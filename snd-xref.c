@@ -1747,7 +1747,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11328] = {
+static const char *snd_names[11346] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -1777,6 +1777,13 @@ static const char *snd_names[11328] = {
     "*libgdbm*", "libgdbm.scm",
     "*libgsl*", "libgsl.scm",
     "*libm*", "libm.scm",
+    "*mock-character*", "mockery.scm",
+    "*mock-hash-table*", "mockery.scm",
+    "*mock-number*", "mockery.scm",
+    "*mock-pair*", "mockery.scm",
+    "*mock-port*", "mockery.scm",
+    "*mock-string*", "mockery.scm",
+    "*mock-symbol*", "mockery.scm",
     "*mock-vector*", "mockery.scm",
     "*to-snd*", "ws.scm",
     "->frequency", "ws.scm",
@@ -6472,6 +6479,7 @@ static const char *snd_names[11328] = {
     "mkstemp", "libc.scm",
     "mktemp", "libc.scm",
     "mktime", "libc.scm",
+    "mock->string", "mockery.scm",
     "mockery.scm", "mockery.scm",
     "modf", "libm.scm",
     "mono->stereo", "extensions.scm",
@@ -6757,6 +6765,7 @@ static const char *snd_names[11328] = {
     "r2k2cos-norm", "generators.scm",
     "r2k2cos?", "generators.scm",
     "r7rs-file-exists?", "r7rs.scm",
+    "r7rs-make-hash-table", "r7rs.scm",
     "r7rs-string-copy", "r7rs.scm",
     "r7rs-string-fill!", "r7rs.scm",
     "r7rs-vector-fill!", "r7rs.scm",
@@ -7416,7 +7425,7 @@ static const char *snd_names[11328] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5664);
+  s7_autoload_set_names(sc, snd_names, 5673);
 }
 #endif
 

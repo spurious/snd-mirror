@@ -826,6 +826,13 @@
     (list 'pretty-print "write.scm")
     (list 'fully-macroexpand "write.scm")
     (list '*mock-vector* "mockery.scm")
+    (list '*mock-port* "mockery.scm")
+    (list '*mock-symbol* "mockery.scm")
+    (list '*mock-pair* "mockery.scm")
+    (list '*mock-number* "mockery.scm")
+    (list '*mock-character* "mockery.scm")
+    (list '*mock-string* "mockery.scm")
+    (list '*mock-hash-table* "mockery.scm")
 
     (list 'lint "lint.scm")
     (list 'html-lint "lint.scm")

@@ -16,6 +16,14 @@
    (apply inlet args)))
 
 
+(define (mock->string obj . args)
+  (dynamic-wind
+      (lambda () (coverlet obj))
+      (lambda () (apply #_object->string (obj 'value) args))
+      (lambda () (openlet obj))))
+
+
+
 ;;; --------------------------------------------------------------------------------
 
 (define *mock-vector*
@@ -23,7 +31,7 @@
     (let ((mock-vector-class
 	   (openlet  
 	    (inlet 'class-name         'mock-vector
-		   'value              (lambda (obj) (obj 'value))
+		   'values             (lambda (obj . args) (obj 'value))
 		   'morally-equal?     (lambda (x y) (#_morally-equal? (x 'value) y))
 		   'vector?            (lambda (obj) #t)
 
@@ -88,7 +96,7 @@
       (define* (make-mock-vector len (init #<unspecified>))
 	(openlet (sublet mock-vector-class 
 		   'value (#_make-vector len init)
-		   'object->string (lambda* (obj (w #t)) (#_object->string (obj 'value) w)))))
+		   'object->string mock->string)))
       
       (define (mock-vector . args)
 	(let ((v (make-mock-vector 0)))
@@ -116,7 +124,7 @@
     (openlet
      (sublet (*mock-vector* 'mock-vector-class)
        'value (vector)
-       'object->string (lambda* (obj (w #t)) (format #f "#<stretchable-vector: ~S>" (obj 'value)))
+       'object->string mock->string
        'initial-element #f
        'vector-ref local-ref
        'let-ref local-ref
@@ -132,6 +140,7 @@
     (let ((mock-hash-table-class
 	   (openlet
 	    (inlet 'hash-table?        (lambda (obj) #t)
+		   'values             (lambda (obj . args) (obj 'mock-hash-table-table))
 		   'class-name         'mock-hash-table
 		   'morally-equal?     (lambda (x y)          (#_morally-equal? (x 'mock-hash-table-table) y))
 		   'hash-table-ref     (lambda (obj key)      (#_hash-table-ref (obj 'mock-hash-table-table) key))
@@ -166,9 +175,14 @@
 					     (error 'wrong-type-arg "copy ~S ~S ~S" src dest args)))))))
 
       (define* (make-mock-hash-table (len 511))
-	(openlet (sublet mock-hash-table-class 
-		   'mock-hash-table-table (#_make-hash-table len)
-		   'object->string (lambda* (obj (w #t)) (#_object->string (obj 'mock-hash-table-table) w)))))
+	(openlet 
+	 (sublet mock-hash-table-class 
+	   'mock-hash-table-table (#_make-hash-table len)
+	   'object->string (lambda (obj . args) ; can't use mock->string because the value is not in the 'value field
+			     (dynamic-wind
+				 (lambda () (coverlet obj))
+				 (lambda () (apply #_object->string (obj 'mock-hash-table-table) args))
+				 (lambda () (openlet obj)))))))
       
       (define (mock-hash-table . args)
 	(let ((v (make-mock-hash-table)))
@@ -224,7 +238,7 @@
 	   (openlet
 	    (inlet 'string?                (lambda (obj) #t)
 		   'class-name             'mock-string
-		   'value                  (lambda (obj) (obj 'value))
+		   'values                 (lambda (obj . args) (obj 'value))
 		   'morally-equal?         (lambda (x y) (#_morally-equal? (x 'value) y))
 		   'reverse                (lambda (obj) (#_reverse (obj 'value)))
 		   'object->string         (lambda* (obj (w #t)) "#<mock-string-class>")
@@ -362,7 +376,7 @@
 	   (openlet
 	    (inlet 'char?              (lambda (obj) #t)
 		   'class-name         'mock-character
-		   'value              (lambda (obj) (obj 'value))
+		   'values             (lambda (obj . args) (obj 'value))
 		   'morally-equal?     (lambda (x y) (#_morally-equal? (x 'value) y))
 		   'char-upcase        (lambda (obj) (#_char-upcase (obj 'value)))
 		   'char-downcase      (lambda (obj) (#_char-downcase (obj 'value)))
@@ -433,7 +447,7 @@
 	   (openlet
 	    (inlet 'number?          (lambda (obj) #t)
 		   'class-name       'mock-number
-		   'value            (lambda (obj) (obj 'value))
+		   'values           (lambda (obj . args) (obj 'value))
 		   'morally-equal?   (lambda (x y) (#_morally-equal? (x 'value) y))
 		   'object->string   (lambda (obj . args) "#<mock-number-class>")
 		   'arity            (lambda (obj) (#_arity (obj 'value)))
@@ -571,34 +585,46 @@
 		   
 		   'vector->list     (lambda* (vec start end) 
 				       (if (vector? vec)
-					   (#_vector->list vec (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
+					   (if end
+					       (#_vector->list vec (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
+					       (#_vector->list vec (if (let? start) (start 'value) start)))
 					   (error 'wrong-type-arg "vector->list ~S ~S ~S" vec start end)))
 
 		   'vector-fill!     (lambda* (vec c start end)
 				       (if (vector? vec)
-					   (#_vector-fill! vec c (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
+					   (if end
+					       (#_vector-fill! vec c (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
+					       (#_vector-fill! vec c (if (let? start) (start 'value) start)))
 					   (error 'wrong-type-arg "vector-fill! ~S ~S ~S ~S" vec c start end)))
 
 		   'substring        (lambda* (str start end) 
 				       (if (string? str)
-					   (#_substring str (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
+					   (if end 
+					       (#_substring str (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
+					       (#_substring str (if (let? start) (start 'value) start)))
 					   (error 'wrong-type-arg "substring ~S ~S ~S" str start end)))
 
 		   'string-fill!     (lambda* (str c start end)
 				       (if (and (string? str)
 						(char? c))
-					   (#_string-fill! str c (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
+					   (if end
+					       (#_string-fill! str c (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
+					       (#_string-fill! str c (if (let? start) (start 'value) start)))
 					   (error 'wrong-type-arg "string-fill! ~S ~S ~S ~S" str c start end)))
 
 		   'string->list     (lambda* (str start end) 
 				       (if (string? str)
-					   (#_string->list vec (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
+					   (if end
+					       (#_string->list str (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
+					       (#_string->list str (if (let? start) (start 'value) start)))
 					   (error 'wrong-type-arg "string->list ~S ~S ~S" str start end)))
 
 		   'write-string     (lambda* (str port start end)
 				       (if (and (string? str)
 						(output-port? port))
-					   (#_write-string str port (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
+					   (if end
+					       (#_write-string str port (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
+					       (#_write-string str port (if (let? start) (start 'value) start)))
 					   (error 'wrong-type-arg "write-string ~S ~S ~S ~S" str port start end)))
 
 		   'copy             (lambda* (obj dest start end)
@@ -606,7 +632,9 @@
 					   (obj 'value)
 					   (if (or (mock-number? start)
 						   (mock-number? end))
-					       (#_copy obj dest (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
+					       (if end
+						   (#_copy obj dest (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
+						   (#_copy obj dest (if (let? start) (start 'value) start)))
 					       (error 'wrong-type-arg "copy ~S ~S ~S ~S" obj dest start end))))
 		   ))))
       
@@ -636,6 +664,8 @@
 	   (*mock-number* 'mock-number-class)
 	 'let-ref-fallback (lambda (obj sym) (fuzz fx))
 	 'object->string (lambda (obj . args) (#_number->string (fuzz fx))))))))
+
+;;; perhaps make an interval arithmetic package along the lines of sbcl's src/compiler/srctran.lisp
 |#
 
 
@@ -648,7 +678,7 @@
 	   (openlet
 	    (inlet 'pair?            (lambda (obj) #t)
 		   'class-name       'mock-pair
-		   'value            (lambda (obj) (obj 'value))
+		   'values           (lambda (obj . args) (obj 'value))
 		   'morally-equal?   (lambda (x y) (#_morally-equal? (x 'value) y))
 		   'pair-line-number (lambda (obj) (#_pair-line-number (obj 'value)))
 		   'list->string     (lambda (obj) (#_list->string (obj 'value)))
@@ -736,14 +766,11 @@
 					   (error 'wrong-type-arg "make-vector ~S ~S ~S" obj dims args)))
 		   ))))
       
-      (define (mock-pair p)
-	(if (and (pair? p)
-		 (not (let? p)))
-	    (openlet
-	     (sublet (*mock-pair* 'mock-pair-class)
-	       'value p
-	       'object->string (lambda (obj . args) (apply #_object->string (obj 'value) args))))
-	    (error 'wrong-type-arg "mock-pair ~S is not a pair" p)))
+      (define (mock-pair . args)
+	(openlet
+	 (sublet (*mock-pair* 'mock-pair-class)
+	   'value (copy args)
+	   'object->string mock->string)))
       
       (set! mock-pair? (lambda (obj)
 			 (and (openlet? obj)
@@ -756,8 +783,8 @@
 #|
 (let ((immutable-list-class 
        (sublet (*mock-pair* 'mock-pair-class)
-	 'object->string   (lambda (obj . args) 
-			     (apply #_object->string (obj 'value) args))
+	 'object->string   mock->string
+
 	 'let-set!         (lambda (obj i val) 
 			     (set! (obj 'value) (append (copy (obj 'value) (make-list (+ i 1))) (list-tail (obj 'value) (+ i 1))))
 			     (list-set! (obj 'value) i val))
@@ -789,7 +816,8 @@
 	 (openlet
 	  (inlet 'symbol?               (lambda (obj) #t)
 		 'class-name            'mock-symbol
-		 'value                 (lambda (obj) (obj 'value))
+		 'values                (lambda (obj . args) (obj 'value))
+		 'object->string        (lambda (obj . arg) "#<mock-symbol-class>")
 		 'morally-equal?        (lambda (x y) (#_morally-equal? (x 'value) y))
 		 'gensym?               (lambda (obj) (#_gensym? (obj 'value)))
 		 'symbol->string        (lambda (obj) (#_symbol->string (obj 'value)))
@@ -828,7 +856,7 @@
 	   (openlet
 	    (inlet 'port?               (lambda (obj) #t)
 		   'class-name          'mock-port
-		   'value               (lambda (obj) (obj 'value))
+		   'values              (lambda (obj . args) (obj 'value))
 		   'morally-equal?      (lambda (x y) (#_morally-equal? (x 'value) y))
 		   'close-input-port    (lambda (obj) (#_close-input-port (obj 'value)))
 		   'close-output-port   (lambda (obj) (#_close-output-port (obj 'value)))
@@ -848,7 +876,8 @@
 		   'char-ready?         (lambda (obj) (#_char-ready? (obj 'value)))
 		   'port-line-number    (lambda (obj) (#_port-line-number (obj 'value)))
 		   'port-filename       (lambda (obj) (#_port-filename (obj 'value)))
-		   
+		   'object->string      (lambda (obj . args) "#<mock-port-class>")
+
 		   'set-current-output-port (lambda (obj) (#_set-current-output-port (obj 'value)))
 		   'set-current-input-port  (lambda (obj) (#_set-current-input-port (obj 'value)))
 		   'set-current-error-port  (lambda (obj) (#_set-current-error-port (obj 'value)))
@@ -862,17 +891,12 @@
 					  (if (mock-port? obj)
 					      (apply #_format (obj 'value) args)
 					      (error 'wrong-type-arg "format ~S ~S" obj args)))
-		   
-		   'object->string      (lambda (obj . args) 
-					  (if (mock-port? obj)
-					      (apply #_object->string (obj 'value) args)
-					      (error 'wrong-type-arg "object->string ~S ~S" obj args)))
-		   
+
 		   'write-string        (lambda (s obj . args) 
 					  (if (mock-port? obj)
 					      (apply #_write-string s (obj 'value) args)
 					      (error 'wrong-type-arg "write-string ~S ~S ~S" s obj args)))
-		   
+
 		   'write-byte          (lambda (b obj) 
 					  (if (mock-port? obj)
 					      (#_write-byte b (obj 'value))
@@ -900,4 +924,49 @@
       
       (curlet))))
 
+;;; mock-port is hard to use because it always seems like we're replacing every blasted function
+;;; sublet of any of these needs to include the value field
+#|
+(require libc.scm)
 
+(define *input-file*
+  (let ((file-write-date (lambda (file)
+			   (with-let (sublet *libc* :file file)
+			     (let ((buf (stat.make)))
+			       (stat file buf)
+			       (let ((date (stat.st_mtime buf)))
+				 (free buf)
+				 date)))))
+	(file-size (lambda (file)
+		      (with-let (sublet *libc* :file file)
+			(let ((buf (stat.make)))
+			  (stat file buf)
+			  (let ((size (stat.st_size buf)))
+			    (free buf)
+			    size)))))
+	(file-owner (lambda (file)
+		      (with-let (sublet *libc* :file file)
+			(let ((buf (stat.make)))
+			  (stat file buf)
+			  (let ((uid (stat.st_uid buf)))
+			    (free buf)
+			    (let ((pwd (getpwuid uid)))
+			      (passwd.pw_name pwd))))))))
+    (openlet
+     (sublet (*mock-port* 'mock-port-class)
+       'value      #f
+       'length     (lambda (obj) (file-size (obj 'file-name)))
+       'owner      (lambda (obj) (file-owner (obj 'file-name)))
+       'write-date (lambda (obj) (file-write-date (obj 'file-name)))))))
+
+(define (open-a-file file)
+  (let ((p (openlet
+	    (sublet *input-file* 
+	      'file-name file))))
+    (set! (p 'value) (open-input-file "oboe.snd"))
+    p))
+
+(define p (open-a-file "oboe.snd"))
+(length p) -> 101684
+((p 'owner) p) -> "bil"
+|#

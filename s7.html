@@ -582,22 +582,6 @@ ERROR: Wrong type (expecting exact integer): 0.0   ; [why?  "it's probably a pro
 
 <p>So I end up using the verbose <code>(floor (inexact-&gt;exact ...))</code> everywhere, and even
 then I have no guarantee that I'll get a legal vector index. 
-</p>
-
-<p>When I started work on s7, I thought perhaps
-"exact" could mean "is represented exactly in the computer".  We'd have integers and ratios exact; 
-reals and complex exact if they are exactly
-represented in the current floating point implementation.  
-0.0 and 0.5 might be exact if the printout isn't misleading, and 0.1 is inexact.
-"integer?" and friends would refer instead to the programmer's point of view.
-That is, if the programmer uses 1 or if the thing prints as 1, it is the integer 1, whereas 1.0
-means floating point (not integer!). 
-And to keep exactness in view, we'd have
-to monitor which operations introduce inexactness &mdash; a kind of interval arithmetic.
-But then what would inexact-&gt;exact do?  
-</p>
-
-<p>
 I have never seen any use made of the exact/inexact distinction &mdash; just
 wild flailing to try get around it.
 I think the whole idea is confused and useless, and leads

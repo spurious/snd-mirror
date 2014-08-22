@@ -24,6 +24,13 @@
 (define mock-symbol (*mock-symbol* 'mock-symbol))
 (define mock-hash-table* (*mock-hash-table* 'mock-hash-table*))
 
+(define np (list 0 1 2 3 4))
+(define mp (mock-pair '(0 1 2 3 4)))
+(define nv (vector 0 1 2 3 4))
+(define mv (mock-vector 0 1 2 3 4))
+(define ns "01234")
+(define ms (mock-string #\0 #\1 #\2 #\3 #\4))
+
 (define constants (list #f #t () #\a (/ most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i
 			"hi455" :key hi: 'hi (list 1) (list 1 2) (cons 1 2) (list (list 1 2)) (list (list 1)) (list ()) #() 
 			1/0+i 0+0/0i 0+1/0i 1+0/0i 0/0+0i 0/0+0/0i 1+1/0i 0/0+i cons ''2 
@@ -74,8 +81,9 @@
 		      (if data-file
 			  (format data-file "(~S~{ ~S~}) -> ~S~%" func args val))))))
 	   (lambda any
-	     (if (or (memq (car any) '(wrong-type-arg syntax-error))
-		     (not (memq func (list map for-each /))))
+	     (if (and (> args-now 0)
+		      (memq (car any) '(wrong-type-arg syntax-error))
+		      (not (memq func (list map for-each /))))
 		 (quit)))))
      
      (let ((c-args (vector-ref arglists args-now)))
@@ -127,7 +135,7 @@
 (define (test-sym sym)
   (if (defined? sym)
       (let ((f (symbol->value sym)))
-	(let ((argn (and (or (procedure? f) (macro? f)) (arity f))))
+	(let ((argn (and (or (procedure? f) (let? f)) (arity f))))
 	  (if argn
 	      (let ((bottom (car argn))
 		    (top (min (cdr argn) max-args))
@@ -140,7 +148,11 @@
 					       "object->string"
 
 					       "mus-audio-close" "mus-audio-read" "mus-audio-write" "mus-audio-open-output"
-					       "boolean=?" "symbol=?" 
+					       "boolean=?" "symbol=?" "symbol-table"
+
+					       (reader-cond ((> max-args 3) "for-each"))
+					       (reader-cond ((> max-args 3) "map"))
+					       (reader-cond ((> max-args 1) "copy"))
 
 ;					       "do*" "define-slot-accessor" "power-set"
 ;					       "define-library" "define-record-type"

@@ -2622,7 +2622,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 #define WITH_COUNTS 0
 
 #if WITH_COUNTS
-#if 0
+#if 1
 #if 0
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -2658,7 +2658,7 @@ static void report_counts(s7_scheme *sc)
     }
 }
 #else
-#if 0
+#if 1
 #define NUM_COUNTS 1000
 static int counts[NUM_COUNTS][NUM_COUNTS];
 static void clear_counts(void) {int i, j; for (i = 0; i < NUM_COUNTS; i++) for (j = 0; j < NUM_COUNTS; j++) counts[i][j] = 0;}
@@ -2683,7 +2683,7 @@ static void report_counts(s7_scheme *sc)
 	  }
       if (mx > 0)
 	{
-	  fprintf(stderr, "%d: %s %s\n", mx, opt_names[mxi], opt_names[mxj]);
+	  fprintf(stderr, "%d: %s %s\n", mx, real_op_names[mxi], real_op_names[mxj]);
 	  counts[mxi][mxj] = 0;
 	}
       else happy = false;
@@ -2878,6 +2878,18 @@ s7_pointer s7_method(s7_scheme *sc, s7_pointer obj, s7_pointer method)
   if (has_methods(obj))
     return(find_method(sc, find_environment(sc, obj), method));
   return(sc->UNDEFINED);
+}
+
+static s7_pointer check_values(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+{
+  if (has_methods(obj))
+    {
+      s7_pointer func;
+      func = find_method(sc, find_environment(sc, obj), sc->VALUES);
+      if (func != sc->UNDEFINED)
+	return(s7_apply_function(sc, func, args));
+    }
+  return(sc->GC_NIL);
 }
 
 #define check_method(Sc, Obj, Method, Args)   \
@@ -10292,14 +10304,17 @@ the 'radix' argument is ignored: (string->number \"#x11\" 2) -> 17 not 3."
 
   if (is_pair(cdr(args)))
     {
-      s7_pointer rad;
+      s7_pointer rad, p;
       rad = cadr(args);
       if (!s7_is_integer(rad))
 	{
-	  check_method(sc, rad, caller, args);
-	  return(wrong_type_argument(sc, caller, small_int(2), rad, T_INTEGER));
+	  if (!s7_is_integer(p = check_values(sc, rad, cdr(args))))
+	    {
+	      check_method(sc, rad, caller, args);
+	      return(wrong_type_argument(sc, caller, small_int(2), rad, T_INTEGER));
+	    }
+	  else rad = p;
 	}
-
       radix = s7_integer(rad);
       if ((radix < 2) ||              /* what about negative int as base (Knuth), reals such as phi, and some complex like -1+i */
 	  (radix > 16))               /* the only problem here is printing the number; perhaps put each digit in "()" in base 10: (123)(0)(34) */
@@ -19167,8 +19182,12 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
       s7_pointer arg3;
       arg3 = caddr(args);
       if (!s7_is_integer(arg3))
-	return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(3), arg3, T_INTEGER));
-
+	{
+	  s7_pointer p;
+	  if (!s7_is_integer(p = check_values(sc, arg3, cddr(args))))
+	    return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(3), arg3, T_INTEGER));
+	  else arg3 = p;
+	}
       start = s7_integer(arg3);
       if (start < 0)
 	return(wrong_type_argument_with_type(sc, sc->CHAR_POSITION, small_int(3), arg3, A_NON_NEGATIVE_INTEGER));
@@ -19239,8 +19258,12 @@ static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
       s7_pointer arg3;
       arg3 = caddr(args);
       if (!s7_is_integer(arg3))
-	return(wrong_type_argument(sc, sc->STRING_POSITION, small_int(3), arg3, T_INTEGER));
-
+	{
+	  s7_pointer p;
+	  if (!s7_is_integer(p = check_values(sc, arg3, cddr(args))))
+	    return(wrong_type_argument(sc, sc->STRING_POSITION, small_int(3), arg3, T_INTEGER));
+	  else arg3 = p;
+	}      
       start = s7_integer(arg3);
       if (start < 0)
 	return(wrong_type_argument_with_type(sc, sc->STRING_POSITION, small_int(3), arg3, A_NON_NEGATIVE_INTEGER));
@@ -19567,8 +19590,13 @@ static s7_pointer string_ref_1(s7_scheme *sc, s7_pointer strng, s7_pointer index
 
   if (!s7_is_integer(index))
     {
-      check_method(sc, index, sc->STRING_REF, list_2(sc, strng, index));
-      return(wrong_type_argument(sc, sc->STRING_REF, small_int(2), index, T_INTEGER));
+      s7_pointer p;
+      if (!s7_is_integer(p = check_values(sc, index, cons(sc, index, sc->NIL))))
+	{
+	  check_method(sc, index, sc->STRING_REF, list_2(sc, strng, index));
+	  return(wrong_type_argument(sc, sc->STRING_REF, small_int(2), index, T_INTEGER));
+	}
+      else index = p;
     }
   ind = s7_integer(index);
   if (ind < 0)
@@ -19583,7 +19611,7 @@ static s7_pointer string_ref_1(s7_scheme *sc, s7_pointer strng, s7_pointer index
 
 static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer strng, index;
+  s7_pointer strng, index, p;
   char *str;
   s7_Int ind;
 
@@ -19599,8 +19627,12 @@ static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
   index = cadr(args);
   if (!s7_is_integer(index))
     {
-      check_method(sc, index, sc->STRING_REF, args);
-      return(wrong_type_argument(sc, sc->STRING_REF, small_int(2), index, T_INTEGER));
+      if (!s7_is_integer(p = check_values(sc, index, cdr(args))))
+	{
+	  check_method(sc, index, sc->STRING_REF, args); 
+	  return(wrong_type_argument(sc, sc->STRING_REF, small_int(2), index, T_INTEGER));
+	}
+      else index = p;
     }
   ind = s7_integer(index);
   if (ind < 0)
@@ -19631,8 +19663,13 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   index = cadr(args);
   if (!s7_is_integer(index))
     {
-      check_method(sc, index, sc->STRING_SET, args);
-      return(wrong_type_argument(sc, sc->STRING_SET, small_int(2), index, T_INTEGER));
+      s7_pointer p;
+      if (!s7_is_integer(p = check_values(sc, index, cdr(args))))
+	{
+	  check_method(sc, index, sc->STRING_SET, args);
+	  return(wrong_type_argument(sc, sc->STRING_SET, small_int(2), index, T_INTEGER));
+	}
+      else index = p;
     }
   ind = s7_integer(index);
   if (ind < 0)
@@ -19731,7 +19768,7 @@ static s7_pointer start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer sta
   /* we assume that *start=0 and *end=length, that end is "exclusive"
    *   return true if the start/end points are not changed.
    */
-  s7_pointer pstart, pend;
+  s7_pointer pstart, pend, p;
   s7_Int index;
 
   if (is_null(start_and_end_args))
@@ -19740,8 +19777,12 @@ static s7_pointer start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer sta
   pstart = car(start_and_end_args);
   if (!s7_is_integer(pstart))
     {
-      check_method(sc, pstart, caller, args);
-      return(wrong_type_argument_n(sc, caller, position, pstart, T_INTEGER));
+      if (!s7_is_integer(p = check_values(sc, pstart, start_and_end_args)))
+	{
+	  check_method(sc, pstart, caller, args);
+	  return(wrong_type_argument_n(sc, caller, position, pstart, T_INTEGER));
+	}
+      else pstart = p;
     }
       
   index = s7_integer(pstart);
@@ -19756,8 +19797,12 @@ static s7_pointer start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer sta
   pend = cadr(start_and_end_args);
   if (!s7_is_integer(pend))
     {
-      check_method(sc, pend, caller, args);
-      return(wrong_type_argument_n(sc, caller, position + 1, pend, T_INTEGER));
+      if (!s7_is_integer(p = check_values(sc, pend, cdr(start_and_end_args))))
+	{
+	  check_method(sc, pend, caller, args);
+	  return(wrong_type_argument_n(sc, caller, position + 1, pend, T_INTEGER));
+	}
+      else pend = p;
     }
   index = s7_integer(pend);
   if ((index < *start) ||
@@ -27877,8 +27922,12 @@ static s7_pointer list_ref_1(s7_scheme *sc, s7_pointer lst, s7_pointer ind)
 
   if (!s7_is_integer(ind))
     {
-      check_method(sc, ind, sc->LIST_REF, list_2(sc, lst, ind));
-      return(wrong_type_argument(sc, sc->LIST_REF, small_int(2), ind, T_INTEGER));
+      if (!s7_is_integer(p = check_values(sc, ind, cons(sc, ind, sc->NIL))))
+	{
+	  check_method(sc, ind, sc->LIST_REF, list_2(sc, lst, ind));
+	  return(wrong_type_argument(sc, sc->LIST_REF, small_int(2), ind, T_INTEGER));
+	}
+      else ind = p;
     }
   index = s7_integer(ind);
   if (index < 0)
@@ -27950,8 +27999,12 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
   ind = car(args);
   if (!s7_is_integer(ind))
     {
-      check_method(sc, ind, sc->LIST_SET, args);
-      return(wrong_type_argument(sc, sc->LIST_SET, small_int(arg_num), ind, T_INTEGER));
+      if (!s7_is_integer(p = check_values(sc, ind, args)))
+	{
+	  check_method(sc, ind, sc->LIST_SET, args); /* surely this can't work -- where is the list? */
+	  return(wrong_type_argument(sc, sc->LIST_SET, small_int(arg_num), ind, T_INTEGER));
+	}
+      else ind = p;
     }
   index = s7_integer(ind);
   if (index < 0)
@@ -28016,7 +28069,7 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
   
   int i;
   s7_Int index;
-  s7_pointer p;
+  s7_pointer p, p1;
 
   p = car(args);
   if (!s7_is_list(sc, p))
@@ -28027,8 +28080,12 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
   p = cadr(args);
   if (!s7_is_integer(p))
     {
-      check_method(sc, p, sc->LIST_TAIL, args);
-      return(wrong_type_argument(sc, sc->LIST_TAIL, small_int(2), p, T_INTEGER));
+      if (!s7_is_integer(p1 = check_values(sc, p, cdr(args))))
+	{
+	  check_method(sc, p, sc->LIST_TAIL, args);
+	  return(wrong_type_argument(sc, sc->LIST_TAIL, small_int(2), p, T_INTEGER));
+	}
+      else p = p1;
     }
   index = s7_integer(p);
   if (index < 0)
@@ -30651,15 +30708,21 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
       for (x = indices, i = 0; (is_not_null(x)) && (i < vector_ndims(vect)); x = cdr(x), i++)
 	{
 	  s7_Int n;
-	  if (!s7_is_integer(car(x)))
+	  s7_pointer p, p1;
+	  p = car(x);
+	  if (!s7_is_integer(p))
 	    {
-	      check_method(sc, car(x), sc->VECTOR_REF, cons(sc, vect, indices));
-	      return(wrong_type_argument_n(sc, sc->VECTOR_REF, i + 2, car(x), T_INTEGER));
+	      if (!s7_is_integer(p1 = check_values(sc, p, x)))
+		{
+		  check_method(sc, p, sc->VECTOR_REF, cons(sc, vect, indices));
+		  return(wrong_type_argument_n(sc, sc->VECTOR_REF, i + 2, p, T_INTEGER));
+		}
+	      else p = p1;
 	    }
-	  n = s7_integer(car(x));
+	  n = s7_integer(p);
 	  if ((n < 0) || 
 	      (n >= vector_dimension(vect, i)))
-	    return(out_of_range(sc, sc->VECTOR_REF, make_integer(sc, i + 2), car(x), "index should be between 0 and the dimension size"));
+	    return(out_of_range(sc, sc->VECTOR_REF, make_integer(sc, i + 2), p, "index should be between 0 and the dimension size"));
 
 	  index += n * vector_offset(vect, i);
 	}
@@ -30676,14 +30739,18 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
     }
   else 
     {
-      s7_pointer p;
+      s7_pointer p, p1;
       /* (let ((hi (make-vector 3 0.0)) (sum 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! sum (+ sum (hi i)))) sum) */
       p = car(indices);
 
       if (!s7_is_integer(p))
 	{
-	  check_method(sc, p, sc->VECTOR_REF, cons(sc, vect, indices));
-	  return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), p, T_INTEGER));
+	  if (!s7_is_integer(p1 = check_values(sc, p, indices)))
+	    {
+	      check_method(sc, p, sc->VECTOR_REF, cons(sc, vect, indices));
+	      return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), p, T_INTEGER));
+	    }
+	  else p = p1;
 	}
       index = s7_integer(p);
       if ((index < 0) ||
@@ -30860,15 +30927,21 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
       for (x = cdr(args), i = 0; (is_not_null(cdr(x))) && (i < vector_ndims(vec)); x = cdr(x), i++)
 	{
 	  s7_Int n;
-	  if (!s7_is_integer(car(x)))
+	  s7_pointer p, p1;
+	  p = car(x);
+	  if (!s7_is_integer(p))
 	    {
-	      check_method(sc, car(x), sc->VECTOR_SET, args);
-	      return(wrong_type_argument_n(sc, sc->VECTOR_SET, i + 2, car(x), T_INTEGER));
+	      if (!s7_is_integer(p1 = check_values(sc, p, x)))
+		{
+		  check_method(sc, p, sc->VECTOR_SET, args);
+		  return(wrong_type_argument_n(sc, sc->VECTOR_SET, i + 2, p, T_INTEGER));
+		}
+	      else p = p1;
 	    }
-	  n = s7_integer(car(x));
+	  n = s7_integer(p);
 	  if ((n < 0) || 
 	      (n >= vector_dimension(vec, i)))
-	    return(out_of_range(sc, sc->VECTOR_SET, make_integer(sc, i + 2), car(x), "index should be between 0 and the dimension size"));
+	    return(out_of_range(sc, sc->VECTOR_SET, make_integer(sc, i + 2), p, "index should be between 0 and the dimension size"));
 
 	  index += n * vector_offset(vec, i);
 	}
@@ -30882,12 +30955,16 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
     }
   else
     {
-      s7_pointer p;
+      s7_pointer p, p1;
       p = cadr(args);
       if (!s7_is_integer(p))
 	{
-	  check_method(sc, p, sc->VECTOR_SET, args);
-	  return(wrong_type_argument(sc, sc->VECTOR_SET, small_int(2), p, T_INTEGER));
+	  if (!s7_is_integer(p1 = check_values(sc, p, cdr(args))))
+	    {
+	      check_method(sc, p, sc->VECTOR_SET, args);
+	      return(wrong_type_argument(sc, sc->VECTOR_SET, small_int(2), p, T_INTEGER));
+	    }
+	  else p = p1;
 	}
       index = s7_integer(p);
       if ((index < 0) ||
@@ -30981,7 +31058,12 @@ static s7_pointer g_vector_set_3(s7_scheme *sc, s7_pointer args)
   
   ind = cadr(args);
   if (!s7_is_integer(ind))
-    return(wrong_type_argument(sc, sc->VECTOR_SET, small_int(2), ind, T_INTEGER));
+    {
+      s7_pointer p;
+      if (!s7_is_integer(p = check_values(sc, ind, cdr(args))))
+	return(wrong_type_argument(sc, sc->VECTOR_SET, small_int(2), ind, T_INTEGER));
+      else ind = p;
+    }
   index = s7_integer(ind);
   if ((index < 0) ||
       (index >= vector_length(vec)))
@@ -31359,7 +31441,12 @@ static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
     {
       index = cadr(args);
       if (!s7_is_integer(index))
-	return(wrong_type_argument_n(sc, sc->FLOAT_VECTOR_REF, 2, index, T_INTEGER)); 
+	{
+	  s7_pointer p;
+	  if (!s7_is_integer(p = check_values(sc, index, cdr(args))))
+	    return(wrong_type_argument_n(sc, sc->FLOAT_VECTOR_REF, 2, index, T_INTEGER)); 
+	  else index = p;
+	}
       ind = s7_integer(index);
       if ((ind < 0) || (ind >= vector_length(v)))
 	return(simple_out_of_range(sc, sc->FLOAT_VECTOR_REF, index, "between 0 and the vector length"));
@@ -31375,9 +31462,13 @@ static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
 	{
 	  s7_Int n;
 	  if (!s7_is_integer(car(x)))
-	    return(wrong_type_argument_n(sc, sc->FLOAT_VECTOR_REF, i + 2, car(x), T_INTEGER));
-
-	  n = s7_integer(car(x));
+	    {
+	      s7_pointer p;
+	      if (!s7_is_integer(p = check_values(sc, car(x), x)))
+		return(wrong_type_argument_n(sc, sc->FLOAT_VECTOR_REF, i + 2, car(x), T_INTEGER));
+	      n = s7_integer(p);
+	    }
+	  else n = s7_integer(car(x));
 	  if ((n < 0) || 
 	      (n >= vector_dimension(v, i)))
 	    return(out_of_range(sc, sc->FLOAT_VECTOR_REF, make_integer(sc, i + 2), car(x), "index should be between 0 and the dimension size"));
@@ -31419,10 +31510,15 @@ static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
 	  s7_Int n;
 	  if (!s7_is_integer(car(x)))
 	    {
-	      check_method(sc, car(x), sc->FLOAT_VECTOR_SET, args);
-	      return(wrong_type_argument_n(sc, sc->FLOAT_VECTOR_SET, i + 2, car(x), T_INTEGER));
+	      s7_pointer p;
+	      if (!s7_is_integer(p = check_values(sc, car(x), x)))
+		{
+		  check_method(sc, car(x), sc->FLOAT_VECTOR_SET, args);
+		  return(wrong_type_argument_n(sc, sc->FLOAT_VECTOR_SET, i + 2, car(x), T_INTEGER));
+		}
+	      n = s7_integer(p);
 	    }
-	  n = s7_integer(car(x));
+	  else n = s7_integer(car(x));
 	  if ((n < 0) || 
 	      (n >= vector_dimension(vec, i)))
 	    return(out_of_range(sc, sc->FLOAT_VECTOR_SET, make_integer(sc, i + 2), car(x), "index should be between 0 and the dimension size"));
@@ -31441,10 +31537,15 @@ static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
     {
       if (!s7_is_integer(cadr(args)))
 	{
-	  check_method(sc, cadr(args), sc->FLOAT_VECTOR_SET, args);
-	  return(wrong_type_argument(sc, sc->FLOAT_VECTOR_SET, small_int(2), cadr(args), T_INTEGER));
+	  s7_pointer p;
+	  if (!s7_is_integer(p = check_values(sc, cadr(args), cdr(args))))
+	    {
+	      check_method(sc, cadr(args), sc->FLOAT_VECTOR_SET, args);
+	      return(wrong_type_argument(sc, sc->FLOAT_VECTOR_SET, small_int(2), cadr(args), T_INTEGER));
+	    }
+	  index = s7_integer(p);
 	}
-      index = s7_integer(cadr(args));
+      else index = s7_integer(cadr(args));
       if ((index < 0) ||
 	  (index >= vector_length(vec)))
 	return(out_of_range(sc, sc->FLOAT_VECTOR_SET, small_int(2), cadr(args), "should be between 0 and the vector length"));
@@ -32311,8 +32412,13 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
       p = car(args);
       if (!s7_is_integer(p))
 	{
-	  check_method(sc, p, sc->MAKE_HASH_TABLE, args);
-	  return(wrong_type_argument(sc, sc->MAKE_HASH_TABLE, small_int(1), p, T_INTEGER));
+	  s7_pointer p1;
+	  if (!s7_is_integer(p1 = check_values(sc, p, args)))
+	    {
+	      check_method(sc, p, sc->MAKE_HASH_TABLE, args);
+	      return(wrong_type_argument(sc, sc->MAKE_HASH_TABLE, small_int(1), p, T_INTEGER));
+	    }
+	  p = p1;
 	}
       size = s7_integer(p);
       if (size <= 0)                      /* we need s7_Int here to catch (make-hash-table most-negative-fixnum) etc */
@@ -50200,7 +50306,6 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op) 
 {
-  /* sc->cur_code = sc->F; */
   sc->op = first_op;
 
   /* this procedure can be entered recursively (via s7_call for example), so it's no place for a setjmp
@@ -70288,10 +70393,6 @@ int main(int argc, char **argv)
  *   but this would require special handling in the Xen stuff.
  *
  * mockery.scm needs documentation (and stuff.scm)
- * example: port/char/symbol
- * many vector cases remain, need multi-index and opt func tests here and implicit index cases
- *   also let-set/ref with obj type check
- *
  * what about (reactive-vector (v 0)) -- can we watch some other vector's contents?
  *   if v were a mock-vector, we could use the same vector-set! stuff as now but with any name (how to distinguish?)
  *   we can distinguish because this is happening at run-time where (v 0) has an ascertainable meaning
@@ -70300,13 +70401,10 @@ int main(int argc, char **argv)
  *   reactive-string? (reactive-string #\a c (integer->char a) (str 0) (_ 0))
  *   reactive-eval, reactive-load(if file changes -- how to tell when its ready?), reactive-if(expr changes)--reactive-assert for example
  *
- * number+uncertainty, check out interval arithmetic
- *
  * in (define (f..) (define (g..) ...) ...) can't g be created once like f? 
  *   how does this interact with check_define?  Perhaps first pass over closure_body can mark it and save
  *   the completed closure somewhere?  (It needs to be under 'g in the closure internal env)
  *   currently these go to op_define_funchecked: if safe/non-recursive why can't we save/reuse the arg-env there?
  *   also these could be reduced to safe_c_sc and so on.
- * get stats on current main cases: start, eval (could apply be undercut?)
  */
 
