@@ -962,6 +962,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 ;; could this use reactive-lambda* to show changes as well?
 
 
+;;; ----------------
+
 (define (gather-symbols expr ce lst ignore)
   (define (symbol->let sym ce)
     (if (defined? sym ce #t)

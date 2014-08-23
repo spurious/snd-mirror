@@ -1176,7 +1176,7 @@ struct s7_scheme {
   s7_pointer symbol_table;            /* symbol table */
   s7_pointer rootlet;                 /* global environment */
   s7_Int rootlet_entries;
-  s7_pointer unlet;             /* original bindings of predefined functions */
+  s7_pointer unlet;                   /* original bindings of predefined functions */
   
   s7_pointer input_port;              /* current-input-port */
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
@@ -1339,6 +1339,12 @@ struct s7_scheme {
   int slash_str_size;
   char *slash_str;
   s7_ex *(*ex_fallback)(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
+
+  /* s7 env symbols */
+  s7_pointer stack_top_symbol, symbol_table_is_locked_symbol, heap_size_symbol, gc_freed_symbol, gc_protected_objects_symbol;
+  s7_pointer free_heap_size_symbol, file_names_symbol, symbol_table_symbol, hash_tables_symbol, gensyms_symbol;
+  s7_pointer stack_size_symbol, rootlet_size_symbol, c_types_symbol;
+  s7_pointer strings_symbol, vectors_symbol, input_ports_symbol, output_ports_symbol, continuations_symbol, c_objects_symbol;
 };
 
 typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_write_t;
@@ -4589,11 +4595,6 @@ static void increase_stack_size(s7_scheme *sc)
     }  
 
 
-static s7_pointer g_stack_top(s7_scheme *sc, s7_pointer args)
-{
-  return(s7_make_integer(sc, (sc->stack_end - sc->stack_start) / 4));
-}
-
 
 
 /* -------------------------------- symbols -------------------------------- */
@@ -4739,20 +4740,6 @@ bool s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 	return(true);
 
   return(false);
-}
-
-
-static s7_pointer g_symbol_table_is_locked(s7_scheme *sc, s7_pointer args)
-{
-  #define H_symbol_table_is_locked "set (-s7-symbol-table-locked?) to #t to prohibit the creation of any new symbols"
-  return(make_boolean(sc, sc->symbol_table_is_locked));
-}
-
-
-static s7_pointer g_set_symbol_table_is_locked(s7_scheme *sc, s7_pointer args)
-{
-  sc->symbol_table_is_locked = (car(args) != sc->F);
-  return(car(args));
 }
 
 
@@ -5021,8 +5008,6 @@ static s7_pointer add_sym_to_list(s7_scheme *sc, s7_pointer sym)
 }
 
 static void clear_syms_in_list(s7_scheme *sc) {sc->syms_tag++;}
-
-
 
 
 
@@ -5750,7 +5735,6 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 	    return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
 
 	  s7_make_slot(sc, new_e, sym, val);
-
 	  if (sym == sc->LET_REF_FALLBACK) 
 	    set_has_ref_fallback(new_e);
 	  else 
@@ -5881,8 +5865,9 @@ static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
    */
   
   if (has_ref_fallback(env))
-    check_method(sc, env, sc->LET_REF_FALLBACK, sc->w = list_2(sc, env, symbol));
-
+    {
+      check_method(sc, env, sc->LET_REF_FALLBACK, sc->w = list_2(sc, env, symbol));
+    }
   return(sc->UNDEFINED);
 }
 
@@ -5902,7 +5887,7 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_let_ref "(let-ref env sym) returns the value of the symbol sym in the environment env"
   s7_pointer e, s;
-
+  
   e = car(args);
   if (!is_let(e))
     return(wrong_type_argument_with_type(sc, sc->LET_REF, small_int(1), e, AN_ENVIRONMENT));
@@ -5997,7 +5982,9 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
 	}
 
   if (has_set_fallback(env))
-    check_method(sc, env, sc->LET_SET_FALLBACK, sc->w = list_3(sc, env, symbol, value));
+    {
+      check_method(sc, env, sc->LET_SET_FALLBACK, sc->w = list_3(sc, env, symbol, value));
+    }
   return(sc->UNDEFINED);
 }
 
@@ -7044,7 +7031,6 @@ static s7_pointer *copy_op_stack(s7_scheme *sc)
  *    continuation which simply delimits the extent of the continuation (why not use lambda?) -- we want to block it
  *    from coming at us from some unknown place.  
  */  
-
 
 static s7_pointer make_baffle(s7_scheme *sc)
 {
@@ -19333,7 +19319,7 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
 }
 
 
-static s7_pointer make_protected_string(s7_scheme *sc, const char *str)
+static s7_pointer make_protected_string(s7_scheme *sc, const char *str) /* here "protected" = immutable, const char*, I think */
 {
   s7_pointer x;
   NEW_CELL(sc, x);
@@ -28001,7 +27987,7 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
     {
       if (!s7_is_integer(p = check_values(sc, ind, args)))
 	{
-	  check_method(sc, ind, sc->LIST_SET, args); /* surely this can't work -- where is the list? */
+	  check_method(sc, ind, sc->LIST_SET, cons(sc, lst, args));
 	  return(wrong_type_argument(sc, sc->LIST_SET, small_int(arg_num), ind, T_INTEGER));
 	}
       else ind = p;
@@ -31805,17 +31791,16 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 
       if (compare_func)
 	{
-	  int gc_loc, i;
+	  int i;
 	  s7_pointer vec, p;
 
 	  vec = g_vector(sc, data);
 	  elements = s7_vector_elements(vec);
 
-	  gc_loc = s7_gc_protect(sc, vec);
+	  sc->v = vec;
 	  qsort((void *)elements, len, sizeof(s7_pointer), sort_func);
 	  for (p = data, i = 0; i < len; i++, p = cdr(p))
 	    car(p) = elements[i];
-	  s7_gc_unprotect_at(sc, gc_loc);
 
 	  return(data);
 	}
@@ -31849,8 +31834,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 
 	if (compare_func)
 	  {
-	    int gc_loc;
-	    gc_loc = s7_gc_protect(sc, vec);	  
+	    sc->v = vec;	  
 	    qsort((void *)elements, len, sizeof(s7_pointer), sort_func);
 	    
 	    if (is_bytevector(data))
@@ -31863,8 +31847,6 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 		for (i = 0; i < len; i++)
 		  chrs[i] = character(elements[i]);
 	      }
-
-	    s7_gc_unprotect_at(sc, gc_loc);
 	    return(data);
 	  }
 	
@@ -31897,14 +31879,11 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 
 	if (compare_func)
 	  {
-	    int gc_loc;
-	    gc_loc = s7_gc_protect(sc, vec);	  
+	    sc->v = vec;	  
 	    qsort((void *)elements, len, sizeof(s7_pointer), sort_func);
 	    
 	    for (i = 0; i < len; i++)
 	      vector_setter(data)(sc, data, i, elements[i]);
-
-	    s7_gc_unprotect_at(sc, gc_loc);
 	    return(data);
 	  }
 	
@@ -31932,10 +31911,9 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
   k = ((int)(n / 2)) + 1;
   {
     s7_pointer lx;
-    int gc_loc;
 
     lx = s7_make_vector(sc, (sc->safety == 0) ? 4 : 6); 
-    gc_loc = s7_gc_protect(sc, lx);
+    sc->v = lx;
 
     vector_element(lx, 0) = make_mutable_integer(sc, n);
     vector_element(lx, 1) = make_mutable_integer(sc, k);
@@ -31946,9 +31924,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	vector_element(lx, 4) = make_mutable_integer(sc, 0);
 	vector_element(lx, 5) = make_integer(sc, n * n);
       }
-    
     push_stack(sc, OP_SORT, args, lx);
-    s7_gc_unprotect_at(sc, gc_loc);
   }
   return(sc->F);
   
@@ -36870,7 +36846,7 @@ static char *stacktrace_1(s7_scheme *sc, int frames_max, int code_cols, int tota
 
   gc_syms = s7_gc_protect(sc, sc->NIL);
   str = NULL;
-  top = (sc->stack_end - sc->stack_start) / 4; /* g_stack_top, not s7_stack_top! */
+  top = (sc->stack_end - sc->stack_start) / 4; /* (*s7* 'stack_top), not s7_stack_top! */
   
   if (stacktrace_in_error_handler(sc, top))
     {
@@ -59254,7 +59230,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_null(sc->args))
 	    sc->value = s7_let_ref(sc, sc->code, sc->F);
 	  else sc->value = s7_let_ref(sc, sc->code, car(sc->args));
-
 	  if (is_pair(cdr(sc->args)))
 	    sc->value = implicit_index(sc, sc->value, cdr(sc->args));
 	  /*    (let ((v #(1 2 3))) (let ((e (curlet))) ((e 'v) 1))) -> 2
@@ -68674,6 +68649,119 @@ static void s7_gmp_init(s7_scheme *sc)
 
 
 
+/* -------------------------------- *s7* environment -------------------------------- */
+
+static void init_s7_env(s7_scheme *sc)
+{
+  sc->stack_top_symbol = s7_make_symbol(sc, "stack-top");
+  sc->stack_size_symbol = s7_make_symbol(sc, "stack-size");
+  sc->symbol_table_is_locked_symbol = s7_make_symbol(sc, "symbol-table-locked?");
+  sc->heap_size_symbol = s7_make_symbol(sc, "heap-size");
+  sc->free_heap_size_symbol = s7_make_symbol(sc, "free-heap-size");
+  sc->gc_freed_symbol = s7_make_symbol(sc, "gc-freed");
+  sc->gc_protected_objects_symbol = s7_make_symbol(sc, "gc-protected-objects");
+  sc->input_ports_symbol = s7_make_symbol(sc, "input-ports");
+  sc->output_ports_symbol = s7_make_symbol(sc, "output-ports");
+  sc->strings_symbol = s7_make_symbol(sc, "strings");
+  sc->gensyms_symbol = s7_make_symbol(sc, "gensyms");
+  sc->vectors_symbol = s7_make_symbol(sc, "vectors");
+  sc->hash_tables_symbol = s7_make_symbol(sc, "hash-tables");
+  sc->continuations_symbol = s7_make_symbol(sc, "continuations");
+  sc->c_objects_symbol = s7_make_symbol(sc, "c-objects");
+  sc->file_names_symbol = s7_make_symbol(sc, "file-names");
+  sc->symbol_table_symbol = s7_make_symbol(sc, "symbol-table");
+  sc->rootlet_size_symbol = s7_make_symbol(sc, "rootlet-size");	
+  sc->c_types_symbol = s7_make_symbol(sc, "c-types");
+}
+
+static s7_pointer make_shadow_vector(s7_scheme *sc, s7_Int size, s7_pointer *elements)
+{
+  s7_pointer x;
+  NEW_CELL(sc, x);
+  vector_length(x) = size;
+  vector_elements(x) = elements;
+  set_type(x, T_VECTOR | T_SAFE_PROCEDURE);
+  vector_getter(x) = default_vector_getter;
+  vector_setter(x) = default_vector_setter;
+  vector_dimension_info(x) = NULL;
+  /* don't add_vector -- no need for sweep to see this */
+  return(x);
+}
+
+static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer sym;
+
+  sym = cadr(args);
+
+  if (sym == sc->stack_top_symbol)                                       /* stack-top = #frames active (4 stack entries per frame) */
+    return(s7_make_integer(sc, (sc->stack_end - sc->stack_start) / 4));
+  if (sym == sc->stack_size_symbol)                                      /* stack-size (max so far) */
+    return(s7_make_integer(sc, sc->stack_size));
+
+  if (sym == sc->symbol_table_is_locked_symbol)                          /* symbol-table-locked? */
+    return(make_boolean(sc, sc->symbol_table_is_locked));
+  if (sym == sc->symbol_table_symbol)                                    /* symbol-table (the raw vector) */
+    return(sc->symbol_table);
+  if (sym == sc->rootlet_size_symbol)                                    /* rootlet-size */
+    return(s7_make_integer(sc, sc->rootlet_entries));
+
+  if (sym == sc->heap_size_symbol)                                       /* heap-size */
+    return(s7_make_integer(sc, sc->heap_size));
+  if (sym == sc->free_heap_size_symbol)                                  /* free-heap-size (number of unused cells in the heap) */
+    return(s7_make_integer(sc, sc->free_heap_top - sc->free_heap));
+  if (sym == sc->gc_freed_symbol)                                        /* gc-freed = # cells freed during last GC sweep */
+    return(s7_make_integer(sc, sc->gc_freed));
+  if (sym == sc->gc_protected_objects_symbol)                            /* gc-protected-objects */
+    return(sc->protected_objects);
+
+  if (sym == sc->input_ports_symbol)                                     /* input-ports */
+    return(make_shadow_vector(sc, sc->input_ports_loc, sc->input_ports));
+  if (sym == sc->output_ports_symbol)                                    /* output-ports */
+    return(make_shadow_vector(sc, sc->output_ports_loc, sc->output_ports));
+  if (sym == sc->strings_symbol)                                         /* strings */
+    return(make_shadow_vector(sc, sc->strings_loc, sc->strings));
+  if (sym == sc->gensyms_symbol)                                         /* gensyms */
+    return(make_shadow_vector(sc, sc->gensyms_loc, sc->gensyms));
+  if (sym == sc->vectors_symbol)                                         /* vectors */
+    return(make_shadow_vector(sc, sc->vectors_loc, sc->vectors));
+  if (sym == sc->hash_tables_symbol)                                     /* hash-tables */
+    return(make_shadow_vector(sc, sc->hash_tables_loc, sc->hash_tables));
+  if (sym == sc->continuations_symbol)                                   /* continuations */
+    return(make_shadow_vector(sc, sc->continuations_loc, sc->continuations));
+  if (sym == sc->c_objects_symbol)                                       /* c-objects */
+    return(make_shadow_vector(sc, sc->c_objects_loc, sc->c_objects));
+
+  if (sym == sc->file_names_symbol)                                      /* file-names (loaded files) */
+    return(make_shadow_vector(sc, file_names_top, file_names));
+  if (sym == sc->c_types_symbol)
+    {
+      s7_pointer res;
+      int i;
+      sc->w = sc->NIL;
+      for (i = 0; i < num_types; i++)
+	sc->w = cons(sc, make_protected_string(sc, object_types[i]->name), sc->w);
+      res = sc->w;
+      sc->w = sc->NIL;
+      return(res);
+    }
+
+  return(sc->UNDEFINED);
+}
+
+
+static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer sym, val;
+  sym = cadr(args);
+  val = caddr(args);
+  if (sym == sc->symbol_table_is_locked_symbol)
+    sc->symbol_table_is_locked = (val != sc->F);
+  return(val);
+}
+
+
+
 /* -------------------------------- initialization -------------------------------- */
 
 static s7_pointer make_unique_object(const char* name, int typ)
@@ -69838,13 +69926,6 @@ s7_scheme *s7_init(void)
   sc->sharp_readers = global_slot(sym);
   s7_symbol_set_access(sc, sym, s7_make_function(sc, "(set *#readers*)", g_sharp_readers_set, 2, 0, false, "*#readers* accessor"));
 
-  /* the next two are for the test suite */
-  s7_dilambda(sc, "-s7-symbol-table-locked?", 
-	      g_symbol_table_is_locked, 0, 0, 
-	      g_set_symbol_table_is_locked, 1, 0, 
-	      H_symbol_table_is_locked);
-
-  s7_define_safe_function(sc, "-s7-stack-top-", g_stack_top, 0, 0, false, "current stack top");
   sc->STACKTRACE = s7_define_safe_function(sc, "stacktrace", g_stacktrace, 0, 5, false, H_stacktrace);
   sc->stacktrace_env = s7_sublet(sc, sc->rootlet, 
 				 s7_list(sc, 5, 
@@ -70158,7 +70239,14 @@ s7_scheme *s7_init(void)
   /* -------- *error-hook* -------- */
   sc->error_hook = s7_eval_c_string(sc, "(make-hook 'type 'data)");
   s7_define_constant_with_documentation(sc, "*error-hook*", sc->error_hook, "*error-hook* functions are called in the error handler, passed (hook 'type) and (hook 'data).");
-  
+
+  s7_define_constant(sc, "*s7*", 
+    s7_openlet(s7_inlet(sc, 
+       s7_list(sc, 2, 
+	       s7_cons(sc, s7_make_symbol(sc, "let-ref-fallback"), s7_make_function(sc, "s7-let-ref", g_s7_let_ref_fallback, 2, 0, false, "*s7* reader")),
+	       s7_cons(sc, s7_make_symbol(sc, "let-set!-fallback"), s7_make_function(sc, "s7-let-set", g_s7_let_set_fallback, 3, 0, false, "*s7* writer"))))));
+
+
 #if (!DISABLE_DEPRECATED)
   s7_eval_c_string(sc, "(define environment? let?)                  \n\
                         (define global-environment rootlet)         \n\
@@ -70206,6 +70294,7 @@ s7_scheme *s7_init(void)
   clear_counts();
 #endif
 
+  init_s7_env(sc);
   already_inited = true;
   return(sc);
 }
@@ -70393,6 +70482,7 @@ int main(int argc, char **argv)
  *   but this would require special handling in the Xen stuff.
  *
  * mockery.scm needs documentation (and stuff.scm)
+ *
  * what about (reactive-vector (v 0)) -- can we watch some other vector's contents?
  *   if v were a mock-vector, we could use the same vector-set! stuff as now but with any name (how to distinguish?)
  *   we can distinguish because this is happening at run-time where (v 0) has an ascertainable meaning
@@ -70406,5 +70496,11 @@ int main(int argc, char **argv)
  *   the completed closure somewhere?  (It needs to be under 'g in the closure internal env)
  *   currently these go to op_define_funchecked: if safe/non-recursive why can't we save/reuse the arg-env there?
  *   also these could be reduced to safe_c_sc and so on.
+ *
+ * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
+ *    (set! (samples (sound) sample) new-sample)
+ * *snd* or *clm* libraries also
+ *
+ * is gc-protect needed on global slot-accessors?
  */
 

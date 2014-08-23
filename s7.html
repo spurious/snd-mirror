@@ -1707,7 +1707,7 @@ not currently considered to be a procedure, so <code>(procedure? "hi")</code> is
 accept anything that apply can handle, so
 <code>(map #(0 1) '(1 0))</code> is '(1 0).  (On the first call to map in this case, you get the result of
 <code>(#(0 1) 1)</code> and so on).
-string-&gt;list, vector-&gt;list, and environment-&gt;list are <code>(map values object)</code>.
+string-&gt;list, vector-&gt;list, and let-&gt;list are <code>(map values object)</code>.
 Their inverses are (and always have been) equally trivial.
 </p>
 
@@ -2347,7 +2347,7 @@ If you pass a table size that is not a power of 2, make-hash-table rounds it up 
 
 <p>hash-table (the function) parallels (the functions) vector, list, and string.  Its arguments are conses containing key/value pairs.
 The result is a new hash-table with those values preinstalled: <code>(hash-table '("hi" . 32) '("ho" . 1))</code>.
-After much use, I now think it is more convenient here, as in environment*, to use hash-table*; its arguments are
+After much use, I now think it is more convenient here, as in inlet, to use hash-table*; its arguments are
 simply the keys and values, without the consing: <code>(hash-table* 'a 1 'b 2)</code>.
 </p>
 <p>
@@ -5639,6 +5639,16 @@ if *debugging* is #t; otherwise assert expands into nothing.
 </p>
 
 
+<div class="separator"></div>
+<p><b>*s7*</b> is an environment that gives access to some of s7's internal
+state: stack-top and stack-size, the symbol-table as a raw vector,
+rootlet-size, heap-size, free-heap-size, gc-freed, gc-protected-objects,
+file-names (currently loaded files), and various GC tables: gensyms,
+input-ports, output-ports, strings, vectors, hash-tables, continuations,
+and c-objects.  Use the standard environment syntax to access these fields:
+<code>(*s7* 'stack-top)</code>.
+</p>
+
 
 
 <div class="separator"></div>
@@ -5757,6 +5767,7 @@ Better ideas are always welcome!
 <li>*load-path*
 <li>*autoload*
 <li>*#readers*
+<li>*s7*
 </ul>
 
 <p>And the built-in constants:
