@@ -62,6 +62,8 @@
 (define *top-level-objects* (make-hash-table))
 (define *lint-output-port* *stderr*)
 
+(define-macro (reader-cond . clauses) `(values))          ; clobber reader-cond to avoid dumb unbound-variable errors
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -643,7 +645,7 @@
 			  'symbol->string symbol?
 			  'symbol->value (list symbol?) ; opt arg is env
 			  'symbol=? symbol?
-			  'system string?
+			  'system (list string? boolean?)
 			  'tan number?
 			  'tanh number?
 			  'truncate real?
@@ -836,12 +838,14 @@
 	;; return form -> string with limits on its length
 	(let* ((str (object->string form))
 	       (len (length str)))
-	  (if (<= len 80)
-	      (format #f "~%        ~A" str)
-	      (do ((i 77 (- i 1)))
-		  ((or (= i 40)
-		       (char-whitespace? (str i)))
-		   (format #f "~%        ~A..." (substring str 0 (if (<= i 40) 77 i))))))))
+	  (if (< len 8)
+	      (format #f " ~A" str)
+	      (if (<= len 80)
+		  (format #f "~%        ~A" str)
+		  (do ((i 77 (- i 1)))
+		      ((or (= i 40)
+			   (char-whitespace? (str i)))
+		       (format #f "~%        ~A..." (substring str 0 (if (<= i 40) 77 i)))))))))
       
       (define (lists->string f1 f2)
 	;; same but 2 strings that may need to be lined up vertically
@@ -3713,6 +3717,8 @@
 	(set! last-simplify-boolean-line-number -1)
 	(set! last-simplify-numeric-line-number -1)
 	(set! line-number -1)
+
+	;(format *stderr* "lint ~S~%" file)
 
 	(let ((fp (if (input-port? file)
 		      file

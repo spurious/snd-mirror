@@ -4713,7 +4713,7 @@ To evaluate the error handler in the environment of the error:
 	     (list args x y)))))    ; we have access to 'y'
 </pre>
 
-<p>To limit the maximum size of the stack, set *maximum-stack-size*.
+<p>To limit the maximum size of the stack, set (*s7* 'maximum-stack-size).
 </p>
 </div>
 
@@ -5641,8 +5641,8 @@ if *debugging* is #t; otherwise assert expands into nothing.
 
 <div class="separator"></div>
 <p><b>*s7*</b> is an environment that gives access to some of s7's internal
-state: stack-top and stack-size, the symbol-table as a raw vector,
-rootlet-size, heap-size, free-heap-size, gc-freed, gc-protected-objects,
+state: stack-top, stack-size, and maximum-stack-size, the symbol-table as a raw vector,
+rootlet-size, safety, cpu-time, heap-size, free-heap-size, gc-freed, gc-protected-objects, gc-stats,
 file-names (currently loaded files), and various GC tables: gensyms,
 input-ports, output-ports, strings, vectors, hash-tables, continuations,
 and c-objects.  Use the standard environment syntax to access these fields:
@@ -5759,15 +5759,11 @@ Better ideas are always welcome!
 </p>
 <ul>
 <li>*bignum-precision*
-<li>*gc-stats*
 <li>*features*
 <li>*vector-print-length*
-<li>*maximum-stack-size*
-<li>*safety*
 <li>*load-path*
 <li>*autoload*
 <li>*#readers*
-<li>*s7*
 </ul>
 
 <p>And the built-in constants:
@@ -5776,6 +5772,7 @@ Better ideas are always welcome!
 <li>pi
 <li>*stdin* *stdout* *stderr*
 <li>*stacktrace*
+<li>*s7*
 <li>nan.0 -nan.0 inf.0 -inf.0 (what crappy names! nan.0 is an inexact integer that is not a number?)
 <li>most-positive-fixnum most-negative-fixnum
 <li>*unbound-variable-hook* *load-hook* *error-hook*
@@ -5930,8 +5927,8 @@ it is GC'd.  Here is an example:
 </pre>
 
 <p>Put this is a file, load it into the interpreter, then call <code>(bad-idea)</code> a
-few times.  You can turn off the optimization in question by setting the variable <b>*safety*</b>
-to 1.  *safety* defaults to 0.  (Also, if *safety* is not 0, sort! is safe from infinite loops,
+few times.  You can turn off the optimization in question by setting the variable <code>(*s7* 'safety)</code>
+to 1.  <code>(*s7* 'safety)</code> defaults to 0.  (Also, if 'safety is not 0, sort! is safe from infinite loops,
 and some exceedingly rare local method cases are handled more carefully).
 </p>
 

@@ -1,6 +1,6 @@
 (set! (hook-functions *unbound-variable-hook*) ())
 (set! *vector-print-length* 6)
-;(set! *gc-stats* #t)
+
 
 (if (provided? 'snd)
     (begin

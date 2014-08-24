@@ -39,7 +39,7 @@
 					 (if (vector? (obj 'value))
 					     (#_vector-set! (obj 'value) i val)
 					     (error 'wrong-type-arg "vector-set! ~S ~S ~S" obj i val))) ; the wrong arg here is 'i
-		   'vector-set!         (lambda (obj i val) ((obj 'local-set!) obj i val) val)
+		   'vector-set!        (lambda (obj i val) ((obj 'local-set!) obj i val) val)
 		   'let-set!           (lambda (obj i val) ((obj 'local-set!) obj i val) val)
 
 		   'vector-ref         (lambda (obj i) 
@@ -924,7 +924,7 @@
       
       (curlet))))
 
-;;; mock-port is hard to use because it always seems like we're replacing every blasted function
+;;; mock-port is hard to use because it seems like we're always replacing every function
 ;;; sublet of any of these needs to include the value field
 #|
 (require libc.scm)
