@@ -2634,7 +2634,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 #define WITH_COUNTS 0
 
 #if WITH_COUNTS
-#if 1
+#if 0
 #if 0
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -21681,7 +21681,7 @@ static s7_pointer file_read_name_or_sharp(s7_scheme *sc, s7_pointer pt, bool ato
 
   if (atom_case)
     return(make_atom(sc, sc->strbuf, BASE_10, SYMBOL_OK, WITH_OVERFLOW_ERROR));
-
+  
   return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
 }
 
@@ -21790,7 +21790,6 @@ static s7_pointer string_read_sharp_no_free(s7_scheme *sc, s7_pointer pt)
   
   memcpy((void *)(sc->strbuf), (void *)orig_str, k);
   sc->strbuf[k] = '\0';
-
   return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
 }
 
@@ -21833,7 +21832,6 @@ static s7_pointer string_read_sharp(s7_scheme *sc, s7_pointer pt)
   
   memcpy((void *)(sc->strbuf), (void *)orig_str, k);
   sc->strbuf[k] = '\0';
-
   return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10, WITH_OVERFLOW_ERROR));
 }
 
@@ -23381,6 +23379,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   s7_pointer port, old_envir;
   /* this can be called recursively via s7_call */
 
+  sc->v = sc->envir;          /* old envir needs GC protection even given the push_stack below */
   old_envir = sc->envir;
   sc->envir = sc->NIL; 
   if (sc->longjmp_ok)
@@ -23410,7 +23409,6 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   pop_input_port(sc);
   s7_close_input_port(sc, port);
   sc->envir = old_envir;  
-
   return(sc->value);
 }
 
@@ -38716,7 +38714,6 @@ static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 #if WITH_COUNTS
   report_counts(sc);
 #endif
-
   return(s7_make_string(sc, "s7 " S7_VERSION ", " S7_DATE));
 }
 
@@ -40008,13 +40005,15 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 	      return(TOKEN_BYTEVECTOR);
 	    backchar(d, pt);
 	    backchar('8', pt);
-	    backchar('u', pt);
 	  }
+	else backchar(d, pt);
       }
       break;
       
     case ':':  /* turn #: into : -- this is for compatibility with Guile, #:optional in particular.
 		*   I just noticed that Rick is using this -- I'll just leave it alone.
+		*   but that means : readers need to handle this case specially.
+		* I don't think #! is special anymore -- maybe remove that code?
 		*/
       sc->strbuf[0] = ':';
       return(TOKEN_ATOM);
@@ -70221,6 +70220,7 @@ int main(int argc, char **argv)
  * t455|6     265 |   89 |   9    8.5  5.5  5.5  5.4  5.9 | 17.4
  * t502        90 |   43 |  14.5 14.4 13.6 12.8 12.7 12.7 | 12.7
  * t816           |   71 |  70.6                44.5 45.6 | 46.0
+ * lg             |      |                                |  6.7
  * calls      359 |  275 |  54   49.5 39.7 36.4 35.4 35.1 | 35.0
  *            153 with run macro (eval_ptree)
  *
@@ -70265,5 +70265,13 @@ int main(int argc, char **argv)
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  * *snd* or *clm* libraries also
+ * other libraries: fftw, alsa, jack
+ * when is (define-macro (f a) `(+ ,a 1)) not the same as (define (f a) (+ a 1))?
+ *   (f (values 2 3))
+ *   (silly stuff like (f1 (random 1.0)) of course, and unbound/closure vars)
+ *   (f most-positive-fixnum) but only because the optimizer messes this up
+ *
+ * lint could see ,1 or `1 -- can it see unquote outside quasiquote? ,a where a is not an arg? (define-macro (f b) `(+ ,a 1)), ,@1
+ *   see g_quasiquote_1 for the simplest cases
  */
 
