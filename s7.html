@@ -1505,6 +1505,11 @@ f
 
 </blockquote>
 
+<!--
+ when is (define-macro (f a) `(+ ,a 1)) not the same as (define (f a) (+ a 1))?
+   (f (values 2 3))
+   (f most-positive-fixnum) but only because the optimizer messes this up
+-->
 
 
 

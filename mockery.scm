@@ -75,23 +75,23 @@
 					     (#_vector-fill! (obj 'value) val start (or end (#_vector-length (obj 'value))))
 					     (error 'wrong-type-arg "vector-fill! ~S ~S ~S ~S" obj val start end)))
 
-		   'copy               (lambda* (src dest . args)
+		   'copy               (lambda* (source dest . args)
 					 ;; copy by itself does not make a new vector, but if no dest we
-					 ;;   need a copy of src, so use coverlet/openlet to make sure
+					 ;;   need a copy of source, so use coverlet/openlet to make sure
 					 ;;   we aren't caught in an infinite recursion.
-					 (if (mock-vector? src)
+					 (if (mock-vector? source)
 					     (if (and dest (not (let? dest)))
-						 (apply copy (src 'value) dest args)
+						 (apply copy (source 'value) dest args)
 						 (let ((nobj (or dest 
 								 (dynamic-wind
-								     (lambda () (coverlet src))
-								     (lambda () (openlet (copy src)))
-								     (lambda () (openlet src))))))
+								     (lambda () (coverlet source))
+								     (lambda () (openlet (copy source)))
+								     (lambda () (openlet source))))))
 						   (if dest
-						       (apply copy (src 'value) (nobj 'value) args)
-						       (set! (nobj 'value) (copy (src 'value))))
+						       (apply copy (source 'value) (nobj 'value) args)
+						       (set! (nobj 'value) (copy (source 'value))))
 						   nobj))
-					     (error 'wrong-type-arg "copy ~S ~S ~S" src dest args)))))))
+					     (error 'wrong-type-arg "copy ~S ~S ~S" source dest args)))))))
       
       (define* (make-mock-vector len (init #<unspecified>))
 	(openlet (sublet mock-vector-class 
@@ -156,6 +156,8 @@
 		   ;;   So, to avoid infinite recursion in let-ref (implicit index), if let-ref can't find the let field,
 		   ;;   and the let has 'let-ref|set!-fallback, let-ref|set! passes the argument to that function rather than
 		   ;;   return #<undefined>.
+		   ;;
+		   ;; (round (openlet (inlet 'round (lambda (obj) (#_round (obj 'value))) 'let-ref-fallback (lambda args 3)))) -> 3
 		   
 		   'length             (lambda (obj)          (#_hash-table-size (obj 'mock-hash-table-table)))
 		   'map                (lambda (f obj)        (map f (obj 'mock-hash-table-table)))
@@ -164,15 +166,15 @@
 		   'reverse            (lambda (obj)          (#_reverse (obj 'mock-hash-table-table)))
 		   'object->string     (lambda* (obj (w #t))  "#<mock-hash-table-class>")
 		   'arity              (lambda (obj)          (#_arity (obj 'mock-hash-table-table)))
-		   'copy               (lambda* (src dest . args)
-					 (if (mock-hash-table? src)
+		   'copy               (lambda* (source dest . args)
+					 (if (mock-hash-table? source)
 					     (if (and dest (not (let? dest)))
 						 (apply copy (obj 'mock-hash-table-table) dest args)
-						 (let ((nobj (or dest (openlet (copy (coverlet src))))))
-						   (openlet src)
-						   (set! (nobj 'mock-hash-table-table) (copy (src 'mock-hash-table-table)))
+						 (let ((nobj (or dest (openlet (copy (coverlet source))))))
+						   (openlet source)
+						   (set! (nobj 'mock-hash-table-table) (copy (source 'mock-hash-table-table)))
 						   nobj))
-					     (error 'wrong-type-arg "copy ~S ~S ~S" src dest args)))))))
+					     (error 'wrong-type-arg "copy ~S ~S ~S" source dest args)))))))
 
       (define* (make-mock-hash-table (len 511))
 	(openlet 
@@ -925,7 +927,7 @@
       (curlet))))
 
 ;;; mock-port is hard to use because it seems like we're always replacing every function
-;;; sublet of any of these needs to include the value field
+;;; sublet of any of these needs to include the value field or a let-ref-fallback
 #|
 (require libc.scm)
 

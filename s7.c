@@ -391,7 +391,7 @@ enum {OP_NO_OP,
       OP_IF_UNCHECKED, OP_AND_UNCHECKED, OP_AND_P, OP_AND_P1, OP_OR_UNCHECKED, OP_OR_P, OP_OR_P1,
       
       OP_SAFE_IF_Z_Z, 
-      OP_CATCH_1, OP_CATCH_2, OP_CATCH_ALL, OP_COND_ALL_X,
+      OP_CATCH_1, OP_CATCH_2, OP_CATCH_ALL, OP_COND_ALL_X, OP_COND_S,
       OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_SAFE_DOTIMES, OP_SAFE_DOTIMES_STEP, OP_SAFE_DOTIMES_STEP_P, OP_SAFE_DOTIMES_STEP_O, OP_SAFE_DOTIMES_STEP_A,
       OP_SIMPLE_SAFE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_SAFE_DO_STEP_1, OP_SAFE_DOTIMES_C_C,
       OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_DOX, OP_DOX_STEP, OP_DOX_STEP_P, OP_SIMPLE_DO_FOREVER,
@@ -490,7 +490,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "and", "and", "and", "or", "or", "or", 
 
    "if", 
-   "catch", "catch", "catch", "cond",
+   "catch", "catch", "catch", "cond", "cond",
    "do", "do", "do", "do", "do", 
    "do", "do", "do", "do", "do", "do",
    "do", "do", "do", "do", "do",
@@ -574,7 +574,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "OP_IF_UNCHECKED", "OP_AND_UNCHECKED", "OP_AND_P", "OP_AND_P1", "OP_OR_UNCHECKED", "OP_OR_P", "OP_OR_P1",
   
   "OP_SAFE_IF_Z_Z", 
-  "OP_CATCH_1", "OP_CATCH_2", "OP_CATCH_ALL", "OP_COND_ALL_X",
+  "OP_CATCH_1", "OP_CATCH_2", "OP_CATCH_ALL", "OP_COND_ALL_X", "OP_COND_S",
   "OP_SIMPLE_DO", "OP_SIMPLE_DO_STEP", "OP_SAFE_DOTIMES", "OP_SAFE_DOTIMES_STEP", "OP_SAFE_DOTIMES_STEP_P", "OP_SAFE_DOTIMES_STEP_O", "OP_SAFE_DOTIMES_STEP_A",
   "OP_SIMPLE_SAFE_DOTIMES", "OP_SAFE_DO", "OP_SAFE_DO_STEP", "OP_SAFE_DO_STEP_1", "OP_SAFE_DOTIMES_C_C",
   "OP_SIMPLE_DO_P", "OP_SIMPLE_DO_STEP_P", "OP_DOX", "OP_DOX_STEP", "OP_DOX_STEP_P", "OP_SIMPLE_DO_FOREVER",
@@ -1314,7 +1314,7 @@ struct s7_scheme {
   s7_pointer IF_P_P_P, IF_P_P, IF_B_P, IF_P_P_X, IF_P_X_P, IF_P_X_X, IF_S_P_P, IF_S_P, IF_S_P_X, IF_S_X_P, IF_P_FEED;
   s7_pointer IF_Z_P, IF_Z_P_P, IF_A_P, IF_A_P_P, IF_ANDP_P, IF_ANDP_P_P, IF_ORP_P, IF_ORP_P_P, WHEN_UNCHECKED, UNLESS_UNCHECKED, WHEN_S, UNLESS_S;
 
-  s7_pointer COND_ALL_X;
+  s7_pointer COND_ALL_X, COND_S;
   s7_pointer SAFE_IF_Z_Z, SAFE_IF_CC_X_P, SAFE_IF_CC_P_P;
   s7_pointer SAFE_IF_CS_P_P, SAFE_IF_CS_X_P, SAFE_IF_IS_NULL_S_P, SAFE_IF_CC_P, SAFE_IF_CS_P, SAFE_IF_CS_P_X, SAFE_IF_IS_NULL_Q_P;
   s7_pointer SAFE_IF_CSS_X_P, SAFE_IF_CSC_X_P, SAFE_IF_CSC_X_O_A;
@@ -30940,6 +30940,7 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
 static s7_pointer vector_set_ic;
 static s7_pointer g_vector_set_ic(s7_scheme *sc, s7_pointer args)
 {
+  /* (vector-set! vec 0 x) */
   s7_pointer vec, val;
   s7_Int index;
 
@@ -30964,6 +30965,7 @@ static s7_pointer g_vector_set_ic(s7_scheme *sc, s7_pointer args)
 static s7_pointer vector_set_vref;
 static s7_pointer g_vector_set_vref(s7_scheme *sc, s7_pointer args)
 {
+  /* (vector-set! vec i (vector-ref vec j))? */
   s7_pointer vec, val1, val2;
   s7_Int index1, index2;
 
@@ -30999,6 +31001,7 @@ static s7_pointer g_vector_set_vector_ref(s7_scheme *sc, s7_pointer args)
 
   vec = find_symbol_checked(sc, car(args));
   val = find_symbol_checked(sc, cadr(args));
+
   arg3 = caddr(args);
   tc = find_symbol_checked(sc, caddr(arg3));
   val2 = caddr(cadr(arg3));
@@ -31006,7 +31009,7 @@ static s7_pointer g_vector_set_vector_ref(s7_scheme *sc, s7_pointer args)
   if ((!s7_is_vector(vec)) ||
       (vector_rank(vec) > 1) ||
       (!s7_is_integer(val)))
-    return(g_vector_set(sc, list_3(sc, vec, val, c_call(arg3)(sc, list_2(sc, g_vector_ref(sc, list_2(sc, vec, val2)), tc)))));
+    return(g_vector_set(sc, list_3(sc, vec, val, c_call(arg3)(sc, list_2(sc, g_vector_ref(sc, list_2(sc, vec, find_symbol_checked(sc, val2))), tc)))));
 
   index1 = s7_integer(val);
   if (index1 >= vector_length(vec))
@@ -31014,14 +31017,23 @@ static s7_pointer g_vector_set_vector_ref(s7_scheme *sc, s7_pointer args)
 
   if (val2 != cadr(args))
     {
-      val = find_symbol_checked(sc, val2);
-      if (!s7_is_integer(val))
-	return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), val, T_INTEGER));
-      index2 = s7_integer(val);
+      val2 = find_symbol_checked(sc, val2);
+      if (!s7_is_integer(val2))
+	{
+	  s7_pointer p;
+	  if (!s7_is_integer(p = check_values(sc, val2, list_1(sc, val2))))
+	    return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(2), val2, T_INTEGER));
+	  else val2 = p;
+	}
+      index2 = s7_integer(val2);
       if (index2 >= vector_length(vec))
 	return(out_of_range(sc, sc->VECTOR_REF, small_int(2), val, "should be less than vector length"));
     }
-  else index2 = index1;
+  else 
+    {
+      val2 = val;
+      index2 = index1;
+    }
 
   val = car(sc->T2_1);
   val2 = car(sc->T2_2);
@@ -31037,6 +31049,7 @@ static s7_pointer g_vector_set_vector_ref(s7_scheme *sc, s7_pointer args)
 static s7_pointer vector_set_3;
 static s7_pointer g_vector_set_3(s7_scheme *sc, s7_pointer args)
 {
+  /* (vector-set! vec ind val) where are all predigested */
   s7_pointer vec, ind, val;
   s7_Int index;
 
@@ -45950,8 +45963,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 		    }
 		  return(true);
 		}
-	      
-	      /* fprintf(stderr, "%s: %d -> %d %d %d\n", DISPLAY(car(x)), args, rest, symbols, pairs); */
+
 	      for (p = cdar(x); is_pair(p); p = cdr(p))
 		set_fcdr(p, (s7_pointer)all_x_eval(sc, car(p)));
 	      
@@ -48161,10 +48173,6 @@ static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1,
    */
   s7_pointer p;
   if (!is_pair(expr)) return;
-  /*
-    fprintf(stderr, "%s %d %d %s\n", DISPLAY_80(expr), is_annotated(expr), is_annotated(cadr(expr)), opt_name(expr));
-  */
-
   if (is_syntactic(car(expr)))
     {
       switch (syntax_opcode(car(expr)))
@@ -50140,18 +50148,36 @@ static s7_pointer check_cond(s7_scheme *sc)
 	}
       else 
 	{
-	  s7_pointer p;
-	  bool xopt = true;
+	  s7_pointer p, sym = NULL;
+	  bool xopt = true, c_s_is_ok = true;
 	  set_syntax_op(sc->code, sc->COND_SIMPLE);
 	  
 	  for (p = sc->code; (xopt) && (is_pair(p)); p = cdr(p))
-	    xopt = is_all_x_safe(sc, caar(p));
-
-	  if (xopt)
 	    {
-	      set_syntax_op(sc->code, sc->COND_ALL_X);
-	      for (p = sc->code; is_pair(p); p = cdr(p))
-		set_fcdr(car(p), (s7_pointer)cond_all_x_eval(sc, caar(p))); /* handle 'else' specially here */
+	      xopt = is_all_x_safe(sc, caar(p));
+	      if ((c_s_is_ok) &&
+		  (caar(p) != sc->T) &&
+		  (caar(p) != sc->ELSE))
+		{
+		  if ((!is_pair(caar(p))) || 
+		      (!is_h_safe_c_s(caar(p))) ||
+		      ((sym) && (sym != cadaar(p))))
+		    c_s_is_ok = false;
+		  else sym = cadaar(p);
+		}
+	    }
+	  if (c_s_is_ok)
+	    {
+	      set_syntax_op(sc->code, sc->COND_S);
+	    }
+	  else
+	    {
+	      if (xopt)
+		{
+		  set_syntax_op(sc->code, sc->COND_ALL_X);
+		  for (p = sc->code; is_pair(p); p = cdr(p))
+		    set_fcdr(car(p), (s7_pointer)cond_all_x_eval(sc, caar(p))); /* handle 'else' specially here */
+		}
 	    }
 	}
     }
@@ -62448,6 +62474,40 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto COND1_SIMPLE;
 
 
+    case OP_COND_S:
+      {
+	s7_pointer val = NULL, p;
+	if (is_pair(caar(sc->code)))
+	  val = find_symbol_checked(sc, cadaar(sc->code));
+	for (p = sc->code; is_pair(p); p = cdr(p))
+	  {
+	    s7_pointer ap;
+	    ap = caar(p);
+	    if (is_pair(ap))
+	      {
+		car(sc->T1_1) = val;
+		sc->value = c_call(ap)(sc, sc->T1_1);
+	      }
+	    else sc->value = sc->T;
+	    if (is_true(sc, sc->value))
+	      {
+		sc->code = cdar(p);
+		if (is_null(sc->code))
+		  {
+		    if (is_multiple_value(sc->value))
+		      sc->value = splice_in_values(sc, multiple_value(sc->value));
+		    goto START;
+		  }
+		if (is_pair(cdr(sc->code)))
+		  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
+		sc->code = car(sc->code);
+		goto EVAL;
+	      }
+	  }
+	sc->value = sc->NIL;
+	goto START;
+      }
+
     case OP_COND_ALL_X:
       {
 	s7_pointer p;
@@ -69056,6 +69116,7 @@ s7_scheme *s7_init(void)
   sc->IF_S_X_P =              assign_internal_syntax(sc, "if",      OP_IF_S_X_P);
   sc->IF_P_FEED =             assign_internal_syntax(sc, "cond",    OP_IF_P_FEED);
   sc->COND_ALL_X =            assign_internal_syntax(sc, "cond",    OP_COND_ALL_X);  
+  sc->COND_S =                assign_internal_syntax(sc, "cond",    OP_COND_S);  
   sc->SAFE_IF_Z_Z =           assign_internal_syntax(sc, "if",      OP_SAFE_IF_Z_Z);  
   sc->IF_Z_P_P =              assign_internal_syntax(sc, "if",      OP_IF_Z_P_P);
   sc->IF_Z_P =                assign_internal_syntax(sc, "if",      OP_IF_Z_P);
@@ -70220,7 +70281,7 @@ int main(int argc, char **argv)
  * t455|6     265 |   89 |   9    8.5  5.5  5.5  5.4  5.9 | 17.4
  * t502        90 |   43 |  14.5 14.4 13.6 12.8 12.7 12.7 | 12.7
  * t816           |   71 |  70.6                44.5 45.6 | 46.0
- * lg             |      |                                |  6.7
+ * lg             |      |                            6.7 |  6.7
  * calls      359 |  275 |  54   49.5 39.7 36.4 35.4 35.1 | 35.0
  *            153 with run macro (eval_ptree)
  *
@@ -70265,13 +70326,8 @@ int main(int argc, char **argv)
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  * *snd* or *clm* libraries also
- * other libraries: fftw, alsa, jack
- * when is (define-macro (f a) `(+ ,a 1)) not the same as (define (f a) (+ a 1))?
- *   (f (values 2 3))
- *   (silly stuff like (f1 (random 1.0)) of course, and unbound/closure vars)
- *   (f most-positive-fixnum) but only because the optimizer messes this up
- *
- * lint could see ,1 or `1 -- can it see unquote outside quasiquote? ,a where a is not an arg? (define-macro (f b) `(+ ,a 1)), ,@1
- *   see g_quasiquote_1 for the simplest cases
+ *   in clm: get rid of the run-time function args to src/convolve/granulate/phase-vocoder/move-sound?
+ * other libraries: fftw, alsa, jack, clm? sndlib? -- libclm.so in CL version, libsndlib.so from sndlib makefile
  */
+
 

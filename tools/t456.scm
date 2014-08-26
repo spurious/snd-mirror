@@ -96,7 +96,6 @@
 		(set-car! p (car constants))
 		(catch #t
 		  (lambda ()
-		    ;(if (macro? func) (format *stderr* "~A: ~A~%" func c-args))
 		    (cond ((apply func c-args) => 
 			   (lambda (val)
 			     (if data-file
@@ -114,7 +113,6 @@
 		   (catch #t 
 		     (lambda () 
 		       (set-car! p c)
-		       ;(if (macro? func) (format *stderr* "~A: ~A~%" func c-args))
 		       (cond ((apply func c-args) => 
 			      (lambda (val)
 				(if data-file
@@ -150,9 +148,9 @@
 					       "mus-audio-close" "mus-audio-read" "mus-audio-write" "mus-audio-open-output"
 					       "boolean=?" "symbol=?" "symbol-table"
 
-					       (reader-cond ((> max-args 3) "for-each"))
-					       (reader-cond ((> max-args 3) "map"))
-					       (reader-cond ((> max-args 1) "copy"))
+					       (reader-cond ((< max-args 3) "for-each"))
+					       (reader-cond ((< max-args 3) "map"))
+					       (reader-cond ((< max-args 2) "copy"))
 
 ;					       "do*" "define-slot-accessor" "power-set"
 ;					       "define-library" "define-record-type"

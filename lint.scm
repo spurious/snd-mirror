@@ -791,25 +791,25 @@
 |#
 
       (define (->type c)
-	(cond ((integer? c) +integer+)
-	      ((number? c) +not-integer+)
-	      ((string? c) +string+)
-	      ((char? c) +character+)
-	      ((null? c) +list+)
-	      ((vector? c) +vector+)
-	      ((eq? c #<unspecified>) +unspecified+)
-	      ((boolean? c) +boolean+)
-	      ((symbol? c) +symbol+)
-	      ((let? c) +environment+)
-	      ((hash-table? c) +hash-table+)
-	      ((or (input-port? c) (output-port? c)) +port+)
-	      ((pair? c)
+	(cond ((pair? c)
 	       (if (symbol? (car c))
 		   (hash-table-ref function-types (car c))
 		   (if (pair? (car c))
 		       +any+ ; might be expr as func
 		       +list+)))
-	      (#t +any+)))
+	      ((integer? c) +integer+)
+	      ((symbol? c) +symbol+)
+	      ((number? c) +not-integer+)
+	      ((null? c) +list+)
+	      ((string? c) +string+)
+	      ((char? c) +character+)
+	      ((boolean? c) +boolean+)
+	      ((vector? c) +vector+)
+	      ((let? c) +environment+)
+	      ((hash-table? c) +hash-table+)
+	      ((input-port? c) +port)
+	      ((output-port? c) +port+)
+	      (#t (if (eq? c #<unspecified>) +unspecified+ +any+))))
       
       (define (type-compatible type obj)
 	(or (eq? type +any+)
@@ -2400,6 +2400,24 @@
 			 (if (< (length args) (length (cdr form)))
 			     (lint-format "possible simplification:~A" name (lists->string form `(string-append ,@args))))))
 		 (set! last-simplify-boolean-line-number line-number))))
+
+	  ((vector-set! list-set! hash-table-set!)
+	   (if (= (length form) 4)
+	       (let ((target (cadr form))
+		     (index (caddr form))
+		     (val (cadddr form)))
+		 (if (and (pair? val)
+			  (= (length val) 3)
+			  (eq? target (cadr val))
+			  (memq (car val) '(vector-ref list-ref hash-table-ref)))
+		     (let ((ref (car val))
+			   (ind (caddr val)))
+		       (if (equal? ind index)
+			   (lint-format "redundant?:~A" name (truncated-list->string form)))
+		       (case head
+			 ((vector-set!) (if (not (eq? ref 'vector-ref)) (lint-format "type mismatch?:~A" name (truncated-list->string form))))
+			 ((list-set!) (if (not (eq? ref 'list-ref)) (lint-format "type mismatch?:~A" name (truncated-list->string form))))
+			 ((hash-table-set!) (if (not (eq? ref 'hash-table-ref)) (lint-format "type mismatch?:~A" name (truncated-list->string form))))))))))
 	  
 	  ((object->string)
 	   (if (pair? (cdr form))
@@ -2838,7 +2856,7 @@
       
       (define (lint-walk-body name head body env)
 	;; walk a body (a list of forms, the value of the last of which might be returned)
-	
+
 	(if (not (list? body))
 	    (lint-format "stray dot? ~A" name (truncated-list->string body))
 	    
