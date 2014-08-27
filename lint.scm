@@ -2968,6 +2968,7 @@
 			(if (or (and (procedure? p)
 				     (zero? (cadr (procedure-arity p)))
 				     (not (caddr (procedure-arity p)))) ; might be deliberately limiting args
+					; but this flushes such things as (define (v x) (vector x) because procedure-arity vector) -> (0 0 #t) 
 				(let ((e (or (var-member cval env) 
 					     (hash-table-ref globals cval))))
 				  (and e

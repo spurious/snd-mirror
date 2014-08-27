@@ -130,6 +130,23 @@
 ;(set! low 3)
 ;(autotest string-set! () 0 3)
 
+(define baddies (list "exit" "emergency-exit" "abort" "autotest" 
+		      "all" "delete-file" "system" "set-cdr!" "stacktrace" "test-sym"
+		      "varlet" "dilambda" "gc" "cond-expand" "reader-cond"
+		      "openlet" "coverlet" "eval" "vector" "list" "cons" "m" "hash-table*" "hash-table" "values"
+		      "object->string"
+
+		      "mus-audio-close" "mus-audio-read" "mus-audio-write" "mus-audio-open-output"
+		      "boolean=?" "symbol=?" "symbol-table"
+
+		      (reader-cond ((> max-args 2) "copy"))
+		      (reader-cond ((>= max-args 3) "hash-table-set!" "vector-set!" "let-set!"))
+		      (reader-cond ((> max-args 3) "map" "for-each")) ; #t = omit
+
+		      "mock-number" "mock-pair" "mock-string" "mock-char" "mock-vector" 
+		      "mock-symbol" "mock-port" "mock-hash-table"
+		      "outlet-member" "make-method" "make-object"))
+
 (define (test-sym sym)
   (if (defined? sym)
       (let ((f (symbol->value sym)))
@@ -139,26 +156,7 @@
 		    (top (min (cdr argn) max-args))
 		    (strname (symbol->string sym)))
 		(if (not (or (memq (strname 0) '(#\{ #\[ #\())
-			     (member strname '("exit" "emergency-exit" "abort" "autotest" 
-					       "all" "delete-file" "system" "set-cdr!" "stacktrace" "test-sym"
-					       "varlet" "dilambda" "gc" "cond-expand" "reader-cond"
-					       "openlet" "eval" "vector" "list" "cons" "m" "hash-table*" "hash-table" "values"
-					       "object->string"
-
-					       "mus-audio-close" "mus-audio-read" "mus-audio-write" "mus-audio-open-output"
-					       "boolean=?" "symbol=?" "symbol-table"
-
-					       (reader-cond ((< max-args 3) "for-each"))
-					       (reader-cond ((< max-args 3) "map"))
-					       (reader-cond ((< max-args 2) "copy"))
-
-;					       "do*" "define-slot-accessor" "power-set"
-;					       "define-library" "define-record-type"
-
-					       "mock-number" "mock-pair" "mock-string" "mock-char" "mock-vector" 
-					       "mock-symbol" "mock-port" "mock-hash-table"
-					       "outlet-member" "make-method" "make-object"
-					       ))))
+			     (member strname baddies)))
 		    (begin
 		      (if (< top bottom)
 			  (format *stderr* ";~A (bottom: ~A, top: ~A)...~%" sym bottom top)

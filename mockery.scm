@@ -429,7 +429,7 @@
 	    (openlet
 	     (sublet (*mock-character* 'mock-character-class)
 	       'value c
-	       'object->string (lambda (obj . args) (apply #_object->string (obj 'value) args))))
+	       'object->string mock->string))
 	    (error 'wrong-type-arg "mock-char ~S is not a char" c)))
       
       (set! mock-char? (lambda (obj)
@@ -438,6 +438,10 @@
       
       (curlet))))
 
+#|
+;;; eventually I'll conjure up unichars like (define lambda (bytevector #xce #xbb)) via mock-char,
+;;;   then combine those into unistring via mock-string
+|#
 
 
 
@@ -496,7 +500,7 @@
 		   'exact->inexact   (lambda (obj) (#_exact->inexact (obj 'value)))
 		   'integer-length   (lambda (obj) (#_integer-length (obj 'value)))
 		   'integer-decode-float (lambda (obj) (#_integer-decode-float (obj 'value)))
-		   'number?          (lambda (obj) (#_number? (obj 'value)))
+		   'number?          (lambda (obj) (#_number? (obj 'value))) ; why not #t? currently (mock-number (mock-number ...)) is an error
 		   'integer?         (lambda (obj) (#_integer? (obj 'value)))
 		   'real?            (lambda (obj) (#_real? (obj 'value)))
 		   'complex?         (lambda (obj) (#_complex? (obj 'value)))
@@ -646,7 +650,7 @@
 	    (openlet
 	     (sublet (*mock-number* 'mock-number-class)
 	       'value x
-	       'object->string (lambda (obj . args) (apply #_object->string (obj 'value) args))))
+	       'object->string mock->string))
 	    (error 'wrong-type-arg "mock-number ~S is not a number" x)))
       
       (set! mock-number? (lambda (obj)
@@ -657,6 +661,8 @@
 
 
 #|
+;;; fuzzy number
+
 (define fuzzy-number
   (let ((fuzz (lambda (fx)
 		(#_* fx (#_- 1.05 (#_random .1))))))
@@ -667,7 +673,108 @@
 	 'let-ref-fallback (lambda (obj sym) (fuzz fx))
 	 'object->string (lambda (obj . args) (#_number->string (fuzz fx))))))))
 
-;;; perhaps make an interval arithmetic package along the lines of sbcl's src/compiler/srctran.lisp
+
+;;; interval arithmetic 
+;;; 
+;;; from Wikipedia:
+;;; x + y =	[a+c, b+d]
+;;; x - y =	[a-d, b-c]
+;;; x × y =	[min(ac, ad, bc, bd), max(ac, ad, bc, bd)]
+;;; x / y =	[min(a/c, a/d, b/c, b/d), max(a/c, a/d, b/c, b/d)]
+
+(define *interval*
+  (let* ((make-interval #f)
+	 (low (lambda (z) (z 'low)))
+	 (high (lambda (z) (z 'high)))
+	 (interval-class 
+	  (openlet (sublet (*mock-number* 'mock-number-class)
+
+		     '+ (lambda args
+			  (let ((lo 0)
+				(hi 0))
+			    (for-each
+			     (lambda (z)
+			       (if (let? z)
+				   (begin
+				     (set! lo (+ lo (low z)))
+				     (set! hi (+ hi (high z))))
+				   (begin
+				     (set! lo (+ lo z))
+				     (set! hi (+ hi z)))))
+			     args)
+			    (make-interval lo hi)))
+		     
+		     '* (lambda args
+			  (let ((lo 1)
+				(hi 1))
+			    (for-each
+			     (lambda (z)
+			       (let ((zlo (if (let? z) (low z) z))
+				     (zhi (if (let? z) (high z) z)))
+				 (let ((ac (* lo zlo))
+				       (ad (* lo zhi))
+				       (bc (* hi zlo))
+				       (bd (* hi zhi)))
+				   (set! lo (min ac ad bc bd))
+				   (set! hi (max ac ad bc bd)))))
+			     args)
+			    (make-interval lo hi)))
+		     
+		     '- (lambda args
+			  (let ((z (car args)))
+			    (if (null? (cdr args)) ; negate (must be let? else how did we get here?)
+				(make-interval (- (high z)) (- (low z)))
+				(let ((lo (low z))
+				      (hi (high z)))
+				  (for-each
+				   (lambda (z)
+				     (if (let? z)
+					 (begin
+					   (set! lo (- lo (high z)))
+					   (set! hi (- hi (low z))))
+					 (begin
+					   (set! lo (- lo z))
+					   (set! hi (- hi z)))))
+				   (cdr args))
+				  (make-interval lo hi)))))
+			  
+		     '/ (lambda args
+			  (let ((z (car args)))
+			    (if (null? (cdr args)) ; invert
+				(make-interval (/ (high z)) (/ (low z)))
+				(let ((lo (low z))
+				      (hi (high z)))
+				  (for-each
+				   (lambda (z)
+				     (let ((zlo (if (let? z) (low z) z))
+					   (zhi (if (let? z) (high z) z)))
+				       (let ((ac (/ lo zlo))
+					     (ad (/ lo zhi))
+					     (bc (/ hi zlo))
+					     (bd (/ hi zhi)))
+					 (set! lo (min ac ad bc bd))
+					 (set! hi (max ac ad bc bd)))))
+				   (cdr args))
+				  (make-interval lo hi)))))
+
+		     'abs (lambda (z)
+			    (if (positive? (low z))
+				(make-interval (low z) (high z))
+				(if (negative? (high z))
+				    (make-interval (abs (high z)) (abs (low z)))
+				    (make-interval 0 (max (abs (low z)) (abs (high z)))))))
+			  
+		     'object->string (lambda (obj . args) 
+				       (format #f "#<interval: ~S ~S>" (low obj) (high obj)))
+		     ))))
+    
+    (set! make-interval (lambda (low high)
+			  (if (> low high) (format *stderr* "~A ~A~%" low high))
+			  (openlet (sublet interval-class 'low low 'high high))))
+
+    (curlet)))
+
+(define x ((*interval* 'make-interval) 3.0 4.0))
 |#
 
 
@@ -840,7 +947,7 @@
 	  (openlet
 	   (sublet (*mock-symbol* 'mock-symbol-class)
 	     'value s
-	     'object->string (lambda (obj . args) (apply #_object->string (obj 'value) args))))
+	     'object->string mock->string))
 	  (error 'wrong-type-arg "mock-symbol ~S is not a symbol" s)))
     
     (define (mock-symbol? obj)
@@ -917,7 +1024,7 @@
 	    (openlet
 	     (sublet (*mock-port* 'mock-port-class)
 	       'value port
-	       'object->string (lambda (obj . args) (apply #_object->string (obj 'value) args))))
+	       'object->string mock->string))
 	    (error 'wrong-type-arg "mock-port ~S is not a port" port)))
       
       (set! mock-port? (lambda (obj)
@@ -926,7 +1033,6 @@
       
       (curlet))))
 
-;;; mock-port is hard to use because it seems like we're always replacing every function
 ;;; sublet of any of these needs to include the value field or a let-ref-fallback
 #|
 (require libc.scm)

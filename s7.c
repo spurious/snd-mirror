@@ -1776,7 +1776,6 @@ static void init_types(void)
 #define T_STEP_SAFE                   T_UNSAFE
 #define is_step_safe(p)               ((typeflag(p) & T_STEP_SAFE) != 0)
 #define set_step_safe(p)              typeflag(p) |= T_STEP_SAFE
-/* an experiment */
 
 #define T_KEYWORD                     (1 << (TYPE_BITS + 16))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
@@ -1868,8 +1867,6 @@ static void init_types(void)
 #define set_has_ref_fallback(p)       typeflag(p) |= T_HAS_REF_FALLBACK
 #define set_has_set_fallback(p)       typeflag(p) |= T_HAS_SET_FALLBACK
 #define set_all_methods(p, e)         typeflag(p) |= (typeflag(e) & (T_HAS_METHODS | T_HAS_REF_FALLBACK | T_HAS_SET_FALLBACK))
-/* an experiment for open lets that want to pass symbol implicit indices to interior objects
- */
 
 #define T_HAS_ACCESSOR                T_HAS_METHODS
 #define has_accessor(p)               ((typeflag(p) & T_HAS_ACCESSOR) != 0)
@@ -2634,8 +2631,8 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 #define WITH_COUNTS 0
 
 #if WITH_COUNTS
-#if 0
-#if 0
+#if 1
+#if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
 static void clear_counts(void) {int i; for (i = 0; i < NUM_COUNTS; i++) counts[i] = 0;}
@@ -2663,7 +2660,7 @@ static void report_counts(s7_scheme *sc)
       if (mx > 0)
 	{
 	  /* if (mx > total/100) */
-	    fprintf(stderr, "%s: %d (%f)\n", real_op_names[mxi], mx, 100.0*mx/(float)total);
+	    fprintf(stderr, "%s: %d (%f)\n", opt_names[mxi], mx, 100.0*mx/(float)total);
 	  counts[mxi] = 0;
 	}
       else happy = false;
@@ -5827,7 +5824,7 @@ static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
   /* now for a horrible kludge.  If a let is a mock-hash-table (for example), implicit
    *   indexing of the hash-table collides with the same thing for the let (field names
    *   versus keys), and we can't just try again here because that makes it too easy to
-   *   get into infinite recursion.  So, for an experiment, 'let-ref-fallback...
+   *   get into infinite recursion.  So, 'let-ref-fallback...
    */
   
   if (has_ref_fallback(env))
@@ -15814,9 +15811,7 @@ static s7_Int object_length_to_int(s7_scheme *sc, s7_pointer obj);
 
 static s7_pointer g_equal_length_ic(s7_scheme *sc, s7_pointer args)
 {
-  /* an experiment to avoid make_integer (and telescope opts)
-   *   we get here with car=length expr, cadr=int
-   */
+  /* avoid make_integer (and telescope opts), we get here with car=length expr, cadr=int */
   s7_Int ilen;
   s7_pointer val;
   
@@ -28677,8 +28672,9 @@ s7_pointer s7_assq(s7_scheme *sc, s7_pointer obj, s7_pointer x)
       /* we can blithely take the car of anything, since we're not treating it as an object,
        *   then if we get a bogus match, the following check that caar made sense ought to catch it.
        *
-       * I thought I could speed this up by having econs/essq using the ecdr field for the key, but
-       *   the difference is only 10%.
+       * if car(#<unspecified>) = #<unspecified> (initialization time), then cdr(nil)->unspec
+       *   and subsequent caar(unspc)->unspec so we could forgo half the is_pair checks below.
+       *   This breaks if "x" is a dotted list -- the last cdr is not nil, so we lose.
        */
       if ((obj == caar(x)) && (is_pair(car(x)))) return(car(x));
       x = cdr(x);
@@ -31759,7 +31755,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
     compare_func = c_function_call(lessp);
   else
     {
-      /* an experiment. other similar cases are assoc/member (and for-each/map but they never happen in this context -- see op_for_each_ls_2 below)
+      /* other similar cases are assoc/member (and for-each/map but they never happen in this context -- see op_for_each_ls_2 below)
        */
       if ((is_closure(lessp)) &&
 	  (is_null(cdr(closure_body(lessp)))) &&
@@ -34907,7 +34903,7 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
   /* perhaps: check func */
 
   sym = car(args);
-  if (!is_symbol(sym))
+  if (!is_symbol(sym))                 /* no check method because no method name? */
     return(s7_wrong_type_arg_error(sc, "set! symbol-access", 1, sym, "a symbol"));
 
   /* (set! (symbol-access sym) f) or (set! (symbol-access sym env) f) */
@@ -35133,11 +35129,9 @@ static bool hash_tables_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	    return(false);
 	}
     }
-
   /* if we get here, every key/value in x has a corresponding key/value in y, and the number of entries match,
    *   so surely the tables are equal??
    */
-
   return(true);
 }
 
@@ -36009,8 +36003,6 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
   return(obj);
 }
 
-
-/* an experiment */
 
 static s7_pointer string_setter(s7_scheme *sc, s7_pointer str, s7_Int loc, s7_pointer val) 
 {
@@ -37939,7 +37931,6 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 		format_to_port(sc, error_port, "\n;  line ~D", list_1(sc, make_integer(sc, line)), NULL, false, 11);
 	      else
 		{
-		  /* an experiment -- look in the input port stack */
 		  if (is_pair(sc->input_port_stack))
 		    {
 		      s7_pointer p;
@@ -43166,7 +43157,7 @@ static void init_choosers(s7_scheme *sc)
   set_function_chooser(sc, sc->STRING_APPEND, string_append_chooser);
 
 
-  /* symbol->string experiment */
+  /* symbol->string */
   f = slot_value(global_slot(sc->SYMBOL_TO_STRING));
   symbol_to_string_uncopied = s7_make_function(sc, "symbol->string", g_symbol_to_string_uncopied, 1, 0, false, "symbol->string opt");
   s7_function_set_class(symbol_to_string_uncopied, f);
@@ -46556,7 +46547,6 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	    (*bad_set) = true;
 	  
 	  /* car(x) is set!, cadr(x) is settee or obj, caddr(x) is val */
-	  /* an experiment */
 	  if (is_symbol(caddr(x)))
 	    return(false);
 
@@ -48158,7 +48148,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 }
 
 
-/* an experiment -- prelookup static refs */
+/* prelookup static refs */
 
 static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1, s7_pointer sym2)
 {
@@ -50317,7 +50307,6 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 
 /* -------------------------------- eval -------------------------------- */
 
-/* an experiment */
 #if WITH_GCC
 #undef NEW_CELL
 #define NEW_CELL(Sc, Obj) \
@@ -54787,7 +54776,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		goto START;
 	      }
 
-	      /* an experiment -- c_function_star */
+	      /* c_function_star */
 	    case OP_SAFE_C_STAR_CD:
 	      if (!c_function_is_ok(sc, code))
 		break;
@@ -54968,6 +54957,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (!c_function_is_ok(sc, code))
 		break;
 	      
+	    C_ALL_X:
 	    case HOP_C_ALL_X:
 	      {
 		s7_pointer args, p;
@@ -54975,6 +54965,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		  car(p) = ((s7_function)fcdr(args))(sc, car(args));
 		sc->value = c_call(code)(sc, sc->args);
+		/* IF_BEGIN_POP_STACK(sc); */
+
+		if (main_stack_op(sc) == OP_BEGIN1) 
+		  {
+		    sc->envir = main_stack_environment(sc);
+		    code = main_stack_code(sc); 
+		    sc->code = car(code); 
+		    if (is_null(cdr(code))) 
+		      pop_main_stack(sc);                 
+		    else main_stack_code(sc) = cdr(code); 
+
+		    if (is_optimized(sc->code))
+		      {
+			if (optimize_op(sc->code) == HOP_C_ALL_X)
+			  {
+			    code = sc->code;
+			    goto C_ALL_X;
+			  }
+			goto OPT_EVAL;
+		      }
+		    goto EVAL;
+		  }
 		goto START;
 	      }
 	      
@@ -59264,27 +59276,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_DEFINE_FUNCHECKED:
       {
-	s7_pointer new_func, new_env;
-	sc->value = caar(sc->code);
+	s7_pointer new_func, new_env, code;
+	code = sc->code;
+	sc->value = caar(code);
 
 	/* make_closure... */
 	NEW_CELL(sc, new_func);
-	closure_args(new_func) = cdar(sc->code);
-	closure_body(new_func) = cdr(sc->code);
+	closure_args(new_func) = cdar(code);
+	closure_body(new_func) = cdr(code);
 	closure_setter(new_func) = sc->F; 
 
-	if (!(fcdr(sc->code))) set_fcdr(sc->code, sc->F);
+	if (!(fcdr(code))) set_fcdr(code, sc->F);
 	/* fcdr can be nil if we have a function, call it (so check_define+opt), then 
 	 *   walk the procedure source while redefining the function, then call it again.
 	 *   To be safe, we should actually call check_define, but how to force that?
 	 *
 	 * later: I think this is fixed now.
 	 */
-	closure_arity(new_func) = integer(fcdr(sc->code));
+	closure_arity(new_func) = integer(fcdr(code));
 	set_type(new_func, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); 
 	sc->capture_env_counter++; 
 	
-	if (is_safe_closure(cdr(sc->code)))
+	if (is_safe_closure(cdr(code)))
 	  {
 	    s7_pointer arg;
 	    set_safe_closure(new_func);
@@ -68454,29 +68467,29 @@ static void s7_gmp_init(s7_scheme *sc)
 
 static void init_s7_env(s7_scheme *sc)
 {
-  sc->stack_top_symbol = s7_make_symbol(sc, "stack-top");
-  sc->stack_size_symbol = s7_make_symbol(sc, "stack-size");
+  sc->stack_top_symbol =              s7_make_symbol(sc, "stack-top");
+  sc->stack_size_symbol =             s7_make_symbol(sc, "stack-size");
   sc->symbol_table_is_locked_symbol = s7_make_symbol(sc, "symbol-table-locked?");
-  sc->heap_size_symbol = s7_make_symbol(sc, "heap-size");
-  sc->free_heap_size_symbol = s7_make_symbol(sc, "free-heap-size");
-  sc->gc_freed_symbol = s7_make_symbol(sc, "gc-freed");
-  sc->gc_protected_objects_symbol = s7_make_symbol(sc, "gc-protected-objects");
-  sc->input_ports_symbol = s7_make_symbol(sc, "input-ports");
-  sc->output_ports_symbol = s7_make_symbol(sc, "output-ports");
-  sc->strings_symbol = s7_make_symbol(sc, "strings");
-  sc->gensyms_symbol = s7_make_symbol(sc, "gensyms");
-  sc->vectors_symbol = s7_make_symbol(sc, "vectors");
-  sc->hash_tables_symbol = s7_make_symbol(sc, "hash-tables");
-  sc->continuations_symbol = s7_make_symbol(sc, "continuations");
-  sc->c_objects_symbol = s7_make_symbol(sc, "c-objects");
-  sc->file_names_symbol = s7_make_symbol(sc, "file-names");
-  sc->symbol_table_symbol = s7_make_symbol(sc, "symbol-table");
-  sc->rootlet_size_symbol = s7_make_symbol(sc, "rootlet-size");	
-  sc->c_types_symbol = s7_make_symbol(sc, "c-types");
-  sc->safety_symbol = s7_make_symbol(sc, "safety");
-  sc->gc_stats_symbol = s7_make_symbol(sc, "gc-stats");
-  sc->maximum_stack_size_symbol = s7_make_symbol(sc, "maximum-stack-size");
-  sc->cpu_time_symbol = s7_make_symbol(sc, "cpu-time");
+  sc->heap_size_symbol =              s7_make_symbol(sc, "heap-size");
+  sc->free_heap_size_symbol =         s7_make_symbol(sc, "free-heap-size");
+  sc->gc_freed_symbol =               s7_make_symbol(sc, "gc-freed");
+  sc->gc_protected_objects_symbol =   s7_make_symbol(sc, "gc-protected-objects");
+  sc->input_ports_symbol =            s7_make_symbol(sc, "input-ports");
+  sc->output_ports_symbol =           s7_make_symbol(sc, "output-ports");
+  sc->strings_symbol =                s7_make_symbol(sc, "strings");
+  sc->gensyms_symbol =                s7_make_symbol(sc, "gensyms");
+  sc->vectors_symbol =                s7_make_symbol(sc, "vectors");
+  sc->hash_tables_symbol =            s7_make_symbol(sc, "hash-tables");
+  sc->continuations_symbol =          s7_make_symbol(sc, "continuations");
+  sc->c_objects_symbol =              s7_make_symbol(sc, "c-objects");
+  sc->file_names_symbol =             s7_make_symbol(sc, "file-names");
+  sc->symbol_table_symbol =           s7_make_symbol(sc, "symbol-table");
+  sc->rootlet_size_symbol =           s7_make_symbol(sc, "rootlet-size");	
+  sc->c_types_symbol =                s7_make_symbol(sc, "c-types");
+  sc->safety_symbol =                 s7_make_symbol(sc, "safety");
+  sc->gc_stats_symbol =               s7_make_symbol(sc, "gc-stats");
+  sc->maximum_stack_size_symbol =     s7_make_symbol(sc, "maximum-stack-size");
+  sc->cpu_time_symbol =               s7_make_symbol(sc, "cpu-time");
 }
 
 static s7_pointer make_shadow_vector(s7_scheme *sc, s7_Int size, s7_pointer *elements)
@@ -68684,7 +68697,7 @@ s7_scheme *s7_init(void)
   cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED; 
 
   cdr(sc->UNDEFINED) = sc->UNDEFINED;
-  /* an experiment -- this way find_symbol of an undefined symbol returns #<undefined> not #<unspecified>
+  /* this way find_symbol of an undefined symbol returns #<undefined> not #<unspecified>
    */
 
   sc->temp_cell = alloc_pointer();
@@ -70278,9 +70291,9 @@ int main(int argc, char **argv)
  * bench    42736 | 8752 |  4220 4157 3447 3556 3540 3548 | 3620
  * index    44300 | 3291 |  1725 1371 1382 1380 1346 1265 | 1305
  * s7test    1721 | 1358 |   995  957  974  971  973 1127 | 1300
- * t455|6     265 |   89 |   9    8.5  5.5  5.5  5.4  5.9 | 17.4
+ * t455|6     265 |   89 |   9    8.5  5.5  5.5  5.4  5.9 | 16.2
  * t502        90 |   43 |  14.5 14.4 13.6 12.8 12.7 12.7 | 12.7
- * t816           |   71 |  70.6                44.5 45.6 | 46.0
+ * t816           |   71 |  70.6                44.5 45.6 | 45.8
  * lg             |      |                            6.7 |  6.7
  * calls      359 |  275 |  54   49.5 39.7 36.4 35.4 35.1 | 35.0
  *            153 with run macro (eval_ptree)
@@ -70321,13 +70334,16 @@ int main(int argc, char **argv)
  *
  * how would reactive-hash-table work? (hash 'a (+ b 1)) and update 'a's value whenever b changes?
  *   reactive-string? (reactive-string #\a c (integer->char a) (str 0) (_ 0))
- *   reactive-eval, reactive-load(if file changes -- how to tell when its ready?), reactive-if(expr changes)--reactive-assert for example
+ *   reactive-eval reactive-if(expr changes)--reactive-assert for example
  *
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  * *snd* or *clm* libraries also
  *   in clm: get rid of the run-time function args to src/convolve/granulate/phase-vocoder/move-sound?
  * other libraries: fftw, alsa, jack, clm? sndlib? -- libclm.so in CL version, libsndlib.so from sndlib makefile
+ *
+ * cload -- all funcs non-safe?
+ * goto+frame could be a free_list
  */
 
 
