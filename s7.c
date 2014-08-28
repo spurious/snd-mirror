@@ -6771,7 +6771,10 @@ static s7_pointer g_c_pointer(s7_scheme *sc, s7_pointer args)
 {
   #define H_c_pointer "(c-pointer int) returns a c-pointer object."
   if (!s7_is_integer(car(args)))
-    return(wrong_type_argument(sc, sc->C_POINTER, small_int(1), car(args), T_INTEGER));
+    {
+      check_method(sc, car(args), sc->C_POINTER, args);
+      return(wrong_type_argument(sc, sc->C_POINTER, small_int(1), car(args), T_INTEGER));
+    }
   return(s7_make_c_pointer(sc, (void *)s7_integer(car(args))));
 }
 
@@ -7291,7 +7294,6 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
 
   p = car(args);                             /* this is the procedure passed to call/cc */
-  
   if (!is_procedure(p))                      /* this includes continuations */
     {
       check_method(sc, p, sc->CALL_CC, args);
@@ -10486,6 +10488,13 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
   s7_Double err;
   s7_pointer x;
 
+  x = car(args);
+  if (!s7_is_real(x))
+    {
+      check_method(sc, x, sc->RATIONALIZE, args);
+      return(wrong_type_argument(sc, sc->RATIONALIZE, small_int(1), x, T_REAL));
+    }
+
   if (is_not_null(cdr(args)))
     {
       s7_pointer ex;
@@ -10502,7 +10511,6 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
     }
   else err = default_rationalize_error;
 
-  x = car(args);
   switch (type(x))
     {
     case T_INTEGER:
@@ -10553,11 +10561,8 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 
 	return(sc->F);
       }
-
-    default:
-      check_method(sc, x, sc->RATIONALIZE, args);
-      return(wrong_type_argument(sc, sc->RATIONALIZE, small_int(1), x, T_REAL));
     }
+  return(sc->F); /* make compiler happy */
 }
 
 
@@ -18361,6 +18366,12 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
   s7_pointer num, state;
   s7_rng_t *r;
 
+  num = car(args);
+  if (!s7_is_number(num))
+    {
+      check_method(sc, num, sc->RANDOM, args);
+      return(wrong_type_argument_with_type(sc, sc->RANDOM, small_int(1), num, A_NUMBER));
+    }
   if (is_not_null(cdr(args)))
     {
       state = cadr(args);
@@ -18384,7 +18395,6 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
     }
   else r = sc->default_rng;
 
-  num = car(args);
   switch (type(num))
     {
     case T_INTEGER:
@@ -18450,10 +18460,6 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
     case T_BIG_COMPLEX:
       return(big_random(sc, args));
 #endif
-
-    default:
-      check_method(sc, num, sc->RANDOM, args);
-      return(wrong_type_argument_with_type(sc, sc->RANDOM, small_int(1), num, A_NUMBER));
     }
   return(sc->F);
 }
@@ -18654,19 +18660,31 @@ static s7_pointer g_char_cmp(s7_scheme *sc, s7_pointer args, int val, s7_pointer
 {
   s7_pointer x;
   unsigned char last_chr;
+
+  if (!s7_is_character(car(args)))
+    {
+      check_method(sc, car(args), sym, args);
+      return(wrong_type_argument_n(sc, sym, 1, car(args), T_CHARACTER));
+    }
   
-  for (x = args; is_not_null(x); x = cdr(x))  
-    if (!s7_is_character(car(x)))
-      {
-	check_method(sc, car(x), sym, args);
-	return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_CHARACTER));
-      }
   last_chr = character(car(args));
   for (x = cdr(args); is_not_null(x); x = cdr(x))
     {
-      if (charcmp(last_chr, character(car(x))) != val)
-	return(sc->F);
-      last_chr = character(car(x));
+      s7_pointer c;
+      c = car(x);
+      if (!s7_is_character(c))
+	{
+	  check_method(sc, c, sym, cons(sc, chars[last_chr], x));
+	  return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	}
+      if (charcmp(last_chr, character(c)) != val)
+	{
+	  for (x = cdr(x); is_pair(x); x = cdr(x))
+	    if (!s7_is_character(car(x)))
+	      return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	  return(sc->F);
+	}
+      last_chr = character(c);
     }
   return(sc->T);
 }
@@ -18677,18 +18695,30 @@ static s7_pointer g_char_cmp_not(s7_scheme *sc, s7_pointer args, int val, s7_poi
   s7_pointer x;
   unsigned char last_chr;
   
-  for (x = args; is_not_null(x); x = cdr(x))  
-    if (!s7_is_character(car(x)))
-      {
-	check_method(sc, car(x), sym, args);
-	return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_CHARACTER));
-      }
+  if (!s7_is_character(car(args)))
+    {
+      check_method(sc, car(args), sym, args);
+      return(wrong_type_argument_n(sc, sym, 1, car(args), T_CHARACTER));
+    }
+  
   last_chr = character(car(args));
   for (x = cdr(args); is_not_null(x); x = cdr(x))
     {
-      if (charcmp(last_chr, character(car(x))) == val)
-	return(sc->F);
-      last_chr = character(car(x));
+      s7_pointer c;
+      c = car(x);
+      if (!s7_is_character(c))
+	{
+	  check_method(sc, c, sym, cons(sc, chars[last_chr], x));
+	  return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	}
+      if (charcmp(last_chr, character(c)) == val)
+	{
+	  for (x = cdr(x); is_pair(x); x = cdr(x))
+	    if (!s7_is_character(car(x)))
+	      return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	  return(sc->F);
+	}
+      last_chr = character(c);
     }
   return(sc->T);
 }
@@ -18898,18 +18928,29 @@ static s7_pointer g_char_cmp_ci(s7_scheme *sc, s7_pointer args, int val, s7_poin
   s7_pointer x;
   unsigned char last_chr;
   
-  for (x = args; is_not_null(x); x = cdr(x))  
-    if (!s7_is_character(car(x)))
-      {
-	check_method(sc, car(x), sym, args);
-	return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_CHARACTER));
-      }
+  if (!s7_is_character(car(args)))
+    {
+      check_method(sc, car(args), sym, args);
+      return(wrong_type_argument_n(sc, sym, 1, car(args), T_CHARACTER));
+    }
   last_chr = upper_character(car(args));
   for (x = cdr(args); is_not_null(x); x = cdr(x))
     {
-      if (charcmp(last_chr, upper_character(car(x))) != val)
-	return(sc->F);
-      last_chr = upper_character(car(x));
+      s7_pointer c;
+      c = car(x);
+      if (!s7_is_character(c))
+	{
+	  check_method(sc, c, sym, cons(sc, chars[last_chr], x));
+	  return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	}
+      if (charcmp(last_chr, upper_character(c)) != val)
+	{
+	  for (x = cdr(x); is_pair(x); x = cdr(x))
+	    if (!s7_is_character(car(x)))
+	      return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	  return(sc->F);
+	}
+      last_chr = upper_character(c);
     }
   return(sc->T);
 }
@@ -18920,18 +18961,29 @@ static s7_pointer g_char_cmp_ci_not(s7_scheme *sc, s7_pointer args, int val, s7_
   s7_pointer x;
   unsigned char last_chr;
   
-  for (x = args; is_not_null(x); x = cdr(x))  
-    if (!s7_is_character(car(x)))
-      {
-	check_method(sc, car(x), sym, args);
-	return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_CHARACTER));
-      }
+  if (!s7_is_character(car(args)))
+    {
+      check_method(sc, car(args), sym, args);
+      return(wrong_type_argument_n(sc, sym, 1, car(args), T_CHARACTER));
+    }
   last_chr = upper_character(car(args));
   for (x = cdr(args); is_not_null(x); x = cdr(x))
     {
-      if (charcmp(last_chr, upper_character(car(x))) == val)
-	return(sc->F);
-      last_chr = upper_character(car(x));
+      s7_pointer c;
+      c = car(x);
+      if (!s7_is_character(c))
+	{
+	  check_method(sc, c, sym, cons(sc, chars[last_chr], x));
+	  return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	}
+      if (charcmp(last_chr, upper_character(c)) == val)
+	{
+	  for (x = cdr(x); is_pair(x); x = cdr(x))
+	    if (!s7_is_character(car(x)))
+	      return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	  return(sc->F);
+	}
+      last_chr = upper_character(c);
     }
   return(sc->T);
 }
@@ -19641,7 +19693,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
 	  str[ind] = (char)ic;
 	  return(c);
 	}
-      check_method(sc, c, sc->STRING_SET, args);
+      check_method(sc, c, sc->STRING_SET, list_3(sc, x, index, c));
       return(wrong_type_argument(sc, sc->STRING_SET, small_int(3), c, T_CHARACTER));
     }
 
@@ -19749,7 +19801,7 @@ static s7_pointer start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer sta
     {
       if (!s7_is_integer(p = check_values(sc, pend, cdr(start_and_end_args))))
 	{
-	  check_method(sc, pend, caller, args);
+	  check_method(sc, pend, caller, (position == 2) ? list_3(sc, car(args), pstart, pend) : list_4(sc, car(args), cadr(args), pstart, pend));
 	  return(wrong_type_argument_n(sc, caller, position + 1, pend, T_INTEGER));
 	}
       else pend = p;
@@ -20661,8 +20713,14 @@ static s7_pointer g_make_bytevector(s7_scheme *sc, s7_pointer args)
     }
   else 
     {
-      s7_pointer byte;
+      s7_pointer len, byte;
       s7_Int b;
+      len = car(args);
+      if (!is_integer(len))
+	{
+	  check_method(sc, len, sc->MAKE_BYTEVECTOR, args);
+	  return(wrong_type_argument(sc, sc->MAKE_BYTEVECTOR, small_int(1), len, T_INTEGER));
+	}
       byte = cadr(args);
       if (!s7_is_integer(byte))
 	{
@@ -20672,7 +20730,7 @@ static s7_pointer g_make_bytevector(s7_scheme *sc, s7_pointer args)
       b = s7_integer(byte);
       if ((b < 0) || (b > 255))
 	return(simple_wrong_type_argument_with_type(sc, sc->MAKE_BYTEVECTOR, byte, AN_UNSIGNED_BYTE));
-      str = g_make_string(sc, list_2(sc, car(args), chars[b]));
+      str = g_make_string(sc, list_2(sc, len, chars[b]));
     }
   set_bytevector(str);
   return(str);
@@ -21548,7 +21606,6 @@ static s7_pointer g_write_string(s7_scheme *sc, s7_pointer args)
       check_method(sc, str, sc->WRITE_STRING, args);
       return(wrong_type_argument(sc, sc->WRITE_STRING, small_int(1), str, T_STRING));
     }
-
   end = string_length(str);
   if (!is_null(cdr(args)))
     {
@@ -23277,6 +23334,7 @@ in the file, or by the function."
       (is_closure(value)))
     return(s7_autoload(sc, sym, value));
 
+  check_method(sc, value, sc->AUTOLOAD, args);
   return(s7_wrong_type_arg_error(sc, "autoload", 2, value, "a string (file-name) or a thunk"));
 }
 
@@ -23545,8 +23603,10 @@ static s7_pointer g_with_input_from_string(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument(sc, sc->WITH_INPUT_FROM_STRING, small_int(1), str, T_STRING));
     }
   if (!s7_is_aritable(sc, cadr(args), 0))
-    return(wrong_type_argument_with_type(sc, sc->WITH_INPUT_FROM_STRING, small_int(2), cadr(args), A_THUNK));
-  
+    {
+      check_method(sc, cadr(args), sc->WITH_INPUT_FROM_STRING, args);
+      return(wrong_type_argument_with_type(sc, sc->WITH_INPUT_FROM_STRING, small_int(2), cadr(args), A_THUNK));
+    }
   /* since the arguments are evaluated before we get here, we can get some confusing situations:
    *   (with-input-from-string "#x2.1" (read))
    *   (read) -> whatever it can get from the current input port!
@@ -23567,8 +23627,10 @@ static s7_pointer g_with_input_from_file(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument(sc, sc->WITH_INPUT_FROM_FILE, small_int(1), car(args), T_STRING));
     }
   if (!s7_is_aritable(sc, cadr(args), 0))
-    return(wrong_type_argument_with_type(sc, sc->WITH_INPUT_FROM_FILE, small_int(2), cadr(args), A_THUNK));
-  
+    {
+      check_method(sc, cadr(args), sc->WITH_INPUT_FROM_FILE, args);
+      return(wrong_type_argument_with_type(sc, sc->WITH_INPUT_FROM_FILE, small_int(2), cadr(args), A_THUNK));
+    }
   return(with_input(sc, open_input_file_1(sc, string_value(car(args)), "r", "with-input-from-file"), args));
 }
 
@@ -25720,8 +25782,11 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
   s7_pointer port, proc;
   proc = car(args);
   if (!s7_is_aritable(sc, proc, 1))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(1), proc, 
-					 make_protected_string(sc, "a procedure of one argument (the port)")));
+    {
+      check_method(sc, proc, sc->CALL_WITH_OUTPUT_STRING, args);
+      return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(1), proc, 
+					   make_protected_string(sc, "a procedure of one argument (the port)")));
+    }
   if ((is_continuation(proc)) || (is_goto(proc)))
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, small_int(1), proc, 
 					 make_protected_string(sc, "a normal procedure (not a continuation)")));
@@ -25752,8 +25817,11 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
 
   proc = cadr(args);
   if (!s7_is_aritable(sc, proc, 1))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(2), proc, 
-					 make_protected_string(sc, "a procedure of one argument (the port)")));
+    {
+      check_method(sc, proc, sc->CALL_WITH_OUTPUT_FILE, args);
+      return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(2), proc, 
+					   make_protected_string(sc, "a procedure of one argument (the port)")));
+    }
   if ((is_continuation(proc)) || is_goto(proc))
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, small_int(2), proc, 
 					 make_protected_string(sc, "a normal procedure (not a continuation)")));
@@ -25814,8 +25882,10 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 
   proc = cadr(args);
   if (!s7_is_aritable(sc, proc, 0))
-    return(wrong_type_argument_with_type(sc, sc->WITH_OUTPUT_TO_FILE, small_int(2), proc, A_THUNK));
-  
+    {
+      check_method(sc, proc, sc->WITH_OUTPUT_TO_FILE, args);
+      return(wrong_type_argument_with_type(sc, sc->WITH_OUTPUT_TO_FILE, small_int(2), proc, A_THUNK));
+    }
   old_output_port = sc->output_port;
   sc->output_port = s7_open_output_file(sc, string_value(file), "w");
   push_stack(sc, OP_UNWIND_OUTPUT, old_output_port, sc->output_port);
@@ -29255,12 +29325,13 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
       /* check third arg before second (trailing arg error check) */
 
       eq_func = caddr(args);
-      if (!is_procedure(eq_func))
-	return(wrong_type_argument_with_type(sc, sc->MEMBER, small_int(3), eq_func, A_CLOSURE));
-
-      if (!s7_is_aritable(sc, eq_func, 2))
-	return(wrong_type_argument_with_type(sc, sc->MEMBER, small_int(3), eq_func, 
-					     make_protected_string(sc, "a procedure that can take 2 arguments")));
+      if ((!is_procedure(eq_func)) ||
+	  (!s7_is_aritable(sc, eq_func, 2)))
+	{
+	  check_method(sc, eq_func, sc->MEMBER, args);
+	  return(wrong_type_argument_with_type(sc, sc->MEMBER, small_int(3), eq_func, 
+					       make_protected_string(sc, "a procedure that can take 2 arguments")));
+	}
 
       /* now maybe there's a simple case */
       if (s7_list_length(sc, x) > 0)
@@ -31156,7 +31227,10 @@ or a real, the vector can only hold numbers of that type (s7_Int or s7_Double)."
 	  else 
 	    {
 	      if (caddr(args) != sc->F)
-		return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(3), caddr(args), make_protected_string(sc, "a boolean")));
+		{
+		  check_method(sc, caddr(args), sc->MAKE_VECTOR, args);
+		  return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(3), caddr(args), make_protected_string(sc, "a boolean")));
+		}
 	    }
 	}
     }
@@ -31731,13 +31805,19 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
       lessp = cadr(args);
       if ((!is_procedure(lessp)) ||
 	  (!s7_is_aritable(sc, lessp, 2)))
-	return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, make_protected_string(sc, "a function of 2 arguments")));
+	{
+	  check_method(sc, lessp, sc->SORT, args);
+	  return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, make_protected_string(sc, "a function of 2 arguments")));
+	}
       return(sc->NIL);
     }
 
   lessp = cadr(args);
   if (!is_procedure(lessp))
-    return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, A_CLOSURE));
+    {
+      check_method(sc, lessp, sc->SORT, args);
+      return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, A_CLOSURE));
+    }
   if ((is_continuation(lessp)) || is_goto(lessp))
     return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, make_protected_string(sc, "a normal procedure (not a continuation)")));
   if (!s7_is_aritable(sc, lessp, 2))
@@ -32420,20 +32500,23 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 
       if (is_not_null(cdr(args)))
 	{
+	  s7_pointer p2;
 	  int typ;
-	  p = cadr(args);
-	  typ = type(p);
+	  p2 = cadr(args);
+	  typ = type(p2);
 	  /* true procedure needed here else (make-hash-table ()) will work
 	   */
 	  if ((typ < T_C_FUNCTION) && (typ != T_CLOSURE) && (typ != T_CLOSURE_STAR)) 
-	    return(simple_wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, p, A_PROCEDURE));
-
-	  if (is_c_function(p)) /* we need to restrict this function so that hash-table-ref|set! remain safe functions */
+	    {
+	      check_method(sc, p2, sc->MAKE_HASH_TABLE, list_2(sc, p, p2));
+	      return(simple_wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, p2, A_PROCEDURE));
+	    }
+	  if (is_c_function(p2)) /* we need to restrict this function so that hash-table-ref|set! remain safe functions */
 	    {
 	      s7_pointer ht;
 	      ht = s7_make_hash_table(sc, size);
 	      hash_table_function(ht) = hash_eq_func;
-	      hash_table_eq_function(ht) = p;
+	      hash_table_eq_function(ht) = p2;
 	      return(ht);
 	    }
 
@@ -34800,8 +34883,10 @@ static s7_pointer g_is_aritable(s7_scheme *sc, s7_pointer args)
 
   n = cadr(args);
   if (!s7_is_integer(n)) /* remember gmp case! */
-    return(wrong_type_argument(sc, sc->IS_ARITABLE, small_int(2), n, T_INTEGER));
-
+    {
+      check_method(sc, n, sc->IS_ARITABLE, args);
+      return(wrong_type_argument(sc, sc->IS_ARITABLE, small_int(2), n, T_INTEGER));
+    }
   num = s7_integer(n);
   if (num < 0)
     return(out_of_range(sc, sc->IS_ARITABLE, small_int(2), n, "should be a non-negative integer"));
@@ -36539,7 +36624,6 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
     default:
       check_method(sc, p, sc->FILL, args);
     }
-
   return(wrong_type_argument_with_type(sc, sc->FILL, small_int(1), p, make_protected_string(sc, "a fillable object"))); /* (fill! 1 0) */
 }
 
@@ -37344,11 +37428,20 @@ each a function of no arguments, guaranteeing that finish is called even if body
   s7_pointer p;
 
   if (!s7_is_aritable(sc, car(args), 0))
-    return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(1), car(args), A_THUNK));
+    {
+      check_method(sc, car(args), sc->DYNAMIC_WIND, args);
+      return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(1), car(args), A_THUNK));
+    }
   if (!s7_is_aritable(sc, cadr(args), 0))
-    return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(2), cadr(args), A_THUNK));
+    {
+      check_method(sc, cadr(args), sc->DYNAMIC_WIND, args);
+      return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(2), cadr(args), A_THUNK));
+    }
   if (!s7_is_aritable(sc, caddr(args), 0))
-    return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(3), caddr(args), A_THUNK));
+    {
+      check_method(sc, caddr(args), sc->DYNAMIC_WIND, args);
+      return(wrong_type_argument_with_type(sc, sc->DYNAMIC_WIND, small_int(3), caddr(args), A_THUNK));
+    }
 
   /* this won't work:
 
@@ -41264,17 +41357,17 @@ static s7_pointer g_format_allg_no_column(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer format_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+  s7_pointer port, str_arg;
+  port = cadr(expr);
+  str_arg = caddr(expr);
   if ((args > 1) &&
-      (!is_string(cadr(expr))) &&
-      (is_string(caddr(expr))))
+      (!is_string(port)) &&
+      (is_string(str_arg)))
     {
-      s7_pointer str_arg;
-      str_arg = caddr(expr);
       if (args == 2) 
 	{
 	  int len;
 	  const char *orig;
-
 	  orig = (const char *)string_value(str_arg);
 	  len = string_length(str_arg);
 	  if ((len > 1) &&
@@ -41283,7 +41376,11 @@ static s7_pointer format_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 	      const char *p;
 	      p = strchr(orig, (int)'~');
 	      if ((p) && ((p - orig) == len - 2))
-		return(format_just_newline);
+		{
+		  if (s7_is_boolean(port))
+		    set_optimize_data(expr, HOP_SAFE_C_C);
+		  return(format_just_newline);
+		}
 	    }
 	}
 
@@ -49612,12 +49709,10 @@ static s7_pointer check_do(s7_scheme *sc)
 		return(eval_error(sc, "do: step variable info has extra stuff after the increment: ~A", sc->code));
 	    }
 	  else return(eval_error(sc, "do: step variable has no initial value: ~A", x));
-
 	  set_local(caar(x));
 
 	  /* (do ((i)) ...) */
 	}
-
       if (is_not_null(x))                                /* (do ((i 0 i) . 1) ((= i 1))) */
 	return(eval_error(sc, "do: list of variables is improper: ~A", sc->code));
     }
@@ -49638,17 +49733,15 @@ static s7_pointer check_do(s7_scheme *sc)
     {
       s7_pointer vars, end, body;
       bool one_line;
-
+      
       vars = car(sc->code);
       end = cadr(sc->code);
       body = cddr(sc->code);
       
       one_line = ((safe_list_length(sc, body) == 1) && (is_pair(car(body))));
-
       set_syntax_op(sc->code, sc->DO_UNCHECKED);
-
-      /* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) */
       
+      /* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) */
       /* (define (hi) (do ((i 1.5 (+ i 1))) ((= i 2.5)) (display i) (newline)))
        *   in OP_SAFE_DOTIMES, for example, if init value is not an integer, it goes to OP_SIMPLE_DO
        * remaining optimizable cases: we can step by 1 and use = for end, and yet simple_do(_p) calls the functions
@@ -49682,7 +49775,7 @@ static s7_pointer check_do(s7_scheme *sc)
 		  /* step var is (var const|symbol (op var const)|(op const var)) 
 		   */
 		  end = car(end);
-
+		  
 		  if ((is_optimized(end)) &&
 		      (car(vars) == cadr(end)) &&
 		      (cadr(end) != caddr(end)) &&
@@ -49717,13 +49810,12 @@ static s7_pointer check_do(s7_scheme *sc)
 			  (s7_integer(caddr(step_expr)) == 1))
 			set_syntax_op(sc->code, sc->SIMPLE_DO_A);
 		      else set_syntax_op(sc->code, sc->SIMPLE_DO);
-
+		      
 		      if ((one_line) &&
 			  ((!is_optimized(car(body))) || (op_no_hop(car(body)) != OP_SAFE_C_C)) &&
 			  (is_syntactic(caar(body))))
 			{
 			  lifted_op(car(body)) = syntax_opcode(caar(body));
-			  /* fprintf(stderr, "choose simple_do_p\n");  */
 			  set_syntax_op(sc->code, sc->SIMPLE_DO_P);
 			  set_fcdr(sc->code, caddr(caar(sc->code)));
 #if (!WITH_GMP)
@@ -49760,35 +49852,24 @@ static s7_pointer check_do(s7_scheme *sc)
 			       *   the final integer check has to wait until run time (symbol value dependent)
 			       */
 			      set_syntax_op(sc->code, sc->SAFE_DO);
-			      
 			      if ((!has_set) &&
 				  (c_function_class(ecdr(end)) == equal_class))
 				{
-				  /* fprintf(stderr, "dotimes\n");  */
 				  set_syntax_op(sc->code, sc->SAFE_DOTIMES);
-				  
 				  /* what are the most common cases here?
 				   */
 				  if (one_line)
 				    {
 				      if ((is_optimized(car(body))) &&
-					  ((!c_function_ext(ecdr(car(body)))) || (!c_function_looped(ecdr(car(body))))))
+					  ((!c_function_ext(ecdr(car(body)))) || 
+					   (!c_function_looped(ecdr(car(body))))))
 					{
 					  if (optimize_data(car(body)) == HOP_SAFE_C_C)
-					    {
-					      /* fprintf(stderr, "dotimes_c_c: %s\n", DISPLAY(body)); */
-					      set_syntax_op(sc->code, sc->SAFE_DOTIMES_C_C);
-					    }
+					    set_syntax_op(sc->code, sc->SAFE_DOTIMES_C_C);
 					  else
 					    {
-					      /* fprintf(stderr, "car(body): %s, step_expr: %s\n", DISPLAY(car(body)), DISPLAY(vars)); */
 					      if (is_all_x_op(optimize_data(car(body))))
 						{
-						  /*
-						    fprintf(stderr, "dotimes_c_a: %s %s %d %p\n", DISPLAY(body), opt_name(car(body)), 
-						    is_all_x_op(optimize_data(car(body))),
-						    c_function_looped(ecdr(car(body))));
-						  */
 						  annotate_arg(sc, body);
 						  set_syntax_op(sc->code, sc->SAFE_DOTIMES_C_A);
 						}
@@ -49796,7 +49877,6 @@ static s7_pointer check_do(s7_scheme *sc)
 					}
 				      else
 					{
-					  /* fprintf(stderr, "perhaps safe: %s\n", DISPLAY(body)); */
 					  if ((is_syntactic(caar(body))) &&
 					      (syntax_opcode(caar(body)) == OP_LET) &&
 					      (!is_null(cadar(body))) && /* it has at least one let var */
@@ -49820,27 +49900,25 @@ static s7_pointer check_do(s7_scheme *sc)
 					    }
 					}
 				    }
-				      else /* else not one line -- might be 0! */
+				  else /* else not one line -- might be 0! */
+				    {
+				      s7_pointer p;
+				      bool happy = true;
+				      for (p = body; is_pair(p); p = cdr(p))
+					if ((is_pair(car(p))) &&
+					    ((!is_optimized(car(p))) ||
+					     (!is_all_x_op(optimize_data(car(p))))))
+					  {
+					    happy = false;
+					    break;
+					  }
+				      if (happy)
 					{
-					  s7_pointer p;
-					  bool happy = true;
-					  for (p = body; is_pair(p); p = cdr(p))
-					    if ((is_pair(car(p))) &&
-						((!is_optimized(car(p))) ||
-						 (!is_all_x_op(optimize_data(car(p))))))
-					      {
-						happy = false;
-						break;
-					      }
-					  if (happy)
-					    {
-					      annotate_args(sc, body);
-					      set_syntax_op(sc->code, sc->SAFE_DOTIMES_C_A);
-					    }
+					  annotate_args(sc, body);
+					  set_syntax_op(sc->code, sc->SAFE_DOTIMES_C_A);
 					}
 				    }
-
-			      /* else fprintf(stderr, "unsafe: %s\n", DISPLAY_80(sc->code)); */
+				}
 			    }
 			}
 		      return(sc->NIL); /* tell OP_DO that this is a special case */
@@ -49848,7 +49926,7 @@ static s7_pointer check_do(s7_scheme *sc)
 		}
 	    }
 	}
-
+      
       /* we get here if there is more than one local var or anything "non-simple" about the rest 
        */
       /* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) 
@@ -49859,12 +49937,11 @@ static s7_pointer check_do(s7_scheme *sc)
       end = cadr(sc->code);
       body = cddr(sc->code);
       
-      if ((is_null(vars)) && /* do () () one-line safe opt body */
+      if ((is_null(vars)) &&            /* do () () one-line safe opt body */
 	  (is_null(end)) &&
 	  (one_line) &&
 	  (is_all_x_safe(sc, car(body))))
 	{
-	  /* fprintf(stderr, "%s %s\n", DISPLAY(body), opt_name(car(body))); */
 	  annotate_arg(sc, body);
 	  set_syntax_op(sc->code, sc->SIMPLE_DO_FOREVER);
 	  return(sc->NIL);
@@ -49884,11 +49961,7 @@ static s7_pointer check_do(s7_scheme *sc)
 	      sc->code = old_code;
 	      return(sc->code);
 	    }
-	  else 
-	    {
-	      /* fprintf(stderr, "end: %s %s\n", DISPLAY(car(end)), opt_name(car(end))); */
-	      return(sc->code);
-	    }
+	  else return(sc->code);
 	}
 
       /* vars can be nil (no steppers) */
@@ -49901,10 +49974,7 @@ static s7_pointer check_do(s7_scheme *sc)
 	      var = car(p);
 
 	      if (!is_init_dox_safe(sc, cadr(var)))
-		{
-		  /* fprintf(stderr, "init: %s %s\n", DISPLAY(cadr(var)), opt_name(cadr(var))); */
-		  return(sc->code);
-		}
+		return(sc->code);
 	      
 	      if ((is_pair(cddr(var))) &&
 		  (!is_step_dox_safe(sc, caddr(var))))
@@ -49912,7 +49982,6 @@ static s7_pointer check_do(s7_scheme *sc)
 		  /* t502: h_safe_c_aaaa, and sz: s_op_op_c_opcq_q_q!
 		   * index (or op_x_s_opscq s): (or (char-position "</! >" line (+ i 1)) len) but unopt?
 		   */
-		  /* fprintf(stderr, "step: %s %s from %s\n", DISPLAY(caddr(var)), opt_name(caddr(var)), DISPLAY_80(sc->code)); */
 		  return(sc->code);
 		}
 	      /* we want to use the pending_value slot for other purposes, so make sure
@@ -49925,10 +49994,7 @@ static s7_pointer check_do(s7_scheme *sc)
 	      for (rp = vars; is_pair(rp); rp = cdr(rp)) /* look both back and forward for cross-talk */
 		if ((rp != p) && 
 		    (s7_tree_memq(sc, var, cddar(rp))))
-		  {
-		    /* fprintf(stderr, "%s found in %s\n", DISPLAY(var), DISPLAY(rp)); */
-		    return(sc->code);
-		  }
+		  return(sc->code);
 	    }
 	}
       
@@ -49949,7 +50015,7 @@ static s7_pointer check_do(s7_scheme *sc)
 
 	      if ((is_pair(cadr(var))) &&
 		  (caadr(var) != sc->QUOTE))
-		set_fcdr(cdr(var), (s7_pointer)step_dox_eval(sc, cadr(var), NULL));         /* init choice */
+		set_fcdr(cdr(var), (s7_pointer)step_dox_eval(sc, cadr(var), NULL));      /* init choice */
 
 	      if (is_pair(cddr(var)))
 		{
@@ -70343,7 +70409,16 @@ int main(int argc, char **argv)
  * other libraries: fftw, alsa, jack, clm? sndlib? -- libclm.so in CL version, libsndlib.so from sndlib makefile
  *
  * cload -- all funcs non-safe?
- * goto+frame could be a free_list
+ *    define_safe_* adds to rootlet, but cload wants a local func
+ *    maybe add s7_make_safe_function
+ *
+ * multimethod troubles: let-ref|fill!|call/cc ambiguous, trailing args too hard in float-vector|for-each|char-position|string-position,
+ *     rational(etc)-via-method: min|max|lcm|gcd, tricky procs: call-with-output-string|call-with-input-string|catch|member,
+ *     embedded lets as in (inlet 'c (mock-num 0)) etc -- some of these might work
+ *
+ * catch with list of tags, or maybe throw should look for its tag independent of catch #t?
+ *   I think the member/memq could be added at almost no cost, (member tag catch_tag) or if tag simple, memq
+ *   but it's ambiguous -- tag can be anything.
  */
 
 

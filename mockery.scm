@@ -449,6 +449,21 @@
 
 (define *mock-number*
   (let ((mock-number? #f))
+
+    (define* (range-method-1 func arg start end)
+      (if (not end)
+	  (func arg (start 'value))
+	  (if (not (let? start))
+	      (func arg start (end 'value))
+	      (apply func arg (start 'value) end ()))))
+
+    (define* (range-method-2 func arg1 arg2 start end)
+      (if (not end)
+	  (func arg1 arg2 (start 'value))
+	  (if (not (let? start))
+	      (func arg1 arg2 start (end 'value))
+	      (apply func arg1 arg2 (start 'value) end ()))))
+
     (let ((mock-number-class
 	   (openlet
 	    (inlet 'number?          (lambda (obj) #t)
@@ -473,7 +488,7 @@
 		   'make-complex     (make-method #_make-rectangular (lambda (obj) (obj 'value)))
 		   'magnitude        (lambda (obj) (#_magnitude (obj 'value)))
 		   'angle            (lambda (obj) (#_angle (obj 'value)))
-		   'rationalize      (lambda (obj . args) (apply #_rationalize (obj 'value) args))
+		   'rationalize      (make-method #_rationalize (lambda (obj) (obj 'value)))
 		   'abs              (lambda (obj) (#_abs (obj 'value)))
 		   'exp              (lambda (obj) (#_exp (obj 'value)))
 		   'log              (lambda (obj . args) (apply #_log (obj 'value) args))
@@ -591,46 +606,38 @@
 		   
 		   'vector->list     (lambda* (vec start end) 
 				       (if (vector? vec)
-					   (if end
-					       (#_vector->list vec (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
-					       (#_vector->list vec (if (let? start) (start 'value) start)))
+					   ;; when there are two args, either might have triggered this method call,
+					   ;;   if (not (let? end)) or (let? start), start must be a mock-number
+					   ;;   and if (not (let? start)), end must be a mock-number, but
+					   ;;   if (let? start) and (let? end), end might be anything
+					   (range-method-1 #_vector->list vec start end)
 					   (error 'wrong-type-arg "vector->list ~S ~S ~S" vec start end)))
 
 		   'vector-fill!     (lambda* (vec c start end)
 				       (if (vector? vec)
-					   (if end
-					       (#_vector-fill! vec c (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
-					       (#_vector-fill! vec c (if (let? start) (start 'value) start)))
+					   (range-method-2 #_vector-fill! vec c start end)
 					   (error 'wrong-type-arg "vector-fill! ~S ~S ~S ~S" vec c start end)))
 
 		   'substring        (lambda* (str start end) 
 				       (if (string? str)
-					   (if end 
-					       (#_substring str (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
-					       (#_substring str (if (let? start) (start 'value) start)))
+					   (range-method-1 #_substring start end)
 					   (error 'wrong-type-arg "substring ~S ~S ~S" str start end)))
 
 		   'string-fill!     (lambda* (str c start end)
 				       (if (and (string? str)
 						(char? c))
-					   (if end
-					       (#_string-fill! str c (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
-					       (#_string-fill! str c (if (let? start) (start 'value) start)))
+					   (range-method-2 #_string-fill! str c start end)
 					   (error 'wrong-type-arg "string-fill! ~S ~S ~S ~S" str c start end)))
 
 		   'string->list     (lambda* (str start end) 
 				       (if (string? str)
-					   (if end
-					       (#_string->list str (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
-					       (#_string->list str (if (let? start) (start 'value) start)))
+					   (range-method-1 #_string->list str start end)
 					   (error 'wrong-type-arg "string->list ~S ~S ~S" str start end)))
 
 		   'write-string     (lambda* (str port start end)
 				       (if (and (string? str)
 						(output-port? port))
-					   (if end
-					       (#_write-string str port (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
-					       (#_write-string str port (if (let? start) (start 'value) start)))
+					   (range-method-2 #_write-string str port start end)
 					   (error 'wrong-type-arg "write-string ~S ~S ~S ~S" str port start end)))
 
 		   'copy             (lambda* (obj dest start end)
@@ -638,9 +645,7 @@
 					   (obj 'value)
 					   (if (or (mock-number? start)
 						   (mock-number? end))
-					       (if end
-						   (#_copy obj dest (if (let? start) (start 'value) start) (if (let? end) (end 'value) end))
-						   (#_copy obj dest (if (let? start) (start 'value) start)))
+					       (range-method-2 #_copy obj dest start end)
 					       (error 'wrong-type-arg "copy ~S ~S ~S ~S" obj dest start end))))
 		   ))))
       
