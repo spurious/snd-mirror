@@ -533,12 +533,14 @@
 		   'logior           (make-method #_logior (lambda (obj) (obj 'value)))
 		   'logxor           (make-method #_logxor (lambda (obj) (obj 'value)))
 		   'logand           (make-method #_logand (lambda (obj) (obj 'value)))
+		   ;; any object that has lcm or gcd also needs rational?
 		   'lcm              (make-method #_lcm (lambda (obj) (obj 'value)))
 		   'gcd              (make-method #_gcd (lambda (obj) (obj 'value)))
 		   '+                (make-method #_+ (lambda (obj) (obj 'value)))
 		   '-                (make-method #_- (lambda (obj) (obj 'value)))
 		   '*                (make-method #_* (lambda (obj) (obj 'value)))
 		   '/                (make-method #_/ (lambda (obj) (obj 'value)))
+		   ;; any object that has min or max also needs real?
 		   'max              (make-method #_max (lambda (obj) (obj 'value)))
 		   'min              (make-method #_min (lambda (obj) (obj 'value)))
 		   '=                (make-method #_= (lambda (obj) (obj 'value)))
@@ -1083,3 +1085,4 @@
 (length p) -> 101684
 ((p 'owner) p) -> "bil"
 |#
+

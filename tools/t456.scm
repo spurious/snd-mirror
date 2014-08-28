@@ -1,7 +1,6 @@
 (set! (hook-functions *unbound-variable-hook*) ())
 (set! *vector-print-length* 6)
 
-
 (if (provided? 'snd)
     (begin
       (format *stderr* "this won't work in Snd!~%") ; see t705.scm

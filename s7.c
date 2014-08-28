@@ -19489,6 +19489,7 @@ static s7_pointer g_make_string(s7_scheme *sc, s7_pointer args)
   if (!s7_is_integer(n))
     {
       check_method(sc, n, sc->MAKE_STRING, args);
+      check_method(sc, n, sc->MAKE_BYTEVECTOR, args);
       return(wrong_type_argument(sc, sc->MAKE_STRING, small_int(1), n, T_INTEGER));
     }
 
@@ -26786,7 +26787,7 @@ static s7_pointer format_to_port(s7_scheme *sc, s7_pointer port, const char *str
 
 static s7_pointer g_format_1(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer pt;
+  s7_pointer pt, str;
   format_column = 0;
 
   /* sc->args = sc->NIL; */ /* why? s7test is ok either way */
@@ -26795,11 +26796,6 @@ static s7_pointer g_format_1(s7_scheme *sc, s7_pointer args)
   if (is_string(pt))
     return(format_to_port(sc, sc->F, string_value(pt), cdr(args), NULL, !is_output_port(pt), string_length(pt)));
 
-  if (!is_string(cadr(args)))
-    {
-      check_method(sc, cadr(args), sc->FORMAT, args);
-      return(wrong_type_argument(sc, sc->FORMAT, small_int(2), cadr(args), T_STRING));
-    }
   if (!((s7_is_boolean(pt)) ||               /* #f or #t */
 	((is_output_port(pt)) &&             /* (current-output-port) or call-with-open-file arg, etc */
 	 (!port_is_closed(pt)))))
@@ -26807,11 +26803,18 @@ static s7_pointer g_format_1(s7_scheme *sc, s7_pointer args)
       check_method(sc, pt, sc->FORMAT, args);
       return(wrong_type_argument_with_type(sc, sc->FORMAT, small_int(1), pt, AN_OUTPUT_PORT));
     }
+
+  str = cadr(args);
+  if (!is_string(str))
+    {
+      check_method(sc, str, sc->FORMAT, args);
+      return(wrong_type_argument(sc, sc->FORMAT, small_int(2), str, T_STRING));
+    }
   return(format_to_port(sc, 
 			(pt == sc->T) ? sc->output_port : pt, 
-			string_value(cadr(args)), 
+			string_value(str),
 			cddr(args), NULL, !is_output_port(pt), 
-			string_length(cadr(args))));
+			string_length(str)));
 }
 
 
@@ -70412,13 +70415,21 @@ int main(int argc, char **argv)
  *    define_safe_* adds to rootlet, but cload wants a local func
  *    maybe add s7_make_safe_function
  *
- * multimethod troubles: let-ref|fill!|call/cc ambiguous, trailing args too hard in float-vector|for-each|char-position|string-position,
- *     rational(etc)-via-method: min|max|lcm|gcd, tricky procs: call-with-output-string|call-with-input-string|catch|member,
+ * multimethod troubles: 
+ *     let-ref|fill!|call/cc ambiguous: fix with multipl checks as per make-string,
+ *     trailing args too hard in float-vector|for-each|char-position|string-position,
+ *     tricky procs: call-with-output-string|call-with-input-string|catch|member,
  *     embedded lets as in (inlet 'c (mock-num 0)) etc -- some of these might work
+ *     let-ref-fallback should close obj via dynamic-wind
  *
  * catch with list of tags, or maybe throw should look for its tag independent of catch #t?
  *   I think the member/memq could be added at almost no cost, (member tag catch_tag) or if tag simple, memq
  *   but it's ambiguous -- tag can be anything.
+ *   (catcher tag . body) and (thrower func . body) where (func tag) -> not #f then => body?)
+ *
+ * safe let (etc)
+ * what is wrong with /tools at ccrma?
+ * t978 -> t456 with all quibbles repaired and catcher/thrower for exit and test cases
  */
 
 
