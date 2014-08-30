@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.12"
-#define S7_DATE "25-July-14"
+#define S7_VERSION "3.13"
+#define S7_DATE "30-Aug-14"
 
 
 typedef long long int s7_Int;
@@ -494,6 +494,7 @@ bool s7_is_constant(s7_pointer p);
 
 bool s7_is_function(s7_pointer p); 
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
+s7_pointer s7_make_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 
 s7_pointer s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
@@ -805,13 +806,14 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer
  * 
  *        s7 changes
  *		
+ * 30-Aug:    s7_make_safe_function (for cload.scm).
  * 25-July:   define and friends now return the value, not the symbol.
  *            procedure_with_setter -> dilambda.
- *            environment -> let.
+ *            environment -> let.  All the replaced names are deprecated.
  * 30-June:   s7_method.
  * 16-June:   remove unoptimize and s7_unoptimize.
  * 14-May:    s7_define_safe_function_star.  Removed s7_catch_all.
- * 22-Apr:    remove (deprecated) s7_apply_n_10, s7_is_valid_pointer, s7_keyword_eq_p.
+ * 22-Apr:    remove s7_apply_n_10, s7_is_valid_pointer, s7_keyword_eq_p.
  * 5-Mar:     s7_heap_size, s7_gc_freed.
  * 22-Jan-14: s7_vector_ref_object_value_checked.
  * --------

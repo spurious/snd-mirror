@@ -390,7 +390,7 @@
 	       (num-args    (f 3))
 	       (opt-args    (if (= (length f) 5) (f 4) 0)))
 	   (format p "~%  s7_define(sc, cur_env,~%            s7_make_symbol(sc, ~S),~%" scheme-name)
-	   (format p "            s7_make_function(sc, ~S, ~A, ~D, ~D, false, ~S));~%"
+	   (format p "            s7_make_safe_function(sc, ~S, ~A, ~D, ~D, false, ~S));~%"
 		   scheme-name
 		   base-name
 		   num-args

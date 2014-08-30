@@ -524,86 +524,86 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
 
 /* these are just for debugging but it's annoying to keep setting the DEBUGGING switch */
 static const char *real_op_names[OP_MAX_DEFINED + 1] = {
-  "OP_NO_OP", 
-  "OP_READ_INTERNAL", "OP_EVAL", 
-  "OP_EVAL_ARGS", "OP_EVAL_ARGS1", "OP_EVAL_ARGS2", "OP_EVAL_ARGS3", "OP_EVAL_ARGS4", "OP_EVAL_ARGS5",
-  "OP_APPLY", "OP_EVAL_MACRO", "OP_LAMBDA", "OP_QUOTE", 
-  "OP_DEFINE", "OP_DEFINE1", "OP_BEGIN", "OP_BEGIN1", "OP_IF", "OP_IF1", "OP_WHEN", "OP_WHEN1", "OP_UNLESS", "OP_UNLESS1", "OP_SET", "OP_SET1", "OP_SET2",
-  "OP_LET", "OP_LET1", "OP_LET_STAR", "OP_LET_STAR1", "OP_LET_STAR2", 
-  "OP_LETREC", "OP_LETREC1", "OP_LETREC_STAR", "OP_LETREC_STAR1", "OP_COND", "OP_COND1", "OP_COND_SIMPLE", "OP_COND1_SIMPLE",
-  "OP_AND", "OP_AND1", "OP_OR", "OP_OR1", 
-  "OP_DEFINE_MACRO", "OP_DEFINE_MACRO_STAR", "OP_DEFINE_EXPANSION",
-  "OP_CASE", "OP_CASE1", "OP_READ_LIST", "OP_READ_NEXT", "OP_READ_DOT", "OP_READ_QUOTE", 
-  "OP_READ_QUASIQUOTE", "OP_READ_QUASIQUOTE_VECTOR", "OP_READ_UNQUOTE", "OP_READ_APPLY_VALUES",
-  "OP_READ_VECTOR", "OP_READ_BYTEVECTOR", "OP_READ_DONE", 
-  "OP_LOAD_RETURN_IF_EOF", "OP_LOAD_CLOSE_AND_POP_IF_EOF", "OP_EVAL_STRING", "OP_EVAL_DONE",
-  "OP_CATCH", "OP_DYNAMIC_WIND", "OP_DEFINE_CONSTANT", "OP_DEFINE_CONSTANT1", 
-  "OP_DO", "OP_DO_END", "OP_DO_END1", "OP_DO_STEP", "OP_DO_STEP2", "OP_DO_INIT",
-  "OP_DEFINE_STAR", "OP_LAMBDA_STAR", "OP_LAMBDA_STAR_DEFAULT", "OP_ERROR_QUIT", "OP_UNWIND_INPUT", "OP_UNWIND_OUTPUT", 
-  "OP_ERROR_HOOK_QUIT", 
-  "OP_WITH_LET", "OP_WITH_LET1", "OP_WITH_LET_UNCHECKED", "OP_WITH_LET_S", 
-  "OP_WITH_BAFFLE", "OP_EXPANSION",
-  "OP_FOR_EACH", "OP_FOR_EACH_SIMPLE", "OP_FOR_EACH_SIMPLER", "OP_FOR_EACH_SIMPLEST",
-  "OP_MAP", "OP_MAP_SIMPLE", "OP_BARRIER", "OP_DEACTIVATE_GOTO",
+  "no_op", 
+  "read_internal", "eval", 
+  "eval_args", "eval_args1", "eval_args2", "eval_args3", "eval_args4", "eval_args5",
+  "apply", "eval_macro", "lambda", "quote", 
+  "define", "define1", "begin", "begin1", "if", "if1", "when", "when1", "unless", "unless1", "set", "set1", "set2",
+  "let", "let1", "let_star", "let_star1", "let_star2", 
+  "letrec", "letrec1", "letrec_star", "letrec_star1", "cond", "cond1", "cond_simple", "cond1_simple",
+  "and", "and1", "or", "or1", 
+  "define_macro", "define_macro_star", "define_expansion",
+  "case", "case1", "read_list", "read_next", "read_dot", "read_quote", 
+  "read_quasiquote", "read_quasiquote_vector", "read_unquote", "read_apply_values",
+  "read_vector", "read_bytevector", "read_done", 
+  "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", "eval_done",
+  "catch", "dynamic_wind", "define_constant", "define_constant1", 
+  "do", "do_end", "do_end1", "do_step", "do_step2", "do_init",
+  "define_star", "lambda_star", "lambda_star_default", "error_quit", "unwind_input", "unwind_output", 
+  "error_hook_quit", 
+  "with_let", "with_let1", "with_let_unchecked", "with_let_s", 
+  "with_baffle", "expansion",
+  "for_each", "for_each_simple", "for_each_simpler", "for_each_simplest",
+  "map", "map_simple", "barrier", "deactivate_goto",
   
-  "OP_DEFINE_BACRO", "OP_DEFINE_BACRO_STAR", 
-  "OP_GET_OUTPUT_STRING", "OP_SORT", "OP_SORT1", "OP_SORT2", "OP_SORT3", "OP_SORT_PAIR_END", "OP_SORT_VECTOR_END", "OP_SORT_STRING_END", 
-  "OP_EVAL_STRING_1", "OP_EVAL_STRING_2", 
-  "OP_MEMBER_IF", "OP_ASSOC_IF", "OP_MEMBER_IF1", "OP_ASSOC_IF1",
+  "define_bacro", "define_bacro_star", 
+  "get_output_string", "sort", "sort1", "sort2", "sort3", "sort_pair_end", "sort_vector_end", "sort_string_end", 
+  "eval_string_1", "eval_string_2", 
+  "member_if", "assoc_if", "member_if1", "assoc_if1",
   
-  "OP_QUOTE_UNCHECKED", "OP_LAMBDA_UNCHECKED", "OP_LET_UNCHECKED", "OP_CASE_UNCHECKED", "OP_WHEN_UNCHECKED", "OP_UNLESS_UNCHECKED",
-  "OP_SET_UNCHECKED", "OP_SET_SYMBOL_C", "OP_SET_SYMBOL_S", "OP_SET_SYMBOL_Q", "OP_SET_SYMBOL_P", "OP_SET_SYMBOL_Z", "OP_SET_SYMBOL_A",
-  "OP_SET_SYMBOL_SAFE_S", "OP_SET_SYMBOL_SAFE_C", 
-  "OP_SET_SYMBOL_SAFE_SS", "OP_SET_SYMBOL_SAFE_SSS",
-  "OP_SET_SYMBOL_UNKNOWN_S",
-  "OP_SET_NORMAL", "OP_SET_PAIR", "OP_SET_PAIR_Z", "OP_SET_PAIR_A", "OP_SET_PAIR_P", "OP_SET_PAIR_ZA", "OP_SET_PAIR_UNKNOWN_S",
-  "OP_SET_PAIR_P_1", "OP_SET_WITH_ACCESSOR", "OP_SET_PWS", "OP_SET_ENV_S", "OP_SET_ENV_ALL_X",
-  "OP_SET_PAIR_C", "OP_SET_PAIR_C_P", "OP_SET_PAIR_C_P_1", "OP_SET_SAFE", "OP_SET_FV_SCALED",
-  "OP_LET_STAR_UNCHECKED", "OP_LETREC_UNCHECKED", "OP_LETREC_STAR_UNCHECKED", "OP_COND_UNCHECKED",
-  "OP_LAMBDA_STAR_UNCHECKED", "OP_DO_UNCHECKED", "OP_DEFINE_UNCHECKED", "OP_DEFINE_STAR_UNCHECKED", "OP_DEFINE_FUNCHECKED",
-  "OP_DEFINE_WITH_ACCESSOR", "OP_DEFINE_MACRO_WITH_ACCESSOR",
-  "OP_LET_NO_VARS", "OP_NAMED_LET", "OP_NAMED_LET_NO_VARS", "OP_NAMED_LET_STAR",
-  "OP_CASE_SIMPLE", "OP_CASE_SIMPLER", "OP_CASE_SIMPLER_1", "OP_CASE_SIMPLER_SS",
-  "OP_CASE_SIMPLEST", "OP_CASE_SIMPLEST_SS", "OP_CASE_SIMPLEST_ELSE", "OP_CASE_SIMPLEST_ELSE_C",
-  "OP_LET_C", "OP_LET_S", "OP_SAFE_LET_S", "OP_SAFE_LET_S1", "OP_LET_Q", "OP_LET_ALL_C", "OP_LET_ALL_S", "OP_LET_ALL_X", 
-  "OP_LET_STAR_ALL_X", "OP_LET_opCq", "OP_LET_opSSq", 
-  "OP_IF_P_P_P", "OP_IF_P_P", "OP_IF_P_P_X", "OP_IF_P_X_P", "OP_IF_P_X_X", 
-  "OP_IF_B_P", "OP_IF_ANDP_P", "OP_IF_ANDP_P_P", "OP_IF_ORP_P", "OP_IF_ORP_P_P", 
-  "OP_IF_PPP", "OP_IF_PP", "OP_IF_PPX", "OP_IF_PXP", "OP_IF_PXX", 
-  "OP_IF_S_P_P", "OP_IF_S_P", "OP_IF_S_P_X", "OP_IF_S_X_P", "OP_IF_P_FEED", "OP_IF_P_FEED_1", "OP_WHEN_S", "OP_UNLESS_S",
-  "OP_IF_UNCHECKED", "OP_AND_UNCHECKED", "OP_AND_P", "OP_AND_P1", "OP_OR_UNCHECKED", "OP_OR_P", "OP_OR_P1",
+  "quote_unchecked", "lambda_unchecked", "let_unchecked", "case_unchecked", "when_unchecked", "unless_unchecked",
+  "set_unchecked", "set_symbol_c", "set_symbol_s", "set_symbol_q", "set_symbol_p", "set_symbol_z", "set_symbol_a",
+  "set_symbol_safe_s", "set_symbol_safe_c", 
+  "set_symbol_safe_ss", "set_symbol_safe_sss",
+  "set_symbol_unknown_s",
+  "set_normal", "set_pair", "set_pair_z", "set_pair_a", "set_pair_p", "set_pair_za", "set_pair_unknown_s",
+  "set_pair_p_1", "set_with_accessor", "set_pws", "set_env_s", "set_env_all_x",
+  "set_pair_c", "set_pair_c_p", "set_pair_c_p_1", "set_safe", "set_fv_scaled",
+  "let_star_unchecked", "letrec_unchecked", "letrec_star_unchecked", "cond_unchecked",
+  "lambda_star_unchecked", "do_unchecked", "define_unchecked", "define_star_unchecked", "define_funchecked",
+  "define_with_accessor", "define_macro_with_accessor",
+  "let_no_vars", "named_let", "named_let_no_vars", "named_let_star",
+  "case_simple", "case_simpler", "case_simpler_1", "case_simpler_ss",
+  "case_simplest", "case_simplest_ss", "case_simplest_else", "case_simplest_else_c",
+  "let_c", "let_s", "safe_let_s", "safe_let_s1", "let_q", "let_all_c", "let_all_s", "let_all_x", 
+  "let_star_all_x", "let_opcq", "let_opssq", 
+  "if_p_p_p", "if_p_p", "if_p_p_x", "if_p_x_p", "if_p_x_x", 
+  "if_b_p", "if_andp_p", "if_andp_p_p", "if_orp_p", "if_orp_p_p", 
+  "if_ppp", "if_pp", "if_ppx", "if_pxp", "if_pxx", 
+  "if_s_p_p", "if_s_p", "if_s_p_x", "if_s_x_p", "if_p_feed", "if_p_feed_1", "when_s", "unless_s",
+  "if_unchecked", "and_unchecked", "and_p", "and_p1", "or_unchecked", "or_p", "or_p1",
   
-  "OP_SAFE_IF_Z_Z", 
-  "OP_CATCH_1", "OP_CATCH_2", "OP_CATCH_ALL", "OP_COND_ALL_X", "OP_COND_S",
-  "OP_SIMPLE_DO", "OP_SIMPLE_DO_STEP", "OP_SAFE_DOTIMES", "OP_SAFE_DOTIMES_STEP", "OP_SAFE_DOTIMES_STEP_P", "OP_SAFE_DOTIMES_STEP_O", "OP_SAFE_DOTIMES_STEP_A",
-  "OP_SIMPLE_SAFE_DOTIMES", "OP_SAFE_DO", "OP_SAFE_DO_STEP", "OP_SAFE_DO_STEP_1", "OP_SAFE_DOTIMES_C_C",
-  "OP_SIMPLE_DO_P", "OP_SIMPLE_DO_STEP_P", "OP_DOX", "OP_DOX_STEP", "OP_DOX_STEP_P", "OP_SIMPLE_DO_FOREVER",
-  "OP_DOTIMES_P", "OP_DOTIMES_STEP_P", "OP_SAFE_DOTIMES_C_A",
-  "OP_SIMPLE_DO_A", "OP_SIMPLE_DO_STEP_A",
-  "OP_SAFE_IF_Z_Z_1", "OP_SAFE_IF_CC_X_P", "OP_SAFE_IF_CC_P_P", 
-  "OP_SAFE_IF_CS_P_P", "OP_SAFE_IF_CS_X_P", "OP_SAFE_IF_IS_NULL_S_P", "OP_SAFE_IF_CC_P", "OP_SAFE_IF_CS_P", "OP_SAFE_IF_CS_P_X", "OP_SAFE_IF_IS_NULL_Q_P",
-  "OP_SAFE_IF_CSS_X_P", "OP_SAFE_IF_CSC_X_P", "OP_SAFE_IF_CSC_X_O_A",
-  "OP_SAFE_IF_CSQ_P", "OP_SAFE_IF_CSQ_P_P", "OP_SAFE_IF_CSS_P", "OP_SAFE_IF_CSS_P_P", "OP_SAFE_IF_CSC_P", "OP_SAFE_IF_CSC_P_P", 
-  "OP_SAFE_IF_IS_PAIR_P", "OP_SAFE_IF_IS_PAIR_P_X", "OP_SAFE_IF_IS_PAIR_P_P", "OP_SAFE_IF_C_SS_P", 
-  "OP_SAFE_IF_IS_SYMBOL_P", "OP_SAFE_IF_IS_SYMBOL_P_P", "OP_SAFE_IF_NOT_S_P",
-  "OP_IF_Z_P", "OP_IF_Z_P_P", "OP_IF_A_P", "OP_IF_A_P_P", 
-  "OP_SAFE_C_P_1", "OP_SAFE_C_PP_1", "OP_SAFE_C_PP_2", "OP_SAFE_C_PP_3", "OP_SAFE_C_PP_4", "OP_SAFE_C_PP_5", "OP_SAFE_C_PP_6", 
-  "OP_EVAL_ARGS_P_1", "OP_EVAL_ARGS_P_1_MV", "OP_EVAL_ARGS_P_2", "OP_EVAL_ARGS_P_2_MV", 
-  "OP_EVAL_ARGS_P_3", "OP_EVAL_ARGS_P_4", "OP_EVAL_ARGS_P_3_MV", "OP_EVAL_ARGS_P_4_MV", 
-  "OP_EVAL_ARGS_SSP_1", "OP_EVAL_ARGS_SSP_MV", "OP_EVAL_MACRO_MV",
-  "OP_INCREMENT_1", "OP_DECREMENT_1", "OP_SET_CONS", 
-  "OP_INCREMENT_SS", "OP_INCREMENT_SSS", "OP_INCREMENT_SZ", "OP_INCREMENT_C_TEMP", "OP_INCREMENT_SA", "OP_INCREMENT_SAA",
-  "OP_LET_O", "OP_LET_O1", "OP_LET_R", "OP_LET_ALL_R", "OP_LET_C_D", "OP_LET_Z_P", "OP_LET_O2", "OP_LET_O_O", "OP_LET_Z_O", "OP_LET_O3", 
-  "OP_LET_R_P", "OP_LET_CAR_P",
+  "safe_if_z_z", 
+  "catch_1", "catch_2", "catch_all", "cond_all_x", "cond_s",
+  "simple_do", "simple_do_step", "safe_dotimes", "safe_dotimes_step", "safe_dotimes_step_p", "safe_dotimes_step_o", "safe_dotimes_step_a",
+  "simple_safe_dotimes", "safe_do", "safe_do_step", "safe_do_step_1", "safe_dotimes_c_c",
+  "simple_do_p", "simple_do_step_p", "dox", "dox_step", "dox_step_p", "simple_do_forever",
+  "dotimes_p", "dotimes_step_p", "safe_dotimes_c_a",
+  "simple_do_a", "simple_do_step_a",
+  "safe_if_z_z_1", "safe_if_cc_x_p", "safe_if_cc_p_p", 
+  "safe_if_cs_p_p", "safe_if_cs_x_p", "safe_if_is_null_s_p", "safe_if_cc_p", "safe_if_cs_p", "safe_if_cs_p_x", "safe_if_is_null_q_p",
+  "safe_if_css_x_p", "safe_if_csc_x_p", "safe_if_csc_x_o_a",
+  "safe_if_csq_p", "safe_if_csq_p_p", "safe_if_css_p", "safe_if_css_p_p", "safe_if_csc_p", "safe_if_csc_p_p", 
+  "safe_if_is_pair_p", "safe_if_is_pair_p_x", "safe_if_is_pair_p_p", "safe_if_c_ss_p", 
+  "safe_if_is_symbol_p", "safe_if_is_symbol_p_p", "safe_if_not_s_p",
+  "if_z_p", "if_z_p_p", "if_a_p", "if_a_p_p", 
+  "safe_c_p_1", "safe_c_pp_1", "safe_c_pp_2", "safe_c_pp_3", "safe_c_pp_4", "safe_c_pp_5", "safe_c_pp_6", 
+  "eval_args_p_1", "eval_args_p_1_mv", "eval_args_p_2", "eval_args_p_2_mv", 
+  "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv", 
+  "eval_args_ssp_1", "eval_args_ssp_mv", "eval_macro_mv",
+  "increment_1", "decrement_1", "set_cons", 
+  "increment_ss", "increment_sss", "increment_sz", "increment_c_temp", "increment_sa", "increment_saa",
+  "let_o", "let_o1", "let_r", "let_all_r", "let_c_d", "let_z_p", "let_o2", "let_o_o", "let_z_o", "let_o3", 
+  "let_r_p", "let_car_p",
 
-  "OP_SAFE_C_ZZ_1", "OP_SAFE_C_ZZ_2", "OP_SAFE_C_SZ_1", "OP_SAFE_C_ZS_1", "OP_SAFE_C_ZA_1", "OP_INCREMENT_SZ_1", "OP_SAFE_C_SZ_SZ",
-  "OP_SAFE_C_ZAA_1", "OP_SAFE_C_AZA_1", "OP_SAFE_C_AAZ_1", "OP_SAFE_C_SSZ_1", 
-  "OP_SAFE_C_ZZA_1", "OP_SAFE_C_ZZA_2", "OP_SAFE_C_ZAZ_1", "OP_SAFE_C_ZAZ_2", "OP_SAFE_C_AZZ_1", "OP_SAFE_C_AZZ_2", 
-  "OP_SAFE_C_ZZZ_1", "OP_SAFE_C_ZZZ_2", "OP_SAFE_C_ZZZ_3", 
-  "OP_SAFE_C_ZZZZ_1", "OP_SAFE_C_ZZZZ_2", "OP_SAFE_C_ZZZZ_3", "OP_SAFE_C_ZZZZ_4", 
+  "safe_c_zz_1", "safe_c_zz_2", "safe_c_sz_1", "safe_c_zs_1", "safe_c_za_1", "increment_sz_1", "safe_c_sz_sz",
+  "safe_c_zaa_1", "safe_c_aza_1", "safe_c_aaz_1", "safe_c_ssz_1", 
+  "safe_c_zza_1", "safe_c_zza_2", "safe_c_zaz_1", "safe_c_zaz_2", "safe_c_azz_1", "safe_c_azz_2", 
+  "safe_c_zzz_1", "safe_c_zzz_2", "safe_c_zzz_3", 
+  "safe_c_zzzz_1", "safe_c_zzzz_2", "safe_c_zzzz_3", "safe_c_zzzz_4", 
 
-  "OP_SAFE_C_opSq_P_1", "OP_SAFE_C_opSq_P_MV", "OP_C_P_1", "OP_C_P_2", "OP_C_SP_1", "OP_C_SP_2",
-  "OP_MAX_DEFINED_1"};
+  "safe_c_opsq_p_1", "safe_c_opsq_p_mv", "c_p_1", "c_p_2", "c_sp_1", "c_sp_2",
+  "max_defined_1"};
 
 typedef enum{E_C_P, E_C_PP, E_C_CP, E_C_SP, E_C_PC, E_C_PS} combine_op_t;
 
@@ -1356,7 +1356,7 @@ struct s7_scheme {
   s7_pointer free_heap_size_symbol, file_names_symbol, symbol_table_symbol, hash_tables_symbol, gensyms_symbol, cpu_time_symbol;
   s7_pointer stack_size_symbol, rootlet_size_symbol, c_types_symbol, safety_symbol, maximum_stack_size_symbol, gc_stats_symbol;
   s7_pointer strings_symbol, vectors_symbol, input_ports_symbol, output_ports_symbol, continuations_symbol, c_objects_symbol;
-  s7_pointer catches_symbol, exits_symbol;
+  s7_pointer catches_symbol, exits_symbol, stack_symbol;
 };
 
 typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_write_t;
@@ -4378,6 +4378,7 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
    *   surrounding code because nothing else points to them.  If we make a special GC protected
    *   list of them, we end up with a bazillion: in snd-test there are 12667 list constants
    *   and 19 vector constants in the removed code!
+   * could we see that we're dealing with hloc=-1 and permanently allocate the new value?
    */
   loc = heap_location(x);
   if (loc == NOT_IN_HEAP) return;
@@ -4496,10 +4497,10 @@ static void resize_op_stack(s7_scheme *sc)
 }
 
 
-#define stack_code(Stack, Loc)        vector_element(Stack, Loc - 3)
-#define stack_environment(Stack, Loc) vector_element(Stack, Loc - 2)
-#define stack_args(Stack, Loc)        vector_element(Stack, Loc - 1)
-#define stack_op(Stack, Loc)          ((opcode_t)(vector_element(Stack, Loc)))
+#define stack_code(Stack, Loc)  vector_element(Stack, Loc - 3)
+#define stack_let(Stack, Loc)   vector_element(Stack, Loc - 2)
+#define stack_args(Stack, Loc)  vector_element(Stack, Loc - 1)
+#define stack_op(Stack, Loc)    ((opcode_t)(vector_element(Stack, Loc)))
 
 /* these macros are faster than the equivalent simple function calls.  If the s7_scheme struct is set up to reflect the
  *    stack order [code envir args op], we can use memcpy here: 
@@ -4553,7 +4554,7 @@ static void resize_op_stack(s7_scheme *sc)
 
 #define main_stack_op(Sc)             ((opcode_t)(Sc->stack_end[-1]))
 #define main_stack_args(Sc)           (Sc->stack_end[-2])
-#define main_stack_environment(Sc)    (Sc->stack_end[-3])
+#define main_stack_let(Sc)    (Sc->stack_end[-3])
 #define main_stack_code(Sc)           (Sc->stack_end[-4])
 #define pop_main_stack(Sc)            Sc->stack_end -= 4
 
@@ -6436,7 +6437,7 @@ static s7_pointer g_symbol_to_dynamic_value(s7_scheme *sc, s7_pointer args)
   for (i = s7_stack_top(sc) - 1; i > 0; i -= 4)
     {
       s7_pointer cur_val;
-      cur_val = find_dynamic_value(sc, stack_environment(sc->stack, i), sym, &top_id);
+      cur_val = find_dynamic_value(sc, stack_let(sc->stack, i), sym, &top_id);
       if (cur_val != sc->GC_NIL)
 	val = cur_val;
       if (top_id == symbol_id(sym))
@@ -33383,6 +33384,14 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   return(x);
 }
 
+s7_pointer s7_make_safe_function(s7_scheme *sc, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
+{
+  s7_pointer p;
+  p = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
+  set_type(p, type(p) | T_SAFE_PROCEDURE);
+  return(p);
+}
+
 
 bool s7_is_procedure(s7_pointer x)
 {
@@ -36824,7 +36833,7 @@ static s7_pointer stacktrace_find_caller(s7_scheme *sc, s7_pointer e)
 static bool stacktrace_find_environment(s7_scheme *sc, int loc, s7_pointer e)
 {
   return((loc > 0) &&
-	 ((stack_environment(sc->stack, loc) == e) ||
+	 ((stack_let(sc->stack, loc) == e) ||
 	  (stacktrace_find_environment(sc, loc - 4, e))));
 }
 
@@ -37072,7 +37081,7 @@ static char *stacktrace_1(s7_scheme *sc, int frames_max, int code_cols, int tota
 		{
 		  s7_pointer e, f;
 
-		  e = stack_environment(sc->stack, true_loc);
+		  e = stack_let(sc->stack, true_loc);
 		  f = stacktrace_find_caller(sc, e);
 		  if (!stacktrace_error_hook_function(sc, f))
 		    {
@@ -37724,7 +37733,7 @@ static s7_pointer active_catches(s7_scheme *sc)
 	lst = cons(sc, catch_tag(x), lst);
 	break;
       }
-  return(lst);
+  return(reverse_in_place_unchecked(sc, sc->NIL, lst));
 }
 
 static s7_pointer active_exits(s7_scheme *sc)
@@ -37741,8 +37750,35 @@ static s7_pointer active_exits(s7_scheme *sc)
 	if ((is_closure(func)) || (is_closure_star(func)))
 	  lst = cons(sc, cons(sc, car(closure_args(func)), jump), lst);
 	else lst = cons(sc, cons(sc, sc->UNSPECIFIED, jump), lst);
+	sc->w = lst;
       }
-  return(lst);
+  return(reverse_in_place_unchecked(sc, sc->NIL, lst));
+}
+
+static s7_pointer stack_entries(s7_scheme *sc)
+{
+  int i;
+  s7_pointer lst, func, args, e;
+  opcode_t op;
+
+  lst = sc->NIL;
+  for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
+    {
+      func = stack_code(sc->stack, i);
+      args = stack_args(sc->stack, i);
+      e = stack_let(sc->stack, i);
+      op = stack_op(sc->stack, i);
+      if ((s7_is_valid(sc, func)) &&
+	  (s7_is_valid(sc, args)) &&
+	  (s7_is_valid(sc, e)) &&
+	  (op >= OP_NO_OP) && 
+	  (op < OP_MAX_DEFINED))
+	{
+	  lst = cons(sc, list_4(sc, func, args, e, make_protected_string(sc, real_op_names[op])), lst);
+	  sc->w = lst;
+	}
+    }
+  return(reverse_in_place_unchecked(sc, sc->NIL, lst));
 }
 
 
@@ -37763,7 +37799,7 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 	  case OP_CATCH_ALL:
 	    {
 	      s7_pointer catcher;
-	      catcher = stack_environment(sc->stack, i);
+	      catcher = stack_let(sc->stack, i);
 	      sc->op_stack_now = (s7_pointer *)(sc->op_stack + catch_all_op_loc(catcher));
 	      sc->stack_end = (s7_pointer *)(sc->stack_start + catch_all_goto_loc(catcher));
 	      pop_stack(sc);
@@ -37870,7 +37906,7 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 		if (op == OP_CATCH_1)
 		  {
 		    s7_pointer y;
-		    make_closure_without_capture(sc, y, car(error_func), cdr(error_func), stack_environment(sc->stack, i));
+		    make_closure_without_capture(sc, y, car(error_func), cdr(error_func), stack_let(sc->stack, i));
 		    sc->code = y;
 		  }
 		else sc->code = error_func;
@@ -53172,7 +53208,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     POP_BEGIN:
       {
 	s7_pointer code;
-	sc->envir = main_stack_environment(sc);
+	sc->envir = main_stack_let(sc);
 	code = main_stack_code(sc); 
 	sc->code =  car(code); 
 	if (is_null(cdr(code)))  /* about 1/2 of these are symbols/#f but checking here costs more than it saves */
@@ -55196,7 +55232,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		if (main_stack_op(sc) == OP_BEGIN1) 
 		  {
-		    sc->envir = main_stack_environment(sc);
+		    sc->envir = main_stack_let(sc);
 		    code = main_stack_code(sc); 
 		    sc->code = car(code); 
 		    if (is_null(cdr(code))) 
@@ -61943,7 +61979,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_SAFE_LET_S:
-      /* fprintf(stderr, "let: %s\n", DISPLAY(sc->code)); */
       NEW_FRAME_WITH_SLOT(sc, sc->envir, optimized_let(slot_value(global_slot(pair_syntax_symbol(sc->code)))), 
 			  gcdr(sc->code), find_symbol_checked(sc, fcdr(sc->code)));
       sc->envir = optimized_let(slot_value(global_slot(pair_syntax_symbol(sc->code))));
@@ -61953,6 +61988,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_SAFE_LET_S1:
       {
+	/* all of this is repeated -- make a macro or something */
 	s7_pointer slot, old_env;
 	old_env = sc->envir;
 	sc->envir = fcdr(ecdr(sc->code)); /* optimized_let(slot_value(global_slot(pair_syntax_symbol(sc->code)))); */
@@ -68739,6 +68775,7 @@ static void init_s7_env(s7_scheme *sc)
   sc->cpu_time_symbol =               s7_make_symbol(sc, "cpu-time");
   sc->catches_symbol =                s7_make_symbol(sc, "catches");
   sc->exits_symbol =                  s7_make_symbol(sc, "exits");
+  sc->stack_symbol =                  s7_make_symbol(sc, "stack");
 }
 
 static s7_pointer make_shadow_vector(s7_scheme *sc, s7_Int size, s7_pointer *elements)
@@ -68781,6 +68818,8 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
     return(active_catches(sc));
   if (sym == sc->exits_symbol)                                           /* exits */
     return(active_exits(sc));
+  if (sym == sc->stack_symbol)                                           /* stack */
+    return(stack_entries(sc));
 
   if (sym == sc->heap_size_symbol)                                       /* heap-size */
     return(s7_make_integer(sc, sc->heap_size));
@@ -70582,7 +70621,6 @@ int main(int argc, char **argv)
  * what about (reactive-vector (v 0)) -- can we watch some other vector's contents?
  *   if v were a mock-vector, we could use the same vector-set! stuff as now but with any name (how to distinguish?)
  *   we can distinguish because this is happening at run-time where (v 0) has an ascertainable meaning
- *
  * how would reactive-hash-table work? (hash 'a (+ b 1)) and update 'a's value whenever b changes?
  *   reactive-string? (reactive-string #\a c (integer->char a) (str 0) (_ 0))
  *   reactive-eval reactive-if(expr changes)--reactive-assert for example
@@ -70591,31 +70629,25 @@ int main(int argc, char **argv)
  *    (set! (samples (sound) sample) new-sample)
  * *snd* or *clm* libraries also
  *   in clm: get rid of the run-time function args to src/convolve/granulate/phase-vocoder/move-sound?
- * other libraries: fftw, alsa, jack, clm? sndlib? -- libclm.so in CL version, libsndlib.so from sndlib makefile
- *
- * cload -- all funcs non-safe?
- *    define_safe_* adds to rootlet, but cload wants a local func
- *    maybe add s7_make_safe_function
- *
- * multimethod troubles: 
- *     let-ref ambiguous
- *     embedded lets as in (inlet 'c (mock-num 0)) etc -- some of these might work
- *     let-ref-fallback should close obj via dynamic-wind
- *   t978 has some of these [need at least a few token tests]
- *   check simple make-let times, doc the special quirks somewhere
+ * other libraries: sdl2, fftw, alsa, jack, clm? sndlib? -- libclm.so in CL version, libsndlib.so from sndlib makefile
  *
  * catch with list of tags, or maybe throw should look for its tag independent of catch #t?
  *   I think the member/memq could be added at almost no cost, (member tag catch_tag) or if tag simple, memq
  *   but it's ambiguous -- tag can be anything.
  *   (catcher tag . body) and (thrower tag-func error-func) where (func tag) -> not #f then => body?)
  *
- * *s7* 'stack: (func args env op-name?) on the stack?
- * doc/test examples of these and exisiting
+ * doc/test *s7* cases
  *
  * safe let (etc): test this!
- *   ca 20 lines per choice
  *   do we need any added internal syntax symbols? -- just copy and set the op (where?)
  *   also what are the unhandled let cases now?
  *   try the RP and ALLX cases
+ *   check remove-from-heap of safe_let_s and bad_set->false, if removed, permanently alloc the new frame+syntax
+ *     even after removal, the added stuff is being marked correctly -- is this by chance?
+ * 
+ * unknown_0|1... at 1st opt, subsequent run-time call on opt_func* (and when type checks indicate trouble)
+ * weak symbol-access refs to enclosing let -- add gc to undo these settings
+ *   easier said... how to turn off the refs in this one case?
+ * can the internal syntaces be simple enums?
  */
 
