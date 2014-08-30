@@ -5647,7 +5647,9 @@ if *debugging* is #t; otherwise assert expands into nothing.
 <div class="separator"></div>
 <p><b>*s7*</b> is an environment that gives access to some of s7's internal
 state: stack-top, stack-size, and maximum-stack-size, the symbol-table as a raw vector,
-rootlet-size, safety, cpu-time, heap-size, free-heap-size, gc-freed, gc-protected-objects, gc-stats,
+rootlet-size, safety, catches (a list of the currently active catch tags), 
+exits (a list of active call-with-exit exit functions),
+cpu-time, heap-size, free-heap-size, gc-freed, gc-protected-objects, gc-stats,
 file-names (currently loaded files), and various GC tables: gensyms,
 input-ports, output-ports, strings, vectors, hash-tables, continuations,
 and c-objects.  Use the standard environment syntax to access these fields:
