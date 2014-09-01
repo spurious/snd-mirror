@@ -531,7 +531,9 @@ int main(int argc, char **argv)
 				in_comment = 1;
 			      else
 				{
-				  if ((input[j] == '#') && ((input[j + 1] == 'd') || (input[j + 1] == 'u')))
+				  if ((input[j] == '#') && 
+				      (((input[j + 1] == 'd') && (input[j + 2] == 'e')) || 
+				       ((input[j + 1] == 'u') && (input[j + 2] == 'n'))))
 				    {
 				      in_define = 1;
 				      got_macro = false;

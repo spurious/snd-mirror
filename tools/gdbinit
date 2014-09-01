@@ -146,7 +146,11 @@ define s7cell
 
   if (($type == T_SYMBOL) || ($is_bad_type))
       printf "sym:            name: %p, global_slot: %p, local_slot: %p, \n                    id: %d, accessor: %d\n", \
-         $cell.object.sym.name, $cell.object.sym.global_slot, $cell.object.sym.local_slot, $cell.object.sym.id, $cell.object.sym.ext.accessor
+         $cell.object.sym.name, $cell.object.sym.global_slot, $cell.object.sym.local_slot, $cell.object.sym.id, $cell.object.sym.str_ext.accessor
+  end
+
+  if (($type == T_SYNTAX) || ($is_bad_type))
+      printf "syn:            symbol: %p, op: %d, let: %p, mark: %p\n", $cell.object.syn.symbol, $cell.object.syn.op, $cell.object.syn.let, $cell.object.syn.gc_mark
   end
 
   if (($type == T_CONTINUATION) || ($is_bad_type))
@@ -176,8 +180,7 @@ define s7cell
   end
 
   if (($type == T_GOTO) || ($is_bad_type))
-      printf "rexit:      goto_loc: %d, op_stack_loc: %d, active: %d\n", \
-         $cell.object.rexit.goto_loc, $cell.object.rexit.op_stack_loc, $cell.object.rexit.active
+      printf "rexit:      goto_loc: %d, op_stack_loc: %d, active: %d\n", $cell.object.rexit.goto_loc, $cell.object.rexit.op_stack_loc, $cell.object.rexit.active
   end
 
   if (($type == T_DYNAMIC_WIND) || ($is_bad_type))

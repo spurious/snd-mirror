@@ -753,7 +753,6 @@ FOO
 <pre class="indented">
 (define* (foo (a 0) (b (+ a 4)) (c (+ a 7))) (list a b c))
 </pre>
-
 </div>
 
 
@@ -5920,14 +5919,14 @@ symbol-&gt;object
 </pre>
 
 <p>s7 normally tries to optimize garbage collection by
-removing some constants from the heap.  If that constant is a sequence, and you later
-set some member of it to something that needs GC protection, nobody in the heap points to it, so
+removing some list constants from the heap.  If you later
+set a member of it to something that needs GC protection, nobody in the heap points to it, so
 it is GC'd.  Here is an example:
 </p>
 
 <pre class="indented">
 (define (bad-idea)
-  (let ((lst '(1 2 3)))              ; or #(1 2 3) and vector-ref|set
+  (let ((lst '(1 2 3)))
     (let ((result (list-ref lst 1)))
      (list-set! lst 1 (* 2.0 16.6))
      (gc)

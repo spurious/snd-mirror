@@ -568,8 +568,6 @@ s7_pointer s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int
    *
    * s7_define_macro defines a Scheme macro; its arguments are not evaluated (unlike a function),
    *   but its returned value (assumed to be some sort of Scheme expression) is evaluated.
-   *
-   * for s7_make_closure, see the "Closure defined in C" example in s7.html.
    */
 
   /* In s7, (define* (name . args) body) or (define name (lambda* args body))
@@ -797,7 +795,6 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 #define s7_object_set_environment s7_object_set_let
 
 s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_pointer e); /* replaced by s7_method */
-s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer a, s7_pointer c, s7_pointer e);
 #endif
 
 
