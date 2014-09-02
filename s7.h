@@ -27,7 +27,7 @@ typedef double s7_Double;
    *       libxm: libxm.tar.gz (X, Motif, Gtk, Cairo, and openGL bindings)
    *       sndlib: sndlib.tar.gz (sound file, audio port, and CLM bindings plus an optimizer (run))
    *
-   *   Common Music by Rick Taube: http://camil.music.uiuc.edu/Software/grace/downloads/cm3.tar.gz (composition)
+   *   Common Music/Grace by Rick Taube: http://camil.music.uiuc.edu/Software/grace/downloads/cm3.tar.gz (composition)
    *     which can use sndlib -- see Snd's grfsnd.html or the cmdist archives for details
    */
 
@@ -61,7 +61,6 @@ s7_scheme *s7_init(void);
 
   /* s7_scheme is our interpreter
    * s7_pointer is a Scheme object of any (Scheme) type
-   *
    * s7_init creates the interpreter.
    */
 
@@ -503,7 +502,7 @@ void s7_define_safe_function_star(s7_scheme *sc, const char *name, s7_function f
 void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc);
   /* this is now the same as s7_dilambda (different args) */
 
-
+  /* these are aimed at the CLM optimizer */
 s7_pointer (*s7_function_chooser(s7_scheme *sc, s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
 void s7_function_set_chooser(s7_scheme *sc, s7_pointer fnc,  s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr));
 void *s7_function_chooser_data(s7_scheme *sc, s7_pointer f);
@@ -512,13 +511,11 @@ void s7_function_chooser_set_data(s7_scheme *sc, s7_pointer f, void *data);
   /* unsigned int s7_function_class(s7_pointer f); */
 void s7_function_set_class(s7_pointer f, s7_pointer base_f);
 s7_function s7_function_choice(s7_scheme *sc, s7_pointer expr);
-
 bool s7_function_choice_is_direct(s7_scheme *sc, s7_pointer expr);
 void s7_function_choice_set_direct(s7_scheme *sc, s7_pointer expr);
 bool s7_function_choice_is_direct_to_real(s7_scheme *sc, s7_pointer expr);
 s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr);
 bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree);
-
 s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
 void s7_function_set_returns_temp(s7_pointer f);
 void s7_function_set_step_safe(s7_pointer f);
@@ -541,8 +538,8 @@ typedef struct {
 
 void s7_function_set_ex_parser(s7_pointer f, s7_ex *(*func)(s7_scheme *sc, s7_pointer expr));
 s7_ex *(*s7_function_ex_parser(s7_pointer f))(s7_scheme *sc, s7_pointer expr);
-s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
 
+s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
 s7_pointer s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 
   /* s7_make_function creates a Scheme function object from the s7_function 'fnc'.
@@ -661,18 +658,6 @@ s7_pointer s7_object_let(s7_pointer obj);
 s7_pointer s7_object_set_let(s7_pointer obj, s7_pointer e);
 void s7_set_object_print_readably(int type, char *(*printer)(s7_scheme *sc, void *val));
 
-  /* experiments */
-void s7_function_set_looped(s7_pointer f, s7_pointer c);
-void s7_function_set_let_looped(s7_pointer f, s7_pointer c);
-s7_pointer s7_local_slot(s7_scheme *sc, s7_pointer symbol);
-s7_pointer s7_is_local_variable(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
-void s7_set_ex_fallback(s7_scheme *sc, s7_ex *(*fallback)(s7_scheme *sc, s7_pointer expr, s7_pointer locals));
-s7_ex *(*s7_ex_fallback(s7_scheme *sc))(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
-
-void s7_autoload_set_names(s7_scheme *sc, const char **names, int size);
-
-
-
   /* These functions create a new Scheme object type.  There is a simple example in s7.html.
    *
    * s7_new_type describes the type for Scheme:
@@ -702,6 +687,16 @@ void s7_autoload_set_names(s7_scheme *sc, const char **names, int size);
    * s7_mark_object marks any Scheme object as in-use (use this in the gc_mark function to mark
    *    any embedded s7_pointer variables).
    */
+
+  /* experiments */
+void s7_function_set_looped(s7_pointer f, s7_pointer c);
+void s7_function_set_let_looped(s7_pointer f, s7_pointer c);
+s7_pointer s7_local_slot(s7_scheme *sc, s7_pointer symbol);
+s7_pointer s7_is_local_variable(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
+void s7_set_ex_fallback(s7_scheme *sc, s7_ex *(*fallback)(s7_scheme *sc, s7_pointer expr, s7_pointer locals));
+s7_ex *(*s7_ex_fallback(s7_scheme *sc))(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
+
+void s7_autoload_set_names(s7_scheme *sc, const char **names, int size);
 
 s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
 
