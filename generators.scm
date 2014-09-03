@@ -756,7 +756,17 @@
   
   (nrxysin (gen 'gen) fm))
 
-
+(define (nrcos-set-scaler g val)
+  (set! (g 'r) (min 0.999999 (max -0.999999 val)))
+  (with-let g
+    (let ((absr (abs r)))
+      (set! rr (* r r))
+      (set! r1 (+ 1.0 rr))
+      (set! norm (- (/ (- (expt absr n) 1) (- absr 1)) 1.0))
+      (set! trouble (or (= n 1) 
+			(< absr 1.0e-12)))))
+  val)
+  
 (define nrcos-methods
   (list
    (cons 'mus-order
@@ -775,18 +785,8 @@
 	  (lambda (g val) (set! (g 'frequency) (hz->radians val)))))
    (cons 'mus-scaler
 	 (dilambda
-	  (lambda (g) 
-	    (g 'r))
-	  (lambda (g val)
-	    (set! (g 'r) (min 0.999999 (max -0.999999 val)))
-	    (with-let g
-	      (let ((absr (abs r)))
-		(set! rr (* r r))
-		(set! r1 (+ 1.0 rr))
-		(set! norm (- (/ (- (expt absr n) 1) (- absr 1)) 1.0))
-		(set! trouble (or (= n 1) 
-				  (< absr 1.0e-12)))))
-	    val)))))
+	  (lambda (g) (g 'r))
+	  nrcos-set-scaler))))
 
 (defgenerator (nrcos
 	       :make-wrapper (lambda (g)
