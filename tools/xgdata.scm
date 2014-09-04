@@ -8980,3 +8980,4 @@
 (CINT-3.14 "GTK_TEXT_VIEW_LAYER_ABOVE" "GtkTextViewLayer")
 
 ;;; 3.13.7: nothing new (GtkStatusIcon deprecated)
+;;; 3.13.8: nothing new

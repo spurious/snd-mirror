@@ -123,7 +123,7 @@
 			    (apply setf (cddr ,args)))))))
 
 (define-macro* (incf sym (inc 1))
-  `(set! ,sym (+ ,sym ,inc)))
+  `(set! ,sym (+ ,sym ,inc))) ; or ({list} set! sym ({list} + sym inc))
 
 (define-macro* (decf sym (dec 1))
   `(set! ,sym (- ,sym ,dec)))
