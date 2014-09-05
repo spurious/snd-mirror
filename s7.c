@@ -382,8 +382,8 @@ enum {OP_NO_OP,
       OP_LET_NO_VARS, OP_NAMED_LET, OP_NAMED_LET_NO_VARS, OP_NAMED_LET_STAR,
       OP_CASE_SIMPLE, OP_CASE_SIMPLER, OP_CASE_SIMPLER_1, OP_CASE_SIMPLER_SS,
       OP_CASE_SIMPLEST, OP_CASE_SIMPLEST_SS, OP_CASE_SIMPLEST_ELSE, OP_CASE_SIMPLEST_ELSE_C,
-      OP_LET_C, OP_LET_S, OP_SAFE_LET_S, OP_SAFE_LET_S1, OP_LET_Q, OP_LET_ALL_C, OP_LET_ALL_S, OP_LET_ALL_X,
-      OP_LET_STAR_ALL_X, OP_LET_opCq, OP_LET_opSSq, OP_SAFE_LET_opCq, OP_SAFE_LET_opCq1,
+      OP_LET_C, OP_LET_S, OP_LET_Q, OP_LET_ALL_C, OP_LET_ALL_S, OP_LET_ALL_X,
+      OP_LET_STAR_ALL_X, OP_LET_opCq, OP_LET_opSSq,
       OP_IF_P_P_P, OP_IF_P_P, OP_IF_P_P_X, OP_IF_P_X_P, OP_IF_P_X_X, 
       OP_IF_B_P, OP_IF_ANDP_P, OP_IF_ANDP_P_P, OP_IF_ORP_P, OP_IF_ORP_P_P, 
       OP_IF_PPP, OP_IF_PP, OP_IF_PPX, OP_IF_PXP, OP_IF_PXX, 
@@ -481,7 +481,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "case", "case", "case", "case",
    "case", "case", "case", "case", 
    "let", "let", "let", "let", "let", "let",
-   "let*", "let", "let", "let", "let", "let", "let",
+   "let*", "let", "let",
 
    "if", "if", "if", "if", "if", 
    "if", "if", "if", "if", "if", "if", 
@@ -565,8 +565,8 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "let_no_vars", "named_let", "named_let_no_vars", "named_let_star",
   "case_simple", "case_simpler", "case_simpler_1", "case_simpler_ss",
   "case_simplest", "case_simplest_ss", "case_simplest_else", "case_simplest_else_c",
-  "let_c", "let_s", "safe_let_s", "safe_let_s1", "let_q", "let_all_c", "let_all_s", "let_all_x", 
-  "let_star_all_x", "let_opcq", "let_opssq", "safe_let_opcq", "safe_let_opcq1",
+  "let_c", "let_s", "let_q", "let_all_c", "let_all_s", "let_all_x", 
+  "let_star_all_x", "let_opcq", "let_opssq", 
   "if_p_p_p", "if_p_p", "if_p_p_x", "if_p_x_p", "if_p_x_x", 
   "if_b_p", "if_andp_p", "if_andp_p_p", "if_orp_p", "if_orp_p_p", 
   "if_ppp", "if_pp", "if_ppx", "if_pxp", "if_pxx", 
@@ -615,7 +615,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_C_ALL_S, HOP_SAFE_C_ALL_S, OP_SAFE_C_ALL_X, HOP_SAFE_C_ALL_X, OP_SAFE_C_SSA, HOP_SAFE_C_SSA, 
       OP_SAFE_C_CSA, HOP_SAFE_C_CSA, OP_SAFE_C_SCA, HOP_SAFE_C_SCA, OP_SAFE_C_CAS, HOP_SAFE_C_CAS,
       OP_SAFE_C_A, HOP_SAFE_C_A, OP_SAFE_C_AA, HOP_SAFE_C_AA, OP_SAFE_C_AAA, HOP_SAFE_C_AAA, OP_SAFE_C_AAAA, HOP_SAFE_C_AAAA, 
-      OP_SAFE_C_SQS, HOP_SAFE_C_SQS, 
+      OP_SAFE_C_SQS, HOP_SAFE_C_SQS, OP_SAFE_C_opAq, HOP_SAFE_C_opAq, OP_SAFE_C_opAAq, HOP_SAFE_C_opAAq, OP_SAFE_C_opAAAq, HOP_SAFE_C_opAAAq,
       OP_SAFE_C_S_opAAq, HOP_SAFE_C_S_opAAq, OP_SAFE_C_S_opAAAq, HOP_SAFE_C_S_opAAAq, 
 
       OP_SAFE_C_opCq, HOP_SAFE_C_opCq, OP_SAFE_C_opSq, HOP_SAFE_C_opSq, 
@@ -724,7 +724,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_all_s", "h_safe_c_all_s", "safe_c_all_x", "h_safe_c_all_x", "safe_c_ssa", "h_safe_c_ssa", 
       "safe_c_csa", "h_safe_c_csa", "safe_c_sca", "h_safe_c_sca", "safe_c_cas", "h_safe_c_cas",
       "safe_c_a", "h_safe_c_a", "safe_c_aa", "h_safe_c_aa", "safe_c_aaa", "h_safe_c_aaa", "safe_c_aaaa", "h_safe_c_aaaa", 
-      "safe_c_sqs", "h_safe_c_sqs",
+      "safe_c_sqs", "h_safe_c_sqs", "safe_c_opaq", "h_safe_c_opaq", "safe_c_opaaq", "h_safe_c_opaaq", "safe_c_opaaaq", "h_safe_c_opaaaq", 
       "safe_c_s_opaaq", "h_safe_c_s_opaaq", "safe_c_s_opaaaq", "h_safe_c_s_opaaaq", 
       
       "safe_c_opcq", "h_safe_c_opcq", "safe_c_opsq", "h_safe_c_opsq", 
@@ -1039,9 +1039,6 @@ typedef struct s7_cell {
     struct {                       /* syntax */
       s7_pointer symbol;
       int op;
-
-      void (*gc_mark)(s7_pointer p);
-      s7_pointer let;
     } syn;
 
     struct {                       /* slots (bindings) */
@@ -1326,8 +1323,8 @@ struct s7_scheme {
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED;
   s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLER_1, CASE_SIMPLER_SS;
   s7_pointer CASE_SIMPLEST, CASE_SIMPLEST_SS, CASE_SIMPLEST_ELSE, CASE_SIMPLEST_ELSE_C;
-  s7_pointer LET_C, LET_S, SAFE_LET_S, LET_Q, LET_ALL_C, LET_ALL_S, LET_ALL_X;
-  s7_pointer LET_STAR_ALL_X, LET_opCq, LET_opSSq, SAFE_LET_opCq;
+  s7_pointer LET_C, LET_S, LET_Q, LET_ALL_C, LET_ALL_S, LET_ALL_X;
+  s7_pointer LET_STAR_ALL_X, LET_opCq, LET_opSSq;
   s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, NAMED_LET_STAR, LET_STAR2, IF_UNCHECKED, AND_UNCHECKED, AND_P, OR_UNCHECKED, OR_P;
   s7_pointer IF_P_P_P, IF_P_P, IF_B_P, IF_P_P_X, IF_P_X_P, IF_P_X_X, IF_S_P_P, IF_S_P, IF_S_P_X, IF_S_X_P, IF_P_FEED;
   s7_pointer IF_Z_P, IF_Z_P_P, IF_A_P, IF_A_P_P, IF_ANDP_P, IF_ANDP_P_P, IF_ORP_P, IF_ORP_P_P, WHEN_UNCHECKED, UNLESS_UNCHECKED, WHEN_S, UNLESS_S;
@@ -1749,9 +1746,6 @@ static void init_types(void)
 /* pair in question has line/file info added during read, or the environment has function placement info
  */
 
-#define T_OPTIMIZED_LET               T_LINE_NUMBER
-#define is_optimized_let(p)           ((typeflag(p) & T_OPTIMIZED_LET) != 0)
-
 #define T_LOADER_PORT                 T_LINE_NUMBER
 #define is_loader_port(p)             ((typeflag(p) & T_LOADER_PORT) != 0)
 #define set_loader_port(p)            typeflag(p) |= T_LOADER_PORT
@@ -2166,9 +2160,6 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 #define is_syntax(p)                  (type(p) == T_SYNTAX)
 #define syntax_symbol(p)              (p)->object.syn.symbol
 #define syntax_opcode(p)              (p)->object.syn.op
-#define syntax_gc_mark(p)             (p)->object.syn.gc_mark
-
-#define optimized_let(p)              (p)->object.syn.let
 
 #define pair_syntax_op(P)             (P)->object.cons.dat.op
 #define pair_syntax_symbol(P)         car(ecdr(P))
@@ -2662,7 +2653,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 #define WITH_COUNTS 0
 
 #if WITH_COUNTS
-#if 0
+#if 1
 #if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -3191,14 +3182,6 @@ static void mark_symbol(s7_pointer p)
   /* don't set the mark bit of a normal symbol!  It wrecks the check against SYNTACTIC_TYPE,
    *   slowing everything down by a large amount.
    */
-  else
-    {
-      if (is_optimized_let(p))
-	{
-	  set_mark(p);
-	  S7_MARK(global_slot(p));
-	}
-    }
 }
 
 static void mark_noop(s7_pointer p)
@@ -3269,8 +3252,7 @@ static void sweep(s7_scheme *sc)
 	  else sc->gensyms[j++] = s1;
 	}
       sc->gensyms_loc = j;
-      if (j == 0)
-	mark_function[T_SYMBOL] = mark_noop;
+      if (j == 0) mark_function[T_SYMBOL] = mark_noop;
     }
 
   if (sc->c_objects_loc > 0)
@@ -3896,7 +3878,6 @@ static void mark_input_port(s7_pointer p)
 
 static void mark_syntax(s7_pointer p)
 {
-  syntax_gc_mark(p)(p);
 }
 
 
@@ -3994,6 +3975,7 @@ static void unmark_permanent_objects(s7_scheme *sc)
     clear_mark(g->p);
 }
 
+
 #define GC_TRIGGER_SIZE 64
 
 
@@ -4023,7 +4005,7 @@ static int gc(s7_scheme *sc)
     else \
       { \
         if (typeflag(p) != 0) \
-          {\
+          { \
 	    p->debugger_bits = 0;\
             clear_type(p);	\
             (*fp++) = p;\
@@ -4438,10 +4420,12 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       return;
 
     case T_VECTOR:
+      add_permanent_object(sc, x);
+      return;
+
     case T_HASH_TABLE:
     case T_ENVIRONMENT:
     case T_SYNTAX:
-      add_permanent_object(sc, x);
       return;
 
     case T_SYMBOL:
@@ -4453,11 +4437,6 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 	  heap_location(sc->heap[loc]) = loc;
 	  clear_gensym(x);
 	  heap_location(x) = NOT_IN_HEAP;
-	}
-      else
-	{
-	  if (is_optimized_let(x))
-	    add_permanent_object(sc, x);
 	}
       return;
 
@@ -40936,7 +40915,6 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS); 
   syntax_opcode(syn) = op;
   syntax_symbol(syn) = x; 
-  syntax_gc_mark(syn) = mark_noop;
 
   global_slot(x) = permanent_slot(x, syn);
   initial_slot(x) = permanent_slot(x, syn);
@@ -40965,55 +40943,11 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS); 
   syntax_opcode(syn) = op;
   syntax_symbol(syn) = s7_make_symbol(sc, name);
-  syntax_gc_mark(syn) = mark_noop;
 
   global_slot(x) = permanent_slot(x, syn);
   initial_slot(x) = permanent_slot(x, syn);
   typeflag(x) = SYNTACTIC_TYPE;
   return(x);
-}
-
-static void mark_let_syntax(s7_pointer p)
-{
-  set_mark(p);
-  if (optimized_let(p)) S7_MARK(optimized_let(p));
-}
-
-static s7_pointer copy_syntax(s7_scheme *sc, s7_pointer symbol)
-{
-  /* sym is the symbol (sc->LET_S for example) that holds the syntax info ("let" and OP_LET_S)
-   *   and is the car of the associated optimized (let) form.  In normal, in-heap code, the
-   *   normal mark_pair call sees car=symbol, calls mark_symbol which sees is_optimized_let
-   *   and marks its global slot.  If the code was removed from the heap before we get called,
-   *   the caller has to see that and add the returned symbol to the sc->permanent_objects list.
-   *   If the code is later removed, s7_remove_from_heap sees the symbol, and places it in that list.
-   *
-   * In the closure-env case, the closure cell itself remains in the heap even though args/code are
-   *   removed, so it still points to env which also remains.
-   */
-  s7_pointer new_symbol, new_syntax, old_syntax;
-
-  old_syntax = global_slot(symbol);      /* syntax object */
-  NEW_CELL(sc, new_syntax);
-  sc->w = new_syntax;
-  set_type(new_syntax, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS); 
-  syntax_opcode(new_syntax) = syntax_opcode(old_syntax);
-  syntax_symbol(new_syntax) = syntax_symbol(old_syntax);
-  syntax_gc_mark(new_syntax) = mark_let_syntax;             /* temporary */
-
-  optimized_let(new_syntax) = NULL;
-
-  NEW_CELL(sc, new_symbol);
-  symbol_name_cell(new_symbol) = symbol_name_cell(symbol);
-  global_slot(new_symbol) = make_slot(sc, symbol, new_syntax); 
-  initial_slot(new_symbol) = initial_slot(symbol);
-  typeflag(new_symbol) = (SYNTACTIC_TYPE | T_OPTIMIZED_LET); /* temporary */
-  symbol_syntax_op(new_symbol) = symbol_syntax_op(symbol);
-  symbol_hash(new_symbol) = symbol_hash(symbol);
-  
-  mark_function[T_SYMBOL] = mark_symbol;
-  sc->w = sc->NIL;
-  return(new_symbol);
 }
 
 
@@ -44012,6 +43946,18 @@ static s7_pointer all_x_c_ssc(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T3_1));
 }
 
+#if 0
+/* we need an op for this: SAFE_A_CLOSURE_C: one line body that is allxable -- does this happen?
+ */
+static s7_pointer all_x_a_closure_c(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer p;
+  sc->envir = old_frame_with_slot(sc, closure_let(ecdr(arg)), cadr(arg));
+  p = car(closure_body(ecdr(arg)));
+  return((s7_function)fcdr(p)(sc, cdr(p)));
+}
+#endif
+
 static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
 {
   if (is_pair(arg))
@@ -44138,6 +44084,7 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer car_x, s7_pointer func, int
 
       set_unsafely_optimized(car_x);
       set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_THUNK : OP_THUNK));
+      /* it apparently never happens that the safe_thunk's body is one-line/allxable */
       set_ecdr(car_x, func);
       return(false);                                /* false because currently the C_PP stuff assumes safe procedure calls */
     }
@@ -44191,9 +44138,14 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_opSq:
 	  return(OP_SAFE_C_op_opSq_q);
 
-	  /* safe_c_a biggest: opcq_s
-	   * ssa: opsq
-	   */
+	case OP_SAFE_C_A:
+	  return(OP_SAFE_C_opAq);
+
+	case OP_SAFE_C_AA:
+	  return(OP_SAFE_C_opAAq);
+
+	case OP_SAFE_C_AAA:
+	  return(OP_SAFE_C_opAAAq);
 	}
       
       /* fprintf(stderr, "z: %s %s\n", opt_name(e2), DISPLAY(e1)); */
@@ -47480,16 +47432,8 @@ static s7_pointer check_let(s7_scheme *sc)
 				{
 				  if (optimize_data(cadr(binding)) == HOP_SAFE_C_C)
 				    {
-				      bool ok, bad_set = false;
 				      set_gcdr(sc->code, car(binding));
 				      pair_set_syntax_symbol(sc->code, sc->LET_opCq);
-				      ok = body_is_safe(sc, sc->NIL, sc->NIL, cdr(sc->code), true, &bad_set);
-				      if ((ok) && (!bad_set))
-					{
-					  pair_set_syntax_symbol(sc->code, copy_syntax(sc, sc->SAFE_LET_opCq));
-					  if (heap_location(sc->code) == NOT_IN_HEAP)
-					    add_permanent_object(sc, pair_syntax_symbol(sc->code));
-					}
 				    }
 				  else pair_set_syntax_symbol(sc->code, sc->LET_ALL_X);
 				}
@@ -47525,17 +47469,7 @@ static s7_pointer check_let(s7_scheme *sc)
 		  set_gcdr(sc->code, caaar(sc->code));
 		  /* should we make sure T_LINE_NUMBER is not set? -- it won't be cur_code in an error message */
 		  if (is_symbol(fcdr(sc->code)))
-		    {
-		      bool bad_set = false, ok;
-		      pair_set_syntax_symbol(sc->code, sc->LET_S);
-		      ok = body_is_safe(sc, sc->NIL, sc->NIL, cdr(sc->code), true, &bad_set);
-		      if ((ok) && (!bad_set))
-			{
-			  pair_set_syntax_symbol(sc->code, copy_syntax(sc, sc->SAFE_LET_S));
-			  if (heap_location(sc->code) == NOT_IN_HEAP)
-			    add_permanent_object(sc, pair_syntax_symbol(sc->code));
-			}
-		    }
+		    pair_set_syntax_symbol(sc->code, sc->LET_S);
 		  else 
 		    {
 		      if ((is_null(cddr(sc->code))) &&
@@ -53475,6 +53409,51 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto OPT_EVAL;
 	      
 	      
+	    case OP_SAFE_C_opAq:
+	      if (!a_is_ok(sc, code)) break;
+	      
+	    case HOP_SAFE_C_opAq:
+	      {
+		s7_pointer arg;
+		arg = cadr(code);
+		car(sc->A1_1) = ((s7_function)fcdr(cdr(arg)))(sc, cadr(arg));
+		car(sc->T1_1) = c_call(arg)(sc, sc->A1_1);
+		sc->value = c_call(code)(sc, sc->T1_1);
+		goto START;
+	      }
+
+
+	    case OP_SAFE_C_opAAq:
+	      if (!a_is_ok(sc, code)) break;
+	      
+	    case HOP_SAFE_C_opAAq:
+	      {
+		s7_pointer arg;
+		arg = cadr(code);
+		car(sc->A2_1) = ((s7_function)fcdr(cdr(arg)))(sc, cadr(arg));
+		car(sc->A2_2) = ((s7_function)fcdr(cddr(arg)))(sc, caddr(arg));
+		car(sc->T1_1) = c_call(arg)(sc, sc->A2_1);
+		sc->value = c_call(code)(sc, sc->T1_1);
+		goto START;
+	      }
+
+
+	    case OP_SAFE_C_opAAAq:
+	      if (!a_is_ok(sc, code)) break;
+	      
+	    case HOP_SAFE_C_opAAAq:
+	      {
+		s7_pointer arg;
+		arg = cadr(code);
+		car(sc->A3_1) = ((s7_function)fcdr(cdr(arg)))(sc, cadr(arg));
+		car(sc->A3_2) = ((s7_function)fcdr(cddr(arg)))(sc, caddr(arg));
+		car(sc->A3_3) = ((s7_function)fcdr(cdddr(arg)))(sc, cadddr(arg));
+		car(sc->T1_1) = c_call(arg)(sc, sc->A3_1);
+		sc->value = c_call(code)(sc, sc->T1_1);
+		goto START;
+	      }
+
+
 	    case OP_SAFE_C_S_opAAq:
 	      if (!a_is_ok(sc, code)) break;
 	      
@@ -61660,33 +61639,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto OPT_EVAL;
       
       
-    case OP_SAFE_LET_S:
-      NEW_FRAME_WITH_SLOT(sc, sc->envir, optimized_let(slot_value(global_slot(pair_syntax_symbol(sc->code)))), 
-			  gcdr(sc->code), find_symbol_checked(sc, fcdr(sc->code)));
-      sc->envir = optimized_let(slot_value(global_slot(pair_syntax_symbol(sc->code))));
-      pair_syntax_op(ecdr(sc->code)) = OP_SAFE_LET_S1;
-      set_fcdr(ecdr(sc->code), sc->envir);
-      goto LET_S_1;
-
-    case OP_SAFE_LET_S1:
-      {
-	/* all of this is repeated -- make a macro or something */
-	s7_pointer slot, old_env;
-	old_env = sc->envir;
-	sc->envir = fcdr(ecdr(sc->code)); /* optimized_let(slot_value(global_slot(pair_syntax_symbol(sc->code)))); */
-	next_environment(sc->envir) = old_env;
-	slot = environment_slots(sc->envir);
-	environment_id(sc->envir) = ++environment_number;
-	slot_set_value(slot, find_symbol_checked(sc, fcdr(sc->code)));
-	symbol_set_local(slot_symbol(slot), environment_number, slot);
-	goto LET_S_1;
-      }
-
     case OP_LET_S:
       /* one var, init is symbol, incoming sc->code is '(((var sym))...)
        */
-      NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, gcdr(sc->code), find_symbol_checked(sc, fcdr(sc->code)));
-    LET_S_1:
+      sc->value = find_symbol_checked(sc, fcdr(sc->code));
+      NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, gcdr(sc->code), sc->value);
       sc->code = cdr(sc->code);
       if (is_pair(cdr(sc->code)))
 	push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
@@ -61730,33 +61687,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
 
-    case OP_SAFE_LET_opCq:
-      NEW_FRAME_WITH_SLOT(sc, sc->envir, optimized_let(slot_value(global_slot(pair_syntax_symbol(sc->code)))), 
-			  gcdr(sc->code), c_call(fcdr(sc->code))(sc, cdr(fcdr(sc->code))));
-      sc->envir = optimized_let(slot_value(global_slot(pair_syntax_symbol(sc->code))));
-      pair_syntax_op(ecdr(sc->code)) = OP_SAFE_LET_opCq1;
-      set_fcdr(ecdr(sc->code), sc->envir);
-      goto LET_opCq_1;
-
-    case OP_SAFE_LET_opCq1:
-      {
-	/* all of this is repeated -- make a macro or something */
-	s7_pointer slot, old_env;
-	old_env = sc->envir;
-	sc->envir = fcdr(ecdr(sc->code));
-	next_environment(sc->envir) = old_env;
-	slot = environment_slots(sc->envir);
-	environment_id(sc->envir) = ++environment_number;
-	slot_set_value(slot, c_call(fcdr(sc->code))(sc, cdr(fcdr(sc->code))));
-	symbol_set_local(slot_symbol(slot), environment_number, slot);
-	goto LET_opCq_1;
-      }
-
     case OP_LET_opCq:
       /* one var, init is safe_c_c */
       sc->value = c_call(fcdr(sc->code))(sc, cdr(fcdr(sc->code)));
       NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, gcdr(sc->code), sc->value);
-    LET_opCq_1:
       sc->code = cdr(sc->code);
       if (is_pair(cdr(sc->code)))
 	push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
@@ -61923,7 +61857,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto EVAL;
       }
       
-
+      /* it is possible to save the frame+slots in a copied symbol+syntax pair, then reuse them
+       *  on every call here, but the savings in GC+allocation+setup is less than the cost in
+       *  marking the saved stuff past its actual life!  (If the code is removed from the heap,
+       *  the frame has to be saved on the permanent_objects list).
+       */
     case OP_LET_ALL_X:
       {
 	s7_pointer p, frame;
@@ -69045,8 +68983,6 @@ s7_scheme *s7_init(void)
   sc->LET_NO_VARS =           assign_internal_syntax(sc, "let",     OP_LET_NO_VARS);  
   sc->LET_C =                 assign_internal_syntax(sc, "let",     OP_LET_C);  
   sc->LET_S =                 assign_internal_syntax(sc, "let",     OP_LET_S);  
-  sc->SAFE_LET_S =            assign_internal_syntax(sc, "let",     OP_SAFE_LET_S);  
-  sc->SAFE_LET_opCq =         assign_internal_syntax(sc, "let",     OP_SAFE_LET_opCq);  
   sc->LET_Q =                 assign_internal_syntax(sc, "let",     OP_LET_Q);  
   sc->LET_ALL_C =             assign_internal_syntax(sc, "let",     OP_LET_ALL_C);  
   sc->LET_ALL_S =             assign_internal_syntax(sc, "let",     OP_LET_ALL_S);  
@@ -70113,8 +70049,8 @@ s7_scheme *s7_init(void)
 #if DEBUGGING
   if (strcmp(op_names[OP_DEFINE_BACRO_STAR], "define-bacro*") != 0)
     fprintf(stderr, "define-bacro* op: %s\n", op_names[OP_DEFINE_BACRO_STAR]);
-  if (strcmp(real_op_names[OP_DEFINE_BACRO_STAR], "OP_DEFINE_BACRO_STAR") != 0)
-    fprintf(stderr, "define-bacro* real op: %s\n", op_names[OP_DEFINE_BACRO_STAR]);
+  if (strcmp(real_op_names[OP_DEFINE_BACRO_STAR], "define_bacro_star") != 0)
+    fprintf(stderr, "define-bacro* real op: %s\n", real_op_names[OP_DEFINE_BACRO_STAR]);
 
   if (strcmp(op_names[OP_SAFE_C_opSq_P_1], "c_opsq_p_1") != 0)
     fprintf(stderr, "safe_c_opsq_p_1 op_names: %s\n", op_names[OP_SAFE_C_opSq_P_1]);
@@ -70283,12 +70219,12 @@ int main(int argc, char **argv)
  *           12.x | 13.0 |  14.2 14.3 14.4 14.5 14.6 14.9 | 15.0
  * bench    42736 | 8752 |  4220 4157 3447 3556 3540 3548 | 3506
  * index    44300 | 3291 |  1725 1371 1382 1380 1346 1265 | 1279
- * s7test    1721 | 1358 |   995  957  974  971  973 1127 | 1201
+ * s7test    1721 | 1358 |   995  957  974  971  973 1127 | 1194
  * t455|6     265 |   89 |   9    8.5  5.5  5.5  5.4  5.9 | 16.2
  * t502        90 |   43 |  14.5 14.4 13.6 12.8 12.7 12.7 | 12.7
- * t816           |   71 |  70.6                44.5 45.6 | 43.6
+ * t816           |   71 |  70.6                44.5 45.6 | 38.4
  * lg             |      |                            6.7 |  6.5
- * calls      359 |  275 |  54   49.5 39.7 36.4 35.4 35.1 | 34.9
+ * calls      359 |  275 |  54   49.5 39.7 36.4 35.4 35.1 | 34.8
  *            153 with run macro (eval_ptree)
  *
  * ------------------------------------------------------------------------------------------------
@@ -70339,24 +70275,10 @@ int main(int argc, char **argv)
  *   but it's ambiguous -- tag can be anything.
  *   (catcher tag . body) and (thrower tag-func error-func) where (func tag) -> not #f then => body?)
  *
- * safe let (etc): test this!
- *   also what are the unhandled let cases now?
- *   find a way to track these pointers fcdr(ecdr) and gcdr/fcdr -> let
- * 
- * safe case syn: save table in syntax field -> table lookup
- *   perhaps use int symbol field for tag?
- *   if case selects are all int/char < 256 --> make a vector 
- *   if all symbol, have a sym_ctr, if none in tag, use that, get bounds, if reasonable -> vector
- * could the syntax loc be a label that we jump to when done?
- *   do step: copy_syntax of the desired branch, if loc goto loc -- like current check for begin
- *   not compatible with MS C I think; --if (loc) or (loc & 1) goto DO_STEP -- it's just a flag (bits for each case?)
- *   try this is HOP_C_ALL_X and t816
- *   define DO_STEP_BIT 1, etc -- we have (worst case) about 100
- * so sym.tag and syn.goto
- *
  * need a way to check all the opt function checks: t990|5
  *   make s7test section that hits every eval branch explicitly
  *   and check all the mv cases
+ * need explicit tests for let value binding timing (before env updated) safe_let_opcq was wrong without complaint
  *
  * accessor if set: opt func involving set or free var, add accessor to free, call func
     (define xxx 23)
@@ -70366,13 +70288,10 @@ int main(int argc, char **argv)
     (hix)
  * and no printout -- how to deal with this?? -- if global to func, don't assume anything?
  *
- * need OP_ENVIRONMENT_C (unknowns etc), OP_GOTO_ALL_X, un_ccc case: (m 1 1) m:fv, (thunk), closure_cc etc, pair|vector_all_x 
- *   why no OP_SAFE_C_S_opAq? SAFE_C_opAq etc? using combine_ops
- * TODO: try SAFE_C_opAq SAFE_C_opAAq and SAFE_C_opAAAq paralleling the C_S_... cases
+ * why no OP_SAFE_C_S_opAq? using combine_ops
  *   combine_ops here could include all the allx-able cases like s_opcq -- need to annotate
  *   isn't this available in the other branches? -- perhaps get A at top, use if fall-through?
  *   c + opsq_s is that c_a or c_opaq? -- c_a -> c_z checked for c_a and other cases
- * TODO: safe LET_ALL_X and LET_STAR_ALL_X
  *
  * remember to check the !optimized(car_x) stuff in the first 3 opt_func cases
  *   if car not a symbol, but actual func, it's obviously not changing whatever it is
@@ -70384,5 +70303,8 @@ int main(int argc, char **argv)
  * why the extra wrapper in macros? 
  * (procedure-source decf): (lambda ({defmac}-17) (apply (lambda* (sym (dec 1)) ({list} 'set! sym ({list} '- sym dec))) (cdr {defmac}-17)))
  * but as long as we know its a macro, why not just (lambda* (sym (dec 1)) ({list} 'set! sym ({list} '- sym dec))
+ *
+ * anything can be op..q -- safe_c_oppq for safe_c_p, why the opt check in safe_c_p? -- count these? shouldn't it be Z if opt? even if unsafe
+ *   line 45975 -- can unsafe/opt disagree?  then who needs unsafe?
  */
 

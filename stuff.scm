@@ -122,8 +122,15 @@
 			    (apply set! (car ,args) (cadr ,args) ())
 			    (apply setf (cddr ,args)))))))
 
+
 (define-macro* (incf sym (inc 1))
   `(set! ,sym (+ ,sym ,inc))) ; or ({list} set! sym ({list} + sym inc))
+
+#|
+;; can't this also be a bacro and much faster? -- no, this is actually slower!  10/11 times slower than direct set! why?
+(define-bacro* (incf-1 sym (inc 1)) ; "inc" -> gensym probably
+  (apply set! sym (list + sym inc) ()))
+|#
 
 (define-macro* (decf sym (dec 1))
   `(set! ,sym (- ,sym ,dec)))

@@ -922,9 +922,6 @@ the result in the calling environment.
 
 
 <p>
-Here define-bacro makes it possible
-to implement setf without any run-time consing or extra work &mdash; the second evaluation
-just sees #&lt;unspecified&gt; &mdash; so this is as fast as a function call.
 The setf argument is a gensym (created when setf is defined) so that its name does not shadow any existing
 variable.  Bacros expand in the calling environment, and a normal argument name
 might shadow something in that environment while the bacro is being expanded.
