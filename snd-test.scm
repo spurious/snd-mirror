@@ -19833,33 +19833,33 @@ EDITS: 2
 	(set! (v01 i) (/ 1.0 i)))
       (set! (v1 0) 1.0)
       (set! (v11 0) 1.0)
-      (let ((gen (make-convolve :filter v0))
-	    (n -1)
-	    (gen1 (make-convolve :filter v01))
+      (let ((n -1)
 	    (n1 -1))
-	(print-and-check gen 
-			 "convolve"
-			 "convolve size: 64")
-	(if (not (convolve? gen)) (snd-display #__line__ ";~A not convolve?" gen))
-	(let ((genx gen1))
-	  (if (not (equal? genx gen1)) (snd-display #__line__ ";convolve equal?: ~A ~A ~A" genx gen1 (equal? genx gen1))))
-	(if (equal? gen gen1) (snd-display #__line__ ";convolve equal? ~A ~A" gen gen1))
-	(if (not (= (mus-length gen) 64)) (snd-display #__line__ ";convolve fft len: ~D?" (mus-length gen)))
-	(do ((i 0 (+ i 1)))
-	    ((= i 128))
-	  (set! (v2 i) (convolve gen (lambda (dir) (set! n (+ n 1)) (v1 n)))))
-	(fill-float-vector v21 (if (convolve? gen1) (convolve gen1 (lambda (dir) (set! n1 (+ n1 1)) (v11 n1)))))
-	(if (not (vequal v2 v21)) (snd-display #__line__ ";run gran: ~A ~A" v2 v21))
-	(if (or (fneq (v2 0) 0.0)
-		(fneq (v2 1) 1.0)
-		(fneq (v2 4) 0.25)
-		(fneq (v2 7) 0.143))
-	    (snd-display #__line__ ";convolve output: ~A?" v2)))
+	(let ((gen (make-convolve :filter v0 :input (lambda (dir) (set! n (+ n 1)) (v1 n))))
+	      (gen1 (make-convolve :filter v01 :input (lambda (dir) (set! n1 (+ n1 1)) (v11 n1)))))
+	  (print-and-check gen 
+			   "convolve"
+			   "convolve size: 64")
+	  (if (not (convolve? gen)) (snd-display #__line__ ";~A not convolve?" gen))
+	  (let ((genx gen1))
+	    (if (not (equal? genx gen1)) (snd-display #__line__ ";convolve equal?: ~A ~A ~A" genx gen1 (equal? genx gen1))))
+	  (if (equal? gen gen1) (snd-display #__line__ ";convolve equal? ~A ~A" gen gen1))
+	  (if (not (= (mus-length gen) 64)) (snd-display #__line__ ";convolve fft len: ~D?" (mus-length gen)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 128))
+	    (set! (v2 i) (convolve gen)))
+	  (fill-float-vector v21 (if (convolve? gen1) (convolve gen1)))
+	  (if (not (vequal v2 v21)) (snd-display #__line__ ";run gran: ~A ~A" v2 v21))
+	  (if (or (fneq (v2 0) 0.0)
+		  (fneq (v2 1) 1.0)
+		  (fneq (v2 4) 0.25)
+		  (fneq (v2 7) 0.143))
+	      (snd-display #__line__ ";convolve output: ~A?" v2)))
       
-      (convolve-files "oboe.snd" "fyow.snd" .5 "fmv.snd")
-      (if (fneq (cadr (mus-sound-maxamp "fmv.snd")) .5) 
-	  (snd-display #__line__ ";convolve-files: ~A is not .5?" (cadr (mus-sound-maxamp "fmv.snd"))))
-      )
+	(convolve-files "oboe.snd" "fyow.snd" .5 "fmv.snd")
+	(if (fneq (cadr (mus-sound-maxamp "fmv.snd")) .5) 
+	    (snd-display #__line__ ";convolve-files: ~A is not .5?" (cadr (mus-sound-maxamp "fmv.snd"))))
+	))
 
     (let ((flt (float-vector 1.0 0.5 0.1 0.2 0.3 0.4 0.5 1.0))
 	  (data (float-vector 0.0 1.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0))
@@ -37623,14 +37623,12 @@ EDITS: 1
 				  (set! (sd 0 i) (* 2.0 (sd 0 i))))
 				(float-vector->channel (sd 0)))))
 	  (list 'convolve (lambda () 
-			    (let ((flt (make-float-vector 8)))
+			    (let ((flt (make-float-vector 8))
+				  (sf (make-sampler 0)))
 			      (set! (flt 0) 2.0)
-			      (let ((cnv (make-convolve :filter flt))
-				    (sf (make-sampler 0)))
+			      (let ((cnv (make-convolve :filter flt :input (lambda (dir) (read-sample sf)))))
 				(map-channel
-				 (lambda (val)
-				   (convolve cnv (lambda (dir) 
-						   (read-sample sf)))))))))
+				 (lambda (val) (convolve cnv)))))))
 	  (list 'fft (lambda ()
 		       (let* ((len (framples))
 			      (fsize (expt 2 (ceiling (log len 2))))
@@ -45694,12 +45692,7 @@ EDITS: 1
 					   (lambda ()
 					     (n arg))
 					   (lambda args (car args)))))
-				    (if (and (not (eq? tag 'wrong-type-arg))
-					     (not (eq? tag 'no-data))
-					     (not (eq? tag 'no-such-method))
-					     (not (eq? tag 'bad-type))
-					     (not (eq? tag 'error))
-					     (not (eq? tag 'arg-error)))
+				    (if (not (memq tag '(wrong-type-arg no-data no-such-method bad-type error arg-error)))
 					(snd-display #__line__ ";clm ~A: tag: ~A arg: ~A" n tag arg))))
 				(list all-pass asymmetric-fm clear-array comb filtered-comb convolve db->linear moving-average moving-max moving-norm
 				      degrees->radians delay env formant firmant granulate hz->radians linear->db even-weight odd-weight
@@ -45730,10 +45723,7 @@ EDITS: 1
 				 (n (make-oscil) float-vector-5)
 				 )
 			       (lambda args (car args)))))
-			(if (not (or (eq? tag 'wrong-type-arg)
-				     (eq? tag 'bad-arity)
-				     (eq? tag 'error)
-				     (eq? tag 'mus-error)))
+			(if (not (memq tag '(wrong-type-arg bad-arity error mus-error)))
 			    (snd-display #__line__ ";clm-1 ~A: ~A" n tag))))
 		    (list all-pass array-interp asymmetric-fm comb filtered-comb contrast-enhancement convolution convolve moving-average moving-max moving-norm
 			  convolve-files delay dot-product env-interp file->sample snd->sample filter fir-filter formant firmant
@@ -45756,9 +45746,7 @@ EDITS: 1
 			       (lambda ()
 				 (set! (n (make-oscil)) vector-0))
 			       (lambda args (car args)))))
-			(if (and (not (eq? tag 'wrong-type-arg))
-				 (not (eq? tag 'syntax-error))
-				 (not (eq? tag 'error)))
+			(if (not (memq tag '(wrong-type-arg syntax-error error)))
 			    (snd-display #__line__ ";mus-gen ~A: ~A" n tag))))
 		    (list mus-channel mus-channels mus-data
 			  mus-feedback mus-feedforward mus-frequency mus-hop mus-increment mus-length
@@ -45786,8 +45774,7 @@ EDITS: 1
 			       (lambda ()
 				 (n))
 			       (lambda args (car args)))))
-			(if (and (not (eq? tag 'wrong-number-of-args))
-				 (not (eq? tag 'error)))
+			(if (not (memq tag '(error wrong-number-of-args)))
 			    (snd-display #__line__ ";no arg mus-sound ~A: ~A" n tag))))
 		    (list mus-sound-samples mus-sound-framples mus-sound-duration mus-sound-datum-size
 			  mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-sample-type
@@ -45815,9 +45802,7 @@ EDITS: 1
 			       (lambda ()
 				 (n float-vector-5))
 			       (lambda args (car args)))))
-			(if (and (not (eq? tag 'wrong-type-arg))
-				 (not (eq? tag 'error))
-				 (not (eq? tag 'no-such-sound)))
+			(if (not (memq tag '(wrong-type-arg error no-such-sound)))
 			    (snd-display #__line__ "; chn (no snd) procs ~A: ~A" n tag))))
 		    (list channel-widgets cursor channel-properties channel-property 
 			  cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size
@@ -45933,8 +45918,7 @@ EDITS: 1
 				 (lambda ()
 				   (n index 1234))
 				 (lambda args (car args)))))
-			  (if (and (not (eq? tag 'no-such-channel))
-				   (not (eq? tag 'no-such-sound)))
+			  (if (not (memq tag '(no-such-channel no-such-sound)))
 			      (snd-display #__line__ "; chn procs ~A: ~A" n tag))))
 		      (list channel-widgets cursor cursor-position cursor-size cursor-style tracking-cursor-style display-edits
 			    dot-size edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
@@ -45959,9 +45943,7 @@ EDITS: 1
 				 (lambda ()
 				   (set! (n index 0) float-vector-5))
 				 (lambda args (car args)))))
-			  (if (and (not (eq? tag 'wrong-type-arg))
-				   (not (eq? tag 'syntax-error))
-				   (not (eq? tag 'error)))
+			  (if (not (memq tag '(wrong-type-arg syntax-error error)))
 			      (snd-display #__line__ "; set chn procs ~A: ~A" n tag))))
 		      (list channel-widgets cursor cursor-position display-edits dot-size edit-tree edits
 			    fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window
@@ -45986,9 +45968,7 @@ EDITS: 1
 			       (lambda ()
 				 (n float-vector-5))
 			       (lambda args (car args)))))
-			(if (and (not (eq? tag 'wrong-type-arg))
-				 (not (eq? tag 'syntax-error))
-				 (not (eq? tag 'error)))
+			(if (not (memq tag '(error wrong-type-arg syntax-error)))
 			    (snd-display #__line__ ";[0]: mix procs ~A: ~A (~A)" b tag float-vector-5))))
 		    (list mix-amp mix-amp-env mix-length mix-name mix-position mix-home mix-speed mix-tag-y)
 		    (list 'mix-amp 'mix-amp-env 'mix-length 'mix-name 'mix-position 'mix-home 'mix-speed 'mix-tag-y))
@@ -46009,10 +45989,7 @@ EDITS: 1
 			       (lambda ()
 				 (set! (n (integer->mix 1234)) float-vector-5))
 			       (lambda args (car args)))))
-			(if (and (not (eq? tag 'wrong-type-arg))
-				 (not (eq? tag 'syntax-error))
-				 (not (eq? tag 'error))
-				 (not (eq? tag 'no-such-mix))) ; if id checked first
+			(if (not (memq tag '(error wrong-type-arg syntax-error no-such-mix)))
 			    (snd-display #__line__ ";[2]: mix procs ~A: ~A" n tag))))
 		    (list mix-name mix-position mix-home mix-speed mix-tag-y))
 	  
@@ -46024,9 +46001,7 @@ EDITS: 1
 				 (lambda ()
 				   (set! (n id) float-vector-5))
 				 (lambda args (car args)))))
-			  (if (and (not (eq? tag 'wrong-type-arg))
-				   (not (eq? tag 'syntax-error))
-				   (not (eq? tag 'error)))
+			  (if (not (memq tag '(error wrong-type-arg syntax-error)))
 			      (snd-display #__line__ ";[3]: mix procs ~A: ~A (~A)" b tag float-vector-5))))
 		      (list  mix-name mix-position mix-home mix-speed mix-tag-y)
 		      (list 'mix-name 'mix-position 'mix-home 'mix-speed 'mix-tag-y))
@@ -46076,8 +46051,7 @@ EDITS: 1
 					   (lambda ()
 					     (n arg))
 					   (lambda args (car args)))))
-				    (if (and (not (eq? tag 'wrong-type-arg))
-					     (not (eq? tag 'wrong-number-of-args)))
+				    (if (not (memq tag '(wrong-type-arg wrong-number-of-args)))
 					(snd-display #__line__ "; region procs ~A: ~A ~A" n tag arg))))
 				(list region-chans region-home region-framples 
 				      region-position region-maxamp region-maxamp-position region-sample 
@@ -46101,9 +46075,7 @@ EDITS: 1
 			       (lambda ()
 				 (set! (n) float-vector-5))
 			       (lambda args (car args)))))
-			(if (and (not (eq? tag 'wrong-type-arg))
-				 (not (eq? tag 'syntax-error))
-				 (not (eq? tag 'error)))
+			(if (not (memq tag '(error wrong-type-arg syntax-error)))
 			    (snd-display #__line__ "; misc procs ~A: ~A" n tag))))
 		    (list axis-color enved-filter-order enved-filter filter-control-waveform-color ask-before-overwrite ask-about-unsaved-edits
 			  auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key show-full-duration show-full-range initial-beg initial-dur
@@ -46568,11 +46540,11 @@ EDITS: 1
 	     (lambda (arg)
 	       (for-each 
 		(lambda (n)
-		  (if (eq? (catch #t
-			     (lambda () (n arg))
-			     (lambda args (car args)))
-			   'wrong-number-of-args)
-		      (snd-display #__line__ ";procs1 wna: ~A" (procedure-documentation n))))
+		  (catch #t
+		    (lambda () (n arg))
+		    (lambda args 
+		      (if (eq? (car args) 'wrong-number-of-args)
+			  (snd-display #__line__ ";procs1 wna: ~A" (procedure-documentation n))))))
 		procs1))
 	     main-args)
 	    (for-each close-sound (sounds))
@@ -46584,11 +46556,11 @@ EDITS: 1
 		(lambda (arg2)
 		  (for-each 
 		   (lambda (n)
-		     (if (eq? (catch #t
-				(lambda () (n arg1 arg2))
-				(lambda args (car args)))
-			      'wrong-number-of-args)
-			 (snd-display #__line__ ";procs2: ~A" (procedure-documentation n))))
+		     (catch #t
+		       (lambda () (n arg1 arg2))
+		       (lambda args 
+			 (if (eq? (car args) 'wrong-number-of-args)
+			     (snd-display #__line__ ";procs2: ~A" (procedure-documentation n))))))
 		   procs2))
 		main-args))
 	     main-args)
@@ -46599,11 +46571,11 @@ EDITS: 1
 	     (lambda (arg)
 	       (for-each 
 		(lambda (n)
-		  (if (eq? (catch #t
-			     (lambda () (set! (n) arg))
-			     (lambda args (car args)))
-			   'wrong-number-of-args)
-		      (snd-display #__line__ ";set-procs0: ~A" (procedure-documentation n))))
+		  (catch #t
+		    (lambda () (set! (n) arg))
+		    (lambda args 
+		      (if (eq? (car args) 'wrong-number-of-args)
+			  (snd-display #__line__ ";set-procs0: ~A" (procedure-documentation n))))))
 		set-procs0))
 	     main-args)
 	    (for-each close-sound (sounds))
@@ -46615,11 +46587,11 @@ EDITS: 1
 		(lambda (arg2)
 		  (for-each 
 		   (lambda (n)
-		     (if (eq? (catch #t
-				(lambda () (set! (n arg1) arg2))
-				(lambda args (car args)))
-			      'wrong-number-of-args)
-			 (snd-display #__line__ ";set-procs1: ~A" (procedure-documentation n))))
+		     (catch #t
+		       (lambda () (set! (n arg1) arg2))
+		       (lambda args 
+			 (if (eq? (car args) 'wrong-number-of-args)
+			     (snd-display #__line__ ";set-procs1: ~A" (procedure-documentation n))))))
 		   set-procs1))
 		main-args))
 	     main-args)
@@ -46635,11 +46607,11 @@ EDITS: 1
 		   (lambda (arg3)
 		     (for-each 
 		      (lambda (n)
-			(if (eq? (catch #t
-				   (lambda () (set! (n arg1 arg2) arg3))
-				   (lambda args (car args)))
-				 'wrong-number-of-args)
-			    (snd-display #__line__ ";set-procs2: ~A" (procedure-documentation n))))
+			(catch #t
+			  (lambda () (set! (n arg1 arg2) arg3))
+			  (lambda args 
+			    (if (eq? (car args) 'wrong-number-of-args)
+				(snd-display #__line__ ";set-procs2: ~A" (procedure-documentation n))))))
 		      set-procs2))
 		   less-args))
 		less-args))

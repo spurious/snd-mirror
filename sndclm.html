@@ -6769,8 +6769,8 @@ envelope so that the result has a given duration, use <a href="sndscm.html#srcfi
 
 <pre class="indented">
 <em class=def id="make-convolve">make-convolve</em> input filter fft-size filter-size
-<em class=def id="convolve">convolve</em> ff input-function
-<em class=def id="convolve?">convolve?</em> ff
+<em class=def id="convolve">convolve</em> gen
+<em class=def id="convolve?">convolve?</em> gen
 
 <em class=def id="convolvefiles">convolve-files</em> file1 file2 (maxamp 1.0) (output-file "tmp.snd")
 </pre>
@@ -6781,7 +6781,7 @@ envelope so that the result has a given duration, use <a href="sndscm.html#srcfi
 </table>
 
 <p>The convolve generator convolves its input with the impulse response "filter" (a float-vector).
-"input" and "input-function" are functions of one argument that are
+"input" is a function of one argument that is
 called whenever convolve needs input.
 </p>
 
@@ -6911,7 +6911,7 @@ lambda: ( -- )
 <p>convolve-files handles a very common special case: convolve
 two files, then normalize the result to some maxamp.  The convolve generator does not
 know in advance what its maxamp will be, and when the two files are more or less
-the same size, there's no real computational savings to using overlap-add (i.e.
+the same size, there's no real computational savings from using overlap-add (i.e.
 the generator), so a one-time giant FFT saved as a temporary sound file is much
 handier.  If you're particular about the format of the convolved data:
 </p>

@@ -667,8 +667,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_CLOSURE_opCq, HOP_SAFE_CLOSURE_opCq, OP_SAFE_CLOSURE_SA, HOP_SAFE_CLOSURE_SA, 
       OP_SAFE_CLOSURE_opSq, HOP_SAFE_CLOSURE_opSq, OP_SAFE_CLOSURE_opSq_S, HOP_SAFE_CLOSURE_opSq_S, OP_SAFE_CLOSURE_opSq_opSq, HOP_SAFE_CLOSURE_opSq_opSq, 
       OP_SAFE_CLOSURE_S_opSq, HOP_SAFE_CLOSURE_S_opSq, OP_SAFE_CLOSURE_S_opSSq, HOP_SAFE_CLOSURE_S_opSSq, OP_SAFE_CLOSURE_opSSq_S, HOP_SAFE_CLOSURE_opSSq_S, 
-      OP_SAFE_CLOSURE_SSS, HOP_SAFE_CLOSURE_SSS, OP_SAFE_CLOSURE_SAA, HOP_SAFE_CLOSURE_SAA, OP_SAFE_CLOSURE_S_CDR_CDR, HOP_SAFE_CLOSURE_S_CDR_CDR,
-      OP_SAFE_CLOSURE_CAR_CAR, HOP_SAFE_CLOSURE_CAR_CAR, OP_SAFE_CLOSURE_CDR_CDR, HOP_SAFE_CLOSURE_CDR_CDR, 
+      OP_SAFE_CLOSURE_SSS, HOP_SAFE_CLOSURE_SSS, OP_SAFE_CLOSURE_SAA, HOP_SAFE_CLOSURE_SAA, 
       OP_SAFE_CLOSURE_ALL_C, HOP_SAFE_CLOSURE_ALL_C, OP_SAFE_CLOSURE_ALL_X, HOP_SAFE_CLOSURE_ALL_X, OP_SAFE_CLOSURE_AA, HOP_SAFE_CLOSURE_AA, 
 
       OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, OP_SAFE_CLOSURE_STAR_SS, HOP_SAFE_CLOSURE_STAR_SS, 
@@ -776,8 +775,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_closure_opcq", "h_safe_closure_opcq", "safe_closure_sa", "h_safe_closure_sa", 
       "safe_closure_opsq", "h_safe_closure_opsq", "safe_closure_opsq_s", "h_safe_closure_opsq_s", "safe_closure_opsq_opsq", "h_safe_closure_opsq_opsq", 
       "safe_closure_s_opsq", "h_safe_closure_s_opsq", "safe_closure_s_opssq", "h_safe_closure_s_opssq", "safe_closure_opssq_s", "h_safe_closure_opssq_s", 
-      "safe_closure_sss", "h_safe_closure_sss", "safe_closure_saa", "h_safe_closure_saa", "safe_closure_s_cdr_cdr", "h_safe_closure_s_cdr_cdr",
-      "safe_closure_car_car", "h_safe_closure_car_car", "safe_closure_cdr_cdr", "h_safe_closure_cdr_cdr", 
+      "safe_closure_sss", "h_safe_closure_sss", "safe_closure_saa", "h_safe_closure_saa", 
       "safe_closure_all_c", "h_safe_closure_all_c", "safe_closure_all_x", "h_safe_closure_all_x", "safe_closure_aa", "h_safe_closure_aa", 
 
       "safe_closure_star_s", "h_safe_closure_star_s", "safe_closure_star_ss", "h_safe_closure_star_ss", 
@@ -34611,7 +34609,12 @@ static int closure_arity_to_int(s7_scheme *sc, s7_pointer x)
       for (i = 0, b = closure_args(x); is_pair(b); i++, b = cdr(b)) {};
       if (is_null(b))
 	closure_arity(x) = i;
-      else closure_arity(x) = -i - 1;
+      else 
+	{
+	  if (i == 0)
+	    return(-1);
+	  closure_arity(x) = -i;
+	}
     }
   return(closure_arity(x));
 }
@@ -39153,9 +39156,10 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
   sc->code = car(args); /* the function */
   if (!is_applicable(sc->code))
     {
-      check_method(sc, car(args), sc->FOR_EACH, args);
+      check_method(sc, sc->code, sc->FOR_EACH, args);
       return(wrong_type_argument_with_type(sc, sc->FOR_EACH, small_int(1), sc->code, SOMETHING_APPLICABLE));
     }
+
   /* macro application requires the entire call as the argument to apply, but apply itself fixes this up.
    *  that is, g_apply checks, then goes to OP_EVAL_MACRO after OP_APPLY with the fixed up list,
    *  but here we are simply sending it to OP_APPLY, so
@@ -39327,10 +39331,9 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 			list_2(sc, make_string_wrapper(sc, "for-each's arguments are circular lists! ~S"), cdr(args))));
     }
 
-  /* (for-each (lambda () 1) (list 1 2 3)) */
   if ((is_closure(sc->code)) &&
-      (closure_arity_to_int(sc, sc->code) == 0))
-    return(s7_error(sc, sc->WRONG_TYPE_ARG, list_1(sc, make_string_wrapper(sc, "for-each function is a thunk")))); 
+      (!s7_is_aritable(sc, sc->code, safe_list_length(sc, cdr(args)))))
+    return(s7_wrong_number_of_args_error(sc, "for-each function: ~A args?", small_int(safe_list_length(sc, cdr(args)))));
 
   sc->args = make_counter(sc, sc->args, safe_reverse_in_place(sc, sc->z), 0, len);
   /* counter_result(sc->x): func-arglist, (this is a saved list used for args on each func application)
@@ -39668,10 +39671,9 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 			list_2(sc, make_string_wrapper(sc, "map's arguments are circular lists! ~S"), cdr(args))));
     }
 
-  /* (for-each (lambda () 1) (list 1 2 3)) */
   if ((is_closure(sc->code)) &&
-      (closure_arity_to_int(sc, sc->code) == 0))
-    return(s7_error(sc, sc->WRONG_TYPE_ARG, list_1(sc, make_string_wrapper(sc, "map function is a thunk")))); 
+      (!s7_is_aritable(sc, sc->code, safe_list_length(sc, cdr(args)))))
+    return(s7_wrong_number_of_args_error(sc, "map function: ~A args?", small_int(safe_list_length(sc, cdr(args)))));
 
   sc->args = make_counter(sc, sc->NIL, safe_reverse_in_place(sc, sc->z), 0, len);
   sc->y = sc->NIL;
@@ -44725,7 +44727,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 	      else
 		{
 		  set_unsafe(car_x);
-		  set_optimize_data(car_x, hop + OP_SAFE_C_P);
+		  set_optimize_data(car_x, hop + OP_SAFE_C_P); /* not c_z because there might be multiple values */
 		  choose_c_function(sc, car_x, func, 1);
 		  return(false);
 		}
@@ -44952,22 +44954,6 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		      if (is_safe_closure(func))
 			set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_opSq_opSq);
 		      else set_optimize_data(car_x, hop + OP_CLOSURE_opSq_opSq);
-		      if ((is_null(cdr(closure_body(func)))) &&
-			  (is_safe_closure(func)) &&
-			  (!arglist_has_rest(sc, closure_args(func))))
-			{
-			  if ((c_call(cadar_x) == g_car) &&
-			      (c_call(caddar_x) == g_car) &&
-			      (symbol_id(sc->CAR) == 0))
-			    set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_CAR_CAR);
-			  else
-			    {
-			      if ((c_call(cadar_x) == g_cdr) &&
-				  (c_call(caddar_x) == g_cdr) &&
-				  (symbol_id(sc->CDR) == 0))
-				set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_CDR_CDR);
-			    }
-			}
 		      set_ecdr(car_x, func);
 		      set_fcdr(car_x, cadr(caddar_x));
 		      set_fcdr(cdr(car_x), cadr(cadar_x));
@@ -45564,15 +45550,7 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
 		  if (is_safe_closure(func))
 		    {
 		      if (is_symbol(cadar_x))
-			{
-			  if ((is_optimized(caddar_x)) &&
-			      (is_optimized(cadddar_x)) &&
-			      (c_call(caddar_x) == g_cdr) &&
-			      (c_call(cadddar_x) == g_cdr) &&
-			      (symbol_id(sc->CDR) == 0))
-			    set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_S_CDR_CDR);
-			  else set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_SAA);
-			}
+			set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_SAA);
 		      else set_optimize_data(car_x, hop + OP_SAFE_CLOSURE_ALL_X);
 		    }
 		  else set_optimize_data(car_x, hop + OP_CLOSURE_ALL_X);
@@ -48339,8 +48317,6 @@ static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1,
 {
   /* look for all_x_[s*] where s matches sym1|2, optimize to use current env
    *   also HOP_SAFE_C_[s*] -> HOP_SAFE_C_S1|2?
-   *   HOP_SAFE_CLOSURE_CAR_CAR -> HOP_SAFE_CLOSURE_CARS1_CARS2 (and CDR) (and S_CDR_CDR) via the unknown op sequence -- tricky
-   *     better perhaps: remove these special cases, use _AA or _SAA with all_x_car specializations
    * stop if any new env possible (shadowing and more complex env access)
    *
    * why can't we do something similar with locals? 
@@ -55388,56 +55364,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 
 
-	    case OP_SAFE_CLOSURE_CAR_CAR:
-	      if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2))
-		{
-		  set_optimize_data(code, OP_UNKNOWN_opSq_opSq);
-		  goto OPT_EVAL;
-		}
-
-	    case HOP_SAFE_CLOSURE_CAR_CAR:
-	      {
-		s7_pointer p1, p2;
-		p1 = find_symbol_checked(sc, fcdr(cdr(code)));
-		if (is_pair(p1))
-		  p1 = car(p1);
-		else p1 = g_car(sc, cdr(cadr(code)));
-		p2 = find_symbol_checked(sc, fcdr(code));
-		if (is_pair(p2))
-		  p2 = car(p2);
-		else p2 = g_car(sc, list_1(sc, p2));
-		
-		sc->envir = old_frame_with_two_slots(sc, closure_let(ecdr(code)), p1, p2);
-		sc->code = car(closure_body(ecdr(code)));
-		goto EVAL;
-	      }
-
-	      
-	    case OP_SAFE_CLOSURE_CDR_CDR:
-	      if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2))
-		{
-		  set_optimize_data(code, OP_UNKNOWN_opSq_opSq);
-		  goto OPT_EVAL;
-		}
-
-	    case HOP_SAFE_CLOSURE_CDR_CDR:
-	      {
-		s7_pointer p1, p2;
-		p1 = find_symbol_checked(sc, fcdr(cdr(code)));
-		if (is_pair(p1))
-		  p1 = cdr(p1);
-		else p1 = g_cdr(sc, cdr(cadr(code)));
-		p2 = find_symbol_checked(sc, fcdr(code));
-		if (is_pair(p2))
-		  p2 = cdr(p2);
-		else p2 = g_cdr(sc, list_1(sc, p2));
-
-		sc->envir = old_frame_with_two_slots(sc, closure_let(ecdr(code)), p1, p2);
-		sc->code = car(closure_body(ecdr(code)));
-		goto EVAL;
-	      }
-	      
-	      
 	    case OP_SAFE_CLOSURE_opSq_S:
 	      if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2))
 		{
@@ -55544,33 +55470,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		y = ((s7_function)fcdr(args))(sc, car(args));
 		args = cdr(args);
 		z = ((s7_function)fcdr(args))(sc, car(args));
-		sc->envir = old_frame_with_three_slots(sc, closure_let(ecdr(code)), find_symbol_checked(sc, cadr(code)), y, z);
-		code = closure_body(ecdr(code));
-		if (is_pair(cdr(code)))
-		  push_stack_no_args(sc, OP_BEGIN1, cdr(code));
-		sc->code = car(code);
-		goto EVAL;
-	      }
-
-
-	    case OP_SAFE_CLOSURE_S_CDR_CDR:
-	      if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 3)) break;
-
-	    case HOP_SAFE_CLOSURE_S_CDR_CDR:
-	      {
-		s7_pointer args, y, z;
-		args = cddr(code);
-		y = find_symbol_checked(sc, cadar(args));
-		args = cdr(args);
-		z = find_symbol_checked(sc, cadar(args));
-
-		if (is_pair(y))
-		  y = cdr(y);
-		else y = g_cdr(sc, cdr(caddr(code)));
-		if (is_pair(z))
-		  z = cdr(z);
-		else z = g_cdr(sc, cdr(cadddr(code)));
-
 		sc->envir = old_frame_with_three_slots(sc, closure_let(ecdr(code)), find_symbol_checked(sc, cadr(code)), y, z);
 		code = closure_body(ecdr(code));
 		if (is_pair(cdr(code)))
@@ -57044,15 +56943,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      {
 				if ((is_symbol(cadr(code))) &&
 				    (num_args == 3))
-				  {
-				    if ((is_safely_optimized(caddr(code))) &&
-					(is_safely_optimized(cadddr(code))) &&
-					(c_call(caddr(code)) == g_cdr) &&
-					(c_call(cadddr(code)) == g_cdr) &&
-					(symbol_id(sc->CDR) == 0))
-				      set_optimize_data(code, ((is_global(car(code))) ? 1 : 0) + OP_SAFE_CLOSURE_S_CDR_CDR);
-				    else set_optimize_data(code, ((is_global(car(code))) ? 1 : 0) + OP_SAFE_CLOSURE_SAA);
-				  }
+				  set_optimize_data(code, ((is_global(car(code))) ? 1 : 0) + OP_SAFE_CLOSURE_SAA);
 				else set_optimize_data(code, 
 						       ((is_global(car(code))) ? 1 : 0) + 
 						       ((num_args == 2) ? OP_SAFE_CLOSURE_AA : OP_SAFE_CLOSURE_ALL_X));
@@ -57465,28 +57356,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    if (is_safe_closure(f))
 			      set_optimize_data(code, OP_SAFE_CLOSURE_opSq_opSq);
 			    else set_optimize_data(code, OP_CLOSURE_opSq_opSq);
-			    if ((is_null(cdr(closure_body(f)))) &&
-				(!arglist_has_rest(sc, closure_args(f))))
-			      {
-				if (is_safe_closure(f))
-				  {
-				    if ((is_safely_optimized(cadr(code))) &&
-					(is_safely_optimized(caddr(code))))
-				      {
-					if ((c_call(cadr(code)) == g_car) &&
-					    (c_call(caddr(code)) == g_car) &&
-					    (symbol_id(sc->CAR) == 0))
-					  set_optimize_data(code, OP_SAFE_CLOSURE_CAR_CAR);
-					else
-					  {
-					    if ((c_call(cadr(code)) == g_cdr) &&
-						(c_call(caddr(code)) == g_cdr) &&
-						(symbol_id(sc->CDR) == 0))
-					      set_optimize_data(code, OP_SAFE_CLOSURE_CDR_CDR);
-					  }
-				      }
-				  }
-			      }
 			    if ((is_global(car(code))) &&
 				(is_hopping(cadr(code))) &&
 				(is_hopping(caddr(code))))
@@ -70218,7 +70087,7 @@ int main(int argc, char **argv)
  *
  *           12.x | 13.0 |  14.2 14.3 14.4 14.5 14.6 14.9 | 15.0
  * bench    42736 | 8752 |  4220 4157 3447 3556 3540 3548 | 3506
- * index    44300 | 3291 |  1725 1371 1382 1380 1346 1265 | 1279
+ * index    44300 | 3291 |  1725 1371 1382 1380 1346 1265 | 1277
  * s7test    1721 | 1358 |   995  957  974  971  973 1127 | 1194
  * t455|6     265 |   89 |   9    8.5  5.5  5.5  5.4  5.9 | 16.2
  * t502        90 |   43 |  14.5 14.4 13.6 12.8 12.7 12.7 | 12.7
@@ -70267,18 +70136,13 @@ int main(int argc, char **argv)
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  * *snd* or *clm* libraries also
- *   in clm: get rid of the run-time function args to src/convolve/granulate/phase-vocoder/move-sound?
+ *   in clm: get rid of the run-time function args to src/[convolve]/granulate/phase-vocoder/move-sound?
  * other libraries: sdl2, fftw, alsa, jack, clm? sndlib? -- libclm.so in CL version, libsndlib.so from sndlib makefile
  *
  * catch with list of tags, or maybe throw should look for its tag independent of catch #t?
  *   I think the member/memq could be added at almost no cost, (member tag catch_tag) or if tag simple, memq
  *   but it's ambiguous -- tag can be anything.
  *   (catcher tag . body) and (thrower tag-func error-func) where (func tag) -> not #f then => body?)
- *
- * need a way to check all the opt function checks: t990|5
- *   make s7test section that hits every eval branch explicitly
- *   and check all the mv cases
- * need explicit tests for let value binding timing (before env updated) safe_let_opcq was wrong without complaint
  *
  * accessor if set: opt func involving set or free var, add accessor to free, call func
     (define xxx 23)
@@ -70288,23 +70152,7 @@ int main(int argc, char **argv)
     (hix)
  * and no printout -- how to deal with this?? -- if global to func, don't assume anything?
  *
- * why no OP_SAFE_C_S_opAq? using combine_ops
- *   combine_ops here could include all the allx-able cases like s_opcq -- need to annotate
- *   isn't this available in the other branches? -- perhaps get A at top, use if fall-through?
- *   c + opsq_s is that c_a or c_opaq? -- c_a -> c_z checked for c_a and other cases
- *
  * remember to check the !optimized(car_x) stuff in the first 3 opt_func cases
  *   if car not a symbol, but actual func, it's obviously not changing whatever it is
- *   also are we assuming _A* are h_opt'd? -- check let et al
- * 
- * try no c_f_is_ok -- maybe no macro needed? also indirect_c_
- *   no -- much slower in both cases -- need to fix a_is_ok first
- *
- * why the extra wrapper in macros? 
- * (procedure-source decf): (lambda ({defmac}-17) (apply (lambda* (sym (dec 1)) ({list} 'set! sym ({list} '- sym dec))) (cdr {defmac}-17)))
- * but as long as we know its a macro, why not just (lambda* (sym (dec 1)) ({list} 'set! sym ({list} '- sym dec))
- *
- * anything can be op..q -- safe_c_oppq for safe_c_p, why the opt check in safe_c_p? -- count these? shouldn't it be Z if opt? even if unsafe
- *   line 45975 -- can unsafe/opt disagree?  then who needs unsafe?
  */
 

@@ -1854,7 +1854,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 	fltdat = precalculated_coeffs;
       else fltdat = get_filter_coeffs(order, e);
 
-      gen = mus_make_convolve(NULL, fltdat, fsize, order, (void *)sf);
+      gen = mus_make_convolve(convolve_next_sample, fltdat, fsize, order, (void *)sf);
 
       if (dur > MAX_BUFFER_SIZE)
 	alloc_len = MAX_BUFFER_SIZE;
@@ -1870,7 +1870,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
       if (alloc_len == dur)
 	{
 	  for (j = 0; j < dur; j++)
-	    idata[j] = mus_convolve(gen, convolve_next_sample);
+	    idata[j] = mus_convolve(gen, NULL);
 	  mus_file_write(ofd, 0, dur - 1, 1, data);
 	}
       else
@@ -1882,7 +1882,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 	      kdur = dur - offk;
 	      if (kdur > alloc_len) kdur = alloc_len;
 	      for (j = 0; j < kdur; j++)
-		idata[j] = mus_convolve(gen, convolve_next_sample);
+		idata[j] = mus_convolve(gen, NULL);
 	      mus_file_write(ofd, 0, kdur - 1, 1, data);
 	      if (reporting)
 		{
