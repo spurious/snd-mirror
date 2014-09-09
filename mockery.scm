@@ -280,6 +280,7 @@
 		   '->bytevector           (lambda (obj) (#_->bytevector (obj 'value))) ; this is in-place! 
 		   'load                   (lambda* (obj (e (curlet))) (#_load (obj 'value) e))
 		   'eval-string            (lambda* (obj (e (curlet))) (#_eval-string (obj 'value) e))
+
 		   'format                 (make-method #_format (lambda (obj) (obj 'value)))
 		   
 		   'string-ref             (lambda (obj i) 
@@ -336,7 +337,10 @@
       
       (define (mock-string . args)
 	(let ((v (make-mock-string 0)))
-	  (set! (v 'value) (apply #_string args))
+	  (set! (v 'value) 
+		(if (string? (car args))
+		    (car args)
+		    (apply #_string args)))
 	  v))
       
       (set! mock-string? (lambda (obj)
@@ -401,6 +405,7 @@
 		   'string             (make-method #_string (lambda (obj) (obj 'value)))
 		   'object->string     (lambda (obj . args) "#<mock-character-class>")
 		   'arity              (lambda (obj) (#_arity (obj 'value)))
+		   'format             (lambda (str c . args) (#_string c))
 		   
 		   'char-position      (lambda (obj str) 
 					 (if (mock-char? obj)
@@ -554,6 +559,7 @@
 		   'make-hash-table  (lambda (ind . args) (apply #_make-hash-table (ind 'value) args))
 
 		   'bytevector       (make-method #_bytevector (lambda (obj) (obj 'value)))
+		   'format           (lambda (str n . rest) (#_number->string n))
 
 		   'make-string      (lambda (ind . args) 
 				       (if (mock-number? ind)
@@ -946,6 +952,7 @@
 		 'symbol->keyword       (lambda (obj) (#_symbol->keyword (obj 'value)))
 		 'keyword?              (lambda (obj) (#_keyword? (obj 'value)))
 		 'keyword->symbol       (lambda (obj) (#_keyword->symbol (obj 'value)))
+		 'format                (lambda (str s . args) (#_symbol->string s))
 		 ))))
 
     (define (mock-symbol s)
@@ -993,6 +1000,7 @@
 		   'port-line-number    (lambda (obj) (#_port-line-number (obj 'value)))
 		   'port-filename       (lambda (obj) (#_port-filename (obj 'value)))
 		   'object->string      (lambda (obj . args) "#<mock-port-class>")
+		   'format              (make-method #_format (lambda (obj) (obj 'value)))
 
 		   'set-current-output-port (lambda (obj) (#_set-current-output-port (obj 'value)))
 		   'set-current-input-port  (lambda (obj) (#_set-current-input-port (obj 'value)))
@@ -1002,11 +1010,6 @@
 					  (if (mock-port? obj)
 					      (#_write-char c (obj 'value))
 					      (error 'wrong-type-arg "write-char ~S ~S" c obj)))
-		   
-		   'format              (lambda (obj . args) 
-					  (if (mock-port? obj)
-					      (apply #_format (obj 'value) args)
-					      (error 'wrong-type-arg "format ~S ~S" obj args)))
 
 		   'write-string        (lambda (s obj . args) 
 					  (if (mock-port? obj)
