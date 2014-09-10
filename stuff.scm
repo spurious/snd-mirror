@@ -1110,7 +1110,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 ;;;   require non-local state (not a hook with its list of functions, or symbol-access)
 ;;;   and that doesn't bring s7 to a halt.  Perhaps a symbol-access function that
 ;;;   traverses the let-chain (like *features*) looking for something??  But the relevant
-;;;   chain is on the stack, so it won't be quick.  And weak refs are asking for trouble.
+;;;   chain is on the stack (is it?), so it won't be quick.  And weak refs are asking for trouble.
+;;;   (let ((a 1)) (define (set-a x) (set! a x)) (let ((b 2)) (reactive-set! b (+ a 1)) (set-a 3) b))
 ;;;   Perhaps a way to share the original's slot?  No slow down, transparent, local setter can
 ;;;   run its own accessor, set -> shared slot so all sharers see the new value,
 ;;;   but how to trigger all accessors?

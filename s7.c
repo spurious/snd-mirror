@@ -1052,7 +1052,7 @@ typedef struct s7_cell {
 	struct {
 	  s7_pointer dox1, dox2;   /* do loop variables */
 	} dox;
-	struct {
+	struct {                   /* (catch #t ...) opts */
 	  s7_pointer result;
 	  unsigned int op_stack_loc, goto_loc;
 	} ctall;
@@ -1886,10 +1886,6 @@ static void init_types(void)
 #define set_has_accessor(p)           typeflag(p) |= T_HAS_ACCESSOR
 /* marks a slot or symbol that has a setter */
 
-#define T_INDIRECT_ACCESSOR           T_SETTER
-#define is_indirect_accessor(p)       ((typeflag(p) & T_INDIRECT_ACCESSOR) != 0)
-#define set_indirect_accessor(p)      typeflag(p) |= T_INDIRECT_ACCESSOR
-
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
 #define set_mark(p)                   typeflag(p) |= T_GC_MARK
@@ -2156,8 +2152,6 @@ static void set_hopping(s7_pointer p) {p->object.cons.dat.d.data |= 1; optimize_
 #define slot_accessor(p)              slot_expression(p)
 #define slot_has_accessor(p)          has_accessor(p)
 #define slot_set_has_accessor(p)      set_has_accessor(p)
-#define slot_is_indirect_accessor(p)  is_indirect_accessor(p)
-#define slot_indirect_symbol(p)       slot_pending_value(p)
 
 
 #define is_syntax(p)                  (type(p) == T_SYNTAX)
@@ -2182,7 +2176,6 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {pair_sy
 #define let_file(p)                   (p)->object.envr.edat.efnc.file
 #define dox_slot1(p)                  (p)->object.envr.edat.dox.dox1
 #define dox_slot2(p)                  (p)->object.envr.edat.dox.dox2
-#define let_has_indirect_accessor(p)  is_indirect_accessor(p)
 
 #define unique_name(p)                (p)->object.unq.name
 #define unique_name_length(p)         (p)->object.unq.len
@@ -5612,9 +5605,8 @@ static s7_pointer check_c_obj_env(s7_scheme *sc, s7_pointer old_e, s7_pointer ca
 
 static s7_pointer g_varlet(s7_scheme *sc, s7_pointer args)
 {
-  #define H_varlet "(varlet env ...) adds its \
-arguments (each an environment or a cons: symbol . value) directly to the environment env, and returns the \
-environment."
+  #define H_varlet "(varlet env ...) adds its arguments (an environment, a cons: symbol . value, or a pair of arguments, the symbol and its value) \
+directly to the environment env, and returns the environment."
 
   s7_pointer x, e, sym, val, p;
   int i;
@@ -69975,20 +69967,20 @@ int main(int argc, char **argv)
 #endif
 
 
-/* ------------------------------------------------------------------------------------------------
+/* --------------------------------------------------
  *
- *           12.x | 13.0 |  14.2 14.3 14.4 14.5 14.6 14.9 | 15.0
- * bench    42736 | 8752 |  4220 4157 3447 3556 3540 3548 | 3506
- * index    44300 | 3291 |  1725 1371 1382 1380 1346 1265 | 1276
- * s7test    1721 | 1358 |   995  957  974  971  973 1127 | 1194
- * t455|6     265 |   89 |   9    8.5  5.5  5.5  5.4  5.9 | 16.2
- * t502        90 |   43 |  14.5 14.4 13.6 12.8 12.7 12.7 | 12.7
- * t816           |   71 |  70.6                44.5 45.6 | 38.0
- * lg             |      |                            6.7 |  6.5
- * calls      359 |  275 |  54   49.5 39.7 36.4 35.4 35.1 | 34.8
+ *           12.x | 13.0 | 14.2 | 15.0
+ * bench    42736 | 8752 | 4220 | 3506
+ * index    44300 | 3291 | 1725 | 1276
+ * s7test    1721 | 1358 |  995 | 1194
+ * t455|6     265 |   89 |  9   | 16.2
+ * t502        90 |   43 | 14.5 | 12.7
+ * t816           |   71 | 70.6 | 38.0
+ * lg             |      |  6.7 |  6.5
+ * calls      359 |  275 | 54   | 34.8
  *            153 with run macro (eval_ptree)
  *
- * ------------------------------------------------------------------------------------------------
+ * --------------------------------------------------
  *
  * ideally the function doc string could be completely removed before optimization etc
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
@@ -70012,10 +70004,7 @@ int main(int argc, char **argv)
  *
  * finish Display!
  * doc cyclic-seq+stuff under circular lists
- * the xm/xg names should be in their own library *xg* *xm* 
- *   none of these is currently in autoload
- *   but this would require special handling in the Xen stuff.
- *
+ * the xm/xg names should be in their own library *xg* *xm*, none of these is currently in autoload but this would require special handling in the Xen stuff.
  * mockery.scm needs documentation (and stuff.scm)
  *
  * what about (reactive-vector (v 0)) -- can we watch some other vector's contents?
@@ -70024,38 +70013,6 @@ int main(int argc, char **argv)
  * how would reactive-hash-table work? (hash 'a (+ b 1)) and update 'a's value whenever b changes?
  *   reactive-string? (reactive-string #\a c (integer->char a) (str 0) (_ 0))
  *   reactive-eval reactive-if(expr changes)--reactive-assert for example
- *
- * if symbol_access code were like *features*, it would automatically come/go with frames
- *   so to check sym_acc, start at sc->envir looking for some sym+frame-specific id, going until we hit the thing itself
- *   evaluate each, feeding to next as cascade of the new value, maybe mark these cases so we search only in known cases
- *   slot_accessor has base case, slot_has_accessor, if curlet is not symbol-let, place indirect slot access in curlet
- *   sym=indirect-symbol-access, val=func, nxt=next slot, pending=pointer to original slot, expr->orig env?
- *   when sym set, if accessor_has_indirect, start at curlet, not e, look for e_has_indirect, if so,
- *   search for indirect-symbol-access, for each (possibly multiple on same sym) look for slot/symbol match,
- *   if so, evaluate func.  Then reactive* becomes easy.
- *
-(let ((spread-function (lambda (x e) (+ x 1))))
-  (let ((spread-function (lambda (x e) (+ x 2))))
-    (let ((x 3))
-      (define (spread-function x e)
-	(let ((val x))
-	  (do ((e1 e (outlet e1)))
-	      ((eq? e1 (rootlet)) val)
-	    (let ((f (symbol->value 'spread-function e1)))
-	      (if (procedure? f)
-		  (set! val (f val (rootlet))))))))
-      (spread-function x (curlet)))))
- 6
- *    need a slot-iterator to crawl back out while repeatedly going to evaluate these functions
- *    or at least cur_slot+cur_env pointers and symbol, T_SLOT_ITERATOR
- *    what about the global case?  handle it the same.  We'll end up with global indirects, but not gc_protected objects.
- *      match on the symbol not the slot
- *    let_has_indirect_accessor, T_SLOT_ITERATOR, slot_is_indirect_accessor
- *    indirect-slot: ind-sym/value/orig-sym-as-expr 
- * slot_accessor is already being gc-marked! but not for rootlet slots (mark_rootlet)
- * how to distinguish set new accessor from add another accessor?
- *    can't incorporate old in new because new is (possibly) local
- *    maybe (set! (symbol-access sym e) f) means set in e, adding (prepending) if already set (use #f as func to clear)
  *
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
@@ -70069,14 +70026,18 @@ int main(int argc, char **argv)
  *   (catcher tag . body) and (thrower tag-func error-func) where (func tag) -> not #f then => body?)
  *
  * accessor if set: opt func involving set or free var, add accessor to free, call func
-    (define xxx 23)
-    (define (hix) (set! xxx 24))
-    (hix)
-    (set! (symbol-access 'xxx) (lambda (sym val) (format *stderr* "val: ~A~%" val) val))
-    (hix)
+ *    (let () (define xxx 23) (define (hix) (set! xxx 24)) (hix) (set! (symbol-access 'xxx) (lambda (sym val) (format *stderr* "val: ~A~%" val) val)) (hix))
  * and no printout -- how to deal with this?? -- if global to func, don't assume anything?
  *
- * if car not a symbol, but actual func, it's obviously not changing whatever it is
- * safe_closure_all_s? safe set -> all_x -> do? [all do body allx?]
+ * opt bug:
+ *   (define (f1) (with-let (inlet '+ (lambda args (apply * args))) (+ 1 2 3 4))) (f1) -> 10
+ *   (with-let (inlet '+ (lambda args (apply * args))) (+ 1 2 3 4)) -> 24
+ *   if is_global, cancel?  or set + c_function to unsafe? too late I think -- inlet->unsafe?
+ *
+ * why is (set! x (values)) an error? or ((lambda () (let ((x #f)) (set! x (equal? (values) (values))))))
+ *   this seems to be mv's leaking out of equal? same for ((lambda () (let ((x #f)) (set! x (boolean? (values)))))) etc
+ * also eval case in s7test thinks
+ *  53796: (= 9223372036854775806/9223372036854775807 1.0) got #t but expected #f (etc)
+ *  16984: (let ((saved-args (make-vector 10))) (let runner ((i 0)) (set! (saved-args i) (lambda () i)) (if (< i 9) (runner (+ i 1)))) (summer saved-args)) got 81 but expected 45
  */
 
