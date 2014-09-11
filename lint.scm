@@ -867,7 +867,8 @@
       
       (define (side-effect? form env)
 	;; could evaluation of form have any side effects (like IO etc)
-	(if (pair? form)
+	(if (and (list? form)                   ; we don't want dotted lists or () here
+		 (not (null? form)))
 	    ;; can't optimize ((...)...) because the car might eval to a function
 	    (or (and (not (hash-table-ref no-side-effect-functions (car form))) ; if func is not in that list, make no assumptions about it
 		     (or (not (eq? (car form) 'format))                 ; (format #f ...)
@@ -3808,6 +3809,7 @@
 ;;;   no built-in data here (fill hash-tables via local loads)
 ;;;   '(func 'type-predicate arg1-pred...) or (f t . arg) if all args have same etc
 ;;;   '(+ number? . number?), '(abs real? real?) etc
+;;;   also cload: libc libgsl etc arg types/return types
 
 
 

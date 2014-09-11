@@ -4288,8 +4288,6 @@ static void expand_heap(s7_scheme *sc)
 static void try_to_call_gc(s7_scheme *sc)
 {
   /* called only from NEW_CELL and cons */
-  unsigned int freed_heap;
-  
   if (sc->gc_off)
     {
       /* we can't just return here!  Someone needs a new cell, and once the heap free list is exhausted, segfault */
@@ -4297,6 +4295,7 @@ static void try_to_call_gc(s7_scheme *sc)
     }
   else
     {
+      unsigned int freed_heap;
       freed_heap = gc(sc);
       if ((freed_heap < sc->heap_size / 2) &&
 	  (freed_heap < 1000000)) /* if huge heap */
@@ -37743,11 +37742,12 @@ static s7_pointer active_exits(s7_scheme *sc)
 {
   /* (call-with-exit (lambda (exiter) (*s7* 'exits))) */
   int i;
-  s7_pointer lst, func, jump;
+  s7_pointer lst;
   lst = sc->NIL;
   for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
     if (stack_op(sc->stack, i) == OP_DEACTIVATE_GOTO)
       {
+	s7_pointer func, jump;
 	func = stack_code(sc->stack, i);  /* presumably this has the goto name */
 	jump = stack_args(sc->stack, i);  /* call this to jump */
 	
@@ -37767,12 +37767,12 @@ static s7_pointer active_exits(s7_scheme *sc)
 static s7_pointer stack_entries(s7_scheme *sc)
 {
   int i;
-  s7_pointer lst, func, args, e;
-  opcode_t op;
-
+  s7_pointer lst;
   lst = sc->NIL;
   for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
     {
+      s7_pointer func, args, e;
+      opcode_t op;
       func = stack_code(sc->stack, i);
       args = stack_args(sc->stack, i);
       e = stack_let(sc->stack, i);
@@ -37780,7 +37780,6 @@ static s7_pointer stack_entries(s7_scheme *sc)
       if ((s7_is_valid(sc, func)) &&
 	  (s7_is_valid(sc, args)) &&
 	  (s7_is_valid(sc, e)) &&
-	  (op >= OP_NO_OP) && 
 	  (op < OP_MAX_DEFINED))
 	{
 	  lst = cons(sc, list_4(sc, func, args, e, make_string_wrapper(sc, real_op_names[op])), lst);
@@ -39896,16 +39895,8 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
 {
   #define H_values "(values obj ...) splices its arguments into whatever list holds it (its 'continuation')"
 
-  if (is_null(args))
-    {
-      opcode_t op;
-      op = stack_op(sc->stack, s7_stack_top(sc) - 1);
-      if ((op == OP_SET1) || /* (set! var (values)) */
-	  (op == OP_SET_SAFE))
-	return(eval_error(sc, "set!: can't assign (values) to something: ~A", args));
-
-      return(sc->NO_VALUE); 
-    }
+  if (is_null(args))         /* ((lambda () (let ((x 1)) (set! x (boolean? (values)))))) */
+    return(sc->NO_VALUE); 
 
   /* this was sc->NIL until 16-Jun-10, 
    *   nil is consistent with the implied values call in call/cc (if no args, the continuation function returns ())
@@ -41119,7 +41110,6 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
    *
    * all args are optional, any arg with no default value defaults to #f.
    *   but the rest arg should default to ().
-   *
    * I later decided to add two warnings: if a parameter is set twice and if
    *   an unknown keyword is seen in a keyword position and there is no rest arg.
    *
@@ -41161,12 +41151,19 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 	    }
 	  else
 	    {
+	      /* mock-symbols introduce an ambiguity here; if the object's value is a keyword, is that
+	       *   intended to be used as an argument name or value?
+	       */
+	      s7_pointer car_lx;
+	      car_lx = car(lx);
+	      if (has_methods(car_lx))
+		car_lx = check_values(sc, car_lx, lx);
 	      if ((is_pair(cdr(lx))) &&
-		  (is_keyword(car(lx))))
+		  (is_keyword(car_lx)))
 		{
 		  /* char *name; */                      /* found a keyword, check the lambda args via the corresponding symbol */
 		  s7_pointer sym;
-		  sym = keyword_symbol(car(lx));
+		  sym = keyword_symbol(car_lx);
 		  
 		  if (lambda_star_argument_set_value(sc, sym, car(cdr(lx))) == sc->NO_VALUE)
 		    {
@@ -41275,22 +41272,11 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 				    list_3(sc, 
 					   make_string_wrapper(sc, "~A: not a key/value pair: ~S"),
 					   closure_name(sc, sc->code), lx)));
-#if 0
-		  s7_pointer x;
-		  for (x = sc->args; (is_pair(x)) && (x != lx); x = cdr(x))
-		    if (car(x) == car(lx))          /* ((lambda* (a :allow-other-keys) a) :a 1 :a 2) */
-		      return(s7_error(sc, sc->WRONG_TYPE_ARG,
-				      list_4(sc,
-					     make_string_wrapper(sc, "~A: parameter set twice, ~S in ~S"),
-					     closure_name(sc, sc->code), lx, sc->args)));
-
-		  /* this is very tricky! ((lambda* (:allow-other-keys ) #f) :b :a :a :b ) or offset if 1 par etc
+		  /* errors not caught? 
+		   *    ((lambda* (a :allow-other-keys) a) :a 1 :a 2)
+		   *    ((lambda* (:allow-other-keys ) #f) :b :a :a :b)
+		   *    ((lambda* (:key b :allow-other-keys ) b) 1 :b 2)
 		   */
-
-		  /* ((lambda* (:key b :allow-other-keys ) b) 1 :b 2) -> 1
-		   *  that is, the argument is set twice, but the second setting is in the trailing args
-		   */
-#endif
 		  lx = cddr(lx);
 		}
 	    }
@@ -46902,15 +46888,17 @@ static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args, int *arity)
 
   for (i = 0, x = args; is_pair(x); i++, x = cdr(x))
     {
-      if (s7_is_constant(car(x)))                       /* (lambda (pi) pi), constant here means not a symbol */
+      s7_pointer car_x;
+      car_x = car(x);
+      if (s7_is_constant(car_x))                       /* (lambda (pi) pi), constant here means not a symbol */
 	{
-	  if (is_pair(car(x)))                          /* (lambda ((:hi . "hi") . "hi") 1) */
-	    return(eval_error(sc, "lambda parameter '~S is a pair (perhaps you want define* or lambda*?)", car(x)));
-	  return(eval_error(sc, "lambda parameter '~S is a constant", car(x)));
+	  if (is_pair(car_x))                          /* (lambda ((:hi . "hi") . "hi") 1) */
+	    return(eval_error(sc, "lambda parameter '~S is a pair (perhaps you want define* or lambda*?)", car_x));
+	  return(eval_error(sc, "lambda parameter '~S is a constant", car_x));
 	}
-      if (symbol_is_in_arg_list(car(x), cdr(x)))       /* (lambda (a a) ...) or (lambda (a . a) ...) */
-	return(eval_error(sc, "lambda parameter '~S is used twice in the parameter list", car(x)));
-      set_local(car(x));
+      if (symbol_is_in_arg_list(car_x, cdr(x)))       /* (lambda (a a) ...) or (lambda (a . a) ...) */
+	return(eval_error(sc, "lambda parameter '~S is used twice in the parameter list", car_x));
+      set_local(car_x);
     }
   if (is_not_null(x))
     {
@@ -46943,33 +46931,41 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int *ar
   v = args;
   for (i = 0, w = args; is_pair(w); i++, v = w, w = cdr(w))
     {
-      if (is_pair(car(w)))
+      s7_pointer car_w;
+      car_w = car(w);
+      if (is_pair(car_w))
 	{
-	  if (s7_is_constant(caar(w)))                            /* (lambda* ((:a 1)) ...) */
-	    return(eval_error_with_string(sc, CONSTANT_ARG_ERROR, caar(w)));
+	  if (s7_is_constant(car(car_w)))                            /* (lambda* ((:a 1)) ...) */
+	    return(eval_error_with_string(sc, CONSTANT_ARG_ERROR, car(car_w)));
 	  if (symbol_is_in_arg_list(caar(w), cdr(w)))             /* (lambda* ((a 1) a) ...) */
-	    return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", caar(w)));
+	    return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car(car_w)));
 	  
-	  if (!is_pair(cdar(w)))                                  /* (lambda* ((a . 0.0)) a) */
+	  if (!is_pair(cdr(car_w)))                                  /* (lambda* ((a . 0.0)) a) */
 	    {
-	      if (is_null(cdar(w)))                               /* (lambda* ((a)) ...) */
-		return(eval_error(sc, "lambda* parameter default value missing? '~A", car(w)));
-	      return(eval_error(sc, "lambda* parameter is a dotted pair? '~A", car(w)));
+	      if (is_null(cdr(car_w)))                               /* (lambda* ((a)) ...) */
+		return(eval_error(sc, "lambda* parameter default value missing? '~A", car_w));
+	      return(eval_error(sc, "lambda* parameter is a dotted pair? '~A", car_w));
+	    }
+	  else
+	    {
+	      if ((is_pair(cadr(car_w))) &&                          /* (lambda* ((a (quote . -1))) ...) */
+		  (s7_list_length(sc, cadr(car_w)) < 0))
+		return(eval_error(sc, "lambda* parameter default value is improper? ~A", car_w));
 	    }
 	  
-	  if (is_not_null(cddar(w)))                              /* (lambda* ((a 0.0 'hi)) a) */
-	    return(eval_error(sc, "lambda* parameter has multiple default values? '~A", car(w)));
+	  if (is_not_null(cddr(car_w)))                              /* (lambda* ((a 0.0 'hi)) a) */
+	    return(eval_error(sc, "lambda* parameter has multiple default values? '~A", car_w));
 	  
-	  set_local(caar(w));
+	  set_local(car(car_w));
 	}
       else 
 	{
-	  if (car(w) != sc->KEY_REST)
+	  if (car_w != sc->KEY_REST)
 	    {
-	      if (s7_is_constant(car(w)))
+	      if (s7_is_constant(car_w))
 		{
-		  if ((car(w) == sc->KEY_KEY) || 
-		      (car(w) == sc->KEY_OPTIONAL))
+		  if ((car_w == sc->KEY_KEY) || 
+		      (car_w == sc->KEY_OPTIONAL))
 		    {
 		      if ((!is_pair(cdr(w))) ||                   /* (lambda* (:key) 1) or (lambda* (:key . b) 1) */
 			  (is_immutable(cadr(w))))                /* (lambda* (:key :optional) 1) */
@@ -46980,19 +46976,19 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int *ar
 		    }
 		  else
 		    {
-		      if (car(w) == sc->KEY_ALLOW_OTHER_KEYS)
+		      if (car_w == sc->KEY_ALLOW_OTHER_KEYS)
 			{
 			  if (is_not_null(cdr(w)))                /* (lambda* (:allow-other-keys x) x) */
 			    eval_error(sc, ":allow-other-keys should be the last parameter: ~A", args);
 			}
 		      else                                        /* (lambda* (pi) ...) */
-			return(eval_error_with_string(sc, CONSTANT_ARG_ERROR, car(w)));
+			return(eval_error_with_string(sc, CONSTANT_ARG_ERROR, car_w));
 		    }
 		}
-	      if (symbol_is_in_arg_list(car(w), cdr(w)))          /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
-		return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car(w)));
+	      if (symbol_is_in_arg_list(car_w, cdr(w)))          /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
+		return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car_w));
 	      
-	      if (!is_keyword(car(w))) set_local(car(w));
+	      if (!is_keyword(car_w)) set_local(car_w);
 	    }
 	  else
 	    {
@@ -52935,7 +52931,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cddr(sc->code);
 	  goto DO_END;
 	}
-      
       /* eval each init value, then set up the new frame (like let, not let*) */
       sc->args = sc->NIL;                             /* the evaluated var-data */
       sc->value = sc->code;                           /* protect it */
@@ -58767,7 +58762,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    if (is_pair(val))
 			      {
 				if (car(val) == sc->QUOTE)
-				  slot_set_value(z, cadr(val));
+				  {
+				    if ((!is_pair(cdr(val))) ||      /* (lambda* ((a (quote))) a) or (lambda* ((a (quote 1 1))) a) etc */
+					(is_pair(cddr(val))))
+				      return(eval_error(sc, "lambda* default: ~A is messed up", val));
+				    slot_set_value(z, cadr(val));
+				  }
 				else
 				  {
 				    push_stack(sc, OP_LAMBDA_STAR_DEFAULT, sc->args, sc->code);
@@ -70017,27 +70017,17 @@ int main(int argc, char **argv)
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  * *snd* or *clm* libraries also
- *   in clm: get rid of the run-time function args to src/[convolve]/granulate/phase-vocoder/move-sound?
+ *   in clm: get rid of the run-time function args to src/[convolve]/granulate/phase-vocoder?
  * other libraries: sdl2, fftw, alsa, jack, clm? sndlib? -- libclm.so in CL version, libsndlib.so from sndlib makefile
- *
- * catch with list of tags, or maybe throw should look for its tag independent of catch #t?
- *   I think the member/memq could be added at almost no cost, (member tag catch_tag) or if tag simple, memq
- *   but it's ambiguous -- tag can be anything.
- *   (catcher tag . body) and (thrower tag-func error-func) where (func tag) -> not #f then => body?)
  *
  * accessor if set: opt func involving set or free var, add accessor to free, call func
  *    (let () (define xxx 23) (define (hix) (set! xxx 24)) (hix) (set! (symbol-access 'xxx) (lambda (sym val) (format *stderr* "val: ~A~%" val) val)) (hix))
- * and no printout -- how to deal with this?? -- if global to func, don't assume anything?
+ *    and no printout -- how to deal with this?? -- if global to func, don't assume anything?
  *
- * opt bug:
- *   (define (f1) (with-let (inlet '+ (lambda args (apply * args))) (+ 1 2 3 4))) (f1) -> 10
- *   (with-let (inlet '+ (lambda args (apply * args))) (+ 1 2 3 4)) -> 24
- *   if is_global, cancel?  or set + c_function to unsafe? too late I think -- inlet->unsafe?
- *
- * why is (set! x (values)) an error? or ((lambda () (let ((x #f)) (set! x (equal? (values) (values))))))
- *   this seems to be mv's leaking out of equal? same for ((lambda () (let ((x #f)) (set! x (boolean? (values)))))) etc
- * also eval case in s7test thinks
- *  53796: (= 9223372036854775806/9223372036854775807 1.0) got #t but expected #f (etc)
+ * eval case in s7test thinks (or from repl):
  *  16984: (let ((saved-args (make-vector 10))) (let runner ((i 0)) (set! (saved-args i) (lambda () i)) (if (< i 9) (runner (+ i 1)))) (summer saved-args)) got 81 but expected 45
+ *
+ * does the mock data work in stuff.scm?
+ * should (set! (obj 'field) #<undefined>) remove the field altogether? or some function like varlet: delet?
  */
 

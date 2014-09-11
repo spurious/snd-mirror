@@ -7077,7 +7077,6 @@ snd can be a filename, a mix, a region, or a sound index number."
   snd_fd *fd = NULL;
   int edpos, direction = 1; /* in Scheme 1=forward, -1=backward */
   chan_info *cp;
-  const char *filename;
   snd_info *loc_sp = NULL;
   mus_long_t beg;
 
@@ -7092,6 +7091,7 @@ snd can be a filename, a mix, a region, or a sound index number."
 
   if (Xen_is_string(snd))
     {
+      const char *filename;
       int chan = 0;
       Xen_check_type(Xen_is_integer_boolean_or_unbound(chn), chn, 3, S_make_sampler, "an integer or boolean");
       filename = Xen_string_to_C_string(snd);
@@ -7691,7 +7691,7 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
   snd_fd *sf;
   mus_float_t ymax, x;
   mus_float_t *d;
-  mus_long_t i, k, lim8, kend, mpos, offset;
+  mus_long_t i, k, lim8, kend, mpos;
 
   sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, edpos, (num > MAX_BUFFER_SIZE) ? MAX_BUFFER_SIZE : num);
   if (sf == NULL) return(0.0);
@@ -7702,7 +7702,7 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 
   while (true)
     {
-      mus_long_t dur, left;
+      mus_long_t dur, left, offset;
       
       dur = sf->last - sf->loc + 1; /* current fragment, we're always reading forward here */
       left = num - i;

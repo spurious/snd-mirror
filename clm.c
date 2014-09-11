@@ -10152,15 +10152,9 @@ static mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
 				      gen->file_name, STRERROR(errno)));
       else
 	{ 
-	  int i;
-	  /*
-	  fprintf(stderr, "read %s len: %lld, samp: %lld, beg/end: %lld %lld  (%p, %p)\n",
-		  gen->file_name,
-		  gen->file_end, samp, gen->data_start, gen->data_end, 
-		  gen, gen->ibufs);
-	  */
 	  if (gen->ibufs == NULL) 
 	    {
+	      int i;
 	      mus_long_t len;
 	      len = gen->file_end + 1;
 	      if (len > gen->file_buffer_size) 
@@ -14683,10 +14677,10 @@ mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_float_t *win
     }
   if (maxa > 0.0)
     {
-      double todb;
       maxa = 1.0 / maxa;
       if (type == MUS_SPECTRUM_IN_DB)
 	{
+	  double todb;
 	  todb = 20.0 / log(10.0);
 	  for (i = 0; i < n; i++) 
 	    rdat[i] = todb * log(rdat[i] * maxa);
@@ -15999,7 +15993,7 @@ void mus_file_mix_with_reader_and_writer(mus_any *outf, mus_any *inf,
 					 mus_float_t *mx, int mx_chans,
 					 mus_any ***envs)
 {
-  int i, mixtype, in_chans, out_chans;
+  int mixtype, in_chans, out_chans;
   mus_long_t inc, outc, out_end;
   mus_float_t *out_data, *in_data, *local_mx;
 
@@ -16037,6 +16031,7 @@ void mus_file_mix_with_reader_and_writer(mus_any *outf, mus_any *inf,
     case ENVELOPED_MIX:
       if (mx == NULL) 
 	{
+	  int i;
 	  mx_chans = (in_chans < out_chans) ? out_chans : in_chans;
 	  local_mx = (mus_float_t *)calloc(mx_chans * mx_chans, sizeof(mus_float_t));
 	  for (i = 0; i < mx_chans; i++)
