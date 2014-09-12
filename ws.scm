@@ -265,7 +265,7 @@
 	       (if output-to-file
 		   (let* ((scale-output (or snd-output (open-sound output-1)))
 			  (old-sync (sync scale-output)))
-		     (set! (sync scale-output) 0)          ; make sure scaling doesn't follow sync
+		     (set! (sync scale-output) (+ (sync-max) 1))          ; make sure scaling doesn't follow sync
 		     (if scaled-to
 			 (scale-to scaled-to scale-output)
 			 (scale-by scaled-by scale-output))

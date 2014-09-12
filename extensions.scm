@@ -55,7 +55,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
       (if (not (= original-maxamp new-maxamp))
 	  (let ((scaler (/ original-maxamp new-maxamp))
 		(old-sync (sync snd)))
-	    (set! (sync snd) 0)
+	    (set! (sync snd) (+ (sync-max) 1))
 	    (scale-by scaler snd chn)
 	    (set! (sync snd) old-sync)
 	    scaler)

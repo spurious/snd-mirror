@@ -2482,6 +2482,7 @@ Environments are first class (and applicable) objects in s7.
 (<em class=def id="inlet">inlet</em> . bindings)       make a new environment with the given bindings
 (<em class=def id="sublet">sublet</em> env . bindings)  same as inlet, but the new environment is local to env
 (<em class=def id="varlet">varlet</em> env . bindings)  add new bindings directly to env
+(<em class=def id="cutlet">cutlet</em> env . fields)    remove bindings from env
 
 (<em class=def id="letp">let?</em> obj)               #t if obj is an environment
 (<em class=def id="with-let">with-let</em> env . body)    evaluate body in the environment env 
@@ -5116,6 +5117,20 @@ CLOS.  We can mimic this behavior:
 </pre>    
 </div>
 
+<!--
+(let ((spread-function (lambda (x e) (+ x 1))))
+  (let ((spread-function (lambda (x e) (+ x 2))))
+    (let ((x 3))
+      (define (spread-function x e)
+	(let ((val x))
+	  (do ((e1 e (outlet e1)))
+	      ((eq? e1 (rootlet)) val)
+	    (let ((f (symbol->value 'spread-function e1)))
+	      (if (procedure? f)
+		  (set! val (f val (rootlet))))))))
+      (spread-function x (curlet)))))
+ 6
+-->
 
 
 <div class="separator"></div>

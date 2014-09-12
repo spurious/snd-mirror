@@ -1254,7 +1254,7 @@ struct s7_scheme {
    */
   s7_pointer MINUS, MULTIPLY, ADD, DIVIDE, LT, LEQ, EQ, GT, GEQ, ABS, ACOS, ACOSH;
   s7_pointer ANGLE, APPEND, APPLY, IS_ARITABLE, ARITY, ASH, ASIN, ASINH, ASSOC, ASSQ, ASSV, ATAN, ATANH;
-  s7_pointer SUBLET, VARLET, AUTOLOAD, AUTOLOADER, IS_BOOLEAN, BYTEVECTOR, IS_BYTEVECTOR, CAAAAR, CAAADR, CAAAR, CAADAR, CAADDR;
+  s7_pointer SUBLET, VARLET, CUTLET, AUTOLOAD, AUTOLOADER, IS_BOOLEAN, BYTEVECTOR, IS_BYTEVECTOR, CAAAAR, CAAADR, CAAAR, CAADAR, CAADDR;
   s7_pointer CAADR, CAAR, CADAAR, CADADR, CADAR, CADDAR, CADDDR, CADDR, CADR, CALL_CC, CALL_WITH_CURRENT_CONTINUATION, CALL_WITH_EXIT, COVERLET;
   s7_pointer CALL_WITH_INPUT_FILE, CALL_WITH_INPUT_STRING, CALL_WITH_OUTPUT_FILE, CALL_WITH_OUTPUT_STRING, CAR, CATCH, CDAAAR;
   s7_pointer CDAADR, CDAAR, CDADAR, CDADDR, CDADR, CDAR, CDDAAR, CDDADR, CDDAR, CDDDAR, CDDDDR, CDDDR, CDDR, CDR, CEILING;
@@ -5689,6 +5689,51 @@ directly to the environment env, and returns the environment."
 	      }
 	  if (!found_it)
 	    s7_make_slot(sc, e, sym, val);
+	}
+    }
+  return(e);
+}
+
+
+static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cutlet "(cutlet e field ...) removes a field or fields from an environment."
+  s7_pointer e, fields;
+  int i;
+
+  e = car(args);
+  if (is_null(e))
+    e = sc->rootlet;
+  else
+    {
+      check_method(sc, e, sc->CUTLET, args);
+      if (!is_let(e))
+	return(wrong_type_argument_with_type(sc, sc->CUTLET, small_int(1), e, AN_ENVIRONMENT));
+    }
+  
+  for (i = 1, fields = cdr(args); is_pair(fields); fields = cdr(fields), i++)
+    {
+      s7_pointer field, slot, last_slot;
+      field = car(fields);
+      if (!is_symbol(field))
+	return(wrong_type_argument_with_type(sc, sc->CUTLET, small_int(i), field, A_SYMBOL));
+      slot = let_slots(e);
+      if (is_slot(slot))
+	{
+	  if (slot_symbol(slot) == field)
+	    let_slots(e) = next_slot(let_slots(e));
+	  else
+	    {
+	      last_slot = slot;
+	      for (slot = next_slot(let_slots(e)); is_slot(slot); last_slot = slot, slot = next_slot(slot))
+		{
+		  if (slot_symbol(slot) == field)
+		    {
+		      next_slot(last_slot) = next_slot(slot);
+		      break; /* or shoud we remove all fields of a given name? */
+		    }
+		}
+	    }
 	}
     }
   return(e);
@@ -68898,6 +68943,7 @@ s7_scheme *s7_init(void)
                               s7_define_constant_function(sc, "unlet",               g_unlet,                  0, 0, false, H_unlet);
   sc->SUBLET =                s7_define_safe_function(sc, "sublet",                  g_sublet,                 1, 0, true,  H_sublet);
   sc->VARLET =                s7_define_function(sc,      "varlet",                  g_varlet,                 1, 0, true,  H_varlet);
+  sc->CUTLET =                s7_define_function(sc,      "cutlet",                  g_cutlet,                 1, 0, true,  H_cutlet);
   sc->INLET =                 s7_define_safe_function(sc, "inlet",                   s7_inlet,                 0, 0, true,  H_inlet);
   sc->IS_LET =                s7_define_safe_function(sc, "let?",                    g_is_let,                 1, 0, false, H_is_let);
   sc->LET_TO_LIST =           s7_define_safe_function(sc, "let->list",               g_let_to_list,            1, 0, false, H_let_to_list);
@@ -69931,9 +69977,9 @@ int main(int argc, char **argv)
  *  16984: (let ((saved-args (make-vector 10))) (let runner ((i 0)) (set! (saved-args i) (lambda () i)) (if (< i 9) (runner (+ i 1)))) (summer saved-args)) got 81 but expected 45
  *
  * does the mock data work in stuff.scm?
- * should (set! (obj 'field) #<undefined>) remove the field altogether? or some function like varlet: delet?
- *
- * permanent c_objects should not be in the gc table (xen_transforms for example)
+ * permanent c_objects should not be in the gc table (xen_transforms for example) [also ffi c-funcs define-constant etc]
  *  re-export s7_remove_from_heap?
+ * maxamp trouble: (with-sound (:scaled-to .9 :channels 2) (fm-violin 0 1 440 1.1 :degree 90))
+ * test cutlet
  */
 
