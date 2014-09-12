@@ -6543,7 +6543,7 @@ See generators.scm for several related functions:
 
 <pre class="indented">
 <em class=def id="make-src">make-src</em> input (srate 1.0) (width 5)
-<em class=def id="src">src</em> s (sr-change 0.0) input-function
+<em class=def id="src">src</em> s (sr-change 0.0)
 <em class=def id="src?">src?</em> s
 </pre>
 
@@ -6611,64 +6611,6 @@ lambda: ( -- )
 </tr>
 </table>
 
-<table>
-<tr>
-<td>
-<div class="scheme">
-<pre class="indented">
-(with-sound (:play #t)
-  (let ((osc (make-oscil 440.0))
-        (sr (make-src :srate 2.0)))
-    (do ((i 0 (+ i 1)))
-        ((= i 44100))
-      (outa i (src sr 0.0 (lambda (dir) (oscil osc)))))))
-</pre>
-</div>
-</td>
-</tr>
-<tr>
-
-<td>
-<div class="ruby">
-<pre class="indented">
-with_sound(:play, true) do
-  osc = make_oscil(440.0);
-  sr = make_src(:srate, 2.0);
-  44100.times do |i|
-    outa(i, src(sr, 0.0, lambda do |dir| 
-                           oscil(osc) 
-                           end), 
-                    $output);
-    end
-  end.output
-</pre>
-</div>
-</td>
-</tr>
-<tr>
-
-<td>
-<div class="forth">
-<pre class="indented">
-: make-src-proc { osc -- prc; dir self -- val }
-  1 proc-create osc , ( prc )
- does> { dir self -- val }
-  self @ ( osc ) 0 0 oscil
-;
-
-lambda: ( -- )
-  440.0 make-oscil { osc }
-  osc make-src-proc { prc }
-  :srate 2.0 make-src { sr }
-  44100 0 do
-    i  sr 0 prc src  *output* outa drop
-  loop
-; :play #t with-sound drop
-</pre>
-</div>
-</td>
-</tr>
-</table>
 
 <p>
 The "width" argument sets how many neighboring samples to convolve with the sinc function.
@@ -6956,7 +6898,7 @@ but convolve uses an FFT internally, rather than a laborious dot-product.
         max-size          ; internal buffer size
         edit              ; grain editing function
 
-<em class=def id="granulate">granulate</em> e input-function edit-function
+<em class=def id="granulate">granulate</em> e
 <em class=def id="granulate?">granulate?</em> e
 </pre>
 
@@ -7222,7 +7164,7 @@ In the following example, we use the edit function to reverse every other grain:
 
 <pre class="indented">
 <em class=def id="make-phase-vocoder">make-phase-vocoder</em> input (fft-size 512) (overlap 4) (interp 128) (pitch 1.0) analyze edit synthesize
-<em class=def id="phase-vocoder">phase-vocoder</em> pv input-function analyze-function edit-function synthesize-function
+<em class=def id="phase-vocoder">phase-vocoder</em> pv
 <em class=def id="phase-vocoder?">phase-vocoder?</em> pv
 </pre>
 

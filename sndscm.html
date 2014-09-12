@@ -9486,7 +9486,9 @@ pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 <pre class="indented">
 (define test-pv-4
   (lambda (gate)
-    (let ((pv (<a class=quiet href="sndclm.html#make-phase-vocoder" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_phase_vocoder_tip)">make-phase-vocoder</a> #f
+    (let* ((reader (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0))
+           (pv (<a class=quiet href="sndclm.html#make-phase-vocoder" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_phase_vocoder_tip)">make-phase-vocoder</a>
+                                  (lambda (dir) (reader))
 				  512 4 128 1.0
 				  #f ;no change to analysis
 				  (lambda (v)
@@ -9497,11 +9499,9 @@ pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 					    (set! ((phase-vocoder-amp-increments v) i) 0.0)))
 				      #t))
 				  #f)) ;no change to synthesis
-	  (reader (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0)))
+	  
       (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (val)
-		  (<a class=quiet href="sndclm.html#phase-vocoder" onmouseout="UnTip()" onmouseover="Tip(sndclm_phase_vocoder_tip)">phase-vocoder</a> pv (lambda (dir) 
-				      (reader)))))
-      (<a class=quiet href="extsnd.html#freesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesampler_tip)">free-sampler</a> reader))))
+		  (<a class=quiet href="sndclm.html#phase-vocoder" onmouseout="UnTip()" onmouseover="Tip(sndclm_phase_vocoder_tip)">phase-vocoder</a> pv)))))))
 </pre>
 
 <p>This sets up a phase-vocoder generator whose edit function is squelching soft partials.

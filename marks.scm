@@ -140,15 +140,16 @@
 			       (set! inctr (+ 1 inctr))
 			       val))
 			   m1-samp mark-samps (car m1-home) (cadr m1-home))
-	      (let ((gr (make-granulate :expansion (/ mark-samps selection-samps))))
+	      (let ((gr (make-granulate :expansion (/ mark-samps selection-samps)
+					:input (lambda (dir)
+						 (if (or (>= inctr selection-samps)
+							 (< inctr 0))
+						     0.0
+						     (let ((val (reg-data inctr)))
+						       (set! inctr (+ inctr dir))
+						       val))))))
 		(map-channel (lambda (y)
-			       (+ y (granulate gr (lambda (dir)
-						    (if (or (>= inctr selection-samps)
-							    (< inctr 0))
-							0.0
-							(let ((val (reg-data inctr)))
-							  (set! inctr (+ inctr dir))
-							  val))))))
+			       (+ y (granulate gr)))
 			     m1-samp mark-samps (car m1-home) (cadr m1-home))))))))
 
 

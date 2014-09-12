@@ -173,53 +173,47 @@
 
 (define test-pv-1
   (lambda (freq)
-    (let ((pv (make-phase-vocoder #f
+    (let* ((reader (make-sampler 0))
+	   (pv (make-phase-vocoder (lambda (dir) (next-sample reader))
 				  512 4 128 1.0
 				  #f ;no change to analysis
 				  #f ;no change to edits
 				  #f ;no change to synthesis
-				  ))
-	  (reader (make-sampler 0)))
-      (map-channel (lambda (val)
-		     (phase-vocoder pv (lambda (dir) 
-					 (next-sample reader)))))
-      (free-sampler reader))))
+				  )))
+      (map-channel (lambda (val) (phase-vocoder pv))))))
 
 (define test-pv-2
   (lambda (freq)
-    (let ((pv (make-phase-vocoder #f
+    (let* ((reader (make-sampler 0))
+	   (pv (make-phase-vocoder (lambda (dir) (next-sample reader))
 				  512 4 128 freq
 				  #f ;no change to analysis
 				  #f
 				  #f ; no change to synthesis
-				  ))
-	  (reader (make-sampler 0)))
-      (map-channel (lambda (val)
-		     (phase-vocoder pv (lambda (dir) 
-					 (next-sample reader)))))
-      (free-sampler reader))))
+				  )))
+      (map-channel (lambda (val) (phase-vocoder pv))))))
 
 (define test-pv-3
   (lambda (time)
-    (let* ((pv (make-phase-vocoder #f
+    (let* ((reader (make-sampler 0))
+	   (pv (make-phase-vocoder (lambda (dir) (next-sample reader))
 				   512 4 (floor (* 128 time)) 1.0
 				   #f ;no change to analysis
 				   #f ;no change to edits
 				   #f ;no change to synthesis
 				   ))
-	   (reader (make-sampler 0))
 	   (len (floor (* time (framples))))
-	   (data (make-float-vector len))
-	   )
+	   (data (make-float-vector len)))
       (do ((i 0 (+ i 1)))
 	  ((= i len))
-	(set! (data i) (phase-vocoder pv (lambda (dir) (next-sample reader)))))
+	(set! (data i) (phase-vocoder pv)))
       (free-sampler reader)
       (float-vector->channel data 0 len))))
 
 (define test-pv-4
   (lambda (gate)
-    (let ((pv (make-phase-vocoder #f
+    (let* ((reader (make-sampler 0))
+	   (pv (make-phase-vocoder (lambda (dir) (next-sample reader))
 				  512 4 128 1.0
 				  #f ;no change to analysis
 				  (lambda (v)
@@ -230,13 +224,8 @@
 					    (float-vector-set! (phase-vocoder-amp-increments v) i 0.0)))
 				      #t))
 				  #f ;no change to synthesis
-				  ))
-	  (reader (make-sampler 0))
-	  )
-      (map-channel (lambda (val)
-		     (phase-vocoder pv (lambda (dir) 
-					 (next-sample reader)))))
-      (free-sampler reader))))
+				  )))
+      (map-channel (lambda (val) (phase-vocoder pv))))))
 |#
 
 
