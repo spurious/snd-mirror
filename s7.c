@@ -5700,6 +5700,7 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
   #define H_cutlet "(cutlet e field ...) removes a field or fields from an environment."
   s7_pointer e, fields;
   int i;
+  #define THE_UN_ID -1
 
   e = car(args);
   if (is_null(e))
@@ -5710,27 +5711,43 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
       if (!is_let(e))
 	return(wrong_type_argument_with_type(sc, sc->CUTLET, small_int(1), e, AN_ENVIRONMENT));
     }
-  
+  /* besides removing the slot we have to make sure the symbol_id does not match else
+   *   let-ref and others will use the old slot!  What's the un-id?  I'll try -1.  0 means global.
+   */
   for (i = 1, fields = cdr(args); is_pair(fields); fields = cdr(fields), i++)
     {
       s7_pointer field, slot, last_slot;
       field = car(fields);
       if (!is_symbol(field))
 	return(wrong_type_argument_with_type(sc, sc->CUTLET, small_int(i), field, A_SYMBOL));
-      slot = let_slots(e);
-      if (is_slot(slot))
+      if ((e == sc->rootlet) &&
+	  (is_slot(global_slot(field))))
 	{
-	  if (slot_symbol(slot) == field)
-	    let_slots(e) = next_slot(let_slots(e));
-	  else
+	  symbol_id(field) = THE_UN_ID;
+	  slot_value(global_slot(field)) = sc->UNDEFINED;
+	  slot_value(local_slot(field)) = sc->UNDEFINED;
+	}
+      else
+	{
+	  slot = let_slots(e);
+	  if (is_slot(slot))
 	    {
-	      last_slot = slot;
-	      for (slot = next_slot(let_slots(e)); is_slot(slot); last_slot = slot, slot = next_slot(slot))
+	      if (slot_symbol(slot) == field)
 		{
-		  if (slot_symbol(slot) == field)
+		  let_slots(e) = next_slot(let_slots(e));
+		  symbol_id(field) = THE_UN_ID;
+		}
+	      else
+		{
+		  last_slot = slot;
+		  for (slot = next_slot(let_slots(e)); is_slot(slot); last_slot = slot, slot = next_slot(slot))
 		    {
-		      next_slot(last_slot) = next_slot(slot);
-		      break; /* or shoud we remove all fields of a given name? */
+		      if (slot_symbol(slot) == field)
+			{
+			  symbol_id(field) = THE_UN_ID;
+			  next_slot(last_slot) = next_slot(slot);
+			  break; /* or shoud we remove all fields of a given name? */
+			}
 		    }
 		}
 	    }
@@ -69976,10 +69993,7 @@ int main(int argc, char **argv)
  * eval case in s7test thinks (or from repl):
  *  16984: (let ((saved-args (make-vector 10))) (let runner ((i 0)) (set! (saved-args i) (lambda () i)) (if (< i 9) (runner (+ i 1)))) (summer saved-args)) got 81 but expected 45
  *
- * does the mock data work in stuff.scm?
- * permanent c_objects should not be in the gc table (xen_transforms for example) [also ffi c-funcs define-constant etc]
- *  re-export s7_remove_from_heap?
- * maxamp trouble: (with-sound (:scaled-to .9 :channels 2) (fm-violin 0 1 440 1.1 :degree 90))
- * test cutlet
+ * permanent c_objects should not be in the gc table (xen_transforms for example)
+ *   re-export s7_remove_from_heap?
  */
 

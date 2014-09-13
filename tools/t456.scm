@@ -133,7 +133,7 @@
 
 (define baddies (list "exit" "emergency-exit" "abort" "autotest" 
 		      "all" "delete-file" "system" "set-cdr!" "stacktrace" "test-sym"
-		      "varlet" "dilambda" "gc" "cond-expand" "reader-cond"
+		      "cutlet" "varlet" "dilambda" "gc" "cond-expand" "reader-cond"
 		      "openlet" "coverlet" "eval" "vector" "list" "cons" "m" "hash-table*" "hash-table" "values"
 		      "object->string"
 
