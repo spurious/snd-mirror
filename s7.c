@@ -1461,6 +1461,7 @@ static bool t_simple_p[NUM_TYPES];
 static bool t_big_number_p[NUM_TYPES];
 static bool t_structure_p[NUM_TYPES];
 static bool t_any_macro_p[NUM_TYPES];
+static bool t_any_closure_p[NUM_TYPES];
 static bool t_sequence_p[NUM_TYPES];
 static bool t_vector_p[NUM_TYPES];
 static bool t_applicable_p[NUM_TYPES];
@@ -1478,6 +1479,7 @@ static void init_types(void)
       t_simple_p[i] = false;
       t_structure_p[i] = false;
       t_any_macro_p[i] = false;
+      t_any_closure_p[i] = false;
       t_sequence_p[i] = false;
       t_vector_p[i] = false;
       t_applicable_p[i] = false;
@@ -1544,6 +1546,9 @@ static void init_types(void)
   t_any_macro_p[T_C_MACRO] = true;
   t_any_macro_p[T_MACRO] = true;
   t_any_macro_p[T_BACRO] = true;
+
+  t_any_closure_p[T_CLOSURE] = true;
+  t_any_closure_p[T_CLOSURE_STAR] = true;
 
   t_simple_p[T_NIL] = true;
   t_simple_p[T_UNIQUE] = true;
@@ -1629,6 +1634,7 @@ static void init_types(void)
 #define has_structure(P)              t_structure_p[type(P)]
 
 #define is_any_macro(P)               t_any_macro_p[type(P)]
+#define is_any_closure(P)             t_any_closure_p[type(P)]
 #define is_procedure_or_macro(P)      ((t_any_macro_p[type(P)]) || ((typeflag(P) & T_PROCEDURE) != 0))
 
 #define is_sequence(P)                ((t_sequence_p[type(P)]) || (has_methods(P)))
@@ -2312,11 +2318,11 @@ bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_optimized
 
 #define is_closure(p)                 (type(p) == T_CLOSURE)
 #define is_closure_star(p)            (type(p) == T_CLOSURE_STAR)
-#define closure_args(p)               ((p)->object.func.args)
-#define closure_body(p)               ((p)->object.func.body)
-#define closure_let(p)                ((p)->object.func.env)
-#define closure_setter(p)             ((p)->object.func.setter)
-#define closure_arity(p)              ((p)->object.func.arity)
+#define closure_args(p)               (p)->object.func.args
+#define closure_body(p)               (p)->object.func.body
+#define closure_let(p)                (p)->object.func.env
+#define closure_setter(p)             (p)->object.func.setter
+#define closure_arity(p)              (p)->object.func.arity
 #define CLOSURE_ARITY_NOT_SET         0x40000000
 #define MAX_ARITY                     0x20000000
 
@@ -2764,8 +2770,7 @@ void add_expr(s7_scheme *sc, s7_pointer expr)
   val = s7_hash_table_ref(sc, hashes, expr);
   if (val == sc->F)
     {
-      if ((!is_closure(expr)) &&
-	  (!is_closure_star(expr)))
+      if (!is_any_closure(expr))
 	s7_hash_table_set(sc, hashes, expr, s7_make_integer(sc, 1));
     }
   else
@@ -5329,8 +5334,7 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
       s7_pointer ge;
 
       if ((sc->safety == 0) &&
-	  ((is_closure(value))      ||
-	   (is_closure_star(value)) ||
+	  ((is_any_closure(value))  ||
 	   (is_macro(value))        ||
 	   (is_bacro(value))))
 	{
@@ -5517,7 +5521,7 @@ static s7_pointer g_openlet(s7_scheme *sc, s7_pointer args)
   e = car(args);
   check_method(sc, e, sc->OPENLET, args);
   if (((is_let(e)) && (e != sc->rootlet)) ||
-      (is_closure(e)) || (is_closure_star(e)) ||
+      (is_any_closure(e)) ||
       ((is_c_object(e)) && (c_object_let(e) != sc->NIL)))
     {
       set_has_methods(e);
@@ -5535,7 +5539,7 @@ static s7_pointer g_coverlet(s7_scheme *sc, s7_pointer args)
   e = car(args);
   check_method(sc, e, sc->COVERLET, args);
   if (((is_let(e)) && (e != sc->rootlet)) ||
-      (is_closure(e)) || (is_closure_star(e)) ||
+      (is_any_closure(e)) || 
       ((is_c_object(e)) && (c_object_let(e) != sc->NIL)))
     {
       clear_has_methods(e);
@@ -33505,7 +33509,7 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
    * ((a) (+ a b)) (((b . 1)) #(() () () () () ((make-filtered-comb . make-filtered-comb)) () () ...))
    */
   
-  if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
+  if (is_any_closure(p) || is_macro(p) || is_bacro(p))
     {
       return(cons(sc, 
 		  append_in_place(sc, 
@@ -33541,7 +33545,7 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
     return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_SOURCE, p, make_string_wrapper(sc, "a scheme macro")));
 
   check_method(sc, p, sc->PROCEDURE_SOURCE, args);
-  if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
+  if (is_any_closure(p) || is_macro(p) || is_bacro(p))
     {
       s7_pointer body;
       body = closure_body(p);
@@ -33563,7 +33567,7 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_funclet(s7_scheme *sc, s7_pointer p)    
 { 
-  if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
+  if (is_any_closure(p) || is_macro(p) || is_bacro(p))
     return(closure_let(p));
   return(sc->rootlet);
 }
@@ -33826,11 +33830,9 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
       (is_c_macro(x)))
     return((char *)c_function_documentation(x));
   
-  if (((is_closure(x)) || 
-       (is_closure_star(x))))
+  if (is_any_closure(x))
     {
       char *args;
-
       if (is_string(car(closure_body(x))))
 	return(string_value(car(closure_body(x))));
 
@@ -34362,8 +34364,7 @@ bool s7_is_dilambda(s7_pointer obj)
 {
   return(((is_c_function(obj)) &&
 	  (is_c_function(c_function_setter(obj)))) ||
-	 (((is_closure(obj)) || 
-	   (is_closure_star(obj))) &&
+	 ((is_any_closure(obj)) && 
 	  (is_procedure(closure_setter(obj)))));
 }
 
@@ -34461,21 +34462,18 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
       c_function_setter(p) = setter;
-      if ((is_closure(setter)) ||
-	  (is_closure_star(setter)))
+      if (is_any_closure(setter))
 	mark_function[type(p)] = mark_c_proc;
       break;
 
     case T_C_FUNCTION_STAR:
       c_function_setter(p) = setter;
-      if ((is_closure(setter)) ||
-	  (is_closure_star(setter)))
+      if (is_any_closure(setter))
 	mark_function[T_C_FUNCTION_STAR] = mark_c_proc_star;
       break;
 
     case T_C_MACRO:
-      if ((is_closure(setter)) ||
-	  (is_closure_star(setter)))
+      if (is_any_closure(setter))
 	mark_function[T_C_MACRO] = mark_c_proc;
       c_macro_setter(p) = setter;
       break;
@@ -34584,8 +34582,7 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
    *   and then there are cases like: (fill! (append (list 1) (procedure-arity abs)) 0)
    */
 
-  if ((is_closure(x)) ||
-      (is_closure_star(x)))
+  if (is_any_closure(x))
     {
       int len;
       
@@ -37811,7 +37808,7 @@ static s7_pointer active_exits(s7_scheme *sc)
 	func = stack_code(sc->stack, i);  /* presumably this has the goto name */
 	jump = stack_args(sc->stack, i);  /* call this to jump */
 	
-	if ((is_closure(func)) || (is_closure_star(func)))
+	if (is_any_closure(func))
 	  lst = cons(sc, cons(sc, car(closure_args(func)), jump), lst);
 	else
 	  {
@@ -45901,8 +45898,7 @@ static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int 
 
   orig_hop = hop;
 
-  if ((is_closure(func)) || /* can't depend on ecdr here because it might not be global, or might be redefined locally */
-      (is_closure_star(func)))
+  if (is_any_closure(func))      /* can't depend on ecdr here because it might not be global, or might be redefined locally */
     {
       /* (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a)) (f1 12))
        * (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a 1)) (f1 12))
@@ -59098,8 +59094,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       
     DEFINE2:
-      if ((is_closure(sc->value)) || 
-	  (is_closure_star(sc->value)))
+      if (is_any_closure(sc->value))
 	{
 	  s7_pointer new_func, new_env;
 	  new_func = sc->value;
@@ -68507,7 +68502,7 @@ s7_scheme *s7_init(void)
 
   sc->port_heap = NULL;
   sc->permanent_objects = NULL;
-  
+    
   sc->heap_size = INITIAL_HEAP_SIZE;
   if ((sc->heap_size % 32) != 0)
     sc->heap_size = 32 * (int)ceil((double)(sc->heap_size) / 32.0);
@@ -68536,7 +68531,7 @@ s7_scheme *s7_init(void)
   for (i = 0; i < INITIAL_PROTECTED_OBJECTS_SIZE; i++)
     vector_element(sc->protected_objects, i) = sc->GC_NIL;
   set_immutable(sc->protected_objects);
-  
+
   sc->stack = s7_make_vector(sc, INITIAL_STACK_SIZE);
   sc->stack_start = vector_elements(sc->stack);
   sc->stack_end = sc->stack_start;
@@ -69949,7 +69944,6 @@ int main(int argc, char **argv)
  *
  * --------------------------------------------------
  *
- * ideally the function doc string could be completely removed before optimization etc
  * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * clm opt accepts (env env)
  * popup menu reflects selected sound, but comes up over any sound -- if popup, select underlying?
