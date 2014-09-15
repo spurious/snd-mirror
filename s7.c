@@ -1137,7 +1137,7 @@ typedef struct gc_obj {
 
 
 static s7_pointer *small_ints, *chars;
-static s7_pointer real_zero, real_NaN, real_pi, real_one, arity_not_set, real_infinity, real_minus_infinity; 
+static s7_pointer real_zero, real_NaN, real_pi, real_one, arity_not_set, max_arity, real_infinity, real_minus_infinity; 
 
 
 struct s7_scheme {  
@@ -2177,7 +2177,7 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {pair_sy
 #define is_let(p)                     (type(p) == T_ENVIRONMENT)
 #define let_slots(p)                  (p)->object.envr.slots
 #define outlet(p)                     (p)->object.envr.nxt
-#define environment_function(p)       (p)->object.envr.edat.efnc.function
+#define funclet_function(p)       (p)->object.envr.edat.efnc.function
 #define let_line(p)                   (p)->object.envr.edat.efnc.line
 #define let_file(p)                   (p)->object.envr.edat.efnc.file
 #define dox_slot1(p)                  (p)->object.envr.edat.dox.dox1
@@ -2325,6 +2325,7 @@ bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_optimized
 #define closure_arity(p)              (p)->object.func.arity
 #define CLOSURE_ARITY_NOT_SET         0x40000000
 #define MAX_ARITY                     0x20000000
+#define closure_arity_unknown(p)      (closure_arity(p) == CLOSURE_ARITY_NOT_SET)
 
 #define catch_tag(p)                  (p)->object.rcatch.tag
 #define catch_goto_loc(p)             (p)->object.rcatch.goto_loc
@@ -23858,10 +23859,10 @@ static s7_pointer find_closure(s7_scheme *sc, s7_pointer closure, s7_pointer cur
   for (e = cur_env; is_let(e); e = outlet(e))
     {
       if ((is_function_env(e)) &&
-	  (is_symbol(environment_function(e))) &&
-	  (is_global(environment_function(e))) && /* (define (f1) (lambda () 1)) shouldn't say the returned closure is named f1 */
-	  (slot_value(global_slot(environment_function(e))) == closure))
-	return(environment_function(e));
+	  (is_symbol(funclet_function(e))) &&
+	  (is_global(funclet_function(e))) && /* (define (f1) (lambda () 1)) shouldn't say the returned closure is named f1 */
+	  (slot_value(global_slot(funclet_function(e))) == closure))
+	return(funclet_function(e));
 
       for (y = let_slots(e); is_slot(y); y = next_slot(y))
 	if (slot_value(y) == closure)
@@ -34661,13 +34662,13 @@ static s7_pointer closure_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_pointer 
   int len;
 
   if (is_symbol(x_args))                    /* any number of args is ok */
-    return(s7_cons(sc, small_int(0), s7_make_integer(sc, MAX_ARITY)));
+    return(s7_cons(sc, small_int(0), max_arity));
 	
-  if (closure_arity(x) == CLOSURE_ARITY_NOT_SET)
+  if (closure_arity_unknown(x))
     closure_arity(x) = s7_list_length(sc, x_args);
   len = closure_arity(x);
   if (len < 0)                               /* dotted list => rest arg, (length '(a b . c)) is -2 */
-    return(s7_cons(sc, s7_make_integer(sc, -len), s7_make_integer(sc, MAX_ARITY)));
+    return(s7_cons(sc, s7_make_integer(sc, -len), max_arity));
   return(s7_cons(sc, s7_make_integer(sc, len), s7_make_integer(sc, len)));
 }
 
@@ -34675,9 +34676,9 @@ static s7_pointer closure_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_pointer 
 static s7_pointer closure_star_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_pointer x_args)
 {
   if (is_symbol(x_args))
-    return(s7_cons(sc, small_int(0), s7_make_integer(sc, MAX_ARITY)));
+    return(s7_cons(sc, small_int(0), max_arity));
 
-  if (closure_arity(x) == CLOSURE_ARITY_NOT_SET)
+  if (closure_arity_unknown(x))
     {
       s7_pointer p;
       int i;
@@ -34696,7 +34697,7 @@ static s7_pointer closure_star_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_poi
     }
 
   if (closure_arity(x) == -1)
-    return(s7_cons(sc, small_int(0), s7_make_integer(sc, MAX_ARITY)));
+    return(s7_cons(sc, small_int(0), max_arity));
   return(s7_cons(sc, small_int(0), s7_make_integer(sc, closure_arity(x))));
 }
 
@@ -34704,7 +34705,7 @@ static s7_pointer closure_star_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_poi
 static int closure_arity_to_int(s7_scheme *sc, s7_pointer x)
 {
   /* not lambda* here */
-  if (closure_arity(x) == CLOSURE_ARITY_NOT_SET)
+  if (closure_arity_unknown(x))
     {
       int i;
       s7_pointer b;
@@ -34725,7 +34726,7 @@ static int closure_arity_to_int(s7_scheme *sc, s7_pointer x)
 static int closure_star_arity_to_int(s7_scheme *sc, s7_pointer x)
 {
   /* not lambda here */
-  if (closure_arity(x) == CLOSURE_ARITY_NOT_SET)
+  if (closure_arity_unknown(x))
     {
       s7_pointer p;
       int i;
@@ -34784,7 +34785,7 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 
     case T_GOTO:
     case T_CONTINUATION:
-      return(s7_cons(sc, small_int(0), s7_make_integer(sc, MAX_ARITY)));
+      return(s7_cons(sc, small_int(0), max_arity));
 
     case T_STRING:
       if (string_length(x) == 0)
@@ -34797,7 +34798,7 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
     case T_C_OBJECT:
       check_method(sc, x, sc->ARITY, args);
       if (is_procedure(x))
-	return(s7_cons(sc, small_int(0), make_integer(sc, MAX_ARITY)));
+	return(s7_cons(sc, small_int(0), max_arity));
       return(sc->F);
 
     case T_INT_VECTOR:
@@ -34808,7 +34809,7 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 
     case T_PAIR:
     case T_HASH_TABLE:
-      return(s7_cons(sc, small_int(1), s7_make_integer(sc, MAX_ARITY)));
+      return(s7_cons(sc, small_int(1), max_arity));
 
     case T_SYNTAX:
       switch (syntax_opcode(x))
@@ -34824,7 +34825,7 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 
 	case OP_COND:
 	case OP_WITH_LET:
-	  return(s7_cons(sc, small_int(1), s7_make_integer(sc, MAX_ARITY)));
+	  return(s7_cons(sc, small_int(1), max_arity));
 
 	case OP_WHEN:
 	case OP_UNLESS:
@@ -34843,13 +34844,13 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 	case OP_DEFINE_EXPANSION:
 	case OP_DEFINE_BACRO:
 	case OP_DEFINE_BACRO_STAR:
-	  return(s7_cons(sc, small_int(2), s7_make_integer(sc, MAX_ARITY)));
+	  return(s7_cons(sc, small_int(2), max_arity));
 
 	case OP_DO:
-	  return(s7_cons(sc, small_int(3), s7_make_integer(sc, MAX_ARITY)));
+	  return(s7_cons(sc, small_int(3), max_arity));
 
 	default:
-	  return(s7_cons(sc, small_int(0), s7_make_integer(sc, MAX_ARITY)));
+	  return(s7_cons(sc, small_int(0), max_arity));
 	}
     }
 
@@ -34882,7 +34883,7 @@ static bool closure_star_is_aritable(s7_scheme *sc, s7_pointer x, s7_pointer x_a
   if (is_symbol(x_args))
     return(true);
 
-  if (closure_arity(x) == CLOSURE_ARITY_NOT_SET)
+  if (closure_arity_unknown(x))
     {
       /* The lambda* list can contain the pure noise words :key and :optional,
        *   :rest = any number ok, :allow-other-keywords = any number of key/value pairs
@@ -36883,7 +36884,7 @@ static s7_pointer stacktrace_find_caller(s7_scheme *sc, s7_pointer e)
   if ((is_let(e)) && (e != sc->rootlet))
     {
       if (is_function_env(e))
-	return(environment_function(e));
+	return(funclet_function(e));
       return(stacktrace_find_caller(sc, outlet(e)));
     }
   return(sc->F);
@@ -40839,11 +40840,11 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       s7_pointer env;
       env = find_closure_let(sc, sc->envir);
       if ((is_let(env)) &&
-	  (is_symbol(environment_function(env))))
+	  (is_symbol(funclet_function(env))))
 	{
 	  if (has_line_number(env))
-	    return(list_3(sc, environment_function(env), file_names[let_file(env)], make_integer(sc, let_line(env))));
-	  return(environment_function(env));
+	    return(list_3(sc, funclet_function(env), file_names[let_file(env)], make_integer(sc, let_line(env))));
+	  return(funclet_function(env));
 	}
       return(sc->UNDEFINED);
     }
@@ -58975,7 +58976,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    outlet(new_env) = sc->envir;
 	    set_type(new_env, T_ENVIRONMENT | T_IMMUTABLE | T_FUNCTION_ENV);
 	    closure_let(new_func) = new_env;
-	    environment_function(new_env) = sc->value;
+	    funclet_function(new_env) = sc->value;
 	    
 	    for (arg = closure_args(new_func); is_pair(arg); arg = cdr(arg))
 	      s7_make_slot(sc, new_env, car(arg), sc->NIL);
@@ -59109,7 +59110,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  outlet(new_env) = closure_let(new_func);
 	  closure_let(new_func) = new_env;		   
 	  let_slots(new_env) = sc->NIL;
-	  environment_function(new_env) = sc->code;
+	  funclet_function(new_env) = sc->code;
 
 	  if ((!is_let(sc->envir)) &&
 	      (port_filename(sc->input_port)) &&
@@ -61674,7 +61675,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* if this is a safe closure, we can build its env in advance and name it (a thunk in this case)
 		 */
 		set_function_env(closure_let(sc->x));
-		environment_function(closure_let(sc->x)) = car(sc->code);
+		funclet_function(closure_let(sc->x)) = car(sc->code);
 
 		add_slot(sc, car(sc->code), sc->x); 
 		sc->code = cddr(sc->code);
@@ -68599,6 +68600,7 @@ s7_scheme *s7_init(void)
       real_minus_infinity = make_permanent_real(-INFINITY);
       real_pi = make_permanent_real(3.1415926535897932384626433832795029L); /* M_PI is not good enough for s7_Double = long double */
       arity_not_set = make_permanent_integer(CLOSURE_ARITY_NOT_SET);
+      max_arity = make_permanent_integer(MAX_ARITY);
       /* prebuilt null string is tricky mainly because it overlaps #u8() */
 
       /* keep the characters out of the heap */
@@ -69989,5 +69991,6 @@ int main(int argc, char **argv)
  *
  * permanent c_objects should not be in the gc table (xen_transforms for example)
  *   re-export s7_remove_from_heap?
+ * set temps to nil wherever possible to reduce pointless marks
  */
 

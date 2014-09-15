@@ -174,6 +174,6 @@
   (let ((st (symbol-table)))
     (for-each test-sym st)
     (if data-file (close-output-port data-file))
-    (format #t "~%all done~%")))
+    (format *stderr* "~%~%all done~%")))
 
 (all)
