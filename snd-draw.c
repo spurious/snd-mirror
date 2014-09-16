@@ -1994,6 +1994,27 @@ Xen_wrap_2_args(g_combined_data_color_w, g_combined_data_color)
 #define g_set_foreground_color_w g_set_foreground_color_reversed
 #define g_set_mix_color_w g_set_mix_color_reversed
 #define g_set_combined_data_color_w g_set_combined_data_color_reversed
+
+static s7_pointer acc_data_color(s7_scheme *sc, s7_pointer args) {return(g_set_data_color(s7_cadr(args)));}
+static s7_pointer acc_selected_data_color(s7_scheme *sc, s7_pointer args) {return(g_set_selected_data_color(s7_cadr(args)));}
+static s7_pointer acc_mark_color(s7_scheme *sc, s7_pointer args) {return(g_set_mark_color(s7_cadr(args)));}
+static s7_pointer acc_graph_color(s7_scheme *sc, s7_pointer args) {return(g_set_graph_color(s7_cadr(args)));}
+static s7_pointer acc_selected_graph_color(s7_scheme *sc, s7_pointer args) {return(g_set_selected_graph_color(s7_cadr(args)));}
+static s7_pointer acc_listener_color(s7_scheme *sc, s7_pointer args) {return(g_set_listener_color(s7_cadr(args)));}
+static s7_pointer acc_listener_text_color(s7_scheme *sc, s7_pointer args) {return(g_set_listener_text_color(s7_cadr(args)));}
+static s7_pointer acc_basic_color(s7_scheme *sc, s7_pointer args) {return(g_set_basic_color(s7_cadr(args)));}
+static s7_pointer acc_zoom_color(s7_scheme *sc, s7_pointer args) {return(g_set_zoom_color(s7_cadr(args)));}
+static s7_pointer acc_selection_color(s7_scheme *sc, s7_pointer args) {return(g_set_selection_color(s7_cadr(args)));}
+static s7_pointer acc_position_color(s7_scheme *sc, s7_pointer args) {return(g_set_position_color(s7_cadr(args)));}
+static s7_pointer acc_highlight_color(s7_scheme *sc, s7_pointer args) {return(g_set_highlight_color(s7_cadr(args)));}
+static s7_pointer acc_enved_waveform_color(s7_scheme *sc, s7_pointer args) {return(g_set_enved_waveform_color(s7_cadr(args)));}
+static s7_pointer acc_cursor_color(s7_scheme *sc, s7_pointer args) {return(g_set_cursor_color(s7_cadr(args)));}
+static s7_pointer acc_filter_control_waveform_color(s7_scheme *sc, s7_pointer args) {return(g_set_filter_control_waveform_color(s7_cadr(args)));}
+static s7_pointer acc_sash_color(s7_scheme *sc, s7_pointer args) {return(g_set_sash_color(s7_cadr(args)));}
+static s7_pointer acc_axis_color(s7_scheme *sc, s7_pointer args) {return(g_set_axis_color(s7_cadr(args)));}
+static s7_pointer acc_mix_color(s7_scheme *sc, s7_pointer args) {return(g_set_mix_color(s7_cadr(args), s7_undefined(s7)));}
+static s7_pointer acc_text_focus_color(s7_scheme *sc, s7_pointer args) {return(g_set_text_focus_color(s7_cadr(args)));}
+
 #else
 Xen_wrap_4_optional_args(g_set_current_font_w, g_set_current_font)
 Xen_wrap_4_optional_args(g_set_foreground_color_w, g_set_foreground_color)
@@ -2068,6 +2089,48 @@ void g_init_draw(void)
 a new set of channel or sound widgets is created."
 
   new_widget_hook = Xen_define_hook(S_new_widget_hook, "(make-hook 'widget)", 1, H_new_widget_hook);
+
+#if HAVE_SCHEME
+  s7_symbol_set_access(s7, ss->data_color_symbol, s7_make_function(s7, "[acc-" S_data_color, acc_data_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->highlight_color_symbol, s7_make_function(s7, "[acc-" S_highlight_color, acc_highlight_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->axis_color_symbol, s7_make_function(s7, "[acc-" S_axis_color, acc_axis_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->sash_color_symbol, s7_make_function(s7, "[acc-" S_sash_color, acc_sash_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->filter_control_waveform_color_symbol, s7_make_function(s7, "[acc-" S_filter_control_waveform_color, acc_filter_control_waveform_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->mix_color_symbol, s7_make_function(s7, "[acc-" S_mix_color, acc_mix_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->selected_data_color_symbol, s7_make_function(s7, "[acc-" S_selected_data_color, acc_selected_data_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->mark_color_symbol, s7_make_function(s7, "[acc-" S_mark_color, acc_mark_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->graph_color_symbol, s7_make_function(s7, "[acc-" S_graph_color, acc_graph_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->selected_graph_color_symbol, s7_make_function(s7, "[acc-" S_selected_graph_color, acc_selected_graph_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->listener_color_symbol, s7_make_function(s7, "[acc-" S_listener_color, acc_listener_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->listener_text_color_symbol, s7_make_function(s7, "[acc-" S_listener_text_color, acc_listener_text_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->basic_color_symbol, s7_make_function(s7, "[acc-" S_basic_color, acc_basic_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->selection_color_symbol, s7_make_function(s7, "[acc-" S_selection_color, acc_selection_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->zoom_color_symbol, s7_make_function(s7, "[acc-" S_zoom_color, acc_zoom_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->position_color_symbol, s7_make_function(s7, "[acc-" S_position_color, acc_position_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->enved_waveform_color_symbol, s7_make_function(s7, "[acc-" S_enved_waveform_color, acc_enved_waveform_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->cursor_color_symbol, s7_make_function(s7, "[acc-" S_cursor_color, acc_cursor_color, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->text_focus_color_symbol, s7_make_function(s7, "[acc-" S_text_focus_color, acc_text_focus_color, 2, 0, false, "accessor"));
+
+  s7_symbol_set_documentation(s7, ss->axis_color_symbol, "*axis-color*: color of axis (defaults to current data color)");
+  s7_symbol_set_documentation(s7, ss->basic_color_symbol, "*basic-color*: Snd's basic color");
+  s7_symbol_set_documentation(s7, ss->cursor_color_symbol, "*cursor-color*: cursor color");
+  s7_symbol_set_documentation(s7, ss->data_color_symbol, "*data-color*: color used to draw unselected data");
+  s7_symbol_set_documentation(s7, ss->enved_waveform_color_symbol, "*enved-waveform-color*: color of the envelope editor wave display");
+  s7_symbol_set_documentation(s7, ss->filter_control_waveform_color_symbol, "*filter-control-waveform-color*: color of the filter waveform");
+  s7_symbol_set_documentation(s7, ss->graph_color_symbol, "*graph-color*: background color used for unselected data");
+  s7_symbol_set_documentation(s7, ss->highlight_color_symbol, "*highlight-color*: color of highlighted text or buttons");
+  s7_symbol_set_documentation(s7, ss->listener_color_symbol, "*listener-color*: background color of the lisp listener");
+  s7_symbol_set_documentation(s7, ss->listener_text_color_symbol, "*listener-text-color*: text color in the lisp listener");
+  s7_symbol_set_documentation(s7, ss->mark_color_symbol, "*mark-color*: mark color");
+  s7_symbol_set_documentation(s7, ss->mix_color_symbol, "*mix-color*: color of mix tags");
+  s7_symbol_set_documentation(s7, ss->position_color_symbol, "*position-color*: color of position sliders");
+  s7_symbol_set_documentation(s7, ss->sash_color_symbol, "*sash-color*: color used to draw paned window sashes");
+  s7_symbol_set_documentation(s7, ss->selected_data_color_symbol, "*selected-data-color*: color used for selected data");
+  s7_symbol_set_documentation(s7, ss->selected_graph_color_symbol, "*selected-graph-color*: background color of selected data");
+  s7_symbol_set_documentation(s7, ss->selection_color_symbol, "*selection-color*: selection color");
+  s7_symbol_set_documentation(s7, ss->text_focus_color_symbol, "*text-focus-color*: color used to show a text field has focus");
+  s7_symbol_set_documentation(s7, ss->zoom_color_symbol, "*zoom-color*: color of zoom sliders");
+#endif
 }
 
 #else

@@ -4072,8 +4072,9 @@ static int gc(s7_scheme *sc)
     int i;
     s7_pointer p;
     for (i = 1; i < NUM_SAFE_LISTS; i++)
-      for (p = sc->safe_lists[i]; is_pair(p); p = cdr(p))
-	S7_MARK(car(p));
+      if (list_is_in_use(sc->safe_lists[i]))
+	for (p = sc->safe_lists[i]; is_pair(p); p = cdr(p))
+	  S7_MARK(car(p));
   }
 
   S7_MARK(sc->protected_objects);
@@ -33810,7 +33811,12 @@ s7_pointer set_c_function_call_args(s7_scheme *sc)
   return(call_args);
 }
 
-
+/* at first glance, it looks simple to get the doc string out of the eval loop by saving the original
+ *   closure_body, setting the eval version to cdr(body), and using the original in the gc mark sweep,
+ *   by placing closure_arity in the same block as funclet_file, freeing up a pointer for the original.
+ *   But it's tricky: the optimizer places a lot of info in car(body) and the arity setting needs to
+ *   be accessible in different contexts than funclet*.  
+ */
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 {
   static char *arglist = NULL, *help = NULL;
@@ -34276,9 +34282,10 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
   else set_type(x, T_C_OBJECT); 
 
   add_c_object(sc, x);
-
   return(x);
 }
+
+/* make_permanent_object (for Snd) -- permanent_alloc, and don't add_c_object -- very little gained */
 
 
 s7_pointer s7_object_let(s7_pointer obj)
@@ -39679,6 +39686,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 		  sc->args = cons(sc, (*func)(sc, sc->T1_1), sc->args); /* can we assume a safe function won't return multiple values? */
 		}
 	      p = safe_reverse_in_place(sc, sc->args);
+	      sc->y = sc->NIL;
 	      return(p);
 	    }
 	}
@@ -39701,6 +39709,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   for (x = cddr(args); is_not_null(x); x = cdr(x))
     if (!is_sequence(car(x)))
       {
+	sc->y = sc->NIL;
 	if (!errstr2)
 	  errstr2 = s7_make_permanent_string("a sequence");
 	return(wrong_type_argument_n_with_type(sc, sc->MAP, position_of(x, args), car(x), errstr2));
@@ -69941,12 +69950,11 @@ int main(int argc, char **argv)
  * t502        90 |   43 | 14.5 | 12.7
  * t816           |   71 | 70.6 | 38.0
  * lg             |      |  6.7 |  6.5
- * calls      359 |  275 | 54   | 34.8
+ * calls      359 |  275 | 54   | 34.7
  *            153 with run macro (eval_ptree)
  *
  * --------------------------------------------------
  *
- * after undo, thumbnail y axis is not updated? (actually nothing is sometimes)
  * clm opt accepts (env env)
  * popup menu reflects selected sound, but comes up over any sound -- if popup, select underlying?
  *   why isn't that the case always? -- pointer selects if focus-follows-mouse, see snd-chn.c 5444 
@@ -69954,43 +69962,25 @@ int main(int argc, char **argv)
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
  * for clm methods, xen_to_c_generator could fallback on method check -- t932.scm -- can't decide about this
- *
- * can mock-string|char + methods handle the unicode cases? (string-length obj)->g_utf8_strlen etc 
- *   (inlet 'value "hi" 'string-length g_utf8_strlen) or assuming bytevector arg?
- *   an example of using the glib unicode stuff? The data is in xgdata.scm.
- *   (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
- *   (g_utf8_strlen (bytevector #xce #xbb #xce #xba) 10) -> 2
- *   (g_utf8_normalize (bytevector #xce #xbb #xce #xba) 4 G_NORMALIZE_DEFAULT)
- *   but the ones that return gunichar (toupper) currently don't return a bytevector or a string
- *   maybe gunichar->bytevector?
- *   but need glib.scm, or unicode.scm to load the stuff
- *
  * finish Display!
- * doc cyclic-seq+stuff under circular lists
  * the xm/xg names should be in their own library *xg* *xm*, none of these is currently in autoload but this would require special handling in the Xen stuff.
- * mockery.scm needs documentation (and stuff.scm)
- *
- * what about (reactive-vector (v 0)) -- can we watch some other vector's contents?
- *   if v were a mock-vector, we could use the same vector-set! stuff as now but with any name (how to distinguish?)
- *   we can distinguish because this is happening at run-time where (v 0) has an ascertainable meaning
- * how would reactive-hash-table work? (hash 'a (+ b 1)) and update 'a's value whenever b changes?
- *   reactive-string? (reactive-string #\a c (integer->char a) (str 0) (_ 0))
- *   reactive-eval reactive-if(expr changes)--reactive-assert for example
+ *   can libxg be loaded/init'd in repl? is it actually needed in normal Snd use?
+ * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  *
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  * *snd* or *clm* libraries also
- * other libraries: sdl2, fftw, alsa, jack, clm? sndlib? -- libclm.so in CL version, libsndlib.so from sndlib makefile
+ * other libraries: sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
  *
  * accessor if set: opt func involving set or free var, add accessor to free, call func
  *    (let () (define xxx 23) (define (hix) (set! xxx 24)) (hix) (set! (symbol-access 'xxx) (lambda (sym val) (format *stderr* "val: ~A~%" val) val)) (hix))
  *    and no printout -- how to deal with this?? -- if global to func, don't assume anything?
  *
  * eval case in s7test thinks (or from repl):
- *  16984: (let ((saved-args (make-vector 10))) (let runner ((i 0)) (set! (saved-args i) (lambda () i)) (if (< i 9) (runner (+ i 1)))) (summer saved-args)) got 81 but expected 45
+ *  16984: (let ((saved-args (make-vector 10))) (let runner ((i 0)) (set! (saved-args i) (lambda () i)) (if (< i 9) (runner (+ i 1)))) (summer saved-args)) 
+ *         got 81 but expected 45
  *
- * permanent c_objects should not be in the gc table (xen_transforms for example)
- *   re-export s7_remove_from_heap?
- * set temps to nil wherever possible to reduce pointless marks
+ * all the symbol-accessors could be c_functions
+ *    see snd-draw/chn.c, more (100 or so) in snd.c, sndlib2xen.c, snd-fft.c, snd-glistener.c, clm2xen.c
  */
 

@@ -1280,6 +1280,14 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 ;; (define e (let ((a 1) (b 2)) (reactive-lambda* (s v) ((curlet) s)) (curlet)))
 |#
 
+;;; what about (reactive-vector (v 0)) -- can we watch some other vector's contents?
+;;;   if v were a mock-vector, we could use the same vector-set! stuff as now but with any name (how to distinguish?)
+;;;   we can distinguish because this is happening at run-time where (v 0) has an ascertainable meaning
+;;; how would reactive-hash-table work? (hash 'a (+ b 1)) and update 'a's value whenever b changes?
+;;;   reactive-string? (reactive-string #\a c (integer->char a) (str 0) (_ 0))
+;;;   reactive-eval reactive-if(expr changes)--reactive-assert for example
+
+
 #|
 ;; this tests a bacro for independence of any runtime names
 ;; (bacro-shaker reactive-set! '(let ((a 21) (b 1)) (reactive-set! a (* b 2)) (set! b 3) a))

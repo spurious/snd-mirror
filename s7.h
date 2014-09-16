@@ -422,7 +422,7 @@ bool s7_is_keyword(s7_pointer obj);                                         /* (
 s7_pointer s7_make_keyword(s7_scheme *sc, const char *key);                 /* (make-keyword key) */
 
 s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym);
-s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer funcs);
+s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer func);
 
 s7_pointer s7_slot(s7_scheme *sc, s7_pointer symbol);
 s7_pointer s7_slot_value(s7_pointer slot);

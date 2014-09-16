@@ -6157,8 +6157,46 @@ static void make_point_arrays(inset_graph_info_t *info, int size, vct *v1)
 
   info->data_size = size;
 }
-#endif
 
+
+static void update_inset_axes(chan_info *cp, inset_graph_info_t *info, graphics_context *cur_ax)
+{
+  char *str;
+  int len, num_hgt = -1;
+  axis_info *ap;
+  ap = cp->axis;
+  str = prettyf(ap->xmax, 2);
+  if (str)
+    {
+      num_hgt = number_height(TINY_FONT(ss));
+      len = strlen(str);
+      set_tiny_numbers_font(cp, cur_ax);
+#if (!USE_GTK)
+      draw_string(cur_ax, info->x1 - 6 * len + 10, info->y1 + num_hgt, str, len);
+#else
+      draw_string(cur_ax, info->x1 - 6 * len + 10, info->y1 + (num_hgt / 2) - 2, str, len);
+#endif
+      free(str);
+    }
+  
+  if (info->maxamp > 0.0)
+    {
+      str = prettyf(info->maxamp, (info->maxamp > .1) ? 2 : ((info->maxamp > .01) ? 3 : 4));
+      if (str)
+	{
+	  if (num_hgt == -1) num_hgt = number_height(TINY_FONT(ss));
+	  len = strlen(str);
+	  set_tiny_numbers_font(cp, cur_ax);
+#if (!USE_GTK)
+	  draw_string(cur_ax, info->x0 - 6 * len - 2, info->y0 + (num_hgt / 2), str, len);
+#else
+	  draw_string(cur_ax, info->x0 - 6 * len - 2, info->y0, str, len);
+#endif
+	  free(str);
+	}
+    }
+}
+#endif
 
 
 static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
@@ -6207,43 +6245,6 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 	  info->y0 = chan_offset;
 	  info->y1 = chan_offset + height;
 	  
-	  {
-	    char *str;
-	    int len, num_hgt = -1;
-	    axis_info *ap;
-	    ap = cp->axis;
-	    str = prettyf(ap->xmax, 2);
-	    if (str)
-	      {
-		num_hgt = number_height(TINY_FONT(ss));
-		len = strlen(str);
-		set_tiny_numbers_font(cp, cur_ax);
-#if (!USE_GTK)
-		draw_string(cur_ax, info->x1 - 6 * len + 10, info->y1 + num_hgt, str, len);
-#else
-		draw_string(cur_ax, info->x1 - 6 * len + 10, info->y1 + (num_hgt / 2) - 2, str, len);
-#endif
-		free(str);
-	      }
-
-	    if (info->maxamp > 0.0)
-	      {
-		str = prettyf(info->maxamp, (info->maxamp > .1) ? 2 : ((info->maxamp > .01) ? 3 : 4));
-		if (str)
-		  {
-		    if (num_hgt == -1) num_hgt = number_height(TINY_FONT(ss));
-		    len = strlen(str);
-		    set_tiny_numbers_font(cp, cur_ax);
-#if (!USE_GTK)
-		    draw_string(cur_ax, info->x0 - 6 * len - 2, info->y0 + (num_hgt / 2), str, len);
-#else
-		    draw_string(cur_ax, info->x0 - 6 * len - 2, info->y0, str, len);
-#endif
-		    free(str);
-		  }
-	      }
-	  }
-
 	  /* show where the current window fits into the overall graph */
 	  {
 	    int rx, lx, wx;
@@ -6276,6 +6277,7 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 	      (cp->edit_ctr == info->edpos))
 	    {
 	      /* use old env graph points if nothing has changed */
+	      update_inset_axes(cp, info, cur_ax);
 	    }
 	  else
 	    {
@@ -6420,6 +6422,7 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 	      info->height = height;
 	      info->edpos = cp->edit_ctr;
 	      info->y_offset = y_offset;
+	      update_inset_axes(cp, info, cur_ax);
 #if HAVE_SCHEME
 	      s7_gc_unprotect_at(s7, gc_loc);
 #endif
@@ -9943,6 +9946,55 @@ Xen_wrap_3_optional_args(g_set_graphs_horizontal_w, g_set_graphs_horizontal)
   Xen_wrap_9_args(g_gl_spectrogram_w, g_gl_spectrogram)
 #endif
 
+#if HAVE_SCHEME
+static s7_pointer acc_show_transform_peaks(s7_scheme *sc, s7_pointer args) {return(g_set_show_transform_peaks(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_show_y_zero(s7_scheme *sc, s7_pointer args) {return(g_set_show_y_zero(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_show_marks(s7_scheme *sc, s7_pointer args) {return(g_set_show_marks(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_show_grid(s7_scheme *sc, s7_pointer args) {return(g_set_show_grid(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_fft_log_frequency(s7_scheme *sc, s7_pointer args) {return(g_set_fft_log_frequency(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_fft_log_magnitude(s7_scheme *sc, s7_pointer args) {return(g_set_fft_log_magnitude(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_fft_with_phases(s7_scheme *sc, s7_pointer args) {return(g_set_fft_with_phases(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_sync_style(s7_scheme *sc, s7_pointer args) {return(g_set_sync_style(s7_cadr(args)));}
+static s7_pointer acc_show_axes(s7_scheme *sc, s7_pointer args) {return(g_set_show_axes(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_with_verbose_cursor(s7_scheme *sc, s7_pointer args) {return(g_set_with_verbose_cursor(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_spectro_x_scale(s7_scheme *sc, s7_pointer args) {return(g_set_spectro_x_scale(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_spectro_y_scale(s7_scheme *sc, s7_pointer args) {return(g_set_spectro_y_scale(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_spectro_z_scale(s7_scheme *sc, s7_pointer args) {return(g_set_spectro_z_scale(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_spectro_z_angle(s7_scheme *sc, s7_pointer args) {return(g_set_spectro_z_angle(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_spectro_x_angle(s7_scheme *sc, s7_pointer args) {return(g_set_spectro_x_angle(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_spectro_y_angle(s7_scheme *sc, s7_pointer args) {return(g_set_spectro_y_angle(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_spectrum_end(s7_scheme *sc, s7_pointer args) {return(g_set_spectrum_end(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_spectrum_start(s7_scheme *sc, s7_pointer args) {return(g_set_spectrum_start(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_spectro_hop(s7_scheme *sc, s7_pointer args) {return(g_set_spectro_hop(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_wavelet_type(s7_scheme *sc, s7_pointer args) {return(g_set_wavelet_type(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_dot_size(s7_scheme *sc, s7_pointer args) {return(g_set_dot_size(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_zero_pad(s7_scheme *sc, s7_pointer args) {return(g_set_zero_pad(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_wavo_hop(s7_scheme *sc, s7_pointer args) {return(g_set_wavo_hop(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_wavo_trace(s7_scheme *sc, s7_pointer args) {return(g_set_wavo_trace(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_transform_size(s7_scheme *sc, s7_pointer args) {return(g_set_transform_size(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_fft_window(s7_scheme *sc, s7_pointer args) {return(g_set_fft_window(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_transform_graph_type(s7_scheme *sc, s7_pointer args) {return(g_set_transform_graph_type(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_time_graph_type(s7_scheme *sc, s7_pointer args) {return(g_set_time_graph_type(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_fft_window_alpha(s7_scheme *sc, s7_pointer args) {return(g_set_fft_window_alpha(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_fft_window_beta(s7_scheme *sc, s7_pointer args) {return(g_set_fft_window_beta(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_grid_density(s7_scheme *sc, s7_pointer args) {return(g_set_grid_density(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_beats_per_minute(s7_scheme *sc, s7_pointer args) {return(g_set_beats_per_minute(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_show_mix_waveforms(s7_scheme *sc, s7_pointer args) {return(g_set_show_mix_waveforms(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_beats_per_measure(s7_scheme *sc, s7_pointer args) {return(g_set_beats_per_measure(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_transform_normalization(s7_scheme *sc, s7_pointer args) {return(g_set_transform_normalization(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_x_axis_style(s7_scheme *sc, s7_pointer args) {return(g_set_x_axis_style(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_zoom_focus_style(s7_scheme *sc, s7_pointer args) {return(g_set_zoom_focus_style(s7_cadr(args)));}
+static s7_pointer acc_graph_style(s7_scheme *sc, s7_pointer args) {return(g_set_graph_style(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_max_transform_peaks(s7_scheme *sc, s7_pointer args) {return(g_set_max_transform_peaks(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_graphs_horizontal(s7_scheme *sc, s7_pointer args) {return(g_set_graphs_horizontal(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_cursor_size(s7_scheme *sc, s7_pointer args) {return(g_set_cursor_size(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_cursor_style(s7_scheme *sc, s7_pointer args) {return(g_set_cursor_style(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_tracking_cursor_style(s7_scheme *sc, s7_pointer args) {return(g_set_tracking_cursor_style(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_show_sonogram_cursor(s7_scheme *sc, s7_pointer args) {return(g_set_show_sonogram_cursor(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_min_dB(s7_scheme *sc, s7_pointer args) {return(g_set_min_dB(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+#endif
+
+
 
 void g_init_chn(void)
 {
@@ -10154,6 +10206,98 @@ If it returns " PROC_TRUE ", the key press is not passed to the main handler. 's
   key_press_hook =        Xen_define_hook(S_key_press_hook,         "(make-hook 'snd 'chn 'key 'state)",                4, H_key_press_hook);
   mark_click_hook =       Xen_define_hook(S_mark_click_hook,        "(make-hook 'id)",                                  1, H_mark_click_hook); 
   mix_click_hook =        Xen_define_hook(S_mix_click_hook,         "(make-hook 'id)",                                  1, H_mix_click_hook);  
+
+#if HAVE_SCHEME
+  s7_symbol_set_documentation(s7, ss->show_transform_peaks_symbol, "*" S_show_transform_peaks "* determines whether fft displays include a peak list");
+  s7_symbol_set_documentation(s7, ss->show_y_zero_symbol, "*show-y-zero*: #t if Snd should include a line at y = 0.0");
+  s7_symbol_set_documentation(s7, ss->show_marks_symbol, "*show-marks*: #t if Snd should show marks");
+  s7_symbol_set_documentation(s7, ss->show_grid_symbol, "*show-grid*: #t if Snd should display a background grid in the graphs");
+  s7_symbol_set_documentation(s7, ss->fft_log_frequency_symbol, "*fft-log-frequency*: #t if fft displays use log on the frequency axis");
+  s7_symbol_set_documentation(s7, ss->fft_log_magnitude_symbol, "*fft-log-magnitude*: #t if fft displays use dB");
+  s7_symbol_set_documentation(s7, ss->fft_with_phases_symbol, "*fft-with-phases*: #t if fft displays include phase info");
+  s7_symbol_set_documentation(s7, ss->sync_style_symbol, "*sync-style*: determines how channels are grouped when a sound is opened.");
+  s7_symbol_set_documentation(s7, ss->show_axes_symbol, "*show-axes*: If show-all-axes, display x and y axes; if show-x-axis, just one axis (the x axis) is displayed. The other choices are show-no-axes, show-all-axes-unlabelled, show-x-axis-unlabelled, and show-bare-x-axis.");
+  s7_symbol_set_documentation(s7, ss->with_verbose_cursor_symbol, "*with-verbose-cursor*: #t if the cursor's position and so on is displayed in the status area");
+  s7_symbol_set_documentation(s7, ss->spectro_x_scale_symbol, "*spectro-x-scale*: scaler (stretch) along the spectrogram x axis (1.0)");
+  s7_symbol_set_documentation(s7, ss->spectro_y_scale_symbol, "*spectro-y-scale*: scaler (stretch) along the spectrogram y axis (1.0)");
+  s7_symbol_set_documentation(s7, ss->spectro_z_scale_symbol, "*spectro-z-scale*: scaler (stretch) along the spectrogram z axis (0.1)");
+  s7_symbol_set_documentation(s7, ss->spectro_z_angle_symbol, "*spectro-z-angle*: spectrogram z-axis viewing angle (-2.0)");
+  s7_symbol_set_documentation(s7, ss->spectro_x_angle_symbol, "*spectro-x-angle*: spectrogram x-axis viewing angle (90.0)");
+  s7_symbol_set_documentation(s7, ss->spectro_y_angle_symbol, "*spectro-y-angle*: spectrogram y-axis viewing angle (0.0)");
+  s7_symbol_set_documentation(s7, ss->spectrum_end_symbol, "*spectrum-end*: max frequency shown in spectra (1.0 = srate/2)");
+  s7_symbol_set_documentation(s7, ss->spectrum_start_symbol, "*spectrum-start*: lower bound of frequency in spectral displays (0.0)");
+  s7_symbol_set_documentation(s7, ss->spectro_hop_symbol, "*spectro-hop*: hop amount (pixels) in spectral displays");
+  s7_symbol_set_documentation(s7, ss->wavelet_type_symbol, "*wavelet-type*: wavelet used in wavelet-transform (0)");
+  s7_symbol_set_documentation(s7, ss->dot_size_symbol, "*dot-size*: size in pixels of dots when graphing with dots (1)");
+  s7_symbol_set_documentation(s7, ss->zero_pad_symbol, "*zero-pad*: zero padding used in fft as a multiple of fft size (0)");
+  s7_symbol_set_documentation(s7, ss->wavo_hop_symbol, "*wavo-hop*: wavogram spacing between successive traces");
+  s7_symbol_set_documentation(s7, ss->wavo_trace_symbol, "*wavo-trace*: length (samples) of each trace in the wavogram (64)");
+  s7_symbol_set_documentation(s7, ss->transform_size_symbol, "*transform-size*: current fft size (512)");
+  s7_symbol_set_documentation(s7, ss->fft_window_symbol, "*fft-window*: fft data window choice (blackman2-window etc)");
+  s7_symbol_set_documentation(s7, ss->transform_graph_type_symbol, "*transform-graph-type* can be graph-once, graph-as-sonogram, or graph-as-spectrogram.");
+  s7_symbol_set_documentation(s7, ss->time_graph_type_symbol, "*time-graph-type*: graph-once or graph-as-wavogram");
+  s7_symbol_set_documentation(s7, ss->fft_window_alpha_symbol, "*fft-window-alpha*: fft window alpha parameter value");
+  s7_symbol_set_documentation(s7, ss->fft_window_beta_symbol, "*fft-window-beta*: fft window beta parameter value");
+  s7_symbol_set_documentation(s7, ss->grid_density_symbol, "*grid-density*: sets how closely axis ticks are spaced, default=1.0");
+  s7_symbol_set_documentation(s7, ss->beats_per_minute_symbol, "*beats-per-minute*: beats per minute if x-axis-style is x-axis-in-beats");
+  s7_symbol_set_documentation(s7, ss->show_mix_waveforms_symbol, "*show-mix-waveforms*: #t if Snd should display mix waveforms (above the main waveform)");
+  s7_symbol_set_documentation(s7, ss->beats_per_measure_symbol, "*beats-per-measure*: beats per measure if x-axis-style is x-axis-in-measures");
+  s7_symbol_set_documentation(s7, ss->transform_normalization_symbol, "*transform-normalization*: dont-normalize, normalize-by-channel, normalize-by-sound, or normalize-globally.");
+  s7_symbol_set_documentation(s7, ss->x_axis_style_symbol, "*x-axis-style*: The x axis labelling of the time domain waveform (x-axis-in-seconds etc)");
+  s7_symbol_set_documentation(s7, ss->zoom_focus_style_symbol, "*zoom-focus-style*: determines what zooming centers on (zoom-focus-active etc).");
+  s7_symbol_set_documentation(s7, ss->graph_style_symbol, "*graph-style*: graph style (graph-lines etc)");
+  s7_symbol_set_documentation(s7, ss->max_transform_peaks_symbol, "*max-transform-peaks*: max number of fft peaks reported in fft display");
+  s7_symbol_set_documentation(s7, ss->graphs_horizontal_symbol, "*graphs-horizontal*: #t if the time domain, fft, and lisp graphs are layed out horizontally");
+  s7_symbol_set_documentation(s7, ss->cursor_size_symbol, "*cursor-size*: current cursor size");
+  s7_symbol_set_documentation(s7, ss->cursor_style_symbol, "*cursor-style*: current cursor shape (cursor-cross etc)");
+  s7_symbol_set_documentation(s7, ss->tracking_cursor_style_symbol, "*tracking-cursor-style*: current tracking cursor shape (cursor-cross, cursor-line)");
+  s7_symbol_set_documentation(s7, ss->show_sonogram_cursor_symbol, "*show-sonogram-cursor*: #t if Snd should display a cursor in the sonogram");
+  s7_symbol_set_documentation(s7, ss->min_db_symbol, "*min-dB*: min dB value displayed in fft graphs using dB scales (-60)");
+
+  s7_symbol_set_access(s7, ss->show_transform_peaks_symbol, s7_make_function(s7, "[acc-" S_show_transform_peaks, acc_show_transform_peaks, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->show_y_zero_symbol, s7_make_function(s7, "[acc-" S_show_y_zero, acc_show_y_zero, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->show_marks_symbol, s7_make_function(s7, "[acc-" S_show_marks, acc_show_marks, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->show_grid_symbol, s7_make_function(s7, "[acc-" S_show_grid, acc_show_grid, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->fft_log_frequency_symbol, s7_make_function(s7, "[acc-" S_fft_log_frequency, acc_fft_log_frequency, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->fft_log_magnitude_symbol, s7_make_function(s7, "[acc-" S_fft_log_magnitude, acc_fft_log_magnitude, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->fft_with_phases_symbol, s7_make_function(s7, "[acc-" S_fft_with_phases, acc_fft_with_phases, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->sync_style_symbol, s7_make_function(s7, "[acc-" S_sync_style, acc_sync_style, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->show_axes_symbol, s7_make_function(s7, "[acc-" S_show_axes, acc_show_axes, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->with_verbose_cursor_symbol, s7_make_function(s7, "[acc-" S_with_verbose_cursor, acc_with_verbose_cursor, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->spectro_x_scale_symbol, s7_make_function(s7, "[acc-" S_spectro_x_scale, acc_spectro_x_scale, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->spectro_y_scale_symbol, s7_make_function(s7, "[acc-" S_spectro_y_scale, acc_spectro_y_scale, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->spectro_z_scale_symbol, s7_make_function(s7, "[acc-" S_spectro_z_scale, acc_spectro_z_scale, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->spectro_z_angle_symbol, s7_make_function(s7, "[acc-" S_spectro_z_angle, acc_spectro_z_angle, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->spectro_x_angle_symbol, s7_make_function(s7, "[acc-" S_spectro_x_angle, acc_spectro_x_angle, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->spectro_y_angle_symbol, s7_make_function(s7, "[acc-" S_spectro_y_angle, acc_spectro_y_angle, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->spectrum_end_symbol, s7_make_function(s7, "[acc-" S_spectrum_end, acc_spectrum_end, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->spectrum_start_symbol, s7_make_function(s7, "[acc-" S_spectrum_start, acc_spectrum_start, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->spectro_hop_symbol, s7_make_function(s7, "[acc-" S_spectro_hop, acc_spectro_hop, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->wavelet_type_symbol, s7_make_function(s7, "[acc-" S_wavelet_type, acc_wavelet_type, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->dot_size_symbol, s7_make_function(s7, "[acc-" S_dot_size, acc_dot_size, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->zero_pad_symbol, s7_make_function(s7, "[acc-" S_zero_pad, acc_zero_pad, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->wavo_hop_symbol, s7_make_function(s7, "[acc-" S_wavo_hop, acc_wavo_hop, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->wavo_trace_symbol, s7_make_function(s7, "[acc-" S_wavo_trace, acc_wavo_trace, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->transform_size_symbol, s7_make_function(s7, "[acc-" S_transform_size, acc_transform_size, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->fft_window_symbol, s7_make_function(s7, "[acc-" S_fft_window, acc_fft_window, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->transform_graph_type_symbol, s7_make_function(s7, "[acc-" S_transform_graph_type, acc_transform_graph_type, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->time_graph_type_symbol, s7_make_function(s7, "[acc-" S_time_graph_type, acc_time_graph_type, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->fft_window_alpha_symbol, s7_make_function(s7, "[acc-" S_fft_window_alpha, acc_fft_window_alpha, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->fft_window_beta_symbol, s7_make_function(s7, "[acc-" S_fft_window_beta, acc_fft_window_beta, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->grid_density_symbol, s7_make_function(s7, "[acc-" S_grid_density, acc_grid_density, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->beats_per_minute_symbol, s7_make_function(s7, "[acc-" S_beats_per_minute, acc_beats_per_minute, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->show_mix_waveforms_symbol, s7_make_function(s7, "[acc-" S_show_mix_waveforms, acc_show_mix_waveforms, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->beats_per_measure_symbol, s7_make_function(s7, "[acc-" S_beats_per_measure, acc_beats_per_measure, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->transform_normalization_symbol, s7_make_function(s7, "[acc-" S_transform_normalization, acc_transform_normalization, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->x_axis_style_symbol, s7_make_function(s7, "[acc-" S_x_axis_style, acc_x_axis_style, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->zoom_focus_style_symbol, s7_make_function(s7, "[acc-" S_zoom_focus_style, acc_zoom_focus_style, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->graph_style_symbol, s7_make_function(s7, "[acc-" S_graph_style, acc_graph_style, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->max_transform_peaks_symbol, s7_make_function(s7, "[acc-" S_max_transform_peaks, acc_max_transform_peaks, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->graphs_horizontal_symbol, s7_make_function(s7, "[acc-" S_graphs_horizontal, acc_graphs_horizontal, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->cursor_size_symbol, s7_make_function(s7, "[acc-" S_cursor_size, acc_cursor_size, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->cursor_style_symbol, s7_make_function(s7, "[acc-" S_cursor_style, acc_cursor_style, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->tracking_cursor_style_symbol, s7_make_function(s7, "[acc-" S_tracking_cursor_style, acc_tracking_cursor_style, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->show_sonogram_cursor_symbol, s7_make_function(s7, "[acc-" S_show_sonogram_cursor, acc_show_sonogram_cursor, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->min_db_symbol, s7_make_function(s7, "[acc-" S_min_dB, acc_min_dB, 2, 0, false, "accessor"));
+#endif
 }
-
-

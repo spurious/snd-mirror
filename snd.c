@@ -328,45 +328,9 @@ void snd_set_global_defaults(bool need_cleanup)
   else ss->Eps_File = NULL;
 
 #if HAVE_SCHEME
-  ss->show_transform_peaks_symbol = s7_define_variable(s7, "*" S_show_transform_peaks "*", s7_make_boolean(s7, DEFAULT_SHOW_TRANSFORM_PEAKS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_transform_peaks "*) (lambda (s v) (set! (" S_show_transform_peaks ") v)))");
-  s7_symbol_set_documentation(s7, ss->show_transform_peaks_symbol, "*" S_show_transform_peaks "* determines whether fft displays include a peak list");
-
-  ss->show_y_zero_symbol = s7_define_variable(s7, "*" S_show_y_zero "*", s7_make_boolean(s7, DEFAULT_SHOW_Y_ZERO));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_y_zero "*) (lambda (s v) (set! (" S_show_y_zero ") v)))");
-  s7_symbol_set_documentation(s7, ss->show_y_zero_symbol, "*show-y-zero*: #t if Snd should include a line at y = 0.0");
-
-  ss->show_marks_symbol = s7_define_variable(s7, "*" S_show_marks "*", s7_make_boolean(s7, DEFAULT_SHOW_MARKS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_marks "*) (lambda (s v) (set! (" S_show_marks ") v)))");
-  s7_symbol_set_documentation(s7, ss->show_marks_symbol, "*show-marks*: #t if Snd should show marks");
-
-  ss->show_grid_symbol = s7_define_variable(s7, "*" S_show_grid "*", s7_make_boolean(s7, DEFAULT_SHOW_GRID));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_grid "*) (lambda (s v) (set! (" S_show_grid ") v)))");
-  s7_symbol_set_documentation(s7, ss->show_grid_symbol, "*show-grid*: #t if Snd should display a background grid in the graphs");
-
-  ss->fft_log_frequency_symbol = s7_define_variable(s7, "*" S_fft_log_frequency "*", s7_make_boolean(s7, DEFAULT_FFT_LOG_FREQUENCY));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_fft_log_frequency "*) (lambda (s v) (set! (" S_fft_log_frequency ") v)))");
-  s7_symbol_set_documentation(s7, ss->fft_log_frequency_symbol, "*fft-log-frequency*: #t if fft displays use log on the frequency axis");
-
-  ss->fft_log_magnitude_symbol = s7_define_variable(s7, "*" S_fft_log_magnitude "*", s7_make_boolean(s7, DEFAULT_FFT_LOG_MAGNITUDE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_fft_log_magnitude "*) (lambda (s v) (set! (" S_fft_log_magnitude ") v)))");
-  s7_symbol_set_documentation(s7, ss->fft_log_magnitude_symbol, "*fft-log-magnitude*: #t if fft displays use dB");
-
-  ss->fft_with_phases_symbol = s7_define_variable(s7, "*" S_fft_with_phases "*", s7_make_boolean(s7, DEFAULT_FFT_WITH_PHASES));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_fft_with_phases "*) (lambda (s v) (set! (" S_fft_with_phases ") v)))");
-  s7_symbol_set_documentation(s7, ss->fft_with_phases_symbol, "*fft-with-phases*: #t if fft displays include phase info");
-
   ss->channel_style_symbol = s7_define_variable(s7, "*" S_channel_style "*", s7_make_integer(s7, DEFAULT_CHANNEL_STYLE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_channel_style "*) (lambda (s v) (set! (" S_channel_style ") v)))");
   s7_symbol_set_documentation(s7, ss->channel_style_symbol, "*channel-style*: how multichannel sounds lay out the channels: channels-combined, channels-separate or channels-superimposed.");
-
-  ss->sync_style_symbol = s7_define_variable(s7, "*" S_sync_style "*", s7_make_integer(s7, DEFAULT_SYNC_STYLE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_sync_style "*) (lambda (s v) (set! (" S_sync_style ") v)))");
-  s7_symbol_set_documentation(s7, ss->sync_style_symbol, "*sync-style*: determines how channels are grouped when a sound is opened.");
-
-  ss->show_axes_symbol = s7_define_variable(s7, "*" S_show_axes "*", s7_make_integer(s7, DEFAULT_SHOW_AXES));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_axes "*) (lambda (s v) (set! (" S_show_axes ") v)))");
-  s7_symbol_set_documentation(s7, ss->show_axes_symbol, "*show-axes*: If show-all-axes, display x and y axes; if show-x-axis, just one axis (the x axis) is displayed. The other choices are show-no-axes, show-all-axes-unlabelled, show-x-axis-unlabelled, and show-bare-x-axis.");
 
   ss->eps_file_symbol = s7_define_variable(s7, "*" S_eps_file "*", s7_make_string(s7, DEFAULT_EPS_FILE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_eps_file "*) (lambda (s v) (set! (" S_eps_file ") v)))");
@@ -419,10 +383,6 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_bold_peaks_font "*) (lambda (s v) (set! (" S_bold_peaks_font ") v)))");
   s7_symbol_set_documentation(s7, ss->bold_peaks_font_symbol, "*bold-peaks-font*: bold font used by fft peak display");
 
-  ss->with_verbose_cursor_symbol = s7_define_variable(s7, "*" S_with_verbose_cursor "*", s7_make_boolean(s7, DEFAULT_WITH_VERBOSE_CURSOR));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_verbose_cursor "*) (lambda (s v) (set! (" S_with_verbose_cursor ") v)))");
-  s7_symbol_set_documentation(s7, ss->with_verbose_cursor_symbol, "*with-verbose-cursor*: #t if the cursor's position and so on is displayed in the status area");
-
   ss->with_inset_graph_symbol = s7_define_variable(s7, "*" S_with_inset_graph "*", s7_make_boolean(s7, DEFAULT_WITH_INSET_GRAPH));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_inset_graph "*) (lambda (s v) (set! (" S_with_inset_graph ") v)))");
   s7_symbol_set_documentation(s7, ss->with_inset_graph_symbol, "*with-inset-graph*: if #t, display the inset graph in the time domain section.");
@@ -459,38 +419,6 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_log_freq_start "*) (lambda (s v) (set! (" S_log_freq_start ") v)))");
   s7_symbol_set_documentation(s7, ss->log_freq_start_symbol, "*log-freq-start*: log freq base (25.0)");
 
-  ss->spectro_x_scale_symbol = s7_define_variable(s7, "*" S_spectro_x_scale "*", s7_make_real(s7, DEFAULT_SPECTRO_X_SCALE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_spectro_x_scale "*) (lambda (s v) (set! (" S_spectro_x_scale ") v)))");
-  s7_symbol_set_documentation(s7, ss->spectro_x_scale_symbol, "*spectro-x-scale*: scaler (stretch) along the spectrogram x axis (1.0)");
-
-  ss->spectro_y_scale_symbol = s7_define_variable(s7, "*" S_spectro_y_scale "*", s7_make_real(s7, DEFAULT_SPECTRO_Y_SCALE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_spectro_y_scale "*) (lambda (s v) (set! (" S_spectro_y_scale ") v)))");
-  s7_symbol_set_documentation(s7, ss->spectro_y_scale_symbol, "*spectro-y-scale*: scaler (stretch) along the spectrogram y axis (1.0)");
-
-  ss->spectro_z_scale_symbol = s7_define_variable(s7, "*" S_spectro_z_scale "*", s7_make_real(s7, DEFAULT_SPECTRO_Z_SCALE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_spectro_z_scale "*) (lambda (s v) (set! (" S_spectro_z_scale ") v)))");
-  s7_symbol_set_documentation(s7, ss->spectro_z_scale_symbol, "*spectro-z-scale*: scaler (stretch) along the spectrogram z axis (0.1)");
-
-  ss->spectro_z_angle_symbol = s7_define_variable(s7, "*" S_spectro_z_angle "*", s7_make_real(s7, DEFAULT_SPECTRO_Z_ANGLE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_spectro_z_angle "*) (lambda (s v) (set! (" S_spectro_z_angle ") v)))");
-  s7_symbol_set_documentation(s7, ss->spectro_z_angle_symbol, "*spectro-z-angle*: spectrogram z-axis viewing angle (-2.0)");
-
-  ss->spectro_x_angle_symbol = s7_define_variable(s7, "*" S_spectro_x_angle "*", s7_make_real(s7, DEFAULT_SPECTRO_X_ANGLE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_spectro_x_angle "*) (lambda (s v) (set! (" S_spectro_x_angle ") v)))");
-  s7_symbol_set_documentation(s7, ss->spectro_x_angle_symbol, "*spectro-x-angle*: spectrogram x-axis viewing angle (90.0)");
-
-  ss->spectro_y_angle_symbol = s7_define_variable(s7, "*" S_spectro_y_angle "*", s7_make_real(s7, DEFAULT_SPECTRO_Y_ANGLE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_spectro_y_angle "*) (lambda (s v) (set! (" S_spectro_y_angle ") v)))");
-  s7_symbol_set_documentation(s7, ss->spectro_y_angle_symbol, "*spectro-y-angle*: spectrogram y-axis viewing angle (0.0)");
-
-  ss->spectrum_end_symbol = s7_define_variable(s7, "*" S_spectrum_end "*", s7_make_real(s7, DEFAULT_SPECTRUM_END));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_spectrum_end "*) (lambda (s v) (set! (" S_spectrum_end ") v)))");
-  s7_symbol_set_documentation(s7, ss->spectrum_end_symbol, "*spectrum-end*: max frequency shown in spectra (1.0 = srate/2)");
-
-  ss->spectrum_start_symbol = s7_define_variable(s7, "*" S_spectrum_start "*", s7_make_real(s7, DEFAULT_SPECTRUM_START));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_spectrum_start "*) (lambda (s v) (set! (" S_spectrum_start ") v)))");
-  s7_symbol_set_documentation(s7, ss->spectrum_start_symbol, "*spectrum-start*: lower bound of frequency in spectral displays (0.0)");
-
   ss->default_output_header_type_symbol = s7_define_variable(s7, "*" S_default_output_header_type "*", s7_make_integer(s7, DEFAULT_OUTPUT_HEADER_TYPE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_default_output_header_type "*) (lambda (s v) (set! (" S_default_output_header_type ") v)))");
   s7_symbol_set_documentation(s7, ss->default_output_header_type_symbol, "*default-output-header-type*: header type when a new file is created (mus-next etc)");
@@ -507,10 +435,6 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_default_output_srate "*) (lambda (s v) (set! (" S_default_output_srate ") v)))");
   s7_symbol_set_documentation(s7, ss->default_output_srate_symbol, "*default-output-srate*: sampling rate when a new file is created (44100)");
 
-  ss->spectro_hop_symbol = s7_define_variable(s7, "*" S_spectro_hop "*", s7_make_integer(s7, DEFAULT_SPECTRO_HOP));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_spectro_hop "*) (lambda (s v) (set! (" S_spectro_hop ") v)))");
-  s7_symbol_set_documentation(s7, ss->spectro_hop_symbol, "*spectro-hop*: hop amount (pixels) in spectral displays");
-
   ss->color_map_symbol = s7_define_variable(s7, "*" S_colormap "*", s7_make_integer(s7, DEFAULT_COLOR_MAP));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_colormap "*) (lambda (s v) (set! (" S_colormap ") v)))");
   s7_symbol_set_documentation(s7, ss->color_map_symbol, "*colormap*: current colormap choice.");
@@ -518,42 +442,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->color_map_size_symbol = s7_define_variable(s7, "*" S_colormap_size "*", s7_make_integer(s7, DEFAULT_COLOR_MAP_SIZE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_colormap_size "*) (lambda (s v) (set! (" S_colormap_size ") v)))");
   s7_symbol_set_documentation(s7, ss->color_map_size_symbol, "*colormap-size*: current colormap size; default is 512.");
-
-  ss->wavelet_type_symbol = s7_define_variable(s7, "*" S_wavelet_type "*", s7_make_integer(s7, DEFAULT_WAVELET_TYPE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_wavelet_type "*) (lambda (s v) (set! (" S_wavelet_type ") v)))");
-  s7_symbol_set_documentation(s7, ss->wavelet_type_symbol, "*wavelet-type*: wavelet used in wavelet-transform (0)");
-
-  ss->dot_size_symbol = s7_define_variable(s7, "*" S_dot_size "*", s7_make_integer(s7, DEFAULT_DOT_SIZE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_dot_size "*) (lambda (s v) (set! (" S_dot_size ") v)))");
-  s7_symbol_set_documentation(s7, ss->dot_size_symbol, "*dot-size*: size in pixels of dots when graphing with dots (1)");
-
-  ss->zero_pad_symbol = s7_define_variable(s7, "*" S_zero_pad "*", s7_make_integer(s7, DEFAULT_ZERO_PAD));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_zero_pad "*) (lambda (s v) (set! (" S_zero_pad ") v)))");
-  s7_symbol_set_documentation(s7, ss->zero_pad_symbol, "*zero-pad*: zero padding used in fft as a multiple of fft size (0)");
-
-  ss->wavo_hop_symbol = s7_define_variable(s7, "*" S_wavo_hop "*", s7_make_integer(s7, DEFAULT_WAVO_HOP));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_wavo_hop "*) (lambda (s v) (set! (" S_wavo_hop ") v)))");
-  s7_symbol_set_documentation(s7, ss->wavo_hop_symbol, "*wavo-hop*: wavogram spacing between successive traces");
-
-  ss->wavo_trace_symbol = s7_define_variable(s7, "*" S_wavo_trace "*", s7_make_integer(s7, DEFAULT_WAVO_TRACE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_wavo_trace "*) (lambda (s v) (set! (" S_wavo_trace ") v)))");
-  s7_symbol_set_documentation(s7, ss->wavo_trace_symbol, "*wavo-trace*: length (samples) of each trace in the wavogram (64)");
-
-  ss->transform_size_symbol = s7_define_variable(s7, "*" S_transform_size "*", s7_make_integer(s7, DEFAULT_TRANSFORM_SIZE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_transform_size "*) (lambda (s v) (set! (" S_transform_size ") v)))");
-  s7_symbol_set_documentation(s7, ss->transform_size_symbol, "*transform-size*: current fft size (512)");
-
-  ss->fft_window_symbol = s7_define_variable(s7, "*" S_fft_window "*", s7_make_integer(s7, DEFAULT_FFT_WINDOW));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_fft_window "*) (lambda (s v) (set! (" S_fft_window ") v)))");
-  s7_symbol_set_documentation(s7, ss->fft_window_symbol, "*fft-window*: fft data window choice (blackman2-window etc)");
-
-  ss->transform_graph_type_symbol = s7_define_variable(s7, "*" S_transform_graph_type "*", s7_make_integer(s7, DEFAULT_TRANSFORM_GRAPH_TYPE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_transform_graph_type "*) (lambda (s v) (set! (" S_transform_graph_type ") v)))");
-  s7_symbol_set_documentation(s7, ss->transform_graph_type_symbol, "*transform-graph-type* can be graph-once, graph-as-sonogram, or graph-as-spectrogram.");
-
-  ss->time_graph_type_symbol = s7_define_variable(s7, "*" S_time_graph_type "*", s7_make_integer(s7, DEFAULT_TIME_GRAPH_TYPE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_time_graph_type "*) (lambda (s v) (set! (" S_time_graph_type ") v)))");
-  s7_symbol_set_documentation(s7, ss->time_graph_type_symbol, "*time-graph-type*: graph-once or graph-as-wavogram");
 
   ss->ask_before_overwrite_symbol = s7_define_variable(s7, "*" S_ask_before_overwrite "*", s7_make_boolean(s7, DEFAULT_ASK_BEFORE_OVERWRITE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_ask_before_overwrite "*) (lambda (s v) (set! (" S_ask_before_overwrite ") v)))");
@@ -595,18 +483,6 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_menu_icons "*) (lambda (s v) (set! (" S_with_menu_icons ") v)))");
   s7_symbol_set_documentation(s7, ss->with_menu_icons_symbol, "*with-menu-icons*: #t if you want icons in the menus (gtk only)");
 
-  ss->fft_window_alpha_symbol = s7_define_variable(s7, "*" S_fft_window_alpha "*", s7_make_real(s7, DEFAULT_FFT_WINDOW_ALPHA));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_fft_window_alpha "*) (lambda (s v) (set! (" S_fft_window_alpha ") v)))");
-  s7_symbol_set_documentation(s7, ss->fft_window_alpha_symbol, "*fft-window-alpha*: fft window alpha parameter value");
-
-  ss->fft_window_beta_symbol = s7_define_variable(s7, "*" S_fft_window_beta "*", s7_make_real(s7, DEFAULT_FFT_WINDOW_BETA));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_fft_window_beta "*) (lambda (s v) (set! (" S_fft_window_beta ") v)))");
-  s7_symbol_set_documentation(s7, ss->fft_window_beta_symbol, "*fft-window-beta*: fft window beta parameter value");
-
-  ss->grid_density_symbol = s7_define_variable(s7, "*" S_grid_density "*", s7_make_real(s7, DEFAULT_GRID_DENSITY));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_grid_density "*) (lambda (s v) (set! (" S_grid_density ") v)))");
-  s7_symbol_set_documentation(s7, ss->grid_density_symbol, "*grid-density*: sets how closely axis ticks are spaced, default=1.0");
-
   ss->initial_beg_symbol = s7_define_variable(s7, "*" S_initial_beg "*", s7_make_real(s7, DEFAULT_INITIAL_BEG));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_initial_beg "*) (lambda (s v) (set! (" S_initial_beg ") v)))");
   s7_symbol_set_documentation(s7, ss->initial_beg_symbol, "*initial-beg*: the begin point (in seconds) for the initial graph of a sound.");
@@ -623,45 +499,17 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_color_cutoff "*) (lambda (s v) (set! (" S_color_cutoff ") v)))");
   s7_symbol_set_documentation(s7, ss->color_cutoff_symbol, "*color-cutoff*: color map cutoff point (default .003).");
 
-  ss->beats_per_minute_symbol = s7_define_variable(s7, "*" S_beats_per_minute "*", s7_make_real(s7, DEFAULT_BEATS_PER_MINUTE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_beats_per_minute "*) (lambda (s v) (set! (" S_beats_per_minute ") v)))");
-  s7_symbol_set_documentation(s7, ss->beats_per_minute_symbol, "*beats-per-minute*: beats per minute if x-axis-style is x-axis-in-beats");
-
   ss->color_inverted_symbol = s7_define_variable(s7, "*" S_color_inverted "*", s7_make_boolean(s7, DEFAULT_COLOR_INVERTED));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_color_inverted "*) (lambda (s v) (set! (" S_color_inverted ") v)))");
   s7_symbol_set_documentation(s7, ss->color_inverted_symbol, "*color-inverted*: whether the colormap in operation should be inverted");
-
-  ss->show_mix_waveforms_symbol = s7_define_variable(s7, "*" S_show_mix_waveforms "*", s7_make_boolean(s7, DEFAULT_SHOW_MIX_WAVEFORMS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_mix_waveforms "*) (lambda (s v) (set! (" S_show_mix_waveforms ") v)))");
-  s7_symbol_set_documentation(s7, ss->show_mix_waveforms_symbol, "*show-mix-waveforms*: #t if Snd should display mix waveforms (above the main waveform)");
 
   ss->mix_waveform_height_symbol = s7_define_variable(s7, "*" S_mix_waveform_height "*", s7_make_integer(s7, DEFAULT_MIX_WAVEFORM_HEIGHT));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_mix_waveform_height "*) (lambda (s v) (set! (" S_mix_waveform_height ") v)))");
   s7_symbol_set_documentation(s7, ss->mix_waveform_height_symbol, "*mix-waveform-height*: max height (pixels) of mix waveforms (20)");
 
-  ss->beats_per_measure_symbol = s7_define_variable(s7, "*" S_beats_per_measure "*", s7_make_integer(s7, DEFAULT_BEATS_PER_MEASURE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_beats_per_measure "*) (lambda (s v) (set! (" S_beats_per_measure ") v)))");
-  s7_symbol_set_documentation(s7, ss->beats_per_measure_symbol, "*beats-per-measure*: beats per measure if x-axis-style is x-axis-in-measures");
-
-  ss->transform_normalization_symbol = s7_define_variable(s7, "*" S_transform_normalization "*", s7_make_integer(s7, DEFAULT_TRANSFORM_NORMALIZATION));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_transform_normalization "*) (lambda (s v) (set! (" S_transform_normalization ") v)))");
-  s7_symbol_set_documentation(s7, ss->transform_normalization_symbol, "*transform-normalization*: dont-normalize, normalize-by-channel, normalize-by-sound, or normalize-globally.");
-
   ss->sinc_width_symbol = s7_define_variable(s7, "*" S_sinc_width "*", s7_make_integer(s7, DEFAULT_SINC_WIDTH));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_sinc_width "*) (lambda (s v) (set! (" S_sinc_width ") v)))");
   s7_symbol_set_documentation(s7, ss->sinc_width_symbol, "*sinc-width*: sampling rate conversion sinc width (10).");
-
-  ss->x_axis_style_symbol = s7_define_variable(s7, "*" S_x_axis_style "*", s7_make_integer(s7, DEFAULT_X_AXIS_STYLE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_x_axis_style "*) (lambda (s v) (set! (" S_x_axis_style ") v)))");
-  s7_symbol_set_documentation(s7, ss->x_axis_style_symbol, "*x-axis-style*: The x axis labelling of the time domain waveform (x-axis-in-seconds etc)");
-
-  ss->zoom_focus_style_symbol = s7_define_variable(s7, "*" S_zoom_focus_style "*", s7_make_integer(s7, DEFAULT_ZOOM_FOCUS_STYLE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_zoom_focus_style "*) (lambda (s v) (set! (" S_zoom_focus_style ") v)))");
-  s7_symbol_set_documentation(s7, ss->zoom_focus_style_symbol, "*zoom-focus-style*: determines what zooming centers on (zoom-focus-active etc).");
-
-  ss->graph_style_symbol = s7_define_variable(s7, "*" S_graph_style "*", s7_make_integer(s7, DEFAULT_GRAPH_STYLE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_graph_style "*) (lambda (s v) (set! (" S_graph_style ") v)))");
-  s7_symbol_set_documentation(s7, ss->graph_style_symbol, "*graph-style*: graph style (graph-lines etc)");
 
   ss->region_graph_style_symbol = s7_define_variable(s7, "*" S_region_graph_style "*", s7_make_integer(s7, ss->Region_Graph_Style));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_region_graph_style "*) (lambda (s v) (set! (" S_region_graph_style ") v)))");
@@ -678,10 +526,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->max_regions_symbol = s7_define_variable(s7, "*" S_max_regions "*", s7_make_integer(s7, DEFAULT_MAX_REGIONS));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_max_regions "*) (lambda (s v) (set! (" S_max_regions ") v)))");
   s7_symbol_set_documentation(s7, ss->max_regions_symbol, "*max-regions*: max number of regions saved on the region list");
-
-  ss->max_transform_peaks_symbol = s7_define_variable(s7, "*" S_max_transform_peaks "*", s7_make_integer(s7, DEFAULT_MAX_TRANSFORM_PEAKS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_max_transform_peaks "*) (lambda (s v) (set! (" S_max_transform_peaks ") v)))");
-  s7_symbol_set_documentation(s7, ss->max_transform_peaks_symbol, "*max-transform-peaks*: max number of fft peaks reported in fft display");
 
   ss->audio_output_device_symbol = s7_define_variable(s7, "*" S_audio_output_device "*", s7_make_integer(s7, DEFAULT_AUDIO_OUTPUT_DEVICE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_audio_output_device "*) (lambda (s v) (set! (" S_audio_output_device ") v)))");
@@ -750,10 +594,6 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_with_wave "*) (lambda (s v) (set! (" S_enved_with_wave ") v)))");
   s7_symbol_set_documentation(s7, ss->enved_with_wave_symbol, "*enved-wave?*: #t if the envelope editor is displaying the waveform to be edited");
 
-  ss->graphs_horizontal_symbol = s7_define_variable(s7, "*" S_graphs_horizontal "*", s7_make_boolean(s7, DEFAULT_GRAPHS_HORIZONTAL));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_graphs_horizontal "*) (lambda (s v) (set! (" S_graphs_horizontal ") v)))");
-  s7_symbol_set_documentation(s7, ss->graphs_horizontal_symbol, "*graphs-horizontal*: #t if the time domain, fft, and lisp graphs are layed out horizontally");
-
   ss->with_background_processes_symbol = s7_define_variable(s7, "*" S_with_background_processes "*", s7_make_boolean(s7, DEFAULT_WITH_BACKGROUND_PROCESSES));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_background_processes "*) (lambda (s v) (set! (" S_with_background_processes ") v)))");
   s7_symbol_set_documentation(s7, ss->with_background_processes_symbol, "*with-background-processes*: #t if Snd should use background (idle time) processing");
@@ -802,18 +642,6 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_just_sounds "*) (lambda (s v) (set! (" S_just_sounds ") v)))");
   s7_symbol_set_documentation(s7, ss->just_sounds_symbol, "*just-sounds*: the 'just sounds' choice in the file chooser dialog");
 
-  ss->cursor_size_symbol = s7_define_variable(s7, "*" S_cursor_size "*", s7_make_integer(s7, DEFAULT_CURSOR_SIZE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_cursor_size "*) (lambda (s v) (set! (" S_cursor_size ") v)))");
-  s7_symbol_set_documentation(s7, ss->cursor_size_symbol, "*cursor-size*: current cursor size");
-
-  ss->cursor_style_symbol = s7_define_variable(s7, "*" S_cursor_style "*", s7_make_integer(s7, DEFAULT_CURSOR_STYLE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_cursor_style "*) (lambda (s v) (set! (" S_cursor_style ") v)))");
-  s7_symbol_set_documentation(s7, ss->cursor_style_symbol, "*cursor-style*: current cursor shape (cursor-cross etc)");
-
-  ss->tracking_cursor_style_symbol = s7_define_variable(s7, "*" S_tracking_cursor_style "*", s7_make_integer(s7, DEFAULT_TRACKING_CURSOR_STYLE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_tracking_cursor_style "*) (lambda (s v) (set! (" S_tracking_cursor_style ") v)))");
-  s7_symbol_set_documentation(s7, ss->tracking_cursor_style_symbol, "*tracking-cursor-style*: current tracking cursor shape (cursor-cross, cursor-line)");
-
   ss->filter_control_in_db_symbol = s7_define_variable(s7, "*" S_filter_control_in_dB "*", s7_make_boolean(s7, DEFAULT_FILTER_CONTROL_IN_DB));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_filter_control_in_dB "*) (lambda (s v) (set! (" S_filter_control_in_dB ") v)))");
   s7_symbol_set_documentation(s7, ss->filter_control_in_db_symbol, "*filter-control-in-dB*: #t if snd's filter envelope is displayed in dB in control panel");
@@ -821,10 +649,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->filter_control_in_hz_symbol = s7_define_variable(s7, "*" S_filter_control_in_hz "*", s7_make_boolean(s7, DEFAULT_FILTER_CONTROL_IN_HZ));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_filter_control_in_hz "*) (lambda (s v) (set! (" S_filter_control_in_hz ") v)))");
   s7_symbol_set_documentation(s7, ss->filter_control_in_hz_symbol, "*filter-control-in-hz*: #t if snd's filter envelope x axis should be in hz (control panel filter)");
-
-  ss->show_sonogram_cursor_symbol = s7_define_variable(s7, "*" S_show_sonogram_cursor "*", s7_make_boolean(s7, DEFAULT_SHOW_SONOGRAM_CURSOR));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_sonogram_cursor "*) (lambda (s v) (set! (" S_show_sonogram_cursor ") v)))");
-  s7_symbol_set_documentation(s7, ss->show_sonogram_cursor_symbol, "*show-sonogram-cursor*: #t if Snd should display a cursor in the sonogram");
 
   ss->speed_control_tones_symbol = s7_define_variable(s7, "*" S_speed_control_tones "*", s7_make_integer(s7, DEFAULT_SPEED_CONTROL_TONES));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_speed_control_tones "*) (lambda (s v) (set! (" S_speed_control_tones ") v)))");
@@ -882,10 +706,6 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_play_arrow_size "*) (lambda (s v) (set! (" S_play_arrow_size ") v)))");
   s7_symbol_set_documentation(s7, ss->play_arrow_size_symbol, "*play-arrow-size*: the size of the play triangles");
 
-  ss->min_db_symbol = s7_define_variable(s7, "*" S_min_dB "*", s7_make_real(s7, DEFAULT_MIN_DB));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_min_dB "*) (lambda (s v) (set! (" S_min_dB ") v)))");
-  s7_symbol_set_documentation(s7, ss->min_db_symbol, "*min-dB*: min dB value displayed in fft graphs using dB scales (-60)");
-
   ss->show_controls_symbol = s7_define_variable(s7, "*" S_show_controls "*", s7_make_boolean(s7, DEFAULT_SHOW_CONTROLS));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_controls "*) (lambda (s v) (set! (" S_show_controls ") v)))");
   s7_symbol_set_documentation(s7, ss->show_controls_symbol, "*show-controls*: #t if snd's control panel is known to be open");
@@ -906,6 +726,54 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_open_file_dialog_directory "*) (lambda (s v) (set! (" S_open_file_dialog_directory ") v)))");
   s7_symbol_set_documentation(s7, ss->open_file_dialog_directory_symbol, "*open-file-dialog-directory*: name of directory for initial open file dialog search");
 
+  /* snd-chn.c */
+  ss->show_transform_peaks_symbol = s7_define_variable(s7, "*" S_show_transform_peaks "*", s7_make_boolean(s7, DEFAULT_SHOW_TRANSFORM_PEAKS));
+  ss->show_y_zero_symbol = s7_define_variable(s7, "*" S_show_y_zero "*", s7_make_boolean(s7, DEFAULT_SHOW_Y_ZERO));
+  ss->show_marks_symbol = s7_define_variable(s7, "*" S_show_marks "*", s7_make_boolean(s7, DEFAULT_SHOW_MARKS));
+  ss->show_grid_symbol = s7_define_variable(s7, "*" S_show_grid "*", s7_make_boolean(s7, DEFAULT_SHOW_GRID));
+  ss->fft_log_frequency_symbol = s7_define_variable(s7, "*" S_fft_log_frequency "*", s7_make_boolean(s7, DEFAULT_FFT_LOG_FREQUENCY));
+  ss->fft_log_magnitude_symbol = s7_define_variable(s7, "*" S_fft_log_magnitude "*", s7_make_boolean(s7, DEFAULT_FFT_LOG_MAGNITUDE));
+  ss->fft_with_phases_symbol = s7_define_variable(s7, "*" S_fft_with_phases "*", s7_make_boolean(s7, DEFAULT_FFT_WITH_PHASES));
+  ss->sync_style_symbol = s7_define_variable(s7, "*" S_sync_style "*", s7_make_integer(s7, DEFAULT_SYNC_STYLE));
+  ss->show_axes_symbol = s7_define_variable(s7, "*" S_show_axes "*", s7_make_integer(s7, DEFAULT_SHOW_AXES));
+  ss->min_db_symbol = s7_define_variable(s7, "*" S_min_dB "*", s7_make_real(s7, DEFAULT_MIN_DB));
+  ss->cursor_size_symbol = s7_define_variable(s7, "*" S_cursor_size "*", s7_make_integer(s7, DEFAULT_CURSOR_SIZE));
+  ss->cursor_style_symbol = s7_define_variable(s7, "*" S_cursor_style "*", s7_make_integer(s7, DEFAULT_CURSOR_STYLE));
+  ss->tracking_cursor_style_symbol = s7_define_variable(s7, "*" S_tracking_cursor_style "*", s7_make_integer(s7, DEFAULT_TRACKING_CURSOR_STYLE));
+  ss->show_sonogram_cursor_symbol = s7_define_variable(s7, "*" S_show_sonogram_cursor "*", s7_make_boolean(s7, DEFAULT_SHOW_SONOGRAM_CURSOR));
+  ss->with_verbose_cursor_symbol = s7_define_variable(s7, "*" S_with_verbose_cursor "*", s7_make_boolean(s7, DEFAULT_WITH_VERBOSE_CURSOR));
+  ss->spectro_x_scale_symbol = s7_define_variable(s7, "*" S_spectro_x_scale "*", s7_make_real(s7, DEFAULT_SPECTRO_X_SCALE));
+  ss->spectro_y_scale_symbol = s7_define_variable(s7, "*" S_spectro_y_scale "*", s7_make_real(s7, DEFAULT_SPECTRO_Y_SCALE));
+  ss->spectro_z_scale_symbol = s7_define_variable(s7, "*" S_spectro_z_scale "*", s7_make_real(s7, DEFAULT_SPECTRO_Z_SCALE));
+  ss->spectro_z_angle_symbol = s7_define_variable(s7, "*" S_spectro_z_angle "*", s7_make_real(s7, DEFAULT_SPECTRO_Z_ANGLE));
+  ss->spectro_x_angle_symbol = s7_define_variable(s7, "*" S_spectro_x_angle "*", s7_make_real(s7, DEFAULT_SPECTRO_X_ANGLE));
+  ss->spectro_y_angle_symbol = s7_define_variable(s7, "*" S_spectro_y_angle "*", s7_make_real(s7, DEFAULT_SPECTRO_Y_ANGLE));
+  ss->spectrum_end_symbol = s7_define_variable(s7, "*" S_spectrum_end "*", s7_make_real(s7, DEFAULT_SPECTRUM_END));
+  ss->spectrum_start_symbol = s7_define_variable(s7, "*" S_spectrum_start "*", s7_make_real(s7, DEFAULT_SPECTRUM_START));
+  ss->spectro_hop_symbol = s7_define_variable(s7, "*" S_spectro_hop "*", s7_make_integer(s7, DEFAULT_SPECTRO_HOP));
+  ss->graphs_horizontal_symbol = s7_define_variable(s7, "*" S_graphs_horizontal "*", s7_make_boolean(s7, DEFAULT_GRAPHS_HORIZONTAL));
+  ss->max_transform_peaks_symbol = s7_define_variable(s7, "*" S_max_transform_peaks "*", s7_make_integer(s7, DEFAULT_MAX_TRANSFORM_PEAKS));
+  ss->fft_window_alpha_symbol = s7_define_variable(s7, "*" S_fft_window_alpha "*", s7_make_real(s7, DEFAULT_FFT_WINDOW_ALPHA));
+  ss->fft_window_beta_symbol = s7_define_variable(s7, "*" S_fft_window_beta "*", s7_make_real(s7, DEFAULT_FFT_WINDOW_BETA));
+  ss->grid_density_symbol = s7_define_variable(s7, "*" S_grid_density "*", s7_make_real(s7, DEFAULT_GRID_DENSITY));
+  ss->beats_per_minute_symbol = s7_define_variable(s7, "*" S_beats_per_minute "*", s7_make_real(s7, DEFAULT_BEATS_PER_MINUTE));
+  ss->show_mix_waveforms_symbol = s7_define_variable(s7, "*" S_show_mix_waveforms "*", s7_make_boolean(s7, DEFAULT_SHOW_MIX_WAVEFORMS));
+  ss->beats_per_measure_symbol = s7_define_variable(s7, "*" S_beats_per_measure "*", s7_make_integer(s7, DEFAULT_BEATS_PER_MEASURE));
+  ss->transform_normalization_symbol = s7_define_variable(s7, "*" S_transform_normalization "*", s7_make_integer(s7, DEFAULT_TRANSFORM_NORMALIZATION));
+  ss->x_axis_style_symbol = s7_define_variable(s7, "*" S_x_axis_style "*", s7_make_integer(s7, DEFAULT_X_AXIS_STYLE));
+  ss->zoom_focus_style_symbol = s7_define_variable(s7, "*" S_zoom_focus_style "*", s7_make_integer(s7, DEFAULT_ZOOM_FOCUS_STYLE));
+  ss->graph_style_symbol = s7_define_variable(s7, "*" S_graph_style "*", s7_make_integer(s7, DEFAULT_GRAPH_STYLE));
+  ss->wavelet_type_symbol = s7_define_variable(s7, "*" S_wavelet_type "*", s7_make_integer(s7, DEFAULT_WAVELET_TYPE));
+  ss->dot_size_symbol = s7_define_variable(s7, "*" S_dot_size "*", s7_make_integer(s7, DEFAULT_DOT_SIZE));
+  ss->zero_pad_symbol = s7_define_variable(s7, "*" S_zero_pad "*", s7_make_integer(s7, DEFAULT_ZERO_PAD));
+  ss->wavo_hop_symbol = s7_define_variable(s7, "*" S_wavo_hop "*", s7_make_integer(s7, DEFAULT_WAVO_HOP));
+  ss->wavo_trace_symbol = s7_define_variable(s7, "*" S_wavo_trace "*", s7_make_integer(s7, DEFAULT_WAVO_TRACE));
+  ss->transform_size_symbol = s7_define_variable(s7, "*" S_transform_size "*", s7_make_integer(s7, DEFAULT_TRANSFORM_SIZE));
+  ss->fft_window_symbol = s7_define_variable(s7, "*" S_fft_window "*", s7_make_integer(s7, DEFAULT_FFT_WINDOW));
+  ss->transform_graph_type_symbol = s7_define_variable(s7, "*" S_transform_graph_type "*", s7_make_integer(s7, DEFAULT_TRANSFORM_GRAPH_TYPE));
+  ss->time_graph_type_symbol = s7_define_variable(s7, "*" S_time_graph_type "*", s7_make_integer(s7, DEFAULT_TIME_GRAPH_TYPE));
+
+  /* snd-draw.c */
   ss->data_color_symbol           = s7_define_variable(s7, "*" S_data_color "*",           s7_f(s7));
   ss->selected_data_color_symbol  = s7_define_variable(s7, "*" S_selected_data_color "*",  s7_f(s7));
   ss->mark_color_symbol           = s7_define_variable(s7, "*" S_mark_color "*",           s7_f(s7));
@@ -925,48 +793,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->mix_color_symbol            = s7_define_variable(s7, "*" S_mix_color "*",            s7_f(s7));
   ss->sash_color_symbol           = s7_define_variable(s7, "*" S_sash_color "*",           s7_f(s7));
   ss->axis_color_symbol           = s7_define_variable(s7, "*" S_axis_color "*",           s7_f(s7));
-
-  s7_symbol_set_documentation(s7, ss->axis_color_symbol, "*axis-color*: color of axis (defaults to current data color)");
-  s7_symbol_set_documentation(s7, ss->basic_color_symbol, "*basic-color*: Snd's basic color");
-  s7_symbol_set_documentation(s7, ss->cursor_color_symbol, "*cursor-color*: cursor color");
-  s7_symbol_set_documentation(s7, ss->data_color_symbol, "*data-color*: color used to draw unselected data");
-  s7_symbol_set_documentation(s7, ss->enved_waveform_color_symbol, "*enved-waveform-color*: color of the envelope editor wave display");
-  s7_symbol_set_documentation(s7, ss->filter_control_waveform_color_symbol, "*filter-control-waveform-color*: color of the filter waveform");
-  s7_symbol_set_documentation(s7, ss->graph_color_symbol, "*graph-color*: background color used for unselected data");
-  s7_symbol_set_documentation(s7, ss->highlight_color_symbol, "*highlight-color*: color of highlighted text or buttons");
-  s7_symbol_set_documentation(s7, ss->listener_color_symbol, "*listener-color*: background color of the lisp listener");
-  s7_symbol_set_documentation(s7, ss->listener_text_color_symbol, "*listener-text-color*: text color in the lisp listener");
-  s7_symbol_set_documentation(s7, ss->mark_color_symbol, "*mark-color*: mark color");
-  s7_symbol_set_documentation(s7, ss->mix_color_symbol, "*mix-color*: color of mix tags");
-  s7_symbol_set_documentation(s7, ss->position_color_symbol, "*position-color*: color of position sliders");
-  s7_symbol_set_documentation(s7, ss->sash_color_symbol, "*sash-color*: color used to draw paned window sashes");
-  s7_symbol_set_documentation(s7, ss->selected_data_color_symbol, "*selected-data-color*: color used for selected data");
-  s7_symbol_set_documentation(s7, ss->selected_graph_color_symbol, "*selected-graph-color*: background color of selected data");
-  s7_symbol_set_documentation(s7, ss->selection_color_symbol, "*selection-color*: selection color");
-  s7_symbol_set_documentation(s7, ss->text_focus_color_symbol, "*text-focus-color*: color used to show a text field has focus");
-  s7_symbol_set_documentation(s7, ss->zoom_color_symbol, "*zoom-color*: color of zoom sliders");
-
-#if (!USE_NO_GUI)
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_data_color "*) (lambda (s v) (set! (" S_data_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_selected_data_color "*) (lambda (s v) (set! (" S_selected_data_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mark_color "*) (lambda (s v) (set! (" S_mark_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_graph_color "*) (lambda (s v) (set! (" S_graph_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_selected_graph_color "*) (lambda (s v) (set! (" S_selected_graph_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_listener_color "*) (lambda (s v) (set! (" S_listener_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_listener_text_color "*) (lambda (s v) (set! (" S_listener_text_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_basic_color "*) (lambda (s v) (set! (" S_basic_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_selection_color "*) (lambda (s v) (set! (" S_selection_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_zoom_color "*) (lambda (s v) (set! (" S_zoom_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_position_color "*) (lambda (s v) (set! (" S_position_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_highlight_color "*) (lambda (s v) (set! (" S_highlight_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_waveform_color "*) (lambda (s v) (set! (" S_enved_waveform_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_cursor_color "*) (lambda (s v) (set! (" S_cursor_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_text_focus_color "*) (lambda (s v) (set! (" S_text_focus_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_filter_control_waveform_color "*) (lambda (s v) (set! (" S_filter_control_waveform_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mix_color "*) (lambda (s v) (set! (" S_mix_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_sash_color "*) (lambda (s v) (set! (" S_sash_color ") v)))");
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_axis_color "*) (lambda (s v) (set! (" S_axis_color ") v)))");
-#endif
 #endif
 }
 

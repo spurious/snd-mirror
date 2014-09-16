@@ -231,52 +231,6 @@ static s7_pointer multivector_ref(s7_scheme *sc, s7_pointer vector, int indices,
                                        s7_make_integer(sc, indices)));
 }
 
-static s7_pointer closure_func(s7_scheme *sc, s7_pointer args)
-{
-  /* closure_func is the function portion of our closure.  It assumes its
-   *   environment has an integer named "x".  The function also takes one argument,
-   *   an integer we'll call it "y".
-   */
-  return(s7_make_integer(sc,                            /* return (+ y x) */
-                         s7_integer(s7_car(args)) +     /*   this is y */
-                         s7_integer(s7_name_to_value(sc, "x"))));
-}
-
-static s7_pointer define_closure(s7_scheme *sc, const char *name, s7_pointer func, s7_pointer x_value)
-{
-  /* make_closure creates a new closure with x_value as the local value of x,
-   *   and func as the function.  It defines this in Scheme as "name".  
-   *
-   *   s7_make_closure's arguments are the closure args and body, and
-   *   the closure's environment.  For the args, we'll use '(y), and
-   *   the body is '(f y));  for the environment, we'll augment 
-   *   the current environment with '((x . x_value) (f . func)).
-   */
-  s7_define(sc, 
-	    s7_nil(sc),
-	    s7_make_symbol(sc, name),
-	    s7_make_closure(sc, 
-			    s7_cons(sc,                         /* arg list: '(y) */
-			            s7_make_symbol(sc, "y"), s7_nil(sc)), 
-			    s7_cons(sc,                         /* body: '(f y) */
-				    s7_cons(sc,                              
-					    s7_make_symbol(sc, "f"),
-					    s7_cons(sc, s7_make_symbol(sc, "y"), s7_nil(sc))),
-				    s7_nil(sc)),
-			    s7_sublet(sc, 
-				      s7_curlet(sc), 
-						   s7_cons(sc, 
-							   s7_cons(sc,  /* the local binding for "x" */
-                                                                   s7_make_symbol(sc, "x"), 
-                                                                   x_value), 
-							   s7_cons(sc,  /*     and "f" */
-								   s7_cons(sc, 
-                                                                           s7_make_symbol(sc, "f"), 
-                                                                           func), 
-								   s7_nil(sc))))));
-  return(s7_unspecified(sc));
-}
-
 
 typedef struct {
   size_t size;
@@ -1131,27 +1085,6 @@ int main(int argc, char **argv)
     {fprintf(stderr, "%d: %s is not #t?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
 
-  {
-    s7_pointer c_func;
-    c_func = s7_make_function(sc,  "#<closure function>", closure_func, 1, 0, false, "function used by define_closure");
-
-    define_closure(sc,  "closure-1", c_func, s7_make_integer(sc,  32));  /* (let ((x 32)) (lambda (y) (+ y x))) */
-    define_closure(sc,  "closure-2", c_func, s7_make_integer(sc,  123)); /* (let ((x 123)) (lambda (y) (+ y x))) */
-
-    p = s7_apply_function(sc, s7_name_to_value(sc, "closure-1"), s7_cons(sc, TO_S7_INT(3), s7_nil(sc)));
-    if (!s7_is_integer(p))
-      {fprintf(stderr, "%d: %s is not an integer?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
-    if (s7_integer(p) != 35)
-      {fprintf(stderr, "%d: %s is not 35?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
-
-    p = s7_apply_function(sc, s7_name_to_value(sc, "closure-2"), s7_cons(sc, TO_S7_INT(3), s7_nil(sc)));
-    if (!s7_is_integer(p))
-      {fprintf(stderr, "%d: %s is not an integer?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
-    if (s7_integer(p) != 126)
-      {fprintf(stderr, "%d: %s is not 126?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
-  }
-
-  
   {
     s7_pointer new_env, old_env;
     new_env = s7_sublet(sc, old_env = s7_curlet(sc), s7_nil(sc));

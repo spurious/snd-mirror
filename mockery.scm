@@ -446,6 +446,14 @@
 #|
 ;;; eventually I'll conjure up unichars like (define lambda (bytevector #xce #xbb)) via mock-char,
 ;;;   then combine those into unistring via mock-string
+;;;
+;;; (string-length obj)->g_utf8_strlen etc 
+;;;   (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
+;;;   (g_utf8_strlen (bytevector #xce #xbb #xce #xba) 10) -> 2
+;;;   (g_utf8_normalize (bytevector #xce #xbb #xce #xba) 4 G_NORMALIZE_DEFAULT)
+;;;   but the ones that return gunichar (toupper) currently don't return a bytevector or a string
+;;;   maybe gunichar->bytevector?
+;;;   need glib.scm, or unicode.scm to load the stuff
 |#
 
 
