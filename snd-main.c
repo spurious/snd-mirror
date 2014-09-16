@@ -2358,6 +2358,8 @@ static s7_pointer acc_with_file_monitor(s7_scheme *sc, s7_pointer args) {return(
 static s7_pointer acc_show_indices(s7_scheme *sc, s7_pointer args) {return(g_set_show_indices(s7_cadr(args)));}
 static s7_pointer acc_just_sounds(s7_scheme *sc, s7_pointer args) {return(g_set_just_sounds(s7_cadr(args)));}
 static s7_pointer acc_play_arrow_size(s7_scheme *sc, s7_pointer args) {return(g_set_play_arrow_size(s7_cadr(args)));}
+static s7_pointer acc_with_relative_panes(s7_scheme *sc, s7_pointer args) {return(g_set_with_relative_panes(s7_cadr(args)));}
+static s7_pointer acc_open_file_dialog_directory(s7_scheme *sc, s7_pointer args) {return(g_set_open_file_dialog_directory(s7_cadr(args)));}
 #endif
 
 
@@ -2534,6 +2536,8 @@ the hook functions return " PROC_TRUE ", the save state process opens the file '
   s7_symbol_set_documentation(s7, ss->show_indices_symbol, "*show-indices*: #t if sound name should be preceded by its index in the sound display.");
   s7_symbol_set_documentation(s7, ss->just_sounds_symbol, "*just-sounds*: the 'just sounds' choice in the file chooser dialog");
   s7_symbol_set_documentation(s7, ss->play_arrow_size_symbol, "*play-arrow-size*: the size of the play triangles");
+  s7_symbol_set_documentation(s7, ss->with_relative_panes_symbol, "*with-relative-panes*: #t if multichannel sounds should try to maintain relative pane sizes");
+  s7_symbol_set_documentation(s7, ss->open_file_dialog_directory_symbol, "*open-file-dialog-directory*: name of directory for initial open file dialog search");
 
   s7_symbol_set_access(s7, ss->temp_dir_symbol, s7_make_function(s7, "[acc-" S_temp_dir, acc_temp_dir, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->save_dir_symbol, s7_make_function(s7, "[acc-" S_save_dir, acc_save_dir, 2, 0, false, "accessor"));
@@ -2563,6 +2567,7 @@ the hook functions return " PROC_TRUE ", the save state process opens the file '
   s7_symbol_set_access(s7, ss->show_indices_symbol, s7_make_function(s7, "[acc-" S_show_indices, acc_show_indices, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->just_sounds_symbol, s7_make_function(s7, "[acc-" S_just_sounds, acc_just_sounds, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->play_arrow_size_symbol, s7_make_function(s7, "[acc-" S_play_arrow_size, acc_play_arrow_size, 2, 0, false, "accessor"));
-
+  s7_symbol_set_access(s7, ss->with_relative_panes_symbol, s7_make_function(s7, "[acc-" S_with_relative_panes, acc_with_relative_panes, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->open_file_dialog_directory_symbol, s7_make_function(s7, "[acc-" S_open_file_dialog_directory, acc_open_file_dialog_directory, 2, 0, false, "accessor"));
 #endif
 }

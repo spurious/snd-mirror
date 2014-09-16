@@ -2396,6 +2396,11 @@ Xen_wrap_1_arg(g_set_show_selection_transform_w, g_set_show_selection_transform)
 Xen_wrap_1_arg(g_integer_to_transform_w, g_integer_to_transform)
 Xen_wrap_1_arg(g_transform_to_integer_w, g_transform_to_integer)
 
+#if HAVE_SCHEME
+static s7_pointer acc_log_freq_start(s7_scheme *sc, s7_pointer args) {return(g_set_log_freq_start(s7_cadr(args)));}
+static s7_pointer acc_show_selection_transform(s7_scheme *sc, s7_pointer args) {return(g_set_show_selection_transform(s7_cadr(args)));}
+#endif
+
 #if (!HAVE_SCHEME)
 static Xen transform_temp[6]; /* static for Ruby's sake */
 #endif
@@ -2455,12 +2460,7 @@ of a moving mark:\n\
   s7_define_constant(s7, S_cepstrum,          C_int_to_Xen_transform(CEPSTRUM));
   s7_define_constant(s7, S_walsh_transform,   C_int_to_Xen_transform(WALSH));
   s7_define_constant(s7, S_autocorrelation,   C_int_to_Xen_transform(AUTOCORRELATION));
-
   /* *transform-type* is #<transform Fourier> by default */
-  ss->transform_type_symbol = s7_define_variable(s7, "*" S_transform_type "*", s7_name_to_value(s7, S_fourier_transform));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_transform_type "*) (lambda (s v) (set! (" S_transform_type ") v)))");
-  s7_symbol_set_documentation(s7, ss->transform_type_symbol, "*transform-type*: transform type (fourier-transform etc)");
-
 #else
   Xen_define_variable(S_fourier_transform, transform_temp[0], C_int_to_Xen_transform(FOURIER));
   Xen_define_variable(S_wavelet_transform, transform_temp[1], C_int_to_Xen_transform(WAVELET));
@@ -2499,6 +2499,12 @@ of a moving mark:\n\
 
 #if HAVE_SCHEME
   s7_eval_c_string(s7, "(define transform->vct transform->float-vector)");
+
+  s7_symbol_set_access(s7, ss->log_freq_start_symbol, s7_make_function(s7, "[acc-" S_log_freq_start, acc_log_freq_start, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->show_selection_transform_symbol, s7_make_function(s7, "[acc-" S_show_selection_transform, acc_show_selection_transform, 2, 0, false, "accessor"));
+
+  s7_symbol_set_documentation(s7, ss->log_freq_start_symbol, "*log-freq-start*: log freq base (25.0)");
+  s7_symbol_set_documentation(s7, ss->show_selection_transform_symbol, "*show-selection-transform*: #t if transform display reflects selection, not time-domain window");
 #endif
 }
 

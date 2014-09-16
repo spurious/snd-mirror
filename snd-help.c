@@ -3829,6 +3829,11 @@ Xen_wrap_1_arg(g_snd_url_w, g_snd_url)
 Xen_wrap_no_args(g_snd_urls_w, g_snd_urls)
 Xen_wrap_4_optional_args(g_help_dialog_w, g_help_dialog)
 
+#if HAVE_SCHEME
+static s7_pointer acc_html_dir(s7_scheme *sc, s7_pointer args) {return(g_set_html_dir(s7_cadr(args)));}
+static s7_pointer acc_html_program(s7_scheme *sc, s7_pointer args) {return(g_set_html_program(s7_cadr(args)));}
+#endif
+
 void g_init_help(void)
 {
   Xen_define_procedure(S_snd_help,    g_listener_help_w,  0, 2, 0, H_snd_help);
@@ -3877,5 +3882,10 @@ If more than one hook function, each function gets the previous function's outpu
 
 #if HAVE_SCHEME
   autoload_info(s7); /* snd-xref.c included above */
+  s7_symbol_set_access(s7, ss->html_dir_symbol, s7_make_function(s7, "[acc-" S_html_dir, acc_html_dir, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->html_program_symbol, s7_make_function(s7, "[acc-" S_html_program, acc_html_program, 2, 0, false, "accessor"));
+
+  s7_symbol_set_documentation(s7, ss->html_dir_symbol, "*html-dir*: location of Snd documentation");
+  s7_symbol_set_documentation(s7, ss->html_program_symbol, "*html-program*: name of documentation reader (firefox)");
 #endif
 }

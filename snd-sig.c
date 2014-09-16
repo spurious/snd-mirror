@@ -6762,6 +6762,10 @@ Xen_wrap_1_arg(g_set_sinc_width_w, g_set_sinc_width)
 
 Xen_wrap_5_optional_args(g_fpsap_w, g_fpsap)
 
+#if HAVE_SCHEME
+static s7_pointer acc_sinc_width(s7_scheme *sc, s7_pointer args) {return(g_set_sinc_width(s7_cadr(args)));}
+#endif
+
 void g_init_sig(void)
 {
   Xen_define_procedure(S_scan_channel,                     g_scan_channel_w,                1, 5, 0, H_scan_channel);
@@ -6813,6 +6817,9 @@ void g_init_sig(void)
   Xen_define_procedure(S_fpsap, g_fpsap_w, 3, 2, 0, H_fpsap);
 #if HAVE_SCHEME
   Xen_define_procedure("phases-get-peak", g_phases_get_peak, 3, 0, 0, "");
+
+  s7_symbol_set_access(s7, ss->sinc_width_symbol, s7_make_function(s7, "[acc-" S_sinc_width, acc_sinc_width, 2, 0, false, "accessor"));
+  s7_symbol_set_documentation(s7, ss->sinc_width_symbol, "*sinc-width*: sampling rate conversion sinc width (10).");
 #endif
 }
 

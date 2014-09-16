@@ -328,152 +328,43 @@ void snd_set_global_defaults(bool need_cleanup)
   else ss->Eps_File = NULL;
 
 #if HAVE_SCHEME
-  ss->eps_file_symbol = s7_define_variable(s7, "*" S_eps_file "*", s7_make_string(s7, DEFAULT_EPS_FILE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_eps_file "*) (lambda (s v) (set! (" S_eps_file ") v)))");
-  s7_symbol_set_documentation(s7, ss->eps_file_symbol, "*eps-file*: File:Print and graph->ps file name (snd.eps)");
-
-  ss->enved_filter_order_symbol = s7_define_variable(s7, "*" S_enved_filter_order "*", s7_make_integer(s7, DEFAULT_ENVED_FILTER_ORDER));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_filter_order "*) (lambda (s v) (set! (" S_enved_filter_order ") v)))");
-  s7_symbol_set_documentation(s7, ss->enved_filter_order_symbol, "*enved-filter-order*: envelope editor's FIR filter order (40)");
-
-  ss->eps_left_margin_symbol = s7_define_variable(s7, "*" S_eps_left_margin "*", s7_make_real(s7, DEFAULT_EPS_LEFT_MARGIN));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_eps_left_margin "*) (lambda (s v) (set! (" S_eps_left_margin ") v)))");
-  s7_symbol_set_documentation(s7, ss->eps_left_margin_symbol, "*eps-left-margin*: File:Print and graph->ps left margin");
-
-  ss->eps_bottom_margin_symbol = s7_define_variable(s7, "*" S_eps_bottom_margin "*", s7_make_real(s7, DEFAULT_EPS_BOTTOM_MARGIN));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_eps_bottom_margin "*) (lambda (s v) (set! (" S_eps_bottom_margin ") v)))");
-  s7_symbol_set_documentation(s7, ss->eps_bottom_margin_symbol, "*eps-bottom-margin*: File:Print and graph->ps bottom margin");
-
-  ss->eps_size_symbol = s7_define_variable(s7, "*" S_eps_size "*", s7_make_real(s7, DEFAULT_EPS_SIZE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_eps_size "*) (lambda (s v) (set! (" S_eps_size ") v)))");
-  s7_symbol_set_documentation(s7, ss->eps_size_symbol, "*eps-size*: File:Print and graph->ps output size scaler (1.0)");
-
-  ss->log_freq_start_symbol = s7_define_variable(s7, "*" S_log_freq_start "*", s7_make_real(s7, DEFAULT_LOG_FREQ_START));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_log_freq_start "*) (lambda (s v) (set! (" S_log_freq_start ") v)))");
-  s7_symbol_set_documentation(s7, ss->log_freq_start_symbol, "*log-freq-start*: log freq base (25.0)");
-
-  ss->color_map_symbol = s7_define_variable(s7, "*" S_colormap "*", s7_make_integer(s7, DEFAULT_COLOR_MAP));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_colormap "*) (lambda (s v) (set! (" S_colormap ") v)))");
-  s7_symbol_set_documentation(s7, ss->color_map_symbol, "*colormap*: current colormap choice.");
-
-  ss->color_map_size_symbol = s7_define_variable(s7, "*" S_colormap_size "*", s7_make_integer(s7, DEFAULT_COLOR_MAP_SIZE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_colormap_size "*) (lambda (s v) (set! (" S_colormap_size ") v)))");
-  s7_symbol_set_documentation(s7, ss->color_map_size_symbol, "*colormap-size*: current colormap size; default is 512.");
-
-  ss->mix_waveform_height_symbol = s7_define_variable(s7, "*" S_mix_waveform_height "*", s7_make_integer(s7, DEFAULT_MIX_WAVEFORM_HEIGHT));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mix_waveform_height "*) (lambda (s v) (set! (" S_mix_waveform_height ") v)))");
-  s7_symbol_set_documentation(s7, ss->mix_waveform_height_symbol, "*mix-waveform-height*: max height (pixels) of mix waveforms (20)");
-
-  ss->sinc_width_symbol = s7_define_variable(s7, "*" S_sinc_width "*", s7_make_integer(s7, DEFAULT_SINC_WIDTH));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_sinc_width "*) (lambda (s v) (set! (" S_sinc_width ") v)))");
-  s7_symbol_set_documentation(s7, ss->sinc_width_symbol, "*sinc-width*: sampling rate conversion sinc width (10).");
-
-  ss->region_graph_style_symbol = s7_define_variable(s7, "*" S_region_graph_style "*", s7_make_integer(s7, ss->Region_Graph_Style));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_region_graph_style "*) (lambda (s v) (set! (" S_region_graph_style ") v)))");
-  s7_symbol_set_documentation(s7, ss->region_graph_style_symbol, "*region-graph-style*: graph style of the region dialog graph (graph-lines etc)");
-
-  ss->max_regions_symbol = s7_define_variable(s7, "*" S_max_regions "*", s7_make_integer(s7, DEFAULT_MAX_REGIONS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_max_regions "*) (lambda (s v) (set! (" S_max_regions ") v)))");
-  s7_symbol_set_documentation(s7, ss->max_regions_symbol, "*max-regions*: max number of regions saved on the region list");
-
-  ss->with_gl_symbol = s7_define_variable(s7, "*" S_with_gl "*", s7_make_boolean(s7, DEFAULT_WITH_GL));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_gl "*) (lambda (s v) (set! (" S_with_gl ") v)))");
-  s7_symbol_set_documentation(s7, ss->with_gl_symbol, "*with-gl*: #t if Snd should use GL graphics");
-
-  ss->with_relative_panes_symbol = s7_define_variable(s7, "*" S_with_relative_panes "*", s7_make_boolean(s7, DEFAULT_WITH_RELATIVE_PANES));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_relative_panes "*) (lambda (s v) (set! (" S_with_relative_panes ") v)))");
-  s7_symbol_set_documentation(s7, ss->with_relative_panes_symbol, "*with-relative-panes*: #t if multichannel sounds should try to maintain relative pane sizes");
-
-  ss->dac_size_symbol = s7_define_variable(s7, "*" S_dac_size "*", s7_make_integer(s7, DEFAULT_DAC_SIZE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_dac_size "*) (lambda (s v) (set! (" S_dac_size ") v)))");
-  s7_symbol_set_documentation(s7, ss->dac_size_symbol, "*dac-size*: the current DAC buffer size in framples (256)");
-
-  ss->view_files_sort_symbol = s7_define_variable(s7, "*" S_view_files_sort "*", s7_make_integer(s7, DEFAULT_VIEW_FILES_SORT));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_view_files_sort "*) (lambda (s v) (set! (" S_view_files_sort ") v)))");
-
-  ss->dac_combines_channels_symbol = s7_define_variable(s7, "*" S_dac_combines_channels "*", s7_make_boolean(s7, DEFAULT_DAC_COMBINES_CHANNELS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_dac_combines_channels "*) (lambda (s v) (set! (" S_dac_combines_channels ") v)))");
-  s7_symbol_set_documentation(s7, ss->dac_combines_channels_symbol, "*dac-combines-channels*: #t if extra channels are to be mixed into available ones during playing.");
-
+  ss->eps_file_symbol =                s7_define_variable(s7, "*" S_eps_file "*",               s7_make_string(s7, DEFAULT_EPS_FILE));
+  ss->enved_filter_order_symbol =      s7_define_variable(s7, "*" S_enved_filter_order "*",     s7_make_integer(s7, DEFAULT_ENVED_FILTER_ORDER));
+  ss->eps_left_margin_symbol =         s7_define_variable(s7, "*" S_eps_left_margin "*",        s7_make_real(s7, DEFAULT_EPS_LEFT_MARGIN));
+  ss->eps_bottom_margin_symbol =       s7_define_variable(s7, "*" S_eps_bottom_margin "*",      s7_make_real(s7, DEFAULT_EPS_BOTTOM_MARGIN));
+  ss->eps_size_symbol =                s7_define_variable(s7, "*" S_eps_size "*",               s7_make_real(s7, DEFAULT_EPS_SIZE));
+  ss->log_freq_start_symbol =          s7_define_variable(s7, "*" S_log_freq_start "*",         s7_make_real(s7, DEFAULT_LOG_FREQ_START));
+  ss->color_map_symbol =               s7_define_variable(s7, "*" S_colormap "*",               s7_make_integer(s7, DEFAULT_COLOR_MAP));
+  ss->color_map_size_symbol =          s7_define_variable(s7, "*" S_colormap_size "*",          s7_make_integer(s7, DEFAULT_COLOR_MAP_SIZE));
+  ss->mix_waveform_height_symbol =     s7_define_variable(s7, "*" S_mix_waveform_height "*",    s7_make_integer(s7, DEFAULT_MIX_WAVEFORM_HEIGHT));
+  ss->sinc_width_symbol =              s7_define_variable(s7, "*" S_sinc_width "*",             s7_make_integer(s7, DEFAULT_SINC_WIDTH));
+  ss->region_graph_style_symbol =      s7_define_variable(s7, "*" S_region_graph_style "*",     s7_make_integer(s7, ss->Region_Graph_Style));
+  ss->max_regions_symbol =             s7_define_variable(s7, "*" S_max_regions "*",            s7_make_integer(s7, DEFAULT_MAX_REGIONS));
+  ss->with_gl_symbol =                 s7_define_variable(s7, "*" S_with_gl "*",                s7_make_boolean(s7, DEFAULT_WITH_GL));
+  ss->with_relative_panes_symbol =     s7_define_variable(s7, "*" S_with_relative_panes "*",    s7_make_boolean(s7, DEFAULT_WITH_RELATIVE_PANES));
+  ss->dac_size_symbol =                s7_define_variable(s7, "*" S_dac_size "*",               s7_make_integer(s7, DEFAULT_DAC_SIZE));
+  ss->view_files_sort_symbol =         s7_define_variable(s7, "*" S_view_files_sort "*",        s7_make_integer(s7, DEFAULT_VIEW_FILES_SORT));
+  ss->dac_combines_channels_symbol =   s7_define_variable(s7, "*" S_dac_combines_channels "*",  s7_make_boolean(s7, DEFAULT_DAC_COMBINES_CHANNELS));
   ss->show_selection_transform_symbol = s7_define_variable(s7, "*" S_show_selection_transform "*", s7_make_boolean(s7, DEFAULT_SHOW_SELECTION_TRANSFORM));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_selection_transform "*) (lambda (s v) (set! (" S_show_selection_transform ") v)))");
-  s7_symbol_set_documentation(s7, ss->show_selection_transform_symbol, "*show-selection-transform*: #t if transform display reflects selection, not time-domain window");
-
-  ss->with_mix_tags_symbol = s7_define_variable(s7, "*" S_with_mix_tags "*", s7_make_boolean(s7, DEFAULT_WITH_MIX_TAGS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_mix_tags "*) (lambda (s v) (set! (" S_with_mix_tags ") v)))");
-  s7_symbol_set_documentation(s7, ss->with_mix_tags_symbol, "*with-mix-tags*: #t if Snd should try to use virtual (tagged) mixing");
-
-  ss->listener_prompt_symbol = s7_define_variable(s7, "*" S_listener_prompt "*", s7_make_string(s7, DEFAULT_LISTENER_PROMPT));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_listener_prompt "*) (lambda (s v) (set! (" S_listener_prompt ") v)))");
-  s7_symbol_set_documentation(s7, ss->listener_prompt_symbol, "*listener-prompt*: the current lisp listener prompt character ('>') ");
-
-  ss->enved_base_symbol = s7_define_variable(s7, "*" S_enved_base "*", s7_make_real(s7, DEFAULT_ENVED_BASE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_base "*) (lambda (s v) (set! (" S_enved_base ") v)))");
-  s7_symbol_set_documentation(s7, ss->enved_base_symbol, "*enved-base*: envelope editor exponential base value (1.0)");
-
-  ss->enved_power_symbol = s7_define_variable(s7, "*" S_enved_power "*", s7_make_real(s7, DEFAULT_ENVED_POWER));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_power "*) (lambda (s v) (set! (" S_enved_power ") v)))");
-  s7_symbol_set_documentation(s7, ss->enved_power_symbol, "*enved-power*: envelope editor base scale range (9.0^power)");
-
-  ss->enved_with_wave_symbol = s7_define_variable(s7, "*" S_enved_with_wave "*", s7_make_boolean(s7, DEFAULT_ENVED_WITH_WAVE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_with_wave "*) (lambda (s v) (set! (" S_enved_with_wave ") v)))");
-  s7_symbol_set_documentation(s7, ss->enved_with_wave_symbol, "*enved-wave?*: #t if the envelope editor is displaying the waveform to be edited");
-
-  ss->enved_style_symbol = s7_define_variable(s7, "*" S_enved_style "*", s7_make_integer(s7, DEFAULT_ENVED_STYLE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_style "*) (lambda (s v) (set! (" S_enved_style ") v)))");
-  s7_symbol_set_documentation(s7, ss->enved_style_symbol, "*enved-style*: envelope editor breakpoint connection choice: envelope-linear or envelope-exponential");
-
-  ss->graph_cursor_symbol = s7_define_variable(s7, "*" S_graph_cursor "*", s7_make_integer(s7, DEFAULT_GRAPH_CURSOR));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_graph_cursor "*) (lambda (s v) (set! (" S_graph_cursor ") v)))");
-  s7_symbol_set_documentation(s7, ss->graph_cursor_symbol, "*graph-cursor*: current graph cursor shape");
-
-  ss->mix_tag_width_symbol = s7_define_variable(s7, "*" S_mix_tag_width "*", s7_make_integer(s7, DEFAULT_MIX_TAG_WIDTH));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mix_tag_width "*) (lambda (s v) (set! (" S_mix_tag_width ") v)))");
-  s7_symbol_set_documentation(s7, ss->mix_tag_width_symbol, "*mix-tag-width*: width (pixels) of mix tags (6)");
-
-  ss->mix_tag_height_symbol = s7_define_variable(s7, "*" S_mix_tag_height "*", s7_make_integer(s7, DEFAULT_MIX_TAG_HEIGHT));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mix_tag_height "*) (lambda (s v) (set! (" S_mix_tag_height ") v)))");
-  s7_symbol_set_documentation(s7, ss->mix_tag_height_symbol, "*mix-tag-height*: height (pixels) of mix tags (14)");
-
-  ss->mark_tag_height_symbol = s7_define_variable(s7, "*" S_mark_tag_height "*", s7_make_integer(s7, DEFAULT_MARK_TAG_HEIGHT));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mark_tag_height "*) (lambda (s v) (set! (" S_mark_tag_height ") v)))");
-  s7_symbol_set_documentation(s7, ss->mark_tag_height_symbol, "*mark-tag-height*: height (pixels) of mark tags (4)");
-
-  ss->mark_tag_width_symbol = s7_define_variable(s7, "*" S_mark_tag_width "*", s7_make_integer(s7, DEFAULT_MARK_TAG_WIDTH));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mark_tag_width "*) (lambda (s v) (set! (" S_mark_tag_width ") v)))");
-  s7_symbol_set_documentation(s7, ss->mark_tag_width_symbol, "*mark-tag-width*: width (pixels) of mark tags (10)");
-
-  ss->enved_target_symbol = s7_define_variable(s7, "*" S_enved_target "*", s7_make_integer(s7, DEFAULT_ENVED_TARGET));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_target "*) (lambda (s v) (set! (" S_enved_target ") v)))");
-  s7_symbol_set_documentation(s7, ss->enved_target_symbol, "*enved-target*: determines how the envelope edit envelope is applied; enved-amplitude etc");
-
-  ss->cursor_update_interval_symbol = s7_define_variable(s7, "*" S_cursor_update_interval "*", s7_make_real(s7, DEFAULT_CURSOR_UPDATE_INTERVAL));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_cursor_update_interval "*) (lambda (s v) (set! (" S_cursor_update_interval ") v)))");
-  s7_symbol_set_documentation(s7, ss->cursor_update_interval_symbol, "*cursor-update-interval*: time (seconds) between cursor updates if with-tracking-cursor.");
-
-  ss->cursor_location_offset_symbol = s7_define_variable(s7, "*" S_cursor_location_offset "*", s7_make_integer(s7, DEFAULT_CURSOR_LOCATION_OFFSET));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_cursor_location_offset "*) (lambda (s v) (set! (" S_cursor_location_offset ") v)))");
-  s7_symbol_set_documentation(s7, ss->cursor_location_offset_symbol, "*cursor-location-offset*: samples added to cursor location if cursor displayed during play.");
-
-  ss->show_controls_symbol = s7_define_variable(s7, "*" S_show_controls "*", s7_make_boolean(s7, DEFAULT_SHOW_CONTROLS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_controls "*) (lambda (s v) (set! (" S_show_controls ") v)))");
-  s7_symbol_set_documentation(s7, ss->show_controls_symbol, "*show-controls*: #t if snd's control panel is known to be open");
-
-  ss->with_tracking_cursor_symbol = s7_define_variable(s7, "*" S_with_tracking_cursor "*", s7_make_integer(s7, (int)DEFAULT_WITH_TRACKING_CURSOR));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_tracking_cursor "*) (lambda (s v) (set! (" S_with_tracking_cursor ") v)))");
-  s7_symbol_set_documentation(s7, ss->with_tracking_cursor_symbol, "*with-tracking-cursor*: #t if cursor always moves along in waveform display as sound is played");
-
-  ss->html_dir_symbol = s7_define_variable(s7, "*" S_html_dir "*", s7_make_string(s7, DEFAULT_HTML_DIR));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_html_dir "*) (lambda (s v) (set! (" S_html_dir ") v)))");
-  s7_symbol_set_documentation(s7, ss->html_dir_symbol, "*html-dir*: location of Snd documentation");
-
-  ss->html_program_symbol = s7_define_variable(s7, "*" S_html_program "*", s7_make_string(s7, DEFAULT_HTML_PROGRAM));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_html_program "*) (lambda (s v) (set! (" S_html_program ") v)))");
-  s7_symbol_set_documentation(s7, ss->html_program_symbol, "*html-program*: name of documentation reader (firefox)");
-
+  ss->with_mix_tags_symbol =           s7_define_variable(s7, "*" S_with_mix_tags "*",          s7_make_boolean(s7, DEFAULT_WITH_MIX_TAGS));
+  ss->listener_prompt_symbol =         s7_define_variable(s7, "*" S_listener_prompt "*",        s7_make_string(s7, DEFAULT_LISTENER_PROMPT));
+  ss->enved_base_symbol =              s7_define_variable(s7, "*" S_enved_base "*",             s7_make_real(s7, DEFAULT_ENVED_BASE));
+  ss->enved_power_symbol =             s7_define_variable(s7, "*" S_enved_power "*",            s7_make_real(s7, DEFAULT_ENVED_POWER));
+  ss->enved_with_wave_symbol =         s7_define_variable(s7, "*" S_enved_with_wave "*",        s7_make_boolean(s7, DEFAULT_ENVED_WITH_WAVE));
+  ss->enved_style_symbol =             s7_define_variable(s7, "*" S_enved_style "*",            s7_make_integer(s7, DEFAULT_ENVED_STYLE));
+  ss->graph_cursor_symbol =            s7_define_variable(s7, "*" S_graph_cursor "*",           s7_make_integer(s7, DEFAULT_GRAPH_CURSOR));
+  ss->mix_tag_width_symbol =           s7_define_variable(s7, "*" S_mix_tag_width "*",          s7_make_integer(s7, DEFAULT_MIX_TAG_WIDTH));
+  ss->mix_tag_height_symbol =          s7_define_variable(s7, "*" S_mix_tag_height "*",         s7_make_integer(s7, DEFAULT_MIX_TAG_HEIGHT));
+  ss->mark_tag_height_symbol =         s7_define_variable(s7, "*" S_mark_tag_height "*",        s7_make_integer(s7, DEFAULT_MARK_TAG_HEIGHT));
+  ss->mark_tag_width_symbol =          s7_define_variable(s7, "*" S_mark_tag_width "*",         s7_make_integer(s7, DEFAULT_MARK_TAG_WIDTH));
+  ss->enved_target_symbol =            s7_define_variable(s7, "*" S_enved_target "*",           s7_make_integer(s7, DEFAULT_ENVED_TARGET));
+  ss->cursor_update_interval_symbol =  s7_define_variable(s7, "*" S_cursor_update_interval "*", s7_make_real(s7, DEFAULT_CURSOR_UPDATE_INTERVAL));
+  ss->cursor_location_offset_symbol =  s7_define_variable(s7, "*" S_cursor_location_offset "*", s7_make_integer(s7, DEFAULT_CURSOR_LOCATION_OFFSET));
+  ss->show_controls_symbol =           s7_define_variable(s7, "*" S_show_controls "*",          s7_make_boolean(s7, DEFAULT_SHOW_CONTROLS));
+  ss->with_tracking_cursor_symbol =    s7_define_variable(s7, "*" S_with_tracking_cursor "*",   s7_make_integer(s7, (int)DEFAULT_WITH_TRACKING_CURSOR));
+  ss->html_dir_symbol =                s7_define_variable(s7, "*" S_html_dir "*",               s7_make_string(s7, DEFAULT_HTML_DIR));
+  ss->html_program_symbol =            s7_define_variable(s7, "*" S_html_program "*",           s7_make_string(s7, DEFAULT_HTML_PROGRAM));
   ss->open_file_dialog_directory_symbol = s7_define_variable(s7, "*" S_open_file_dialog_directory "*", s7_make_string(s7, ss->Open_File_Dialog_Directory));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_open_file_dialog_directory "*) (lambda (s v) (set! (" S_open_file_dialog_directory ") v)))");
-  s7_symbol_set_documentation(s7, ss->open_file_dialog_directory_symbol, "*open-file-dialog-directory*: name of directory for initial open file dialog search");
 
   /* snd-file.c */
   ss->auto_update_symbol =             s7_define_variable(s7, "*" S_auto_update "*",          s7_make_boolean(s7, DEFAULT_AUTO_UPDATE));
@@ -616,6 +507,11 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->mix_color_symbol            = s7_define_variable(s7, "*" S_mix_color "*",            s7_f(s7));
   ss->sash_color_symbol           = s7_define_variable(s7, "*" S_sash_color "*",           s7_f(s7));
   ss->axis_color_symbol           = s7_define_variable(s7, "*" S_axis_color "*",           s7_f(s7));
+
+  ss->transform_type_symbol = s7_define_variable(s7, "*" S_transform_type "*", s7_f(s7)); /* set in snd-chn.c(!) */
+#if USE_GTK
+  ss->listener_colorized_symbol = s7_define_variable(s7, "*listener-colorized*", s7_make_boolean(s7, s7_f(s7)));
+#endif
 #endif
 }
 

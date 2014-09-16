@@ -8981,3 +8981,5 @@
 
 ;;; 3.13.7: nothing new (GtkStatusIcon deprecated)
 ;;; 3.13.8: nothing new
+;;; 3.13.9: nothing new, but GDK_KEY changes
+

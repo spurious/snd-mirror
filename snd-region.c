@@ -2158,6 +2158,12 @@ Xen_wrap_1_arg(g_set_region_graph_style_w, g_set_region_graph_style)
 Xen_wrap_1_arg(g_integer_to_region_w, g_integer_to_region)
 Xen_wrap_1_arg(g_region_to_integer_w, g_region_to_integer)
 
+#if HAVE_SCHEME
+static s7_pointer acc_region_graph_style(s7_scheme *sc, s7_pointer args) {return(g_set_region_graph_style(s7_cadr(args)));}
+static s7_pointer acc_max_regions(s7_scheme *sc, s7_pointer args) {return(g_set_max_regions(s7_cadr(args)));}
+#endif
+
+
 void g_init_regions(void)
 {
   init_xen_region();
@@ -2192,6 +2198,11 @@ void g_init_regions(void)
 
 #if HAVE_SCHEME
   s7_eval_c_string(s7, "(define region->vct region->float-vector)");
+  s7_symbol_set_access(s7, ss->max_regions_symbol, s7_make_function(s7, "[acc-" S_max_regions, acc_max_regions, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->region_graph_style_symbol, s7_make_function(s7, "[acc-" S_region_graph_style, acc_region_graph_style, 2, 0, false, "accessor"));
+
+  s7_symbol_set_documentation(s7, ss->max_regions_symbol, "*max-regions*: max number of regions saved on the region list");
+  s7_symbol_set_documentation(s7, ss->region_graph_style_symbol, "*region-graph-style*: graph style of the region dialog graph (graph-lines etc)");
 #endif
 }
 

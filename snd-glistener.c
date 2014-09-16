@@ -517,8 +517,6 @@ static void glistener_init(glistener *g1)
   s7_define_function(s7, "listener-text-widget",     g_text_widget,     1, 0, false, "(listener-text-widget g)");
   s7_define_variable(s7, "*listener*", wrap_glistener(g1));
 }
-
-static s7_pointer listener_colorized_symbol;
 #endif
 
 
@@ -528,7 +526,7 @@ bool listener_set_colorized(bool val)
 {
 #if HAVE_SCHEME
   listener_colorizing = val;
-  s7_symbol_set_value(s7, listener_colorized_symbol, s7_make_boolean(s7, val));
+  s7_symbol_set_value(s7, ss->listener_colorized_symbol, s7_make_boolean(s7, val));
   if (ss->listener)
     {
       if (val)
@@ -806,10 +804,6 @@ leaves the lisp listener pane"
     s7_cons(s7, 
       s7_make_function(s7, "listener-load-hook", g_listener_load_hook, 1, 0, false, "listener *load-hook* function"), 
       s7_hook_functions(s7, s7_name_to_value(s7, "*load-hook*"))));
-
-  listener_colorized_symbol = s7_define_variable(s7, "*listener-colorized*", s7_make_boolean(s7, s7_f(s7)));
-  s7_eval_c_string(s7, "(set! (symbol-access '*listener-colorized*) (lambda (s v) (set! (listener-colorized) v)))");
-  s7_symbol_set_documentation(s7, listener_colorized_symbol, "*listener-colorized*: number of vector elements to print in the listener (default: 12)");
 #endif
 }
 

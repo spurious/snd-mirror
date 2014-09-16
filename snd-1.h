@@ -566,6 +566,9 @@ typedef struct snd_state {
     min_db_symbol,
     show_controls_symbol,
     with_tracking_cursor_symbol,
+#if USE_GTK
+    listener_colorized_symbol,
+#endif
     html_dir_symbol, html_program_symbol, open_file_dialog_directory_symbol;
 #endif
 

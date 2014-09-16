@@ -246,17 +246,18 @@ Xen_wrap_1_arg(g_snd_completion_w, g_snd_completion)
 Xen_wrap_no_args(g_listener_colorized_w, g_listener_colorized)
 Xen_wrap_1_arg(g_listener_set_colorized_w, g_listener_set_colorized)
 
+#if HAVE_SCHEME && USE_GTK
+static s7_pointer acc_listener_colorized(s7_scheme *sc, s7_pointer args) {return(g_listener_set_colorized(s7_cadr(args)));}
+static s7_pointer acc_listener_prompt(s7_scheme *sc, s7_pointer args) {return(g_set_listener_prompt(s7_cadr(args)));}
+#endif
+
 void g_init_listener(void)
 {
   Xen_define_procedure(S_save_listener,  g_save_listener_w,  1, 0, 0, H_save_listener);
   Xen_define_procedure(S_clear_listener, g_clear_listener_w, 0, 0, 0, H_clear_listener);
 
-  Xen_define_procedure_with_setter(S_show_listener, g_show_listener_w, H_show_listener,
-				   S_setB S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
-
-  Xen_define_procedure_with_setter(S_listener_prompt, g_listener_prompt_w, H_listener_prompt,
-				   S_setB S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0);
-
+  Xen_define_procedure_with_setter(S_show_listener, g_show_listener_w, H_show_listener, S_setB S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
+  Xen_define_procedure_with_setter(S_listener_prompt, g_listener_prompt_w, H_listener_prompt, S_setB S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0);
   Xen_define_procedure_with_setter(S_listener_colorized, g_listener_colorized_w, H_listener_colorized,
 				   S_setB S_listener_colorized, g_listener_set_colorized_w,  0, 0, 1, 0);
 
@@ -266,4 +267,12 @@ If it returns true, Snd assumes you've dealt the text yourself, and does not try
   read_hook = Xen_define_hook(S_read_hook, "(make-hook 'text)", 1, H_read_hook);
 
   Xen_define_procedure("snd-completion",        g_snd_completion_w,        1, 0, 0, "return completion of arg");
+
+#if HAVE_SCHEME && USE_GTK
+  s7_symbol_set_documentation(s7, ss->listener_colorized_symbol, "*listener-colorized*: number of vector elements to print in the listener (default: 12)");
+  s7_symbol_set_documentation(s7, ss->listener_prompt_symbol, "*listener-prompt*: the current lisp listener prompt character ('>') ");
+
+  s7_symbol_set_access(s7, ss->listener_colorized_symbol, s7_make_function(s7, "[acc-" S_listener_colorized, acc_listener_colorized, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->listener_prompt_symbol, s7_make_function(s7, "[acc-" S_listener_prompt, acc_listener_prompt, 2, 0, false, "accessor"));
+#endif  
 }

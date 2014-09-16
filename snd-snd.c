@@ -5882,6 +5882,7 @@ static s7_pointer acc_reverb_control_feedback(s7_scheme *sc, s7_pointer args) {r
 static s7_pointer acc_reverb_control_lowpass(s7_scheme *sc, s7_pointer args) {return(g_set_reverb_control_lowpass(s7_cadr(args), s7_undefined(sc)));}
 static s7_pointer acc_reverb_control_decay(s7_scheme *sc, s7_pointer args) {return(g_set_reverb_control_decay(s7_cadr(args), s7_undefined(sc)));}
 static s7_pointer acc_filter_control_order(s7_scheme *sc, s7_pointer args) {return(g_set_filter_control_order(s7_cadr(args), s7_undefined(sc)));}
+static s7_pointer acc_show_controls(s7_scheme *sc, s7_pointer args) {return(g_set_show_controls(s7_cadr(args), s7_undefined(sc)));}
 #endif
 
 
@@ -6022,6 +6023,7 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   s7_symbol_set_documentation(s7, ss->reverb_control_lowpass_symbol, "*reverb-control-lowpass*: control-panel reverb lowpass filter coefficient");
   s7_symbol_set_documentation(s7, ss->reverb_control_decay_symbol, "*reverb-control-decay*: control-panel reverb decay time (1.0 seconds)");
   s7_symbol_set_documentation(s7, ss->filter_control_order_symbol, "*filter-control-order*: control-panel filter order");
+  s7_symbol_set_documentation(s7, ss->show_controls_symbol, "*show-controls*: #t if snd's control panel is known to be open");
 
   s7_symbol_set_access(s7, ss->channel_style_symbol, s7_make_function(s7, "[acc-" S_channel_style, acc_channel_style, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->filter_control_in_db_symbol, s7_make_function(s7, "[acc-" S_filter_control_in_dB, acc_filter_control_in_dB, 2, 0, false, "accessor"));
@@ -6037,5 +6039,6 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   s7_symbol_set_access(s7, ss->reverb_control_lowpass_symbol, s7_make_function(s7, "[acc-" S_reverb_control_lowpass, acc_reverb_control_lowpass, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->reverb_control_decay_symbol, s7_make_function(s7, "[acc-" S_reverb_control_decay, acc_reverb_control_decay, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->filter_control_order_symbol, s7_make_function(s7, "[acc-" S_filter_control_order, acc_filter_control_order, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->show_controls_symbol, s7_make_function(s7, "[acc-" S_show_controls, acc_show_controls, 2, 0, false, "accessor"));
 #endif
 }

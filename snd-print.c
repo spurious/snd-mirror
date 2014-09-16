@@ -800,6 +800,13 @@ Xen_wrap_1_arg(g_set_eps_size_w, g_set_eps_size)
 Xen_wrap_no_args(g_eps_bottom_margin_w, g_eps_bottom_margin)
 Xen_wrap_1_arg(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
 
+#if HAVE_SCHEME
+static s7_pointer acc_eps_bottom_margin(s7_scheme *sc, s7_pointer args) {return(g_set_eps_bottom_margin(s7_cadr(args)));}
+static s7_pointer acc_eps_file(s7_scheme *sc, s7_pointer args) {return(g_set_eps_file(s7_cadr(args)));}
+static s7_pointer acc_eps_left_margin(s7_scheme *sc, s7_pointer args) {return(g_set_eps_left_margin(s7_cadr(args)));}
+static s7_pointer acc_eps_size(s7_scheme *sc, s7_pointer args) {return(g_set_eps_size(s7_cadr(args)));}
+#endif
+
 void g_init_print(void)
 {
   Xen_define_procedure(S_graph_to_ps, g_graph_to_ps_w, 0, 1, 0, H_graph_to_ps);
@@ -819,5 +826,17 @@ void g_init_print(void)
 
 #if HAVE_GL && WITH_GL2PS
   Xen_provide_feature("gl2ps");
+#endif
+
+#if HAVE_SCHEME
+  s7_symbol_set_access(s7, ss->eps_bottom_margin_symbol, s7_make_function(s7, "[acc-" S_eps_bottom_margin, acc_eps_bottom_margin, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->eps_file_symbol, s7_make_function(s7, "[acc-" S_eps_file, acc_eps_file, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->eps_left_margin_symbol, s7_make_function(s7, "[acc-" S_eps_left_margin, acc_eps_left_margin, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->eps_size_symbol, s7_make_function(s7, "[acc-" S_eps_size, acc_eps_size, 2, 0, false, "accessor"));
+
+  s7_symbol_set_documentation(s7, ss->eps_bottom_margin_symbol, "*eps-bottom-margin*: File:Print and graph->ps bottom margin");
+  s7_symbol_set_documentation(s7, ss->eps_file_symbol, "*eps-file*: File:Print and graph->ps file name (snd.eps)");
+  s7_symbol_set_documentation(s7, ss->eps_left_margin_symbol, "*eps-left-margin*: File:Print and graph->ps left margin");
+  s7_symbol_set_documentation(s7, ss->eps_size_symbol, "*eps-size*: File:Print and graph->ps output size scaler (1.0)");
 #endif
 }

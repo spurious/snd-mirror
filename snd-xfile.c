@@ -9129,6 +9129,10 @@ Xen_wrap_2_args(g_view_files_set_files_w, g_view_files_set_files)
 Xen_wrap_1_arg(g_delete_file_sorter_w, g_delete_file_sorter)
 Xen_wrap_2_args(g_add_file_sorter_w, g_add_file_sorter)
 
+#if HAVE_SCHEME
+static s7_pointer acc_view_files_sort(s7_scheme *sc, s7_pointer args) {return(g_set_view_files_sort(s7_cadr(args), s7_undefined(sc)));}
+#endif
+
 void g_init_gxfile(void)
 {
 #if HAVE_SCHEME
@@ -9216,4 +9220,8 @@ files list of the View Files dialog.  If it returns " PROC_TRUE ", the default a
 event. If it returns " PROC_TRUE ", the file is not opened or mixed by Snd."
 
   drop_hook = Xen_define_hook(S_drop_hook, "(make-hook 'name)", 1, H_drop_hook);
+
+#if HAVE_SCHEME
+  s7_symbol_set_access(s7, ss->view_files_sort_symbol, s7_make_function(s7, "[acc-" S_view_files_sort, acc_view_files_sort, 2, 0, false, "accessor"));
+#endif
 }

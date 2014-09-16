@@ -1202,6 +1202,11 @@ Xen_wrap_2_args(g_add_colormap_w, g_add_colormap)
 Xen_wrap_1_arg(g_integer_to_colormap_w, g_integer_to_colormap)
 Xen_wrap_1_arg(g_colormap_to_integer_w, g_colormap_to_integer)
 
+#if HAVE_SCHEME
+static s7_pointer acc_colormap(s7_scheme *sc, s7_pointer args) {return(g_set_colormap(s7_cadr(args)));}
+static s7_pointer acc_colormap_size(s7_scheme *sc, s7_pointer args) {return(g_set_colormap_size(s7_cadr(args)));}
+#endif
+
 #if (!HAVE_SCHEME)
 static Xen colormap_temp[16]; /* static for Ruby's sake */
 #endif
@@ -1277,4 +1282,12 @@ void g_init_gxcolormaps(void)
 
   Xen_define_procedure(S_integer_to_colormap,       g_integer_to_colormap_w, 1, 0, 0, H_integer_to_colormap);
   Xen_define_procedure(S_colormap_to_integer,       g_colormap_to_integer_w, 1, 0, 0, H_colormap_to_integer);
+
+#if HAVE_SCHEME
+  s7_symbol_set_access(s7, ss->color_map_size_symbol, s7_make_function(s7, "[acc-" S_colormap_size, acc_colormap_size, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->color_map_symbol, s7_make_function(s7, "[acc-" S_colormap, acc_colormap, 2, 0, false, "accessor"));
+
+  s7_symbol_set_documentation(s7, ss->color_map_size_symbol, "*colormap-size*: current colormap size; default is 512.");
+  s7_symbol_set_documentation(s7, ss->color_map_symbol, "*colormap*: current colormap choice.");
+#endif
 }

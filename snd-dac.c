@@ -3441,6 +3441,14 @@ Xen_wrap_1_arg(g_set_cursor_update_interval_w, g_set_cursor_update_interval)
 Xen_wrap_no_args(g_cursor_location_offset_w, g_cursor_location_offset)
 Xen_wrap_1_arg(g_set_cursor_location_offset_w, g_set_cursor_location_offset)
 
+#if HAVE_SCHEME
+static s7_pointer acc_cursor_location_offset(s7_scheme *sc, s7_pointer args) {return(g_set_cursor_location_offset(s7_cadr(args)));}
+static s7_pointer acc_cursor_update_interval(s7_scheme *sc, s7_pointer args) {return(g_set_cursor_update_interval(s7_cadr(args)));}
+static s7_pointer acc_dac_combines_channels(s7_scheme *sc, s7_pointer args) {return(g_set_dac_combines_channels(s7_cadr(args)));}
+static s7_pointer acc_dac_size(s7_scheme *sc, s7_pointer args) {return(g_set_dac_size(s7_cadr(args)));}
+static s7_pointer acc_with_tracking_cursor(s7_scheme *sc, s7_pointer args) {return(g_set_with_tracking_cursor(s7_cadr(args)));}
+#endif
+
 void g_init_dac(void)
 {
   init_xen_player();
@@ -3489,4 +3497,18 @@ If it returns " PROC_TRUE ", the sound is not played."
   play_hook =                    Xen_define_hook(S_play_hook,                    "(make-hook 'size)", 1, H_play_hook); 
   stop_playing_selection_hook =  Xen_define_hook(S_stop_playing_selection_hook,  "(make-hook)",       0, H_stop_playing_selection_hook);
   start_playing_selection_hook = Xen_define_hook(S_start_playing_selection_hook, "(make-hook)",       0, H_start_playing_selection_hook);
+
+#if HAVE_SCHEME
+  s7_symbol_set_access(s7, ss->cursor_location_offset_symbol, s7_make_function(s7, "[acc-" S_cursor_location_offset, acc_cursor_location_offset, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->cursor_update_interval_symbol, s7_make_function(s7, "[acc-" S_cursor_update_interval, acc_cursor_update_interval, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->dac_combines_channels_symbol, s7_make_function(s7, "[acc-" S_dac_combines_channels, acc_dac_combines_channels, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->dac_size_symbol, s7_make_function(s7, "[acc-" S_dac_size, acc_dac_size, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->with_tracking_cursor_symbol, s7_make_function(s7, "[acc-" S_with_tracking_cursor, acc_with_tracking_cursor, 2, 0, false, "accessor"));
+
+  s7_symbol_set_documentation(s7, ss->cursor_location_offset_symbol, "*cursor-location-offset*: samples added to cursor location if cursor displayed during play.");
+  s7_symbol_set_documentation(s7, ss->cursor_update_interval_symbol, "*cursor-update-interval*: time (seconds) between cursor updates if with-tracking-cursor.");
+  s7_symbol_set_documentation(s7, ss->dac_combines_channels_symbol, "*dac-combines-channels*: #t if extra channels are to be mixed into available ones during playing.");
+  s7_symbol_set_documentation(s7, ss->dac_size_symbol, "*dac-size*: the current DAC buffer size in framples (256)");
+  s7_symbol_set_documentation(s7, ss->with_tracking_cursor_symbol, "*with-tracking-cursor*: #t if cursor always moves along in waveform display as sound is played");
+#endif
 }

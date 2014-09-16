@@ -2895,6 +2895,11 @@ Xen_wrap_2_args(g_set_mark_properties_w, g_set_mark_properties)
 Xen_wrap_2_args(g_mark_property_w, g_mark_property)
 Xen_wrap_3_args(g_set_mark_property_w, g_set_mark_property)
 
+#if HAVE_SCHEME
+static s7_pointer acc_mark_tag_height(s7_scheme *sc, s7_pointer args) {return(g_set_mark_tag_height(s7_cadr(args)));}
+static s7_pointer acc_mark_tag_width(s7_scheme *sc, s7_pointer args) {return(g_set_mark_tag_width(s7_cadr(args)));}
+#endif
+
 void g_init_marks(void)
 {
   #define H_mark_drag_hook S_mark_drag_hook " (id): called when a mark is dragged"
@@ -2945,5 +2950,13 @@ void g_init_marks(void)
 If the hook returns " PROC_TRUE ", the mark is not drawn."
 
   draw_mark_hook = Xen_define_hook(S_draw_mark_hook, "(make-hook 'id)", 1, H_draw_mark_hook);
+
+#if HAVE_SCHEME
+  s7_symbol_set_access(s7, ss->mark_tag_height_symbol, s7_make_function(s7, "[acc-" S_mark_tag_height, acc_mark_tag_height, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->mark_tag_width_symbol, s7_make_function(s7, "[acc-" S_mark_tag_width, acc_mark_tag_width, 2, 0, false, "accessor"));
+
+  s7_symbol_set_documentation(s7, ss->mark_tag_height_symbol, "*mark-tag-height*: height (pixels) of mark tags (4)");
+  s7_symbol_set_documentation(s7, ss->mark_tag_width_symbol, "*mark-tag-width*: width (pixels) of mark tags (10)");
+#endif
 }
 

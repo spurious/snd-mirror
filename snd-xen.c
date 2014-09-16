@@ -2884,11 +2884,11 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
   g_init_regions();
   g_init_selection();
   g_init_mix();
+  g_init_fft(); /* needs to precede snd-chn init */
   g_init_chn();
   g_init_kbd();
   g_init_sig();
   g_init_print();
-  g_init_fft();
   g_init_edits();
   g_init_listener();
   g_init_help();

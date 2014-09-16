@@ -18357,6 +18357,8 @@ static s7_pointer env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
       arg = cadr(expr);
       if (s7_is_symbol(arg))
 	{
+	  if (arg == env_symbol)
+	    fprintf(stderr, "(env env) is unlikely to work in Scheme\n");
 	  s7_function_choice_set_direct(sc, expr);
 	  return(env_1);
 	}
@@ -20976,6 +20978,16 @@ Xen_wrap_3_args(g_out_bank_w, g_out_bank)
 #define Xen_define_real_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc) Xen_define_safe_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc)
 #endif
 
+#if HAVE_SCHEME
+  static s7_pointer acc_clm_srate(s7_scheme *sc, s7_pointer args) {return(g_mus_set_srate(s7_cadr(args)));}  
+  static s7_pointer acc_clm_default_frequency(s7_scheme *sc, s7_pointer args) {return(g_set_clm_default_frequency(s7_cadr(args)));}  
+  static s7_pointer acc_clm_table_size(s7_scheme *sc, s7_pointer args) {return(g_set_clm_table_size(s7_cadr(args)));}  
+  static s7_pointer acc_mus_file_buffer_size(s7_scheme *sc, s7_pointer args) {return(g_mus_set_file_buffer_size(s7_cadr(args)));}  
+  static s7_pointer acc_mus_float_equal_fudge_factor(s7_scheme *sc, s7_pointer args) {return(g_mus_set_float_equal_fudge_factor(s7_cadr(args)));}  
+  static s7_pointer acc_mus_array_print_length(s7_scheme *sc, s7_pointer args) {return(g_mus_set_array_print_length(s7_cadr(args)));}  
+#endif
+
+
 static void mus_xen_init(void)
 {
   mus_initialize();
@@ -21067,26 +21079,26 @@ static void mus_xen_init(void)
 
 #if HAVE_SCHEME
   clm_srate_symbol = s7_define_variable(s7, "*clm-srate*", s7_make_real(s7, MUS_DEFAULT_SAMPLING_RATE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*clm-srate*) (lambda (s v) (set! (mus-srate) v)))");
+  s7_symbol_set_access(s7, clm_srate_symbol, s7_make_function(s7, "[acc-clm-srate]", acc_clm_srate, 2, 0, false, "accessor"));
 
   clm_default_frequency_symbol = s7_define_variable(s7, "*" S_clm_default_frequency "*", s7_make_real(s7, MUS_CLM_DEFAULT_FREQUENCY));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_clm_default_frequency "*) (lambda (s v) (set! (" S_clm_default_frequency ") v)))");
   s7_symbol_set_documentation(s7, clm_default_frequency_symbol, "*clm-default-frequency*: the default frequency for most generators (0.0)");
+  s7_symbol_set_access(s7, clm_default_frequency_symbol, s7_make_function(s7, "[acc-clm-default-frequency]", acc_clm_default_frequency, 2, 0, false, "accessor"));
 
   clm_table_size_symbol = s7_define_variable(s7, "*" S_clm_table_size "*", s7_make_integer(s7, MUS_CLM_DEFAULT_TABLE_SIZE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_clm_table_size "*) (lambda (s v) (set! (" S_clm_table_size ") v)))");
   s7_symbol_set_documentation(s7, clm_table_size_symbol, "*clm-table-size*: the default table size for most generators (512)");
+  s7_symbol_set_access(s7, clm_table_size_symbol, s7_make_function(s7, "[acc-clm-table-size]", acc_clm_table_size, 2, 0, false, "accessor"));
 
   mus_file_buffer_size_symbol = s7_define_variable(s7, "*clm-file-buffer-size*", s7_make_integer(s7, MUS_DEFAULT_FILE_BUFFER_SIZE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*clm-file-buffer-size*) (lambda (s v) (set! (" S_mus_file_buffer_size ") v)))");
+  s7_symbol_set_access(s7, mus_file_buffer_size_symbol, s7_make_function(s7, "[acc-mus-file-buffer-size]", acc_mus_file_buffer_size, 2, 0, false, "accessor"));
 
   mus_float_equal_fudge_factor_symbol = s7_define_variable(s7, "*" S_mus_float_equal_fudge_factor "*", s7_make_real(s7, 0.0000001)); /* clm.c */
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mus_float_equal_fudge_factor "*) (lambda (s v) (set! (" S_mus_float_equal_fudge_factor ") v)))");
   s7_symbol_set_documentation(s7, mus_float_equal_fudge_factor_symbol, "*mus-float-equal-fudge-factor*: floating point equality fudge factor");
+  s7_symbol_set_access(s7, mus_float_equal_fudge_factor_symbol, s7_make_function(s7, "[acc-mus-float-equal-fudge-factor]", acc_mus_float_equal_fudge_factor, 2, 0, false, "accessor"));
 
   mus_array_print_length_symbol = s7_define_variable(s7, "*" S_mus_array_print_length "*", s7_make_integer(s7, MUS_DEFAULT_ARRAY_PRINT_LENGTH));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_mus_array_print_length "*) (lambda (s v) (set! (" S_mus_array_print_length ") v)))");
   s7_symbol_set_documentation(s7, mus_array_print_length_symbol, "*mus-array-print-length*: current clm array print length (default is 8).");
+  s7_symbol_set_access(s7, mus_array_print_length_symbol, s7_make_function(s7, "[acc-mus-array-print-length]", acc_mus_array_print_length, 2, 0, false, "accessor"));
 #endif
 
   Xen_define_real_procedure(S_radians_to_hz,        g_radians_to_hz_w,        1, 0, 0, H_radians_to_hz);

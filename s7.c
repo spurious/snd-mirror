@@ -69955,7 +69955,6 @@ int main(int argc, char **argv)
  *
  * --------------------------------------------------
  *
- * clm opt accepts (env env)
  * popup menu reflects selected sound, but comes up over any sound -- if popup, select underlying?
  *   why isn't that the case always? -- pointer selects if focus-follows-mouse, see snd-chn.c 5444 
  * float-vector support is currently half-in/half-out (shouldn't the name be byte-vector?)
@@ -69979,8 +69978,5 @@ int main(int argc, char **argv)
  * eval case in s7test thinks (or from repl):
  *  16984: (let ((saved-args (make-vector 10))) (let runner ((i 0)) (set! (saved-args i) (lambda () i)) (if (< i 9) (runner (+ i 1)))) (summer saved-args)) 
  *         got 81 but expected 45
- *
- * all the symbol-accessors could be c_functions
- *    see snd-draw/chn.c, more (100 or so) in snd.c, sndlib2xen.c, snd-fft.c, snd-glistener.c, clm2xen.c
  */
 

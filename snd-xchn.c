@@ -1676,6 +1676,11 @@ Xen_wrap_no_args(g_graph_cursor_w, g_graph_cursor)
 Xen_wrap_1_arg(g_set_graph_cursor_w, g_set_graph_cursor)
 Xen_wrap_2_optional_args(g_channel_widgets_w, g_channel_widgets)
 
+#if HAVE_SCHEME
+static s7_pointer acc_graph_cursor(s7_scheme *sc, s7_pointer args) {return(g_set_graph_cursor(s7_cadr(args)));}
+#endif
+
+
 void g_init_gxchn(void)
 {
   Xen_define_procedure(S_in,            g_in_w,             2, 0, 0, H_in);
@@ -1717,4 +1722,9 @@ leaves the drawing area (graph pane) of the given channel."
 
   mouse_enter_graph_hook = Xen_define_hook(S_mouse_enter_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_enter_graph_hook);
   mouse_leave_graph_hook = Xen_define_hook(S_mouse_leave_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_leave_graph_hook);
+
+#if HAVE_SCHEME
+  s7_symbol_set_access(s7, ss->graph_cursor_symbol, s7_make_function(s7, "[acc-" S_graph_cursor, acc_graph_cursor, 2, 0, false, "accessor"));
+  s7_symbol_set_documentation(s7, ss->graph_cursor_symbol, "*graph-cursor*: current graph cursor shape");
+#endif
 }

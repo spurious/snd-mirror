@@ -8578,7 +8578,6 @@ static Xen g_set_transform_type(Xen val, Xen snd, Xen chn)
     return(channel_set(snd, chn, val, CP_TRANSFORM_TYPE, S_setB S_transform_type));
 
   set_transform_type(type);
-
   return(C_int_to_Xen_transform(transform_type(ss)));
 }
 
@@ -9947,6 +9946,7 @@ Xen_wrap_3_optional_args(g_set_graphs_horizontal_w, g_set_graphs_horizontal)
 #endif
 
 #if HAVE_SCHEME
+static s7_pointer acc_transform_type(s7_scheme *sc, s7_pointer args) {return(g_set_transform_type(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
 static s7_pointer acc_show_transform_peaks(s7_scheme *sc, s7_pointer args) {return(g_set_show_transform_peaks(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
 static s7_pointer acc_show_y_zero(s7_scheme *sc, s7_pointer args) {return(g_set_show_y_zero(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
 static s7_pointer acc_show_marks(s7_scheme *sc, s7_pointer args) {return(g_set_show_marks(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
@@ -9992,6 +9992,7 @@ static s7_pointer acc_cursor_style(s7_scheme *sc, s7_pointer args) {return(g_set
 static s7_pointer acc_tracking_cursor_style(s7_scheme *sc, s7_pointer args) {return(g_set_tracking_cursor_style(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
 static s7_pointer acc_show_sonogram_cursor(s7_scheme *sc, s7_pointer args) {return(g_set_show_sonogram_cursor(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
 static s7_pointer acc_min_dB(s7_scheme *sc, s7_pointer args) {return(g_set_min_dB(s7_cadr(args), s7_undefined(sc), s7_undefined(sc)));}
+static s7_pointer acc_with_gl(s7_scheme *sc, s7_pointer args) {return(g_set_with_gl(s7_cadr(args)));}
 #endif
 
 
@@ -10253,7 +10254,10 @@ If it returns " PROC_TRUE ", the key press is not passed to the main handler. 's
   s7_symbol_set_documentation(s7, ss->tracking_cursor_style_symbol, "*tracking-cursor-style*: current tracking cursor shape (cursor-cross, cursor-line)");
   s7_symbol_set_documentation(s7, ss->show_sonogram_cursor_symbol, "*show-sonogram-cursor*: #t if Snd should display a cursor in the sonogram");
   s7_symbol_set_documentation(s7, ss->min_db_symbol, "*min-dB*: min dB value displayed in fft graphs using dB scales (-60)");
+  s7_symbol_set_documentation(s7, ss->transform_type_symbol, "*transform-type*: transform type (fourier-transform etc)");
+  s7_symbol_set_documentation(s7, ss->with_gl_symbol, "*with-gl*: #t if Snd should use GL graphics");
 
+  s7_symbol_set_access(s7, ss->transform_type_symbol, s7_make_function(s7, "[acc-" S_transform_type, acc_transform_type, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->show_transform_peaks_symbol, s7_make_function(s7, "[acc-" S_show_transform_peaks, acc_show_transform_peaks, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->show_y_zero_symbol, s7_make_function(s7, "[acc-" S_show_y_zero, acc_show_y_zero, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->show_marks_symbol, s7_make_function(s7, "[acc-" S_show_marks, acc_show_marks, 2, 0, false, "accessor"));
@@ -10299,5 +10303,8 @@ If it returns " PROC_TRUE ", the key press is not passed to the main handler. 's
   s7_symbol_set_access(s7, ss->tracking_cursor_style_symbol, s7_make_function(s7, "[acc-" S_tracking_cursor_style, acc_tracking_cursor_style, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->show_sonogram_cursor_symbol, s7_make_function(s7, "[acc-" S_show_sonogram_cursor, acc_show_sonogram_cursor, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->min_db_symbol, s7_make_function(s7, "[acc-" S_min_dB, acc_min_dB, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->with_gl_symbol, s7_make_function(s7, "[acc-" S_with_gl, acc_with_gl, 2, 0, false, "accessor"));
+
+  s7_eval_c_string(s7, "(set! *transform-type* fourier-transform)");
 #endif
 }
