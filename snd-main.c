@@ -2329,6 +2329,38 @@ Xen_wrap_no_args(g_abort_w, g_abort)
 Xen_wrap_no_args(g_abortq_w, g_abortq)
 #endif
 
+#if HAVE_SCHEME
+static s7_pointer acc_temp_dir(s7_scheme *sc, s7_pointer args) {return(g_set_temp_dir(s7_cadr(args)));}
+static s7_pointer acc_save_dir(s7_scheme *sc, s7_pointer args) {return(g_set_save_dir(s7_cadr(args)));}
+static s7_pointer acc_ladspa_dir(s7_scheme *sc, s7_pointer args) {return(g_set_ladspa_dir(s7_cadr(args)));}
+static s7_pointer acc_peak_env_dir(s7_scheme *sc, s7_pointer args) {return(g_set_peak_env_dir(s7_cadr(args)));}
+static s7_pointer acc_listener_font(s7_scheme *sc, s7_pointer args) {return(g_set_listener_font(s7_cadr(args)));}
+static s7_pointer acc_axis_label_font(s7_scheme *sc, s7_pointer args) {return(g_set_axis_label_font(s7_cadr(args)));}
+static s7_pointer acc_axis_numbers_font(s7_scheme *sc, s7_pointer args) {return(g_set_axis_numbers_font(s7_cadr(args)));}
+static s7_pointer acc_tiny_font(s7_scheme *sc, s7_pointer args) {return(g_set_tiny_font(s7_cadr(args)));}
+static s7_pointer acc_peaks_font(s7_scheme *sc, s7_pointer args) {return(g_set_peaks_font(s7_cadr(args)));}
+static s7_pointer acc_bold_peaks_font(s7_scheme *sc, s7_pointer args) {return(g_set_bold_peaks_font(s7_cadr(args)));}
+static s7_pointer acc_with_inset_graph(s7_scheme *sc, s7_pointer args) {return(g_set_with_inset_graph(s7_cadr(args)));}
+static s7_pointer acc_with_pointer_focus(s7_scheme *sc, s7_pointer args) {return(g_set_with_pointer_focus(s7_cadr(args)));}
+static s7_pointer acc_with_smpte_label(s7_scheme *sc, s7_pointer args) {return(g_set_with_smpte_label(s7_cadr(args)));}
+static s7_pointer acc_with_interrupts(s7_scheme *sc, s7_pointer args) {return(g_set_with_interrupts(s7_cadr(args)));}
+static s7_pointer acc_color_scale(s7_scheme *sc, s7_pointer args) {return(g_set_color_scale(s7_cadr(args)));}
+static s7_pointer acc_color_cutoff(s7_scheme *sc, s7_pointer args) {return(g_set_color_cutoff(s7_cadr(args)));}
+static s7_pointer acc_color_inverted(s7_scheme *sc, s7_pointer args) {return(g_set_color_inverted(s7_cadr(args)));}
+static s7_pointer acc_auto_resize(s7_scheme *sc, s7_pointer args) {return(g_set_auto_resize(s7_cadr(args)));}
+static s7_pointer acc_audio_output_device(s7_scheme *sc, s7_pointer args) {return(g_set_audio_output_device(s7_cadr(args)));}
+static s7_pointer acc_audio_input_device(s7_scheme *sc, s7_pointer args) {return(g_set_audio_input_device(s7_cadr(args)));}
+static s7_pointer acc_print_length(s7_scheme *sc, s7_pointer args) {return(g_set_print_length(s7_cadr(args)));}
+static s7_pointer acc_selection_creates_region(s7_scheme *sc, s7_pointer args) {return(g_set_selection_creates_region(s7_cadr(args)));}
+static s7_pointer acc_save_state_file(s7_scheme *sc, s7_pointer args) {return(g_set_save_state_file(s7_cadr(args)));}
+static s7_pointer acc_with_background_processes(s7_scheme *sc, s7_pointer args) {return(g_set_with_background_processes(s7_cadr(args)));}
+static s7_pointer acc_with_file_monitor(s7_scheme *sc, s7_pointer args) {return(g_set_with_file_monitor(s7_cadr(args)));}
+static s7_pointer acc_show_indices(s7_scheme *sc, s7_pointer args) {return(g_set_show_indices(s7_cadr(args)));}
+static s7_pointer acc_just_sounds(s7_scheme *sc, s7_pointer args) {return(g_set_just_sounds(s7_cadr(args)));}
+static s7_pointer acc_play_arrow_size(s7_scheme *sc, s7_pointer args) {return(g_set_play_arrow_size(s7_cadr(args)));}
+#endif
+
+
 void g_init_main(void)
 {
   Xen_define_procedure(S_save_state,   g_save_state_w,   0, 1, 0, H_save_state);
@@ -2471,5 +2503,66 @@ the hook functions return " PROC_TRUE ", the save state process opens the file '
   Xen_define_procedure(S_abort,                    g_abort_w,                    0, 0, 0, H_abort);
 #if (!HAVE_SCHEME)
   Xen_define_procedure(S_c_g,                      g_abortq_w,                   0, 0, 0, H_abortQ);
+#endif
+
+#if HAVE_SCHEME
+  s7_symbol_set_documentation(s7, ss->temp_dir_symbol, "*temp-dir*: name of directory for temp files (or #f=null)"); 
+  s7_symbol_set_documentation(s7, ss->save_dir_symbol, "*save-dir*: name of directory for saved state data (or #f=null)");
+  s7_symbol_set_documentation(s7, ss->ladspa_dir_symbol, "*ladspa-dir*: name of directory for ladspa plugin libraries");
+  s7_symbol_set_documentation(s7, ss->peak_env_dir_symbol, "*peak-env-dir*: name of directory for peak env files (or #f=null)");
+  s7_symbol_set_documentation(s7, ss->listener_font_symbol, "*listener-font*: font used by the lisp listener");
+  s7_symbol_set_documentation(s7, ss->axis_label_font_symbol, "*axis-label-font*: font used for axis labels");
+  s7_symbol_set_documentation(s7, ss->axis_numbers_font_symbol, "*axis-numbers-font*: font used for axis numbers");
+  s7_symbol_set_documentation(s7, ss->tiny_font_symbol, "*tiny-font*: font use for some info in the graphs");
+  s7_symbol_set_documentation(s7, ss->peaks_font_symbol, "*peaks-font*: normal font used by fft peak display");
+  s7_symbol_set_documentation(s7, ss->bold_peaks_font_symbol, "*bold-peaks-font*: bold font used by fft peak display");
+  s7_symbol_set_documentation(s7, ss->with_inset_graph_symbol, "*with-inset-graph*: if #t, display the inset graph in the time domain section.");
+  s7_symbol_set_documentation(s7, ss->with_pointer_focus_symbol, "*with-pointer-focus*: if #t, activate the text or graph widget beneath the mouse.");
+  s7_symbol_set_documentation(s7, ss->with_smpte_label_symbol, "*with-smpte-label*: if #t, display the SMPTE data in the time domain section.");
+  s7_symbol_set_documentation(s7, ss->with_interrupts_symbol, "*with-interrupts*: if #t, check for GUI events during computations.");
+  s7_symbol_set_documentation(s7, ss->color_scale_symbol, "*color-scale*: darkness setting for colormaps (0.5)");
+  s7_symbol_set_documentation(s7, ss->color_cutoff_symbol, "*color-cutoff*: color map cutoff point (default .003).");
+  s7_symbol_set_documentation(s7, ss->color_inverted_symbol, "*color-inverted*: whether the colormap in operation should be inverted");
+  s7_symbol_set_documentation(s7, ss->auto_resize_symbol, "*auto-resize*: #t if Snd can change its main window size as it pleases");
+  s7_symbol_set_documentation(s7, ss->audio_output_device_symbol, "*audio-output-device*: the current sndlib default output device (mus-audio-default)");
+  s7_symbol_set_documentation(s7, ss->audio_input_device_symbol, "*audio-input-device*: the current sndlib default input device (mus-audio-default)");
+  s7_symbol_set_documentation(s7, ss->print_length_symbol, "*print-length*: number of vector elements to print in the listener (12)");
+  s7_symbol_set_documentation(s7, ss->selection_creates_region_symbol, "*selection-creates-region*: #t if a region should be created each time a selection is made.");
+  s7_symbol_set_documentation(s7, ss->save_state_file_symbol, "*save-state-file*: the name of the saved state file (\"saved-snd.scm\")");
+  s7_symbol_set_documentation(s7, ss->with_background_processes_symbol, "*with-background-processes*: #t if Snd should use background (idle time) processing");
+  s7_symbol_set_documentation(s7, ss->with_file_monitor_symbol, "*with-file-monitor*: #t if the file alteration monitor is active");
+  s7_symbol_set_documentation(s7, ss->show_indices_symbol, "*show-indices*: #t if sound name should be preceded by its index in the sound display.");
+  s7_symbol_set_documentation(s7, ss->just_sounds_symbol, "*just-sounds*: the 'just sounds' choice in the file chooser dialog");
+  s7_symbol_set_documentation(s7, ss->play_arrow_size_symbol, "*play-arrow-size*: the size of the play triangles");
+
+  s7_symbol_set_access(s7, ss->temp_dir_symbol, s7_make_function(s7, "[acc-" S_temp_dir, acc_temp_dir, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->save_dir_symbol, s7_make_function(s7, "[acc-" S_save_dir, acc_save_dir, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->ladspa_dir_symbol, s7_make_function(s7, "[acc-" S_ladspa_dir, acc_ladspa_dir, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->peak_env_dir_symbol, s7_make_function(s7, "[acc-" S_peak_env_dir, acc_peak_env_dir, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->listener_font_symbol, s7_make_function(s7, "[acc-" S_listener_font, acc_listener_font, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->axis_label_font_symbol, s7_make_function(s7, "[acc-" S_axis_label_font, acc_axis_label_font, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->axis_numbers_font_symbol, s7_make_function(s7, "[acc-" S_axis_numbers_font, acc_axis_numbers_font, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->tiny_font_symbol, s7_make_function(s7, "[acc-" S_tiny_font, acc_tiny_font, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->peaks_font_symbol, s7_make_function(s7, "[acc-" S_peaks_font, acc_peaks_font, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->bold_peaks_font_symbol, s7_make_function(s7, "[acc-" S_bold_peaks_font, acc_bold_peaks_font, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->with_inset_graph_symbol, s7_make_function(s7, "[acc-" S_with_inset_graph, acc_with_inset_graph, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->with_pointer_focus_symbol, s7_make_function(s7, "[acc-" S_with_pointer_focus, acc_with_pointer_focus, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->with_smpte_label_symbol, s7_make_function(s7, "[acc-" S_with_smpte_label, acc_with_smpte_label, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->with_interrupts_symbol, s7_make_function(s7, "[acc-" S_with_interrupts, acc_with_interrupts, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->color_scale_symbol, s7_make_function(s7, "[acc-" S_color_scale, acc_color_scale, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->color_cutoff_symbol, s7_make_function(s7, "[acc-" S_color_cutoff, acc_color_cutoff, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->color_inverted_symbol, s7_make_function(s7, "[acc-" S_color_inverted, acc_color_inverted, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->auto_resize_symbol, s7_make_function(s7, "[acc-" S_auto_resize, acc_auto_resize, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->audio_output_device_symbol, s7_make_function(s7, "[acc-" S_audio_output_device, acc_audio_output_device, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->audio_input_device_symbol, s7_make_function(s7, "[acc-" S_audio_input_device, acc_audio_input_device, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->print_length_symbol, s7_make_function(s7, "[acc-" S_print_length, acc_print_length, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->selection_creates_region_symbol, s7_make_function(s7, "[acc-" S_selection_creates_region, acc_selection_creates_region, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->save_state_file_symbol, s7_make_function(s7, "[acc-" S_save_state_file, acc_save_state_file, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->with_background_processes_symbol, s7_make_function(s7, "[acc-" S_with_background_processes, acc_with_background_processes, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->with_file_monitor_symbol, s7_make_function(s7, "[acc-" S_with_file_monitor, acc_with_file_monitor, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->show_indices_symbol, s7_make_function(s7, "[acc-" S_show_indices, acc_show_indices, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->just_sounds_symbol, s7_make_function(s7, "[acc-" S_just_sounds, acc_just_sounds, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->play_arrow_size_symbol, s7_make_function(s7, "[acc-" S_play_arrow_size, acc_play_arrow_size, 2, 0, false, "accessor"));
+
 #endif
 }

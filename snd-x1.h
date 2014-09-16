@@ -97,7 +97,8 @@ void post_basic_popup_menu(void *ev);
 void post_lisp_popup_menu(void *ev);
 void post_fft_popup_menu(void *ev);
 void post_selection_popup_menu(void *ev);
-
+widget_t make_file_print_dialog(bool managed, bool direct_to_printer);
+void save_print_dialog_state(FILE *fd);
 
 
 /* -------- snd-xmain.c -------- */
@@ -445,14 +446,6 @@ void reflect_mix_play_stop(void);
 void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color);
 int mix_dialog_mix(void);
 void mix_dialog_set_mix(int id);
-
-
-
-/* -------- snd-xprint.c -------- */
-
-void file_print_callback(Widget w, XtPointer context, XtPointer info);
-widget_t make_file_print_dialog(bool managed, bool direct_to_printer);
-void save_print_dialog_state(FILE *fd);
 
 
 /* -------- snd-xprefs.c -------- */

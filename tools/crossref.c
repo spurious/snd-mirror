@@ -314,7 +314,7 @@ int main(int argc, char **argv)
   add_file("snd-gxbitmaps.c");
   add_file("snd-gxcolormaps.c");
   add_file("snd-xfft.c");
-  add_file("snd-xprint.c");
+  /* add_file("snd-xprint.c"); */
   add_file("snd-xfile.c");
   add_file("snd-xprefs.c");
   add_file("snd-gutils.c");
@@ -331,7 +331,7 @@ int main(int argc, char **argv)
   add_file("snd-gmix.c");
   add_file("snd-genv.c");
   add_file("snd-gfft.c");
-  add_file("snd-gprint.c");
+  /* add_file("snd-gprint.c"); */
   add_file("snd-gfile.c");
   add_file("snd-gprefs.c");
   add_file("snd-prefs.c");

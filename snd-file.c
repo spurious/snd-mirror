@@ -3809,6 +3809,29 @@ Xen_wrap_1_arg(g_delete_file_filter_w, g_delete_file_filter)
 Xen_wrap_2_args(g_add_file_filter_w, g_add_file_filter)
 
 
+#if HAVE_SCHEME
+static s7_pointer acc_default_output_header_type(s7_scheme *sc, s7_pointer args) {return(g_set_default_output_header_type(s7_cadr(args)));}
+static s7_pointer acc_default_output_sample_type(s7_scheme *sc, s7_pointer args) {return(g_set_default_output_sample_type(s7_cadr(args)));}
+static s7_pointer acc_default_output_chans(s7_scheme *sc, s7_pointer args) {return(g_set_default_output_chans(s7_cadr(args)));}
+static s7_pointer acc_default_output_srate(s7_scheme *sc, s7_pointer args) {return(g_set_default_output_srate(s7_cadr(args)));}
+static s7_pointer acc_ask_before_overwrite(s7_scheme *sc, s7_pointer args) {return(g_set_ask_before_overwrite(s7_cadr(args)));}
+static s7_pointer acc_ask_about_unsaved_edits(s7_scheme *sc, s7_pointer args) {return(g_set_ask_about_unsaved_edits(s7_cadr(args)));}
+static s7_pointer acc_show_full_duration(s7_scheme *sc, s7_pointer args) {return(g_set_show_full_duration(s7_cadr(args)));}
+static s7_pointer acc_show_full_range(s7_scheme *sc, s7_pointer args) {return(g_set_show_full_range(s7_cadr(args)));}
+static s7_pointer acc_remember_sound_state(s7_scheme *sc, s7_pointer args) {return(g_set_remember_sound_state(s7_cadr(args)));}
+static s7_pointer acc_save_as_dialog_src(s7_scheme *sc, s7_pointer args) {return(g_set_save_as_dialog_src(s7_cadr(args)));}
+static s7_pointer acc_save_as_dialog_auto_comment(s7_scheme *sc, s7_pointer args) {return(g_set_save_as_dialog_auto_comment(s7_cadr(args)));}
+static s7_pointer acc_with_toolbar(s7_scheme *sc, s7_pointer args) {return(g_set_with_toolbar(s7_cadr(args)));}
+static s7_pointer acc_with_tooltips(s7_scheme *sc, s7_pointer args) {return(g_set_with_tooltips(s7_cadr(args)));}
+static s7_pointer acc_with_menu_icons(s7_scheme *sc, s7_pointer args) {return(g_set_with_menu_icons(s7_cadr(args)));}
+static s7_pointer acc_initial_beg(s7_scheme *sc, s7_pointer args) {return(g_set_initial_beg(s7_cadr(args)));}
+static s7_pointer acc_initial_dur(s7_scheme *sc, s7_pointer args) {return(g_set_initial_dur(s7_cadr(args)));}
+static s7_pointer acc_auto_update(s7_scheme *sc, s7_pointer args) {return(g_set_auto_update(s7_cadr(args)));}
+static s7_pointer acc_auto_update_interval(s7_scheme *sc, s7_pointer args) {return(g_set_auto_update_interval(s7_cadr(args)));}
+static s7_pointer acc_clipping(s7_scheme *sc, s7_pointer args) {return(g_set_clipping(s7_cadr(args)));}
+#endif
+
+
 void g_init_file(void)
 {
   Xen_define_safe_procedure(S_add_sound_file_extension, g_add_sound_file_extension_w, 1, 0, 0, H_add_sound_file_extension);
@@ -3989,4 +4012,48 @@ the newly updated sound may have a different index."
   ss->file_filters_size = INITIAL_FILE_FILTERS_SIZE;
   ss->file_filters = Xen_make_vector(ss->file_filters_size, Xen_false);
   Xen_GC_protect(ss->file_filters);
+
+#if HAVE_SCHEME
+  s7_symbol_set_documentation(s7, ss->default_output_header_type_symbol, "*default-output-header-type*: header type when a new file is created (mus-next etc)");
+  s7_symbol_set_documentation(s7, ss->default_output_sample_type_symbol, "*default-output-sample-type*: sample type when a new file is created (mus-ldouble etc)");
+  s7_symbol_set_documentation(s7, ss->default_output_chans_symbol, "*default-output-chans*: number of channels when a new file is created (1)");
+  s7_symbol_set_documentation(s7, ss->default_output_srate_symbol, "*default-output-srate*: sampling rate when a new file is created (44100)");
+  s7_symbol_set_documentation(s7, ss->ask_before_overwrite_symbol, "*ask-before-overwrite*: #t if you want Snd to ask before overwriting a file.");
+  s7_symbol_set_documentation(s7, ss->ask_about_unsaved_edits_symbol, "*ask-about-unsaved-edits*: #t if you want Snd to ask whether to save unsaved edits when a sound is closed.");
+  s7_symbol_set_documentation(s7, ss->show_full_duration_symbol, "*show-full-duration*: #t if you want the entire sound displayed whn it is opened.");
+  s7_symbol_set_documentation(s7, ss->show_full_range_symbol, "*show-full-range*: #t if you want the graph y-bounds to accommodate the sound's max and min when it is opened.");
+  s7_symbol_set_documentation(s7, ss->remember_sound_state_symbol, "*remember-sound-state*: #t if you want a Snd to remember the current state of each sound when it is closed, restoring that state when it is opened again later.");
+  s7_symbol_set_documentation(s7, ss->save_as_dialog_src_symbol, "*save-as-dialog-src*: #t if you want the 'src' button set by default in the various Save-as dialogs");
+  s7_symbol_set_documentation(s7, ss->save_as_dialog_auto_comment_symbol, "*save-as-dialog-auto-comment*: #t if you want the 'auto' button set by default in the various Save-as dialogs");
+  s7_symbol_set_documentation(s7, ss->with_toolbar_symbol, "*with-toolbar*: #t if you want a toolbar");
+  s7_symbol_set_documentation(s7, ss->with_tooltips_symbol, "*with-tooltips*: #t if you want tooltips");
+  s7_symbol_set_documentation(s7, ss->with_menu_icons_symbol, "*with-menu-icons*: #t if you want icons in the menus (gtk only)");
+  s7_symbol_set_documentation(s7, ss->initial_beg_symbol, "*initial-beg*: the begin point (in seconds) for the initial graph of a sound.");
+  s7_symbol_set_documentation(s7, ss->initial_dur_symbol, "*initial-dur*: the duration (in seconds) for the initial graph of a sound.");
+  s7_symbol_set_documentation(s7, ss->auto_update_symbol, "*auto-update*: #t if Snd should automatically update a file if it changes unexpectedly");
+  s7_symbol_set_documentation(s7, ss->auto_update_interval_symbol, "*auto-update-interval*: time (seconds) between background checks for changed file on disk (60)");
+  s7_symbol_set_documentation(s7, ss->clipping_symbol, "*clipping*: #t if Snd should clip output values");
+
+ 
+  s7_symbol_set_access(s7, ss->default_output_header_type_symbol, s7_make_function(s7, "[acc-" S_default_output_header_type, acc_default_output_header_type, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->default_output_sample_type_symbol, s7_make_function(s7, "[acc-" S_default_output_sample_type, acc_default_output_sample_type, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->default_output_chans_symbol, s7_make_function(s7, "[acc-" S_default_output_chans, acc_default_output_chans, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->default_output_srate_symbol, s7_make_function(s7, "[acc-" S_default_output_srate, acc_default_output_srate, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->ask_before_overwrite_symbol, s7_make_function(s7, "[acc-" S_ask_before_overwrite, acc_ask_before_overwrite, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->ask_about_unsaved_edits_symbol, s7_make_function(s7, "[acc-" S_ask_about_unsaved_edits, acc_ask_about_unsaved_edits, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->show_full_duration_symbol, s7_make_function(s7, "[acc-" S_show_full_duration, acc_show_full_duration, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->show_full_range_symbol, s7_make_function(s7, "[acc-" S_show_full_range, acc_show_full_range, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->remember_sound_state_symbol, s7_make_function(s7, "[acc-" S_remember_sound_state, acc_remember_sound_state, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->save_as_dialog_src_symbol, s7_make_function(s7, "[acc-" S_save_as_dialog_src, acc_save_as_dialog_src, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->save_as_dialog_auto_comment_symbol, s7_make_function(s7, "[acc-" S_save_as_dialog_auto_comment, acc_save_as_dialog_auto_comment, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->with_toolbar_symbol, s7_make_function(s7, "[acc-" S_with_toolbar, acc_with_toolbar, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->with_tooltips_symbol, s7_make_function(s7, "[acc-" S_with_tooltips, acc_with_tooltips, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->with_menu_icons_symbol, s7_make_function(s7, "[acc-" S_with_menu_icons, acc_with_menu_icons, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->initial_beg_symbol, s7_make_function(s7, "[acc-" S_initial_beg, acc_initial_beg, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->initial_dur_symbol, s7_make_function(s7, "[acc-" S_initial_dur, acc_initial_dur, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->auto_update_symbol, s7_make_function(s7, "[acc-" S_auto_update, acc_auto_update, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->auto_update_interval_symbol, s7_make_function(s7, "[acc-" S_auto_update_interval, acc_auto_update_interval, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->clipping_symbol, s7_make_function(s7, "[acc-" S_clipping, acc_clipping, 2, 0, false, "accessor"));
+#endif
 }
+

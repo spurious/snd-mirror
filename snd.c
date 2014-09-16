@@ -328,76 +328,9 @@ void snd_set_global_defaults(bool need_cleanup)
   else ss->Eps_File = NULL;
 
 #if HAVE_SCHEME
-  ss->channel_style_symbol = s7_define_variable(s7, "*" S_channel_style "*", s7_make_integer(s7, DEFAULT_CHANNEL_STYLE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_channel_style "*) (lambda (s v) (set! (" S_channel_style ") v)))");
-  s7_symbol_set_documentation(s7, ss->channel_style_symbol, "*channel-style*: how multichannel sounds lay out the channels: channels-combined, channels-separate or channels-superimposed.");
-
   ss->eps_file_symbol = s7_define_variable(s7, "*" S_eps_file "*", s7_make_string(s7, DEFAULT_EPS_FILE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_eps_file "*) (lambda (s v) (set! (" S_eps_file ") v)))");
   s7_symbol_set_documentation(s7, ss->eps_file_symbol, "*eps-file*: File:Print and graph->ps file name (snd.eps)");
-
-  ss->temp_dir_symbol = s7_define_variable(s7, "*" S_temp_dir "*", s7_make_string(s7, ss->Temp_Dir));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_temp_dir "*) (lambda (s v) (set! (" S_temp_dir ") v)))");
-  s7_symbol_set_documentation(s7, ss->temp_dir_symbol, "*temp-dir*: name of directory for temp files (or #f=null)"); 
-
-  ss->save_dir_symbol = s7_define_variable(s7, "*" S_save_dir "*", s7_make_string(s7, ss->Save_Dir));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_save_dir "*) (lambda (s v) (set! (" S_save_dir ") v)))");
-  s7_symbol_set_documentation(s7, ss->save_dir_symbol, "*save-dir*: name of directory for saved state data (or #f=null)");
-
-  ss->ladspa_dir_symbol = s7_define_variable(s7, "*" S_ladspa_dir "*", s7_make_string(s7, DEFAULT_LADSPA_DIR));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_ladspa_dir "*) (lambda (s v) (set! (" S_ladspa_dir ") v)))");
-  s7_symbol_set_documentation(s7, ss->ladspa_dir_symbol, "*ladspa-dir*: name of directory for ladspa plugin libraries");
-
-  ss->peak_env_dir_symbol = s7_define_variable(s7, "*" S_peak_env_dir "*", s7_make_string(s7, DEFAULT_PEAK_ENV_DIR));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_peak_env_dir "*) (lambda (s v) (set! (" S_peak_env_dir ") v)))");
-  s7_symbol_set_documentation(s7, ss->peak_env_dir_symbol, "*peak-env-dir*: name of directory for peak env files (or #f=null)");
-
-#if USE_MOTIF
-  #define DEFAULT_LISTENER_FONT "9x15"
-#endif
-#if (!USE_NO_GUI)
-  ss->listener_font_symbol = s7_define_variable(s7, "*" S_listener_font "*", s7_make_string(s7, DEFAULT_LISTENER_FONT));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_listener_font "*) (lambda (s v) (set! (" S_listener_font ") v)))");
-#else
-  ss->listener_font_symbol = s7_define_variable(s7, "*" S_listener_font "*", s7_make_string(s7, ""));
-#endif
-  s7_symbol_set_documentation(s7, ss->listener_font_symbol, "*listener-font*: font used by the lisp listener");
-
-  ss->axis_label_font_symbol = s7_define_variable(s7, "*" S_axis_label_font "*", s7_make_string(s7, DEFAULT_AXIS_LABEL_FONT));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_axis_label_font "*) (lambda (s v) (set! (" S_axis_label_font ") v)))");
-  s7_symbol_set_documentation(s7, ss->axis_label_font_symbol, "*axis-label-font*: font used for axis labels");
-
-  ss->axis_numbers_font_symbol = s7_define_variable(s7, "*" S_axis_numbers_font "*", s7_make_string(s7, DEFAULT_AXIS_NUMBERS_FONT));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_axis_numbers_font "*) (lambda (s v) (set! (" S_axis_numbers_font ") v)))");
-  s7_symbol_set_documentation(s7, ss->axis_numbers_font_symbol, "*axis-numbers-font*: font used for axis numbers");
-
-  ss->tiny_font_symbol = s7_define_variable(s7, "*" S_tiny_font "*", s7_make_string(s7, DEFAULT_TINY_FONT));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_tiny_font "*) (lambda (s v) (set! (" S_tiny_font ") v)))");
-  s7_symbol_set_documentation(s7, ss->tiny_font_symbol, "*tiny-font*: font use for some info in the graphs");
-
-  ss->peaks_font_symbol = s7_define_variable(s7, "*" S_peaks_font "*", s7_make_string(s7, DEFAULT_PEAKS_FONT));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_peaks_font "*) (lambda (s v) (set! (" S_peaks_font ") v)))");
-  s7_symbol_set_documentation(s7, ss->peaks_font_symbol, "*peaks-font*: normal font used by fft peak display");
-
-  ss->bold_peaks_font_symbol = s7_define_variable(s7, "*" S_bold_peaks_font "*", s7_make_string(s7, DEFAULT_BOLD_PEAKS_FONT));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_bold_peaks_font "*) (lambda (s v) (set! (" S_bold_peaks_font ") v)))");
-  s7_symbol_set_documentation(s7, ss->bold_peaks_font_symbol, "*bold-peaks-font*: bold font used by fft peak display");
-
-  ss->with_inset_graph_symbol = s7_define_variable(s7, "*" S_with_inset_graph "*", s7_make_boolean(s7, DEFAULT_WITH_INSET_GRAPH));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_inset_graph "*) (lambda (s v) (set! (" S_with_inset_graph ") v)))");
-  s7_symbol_set_documentation(s7, ss->with_inset_graph_symbol, "*with-inset-graph*: if #t, display the inset graph in the time domain section.");
-
-  ss->with_pointer_focus_symbol = s7_define_variable(s7, "*" S_with_pointer_focus "*", s7_make_boolean(s7, DEFAULT_WITH_POINTER_FOCUS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_pointer_focus "*) (lambda (s v) (set! (" S_with_pointer_focus ") v)))");
-  s7_symbol_set_documentation(s7, ss->with_pointer_focus_symbol, "*with-pointer-focus*: if #t, activate the text or graph widget beneath the mouse.");
-
-  ss->with_smpte_label_symbol = s7_define_variable(s7, "*" S_with_smpte_label "*", s7_make_boolean(s7, DEFAULT_WITH_SMPTE_LABEL));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_smpte_label "*) (lambda (s v) (set! (" S_with_smpte_label ") v)))");
-  s7_symbol_set_documentation(s7, ss->with_smpte_label_symbol, "*with-smpte-label*: if #t, display the SMPTE data in the time domain section.");
-
-  ss->with_interrupts_symbol = s7_define_variable(s7, "*" S_with_interrupts "*", s7_make_boolean(s7, DEFAULT_WITH_INTERRUPTS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_interrupts "*) (lambda (s v) (set! (" S_with_interrupts ") v)))");
-  s7_symbol_set_documentation(s7, ss->with_interrupts_symbol, "*with-interrupts*: if #t, check for GUI events during computations.");
 
   ss->enved_filter_order_symbol = s7_define_variable(s7, "*" S_enved_filter_order "*", s7_make_integer(s7, DEFAULT_ENVED_FILTER_ORDER));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_filter_order "*) (lambda (s v) (set! (" S_enved_filter_order ") v)))");
@@ -419,22 +352,6 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_log_freq_start "*) (lambda (s v) (set! (" S_log_freq_start ") v)))");
   s7_symbol_set_documentation(s7, ss->log_freq_start_symbol, "*log-freq-start*: log freq base (25.0)");
 
-  ss->default_output_header_type_symbol = s7_define_variable(s7, "*" S_default_output_header_type "*", s7_make_integer(s7, DEFAULT_OUTPUT_HEADER_TYPE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_default_output_header_type "*) (lambda (s v) (set! (" S_default_output_header_type ") v)))");
-  s7_symbol_set_documentation(s7, ss->default_output_header_type_symbol, "*default-output-header-type*: header type when a new file is created (mus-next etc)");
-
-  ss->default_output_sample_type_symbol = s7_define_variable(s7, "*" S_default_output_sample_type "*", s7_make_integer(s7, DEFAULT_OUTPUT_SAMPLE_TYPE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_default_output_sample_type "*) (lambda (s v) (set! (" S_default_output_sample_type ") v)))");
-  s7_symbol_set_documentation(s7, ss->default_output_sample_type_symbol, "*default-output-sample-type*: sample type when a new file is created (mus-ldouble etc)");
-
-  ss->default_output_chans_symbol = s7_define_variable(s7, "*" S_default_output_chans "*", s7_make_integer(s7, DEFAULT_OUTPUT_CHANS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_default_output_chans "*) (lambda (s v) (set! (" S_default_output_chans ") v)))");
-  s7_symbol_set_documentation(s7, ss->default_output_chans_symbol, "*default-output-chans*: number of channels when a new file is created (1)");
-
-  ss->default_output_srate_symbol = s7_define_variable(s7, "*" S_default_output_srate "*", s7_make_integer(s7, DEFAULT_OUTPUT_SRATE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_default_output_srate "*) (lambda (s v) (set! (" S_default_output_srate ") v)))");
-  s7_symbol_set_documentation(s7, ss->default_output_srate_symbol, "*default-output-srate*: sampling rate when a new file is created (44100)");
-
   ss->color_map_symbol = s7_define_variable(s7, "*" S_colormap "*", s7_make_integer(s7, DEFAULT_COLOR_MAP));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_colormap "*) (lambda (s v) (set! (" S_colormap ") v)))");
   s7_symbol_set_documentation(s7, ss->color_map_symbol, "*colormap*: current colormap choice.");
@@ -442,66 +359,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->color_map_size_symbol = s7_define_variable(s7, "*" S_colormap_size "*", s7_make_integer(s7, DEFAULT_COLOR_MAP_SIZE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_colormap_size "*) (lambda (s v) (set! (" S_colormap_size ") v)))");
   s7_symbol_set_documentation(s7, ss->color_map_size_symbol, "*colormap-size*: current colormap size; default is 512.");
-
-  ss->ask_before_overwrite_symbol = s7_define_variable(s7, "*" S_ask_before_overwrite "*", s7_make_boolean(s7, DEFAULT_ASK_BEFORE_OVERWRITE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_ask_before_overwrite "*) (lambda (s v) (set! (" S_ask_before_overwrite ") v)))");
-  s7_symbol_set_documentation(s7, ss->ask_before_overwrite_symbol, "*ask-before-overwrite*: #t if you want Snd to ask before overwriting a file.");
-
-  ss->ask_about_unsaved_edits_symbol = s7_define_variable(s7, "*" S_ask_about_unsaved_edits "*", s7_make_boolean(s7, DEFAULT_ASK_ABOUT_UNSAVED_EDITS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_ask_about_unsaved_edits "*) (lambda (s v) (set! (" S_ask_about_unsaved_edits ") v)))");
-  s7_symbol_set_documentation(s7, ss->ask_about_unsaved_edits_symbol, "*ask-about-unsaved-edits*: #t if you want Snd to ask whether to save unsaved edits when a sound is closed.");
-
-  ss->show_full_duration_symbol = s7_define_variable(s7, "*" S_show_full_duration "*", s7_make_boolean(s7, DEFAULT_SHOW_FULL_DURATION));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_full_duration "*) (lambda (s v) (set! (" S_show_full_duration ") v)))");
-  s7_symbol_set_documentation(s7, ss->show_full_duration_symbol, "*show-full-duration*: #t if you want the entire sound displayed whn it is opened.");
-
-  ss->show_full_range_symbol = s7_define_variable(s7, "*" S_show_full_range "*", s7_make_boolean(s7, DEFAULT_SHOW_FULL_RANGE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_full_range "*) (lambda (s v) (set! (" S_show_full_range ") v)))");
-  s7_symbol_set_documentation(s7, ss->show_full_range_symbol, "*show-full-range*: #t if you want the graph y-bounds to accommodate the sound's max and min when it is opened.");
-
-  ss->remember_sound_state_symbol = s7_define_variable(s7, "*" S_remember_sound_state "*", s7_make_boolean(s7, DEFAULT_REMEMBER_SOUND_STATE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_remember_sound_state "*) (lambda (s v) (set! (" S_remember_sound_state ") v)))");
-  s7_symbol_set_documentation(s7, ss->remember_sound_state_symbol, "*remember-sound-state*: #t if you want a Snd to remember the current state of each sound when it is closed, restoring that state when it is opened again later.");
-
-  ss->save_as_dialog_src_symbol = s7_define_variable(s7, "*" S_save_as_dialog_src "*", s7_make_boolean(s7, DEFAULT_SAVE_AS_DIALOG_SRC));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_save_as_dialog_src "*) (lambda (s v) (set! (" S_save_as_dialog_src ") v)))");
-  s7_symbol_set_documentation(s7, ss->save_as_dialog_src_symbol, "*save-as-dialog-src*: #t if you want the 'src' button set by default in the various Save-as dialogs");
-
-  ss->save_as_dialog_auto_comment_symbol = s7_define_variable(s7, "*" S_save_as_dialog_auto_comment "*", s7_make_boolean(s7, DEFAULT_SAVE_AS_DIALOG_AUTO_COMMENT));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_save_as_dialog_auto_comment "*) (lambda (s v) (set! (" S_save_as_dialog_auto_comment ") v)))");
-  s7_symbol_set_documentation(s7, ss->save_as_dialog_auto_comment_symbol, "*save-as-dialog-auto-comment*: #t if you want the 'auto' button set by default in the various Save-as dialogs");
-
-  ss->with_toolbar_symbol = s7_define_variable(s7, "*" S_with_toolbar "*", s7_make_boolean(s7, DEFAULT_WITH_TOOLBAR));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_toolbar "*) (lambda (s v) (set! (" S_with_toolbar ") v)))");
-  s7_symbol_set_documentation(s7, ss->with_toolbar_symbol, "*with-toolbar*: #t if you want a toolbar");
-
-  ss->with_tooltips_symbol = s7_define_variable(s7, "*" S_with_tooltips "*", s7_make_boolean(s7, DEFAULT_WITH_TOOLTIPS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_tooltips "*) (lambda (s v) (set! (" S_with_tooltips ") v)))");
-  s7_symbol_set_documentation(s7, ss->with_tooltips_symbol, "*with-tooltips*: #t if you want tooltips");
-
-  ss->with_menu_icons_symbol = s7_define_variable(s7, "*" S_with_menu_icons "*", s7_make_boolean(s7, DEFAULT_WITH_MENU_ICONS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_menu_icons "*) (lambda (s v) (set! (" S_with_menu_icons ") v)))");
-  s7_symbol_set_documentation(s7, ss->with_menu_icons_symbol, "*with-menu-icons*: #t if you want icons in the menus (gtk only)");
-
-  ss->initial_beg_symbol = s7_define_variable(s7, "*" S_initial_beg "*", s7_make_real(s7, DEFAULT_INITIAL_BEG));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_initial_beg "*) (lambda (s v) (set! (" S_initial_beg ") v)))");
-  s7_symbol_set_documentation(s7, ss->initial_beg_symbol, "*initial-beg*: the begin point (in seconds) for the initial graph of a sound.");
-
-  ss->initial_dur_symbol = s7_define_variable(s7, "*" S_initial_dur "*", s7_make_real(s7, DEFAULT_INITIAL_DUR));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_initial_dur "*) (lambda (s v) (set! (" S_initial_dur ") v)))");
-  s7_symbol_set_documentation(s7, ss->initial_dur_symbol, "*initial-dur*: the duration (in seconds) for the initial graph of a sound.");
-
-  ss->color_scale_symbol = s7_define_variable(s7, "*" S_color_scale "*", s7_make_real(s7, DEFAULT_COLOR_SCALE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_color_scale "*) (lambda (s v) (set! (" S_color_scale ") v)))");
-  s7_symbol_set_documentation(s7, ss->color_scale_symbol, "*color-scale*: darkness setting for colormaps (0.5)");
-
-  ss->color_cutoff_symbol = s7_define_variable(s7, "*" S_color_cutoff "*", s7_make_real(s7, DEFAULT_COLOR_CUTOFF));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_color_cutoff "*) (lambda (s v) (set! (" S_color_cutoff ") v)))");
-  s7_symbol_set_documentation(s7, ss->color_cutoff_symbol, "*color-cutoff*: color map cutoff point (default .003).");
-
-  ss->color_inverted_symbol = s7_define_variable(s7, "*" S_color_inverted "*", s7_make_boolean(s7, DEFAULT_COLOR_INVERTED));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_color_inverted "*) (lambda (s v) (set! (" S_color_inverted ") v)))");
-  s7_symbol_set_documentation(s7, ss->color_inverted_symbol, "*color-inverted*: whether the colormap in operation should be inverted");
 
   ss->mix_waveform_height_symbol = s7_define_variable(s7, "*" S_mix_waveform_height "*", s7_make_integer(s7, DEFAULT_MIX_WAVEFORM_HEIGHT));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_mix_waveform_height "*) (lambda (s v) (set! (" S_mix_waveform_height ") v)))");
@@ -515,25 +372,9 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_region_graph_style "*) (lambda (s v) (set! (" S_region_graph_style ") v)))");
   s7_symbol_set_documentation(s7, ss->region_graph_style_symbol, "*region-graph-style*: graph style of the region dialog graph (graph-lines etc)");
 
-  ss->auto_resize_symbol = s7_define_variable(s7, "*" S_auto_resize "*", s7_make_boolean(s7, DEFAULT_AUTO_RESIZE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_auto_resize "*) (lambda (s v) (set! (" S_auto_resize ") v)))");
-  s7_symbol_set_documentation(s7, ss->auto_resize_symbol, "*auto-resize*: #t if Snd can change its main window size as it pleases");
-
-  ss->auto_update_symbol = s7_define_variable(s7, "*" S_auto_update "*", s7_make_boolean(s7, DEFAULT_AUTO_UPDATE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_auto_update "*) (lambda (s v) (set! (" S_auto_update ") v)))");
-  s7_symbol_set_documentation(s7, ss->auto_update_symbol, "*auto-update*: #t if Snd should automatically update a file if it changes unexpectedly");
-
   ss->max_regions_symbol = s7_define_variable(s7, "*" S_max_regions "*", s7_make_integer(s7, DEFAULT_MAX_REGIONS));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_max_regions "*) (lambda (s v) (set! (" S_max_regions ") v)))");
   s7_symbol_set_documentation(s7, ss->max_regions_symbol, "*max-regions*: max number of regions saved on the region list");
-
-  ss->audio_output_device_symbol = s7_define_variable(s7, "*" S_audio_output_device "*", s7_make_integer(s7, DEFAULT_AUDIO_OUTPUT_DEVICE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_audio_output_device "*) (lambda (s v) (set! (" S_audio_output_device ") v)))");
-  s7_symbol_set_documentation(s7, ss->audio_output_device_symbol, "*audio-output-device*: the current sndlib default output device (mus-audio-default)");
-
-  ss->audio_input_device_symbol = s7_define_variable(s7, "*" S_audio_input_device "*", s7_make_integer(s7, DEFAULT_AUDIO_INPUT_DEVICE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_audio_input_device "*) (lambda (s v) (set! (" S_audio_input_device ") v)))");
-  s7_symbol_set_documentation(s7, ss->audio_input_device_symbol, "*audio-input-device*: the current sndlib default input device (mus-audio-default)");
 
   ss->with_gl_symbol = s7_define_variable(s7, "*" S_with_gl "*", s7_make_boolean(s7, DEFAULT_WITH_GL));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_gl "*) (lambda (s v) (set! (" S_with_gl ") v)))");
@@ -542,10 +383,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->with_relative_panes_symbol = s7_define_variable(s7, "*" S_with_relative_panes "*", s7_make_boolean(s7, DEFAULT_WITH_RELATIVE_PANES));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_relative_panes "*) (lambda (s v) (set! (" S_with_relative_panes ") v)))");
   s7_symbol_set_documentation(s7, ss->with_relative_panes_symbol, "*with-relative-panes*: #t if multichannel sounds should try to maintain relative pane sizes");
-
-  ss->print_length_symbol = s7_define_variable(s7, "*" S_print_length "*", s7_make_integer(s7, DEFAULT_PRINT_LENGTH));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_print_length "*) (lambda (s v) (set! (" S_print_length ") v)))");
-  s7_symbol_set_documentation(s7, ss->print_length_symbol, "*print-length*: number of vector elements to print in the listener (12)");
 
   ss->dac_size_symbol = s7_define_variable(s7, "*" S_dac_size "*", s7_make_integer(s7, DEFAULT_DAC_SIZE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_dac_size "*) (lambda (s v) (set! (" S_dac_size ") v)))");
@@ -566,14 +403,6 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_mix_tags "*) (lambda (s v) (set! (" S_with_mix_tags ") v)))");
   s7_symbol_set_documentation(s7, ss->with_mix_tags_symbol, "*with-mix-tags*: #t if Snd should try to use virtual (tagged) mixing");
 
-  ss->selection_creates_region_symbol = s7_define_variable(s7, "*" S_selection_creates_region "*", s7_make_boolean(s7, DEFAULT_SELECTION_CREATES_REGION));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_selection_creates_region "*) (lambda (s v) (set! (" S_selection_creates_region ") v)))");
-  s7_symbol_set_documentation(s7, ss->selection_creates_region_symbol, "*selection-creates-region*: #t if a region should be created each time a selection is made.");
-
-  ss->save_state_file_symbol = s7_define_variable(s7, "*" S_save_state_file "*", s7_make_string(s7, DEFAULT_SAVE_STATE_FILE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_save_state_file "*) (lambda (s v) (set! (" S_save_state_file ") v)))");
-  s7_symbol_set_documentation(s7, ss->save_state_file_symbol, "*save-state-file*: the name of the saved state file (\"saved-snd.scm\")");
-
   ss->listener_prompt_symbol = s7_define_variable(s7, "*" S_listener_prompt "*", s7_make_string(s7, DEFAULT_LISTENER_PROMPT));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_listener_prompt "*) (lambda (s v) (set! (" S_listener_prompt ") v)))");
   s7_symbol_set_documentation(s7, ss->listener_prompt_symbol, "*listener-prompt*: the current lisp listener prompt character ('>') ");
@@ -586,21 +415,9 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_power "*) (lambda (s v) (set! (" S_enved_power ") v)))");
   s7_symbol_set_documentation(s7, ss->enved_power_symbol, "*enved-power*: envelope editor base scale range (9.0^power)");
 
-  ss->auto_update_interval_symbol = s7_define_variable(s7, "*" S_auto_update_interval "*", s7_make_real(s7, DEFAULT_AUTO_UPDATE_INTERVAL));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_auto_update_interval "*) (lambda (s v) (set! (" S_auto_update_interval ") v)))");
-  s7_symbol_set_documentation(s7, ss->auto_update_interval_symbol, "*auto-update-interval*: time (seconds) between background checks for changed file on disk (60)");
-
   ss->enved_with_wave_symbol = s7_define_variable(s7, "*" S_enved_with_wave "*", s7_make_boolean(s7, DEFAULT_ENVED_WITH_WAVE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_with_wave "*) (lambda (s v) (set! (" S_enved_with_wave ") v)))");
   s7_symbol_set_documentation(s7, ss->enved_with_wave_symbol, "*enved-wave?*: #t if the envelope editor is displaying the waveform to be edited");
-
-  ss->with_background_processes_symbol = s7_define_variable(s7, "*" S_with_background_processes "*", s7_make_boolean(s7, DEFAULT_WITH_BACKGROUND_PROCESSES));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_background_processes "*) (lambda (s v) (set! (" S_with_background_processes ") v)))");
-  s7_symbol_set_documentation(s7, ss->with_background_processes_symbol, "*with-background-processes*: #t if Snd should use background (idle time) processing");
-
-  ss->with_file_monitor_symbol = s7_define_variable(s7, "*" S_with_file_monitor "*", s7_make_boolean(s7, DEFAULT_WITH_FILE_MONITOR));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_with_file_monitor "*) (lambda (s v) (set! (" S_with_file_monitor ") v)))");
-  s7_symbol_set_documentation(s7, ss->with_file_monitor_symbol, "*with-file-monitor*: #t if the file alteration monitor is active");
 
   ss->enved_style_symbol = s7_define_variable(s7, "*" S_enved_style "*", s7_make_integer(s7, DEFAULT_ENVED_STYLE));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_style "*) (lambda (s v) (set! (" S_enved_style ") v)))");
@@ -630,81 +447,13 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_enved_target "*) (lambda (s v) (set! (" S_enved_target ") v)))");
   s7_symbol_set_documentation(s7, ss->enved_target_symbol, "*enved-target*: determines how the envelope edit envelope is applied; enved-amplitude etc");
 
-  ss->clipping_symbol = s7_define_variable(s7, "*" S_clipping "*", s7_make_boolean(s7, DEFAULT_CLIPPING));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_clipping "*) (lambda (s v) (set! (" S_clipping ") v)))");
-  s7_symbol_set_documentation(s7, ss->clipping_symbol, "*clipping*: #t if Snd should clip output values");
-
-  ss->show_indices_symbol = s7_define_variable(s7, "*" S_show_indices "*", s7_make_boolean(s7, DEFAULT_SHOW_INDICES));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_indices "*) (lambda (s v) (set! (" S_show_indices ") v)))");
-  s7_symbol_set_documentation(s7, ss->show_indices_symbol, "*show-indices*: #t if sound name should be preceded by its index in the sound display.");
-
-  ss->just_sounds_symbol = s7_define_variable(s7, "*" S_just_sounds "*", s7_make_boolean(s7, DEFAULT_JUST_SOUNDS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_just_sounds "*) (lambda (s v) (set! (" S_just_sounds ") v)))");
-  s7_symbol_set_documentation(s7, ss->just_sounds_symbol, "*just-sounds*: the 'just sounds' choice in the file chooser dialog");
-
-  ss->filter_control_in_db_symbol = s7_define_variable(s7, "*" S_filter_control_in_dB "*", s7_make_boolean(s7, DEFAULT_FILTER_CONTROL_IN_DB));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_filter_control_in_dB "*) (lambda (s v) (set! (" S_filter_control_in_dB ") v)))");
-  s7_symbol_set_documentation(s7, ss->filter_control_in_db_symbol, "*filter-control-in-dB*: #t if snd's filter envelope is displayed in dB in control panel");
-
-  ss->filter_control_in_hz_symbol = s7_define_variable(s7, "*" S_filter_control_in_hz "*", s7_make_boolean(s7, DEFAULT_FILTER_CONTROL_IN_HZ));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_filter_control_in_hz "*) (lambda (s v) (set! (" S_filter_control_in_hz ") v)))");
-  s7_symbol_set_documentation(s7, ss->filter_control_in_hz_symbol, "*filter-control-in-hz*: #t if snd's filter envelope x axis should be in hz (control panel filter)");
-
-  ss->speed_control_tones_symbol = s7_define_variable(s7, "*" S_speed_control_tones "*", s7_make_integer(s7, DEFAULT_SPEED_CONTROL_TONES));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_speed_control_tones "*) (lambda (s v) (set! (" S_speed_control_tones ") v)))");
-  s7_symbol_set_documentation(s7, ss->speed_control_tones_symbol, "*speed-control-tones*: the speed-control octave divisions (12)");
-
-  ss->speed_control_style_symbol = s7_define_variable(s7, "*" S_speed_control_style "*", s7_make_integer(s7, DEFAULT_SPEED_CONTROL_STYLE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_speed_control_style "*) (lambda (s v) (set! (" S_speed_control_style ") v)))");
-  s7_symbol_set_documentation(s7, ss->speed_control_style_symbol, "*speed-control-style*: speed control choice (speed-control-as-float etc)");
-
-  ss->expand_control_length_symbol = s7_define_variable(s7, "*" S_expand_control_length "*", s7_make_real(s7, DEFAULT_EXPAND_CONTROL_LENGTH));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_expand_control_length "*) (lambda (s v) (set! (" S_expand_control_length ") v)))");
-  s7_symbol_set_documentation(s7, ss->expand_control_length_symbol, "*expand-control-length*: current expansion segment length in seconds (.15)");
-
-  ss->expand_control_ramp_symbol = s7_define_variable(s7, "*" S_expand_control_ramp "*", s7_make_real(s7, DEFAULT_EXPAND_CONTROL_RAMP));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_expand_control_ramp "*) (lambda (s v) (set! (" S_expand_control_ramp ") v)))");
-  s7_symbol_set_documentation(s7, ss->expand_control_ramp_symbol, "*expand-control-ramp*: current expansion ramp time (.4)");
-
-  ss->expand_control_hop_symbol = s7_define_variable(s7, "*" S_expand_control_hop "*", s7_make_real(s7, DEFAULT_EXPAND_CONTROL_HOP));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_expand_control_hop "*) (lambda (s v) (set! (" S_expand_control_hop ") v)))");
-  s7_symbol_set_documentation(s7, ss->expand_control_hop_symbol, "*expand-control-hop*: current expansion output grain spacing in seconds (0.05)");
-
-  ss->expand_control_jitter_symbol = s7_define_variable(s7, "*" S_expand_control_jitter "*", s7_make_real(s7, DEFAULT_EXPAND_CONTROL_JITTER));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_expand_control_jitter "*) (lambda (s v) (set! (" S_expand_control_jitter ") v)))");
-  s7_symbol_set_documentation(s7, ss->expand_control_jitter_symbol, "*expand-control-jitter*: current expansion output grain spacing jitter (0.1)");
-
-  ss->contrast_control_amp_symbol = s7_define_variable(s7, "*" S_contrast_control_amp "*", s7_make_real(s7, DEFAULT_CONTRAST_CONTROL_AMP));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_contrast_control_amp "*) (lambda (s v) (set! (" S_contrast_control_amp ") v)))");
-  s7_symbol_set_documentation(s7, ss->contrast_control_amp_symbol, "*contrast-control-amp*: contrast amp");
-
-  ss->reverb_control_feedback_symbol = s7_define_variable(s7, "*" S_reverb_control_feedback "*", s7_make_real(s7, DEFAULT_REVERB_CONTROL_FEEDBACK));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_reverb_control_feedback "*) (lambda (s v) (set! (" S_reverb_control_feedback ") v)))");
-  s7_symbol_set_documentation(s7, ss->reverb_control_feedback_symbol, "*reverb-control-feedback*: control-panel reverb feedback scaler");
-
-  ss->reverb_control_lowpass_symbol = s7_define_variable(s7, "*" S_reverb_control_lowpass "*", s7_make_real(s7, DEFAULT_REVERB_CONTROL_LOWPASS));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_reverb_control_lowpass "*) (lambda (s v) (set! (" S_reverb_control_lowpass ") v)))");
-  s7_symbol_set_documentation(s7, ss->reverb_control_lowpass_symbol, "*reverb-control-lowpass*: control-panel reverb lowpass filter coefficient");
-
-  ss->reverb_control_decay_symbol = s7_define_variable(s7, "*" S_reverb_control_decay "*", s7_make_real(s7, DEFAULT_REVERB_CONTROL_DECAY));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_reverb_control_decay "*) (lambda (s v) (set! (" S_reverb_control_decay ") v)))");
-  s7_symbol_set_documentation(s7, ss->reverb_control_decay_symbol, "*reverb-control-decay*: control-panel reverb decay time (1.0 seconds)");
-
   ss->cursor_update_interval_symbol = s7_define_variable(s7, "*" S_cursor_update_interval "*", s7_make_real(s7, DEFAULT_CURSOR_UPDATE_INTERVAL));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_cursor_update_interval "*) (lambda (s v) (set! (" S_cursor_update_interval ") v)))");
   s7_symbol_set_documentation(s7, ss->cursor_update_interval_symbol, "*cursor-update-interval*: time (seconds) between cursor updates if with-tracking-cursor.");
 
-  ss->filter_control_order_symbol = s7_define_variable(s7, "*" S_filter_control_order "*", s7_make_integer(s7, DEFAULT_FILTER_CONTROL_ORDER));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_filter_control_order "*) (lambda (s v) (set! (" S_filter_control_order ") v)))");
-  s7_symbol_set_documentation(s7, ss->filter_control_order_symbol, "*filter-control-order*: control-panel filter order");
-
   ss->cursor_location_offset_symbol = s7_define_variable(s7, "*" S_cursor_location_offset "*", s7_make_integer(s7, DEFAULT_CURSOR_LOCATION_OFFSET));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_cursor_location_offset "*) (lambda (s v) (set! (" S_cursor_location_offset ") v)))");
   s7_symbol_set_documentation(s7, ss->cursor_location_offset_symbol, "*cursor-location-offset*: samples added to cursor location if cursor displayed during play.");
-
-  ss->play_arrow_size_symbol = s7_define_variable(s7, "*" S_play_arrow_size "*", s7_make_integer(s7, DEFAULT_PLAY_ARROW_SIZE));
-  s7_eval_c_string(s7, "(set! (symbol-access '*" S_play_arrow_size "*) (lambda (s v) (set! (" S_play_arrow_size ") v)))");
-  s7_symbol_set_documentation(s7, ss->play_arrow_size_symbol, "*play-arrow-size*: the size of the play triangles");
 
   ss->show_controls_symbol = s7_define_variable(s7, "*" S_show_controls "*", s7_make_boolean(s7, DEFAULT_SHOW_CONTROLS));
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_show_controls "*) (lambda (s v) (set! (" S_show_controls ") v)))");
@@ -726,52 +475,126 @@ void snd_set_global_defaults(bool need_cleanup)
   s7_eval_c_string(s7, "(set! (symbol-access '*" S_open_file_dialog_directory "*) (lambda (s v) (set! (" S_open_file_dialog_directory ") v)))");
   s7_symbol_set_documentation(s7, ss->open_file_dialog_directory_symbol, "*open-file-dialog-directory*: name of directory for initial open file dialog search");
 
+  /* snd-file.c */
+  ss->auto_update_symbol =             s7_define_variable(s7, "*" S_auto_update "*",          s7_make_boolean(s7, DEFAULT_AUTO_UPDATE));
+  ss->auto_update_interval_symbol =    s7_define_variable(s7, "*" S_auto_update_interval "*", s7_make_real(s7, DEFAULT_AUTO_UPDATE_INTERVAL));
+  ss->clipping_symbol =                s7_define_variable(s7, "*" S_clipping "*",             s7_make_boolean(s7, DEFAULT_CLIPPING));
+  ss->default_output_header_type_symbol = s7_define_variable(s7, "*" S_default_output_header_type "*", s7_make_integer(s7, DEFAULT_OUTPUT_HEADER_TYPE));
+  ss->default_output_sample_type_symbol = s7_define_variable(s7, "*" S_default_output_sample_type "*", s7_make_integer(s7, DEFAULT_OUTPUT_SAMPLE_TYPE));
+  ss->default_output_chans_symbol =    s7_define_variable(s7, "*" S_default_output_chans "*", s7_make_integer(s7, DEFAULT_OUTPUT_CHANS));
+  ss->default_output_srate_symbol =    s7_define_variable(s7, "*" S_default_output_srate "*", s7_make_integer(s7, DEFAULT_OUTPUT_SRATE));
+  ss->ask_before_overwrite_symbol =    s7_define_variable(s7, "*" S_ask_before_overwrite "*", s7_make_boolean(s7, DEFAULT_ASK_BEFORE_OVERWRITE));
+  ss->ask_about_unsaved_edits_symbol = s7_define_variable(s7, "*" S_ask_about_unsaved_edits "*", s7_make_boolean(s7, DEFAULT_ASK_ABOUT_UNSAVED_EDITS));
+  ss->show_full_duration_symbol =      s7_define_variable(s7, "*" S_show_full_duration "*",   s7_make_boolean(s7, DEFAULT_SHOW_FULL_DURATION));
+  ss->show_full_range_symbol =         s7_define_variable(s7, "*" S_show_full_range "*",      s7_make_boolean(s7, DEFAULT_SHOW_FULL_RANGE));
+  ss->remember_sound_state_symbol =    s7_define_variable(s7, "*" S_remember_sound_state "*", s7_make_boolean(s7, DEFAULT_REMEMBER_SOUND_STATE));
+  ss->save_as_dialog_src_symbol =      s7_define_variable(s7, "*" S_save_as_dialog_src "*",   s7_make_boolean(s7, DEFAULT_SAVE_AS_DIALOG_SRC));
+  ss->save_as_dialog_auto_comment_symbol = s7_define_variable(s7, "*" S_save_as_dialog_auto_comment "*", s7_make_boolean(s7, DEFAULT_SAVE_AS_DIALOG_AUTO_COMMENT));
+  ss->with_toolbar_symbol =            s7_define_variable(s7, "*" S_with_toolbar "*",         s7_make_boolean(s7, DEFAULT_WITH_TOOLBAR));
+  ss->with_tooltips_symbol =           s7_define_variable(s7, "*" S_with_tooltips "*",        s7_make_boolean(s7, DEFAULT_WITH_TOOLTIPS));
+  ss->with_menu_icons_symbol =         s7_define_variable(s7, "*" S_with_menu_icons "*",      s7_make_boolean(s7, DEFAULT_WITH_MENU_ICONS));
+  ss->initial_beg_symbol =             s7_define_variable(s7, "*" S_initial_beg "*",          s7_make_real(s7, DEFAULT_INITIAL_BEG));
+  ss->initial_dur_symbol =             s7_define_variable(s7, "*" S_initial_dur "*",          s7_make_real(s7, DEFAULT_INITIAL_DUR));
+
+  /* snd-main.c */
+  ss->show_indices_symbol =          s7_define_variable(s7, "*" S_show_indices "*",           s7_make_boolean(s7, DEFAULT_SHOW_INDICES));
+  ss->just_sounds_symbol =           s7_define_variable(s7, "*" S_just_sounds "*",            s7_make_boolean(s7, DEFAULT_JUST_SOUNDS));
+  ss->play_arrow_size_symbol =       s7_define_variable(s7, "*" S_play_arrow_size "*",        s7_make_integer(s7, DEFAULT_PLAY_ARROW_SIZE));
+  ss->print_length_symbol =          s7_define_variable(s7, "*" S_print_length "*",           s7_make_integer(s7, DEFAULT_PRINT_LENGTH));
+  ss->selection_creates_region_symbol = s7_define_variable(s7, "*" S_selection_creates_region "*", s7_make_boolean(s7, DEFAULT_SELECTION_CREATES_REGION));
+  ss->save_state_file_symbol =       s7_define_variable(s7, "*" S_save_state_file "*",        s7_make_string(s7, DEFAULT_SAVE_STATE_FILE));
+  ss->with_background_processes_symbol = s7_define_variable(s7, "*" S_with_background_processes "*", s7_make_boolean(s7, DEFAULT_WITH_BACKGROUND_PROCESSES));
+  ss->with_file_monitor_symbol =     s7_define_variable(s7, "*" S_with_file_monitor "*",      s7_make_boolean(s7, DEFAULT_WITH_FILE_MONITOR));
+  ss->temp_dir_symbol =              s7_define_variable(s7, "*" S_temp_dir "*",               s7_make_string(s7, ss->Temp_Dir));
+  ss->save_dir_symbol =              s7_define_variable(s7, "*" S_save_dir "*",               s7_make_string(s7, ss->Save_Dir));
+  ss->ladspa_dir_symbol =            s7_define_variable(s7, "*" S_ladspa_dir "*",             s7_make_string(s7, DEFAULT_LADSPA_DIR));
+  ss->peak_env_dir_symbol =          s7_define_variable(s7, "*" S_peak_env_dir "*",           s7_make_string(s7, DEFAULT_PEAK_ENV_DIR));
+  ss->axis_label_font_symbol =       s7_define_variable(s7, "*" S_axis_label_font "*",        s7_make_string(s7, DEFAULT_AXIS_LABEL_FONT));
+  ss->axis_numbers_font_symbol =     s7_define_variable(s7, "*" S_axis_numbers_font "*",      s7_make_string(s7, DEFAULT_AXIS_NUMBERS_FONT));
+  ss->tiny_font_symbol =             s7_define_variable(s7, "*" S_tiny_font "*",              s7_make_string(s7, DEFAULT_TINY_FONT));
+  ss->peaks_font_symbol =            s7_define_variable(s7, "*" S_peaks_font "*",             s7_make_string(s7, DEFAULT_PEAKS_FONT));
+  ss->bold_peaks_font_symbol =       s7_define_variable(s7, "*" S_bold_peaks_font "*",        s7_make_string(s7, DEFAULT_BOLD_PEAKS_FONT));
+  ss->with_inset_graph_symbol =      s7_define_variable(s7, "*" S_with_inset_graph "*",       s7_make_boolean(s7, DEFAULT_WITH_INSET_GRAPH));
+  ss->with_pointer_focus_symbol =    s7_define_variable(s7, "*" S_with_pointer_focus "*",     s7_make_boolean(s7, DEFAULT_WITH_POINTER_FOCUS));
+  ss->with_smpte_label_symbol =      s7_define_variable(s7, "*" S_with_smpte_label "*",       s7_make_boolean(s7, DEFAULT_WITH_SMPTE_LABEL));
+  ss->with_interrupts_symbol =       s7_define_variable(s7, "*" S_with_interrupts "*",        s7_make_boolean(s7, DEFAULT_WITH_INTERRUPTS));
+  ss->color_scale_symbol =           s7_define_variable(s7, "*" S_color_scale "*",            s7_make_real(s7, DEFAULT_COLOR_SCALE));
+  ss->color_cutoff_symbol =          s7_define_variable(s7, "*" S_color_cutoff "*",           s7_make_real(s7, DEFAULT_COLOR_CUTOFF));
+  ss->color_inverted_symbol =        s7_define_variable(s7, "*" S_color_inverted "*",         s7_make_boolean(s7, DEFAULT_COLOR_INVERTED));
+  ss->auto_resize_symbol =           s7_define_variable(s7, "*" S_auto_resize "*",            s7_make_boolean(s7, DEFAULT_AUTO_RESIZE));
+  ss->audio_output_device_symbol =   s7_define_variable(s7, "*" S_audio_output_device "*",    s7_make_integer(s7, DEFAULT_AUDIO_OUTPUT_DEVICE));
+  ss->audio_input_device_symbol =    s7_define_variable(s7, "*" S_audio_input_device "*",     s7_make_integer(s7, DEFAULT_AUDIO_INPUT_DEVICE));
+#if USE_MOTIF
+  #define DEFAULT_LISTENER_FONT "9x15"
+#endif
+#if (!USE_NO_GUI)
+  ss->listener_font_symbol =         s7_define_variable(s7, "*" S_listener_font "*",          s7_make_string(s7, DEFAULT_LISTENER_FONT));
+#else
+  ss->listener_font_symbol =         s7_define_variable(s7, "*" S_listener_font "*",          s7_make_string(s7, ""));
+#endif
+
+  /* snd-snd.c */
+  ss->channel_style_symbol =           s7_define_variable(s7, "*" S_channel_style "*",           s7_make_integer(s7, DEFAULT_CHANNEL_STYLE));
+  ss->filter_control_in_db_symbol =    s7_define_variable(s7, "*" S_filter_control_in_dB "*",    s7_make_boolean(s7, DEFAULT_FILTER_CONTROL_IN_DB));
+  ss->filter_control_in_hz_symbol =    s7_define_variable(s7, "*" S_filter_control_in_hz "*",    s7_make_boolean(s7, DEFAULT_FILTER_CONTROL_IN_HZ));
+  ss->speed_control_tones_symbol =     s7_define_variable(s7, "*" S_speed_control_tones "*",     s7_make_integer(s7, DEFAULT_SPEED_CONTROL_TONES));
+  ss->speed_control_style_symbol =     s7_define_variable(s7, "*" S_speed_control_style "*",     s7_make_integer(s7, DEFAULT_SPEED_CONTROL_STYLE));
+  ss->expand_control_length_symbol =   s7_define_variable(s7, "*" S_expand_control_length "*",   s7_make_real(s7, DEFAULT_EXPAND_CONTROL_LENGTH));
+  ss->expand_control_ramp_symbol =     s7_define_variable(s7, "*" S_expand_control_ramp "*",     s7_make_real(s7, DEFAULT_EXPAND_CONTROL_RAMP));
+  ss->expand_control_hop_symbol =      s7_define_variable(s7, "*" S_expand_control_hop "*",      s7_make_real(s7, DEFAULT_EXPAND_CONTROL_HOP));
+  ss->expand_control_jitter_symbol =   s7_define_variable(s7, "*" S_expand_control_jitter "*",   s7_make_real(s7, DEFAULT_EXPAND_CONTROL_JITTER));
+  ss->contrast_control_amp_symbol =    s7_define_variable(s7, "*" S_contrast_control_amp "*",    s7_make_real(s7, DEFAULT_CONTRAST_CONTROL_AMP));
+  ss->reverb_control_feedback_symbol = s7_define_variable(s7, "*" S_reverb_control_feedback "*", s7_make_real(s7, DEFAULT_REVERB_CONTROL_FEEDBACK));
+  ss->reverb_control_lowpass_symbol =  s7_define_variable(s7, "*" S_reverb_control_lowpass "*",  s7_make_real(s7, DEFAULT_REVERB_CONTROL_LOWPASS));
+  ss->reverb_control_decay_symbol =    s7_define_variable(s7, "*" S_reverb_control_decay "*",    s7_make_real(s7, DEFAULT_REVERB_CONTROL_DECAY));
+  ss->filter_control_order_symbol =    s7_define_variable(s7, "*" S_filter_control_order "*",    s7_make_integer(s7, DEFAULT_FILTER_CONTROL_ORDER));
+
   /* snd-chn.c */
   ss->show_transform_peaks_symbol = s7_define_variable(s7, "*" S_show_transform_peaks "*", s7_make_boolean(s7, DEFAULT_SHOW_TRANSFORM_PEAKS));
-  ss->show_y_zero_symbol = s7_define_variable(s7, "*" S_show_y_zero "*", s7_make_boolean(s7, DEFAULT_SHOW_Y_ZERO));
-  ss->show_marks_symbol = s7_define_variable(s7, "*" S_show_marks "*", s7_make_boolean(s7, DEFAULT_SHOW_MARKS));
-  ss->show_grid_symbol = s7_define_variable(s7, "*" S_show_grid "*", s7_make_boolean(s7, DEFAULT_SHOW_GRID));
-  ss->fft_log_frequency_symbol = s7_define_variable(s7, "*" S_fft_log_frequency "*", s7_make_boolean(s7, DEFAULT_FFT_LOG_FREQUENCY));
-  ss->fft_log_magnitude_symbol = s7_define_variable(s7, "*" S_fft_log_magnitude "*", s7_make_boolean(s7, DEFAULT_FFT_LOG_MAGNITUDE));
-  ss->fft_with_phases_symbol = s7_define_variable(s7, "*" S_fft_with_phases "*", s7_make_boolean(s7, DEFAULT_FFT_WITH_PHASES));
-  ss->sync_style_symbol = s7_define_variable(s7, "*" S_sync_style "*", s7_make_integer(s7, DEFAULT_SYNC_STYLE));
-  ss->show_axes_symbol = s7_define_variable(s7, "*" S_show_axes "*", s7_make_integer(s7, DEFAULT_SHOW_AXES));
-  ss->min_db_symbol = s7_define_variable(s7, "*" S_min_dB "*", s7_make_real(s7, DEFAULT_MIN_DB));
-  ss->cursor_size_symbol = s7_define_variable(s7, "*" S_cursor_size "*", s7_make_integer(s7, DEFAULT_CURSOR_SIZE));
-  ss->cursor_style_symbol = s7_define_variable(s7, "*" S_cursor_style "*", s7_make_integer(s7, DEFAULT_CURSOR_STYLE));
+  ss->show_y_zero_symbol =          s7_define_variable(s7, "*" S_show_y_zero "*",          s7_make_boolean(s7, DEFAULT_SHOW_Y_ZERO));
+  ss->show_marks_symbol =           s7_define_variable(s7, "*" S_show_marks "*",           s7_make_boolean(s7, DEFAULT_SHOW_MARKS));
+  ss->show_grid_symbol =            s7_define_variable(s7, "*" S_show_grid "*",            s7_make_boolean(s7, DEFAULT_SHOW_GRID));
+  ss->fft_log_frequency_symbol =    s7_define_variable(s7, "*" S_fft_log_frequency "*",    s7_make_boolean(s7, DEFAULT_FFT_LOG_FREQUENCY));
+  ss->fft_log_magnitude_symbol =    s7_define_variable(s7, "*" S_fft_log_magnitude "*",    s7_make_boolean(s7, DEFAULT_FFT_LOG_MAGNITUDE));
+  ss->fft_with_phases_symbol =      s7_define_variable(s7, "*" S_fft_with_phases "*",      s7_make_boolean(s7, DEFAULT_FFT_WITH_PHASES));
+  ss->sync_style_symbol =           s7_define_variable(s7, "*" S_sync_style "*",           s7_make_integer(s7, DEFAULT_SYNC_STYLE));
+  ss->show_axes_symbol =            s7_define_variable(s7, "*" S_show_axes "*",            s7_make_integer(s7, DEFAULT_SHOW_AXES));
+  ss->min_db_symbol =               s7_define_variable(s7, "*" S_min_dB "*",               s7_make_real(s7, DEFAULT_MIN_DB));
+  ss->cursor_size_symbol =          s7_define_variable(s7, "*" S_cursor_size "*",          s7_make_integer(s7, DEFAULT_CURSOR_SIZE));
+  ss->cursor_style_symbol =         s7_define_variable(s7, "*" S_cursor_style "*",         s7_make_integer(s7, DEFAULT_CURSOR_STYLE));
   ss->tracking_cursor_style_symbol = s7_define_variable(s7, "*" S_tracking_cursor_style "*", s7_make_integer(s7, DEFAULT_TRACKING_CURSOR_STYLE));
   ss->show_sonogram_cursor_symbol = s7_define_variable(s7, "*" S_show_sonogram_cursor "*", s7_make_boolean(s7, DEFAULT_SHOW_SONOGRAM_CURSOR));
-  ss->with_verbose_cursor_symbol = s7_define_variable(s7, "*" S_with_verbose_cursor "*", s7_make_boolean(s7, DEFAULT_WITH_VERBOSE_CURSOR));
-  ss->spectro_x_scale_symbol = s7_define_variable(s7, "*" S_spectro_x_scale "*", s7_make_real(s7, DEFAULT_SPECTRO_X_SCALE));
-  ss->spectro_y_scale_symbol = s7_define_variable(s7, "*" S_spectro_y_scale "*", s7_make_real(s7, DEFAULT_SPECTRO_Y_SCALE));
-  ss->spectro_z_scale_symbol = s7_define_variable(s7, "*" S_spectro_z_scale "*", s7_make_real(s7, DEFAULT_SPECTRO_Z_SCALE));
-  ss->spectro_z_angle_symbol = s7_define_variable(s7, "*" S_spectro_z_angle "*", s7_make_real(s7, DEFAULT_SPECTRO_Z_ANGLE));
-  ss->spectro_x_angle_symbol = s7_define_variable(s7, "*" S_spectro_x_angle "*", s7_make_real(s7, DEFAULT_SPECTRO_X_ANGLE));
-  ss->spectro_y_angle_symbol = s7_define_variable(s7, "*" S_spectro_y_angle "*", s7_make_real(s7, DEFAULT_SPECTRO_Y_ANGLE));
-  ss->spectrum_end_symbol = s7_define_variable(s7, "*" S_spectrum_end "*", s7_make_real(s7, DEFAULT_SPECTRUM_END));
-  ss->spectrum_start_symbol = s7_define_variable(s7, "*" S_spectrum_start "*", s7_make_real(s7, DEFAULT_SPECTRUM_START));
-  ss->spectro_hop_symbol = s7_define_variable(s7, "*" S_spectro_hop "*", s7_make_integer(s7, DEFAULT_SPECTRO_HOP));
-  ss->graphs_horizontal_symbol = s7_define_variable(s7, "*" S_graphs_horizontal "*", s7_make_boolean(s7, DEFAULT_GRAPHS_HORIZONTAL));
-  ss->max_transform_peaks_symbol = s7_define_variable(s7, "*" S_max_transform_peaks "*", s7_make_integer(s7, DEFAULT_MAX_TRANSFORM_PEAKS));
-  ss->fft_window_alpha_symbol = s7_define_variable(s7, "*" S_fft_window_alpha "*", s7_make_real(s7, DEFAULT_FFT_WINDOW_ALPHA));
-  ss->fft_window_beta_symbol = s7_define_variable(s7, "*" S_fft_window_beta "*", s7_make_real(s7, DEFAULT_FFT_WINDOW_BETA));
-  ss->grid_density_symbol = s7_define_variable(s7, "*" S_grid_density "*", s7_make_real(s7, DEFAULT_GRID_DENSITY));
-  ss->beats_per_minute_symbol = s7_define_variable(s7, "*" S_beats_per_minute "*", s7_make_real(s7, DEFAULT_BEATS_PER_MINUTE));
-  ss->show_mix_waveforms_symbol = s7_define_variable(s7, "*" S_show_mix_waveforms "*", s7_make_boolean(s7, DEFAULT_SHOW_MIX_WAVEFORMS));
-  ss->beats_per_measure_symbol = s7_define_variable(s7, "*" S_beats_per_measure "*", s7_make_integer(s7, DEFAULT_BEATS_PER_MEASURE));
+  ss->with_verbose_cursor_symbol =  s7_define_variable(s7, "*" S_with_verbose_cursor "*",  s7_make_boolean(s7, DEFAULT_WITH_VERBOSE_CURSOR));
+  ss->spectro_x_scale_symbol =      s7_define_variable(s7, "*" S_spectro_x_scale "*",      s7_make_real(s7, DEFAULT_SPECTRO_X_SCALE));
+  ss->spectro_y_scale_symbol =      s7_define_variable(s7, "*" S_spectro_y_scale "*",      s7_make_real(s7, DEFAULT_SPECTRO_Y_SCALE));
+  ss->spectro_z_scale_symbol =      s7_define_variable(s7, "*" S_spectro_z_scale "*",      s7_make_real(s7, DEFAULT_SPECTRO_Z_SCALE));
+  ss->spectro_z_angle_symbol =      s7_define_variable(s7, "*" S_spectro_z_angle "*",      s7_make_real(s7, DEFAULT_SPECTRO_Z_ANGLE));
+  ss->spectro_x_angle_symbol =      s7_define_variable(s7, "*" S_spectro_x_angle "*",      s7_make_real(s7, DEFAULT_SPECTRO_X_ANGLE));
+  ss->spectro_y_angle_symbol =      s7_define_variable(s7, "*" S_spectro_y_angle "*",      s7_make_real(s7, DEFAULT_SPECTRO_Y_ANGLE));
+  ss->spectrum_end_symbol =         s7_define_variable(s7, "*" S_spectrum_end "*",         s7_make_real(s7, DEFAULT_SPECTRUM_END));
+  ss->spectrum_start_symbol =       s7_define_variable(s7, "*" S_spectrum_start "*",       s7_make_real(s7, DEFAULT_SPECTRUM_START));
+  ss->spectro_hop_symbol =          s7_define_variable(s7, "*" S_spectro_hop "*",          s7_make_integer(s7, DEFAULT_SPECTRO_HOP));
+  ss->graphs_horizontal_symbol =    s7_define_variable(s7, "*" S_graphs_horizontal "*",    s7_make_boolean(s7, DEFAULT_GRAPHS_HORIZONTAL));
+  ss->max_transform_peaks_symbol =  s7_define_variable(s7, "*" S_max_transform_peaks "*",  s7_make_integer(s7, DEFAULT_MAX_TRANSFORM_PEAKS));
+  ss->fft_window_alpha_symbol =     s7_define_variable(s7, "*" S_fft_window_alpha "*",     s7_make_real(s7, DEFAULT_FFT_WINDOW_ALPHA));
+  ss->fft_window_beta_symbol =      s7_define_variable(s7, "*" S_fft_window_beta "*",      s7_make_real(s7, DEFAULT_FFT_WINDOW_BETA));
+  ss->grid_density_symbol =         s7_define_variable(s7, "*" S_grid_density "*",         s7_make_real(s7, DEFAULT_GRID_DENSITY));
+  ss->beats_per_minute_symbol =     s7_define_variable(s7, "*" S_beats_per_minute "*",     s7_make_real(s7, DEFAULT_BEATS_PER_MINUTE));
+  ss->show_mix_waveforms_symbol =   s7_define_variable(s7, "*" S_show_mix_waveforms "*",   s7_make_boolean(s7, DEFAULT_SHOW_MIX_WAVEFORMS));
+  ss->beats_per_measure_symbol =    s7_define_variable(s7, "*" S_beats_per_measure "*",    s7_make_integer(s7, DEFAULT_BEATS_PER_MEASURE));
   ss->transform_normalization_symbol = s7_define_variable(s7, "*" S_transform_normalization "*", s7_make_integer(s7, DEFAULT_TRANSFORM_NORMALIZATION));
-  ss->x_axis_style_symbol = s7_define_variable(s7, "*" S_x_axis_style "*", s7_make_integer(s7, DEFAULT_X_AXIS_STYLE));
-  ss->zoom_focus_style_symbol = s7_define_variable(s7, "*" S_zoom_focus_style "*", s7_make_integer(s7, DEFAULT_ZOOM_FOCUS_STYLE));
-  ss->graph_style_symbol = s7_define_variable(s7, "*" S_graph_style "*", s7_make_integer(s7, DEFAULT_GRAPH_STYLE));
-  ss->wavelet_type_symbol = s7_define_variable(s7, "*" S_wavelet_type "*", s7_make_integer(s7, DEFAULT_WAVELET_TYPE));
-  ss->dot_size_symbol = s7_define_variable(s7, "*" S_dot_size "*", s7_make_integer(s7, DEFAULT_DOT_SIZE));
-  ss->zero_pad_symbol = s7_define_variable(s7, "*" S_zero_pad "*", s7_make_integer(s7, DEFAULT_ZERO_PAD));
-  ss->wavo_hop_symbol = s7_define_variable(s7, "*" S_wavo_hop "*", s7_make_integer(s7, DEFAULT_WAVO_HOP));
-  ss->wavo_trace_symbol = s7_define_variable(s7, "*" S_wavo_trace "*", s7_make_integer(s7, DEFAULT_WAVO_TRACE));
-  ss->transform_size_symbol = s7_define_variable(s7, "*" S_transform_size "*", s7_make_integer(s7, DEFAULT_TRANSFORM_SIZE));
-  ss->fft_window_symbol = s7_define_variable(s7, "*" S_fft_window "*", s7_make_integer(s7, DEFAULT_FFT_WINDOW));
+  ss->x_axis_style_symbol =         s7_define_variable(s7, "*" S_x_axis_style "*",         s7_make_integer(s7, DEFAULT_X_AXIS_STYLE));
+  ss->zoom_focus_style_symbol =     s7_define_variable(s7, "*" S_zoom_focus_style "*",     s7_make_integer(s7, DEFAULT_ZOOM_FOCUS_STYLE));
+  ss->graph_style_symbol =          s7_define_variable(s7, "*" S_graph_style "*",          s7_make_integer(s7, DEFAULT_GRAPH_STYLE));
+  ss->wavelet_type_symbol =         s7_define_variable(s7, "*" S_wavelet_type "*",         s7_make_integer(s7, DEFAULT_WAVELET_TYPE));
+  ss->dot_size_symbol =             s7_define_variable(s7, "*" S_dot_size "*",             s7_make_integer(s7, DEFAULT_DOT_SIZE));
+  ss->zero_pad_symbol =             s7_define_variable(s7, "*" S_zero_pad "*",             s7_make_integer(s7, DEFAULT_ZERO_PAD));
+  ss->wavo_hop_symbol =             s7_define_variable(s7, "*" S_wavo_hop "*",             s7_make_integer(s7, DEFAULT_WAVO_HOP));
+  ss->wavo_trace_symbol =           s7_define_variable(s7, "*" S_wavo_trace "*",           s7_make_integer(s7, DEFAULT_WAVO_TRACE));
+  ss->transform_size_symbol =       s7_define_variable(s7, "*" S_transform_size "*",       s7_make_integer(s7, DEFAULT_TRANSFORM_SIZE));
+  ss->fft_window_symbol =           s7_define_variable(s7, "*" S_fft_window "*",           s7_make_integer(s7, DEFAULT_FFT_WINDOW));
   ss->transform_graph_type_symbol = s7_define_variable(s7, "*" S_transform_graph_type "*", s7_make_integer(s7, DEFAULT_TRANSFORM_GRAPH_TYPE));
-  ss->time_graph_type_symbol = s7_define_variable(s7, "*" S_time_graph_type "*", s7_make_integer(s7, DEFAULT_TIME_GRAPH_TYPE));
+  ss->time_graph_type_symbol =      s7_define_variable(s7, "*" S_time_graph_type "*",      s7_make_integer(s7, DEFAULT_TIME_GRAPH_TYPE));
 
   /* snd-draw.c */
   ss->data_color_symbol           = s7_define_variable(s7, "*" S_data_color "*",           s7_f(s7));

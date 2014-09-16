@@ -104,6 +104,7 @@ void add_tooltip(GtkWidget *w, const char *tip);
 void post_basic_popup_menu(void *ev);
 void post_lisp_popup_menu(void *ev);
 void post_selection_popup_menu(void *ev);
+widget_t make_file_print_dialog(bool managed, bool direct_to_printer);
 
 
 
@@ -484,13 +485,6 @@ void add_drag_and_drop(GtkWidget *w,
 		       void (*drop_watcher)(GtkWidget *w, const char *message, int x, int y, void *data), 
 		       void (*drag_watcher)(GtkWidget *w, const char *message, int x, int y, drag_style_t dtype, void *data), 
 		       void *context);
-
-
-
-/* -------- snd-gprint.c -------- */
-
-void file_print_callback(GtkWidget *w, gpointer info);
-widget_t make_file_print_dialog(bool managed, bool direct_to_printer);
 
 
 /* -------- snd-gprefs.c -------- */

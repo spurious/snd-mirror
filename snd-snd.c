@@ -5867,6 +5867,24 @@ Xen_wrap_2_optional_args(g_set_speed_control_style_w, g_set_speed_control_style)
 Xen_wrap_2_optional_args(g_set_speed_control_tones_w, g_set_speed_control_tones)
 #endif
 
+#if HAVE_SCHEME
+static s7_pointer acc_channel_style(s7_scheme *sc, s7_pointer args) {return(g_set_channel_style(s7_cadr(args), s7_undefined(sc)));}
+static s7_pointer acc_filter_control_in_dB(s7_scheme *sc, s7_pointer args) {return(g_set_filter_control_in_dB(s7_cadr(args), s7_undefined(sc)));}
+static s7_pointer acc_filter_control_in_hz(s7_scheme *sc, s7_pointer args) {return(g_set_filter_control_in_hz(s7_cadr(args), s7_undefined(sc)));}
+static s7_pointer acc_speed_control_tones(s7_scheme *sc, s7_pointer args) {return(g_set_speed_control_tones(s7_cadr(args), s7_undefined(sc)));}
+static s7_pointer acc_speed_control_style(s7_scheme *sc, s7_pointer args) {return(g_set_speed_control_style(s7_cadr(args), s7_undefined(sc)));}
+static s7_pointer acc_expand_control_length(s7_scheme *sc, s7_pointer args) {return(g_set_expand_control_length(s7_cadr(args), s7_undefined(sc)));}
+static s7_pointer acc_expand_control_ramp(s7_scheme *sc, s7_pointer args) {return(g_set_expand_control_ramp(s7_cadr(args), s7_undefined(sc)));}
+static s7_pointer acc_expand_control_hop(s7_scheme *sc, s7_pointer args) {return(g_set_expand_control_hop(s7_cadr(args), s7_undefined(sc)));}
+static s7_pointer acc_expand_control_jitter(s7_scheme *sc, s7_pointer args) {return(g_set_expand_control_jitter(s7_cadr(args), s7_undefined(sc)));}
+static s7_pointer acc_contrast_control_amp(s7_scheme *sc, s7_pointer args) {return(g_set_contrast_control_amp(s7_cadr(args), s7_undefined(sc)));}
+static s7_pointer acc_reverb_control_feedback(s7_scheme *sc, s7_pointer args) {return(g_set_reverb_control_feedback(s7_cadr(args), s7_undefined(sc)));}
+static s7_pointer acc_reverb_control_lowpass(s7_scheme *sc, s7_pointer args) {return(g_set_reverb_control_lowpass(s7_cadr(args), s7_undefined(sc)));}
+static s7_pointer acc_reverb_control_decay(s7_scheme *sc, s7_pointer args) {return(g_set_reverb_control_decay(s7_cadr(args), s7_undefined(sc)));}
+static s7_pointer acc_filter_control_order(s7_scheme *sc, s7_pointer args) {return(g_set_filter_control_order(s7_cadr(args), s7_undefined(sc)));}
+#endif
+
+
 void g_init_snd(void)
 {
   init_xen_sound();
@@ -5988,4 +6006,36 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_safe_procedure(S_sounds,                   g_sounds_w,                   0, 0, 0, H_sounds);
   Xen_define_safe_procedure(S_integer_to_sound,         g_integer_to_sound_w,         1, 0, 0, H_integer_to_sound);
   Xen_define_safe_procedure(S_sound_to_integer,         g_sound_to_integer_w,         1, 0, 0, H_sound_to_integer);
+
+#if HAVE_SCHEME
+  s7_symbol_set_documentation(s7, ss->channel_style_symbol, "*channel-style*: how multichannel sounds lay out the channels: channels-combined, channels-separate or channels-superimposed.");
+  s7_symbol_set_documentation(s7, ss->filter_control_in_db_symbol, "*filter-control-in-dB*: #t if snd's filter envelope is displayed in dB in control panel");
+  s7_symbol_set_documentation(s7, ss->filter_control_in_hz_symbol, "*filter-control-in-hz*: #t if snd's filter envelope x axis should be in hz (control panel filter)");
+  s7_symbol_set_documentation(s7, ss->speed_control_tones_symbol, "*speed-control-tones*: the speed-control octave divisions (12)");
+  s7_symbol_set_documentation(s7, ss->speed_control_style_symbol, "*speed-control-style*: speed control choice (speed-control-as-float etc)");
+  s7_symbol_set_documentation(s7, ss->expand_control_length_symbol, "*expand-control-length*: current expansion segment length in seconds (.15)");
+  s7_symbol_set_documentation(s7, ss->expand_control_ramp_symbol, "*expand-control-ramp*: current expansion ramp time (.4)");
+  s7_symbol_set_documentation(s7, ss->expand_control_hop_symbol, "*expand-control-hop*: current expansion output grain spacing in seconds (0.05)");
+  s7_symbol_set_documentation(s7, ss->expand_control_jitter_symbol, "*expand-control-jitter*: current expansion output grain spacing jitter (0.1)");
+  s7_symbol_set_documentation(s7, ss->contrast_control_amp_symbol, "*contrast-control-amp*: contrast amp");
+  s7_symbol_set_documentation(s7, ss->reverb_control_feedback_symbol, "*reverb-control-feedback*: control-panel reverb feedback scaler");
+  s7_symbol_set_documentation(s7, ss->reverb_control_lowpass_symbol, "*reverb-control-lowpass*: control-panel reverb lowpass filter coefficient");
+  s7_symbol_set_documentation(s7, ss->reverb_control_decay_symbol, "*reverb-control-decay*: control-panel reverb decay time (1.0 seconds)");
+  s7_symbol_set_documentation(s7, ss->filter_control_order_symbol, "*filter-control-order*: control-panel filter order");
+
+  s7_symbol_set_access(s7, ss->channel_style_symbol, s7_make_function(s7, "[acc-" S_channel_style, acc_channel_style, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->filter_control_in_db_symbol, s7_make_function(s7, "[acc-" S_filter_control_in_dB, acc_filter_control_in_dB, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->filter_control_in_hz_symbol, s7_make_function(s7, "[acc-" S_filter_control_in_hz, acc_filter_control_in_hz, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->speed_control_tones_symbol, s7_make_function(s7, "[acc-" S_speed_control_tones, acc_speed_control_tones, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->speed_control_style_symbol, s7_make_function(s7, "[acc-" S_speed_control_style, acc_speed_control_style, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->expand_control_length_symbol, s7_make_function(s7, "[acc-" S_expand_control_length, acc_expand_control_length, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->expand_control_ramp_symbol, s7_make_function(s7, "[acc-" S_expand_control_ramp, acc_expand_control_ramp, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->expand_control_hop_symbol, s7_make_function(s7, "[acc-" S_expand_control_hop, acc_expand_control_hop, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->expand_control_jitter_symbol, s7_make_function(s7, "[acc-" S_expand_control_jitter, acc_expand_control_jitter, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->contrast_control_amp_symbol, s7_make_function(s7, "[acc-" S_contrast_control_amp, acc_contrast_control_amp, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->reverb_control_feedback_symbol, s7_make_function(s7, "[acc-" S_reverb_control_feedback, acc_reverb_control_feedback, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->reverb_control_lowpass_symbol, s7_make_function(s7, "[acc-" S_reverb_control_lowpass, acc_reverb_control_lowpass, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->reverb_control_decay_symbol, s7_make_function(s7, "[acc-" S_reverb_control_decay, acc_reverb_control_decay, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->filter_control_order_symbol, s7_make_function(s7, "[acc-" S_filter_control_order, acc_filter_control_order, 2, 0, false, "accessor"));
+#endif
 }
