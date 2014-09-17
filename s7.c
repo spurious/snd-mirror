@@ -1807,12 +1807,6 @@ static void init_types(void)
 /* optimizer flag for a procedure that sets some variable (set-car! for example).
  */
 
-#define T_ANNOTATED                   T_SETTER
-#define set_annotated(p)              typeflag(p) |= T_ANNOTATED
-#define is_annotated(p)               ((typeflag(p) & T_ANNOTATED) != 0)
-/* optimizer flag for a pair that has all_x_* info
- */
-
 #define T_MUTABLE                     (1 << (TYPE_BITS + 18))
 #define is_mutable(p)                 ((typeflag(p) & T_MUTABLE) != 0)
 /* #define set_mutable(p)             typeflag(p) |= T_MUTABLE */
@@ -43721,31 +43715,6 @@ static s7_pointer all_x_c_ss(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T2_1));
 }		    
 
-static s7_pointer all_x_c_s1s2(s7_scheme *sc, s7_pointer arg)
-{
-  /* (define (hi a b) (if (> a b) a b)) */
-  s7_pointer slots;
-  slots = let_slots(sc->envir);
-  if (slot_symbol(slots) == cadr(arg))
-    {
-      car(sc->T2_1) = slot_value(slots);
-      car(sc->T2_2) = slot_value(next_slot(slots));
-    }
-  else
-    {
-      car(sc->T2_2) = slot_value(slots);
-      car(sc->T2_1) = slot_value(next_slot(slots));
-    }
-  return(c_call(arg)(sc, sc->T2_1));
-}		    
-
-static s7_pointer all_x_c_is_eq_ss(s7_scheme *sc, s7_pointer arg)
-{
-  s7_pointer slots;
-  slots = let_slots(sc->envir);
-  return(make_boolean(sc, slot_value(slots) == slot_value(next_slot(slots))));
-}		    
-
 static s7_pointer all_x_c_sss(s7_scheme *sc, s7_pointer arg)
 {
   car(sc->T3_1) = find_symbol_checked(sc, cadr(arg));
@@ -43775,26 +43744,6 @@ static s7_pointer all_x_c_sq(s7_scheme *sc, s7_pointer arg)
   car(sc->T2_1) = find_symbol_checked(sc, cadr(arg));
   car(sc->T2_2) = cadr(caddr(arg));
   return(c_call(arg)(sc, sc->T2_1));
-}
-
-static s7_pointer all_x_c_s12q(s7_scheme *sc, s7_pointer arg)
-{
-  s7_pointer slots;
-  slots = let_slots(sc->envir);
-  if (slot_symbol(slots) == cadr(arg))
-    car(sc->T2_1) = slot_value(slots);
-  else car(sc->T2_1) = slot_value(next_slot(slots));
-  car(sc->T2_2) = cadr(caddr(arg));
-  return(c_call(arg)(sc, sc->T2_1));
-}
-
-static s7_pointer all_x_c_is_eq_s2q(s7_scheme *sc, s7_pointer arg)
-{
-  s7_pointer slots;
-  slots = let_slots(sc->envir);
-  if (slot_symbol(slots) == cadr(arg))
-    return(make_boolean(sc, slot_value(slots) == cadr(caddr(arg))));
-  return(make_boolean(sc, slot_value(next_slot(slots)) == cadr(caddr(arg))));
 }
 
 static s7_pointer all_x_c_opcq(s7_scheme *sc, s7_pointer arg)
@@ -44032,25 +43981,12 @@ static s7_pointer all_x_c_ssc(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T3_1));
 }
 
-#if 0
-/* we need an op for this: SAFE_A_CLOSURE_C: one line body that is allxable -- does this happen?
- */
-static s7_pointer all_x_a_closure_c(s7_scheme *sc, s7_pointer arg)
-{
-  s7_pointer p;
-  sc->envir = old_frame_with_slot(sc, closure_let(ecdr(arg)), cadr(arg));
-  p = car(closure_body(ecdr(arg)));
-  return((s7_function)fcdr(p)(sc, cdr(p)));
-}
-#endif
-
 static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
 {
   if (is_pair(arg))
     {
       if (is_optimized(arg))
 	{
-	  set_annotated(arg);
 	  switch (optimize_data(arg))
 	    {
 	    case HOP_SAFE_C_C:           return(all_x_c_c);
@@ -48330,116 +48266,6 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 	}
     }
   return(x);
-}
-
-
-/* prelookup static refs */
-
-static void substitute_arg_refs(s7_scheme *sc, s7_pointer expr, s7_pointer sym1, s7_pointer sym2)
-{
-  /* look for all_x_[s*] where s matches sym1|2, optimize to use current env
-   *   also HOP_SAFE_C_[s*] -> HOP_SAFE_C_S1|2?
-   * stop if any new env possible (shadowing and more complex env access)
-   *
-   * why can't we do something similar with locals? 
-   * how can slots be reversed if safe closure? -- macros and OP_APPLY handling -- apparently no way around this
-   */
-  s7_pointer p;
-  if (!is_pair(expr)) return;
-  if (is_syntactic(car(expr)))
-    {
-      switch (symbol_syntax_op(car(expr)))
-	{
-	case OP_WHEN:
-	case OP_UNLESS:
-	case OP_IF:
-	  /* an experiment in combining various all_x* was not a big win */
-
-	case OP_OR:
-	case OP_AND:
-	case OP_BEGIN:
-	case OP_COND:
-	case OP_CASE:
-	  for (p = cdr(expr); is_pair(p); p = cdr(p))
-	    if (is_pair(car(p)))
-	      substitute_arg_refs(sc, p, sym1, sym2);
-	  break;
-	  
-	case OP_SET:
-	  substitute_arg_refs(sc, caddr(expr), sym1, sym2);
-	  break;
-
-	case OP_LET:
-	case OP_LET_STAR:
-	case OP_LETREC:
-	case OP_LETREC_STAR:
-	  /* these can be optimized to some extent */
-	  break;
-	  
-	case OP_WITH_BAFFLE: /* this creates a new env */
-	case OP_QUOTE:
-	case OP_DO:
-	case OP_WITH_LET:
-	default:
-	  break;
-	}
-    }
-  else  /* car(expr) is not syntactic */
-    {
-      if (is_annotated(car(expr)))
-	{
-	  if (((s7_function)fcdr(expr) == all_x_c_ss) &&
-	      (cadr(car(expr)) == sym1) &&
-	      (caddr(car(expr)) == sym2))
-	    {
-	      if (c_call(car(expr)) == g_is_eq)
-		set_fcdr(expr, (s7_pointer)all_x_c_is_eq_ss);
-	      else set_fcdr(expr, (s7_pointer)all_x_c_s1s2);
-	    }
-	  else
-	    {
-	      if (((s7_function)fcdr(expr) == all_x_c_sq) &&
-		  ((cadr(car(expr)) == sym1) ||
-		   (cadr(car(expr)) == sym2)))
-		{
-		  if (c_call(car(expr)) == g_is_eq)
-		    set_fcdr(expr, (s7_pointer)all_x_c_is_eq_s2q);
-		  else set_fcdr(expr, (s7_pointer)all_x_c_s12q);
-		}
-	    }
-	  substitute_arg_refs(sc, car(expr), sym1, sym2);
-	}
-      for (p = cdr(expr); is_pair(p); p = cdr(p))
-	if (is_pair(car(p)))
-	      substitute_arg_refs(sc, p, sym1, sym2);
-    }
-}
-
-static void optimize_safe_closure_arg_refs(s7_scheme *sc, s7_pointer func, int argn)
-{
-  /* we can replace all_x_c_ss (etc) with specializations that do not need to look up
-   *   the function args: all_x_c_s1s2 (sc->envir slots will be in the any order!)
-   *
-   * 1-arg: no order problem
-   * 2-arg: s1s2 as above, s1c, s2c? etc -- everything splits
-   * need a 2nd level all_x_eval -- all_x_prefind
-   *
-   * anything that introduces a new env halts our tree walker
-   */
-  /* if we used the arg list instead of e, I think this would also work for any closure.
-   */
-
-  s7_pointer body, p, e, sym1, sym2 = NULL;
-  if ((argn == 0) || (argn > 2)) return;
-
-  body = closure_body(func);
-  e = closure_let(func);
-  sym1 = slot_symbol(let_slots(e));
-  if (argn == 2) sym2 = slot_symbol(next_slot(let_slots(e)));
-
-  for (p = body; is_pair(p); p = cdr(p))
-    if (is_pair(p))
-      substitute_arg_refs(sc, car(p), sym1, sym2);
 }
 
 
@@ -59148,7 +58974,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  else s7_make_slot(sc, new_env, car(arg), sc->NIL);
 		}
 	      let_slots(new_env) = reverse_slots(sc, let_slots(new_env));
-	      optimize_safe_closure_arg_refs(sc, new_func, i);
 	    }
 	  /* add the newly defined thing to the current environment */
 	  if (is_let(sc->envir))
@@ -69960,8 +69785,6 @@ int main(int argc, char **argv)
  * float-vector support is currently half-in/half-out (shouldn't the name be byte-vector?)
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
- * for clm methods, xen_to_c_generator could fallback on method check -- t932.scm -- can't decide about this
- * finish Display!
  * the xm/xg names should be in their own library *xg* *xm*, none of these is currently in autoload but this would require special handling in the Xen stuff.
  *   can libxg be loaded/init'd in repl? is it actually needed in normal Snd use?
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
