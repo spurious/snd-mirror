@@ -296,27 +296,28 @@ int main(int argc, char **argv)
   add_file("snd-env.c");
   add_file("snd-xen.c");
   add_file("snd-ladspa.c");
-  add_file("snd-xutils.c");
-  add_file("snd-xhelp.c");
-  add_file("snd-xfind.c");
-  add_file("snd-xmenu.c");
-  add_file("snd-xdraw.c");
-  add_file("snd-xlistener.c");
+  add_file("snd-motif.c");
+  /* add_file("snd-xutils.c"); */
+  /* add_file("snd-xhelp.c"); */
+  /* add_file("snd-xfind.c"); */
+  /* add_file("snd-xmenu.c"); */
+  /* add_file("snd-xdraw.c"); */
+  /* add_file("snd-xlistener.c"); */
   add_file("snd-listener.c");
-  add_file("snd-xchn.c");
-  add_file("snd-xsnd.c");
-  add_file("snd-xregion.c");
+  /* add_file("snd-xchn.c"); */
+  /* add_file("snd-xsnd.c"); */
+  /* add_file("snd-xregion.c"); */
   add_file("snd-xref.c");
   /*  add_file("snd-xdrop.c"); */
-  add_file("snd-xmain.c");
-  add_file("snd-xmix.c");
-  add_file("snd-xenv.c");
+  /* add_file("snd-xmain.c"); */
+  /* add_file("snd-xmix.c"); */
+  /* add_file("snd-xenv.c"); */
   add_file("snd-gxbitmaps.c");
   add_file("snd-gxcolormaps.c");
-  add_file("snd-xfft.c");
+  /* add_file("snd-xfft.c"); */
   /* add_file("snd-xprint.c"); */
-  add_file("snd-xfile.c");
-  add_file("snd-xprefs.c");
+  /* add_file("snd-xfile.c"); */
+  /* add_file("snd-xprefs.c"); */
   add_file("snd-gutils.c");
   add_file("snd-ghelp.c");
   add_file("snd-gfind.c");
@@ -828,7 +829,7 @@ int main(int argc, char **argv)
 		      if (menu_case)
 			{
 			  if ((strcmp(files[j], "snd-menu.c") != 0) &&
-			      (strcmp(files[j], "snd-xmenu.c") != 0) &&
+			      (strcmp(files[j], "snd-motif.c") != 0) &&
 			      (strcmp(files[j], "snd-gmenu.c") != 0))
 			    {
 			      if (strcmp(files[j], "snd-nogui.c") != 0)
@@ -849,7 +850,7 @@ int main(int argc, char **argv)
 		      if (file_case)
 			{
 			  if ((strcmp(files[j], "snd-file.c") != 0) &&
-			      (strcmp(files[j], "snd-xfile.c") != 0) &&
+			      (strcmp(files[j], "snd-motif.c") != 0) &&
 			      (strcmp(files[j], "snd-gfile.c") != 0))
 			    {
 			      if (strcmp(files[j], "snd-nogui.c") != 0)
@@ -891,7 +892,7 @@ int main(int argc, char **argv)
 		  (menu_count > 0) &&
 		  ((!(qs[i]->def)) ||
 		   (strcmp(qs[i]->def, "snd-menu.c") == 0) ||
-		   (strcmp(qs[i]->def, "snd-xmenu.c") == 0) ||
+		   (strcmp(qs[i]->def, "snd-motif.c") == 0) ||
 		   (strcmp(qs[i]->def, "snd-gmenu.c") == 0)))
 		fprintf(FD, "\n->SND-MENU.H\n");
 
@@ -899,7 +900,7 @@ int main(int argc, char **argv)
 		  (file_count > 0) &&
 		  ((!(qs[i]->def)) ||
 		   (strcmp(qs[i]->def, "snd-file.c") == 0) ||
-		   (strcmp(qs[i]->def, "snd-xfile.c") == 0) ||
+		   (strcmp(qs[i]->def, "snd-motif.c") == 0) ||
 		   (strcmp(qs[i]->def, "snd-gfile.c") == 0)))
 		fprintf(FD, "\n->SND-FILE.H\n");
 

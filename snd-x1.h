@@ -30,7 +30,6 @@ void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, in
 void draw_spectro_line(graphics_context *ax, int color, int x0, int y0, int x1, int y1);
 void allocate_color_map(int colormap);
 void check_colormap_sizes(int size);
-void initialize_colormap(void);
 void reflect_color_list(bool setup_time);
 void allocate_sono_rects(int size);
 void set_sono_rectangle(int j, int color, int x, int y, int width, int height);
@@ -46,7 +45,6 @@ void set_spectro_z_angle(mus_float_t val);
 void set_spectro_x_scale(mus_float_t val);
 void set_spectro_y_scale(mus_float_t val);
 void set_spectro_z_scale(mus_float_t val);
-void view_color_orientation_callback(Widget w, XtPointer context, XtPointer info);
 bool color_orientation_dialog_is_active(void);
 Widget make_color_orientation_dialog(bool managed);
 void reflect_spectro(void);
@@ -144,15 +142,11 @@ int update_region_browser(bool grf_too);
 bool region_browser_is_active(void);
 void delete_region_and_update_browser(int n);
 void reflect_play_region_stop(int n);
-void view_region_callback(Widget w, XtPointer context, XtPointer info);
 bool region_dialog_is_active(void);
 void allocate_region_rows(int n);
 void reflect_regions_in_region_browser(void);
 void reflect_no_regions_in_region_browser(void);
 void reflect_region_graph_style(void);
-int region_dialog_region(void);
-char *regrow_get_label(void *ur);
-int regrow_get_pos(void *ur);
 void g_init_gxregion(void);
 
 
@@ -192,7 +186,6 @@ void g_init_gxcolormaps(void);
 
 /* -------- snd-xfind.c -------- */
 
-void edit_find_callback(Widget w, XtPointer context, XtPointer info);
 void find_dialog(chan_info *cp);
 void find_dialog_set_label(const char *str);
 void stop_search_if_error(const char *msg, void *data);
@@ -216,17 +209,11 @@ int number_width(const char *num, bool use_tiny_font);
 int number_height(XFontStruct *numbers_font);
 int label_height(bool use_tiny_font);
 int mark_name_width(const char *txt);
-void map_over_children(Widget w, void (*func)(Widget w));
 void map_over_children_with_color(Widget w, void (*func)(Widget uw, color_t color), color_t color);
 void clear_window(graphics_context *ax);
-void raise_dialog(Widget w);
-void set_main_color_of_widget(Widget w);
-char *get_label(Widget label);
 void set_label(Widget label, const char *str);
 void set_title(const char *title);
 void goto_window(Widget text);
-XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure);
-void color_sashes(Widget w);
 void check_for_event(void);
 void color_cursor(Pixel color);
 void color_marks(Pixel color);
@@ -250,13 +237,7 @@ void set_widget_y(Widget w, Position y);
 void set_widget_size(Widget w, Dimension width, Dimension height);
 void set_widget_position(Widget w, Position x, Position y);
 idle_t add_work_proc(XtWorkProc func, XtPointer data);
-int attach_all_sides(Arg *args, int n);
-void widget_int_to_text(Widget w, int val);
-void widget_mus_long_t_to_text(Widget w, mus_long_t val);
 void draw_rotated_axis_label(chan_info *cp, graphics_context *ax, const char *text, int x0, int y0);
-void ensure_list_row_visible(widget_t list, int row);
-void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows);
-XmString multi_line_label(const char *s, int *lines);
 
 
 /* -------- snd-xchn.c -------- */
@@ -355,7 +336,6 @@ void update_sound_label(snd_info *sp);
 /* -------- snd-xfile.c -------- */
 
 void cleanup_file_monitor(void);
-bool initialize_file_monitor(void);
 void *unmonitor_file(void *watcher);
 void monitor_sound(snd_info *sp);
 
@@ -423,7 +403,6 @@ void new_active_channel_alert(void);
 void env_redisplay(void);
 void env_redisplay_with_print(void);
 void update_enved_background_waveform(chan_info *cp);
-void enved_print(char *name);
 Widget create_envelope_editor(void);
 void set_enved_clipping(bool val);
 void reflect_enved_style(void);

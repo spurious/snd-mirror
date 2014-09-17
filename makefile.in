@@ -68,7 +68,7 @@ NO_GUI_HEADERS = snd-nogui0.h snd-nogui1.h
 
 O_FILES = snd-io.o snd-utils.o snd-listener.o snd-completion.o snd-menu.o snd-axis.o snd-data.o snd-fft.o snd-marks.o snd-file.o snd-edits.o snd-chn.o snd-dac.o snd-region.o snd-select.o snd-find.o snd-snd.o snd-help.o snd-main.o snd-print.o snd-trans.o snd-mix.o snd.o snd-env.o snd-xen.o snd-ladspa.o snd-kbd.o snd-sig.o snd-draw.o
 
-MOTIF_O_FILES = snd-xutils.o snd-xhelp.o snd-xfind.o snd-xmenu.o snd-xdraw.o snd-xlistener.o snd-xchn.o snd-xsnd.o snd-xregion.o snd-xmain.o snd-xmix.o snd-xenv.o snd-gxbitmaps.o snd-gxcolormaps.o snd-xfft.o snd-xfile.o snd-xprefs.o xm.o
+MOTIF_O_FILES = snd-gxbitmaps.o snd-gxcolormaps.o snd-motif.o xm.o
 
 GTK_O_FILES = snd-gutils.o snd-ghelp.o snd-gfind.o snd-gmenu.o snd-gdraw.o snd-glistener.o glistener.o snd-gchn.o snd-gsnd.o snd-gregion.o snd-gmain.o snd-gmix.o snd-genv.o snd-gxbitmaps.o snd-gxcolormaps.o snd-gfft.o snd-gfile.o snd-gprefs.o xg.o
 
