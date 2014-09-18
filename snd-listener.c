@@ -187,13 +187,12 @@ static Xen g_listener_prompt(void) {return(C_string_to_Xen_string(listener_promp
 static Xen g_set_listener_prompt(Xen val) 
 {
   #define H_listener_prompt "(" S_listener_prompt "): the current lisp listener prompt character ('>') "
-
   Xen_check_type(Xen_is_string(val), val, 1, S_setB S_listener_prompt, "a string"); 
 
   if (listener_prompt(ss)) free(listener_prompt(ss));
   set_listener_prompt(mus_strdup(Xen_string_to_C_string(val)));
 
-  return(C_string_to_Xen_string(listener_prompt(ss)));
+  return(val);
 }
 
 
@@ -246,8 +245,10 @@ Xen_wrap_1_arg(g_snd_completion_w, g_snd_completion)
 Xen_wrap_no_args(g_listener_colorized_w, g_listener_colorized)
 Xen_wrap_1_arg(g_listener_set_colorized_w, g_listener_set_colorized)
 
-#if HAVE_SCHEME && USE_GTK
+#if HAVE_SCHEME
+#if USE_GTK
 static s7_pointer acc_listener_colorized(s7_scheme *sc, s7_pointer args) {return(g_listener_set_colorized(s7_cadr(args)));}
+#endif
 static s7_pointer acc_listener_prompt(s7_scheme *sc, s7_pointer args) {return(g_set_listener_prompt(s7_cadr(args)));}
 #endif
 
@@ -268,11 +269,12 @@ If it returns true, Snd assumes you've dealt the text yourself, and does not try
 
   Xen_define_procedure("snd-completion",        g_snd_completion_w,        1, 0, 0, "return completion of arg");
 
-#if HAVE_SCHEME && USE_GTK
+#if HAVE_SCHEME
+#if USE_GTK
   s7_symbol_set_documentation(s7, ss->listener_colorized_symbol, "*listener-colorized*: number of vector elements to print in the listener (default: 12)");
-  s7_symbol_set_documentation(s7, ss->listener_prompt_symbol, "*listener-prompt*: the current lisp listener prompt character ('>') ");
-
   s7_symbol_set_access(s7, ss->listener_colorized_symbol, s7_make_function(s7, "[acc-" S_listener_colorized, acc_listener_colorized, 2, 0, false, "accessor"));
+#endif
+  s7_symbol_set_documentation(s7, ss->listener_prompt_symbol, "*listener-prompt*: the current lisp listener prompt character ('>') ");
   s7_symbol_set_access(s7, ss->listener_prompt_symbol, s7_make_function(s7, "[acc-" S_listener_prompt, acc_listener_prompt, 2, 0, false, "accessor"));
 #endif  
 }

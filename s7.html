@@ -6441,7 +6441,9 @@ int main(int argc, char **argv)
   pthread_join(*(f2-&gt;thread), NULL);
 }
 
-/* gcc -o repl repl.c s7.o -g3 -Wl,-export-dynamic -lpthread -lm -I. -ldl */
+/* build s7 with -DWITH_THREADS, then
+ * gcc -o repl repl.c s7.o -g3 -Wl,-export-dynamic -lpthread -lm -I. -ldl 
+ */
 </pre>
 
 </div>

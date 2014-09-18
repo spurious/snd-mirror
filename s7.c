@@ -1203,10 +1203,15 @@ struct s7_scheme {
   s7_pointer direct_str;
 
   bool gc_off, gc_stats;              /* gc_off: if true, the GC won't run, gc_stats: if true, print stats during GC */
-  unsigned int gensym_counter, cycle_counter;
+  unsigned int gensym_counter, cycle_counter, f_class, add_class, equal_class;
+  int format_column;
   long long int capture_env_counter;
   bool symbol_table_is_locked;  
   unsigned long long int let_number;
+
+  #define INITIAL_FILE_NAMES_SIZE 8
+  s7_pointer *file_names;
+  int file_names_size, file_names_top;
 
   #define INITIAL_STRBUF_SIZE 1024
   unsigned int strbuf_size;
@@ -4339,19 +4344,23 @@ s7_pointer s7_gc_on(s7_scheme *sc, bool on)
 }
 
 
+#if (!WITH_THREADS)
 static s7_cell *alloc_pointer(void)
 {
   #define ALLOC_SIZE 256
   static unsigned int alloc_k = ALLOC_SIZE;
   static s7_cell *alloc_cells = NULL;
 
-  if (alloc_k == ALLOC_SIZE)
-    {
+  if (alloc_k == ALLOC_SIZE)     /* if either no current block or the block is used up */
+    {                            /*   make a new block */
       alloc_cells = (s7_cell *)calloc(ALLOC_SIZE, sizeof(s7_cell));
       alloc_k = 0;
     }
   return(&alloc_cells[alloc_k++]);
 }
+#else
+#define alloc_pointer() (s7_cell *)calloc(1, sizeof(s7_cell))
+#endif
 
 
 static void add_permanent_object(s7_scheme *sc, s7_pointer obj)
@@ -26013,7 +26022,6 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 /* -------------------------------- format -------------------------------- */
 
 static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj);
-static int format_column = 0;
 
 static s7_pointer format_error(s7_scheme *sc, const char *msg, const char *str, s7_pointer args, format_data *fdat)
 {
@@ -26061,7 +26069,7 @@ static s7_pointer format_error(s7_scheme *sc, const char *msg, const char *str, 
 static void format_append_char(s7_scheme *sc, format_data *fdat, char c, s7_pointer port)
 {
   port_write_character(port)(sc, c, port);
-  format_column++;
+  sc->format_column++;
 
   /* if c is #\null, is this the right thing to do? 
    * We used to return "1 2 3 4" because ~C was first turned into a string (empty in this case)
@@ -26078,7 +26086,7 @@ static void format_append_char(s7_scheme *sc, format_data *fdat, char c, s7_poin
 static void format_append_newline(s7_scheme *sc, format_data *fdat, s7_pointer port)
 {
   port_write_character(port)(sc, '\n', port);
-  format_column = 0;
+  sc->format_column = 0;
 }
 
 
@@ -26086,7 +26094,7 @@ static void format_append_string(s7_scheme *sc, format_data *fdat, const char *s
 {
   port_write_string(port)(sc, str, len, port);
   fdat->loc += len;
-  format_column += len;
+  sc->format_column += len;
 }
 
 
@@ -26297,14 +26305,14 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		  /* which is actually a bad idea, but as a desperate stopgap, I simply padded
 		   *  the string port string with 8 chars that are not in the length.
 		   */
-		  format_column = 0;
+		  sc->format_column = 0;
 		}
 	      else format_append_newline(sc, fdat, port);
 	      i++;
 	      break;
 	      
 	    case '&':                           /* -------- conditional newline -------- */
-	      if (format_column > 0)
+	      if (sc->format_column > 0)
 		format_append_newline(sc, fdat, port);
 	      i++;
 	      break;
@@ -26701,11 +26709,11 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 			if (precision > 0)
 			  {
 			    int mult;
-			    mult = (int)(ceil((s7_Double)(format_column + 1 - width) / (s7_Double)precision)); /* CLtL2 ("least positive int") */
+			    mult = (int)(ceil((s7_Double)(sc->format_column + 1 - width) / (s7_Double)precision)); /* CLtL2 ("least positive int") */
 			    if (mult < 1) mult = 1;
 			    width += (precision * mult);
 			  }
-			for (j = format_column + 1; j < width; j++)
+			for (j = sc->format_column + 1; j < width; j++)
 			  format_append_char(sc, fdat, pad, port);
 		      }
 		    break;
@@ -26861,7 +26869,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	    }
 	  else port_write_string(port)(sc, (char *)(str + i), new_len, port);
 	  fdat->loc += new_len;
-	  format_column += new_len;
+	  sc->format_column += new_len;
 	  i = j - 1;
 	}
     }
@@ -26942,7 +26950,7 @@ static s7_pointer format_to_port(s7_scheme *sc, s7_pointer port, const char *str
 static s7_pointer g_format_1(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer pt, str;
-  format_column = 0;
+  sc->format_column = 0;
 
   /* sc->args = sc->NIL; */ /* why? s7test is ok either way */
   pt = car(args);
@@ -31628,43 +31636,6 @@ s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
 }
 
 
-/* an experiment */
-s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x)
-{
-  s7_Int len;
-  s7_Double scl;
-  s7_Double *d;
-
-  if (!s7_is_real(x))
-    return(s7_wrong_type_arg_error(sc, "float-vector-scale!", 2, x, "a real number")); 
-  scl = number_to_double(sc, x, "float-vector-scale!");
-  if (scl == 1.0) return(v);
-
-  len = vector_length(v);
-  if (len == 0) return(v);
-  d = float_vector_elements(v);
-
-  if (scl == 0.0)
-    memset((void *)d, 0, len * sizeof(s7_Double));
-  else
-    {
-      s7_Int i, lim4;
-      lim4 = len - 4;
-      i = 0;
-      while (i <= lim4)
-	{
-	  d[i++] *= scl;
-	  d[i++] *= scl;
-	  d[i++] *= scl;
-	  d[i++] *= scl;
-	}
-      for (; i < len; i++) 
-	d[i] *= scl;
-    }
-  return(v);
-}
-
-
 static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_float_vector_ref "(float-vector-ref v ...) returns an element of the float-vector v."
@@ -33230,7 +33201,6 @@ void s7_function_set_step_safe(s7_pointer f)
   set_step_safe(f);
 }
 
-static unsigned int f_class = 0;
 
 static s7_pointer fallback_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
@@ -33432,7 +33402,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
     c_function_all_args(x) = MAX_ARITY;
   else c_function_all_args(x) = required_args + optional_args;
 
-  c_function_class(x) = ++f_class;
+  c_function_class(x) = ++sc->f_class;
   c_function_chooser(x) = fallback_chooser;
   c_function_ext(x) = NULL;
 
@@ -37696,13 +37666,8 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 
 /* error reporting info -- save filename and line number */
 
-#define INITIAL_FILE_NAMES_SIZE 8
-static s7_pointer *file_names = NULL;
-static int file_names_size = 0;
-static int file_names_top = -1;
-
 #define remembered_line_number(Line) (Line & 0xfffff)
-#define remembered_file_name(Line)   (((Line >> 20) <= file_names_top) ? file_names[Line >> 20] : sc->F)
+#define remembered_file_name(Line)   (((Line >> 20) <= sc->file_names_top) ? sc->file_names[Line >> 20] : sc->F)
 /* this gives room for 4000 files each of 1000000 lines */
 
 
@@ -37710,31 +37675,31 @@ static int remember_file_name(s7_scheme *sc, const char *file)
 {
   int i;
 
-  for (i = 0; i <= file_names_top; i++)
-    if (safe_strcmp(file, string_value(file_names[i])) == 0)
+  for (i = 0; i <= sc->file_names_top; i++)
+    if (safe_strcmp(file, string_value(sc->file_names[i])) == 0)
       return(i);
 
-  file_names_top++;
-  if (file_names_top >= file_names_size)
+  sc->file_names_top++;
+  if (sc->file_names_top >= sc->file_names_size)
     {
       int old_size = 0;
-      if (file_names_size == 0)
+      if (sc->file_names_size == 0)
 	{
-	  file_names_size = INITIAL_FILE_NAMES_SIZE;
-	  file_names = (s7_pointer *)calloc(file_names_size, sizeof(s7_pointer));
+	  sc->file_names_size = INITIAL_FILE_NAMES_SIZE;
+	  sc->file_names = (s7_pointer *)calloc(sc->file_names_size, sizeof(s7_pointer));
 	}
       else
 	{
-	  old_size = file_names_size;
-	  file_names_size *= 2;
-	  file_names = (s7_pointer *)realloc(file_names, file_names_size * sizeof(s7_pointer));
+	  old_size = sc->file_names_size;
+	  sc->file_names_size *= 2;
+	  sc->file_names = (s7_pointer *)realloc(sc->file_names, sc->file_names_size * sizeof(s7_pointer));
 	}
-      for (i = old_size; i < file_names_size; i++)
-	file_names[i] = sc->F;
+      for (i = old_size; i < sc->file_names_size; i++)
+	sc->file_names[i] = sc->F;
     }
-  file_names[file_names_top] = s7_make_permanent_string(file);
+  sc->file_names[sc->file_names_top] = s7_make_permanent_string(file);
 
-  return(file_names_top);
+  return(sc->file_names_top);
 }
 
 
@@ -40843,7 +40808,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	  (is_symbol(funclet_function(env))))
 	{
 	  if (has_line_number(env))
-	    return(list_3(sc, funclet_function(env), file_names[let_file(env)], make_integer(sc, let_line(env))));
+	    return(list_3(sc, funclet_function(env), sc->file_names[let_file(env)], make_integer(sc, let_line(env))));
 	  return(funclet_function(env));
 	}
       return(sc->UNDEFINED);
@@ -41547,7 +41512,7 @@ static s7_pointer g_format_allg_no_column(s7_scheme *sc, s7_pointer args)
       check_method(sc, pt, sc->FORMAT, args);
       return(wrong_type_argument_with_type(sc, sc->FORMAT, small_int(1), pt, A_FORMAT_PORT));
     }
-  format_column = 0;
+  sc->format_column = 0;
   return(format_to_port_1(sc, (pt == sc->T) ? sc->output_port : pt, 
 			  string_value(cadr(args)), cddr(args), NULL,
 			  !is_output_port(pt), /* i.e. is boolean port so we're returning a string */
@@ -43085,15 +43050,13 @@ static s7_pointer set_function_chooser(s7_scheme *sc, s7_pointer sym, s7_pointer
 }
 
 
-static unsigned int add_class = 0, equal_class = 0;
-
 static void init_choosers(s7_scheme *sc)
 {
   s7_pointer f;
 
   /* + */
   f = set_function_chooser(sc, sc->ADD, add_chooser);
-  add_class = c_function_class(f);
+  sc->add_class = c_function_class(f);
 
   add_1 = make_function_with_class(sc, f, "+", g_add_1, 1, 0, false, "+ opt");
   add_2 = make_function_with_class(sc, f, "+", g_add_2, 2, 0, false, "+ opt");
@@ -43197,7 +43160,7 @@ static void init_choosers(s7_scheme *sc)
 
   /* = */
   f = set_function_chooser(sc, sc->EQ, equal_chooser);
-  equal_class = c_function_class(f);
+  sc->equal_class = c_function_class(f);
 
   equal_s_ic = make_function_with_class(sc, f, "=", g_equal_s_ic, 2, 0, false, "= opt");
   equal_length_ic = make_function_with_class(sc, f, "=", g_equal_length_ic, 2, 0, false, "= opt");
@@ -46505,7 +46468,7 @@ static bool arg_match(s7_scheme *sc, s7_pointer expr, s7_pointer args)
 
 static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_pointer x, bool at_end, bool *bad_set)
 {
-  /* called only from body_is_safe */
+  /* called only from body_is_safe and itself */
 
   sc->cycle_counter++;
   if ((!is_proper_list(sc, x)) ||
@@ -46675,7 +46638,8 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	  if (is_symbol(caddr(x)))
 	    return(false);
 
-	  if (((s7_is_constant(caddr(x))) ||
+	  if ((((s7_is_constant(caddr(x))) && 
+		(!is_pair(caddr(x)))) ||
 	       (form_is_safe(sc, func, args, caddr(x), false, bad_set))) &&
 	      (((is_pair(cadr(x))) &&
 		(form_is_safe(sc, func, args, cadr(x), false, bad_set))) ||
@@ -46711,7 +46675,6 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	   * (let () (define (hi1 a) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1))
 	   * (let () (define (hi1 a) (define (ho1 b) b) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1))
 	   */
-	  
 	  if ((is_pair(cdr(x))) &&
 	      ((cadr(x) == func) ||
 	       ((is_pair(cadr(x))) && (caadr(x) == func))))
@@ -49719,11 +49682,11 @@ static s7_pointer check_do(s7_scheme *sc)
 #if (!WITH_GMP)
 			  if ((s7_is_integer(caddr(step_expr))) &&
 			      (s7_integer(caddr(step_expr)) == 1) &&
-			      (c_function_class(ecdr(step_expr)) == add_class) &&
+			      (c_function_class(ecdr(step_expr)) == sc->add_class) &&
 			      /* we check above that (car(vars) == cadr(step_expr))
 			       *    and that         (car(vars) == cadr(end))
 			       */
-			      ((c_function_class(ecdr(end)) == equal_class) ||
+			      ((c_function_class(ecdr(end)) == sc->equal_class) ||
 			       (ecdr(end) == geq_2)))
 			    pair_set_syntax_symbol(sc->code, sc->DOTIMES_P);
 #endif
@@ -49737,11 +49700,11 @@ static s7_pointer check_do(s7_scheme *sc)
 				(s7_integer(caddr(step_expr)) == 1)) ||
 			       ((s7_is_integer(cadr(step_expr))) &&
 				(s7_integer(cadr(step_expr)) == 1))) &&
-			      (c_function_class(ecdr(step_expr)) == add_class) &&
+			      (c_function_class(ecdr(step_expr)) == sc->add_class) &&
 #if WITH_GMP
-			      (c_function_class(ecdr(end)) == equal_class)
+			      (c_function_class(ecdr(end)) == sc->equal_class)
 #else
-			      ((c_function_class(ecdr(end)) == equal_class) ||
+			      ((c_function_class(ecdr(end)) == sc->equal_class) ||
 			       (ecdr(end) == geq_2))
 #endif
 			      )
@@ -49751,7 +49714,7 @@ static s7_pointer check_do(s7_scheme *sc)
 			       */
 			      pair_set_syntax_symbol(sc->code, sc->SAFE_DO);
 			      if ((!has_set) &&
-				  (c_function_class(ecdr(end)) == equal_class))
+				  (c_function_class(ecdr(end)) == sc->equal_class))
 				{
 				  pair_set_syntax_symbol(sc->code, sc->SAFE_DOTIMES);
 				  /* what are the most common cases here?
@@ -68064,7 +68027,7 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
     return(make_vector_wrapper(sc, sc->c_objects_loc, sc->c_objects));
 
   if (sym == sc->file_names_symbol)                                      /* file-names (loaded files) */
-    return(make_vector_wrapper(sc, file_names_top, file_names));
+    return(make_vector_wrapper(sc, sc->file_names_top, sc->file_names));
   if (sym == sc->c_types_symbol)                                         /* c-types */
     {
       s7_pointer res;
@@ -68386,7 +68349,14 @@ s7_scheme *s7_init(void)
   
   sc->gensym_counter = 0;
   sc->capture_env_counter = 0;
+  sc->f_class = 0;
+  sc->add_class = 0;
+  sc->equal_class = 0;
   sc->let_number = 0;
+  sc->format_column = 0;
+  sc->file_names = NULL;
+  sc->file_names_size = 0;
+  sc->file_names_top = -1;
   sc->no_values = 0;
   sc->s7_call_line = 0;
   sc->s7_call_file = NULL;
@@ -69778,7 +69748,9 @@ int main(int argc, char **argv)
  *
  * --------------------------------------------------
  *
- * float-vector support is currently half-in/half-out (shouldn't the name be byte-vector?)
+ * perhaps add an s7aux.c for stuff like the int/float funcs in vct.c -- could add fft? linear algebra stuff like dot-product (clm.c)
+ *   mean/norm etc (dsp.scm) -- this could have s7aux.scm + autoload
+ *   
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
@@ -69790,11 +69762,5 @@ int main(int argc, char **argv)
  * accessor if set: opt func involving set or free var, add accessor to free, call func
  *    (let () (define xxx 23) (define (hix) (set! xxx 24)) (hix) (set! (symbol-access 'xxx) (lambda (sym val) (format *stderr* "val: ~A~%" val) val)) (hix))
  *    and no printout -- how to deal with this?? -- if global to func, don't assume anything?
- *
- * eval case in s7test thinks (or from repl):
- *  16984: (let ((saved-args (make-vector 10))) (let runner ((i 0)) (set! (saved-args i) (lambda () i)) (if (< i 9) (runner (+ i 1)))) (summer saved-args)) 
- *         got 81 but expected 45
- *
- * file_names (and counters) should be in sc, compare_func? format_column?
  */
 

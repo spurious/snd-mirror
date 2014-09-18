@@ -681,10 +681,9 @@ static Xen g_vct_scale(Xen obj1, Xen obj2)
 {
   #define H_vct_scaleB "(" S_vct_scaleB " v val): scale each element of v by val: v[i] *= val, returns v"
 
-#if HAVE_SCHEME
-  Xen_check_type(s7_is_float_vector(obj1), obj1, 1, "float-vector-scale!", "a float-vector");
-  return(s7_float_vector_scale(s7, obj1, obj2));
-#else
+  /* Xen_check_type(s7_is_float_vector(obj1), obj1, 1, "float-vector-scale!", "a float-vector");
+   * return(s7_float_vector_scale(s7, obj1, obj2));
+   */
   mus_long_t i;
   vct *v1;
   mus_float_t scl;
@@ -719,7 +718,6 @@ static Xen g_vct_scale(Xen obj1, Xen obj2)
 	}
     }
   return(obj1);
-#endif
 }
 
 

@@ -1606,7 +1606,7 @@ static Xen g_mus_reset(Xen gen)
 #if HAVE_SCHEME
   if (s7_is_float_vector(gen))
     {
-      s7_float_vector_scale(s7, gen, xen_zero);
+      memset((void *)s7_float_vector_elements(gen), 0, s7_vector_length(gen) * sizeof(s7_Double));
       return(gen);
     }
   {

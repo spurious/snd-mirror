@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.13"
-#define S7_DATE "30-Aug-14"
+#define S7_VERSION "3.14"
+#define S7_DATE "18-Sep-14"
 
 
 typedef long long int s7_Int;
@@ -15,21 +15,19 @@ typedef double s7_Double;
  *    integer-decode-float assumes s7_Double is double, as do all the homogenous float vector functions.
  */
 
-
-  /* --------------------------------------------------------------------------------
-   * s7 itself is based on the types and functions in this file, so the first place to look for examples
-   *   is s7.c.  There are also a few variations on a REPL at the end of s7.html.  s7test.scm
-   *   is a regression test for s7 -- it still turns up a few problems.  More tests are certainly welcome!  
-   *   Extended examples of s7 usage are:
-   *
-   *   Snd: ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-15.tar.gz (a sound editor)
-   *     which includes:
-   *       libxm: libxm.tar.gz (X, Motif, Gtk, Cairo, and openGL bindings)
-   *       sndlib: sndlib.tar.gz (sound file, audio port, and CLM bindings plus an optimizer (run))
-   *
-   *   Common Music/Grace by Rick Taube: http://camil.music.uiuc.edu/Software/grace/downloads/cm3.tar.gz (composition)
-   *     which can use sndlib -- see Snd's grfsnd.html or the cmdist archives for details
-   */
+/* s7 itself is based on the types and functions in this file, so the first place to look for examples
+ *   is s7.c.  There are also a few variations on a REPL at the end of s7.html.  s7test.scm
+ *   is a regression test for s7 -- it still turns up a few problems.  More tests are certainly welcome!  
+ *   Extended examples of s7 usage are:
+ *
+ *   Snd: ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-15.tar.gz (a sound editor)
+ *     which includes:
+ *       libxm: libxm.tar.gz (X, Motif, Gtk, Cairo, and openGL bindings)
+ *       sndlib: sndlib.tar.gz (sound file, audio port, and CLM bindings plus an optimizer (run))
+ *
+ *   Common Music/Grace by Rick Taube: http://camil.music.uiuc.edu/Software/grace/downloads/cm3.tar.gz (composition)
+ *     which can use sndlib -- see Snd's grfsnd.html or the cmdist archives for details
+ */
 
 
 #include <stdio.h>
@@ -309,7 +307,6 @@ s7_Int *s7_int_vector_elements(s7_pointer vec);
 s7_Double *s7_float_vector_elements(s7_pointer vec);
 bool s7_is_float_vector(s7_pointer p);                                    
 bool s7_is_int_vector(s7_pointer p);                                      
-s7_pointer s7_float_vector_scale(s7_scheme *sc, s7_pointer v, s7_pointer x);
 
 s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_Int index);                            /* (vector-ref vec index) */
 s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer a);              /* (vector-set! vec index a) */

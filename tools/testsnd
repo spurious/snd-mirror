@@ -26,6 +26,7 @@ echo ' '
 
 gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -ldl -lm 
 ./repl tools/t456.scm
+./snd t101.scm
 
 # ./snd t816.scm
 
