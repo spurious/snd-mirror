@@ -800,8 +800,6 @@ static XmString multi_line_label(const char *s, int *lines)
   return(xms1);
 }
 
-#include "snd.h"
-
 #include <Xm/ScaleP.h>
 /* needed to set the scale title background */
 
@@ -2235,7 +2233,7 @@ color dialog changes"
   orientation_hook = Xen_define_hook(S_orientation_hook, "(make-hook)", 0, H_orientation_hook);
   color_hook =       Xen_define_hook(S_color_hook,       "(make-hook)", 0, H_color_hook);
 }
-#include "snd.h"
+
 
 #define HELP_ROWS 10
 #define HELP_XREFS 8
@@ -2791,7 +2789,7 @@ void snd_help_back_to_top(void)
 {
   if (help_text) XmTextShowPosition(help_text, 0);
 }
-#include "snd.h"
+
 
 static Widget edit_find_dialog, edit_find_text, cancelB, edit_find_label, previousB;
 static Widget find_error_frame = NULL, find_error_label = NULL;
@@ -3133,7 +3131,6 @@ void g_init_gxfind(void)
 }
 
 
-#include "snd.h"
 
 #define NAME_COLUMNS 8
 
@@ -4270,8 +4267,6 @@ void mix_dialog_set_mix(int id)
 }
 
 
-
-#include "snd.h"
 
 /* envelope editor and viewer */
 
@@ -5860,8 +5855,6 @@ void g_init_gxenv(void)
 				   S_setB S_enved_envelope, g_set_enved_envelope_w,  0, 0, 1, 0);
 }
 /* Transform settings dialog */
-
-#include "snd.h"
 
 
 static Widget transform_dialog = NULL; /* main dialog shell */
@@ -7722,7 +7715,7 @@ bool transform_dialog_is_active(void)
   return((transform_dialog) && 
 	 (XtIsManaged(transform_dialog)));
 }
-#include "snd.h"
+
 
 /* -------- region browser -------- */
 
@@ -8499,9 +8492,9 @@ void g_init_gxregion(void)
 {
   Xen_define_procedure(S_view_regions_dialog, g_view_regions_dialog_w, 0, 0, 0,  H_view_regions_dialog);
 }
-#include "snd.h"
-#include "snd-file.h"
 
+
+#include "snd-file.h"
 
 /* various file-related dialogs:
    File|Edit:Save-as
@@ -17726,9 +17719,9 @@ event. If it returns " PROC_TRUE ", the file is not opened or mixed by Snd."
   s7_symbol_set_access(s7, ss->view_files_sort_symbol, s7_make_function(s7, "[acc-" S_view_files_sort, acc_view_files_sort, 2, 0, false, "accessor"));
 #endif
 }
-#include "snd.h"
-#include "sndlib-strings.h"
 
+
+#include "sndlib-strings.h"
 
 /* preferences dialog; layout design taken from webmail
  */
@@ -20424,10 +20417,10 @@ widget_t make_preferences_dialog(void)
 
   return(preferences_dialog);
 }
-#include "snd.h"
+
+
 #include "snd-menu.h"
 #include <X11/cursorfont.h>
-
 
 /* X side of file print */
 
@@ -22713,7 +22706,7 @@ void g_init_gxmenu(void)
 
 /* Motif bug: the button backgrounds remain in the original highlight color? but the widget (if it is one) is not the child of any obvious widget
  */
-#include "snd.h"
+
 
 /* motif case needs prompt length fixups, listener if no panes, minibuffer as label not text entry
  */
@@ -25138,7 +25131,7 @@ $mouse_enter_text_hook.add_hook!(\"enter\") do |w|\n\
 
   preload_best_completions();
 }
-#include "snd.h"
+
 
 #include <X11/XKBlib.h>
 
@@ -26868,7 +26861,8 @@ leaves the drawing area (graph pane) of the given channel."
   s7_symbol_set_documentation(s7, ss->graph_cursor_symbol, "*graph-cursor*: current graph cursor shape");
 #endif
 }
-#include "snd.h"
+
+
 #include <X11/xpm.h>
 
 #define sound_env_editor(Sp) ((env_editor *)(sp->flt))
@@ -30159,7 +30153,7 @@ void g_init_gxsnd(void)
   Xen_add_to_hook_list(ss->snd_open_file_hook, reflect_file_close_in_sync_w, "sync-open-file-watcher", "sound sync open-file-hook handler");
   Xen_define_procedure(S_sound_widgets,  g_sound_widgets_w,  0, 1, 0, H_sound_widgets);
 }
-#include "snd.h"
+
 
 #define FALLBACK_FONT        "fixed"
 #define DEFAULT_LISTENER_FONT "9x15"

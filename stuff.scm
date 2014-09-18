@@ -225,8 +225,7 @@
 
 (define-macro (eval-case key . clauses) ; case with evaluated key-lists
   (let ((select (gensym)))
-    `(begin 
-       (define ,select ,key)
+    `(let ((,select ,key))
        (cond ,@(map (lambda (lst)
 		      (if (pair? (car lst))
 			  (cons `(member ,select (list ,@(car lst)))
@@ -1393,12 +1392,6 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 	    (((obj 'subsequence) obj start end)
 	     (subsequence (obj 'value) start end))
 	    #f)))))
-
-#|
-(pitch* ((tag1 ...)
-	 (tag2 ...))
-	...)
-|#
 
 
 (define (sequence->string val)

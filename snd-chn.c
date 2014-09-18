@@ -5426,18 +5426,6 @@ void graph_button_press_callback(chan_info *cp, void *ev, int x, int y, int key_
 {
   snd_info *sp;
 
-  /* in Motif and Gtk, we see left (1) and middle (2) buttons, 
-   *   but right (3) button is trapped earlier and starts the popup menu.
-   *   In gtk, that's apparently only because we trap the POPUP_BUTTON in 
-   *   graph_button_press first in snd-gchn.c.  In motif, there's a check
-   *   in snd-xchn (post_popup), but I think that only applies to the
-   *   separate windows case.
-   * presumably in gtk we could remove that check, land here, get our graph context
-   *   from within_graph, then choose the right popup menu if button == POPUP_BUTTON
-   * perhaps in Motif, we could not enable the popup menu in snd-xmenu, calling it
-   *   explicitly as in gtk?
-   */
-
   sp = cp->sound;
   if ((cp->active < CHANNEL_HAS_AXES) || (sp == NULL)) return; /* autotest silliness */
 
@@ -5445,6 +5433,7 @@ void graph_button_press_callback(chan_info *cp, void *ev, int x, int y, int key_
   if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y); /* select this?? */
 
   click_within_graph = within_graph(cp, x, y);
+  select_channel(sp, cp->chan);
 
   if (button == POPUP_BUTTON)
     {
@@ -5478,9 +5467,7 @@ void graph_button_press_callback(chan_info *cp, void *ev, int x, int y, int key_
 	case CLICK_LISP:
 	  post_lisp_popup_menu(ev);
 	  break;
-	  
 	}
-
       return;
     }
 
@@ -5489,7 +5476,7 @@ void graph_button_press_callback(chan_info *cp, void *ev, int x, int y, int key_
   press_x = x;
   press_y = y;
 #endif
-  select_channel(sp, cp->chan);
+  /* select_channel(sp, cp->chan); */
   dragged_cp = cp;
   dragged = false;
   finish_selection_creation();

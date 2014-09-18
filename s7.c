@@ -1206,6 +1206,7 @@ struct s7_scheme {
   unsigned int gensym_counter, cycle_counter;
   long long int capture_env_counter;
   bool symbol_table_is_locked;  
+  unsigned long long int let_number;
 
   #define INITIAL_STRBUF_SIZE 1024
   unsigned int strbuf_size;
@@ -3792,7 +3793,6 @@ static void mark_vector(s7_pointer p)
        *    to keep the parent case separate (i.e. sc->F means the current is the original)
        *    so that we only free once (or remove_from_heap once).
        */
-
       if ((vector_has_dimensional_info(p)) &&
 	  (s7_is_vector(shared_vector(p))))
 	mark_vector(shared_vector(p));
@@ -3876,7 +3876,6 @@ static void mark_input_port(s7_pointer p)
 static void mark_syntax(s7_pointer p)
 {
 }
-
 
 
 static void init_mark_functions(void)
@@ -5031,13 +5030,11 @@ static void clear_syms_in_list(s7_scheme *sc) {sc->syms_tag++;}
 
 /* -------------------------------- environments -------------------------------- */
 
-static unsigned long long int let_number = 0;
-
 #define NEW_FRAME(Sc, Old_Env, New_Env)  \
   do {                                   \
       s7_pointer _x_;                      \
       NEW_CELL(Sc, _x_);                   \
-      let_id(_x_) = ++let_number; \
+      let_id(_x_) = ++sc->let_number; \
       let_slots(_x_) = Sc->NIL;                  \
       outlet(_x_) = Old_Env;		         \
       set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
@@ -5050,7 +5047,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
   /* return(cons(sc, sc->NIL, old_env)); */
   s7_pointer x;
   NEW_CELL(sc, x);
-  let_id(x) = ++let_number;
+  let_id(x) = ++sc->let_number;
   let_slots(x) = sc->NIL;
   outlet(x) = old_env;
   set_type(x, T_ENVIRONMENT | T_IMMUTABLE);
@@ -5062,7 +5059,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
 {
   s7_pointer frame;
   NEW_CELL(sc, frame);
-  let_id(frame) = let_number + 1;
+  let_id(frame) = sc->let_number + 1;
   let_slots(frame) = sc->NIL;
   outlet(frame) = sc->envir;
   set_type(frame, T_ENVIRONMENT | T_IMMUTABLE);
@@ -5094,14 +5091,14 @@ static s7_pointer make_simple_let(s7_scheme *sc)
     s7_pointer _x_, _slot_, _sym_, _val_;	 \
       _sym_ = Symbol; _val_ = Value;		 \
       NEW_CELL(Sc, _x_);                   \
-      let_id(_x_) = ++let_number; \
+      let_id(_x_) = ++sc->let_number; \
       outlet(_x_) = Old_Env;		         \
       set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
       New_Env = _x_;		   \
       NEW_CELL_NO_CHECK(Sc, _slot_);\
       slot_symbol(_slot_) = _sym_;\
       slot_set_value(_slot_, _val_);	\
-      symbol_set_local(_sym_, let_number, _slot_); \
+      symbol_set_local(_sym_, sc->let_number, _slot_); \
       set_type(_slot_, T_SLOT | T_IMMUTABLE);\
       next_slot(_slot_) = sc->NIL;\
       let_slots(_x_) = _slot_;\
@@ -5114,20 +5111,20 @@ static s7_pointer make_simple_let(s7_scheme *sc)
       _sym1_ = Symbol1; _val1_ = Value1;				\
       _sym2_ = Symbol2; _val2_ = Value2;				\
       NEW_CELL(Sc, _x_);                   \
-      let_id(_x_) = ++let_number; \
+      let_id(_x_) = ++sc->let_number; \
       outlet(_x_) = Old_Env;		         \
       set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
       New_Env = _x_;		   \
       NEW_CELL_NO_CHECK(Sc, _slot_);\
       slot_symbol(_slot_) = _sym1_;\
       slot_set_value(_slot_, _val1_);	\
-      symbol_set_local(_sym1_, let_number, _slot_); \
+      symbol_set_local(_sym1_, sc->let_number, _slot_); \
       set_type(_slot_, T_SLOT | T_IMMUTABLE);\
       let_slots(_x_) = _slot_;\
       NEW_CELL_NO_CHECK(Sc, _x_);\
       slot_symbol(_x_) = _sym2_;\
       slot_set_value(_x_, _val2_);	\
-      symbol_set_local(_sym2_, let_number, _x_); \
+      symbol_set_local(_sym2_, sc->let_number, _x_); \
       set_type(_x_, T_SLOT | T_IMMUTABLE);\
       next_slot(_x_) = sc->NIL;\
       next_slot(_slot_) = _x_;\
@@ -5139,14 +5136,14 @@ static s7_pointer make_simple_let(s7_scheme *sc)
     s7_pointer _x_, _slot_, _sym_, _val_;	 \
       _sym_ = Symbol; _val_ = Value;		 \
       NEW_CELL(Sc, _x_);                   \
-      let_id(_x_) = ++let_number; \
+      let_id(_x_) = ++sc->let_number; \
       outlet(_x_) = Old_Env;		         \
       set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
       New_Env = _x_;		   \
       NEW_CELL_NO_CHECK(Sc, _slot_);\
       slot_symbol(_slot_) = _sym_;\
       slot_set_value(_slot_, _val_);		\
-      symbol_set_local(_sym_, let_number, _slot_); \
+      symbol_set_local(_sym_, sc->let_number, _slot_); \
       set_type(_slot_, T_SLOT | T_IMMUTABLE);\
       next_slot(_slot_) = sc->NIL;\
       let_slots(_x_) = _slot_;\
@@ -5172,7 +5169,7 @@ static s7_pointer old_frame_in_env(s7_scheme *sc, s7_pointer frame, s7_pointer n
   let_slots(frame) = sc->NIL;                  
   outlet(frame) = next_frame;
   set_type(frame, T_ENVIRONMENT | T_IMMUTABLE); 
-  let_id(frame) = ++let_number; 
+  let_id(frame) = ++sc->let_number; 
   return(frame);
 }
 
@@ -5182,7 +5179,7 @@ static s7_pointer old_frame_with_slot(s7_scheme *sc, s7_pointer env, s7_pointer 
   s7_pointer x, sym;
   unsigned long long int id;
 
-  id = ++let_number;
+  id = ++sc->let_number;
   let_id(env) = id;
   x = let_slots(env);
   slot_set_value(x, val);
@@ -5198,7 +5195,7 @@ static s7_pointer old_frame_with_two_slots(s7_scheme *sc, s7_pointer env, s7_poi
   s7_pointer x, sym;
   unsigned long long int id;
 
-  id = ++let_number;
+  id = ++sc->let_number;
   let_id(env) = id;
   x = let_slots(env);
   slot_set_value(x, val1);
@@ -5218,7 +5215,7 @@ static s7_pointer old_frame_with_three_slots(s7_scheme *sc, s7_pointer env, s7_p
   s7_pointer x, sym;
   unsigned long long int id;
 
-  id = ++let_number;
+  id = ++sc->let_number;
   let_id(env) = id;
   x = let_slots(env);
 
@@ -50904,7 +50901,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		p = counter_result(counter);
 		let_slots(p) = sc->NIL;                  
-		let_id(p) = ++let_number; 
+		let_id(p) = ++sc->let_number; 
 		outlet(p) = sc->envir;
 	      }
 	    sc->envir = p;
@@ -55327,7 +55324,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		clear_list_in_use(sc->args);
 		sc->code = ecdr(code);
 
-		id = ++let_number;
+		id = ++sc->let_number;
 		env = closure_let(sc->code);
 		let_id(env) = id;
 		
@@ -55457,7 +55454,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 
 		/* we have to put off the actual environment update in case this is a tail recursive call */
-		let_id(e) = ++let_number;
+		let_id(e) = ++sc->let_number;
 		for (p = let_slots(e); is_slot(p); p = next_slot(p))
 		  {
 		    slot_set_value(p, slot_pending_value(p));
@@ -55483,7 +55480,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_SAFE_CLOSURE_STAR:
 	      /* (let () (define* (hi (a 100)) (random a)) (define (ho) (hi)) (ho)) */
 	      sc->envir = closure_let(ecdr(code));
-	      let_id(sc->envir) = ++let_number;
+	      let_id(sc->envir) = ++sc->let_number;
 	      car(sc->T2_1) = let_slots(closure_let(ecdr(code)));
 	      car(sc->T2_2) = closure_args(ecdr(code));
 	      goto FILL_SAFE_CLOSURE_STAR;
@@ -55520,12 +55517,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (e != sc->rootlet)
 		  {
 		    s7_pointer p;
-		    let_id(e) = ++let_number;
+		    let_id(e) = ++sc->let_number;
 		    for (p = let_slots(e); is_slot(p); p = next_slot(p))
 		      {
 			s7_pointer sym;
 			sym = slot_symbol(p);
-			symbol_set_local(sym, let_number, p);
+			symbol_set_local(sym, sc->let_number, p);
 			if (sym == arg2)
 			  slot_set_value(p, real_zero);          /* if this doesn't happen should we raise an error? (currently let-set! does not) */
 		      }
@@ -58806,7 +58803,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    set_safe_closure(new_func);
 	    
 	    NEW_CELL_NO_CHECK(sc, new_env);
-	    let_id(new_env) = ++let_number;
+	    let_id(new_env) = ++sc->let_number;
 	    let_slots(new_env) = sc->NIL;
 	    outlet(new_env) = sc->envir;
 	    set_type(new_env, T_ENVIRONMENT | T_IMMUTABLE | T_FUNCTION_ENV);
@@ -58941,7 +58938,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 
 	  NEW_CELL_NO_CHECK(sc, new_env);                   
-	  let_id(new_env) = ++let_number; 
+	  let_id(new_env) = ++sc->let_number; 
 	  outlet(new_env) = closure_let(new_func);
 	  closure_let(new_func) = new_env;		   
 	  let_slots(new_env) = sc->NIL;
@@ -61412,7 +61409,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->args = frame;
 	for (p = car(sc->code); is_pair(p); p = cdr(p))
 	  ADD_SLOT(frame, caar(p), find_symbol_checked(sc, cadar(p)));
-	let_number++;
+	sc->let_number++;
 	sc->envir = frame;
 	sc->code = cdr(sc->code);
 	goto BEGIN;
@@ -61431,7 +61428,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    car(sc->T1_1) = find_symbol_checked(sc, cadr(cp));
 	    ADD_SLOT(frame, caar(p), c_call(cp)(sc, sc->T1_1)); 
 	  }
-	let_number++;
+	sc->let_number++;
 	sc->envir = frame;
 	sc->code = cdr(sc->code);
 	if (is_pair(cdr(sc->code)))
@@ -61457,7 +61454,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    arg = ((s7_function)fcdr(arg))(sc, car(arg));
 	    ADD_SLOT(frame, caar(p), arg);
 	  }
-	let_number++;
+	sc->let_number++;
 	sc->envir = frame;
 	sc->code = cdr(sc->code);
 	if (is_pair(cdr(sc->code)))
@@ -62824,13 +62821,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer p;
 	    if (!is_let(e))
 	      eval_type_error(sc, "with-let takes an environment argument: ~A", e);
-	    let_id(e) = ++let_number;
+	    let_id(e) = ++sc->let_number;
 	    sc->envir = e;
 	    for (p = let_slots(e); is_slot(p); p = next_slot(p))
 	      {
 		s7_pointer sym;
 		sym = slot_symbol(p);
-		symbol_set_local(sym, let_number, p);
+		symbol_set_local(sym, sc->let_number, p);
 	      }
 	  }
 	e = cdr(sc->code);
@@ -62883,10 +62880,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	else 
 	  {
 	    s7_pointer p;
-	    let_id(e) = ++let_number;
+	    let_id(e) = ++sc->let_number;
 	    sc->envir = e;
 	    for (p = let_slots(e); is_slot(p); p = next_slot(p))
-	      symbol_set_local(slot_symbol(p), let_number, p);
+	      symbol_set_local(slot_symbol(p), sc->let_number, p);
 	  }
 	if (is_pair(cdr(sc->code)))
 	  push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
@@ -68389,6 +68386,7 @@ s7_scheme *s7_init(void)
   
   sc->gensym_counter = 0;
   sc->capture_env_counter = 0;
+  sc->let_number = 0;
   sc->no_values = 0;
   sc->s7_call_line = 0;
   sc->s7_call_file = NULL;
@@ -69742,7 +69740,7 @@ int main(int argc, char **argv)
 	    {
 	      char *str;
 	      str = line_read;
-	      while ((str) && (isspace(str[0]))) str++;
+	      while ((str) && (isspace((int)str[0]))) str++;
 	      if (*str)
 		{
 		  s7_pointer result;
@@ -69780,19 +69778,14 @@ int main(int argc, char **argv)
  *
  * --------------------------------------------------
  *
- * popup menu reflects selected sound, but comes up over any sound -- if popup, select underlying?
- *   why isn't that the case always? -- pointer selects if focus-follows-mouse, see snd-chn.c 5444 
  * float-vector support is currently half-in/half-out (shouldn't the name be byte-vector?)
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
- * the xm/xg names should be in their own library *xg* *xm*, none of these is currently in autoload but this would require special handling in the Xen stuff.
- *   can libxg be loaded/init'd in repl? is it actually needed in normal Snd use?
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  *
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
- * *snd* or *clm* libraries also
- * other libraries: sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
+ * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
  *
  * accessor if set: opt func involving set or free var, add accessor to free, call func
  *    (let () (define xxx 23) (define (hix) (set! xxx 24)) (hix) (set! (symbol-access 'xxx) (lambda (sym val) (format *stderr* "val: ~A~%" val) val)) (hix))
@@ -69801,5 +69794,7 @@ int main(int argc, char **argv)
  * eval case in s7test thinks (or from repl):
  *  16984: (let ((saved-args (make-vector 10))) (let runner ((i 0)) (set! (saved-args i) (lambda () i)) (if (< i 9) (runner (+ i 1)))) (summer saved-args)) 
  *         got 81 but expected 45
+ *
+ * file_names (and counters) should be in sc, compare_func? format_column?
  */
 
