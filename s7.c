@@ -1208,6 +1208,13 @@ struct s7_scheme {
   long long int capture_env_counter;
   bool symbol_table_is_locked;  
   unsigned long long int let_number;
+  double default_rationalize_error;
+  s7_pointer *op_names_saved;
+
+  s7_pointer tmp_str;
+  int tmp_str_size;
+  char *tmp_str_chars;
+  char *help_arglist;
 
   #define INITIAL_FILE_NAMES_SIZE 8
   s7_pointer *file_names;
@@ -1363,7 +1370,7 @@ struct s7_scheme {
   s7_pointer free_heap_size_symbol, file_names_symbol, symbol_table_symbol, hash_tables_symbol, gensyms_symbol, cpu_time_symbol;
   s7_pointer stack_size_symbol, rootlet_size_symbol, c_types_symbol, safety_symbol, maximum_stack_size_symbol, gc_stats_symbol;
   s7_pointer strings_symbol, vectors_symbol, input_ports_symbol, output_ports_symbol, continuations_symbol, c_objects_symbol;
-  s7_pointer catches_symbol, exits_symbol, stack_symbol;
+  s7_pointer catches_symbol, exits_symbol, stack_symbol, default_rationalize_error_symbol;
 };
 
 typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_write_t;
@@ -8119,8 +8126,6 @@ static s7_pointer exact_to_inexact(s7_scheme *sc, s7_pointer x)
 #define WITH_OVERFLOW_ERROR true
 #define WITHOUT_OVERFLOW_ERROR false
 
-static double default_rationalize_error = 1.0e-12;
-
 static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x, bool with_error)
 {
   switch (type(x))
@@ -8150,7 +8155,7 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x, bool with_error)
 	    return(sc->NIL);
 	  }
 
-	if (c_rationalize(val, default_rationalize_error, &numer, &denom))
+	if (c_rationalize(val, sc->default_rationalize_error, &numer, &denom))
 	  return(s7_make_ratio(sc, numer, denom));
       }
 
@@ -10610,7 +10615,7 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 	return(out_of_range(sc, sc->RATIONALIZE, small_int(2), cadr(args), "error term is NaN"));
       if (err < 0.0) err = -err;
     }
-  else err = default_rationalize_error;
+  else err = sc->default_rationalize_error;
 
   switch (type(x))
     {
@@ -19530,34 +19535,30 @@ s7_pointer s7_make_permanent_string(const char *str)
 
 static s7_pointer make_temporary_string(s7_scheme *sc, const char *str, int len) 
 {
-  static s7_pointer tmp_str = NULL;
-  static int tmp_str_size = -1;
-  static char *tmp_str_chars = NULL;
-
-  if (!tmp_str)
+  if (!sc->tmp_str)
     {
-      tmp_str = alloc_pointer();
-      heap_location(tmp_str) = NOT_IN_HEAP;
-      set_type(tmp_str, T_STRING | T_SAFE_PROCEDURE);
-      string_hash(tmp_str) = 0;
-      string_needs_free(tmp_str) = false;
+      sc->tmp_str = alloc_pointer();
+      heap_location(sc->tmp_str) = NOT_IN_HEAP;
+      set_type(sc->tmp_str, T_STRING | T_SAFE_PROCEDURE);
+      string_hash(sc->tmp_str) = 0;
+      string_needs_free(sc->tmp_str) = false;
     }
-  if (len >= tmp_str_size)
+  if (len >= sc->tmp_str_size)
     {
       if (len == 0)
-	tmp_str_size = 8;
-      else tmp_str_size = 2 * len;
-      if (!tmp_str_chars)
-	tmp_str_chars = (char *)malloc(tmp_str_size * sizeof(char));
-      else tmp_str_chars = (char *)realloc(tmp_str_chars, tmp_str_size * sizeof(char));
-      string_value(tmp_str) = tmp_str_chars;
+	sc->tmp_str_size = 8;
+      else sc->tmp_str_size = 2 * len;
+      if (!sc->tmp_str_chars)
+	sc->tmp_str_chars = (char *)malloc(sc->tmp_str_size * sizeof(char));
+      else sc->tmp_str_chars = (char *)realloc(sc->tmp_str_chars, sc->tmp_str_size * sizeof(char));
+      string_value(sc->tmp_str) = sc->tmp_str_chars;
     }
 
-  string_length(tmp_str) = len;
+  string_length(sc->tmp_str) = len;
   if (len > 0)
-    memmove((void *)tmp_str_chars, (void *)str, len); /* not memcpy because str might be a temp string (i.e. tmp_str_chars -> itself) */
-  tmp_str_chars[len] = 0;
-  return(tmp_str);
+    memmove((void *)sc->tmp_str_chars, (void *)str, len); /* not memcpy because str might be a temp string (i.e. sc->tmp_str_chars -> itself) */
+  sc->tmp_str_chars[len] = 0;
+  return(sc->tmp_str);
 }
 
 
@@ -33024,10 +33025,7 @@ static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
 typedef struct {
   s7_pointer table, lst;
   int loc;
-  void *next;
 } ht_iter;
-
-static ht_iter *ht_iter_free_list = NULL;
 
 static char *print_ht_iter(s7_scheme *sc, void *val)
 {
@@ -33037,27 +33035,7 @@ static char *print_ht_iter(s7_scheme *sc, void *val)
   return(str);
 }
 
-
-static void ht_iter_free(void *p)
-{
-  ht_iter *val = (ht_iter *)p;
-  val->next = (void *)ht_iter_free_list;
-  ht_iter_free_list = val;
-}
-
-
-static ht_iter *ht_iter_alloc(void)
-{
-  if (ht_iter_free_list)
-    {
-      ht_iter *p;
-      p = ht_iter_free_list;
-      ht_iter_free_list = (ht_iter *)(p->next);
-      return(p);
-    }
-  return((ht_iter *)malloc(sizeof(ht_iter)));
-}
-
+static void ht_iter_free(void *p) {free(p);}
 
 static bool equal_ht_iter(void *val1, void *val2)
 {
@@ -33069,7 +33047,6 @@ static bool equal_ht_iter(void *val1, void *val2)
 	 (h1->loc == h2->loc)&&
 	 (h1->lst == h2->lst));
 }
-
 
 static void mark_ht_iter(void *val)
 {
@@ -33091,7 +33068,7 @@ static s7_pointer copy_ht_iter(s7_scheme *sc, s7_pointer obj)
   ht_iter *new_iter, *old_iter;
   old_iter = (ht_iter *)s7_object_value(obj);
   
-  new_iter = ht_iter_alloc();
+  new_iter = (ht_iter *)malloc(sizeof(ht_iter));
   new_iter->lst = old_iter->lst;
   new_iter->table = old_iter->table;
   new_iter->loc = old_iter->loc;
@@ -33111,7 +33088,7 @@ returns the next (key . value) pair in the hash-table each time it is called.  W
       check_method(sc, car(args), sc->MAKE_HASH_TABLE_ITERATOR, args);
       return(simple_wrong_type_argument(sc, sc->MAKE_HASH_TABLE_ITERATOR, car(args), T_HASH_TABLE));
     }
-  iter = ht_iter_alloc();
+  iter = (ht_iter *)malloc(sizeof(ht_iter));
   iter->lst = sc->NIL;
   iter->table = car(args);
   iter->loc = -1;
@@ -33780,8 +33757,8 @@ s7_pointer set_c_function_call_args(s7_scheme *sc)
  */
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 {
-  static char *arglist = NULL, *help = NULL;
-  #define ARGLIST_SIZE 512
+  char *help = NULL;
+  #define HELP_ARGLIST_SIZE 512
 
   if (is_symbol(x))
     {
@@ -33806,14 +33783,14 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 
       if (help) return(help);
 
-      if (!arglist)
-	arglist = (char *)malloc(ARGLIST_SIZE * sizeof(char));
+      if (!sc->help_arglist)
+	sc->help_arglist = (char *)malloc(HELP_ARGLIST_SIZE * sizeof(char));
       args = s7_object_to_c_string(sc, closure_args(x));
       if (args)
 	{
-	  snprintf(arglist, ARGLIST_SIZE, "args: %s", args);
+	  snprintf(sc->help_arglist, HELP_ARGLIST_SIZE, "args: %s", args);
 	  free(args);
-	  return(arglist);
+	  return(sc->help_arglist);
 	}
     }
   
@@ -38321,14 +38298,13 @@ static s7_pointer eval_error_with_string(s7_scheme *sc, s7_pointer errmsg, s7_po
 
 static s7_pointer eval_error_with_name_and_string(s7_scheme *sc, s7_pointer errmsg, s7_pointer obj)
 {
-  static s7_pointer *op_names_saved = NULL;
   int ind;
   ind = (int)(sc->op);
-  if (!op_names_saved)
-    op_names_saved = (s7_pointer *)calloc(OP_MAX_DEFINED + 1, sizeof(s7_pointer));
-  if (!op_names_saved[ind])
-    op_names_saved[ind] = s7_make_permanent_string(op_names[ind]);
-  return(s7_error(sc, sc->SYNTAX_ERROR, list_3(sc, errmsg, op_names_saved[ind], obj)));
+  if (!sc->op_names_saved)
+    sc->op_names_saved = (s7_pointer *)calloc(OP_MAX_DEFINED + 1, sizeof(s7_pointer));
+  if (!sc->op_names_saved[ind])
+    sc->op_names_saved[ind] = s7_make_permanent_string(op_names[ind]);
+  return(s7_error(sc, sc->SYNTAX_ERROR, list_3(sc, errmsg, sc->op_names_saved[ind], obj)));
 }
 
 
@@ -66489,7 +66465,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 	}
       mpfr_abs(error, error, GMP_RNDN);
     }
-  else mpfr_init_set_d(error, default_rationalize_error, GMP_RNDN);
+  else mpfr_init_set_d(error, sc->default_rationalize_error, GMP_RNDN);
   
   if (is_big_number(p0))
     mpfr_init_set(ux, big_real(promote_number(sc, T_BIG_REAL, p0)), GMP_RNDN);
@@ -67791,7 +67767,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	    mpfr_init_set_str(e, "0.0000001", 10, GMP_RNDN);
 	    mpfr_mul(e, e, rat, GMP_RNDN);
 	    mpfr_clear(rat);
-	    /* as in g_random, small ratios are a problem because the error term (default_rationalize_error = 1e-12 here)
+	    /* as in g_random, small ratios are a problem because the error term (sc->default_rationalize_error = 1e-12 here)
 	     *   clobbers everything to 0.
 	     */
 	    x = big_rationalize(sc, list_2(sc, mpfr_to_big_real(sc, n), mpfr_to_big_real(sc, e)));
@@ -67953,6 +67929,7 @@ static void init_s7_env(s7_scheme *sc)
   sc->catches_symbol =                s7_make_symbol(sc, "catches");
   sc->exits_symbol =                  s7_make_symbol(sc, "exits");
   sc->stack_symbol =                  s7_make_symbol(sc, "stack");
+  sc->default_rationalize_error_symbol = s7_make_symbol(sc, "default-rationalize-error");
 }
 
 static s7_pointer make_vector_wrapper(s7_scheme *sc, s7_Int size, s7_pointer *elements)
@@ -68008,6 +67985,9 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
     return(sc->protected_objects);
   if (sym == sc->gc_stats_symbol)                                        /* gc-stats */
     return(make_boolean(sc, sc->gc_stats));
+
+  if (sym == sc->default_rationalize_error_symbol)                       /* default-rationalize-error */
+    return(make_real(sc, sc->default_rationalize_error));
 
   if (sym == sc->input_ports_symbol)                                     /* input-ports */
     return(make_vector_wrapper(sc, sc->input_ports_loc, sc->input_ports));
@@ -68081,6 +68061,15 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 		  if (s7_is_integer(val))
 		    sc->safety = s7_integer(val);
 		  else return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+		}
+	      else
+		{
+		  if (sym == sc->default_rationalize_error_symbol)
+		    {
+		      if (s7_is_real(val))
+			sc->default_rationalize_error = real_to_double(sc, val, "set! default-rationalize-error");
+		      else return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_REAL));
+		    }
 		}
 	    }
 	}
@@ -68347,6 +68336,12 @@ s7_scheme *s7_init(void)
   s7_vector_fill(sc, sc->symbol_table, sc->NIL);
   heap_location(sc->symbol_table) = NOT_IN_HEAP;
   
+  sc->op_names_saved = NULL;
+  sc->tmp_str = NULL;
+  sc->tmp_str_size = -1;
+  sc->tmp_str_chars = NULL;
+  sc->help_arglist = NULL;
+  sc->default_rationalize_error = 1.0e-12;
   sc->gensym_counter = 0;
   sc->capture_env_counter = 0;
   sc->f_class = 0;
@@ -69384,7 +69379,7 @@ s7_scheme *s7_init(void)
     s7_define_constant(sc, "most-positive-fixnum", make_permanent_integer((top == 8) ? S7_LLONG_MAX : ((top == 4) ? S7_LONG_MAX : S7_SHORT_MAX)));
     s7_define_constant(sc, "most-negative-fixnum", make_permanent_integer((top == 8) ? S7_LLONG_MIN : ((top == 4) ? S7_LONG_MIN : S7_SHORT_MIN)));
     
-    if (top == 4) default_rationalize_error = 1.0e-6;
+    if (top == 4) sc->default_rationalize_error = 1.0e-6;
     s7_define_constant(sc, "pi", real_pi);
     sc->PI = s7_make_symbol(sc, "pi");
 
@@ -69750,7 +69745,6 @@ int main(int argc, char **argv)
  *
  * perhaps add an s7aux.c for stuff like the int/float funcs in vct.c -- could add fft? linear algebra stuff like dot-product (clm.c)
  *   mean/norm etc (dsp.scm) -- this could have s7aux.scm + autoload
- *   
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
@@ -69762,5 +69756,22 @@ int main(int argc, char **argv)
  * accessor if set: opt func involving set or free var, add accessor to free, call func
  *    (let () (define xxx 23) (define (hix) (set! xxx 24)) (hix) (set! (symbol-access 'xxx) (lambda (sym val) (format *stderr* "val: ~A~%" val) val)) (hix))
  *    and no printout -- how to deal with this?? -- if global to func, don't assume anything?
- */
-
+ *
+  some globals: 
+   static char *typnam = NULL;
+   static int typnam_len = 0;
+ static c_object_t **object_types = NULL;
+ static int object_types_size = 0;
+ static int num_types = 0;
+   static char int_to_str[INT_TO_STR_SIZE];
+ static int num_to_str_size = 0;
+ static char *num_to_str = NULL;
+   
+ sgrep
+ begin-hook doc
+ append mock
+ thread s7_init times
+ thread + lg or diff dirs
+ why is chain-dsps still op_do?
+ ws-thread
+*/

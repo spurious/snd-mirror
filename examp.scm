@@ -1854,11 +1854,11 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 
       ;; now patch the two together (the apply let below) and evaluate the resultant thunk
 
-      (define inner (apply let closure 
-			   `((lambda ()
-			      (do ((k ,start (+ k 1)))
-				  ((= k ,end))
-				(outa k ,body))))))
+      (apply define (list 'inner)
+	     `((let ,closure
+		(do ((k ,start (+ k 1)))
+		    ((= k ,end))
+		  (outa k ,body)))))
       (inner))))
 #|
 (with-sound ()
