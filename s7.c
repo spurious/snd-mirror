@@ -1211,6 +1211,8 @@ struct s7_scheme {
   double default_rationalize_error;
   s7_pointer *op_names_saved;
 
+  char *typnam;
+  int typnam_len;
   s7_pointer tmp_str;
   int tmp_str_size;
   char *tmp_str_chars;
@@ -3589,16 +3591,16 @@ static void add_bignumber(s7_scheme *sc, s7_pointer p)
 #endif
 
 
-#define INIT_GC_CACHE_SIZE 512
+#define INIT_GC_CACHE_SIZE 64
 static void init_gc_caches(s7_scheme *sc)
 {
-  sc->strings_size = INIT_GC_CACHE_SIZE;
+  sc->strings_size = INIT_GC_CACHE_SIZE * 8;
   sc->strings_loc = 0;
   sc->strings = (s7_pointer *)malloc(sc->strings_size * sizeof(s7_pointer));
   sc->gensyms_size = INIT_GC_CACHE_SIZE;
   sc->gensyms_loc = 0;
   sc->gensyms = (s7_pointer *)malloc(sc->gensyms_size * sizeof(s7_pointer));
-  sc->vectors_size = INIT_GC_CACHE_SIZE;
+  sc->vectors_size = INIT_GC_CACHE_SIZE * 4;
   sc->vectors_loc = 0;
   sc->vectors = (s7_pointer *)malloc(sc->vectors_size * sizeof(s7_pointer));
   sc->hash_tables_size = INIT_GC_CACHE_SIZE;
@@ -29855,14 +29857,16 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
     return(sc->NIL);
 
   if (is_null(cdr(args)))
-    return(car(args)); 
-  
+    return(car(args));   /* no check_method here because we aren't checking the type? */
+
   x = sc->NIL;
   for (y = args; is_not_null(y); y = cdr(y)) 
     {
       /* the original version used s7_append but that copies the arguments too many times if there are 3 or more lists */
       s7_pointer p;
       p = car(y);
+
+      check_method(sc, p, sc->APPEND, (x != sc->NIL) ? cons(sc, reverse_in_place_unchecked(sc, sc->NIL, x), y) : args);
 
       if (is_null(cdr(y)))
 	return(reverse_in_place_unchecked(sc, p, x)); /* i.e. tack car(y) onto end of x copied and reversed */
@@ -35039,6 +35043,8 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
   return(func); 
 }
 
+/* a bug: (let () (define xxx 23) (define (hix) (set! xxx 24)) (hix) (set! (symbol-access 'xxx) (lambda (sym val) (format *stderr* "val: ~A~%" val) val)) (hix))
+ */
 
 static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
 {
@@ -37205,41 +37211,39 @@ line to be preceded by a semicolon."
 
 /* -------- error handlers -------- */
 
-static const char *make_type_name(const char *name, int article)
+static const char *make_type_name(s7_scheme *sc, const char *name, int article)
 {
-  static char *typnam = NULL;
-  static int typnam_len = 0;
   int i, len;
   char *s;
 
   len = safe_strlen(name) + 8;
-  if (len > typnam_len)
+  if (len > sc->typnam_len)
     {
-      if (typnam) free(typnam);
-      typnam = (char *)malloc(len * sizeof(char));
-      typnam_len = len;
+      if (sc->typnam) free(sc->typnam);
+      sc->typnam = (char *)malloc(len * sizeof(char));
+      sc->typnam_len = len;
     }
   if (article == INDEFINITE_ARTICLE)
     {
       i = 1;
-      typnam[0] = 'a';
+      sc->typnam[0] = 'a';
       if ((name[0] == 'a') || (name[0] == 'e') || (name[0] == 'i') || (name[0] == 'o') || (name[0] == 'u'))
-	typnam[i++] = 'n'; 
-      typnam[i++] = ' ';
+	sc->typnam[i++] = 'n'; 
+      sc->typnam[i++] = ' ';
     }
   else
     {
       if (article == DEFINITE_ARTICLE)
 	{
-	  typnam[0] = 't'; typnam[1] = 'h'; typnam[2] = 'e'; typnam[3] = ' '; 
+	  sc->typnam[0] = 't'; sc->typnam[1] = 'h'; sc->typnam[2] = 'e'; sc->typnam[3] = ' '; 
 	  i = 4;
 	}
       else i = 0;
     }
   for (s = (char *)name; *s; s++)
-    typnam[i++] = *s;
-  typnam[i] = '\0';
-  return(typnam);
+    sc->typnam[i++] = *s;
+  sc->typnam[i] = '\0';
+  return(sc->typnam);
 }
 
 
@@ -37337,13 +37341,13 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
   switch (type(arg))
     {
     case T_C_OBJECT:     
-      return(make_type_name(object_types[c_object_type(arg)]->name, article));
+      return(make_type_name(sc, object_types[c_object_type(arg)]->name, article));
 
     case T_INPUT_PORT:   
-      return(make_type_name((is_file_port(arg)) ? "input file port" : ((is_string_port(arg)) ? "input string port" : "input port"), article));
+      return(make_type_name(sc, (is_file_port(arg)) ? "input file port" : ((is_string_port(arg)) ? "input string port" : "input port"), article));
 
     case T_OUTPUT_PORT:  
-      return(make_type_name((is_file_port(arg)) ? "output file port" : ((is_string_port(arg)) ? "output string port" : "output port"), article));
+      return(make_type_name(sc, (is_file_port(arg)) ? "output file port" : ((is_string_port(arg)) ? "output string port" : "output port"), article));
 
     case T_ENVIRONMENT:  
       if (has_methods(arg))
@@ -37351,7 +37355,7 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
 	  s7_pointer class_name;
 	  class_name = find_method(sc, arg, sc->CLASS_NAME);
 	  if (is_symbol(class_name))
-	    return(make_type_name(symbol_name(class_name), article));
+	    return(make_type_name(sc, symbol_name(class_name), article));
 	}
       return(environments[article]);
 
@@ -37362,7 +37366,7 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
 	  s7_pointer class_name;
 	  class_name = find_method(sc, closure_let(arg), sc->CLASS_NAME);
 	  if (is_symbol(class_name))
-	    return(make_type_name(symbol_name(class_name), article));
+	    return(make_type_name(sc, symbol_name(class_name), article));
 	}
       return(closures[article]);
     }
@@ -37379,7 +37383,7 @@ static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
     {
       p = find_method(sc, find_let(sc, x), sc->CLASS_NAME);
       if (is_symbol(p))
-	return(make_string_wrapper(sc, make_type_name(symbol_name(p), INDEFINITE_ARTICLE)));
+	return(make_string_wrapper(sc, make_type_name(sc, symbol_name(p), INDEFINITE_ARTICLE)));
     }
 
   p = prepackaged_type_names[type(x)];
@@ -68020,6 +68024,7 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
       return(res);
     }
 
+  /* sc->unlet is a scheme vector of slots -- not very useful at the scheme level */
   return(sc->UNDEFINED);
 }
 
@@ -68336,6 +68341,8 @@ s7_scheme *s7_init(void)
   s7_vector_fill(sc, sc->symbol_table, sc->NIL);
   heap_location(sc->symbol_table) = NOT_IN_HEAP;
   
+  sc->typnam = NULL;
+  sc->typnam_len = 0;
   sc->op_names_saved = NULL;
   sc->tmp_str = NULL;
   sc->tmp_str_size = -1;
@@ -69581,8 +69588,7 @@ s7_scheme *s7_init(void)
 #if WITH_COUNTS
   clear_counts();
 #endif
-
-  init_s7_env(sc);
+  init_s7_env(sc);          /* set up *s7* */
   already_inited = true;
   return(sc);
 }
@@ -69743,8 +69749,6 @@ int main(int argc, char **argv)
  *
  * --------------------------------------------------
  *
- * perhaps add an s7aux.c for stuff like the int/float funcs in vct.c -- could add fft? linear algebra stuff like dot-product (clm.c)
- *   mean/norm etc (dsp.scm) -- this could have s7aux.scm + autoload
  * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
@@ -69753,25 +69757,12 @@ int main(int argc, char **argv)
  *    (set! (samples (sound) sample) new-sample)
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
  *
- * accessor if set: opt func involving set or free var, add accessor to free, call func
- *    (let () (define xxx 23) (define (hix) (set! xxx 24)) (hix) (set! (symbol-access 'xxx) (lambda (sym val) (format *stderr* "val: ~A~%" val) val)) (hix))
- *    and no printout -- how to deal with this?? -- if global to func, don't assume anything?
- *
-  some globals: 
-   static char *typnam = NULL;
-   static int typnam_len = 0;
- static c_object_t **object_types = NULL;
- static int object_types_size = 0;
- static int num_types = 0;
-   static char int_to_str[INT_TO_STR_SIZE];
- static int num_to_str_size = 0;
- static char *num_to_str = NULL;
-   
- sgrep
- begin-hook doc
- append mock
- thread s7_init times
- thread + lg or diff dirs
- why is chain-dsps still op_do?
- ws-thread
-*/
+ * more for *s7*: default-hash-table-size, hash-table-float-epsilon, morally-equal-float-epsilon
+ *                max-vector-dimensions gc-trigger-size?, max-string-length
+ *                string-port-initial-size max-list-length
+ *                default_rng pid? cwd? "home" envvars?
+ *                *libraries* internal (currently global)? also *vector-print-length* (print-length?)
+comp.lang.lisp
+snd> (with-input-from-string "(a `(aaa ,(/ 0.9)))" read)
+(a ({list} 'aaa (/ 0.9)))
+ */

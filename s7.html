@@ -4671,7 +4671,7 @@ Along the same lines:
 
 </blockquote>
 
-<p>When an error is encountered, and when s7 is interrupted via begin-hook, 
+<p>When an error is encountered, and when s7 is interrupted via begin_hook, 
 (<em class=def id="owlet">owlet</em>) returns an environment that contains
 additional info about that error:
 </p>
@@ -5292,6 +5292,20 @@ char-position looks for the first occurrence of any member of that set.
 Currently, the strings involved are assumed to be C strings (don't expect embedded nulls
 to work right in this context).
 </p>
+
+<pre class="indented">
+(call-with-input-file "s7.c" ; report any lines with "static " but no following open paren
+  (lambda (file)
+    (let loop ((line (read-line file #t)))
+      (or (eof-object? line)
+	  (let ((pos (<em class=red>string-position</em> "static " line)))
+	    (if (and pos
+		     (not (<em class=red>char-position</em> #\( (substring line pos))))
+ 	        (if (&gt; (length line) 80)
+		    (begin (display (substring line 0 80)) (newline))
+		    (display line))))
+	    (loop (read-line file #t)))))))
+</pre>
 
 
 <div class="separator"></div>
@@ -6618,6 +6632,8 @@ g_io_channel_unref(channel);
 </pre></div>
 </blockquote>
 
+<details>
+<summary class="indented">repl with libtecla</summary>
 <p>Here's a version that uses libtecla for the line editor:
 </p>
 
@@ -6660,6 +6676,7 @@ int main(int argc, char **argv)
  */
 </pre></div>
 </blockquote>
+</details>
 
 <p>A repl that uses readline instead is built into s7.  Include the compiler flag -DWITH_MAIN:
 </p>
@@ -6670,6 +6687,9 @@ in *BSD:  gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -lm -Wl,-
 in OSX:   gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -lm
 </pre>
 
+
+<details>
+<summary class="indented">repl in C++</summary>
 <p>If you prefer C++, here's a C++ version of the listener, extracted from Rick Taube's
 Common Music package:
 </p>
@@ -6776,6 +6796,114 @@ static bool is_not_white(std::string str)
 /* g++ -I. -c repl.cpp
  * g++ -o repl repl.o s7.o -ldl
  */
+</pre></div>
+</blockquote>
+</details>
+
+
+<p>
+Common Lisp has something called "evalhook" that makes it possible
+to insert your own function into the eval loop.  In s7, we have a "begin_hook" which sits at the opening of any begin block
+(implicit or explicit).  begin_hook is a (C) function; 
+if it sets its bool argument to true, 
+s7 interrupts the current evaluation. 
+Here is a version of the REPL in which begin_hook watches for C-g to interrupt
+some long computation:
+</p>
+
+<blockquote>
+<div class="indented">
+<pre>
+/* terminal-based REPL, 
+ *    an expansion of the <a href="#repl">read-eval-print loop</a> program above.
+ * type C-g to interrupt an evaluation.
+ */
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;termios.h&gt;
+#include &lt;signal.h&gt;
+
+#include "s7.h"
+
+static struct termios save_buf, buf;
+
+static void sigcatch(int n)
+{
+  /* put things back the way they were */
+  tcsetattr(fileno(stdin), TCSAFLUSH, &amp;save_buf);
+  exit(0);
+}
+
+static char buffer[512];
+static int type_ahead_point = 0;
+
+static void <em class=red>watch_for_c_g</em>(s7_scheme *sc, bool *all_done)
+{
+  char c;
+  /* watch for C-g without blocking, save other chars as type-ahead */
+  tcsetattr(fileno(stdin), TCSAFLUSH, &amp;buf);
+  if (read(fileno(stdin), &amp;c, 1) == 1)
+    {
+      if (c == 7) /* C-g */
+	{
+	  *all_done = true;
+	  type_ahead_point = 0;
+	}
+      else buffer[type_ahead_point++] = c;
+    }
+  tcsetattr(fileno(stdin), TCSAFLUSH, &amp;save_buf);
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  bool use_begin_hook;
+
+  use_begin_hook = (tcgetattr(fileno(stdin), &amp;save_buf) &gt;= 0);
+  if (use_begin_hook)
+    {
+      buf = save_buf;
+      buf.c_lflag &amp;= ~ICANON;
+      buf.c_cc[VMIN] = 0;         /* if no chars waiting, just return */
+      buf.c_cc[VTIME] = 0;
+
+      signal(SIGINT, sigcatch);
+      signal(SIGQUIT, sigcatch);
+      signal(SIGTERM, sigcatch);
+    }
+  s7 = s7_init();  
+
+  if (argc == 2)
+    {
+      fprintf(stderr, "load %s\n", argv[1]);
+      s7_load(s7, argv[1]);
+    }
+  else
+    {
+      char response[1024];
+      while (1) 
+	{
+	  fprintf(stdout, "\n&gt; ");
+	  fgets((char *)(buffer + type_ahead_point), 512 - type_ahead_point, stdin);
+	  type_ahead_point = 0;
+
+	  if ((buffer[0] != '\n') || 
+	      (strlen(buffer) &gt; 1))
+	    {                            
+	      sprintf(response, "(write %s)", buffer);
+
+	      if (use_begin_hook)
+		<em class=red>s7_set_begin_hook</em>(s7, watch_for_c_g);
+	      s7_eval_c_string(s7, response);
+	      if (use_begin_hook)
+		<em class=red>s7_set_begin_hook</em>(s7, NULL);
+	    }
+	}
+    }
+  if (use_begin_hook)
+    tcsetattr(fileno(stdin), TCSAFLUSH, &amp;save_buf);
+}
 </pre></div>
 </blockquote>
 

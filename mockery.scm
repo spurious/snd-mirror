@@ -894,6 +894,8 @@
 				       (if (mock-pair? dims)
 					   (apply #_make-vector obj (dims 'value) args)
 					   (error 'wrong-type-arg "make-vector ~S ~S ~S" obj dims args)))
+
+		   'append           (make-method #_append (lambda (obj) (obj 'value)))
 		   ))))
       
       (define (mock-pair . args)
@@ -907,8 +909,6 @@
 			      (outlet-member obj mock-pair-class))))
       
       (curlet))))
-
-;; append is very strange -- not sure how to handle it
 
 #|
 (let ((immutable-list-class 
@@ -937,6 +937,10 @@
        (sublet immutable-list-class
 	 'value lst))))
 |#
+
+;;; since a mock-pair prints itself as if a list, you can get some strange printout results:
+;;;    (cons 'a ((*mock-pair* 'mock-pair) 'b 'c)) -> '(a . (b c))
+
 
 
 ;;; --------------------------------------------------------------------------------
