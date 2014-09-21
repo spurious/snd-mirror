@@ -231,7 +231,7 @@ indented and on a sort of brownish background.
   <li><a href="#miscellanea">miscellaneous:</a> 
 
   <ul>
-    <li><a href="#loadpath">*load-path*</a>, <a href="#featureslist">*features*</a>, <a href="#sharpreaders">*#readers*</a>
+    <li><a href="#loadpath">*load-path*</a>, <a href="#featureslist">*features*</a>, <a href="#sharpreaders">*#readers*</a>, <a href="#s7env">*s7*</a>,
     <li><a href="#makelist">make-list</a>, <a href="#charposition">char-position</a>, <a href="#keywords">keywords</a>
     <li><a href="#symboltable">symbol-table</a>, <a href="#s7help">help</a>, <a href="#s7gc">gc</a>, <a href="#morallyequalp">morally-equal?</a>
     <li><a href="#s7vsr5rs">r5rs</a>, <a href="#r7rs">r7rs</a>, <a href="#circle">circular lists</a>, <a href="#legolambda">legolambda</a>, etc...
@@ -5670,15 +5670,53 @@ if *debugging* is #t; otherwise assert expands into nothing.
 
 
 <div class="separator"></div>
-<p><b>*s7*</b> is an environment that gives access to some of s7's internal
-state: stack-top, stack-size, and maximum-stack-size, the symbol-table as a raw vector,
-rootlet-size, safety, catches (a list of the currently active catch tags), 
-exits (a list of active call-with-exit exit functions), stack (the current
-scheme stack entries), default-rationalize-error (1e-12), 
-cpu-time, heap-size, free-heap-size, gc-freed, gc-protected-objects, gc-stats,
-file-names (currently loaded files), and various GC tables: gensyms,
-input-ports, output-ports, strings, vectors, hash-tables, continuations,
-and c-objects.  Use the standard environment syntax to access these fields:
+<p id="s7env"><b>*s7*</b> is an environment that gives access to some of s7's internal
+state: 
+</p>
+<pre class="indented">
+max-string-length             max size arg to make-string and read-string
+max-list-length               max size arg to make-list
+max-vector-length             max size arg to make-vector and make-hash-table
+max-vector-dimensions         make-vector dimensions limit
+default-hash-table-length     default size for make-hash-table (511, settable)
+initial-string-port-length    128, initial size of a string port's buffer
+
+default-rationalize-error     1e-12 (settable)
+morally-equal-float-epsilon   1e-15 (settable)
+hash-table-float-epsilon      1e-12 (settable)
+default-random-state          the default arg for random (settable)
+
+cpu-time                      run time so far
+file-names                    currently loaded files (a list)
+
+safety                        0 (non zero turns on various infinite loop checks)
+catches                       a list of the currently active catch tags
+exits                         a list of active call-with-exit exit functions
+c-types                       a list of c-object type names (from s7_new_type, etc)
+
+stack-top                     current stack location
+stack-size                    current stack size
+maximum-stack-size            max stack size (settable)
+stack                         the current stack entries
+
+symbol-table                  a vector
+symbol-table-locked?          #f (if #t, no new symbols can be added to the symbol table)
+rootlet-size                  the number of globals
+
+heap-size                     total cells currently available
+free-heap-size                the number of currently unused cells
+gc-freed                      number of cells freed by the last GC pass
+gc-protected-objects          number of objects permanently protected from the GC
+gc-stats                      #f (#t turns on printout of the GC activity)
+gc-trigger-length             64, sets delay before GC sees a newly allocated cell
+
+the next 8 are vectors (mainly for GC debugging)
+    gensyms, input-ports, output-ports, strings, vectors, 
+    hash-tables, continuations, c-objects
+</pre>
+
+<p>
+Use the standard environment syntax to access these fields:
 <code>(*s7* 'stack-top)</code>.
 </p>
 
@@ -5793,6 +5831,7 @@ Better ideas are always welcome!
 <ul>
 <li>*bignum-precision*
 <li>*features*
+<li>*libraries*
 <li>*vector-print-length*
 <li>*load-path*
 <li>*autoload*

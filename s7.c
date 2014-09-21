@@ -1208,7 +1208,8 @@ struct s7_scheme {
   long long int capture_env_counter;
   bool symbol_table_is_locked;  
   unsigned long long int let_number;
-  double default_rationalize_error;
+  double default_rationalize_error, morally_equal_float_epsilon, hash_table_float_epsilon;
+  s7_Int default_hash_table_length, gc_trigger_length, initial_string_port_length;
   s7_pointer *op_names_saved;
 
   char *typnam;
@@ -1372,7 +1373,9 @@ struct s7_scheme {
   s7_pointer free_heap_size_symbol, file_names_symbol, symbol_table_symbol, hash_tables_symbol, gensyms_symbol, cpu_time_symbol;
   s7_pointer stack_size_symbol, rootlet_size_symbol, c_types_symbol, safety_symbol, maximum_stack_size_symbol, gc_stats_symbol;
   s7_pointer strings_symbol, vectors_symbol, input_ports_symbol, output_ports_symbol, continuations_symbol, c_objects_symbol;
-  s7_pointer catches_symbol, exits_symbol, stack_symbol, default_rationalize_error_symbol;
+  s7_pointer catches_symbol, exits_symbol, stack_symbol, default_rationalize_error_symbol, max_string_length_symbol, default_random_state_symbol;
+  s7_pointer max_list_length_symbol, max_vector_length_symbol, max_vector_dimensions_symbol, default_hash_table_length_symbol;
+  s7_pointer hash_table_float_epsilon_symbol, morally_equal_float_epsilon_symbol, gc_trigger_length_symbol, initial_string_port_length_symbol;
 };
 
 typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_write_t;
@@ -3986,8 +3989,6 @@ static void unmark_permanent_objects(s7_scheme *sc)
 }
 
 
-#define GC_TRIGGER_SIZE 64
-
 
 #ifndef _MSC_VER
   #include <time.h>
@@ -4258,7 +4259,7 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
     } while (0)
 
 #define NEW_CELL_NO_CHECK(Sc, Obj) do {Obj = (*(--(Sc->free_heap_top)));} while (0)
-  /* since sc->free_heap_trigger is GC_TRIGGER_SIZE above the free heap base, we don't need
+  /* since sc->free_heap_trigger is sc->gc_trigger_length above the free heap base, we don't need
    *   to check it repeatedly after the first such check.
    */
 
@@ -4285,7 +4286,7 @@ static void expand_heap(s7_scheme *sc)
   if (!(sc->free_heap))
     fprintf(stderr, "free heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));	  
   
-  sc->free_heap_trigger = (s7_cell **)(sc->free_heap + GC_TRIGGER_SIZE);
+  sc->free_heap_trigger = (s7_cell **)(sc->free_heap + sc->gc_trigger_length);
   sc->free_heap_top = sc->free_heap + old_free; /* incremented below, added old_free 21-Aug-12?!? */
 
   /* optimization suggested by K Matheussen */
@@ -22456,10 +22457,9 @@ static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
 }
 
 
-#define STRING_PORT_INITIAL_LENGTH 128
 /* the large majority (> 99% in my tests) of the output strings have less than 128 chars when the port is finally closed 
  *   256 is slightly slower (the calloc time below dominates the realloc time in string_write_string)
- *   64 is much slower (realloc dominates)
+ *   64 is much slower (realloc dominates)  so sc->initial_string_port_length defaults to 128
  */
 
 s7_pointer s7_open_output_string(s7_scheme *sc)
@@ -22471,8 +22471,8 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   port_port(x) = alloc_port(sc);
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
-  port_data_size(x) = STRING_PORT_INITIAL_LENGTH;
-  port_data(x) = (unsigned char *)calloc((STRING_PORT_INITIAL_LENGTH + 8), sizeof(unsigned char));
+  port_data_size(x) = sc->initial_string_port_length;
+  port_data(x) = (unsigned char *)calloc((sc->initial_string_port_length + 8), sizeof(unsigned char));
   port_position(x) = 0;
   port_needs_free(x) = true;
   port_read_character(x) = output_read_char;
@@ -29969,6 +29969,12 @@ static s7_pointer float_vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc)
 }
 
 
+#if (SIZEOF_VOID_P == 4)
+  #define MAX_VECTOR_LENGTH (1LL << 30)
+#else
+  #define MAX_VECTOR_LENGTH (1LL << 40)
+#endif
+
 #define FILLED true
 #define NOT_FILLED false
 
@@ -29977,23 +29983,8 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, int typ)
   s7_pointer x;
   if (len < 0)
     return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), A_NON_NEGATIVE_INTEGER));
-  if (len > 134217728)
-    {
-      /* len is an "int" currently */
-      float ilog2;
-
-      ilog2 = log((double)len) / log(2.0);
-      if (sizeof(size_t) > 4)
-	{
-	  if (ilog2 > 56.0)
-	    return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), "should be less than about 2^56 probably"));
-	}
-      else
-	{
-	  if (ilog2 > 28.0)
-	    return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), "should be less than about 2^28 probably"));
-	}
-    }
+  if (len > MAX_VECTOR_LENGTH)
+    return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), "requested vector size is too large"));
 
   /* if (len == 0) typ = T_VECTOR; *//* all empty vectors are the same type */
   /* this produces odd results: (float-vector? (float-vector)) -> #f etc 
@@ -32376,8 +32367,6 @@ static s7_pointer hash_char(s7_scheme *sc, s7_pointer table, s7_pointer key)
 }
 
 
-#define HASH_FLOAT_EPSILON 1.0e-12
-
 static s7_pointer hash_float_1(s7_scheme *sc, s7_pointer table, int loc, s7_Double keyval)
 {
   s7_pointer x;
@@ -32400,7 +32389,7 @@ static s7_pointer hash_float_1(s7_scheme *sc, s7_pointer table, int loc, s7_Doub
 	  else
 	    {
 	      if ((val == keyval) ||   /* inf case */
-		  (fabs(val - keyval) < HASH_FLOAT_EPSILON))
+		  (fabs(val - keyval) < sc->hash_table_float_epsilon))
 		return(car(x));
 	    }
 	}
@@ -32537,8 +32526,7 @@ static s7_pointer hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)
 }
 
 
-#define DEFAULT_HASH_TABLE_SIZE 511
-/* this may be too big -- smaller is faster in lint (even 31), but not in make-index.  Perhaps we need *hash-table-default-size*?
+/* default size (511) may be too big -- smaller is faster in lint (even 31), but not in make-index.
  *   another approach: bi-level tables where we index twice, and thereby skip over (sqrt n) (or whatever) at a time.  
  *   does this happen often? would it matter in the gc enough to warrant the code?
  * or perhaps combine the back-and-forth indexing to a hash-table, so we'd only have the sections we need
@@ -32589,7 +32577,8 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_hash_table "(make-hash-table (size 511) eq-func) returns a new hash table"
-  s7_Int size = DEFAULT_HASH_TABLE_SIZE;
+  s7_Int size;
+  size = sc->default_hash_table_length;
 
   if (is_not_null(args))
     {
@@ -32608,7 +32597,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
       size = s7_integer(p);
       if (size <= 0)                      /* we need s7_Int here to catch (make-hash-table most-negative-fixnum) etc */
 	return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, p, "should be a positive integer"));
-      if (size > MAX_LIST_LENGTH)
+      if (size > MAX_VECTOR_LENGTH)
 	return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, p, "should be a reasonable integer"));
 
       if (is_not_null(cdr(args)))
@@ -35640,16 +35629,14 @@ static bool hash_tables_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointe
 }
 
 
-#define FLOATING_EPSILON 1e-15
-
-static bool floats_are_morally_equal(s7_Double x, s7_Double y)
+static bool floats_are_morally_equal(s7_scheme *sc, s7_Double x, s7_Double y)
 {
   if (is_NaN(x))
     return(is_NaN(y));
 
   return((!is_NaN(y)) &&
 	 ((x == y) ||
-	  (fabs(x - y) <= FLOATING_EPSILON)));
+	  (fabs(x - y) <= sc->morally_equal_float_epsilon)));
 }
 
 
@@ -35721,7 +35708,7 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
 	    /* (morally-equal? (make-vector 1 1.0 #t) (make-vector 1 1.0 #t))
 	     */
 	    for (i = 0; i < len; i++)
-	      if (!floats_are_morally_equal(float_vector_element(x, i), float_vector_element(y, i)))
+	      if (!floats_are_morally_equal(sc, float_vector_element(x, i), float_vector_element(y, i)))
 		return(false);
 	    return(true);
 	  }
@@ -35867,17 +35854,17 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	  return(integer(x) == integer(y));
 
 	case T_RATIO:
-	  return(fabs(integer(x) - fraction(y)) <= FLOATING_EPSILON);
+	  return(fabs(integer(x) - fraction(y)) <= sc->morally_equal_float_epsilon);
 
 	case T_REAL:
 	  return((!is_NaN(real(y))) &&
-		 (fabs(integer(x) - real(y)) <= FLOATING_EPSILON));
+		 (fabs(integer(x) - real(y)) <= sc->morally_equal_float_epsilon));
 
 	case T_COMPLEX:
 	  return((!is_NaN(real_part(y))) &&
 		 (!is_NaN(imag_part(y))) &&
-		 (fabs(integer(x) - real_part(y)) <= FLOATING_EPSILON) &&
-		 (fabs(imag_part(y)) <= FLOATING_EPSILON));
+		 (fabs(integer(x) - real_part(y)) <= sc->morally_equal_float_epsilon) &&
+		 (fabs(imag_part(y)) <= sc->morally_equal_float_epsilon));
 
 	default:
 	  return(false);
@@ -35895,19 +35882,19 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 #endif
 	  
 	case T_INTEGER:
-	  return(fabs(fraction(x) - integer(y)) <= FLOATING_EPSILON);
+	  return(fabs(fraction(x) - integer(y)) <= sc->morally_equal_float_epsilon);
 
 	case T_RATIO:
-	  return(fabs(fraction(x) - fraction(y)) <= FLOATING_EPSILON);
+	  return(fabs(fraction(x) - fraction(y)) <= sc->morally_equal_float_epsilon);
 
 	case T_REAL:
-	  return(floats_are_morally_equal(fraction(x), real(y)));
+	  return(floats_are_morally_equal(sc, fraction(x), real(y)));
 
 	case T_COMPLEX:
 	  return((!is_NaN(real_part(y))) &&
 		 (!is_NaN(imag_part(y))) &&
-		 (fabs(fraction(x) - real_part(y)) <= FLOATING_EPSILON) &&
-		 (fabs(imag_part(y)) <= FLOATING_EPSILON));
+		 (fabs(fraction(x) - real_part(y)) <= sc->morally_equal_float_epsilon) &&
+		 (fabs(imag_part(y)) <= sc->morally_equal_float_epsilon));
 
 	default:
 	  return(false);
@@ -35926,26 +35913,26 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	  
 	case T_INTEGER:
 	  return((!is_NaN(real(x))) &&
-		 (fabs(real(x) - integer(y)) <= FLOATING_EPSILON));
+		 (fabs(real(x) - integer(y)) <= sc->morally_equal_float_epsilon));
 
 	case T_RATIO:
 	  return((!is_NaN(real(x))) &&
-		 (fabs(real(x) - fraction(y)) <= FLOATING_EPSILON));
+		 (fabs(real(x) - fraction(y)) <= sc->morally_equal_float_epsilon));
 
 	case T_REAL:
-	  return(floats_are_morally_equal(real(x), real(y)));
+	  return(floats_are_morally_equal(sc, real(x), real(y)));
 
 	case T_COMPLEX:
 	  if (is_NaN(real(x)))
 	    return((is_NaN(real_part(y))) &&
-		   (fabs(imag_part(y)) <= FLOATING_EPSILON));
+		   (fabs(imag_part(y)) <= sc->morally_equal_float_epsilon));
 
 	  return((!is_NaN(real(x))) &&
 		 (!is_NaN(real_part(y))) &&
 		 (!is_NaN(imag_part(y))) &&
 		 ((real(x) == real_part(y)) ||
-		  (fabs(real(x) - real_part(y)) <= FLOATING_EPSILON)) &&
-		 (fabs(imag_part(y)) <= FLOATING_EPSILON));
+		  (fabs(real(x) - real_part(y)) <= sc->morally_equal_float_epsilon)) &&
+		 (fabs(imag_part(y)) <= sc->morally_equal_float_epsilon));
 
 	default:
 	  return(false);
@@ -35965,14 +35952,14 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	case T_INTEGER:
 	  return((!is_NaN(real_part(x))) &&
 		 (!is_NaN(imag_part(x))) &&
-		 (fabs(real_part(x) - integer(y)) <= FLOATING_EPSILON) &&
-		 (fabs(imag_part(x)) <= FLOATING_EPSILON));
+		 (fabs(real_part(x) - integer(y)) <= sc->morally_equal_float_epsilon) &&
+		 (fabs(imag_part(x)) <= sc->morally_equal_float_epsilon));
 
 	case T_RATIO:
 	  return((!is_NaN(real_part(x))) &&
 		 (!is_NaN(imag_part(x))) &&
-		 (fabs(real_part(x) - fraction(y)) <= FLOATING_EPSILON) &&
-		 (fabs(imag_part(x)) <= FLOATING_EPSILON));
+		 (fabs(real_part(x) - fraction(y)) <= sc->morally_equal_float_epsilon) &&
+		 (fabs(imag_part(x)) <= sc->morally_equal_float_epsilon));
 
 	case T_REAL:
 	  if ((is_NaN(real_part(x))) ||
@@ -35980,29 +35967,29 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	      (is_NaN(real(y))))
 	    return(false);
 	  return(((real_part(x) == real(y)) ||
-		  (fabs(real_part(x) - real(y)) <= FLOATING_EPSILON)) &&
-		 (fabs(imag_part(x)) <= FLOATING_EPSILON));
+		  (fabs(real_part(x) - real(y)) <= sc->morally_equal_float_epsilon)) &&
+		 (fabs(imag_part(x)) <= sc->morally_equal_float_epsilon));
 
 	case T_COMPLEX:
 	  if (is_NaN(real_part(x)))
 	    return((is_NaN(real_part(y))) &&
 		   (((is_NaN(imag_part(x))) && (is_NaN(imag_part(y)))) ||
 		    (imag_part(x) == imag_part(y)) ||
-		    (fabs(imag_part(x) - imag_part(y)) <= FLOATING_EPSILON)));
+		    (fabs(imag_part(x) - imag_part(y)) <= sc->morally_equal_float_epsilon)));
 
 	  if (is_NaN(imag_part(x)))
 	    return((is_NaN(imag_part(y))) &&
 		   ((real_part(x) == real_part(y)) ||
-		    (fabs(real_part(x) - real_part(y)) <= FLOATING_EPSILON)));
+		    (fabs(real_part(x) - real_part(y)) <= sc->morally_equal_float_epsilon)));
 		   
 	  if ((is_NaN(real_part(y))) ||
 	      (is_NaN(imag_part(y))))
 	    return(false);
 
 	  return(((real_part(x) == real_part(y)) ||
-		  (fabs(real_part(x) - real_part(y)) <= FLOATING_EPSILON)) &&
+		  (fabs(real_part(x) - real_part(y)) <= sc->morally_equal_float_epsilon)) &&
 		 ((imag_part(x) == imag_part(y)) ||
-		  (fabs(imag_part(x) - imag_part(y)) <= FLOATING_EPSILON)));
+		  (fabs(imag_part(x) - imag_part(y)) <= sc->morally_equal_float_epsilon)));
 
 	default:
 	  return(false);
@@ -45672,7 +45659,7 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
 		  return(true);
 		}
 	      if ((symbols == args) &&
-		  (args < GC_TRIGGER_SIZE))
+		  (args < sc->gc_trigger_length))
 		{
 		  set_optimized(car_x);
 		  set_optimize_data(car_x, hop + OP_SAFE_C_ALL_S);
@@ -45690,7 +45677,7 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
       if ((func_is_closure) &&
 	  (pairs == 0) &&
 	  ((symbols == args) || (symbols == 0)) &&
-	  (args < GC_TRIGGER_SIZE))
+	  (args < sc->gc_trigger_length))
 	{
 	  bool safe_case;
 	  safe_case = is_safe_closure(func);
@@ -45712,7 +45699,7 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
   
   if ((func_is_c_function) &&
       (!func_is_safe) &&
-      (args < GC_TRIGGER_SIZE) &&
+      (args < sc->gc_trigger_length) &&
       (pairs == (quotes + all_x_count(car_x))))
     {
       set_unsafely_optimized(car_x);
@@ -45726,7 +45713,7 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
       /* else use all_x below */
     }
   
-  if (args < GC_TRIGGER_SIZE)
+  if (args < sc->gc_trigger_length)
     {
       if ((func_is_c_function) &&
 	  (func_is_safe) &&
@@ -46340,7 +46327,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 			return(false); 
 		      }
 		  }
-		if ((len < GC_TRIGGER_SIZE) &&
+		if ((len < sc->gc_trigger_length) &&
 		    (pairs == (quotes + all_x_count(car_x))))
 		  {
 		    set_unsafely_optimized(car_x);
@@ -47361,7 +47348,7 @@ static s7_pointer check_let(s7_scheme *sc)
 	    }
 	  else 
 	    {
-	      if (vars < GC_TRIGGER_SIZE)
+	      if (vars < sc->gc_trigger_length)
 		{
 		  s7_pointer p, x, op;
 		  /* pair_set_syntax_symbol(sc->code, sc->LET_UNCHECKED); */
@@ -67907,33 +67894,43 @@ static void s7_gmp_init(s7_scheme *sc)
 
 static void init_s7_env(s7_scheme *sc)
 {
-  sc->stack_top_symbol =              s7_make_symbol(sc, "stack-top");
-  sc->stack_size_symbol =             s7_make_symbol(sc, "stack-size");
-  sc->symbol_table_is_locked_symbol = s7_make_symbol(sc, "symbol-table-locked?");
-  sc->heap_size_symbol =              s7_make_symbol(sc, "heap-size");
-  sc->free_heap_size_symbol =         s7_make_symbol(sc, "free-heap-size");
-  sc->gc_freed_symbol =               s7_make_symbol(sc, "gc-freed");
-  sc->gc_protected_objects_symbol =   s7_make_symbol(sc, "gc-protected-objects");
-  sc->input_ports_symbol =            s7_make_symbol(sc, "input-ports");
-  sc->output_ports_symbol =           s7_make_symbol(sc, "output-ports");
-  sc->strings_symbol =                s7_make_symbol(sc, "strings");
-  sc->gensyms_symbol =                s7_make_symbol(sc, "gensyms");
-  sc->vectors_symbol =                s7_make_symbol(sc, "vectors");
-  sc->hash_tables_symbol =            s7_make_symbol(sc, "hash-tables");
-  sc->continuations_symbol =          s7_make_symbol(sc, "continuations");
-  sc->c_objects_symbol =              s7_make_symbol(sc, "c-objects");
-  sc->file_names_symbol =             s7_make_symbol(sc, "file-names");
-  sc->symbol_table_symbol =           s7_make_symbol(sc, "symbol-table");
-  sc->rootlet_size_symbol =           s7_make_symbol(sc, "rootlet-size");	
-  sc->c_types_symbol =                s7_make_symbol(sc, "c-types");
-  sc->safety_symbol =                 s7_make_symbol(sc, "safety");
-  sc->gc_stats_symbol =               s7_make_symbol(sc, "gc-stats");
-  sc->maximum_stack_size_symbol =     s7_make_symbol(sc, "maximum-stack-size");
-  sc->cpu_time_symbol =               s7_make_symbol(sc, "cpu-time");
-  sc->catches_symbol =                s7_make_symbol(sc, "catches");
-  sc->exits_symbol =                  s7_make_symbol(sc, "exits");
-  sc->stack_symbol =                  s7_make_symbol(sc, "stack");
-  sc->default_rationalize_error_symbol = s7_make_symbol(sc, "default-rationalize-error");
+  sc->stack_top_symbol =                  s7_make_symbol(sc, "stack-top");
+  sc->stack_size_symbol =                 s7_make_symbol(sc, "stack-size");
+  sc->symbol_table_is_locked_symbol =     s7_make_symbol(sc, "symbol-table-locked?");
+  sc->heap_size_symbol =                  s7_make_symbol(sc, "heap-size");
+  sc->free_heap_size_symbol =             s7_make_symbol(sc, "free-heap-size");
+  sc->gc_freed_symbol =                   s7_make_symbol(sc, "gc-freed");
+  sc->gc_protected_objects_symbol =       s7_make_symbol(sc, "gc-protected-objects");
+  sc->input_ports_symbol =                s7_make_symbol(sc, "input-ports");
+  sc->output_ports_symbol =               s7_make_symbol(sc, "output-ports");
+  sc->strings_symbol =                    s7_make_symbol(sc, "strings");
+  sc->gensyms_symbol =                    s7_make_symbol(sc, "gensyms");
+  sc->vectors_symbol =                    s7_make_symbol(sc, "vectors");
+  sc->hash_tables_symbol =                s7_make_symbol(sc, "hash-tables");
+  sc->continuations_symbol =              s7_make_symbol(sc, "continuations");
+  sc->c_objects_symbol =                  s7_make_symbol(sc, "c-objects");
+  sc->file_names_symbol =                 s7_make_symbol(sc, "file-names");
+  sc->symbol_table_symbol =               s7_make_symbol(sc, "symbol-table");
+  sc->rootlet_size_symbol =               s7_make_symbol(sc, "rootlet-size");	
+  sc->c_types_symbol =                    s7_make_symbol(sc, "c-types");
+  sc->safety_symbol =                     s7_make_symbol(sc, "safety");
+  sc->gc_stats_symbol =                   s7_make_symbol(sc, "gc-stats");
+  sc->maximum_stack_size_symbol =         s7_make_symbol(sc, "maximum-stack-size");
+  sc->cpu_time_symbol =                   s7_make_symbol(sc, "cpu-time");
+  sc->catches_symbol =                    s7_make_symbol(sc, "catches");
+  sc->exits_symbol =                      s7_make_symbol(sc, "exits");
+  sc->stack_symbol =                      s7_make_symbol(sc, "stack");
+  sc->max_string_length_symbol =          s7_make_symbol(sc, "max-string-length");
+  sc->max_list_length_symbol =            s7_make_symbol(sc, "max-list-length");
+  sc->max_vector_length_symbol =          s7_make_symbol(sc, "max-vector-length");
+  sc->max_vector_dimensions_symbol =      s7_make_symbol(sc, "max-vector-dimensions");
+  sc->default_hash_table_length_symbol =  s7_make_symbol(sc, "default-hash-table-length");
+  sc->gc_trigger_length_symbol =          s7_make_symbol(sc, "gc-trigger-length");
+  sc->initial_string_port_length_symbol = s7_make_symbol(sc, "initial-string-port-length");
+  sc->default_rationalize_error_symbol =  s7_make_symbol(sc, "default-rationalize-error");
+  sc->default_random_state_symbol =       s7_make_symbol(sc, "default-random-state");
+  sc->morally_equal_float_epsilon_symbol= s7_make_symbol(sc, "morally-equal-float-epsilon");
+  sc->hash_table_float_epsilon_symbol =   s7_make_symbol(sc, "hash-table-float-epsilon");
 }
 
 static s7_pointer make_vector_wrapper(s7_scheme *sc, s7_Int size, s7_pointer *elements)
@@ -67992,6 +67989,27 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
 
   if (sym == sc->default_rationalize_error_symbol)                       /* default-rationalize-error */
     return(make_real(sc, sc->default_rationalize_error));
+  if (sym == sc->default_random_state_symbol)                            /* default-random-state */
+    return(s7_make_random_state(sc, s7_random_state_to_list(sc, sc->NIL)));
+
+  if (sym == sc->max_list_length_symbol)                                 /* max-list-length (as arg to make-list) */
+    return(s7_make_integer(sc, MAX_LIST_LENGTH));
+  if (sym == sc->max_vector_length_symbol)                               /* max-vector-length (as arg to make-vector and make-hash-table) */
+    return(s7_make_integer(sc, MAX_VECTOR_LENGTH));
+  if (sym == sc->max_vector_dimensions_symbol)                           /* max-vector-dimensions (make-vector) */
+    return(s7_make_integer(sc, MAX_VECTOR_DIMENSIONS));
+  if (sym == sc->max_string_length_symbol)                               /* max-string-length (as arg to make-string and read-string) */
+    return(s7_make_integer(sc, MAX_STRING_LENGTH));
+  if (sym == sc->default_hash_table_length_symbol)                       /* default size for make-hash-table */
+    return(s7_make_integer(sc, sc->default_hash_table_length));
+  if (sym == sc->morally_equal_float_epsilon_symbol)                     /* morally-equal-float-epsilon */
+    return(s7_make_real(sc, sc->morally_equal_float_epsilon));
+  if (sym == sc->hash_table_float_epsilon_symbol)                        /* hash-table-float-epsilon */
+    return(s7_make_real(sc, sc->hash_table_float_epsilon));
+  if (sym == sc->gc_trigger_length_symbol)                               /* gc-trigger-length */
+    return(s7_make_integer(sc, sc->gc_trigger_length));
+  if (sym == sc->initial_string_port_length_symbol)                      /* initial-string-port-length */
+    return(s7_make_integer(sc, sc->initial_string_port_length));
 
   if (sym == sc->input_ports_symbol)                                     /* input-ports */
     return(make_vector_wrapper(sc, sc->input_ports_loc, sc->input_ports));
@@ -68035,50 +68053,78 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
   sym = cadr(args);
   val = caddr(args);
 
+  if (sym == sc->default_hash_table_length_symbol)
+    {
+      if (s7_is_integer(val)) {sc->default_hash_table_length = s7_integer(val); return(val);}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+    }
+
+  if (sym == sc->gc_trigger_length_symbol)
+    {
+      if (s7_is_integer(val)) {sc->gc_trigger_length = s7_integer(val); return(val);}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+    }
+
+  if (sym == sc->initial_string_port_length_symbol)
+    {
+      if (s7_is_integer(val)) {sc->initial_string_port_length = s7_integer(val); return(val);}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+    }
+
+  if (sym == sc->morally_equal_float_epsilon_symbol)
+    {
+      if (s7_is_real(val)) {sc->morally_equal_float_epsilon = s7_real(val); return(val);}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_REAL));
+    }
+
+  if (sym == sc->hash_table_float_epsilon_symbol)
+    {
+      if (s7_is_real(val)) {sc->hash_table_float_epsilon = s7_real(val); return(val);}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_REAL));
+    }
+
   if (sym == sc->gc_stats_symbol)
     {
-      if (s7_is_boolean(val))
-	sc->gc_stats = (val == sc->T);
-      else return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_BOOLEAN));
+      if (s7_is_boolean(val)) {sc->gc_stats = (val == sc->T); return(val);}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_BOOLEAN));
     }
-  else
+
+  if (sym == sc->symbol_table_is_locked_symbol) {sc->symbol_table_is_locked = (val != sc->F); return(val);}
+
+  if (sym == sc->maximum_stack_size_symbol)
     {
-      if (sym == sc->symbol_table_is_locked_symbol)
-	sc->symbol_table_is_locked = (val != sc->F);
-      else
+      if (s7_is_integer(val))
 	{
-	  if (sym == sc->maximum_stack_size_symbol)
+	  s7_Int size;
+	  size = s7_integer(val);
+	  if (size >= INITIAL_STACK_SIZE)
 	    {
-	      if (s7_is_integer(val))
-		{
-		  s7_Int size;
-		  size = s7_integer(val);
-		  if (size >= INITIAL_STACK_SIZE)
-		    sc->maximum_stack_size = (unsigned int)size;
-		  else return(simple_out_of_range(sc, sc->LET_SET, val, "should be greater than the initial stack size (512)"));
-		}
-	      else return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+	      sc->maximum_stack_size = (unsigned int)size;
+	      return(val);
 	    }
-	  else
-	    {
-	      if (sym == sc->safety_symbol)
-		{
-		  if (s7_is_integer(val))
-		    sc->safety = s7_integer(val);
-		  else return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
-		}
-	      else
-		{
-		  if (sym == sc->default_rationalize_error_symbol)
-		    {
-		      if (s7_is_real(val))
-			sc->default_rationalize_error = real_to_double(sc, val, "set! default-rationalize-error");
-		      else return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_REAL));
-		    }
-		}
-	    }
+	  return(simple_out_of_range(sc, sc->LET_SET, val, "should be greater than the initial stack size (512)"));
 	}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
     }
+
+  if (sym == sc->safety_symbol)
+    {
+      if (s7_is_integer(val)) {sc->safety = s7_integer(val); return(val);}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+    }
+  
+  if (sym == sc->default_rationalize_error_symbol)
+    {
+      if (s7_is_real(val)) {sc->default_rationalize_error = real_to_double(sc, val, "set! default-rationalize-error"); return(val);}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_REAL));
+    }
+
+  if (sym == sc->default_random_state_symbol)
+    {
+      /* TODO: set sc->default_rng or bignum equivalent (check ref case also) */
+    }
+
+  /* error? */
   return(val);
 }
 
@@ -68128,6 +68174,8 @@ s7_scheme *s7_init(void)
   sc->strbuf = (char *)calloc(sc->strbuf_size, sizeof(char));
   sc->print_width = MAX_STRING_LENGTH;
 
+  sc->gc_trigger_length = 64;
+  sc->initial_string_port_length = 128;
   sc->format_depth = -1;
   sc->slash_str_size = 0;
   sc->slash_str = NULL;
@@ -68299,7 +68347,7 @@ s7_scheme *s7_init(void)
   
   sc->free_heap = (s7_cell **)malloc(sc->heap_size * sizeof(s7_cell *));
   sc->free_heap_top = (s7_cell **)(sc->free_heap + INITIAL_HEAP_SIZE);
-  sc->free_heap_trigger = (s7_cell **)(sc->free_heap + GC_TRIGGER_SIZE);
+  sc->free_heap_trigger = (s7_cell **)(sc->free_heap + sc->gc_trigger_length);
   sc->previous_free_heap_top = sc->free_heap_top;
 
   {
@@ -68349,6 +68397,9 @@ s7_scheme *s7_init(void)
   sc->tmp_str_chars = NULL;
   sc->help_arglist = NULL;
   sc->default_rationalize_error = 1.0e-12;
+  sc->hash_table_float_epsilon = 1.0e-12;
+  sc->morally_equal_float_epsilon = 1.0e-15;
+  sc->default_hash_table_length = 511;
   sc->gensym_counter = 0;
   sc->capture_env_counter = 0;
   sc->f_class = 0;
@@ -69756,13 +69807,4 @@ int main(int argc, char **argv)
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
- *
- * more for *s7*: default-hash-table-size, hash-table-float-epsilon, morally-equal-float-epsilon
- *                max-vector-dimensions gc-trigger-size?, max-string-length
- *                string-port-initial-size max-list-length
- *                default_rng pid? cwd? "home" envvars?
- *                *libraries* internal (currently global)? also *vector-print-length* (print-length?)
-comp.lang.lisp
-snd> (with-input-from-string "(a `(aaa ,(/ 0.9)))" read)
-(a ({list} 'aaa (/ 0.9)))
  */
