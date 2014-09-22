@@ -4671,7 +4671,7 @@ Along the same lines:
 
 </blockquote>
 
-<p>When an error is encountered, and when s7 is interrupted via begin_hook, 
+<p>When an error is encountered, and when s7 is interrupted via <a href="#beginhook">begin_hook</a>, 
 (<em class=def id="owlet">owlet</em>) returns an environment that contains
 additional info about that error:
 </p>
@@ -5633,8 +5633,7 @@ some other thing, they satisfy the function morally-equal?.
 #t
 </pre>
 
-<p>I'd be happy to add *float-epsilon* or some such variable, if anyone needs 
-it.  
+<p>The *s7* field morally-equal-float-epsilon sets the floating-point fudge factor.
 I can't decide how bignums should interact with morally-equal?.  Currently,
 if a bignum is involved, either here or in a hash-table, s7 uses equal?.
 Finally, if either argument is an environment with a 'morally-equal? method,
@@ -5683,7 +5682,7 @@ initial-string-port-length    128, initial size of a string port's buffer
 
 default-rationalize-error     1e-12 (settable)
 morally-equal-float-epsilon   1e-15 (settable)
-hash-table-float-epsilon      1e-12 (settable)
+hash-table-float-epsilon      1e-12 (settable, but currently limited to less than 1e-3).
 default-random-state          the default arg for random (settable)
 
 cpu-time                      run time so far
@@ -6499,6 +6498,10 @@ int main(int argc, char **argv)
  */
 </pre>
 
+<p>Unfortunately, there's no way yet to
+free all the resources s7_init allocates (the heap, stack, etc).
+</p>
+
 </div>
 </details>
 
@@ -6840,7 +6843,7 @@ static bool is_not_white(std::string str)
 </details>
 
 
-<p>
+<p id="beginhook">
 Common Lisp has something called "evalhook" that makes it possible
 to insert your own function into the eval loop.  In s7, we have a "begin_hook" which sits at the opening of any begin block
 (implicit or explicit).  begin_hook is a (C) function; 

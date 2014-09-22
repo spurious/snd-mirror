@@ -32182,7 +32182,7 @@ static int hash_float_location(s7_Double x)
 
   x = fabs(x);
   if (x < 100.0)
-    loc = 1000.0 * x;
+    loc = 1000.0 * x;     /* this means hash_table_float_epsilon only works if it is less than about .001 */
   else loc = x;
 
   if (loc < 0) /* (hash-table-index 1e+18) -> -2147483648 */
@@ -68053,36 +68053,6 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
   sym = cadr(args);
   val = caddr(args);
 
-  if (sym == sc->default_hash_table_length_symbol)
-    {
-      if (s7_is_integer(val)) {sc->default_hash_table_length = s7_integer(val); return(val);}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
-    }
-
-  if (sym == sc->gc_trigger_length_symbol)
-    {
-      if (s7_is_integer(val)) {sc->gc_trigger_length = s7_integer(val); return(val);}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
-    }
-
-  if (sym == sc->initial_string_port_length_symbol)
-    {
-      if (s7_is_integer(val)) {sc->initial_string_port_length = s7_integer(val); return(val);}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
-    }
-
-  if (sym == sc->morally_equal_float_epsilon_symbol)
-    {
-      if (s7_is_real(val)) {sc->morally_equal_float_epsilon = s7_real(val); return(val);}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_REAL));
-    }
-
-  if (sym == sc->hash_table_float_epsilon_symbol)
-    {
-      if (s7_is_real(val)) {sc->hash_table_float_epsilon = s7_real(val); return(val);}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_REAL));
-    }
-
   if (sym == sc->gc_stats_symbol)
     {
       if (s7_is_boolean(val)) {sc->gc_stats = (val == sc->T); return(val);}
@@ -68113,6 +68083,36 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
       return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
     }
   
+  if (sym == sc->default_hash_table_length_symbol)
+    {
+      if (s7_is_integer(val)) {sc->default_hash_table_length = s7_integer(val); return(val);}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+    }
+
+  if (sym == sc->gc_trigger_length_symbol)
+    {
+      if (s7_is_integer(val)) {sc->gc_trigger_length = s7_integer(val); return(val);}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+    }
+
+  if (sym == sc->initial_string_port_length_symbol)
+    {
+      if (s7_is_integer(val)) {sc->initial_string_port_length = s7_integer(val); return(val);}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+    }
+
+  if (sym == sc->morally_equal_float_epsilon_symbol)
+    {
+      if (s7_is_real(val)) {sc->morally_equal_float_epsilon = s7_real(val); return(val);}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_REAL));
+    }
+
+  if (sym == sc->hash_table_float_epsilon_symbol)
+    {
+      if (s7_is_real(val)) {sc->hash_table_float_epsilon = s7_real(val); return(val);}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_REAL));
+    }
+
   if (sym == sc->default_rationalize_error_symbol)
     {
       if (s7_is_real(val)) {sc->default_rationalize_error = real_to_double(sc, val, "set! default-rationalize-error"); return(val);}
@@ -68121,7 +68121,17 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 
   if (sym == sc->default_random_state_symbol)
     {
-      /* TODO: set sc->default_rng or bignum equivalent (check ref case also) */
+      if ((is_c_object(val)) &&
+	  (c_object_type(val) == sc->rng_tag))
+	{
+	  s7_rng_t *r, *dr;	  
+	  r = (s7_rng_t *)s7_object_value(val);
+	  dr = sc->default_rng;
+	  dr->ran_seed = r->ran_seed;
+	  dr->ran_carry = r->ran_carry;
+	  return(val);
+	}
+      return(wrong_type_argument_with_type(sc, sc->LET_SET, small_int(1), val, make_string_wrapper(sc, "a random state object")));
     }
 
   /* error? */
@@ -69807,4 +69817,9 @@ int main(int argc, char **argv)
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
+ *
+ * if in with-let, should let-ref-fallback be checked before unbound-variable error?
+ *    (with-let *s7* stack-top) -> unbound variable
+ *    making it a true env means GC of slot-values etc
+ * what about with-let with a mock-let?
  */
