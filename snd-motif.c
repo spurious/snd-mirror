@@ -3714,7 +3714,7 @@ static void mix_wave_callback(Widget w, XtPointer context, XtPointer info)
 
 /* -------- next/previous -------- */
 
-static Widget nextb, previousb;
+static Widget mix_next_button, mix_previous_button;
 
 static void mix_next_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -3726,7 +3726,7 @@ static void mix_next_callback(Widget w, XtPointer context, XtPointer info)
       mix_dialog_id = id;
       reflect_mix_change(id);
       if (next_mix_id(id) == INVALID_MIX_ID) 
-	set_sensitive(nextb, false);
+	set_sensitive(mix_next_button, false);
     }
 }
 
@@ -3741,7 +3741,7 @@ static void mix_previous_callback(Widget w, XtPointer context, XtPointer info)
       mix_dialog_id = id;
       reflect_mix_change(id);
       if (previous_mix_id(id) == INVALID_MIX_ID) 
-	set_sensitive(previousb, false);
+	set_sensitive(mix_previous_button, false);
     }
 }
 
@@ -3910,18 +3910,18 @@ Widget make_mix_dialog(void)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
-      previousb = XtCreateManagedWidget(I_PREVIOUS, xmPushButtonWidgetClass, mix_row, args, n);
+      mix_previous_button = XtCreateManagedWidget(I_PREVIOUS, xmPushButtonWidgetClass, mix_row, args, n);
       if (previous_mix_id(mix_dialog_id) == INVALID_MIX_ID) 
-	set_sensitive(previousb, false);
-      XtAddCallback(previousb, XmNactivateCallback, mix_previous_callback, NULL);
+	set_sensitive(mix_previous_button, false);
+      XtAddCallback(mix_previous_button, XmNactivateCallback, mix_previous_callback, NULL);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNarmColor, ss->selection_color); n++;
-      nextb = XtCreateManagedWidget(I_NEXT, xmPushButtonWidgetClass, mix_row, args, n);
+      mix_next_button = XtCreateManagedWidget(I_NEXT, xmPushButtonWidgetClass, mix_row, args, n);
       if (next_mix_id(mix_dialog_id) == INVALID_MIX_ID) 
-	set_sensitive(nextb, false);
-      XtAddCallback(nextb, XmNactivateCallback, mix_next_callback, NULL);
+	set_sensitive(mix_next_button, false);
+      XtAddCallback(mix_next_button, XmNactivateCallback, mix_next_callback, NULL);
 
 
 
@@ -4182,8 +4182,8 @@ void reflect_mix_change(int mix_id)
       if ((mix_id == mix_dialog_id) || (mix_id == ANY_MIX_ID))
 	{
 	  mus_float_t val;
-	  set_sensitive(nextb, (next_mix_id(mix_dialog_id) != INVALID_MIX_ID));
-	  set_sensitive(previousb, (previous_mix_id(mix_dialog_id) != INVALID_MIX_ID));
+	  set_sensitive(mix_next_button, (next_mix_id(mix_dialog_id) != INVALID_MIX_ID));
+	  set_sensitive(mix_previous_button, (previous_mix_id(mix_dialog_id) != INVALID_MIX_ID));
 
 	  /* now reflect current mix state in mix dialog controls */
 	  if (mix_exists(mix_dialog_id))
@@ -4276,7 +4276,7 @@ static Widget apply_button, apply2_button, cancel_button, drawer, show_button, s
 static Widget brkptL, graph_button, flt_button, amp_button, src_button, clip_button;
 static Widget nameL, textL, screnvlst, dB_button, orderL, reset_button, fir_button = NULL;
 static Widget baseScale, baseValue, selection_button;
-static GC gc, rgc, ggc;
+static GC gc1, rgc, ggc;
 
 static const char *env_names[3] = {"amp env:", "flt env:", "src env:"};
 
@@ -4347,7 +4347,7 @@ static void display_env(env *e, const char *name, GC cur_gc, int x0, int y0, int
 
 void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, int width, int height, bool dots, printing_t printing)
 {
-  display_env(e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, printing);
+  display_env(e, name, (selected_env == e) ? rgc : gc1, x0, y0, width, height, dots, printing);
 }
 
 
@@ -4551,7 +4551,7 @@ static void env_redisplay_1(printing_t printing)
 	      enved_show_background_waveform(axis, gray_ap, apply_to_selection, (enved_target(ss) == ENVED_SPECTRUM), printing);
 	    }
 
-	  display_env(active_env, name, gc, 0, 0, env_window_width, env_window_height, true, printing);
+	  display_env(active_env, name, gc1, 0, 0, env_window_width, env_window_height, true, printing);
 	  if (name) XtFree(name);
 	}
     }
@@ -4798,10 +4798,6 @@ static void enved_display_point_label(mus_float_t x, mus_float_t y)
   set_button_label(brkptL, brkpt_buf);
 }
 
-
-#ifdef __APPLE__
-static int press_x, press_y;
-#endif
 
 static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
@@ -5643,7 +5639,7 @@ Widget create_envelope_editor(void)
 
       gv.function = GXcopy;
       XtVaGetValues(drawer, XmNbackground, &gv.background, XmNforeground, &gv.foreground, NULL);
-      gc = XtGetGC(drawer, GCForeground | GCFunction, &gv);
+      gc1 = XtGetGC(drawer, GCForeground | GCFunction, &gv);
       gv.foreground = ss->red;
       rgc = XtGetGC(drawer, GCBackground | GCForeground | GCFunction, &gv);
       gv.foreground = ss->enved_waveform_color;
@@ -5860,10 +5856,10 @@ void g_init_gxenv(void)
 static Widget transform_dialog = NULL; /* main dialog shell */
 static Widget type_list, size_list, wavelet_list, window_list;
 static Widget beta_scale, alpha_scale, start_scale, end_scale, alpha_number, beta_number, start_number, end_number;  
-static Widget db_button, peaks_button, logfreq_button, sono_button, spectro_button, normo_button, normalize_button, selection_button, phases_button;
+static Widget db_button, peaks_button, logfreq_button, sono_button, spectro_button, normo_button, normalize_button, selection_button1, phases_button;
 static Widget graph_label, graph_drawer;
 static Widget peak_txt, db_txt, freq_base_txt;
-static Widget error_frame, error_label;
+static Widget error_frame1, error_label1;
 
 #define NUM_TRANSFORM_SIZES 15
 static const char *transform_size_names[NUM_TRANSFORM_SIZES] = 
@@ -5875,7 +5871,7 @@ static mus_long_t transform_sizes[NUM_TRANSFORM_SIZES] =
 
 /* ---------------- fft window graph ---------------- */
 
-static GC gc, fgc;
+static GC gc2, fgc;
 
 #define GRAPH_SIZE 128
 static mus_float_t graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
@@ -5960,7 +5956,7 @@ static void graph_redisplay(void)
   axis_ap->graph_x0 = 0;
 
   clear_window(ax);
-  ax->gc = gc;
+  ax->gc = gc2;
   make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1 /* "srate" */, SHOW_ALL_AXES, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
 
   ix1 = local_grf_x(0.0, axis_ap);
@@ -5973,7 +5969,7 @@ static void graph_redisplay(void)
       iy0 = iy1;
       ix1 = local_grf_x(x, axis_ap);
       iy1 = local_grf_y(graph_data[i], axis_ap);
-      XDrawLine(ax->dp, ax->wn, gc, ix0, iy0, ix1, iy1);
+      XDrawLine(ax->dp, ax->wn, gc2, ix0, iy0, ix1, iy1);
     }
 
   ax->gc = fgc;
@@ -6024,8 +6020,8 @@ static void widget_float_to_text(Widget w, mus_float_t val)
 
 static void clear_fft_error(void)
 {
-  if ((error_frame) && (XtIsManaged(error_frame)))
-    XtUnmanageChild(error_frame);
+  if ((error_frame1) && (XtIsManaged(error_frame1)))
+    XtUnmanageChild(error_frame1);
 }
 
 
@@ -6040,13 +6036,13 @@ static void errors_to_fft_text(const char *msg, void *data)
   int lines = 0;
   XmString label;
   label = multi_line_label(msg, &lines);
-  XtVaSetValues(error_label, 
+  XtVaSetValues(error_label1, 
 		XmNlabelString, label, 
 		XmNheight, lines * 20,
 		NULL);
-  XtVaSetValues(error_frame, XmNheight, lines * 20, NULL);
+  XtVaSetValues(error_frame1, XmNheight, lines * 20, NULL);
   XmStringFree(label);
-  XtManageChild(error_frame);
+  XtManageChild(error_frame1);
   /* since the offending text is automatically overwritten, we can't depend on subsequent text modify callbacks
    *   to clear things, so we'll just use a timer
    */
@@ -6546,7 +6542,7 @@ void set_show_selection_transform(bool show)
 {
   in_set_show_selection_transform(show);
   if (transform_dialog)
-    set_toggle_button(selection_button, show, false, NULL); 
+    set_toggle_button(selection_button1, show, false, NULL); 
   if (!(ss->graph_hook_active)) 
     for_each_chan(calculate_fft);
 }
@@ -6923,11 +6919,11 @@ Widget make_transform_dialog(bool managed)
       XtSetArg(args[n], XmNallowResize, true); n++;
       XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
       XtSetArg(args[n], XmNshadowThickness, 2); n++;
-      error_frame = XtCreateManagedWidget("error-frame", xmFrameWidgetClass, mainform, args, n);
+      error_frame1 = XtCreateManagedWidget("error-frame", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
-      error_label = XtCreateManagedWidget("", xmLabelWidgetClass, error_frame, args, n);
+      error_label1 = XtCreateManagedWidget("", xmLabelWidgetClass, error_frame1, args, n);
 
 
       /* now 7 or 8 boxes within the main box:
@@ -7575,8 +7571,8 @@ Widget make_transform_dialog(bool managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNlabelString, bstr); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-      selection_button = make_togglebutton_widget("selection-button", display_form, args, n);
-      XtAddCallback(selection_button, XmNvalueChangedCallback, selection_callback, NULL);
+      selection_button1 = make_togglebutton_widget("selection-button", display_form, args, n);
+      XtAddCallback(selection_button1, XmNvalueChangedCallback, selection_callback, NULL);
       XmStringFree(bstr);
 
 
@@ -7587,7 +7583,7 @@ Widget make_transform_dialog(bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, selection_button); n++;
+      XtSetArg(args[n], XmNtopWidget, selection_button1); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNlabelString, bstr); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
@@ -7648,7 +7644,7 @@ Widget make_transform_dialog(bool managed)
 
       gv.function = GXcopy;
       XtVaGetValues(graph_drawer, XmNbackground, &gv.background, XmNforeground, &gv.foreground, NULL);
-      gc = XtGetGC(graph_drawer, GCForeground | GCFunction, &gv);
+      gc2 = XtGetGC(graph_drawer, GCForeground | GCFunction, &gv);
 
       gv.foreground = ss->enved_waveform_color;
       fgc = XtGetGC(graph_drawer, GCForeground | GCFunction, &gv);
@@ -7660,7 +7656,7 @@ Widget make_transform_dialog(bool managed)
       XmToggleButtonSetState(db_button, (Boolean)(fft_log_magnitude(ss)), false);
       XmToggleButtonSetState(logfreq_button, (Boolean)(fft_log_frequency(ss)), false);
       XmToggleButtonSetState(normalize_button, (Boolean)(transform_normalization(ss) != DONT_NORMALIZE), false);
-      XmToggleButtonSetState(selection_button, (Boolean)(show_selection_transform(ss)), false);
+      XmToggleButtonSetState(selection_button1, (Boolean)(show_selection_transform(ss)), false);
       XmToggleButtonSetState(phases_button, (Boolean)(fft_with_phases(ss)), false);
 
       /* select current list choices */
@@ -7685,7 +7681,7 @@ Widget make_transform_dialog(bool managed)
 
       set_dialog_widget(TRANSFORM_DIALOG, transform_dialog);
 
-      XtUnmanageChild(error_frame);
+      XtUnmanageChild(error_frame1);
     }
   else
     {
@@ -16183,10 +16179,6 @@ static void vf_amp_env_redraw(Widget w, view_files_info *vdat)
   vf_amp_env_resize(w, (void *)vdat, NULL);
 }
 
-
-#ifdef __APPLE__
-static int press_x, press_y;
-#endif
 
 static void vf_drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
@@ -27573,10 +27565,6 @@ void set_filter_text(snd_info *sp, const char *str)
   if (has_widgets(sp))
     XmTextSetString(FILTER_COEFFS_TEXT(sp), (char *)str);
 }
-
-#ifdef __APPLE__
-static int press_x, press_y;
-#endif
 
 
 static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 

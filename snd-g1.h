@@ -485,6 +485,8 @@ void add_drag_and_drop(GtkWidget *w,
 		       void (*drop_watcher)(GtkWidget *w, const char *message, int x, int y, void *data), 
 		       void (*drag_watcher)(GtkWidget *w, const char *message, int x, int y, drag_style_t dtype, void *data), 
 		       void *context);
+void view_files_add_directory(widget_t dialog, const char *dirname);
+bool view_files_has_files(void);
 
 
 /* -------- snd-gprefs.c -------- */

@@ -62738,6 +62738,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *
        * the extra set! to pull in args, or fixup the outer-env is annoying, but 
        *   but with-let is hard to do right -- what if env is chained as in class/objects?
+       *
+       * also, currently a mock-let is an error -- perhaps add the method checks?
+       *   but unless 'values, that would require a 'with-let method (it's not a function)
        */
 
     case OP_WITH_LET_S:
@@ -64969,6 +64972,9 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
     
   if (s7_is_zero(divisor))
     return(division_by_zero_error(sc, sc->DIVIDE, args));
+
+  /* it's possible for the divisor to be the wrong type here (if complex multiply -> real for example */
+  divisor = promote_number_1(sc, result_type, divisor, false);
 
   result = copy_and_promote_number(sc, result_type, car(args));
 
@@ -69636,7 +69642,7 @@ s7_scheme *s7_init(void)
 
   if (strcmp(op_names[OP_SAFE_C_opSq_P_1], "c_opsq_p_1") != 0)
     fprintf(stderr, "safe_c_opsq_p_1 op_names: %s\n", op_names[OP_SAFE_C_opSq_P_1]);
-  if (strcmp(real_op_names[OP_SAFE_C_opSq_P_1], "OP_SAFE_C_opSq_P_1") != 0)
+  if (strcmp(real_op_names[OP_SAFE_C_opSq_P_1], "safe_c_opsq_p_1") != 0)
     fprintf(stderr, "safe_c_opsq_p_1 real_op_names: %s\n", real_op_names[OP_SAFE_C_opSq_P_1]);
 
   if (strcmp(opt_names[OPT_MAX_DEFINED], "opt_max_defined") != 0)
@@ -69818,8 +69824,5 @@ int main(int argc, char **argv)
  *    (set! (samples (sound) sample) new-sample)
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
  *
- * if in with-let, should let-ref-fallback be checked before unbound-variable error?
- *    (with-let *s7* stack-top) -> unbound variable
- *    making it a true env means GC of slot-values etc
- * what about with-let with a mock-let?
+ * restore a view-files dialog in gtk (gregion+add_dir I guess)
  */

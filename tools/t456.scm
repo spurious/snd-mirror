@@ -177,3 +177,5 @@
     (format *stderr* "~%~%all done~%")))
 
 (all)
+
+(exit)

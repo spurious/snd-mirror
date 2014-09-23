@@ -1,6 +1,6 @@
 #include "snd.h"
 
-static GtkWidget *edit_find_dialog, *edit_find_text, *cancel_button, *edit_find_label, *next_button, *previous_button;
+static GtkWidget *edit_find_dialog, *edit_find_text, *find_cancel_button, *edit_find_label, *find_next_button, *find_previous_button;
 static GtkWidget *find_error_frame = NULL, *find_error_label = NULL;
 static chan_info *find_channel = NULL;
 static gulong find_key_press_handler_id = 0;
@@ -77,8 +77,8 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
 void find_dialog_stop_label(bool show_stop)
 {
   if (show_stop)
-    set_stock_button_label(cancel_button, I_STOP);
-  else set_stock_button_label(cancel_button, I_GO_AWAY); 
+    set_stock_button_label(find_cancel_button, I_STOP);
+  else set_stock_button_label(find_cancel_button, I_GO_AWAY); 
 }
 
 
@@ -115,31 +115,31 @@ static void make_edit_find_dialog(bool managed, chan_info *cp)
       gtk_window_resize(GTK_WINDOW(edit_find_dialog), 350, 120);
       gtk_widget_realize(edit_find_dialog);
 
-      next_button = gtk_dialog_add_button(GTK_DIALOG(edit_find_dialog), "Forward", GTK_RESPONSE_NONE);
-      previous_button = gtk_dialog_add_button(GTK_DIALOG(edit_find_dialog), "Back", GTK_RESPONSE_NONE);
-      cancel_button = gtk_dialog_add_button(GTK_DIALOG(edit_find_dialog), "Go Away", GTK_RESPONSE_NONE);
+      find_next_button = gtk_dialog_add_button(GTK_DIALOG(edit_find_dialog), "Forward", GTK_RESPONSE_NONE);
+      find_previous_button = gtk_dialog_add_button(GTK_DIALOG(edit_find_dialog), "Back", GTK_RESPONSE_NONE);
+      find_cancel_button = gtk_dialog_add_button(GTK_DIALOG(edit_find_dialog), "Go Away", GTK_RESPONSE_NONE);
       help_button = gtk_dialog_add_button(GTK_DIALOG(edit_find_dialog), "Help", GTK_RESPONSE_NONE);
 
       gtk_widget_set_name(help_button, "dialog_button");
-      gtk_widget_set_name(cancel_button, "dialog_button");
-      gtk_widget_set_name(previous_button, "dialog_button");
-      gtk_widget_set_name(next_button, "dialog_button");
+      gtk_widget_set_name(find_cancel_button, "dialog_button");
+      gtk_widget_set_name(find_previous_button, "dialog_button");
+      gtk_widget_set_name(find_next_button, "dialog_button");
 
 #if HAVE_GTK_3
-      add_highlight_button_style(cancel_button);
+      add_highlight_button_style(find_cancel_button);
       add_highlight_button_style(help_button);
-      add_highlight_button_style(previous_button);
-      add_highlight_button_style(next_button);
+      add_highlight_button_style(find_previous_button);
+      add_highlight_button_style(find_next_button);
 #endif
 
-      SG_SIGNAL_CONNECT(cancel_button, "clicked", edit_find_dismiss, NULL);
+      SG_SIGNAL_CONNECT(find_cancel_button, "clicked", edit_find_dismiss, NULL);
       SG_SIGNAL_CONNECT(help_button, "clicked", edit_find_help, NULL);
-      SG_SIGNAL_CONNECT(next_button, "clicked", edit_find_next, NULL);
-      SG_SIGNAL_CONNECT(previous_button, "clicked", edit_find_previous, NULL);
+      SG_SIGNAL_CONNECT(find_next_button, "clicked", edit_find_next, NULL);
+      SG_SIGNAL_CONNECT(find_previous_button, "clicked", edit_find_previous, NULL);
 
-      gtk_widget_show(cancel_button);
-      gtk_widget_show(next_button);
-      gtk_widget_show(previous_button);
+      gtk_widget_show(find_cancel_button);
+      gtk_widget_show(find_next_button);
+      gtk_widget_show(find_previous_button);
       gtk_widget_show(help_button);
       
 
@@ -257,9 +257,9 @@ static Xen g_find_dialog_widgets(void)
   if (edit_find_dialog)
     return(Xen_cons(Xen_wrap_widget(edit_find_dialog),
 	     Xen_cons(Xen_wrap_widget(edit_find_text),
-  	       Xen_cons(Xen_wrap_widget(next_button),
-		 Xen_cons(Xen_wrap_widget(previous_button),
-		   Xen_cons(Xen_wrap_widget(cancel_button),
+  	       Xen_cons(Xen_wrap_widget(find_next_button),
+		 Xen_cons(Xen_wrap_widget(find_previous_button),
+		   Xen_cons(Xen_wrap_widget(find_cancel_button),
 		     Xen_empty_list))))));
   return(Xen_empty_list);
 }

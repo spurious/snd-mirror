@@ -618,7 +618,7 @@ static gint delete_mix_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 }
 
 
-static GtkWidget *nextb, *previousb, *apply_button;
+static GtkWidget *mix_next_button, *mix_previous_button, *mix_apply_button;
 
 static void mix_next_callback(GtkWidget *w, gpointer context)
 {
@@ -630,7 +630,7 @@ static void mix_next_callback(GtkWidget *w, gpointer context)
       mix_dialog_id = id;
       reflect_mix_change(id);
       if (next_mix_id(id) == INVALID_MIX_ID) 
-	set_sensitive(nextb, false);
+	set_sensitive(mix_next_button, false);
     }
 }
 
@@ -645,7 +645,7 @@ static void mix_previous_callback(GtkWidget *w, gpointer context)
       mix_dialog_id = id;
       reflect_mix_change(id);
       if (previous_mix_id(id) == INVALID_MIX_ID) 
-	set_sensitive(previousb, false);
+	set_sensitive(mix_previous_button, false);
     }
 }
 
@@ -705,13 +705,13 @@ GtkWidget *make_mix_dialog(void)
 #endif
       gtk_widget_show(dismiss_button);
 
-      apply_button = gtk_dialog_add_button(GTK_DIALOG(mix_dialog), "Apply env", GTK_RESPONSE_NONE);
-      gtk_widget_set_name(apply_button, "dialog_button");
-      SG_SIGNAL_CONNECT(apply_button, "clicked", apply_env_callback, NULL);
+      mix_apply_button = gtk_dialog_add_button(GTK_DIALOG(mix_dialog), "Apply env", GTK_RESPONSE_NONE);
+      gtk_widget_set_name(mix_apply_button, "dialog_button");
+      SG_SIGNAL_CONNECT(mix_apply_button, "clicked", apply_env_callback, NULL);
 #if HAVE_GTK_3
-      add_highlight_button_style(apply_button);
+      add_highlight_button_style(mix_apply_button);
 #endif
-      gtk_widget_show(apply_button);
+      gtk_widget_show(mix_apply_button);
 
       /* normally hidden error indication at top */
       error_frame = gtk_frame_new(NULL);
@@ -764,25 +764,25 @@ GtkWidget *make_mix_dialog(void)
       SG_SIGNAL_CONNECT(mix_play_pix, DRAW_SIGNAL, mix_play_pix_expose, NULL);
 #endif
 
-      nextb = button_new_with_icon(ICON_GO_FORWARD);
-      gtk_widget_set_name(nextb, "dialog_button");
-      gtk_box_pack_end(GTK_BOX(rc), nextb, false, true, 6);
+      mix_next_button = button_new_with_icon(ICON_GO_FORWARD);
+      gtk_widget_set_name(mix_next_button, "dialog_button");
+      gtk_box_pack_end(GTK_BOX(rc), mix_next_button, false, true, 6);
 #if HAVE_GTK_3
-      add_highlight_button_style(nextb);
+      add_highlight_button_style(mix_next_button);
 #endif
-      SG_SIGNAL_CONNECT(nextb, "clicked", mix_next_callback, NULL);
-      gtk_widget_show(nextb);
-      set_stock_button_label(nextb, I_NEXT);
+      SG_SIGNAL_CONNECT(mix_next_button, "clicked", mix_next_callback, NULL);
+      gtk_widget_show(mix_next_button);
+      set_stock_button_label(mix_next_button, I_NEXT);
 
-      previousb = button_new_with_icon(ICON_GO_BACK);
-      gtk_widget_set_name(previousb, "dialog_button");
-      gtk_box_pack_end(GTK_BOX(rc), previousb, false, true, 6);
+      mix_previous_button = button_new_with_icon(ICON_GO_BACK);
+      gtk_widget_set_name(mix_previous_button, "dialog_button");
+      gtk_box_pack_end(GTK_BOX(rc), mix_previous_button, false, true, 6);
 #if HAVE_GTK_3
-      add_highlight_button_style(previousb);
+      add_highlight_button_style(mix_previous_button);
 #endif
-      SG_SIGNAL_CONNECT(previousb, "clicked", mix_previous_callback, NULL);
-      gtk_widget_show(previousb);
-      set_stock_button_label(previousb, I_PREVIOUS);
+      SG_SIGNAL_CONNECT(mix_previous_button, "clicked", mix_previous_callback, NULL);
+      gtk_widget_show(mix_previous_button);
+      set_stock_button_label(mix_previous_button, I_PREVIOUS);
 
 
       /* SPEED */
@@ -957,8 +957,8 @@ void reflect_mix_change(int mix_id)
       if ((mix_id == mix_dialog_id) || (mix_id == ANY_MIX_ID))
 	{
 	  mus_float_t val;
-	  set_sensitive(nextb, (next_mix_id(mix_dialog_id) != INVALID_MIX_ID));
-	  set_sensitive(previousb, (previous_mix_id(mix_dialog_id) != INVALID_MIX_ID));
+	  set_sensitive(mix_next_button, (next_mix_id(mix_dialog_id) != INVALID_MIX_ID));
+	  set_sensitive(mix_previous_button, (previous_mix_id(mix_dialog_id) != INVALID_MIX_ID));
 
 	  /* now reflect current mix state in mix dialog controls */
 	  if (mix_exists(mix_dialog_id))
@@ -995,13 +995,13 @@ void reflect_mix_change(int mix_id)
 
 	      widget_mix_to_text(w_id, mix_dialog_id);
 
-	      set_sensitive(apply_button, true);
+	      set_sensitive(mix_apply_button, true);
 	    }
 	  else
 	    {
 	      gtk_entry_set_text(GTK_ENTRY(w_id), "-1");
 	      gtk_entry_set_text(GTK_ENTRY(w_beg), "no active mixes");
-	      set_sensitive(apply_button, false);
+	      set_sensitive(mix_apply_button, false);
 	    }
 	  if (!dragging)
 	    {

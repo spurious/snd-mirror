@@ -7,7 +7,7 @@
  */
 
 
-slist *transform_list = NULL, *size_list = NULL, *window_list = NULL, *wavelet_list = NULL;
+static slist *transform_list = NULL, *size_list = NULL, *window_list = NULL, *wavelet_list = NULL;
 static GtkWidget *transform_dialog = NULL; /* main dialog shell */
 static GtkWidget *outer_table, *db_button, *peaks_button, *logfreq_button, *sono_button, *spectro_button, *normal_fft_button, *phases_button;
 static GtkWidget *normalize_button, *selection_button;
@@ -15,7 +15,7 @@ static GtkWidget *alpha_label = NULL, *beta_label = NULL, *graph_drawer = NULL, 
 static GtkAdjustment *beta_adj, *alpha_adj, *spectrum_start_adj, *spectrum_end_adj;
 static GtkWidget *spectrum_start_scale, *spectrum_end_scale;
 static GtkWidget *db_txt, *peaks_txt, *lf_txt;
-static gc_t *gc = NULL, *fgc = NULL;
+static gc_t *fft_gc = NULL, *fgc = NULL;
 static bool ignore_callbacks;
 
 #define NUM_TRANSFORM_SIZES 15
@@ -63,7 +63,7 @@ static void graph_redisplay(void)
   else ax = axis_ap->ax;
   ax->wn = WIDGET_TO_WINDOW(graph_drawer);
   ax->w = graph_drawer;
-  ax->gc = gc;
+  ax->gc = fft_gc;
   ax->current_font = TINY_FONT(ss);  /* we're right on the edge; this changes if user makes dialog bigger */
   axis_ap->xmin = 0.0;
   axis_ap->xmax = 1.0;
@@ -108,7 +108,7 @@ static void graph_redisplay(void)
 
   make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1 /* "srate" */, SHOW_ALL_AXES, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
 
-  ax->gc = gc;
+  ax->gc = fft_gc;
   ix1 = grf_x(0.0, axis_ap);
   iy1 = grf_y(graph_data[0], axis_ap);
   xincr = 1.0 / (mus_float_t)GRAPH_SIZE;
@@ -1239,9 +1239,9 @@ GtkWidget *make_transform_dialog(bool managed)
 	gc_set_background(fgc, ss->white);
 	gc_set_foreground(fgc, ss->enved_waveform_color);
 
-	gc = gc_new();
-	gc_set_background(gc, ss->white);
-	gc_set_foreground(gc, ss->black);
+	fft_gc = gc_new();
+	gc_set_background(fft_gc, ss->white);
+	gc_set_foreground(fft_gc, ss->black);
 
 	gtk_widget_show(graph_drawer);
 	gtk_widget_show(graph_frame);

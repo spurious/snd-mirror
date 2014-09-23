@@ -2,6 +2,7 @@
 #include "snd-menu.h"
 
 
+/* gprint */
 /* are the printed graphs truncated because the "printer" assumes some paper size? 
  */
 
@@ -79,6 +80,7 @@ widget_t make_file_print_dialog(bool managed, bool direct_to_printer)
 }
 
 
+/* gmenu */
 
 static const char *ml[NUM_MENU_WIDGETS];
 
@@ -302,6 +304,10 @@ static void view_grid_callback(GtkWidget *w, gpointer info)
   if (show_grid(ss) == NO_GRID)
     set_show_grid(WITH_GRID);
   else set_show_grid(NO_GRID);
+}
+
+static void view_files_callback(GtkWidget *w, gpointer info)
+{
 }
 
 
@@ -596,7 +602,11 @@ GtkWidget *add_menu(void)
 #if HAVE_EXTENSION_LANGUAGE
   view_listener_menu = add_menu_item(view_cascade_menu, "Open listener", NULL, (GCallback)view_listener_callback);
   ml[v_listener_menu] = "Open listener";
+  /* handle_listener in snd-glistener hides this -- is it ever displayed? */
 #endif
+
+  view_files_menu = add_insensitive_menu_item(view_cascade_menu, "Files", NULL, (GCallback)view_files_callback);
+  ml[v_files_menu] = "Files";
 
   view_mix_dialog_menu = add_menu_item(view_cascade_menu, "Mixes", NULL, (GCallback)view_mix_dialog_callback);
   ml[v_mix_dialog_menu] = "Mixes";
