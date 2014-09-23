@@ -306,10 +306,6 @@ static void view_grid_callback(GtkWidget *w, gpointer info)
   else set_show_grid(NO_GRID);
 }
 
-static void view_files_callback(GtkWidget *w, gpointer info)
-{
-}
-
 
 /* -------------------------------- OPTIONS MENU -------------------------------- */
 

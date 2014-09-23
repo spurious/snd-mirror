@@ -8733,7 +8733,6 @@ typedef struct {
   GC env_gc;
 } view_files_info;
 
-
 static void vf_unhighlight_row(widget_t nm, widget_t rw);
 static void vf_highlight_row(widget_t nm, widget_t rw);
 static void vf_post_info(view_files_info *vdat, int pos);
@@ -8756,20 +8755,7 @@ static void vf_clear_error(view_files_info *vdat);
 static void vf_mix_insert_buttons_set_sensitive(view_files_info *vdat, bool sensitive);
 static int vf_mix(view_files_info *vdat);
 static bool vf_insert(view_files_info *vdat);
-
 static void view_files_display_list(view_files_info *vdat);
-static void view_files_mix_selected_files(widget_t w, view_files_info *vdat);
-static void view_files_insert_selected_files(widget_t w, view_files_info *vdat);
-static void view_files_open_selected_files(view_files_info *vdat);
-static void view_files_select(vf_row *r, bool add_to_selected);
-static bool view_files_play(view_files_info *vdat, int pos, bool play);
-static view_files_info *new_view_files_dialog(void);
-static void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname);
-static void add_file_to_view_files_list(view_files_info *vdat, const char *filename, const char *fullname);
-static void view_files_reflect_sort_items(void);
-static void view_files_unmonitor_directories(view_files_info *vdat);
-static void view_files_monitor_directory(view_files_info *vdat, const char *dirname);
-
 
 static void dialog_set_title(widget_t dialog, const char *titlestr)
 {
@@ -8780,7 +8766,8 @@ static void dialog_set_title(widget_t dialog, const char *titlestr)
 }
 
 
-
+static void view_files_unmonitor_directories(view_files_info *vdat) {}
+static void view_files_monitor_directory(view_files_info *vdat, const char *dirname) {}
 
 void cleanup_file_monitor(void) {}
 static bool initialize_file_monitor(void) {return(false);}
@@ -15250,11 +15237,6 @@ char *view_files_find_any_directory(void)
 
 static Xen mouse_enter_label_hook;
 static Xen mouse_leave_label_hook;
-
-
-static void view_files_unmonitor_directories(view_files_info *vdat) {}
-static void view_files_monitor_directory(view_files_info *vdat, const char *dirname) {}
-
 
 static char *vf_row_get_label(void *ur)
 {

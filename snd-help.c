@@ -2640,8 +2640,7 @@ static const char *view_files_xrefs[5] = {
 
 void view_files_dialog_help(void)
 {
-  snd_help_with_xrefs("File Browser [Motif only]",
-
+  snd_help_with_xrefs("File Browser",
 #if USE_MOTIF
 "The View:Files dialog provides a list of sounds and various things to do with them.\
 The play button plays the file. \
@@ -2667,7 +2666,7 @@ The functions that refer to this dialog are: \n\
   " S_view_files_speed ": dialog's speed value\n\
   " S_view_files_speed_style ": dialog's speed style\n",
 #else
-  "The View:Files dialog exists only in the Motif version of Snd.",
+  "The View:Files dialog provides a list of files preloaded via the -p startup switch.",
 #endif
 		      WITH_WORD_WRAP,
 		      view_files_xrefs,

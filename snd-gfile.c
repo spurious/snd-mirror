@@ -3955,16 +3955,3 @@ event. If it returns " PROC_TRUE ", the file is not opened by Snd."
 
   drop_hook = Xen_define_hook(S_drop_hook, "(make-hook 'name)", 1, H_drop_hook); 
 }
-
-
-
-/* view-files replacement */
-
-void view_files_add_directory(widget_t dialog, const char *dirname) 
-{
-}
-
-bool view_files_has_files(void)
-{
-  return(false);
-}

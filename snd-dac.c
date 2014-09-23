@@ -617,9 +617,7 @@ static void reflect_play_stop(snd_info *sp)
   set_control_panel_play_button(sp);
 #endif
   set_open_file_play_button(false);
-#if USE_MOTIF
   view_files_unplay();
-#endif
   ss->tracking = false;
 }
 

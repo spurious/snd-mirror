@@ -533,7 +533,6 @@ static gboolean mix_region_tooltip(GtkWidget *w, gint x, gint y, gboolean keyboa
 }
 
 
-
 static void make_region_dialog(void)
 {
   int i, id, rows;
@@ -874,3 +873,242 @@ to popup file info as follows: \n\
   mouse_leave_label_hook = Xen_define_hook(S_mouse_leave_label_hook, "(make-hook 'type 'position 'label)", 3, H_mouse_leave_label_hook);
 }
 
+
+/* simple view-files replacement */
+
+#include "snd-file.h"
+
+GtkWidget *view_files_dialog = NULL;
+
+static gint vf_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
+{
+  gtk_widget_hide(view_files_dialog);
+  return(true);
+}
+
+static void vf_ok_callback(GtkWidget *w, gpointer context)
+{
+  gtk_widget_hide(view_files_dialog);
+}
+
+static void vf_help_callback(GtkWidget *w, gpointer context)
+{
+  view_files_dialog_help();
+}
+
+
+static char **vf_names, **vf_full_names;
+static int vf_names_size = 0;
+static regrow **vf_rows = NULL;
+static snd_info *vf_play_sp = NULL;
+
+static bool view_files_play(int pos, bool play)
+{
+  if (play)
+    {
+      if (vf_play_sp)
+	{
+	  if (vf_play_sp->playing) return(true); /* can't play two of these at once */
+	  if (strcmp(vf_play_sp->short_filename, vf_names[pos]) != 0)
+	    {
+	      completely_free_snd_info(vf_play_sp);
+	      vf_play_sp = NULL;
+	    }
+	}
+      if ((!vf_play_sp) && 
+	  (vf_full_names[pos]))
+	vf_play_sp = make_sound_readable(vf_full_names[pos], false);
+      if (vf_play_sp)
+	{
+	  vf_play_sp->short_filename = vf_names[pos];
+	  vf_play_sp->filename = NULL;
+	  play_sound(vf_play_sp, 0, NO_END_SPECIFIED);
+	}
+      else return(true); /* can't find or setup file */
+    }
+  else
+    { /* play toggled off */
+      if ((vf_play_sp) && 
+	  (vf_play_sp->playing)) 
+	{
+	  stop_playing_sound(vf_play_sp, PLAY_BUTTON_UNSET);
+	}
+    }
+  return(false);
+}
+
+void view_files_unplay(void)
+{
+  int i;
+  for (i = 0; i < vf_names_size; i++)
+    if (TOGGLE_BUTTON_ACTIVE(vf_rows[i]->pl))
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vf_rows[i]->pl), false);
+}
+
+static void vf_focus_callback(GtkWidget *w, gpointer context) {}
+
+static void vf_play_callback(GtkWidget *w, gpointer context)
+{
+  regrow *r = (regrow *)context;
+  view_files_play(r->pos, TOGGLE_BUTTON_ACTIVE(r->pl));
+}
+
+static int sort_a_to_z(const void *a, const void *b)
+{
+  sort_info *d1 = *(sort_info **)a;
+  sort_info *d2 = *(sort_info **)b;
+  return(strcmp(d1->filename, d2->filename));
+}
+
+static void vf_sort(void)
+{
+  sort_info **data;
+  int i;
+
+  data = (sort_info **)calloc(vf_names_size, sizeof(sort_info *));
+  for (i = 0; i < vf_names_size; i++)
+    {
+      data[i] = (sort_info *)calloc(1, sizeof(sort_info));
+      data[i]->filename = vf_names[i];
+      data[i]->full_filename = vf_full_names[i];
+    }
+  qsort((void *)data, vf_names_size, sizeof(sort_info *), sort_a_to_z);
+  for (i = 0; i < vf_names_size; i++)
+    {
+      vf_names[i] = data[i]->filename;
+      vf_full_names[i] = data[i]->full_filename;
+      free(data[i]);
+    }
+  free(data);
+}
+
+void view_files_add_directory(widget_t dialog, const char *dirname) 
+{
+  dir_info *sound_files = NULL;
+  if ((dirname) && (dirname[strlen(dirname) - 1] != '/'))
+    {
+      char *add_slash;
+      add_slash = mus_format("%s/", dirname);
+      sound_files = find_sound_files_in_dir(add_slash);
+      free(add_slash);
+    }
+  else sound_files = find_sound_files_in_dir(dirname);
+
+  if ((sound_files) && 
+      (sound_files->len > 0))
+    {
+      int i;
+
+      vf_names_size = sound_files->len;
+      vf_names = (char **)calloc(vf_names_size, sizeof(char **));
+      vf_full_names = (char **)calloc(vf_names_size, sizeof(char **));
+      vf_rows = (regrow **)calloc(vf_names_size, sizeof(regrow *));
+
+      for (i = 0; i < sound_files->len; i++) 
+	{
+	  vf_names[i] = mus_strdup(sound_files->files[i]->filename);
+	  vf_full_names[i] = mus_strdup(sound_files->files[i]->full_filename);
+	}
+      sound_files = free_dir_info(sound_files);
+      vf_sort();
+    }
+}
+
+bool view_files_has_files(void)
+{
+  return(vf_names_size > 0);
+}
+
+void view_files_callback(GtkWidget *w, gpointer info)
+{
+  if (!view_files_dialog)
+    {
+      int i;
+      regrow *r;
+      GtkWidget *dismiss_button, *help_button, *vf_list;
+      GtkWidget *sep1, *cww, *tophbox, *formw;
+      GtkWidget *plw;
+      
+      view_files_dialog = snd_gtk_dialog_new();
+      SG_SIGNAL_CONNECT(view_files_dialog, "delete_event", vf_delete_callback, NULL);
+      gtk_window_set_title(GTK_WINDOW(view_files_dialog), "Files");
+      sg_make_resizable(view_files_dialog);
+      gtk_container_set_border_width(GTK_CONTAINER(view_files_dialog), 10);
+      gtk_window_resize(GTK_WINDOW(view_files_dialog), 300, 500);
+      gtk_widget_realize(view_files_dialog);
+      
+      dismiss_button = gtk_dialog_add_button(GTK_DIALOG(view_files_dialog), "Go away", GTK_RESPONSE_NONE);
+      help_button = gtk_dialog_add_button(GTK_DIALOG(view_files_dialog), "Help", GTK_RESPONSE_NONE);
+      
+      gtk_widget_set_name(help_button, "dialog_button");
+      gtk_widget_set_name(dismiss_button, "dialog_button");
+      
+#if HAVE_GTK_3
+      add_highlight_button_style(help_button);
+      add_highlight_button_style(dismiss_button);
+#endif
+      
+      SG_SIGNAL_CONNECT(help_button, "clicked", vf_help_callback, NULL);
+      SG_SIGNAL_CONNECT(dismiss_button, "clicked", vf_ok_callback, NULL);
+      
+      gtk_widget_show(help_button);
+      gtk_widget_show(dismiss_button);
+      
+      formw = gtk_vbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(view_files_dialog)), formw, true, true, 0);
+      gtk_widget_show(formw);
+      
+      sep1 = gtk_vseparator_new(); /* not hsep -- damned thing insists on drawing a line */
+      gtk_box_pack_start(GTK_BOX(formw), sep1, false, false, 2);
+      gtk_widget_show(sep1);
+      
+      tophbox = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(formw), tophbox, false, false, 4);
+      gtk_widget_show(tophbox);
+      
+#if WITH_AUDIO
+#if (!HAVE_GTK_3)
+      plw = gtk_label_new("play"); 
+#else
+      plw = gtk_button_new_with_label("play"); 
+      add_highlight_button_style(plw);
+#endif
+      gtk_box_pack_start(GTK_BOX(tophbox), plw, false, false, 2);
+      gtk_widget_show(plw);
+#endif
+      
+      sep1 = gtk_vseparator_new();
+      gtk_box_pack_start(GTK_BOX(formw), sep1, false, false, 2);
+      gtk_widget_show(sep1);
+      
+      vf_list = gtk_vbox_new(false, 0);
+      
+      cww = gtk_scrolled_window_new(NULL, NULL);
+      gtk_box_pack_start(GTK_BOX(formw), cww, true, true, 0);
+      gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cww), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+#if HAVE_GTK_HEADER_BAR_NEW
+      gtk_container_add(GTK_CONTAINER(cww), vf_list);
+#else
+      gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(cww), vf_list);
+#endif
+      
+      gtk_widget_show(vf_list);
+      gtk_widget_show(cww);
+      
+      for (i = 0; i < vf_names_size; i++)
+	{
+	  r = make_regrow(vf_list, (void (*)())vf_play_callback, (void (*)())vf_focus_callback);
+	  vf_rows[i] = r;
+	  r->pos = i;
+	  set_button_label(r->nm, vf_names[i]);
+	}
+
+      gtk_widget_show(view_files_dialog);
+      set_dialog_widget(VIEW_FILES_DIALOG, view_files_dialog);
+    }
+  else
+    {
+      raise_dialog(view_files_dialog);
+    }
+
+}
