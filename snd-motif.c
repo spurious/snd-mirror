@@ -8655,108 +8655,6 @@ static void snd_sort(int sorter, sort_info **data, int len)
 
 
 
-
-
-
-typedef enum {VF_AT_CURSOR, VF_AT_END, VF_AT_BEGINNING, VF_AT_MARK, VF_AT_SAMPLE} vf_location_t;
-
-typedef struct {
-  widget_t rw;
-  widget_t nm;
-#if WITH_AUDIO
-  widget_t pl;
-#endif
-  int pos;
-  void *vdat;
-} vf_row;
-
-typedef struct {
-  vf_row **file_list_entries;
-  int index, size;
-  char **names;
-  char **full_names;
-  int end;
-  int sorter;
-  int *selected_files;
-  int selected_files_size;
-  int currently_selected_files;
-  mus_float_t amp;
-  vf_location_t location_choice;
-  mus_float_t speed;
-  graphics_context *env_ax;
-  env_editor *spf;
-  env *amp_env;
-  bool has_error;
-  int sort_items_size;
-  speed_style_t speed_style;
-  mus_long_t beg;
-
-  int dirs_size;
-  void *dirs;
-  char **dir_names;
-  bool need_update;
-
-  widget_t dialog;
-  widget_t file_list;
-  widget_t file_list_holder;
-  widget_t left_title;
-  widget_t info1; 
-  widget_t info2; 
-  widget_t mixB; 
-  widget_t insertB; 
-  widget_t at_cursor_button; 
-  widget_t at_end_button; 
-  widget_t at_beginning_button; 
-  widget_t at_mark_button; 
-  widget_t at_sample_button; 
-  widget_t at_sample_text; 
-  widget_t at_mark_text;
-  widget_t amp_number; 
-  widget_t amp_scrollbar;
-  widget_t speed_number; 
-  widget_t speed_scrollbar;
-  widget_t env_drawer;
-  widget_t a_to_z; 
-  widget_t z_to_a; 
-  widget_t new_to_old; 
-  widget_t old_to_new; 
-  widget_t small_to_big; 
-  widget_t big_to_small; 
-  widget_t smenu; 
-  widget_t current_play_button;
-  widget_t amp_event; 
-  widget_t speed_event;
-  widget_t speed_label_event;
-  widget_t add_text;
-  widget_t* sort_items;
-
-  GC env_gc;
-} view_files_info;
-
-static void vf_unhighlight_row(widget_t nm, widget_t rw);
-static void vf_highlight_row(widget_t nm, widget_t rw);
-static void vf_post_info(view_files_info *vdat, int pos);
-static void vf_unpost_info(view_files_info *vdat);
-static mus_long_t vf_location(view_files_info *vdat);
-static void vf_post_error(const char *error_msg, view_files_info *data);
-static void redirect_vf_post_error(const char *error_msg, void *data);
-static void redirect_vf_post_location_error(const char *error_msg, void *data);
-static void vf_post_add_error(const char *error_msg, view_files_info *data);
-static widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed);
-static void vf_post_selected_files_list(view_files_info *vdat);
-static void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir);
-static void vf_reflect_sort_choice_in_menu(view_files_info *vdat);
-static vf_row *view_files_make_row(view_files_info *vdat, widget_t last_row);
-static void vf_flash_row(vf_row *r);
-static void vf_set_amp(view_files_info *vdat, mus_float_t val);
-static void vf_set_speed(view_files_info *vdat, mus_float_t val);
-static void vf_set_amp_env(view_files_info *vdat, env *new_e);
-static void vf_clear_error(view_files_info *vdat);
-static void vf_mix_insert_buttons_set_sensitive(view_files_info *vdat, bool sensitive);
-static int vf_mix(view_files_info *vdat);
-static bool vf_insert(view_files_info *vdat);
-static void view_files_display_list(view_files_info *vdat);
-
 static void dialog_set_title(widget_t dialog, const char *titlestr)
 {
   XmString title;
@@ -8765,9 +8663,6 @@ static void dialog_set_title(widget_t dialog, const char *titlestr)
   XmStringFree(title);
 }
 
-
-static void view_files_unmonitor_directories(view_files_info *vdat) {}
-static void view_files_monitor_directory(view_files_info *vdat, const char *dirname) {}
 
 void cleanup_file_monitor(void) {}
 static bool initialize_file_monitor(void) {return(false);}
@@ -13132,6 +13027,109 @@ void save_edit_header_dialog_state(FILE *fd)
 	  }
     }
 }
+
+
+typedef enum {VF_AT_CURSOR, VF_AT_END, VF_AT_BEGINNING, VF_AT_MARK, VF_AT_SAMPLE} vf_location_t;
+
+typedef struct {
+  widget_t rw;
+  widget_t nm;
+#if WITH_AUDIO
+  widget_t pl;
+#endif
+  int pos;
+  void *vdat;
+} vf_row;
+
+typedef struct {
+  vf_row **file_list_entries;
+  int index, size;
+  char **names;
+  char **full_names;
+  int end;
+  int sorter;
+  int *selected_files;
+  int selected_files_size;
+  int currently_selected_files;
+  mus_float_t amp;
+  vf_location_t location_choice;
+  mus_float_t speed;
+  graphics_context *env_ax;
+  env_editor *spf;
+  env *amp_env;
+  bool has_error;
+  int sort_items_size;
+  speed_style_t speed_style;
+  mus_long_t beg;
+
+  int dirs_size;
+  void *dirs;
+  char **dir_names;
+  bool need_update;
+
+  widget_t dialog;
+  widget_t file_list;
+  widget_t file_list_holder;
+  widget_t left_title;
+  widget_t info1; 
+  widget_t info2; 
+  widget_t mixB; 
+  widget_t insertB; 
+  widget_t at_cursor_button; 
+  widget_t at_end_button; 
+  widget_t at_beginning_button; 
+  widget_t at_mark_button; 
+  widget_t at_sample_button; 
+  widget_t at_sample_text; 
+  widget_t at_mark_text;
+  widget_t amp_number; 
+  widget_t amp_scrollbar;
+  widget_t speed_number; 
+  widget_t speed_scrollbar;
+  widget_t env_drawer;
+  widget_t a_to_z; 
+  widget_t z_to_a; 
+  widget_t new_to_old; 
+  widget_t old_to_new; 
+  widget_t small_to_big; 
+  widget_t big_to_small; 
+  widget_t smenu; 
+  widget_t current_play_button;
+  widget_t amp_event; 
+  widget_t speed_event;
+  widget_t speed_label_event;
+  widget_t add_text;
+  widget_t* sort_items;
+
+  GC env_gc;
+} view_files_info;
+
+static void vf_unhighlight_row(widget_t nm, widget_t rw);
+static void vf_highlight_row(widget_t nm, widget_t rw);
+static void vf_post_info(view_files_info *vdat, int pos);
+static void vf_unpost_info(view_files_info *vdat);
+static mus_long_t vf_location(view_files_info *vdat);
+static void vf_post_error(const char *error_msg, view_files_info *data);
+static void redirect_vf_post_error(const char *error_msg, void *data);
+static void redirect_vf_post_location_error(const char *error_msg, void *data);
+static void vf_post_add_error(const char *error_msg, view_files_info *data);
+static widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed);
+static void vf_post_selected_files_list(view_files_info *vdat);
+static void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir);
+static void vf_reflect_sort_choice_in_menu(view_files_info *vdat);
+static vf_row *view_files_make_row(view_files_info *vdat, widget_t last_row);
+static void vf_flash_row(vf_row *r);
+static void vf_set_amp(view_files_info *vdat, mus_float_t val);
+static void vf_set_speed(view_files_info *vdat, mus_float_t val);
+static void vf_set_amp_env(view_files_info *vdat, env *new_e);
+static void vf_clear_error(view_files_info *vdat);
+static void vf_mix_insert_buttons_set_sensitive(view_files_info *vdat, bool sensitive);
+static int vf_mix(view_files_info *vdat);
+static bool vf_insert(view_files_info *vdat);
+static void view_files_display_list(view_files_info *vdat);
+
+static void view_files_unmonitor_directories(view_files_info *vdat) {}
+static void view_files_monitor_directory(view_files_info *vdat, const char *dirname) {}
 
 
 

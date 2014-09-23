@@ -1439,7 +1439,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 	    return(auto_open_ctr + 2);
 	  else
 	    {
-
+#if (!USE_NO_GUI)
 	      if ((strcmp("-p", argname) == 0) ||
 		  (strcmp("-preload", argname) == 0) ||
 		  (strcmp("--preload", argname) == 0))
@@ -1452,7 +1452,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		  else view_files_add_directory(NULL_WIDGET, auto_open_file_names[auto_open_ctr]);
 		}
 	      else
-
+#endif
 		{
 		  if ((strcmp("-l", argname) == 0) ||
 		      (strcmp("-load", argname) == 0) ||

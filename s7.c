@@ -69823,6 +69823,4 @@ int main(int argc, char **argv)
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
- *
- * restore a view-files dialog in gtk (gregion+add_dir I guess)
  */
