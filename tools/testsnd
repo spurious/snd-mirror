@@ -16,8 +16,6 @@ echo ' '
 echo ' '
 
 ./snd lint.scm -e '(begin (lint "s7test.scm" #f) (exit))'
-./snd t101.scm
-# ./snd t816.scm
 
 valgrind ./snd -noinit -l snd-test
 echo ' '

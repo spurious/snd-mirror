@@ -2775,7 +2775,7 @@ static Xen sound_set(Xen snd, Xen val, sp_field_t fld, const char *caller)
 	  else
 	    {
 	      if (Xen_is_double(val))
-		ival = (int)round(Xen_real_to_C_double(val));
+		ival = snd_round(Xen_real_to_C_double(val));
 	      else ival = 44100;
 	    }
 	  if ((ival <= 0) || (ival > 100000000))

@@ -1000,8 +1000,8 @@ void view_files_add_directory(widget_t dialog, const char *dirname)
       int i;
 
       vf_names_size = sound_files->len;
-      vf_names = (char **)calloc(vf_names_size, sizeof(char **));
-      vf_full_names = (char **)calloc(vf_names_size, sizeof(char **));
+      vf_names = (char **)calloc(vf_names_size, sizeof(char *));
+      vf_full_names = (char **)calloc(vf_names_size, sizeof(char *));
       vf_rows = (regrow **)calloc(vf_names_size, sizeof(regrow *));
 
       for (i = 0; i < sound_files->len; i++) 
@@ -1027,8 +1027,9 @@ void view_files_callback(GtkWidget *w, gpointer info)
       regrow *r;
       GtkWidget *dismiss_button, *help_button, *vf_list;
       GtkWidget *sep1, *cww, *tophbox, *formw;
+#if WITH_AUDIO
       GtkWidget *plw;
-      
+#endif      
       view_files_dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(view_files_dialog, "delete_event", vf_delete_callback, NULL);
       gtk_window_set_title(GTK_WINDOW(view_files_dialog), "Files");

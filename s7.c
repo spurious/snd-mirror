@@ -44419,6 +44419,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		      if ((is_pair(body)) &&
 			  (is_null(cdr(body))) &&
 			  (is_pair(car(body))) &&
+			  (is_optimized(car(body))) &&  /* snd-test: (power-env pe) is safe_closure but body is not optimized? and c_call is nil */
 			  (car(closure_args(func)) == cadar(body)))
 			{
 			  if ((is_null(cdddr(car(body)))) &&
@@ -69823,4 +69824,9 @@ int main(int argc, char **argv)
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
+ *
+ * perhaps comment out the freebsd s7test dl cases or fix them
+ * cc says no icon?
+ * fc32 libm ids, mock-number trouble
+ * mac64: why does it give up after gmp?
  */

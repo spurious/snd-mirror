@@ -1,49 +1,13 @@
-Snd 14.9:
+Snd 15.0:
 
-s7: symbol-access is now just the set accessor function (not a list), and it is
-      local to an environment.  See reactive-let et al in stuff.scm.
+clm and snd: Juan Reyes provided his banded waveguide instrument,
+  bandedwg.ins and bandedwg.cms, and a Tibetan bowl: bowl.ins 
+  and bowl.cms.
 
-    define and friends now return the value, not the symbol (like set!).
+s7: *s7* is an environment holding various curiousities.
+    moved *gc-stats*, *safety*, and *maximum-stack-size* into *s7*
+    added cutlet to remove a binding from an environment
 
-    added mockery.scm.
+checked: gtk 3.13.7|8|9, sbcl 1.2.3
 
-    added hash-table* (unconsed args): 
-        (hash-table '(a . 1) '(b . 2)) 
-        (hash-table* 'a 1 'b 2)
-
-    "let" replaces the "environment" terms
-    make-procedure-with-setter is now dilambda
-
-        new name       old name
-
-        let?         environment?
-        rootlet      global-environment
-        unlet        initial-environment
-        with-let     with-environment
-        outlet       outer-environment
-        sublet       augment-environment
-        varlet       augment-environment!
-        curlet       current-environment
-        owlet        error-environment
-        funclet      procedure-environment
-        let->list    environment->list
-        openlet      open-environment
-        openlet?     open-environment?
-        coverlet     close-environment
-        let-ref      environment-ref
-        let-set!     environment-set!
-        inlet        environment and environment*
-
-        dilambda     make-procedure-with-setter
-        dilambda?    procedure-with-setter?
-
-
-Snd: edit-position can't be a function
-     mus-sound-path and *mus-sound-path*
-     *default-output-data-format* is now *default-output-sample-type*
-     default-output-data-format is replaced by default-output-sample-type
-     similarly, data-format, mus-sound-data-format, mus-data-format->string and mus-data-format-name
-
-checked: gtk 3.13.4|5|6, FreeBSD 10, sbcl 1.2.2.
-
-Thanks!: Francis Derive, Anders Vinjar
+Thanks!: Juan Reyes
