@@ -148,7 +148,6 @@ static mus_xen *mx_free_lists[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NU
 
 static mus_xen *mx_alloc(int vcts)
 {
-  int i;
   mus_xen *p;
   if (mx_free_lists[vcts])
     {
@@ -157,18 +156,12 @@ static mus_xen *mx_alloc(int vcts)
 #if HAVE_SCHEME
       p->g = NULL;
 #endif
-      for (i = 0; i < vcts; i++)
-	p->vcts[i] = Xen_undefined;
       return(p);
     }
   p = (mus_xen *)calloc(1, sizeof(mus_xen));
   p->nvcts = vcts;
   if (vcts > 0)
-    {
-      p->vcts = (Xen *)malloc(vcts * sizeof(Xen));
-      for (i = 0; i < vcts; i++)
-	p->vcts[i] = Xen_undefined;
-    }
+    p->vcts = (Xen *)malloc(vcts * sizeof(Xen));
   else p->vcts = NULL;
 #if HAVE_SCHEME
   p->g = NULL;
@@ -268,23 +261,26 @@ int mus_optkey_unscramble(const char *caller, int nkeys, Xen *keys, Xen *args, i
    * "orig" should be of size nkeys, and will contain upon return the 1-based location of the original keyword value argument
    *  (it is intended for error reports)
    */
-  int arg_ctr = 0, key_start = 0, rtn_ctr = 0, nargs;
+  int arg_ctr = 0, key_start = 0, rtn_ctr = 0, nargs, nargs_end;
   bool keying = false, key_found = false;
   nargs = nkeys * 2;
+  nargs_end = nargs - 1;
 
   while ((arg_ctr < nargs) && 
 	 (Xen_is_bound(args[arg_ctr])))
     {
-      if (!(Xen_is_keyword(args[arg_ctr])))
+      Xen key;
+      key = args[arg_ctr];
+      if (!(Xen_is_keyword(key)))
 	{
 	  if (keying) 
-	    clm_error(caller, "unmatched value within keyword section?", args[arg_ctr]);
+	    clm_error(caller, "unmatched value within keyword section?", key);
 	  /* type checking on the actual values has to be the caller's problem */
 
 	  if (arg_ctr >= nkeys) /* we aren't handling a keyword arg, so the underlying args should only take nkeys args */
-	    clm_error(caller, "extra trailing args?", args[arg_ctr]);
+	    clm_error(caller, "extra trailing args?", key);
 
-	  keys[arg_ctr] = args[arg_ctr];
+	  keys[arg_ctr] = key;
 	  orig[arg_ctr] = arg_ctr + 1;
 	  arg_ctr++;
 	  key_start = arg_ctr;
@@ -292,29 +288,28 @@ int mus_optkey_unscramble(const char *caller, int nkeys, Xen *keys, Xen *args, i
 	}
       else
 	{
-	  Xen key;
 	  int i;
+	  Xen val;
+	  val = args[arg_ctr + 1];
+	  if ((arg_ctr == nargs_end) ||
+	      (!(Xen_is_bound(val))))
+	    clm_error(caller, "keyword without value?", key);
 
-	  if ((arg_ctr == (nargs - 1)) ||
-	      (!(Xen_is_bound(args[arg_ctr + 1]))))
-	    clm_error(caller, "keyword without value?", args[arg_ctr]);
-
-	  keying = true;
-	  key = args[arg_ctr];
-
-	  if (Xen_is_keyword(args[arg_ctr + 1])) 
+	  if (Xen_is_keyword(val))
 	    clm_error(caller, "two keywords in a row?", key);
 
+	  keying = true;
 	  key_found = false;
 	  for (i = key_start; i < nkeys; i++)
 	    {
 	      if (Xen_keyword_is_eq(keys[i], key))
 		{
-		  keys[i] = args[arg_ctr + 1];
-		  orig[i] = arg_ctr + 2;
+		  keys[i] = val;
 		  arg_ctr += 2;
+		  orig[i] = arg_ctr;
 		  rtn_ctr++;
 		  key_found = true;
+		  break;
 		}
 	    }
 
@@ -8295,6 +8290,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
     }
 
   gn = mx_alloc(MUS_MAX_VCTS);
+  {int i; for (i = 0; i < MUS_MAX_VCTS; i++) gn->vcts[i] = Xen_undefined;}
   /* mus_make_src assumes it can invoke the input function! */
   gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
 
@@ -8470,7 +8466,7 @@ The edit function, if any, should return the length in samples of the grain, or 
     }
 
   gn = mx_alloc(MUS_MAX_VCTS);
-
+  {int i; for (i = 0; i < MUS_MAX_VCTS; i++) gn->vcts[i] = Xen_undefined;}
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
@@ -8585,7 +8581,7 @@ return a new convolution generator which convolves its input with the impulse re
   if (fft_size < fftlen) fft_size = fftlen;
 
   gn = mx_alloc(MUS_MAX_VCTS);
-
+  {int i; for (i = 0; i < MUS_MAX_VCTS; i++) gn->vcts[i] = Xen_undefined;}
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
@@ -8836,7 +8832,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
     }
 
   gn = mx_alloc(MUS_MAX_VCTS);
-
+  {int i; for (i = 0; i < MUS_MAX_VCTS; i++) gn->vcts[i] = Xen_undefined;}
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);

@@ -3810,6 +3810,10 @@
 ;;;   '(func 'type-predicate arg1-pred...) or (f t . arg) if all args have same etc
 ;;;   '(+ number? . number?), '(abs real? real?) etc
 ;;;   also cload: libc libgsl etc arg types/return types
+;;;
+;;; what about cond expr that can't be true given previous exprs? -- like or (1508)  and test (cond (#f ...)...)?
+;;;  also (set! x 32) (set! x 123) etc [list-set!...]
+;;;  also (set! x 32) (list-ref x 1)...
 
 
 

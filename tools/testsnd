@@ -192,7 +192,9 @@ echo ' '
 
 
 cp snd-test.scm orig-snd-test.scm
-sed snd-test.scm -e 's/(define tests 1)/(define tests 7)/g' > tmp
+./snd tools/sed.scm -e '(sed "snd-test.scm" "tmp" "(define tests 1)" "(define tests 7)")'
+# sed snd-test.scm -e 's/(define tests 1)/(define tests 7)/g' > tmp
+# sed differs so much between systems that it is useless
 mv tmp snd-test.scm
 
 echo ' -------------------------------- without-gui -------------------------------- '
@@ -220,7 +222,8 @@ echo ' '
 
 
 cp orig-snd-test.scm snd-test.scm
-sed snd-test.scm -e 's/(define test-at-random 0)/(define test-at-random 300)/g' > tmp
+./snd tools/sed.scm -e '(sed "snd-test.scm" "tmp" "(define test-at-random 0)" "(define test-at-random 300)")'
+# sed snd-test.scm -e 's/(define test-at-random 0)/(define test-at-random 300)/g' > tmp
 mv tmp snd-test.scm
 
 echo ' '
@@ -242,7 +245,8 @@ echo ' '
 
 
 cp orig-snd-test.scm snd-test.scm
-sed snd-test.scm -e 's/(define all-args #f)/(define all-args #t)/g' > tmp
+./snd tools/sed.scm -e '(sed "snd-test.scm" "tmp" "(define all-args #f)" "(define all-args #t)")'
+# sed snd-test.scm -e 's/(define all-args #f)/(define all-args #t)/g' > tmp
 mv tmp snd-test.scm
 
 echo ' '
@@ -307,7 +311,8 @@ echo ' -------------------------------- that was snd-test full gmp -------------
 echo ' '
 echo ' '
 
-sed snd-test.scm -e 's/(define tests 1)/(define tests 7)/g' > tmp
+./snd tools/sed.scm -e '(sed "snd-test.scm" "tmp" "(define tests 1)" "(define tests 7)")'
+# sed snd-test.scm -e 's/(define tests 1)/(define tests 7)/g' > tmp
 mv tmp snd-test.scm
 
 make allclean
