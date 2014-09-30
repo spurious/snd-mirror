@@ -2547,6 +2547,8 @@ static char *copy_string(const char *str)
 
 
 #define strings_are_equal(Str1, Str2) (strcmp(Str1, Str2) == 0)
+#define strings_are_equal_with_length(Str1, Str2, Len) (strncmp(Str1, Str2, Len) == 0)
+
 /* newlib code here was slower -- this should only be used for internal strings -- scheme
  *   strings can have embedded nulls.
  */
@@ -2596,6 +2598,7 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article);
 static s7_pointer make_string_uncopied(s7_scheme *sc, char *str);
 static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int len);
 static s7_pointer make_string_wrapper(s7_scheme *sc, const char *str);
+static s7_pointer make_permanent_string_with_length_and_hash(const char *str, unsigned int len, unsigned int hash);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static void pop_input_port(s7_scheme *sc);
 static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
@@ -4654,32 +4657,72 @@ static void increase_stack_size(s7_scheme *sc)
 
 #define HASH_MULT 4
 
-static unsigned int raw_string_hash(const unsigned char *key) 
+static unsigned int raw_string_hash(const unsigned char *key, unsigned int len)
 { 
-  unsigned int hashed = 0;
-  const unsigned char *c; 
+  switch (len)
+    {
+    case 0: return(0);
+    case 1: return(key[0]);
+    case 2: return(key[0] * HASH_MULT + key[1]);
+    case 3: return((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]);
+    case 4: return(((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]);
+    case 5: return((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT + key[4]);
+    case 6: return(((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT + key[4]) * HASH_MULT + key[5]);
+    case 7: 
+      return((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
+	       + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]);
+    case 8: 
+      return(((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
+		+ key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]);
+    case 9: 
+      return((((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
+		 + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]) * HASH_MULT + key[8]);
+    case 10: 
+      return(((((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
+		  + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]) * HASH_MULT 
+	      + key[8]) * HASH_MULT + key[9]);
+    case 11: 
+      return((((((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
+		   + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]) * HASH_MULT 
+	       + key[8]) * HASH_MULT + key[9]) * HASH_MULT + key[10]);
+    case 12: case 13: case 14: case 15:
+      {
+	unsigned int i, hashed;
+	hashed = key[4];
+	for (i = 5; i < len; i++)
+	  hashed = key[i] + hashed * HASH_MULT;
+	return(hashed);
+      }
 
-  for (c = key; *c; c++) 
-    hashed = *c + hashed * HASH_MULT;
-  return(hashed);
-
+    default:
+      {
+	unsigned int i, hashed;
+	hashed = key[8];
+	for (i = 9; i < len; i++)
+	  hashed = key[i] + hashed * HASH_MULT;
+	return(hashed);
+      }
+    }
   /* hash_mult 4 just adding new: snd-test: H: 1136155, s: 786385, f: 572859
    *           4 add, add0 at end:          H: 2208589, s:1936257, f: 572814, z: 27708
    *           13:                          H: 1123916, s: 612287, f: 572909, z: 27631 [0 5652 1 6454 2 4148 top 8]!
    *           37:                          H: 1076203, s: 573052, f: 572851, z: 27708![0 5152 1 6818 2 4536 top 9]!
    * so 37 wins at hashing, we save 9 in strcmp, we lose 7 here to multiply by 37 -- we win 2 (callgrind says 5)
    * But 37 loses big in other cases -- not sure what to do!
+   *
+   * the switch statement costs about 50 here but saves about 110 in extreme cases
+   * the simple form of this function (just a for loop) is about 40% slower
    */
-} 
-
+}
 
 static s7_pointer make_symbol(s7_scheme *sc, const char *name);
+static s7_pointer make_symbol_with_length(s7_scheme *sc, const char *name, unsigned int len);
 
-static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int hash, unsigned int location) 
+static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, unsigned int hash, unsigned int location) 
 { 
   s7_pointer x, str, p; 
 
-  str = s7_make_permanent_string(name);
+  str = make_permanent_string_with_length_and_hash(name, len, hash);
   x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   symbol_name_cell(x) = str;
@@ -4694,7 +4737,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int hash,
       if (name[0] == ':')
 	{
 	  typeflag(x) |= (T_IMMUTABLE | T_KEYWORD); 
-	  keyword_symbol(x) = make_symbol(sc, (char *)(name + 1));
+	  keyword_symbol(x) = make_symbol_with_length(sc, (char *)(name + 1), len - 1);
 	  global_slot(x) = s7_make_slot(sc, sc->NIL, x, x);
 	}
       else
@@ -4703,14 +4746,16 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int hash,
 	  c = name[symbol_name_length(x) - 1];
 	  if (c == ':')
 	    {
-	      char *str;
-	      str = (char *)malloc(symbol_name_length(x) * sizeof(char));
-	      str[symbol_name_length(x) - 1] = 0;
-	      memcpy((void *)str, (void *)name, symbol_name_length(x) - 1);
+	      char *kstr;
+	      unsigned int klen;
+	      klen = symbol_name_length(x) - 1;
+	      kstr = (char *)malloc(symbol_name_length(x) * sizeof(char));
+	      kstr[klen] = 0;
+	      memcpy((void *)kstr, (void *)name, klen);
 	      typeflag(x) |= (T_IMMUTABLE | T_KEYWORD); 
-	      keyword_symbol(x) = make_symbol(sc, str);
+	      keyword_symbol(x) = make_symbol_with_length(sc, kstr, klen);
 	      global_slot(x) = s7_make_slot(sc, sc->NIL, x, x);
-	      free(str);
+	      free(kstr);
 	    }
 	}
     }
@@ -4796,32 +4841,38 @@ bool s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 }
 
 
-static s7_pointer make_symbol(s7_scheme *sc, const char *name) 
+static s7_pointer make_symbol_with_length(s7_scheme *sc, const char *name, unsigned int len) 
 {
   s7_pointer x; 
   unsigned int hash, location;
     
-  hash = raw_string_hash((const unsigned char *)name); 
+  hash = raw_string_hash((const unsigned char *)name, len); 
   location = hash % SYMBOL_TABLE_SIZE;
 
   for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
     if ((hash == pair_raw_hash(x)) &&
-	(strings_are_equal(name, symbol_name(car(x)))))
+	(strings_are_equal_with_length(name, symbol_name(car(x)), len)))
       return(car(x));
 
   if (sc->symbol_table_is_locked)
     return(s7_error(sc, sc->ERROR, sc->NIL));
 
-  x = new_symbol(sc, name, hash, location); 
+  x = new_symbol(sc, name, len, hash, location); 
   symbol_hash(x) = location;
   return(x);
 } 
 
 
+static s7_pointer make_symbol(s7_scheme *sc, const char *name) 
+{
+  return(make_symbol_with_length(sc, name, safe_strlen(name)));
+}
+
+
 s7_pointer s7_make_symbol(s7_scheme *sc, const char *name) 
 { 
   if (!name) return(sc->F);
-  return(make_symbol(sc, name));
+  return(make_symbol_with_length(sc, name, safe_strlen(name)));
 }
 
 
@@ -4830,7 +4881,7 @@ s7_pointer s7_symbol_table_find_name(s7_scheme *sc, const char *name)
   unsigned int hash, location;
   s7_pointer result;
 
-  hash = raw_string_hash((const unsigned char *)name); 
+  hash = raw_string_hash((const unsigned char *)name, safe_strlen(name));
   location = hash % SYMBOL_TABLE_SIZE;
   result = symbol_table_find_by_name(sc, name, hash, location); 
   if (is_null(result))
@@ -4878,10 +4929,10 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   /* there's no point in heroic efforts here to avoid name collisions --
    *    the user can screw up no matter what we do.
    */
-  snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++);
-  hash = raw_string_hash((const unsigned char *)name);
+  len = snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++);
+  hash = raw_string_hash((const unsigned char *)name, len);
   location = hash % SYMBOL_TABLE_SIZE;
-  x = new_symbol(sc, name, hash, location);  /* not T_GENSYM -- might be called from outside */
+  x = new_symbol(sc, name, len, hash, location);  /* not T_GENSYM -- might be called from outside */
   symbol_hash(x) = location;
   free(name);
   return(x); 
@@ -4903,7 +4954,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
 
   const char *prefix;
   char *name;
-  unsigned int len, hash, location;
+  unsigned int len, nlen, hash, location;
   s7_pointer x, str, stc;
 
   /* get symbol name */
@@ -4919,8 +4970,8 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   else prefix = "gensym";
   len = safe_strlen(prefix) + 32;
   name = (char *)malloc(len * sizeof(char));
-  snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++); 
-  hash = raw_string_hash((const unsigned char *)name);
+  nlen = snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++); 
+  hash = raw_string_hash((const unsigned char *)name, nlen);
   location = hash % SYMBOL_TABLE_SIZE;
       
   /* make-string for symbol name */
@@ -5032,7 +5083,7 @@ static s7_pointer g_string_to_symbol_1(s7_scheme *sc, s7_pointer args, s7_pointe
   /* currently if the string has an embedded null, it marks the end of the new symbol name.
    *   I wonder if this is a bug...
    */
-  return(make_symbol(sc, string_value(str)));
+  return(make_symbol_with_length(sc, string_value(str), string_length(str)));
 }
 
 
@@ -6802,18 +6853,17 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
 {
   s7_pointer sym;
   char *name;
-  int len;
+  unsigned int len, slen;
   
-  len = safe_strlen(key) + 2;
-  name = (char *)malloc(len * sizeof(char));
-  snprintf(name, len, ":%s", key);                     /* prepend ":" */
-  sym = make_symbol(sc, name);
+  slen = safe_strlen(key);
+  name = (char *)malloc((slen + 2) * sizeof(char));
+  len = snprintf(name, slen + 2, ":%s", key);                     /* prepend ":" */
+  sym = make_symbol_with_length(sc, name, len);
   typeflag(sym) |= (T_IMMUTABLE); 
   free(name);
-  keyword_symbol(sym) = make_symbol(sc, key);
+  keyword_symbol(sym) = make_symbol_with_length(sc, key, slen);
   
   s7_make_slot(sc, sc->NIL, sym, sym); /* make it global, not in the local env! */
-
   return(sym);
 }
 
@@ -19554,6 +19604,23 @@ s7_pointer s7_make_permanent_string(const char *str)
 }
 
 
+static s7_pointer make_permanent_string_with_length_and_hash(const char *str, unsigned int len, unsigned int hash)
+{
+  /* for the symbol table which is never GC'd */
+  s7_pointer x;
+  x = alloc_pointer();
+  heap_location(x) = NOT_IN_HEAP;
+  set_type(x, T_STRING | T_IMMUTABLE);
+  string_length(x) = len;
+  string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
+  memcpy((void *)string_value(x), (void *)str, len);
+  string_value(x)[len] = 0;
+  string_hash(x) = hash;
+  string_needs_free(x) = false;
+  return(x);
+}
+
+
 static s7_pointer make_temporary_string(s7_scheme *sc, const char *str, int len) 
 {
   if (!sc->tmp_str)
@@ -21894,7 +21961,7 @@ static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt)
       if (!result)
 	{
 	  sc->strbuf[1] = '\0';
-	  result = make_symbol(sc, sc->strbuf);
+	  result = make_symbol_with_length(sc, sc->strbuf, 1);
 	  sc->singletons[(unsigned char)(sc->strbuf[0])] = result;
 	}
       return(result);
@@ -21919,8 +21986,10 @@ static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt)
    * but slightly faster.
    */
 
+  if (!number_table[(unsigned char)(*orig_str)])
+    return(make_symbol_with_length(sc, orig_str, k));
+
   /* eval_c_string string is a constant so we can't set and unset the token's end char 
-   *    two elaborate attempts to avoid the memcpy failed.
    */
   if ((k + 1) >= sc->strbuf_size)
     resize_strbuf(sc, k + 1);
@@ -21928,8 +21997,6 @@ static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt)
   memcpy((void *)(sc->strbuf), (void *)orig_str, k);
   sc->strbuf[k] = '\0';
 
-  if (!number_table[(unsigned char)(sc->strbuf[0])])
-    return(make_symbol(sc, sc->strbuf)); /* expanded here is slower? */
   return(make_atom(sc, sc->strbuf, BASE_10, SYMBOL_OK, WITH_OVERFLOW_ERROR));
 }
 
@@ -22027,7 +22094,6 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt)
   char endc;
   
   str = (char *)(port_data(pt) + port_position(pt));
-
   if (!char_ok_in_a_name[(unsigned char)*str])
     {
       s7_pointer result;
@@ -22035,7 +22101,7 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt)
       if (!result)
 	{
 	  sc->strbuf[1] = '\0';
-	  result = make_symbol(sc, sc->strbuf);
+	  result = make_symbol_with_length(sc, sc->strbuf, 1);
 	  sc->singletons[(unsigned char)(sc->strbuf[0])] = result;
 	}
       return(result);
@@ -22049,11 +22115,12 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt)
     port_position(pt) += (k - 1);
   else port_position(pt) += k;
 
+  if (!number_table[(unsigned char)(*orig_str)])
+    return(make_symbol_with_length(sc, orig_str, k));
+
   endc = (*str);
   (*str) = '\0';
-  if (!number_table[(unsigned char)(*orig_str)])
-    result = make_symbol(sc, orig_str);
-  else result = make_atom(sc, orig_str, BASE_10, SYMBOL_OK, WITH_OVERFLOW_ERROR);
+  result = make_atom(sc, orig_str, BASE_10, SYMBOL_OK, WITH_OVERFLOW_ERROR);
   (*str) = endc;
   return(result);
 }
@@ -22480,7 +22547,7 @@ static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
  *   64 is much slower (realloc dominates)  so sc->initial_string_port_length defaults to 128
  */
 
-s7_pointer s7_open_output_string(s7_scheme *sc)
+static s7_pointer open_output_string(s7_scheme *sc, int len)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
@@ -22489,8 +22556,8 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   port_port(x) = alloc_port(sc);
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
-  port_data_size(x) = sc->initial_string_port_length;
-  port_data(x) = (unsigned char *)calloc((sc->initial_string_port_length + 8), sizeof(unsigned char));
+  port_data_size(x) = len;
+  port_data(x) = (unsigned char *)calloc(len + 8, sizeof(unsigned char));
   port_position(x) = 0;
   port_needs_free(x) = true;
   port_read_character(x) = output_read_char;
@@ -22500,6 +22567,11 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   port_write_string(x) = string_write_string;
   add_output_port(sc, x);
   return(x);
+}
+
+s7_pointer s7_open_output_string(s7_scheme *sc)
+{
+  return(open_output_string(sc, sc->initial_string_port_length));
 }
 
 
@@ -23450,7 +23522,7 @@ in the file, or by the function."
     {
       if (string_length(sym) == 0)                   /* (autoload "" ...) */
 	return(s7_wrong_type_arg_error(sc, "autoload", 1, sym, "a symbol-name or a symbol"));
-      sym = s7_make_symbol(sc, string_value(sym));
+      sym = make_symbol_with_length(sc, string_value(sym), string_length(sym));
     }
   if (!is_symbol(sym))
     {
@@ -25778,7 +25850,7 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t 
   s7_pointer strport;
   int gc_loc;
 
-  strport = s7_open_output_string(sc);
+  strport = open_output_string(sc, 128);
   gc_loc = s7_gc_protect(sc, strport);
 
   if (has_structure(obj))
@@ -26303,7 +26375,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
   if (with_result)
     {
       deferred_port = port;
-      port = s7_open_output_string(sc);
+      port = open_output_string(sc, 128);
       fdat->gc_loc = s7_gc_protect(sc, port);
     }
 
@@ -32219,7 +32291,7 @@ static unsigned int hash_loc(s7_scheme *sc, s7_pointer key)
     case T_STRING:
       if (string_hash(key) != 0)
 	return(string_hash(key));
-      loc = raw_string_hash((const unsigned char *)string_value(key));
+      loc = raw_string_hash((const unsigned char *)string_value(key), string_length(key));
       string_hash(key) = loc;
       return(loc);
 
@@ -32355,7 +32427,7 @@ static s7_pointer hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key)
       loc = string_hash(key);
       if (loc == 0)
 	{
-	  loc = raw_string_hash((const unsigned char *)string_value(key));
+	  loc = raw_string_hash((const unsigned char *)string_value(key), string_length(key));
 	  string_hash(key) = loc;
 	}
       orig = loc;
@@ -38563,14 +38635,14 @@ static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 	      int len;
 	      
 	      len = s7_list_length(sc, car(p));
-	      if (((caar(p) == s7_make_symbol(sc, "if")) &&
+	      if (((caar(p) == make_symbol_with_length(sc, "if", 2)) &&
 		   (len > 4)) ||
 		  /* some care is needed -- we can't risk autoloading the very same file we're complaining about! 
 		   */
 		  ((s7_is_defined(sc, symbol_name(caar(p)))) &&
 		   (s7_is_procedure(SYMBOL_TO_VALUE(sc, caar(p)))) &&
 		   (!s7_is_aritable(sc, SYMBOL_TO_VALUE(sc, caar(p)), len))) ||
-		  ((caar(p) == s7_make_symbol(sc, "define")) &&
+		  ((caar(p) == make_symbol_with_length(sc, "define", 6)) &&
 		   (is_pair(cdr(p))) &&
 		   (is_symbol(cadr(p))) &&
 		   (len > 3)))
@@ -40946,9 +41018,9 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   s7_pointer x, syn;
   unsigned int hash, loc;
 
-  hash = raw_string_hash((const unsigned char *)name);
+  hash = raw_string_hash((const unsigned char *)name, safe_strlen(name));
   loc = hash % SYMBOL_TABLE_SIZE;
-  x = new_symbol(sc, name, hash, loc);
+  x = new_symbol(sc, name, safe_strlen(name), hash, loc);
   symbol_hash(x) = loc;
 
   syn = alloc_pointer();
@@ -40975,7 +41047,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   heap_location(x) = NOT_IN_HEAP;
   symbol_name_cell(x) = str;
   set_type(x, T_SYMBOL);
-  symbol_hash(x) = (raw_string_hash((const unsigned char *)name) % SYMBOL_TABLE_SIZE);
+  symbol_hash(x) = (raw_string_hash((const unsigned char *)name, safe_strlen(name)) % SYMBOL_TABLE_SIZE);
   symbol_set_local(x, 0LL, sc->NIL);
   symbol_syntax_op(x) = op;
 
@@ -46088,6 +46160,7 @@ static bool rdirect_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer symbols)
   for (x = symbols; is_pair(x); x = cdr(x))
     if (car(x) == symbol)
       return(true);
+  symbol_tag(symbol) = 0; /* this makes no difference */
   return(false);
 }
 
@@ -46131,27 +46204,27 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 
   if (is_symbol(caar_x))
     {
-      s7_pointer func;
-      
       if (is_syntactic(caar_x))
 	return(optimize_syntax(sc, x, slot_value(global_slot(caar_x)), hop, e));
 
       if (caar_x == sc->QUOTE)
 	return(false);
 
-      func = find_uncomplicated_symbol(sc, caar_x, e);
-      if (is_slot(func))
-	{
-	  func = slot_value(func);
-	  if (is_syntactic(func))
-	    return(optimize_syntax(sc, x, func, hop, e));
-	  /* we miss implicit indexing here because at this time, the data are not set */
-	  if ((is_procedure(func)) ||
-	      (is_c_function(func)) ||
-	      (is_safe_procedure(func))) /* built-in applicable objects like vectors */
-	    return(optimize_function(sc, x, func, hop, e));
-	}
-      else func = sc->F;
+      {
+	s7_pointer func;
+	func = find_uncomplicated_symbol(sc, caar_x, e);
+	if (is_slot(func))
+	  {
+	    func = slot_value(func);
+	    if (is_syntactic(func))
+	      return(optimize_syntax(sc, x, func, hop, e));
+	    /* we miss implicit indexing here because at this time, the data are not set */
+	    if ((is_procedure(func)) ||
+		(is_c_function(func)) ||
+		(is_safe_procedure(func))) /* built-in applicable objects like vectors */
+	      return(optimize_function(sc, x, func, hop, e));
+	  }
+      }
 
       /* caar(x) is a symbol but it's not a known procedure or a "safe" case = vector etc */
       {
@@ -57731,7 +57804,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	car(x) = sc->value;
 	cdr(x) = sc->args;
-	if (type(sc->args) != T_NIL)
+	if (!is_null(sc->args))
 	  sc->args = safe_reverse_in_place(sc, x);
 	else sc->args = x;
 	goto APPLY;
@@ -58205,7 +58278,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       */
 	      s7_pointer x;
 	      
-	      if (type(cdr(sc->code)) != T_NIL)
+	      if (!is_null(cdr(sc->code)))
 		improper_arglist_error(sc);
 	      
 	      sc->code = pop_op_stack(sc);
@@ -58229,7 +58302,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  set_type(x, T_PAIR);
 		}
 	      
-	      if (type(sc->args) != T_NIL)
+	      if (!is_null(sc->args))
 		sc->args = safe_reverse_in_place(sc, x);
 	      else sc->args = x;
 	      /* drop into APPLY */
@@ -58466,18 +58539,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    nxt = NULL;
 	    for (z = closure_args(sc->code); is_pair(z); z = cdr(z))
 	      {
-		if (is_pair(car(z)))           /* arg has a default value of some sort */
+		s7_pointer car_z;
+		car_z = car(z);
+		if (is_pair(car_z))           /* arg has a default value of some sort */
 		  {
 		    s7_pointer val;
-		    val = cadar(z);
+		    val = cadr(car_z);
 		    if ((!is_pair(val)) && 
 			(!is_symbol(val)))
-		      add_slot(sc, caar(z), val);
+		      add_slot(sc, car(car_z), val);
 		    else
 		      {
 			s7_pointer y;
-			y = add_slot(sc, caar(z), sc->UNDEFINED);
-			slot_expression(y) = cadar(z);
+			y = add_slot(sc, car(car_z), sc->UNDEFINED);
+			slot_expression(y) = cadr(car_z);
 			slot_pending_value(y) = sc->NIL;
 			if (!top)
 			  {
@@ -58493,11 +58568,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		else
 		  {
-		    if (!is_keyword(car(z)))
-		      add_slot(sc, car(z), sc->F);
+		    if (!is_keyword(car_z))
+		      add_slot(sc, car_z, sc->F);
 		    else
 		      {
-			if (car(z) == sc->KEY_REST)
+			if (car_z == sc->KEY_REST)
 			  {
 			    add_slot(sc, cadr(z), sc->NIL);
 			    z = cdr(z);
@@ -69813,14 +69888,14 @@ int main(int argc, char **argv)
 /* --------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1
- * bench    42736 | 8752 | 4220 | 3506
- * index    44300 | 3291 | 1725 | 1276
- * s7test    1721 | 1358 |  995 | 1194
- * t455|6     265 |   89 |  9   | 16.2
- * t502        90 |   43 | 14.5 | 12.7
- * t816           |   71 | 70.6 | 38.0 37.2
- * lg             |      |  6.7 |  6.5
- * calls      359 |  275 | 54   | 34.7
+ * bench    42736 | 8752 | 4220 | 3506 3512
+ * index    44300 | 3291 | 1725 | 1276 1271
+ * s7test    1721 | 1358 |  995 | 1194 1210
+ * t455|6     265 |   89 |  9   | 16.2 18.9
+ * t502        90 |   43 | 14.5 | 12.7 12.7
+ * t816           |   71 | 70.6 | 38.0 36.8
+ * lg             |      |  6.7 | 6492 6476
+ * calls      359 |  275 | 54   | 34.7 34.7
  *            153 with run macro (eval_ptree)
  *
  * --------------------------------------------------
@@ -69833,7 +69908,6 @@ int main(int argc, char **argv)
  *    (set! (samples (sound) sample) new-sample)
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
  *
- * cc says no icon?
  * see lint.scm, also fgrep along the lines of sed.scm
  * all duplication checks use syms_list: symbol_is_in_arg_list for example, or take the place of the arg-set-twice bit
  *   could check_collisions use sym_tag>=cur_tag?
