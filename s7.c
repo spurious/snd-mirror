@@ -2606,8 +2606,6 @@ static token_t token(s7_scheme *sc);
 static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indices);
 static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
 static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym);
-static void stack_reset(s7_scheme *sc);
-
 static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol);
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym);
 
@@ -4668,23 +4666,29 @@ static unsigned int raw_string_hash(const unsigned char *key, unsigned int len)
     case 4: return(((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]);
     case 5: return((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT + key[4]);
     case 6: return(((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT + key[4]) * HASH_MULT + key[5]);
+
     case 7: 
       return((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
 	       + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]);
+
     case 8: 
       return(((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
 		+ key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]);
+
     case 9: 
       return((((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
 		 + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]) * HASH_MULT + key[8]);
+
     case 10: 
       return(((((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
 		  + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]) * HASH_MULT 
 	      + key[8]) * HASH_MULT + key[9]);
+
     case 11: 
       return((((((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
 		   + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]) * HASH_MULT 
 	       + key[8]) * HASH_MULT + key[9]) * HASH_MULT + key[10]);
+
     case 12: case 13: case 14: case 15:
       {
 	unsigned int i, hashed;
@@ -4712,6 +4716,7 @@ static unsigned int raw_string_hash(const unsigned char *key, unsigned int len)
    *
    * the switch statement costs about 50 here but saves about 110 in extreme cases
    * the simple form of this function (just a for loop) is about 40% slower
+   * using a function array indexed by len is about the same (slightly slower)
    */
 }
 
@@ -22542,6 +22547,7 @@ static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
 }
 
 
+#define FORMAT_PORT_LENGTH 128
 /* the large majority (> 99% in my tests) of the output strings have less than 128 chars when the port is finally closed 
  *   256 is slightly slower (the calloc time below dominates the realloc time in string_write_string)
  *   64 is much slower (realloc dominates)  so sc->initial_string_port_length defaults to 128
@@ -25850,7 +25856,7 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t 
   s7_pointer strport;
   int gc_loc;
 
-  strport = open_output_string(sc, 128);
+  strport = open_output_string(sc, FORMAT_PORT_LENGTH);
   gc_loc = s7_gc_protect(sc, strport);
 
   if (has_structure(obj))
@@ -26375,7 +26381,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
   if (with_result)
     {
       deferred_port = port;
-      port = open_output_string(sc, 128);
+      port = open_output_string(sc, FORMAT_PORT_LENGTH);
       fdat->gc_loc = s7_gc_protect(sc, port);
     }
 
@@ -34987,8 +34993,8 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
 	     (string_length(x) > 0)); /* ("" 0) -> error */
       
     case T_C_OBJECT:
-      check_method(sc, x, sc->IS_ARITABLE, list_2(sc, x, s7_make_integer(sc, args)));
-      return(is_procedure(x));
+      /* check_method(sc, x, sc->IS_ARITABLE, list_2(sc, x, s7_make_integer(sc, args))); -- see below */
+      return(is_procedure(x)); /* i.e. is_applicable */
 
     case T_INT_VECTOR:
     case T_FLOAT_VECTOR:
@@ -35000,7 +35006,6 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
     case T_ENVIRONMENT:
       /* check_method(sc, x, sc->IS_ARITABLE, list_2(sc, x, s7_make_integer(sc, args))); */
       /* this slows us down a lot */
-
     case T_HASH_TABLE:
     case T_PAIR:
       return(args == 1);
@@ -62944,7 +62949,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
       
     case OP_READ_NEXT:
-      /* sc->tok = token(sc); */
       /* this is 75% of the token calls, so expanding it saves lots of time */
       {
 	int c;
@@ -62952,11 +62956,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	pt = sc->input_port;
 	c = port_read_white_space(pt)(sc, pt);
-
+	
 	switch (c) 
 	  {
 	  case '(':
-	    sc->tok = token(sc);
+	    c = port_read_white_space(pt)(sc, pt);
+	    switch (c) 
+	      {
+	      case '(':	sc->tok = TOKEN_LEFT_PAREN;                break;
+	      case ')':	sc->tok = TOKEN_RIGHT_PAREN;               break;
+	      case '.':	sc->tok = read_dot(sc, pt);                break;
+	      case '\'': sc->tok = TOKEN_QUOTE;                    break;
+	      case ';': sc->tok = port_read_semicolon(pt)(sc, pt); break;
+	      case '"': sc->tok = TOKEN_DOUBLE_QUOTE;              break;
+	      case '`': sc->tok = TOKEN_BACK_QUOTE;                break;
+	      case ',': sc->tok = read_comma(sc, pt);              break;
+	      case '#': sc->tok = read_sharp(sc, pt);              break;
+	      case '\0': case EOF: sc->tok = TOKEN_EOF;            break;
+	      default:
+		sc->strbuf[0] = c;
+		push_stack_no_code(sc, OP_READ_LIST, sc->args);
+		CHECK_STACK_SIZE(sc);
+		sc->value = port_read_name(pt)(sc, pt);
+		sc->args = sc->NIL;
+		goto READ_LIST;
+	      }
 
 	    if (sc->tok == TOKEN_ATOM)
 	      {
@@ -62967,9 +62991,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		goto READ_LIST;
 	      }
 
-	    /* after atom, nearly all remaining cases are left paren; can we do it directly?
-	     */
-
 	    if (sc->tok == TOKEN_RIGHT_PAREN)
 	      {
 		sc->value = sc->NIL;
@@ -62979,7 +63000,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (sc->tok == TOKEN_DOT) 
 	      {
 		do {c = inchar(pt);} while ((c != ')') && (c != EOF));
-		return(read_error(sc, "stray dot after '('?"));         /* (car '( . )) */
+		return(read_error(sc, "stray dot after '('?"));      /* (car '( . )) */
 	      }
 	    
 	    if (sc->tok == TOKEN_EOF)
@@ -62990,7 +63011,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    push_stack_no_code(sc, OP_READ_LIST, sc->NIL);
 	    sc->value = read_expression(sc);
 	    goto START;
-
       
 	  case ')':
 	    sc->tok = TOKEN_RIGHT_PAREN;
@@ -63038,7 +63058,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  case '\0':
 	  case EOF:
 	    return(missing_close_paren_error(sc));
-	    
+	  
 	  default: 
 	    sc->strbuf[0] = c; 
 	    sc->value = port_read_name(pt)(sc, pt);
@@ -69893,7 +69913,7 @@ int main(int argc, char **argv)
  * s7test    1721 | 1358 |  995 | 1194 1210
  * t455|6     265 |   89 |  9   | 16.2 18.9
  * t502        90 |   43 | 14.5 | 12.7 12.7
- * t816           |   71 | 70.6 | 38.0 36.8
+ * t816           |   71 | 70.6 | 38.0 32.7
  * lg             |      |  6.7 | 6492 6476
  * calls      359 |  275 | 54   | 34.7 34.7
  *            153 with run macro (eval_ptree)
@@ -69907,8 +69927,4 @@ int main(int argc, char **argv)
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
- *
- * see lint.scm, also fgrep along the lines of sed.scm
- * all duplication checks use syms_list: symbol_is_in_arg_list for example, or take the place of the arg-set-twice bit
- *   could check_collisions use sym_tag>=cur_tag?
  */

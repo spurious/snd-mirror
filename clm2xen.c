@@ -3114,14 +3114,12 @@ static Xen g_comb_bank(Xen gens, Xen inp)
   #define H_comb_bank "(" S_comb_bank " bank inval): sum an array of " S_comb " filters."
   mus_any *bank = NULL;
   mus_xen *gn;
+  mus_float_t x = 0.0;
 
   Xen_to_C_generator(gens, gn, bank, mus_is_comb_bank, S_comb_bank, "a comb-bank generator");
-#if (!HAVE_SCHEME)
-  Xen_check_type(Xen_is_number(inp), inp, 2, S_comb_bank, "a number");
-  return(C_double_to_Xen_real(mus_comb_bank(bank, Xen_real_to_C_double(inp))));
-#else
-  return(C_double_to_Xen_real(mus_comb_bank(bank, s7_number_to_real_with_caller(s7, inp, S_comb_bank))));
-#endif
+  Xen_real_to_C_double_if_bound(inp, x, S_comb_bank, 2);
+
+  return(C_double_to_Xen_real(mus_comb_bank(bank, x)));
 }
 
 
@@ -3189,14 +3187,12 @@ static Xen g_filtered_comb_bank(Xen gens, Xen inp)
   #define H_filtered_comb_bank "(" S_filtered_comb_bank " bank inval): sum an array of " S_filtered_comb " filters."
   mus_any *bank = NULL;
   mus_xen *gn;
+  mus_float_t x = 0.0;
 
   Xen_to_C_generator(gens, gn, bank, mus_is_filtered_comb_bank, S_filtered_comb_bank, "a filtered-comb-bank generator");
-#if (!HAVE_SCHEME)
-  Xen_check_type(Xen_is_number(inp), inp, 2, S_filtered_comb_bank, "a number");
-  return(C_double_to_Xen_real(mus_filtered_comb_bank(bank, Xen_real_to_C_double(inp))));
-#else
-  return(C_double_to_Xen_real(mus_filtered_comb_bank(bank, s7_number_to_real_with_caller(s7, inp, S_filtered_comb_bank))));
-#endif
+  Xen_real_to_C_double_if_bound(inp, x, S_filtered_comb_bank, 2);
+
+  return(C_double_to_Xen_real(mus_filtered_comb_bank(bank, x)));
 }
 
 
@@ -3264,14 +3260,12 @@ static Xen g_all_pass_bank(Xen gens, Xen inp)
   #define H_all_pass_bank "(" S_all_pass_bank " bank inval): sum an array of " S_all_pass " filters."
   mus_any *bank = NULL;
   mus_xen *gn;
+  mus_float_t x = 0.0;
 
   Xen_to_C_generator(gens, gn, bank, mus_is_all_pass_bank, S_all_pass_bank, "an all-pass-bank generator");
-#if (!HAVE_SCHEME)
-  Xen_check_type(Xen_is_number(inp), inp, 2, S_all_pass_bank, "a number");
-  return(C_double_to_Xen_real(mus_all_pass_bank(bank, Xen_real_to_C_double(inp))));
-#else
-  return(C_double_to_Xen_real(mus_all_pass_bank(bank, s7_number_to_real_with_caller(s7, inp, S_all_pass_bank))));
-#endif
+  Xen_real_to_C_double_if_bound(inp, x, S_all_pass_bank, 2);
+
+  return(C_double_to_Xen_real(mus_all_pass_bank(bank, x)));
 }
 
 
@@ -5960,15 +5954,12 @@ static Xen g_filter(Xen obj, Xen input)
   #define H_filter "(" S_filter " gen (input 0.0)): next sample from filter"
   mus_any *g = NULL;
   mus_xen *gn;
+  mus_float_t x = 0.0;
 
   Xen_to_C_generator(obj, gn, g, mus_is_filter, S_filter, "a filter");
+  Xen_real_to_C_double_if_bound(input, x, S_filter, 2);
 
-#if (!HAVE_SCHEME)
-  Xen_check_type(Xen_is_number(input), input, 2, S_filter, "a number");
-  return(C_double_to_Xen_real(mus_filter(g, Xen_real_to_C_double(input))));
-#else
-  return(C_double_to_Xen_real(mus_filter(g, s7_number_to_real_with_caller(s7, input, S_filter))));
-#endif
+  return(C_double_to_Xen_real(mus_filter(g, x)));
 }
 
 
@@ -5977,15 +5968,12 @@ static Xen g_fir_filter(Xen obj, Xen input)
   #define H_fir_filter "(" S_fir_filter " gen (input 0.0)): next sample from FIR filter"
   mus_any *g = NULL;
   mus_xen *gn;
+  mus_float_t x = 0.0;
 
   Xen_to_C_generator(obj, gn, g, mus_is_fir_filter, S_fir_filter, "an FIR filter");
+  Xen_real_to_C_double_if_bound(input, x, S_fir_filter, 2);
 
-#if (!HAVE_SCHEME)
-  Xen_check_type(Xen_is_number(input), input, 2, S_fir_filter, "a number");
-  return(C_double_to_Xen_real(mus_fir_filter(g, Xen_real_to_C_double(input))));
-#else
-  return(C_double_to_Xen_real(mus_fir_filter(g, s7_number_to_real_with_caller(s7, input, S_fir_filter))));
-#endif
+  return(C_double_to_Xen_real(mus_fir_filter(g, x)));
 }
 
 
@@ -5994,15 +5982,12 @@ static Xen g_iir_filter(Xen obj, Xen input)
   #define H_iir_filter "(" S_iir_filter " gen (input 0.0)): next sample from IIR filter"
   mus_any *g = NULL;
   mus_xen *gn;
+  mus_float_t x = 0.0;
 
   Xen_to_C_generator(obj, gn, g, mus_is_iir_filter, S_iir_filter, "an IIR filter");
+  Xen_real_to_C_double_if_bound(input, x, S_iir_filter, 2);
 
-#if (!HAVE_SCHEME)
-  Xen_check_type(Xen_is_number(input), input, 2, S_iir_filter, "a number");
-  return(C_double_to_Xen_real(mus_iir_filter(g, Xen_real_to_C_double(input))));
-#else
-  return(C_double_to_Xen_real(mus_iir_filter(g, s7_number_to_real_with_caller(s7, input, S_iir_filter))));
-#endif
+  return(C_double_to_Xen_real(mus_iir_filter(g, x)));
 }
 
 
@@ -10482,6 +10467,30 @@ static mus_float_t wrapped_firmant_3(mus_xen *p, mus_float_t x, mus_float_t y) {
 static mus_float_t wrapped_ssb_am_3(mus_xen *p, mus_float_t x, mus_float_t y) {return(mus_ssb_am(p->gen, x, y));}
 static mus_float_t wrapped_ssb_am_1(mus_xen *p) {return(mus_ssb_am_unmodulated(p->gen, 0.0));}
 
+static mus_float_t wrapped_one_pole_1(mus_xen *p) {return(mus_one_pole(p->gen, 0.0));}
+static mus_float_t wrapped_two_pole_1(mus_xen *p) {return(mus_two_pole(p->gen, 0.0));}
+static mus_float_t wrapped_one_zero_1(mus_xen *p) {return(mus_one_zero(p->gen, 0.0));}
+static mus_float_t wrapped_two_zero_1(mus_xen *p) {return(mus_two_zero(p->gen, 0.0));}
+static mus_float_t wrapped_delay_1(mus_xen *p) {return(mus_delay_unmodulated(p->gen, 0.0));}
+static mus_float_t wrapped_comb_1(mus_xen *p) {return(mus_comb_unmodulated(p->gen, 0.0));}
+static mus_float_t wrapped_comb_bank_1(mus_xen *p) {return(mus_comb_bank(p->gen, 0.0));}
+static mus_float_t wrapped_notch_1(mus_xen *p) {return(mus_notch_unmodulated(p->gen, 0.0));}
+static mus_float_t wrapped_all_pass_1(mus_xen *p) {return(mus_all_pass_unmodulated(p->gen, 0.0));}
+static mus_float_t wrapped_all_pass_bank_1(mus_xen *p) {return(mus_all_pass_bank(p->gen, 0.0));}
+static mus_float_t wrapped_one_pole_all_pass_1(mus_xen *p) {return(mus_one_pole_all_pass(p->gen, 0.0));}
+static mus_float_t wrapped_moving_average_1(mus_xen *p) {return(mus_moving_average(p->gen, 0.0));}
+static mus_float_t wrapped_moving_max_1(mus_xen *p) {return(mus_moving_max(p->gen, 0.0));}
+static mus_float_t wrapped_moving_norm_1(mus_xen *p) {return(mus_moving_norm(p->gen, 0.0));}
+static mus_float_t wrapped_filter_1(mus_xen *p) {return(mus_filter(p->gen, 0.0));}
+static mus_float_t wrapped_fir_filter_1(mus_xen *p) {return(mus_fir_filter(p->gen, 0.0));}
+static mus_float_t wrapped_iir_filter_1(mus_xen *p) {return(mus_iir_filter(p->gen, 0.0));}
+static mus_float_t wrapped_polyshape_1(mus_xen *p) {return(mus_polyshape_unmodulated(p->gen, 1.0));}
+static mus_float_t wrapped_filtered_comb_1(mus_xen *p) {return(mus_filtered_comb_unmodulated(p->gen, 0.0));}
+static mus_float_t wrapped_filtered_comb_bank_1(mus_xen *p) {return(mus_filtered_comb_bank(p->gen, 0.0));}
+static mus_float_t wrapped_asymmetric_fm_1(mus_xen *p) {return(mus_asymmetric_fm_unmodulated(p->gen, 0.0));}
+static mus_float_t wrapped_formant_1(mus_xen *p) {return(mus_formant(p->gen, 0.0));}
+static mus_float_t wrapped_firmant_1(mus_xen *p) {return(mus_firmant(p->gen, 0.0));}
+
 /* (define (hi) (let ((o (make-oscil 440.0)) (scl 0+i)) (oscil o) (* scl (oscil o))))
  * (define (hi) (let ((o (make-oscil 440.0)) (scl 0+i) (val 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! val (* scl (oscil o)))) val))
  * (define (hi) (let ((o (make-oscil 440.0)) (fm 1.0) (scl 0+i) (val 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! val (* scl (oscil o fm)))) val))
@@ -12745,6 +12754,8 @@ static gf *fixup_sin(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 
 static mus_float_t gf_subtract_g1_g2(void *p) {gf *g = (gf *)p; return(g->f1(g->g1) - g->f2(g->g2));}
 static mus_float_t gf_subtract_g1_rx1(void *p) {gf *g = (gf *)p; return(g->f1(g->g1) - (*(g->rx1)));}
+static mus_float_t gf_subtract_g1_x1(void *p) {gf *g = (gf *)p; return(g->f1(g->g1) - g->x1);}
+static mus_float_t gf_subtract_g1_s1(void *p) {gf *g = (gf *)p; return(g->f1(g->g1) - s7_cell_s1_to_real(g));}
 
 static mus_float_t gf_subtract_x1_g1(void *p) {gf *g = (gf *)p; return(g->x1 - g->f1(g->g1));}
 static mus_float_t gf_subtract_x1_rx1(void *p) {gf *g = (gf *)p; return(g->x1 - (*(g->rx1)));}
@@ -12754,6 +12765,11 @@ static mus_float_t gf_subtract_rx1_g1(void *p) {gf *g = (gf *)p; return((*(g->rx
 static mus_float_t gf_subtract_rx1_rx2(void *p) {gf *g = (gf *)p; return((*(g->rx1)) - (*(g->rx2)));}
 static mus_float_t gf_subtract_rx1_x1(void *p) {gf *g = (gf *)p; return((*(g->rx1)) - g->x1);}
 static mus_float_t gf_subtract_rx1_s1(void *p) {gf *g = (gf *)p; return((*(g->rx1)) - s7_cell_s1_to_real(g));}
+
+static mus_float_t gf_subtract_s1_s2(void *p) {gf *g = (gf *)p; return(s7_cell_s1_to_real(g) - s7_cell_s2_to_real(g));}
+static mus_float_t gf_subtract_s1_x1(void *p) {gf *g = (gf *)p; return(s7_cell_s1_to_real(g) - g->x1);}
+static mus_float_t gf_subtract_s1_rx1(void *p) {gf *g = (gf *)p; return(s7_cell_s1_to_real(g) - (*(g->rx1)));}
+static mus_float_t gf_subtract_s1_g1(void *p) {gf *g = (gf *)p; return(s7_cell_s1_to_real(g) - g->f1(g->g1));}
 
 static gf *fixup_subtract(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 {
@@ -12768,26 +12784,41 @@ static gf *fixup_subtract(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
       typ1 = gf_parse(sc, cadr(expr), locals, &g1, &s1, &x1, &rx1);
       typ2 = gf_parse(sc, caddr(expr), locals, &g2, &s2, &x2, &rx2);
 
+      if ((typ1 == GF_NONE) || (typ2 == GF_NONE))
+	{
+	  if (g1) gf_free(g1);
+	  if (g2) gf_free(g2);
+	  return(NULL);
+	}
+
       switch (typ1)
 	{
 	case GF_G:
-	  if (typ2 == GF_G)
+	  g = gf_alloc();
+	  g->f1 = g1->func;
+	  g->g1 = g1;
+	  
+	  switch (typ2)
 	    {
-	      g = gf_alloc();
+	    case GF_G:
 	      g->func = gf_subtract_g1_g2;
-	      g->f1 = g1->func;
-	      g->g1 = g1;
 	      g->f2 = g2->func;
 	      g->g2 = g2;
 	      return(g);
-	    }
-	  if (typ2 == GF_RX)
-	    {
-	      g = gf_alloc();
+
+	    case GF_RX:
 	      g->func = gf_subtract_g1_rx1;
-	      g->g1 = g1;
-	      g->f1 = g1->func;
 	      g->rx1 = rx2;
+	      return(g);
+
+	    case GF_S:
+	      g->func = gf_subtract_g1_s1;
+	      g->s1 = s2;
+	      return(g);
+
+	    case GF_X:
+	      g->func = gf_subtract_g1_x1;
+	      g->x1 = x2;
 	      return(g);
 	    }
 	  break;
@@ -12848,6 +12879,36 @@ static gf *fixup_subtract(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 	      g->func = gf_subtract_rx1_s1;
 	      g->gen1 = (void *)sc;
 	      g->s1 = s2;
+	      return(g);
+	    }
+	  break;
+
+	case GF_S:
+	  g = gf_alloc();
+	  g->s1 = s1;
+	  
+	  switch (typ2)
+	    {
+	    case GF_G:
+	      g->func = gf_subtract_s1_g1;
+	      g->f1 = g2->func;
+	      g->g1 = g2;
+	      return(g);
+	      
+	    case GF_X:
+	      g->func = gf_subtract_s1_x1;
+	      g->x1 = x2;
+	      return(g);
+	      
+	    case GF_RX:
+	      g->func = gf_subtract_s1_rx1;
+	      g->rx1 = rx2;
+	      return(g);
+	      
+	    case GF_S:
+	      g->func = gf_subtract_s1_s2;
+	      g->gen1 = (void *)sc;
+	      g->s2 = s2;
 	      return(g);
 	    }
 	  break;
@@ -19892,22 +19953,12 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, Name);			\
   s7_function_set_chooser(sc, f, Type ## _chooser);			\
   store_choices(sc, f, wrapped_ ## Type ## _1, NULL, NULL, wrapped_ ## Type ## _p);
-  
-#define GEN_F2(Name, Type)				\
-  f = s7_name_to_value(sc, Name);			\
-  s7_function_set_chooser(sc, f, Type ## _chooser);			\
-  store_choices(sc, f, NULL, wrapped_ ## Type ## _2, NULL, wrapped_ ## Type ## _p);
 
 #define GEN_F3(Name, Type)				\
   f = s7_name_to_value(sc, Name);			\
   s7_function_set_chooser(sc, f, Type ## _chooser);			\
   store_choices(sc, f, wrapped_ ## Type ## _1, wrapped_ ## Type ## _2, wrapped_ ## Type ## _3, wrapped_ ## Type ## _p);
 
-#define GEN_F2_3(Name, Type)				\
-  f = s7_name_to_value(sc, Name);			\
-  s7_function_set_chooser(sc, f, Type ## _chooser);			\
-  store_choices(sc, f, NULL, wrapped_ ## Type ## _2, wrapped_ ## Type ## _3, wrapped_ ## Type ## _p);
-  
 
   /* oscil */
   GEN_F3(S_oscil, oscil);
@@ -20091,14 +20142,14 @@ static void init_choosers(s7_scheme *sc)
   store_choices(sc, f, wrapped_tap_1, NULL, NULL, wrapped_tap_p);
 
 
-  GEN_F2_3("comb", comb);
+  GEN_F3("comb", comb);
 
   comb_2 = clm_make_temp_function(sc, "comb", g_comb_2, 2, 0, false, "comb opt", f, mul_c_comb_2, mul_s_comb_2, env_comb_2, NULL, NULL, NULL);
   direct_comb_2 = clm_make_temp_function_no_choice(sc, "comb", g_direct_comb_2, 2, 0, false, "comb opt", f);
   indirect_comb_2 = clm_make_temp_function_no_choice(sc, "comb", g_indirect_comb_2, 2, 0, false, "comb opt", f);
 
 
-  GEN_F2("comb-bank", comb_bank);
+  GEN_F("comb-bank", comb_bank);
 
   comb_bank_2 = clm_make_temp_function(sc, "comb-bank", g_comb_bank_2, 2, 0, false, "comb-bank opt", f, 
 				  mul_c_comb_bank_2, mul_s_comb_bank_2, env_comb_bank_2, NULL, NULL, NULL);
@@ -20106,13 +20157,13 @@ static void init_choosers(s7_scheme *sc)
   indirect_comb_bank_2 = clm_make_temp_function_no_choice(sc, "comb-bank", g_indirect_comb_bank_2, 2, 0, false, "comb-bank opt", f);
 
 
-  GEN_F2_3("notch", notch);
+  GEN_F3("notch", notch);
 
   notch_2 = clm_make_temp_function(sc, "notch", g_notch_2, 2, 0, false, "notch opt", f, mul_c_notch_2, mul_s_notch_2, env_notch_2, NULL, NULL, NULL);
   direct_notch_2 = clm_make_temp_function_no_choice(sc, "notch", g_direct_notch_2, 2, 0, false, "notch opt", f);
   indirect_notch_2 = clm_make_temp_function_no_choice(sc, "notch", g_indirect_notch_2, 2, 0, false, "notch opt", f);
 
-  GEN_F2("one-pole", one_pole);
+  GEN_F("one-pole", one_pole);
 
   one_pole_2 = clm_make_temp_function(sc, "one-pole", g_one_pole_2, 2, 0, false, "one-pole opt", f,
 				 mul_c_one_pole_2, mul_s_one_pole_2, env_one_pole_2, NULL, NULL, NULL);
@@ -20120,7 +20171,7 @@ static void init_choosers(s7_scheme *sc)
   indirect_one_pole_2 = clm_make_temp_function_no_choice(sc, "one-pole", g_indirect_one_pole_2, 2, 0, false, "one-pole opt", f);
 
 
-  GEN_F2("two-pole", two_pole);
+  GEN_F("two-pole", two_pole);
 
   two_pole_2 = clm_make_temp_function(sc, "two-pole", g_two_pole_2, 2, 0, false, "two-pole opt", f,
 				 mul_c_two_pole_2, mul_s_two_pole_2, env_two_pole_2, NULL, NULL, NULL);
@@ -20132,7 +20183,7 @@ static void init_choosers(s7_scheme *sc)
 #endif
 
 
-  GEN_F2("one-zero", one_zero);
+  GEN_F("one-zero", one_zero);
 
   one_zero_2 = clm_make_temp_function(sc, "one-zero", g_one_zero_2, 2, 0, false, "one-zero opt", f,
 				 mul_c_one_zero_2, mul_s_one_zero_2, env_one_zero_2, NULL, NULL, NULL);
@@ -20140,35 +20191,35 @@ static void init_choosers(s7_scheme *sc)
   indirect_one_zero_2 = clm_make_temp_function_no_choice(sc, "one-zero", g_indirect_one_zero_2, 2, 0, false, "one-zero opt", f);
 
 
-  GEN_F2("two-zero", two_zero);
+  GEN_F("two-zero", two_zero);
 
   two_zero_2 = clm_make_temp_function(sc, "two-zero", g_two_zero_2, 2, 0, false, "two-zero opt", f,
 				 mul_c_two_zero_2, mul_s_two_zero_2, env_two_zero_2, NULL, NULL, NULL);
   direct_two_zero_2 = clm_make_temp_function_no_choice(sc, "two-zero", g_direct_two_zero_2, 2, 0, false, "two-zero opt", f);
   indirect_two_zero_2 = clm_make_temp_function_no_choice(sc, "two-zero", g_indirect_two_zero_2, 2, 0, false, "two-zero opt", f);
 
-  GEN_F2("moving-average", moving_average);
+  GEN_F("moving-average", moving_average);
 
   moving_average_2 = clm_make_temp_function(sc, "moving-average", g_moving_average_2, 2, 0, false, "moving-average opt", f,
 				       mul_c_moving_average_2, mul_s_moving_average_2, env_moving_average_2, NULL, NULL, NULL);
   direct_moving_average_2 = clm_make_temp_function_no_choice(sc, "moving-average", g_direct_moving_average_2, 2, 0, false, "moving-average opt", f);
   indirect_moving_average_2 = clm_make_temp_function_no_choice(sc, "moving-average", g_indirect_moving_average_2, 2, 0, false, "moving-average opt", f);
 
-  GEN_F2("moving-max", moving_max);
+  GEN_F("moving-max", moving_max);
 
   moving_max_2 = clm_make_temp_function(sc, "moving-max", g_moving_max_2, 2, 0, false, "moving-max opt", f,
 				       mul_c_moving_max_2, mul_s_moving_max_2, env_moving_max_2, NULL, NULL, NULL);
   direct_moving_max_2 = clm_make_temp_function_no_choice(sc, "moving-max", g_direct_moving_max_2, 2, 0, false, "moving-max opt", f);
   indirect_moving_max_2 = clm_make_temp_function_no_choice(sc, "moving-max", g_indirect_moving_max_2, 2, 0, false, "moving-max opt", f);
 
-  GEN_F2("moving-norm", moving_norm);
+  GEN_F("moving-norm", moving_norm);
 
   moving_norm_2 = clm_make_temp_function(sc, "moving-norm", g_moving_norm_2, 2, 0, false, "moving-norm opt", f,
 				       mul_c_moving_norm_2, mul_s_moving_norm_2, env_moving_norm_2, NULL, NULL, NULL);
   direct_moving_norm_2 = clm_make_temp_function_no_choice(sc, "moving-norm", g_direct_moving_norm_2, 2, 0, false, "moving-norm opt", f);
   indirect_moving_norm_2 = clm_make_temp_function_no_choice(sc, "moving-norm", g_indirect_moving_norm_2, 2, 0, false, "moving-norm opt", f);
 
-  GEN_F2("filter", filter);
+  GEN_F("filter", filter);
 
   filter_2 = clm_make_temp_function(sc, "filter", g_filter_2, 2, 0, false, "filter opt", f,
 			       mul_c_filter_2, mul_s_filter_2, env_filter_2, NULL, NULL, NULL);
@@ -20176,7 +20227,7 @@ static void init_choosers(s7_scheme *sc)
   indirect_filter_2 = clm_make_temp_function_no_choice(sc, "filter", g_indirect_filter_2, 2, 0, false, "filter opt", f);
 
 
-  GEN_F2("fir-filter", fir_filter);
+  GEN_F("fir-filter", fir_filter);
 
   fir_filter_2 = clm_make_temp_function(sc, "fir-filter", g_fir_filter_2, 2, 0, false, "fir-filter opt", f,
 				   mul_c_fir_filter_2, mul_s_fir_filter_2, env_fir_filter_2, NULL, NULL, NULL);
@@ -20185,7 +20236,7 @@ static void init_choosers(s7_scheme *sc)
   fir_filter_temp = clm_make_temp_function_no_choice(sc, "fir-filter", g_fir_filter_temp, 2, 0, false, "fir-filter opt", f);
 
 
-  GEN_F2("iir-filter", iir_filter);
+  GEN_F("iir-filter", iir_filter);
 
   iir_filter_2 = clm_make_temp_function(sc, "iir-filter", g_iir_filter_2, 2, 0, false, "iir-filter opt", f,
 				   mul_c_iir_filter_2, mul_s_iir_filter_2, env_iir_filter_2, NULL, NULL, NULL);
@@ -20254,7 +20305,7 @@ static void init_choosers(s7_scheme *sc)
   indirect_rand_interp_2 = clm_make_temp_function_no_choice(sc, "rand-interp", g_indirect_rand_interp_2, 2, 0, false, "rand-interp opt", f);
 
 
-  GEN_F2_3("formant", formant);
+  GEN_F3("formant", formant);
 
   formant_2 = clm_make_temp_function(sc, "formant", g_formant_2, 2, 0, false, "formant opt", f,
 				mul_c_formant_2, mul_s_formant_2, env_formant_2, NULL, NULL, NULL);
@@ -20270,21 +20321,21 @@ static void init_choosers(s7_scheme *sc)
   formant_bank_sz = clm_make_temp_function_no_choice(sc, "formant", g_formant_bank_sz, 3, 0, false, "formant-bank opt", f);
 
 
-  GEN_F2_3("firmant", firmant);
+  GEN_F3("firmant", firmant);
 
   firmant_2 = clm_make_temp_function(sc, "firmant", g_firmant_2, 2, 0, false, "firmant opt", f, mul_c_firmant_2, mul_s_firmant_2, env_firmant_2, NULL, NULL, NULL);
   direct_firmant_2 = clm_make_temp_function_no_choice(sc, "firmant", g_direct_firmant_2, 2, 0, false, "firmant opt", f);
   indirect_firmant_2 = clm_make_temp_function_no_choice(sc, "firmant", g_indirect_firmant_2, 2, 0, false, "firmant opt", f);
 
 
-  GEN_F2_3("all-pass", all_pass);
+  GEN_F3("all-pass", all_pass);
 
   all_pass_2 = clm_make_temp_function(sc, "all-pass", g_all_pass_2, 2, 0, false, "all-pass opt", f, mul_c_all_pass_2, mul_s_all_pass_2, env_all_pass_2, NULL, NULL, NULL);
   direct_all_pass_2 = clm_make_temp_function_no_choice(sc, "all-pass", g_direct_all_pass_2, 2, 0, false, "all-pass opt", f);
   indirect_all_pass_2 = clm_make_temp_function_no_choice(sc, "all-pass", g_indirect_all_pass_2, 2, 0, false, "all-pass opt", f);
 
 
-  GEN_F2("all-pass-bank", all_pass_bank);
+  GEN_F("all-pass-bank", all_pass_bank);
 
   all_pass_bank_2 = clm_make_temp_function(sc, "all-pass-bank", g_all_pass_bank_2, 2, 0, false, "all-pass-bank opt", f, 
 				      mul_c_all_pass_bank_2, mul_s_all_pass_bank_2, env_all_pass_bank_2, NULL, NULL, NULL);
@@ -20292,14 +20343,14 @@ static void init_choosers(s7_scheme *sc)
   indirect_all_pass_bank_2 = clm_make_temp_function_no_choice(sc, "all-pass-bank", g_indirect_all_pass_bank_2, 2, 0, false, "all-pass-bank opt", f);
 
 
-  GEN_F2("one-pole-all-pass", one_pole_all_pass);
+  GEN_F("one-pole-all-pass", one_pole_all_pass);
   one_pole_all_pass_2 = clm_make_temp_function(sc, "one-pole-all-pass", g_one_pole_all_pass_2, 2, 0, false, "one-pole-all-pass opt", f, 
 					  mul_c_one_pole_all_pass_2, mul_s_one_pole_all_pass_2, env_one_pole_all_pass_2, NULL, NULL, NULL);
   direct_one_pole_all_pass_2 = clm_make_temp_function_no_choice(sc, "one-pole-all-pass", g_direct_one_pole_all_pass_2, 2, 0, false, "one-pole-all-pass opt", f);
   indirect_one_pole_all_pass_2 = clm_make_temp_function_no_choice(sc, "one-pole-all-pass", g_indirect_one_pole_all_pass_2, 2, 0, false, "one-pole-all-pass opt", f);
 
 
-  GEN_F2_3("delay", delay);
+  GEN_F3("delay", delay);
 
   delay_2 = clm_make_temp_function(sc, "delay", g_delay_2, 2, 0, false, "delay opt", f,
 			      mul_c_delay_2, mul_s_delay_2, env_delay_2, NULL, NULL, NULL);
@@ -20314,7 +20365,7 @@ static void init_choosers(s7_scheme *sc)
   polynomial_cos = clm_make_function_no_choice(sc, "polynomial", g_polynomial_cos, 2, 0, false, "polynomial optimization", f);
 
 
-  GEN_F2("polyshape", polyshape);
+  GEN_F("polyshape", polyshape);
 
   polyshape_2 = clm_make_temp_function(sc, "polyshape", g_polyshape_2, 2, 0, false, "polyshape opt", f,
 				mul_c_polyshape_2, mul_s_polyshape_2, env_polyshape_2, NULL, NULL, NULL);
@@ -20343,7 +20394,7 @@ static void init_choosers(s7_scheme *sc)
   ssb_am_3 = clm_make_temp_function_no_choice(sc, S_ssb_am, g_ssb_am_3, 3, 0, false, "ssb-am opt", f);
 
 
-  GEN_F2_3("asymmetric-fm", asymmetric_fm);
+  GEN_F3("asymmetric-fm", asymmetric_fm);
 
   asymmetric_fm_2 = clm_make_temp_function(sc, "asymmetric-fm", g_asymmetric_fm_2, 2, 0, false, "asymmetric-fm opt", f,
 				mul_c_asymmetric_fm_2, mul_s_asymmetric_fm_2, env_asymmetric_fm_2, NULL, NULL, NULL);
@@ -20351,14 +20402,14 @@ static void init_choosers(s7_scheme *sc)
   indirect_asymmetric_fm_2 = clm_make_temp_function_no_choice(sc, "asymmetric-fm", g_indirect_asymmetric_fm_2, 2, 0, false, "asymmetric-fm opt", f);
   asymmetric_fm_3 = clm_make_temp_function_no_choice(sc, "asymmetric-fm", g_asymmetric_fm_3, 3, 0, false, "asymmetric-fm opt", f);
 
-  GEN_F2_3("filtered-comb", filtered_comb);
+  GEN_F3("filtered-comb", filtered_comb);
 
   filtered_comb_2 = clm_make_temp_function(sc, "filtered-comb", g_filtered_comb_2, 2, 0, false, "filtered-comb opt", f,
 				mul_c_filtered_comb_2, mul_s_filtered_comb_2, env_filtered_comb_2, NULL, NULL, NULL);
   direct_filtered_comb_2 = clm_make_temp_function_no_choice(sc, "filtered-comb", g_direct_filtered_comb_2, 2, 0, false, "filtered-comb opt", f);
   indirect_filtered_comb_2 = clm_make_temp_function_no_choice(sc, "filtered-comb", g_indirect_filtered_comb_2, 2, 0, false, "filtered-comb opt", f);
 
-  GEN_F2("filtered-comb-bank", filtered_comb_bank);
+  GEN_F("filtered-comb-bank", filtered_comb_bank);
 
   filtered_comb_bank_2 = clm_make_temp_function(sc, "filtered-comb-bank", g_filtered_comb_bank_2, 2, 0, false, "filtered-comb-bank opt", f,
 				mul_c_filtered_comb_bank_2, mul_s_filtered_comb_bank_2, env_filtered_comb_bank_2, NULL, NULL, NULL);
@@ -20829,14 +20880,14 @@ Xen_wrap_2_optional_args(g_rxykcos_w, g_rxykcos)
 Xen_wrap_1_arg(g_is_rxykcos_w, g_is_rxykcos)
 
 Xen_wrap_6_optional_args(g_make_filter_w, g_make_filter)
-Xen_wrap_2_args(g_filter_w, g_filter)
+Xen_wrap_2_optional_args(g_filter_w, g_filter)
 Xen_wrap_1_arg(g_is_filter_w, g_is_filter)
 Xen_wrap_4_optional_args(g_make_fir_filter_w, g_make_fir_filter)
 Xen_wrap_2_args(g_make_fir_coeffs_w, g_make_fir_coeffs)
-Xen_wrap_2_args(g_fir_filter_w, g_fir_filter)
+Xen_wrap_2_optional_args(g_fir_filter_w, g_fir_filter)
 Xen_wrap_1_arg(g_is_fir_filter_w, g_is_fir_filter)
 Xen_wrap_4_optional_args(g_make_iir_filter_w, g_make_iir_filter)
-Xen_wrap_2_args(g_iir_filter_w, g_iir_filter)
+Xen_wrap_2_optional_args(g_iir_filter_w, g_iir_filter)
 Xen_wrap_1_arg(g_is_iir_filter_w, g_is_iir_filter)
 Xen_wrap_1_arg(g_mus_xcoeffs_w, g_mus_xcoeffs)
 Xen_wrap_1_arg(g_mus_ycoeffs_w, g_mus_ycoeffs)
@@ -20950,13 +21001,13 @@ Xen_wrap_8_optional_args(g_make_asymmetric_fm_w, g_make_asymmetric_fm)
 Xen_wrap_any_args(g_mus_file_mix_w, g_mus_file_mix)
 Xen_wrap_any_args(g_mus_file_mix_with_envs_w, g_mus_file_mix_with_envs)
 
-Xen_wrap_2_args(g_comb_bank_w, g_comb_bank)
+Xen_wrap_2_optional_args(g_comb_bank_w, g_comb_bank)
 Xen_wrap_1_arg(g_is_comb_bank_w, g_is_comb_bank)
 Xen_wrap_1_arg(g_make_comb_bank_w, g_make_comb_bank)
-Xen_wrap_2_args(g_filtered_comb_bank_w, g_filtered_comb_bank)
+Xen_wrap_2_optional_args(g_filtered_comb_bank_w, g_filtered_comb_bank)
 Xen_wrap_1_arg(g_is_filtered_comb_bank_w, g_is_filtered_comb_bank)
 Xen_wrap_1_arg(g_make_filtered_comb_bank_w, g_make_filtered_comb_bank)
-Xen_wrap_2_args(g_all_pass_bank_w, g_all_pass_bank)
+Xen_wrap_2_optional_args(g_all_pass_bank_w, g_all_pass_bank)
 Xen_wrap_1_arg(g_is_all_pass_bank_w, g_is_all_pass_bank)
 Xen_wrap_1_arg(g_make_all_pass_bank_w, g_make_all_pass_bank)
 Xen_wrap_1_arg(g_pink_noise_w, g_pink_noise)
@@ -21238,15 +21289,15 @@ static void mus_xen_init(void)
   Xen_define_safe_procedure(S_is_moving_max,        g_is_moving_max_w,         1, 0, 0, H_is_moving_max);
   Xen_define_safe_procedure(S_is_moving_norm,       g_is_moving_norm_w,        1, 0, 0, H_is_moving_norm);
 
-  Xen_define_real_procedure(S_comb_bank,            g_comb_bank_w,             2, 0, 0, H_comb_bank);
+  Xen_define_real_procedure(S_comb_bank,            g_comb_bank_w,             1, 1, 0, H_comb_bank);
   Xen_define_safe_procedure(S_is_comb_bank,         g_is_comb_bank_w,          1, 0, 0, H_is_comb_bank);
   Xen_define_safe_procedure(S_make_comb_bank,       g_make_comb_bank_w,        1, 0, 0, H_make_comb_bank);
 
-  Xen_define_real_procedure(S_filtered_comb_bank,   g_filtered_comb_bank_w,    2, 0, 0, H_filtered_comb_bank);
+  Xen_define_real_procedure(S_filtered_comb_bank,   g_filtered_comb_bank_w,    1, 1, 0, H_filtered_comb_bank);
   Xen_define_safe_procedure(S_is_filtered_comb_bank, g_is_filtered_comb_bank_w,  1, 0, 0, H_is_filtered_comb_bank);
   Xen_define_safe_procedure(S_make_filtered_comb_bank, g_make_filtered_comb_bank_w, 1, 0, 0, H_make_filtered_comb_bank);
 
-  Xen_define_real_procedure(S_all_pass_bank,        g_all_pass_bank_w,         2, 0, 0, H_all_pass_bank);
+  Xen_define_real_procedure(S_all_pass_bank,        g_all_pass_bank_w,         1, 1, 0, H_all_pass_bank);
   Xen_define_safe_procedure(S_is_all_pass_bank,     g_is_all_pass_bank_w,      1, 0, 0, H_is_all_pass_bank);
   Xen_define_safe_procedure(S_make_all_pass_bank,   g_make_all_pass_bank_w,    1, 0, 0, H_make_all_pass_bank);
 
@@ -21370,14 +21421,14 @@ static void mus_xen_init(void)
 
 
   Xen_define_safe_procedure(S_make_filter,          g_make_filter_w,           0, 6, 0, H_make_filter);
-  Xen_define_real_procedure(S_filter,               g_filter_w,                2, 0, 0, H_filter);
+  Xen_define_real_procedure(S_filter,               g_filter_w,                1, 1, 0, H_filter);
   Xen_define_safe_procedure(S_is_filter,            g_is_filter_w,             1, 0, 0, H_is_filter);
   Xen_define_safe_procedure(S_make_fir_coeffs,      g_make_fir_coeffs_w,       2, 0, 0, H_make_fir_coeffs);
   Xen_define_safe_procedure(S_make_fir_filter,      g_make_fir_filter_w,       0, 4, 0, H_make_fir_filter);
-  Xen_define_real_procedure(S_fir_filter,           g_fir_filter_w,            2, 0, 0, H_fir_filter);
+  Xen_define_real_procedure(S_fir_filter,           g_fir_filter_w,            1, 1, 0, H_fir_filter);
   Xen_define_safe_procedure(S_is_fir_filter,        g_is_fir_filter_w,         1, 0, 0, H_is_fir_filter);
   Xen_define_safe_procedure(S_make_iir_filter,      g_make_iir_filter_w,       0, 4, 0, H_make_iir_filter);
-  Xen_define_real_procedure(S_iir_filter,           g_iir_filter_w,            2, 0, 0, H_iir_filter);
+  Xen_define_real_procedure(S_iir_filter,           g_iir_filter_w,            1, 1, 0, H_iir_filter);
   Xen_define_safe_procedure(S_is_iir_filter,        g_is_iir_filter_w,         1, 0, 0, H_is_iir_filter);
   Xen_define_safe_procedure(S_mus_order,            g_mus_order_w,             1, 0, 0, H_mus_order);
   Xen_define_safe_procedure(S_mus_type,             g_mus_type_w,              1, 0, 0, H_mus_type);
