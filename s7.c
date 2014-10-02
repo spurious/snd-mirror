@@ -364,7 +364,7 @@ enum {OP_NO_OP,
       OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
 
       OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
-      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT_PAIR_END, OP_SORT_VECTOR_END, OP_SORT_STRING_END, 
+      OP_GET_OUTPUT_STRING, OP_GET_OUTPUT_STRING_1, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT_PAIR_END, OP_SORT_VECTOR_END, OP_SORT_STRING_END, 
       OP_EVAL_STRING_1, OP_EVAL_STRING_2, 
       OP_MEMBER_IF, OP_ASSOC_IF, OP_MEMBER_IF1, OP_ASSOC_IF1,
       
@@ -547,7 +547,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "map", "map_simple", "barrier", "deactivate_goto",
   
   "define_bacro", "define_bacro_star", 
-  "get_output_string", "sort", "sort1", "sort2", "sort3", "sort_pair_end", "sort_vector_end", "sort_string_end", 
+  "get_output_string", "get-output-string-1", "sort", "sort1", "sort2", "sort3", "sort_pair_end", "sort_vector_end", "sort_string_end", 
   "eval_string_1", "eval_string_2", 
   "member_if", "assoc_if", "member_if1", "assoc_if1",
   
@@ -3598,13 +3598,13 @@ static void add_bignumber(s7_scheme *sc, s7_pointer p)
 #define INIT_GC_CACHE_SIZE 64
 static void init_gc_caches(s7_scheme *sc)
 {
-  sc->strings_size = INIT_GC_CACHE_SIZE * 8;
+  sc->strings_size = INIT_GC_CACHE_SIZE * 16;
   sc->strings_loc = 0;
   sc->strings = (s7_pointer *)malloc(sc->strings_size * sizeof(s7_pointer));
   sc->gensyms_size = INIT_GC_CACHE_SIZE;
   sc->gensyms_loc = 0;
   sc->gensyms = (s7_pointer *)malloc(sc->gensyms_size * sizeof(s7_pointer));
-  sc->vectors_size = INIT_GC_CACHE_SIZE * 4;
+  sc->vectors_size = INIT_GC_CACHE_SIZE * 8;
   sc->vectors_loc = 0;
   sc->vectors = (s7_pointer *)malloc(sc->vectors_size * sizeof(s7_pointer));
   sc->hash_tables_size = INIT_GC_CACHE_SIZE;
@@ -7437,6 +7437,7 @@ static void call_with_exit(s7_scheme *sc)
 	  break;
 
 	  /* call/cc does not close files, but I think call-with-exit should */
+	case OP_GET_OUTPUT_STRING_1:
 	case OP_UNWIND_OUTPUT:
 	  {
 	    s7_pointer x;
@@ -19346,7 +19347,7 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
 {
   #define H_char_position "(char-position char-or-str str (start 0)) returns the position of the first occurrence of char in str, or #f"
   const char *porig, *p, *pset;
-  s7_Int start = 0, pos, len; /* not "int" because start arg might be most-negative-fixnum */
+  s7_Int start, pos, len; /* not "int" because start arg might be most-negative-fixnum */
   s7_pointer arg1, arg2;
 
   arg1 = car(args);
@@ -19377,10 +19378,10 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
       if (start < 0)
 	return(wrong_type_argument_with_type(sc, sc->CHAR_POSITION, small_int(3), arg3, A_NON_NEGATIVE_INTEGER));
     }
+  else start = 0;
 
   len = string_length(arg2);
-  if ((!porig) || (start >= len))
-      return(sc->F);
+  if (start >= len) return(sc->F);
 
   if (s7_is_character(arg1))
     {
@@ -19413,6 +19414,32 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
    *   about chars and strings, so I think I'll ignore these cases.  In unicode, you'd
    *   want to use unicode-aware searchers, so that also is irrelevant.
    */
+  return(sc->F);
+}
+
+
+static s7_pointer char_position_cs;
+static s7_pointer g_char_position_cs(s7_scheme *sc, s7_pointer args)
+{
+  /* assume char arg1, no start */
+  const char *porig, *p;
+  char c;
+  s7_pointer arg2;
+
+  c = character(car(args));
+  arg2 = cadr(args);
+
+  if (!is_string(arg2))
+    {
+      check_method(sc, arg2, sc->CHAR_POSITION, args);
+      return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(2), arg2, T_STRING));
+    }
+  if (string_length(arg2) == 0) return(sc->F);
+  porig = string_value(arg2);
+
+  p = strchr(porig, (int)c);
+  if (p)
+    return(make_integer(sc, p - porig));
   return(sc->F);
 }
 
@@ -21874,13 +21901,12 @@ static int file_read_white_space(s7_scheme *sc, s7_pointer port)
 
 static int terminated_string_read_white_space(s7_scheme *sc, s7_pointer pt)
 {
-  unsigned char *str;
+  const unsigned char *str;
   unsigned char c;
   /* here we know we have null termination and white_space[#\null] is false.
-   * half the time this is called, the initial character is not white space, 
-   *   but splitting that out is (slightly) slower.
    */
-  str = (unsigned char *)(port_data(pt) + port_position(pt));
+  str = (const unsigned char *)(port_data(pt) + port_position(pt));
+
   while (white_space[c = *str++]) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
     if (c == '\n')
       port_line_number(pt)++;
@@ -26008,8 +26034,7 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
 					 make_string_wrapper(sc, "a normal procedure (not a continuation)")));
 
   port = s7_open_output_string(sc);
-  push_stack(sc, OP_UNWIND_OUTPUT, sc->F, port);
-  push_stack(sc, OP_GET_OUTPUT_STRING, sc->F, port);
+  push_stack(sc, OP_GET_OUTPUT_STRING_1, sc->F, port);
   if (is_any_macro(proc))                             /* (let () (define-macro (m p) `(write 123 ,p)) (call-with-output-string m)) */
     {
       push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
@@ -26068,8 +26093,7 @@ static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
     }
   old_output_port = sc->output_port;
   sc->output_port = s7_open_output_string(sc);
-  push_stack(sc, OP_UNWIND_OUTPUT, old_output_port, sc->output_port);
-  push_stack(sc, OP_GET_OUTPUT_STRING, sc->F, sc->output_port);
+  push_stack(sc, OP_GET_OUTPUT_STRING_1, old_output_port, sc->output_port);
 
   if (is_any_macro(p))
     {
@@ -38052,6 +38076,7 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 	      }
 	    break;
 	    
+	  case OP_GET_OUTPUT_STRING_1:
 	  case OP_UNWIND_OUTPUT:
 	    x = stack_code(sc->stack, i);                /* "code" = port that we opened */
 	    s7_close_output_port(sc, x);
@@ -42756,6 +42781,13 @@ static void check_for_substring_temp(s7_scheme *sc, s7_pointer expr)
   if (np) set_c_function(np, substring_to_temp);
 }
 
+static s7_pointer char_position_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) &&
+      (s7_is_character(cadr(expr))))
+    return(char_position_cs);
+  return(f);
+}
 
 static s7_pointer string_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
@@ -42825,6 +42857,13 @@ static s7_pointer string_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 	return(string_leq_s_ic);
       return(string_leq_2);
     }
+  return(f);
+}
+
+
+static s7_pointer string_to_symbol_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  check_for_substring_temp(sc, expr);
   return(f);
 }
 
@@ -43140,7 +43179,6 @@ static void init_choosers(s7_scheme *sc)
   add_ss_1ss = make_temp_function_with_class(sc, f, "+", g_add_ss_1ss, 2, 0, false, "+ opt");
   add_f_sf = make_function_with_class(sc, f, "+", g_add_f_sf, 2, 0, false, "+ opt");
 
-
   /* - */
   f = set_function_chooser(sc, sc->MINUS, subtract_chooser);
 
@@ -43180,7 +43218,6 @@ static void init_choosers(s7_scheme *sc)
   mul_s_cos_s = make_function_with_class(sc, f, "*", g_mul_s_cos_s, 2, 0, false, "* opt");
 #endif
 
-
   /* / */
 #if (!WITH_GMP)
   f = set_function_chooser(sc, sc->DIVIDE, divide_chooser);
@@ -43189,7 +43226,6 @@ static void init_choosers(s7_scheme *sc)
   divide_temp_s = make_temp_function_with_class(sc, f, "/", g_divide_temp_s, 2, 0, false, "/ opt");
   divide_s_temp = make_temp_function_with_class(sc, f, "/", g_divide_s_temp, 2, 0, false, "/ opt");
 #endif
-
 
 #if (!WITH_GMP)
   /* modulo */
@@ -43205,20 +43241,16 @@ static void init_choosers(s7_scheme *sc)
   expt_temp_s = make_temp_function_with_class(sc, f, "expt", g_expt_temp_s, 2, 0, false, "expt opt");
 #endif
 
-
   /* max */
   f = set_function_chooser(sc, sc->MAX, max_chooser);
   max_f2 = make_function_with_class(sc, f, "max", g_max_f2, 2, 0, false, "max opt");
-
 
   /* min */
   f = set_function_chooser(sc, sc->MIN, min_chooser);
   min_f2 = make_function_with_class(sc, f, "min", g_min_f2, 2, 0, false, "min opt");
 
-
   /* zero? */
   set_function_chooser(sc, sc->IS_ZERO, is_zero_chooser);
-
 
   /* = */
   f = set_function_chooser(sc, sc->EQ, equal_chooser);
@@ -43236,7 +43268,6 @@ static void init_choosers(s7_scheme *sc)
   f = set_function_chooser(sc, sc->IS_NEGATIVE, is_negative_chooser);
   is_negative_length = make_function_with_class(sc, f, "negative?", g_is_negative_length, 1, 0, false, "negative? opt");
 
-
   /* < */
   f = set_function_chooser(sc, sc->LT, less_chooser);
 
@@ -43245,7 +43276,6 @@ static void init_choosers(s7_scheme *sc)
   less_2 = make_function_with_class(sc, f, "<", g_less_2, 2, 0, false, "< opt");
   less_length_ic = make_function_with_class(sc, f, "<", g_less_length_ic, 2, 0, false, "< opt");
 
-
   /* > */
   f = set_function_chooser(sc, sc->GT, greater_chooser);
 
@@ -43253,13 +43283,11 @@ static void init_choosers(s7_scheme *sc)
   greater_s_fc = make_function_with_class(sc, f, ">", g_greater_s_fc, 2, 0, false, "> opt");
   greater_2 = make_function_with_class(sc, f, ">", g_greater_2, 2, 0, false, "> opt");
 
-
   /* <= */
   f = set_function_chooser(sc, sc->LEQ, leq_chooser);
 
   leq_s_ic = make_function_with_class(sc, f, "<=", g_leq_s_ic, 2, 0, false, "<= opt");
   leq_2 = make_function_with_class(sc, f, "<=", g_leq_2, 2, 0, false, "<= opt");
-
 
   /* >= */
   f = set_function_chooser(sc, sc->GEQ, geq_chooser);
@@ -43287,13 +43315,11 @@ static void init_choosers(s7_scheme *sc)
   f = set_function_chooser(sc, sc->IS_ARITABLE, is_aritable_chooser);
   is_aritable_ic = make_function_with_class(sc, f, "aritable?", g_is_aritable_ic, 2, 0, false, "aritable? opt");
 
-
   /* char=? */
   f = set_function_chooser(sc, sc->CHAR_EQ, char_equal_chooser);
 
   char_equal_s_ic = make_function_with_class(sc, f, "char=?", g_char_equal_s_ic, 2, 0, false, "char=? opt");
   char_equal_2 = make_function_with_class(sc, f, "char=?", g_char_equal_2, 2, 0, false, "char=? opt");
-
 
   /* char>? */
   f = set_function_chooser(sc, sc->CHAR_GT, char_greater_chooser);
@@ -43301,20 +43327,17 @@ static void init_choosers(s7_scheme *sc)
   char_greater_s_ic = make_function_with_class(sc, f, "char>?", g_char_greater_s_ic, 2, 0, false, "char>? opt");
   char_greater_2 = make_function_with_class(sc, f, "char>?", g_char_greater_2, 2, 0, false, "char>? opt");
 
-
   /* char<? */
   f = set_function_chooser(sc, sc->CHAR_LT, char_less_chooser);
 
   char_less_s_ic = make_function_with_class(sc, f, "char<?", g_char_less_s_ic, 2, 0, false, "char<? opt");
   char_less_2 = make_function_with_class(sc, f, "char<?", g_char_less_2, 2, 0, false, "char<? opt");
 
-
   /* char<=? */
   f = set_function_chooser(sc, sc->CHAR_LEQ, char_leq_chooser);
 
   char_leq_s_ic = make_function_with_class(sc, f, "char<=?", g_char_leq_s_ic, 2, 0, false, "char<=? opt");
   char_leq_2 = make_function_with_class(sc, f, "char<=?", g_char_leq_2, 2, 0, false, "char<=? opt");
-
 
   /* char>=? */
   f = set_function_chooser(sc, sc->CHAR_GEQ, char_geq_chooser);
@@ -43329,13 +43352,11 @@ static void init_choosers(s7_scheme *sc)
   char_ci_equal_s_ic = make_function_with_class(sc, f, "char-ci=?", g_char_ci_equal_s_ic, 2, 0, false, "char-ci=? opt");
   char_ci_equal_2 = make_function_with_class(sc, f, "char-ci=?", g_char_ci_equal_2, 2, 0, false, "char-ci=? opt");
 
-
   /* char-ci>? */
   f = set_function_chooser(sc, sc->CHAR_CI_GT, char_ci_greater_chooser);
 
   char_ci_greater_s_ic = make_function_with_class(sc, f, "char-ci>?", g_char_ci_greater_s_ic, 2, 0, false, "char-ci>? opt");
   char_ci_greater_2 = make_function_with_class(sc, f, "char-ci>?", g_char_ci_greater_2, 2, 0, false, "char-ci>? opt");
-
 
   /* char-ci<? */
   f = set_function_chooser(sc, sc->CHAR_CI_LT, char_ci_less_chooser);
@@ -43343,13 +43364,11 @@ static void init_choosers(s7_scheme *sc)
   char_ci_less_s_ic = make_function_with_class(sc, f, "char-ci<?", g_char_ci_less_s_ic, 2, 0, false, "char-ci<? opt");
   char_ci_less_2 = make_function_with_class(sc, f, "char-ci<?", g_char_ci_less_2, 2, 0, false, "char-ci<? opt");
 
-
   /* char-ci<=? */
   f = set_function_chooser(sc, sc->CHAR_CI_LEQ, char_ci_leq_chooser);
 
   char_ci_leq_s_ic = make_function_with_class(sc, f, "char-ci<=?", g_char_ci_leq_s_ic, 2, 0, false, "char-ci<=? opt");
   char_ci_leq_2 = make_function_with_class(sc, f, "char-ci<=?", g_char_ci_leq_2, 2, 0, false, "char-ci<=? opt");
-
 
   /* char-ci>=? */
   f = set_function_chooser(sc, sc->CHAR_CI_GEQ, char_ci_geq_chooser);
@@ -43358,17 +43377,22 @@ static void init_choosers(s7_scheme *sc)
   char_ci_geq_2 = make_function_with_class(sc, f, "char-ci>=?", g_char_ci_geq_2, 2, 0, false, "char-ci>=? opt");
 #endif
 
+  /* char-position */
+  f = set_function_chooser(sc, sc->CHAR_POSITION, char_position_chooser);
+  char_position_cs = make_function_with_class(sc, f, "char-position", g_char_position_cs, 2, 0, false, "char-position opt");
+
+  /* string->symbol */
+  f = set_function_chooser(sc, sc->STRING_TO_SYMBOL, string_to_symbol_chooser);
+
   /* string=? */
   f = set_function_chooser(sc, sc->STRING_EQ, string_equal_chooser);
 
   string_equal_s_ic = make_function_with_class(sc, f, "string=?", g_string_equal_s_ic, 2, 0, false, "string=? opt");
   string_equal_2 = make_function_with_class(sc, f, "string=?", g_string_equal_2, 2, 0, false, "string=? opt");
 
-
   /* substring */
   substring_to_temp = s7_make_function(sc, "substring", g_substring_to_temp, 2, 1, false, "substring opt");
   s7_function_set_class(substring_to_temp, slot_value(global_slot(sc->SUBSTRING)));
-
 
   /* string>? */
   f = set_function_chooser(sc, sc->STRING_GT, string_greater_chooser);
@@ -43376,20 +43400,17 @@ static void init_choosers(s7_scheme *sc)
   string_greater_s_ic = make_function_with_class(sc, f, "string>?", g_string_greater_s_ic, 2, 0, false, "string>? opt");
   string_greater_2 = make_function_with_class(sc, f, "string>?", g_string_greater_2, 2, 0, false, "string>? opt");
 
-
   /* string<? */
   f = set_function_chooser(sc, sc->STRING_LT, string_less_chooser);
 
   string_less_s_ic = make_function_with_class(sc, f, "string<?", g_string_less_s_ic, 2, 0, false, "string<? opt");
   string_less_2 = make_function_with_class(sc, f, "string<?", g_string_less_2, 2, 0, false, "string<? opt");
 
-
   /* string<=? */
   f = set_function_chooser(sc, sc->STRING_LEQ, string_leq_chooser);
 
   string_leq_s_ic = make_function_with_class(sc, f, "string<=?", g_string_leq_s_ic, 2, 0, false, "string<=? opt");
   string_leq_2 = make_function_with_class(sc, f, "string<=?", g_string_leq_2, 2, 0, false, "string<=? opt");
-
 
   /* string>=? */
   f = set_function_chooser(sc, sc->STRING_GEQ, string_geq_chooser);
@@ -43404,13 +43425,11 @@ static void init_choosers(s7_scheme *sc)
   string_ci_equal_s_ic = make_function_with_class(sc, f, "string-ci=?", g_string_ci_equal_s_ic, 2, 0, false, "string-ci=? opt");
   string_ci_equal_2 = make_function_with_class(sc, f, "string-ci=?", g_string_ci_equal_2, 2, 0, false, "string-ci=? opt");
 
-
   /* string-ci>? */
   f = set_function_chooser(sc, sc->STRING_CI_GT, string_ci_greater_chooser);
 
   string_ci_greater_s_ic = make_function_with_class(sc, f, "string-ci>?", g_string_ci_greater_s_ic, 2, 0, false, "string-ci>? opt");
   string_ci_greater_2 = make_function_with_class(sc, f, "string-ci>?", g_string_ci_greater_2, 2, 0, false, "string-ci>? opt");
-
 
   /* string-ci<? */
   f = set_function_chooser(sc, sc->STRING_CI_LT, string_ci_less_chooser);
@@ -43418,13 +43437,11 @@ static void init_choosers(s7_scheme *sc)
   string_ci_less_s_ic = make_function_with_class(sc, f, "string-ci<?", g_string_ci_less_s_ic, 2, 0, false, "string-ci<? opt");
   string_ci_less_2 = make_function_with_class(sc, f, "string-ci<?", g_string_ci_less_2, 2, 0, false, "string-ci<? opt");
 
-
   /* string-ci<=? */
   f = set_function_chooser(sc, sc->STRING_CI_LEQ, string_ci_leq_chooser);
 
   string_ci_leq_s_ic = make_function_with_class(sc, f, "string-ci<=?", g_string_ci_leq_s_ic, 2, 0, false, "string-ci<=? opt");
   string_ci_leq_2 = make_function_with_class(sc, f, "string-ci<=?", g_string_ci_leq_2, 2, 0, false, "string-ci<=? opt");
-
 
   /* string-ci>=? */
   f = set_function_chooser(sc, sc->STRING_CI_GEQ, string_ci_geq_chooser);
@@ -43442,19 +43459,16 @@ static void init_choosers(s7_scheme *sc)
   /* string-append */
   set_function_chooser(sc, sc->STRING_APPEND, string_append_chooser);
 
-
   /* symbol->string */
   f = slot_value(global_slot(sc->SYMBOL_TO_STRING));
   symbol_to_string_uncopied = s7_make_function(sc, "symbol->string", g_symbol_to_string_uncopied, 1, 0, false, "symbol->string opt");
   s7_function_set_class(symbol_to_string_uncopied, f);
-
 
   /* for-each */
   f = set_function_chooser(sc, sc->FOR_EACH, for_each_chooser);
 
   for_each_1 = make_function_with_class(sc, f, "for-each", g_for_each_1, 2, 0, false, "for-each opt");
   for_each_2 = make_function_with_class(sc, f, "for-each", g_for_each_2, 2, 0, false, "for-each opt");
-
   
   /* vector-ref */
   f = set_function_chooser(sc, sc->VECTOR_REF, vector_ref_chooser);
@@ -43468,7 +43482,6 @@ static void init_choosers(s7_scheme *sc)
   vector_ref_2 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_2, 2, 0, false, "vector-ref opt");
   vector_ref_gs = make_function_with_class(sc, f, "vector-ref", g_vector_ref_gs, 2, 0, false, "vector-ref opt");
 
-
   /* vector-set! */
   f = set_function_chooser(sc, sc->VECTOR_SET, vector_set_chooser);
 
@@ -43477,16 +43490,13 @@ static void init_choosers(s7_scheme *sc)
   vector_set_vector_ref = make_function_with_class(sc, f, "vector-set!", g_vector_set_vector_ref, 3, 0, false, "vector-set! opt");
   vector_set_3 = make_function_with_class(sc, f, "vector-set!", g_vector_set_3, 3, 0, false, "vector-set! opt");
 
-
   /* list-ref */
   f = set_function_chooser(sc, sc->LIST_REF, list_ref_chooser);
   list_ref_ic = make_function_with_class(sc, f, "list-ref", g_list_ref_ic, 2, 0, false, "list-ref opt");
 
-
   /* list-set! */
   f = set_function_chooser(sc, sc->LIST_SET, list_set_chooser);
   list_set_ic = make_function_with_class(sc, f, "list-set!", g_list_set_ic, 3, 0, false, "list-set! opt");
-
 
   /* hash-table-ref */
   f = set_function_chooser(sc, sc->HASH_TABLE_REF, hash_table_ref_chooser);
@@ -43495,13 +43505,11 @@ static void init_choosers(s7_scheme *sc)
   hash_table_ref_ss = make_function_with_class(sc, f, "hash-table-ref", g_hash_table_ref_ss, 2, 0, false, "hash-table-ref opt");
   hash_table_ref_car = make_function_with_class(sc, f, "hash-table-ref", g_hash_table_ref_car, 2, 0, false, "hash-table-ref opt");
 
-
   /* car */
   set_function_chooser(sc, sc->CAR, car_chooser);
 
   /* cdr */
   set_function_chooser(sc, sc->CDR, cdr_chooser);
-
 
   /* format */
   f = set_function_chooser(sc, sc->FORMAT, format_chooser);
@@ -43510,7 +43518,6 @@ static void init_choosers(s7_scheme *sc)
   format_allg_no_column = make_function_with_class(sc, f, "format", g_format_allg_no_column, 1, 0, true, "format opt");
   format_just_newline = make_function_with_class(sc, f, "format", g_format_just_newline, 2, 0, false, "format opt");
   set_type(format_just_newline, type(format_just_newline) | T_SAFE_PROCEDURE);
-
 
   /* not */
   f = set_function_chooser(sc, sc->NOT, not_chooser);
@@ -43533,7 +43540,6 @@ static void init_choosers(s7_scheme *sc)
   not_is_null_cdr = make_function_with_class(sc, f, "not", g_not_is_null_cdr, 1, 0, false, "not opt");
   not_c_c = make_function_with_class(sc, f, "not", g_not_c_c, 1, 0, false, "not opt");
 
-
   /* pair? */
   f = set_function_chooser(sc, sc->IS_PAIR, is_pair_chooser);
 
@@ -43541,11 +43547,9 @@ static void init_choosers(s7_scheme *sc)
   is_pair_cdr = make_function_with_class(sc, f, "pair?", g_is_pair_cdr, 1, 0, false, "pair? opt");
   is_pair_cadr = make_function_with_class(sc, f, "pair?", g_is_pair_cadr, 1, 0, false, "pair? opt");
 
-
   /* null? */
   f = set_function_chooser(sc, sc->IS_NULL, is_null_chooser);
   is_null_cdr = make_function_with_class(sc, f, "null?", g_is_null_cdr, 1, 0, false, "null? opt");
-
 
   /* eq? */
   f = set_function_chooser(sc, sc->IS_EQ, is_eq_chooser);
@@ -43553,7 +43557,6 @@ static void init_choosers(s7_scheme *sc)
   is_eq_car = make_function_with_class(sc, f, "eq?", g_is_eq_car, 2, 0, false, "eq? opt");
   is_eq_car_q = make_function_with_class(sc, f, "eq?", g_is_eq_car_q, 2, 0, false, "eq? opt");
   is_eq_caar_q = make_function_with_class(sc, f, "eq?", g_is_eq_caar_q, 2, 0, false, "eq? opt");
-
 
   /* memq */
   f = set_function_chooser(sc, sc->MEMQ, memq_chooser);
@@ -43563,7 +43566,6 @@ static void init_choosers(s7_scheme *sc)
   memq_any = make_function_with_class(sc, f, "memq", g_memq_any, 2, 0, false, "memq opt");
   memq_car = make_function_with_class(sc, f, "memq", g_memq_car, 2, 0, false, "memq opt");
 
-
   /* member */
   f = set_function_chooser(sc, sc->MEMBER, member_chooser);
   
@@ -43572,18 +43574,15 @@ static void init_choosers(s7_scheme *sc)
   member_sym_s = make_function_with_class(sc, f, "member", g_member_sym_s, 2, 0, false, "member opt");
   member_num_s = make_function_with_class(sc, f, "member", g_member_num_s, 2, 0, false, "member opt");
 
-
   /* read-char */
   f = set_function_chooser(sc, sc->READ_CHAR, read_char_chooser);
   
   read_char_0 = make_function_with_class(sc, f, "read-char", g_read_char_0, 0, 0, false, "read-char opt");
   read_char_1 = make_function_with_class(sc, f, "read-char", g_read_char_1, 1, 0, false, "read-char opt");
 
-
   /* write-char */
   f = set_function_chooser(sc, sc->WRITE_CHAR, write_char_chooser);
   write_char_1 = make_function_with_class(sc, f, "write-char", g_write_char_1, 1, 0, false, "write-char opt");
-
 
   /* or and if simple cases */
   or_direct = s7_make_function(sc, "or", g_or_direct, 0, 0, true, "or opt");
@@ -45797,8 +45796,8 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
   
   if ((func_is_c_function) &&
       (!func_is_safe) &&
-      (args < GC_TRIGGER_SIZE) &&
-      (pairs == (quotes + all_x_count(car_x))))
+      (pairs == (quotes + all_x_count(car_x))) &&
+      (args < GC_TRIGGER_SIZE))
     {
       set_unsafely_optimized(car_x);
       set_optimize_data(car_x, hop + OP_C_ALL_X);
@@ -46421,8 +46420,8 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 			return(false); 
 		      }
 		  }
-		if ((len < GC_TRIGGER_SIZE) &&
-		    (pairs == (quotes + all_x_count(car_x))))
+		if ((pairs == (quotes + all_x_count(car_x))) &&
+		    (len < GC_TRIGGER_SIZE))
 		  {
 		    set_unsafely_optimized(car_x);
 		    set_optimize_data(car_x, hop + OP_UNKNOWN_ALL_X);
@@ -62747,10 +62746,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       return(sc->value); /* not executed I hope */
 
       
-    case OP_GET_OUTPUT_STRING:          /* from call-with-output-string and with-output-to-string -- return the string */
+    case OP_GET_OUTPUT_STRING:          /* from get-output-string -- return a new string */
       sc->value = s7_make_string_with_length(sc, (const char *)port_data(sc->code), port_position(sc->code));
       goto START;
 
+
+    case OP_GET_OUTPUT_STRING_1:        /* from call-with-output-string and with-output-to-string -- return the port string directly */
+      sc->value = make_string_uncopied_with_length(sc, (char *)port_data(sc->code), port_position(sc->code));
+      string_value(sc->value)[port_position(sc->code)] = 0;
+      port_data(sc->code) = NULL;
+      port_data_size(sc->code) = 0;
+      port_needs_free(sc->code) = false;
+      /* fall through */
 
     case OP_UNWIND_OUTPUT:
       {
@@ -62960,19 +62967,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	switch (c) 
 	  {
 	  case '(':
-	    c = port_read_white_space(pt)(sc, pt);
+	    c = port_read_white_space(pt)(sc, pt);  /* sc->tok = token(sc) */
 	    switch (c) 
 	      {
-	      case '(':	sc->tok = TOKEN_LEFT_PAREN;                break;
-	      case ')':	sc->tok = TOKEN_RIGHT_PAREN;               break;
-	      case '.':	sc->tok = read_dot(sc, pt);                break;
-	      case '\'': sc->tok = TOKEN_QUOTE;                    break;
-	      case ';': sc->tok = port_read_semicolon(pt)(sc, pt); break;
-	      case '"': sc->tok = TOKEN_DOUBLE_QUOTE;              break;
-	      case '`': sc->tok = TOKEN_BACK_QUOTE;                break;
-	      case ',': sc->tok = read_comma(sc, pt);              break;
-	      case '#': sc->tok = read_sharp(sc, pt);              break;
-	      case '\0': case EOF: sc->tok = TOKEN_EOF;            break;
+	      case '(':	 sc->tok = TOKEN_LEFT_PAREN;                break;
+	      case ')':	 sc->tok = TOKEN_RIGHT_PAREN;               break;
+	      case '.':	 sc->tok = read_dot(sc, pt);                break;
+	      case '\'': sc->tok = TOKEN_QUOTE;                     break;
+	      case ';':  sc->tok = port_read_semicolon(pt)(sc, pt); break;
+	      case '"':  sc->tok = TOKEN_DOUBLE_QUOTE;              break;
+	      case '`':  sc->tok = TOKEN_BACK_QUOTE;                break;
+	      case ',':  sc->tok = read_comma(sc, pt);              break;
+	      case '#':  sc->tok = read_sharp(sc, pt);              break;
+	      case '\0': case EOF: sc->tok = TOKEN_EOF;             break;
 	      default:
 		sc->strbuf[0] = c;
 		push_stack_no_code(sc, OP_READ_LIST, sc->args);
@@ -69908,8 +69915,8 @@ int main(int argc, char **argv)
 /* --------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1
- * bench    42736 | 8752 | 4220 | 3506 3512
- * index    44300 | 3291 | 1725 | 1276 1271
+ * bench    42736 | 8752 | 4220 | 3506 3509
+ * index    44300 | 3291 | 1725 | 1276 1254
  * s7test    1721 | 1358 |  995 | 1194 1210
  * t455|6     265 |   89 |  9   | 16.2 18.9
  * t502        90 |   43 | 14.5 | 12.7 12.7
@@ -69920,11 +69927,17 @@ int main(int argc, char **argv)
  *
  * --------------------------------------------------
  *
- * a better notation for circular/shared structures, read/write [distinguish shared from cyclic]
  * cyclic-seq in rest of full-* 
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  *
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
+ *
+ * symbol->string could be direct in many cases (arg to string-append, gensym etc) -- piggy-back on substring_to_temp
+ *   another case: (string-append ... (string #\newline) ...), (display|write <any-string-op>)
+ * if (format p ...) where p is a string port, could we use the port buffer directly?
+ *   similarly for saved_data buffers in mus_read -- if readin is direct read safe?
+ * in gen* add_slot overhead is noticeable
+ *   and inlet seems to be including envs?
  */

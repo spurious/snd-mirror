@@ -13647,10 +13647,13 @@ static void gen_list_walk(s7_scheme *sc, s7_pointer tree)
 	}
 #endif
     }
-  if (s7_is_pair(tree))
+  else
     {
-      gen_list_walk(sc, car(tree));
-      gen_list_walk(sc, cdr(tree));
+      if (s7_is_pair(tree))
+	{
+	  gen_list_walk(sc, car(tree));
+	  gen_list_walk(sc, cdr(tree));
+	}
     }
 }
 

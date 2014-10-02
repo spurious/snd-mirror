@@ -46713,7 +46713,7 @@ EDITS: 1
 (format #t "~%;all done!~%~A" original-prompt)
 
 (set! *print-length* 64)
-(format #t "~%;times: ~A~%;total: ~A~%" timings (round (- (real-time) overall-start-time)))
+(format *stderr* "~%;times: ~A~%;total: ~A~%" timings (round (- (real-time) overall-start-time)))
 
 
 ;; #(59 58 114 95 2244 5373 613 134 11680 2892 609 743 868 976 815 1288 3020 197 168 2952 758 1925 4997 6567 846  183 0 242 6696 0))) ; 571
@@ -46739,7 +46739,7 @@ EDITS: 1
 ;; 21-Apr-13: #(1 1 2 2 27  88 4 1 266 1 15 1 2 10 15 1  78 1 1  97 39  69 1  917 0 0 0 1 2 77)  ;  17
 ;; 24-Feb-14: #(1 1 2 1 22  74 2 1 162 2  9 1 3  8  9 2  54 2    70 33  24 2  791     0 0 1 82)  ;  14
 ;; 15-Mar-14: #(1 2 3 2 25  71 3 2 129 1  8 1 2  8 14 2  45 2    74 32  25 1  781     0 0 2 81)  ;  13
-;; 29-Jun-14: #(1 2 3 2 21  72 3 2 128 1  7 1 2  8 12 2  45 1    70 32  24 1  759     0 0 2 101) ;  13
+;; 1-Oct-14:  #(1 2 2 2 22  68 2 2 114 2  9 1 3  8 50 1  45 2    70 32  26 2  749     0 0 2 113) ;  13
 
 ;;; -------- cleanup temp files
 
@@ -46749,30 +46749,30 @@ EDITS: 1
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (if (file-exists? original-save-dir)
     (begin
-      (format #t "ls ~A/snd_* | wc~%" original-save-dir)
-      (system (format #f "ls ~A/snd_* | wc" original-save-dir))
+      ;(format #t "ls ~A/snd_* | wc~%" original-save-dir)
+      ;(system (format #f "ls ~A/snd_* | wc" original-save-dir))
       (system (format #f "rm -f ~A/snd_*" original-save-dir))))
 
 (if (file-exists? original-temp-dir)
     (begin
-      (format #t "ls ~A/snd_* | wc~%" original-temp-dir)
-      (system (format #f "ls ~A/snd_* | wc" original-temp-dir))
+      ;(format #t "ls ~A/snd_* | wc~%" original-temp-dir)
+      ;(system (format #f "ls ~A/snd_* | wc" original-temp-dir))
       (system (format #f "rm -f ~A/snd_*" original-temp-dir))))
 
 (if (file-exists? "/tmp")
     (begin
-      (format #t "ls /tmp/snd_* | wc~%")
-      (system "ls /tmp/snd_* | wc")
+      ;(format #t "ls /tmp/snd_* | wc~%")
+      ;(system "ls /tmp/snd_* | wc")
       (system "rm -f /tmp/snd_*")
-      (system "ls /tmp/file*.snd | wc")
+      ;(system "ls /tmp/file*.snd | wc")
       (system "rm -f /tmp/file*.snd")))
 
 (if (file-exists? "/var/tmp")
     (begin
-      (format #t "ls /var/tmp/snd_* | wc~%")
-      (system "ls /var/tmp/snd_* | wc")
+      ;(format #t "ls /var/tmp/snd_* | wc~%")
+      ;(system "ls /var/tmp/snd_* | wc")
       (system "rm -f /var/tmp/snd_*")
-      (system "ls /var/tmp/file*.snd | wc")
+      ;(system "ls /var/tmp/file*.snd | wc")
       (system "rm -f /var/tmp/file*.snd")))
 
 (if (defined? 'dlocsig-speaker-configs) (set! dlocsig-speaker-configs #f))
