@@ -466,7 +466,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "for-each", "for-each", "for-each", "for-each",
    "map", "map", "barrier", "deactivate-goto",
    "define-bacro", "define-bacro*", 
-   "get-output-string", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!",
+   "get-output-string", "get-output-string", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!",
    "eval-string", "eval-string", 
    "member", "assoc", "member", "assoc",
    
@@ -1312,7 +1312,7 @@ struct s7_scheme {
   /* these are the associated functions, not symbols */
   s7_pointer Vector_Set, String_Set, List_Set, Hash_Table_Set, Let_Set; /* Cons (see the setter stuff at the end) */
 
-  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND, BAFFLE, WITH_LET;
+  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND, DEFINE_EXPANSION, BAFFLE, WITH_LET;
 #if (!DISABLE_DEPRECATED)
   s7_pointer WITH_ENVIRONMENT;
 #endif
@@ -2604,7 +2604,7 @@ static void pop_input_port(s7_scheme *sc);
 static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
 static token_t token(s7_scheme *sc);
 static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indices);
-static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
+static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
 static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym);
 static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol);
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym);
@@ -2661,7 +2661,7 @@ static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
 static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
 static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, AN_OPEN_PORT, A_NORMAL_REAL, A_RATIONAL, A_CLOSURE;
 static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL, A_NON_NEGATIVE_INTEGER;
-static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BYTE, A_BINDING, A_NON_CONSTANT_SYMBOL;
+static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BYTE, A_BINDING, A_NON_CONSTANT_SYMBOL, AN_EQ_FUNC;
 
 
 /* --------------------------------------------------------------------------------
@@ -5810,12 +5810,14 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
       field = car(fields);
       if (!is_symbol(field))
 	return(wrong_type_argument_with_type(sc, sc->CUTLET, small_int(i), field, A_SYMBOL));
-      if ((e == sc->rootlet) &&
-	  (is_slot(global_slot(field))))
+      if (e == sc->rootlet)
 	{
-	  symbol_id(field) = THE_UN_ID;
-	  slot_value(global_slot(field)) = sc->UNDEFINED;
-	  slot_value(local_slot(field)) = sc->UNDEFINED;
+	  if (is_slot(global_slot(field)))
+	    {
+	      symbol_id(field) = THE_UN_ID;
+	      slot_value(global_slot(field)) = sc->UNDEFINED;
+	      slot_value(local_slot(field)) = sc->UNDEFINED;
+	    }
 	}
       else
 	{
@@ -28508,6 +28510,7 @@ static void init_car_a_list(void)
   CDDDR_A_LIST = s7_make_permanent_string("a list whose cdddr is also a list");
 
   A_LIST = s7_make_permanent_string("a list");
+  AN_EQ_FUNC = s7_make_permanent_string("a procedure that can take 2 arguments");
   AN_ASSOCIATION_LIST = s7_make_permanent_string("an association list");
   A_NORMAL_REAL = s7_make_permanent_string("a normal real");
   A_RATIONAL = s7_make_permanent_string("an integer or a ratio");
@@ -29154,8 +29157,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 	return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(3), eq_func, A_CLOSURE));
 
       if (!s7_is_aritable(sc, eq_func, 2))
-	return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(3), eq_func, 
-					     make_string_wrapper(sc, "a procedure that can take 2 arguments")));
+	return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(3), eq_func, AN_EQ_FUNC));
       /* now maybe there's a simple case */
       if (s7_list_length(sc, x) > 0)
 	{
@@ -29616,8 +29618,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 	  (!s7_is_aritable(sc, eq_func, 2)))
 	{
 	  check_method(sc, eq_func, sc->MEMBER, args);
-	  return(wrong_type_argument_with_type(sc, sc->MEMBER, small_int(3), eq_func, 
-					       make_string_wrapper(sc, "a procedure that can take 2 arguments")));
+	  return(wrong_type_argument_with_type(sc, sc->MEMBER, small_int(3), eq_func, AN_EQ_FUNC));
 	}
 
       /* now maybe there's a simple case */
@@ -32031,7 +32032,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	  (!s7_is_aritable(sc, lessp, 2)))
 	{
 	  check_method(sc, lessp, sc->SORT, args);
-	  return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, make_string_wrapper(sc, "a function of 2 arguments")));
+	  return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, AN_EQ_FUNC));
 	}
       return(sc->NIL);
     }
@@ -32045,7 +32046,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
   if ((is_continuation(lessp)) || is_goto(lessp))
     return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, make_string_wrapper(sc, "a normal procedure (not a continuation)")));
   if (!s7_is_aritable(sc, lessp, 2))
-    return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, make_string_wrapper(sc, "a procedure that can take 2 arguments")));
+    return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, AN_EQ_FUNC));
 
   sort_func = vector_compare;
   compare_func = NULL;
@@ -32542,7 +32543,7 @@ static s7_pointer hash_complex_1(s7_scheme *sc, s7_pointer table, int loc, s7_po
       s7_pointer y;
       y = fcdr(x);
       if ((type(y) == T_COMPLEX) &&
-	  (s7_is_morally_equal_1(sc, y, key, NULL)))
+	  (s7_is_morally_equal(sc, y, key, NULL)))
 	return(car(x));
     }
   return(sc->NIL);
@@ -35443,7 +35444,7 @@ static bool environments_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, sh
 
   if (normal)
     checker = s7_is_equal_tracking_circles;
-  else checker = s7_is_morally_equal_1;
+  else checker = s7_is_morally_equal;
 
   for (ex = x, ey = y; is_let(ex) && is_let(ey); ex = outlet(ex), ey = outlet(ey))
     {
@@ -35735,7 +35736,7 @@ static bool hash_tables_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointe
 
 	  if (is_null(y_val))
 	    return(false);
-	  if (!s7_is_morally_equal_1(sc, x_val, cdr(y_val), ci))
+	  if (!s7_is_morally_equal(sc, x_val, cdr(y_val), ci))
 	    return(false);
 	}
     }
@@ -35785,8 +35786,8 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
   switch (type(x))
     {
     case T_PAIR:
-      return((s7_is_morally_equal_1(sc, car(x), car(y), ci)) &&
-	     (s7_is_morally_equal_1(sc, cdr(x), cdr(y), ci)));
+      return((s7_is_morally_equal(sc, car(x), car(y), ci)) &&
+	     (s7_is_morally_equal(sc, cdr(x), cdr(y), ci)));
 
     case T_HASH_TABLE:
       return(hash_tables_are_morally_equal(sc, x, y, ci));
@@ -35833,7 +35834,7 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
 	  }
 
 	for (i = 0; i < len; i++)
-	  if (!(s7_is_morally_equal_1(sc, vector_element(x, i), vector_element(y, i), ci)))
+	  if (!(s7_is_morally_equal(sc, vector_element(x, i), vector_element(y, i), ci)))
 	    return(false);
 	return(true);
       }
@@ -35859,7 +35860,7 @@ static bool unmatched_vectors_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_
       if (len == 0)   /* all empty vectors are morally equal */
 	return(true);
       for (i = 0; i < len; i++)
-	if (!s7_is_morally_equal_1(sc, vector_getter(x)(sc, x, i), vector_getter(y)(sc, y, i), NULL))
+	if (!s7_is_morally_equal(sc, vector_getter(x)(sc, x, i), vector_getter(y)(sc, y, i), NULL))
 	  return(false);
       return(true);
     }
@@ -35875,7 +35876,7 @@ static bool let_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
   return(false);
 }
 
-static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   if (x == y) 
     return(true);
@@ -36126,9 +36127,9 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 	  if (equal_func != sc->UNDEFINED)
 	    return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, x, y))));
 	}
-      return((s7_is_morally_equal_1(sc, closure_args(x), closure_args(y), ci)) &&
-	     (s7_is_morally_equal_1(sc, closure_let(x), closure_let(y), ci)) &&
-	     (s7_is_morally_equal_1(sc, closure_body(x), closure_body(y), ci)));
+      return((s7_is_morally_equal(sc, closure_args(x), closure_args(y), ci)) &&
+	     (s7_is_morally_equal(sc, closure_let(x), closure_let(y), ci)) &&
+	     (s7_is_morally_equal(sc, closure_body(x), closure_body(y), ci)));
 
     case T_MACRO:
     case T_BACRO:
@@ -36154,8 +36155,8 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
        *        (a_func (lambda () #t))))
        */
       return((type(y) == type(x)) &&
-	     (s7_is_morally_equal_1(sc, closure_let(x), closure_let(y), ci)) &&
-	     (s7_is_morally_equal_1(sc, cadr(car(closure_body(x))), cadr(car(closure_body(y))), ci)));
+	     (s7_is_morally_equal(sc, closure_let(x), closure_let(y), ci)) &&
+	     (s7_is_morally_equal(sc, cadr(car(closure_body(x))), cadr(car(closure_body(y))), ci)));
 
     }
   return(false);
@@ -36165,7 +36166,7 @@ static bool s7_is_morally_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, sha
 static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_morally_equal "(morally-equal? obj1 obj2) returns #t if obj1 is close enough to obj2."
-  return(make_boolean(sc, s7_is_morally_equal_1(sc, car(args), cadr(args), NULL)));
+  return(make_boolean(sc, s7_is_morally_equal(sc, car(args), cadr(args), NULL)));
 }
 
 
@@ -39277,10 +39278,10 @@ static s7_pointer make_simple_counter(s7_scheme *sc, s7_pointer lst)
   s7_pointer x;
   NEW_CELL(sc, x);
   counter_result(x) = sc->NIL;
-  counter_list(x) = lst;
+  counter_list(x) = lst;        /* cdr-ing arg list */
   counter_count(x) = 0;
-  counter_length(x) = 0;
-  counter_let(x) = sc->NIL;
+  counter_length(x) = 0;        /* will be capture_env_counter */
+  counter_let(x) = sc->NIL;     /* will be the saved env */
   set_type(x, T_COUNTER);
   return(x);
 }
@@ -39355,9 +39356,6 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 
 	      /* this, and map, across a string (say) or other sequence involving
 	       *   only 1 arg could be optimized in the same way. OP_FOR_EACH|MAP_STRING|VECTOR|C_OBJECT
-	       */
-
-	      /* if len is 1 can't we just call apply?
 	       */
 	    }
 
@@ -42762,7 +42760,8 @@ static s7_pointer char_ci_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
 
 static void check_for_substring_temp(s7_scheme *sc, s7_pointer expr)
 {
-  s7_pointer p, cp = NULL, np = NULL;
+  s7_pointer p, np = NULL;
+  int pairs = 0;
   /* a bit tricky -- accept temp only if there's just one inner expression and it calls substring */
   for (p = cdr(expr); is_pair(p); p = cdr(p))
     {
@@ -42770,15 +42769,20 @@ static void check_for_substring_temp(s7_scheme *sc, s7_pointer expr)
       arg = car(p);
       if (is_pair(arg))
 	{
-	  if (cp) return;
+	  pairs++;
 	  if ((is_symbol(car(arg))) &&
-	      (is_safely_optimized(arg)) &&
-	      (c_call(arg) == g_substring))
-	    np = arg;
-	  cp = arg;
+	      (is_safely_optimized(arg)))
+	    {
+	      if (c_call(arg) == g_substring)
+		np = arg;
+
+	      if (c_call(arg) == g_symbol_to_string)
+		set_c_function(arg, symbol_to_string_uncopied);
+	    }
 	}
     }
-  if (np) set_c_function(np, substring_to_temp);
+  if ((pairs == 1) && (np)) 
+    set_c_function(np, substring_to_temp);
 }
 
 static s7_pointer char_position_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -42808,17 +42812,6 @@ static s7_pointer string_less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
     {
       if (is_string(caddr(expr)))
 	return(string_less_s_ic);
-      
-      if ((is_pair(cadr(expr))) &&
-	  (is_safely_optimized(cadr(expr))) &&
-	  (c_call(cadr(expr)) == g_symbol_to_string))
-	set_c_function(cadr(expr), symbol_to_string_uncopied);
-
-      if ((is_pair(caddr(expr))) &&
-	  (is_safely_optimized(caddr(expr))) &&
-	  (c_call(caddr(expr)) == g_symbol_to_string))
-	set_c_function(caddr(expr), symbol_to_string_uncopied);
-
       return(string_less_2);
     }
   return(f);
@@ -42934,10 +42927,6 @@ static s7_pointer string_ci_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s
 static s7_pointer string_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   check_for_substring_temp(sc, expr);
-  if ((is_pair(cadr(expr))) &&
-      (is_safely_optimized(cadr(expr))) &&
-      (c_call(cadr(expr)) == g_symbol_to_string))
-    set_c_function(cadr(expr), symbol_to_string_uncopied);
   return(f);
 }
 
@@ -42949,10 +42938,6 @@ static s7_pointer string_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 static s7_pointer string_append_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   check_for_substring_temp(sc, expr);
-  if ((is_pair(cadr(expr))) &&
-      (is_safely_optimized(cadr(expr))) &&
-      (c_call(cadr(expr)) == g_symbol_to_string))
-    set_c_function(cadr(expr), symbol_to_string_uncopied);
   return(f);
 }
 
@@ -58938,9 +58923,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    eval_error_with_name(sc, "~A: ~S is immutable", sc->code);
 	  
 	  x = find_symbol(sc, sc->code);
-	  if ((!is_slot(x)) ||
-	      (!s7_is_equal(sc, sc->value, slot_value(x))))              /* if value is unchanged, just ignore this definition */
-	    eval_error_with_name(sc, "~A: ~S is immutable", sc->code);
+	  if ((is_slot(x)) &&
+	      (!s7_is_morally_equal(sc, sc->value, slot_value(x), NULL)))/* if value is unchanged, just ignore this definition */
+	    eval_error_with_name(sc, "~A: ~S is immutable", sc->code);   /*   can't use s7_is_equal because value might be NaN, etc */
 	}
       if (symbol_has_accessor(sc->code))
 	{
@@ -63120,12 +63105,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_expansion(car(sc->value)))                                  /* was checking the T_EXPANSION bit (car(sc->value) is a symbol) */
 	    {
 	      int loc;
-
+	      s7_pointer caller;
 	      loc = s7_stack_top(sc) - 1;
+	      caller = car(stack_args(sc->stack, loc));
 	      if ((loc >= 3) &&
 		  (stack_op(sc->stack, loc) != OP_READ_QUOTE) &&             /* '(hi 1) for example */
-		  (car(stack_args(sc->stack, loc)) != sc->QUOTE) &&          /* (quote (hi 1)) */
-		  (car(stack_args(sc->stack, loc)) != sc->MACROEXPAND))      /* (macroexpand (hi 1)) */
+		  (caller != sc->QUOTE) &&          /* (quote (hi 1)) */
+		  (caller != sc->MACROEXPAND) &&    /* (macroexpand (hi 1)) */
+		  (caller != sc->DEFINE_EXPANSION)) /* (define-expansion ...) being reloaded */
 		{
 		  push_stack(sc, OP_EXPANSION, sc->NIL, sc->NIL);
 		  sc->code = slot_value(find_symbol(sc, car(sc->value)));
@@ -68846,11 +68833,20 @@ s7_scheme *s7_init(void)
   sc->UNQUOTE =     make_symbol(sc, "unquote");
 #endif
 
-  sc->MACROEXPAND = make_symbol(sc, "macroexpand");
-  sc->FEED_TO =     make_symbol(sc, "=>");
-  sc->SET =         make_symbol(sc, "set!");
-  sc->BAFFLE =      make_symbol(sc, "(baffle)");
-  sc->BODY =        make_symbol(sc, "body");
+  sc->MACROEXPAND =          make_symbol(sc, "macroexpand");
+  sc->DEFINE_EXPANSION =     make_symbol(sc, "define-expansion");
+  sc->FEED_TO =              make_symbol(sc, "=>");
+  sc->SET =                  make_symbol(sc, "set!");
+  sc->BAFFLE =               make_symbol(sc, "(baffle)");
+  sc->BODY =                 make_symbol(sc, "body");
+  sc->ERROR =                make_symbol(sc, "error");
+  sc->READ_ERROR =           make_symbol(sc, "read-error");
+  sc->SYNTAX_ERROR =         make_symbol(sc, "syntax-error");
+  sc->WRONG_TYPE_ARG =       make_symbol(sc, "wrong-type-arg");
+  sc->WRONG_NUMBER_OF_ARGS = make_symbol(sc, "wrong-number-of-args");
+  sc->FORMAT_ERROR =         make_symbol(sc, "format-error");
+  sc->OUT_OF_RANGE =         make_symbol(sc, "out-of-range");
+
 
   sc->KEY_KEY =              s7_make_keyword(sc, "key");
   sc->KEY_OPTIONAL =         s7_make_keyword(sc, "optional");
@@ -68860,14 +68856,6 @@ s7_scheme *s7_init(void)
 
   sc->__FUNC__ = make_symbol(sc, "__func__");
   s7_make_slot(sc, sc->NIL, make_symbol(sc, "else"), sc->ELSE);
-
-  sc->ERROR =          make_symbol(sc, "error");
-  sc->READ_ERROR =     make_symbol(sc, "read-error");
-  sc->SYNTAX_ERROR =   make_symbol(sc, "syntax-error");
-  sc->WRONG_TYPE_ARG = make_symbol(sc, "wrong-type-arg");
-  sc->WRONG_NUMBER_OF_ARGS = make_symbol(sc, "wrong-number-of-args");
-  sc->FORMAT_ERROR =   make_symbol(sc, "format-error");
-  sc->OUT_OF_RANGE =   make_symbol(sc, "out-of-range");
 
   sc->owlet = init_owlet(sc);
 
@@ -69915,13 +69903,13 @@ int main(int argc, char **argv)
 /* --------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1
- * bench    42736 | 8752 | 4220 | 3506 3509
- * index    44300 | 3291 | 1725 | 1276 1254
  * s7test    1721 | 1358 |  995 | 1194 1210
- * t455|6     265 |   89 |  9   | 16.2 18.9
- * t502        90 |   43 | 14.5 | 12.7 12.7
- * t816           |   71 | 70.6 | 38.0 32.7
+ * index    44300 | 3291 | 1725 | 1276 1254
+ * bench    42736 | 8752 | 4220 | 3506 3509
  * lg             |      |  6.7 | 6492 6476
+ * t502        90 |   43 | 14.5 | 12.7 12.7
+ * t455|6     265 |   89 |  9   | 16.2 18.9
+ * t816           |   71 | 70.6 | 38.0 32.7
  * calls      359 |  275 | 54   | 34.7 34.7
  *            153 with run macro (eval_ptree)
  *
@@ -69933,11 +69921,4 @@ int main(int argc, char **argv)
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
- *
- * symbol->string could be direct in many cases (arg to string-append, gensym etc) -- piggy-back on substring_to_temp
- *   another case: (string-append ... (string #\newline) ...), (display|write <any-string-op>)
- * if (format p ...) where p is a string port, could we use the port buffer directly?
- *   similarly for saved_data buffers in mus_read -- if readin is direct read safe?
- * in gen* add_slot overhead is noticeable
- *   and inlet seems to be including envs?
  */
