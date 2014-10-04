@@ -1568,8 +1568,7 @@ static void init_types(void)
   t_any_closure_p[T_CLOSURE] = true;
   t_any_closure_p[T_CLOSURE_STAR] = true;
 
-  t_simple_p[T_NIL] = true;
-  t_simple_p[T_UNIQUE] = true;
+  t_simple_p[T_NIL] = true;   /* not T_UNIQUE here -- #<unspecified> has two forms */
   t_simple_p[T_BOOLEAN] = true;
   t_simple_p[T_CHARACTER] = true;
   t_simple_p[T_SYMBOL] = true;
@@ -4477,6 +4476,7 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 	  heap_location(sc->heap[loc]) = loc;
 	  clear_gensym(x);
 	  heap_location(x) = NOT_IN_HEAP;
+	  /* TODO: surely we also need to remove it from the gensyms table?  */
 	}
       return;
 
@@ -5060,7 +5060,7 @@ static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
 static s7_pointer symbol_to_string_uncopied;
 static s7_pointer g_symbol_to_string_uncopied(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer sym, x;
+  s7_pointer sym;
 
   sym = car(args);
   if (!is_symbol(sym))
@@ -5068,11 +5068,8 @@ static s7_pointer g_symbol_to_string_uncopied(s7_scheme *sc, s7_pointer args)
       check_method(sc, sym, sc->SYMBOL_TO_STRING, args);
       return(simple_wrong_type_argument(sc, sc->SYMBOL_TO_STRING, sym, T_SYMBOL));
     }
-  x = make_string_uncopied_with_length(sc, symbol_name(sym), symbol_name_length(sym)); 
-  string_needs_free(x) = false;
-  return(x);
+  return(symbol_name_cell(sym));
 }
-
 
 
 static s7_pointer g_string_to_symbol_1(s7_scheme *sc, s7_pointer args, s7_pointer sym)
@@ -5838,7 +5835,7 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 			{
 			  symbol_id(field) = THE_UN_ID;
 			  next_slot(last_slot) = next_slot(slot);
-			  break; /* or shoud we remove all fields of a given name? */
+			  break; /* or should we remove all fields of a given name? */
 			}
 		    }
 		}
@@ -5856,7 +5853,6 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
   if (e == sc->rootlet)
     new_e = new_frame_in_env(sc, sc->NIL);
   else new_e = new_frame_in_env(sc, e);
-  /* if (has_methods(e)) set_has_methods(new_e); */
   set_all_methods(new_e, e);
 
   if (!is_null(bindings))
@@ -5912,7 +5908,9 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 		set_has_set_fallback(new_e);
 	    }
 	}
+      sc->temp3 = sc->NIL;
     }
+
   return(new_e);
 }
 
@@ -5966,9 +5964,27 @@ s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env)
 
       entries = vector_elements(env);
       lim2 = sc->rootlet_entries;
+
+#if DEBUGGING
+      for (i = 0; i < lim2; i++)
+	if (is_slot(entries[i]))
+	  {
+	    if (!is_symbol(slot_symbol(entries[i])))
+	      {
+		fprintf(stderr, " rootlet[%d/%d]: %p slot: ", i, lim2, entries[i]);
+		fprintf(stderr, "%s ", DISPLAY(slot_symbol(entries[i])));
+		fprintf(stderr, "%s", DISPLAY(slot_value(entries[i])));
+		if (is_macro(slot_value(entries[i])))
+		  fprintf(stderr, ": %s\n", DISPLAY(closure_args(entries[i])));
+		else fprintf(stderr, "\n");
+	      }
+	  }
+	else fprintf(stderr, "rootlet[%d] is not a slot?\n", i);
+#endif
+
       if (lim2 & 1) lim2--;
 
-      for (i = 0; i <lim2; )
+      for (i = 0; i < lim2; )
 	{
 	  sc->w = cons_unchecked(sc, cons(sc, slot_symbol(entries[i]), slot_value(entries[i])), sc->w); i++;
 	  sc->w = cons_unchecked(sc, cons_unchecked(sc, slot_symbol(entries[i]), slot_value(entries[i])), sc->w); i++;
@@ -30603,8 +30619,8 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 	      x = car(p);
 	      source = int_vector_elements(x);
 	      source_len = vector_length(x);
-	      for (j = 0; j < source_len; j++, i++)
-		dest[i] = source[j];
+	      memcpy((void *)(dest + i), (void *)source, source_len * sizeof(s7_Int));
+	      i += source_len;
 	    }
 	}
       else
@@ -30616,8 +30632,8 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 	      x = car(p);
 	      source = float_vector_elements(x);
 	      source_len = vector_length(x);
-	      for (j = 0; j < source_len; j++, i++)
-		dest[i] = source[j];
+	      memcpy((void *)(dest + i), (void *)source, source_len * sizeof(s7_Double));
+	      i += source_len;
 	    }
 	}
     }
@@ -31183,6 +31199,7 @@ static s7_pointer g_vector_ref_add1(s7_scheme *sc, s7_pointer args)
   return(vector_getter(vec)(sc, vec, index));
 }
 
+
 static s7_pointer vector_ref_2;
 static s7_pointer g_vector_ref_2(s7_scheme *sc, s7_pointer args)
 {
@@ -31294,6 +31311,7 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
   return(val);
 }
 
+
 static s7_pointer vector_set_ic;
 static s7_pointer g_vector_set_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -31318,6 +31336,7 @@ static s7_pointer g_vector_set_ic(s7_scheme *sc, s7_pointer args)
   vector_setter(vec)(sc, vec, index, val);
   return(val);
 }
+
 
 static s7_pointer vector_set_vref;
 static s7_pointer g_vector_set_vref(s7_scheme *sc, s7_pointer args)
@@ -37320,10 +37339,10 @@ line to be preceded by a semicolon."
 
 static const char *make_type_name(s7_scheme *sc, const char *name, int article)
 {
-  int i, len;
-  char *s;
+  int i, slen, len;
 
-  len = safe_strlen(name) + 8;
+  slen = safe_strlen(name);
+  len = slen + 8;
   if (len > sc->typnam_len)
     {
       if (sc->typnam) free(sc->typnam);
@@ -37347,9 +37366,8 @@ static const char *make_type_name(s7_scheme *sc, const char *name, int article)
 	}
       else i = 0;
     }
-  for (s = (char *)name; *s; s++)
-    sc->typnam[i++] = *s;
-  sc->typnam[i] = '\0';
+  memcpy((void *)(sc->typnam + i), (void *)name, slen);
+  sc->typnam[i + slen] = '\0';
   return(sc->typnam);
 }
 
@@ -37490,9 +37508,11 @@ static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
     {
       p = find_method(sc, find_let(sc, x), sc->CLASS_NAME);
       if (is_symbol(p))
-	return(make_string_wrapper(sc, make_type_name(sc, symbol_name(p), INDEFINITE_ARTICLE)));
+	return(symbol_name_cell(p));
+	/* prettier, but much more expensive:
+	 *   return(make_string_wrapper(sc, make_type_name(sc, symbol_name(p), INDEFINITE_ARTICLE)));
+	*/
     }
-
   p = prepackaged_type_names[type(x)];
   if (is_string(p))
     return(p);
@@ -62349,15 +62369,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->capture_env_counter++;
 	sc->code = cx; 
 	
-	fixup_macro_overlay(sc, closure_body(sc->value));
-	
-	/* symbol? macro name has already been checked */
-	/* find name in environment, and define it */
-	cx = find_local_symbol(sc, sc->code, sc->envir); 
-	if (is_slot(cx))
-	  slot_set_value(cx, sc->value); 
-	else s7_make_slot(sc, sc->envir, sc->code, sc->value); /* was current but we've checked immutable already */
-	
 	if ((sc->op == OP_DEFINE_BACRO) ||
 	    (sc->op == OP_DEFINE_BACRO_STAR))
 	  set_type(sc->value, T_BACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS);
@@ -62372,6 +62383,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    else set_type(sc->value, T_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS); 
 	  }
+
+	fixup_macro_overlay(sc, closure_body(sc->value));
+	
+	/* symbol? macro name has already been checked */
+	/* find name in environment, and define it */
+	cx = find_local_symbol(sc, sc->code, sc->envir); 
+	if (is_slot(cx))
+	  slot_set_value(cx, sc->value); 
+	else s7_make_slot(sc, sc->envir, sc->code, sc->value); /* was current but we've checked immutable already */
+	
 	optimize(sc, closure_body(sc->value), 0, sc->NIL);
 	
 	/* here sc->value is the macro, sc->code is its name (a symbol),
@@ -68814,23 +68835,23 @@ s7_scheme *s7_init(void)
   sc->SAFE_DO =               assign_internal_syntax(sc, "do",      OP_SAFE_DO);
   sc->DOX =                   assign_internal_syntax(sc, "do",      OP_DOX);
 
-  sc->LAMBDA =           make_symbol(sc, "lambda");
-  sc->LAMBDA_STAR =      make_symbol(sc, "lambda*");
-  sc->QUOTE =            make_symbol(sc, "quote");
+  sc->LAMBDA =                make_symbol(sc, "lambda");
+  sc->LAMBDA_STAR =           make_symbol(sc, "lambda*");
+  sc->QUOTE =                 make_symbol(sc, "quote");
 #if (!DISABLE_DEPRECATED)
-  sc->WITH_ENVIRONMENT = make_symbol(sc, "with-environment");
+  sc->WITH_ENVIRONMENT =      make_symbol(sc, "with-environment");
 #endif
-  sc->WITH_LET =         make_symbol(sc, "with-let");
+  sc->WITH_LET =              make_symbol(sc, "with-let");
 
 #if WITH_IMMUTABLE_UNQUOTE
   /* this code solves the various unquote redefinition troubles
    * if "," -> "(unquote...)" in the reader, (let (, (lambda (x) (+ x 1))) ,,,,1) -> 5
    *   in s7, this requires a quote: (let (, (lambda (x) (+ x 1))) ,,,,'1)
    */
-  sc->UNQUOTE =     make_symbol(sc, ","); 
+  sc->UNQUOTE =              make_symbol(sc, ","); 
   set_immutable(sc->UNQUOTE);
 #else
-  sc->UNQUOTE =     make_symbol(sc, "unquote");
+  sc->UNQUOTE =              make_symbol(sc, "unquote");
 #endif
 
   sc->MACROEXPAND =          make_symbol(sc, "macroexpand");
@@ -69908,7 +69929,7 @@ int main(int argc, char **argv)
  * bench    42736 | 8752 | 4220 | 3506 3509
  * lg             |      |  6.7 | 6492 6476
  * t502        90 |   43 | 14.5 | 12.7 12.7
- * t455|6     265 |   89 |  9   | 16.2 18.9
+ * t455|6     265 |   89 |  9   | 16.2 18.5
  * t816           |   71 | 70.6 | 38.0 32.7
  * calls      359 |  275 | 54   | 34.7 34.7
  *            153 with run macro (eval_ptree)
@@ -69921,4 +69942,20 @@ int main(int argc, char **argv)
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
+ *
+ * perhaps owlet should return a copy of the error env? (define e (owlet)), e changes as owlet does!
+ *
+ * there are still problems with (assoc #<unspecified> (list (cons (apply values ()) #f))) -- see t101.scm
+ *   should memq/assq work here?  case also checks is_simple
+ *   (memv (apply values ()) (list #<unspecified>)) #f but (eqv? (apply values ()) #<unspecified>) #t (same for memv/q)
+ *
+ * somehow let->list returned a slot of (#<unspecified> . #f)? where it's actually no-values -- can map do this?
+ *   probably due to:
+(let ((e (inlet
+	  'mac (apply define-macro 
+		      (list (list (gensym) 'a) '`(+ ,a 1))))))
+  (test ((e 'mac) 3) 4))
+places gensym as rootlet name s7test line 26821
+but gc sweep marks global values not symbols -- then why was the macro falling apart?
+so gensym->rootlet means make it permanent, remove from gensyms gc table, release old cell, keep gensym bit
  */
