@@ -1,5 +1,6 @@
 (set! (hook-functions *unbound-variable-hook*) ())
 (set! *vector-print-length* 6)
+;(set! (*s7* 'gc-stats) #t)
 
 (if (provided? 'snd)
     (begin
@@ -55,6 +56,7 @@
 			(lambda (dir) 1.0) (float-vector) (make-float-vector '(2 32)) 
 			;(openlet (inlet 'value 1 '+ (lambda args 1)))
 			;all-env
+			"t105.scm"
 
 			(mock-number 0) (mock-number 2) (mock-number 1-i) (mock-number 4/3) (mock-number 2.0)
 			(mock-string #\h #\o #\h #\o)
@@ -77,7 +79,7 @@
      (if (>= args-now low)
 	 (catch #t 
 	   (lambda () 
-	     (cond ((func (values args)) => ;(apply func args) => 
+	     (cond ((apply func args) => 
 		    (lambda (val) 
 		      (if data-file
 			  (format data-file "(~S~{ ~S~}) -> ~S~%" func args val))))))
@@ -135,14 +137,20 @@
 		      "all" "delete-file" "system" "set-cdr!" "stacktrace" "test-sym"
 		      "cutlet" "varlet" "dilambda" "gc" "cond-expand" "reader-cond"
 		      "openlet" "coverlet" "eval" "vector" "list" "cons" "m" "hash-table*" "hash-table" "values"
-		      "object->string"
+		      "object->string" 
+
+		      ;; deprecated (redundant)
+		      "with-environment" "environment?" "global-environment" "initial-environment" "outer-environment" 
+		      "augment-environment" "augment-environment!" "current-environment" "error-environment" "procedure-environment" 
+		      "environment->list" "open-environment" "open-environment?" "close-environment" "environment-ref" "environment-set!" 
+		      "environment" "environment*" "make-procedure-with-setter" "procedure-with-setter?" 
 
 		      "mus-audio-close" "mus-audio-read" "mus-audio-write" "mus-audio-open-output"
 		      "boolean=?" "symbol=?" "symbol-table"
 
-		      (reader-cond ((> max-args 2) "copy"))
-		      (reader-cond ((>= max-args 3) "hash-table-set!" "vector-set!" "let-set!"))
-		      (reader-cond ((> max-args 3) "map" "for-each")) ; #t = omit
+		      (reader-cond ((> max-args 2) "copy" "hash-table-set!" "vector-set!" "let-set!"))
+		      (reader-cond ((> max-args 3) "map" "for-each"))
+		      (reader-cond ((> max-args 4) "float-vector-ref" "throw"))
 
 		      "mock-number" "mock-pair" "mock-string" "mock-char" "mock-vector" 
 		      "mock-symbol" "mock-port" "mock-hash-table"

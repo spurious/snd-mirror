@@ -5816,7 +5816,7 @@ operate with the *features* list; perhaps "cond-provided"?  Not only is cond-exp
 idea is clumsy.  Take libgsl.scm; different versions of the GSL library have different functions.  We need to know
 when we're building the FFI what version we're dealing with.  It would be nuts to start pushing and checking dozens
 of library version symbols when all we actually want is <code>(&gt; version 23.19)</code>.
-(ACL shows how inadequate #+ is when dealing with version numbers).  So, s7 uses reader-cond instead.
+So, s7 uses reader-cond instead.
 In this case, the read-time decision involves normal evaluation, not something specific to *features*.
 </p>
 
