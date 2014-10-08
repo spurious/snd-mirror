@@ -1758,6 +1758,14 @@
 }
 
 {
+   s71a11
+   Memcheck:Leak
+   fun:malloc
+   fun:new_symbol
+   fun:*
+}
+
+{
    s71ab
    Memcheck:Leak
    fun:calloc
@@ -1777,6 +1785,14 @@
    s71abcd
    Memcheck:Leak
    fun:calloc
+   fun:s7_make_function
+   fun:*
+}
+
+{
+   s71abcd1
+   Memcheck:Leak
+   fun:malloc
    fun:s7_make_function
    fun:*
 }

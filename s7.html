@@ -5760,6 +5760,7 @@ loading code that calls gcd.
 </p>
 
 <!-- another case:  (with-let (inlet '+ -) (+ 2 3)) -> 5 -->
+<!-- also, (eq? (if #f #f) (apply values ())) is #t, but memq and assq don't treat them as equal -->
 
 </div>
 

@@ -102,7 +102,6 @@ void s7_quit(s7_scheme *sc);
 void (*s7_begin_hook(s7_scheme *sc))(s7_scheme *sc, bool *val);
 void s7_set_begin_hook(s7_scheme *sc, void (*hook)(s7_scheme *sc, bool *val));
   /* call "hook" at the start of any block; use NULL to cancel.
-   *   see s7.html#replrescue and (in the Snd package) snd-listener.c for examples.
    *   s7_begin_hook returns the current begin_hook function or NULL.
    */
 
@@ -352,10 +351,8 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
       -> 32
   */
 
-
 s7_pointer s7_hook_functions(s7_scheme *sc, s7_pointer hook);                              /* (hook-functions hook) */
 s7_pointer s7_hook_set_functions(s7_scheme *sc, s7_pointer hook, s7_pointer functions);    /* (set! (hook-functions hook) ...) */
-
 
 
 bool s7_is_input_port(s7_scheme *sc, s7_pointer p);                         /* (input-port? p) */
@@ -498,43 +495,6 @@ void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, c
 void s7_define_safe_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc);
   /* this is now the same as s7_dilambda (different args) */
-
-  /* these are aimed at the CLM optimizer */
-s7_pointer (*s7_function_chooser(s7_scheme *sc, s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
-void s7_function_set_chooser(s7_scheme *sc, s7_pointer fnc,  s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr));
-void *s7_function_chooser_data(s7_scheme *sc, s7_pointer f);
-void *s7_function_chooser_data_direct(s7_pointer f);
-void s7_function_chooser_set_data(s7_scheme *sc, s7_pointer f, void *data);
-  /* unsigned int s7_function_class(s7_pointer f); */
-void s7_function_set_class(s7_pointer f, s7_pointer base_f);
-s7_function s7_function_choice(s7_scheme *sc, s7_pointer expr);
-bool s7_function_choice_is_direct(s7_scheme *sc, s7_pointer expr);
-void s7_function_choice_set_direct(s7_scheme *sc, s7_pointer expr);
-bool s7_function_choice_is_direct_to_real(s7_scheme *sc, s7_pointer expr);
-s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr);
-bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree);
-s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
-void s7_function_set_returns_temp(s7_pointer f);
-void s7_function_set_step_safe(s7_pointer f);
-bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f);
-s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr);
-s7_pointer s7_value(s7_scheme *sc, s7_pointer sym);
-s7_pointer s7_car_value(s7_scheme *sc, s7_pointer lst);
-s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst);
-s7_pointer s7_cadar_value(s7_scheme *sc, s7_pointer lst);
-size_t s7_number_offset(s7_scheme *sc);
-size_t s7_denominator_offset(s7_scheme *sc);
-size_t s7_slot_value_offset(s7_scheme *sc);
-
-typedef struct {
-  void (*func)(void *p); 
-  void (*free)(void *p); 
-  s7_Double (*f)(void *p); 
-  void *data;
-} s7_ex;
-
-void s7_function_set_ex_parser(s7_pointer f, s7_ex *(*func)(s7_scheme *sc, s7_pointer expr));
-s7_ex *(*s7_function_ex_parser(s7_pointer f))(s7_scheme *sc, s7_pointer expr);
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
 s7_pointer s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
@@ -685,17 +645,57 @@ void s7_set_object_print_readably(int type, char *(*printer)(s7_scheme *sc, void
    *    any embedded s7_pointer variables).
    */
 
-  /* experiments */
+
+void s7_autoload_set_names(s7_scheme *sc, const char **names, int size);
+
+s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
+
+
+  /* these are aimed at the CLM optimizer */
+s7_pointer (*s7_function_chooser(s7_scheme *sc, s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
+void s7_function_set_chooser(s7_scheme *sc, s7_pointer fnc,  s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr));
+void *s7_function_chooser_data(s7_scheme *sc, s7_pointer f);
+void *s7_function_chooser_data_direct(s7_pointer f);
+void s7_function_chooser_set_data(s7_scheme *sc, s7_pointer f, void *data);
+  /* unsigned int s7_function_class(s7_pointer f); */
+void s7_function_set_class(s7_pointer f, s7_pointer base_f);
+s7_function s7_function_choice(s7_scheme *sc, s7_pointer expr);
+bool s7_function_choice_is_direct(s7_scheme *sc, s7_pointer expr);
+void s7_function_choice_set_direct(s7_scheme *sc, s7_pointer expr);
+bool s7_function_choice_is_direct_to_real(s7_scheme *sc, s7_pointer expr);
+s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr);
+bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree);
+s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
+void s7_function_set_returns_temp(s7_pointer f);
+void s7_function_set_step_safe(s7_pointer f);
+bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f);
+s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr);
+s7_pointer s7_value(s7_scheme *sc, s7_pointer sym);
+s7_pointer s7_car_value(s7_scheme *sc, s7_pointer lst);
+s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst);
+s7_pointer s7_cadar_value(s7_scheme *sc, s7_pointer lst);
+size_t s7_number_offset(s7_scheme *sc);
+size_t s7_denominator_offset(s7_scheme *sc);
+size_t s7_slot_value_offset(s7_scheme *sc);
+
+typedef struct {
+  void (*func)(void *p); 
+  void (*free)(void *p); 
+  s7_Double (*f)(void *p); 
+  void *data;
+} s7_ex;
+
+void s7_function_set_ex_parser(s7_pointer f, s7_ex *(*func)(s7_scheme *sc, s7_pointer expr));
+s7_ex *(*s7_function_ex_parser(s7_pointer f))(s7_scheme *sc, s7_pointer expr);
+
 void s7_function_set_looped(s7_pointer f, s7_pointer c);
 void s7_function_set_let_looped(s7_pointer f, s7_pointer c);
 s7_pointer s7_local_slot(s7_scheme *sc, s7_pointer symbol);
 s7_pointer s7_is_local_variable(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
 void s7_set_ex_fallback(s7_scheme *sc, s7_ex *(*fallback)(s7_scheme *sc, s7_pointer expr, s7_pointer locals));
 s7_ex *(*s7_ex_fallback(s7_scheme *sc))(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
+  /* end CLM stuff */
 
-void s7_autoload_set_names(s7_scheme *sc, const char **names, int size);
-
-s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
 
   /* this is experimental */
 s7_pointer s7_apply_1(s7_scheme *sc, s7_pointer args, s7_pointer (*f1)(s7_pointer a1));

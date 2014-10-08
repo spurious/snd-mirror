@@ -1378,6 +1378,9 @@ struct s7_scheme {
   s7_pointer max_list_length_symbol, max_vector_length_symbol, max_vector_dimensions_symbol, default_hash_table_length_symbol;
   s7_pointer hash_table_float_epsilon_symbol, morally_equal_float_epsilon_symbol, initial_string_port_length_symbol;
 
+  bool undefined_identifier_warnings;
+
+  /* unbound-variable hook context */
   int ubh_cur_code_loc, ubh_value_loc, ubh_args_loc, ubh_code_loc, ubh_hook_loc;
   int ubh_x, ubh_z;
 };
@@ -1642,9 +1645,31 @@ static void init_types(void)
   t_opt_all_x[HOP_SAFE_C_opSSq_opSSq] = true;
 }
 
+
 #define typeflag(p)                   ((p)->tf.flag)
 #define typesflag(p)                  ((p)->tf.sflag)
-#define type(p)                       ((p)->tf.type_field)
+
+#if DEBUGGING
+  #define unchecked_type(p)           ((p)->tf.type_field)
+  #define type(p) ({unsigned char _t_; _t_ = (p)->tf.type_field; if (_t_ == T_FREE) fprintf(stderr, "%p is free (line %d)\n", p, __LINE__); _t_;})
+  #define set_type(p, f) \
+  do { \
+      p->previous_alloc_line = p->current_alloc_line; \
+      p->previous_alloc_func = p->current_alloc_func; \
+      p->previous_alloc_type = p->current_alloc_type; \
+      p->current_alloc_line = __LINE__; \
+      p->current_alloc_func = __func__; \
+      p->current_alloc_type = f; \
+      p->uses++; \
+      typeflag(p) = f; \
+    } while (0)
+  #define clear_type(p) do {p->gc_line = __LINE__; p->gc_func = __func__; typeflag(p) = 0;} while (0)
+#else
+  #define unchecked_type(p)           ((p)->tf.type_field)
+  #define type(p)                     ((p)->tf.type_field)
+  #define set_type(p, f)              typeflag(p) = f
+  #define clear_type(p)               typeflag(p) = T_FREE
+#endif
 
 #define is_number(P)                  t_number_p[type(P)]
 #define is_integer(P)                 (type(P) == T_INTEGER)
@@ -1920,41 +1945,24 @@ static void init_types(void)
 
 #define UNUSED_BITS 0 /* (1 << (TYPE_BITS + 11)) */
 
+
 #if 0
-/* to find who is stomping on our symbols:
- */
-static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
-
-static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int line) 
-{
-  if ((is_global(symbol)) || (is_syntactic(symbol)))
-    fprintf(stderr, "%s[%d]: %s%s%s in %s\n", func, line, BOLD_TEXT, DISPLAY(symbol), UNBOLD_TEXT, DISPLAY_80(sc->cur_code));
-  typeflag(symbol) = (typeflag(symbol) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC));
-}
-#define set_local(Symbol) set_local_1(sc, Symbol, __func__, __LINE__)
+  /* to find who is stomping on our symbols:
+   */
+  static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
+  
+  static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int line) 
+  {
+    if ((is_global(symbol)) || (is_syntactic(symbol)))
+      fprintf(stderr, "%s[%d]: %s%s%s in %s\n", func, line, BOLD_TEXT, DISPLAY(symbol), UNBOLD_TEXT, DISPLAY_80(sc->cur_code));
+    typeflag(symbol) = (typeflag(symbol) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC));
+  }
+  #define set_local(Symbol) set_local_1(sc, Symbol, __func__, __LINE__)
 #endif
 
-
-#if DEBUGGING
-#define set_type(p, f) \
-  do { \
-      p->previous_alloc_line = p->current_alloc_line; \
-      p->previous_alloc_func = p->current_alloc_func; \
-      p->previous_alloc_type = p->current_alloc_type; \
-      p->current_alloc_line = __LINE__; \
-      p->current_alloc_func = __func__; \
-      p->current_alloc_type = f; \
-      p->uses++; \
-      typeflag(p) = f; \
-    } while (0)
-#define clear_type(p) do {p->gc_line = __LINE__; p->gc_func = __func__; typeflag(p) = 0;} while (0)
-#else
-  #define set_type(p, f)              typeflag(p) = f
-  #define clear_type(p)               typeflag(p) = T_FREE
-#endif
 
 #define heap_location(p)              (p)->hloc
-
+#define is_eof(p)                     (p == sc->EOF_OBJECT)
 #define is_true(Sc, p)                ((p) != Sc->F)
 #define is_false(Sc, p)               ((p) == Sc->F)
 #ifdef _MSC_VER
@@ -1968,31 +1976,25 @@ static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int 
   #define make_boolean(sc, Val)       ((Val) ? sc->T : sc->F)
 #endif
 
-#define is_eof(p)                     (p == sc->EOF_OBJECT)
-
 #define is_pair(p)                    (type(p) == T_PAIR)
 #define is_null(p)                    (p == sc->NIL)
 #define is_not_null(p)                (p != sc->NIL)
 
-#define car(p)                        ((p)->object.cons.car)
-#define cdr(p)                        ((p)->object.cons.cdr)
 
 #if (!DEBUGGING)
-#define ecdr(p)                       ((p)->object.cons.ecdr)
-#define set_ecdr(p, x)                (p)->object.cons.ecdr = x
-#define fcdr(p)                       ((p)->object.cons.fcdr)
-#define set_fcdr(p, x)                (p)->object.cons.fcdr = x
-#define gcdr(p)                       ((p)->object.ext_cons.gcdr)
-#define set_gcdr(p, x)                do {(p)->object.ext_cons.gcdr = x; typeflag(p) &= ~(T_OPTIMIZED | T_LINE_NUMBER);} while (0)
+  #define ecdr(p)                     ((p)->object.cons.ecdr)
+  #define set_ecdr(p, x)              (p)->object.cons.ecdr = x
+  #define fcdr(p)                     ((p)->object.cons.fcdr)
+  #define set_fcdr(p, x)              (p)->object.cons.fcdr = x
+  #define gcdr(p)                     ((p)->object.ext_cons.gcdr)
+  #define set_gcdr(p, x)              do {(p)->object.ext_cons.gcdr = x; typeflag(p) &= ~(T_OPTIMIZED | T_LINE_NUMBER);} while (0)
 #else
-
     /* ---------------- debugging versions of e|f|gcdr ---------------- */
 #define T_ECDR_SET                    1                                        /* T_HAS_METHODS */
 #define ecdr_is_set(p)                (((p)->debugger_bits & T_ECDR_SET) != 0) /* ((typeflag(p) & T_ECDR_SET) != 0) */
 #define set_ecdr_is_set(p)            (p)->debugger_bits |= T_ECDR_SET         /*  typeflag(p) |= T_ECDR_SET */
-
-#define ecdr(p) ecdr_1(sc, p, __func__, __LINE__)
-#define set_ecdr(p, x) set_ecdr_1(sc, p, x, __func__, __LINE__)
+#define ecdr(p)                       ecdr_1(sc, p, __func__, __LINE__)
+#define set_ecdr(p, x)                set_ecdr_1(sc, p, x, __func__, __LINE__)
 
 static s7_pointer ecdr_1(s7_scheme *sc, s7_pointer p, const char *func, int line) 
 {
@@ -2011,9 +2013,8 @@ static s7_pointer set_ecdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const ch
 #define T_FCDR_SET                    2                                        /* T_GLOBAL */
 #define fcdr_is_set(p)                (((p)->debugger_bits & T_FCDR_SET) != 0) /* ((typeflag(p) & T_FCDR_SET) != 0) */
 #define set_fcdr_is_set(p)            (p)->debugger_bits |= T_FCDR_SET         /* typeflag(p) |= T_FCDR_SET */
-
-#define fcdr(p) fcdr_1(sc, p, __func__, __LINE__)
-#define set_fcdr(p, x) set_fcdr_1(sc, p, x, __func__, __LINE__)
+#define fcdr(p)                       fcdr_1(sc, p, __func__, __LINE__)
+#define set_fcdr(p, x)                set_fcdr_1(sc, p, x, __func__, __LINE__)
 
 static s7_pointer fcdr_1(s7_scheme *sc, s7_pointer p, const char *func, int line) 
 {
@@ -2034,9 +2035,8 @@ static void set_fcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define T_GCDR_SET                    4                                        /* T_COPY_ARGS */
 #define gcdr_is_set(p)                (((p)->debugger_bits & T_GCDR_SET) != 0) /* ((typeflag(p) & T_GCDR_SET) != 0) */
 #define set_gcdr_is_set(p)            (p)->debugger_bits |= T_GCDR_SET         /* typeflag(p) |= T_GCDR_SET */
-
-#define gcdr(p) gcdr_1(sc, p, __func__, __LINE__)
-#define set_gcdr(p, x) set_gcdr_1(sc, p, x, __func__, __LINE__)
+#define gcdr(p)                       gcdr_1(sc, p, __func__, __LINE__)
+#define set_gcdr(p, x)                set_gcdr_1(sc, p, x, __func__, __LINE__)
 
 static s7_pointer gcdr_1(s7_scheme *sc, s7_pointer p, const char *func, int line) 
 {
@@ -2055,8 +2055,10 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
   p->object.ext_cons.gcdr = x;
   set_gcdr_is_set(p);
 }
-
 #endif
+
+#define car(p)                        ((p)->object.cons.car)
+#define cdr(p)                        ((p)->object.cons.cdr)
 
 #define caar(p)                       car(car(p))
 #define cadr(p)                       car(cdr(p))
@@ -2239,7 +2241,11 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {pair_sy
 #define hash_table_eq_function(p)     (p)->object.hasher.eq_func
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT) 
+#if DEBUGGING
+#define is_output_port(p)             (unchecked_type(p) == T_OUTPUT_PORT)
+#else
 #define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
+#endif
 #define port_port(p)                  (p)->object.prt.port
 #define port_type(p)                  (p)->object.prt.ptype
 #define is_string_port(p)             (port_type(p) == STRING_PORT)
@@ -3198,7 +3204,7 @@ s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc)
 
 static void (*mark_function[NUM_TYPES])(s7_pointer p);
 
-#define S7_MARK(Obj) do {s7_pointer _p_; _p_ = Obj; (*mark_function[type(_p_)])(_p_);} while (0)
+#define S7_MARK(Obj) do {s7_pointer _p_; _p_ = Obj; (*mark_function[unchecked_type(_p_)])(_p_);} while (0)
 
 static void mark_symbol(s7_pointer p)
 {
@@ -3378,7 +3384,7 @@ static void sweep(s7_scheme *sc)
 	{
 	  if (is_free_and_clear(sc->output_ports[i]))
 	    {
-	      s7_close_output_port(sc, sc->output_ports[i]);
+	      s7_close_output_port(sc, sc->output_ports[i]); /* needed for free filename, etc */
 	      free_port(sc, port_port(sc->output_ports[i]));
 	    }
 	  else sc->output_ports[j++] = sc->output_ports[i];
@@ -4481,13 +4487,23 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_SYMBOL:
       if (is_gensym(x))
 	{
+	  int i;
 	  sc->heap[loc] = alloc_pointer();
 	  clear_type(sc->heap[loc]);
 	  (*sc->free_heap_top++) = sc->heap[loc];
 	  heap_location(sc->heap[loc]) = loc;
-	  clear_gensym(x);
+
 	  heap_location(x) = NOT_IN_HEAP;
-	  /* TODO: surely we also need to remove it from the gensyms table?  */
+	  for (i = 0; i < sc->gensyms_loc; i++)
+	    if (sc->gensyms[i] == x)
+	      {
+		int j;
+		for (j = i + 1; i < sc->gensyms_loc; i++, j++)
+		  sc->gensyms[i] = sc->gensyms[j];
+		sc->gensyms_loc--;
+		if (sc->gensyms_loc == 0) mark_function[T_SYMBOL] = mark_noop;
+		break;
+	      }
 	}
       return;
 
@@ -5442,6 +5458,9 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
 	  local_slot(symbol) = slot;
 	  set_global(symbol);
 	}
+
+      if (is_gensym(symbol))
+	s7_remove_from_heap(sc, symbol);
     }
   else 
     {
@@ -29145,7 +29164,6 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
   s7_pointer x, y, obj;
 
   x = cadr(args);      
-
   if (!is_pair(x))
     {
       if (is_null(x)) 
@@ -30538,6 +30556,10 @@ s7_Int *s7_vector_offsets(s7_pointer vec)
 
 static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 {
+  /* returns a one-dimensional vector.  To handle multidimensional vectors, we'd need to
+   *   ensure all the dimensional data matches (rank, size of each dimension except the last etc),
+   *   which is too much trouble.
+   */
   #define H_vector_append "(vector-append . vectors) returns a new (1-dimensional) vector containing the elements of its vector arguments."
   s7_Int i = 0, j, len = 0, source_len;
   s7_pointer p, v, x;
@@ -30570,9 +30592,12 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 	    }
 	  return(wrong_type_argument_n(sc, sc->VECTOR_APPEND, position_of(p, args), x, T_VECTOR));
 	}
+
       len += vector_length(x);
+
       if ((!parlous_gc) && (type(x) != T_VECTOR)) 
 	parlous_gc = true;    /* might create a new object during append, gc possible: new vector needs fill and gc-protect */
+
       if (result_type == -1)
 	result_type = type(x);
       else
@@ -30630,7 +30655,6 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 	    }
 	}
     }
-
   return(v);
 }
 
@@ -46187,6 +46211,16 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		(is_safe_procedure(func))) /* built-in applicable objects like vectors */
 	      return(optimize_function(sc, x, func, hop, e));
 	  }
+#if 0
+	else
+	  {
+	    if ((func == sc->UNDEFINED) &&
+		((true) || (sc->undefined_identifier_warnings)))
+	      fprintf(stderr, "%s might be undefined\n", DISPLAY(caar_x));
+	    /* we need local definitions and func args in e?  also check is_symbol case below
+	     */
+	  }
+#endif
       }
 
       /* caar(x) is a symbol but it's not a known procedure or a "safe" case = vector etc */
@@ -46221,7 +46255,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 	    (!is_optimized(car_x)))
 	  {
 	    /* len=0 case is almost entirely arglists */
-
 	    if (pairs == 0)
 	      {
 		if (len == 0)
@@ -62814,7 +62847,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* -------------------------------- with-let --------------------------------
        *
-       * the extra set! to pull in args, or fixup the outer-env is annoying, but 
+       * the extra set! to pull in args, or fixup the outlet is annoying, but 
        *   but with-let is hard to do right -- what if env is chained as in class/objects?
        *
        * also, currently a mock-let is an error -- perhaps add the method checks?
@@ -68518,9 +68551,10 @@ s7_scheme *s7_init(void)
   sc->fdats = (format_data **)calloc(8, sizeof(format_data *));
   sc->num_fdats = 8;
   sc->direct_str = s7_make_permanent_string(NULL);
+  sc->undefined_identifier_warnings = false;
 
   sc->rootlet = s7_make_vector(sc, 512);
-  type(sc->rootlet) = T_ENVIRONMENT;
+  set_type(sc->rootlet, T_ENVIRONMENT);
   sc->rootlet_entries = 0;
   for (i = 0; i < 512; i++)
     vector_element(sc->rootlet, i) = sc->NIL;
@@ -69895,11 +69929,11 @@ int main(int argc, char **argv)
  *           12.x | 13.0 | 14.2 | 15.0 15.1
  * s7test    1721 | 1358 |  995 | 1194 1210
  * index    44300 | 3291 | 1725 | 1276 1244
- * bench    42736 | 8752 | 4220 | 3506 3505
- * lg             |      |      | 6092 6406
+ * bench    42736 | 8752 | 4220 | 3506 3506
+ * lg             |      |      | 6492 6406
  * t502        90 |   43 | 14.5 | 12.7 12.6
- * t455|6     265 |   89 |  9   |      10.8
- * t816           |   71 | 70.6 | 38.0 32.5
+ * t455|6     265 |   89 |  9   |      10.7
+ * t816           |   71 | 70.6 | 38.0 32.6
  * calls      359 |  275 | 54   | 34.7 34.7
  *            153 with run macro (eval_ptree)
  *
@@ -69911,25 +69945,4 @@ int main(int argc, char **argv)
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
- *
- * there are still problems with (assoc #<unspecified> (list (cons (apply values ()) #f))) -- see t101.scm
- *   should memq/assq work here?  case also checks is_simple
- *   (memv (apply values ()) (list #<unspecified>)) #f but (eqv? (apply values ()) #<unspecified>) #t (same for memv/q)
- *
- * somehow let->list returned a slot of (#<unspecified> . #f)? where it's actually no-values -- can map do this?
- *   probably due to:
-(let ((e (inlet
-	  'mac (apply define-macro 
-		      (list (list (gensym) 'a) '`(+ ,a 1))))))
-  (test ((e 'mac) 3) 4))
-places gensym as rootlet name s7test line 26821
-but gc sweep marks global values not symbols -- then why was the macro falling apart?
-so gensym->rootlet means make it permanent, remove from gensyms gc table, release old cell, keep gensym bit
-see s7_make_slot
-but what about a gensym slot in a normal let?  even here the symbol is ignored, but presumably it's in use in the let?
- *
- * add a switch to warn about undefined identifiers
- *   optimize loop needs symbol check, also optimize_expression|syntax|function?
- *
- * multidim vector-append? (currently result is always 1-dim)
  */

@@ -181,6 +181,7 @@
 (define (all)
   (let ((st (symbol-table)))
     (for-each test-sym st)
+    ;(do ((i 0 (+ i 1)) (len (length st))) ((= i 1000)) (test-sym (st (random len))))
     (if data-file (close-output-port data-file))
     (format *stderr* "~%~%all done~%")))
 
