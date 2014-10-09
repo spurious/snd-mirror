@@ -56,7 +56,7 @@
 			(lambda (dir) 1.0) (float-vector) (make-float-vector '(2 32)) 
 			;(openlet (inlet 'value 1 '+ (lambda args 1)))
 			;all-env
-			"t105.scm"
+			"t105.scm" "~,3F" "~{~A~}"
 
 			(mock-number 0) (mock-number 2) (mock-number 1-i) (mock-number 4/3) (mock-number 2.0)
 			(mock-string #\h #\o #\h #\o)
@@ -137,7 +137,7 @@
 		      "all" "delete-file" "system" "set-cdr!" "stacktrace" "test-sym"
 		      "cutlet" "varlet" "dilambda" "gc" "cond-expand" "reader-cond"
 		      "openlet" "coverlet" "eval" "vector" "list" "cons" "m" "hash-table*" "hash-table" "values"
-		      "object->string" 
+		      "object->string" "throw"
 
 		      ;; deprecated (redundant)
 		      "with-environment" "environment?" "global-environment" "initial-environment" "outer-environment" 
@@ -149,8 +149,7 @@
 		      "boolean=?" "symbol=?" "symbol-table"
 
 		      (reader-cond ((> max-args 2) "copy" "hash-table-set!" "vector-set!" "let-set!"))
-		      (reader-cond ((> max-args 3) "map" "for-each"))
-		      (reader-cond ((> max-args 4) "float-vector-ref" "throw"))
+		      (reader-cond ((> max-args 4) "float-vector-ref"))
 
 		      "mock-number" "mock-pair" "mock-string" "mock-char" "mock-vector" 
 		      "mock-symbol" "mock-port" "mock-hash-table"
