@@ -255,8 +255,6 @@ void highlight_color(GtkWidget *w);
 void raise_dialog(GtkWidget *w);
 void set_button_label(GtkWidget *label, const char *str);
 void set_label(GtkWidget *label, const char *str);
-void sg_left_justify_button(GtkWidget *button);
-void sg_left_justify_label(GtkWidget *label);
 void check_for_event(void);
 void set_title(const char *title);
 void goto_window(GtkWidget *text);

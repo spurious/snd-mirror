@@ -68,6 +68,8 @@
 			))
 
 (define low 0)
+(define special-cases (list map for-each))
+
 (define arglists (vector (make-list 1) (make-list 2) (make-list 3) (make-list 4) (make-list 5) (make-list 6)))
 
 (define (autotest func args args-now args-left)
@@ -86,7 +88,7 @@
 	   (lambda any
 	     (if (and (> args-now 0)
 		      (memq (car any) '(wrong-type-arg syntax-error))
-		      (not (memq func (list map for-each /))))
+		      (not (memq func special-cases)))
 		 (quit)))))
      
      (let ((c-args (vector-ref arglists args-now)))

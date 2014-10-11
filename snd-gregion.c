@@ -1,5 +1,38 @@
 #include "snd.h"
 
+
+/* TODO: use widget alignment and margin properties here (snd-gdraw|gprefs.c too) 
+   gtk_widget_set_h|valign and set_margin_left|right ?
+   but the code below just sets "x" -- halign + GTK_ALIGN_START ?
+
+   try this in gtk3!
+ */
+static void sg_left_justify_button(GtkWidget *button)
+{
+#if HAVE_GTK_3
+  gtk_widget_set_halign(GTK_WIDGET(GTK_LABEL(BIN_CHILD(button))), GTK_ALIGN_START);
+#else
+  gfloat x, y;
+  gtk_misc_get_alignment(GTK_MISC(GTK_LABEL(BIN_CHILD(button))), &x, &y);
+  gtk_misc_set_alignment(GTK_MISC(GTK_LABEL(BIN_CHILD(button))), 0.05, y);
+#endif
+}
+
+
+static void sg_left_justify_label(GtkWidget *label)
+{
+  /* the label justify function in Gtk refers to the text of the lines after the 1st! */
+#if HAVE_GTK_3
+  gtk_widget_set_halign(GTK_WIDGET(GTK_LABEL(label)), GTK_ALIGN_START);
+#else
+  gfloat x, y;
+  gtk_misc_get_alignment(GTK_MISC(GTK_LABEL(label)), &x, &y);
+  gtk_misc_set_alignment(GTK_MISC(GTK_LABEL(label)), 0.05, y);
+#endif
+}
+
+
+
 /* -------- region browser -------- */
 
 typedef struct {

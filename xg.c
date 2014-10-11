@@ -196,7 +196,7 @@ static void define_xm_obj(void)
   #define Xg_field_pre "F"
 #endif
 
-static Xen xg_GtkPropagationPhase_symbol, xg_GtkEventController__symbol, xg_GtkGestureZoom__symbol, xg_GtkGestureSwipe__symbol, xg_GtkGestureSingle__symbol, xg_GtkGestureRotate__symbol, xg_GtkGestureMultiPress__symbol, xg_GtkGesturePan__symbol, xg_GtkGestureDrag__symbol, xg_gdoubl_symbol, xg_GdkEventSequence__symbol, xg_GtkEventSequenceState_symbol, xg_GtkGesture__symbol, xg_GtkPopover__symbol, xg_GtkActionBar__symbol, xg_GtkFlowBox__symbol, xg_GtkFlowBoxChild__symbol, xg_GdkEventType_symbol, xg_GtkSearchBar__symbol, xg_GtkListBox__symbol, xg_GtkListBoxRow__symbol, xg_GtkHeaderBar__symbol, xg_GtkRevealerTransitionType_symbol, xg_GtkRevealer__symbol, xg_GtkStackTransitionType_symbol, xg_GtkStack__symbol, xg_GtkStackSwitcher__symbol, xg_GtkPlacesSidebar__symbol, xg_GtkPlacesOpenFlags_symbol, xg_GtkBaselinePosition_symbol, xg_GdkFullscreenMode_symbol, xg_GtkInputHints_symbol, xg_GtkInputPurpose_symbol, xg_GtkLevelBarMode_symbol, xg_GtkLevelBar__symbol, xg_GtkMenuButton__symbol, xg_GtkColorChooser__symbol, xg_GtkApplicationWindow__symbol, xg_GtkApplication__symbol, xg_GMenuModel__symbol, xg_guint___symbol, xg_GdkModifierIntent_symbol, xg_GtkFontChooser__symbol, xg_GdkScrollDirection_symbol, xg_GtkOverlay__symbol, xg_GtkWidgetPath__symbol, xg_GtkStateFlags_symbol, xg_GdkScreen___symbol, xg_GtkToolShell__symbol, xg_GtkWindowGroup__symbol, xg_GtkInvisible__symbol, xg_GtkOrientable__symbol, xg_GtkCellArea__symbol, xg_GtkBorder__symbol, xg_GtkSwitch__symbol, xg_GtkScrollablePolicy_symbol, xg_GtkScrollable__symbol, xg_GtkGrid__symbol, xg_GdkRGBA__symbol, xg_GtkComboBoxText__symbol, xg_GtkAlign_symbol, xg_GtkContainerClass__symbol, xg_GtkSizeRequestMode_symbol, xg_cairo_region_overlap_t_symbol, xg_cairo_rectangle_int_t__symbol, xg_double__symbol, xg_cairo_rectangle_t__symbol, xg_cairo_device_t__symbol, xg_cairo_bool_t_symbol, xg_cairo_text_cluster_flags_t__symbol, xg_cairo_text_cluster_t___symbol, xg_cairo_glyph_t___symbol, xg_cairo_text_cluster_flags_t_symbol, xg_cairo_text_cluster_t__symbol, xg_cairo_region_t__symbol, xg_GtkMessageDialog__symbol, xg_GdkDevice__symbol, xg_GdkDeviceManager__symbol, xg_GtkAccessible__symbol, xg_GdkModifierType__symbol, xg_GtkToolPaletteDragTargets_symbol, xg_GtkToolItemGroup__symbol, xg_GtkToolPalette__symbol, xg_GtkSpinner__symbol, xg_GtkEntryBuffer__symbol, xg_GtkMessageType_symbol, xg_GtkInfoBar__symbol, xg_GIcon__symbol, xg_GtkEntryIconPosition_symbol, xg_GFile__symbol, xg_GtkScaleButton__symbol, xg_GtkCalendarDetailFunc_symbol, xg_GtkTooltip__symbol, xg_cairo_rectangle_list_t__symbol, xg_void__symbol, xg_cairo_filter_t_symbol, xg_cairo_extend_t_symbol, xg_cairo_format_t_symbol, xg_cairo_path_t__symbol, xg_cairo_destroy_func_t_symbol, xg_cairo_user_data_key_t__symbol, xg_cairo_text_extents_t__symbol, xg_cairo_font_extents_t__symbol, xg_cairo_font_face_t__symbol, xg_cairo_glyph_t__symbol, xg_cairo_scaled_font_t__symbol, xg_cairo_font_weight_t_symbol, xg_cairo_font_slant_t_symbol, xg_cairo_hint_metrics_t_symbol, xg_cairo_hint_style_t_symbol, xg_cairo_subpixel_order_t_symbol, xg_cairo_status_t_symbol, xg_bool_symbol, xg_cairo_matrix_t__symbol, xg_cairo_line_join_t_symbol, xg_cairo_line_cap_t_symbol, xg_cairo_fill_rule_t_symbol, xg_cairo_antialias_t_symbol, xg_cairo_operator_t_symbol, xg_cairo_pattern_t__symbol, xg_cairo_content_t_symbol, xg_GtkPageSet_symbol, xg_GtkPageRange__symbol, xg_GtkPrintPages_symbol, xg_GtkPrintQuality_symbol, xg_GtkPrintDuplex_symbol, xg_GtkPaperSize__symbol, xg_GtkPageOrientation_symbol, xg_GtkPrintSettingsFunc_symbol, xg_GtkPrintOperationPreview__symbol, xg_GtkPageSetupDoneFunc_symbol, xg_GtkPrintStatus_symbol, xg_GtkPrintOperationAction_symbol, xg_GtkPrintOperationResult_symbol, xg_GtkUnit_symbol, xg_GtkPrintSettings__symbol, xg_GtkPrintOperation__symbol, xg_GtkPageSetup__symbol, xg_GtkPrintContext__symbol, xg_cairo_surface_t__symbol, xg_GtkTreeViewGridLines_symbol, xg_GtkRecentData__symbol, xg_GtkTextBufferDeserializeFunc_symbol, xg_GtkTextBufferSerializeFunc_symbol, xg_time_t_symbol, xg_GtkRecentChooserMenu__symbol, xg_GtkRecentManager__symbol, xg_GtkRecentFilter__symbol, xg_GtkRecentSortFunc_symbol, xg_GtkRecentSortType_symbol, xg_GtkRecentChooser__symbol, xg_GtkLinkButton__symbol, xg_GtkAssistantPageType_symbol, xg_GtkAssistantPageFunc_symbol, xg_GtkAssistant__symbol, xg_GDestroyNotify_symbol, xg_GtkTreeViewSearchPositionFunc_symbol, xg_GtkSensitivityType_symbol, xg_GtkClipboardRichTextReceivedFunc_symbol, xg_GtkMenuBar__symbol, xg_GtkPackDirection_symbol, xg_GtkIconViewDropPosition_symbol, xg_GValue__symbol, xg_GLogFunc_symbol, xg_PangoMatrix__symbol, xg_PangoRenderPart_symbol, xg_PangoRenderer__symbol, xg_GtkClipboardImageReceivedFunc_symbol, xg_GtkMenuToolButton__symbol, xg_GtkFileChooserButton__symbol, xg_PangoScriptIter__symbol, xg_PangoScript_symbol, xg_PangoAttrFilterFunc_symbol, xg_PangoEllipsizeMode_symbol, xg_GtkIconViewForeachFunc_symbol, xg_GtkAboutDialog__symbol, xg_GtkTreeViewRowSeparatorFunc_symbol, xg_GtkCellView__symbol, xg_GtkAccelMap__symbol, xg_GtkClipboardTargetsReceivedFunc_symbol, xg_GtkOrientation_symbol, xg_GtkToolButton__symbol, xg_GtkIconLookupFlags_symbol, xg_GtkIconInfo__symbol, xg_GtkIconTheme__symbol, xg_GtkFileChooser__symbol, xg_GtkCellLayoutDataFunc_symbol, xg_GtkCellLayout__symbol, xg_GtkFileFilterFunc_symbol, xg_GtkFileFilterFlags_symbol, xg_GtkFileFilter__symbol, xg_GSourceFunc_symbol, xg_GtkToggleToolButton__symbol, xg_GtkSeparatorToolItem__symbol, xg_GtkRadioToolButton__symbol, xg_GtkEntryCompletionMatchFunc_symbol, xg_GtkFontButton__symbol, xg_GtkExpander__symbol, xg_GtkComboBox__symbol, xg_GtkTreeModelFilter__symbol, xg_GtkFileChooserAction_symbol, xg_GtkToolItem__symbol, xg_GtkEventBox__symbol, xg_GtkCalendarDisplayOptions_symbol, xg_GtkAlignment__symbol, xg_GdkScreen__symbol, xg_GdkDisplay__symbol, xg_PangoLayoutRun__symbol, xg_PangoLayoutIter__symbol, xg_PangoLayoutLine__symbol, xg_int__symbol, xg_PangoAlignment_symbol, xg_PangoWrapMode_symbol, xg_PangoItem__symbol, xg_PangoGlyphString__symbol, xg_PangoFontMap__symbol, xg_PangoGlyph_symbol, xg_PangoFontFace__symbol, xg_PangoFontFace___symbol, xg_PangoFontFamily__symbol, xg_PangoFontMask_symbol, xg_PangoFontDescription___symbol, xg_PangoCoverageLevel_symbol, xg_PangoCoverage__symbol, xg_PangoFontMetrics__symbol, xg_PangoFontset__symbol, xg_PangoFont__symbol, xg_PangoFontFamily___symbol, xg_PangoLogAttr__symbol, xg_PangoAnalysis__symbol, xg_PangoAttrList___symbol, xg_PangoAttrIterator__symbol, xg_PangoRectangle__symbol, xg_PangoUnderline_symbol, xg_PangoStretch_symbol, xg_PangoVariant_symbol, xg_PangoWeight_symbol, xg_PangoStyle_symbol, xg_guint16_symbol, xg_PangoAttribute__symbol, xg_PangoAttrType_symbol, xg_PangoColor__symbol, xg_GdkGravity_symbol, xg_GtkWindowPosition_symbol, xg_GtkWindowType_symbol, xg_GtkWindow__symbol, xg_GtkTextDirection_symbol, xg_AtkObject__symbol, xg_GtkDirectionType_symbol, xg_GtkAllocation__symbol, xg_GtkViewport__symbol, xg_GtkTreeViewSearchEqualFunc_symbol, xg_GtkTreeViewDropPosition_symbol, xg_GtkTreeViewMappingFunc_symbol, xg_GtkTreeViewColumnDropFunc_symbol, xg_GtkTreeViewColumnSizing_symbol, xg_GtkTreeCellDataFunc_symbol, xg_GtkTreeStore__symbol, xg_GtkTreeIterCompareFunc_symbol, xg_GtkSortType_symbol, xg_GtkTreeSortable__symbol, xg_GtkTreeSelectionForeachFunc_symbol, xg_GtkTreeModel___symbol, xg_GtkTreeSelectionFunc_symbol, xg_GtkSelectionMode_symbol, xg_GtkTreeModelSort__symbol, xg_GtkTreeModelForeachFunc_symbol, xg_GtkTreeModelFlags_symbol, xg_GtkTreeRowReference__symbol, xg_GtkTreeDragDest__symbol, xg_GtkTreeDragSource__symbol, xg_GtkToolbarStyle_symbol, xg_GtkToolbar__symbol, xg_GtkToggleButton__symbol, xg_PangoTabArray__symbol, xg_GtkWrapMode_symbol, xg_GtkTextWindowType_symbol, xg_GtkTextView__symbol, xg_GtkTextTagTableForeach_symbol, xg_GtkTextSearchFlags_symbol, xg_GtkTextCharPredicate_symbol, xg_GtkTextAttributes__symbol, xg_GtkTextMark__symbol, xg_GtkTextChildAnchor__symbol, xg_GtkTextIter__symbol, xg_GtkTextTagTable__symbol, xg_GtkTextBuffer__symbol, xg_GtkStatusbar__symbol, xg_GtkSpinType_symbol, xg_GtkSpinButtonUpdatePolicy_symbol, xg_GtkSpinButton__symbol, xg_GtkSizeGroupMode_symbol, xg_GtkSizeGroup__symbol, xg_GtkSettings__symbol, xg_GtkCornerType_symbol, xg_GtkPolicyType_symbol, xg_GtkScrolledWindow__symbol, xg_GtkScale__symbol, xg_GtkRange__symbol, xg_GtkRadioMenuItem__symbol, xg_GtkRadioButton__symbol, xg_GtkProgressBar__symbol, xg_GtkPaned__symbol, xg_GtkPositionType_symbol, xg_GtkNotebook__symbol, xg_GtkMenuShell__symbol, xg_GtkMenuItem__symbol, xg_GtkMenuPositionFunc_symbol, xg_PangoLanguage__symbol, xg_GtkListStore__symbol, xg_GtkLayout__symbol, xg_GtkJustification_symbol, xg_GtkLabel__symbol, xg_guint16__symbol, xg_GtkIMContextSimple__symbol, xg_GdkEventKey__symbol, xg_PangoAttrList__symbol, xg_GtkIMContext__symbol, xg_GtkImageType_symbol, xg_GtkImage__symbol, xg_GtkShadowType_symbol, xg_GtkFrame__symbol, xg_GtkFixed__symbol, xg_PangoLayout__symbol, xg_GtkEntry__symbol, xg_GtkEditable__symbol, xg_GtkTargetList__symbol, xg_GtkDestDefaults_symbol, xg_etc_symbol, xg_GtkDialog__symbol, xg_GtkCallback_symbol, xg_GtkContainer__symbol, xg_GtkClipboardTextReceivedFunc_symbol, xg_GtkClipboardReceivedFunc_symbol, xg_GtkClipboardClearFunc_symbol, xg_GtkClipboardGetFunc_symbol, xg_GtkTargetEntry__symbol, xg_GtkCheckMenuItem__symbol, xg_GtkCellRendererToggle__symbol, xg_GtkCellRendererText__symbol, xg_GtkCellRendererState_symbol, xg_GtkCellEditable__symbol, xg_GtkCalendar__symbol, xg_GtkReliefStyle_symbol, xg_GtkButton__symbol, xg_GtkPackType_symbol, xg_GtkBox__symbol, xg_GtkBin__symbol, xg_GtkBindingSet__symbol, xg_GtkButtonBox__symbol, xg_GtkButtonBoxStyle_symbol, xg_GtkAspectFrame__symbol, xg_GtkAdjustment__symbol, xg_GtkAccelMapForeach_symbol, xg_GtkAccelLabel__symbol, xg_GtkAccelGroupEntry__symbol, xg_lambda3_symbol, xg_GSList__symbol, xg_GObject__symbol, xg_GtkAccelFlags_symbol, xg_GtkAccelGroup__symbol, xg_GTimeVal__symbol, xg_GdkPixbufAnimationIter__symbol, xg_GdkPixbufAnimation__symbol, xg_GdkInterpType_symbol, xg_double_symbol, xg_gfloat_symbol, xg_guchar_symbol, xg_char___symbol, xg_GdkPixbufDestroyNotify_symbol, xg_GError__symbol, xg_int_symbol, xg_GdkColorspace_symbol, xg_GdkWindowTypeHint_symbol, xg_GdkWindowHints_symbol, xg_GdkGeometry__symbol, xg_GdkWindowEdge_symbol, xg_GdkWMFunction_symbol, xg_GdkWMDecoration_symbol, xg_GdkEventMask_symbol, xg_GdkWindowState_symbol, xg_GdkFilterFunc_symbol, xg_GdkWindowType_symbol, xg_GdkWindowAttr__symbol, xg_GdkVisualType__symbol, xg_gint__symbol, xg_GdkVisualType_symbol, xg_GdkPropMode_symbol, xg_guchar__symbol, xg_PangoContext__symbol, xg_PangoDirection_symbol, xg_GdkKeymapKey__symbol, xg_GdkKeymap__symbol, xg_GdkRectangle__symbol, xg_char__symbol, xg_gchar___symbol, xg_GdkEventFunc_symbol, xg_gdouble_symbol, xg_GList__symbol, xg_GdkWindow__symbol, xg_guint32_symbol, xg_GdkDragAction_symbol, xg_GdkDragContext__symbol, xg_GdkCursorType_symbol, xg_GdkCursor__symbol, xg_GdkVisual__symbol, xg_GSignalMatchType_symbol, xg_GConnectFlags_symbol, xg_GtkDestroyNotify_symbol, xg_GSignalEmissionHook_symbol, xg_gulong_symbol, xg_GSignalInvocationHint__symbol, xg_GQuark_symbol, xg_guint__symbol, xg_GSignalQuery__symbol, xg_GType__symbol, xg_GSignalCMarshaller_symbol, xg_gpointer_symbol, xg_GSignalAccumulator_symbol, xg_GSignalFlags_symbol, xg_GType_symbol, xg_GClosureNotify_symbol, xg_GCallback_symbol, xg_GNormalizeMode_symbol, xg_glong_symbol, xg_gssize_symbol, xg_gunichar__symbol, xg_void_symbol, xg_GtkRecentInfo__symbol, xg_gsize_symbol, xg_guint8__symbol, xg_GdkAtom_symbol, xg_GLogLevelFlags_symbol, xg_GdkPixbuf__symbol, xg_GtkIconView__symbol, xg_GtkEntryCompletion__symbol, xg_GtkFileFilterInfo__symbol, xg_GtkTreeSelection__symbol, xg_GtkCellRenderer__symbol, xg_GtkTreeViewColumn__symbol, xg_GtkTreeView__symbol, xg_gunichar_symbol, xg_GdkAtom__symbol, xg_GtkSelectionData__symbol, xg_GtkClipboard__symbol, xg_GtkTreeIter__symbol, xg_GtkTreePath__symbol, xg_GtkTreeModel__symbol, xg_GdkModifierType_symbol, xg_guint_symbol, xg_gchar__symbol, xg_GtkTextTag__symbol, xg_gboolean_symbol, xg_gint_symbol, xg_GtkMenu__symbol, xg_GdkXEvent__symbol, xg_GtkWidget__symbol, xg_lambda_data_symbol, xg_GClosure__symbol, xg_GtkAccelKey__symbol, xg_GdkEventMotion__symbol, xg_gdouble__symbol, xg_GdkEventAny__symbol, xg_GdkEvent__symbol, xg_cairo_t__symbol, xg_cairo_font_options_t__symbol, xg_PangoFontDescription__symbol, xg_idler_symbol, xg_GtkCellRendererPixbuf__symbol, xg_GtkCheckButton__symbol, xg_GtkDrawingArea__symbol, xg_GtkScrollbar__symbol, xg_GtkSeparator__symbol, xg_GtkSeparatorMenuItem__symbol, xg_GdkEventExpose__symbol, xg_GdkEventNoExpose__symbol, xg_GdkEventVisibility__symbol, xg_GdkEventButton__symbol, xg_GdkEventScroll__symbol, xg_GdkEventCrossing__symbol, xg_GdkEventFocus__symbol, xg_GdkEventConfigure__symbol, xg_GdkEventProperty__symbol, xg_GdkEventSelection__symbol, xg_GdkEventProximity__symbol, xg_GdkEventSetting__symbol, xg_GdkEventWindowState__symbol, xg_GdkEventDND__symbol, xg_GtkFileChooserDialog__symbol, xg_GtkFileChooserWidget__symbol, xg_GtkColorButton__symbol, xg_GtkAccelMap_symbol, xg_GtkCellRendererCombo__symbol, xg_GtkCellRendererProgress__symbol, xg_GtkCellRendererAccel__symbol, xg_GtkCellRendererSpin__symbol, xg_GtkRecentChooserDialog__symbol, xg_GtkRecentChooserWidget__symbol, xg_GtkCellRendererSpinner__symbol, xg_gboolean__symbol, xg_GtkFontChooserDialog__symbol, xg_GtkFontChooserWidget__symbol, xg_GtkColorChooserDialog__symbol, xg_GtkColorChooserWidget__symbol, xg_GtkColorWidget__symbol;
+static Xen xg_GtkPropagationPhase_symbol, xg_GtkEventController__symbol, xg_GtkGestureZoom__symbol, xg_GtkGestureSwipe__symbol, xg_GtkGestureSingle__symbol, xg_GtkGestureRotate__symbol, xg_GtkGestureMultiPress__symbol, xg_GtkGesturePan__symbol, xg_GtkGestureDrag__symbol, xg_GdkEventSequence__symbol, xg_GtkEventSequenceState_symbol, xg_GtkGesture__symbol, xg_GtkPopover__symbol, xg_GtkActionBar__symbol, xg_GtkFlowBox__symbol, xg_GtkFlowBoxChild__symbol, xg_GdkEventType_symbol, xg_GtkSearchBar__symbol, xg_GtkListBox__symbol, xg_GtkListBoxRow__symbol, xg_GtkHeaderBar__symbol, xg_GtkRevealerTransitionType_symbol, xg_GtkRevealer__symbol, xg_GtkStackTransitionType_symbol, xg_GtkStack__symbol, xg_GtkStackSwitcher__symbol, xg_GtkPlacesSidebar__symbol, xg_GtkPlacesOpenFlags_symbol, xg_GtkBaselinePosition_symbol, xg_GdkFullscreenMode_symbol, xg_GtkInputHints_symbol, xg_GtkInputPurpose_symbol, xg_GtkLevelBarMode_symbol, xg_GtkLevelBar__symbol, xg_GtkMenuButton__symbol, xg_GtkColorChooser__symbol, xg_GtkApplicationWindow__symbol, xg_GtkApplication__symbol, xg_GMenuModel__symbol, xg_guint___symbol, xg_GdkModifierIntent_symbol, xg_GtkFontChooser__symbol, xg_GdkScrollDirection_symbol, xg_GtkOverlay__symbol, xg_GtkWidgetPath__symbol, xg_GtkStateFlags_symbol, xg_GdkScreen___symbol, xg_GtkToolShell__symbol, xg_GtkWindowGroup__symbol, xg_GtkInvisible__symbol, xg_GtkOrientable__symbol, xg_GtkCellArea__symbol, xg_GtkBorder__symbol, xg_GtkSwitch__symbol, xg_GtkScrollablePolicy_symbol, xg_GtkScrollable__symbol, xg_GtkGrid__symbol, xg_GdkRGBA__symbol, xg_GtkComboBoxText__symbol, xg_GtkAlign_symbol, xg_GtkContainerClass__symbol, xg_GtkSizeRequestMode_symbol, xg_cairo_region_overlap_t_symbol, xg_cairo_rectangle_int_t__symbol, xg_double__symbol, xg_cairo_rectangle_t__symbol, xg_cairo_device_t__symbol, xg_cairo_bool_t_symbol, xg_cairo_text_cluster_flags_t__symbol, xg_cairo_text_cluster_t___symbol, xg_cairo_glyph_t___symbol, xg_cairo_text_cluster_flags_t_symbol, xg_cairo_text_cluster_t__symbol, xg_cairo_region_t__symbol, xg_GtkMessageDialog__symbol, xg_GdkDevice__symbol, xg_GdkDeviceManager__symbol, xg_GtkAccessible__symbol, xg_GdkModifierType__symbol, xg_GtkToolPaletteDragTargets_symbol, xg_GtkToolItemGroup__symbol, xg_GtkToolPalette__symbol, xg_GtkSpinner__symbol, xg_GtkEntryBuffer__symbol, xg_GtkMessageType_symbol, xg_GtkInfoBar__symbol, xg_GIcon__symbol, xg_GtkEntryIconPosition_symbol, xg_GFile__symbol, xg_GtkScaleButton__symbol, xg_GtkCalendarDetailFunc_symbol, xg_GtkTooltip__symbol, xg_cairo_rectangle_list_t__symbol, xg_void__symbol, xg_cairo_filter_t_symbol, xg_cairo_extend_t_symbol, xg_cairo_format_t_symbol, xg_cairo_path_t__symbol, xg_cairo_destroy_func_t_symbol, xg_cairo_user_data_key_t__symbol, xg_cairo_text_extents_t__symbol, xg_cairo_font_extents_t__symbol, xg_cairo_font_face_t__symbol, xg_cairo_glyph_t__symbol, xg_cairo_scaled_font_t__symbol, xg_cairo_font_weight_t_symbol, xg_cairo_font_slant_t_symbol, xg_cairo_hint_metrics_t_symbol, xg_cairo_hint_style_t_symbol, xg_cairo_subpixel_order_t_symbol, xg_cairo_status_t_symbol, xg_bool_symbol, xg_cairo_matrix_t__symbol, xg_cairo_line_join_t_symbol, xg_cairo_line_cap_t_symbol, xg_cairo_fill_rule_t_symbol, xg_cairo_antialias_t_symbol, xg_cairo_operator_t_symbol, xg_cairo_pattern_t__symbol, xg_cairo_content_t_symbol, xg_GtkPageSet_symbol, xg_GtkPageRange__symbol, xg_GtkPrintPages_symbol, xg_GtkPrintQuality_symbol, xg_GtkPrintDuplex_symbol, xg_GtkPaperSize__symbol, xg_GtkPageOrientation_symbol, xg_GtkPrintSettingsFunc_symbol, xg_GtkPrintOperationPreview__symbol, xg_GtkPageSetupDoneFunc_symbol, xg_GtkPrintStatus_symbol, xg_GtkPrintOperationAction_symbol, xg_GtkPrintOperationResult_symbol, xg_GtkUnit_symbol, xg_GtkPrintSettings__symbol, xg_GtkPrintOperation__symbol, xg_GtkPageSetup__symbol, xg_GtkPrintContext__symbol, xg_cairo_surface_t__symbol, xg_GtkTreeViewGridLines_symbol, xg_GtkRecentData__symbol, xg_GtkTextBufferDeserializeFunc_symbol, xg_GtkTextBufferSerializeFunc_symbol, xg_time_t_symbol, xg_GtkRecentChooserMenu__symbol, xg_GtkRecentManager__symbol, xg_GtkRecentFilter__symbol, xg_GtkRecentSortFunc_symbol, xg_GtkRecentSortType_symbol, xg_GtkRecentChooser__symbol, xg_GtkLinkButton__symbol, xg_GtkAssistantPageType_symbol, xg_GtkAssistantPageFunc_symbol, xg_GtkAssistant__symbol, xg_GDestroyNotify_symbol, xg_GtkTreeViewSearchPositionFunc_symbol, xg_GtkSensitivityType_symbol, xg_GtkClipboardRichTextReceivedFunc_symbol, xg_GtkMenuBar__symbol, xg_GtkPackDirection_symbol, xg_GtkIconViewDropPosition_symbol, xg_GValue__symbol, xg_GLogFunc_symbol, xg_PangoMatrix__symbol, xg_PangoRenderPart_symbol, xg_PangoRenderer__symbol, xg_GtkClipboardImageReceivedFunc_symbol, xg_GtkMenuToolButton__symbol, xg_GtkFileChooserButton__symbol, xg_PangoScriptIter__symbol, xg_PangoScript_symbol, xg_PangoAttrFilterFunc_symbol, xg_PangoEllipsizeMode_symbol, xg_GtkIconViewForeachFunc_symbol, xg_GtkAboutDialog__symbol, xg_GtkTreeViewRowSeparatorFunc_symbol, xg_GtkCellView__symbol, xg_GtkAccelMap__symbol, xg_GtkClipboardTargetsReceivedFunc_symbol, xg_GtkOrientation_symbol, xg_GtkToolButton__symbol, xg_GtkIconLookupFlags_symbol, xg_GtkIconInfo__symbol, xg_GtkIconTheme__symbol, xg_GtkFileChooser__symbol, xg_GtkCellLayoutDataFunc_symbol, xg_GtkCellLayout__symbol, xg_GtkFileFilterFunc_symbol, xg_GtkFileFilterFlags_symbol, xg_GtkFileFilter__symbol, xg_GSourceFunc_symbol, xg_GtkToggleToolButton__symbol, xg_GtkSeparatorToolItem__symbol, xg_GtkRadioToolButton__symbol, xg_GtkEntryCompletionMatchFunc_symbol, xg_GtkFontButton__symbol, xg_GtkExpander__symbol, xg_GtkComboBox__symbol, xg_GtkTreeModelFilter__symbol, xg_GtkFileChooserAction_symbol, xg_GtkToolItem__symbol, xg_GtkEventBox__symbol, xg_GtkCalendarDisplayOptions_symbol, xg_GdkScreen__symbol, xg_GdkDisplay__symbol, xg_PangoLayoutRun__symbol, xg_PangoLayoutIter__symbol, xg_PangoLayoutLine__symbol, xg_int__symbol, xg_PangoAlignment_symbol, xg_PangoWrapMode_symbol, xg_PangoItem__symbol, xg_PangoGlyphString__symbol, xg_PangoFontMap__symbol, xg_PangoGlyph_symbol, xg_PangoFontFace__symbol, xg_PangoFontFace___symbol, xg_PangoFontFamily__symbol, xg_PangoFontMask_symbol, xg_PangoFontDescription___symbol, xg_PangoCoverageLevel_symbol, xg_PangoCoverage__symbol, xg_PangoFontMetrics__symbol, xg_PangoFontset__symbol, xg_PangoFont__symbol, xg_PangoFontFamily___symbol, xg_PangoLogAttr__symbol, xg_PangoAnalysis__symbol, xg_PangoAttrList___symbol, xg_PangoAttrIterator__symbol, xg_PangoRectangle__symbol, xg_PangoUnderline_symbol, xg_PangoStretch_symbol, xg_PangoVariant_symbol, xg_PangoWeight_symbol, xg_PangoStyle_symbol, xg_guint16_symbol, xg_PangoAttribute__symbol, xg_PangoAttrType_symbol, xg_PangoColor__symbol, xg_GdkGravity_symbol, xg_GtkWindowPosition_symbol, xg_GtkWindowType_symbol, xg_GtkWindow__symbol, xg_GtkTextDirection_symbol, xg_AtkObject__symbol, xg_GtkDirectionType_symbol, xg_GtkAllocation__symbol, xg_GtkViewport__symbol, xg_GtkTreeViewSearchEqualFunc_symbol, xg_GtkTreeViewDropPosition_symbol, xg_GtkTreeViewMappingFunc_symbol, xg_GtkTreeViewColumnDropFunc_symbol, xg_GtkTreeViewColumnSizing_symbol, xg_GtkTreeCellDataFunc_symbol, xg_GtkTreeStore__symbol, xg_GtkTreeIterCompareFunc_symbol, xg_GtkSortType_symbol, xg_GtkTreeSortable__symbol, xg_GtkTreeSelectionForeachFunc_symbol, xg_GtkTreeModel___symbol, xg_GtkTreeSelectionFunc_symbol, xg_GtkSelectionMode_symbol, xg_GtkTreeModelSort__symbol, xg_GtkTreeModelForeachFunc_symbol, xg_GtkTreeModelFlags_symbol, xg_GtkTreeRowReference__symbol, xg_GtkTreeDragDest__symbol, xg_GtkTreeDragSource__symbol, xg_GtkToolbarStyle_symbol, xg_GtkToolbar__symbol, xg_GtkToggleButton__symbol, xg_PangoTabArray__symbol, xg_GtkWrapMode_symbol, xg_GtkTextWindowType_symbol, xg_GtkTextView__symbol, xg_GtkTextTagTableForeach_symbol, xg_GtkTextSearchFlags_symbol, xg_GtkTextCharPredicate_symbol, xg_GtkTextAttributes__symbol, xg_GtkTextMark__symbol, xg_GtkTextChildAnchor__symbol, xg_GtkTextIter__symbol, xg_GtkTextTagTable__symbol, xg_GtkTextBuffer__symbol, xg_GtkStatusbar__symbol, xg_GtkSpinType_symbol, xg_GtkSpinButtonUpdatePolicy_symbol, xg_GtkSpinButton__symbol, xg_GtkSizeGroupMode_symbol, xg_GtkSizeGroup__symbol, xg_GtkSettings__symbol, xg_GtkCornerType_symbol, xg_GtkPolicyType_symbol, xg_GtkScrolledWindow__symbol, xg_GtkScale__symbol, xg_GtkRange__symbol, xg_GtkRadioMenuItem__symbol, xg_GtkRadioButton__symbol, xg_GtkProgressBar__symbol, xg_GtkPaned__symbol, xg_GtkPositionType_symbol, xg_GtkNotebook__symbol, xg_GtkMenuShell__symbol, xg_GtkMenuItem__symbol, xg_GtkMenuPositionFunc_symbol, xg_PangoLanguage__symbol, xg_GtkListStore__symbol, xg_GtkLayout__symbol, xg_GtkJustification_symbol, xg_GtkLabel__symbol, xg_guint16__symbol, xg_GtkIMContextSimple__symbol, xg_GdkEventKey__symbol, xg_PangoAttrList__symbol, xg_GtkIMContext__symbol, xg_GtkImageType_symbol, xg_GtkImage__symbol, xg_GtkShadowType_symbol, xg_GtkFrame__symbol, xg_GtkFixed__symbol, xg_PangoLayout__symbol, xg_GtkEntry__symbol, xg_GtkEditable__symbol, xg_GtkTargetList__symbol, xg_GtkDestDefaults_symbol, xg_etc_symbol, xg_GtkDialog__symbol, xg_GtkCallback_symbol, xg_GtkContainer__symbol, xg_GtkClipboardTextReceivedFunc_symbol, xg_GtkClipboardReceivedFunc_symbol, xg_GtkClipboardClearFunc_symbol, xg_GtkClipboardGetFunc_symbol, xg_GtkTargetEntry__symbol, xg_GtkCheckMenuItem__symbol, xg_GtkCellRendererToggle__symbol, xg_GtkCellRendererText__symbol, xg_GtkCellRendererState_symbol, xg_GtkCellEditable__symbol, xg_GtkCalendar__symbol, xg_GtkReliefStyle_symbol, xg_GtkButton__symbol, xg_GtkPackType_symbol, xg_GtkBox__symbol, xg_GtkBin__symbol, xg_GtkBindingSet__symbol, xg_GtkButtonBox__symbol, xg_GtkButtonBoxStyle_symbol, xg_GtkAspectFrame__symbol, xg_GtkAdjustment__symbol, xg_GtkAccelMapForeach_symbol, xg_GtkAccelLabel__symbol, xg_GtkAccelGroupEntry__symbol, xg_lambda3_symbol, xg_GSList__symbol, xg_GObject__symbol, xg_GtkAccelFlags_symbol, xg_GtkAccelGroup__symbol, xg_GTimeVal__symbol, xg_GdkPixbufAnimationIter__symbol, xg_GdkPixbufAnimation__symbol, xg_GdkInterpType_symbol, xg_double_symbol, xg_gfloat_symbol, xg_guchar_symbol, xg_char___symbol, xg_GdkPixbufDestroyNotify_symbol, xg_GError__symbol, xg_int_symbol, xg_GdkColorspace_symbol, xg_GdkWindowTypeHint_symbol, xg_GdkWindowHints_symbol, xg_GdkGeometry__symbol, xg_GdkWindowEdge_symbol, xg_GdkWMFunction_symbol, xg_GdkWMDecoration_symbol, xg_GdkEventMask_symbol, xg_GdkWindowState_symbol, xg_GdkFilterFunc_symbol, xg_GdkWindowType_symbol, xg_GdkWindowAttr__symbol, xg_GdkVisualType__symbol, xg_gint__symbol, xg_GdkVisualType_symbol, xg_GdkPropMode_symbol, xg_guchar__symbol, xg_PangoContext__symbol, xg_PangoDirection_symbol, xg_GdkKeymapKey__symbol, xg_GdkKeymap__symbol, xg_GdkRectangle__symbol, xg_char__symbol, xg_gchar___symbol, xg_GdkEventFunc_symbol, xg_gdouble_symbol, xg_GList__symbol, xg_GdkWindow__symbol, xg_guint32_symbol, xg_GdkDragAction_symbol, xg_GdkDragContext__symbol, xg_GdkCursorType_symbol, xg_GdkCursor__symbol, xg_GdkVisual__symbol, xg_GSignalMatchType_symbol, xg_GConnectFlags_symbol, xg_GtkDestroyNotify_symbol, xg_GSignalEmissionHook_symbol, xg_gulong_symbol, xg_GSignalInvocationHint__symbol, xg_GQuark_symbol, xg_guint__symbol, xg_GSignalQuery__symbol, xg_GType__symbol, xg_GSignalCMarshaller_symbol, xg_gpointer_symbol, xg_GSignalAccumulator_symbol, xg_GSignalFlags_symbol, xg_GType_symbol, xg_GClosureNotify_symbol, xg_GCallback_symbol, xg_GNormalizeMode_symbol, xg_glong_symbol, xg_gssize_symbol, xg_gunichar__symbol, xg_void_symbol, xg_GtkRecentInfo__symbol, xg_gsize_symbol, xg_guint8__symbol, xg_GdkAtom_symbol, xg_GLogLevelFlags_symbol, xg_GdkPixbuf__symbol, xg_GtkIconView__symbol, xg_GtkEntryCompletion__symbol, xg_GtkFileFilterInfo__symbol, xg_GtkTreeSelection__symbol, xg_GtkCellRenderer__symbol, xg_GtkTreeViewColumn__symbol, xg_GtkTreeView__symbol, xg_gunichar_symbol, xg_GdkAtom__symbol, xg_GtkSelectionData__symbol, xg_GtkClipboard__symbol, xg_GtkTreeIter__symbol, xg_GtkTreePath__symbol, xg_GtkTreeModel__symbol, xg_GdkModifierType_symbol, xg_guint_symbol, xg_gchar__symbol, xg_GtkTextTag__symbol, xg_gboolean_symbol, xg_gint_symbol, xg_GtkMenu__symbol, xg_GdkXEvent__symbol, xg_GtkWidget__symbol, xg_lambda_data_symbol, xg_GClosure__symbol, xg_GtkAccelKey__symbol, xg_GdkEventMotion__symbol, xg_gdouble__symbol, xg_GdkEventAny__symbol, xg_GdkEvent__symbol, xg_cairo_t__symbol, xg_cairo_font_options_t__symbol, xg_PangoFontDescription__symbol, xg_idler_symbol, xg_GtkCellRendererPixbuf__symbol, xg_GtkCheckButton__symbol, xg_GtkDrawingArea__symbol, xg_GtkScrollbar__symbol, xg_GtkSeparator__symbol, xg_GtkSeparatorMenuItem__symbol, xg_GdkEventExpose__symbol, xg_GdkEventNoExpose__symbol, xg_GdkEventVisibility__symbol, xg_GdkEventButton__symbol, xg_GdkEventScroll__symbol, xg_GdkEventCrossing__symbol, xg_GdkEventFocus__symbol, xg_GdkEventConfigure__symbol, xg_GdkEventProperty__symbol, xg_GdkEventSelection__symbol, xg_GdkEventProximity__symbol, xg_GdkEventSetting__symbol, xg_GdkEventWindowState__symbol, xg_GdkEventDND__symbol, xg_GtkFileChooserDialog__symbol, xg_GtkFileChooserWidget__symbol, xg_GtkColorButton__symbol, xg_GtkAccelMap_symbol, xg_GtkCellRendererCombo__symbol, xg_GtkCellRendererProgress__symbol, xg_GtkCellRendererAccel__symbol, xg_GtkCellRendererSpin__symbol, xg_GtkRecentChooserDialog__symbol, xg_GtkRecentChooserWidget__symbol, xg_GtkCellRendererSpinner__symbol, xg_gboolean__symbol, xg_GtkFontChooserDialog__symbol, xg_GtkFontChooserWidget__symbol, xg_GtkColorChooserDialog__symbol, xg_GtkColorChooserWidget__symbol, xg_GtkColorWidget__symbol, xg_GtkGestureLongPress__symbol;
 
 #define wrap_for_Xen(Name, Value) Xen_list_2(xg_ ## Name ## _symbol, Xen_wrap_C_pointer(Value))
 #define is_wrapped(Name, Value) (Xen_is_pair(Value) && (Xen_car(Value) == xg_ ## Name ## _symbol))
@@ -688,7 +688,6 @@ Xm_type_Ptr(PangoLayoutIter_, PangoLayoutIter*)
 Xm_type_Ptr_2(PangoLayoutRun_, PangoLayoutRun*)
 Xm_type_Ptr(GdkDisplay_, GdkDisplay*)
 Xm_type_Ptr(GdkScreen_, GdkScreen*)
-Xm_type_Ptr_1(GtkAlignment_, GtkAlignment*)
 #define C_to_Xen_GtkCalendarDisplayOptions(Arg) C_int_to_Xen_integer(Arg)
 #define Xen_to_C_GtkCalendarDisplayOptions(Arg) (GtkCalendarDisplayOptions)(Xen_integer_to_C_int(Arg))
 #define Xen_is_GtkCalendarDisplayOptions(Arg) Xen_is_integer(Arg)
@@ -897,15 +896,14 @@ Xm_type_Ptr_1(GtkPopover_, GtkPopover*)
 Xm_type_Ptr(GtkGesture_, GtkGesture*)
 Xm_type(GtkEventSequenceState, GtkEventSequenceState)
 Xm_type_Ptr(GdkEventSequence_, GdkEventSequence*)
-Xm_type(gdoubl, gdoubl)
-Xm_type_Ptr(GtkGestureDrag_, GtkGestureDrag*)
-Xm_type_Ptr(GtkGesturePan_, GtkGesturePan*)
-Xm_type_Ptr(GtkGestureMultiPress_, GtkGestureMultiPress*)
-Xm_type_Ptr(GtkGestureRotate_, GtkGestureRotate*)
-Xm_type_Ptr(GtkGestureSingle_, GtkGestureSingle*)
-Xm_type_Ptr(GtkGestureSwipe_, GtkGestureSwipe*)
-Xm_type_Ptr(GtkGestureZoom_, GtkGestureZoom*)
-Xm_type_Ptr(GtkEventController_, GtkEventController*)
+Xm_type_Ptr_1(GtkGestureDrag_, GtkGestureDrag*)
+Xm_type_Ptr_1(GtkGesturePan_, GtkGesturePan*)
+Xm_type_Ptr_1(GtkGestureMultiPress_, GtkGestureMultiPress*)
+Xm_type_Ptr_1(GtkGestureRotate_, GtkGestureRotate*)
+Xm_type_Ptr_1(GtkGestureSingle_, GtkGestureSingle*)
+Xm_type_Ptr_1(GtkGestureSwipe_, GtkGestureSwipe*)
+Xm_type_Ptr_1(GtkGestureZoom_, GtkGestureZoom*)
+Xm_type_Ptr_1(GtkEventController_, GtkEventController*)
 Xm_type(GtkPropagationPhase, GtkPropagationPhase)
 #endif
 
@@ -15358,34 +15356,6 @@ static Xen gxg_gdk_window_set_keep_below(Xen window, Xen setting)
   return(Xen_false);
 }
 
-static Xen gxg_gtk_alignment_set_padding(Xen alignment, Xen padding_top, Xen padding_bottom, Xen padding_left, Xen padding_right)
-{
-  #define H_gtk_alignment_set_padding "void gtk_alignment_set_padding(GtkAlignment* alignment, guint padding_top, \
-guint padding_bottom, guint padding_left, guint padding_right)"
-  Xen_check_type(Xen_is_GtkAlignment_(alignment), alignment, 1, "gtk_alignment_set_padding", "GtkAlignment*");
-  Xen_check_type(Xen_is_guint(padding_top), padding_top, 2, "gtk_alignment_set_padding", "guint");
-  Xen_check_type(Xen_is_guint(padding_bottom), padding_bottom, 3, "gtk_alignment_set_padding", "guint");
-  Xen_check_type(Xen_is_guint(padding_left), padding_left, 4, "gtk_alignment_set_padding", "guint");
-  Xen_check_type(Xen_is_guint(padding_right), padding_right, 5, "gtk_alignment_set_padding", "guint");
-  gtk_alignment_set_padding(Xen_to_C_GtkAlignment_(alignment), Xen_to_C_guint(padding_top), Xen_to_C_guint(padding_bottom), 
-                            Xen_to_C_guint(padding_left), Xen_to_C_guint(padding_right));
-  return(Xen_false);
-}
-
-static Xen gxg_gtk_alignment_get_padding(Xen alignment, Xen ignore_padding_top, Xen ignore_padding_bottom, Xen ignore_padding_left, Xen ignore_padding_right)
-{
-  #define H_gtk_alignment_get_padding "void gtk_alignment_get_padding(GtkAlignment* alignment, guint* [padding_top], \
-guint* [padding_bottom], guint* [padding_left], guint* [padding_right])"
-  guint ref_padding_top;
-  guint ref_padding_bottom;
-  guint ref_padding_left;
-  guint ref_padding_right;
-  Xen_check_type(Xen_is_GtkAlignment_(alignment), alignment, 1, "gtk_alignment_get_padding", "GtkAlignment*");
-  gtk_alignment_get_padding(Xen_to_C_GtkAlignment_(alignment), &ref_padding_top, &ref_padding_bottom, &ref_padding_left, 
-                            &ref_padding_right);
-  return(Xen_list_4(C_to_Xen_guint(ref_padding_top), C_to_Xen_guint(ref_padding_bottom), C_to_Xen_guint(ref_padding_left), C_to_Xen_guint(ref_padding_right)));
-}
-
 static Xen gxg_gtk_button_box_get_child_secondary(Xen widget, Xen child)
 {
   #define H_gtk_button_box_get_child_secondary "gboolean gtk_button_box_get_child_secondary(GtkButtonBox* widget, \
@@ -25657,15 +25627,6 @@ static Xen gxg_gdk_window_begin_paint_region(Xen window, Xen region)
   return(Xen_false);
 }
 
-static Xen gxg_gtk_widget_region_intersect(Xen widget, Xen region)
-{
-  #define H_gtk_widget_region_intersect "cairo_region_t* gtk_widget_region_intersect(GtkWidget* widget, \
-cairo_region_t* region)"
-  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 1, "gtk_widget_region_intersect", "GtkWidget*");
-  Xen_check_type(Xen_is_cairo_region_t_(region), region, 2, "gtk_widget_region_intersect", "cairo_region_t*");
-  return(C_to_Xen_cairo_region_t_(gtk_widget_region_intersect(Xen_to_C_GtkWidget_(widget), Xen_to_C_cairo_region_t_(region))));
-}
-
 static Xen gxg_gdk_window_move_region(Xen window, Xen region, Xen dx, Xen dy)
 {
   #define H_gdk_window_move_region "void gdk_window_move_region(GdkWindow* window, cairo_region_t* region, \
@@ -30702,22 +30663,22 @@ static Xen gxg_gtk_gesture_get_last_event(Xen gesture, Xen sequence)
   #define H_gtk_gesture_get_last_event "GdkEvent* gtk_gesture_get_last_event(GtkGesture* gesture, GdkEventSequence* sequence)"
   Xen_check_type(Xen_is_GtkGesture_(gesture), gesture, 1, "gtk_gesture_get_last_event", "GtkGesture*");
   Xen_check_type(Xen_is_GdkEventSequence_(sequence), sequence, 2, "gtk_gesture_get_last_event", "GdkEventSequence*");
-  return(C_to_Xen_GdkEvent_(gtk_gesture_get_last_event(Xen_to_C_GtkGesture_(gesture), Xen_to_C_GdkEventSequence_(sequence))));
+    return(C_to_Xen_GdkEvent_((GdkEvent*)gtk_gesture_get_last_event(Xen_to_C_GtkGesture_(gesture), Xen_to_C_GdkEventSequence_(sequence))));
 }
 
 static Xen gxg_gtk_gesture_get_point(Xen gesture, Xen sequence, Xen ignore_x, Xen ignore_y)
 {
   #define H_gtk_gesture_get_point "gboolean gtk_gesture_get_point(GtkGesture* gesture, GdkEventSequence* sequence, \
-gdouble [x], gdouble [y])"
-  gdoubl ref_x;
-  gdoubl ref_y;
+gdouble* [x], gdouble* [y])"
+  gdouble ref_x;
+  gdouble ref_y;
   Xen_check_type(Xen_is_GtkGesture_(gesture), gesture, 1, "gtk_gesture_get_point", "GtkGesture*");
   Xen_check_type(Xen_is_GdkEventSequence_(sequence), sequence, 2, "gtk_gesture_get_point", "GdkEventSequence*");
   {
     Xen result;
     result = C_to_Xen_gboolean(gtk_gesture_get_point(Xen_to_C_GtkGesture_(gesture), Xen_to_C_GdkEventSequence_(sequence), 
                                                      &ref_x, &ref_y));
-    return(Xen_list_3(result, C_to_Xen_gdoubl(ref_x), C_to_Xen_gdoubl(ref_y)));
+    return(Xen_list_3(result, C_to_Xen_gdouble(ref_x), C_to_Xen_gdouble(ref_y)));
    }
 }
 
@@ -30733,14 +30694,14 @@ GdkRectangle* rect)"
 static Xen gxg_gtk_gesture_get_bounding_box_center(Xen gesture, Xen ignore_x, Xen ignore_y)
 {
   #define H_gtk_gesture_get_bounding_box_center "gboolean gtk_gesture_get_bounding_box_center(GtkGesture* gesture, \
-gdouble [x], gdouble [y])"
-  gdoubl ref_x;
-  gdoubl ref_y;
+gdouble* [x], gdouble* [y])"
+  gdouble ref_x;
+  gdouble ref_y;
   Xen_check_type(Xen_is_GtkGesture_(gesture), gesture, 1, "gtk_gesture_get_bounding_box_center", "GtkGesture*");
   {
     Xen result;
     result = C_to_Xen_gboolean(gtk_gesture_get_bounding_box_center(Xen_to_C_GtkGesture_(gesture), &ref_x, &ref_y));
-    return(Xen_list_3(result, C_to_Xen_gdoubl(ref_x), C_to_Xen_gdoubl(ref_y)));
+    return(Xen_list_3(result, C_to_Xen_gdouble(ref_x), C_to_Xen_gdouble(ref_y)));
    }
 }
 
@@ -30816,28 +30777,28 @@ static Xen gxg_gtk_gesture_drag_new(Xen widget)
 static Xen gxg_gtk_gesture_drag_get_start_point(Xen gesture, Xen ignore_x, Xen ignore_y)
 {
   #define H_gtk_gesture_drag_get_start_point "gboolean gtk_gesture_drag_get_start_point(GtkGestureDrag* gesture, \
-gdouble [x], gdouble [y])"
-  gdoubl ref_x;
-  gdoubl ref_y;
+gdouble* [x], gdouble* [y])"
+  gdouble ref_x;
+  gdouble ref_y;
   Xen_check_type(Xen_is_GtkGestureDrag_(gesture), gesture, 1, "gtk_gesture_drag_get_start_point", "GtkGestureDrag*");
   {
     Xen result;
     result = C_to_Xen_gboolean(gtk_gesture_drag_get_start_point(Xen_to_C_GtkGestureDrag_(gesture), &ref_x, &ref_y));
-    return(Xen_list_3(result, C_to_Xen_gdoubl(ref_x), C_to_Xen_gdoubl(ref_y)));
+    return(Xen_list_3(result, C_to_Xen_gdouble(ref_x), C_to_Xen_gdouble(ref_y)));
    }
 }
 
 static Xen gxg_gtk_gesture_drag_get_offset(Xen gesture, Xen ignore_x, Xen ignore_y)
 {
   #define H_gtk_gesture_drag_get_offset "gboolean gtk_gesture_drag_get_offset(GtkGestureDrag* gesture, \
-gdouble [x], gdouble [y])"
-  gdoubl ref_x;
-  gdoubl ref_y;
+gdouble* [x], gdouble* [y])"
+  gdouble ref_x;
+  gdouble ref_y;
   Xen_check_type(Xen_is_GtkGestureDrag_(gesture), gesture, 1, "gtk_gesture_drag_get_offset", "GtkGestureDrag*");
   {
     Xen result;
     result = C_to_Xen_gboolean(gtk_gesture_drag_get_offset(Xen_to_C_GtkGestureDrag_(gesture), &ref_x, &ref_y));
-    return(Xen_list_3(result, C_to_Xen_gdoubl(ref_x), C_to_Xen_gdoubl(ref_y)));
+    return(Xen_list_3(result, C_to_Xen_gdouble(ref_x), C_to_Xen_gdouble(ref_y)));
    }
 }
 
@@ -30988,14 +30949,14 @@ static Xen gxg_gtk_gesture_swipe_new(Xen widget)
 static Xen gxg_gtk_gesture_swipe_get_velocity(Xen gesture, Xen ignore_velocity_x, Xen ignore_velocity_y)
 {
   #define H_gtk_gesture_swipe_get_velocity "gboolean gtk_gesture_swipe_get_velocity(GtkGestureSwipe* gesture, \
-gdouble [velocity_x], gdouble [velocity_y])"
-  gdoubl ref_velocity_x;
-  gdoubl ref_velocity_y;
+gdouble* [velocity_x], gdouble* [velocity_y])"
+  gdouble ref_velocity_x;
+  gdouble ref_velocity_y;
   Xen_check_type(Xen_is_GtkGestureSwipe_(gesture), gesture, 1, "gtk_gesture_swipe_get_velocity", "GtkGestureSwipe*");
   {
     Xen result;
     result = C_to_Xen_gboolean(gtk_gesture_swipe_get_velocity(Xen_to_C_GtkGestureSwipe_(gesture), &ref_velocity_x, &ref_velocity_y));
-    return(Xen_list_3(result, C_to_Xen_gdoubl(ref_velocity_x), C_to_Xen_gdoubl(ref_velocity_y)));
+    return(Xen_list_3(result, C_to_Xen_gdouble(ref_velocity_x), C_to_Xen_gdouble(ref_velocity_y)));
    }
 }
 
@@ -33751,16 +33712,16 @@ static Xen gxg_GTK_POPOVER(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_l
 #endif
 
 #if GTK_CHECK_VERSION(3, 14, 0)
-static Xen gxg_GTK_GESTURE(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGesture_symbol, Xen_cadr(obj)) : Xen_false);}
-static Xen gxg_GTK_GESTURE_DRAG(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGestureDrag_symbol, Xen_cadr(obj)) : Xen_false);}
-static Xen gxg_GTK_GESTURE_LONG_PRESS(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGestureLongPress_symbol, Xen_cadr(obj)) : Xen_false);}
-static Xen gxg_GTK_GESTURE_ZOOM(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGestureZoom_symbol, Xen_cadr(obj)) : Xen_false);}
-static Xen gxg_GTK_GESTURE_SWIPE(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGestureSwipe_symbol, Xen_cadr(obj)) : Xen_false);}
-static Xen gxg_GTK_GESTURE_SINGLE(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGestureSingle_symbol, Xen_cadr(obj)) : Xen_false);}
-static Xen gxg_GTK_GESTURE_PAN(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGesturePan_symbol, Xen_cadr(obj)) : Xen_false);}
-static Xen gxg_GTK_GESTURE_MULTI_PRESS(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGestureMultiPress_symbol, Xen_cadr(obj)) : Xen_false);}
-static Xen gxg_GTK_GESTURE_ROTATE(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGestureRotate_symbol, Xen_cadr(obj)) : Xen_false);}
-static Xen gxg_GTK_EVENT_CONTROLLER(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GttEventController__symbol, Xen_cadr(obj)) : Xen_false);}
+static Xen gxg_GTK_GESTURE(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGesture__symbol, Xen_cadr(obj)) : Xen_false);}
+static Xen gxg_GTK_GESTURE_DRAG(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGestureDrag__symbol, Xen_cadr(obj)) : Xen_false);}
+static Xen gxg_GTK_GESTURE_LONG_PRESS(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGestureLongPress__symbol, Xen_cadr(obj)) : Xen_false);}
+static Xen gxg_GTK_GESTURE_ZOOM(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGestureZoom__symbol, Xen_cadr(obj)) : Xen_false);}
+static Xen gxg_GTK_GESTURE_SWIPE(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGestureSwipe__symbol, Xen_cadr(obj)) : Xen_false);}
+static Xen gxg_GTK_GESTURE_SINGLE(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGestureSingle__symbol, Xen_cadr(obj)) : Xen_false);}
+static Xen gxg_GTK_GESTURE_PAN(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGesturePan__symbol, Xen_cadr(obj)) : Xen_false);}
+static Xen gxg_GTK_GESTURE_MULTI_PRESS(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGestureMultiPress__symbol, Xen_cadr(obj)) : Xen_false);}
+static Xen gxg_GTK_GESTURE_ROTATE(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkGestureRotate__symbol, Xen_cadr(obj)) : Xen_false);}
+static Xen gxg_GTK_EVENT_CONTROLLER(Xen obj) {return((Xen_is_wrapped_object(obj)) ? Xen_list_2(xg_GtkEventController__symbol, Xen_cadr(obj)) : Xen_false);}
 #endif
 
 static Xen gxg_GDK_IS_DRAG_CONTEXT(Xen obj) {return(C_bool_to_Xen_boolean(Xen_is_wrapped_object(obj) && GDK_IS_DRAG_CONTEXT((GTypeInstance *)Xen_unwrap_C_pointer(Xen_cadr(obj)))));}
@@ -35844,8 +35805,6 @@ Xen_wrap_1_arg(gxg_gdk_display_get_default_cursor_size_w, gxg_gdk_display_get_de
 Xen_wrap_3_optional_args(gxg_gdk_display_get_maximal_cursor_size_w, gxg_gdk_display_get_maximal_cursor_size)
 Xen_wrap_2_args(gxg_gdk_window_set_keep_above_w, gxg_gdk_window_set_keep_above)
 Xen_wrap_2_args(gxg_gdk_window_set_keep_below_w, gxg_gdk_window_set_keep_below)
-Xen_wrap_5_args(gxg_gtk_alignment_set_padding_w, gxg_gtk_alignment_set_padding)
-Xen_wrap_5_optional_args(gxg_gtk_alignment_get_padding_w, gxg_gtk_alignment_get_padding)
 Xen_wrap_2_args(gxg_gtk_button_box_get_child_secondary_w, gxg_gtk_button_box_get_child_secondary)
 Xen_wrap_2_args(gxg_gtk_button_set_focus_on_click_w, gxg_gtk_button_set_focus_on_click)
 Xen_wrap_1_arg(gxg_gtk_button_get_focus_on_click_w, gxg_gtk_button_get_focus_on_click)
@@ -36986,7 +36945,6 @@ Xen_wrap_4_args(gxg_gdk_window_shape_combine_region_w, gxg_gdk_window_shape_comb
 Xen_wrap_3_args(gxg_gdk_window_invalidate_region_w, gxg_gdk_window_invalidate_region)
 Xen_wrap_1_arg(gxg_gdk_window_get_update_area_w, gxg_gdk_window_get_update_area)
 Xen_wrap_2_args(gxg_gdk_window_begin_paint_region_w, gxg_gdk_window_begin_paint_region)
-Xen_wrap_2_args(gxg_gtk_widget_region_intersect_w, gxg_gtk_widget_region_intersect)
 Xen_wrap_4_args(gxg_gdk_window_move_region_w, gxg_gdk_window_move_region)
 Xen_wrap_1_arg(gxg_gdk_keymap_get_num_lock_state_w, gxg_gdk_keymap_get_num_lock_state)
 Xen_wrap_1_arg(gxg_gdk_window_has_native_w, gxg_gdk_window_has_native)
@@ -39830,8 +39788,6 @@ static void define_functions(void)
   Xg_define_procedure(gdk_display_get_maximal_cursor_size, gxg_gdk_display_get_maximal_cursor_size_w, 1, 2, 0, H_gdk_display_get_maximal_cursor_size);
   Xg_define_procedure(gdk_window_set_keep_above, gxg_gdk_window_set_keep_above_w, 2, 0, 0, H_gdk_window_set_keep_above);
   Xg_define_procedure(gdk_window_set_keep_below, gxg_gdk_window_set_keep_below_w, 2, 0, 0, H_gdk_window_set_keep_below);
-  Xg_define_procedure(gtk_alignment_set_padding, gxg_gtk_alignment_set_padding_w, 5, 0, 0, H_gtk_alignment_set_padding);
-  Xg_define_procedure(gtk_alignment_get_padding, gxg_gtk_alignment_get_padding_w, 1, 4, 0, H_gtk_alignment_get_padding);
   Xg_define_procedure(gtk_button_box_get_child_secondary, gxg_gtk_button_box_get_child_secondary_w, 2, 0, 0, H_gtk_button_box_get_child_secondary);
   Xg_define_procedure(gtk_button_set_focus_on_click, gxg_gtk_button_set_focus_on_click_w, 2, 0, 0, H_gtk_button_set_focus_on_click);
   Xg_define_procedure(gtk_button_get_focus_on_click, gxg_gtk_button_get_focus_on_click_w, 1, 0, 0, H_gtk_button_get_focus_on_click);
@@ -40972,7 +40928,6 @@ static void define_functions(void)
   Xg_define_procedure(gdk_window_invalidate_region, gxg_gdk_window_invalidate_region_w, 3, 0, 0, H_gdk_window_invalidate_region);
   Xg_define_procedure(gdk_window_get_update_area, gxg_gdk_window_get_update_area_w, 1, 0, 0, H_gdk_window_get_update_area);
   Xg_define_procedure(gdk_window_begin_paint_region, gxg_gdk_window_begin_paint_region_w, 2, 0, 0, H_gdk_window_begin_paint_region);
-  Xg_define_procedure(gtk_widget_region_intersect, gxg_gtk_widget_region_intersect_w, 2, 0, 0, H_gtk_widget_region_intersect);
   Xg_define_procedure(gdk_window_move_region, gxg_gdk_window_move_region_w, 4, 0, 0, H_gdk_window_move_region);
   Xg_define_procedure(gdk_keymap_get_num_lock_state, gxg_gdk_keymap_get_num_lock_state_w, 1, 0, 0, H_gdk_keymap_get_num_lock_state);
   Xg_define_procedure(gdk_window_has_native, gxg_gdk_window_has_native_w, 1, 0, 0, H_gdk_window_has_native);
@@ -43700,7 +43655,6 @@ static void define_symbols(void)
   xg_GtkGestureMultiPress__symbol = C_string_to_Xen_symbol("GtkGestureMultiPress_");
   xg_GtkGesturePan__symbol = C_string_to_Xen_symbol("GtkGesturePan_");
   xg_GtkGestureDrag__symbol = C_string_to_Xen_symbol("GtkGestureDrag_");
-  xg_gdoubl_symbol = C_string_to_Xen_symbol("gdoubl");
   xg_GdkEventSequence__symbol = C_string_to_Xen_symbol("GdkEventSequence_");
   xg_GtkEventSequenceState_symbol = C_string_to_Xen_symbol("GtkEventSequenceState");
   xg_GtkGesture__symbol = C_string_to_Xen_symbol("GtkGesture_");
@@ -43895,7 +43849,6 @@ static void define_symbols(void)
   xg_GtkToolItem__symbol = C_string_to_Xen_symbol("GtkToolItem_");
   xg_GtkEventBox__symbol = C_string_to_Xen_symbol("GtkEventBox_");
   xg_GtkCalendarDisplayOptions_symbol = C_string_to_Xen_symbol("GtkCalendarDisplayOptions");
-  xg_GtkAlignment__symbol = C_string_to_Xen_symbol("GtkAlignment_");
   xg_GdkScreen__symbol = C_string_to_Xen_symbol("GdkScreen_");
   xg_GdkDisplay__symbol = C_string_to_Xen_symbol("GdkDisplay_");
   xg_PangoLayoutRun__symbol = C_string_to_Xen_symbol("PangoLayoutRun_");
@@ -44196,6 +44149,7 @@ static void define_symbols(void)
   xg_GtkColorChooserDialog__symbol = C_string_to_Xen_symbol("GtkColorChooserDialog_");
   xg_GtkColorChooserWidget__symbol = C_string_to_Xen_symbol("GtkColorChooserWidget_");
   xg_GtkColorWidget__symbol = C_string_to_Xen_symbol("GtkColorWidget_");
+  xg_GtkGestureLongPress__symbol = C_string_to_Xen_symbol("GtkGestureLongPress_");
 }
 
 /* -------------------------------- strings -------------------------------- */
@@ -44272,7 +44226,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("18-Aug-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("10-Oct-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

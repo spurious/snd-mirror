@@ -36416,10 +36416,6 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
   if (is_null(cdr(args)))                /* (copy obj) -- this works for environments, hash-tables and bignums */
     return(s7_copy(sc, car(args)));
   have_indices = (is_pair(cddr(args)));
-
-  /* (do ((i 0 (+ i 1))) ((= i (min (length src) (length dest))) dest) (set! (dest i) (src i)))
-   */
-
   source = car(args);
   dest = cadr(args);
   if ((source == dest) && (!have_indices))
@@ -45988,6 +45984,12 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
       sc->w = collect_collisions(sc, cadr(p), sc->w);
       break;
 
+    case OP_DEFINE_MACRO:
+    case OP_DEFINE_MACRO_STAR:
+    case OP_DEFINE_BACRO:
+    case OP_DEFINE_BACRO_STAR:
+      /* (set! (*s7* 'undefined-identifier-warnings) #t)
+       */
     case OP_DEFINE:
     case OP_DEFINE_STAR:
       if ((is_pair(cadr(p))) &&
@@ -46240,12 +46242,12 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		    (port_filename(p)))
 		  fprintf(stderr, "%s might be undefined (%s %u)\n", 
 			  DISPLAY(caar_x),
-			  port_filename(sc->input_port),
-			  port_line_number(sc->input_port));
+			  port_filename(p),
+			  port_line_number(p));
 		else fprintf(stderr, "%s might be undefined\n", DISPLAY(caar_x));
 		symbol_tag(caar_x) = 1;             /* one warning is enough */
 	      }
-	    /* we need local definitions and func args in e?  also check is_symbol case below, also (local?) define-macro in opt-syntax
+	    /* we need local definitions and func args in e?  also check is_symbol case below
 	     */
 	  }
 
@@ -46459,7 +46461,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
     {
       /* caar(x) is not a symbol, but there might be interesting stuff here */
       /* (define (hi a) (case 1 ((1) (if (> a 2) a 2)))) */
-
       s7_pointer p;
       for (p = car_x; is_pair(p); p = cdr(p))
 	{
@@ -47114,7 +47115,6 @@ static s7_pointer check_case(s7_scheme *sc)
 		}
 	    }
 	}
-      
       y = caar(x);
       if (!is_pair(y))
 	{
@@ -47150,7 +47150,6 @@ static s7_pointer check_case(s7_scheme *sc)
 		keys_simple = false;
 	    }
 	}
-
       y = car(x);
       if ((cadr(y) == sc->FEED_TO) &&
 	  (s7_symbol_value(sc, sc->FEED_TO) == sc->UNDEFINED))
@@ -52000,7 +51999,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 	      }
 	  }
-
 	if (sc->op == OP_SIMPLE_DO_A)
 	  push_stack(sc, OP_SIMPLE_DO_STEP_A, sc->args, code);
 	else push_stack(sc, OP_SIMPLE_DO_STEP, sc->args, code);
@@ -69956,7 +69954,7 @@ int main(int argc, char **argv)
  * bench    42736 | 8752 | 4220 | 3506 3506
  * lg             |      |      |      6404
  * t502        90 |   43 | 14.5 | 12.7 12.6
- * t455|6     265 |   89 |  9   |      10.1
+ * t455|6     265 |   89 |  9   |       8.8
  * t816           |   71 | 70.6 | 38.0 32.4
  * calls      359 |  275 | 54   | 34.7 34.7
  *            153 with run macro (eval_ptree)
@@ -69971,4 +69969,5 @@ int main(int argc, char **argv)
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
  *
  * (owlet) still is not right -- error-data is by ref
+ * undef id needs to ignore case key lists [46237 optimize_expression]
  */

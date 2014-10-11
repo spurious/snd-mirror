@@ -399,23 +399,6 @@ void set_label(GtkWidget *label, const char *str)
 }
 
 
-void sg_left_justify_button(GtkWidget *button)
-{
-  gfloat x, y;
-  gtk_misc_get_alignment(GTK_MISC(GTK_LABEL(BIN_CHILD(button))), &x, &y);
-  gtk_misc_set_alignment(GTK_MISC(GTK_LABEL(BIN_CHILD(button))), 0.05, y);
-}
-
-
-void sg_left_justify_label(GtkWidget *label)
-{
-  /* the label justify function in Gtk refers to the text of the lines after the 1st! */
-  gfloat x, y;
-  gtk_misc_get_alignment(GTK_MISC(GTK_LABEL(label)), &x, &y);
-  gtk_misc_set_alignment(GTK_MISC(GTK_LABEL(label)), 0.05, y);
-}
-
-
 void check_for_event(void)
 {
   /* this is needed to force label updates and provide interrupts for long computations

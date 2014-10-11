@@ -110,6 +110,8 @@
 	"GBytes" "GtkPlacesSidebar*" "GtkStackSwitcher*" "GtkRevealer*" "GtkHeaderBar*" "GtkListBox*" "GtkSearchBar*"
 
 	"GtkFlowBox*" "GtkActionBar*" "GtkPopover*"
+	"GtkGestureDrag*" "GtkGesturePan*" "GtkGestureMultiPress*" "GtkGestureRotate*" "GtkGestureSingle*"
+	"GtkGestureSwipe*" "GtkGestureZoom*" "GtkGestureController*" "GtkEventController*"
 	))
 
 (define no-xen-p 
@@ -1638,7 +1640,7 @@
 	'GtkCellRendererCombo_ 'GtkCellRendererProgress_ 'GtkCellRendererAccel_ 'GtkCellRendererSpin_ 'GtkRecentChooserDialog_
 	'GtkRecentChooserWidget_ 'GtkCellRendererSpinner_ 'gboolean_
 	'GtkFontChooserDialog_ 'GtkFontChooserWidget_ 'GtkColorChooserDialog_ 'GtkColorChooserWidget_ 'GtkColorWidget_
-
+	'GtkGestureLongPress_ 
 	))
 
 (for-each

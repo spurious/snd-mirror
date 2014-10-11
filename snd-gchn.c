@@ -897,6 +897,10 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  gtk_box_pack_start(GTK_BOX(cw[W_wf_buttons]), cw[W_up_ev], true, true, 0);
 	  gtk_widget_show(cw[W_up_ev]);
 
+	  /* TODO: arrow is deprecated -- use GtkImage with "suitable icon" (gprefs also) 
+	   *   this arrow (for channel movement) could be a drop down box I guess
+	   *   the prefs arrow as well, though it will look dumb in both cases 
+	   */
 	  cw[W_f] = gtk_arrow_new(GTK_ARROW_UP, GTK_SHADOW_ETCHED_OUT);
 	  gtk_container_add(GTK_CONTAINER(cw[W_up_ev]), cw[W_f]);
 	  gtk_widget_show(cw[W_f]);
