@@ -2623,6 +2623,7 @@ static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, share
 static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym);
 static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol);
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym);
+static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_pointer body, bool at_end, bool *bad_set);
 
 #if WITH_GCC
 #define find_symbol_checked(Sc, Sym) ({s7_pointer _x_; _x_ = find_symbol_unchecked(Sc, Sym); ((_x_) ? _x_ : unbound_variable(Sc, Sym));})
@@ -2926,8 +2927,6 @@ void add_code(s7_scheme *sc)
 #endif
 /* -------------------------------------------------------------------------------- */
 
-
-static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_pointer body, bool at_end, bool *bad_set);
 
 static int position_of(s7_pointer p, s7_pointer args)
 {
@@ -5479,7 +5478,6 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
       if (let_id(env) >= symbol_id(symbol))
 	symbol_set_local(symbol, let_id(env), slot);
     }
-
   /* there are about the same number of frames as local variables -- this
    *   strikes me as surprising, but it holds up across a lot of code.
    */
@@ -46235,16 +46233,22 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		(symbol_tag(caar_x) == 0))         /*    and we haven't looked it up earlier */
 	      {
 		s7_pointer p;
+		char *str;
+		int len;
+
+		str = (char *)malloc(1024 * sizeof(char));
 		p = sc->input_port;
 		if ((is_input_port(p)) &&
 		    (port_file(p) != stdin) &&
 		    (!port_is_closed(p)) &&
 		    (port_filename(p)))
-		  fprintf(stderr, "%s might be undefined (%s %u)\n", 
-			  DISPLAY(caar_x),
-			  port_filename(p),
-			  port_line_number(p));
-		else fprintf(stderr, "%s might be undefined\n", DISPLAY(caar_x));
+		  len = snprintf(str, 1024, "%s might be undefined (%s %u)\n", 
+			   DISPLAY(caar_x),
+			   port_filename(p),
+			   port_line_number(p));
+		else len = snprintf(str, 1024, "; %s might be undefined\n", DISPLAY(caar_x));
+		s7_display(sc, make_string_uncopied_with_length(sc, str, len), sc->error_port);
+
 		symbol_tag(caar_x) = 1;             /* one warning is enough */
 	      }
 	    /* we need local definitions and func args in e?  also check is_symbol case below
@@ -69365,7 +69369,7 @@ s7_scheme *s7_init(void)
   sc->PROCEDURE_SOURCE =      s7_define_safe_function(sc, "procedure-source",        g_procedure_source,       1, 0, false, H_procedure_source);
   sc->FUNCLET =               s7_define_safe_function(sc, "funclet",                 g_funclet,                1, 0, false, H_funclet);
   sc->PROCEDURE_NAME =        s7_define_safe_function(sc, "procedure-name",          g_procedure_name,         1, 0, false, H_procedure_name);
-  s7_dilambda(sc, "procedure-setter",   g_procedure_setter, 1, 0, g_procedure_set_setter, 2, 0, H_procedure_setter);
+  s7_dilambda(sc, "procedure-setter", g_procedure_setter, 1, 0, g_procedure_set_setter, 2, 0, H_procedure_setter);
   sc->IS_DILAMBDA =           s7_define_safe_function(sc, "dilambda?",               g_is_dilambda,            1, 0, false, H_is_dilambda);
 
   sc->ARITY =                 s7_define_safe_function(sc, "arity",                   g_arity,                  1, 0, false, H_arity);
@@ -69970,4 +69974,5 @@ int main(int argc, char **argv)
  *
  * (owlet) still is not right -- error-data is by ref
  * undef id needs to ignore case key lists [46237 optimize_expression]
+ * several current stderr messages might better go to *stderr* -- dynamic loader troubles for example
  */
