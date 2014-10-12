@@ -2602,6 +2602,7 @@ static void mark_embedded_objects(s7_pointer a); /* called by gc, calls c_obj's 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op);
 static s7_pointer division_by_zero_error(s7_scheme *sc, s7_pointer caller, s7_pointer arg);
 static s7_pointer file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name);
+static void s7_warn(s7_scheme *sc, int len, const char *ctrl, ...);
 static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list);
 static s7_pointer cons_unchecked(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type);
@@ -4315,11 +4316,11 @@ static void expand_heap(s7_scheme *sc)
   
   sc->heap = (s7_cell **)realloc(sc->heap, sc->heap_size * sizeof(s7_cell *));
   if (!(sc->heap))
-    fprintf(stderr, "heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));
+    s7_warn(sc, 256, "heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));
   
   sc->free_heap = (s7_cell **)realloc(sc->free_heap, sc->heap_size * sizeof(s7_cell *));
   if (!(sc->free_heap))
-    fprintf(stderr, "free heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));	  
+    s7_warn(sc, 256, "free heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));	  
   
   sc->free_heap_trigger = (s7_cell **)(sc->free_heap + GC_TRIGGER_SIZE);
   sc->free_heap_top = sc->free_heap + old_free; /* incremented below, added old_free 21-Aug-12?!? */
@@ -21411,7 +21412,7 @@ void s7_flush_output_port(s7_scheme *sc, s7_pointer p)
       if (port_position(p) > 0)
 	{
 	  if (fwrite((void *)(port_data(p)), 1, port_position(p), port_file(p)) != port_position(p))
-	    fprintf(stderr, "fwrite trouble in flush-output-port\n");
+	    s7_warn(sc, 64, "fwrite trouble in flush-output-port\n");
 	}
       port_position(p) = 0;
       fflush(port_file(p));
@@ -21460,7 +21461,7 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
 	  if (port_position(p) > 0)
 	    {
 	      if (fwrite((void *)(port_data(p)), 1, port_position(p), port_file(p)) != port_position(p))
-		fprintf(stderr, "fwrite trouble in close-output-port\n");
+		s7_warn(sc, 64, "fwrite trouble in close-output-port\n");
 	    }
 	  port_position(p) = 0;
 	  free(port_data(p));
@@ -21694,7 +21695,7 @@ static void file_write_char(s7_scheme *sc, int c, s7_pointer port)
   if (port_position(port) == PORT_DATA_SIZE)
     {
       if (fwrite((void *)(port_data(port)), 1, PORT_DATA_SIZE, port_file(port)) != PORT_DATA_SIZE)
-	fprintf(stderr, "fwrite trouble during write-char\n");
+	s7_warn(sc, 64, "fwrite trouble during write-char\n");
       port_position(port) = 0;
     }
   port_data(port)[port_position(port)++] = (unsigned char)c;
@@ -21789,11 +21790,11 @@ static void file_display(s7_scheme *sc, const char *s, s7_pointer port)
       if (port_position(port) > 0)
 	{
 	  if (fwrite((void *)(port_data(port)), 1, port_position(port), port_file(port)) != port_position(port))
-	    fprintf(stderr, "fwrite trouble in display\n");
+	    s7_warn(sc, 64, "fwrite trouble in display\n");
 	  port_position(port) = 0;
 	}
       if (fputs(s, port_file(port)) == EOF)
-	fprintf(stderr, "write to %s: %s\n", port_filename(port), strerror(errno));
+	s7_warn(sc, 64, "write to %s: %s\n", port_filename(port), strerror(errno));
     }
 }
 
@@ -21806,11 +21807,11 @@ static void file_write_string(s7_scheme *sc, const char *str, int len, s7_pointe
       if (port_position(pt) > 0)
 	{
 	  if (fwrite((void *)(port_data(pt)), 1, port_position(pt), port_file(pt)) != port_position(pt))
-	    fprintf(stderr, "fwrite trouble in write-string\n");
+	    s7_warn(sc, 64, "fwrite trouble in write-string\n");
 	  port_position(pt) = 0;
 	}
       if (fwrite((void *)str, 1, len, port_file(pt)) != (size_t)len)
-	fprintf(stderr, "fwrite trouble in write-string\n");
+	s7_warn(sc, 64, "fwrite trouble in write-string\n");
     }
   else
     {
@@ -23314,14 +23315,14 @@ defaults to the rootlet.  To load into the curlet instead, pass (curlet)."
 		  }
 		else 
 		  {
-		    fprintf(stderr, "loaded %s, but can't find %s (%s)?\n", pwd_name, init_name, dlerror());
+		    s7_warn(sc, 512, "loaded %s, but can't find %s (%s)?\n", pwd_name, init_name, dlerror());
 		    dlclose(library);
 		  }
 	      }
-	    else fprintf(stderr, "load %s failed: %s\n", pwd_name, dlerror());
+	    else s7_warn(sc, 512, "load %s failed: %s\n", pwd_name, dlerror());
 	    free(pwd_name);
 	  }
-	else fprintf(stderr, "can't load %s: no init function\n", fname);
+	else s7_warn(sc, 512, "can't load %s: no init function\n", fname);
 	return(sc->F);
       }
   }
@@ -38146,6 +38147,20 @@ It looks for an existing catch with a matching tag, and jumps to it if found.  O
 }
 
 
+static void s7_warn(s7_scheme *sc, int len, const char *ctrl, ...)
+{
+  va_list ap;
+  char *str;
+
+  str = (char *)malloc(len * sizeof(char));
+  va_start(ap, ctrl);
+  len = vsnprintf(str, len, ctrl, ap);
+  va_end(ap);
+
+  s7_display(sc, make_string_uncopied_with_length(sc, str, len), sc->error_port);
+}
+
+
 s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 {
   static int last_line = -1;
@@ -46233,22 +46248,13 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		(symbol_tag(caar_x) == 0))         /*    and we haven't looked it up earlier */
 	      {
 		s7_pointer p;
-		char *str;
-		int len;
-
-		str = (char *)malloc(1024 * sizeof(char));
 		p = sc->input_port;
 		if ((is_input_port(p)) &&
 		    (port_file(p) != stdin) &&
 		    (!port_is_closed(p)) &&
 		    (port_filename(p)))
-		  len = snprintf(str, 1024, "%s might be undefined (%s %u)\n", 
-			   DISPLAY(caar_x),
-			   port_filename(p),
-			   port_line_number(p));
-		else len = snprintf(str, 1024, "; %s might be undefined\n", DISPLAY(caar_x));
-		s7_display(sc, make_string_uncopied_with_length(sc, str, len), sc->error_port);
-
+		  s7_warn(sc, 1024, "%s might be undefined (%s %u)\n", DISPLAY(caar_x), port_filename(p), port_line_number(p));
+		else s7_warn(sc, 1024, "; %s might be undefined\n", DISPLAY(caar_x));
 		symbol_tag(caar_x) = 1;             /* one warning is enough */
 	      }
 	    /* we need local definitions and func args in e?  also check is_symbol case below
@@ -48347,7 +48353,7 @@ static s7_pointer check_define(s7_scheme *sc)
 	return(eval_error_with_name(sc, "~A ~A: keywords are constants", x));
       if ((is_syntactic(x)) &&                                                  /* (define and a) */
 	  (sc->safety > 0))
-	  fprintf(stderr, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
+	s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
       if ((is_pair(cadr(sc->code))) &&               /* look for (define sym (lambda ...)) and treat it like (define (sym ...)...) */
 	  (((symbol_id(sc->LAMBDA) == 0) && (caadr(sc->code) == sc->LAMBDA)) ||
 	   ((symbol_id(sc->LAMBDA_STAR) == 0) && (caadr(sc->code) == sc->LAMBDA_STAR))))
@@ -48361,7 +48367,7 @@ static s7_pointer check_define(s7_scheme *sc)
 	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", x));
       if ((is_syntactic(x)) &&                                                  /* (define (and a) a) */
 	  (sc->safety > 0))
-	fprintf(stderr, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
+	s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
       if (sc->op == OP_DEFINE_STAR)
 	cdar(sc->code) = check_lambda_star_args(sc, cdar(sc->code), &arity);
       else check_lambda_args(sc, cdar(sc->code), &arity);
@@ -50042,7 +50048,7 @@ static s7_pointer check_define_macro(s7_scheme *sc)
     return(eval_error_with_name(sc, "~A: ~S is not a symbol?", x));
   if ((dont_eval_args(x)) &&                                           /* (define-macro (quote a) quote) */
       (sc->safety > 0))
-    fprintf(stderr, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
+    s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
   
   if (is_immutable(x))
     return(eval_error_with_name(sc, "~A: ~S is immutable", x));
