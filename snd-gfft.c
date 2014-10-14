@@ -877,6 +877,9 @@ GtkWidget *make_transform_dialog(bool managed)
 #endif
 
       transform_dialog = snd_gtk_dialog_new();
+#if GTK_CHECK_VERSION(3, 14, 0)
+      gtk_window_set_transient_for(GTK_WINDOW(transform_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+#endif
       gtk_widget_set_name(transform_dialog, "fft_dialog");
       SG_SIGNAL_CONNECT(transform_dialog, "delete_event", delete_transform_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(transform_dialog), "Transform Options");

@@ -893,24 +893,36 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	}
       else
 	{
+#if GTK_CHECK_VERSION(3, 14, 0)
+	  GtkIconTheme *icon_theme; 
+	  icon_theme = gtk_icon_theme_get_default();
+#endif
 	  cw[W_up_ev] = gtk_event_box_new();
 	  gtk_box_pack_start(GTK_BOX(cw[W_wf_buttons]), cw[W_up_ev], true, true, 0);
 	  gtk_widget_show(cw[W_up_ev]);
 
-	  /* TODO: arrow is deprecated -- use GtkImage with "suitable icon" (gprefs also) 
-	   *   this arrow (for channel movement) could be a drop down box I guess
-	   *   the prefs arrow as well, though it will look dumb in both cases 
+	  /* gtk_arrow is deprecated -- docs say: use GtkImage with a suitable icon
+	   *   but the damned "suitable icon" is specific to some ugly Gnome theme,
+	   *   so I'll conjure up some "^" and "v" images I guess -- insert flame here.
 	   */
+#if GTK_CHECK_VERSION(3, 14, 0)
+	  cw[W_f] = gtk_image_new_from_pixbuf(gtk_icon_theme_load_icon(icon_theme, "pan-up-symbolic", 16, (GtkIconLookupFlags)0, NULL)); 
+#else
 	  cw[W_f] = gtk_arrow_new(GTK_ARROW_UP, GTK_SHADOW_ETCHED_OUT);
-	  gtk_container_add(GTK_CONTAINER(cw[W_up_ev]), cw[W_f]);
+#endif
+	  gtk_container_add(GTK_CONTAINER(cw[W_up_ev]), GTK_WIDGET(cw[W_f]));
 	  gtk_widget_show(cw[W_f]);
 
 	  cw[W_down_ev] = gtk_event_box_new();
 	  gtk_box_pack_start(GTK_BOX(cw[W_wf_buttons]), cw[W_down_ev], true, true, 0);
 	  gtk_widget_show(cw[W_down_ev]);
 
+#if GTK_CHECK_VERSION(3, 14, 0)
+	  cw[W_w] = gtk_image_new_from_pixbuf(gtk_icon_theme_load_icon(icon_theme, "pan-down-symbolic", 16, (GtkIconLookupFlags)0, NULL)); 
+#else
 	  cw[W_w] = gtk_arrow_new(GTK_ARROW_DOWN, GTK_SHADOW_ETCHED_OUT);
-	  gtk_container_add(GTK_CONTAINER(cw[W_down_ev]), cw[W_w]);
+#endif
+	  gtk_container_add(GTK_CONTAINER(cw[W_down_ev]), GTK_WIDGET(cw[W_w]));
 	  gtk_widget_show(cw[W_w]);
 	}
 

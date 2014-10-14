@@ -845,6 +845,9 @@ GtkWidget *snd_gtk_dialog_new(void)
 {
   GtkWidget *w;
   w = gtk_dialog_new();
+#if GTK_CHECK_VERSION(3, 14, 0)
+  gtk_window_set_transient_for(GTK_WINDOW(w), GTK_WINDOW(MAIN_SHELL(ss)));
+#endif
   add_dialog_style(w);
   g_object_ref(w); 
   return(w);
@@ -885,6 +888,13 @@ void widget_mus_long_t_to_text(GtkWidget *w, mus_long_t val)
   free(str);
 }
 
+#if HAVE_GTK_ADJUSTMENT_GET_UPPER
+  #define ADJUSTMENT_LOWER(Adjust)                gtk_adjustment_get_lower(GTK_ADJUSTMENT(Adjust))
+  #define ADJUSTMENT_UPPER(Adjust)                gtk_adjustment_get_upper(GTK_ADJUSTMENT(Adjust))
+#else
+  #define ADJUSTMENT_LOWER(Adjust)                ((GTK_ADJUSTMENT(Adjust))->lower)
+  #define ADJUSTMENT_UPPER(Adjust)                ((GTK_ADJUSTMENT(Adjust))->upper)
+#endif
 
 void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
 {
@@ -1110,7 +1120,11 @@ static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
   item = gtk_button_new_with_label(label);
   slist_set_row(item, row);
   gtk_button_set_relief(GTK_BUTTON(item), GTK_RELIEF_HALF);
+#if GTK_CHECK_VERSION(3, 14, 0)
+  gtk_widget_set_halign(GTK_WIDGET(item), GTK_ALIGN_START);
+#else
   gtk_button_set_alignment(GTK_BUTTON(item), 0.05, 1.0);
+#endif
   gtk_box_pack_start(GTK_BOX(lst->topics), item, false, false, 0);
 
   widget_modify_bg(item, GTK_STATE_NORMAL, ss->white);
@@ -1161,16 +1175,8 @@ slist *slist_new_with_title_and_table_data(const char *title,
       gtk_paned_add1(GTK_PANED(parent), topw);
       break;
 
-    case PANED_ADD2: 
-      gtk_paned_add2(GTK_PANED(parent), topw);
-      break;
-
     case BOX_PACK: 
       gtk_box_pack_start(GTK_BOX(parent), topw, true, true, 4); 
-      break;
-
-    case BOX_PACK_END: 
-      gtk_box_pack_end(GTK_BOX(parent), topw, false, false, 4); 
       break;
 
     case TABLE_ATTACH: 

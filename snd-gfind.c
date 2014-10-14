@@ -108,6 +108,9 @@ static void make_edit_find_dialog(bool managed, chan_info *cp)
       GtkWidget *dl, *rc;
       GtkWidget *help_button;
       edit_find_dialog = snd_gtk_dialog_new();
+#if GTK_CHECK_VERSION(3, 14, 0)
+      gtk_window_set_transient_for(GTK_WINDOW(edit_find_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+#endif
       SG_SIGNAL_CONNECT(edit_find_dialog, "delete_event", edit_find_delete, NULL);
       gtk_window_set_title(GTK_WINDOW(edit_find_dialog), I_FIND);
       sg_make_resizable(edit_find_dialog);

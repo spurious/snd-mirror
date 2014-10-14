@@ -1,16 +1,9 @@
 #include "snd.h"
 
-
-/* TODO: use widget alignment and margin properties here (snd-gdraw|gprefs.c too) 
-   gtk_widget_set_h|valign and set_margin_left|right ?
-   but the code below just sets "x" -- halign + GTK_ALIGN_START ?
-
-   try this in gtk3!
- */
 static void sg_left_justify_button(GtkWidget *button)
 {
 #if HAVE_GTK_3
-  gtk_widget_set_halign(GTK_WIDGET(GTK_LABEL(BIN_CHILD(button))), GTK_ALIGN_START);
+  gtk_widget_set_halign(GTK_WIDGET(button), GTK_ALIGN_START);
 #else
   gfloat x, y;
   gtk_misc_get_alignment(GTK_MISC(GTK_LABEL(BIN_CHILD(button))), &x, &y);
@@ -19,18 +12,15 @@ static void sg_left_justify_button(GtkWidget *button)
 }
 
 
+#if (!HAVE_GTK_3)
 static void sg_left_justify_label(GtkWidget *label)
 {
   /* the label justify function in Gtk refers to the text of the lines after the 1st! */
-#if HAVE_GTK_3
-  gtk_widget_set_halign(GTK_WIDGET(GTK_LABEL(label)), GTK_ALIGN_START);
-#else
   gfloat x, y;
   gtk_misc_get_alignment(GTK_MISC(GTK_LABEL(label)), &x, &y);
   gtk_misc_set_alignment(GTK_MISC(GTK_LABEL(label)), 0.05, y);
-#endif
 }
-
+#endif
 
 
 /* -------- region browser -------- */
@@ -578,6 +568,9 @@ static void make_region_dialog(void)
 #endif
 
   region_dialog = snd_gtk_dialog_new();
+#if GTK_CHECK_VERSION(3, 14, 0)
+  gtk_window_set_transient_for(GTK_WINDOW(region_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+#endif
   SG_SIGNAL_CONNECT(region_dialog, "delete_event", region_browser_delete_callback, NULL);
   gtk_window_set_title(GTK_WINDOW(region_dialog), "Regions");
   sg_make_resizable(region_dialog);
@@ -1064,6 +1057,9 @@ void view_files_callback(GtkWidget *w, gpointer info)
       GtkWidget *plw;
 #endif      
       view_files_dialog = snd_gtk_dialog_new();
+#if GTK_CHECK_VERSION(3, 14, 0)
+      gtk_window_set_transient_for(GTK_WINDOW(view_files_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+#endif
       SG_SIGNAL_CONNECT(view_files_dialog, "delete_event", vf_delete_callback, NULL);
       gtk_window_set_title(GTK_WINDOW(view_files_dialog), "Files");
       sg_make_resizable(view_files_dialog);

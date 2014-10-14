@@ -606,6 +606,9 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
 
   /* -------- base dialog -------- */
   fd->dialog = snd_gtk_dialog_new();
+#if GTK_CHECK_VERSION(3, 14, 0)
+  gtk_window_set_transient_for(GTK_WINDOW(fd->dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+#endif
   gtk_window_set_title(GTK_WINDOW(fd->dialog), title);
   sg_make_resizable(fd->dialog);
   gtk_container_set_border_width(GTK_CONTAINER(fd->dialog), 10);
@@ -2701,6 +2704,9 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
   int raw_srate, raw_chans, raw_sample_type;
  
   rp->dialog = snd_gtk_dialog_new();
+#if GTK_CHECK_VERSION(3, 14, 0)
+  gtk_window_set_transient_for(GTK_WINDOW(rp->dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+#endif
   if (!title)
     gtk_window_set_title(GTK_WINDOW(rp->dialog), "No header on file");
   else gtk_window_set_title(GTK_WINDOW(rp->dialog), title);
@@ -3036,6 +3042,9 @@ widget_t make_new_file_dialog(bool managed)
       char *newname;
       GtkWidget *name_label, *hform, *help_button, *cancel_button, *reset_button;
       new_file_dialog = snd_gtk_dialog_new();
+#if GTK_CHECK_VERSION(3, 14, 0)
+      gtk_window_set_transient_for(GTK_WINDOW(new_file_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+#endif
       gtk_window_set_title(GTK_WINDOW(new_file_dialog), "New file");
       sg_make_resizable(new_file_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(new_file_dialog), 10);
@@ -3373,6 +3382,9 @@ GtkWidget *edit_header(snd_info *sp)
     {
       GtkWidget *help_button, *cancel_button;
       ep->dialog = snd_gtk_dialog_new();
+#if GTK_CHECK_VERSION(3, 14, 0)
+      gtk_window_set_transient_for(GTK_WINDOW(ep->dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+#endif
       /* gtk_window_set_title(GTK_WINDOW(ep->dialog), "Edit Header"); */
       sg_make_resizable(ep->dialog);
       gtk_container_set_border_width (GTK_CONTAINER(ep->dialog), 10);
@@ -3498,6 +3510,9 @@ static void create_post_it_monolog(void)
   /* create scrollable but not editable text window */
   GtkWidget *ok_button;
   post_it_dialog = gtk_dialog_new();
+#if GTK_CHECK_VERSION(3, 14, 0)
+  gtk_window_set_transient_for(GTK_WINDOW(post_it_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+#endif
   SG_SIGNAL_CONNECT(post_it_dialog, "delete_event", delete_post_it, NULL);
 
   gtk_window_set_title(GTK_WINDOW(post_it_dialog), "Info");

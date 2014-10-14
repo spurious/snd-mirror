@@ -196,6 +196,11 @@ void draw_rotated_axis_label(chan_info *cp, graphics_context *ax, const char *te
   rotate_text(ax, AXIS_LABEL_FONT(ss), text, 90, x0, y0);
 }
 
+#if HAVE_GTK_3
+  #define IS_DRAWABLE(Widget) GDK_IS_WINDOW(Widget)
+#else
+  #define IS_DRAWABLE(Widget) GDK_IS_DRAWABLE(Widget)
+#endif
 
 void draw_picture(graphics_context *ax, picture_t *src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height)
 {
@@ -889,6 +894,9 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 
 
       ccd_dialog = snd_gtk_dialog_new();
+#if GTK_CHECK_VERSION(3, 14, 0)
+      gtk_window_set_transient_for(GTK_WINDOW(ccd_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+#endif
       SG_SIGNAL_CONNECT(ccd_dialog, "delete_event", delete_color_orientation_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(ccd_dialog), "Color");
       sg_make_resizable(ccd_dialog);
@@ -1018,12 +1026,20 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       gtk_widget_show(shbox);
 
       light_label = gtk_label_new("light");
-      gtk_misc_set_alignment(GTK_MISC (light_label), 0.05, 0.0);
+#if GTK_CHECK_VERSION(3, 14, 0)
+      gtk_widget_set_halign(GTK_WIDGET(light_label), GTK_ALIGN_START);
+#else
+      gtk_misc_set_alignment(GTK_MISC(light_label), 0.05, 0.0);
+#endif
       gtk_box_pack_start(GTK_BOX(shbox), light_label, false, false, 0);
       gtk_widget_show(light_label);
 
       dark_label = gtk_label_new("dark");
+#if GTK_CHECK_VERSION(3, 14, 0)
+      gtk_widget_set_halign(GTK_WIDGET(dark_label), GTK_ALIGN_END);
+#else
       gtk_misc_set_alignment(GTK_MISC(dark_label), 0.95, 0.0);
+#endif
       gtk_box_pack_end(GTK_BOX(shbox), dark_label, false, false, 0);
       gtk_widget_show(dark_label);
 

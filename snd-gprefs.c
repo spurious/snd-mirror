@@ -196,7 +196,11 @@ static GtkWidget *make_row_label(prefs_info *prf, const char *label, GtkWidget *
 #if (!HAVE_GTK_3)
   gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.0);
 #else
+#if GTK_CHECK_VERSION(3, 14, 0)
+  gtk_widget_set_halign(GTK_WIDGET(w), GTK_ALIGN_END);
+#else
   gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.5);
+#endif
 #endif
   gtk_size_group_add_widget(label_group, w);
   gtk_box_pack_start(GTK_BOX(box), w, PACK_1, PACK_2, 0);
@@ -365,12 +369,20 @@ static gboolean call_arrow_up_press(GtkWidget *w, GdkEventButton *ev, gpointer c
 static GtkWidget *make_row_arrows(prefs_info *prf, GtkWidget *box)
 {
   GtkWidget *ev_up, *ev_down, *up, *down;
+#if GTK_CHECK_VERSION(3, 14, 0)
+  GtkIconTheme *icon_theme; 
+  icon_theme = gtk_icon_theme_get_default();
+#endif
 
   ev_down = gtk_event_box_new();
   gtk_box_pack_start(GTK_BOX(box), ev_down, false, false, 0);
   gtk_widget_show(ev_down);
 
+#if GTK_CHECK_VERSION(3, 14, 0)
+  down = gtk_image_new_from_pixbuf(gtk_icon_theme_load_icon(icon_theme, "pan-down-symbolic", 16, (GtkIconLookupFlags)0, NULL)); 
+#else
   down = gtk_arrow_new(GTK_ARROW_DOWN, GTK_SHADOW_ETCHED_OUT);
+#endif
   gtk_container_add(GTK_CONTAINER(ev_down), down);
   gtk_widget_show(down);
 
@@ -378,7 +390,11 @@ static GtkWidget *make_row_arrows(prefs_info *prf, GtkWidget *box)
   gtk_box_pack_start(GTK_BOX(box), ev_up, false, false, 0);
   gtk_widget_show(ev_up);
 
+#if GTK_CHECK_VERSION(3, 14, 0)
+  up = gtk_image_new_from_pixbuf(gtk_icon_theme_load_icon(icon_theme, "pan-up-symbolic", 16, (GtkIconLookupFlags)0, NULL)); 
+#else
   up = gtk_arrow_new(GTK_ARROW_UP, GTK_SHADOW_ETCHED_OUT);
+#endif
   gtk_container_add(GTK_CONTAINER(ev_up), up);
   gtk_widget_show(up);
 
@@ -1415,7 +1431,11 @@ static void make_top_level_label(const char *label, GtkWidget *parent)
   add_highlight_button_style(w2);
   gtk_label_set_markup(GTK_LABEL(BIN_CHILD(w2)), str);
   gtk_label_set_use_markup(GTK_LABEL(BIN_CHILD(w2)), true);
+#if GTK_CHECK_VERSION(3, 14, 0)
+  gtk_widget_set_halign(GTK_WIDGET(w2), GTK_ALIGN_START);
+#else
   gtk_misc_set_alignment(GTK_MISC(BIN_CHILD(w2)), 0.01, 0.5);
+#endif
 #endif
 
   free(str);
@@ -1467,7 +1487,11 @@ static void make_inner_label(const char *label, GtkWidget *parent)
   add_highlight_button_style(w);
   gtk_label_set_markup(GTK_LABEL(BIN_CHILD(w)), str);
   gtk_label_set_use_markup(GTK_LABEL(BIN_CHILD(w)), true);
+#if GTK_CHECK_VERSION(3, 14, 0)
+  gtk_widget_set_halign(GTK_WIDGET(w), GTK_ALIGN_START);
+#else
   gtk_misc_set_alignment(GTK_MISC(BIN_CHILD(w)), 0.0, 0.5);
+#endif
 #endif
 
   free(str);
@@ -1605,6 +1629,9 @@ widget_t make_preferences_dialog(void)
     }
 
   preferences_dialog = snd_gtk_dialog_new();
+#if GTK_CHECK_VERSION(3, 14, 0)
+  gtk_window_set_transient_for(GTK_WINDOW(preferences_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+#endif
   gtk_window_set_title(GTK_WINDOW(preferences_dialog), "Preferences");
   sg_make_resizable(preferences_dialog);
   /* gtk_container_set_border_width (GTK_CONTAINER(preferences_dialog), 10); */

@@ -156,16 +156,12 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
   #define WIDGET_TO_WINDOW(Widget)                gtk_widget_get_window(Widget)
   #define DIALOG_CONTENT_AREA(Dialog)             gtk_dialog_get_content_area(GTK_DIALOG(Dialog))
   #define ADJUSTMENT_VALUE(Adjust)                gtk_adjustment_get_value(GTK_ADJUSTMENT(Adjust))
-  #define ADJUSTMENT_LOWER(Adjust)                gtk_adjustment_get_lower(GTK_ADJUSTMENT(Adjust))
-  #define ADJUSTMENT_UPPER(Adjust)                gtk_adjustment_get_upper(GTK_ADJUSTMENT(Adjust))
   #define ADJUSTMENT_PAGE_SIZE(Adjust)            gtk_adjustment_get_page_size(GTK_ADJUSTMENT(Adjust))
   #define ADJUSTMENT_SET_PAGE_SIZE(Adjust, Value) gtk_adjustment_set_page_size(GTK_ADJUSTMENT(Adjust), Value)
 #else
   #define WIDGET_TO_WINDOW(Widget)                ((Widget)->window)
   #define DIALOG_CONTENT_AREA(Dialog)             ((GTK_DIALOG(Dialog))->vbox)
   #define ADJUSTMENT_VALUE(Adjust)                ((GTK_ADJUSTMENT(Adjust))->value)
-  #define ADJUSTMENT_LOWER(Adjust)                ((GTK_ADJUSTMENT(Adjust))->lower)
-  #define ADJUSTMENT_UPPER(Adjust)                ((GTK_ADJUSTMENT(Adjust))->upper)
   #define ADJUSTMENT_PAGE_SIZE(Adjust)            ((GTK_ADJUSTMENT(Adjust))->page_size)
   #define ADJUSTMENT_SET_PAGE_SIZE(Adjust, Value) (GTK_ADJUSTMENT(Adjust))->page_size = Value
 #endif
@@ -220,8 +216,6 @@ typedef struct {
 #if HAVE_GTK_3
   typedef GdkWindow Drawable;
   #define DRAWABLE(Widget) GDK_WINDOW(Widget)
-  #define IS_DRAWABLE(Widget) GDK_IS_WINDOW(Widget)
-
   /* as far as I can see, UPDATE_CONTINUOUS is now built-in */
   #define gtk_range_get_update_policy(W) 0
   #define gtk_range_set_update_policy(W, V)
@@ -229,7 +223,6 @@ typedef struct {
 #else
   typedef GdkDrawable Drawable;
   #define DRAWABLE(Widget) GDK_DRAWABLE(Widget)
-  #define IS_DRAWABLE(Widget) GDK_IS_DRAWABLE(Widget)
 #endif
 
 typedef struct {
@@ -272,7 +265,7 @@ typedef struct {
 #define DEFAULT_AXIS_LABEL_FONT "Times Medium 14"
 #define DEFAULT_LISTENER_FONT "Monospace 11"
 
-typedef enum {CONTAINER_ADD, PANED_ADD1, BOX_PACK, TABLE_ATTACH, PANED_ADD2, BOX_PACK_END} widget_add_t;
+typedef enum {CONTAINER_ADD, PANED_ADD1, BOX_PACK, TABLE_ATTACH} widget_add_t;
 typedef enum {WITHOUT_CHANNELS_FIELD, WITH_CHANNELS_FIELD, WITH_EXTRACT_CHANNELS_FIELD} dialog_channels_t;
 typedef enum {WITHOUT_SAMPLES_FIELD, WITH_SAMPLES_FIELD} dialog_samples_t;
 typedef enum {WITHOUT_DATA_LOCATION_FIELD, WITH_DATA_LOCATION_FIELD} dialog_data_location_t;

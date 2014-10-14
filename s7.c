@@ -1884,7 +1884,6 @@ static void init_types(void)
 
 #define T_GENSYM                      (1 << (TYPE_BITS + 21))
 #define is_gensym(p)                  ((typeflag(p) & T_GENSYM) != 0)
-#define clear_gensym(p)               typeflag(p) &= (~T_GENSYM)
 /* symbol is from gensym (GC-able etc)
  *   since this is only relevant to symbols, this bit is used below in several other non-intersecting ways
  */
@@ -2206,7 +2205,6 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {pair_sy
 
 #define unique_name(p)                (p)->object.unq.name
 #define unique_name_length(p)         (p)->object.unq.len
-#define is_unique(p)                  (type(p) == T_UNIQUE)
 #define is_unspecified(p)             (type(p) == T_UNSPECIFIED)
 
 #define vector_length(p)              ((p)->object.vector.length)
@@ -26135,6 +26133,10 @@ static s7_pointer format_error(s7_scheme *sc, const char *msg, const char *str, 
   if (safe_strlen(msg) > 100) fprintf(stderr, "format_error ctrl msg len: %d\n", safe_strlen(msg));
 #endif
 
+  /* the control string can't easily be handled here (as opposed to passing it as an argument below)
+   *   because it becomes simply incorporated in the error's control string, so we'd have to scan
+   *   for tildes and so on.
+   */
   if (fdat->loc == 0)
     {
       errmsg = (char *)malloc(128 * sizeof(char));
@@ -37821,7 +37823,6 @@ static s7_pointer g_owlet(s7_scheme *sc, s7_pointer args)
   #define H_owlet "(owlet) returns the environment at the point of the last error. \
 It has the additional local variables: error-type, error-data, error-code, error-line, and error-file."
   /* if owlet is not copied, (define e (owlet)), e changes as owlet does!
-   *    but let_copy does not copy the values which means they can change as owlet does.
    */
   return(let_copy(sc, sc->owlet));
 }
@@ -46001,8 +46002,6 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
     case OP_DEFINE_MACRO_STAR:
     case OP_DEFINE_BACRO:
     case OP_DEFINE_BACRO_STAR:
-      /* (set! (*s7* 'undefined-identifier-warnings) #t)
-       */
     case OP_DEFINE:
     case OP_DEFINE_STAR:
       if ((is_pair(cadr(p))) &&
@@ -46044,6 +46043,22 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
        */
       break;
 
+    case OP_CASE:
+      if (is_pair(cddr(p)))
+	{
+	  s7_pointer kp;
+	  for (kp = cddr(p); is_pair(kp); kp = cdr(kp))
+	    if (is_pair(car(kp)))
+	      {
+		s7_pointer k;
+		for (k = caar(kp); is_pair(k); k = cdr(k))
+		  if ((is_symbol(car(k))) &&
+		      (symbol_tag(car(k)) == 0))
+		    symbol_tag(car(k)) = 1;
+	      }
+	}
+      break;
+
     default:
       break;
     }
@@ -46054,17 +46069,6 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
   
   if (symbol_id(caar(x)) == 0) 
     {
-      /* if (op == OP_SET) fprintf(stderr, "%s\n", DISPLAY(x));
-       *  if either constant caddar? or (+ sym 1) etc
-       *  can we return set_all_c or incr_all?
-       * then
-	      set_optimized(car_x);
-	      set_optimize_data(car_x, hop + OP_SAFE_C_C);
-	      set_c_function(car_x, set_all_c) or whatever and return true 
-       * but is this slower if not in an expression, or at the end of a body?
-       * and howto handle undeclared var?
-       */
-
       if ((op == OP_IF) || (op == OP_OR) || (op == OP_AND))
 	{
 	  bool happy = true;
@@ -48523,7 +48527,6 @@ static s7_pointer check_set(s7_scheme *sc)
 					pair_set_syntax_symbol(sc->code, sc->SET_FV_SCALED);
 				    }
 				}
-
 			      /* else if (is_optimized(value)) fprintf(stderr, "%s %s\n", opt_names[optimize_data(value)], DISPLAY(sc->code)); */
 			      /* here we can get h_unknown_s      (set! (current-peak-freqs new-place) (peak-freqs k))
 			       *                 h_safe_c_opvsq_s (set! (sines k) (* (sines k) one-over-two-pi))
@@ -49335,11 +49338,9 @@ static dox_function step_dox_eval(s7_scheme *sc, s7_pointer code, s7_pointer var
 
 	  /* (+ i c) (- i c)?
 	   * (+ 1 i) -> cs
+	   * 
+	   * if (fcdr(code) == (s7_pointer)g_add_sf) return(dox_add_tf);
 	   */
-#if 0
-	  if (fcdr(code) == (s7_pointer)g_add_sf)
-	    return(dox_add_tf);
-#endif
 	}
       if ((var) &&
 	  (is_symbol(cadr(code))) &&
@@ -57765,8 +57766,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_any_macro(sc->value))
 	    {    
 	      /* macro expansion */
-	      /* fprintf(stderr, "eval %s at %s\n", DISPLAY(sc->value), DISPLAY(sc->code)); */
-
 	      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->code); /* sc->code is here for (vital) GC protection */
 	      /* 
 	       * pass a list (mac . args) to the macro expander
@@ -58186,9 +58185,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_EVAL_ARGS4:
       /* sc->code is a pair, and either cdr(sc->code) is not null or car(sc->code) is a pair 
-       */
-      /* fprintf(stderr, "code: %s, value: %s, args: %s\n", DISPLAY_80(sc->code), DISPLAY_80(sc->value), DISPLAY_80(sc->args)); 
-       *   (#f #f) (env #f) etc.  args is very often nil here, so we're looking at 3 simple args
+       *
+       * (#f #f) (env #f) etc.  args is very often nil here, so we're looking at 3 simple args
        *   or even just 2 in some cases: (+ req opt) with value 2 and args ()
        */
       {
@@ -67892,7 +67890,6 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	      break;
 	    }
 	}
-
       /* finally both the state and the number are big */
 	    
       switch (type(num))
@@ -67906,7 +67903,6 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	    /* this does not work if num is a negative number -- you get positive results.
 	     *   so check num for sign, and negate result if necessary.
 	     */
-	    
 	    if (mpz_cmp_ui(big_integer(num), 0) < 0)
 	      mpz_neg(n, n);
 	    
@@ -68291,7 +68287,7 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
     }
 
   /* error? */
-  return(val);
+  return(sc->UNDEFINED);
 }
 
 
@@ -69978,7 +69974,5 @@ int main(int argc, char **argv)
  *    (set! (samples (sound) sample) new-sample)
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
  *
- * (owlet) still is not right -- error-data is by ref
- * undef id needs to ignore case key lists [46237 optimize_expression]
- * several current stderr messages might better go to *stderr* -- dynamic loader troubles for example
+ * undef id: cond-expand args
  */

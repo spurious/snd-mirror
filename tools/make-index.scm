@@ -517,12 +517,12 @@
 		 (value (cdr binding)))
 	     (if (procedure? value)
 		 (let ((file (where-is value)))
-		   
 		   (if (and file
 			    (not (string=? file "~/.snd_s7"))
 			    (not (string=? file "/home/bil/.snd_s7"))
 			    (not (string=? file "t.scm"))
 			    (not (string=? file "/home/bil/cl/t.scm"))
+			    (not (string=? file "make-index.scm"))
 			    (not (string=? file "/home/bil/cl/make-index.scm"))
 			    )
 		       (let ((pos (char-position #\/ file)))

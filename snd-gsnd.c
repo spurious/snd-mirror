@@ -2369,6 +2369,9 @@ void make_controls_dialog(void)
       GtkWidget* mainbox, *help_button, *dismiss_button, *reset_button;
 
       controls_dialog = snd_gtk_dialog_new();
+#if GTK_CHECK_VERSION(3, 14, 0)
+      gtk_window_set_transient_for(GTK_WINDOW(controls_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+#endif
       SG_SIGNAL_CONNECT(controls_dialog, "delete_event", delete_controls_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(controls_dialog), "Controls");
       sg_make_resizable(controls_dialog);
