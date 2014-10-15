@@ -278,9 +278,10 @@ mus_float_t mus_samples_to_seconds(mus_long_t samps) {return((mus_float_t)((doub
 
 static char *float_array_to_string(mus_float_t *arr, int len, int loc)
 {
-  #define MAX_NUM_SIZE 32
+  /* %g is needed here rather than %f -- otherwise the number strings can be any size */
+  #define MAX_NUM_SIZE 64
   char *base, *str;
-  int i, lim, size = 256;
+  int i, lim, size = 512;
   if (arr == NULL) 
     {
       str = (char *)malloc(4 * sizeof(char));
@@ -304,7 +305,7 @@ static char *float_array_to_string(mus_float_t *arr, int len, int loc)
       if (k >= len) k = 0;
       for (i = 0; i < lim - 1; i++)
 	{
-	  snprintf(str, STR_SIZE, "%.3f ", arr[k]);
+	  snprintf(str, STR_SIZE, "%.3g ", arr[k]);
 	  strcat(base, str);
 	  if ((int)(strlen(base) + MAX_NUM_SIZE) > size)
 	    {
@@ -315,7 +316,7 @@ static char *float_array_to_string(mus_float_t *arr, int len, int loc)
 	  k++;
 	  if (k >= len) k = 0;
 	}
-      snprintf(str, STR_SIZE, "%.3f%s", arr[k], (len > lim) ? "..." : "]");
+      snprintf(str, STR_SIZE, "%.3g%s", arr[k], (len > lim) ? "..." : "]");
       strcat(base, str);
     }
   else sprintf(base, "[]");
@@ -331,7 +332,7 @@ static char *float_array_to_string(mus_float_t *arr, int len, int loc)
 	  if (arr[i] < min_val) {min_val = arr[i]; min_loc = i;}
 	  if (arr[i] > max_val) {max_val = arr[i]; max_loc = i;}
 	}
-      snprintf(str, STR_SIZE, "(%d: %.3f, %d: %.3f)]", min_loc, min_val, max_loc, max_val);
+      snprintf(str, STR_SIZE, "(%d: %.3g, %d: %.3g)]", min_loc, min_val, max_loc, max_val);
       strcat(base, str);
     }
   free(str);

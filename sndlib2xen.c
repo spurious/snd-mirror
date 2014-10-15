@@ -1068,7 +1068,7 @@ static Xen g_file_to_array(Xen filename, Xen chan, Xen start, Xen samples, Xen d
 'filename' placing samples from channel 'chan' into the " S_vct " 'data' starting in the file \
 at frample 'start' and reading 'samples' samples altogether."
 
-  int chn;
+  int chn, chans;
   mus_long_t samps;
   vct *v;
   const char *name = NULL;
@@ -1095,14 +1095,15 @@ at frample 'start' and reading 'samples' samples altogether."
     samps = mus_vct_length(v);
 
   chn = Xen_integer_to_C_int(chan);
-  if ((chn < 0) || (chn > mus_sound_chans(name)))
+  chans = mus_sound_chans(name);
+  if ((chn < 0) || (chn > chans))
     Xen_error(NO_SUCH_CHANNEL,
 	      Xen_list_4(C_string_to_Xen_string(S_file_to_array ": invalid chan: ~A, ~S has ~A chans"),
 			 chan,
 			 filename,
-			 C_int_to_Xen_integer(mus_sound_chans(name))));
+			 C_int_to_Xen_integer(chans)));
 
-  if (mus_sound_chans(name) <= 0)
+  if (chans <= 0)
     Xen_error(BAD_HEADER,
 	      Xen_list_2(C_string_to_Xen_string(S_file_to_array ": ~S chans <= 0"),
 			 filename));

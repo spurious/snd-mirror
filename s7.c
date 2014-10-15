@@ -43619,15 +43619,17 @@ static s7_pointer collect_collisions(s7_scheme *sc, s7_pointer lst, s7_pointer e
     {
       s7_pointer car_p;
       car_p = car(p);
-      if ((is_symbol(car_p)) &&
-	  (global_slot(car_p) != sc->NIL))
-	sc->w = cons(sc, add_sym_to_list(sc, car_p), sc->w);
-      else
+      if (is_pair(car_p))
 	{
-	  if ((is_pair(car_p)) &&
-	      (is_symbol(car(car_p))) &&
+	  if ((is_symbol(car(car_p))) &&
 	      (global_slot(car(car_p)) != sc->NIL))
 	    sc->w = cons(sc, add_sym_to_list(sc, car(car_p)), sc->w);
+	}
+      else
+	{
+	  if ((is_symbol(car_p)) &&
+	      (global_slot(car_p) != sc->NIL))
+	    sc->w = cons(sc, add_sym_to_list(sc, car_p), sc->w);
 	}
     }
   return(sc->w);
@@ -44379,7 +44381,6 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	  break;
 	}
       /* fprintf(stderr, "zz: %s %s %s %s\n", opt_name(e1), opt_name(e2), DISPLAY(e1), DISPLAY(e2)); */
-      /* see comment under OP_SAFE_C_ZZ */
       return(OP_SAFE_C_ZZ);
       break;
       
@@ -58592,7 +58593,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    else
 		      {
 			s7_pointer y;
-			y = add_slot(sc, car(car_z), sc->UNDEFINED);
+			/* y = add_slot(sc, car(car_z), sc->UNDEFINED); */
+			ADD_SLOT(sc->envir, car(car_z), sc->UNDEFINED);
+			y = let_slots(sc->envir);
 			slot_expression(y) = cadr(car_z);
 			slot_pending_value(y) = sc->NIL;
 			if (!top)
@@ -69961,7 +69964,7 @@ int main(int argc, char **argv)
  * lg             |      |      |      6404
  * t502        90 |   43 | 14.5 | 12.7 12.6
  * t455|6     265 |   89 |  9   |       8.8
- * t816           |   71 | 70.6 | 38.0 32.4
+ * t816           |   71 | 70.6 | 38.0 32.3
  * calls      359 |  275 | 54   | 34.7 34.7
  *            153 with run macro (eval_ptree)
  *
@@ -69975,4 +69978,5 @@ int main(int argc, char **argv)
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
  *
  * undef id: cond-expand args
+ * snd-genv needs a lot of gtk3 work
  */

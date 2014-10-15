@@ -4871,7 +4871,7 @@ static Xen g_pink_noise(Xen gens)
 
   size = mus_vct_length(v);
   if (size == 0)
-    return(XEN_ZERO);
+    return(xen_zero);
   Xen_check_type((size & 1) == 0, gens, 1, S_pink_noise, "an even length " S_vct);
     
   data = mus_vct_data(v);
@@ -7327,7 +7327,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
   Xen args[10];
   Xen keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
-  int vals;
+  int vals, chans;
   mus_long_t buffer_size;
   int channel = 0, direction = 1;
   mus_long_t start = 0;
@@ -7376,12 +7376,13 @@ return a new readin (file input) generator reading the sound file 'file' startin
 			 C_string_to_Xen_string(file),
 			 C_string_to_Xen_string(STRERROR(errno))));
 
-  if (mus_sound_chans(file) <= 0)
+  chans = mus_sound_chans(file);
+  if (chans <= 0)
     Xen_error(BAD_HEADER,
 	      Xen_list_2(C_string_to_Xen_string(S_make_readin ": ~S chans <= 0?"),
 			 C_string_to_Xen_string(file)));
 
-  if (channel >= mus_sound_chans(file))
+  if (channel >= chans)
     Xen_out_of_range_error(S_make_readin, orig_arg[1], keys[1], "channel > available chans?");
 
   ge = mus_make_readin_with_buffer_size(file, channel, start, direction, buffer_size);
@@ -9403,6 +9404,8 @@ static Xen g_frample_to_frample(Xen mx, Xen infr, Xen inchans, Xen outfr, Xen ou
 {
   #define H_frample_to_frample "(" S_frample_to_frample " matrix in-data in-chans out-data out-chans): pass frample in-data through matrix \
 returning frample out-data; this is a matrix multiply of matrix and in-data"
+  int ins, outs, mxs;
+  vct *vin, *vout, *vmx;
 
   Xen_check_type(mus_is_vct(mx), mx, 1, S_frample_to_frample, "a " S_vct);
   Xen_check_type(mus_is_vct(infr), infr, 2, S_frample_to_frample, "a " S_vct);
@@ -9410,9 +9413,20 @@ returning frample out-data; this is a matrix multiply of matrix and in-data"
   Xen_check_type(Xen_is_integer(inchans), inchans, 3, S_frample_to_frample, "an integer");
   Xen_check_type(Xen_is_integer(outchans), outchans, 5, S_frample_to_frample, "an integer");
 
-  mus_frample_to_frample(mus_vct_data(Xen_to_vct(mx)), (int)sqrt(mus_vct_length(Xen_to_vct(mx))),
-			 mus_vct_data(Xen_to_vct(infr)), Xen_integer_to_C_int(inchans),
-			 mus_vct_data(Xen_to_vct(outfr)), Xen_integer_to_C_int(outchans));
+  ins = Xen_integer_to_C_int(inchans);
+  vin = Xen_to_vct(infr);
+  if (mus_vct_length(vin) < ins) ins = mus_vct_length(vin);
+  if (ins <= 0) return(outfr);
+
+  outs = Xen_integer_to_C_int(outchans);
+  vout = Xen_to_vct(outfr);
+  if (mus_vct_length(vout) < outs) outs = mus_vct_length(vout);
+  if (outs <= 0) return(outfr);
+
+  vmx = Xen_to_vct(mx);
+  mxs = (int)sqrt(mus_vct_length(vmx));
+
+  mus_frample_to_frample(mus_vct_data(vmx), mxs, mus_vct_data(vin), ins, mus_vct_data(vout), outs);
   return(outfr);
 }
 

@@ -254,12 +254,10 @@ static sound_file ***sound_tables = NULL;
  *  also always the same: the tmp directory, eg: /home/bil/zap/tmp/snd_16687_632.snd).
  */
 
-static int sound_file_hash_index(const char *name)
+static int sound_file_hash_index(const char *name, int len)
 {
-  int len;
   unsigned char *s;
   if (!name) return(0);
-  len = strlen(name);
   if (len < 8) return(len);
   s = (unsigned char *)(name + len - 8);
   return((s[0] + s[1] + s[2] + s[3]) % NUM_SOUND_TABLES);
@@ -304,7 +302,7 @@ static sound_file *add_to_sound_table(const char *name)
   sound_file *sf;
 
   len = strlen(name);
-  index = sound_file_hash_index(name);
+  index = sound_file_hash_index(name, len);
   
   sound_table = sound_tables[index];
   sound_table_size = sound_table_sizes[index];
@@ -403,7 +401,7 @@ int mus_sound_forget(const char *name)
   if (short_name) 
     short_len = strlen(short_name);
 
-  index = sound_file_hash_index(name);
+  index = sound_file_hash_index(name, len);
   sound_table = sound_tables[index];
   sound_table_size = sound_table_sizes[index];
 
@@ -424,7 +422,7 @@ int mus_sound_forget(const char *name)
       else len2 = short_len / 2;
       c = short_name[len2];
 
-      index = sound_file_hash_index(short_name);
+      index = sound_file_hash_index(short_name, short_len);
       sound_table = sound_tables[index];
       sound_table_size = sound_table_sizes[index];
 
@@ -479,19 +477,19 @@ static sound_file *check_write_date(const char *name, sound_file *sf)
 
 static sound_file *find_sound_file(const char *name)
 {
+  /* assume name != NULL */
   int i, len, len2;
   sound_file **sound_table;
   int sound_table_size, index;
   char c;
 
-  if (!name) return(NULL);
   len = strlen(name);
   if (len > 6)
     len2 = len - 6; /* the names probably all start with '/' and end with ".snd", so try to find a changing character... */
   else len2 = len / 2;
   c = name[len2];
   
-  index = sound_file_hash_index(name);
+  index = sound_file_hash_index(name, len);
   sound_table = sound_tables[index];
   sound_table_size = sound_table_sizes[index];
 
@@ -861,6 +859,7 @@ mus_float_t **mus_sound_saved_data(const char *arg)
   /* slightly tricky -- we don't want to trigger a sound_file table entry here!
    */
   sound_file *sf;
+  if (arg == NULL) return(NULL);
   sf = find_sound_file(arg); /* not get_sf which will make an entry in the table */
   return((sf) ? sf->saved_data : NULL);
 }
