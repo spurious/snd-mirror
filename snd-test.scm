@@ -12663,7 +12663,7 @@ EDITS: 2
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "delay" 
-		       "delay line[3, step]: [0.000 0.000 0.000]")
+		       "delay line[3, step]: [0 0 0]")
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(float-vector-set! v0 i (delay gen i)))
@@ -12734,7 +12734,7 @@ EDITS: 2
 	    (snd-display #__line__ ";zdelay: ~A" v0))
 	(delay del 1.0)
 	(delay del 0.0 0.4)
-	(if (not (string=? (mus-describe del) "delay line[5,8, linear]: [0.000 0.000 1.000 0.000 0.000]"))
+	(if (not (string=? (mus-describe del) "delay line[5,8, linear]: [0 0 1 0 0]"))
 	    (snd-display #__line__ ";describe zdelay: ~A" (mus-describe del)))))
     (let ((tag (catch #t (lambda () 
 			   (let ((gen (make-oscil)))
@@ -12969,7 +12969,7 @@ EDITS: 2
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "all-pass"
-		       "all-pass feedback: 0.400, feedforward: 0.600, line[3, step]:[0.000 0.000 0.000]")
+		       "all-pass feedback: 0.400, feedforward: 0.600, line[3, step]:[0 0 0]")
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(float-vector-set! v0 i (all-pass gen 1.0)))
@@ -13009,7 +13009,7 @@ EDITS: 2
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "moving-average"
-		       "moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000]")
+		       "moving-average 0.000, line[4]:[0 0 0 0]")
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(float-vector-set! v0 i (moving-average gen 1.0)))
@@ -13071,7 +13071,7 @@ EDITS: 2
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "moving-max"
-		       "moving-max 0.000, line[4]:[0.000 0.000 0.000 0.000]")
+		       "moving-max 0.000, line[4]:[0 0 0 0]")
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(float-vector-set! v0 i (moving-max gen 1.0)))
@@ -13133,7 +13133,7 @@ EDITS: 2
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "moving-norm"
-		       "moving-norm, max 0.000, y1 5.000, weight 0.800, line[4]:[0.000 0.000 0.000 0.000]")
+		       "moving-norm, max 0.000, y1 5.000, weight 0.800, line[4]:[0 0 0 0]")
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(float-vector-set! v0 i (moving-norm gen 1.0)))
@@ -13188,7 +13188,7 @@ EDITS: 2
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "comb"
-		       "comb scaler: 0.400, line[3, step]: [0.000 0.000 0.000]")
+		       "comb scaler: 0.400, line[3, step]: [0 0 0]")
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(float-vector-set! v0 i (comb gen 1.0)))
@@ -13225,7 +13225,7 @@ EDITS: 2
 	    (snd-display #__line__ ";zcomb: ~A" v0))
 	(comb del 1.0)
 	(comb del 0.0 0.4)
-	(if (not (string=? (mus-describe del) "comb scaler: 0.000, line[5,8, linear]: [0.000 0.000 1.000 0.000 0.000]"))
+	(if (not (string=? (mus-describe del) "comb scaler: 0.000, line[5,8, linear]: [0 0 1 0 0]"))
 	    (snd-display #__line__ ";describe zcomb: ~A" (mus-describe del))))
       (set! (mus-feedback del) 1.0)
       (if (fneq (mus-feedback del) 1.0)
@@ -13236,7 +13236,7 @@ EDITS: 2
 	  (v0 (make-float-vector 20)))
       (print-and-check gen 
 		       "filtered-comb"
-		       "filtered-comb scaler: 0.400, line[5, step]: [0.000 0.000 0.000 0.000 0.000], filter: [one-zero a0: 0.300, a1: 0.700, x1: 0.000]")
+		       "filtered-comb scaler: 0.400, line[5, step]: [0 0 0 0 0], filter: [one-zero a0: 0.300, a1: 0.700, x1: 0.000]")
       (let ((val 1.0))
 	(do ((i 0 (+ i 1)))
 	    ((= i 20))
@@ -13253,7 +13253,7 @@ EDITS: 2
 	  (v0 (make-float-vector 20)))
       (print-and-check gen 
 		       "filtered-comb"
-		       "filtered-comb scaler: 0.900, line[5, step]: [0.000 0.000 0.000 0.000 0.000], filter: [one-zero a0: 0.500, a1: 0.500, x1: 0.000]")
+		       "filtered-comb scaler: 0.900, line[5, step]: [0 0 0 0 0], filter: [one-zero a0: 0.500, a1: 0.500, x1: 0.000]")
       (let ((val 1.0))
 	(do ((i 0 (+ i 1)))
 	    ((= i 20))
@@ -13266,7 +13266,7 @@ EDITS: 2
 	  (v0 (make-float-vector 20)))
       (print-and-check gen 
 		       "filtered-comb"
-		       "filtered-comb scaler: 0.900, line[5, step]: [0.000 0.000 0.000 0.000 0.000], filter: [fir-filter order: 5, xs: [0.100 0.200 0.300 0.200 0.100]]")
+		       "filtered-comb scaler: 0.900, line[5, step]: [0 0 0 0 0], filter: [fir-filter order: 5, xs: [0.1 0.2 0.3 0.2 0.1]]")
       (let ((val 1.0))
 	(do ((i 0 (+ i 1)))
 	    ((= i 20))
@@ -13300,7 +13300,7 @@ EDITS: 2
 	(filtered-comb del 1.0)
 	(filtered-comb del 0.0 0.4)
 	(if (not (string=? (mus-describe del)
-			   "filtered-comb scaler: 0.000, line[5,8, linear]: [0.000 0.000 1.000 0.000 0.000], filter: [one-zero a0: 0.500, a1: 0.500, x1: 0.000]"))
+			   "filtered-comb scaler: 0.000, line[5,8, linear]: [0 0 1 0 0], filter: [one-zero a0: 0.500, a1: 0.500, x1: 0.000]"))
 	    (snd-display #__line__ ";describe zfiltered-comb: ~A" (mus-describe del))))
       (set! (mus-feedback del) 1.0)
       (if (fneq (mus-feedback del) 1.0)
@@ -13313,7 +13313,7 @@ EDITS: 2
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "notch"
-		       "notch scaler: 0.400, line[3, step]: [0.000 0.000 0.000]")
+		       "notch scaler: 0.400, line[3, step]: [0 0 0]")
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(float-vector-set! v0 i (notch gen 1.0)))
@@ -14685,7 +14685,7 @@ EDITS: 2
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "fir-filter"
-		       "fir-filter order: 3, xs: [0.500 0.250 0.125]"
+		       "fir-filter order: 3, xs: [0.5 0.25 0.125]"
 		       )
       (set! (v0 0) (fir-filter gen 1.0))
       (do ((i 1 (+ i 1)))
@@ -14788,7 +14788,7 @@ EDITS: 2
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "iir-filter"
-		       "iir-filter order: 3, ys: [0.500 0.250 0.125]"
+		       "iir-filter order: 3, ys: [0.5 0.25 0.125]"
 		       )
       (set! (v0 0) (iir-filter gen 1.0))
       (do ((i 1 (+ i 1)))
@@ -14825,7 +14825,7 @@ EDITS: 2
 	  (gen2 (make-biquad .1 .2 .3 .4 .5)))
       (print-and-check gen 
 		       "filter"
-		       "filter order: 3, xs: [0.500 0.250 0.125], ys: [0.500 0.250 0.125]"
+		       "filter order: 3, xs: [0.5 0.25 0.125], ys: [0.5 0.25 0.125]"
 		       )
       (set! (v0 0) (filter gen 1.0))
       (do ((i 1 (+ i 1)))
@@ -15851,7 +15851,7 @@ EDITS: 2
 	  (gen1 (make-env '(0 0 1 1 2 0) :scaler 0.5 :length 11)))
       (print-and-check gen 
 		       "env"
-		       "env linear, pass: 0 (dur: 11), index: 0, scaler: 0.5000, offset: 0.0000, data: [0.000 0.000 1.000 1.000 2.000 0.000]")
+		       "env linear, pass: 0 (dur: 11), index: 0, scaler: 0.5000, offset: 0.0000, data: [0 0 1 1 2 0]")
       (if (not (env? gen)) (snd-display #__line__ ";~A not env?" gen))
       (if (fneq (mus-scaler gen) 0.5) (snd-display #__line__ ";env scaler ~F?" (mus-scaler gen)))
       (if (fneq (mus-increment gen) 1.0) (snd-display #__line__ ";env base (1.0): ~A?" (mus-increment gen)))
@@ -16693,7 +16693,7 @@ EDITS: 2
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "polyshape"
-		       "polyshape freq: 440.000Hz, phase: 0.000, coeffs[2]: [0.000 1.000]")
+		       "polyshape freq: 440.000Hz, phase: 0.000, coeffs[2]: [0 1]")
       (if (not (= (mus-length gen) 2)) (snd-display #__line__ ";polyshape length: ~A?" (mus-length gen)))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
@@ -16919,7 +16919,7 @@ EDITS: 2
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "polywave"
-		       "polywave freq: 440.000Hz, phase: 0.000, coeffs[2]: [0.000 1.000]")
+		       "polywave freq: 440.000Hz, phase: 0.000, coeffs[2]: [0 1]")
       (if (not (= (mus-length gen) 2)) (snd-display #__line__ ";polywave length: ~A?" (mus-length gen)))
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
@@ -18795,13 +18795,13 @@ EDITS: 2
       (print-and-check gen1
 		       "move-sound"
 		       "move-sound start: 0, end: 1000, out chans 1, rev chans: 0
-  doppler delay line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
-  doppler env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
-  global reverb env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+  doppler delay line[32, step]: [0 0 0 0 0 0 0 0...(0: 0, 0: 0)]
+  doppler env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0 0 1 1]
+  global reverb env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0 0 1 1]
   out_delays[1]:
-    [0]: delay line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
+    [0]: delay line[32, step]: [0 0 0 0 0 0 0 0...(0: 0, 0: 0)]
   out_envs[1]:
-    [0]: env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+    [0]: env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0 0 1 1]
   rev_envs: nil
   out_map[1]: (0)
   free: arrays: true, gens: false
@@ -18810,8 +18810,8 @@ EDITS: 2
       (print-and-check gen2
 		       "move-sound"
 		       "move-sound start: 0, end: 1000, out chans 4, rev chans: 0
-  doppler delay line[12, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
-  doppler env linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 10.000 1.000]
+  doppler delay line[12, step]: [0 0 0 0 0 0 0 0...(0: 0, 0: 0)]
+  doppler env linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0 0 10 1]
   global reverb null
   out_delays[4]:
     [0]: nil
@@ -18819,10 +18819,10 @@ EDITS: 2
     [2]: nil
     [3]: nil
   out_envs[4]:
-    [0]: env linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000 2.000 0.000 3.000 0.000...(0: 0.000, 8: 4.000)]
-    [1]: env linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 0.000 2.000 1.000 3.000 0.000...(0: 0.000, 8: 4.000)]
-    [2]: env linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 0.000 2.000 0.000 3.000 1.000...(0: 0.000, 8: 4.000)]
-    [3]: env linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 0.000 2.000 0.000 3.000 0.000...(0: 0.000, 8: 4.000)]
+    [0]: env linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0 0 1 1 2 0 3 0...(0: 0, 8: 4)]
+    [1]: env linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0 0 1 0 2 1 3 0...(0: 0, 8: 4)]
+    [2]: env linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0 0 1 0 2 0 3 1...(0: 0, 8: 4)]
+    [3]: env linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0 0 1 0 2 0 3 0...(0: 0, 8: 4)]
   rev_envs: nil
   out_map[4]: (0 1 2 3)
   free: arrays: true, gens: false
@@ -18831,15 +18831,15 @@ EDITS: 2
       (print-and-check gen3
 		       "move-sound"
 		       "move-sound start: 0, end: 1000, out chans 1, rev chans: 1
-  doppler delay line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
-  doppler env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
-  global reverb env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+  doppler delay line[32, step]: [0 0 0 0 0 0 0 0...(0: 0, 0: 0)]
+  doppler env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0 0 1 1]
+  global reverb env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0 0 1 1]
   out_delays[1]:
-    [0]: delay line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
+    [0]: delay line[32, step]: [0 0 0 0 0 0 0 0...(0: 0, 0: 0)]
   out_envs[1]:
-    [0]: env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+    [0]: env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0 0 1 1]
   rev_envs[1]:
-    [0]: env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 1.000 1.000 1.000]
+    [0]: env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0 1 1 1]
   out_map[1]: (0)
   free: arrays: true, gens: false
 ")

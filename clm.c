@@ -9338,14 +9338,16 @@ static mus_float_t run_env(mus_any *ptr, mus_float_t unused1, mus_float_t unused
 
 static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur, double scaler)
 { 
-  int i, j;
-  double xscl, cur_loc, x1, y1;
+  int i, j, pts2;
+  double xscl, cur_loc, x1, y1, xdur;
   mus_long_t samps, pre_loc;
 
   /* pts > 1 if we get here, so the loop below is always exercised */
 
-  if (data[pts * 2 - 2] != data[0])
-    xscl = (double)(dur - 1) / (double)(data[pts * 2 - 2] - data[0]); /* was dur, 7-Apr-02 */
+  pts2 = pts * 2;
+  xdur = data[pts2 - 2] - data[0];
+  if (xdur > 0.0)
+    xscl = (double)(dur - 1) / xdur;
   else xscl = 1.0;
   e->locs[pts - 2] = e->end;
 
@@ -9353,7 +9355,7 @@ static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur
   y1 = data[1];
   pre_loc = 0;
 
-  for (j = 0, i = 2, cur_loc = 0.0; i < pts * 2; i += 2, j++)
+  for (j = 0, i = 2, cur_loc = 0.0; i < pts2; i += 2, j++)
     {
       double cur_dx, x0, y0;
       x0 = x1;

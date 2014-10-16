@@ -5480,7 +5480,6 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
   /* there are about the same number of frames as local variables -- this
    *   strikes me as surprising, but it holds up across a lot of code.
    */
-
   return(slot);
 } 
 
@@ -5923,7 +5922,6 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 	}
       sc->temp3 = sc->NIL;
     }
-
   return(new_e);
 }
 
@@ -6099,7 +6097,6 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
       check_method(sc, e, sc->LET_REF, args);
       return(wrong_type_argument_with_type(sc, sc->LET_REF, small_int(2), s, A_SYMBOL));
     }
-
   return(let_ref_1(sc, e, s));
 }
 
@@ -7572,7 +7569,6 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
    * I think call-with-exit could be based on catch, but it's a simpler notion,
    *   and certainly at the source level it is easier to read.
    */
-  
   return(sc->NIL);
 }
 
@@ -8270,7 +8266,6 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x, bool with_error)
 	}
       return(sc->NIL);
     }
-
   return(x);
 }
 
@@ -8383,7 +8378,6 @@ s7_Int s7_numerator(s7_pointer x)
       return(big_integer_to_s7_Int(mpq_numref(big_ratio(x))));
 #endif
     }
-
   return(0);
 }
 
@@ -8400,7 +8394,6 @@ s7_Int s7_denominator(s7_pointer x)
       return(big_integer_to_s7_Int(mpq_denref(big_ratio(x))));
 #endif
     }
-
   return(1);
 }
 
@@ -10514,7 +10507,6 @@ the 'radix' argument is ignored: (string->number \"#x11\" 2) -> 17 not 3."
 	return(real_infinity);
       break;
     }
-
   return(s7_string_to_number(sc, str, radix));
 }
 
@@ -10551,7 +10543,6 @@ static bool numbers_are_eqv(s7_pointer a, s7_pointer b)
       return((real_part(a) == real_part(b)) &&
 	     (imag_part(a) == imag_part(b)));
     }
-  
   return(false);
 }
 
@@ -11129,7 +11120,6 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 	return(make_real(sc, log(real_to_double(sc, x, "log"))));
       return(s7_make_complex(sc, log(-real_to_double(sc, x, "log")), M_PI));
     }
-
   return(s7_from_c_complex(sc, clog(s7_complex(x))));
 }
 
@@ -17121,7 +17111,6 @@ static s7_pointer g_less_2(s7_scheme *sc, s7_pointer args)
       check_method(sc, x, sc->LT, args);
       return(wrong_type_argument(sc, sc->LT, small_int(1), x, T_REAL));      
     }
-
   return(sc->T);
 }
 
@@ -17226,7 +17215,6 @@ static s7_pointer g_leq_2(s7_scheme *sc, s7_pointer args)
       check_method(sc, x, sc->LEQ, args);
       return(wrong_type_argument(sc, sc->LEQ, small_int(1), x, T_REAL));
     }
-
   return(sc->T);
 }
 
@@ -17359,7 +17347,6 @@ static s7_pointer g_greater_2(s7_scheme *sc, s7_pointer args)
       check_method(sc, x, sc->GT, args);
       return(wrong_type_argument(sc, sc->GT, small_int(1), x, T_REAL));
     }
-
   return(sc->T);
 }
 
@@ -17443,7 +17430,6 @@ static s7_pointer g_geq_2(s7_scheme *sc, s7_pointer args)
       check_method(sc, x, sc->GEQ, args);
       return(wrong_type_argument(sc, sc->GEQ, small_int(1), x, T_REAL));
     }
-
   return(sc->T);
 }
 
@@ -22313,7 +22299,6 @@ static s7_pointer open_input_file_1(s7_scheme *sc, const char *name, const char 
 #endif
       return(file_error(sc, caller, strerror(errno), name));
     }
-
   return(make_input_file(sc, name, fp));
 }
 
@@ -23154,7 +23139,6 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
 	  if (fp) return(fp);
 	}
     }
-
   return(NULL);
 }
 
@@ -23209,7 +23193,6 @@ static s7_pointer s7_load_1(s7_scheme *sc, const char *filename, s7_pointer e)
       pop_input_port(sc);
       s7_close_input_port(sc, port);
     }
-
   return(sc->value);
 }
 
@@ -25804,7 +25787,6 @@ static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_po
 	}
     }
   object_to_port(sc, vr, port, use_write, to_file, ci);
-  return;
 }
 
 
@@ -27879,7 +27861,6 @@ static s7_pointer reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer li
       result = p;
       p = q;
     }
-
   return(result);
 }
 
@@ -27901,7 +27882,6 @@ static s7_pointer reverse_in_place_unchecked(s7_scheme *sc, s7_pointer term, s7_
       result = p;
       p = q;
     }
-
   return(result);
 }
 
@@ -27938,7 +27918,6 @@ static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list) /* "safe
       result = p;
       p = q;
     }
-
   return(result);
 }
 
@@ -28240,7 +28219,6 @@ static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
           (list-ref L (car args))
           (apply lref (list-ref L (car args)) (cdr args))))
   */
-
   s7_pointer lst, inds;
 
   lst = car(args);
@@ -28380,7 +28358,6 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
     return(out_of_range(sc, sc->LIST_TAIL, small_int(2), cadr(args), "index should be less than list length"));
 
   /* I guess this would make sense with more than one index, but I'm not sure it's very important */
-  
   return(p);
 }
 
@@ -30159,7 +30136,6 @@ static s7_vdims_t *make_vdims(s7_scheme *sc, bool elements_allocated, int dims, 
       v->offsets[i] = offset;
       offset *= v->dims[i];
     }
-  
   return(v);
 }
 
@@ -31085,7 +31061,6 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	  return(implicit_index(sc, vector_element(vect, index), cdr(indices)));
 	}
     }
-
   return((vector_getter(vect))(sc, vect, index));
 }
 
@@ -31568,7 +31543,6 @@ or a real, the vector can only hold numbers of that type (s7_Int or s7_Double)."
 	}
       vector_dimension_info(vec) = v;
     }
-
   return(vec);
 }
 
@@ -32995,7 +32969,6 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
   /* how would (set! (ht a b) c) choose the inner table if (ht a b) is not found?
    *   I'm not sure the multi-index case makes sense here
    */
-
   return(s7_hash_table_set(sc, table, cadr(args), caddr(args)));
 }
 
@@ -33587,7 +33560,6 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 				  closure_body(p)),
 		  closure_let(p)));
     }
-  
   return(sc->NIL);
 }
 
@@ -33935,7 +33907,6 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 	  (is_string(caddr(cadr(p)))))
 	return(string_value(caddr(cadr(p))));
     }
-
   return(help);
 }
 
@@ -34491,7 +34462,6 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
       check_method(sc, p, s7_make_symbol(sc, "procedure-setter"), args);
       break;
     }
-
   return(s7_wrong_type_arg_error(sc, "procedure-setter", 0, p, "a procedure or a reasonable facsimile thereof"));
 }
 
@@ -34557,7 +34527,6 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
     case T_CONTINUATION:
       return(s7_wrong_type_arg_error(sc, "set! procedure-setter", 1, p, "a normal procedure (not a continuation)"));
     }
-
   return(setter);
 }
 
@@ -35397,7 +35366,6 @@ static bool s7_is_equal_tracking_circles(s7_scheme *sc, s7_pointer x, s7_pointer
     case T_C_POINTER:       /* might have a list of these for example */
       return(raw_pointer(x) == raw_pointer(y));
     }
-
   return(false); /* we already checked that x != y (port etc) */
 }
 
@@ -35757,7 +35725,6 @@ static bool hash_tables_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointe
   /* if we get here, every key/value in x has a corresponding key/value in y, and the number of entries match,
    *   so surely the tables are equal??
    */
-
   return(true);
 }
 
@@ -36239,7 +36206,6 @@ list has infinite length.  Length of anything else returns #f."
       return(sc->F);
       /* return(simple_wrong_type_argument_with_type(sc, sc->LENGTH, lst, A_SEQUENCE)); */
     }
-  
   return(small_int(0));
 }
 
@@ -36580,7 +36546,6 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
   /* some choices probably should raise an error, but don't:
    *   (copy (make-hash-table) "1") ; nothing to copy (empty hash table), so no error
    */
-
   return(dest);
 }
 
@@ -36663,7 +36628,6 @@ also accepts a string or vector argument."
       check_method(sc, p, sc->REVERSE, args);
       return(simple_wrong_type_argument_with_type(sc, sc->REVERSE, p, A_SEQUENCE));
     }
-  
   return(np);
 }
 
@@ -36757,7 +36721,6 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
       check_method(sc, p, sc->REVERSEB, args);
       return(simple_wrong_type_argument_with_type(sc, sc->REVERSEB, p, A_SEQUENCE));
     }
-  
   return(p);
 }
 
@@ -39086,7 +39049,6 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
       sc->s7_call_file = NULL;
       sc->s7_call_line = -1;
     }
-
   return(result);
 }
 
@@ -40089,7 +40051,6 @@ static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
 	return(sc->NIL);
       cdr(px) = sc->NIL;
     }
-
   return(args);
 }
 
@@ -42443,7 +42404,6 @@ static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 	  (s7_function_returns_temp(sc, arg2)))
 	return(divide_s_temp);
     }
-
   return(f);
 }
 
@@ -45392,7 +45352,6 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
       choose_c_function(sc, car_x, func, 2);
       return(false);
     }
-
   return(is_optimized(car_x));  
 }
 
@@ -45869,102 +45828,6 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
 }
 
 
-static bool optimize_function(s7_scheme *sc, s7_pointer x, s7_pointer func, int hop, s7_pointer e)
-{
-  int pairs = 0, symbols = 0, args = 0, bad_pairs = 0, quotes = 0, orig_hop;
-  s7_pointer p;
-  /* fprintf(stderr, "opt_func func %s %s %d %s\n", DISPLAY(func), DISPLAY_80(x), hop, DISPLAY(e)); */
-
-  orig_hop = hop;
-
-  if (is_any_closure(func))      /* can't depend on ecdr here because it might not be global, or might be redefined locally */
-    {
-      /* (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a)) (f1 12))
-       * (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a 1)) (f1 12))
-       * and similar define* cases
-       */
-      hop = 0;
-      /* this is very tricky!  See s7test for some cases.  Basically, we need to protect a recursive call
-       *   of the current function being optimized from being confused with some previous definition
-       *   of the same name.  But method lists have global names so the global bit is off even though the
-       *   thing is actually a safe global.  But no closure can be considered safe in the hop sense --
-       *   even a global function might be redefined at anuy time, and previous uses of it in other functions
-       *   need to reflect its new value.  
-       *   So, closures are always checked, but built-in functions are used as if never redefined until that redefinition.
-       *   costs: index 6/1380, t502: 2/12900, bench: 43/4134, snd-test: 22/37200
-       * Syntax handling is already impure in s7, so the special handling of built-in functions doesn't
-       *   offend me much.  Consider each a sort of reader macro until someone redefines it -- previous
-       *   uses may not be affected because they might have been optimized away -- the result depends on the
-       *   current optimizer.
-       */
-    }
-
-  /* but if we make a recursive call on a func, we've obviously already looked up that function, and
-   *   if it has not been shadowed, then we don't need to check it -- so the hop bit should be on
-   *   for that one case.
-   */
-
-  for (p = cdar(x); is_pair(p); p = cdr(p), args++)
-    {
-      if (is_pair(car(p)))
-	{
-	  pairs++;
-	  if (!is_checked(car(p)))
-	    {
-	      if (!optimize_expression(sc, p, orig_hop, e))
-		{
-		  bad_pairs++;
-		  if ((caar(p) == sc->QUOTE) &&
-		      (is_pair(cdar(p))) &&
-		      (is_null(cddar(p))))
-		    quotes++;
-		}
-	    }
-	  else 
-	    {
-	      if ((!is_optimized(car(p))) ||
-		  (is_unsafe(car(p))))
-		{
-		  bad_pairs++;
-		  if ((caar(p) == sc->QUOTE) &&
-		      (is_pair(cdar(p))) &&
-		      (is_null(cddar(p))))
-		    quotes++;
-		}
-	    }
-	}
-      else
-	{
-	  if (is_symbol(car(p)))
-	    symbols++;
-	}
-    }
-
-  if ((is_null(p)) &&                    /* if not null, dotted list of args? */
-      (s7_is_aritable(sc, func, args)))  /* we have a legit call, at least syntactically */
-    {
-      switch (args)
-	{
-	case 0: 
-	  return(optimize_thunk(sc, car(x), func, hop));
-	  
-	case 1:
-	  return(optimize_func_one_arg(sc, car(x), func, hop, pairs, symbols, quotes, bad_pairs));
-
-	case 2:
-	  return(optimize_func_two_args(sc, car(x), func, hop, pairs, symbols, quotes, bad_pairs));
-
-	case 3:
-	  return(optimize_func_three_args(sc, car(x), func, hop, pairs, symbols, quotes, bad_pairs));
-
-	default:
-	  return(optimize_func_many_args(sc, car(x), func, hop, args, pairs, symbols, quotes, bad_pairs));
-	}
-    }
-  return(false);
-}
-
-
 static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int hop, s7_pointer e)
 {
   s7_pointer p;
@@ -46243,9 +46106,98 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 	    if ((is_procedure(func)) ||
 		(is_c_function(func)) ||
 		(is_safe_procedure(func))) /* built-in applicable objects like vectors */
-	      return(optimize_function(sc, x, func, hop, e));
-	  }
+	      /* return(optimize_function(sc, x, func, hop, e)); */
+	      {
+		int pairs = 0, symbols = 0, args = 0, bad_pairs = 0, quotes = 0, orig_hop;
+		s7_pointer p;
+		/* fprintf(stderr, "opt_func func %s %s %d %s\n", DISPLAY(func), DISPLAY_80(x), hop, DISPLAY(e)); */
+		
+		orig_hop = hop;
+		if (is_any_closure(func))      /* can't depend on ecdr here because it might not be global, or might be redefined locally */
+		  {
+		    /* (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a)) (f1 12))
+		     * (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a 1)) (f1 12))
+		     * and similar define* cases
+		     */
+		    hop = 0;
+		    /* this is very tricky!  See s7test for some cases.  Basically, we need to protect a recursive call
+		     *   of the current function being optimized from being confused with some previous definition
+		     *   of the same name.  But method lists have global names so the global bit is off even though the
+		     *   thing is actually a safe global.  But no closure can be considered safe in the hop sense --
+		     *   even a global function might be redefined at anuy time, and previous uses of it in other functions
+		     *   need to reflect its new value.  
+		     *   So, closures are always checked, but built-in functions are used as if never redefined until that redefinition.
+		     *   costs: index 6/1380, t502: 2/12900, bench: 43/4134, snd-test: 22/37200
+		     * Syntax handling is already impure in s7, so the special handling of built-in functions doesn't
+		     *   offend me much.  Consider each a sort of reader macro until someone redefines it -- previous
+		     *   uses may not be affected because they might have been optimized away -- the result depends on the
+		     *   current optimizer.
+		     */
+		  }
+		/* but if we make a recursive call on a func, we've obviously already looked up that function, and
+		 *   if it has not been shadowed, then we don't need to check it -- so the hop bit should be on
+		 *   for that one case.
+		 */
 
+		for (p = cdar(x); is_pair(p); p = cdr(p), args++) /* check the args (the calling expression) */
+		  {
+		    if (is_pair(car(p)))
+		      {
+			pairs++;
+			if (!is_checked(car(p)))
+			  {
+			    if (!optimize_expression(sc, p, orig_hop, e))
+			      {
+				bad_pairs++;
+				if ((caar(p) == sc->QUOTE) &&
+				    (is_pair(cdar(p))) &&
+				    (is_null(cddar(p))))
+				  quotes++;
+			      }
+			  }
+			else 
+			  {
+			    if ((!is_optimized(car(p))) ||
+				(is_unsafe(car(p))))
+			      {
+				bad_pairs++;
+				if ((caar(p) == sc->QUOTE) &&
+				    (is_pair(cdar(p))) &&
+				    (is_null(cddar(p))))
+				  quotes++;
+			      }
+			  }
+		      }
+		    else
+		      {
+			if (is_symbol(car(p)))
+			  symbols++;
+		      }
+		  }
+		if ((is_null(p)) &&                    /* if not null, dotted list of args? */
+		    (s7_is_aritable(sc, func, args)))  /* we have a legit call, at least syntactically */
+		  {
+		    switch (args)
+		      {
+		      case 0: 
+			return(optimize_thunk(sc, car(x), func, hop));
+			
+		      case 1:
+			return(optimize_func_one_arg(sc, car(x), func, hop, pairs, symbols, quotes, bad_pairs));
+			
+		      case 2:
+			return(optimize_func_two_args(sc, car(x), func, hop, pairs, symbols, quotes, bad_pairs));
+			
+		      case 3:
+			return(optimize_func_three_args(sc, car(x), func, hop, pairs, symbols, quotes, bad_pairs));
+			
+		      default:
+			return(optimize_func_many_args(sc, car(x), func, hop, args, pairs, symbols, quotes, bad_pairs));
+		      }
+		  }
+		return(false);
+	      }
+	  }
 	else
 	  {
 	    if ((sc->undefined_identifier_warnings) &&
@@ -47258,7 +47210,6 @@ static s7_pointer check_case(s7_scheme *sc)
 	    }
 	}
     }
-
   return(sc->code);
 }
 
@@ -47822,7 +47773,6 @@ static s7_pointer check_quote(s7_scheme *sc)
     {
       pair_set_syntax_symbol(sc->code, sc->QUOTE_UNCHECKED);
     }
-
   return(sc->code);
 }
 
@@ -48756,7 +48706,6 @@ static s7_pointer check_set(s7_scheme *sc)
 	    }
 	}
     }
-
   return(sc->code);
 }
 
@@ -58648,7 +58597,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  {
 			    slot_set_value(z, find_symbol_checked(sc, val));
 			    if (slot_value(z) == sc->UNDEFINED)
-			      return(eval_error(sc, "~A: unbound variable", slot_symbol(z)));
+			      return(eval_error(sc, "lambda* defaults: ~A is unbound", slot_symbol(z)));
 			    /* but #f is default if no expr, so there's some inconsistency here */
 			  }
 			else
@@ -64244,7 +64193,6 @@ static bool big_numbers_are_eqv(s7_pointer a, s7_pointer b)
 	}
       return(result);
     }
-
   return(false);
 }
 
@@ -64494,7 +64442,6 @@ static s7_pointer promote_number_1(s7_scheme *sc, int type, s7_pointer x, bool c
       return(s7_number_to_big_complex(sc, x));
       break;
     }
-
   return(sc->NIL);
 }
 
@@ -65175,7 +65122,6 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
       return(make_big_real_or_complex(sc, result));
       break;
     }
-
   return(result);
 }
 
@@ -69964,7 +69910,7 @@ int main(int argc, char **argv)
  * lg             |      |      |      6404
  * t502        90 |   43 | 14.5 | 12.7 12.6
  * t455|6     265 |   89 |  9   |       8.8
- * t816           |   71 | 70.6 | 38.0 32.3
+ * t816           |   71 | 70.6 | 38.0 32.2
  * calls      359 |  275 | 54   | 34.7 34.7
  *            153 with run macro (eval_ptree)
  *

@@ -2572,12 +2572,14 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 
   {
     Xen p;
-    int arglist_len;
+    int a2, arglist_len;
+    a2 = argn * 2;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > 18) clm_error(caller, "too many args!", arglist);
+    if (arglist_len > a2) clm_error(caller, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
-    for (i = arglist_len; i < argn * 2; i++) args[i] = Xen_undefined;
+    for (i = arglist_len; i < a2; i++) args[i] = Xen_undefined;
   }
+
   vals = mus_optkey_unscramble(caller, argn, keys, args, orig_arg);
 
   if (vals > 0)
@@ -2864,7 +2866,7 @@ static Xen g_make_moving_any(xclm_moving_t choice, Xen arglist)
   keys[argn++] = kw_initial_element;
 
   arglist_len = Xen_list_length(arglist);
-  if (arglist_len > 8) clm_error(caller, "too many args!", arglist);
+  if (arglist_len > 8) clm_error(caller, "too many arguments!", arglist);
   for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
   for (i = arglist_len; i < argn * 2; i++) args[i] = Xen_undefined;
   vals = mus_optkey_unscramble(caller, argn, keys, args, orig_arg);
@@ -3652,7 +3654,7 @@ static Xen g_make_noi(bool rand_case, const char *caller, Xen arglist)
     int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > 10) clm_error(caller, "too many args!", arglist);
+    if (arglist_len > 10) clm_error(caller, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
     for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
   }
@@ -4037,7 +4039,7 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
     int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > 10) clm_error(S_make_table_lookup, "too many args!", arglist);
+    if (arglist_len > 10) clm_error(S_make_table_lookup, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
     for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
   }
@@ -4924,7 +4926,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
     Xen p;
     int i, arglist_len;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > 10) clm_error(S_make_wave_train, "too many args!", arglist);
+    if (arglist_len > 10) clm_error(S_make_wave_train, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
     for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
   }
@@ -5460,7 +5462,7 @@ is the same in effect as " S_make_oscil
     int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > 10) clm_error(S_make_polyshape, "too many args!", arglist);
+    if (arglist_len > 10) clm_error(S_make_polyshape, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
     for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
   }
@@ -5587,7 +5589,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
     int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > 10) clm_error(S_make_polywave, "too many args!", arglist);
+    if (arglist_len > 10) clm_error(S_make_polywave, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
     for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
   }
@@ -5745,7 +5747,7 @@ static Xen g_make_nrxy(bool sin_case, const char *caller, Xen arglist)
     int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > 8) clm_error(caller, "too many args!", arglist);
+    if (arglist_len > 8) clm_error(caller, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
     for (i = arglist_len; i < 8; i++) args[i] = Xen_undefined;
   }
@@ -5859,7 +5861,7 @@ static Xen g_make_rxyk(bool sin_case, const char *caller, Xen arglist)
     int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > 6) clm_error(caller, "too many args!", arglist);
+    if (arglist_len > 6) clm_error(caller, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
     for (i = arglist_len; i < 6; i++) args[i] = Xen_undefined;
   }
@@ -6194,7 +6196,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
     int arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > 14) clm_error(S_make_env, "too many args!", arglist);
+    if (arglist_len > 14) clm_error(S_make_env, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
     for (i = arglist_len; i < 14; i++) args[i] = Xen_undefined;
   }
@@ -7345,7 +7347,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
     int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > 10) clm_error(S_make_readin, "too many args!", arglist);
+    if (arglist_len > 10) clm_error(S_make_readin, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
     for (i = arglist_len; i < 10; i++) args[i] = Xen_undefined;
   }
@@ -7643,7 +7645,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
     int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > 14) clm_error(S_make_locsig, "too many args!", arglist);
+    if (arglist_len > 14) clm_error(S_make_locsig, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
     for (i = arglist_len; i < 14; i++) args[i] = Xen_undefined;
   }
@@ -8405,7 +8407,7 @@ The edit function, if any, should return the length in samples of the grain, or 
     int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > 18) clm_error(S_make_granulate, "too many args!", arglist);
+    if (arglist_len > 18) clm_error(S_make_granulate, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
     for (i = arglist_len; i < 18; i++) args[i] = Xen_undefined;
   }
@@ -8537,7 +8539,7 @@ return a new convolution generator which convolves its input with the impulse re
     int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > 6) clm_error(S_make_convolve, "too many args!", arglist);
+    if (arglist_len > 6) clm_error(S_make_convolve, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
     for (i = arglist_len; i < 6; i++) args[i] = Xen_undefined;
   }
@@ -8784,7 +8786,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
     int i, arglist_len;
     Xen p;
     arglist_len = Xen_list_length(arglist);
-    if (arglist_len > 16) clm_error(S_make_phase_vocoder, "too many args!", arglist);
+    if (arglist_len > 16) clm_error(S_make_phase_vocoder, "too many arguments!", arglist);
     for (i = 0, p = arglist; i < arglist_len; i++, p = Xen_cdr(p)) args[i] = Xen_car(p);
     for (i = arglist_len; i < 16; i++) args[i] = Xen_undefined;
   }

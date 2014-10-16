@@ -2361,7 +2361,26 @@ static void glistener_completion(glistener *g, int pos)
     {
       char *new_name;
       if (!in_string)
-	new_name = symbol_completion(g, text);
+	{
+	  if ((g->is_schemish) &&
+	      (text[0] == '\''))          /* quoted partial symbol name */
+	    {
+	      char *unq;
+	      unq = symbol_completion(g, (char *)(text + 1));
+	      if (unq)
+		{
+		  int len;
+		  len = strlen(unq);
+		  new_name = (char *)malloc((len + 2) * sizeof(char));
+		  new_name[0] = '\'';
+		  memcpy((void *)(new_name + 1), (void *)unq, len);
+		  new_name[len + 1] = '\0';
+		  free(unq);
+		}
+	      else new_name = NULL;
+	    }
+	  else new_name = symbol_completion(g, text);
+	}
       else new_name = filename_completion(g, text);
       if (new_name)
 	{
