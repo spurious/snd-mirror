@@ -722,11 +722,12 @@ typedef struct fft_state {
 } fft_state;
 
 
+static mus_float_t *fs_idata = NULL;
+static mus_long_t fs_idata_size = 0;
 
 void fourier_spectrum(snd_fd *sf, mus_float_t *fft_data, mus_long_t fft_size, mus_long_t data_len, mus_float_t *window, chan_info *cp)
 {
-  mus_long_t i;
-  mus_float_t *idata;
+  mus_long_t i, j, lim;
 
   if (window)
     {
@@ -741,25 +742,47 @@ void fourier_spectrum(snd_fd *sf, mus_float_t *fft_data, mus_long_t fft_size, mu
 
   if (data_len < fft_size) 
     memset((void *)(fft_data + data_len), 0, (fft_size - data_len) * sizeof(mus_float_t));
-  idata = (mus_float_t *)calloc(fft_size, sizeof(mus_float_t));
+  if (fft_size <= fs_idata_size)
+    memset((void *)fs_idata, 0, fft_size * sizeof(mus_float_t));
+  else
+    {
+      if (!fs_idata)
+	fs_idata = (mus_float_t *)malloc(fft_size * sizeof(mus_float_t));
+      else fs_idata = (mus_float_t *)realloc(fs_idata, fft_size * sizeof(mus_float_t));
+      memset((void *)fs_idata, 0, fft_size * sizeof(mus_float_t));
+      fs_idata_size = fft_size;
+    }
 
-  mus_fft(fft_data, idata, fft_size, 1);
+  mus_fft(fft_data, fs_idata, fft_size, 1);
 
+  lim = fft_size / 2;
   if ((cp) && (cp->fft_with_phases))
     {
-      for (i = 0; i < fft_size; i++)
+      fft_data[0] = hypot(fft_data[0], fs_idata[0]);
+      cp->fft->phases[0] = -atan2(fs_idata[0], fft_data[0]);
+      for (i = 1, j = fft_size - 1; i < lim; i++, j--)
 	{
-	  cp->fft->phases[i] = -atan2(idata[i], fft_data[i]);
-	  fft_data[i] = hypot(fft_data[i], idata[i]);
+	  fft_data[i] = hypot(fft_data[i], fs_idata[i]);
+	  fft_data[j] = fft_data[i];
+	  cp->fft->phases[i] = -atan2(fs_idata[i], fft_data[i]);
+	  cp->fft->phases[j] = -cp->fft->phases[i];
 	}
     }
   else
     {
-      for (i = 0; i < fft_size; i++) 
-	fft_data[i] = hypot(fft_data[i], idata[i]);
+      fft_data[0] = hypot(fft_data[0], fs_idata[0]);
+      for (i = 1, j = fft_size - 1; i < lim; i++, j--)
+	{
+	  fft_data[i] = hypot(fft_data[i], fs_idata[i]);
+	  fft_data[j] = fft_data[i];
+	}
     }
-
-  free(idata);
+  if (fs_idata_size >= 4194304)
+    {
+      free(fs_idata);
+      fs_idata = NULL;
+      fs_idata_size = 0;
+    }
 }
 
 

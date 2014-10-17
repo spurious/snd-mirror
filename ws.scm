@@ -813,7 +813,8 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
        (define ,(string->symbol (string-append sname "?")) #f)
        (define ,(string->symbol (string-append "make-" sname)) #f)
 
-       (let ((gen-type ',(string->symbol (string-append "+" sname "+"))))
+       (let ((gen-type ',(string->symbol (string-append "+" sname "+")))
+	     (gen-methods (and ,methods (apply inlet ,methods))))
 	 
 	 (set! ,(string->symbol (string-append sname "?"))
 	       (lambda (obj)
@@ -827,9 +828,8 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
   	         (,wrapper 
 		  (openlet
 		   ,(if methods
-		       `(sublet 
-			   (apply inlet ,methods)
-			 (inlet ,@(list->bindings (reverse fields)) 'mus-generator-type gen-type))
+		       `(sublet gen-methods
+			  ,@(list->bindings (reverse fields)) 'mus-generator-type gen-type)
 		       `(inlet 'mus-generator-type gen-type ,@(list->bindings fields)))))))))))
 
 

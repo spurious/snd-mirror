@@ -14665,7 +14665,7 @@ mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_float_t *win
 
   lowest = 0.000001;
   maxa = 0.0;
-  n = n * 0.5;
+  n = n / 2;
   for (i = 0; i < n; i++)
     {
       double val;

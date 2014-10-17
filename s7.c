@@ -46139,39 +46139,39 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		 *   for that one case.
 		 */
 
-		for (p = cdar(x); is_pair(p); p = cdr(p), args++) /* check the args (the calling expression) */
+		for (p = cdr(car_x); is_pair(p); p = cdr(p), args++) /* check the args (the calling expression) */
 		  {
-		    if (is_pair(car(p)))
-		      {
-			pairs++;
-			if (!is_checked(car(p)))
-			  {
-			    if (!optimize_expression(sc, p, orig_hop, e))
-			      {
-				bad_pairs++;
-				if ((caar(p) == sc->QUOTE) &&
-				    (is_pair(cdar(p))) &&
-				    (is_null(cddar(p))))
-				  quotes++;
-			      }
-			  }
-			else 
-			  {
-			    if ((!is_optimized(car(p))) ||
-				(is_unsafe(car(p))))
-			      {
-				bad_pairs++;
-				if ((caar(p) == sc->QUOTE) &&
-				    (is_pair(cdar(p))) &&
-				    (is_null(cddar(p))))
-				  quotes++;
-			      }
-			  }
-		      }
+		    if (is_symbol(car(p)))
+		      symbols++;
 		    else
 		      {
-			if (is_symbol(car(p)))
-			  symbols++;
+			if (is_pair(car(p)))
+			  {
+			    pairs++;
+			    if (!is_checked(car(p)))
+			      {
+				if (!optimize_expression(sc, p, orig_hop, e))
+				  {
+				    bad_pairs++;
+				    if ((caar(p) == sc->QUOTE) &&
+					(is_pair(cdar(p))) &&
+					(is_null(cddar(p))))
+				      quotes++;
+				  }
+			      }
+			    else 
+			      {
+				if ((!is_optimized(car(p))) ||
+				    (is_unsafe(car(p))))
+				  {
+				    bad_pairs++;
+				    if ((caar(p) == sc->QUOTE) &&
+					(is_pair(cdar(p))) &&
+					(is_null(cddar(p))))
+				      quotes++;
+				  }
+			      }
+			  }
 		      }
 		  }
 		if ((is_null(p)) &&                    /* if not null, dotted list of args? */
@@ -46180,19 +46180,19 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		    switch (args)
 		      {
 		      case 0: 
-			return(optimize_thunk(sc, car(x), func, hop));
+			return(optimize_thunk(sc, car_x, func, hop));
 			
 		      case 1:
-			return(optimize_func_one_arg(sc, car(x), func, hop, pairs, symbols, quotes, bad_pairs));
+			return(optimize_func_one_arg(sc, car_x, func, hop, pairs, symbols, quotes, bad_pairs));
 			
 		      case 2:
-			return(optimize_func_two_args(sc, car(x), func, hop, pairs, symbols, quotes, bad_pairs));
+			return(optimize_func_two_args(sc, car_x, func, hop, pairs, symbols, quotes, bad_pairs));
 			
 		      case 3:
-			return(optimize_func_three_args(sc, car(x), func, hop, pairs, symbols, quotes, bad_pairs));
+			return(optimize_func_three_args(sc, car_x, func, hop, pairs, symbols, quotes, bad_pairs));
 			
 		      default:
-			return(optimize_func_many_args(sc, car(x), func, hop, args, pairs, symbols, quotes, bad_pairs));
+			return(optimize_func_many_args(sc, car_x, func, hop, args, pairs, symbols, quotes, bad_pairs));
 		      }
 		  }
 		return(false);
@@ -46217,7 +46217,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 	    /* we need local definitions and func args in e?  also check is_symbol case below
 	     */
 	  }
-
       }
 
       /* caar(x) is a symbol but it's not a known procedure or a "safe" case = vector etc */
@@ -57255,7 +57254,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		/* this is the implicit indexing case (vector-ref is a normal safe op) 
 		 *    (define (hi) (let ((v (vector 1 2 3))) (v 0)))
-		 *    this starts as unknown_c [26608 in optimize_function] -> vector_c
+		 *    this starts as unknown_c in optimize_expression -> vector_c
 		 *    but it still reports itself as unsafe, so there are higher levels possible
 		 */
 		s7_pointer v; 
@@ -57624,12 +57623,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		set_type(code, SYNTACTIC_PAIR);
 		car(code) = syntax_symbol(slot_value(initial_slot(carc))); /* clear possible optimization confusion */
-
-		carc = car(code); 
-		sc->op = (opcode_t)symbol_syntax_op(carc);
+		sc->op = (opcode_t)symbol_syntax_op(car(code));
 		pair_syntax_op(code) = sc->op;
 		sc->code = cdr(code); 
-
 		goto START_WITHOUT_POP_STACK;
 	      }
 	    
@@ -67738,7 +67734,6 @@ Pass this as the second argument to 'random' to get a repeatable random number s
       gmp_randseed(r->state, big_integer(seed));
       return(s7_make_object(sc, sc->big_rng_tag, (void *)r));
     }
-
   return(s7_make_random_state(sc, args));
 }
 
@@ -68868,7 +68863,6 @@ s7_scheme *s7_init(void)
     }
   car(sc->WRONG_TYPE_ARG_INFO) = s7_make_permanent_string("~A argument ~D, ~S, is ~A but should be ~A");
 
-
   sc->SIMPLE_WRONG_TYPE_ARG_INFO = sc->NIL;
   for (i = 0; i < 5; i++)
     sc->SIMPLE_WRONG_TYPE_ARG_INFO = permanent_cons(sc->F, sc->SIMPLE_WRONG_TYPE_ARG_INFO, T_PAIR);
@@ -69613,10 +69607,9 @@ s7_scheme *s7_init(void)
 
   /* ---------------- dilambda ---------------- */
 
-  s7_eval_c_string(sc, "(define (dilambda g s)                                              \n\
-                          \"(dilambda g s) returns a function (g) whose setter is s.\"      \n\
+  s7_eval_c_string(sc, "(define (dilambda g s)                                                                \n\
                           (if (or (not (procedure? g)) (not (procedure? s)))                                  \n\
-                              (error 'wrong-type-arg \"dilambda takes 2 procedures: ~A ~A\" g s) \n\
+                              (error 'wrong-type-arg \"dilambda takes 2 procedures: ~A ~A\" g s)              \n\
                               (set! (procedure-setter g) s))                                                  \n\
                           g)");
 
@@ -69905,12 +69898,12 @@ int main(int argc, char **argv)
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1
  * s7test    1721 | 1358 |  995 | 1194 1210
- * index    44300 | 3291 | 1725 | 1276 1244
+ * index    44300 | 3291 | 1725 | 1276 1243
  * bench    42736 | 8752 | 4220 | 3506 3506
  * lg             |      |      |      6404
  * t502        90 |   43 | 14.5 | 12.7 12.6
  * t455|6     265 |   89 |  9   |       8.8
- * t816           |   71 | 70.6 | 38.0 32.2
+ * t816           |   71 | 70.6 | 38.0 32.1
  * calls      359 |  275 | 54   | 34.7 34.7
  *            153 with run macro (eval_ptree)
  *
@@ -69925,4 +69918,9 @@ int main(int argc, char **argv)
  *
  * undef id: cond-expand args
  * snd-genv needs a lot of gtk3 work
+ * perhaps a setter for procedure-documentation
+ *   (define-with-documentation (name args) doc . body) returns (define (name args) body) while setting doc of name
+ *   or just do it with current define if string as first form and something follows it (so it's either doc or dumb)
+ *   but where to store it if closure (closure env somehow?)
+ * cyclic-sequences is minimally tested in s7test
  */
