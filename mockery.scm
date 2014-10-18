@@ -280,6 +280,7 @@
 		   '->bytevector           (lambda (obj) (#_->bytevector (obj 'value))) ; this is in-place! 
 		   'load                   (lambda* (obj (e (curlet))) (#_load (obj 'value) e))
 		   'eval-string            (lambda* (obj (e (curlet))) (#_eval-string (obj 'value) e))
+		   'char-position          (make-method #_char-position (lambda (obj) (obj 'value)))
 
 		   'format                 (make-method #_format (lambda (obj) (obj 'value)))
 		   
@@ -405,7 +406,8 @@
 		   'string             (make-method #_string (lambda (obj) (obj 'value)))
 		   'object->string     (lambda (obj . args) "#<mock-character-class>")
 		   'arity              (lambda (obj) (#_arity (obj 'value)))
-		   'format             (lambda (str c . args) (#_string c))
+		   'format             (make-method #_format (lambda (obj) (obj 'value)))
+		   'make-string        (make-method #_make-string (lambda (obj) (obj 'value)))
 		   
 		   'char-position      (lambda (obj str) 
 					 (if (mock-char? obj)
@@ -565,11 +567,12 @@
 		   'write-byte       (lambda (byte . port) (apply #_write-byte (byte 'value) port))
 
 		   'make-list        (lambda (ind . args) (apply #_make-list (ind 'value) args))
-		   'make-vector      (lambda (ind . args) (apply #_make-vector (ind 'value) args))
+		   'make-vector      (make-method #_make-vector (lambda (obj) (obj 'value)))
+		   'make-float-vector(make-method #_make-float-vector (lambda (obj) (obj 'value)))
 		   'make-hash-table  (lambda (ind . args) (apply #_make-hash-table (ind 'value) args))
 
 		   'bytevector       (make-method #_bytevector (lambda (obj) (obj 'value)))
-		   'format           (lambda (str n . rest) (#_number->string n))
+		   'format           (make-method #_format (lambda (obj) (obj 'value)))
 
 		   'make-string      (lambda (ind . args) 
 				       (if (mock-number? ind)

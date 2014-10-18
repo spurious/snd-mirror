@@ -6725,15 +6725,23 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument(sc, sc->IS_DEFINED, small_int(1), sym, T_SYMBOL));
     }
 
-  if (is_not_null(cdr(args)))
+  if (is_pair(cdr(args)))
     {
-      s7_pointer e;
+      s7_pointer e, b;
       e = cadr(args);
       if (!is_let(e))
+	return(wrong_type_argument_with_type(sc, sc->IS_DEFINED, small_int(2), e, AN_ENVIRONMENT));
+
+      if (is_pair(cddr(args)))
 	{
-	  check_method(sc, e, sc->IS_DEFINED, args);
-	  return(wrong_type_argument_with_type(sc, sc->IS_DEFINED, small_int(2), e, AN_ENVIRONMENT));
+	  b = caddr(args);
+	  if (!s7_is_boolean(b))
+	    {
+	      check_method(sc, b, sc->IS_DEFINED, args);
+	      return(wrong_type_argument_with_type(sc, sc->IS_DEFINED, small_int(3), b, make_string_wrapper(sc, "a boolean")));
+	    }
 	}
+      else b = sc->F;
 
       if (e == sc->rootlet)
 	return(make_boolean(sc, global_slot(sym) != sc->UNDEFINED));
@@ -6742,9 +6750,8 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
       if (is_slot(x))
 	return(sc->T);
 
-      if ((is_pair(cddr(args))) &&
-	  (caddr(args) == sc->T))
-	return(sc->F);
+      if (b == sc->T)
+	return(false);
 
       /* here we can't fall back on find_symbol:
        *    (let ((b 2))
@@ -14922,6 +14929,20 @@ static s7_pointer g_mul_s_cos_s(s7_scheme *sc, s7_pointer args)
 
 /* ---------------------------------------- divide ---------------------------------------- */
 
+static bool is_number_via_method(s7_scheme *sc, s7_pointer p)
+{
+  if (s7_is_number(p))
+    return(true);
+  if (has_methods(p))
+    {
+      s7_pointer f;
+      f = find_method(sc, find_let(sc, p), sc->IS_NUMBER);
+      if (f != sc->UNDEFINED)
+	return(is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL))));
+    }
+  return(false);
+}
+
 static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 {
   #define H_divide "(/ x1 ...) divides its first argument by the rest, or inverts the first if there is only one argument"
@@ -14952,18 +14973,23 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	  bool return_nan = false, return_real_zero = false;
 	  for (; is_pair(p); p = cdr(p))
 	    {
-	      if (!is_number(car(p)))
+	      s7_pointer n;
+	      n = car(p);
+	      if (!s7_is_number(n))
 		{
-		  check_method(sc, car(p), sc->DIVIDE, args);
-		  return(wrong_type_argument_n_with_type(sc, sc->DIVIDE, position_of(p, args), car(p), A_NUMBER));
+		  if (!is_number_via_method(sc, n))
+		    return(wrong_type_argument_n_with_type(sc, sc->DIVIDE, position_of(p, args), n, A_NUMBER));
 		}
-	      if (s7_is_zero(car(p)))
-		return(division_by_zero_error(sc, sc->DIVIDE, args));
-	      if (type(car(p)) > T_RATIO)
+	      else
 		{
-		  return_real_zero = true;		  
-		  if (is_NaN(real(car(p))))
-		    return_nan = true;
+		  if (s7_is_zero(n))
+		    return(division_by_zero_error(sc, sc->DIVIDE, args));
+		  if (type(n) > T_RATIO)
+		    {
+		      return_real_zero = true;		  
+		      if (is_NaN(real(n)))
+			return_nan = true;
+		    }
 		}
 	    }
 	  if (return_nan)
@@ -15161,16 +15187,21 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	  bool return_nan = false;
 	  for (; is_pair(p); p = cdr(p))
 	    {
-	      if (!is_number(car(p)))
+	      s7_pointer n;
+	      n = car(p);
+	      if (!is_number(n))
 		{
-		  check_method(sc, car(p), sc->DIVIDE, args);
-		  return(wrong_type_argument_n_with_type(sc, sc->DIVIDE, position_of(p, args), car(p), A_NUMBER));
+		  if (!is_number_via_method(sc, n))
+		    return(wrong_type_argument_n_with_type(sc, sc->DIVIDE, position_of(p, args), n, A_NUMBER));
 		}
-	      if (s7_is_zero(car(p)))
-		return(division_by_zero_error(sc, sc->DIVIDE, args));
-	      if ((type(car(p)) == T_REAL) && 
-		  (is_NaN(real(car(p)))))
-		return_nan = true;
+	      else
+		{
+		  if (s7_is_zero(n))
+		    return(division_by_zero_error(sc, sc->DIVIDE, args));
+		  if ((type(n) == T_REAL) && 
+		      (is_NaN(real(n))))
+		    return_nan = true;
+		}
 	    }
 	  if (return_nan)
 	    return(real_NaN);
@@ -15822,21 +15853,6 @@ static s7_pointer g_min_f2(s7_scheme *sc, s7_pointer args)
 
 
 /* ---------------------------------------- = > < >= <= ---------------------------------------- */
-
-static bool is_number_via_method(s7_scheme *sc, s7_pointer p)
-{
-  if (s7_is_number(p))
-    return(true);
-  if (has_methods(p))
-    {
-      s7_pointer f;
-      f = find_method(sc, find_let(sc, p), sc->IS_NUMBER);
-      if (f != sc->UNDEFINED)
-	return(is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL))));
-    }
-  return(false);
-}
-
 
 static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 {
@@ -19402,11 +19418,11 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
   else start = 0;
 
   len = string_length(arg2);
-  if (start >= len) return(sc->F);
 
   if (s7_is_character(arg1))
     {
       char c;
+      if (start >= len) return(sc->F);
       c = character(arg1);
       p = strchr((const char *)(porig + start), (int)c); /* use strchrnul in Gnu C to catch embedded null case */
       if (p)
@@ -19419,6 +19435,7 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
       check_method(sc, arg1, sc->CHAR_POSITION, args);
       return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(1), arg1, T_CHARACTER));
     }
+  if (start >= len) return(sc->F);
   if (string_length(arg1) == 0)
     return(sc->F);
   pset = string_value(arg1);
@@ -22864,6 +22881,9 @@ static s7_pointer g_peek_char(s7_scheme *sc, s7_pointer args)
     }
   if (port_is_closed(port))
     return(simple_wrong_type_argument_with_type(sc, sc->PEEK_CHAR, port, AN_OPEN_PORT));
+
+  if (is_function_port(port))
+    return((*(port_input_function(port)))(sc, S7_PEEK_CHAR, port));
       
   c = s7_peek_char(sc, port);
   return(chars[c]);
@@ -22983,6 +23003,9 @@ static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
   if (chars > MAX_STRING_LENGTH)
     return(out_of_range(sc, sc->READ_STRING, small_int(1), k, "a reasonable integer!"));
 
+  if (chars == 0)
+    return(make_empty_string(sc, 0, 0));
+
   if (!is_null(cdr(args)))
     {
       port = cadr(args);
@@ -22999,27 +23022,14 @@ static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
 	return(sc->EOF_OBJECT);
     }
 
-  if ((chars == 0) && 
-      (port == sc->standard_input))
-    return(make_empty_string(sc, 0, 0));
-
-  c = port_read_character(port)(sc, port);
-  if (c == EOF)
-    return(sc->EOF_OBJECT);
-
-  if (chars == 0)
-    {
-      backchar(c, port);
-      return(make_empty_string(sc, 0, 0));
-    }
-  
   str = make_empty_string(sc, chars, 0);
-  string_value(str)[0] = c;
-  for (i = 1; i < chars; i++)
+  for (i = 0; i < chars; i++)
     {
       c = port_read_character(port)(sc, port);
       if (c == EOF)
 	{
+	  if (i == 0)
+	    return(sc->EOF_OBJECT);
 	  string_length(str) = i;
 	  return(str);
 	}
@@ -27031,8 +27041,6 @@ static s7_pointer g_format_1(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer pt, str;
   sc->format_column = 0;
-
-  /* sc->args = sc->NIL; */ /* why? s7test is ok either way */
   pt = car(args);
 
   if (is_string(pt))
@@ -31499,8 +31507,12 @@ or a real, the vector can only hold numbers of that type (s7_Int or s7_Double)."
 		{
 		  if (s7_is_real(fill)) /* might be gmp with big_real by accident */
 		    result_type = T_FLOAT_VECTOR;
-		  else return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(2), fill,
-							    make_string_wrapper(sc, "an integer or a real since 'homogenous' is #t")));
+		  else 
+		    {
+		      check_method(sc, fill, sc->MAKE_VECTOR, args);
+		      return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(2), fill,
+							   make_string_wrapper(sc, "an integer or a real since 'homogenous' is #t")));
+		    }
 		}
 	    }
 	  else 
@@ -47766,12 +47778,13 @@ static s7_pointer check_quote(s7_scheme *sc)
     }
   if (is_not_null(cdr(sc->code)))             /* (quote . (1 2)) or (quote 1 1) */
     return(eval_error(sc, "quote: too many arguments ~A", sc->code));
-
+#if 0
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
       pair_set_syntax_symbol(sc->code, sc->QUOTE_UNCHECKED);
     }
+#endif
   return(sc->code);
 }
 
@@ -56319,7 +56332,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      case T_INT_VECTOR:
 		      case T_FLOAT_VECTOR:
 		      case T_VECTOR:
-			set_opt_and_goto_opt_eval(code, f, OP_VECTOR_C);
+			if (is_integer(cadr(code)))      /* (v 4/3) */
+			  set_opt_and_goto_opt_eval(code, f, OP_VECTOR_C);
+			break;
 			
 		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			/* if we switch to op_c_all_x here, we need to set fcdr */
@@ -57259,7 +57274,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		 */
 		s7_pointer v; 
 		v = find_symbol_checked(sc, car(code));
-		if (!s7_is_vector(v))
+		if ((!s7_is_vector(v)) ||
+		    (!s7_is_integer(cadr(code))))  /* (v 4/3) */
+		  break;
+
 		  break;
 		
 		if (vector_rank(v) == 1)
@@ -57345,7 +57363,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_Int index;
 		s7_pointer s;
 		s = find_symbol_checked(sc, car(code));
-		if (!is_string(s))
+		if ((!is_string(s)) ||
+		    (!is_integer(cadr(code))))
 		  break;
 		
 		index = s7_integer(cadr(code));
@@ -57475,7 +57494,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* 6768: (a 4) dlocsig (etc...) */
 		s7_pointer s;
 		s = find_symbol_checked(sc, car(code));
-		if (!is_pair(s))
+		if ((!is_pair(s)) ||
+		    (!is_integer(cadr(code))))
 		  break;
 		
 		sc->value = list_ref_1(sc, s, cadr(code));
@@ -58755,9 +58775,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_QUOTE:
-      check_quote(sc);
-      
     case OP_QUOTE_UNCHECKED:
+      /* I think a quoted list in another list can be applied to a function, come here and
+       *   be changed to unchecked, set-cdr! or something clobbers the argument so we get
+       *   here on the next time around with the equivalent of (quote . 0) so unchecked
+       *   quote needs more thought.
+       */
+      check_quote(sc);
       sc->value = car(sc->code);
       goto START;
       
@@ -69586,6 +69610,7 @@ s7_scheme *s7_init(void)
   s7_eval_c_string(sc, "(define-macro (defmacro* name args . body) `(define-macro* ,(cons name args) ,@body))");
 
   /* call-with-values is almost a no-op; r7rs's fault.
+   *   this really should check that the producer and consumer make sense (not a circular list for example).
    */
   s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) `(,consumer (,producer)))"); 
   /* (call-with-values (lambda () (values 1 2 3)) +) */
@@ -69923,4 +69948,7 @@ int main(int argc, char **argv)
  *   or just do it with current define if string as first form and something follows it (so it's either doc or dumb)
  *   but where to store it if closure (closure env somehow?)
  * cyclic-sequences is minimally tested in s7test
+ * ideally the vector ops would accept bytevectors
+ * t109 expanded
+ * mockery problem if (say) vector-fill! falls back on fill!, but it's string-fill!, and the fill! is called since there is no string-fill!
  */
