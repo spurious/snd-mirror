@@ -32,7 +32,7 @@
 	   (openlet  
 	    (inlet 'class-name         'mock-vector
 		   'values             (lambda (obj . args) (obj 'value))
-		   'morally-equal?     (lambda (x y) (#_morally-equal? (x 'value) y))
+		   'morally-equal?     (make-method #_morally-equal? (lambda (obj) (obj 'value)))
 		   'vector?            (lambda (obj) #t)
 
 		   'local-set!         (lambda (obj i val)          ; reactive-vector uses this as a hook into vector-set!
@@ -408,11 +408,7 @@
 		   'arity              (lambda (obj) (#_arity (obj 'value)))
 		   'format             (make-method #_format (lambda (obj) (obj 'value)))
 		   'make-string        (make-method #_make-string (lambda (obj) (obj 'value)))
-		   
-		   'char-position      (lambda (obj str) 
-					 (if (mock-char? obj)
-					     (#_char-position (obj 'value) str)
-					     (error 'wrong-type-arg "char-position: ~S ~S" obj str)))
+		   'char-position      (make-method #_char-position (lambda (obj) (obj 'value)))
 		   
 		   'write-char         (lambda (obj . args) 
 					 (if (mock-char? obj)

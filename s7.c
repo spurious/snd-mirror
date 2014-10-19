@@ -19388,14 +19388,21 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
   s7_pointer arg1, arg2;
 
   arg1 = car(args);
+  if ((!s7_is_character(arg1)) &&
+      (!is_string(arg1)))
+    {
+      check_method(sc, arg1, sc->CHAR_POSITION, args);
+      return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(1), arg1, T_CHARACTER));
+    }
+    
   arg2 = cadr(args);
-
   if (!is_string(arg2))
     {
-      check_method(sc, (is_let(arg1)) ? arg1 : arg2, sc->CHAR_POSITION, args);
+      check_method(sc, arg2, sc->CHAR_POSITION, args);
       return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(2), arg2, T_STRING));
     }
   porig = string_value(arg2);
+  len = string_length(arg2);
 
   if (is_pair(cddr(args)))
     {
@@ -19416,13 +19423,11 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
 	return(wrong_type_argument_with_type(sc, sc->CHAR_POSITION, small_int(3), arg3, A_NON_NEGATIVE_INTEGER));
     }
   else start = 0;
-
-  len = string_length(arg2);
+  if (start >= len) return(sc->F);
 
   if (s7_is_character(arg1))
     {
       char c;
-      if (start >= len) return(sc->F);
       c = character(arg1);
       p = strchr((const char *)(porig + start), (int)c); /* use strchrnul in Gnu C to catch embedded null case */
       if (p)
@@ -19430,12 +19435,6 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
       return(sc->F);
     }
   
-  if (!is_string(arg1))
-    {
-      check_method(sc, arg1, sc->CHAR_POSITION, args);
-      return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(1), arg1, T_CHARACTER));
-    }
-  if (start >= len) return(sc->F);
   if (string_length(arg1) == 0)
     return(sc->F);
   pset = string_value(arg1);
@@ -20295,22 +20294,24 @@ static s7_pointer g_strings_are_equal(s7_scheme *sc, s7_pointer args)
 
   for (x = cdr(args); is_not_null(x); x = cdr(x)) 
     {
-      if (y != car(x))
+      s7_pointer p;
+      p = car(x);
+      if (y != p)
 	{
-	  if (!is_string(car(x)))
+	  if (!is_string(p))
 	    {
-	      check_method(sc, car(x), sc->STRING_EQ, args);
-	      return(wrong_type_argument_n(sc, sc->STRING_EQ, position_of(x, args), car(x), T_STRING));
+	      check_method(sc, p, sc->STRING_EQ, cons(sc, y, x));
+	      return(wrong_type_argument_n(sc, sc->STRING_EQ, position_of(x, args), p, T_STRING));
 	    }
 	  if (happy)
 	    {
-	      if (string_length(car(x)) != len)
+	      if (string_length(p) != len)
 		happy = false;
 	      else
 		{
 		  unsigned int k;
 		  char *xstr;
-		  xstr = string_value(car(x));
+		  xstr = string_value(p);
 		  for (k = 0; k < len; k++)
 		    if (ystr[k] != xstr[k])
 		      {
@@ -36082,6 +36083,7 @@ static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, share
 		 (fabs(imag_part(x)) <= sc->morally_equal_float_epsilon));
 
 	case T_COMPLEX:
+	  /* should (morally-equal? nan.0 (make-rectangular nan.0 nan.0)) be #t? */
 	  if (is_NaN(real_part(x)))
 	    return((is_NaN(real_part(y))) &&
 		   (((is_NaN(imag_part(x))) && (is_NaN(imag_part(y)))) ||
@@ -58413,20 +58415,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_C_MACRO: 	                    /* -------- C-based macro -------- */
 	  {
 	    int len;
-	    
+	    /* fprintf(stderr, "args: %s\n", DISPLAY(sc->args)); */
 	    if (is_pair(car(sc->args)))            /* normally args is ((mac-name ...)) */
 	      {                                    /*   but in a case like (call-with-exit quasiquote), args is (#<goto>) */
 		if (!s7_is_list(sc, cdar(sc->args)))  /* (quasiquote . 1) */
 		  eval_error(sc, "improper list of arguments: ~A", car(sc->args));
 		sc->args = cdar(sc->args);         
 	      }
-	    else 
-	      {
-		/* I think this can only be triggered by map/for-each with a (c_)macro [in fact, quasiquote] argument,
-		 *    so perhaps we can fix it here?
-		 */
-		eval_error(sc, "~A called as a function, but it's a macro!", sc->code);
-	      }
+	    /* otherwise sc->args is already ok -- I think this can only be triggered by quasiquote */
 	    
 	    len = s7_list_length(sc, sc->args);
 	    if (len <= 0)                          /* (quasiquote 0 . 1) */
@@ -69943,12 +69939,13 @@ int main(int argc, char **argv)
  *
  * undef id: cond-expand args
  * snd-genv needs a lot of gtk3 work
- * perhaps a setter for procedure-documentation
- *   (define-with-documentation (name args) doc . body) returns (define (name args) body) while setting doc of name
- *   or just do it with current define if string as first form and something follows it (so it's either doc or dumb)
- *   but where to store it if closure (closure env somehow?)
  * cyclic-sequences is minimally tested in s7test
  * ideally the vector ops would accept bytevectors
  * t109 expanded
- * mockery problem if (say) vector-fill! falls back on fill!, but it's string-fill!, and the fill! is called since there is no string-fill!
+ * 2-method problem if (say) vector-fill! falls back on fill!, but it's string-fill!
+ *  (let ((e (openlet (inlet 'fill! (lambda (obj val) (string-fill! (obj 'value) val)) 'value "01234")))) (vector-fill! e #\a) (e 'value)) -> "aaaa"
+ *
+ * (let () (define (when a) (+ a 1)) (when 2)) -> 3
+ *   but at the top level: (define (when a) (+ a 1)) (when 2) -> when has no body? 
+ *   (this is ok if it happens after the local definition) -- global redef means set local flag?
  */
