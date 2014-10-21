@@ -377,12 +377,12 @@
 
 ;;; --------------------------------------------------------------------------------
 
-(define *mock-character*
+(define *mock-char*
   (let ((mock-char? #f))
-    (let ((mock-character-class
+    (let ((mock-char-class
 	   (openlet
 	    (inlet 'char?              (lambda (obj) #t)
-		   'class-name         'mock-character
+		   'class-name         'mock-char
 		   'values             (lambda (obj . args) (obj 'value))
 		   'morally-equal?     (lambda (x y) (#_morally-equal? (x 'value) y))
 		   'char-upcase        (lambda (obj) (#_char-upcase (obj 'value)))
@@ -404,7 +404,7 @@
 		   'char-ci<=?         (make-method #_char-ci<=? (lambda (obj) (obj 'value)))
 		   'char-ci>=?         (make-method #_char-ci>=? (lambda (obj) (obj 'value)))
 		   'string             (make-method #_string (lambda (obj) (obj 'value)))
-		   'object->string     (lambda (obj . args) "#<mock-character-class>")
+		   'object->string     (lambda (obj . args) "#<mock-char-class>")
 		   'arity              (lambda (obj) (#_arity (obj 'value)))
 		   'format             (make-method #_format (lambda (obj) (obj 'value)))
 		   'make-string        (make-method #_make-string (lambda (obj) (obj 'value)))
@@ -430,14 +430,14 @@
 	(if (and (char? c)
 		 (not (let? c)))
 	    (openlet
-	     (sublet (*mock-character* 'mock-character-class)
+	     (sublet (*mock-char* 'mock-char-class)
 	       'value c
 	       'object->string mock->string))
 	    (error 'wrong-type-arg "mock-char ~S is not a char" c)))
       
       (set! mock-char? (lambda (obj)
 			 (and (openlet? obj)
-			      (outlet-member obj mock-character-class))))
+			      (outlet-member obj mock-char-class))))
       
       (curlet))))
 

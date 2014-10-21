@@ -19,7 +19,7 @@
 (define mock-number (*mock-number* 'mock-number))
 (define mock-pair (*mock-pair* 'mock-pair))
 (define mock-string (*mock-string* 'mock-string))
-(define mock-char (*mock-character* 'mock-char))
+(define mock-char (*mock-char* 'mock-char))
 (define mock-vector (*mock-vector* 'mock-vector))
 (define mock-symbol (*mock-symbol* 'mock-symbol))
 (define mock-hash-table* (*mock-hash-table* 'mock-hash-table*))
@@ -55,7 +55,6 @@
 			(bytevector 0 1 2) (bytevector) (bytevector 255 0 127) (make-hash-table-iterator (hash-table '(a . 2)))
 			(lambda (dir) 1.0) (float-vector) (make-float-vector '(2 32)) 
 			;(openlet (inlet 'value 1 '+ (lambda args 1)))
-			;all-env
 			"t105.scm" "~,3F" "~{~A~}"
 
 			(mock-number 0) (mock-number 2) (mock-number 1-i) (mock-number 4/3) (mock-number 2.0)
@@ -187,5 +186,5 @@
     (format *stderr* "~%~%all done~%")))
 
 (all)
-
+(s7-version)
 (exit)

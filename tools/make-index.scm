@@ -822,7 +822,7 @@
     (list '*mock-symbol* "mockery.scm")
     (list '*mock-pair* "mockery.scm")
     (list '*mock-number* "mockery.scm")
-    (list '*mock-character* "mockery.scm")
+    (list '*mock-char* "mockery.scm")
     (list '*mock-string* "mockery.scm")
     (list '*mock-hash-table* "mockery.scm")
 

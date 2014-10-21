@@ -1090,14 +1090,14 @@ It's almost as easy to write the actual macro body as the backquoted version of 
 &gt; (define-macro (hi a) `(+ 1 ,a))
 hi
 &gt; (procedure-source hi)
-(lambda ({defmac}-16) (apply (lambda (a) <em class=red>({list} '+ 1 a))</em> (cdr {defmac}-16)))
+(lambda ({hi}-16) (apply (lambda (a) <em class=red>({list} '+ 1 a))</em> (cdr {hi}-16)))
 
 ;; so (define-macro (hi a) ({list} + 1 a)) is the same
 
 &gt; (define-macro (hi a) `(+ 1 ,@a))
 hi
 &gt; (procedure-source hi)
-(lambda ({defmac}-17) (apply (lambda (a) <em class=red>({list} '+ 1 ({apply_values} a)))</em> (cdr {defmac}-17)))
+(lambda ({hi}-17) (apply (lambda (a) <em class=red>({list} '+ 1 ({apply_values} a)))</em> (cdr {hi}-17)))
 
 ;; same: (define-macro (hi a) ({list} + 1 ({apply_values} a)))
 </pre>

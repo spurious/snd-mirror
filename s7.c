@@ -1600,6 +1600,7 @@ static void init_types(void)
   t_catchable_p[OP_CATCH_2] = true;
   t_catchable_p[OP_CATCH] = true;
   t_catchable_p[OP_DYNAMIC_WIND] = true;
+  t_catchable_p[OP_GET_OUTPUT_STRING_1] = true;
   t_catchable_p[OP_UNWIND_OUTPUT] = true;
   t_catchable_p[OP_UNWIND_INPUT] = true;
   t_catchable_p[OP_READ_DONE] = true;
@@ -1662,7 +1663,7 @@ static void init_types(void)
       p->current_alloc_func = __func__; \
       p->current_alloc_type = f; \
       p->uses++; \
-      typeflag(p) = f; \
+      typeflag(p) = f; if (is_free(p)) fprintf(stderr, "%d: set %p type %x\n", __LINE__, p, f); \
     } while (0)
   #define clear_type(p) do {p->gc_line = __LINE__; p->gc_func = __func__; typeflag(p) = 0;} while (0)
 #else
@@ -1898,11 +1899,6 @@ static void init_types(void)
 #define set_list_in_use(p)            typeflag(p) |= T_LIST_IN_USE
 #define clear_list_in_use(p)          typeflag(p) &= (~T_LIST_IN_USE)
 /* these could all be one permanent list, indexed from inside, and this bit is never actually protecting anything across a call
- */
-
-#define T_NO_VALUE                    T_GENSYM
-#define has_no_value(p)               (typeflag(p) == (unsigned int)(T_UNSPECIFIED | T_IMMUTABLE | T_GC_MARK | T_NO_VALUE))
-/* to catch (eq? #<unspecified> #<unspecified>) where one of the two is the internal "no value" value 
  */
 
 #define T_FUNCTION_ENV                T_GENSYM
@@ -9115,7 +9111,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
   if (s7_is_bignum(x))
     {
       res = big_number_to_string_with_radix(x, radix, 0, &nlen, USE_WRITE);
-      return(s7_make_string_uncopied_with_length(sc, res, nlen));
+      return(make_string_uncopied_with_length(sc, res, nlen));
     }
 #endif
 
@@ -14977,19 +14973,17 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	      n = car(p);
 	      if (!s7_is_number(n))
 		{
-		  if (!is_number_via_method(sc, n))
+		  n = check_values(sc, n, p);
+		  if (!s7_is_number(n))
 		    return(wrong_type_argument_n_with_type(sc, sc->DIVIDE, position_of(p, args), n, A_NUMBER));
 		}
-	      else
+	      if (s7_is_zero(n))
+		return(division_by_zero_error(sc, sc->DIVIDE, args));
+	      if (type(n) > T_RATIO)
 		{
-		  if (s7_is_zero(n))
-		    return(division_by_zero_error(sc, sc->DIVIDE, args));
-		  if (type(n) > T_RATIO)
-		    {
-		      return_real_zero = true;		  
-		      if (is_NaN(real(n)))
-			return_nan = true;
-		    }
+		  return_real_zero = true;		  
+		  if (is_NaN(real(n)))
+		    return_nan = true;
 		}
 	    }
 	  if (return_nan)
@@ -15189,19 +15183,17 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	    {
 	      s7_pointer n;
 	      n = car(p);
-	      if (!is_number(n))
+	      if (!s7_is_number(n))
 		{
-		  if (!is_number_via_method(sc, n))
+		  n = check_values(sc, n, p);
+		  if (!s7_is_number(n))
 		    return(wrong_type_argument_n_with_type(sc, sc->DIVIDE, position_of(p, args), n, A_NUMBER));
 		}
-	      else
-		{
-		  if (s7_is_zero(n))
-		    return(division_by_zero_error(sc, sc->DIVIDE, args));
-		  if ((type(n) == T_REAL) && 
-		      (is_NaN(real(n))))
-		    return_nan = true;
-		}
+	      if (s7_is_zero(n))
+		return(division_by_zero_error(sc, sc->DIVIDE, args));
+	      if ((type(n) == T_REAL) && 
+		  (is_NaN(real(n))))
+		return_nan = true;
 	    }
 	  if (return_nan)
 	    return(real_NaN);
@@ -18876,35 +18868,46 @@ static int charcmp(unsigned char c1, unsigned char c2)
 }
 
 
+static bool is_character_via_method(s7_scheme *sc, s7_pointer p)
+{
+  if (s7_is_character(p))
+    return(true);
+  if (has_methods(p))
+    {
+      s7_pointer f;
+      f = find_method(sc, find_let(sc, p), sc->IS_CHAR);
+      if (f != sc->UNDEFINED)
+	return(is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL))));
+    }
+  return(false);
+}
+
+
 static s7_pointer g_char_cmp(s7_scheme *sc, s7_pointer args, int val, s7_pointer sym)
 {
-  s7_pointer x;
-  unsigned char last_chr;
+  s7_pointer x, y;
 
-  if (!s7_is_character(car(args)))
+  y = car(args);
+  if (!s7_is_character(y))
     {
-      check_method(sc, car(args), sym, args);
-      return(wrong_type_argument_n(sc, sym, 1, car(args), T_CHARACTER));
+      check_method(sc, y, sym, args);
+      return(wrong_type_argument_n(sc, sym, 1, y, T_CHARACTER));
     }
-  
-  last_chr = character(car(args));
-  for (x = cdr(args); is_not_null(x); x = cdr(x))
+  for (x = cdr(args); is_pair(x); x = cdr(x))
     {
-      s7_pointer c;
-      c = car(x);
-      if (!s7_is_character(c))
+      if (!s7_is_character(car(x)))
 	{
-	  check_method(sc, c, sym, cons(sc, chars[last_chr], x));
-	  return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	  check_method(sc, car(x), sym, cons(sc, y, x));
+	  return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_CHARACTER));
 	}
-      if (charcmp(last_chr, character(c)) != val)
+      if (charcmp(character(y), character(car(x))) != val)
 	{
-	  for (x = cdr(x); is_pair(x); x = cdr(x))
-	    if (!s7_is_character(car(x)))
-	      return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	  for (y = cdr(x); is_pair(y); y = cdr(y))
+	    if (!is_character_via_method(sc, car(y)))
+	      return(wrong_type_argument_n(sc, sym, position_of(y, args), car(y), T_CHARACTER));
 	  return(sc->F);
 	}
-      last_chr = character(c);
+      y = car(x);
     }
   return(sc->T);
 }
@@ -18912,33 +18915,29 @@ static s7_pointer g_char_cmp(s7_scheme *sc, s7_pointer args, int val, s7_pointer
 
 static s7_pointer g_char_cmp_not(s7_scheme *sc, s7_pointer args, int val, s7_pointer sym)
 {
-  s7_pointer x;
-  unsigned char last_chr;
-  
-  if (!s7_is_character(car(args)))
+  s7_pointer x, y;
+
+  y = car(args);
+  if (!s7_is_character(y))
     {
-      check_method(sc, car(args), sym, args);
-      return(wrong_type_argument_n(sc, sym, 1, car(args), T_CHARACTER));
+      check_method(sc, y, sym, args);
+      return(wrong_type_argument_n(sc, sym, 1, y, T_CHARACTER));
     }
-  
-  last_chr = character(car(args));
-  for (x = cdr(args); is_not_null(x); x = cdr(x))
+  for (x = cdr(args); is_pair(x); x = cdr(x))
     {
-      s7_pointer c;
-      c = car(x);
-      if (!s7_is_character(c))
+      if (!s7_is_character(car(x)))
 	{
-	  check_method(sc, c, sym, cons(sc, chars[last_chr], x));
-	  return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	  check_method(sc, car(x), sym, cons(sc, y, x));
+	  return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_CHARACTER));
 	}
-      if (charcmp(last_chr, character(c)) == val)
+      if (charcmp(character(y), character(car(x))) == val)
 	{
-	  for (x = cdr(x); is_pair(x); x = cdr(x))
-	    if (!s7_is_character(car(x)))
-	      return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	  for (y = cdr(x); is_pair(y); y = cdr(y))
+	    if (!is_character_via_method(sc, car(y)))
+	      return(wrong_type_argument_n(sc, sym, position_of(y, args), car(y), T_CHARACTER));
 	  return(sc->F);
 	}
-      last_chr = character(c);
+      y = car(x);
     }
   return(sc->T);
 }
@@ -18947,9 +18946,7 @@ static s7_pointer g_char_cmp_not(s7_scheme *sc, s7_pointer args, int val, s7_poi
 static s7_pointer g_chars_are_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_equal "(char=? char ...) returns #t if all the character arguments are equal"
-
   s7_pointer x, y;
-  bool result = true;
   
   y = car(args);
   if (!s7_is_character(y))
@@ -18957,19 +18954,22 @@ static s7_pointer g_chars_are_equal(s7_scheme *sc, s7_pointer args)
       check_method(sc, y, sc->CHAR_EQ, args);
       return(wrong_type_argument_n(sc, sc->CHAR_EQ, 1, y, T_CHARACTER));
     }
-  for (x = cdr(args); is_not_null(x); x = cdr(x))
+  for (x = cdr(args); is_pair(x); x = cdr(x))
     {
+      if (!s7_is_character(car(x)))
+	{
+	  check_method(sc, car(x), sc->CHAR_EQ, cons(sc, y, x));
+	  return(wrong_type_argument_n(sc, sc->CHAR_EQ, position_of(x, args), car(x), T_CHARACTER));
+	}
       if (car(x) != y)
 	{
-	  result = false;
-	  if (!s7_is_character(car(x)))
-	    {
-	      check_method(sc, car(x), sc->CHAR_EQ, args);
-	      return(wrong_type_argument_n(sc, sc->CHAR_EQ, position_of(x, args), car(x), T_CHARACTER));
-	    }
+	  for (y = cdr(x); is_pair(y); y = cdr(y))
+	    if (!is_character_via_method(sc, car(y)))
+	      return(wrong_type_argument_n(sc, sc->CHAR_EQ, position_of(y, args), car(y), T_CHARACTER));
+	  return(sc->F);
 	}
     }
-  return((result) ? sc->T : sc->F);
+  return(sc->T);
 }	
 
 
@@ -19145,32 +19145,29 @@ static s7_pointer g_char_leq_2(s7_scheme *sc, s7_pointer args)
 #if (!WITH_PURE_S7)
 static s7_pointer g_char_cmp_ci(s7_scheme *sc, s7_pointer args, int val, s7_pointer sym)
 {
-  s7_pointer x;
-  unsigned char last_chr;
-  
-  if (!s7_is_character(car(args)))
+  s7_pointer x, y;
+
+  y = car(args);
+  if (!s7_is_character(y))
     {
-      check_method(sc, car(args), sym, args);
-      return(wrong_type_argument_n(sc, sym, 1, car(args), T_CHARACTER));
+      check_method(sc, y, sym, args);
+      return(wrong_type_argument_n(sc, sym, 1, y, T_CHARACTER));
     }
-  last_chr = upper_character(car(args));
-  for (x = cdr(args); is_not_null(x); x = cdr(x))
+  for (x = cdr(args); is_pair(x); x = cdr(x))
     {
-      s7_pointer c;
-      c = car(x);
-      if (!s7_is_character(c))
+      if (!s7_is_character(car(x)))
 	{
-	  check_method(sc, c, sym, cons(sc, chars[last_chr], x));
-	  return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	  check_method(sc, car(x), sym, cons(sc, y, x));
+	  return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_CHARACTER));
 	}
-      if (charcmp(last_chr, upper_character(c)) != val)
+      if (charcmp(upper_character(y), upper_character(car(x))) != val)
 	{
-	  for (x = cdr(x); is_pair(x); x = cdr(x))
-	    if (!s7_is_character(car(x)))
-	      return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	  for (y = cdr(x); is_pair(y); y = cdr(y))
+	    if (!is_character_via_method(sc, car(y)))
+	      return(wrong_type_argument_n(sc, sym, position_of(y, args), car(y), T_CHARACTER));
 	  return(sc->F);
 	}
-      last_chr = upper_character(c);
+      y = car(x);
     }
   return(sc->T);
 }
@@ -19178,32 +19175,29 @@ static s7_pointer g_char_cmp_ci(s7_scheme *sc, s7_pointer args, int val, s7_poin
 
 static s7_pointer g_char_cmp_ci_not(s7_scheme *sc, s7_pointer args, int val, s7_pointer sym)
 {
-  s7_pointer x;
-  unsigned char last_chr;
-  
-  if (!s7_is_character(car(args)))
+  s7_pointer x, y;
+
+  y = car(args);
+  if (!s7_is_character(y))
     {
-      check_method(sc, car(args), sym, args);
-      return(wrong_type_argument_n(sc, sym, 1, car(args), T_CHARACTER));
+      check_method(sc, y, sym, args);
+      return(wrong_type_argument_n(sc, sym, 1, y, T_CHARACTER));
     }
-  last_chr = upper_character(car(args));
-  for (x = cdr(args); is_not_null(x); x = cdr(x))
+  for (x = cdr(args); is_pair(x); x = cdr(x))
     {
-      s7_pointer c;
-      c = car(x);
-      if (!s7_is_character(c))
+      if (!s7_is_character(car(x)))
 	{
-	  check_method(sc, c, sym, cons(sc, chars[last_chr], x));
-	  return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	  check_method(sc, car(x), sym, cons(sc, y, x));
+	  return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_CHARACTER));
 	}
-      if (charcmp(last_chr, upper_character(c)) == val)
+      if (charcmp(upper_character(y), upper_character(car(x))) == val)
 	{
-	  for (x = cdr(x); is_pair(x); x = cdr(x))
-	    if (!s7_is_character(car(x)))
-	      return(wrong_type_argument_n(sc, sym, position_of(x, args), c, T_CHARACTER));
+	  for (y = cdr(x); is_pair(y); y = cdr(y))
+	    if (!is_character_via_method(sc, car(y)))
+	      return(wrong_type_argument_n(sc, sym, position_of(y, args), car(y), T_CHARACTER));
 	  return(sc->F);
 	}
-      last_chr = upper_character(c);
+      y = car(x);
     }
   return(sc->T);
 }
@@ -20209,21 +20203,45 @@ static int scheme_strcmp(s7_pointer s1, s7_pointer s2)
 }
 
 
+static bool is_string_via_method(s7_scheme *sc, s7_pointer p)
+{
+  if (s7_is_string(p))
+    return(true);
+  if (has_methods(p))
+    {
+      s7_pointer f;
+      f = find_method(sc, find_let(sc, p), sc->IS_STRING);
+      if (f != sc->UNDEFINED)
+	return(is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL))));
+    }
+  return(false);
+}
+
 static s7_pointer g_string_cmp(s7_scheme *sc, s7_pointer args, int val, s7_pointer sym)
 {
   s7_pointer x, y;
-  
-  for (x = args; is_not_null(x); x = cdr(x))  
-    if (!is_string(car(x)))
-      {
-	check_method(sc, car(x), sym, args);
-	return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_STRING));
-      }
+
   y = car(args);
+  if (!is_string(y))
+    {
+      check_method(sc, y, sym, args);
+      return(wrong_type_argument(sc, sym, small_int(1), y, T_STRING));
+    }
+  
   for (x = cdr(args); is_not_null(x); x = cdr(x))
     {
+      if (!is_string(car(x)))
+	{
+	  check_method(sc, car(x), sym, cons(sc, y, x));
+	  return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_STRING));
+	}
       if (scheme_strcmp(y, car(x)) != val)
-	return(sc->F);
+	{
+	  for (y = cdr(x); is_pair(y); y = cdr(y))
+	    if (!is_string_via_method(sc, car(y)))
+	      return(wrong_type_argument_n(sc, sym, position_of(y, args), car(y), T_STRING));
+	  return(sc->F);
+	}
       y = car(x);
     }
   return(sc->T);
@@ -20234,17 +20252,27 @@ static s7_pointer g_string_cmp_not(s7_scheme *sc, s7_pointer args, int val, s7_p
 {
   s7_pointer x, y;
   
-  for (x = args; is_not_null(x); x = cdr(x))  
-    if (!is_string(car(x)))
-      {
-	check_method(sc, car(x), sym, args);
-	return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_STRING));
-      }
   y = car(args);
+  if (!is_string(y))
+    {
+      check_method(sc, y, sym, args);
+      return(wrong_type_argument(sc, sym, small_int(1), y, T_STRING));
+    }
+  
   for (x = cdr(args); is_not_null(x); x = cdr(x))
     {
+      if (!is_string(car(x)))
+	{
+	  check_method(sc, car(x), sym, cons(sc, y, x));
+	  return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_STRING));
+	}
       if (scheme_strcmp(y, car(x)) == val)
-	return(sc->F);
+	{
+	  for (y = cdr(x); is_pair(y); y = cdr(y))
+	    if (!is_string_via_method(sc, car(y)))
+	      return(wrong_type_argument_n(sc, sym, position_of(y, args), car(y), T_STRING));
+	  return(sc->F);
+	}
       y = car(x);
     }
   return(sc->T);
@@ -20559,27 +20587,41 @@ static s7_pointer g_string_ci_cmp(s7_scheme *sc, s7_pointer args, int val, s7_po
 {
   s7_pointer x, y;
   
-  for (x = args; is_not_null(x); x = cdr(x))  
-    if (!is_string(car(x)))
-      {
-	check_method(sc, car(x), sym, args);
-	return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_STRING));
-      }
   y = car(args);
-  if (val == 0)
+  if (!is_string(y))
     {
-      for (x = cdr(args); is_not_null(x); x = cdr(x))
-	if (!scheme_strequal_ci(y, car(x)))
-	  return(sc->F);
+      check_method(sc, y, sym, args);
+      return(wrong_type_argument(sc, sym, small_int(1), y, T_STRING));
     }
-  else
+  
+  for (x = cdr(args); is_not_null(x); x = cdr(x))
     {
-      for (x = cdr(args); is_not_null(x); x = cdr(x))
+      if (!is_string(car(x)))
+	{
+	  check_method(sc, car(x), sym, cons(sc, y, x));
+	  return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_STRING));
+	}
+      if (val == 0)
+	{
+	  if (!scheme_strequal_ci(y, car(x)))
+	    {
+	      for (y = cdr(x); is_pair(y); y = cdr(y))
+		if (!is_string_via_method(sc, car(y)))
+		  return(wrong_type_argument_n(sc, sym, position_of(y, args), car(y), T_STRING));
+	      return(sc->F);
+	    }
+	}
+      else
 	{
 	  if (scheme_strcasecmp(y, car(x)) != val)
-	    return(sc->F);
-	  y = car(x);
+	    {
+	      for (y = cdr(x); is_pair(y); y = cdr(y))
+		if (!is_string_via_method(sc, car(y)))
+		  return(wrong_type_argument_n(sc, sym, position_of(y, args), car(y), T_STRING));
+	      return(sc->F);
+	    }
 	}
+      y = car(x);
     }
   return(sc->T);
 }
@@ -20589,17 +20631,27 @@ static s7_pointer g_string_ci_cmp_not(s7_scheme *sc, s7_pointer args, int val, s
 {
   s7_pointer x, y;
   
-  for (x = args; is_not_null(x); x = cdr(x))  
-    if (!is_string(car(x)))
-      {
-	check_method(sc, car(x), sym, args);
-	return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_STRING));
-      }
   y = car(args);
+  if (!is_string(y))
+    {
+      check_method(sc, y, sym, args);
+      return(wrong_type_argument(sc, sym, small_int(1), y, T_STRING));
+    }
+  
   for (x = cdr(args); is_not_null(x); x = cdr(x))
     {
+      if (!is_string(car(x)))
+	{
+	  check_method(sc, car(x), sym, cons(sc, y, x));
+	  return(wrong_type_argument_n(sc, sym, position_of(x, args), car(x), T_STRING));
+	}
       if (scheme_strcasecmp(y, car(x)) == val)
-	return(sc->F);
+	{
+	  for (y = cdr(x); is_pair(y); y = cdr(y))
+	    if (!is_string_via_method(sc, car(y)))
+	      return(wrong_type_argument_n(sc, sym, position_of(y, args), car(y), T_STRING));
+	  return(sc->F);
+	}
       y = car(x);
     }
   return(sc->T);
@@ -34995,8 +35047,8 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
 	s7_pointer op;
 	op = cadar(closure_body(x));
 	/* we need to look at the embedded lambda to choose between closure and closure_star 
-	 *   closure_body here is of the form: ((apply (lambda (a b) ...) (cdr {defmac}-14)))
-	 *   so car is                          (apply (lambda (a b) ...) (cdr {defmac}-14))
+	 *   closure_body here is of the form: ((apply (lambda (a b) ...) (cdr {mac}-14)))
+	 *   so car is                          (apply (lambda (a b) ...) (cdr {mac}-14))
 	 *      cadr(car) is                           (lambda (a b) ...)
 	 */
 	if ((car(op) == sc->LAMBDA) || (car(op) == sc->LAMBDA_UNCHECKED))
@@ -35172,15 +35224,32 @@ static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
 
   if ((e == sc->rootlet) ||
       (e == sc->NIL))
-    return(s7_symbol_access(sc, sym));
+    {
+      if (is_free(s7_symbol_access(sc, sym)))
+	{
+#if DEBUGGING
+	  fprintf(stderr, "%s (global) accessor is freed\n", symbol_name(sym));
+#endif
+	  return(sc->F);
+	}
+      return(s7_symbol_access(sc, sym));
+    }
 
   if (is_null(cdr(args)))
     p = find_symbol(sc, sym);
   else p = find_local_symbol(sc, sym, e);
   if ((is_slot(p)) &&
       (slot_has_accessor(p)))
-    return(slot_accessor(p));
-
+    {
+      if (is_free(slot_accessor(p)))
+	{
+#if DEBUGGING
+	  fprintf(stderr, "%s (slot) accessor is freed\n", symbol_name(sym));
+#endif
+	  return(sc->F);
+	}
+      return(slot_accessor(p));
+    }
   return(sc->F);
 }
 
@@ -35300,8 +35369,8 @@ bool s7_is_eqv(s7_pointer a, s7_pointer b)
     return(true);
   
 #if WITH_GMP
-  if (big_numbers_are_eqv(a, b))
-    return(true);                                     /* T_INTEGER != T_BIG_INTEGER etc */
+  if ((is_big_number(a)) || (is_big_number(b)))
+    return(big_numbers_are_eqv(a, b));
 #endif
 
   if (type(a) != type(b)) 
@@ -35313,7 +35382,7 @@ bool s7_is_eqv(s7_pointer a, s7_pointer b)
   if (s7_is_number(a))
     return(numbers_are_eqv(a, b));
   
-  if ((has_no_value(a)) && (has_no_value(b)))
+  if (is_unspecified(a))                             /* types are the same so we know b is also unspecified */
     return(true);
 
   return(false);
@@ -35335,8 +35404,8 @@ static bool s7_is_equal_tracking_circles(s7_scheme *sc, s7_pointer x, s7_pointer
     return(true);
   
 #if WITH_GMP
-  if (big_numbers_are_eqv(x, y))
-    return(true);
+  if ((is_big_number(x)) || (is_big_number(y)))
+    return(big_numbers_are_eqv(x, y));
 #endif
 
   if (type(x) != type(y)) 
@@ -35591,8 +35660,8 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
     return(true);
 
 #if WITH_GMP
-  if (big_numbers_are_eqv(x, y))
-    return(true);
+  if ((is_big_number(x)) || (is_big_number(y)))
+    return(big_numbers_are_eqv(x, y));
 #endif
 
   if (type(x) != type(y)) 
@@ -35683,7 +35752,7 @@ static s7_pointer g_is_eq(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_eq "(eq? obj1 obj2) returns #t if obj1 is eq to (the same object as) obj2"
   return(make_boolean(sc, ((car(args) == cadr(args)) ||
-			   ((has_no_value(car(args))) && (has_no_value(cadr(args)))))));
+			   ((is_unspecified(car(args))) && (is_unspecified(cadr(args)))))));
   /* (eq? (apply apply apply values '(())) #<unspecified>) should return #t
    */
 }
@@ -36128,10 +36197,10 @@ static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, share
     case T_BACRO:
       /* these are hard to check because the body has the gensymmed arg name
        *
-       * args:   ({defmac}-16) 
-       *         ({defmac}-17)
-       * bodies: ((apply (lambda (a) ({list} '+ 1 a)) (cdr {defmac}-16))) 
-       *         ((apply (lambda (a) ({list} '+ 1 a)) (cdr {defmac}-17)))
+       * args:   ({mac}-16) 
+       *         ({mac}-17)
+       * bodies: ((apply (lambda (a) ({list} '+ 1 a)) (cdr {mac}-16))) 
+       *         ((apply (lambda (a) ({list} '+ 1 a)) (cdr {mac}-17)))
        * 
        * the "args" and "body" are not relevant: we create these shells internally, so the true args are in the applied lambda
        * so ignore args, and check (cadr (car body)) => (lambda (a) ({list} '+ 1 a))
@@ -58464,7 +58533,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
 	  
 	  /* (define-macro (hi a b) `(+ ,a ,b))
-	   *   -> code: #<macro>, args: ((hi 2 3)), closure args: (defmac-9)
+	   *   -> code: #<macro>, args: ((hi 2 3)), closure args: (hi-9)
 	   *   then back again: code: #<closure>, args: (2 3), closure args: (a b)
 	   *
 	   * (let* ((mac (let () (define-macro (mac1 a) `(+ ,a 1)) mac1)) (lst (list 1))) (set-cdr! lst lst) (apply mac lst ()))
@@ -58943,8 +59012,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    eval_error_with_name(sc, "~A: ~S is immutable", sc->code);
 	  
 	  x = find_symbol(sc, sc->code);
-	  if ((is_slot(x)) &&
-	      (!s7_is_morally_equal(sc, sc->value, slot_value(x), NULL)))/* if value is unchanged, just ignore this definition */
+	  /* if not a slot, the define-constant must have been local -- this has to still be a constant however:
+	   *    (let () (define-constant aaa 2)) (define aaa 3) (set! aaa 4) -> error!
+	   *    but in this case, (define aaa 2) is also an error -- inconsistent in a sense.
+	   */
+	  if ((!is_slot(x)) ||
+	      (!s7_is_morally_equal(sc, sc->value, slot_value(x), NULL)))/* if value is unchanged, just ignore this (re)definition */
 	    eval_error_with_name(sc, "~A: ~S is immutable", sc->code);   /*   can't use s7_is_equal because value might be NaN, etc */
 	}
       if (symbol_has_accessor(sc->code))
@@ -62345,10 +62418,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer lx, cx, zx;
 	cx = caar(sc->code);
 	zx = cdr(sc->code);
-	lx = s7_gensym(sc, "defmac");
+	lx = s7_gensym(sc, symbol_name(cx));
 	/* (define-macro (hi a b) `(+ ,a ,b)) becomes:
 	 *   cx: hi
-	 *   sc->code: (lambda ({defmac}-14) (apply (lambda (a b) ({list} '+ a b)) (cdr {defmac}-14)))
+	 *   sc->code: (lambda ({hi}-14) (apply (lambda (a b) ({list} '+ a b)) (cdr {hi}-14)))
 	 */
 	NEW_CELL_NO_CHECK(sc, sc->value);
 	closure_args(sc->value) = list_1(sc, lx);
@@ -63320,7 +63393,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      DISPLAY(sc->cur_code));
       return(sc->F);
     }
-
   return(sc->F);
 }
 
@@ -64077,9 +64149,6 @@ static bool big_numbers_are_eqv(s7_pointer a, s7_pointer b)
   bool result;
   /* either or both can be big here, but not neither */
 
-  if ((!is_big_number(a)) && (!is_big_number(b)))
-    return(false);
-  
   if (s7_is_integer(a))
     {
       mpz_t a1, b1;
@@ -68317,8 +68386,8 @@ s7_scheme *s7_init(void)
   sc->UNDEFINED =   make_unique_object("#<undefined>",   T_UNIQUE);
   sc->ELSE =        make_unique_object("else",           T_UNIQUE);
   /* "else" is added to the rootlet below -- can't do it here because the symbol table and environment don't exist yet. */
-  sc->UNSPECIFIED = make_unique_object("#<unspecified>", T_UNSPECIFIED | T_NO_VALUE);
-  sc->NO_VALUE =    make_unique_object("#<unspecified>", T_UNSPECIFIED | T_NO_VALUE);
+  sc->UNSPECIFIED = make_unique_object("#<unspecified>", T_UNSPECIFIED);
+  sc->NO_VALUE =    make_unique_object("#<unspecified>", T_UNSPECIFIED);
 
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
   /* this is mixing two different s7_cell structs, cons and envr, but luckily
@@ -69187,7 +69256,6 @@ s7_scheme *s7_init(void)
    *    millions of times, normally, so I think I'll just leave it "unsafe" (rather than
    *    clearing that flag in openlet).  Any other function that keeps sc->args
    *    in play long enough for s7_call should also be unsafe.
-   *
    * Would it fix this to save/restore the temp cells across the object->string method application? -- no.
    */
 
@@ -69306,11 +69374,7 @@ s7_scheme *s7_init(void)
   sc->APPLY =                 s7_define_function(sc,      "apply",                   g_apply,                  1, 0, true,  H_apply);
   sc->Apply = s7_symbol_value(sc, sc->APPLY);
   set_type(sc->Apply, type(sc->Apply) | T_COPY_ARGS);
-  /* (let ((x '((1 2) 3 4))) 
-   *   (catch #t (lambda () (apply apply apply x)) (lambda args 'error)) 
-   *   x)
-   * should not mess up x!
-   */
+  /* (let ((x '((1 2) 3 4))) (catch #t (lambda () (apply apply apply x)) (lambda args 'error)) x) should not mess up x! */
 
   sc->FOR_EACH =              s7_define_function(sc,      "for-each",                g_for_each,               2, 0, true,  H_for_each);
   sc->MAP =                   s7_define_function(sc,      "map",                     g_map,                    2, 0, true,  H_map);
@@ -69941,11 +70005,12 @@ int main(int argc, char **argv)
  * snd-genv needs a lot of gtk3 work
  * cyclic-sequences is minimally tested in s7test
  * ideally the vector ops would accept bytevectors
- * t109 expanded
  * 2-method problem if (say) vector-fill! falls back on fill!, but it's string-fill!
  *  (let ((e (openlet (inlet 'fill! (lambda (obj val) (string-fill! (obj 'value) val)) 'value "01234")))) (vector-fill! e #\a) (e 'value)) -> "aaaa"
  *
  * (let () (define (when a) (+ a 1)) (when 2)) -> 3
  *   but at the top level: (define (when a) (+ a 1)) (when 2) -> when has no body? 
  *   (this is ok if it happens after the local definition) -- global redef means set local flag?
+ *
+ * symbol-accessor early GC problem in reactive-let*
  */

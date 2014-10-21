@@ -1777,7 +1777,7 @@ static const char *snd_names[11348] = {
     "*libgdbm*", "libgdbm.scm",
     "*libgsl*", "libgsl.scm",
     "*libm*", "libm.scm",
-    "*mock-character*", "mockery.scm",
+    "*mock-char*", "mockery.scm",
     "*mock-hash-table*", "mockery.scm",
     "*mock-number*", "mockery.scm",
     "*mock-pair*", "mockery.scm",
