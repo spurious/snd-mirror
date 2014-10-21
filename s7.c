@@ -1695,8 +1695,7 @@ static void init_types(void)
 
 
 /* the layout of these bits does matter in several cases -- in particular, don't use the 2nd byte for anything
- *   that might shadow SYNTACTIC_PAIR and OPTIMIZED_PAIR.  Also, none of these bits can easily be turned into
- *   array lookups.
+ *   that might shadow SYNTACTIC_PAIR and OPTIMIZED_PAIR.
  */
 #define NOT_IN_HEAP -1
 #define TYPE_BITS                     8
@@ -2673,7 +2672,6 @@ static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_
 static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, AN_OPEN_PORT, A_NORMAL_REAL, A_RATIONAL, A_CLOSURE;
 static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL, A_NON_NEGATIVE_INTEGER;
 static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BYTE, A_BINDING, A_NON_CONSTANT_SYMBOL, AN_EQ_FUNC, A_SEQUENCE;
-
 
 
 /* --------------------------------------------------------------------------------
@@ -6055,7 +6053,6 @@ static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
    *   versus keys), and we can't just try again here because that makes it too easy to
    *   get into infinite recursion.  So, 'let-ref-fallback...
    */
-  
   if (has_ref_fallback(env))
     {
       check_method(sc, env, sc->LET_REF_FALLBACK, sc->w = list_2(sc, env, symbol));
@@ -6740,14 +6737,14 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
       else b = sc->F;
 
       if (e == sc->rootlet)
-	return(make_boolean(sc, global_slot(sym) != sc->UNDEFINED));
+	return(make_boolean(sc, global_slot(sym) != sc->UNDEFINED)); /* new_symbol initializes global_slot to #<undefined> */
 
       x = find_local_symbol(sc, sym, e); 
       if (is_slot(x))
 	return(sc->T);
 
       if (b == sc->T)
-	return(false);
+	return(sc->F);
 
       /* here we can't fall back on find_symbol:
        *    (let ((b 2))
@@ -7585,10 +7582,8 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   static s7_pointer string_to_either_integer(s7_scheme *sc, const char *str, int radix);
   static s7_pointer string_to_either_ratio(s7_scheme *sc, const char *nstr, const char *dstr, int radix);
   static s7_pointer string_to_either_real(s7_scheme *sc, const char *str, int radix);
-  static s7_pointer string_to_either_complex(s7_scheme *sc,
-					     char *q, char *slash1, char *ex1, bool has_dec_point1, 
-					     char *plus, char *slash2, char *ex2, bool has_dec_point2, 
-					     int radix, int has_plus_or_minus);
+  static s7_pointer string_to_either_complex(s7_scheme *sc, char *q, char *slash1, char *ex1, bool has_dec_point1, 
+					     char *plus, char *slash2, char *ex2, bool has_dec_point2, int radix, int has_plus_or_minus);
   static s7_pointer big_add(s7_scheme *sc, s7_pointer args);
   static s7_pointer big_subtract(s7_scheme *sc, s7_pointer args);
   static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args);
@@ -42508,20 +42503,24 @@ static s7_pointer expt_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 
 static s7_pointer max_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+#if (!WITH_GMP)
   if ((args == 2) &&
       (type(cadr(expr)) == T_REAL) &&
       (!is_NaN(real(cadr(expr)))))
     return(max_f2);
+#endif
   return(f);
 }
 
 
 static s7_pointer min_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+#if (!WITH_GMP)
   if ((args == 2) &&
       (type(cadr(expr)) == T_REAL) &&
       (!is_NaN(real(cadr(expr)))))
     return(min_f2);
+#endif
   return(f);
 }
 
@@ -68925,7 +68924,6 @@ s7_scheme *s7_init(void)
   sc->FORMAT_ERROR =         make_symbol(sc, "format-error");
   sc->OUT_OF_RANGE =         make_symbol(sc, "out-of-range");
 
-
   sc->KEY_KEY =              s7_make_keyword(sc, "key");
   sc->KEY_OPTIONAL =         s7_make_keyword(sc, "optional");
   sc->KEY_ALLOW_OTHER_KEYS = s7_make_keyword(sc, "allow-other-keys");
@@ -69218,8 +69216,8 @@ s7_scheme *s7_init(void)
   sc->CHAR_CI_LEQ =           s7_define_safe_function(sc, "char-ci<=?",              g_chars_are_ci_leq,       2, 0, true,  H_chars_are_ci_leq);
   sc->CHAR_CI_GEQ =           s7_define_safe_function(sc, "char-ci>=?",              g_chars_are_ci_geq,       2, 0, true,  H_chars_are_ci_geq);
 #endif  
-  sc->CHAR_POSITION =         s7_define_safe_function(sc, "char-position",           g_char_position,          2, 1, false,  H_char_position);
-  sc->STRING_POSITION =       s7_define_safe_function(sc, "string-position",         g_string_position,        2, 1, false,  H_string_position);
+  sc->CHAR_POSITION =         s7_define_safe_function(sc, "char-position",           g_char_position,          2, 1, false, H_char_position);
+  sc->STRING_POSITION =       s7_define_safe_function(sc, "string-position",         g_string_position,        2, 1, false, H_string_position);
   
   sc->IS_STRING =             s7_define_safe_function(sc, "string?",                 g_is_string,              1, 0, false, H_is_string);
   sc->MAKE_STRING =           s7_define_safe_function(sc, "make-string",             g_make_string,            1, 1, false, H_make_string);
@@ -69996,6 +69994,7 @@ int main(int argc, char **argv)
  *
  * cyclic-seq in rest of full-* 
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
+ *   also needs a complete morally-equal? method that cooperates with the built-in version
  *
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
@@ -70005,12 +70004,13 @@ int main(int argc, char **argv)
  * snd-genv needs a lot of gtk3 work
  * cyclic-sequences is minimally tested in s7test
  * ideally the vector ops would accept bytevectors
+ *
  * 2-method problem if (say) vector-fill! falls back on fill!, but it's string-fill!
- *  (let ((e (openlet (inlet 'fill! (lambda (obj val) (string-fill! (obj 'value) val)) 'value "01234")))) (vector-fill! e #\a) (e 'value)) -> "aaaa"
+ *   (let ((e (openlet (inlet 'fill! (lambda (obj val) (string-fill! (obj 'value) val)) 'value "01234")))) (vector-fill! e #\a) (e 'value)) -> "aaaa"
+ *   perhaps check first 'vector?
+ *   affects fill! (string/vector), make-string|bytevector
  *
  * (let () (define (when a) (+ a 1)) (when 2)) -> 3
  *   but at the top level: (define (when a) (+ a 1)) (when 2) -> when has no body? 
  *   (this is ok if it happens after the local definition) -- global redef means set local flag?
- *
- * symbol-accessor early GC problem in reactive-let*
  */

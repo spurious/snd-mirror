@@ -976,6 +976,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
   (if (symbol? expr)
       (if (and (not (memq expr lst))
 	       (not (memq expr ignore))
+	       (not (procedure? (symbol->value expr ce)))
 	       (not (eq? (symbol->let expr ce) (rootlet))))
 	  (cons expr lst)
 	  lst)

@@ -969,7 +969,7 @@
 	    (lint-format "this looks odd:~A" name (truncated-list->string form))))
       
       
-      (define (check-args name head form checkers env)
+      (define (check-args name head form checkers env max-arity)
 	;; check for obvious argument type problems
 	;; name = overall caller, head = current caller, checkers = proc or list of procs for checking args
 	(let ((arg-number 1))
@@ -1052,7 +1052,8 @@
 		      (if (null? (cdr checkers))
 			  (done)
 			  (set! checkers (cdr checkers))))
-		  (set! arg-number (+ arg-number 1))))
+		  (set! arg-number (+ arg-number 1))
+		  (if (> arg-number max-arity) (done))))
 	      (cdr form))))))
       
       
@@ -2527,7 +2528,8 @@
 		  ;; check arg number
 		  (let* ((head-value (symbol->value head)) ; head might be "arity"!
 			 (arity (procedure-arity head-value))
-			 (args (length (cdr form))))
+			 (args (length (cdr form)))
+			 (max-arity 123123123))
 		    (if (pair? arity)
 			(if (< args (car arity))
 			    (lint-format "~A needs ~A~D argument~A:~A" 
@@ -2539,7 +2541,9 @@
 			    (if (and (not (caddr arity))
 				     (> (- args (keywords (cdr form))) (+ (car arity) (cadr arity)))
 				     (not (procedure-setter head-value)))
-				(lint-format "~A has too many arguments:~A" name head (truncated-list->string form)))))
+				(begin
+				  (set! max-arity (+ (car arity) (cadr arity)))
+				  (lint-format "~A has too many arguments:~A" name head (truncated-list->string form))))))
 		    
 		    (if (pair? (cdr form)) ; there are args
 			(begin
@@ -2689,7 +2693,7 @@
 			     ;; now try to check arg types for egregious errors
 			     (let ((arg-data (hash-table-ref argument-data head)))
 			       (if arg-data
-				   (check-args name head form arg-data env)
+				   (check-args name head form arg-data env max-arity)
 				   )))))))))))
       
       

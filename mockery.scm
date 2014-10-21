@@ -32,7 +32,7 @@
 	   (openlet  
 	    (inlet 'class-name         'mock-vector
 		   'values             (lambda (obj . args) (obj 'value))
-		   'morally-equal?     (make-method #_morally-equal? (lambda (obj) (obj 'value)))
+		   'morally-equal?     (make-method #_morally-equal? (lambda (obj) (obj 'value))) ; see comment below
 		   'vector?            (lambda (obj) #t)
 
 		   'local-set!         (lambda (obj i val)          ; reactive-vector uses this as a hook into vector-set!
@@ -108,6 +108,22 @@
 				(outlet-member obj mock-vector-class))))
       
       (curlet))))
+
+
+#|
+;;; the morally-equal? method should track circles (via cyclic-sequences?)
+;;;   as it is now, this code cores up indefinitely:
+(let ((v1 ((*mock-vector* 'mock-vector) 1 2 3 4))
+      (v2 ((*mock-vector* 'mock-vector) 2 3 4))
+      (v3 #(1 2 3 4))
+      (v4 #(2 3 4)))
+  (vector-set! v2 0 v1)
+  (vector-set! v1 0 v2)
+  (vector-set! v4 0 v3)
+  (vector-set! v3 0 v4)
+  (morally-equal? v1 v3))
+;;; but how to make this cooperate with the built-in method -- we should call cyclic-sequences just once
+|#
 
 #|
 ;; vector that grows to accommodate vector-set!

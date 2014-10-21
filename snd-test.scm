@@ -38,7 +38,6 @@
 (define all-args #f)
 (define test-at-random 0)
 (if (<= tests 0) (set! tests 1))
-;(set! *gc-stats* #t)
 
 #|
 (set! *#readers* 
