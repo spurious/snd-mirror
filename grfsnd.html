@@ -1450,8 +1450,10 @@ Here's the scale-dialog in xg/gtk:
 	  (gtk_widget_show dismiss)
 	  (gtk_widget_show help)
 	  (let* ((adj (gtk_adjustment_new 0.0 0.0 1.01 0.01 0.01 .01))
-		 (scale (gtk_hscale_new (GTK_ADJUSTMENT adj))))
-	    (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE scale)) GTK_UPDATE_CONTINUOUS)
+		 (scale (if (provided? 'gtk2)
+		            (gtk_hscale_new (GTK_ADJUSTMENT adj))
+			    (gtk_scale_new GTK_ORIENTATION_HORIZONTAL (GTK_ADJUSTMENT adj)))))
+	    (if (provided? 'gtk2) (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE scale)) GTK_UPDATE_CONTINUOUS))
 	    (gtk_scale_set_draw_value (GTK_SCALE scale) #t)
 	    (gtk_scale_set_digits (GTK_SCALE scale) 2)
 	    (g_signal_connect adj "value_changed"

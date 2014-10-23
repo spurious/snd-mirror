@@ -295,7 +295,7 @@
 	    libs)))
 
 
-;; delay and force: ugh (hold your nose!)
+;; delay and force: ugh
 ;;   this implementation is based on the r7rs spec
 (define-macro (delay-force expr) 
   `(make-promise #f (lambda () ,expr)))

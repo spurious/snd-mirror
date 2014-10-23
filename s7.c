@@ -4615,6 +4615,9 @@ static void resize_op_stack(s7_scheme *sc)
       Sc->stack_end += 4; \
   } while (0)
 
+/* since we don't GC mark the stack past the stack_top, push_stack_no_args and friends can cause pop_stack to set
+ *   sc->code and sc->args to currently free objects.  
+ */
 
 #define main_stack_op(Sc)             ((opcode_t)(Sc->stack_end[-1]))
 #define main_stack_args(Sc)           (Sc->stack_end[-2])
@@ -20833,7 +20836,7 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
 
   if (!is_string(x))
     {
-      check_two_methods(sc, x, sc->STRING_FILL, sc->FILL, args);
+      check_method(sc, x, sc->STRING_FILL, args); /* not two_methods here */
       return(wrong_type_argument(sc, sc->STRING_FILL, small_int(1), x, T_STRING));
     }
 
@@ -30377,7 +30380,10 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_vector(x))
     {
-      check_two_methods(sc, x, sc->VECTOR_FILL, sc->FILL, args);
+      check_method(sc, x, sc->VECTOR_FILL, args); 
+      /* not two_methods (and fill!) here else we get stuff like:
+       *   (let ((e (openlet (inlet 'fill! (lambda (obj val) (string-fill! (obj 'value) val)) 'value "01234")))) (vector-fill! e #\a) (e 'value)) -> "aaaaa"
+       */
       return(wrong_type_argument(sc, sc->VECTOR_FILL, small_int(1), x, T_VECTOR));
     }
 
@@ -69998,19 +70004,27 @@ int main(int argc, char **argv)
  *
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
+ *
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
+ *   perhaps put xg/xm and sndlib in their own lets: *gtk* *motif* *gl* *clm* -- or at least make it an option
  *
- * undef id: cond-expand args
+ * undef id: cond-expand args and check for other cases via s7test/etc:
+ *   defmacro, define-memoized and the like -- see test/undef
+ *
  * snd-genv needs a lot of gtk3 work
- * cyclic-sequences is minimally tested in s7test
- * ideally the vector ops would accept bytevectors
+ * check out the GL support in gtk 3.16 -- this looks straightforward, snd-chn.c
+ * try gtk-effects.scm in gtk3
  *
- * 2-method problem if (say) vector-fill! falls back on fill!, but it's string-fill!
- *   (let ((e (openlet (inlet 'fill! (lambda (obj val) (string-fill! (obj 'value) val)) 'value "01234")))) (vector-fill! e #\a) (e 'value)) -> "aaaa"
- *   perhaps check first 'vector?
- *   affects fill! (string/vector), make-string|bytevector
+ * cyclic-sequences is minimally tested in s7test
+ *
+ * ideally the vector ops would accept bytevectors (and the name should be byte-vector throughout)
+ *   perhaps as no-method fallback before error?
  *
  * (let () (define (when a) (+ a 1)) (when 2)) -> 3
  *   but at the top level: (define (when a) (+ a 1)) (when 2) -> when has no body? 
  *   (this is ok if it happens after the local definition) -- global redef means set local flag?
+ *
+ * t112 lint ok eval error
+ * if odd 124 comes through, perhaps retry 123 from that new starting point?
+ * (with-lets (e1 ...) . body) ? with-let is tail-callable so this requires dynamic-wind to restore outlets?
  */

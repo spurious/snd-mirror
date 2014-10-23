@@ -33,7 +33,7 @@
 		    (func (GTK_WIDGET w)))))
 
 
-(define (host-name)
+(define (host-name) ; this is the same as (define (machine-name) (caddr ((*libc* 'uname))))
   "(host-name) -> name of current machine"
   (let ((val (gdk_property_get (car (main-widgets))
 			       (gdk_atom_intern "WM_CLIENT_MACHINE" #f)
@@ -591,8 +591,10 @@
 						   #f
 						   ;(GTK_WINDOW (cadr (main-widgets)))
 						   GTK_FILE_CHOOSER_ACTION_OPEN
-						   (list GTK_STOCK_CANCEL GTK_RESPONSE_REJECT
-							 GTK_STOCK_OK GTK_RESPONSE_ACCEPT))))))	
+						   (list (if (provided? 'gtk2) GTK_STOCK_CANCEL "process-stop")
+							 GTK_RESPONSE_REJECT
+							 (if (provided? 'gtk2) GTK_STOCK_OK "Ok")
+							 GTK_RESPONSE_ACCEPT))))))	
 	(gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER dialog) dir)
 	(if (and (= GTK_RESPONSE_ACCEPT (gtk_dialog_run (GTK_DIALOG dialog)))
 		 func)
@@ -624,7 +626,7 @@
 	(g_signal_connect meter "configure_event" 
 			  (lambda (w e d)
 			    (let ((xy (if (provided? 'gtk2)
-					  (gdk_drawable_get_size ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window w)))
+					  (gdk_drawable_get_size (GDK_DRAWABLE (gtk_widget_get_window w)))
 					  (list (gtk_widget_get_allocated_width w)
 						(gtk_widget_get_allocated_height w)))))
 			      (set! (d 5) (car xy))
@@ -733,7 +735,11 @@
   ;; add n level meters to a pane at the top of the Snd window
   (let* ((parent ((main-widgets) 5))
 	 (height (if (> n 2) 70 85))
-	 (parent-width (cadr (gdk_drawable_get_size ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window parent)))))
+	 (pw (gtk_widget_get_window parent))
+	 (parent-width (cadr (if (provided? 'gtk2)
+				 (gdk_drawable_get_size (GDK_DRAWABLE pw))
+				 (list (gtk_widget_get_allocated_width pw)
+				       (gtk_widget_get_allocated_height pw)))))
 	 (width (floor (/ parent-width n)))
 	 (meters (gtk_box_new GTK_ORIENTATION_HORIZONTAL 4))
 	 (meter-list ()))
@@ -825,10 +831,14 @@
 	   (gtk_box_pack_start (GTK_BOX pane) hbox #f #f 2)
 	   (gtk_widget_show hbox)
 	   (gtk_box_pack_start (GTK_BOX hbox) label #f #f 6)
-;	   (gtk_misc_set_alignment (GTK_MISC (GTK_LABEL label)) 0.05 0.0)
+
+; in gtk 3.14 this is (gtk_widget_set_halign (GTK_WIDGET label) GTK_ALIGN_START)
+	   (if (provided? 'gtk2) (gtk_misc_set_alignment (GTK_MISC (GTK_LABEL label)) 0.05 0.0))
 	   (gtk_widget_show label)
 	   (gtk_box_pack_start (GTK_BOX hbox) text #t #t 6)
-;	   (gtk_misc_set_alignment (GTK_MISC (GTK_LABEL text)) 0.05 0.0)
+;          (gtk_widget_set_halign (GTK_WIDGET text) GTK_ALIGN_START)
+	   (if (provided? 'gtk2) (gtk_misc_set_alignment (GTK_MISC (GTK_LABEL text)) 0.05 0.0))
+
 	   (gtk_widget_show text)
 	   text))
 	((scale)
@@ -838,7 +848,8 @@
 	   (gtk_box_pack_start (GTK_BOX pane) hbox #f #f 2)
 	   (gtk_widget_show hbox)
 	   (gtk_box_pack_start (GTK_BOX hbox) label #f #f 6)
-;	   (gtk_misc_set_alignment (GTK_MISC (GTK_LABEL label)) 0.05 0.0)
+;          (gtk_widget_set_halign (GTK_WIDGET label) GTK_ALIGN_START)
+	   (if (provided? 'gtk2) (gtk_misc_set_alignment (GTK_MISC (GTK_LABEL label)) 0.05 0.0))
 	   (gtk_widget_show label)
 	   (gtk_box_pack_start (GTK_BOX hbox) scale #f #f 6)
 	   (gtk_widget_show scale)

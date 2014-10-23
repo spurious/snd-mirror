@@ -227,6 +227,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
+/home/bil/cl/snd tools/va.scm
 ./snd -noinit --features "'clm 'snd-gtk 'snd-s7"
 
 make allclean

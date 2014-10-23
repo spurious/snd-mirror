@@ -155,6 +155,8 @@
       (or (pair? obj)
 	  (null? obj)))
 
+    (define (t? obj) #t)
+
     (let ((no-side-effect-functions 
 	   (let ((ht (make-hash-table)))
 	     (for-each
@@ -456,6 +458,9 @@
 			  'ash (list integer? integer?)
 			  'asin number?
 			  'asinh number?
+			  'assoc (list t? pair? procedure?)
+			  'assq (list t? pair?)
+			  'assv (list t? pair?)
 			  'atan (list number? number?)
 			  'atanh number?
 			  'bytevector integer?
@@ -520,6 +525,7 @@
 			  'cos number?
 			  'cosh number?
 			  'coverlet environment?
+			  'defined? (list symbol? let? boolean?)
 			  'denominator rational?
 			  'dilambda procedure?
 			  'dynamic-wind (list thunk? thunk? thunk?)
@@ -573,11 +579,16 @@
 			  'make-hash-table non-negative-integer?
 			  'make-hash-table-iterator hash-table?
 			  'make-hook (list list? string?)
+			  'make-keyword string?
 			  'make-list (list non-negative-integer?)
 			  'make-polar real?
+			  'make-random-state integer?
 			  'make-rectangular real?
 			  'make-string (list non-negative-integer? char?)
 			  'max real?
+			  'member (list t? pair? procedure?)
+			  'memq (list t? pair?)
+			  'memv (list t? pair?)
 			  'min real?
 			  'modulo (list real? real?)
 			  'nan? number?
@@ -594,8 +605,12 @@
 			  'outlet environment?
 			  'output-port? port?
 			  'pair-line-number pair?
+			  'peek-char input-port?
 			  'port-closed? port?
+			  'port-filename input-port?
+			  'port-line-number input-port?
 			  'positive? real?
+			  'procedure-arity procedure?
 			  'procedure-documentation procedure?
 			  'procedure-environment procedure?
 			  'procedure-setter procedure?
@@ -605,6 +620,10 @@
 			  'quotient (list real? real?)
 			  'random (list number? random-state?)
 			  'rationalize (list real? real?)
+			  'read-char input-port?
+			  'read-byte input-port?
+			  'read-line (list input-port? boolean?)
+			  'read-string (list integer? input-port?)
 			  'real-part number?
 			  'remainder (list real? real?)
 			  'reverse sequence?
@@ -645,6 +664,8 @@
 			  'symbol->string symbol?
 			  'symbol->value (list symbol?) ; opt arg is env
 			  'symbol=? symbol?
+			  'symbol string?
+			  'symbol-access (list symbol? let?)
 			  'system (list string? boolean?)
 			  'tan number?
 			  'tanh number?
@@ -982,39 +1003,39 @@
 				   checkers)))  
 		  (if (pair? arg)
 		      (let ((op (hash-table-ref function-types (car arg))))
-			(if (and (symbol? op)
-				 (not (eq? symbol +symbol+)))
-			    (if (and checker
-				     *report-minor-stuff*)
-				(if (memq op '(number-or-f list-or-f))
-				    (lint-format "~A argument ~D might be #f:~A"
-						 name head arg-number
-						 (truncated-list->string form))
-				    (if (memq op '(number-or-eof char-or-eof string-or-eof))
-					(lint-format "~A argument ~D might be #<eof>:~A"
-						     name head arg-number
-						     (truncated-list->string form)))))
-			    (if (or (and op
-					 (not (checker op)))
-				    (and (just-constants? arg env)
-					 (catch #t 
-					   (lambda ()
-					     (not (checker (eval arg))))
-					   (lambda ignore-catch-error-args
-					     #f))))
-				(lint-format "~A's argument ~D should be a~A ~A: ~S:~A" 
-					     name head arg-number 
-					     (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
-					     checker arg 
-					     (truncated-list->string form))
-				
-				(if (and (eq? (car arg) 'if)
-					 (= (length arg) 3)
-					 (not (checker #<unspecified>)))
-				    (lint-format "~A argument might be ~A:~A"
-						 name head
-						 #<unspecified>
-						 (truncated-list->string form))))))
+			(when op
+			  (if (and (symbol? op)
+				   (not (eq? symbol +symbol+)))
+			      (if (and checker
+				       *report-minor-stuff*)
+				  (if (memq op '(number-or-f list-or-f))
+				      (lint-format "~A argument ~D might be #f:~A"
+						   name head arg-number
+						   (truncated-list->string form))
+				      (if (memq op '(number-or-eof char-or-eof string-or-eof))
+					  (lint-format "~A argument ~D might be #<eof>:~A"
+						       name head arg-number
+						       (truncated-list->string form)))))
+			      (if (or (not (checker op))
+				      (and (just-constants? arg env)
+					   (catch #t 
+					     (lambda ()
+					       (not (checker (eval arg))))
+					     (lambda ignore-catch-error-args
+					       #f))))
+				  (lint-format "~A's argument ~D should be a~A ~A: ~S:~A" 
+					       name head arg-number 
+					       (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
+					       checker arg 
+					       (truncated-list->string form))
+				  
+				  (if (and (eq? (car arg) 'if)
+					   (= (length arg) 3)
+					   (not (checker #<unspecified>)))
+				      (lint-format "~A argument might be ~A:~A"
+						   name head
+						   #<unspecified>
+						   (truncated-list->string form)))))))
 		      
 		      (if (symbol? arg)
 			  ;; if we're in a loop of some sort and the set! follows the ref,
@@ -1029,19 +1050,16 @@
 					     name head arg-number 
 					     (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
 					     checker arg
+					     (truncated-list->string form)))
+			    (if (and (not (memq arg '(angle)))
+				     (not (var-member arg env))
+				     (hash-table-ref globals arg)
+				     (not (checker (symbol->value arg))))
+				(lint-format "~A's argument ~D should be a~A ~A: ~S:~A" 
+					     name head arg-number 
+					     (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
+					     checker arg 
 					     (truncated-list->string form))))
-#|
-;; this makes too many mistakes (angle as env field in generators.scm)
-				(if (and (not (var-member arg env))
-					 (hash-table-ref globals arg)
-					 (not (checker (symbol->value arg))))
-				    (lint-format "~A's argument ~D should be a~A ~A: ~S:~A" 
-						 name head arg-number 
-						 (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
-						 checker arg 
-						 (truncated-list->string form)))))
-|#
-
 			  (if (not (checker arg))
 			      (lint-format "~A's argument ~D should be a~A ~A: ~S:~A" 
 					   name head arg-number 
@@ -2538,164 +2556,163 @@
 					 (car arity) 
 					 (if (> (car arity) 1) "s" "") 
 					 (truncated-list->string form))
-			    (if (and (not (caddr arity))
-				     (> (- args (keywords (cdr form))) (+ (car arity) (cadr arity)))
-				     (not (procedure-setter head-value)))
-				(begin
-				  (set! max-arity (+ (car arity) (cadr arity)))
+			    (when (not (caddr arity))
+			      (set! max-arity (+ (car arity) (cadr arity)))
+			      (if (and (> (- args (keywords (cdr form))) (+ (car arity) (cadr arity)))
+				       (not (procedure-setter head-value)))
 				  (lint-format "~A has too many arguments:~A" name head (truncated-list->string form))))))
-		    
-		    (if (pair? (cdr form)) ; there are args
-			(begin
-			  ;; if keywords, check that they are acceptable
-			  ;;    this only applies to lambda*'s that have been previously loaded (lint doesn't create them)
-			  (let ((source (procedure-source head-value)))
-			    (if (and (pair? source)
-				     (eq? (car source) 'lambda*))
-				(let ((decls (cadr source)))
-				  (if (not (memq :allow-other-keys decls))
-				      (for-each
-				       (lambda (arg)
-					 (if (and (keyword? arg)
-						  (not (memq arg '(:rest :key :optional)))
-						  (not (member arg decls 
-							       (lambda (a b) 
-								 (if (pair? b) 
-								     (eq? (keyword->symbol a) (car b))
-								     (eq? (keyword->symbol a) b))))))
-					     (lint-format "~A keyword argument ~A (in ~S) does not match any argument in ~S" name head arg form decls)))
-				       (cdr form))))))
-			  
-			  (case head
-			    ((eq?) 
-			     (if (< (length form) 3)
-				 (lint-format "eq? needs 2 arguments:~A" name (truncated-list->string form))
-				 (begin
-				   (if (or (and (number? (cadr form))
-						(rational? (cadr form)))
-					   (char? (cadr form))
-					   (and (number? (caddr form))
-						(rational? (caddr form)))
-					   (char? (caddr form)))
-				       (lint-format "eq? doesn't work reliably with args like ~S" name form)
-				       (if (or (and (number? (cadr form))
-						    (not (rational? (cadr form))))
-					       (string? (cadr form))
-					       (vector? (cadr form))
-					       (and (number? (caddr form))
-						    (not (rational? (caddr form))))
-					       (string? (caddr form))
-					       (vector? (caddr form)))
-					   (lint-format "~A is always #f" name form)))
 
-				   (if *report-minor-stuff*  ; (eq? e #f) or (eq? #f e) -> (not e); can't simplify #t as well here
-				       (let ((expr 'unset))
-					 (if (not (cadr form))
-					     (set! expr (simplify-boolean `(not ,(caddr form)) () () env))
-					     (if (not (caddr form))
-						 (set! expr (simplify-boolean `(not ,(cadr form)) () () env))))
-					 (if (not (eq? expr 'unset))
-					     (lint-format "possible simplification:~A" name (lists->string form expr)))))))
-			     
-			     (check-for-repeated-args name head form env)
-			     (check-for-repeated-args-with-not name form env))
-			    
-			    ((eqv?) 
-			     (if (< (length form) 3)
-				 (lint-format "eqv? needs 2 arguments:~A" name (truncated-list->string form))
-				 (if (or (vector? (cadr form))
-					 (string? (cadr form))
-					 (vector? (caddr form))
-					 (string? (caddr form)))
-				     (lint-format "eqv? doesn't work reliably with args like ~S" name form)))
-			     
-			     (check-for-repeated-args name head form env)
-			     (check-for-repeated-args-with-not name form env))
-			    
-			    ((map for-each)
-			     (let* ((len (length form))
-				    (args (- len 2)))
-			       (if (< len 3)
-				   (lint-format "~A missing argument~A in:~A"
-						name head 
-						(if (= len 2) "" "s") 
-						(truncated-list->string form)))
-			       (let ((func (cadr form))
-				     (arity #f))
-				 (if (and (symbol? func)
-					  (defined? func)
-					  (procedure? (symbol->value func)))
-				     (set! arity (procedure-arity (symbol->value func)))
-				     
-				     (if (and (pair? func)
-					      (memq (car func) '(lambda lambda*))
-					      (pair? (cadr func)))
-					 (let ((arglen (length (cadr func))))
-					   (if (eq? (car func) 'lambda)
-					       (if (negative? arglen)
-						   (set! arity (list (abs arglen) 0 #t))
-						   (set! arity (list arglen 0 #f)))
-					       (if (negative? arglen)
-						   (set! arity (list 0 (abs arglen) #t))
-						   (set! arity (list 0 arglen (memq :rest (cadr func)))))))))
+		    (if (pair? (cdr form)) ; there are args (the not-enough-args case is checked above)
+			(if (zero? max-arity)
+			    (lint-format "too many arguments:~A" name (truncated-list->string form))    
+			    (begin
+			      ;; if keywords, check that they are acceptable
+			      ;;    this only applies to lambda*'s that have been previously loaded (lint doesn't create them)
+			      (let ((source (procedure-source head-value)))
+				(if (and (pair? source)
+					 (eq? (car source) 'lambda*))
+				    (let ((decls (cadr source)))
+				      (if (not (memq :allow-other-keys decls))
+					  (for-each
+					   (lambda (arg)
+					     (if (and (keyword? arg)
+						      (not (memq arg '(:rest :key :optional)))
+						      (not (member arg decls 
+								   (lambda (a b) 
+								     (if (pair? b) 
+									 (eq? (keyword->symbol a) (car b))
+									 (eq? (keyword->symbol a) b))))))
+						 (lint-format "~A keyword argument ~A (in ~S) does not match any argument in ~S" name head arg form decls)))
+					   (cdr form))))))
+			      
+			      (case head
+				((eq?) 
+				 (if (< (length form) 3)
+				     (lint-format "eq? needs 2 arguments:~A" name (truncated-list->string form))
+				     (begin
+				       (if (or (and (number? (cadr form))
+						    (rational? (cadr form)))
+					       (char? (cadr form))
+					       (and (number? (caddr form))
+						    (rational? (caddr form)))
+					       (char? (caddr form)))
+					   (lint-format "eq? doesn't work reliably with args like ~S" name form)
+					   (if (or (and (number? (cadr form))
+							(not (rational? (cadr form))))
+						   (string? (cadr form))
+						   (vector? (cadr form))
+						   (and (number? (caddr form))
+							(not (rational? (caddr form))))
+						   (string? (caddr form))
+						   (vector? (caddr form)))
+					       (lint-format "~A is always #f" name form)))
+				       
+				       (if *report-minor-stuff*  ; (eq? e #f) or (eq? #f e) -> (not e); can't simplify #t as well here
+					   (let ((expr 'unset))
+					     (if (not (cadr form))
+						 (set! expr (simplify-boolean `(not ,(caddr form)) () () env))
+						 (if (not (caddr form))
+						     (set! expr (simplify-boolean `(not ,(cadr form)) () () env))))
+					     (if (not (eq? expr 'unset))
+						 (lint-format "possible simplification:~A" name (lists->string form expr)))))))
 				 
-				 (if (pair? arity)
-				     (if (< args (car arity))
-					 (lint-format "~A has too few arguments in: ~A"
-						      name head 
-						      (truncated-list->string form))
-					 (if (and (not (caddr arity))
-						  (> args (+ (car arity) (cadr arity))))
-					     (lint-format "~A has too many arguments in: ~A"
+				 (check-for-repeated-args name head form env)
+				 (check-for-repeated-args-with-not name form env))
+				
+				((eqv?) 
+				 (if (< (length form) 3)
+				     (lint-format "eqv? needs 2 arguments:~A" name (truncated-list->string form))
+				     (if (or (vector? (cadr form))
+					     (string? (cadr form))
+					     (vector? (caddr form))
+					     (string? (caddr form)))
+					 (lint-format "eqv? doesn't work reliably with args like ~S" name form)))
+				 
+				 (check-for-repeated-args name head form env)
+				 (check-for-repeated-args-with-not name form env))
+				
+				((map for-each)
+				 (let* ((len (length form))
+					(args (- len 2)))
+				   (if (< len 3)
+				       (lint-format "~A missing argument~A in:~A"
+						    name head 
+						    (if (= len 2) "" "s") 
+						    (truncated-list->string form)))
+				   (let ((func (cadr form))
+					 (arity #f))
+				     (if (and (symbol? func)
+					      (defined? func)
+					      (procedure? (symbol->value func)))
+					 (set! arity (procedure-arity (symbol->value func)))
+					 
+					 (if (and (pair? func)
+						  (memq (car func) '(lambda lambda*))
+						  (pair? (cadr func)))
+					     (let ((arglen (length (cadr func))))
+					       (if (eq? (car func) 'lambda)
+						   (if (negative? arglen)
+						       (set! arity (list (abs arglen) 0 #t))
+						       (set! arity (list arglen 0 #f)))
+						   (if (negative? arglen)
+						       (set! arity (list 0 (abs arglen) #t))
+						       (set! arity (list 0 arglen (memq :rest (cadr func)))))))))
+				     
+				     (if (pair? arity)
+					 (if (< args (car arity))
+					     (lint-format "~A has too few arguments in: ~A"
 							  name head 
-							  (truncated-list->string form)))))
-				 
-				 (if (and *report-minor-stuff*
-					  (= len 3)
-					  (pair? func)
-					  (eq? (car func) 'lambda))
-				     (let ((farg (cadr func))
-					   (body (cddr func)))
-				       (if (and (pair? farg)
-						(null? (cdr farg))
-						(pair? body)
-						(null? (cdr body))
-						(pair? (car body))
-						(pair? (cdar body))
-						(eq? (cadar body) (car farg))
-						(null? (cddar body)))
-					   (lint-format "possible simplification:~A"
-							name 
-							(lists->string form `(,(car form) ,(caar body) ,(caddr form)))))))
+							  (truncated-list->string form))
+					     (if (and (not (caddr arity))
+						      (> args (+ (car arity) (cadr arity))))
+						 (lint-format "~A has too many arguments in: ~A"
+							      name head 
+							      (truncated-list->string form)))))
 				     
-				 (for-each 
-				  (lambda (obj)
-				    (if (and (pair? obj)
-					     (memq (car obj) '(vector->list string->list let->list environment->list)))
-					(lint-format "~A could be simplified to: ~A ; (~A accepts non-list sequences)" 
-						     name
-						     (truncated-list->string obj) 
-						     (truncated-list->string (cadr obj))
-						     head)))
-				  (cddr form)))))
-			    
-			    ((catch)
-			     (if (and (not (symbol? (cadr form)))
-				      (not (boolean? (cadr form)))
-				      (or (not (pair? (cadr form)))
-					  (not (eq? (caadr form) 'quote))))
-				 (lint-format "catch tag ~S is unreliable" name (cadr form))))
-			    
-			    (else
-			     ;; we've already checked for head in the current env above
-			     (check-for-repeated-args name head form env)
-			     
-			     ;; now try to check arg types for egregious errors
-			     (let ((arg-data (hash-table-ref argument-data head)))
-			       (if arg-data
-				   (check-args name head form arg-data env max-arity)
-				   )))))))))))
-      
+				     (if (and *report-minor-stuff*
+					      (= len 3)
+					      (pair? func)
+					      (eq? (car func) 'lambda))
+					 (let ((farg (cadr func))
+					       (body (cddr func)))
+					   (if (and (pair? farg)
+						    (null? (cdr farg))
+						    (pair? body)
+						    (null? (cdr body))
+						    (pair? (car body))
+						    (pair? (cdar body))
+						    (eq? (cadar body) (car farg))
+						    (null? (cddar body)))
+					       (lint-format "possible simplification:~A"
+							    name 
+							    (lists->string form `(,(car form) ,(caar body) ,(caddr form)))))))
+				     
+				     (for-each 
+				      (lambda (obj)
+					(if (and (pair? obj)
+						 (memq (car obj) '(vector->list string->list let->list environment->list)))
+					    (lint-format "~A could be simplified to: ~A ; (~A accepts non-list sequences)" 
+							 name
+							 (truncated-list->string obj) 
+							 (truncated-list->string (cadr obj))
+							 head)))
+				      (cddr form)))))
+				
+				((catch)
+				 (if (and (not (symbol? (cadr form)))
+					  (not (boolean? (cadr form)))
+					  (or (not (pair? (cadr form)))
+					      (not (eq? (caadr form) 'quote))))
+				     (lint-format "catch tag ~S is unreliable" name (cadr form))))
+				
+				(else
+				 ;; we've already checked for head in the current env above
+				 (check-for-repeated-args name head form env)
+				 
+				 ;; now try to check arg types for egregious errors
+				 (let ((arg-data (hash-table-ref argument-data head)))
+				   (if arg-data
+				       (check-args name head form arg-data env max-arity)))))))))))))
       
       (define (get-generator form name head) ; defgenerator funcs
 	(let ((name (if (pair? (cadr form))
