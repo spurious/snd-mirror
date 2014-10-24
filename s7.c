@@ -685,7 +685,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_VECTOR_C, HOP_VECTOR_C, OP_VECTOR_S, HOP_VECTOR_S, OP_VECTOR_opCq, HOP_VECTOR_opCq, 
       OP_STRING_C, HOP_STRING_C, OP_STRING_S, HOP_STRING_S, OP_STRING_opCq, HOP_STRING_opCq, 
       OP_C_OBJECT, HOP_C_OBJECT, OP_C_OBJECT_C, HOP_C_OBJECT_C, OP_C_OBJECT_S, HOP_C_OBJECT_S, 
-        OP_C_OBJECT_opCq, HOP_C_OBJECT_opCq, OP_C_OBJECT_SS, HOP_C_OBJECT_SS, OP_C_OBJECT_CC, HOP_C_OBJECT_CC, 
+      OP_C_OBJECT_opCq, HOP_C_OBJECT_opCq, OP_C_OBJECT_SS, HOP_C_OBJECT_SS, OP_C_OBJECT_CC, HOP_C_OBJECT_CC, 
       OP_PAIR_C, HOP_PAIR_C, OP_PAIR_S, HOP_PAIR_S, OP_PAIR_opCq, HOP_PAIR_opCq, 
       OP_HASH_TABLE_C, HOP_HASH_TABLE_C, OP_HASH_TABLE_S, HOP_HASH_TABLE_S, 
       OP_ENVIRONMENT_S, HOP_ENVIRONMENT_S, OP_ENVIRONMENT_Q, HOP_ENVIRONMENT_Q, 
@@ -18546,9 +18546,7 @@ You can later apply make-random-state to this list to continue a random number s
     }
   
   if (r)
-    return(list_2(sc, 
-		  make_integer(sc, r->ran_seed), 
-		  make_integer(sc, r->ran_carry)));
+    return(list_2(sc, make_integer(sc, r->ran_seed), make_integer(sc, r->ran_carry)));
   return(sc->F);
 }
 
@@ -23315,9 +23313,7 @@ defaults to the rootlet.  To load into the curlet instead, pass (curlet)."
   fname = string_value(name);
   if ((!fname) || (!(*fname)))                 /* fopen("", "r") returns a file pointer?? */
     return(s7_error(sc, sc->OUT_OF_RANGE, 
-		    list_2(sc, 
-			   make_string_wrapper(sc, "load's first argument, ~S, should be a filename"),
-			   name)));
+		    list_2(sc, make_string_wrapper(sc, "load's first argument, ~S, should be a filename"), name)));
 
   if (is_directory(fname))
     return(s7_error(sc, sc->WRONG_TYPE_ARG, 
@@ -25169,9 +25165,7 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
 static void write_readably_error(s7_scheme *sc, const char *type)
 {
   s7_error(sc, make_symbol(sc, "io-error"), 
-	   list_2(sc, 
-		  make_string_wrapper(sc, "can't write ~A readably"),
-		  make_string_wrapper(sc, type)));
+	   list_2(sc, make_string_wrapper(sc, "can't write ~A readably"), make_string_wrapper(sc, type)));
 }
 
 
@@ -29604,6 +29598,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
    * also the 3 arg version can implement position, find, etc
    *
    * the third arg can be weird: (member #f (list #t) cons) -> (#t)
+   * should this be an error: (member '(1 2 3) () '(1 . 2)) -- the third arg is bogus, but the second is nil
    */
 
   s7_pointer x, y, obj;
@@ -33619,10 +33614,7 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
   if (is_any_closure(p) || is_macro(p) || is_bacro(p))
     {
       return(cons(sc, 
-		  append_in_place(sc, 
-				  list_2(sc, 
-					 (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
-					 closure_args(p)),
+		  append_in_place(sc, list_2(sc, (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, closure_args(p)),
 				  closure_body(p)),
 		  closure_let(p)));
     }
@@ -33658,9 +33650,7 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
       if (is_safe_closure(body))
 	clear_safe_closure(body);
       return(append_in_place(sc, 
-			     list_2(sc, 
-				    (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
-				    closure_args(p)),
+			     list_2(sc, (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, closure_args(p)),
 			     body));
     }
 
@@ -37653,8 +37643,7 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
 s7_pointer s7_wrong_number_of_args_error(s7_scheme *sc, const char *caller, s7_pointer args)
 {
   return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
-		  list_2(sc, 
-			 make_string_wrapper(sc, caller), /* "caller" includes the format directives */
+		  list_2(sc, make_string_wrapper(sc, caller), /* "caller" includes the format directives */
 			 args)));
 }
 
@@ -38397,9 +38386,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
       if (is_string(slot_value(sc->error_file)))
 	{
 	  format_to_port(sc, error_port, ";    ~S, line ~D",
-			 list_2(sc, 
-				slot_value(sc->error_file),
-				slot_value(sc->error_line)),
+			 list_2(sc, slot_value(sc->error_file),	slot_value(sc->error_line)),
 			 NULL, false, 16);
 	  s7_newline(sc, error_port);
 	}
@@ -38841,8 +38828,7 @@ static void improper_arglist_error(s7_scheme *sc)
     s7_error(sc, sc->SYNTAX_ERROR, 
 	     list_1(sc, make_string_wrapper(sc, "function call is a dotted list?")));
   else s7_error(sc, sc->SYNTAX_ERROR, 
-		list_2(sc,
-		       make_string_wrapper(sc, "improper list of arguments: ~S"),
+		list_2(sc, make_string_wrapper(sc, "improper list of arguments: ~S"),
 		       append_in_place(sc, sc->args = safe_reverse_in_place(sc, sc->args), sc->code)));
 }
 
@@ -39224,7 +39210,6 @@ static s7_Int applicable_length(s7_scheme *sc, s7_pointer obj)
     case T_NIL:
       return(0);
     }
-  
   return(-1);
 }
 
@@ -40274,7 +40259,6 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
 		 *     This now becomes (1 unquote ({apply_values} ('(2 3)))) -> ({append} ({list} 1) ({apply_values} ('(2 3)))) -> error
 		 * `(1 . (,@'(2 3))) works in both cases, and `(1 . (,(+ 1 1)))
 		 */
-
 		car(bq) = g_quasiquote_1(sc, car(orig));
 		cdr(bq) = sc->NIL;
 		sc->w = list_3(sc, sc->QQ_Append, sc->w, caddr(orig));
@@ -40522,7 +40506,6 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 	  }
       }
     }
-  
   sc->strbuf[0] = c; 
   return(TOKEN_SHARP_CONST); /* next stage notices any errors */
 }    
@@ -40914,7 +40897,6 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  return(read_error(sc, "unexpected close paren"));         /* (+ 1 2)) or (+ 1 . ) */
 	}
     }
-
   /* we never get here */
   return(sc->NIL);
 }
@@ -41081,7 +41063,6 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	    }
 	}
 
-      /* -------- */
       RESTORE_X_Z(sc->ubh_x, sc->ubh_z);
       sc->ubh_x = -1;
       sc->ubh_z = -1;
@@ -41370,16 +41351,14 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 				    {
 				      /* this case is not caught yet: ((lambda* (a :optional b :allow-other-keys ) a) :b 1 :c :a :a ) */
 				      return(s7_error(sc, sc->WRONG_TYPE_ARG,
-						      list_4(sc,
-							     make_string_wrapper(sc, "~A: parameter set twice, ~S in ~S"),
+						      list_4(sc, make_string_wrapper(sc, "~A: parameter set twice, ~S in ~S"),
 							     closure_name(sc, sc->code), lx, sc->args)));
 				    }
 				}
 			      else
 				{
 				  return(s7_error(sc, sc->WRONG_TYPE_ARG,
-						  list_4(sc,
-							 make_string_wrapper(sc, "~A: unknown key: ~S in ~S"),
+						  list_4(sc, make_string_wrapper(sc, "~A: unknown key: ~S in ~S"),
 							 closure_name(sc, sc->code), lx, sc->args)));
 				}
 			      /* (define* (f a (b :c)) b) (f :b 1 :d) */
@@ -41387,8 +41366,7 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 			  else
 			    {
 			      return(s7_error(sc, sc->WRONG_TYPE_ARG,
-					      list_4(sc,
-						     make_string_wrapper(sc, "~A: unknown key: ~S in ~S"),
+					      list_4(sc, make_string_wrapper(sc, "~A: unknown key: ~S in ~S"),
 						     closure_name(sc, sc->code), lx, sc->args)));
 			    }
 			}
@@ -41437,9 +41415,7 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 		  if ((!is_keyword(car(lx))) ||     /* ((lambda* (a :allow-other-keys) a) :a 1 :b 2 3) */
 		      (!is_pair(cdr(lx))))          /* ((lambda* (a :allow-other-keys) a) :a 1 :b) */
 		    return(s7_error(sc, sc->WRONG_TYPE_ARG,
-				    list_3(sc, 
-					   make_string_wrapper(sc, "~A: not a key/value pair: ~S"),
-					   closure_name(sc, sc->code), lx)));
+				    list_3(sc, make_string_wrapper(sc, "~A: not a key/value pair: ~S"), closure_name(sc, sc->code), lx)));
 		  /* errors not caught? 
 		   *    ((lambda* (a :allow-other-keys) a) :a 1 :a 2)
 		   *    ((lambda* (:allow-other-keys ) #f) :b :a :a :b)
@@ -41622,7 +41598,6 @@ static s7_pointer g_format_just_newline(s7_scheme *sc, s7_pointer args)
   str = cadr(args);
   new_str = (char *)string_value(str);
   tpoint = string_length(str) - 2;
-
   need_output = !is_output_port(pt);
 
   if (pt != sc->F)
@@ -41707,7 +41682,6 @@ static s7_pointer format_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 	return(format_allg_no_column);
       return(format_allg);
     }
-
   return(f);
 }
 
@@ -44250,7 +44224,6 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
       return(OP_SAFE_C_Z); /* this splits out to A in optimize_func_one_arg */
       break;
       
-
     case E_C_SP:
       switch (op2)
 	{
@@ -44305,7 +44278,6 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
       return(OP_SAFE_C_SZ);
       break;
 
-
     case E_C_PS:
       switch (op2)
 	{
@@ -44327,7 +44299,6 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
       /* fprintf(stderr, "zs: %s %s\n", opt_name(e2), DISPLAY(e1)); */
       return(OP_SAFE_C_ZS);
       break;
-
 
     case E_C_PC:
       switch (op2)
@@ -44353,7 +44324,6 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
       /* fprintf(stderr, "zc: %s %s\n", opt_name(e2), DISPLAY(e1)); */
       return(OP_SAFE_C_ZC);
       break;
-
 
     case E_C_CP:
       switch (op2)
@@ -44388,7 +44358,6 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
       /* fprintf(stderr, "cz: %s %s\n", opt_name(e2), DISPLAY(e1)); */
       return(OP_SAFE_C_CZ);
       break;
-
 
     case E_C_PP:
       switch (op2)
@@ -44824,7 +44793,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 	    }
 	}
     }
-
 
   if (pairs == (quotes + all_x_count(car_x)))
     {
@@ -46746,7 +46714,8 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 		  if (!is_pair(car(vars)))
 		    return(false);
 		  
-		  if (caar(vars) == func)
+		  if ((caar(vars) == func) || 
+		      (!is_pair(cdar(vars))))   /* (do ((a . 1) (b . 2)) ...) */
 		    return(false);
 		  
 		  if ((is_pair(cadar(vars))) &&
@@ -57743,13 +57712,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (is_pair(carc))
 		  {
 		    /* evaluate the inner list but that list can be circular: carc: #1=(#1# #1#)!
+		     *   and the cycle can be well-hidden -- #1=((#1 2) . 2) and other such stuff
 		     */
-		    if ((code == carc) || (cdr(code) == carc) || (cdr(code) == code))
+		    if ((code == carc) || (cdr(code) == carc) || (cdr(code) == code))        /* try a few simple cases */
 		      return(eval_error(sc, "attempt to evaluate a circular list: ~A", carc));
+
+		    if (sc->stack_end >= sc->stack_resize_trigger)                           /* ouch -- call in the big guns */
+		      {
+			if (is_pair(g_cyclic_sequences(sc, list_1(sc, carc))))
+			  return(eval_error(sc, "attempt to evaluate a circular list: ~A", carc));
 #if DEBUGGING
-		    if (sc->stack_end >= sc->stack_resize_trigger)
-		      fprintf(stderr, "stack overflow imminent\n");
+			fprintf(stderr, "stack is about to overflow: %s\n", DISPLAY(carc));
 #endif
+		      }
+
 		    push_stack(sc, OP_EVAL_ARGS, sc->NIL, cdr(code));
 		    if (typesflag(car(carc)) == SYNTACTIC_TYPE) 
 		      /* was checking for is_syntactic here but that can be confused by successive optimizer passes:
@@ -64626,9 +64602,7 @@ static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
   p = g_string_to_number_1(sc, args, sc->BIGNUM); 
   if (is_false(sc, p))                                       /* (bignum "1/3.0") */
     s7_error(sc, make_symbol(sc, "bignum-error"),
-	     list_2(sc,
-		    make_string_wrapper(sc, "bignum argument does not represent a number: ~S"),
-		    car(args)));
+	     list_2(sc, make_string_wrapper(sc, "bignum argument does not represent a number: ~S"), car(args)));
 
   switch (type(p))
     {
@@ -70001,20 +69975,21 @@ int main(int argc, char **argv)
  * cyclic-seq in rest of full-* 
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
+ *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers?
  *
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
  *
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
- *   perhaps put xg/xm and sndlib in their own lets: *gtk* *motif* *gl* *clm* -- or at least make it an option
+ *   perhaps put xg/xm and sndlib in their own lets: *gtk* *motif* *gl*(libgl.scm?) *clm* -- or at least make it an option
+ *   need to check new openGL for API changes
+ *   check motif+gl? -- glext.h has a ton of changes: 10000 names!!
+ * check out the GL support in gtk 3.16 -- this looks straightforward, snd-chn.c
  *
  * undef id: cond-expand args and check for other cases via s7test/etc:
  *   defmacro, define-memoized and the like -- see test/undef
  *
  * snd-genv needs a lot of gtk3 work
- * check out the GL support in gtk 3.16 -- this looks straightforward, snd-chn.c
- * try gtk-effects.scm in gtk3
- *
  * cyclic-sequences is minimally tested in s7test
  *
  * ideally the vector ops would accept bytevectors (and the name should be byte-vector throughout)
@@ -70023,8 +69998,4 @@ int main(int argc, char **argv)
  * (let () (define (when a) (+ a 1)) (when 2)) -> 3
  *   but at the top level: (define (when a) (+ a 1)) (when 2) -> when has no body? 
  *   (this is ok if it happens after the local definition) -- global redef means set local flag?
- *
- * t112 lint ok eval error
- * if odd 124 comes through, perhaps retry 123 from that new starting point?
- * (with-lets (e1 ...) . body) ? with-let is tail-callable so this requires dynamic-wind to restore outlets?
  */

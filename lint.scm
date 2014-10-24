@@ -2408,6 +2408,10 @@
 		    (or (eq? (caadr form) 'copy)
 			(eq? (caadr form) 'string-copy)))
 	       (lint-format "~A could be ~A" name form (cadr form))))
+
+	  ((string)
+	   (if (every? (lambda (x) (and (char? x) (not (char=? x #\newline)))) (cdr form))
+	       (lint-format "~A could be ~S" name form (apply string (cdr form)))))
 	  
 	  ((string-append)
 	   ;; also (string-append . constants)? and (string-append)->""
@@ -2488,6 +2492,12 @@
 	   ;; also (append . constants)? and (append)->()
 	   (if (= (length form) 2)
 	       (lint-format "~A could be ~A" name form (cadr form))))
+
+	  ((apply) 
+	   (if (and (pair? (cdr form))
+		    (not (symbol? (cadr form)))
+		    (not (applicable? (cadr form))))
+	       (lint-format "~S is not applicable: ~A" name (cadr form) (truncated-list->string form))))
 
 	  ((sort!)
 	   (if (and (= (length form) 3)
@@ -3401,6 +3411,9 @@
 								     (list 'define (map car (caddr form))))))
 					   ()))
 				 (varlist (if named-let (caddr form) (cadr form))))
+			     (if (and (not (null? varlist))
+				      (not (pair? varlist)))
+				 (lint-format "let is messed up: ~A" name (truncated-list->string form)))
 			     (do ((bindings varlist (cdr bindings)))
 				 ((not (pair? bindings))
 				  (if (pair? bindings)
@@ -3439,10 +3452,12 @@
 		    ((let*)
 		     (if (< (length form) 3)
 			 (lint-format "let* is messed up: ~A" name (truncated-list->string form))
-			 
 			 (let ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
 			   (let ((vars (if named-let (list (make-var named-let)) ()))
 				 (varlist (if named-let (caddr form) (cadr form))))
+			     (if (and (not (null? varlist))
+				      (not (pair? varlist)))
+				 (lint-format "let* is messed up: ~A" name (truncated-list->string form)))
 			     (do ((bindings varlist (cdr bindings)))
 				 ((not (pair? bindings))
 				  (if (pair? bindings)
@@ -3488,7 +3503,9 @@
 			 (lint-format "~A is messed up: ~A" name head (truncated-list->string form))
 			 (let ((vars ()))
 			   (if (null? (cadr form))
-			       (lint-format "~A could be let:~A" name head (truncated-list->string form)))
+			       (lint-format "~A could be let:~A" name head (truncated-list->string form))
+			       (if (not (pair? (cadr form)))
+				   (lint-format "~A is messed up: ~A" name head (truncated-list->string form))))
 			   (do ((bindings (cadr form) (cdr bindings)))
 			       ((not (pair? bindings))
 				(if (pair? bindings)

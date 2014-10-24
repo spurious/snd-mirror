@@ -5852,7 +5852,7 @@ static mus_float_t filtered_comb_one_zero(mus_any *ptr, mus_float_t input)
   dly *gen = (dly *)ptr;
   mus_float_t result;
   result = gen->line[gen->loc];
-  gen->line[gen->loc] = input + (gen->yscl * mus_one_zero(gen->filt, result));
+  gen->line[gen->loc] = input + mus_one_zero(gen->filt, result); /* gen->yscl folded into one_zero coeffs via smp_scl */
   gen->loc++;
   if (gen->loc >= gen->size) 
     gen->loc = 0;
@@ -5885,6 +5885,7 @@ static mus_float_t filtered_comb_bank_any(mus_any *filtered_combs, mus_float_t i
   return(sum);
 }
 
+static void smp_scl(mus_any *ptr, mus_float_t scl);
 
 mus_any *mus_make_filtered_comb_bank(int size, mus_any **filtered_combs)
 {
@@ -5907,7 +5908,15 @@ mus_any *mus_make_filtered_comb_bank(int size, mus_any **filtered_combs)
   if ((size == 8) &&
       (oz) &&
       (!zdly))
-    gen->cmbf = filtered_comb_bank_8;
+    {
+      gen->cmbf = filtered_comb_bank_8;
+      for (i = 0; i < 8; i++)
+	{
+	  dly *d;
+	  d = (dly *)gen->gens[i];
+	  smp_scl(d->filt, d->yscl);
+	}
+    }
   else gen->cmbf = filtered_comb_bank_any;
 
   return((mus_any *)gen);
@@ -6843,6 +6852,7 @@ static mus_float_t smp_set_ycoeff(mus_any *ptr, int index, mus_float_t val) {((s
 static mus_float_t *smp_xcoeffs(mus_any *ptr) {return(((smpflt *)ptr)->xs);}
 static mus_float_t *smp_ycoeffs(mus_any *ptr) {return(((smpflt *)ptr)->ys);}
 
+static void smp_scl(mus_any *ptr, mus_float_t scl) {smpflt *g = (smpflt *)ptr; g->xs[0] *= scl; g->xs[1] *= scl;}
 
 static void smpflt_reset(mus_any *ptr)
 {
