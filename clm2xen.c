@@ -4873,7 +4873,7 @@ static Xen g_pink_noise(Xen gens)
 
   size = mus_vct_length(v);
   if (size == 0)
-    return(xen_zero);
+    return(XEN_ZERO); /* needs to be upper case for Forth/Ruby */
   Xen_check_type((size & 1) == 0, gens, 1, S_pink_noise, "an even length " S_vct);
     
   data = mus_vct_data(v);

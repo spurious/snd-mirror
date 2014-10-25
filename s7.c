@@ -1746,7 +1746,8 @@ static void init_types(void)
 
 #define T_EXPANSION                   (1 << (TYPE_BITS + 6))
 #define EXPANSION_TYPE                (unsigned short)(T_EXPANSION | T_SYMBOL)
-#define is_expansion(p)               (typesflag(p) == EXPANSION_TYPE)
+/* #define is_expansion(p)               (typesflag(p) == EXPANSION_TYPE) */
+#define is_expansion(p)               ((typesflag(p) & T_EXPANSION) != 0)
 /* this marks the symbol associated with a run-time macro and distinguishes the value from an ordinary macro
  */
 
@@ -4750,6 +4751,9 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
 { 
   s7_pointer x, str, p; 
 
+  if (sc->symbol_table_is_locked)
+    return(s7_error(sc, sc->ERROR, sc->NIL));
+
   str = make_permanent_string_with_length_and_hash(name, len, hash);
   x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
@@ -4759,6 +4763,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
   initial_slot(x) = sc->UNDEFINED;
   symbol_set_local(x, 0LL, sc->NIL);
   symbol_tag(x) = 0;
+  symbol_hash(x) = location;
 
   if (symbol_name_length(x) > 1)                           /* not 0, otherwise : is a keyword */
     {
@@ -4824,7 +4829,7 @@ static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
   
   gc(sc);
   for (i = 0; i < vector_length(sc->symbol_table); i++) 
-    for (x  = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
+    for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
       sc->w = cons(sc, car(x), sc->w);
 
   lst = sc->w;
@@ -4841,7 +4846,7 @@ bool s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symb
   s7_pointer x; 
 
   for (i = 0; i < vector_length(sc->symbol_table); i++) 
-    for (x  = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
+    for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
       if (symbol_func(symbol_name(car(x)), data))
 	return(true);
 
@@ -4861,7 +4866,7 @@ bool s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
   s7_pointer x; 
 
   for (i = 0; i < vector_length(sc->symbol_table); i++) 
-    for (x  = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
+    for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
       if (symbol_func(symbol_name(car(x)), cdr(x), data))
 	return(true);
 
@@ -4877,17 +4882,12 @@ static s7_pointer make_symbol_with_length(s7_scheme *sc, const char *name, unsig
   hash = raw_string_hash((const unsigned char *)name, len); 
   location = hash % SYMBOL_TABLE_SIZE;
 
-  for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
+  for (x = vector_element(sc->symbol_table, location); is_pair(x); x = cdr(x)) 
     if ((hash == pair_raw_hash(x)) &&
 	(strings_are_equal_with_length(name, symbol_name(car(x)), len)))
       return(car(x));
 
-  if (sc->symbol_table_is_locked)
-    return(s7_error(sc, sc->ERROR, sc->NIL));
-
-  x = new_symbol(sc, name, len, hash, location); 
-  symbol_hash(x) = location;
-  return(x);
+  return(new_symbol(sc, name, len, hash, location)); 
 } 
 
 
@@ -4961,7 +4961,6 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   hash = raw_string_hash((const unsigned char *)name, len);
   location = hash % SYMBOL_TABLE_SIZE;
   x = new_symbol(sc, name, len, hash, location);  /* not T_GENSYM -- might be called from outside */
-  symbol_hash(x) = location;
   free(name);
   return(x); 
 } 
@@ -5533,7 +5532,7 @@ static void save_unlet(s7_scheme *sc)
   heap_location(sc->unlet) = NOT_IN_HEAP;
 
   for (i = 0; i < vector_length(sc->symbol_table); i++) 
-    for (x  = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
+    for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
       {
 	s7_pointer sym, val;
 	sym = car(x);
@@ -12389,8 +12388,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 
 
 #define REAL_TO_INT_LIMIT 9.2233727815085e+18
-/* unfortunately, this limit is only a max in a sense:
- *    (ceiling 9223372036854770.9)  => 9223372036854770
+/* unfortunately, this limit is only a max in a sense: (ceiling 9223372036854770.9) => 9223372036854770
  *    see s7test for more examples
  */
 
@@ -41097,7 +41095,6 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   hash = raw_string_hash((const unsigned char *)name, safe_strlen(name));
   loc = hash % SYMBOL_TABLE_SIZE;
   x = new_symbol(sc, name, safe_strlen(name), hash, loc);
-  symbol_hash(x) = loc;
 
   syn = alloc_pointer();
   set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS); 
@@ -63137,69 +63134,53 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	case TOKEN_RIGHT_PAREN:
 	  /* sc->args can't be null here */
-	  
-	  sc->value = safe_reverse_in_place(sc, sc->args);
-	  pair_line_number(sc->value) = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
-	  set_has_line_number(sc->value);
-	  /* I think sc->input_port can't be nil -- it falls back on stdin now */
-
-	  /* read-time macro expansion
-	   *
+	  /* read-time macro expansion:
 	   *   (define-macro (hi a) (format #t "hi...") `(+ ,a 1))
 	   *   (define (ho b) (+ 1 (hi b)))
-	   *
 	   * here sc->value is: (ho b), (hi b), (+ 1 (hi b)), (define (ho b) (+ 1 (hi b)))
-	   * 
 	   * but... first we can't tell for sure at this point that "hi" really is a macro
-	   *
 	   *   (letrec ((hi ... (hi...))) will be confused about the second hi,
 	   *   or (call/cc (lambda (hi) (hi 1))) etc.
-	   *
 	   * second, figuring out that we're quoted is not easy -- we have to march all the
 	   * way to the bottom of the stack looking for op_read_quote or op_read_vector
-	   *
 	   *    #(((hi)) 2) or '(((hi)))
-	   *
 	   * or op_read_list with args not equal (quote) or (macroexapand)
-	   *
 	   *    '(hi 3) or (macroexpand (hi 3) or (quote (hi 3))
-	   *
 	   * and those are only the problems I noticed!
 	   *
 	   * The hardest of these problems involve shadowing, so Rick asked for "define-expansion"
 	   *   which is just like define-macro, but the programmer guarantees that the macro
-	   *   name will not be shadowed.  So I'll also assume that the other funny cases are
-	   *   being avoided -- see what happens!
-	   *
-	   *   (define-expansion (hi a) `(+ ,a 1))
-	   *   (define (ho b) (+ 1 (hi b)))
-	   *   (procedure-source ho) -> (lambda (b) (+ 1 (+ b 1)))
+	   *   name will not be shadowed. 
 	   */
-	  
-	  if (is_expansion(car(sc->value)))                                  /* was checking the T_EXPANSION bit (car(sc->value) is a symbol) */
+	  sc->value = safe_reverse_in_place(sc, sc->args);
+	  if (is_symbol(car(sc->value)))
 	    {
-	      int loc;
-	      s7_pointer caller;
-	      loc = s7_stack_top(sc) - 1;
-	      caller = car(stack_args(sc->stack, loc));
-	      if ((loc >= 3) &&
-		  (stack_op(sc->stack, loc) != OP_READ_QUOTE) &&             /* '(hi 1) for example */
-		  (caller != sc->QUOTE) &&          /* (quote (hi 1)) */
-		  (caller != sc->MACROEXPAND) &&    /* (macroexpand (hi 1)) */
-		  (caller != sc->DEFINE_EXPANSION)) /* (define-expansion ...) being reloaded */
+	      pair_line_number(sc->value) = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
+	      set_has_line_number(sc->value);	      /* sc->input_port above can't be nil(?) -- it falls back on stdin now */
+
+	      if (is_expansion(car(sc->value)))
 		{
-		  push_stack(sc, OP_EXPANSION, sc->NIL, sc->NIL);
-		  sc->code = slot_value(find_symbol(sc, car(sc->value)));
-		  sc->args = list_1(sc, sc->value); 
-		  goto APPLY;
+		  int loc;
+		  s7_pointer caller;
+		  loc = s7_stack_top(sc) - 1;
+		  caller = car(stack_args(sc->stack, loc));
+		  if ((loc >= 3) &&
+		      (stack_op(sc->stack, loc) != OP_READ_QUOTE) &&             /* '(hi 1) for example */
+		      (caller != sc->QUOTE) &&          /* (quote (hi 1)) */
+		      (caller != sc->MACROEXPAND) &&    /* (macroexpand (hi 1)) */
+		      (caller != sc->DEFINE_EXPANSION)) /* (define-expansion ...) being reloaded */
+		    {
+		      push_stack(sc, OP_EXPANSION, sc->NIL, sc->NIL);
+		      sc->code = slot_value(find_symbol(sc, car(sc->value)));
+		      sc->args = list_1(sc, sc->value); 
+		      goto APPLY;
+		    }
 		}
-	    }
-	  
-	  if ((is_symbol(car(sc->value))) &&
-	      (is_pair(cdr(sc->value))))
-	    {
-	      set_ecdr(cdr(sc->value), sc->value);
-	      set_overlay(cdr(sc->value));
+	      if (is_pair(cdr(sc->value)))
+		{
+		  set_ecdr(cdr(sc->value), sc->value);
+		  set_overlay(cdr(sc->value));
+		}
 	    }
 	  /* I think it's too soon to scan every list at this point for symbols and pairs */
 	  break;
@@ -69962,7 +69943,7 @@ int main(int argc, char **argv)
  * s7test    1721 | 1358 |  995 | 1194 1210
  * index    44300 | 3291 | 1725 | 1276 1243
  * bench    42736 | 8752 | 4220 | 3506 3506
- * lg             |      |      |      6404
+ * lg             |      |      |      6497
  * t502        90 |   43 | 14.5 | 12.7 12.6
  * t455|6     265 |   89 |  9   |       8.8
  * t816           |   71 | 70.6 | 38.0 32.0

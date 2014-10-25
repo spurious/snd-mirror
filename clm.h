@@ -93,8 +93,9 @@ MUS_EXPORT void mus_generator_set_channel(mus_any_class *p, int (*channel)(mus_a
 MUS_EXPORT void mus_generator_set_file_name(mus_any_class *p, char *(*file_name)(mus_any *ptr));
 MUS_EXPORT void mus_generator_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type);
 MUS_EXPORT void mus_generator_set_read_sample(mus_any_class *p, mus_float_t (*read_sample)(mus_any *ptr, mus_long_t samp, int chan));
-
+#if (!DISABLE_DEPRECATED)
 MUS_EXPORT void mus_generator_set_feeder(mus_any *g, mus_float_t (*feed)(void *arg, int direction)); /* backwards compatibility */
+#endif
 MUS_EXPORT void mus_generator_set_feeders(mus_any *g, 
 					  mus_float_t (*feed)(void *arg, int direction),
 					  mus_float_t (*block_feed)(void *arg, int direction, mus_float_t *block, mus_long_t start, mus_long_t end));

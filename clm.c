@@ -15641,12 +15641,12 @@ void mus_generator_set_feeders(mus_any *g,
     }
 }
 
-
+#if (!DISABLE_DEPRECATED)
 void mus_generator_set_feeder(mus_any *g, mus_float_t (*feed)(void *arg, int direction))
 {
   mus_generator_set_feeders(g, feed, NULL);
 }
-
+#endif
 
 
 /* ---------------- single sideband "suppressed carrier" amplitude modulation (ssb-am) ---------------- */
