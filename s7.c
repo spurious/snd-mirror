@@ -59080,7 +59080,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    slot_set_value(lx, sc->value); 
 	  else s7_make_slot(sc, sc->envir, sc->code, sc->value);
 	}
-      /* sc->value = sc->code; */ /* 25-Jul-14 */
       IF_BEGIN_POP_STACK(sc);
       
       
@@ -69966,7 +69965,7 @@ int main(int argc, char **argv)
  * lg             |      |      |      6404
  * t502        90 |   43 | 14.5 | 12.7 12.6
  * t455|6     265 |   89 |  9   |       8.8
- * t816           |   71 | 70.6 | 38.0 32.1
+ * t816           |   71 | 70.6 | 38.0 32.0
  * calls      359 |  275 | 54   | 34.7 34.7
  *            153 with run macro (eval_ptree)
  *
@@ -69975,7 +69974,7 @@ int main(int argc, char **argv)
  * cyclic-seq in rest of full-* 
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
- *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers?
+ *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers? (useful in object->string too)
  *
  * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
  *    (set! (samples (sound) sample) new-sample)
@@ -69991,9 +69990,6 @@ int main(int argc, char **argv)
  *
  * snd-genv needs a lot of gtk3 work
  * cyclic-sequences is minimally tested in s7test
- *
- * ideally the vector ops would accept bytevectors (and the name should be byte-vector throughout)
- *   perhaps as no-method fallback before error?
  *
  * (let () (define (when a) (+ a 1)) (when 2)) -> 3
  *   but at the top level: (define (when a) (+ a 1)) (when 2) -> when has no body? 

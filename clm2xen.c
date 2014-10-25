@@ -7998,20 +7998,41 @@ static Xen g_make_move_sound(Xen dloc_list, Xen outp, Xen revp)
 /* ---------------- src ---------------- */
 
 static Xen xen_one, xen_minus_one;
+
 #if HAVE_SCHEME
-  static Xen as_needed_arglist;
-/* I guess these functions can be called recursively -- maybe we need a list of these?
- */
+static Xen as_needed_arglist;
 
 static s7_pointer env_symbol, all_pass_symbol, ina_symbol, polywave_symbol, triangle_wave_symbol;
 static s7_pointer rand_interp_symbol, oscil_symbol, add_symbol, subtract_symbol, reverb_symbol, output_symbol, outa_symbol;
 static s7_pointer multiply_symbol, vector_ref_symbol, quote_symbol, sin_symbol, cos_symbol, readin_symbol, abs_symbol;
 static s7_pointer comb_bank_symbol, all_pass_bank_symbol, one_pole_symbol;
 
+
 static mus_float_t as_needed_input_float(void *ptr, int direction)
 {
   mus_xen *gn = (mus_xen *)ptr;
   return(s7_real(gn->vcts[MUS_INPUT_DATA]));
+}
+
+static mus_float_t as_needed_block_input_float(void *ptr, int direction, mus_float_t *data, mus_long_t start, mus_long_t end)
+{
+  mus_xen *gn = (mus_xen *)ptr;
+  mus_float_t val;
+  mus_long_t i, lim4;
+
+  lim4 = end - 4;
+  val = (mus_float_t)s7_real(gn->vcts[MUS_INPUT_DATA]); /* set in the chooser below */
+
+  for (i = start; i <= lim4;)
+    {
+      data[i++] = val;
+      data[i++] = val;
+      data[i++] = val;
+      data[i++] = val;
+    }
+  for (;i < end; i++)
+    data[i] = val;
+  return(val);
 }
 
 
@@ -8022,12 +8043,26 @@ static mus_float_t as_needed_input_any(void *ptr, int direction)
   return(s7_number_to_real(s7, s7_apply_function(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist)));
 }
 
+
 static mus_float_t as_needed_input_f1(void *ptr, int direction)
 {
   mus_xen *gn = (mus_xen *)ptr;
   gf *g;
   g = gn->g;
   return(g->func(g));
+}
+
+static mus_float_t as_needed_block_input_f1(void *ptr, int direction, mus_float_t *data, mus_long_t start, mus_long_t end)
+{
+  mus_xen *gn = (mus_xen *)ptr;
+  mus_long_t i;
+  gf *g;
+
+  g = gn->g;
+  for (i = start; i < end; i++)
+    data[i] = g->func(g);
+
+  return(0.0);
 }
 #endif
 
@@ -8041,6 +8076,19 @@ static mus_float_t as_needed_input_generator(void *ptr, int direction)
 #endif
 }
 
+static mus_float_t as_needed_block_input_generator(void *ptr, int direction, mus_float_t *data, mus_long_t start, mus_long_t end)
+{
+#if HAVE_EXTENSION_LANGUAGE
+  mus_any *g;
+  mus_long_t i;
+  g = (mus_any *)(((mus_xen *)ptr)->vcts[MUS_INPUT_DATA]);
+  for (i = start; i < end; i++)
+    data[i] = mus_apply(g, 0.0, 0.0);
+#endif
+  return(0.0);
+}
+
+
 static mus_float_t as_needed_input_readin(void *ptr, int direction)
 {
 #if HAVE_EXTENSION_LANGUAGE
@@ -8050,140 +8098,151 @@ static mus_float_t as_needed_input_readin(void *ptr, int direction)
 #endif
 }
 
+static mus_float_t as_needed_block_input_readin(void *ptr, int direction, mus_float_t *data, mus_long_t start, mus_long_t end)
+{
+#if HAVE_EXTENSION_LANGUAGE
+  mus_any *g;
+  mus_long_t i;
+  g = (mus_any *)(((mus_xen *)ptr)->vcts[MUS_INPUT_DATA]);
+  for (i = start; i < end; i++)
+    data[i] = mus_readin(g);
+#endif
+  return(0.0);
+}
+
+
 #if USE_SND && HAVE_SCHEME
 static mus_float_t as_needed_input_sampler(void *ptr, int direction)
 {
   return(read_sample((snd_fd *)(((mus_xen *)ptr)->vcts[MUS_INPUT_DATA])));
 }
 
+static mus_float_t as_needed_block_input_sampler(void *ptr, int direction, mus_float_t *data, mus_long_t start, mus_long_t end)
+{
+  snd_fd *p;
+  mus_long_t i;
+  p = (snd_fd *)(((mus_xen *)ptr)->vcts[MUS_INPUT_DATA]);
+  for (i = start; i < end; i++)
+    data[i] = read_sample(p);
+  return(0.0);
+}
+
+
 mus_float_t read_sample_with_direction(void *p, int dir);
 static mus_float_t as_needed_input_sampler_with_direction(void *ptr, int direction)
 {
   return(read_sample_with_direction((snd_fd *)(((mus_xen *)ptr)->vcts[MUS_INPUT_DATA]), direction));
+}
+
+static mus_float_t as_needed_block_input_sampler_with_direction(void *ptr, int direction, mus_float_t *data, mus_long_t start, mus_long_t end)
+{
+  snd_fd *p;
+  mus_long_t i;
+  p = (snd_fd *)(((mus_xen *)ptr)->vcts[MUS_INPUT_DATA]);
+  for (i = start; i < end; i++)
+    data[i] = read_sample_with_direction(p, direction);
+  return(0.0);
 }
 #endif
 
 
 static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended for "as-needed" input funcs */
 {
-  /* if this is called, it's a callback from C, where ptr is a mus_xen object whose vcts[0]
-   * field is a Xen procedure to be called, the result being returned back to C.  In the
-   * Scheme world, it's a procedure of one arg, the current read direction: 
-   *
-   * as_needed_input_func is input-func for clm.c make args, or the 2nd arg to the gen (mus_src(gen, input))
-   *    it is called in C (*input)(closure, dir)
-   *    closure is mus_xen *gn
-   *      its gn->vcts array [MUS_INPUT_FUNCTION] = procedure object (if any) else nil
-   *      this is set in the gen call if it's passed there, else in the make-gen call
-   * so we get here via *as_needed_input_func(gn, dir)
-   *   and make sure gn->vcts[MUS_INPUT_FUNCTION] is a procedure, call it with dir as its arg,
-   *   it returns a float which we then return to C
-   */
   mus_xen *gn = (mus_xen *)ptr;
   if (gn)
     {
       Xen in_obj;
       in_obj = gn->vcts[MUS_INPUT_FUNCTION];
-
       if (Xen_is_procedure(in_obj))
-	{
-#if HAVE_SCHEME
-	  mus_float_t result;
-	  s7_pointer source, arg, body, res;
-	  source = s7_procedure_source(s7, in_obj);
-	  if (s7_is_pair(source))
-	    {
-	      body = s7_cddar(source);
-	      if (s7_is_null(s7, s7_cdr(body)))
-		{
-		  res = s7_car(body);
-		  if (s7_is_real(res))
-		    {
-		      gn->vcts[MUS_INPUT_DATA] = res;
-		      mus_generator_set_feeder(gn->gen, as_needed_input_float);
-		      return(s7_real(res));
-		    }
-		  arg = s7_caadar(source);
-		  if (s7_is_pair(res))
-		    {
-#if USE_SND
-		      if ((arg == s7_caddr(res)) &&
-			  (s7_car(res) == s7_make_symbol(s7, "read-sample-with-direction")))
-			{
-			  gn->vcts[MUS_INPUT_DATA] = (Xen)xen_to_sampler(s7_symbol_local_value(s7, s7_cadr(res), s7_cdr(source)));
-			  mus_generator_set_feeder(gn->gen, as_needed_input_sampler_with_direction);
-			  return(read_sample_with_direction((snd_fd *)(gn->vcts[MUS_INPUT_DATA]), direction));
-			}
-#endif
-		      if (!s7_tree_memq(s7, arg, res))
-			{
-			  gf *g;
-			  /* here we need to make sure the function's environment is set up correctly */
-			  s7_pointer old_e;
-			  old_e = s7_set_curlet(s7, s7_cdr(source));
-			  setup_gen_list(s7, res);
-			  g = find_gf(s7, res);
-			  s7_set_curlet(s7, old_e);
-			  if (g)
-			    {
-			      gn->g = g;
-			      mus_generator_set_feeder(gn->gen, as_needed_input_f1);
-			      clear_gen_list();
-			      return(g->func(g));
-			    }
-			  clear_gen_list();
-			}
-		    }
-		}
-	    }
-#if USE_SND
-	  /* check for a sampler (snd-edits.c) */
-	  if (is_sampler(in_obj))
-	    {
-	      /* fprintf(stderr, "use sampler direct\n"); */
-	      gn->vcts[MUS_INPUT_DATA] = (Xen)xen_to_sampler(in_obj);
-	      mus_generator_set_feeder(gn->gen, as_needed_input_sampler);
-	      return(read_sample(xen_to_sampler(in_obj)));
-	    }
-#endif	  
-
-	  s7_set_car(as_needed_arglist, (direction == 1) ? xen_one : xen_minus_one);
-	  result = Xen_real_to_C_double(s7_call_with_location(s7, gn->vcts[MUS_INPUT_FUNCTION], as_needed_arglist, __func__, __FILE__, __LINE__));
-
-	  if (mus_is_xen(gn->vcts[MUS_SELF_WRAPPER]))
-	    {
-	      /* probably not safe -- we need one more check that the function in the closure (see above) has not be reset */
-	      gn->vcts[MUS_INPUT_DATA] = Xen_true;
-	      mus_generator_set_feeder(gn->gen, as_needed_input_any);
-	      /* fprintf(stderr, "func: %s\n", DISPLAY(s7_procedure_source(s7, gn->vcts[MUS_INPUT_FUNCTION]))); */
-	    }
-	  return(result);
-#else
-	  return(Xen_real_to_C_double(Xen_unprotected_call_with_1_arg(gn->vcts[MUS_INPUT_FUNCTION], (direction == 1) ? xen_one : xen_minus_one)));
-#endif
-	}
+	return(Xen_real_to_C_double(Xen_unprotected_call_with_1_arg(gn->vcts[MUS_INPUT_FUNCTION], (direction == 1) ? xen_one : xen_minus_one)));
     }
   return(0.0);
 }
 
 
-static mus_float_t (*as_needed_input_choice(Xen obj, mus_xen *gn))(void *ptr, int direction)
+static void set_as_needed_input_choices(mus_any *gen, Xen obj, mus_xen *gn)
 {
-  if (mus_is_xen(obj))
+  /* fprintf(stderr, "set_as_needed_input for %s: %s\n", mus_name(gen), DISPLAY(obj)); */
+  if (mus_is_xen(obj)) /* input function is a generator */
     {
       mus_any *p;
       p = Xen_to_mus_any(obj);
       if (p) 
 	{
 #if HAVE_EXTENSION_LANGUAGE
-	  gn->vcts[MUS_INPUT_DATA] = (Xen)p;
+	  gn->vcts[MUS_INPUT_DATA] = (Xen)p; 
 #endif
 	  if (mus_is_readin(p))
-	    return(as_needed_input_readin);
-	  return(as_needed_input_generator);
+	    mus_generator_set_feeders(gen, as_needed_input_readin, as_needed_block_input_readin);
+	  else mus_generator_set_feeders(gen, as_needed_input_generator, as_needed_block_input_generator);
+	  return;
 	}
     }
-  return(as_needed_input_func);
+
+#if HAVE_SCHEME
+  if (Xen_is_procedure(obj))
+    {
+      s7_pointer source, arg, body, res;
+      source = s7_procedure_source(s7, obj);
+      if (s7_is_pair(source))
+	{
+	  body = s7_cddar(source);
+	  if (s7_is_null(s7, s7_cdr(body)))
+	    {
+	      res = s7_car(body);
+	      if (s7_is_real(res))
+		{
+		  gn->vcts[MUS_INPUT_DATA] = res;
+		  mus_generator_set_feeders(gen, as_needed_input_float, as_needed_block_input_float);
+		  return;
+		}
+	      arg = s7_caadar(source);
+	      if (s7_is_pair(res))
+		{
+#if USE_SND
+		  if ((arg == s7_caddr(res)) &&
+		      (s7_car(res) == s7_make_symbol(s7, "read-sample-with-direction")))
+		    {
+		      gn->vcts[MUS_INPUT_DATA] = (Xen)xen_to_sampler(s7_symbol_local_value(s7, s7_cadr(res), s7_cdr(source)));
+		      mus_generator_set_feeders(gen, as_needed_input_sampler_with_direction, as_needed_block_input_sampler_with_direction);
+		      return;
+		    }
+#endif
+		  if (!s7_tree_memq(s7, arg, res))
+		    {
+		      gf *g;
+		      /* here we need to make sure the function's environment is set up correctly */
+		      s7_pointer old_e;
+		      old_e = s7_set_curlet(s7, s7_cdr(source));
+		      setup_gen_list(s7, res);
+		      g = find_gf(s7, res);
+		      s7_set_curlet(s7, old_e);
+		      if (g)
+			{
+			  gn->g = g;
+			  mus_generator_set_feeders(gen, as_needed_input_f1, as_needed_block_input_f1);
+			  clear_gen_list();
+			  return;
+			}
+		      clear_gen_list();
+		    }
+		}
+	    }
+	}
+#if USE_SND
+      /* check for a sampler (snd-edits.c) */
+      if (is_sampler(obj))
+	{
+	  gn->vcts[MUS_INPUT_DATA] = (Xen)xen_to_sampler(obj);
+	  mus_generator_set_feeders(gen, as_needed_input_sampler, as_needed_block_input_sampler);
+	  return;
+	}
+      mus_generator_set_feeders(gen, as_needed_input_any, NULL);
+      return;
+#endif	  
+    }
+#endif
+  mus_generator_set_feeders(gen, as_needed_input_func, NULL);
 }
 
 
@@ -8285,22 +8344,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
-
-    if (mus_is_xen(in_obj))
-      {
-	mus_any *p;
-	p = Xen_to_mus_any(in_obj);
-	if (p) 
-	  {
-#if HAVE_EXTENSION_LANGUAGE
-	    gn->vcts[MUS_INPUT_DATA] = (Xen)p;
-#endif
-	    if (mus_is_readin(p))
-	      ge = mus_make_src(as_needed_input_readin, srate, wid, gn);
-	    else ge = mus_make_src(as_needed_input_generator, srate, wid, gn);
-	  }
-      }
-    else ge = mus_make_src_with_init(as_needed_input_func, srate, wid, gn, set_gn_gen);
+    ge = mus_make_src_with_init(NULL, srate, wid, gn, set_gn_gen);
     mus_error_set_handler(old_error_handler);
   }
 
@@ -8310,6 +8354,8 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
       gn->gen = ge;
       src_obj = mus_xen_to_object(gn);
       gn->vcts[MUS_SELF_WRAPPER] = src_obj;
+      set_as_needed_input_choices(ge, in_obj, gn);
+      mus_src_init(ge);
       return(src_obj);
     }
 
@@ -8458,7 +8504,7 @@ The edit function, if any, should return the length in samples of the grain, or 
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
-    ge = mus_make_granulate(as_needed_input_choice(in_obj, gn),
+    ge = mus_make_granulate(NULL, 
 			    expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, 
 			    (!Xen_is_bound(edit_obj) ? NULL : grnedit),
 			    (void *)gn);
@@ -8473,6 +8519,7 @@ The edit function, if any, should return the length in samples of the grain, or 
       gn->gen = ge;
       grn_obj = mus_xen_to_object(gn);
       gn->vcts[MUS_SELF_WRAPPER] = grn_obj;
+      set_as_needed_input_choices(ge, in_obj, gn);
       return(grn_obj);
     }
 
@@ -8573,7 +8620,7 @@ return a new convolution generator which convolves its input with the impulse re
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
-    ge = mus_make_convolve(as_needed_input_choice(in_obj, gn), mus_vct_data(filter), fft_size, mus_vct_length(filter), gn);
+    ge = mus_make_convolve(NULL, mus_vct_data(filter), fft_size, mus_vct_length(filter), gn);
     mus_error_set_handler(old_error_handler);
   }
 
@@ -8581,10 +8628,11 @@ return a new convolution generator which convolves its input with the impulse re
     {
       Xen c_obj;
       gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
-      gn->vcts[2] = filt; /* why is this here? GC protection? (might be a locally-allocated vct as from file->vct) */
+      gn->vcts[MUS_ANALYZE_FUNCTION] = filt; /* why is this here? GC protection? (might be a locally-allocated vct as from file->vct) */
       gn->gen = ge;
       c_obj = mus_xen_to_object(gn);
       gn->vcts[MUS_SELF_WRAPPER] = c_obj;
+      set_as_needed_input_choices(ge, in_obj, gn);
       return(c_obj);
     }
 
@@ -8824,7 +8872,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
-    ge = mus_make_phase_vocoder(as_needed_input_choice(in_obj, gn),
+    ge = mus_make_phase_vocoder(NULL,
 				fft_size, overlap, interp, pitch,
 				(!Xen_is_bound(analyze_obj) ? NULL : pvanalyze),
 				(!Xen_is_bound(edit_obj) ? NULL : pvedit),
@@ -8843,6 +8891,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
       pv_obj = mus_xen_to_object(gn);
       /* need scheme-relative backpointer for possible function calls */
       gn->vcts[MUS_SELF_WRAPPER] = pv_obj;
+      set_as_needed_input_choices(ge, in_obj, gn);
       return(pv_obj);
     }
 
@@ -17774,18 +17823,6 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 /* (define (hi) (let ((fm .1) (o (make-oscil 440)) (e (make-env (list 0 0 1 1) :duration .01))) (do ((i 0 (+ i 1))) ((= i 100)) (* (env e) (oscil o fm)))))
  */
 
-#if 0
-static s7_pointer (*initial_subtract_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
-
-static s7_pointer clm_subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  /* fprintf(stderr, "sub: %s\n", DISPLAY(expr)); */
-
-  return((*initial_subtract_chooser)(sc, f, args, expr));
-}
-#endif
-
-
 static s7_pointer (*initial_abs_chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
 
 static s7_pointer clm_abs_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -17819,7 +17856,6 @@ static s7_pointer clm_abs_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   s7_pointer arg1, arg2, arg3;
-  /* fprintf(stderr, "oscil: %s\n", DISPLAY(expr)); */
 
   arg1 = cadr(expr);
   if (args == 1)
@@ -17921,12 +17957,6 @@ static s7_pointer oscil_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 	  s7_function_choice_set_direct(sc, expr);
 	  return(oscil_vss_s);
 	}
-
-      /*
-      fprintf(stderr, "oscil_two: %s %d %d\n", DISPLAY(expr),
-	      (s7_is_pair(cadr(expr))) && (s7_function_choice_is_direct(sc, cadr(expr))),
-	      (s7_is_pair(caddr(expr))) && (s7_function_choice_is_direct(sc, caddr(expr))));
-      */
       return(oscil_two);
     }
   if (args == 3)
@@ -18067,7 +18097,6 @@ static s7_pointer polywave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  s7_function_choice_set_direct(sc, expr);
 	  return(polywave_2);
 	}
-
       if (s7_is_pair(arg2))
 	{
 	  if (s7_list_length(sc, arg2) == 3)
@@ -18082,7 +18111,6 @@ static s7_pointer polywave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 		  s7_function_choice_set_direct(sc, expr);
 		  return(polywave_mul_c_s);
 		}
-	      
 	      if ((car(arg2) == add_symbol) &&
 		  (s7_is_pair(a1)) &&
 		  (s7_is_pair(a2)) &&
@@ -18107,7 +18135,6 @@ static s7_pointer polywave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 		    }
 		}
 	    }
-	      
 	  if (s7_function_choice_is_direct(sc, arg2))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
@@ -18117,7 +18144,6 @@ static s7_pointer polywave_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	    }
 	}
     }
-  /* fprintf(stderr, "poly: %s\n", DISPLAY(expr)); */
   return(f);
 }
 

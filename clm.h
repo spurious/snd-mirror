@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 3
-#define MUS_DATE "10-Aug-14"
+#define MUS_REVISION 4
+#define MUS_DATE "24-Oct-14"
 
 /* isn't mus_env_interp backwards? */
 
@@ -94,7 +94,10 @@ MUS_EXPORT void mus_generator_set_file_name(mus_any_class *p, char *(*file_name)
 MUS_EXPORT void mus_generator_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type);
 MUS_EXPORT void mus_generator_set_read_sample(mus_any_class *p, mus_float_t (*read_sample)(mus_any *ptr, mus_long_t samp, int chan));
 
-MUS_EXPORT void mus_generator_set_feeder(mus_any *g, mus_float_t (*feed)(void *arg, int direction));
+MUS_EXPORT void mus_generator_set_feeder(mus_any *g, mus_float_t (*feed)(void *arg, int direction)); /* backwards compatibility */
+MUS_EXPORT void mus_generator_set_feeders(mus_any *g, 
+					  mus_float_t (*feed)(void *arg, int direction),
+					  mus_float_t (*block_feed)(void *arg, int direction, mus_float_t *block, mus_long_t start, mus_long_t end));
 
 MUS_EXPORT mus_float_t mus_radians_to_hz(mus_float_t radians);
 MUS_EXPORT mus_float_t mus_hz_to_radians(mus_float_t hz);
@@ -528,6 +531,7 @@ MUS_EXPORT bool mus_is_src(mus_any *ptr);
 MUS_EXPORT mus_float_t *mus_src_20(mus_any *srptr, mus_float_t *in_data, mus_long_t dur);
 MUS_EXPORT mus_float_t *mus_src_05(mus_any *srptr, mus_float_t *in_data, mus_long_t dur);
 MUS_EXPORT void mus_src_to_buffer(mus_any *srptr, mus_float_t (*input)(void *arg, int direction), mus_float_t *out_data, mus_long_t dur);
+MUS_EXPORT void mus_src_init(mus_any *ptr);
 
 MUS_EXPORT bool mus_is_convolve(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direction));
@@ -601,6 +605,7 @@ MUS_EXPORT void *mus_set_environ(mus_any *gen, void *e);
 
 /* Change log.
  *
+ * 24-Oct:     mus_generator_set_feeders.
  * 10-Aug:     data-format -> sample-type.
  * 17-Apr:     moving_norm generator.
  * 14-Apr:     mus_frame and mus_mixer removed, "frame" replaced by "frample" in IO functions.
