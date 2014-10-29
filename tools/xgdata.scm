@@ -9053,3 +9053,12 @@
 (CFNC-3.16 "GdkGLContext* gdk_gl_context_get_current void")
 (CFNC-3.16 "void gdk_gl_context_clear_current void")
 
+
+;;; 3.15.1:
+
+(CFNC-3.16 "void gtk_stack_set_hhomogeneous GtkStack* stack gboolean hhomogeneous")
+(CFNC-3.16 "gboolean gtk_stack_get_hhomogeneous GtkStack* stack")
+(CFNC-3.16 "void gtk_stack_set_vhomogeneous GtkStack* stack gboolean vhomogeneous")
+(CFNC-3.16 "gboolean gtk_stack_get_vhomogeneous GtkStack* stack")
+
+

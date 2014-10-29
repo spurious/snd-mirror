@@ -31520,6 +31520,38 @@ static Xen gxg_gdk_gl_context_clear_current(void)
   return(Xen_false);
 }
 
+static Xen gxg_gtk_stack_set_hhomogeneous(Xen stack, Xen hhomogeneous)
+{
+  #define H_gtk_stack_set_hhomogeneous "void gtk_stack_set_hhomogeneous(GtkStack* stack, gboolean hhomogeneous)"
+  Xen_check_type(Xen_is_GtkStack_(stack), stack, 1, "gtk_stack_set_hhomogeneous", "GtkStack*");
+  Xen_check_type(Xen_is_gboolean(hhomogeneous), hhomogeneous, 2, "gtk_stack_set_hhomogeneous", "gboolean");
+  gtk_stack_set_hhomogeneous(Xen_to_C_GtkStack_(stack), Xen_to_C_gboolean(hhomogeneous));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_stack_get_hhomogeneous(Xen stack)
+{
+  #define H_gtk_stack_get_hhomogeneous "gboolean gtk_stack_get_hhomogeneous(GtkStack* stack)"
+  Xen_check_type(Xen_is_GtkStack_(stack), stack, 1, "gtk_stack_get_hhomogeneous", "GtkStack*");
+  return(C_to_Xen_gboolean(gtk_stack_get_hhomogeneous(Xen_to_C_GtkStack_(stack))));
+}
+
+static Xen gxg_gtk_stack_set_vhomogeneous(Xen stack, Xen vhomogeneous)
+{
+  #define H_gtk_stack_set_vhomogeneous "void gtk_stack_set_vhomogeneous(GtkStack* stack, gboolean vhomogeneous)"
+  Xen_check_type(Xen_is_GtkStack_(stack), stack, 1, "gtk_stack_set_vhomogeneous", "GtkStack*");
+  Xen_check_type(Xen_is_gboolean(vhomogeneous), vhomogeneous, 2, "gtk_stack_set_vhomogeneous", "gboolean");
+  gtk_stack_set_vhomogeneous(Xen_to_C_GtkStack_(stack), Xen_to_C_gboolean(vhomogeneous));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_stack_get_vhomogeneous(Xen stack)
+{
+  #define H_gtk_stack_get_vhomogeneous "gboolean gtk_stack_get_vhomogeneous(GtkStack* stack)"
+  Xen_check_type(Xen_is_GtkStack_(stack), stack, 1, "gtk_stack_get_vhomogeneous", "GtkStack*");
+  return(C_to_Xen_gboolean(gtk_stack_get_vhomogeneous(Xen_to_C_GtkStack_(stack))));
+}
+
 #endif
 
 static Xen gxg_cairo_create(Xen target)
@@ -38081,6 +38113,10 @@ Xen_wrap_1_arg(gxg_gdk_gl_context_get_window_w, gxg_gdk_gl_context_get_window)
 Xen_wrap_1_arg(gxg_gdk_gl_context_make_current_w, gxg_gdk_gl_context_make_current)
 Xen_wrap_no_args(gxg_gdk_gl_context_get_current_w, gxg_gdk_gl_context_get_current)
 Xen_wrap_no_args(gxg_gdk_gl_context_clear_current_w, gxg_gdk_gl_context_clear_current)
+Xen_wrap_2_args(gxg_gtk_stack_set_hhomogeneous_w, gxg_gtk_stack_set_hhomogeneous)
+Xen_wrap_1_arg(gxg_gtk_stack_get_hhomogeneous_w, gxg_gtk_stack_get_hhomogeneous)
+Xen_wrap_2_args(gxg_gtk_stack_set_vhomogeneous_w, gxg_gtk_stack_set_vhomogeneous)
+Xen_wrap_1_arg(gxg_gtk_stack_get_vhomogeneous_w, gxg_gtk_stack_get_vhomogeneous)
 #endif
 
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
@@ -42116,6 +42152,10 @@ static void define_functions(void)
   Xg_define_procedure(gdk_gl_context_make_current, gxg_gdk_gl_context_make_current_w, 1, 0, 0, H_gdk_gl_context_make_current);
   Xg_define_procedure(gdk_gl_context_get_current, gxg_gdk_gl_context_get_current_w, 0, 0, 0, H_gdk_gl_context_get_current);
   Xg_define_procedure(gdk_gl_context_clear_current, gxg_gdk_gl_context_clear_current_w, 0, 0, 0, H_gdk_gl_context_clear_current);
+  Xg_define_procedure(gtk_stack_set_hhomogeneous, gxg_gtk_stack_set_hhomogeneous_w, 2, 0, 0, H_gtk_stack_set_hhomogeneous);
+  Xg_define_procedure(gtk_stack_get_hhomogeneous, gxg_gtk_stack_get_hhomogeneous_w, 1, 0, 0, H_gtk_stack_get_hhomogeneous);
+  Xg_define_procedure(gtk_stack_set_vhomogeneous, gxg_gtk_stack_set_vhomogeneous_w, 2, 0, 0, H_gtk_stack_set_vhomogeneous);
+  Xg_define_procedure(gtk_stack_get_vhomogeneous, gxg_gtk_stack_get_vhomogeneous_w, 1, 0, 0, H_gtk_stack_get_vhomogeneous);
 #endif
 
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
@@ -44800,7 +44840,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("22-Oct-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("28-Oct-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
