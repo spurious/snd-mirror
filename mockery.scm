@@ -30,10 +30,7 @@
   (let ((mock-vector? #f))
     (let ((mock-vector-class
 	   (openlet  
-	    (inlet 'class-name         'mock-vector
-		   'values             (lambda (obj . args) (obj 'value))
-		   'morally-equal?     (make-method #_morally-equal? (lambda (obj) (obj 'value))) ; see comment below
-		   'vector?            (lambda (obj) #t)
+	    (inlet 'morally-equal?     (make-method #_morally-equal? (lambda (obj) (obj 'value))) ; see comment below
 
 		   'local-set!         (lambda (obj i val)          ; reactive-vector uses this as a hook into vector-set!
 					 (if (vector? (obj 'value))
@@ -48,7 +45,6 @@
 					     (error 'wrong-type-arg "vector-ref ~S ~S" obj i)))
 
 		   'let-ref            (lambda (obj i) (#_vector-ref (obj 'value) i))   ; the implicit case, so 'i can't be the culprit
-		   'length             (lambda (obj) (#_vector-length (obj 'value)))
 		   'vector-length      (lambda (obj) (#_vector-length (obj 'value)))
 		   'map                (lambda (f obj) (map f (obj 'value)))
 		   'for-each           (lambda (f obj) (for-each f (obj 'value)))
@@ -91,7 +87,11 @@
 						       (apply copy (source 'value) (nobj 'value) args)
 						       (set! (nobj 'value) (copy (source 'value))))
 						   nobj))
-					     (error 'wrong-type-arg "copy ~S ~S ~S" source dest args)))))))
+					     (error 'wrong-type-arg "copy ~S ~S ~S" source dest args)))
+		   'vector?            (lambda (obj) #t)
+		   'values             (lambda (obj . args) (obj 'value))
+		   'length             (lambda (obj) (#_vector-length (obj 'value)))
+		   'class-name         'mock-vector))))
       
       (define* (make-mock-vector len (init #<unspecified>))
 	(openlet (sublet mock-vector-class 
@@ -155,10 +155,7 @@
   (let ((mock-hash-table? #f))
     (let ((mock-hash-table-class
 	   (openlet
-	    (inlet 'hash-table?        (lambda (obj) #t)
-		   'values             (lambda (obj . args) (obj 'mock-hash-table-table))
-		   'class-name         'mock-hash-table
-		   'morally-equal?     (lambda (x y)          (#_morally-equal? (x 'mock-hash-table-table) y))
+	    (inlet 'morally-equal?     (lambda (x y)          (#_morally-equal? (x 'mock-hash-table-table) y))
 		   'hash-table-ref     (lambda (obj key)      (#_hash-table-ref (obj 'mock-hash-table-table) key))
 		   'hash-table-set!    (lambda (obj key val)  (#_hash-table-set! (obj 'mock-hash-table-table) key val))
 		   'hash-table-size    (lambda (obj)          (#_hash-table-size (obj 'mock-hash-table-table)))
@@ -175,7 +172,6 @@
 		   ;;
 		   ;; (round (openlet (inlet 'round (lambda (obj) (#_round (obj 'value))) 'let-ref-fallback (lambda args 3)))) -> 3
 		   
-		   'length             (lambda (obj)          (#_hash-table-size (obj 'mock-hash-table-table)))
 		   'map                (lambda (f obj)        (map f (obj 'mock-hash-table-table)))
 		   'for-each           (lambda (f obj)        (for-each f (obj 'mock-hash-table-table)))
 		   'fill!              (lambda (obj val)      (#_fill! (obj 'mock-hash-table-table) val))
@@ -190,7 +186,11 @@
 						   (openlet source)
 						   (set! (nobj 'mock-hash-table-table) (copy (source 'mock-hash-table-table)))
 						   nobj))
-					     (error 'wrong-type-arg "copy ~S ~S ~S" source dest args)))))))
+					     (error 'wrong-type-arg "copy ~S ~S ~S" source dest args)))
+		   'hash-table?        (lambda (obj) #t)
+		   'values             (lambda (obj . args) (obj 'mock-hash-table-table))
+		   'length             (lambda (obj)          (#_hash-table-size (obj 'mock-hash-table-table)))
+		   'class-name         'mock-hash-table))))
 
       (define* (make-mock-hash-table (len 511))
 	(openlet 
@@ -254,16 +254,12 @@
   (let ((mock-string? #f))
     (let ((mock-string-class
 	   (openlet
-	    (inlet 'string?                (lambda (obj) #t)
-		   'class-name             'mock-string
-		   'values                 (lambda (obj . args) (obj 'value))
-		   'morally-equal?         (lambda (x y) (#_morally-equal? (x 'value) y))
+	    (inlet 'morally-equal?         (lambda (x y) (#_morally-equal? (x 'value) y))
 		   'reverse                (lambda (obj) (#_reverse (obj 'value)))
 		   'object->string         (lambda* (obj (w #t)) "#<mock-string-class>")
 		   'arity                  (lambda (obj) (#_arity (obj 'value)))
 		   'let-ref                (lambda (obj i) (#_string-ref (obj 'value) i))           ; these are the implicit cases
 		   'let-set!               (lambda (obj i val) (string-set! (obj 'value) i val))
-		   'length                 (lambda (obj) (#_string-length (obj 'value)))
 		   'string-length          (lambda (obj) (#_string-length (obj 'value)))
 		   'map                    (lambda (f obj) (map f (obj 'value)))
 		   'for-each               (lambda (f obj) (for-each f (obj 'value)))
@@ -300,17 +296,6 @@
 		   'char-position          (make-method #_char-position (lambda (obj) (obj 'value)))
 
 		   'format                 (make-method #_format (lambda (obj) (obj 'value)))
-		   
-		   'string-ref             (lambda (obj i) 
-					     (if (mock-string? obj)
-						 (#_string-ref (obj 'value) i)
-						 (error 'wrong-type-arg "string-ref ~S ~S" obj i)))
-		   
-		   'string-set!            (lambda (obj i val) 
-					     (if (mock-string? obj)
-						 (#_string-set! (obj 'value) i val)
-						 (error 'wrong-type-arg "string-set! ~S ~S ~S" obj i val)))
-		   
 		   'string-fill!           (lambda* (obj val (start 0) end) 
 					     (if (mock-string? obj)
 						 (#_string-fill! (obj 'value) val start (or end (#_string-length (obj 'value))))
@@ -346,7 +331,21 @@
 						 (#_string-position (s1 'value) s2 start)
 						 (if (mock-string? s2)
 						     (#_string-position s1 (s2 'value) start)
-						     (error 'wrong-type-arg "write-string ~S ~S ~S" s1 s2 start))))))))
+						     (error 'wrong-type-arg "write-string ~S ~S ~S" s1 s2 start))))
+		   'string-ref             (lambda (obj i) 
+					     (if (mock-string? obj)
+						 (#_string-ref (obj 'value) i)
+						 (error 'wrong-type-arg "string-ref ~S ~S" obj i)))
+		   
+		   'string-set!            (lambda (obj i val) 
+					     (if (mock-string? obj)
+						 (#_string-set! (obj 'value) i val)
+						 (error 'wrong-type-arg "string-set! ~S ~S ~S" obj i val)))
+		   
+		   'string?                (lambda (obj) #t)
+		   'values                 (lambda (obj . args) (obj 'value))
+		   'length                 (lambda (obj) (#_string-length (obj 'value)))
+		   'class-name             'mock-string))))
       
       (define* (make-mock-string len (init #\null))
 	(openlet (sublet mock-string-class 
@@ -398,10 +397,7 @@
   (let ((mock-char? #f))
     (let ((mock-char-class
 	   (openlet
-	    (inlet 'char?              (lambda (obj) #t)
-		   'class-name         'mock-char
-		   'values             (lambda (obj . args) (obj 'value))
-		   'morally-equal?     (lambda (x y) (#_morally-equal? (x 'value) y))
+	    (inlet 'morally-equal?     (lambda (x y) (#_morally-equal? (x 'value) y))
 		   'char-upcase        (lambda (obj) (#_char-upcase (obj 'value)))
 		   'char-downcase      (lambda (obj) (#_char-downcase (obj 'value)))
 		   'char->integer      (lambda (obj) (#_char->integer (obj 'value)))
@@ -441,7 +437,10 @@
 		   'copy               (lambda (obj . args) 
 					 (if (mock-char? obj)
 					     (obj 'value)
-					     (error 'wrong-type-arg "copy: ~S ~S" obj args)))))))
+					     (error 'wrong-type-arg "copy: ~S ~S" obj args)))
+		   'char?              (lambda (obj) #t)
+		   'class-name         'mock-char
+		   'values             (lambda (obj . args) (obj 'value))))))
       
       (define (mock-char c) 
 	(if (and (char? c)
@@ -494,13 +493,10 @@
 
     (let ((mock-number-class
 	   (openlet
-	    (inlet 'number?          (lambda (obj) #t)
-		   'class-name       'mock-number
-		   'values           (lambda (obj . args) (obj 'value))
+	    (inlet 
 		   'morally-equal?   (lambda (x y) (#_morally-equal? (x 'value) y))
 		   'object->string   (lambda (obj . args) "#<mock-number-class>")
 		   'arity            (lambda (obj) (#_arity (obj 'value)))
-		   'length           (lambda (obj) #f)
 		   'real-part        (lambda (obj) (#_real-part (obj 'value)))
 		   'imag-part        (lambda (obj) (#_imag-part (obj 'value)))
 		   'numerator        (lambda (obj) (#_numerator (obj 'value)))
@@ -686,7 +682,11 @@
 						   (mock-number? end))
 					       (range-method-2 #_copy obj dest start end)
 					       (error 'wrong-type-arg "copy ~S ~S ~S ~S" obj dest start end))))
-		   ))))
+
+		   'length           (lambda (obj) #f)
+		   'number?          (lambda (obj) #t)
+		   'values           (lambda (obj . args) (obj 'value))
+		   'class-name       'mock-number))))
       
       (define (mock-number x)
 	(if (and (number? x)
@@ -829,10 +829,7 @@
   (let ((mock-pair? #f))
     (let ((mock-pair-class
 	   (openlet
-	    (inlet 'pair?            (lambda (obj) #t)
-		   'class-name       'mock-pair
-		   'values           (lambda (obj . args) (obj 'value))
-		   'morally-equal?   (lambda (x y) (#_morally-equal? (x 'value) y))
+	    (inlet 'morally-equal?   (lambda (x y) (#_morally-equal? (x 'value) y))
 		   'pair-line-number (lambda (obj) (#_pair-line-number (obj 'value)))
 		   'list->string     (lambda (obj) (#_list->string (obj 'value)))
 		   'object->string   (lambda (obj . arg) "#<mock-pair-class>")
@@ -877,7 +874,6 @@
 		   'member           (lambda (val obj . args) (apply #_member val (obj 'value) args))
 		   'let-ref          (lambda (obj ind) (coverlet obj) (let ((val (#_list-ref (obj 'value) ind))) (openlet obj) val))
 		   'let-set!         (lambda (obj ind val) (coverlet obj) (#_list-set! (obj 'value) ind val) (openlet obj) val)
-		   'length           (lambda (obj) (#_length (obj 'value)))
 		   'arity            (lambda (obj) (#_arity (obj 'value)))
 		   'fill!            (lambda (obj val) (#_fill! (obj 'value) val))
 		   'reverse          (lambda (obj) (#_reverse (obj 'value)))
@@ -887,16 +883,6 @@
 		   'map              (lambda (f obj) (#_map f (obj 'value)))
 		   'eval             (lambda (f obj) (#_eval (obj 'value)))
 		   'list->vector     (lambda (obj) (#_list->vector (obj 'value)))
-
-		   'list-ref         (lambda (obj ind) 
-				       (if (mock-pair? obj)
-					   (#_list-ref (obj 'value) ind)
-					   (error 'wrong-type-arg "list-ref ~S ~S" obj ind)))
-
-		   'list-set!        (lambda (obj ind val) 
-				       (if (mock-pair? obj)
-					   (#_list-set! (obj 'value) ind val)
-					   (error 'wrong-type-arg "list-set! ~S ~S ~S" obj ind val)))
 
 		   'list-tail        (lambda (obj . args) 
 				       (if (mock-pair? obj)
@@ -919,7 +905,21 @@
 					   (error 'wrong-type-arg "make-vector ~S ~S ~S" obj dims args)))
 
 		   'append           (make-method #_append (lambda (obj) (obj 'value)))
-		   ))))
+
+		   'list-ref         (lambda (obj ind) 
+				       (if (mock-pair? obj)
+					   (#_list-ref (obj 'value) ind)
+					   (error 'wrong-type-arg "list-ref ~S ~S" obj ind)))
+
+		   'list-set!        (lambda (obj ind val) 
+				       (if (mock-pair? obj)
+					   (#_list-set! (obj 'value) ind val)
+					   (error 'wrong-type-arg "list-set! ~S ~S ~S" obj ind val)))
+
+		   'pair?            (lambda (obj) #t)
+		   'length           (lambda (obj) (#_length (obj 'value)))
+		   'values           (lambda (obj . args) (obj 'value))
+		   'class-name       'mock-pair))))
       
       (define (mock-pair . args)
 	(openlet
@@ -971,10 +971,7 @@
 (define *mock-symbol*
   (let ((mock-symbol-class
 	 (openlet
-	  (inlet 'symbol?               (lambda (obj) #t)
-		 'class-name            'mock-symbol
-		 'values                (lambda (obj . args) (obj 'value))
-		 'object->string        (lambda (obj . arg) "#<mock-symbol-class>")
+	  (inlet 'object->string        (lambda (obj . arg) "#<mock-symbol-class>")
 		 'morally-equal?        (lambda (x y) (#_morally-equal? (x 'value) y))
 		 'gensym?               (lambda (obj) (#_gensym? (obj 'value)))
 		 'symbol->string        (lambda (obj) (#_symbol->string (obj 'value)))
@@ -988,6 +985,9 @@
 		 'keyword?              (lambda (obj) (#_keyword? (obj 'value)))
 		 'keyword->symbol       (lambda (obj) (#_keyword->symbol (obj 'value)))
 		 'format                (lambda (str s . args) (#_symbol->string s))
+		 'symbol?               (lambda (obj) #t)
+		 'class-name            'mock-symbol
+		 'values                (lambda (obj . args) (obj 'value))
 		 ))))
 
     (define (mock-symbol s)
@@ -1013,8 +1013,6 @@
     (let ((mock-port-class
 	   (openlet
 	    (inlet 'port?               (lambda (obj) #t)
-		   'class-name          'mock-port
-		   'values              (lambda (obj . args) (obj 'value))
 		   'morally-equal?      (lambda (x y) (#_morally-equal? (x 'value) y))
 		   'close-input-port    (lambda (obj) (#_close-input-port (obj 'value)))
 		   'close-output-port   (lambda (obj) (#_close-output-port (obj 'value)))
@@ -1060,6 +1058,8 @@
 					  (if (mock-port? obj)
 					      (#_read-string k (obj 'value))
 					      (error 'wrong-type-arg "read-string ~S ~S" k obj)))
+		   'values              (lambda (obj . args) (obj 'value))
+		   'class-name          'mock-port
 		   ))))
       
       (define (mock-port port)

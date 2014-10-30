@@ -2683,7 +2683,7 @@ static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BY
 #define WITH_COUNTS 0
 
 #if WITH_COUNTS
-#if 1
+#if 0
 #if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -7096,7 +7096,7 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
 
   /* NEW_CELL(sc, nobj); */
   /* since the GC is off, NEW_CELL ignores the free_heap trigger, causing it to exhaust the free list sometimes,
-   *   so we check explicitly here -- we don't want to call the gc mark/sweep process here.
+   *   so we check explicitly -- we don't want to call the gc mark/sweep process here.
    */
   if (sc->free_heap_top <= sc->free_heap_trigger) expand_heap(sc);
   nobj = (*(--(sc->free_heap_top)));
@@ -7168,7 +7168,6 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
 	  else nv[i + 2] = p;                 /* is this a safe assumption? */
 	}
     }
-  
   s7_gc_on(sc, true);
   return(new_v);
 }
@@ -7191,7 +7190,6 @@ static s7_pointer *copy_op_stack(s7_scheme *sc)
   int len;
   s7_pointer *ops;
   ops = (s7_pointer *)malloc(sc->op_stack_size * sizeof(s7_pointer));
-  /* memcpy((void *)ops, (void *)(sc->op_stack), sc->op_stack_size * sizeof(s7_pointer)); */
   len = (int)(sc->op_stack_now - sc->op_stack);
   if (len > 0)
     memcpy((void *)ops, (void *)(sc->op_stack), len * sizeof(s7_pointer));
@@ -10060,10 +10058,9 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 }
 
 
-/* make symbol or number atom from string */
-
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol, bool with_error) 
 {
+  /* make symbol or number from string */
   #define IS_DIGIT(Chr, Rad) (digits[(unsigned char)Chr] < Rad)
 
   char c, *p;
@@ -10110,7 +10107,6 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
     }
 
   /* now it's possibly a number -- the first character(s) could be part of a number in the current radix */
-
   {
     char *slash1 = NULL, *slash2 = NULL, *plus = NULL, *ex1 = NULL, *ex2 = NULL;
     bool has_i = false, has_dec_point2 = false;
@@ -58172,7 +58168,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	car(x) = sc->value;
 	cdr(x) = sc->args;
 	set_type(x, T_PAIR);
-	sc->args = x; /* all the others reverse -- why not this case? --reverse is at end? (below) */
+	sc->args = x; /* all the others reverse -- why not this case? -- reverse is at end? (below) */
 	goto EVAL_ARGS_PAIR;
       }
       
@@ -58645,9 +58641,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->args = slot_pending_value(z);
 		    goto LAMBDA_STAR_DEFAULT;
 		  }
-		pop_stack_no_op(sc);                          /* get original args and code back */
+		pop_stack_no_op(sc);              /* get original args and code back */
 	      }
-	    sc->code = closure_body(sc->code);            /* evaluate the function body */
+	    sc->code = closure_body(sc->code);    /* evaluate the function body */
 	    if (is_pair(cdr(sc->code)))
 	      push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
 	    sc->code = car(sc->code);
@@ -58674,7 +58670,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_VECTOR:                            /* -------- vector as applicable object -------- */
 	  /* sc->code is the vector, sc->args is the list of indices 
 	   */
-	  if (is_null(sc->args))                            /* (#2d((1 2) (3 4))) */
+	  if (is_null(sc->args))                  /* (#2d((1 2) (3 4))) */
 	    return(s7_wrong_number_of_args_error(sc, "not enough args for vector-ref: ~A", sc->args));
 
 	  if ((is_null(cdr(sc->args))) &&       
@@ -59714,22 +59710,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	eval_type_error(sc, "set! ~A: unbound variable", sc->code);
       }
       
-    case OP_SET_SYMBOL_C:
-      /* ([set!] x 3) */
+    case OP_SET_SYMBOL_C:      /* ([set!] x 3) */
       sc->value = cadr(sc->code);
       sc->code = car(sc->code);
       goto SET_SAFE;
       
 
-    case OP_SET_SYMBOL_Q:
-      /* ([set!] incr '+) */
+    case OP_SET_SYMBOL_Q:      /* ([set!] incr '+) */
       sc->value = cadr(cadr(sc->code));
       sc->code = car(sc->code);
       goto SET_SAFE;
       
 
-    case OP_SET_SYMBOL_P:
-      /* ([set!] f (lambda () 1)) */
+    case OP_SET_SYMBOL_P:      /* ([set!] f (lambda () 1)) */
       push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
       sc->code = cadr(sc->code);
       goto EVAL; 
@@ -69910,7 +69903,7 @@ int main(int argc, char **argv)
  * bench    42736 | 8752 | 4220 | 3506 3506
  * lg             |      |      |      6497
  * t502        90 |   43 | 14.5 | 12.7 12.6
- * t455|6     265 |   89 |  9   |       8.5
+ * t455|6     265 |   89 |  9   |       8.4
  * t816           |   71 | 70.6 | 38.0 31.8
  * calls      359 |  275 | 54   | 34.7 34.7
  *            153 with run macro (eval_ptree)
@@ -69926,7 +69919,7 @@ int main(int argc, char **argv)
  *
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
  *   perhaps put xg/xm and sndlib in their own lets: *gtk* *motif* *gl*(libgl.scm?) *clm* -- or at least make it an option
- *   need to check new openGL for API changes
+ *   need to check new openGL for API changes (GL_VERSION?)
  *   check motif+gl? -- glext.h has a ton of changes: 10000 names!!
  * check out the GL support in gtk 3.16 -- this looks straightforward, snd-chn.c
  * snd-genv needs a lot of gtk3 work
