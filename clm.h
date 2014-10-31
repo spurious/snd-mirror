@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 4
-#define MUS_DATE "24-Oct-14"
+#define MUS_REVISION 5
+#define MUS_DATE "31-Oct-14"
 
 /* isn't mus_env_interp backwards? */
 
@@ -511,6 +511,7 @@ MUS_EXPORT int mus_locsig_channels(mus_any *ptr);
 MUS_EXPORT int mus_locsig_reverb_channels(mus_any *ptr);
 MUS_EXPORT mus_any *mus_locsig_out_writer(mus_any *ptr);
 MUS_EXPORT mus_any *mus_locsig_rev_writer(mus_any *ptr);
+MUS_EXPORT void (*mus_locsig_function(mus_any *g))(mus_any *gen, mus_long_t loc, mus_float_t val);
 
 MUS_EXPORT bool mus_is_move_sound(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_move_sound(mus_any *ptr, mus_long_t loc, mus_float_t val);

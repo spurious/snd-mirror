@@ -1293,7 +1293,7 @@ struct s7_scheme {
   s7_pointer IS_POSITIVE, IS_PROCEDURE, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, FUNCLET, PROCEDURE_NAME, PROCEDURE_SOURCE;
   s7_pointer IS_DILAMBDA, PROVIDE;
   s7_pointer IS_PROVIDED, QUOTIENT, RANDOM, IS_RANDOM_STATE, RANDOM_STATE_TO_LIST, RATIONALIZE, IS_RATIONAL, READ, READ_BYTE, READ_CHAR, READ_LINE, IS_REAL;
-  s7_pointer READ_STRING, REAL_PART, REMAINDER, REQUIRE, REVERSE, REVERSEB, ROUND, SET_CARB, SET_CDRB, SIN, SINH, SORT, SQRT, STACKTRACE;
+  s7_pointer READ_STRING, REAL_PART, REMAINDER, REQUIRE, REVERSE, REVERSEB, ROUND, SET_CAR, SET_CDR, SIN, SINH, SORT, SQRT, STACKTRACE;
   s7_pointer STRING, STRING_DOWNCASE, STRING_UPCASE, STRING_LEQ, STRING_LT, STRING_EQ;
   s7_pointer STRING_GEQ, STRING_GT, IS_STRING, STRING_POSITION, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND, STRING_CI_LEQ, STRING_CI_LT;
   s7_pointer STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_COPY, STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
@@ -1301,7 +1301,7 @@ struct s7_scheme {
   s7_pointer TAN, TANH, THROW, TO_BYTEVECTOR, TRUNCATE, VALUES, VECTOR, VECTOR_APPEND;
   s7_pointer IS_VECTOR, VECTOR_TO_LIST, VECTOR_DIMENSIONS, VECTOR_FILL, VECTOR_LENGTH, VECTOR_REF, VECTOR_SET, WITH_INPUT_FROM_FILE;
   s7_pointer WITH_INPUT_FROM_STRING, WITH_OUTPUT_TO_FILE, WITH_OUTPUT_TO_STRING, WRITE, WRITE_BYTE, WRITE_CHAR, WRITE_STRING, IS_ZERO;
-  s7_pointer S7_FEATURES, GC_STATS, LOAD_PATH, PI;
+  s7_pointer S7_FEATURES, LOAD_PATH, PI;
 
 #if WITH_GMP
   s7_pointer BIGNUM, BIGNUM_PRECISION;
@@ -1349,7 +1349,7 @@ struct s7_scheme {
   s7_pointer SAFE_IF_CSQ_P, SAFE_IF_CSQ_P_P, SAFE_IF_CSS_P, SAFE_IF_CSS_P_P, SAFE_IF_CSC_P, SAFE_IF_CSC_P_P;
   s7_pointer SAFE_IF_IS_PAIR_P, SAFE_IF_IS_PAIR_P_X, SAFE_IF_IS_PAIR_P_P, SAFE_IF_C_SS_P;
   s7_pointer SAFE_IF_IS_SYMBOL_P, SAFE_IF_IS_SYMBOL_P_P, SAFE_IF_NOT_S_P;
-  s7_pointer INCREMENT_1, DECREMENT_1, SET_CDR, SET_CONS, INCREMENT_SS, INCREMENT_SSS, INCREMENT_SZ, INCREMENT_C_TEMP, INCREMENT_SA, INCREMENT_SAA;
+  s7_pointer INCREMENT_1, DECREMENT_1, SET_CONS, INCREMENT_SS, INCREMENT_SSS, INCREMENT_SZ, INCREMENT_C_TEMP, INCREMENT_SA, INCREMENT_SAA;
   s7_pointer LET_R, LET_O, LET_ALL_R, LET_C_D, LET_Z_P, LET_O_O, LET_Z_O, LET_R_P, LET_CAR_P;
   s7_pointer SIMPLE_DO, SAFE_DOTIMES, SIMPLE_SAFE_DOTIMES, SAFE_DOTIMES_C_C, SAFE_DOTIMES_C_A, SAFE_DO;
   s7_pointer SIMPLE_DO_P, DOTIMES_P, SIMPLE_DO_FOREVER, SIMPLE_DO_A;
@@ -3739,7 +3739,7 @@ static void mark_pair(s7_pointer p)
       set_mark(p);
       S7_MARK(car(p));
       /* if the list is huge, the recursion to cdr(p) is problematic when there are strict limits on the stack size
-       *  (C is not tail recursive apparently), so I'll try somthing else... (This form is faster according to callgrind).
+       *  (C is not tail recursive apparently), so I'll try something else... (This form is faster according to callgrind).
        */
       for (p = cdr(p); is_pair(p) && (!is_marked(p)); p = cdr(p)) /* this order much faster */
 	{
@@ -11932,7 +11932,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if (!HAVE_GMP)
+#if (!WITH_GMP)
 static s7_pointer expt_temp_s;
 static s7_pointer g_expt_temp_s(s7_scheme *sc, s7_pointer args)
 {
@@ -18179,7 +18179,7 @@ sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
   x = car(args);
 
   /* frexp doesn't work in edge cases.  Since the double and long long int fields are equivalenced
-   *   in the s7_num struct, we can get the actual bits of the double from the int.  The problem with doing this
+   *   in the num struct, we can get the actual bits of the double from the int.  The problem with doing this
    *   is that bignums don't use that struct.  Assume IEEE 754 and double = s7_Double.
    */
 
@@ -28462,8 +28462,8 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if (!is_pair(p))
     {
-      check_method(sc, p, sc->SET_CARB, args);
-      return(wrong_type_argument(sc, sc->SET_CARB, small_int(1), p, T_PAIR));
+      check_method(sc, p, sc->SET_CAR, args);
+      return(wrong_type_argument(sc, sc->SET_CAR, small_int(1), p, T_PAIR));
     }
   car(p) = cadr(args);
   return(cadr(args));
@@ -28478,8 +28478,8 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if (!is_pair(p))
     {
-      check_method(sc, p, sc->SET_CDRB, args);
-      return(wrong_type_argument(sc, sc->SET_CDRB, small_int(1), p, T_PAIR));
+      check_method(sc, p, sc->SET_CDR, args);
+      return(wrong_type_argument(sc, sc->SET_CDR, small_int(1), p, T_PAIR));
     }
   cdr(p) = cadr(args);
   return(cadr(args));
@@ -41581,7 +41581,7 @@ static s7_pointer g_format_allg_no_column(s7_scheme *sc, s7_pointer args)
   s7_pointer pt;
   pt = car(args);
  
-  if (!((s7_is_boolean(pt)) ||               /* #f or #t */
+  if (!((s7_is_boolean(pt)) ||
 	((is_output_port(pt)) &&             /* (current-output-port) or call-with-open-file arg, etc */
 	 (!port_is_closed(pt)))))
     {
@@ -41591,8 +41591,8 @@ static s7_pointer g_format_allg_no_column(s7_scheme *sc, s7_pointer args)
   sc->format_column = 0;
   return(format_to_port_1(sc, (pt == sc->T) ? sc->output_port : pt, 
 			  string_value(cadr(args)), cddr(args), NULL,
-			  !is_output_port(pt), /* i.e. is boolean port so we're returning a string */
-			  false,
+			  !is_output_port(pt),   /* i.e. is boolean port so we're returning a string */
+			  false,                 /* we checked in advance that it is not columnized */
 			  string_length(cadr(args))));
 }
 
@@ -48321,9 +48321,12 @@ static s7_pointer check_define(s7_scheme *sc)
 	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", x));
       if (is_keyword(x))                                                        /* (define :hi 1) */
 	return(eval_error_with_name(sc, "~A ~A: keywords are constants", x));
-      if ((is_syntactic(x)) &&                                                  /* (define and a) */
-	  (sc->safety > 0))
-	s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
+      if (is_syntactic(x))                                                      /* (define and a) */
+	{
+	  if (sc->safety > 0)
+	    s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
+	  set_local(x);
+	}
       if ((is_pair(cadr(sc->code))) &&               /* look for (define sym (lambda ...)) and treat it like (define (sym ...)...) */
 	  (((symbol_id(sc->LAMBDA) == 0) && (caadr(sc->code) == sc->LAMBDA)) ||
 	   ((symbol_id(sc->LAMBDA_STAR) == 0) && (caadr(sc->code) == sc->LAMBDA_STAR))))
@@ -48335,9 +48338,12 @@ static s7_pointer check_define(s7_scheme *sc)
       x = caar(sc->code);
       if (!is_symbol(x))                                                        /* (define (3 a) a) */
 	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", x));
-      if ((is_syntactic(x)) &&                                                  /* (define (and a) a) */
-	  (sc->safety > 0))
-	s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
+      if (is_syntactic(x))                                                      /* (define (and a) a) */
+	{
+	  if (sc->safety > 0)
+	    s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
+	  set_local(x);
+	}
       if (sc->op == OP_DEFINE_STAR)
 	cdar(sc->code) = check_lambda_star_args(sc, cdar(sc->code), &arity);
       else check_lambda_args(sc, cdar(sc->code), &arity);
@@ -48582,7 +48588,7 @@ static s7_pointer check_set(s7_scheme *sc)
 				  pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_Z);
 				  /* lots of h_unknown* cases here
 				     if ((is_unknown_op(optimize_data(value))) && (is_hopping(value)))
-				     or (optimize_data(value) == H_UNKNOWN_S)...
+				     or (optimize_data(value) == HOP_UNKNOWN_S)...
 				   */
 				  if (optimize_data(value) == HOP_UNKNOWN_S)
 				    pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_UNKNOWN_S);
@@ -50012,10 +50018,12 @@ static s7_pointer check_define_macro(s7_scheme *sc)
   x = caar(sc->code);
   if (!is_symbol(x))
     return(eval_error_with_name(sc, "~A: ~S is not a symbol?", x));
-  if ((dont_eval_args(x)) &&                                           /* (define-macro (quote a) quote) */
-      (sc->safety > 0))
-    s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
-  
+  if (dont_eval_args(x))                                               /* (define-macro (quote a) quote) */
+    {
+      if (sc->safety > 0)
+	s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
+      set_local(x);
+    }
   if (is_immutable(x))
     return(eval_error_with_name(sc, "~A: ~S is immutable", x));
   
@@ -61128,7 +61136,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_SAFE_C_PP_1:
       /* unless multiple values from last call (first arg), sc->args == sc->NIL because we pushed that.
-       *   we get here only from SAFE_C_PP.
+       *   we get here only from OP_SAFE_C_PP.
        *
        * currently splice_in_values changes the operator so if we get here, sc->value is the result of the first arg
        *
@@ -69182,8 +69190,8 @@ s7_scheme *s7_init(void)
 
   sc->CAR =                   s7_define_safe_function(sc, "car",                     g_car,                    1, 0, false, H_car);
   sc->CDR =                   s7_define_safe_function(sc, "cdr",                     g_cdr,                    1, 0, false, H_cdr);
-  sc->SET_CARB =              s7_define_safe_function(sc, "set-car!",                g_set_car,                2, 0, false, H_set_car); /* ?: list-set! is safe */
-  sc->SET_CDRB =              s7_define_function(sc,      "set-cdr!",                g_set_cdr,                2, 0, false, H_set_cdr);
+  sc->SET_CAR =               s7_define_safe_function(sc, "set-car!",                g_set_car,                2, 0, false, H_set_car); /* ?: list-set! is safe */
+  sc->SET_CDR =               s7_define_function(sc,      "set-cdr!",                g_set_cdr,                2, 0, false, H_set_cdr);
   sc->CAAR =                  s7_define_safe_function(sc, "caar",                    g_caar,                   1, 0, false, H_caar);
   sc->CADR =                  s7_define_safe_function(sc, "cadr",                    g_cadr,                   1, 0, false, H_cadr);
   sc->CDAR =                  s7_define_safe_function(sc, "cdar",                    g_cdar,                   1, 0, false, H_cdar);
@@ -69488,10 +69496,10 @@ s7_scheme *s7_init(void)
   set_setter(sc->String_Set);
   set_setter(sc->STRING_SET);
 
-  set_setter(sc->SET_CARB);
-  set_setter(s7_symbol_value(sc, sc->SET_CARB));
-  set_setter(sc->SET_CDRB);
-  set_setter(s7_symbol_value(sc, sc->SET_CDRB));
+  set_setter(sc->SET_CAR);
+  set_setter(s7_symbol_value(sc, sc->SET_CAR));
+  set_setter(sc->SET_CDR);
+  set_setter(s7_symbol_value(sc, sc->SET_CDR));
 
   set_setter(s7_make_symbol(sc, "set-current-input-port"));
   set_setter(s7_make_symbol(sc, "set-current-output-port"));
@@ -69914,9 +69922,6 @@ int main(int argc, char **argv)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers? (useful in object->string too)
  *
- * (set! (samples (edits (channels (sound name[ind]) chan) edit) sample) new-sample) ; chan defaults to 0, edits to current edit, name to selected sound
- *    (set! (samples (sound) sample) new-sample)
- *
  * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
  *   perhaps put xg/xm and sndlib in their own lets: *gtk* *motif* *gl*(libgl.scm?) *clm* -- or at least make it an option
  *   need to check new openGL for API changes (GL_VERSION?)
@@ -69930,7 +69935,5 @@ int main(int argc, char **argv)
  * cyclic-seq in rest of full-* 
  * cyclic-sequences is minimally tested in s7test (also c_object env)
  *
- * (let () (define (when a) (+ a 1)) (when 2)) -> 3
- *   but at the top level: (define (when a) (+ a 1)) (when 2) -> when has no body? 
- *   (this is ok if it happens after the local definition) -- global redef means set local flag?
+ * type-checks in field accessor macros if debugging
  */

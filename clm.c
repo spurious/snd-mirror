@@ -11443,6 +11443,14 @@ typedef struct {
 } locs;
 
 
+void (*mus_locsig_function(mus_any *g))(mus_any *gen, mus_long_t loc, mus_float_t val)
+{
+  if (mus_is_locsig(g))
+    return(((locs *)g)->locsig_func);
+  return(NULL);
+}
+
+
 static bool locsig_equalp(mus_any *p1, mus_any *p2) 
 {
   locs *g1 = (locs *)p1;

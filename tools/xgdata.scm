@@ -9061,4 +9061,12 @@
 (CFNC-3.16 "void gtk_stack_set_vhomogeneous GtkStack* stack gboolean vhomogeneous")
 (CFNC-3.16 "gboolean gtk_stack_get_vhomogeneous GtkStack* stack")
 
+;;; pango 1.36.8
+(CINT-3.16 "PANGO_WEIGHT_SEMILIGHT" "PangoWeight")
+
+#|
+;;; cairo 1.14.0:
+(CFNC-3.16 "void cairo_surface_set_device_scale cairo_surface_t* surface double x_scale double y_scale")
+(CFNC-3.16 "void cairo_surface_get_device_scale cairo_surface_t* surface double* [x_scale] double* [y_scale]")
+|#
 

@@ -11442,6 +11442,7 @@ static s7_pointer g_fm_violin_4_looped(s7_scheme *sc, s7_pointer u_args)
   s7_Int *step, *stop;
   mus_any *ampf, *locs, *carrier, *indf1, *fmosc1, *indf2, *fmosc2, *indf3, *fmosc3, *f, *t, *r;
   double vibrato, fm1_rat, fm2_rat, fm3_rat;
+  void (*locf)(mus_any *gen, mus_long_t loc, mus_float_t fm);
 
   /* (with-sound () (fm-violin 0 1 440 .1 :fm1-rat 1.002)) */
   /* args: (0 
@@ -11513,16 +11514,18 @@ static s7_pointer g_fm_violin_4_looped(s7_scheme *sc, s7_pointer u_args)
   fm_args = cdadr(fm_args);
   GET_REAL(fm_args, *, fm3_rat);
 
+  locf = mus_locsig_function(locs);
+
   /* this is called a zillion times (test 9 gui-based waltz display)
    * all safe, chans 1 rev 0
    */
   for (; pos < end; pos++)
     {
       vibrato = mus_env(f) + mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);			
-      mus_locsig(locs, pos, mus_env(ampf) * 
-		              mus_oscil_fm(carrier, vibrato + (mus_env(indf1) * mus_oscil_fm(fmosc1, fm1_rat * vibrato)) +
-					                      (mus_env(indf2) * mus_oscil_fm(fmosc2, fm2_rat * vibrato)) +
-					                      (mus_env(indf3) * mus_oscil_fm(fmosc3, fm3_rat * vibrato))));
+      locf(locs, pos, 
+	   mus_env(ampf) * mus_oscil_fm(carrier, vibrato + (mus_env(indf1) * mus_oscil_fm(fmosc1, fm1_rat * vibrato)) +
+					(mus_env(indf2) * mus_oscil_fm(fmosc2, fm2_rat * vibrato)) +
+					(mus_env(indf3) * mus_oscil_fm(fmosc3, fm3_rat * vibrato))));
     }
   (*step) = end;
   return(u_args);
@@ -11572,6 +11575,7 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
   mus_float_t (*ff)(mus_any *gen);
   mus_float_t (*pf)(mus_any *gen, mus_float_t fm);
   mus_float_t (*rf)(mus_any *gen);
+  void (*locf)(mus_any *gen, mus_long_t loc, mus_float_t fm);
 
   /* incoming args: 
      (0 
@@ -11638,6 +11642,7 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
   ef = mus_env_function(e);
   af = mus_env_function(a);
   pf = mus_polywave_function(m);
+  locf = mus_locsig_function(lc);
 
   if (vibf == g_fm_violin_vibrato_no_env)
     {
@@ -11808,7 +11813,7 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 		      for (; pos < end; pos++)
 			{
 			  vibrato = simple_triangle_wave(s) + rf(r);
-			  mus_locsig(lc, pos, af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato))));	  
+			  locf(lc, pos, af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato))));	  
 			}
 		    }
 		}
@@ -11819,7 +11824,7 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
 	  for (; pos < end; pos++)
 	    {
 	      vibrato = simple_triangle_wave(s) + rf(r);
-	      mus_locsig(lc, pos, af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato))));	  
+	      locf(lc, pos, af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato))));	  
 	    }
 	}
     }
@@ -11839,7 +11844,7 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
       for (; pos < end; pos++)
 	{
 	  vibrato = ff(f) + simple_triangle_wave(s) + rf(r);			
-      	  mus_locsig(lc, pos, af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato))));	  
+      	  locf(lc, pos, af(a) * mus_oscil_fm(o, vibrato + (ef(e) * pf(m, vibrato))));	  
 	}
     }
   (*step) = end;
