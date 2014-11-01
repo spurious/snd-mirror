@@ -24480,23 +24480,17 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top, bool stop_at
 }
 
 
-static s7_pointer g_cyclic_sequences(s7_scheme *sc, s7_pointer args)
+static s7_pointer cyclic_sequences(s7_scheme *sc, s7_pointer obj, bool return_list)
 {
-  #define H_cyclic_sequences "(cyclic-sequences obj) returns a list of elements that are cyclic."
-  shared_info *ci = NULL;
-  s7_pointer obj;
-  
-  obj = car(args);
   if (has_structure(obj))
-    /* (obj != sc->rootlet) -- why this? */
     {
+      shared_info *ci;
       ci = make_shared_info(sc, obj, false); /* false=don't stop at print length (vectors etc) */
       if (ci)
 	{
 	  int i, num;
 	  s7_pointer *objects;
 	  s7_pointer **obj_cis;
-	  s7_pointer lst;
 	  int *obj_top;
 
 	  /* save list of current shared pointers, set cyclic bit in each
@@ -24559,18 +24553,42 @@ static s7_pointer g_cyclic_sequences(s7_scheme *sc, s7_pointer args)
 	  free(obj_cis);
 	  free(obj_top);
 
-	  sc->w = sc->NIL;
-	  for (i = 0; i < num; i++)
-	    if (is_cyclic(objects[i]))
-	      sc->w = cons(sc, objects[i], sc->w);
-	  lst = sc->w;
-	  sc->w = sc->NIL;
-	  free(objects);
-
-	  return(lst);
+	  if (return_list)
+	    {
+	      s7_pointer lst;
+	      sc->w = sc->NIL;
+	      for (i = 0; i < num; i++)
+		if (is_cyclic(objects[i]))
+		  sc->w = cons(sc, objects[i], sc->w);
+	      lst = sc->w;
+	      sc->w = sc->NIL;
+	      free(objects);
+	      return(lst);
+	    }
+	  else
+	    {
+	      for (i = 0; i < num; i++)
+		if (is_cyclic(objects[i]))
+		  {
+		    free(objects);
+		    return(sc->T);
+		  }
+	      free(objects);
+	    }
 	}
     }
   return(sc->NIL);
+}
+
+static s7_pointer g_cyclic_sequences(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cyclic_sequences "(cyclic-sequences obj) returns a list of elements that are cyclic."
+  return(cyclic_sequences(sc, car(args), true));
+}
+
+static bool has_cyclic_sequence(s7_scheme *sc, s7_pointer obj)
+{
+  return(cyclic_sequences(sc, obj, false) == sc->T);
 }
 
 
@@ -57682,7 +57700,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		    if (sc->stack_end >= sc->stack_resize_trigger)                           /* ouch -- call in the big guns */
 		      {
-			if (is_pair(g_cyclic_sequences(sc, list_1(sc, carc))))
+			if (has_cyclic_sequence(sc, carc))
 			  return(eval_error(sc, "attempt to evaluate a circular list: ~A", carc));
 #if DEBUGGING
 			fprintf(stderr, "stack is about to overflow: %s\n", DISPLAY(carc));
@@ -58765,7 +58783,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_SYNTAX:                            /* -------- syntactic keyword as applicable object -------- */
 	  sc->op = (opcode_t)syntax_opcode(sc->code);                       /* (apply begin '((define x 3) (+ x 2))) */
 	  sc->code = sc->args;
-	  if (is_pair(g_cyclic_sequences(sc, list_1(sc, sc->args))))
+	  if (has_cyclic_sequence(sc, sc->args))
 	    return(eval_error(sc, "attempt to evaluate a circular list: ~A", sc->args));
 	  fixup_macro_overlay(sc, sc->code);
 	  goto START_WITHOUT_POP_STACK;

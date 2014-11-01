@@ -1,8 +1,6 @@
 (provide 'write.scm)
 
 ;;; pretty-print:   the usual pretty printer, intended for s7
-;;; checkpoint:     use write-readably to save the current runtime state of s7 as a loadable scheme file
-
 
 ;;; -------------------------------- pretty-print --------------------------------
 
@@ -10,7 +8,7 @@
 
 (let ((*pretty-print-length* 100)
       (*pretty-print-spacing* 2)
-      (*pretty-print-float-format "~,4F"))
+      (*pretty-print-float-format* "~,4F"))
 
   (define* (pretty-print-inner obj (port (current-output-port)) (column 0))
     
