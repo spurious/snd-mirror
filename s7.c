@@ -21076,7 +21076,7 @@ static s7_pointer g_bytevector(s7_scheme *sc, s7_pointer args)
 		  return(vec);
 		}
 	    }
-	  return(wrong_type_argument(sc, sc->BYTEVECTOR, make_integer(sc, i), byte, T_INTEGER));
+	  return(wrong_type_argument(sc, sc->BYTEVECTOR, make_integer(sc, i + 1), byte, T_INTEGER));
 	}
       b = s7_integer(byte);
       if ((b < 0) || (b > 255))
@@ -36932,7 +36932,6 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 	long int i, len; /* the "long" matters on 64-bit machines */
 	s7_pointer x, z, result;
 	int save_x = -1, save_z = -1, gc_res = -1, gc_z = -1;
-	/* (format #f "~{~A ~}" (vct 1 2 3)) */
 
 	x = object_length(sc, obj);
 	if (s7_is_integer(x))
@@ -39338,7 +39337,6 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
   #define H_for_each "(for-each proc object . objects) applies proc to each element of the objects traversed in parallel. \
 Each object can be a list, string, vector, hash-table, or any other sequence."
 
-  /* (for-each (lambda (n) (format #t "~A " n)) (vct 1.0 2.0 3.0)) */
   s7_Int len = 0; 
   /* "int" here is unhappy on 64-bit machines, and "long int" is unhappy on 32-bit machines, so try long long int.
    *    string_length is an int.
@@ -39751,8 +39749,11 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      sc->args = sc->NIL;                 /* can't use sc->x here, and can't assume func won't hit an error, so... */
 	      for (p = obj; is_pair(p); p = cdr(p))
 		{
+		  s7_pointer x;
 		  car(sc->T1_1) = car(p);
-		  sc->args = cons(sc, (*func)(sc, sc->T1_1), sc->args); /* can we assume a safe function won't return multiple values? */
+		  x = (*func)(sc, sc->T1_1);
+		  if (x != sc->NO_VALUE)
+		    sc->args = cons(sc, x, sc->args); /* can we assume a safe function won't return multiple values? */
 		}
 	      p = safe_reverse_in_place(sc, sc->args);
 	      return(p);
@@ -39807,7 +39808,6 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      nlen = applicable_length(sc, car(x));
 	      if (nlen < 0)
 		return(wrong_type_argument_n_with_type(sc, sc->MAP, position_of(x, args), car(x), A_SEQUENCE));
-
 	      if (nlen < len) len = nlen;
 	      if (len == 0) break; /* need error check below */
 	      
@@ -50067,7 +50067,7 @@ static void fixup_macro_overlay(s7_scheme *sc, s7_pointer p)
 	    }
 	  fixup_macro_overlay(sc, cdr(p));
 	}
-      fixup_macro_overlay(sc, car(p));
+      fixup_macro_overlay(sc, car(p));       /* there's no check for circles through car */
     }
 }
 
@@ -50279,7 +50279,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 	return(implicit_index(sc, obj, cdr(indices)));
       return(obj);
 
-    case T_C_OBJECT:                     /* ((vector (vct 1 2 3)) 0 2) -> 3.0 */
+    case T_C_OBJECT:
       return((*(c_object_ref(obj)))(sc, obj, indices));
 
     case T_ENVIRONMENT:
@@ -50294,7 +50294,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 }
 
 
-/* this is transitional -- first step toward collapsing the unknown fixups */
+/* this is transitional(?) -- first step toward collapsing the unknown fixups */
 #define set_opt_and_goto_opt_eval(Code, Func, Op)    \
   {						     \
     set_optimize_data(Code, Op);		     \
@@ -58765,6 +58765,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_SYNTAX:                            /* -------- syntactic keyword as applicable object -------- */
 	  sc->op = (opcode_t)syntax_opcode(sc->code);                       /* (apply begin '((define x 3) (+ x 2))) */
 	  sc->code = sc->args;
+	  if (is_pair(g_cyclic_sequences(sc, list_1(sc, sc->args))))
+	    return(eval_error(sc, "attempt to evaluate a circular list: ~A", sc->args));
 	  fixup_macro_overlay(sc, sc->code);
 	  goto START_WITHOUT_POP_STACK;
 	  
@@ -69934,6 +69936,4 @@ int main(int argc, char **argv)
  *
  * cyclic-seq in rest of full-* 
  * cyclic-sequences is minimally tested in s7test (also c_object env)
- *
- * type-checks in field accessor macros if debugging
  */

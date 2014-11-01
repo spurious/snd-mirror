@@ -44050,6 +44050,7 @@ static void define_integers(void)
   define_integer(GDK_GL_ERROR_NOT_AVAILABLE);
   define_integer(GDK_GL_ERROR_UNSUPPORTED_FORMAT);
   define_integer(GDK_GL_ERROR_UNSUPPORTED_PROFIL);
+  define_integer(PANGO_WEIGHT_SEMILIGHT);
 #endif
 
   define_integer(CAIRO_STATUS_SUCCESS);
@@ -44840,7 +44841,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("28-Oct-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("31-Oct-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
