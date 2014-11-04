@@ -43222,9 +43222,6 @@ static void define_integers(void)
   define_integer(GTK_DEST_DEFAULT_HIGHLIGHT);
   define_integer(GTK_DEST_DEFAULT_DROP);
   define_integer(GTK_DEST_DEFAULT_ALL);
-  define_integer(GTK_EXPAND);
-  define_integer(GTK_SHRINK);
-  define_integer(GTK_FILL);
   define_integer(GTK_BUTTONBOX_SPREAD);
   define_integer(GTK_BUTTONBOX_EDGE);
   define_integer(GTK_BUTTONBOX_START);
@@ -43244,10 +43241,6 @@ static void define_integers(void)
   define_integer(GTK_DIR_DOWN);
   define_integer(GTK_DIR_LEFT);
   define_integer(GTK_DIR_RIGHT);
-  define_integer(GTK_EXPANDER_COLLAPSED);
-  define_integer(GTK_EXPANDER_SEMI_COLLAPSED);
-  define_integer(GTK_EXPANDER_SEMI_EXPANDED);
-  define_integer(GTK_EXPANDER_EXPANDED);
   define_integer(GTK_TEXT_DIR_NONE);
   define_integer(GTK_TEXT_DIR_LTR);
   define_integer(GTK_TEXT_DIR_RTL);
@@ -43276,16 +43269,6 @@ static void define_integers(void)
   define_integer(GTK_CORNER_BOTTOM_RIGHT);
   define_integer(GTK_PACK_START);
   define_integer(GTK_PACK_END);
-  define_integer(GTK_PATH_PRIO_LOWEST);
-  define_integer(GTK_PATH_PRIO_GTK);
-  define_integer(GTK_PATH_PRIO_APPLICATION);
-  define_integer(GTK_PATH_PRIO_THEME);
-  define_integer(GTK_PATH_PRIO_RC);
-  define_integer(GTK_PATH_PRIO_HIGHEST);
-  define_integer(GTK_PATH_PRIO_MASK);
-  define_integer(GTK_PATH_WIDGET);
-  define_integer(GTK_PATH_WIDGET_CLASS);
-  define_integer(GTK_PATH_CLASS);
   define_integer(GTK_POLICY_ALWAYS);
   define_integer(GTK_POLICY_AUTOMATIC);
   define_integer(GTK_POLICY_NEVER);
@@ -44843,7 +44826,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("03-Nov-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("04-Nov-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

@@ -30397,7 +30397,7 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
   fill = cadr(args);
   if (is_float_vector(x))
     {
-      if (!is_real(fill))
+      if (!s7_is_real(fill)) /* possibly a bignum */
 	{
 	  check_two_methods(sc, fill, sc->VECTOR_FILL, sc->FILL, args);
 	  s7_wrong_type_arg_error(sc, "(float) vector-fill!", 2, fill, "a real");
@@ -30407,7 +30407,7 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
     {
       if (is_int_vector(x))
 	{
-	  if (!is_integer(fill))
+	  if (!s7_is_integer(fill))
 	    {
 	      check_two_methods(sc, fill, sc->VECTOR_FILL, sc->FILL, args);
 	      s7_wrong_type_arg_error(sc, "(int) vector-fill!", 2, fill, "an integer");
