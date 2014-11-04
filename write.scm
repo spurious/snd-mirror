@@ -1,7 +1,5 @@
 (provide 'write.scm)
 
-;;; pretty-print:   the usual pretty printer, intended for s7
-
 ;;; -------------------------------- pretty-print --------------------------------
 
 (define pretty-print #f)

@@ -62948,7 +62948,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL;
 	}
 
-      
     case OP_WITH_LET1:
       {
 	s7_pointer e;

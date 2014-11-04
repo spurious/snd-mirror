@@ -1,6 +1,6 @@
 # ws.rb -- with_sound and friends for Snd/Ruby
 
-# Copyright (c) 2003-2012 Michael Scholz <mi-scholz@users.sourceforge.net>
+# Copyright (c) 2003-2014 Michael Scholz <mi-scholz@users.sourceforge.net>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -23,9 +23,10 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
-
-# Commentary:
 #
+# Created: in 2003
+# Changed: 14/11/03 22:52:16
+
 # module WS
 #   ws_break(*rest)
 #   with_reverb(reverb, reverb_amount, snd, *with_sound_args)
@@ -423,7 +424,7 @@ trace_var(:$clm_table_size)        do |val| set_clm_table_size(val) end
 
 with_silence do
   # warning: undefined variable
-  $clm_version            = "ruby 23-Dec-2012"
+  $clm_version            = "ruby 04-Nov-2014"
   $output                 ||= false
   $reverb                 ||= false
   $clm_array_print_length ||= 8
@@ -450,7 +451,7 @@ with_silence do
 
   if provided? :snd
     $clm_channels      ||= default_output_chans
-    $clm_sample_type   ||= default_output_sample_type
+    $clm_data_format   ||= default_output_data_format
     $clm_header_type   ||= default_output_header_type
     $clm_locsig_type   ||= locsig_type
     $clm_output_device ||= audio_output_device
@@ -458,7 +459,7 @@ with_silence do
     $clm_srate         ||= default_output_srate
   else
     $clm_channels      ||= 1
-    $clm_sample_type   ||= Mus_lfloat
+    $clm_data_format   ||= Mus_lfloat
     $clm_header_type   ||= Mus_next
     $clm_locsig_type   ||= Mus_interp_linear
     $clm_output_device ||= 0
@@ -475,7 +476,7 @@ module WS
    :channels           $clm_channels         1
    :srate              $clm_srate            44100
    :header_type        $clm_header_type      Mus_next
-   :sample_type        $clm_sample_type      Mus_lfloat
+   :data_format        $clm_data_format      Mus_lfloat
    :audio_format       $clm_audio_format     Mus_lshort
  
    :reverb             $clm_reverb           nil
@@ -687,7 +688,7 @@ class With_sound
     @channels        = get_args(args, :channels,          $clm_channels)
     @srate           = get_args(args, :srate,             $clm_srate)
     @header_type     = get_args(args, :header_type,       $clm_header_type)
-    @sample_type     = get_args(args, :sample_type,       $clm_sample_type)
+    @data_format     = get_args(args, :data_format,       $clm_data_format)
     @audio_format    = get_args(args, :audio_format,      $clm_audio_format)
     @out_buffer      = get_args(args, :out_buffer,        false)
 
@@ -718,7 +719,7 @@ class With_sound
 
     @rtime = @utime = @stime = 0.0
     @stat_frames      = 0
-    @stat_sample_type = false
+    @stat_data_format = false
     @stat_header_type = false
     @stat_comment     = nil
     @stat_maxamp      = nil
@@ -841,8 +842,8 @@ installs the @with_sound_note_hook and prints the line
                         :srate, get_args(args, :srate, @srate),
                         :header_type, get_args(args,
                                                :header_type, @header_type),
-                        :sample_type, get_args(args,
-                                               :sample_type, @sample_type),
+                        :data_format, get_args(args,
+                                               :data_format, @data_format),
                         :audio_format, get_args(args,
                                                 :audio_format, @audio_format),
                         :verbose, get_args(args, :verbose, @verbose),
@@ -1002,7 +1003,7 @@ installs the @with_sound_note_hook and prints the line
     if @clipped == :undefined
       if (@scaled_by or @scaled_to) and
         [Mus_bfloat, Mus_lfloat,
-          Mus_bdouble, Mus_ldouble].member?(@sample_type)
+          Mus_bdouble, Mus_ldouble].member?(@data_format)
         set_mus_clipping(false)
       else
         set_mus_clipping($clm_clipped)
@@ -1027,7 +1028,7 @@ installs the @with_sound_note_hook and prints the line
       else
         if @header_type == Mus_raw
           @out_snd = open_raw_sound(@output, @channels,
-                                    @srate.to_i, @sample_type)
+                                    @srate.to_i, @data_format)
         else
           @out_snd = open_sound(@output)
         end
@@ -1159,9 +1160,9 @@ installs the @with_sound_note_hook and prints the line
                end
     Snd.message("filename: %s%s", @output.inspect, obj_name)
     Snd.message("   chans: %d, srate: %d", @channels, @srate.to_i)
-    if @stat_sample_type and @stat_header_type
+    if @stat_data_format and @stat_header_type
       Snd.message("  format: %s [%s]",
-                  mus_sample_type_name(@stat_sample_type),
+                  mus_data_format_name(@stat_data_format),
                   mus_header_type_name(@stat_header_type))
     end
     if @stat_frames > 0
@@ -1222,7 +1223,7 @@ installs the @with_sound_note_hook and prints the line
 #   :channels           $clm_channels (#$clm_channels)
 #   :srate              $clm_srate (#$clm_srate)
 #   :header_type        $clm_header_type (#$clm_header_type)
-#   :sample_type        $clm_sample_type (#$clm_sample_type)
+#   :data_format        $clm_data_format (#$clm_data_format)
 #   :audio_format       $clm_audio_format (#$clm_audio_format)
 #   :out_buffer         nil (vct or sound-data object)
 # 
@@ -1692,10 +1693,10 @@ Example: clm_mix(\"tmp\")")
       close_sound_extend(rsnd)
       remove_file(@revfile)
       rsnd = new_sound(@revfile, @header_type,
-                       @sample_type, @srate.to_i, @reverb_channels)
+                       @data_format, @srate.to_i, @reverb_channels)
     else
       rsnd = new_sound(@revfile, @header_type,
-                       @sample_type, @srate.to_i, @reverb_channels)
+                       @data_format, @srate.to_i, @reverb_channels)
     end
     @out_snd = snd
     @rev_snd = rsnd
@@ -1721,7 +1722,7 @@ Example: clm_mix(\"tmp\")")
         @srate = set_mus_srate(srate(snd))
       else
         set_header_type(snd, @header_type)
-        set_sample_type(snd, @sample_type)
+        set_data_format(snd, @data_format)
         set_srate(snd, sr)
         set_channels(snd, @channels)
         set_comment(snd, @comment)
@@ -1730,13 +1731,13 @@ Example: clm_mix(\"tmp\")")
       end
     else
       unless @continue then remove_file(@output) end
-      snd = new_sound(@output, @header_type, @sample_type,
+      snd = new_sound(@output, @header_type, @data_format,
                       sr, @channels, @comment)
     end
     if @reverb
       if sound?(rsnd = find_sound(@revfile)) and (not @continue)
         set_header_type(@header_type, rsnd)
-        set_sample_type(@sample_type, rsnd)
+        set_data_format(@data_format, rsnd)
         set_srate(sr, rsnd)
         set_channels(@reverb_channels, rsnd)
         set_frames(1, rsnd)
@@ -1745,7 +1746,7 @@ Example: clm_mix(\"tmp\")")
         unless @continue
           remove_file(@revfile)
         end
-        rsnd = new_sound(@revfile, @header_type, @sample_type,
+        rsnd = new_sound(@revfile, @header_type, @data_format,
                          sr, @reverb_channels)
       end
     end
@@ -1778,7 +1779,7 @@ Example: clm_mix(\"tmp\")")
   
   def set_statistics
     @stat_frames      = frames(@out_snd)
-    @stat_sample_type = sample_type(@out_snd)
+    @stat_data_format = data_format(@out_snd)
     @stat_header_type = header_type(@out_snd)
     @stat_comment     = comment(@out_snd)
     @stat_maxamp      = maxamp(@out_snd, true)
@@ -1838,14 +1839,14 @@ class With_CLM < CLM_Instrument
     case chan
     when Integer
       (@ws_reverb.length + seconds2samples(@decay_time)).times do |samp|
-        sample2file(@ws_output, samp,
+        frame2file(@ws_output, samp,
                    yield(file2sample(@ws_reverb, samp, chan), samp))
       end
     when :frames
-      frm = make_vct(@reverb_channels)
+      frm = make_frame(@reverb_channels)
       (@ws_reverb.length + seconds2samples(@decay_time)).times do |samp|
-        frample2file(@ws_output, samp,
-                   yield(file2frample(@ws_reverb, samp, frm), samp))
+        frame2file(@ws_output, samp,
+                   yield(file2frame(@ws_reverb, samp, frm), samp))
       end
     end
   end
@@ -1861,10 +1862,10 @@ Example: clm_mix(\"tmp\")")
     optkey(args, binding,
            [:input_frame, 0],
            [:output_frame, 0],
-           [:framples, mus_sound_framples(filename)],
+           [:frames, mus_sound_frames(filename)],
            [:scale, 1.0])
-    mx = make_vct(@channel * @channels, *(0...@channels * @channels).map do scale end)
-    mus_file_mix(@output, filename, output_frame, framples, input_frame, mx)
+    mx = make_mixer(@channels, *(0...@channels * @channels).map do scale end)
+    mus_mix(@output, filename, output_frame, frames, input_frame, mx)
   end
   
   protected
@@ -1882,11 +1883,11 @@ Example: clm_mix(\"tmp\")")
     else
       remove_file(@output)
       @ws_output = make_sample2file(@output, @channels,
-                                    @sample_type, @header_type, @comment)
+                                    @data_format, @header_type, @comment)
       if @reverb
         remove_file(@revfile)
         @ws_reverb = make_sample2file(@revfile, @reverb_channels,
-                                      @sample_type, @header_type)
+                                      @data_format, @header_type)
       end
     end
     $output = @ws_output
@@ -1952,7 +1953,7 @@ Example: clm_mix(\"tmp\")")
 
   def set_statistics
     @stat_frames      = mus_sound_frames(@output)
-    @stat_sample_type = mus_sound_sample_type(@output)
+    @stat_data_format = mus_sound_sample_type(@output)
     @stat_header_type = mus_sound_header_type(@output)
     @stat_comment     = mus_sound_comment(@output)
     @stat_maxamp      = mus_sound_maxamp(@output)

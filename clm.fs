@@ -2,9 +2,9 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 04/03/15 19:25:58
-\ Changed: 14/04/28 03:52:17
+\ Changed: 14/11/04 00:30:54
 \
-\ @(#)clm.fs	1.110 4/28/14
+\ @(#)clm.fs	1.113 11/4/14
 
 \ clm-print		( fmt :optional args -- )
 \ clm-message		( fmt :optional args -- )
@@ -89,6 +89,7 @@
 	<'> noop alias save-sound
 	<'> noop alias scale-channel
 	<'> noop alias sound?
+	<'> noop alias framples
 
 	\ Some generic words for non-Snd use.
 	: channels <{ :optional obj #f -- n }>
@@ -108,18 +109,6 @@
 			obj mus-sound-srate
 		else
 			mus-srate f>s
-		then
-	;
-	
-	: framples <{ :optional snd #f chn #f edpos #f -- n }>
-		snd string? if
-			snd mus-sound-framples
-		else
-			snd mus-generator? if
-				snd mus-length
-			else
-				snd object-length
-			then
 		then
 	;
 
@@ -294,7 +283,7 @@ set-current
 previous
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-"fth 27-Nov-2012" value *clm-version*
+"fth 04-Nov-2014" value *clm-version*
 #f 	      	  value *locsig*
 mus-lshort    	  value *clm-audio-format*
 #f            	  value *clm-comment*
@@ -324,7 +313,7 @@ Instruments using RUN or RUN-INSTRUMENT add entries to the list." help-set!
 	1          constant default-output-chans
 	44100      constant default-output-srate
 	mus-next   constant default-output-header-type
-	mus-lfloat constant default-output-sample-type
+	mus-lfloat constant default-output-data-format
 	mus-audio-default constant audio-output-device
 	512        constant dac-size
 [then]
@@ -333,7 +322,7 @@ default-output-chans       value *clm-channels*
 default-output-srate       value *clm-srate*
 locsig-type                value *clm-locsig-type*
 default-output-header-type value *clm-header-type*
-default-output-sample-type value *clm-sample-type*
+default-output-data-format value *clm-data-format*
 audio-output-device        value *clm-output-device*
 dac-size                   value *clm-rt-bufsize*
 mus-file-buffer-size       value *clm-file-buffer-size*
@@ -626,7 +615,7 @@ set-current
 	"filename: %S" #( output ) clm-message
 	"   chans: %d, srate: %d" #( channels srate f>s ) clm-message
 	"  format: %s [%s]"
-	    #( output mus-sound-sample-type mus-sample-type-name
+	    #( output mus-sound-sample-type mus-data-format-name
 	       output mus-sound-header-type mus-header-type-name ) clm-message
 	"  length: %.3f  (%d frames)" #( dur frms ) clm-message
 	timer timer? if
@@ -668,7 +657,7 @@ previous
     srate         *clm-srate*
     channels      *clm-channels*
     audio-format  *clm-audio-format*
-    sample-type   *clm-sample-type*
+    data-format   *clm-data-format*
     header-type   *clm-header-type*
     comment       *clm-comment* -- }>
 	"%s removed" #( get-func-name ) fth-warning
@@ -734,7 +723,7 @@ previous
     srate         *clm-srate*
     channels      *clm-channels*
     audio-format  *clm-audio-format*
-    sample-type   *clm-sample-type*
+    data-format   *clm-data-format*
     header-type   *clm-header-type*
     comment       *clm-comment* -- }>
 	doc" Record from dac output device to the specified OUTPUT file."
@@ -749,7 +738,7 @@ previous
 		    string-format to comment
 	then
 	chans bufsize make-sound-data { data }
-	output srate chans sample-type header-type comment
+	output srate chans data-format header-type comment
 	    mus-sound-open-output { snd-fd }
 	snd-fd 0< if
 		'forth-error
@@ -765,9 +754,9 @@ previous
 		"  device: %d" #( output-device ) clm-message
 		"   chans: %d, srate: %d" #( chans srate ) clm-message
 		"r format: %s [Dac]"
-		    #( audio-format mus-sample-type-name ) clm-message
+		    #( audio-format mus-data-format-name ) clm-message
 		"w format: %s [%s]"
-		    #( sample-type mus-sample-type-name
+		    #( data-format mus-data-format-name
 		       header-type mus-header-type-name ) clm-message
 		"  length: %.3f  (%d frames)" #( duration frms ) clm-message
 		" comment: %S" #( comment ) clm-message
@@ -780,7 +769,7 @@ previous
 		snd-fd 0 bufsize 1- chans data mus-sound-write drop
 	bufsize +loop
 	dac-fd mus-audio-close drop
-	snd-fd frms chans * sample-type mus-bytes-per-sample *
+	snd-fd frms chans * data-format mus-bytes-per-sample *
 	mus-sound-close-output drop
 	old-srate set-mus-srate drop
 ;
@@ -927,7 +916,7 @@ hide
 		#( mus-bfloat
 		   mus-lfloat
 		   mus-bdouble
-		   mus-ldouble ) ws :sample-type ws-ref array-member? if
+		   mus-ldouble ) ws :data-format ws-ref array-member? if
 			#f set-mus-clipping
 		else
 			*clm-clipped* set-mus-clipping
@@ -1019,7 +1008,7 @@ set-current
 	:clipped           *clm-clipped*          ws set-args
 	:comment           *clm-comment*          ws set-args
 	:continue-old-file #f                     ws set-args
-	:sample-type       *clm-sample-type*      ws set-args
+	:data-format       *clm-data-format*      ws set-args
 	:debug             *clm-debug*            ws set-args
 	:decay-time        *clm-decay-time*       ws set-args
 	:delete-reverb     *clm-delete-reverb*    ws set-args
@@ -1056,7 +1045,7 @@ set-current
 	:srate             ws1 :srate       	 ws-ref ws set-args
 	:locsig-type       ws1 :locsig-type 	 ws-ref ws set-args
 	:header-type       ws1 :header-type 	 ws-ref ws set-args
-	:sample-type       ws1 :sample-type 	 ws-ref ws set-args
+	:data-format       ws1 :data-format 	 ws-ref ws set-args
 	:comment "with-sound level %d"
 	    #( *ws-args* length ) string-format ws set-args
 	:notehook          ws1 :notehook         ws-ref ws set-args
@@ -1092,7 +1081,7 @@ set-current
 		output file-delete
 		output
 		ws :channels    ws-ref
-		ws :sample-type ws-ref
+		ws :data-format ws-ref
 		ws :header-type ws-ref
 		ws :comment ws-ref dup empty? if
 			drop make-default-comment
@@ -1117,7 +1106,7 @@ set-current
 			revput file-delete
 			revput
 			ws :reverb-channels ws-ref
-			ws :sample-type     ws-ref
+			ws :data-format     ws-ref
 			ws :header-type     ws-ref
 			"with-sound temporary reverb file" make-sample->file
 		then to *reverb*
@@ -1205,7 +1194,7 @@ previous
 :srate             *clm-srate*            (44100)\n\
 :locsig-type       *clm-locsig-type*      (mus-interp-linear)\n\
 :header-type       *clm-header-type*      (mus-next)\n\
-:sample-type       *clm-sample-type*      (mus-lfloat)\n\
+:data-format       *clm-data-format*      (mus-lfloat)\n\
 :clipped           *clm-clipped*          (#t)\n\
 :comment           *clm-comment*          (#f)\n\
 :notehook          *clm-notehook*         (#f)\n\
@@ -1585,7 +1574,7 @@ event: inst-test ( -- )
 		48000 set-mus-srate drop
 		:file "arpeggio.snd"
 		    :header-type mus-next
-		    :sample-type mus-bdouble
+		    :data-format mus-bdouble
 		    :channels 2
 		    :srate mus-srate f>s
 		    :comment make-default-comment new-sound { snd }

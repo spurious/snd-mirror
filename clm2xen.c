@@ -7983,6 +7983,7 @@ static Xen g_make_move_sound(Xen dloc_list, Xen outp, Xen revp)
 	  mus_move_sound_set_detour(ge, clm_move_sound_detour);
 	  gn->vcts[G_LOCSIG_OUT] = ov;
 	  gn->vcts[G_LOCSIG_REVOUT] = rv;
+	  gn->vcts[G_LOCSIG_REVDATA] = Xen_undefined;
 	  mus_set_environ(ge, (void *)gn);
 	}
       gn->gen = ge;
@@ -12848,7 +12849,7 @@ static gf *fixup_subtract(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
       int typ1, typ2;
       double x1 = 0.0, x2 = 0.0;
       double *rx1 = NULL, *rx2 = NULL;
-      s7_pointer s1, s2 = NULL;
+      s7_pointer s1 = NULL, s2 = NULL;
       gf *g1 = NULL, *g2 = NULL, *g = NULL;
 
       typ1 = gf_parse(sc, cadr(expr), locals, &g1, &s1, &x1, &rx1);

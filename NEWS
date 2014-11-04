@@ -1,13 +1,13 @@
-Snd 15.0:
+Snd 15.1.
 
-clm and snd: Juan Reyes provided his banded waveguide instrument,
-  bandedwg.ins and bandedwg.cms, and a Tibetan bowl: bowl.ins 
-  and bowl.cms.
+Juan Reyes donated his Leslie instrument, rotates, in leslie.cms
+  and leslie.ins (in clm).
 
-s7: *s7* is an environment holding various curiousities.
-    moved *gc-stats*, *safety*, and *maximum-stack-size* into *s7*
-    added cutlet to remove a binding from an environment
+s7 now has a s7webserver directory containing Kjetil Matheussen's
+  s7 web repl.
 
-checked: gtk 3.13.7|8|9, sbcl 1.2.3
+Mike Scholz updated some of the Forth and Ruby scripts.
 
-Thanks!: Juan Reyes
+checked: sbcl 1.2.4|5, gtk 3.14.0|1|2|3|4, 3.15.0|1
+
+Thanks!: Kjetil Matheussen, Juan Reyes, Mike Scholz.

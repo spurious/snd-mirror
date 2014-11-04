@@ -1,8 +1,8 @@
-# nb.rb -- translation of nb.rb
+# nb.rb -- translation of nb.scm
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Tue Dec 10 22:08:15 CET 2002
-# Changed: Sat Jul 31 22:40:21 CEST 2010
+# Created: 02/12/10 22:08:15
+# Changed: 14/11/03 22:52:16
 
 # Commentary:
 #
@@ -92,8 +92,8 @@ class NB
   include Info
   
   Region_viewer = 2
-  View_files_dialog = 5
-  Info_dialog = 15
+  View_files_dialog = 8
+  Info_dialog = 20
   
   def initialize(path)
     @nb_database = path
@@ -218,7 +218,7 @@ class NB
     cs = mus_sound_chans(@name)
     sr = mus_sound_srate(@name)
     len = format("%1.3f", mus_sound_samples(@name).to_f / (cs * sr.to_f))
-    d_format = mus_sample_type_name(mus_sound_sample_type(@name))
+    d_format = mus_data_format_name(mus_sound_sample_type(@name))
     h_type = mus_header_type_name(mus_sound_header_type(@name))
     frms = mus_sound_frames(@name)
     max_amp = ""

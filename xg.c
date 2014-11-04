@@ -819,7 +819,9 @@ Xm_type_Ptr_1(GtkMessageDialog_, GtkMessageDialog*)
 Xm_type_Ptr(cairo_region_t_, cairo_region_t*)
 #define C_to_Xen_GtkSizeRequestMode(Arg) C_int_to_Xen_integer(Arg)
 Xm_type_Ptr_1(GtkContainerClass_, GtkContainerClass*)
-Xm_type(GtkAlign, GtkAlign)
+#define C_to_Xen_GtkAlign(Arg) C_int_to_Xen_integer(Arg)
+#define Xen_to_C_GtkAlign(Arg) (GtkAlign)(Xen_integer_to_C_int(Arg))
+#define Xen_is_GtkAlign(Arg) Xen_is_integer(Arg)
 Xm_type_Ptr_1(GtkComboBoxText_, GtkComboBoxText*)
 Xm_type_Ptr(GdkRGBA_, GdkRGBA*)
 Xm_type_Ptr_1(GtkGrid_, GtkGrid*)
@@ -44841,7 +44843,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("31-Oct-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("03-Nov-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

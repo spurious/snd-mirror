@@ -837,6 +837,7 @@
 	(cons "GtkScrollablePolicy" "INT")
 
 	(cons "GdkModifierIntent" "INT")
+	(cons "GtkAlign" "INT")
 	))
 
 (define (c-to-xen-macro-name typ str)
