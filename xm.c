@@ -25492,20 +25492,21 @@ void Init_libxm(void)
       define_procedures();
       define_structs();
 #if HAVE_SCHEME
-      Xen_eval_C_string("(define (XmAddWMProtocols s p n) \
-                           (XmAddProtocols s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p n))");
-      Xen_eval_C_string("(define (XmRemoveWMProtocols s p n) \
-                           (XmRemoveProtocols s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p n))");
-      Xen_eval_C_string("(define (XmAddWMProtocolCallback s p c cl) \
-                           (XmAddProtocolCallback s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p c cl))");
-      Xen_eval_C_string("(define (XmRemoveWMProtocolCallback s p c cl) \
-                           (XmRemoveProtocolCallback s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p c cl))");
-      Xen_eval_C_string("(define (XmActivateWMProtocol s p) \
-                           (XmActivateProtocol s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p))");
-      Xen_eval_C_string("(define (XmDeactivateWMProtocol s p) \
-                           (XmDeactivateProtocol s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p))");
-      Xen_eval_C_string("(define (XmSetWMProtocolHooks s p preh prec posth postc) \
-                           (XmSetProtocolHooks s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p preh prec posth postc))");
+      /* use s7_define directly because we want this to go to the *motif* environment in Snd */
+      s7_define(s7, s7_nil(s7), s7_make_symbol(s7, "XmAddWMProtocols"), 
+		Xen_eval_C_string("(lambda (s p n) (XmAddProtocols s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p n))"));
+      s7_define(s7, s7_nil(s7), s7_make_symbol(s7, "XmRemoveWMProtocols"), 
+		Xen_eval_C_string("(lambda (s p n) (XmRemoveProtocols s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p n))"));
+      s7_define(s7, s7_nil(s7), s7_make_symbol(s7, "XmAddWMProtocolCallback"), 
+		Xen_eval_C_string("(lambda (s p c cl) (XmAddProtocolCallback s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p c cl))"));
+      s7_define(s7, s7_nil(s7), s7_make_symbol(s7, "XmRemoveWMProtocolCallback"), 
+		Xen_eval_C_string("(lambda (s p c cl) (XmRemoveProtocolCallback s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p c cl))"));
+      s7_define(s7, s7_nil(s7), s7_make_symbol(s7, "XmActivateWMProtocol"), 
+		Xen_eval_C_string("(lambda (s p) (XmActivateProtocol s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p))"));
+      s7_define(s7, s7_nil(s7), s7_make_symbol(s7, "XmDeactivateWMProtocol"), 
+		Xen_eval_C_string("(lambda (s p) (XmDeactivateProtocol s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p))"));
+      s7_define(s7, s7_nil(s7), s7_make_symbol(s7, "XmSetWMProtocolHooks"), 
+		Xen_eval_C_string("(lambda (s p preh prec posth postc) (XmSetProtocolHooks s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p preh prec posth postc))"));
 #endif
 #if HAVE_RUBY
       Xen_eval_C_string("def RXmAddWMProtocols(s, p, n) \

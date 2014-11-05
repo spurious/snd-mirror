@@ -4097,19 +4097,8 @@ Closely related to this is xm-enved.scm which implements a separate envelope edi
 xe-create-enved returns a new envelope editor whose x axis label is 'name', the x and y axis bounds
 are in the list 'axis', the editor's parent widget is 'parent',  and the Xt-style
 resource argument list is 'args'.  The editor's current envelope is accessible
-(read and write) as 'xe-envelope':
+as 'xe-envelope'.
 </p>
-
-<pre class="indented">
-(define outer (add-main-pane "hiho" xmFormWidgetClass ()))
-(define editor (<em class=red>xe-create-enved</em> "a name" outer 
-			     (list XmNleftAttachment   XmATTACH_FORM
-				   XmNtopAttachment    XmATTACH_FORM
-				   XmNbottomAttachment XmATTACH_FORM
-				   XmNrightAttachment  XmATTACH_FORM)
-			     '(0.0 1.0 0.0 1.0)))
-(set! (<em class=red>xe-envelope</em> editor) (list 0.0 1.0 1.0 0.5))
-</pre>
 
 
 

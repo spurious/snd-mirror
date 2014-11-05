@@ -6,6 +6,8 @@
 (require snd-hooks.scm snd-marks.scm snd-mix.scm snd-moog.scm snd-play.scm snd-rubber.scm snd-zip.scm snd-edit123.scm)
 (require snd-new-effects.scm snd-special-menu.scm snd-new-backgrounds.scm snd-marks-menu.scm snd-fft-menu.scm snd-effects-utils.scm)
 
+(with-let *motif*
+
 (keep-file-dialog-open-upon-ok)
 (set! *ask-about-unsaved-edits* #t)
 (if (not (hook-member show-disk-space after-open-hook))
@@ -307,3 +309,4 @@
 
 (define deselect-all unselect-all)
 
+)

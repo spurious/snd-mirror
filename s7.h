@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.14"
-#define S7_DATE "18-Sep-14"
+#define S7_VERSION "3.15"
+#define S7_DATE "5-Nov-14"
 
 
 typedef long long int s7_Int;
@@ -424,6 +424,8 @@ s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value);
 s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value);
 
 s7_pointer s7_rootlet(s7_scheme *sc);                                       /* (rootlet) */
+s7_pointer s7_shadow_rootlet(s7_scheme *sc);
+s7_pointer s7_set_shadow_rootlet(s7_scheme *sc, s7_pointer let);
 s7_pointer s7_curlet(s7_scheme *sc);                                        /* (curlet) */
 s7_pointer s7_set_curlet(s7_scheme *sc, s7_pointer e);                      /* returns previous curlet */
 s7_pointer s7_outlet(s7_pointer e);                                         /* (outlet e) */
@@ -795,6 +797,7 @@ s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_point
  * 
  *        s7 changes
  *		
+ * 5-Nov:     s7_shadow_rootlet and s7_set_shadow_rootlet.
  * 30-Aug:    s7_make_safe_function (for cload.scm).
  * 25-July:   define and friends now return the value, not the symbol.
  *            procedure_with_setter -> dilambda.

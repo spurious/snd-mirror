@@ -156,7 +156,9 @@
       (set! xe-mouse-new #f)))
 
   (if (provided? 'snd-motif)
-      (begin
+      (with-let (sublet *motif* 
+		  'args args 'parent parent 'axis-bounds axis-bounds 'name name
+		  'xe-redraw xe-redraw 'xe-mouse-press xe-mouse-press 'xe-mouse-drag xe-mouse-drag 'xe-mouse-release xe-mouse-release)
 	(if (not (member XmNbackground args))
 	    (set! args (append args (list XmNbackground *graph-color*))))
 	(if (not (member XmNforeground args))
@@ -301,8 +303,8 @@
 (define (xe-redraw drawer)
   (let* ((cur-env (xe-envelope drawer))
 	 (widget (drawer 1))
-	 (dpy (and (provided? 'snd-motif) (XtDisplay widget)))
-	 (wn (if (provided? 'snd-motif) (XtWindow widget) (gtk_widget_get_window widget)))
+	 (dpy (and (provided? 'snd-motif) ((*motif* 'XtDisplay) widget)))
+	 (wn (if (provided? 'snd-motif) ((*motif* 'XtWindow) widget) (gtk_widget_get_window widget)))
 	 (ax-pix (drawer 2))
 	 (ax-inf (drawer 3))
 	 (gc (car (drawer 4)))
@@ -312,7 +314,7 @@
     (if (and (list? ax-pix)
 	     (list? cur-env)
 	     (if (provided? 'snd-motif)
-		 (XtIsManaged widget)
+		 ((*motif* 'XtIsManaged) widget)
 		 (get_realized widget)))
 	(let ((px0 (ax-pix 0))
 	      (px1 (ax-pix 2))
@@ -347,7 +349,7 @@
 	      (begin
 		(if (provided? 'snd-motif)
 		    (begin
-		      (XClearWindow dpy wn)
+		      ((*motif* 'XClearWindow) dpy wn)
 		      (draw-axes widget gc name ix0 ix1 iy0 iy1)
 		      (let ((lx #f)
 			    (ly #f))
@@ -355,13 +357,14 @@
 			    ((= i len))
 			  (let ((cx (xe-grfx drawer (cur-env i)))
 				(cy (xe-grfy drawer (cur-env (+ i 1)))))
-			    (XFillArc dpy wn gc 
-				      (- cx mouse-r)
-				      (- cy mouse-r)
-				      mouse-d mouse-d
-				      0 (* 360 64))
+			    ((*motif* 'XFillArc)
+			     dpy wn gc 
+			     (- cx mouse-r)
+			     (- cy mouse-r)
+			     mouse-d mouse-d
+			     0 (* 360 64))
 			    (if lx
-				(XDrawLine dpy wn gc lx ly cx cy))
+				((*motif* 'XDrawLine) dpy wn gc lx ly cx cy))
 			    (set! lx cx)
 			    (set! ly cy)))))
 		    (let ((lx #f)
@@ -395,13 +398,3 @@
 		      (cairo_paint cr)
 		      (cairo_destroy cr)))))))))
   
-#|
-(define outer (add-main-pane "hiho" xmFormWidgetClass ()))
-
-(define editor (xe-create-enved "a name" outer 
-			     (list XmNleftAttachment   XmATTACH_FORM
-				   XmNtopAttachment    XmATTACH_FORM
-				   XmNbottomAttachment XmATTACH_FORM
-				   XmNrightAttachment  XmATTACH_FORM)
-			     '(0.0 1.0 0.0 1.0)))
-|#

@@ -1184,7 +1184,7 @@ struct s7_scheme {
   s7_pointer GC_NIL;                  /* a marker for an unoccupied slot in sc->protected_objects (and other similar stuff) */
   
   s7_pointer symbol_table;            /* symbol table */
-  s7_pointer rootlet;                 /* rootlet */
+  s7_pointer rootlet, shadow_rootlet; /* rootlet */
   s7_Int rootlet_entries;
   s7_pointer unlet;                   /* original bindings of predefined functions */
   
@@ -6282,6 +6282,17 @@ s7_pointer s7_rootlet(s7_scheme *sc)
   return(sc->rootlet);
 }
 
+s7_pointer s7_shadow_rootlet(s7_scheme *sc) 
+{
+  return(sc->shadow_rootlet);
+}
+
+s7_pointer s7_set_shadow_rootlet(s7_scheme *sc, s7_pointer let)
+{
+  sc->shadow_rootlet = let;
+  return(let);
+}
+
 
 static s7_pointer g_curlet(s7_scheme *sc, s7_pointer args)
 {
@@ -6793,7 +6804,9 @@ bool s7_is_defined(s7_scheme *sc, const char *name)
 void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer value) 
 {
   s7_pointer x;
-  if (envir == sc->rootlet) envir = sc->NIL; /* for C-side backwards compatibility */
+  if ((envir == sc->NIL) ||
+      (envir == sc->rootlet)) 
+    envir = sc->shadow_rootlet;
   x = find_local_symbol(sc, symbol, envir);
   if (is_slot(x)) 
     slot_set_value(x, value); 
@@ -6822,11 +6835,10 @@ s7_pointer s7_define_variable_with_documentation(s7_scheme *sc, const char *name
 
 s7_pointer s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
 {
-  s7_pointer x, sym;
+  s7_pointer sym;
   sym = make_symbol(sc, name);
   s7_define(sc, sc->NIL, sym, value);
-  x = global_slot(sym);
-  set_immutable(slot_symbol(x));
+  set_immutable(sym);
   return(sym);
 }
 
@@ -30327,7 +30339,7 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
       break;
 
     case T_INT_VECTOR:
-      if (!is_integer(obj))
+      if (!s7_is_integer(obj)) /* possibly a bignum */
 	s7_wrong_type_arg_error(sc, "(int) vector-fill!", 2, obj, "an integer");
       else
 	{
@@ -31565,7 +31577,7 @@ or a real, the vector can only hold numbers of that type (s7_Int or s7_Double)."
 		result_type = T_INT_VECTOR;
 	      else
 		{
-		  if (s7_is_real(fill)) /* might be gmp with big_real by accident */
+		  if (s7_is_real(fill)) /* might be gmp with big_real by accident (? see above) */
 		    result_type = T_FLOAT_VECTOR;
 		  else 
 		    {
@@ -33553,6 +33565,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   return(x);
 }
 
+
 s7_pointer s7_make_safe_function(s7_scheme *sc, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer p;
@@ -34459,7 +34472,7 @@ s7_pointer s7_dilambda(s7_scheme *sc,
   s7_define(sc, sc->NIL, make_symbol(sc, name), get_func);
   set_func = s7_make_function(sc, internal_set_name, setter, set_req_args, set_opt_args, false, documentation); 
   /* typeflag(set_func) |= T_SAFE_PROCEDURE; */
-  s7_define(sc, sc->NIL, make_symbol(sc, internal_set_name), set_func);
+  /* s7_define(sc, sc->NIL, make_symbol(sc, internal_set_name), set_func); */
   c_function_setter(get_func) = set_func;
 
   return(get_func);
@@ -68562,6 +68575,7 @@ s7_scheme *s7_init(void)
   for (i = 0; i < 512; i++)
     vector_element(sc->rootlet, i) = sc->NIL;
   sc->envir = sc->NIL;
+  sc->shadow_rootlet = sc->NIL;
   
   if (!already_inited)
     {
@@ -69933,7 +69947,6 @@ int main(int argc, char **argv)
  * t455|6     265 |   89 |  9   |       8.4
  * t816           |   71 | 70.6 | 38.0 31.8
  * calls      359 |  275 | 54   | 34.7 34.7
- *            153 (run)
  *
  * --------------------------------------------------
  *
@@ -69941,8 +69954,13 @@ int main(int argc, char **argv)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers? (useful in object->string too)
  *
- * other libraries: xg/xm, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
- *   perhaps put xg/xm and sndlib in their own lets: *gtk* *motif* *gl*(libgl.scm?) *clm* -- or at least make it an option
+ * other libraries: xg, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
+ *   perhaps put xg and sndlib in their own lets: *gtk* *gl*(libgl.scm?) *clm* -- or at least make it an option
+ *   prelookup?
+ *
+ * one cost of *motif* -- functions that were previously global and therefore removed from the heap,
+ *   are now local to *motif* so the GC mark costs rise significantly.
+ *
  *   need to check new openGL for API changes (GL_VERSION?)
  *   check motif+gl? -- glext.h has a ton of changes: 10000 names!!
  * check out the GL support in gtk 3.16 -- this looks straightforward, snd-chn.c

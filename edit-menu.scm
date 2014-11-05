@@ -137,6 +137,7 @@
 
 (if (and (not (provided? 'snd-gtk))
 	 (provided? 'xm))
+    (with-let *motif*
     (let* ((edit-cascade (list-ref (menu-widgets) 2))
 	   (edit-menu (cadr (XtGetValues edit-cascade (list XmNsubMenuId 0)))))
 
@@ -165,5 +166,5 @@
 			     (string=? (XtName child) "Trim back"))
 			 (XtSetSensitive child (and (selected-sound)
 						    (>= (length (marks (selected-sound) (selected-channel))) 1))))))))))))
-
+    )
 

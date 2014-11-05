@@ -3,6 +3,8 @@
 (provide 'snd-new-effects.scm)
 (require snd-effects-utils.scm snd-xm-enved.scm snd-moog.scm snd-rubber.scm snd-dsp.scm)
 
+(with-let *motif*
+
 (define effects-list ()) ; menu labels are updated to show current settings
 
 (define effects-menu (add-to-main-menu "Effects" (lambda () (update-label effects-list))))
@@ -3098,3 +3100,4 @@ the synthesis amplitude, the FFT size, and the radius value."))
 (add-to-menu effects-menu "Null phase" (lambda () (zero-phase)))
 
 
+)

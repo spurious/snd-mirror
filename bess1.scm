@@ -25,6 +25,8 @@
 
 ;;; Code:
 
+(with-let *motif*
+
 (set! *clm-srate* 22050)
 
 (define *clm-sample-type* mus-lfloat)
@@ -534,5 +536,5 @@
     (XtAppMainLoop app)))
 
 (rt-motif)
-
+)
 ;; bess1.scm ends here

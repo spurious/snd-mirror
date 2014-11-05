@@ -3024,19 +3024,28 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
 #endif
 
 #if USE_MOTIF
+#if HAVE_SCHEME
+  {
+    s7_pointer motif, old_shadow;
+    s7_define_constant(s7, "*motif*", motif = s7_inlet(s7, s7_nil(s7)));
+    old_shadow = s7_shadow_rootlet(s7);
+    s7_set_shadow_rootlet(s7, motif);
+    Init_libxm();
+    s7_set_shadow_rootlet(s7, old_shadow);
+  }
+#else
   Init_libxm();
+#endif
   #if HAVE_FORTH
     fth_add_loaded_files("libxm.so");
   #endif
 #endif
 
-#if 1
 #if USE_GTK
   Init_libxg();
   #if HAVE_FORTH
     fth_add_loaded_files("libxg.so");
   #endif
-#endif
 #endif
 
 #if HAVE_GL

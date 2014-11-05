@@ -6,7 +6,7 @@ Juan Reyes donated his Leslie instrument, rotates, in leslie.cms
 s7 now has a s7webserver directory containing Kjetil Matheussen's
   s7 web repl.
 
-Mike Scholz updated some of the Forth and Ruby scripts.
+Mike Scholz updated the Forth and Ruby scripts.
 
 checked: sbcl 1.2.4|5, gtk 3.14.0|1|2|3|4, 3.15.0|1
 

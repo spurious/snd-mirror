@@ -1,5 +1,5 @@
 (if (provided? 'snd-motif)
-
+    (with-let *motif*
 ;;; set up our user-interface
 (let* ((app (car (main-widgets)))
 
@@ -259,4 +259,4 @@
 		    #f))))
     ))
 
-)
+))

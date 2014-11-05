@@ -9178,11 +9178,11 @@ Xen_wrap_4_optional_args(g_sample_w, g_sample)
 #define g_set_sample_w g_set_sample_reversed
 #define g_set_samples_w g_set_samples_reversed
 Xen_wrap_5_optional_args(orig_g_set_sample_w, g_set_sample)
-Xen_wrap_any_args(orig_g_set_samples_w, g_set_samples_any)
 #else
 Xen_wrap_5_optional_args(g_set_sample_w, g_set_sample)
 Xen_wrap_any_args(g_set_samples_w, g_set_samples_any)
 #endif
+Xen_wrap_any_args(orig_g_set_samples_w, g_set_samples_any)
 Xen_wrap_5_optional_args(g_samples_w, g_samples)
 Xen_wrap_1_arg(g_is_snd_to_sample_w, g_is_snd_to_sample)
 Xen_wrap_3_optional_args(g_snd_to_sample_w, g_snd_to_sample)
@@ -9276,10 +9276,10 @@ void g_init_edits(void)
 
 #if HAVE_SCHEME
   Xen_define_procedure("set-sample",                   orig_g_set_sample_w,              2, 3, 0, H_sample);   /* for edit-list->function */
-  Xen_define_procedure("set-samples",                  orig_g_set_samples_w,             0, 0, 1, H_set_samples);
 #endif
+  Xen_define_procedure("set-samples",                  orig_g_set_samples_w,             0, 0, 1, H_set_samples);
 
-  Xen_define_procedure(S_is_snd_to_sample,              g_is_snd_to_sample_w,              1, 0, 0, H_is_snd_to_sample);
+  Xen_define_procedure(S_is_snd_to_sample,             g_is_snd_to_sample_w,             1, 0, 0, H_is_snd_to_sample);
   Xen_define_procedure(S_make_snd_to_sample,           g_make_snd_to_sample_w,           0, 1, 0, H_make_snd_to_sample);
   Xen_define_procedure(S_snd_to_sample,                g_snd_to_sample_w,                2, 1, 0, H_snd_to_sample);
   Xen_define_procedure(S_edit_list_to_function,        g_edit_list_to_function_w,        0, 4, 0, H_edit_list_to_function);

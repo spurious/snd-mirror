@@ -366,16 +366,16 @@
 	 (if dialog
 	     (if (symbol? (car dialog))
 		 (if (provided? 'snd-motif)
-		     (if (XtIsManaged dialog)
-			 (XtUnmanageChild dialog))
+		     (if ((*motif* 'XtIsManaged) dialog)
+			   ((*motif* 'XtUnmanageChild) dialog))
 		     (if (provided? 'snd-gtk)
 			 (gtk_widget_hide dialog)))
 		 (for-each
 		  (lambda (d)
 		    (if (symbol? (car d))
 			(if (provided? 'snd-motif)
-			    (if (XtIsManaged d)
-				(XtUnmanageChild d))
+			    (if ((*motif* 'XtIsManaged) d)
+				((*motif* 'XtUnmanageChild) d))
 			    (if (provided? 'snd-gtk)
 				(gtk_widget_hide d)))))
 		  dialog))))
@@ -5803,7 +5803,7 @@ EDITS: 5
 	(peaks)
 	(if (and (provided? 'xm) 
 		 (or (not ((dialog-widgets) 15))
-		     (not (XtIsManaged ((dialog-widgets) 15)))))
+		     (not ((*motif* 'XtIsManaged) ((dialog-widgets) 15)))))
 	    (snd-display #__line__ ";peaks but no help?"))
 	(dismiss-all-dialogs)
 	(let ((num-transforms 6)
@@ -23686,6 +23686,9 @@ EDITS: 2
 
 (require snd-marks.scm)
 
+(if (provided? 'snd-motif)
+    (define mark-sync-color (*motif* 'mark-sync-color)))
+
 (define (snd_test_10)
   
   (define maxval 0.0)
@@ -25791,14 +25794,15 @@ EDITS: 2
 	(if (and (not gr)
 		 (provided? 'snd-motif) 
 		 (provided? 'xm))
-	    (do ((i 0 (+ i 1))
-		 (happy #f)
-		 (app (car (main-widgets))))
-		((or happy (= i 1000)))
-	      (let ((msk (XtAppPending app)))
-		(if (= (logand msk (logior XtIMXEvent XtIMAlternateInput)) 0)
-		    (set! happy #t)
-		    (XtDispatchEvent (XtAppNextEvent app))))))
+	    (with-let *motif* 
+	      (do ((i 0 (+ i 1))
+		   (happy #f)
+		   (app (car (main-widgets))))
+		  ((or happy (= i 1000)))
+		(let ((msk (XtAppPending app)))
+		  (if (= (logand msk (logior XtIMXEvent XtIMAlternateInput)) 0)
+		      (set! happy #t)
+		      (XtDispatchEvent (XtAppNextEvent app)))))))
 	
 	(if (and (not gr) (not (provided? 'snd-gtk))) (snd-display #__line__ ";graph-hook not called? ~A ~A ~A ~A" (time-graph? ind) (short-file-name ind) ind (sounds)))
 	(if (and (not agr) (not (provided? 'snd-gtk))) (snd-display #__line__ ";after-graph-hook not called?"))
@@ -26175,10 +26179,10 @@ EDITS: 2
       (if (and (provided? 'snd-motif)
 	       (provided? 'xm))
 	  (let* ((edhist ((channel-widgets ind 0) 7))
-		 (edp (XtParent edhist)))
-	    (XtUnmanageChild edp) 
-	    (XtVaSetValues edp (list XmNpaneMinimum 100)) 
-	    (XtManageChild edp)))
+		 (edp ((*motif* 'XtParent) edhist)))
+	    ((*motif* 'XtUnmanageChild) edp) 
+	    ((*motif* 'XtVaSetValues) edp (list (*motif* 'XmNpaneMinimum) 100)) 
+	    ((*motif* 'XtManageChild) edp)))
       
       (hook-push (edit-hook ind 0) 
 		 (lambda (hook) 
@@ -26228,10 +26232,10 @@ EDITS: 2
       (if (and (provided? 'snd-motif)
 	       (provided? 'xm))
 	  (let* ((edhist ((channel-widgets ind 0) 7))
-		 (edp (XtParent edhist)))
-	    (XtUnmanageChild edp) 
-	    (XtVaSetValues edp (list XmNpaneMinimum 1))  ; not 0 here -- Xt warnings
-	    (XtManageChild edp)))
+		 (edp ((*motif* 'XtParent) edhist)))
+	    ((*motif* 'XtUnmanageChild) edp) 
+	    ((*motif* 'XtVaSetValues) edp (list (*motif* 'XmNpaneMinimum) 1))  ; not 0 here -- Xt warnings
+	    ((*motif* 'XtManageChild) edp)))
       
       (close-sound ind))
     
@@ -39437,7 +39441,7 @@ EDITS: 1
 	(let ((tag (catch #t (lambda () (set! (sample 0 (car wid3) 0) .5)) (lambda args (car args)))))
 	  (if (> (edit-position (car wid3) 0) 0) (snd-display #__line__ ";edited variable graph? ~A ~A" tag (edit-position (car wid3) 0))))
 	(if (provided? 'snd-motif)
-	    (XtUnmanageChild variables-dialog) ; from snd-motif.scm
+	    ((*motif* 'XtUnmanageChild) variables-dialog) ; from snd-motif.scm
 	    (gtk_widget_hide variables-dialog))
 	(close-sound (car wid3))
 	(close-sound (car wid4))
@@ -41310,3680 +41314,3677 @@ EDITS: 1
 
 ;;; ---------------- test 23: X/Xt/Xm --------------------
 (define (snd_test_23)
-  (define (x->snd-color color-name)
-    "(x->snd-color color-name) returns a Snd color object corresponding to the X11 color name 'color-name'"
-    (let* ((col (XColor))
-	   (dpy (XtDisplay (cadr (main-widgets))))
-	   (scr (DefaultScreen dpy))
-	   (cmap (DefaultColormap dpy scr)))
-      (if (= (XAllocNamedColor dpy cmap color-name col col) 0)
-	  (snd-error (format #f "can't allocate ~A" color-name))
-	  (make-color-with-catch (/ (.red col) 65535.0)
-				 (/ (.green col) 65535.0)
-				 (/ (.blue col) 65535.0)))))
-  
-  (define (snd-test-clean-string str)
-    ;; full file name should be unique, so I think we need only fix it up to look like a flat name
-    (let* ((len (string-length str))
-	   (new-str (make-string len #\.)))
-      (do ((i 0 (+ i 1)))
-	  ((= i len) new-str)
-	(let ((c (str i)))
-	  (if (or (char=? c #\\)
-		  (char=? c #\/))
-	      (string-set! new-str i #\_)
-	      (string-set! new-str i c))))))
-  
-  (define (tagged-p val sym)  (or (not val) (and (list? val) (pair? val) (eq? (car val) sym))))
-  (define (array-p val type)  (and (list? val) (or (null? val) (type (car val)))))
-  (define XM_INT  integer?)
-  (define (XM_ULONG val)  (and (integer? val) (>= val 0)))
-  (define (XM_UCHAR val)  (or (char? val) (and (integer? val) (>= val 0) (< val 65536))))
-  (define XM_FLOAT  real?)
-  (define (XM_STRING val)  (or (not val) (string? val) (and (number? val) (= val 0))))
-  (define (XM_XMSTRING val)  (or (tagged-p val 'XmString) (and (number? val) (= val 0))))
-  (define (XM_STRING_TABLE val)  (or (array-p val (lambda (n) (eq? (car n) 'XmString))) (and (number? val) (= val 0))))
-  (define (XM_INT_TABLE val)  (or (array-p val integer?) (and (number? val) (= val 0))))
-  (define (XM_BOOLEAN val)  (or (boolean? val) (and (number? val) (= val 0))))
-  (define (XM_RENDER_TABLE val)  (or (tagged-p val 'XmRenderTable) (and (number? val) (= val 0))))
-  (define (XM_TRANSFER_ENTRY_LIST val)  (or (list? val) (and (number? val) (= val 0))))
-  (define (XM_RECTANGLE_LIST val)  (or (array-p val (lambda (n) (eq? (car n) 'XRectangle))) (and (number? val) (= val 0))))
-  (define (XM_TAB_LIST val)  (or (tagged-p val 'XmTabList) (and (number? val) (= val 0))))
-  (define (XM_WIDGET_LIST val)  (or (array-p val (lambda (n) (eq? (car n) 'Widget))) (and (number? val) (= val 0))))
-  (define (XM_ATOM_LIST val)  (or (not val) (array-p val (lambda (n) (eq? (car n) 'Atom))) (and (number? val) (= val 0))))
-  (define (XM_STRING_LIST val)  (or (array-p val (lambda (n) (eq? (car n) 'XmString))) (and (number? val) (= val 0))))
-  (define (XM_CHARSET_TABLE val)  (or (array-p val (lambda (n) (eq? (car n) 'CharSet))) (and (number? val) (= val 0))))
-  (define (XM_KEYSYM_TABLE val)  (or (array-p val (lambda (n) (eq? (car n) 'KeySym))) (and (number? val) (= val 0))))
-  (define (XM_WIDGET val)  (or (tagged-p val 'Widget) (and (number? val) (= val 0))))
-  (define (XM_PIXEL val)  (or (tagged-p val 'Pixel) (and (number? val) (= val 0))))
-  (define (XM_PIXMAP val)  (or (tagged-p val 'Pixmap) (and (number? val) (= val 0))))
-  (define (XM_XFONTSTRUCT val)  (or (tagged-p val 'XFontStruct) (and (number? val) (= val 0))))
-  (define (XM_DIMENSION val)  (and (integer? val) (>= val 0) (< val 65536)))
-  (define (XM_ATOM val)  (or (tagged-p val 'Atom) (and (number? val) (= val 0))))
-  (define (XM_TEXT_SOURCE val)  (or (tagged-p val 'XmTextSource) (and (number? val) (= val 0))))
-  (define (XM_FONTLIST val)  (or (tagged-p val 'FontList) (and (number? val) (= val 0))))
-  (define (XM_COLORMAP val)  (or (tagged-p val 'Colormap) (and (number? val) (= val 0))))
-  (define (XM_KEYSYM val)  (or (tagged-p val 'KeySym) (and (number? val) (= val 0))))
-  (define (XM_SCREEN val)  (or (tagged-p val 'Screen) (and (number? val) (= val 0))))
-  (define (XM_WINDOW val)  (or (tagged-p val 'Window) (and (number? val) (= val 0))))
-  (define (XM_VISUAL val)  (or (tagged-p val 'Visual) (and (number? val) (= val 0))))
-  (define (XM_WIDGET_CLASS val)  (or (tagged-p val 'WidgetClass) (and (number? val) (= val 0))))
-  (define (XM_STRING_OR_INT val)  (or (string? val) (integer? val) (not val)))
-  (define (XM_STRING_OR_XMSTRING val)  (or (string? val) (not val) (and (list? val) (pair? val) (eq? (car val) 'XmString)) (and (number? val) (= val 0))))
-  (define (XM_BOOLEAN_OR_INT val)  (or (boolean? val) (integer? val)))
-  (define (XM_POSITION val)  (and (integer? val) (< (abs val) 65536)))
-  (define (XM_SHORT val)  (and (integer? val) (< (abs val) 65536)))
-  (define (XM_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
-  (define (XM_TRANSFER_CALLBACK val)  (or (procedure? val) (not val) (integer? val) (and (list? val) (pair? val) (procedure? (car val)))))
-  (define (XM_CONVERT_CALLBACK val)  (or (procedure? val) (not val) (integer? val) (and (list? val) (pair? val) (procedure? (car val)))))
-  (define (XM_SEARCH_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
-  (define (XM_ORDER_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
-  (define (XM_QUALIFY_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
-  (define (XM_ALLOC_COLOR_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
-  (define (XM_POPUP_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
-  (define (XM_SCREEN_COLOR_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
-  (define (XM_DROP_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
-  (define (XM_DRAG_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
-  (define (XM_PARSE_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
-  
-  
-  (if (and (provided? 'snd-motif) 
-	   (provided? 'xm)) 
-      (begin
+
+  (when (and (provided? 'snd-motif) 
+	     (provided? 'xm)) 
+    (with-let (sublet *motif*)
 	
-	(do ((clmtest 0 (+ 1 clmtest))) ((= clmtest (min 2 tests)))
-	  (log-mem clmtest)
-	  
-	  ;; check some resource stuff first
-	  (let ((hgt (cadr (XtVaGetValues (cadr (main-widgets)) (list XmNheight 0))))
-		(wid (cadr (XtVaGetValues (cadr (main-widgets)) (list XmNwidth 0)))))
-	    (if (or (<= wid 0) (<= hgt 0) (> wid 65535) (> hgt 65535))
-		(snd-display #__line__ ";Dimension miscast: ~A ~A" wid hgt)))
-	  
-	  ;; ---------------- X tests ----------------
-	  (let ((scr (current-screen))
-		(dpy (XtDisplay (cadr (main-widgets)))))
-	    (if (and (not (= (.height scr) 1200))
-		     (not (= (.height scr) 1600)))
-		(snd-display #__line__ ";screen height: ~A" (.height scr)))
-	    (if (and (not (= (.width scr) 1600))
-		     (not (= (.width scr) 2560)))
-		(snd-display #__line__ ";screen width: ~A" (.width scr)))
-	    (if (not (= (.ndepths scr) 7))
-		(snd-display #__line__ ";screen ndepths: ~A" (.ndepths scr)))
-	    (let ((dps (.depths scr)))
-	      (if (or (not (= (length dps) (.ndepths scr)))
-		      (not (Depth? (car dps))))
-		  (snd-display #__line__ ";depths: ~A" (.depths scr)))
-	      (if (not (= (.depth (car dps)) 24)) (snd-display #__line__ ";.depths val: ~A" (map .depth dps)))
-	      (if (pair? (.visuals (car dps)))
-		  (if (not (Visual? (car (.visuals (car dps))))) 
+      (define (x->snd-color color-name)
+	"(x->snd-color color-name) returns a Snd color object corresponding to the X11 color name 'color-name'"
+	(let* ((col (XColor))
+	       (dpy (XtDisplay (cadr (main-widgets))))
+	       (scr (DefaultScreen dpy))
+	       (cmap (DefaultColormap dpy scr)))
+	  (if (= (XAllocNamedColor dpy cmap color-name col col) 0)
+	      (snd-error (format #f "can't allocate ~A" color-name))
+	      (make-color-with-catch (/ (.red col) 65535.0)
+				     (/ (.green col) 65535.0)
+				     (/ (.blue col) 65535.0)))))
+      
+      (define (snd-test-clean-string str)
+	;; full file name should be unique, so I think we need only fix it up to look like a flat name
+	(let* ((len (string-length str))
+	       (new-str (make-string len #\.)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i len) new-str)
+	    (let ((c (str i)))
+	      (if (or (char=? c #\\)
+		      (char=? c #\/))
+		  (string-set! new-str i #\_)
+		  (string-set! new-str i c))))))
+      
+      (define (tagged-p val sym)  (or (not val) (and (list? val) (pair? val) (eq? (car val) sym))))
+      (define (array-p val type)  (and (list? val) (or (null? val) (type (car val)))))
+      (define XM_INT  integer?)
+      (define (XM_ULONG val)  (and (integer? val) (>= val 0)))
+      (define (XM_UCHAR val)  (or (char? val) (and (integer? val) (>= val 0) (< val 65536))))
+      (define XM_FLOAT  real?)
+      (define (XM_STRING val)  (or (not val) (string? val) (and (number? val) (= val 0))))
+      (define (XM_XMSTRING val)  (or (tagged-p val 'XmString) (and (number? val) (= val 0))))
+      (define (XM_STRING_TABLE val)  (or (array-p val (lambda (n) (eq? (car n) 'XmString))) (and (number? val) (= val 0))))
+      (define (XM_INT_TABLE val)  (or (array-p val integer?) (and (number? val) (= val 0))))
+      (define (XM_BOOLEAN val)  (or (boolean? val) (and (number? val) (= val 0))))
+      (define (XM_RENDER_TABLE val)  (or (tagged-p val 'XmRenderTable) (and (number? val) (= val 0))))
+      (define (XM_TRANSFER_ENTRY_LIST val)  (or (list? val) (and (number? val) (= val 0))))
+      (define (XM_RECTANGLE_LIST val)  (or (array-p val (lambda (n) (eq? (car n) 'XRectangle))) (and (number? val) (= val 0))))
+      (define (XM_TAB_LIST val)  (or (tagged-p val 'XmTabList) (and (number? val) (= val 0))))
+      (define (XM_WIDGET_LIST val)  (or (array-p val (lambda (n) (eq? (car n) 'Widget))) (and (number? val) (= val 0))))
+      (define (XM_ATOM_LIST val)  (or (not val) (array-p val (lambda (n) (eq? (car n) 'Atom))) (and (number? val) (= val 0))))
+      (define (XM_STRING_LIST val)  (or (array-p val (lambda (n) (eq? (car n) 'XmString))) (and (number? val) (= val 0))))
+      (define (XM_CHARSET_TABLE val)  (or (array-p val (lambda (n) (eq? (car n) 'CharSet))) (and (number? val) (= val 0))))
+      (define (XM_KEYSYM_TABLE val)  (or (array-p val (lambda (n) (eq? (car n) 'KeySym))) (and (number? val) (= val 0))))
+      (define (XM_WIDGET val)  (or (tagged-p val 'Widget) (and (number? val) (= val 0))))
+      (define (XM_PIXEL val)  (or (tagged-p val 'Pixel) (and (number? val) (= val 0))))
+      (define (XM_PIXMAP val)  (or (tagged-p val 'Pixmap) (and (number? val) (= val 0))))
+      (define (XM_XFONTSTRUCT val)  (or (tagged-p val 'XFontStruct) (and (number? val) (= val 0))))
+      (define (XM_DIMENSION val)  (and (integer? val) (>= val 0) (< val 65536)))
+      (define (XM_ATOM val)  (or (tagged-p val 'Atom) (and (number? val) (= val 0))))
+      (define (XM_TEXT_SOURCE val)  (or (tagged-p val 'XmTextSource) (and (number? val) (= val 0))))
+      (define (XM_FONTLIST val)  (or (tagged-p val 'FontList) (and (number? val) (= val 0))))
+      (define (XM_COLORMAP val)  (or (tagged-p val 'Colormap) (and (number? val) (= val 0))))
+      (define (XM_KEYSYM val)  (or (tagged-p val 'KeySym) (and (number? val) (= val 0))))
+      (define (XM_SCREEN val)  (or (tagged-p val 'Screen) (and (number? val) (= val 0))))
+      (define (XM_WINDOW val)  (or (tagged-p val 'Window) (and (number? val) (= val 0))))
+      (define (XM_VISUAL val)  (or (tagged-p val 'Visual) (and (number? val) (= val 0))))
+      (define (XM_WIDGET_CLASS val)  (or (tagged-p val 'WidgetClass) (and (number? val) (= val 0))))
+      (define (XM_STRING_OR_INT val)  (or (string? val) (integer? val) (not val)))
+      (define (XM_STRING_OR_XMSTRING val)  (or (string? val) (not val) (and (list? val) (pair? val) (eq? (car val) 'XmString)) (and (number? val) (= val 0))))
+      (define (XM_BOOLEAN_OR_INT val)  (or (boolean? val) (integer? val)))
+      (define (XM_POSITION val)  (and (integer? val) (< (abs val) 65536)))
+      (define (XM_SHORT val)  (and (integer? val) (< (abs val) 65536)))
+      (define (XM_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
+      (define (XM_TRANSFER_CALLBACK val)  (or (procedure? val) (not val) (integer? val) (and (list? val) (pair? val) (procedure? (car val)))))
+      (define (XM_CONVERT_CALLBACK val)  (or (procedure? val) (not val) (integer? val) (and (list? val) (pair? val) (procedure? (car val)))))
+      (define (XM_SEARCH_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
+      (define (XM_ORDER_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
+      (define (XM_QUALIFY_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
+      (define (XM_ALLOC_COLOR_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
+      (define (XM_POPUP_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
+      (define (XM_SCREEN_COLOR_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
+      (define (XM_DROP_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
+      (define (XM_DRAG_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
+      (define (XM_PARSE_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
+      
+      ;; check some resource stuff first
+      (let ((hgt (cadr (XtVaGetValues (cadr (main-widgets)) (list XmNheight 0))))
+	    (wid (cadr (XtVaGetValues (cadr (main-widgets)) (list XmNwidth 0)))))
+	(if (or (<= wid 0) (<= hgt 0) (> wid 65535) (> hgt 65535))
+	    (snd-display #__line__ ";Dimension miscast: ~A ~A" wid hgt)))
+      
+      ;; ---------------- X tests ----------------
+      (let ((scr (current-screen))
+	    (dpy (XtDisplay (cadr (main-widgets)))))
+	(if (and (not (= (.height scr) 1200))
+		 (not (= (.height scr) 1600)))
+	    (snd-display #__line__ ";screen height: ~A" (.height scr)))
+	(if (and (not (= (.width scr) 1600))
+		 (not (= (.width scr) 2560)))
+	    (snd-display #__line__ ";screen width: ~A" (.width scr)))
+	(if (not (= (.ndepths scr) 7))
+	    (snd-display #__line__ ";screen ndepths: ~A" (.ndepths scr)))
+	(let ((dps (.depths scr)))
+	  (if (or (not (= (length dps) (.ndepths scr)))
+		  (not (Depth? (car dps))))
+	      (snd-display #__line__ ";depths: ~A" (.depths scr)))
+	  (if (not (= (.depth (car dps)) 24)) (snd-display #__line__ ";.depths val: ~A" (map .depth dps)))
+	  (if (pair? (.visuals (car dps)))
+	      (if (not (Visual? (car (.visuals (car dps))))) 
+		  (snd-display #__line__ ";visuals: ~A" (map .visuals dps))
+		  (if (not (= (.bits_per_rgb (car (.visuals (car dps)))) 8))
+		      (snd-display #__line__ ";bits/visuals: ~A" (map .bits_per_rgb (.visuals (car dps))))))
+	      (if (and (cadr dps)
+		       (pair? (.visuals (cadr dps))))
+		  (if (not (Visual? (car (.visuals (cadr dps))))) 
 		      (snd-display #__line__ ";visuals: ~A" (map .visuals dps))
-		      (if (not (= (.bits_per_rgb (car (.visuals (car dps)))) 8))
-			  (snd-display #__line__ ";bits/visuals: ~A" (map .bits_per_rgb (.visuals (car dps))))))
-		  (if (and (cadr dps)
-			   (pair? (.visuals (cadr dps))))
-		      (if (not (Visual? (car (.visuals (cadr dps))))) 
-			  (snd-display #__line__ ";visuals: ~A" (map .visuals dps))
-			  (if (not (= (.bits_per_rgb (car (.visuals (cadr dps)))) 8))
-			      (snd-display #__line__ ";bits/visuals: ~A" (map .bits_per_rgb (.visuals (cadr dps)))))))))
-	    (if (not (= (cadr (.white_pixel scr)) 16777215))
-		(snd-display #__line__ ";screen white_pixel: ~A" (.white_pixel scr)))
-	    (if (not (= (cadr (.black_pixel scr)) 0))
-		(snd-display #__line__ ";screen black_pixel: ~A" (.black_pixel scr)))
-	    (if (.backing_store scr)
-		(snd-display #__line__ ";screen backing_store: ~A" (.backing_store scr)))
-	    (if (not (= (.min_maps scr) 1))
-		(snd-display #__line__ ";screen min_maps: ~A" (.min_maps scr)))
-	    (if (not (= (.max_maps scr) 1))
-		(snd-display #__line__ ";screen max_maps: ~A" (.max_maps scr)))
-	    (if (.save_unders scr)
-		(snd-display #__line__ ";screen save_unders: ~A" (.save_unders scr)))
-	    (if (not (GC? (.default_gc scr)))
-		(snd-display #__line__ ";screen default_gc: ~A" (.default_gc scr)))
-	    (if (not (Window? (.root scr)))
-		(snd-display #__line__ ";screen root: ~A" (.root scr)))
-	    (if (not (Colormap? (.cmap scr)))
-		(snd-display #__line__ ";screen colormap: ~A" (.cmap scr)))
-	    
-	    (if (not (equal? (DisplayOfScreen scr) (.display scr))) 
-		(snd-display #__line__ ";DisplayOfScreen: ~A ~A" (DisplayOfScreen scr) (.display scr)))
-	    (if (not (equal? (RootWindowOfScreen scr) (.root scr))) 
-		(snd-display #__line__ ";RootWindowOfScreen: ~A ~A" (RootWindowOfScreen scr) (.root scr)))
-	    (if (not (equal? (BlackPixelOfScreen scr) (.black_pixel scr))) 
-		(snd-display #__line__ ";BlackPixelOfScreen: ~A ~A" (BlackPixelOfScreen scr) (.black_pixel scr)))
-	    (if (not (equal? (WhitePixelOfScreen scr) (.white_pixel scr))) 
-		(snd-display #__line__ ";WhitePixelOfScreen: ~A ~A" (WhitePixelOfScreen scr) (.white_pixel scr)))
-	    (if (not (equal? (DefaultColormapOfScreen scr) (.cmap scr))) 
-		(snd-display #__line__ ";DefaultColormapOfScreen: ~A ~A" (DefaultColormapOfScreen scr) (.cmap scr)))
-	    (if (not (equal? (DefaultDepthOfScreen scr) (.root_depth scr))) 
-		(snd-display #__line__ ";DefaultDepthOfScreen: ~A ~A" (DefaultDepthOfScreen scr) (.root_depth scr)))
-	    (if (not (equal? (DefaultGCOfScreen scr) (.default_gc scr))) 
-		(snd-display #__line__ ";DefaultGCOfScreen: ~A ~A" (DefaultGCOfScreen scr) (.default_gc scr)))
-	    (if (not (equal? (DefaultVisualOfScreen scr) (.root_visual scr))) 
-		(snd-display #__line__ ";DefaultVisualOfScreen: ~A ~A" (DefaultVisualOfScreen scr) (.root_visual scr)))
-	    (if (not (equal? (WidthOfScreen scr) (.width scr))) 
-		(snd-display #__line__ ";WidthOfScreen: ~A ~A" (WidthOfScreen scr) (.width scr)))
-	    (if (not (equal? (HeightOfScreen scr) (.height scr))) 
-		(snd-display #__line__ ";HeightOfScreen: ~A ~A" (HeightOfScreen scr) (.height scr)))
-	    (if (not (equal? (WidthMMOfScreen scr) (.mwidth scr))) 
-		(snd-display #__line__ ";WidthMMOfScreen: ~A ~A" (WidthMMOfScreen scr) (.mwidth scr)))
-	    (if (not (equal? (HeightMMOfScreen scr) (.mheight scr))) 
-		(snd-display #__line__ ";HeightMMOfScreen: ~A ~A" (HeightMMOfScreen scr) (.mheight scr)))
-	    (if (not (equal? (PlanesOfScreen scr) (.root_depth scr))) 
-		(snd-display #__line__ ";PlanesOfScreen: ~A ~A" (PlanesOfScreen scr) (.root_depth scr)))
-	    (if (not (equal? (MinCmapsOfScreen scr) (.min_maps scr))) 
-		(snd-display #__line__ ";MinCmapsOfScreen: ~A ~A" (MinCmapsOfScreen scr) (.min_maps scr)))
-	    (if (not (equal? (MaxCmapsOfScreen scr) (.max_maps scr))) 
-		(snd-display #__line__ ";MaxCmapsOfScreen: ~A ~A" (MaxCmapsOfScreen scr) (.max_maps scr)))
-	    (if (not (equal? (DoesSaveUnders scr) (.save_unders scr))) 
-		(snd-display #__line__ ";DoesSaveUnders: ~A ~A" (DoesSaveUnders scr) (.save_unders scr)))
-	    (if (not (equal? (DoesBackingStore scr) (.backing_store scr))) 
-		(snd-display #__line__ ";DoesBackingStore: ~A ~A" (DoesBackingStore scr) (.backing_store scr)))
-	    (if (not (equal? (EventMaskOfScreen scr) (.root_input_mask scr))) 
-		(snd-display #__line__ ";EventMaskOfScreen: ~A ~A" (EventMaskOfScreen scr) (.root_input_mask scr)))
-	    
-	    (if (not (equal? (XDisplayOfScreen scr) (.display scr))) 
-		(snd-display #__line__ ";XDisplayOfScreen: ~A ~A" (XDisplayOfScreen scr) (.display scr)))
-	    (if (not (equal? (XDisplayOfScreen (XScreenOfDisplay dpy 0)) dpy))
-		(snd-display #__line__ ";XScreenOfDisplay ~A ~A" (XDisplayOfScreen (XScreenOfDisplay dpy 0)) dpy))
-	    (if (not (equal? (XDefaultScreenOfDisplay dpy) scr))
-		(snd-display #__line__ ";XDefaultScreenOfDisplay ~A ~A" (XDefaultScreenOfDisplay dpy) scr))
-	    (if (not (equal? (XRootWindowOfScreen scr) (.root scr))) 
-		(snd-display #__line__ ";XRootWindowOfScreen: ~A ~A" (XRootWindowOfScreen scr) (.root scr)))
-	    (if (not (equal? (XBlackPixelOfScreen scr) (.black_pixel scr))) 
-		(snd-display #__line__ ";XBlackPixelOfScreen: ~A ~A" (XBlackPixelOfScreen scr) (.black_pixel scr)))
-	    (if (not (equal? (XWhitePixelOfScreen scr) (.white_pixel scr))) 
-		(snd-display #__line__ ";XWhitePixelOfScreen: ~A ~A" (XWhitePixelOfScreen scr) (.white_pixel scr)))
-	    (if (not (equal? (XDefaultColormapOfScreen scr) (.cmap scr))) 
-		(snd-display #__line__ ";XDefaultColormapOfScreen: ~A ~A" (XDefaultColormapOfScreen scr) (.cmap scr)))
-	    (if (not (equal? (XDefaultDepthOfScreen scr) (.root_depth scr))) 
-		(snd-display #__line__ ";XDefaultDepthOfScreen: ~A ~A" (XDefaultDepthOfScreen scr) (.root_depth scr)))
-	    (if (not (equal? (XDefaultGCOfScreen scr) (.default_gc scr)))
-		(snd-display #__line__ ";XDefaultGCOfScreen: ~A ~A" (XDefaultGCOfScreen scr) (.default_gc scr)))
-	    (if (not (equal? (XDefaultVisualOfScreen scr) (.root_visual scr)))
-		(snd-display #__line__ ";XDefaultVisualOfScreen: ~A ~A" (XDefaultVisualOfScreen scr) (.root_visual scr)))
-	    (if (not (equal? (XWidthOfScreen scr) (.width scr)))
-		(snd-display #__line__ ";XWidthOfScreen: ~A ~A" (XWidthOfScreen scr) (.width scr)))
-	    (if (not (equal? (XHeightOfScreen scr) (.height scr)))
-		(snd-display #__line__ ";XHeightOfScreen: ~A ~A" (XHeightOfScreen scr) (.height scr)))
-	    (if (not (equal? (XWidthMMOfScreen scr) (.mwidth scr))) 
-		(snd-display #__line__ ";XWidthMMOfScreen: ~A ~A" (XWidthMMOfScreen scr) (.mwidth scr)))
-	    (if (not (equal? (XHeightMMOfScreen scr) (.mheight scr))) 
-		(snd-display #__line__ ";XHeightMMOfScreen: ~A ~A" (XHeightMMOfScreen scr) (.mheight scr)))
-	    (if (not (equal? (XPlanesOfScreen scr) (.root_depth scr))) 
-		(snd-display #__line__ ";XPlanesOfScreen: ~A ~A" (XPlanesOfScreen scr) (.root_depth scr)))
-	    (if (not (equal? (XMinCmapsOfScreen scr) (.min_maps scr)))
-		(snd-display #__line__ ";XMinCmapsOfScreen: ~A ~A" (XMinCmapsOfScreen scr) (.min_maps scr)))
-	    (if (not (equal? (XMaxCmapsOfScreen scr) (.max_maps scr)))
-		(snd-display #__line__ ";XMaxCmapsOfScreen: ~A ~A" (XMaxCmapsOfScreen scr) (.max_maps scr)))
-	    (if (not (equal? (XDoesSaveUnders scr) (.save_unders scr)))
-		(snd-display #__line__ ";XDoesSaveUnders: ~A ~A" (XDoesSaveUnders scr) (.save_unders scr)))
-	    (if (not (equal? (XDoesBackingStore scr) (.backing_store scr))) 
-		(snd-display #__line__ ";XDoesBackingStore: ~A ~A" (XDoesBackingStore scr) (.backing_store scr)))
-	    (if (not (equal? (XEventMaskOfScreen scr) (.root_input_mask scr)))
-		(snd-display #__line__ ";XEventMaskOfScreen: ~A ~A" (XEventMaskOfScreen scr) (.root_input_mask scr)))
-	    )
-	  
-	  (let* ((scr (current-screen))
-		 (scrn (XScreenNumberOfScreen scr))
-		 (dpy (XtDisplay (cadr (main-widgets))))
-		 (vis (DefaultVisual dpy scrn))
-		 (win (XtWindow (cadr (main-widgets)))))
-	    
-	    (if (not (equal? (RootWindow dpy scrn) (.root scr)))
-		(snd-display #__line__ ";RootWindow: ~A ~A" (RootWindow dpy scrn) (.root scr)))
-	    (if (not (equal? (DefaultRootWindow dpy) (.root (ScreenOfDisplay dpy (DefaultScreen dpy)))))
-		(snd-display #__line__ ";DefaultRootWindow: ~A ~A" (DefaultRootWindow dpy) (.root (ScreenOfDisplay dpy (DefaultScreen dpy)))))
-	    (if (not (equal? (DefaultVisual dpy scrn) (.root_visual scr)))
-		(snd-display #__line__ ";DefaultVisual: ~A ~A" (DefaultVisual dpy scrn) (.root_visual scr)))
-	    (if (not (equal? (DefaultGC dpy scrn) (.default_gc scr)))
-		(snd-display #__line__ ";DefaultGC: ~A ~A" (DefaultGC dpy scrn) (.default_gc scr)))
-	    (if (not (equal? (BlackPixel dpy scrn) (.black_pixel scr)))
-		(snd-display #__line__ ";BlackPixel: ~A ~A" (BlackPixel dpy scrn) (.black_pixel scr)))
-	    (if (not (equal? (WhitePixel dpy scrn) (.white_pixel scr)))
-		(snd-display #__line__ ";WhitePixel ~A ~A" (WhitePixel dpy scrn) (.white_pixel scr)))
-	    (if (not (equal? (DisplayWidth dpy scrn) (.width scr)))
-		(snd-display #__line__ ";DisplayWidth: ~A ~A" (DisplayWidth dpy scrn) (.width scr)))
-	    (if (not (equal? (DisplayHeight dpy scrn) (.height scr)))
-		(snd-display #__line__ ";DisplayHeight: ~A ~A" (DisplayHeight dpy scrn) (.height scr)))
-	    (if (not (equal? (DisplayWidthMM dpy scrn) (.mwidth scr)))
-		(snd-display #__line__ ";DisplayWidthMM: ~A ~A" (DisplayWidthMM dpy scrn) (.mwidth scr)))
-	    (if (not (equal? (DisplayHeightMM dpy scrn) (.mheight scr)))
-		(snd-display #__line__ ";DisplayHeightMM: ~A ~A" (DisplayHeightMM dpy scrn) (.mheight scr)))
-	    (if (not (equal? (DisplayPlanes dpy scrn) (.root_depth scr)))
-		(snd-display #__line__ ";DisplayPlanes: ~A ~A" (DisplayPlanes dpy scrn) (.root_depth scr)))
-	    (if (not (equal? (DefaultDepth dpy scrn) (.root_depth scr)))
-		(snd-display #__line__ ";DefaultDepth: ~A ~A" (DefaultDepth dpy scrn) (.root_depth scr)))
-	    (if (not (equal? (DefaultColormap dpy scrn) (.cmap scr)))
-		(snd-display #__line__ ";DefaultColormap: ~A ~A" (DefaultColormap dpy scrn) (.cmap scr)))
-	    
-	    (if (not (equal? (XRootWindow dpy scrn) (.root scr)))
-		(snd-display #__line__ ";XRootWindow: ~A ~A" (XRootWindow dpy scrn) (.root scr)))
-	    (if (not (equal? (XDefaultRootWindow dpy) (.root (ScreenOfDisplay dpy (DefaultScreen dpy)))))
-		(snd-display #__line__ ";XDefaultRootWindow: ~A ~A" (XDefaultRootWindow dpy) (.root (ScreenOfDisplay dpy (DefaultScreen dpy)))))
-	    (if (not (equal? (XDefaultVisual dpy scrn) (.root_visual scr)))
-		(snd-display #__line__ ";XDefaultVisual: ~A ~A" (XDefaultVisual dpy scrn) (.root_visual scr)))
-	    (if (not (equal? (XDefaultGC dpy scrn) (.default_gc scr)))
-		(snd-display #__line__ ";XDefaultGC: ~A ~A" (XDefaultGC dpy scrn) (.default_gc scr)))
-	    (if (not (equal? (XBlackPixel dpy scrn) (.black_pixel scr)))
-		(snd-display #__line__ ";XBlackPixel: ~A ~A" (XBlackPixel dpy scrn) (.black_pixel scr)))
-	    (if (not (equal? (XWhitePixel dpy scrn) (.white_pixel scr)))
-		(snd-display #__line__ ";XWhitePixel ~A ~A" (XWhitePixel dpy scrn) (.white_pixel scr)))
-	    (if (not (equal? (XDisplayWidth dpy scrn) (.width scr)))
-		(snd-display #__line__ ";XDisplayWidth: ~A ~A" (XDisplayWidth dpy scrn) (.width scr)))
-	    (if (not (equal? (XDisplayHeight dpy scrn) (.height scr)))
-		(snd-display #__line__ ";XDisplayHeight: ~A ~A" (XDisplayHeight dpy scrn) (.height scr)))
-	    (if (not (equal? (XDisplayWidthMM dpy scrn) (.mwidth scr)))
-		(snd-display #__line__ ";XDisplayWidthMM: ~A ~A" (XDisplayWidthMM dpy scrn) (.mwidth scr)))
-	    (if (not (equal? (XDisplayHeightMM dpy scrn) (.mheight scr)))
-		(snd-display #__line__ ";XDisplayHeightMM: ~A ~A" (XDisplayHeightMM dpy scrn) (.mheight scr)))
-	    (if (not (equal? (XDisplayPlanes dpy scrn) (.root_depth scr)))
-		(snd-display #__line__ ";XDisplayPlanes: ~A ~A" (XDisplayPlanes dpy scrn) (.root_depth scr)))
-	    (if (not (equal? (XDefaultDepth dpy scrn) (.root_depth scr)))
-		(snd-display #__line__ ";XDefaultDepth: ~A ~A" (XDefaultDepth dpy scrn) (.root_depth scr)))
-	    (if (not (equal? (XDefaultColormap dpy scrn) (.cmap scr)))
-		(snd-display #__line__ ";XDefaultColormap: ~A ~A" (XDefaultColormap dpy scrn) (.cmap scr)))
-	    
-	    (if (not (equal? (XDefaultVisual dpy scrn) vis))
-		(snd-display #__line__ ";XDefaultVisual: ~A ~A" (XDefaultVisual dpy scrn) vis))
-	    (if (not (equal? (DisplayCells dpy scrn) (.map_entries vis)))
-		(snd-display #__line__ ";DisplayCells: ~A ~A" (DisplayCells dpy scrn) (.map_entries vis)))
-	    (if (not (equal? (CellsOfScreen scr) (.map_entries (DefaultVisualOfScreen scr))))
-		(snd-display #__line__ ";CellsOfScreen: ~A ~A" (CellsOfScreen scr) (.map_entries (DefaultVisualOfScreen scr))))
-	    (if (not (equal? (XDisplayCells dpy scrn) (.map_entries vis)))
-		(snd-display #__line__ ";XDisplayCells: ~A ~A" (XDisplayCells dpy scrn) (.map_entries vis)))
-	    (if (not (equal? (XCellsOfScreen scr) (.map_entries (DefaultVisualOfScreen scr))))
-		(snd-display #__line__ ";XCellsOfScreen: ~A ~A" (XCellsOfScreen scr) (.map_entries (DefaultVisualOfScreen scr))))
-	    (if (< (XNextRequest dpy) (XLastKnownRequestProcessed dpy))
-		(snd-display #__line__ ";XRequests: ~A ~A" (XNextRequest dpy) (XLastKnownRequestProcessed dpy)))
-	    (if (< (NextRequest dpy) (LastKnownRequestProcessed dpy))
-		(snd-display #__line__ ";Requests: ~A ~A" (NextRequest dpy) (LastKnownRequestProcessed dpy)))
-	    (if (not (= (XDisplayMotionBufferSize dpy) 256))
-		(snd-display #__line__ ";XDisplayMotionBufferSize: ~A" (XDisplayMotionBufferSize dpy)))
-	    (XGetMotionEvents dpy win (list 'Time 100) (list 'Time CurrentTime))
-	    
-	    (let ((lmapk (XNewModifiermap 2))
-		  (kcd (list 'KeyCode 50)))
-	      (if (not (XModifierKeymap? lmapk))
-		  (snd-display #__line__ ";xNewModifiermap: ~A" lmapk)
-		  (begin
-		    (set! lmapk (XInsertModifiermapEntry lmapk kcd ShiftMapIndex))
-		    (set! lmapk (XDeleteModifiermapEntry lmapk kcd ShiftMapIndex))
+		      (if (not (= (.bits_per_rgb (car (.visuals (cadr dps)))) 8))
+			  (snd-display #__line__ ";bits/visuals: ~A" (map .bits_per_rgb (.visuals (cadr dps)))))))))
+	(if (not (= (cadr (.white_pixel scr)) 16777215))
+	    (snd-display #__line__ ";screen white_pixel: ~A" (.white_pixel scr)))
+	(if (not (= (cadr (.black_pixel scr)) 0))
+	    (snd-display #__line__ ";screen black_pixel: ~A" (.black_pixel scr)))
+	(if (.backing_store scr)
+	    (snd-display #__line__ ";screen backing_store: ~A" (.backing_store scr)))
+	(if (not (= (.min_maps scr) 1))
+	    (snd-display #__line__ ";screen min_maps: ~A" (.min_maps scr)))
+	(if (not (= (.max_maps scr) 1))
+	    (snd-display #__line__ ";screen max_maps: ~A" (.max_maps scr)))
+	(if (.save_unders scr)
+	    (snd-display #__line__ ";screen save_unders: ~A" (.save_unders scr)))
+	(if (not (GC? (.default_gc scr)))
+	    (snd-display #__line__ ";screen default_gc: ~A" (.default_gc scr)))
+	(if (not (Window? (.root scr)))
+	    (snd-display #__line__ ";screen root: ~A" (.root scr)))
+	(if (not (Colormap? (.cmap scr)))
+	    (snd-display #__line__ ";screen colormap: ~A" (.cmap scr)))
+	
+	(if (not (equal? (DisplayOfScreen scr) (.display scr))) 
+	    (snd-display #__line__ ";DisplayOfScreen: ~A ~A" (DisplayOfScreen scr) (.display scr)))
+	(if (not (equal? (RootWindowOfScreen scr) (.root scr))) 
+	    (snd-display #__line__ ";RootWindowOfScreen: ~A ~A" (RootWindowOfScreen scr) (.root scr)))
+	(if (not (equal? (BlackPixelOfScreen scr) (.black_pixel scr))) 
+	    (snd-display #__line__ ";BlackPixelOfScreen: ~A ~A" (BlackPixelOfScreen scr) (.black_pixel scr)))
+	(if (not (equal? (WhitePixelOfScreen scr) (.white_pixel scr))) 
+	    (snd-display #__line__ ";WhitePixelOfScreen: ~A ~A" (WhitePixelOfScreen scr) (.white_pixel scr)))
+	(if (not (equal? (DefaultColormapOfScreen scr) (.cmap scr))) 
+	    (snd-display #__line__ ";DefaultColormapOfScreen: ~A ~A" (DefaultColormapOfScreen scr) (.cmap scr)))
+	(if (not (equal? (DefaultDepthOfScreen scr) (.root_depth scr))) 
+	    (snd-display #__line__ ";DefaultDepthOfScreen: ~A ~A" (DefaultDepthOfScreen scr) (.root_depth scr)))
+	(if (not (equal? (DefaultGCOfScreen scr) (.default_gc scr))) 
+	    (snd-display #__line__ ";DefaultGCOfScreen: ~A ~A" (DefaultGCOfScreen scr) (.default_gc scr)))
+	(if (not (equal? (DefaultVisualOfScreen scr) (.root_visual scr))) 
+	    (snd-display #__line__ ";DefaultVisualOfScreen: ~A ~A" (DefaultVisualOfScreen scr) (.root_visual scr)))
+	(if (not (equal? (WidthOfScreen scr) (.width scr))) 
+	    (snd-display #__line__ ";WidthOfScreen: ~A ~A" (WidthOfScreen scr) (.width scr)))
+	(if (not (equal? (HeightOfScreen scr) (.height scr))) 
+	    (snd-display #__line__ ";HeightOfScreen: ~A ~A" (HeightOfScreen scr) (.height scr)))
+	(if (not (equal? (WidthMMOfScreen scr) (.mwidth scr))) 
+	    (snd-display #__line__ ";WidthMMOfScreen: ~A ~A" (WidthMMOfScreen scr) (.mwidth scr)))
+	(if (not (equal? (HeightMMOfScreen scr) (.mheight scr))) 
+	    (snd-display #__line__ ";HeightMMOfScreen: ~A ~A" (HeightMMOfScreen scr) (.mheight scr)))
+	(if (not (equal? (PlanesOfScreen scr) (.root_depth scr))) 
+	    (snd-display #__line__ ";PlanesOfScreen: ~A ~A" (PlanesOfScreen scr) (.root_depth scr)))
+	(if (not (equal? (MinCmapsOfScreen scr) (.min_maps scr))) 
+	    (snd-display #__line__ ";MinCmapsOfScreen: ~A ~A" (MinCmapsOfScreen scr) (.min_maps scr)))
+	(if (not (equal? (MaxCmapsOfScreen scr) (.max_maps scr))) 
+	    (snd-display #__line__ ";MaxCmapsOfScreen: ~A ~A" (MaxCmapsOfScreen scr) (.max_maps scr)))
+	(if (not (equal? (DoesSaveUnders scr) (.save_unders scr))) 
+	    (snd-display #__line__ ";DoesSaveUnders: ~A ~A" (DoesSaveUnders scr) (.save_unders scr)))
+	(if (not (equal? (DoesBackingStore scr) (.backing_store scr))) 
+	    (snd-display #__line__ ";DoesBackingStore: ~A ~A" (DoesBackingStore scr) (.backing_store scr)))
+	(if (not (equal? (EventMaskOfScreen scr) (.root_input_mask scr))) 
+	    (snd-display #__line__ ";EventMaskOfScreen: ~A ~A" (EventMaskOfScreen scr) (.root_input_mask scr)))
+	
+	(if (not (equal? (XDisplayOfScreen scr) (.display scr))) 
+	    (snd-display #__line__ ";XDisplayOfScreen: ~A ~A" (XDisplayOfScreen scr) (.display scr)))
+	(if (not (equal? (XDisplayOfScreen (XScreenOfDisplay dpy 0)) dpy))
+	    (snd-display #__line__ ";XScreenOfDisplay ~A ~A" (XDisplayOfScreen (XScreenOfDisplay dpy 0)) dpy))
+	(if (not (equal? (XDefaultScreenOfDisplay dpy) scr))
+	    (snd-display #__line__ ";XDefaultScreenOfDisplay ~A ~A" (XDefaultScreenOfDisplay dpy) scr))
+	(if (not (equal? (XRootWindowOfScreen scr) (.root scr))) 
+	    (snd-display #__line__ ";XRootWindowOfScreen: ~A ~A" (XRootWindowOfScreen scr) (.root scr)))
+	(if (not (equal? (XBlackPixelOfScreen scr) (.black_pixel scr))) 
+	    (snd-display #__line__ ";XBlackPixelOfScreen: ~A ~A" (XBlackPixelOfScreen scr) (.black_pixel scr)))
+	(if (not (equal? (XWhitePixelOfScreen scr) (.white_pixel scr))) 
+	    (snd-display #__line__ ";XWhitePixelOfScreen: ~A ~A" (XWhitePixelOfScreen scr) (.white_pixel scr)))
+	(if (not (equal? (XDefaultColormapOfScreen scr) (.cmap scr))) 
+	    (snd-display #__line__ ";XDefaultColormapOfScreen: ~A ~A" (XDefaultColormapOfScreen scr) (.cmap scr)))
+	(if (not (equal? (XDefaultDepthOfScreen scr) (.root_depth scr))) 
+	    (snd-display #__line__ ";XDefaultDepthOfScreen: ~A ~A" (XDefaultDepthOfScreen scr) (.root_depth scr)))
+	(if (not (equal? (XDefaultGCOfScreen scr) (.default_gc scr)))
+	    (snd-display #__line__ ";XDefaultGCOfScreen: ~A ~A" (XDefaultGCOfScreen scr) (.default_gc scr)))
+	(if (not (equal? (XDefaultVisualOfScreen scr) (.root_visual scr)))
+	    (snd-display #__line__ ";XDefaultVisualOfScreen: ~A ~A" (XDefaultVisualOfScreen scr) (.root_visual scr)))
+	(if (not (equal? (XWidthOfScreen scr) (.width scr)))
+	    (snd-display #__line__ ";XWidthOfScreen: ~A ~A" (XWidthOfScreen scr) (.width scr)))
+	(if (not (equal? (XHeightOfScreen scr) (.height scr)))
+	    (snd-display #__line__ ";XHeightOfScreen: ~A ~A" (XHeightOfScreen scr) (.height scr)))
+	(if (not (equal? (XWidthMMOfScreen scr) (.mwidth scr))) 
+	    (snd-display #__line__ ";XWidthMMOfScreen: ~A ~A" (XWidthMMOfScreen scr) (.mwidth scr)))
+	(if (not (equal? (XHeightMMOfScreen scr) (.mheight scr))) 
+	    (snd-display #__line__ ";XHeightMMOfScreen: ~A ~A" (XHeightMMOfScreen scr) (.mheight scr)))
+	(if (not (equal? (XPlanesOfScreen scr) (.root_depth scr))) 
+	    (snd-display #__line__ ";XPlanesOfScreen: ~A ~A" (XPlanesOfScreen scr) (.root_depth scr)))
+	(if (not (equal? (XMinCmapsOfScreen scr) (.min_maps scr)))
+	    (snd-display #__line__ ";XMinCmapsOfScreen: ~A ~A" (XMinCmapsOfScreen scr) (.min_maps scr)))
+	(if (not (equal? (XMaxCmapsOfScreen scr) (.max_maps scr)))
+	    (snd-display #__line__ ";XMaxCmapsOfScreen: ~A ~A" (XMaxCmapsOfScreen scr) (.max_maps scr)))
+	(if (not (equal? (XDoesSaveUnders scr) (.save_unders scr)))
+	    (snd-display #__line__ ";XDoesSaveUnders: ~A ~A" (XDoesSaveUnders scr) (.save_unders scr)))
+	(if (not (equal? (XDoesBackingStore scr) (.backing_store scr))) 
+	    (snd-display #__line__ ";XDoesBackingStore: ~A ~A" (XDoesBackingStore scr) (.backing_store scr)))
+	(if (not (equal? (XEventMaskOfScreen scr) (.root_input_mask scr)))
+	    (snd-display #__line__ ";XEventMaskOfScreen: ~A ~A" (XEventMaskOfScreen scr) (.root_input_mask scr)))
+	)
+      
+      (let* ((scr (current-screen))
+	     (scrn (XScreenNumberOfScreen scr))
+	     (dpy (XtDisplay (cadr (main-widgets))))
+	     (vis (DefaultVisual dpy scrn))
+	     (win (XtWindow (cadr (main-widgets)))))
+	
+	(if (not (equal? (RootWindow dpy scrn) (.root scr)))
+	    (snd-display #__line__ ";RootWindow: ~A ~A" (RootWindow dpy scrn) (.root scr)))
+	(if (not (equal? (DefaultRootWindow dpy) (.root (ScreenOfDisplay dpy (DefaultScreen dpy)))))
+	    (snd-display #__line__ ";DefaultRootWindow: ~A ~A" (DefaultRootWindow dpy) (.root (ScreenOfDisplay dpy (DefaultScreen dpy)))))
+	(if (not (equal? (DefaultVisual dpy scrn) (.root_visual scr)))
+	    (snd-display #__line__ ";DefaultVisual: ~A ~A" (DefaultVisual dpy scrn) (.root_visual scr)))
+	(if (not (equal? (DefaultGC dpy scrn) (.default_gc scr)))
+	    (snd-display #__line__ ";DefaultGC: ~A ~A" (DefaultGC dpy scrn) (.default_gc scr)))
+	(if (not (equal? (BlackPixel dpy scrn) (.black_pixel scr)))
+	    (snd-display #__line__ ";BlackPixel: ~A ~A" (BlackPixel dpy scrn) (.black_pixel scr)))
+	(if (not (equal? (WhitePixel dpy scrn) (.white_pixel scr)))
+	    (snd-display #__line__ ";WhitePixel ~A ~A" (WhitePixel dpy scrn) (.white_pixel scr)))
+	(if (not (equal? (DisplayWidth dpy scrn) (.width scr)))
+	    (snd-display #__line__ ";DisplayWidth: ~A ~A" (DisplayWidth dpy scrn) (.width scr)))
+	(if (not (equal? (DisplayHeight dpy scrn) (.height scr)))
+	    (snd-display #__line__ ";DisplayHeight: ~A ~A" (DisplayHeight dpy scrn) (.height scr)))
+	(if (not (equal? (DisplayWidthMM dpy scrn) (.mwidth scr)))
+	    (snd-display #__line__ ";DisplayWidthMM: ~A ~A" (DisplayWidthMM dpy scrn) (.mwidth scr)))
+	(if (not (equal? (DisplayHeightMM dpy scrn) (.mheight scr)))
+	    (snd-display #__line__ ";DisplayHeightMM: ~A ~A" (DisplayHeightMM dpy scrn) (.mheight scr)))
+	(if (not (equal? (DisplayPlanes dpy scrn) (.root_depth scr)))
+	    (snd-display #__line__ ";DisplayPlanes: ~A ~A" (DisplayPlanes dpy scrn) (.root_depth scr)))
+	(if (not (equal? (DefaultDepth dpy scrn) (.root_depth scr)))
+	    (snd-display #__line__ ";DefaultDepth: ~A ~A" (DefaultDepth dpy scrn) (.root_depth scr)))
+	(if (not (equal? (DefaultColormap dpy scrn) (.cmap scr)))
+	    (snd-display #__line__ ";DefaultColormap: ~A ~A" (DefaultColormap dpy scrn) (.cmap scr)))
+	
+	(if (not (equal? (XRootWindow dpy scrn) (.root scr)))
+	    (snd-display #__line__ ";XRootWindow: ~A ~A" (XRootWindow dpy scrn) (.root scr)))
+	(if (not (equal? (XDefaultRootWindow dpy) (.root (ScreenOfDisplay dpy (DefaultScreen dpy)))))
+	    (snd-display #__line__ ";XDefaultRootWindow: ~A ~A" (XDefaultRootWindow dpy) (.root (ScreenOfDisplay dpy (DefaultScreen dpy)))))
+	(if (not (equal? (XDefaultVisual dpy scrn) (.root_visual scr)))
+	    (snd-display #__line__ ";XDefaultVisual: ~A ~A" (XDefaultVisual dpy scrn) (.root_visual scr)))
+	(if (not (equal? (XDefaultGC dpy scrn) (.default_gc scr)))
+	    (snd-display #__line__ ";XDefaultGC: ~A ~A" (XDefaultGC dpy scrn) (.default_gc scr)))
+	(if (not (equal? (XBlackPixel dpy scrn) (.black_pixel scr)))
+	    (snd-display #__line__ ";XBlackPixel: ~A ~A" (XBlackPixel dpy scrn) (.black_pixel scr)))
+	(if (not (equal? (XWhitePixel dpy scrn) (.white_pixel scr)))
+	    (snd-display #__line__ ";XWhitePixel ~A ~A" (XWhitePixel dpy scrn) (.white_pixel scr)))
+	(if (not (equal? (XDisplayWidth dpy scrn) (.width scr)))
+	    (snd-display #__line__ ";XDisplayWidth: ~A ~A" (XDisplayWidth dpy scrn) (.width scr)))
+	(if (not (equal? (XDisplayHeight dpy scrn) (.height scr)))
+	    (snd-display #__line__ ";XDisplayHeight: ~A ~A" (XDisplayHeight dpy scrn) (.height scr)))
+	(if (not (equal? (XDisplayWidthMM dpy scrn) (.mwidth scr)))
+	    (snd-display #__line__ ";XDisplayWidthMM: ~A ~A" (XDisplayWidthMM dpy scrn) (.mwidth scr)))
+	(if (not (equal? (XDisplayHeightMM dpy scrn) (.mheight scr)))
+	    (snd-display #__line__ ";XDisplayHeightMM: ~A ~A" (XDisplayHeightMM dpy scrn) (.mheight scr)))
+	(if (not (equal? (XDisplayPlanes dpy scrn) (.root_depth scr)))
+	    (snd-display #__line__ ";XDisplayPlanes: ~A ~A" (XDisplayPlanes dpy scrn) (.root_depth scr)))
+	(if (not (equal? (XDefaultDepth dpy scrn) (.root_depth scr)))
+	    (snd-display #__line__ ";XDefaultDepth: ~A ~A" (XDefaultDepth dpy scrn) (.root_depth scr)))
+	(if (not (equal? (XDefaultColormap dpy scrn) (.cmap scr)))
+	    (snd-display #__line__ ";XDefaultColormap: ~A ~A" (XDefaultColormap dpy scrn) (.cmap scr)))
+	
+	(if (not (equal? (XDefaultVisual dpy scrn) vis))
+	    (snd-display #__line__ ";XDefaultVisual: ~A ~A" (XDefaultVisual dpy scrn) vis))
+	(if (not (equal? (DisplayCells dpy scrn) (.map_entries vis)))
+	    (snd-display #__line__ ";DisplayCells: ~A ~A" (DisplayCells dpy scrn) (.map_entries vis)))
+	(if (not (equal? (CellsOfScreen scr) (.map_entries (DefaultVisualOfScreen scr))))
+	    (snd-display #__line__ ";CellsOfScreen: ~A ~A" (CellsOfScreen scr) (.map_entries (DefaultVisualOfScreen scr))))
+	(if (not (equal? (XDisplayCells dpy scrn) (.map_entries vis)))
+	    (snd-display #__line__ ";XDisplayCells: ~A ~A" (XDisplayCells dpy scrn) (.map_entries vis)))
+	(if (not (equal? (XCellsOfScreen scr) (.map_entries (DefaultVisualOfScreen scr))))
+	    (snd-display #__line__ ";XCellsOfScreen: ~A ~A" (XCellsOfScreen scr) (.map_entries (DefaultVisualOfScreen scr))))
+	(if (< (XNextRequest dpy) (XLastKnownRequestProcessed dpy))
+	    (snd-display #__line__ ";XRequests: ~A ~A" (XNextRequest dpy) (XLastKnownRequestProcessed dpy)))
+	(if (< (NextRequest dpy) (LastKnownRequestProcessed dpy))
+	    (snd-display #__line__ ";Requests: ~A ~A" (NextRequest dpy) (LastKnownRequestProcessed dpy)))
+	(if (not (= (XDisplayMotionBufferSize dpy) 256))
+	    (snd-display #__line__ ";XDisplayMotionBufferSize: ~A" (XDisplayMotionBufferSize dpy)))
+	(XGetMotionEvents dpy win (list 'Time 100) (list 'Time CurrentTime))
+	
+	(let ((lmapk (XNewModifiermap 2))
+	      (kcd (list 'KeyCode 50)))
+	  (if (not (XModifierKeymap? lmapk))
+	      (snd-display #__line__ ";xNewModifiermap: ~A" lmapk)
+	      (begin
+		(set! lmapk (XInsertModifiermapEntry lmapk kcd ShiftMapIndex))
+		(set! lmapk (XDeleteModifiermapEntry lmapk kcd ShiftMapIndex))
 					;		      (XFreeModifiermap lmapk) ;prone to segfault in X
-		    )))
-	    
-	    (if (not (= (XExtendedMaxRequestSize dpy) 4194303))
-		(snd-display #__line__ ";XExtendedMaxRequestSize ~A" (XExtendedMaxRequestSize dpy)))
-	    (if (not (= (XMaxRequestSize dpy) 65535))
-		(snd-display #__line__ ";XMaxRequestSize ~A" (XMaxRequestSize dpy)))
-	    (if (not (member (list 'Atom 40) (XListProperties dpy win)))
-		(snd-display #__line__ ";XListProperties: ~A" (XListProperties dpy win)))
-	    (if (not (member "SHAPE" (XListExtensions dpy)))
-		(snd-display #__line__ ";XListExtensions: ~A" (XListExtensions dpy)))
-	    (let ((val (XListInstalledColormaps dpy win)))
-	      (if (or (not val)
-		      (null? val)
-		      (not (Colormap? (car val))))
-		  (snd-display #__line__ ";XListInstalledColormaps: ~A" (XListInstalledColormaps dpy win))))
-	    (if (not (string=? (XKeysymToString (list 'KeySym 80)) "P"))
-		(snd-display #__line__ ";XKeysymToString: ~A" (XKeysymToString (list 'KeySym 80))))
-	    (if (not (string=? (XGetAtomName dpy (list 'Atom 40)) "WM_NORMAL_HINTS"))
-		(snd-display #__line__ ";XGetAtomName: ~A" (XGetAtomName dpy (list 'Atom 40))))
-	    
-	    (if (not (= (.bits_per_rgb vis) 8)) (snd-display #__line__ ";bits_per_rgb: ~A" (.bits_per_rgb vis)))
-	    (if (not (= (.blue_mask vis) 255)) (snd-display #__line__ ";blue_mask: ~A" (.blue_mask vis)))
-	    (if (not (= (.green_mask vis) 65280)) (snd-display #__line__ ";green_mask: ~A" (.green_mask vis)))
-	    (if (not (= (.red_mask vis) 16711680)) (snd-display #__line__ ";red_mask: ~A" (.red_mask vis)))
-	    (if (not (= AllPlanes 4294967295)) (snd-display #__line__ ";AllPlanes: ~A" AllPlanes))
-	    
-	    (if (< (QLength dpy) 0) (snd-display #__line__ ";QLength: ~A" (QLength dpy)))
-	    (if (not (= (ScreenCount dpy) 1)) (snd-display #__line__ ";ScreenCount: ~A" (ScreenCount dpy)))
-	    (if (not (string=? (ServerVendor dpy) "The X.Org Foundation")) (snd-display #__line__ ";ServerVendor: ~A" (ServerVendor dpy)))
-	    (if (not (= (ProtocolRevision dpy) 0)) (snd-display #__line__ ";ProtocolRevision: ~A" (ProtocolRevision dpy)))
-	    (if (not (= (ProtocolVersion dpy) 11)) (snd-display #__line__ ";ProtocolVersion: ~A" (ProtocolVersion dpy)))
-	    (if (not (number? (VendorRelease dpy))) (snd-display #__line__ ";VendorRelease: ~A" (VendorRelease dpy)))
-	    (if (not (string=? (DisplayString dpy) ":0.0")) (snd-display #__line__ ";DisplayString: ~A" (DisplayString dpy)))
-	    (if (not (= (BitmapUnit dpy) 32)) (snd-display #__line__ ";BitmapUnit: ~A" (BitmapUnit dpy)))
-	    (if (not (= (BitmapPad dpy) 32)) (snd-display #__line__ ";BitmapPad: ~A" (BitmapPad dpy)))
-	    (if (not (= (BitmapBitOrder dpy) 0)) (snd-display #__line__ ";BitmapBitOrder: ~A" (BitmapBitOrder dpy)))
-	    (if (not (= (ImageByteOrder dpy) 0)) (snd-display #__line__ ";ImageByteOrder: ~A" (ImageByteOrder dpy)))
-	    (if (not (= (DefaultScreen dpy) 0)) (snd-display #__line__ ";DefaultScreen: ~A" (DefaultScreen dpy)))
-	    
-	    (let* ((col (XColor))
-		   (col1 (XColor))
-		   (dpy (XtDisplay (cadr (main-widgets))))
-		   (scr (DefaultScreen dpy))
-		   (cmap (DefaultColormap dpy scr)))
-	      (if (= (XAllocNamedColor dpy cmap "blue" col col) 0) (snd-display #__line__ ";XAllocNamedColor blue ~A?" col))
-	      (if (not (= (.red col) 0)) (snd-display #__line__ ";XAllocNamedColor: ~A" (.red col)))
-	      (if (= (XAllocColor dpy cmap col) 0) (snd-display #__line__ ";XAllocColor?"))
-	      (if (not (= (.red col) 0)) (snd-display #__line__ ";XAllocColor: ~A" (.red col)))
-	      (if (= (XParseColor dpy cmap "blue" col) 0) (snd-display #__line__ ";XParseColor?"))
-	      (if (not (= (.red col) 0)) (snd-display #__line__ ";XParseColor: ~A" (.red col)))
-	      (if (= (XAllocNamedColor dpy cmap "green" col1 col1) 0) (snd-display #__line__ ";XAllocNamedColor green ~A?" col1))
-	      (XQueryColor dpy cmap col)
-	      (XQueryColors dpy cmap (list col col1)))
-	    
-	    (XSetAfterFunction dpy (lambda (n) 0))
-	    (XSetAfterFunction dpy #f)
-	    (if (not (equal? (XDisplayKeycodes dpy) (list 1 8 255)))
-		(snd-display #__line__ ";XDisplayKeycodes: ~A" (XDisplayKeycodes dpy)))
-	    (let ((str (XFetchName dpy win)))
-	      (if (not (string=? (substring str 0 3) "snd"))
-		  (snd-display #__line__ ";XFetchName: ~A" str)))
-	    (XStoreName dpy win "hiho")
-	    (let ((str (XFetchName dpy win)))
-	      (if (not (string=? str "hiho"))
-		  (snd-display #__line__ ";XStoreName: ~A" str)))
-	    (XStoreName dpy win "snd")
-	    (let ((str (XGetIconName dpy win)))
-	      (if (not (string=? str "snd"))
-		  (snd-display #__line__ ";XGetIconName: ~A" str)))
-	    (XSetIconName dpy win "hiho")
-	    (let ((str (XGetIconName dpy win)))
-	      (if (not (string=? str "hiho"))
-		  (snd-display #__line__ ";XSetIconName: ~A" str)))
-	    (let ((geo (XGetGeometry dpy win)))
-	      (if (or (not (= (window-width) (geo 4)))
-		      (not (= (window-height) (geo 5))))
-		  (snd-display #__line__ ";XGetGeometry: ~A (~A ~A)" geo (window-width) (window-height))))
-	    (let ((focus (XGetInputFocus dpy)))
-	      (if (or (not (= (car focus) 1))
-		      (not (Window? (cadr focus))))
-		  (snd-display #__line__ ";XGetInputFocus: ~A" focus)))
-	    (let ((vals (XGetPointerControl dpy)))
-	      (if (not (equal? vals (list 1 2 1 4))) (snd-display #__line__ ";pointer state: ~A" vals))
-	      (XChangePointerControl dpy #f #t 2 1 8)
-	      (set! vals (XGetPointerControl dpy))
-	      (if (not (equal? vals (list 1 2 1 8))) (snd-display #__line__ ";set pointer state: ~A" vals))
-	      (XChangePointerControl dpy #f #t 2 1 4))
-	    (XAutoRepeatOff dpy)
-	    (if (not (= ((XGetKeyboardControl dpy) 5) 0)) (snd-display #__line__ ";AutoRepeatOff?"))
-	    (XAutoRepeatOn dpy)
-	    (if (not (= ((XGetKeyboardControl dpy) 5) 1)) (snd-display #__line__ ";AutoRepeatOn?"))
-	    (let ((vals (XGetPointerMapping dpy 0 3)))
-	      (if (not (equal? vals (list 1 2 3))) (snd-display #__line__ ";XGetPointerMapping: ~A" vals)))
-	    (XGetScreenSaver dpy)
-	    (XMoveWindow dpy win 100 10)
-	    (XSync dpy #f)
-	    (XResizeWindow dpy win 400 400)
-	    (XSync dpy #f)
-	    (XMoveResizeWindow dpy win 120 20 500 500)
-	    (XSync dpy #f)
-	    (let ((attr (XGetWindowAttributes dpy win)))
-	      (if (> (abs (- (.x attr) 120)) 200) (snd-display #__line__ ";XMoveWindow x etc: ~A" (.x attr)))
-	      (if (> (abs (- (.y attr) 20)) 200) (snd-display #__line__ ";XMoveWindow y etc: ~A" (.y attr)))
-	      (if (> (abs (- (.width attr) 500)) 20) (snd-display #__line__ ";XMoveWindow width etc: ~A" (.width attr)))
-	      (if (> (abs (- (.height attr) 500)) 20) (snd-display #__line__ ";XMoveWindow height etc: ~A" (.height attr)))
-	      (if (not (= (.border_width attr) 0)) (snd-display #__line__ ";XGetWindowAttributes border_width: ~A" (.border_width attr)))
-	      (if (not (= (.depth attr) 24)) (snd-display #__line__ ";XGetWindowAttributes depth: ~A" (.depth attr)))
-	      (if (not (= (.bit_gravity attr) 0)) (snd-display #__line__ ";XGetWindowAttributes bit_gravity: ~A" (.bit_gravity attr)))
-	      (if (not (= (.win_gravity attr) 1)) (snd-display #__line__ ";XGetWindowAttributes win_gravity: ~A" (.win_gravity attr)))
-	      (if (.backing_store attr) (snd-display #__line__ ";XGetWindowAttributes backing_store: ~A" (.backing_store attr)))
-	      (if (.override_redirect attr) (snd-display #__line__ ";XGetWindowAttributes override_redirect: ~A" (.override_redirect attr)))
-	      (if (.save_under attr) (snd-display #__line__ ";XGetWindowAttributes save_under: ~A" (.save_under attr)))
+		)))
+	
+	(if (not (= (XExtendedMaxRequestSize dpy) 4194303))
+	    (snd-display #__line__ ";XExtendedMaxRequestSize ~A" (XExtendedMaxRequestSize dpy)))
+	(if (not (= (XMaxRequestSize dpy) 65535))
+	    (snd-display #__line__ ";XMaxRequestSize ~A" (XMaxRequestSize dpy)))
+	(if (not (member (list 'Atom 40) (XListProperties dpy win)))
+	    (snd-display #__line__ ";XListProperties: ~A" (XListProperties dpy win)))
+	(if (not (member "SHAPE" (XListExtensions dpy)))
+	    (snd-display #__line__ ";XListExtensions: ~A" (XListExtensions dpy)))
+	(let ((val (XListInstalledColormaps dpy win)))
+	  (if (or (not val)
+		  (null? val)
+		  (not (Colormap? (car val))))
+	      (snd-display #__line__ ";XListInstalledColormaps: ~A" (XListInstalledColormaps dpy win))))
+	(if (not (string=? (XKeysymToString (list 'KeySym 80)) "P"))
+	    (snd-display #__line__ ";XKeysymToString: ~A" (XKeysymToString (list 'KeySym 80))))
+	(if (not (string=? (XGetAtomName dpy (list 'Atom 40)) "WM_NORMAL_HINTS"))
+	    (snd-display #__line__ ";XGetAtomName: ~A" (XGetAtomName dpy (list 'Atom 40))))
+	
+	(if (not (= (.bits_per_rgb vis) 8)) (snd-display #__line__ ";bits_per_rgb: ~A" (.bits_per_rgb vis)))
+	(if (not (= (.blue_mask vis) 255)) (snd-display #__line__ ";blue_mask: ~A" (.blue_mask vis)))
+	(if (not (= (.green_mask vis) 65280)) (snd-display #__line__ ";green_mask: ~A" (.green_mask vis)))
+	(if (not (= (.red_mask vis) 16711680)) (snd-display #__line__ ";red_mask: ~A" (.red_mask vis)))
+	(if (not (= AllPlanes 4294967295)) (snd-display #__line__ ";AllPlanes: ~A" AllPlanes))
+	
+	(if (< (QLength dpy) 0) (snd-display #__line__ ";QLength: ~A" (QLength dpy)))
+	(if (not (= (ScreenCount dpy) 1)) (snd-display #__line__ ";ScreenCount: ~A" (ScreenCount dpy)))
+	(if (not (string=? (ServerVendor dpy) "The X.Org Foundation")) (snd-display #__line__ ";ServerVendor: ~A" (ServerVendor dpy)))
+	(if (not (= (ProtocolRevision dpy) 0)) (snd-display #__line__ ";ProtocolRevision: ~A" (ProtocolRevision dpy)))
+	(if (not (= (ProtocolVersion dpy) 11)) (snd-display #__line__ ";ProtocolVersion: ~A" (ProtocolVersion dpy)))
+	(if (not (number? (VendorRelease dpy))) (snd-display #__line__ ";VendorRelease: ~A" (VendorRelease dpy)))
+	(if (not (string=? (DisplayString dpy) ":0.0")) (snd-display #__line__ ";DisplayString: ~A" (DisplayString dpy)))
+	(if (not (= (BitmapUnit dpy) 32)) (snd-display #__line__ ";BitmapUnit: ~A" (BitmapUnit dpy)))
+	(if (not (= (BitmapPad dpy) 32)) (snd-display #__line__ ";BitmapPad: ~A" (BitmapPad dpy)))
+	(if (not (= (BitmapBitOrder dpy) 0)) (snd-display #__line__ ";BitmapBitOrder: ~A" (BitmapBitOrder dpy)))
+	(if (not (= (ImageByteOrder dpy) 0)) (snd-display #__line__ ";ImageByteOrder: ~A" (ImageByteOrder dpy)))
+	(if (not (= (DefaultScreen dpy) 0)) (snd-display #__line__ ";DefaultScreen: ~A" (DefaultScreen dpy)))
+	
+	(let* ((col (XColor))
+	       (col1 (XColor))
+	       (dpy (XtDisplay (cadr (main-widgets))))
+	       (scr (DefaultScreen dpy))
+	       (cmap (DefaultColormap dpy scr)))
+	  (if (= (XAllocNamedColor dpy cmap "blue" col col) 0) (snd-display #__line__ ";XAllocNamedColor blue ~A?" col))
+	  (if (not (= (.red col) 0)) (snd-display #__line__ ";XAllocNamedColor: ~A" (.red col)))
+	  (if (= (XAllocColor dpy cmap col) 0) (snd-display #__line__ ";XAllocColor?"))
+	  (if (not (= (.red col) 0)) (snd-display #__line__ ";XAllocColor: ~A" (.red col)))
+	  (if (= (XParseColor dpy cmap "blue" col) 0) (snd-display #__line__ ";XParseColor?"))
+	  (if (not (= (.red col) 0)) (snd-display #__line__ ";XParseColor: ~A" (.red col)))
+	  (if (= (XAllocNamedColor dpy cmap "green" col1 col1) 0) (snd-display #__line__ ";XAllocNamedColor green ~A?" col1))
+	  (XQueryColor dpy cmap col)
+	  (XQueryColors dpy cmap (list col col1)))
+	
+	(XSetAfterFunction dpy (lambda (n) 0))
+	(XSetAfterFunction dpy #f)
+	(if (not (equal? (XDisplayKeycodes dpy) (list 1 8 255)))
+	    (snd-display #__line__ ";XDisplayKeycodes: ~A" (XDisplayKeycodes dpy)))
+	(let ((str (XFetchName dpy win)))
+	  (if (not (string=? (substring str 0 3) "snd"))
+	      (snd-display #__line__ ";XFetchName: ~A" str)))
+	(XStoreName dpy win "hiho")
+	(let ((str (XFetchName dpy win)))
+	  (if (not (string=? str "hiho"))
+	      (snd-display #__line__ ";XStoreName: ~A" str)))
+	(XStoreName dpy win "snd")
+	(let ((str (XGetIconName dpy win)))
+	  (if (not (string=? str "snd"))
+	      (snd-display #__line__ ";XGetIconName: ~A" str)))
+	(XSetIconName dpy win "hiho")
+	(let ((str (XGetIconName dpy win)))
+	  (if (not (string=? str "hiho"))
+	      (snd-display #__line__ ";XSetIconName: ~A" str)))
+	(let ((geo (XGetGeometry dpy win)))
+	  (if (or (not (= (window-width) (geo 4)))
+		  (not (= (window-height) (geo 5))))
+	      (snd-display #__line__ ";XGetGeometry: ~A (~A ~A)" geo (window-width) (window-height))))
+	(let ((focus (XGetInputFocus dpy)))
+	  (if (or (not (= (car focus) 1))
+		  (not (Window? (cadr focus))))
+	      (snd-display #__line__ ";XGetInputFocus: ~A" focus)))
+	(let ((vals (XGetPointerControl dpy)))
+	  (if (not (equal? vals (list 1 2 1 4))) (snd-display #__line__ ";pointer state: ~A" vals))
+	  (XChangePointerControl dpy #f #t 2 1 8)
+	  (set! vals (XGetPointerControl dpy))
+	  (if (not (equal? vals (list 1 2 1 8))) (snd-display #__line__ ";set pointer state: ~A" vals))
+	  (XChangePointerControl dpy #f #t 2 1 4))
+	(XAutoRepeatOff dpy)
+	(if (not (= ((XGetKeyboardControl dpy) 5) 0)) (snd-display #__line__ ";AutoRepeatOff?"))
+	(XAutoRepeatOn dpy)
+	(if (not (= ((XGetKeyboardControl dpy) 5) 1)) (snd-display #__line__ ";AutoRepeatOn?"))
+	(let ((vals (XGetPointerMapping dpy 0 3)))
+	  (if (not (equal? vals (list 1 2 3))) (snd-display #__line__ ";XGetPointerMapping: ~A" vals)))
+	(XGetScreenSaver dpy)
+	(XMoveWindow dpy win 100 10)
+	(XSync dpy #f)
+	(XResizeWindow dpy win 400 400)
+	(XSync dpy #f)
+	(XMoveResizeWindow dpy win 120 20 500 500)
+	(XSync dpy #f)
+	(let ((attr (XGetWindowAttributes dpy win)))
+	  (if (> (abs (- (.x attr) 120)) 200) (snd-display #__line__ ";XMoveWindow x etc: ~A" (.x attr)))
+	  (if (> (abs (- (.y attr) 20)) 200) (snd-display #__line__ ";XMoveWindow y etc: ~A" (.y attr)))
+	  (if (> (abs (- (.width attr) 500)) 20) (snd-display #__line__ ";XMoveWindow width etc: ~A" (.width attr)))
+	  (if (> (abs (- (.height attr) 500)) 20) (snd-display #__line__ ";XMoveWindow height etc: ~A" (.height attr)))
+	  (if (not (= (.border_width attr) 0)) (snd-display #__line__ ";XGetWindowAttributes border_width: ~A" (.border_width attr)))
+	  (if (not (= (.depth attr) 24)) (snd-display #__line__ ";XGetWindowAttributes depth: ~A" (.depth attr)))
+	  (if (not (= (.bit_gravity attr) 0)) (snd-display #__line__ ";XGetWindowAttributes bit_gravity: ~A" (.bit_gravity attr)))
+	  (if (not (= (.win_gravity attr) 1)) (snd-display #__line__ ";XGetWindowAttributes win_gravity: ~A" (.win_gravity attr)))
+	  (if (.backing_store attr) (snd-display #__line__ ";XGetWindowAttributes backing_store: ~A" (.backing_store attr)))
+	  (if (.override_redirect attr) (snd-display #__line__ ";XGetWindowAttributes override_redirect: ~A" (.override_redirect attr)))
+	  (if (.save_under attr) (snd-display #__line__ ";XGetWindowAttributes save_under: ~A" (.save_under attr)))
 					;		(if (.map_installed attr) (snd-display #__line__ ";XGetWindowAttributes map_installed: ~A" (.map_installed attr)))
-	      (if (not (equal? (.backing_pixel attr) (list 'Pixel 0))) (snd-display #__line__ ";XGetWindowAttributes backing_pixel: ~A" (.backing_pixel attr)))
-	      (if (not (= (.map_state attr) 2)) (snd-display #__line__ ";XGetWindowAttributes map_state: ~A" (.map_state attr)))
-	      (if (not (= (.your_event_mask attr) #x628033)) (snd-display #__line__ ";your_event_mask: ~X" (.your_event_mask attr)))
-	      (if (and (not (= (.all_event_masks attr) #x628033)) 
-		       (not (= (.all_event_masks attr) #xe28033))
-		       (not (= (.all_event_masks attr) #xea8033)))
-		  (snd-display #__line__ ";all_event_masks: ~X" (.all_event_masks attr)))
-	      (if (not (Screen? (.screen attr))) (snd-display #__line__ ";XGetWindowAttributes screen: ~A" (.screen attr)))
-	      (if (and (not (= (.do_not_propagate_mask attr) 0)) 
-		       (not (= (.do_not_propagate_mask attr) 8204)))
-		  (snd-display #__line__ ";XGetWindowAttributes do_not_propagate_mask: ~A" (.do_not_propagate_mask attr)))
-	      (if (not (= (.backing_planes attr) AllPlanes)) (snd-display #__line__ ";XGetWindowAttributes backing_planes: ~A" (.backing_planes attr)))
-	      (if (not (= (.win_gravity attr) 1)) (snd-display #__line__ ";XGetWindowAttributes win_gravity: ~A" (.win_gravity attr)))
-	      (if (not (= (.bit_gravity attr) 0)) (snd-display #__line__ ";XGetWindowAttributes bit_gravity: ~A" (.bit_gravity attr)))
+	  (if (not (equal? (.backing_pixel attr) (list 'Pixel 0))) (snd-display #__line__ ";XGetWindowAttributes backing_pixel: ~A" (.backing_pixel attr)))
+	  (if (not (= (.map_state attr) 2)) (snd-display #__line__ ";XGetWindowAttributes map_state: ~A" (.map_state attr)))
+	  (if (not (= (.your_event_mask attr) #x628033)) (snd-display #__line__ ";your_event_mask: ~X" (.your_event_mask attr)))
+	  (if (and (not (= (.all_event_masks attr) #x628033)) 
+		   (not (= (.all_event_masks attr) #xe28033))
+		   (not (= (.all_event_masks attr) #xea8033)))
+	      (snd-display #__line__ ";all_event_masks: ~X" (.all_event_masks attr)))
+	  (if (not (Screen? (.screen attr))) (snd-display #__line__ ";XGetWindowAttributes screen: ~A" (.screen attr)))
+	  (if (and (not (= (.do_not_propagate_mask attr) 0)) 
+		   (not (= (.do_not_propagate_mask attr) 8204)))
+	      (snd-display #__line__ ";XGetWindowAttributes do_not_propagate_mask: ~A" (.do_not_propagate_mask attr)))
+	  (if (not (= (.backing_planes attr) AllPlanes)) (snd-display #__line__ ";XGetWindowAttributes backing_planes: ~A" (.backing_planes attr)))
+	  (if (not (= (.win_gravity attr) 1)) (snd-display #__line__ ";XGetWindowAttributes win_gravity: ~A" (.win_gravity attr)))
+	  (if (not (= (.bit_gravity attr) 0)) (snd-display #__line__ ";XGetWindowAttributes bit_gravity: ~A" (.bit_gravity attr)))
 					;(segfault)	(XFree (cadr attr))
-	      )
-	    (XResetScreenSaver dpy)
-	    (if (< (XPending dpy) 0) (snd-display #__line__ ";XPending: ~A" (XPending dpy)))
-	    (XNoOp dpy)
-	    (XQueryBestStipple dpy win 100 100)
-	    (XQueryBestTile dpy win 100 100)
-	    (XQueryBestSize dpy 0 win 100 100)
-	    (let ((ext (XQueryExtension dpy "SHAPE")))
-	      (if (not (eq? (car ext) #t))
-		  (snd-display #__line__ ";XQueryExtension: ~A" ext)))
-	    (XQueryKeymap dpy)
-	    (let ((tree (XQueryTree dpy win)))
-	      (if (or (not (= (car tree) 1))
-		      (not (equal? (XRootWindow dpy 0) (cadr tree))))
-		  (snd-display #__line__ ";XQueryTree: ~A (~A)" tree (XRootWindow dpy 0))))
-	    
-	    (if (< (XQLength dpy) 0) (snd-display #__line__ ";XQLength: ~A" (XQLength dpy)))
-	    (if (not (= (XScreenCount dpy) 1)) (snd-display #__line__ ";XScreenCount: ~A" (XScreenCount dpy)))
-	    (if (not (string=? (XServerVendor dpy) "The X.Org Foundation")) (snd-display #__line__ ";XServerVendor: ~A" (XServerVendor dpy)))
-	    (if (not (= (XProtocolRevision dpy) 0)) (snd-display #__line__ ";XProtocolRevision: ~A" (XProtocolRevision dpy)))
-	    (if (not (= (XProtocolVersion dpy) 11)) (snd-display #__line__ ";XProtocolVersion: ~A" (XProtocolVersion dpy)))
-	    (if (not (number? (XVendorRelease dpy))) (snd-display #__line__ ";XVendorRelease: ~A" (XVendorRelease dpy)))
-	    (if (not (string=? (XDisplayString dpy) ":0.0")) (snd-display #__line__ ";XDisplayString: ~A" (XDisplayString dpy)))
-	    (if (not (= (XBitmapUnit dpy) 32)) (snd-display #__line__ ";XBitmapUnit: ~A" (XBitmapUnit dpy)))
-	    (if (not (= (XBitmapPad dpy) 32)) (snd-display #__line__ ";XBitmapPad: ~A" (XBitmapPad dpy)))
-	    (if (not (= (XBitmapBitOrder dpy) 0)) (snd-display #__line__ ";XBitmapBitOrder: ~A" (XBitmapBitOrder dpy)))
-	    (if (not (= (XImageByteOrder dpy) 0)) (snd-display #__line__ ";XImageByteOrder: ~A" (XImageByteOrder dpy)))
-	    (if (not (= (XDefaultScreen dpy) 0)) (snd-display #__line__ ";XDefaultScreen: ~A" (XDefaultScreen dpy)))
-	    (if (XGetIconSizes dpy win) (snd-display #__line__ ";XGetIconSizes: ~A" (XGetIconSizes dpy win)))
-	    (if (XGetRGBColormaps dpy win XA_RGB_DEFAULT_MAP)
-		(snd-display #__line__ ";XGetRGBColormaps: ~A!" (XGetRGBColormaps dpy win XA_RGB_DEFAULT_MAP)))
-	    (let ((cmap (XAllocStandardColormap)))
-	      (for-each 
-	       (lambda (func name)
-		 (if (not (= (func cmap) 0)) (snd-display #__line__ ";standardcolormap ~A: ~A" name (func cmap))))
-	       (list .visualid .red_max .red_mult .green_max .green_mult .blue_max .blue_mult)
-	       (list 'visualid 'red_max 'red_mult 'green_max 'green_mult 'blue_max 'blue_mult))
-	      (if (.colormap cmap) (snd-display #__line__ ";colormap: ~A" (.colormap cmap)))
-	      (XtFree (cadr cmap))
-	      )
-	    (let ((icon (XAllocIconSize)))
-	      (for-each
-	       (lambda (func name)
-		 (if (not (= (func icon) 0)) (snd-display #__line__ ";iconsize ~A: ~A" name (func icon))))
-	       (list .min_width .min_height .max_width .max_height .width_inc .height_inc)
-	       (list 'min_width 'min_height 'max_width 'max_height 'width_inc 'height_inc))
-	      (XFree icon))
-	    
-	    (let ((fs (XCreateFontSet dpy "*-*-*-*-Normal-*-*-*-*-*-*")))
-	      (if (or (not (XFontSet? fs))
-		      (= (cadr fs) 0))
-		  (snd-display #__line__ ";XCreateFontSet: ~A" fs)
-		  (let* ((fnts (XFontsOfFontSet fs))
-			 (fnt (caar fnts)))
-		    (if (not (XFontStruct? fnt))
-			(snd-display #__line__ ";XFontsOfFontSet: ~A" fnts))
-		    (if (XContextualDrawing fs)
-			(snd-display #__line__ ";XContextualDrawing: ~A" (XContextualDrawing fs)))
-		    (if (XContextDependentDrawing fs)
-			(snd-display #__line__ ";XContextDependentDrawing: ~A" (XContextDependentDrawing fs)))
-		    (if (XDirectionalDependentDrawing fs)
-			(snd-display #__line__ ";XDirectionalDependentDrawing: ~A" (XDirectionalDependentDrawing fs)))
-		    (if (not (string=? (XLocaleOfFontSet fs) "en_US"))
-			(snd-display #__line__ ";XLocaleOfFontSet: ~A" (XLocaleOfFontSet fs)))
-		    (if (not (string=? (XBaseFontNameListOfFontSet fs) "*-*-*-*-Normal-*-*-*-*-*-*"))
-			(snd-display #__line__ ";XBaseFontNameListOfFontSet: ~A" (XBaseFontNameListOfFontSet fs)))
-		    (if fnt
-			(let ((wgt (XGetFontProperty fnt XA_WEIGHT))
-			      (siz (XGetFontProperty fnt XA_POINT_SIZE)))
-			  (if (or (not (= (cadr wgt) 10))
-				  (not (= (cadr siz) 120)))
-			      (snd-display #__line__ ";XGetFontProperty: ~A ~A" wgt siz))
-			  (if (not (= (.descent fnt) 2)) (snd-display #__line__ ";descent: ~A" (.descent fnt)))
-			  (if (not (= (.ascent fnt) 11)) (snd-display #__line__ ";ascent: ~A" (.ascent fnt)))
-			  (if (not (XCharStruct? (.per_char fnt))) (snd-display #__line__ ";per_char: ~A" (.per_char fnt)))
-			  (if (not (XCharStruct? (.max_bounds fnt))) (snd-display #__line__ ";max_bounds: ~A" (.max_bounds fnt)))
-			  (if (not (XCharStruct? (.min_bounds fnt))) (snd-display #__line__ ";min_bounds: ~A" (.min_bounds fnt)))
-			  (if (not (XFontProp? (car (.properties fnt)))) (snd-display #__line__ ";properties ~A" (.properties fnt)))
-			  (if (not (= (.card32 (car (.properties fnt))) 7)) (snd-display #__line__ ";card32: ~A" (.card32 (car (.properties fnt)))))))
-		    (XFreeFontSet dpy fs))))
-	    (XBell dpy 10)
-	    (let ((cmd (XGetCommand dpy win)))
-	      (if (or (<= (length cmd) 0)
-		      (not (string=? (substring (car cmd) (- (string-length (car cmd)) 3)) "snd")))
-		  (snd-display #__line__ ";XGetCommand: ~A" cmd)))
-	    (XSetCommand dpy win (list "hiho" "away") 2)
-	    (if (not (equal? (XGetCommand dpy win) (list "hiho" "away"))) 
-		(snd-display #__line__ ";XSetCommand: ~A" (XGetCommand dpy win)))
-	    (let ((wmp (map (lambda (w) (XGetAtomName dpy w)) (XGetWMProtocols dpy win))))
-	      (if (not (equal? wmp (list "_MOTIF_WM_MESSAGES" "WM_DELETE_WINDOW")))
-		  (snd-display #__line__ ";XGetWMProtocols: ~A" wmp)))
-	    (if (not (equal? (XListDepths dpy 0) (list 24 1 4 8 15 16 32)))
-		(snd-display #__line__ ";XListDepths: ~A" (XListDepths dpy 0)))
-	    (if (not (equal? (XListPixmapFormats dpy) '((1 1 32) (4 8 32) (8 8 32) (15 16 32) (16 16 32) (24 32 32) (32 32 32))))
-		(snd-display #__line__ ";XListPixmapFormats: ~A" (XListPixmapFormats dpy)))
-	    
-	    (XWarpPointer dpy (list 'Window None) (list 'Window None) 0 0 10 10 100 100)
-	    (let ((cs (XQueryBestCursor dpy win 10 10)))
-	      (if (not (equal? cs (list 1 10 10))) (snd-display #__line__ ";XQueryBestCursor: ~A" cs)))
-	    (let ((pt (XQueryPointer dpy win)))
-	      (if (not (Window? (cadr pt))) (snd-display #__line__ ";XQueryPointer: ~A" pt)))
-	    (XRaiseWindow dpy win)
-	    (XRotateBuffers dpy 1)
-	    (XSetWindowBorderWidth dpy win 10)
-	    (XSetWindowBorder dpy win (black-pixel))
-	    (XSetWindowBackground dpy win *basic-color*)
-	    (let* ((vis (XGetVisualInfo dpy 0 (list 'XVisualInfo 0)))
-		   (depth (.depth (car vis))))
-	      (XSetWindowBorderPixmap dpy win (XCreatePixmap dpy win 10 10 depth))
-	      (XSetWindowBackgroundPixmap dpy win (XCreatePixmap dpy win 10 10 depth))
-	      (XSetWindowBorderPixmap dpy win CopyFromParent)
-	      (XSetWindowBackgroundPixmap dpy win ParentRelative)
+	  )
+	(XResetScreenSaver dpy)
+	(if (< (XPending dpy) 0) (snd-display #__line__ ";XPending: ~A" (XPending dpy)))
+	(XNoOp dpy)
+	(XQueryBestStipple dpy win 100 100)
+	(XQueryBestTile dpy win 100 100)
+	(XQueryBestSize dpy 0 win 100 100)
+	(let ((ext (XQueryExtension dpy "SHAPE")))
+	  (if (not (eq? (car ext) #t))
+	      (snd-display #__line__ ";XQueryExtension: ~A" ext)))
+	(XQueryKeymap dpy)
+	(let ((tree (XQueryTree dpy win)))
+	  (if (or (not (= (car tree) 1))
+		  (not (equal? (XRootWindow dpy 0) (cadr tree))))
+	      (snd-display #__line__ ";XQueryTree: ~A (~A)" tree (XRootWindow dpy 0))))
+	
+	(if (< (XQLength dpy) 0) (snd-display #__line__ ";XQLength: ~A" (XQLength dpy)))
+	(if (not (= (XScreenCount dpy) 1)) (snd-display #__line__ ";XScreenCount: ~A" (XScreenCount dpy)))
+	(if (not (string=? (XServerVendor dpy) "The X.Org Foundation")) (snd-display #__line__ ";XServerVendor: ~A" (XServerVendor dpy)))
+	(if (not (= (XProtocolRevision dpy) 0)) (snd-display #__line__ ";XProtocolRevision: ~A" (XProtocolRevision dpy)))
+	(if (not (= (XProtocolVersion dpy) 11)) (snd-display #__line__ ";XProtocolVersion: ~A" (XProtocolVersion dpy)))
+	(if (not (number? (XVendorRelease dpy))) (snd-display #__line__ ";XVendorRelease: ~A" (XVendorRelease dpy)))
+	(if (not (string=? (XDisplayString dpy) ":0.0")) (snd-display #__line__ ";XDisplayString: ~A" (XDisplayString dpy)))
+	(if (not (= (XBitmapUnit dpy) 32)) (snd-display #__line__ ";XBitmapUnit: ~A" (XBitmapUnit dpy)))
+	(if (not (= (XBitmapPad dpy) 32)) (snd-display #__line__ ";XBitmapPad: ~A" (XBitmapPad dpy)))
+	(if (not (= (XBitmapBitOrder dpy) 0)) (snd-display #__line__ ";XBitmapBitOrder: ~A" (XBitmapBitOrder dpy)))
+	(if (not (= (XImageByteOrder dpy) 0)) (snd-display #__line__ ";XImageByteOrder: ~A" (XImageByteOrder dpy)))
+	(if (not (= (XDefaultScreen dpy) 0)) (snd-display #__line__ ";XDefaultScreen: ~A" (XDefaultScreen dpy)))
+	(if (XGetIconSizes dpy win) (snd-display #__line__ ";XGetIconSizes: ~A" (XGetIconSizes dpy win)))
+	(if (XGetRGBColormaps dpy win XA_RGB_DEFAULT_MAP)
+	    (snd-display #__line__ ";XGetRGBColormaps: ~A!" (XGetRGBColormaps dpy win XA_RGB_DEFAULT_MAP)))
+	(let ((cmap (XAllocStandardColormap)))
+	  (for-each 
+	   (lambda (func name)
+	     (if (not (= (func cmap) 0)) (snd-display #__line__ ";standardcolormap ~A: ~A" name (func cmap))))
+	   (list .visualid .red_max .red_mult .green_max .green_mult .blue_max .blue_mult)
+	   (list 'visualid 'red_max 'red_mult 'green_max 'green_mult 'blue_max 'blue_mult))
+	  (if (.colormap cmap) (snd-display #__line__ ";colormap: ~A" (.colormap cmap)))
+	  (XtFree (cadr cmap))
+	  )
+	(let ((icon (XAllocIconSize)))
+	  (for-each
+	   (lambda (func name)
+	     (if (not (= (func icon) 0)) (snd-display #__line__ ";iconsize ~A: ~A" name (func icon))))
+	   (list .min_width .min_height .max_width .max_height .width_inc .height_inc)
+	   (list 'min_width 'min_height 'max_width 'max_height 'width_inc 'height_inc))
+	  (XFree icon))
+	
+	(let ((fs (XCreateFontSet dpy "*-*-*-*-Normal-*-*-*-*-*-*")))
+	  (if (or (not (XFontSet? fs))
+		  (= (cadr fs) 0))
+	      (snd-display #__line__ ";XCreateFontSet: ~A" fs)
+	      (let* ((fnts (XFontsOfFontSet fs))
+		     (fnt (caar fnts)))
+		(if (not (XFontStruct? fnt))
+		    (snd-display #__line__ ";XFontsOfFontSet: ~A" fnts))
+		(if (XContextualDrawing fs)
+		    (snd-display #__line__ ";XContextualDrawing: ~A" (XContextualDrawing fs)))
+		(if (XContextDependentDrawing fs)
+		    (snd-display #__line__ ";XContextDependentDrawing: ~A" (XContextDependentDrawing fs)))
+		(if (XDirectionalDependentDrawing fs)
+		    (snd-display #__line__ ";XDirectionalDependentDrawing: ~A" (XDirectionalDependentDrawing fs)))
+		(if (not (string=? (XLocaleOfFontSet fs) "en_US"))
+		    (snd-display #__line__ ";XLocaleOfFontSet: ~A" (XLocaleOfFontSet fs)))
+		(if (not (string=? (XBaseFontNameListOfFontSet fs) "*-*-*-*-Normal-*-*-*-*-*-*"))
+		    (snd-display #__line__ ";XBaseFontNameListOfFontSet: ~A" (XBaseFontNameListOfFontSet fs)))
+		(if fnt
+		    (let ((wgt (XGetFontProperty fnt XA_WEIGHT))
+			  (siz (XGetFontProperty fnt XA_POINT_SIZE)))
+		      (if (or (not (= (cadr wgt) 10))
+			      (not (= (cadr siz) 120)))
+			  (snd-display #__line__ ";XGetFontProperty: ~A ~A" wgt siz))
+		      (if (not (= (.descent fnt) 2)) (snd-display #__line__ ";descent: ~A" (.descent fnt)))
+		      (if (not (= (.ascent fnt) 11)) (snd-display #__line__ ";ascent: ~A" (.ascent fnt)))
+		      (if (not (XCharStruct? (.per_char fnt))) (snd-display #__line__ ";per_char: ~A" (.per_char fnt)))
+		      (if (not (XCharStruct? (.max_bounds fnt))) (snd-display #__line__ ";max_bounds: ~A" (.max_bounds fnt)))
+		      (if (not (XCharStruct? (.min_bounds fnt))) (snd-display #__line__ ";min_bounds: ~A" (.min_bounds fnt)))
+		      (if (not (XFontProp? (car (.properties fnt)))) (snd-display #__line__ ";properties ~A" (.properties fnt)))
+		      (if (not (= (.card32 (car (.properties fnt))) 7)) (snd-display #__line__ ";card32: ~A" (.card32 (car (.properties fnt)))))))
+		(XFreeFontSet dpy fs))))
+	(XBell dpy 10)
+	(let ((cmd (XGetCommand dpy win)))
+	  (if (or (<= (length cmd) 0)
+		  (not (string=? (substring (car cmd) (- (string-length (car cmd)) 3)) "snd")))
+	      (snd-display #__line__ ";XGetCommand: ~A" cmd)))
+	(XSetCommand dpy win (list "hiho" "away") 2)
+	(if (not (equal? (XGetCommand dpy win) (list "hiho" "away"))) 
+	    (snd-display #__line__ ";XSetCommand: ~A" (XGetCommand dpy win)))
+	(let ((wmp (map (lambda (w) (XGetAtomName dpy w)) (XGetWMProtocols dpy win))))
+	  (if (not (equal? wmp (list "_MOTIF_WM_MESSAGES" "WM_DELETE_WINDOW")))
+	      (snd-display #__line__ ";XGetWMProtocols: ~A" wmp)))
+	(if (not (equal? (XListDepths dpy 0) (list 24 1 4 8 15 16 32)))
+	    (snd-display #__line__ ";XListDepths: ~A" (XListDepths dpy 0)))
+	(if (not (equal? (XListPixmapFormats dpy) '((1 1 32) (4 8 32) (8 8 32) (15 16 32) (16 16 32) (24 32 32) (32 32 32))))
+	    (snd-display #__line__ ";XListPixmapFormats: ~A" (XListPixmapFormats dpy)))
+	
+	(XWarpPointer dpy (list 'Window None) (list 'Window None) 0 0 10 10 100 100)
+	(let ((cs (XQueryBestCursor dpy win 10 10)))
+	  (if (not (equal? cs (list 1 10 10))) (snd-display #__line__ ";XQueryBestCursor: ~A" cs)))
+	(let ((pt (XQueryPointer dpy win)))
+	  (if (not (Window? (cadr pt))) (snd-display #__line__ ";XQueryPointer: ~A" pt)))
+	(XRaiseWindow dpy win)
+	(XRotateBuffers dpy 1)
+	(XSetWindowBorderWidth dpy win 10)
+	(XSetWindowBorder dpy win (black-pixel))
+	(XSetWindowBackground dpy win *basic-color*)
+	(let* ((vis (XGetVisualInfo dpy 0 (list 'XVisualInfo 0)))
+	       (depth (.depth (car vis))))
+	  (XSetWindowBorderPixmap dpy win (XCreatePixmap dpy win 10 10 depth))
+	  (XSetWindowBackgroundPixmap dpy win (XCreatePixmap dpy win 10 10 depth))
+	  (XSetWindowBorderPixmap dpy win CopyFromParent)
+	  (XSetWindowBackgroundPixmap dpy win ParentRelative)
 					;(segfault)     (XFree (cadr vis))
-	      )
-	    (let ((hints (XGetWMHints dpy win)))
-	      (if (or (not hints) (not (XWMHints? hints))) (snd-display #__line__ ";XGetWMHints?"))
-	      (if (not (= (.flags hints) 7)) (snd-display #__line__ ";flags wmhints: ~A" (.flags hints)))
-	      (if (not (= (.initial_state hints) 1)) (snd-display #__line__ ";initial_state wmhints: ~A" (.initial_state hints)))
-	      (if (not (.input hints)) (snd-display #__line__ ";input wmhints: ~A" (.input hints)))
-	      (if (not (Pixmap? (.icon_pixmap hints))) (snd-display #__line__ ";icon_pixmap wmhints: ~A" (.icon_pixmap hints)))
-	      (if (.icon_window hints) (snd-display #__line__ ";icon_window: ~A" (.icon_window hints)))
-	      (if (not (equal? (.icon_mask hints) (list 'Pixmap 0))) (snd-display #__line__ ";icon_mask: ~A" (.icon_mask hints)))
-	      (if (not (number? (.window_group hints))) (snd-display #__line__ ";window_group: ~A" (.window_group hints)))
-	      (XtFree (cadr hints))
-	      (let ((st (XAllocWMHints)))
-		(if (not (XWMHints? st)) (snd-display #__line__ ";XAllocWMHints: ~A" st))
-		(XFree st))))
+	  )
+	(let ((hints (XGetWMHints dpy win)))
+	  (if (or (not hints) (not (XWMHints? hints))) (snd-display #__line__ ";XGetWMHints?"))
+	  (if (not (= (.flags hints) 7)) (snd-display #__line__ ";flags wmhints: ~A" (.flags hints)))
+	  (if (not (= (.initial_state hints) 1)) (snd-display #__line__ ";initial_state wmhints: ~A" (.initial_state hints)))
+	  (if (not (.input hints)) (snd-display #__line__ ";input wmhints: ~A" (.input hints)))
+	  (if (not (Pixmap? (.icon_pixmap hints))) (snd-display #__line__ ";icon_pixmap wmhints: ~A" (.icon_pixmap hints)))
+	  (if (.icon_window hints) (snd-display #__line__ ";icon_window: ~A" (.icon_window hints)))
+	  (if (not (equal? (.icon_mask hints) (list 'Pixmap 0))) (snd-display #__line__ ";icon_mask: ~A" (.icon_mask hints)))
+	  (if (not (number? (.window_group hints))) (snd-display #__line__ ";window_group: ~A" (.window_group hints)))
+	  (XtFree (cadr hints))
+	  (let ((st (XAllocWMHints)))
+	    (if (not (XWMHints? st)) (snd-display #__line__ ";XAllocWMHints: ~A" st))
+	    (XFree st))))
+      
+      (if (not (IsKeypadKey (list 'KeySym XK_KP_Space))) (snd-display #__line__ ";IsKeypadKey kp-space"))
+      (if (IsKeypadKey (list 'KeySym XK_A)) (snd-display #__line__ ";IsKeypadKey A"))
+      (if (IsPrivateKeypadKey (list 'KeySym XK_A)) (snd-display #__line__ ";IsPrivateKeypadKey A"))
+      (if (not (IsCursorKey (list 'KeySym XK_Home))) (snd-display #__line__ ";IsCursorKey Home"))
+      (if (IsCursorKey (list 'KeySym XK_S)) (snd-display #__line__ ";IsCursorKey S"))
+      (if (not (IsPFKey (list 'KeySym XK_KP_F1))) (snd-display #__line__ ";IsPFKey F1"))
+      (if (IsPFKey (list 'KeySym XK_S)) (snd-display #__line__ ";IsPFKey S"))
+      (if (not (IsFunctionKey (list 'KeySym XK_F1))) (snd-display #__line__ ";IsFunctionKey F1"))
+      (if (IsFunctionKey (list 'KeySym XK_S)) (snd-display #__line__ ";IsFunctionKey S"))
+      (if (not (IsMiscFunctionKey (list 'KeySym XK_Select))) (snd-display #__line__ ";IsMiscFunctionKey Select"))
+      (if (IsMiscFunctionKey (list 'KeySym XK_S)) (snd-display #__line__ ";IsMiscFunctionKey S"))
+      (if (not (IsModifierKey (list 'KeySym XK_Shift_L))) (snd-display #__line__ ";IsModifierKey Shift"))
+      (if (IsModifierKey (list 'KeySym XK_S)) (snd-display #__line__ ";IsModifierKey S"))
+      
+      (let (;(scr (current-screen))
+	    (dpy (XtDisplay (cadr (main-widgets))))
+	    (val (XGCValues))
+	    (wn (XtWindow (cadr (main-widgets)))))
+	(set! (.function val) GXclear)
+	(if (not (equal? (.function val) GXclear))
+	    (snd-display #__line__ ";function: ~A ~A" (.function val) GXclear))
+	(set! (.line_width val) 10)
+	(if (not (equal? (.line_width val) 10)) 
+	    (snd-display #__line__ ";line_width: ~A ~A" (.line_width val) 10))
+	(set! (.line_style val) LineSolid)
+	(if (not (equal? (.line_style val) LineSolid)) 
+	    (snd-display #__line__ ";line_style: ~A ~A" (.line_style val) LineSolid))
+	(set! (.background val) (WhitePixelOfScreen (current-screen)))
+	(if (not (equal? (.background val) (WhitePixelOfScreen (current-screen)))) 
+	    (snd-display #__line__ ";background: ~A ~A" (.background val) (WhitePixelOfScreen (current-screen))))
+	(set! (.foreground val) (BlackPixelOfScreen (current-screen)))
+	(if (not (equal? (.foreground val) (BlackPixelOfScreen (current-screen)))) 
+	    (snd-display #__line__ ";foreground: ~A ~A" (.foreground val) (BlackPixelOfScreen (current-screen))))
+	;; plane_mask?
+	(set! (.cap_style val) CapRound)
+	(if (not (equal? (.cap_style val) CapRound)) 
+	    (snd-display #__line__ ";cap_style: ~A ~A" (.cap_style val) CapRound))
+	(set! (.join_style val) JoinMiter)
+	(if (not (equal? (.join_style val) JoinMiter)) 
+	    (snd-display #__line__ ";join_style: ~A ~A" (.join_style val) JoinMiter))
+	(set! (.fill_style val) FillSolid)
+	(if (not (equal? (.fill_style val) FillSolid)) 
+	    (snd-display #__line__ ";fill_style: ~A ~A" (.fill_style val) FillSolid))
+	(set! (.fill_rule val) EvenOddRule)
+	(if (not (equal? (.fill_rule val) EvenOddRule)) 
+	    (snd-display #__line__ ";fill_rule: ~A ~A" (.fill_rule val) EvenOddRule))
+	(set! (.arc_mode val) ArcChord)
+	(if (not (equal? (.arc_mode val) ArcChord))
+	    (snd-display #__line__ ";arc_mode: ~A ~A" (.arc_mode val) ArcChord))
+	;; tile stipple clip_mask are Pixmaps
+	(set! (.ts_x_origin val) 1)
+	(if (not (equal? (.ts_x_origin val) 1)) 
+	    (snd-display #__line__ ";ts_x_origin: ~A ~A" (.ts_x_origin val) 1))
+	(set! (.ts_y_origin val) 1)
+	(if (not (equal? (.ts_y_origin val) 1)) 
+	    (snd-display #__line__ ";ts_y_origin: ~A ~A" (.ts_y_origin val) 1))
+	;; font is Font
+	(set! (.subwindow_mode val) ClipByChildren)
+	(if (not (equal? (.subwindow_mode val) ClipByChildren)) 
+	    (snd-display #__line__ ";subwindow_mode: ~A ~A" (.subwindow_mode val) ClipByChildren))
+	(set! (.graphics_exposures val) #f)
+	(if (not (equal? (.graphics_exposures val) #f)) 
+	    (snd-display #__line__ ";graphics_exposures: ~A ~A" (.graphics_exposures val) #f))
+	(set! (.clip_x_origin val) 0)
+	(if (not (equal? (.clip_x_origin val) 0)) 
+	    (snd-display #__line__ ";clip_x_origin: ~A ~A" (.clip_x_origin val) 0))
+	(set! (.clip_y_origin val) 0)
+	(if (not (equal? (.clip_y_origin val) 0)) 
+	    (snd-display #__line__ ";clip_y_origin: ~A ~A" (.clip_y_origin val) 0))
+	(set! (.dash_offset val) 1)
+	(if (not (equal? (.dash_offset val) 1))
+	    (snd-display #__line__ ";dash_offset: ~A ~A" (.dash_offset val) 1))
+	(if (not (number? (XConnectionNumber dpy)))
+	    (snd-display #__line__ ";XConnectionNumber: ~A" (XConnectionNumber dpy)))
+	
+	(let ((sgc (XCreateGC dpy wn (+ GCFunction GCForeground GCBackground GCLineWidth GCLineStyle 
+					GCCapStyle GCJoinStyle GCFillStyle GCFillRule GCTileStipXOrigin
+					GCTileStipYOrigin GCSubwindowMode GCGraphicsExposures GCClipXOrigin
+					GCClipYOrigin GCDashOffset GCArcMode)
+			      val)))
 	  
-	  (if (not (IsKeypadKey (list 'KeySym XK_KP_Space))) (snd-display #__line__ ";IsKeypadKey kp-space"))
-	  (if (IsKeypadKey (list 'KeySym XK_A)) (snd-display #__line__ ";IsKeypadKey A"))
-	  (if (IsPrivateKeypadKey (list 'KeySym XK_A)) (snd-display #__line__ ";IsPrivateKeypadKey A"))
-	  (if (not (IsCursorKey (list 'KeySym XK_Home))) (snd-display #__line__ ";IsCursorKey Home"))
-	  (if (IsCursorKey (list 'KeySym XK_S)) (snd-display #__line__ ";IsCursorKey S"))
-	  (if (not (IsPFKey (list 'KeySym XK_KP_F1))) (snd-display #__line__ ";IsPFKey F1"))
-	  (if (IsPFKey (list 'KeySym XK_S)) (snd-display #__line__ ";IsPFKey S"))
-	  (if (not (IsFunctionKey (list 'KeySym XK_F1))) (snd-display #__line__ ";IsFunctionKey F1"))
-	  (if (IsFunctionKey (list 'KeySym XK_S)) (snd-display #__line__ ";IsFunctionKey S"))
-	  (if (not (IsMiscFunctionKey (list 'KeySym XK_Select))) (snd-display #__line__ ";IsMiscFunctionKey Select"))
-	  (if (IsMiscFunctionKey (list 'KeySym XK_S)) (snd-display #__line__ ";IsMiscFunctionKey S"))
-	  (if (not (IsModifierKey (list 'KeySym XK_Shift_L))) (snd-display #__line__ ";IsModifierKey Shift"))
-	  (if (IsModifierKey (list 'KeySym XK_S)) (snd-display #__line__ ";IsModifierKey S"))
+	  (if (not (GC? sgc)) (snd-display #__line__ ";XCreateGC returned ~A" sgc))
+	  (XSetArcMode dpy sgc ArcPieSlice)
+	  (XSetFunction dpy sgc GXcopy)
+	  (XSetLineAttributes dpy sgc 3 LineDoubleDash CapButt JoinMiter)
+	  (XSetClipOrigin dpy sgc 1 1)
+	  (XSetTSOrigin dpy sgc 0 0)
+	  (XSetFillRule dpy sgc WindingRule)
+	  (XSetFillStyle dpy sgc FillStippled)
+	  (XSetForeground dpy sgc (WhitePixelOfScreen (current-screen)))
+	  (XSetBackground dpy sgc (BlackPixelOfScreen (current-screen)))
+	  (XSetGraphicsExposures dpy sgc #t)
+	  (XSetSubwindowMode dpy sgc IncludeInferiors)
+	  (let ((owner (XGetSelectionOwner dpy XA_PRIMARY)))
+	    (if (and owner (not (Window? owner)))
+		(snd-display #__line__ ";XGetSelectionOwner: ~A" owner)))
+	  (let ((mods (XGetModifierMapping dpy)))
+	    (if (not (XModifierKeymap? mods))
+		(snd-display #__line__ ";XGetModifierMapping: ~A" mods)))
+	  (let ((vis (XGetVisualInfo dpy 0 (list 'XVisualInfo 0))))
+	    (if (or (not vis)
+		    (not (XVisualInfo? (car vis))))
+		(snd-display #__line__ ";XGetVisualInfo: ~A" vis))
+	    (if (not (= (.depth (car vis)) 24)) (snd-display #__line__ ";depth vis: ~A" (.depth (car vis))))
+	    (if (not (= (.screen (car vis)) 0)) (snd-display #__line__ ";screen vis: ~A" (.screen (car vis))))
+	    (catch #t ; in c++ no class field
+	      (lambda ()
+		(if (not (= (.class (car vis)) TrueColor)) (snd-display #__line__ ";class vis: ~A (~A)" (.class (car vis)) TrueColor)))
+	      (lambda args args))
+	    (if (not (= (.colormap_size (car vis)) 256)) (snd-display #__line__ ";colormap_size vis: ~A" (.colormap_size (car vis))))
+	    (if (and (not (XVisualInfo? (XMatchVisualInfo dpy 0 24 TrueColor)))
+		     (not (XVisualInfo? (XMatchVisualInfo dpy 0 16 TrueColor))))
+		(snd-display #__line__ ";XMatchVisualInfo: ~A" (XMatchVisualInfo dpy 0 24 TrueColor))))
+	  (XCheckMaskEvent dpy KeyPressMask)
 	  
-	  (let (;(scr (current-screen))
-		 (dpy (XtDisplay (cadr (main-widgets))))
-		 (val (XGCValues))
-		 (wn (XtWindow (cadr (main-widgets)))))
-	    (set! (.function val) GXclear)
-	    (if (not (equal? (.function val) GXclear))
-		(snd-display #__line__ ";function: ~A ~A" (.function val) GXclear))
-	    (set! (.line_width val) 10)
-	    (if (not (equal? (.line_width val) 10)) 
-		(snd-display #__line__ ";line_width: ~A ~A" (.line_width val) 10))
-	    (set! (.line_style val) LineSolid)
-	    (if (not (equal? (.line_style val) LineSolid)) 
-		(snd-display #__line__ ";line_style: ~A ~A" (.line_style val) LineSolid))
-	    (set! (.background val) (WhitePixelOfScreen (current-screen)))
-	    (if (not (equal? (.background val) (WhitePixelOfScreen (current-screen)))) 
-		(snd-display #__line__ ";background: ~A ~A" (.background val) (WhitePixelOfScreen (current-screen))))
-	    (set! (.foreground val) (BlackPixelOfScreen (current-screen)))
-	    (if (not (equal? (.foreground val) (BlackPixelOfScreen (current-screen)))) 
-		(snd-display #__line__ ";foreground: ~A ~A" (.foreground val) (BlackPixelOfScreen (current-screen))))
-	    ;; plane_mask?
-	    (set! (.cap_style val) CapRound)
-	    (if (not (equal? (.cap_style val) CapRound)) 
-		(snd-display #__line__ ";cap_style: ~A ~A" (.cap_style val) CapRound))
-	    (set! (.join_style val) JoinMiter)
-	    (if (not (equal? (.join_style val) JoinMiter)) 
-		(snd-display #__line__ ";join_style: ~A ~A" (.join_style val) JoinMiter))
-	    (set! (.fill_style val) FillSolid)
-	    (if (not (equal? (.fill_style val) FillSolid)) 
-		(snd-display #__line__ ";fill_style: ~A ~A" (.fill_style val) FillSolid))
-	    (set! (.fill_rule val) EvenOddRule)
-	    (if (not (equal? (.fill_rule val) EvenOddRule)) 
-		(snd-display #__line__ ";fill_rule: ~A ~A" (.fill_rule val) EvenOddRule))
-	    (set! (.arc_mode val) ArcChord)
-	    (if (not (equal? (.arc_mode val) ArcChord))
-		(snd-display #__line__ ";arc_mode: ~A ~A" (.arc_mode val) ArcChord))
-	    ;; tile stipple clip_mask are Pixmaps
-	    (set! (.ts_x_origin val) 1)
-	    (if (not (equal? (.ts_x_origin val) 1)) 
-		(snd-display #__line__ ";ts_x_origin: ~A ~A" (.ts_x_origin val) 1))
-	    (set! (.ts_y_origin val) 1)
-	    (if (not (equal? (.ts_y_origin val) 1)) 
-		(snd-display #__line__ ";ts_y_origin: ~A ~A" (.ts_y_origin val) 1))
-	    ;; font is Font
-	    (set! (.subwindow_mode val) ClipByChildren)
-	    (if (not (equal? (.subwindow_mode val) ClipByChildren)) 
-		(snd-display #__line__ ";subwindow_mode: ~A ~A" (.subwindow_mode val) ClipByChildren))
-	    (set! (.graphics_exposures val) #f)
-	    (if (not (equal? (.graphics_exposures val) #f)) 
-		(snd-display #__line__ ";graphics_exposures: ~A ~A" (.graphics_exposures val) #f))
-	    (set! (.clip_x_origin val) 0)
-	    (if (not (equal? (.clip_x_origin val) 0)) 
-		(snd-display #__line__ ";clip_x_origin: ~A ~A" (.clip_x_origin val) 0))
-	    (set! (.clip_y_origin val) 0)
-	    (if (not (equal? (.clip_y_origin val) 0)) 
-		(snd-display #__line__ ";clip_y_origin: ~A ~A" (.clip_y_origin val) 0))
-	    (set! (.dash_offset val) 1)
-	    (if (not (equal? (.dash_offset val) 1))
-		(snd-display #__line__ ";dash_offset: ~A ~A" (.dash_offset val) 1))
-	    (if (not (number? (XConnectionNumber dpy)))
-		(snd-display #__line__ ";XConnectionNumber: ~A" (XConnectionNumber dpy)))
+	  (let* ((vals (XGetGCValues dpy sgc (+ GCFunction GCForeground GCBackground GCLineWidth GCLineStyle 
+						GCCapStyle GCJoinStyle GCFillStyle GCFillRule GCTileStipXOrigin
+						GCTileStipYOrigin GCSubwindowMode GCGraphicsExposures GCClipXOrigin
+						GCClipYOrigin GCDashOffset GCArcMode)))
+		 (val1 (cadr vals)))
+	    (if (= (car vals) 0)
+		(snd-display #__line__ ";XGetGCValues failed"))
 	    
-	    (let ((sgc (XCreateGC dpy wn (+ GCFunction GCForeground GCBackground GCLineWidth GCLineStyle 
-					    GCCapStyle GCJoinStyle GCFillStyle GCFillRule GCTileStipXOrigin
-					    GCTileStipYOrigin GCSubwindowMode GCGraphicsExposures GCClipXOrigin
-					    GCClipYOrigin GCDashOffset GCArcMode)
-				  val)))
-	      
-	      (if (not (GC? sgc)) (snd-display #__line__ ";XCreateGC returned ~A" sgc))
-	      (XSetArcMode dpy sgc ArcPieSlice)
-	      (XSetFunction dpy sgc GXcopy)
-	      (XSetLineAttributes dpy sgc 3 LineDoubleDash CapButt JoinMiter)
-	      (XSetClipOrigin dpy sgc 1 1)
-	      (XSetTSOrigin dpy sgc 0 0)
-	      (XSetFillRule dpy sgc WindingRule)
-	      (XSetFillStyle dpy sgc FillStippled)
-	      (XSetForeground dpy sgc (WhitePixelOfScreen (current-screen)))
-	      (XSetBackground dpy sgc (BlackPixelOfScreen (current-screen)))
-	      (XSetGraphicsExposures dpy sgc #t)
-	      (XSetSubwindowMode dpy sgc IncludeInferiors)
-	      (let ((owner (XGetSelectionOwner dpy XA_PRIMARY)))
-		(if (and owner (not (Window? owner)))
-		    (snd-display #__line__ ";XGetSelectionOwner: ~A" owner)))
-	      (let ((mods (XGetModifierMapping dpy)))
-		(if (not (XModifierKeymap? mods))
-		    (snd-display #__line__ ";XGetModifierMapping: ~A" mods)))
-	      (let ((vis (XGetVisualInfo dpy 0 (list 'XVisualInfo 0))))
-		(if (or (not vis)
-			(not (XVisualInfo? (car vis))))
-		    (snd-display #__line__ ";XGetVisualInfo: ~A" vis))
-		(if (not (= (.depth (car vis)) 24)) (snd-display #__line__ ";depth vis: ~A" (.depth (car vis))))
-		(if (not (= (.screen (car vis)) 0)) (snd-display #__line__ ";screen vis: ~A" (.screen (car vis))))
-		(catch #t ; in c++ no class field
-		       (lambda ()
-			 (if (not (= (.class (car vis)) TrueColor)) (snd-display #__line__ ";class vis: ~A (~A)" (.class (car vis)) TrueColor)))
-		       (lambda args args))
-		(if (not (= (.colormap_size (car vis)) 256)) (snd-display #__line__ ";colormap_size vis: ~A" (.colormap_size (car vis))))
-		(if (and (not (XVisualInfo? (XMatchVisualInfo dpy 0 24 TrueColor)))
-			 (not (XVisualInfo? (XMatchVisualInfo dpy 0 16 TrueColor))))
-		    (snd-display #__line__ ";XMatchVisualInfo: ~A" (XMatchVisualInfo dpy 0 24 TrueColor))))
-	      (XCheckMaskEvent dpy KeyPressMask)
-	      
-	      (let* ((vals (XGetGCValues dpy sgc (+ GCFunction GCForeground GCBackground GCLineWidth GCLineStyle 
-						    GCCapStyle GCJoinStyle GCFillStyle GCFillRule GCTileStipXOrigin
-						    GCTileStipYOrigin GCSubwindowMode GCGraphicsExposures GCClipXOrigin
-						    GCClipYOrigin GCDashOffset GCArcMode)))
-		     (val1 (cadr vals)))
-		(if (= (car vals) 0)
-		    (snd-display #__line__ ";XGetGCValues failed"))
-		
-		(if (not (equal? (.function val1) GXcopy))
-		    (snd-display #__line__ ";function: ~A ~A" (.function val1) GXcopy))
-		(if (not (equal? (.line_width val1) 3)) 
-		    (snd-display #__line__ ";line_width: ~A ~A" (.line_width val1) 3))
-		(if (not (equal? (.line_style val1) LineDoubleDash)) 
-		    (snd-display #__line__ ";line_style: ~A ~A" (.line_style val1) LineDoubleDash))
-		(if (not (equal? (.background val1) (BlackPixelOfScreen (current-screen)))) 
-		    (snd-display #__line__ ";background: ~A ~A" (.background val1) (BlackPixelOfScreen (current-screen))))
-		(if (not (equal? (.foreground val1) (WhitePixelOfScreen (current-screen)))) 
-		    (snd-display #__line__ ";foreground: ~A ~A" (.foreground val1) (WhitePixelOfScreen (current-screen))))
-		(if (not (equal? (.cap_style val1) CapButt)) 
-		    (snd-display #__line__ ";cap_style: ~A ~A" (.cap_style val1) CapButt))
-		(if (not (equal? (.join_style val1) JoinMiter)) 
-		    (snd-display #__line__ ";join_style: ~A ~A" (.join_style val1) JoinMiter))
-		(if (not (equal? (.fill_style val1) FillStippled)) 
-		    (snd-display #__line__ ";fill_style: ~A ~A" (.fill_style val1) FillStippled))
-		(if (not (equal? (.fill_rule val1) WindingRule)) 
-		    (snd-display #__line__ ";fill_rule: ~A ~A" (.fill_rule val1) WindingRule))
-		(if (not (equal? (.arc_mode val1) ArcPieSlice))
-		    (snd-display #__line__ ";arc_mode: ~A ~A" (.arc_mode val1) ArcPieSlice))
-		(if (not (equal? (.ts_x_origin val1) 0)) 
-		    (snd-display #__line__ ";ts_x_origin: ~A ~A" (.ts_x_origin val1) 0))
-		(if (not (equal? (.ts_y_origin val1) 0)) 
-		    (snd-display #__line__ ";ts_y_origin: ~A ~A" (.ts_y_origin val1) 0))
-		(if (not (equal? (.subwindow_mode val1) IncludeInferiors)) 
-		    (snd-display #__line__ ";subwindow_mode: ~A ~A" (.subwindow_mode val1) IncludeInferiors))
-		(if (not (equal? (.graphics_exposures val1) #t)) 
-		    (snd-display #__line__ ";graphics_exposures: ~A ~A" (.graphics_exposures val1) #t))
-		(if (not (equal? (.clip_x_origin val1) 1)) 
-		    (snd-display #__line__ ";clip_x_origin: ~A ~A" (.clip_x_origin val1) 1))
-		(if (not (equal? (.clip_y_origin val1) 1)) 
-		    (snd-display #__line__ ";clip_y_origin: ~A ~A" (.clip_y_origin val1) 1))
-		(if (not (equal? (.dash_offset val1) 1))
-		    (snd-display #__line__ ";dash_offset: ~A ~A" (.dash_offset val1) 1))
-		
-		(set! (.plane_mask val) 0)
-		(if (not (equal? (.plane_mask val) 0)) 
-		    (snd-display #__line__ ";plane_mask: ~A ~A" (.plane_mask val) 0))
-		(set! (.tile val) (list 'Pixmap 0))
-		(if (not (equal? (.tile val) (list 'Pixmap 0)))
-		    (snd-display #__line__ ";tile: ~A" (.tile val)))
-		(set! (.stipple val) (list 'Pixmap 0))
-		(if (not (equal? (.stipple val) (list 'Pixmap 0)))
-		    (snd-display #__line__ ";stipple: ~A" (.stipple val)))
-		
-		(let* ((dpy (XtDisplay (cadr (main-widgets))))
-		       (win (XtWindow (cadr (main-widgets))))
-		       (attr (XSetWindowAttributes #f *basic-color* #f *highlight-color*))
-		       (newwin (XCreateWindow dpy win 10 10 100 100 3 
-					      CopyFromParent InputOutput (list 'Visual CopyFromParent)
-					      (logior CWBackPixel CWBorderPixel)
-					      attr)))
-		  (if (not (= (.do_not_propagate_mask attr) 0)) (snd-display #__line__ ";do_not_propagate_mask: ~A" (.do_not_propagate_mask attr)))
-		  (if (not (= (.event_mask attr) 0)) (snd-display #__line__ ";event_mask: ~A" (.event_mask attr)))
-		  (if (not (Pixel? (.backing_pixel attr))) (snd-display #__line__ ";backing_pixel: ~A" (.backing_pixel attr)))
-		  (if (not (Pixel? (.border_pixel attr))) (snd-display #__line__ ";border_pixel: ~A" (.border_pixel attr)))
-		  (if (not (= (cadr (.border_pixmap attr)) 0)) (snd-display #__line__ ";border_pixmap: ~A" (.border_pixmap attr)))
-		  (if (not (Pixel? (.background_pixel attr))) (snd-display #__line__ ";background_pixel: ~A" (.background_pixel attr)))
-		  (if (not (= (cadr (.background_pixmap attr)) 0)) (snd-display #__line__ ";background_pixmap: ~A" (.background_pixmap attr)))
-		  (if (not (= (.backing_planes attr) 0)) (snd-display #__line__ ";backing_planes: ~A" (.backing_planes attr)))
-		  (if (.save_under attr) (snd-display #__line__ ";save_under: ~A" (.save_under attr)))
-		  (if (not (= (cadr (.cursor attr)) 0)) (snd-display #__line__ ";cursor: ~A" (.cursor attr)))
-		  (if (not (Window? newwin)) (snd-display #__line__ ";XCreateWindow: ~A" newwin))
-		  (if (not (= (.bit_gravity attr) 0)) (snd-display #__line__ ";bit_gravity: ~A" (.bit_gravity attr)))
-		  (XChangeWindowAttributes dpy newwin CWBackPixel (XSetWindowAttributes #f *basic-color*))
-		  (XDestroyWindow dpy newwin)
-		  (set! newwin (XCreateSimpleWindow dpy win 10 10 100 100 3 *basic-color* *highlight-color*))
-		  (XDestroyWindow dpy newwin))
-		
-		(XSetRegion dpy sgc (XPolygonRegion (list (XPoint 0 0) (XPoint 10 0) (XPoint 10 10) (XPoint 0 10)) 4 WindingRule))
-		(let ((pix (make-pixmap (cadr (main-widgets)) arrow-strs)))
-		  (if (not (Pixmap? pix)) 
-		      (snd-display #__line__ ";make-pixmap?")
-		      (begin
-			(XSetTile dpy sgc pix)
-			(XSetStipple dpy sgc (XCreateBitmapFromData dpy wn right-arrow 16 12))
-			(XSetClipMask dpy sgc None)
-			(XSetState dpy sgc *basic-color* *mark-color* GXcopy 0)
-			(XSetPlaneMask dpy sgc 0)
-			(XSetDashes dpy sgc 0 '(3 4 3 1))
-			(XSetClipRectangles dpy sgc 0 0 (list (XRectangle 0 0 10 10) (XRectangle 10 10 100 100)) 2 Unsorted)
-			(let ((err (XWriteBitmapFile dpy "testx.data" pix 16 12 -1 -1)))
-			  (if (not (= BitmapSuccess err)) (snd-display #__line__ ";XWriteBitmapFile: ~A" err)))
+	    (if (not (equal? (.function val1) GXcopy))
+		(snd-display #__line__ ";function: ~A ~A" (.function val1) GXcopy))
+	    (if (not (equal? (.line_width val1) 3)) 
+		(snd-display #__line__ ";line_width: ~A ~A" (.line_width val1) 3))
+	    (if (not (equal? (.line_style val1) LineDoubleDash)) 
+		(snd-display #__line__ ";line_style: ~A ~A" (.line_style val1) LineDoubleDash))
+	    (if (not (equal? (.background val1) (BlackPixelOfScreen (current-screen)))) 
+		(snd-display #__line__ ";background: ~A ~A" (.background val1) (BlackPixelOfScreen (current-screen))))
+	    (if (not (equal? (.foreground val1) (WhitePixelOfScreen (current-screen)))) 
+		(snd-display #__line__ ";foreground: ~A ~A" (.foreground val1) (WhitePixelOfScreen (current-screen))))
+	    (if (not (equal? (.cap_style val1) CapButt)) 
+		(snd-display #__line__ ";cap_style: ~A ~A" (.cap_style val1) CapButt))
+	    (if (not (equal? (.join_style val1) JoinMiter)) 
+		(snd-display #__line__ ";join_style: ~A ~A" (.join_style val1) JoinMiter))
+	    (if (not (equal? (.fill_style val1) FillStippled)) 
+		(snd-display #__line__ ";fill_style: ~A ~A" (.fill_style val1) FillStippled))
+	    (if (not (equal? (.fill_rule val1) WindingRule)) 
+		(snd-display #__line__ ";fill_rule: ~A ~A" (.fill_rule val1) WindingRule))
+	    (if (not (equal? (.arc_mode val1) ArcPieSlice))
+		(snd-display #__line__ ";arc_mode: ~A ~A" (.arc_mode val1) ArcPieSlice))
+	    (if (not (equal? (.ts_x_origin val1) 0)) 
+		(snd-display #__line__ ";ts_x_origin: ~A ~A" (.ts_x_origin val1) 0))
+	    (if (not (equal? (.ts_y_origin val1) 0)) 
+		(snd-display #__line__ ";ts_y_origin: ~A ~A" (.ts_y_origin val1) 0))
+	    (if (not (equal? (.subwindow_mode val1) IncludeInferiors)) 
+		(snd-display #__line__ ";subwindow_mode: ~A ~A" (.subwindow_mode val1) IncludeInferiors))
+	    (if (not (equal? (.graphics_exposures val1) #t)) 
+		(snd-display #__line__ ";graphics_exposures: ~A ~A" (.graphics_exposures val1) #t))
+	    (if (not (equal? (.clip_x_origin val1) 1)) 
+		(snd-display #__line__ ";clip_x_origin: ~A ~A" (.clip_x_origin val1) 1))
+	    (if (not (equal? (.clip_y_origin val1) 1)) 
+		(snd-display #__line__ ";clip_y_origin: ~A ~A" (.clip_y_origin val1) 1))
+	    (if (not (equal? (.dash_offset val1) 1))
+		(snd-display #__line__ ";dash_offset: ~A ~A" (.dash_offset val1) 1))
+	    
+	    (set! (.plane_mask val) 0)
+	    (if (not (equal? (.plane_mask val) 0)) 
+		(snd-display #__line__ ";plane_mask: ~A ~A" (.plane_mask val) 0))
+	    (set! (.tile val) (list 'Pixmap 0))
+	    (if (not (equal? (.tile val) (list 'Pixmap 0)))
+		(snd-display #__line__ ";tile: ~A" (.tile val)))
+	    (set! (.stipple val) (list 'Pixmap 0))
+	    (if (not (equal? (.stipple val) (list 'Pixmap 0)))
+		(snd-display #__line__ ";stipple: ~A" (.stipple val)))
+	    
+	    (let* ((dpy (XtDisplay (cadr (main-widgets))))
+		   (win (XtWindow (cadr (main-widgets))))
+		   (attr (XSetWindowAttributes #f *basic-color* #f *highlight-color*))
+		   (newwin (XCreateWindow dpy win 10 10 100 100 3 
+					  CopyFromParent InputOutput (list 'Visual CopyFromParent)
+					  (logior CWBackPixel CWBorderPixel)
+					  attr)))
+	      (if (not (= (.do_not_propagate_mask attr) 0)) (snd-display #__line__ ";do_not_propagate_mask: ~A" (.do_not_propagate_mask attr)))
+	      (if (not (= (.event_mask attr) 0)) (snd-display #__line__ ";event_mask: ~A" (.event_mask attr)))
+	      (if (not (Pixel? (.backing_pixel attr))) (snd-display #__line__ ";backing_pixel: ~A" (.backing_pixel attr)))
+	      (if (not (Pixel? (.border_pixel attr))) (snd-display #__line__ ";border_pixel: ~A" (.border_pixel attr)))
+	      (if (not (= (cadr (.border_pixmap attr)) 0)) (snd-display #__line__ ";border_pixmap: ~A" (.border_pixmap attr)))
+	      (if (not (Pixel? (.background_pixel attr))) (snd-display #__line__ ";background_pixel: ~A" (.background_pixel attr)))
+	      (if (not (= (cadr (.background_pixmap attr)) 0)) (snd-display #__line__ ";background_pixmap: ~A" (.background_pixmap attr)))
+	      (if (not (= (.backing_planes attr) 0)) (snd-display #__line__ ";backing_planes: ~A" (.backing_planes attr)))
+	      (if (.save_under attr) (snd-display #__line__ ";save_under: ~A" (.save_under attr)))
+	      (if (not (= (cadr (.cursor attr)) 0)) (snd-display #__line__ ";cursor: ~A" (.cursor attr)))
+	      (if (not (Window? newwin)) (snd-display #__line__ ";XCreateWindow: ~A" newwin))
+	      (if (not (= (.bit_gravity attr) 0)) (snd-display #__line__ ";bit_gravity: ~A" (.bit_gravity attr)))
+	      (XChangeWindowAttributes dpy newwin CWBackPixel (XSetWindowAttributes #f *basic-color*))
+	      (XDestroyWindow dpy newwin)
+	      (set! newwin (XCreateSimpleWindow dpy win 10 10 100 100 3 *basic-color* *highlight-color*))
+	      (XDestroyWindow dpy newwin))
+	    
+	    (XSetRegion dpy sgc (XPolygonRegion (list (XPoint 0 0) (XPoint 10 0) (XPoint 10 10) (XPoint 0 10)) 4 WindingRule))
+	    (let ((pix (make-pixmap (cadr (main-widgets)) arrow-strs)))
+	      (if (not (Pixmap? pix)) 
+		  (snd-display #__line__ ";make-pixmap?")
+		  (begin
+		    (XSetTile dpy sgc pix)
+		    (XSetStipple dpy sgc (XCreateBitmapFromData dpy wn right-arrow 16 12))
+		    (XSetClipMask dpy sgc None)
+		    (XSetState dpy sgc *basic-color* *mark-color* GXcopy 0)
+		    (XSetPlaneMask dpy sgc 0)
+		    (XSetDashes dpy sgc 0 '(3 4 3 1))
+		    (XSetClipRectangles dpy sgc 0 0 (list (XRectangle 0 0 10 10) (XRectangle 10 10 100 100)) 2 Unsorted)
+		    (let ((err (XWriteBitmapFile dpy "testx.data" pix 16 12 -1 -1)))
+		      (if (not (= BitmapSuccess err)) (snd-display #__line__ ";XWriteBitmapFile: ~A" err)))
 					;(let ((vals (XReadBitmapFile dpy (XtWindow (cadr (main-widgets))) "testx.data")))
 					;  (if (not (= (car vals BitmapSuccess))) (snd-display #__line__ ";XReadBitmapFile: ~A" vals)))
 					;(let ((vals (XReadBitmapFileData "testx.data")))
 					;  (if (not (= (car vals BitmapSuccess))) (snd-display #__line__ ";XReadBitmapFileData: ~A" vals)))
-			
-			(let* ((fid (XLoadFont dpy "cursor"))
-			       (col (XColor))
-			       (col1 (XColor))
-			       (scr (DefaultScreen dpy))
-			       (cmap (DefaultColormap dpy scr)))
-			  (XAllocNamedColor dpy cmap "blue" col col)
-			  (XAllocNamedColor dpy cmap "green" col1 col1)
-			  (let ((vals (XCreateGlyphCursor dpy fid None XC_dot 0 col col1)))
-			    (if (not (Cursor? vals)) (snd-display #__line__ ";XCreateGlyphCursor: ~A" vals)))
-			  (let ((vals (XCreatePixmapCursor dpy pix None col col1 5 5)))
-			    (if (not (Cursor? vals)) (snd-display #__line__ ";XCreatePixmapCursor: ~A" vals))
-			    (XRecolorCursor dpy vals col1 col))
-			  (XAllocColorPlanes dpy cmap #f 2 1 1 1)
-			  (XAllocColorCells dpy cmap #f 1 1))
-			
-			
-			)))
-		(let* ((fid (XLoadFont dpy "-*-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
-		       (fnt (XLoadQueryFont dpy "-*-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
-		       (chs (XQueryTextExtents dpy fid "hiho"))
-		       (struct (chs 4))
-		       (fnt1 (XQueryFont dpy fid)))
-		  (if (not (Font? fid)) (snd-display #__line__ ";XLoadFont: ~A" fid))
-		  (if (not (XFontStruct? fnt)) (snd-display #__line__ ";XLoadQueryFont: ~A" fnt))
-		  (if (not (XFontStruct? fnt1)) (snd-display #__line__ ";XQueryFont: ~A" fnt1))
-		  (if (not (XCharStruct? struct)) (snd-display #__line__ ";XQueryTextExtents: ~A" chs))
-		  (if (not (= (chs 2) 12)) (snd-display #__line__ ";XQueryTextExtents max ascent: ~A" (chs 2)))
-		  (if (not (= (chs 3) 3)) (snd-display #__line__ ";XQueryTextExtents max descent: ~A" (chs 3)))
-		  (if (not (= (.lbearing struct) 0)) (snd-display #__line__ ";lbearing: ~A" (.lbearing struct)))
-		  (if (not (= (.rbearing struct) 23)) (snd-display #__line__ ";rbearing: ~A" (.rbearing struct)))
-		  (if (not (= (.width struct) 24)) (snd-display #__line__ ";width: ~A" (.width struct)))
-		  (if (not (= (.ascent struct) 10)) (snd-display #__line__ ";ascent: ~A" (.ascent struct)))
-		  (if (not (= (.descent struct) 0)) (snd-display #__line__ ";descent: ~A" (.descent struct)))
-		  (if (not (= (.attributes struct) 0)) (snd-display #__line__ ";attributes: ~A" (.attributes struct)))
-		  (let ((fid (load-font "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*")))
-		    (if (not (Font? fid)) (snd-display #__line__ ";load-font -> ~A" fid)))
-		  )
-		(XFreeGC (XtDisplay (cadr (main-widgets))) sgc)
-		)))
-	  
-	  (let ((atoms (list XA_PRIMARY XA_SECONDARY XA_ARC XA_ATOM XA_BITMAP XA_CARDINAL XA_COLORMAP XA_CURSOR XA_CUT_BUFFER0
-			     XA_CUT_BUFFER1 XA_CUT_BUFFER2 XA_CUT_BUFFER3 XA_CUT_BUFFER4 XA_CUT_BUFFER5 XA_CUT_BUFFER6
-			     XA_CUT_BUFFER7 XA_DRAWABLE XA_FONT XA_INTEGER XA_PIXMAP XA_POINT XA_RECTANGLE XA_RESOURCE_MANAGER
-			     XA_RGB_COLOR_MAP XA_RGB_BEST_MAP XA_RGB_BLUE_MAP XA_RGB_DEFAULT_MAP XA_RGB_GRAY_MAP XA_RGB_GREEN_MAP
-			     XA_RGB_RED_MAP XA_STRING XA_VISUALID XA_WINDOW XA_WM_COMMAND XA_WM_HINTS XA_WM_CLIENT_MACHINE
-			     XA_WM_ICON_NAME XA_WM_ICON_SIZE XA_WM_NAME XA_WM_NORMAL_HINTS XA_WM_SIZE_HINTS XA_WM_ZOOM_HINTS
-			     XA_MIN_SPACE XA_NORM_SPACE XA_MAX_SPACE XA_END_SPACE XA_SUPERSCRIPT_X XA_SUPERSCRIPT_Y
-			     XA_SUBSCRIPT_X XA_SUBSCRIPT_Y XA_UNDERLINE_POSITION XA_UNDERLINE_THICKNESS XA_STRIKEOUT_ASCENT
-			     XA_STRIKEOUT_DESCENT XA_ITALIC_ANGLE XA_X_HEIGHT XA_QUAD_WIDTH XA_WEIGHT XA_POINT_SIZE
-			     XA_RESOLUTION XA_COPYRIGHT XA_NOTICE XA_FONT_NAME XA_FAMILY_NAME XA_FULL_NAME XA_CAP_HEIGHT
-			     XA_WM_CLASS XA_WM_TRANSIENT_FOR))
-		(atom-names (list 'XA_PRIMARY 'XA_SECONDARY 'XA_ARC 'XA_ATOM 'XA_BITMAP 'XA_CARDINAL 'XA_COLORMAP 'XA_CURSOR 'XA_CUT_BUFFER0
-				  'XA_CUT_BUFFER1 'XA_CUT_BUFFER2 'XA_CUT_BUFFER3 'XA_CUT_BUFFER4 'XA_CUT_BUFFER5 'XA_CUT_BUFFER6
-				  'XA_CUT_BUFFER7 'XA_DRAWABLE 'XA_FONT 'XA_INTEGER 'XA_PIXMAP 'XA_POINT 'XA_RECTANGLE 'XA_RESOURCE_MANAGER
-				  'XA_RGB_COLOR_MAP 'XA_RGB_BEST_MAP 'XA_RGB_BLUE_MAP 'XA_RGB_DEFAULT_MAP 'XA_RGB_GRAY_MAP 'XA_RGB_GREEN_MAP
-				  'XA_RGB_RED_MAP 'XA_STRING 'XA_VISUALID 'XA_WINDOW 'XA_WM_COMMAND 'XA_WM_HINTS 'XA_WM_CLIENT_MACHINE
-				  'XA_WM_ICON_NAME 'XA_WM_ICON_SIZE 'XA_WM_NAME 'XA_WM_NORMAL_HINTS 'XA_WM_SIZE_HINTS 'XA_WM_ZOOM_HINTS
-				  'XA_MIN_SPACE 'XA_NORM_SPACE 'XA_MAX_SPACE 'XA_END_SPACE 'XA_SUPERSCRIPT_X 'XA_SUPERSCRIPT_Y
-				  'XA_SUBSCRIPT_X 'XA_SUBSCRIPT_Y 'XA_UNDERLINE_POSITION 'XA_UNDERLINE_THICKNESS 'XA_STRIKEOUT_ASCENT
-				  'XA_STRIKEOUT_DESCENT 'XA_ITALIC_ANGLE 'XA_X_HEIGHT 'XA_QUAD_WIDTH 'XA_WEIGHT 'XA_POINT_SIZE
-				  'XA_RESOLUTION 'XA_COPYRIGHT 'XA_NOTICE 'XA_FONT_NAME 'XA_FAMILY_NAME 'XA_FULL_NAME 'XA_CAP_HEIGHT
-				  'XA_WM_CLASS 'XA_WM_TRANSIENT_FOR)))
-	    (for-each
-	     (lambda (n name)
-	       (if (not (Atom? n))
-		   (snd-display #__line__ ";Atom: ~A -> ~A" name (Atom? n))))
-	     atoms
-	     atom-names))
-	  
-	  (let ((r (XRectangle 10 20 100 110)))
-	    (if (not (= (.width r) 100))
-		(snd-display #__line__ ";XRectangle width: ~A" (.width r)))
-	    (if (not (= (.height r) 110))
-		(snd-display #__line__ ";XRectangle height: ~A" (.height r)))
-	    (if (not (= (.x r) 10))
-		(snd-display #__line__ ";XRectangle x: ~A" (.x r)))
-	    (if (not (= (.y r) 20))
-		(snd-display #__line__ ";XRectangle y: ~A" (.y r)))
-	    (set! (.width r) 10)
-	    (if (not (= (.width r) 10))
-		(snd-display #__line__ ";set XRectangle width: ~A" (.width r)))
-	    (set! (.height r) 11)
-	    (if (not (= (.height r) 11))
-		(snd-display #__line__ ";set XRectangle height: ~A" (.height r)))
-	    (set! (.x r) 1)
-	    (if (not (= (.x r) 1))
-		(snd-display #__line__ ";set XRectangle x: ~A" (.x r)))
-	    (set! (.y r) 2)
-	    (if (not (= (.y r) 2))
-		(snd-display #__line__ ";XRectangle y: ~A" (.y r))))
-	  
-	  (let ((r (XArc 10 20 100 110 0 235)))
-	    (if (not (= (.width r) 100))
-		(snd-display #__line__ ";XArc width: ~A" (.width r)))
-	    (if (not (= (.height r) 110))
-		(snd-display #__line__ ";XArc height: ~A" (.height r)))
-	    (if (not (= (.x r) 10))
-		(snd-display #__line__ ";XArc x: ~A" (.x r)))
-	    (if (not (= (.y r) 20))
-		(snd-display #__line__ ";XArc y: ~A" (.y r)))
-	    (if (not (= (.angle1 r) 0))
-		(snd-display #__line__ ";XArc angle1: ~A" (.angle1 r)))
-	    (if (not (= (.angle2 r) 235))
-		(snd-display #__line__ ";XArc angle2: ~A" (.angle2 r)))
-	    (set! (.width r) 10)
-	    (if (not (= (.width r) 10))
-		(snd-display #__line__ ";set XArc width: ~A" (.width r)))
-	    (set! (.height r) 11)
-	    (if (not (= (.height r) 11))
-		(snd-display #__line__ ";set XArc height: ~A" (.height r)))
-	    (set! (.x r) 1)
-	    (if (not (= (.x r) 1))
-		(snd-display #__line__ ";set XArc x: ~A" (.x r)))
-	    (set! (.y r) 2)
-	    (if (not (= (.y r) 2))
-		(snd-display #__line__ ";set XArc y: ~A" (.y r)))
-	    (set! (.angle1 r) 123)
-	    (if (not (= (.angle1 r) 123))
-		(snd-display #__line__ ";set XArc angle1: ~A" (.angle1 r)))
-	    (set! (.angle2 r) 321)
-	    (if (not (= (.angle2 r) 321))
-		(snd-display #__line__ ";set XArc angle2: ~A" (.angle2 r))))
-	  
-	  (let ((r (XPoint 10 20)))
-	    (if (not (= (.x r) 10))
-		(snd-display #__line__ ";XPoint x: ~A" (.x r)))
-	    (if (not (= (.y r) 20))
-		(snd-display #__line__ ";XPoint y: ~A" (.y r)))
-	    (set! (.x r) 1)
-	    (if (not (= (.x r) 1))
-		(snd-display #__line__ ";set XPoint x: ~A" (.x r)))
-	    (set! (.y r) 2)
-	    (if (not (= (.y r) 2))
-		(snd-display #__line__ ";set XPoint y: ~A" (.y r))))
-	  
-	  (let ((r (XSegment 10 20 100 110)))
-	    (if (not (= (.x1 r) 10))
-		(snd-display #__line__ ";XSegment x1: ~A" (.x1 r)))
-	    (if (not (= (.y1 r) 20))
-		(snd-display #__line__ ";XSegment y1: ~A" (.y1 r)))
-	    (if (not (= (.x2 r) 100))
-		(snd-display #__line__ ";XSegment x2: ~A" (.x2 r)))
-	    (if (not (= (.y2 r) 110))
-		(snd-display #__line__ ";XSegment y2: ~A" (.y2 r)))
-	    (set! (.x1 r) 1)
-	    (if (not (= (.x1 r) 1))
-		(snd-display #__line__ ";set XSegment x1: ~A" (.x1 r)))
-	    (set! (.y1 r) 2)
-	    (if (not (= (.y1 r) 2))
-		(snd-display #__line__ ";set XSegment y1: ~A" (.y1 r)))
-	    (set! (.x2 r) 10)
-	    (if (not (= (.x2 r) 10))
-		(snd-display #__line__ ";set XSegment x2: ~A" (.x2 r)))
-	    (set! (.y2 r) 11)
-	    (if (not (= (.y2 r) 11))
-		(snd-display #__line__ ";set XSegment y2: ~A" (.y2 r))))
-	  
-	  (let ((c (XColor)))
-	    (set! (.red c) 1)
-	    (if (not (= (.red c) 1)) (snd-display #__line__ ";Xcolor red: ~A" (.red c)))
-	    (set! (.green c) 1)
-	    (if (not (= (.green c) 1)) (snd-display #__line__ ";Xcolor green: ~A" (.green c)))
-	    (set! (.blue c) 1)
-	    (if (not (= (.blue c) 1)) (snd-display #__line__ ";Xcolor blue: ~A" (.blue c)))
-	    (set! (.flags c) DoRed)
-	    (if (not (= (.flags c) DoRed)) (snd-display #__line__ ";Xcolor flags: ~A" (.flags c)))
-	    (if (not (= (.pad c) 0)) (snd-display #__line__ ";pad: ~A" (.pad c)))
-	    (set! (.pixel c) *basic-color*)
-	    (if (not (equal? (.pixel c) *basic-color*)) (snd-display #__line__ ";Xcolor pixel: ~A" (.pixel c))))
-	  
-	  (let ((obj (XTextItem "hiho" 4 3 (list 'Font 1))))
-	    (if (not (XTextItem? obj)) (snd-display #__line__ ";XTextItem -> ~A" obj))
-	    (if (not (equal? (.font obj) (list 'Font 1))) (snd-display #__line__ ";font ~A" (.font obj)))
-	    (set! (.font obj) (list 'Font 2))
-	    (if (not (equal? (.font obj) (list 'Font 2))) (snd-display #__line__ ";set font ~A" (.font obj)))
-	    (if (not (string=? (.chars obj) "hiho")) (snd-display #__line__ ";chars: ~A" (.chars obj)))
-	    (if (not (= (.nchars obj) 4)) (snd-display #__line__ ";chars: ~A" (.nchars obj)))
-	    (set! (.chars obj) "away!")
-	    (set! (.nchars obj) 5)
-	    (if (not (string=? (.chars obj) "away!")) (snd-display #__line__ ";set chars: ~A" (.chars obj)))
-	    (if (not (= (.nchars obj) 5)) (snd-display #__line__ ";set chars: ~A" (.nchars obj)))
-	    (if (not (= (.delta obj) 3)) (snd-display #__line__ ";delta ~A" (.delta obj)))
-	    (set! (.delta obj) 4)
-	    (if (not (= (.delta obj) 4)) (snd-display #__line__ ";set delta ~A" (.delta obj)))
-	    )
-	  
-	  (let ((reg (XPolygonRegion (list (XPoint 0 0) (XPoint 10 0) (XPoint 10 10) (XPoint 0 10)) 4 WindingRule)))
-	    (if (not (XPointInRegion reg 4 4)) (snd-display #__line__ ";XPointInRegion"))
-	    (XShrinkRegion reg 1 2)
-	    (if (not (XPointInRegion reg 4 7)) (snd-display #__line__ ";t XShrinkRegion"))
-	    (if (XPointInRegion reg 4 9) (snd-display #__line__ ";f XShrinkRegion"))
-	    (XOffsetRegion reg 1 2)
-	    (if (not (XPointInRegion reg 4 9)) (snd-display #__line__ ";t XOffsetRegion"))
-	    (if (XPointInRegion reg 1 9) (snd-display #__line__ ";f XOffsetRegion"))
-	    (let ((reg2 (XCreateRegion))
-		  (reg1 (XPolygonRegion (list (XPoint 2 2) (XPoint 10 2) (XPoint 10 10) (XPoint 2 10)) 4 WindingRule)))
-	      (if (XEqualRegion reg reg1) (snd-display #__line__ ";f XEqualRegion"))
-	      (if (XEmptyRegion reg) (snd-display #__line__ ";f XEmptyRegion"))
-	      (XXorRegion reg reg1 reg2)
-	      (let ((box (XClipBox reg2)))
-		(if (or (not (= (.x (cadr box)) 2))
-			(not (= (.y (cadr box)) 2))
-			(not (= (.width (cadr box)) 8))
-			(not (= (.height (cadr box)) 2)))
-		    (snd-display #__line__ ";XXorRegion: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
-	      (XUnionRegion reg reg1 reg2)
-	      (let ((box (XClipBox reg2)))
-		(if (or (not (= (.x (cadr box)) 2))
-			(not (= (.y (cadr box)) 2))
-			(not (= (.width (cadr box)) 8))
-			(not (= (.height (cadr box)) 8)))
-		    (snd-display #__line__ ";XUnionRegion: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
-	      (XSubtractRegion reg reg1 reg2)
-	      (let ((box (XClipBox reg2)))
-		(if (or (not (= (.x (cadr box)) 0))
-			(not (= (.y (cadr box)) 0))
-			(not (= (.width (cadr box)) 0))
-			(not (= (.height (cadr box)) 0)))
-		    (snd-display #__line__ ";XSubtractRegion: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
-	      (XIntersectRegion reg reg1 reg2)
-	      (let ((box (XClipBox reg2)))
-		(if (or (not (= (.x (cadr box)) 2))
-			(not (= (.y (cadr box)) 4))
-			(not (= (.width (cadr box)) 8))
-			(not (= (.height (cadr box)) 6)))
-		    (snd-display #__line__ ";XIntersectRegion: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
-	      (XUnionRectWithRegion (XRectangle 1 3 100 100) reg1 reg2)
-	      (let ((box (XClipBox reg2)))
-		(if (or (not (= (.x (cadr box)) 1))
-			(not (= (.y (cadr box)) 2))
-			(not (= (.width (cadr box)) 100))
-			(not (= (.height (cadr box)) 101)))
-		    (snd-display #__line__ ";XUnionRectWithRegion: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
-	      (XRectInRegion reg 0 0 100 100)
-	      (let ((box (XClipBox reg1)))
-		(if (or (not (= (.x (cadr box)) 2))
-			(not (= (.y (cadr box)) 2))
-			(not (= (.width (cadr box)) 8))
-			(not (= (.height (cadr box)) 8)))
-		    (snd-display #__line__ ";XClipBox: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
-	      (XDestroyRegion reg1)
-	      ))
-	  
-	  (let ((xid (XUniqueContext))
-		(dpy (XtDisplay (cadr (main-widgets)))))
-	    (if (not (eq? (car xid) 'XContext))
-		(snd-display #__line__ ";XUniqueContext: ~A" xid))
-	    (XSaveContext dpy  123 xid "hiho")
-	    (let ((val (XFindContext dpy 123 xid)))
-	      (if (or (not (= 0 (car val)))
-		      (not (string=? (cadr val) "hiho")))
-		  (snd-display #__line__ ";XFindContext: ~A" val)))
-	    (XDeleteContext dpy 123 xid)
-	    (XStoreBytes dpy "hiho" 4)
-	    (if (not (string=? (XFetchBytes dpy) "hiho")) (snd-display #__line__ ";XStoreBytes: ~A" (XFetchBytes dpy)))
-	    (XStoreBuffer dpy "hiho" 4 1)
-	    (if (not (string=? (XFetchBuffer dpy 1) "hiho")) (snd-display #__line__ ";XStoreBuffer: ~A" (XFetchBuffer dpy 1)))
-	    )
-	  
-	  
-	  ;; ---------------- Xt tests ----------------
-	  (let ((name (XtGetApplicationNameAndClass (XtDisplay (cadr (main-widgets))))))
-	    (if (not (equal? name (list "snd" "Snd")))
-		(snd-display #__line__ ";XtGetApplicationNameAndClass: ~A?" name)))
-	  (let ((dpys (XtGetDisplays (car (main-widgets)))))
-	    (if (not (Display? (car dpys)))
-		(snd-display #__line__ ";XtGetDisplays: ~A?" dpys)))
-	  (let ((app (XtDisplayToApplicationContext (XtDisplay (cadr (main-widgets)))))
-		(orig (car (main-widgets)))
-		(wid (XtWidgetToApplicationContext (cadr (main-widgets)))))
-	    (if (not (equal? app orig))
-		(snd-display #__line__ ";XtDisplayToApplicationContext: ~A ~A?" app orig))
-	    (if (not (equal? app wid))
-		(snd-display #__line__ ";XtWidgetToApplicationContext: ~A ~A?" app wid)))
-	  (if (not (string=? (XtName (caddr (main-widgets))) "mainpane"))
-	      (snd-display #__line__ ";XtName main pane: ~A" (XtName (caddr (main-widgets)))))
-	  (if (not (= (XtGetMultiClickTime (XtDisplay (cadr (main-widgets)))) 200))
-	      (snd-display #__line__ ";XtGetMultiClickTime: ~A" (XtGetMultiClickTime (XtDisplay (cadr (main-widgets))))))
-	  (XtSetMultiClickTime (XtDisplay (cadr (main-widgets))) 250)
-	  (if (not (= (XtGetMultiClickTime (XtDisplay (cadr (main-widgets)))) 250))
-	      (snd-display #__line__ ";XtSetMultiClickTime: ~A" (XtGetMultiClickTime (XtDisplay (cadr (main-widgets))))))
-	  (XtGetResourceList xmListWidgetClass)
-	  (let ((wid1 (XtCreateWidget "wid1" xmPushButtonWidgetClass (cadr (main-widgets)) ())))
-	    (XtDestroyWidget wid1))
-	  
-	  (let ((hook-id (XtAppAddActionHook 
-			  (car (main-widgets))
-			  (lambda (w data name e p)
-			    (format #t "~A ~A ~A ~A ~A~%" w data name e p))
-			  #f)))
-	    (XtRemoveActionHook hook-id))
-	  
-	  (let* ((shell (cadr (main-widgets)))
-		 (wid (XtCreateWidget "wid" xmFormWidgetClass shell ()))
-		 (wid1 (XtCreateWidget "wid1" xmPushButtonWidgetClass wid ()))
-		 (wid2 (XtVaCreateWidget "wid" xmFormWidgetClass shell ())))
-	    (if (XtIsApplicationShell wid) (snd-display #__line__ ";XtIsApplicationShell"))
-	    (if (not (XtIsApplicationShell shell)) (snd-display #__line__ ";XtIsApplicationShell of appshell"))
-	    (if (not (XtIsComposite wid)) (snd-display #__line__ ";XtIsComposite"))
-	    (if (not (XtIsConstraint wid)) (snd-display #__line__ ";XtIsConstraint"))
-	    (if (XtIsManaged wid) (snd-display #__line__ ";XtIsManaged"))
-	    (if (not (XtIsObject wid)) (snd-display #__line__ ";XtIsObject"))
-	    (if (XtIsOverrideShell wid) (snd-display #__line__ ";XtIsOverrideShell"))
-	    (if (XtIsRealized wid) (snd-display #__line__ ";XtIsRealized"))
-	    (if (not (XtIsRealized shell)) (snd-display #__line__ ";XtIsRealized main shell"))
-	    (if (not (XtIsRectObj wid)) (snd-display #__line__ ";XtIsRectObj"))
-	    (if (not (XtIsSensitive wid)) (snd-display #__line__ ";XtIsSensitive"))
-	    (if (not (XtIsSensitive shell)) (snd-display #__line__ ";XtIsSensitive of main shell"))
-	    (XtSetSensitive wid1 #t)
-	    (if (not (XtIsSensitive wid1)) (snd-display #__line__ ";XtIsSensitive of button"))
-	    (if (XtIsSessionShell wid) (snd-display #__line__ ";XtIsSessionShell"))
-	    (if (XtIsShell wid) (snd-display #__line__ ";XtIsShell"))
-	    (if (not (XtIsShell shell)) (snd-display #__line__ ";XtIsShell of main shell"))
-	    (if (XtIsTopLevelShell wid) (snd-display #__line__ ";XtIsTopLevelShell"))
-	    (if (not (XtIsTopLevelShell shell)) (snd-display #__line__ ";XtIsTopLevelShell of main shell"))
-	    (if (XtIsTransientShell wid) (snd-display #__line__ ";XtIsTransientShell"))
-	    (if (XtIsVendorShell wid) (snd-display #__line__ ";XtIsVendorShell"))
-	    (if (not (XtIsVendorShell shell)) (snd-display #__line__ ";XtIsVendorShell of main shell"))
-	    (if (XtIsWMShell wid) (snd-display #__line__ ";XtIsWMShell"))
-	    (if (not (XtIsWidget wid)) (snd-display #__line__ ";XtIsWidget"))
-	    (if (not (XtIsWidget wid2)) (snd-display #__line__ ";XtIsWidget 2"))
-	    (XtRealizeWidget wid)
-	    (if (not (XtIsRealized wid)) (snd-display #__line__ ";XtRealizeWidget?"))
-	    (XtAddGrab shell #f #f)
-	    (XtRemoveGrab shell)
-	    (XtMakeResizeRequest wid 200 200)
-	    (XtMapWidget wid)
-	    (XtUnmapWidget wid)
-	    (XtUnrealizeWidget wid)
-					;(XtDestroyWidget wid1)
-	    )
-					;	     (XtFree 0) (XtCalloc 0 0) (XtMalloc 0) (XtRealloc 0 0)
-	  (XtSetLanguageProc 
-	   (car (main-widgets)) 
-	   (lambda (dpy str data)
-	     (snd-display #__line__ ";YOW: language proc: got ~A ~A" str data))
-	   "who called us?")
-	  (XtSetLanguageProc (car (main-widgets)) #f "oops")
-	  (XtSetLanguageProc #f #f "oops")
-	  (XtMergeArgLists (list 1 2) 2 (list 1) 1)
-	  
-	  (let* ((shell (cadr (main-widgets)))
-		 (dpy (XtDisplay shell)))
-	    (if (not (equal? (XtClass shell) applicationShellWidgetClass))
-		(snd-display #__line__ ";XtClass shell: ~A" (XtClass shell)))
-	    (if (not (equal? (XtSuperclass shell) topLevelShellWidgetClass))
-		(snd-display #__line__ ";XtSuperclass shell: ~A" (XtClass shell)))
-	    (if (not (string=? (XtName shell) "snd"))
-		(snd-display #__line__ ";XtName: ~A" (XtName shell)))
-	    (if (not (equal? (XtWindow shell) (XtWindowOfObject shell)))
-		(snd-display #__line__ ";XtWindow: ~A ~A" (XtWindow shell) (XtWindowOfObject shell)))
-	    (if (not (equal? (XtScreen shell) (XtScreenOfObject shell)))
-		(snd-display #__line__ ";XtScreen: ~A ~A" (XtScreen shell) (XtScreenOfObject shell)))
-	    (if (not (equal? (XtDisplay shell) (XtDisplayOfObject shell)))
-		(snd-display #__line__ ";XtDisplay: ~A ~A" (XtDisplay shell) (XtDisplayOfObject shell)))
-	    (if (not (Time? (XtLastTimestampProcessed dpy)))
-		(snd-display #__line__ ";XtLastTimestampProcessed: ~A" (XtLastTimestampProcessed dpy)))
-	    (if (not (XEvent? (XtLastEventProcessed dpy)))
-		(snd-display #__line__ ";XtLastEventProcessed: ~A" (XtLastEventProcessed dpy)))
-	    (XtBuildEventMask shell)
-	    (let ((val 0))
-	      (XtRegisterCaseConverter 
-	       dpy
-	       (lambda (dp key)
-		 (set! val 123)
-		 (list (list 'KeySym 65)
-		       (list 'KeySym 97)))
-	       (list 'KeySym 65)
-	       (list 'KeySym 65))
-	      (XtConvertCase dpy (list 'KeySym 65))
-	      (if (not (= val 123)) (snd-display #__line__ ";XtRegisterCaseConverter: ~A" val)))
-	    (XtRegisterGrabAction (lambda (a b c) #f) #f ColormapChangeMask GrabModeSync GrabModeAsync)
-	    (let ((vals (XtTranslateKeycode dpy (list 'KeyCode XK_B) 0)))
-	      (if (or (not (= (car vals) 0))
-		      (not (KeySym? (cadr vals))))
-		  (snd-display #__line__ ";XtTranslateKeycode: ~A" vals))
-	      (if (not (equal? vals (XtTranslateKey dpy (list 'KeyCode XK_B) 0)))
-		  (snd-display #__line__ ";XtTranslateKey: ~A ~A" vals (XtTranslateKey dpy (list 'KeyCode XK_B) 0)))
-	      (XtSetKeyTranslator dpy #f)
-	      (if (not (equal? vals (XtTranslateKeycode dpy (list 'KeyCode XK_B) 0)))
-		  (snd-display #__line__ ";XtSetKeyTranslator #f: ~A ~A" vals (XtTranslateKeycode dpy (list 'KeyCode XK_B) 0)))
-	      (XtSetKeyTranslator dpy (lambda (d k m)
-					(if (not (equal? d dpy)) (snd-display #__line__ ";d in keyproc: ~A ~A" d dpy))
-					(XtTranslateKey d k m)))
-	      (let ((newvals (XtTranslateKeycode dpy (list 'KeyCode XK_B) 0)))
-		(if (not (equal? vals newvals)) (snd-display #__line__ ";XtSetKeyTranslator: ~A ~A" vals newvals)))
-	      (XtSetKeyTranslator dpy #f))
-	    (if (not (KeySym? (cadr (XmTranslateKey dpy (list 'KeyCode XK_B) 0))))
-		(snd-display #__line__ ";XmTranslateKey: ~A" (XmTranslateKey dpy XK_B 0)))
-	    (let ((kv (XtKeysymToKeycodeList dpy (list 'KeySym 65509))))
-	      (if (not (equal? (car kv) (list 'KeyCode 66))) 
-		  (snd-display #__line__ ";XtKeysymToKeycodeList: ~A ~A" kv (XtKeysymToKeycodeList dpy (list 'KeySym 65509)))))
-	    (XtInstallAllAccelerators (cadr (main-widgets)) (caddr (main-widgets)))
-	    (XtInstallAccelerators (cadr (main-widgets)) (caddr (main-widgets)))
-	    (if (not (equal? (list 0 1 2) (XtSetArg 0 1 2))) (snd-display #__line__ ";XtSetArg: ~A" (XtSetArg 0 1 2)))
-	    (if (not (Widget? (XtGetKeyboardFocusWidget (cadr (main-widgets)))))
-		(snd-display #__line__ ";XtGetKeyboardFocusWidget: ~A" (XtGetKeyboardFocusWidget (cadr (main-widgets)))))
-	    (let ((id (XtAppAddInput (car (main-widgets)) 1 XtInputReadMask (lambda (a b c) #f) #f)))
-	      (XtRemoveInput id))
-	    
-	    (let ((id (XtAppAddWorkProc (car (main-widgets)) (lambda (me) #f) #f)))
-	      (XtRemoveWorkProc id))
-	    (if (not (equal? (caddr (main-widgets)) (XtNameToWidget (cadr (main-widgets)) "mainpane")))
-		(snd-display #__line__ ";XtNameToWidget: ~A ~A" (caddr (main-widgets)) (XtNameToWidget (cadr (main-widgets)) "mainpane")))
-	    (XtVaCreatePopupShell "hiho" vendorShellWidgetClass (cadr (main-widgets)) ())
-	    (XtResolvePathname (XtDisplay (cadr (main-widgets))) "app-defaults" #f #f #f #f 0 #f)
-	    (XtFindFile ".snd" #f 0 #f)
-	    
-	    (XtAppLock (car (main-widgets)))
-	    (XtAppUnlock (car (main-widgets)))
-	    (let ((acts (XtGetActionList xmLabelWidgetClass)))
-	      (if (or (not (= (length acts) 4))
-		      (not (string=? (caar acts) "Enter")))
-		  (snd-display #__line__ ";XtGetActionList: ~A" acts)))
-	    )
-	  
-	  (let ((pop (XtCreatePopupShell "hiho" xmGrabShellWidgetClass (cadr (main-widgets))
-					 (list XmNiconNameEncoding XA_STRING))))
-	    (XtPopup pop XtGrabNone)
-	    (XtPopdown pop))
-	  (XtAppSetWarningHandler (car (main-widgets))
-				  (lambda (n) 
-				    (if (not (string=? n "hiho"))
-					(snd-display #__line__ ";XtWarning: ~A" n))))
-	  (XtAppSetWarningMsgHandler (car (main-widgets)) 
-				     (lambda (name type klass def pars num)
-				       (snd-display #__line__ ";ignore: ~A ~A ~A~%" name def pars)))
-	  
-	  (let ((listener ((main-widgets) 4)))
-	    (XtCallActionProc listener "text-transpose" (XEvent) #f 0)
-	    (XtCallActionProc listener "begin-of-line" (XEvent) #f 0)
-	    (XtCallActionProc listener "kill-line" (XEvent) #f 0)
-	    (XtCallActionProc listener "yank" (XEvent) #f 0)
-	    (XtCallActionProc listener "name-completion" (XEvent) #f 0)
-	    (XtCallActionProc listener "listener-completion" (XEvent) #f 0)
-	    (XtCallActionProc listener "no-op" (XEvent) #f 0)
-	    (XtCallActionProc listener "delete-region" (XEvent) #f 0)
-	    (XtCallActionProc listener "listener-g" (XEvent) #f 0)
-	    (XtCallActionProc listener "listener-clear" (XEvent) #f 0)
-	    (XtCallActionProc listener "b1-press" (XEvent) #f 0)
-	    (XtCallActionProc listener "delete-to-previous-command" (XEvent) #f 0)
-	    (let ((BEvent (XEvent ButtonPress)))
-	      (set! (.x BEvent) 10)
-	      (set! (.y BEvent) 10)
-	      (XtCallActionProc listener "b1-press" BEvent #f 0)
-	      (XtCallActionProc listener "b1-release" BEvent #f 0))
-	    (XtCallActionProc listener "word-upper" (XEvent) (list "u") 1))
-	  
-	  (let ((ind (open-sound "oboe.snd")))
-	    (set! (show-controls ind) #t)
-	    (let* ((swids (sound-widgets ind))
-		   (sctrls (swids 2))
-		   (wh (widget-size sctrls)))
-	      (XtUnmanageChild sctrls)
-	      (set! (widget-size sctrls) (list (car wh) (* (cadr wh) 3)))
-	      (XtManageChild sctrls)
-	      
-	      (let ((tag (catch #t (lambda () (XtVaGetValues (car (sound-widgets)) (list "XmNpaneMaximum" 0)))
-				(lambda args (car args)))))
-		(if (not (eq? tag 'no-such-resource))
-		    (snd-display #__line__ ";XtVaGetValues of incorrectly quoted resource name: ~A" tag)))
-	      )
-	    
-	    (close-sound ind))
-	  
-	  
-	  ;; ---------------- XM tests ----------------
-	  (let* ((label-render-table (cadr (XtVaGetValues (cadr (main-widgets)) (list XmNlabelRenderTable 0))))
-		 (renditions (and label-render-table 
-				  (XmRenderTableGetRenditions label-render-table (XmRenderTableGetTags label-render-table))))
-		 (default-font-name (and renditions
-					 (cadr (XmRenditionRetrieve (car renditions) (list XmNfontName 0)))))
-		 (default-font-info (and renditions
-					 (XmRenditionRetrieve (car renditions) (list XmNfont 0 XmNfontType 0)))))
-	    (if (not (string=? default-font-name "fixed")) (snd-display #__line__ ";XmRenderTableGetRenditions name: ~A" default-font-name))
-	    (if (not (XFontStruct? (default-font-info 1))) (snd-display #__line__ ";XmRenderTableGetRenditions font struct: ~A" default-font-info))
-	    (if (not (= (default-font-info 3) XmFONT_IS_FONT)) (snd-display #__line__ ";XmRenderTableGetRenditions font type: ~A" default-font-info)))
-	  
-	  
-	  (let* ((button-render-table (cadr (XtVaGetValues (cadr (main-widgets)) (list XmNbuttonRenderTable 0))))
-		 (default-rendition (and button-render-table 
-					 (XmRenderTableGetRendition button-render-table XmFONTLIST_DEFAULT_TAG)))
-		 (default-font-info (and default-rendition
-					 (XmRenditionRetrieve default-rendition (list XmNfont 0 XmNfontType 0)))))
-	    (if (and default-font-info
-		     (= (default-font-info 3) XmFONT_IS_FONT))
-		(let ((font (cadr default-font-info))
-		       (dpy (XtDisplay (cadr (main-widgets))))
-		       (data ()))
-		  (for-each (lambda (name atom?)
-			      (let ((val (XGetFontProperty font name)))
-				(if (car val)
-				    (set! data (cons (list (XGetAtomName (XtDisplay (cadr (main-widgets))) name)
-							   (if atom? 
-							       (XGetAtomName (XtDisplay (cadr (main-widgets))) (list 'Atom (cadr val)))
-							       (cadr val)))
-						     data)))))
-			    (list XA_POINT_SIZE XA_FONT XA_FULL_NAME 
-				  (XInternAtom dpy "XA_SLANT" #f) 
-				  (XInternAtom dpy "XA_WEIGHT_NAME" #f) 
-				  XA_FAMILY_NAME 
-				  (XInternAtom dpy "XA_FOUNDRY" #f) 
-				  XA_CAP_HEIGHT)
-			    (list #f #t #t #t #t #t #t #f))
-		  (if (not (string=? "Fixed" (cadr (data 1)))) (snd-display #__line__ ";XmRenderTableGetRendition: ~A" data)))))
-	  
-	  (let* ((tabs (let ((ctr 0))
-			 (map
-			  (lambda (n)
-			    (set! ctr (+ ctr 1))
-			    (XmTabCreate n XmINCHES (if (= ctr 1) XmABSOLUTE XmRELATIVE) XmALIGNMENT_BEGINNING "."))
-			  (list 1.5 1.5 1.5 1.5))))
-		 (tablist (XmTabListInsertTabs #f tabs (length tabs) 0)))
-	    (if (not (= (XmTabListTabCount tablist) (length tabs))) 
-		(snd-display #__line__ ";tablist len: ~A ~A~%" (XmTabListTabCount tablist) (length tabs)))
-	    (if (not (equal? (XmTabGetValues (XmTabListGetTab tablist 0)) (list 1.5 5 0 0 ".")))
-		(snd-display #__line__ ";XmTabs 0: ~A" (XmTabGetValues (XmTabListGetTab tablist 0))))
-	    (if (not (equal? (XmTabGetValues (XmTabListGetTab tablist 2)) (list 1.5 5 1 0 ".")))
-		(snd-display #__line__ ";XmTabs 2: ~A" (XmTabGetValues (XmTabListGetTab tablist 2))))
-	    (let ((copytab (XmTabListCopy tablist 0 0)))
-	      (if (not (equal? (XmTabGetValues (XmTabListGetTab copytab 0)) (list 1.5 5 0 0 ".")))
-		  (snd-display #__line__ ";XmTabListCopy 0: ~A" (XmTabGetValues (XmTabListGetTab copytab 0))))
-	      (let ((another (XmTabListRemoveTabs copytab (list 0 1)))
-		    (atab (XmTabCreate 3.0 XmINCHES XmABSOLUTE XmALIGNMENT_BEGINNING ".")))
-		(if (not (equal? (XmTabGetValues (XmTabListGetTab another 0)) (list 1.5 5 1 0 ".")))
-		    (snd-display #__line__ ";XmTabListRemoveTabs: ~A" (XmTabGetValues (XmTabListGetTab another 0))))
-		(XmTabListReplacePositions (XmTabListCopy tablist 0 0) (list 1) (list atab))
-		;; this (replacepositions) is very prone to segfaults -- *very* poorly implemented! 
-		(XmTabSetValue atab 6.0)
-		(XmTabFree atab)
-		(XmTabListFree another))
-	      (let ((tabl (XmStringTableProposeTablist
-			   (list (XmStringCreateLocalized "a-string") (XmStringCreateLocalized "another")) 2
-			   (cadr (main-widgets))
-			   1.0
-			   XmABSOLUTE)))
-		(if (not (XmTabList? tabl)) (snd-display #__line__ ";XmStringTableProposeTabList: ~A" tabl))
-		(XmTabListFree tabl)))
-	    
-	    (let ((hname (host-name))) ; from snd-motif.scm
-	      (if (not (equal? hname (getenv "HOSTNAME")))
-		  (snd-display #__line__ ";host name appears to be ~A or maybe ~A" hname (getenv "HOSTNAME"))))
-	    (let ((blu (x->snd-color "blue")))
-	      (if (not (Pixel? blu)) (snd-display #__line__ ";x->snd-color can't find blue! ~A" blu))
-	      (if (not (equal? (color->list blu) (list 0.0 0.0 1.0)))
-		  (snd-display #__line__ ";x->snd-color blue: ~A" (color->list blu))))
-	    
-	    (let* ((tmp (XmStringCreateLocalized "h"))
-		   (pm (XmParseMappingCreate (list XmNincludeStatus XmINSERT
-						   XmNsubstitute    tmp
-						   XmNpattern       "i"
-						   XmNpatternType   XmCHARSET_TEXT))))
-	      (XmStringFree tmp)
-	      (XmParseMappingFree pm)
-	      (set! pm (XmParseMappingCreate (list XmNinvokeParseProc
-						   (lambda (txt end type tag entry pattern str call)
-						     #f))))
-	      (XmParseMappingFree pm)
-	      (let ((tag (catch #t (lambda ()
-				     (set! pm (XmParseMappingCreate (list XmNinvokeParseProc
-									  (lambda (txt end type tag entry pattern)
-									    #f)))))
-				(lambda args (car args)))))
-		(if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmNinvokeParseProc wrong arity: ~A" tag))))
-	    
-	    (let* ((fonts (list "fixed"
-				"-*-times-bold-r-*-*-14-*-*-*-*-*-*-*"
-				"-*-*-medium-i-*-*-18-*-*-*-*-*-*-*"
-				"-*-helvetica-*-*-*-*-18-*-*-*-*-*-*-*"))
-		   (tags (list "one" "two" "three" "four"))
-		   (colors (list "red" "green" "blue" "orange"))
-		   (pixels
-		    (let* ((dpy (XtDisplay (cadr (main-widgets))))
+		    
+		    (let* ((fid (XLoadFont dpy "cursor"))
+			   (col (XColor))
+			   (col1 (XColor))
 			   (scr (DefaultScreen dpy))
 			   (cmap (DefaultColormap dpy scr)))
-		      (let ((col (XColor)))
-			(XParseColor dpy cmap "blue" col)
-			(if (or (not (= (.red col) 0))
-				(not (= (.green col) 0))
-				(not (= (.blue col) 65535)))
-			    (snd-display #__line__ ";XParseColor: ~A ~A ~A ~A" col (.red col) (.blue col) (.green col)))
-			(XLookupColor dpy cmap "red" col (XColor))
-			(if (or (not (= (.red col) 65535))
-				(not (= (.green col) 0))
-				(not (= (.blue col) 0)))
-			    (snd-display #__line__ ";XLookupColor: ~A ~A ~A ~A" col (.red col) (.blue col) (.green col))))
-		      (map
-		       (lambda (color)
-			 (let ((col (XColor)))
-			   (if (= (XAllocNamedColor dpy cmap color col col) 0)
-			       (snd-error (format #f "can't allocate ~A" color))
-			       (.pixel col))))
-		       colors)))
-		   (rendertable (XmRenderTableAddRenditions #f 
-							    (let ((ctr 0))
-							      (map (lambda (r)
-								     (set! ctr (+ ctr 1))
-								     (XmRenditionCreate (cadr (main-widgets))
-											r
-											(append
-											 (if (= ctr 1)
-											     (list XmNtabList tablist)
-											     ())
-											 (list XmNrenditionForeground (pixels (- ctr 1))
-											       XmNfontName (fonts (- ctr 1))
-											       XmNfontType XmFONT_IS_FONT))))
-								   tags))
-							    (length tags)
-							    XmMERGE_NEW)))
-	      
-	      (if (file-exists? "hiho") (delete-file "hiho"))
-	      (let* ((dpy (XtDisplay (cadr (main-widgets))))
-		     (scr (DefaultScreenOfDisplay dpy))
-		     (p1 (XmGetPixmap scr "hiho" (car pixels) (cadr pixels))))
-		(if (not (Pixmap? p1)) (snd-display #__line__ ";XmGetPixmap: ~A" p1))
-		(set! p1 (XmGetPixmapByDepth scr "hoho" (car pixels) (cadr pixels) (XDefaultDepth dpy (XScreenNumberOfScreen scr))))
-		(if (not (Pixmap? p1)) (snd-display #__line__ ";XmGetPixmapByDepth: ~A" p1))
-		(XmDestroyPixmap scr p1))
-	      
-	      (let ((tabl (XmStringTableParseStringArray (list "hi" "ho") 2 "hiho" XmCHARSET_TEXT #f 0 #f)))
-		(if (not (XmString? (car tabl))) (snd-display #__line__ ";XmStringTableParseStringArray: ~A" tabl))
-		(let ((strs (XmStringTableUnparse tabl 2 "hiho" XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
-		  (if (not (equal? strs (list "hi" "ho"))) (snd-display #__line__ ";XmStringTableUnparse: ~A" strs)))
-		(let ((str (XmStringTableToXmString tabl 2 #f)))
-		  (if (not (XmString? str)) (snd-display #__line__ ";XmStringTableToXmString: ~A" str))
-		  (XmStringToXmStringTable str #f)
-		  (let ((val (XmStringUnparse str "hiho" XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
-		    (if (not (string=? val "hiho")) (snd-display #__line__ ";XmStringUnparse: ~A" val))
-		    (set! val (XmStringUnparse (XmStringCreateLocalized "hi") #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
-		    (if (not (string=? val "hi")) (snd-display #__line__ ";XmStringUnparse null tag: ~A" val)))
-		  ;; XmCvtXmStringToByteStream test deleted because it seems to be buggy in memory handling
-		  (let* ((ind (open-sound "oboe.snd"))
-			 (grf1 (car (channel-widgets)))
-			 (dpy (XtDisplay grf1))
-			 (win (XtWindow grf1))
-			 (scr (DefaultScreenOfDisplay dpy))
-			 (scrn (XScreenNumberOfScreen scr))
-			 (gv (XGCValues)))
-		    (if (not (Font? (current-font ind))) (snd-display #__line__ ";current-font: ~A" (current-font ind)))
-		    (let ((old-font (current-font))
-			  (a-font (load-font "6x12")))
-		      (set! (current-font) a-font)
-		      (if (not (equal? a-font (current-font)))
-			  (snd-display #__line__ ";set current-font: ~A ~A" a-font (current-font)))
-		      (set! (current-font ind) old-font)
-		      (if (not (equal? old-font (current-font ind)))
-			  (snd-display #__line__ ";set current-font with ind: ~A ~A" old-font (current-font ind)))
-		      (set! (current-font) a-font)
-		      (set! (current-font ind 0) old-font)
-		      (if (not (equal? old-font (current-font ind 0)))
-			  (snd-display #__line__ ";set current-font with ind/0: ~A ~A" old-font (current-font ind 0)))
-		      (set! (current-font) old-font))
+		      (XAllocNamedColor dpy cmap "blue" col col)
+		      (XAllocNamedColor dpy cmap "green" col1 col1)
+		      (let ((vals (XCreateGlyphCursor dpy fid None XC_dot 0 col col1)))
+			(if (not (Cursor? vals)) (snd-display #__line__ ";XCreateGlyphCursor: ~A" vals)))
+		      (let ((vals (XCreatePixmapCursor dpy pix None col col1 5 5)))
+			(if (not (Cursor? vals)) (snd-display #__line__ ";XCreatePixmapCursor: ~A" vals))
+			(XRecolorCursor dpy vals col1 col))
+		      (XAllocColorPlanes dpy cmap #f 2 1 1 1)
+		      (XAllocColorCells dpy cmap #f 1 1))
 		    
-		    (set! (.foreground gv) *data-color*)
-		    (set! (.background gv) *basic-color*)
-		    (set! (.function gv) GXcopy)
-		    (let ((sgc (XtAllocateGC grf1
-					      (XDefaultDepth dpy scrn) 
-					      (logior GCForeground GCBackground GCFunction)
-					      gv
-					      (logior GCFont GCDashList)
-					      0))
-			   (str2 (XmStringCreateLocalized "hiho")))
-		      (XmStringDraw dpy win rendertable str2 sgc 10 10 100 
-				    XmALIGNMENT_END XmSTRING_DIRECTION_L_TO_R (XRectangle 0 0 100 100))
-		      (XmStringDrawImage dpy win rendertable str2 sgc 10 10 100 
-					 XmALIGNMENT_END XmSTRING_DIRECTION_L_TO_R (XRectangle 0 0 100 100))
-		      (XmStringDrawUnderline dpy win rendertable str2 sgc 10 10 100 
-					     XmALIGNMENT_END XmSTRING_DIRECTION_L_TO_R (XRectangle 0 0 100 100) str2)
-		      (XtGetGC (cadr (main-widgets)) GCForeground gv)
-		      (XCopyGC dpy sgc GCFunction sgc)
-		      (XCopyArea dpy win win sgc 0 0 100 100 0 0)
-		      (XCopyPlane dpy win win sgc 0 0 100 100 0 0 1)
-		      (XtReleaseGC grf1 sgc))
-		    (close-sound ind))
-		  (let ((lc (XmStringLineCount (XmStringCreateLocalized "hiho"))))
-		    (if (not (= lc 1)) (snd-display #__line__ ";XmStringLineCount: ~A" lc)))
-		  (if (not (XmStringHasSubstring str (XmStringCreateLocalized "hi"))) (snd-display #__line__ ";XmStringHasSubstring?"))))
-	      
-	      
-	      (if (not (equal? (XmRenderTableGetTags rendertable) (list "one" "two" "three" "four")))
-		  (snd-display #__line__ ";tags: ~A~%" (XmRenderTableGetTags rendertable)))
-	      (let* ((rend (XmRenderTableGetRendition rendertable "one"))
-		     (r (and rend (XmRenditionRetrieve rend
-						       (list XmNrenditionForeground 0
-							     XmNfontName 0
-							     XmNfontType 0
-							     XmNtag 0)))))
-		(if (and rend r)
-		    (begin
-		      (if (or (not (string=? (r 7) "one"))
-			      (not (string=? (r 3) "fixed")))
-			  (snd-display #__line__ ";rendertable: ~A" r))
-		      (XmRenditionUpdate rend (list XmNstrikethruType XmSINGLE_LINE))
-		      (if (not (= (cadr (XmRenditionRetrieve rend (list XmNstrikethruType 0))) XmSINGLE_LINE))
-			  (snd-display #__line__ ";XmRenditionUpdate: ~A ~A" (cadr (XtGetValues rend (list XmNstrikethruType 0))) XmSINGLE_LINE)))
-		    (snd-display #__line__ ";r and rend: ~A ~A~%" r rend)))
-	      (let ((r1 (XmRenditionCreate (cadr (main-widgets)) "r1" (list XmNfontName "fixed"))))
-		(XmRenditionFree r1))
-	      
-	      (if (not (equal? (XmDropSiteQueryStackingOrder ((main-widgets) 4)) (list #f)))
-		  (snd-display #__line__ ";XmDropSiteQueryStackingOrder: ~A" (XmDropSiteQueryStackingOrder ((main-widgets) 4))))
-	      (let ((tab (XmStringComponentCreate XmSTRING_COMPONENT_TAB 0 #f))
-		    (row #f)
-		    (table ())
-		    (our-tags tags))
-		(for-each 
-		 (lambda (word)
-		   (let ((entry (XmStringGenerate word
-						  #f
-						  XmCHARSET_TEXT
-						  (car our-tags))))
-		     (if (XmStringIsVoid entry) (snd-display #__line__ ";~A is void?" entry))
-		     (if (XmStringEmpty entry) (snd-display #__line__ ";~A is empty?" entry))
-		     
-		     (if row
-			 (let ((tmp (XmStringConcat row tab)))
-			   (XmStringFree row)
-			   (set! row (XmStringConcatAndFree tmp entry)))
-			 (set! row entry))
-		     (set! our-tags (cdr our-tags))
-		     (if (null? our-tags) 
-			 (begin
-			   (set! our-tags tags)
-			   (set! table (cons row table))
-			   (set! row #f)))))
-		 (list "this" "is" "a" "test" "of" "the" "renditions" "and" "rendertables" 
-		       "perhaps" "all" "will" "go" "well" "and" "then" "again" "perhaps" "not"))
-		(let* ((n (car table))
-		       (c (XmStringInitContext n))
-		       (happy #t))
-		  (do ((i 0 (+ i 1)))
-		      ((not happy))
-		    (let ((type (XmStringGetNextTriple (cadr c))))
-		      (if (= (car type) XmSTRING_COMPONENT_TEXT)
-			  (if (or (not (= (cadr type) ((list 0 0 2 0 0 0 4 0 0 0 3 0 0 0 4) i)))
-				  (not (string=? (caddr type) 
-						 ((list "o" "o" "go" "o" "o" "o" "well" "o" "o" "o" "and" "o" "o" "o" "then") i))))
-			      (snd-display #__line__ ";component ~A -> ~A" i (cdr type)))
-			  (if (and (not (= (car type) XmSTRING_COMPONENT_TAB))
-				   (= (car type) XmSTRING_COMPONENT_END))
-			      (set! happy #f)))))
-		  (XmStringFreeContext (cadr c))))))
+		    
+		    )))
+	    (let* ((fid (XLoadFont dpy "-*-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
+		   (fnt (XLoadQueryFont dpy "-*-times-medium-r-*-*-14-*-*-*-*-*-*-*"))
+		   (chs (XQueryTextExtents dpy fid "hiho"))
+		   (struct (chs 4))
+		   (fnt1 (XQueryFont dpy fid)))
+	      (if (not (Font? fid)) (snd-display #__line__ ";XLoadFont: ~A" fid))
+	      (if (not (XFontStruct? fnt)) (snd-display #__line__ ";XLoadQueryFont: ~A" fnt))
+	      (if (not (XFontStruct? fnt1)) (snd-display #__line__ ";XQueryFont: ~A" fnt1))
+	      (if (not (XCharStruct? struct)) (snd-display #__line__ ";XQueryTextExtents: ~A" chs))
+	      (if (not (= (chs 2) 12)) (snd-display #__line__ ";XQueryTextExtents max ascent: ~A" (chs 2)))
+	      (if (not (= (chs 3) 3)) (snd-display #__line__ ";XQueryTextExtents max descent: ~A" (chs 3)))
+	      (if (not (= (.lbearing struct) 0)) (snd-display #__line__ ";lbearing: ~A" (.lbearing struct)))
+	      (if (not (= (.rbearing struct) 23)) (snd-display #__line__ ";rbearing: ~A" (.rbearing struct)))
+	      (if (not (= (.width struct) 24)) (snd-display #__line__ ";width: ~A" (.width struct)))
+	      (if (not (= (.ascent struct) 10)) (snd-display #__line__ ";ascent: ~A" (.ascent struct)))
+	      (if (not (= (.descent struct) 0)) (snd-display #__line__ ";descent: ~A" (.descent struct)))
+	      (if (not (= (.attributes struct) 0)) (snd-display #__line__ ";attributes: ~A" (.attributes struct)))
+	      (let ((fid (load-font "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*")))
+		(if (not (Font? fid)) (snd-display #__line__ ";load-font -> ~A" fid)))
+	      )
+	    (XFreeGC (XtDisplay (cadr (main-widgets))) sgc)
+	    )))
+      
+      (let ((atoms (list XA_PRIMARY XA_SECONDARY XA_ARC XA_ATOM XA_BITMAP XA_CARDINAL XA_COLORMAP XA_CURSOR XA_CUT_BUFFER0
+			 XA_CUT_BUFFER1 XA_CUT_BUFFER2 XA_CUT_BUFFER3 XA_CUT_BUFFER4 XA_CUT_BUFFER5 XA_CUT_BUFFER6
+			 XA_CUT_BUFFER7 XA_DRAWABLE XA_FONT XA_INTEGER XA_PIXMAP XA_POINT XA_RECTANGLE XA_RESOURCE_MANAGER
+			 XA_RGB_COLOR_MAP XA_RGB_BEST_MAP XA_RGB_BLUE_MAP XA_RGB_DEFAULT_MAP XA_RGB_GRAY_MAP XA_RGB_GREEN_MAP
+			 XA_RGB_RED_MAP XA_STRING XA_VISUALID XA_WINDOW XA_WM_COMMAND XA_WM_HINTS XA_WM_CLIENT_MACHINE
+			 XA_WM_ICON_NAME XA_WM_ICON_SIZE XA_WM_NAME XA_WM_NORMAL_HINTS XA_WM_SIZE_HINTS XA_WM_ZOOM_HINTS
+			 XA_MIN_SPACE XA_NORM_SPACE XA_MAX_SPACE XA_END_SPACE XA_SUPERSCRIPT_X XA_SUPERSCRIPT_Y
+			 XA_SUBSCRIPT_X XA_SUBSCRIPT_Y XA_UNDERLINE_POSITION XA_UNDERLINE_THICKNESS XA_STRIKEOUT_ASCENT
+			 XA_STRIKEOUT_DESCENT XA_ITALIC_ANGLE XA_X_HEIGHT XA_QUAD_WIDTH XA_WEIGHT XA_POINT_SIZE
+			 XA_RESOLUTION XA_COPYRIGHT XA_NOTICE XA_FONT_NAME XA_FAMILY_NAME XA_FULL_NAME XA_CAP_HEIGHT
+			 XA_WM_CLASS XA_WM_TRANSIENT_FOR))
+	    (atom-names (list 'XA_PRIMARY 'XA_SECONDARY 'XA_ARC 'XA_ATOM 'XA_BITMAP 'XA_CARDINAL 'XA_COLORMAP 'XA_CURSOR 'XA_CUT_BUFFER0
+			      'XA_CUT_BUFFER1 'XA_CUT_BUFFER2 'XA_CUT_BUFFER3 'XA_CUT_BUFFER4 'XA_CUT_BUFFER5 'XA_CUT_BUFFER6
+			      'XA_CUT_BUFFER7 'XA_DRAWABLE 'XA_FONT 'XA_INTEGER 'XA_PIXMAP 'XA_POINT 'XA_RECTANGLE 'XA_RESOURCE_MANAGER
+			      'XA_RGB_COLOR_MAP 'XA_RGB_BEST_MAP 'XA_RGB_BLUE_MAP 'XA_RGB_DEFAULT_MAP 'XA_RGB_GRAY_MAP 'XA_RGB_GREEN_MAP
+			      'XA_RGB_RED_MAP 'XA_STRING 'XA_VISUALID 'XA_WINDOW 'XA_WM_COMMAND 'XA_WM_HINTS 'XA_WM_CLIENT_MACHINE
+			      'XA_WM_ICON_NAME 'XA_WM_ICON_SIZE 'XA_WM_NAME 'XA_WM_NORMAL_HINTS 'XA_WM_SIZE_HINTS 'XA_WM_ZOOM_HINTS
+			      'XA_MIN_SPACE 'XA_NORM_SPACE 'XA_MAX_SPACE 'XA_END_SPACE 'XA_SUPERSCRIPT_X 'XA_SUPERSCRIPT_Y
+			      'XA_SUBSCRIPT_X 'XA_SUBSCRIPT_Y 'XA_UNDERLINE_POSITION 'XA_UNDERLINE_THICKNESS 'XA_STRIKEOUT_ASCENT
+			      'XA_STRIKEOUT_DESCENT 'XA_ITALIC_ANGLE 'XA_X_HEIGHT 'XA_QUAD_WIDTH 'XA_WEIGHT 'XA_POINT_SIZE
+			      'XA_RESOLUTION 'XA_COPYRIGHT 'XA_NOTICE 'XA_FONT_NAME 'XA_FAMILY_NAME 'XA_FULL_NAME 'XA_CAP_HEIGHT
+			      'XA_WM_CLASS 'XA_WM_TRANSIENT_FOR)))
+	(for-each
+	 (lambda (n name)
+	   (if (not (Atom? n))
+	       (snd-display #__line__ ";Atom: ~A -> ~A" name (Atom? n))))
+	 atoms
+	 atom-names))
+      
+      (let ((r (XRectangle 10 20 100 110)))
+	(if (not (= (.width r) 100))
+	    (snd-display #__line__ ";XRectangle width: ~A" (.width r)))
+	(if (not (= (.height r) 110))
+	    (snd-display #__line__ ";XRectangle height: ~A" (.height r)))
+	(if (not (= (.x r) 10))
+	    (snd-display #__line__ ";XRectangle x: ~A" (.x r)))
+	(if (not (= (.y r) 20))
+	    (snd-display #__line__ ";XRectangle y: ~A" (.y r)))
+	(set! (.width r) 10)
+	(if (not (= (.width r) 10))
+	    (snd-display #__line__ ";set XRectangle width: ~A" (.width r)))
+	(set! (.height r) 11)
+	(if (not (= (.height r) 11))
+	    (snd-display #__line__ ";set XRectangle height: ~A" (.height r)))
+	(set! (.x r) 1)
+	(if (not (= (.x r) 1))
+	    (snd-display #__line__ ";set XRectangle x: ~A" (.x r)))
+	(set! (.y r) 2)
+	(if (not (= (.y r) 2))
+	    (snd-display #__line__ ";XRectangle y: ~A" (.y r))))
+      
+      (let ((r (XArc 10 20 100 110 0 235)))
+	(if (not (= (.width r) 100))
+	    (snd-display #__line__ ";XArc width: ~A" (.width r)))
+	(if (not (= (.height r) 110))
+	    (snd-display #__line__ ";XArc height: ~A" (.height r)))
+	(if (not (= (.x r) 10))
+	    (snd-display #__line__ ";XArc x: ~A" (.x r)))
+	(if (not (= (.y r) 20))
+	    (snd-display #__line__ ";XArc y: ~A" (.y r)))
+	(if (not (= (.angle1 r) 0))
+	    (snd-display #__line__ ";XArc angle1: ~A" (.angle1 r)))
+	(if (not (= (.angle2 r) 235))
+	    (snd-display #__line__ ";XArc angle2: ~A" (.angle2 r)))
+	(set! (.width r) 10)
+	(if (not (= (.width r) 10))
+	    (snd-display #__line__ ";set XArc width: ~A" (.width r)))
+	(set! (.height r) 11)
+	(if (not (= (.height r) 11))
+	    (snd-display #__line__ ";set XArc height: ~A" (.height r)))
+	(set! (.x r) 1)
+	(if (not (= (.x r) 1))
+	    (snd-display #__line__ ";set XArc x: ~A" (.x r)))
+	(set! (.y r) 2)
+	(if (not (= (.y r) 2))
+	    (snd-display #__line__ ";set XArc y: ~A" (.y r)))
+	(set! (.angle1 r) 123)
+	(if (not (= (.angle1 r) 123))
+	    (snd-display #__line__ ";set XArc angle1: ~A" (.angle1 r)))
+	(set! (.angle2 r) 321)
+	(if (not (= (.angle2 r) 321))
+	    (snd-display #__line__ ";set XArc angle2: ~A" (.angle2 r))))
+      
+      (let ((r (XPoint 10 20)))
+	(if (not (= (.x r) 10))
+	    (snd-display #__line__ ";XPoint x: ~A" (.x r)))
+	(if (not (= (.y r) 20))
+	    (snd-display #__line__ ";XPoint y: ~A" (.y r)))
+	(set! (.x r) 1)
+	(if (not (= (.x r) 1))
+	    (snd-display #__line__ ";set XPoint x: ~A" (.x r)))
+	(set! (.y r) 2)
+	(if (not (= (.y r) 2))
+	    (snd-display #__line__ ";set XPoint y: ~A" (.y r))))
+      
+      (let ((r (XSegment 10 20 100 110)))
+	(if (not (= (.x1 r) 10))
+	    (snd-display #__line__ ";XSegment x1: ~A" (.x1 r)))
+	(if (not (= (.y1 r) 20))
+	    (snd-display #__line__ ";XSegment y1: ~A" (.y1 r)))
+	(if (not (= (.x2 r) 100))
+	    (snd-display #__line__ ";XSegment x2: ~A" (.x2 r)))
+	(if (not (= (.y2 r) 110))
+	    (snd-display #__line__ ";XSegment y2: ~A" (.y2 r)))
+	(set! (.x1 r) 1)
+	(if (not (= (.x1 r) 1))
+	    (snd-display #__line__ ";set XSegment x1: ~A" (.x1 r)))
+	(set! (.y1 r) 2)
+	(if (not (= (.y1 r) 2))
+	    (snd-display #__line__ ";set XSegment y1: ~A" (.y1 r)))
+	(set! (.x2 r) 10)
+	(if (not (= (.x2 r) 10))
+	    (snd-display #__line__ ";set XSegment x2: ~A" (.x2 r)))
+	(set! (.y2 r) 11)
+	(if (not (= (.y2 r) 11))
+	    (snd-display #__line__ ";set XSegment y2: ~A" (.y2 r))))
+      
+      (let ((c (XColor)))
+	(set! (.red c) 1)
+	(if (not (= (.red c) 1)) (snd-display #__line__ ";Xcolor red: ~A" (.red c)))
+	(set! (.green c) 1)
+	(if (not (= (.green c) 1)) (snd-display #__line__ ";Xcolor green: ~A" (.green c)))
+	(set! (.blue c) 1)
+	(if (not (= (.blue c) 1)) (snd-display #__line__ ";Xcolor blue: ~A" (.blue c)))
+	(set! (.flags c) DoRed)
+	(if (not (= (.flags c) DoRed)) (snd-display #__line__ ";Xcolor flags: ~A" (.flags c)))
+	(if (not (= (.pad c) 0)) (snd-display #__line__ ";pad: ~A" (.pad c)))
+	(set! (.pixel c) *basic-color*)
+	(if (not (equal? (.pixel c) *basic-color*)) (snd-display #__line__ ";Xcolor pixel: ~A" (.pixel c))))
+      
+      (let ((obj (XTextItem "hiho" 4 3 (list 'Font 1))))
+	(if (not (XTextItem? obj)) (snd-display #__line__ ";XTextItem -> ~A" obj))
+	(if (not (equal? (.font obj) (list 'Font 1))) (snd-display #__line__ ";font ~A" (.font obj)))
+	(set! (.font obj) (list 'Font 2))
+	(if (not (equal? (.font obj) (list 'Font 2))) (snd-display #__line__ ";set font ~A" (.font obj)))
+	(if (not (string=? (.chars obj) "hiho")) (snd-display #__line__ ";chars: ~A" (.chars obj)))
+	(if (not (= (.nchars obj) 4)) (snd-display #__line__ ";chars: ~A" (.nchars obj)))
+	(set! (.chars obj) "away!")
+	(set! (.nchars obj) 5)
+	(if (not (string=? (.chars obj) "away!")) (snd-display #__line__ ";set chars: ~A" (.chars obj)))
+	(if (not (= (.nchars obj) 5)) (snd-display #__line__ ";set chars: ~A" (.nchars obj)))
+	(if (not (= (.delta obj) 3)) (snd-display #__line__ ";delta ~A" (.delta obj)))
+	(set! (.delta obj) 4)
+	(if (not (= (.delta obj) 4)) (snd-display #__line__ ";set delta ~A" (.delta obj)))
+	)
+      
+      (let ((reg (XPolygonRegion (list (XPoint 0 0) (XPoint 10 0) (XPoint 10 10) (XPoint 0 10)) 4 WindingRule)))
+	(if (not (XPointInRegion reg 4 4)) (snd-display #__line__ ";XPointInRegion"))
+	(XShrinkRegion reg 1 2)
+	(if (not (XPointInRegion reg 4 7)) (snd-display #__line__ ";t XShrinkRegion"))
+	(if (XPointInRegion reg 4 9) (snd-display #__line__ ";f XShrinkRegion"))
+	(XOffsetRegion reg 1 2)
+	(if (not (XPointInRegion reg 4 9)) (snd-display #__line__ ";t XOffsetRegion"))
+	(if (XPointInRegion reg 1 9) (snd-display #__line__ ";f XOffsetRegion"))
+	(let ((reg2 (XCreateRegion))
+	      (reg1 (XPolygonRegion (list (XPoint 2 2) (XPoint 10 2) (XPoint 10 10) (XPoint 2 10)) 4 WindingRule)))
+	  (if (XEqualRegion reg reg1) (snd-display #__line__ ";f XEqualRegion"))
+	  (if (XEmptyRegion reg) (snd-display #__line__ ";f XEmptyRegion"))
+	  (XXorRegion reg reg1 reg2)
+	  (let ((box (XClipBox reg2)))
+	    (if (or (not (= (.x (cadr box)) 2))
+		    (not (= (.y (cadr box)) 2))
+		    (not (= (.width (cadr box)) 8))
+		    (not (= (.height (cadr box)) 2)))
+		(snd-display #__line__ ";XXorRegion: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
+	  (XUnionRegion reg reg1 reg2)
+	  (let ((box (XClipBox reg2)))
+	    (if (or (not (= (.x (cadr box)) 2))
+		    (not (= (.y (cadr box)) 2))
+		    (not (= (.width (cadr box)) 8))
+		    (not (= (.height (cadr box)) 8)))
+		(snd-display #__line__ ";XUnionRegion: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
+	  (XSubtractRegion reg reg1 reg2)
+	  (let ((box (XClipBox reg2)))
+	    (if (or (not (= (.x (cadr box)) 0))
+		    (not (= (.y (cadr box)) 0))
+		    (not (= (.width (cadr box)) 0))
+		    (not (= (.height (cadr box)) 0)))
+		(snd-display #__line__ ";XSubtractRegion: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
+	  (XIntersectRegion reg reg1 reg2)
+	  (let ((box (XClipBox reg2)))
+	    (if (or (not (= (.x (cadr box)) 2))
+		    (not (= (.y (cadr box)) 4))
+		    (not (= (.width (cadr box)) 8))
+		    (not (= (.height (cadr box)) 6)))
+		(snd-display #__line__ ";XIntersectRegion: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
+	  (XUnionRectWithRegion (XRectangle 1 3 100 100) reg1 reg2)
+	  (let ((box (XClipBox reg2)))
+	    (if (or (not (= (.x (cadr box)) 1))
+		    (not (= (.y (cadr box)) 2))
+		    (not (= (.width (cadr box)) 100))
+		    (not (= (.height (cadr box)) 101)))
+		(snd-display #__line__ ";XUnionRectWithRegion: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
+	  (XRectInRegion reg 0 0 100 100)
+	  (let ((box (XClipBox reg1)))
+	    (if (or (not (= (.x (cadr box)) 2))
+		    (not (= (.y (cadr box)) 2))
+		    (not (= (.width (cadr box)) 8))
+		    (not (= (.height (cadr box)) 8)))
+		(snd-display #__line__ ";XClipBox: ~A ~A ~A ~A" (.x (cadr box)) (.y (cadr box)) (.width (cadr box)) (.height (cadr box)))))
+	  (XDestroyRegion reg1)
+	  ))
+      
+      (let ((xid (XUniqueContext))
+	    (dpy (XtDisplay (cadr (main-widgets)))))
+	(if (not (eq? (car xid) 'XContext))
+	    (snd-display #__line__ ";XUniqueContext: ~A" xid))
+	(XSaveContext dpy  123 xid "hiho")
+	(let ((val (XFindContext dpy 123 xid)))
+	  (if (or (not (= 0 (car val)))
+		  (not (string=? (cadr val) "hiho")))
+	      (snd-display #__line__ ";XFindContext: ~A" val)))
+	(XDeleteContext dpy 123 xid)
+	(XStoreBytes dpy "hiho" 4)
+	(if (not (string=? (XFetchBytes dpy) "hiho")) (snd-display #__line__ ";XStoreBytes: ~A" (XFetchBytes dpy)))
+	(XStoreBuffer dpy "hiho" 4 1)
+	(if (not (string=? (XFetchBuffer dpy 1) "hiho")) (snd-display #__line__ ";XStoreBuffer: ~A" (XFetchBuffer dpy 1)))
+	)
+      
+      
+      ;; ---------------- Xt tests ----------------
+      (let ((name (XtGetApplicationNameAndClass (XtDisplay (cadr (main-widgets))))))
+	(if (not (equal? name (list "snd" "Snd")))
+	    (snd-display #__line__ ";XtGetApplicationNameAndClass: ~A?" name)))
+      (let ((dpys (XtGetDisplays (car (main-widgets)))))
+	(if (not (Display? (car dpys)))
+	    (snd-display #__line__ ";XtGetDisplays: ~A?" dpys)))
+      (let ((app (XtDisplayToApplicationContext (XtDisplay (cadr (main-widgets)))))
+	    (orig (car (main-widgets)))
+	    (wid (XtWidgetToApplicationContext (cadr (main-widgets)))))
+	(if (not (equal? app orig))
+	    (snd-display #__line__ ";XtDisplayToApplicationContext: ~A ~A?" app orig))
+	(if (not (equal? app wid))
+	    (snd-display #__line__ ";XtWidgetToApplicationContext: ~A ~A?" app wid)))
+      (if (not (string=? (XtName (caddr (main-widgets))) "mainpane"))
+	  (snd-display #__line__ ";XtName main pane: ~A" (XtName (caddr (main-widgets)))))
+      (if (not (= (XtGetMultiClickTime (XtDisplay (cadr (main-widgets)))) 200))
+	  (snd-display #__line__ ";XtGetMultiClickTime: ~A" (XtGetMultiClickTime (XtDisplay (cadr (main-widgets))))))
+      (XtSetMultiClickTime (XtDisplay (cadr (main-widgets))) 250)
+      (if (not (= (XtGetMultiClickTime (XtDisplay (cadr (main-widgets)))) 250))
+	  (snd-display #__line__ ";XtSetMultiClickTime: ~A" (XtGetMultiClickTime (XtDisplay (cadr (main-widgets))))))
+      (XtGetResourceList xmListWidgetClass)
+      (let ((wid1 (XtCreateWidget "wid1" xmPushButtonWidgetClass (cadr (main-widgets)) ())))
+	(XtDestroyWidget wid1))
+      
+      (let ((hook-id (XtAppAddActionHook 
+		      (car (main-widgets))
+		      (lambda (w data name e p)
+			(format #t "~A ~A ~A ~A ~A~%" w data name e p))
+		      #f)))
+	(XtRemoveActionHook hook-id))
+      
+      (let* ((shell (cadr (main-widgets)))
+	     (wid (XtCreateWidget "wid" xmFormWidgetClass shell ()))
+	     (wid1 (XtCreateWidget "wid1" xmPushButtonWidgetClass wid ()))
+	     (wid2 (XtVaCreateWidget "wid" xmFormWidgetClass shell ())))
+	(if (XtIsApplicationShell wid) (snd-display #__line__ ";XtIsApplicationShell"))
+	(if (not (XtIsApplicationShell shell)) (snd-display #__line__ ";XtIsApplicationShell of appshell"))
+	(if (not (XtIsComposite wid)) (snd-display #__line__ ";XtIsComposite"))
+	(if (not (XtIsConstraint wid)) (snd-display #__line__ ";XtIsConstraint"))
+	(if (XtIsManaged wid) (snd-display #__line__ ";XtIsManaged"))
+	(if (not (XtIsObject wid)) (snd-display #__line__ ";XtIsObject"))
+	(if (XtIsOverrideShell wid) (snd-display #__line__ ";XtIsOverrideShell"))
+	(if (XtIsRealized wid) (snd-display #__line__ ";XtIsRealized"))
+	(if (not (XtIsRealized shell)) (snd-display #__line__ ";XtIsRealized main shell"))
+	(if (not (XtIsRectObj wid)) (snd-display #__line__ ";XtIsRectObj"))
+	(if (not (XtIsSensitive wid)) (snd-display #__line__ ";XtIsSensitive"))
+	(if (not (XtIsSensitive shell)) (snd-display #__line__ ";XtIsSensitive of main shell"))
+	(XtSetSensitive wid1 #t)
+	(if (not (XtIsSensitive wid1)) (snd-display #__line__ ";XtIsSensitive of button"))
+	(if (XtIsSessionShell wid) (snd-display #__line__ ";XtIsSessionShell"))
+	(if (XtIsShell wid) (snd-display #__line__ ";XtIsShell"))
+	(if (not (XtIsShell shell)) (snd-display #__line__ ";XtIsShell of main shell"))
+	(if (XtIsTopLevelShell wid) (snd-display #__line__ ";XtIsTopLevelShell"))
+	(if (not (XtIsTopLevelShell shell)) (snd-display #__line__ ";XtIsTopLevelShell of main shell"))
+	(if (XtIsTransientShell wid) (snd-display #__line__ ";XtIsTransientShell"))
+	(if (XtIsVendorShell wid) (snd-display #__line__ ";XtIsVendorShell"))
+	(if (not (XtIsVendorShell shell)) (snd-display #__line__ ";XtIsVendorShell of main shell"))
+	(if (XtIsWMShell wid) (snd-display #__line__ ";XtIsWMShell"))
+	(if (not (XtIsWidget wid)) (snd-display #__line__ ";XtIsWidget"))
+	(if (not (XtIsWidget wid2)) (snd-display #__line__ ";XtIsWidget 2"))
+	(XtRealizeWidget wid)
+	(if (not (XtIsRealized wid)) (snd-display #__line__ ";XtRealizeWidget?"))
+	(XtAddGrab shell #f #f)
+	(XtRemoveGrab shell)
+	(XtMakeResizeRequest wid 200 200)
+	(XtMapWidget wid)
+	(XtUnmapWidget wid)
+	(XtUnrealizeWidget wid)
+					;(XtDestroyWidget wid1)
+	)
+					;	     (XtFree 0) (XtCalloc 0 0) (XtMalloc 0) (XtRealloc 0 0)
+      (XtSetLanguageProc 
+       (car (main-widgets)) 
+       (lambda (dpy str data)
+	 (snd-display #__line__ ";YOW: language proc: got ~A ~A" str data))
+       "who called us?")
+      (XtSetLanguageProc (car (main-widgets)) #f "oops")
+      (XtSetLanguageProc #f #f "oops")
+      (XtMergeArgLists (list 1 2) 2 (list 1) 1)
+      
+      (let* ((shell (cadr (main-widgets)))
+	     (dpy (XtDisplay shell)))
+	(if (not (equal? (XtClass shell) applicationShellWidgetClass))
+	    (snd-display #__line__ ";XtClass shell: ~A" (XtClass shell)))
+	(if (not (equal? (XtSuperclass shell) topLevelShellWidgetClass))
+	    (snd-display #__line__ ";XtSuperclass shell: ~A" (XtClass shell)))
+	(if (not (string=? (XtName shell) "snd"))
+	    (snd-display #__line__ ";XtName: ~A" (XtName shell)))
+	(if (not (equal? (XtWindow shell) (XtWindowOfObject shell)))
+	    (snd-display #__line__ ";XtWindow: ~A ~A" (XtWindow shell) (XtWindowOfObject shell)))
+	(if (not (equal? (XtScreen shell) (XtScreenOfObject shell)))
+	    (snd-display #__line__ ";XtScreen: ~A ~A" (XtScreen shell) (XtScreenOfObject shell)))
+	(if (not (equal? (XtDisplay shell) (XtDisplayOfObject shell)))
+	    (snd-display #__line__ ";XtDisplay: ~A ~A" (XtDisplay shell) (XtDisplayOfObject shell)))
+	(if (not (Time? (XtLastTimestampProcessed dpy)))
+	    (snd-display #__line__ ";XtLastTimestampProcessed: ~A" (XtLastTimestampProcessed dpy)))
+	(if (not (XEvent? (XtLastEventProcessed dpy)))
+	    (snd-display #__line__ ";XtLastEventProcessed: ~A" (XtLastEventProcessed dpy)))
+	(XtBuildEventMask shell)
+	(let ((val 0))
+	  (XtRegisterCaseConverter 
+	   dpy
+	   (lambda (dp key)
+	     (set! val 123)
+	     (list (list 'KeySym 65)
+		   (list 'KeySym 97)))
+	   (list 'KeySym 65)
+	   (list 'KeySym 65))
+	  (XtConvertCase dpy (list 'KeySym 65))
+	  (if (not (= val 123)) (snd-display #__line__ ";XtRegisterCaseConverter: ~A" val)))
+	(XtRegisterGrabAction (lambda (a b c) #f) #f ColormapChangeMask GrabModeSync GrabModeAsync)
+	(let ((vals (XtTranslateKeycode dpy (list 'KeyCode XK_B) 0)))
+	  (if (or (not (= (car vals) 0))
+		  (not (KeySym? (cadr vals))))
+	      (snd-display #__line__ ";XtTranslateKeycode: ~A" vals))
+	  (if (not (equal? vals (XtTranslateKey dpy (list 'KeyCode XK_B) 0)))
+	      (snd-display #__line__ ";XtTranslateKey: ~A ~A" vals (XtTranslateKey dpy (list 'KeyCode XK_B) 0)))
+	  (XtSetKeyTranslator dpy #f)
+	  (if (not (equal? vals (XtTranslateKeycode dpy (list 'KeyCode XK_B) 0)))
+	      (snd-display #__line__ ";XtSetKeyTranslator #f: ~A ~A" vals (XtTranslateKeycode dpy (list 'KeyCode XK_B) 0)))
+	  (XtSetKeyTranslator dpy (lambda (d k m)
+				    (if (not (equal? d dpy)) (snd-display #__line__ ";d in keyproc: ~A ~A" d dpy))
+				    (XtTranslateKey d k m)))
+	  (let ((newvals (XtTranslateKeycode dpy (list 'KeyCode XK_B) 0)))
+	    (if (not (equal? vals newvals)) (snd-display #__line__ ";XtSetKeyTranslator: ~A ~A" vals newvals)))
+	  (XtSetKeyTranslator dpy #f))
+	(if (not (KeySym? (cadr (XmTranslateKey dpy (list 'KeyCode XK_B) 0))))
+	    (snd-display #__line__ ";XmTranslateKey: ~A" (XmTranslateKey dpy XK_B 0)))
+	(let ((kv (XtKeysymToKeycodeList dpy (list 'KeySym 65509))))
+	  (if (not (equal? (car kv) (list 'KeyCode 66))) 
+	      (snd-display #__line__ ";XtKeysymToKeycodeList: ~A ~A" kv (XtKeysymToKeycodeList dpy (list 'KeySym 65509)))))
+	(XtInstallAllAccelerators (cadr (main-widgets)) (caddr (main-widgets)))
+	(XtInstallAccelerators (cadr (main-widgets)) (caddr (main-widgets)))
+	(if (not (equal? (list 0 1 2) (XtSetArg 0 1 2))) (snd-display #__line__ ";XtSetArg: ~A" (XtSetArg 0 1 2)))
+	(if (not (Widget? (XtGetKeyboardFocusWidget (cadr (main-widgets)))))
+	    (snd-display #__line__ ";XtGetKeyboardFocusWidget: ~A" (XtGetKeyboardFocusWidget (cadr (main-widgets)))))
+	(let ((id (XtAppAddInput (car (main-widgets)) 1 XtInputReadMask (lambda (a b c) #f) #f)))
+	  (XtRemoveInput id))
+	
+	(let ((id (XtAppAddWorkProc (car (main-widgets)) (lambda (me) #f) #f)))
+	  (XtRemoveWorkProc id))
+	(if (not (equal? (caddr (main-widgets)) (XtNameToWidget (cadr (main-widgets)) "mainpane")))
+	    (snd-display #__line__ ";XtNameToWidget: ~A ~A" (caddr (main-widgets)) (XtNameToWidget (cadr (main-widgets)) "mainpane")))
+	(XtVaCreatePopupShell "hiho" vendorShellWidgetClass (cadr (main-widgets)) ())
+	(XtResolvePathname (XtDisplay (cadr (main-widgets))) "app-defaults" #f #f #f #f 0 #f)
+	(XtFindFile ".snd" #f 0 #f)
+	
+	(XtAppLock (car (main-widgets)))
+	(XtAppUnlock (car (main-widgets)))
+	(let ((acts (XtGetActionList xmLabelWidgetClass)))
+	  (if (or (not (= (length acts) 4))
+		  (not (string=? (caar acts) "Enter")))
+	      (snd-display #__line__ ";XtGetActionList: ~A" acts)))
+	)
+      
+      (let ((pop (XtCreatePopupShell "hiho" xmGrabShellWidgetClass (cadr (main-widgets))
+				     (list XmNiconNameEncoding XA_STRING))))
+	(XtPopup pop XtGrabNone)
+	(XtPopdown pop))
+      (XtAppSetWarningHandler (car (main-widgets))
+			      (lambda (n) 
+				(if (not (string=? n "hiho"))
+				    (snd-display #__line__ ";XtWarning: ~A" n))))
+      (XtAppSetWarningMsgHandler (car (main-widgets)) 
+				 (lambda (name type klass def pars num)
+				   (snd-display #__line__ ";ignore: ~A ~A ~A~%" name def pars)))
+      
+      (let ((listener ((main-widgets) 4)))
+	(XtCallActionProc listener "text-transpose" (XEvent) #f 0)
+	(XtCallActionProc listener "begin-of-line" (XEvent) #f 0)
+	(XtCallActionProc listener "kill-line" (XEvent) #f 0)
+	(XtCallActionProc listener "yank" (XEvent) #f 0)
+	(XtCallActionProc listener "name-completion" (XEvent) #f 0)
+	(XtCallActionProc listener "listener-completion" (XEvent) #f 0)
+	(XtCallActionProc listener "no-op" (XEvent) #f 0)
+	(XtCallActionProc listener "delete-region" (XEvent) #f 0)
+	(XtCallActionProc listener "listener-g" (XEvent) #f 0)
+	(XtCallActionProc listener "listener-clear" (XEvent) #f 0)
+	(XtCallActionProc listener "b1-press" (XEvent) #f 0)
+	(XtCallActionProc listener "delete-to-previous-command" (XEvent) #f 0)
+	(let ((BEvent (XEvent ButtonPress)))
+	  (set! (.x BEvent) 10)
+	  (set! (.y BEvent) 10)
+	  (XtCallActionProc listener "b1-press" BEvent #f 0)
+	  (XtCallActionProc listener "b1-release" BEvent #f 0))
+	(XtCallActionProc listener "word-upper" (XEvent) (list "u") 1))
+      
+      (let ((ind (open-sound "oboe.snd")))
+	(set! (show-controls ind) #t)
+	(let* ((swids (sound-widgets ind))
+	       (sctrls (swids 2))
+	       (wh (widget-size sctrls)))
+	  (XtUnmanageChild sctrls)
+	  (set! (widget-size sctrls) (list (car wh) (* (cadr wh) 3)))
+	  (XtManageChild sctrls)
 	  
-	  (XtAppAddActions (car (main-widgets))
-			   (list (list "try1" (lambda (w e strs)	
-						(snd-display #__line__ ";try1: ~A~%" strs)))
-				 (list "try2" (lambda (w e strs)
-						(snd-display #__line__ ";try2: ~A~%" strs)))))
-	  (let ((tab (XtParseTranslationTable 
-		       (format #f "Ctrl <Key>osfLeft:  try1()~%Ctrl <Key>osfRight: try2()~%Ctrl <Key>osfUp:  try1(hiho)~%Ctrl <Key>osfDown: try2(down, up)~%")))
-		 (pane (add-main-pane "hiho" xmTextWidgetClass ())))
-	    (XtOverrideTranslations pane tab))
+	  (let ((tag (catch #t (lambda () (XtVaGetValues (car (sound-widgets)) (list "XmNpaneMaximum" 0)))
+			    (lambda args (car args)))))
+	    (if (not (eq? tag 'no-such-resource))
+		(snd-display #__line__ ";XtVaGetValues of incorrectly quoted resource name: ~A" tag)))
+	  )
+	
+	(close-sound ind))
+      
+      
+      ;; ---------------- XM tests ----------------
+      (let* ((label-render-table (cadr (XtVaGetValues (cadr (main-widgets)) (list XmNlabelRenderTable 0))))
+	     (renditions (and label-render-table 
+			      (XmRenderTableGetRenditions label-render-table (XmRenderTableGetTags label-render-table))))
+	     (default-font-name (and renditions
+				     (cadr (XmRenditionRetrieve (car renditions) (list XmNfontName 0)))))
+	     (default-font-info (and renditions
+				     (XmRenditionRetrieve (car renditions) (list XmNfont 0 XmNfontType 0)))))
+	(if (not (string=? default-font-name "fixed")) (snd-display #__line__ ";XmRenderTableGetRenditions name: ~A" default-font-name))
+	(if (not (XFontStruct? (default-font-info 1))) (snd-display #__line__ ";XmRenderTableGetRenditions font struct: ~A" default-font-info))
+	(if (not (= (default-font-info 3) XmFONT_IS_FONT)) (snd-display #__line__ ";XmRenderTableGetRenditions font type: ~A" default-font-info)))
+      
+      
+      (let* ((button-render-table (cadr (XtVaGetValues (cadr (main-widgets)) (list XmNbuttonRenderTable 0))))
+	     (default-rendition (and button-render-table 
+				     (XmRenderTableGetRendition button-render-table XmFONTLIST_DEFAULT_TAG)))
+	     (default-font-info (and default-rendition
+				     (XmRenditionRetrieve default-rendition (list XmNfont 0 XmNfontType 0)))))
+	(if (and default-font-info
+		 (= (default-font-info 3) XmFONT_IS_FONT))
+	    (let ((font (cadr default-font-info))
+		  (dpy (XtDisplay (cadr (main-widgets))))
+		  (data ()))
+	      (for-each (lambda (name atom?)
+			  (let ((val (XGetFontProperty font name)))
+			    (if (car val)
+				(set! data (cons (list (XGetAtomName (XtDisplay (cadr (main-widgets))) name)
+						       (if atom? 
+							   (XGetAtomName (XtDisplay (cadr (main-widgets))) (list 'Atom (cadr val)))
+							   (cadr val)))
+						 data)))))
+			(list XA_POINT_SIZE XA_FONT XA_FULL_NAME 
+			      (XInternAtom dpy "XA_SLANT" #f) 
+			      (XInternAtom dpy "XA_WEIGHT_NAME" #f) 
+			      XA_FAMILY_NAME 
+			      (XInternAtom dpy "XA_FOUNDRY" #f) 
+			      XA_CAP_HEIGHT)
+			(list #f #t #t #t #t #t #t #f))
+	      (if (not (string=? "Fixed" (cadr (data 1)))) (snd-display #__line__ ";XmRenderTableGetRendition: ~A" data)))))
+      
+      (let* ((tabs (let ((ctr 0))
+		     (map
+		      (lambda (n)
+			(set! ctr (+ ctr 1))
+			(XmTabCreate n XmINCHES (if (= ctr 1) XmABSOLUTE XmRELATIVE) XmALIGNMENT_BEGINNING "."))
+		      (list 1.5 1.5 1.5 1.5))))
+	     (tablist (XmTabListInsertTabs #f tabs (length tabs) 0)))
+	(if (not (= (XmTabListTabCount tablist) (length tabs))) 
+	    (snd-display #__line__ ";tablist len: ~A ~A~%" (XmTabListTabCount tablist) (length tabs)))
+	(if (not (equal? (XmTabGetValues (XmTabListGetTab tablist 0)) (list 1.5 5 0 0 ".")))
+	    (snd-display #__line__ ";XmTabs 0: ~A" (XmTabGetValues (XmTabListGetTab tablist 0))))
+	(if (not (equal? (XmTabGetValues (XmTabListGetTab tablist 2)) (list 1.5 5 1 0 ".")))
+	    (snd-display #__line__ ";XmTabs 2: ~A" (XmTabGetValues (XmTabListGetTab tablist 2))))
+	(let ((copytab (XmTabListCopy tablist 0 0)))
+	  (if (not (equal? (XmTabGetValues (XmTabListGetTab copytab 0)) (list 1.5 5 0 0 ".")))
+	      (snd-display #__line__ ";XmTabListCopy 0: ~A" (XmTabGetValues (XmTabListGetTab copytab 0))))
+	  (let ((another (XmTabListRemoveTabs copytab (list 0 1)))
+		(atab (XmTabCreate 3.0 XmINCHES XmABSOLUTE XmALIGNMENT_BEGINNING ".")))
+	    (if (not (equal? (XmTabGetValues (XmTabListGetTab another 0)) (list 1.5 5 1 0 ".")))
+		(snd-display #__line__ ";XmTabListRemoveTabs: ~A" (XmTabGetValues (XmTabListGetTab another 0))))
+	    (XmTabListReplacePositions (XmTabListCopy tablist 0 0) (list 1) (list atab))
+	    ;; this (replacepositions) is very prone to segfaults -- *very* poorly implemented! 
+	    (XmTabSetValue atab 6.0)
+	    (XmTabFree atab)
+	    (XmTabListFree another))
+	  (let ((tabl (XmStringTableProposeTablist
+		       (list (XmStringCreateLocalized "a-string") (XmStringCreateLocalized "another")) 2
+		       (cadr (main-widgets))
+		       1.0
+		       XmABSOLUTE)))
+	    (if (not (XmTabList? tabl)) (snd-display #__line__ ";XmStringTableProposeTabList: ~A" tabl))
+	    (XmTabListFree tabl)))
+	
+	(let ((hname (host-name))) ; from snd-motif.scm
+	  (if (not (equal? hname (getenv "HOSTNAME")))
+	      (snd-display #__line__ ";host name appears to be ~A or maybe ~A" hname (getenv "HOSTNAME"))))
+	(let ((blu (x->snd-color "blue")))
+	  (if (not (Pixel? blu)) (snd-display #__line__ ";x->snd-color can't find blue! ~A" blu))
+	  (if (not (equal? (color->list blu) (list 0.0 0.0 1.0)))
+	      (snd-display #__line__ ";x->snd-color blue: ~A" (color->list blu))))
+	
+	(let* ((tmp (XmStringCreateLocalized "h"))
+	       (pm (XmParseMappingCreate (list XmNincludeStatus XmINSERT
+					       XmNsubstitute    tmp
+					       XmNpattern       "i"
+					       XmNpatternType   XmCHARSET_TEXT))))
+	  (XmStringFree tmp)
+	  (XmParseMappingFree pm)
+	  (set! pm (XmParseMappingCreate (list XmNinvokeParseProc
+					       (lambda (txt end type tag entry pattern str call)
+						 #f))))
+	  (XmParseMappingFree pm)
+	  (let ((tag (catch #t (lambda ()
+				 (set! pm (XmParseMappingCreate (list XmNinvokeParseProc
+								      (lambda (txt end type tag entry pattern)
+									#f)))))
+			    (lambda args (car args)))))
+	    (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmNinvokeParseProc wrong arity: ~A" tag))))
+	
+	(let* ((fonts (list "fixed"
+			    "-*-times-bold-r-*-*-14-*-*-*-*-*-*-*"
+			    "-*-*-medium-i-*-*-18-*-*-*-*-*-*-*"
+			    "-*-helvetica-*-*-*-*-18-*-*-*-*-*-*-*"))
+	       (tags (list "one" "two" "three" "four"))
+	       (colors (list "red" "green" "blue" "orange"))
+	       (pixels
+		(let* ((dpy (XtDisplay (cadr (main-widgets))))
+		       (scr (DefaultScreen dpy))
+		       (cmap (DefaultColormap dpy scr)))
+		  (let ((col (XColor)))
+		    (XParseColor dpy cmap "blue" col)
+		    (if (or (not (= (.red col) 0))
+			    (not (= (.green col) 0))
+			    (not (= (.blue col) 65535)))
+			(snd-display #__line__ ";XParseColor: ~A ~A ~A ~A" col (.red col) (.blue col) (.green col)))
+		    (XLookupColor dpy cmap "red" col (XColor))
+		    (if (or (not (= (.red col) 65535))
+			    (not (= (.green col) 0))
+			    (not (= (.blue col) 0)))
+			(snd-display #__line__ ";XLookupColor: ~A ~A ~A ~A" col (.red col) (.blue col) (.green col))))
+		  (map
+		   (lambda (color)
+		     (let ((col (XColor)))
+		       (if (= (XAllocNamedColor dpy cmap color col col) 0)
+			   (snd-error (format #f "can't allocate ~A" color))
+			   (.pixel col))))
+		   colors)))
+	       (rendertable (XmRenderTableAddRenditions #f 
+							(let ((ctr 0))
+							  (map (lambda (r)
+								 (set! ctr (+ ctr 1))
+								 (XmRenditionCreate (cadr (main-widgets))
+										    r
+										    (append
+										     (if (= ctr 1)
+											 (list XmNtabList tablist)
+											 ())
+										     (list XmNrenditionForeground (pixels (- ctr 1))
+											   XmNfontName (fonts (- ctr 1))
+											   XmNfontType XmFONT_IS_FONT))))
+							       tags))
+							(length tags)
+							XmMERGE_NEW)))
 	  
-	  (let ((XmNhiho (add-resource "hiho" 0)))
-	    (if (not (string=? XmNhiho "hiho")) (snd-display #__line__ ";add-resource XmNhiho: ~A" XmNhiho)))
+	  (if (file-exists? "hiho") (delete-file "hiho"))
+	  (let* ((dpy (XtDisplay (cadr (main-widgets))))
+		 (scr (DefaultScreenOfDisplay dpy))
+		 (p1 (XmGetPixmap scr "hiho" (car pixels) (cadr pixels))))
+	    (if (not (Pixmap? p1)) (snd-display #__line__ ";XmGetPixmap: ~A" p1))
+	    (set! p1 (XmGetPixmapByDepth scr "hoho" (car pixels) (cadr pixels) (XDefaultDepth dpy (XScreenNumberOfScreen scr))))
+	    (if (not (Pixmap? p1)) (snd-display #__line__ ";XmGetPixmapByDepth: ~A" p1))
+	    (XmDestroyPixmap scr p1))
 	  
-	  (open-sound "cardinal.snd")
-	  (let*  ((mouse_width 32)
-		  (mouse_height 32)
-		  (mouse_bits (list
-			       #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
-			       #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
-			       #x80 #xff #xff #x01 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01
-			       #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01
-			       #x80 #x00 #x01 #x01 #x80 #xff #xff #x01 #x80 #x00 #x00 #x01
-			       #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01
-			       #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01
-			       #x80 #x00 #x00 #x01 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00
-			       #x00 #x06 #x60 #x00 #x00 #xf8 #x1f #x00 #x00 #x00 #x00 #x00
-			       #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
-			       #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00))
-		  (rb (list
-		       #x00 #x04 #x10 #x08 #x00 #x10 #x04 #x20 #x00 #x40 #xa5 #xbf
-		       #x00 #x40 #x04 #x20 #x00 #x10 #x10 #x08 #x00 #x04 #x00 #x00))
-		  (iconw ((sound-widgets) 8))
-		  (dpy (XtDisplay iconw))
-		  (win (XtWindow iconw)))
-	    (XCreateBitmapFromData dpy win rb 16 12)
-	    (XCreateBitmapFromData dpy win mouse_bits mouse_width mouse_height)
-	    (XCreatePixmapFromBitmapData dpy win mouse_bits 32 32 (white-pixel) (black-pixel) 8))
+	  (let ((tabl (XmStringTableParseStringArray (list "hi" "ho") 2 "hiho" XmCHARSET_TEXT #f 0 #f)))
+	    (if (not (XmString? (car tabl))) (snd-display #__line__ ";XmStringTableParseStringArray: ~A" tabl))
+	    (let ((strs (XmStringTableUnparse tabl 2 "hiho" XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
+	      (if (not (equal? strs (list "hi" "ho"))) (snd-display #__line__ ";XmStringTableUnparse: ~A" strs)))
+	    (let ((str (XmStringTableToXmString tabl 2 #f)))
+	      (if (not (XmString? str)) (snd-display #__line__ ";XmStringTableToXmString: ~A" str))
+	      (XmStringToXmStringTable str #f)
+	      (let ((val (XmStringUnparse str "hiho" XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
+		(if (not (string=? val "hiho")) (snd-display #__line__ ";XmStringUnparse: ~A" val))
+		(set! val (XmStringUnparse (XmStringCreateLocalized "hi") #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
+		(if (not (string=? val "hi")) (snd-display #__line__ ";XmStringUnparse null tag: ~A" val)))
+	      ;; XmCvtXmStringToByteStream test deleted because it seems to be buggy in memory handling
+	      (let* ((ind (open-sound "oboe.snd"))
+		     (grf1 (car (channel-widgets)))
+		     (dpy (XtDisplay grf1))
+		     (win (XtWindow grf1))
+		     (scr (DefaultScreenOfDisplay dpy))
+		     (scrn (XScreenNumberOfScreen scr))
+		     (gv (XGCValues)))
+		(if (not (Font? (current-font ind))) (snd-display #__line__ ";current-font: ~A" (current-font ind)))
+		(let ((old-font (current-font))
+		      (a-font (load-font "6x12")))
+		  (set! (current-font) a-font)
+		  (if (not (equal? a-font (current-font)))
+		      (snd-display #__line__ ";set current-font: ~A ~A" a-font (current-font)))
+		  (set! (current-font ind) old-font)
+		  (if (not (equal? old-font (current-font ind)))
+		      (snd-display #__line__ ";set current-font with ind: ~A ~A" old-font (current-font ind)))
+		  (set! (current-font) a-font)
+		  (set! (current-font ind 0) old-font)
+		  (if (not (equal? old-font (current-font ind 0)))
+		      (snd-display #__line__ ";set current-font with ind/0: ~A ~A" old-font (current-font ind 0)))
+		  (set! (current-font) old-font))
+		
+		(set! (.foreground gv) *data-color*)
+		(set! (.background gv) *basic-color*)
+		(set! (.function gv) GXcopy)
+		(let ((sgc (XtAllocateGC grf1
+					 (XDefaultDepth dpy scrn) 
+					 (logior GCForeground GCBackground GCFunction)
+					 gv
+					 (logior GCFont GCDashList)
+					 0))
+		      (str2 (XmStringCreateLocalized "hiho")))
+		  (XmStringDraw dpy win rendertable str2 sgc 10 10 100 
+				XmALIGNMENT_END XmSTRING_DIRECTION_L_TO_R (XRectangle 0 0 100 100))
+		  (XmStringDrawImage dpy win rendertable str2 sgc 10 10 100 
+				     XmALIGNMENT_END XmSTRING_DIRECTION_L_TO_R (XRectangle 0 0 100 100))
+		  (XmStringDrawUnderline dpy win rendertable str2 sgc 10 10 100 
+					 XmALIGNMENT_END XmSTRING_DIRECTION_L_TO_R (XRectangle 0 0 100 100) str2)
+		  (XtGetGC (cadr (main-widgets)) GCForeground gv)
+		  (XCopyGC dpy sgc GCFunction sgc)
+		  (XCopyArea dpy win win sgc 0 0 100 100 0 0)
+		  (XCopyPlane dpy win win sgc 0 0 100 100 0 0 1)
+		  (XtReleaseGC grf1 sgc))
+		(close-sound ind))
+	      (let ((lc (XmStringLineCount (XmStringCreateLocalized "hiho"))))
+		(if (not (= lc 1)) (snd-display #__line__ ";XmStringLineCount: ~A" lc)))
+	      (if (not (XmStringHasSubstring str (XmStringCreateLocalized "hi"))) (snd-display #__line__ ";XmStringHasSubstring?"))))
 	  
-	  (let* ((grf1 (car (channel-widgets)))
-		 (dpy (XtDisplay grf1))
-		 (win (XtWindow grf1))
-		 (sgc (car (snd-gcs)))
-		 (shell (cadr (main-widgets)))
-		 (scr (DefaultScreen dpy))
-		 (vis (DefaultVisual dpy scr))
-		 (depth (cadr (XtGetValues grf1 (list XmNdepth 0))))
-		 (pix (XCreatePixmap dpy win 10 10 depth))
-		 (rotpix (XCreatePixmap dpy win 10 10 depth)))
-	    
-	    (XDrawText dpy win sgc 50 50 (list (XTextItem "hi" 2 2 '(Font 0))
-					       (XTextItem "ho" 2 3 '(Font 0))))
-	    
-	    (let ((cmap (XCreateColormap dpy win vis AllocNone)))
-	      (set! cmap (XCopyColormapAndFree dpy cmap))
-	      (XFreeColormap dpy cmap)
-	      (if (XCheckTypedWindowEvent dpy win ExposureMask) 
-		  (snd-display #__line__ ";XCheckTypedWindowEvent: ~A" (XCheckTypedWindowEvent dpy win ExposureMask)))
-	      (if (XCheckTypedEvent dpy ExposureMask) 
-		  (snd-display #__line__ ";XCheckTypedEvent: ~A" (XCheckTypedEvent dpy ExposureMask)))
-	      (XCheckWindowEvent dpy win ExposureMask)
+	  
+	  (if (not (equal? (XmRenderTableGetTags rendertable) (list "one" "two" "three" "four")))
+	      (snd-display #__line__ ";tags: ~A~%" (XmRenderTableGetTags rendertable)))
+	  (let* ((rend (XmRenderTableGetRendition rendertable "one"))
+		 (r (and rend (XmRenditionRetrieve rend
+						   (list XmNrenditionForeground 0
+							 XmNfontName 0
+							 XmNfontType 0
+							 XmNtag 0)))))
+	    (if (and rend r)
+		(begin
+		  (if (or (not (string=? (r 7) "one"))
+			  (not (string=? (r 3) "fixed")))
+		      (snd-display #__line__ ";rendertable: ~A" r))
+		  (XmRenditionUpdate rend (list XmNstrikethruType XmSINGLE_LINE))
+		  (if (not (= (cadr (XmRenditionRetrieve rend (list XmNstrikethruType 0))) XmSINGLE_LINE))
+		      (snd-display #__line__ ";XmRenditionUpdate: ~A ~A" (cadr (XtGetValues rend (list XmNstrikethruType 0))) XmSINGLE_LINE)))
+		(snd-display #__line__ ";r and rend: ~A ~A~%" r rend)))
+	  (let ((r1 (XmRenditionCreate (cadr (main-widgets)) "r1" (list XmNfontName "fixed"))))
+	    (XmRenditionFree r1))
+	  
+	  (if (not (equal? (XmDropSiteQueryStackingOrder ((main-widgets) 4)) (list #f)))
+	      (snd-display #__line__ ";XmDropSiteQueryStackingOrder: ~A" (XmDropSiteQueryStackingOrder ((main-widgets) 4))))
+	  (let ((tab (XmStringComponentCreate XmSTRING_COMPONENT_TAB 0 #f))
+		(row #f)
+		(table ())
+		(our-tags tags))
+	    (for-each 
+	     (lambda (word)
+	       (let ((entry (XmStringGenerate word
+					      #f
+					      XmCHARSET_TEXT
+					      (car our-tags))))
+		 (if (XmStringIsVoid entry) (snd-display #__line__ ";~A is void?" entry))
+		 (if (XmStringEmpty entry) (snd-display #__line__ ";~A is empty?" entry))
+		 
+		 (if row
+		     (let ((tmp (XmStringConcat row tab)))
+		       (XmStringFree row)
+		       (set! row (XmStringConcatAndFree tmp entry)))
+		     (set! row entry))
+		 (set! our-tags (cdr our-tags))
+		 (if (null? our-tags) 
+		     (begin
+		       (set! our-tags tags)
+		       (set! table (cons row table))
+		       (set! row #f)))))
+	     (list "this" "is" "a" "test" "of" "the" "renditions" "and" "rendertables" 
+		   "perhaps" "all" "will" "go" "well" "and" "then" "again" "perhaps" "not"))
+	    (let* ((n (car table))
+		   (c (XmStringInitContext n))
+		   (happy #t))
+	      (do ((i 0 (+ i 1)))
+		  ((not happy))
+		(let ((type (XmStringGetNextTriple (cadr c))))
+		  (if (= (car type) XmSTRING_COMPONENT_TEXT)
+		      (if (or (not (= (cadr type) ((list 0 0 2 0 0 0 4 0 0 0 3 0 0 0 4) i)))
+			      (not (string=? (caddr type) 
+					     ((list "o" "o" "go" "o" "o" "o" "well" "o" "o" "o" "and" "o" "o" "o" "then") i))))
+			  (snd-display #__line__ ";component ~A -> ~A" i (cdr type)))
+		      (if (and (not (= (car type) XmSTRING_COMPONENT_TAB))
+			       (= (car type) XmSTRING_COMPONENT_END))
+			  (set! happy #f)))))
+	      (XmStringFreeContext (cadr c))))))
+      
+      (XtAppAddActions (car (main-widgets))
+		       (list (list "try1" (lambda (w e strs)	
+					    (snd-display #__line__ ";try1: ~A~%" strs)))
+			     (list "try2" (lambda (w e strs)
+					    (snd-display #__line__ ";try2: ~A~%" strs)))))
+      (let ((tab (XtParseTranslationTable 
+		  (format #f "Ctrl <Key>osfLeft:  try1()~%Ctrl <Key>osfRight: try2()~%Ctrl <Key>osfUp:  try1(hiho)~%Ctrl <Key>osfDown: try2(down, up)~%")))
+	    (pane (add-main-pane "hiho" xmTextWidgetClass ())))
+	(XtOverrideTranslations pane tab))
+      
+      (let ((XmNhiho (add-resource "hiho" 0)))
+	(if (not (string=? XmNhiho "hiho")) (snd-display #__line__ ";add-resource XmNhiho: ~A" XmNhiho)))
+      
+      (open-sound "cardinal.snd")
+      (let*  ((mouse_width 32)
+	      (mouse_height 32)
+	      (mouse_bits (list
+			   #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
+			   #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
+			   #x80 #xff #xff #x01 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01
+			   #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01
+			   #x80 #x00 #x01 #x01 #x80 #xff #xff #x01 #x80 #x00 #x00 #x01
+			   #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01
+			   #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01
+			   #x80 #x00 #x00 #x01 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00
+			   #x00 #x06 #x60 #x00 #x00 #xf8 #x1f #x00 #x00 #x00 #x00 #x00
+			   #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
+			   #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00))
+	      (rb (list
+		   #x00 #x04 #x10 #x08 #x00 #x10 #x04 #x20 #x00 #x40 #xa5 #xbf
+		   #x00 #x40 #x04 #x20 #x00 #x10 #x10 #x08 #x00 #x04 #x00 #x00))
+	      (iconw ((sound-widgets) 8))
+	      (dpy (XtDisplay iconw))
+	      (win (XtWindow iconw)))
+	(XCreateBitmapFromData dpy win rb 16 12)
+	(XCreateBitmapFromData dpy win mouse_bits mouse_width mouse_height)
+	(XCreatePixmapFromBitmapData dpy win mouse_bits 32 32 (white-pixel) (black-pixel) 8))
+      
+      (let* ((grf1 (car (channel-widgets)))
+	     (dpy (XtDisplay grf1))
+	     (win (XtWindow grf1))
+	     (sgc (car (snd-gcs)))
+	     (shell (cadr (main-widgets)))
+	     (scr (DefaultScreen dpy))
+	     (vis (DefaultVisual dpy scr))
+	     (depth (cadr (XtGetValues grf1 (list XmNdepth 0))))
+	     (pix (XCreatePixmap dpy win 10 10 depth))
+	     (rotpix (XCreatePixmap dpy win 10 10 depth)))
+	
+	(XDrawText dpy win sgc 50 50 (list (XTextItem "hi" 2 2 '(Font 0))
+					   (XTextItem "ho" 2 3 '(Font 0))))
+	
+	(let ((cmap (XCreateColormap dpy win vis AllocNone)))
+	  (set! cmap (XCopyColormapAndFree dpy cmap))
+	  (XFreeColormap dpy cmap)
+	  (if (XCheckTypedWindowEvent dpy win ExposureMask) 
+	      (snd-display #__line__ ";XCheckTypedWindowEvent: ~A" (XCheckTypedWindowEvent dpy win ExposureMask)))
+	  (if (XCheckTypedEvent dpy ExposureMask) 
+	      (snd-display #__line__ ";XCheckTypedEvent: ~A" (XCheckTypedEvent dpy ExposureMask)))
+	  (XCheckWindowEvent dpy win ExposureMask)
 					;		(if (XCheckIfEvent dpy (lambda (d e data) #f) #f)
 					;		    (snd-display #__line__ ";XCheckIfEvent: ~A" (XCheckIfEvent dpy (lambda (d e data) #f) #f)))
-	      (XCirculateSubwindows dpy win RaiseLowest)
-	      (XCirculateSubwindowsUp dpy win)
-	      (XCirculateSubwindowsDown dpy win)
-	      (let ((wc (XWindowChanges 10 10 100 100 10 win 0)))
-		(if (not (= (.stack_mode wc) 0)) (snd-display #__line__ ";stack_mode wc: ~A" (.stack_mode wc)))
-		(if (not (equal? (.sibling wc) win)) (snd-display #__line__ ";sibling wc: ~A" (.sibling wc)))
-		(if (not (= (.x wc) 10)) (snd-display #__line__ ";x wc: ~A" (.x wc)))
-		(if (not (= (.y wc) 10)) (snd-display #__line__ ";y wc: ~A" (.y wc)))
-		(if (not (= (.width wc) 100)) (snd-display #__line__ ";width wc: ~A" (.width wc)))
-		(if (not (= (.height wc) 100)) (snd-display #__line__ ";height wc: ~A" (.height wc)))
-		(if (not (= (.border_width wc) 10)) (snd-display #__line__ ";border_width wc: ~A" (.border_width wc))))
-	      (if (defined? 'XpmImage)
-		  (let ((xp (XpmImage 10 10 0 1 0)))
-		    (if (not (= (.cpp xp) 0)) (snd-display #__line__ ";cpp xp: ~A" (.cpp xp)))
-		    (if (not (= (.ncolors xp) 1)) (snd-display #__line__ ";ncolors xp: ~A" (.ncolors xp)))))
-	      )
-	    (XmObjectAtPoint shell 100 100)
-	    (if (not (string=? (XmGetAtomName dpy XA_STRING) "STRING")) (snd-display #__line__ ";XmGetAtomName: ~A" (XmGetAtomName dpy XA_STRING)))
-	    (if (not (XmTargetsAreCompatible dpy (list XA_STRING) 1 (list XA_STRING) 1)) (snd-display #__line__ ";XmTargetsAreCompatible"))
-	    (XmUpdateDisplay grf1)
-	    (let ((lines (XmWidgetGetBaselines ((main-widgets) 4))))
-	      (if (not lines) (snd-display #__line__ ";XmWidgetGetBaselines?"))
-	      (if (< (length lines) 4) (snd-display #__line__ ";no listener text?? ~A" lines)))
-	    (let ((r (XmWidgetGetDisplayRect ((sound-widgets) 8))))
-	      (if (not (XRectangle? r)) (snd-display #__line__ ";XmWidgetGetDisplayRect: ~A" r)))
-	    (XDrawImageString dpy (list 'Window (cadr pix)) sgc 0 10 "hiho" 4)
-	    (let* ((data (XtCalloc (* 11 11 depth) 1))
-		   (before (XCreateImage dpy vis depth XYPixmap 0 data 10 10 8 0))
-		   (newimage (XGetSubImage dpy (list 'Window (cadr pix)) 0 0 10 10 AllPlanes XYPixmap before 0 0)))
-	      (XSubImage newimage 0 0 3 3)
-	      (if (not (= (.bytes_per_line newimage) 2)) (snd-display #__line__ ";bytes_per_line: ~A" (.bytes_per_line newimage)))
-	      (if (not (= (.byte_order newimage) 0)) (snd-display #__line__ ";byte_order: ~A" (.byte_order newimage)))
-	      (if (not (= (.bitmap_pad newimage) 8)) (snd-display #__line__ ";bitmap_pad: ~A" (.bitmap_pad newimage)))
-	      (if (not (= (.bitmap_bit_order newimage) 0)) (snd-display #__line__ ";bitmap_bit_order: ~A" (.bitmap_bit_order newimage)))
-	      (if (not (= (.bitmap_unit newimage) 32)) (snd-display #__line__ ";bitmap_unit: ~A" (.bitmap_unit newimage)))
+	  (XCirculateSubwindows dpy win RaiseLowest)
+	  (XCirculateSubwindowsUp dpy win)
+	  (XCirculateSubwindowsDown dpy win)
+	  (let ((wc (XWindowChanges 10 10 100 100 10 win 0)))
+	    (if (not (= (.stack_mode wc) 0)) (snd-display #__line__ ";stack_mode wc: ~A" (.stack_mode wc)))
+	    (if (not (equal? (.sibling wc) win)) (snd-display #__line__ ";sibling wc: ~A" (.sibling wc)))
+	    (if (not (= (.x wc) 10)) (snd-display #__line__ ";x wc: ~A" (.x wc)))
+	    (if (not (= (.y wc) 10)) (snd-display #__line__ ";y wc: ~A" (.y wc)))
+	    (if (not (= (.width wc) 100)) (snd-display #__line__ ";width wc: ~A" (.width wc)))
+	    (if (not (= (.height wc) 100)) (snd-display #__line__ ";height wc: ~A" (.height wc)))
+	    (if (not (= (.border_width wc) 10)) (snd-display #__line__ ";border_width wc: ~A" (.border_width wc))))
+	  (if (defined? 'XpmImage)
+	      (let ((xp (XpmImage 10 10 0 1 0)))
+		(if (not (= (.cpp xp) 0)) (snd-display #__line__ ";cpp xp: ~A" (.cpp xp)))
+		(if (not (= (.ncolors xp) 1)) (snd-display #__line__ ";ncolors xp: ~A" (.ncolors xp)))))
+	  )
+	(XmObjectAtPoint shell 100 100)
+	(if (not (string=? (XmGetAtomName dpy XA_STRING) "STRING")) (snd-display #__line__ ";XmGetAtomName: ~A" (XmGetAtomName dpy XA_STRING)))
+	(if (not (XmTargetsAreCompatible dpy (list XA_STRING) 1 (list XA_STRING) 1)) (snd-display #__line__ ";XmTargetsAreCompatible"))
+	(XmUpdateDisplay grf1)
+	(let ((lines (XmWidgetGetBaselines ((main-widgets) 4))))
+	  (if (not lines) (snd-display #__line__ ";XmWidgetGetBaselines?"))
+	  (if (< (length lines) 4) (snd-display #__line__ ";no listener text?? ~A" lines)))
+	(let ((r (XmWidgetGetDisplayRect ((sound-widgets) 8))))
+	  (if (not (XRectangle? r)) (snd-display #__line__ ";XmWidgetGetDisplayRect: ~A" r)))
+	(XDrawImageString dpy (list 'Window (cadr pix)) sgc 0 10 "hiho" 4)
+	(let* ((data (XtCalloc (* 11 11 depth) 1))
+	       (before (XCreateImage dpy vis depth XYPixmap 0 data 10 10 8 0))
+	       (newimage (XGetSubImage dpy (list 'Window (cadr pix)) 0 0 10 10 AllPlanes XYPixmap before 0 0)))
+	  (XSubImage newimage 0 0 3 3)
+	  (if (not (= (.bytes_per_line newimage) 2)) (snd-display #__line__ ";bytes_per_line: ~A" (.bytes_per_line newimage)))
+	  (if (not (= (.byte_order newimage) 0)) (snd-display #__line__ ";byte_order: ~A" (.byte_order newimage)))
+	  (if (not (= (.bitmap_pad newimage) 8)) (snd-display #__line__ ";bitmap_pad: ~A" (.bitmap_pad newimage)))
+	  (if (not (= (.bitmap_bit_order newimage) 0)) (snd-display #__line__ ";bitmap_bit_order: ~A" (.bitmap_bit_order newimage)))
+	  (if (not (= (.bitmap_unit newimage) 32)) (snd-display #__line__ ";bitmap_unit: ~A" (.bitmap_unit newimage)))
 					;		 (if (not (= (.obdata newimage) 0)) (snd-display #__line__ ";obdata: ~A" (.obdata newimage)))
-	      (if (not (= (.xoffset newimage) 0)) (snd-display #__line__ ";xoffset: ~A" (.xoffset newimage)))
-	      (XPutPixel before 1 1 *basic-color*)
-	      (XGetPixel before 1 1)
-	      (XPutImage dpy (list 'Window (cadr rotpix)) sgc before 0 0 0 0 10 10)
-	      (XAddPixel before 1)
-	      (if (> (.bits_per_pixel before) 123) (snd-display #__line__ ";bits_per_pixel: ~A" (.bits_per_pixel before)))
-	      (XmInstallImage before "before_image")
-	      (XmUninstallImage before)
-	      (if (defined? 'XpmAttributes)
-		  (let ((i11 (XGetImage dpy (list 'Window (cadr pix)) 0 0 10 10 AllPlanes XYPixmap))
-			(attr (XpmAttributes))
-			(vals (XtGetValues (cadr (main-widgets)) (list XmNcolormap 0 XmNdepth 0)))
-			(sym (XpmColorSymbol "basiccolor" #f *basic-color*)))
-		    (if (not (string=? (.name sym) "basiccolor")) (snd-display #__line__ ";.name colorsymbol: ~A" (.name sym)))
-		    (set! (.name sym) "hiho")
-		    (if (not (string=? (.name sym) "hiho")) (snd-display #__line__ ";set .name colorsymbol: ~A" (.name sym)))
-		    (set! (.visual attr) vis)
-		    (if (not (equal? vis (.visual attr))) (snd-display #__line__ ";visual xpm attr: ~A" (.visual attr)))
-		    (if (not (list? (.colorsymbols attr))) (snd-display #__line__ ";.colorsymbols attr: ~A" (.colorsymbols attr)))
-		    (set! (.colorsymbols attr) (list sym))
-		    (set! (.pixel sym) *basic-color*)
-		    (set! (.numsymbols attr) 1)
-		    (if (not (equal? 1 (.numsymbols attr))) (snd-display #__line__ ";numsymbols xpm attr: ~A" (.numsymbols attr)))
-		    (set! (.depth attr) (vals 3))
-		    (if (not (equal? (vals 3) (.depth attr))) (snd-display #__line__ ";depth xpm attr: ~A" (.depth attr)))
-		    (set! (.colormap attr) (vals 1))
-		    (if (not (equal? (vals 1) (.colormap attr))) (snd-display #__line__ ";colormap xpm attr: ~A" (.colormap attr)))
-		    (set! (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual))
-		    (if (not (= (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual)))
-			(snd-display #__line__ ";valuemask: ~A" (.valuemask attr)))
-		    (if (not (= (.x_hotspot attr) 0)) (snd-display #__line__ ";x_hotspot: ~A" (.x_hotspot attr)))
-		    (if (not (= (.y_hotspot attr) 0)) (snd-display #__line__ ";y_hotspot: ~A" (.y_hotspot attr)))
-		    (if (not (= (.npixels attr) 0)) (snd-display #__line__ ";npixels: ~A" (.npixels attr)))
-		    (let ((err (XpmCreatePixmapFromData dpy win 
-							(list "16 14 6 1"
-							      " 	c None s None"
-							      ".	c gray50"
-							      "X	c black"
-							      "o	c white"
-							      "O	c yellow"
-							      "-      c ivory2 s basiccolor"
-							      "------.XXX.-----"
-							      "-----X.ooo.X----"
-							      "----..oXXXo..---"
-							      "----XoX...XoX---"
-							      "----XoX.--XoX.--"
-							      "----XoX.--XoX.--"
-							      "---XXXXXXXXXXX--"
-							      "---XOOOOOOOOOX.-"
-							      "---XO.......OX.-"
-							      "---XOOOOOOOOOX.-"
-							      "---XO.......OX.-"
-							      "---XOOOOOOOOOX.-"
-							      "---XXXXXXXXXXX.-"
-							      "----...........-")
-							attr)))
-		      (if (or (not (= (car err) XpmSuccess))
-			      (not (Pixmap? (cadr err))))
-			  (snd-display #__line__ ";XpmCreatePixmapFromData: ~A" err)))
-		    
-		    (let* ((shell (cadr (main-widgets)))
-			   (dpy (XtDisplay shell))
-			   (button (XmCreatePushButton shell "button" ()))
-			   (status-and-whatnot (XpmReadFileToPixmap dpy (XRootWindowOfScreen (XtScreen shell)) "bullet.xpm" #f))
-			   (status (car status-and-whatnot))
-			   (pixmap (cadr status-and-whatnot))
-			   (pixmap1 (caddr status-and-whatnot)))
-		      (if (not (string=? (XpmGetErrorString XpmSuccess) "XpmSuccess")) 
-			  (snd-display #__line__ ";XpmGetErrorString: ~A" (XpmGetErrorString XpmSuccess)))
-		      (if (not (= status XpmSuccess))
-			  (snd-display #__line__ "; XpmError ReadFileToPixmap: ~A" (XpmGetErrorString status)))
-		      (XtVaSetValues button (list XmNlabelType XmPIXMAP
-						  XmNlabelPixmap pixmap))
-		      (XpmWriteFileFromPixmap dpy "test.xpm" pixmap pixmap1 #f)
-		      (XpmCreateDataFromPixmap dpy pixmap pixmap1 #f)
-		      (let ((status (XpmReadFileToXpmImage "bullet.xpm"))
-			     (symb (XpmColorSymbol "Foreground" "green" *basic-color*))
-			     (attr (XpmAttributes)))
-			(if (not (XpmImage? status))
-			    (snd-display #__line__ "; XpmError ReadFileToXpmImage: ~A ~A" symb (XpmGetErrorString status)))
-			(set! (.valuemask attr) XpmColorSymbols)
-			(XpmCreatePixmapFromXpmImage dpy (XRootWindowOfScreen (XtScreen shell)) status attr)
-			(XpmCreateXpmImageFromPixmap dpy pixmap pixmap1 attr)
-			(for-each
-			 (lambda (func val name)
-			   (set! (func attr) val)
-			   (if (not (equal? (func attr) val)) (snd-display #__line__ ";attr ~A ~A" name (func attr))))
-			 (list .valuemask .depth .width .x_hotspot .y_hotspot .cpp .npixels .ncolors)
-			 (list 0 0 0 0 0 0 0 0)
-			 (list 'valuemask 'depth 'width 'x_hotspot 'y_hotspot 'cpp 'npixels 'ncolors)))
-		      )
-		    (XDestroyImage i11)))
-	      
-	      (XDestroyImage before)
-	      (XFreePixmap dpy pix)
-	      (XVisualIDFromVisual vis)
-	      (XGrabServer dpy)
-	      (XUngrabServer dpy)
-	      (XGrabPointer dpy win #t ButtonPressMask GrabModeSync GrabModeSync (list 'Window None) (list 'Cursor None) (list 'Time CurrentTime))
-	      (XUngrabPointer dpy (list 'Time CurrentTime))
-	      (XGrabKeyboard dpy win #t GrabModeSync GrabModeSync (list 'Time CurrentTime))
-	      (XUngrabKeyboard dpy (list 'Time CurrentTime))
-	      (XGrabKey dpy AnyKey AnyModifier win #t GrabModeSync GrabModeSync)
-	      (XUngrabKey dpy AnyKey AnyModifier win)
-	      (XGrabButton dpy AnyButton AnyModifier win #t ButtonPressMask GrabModeSync GrabModeSync (list 'Window None) (list 'Cursor None))
-	      (XUngrabButton dpy AnyButton AnyModifier win)
-	      (XtGrabPointer shell #t ButtonPressMask GrabModeSync GrabModeSync (list 'Window None) (list 'Cursor None) (list 'Time CurrentTime))
-	      (XtUngrabPointer shell (list 'Time CurrentTime))
-	      (XtGrabKeyboard shell #t GrabModeSync GrabModeSync (list 'Time CurrentTime))
-	      (XtUngrabKeyboard shell (list 'Time CurrentTime))
-	      (XtGrabKey shell (list 'KeyCode AnyKey) AnyModifier #t GrabModeSync GrabModeSync)
-	      (XtUngrabKey shell (list 'KeyCode AnyKey) AnyModifier)
-	      (XtGrabButton shell AnyButton AnyModifier #t ButtonPressMask GrabModeSync GrabModeSync (list 'Window None) (list 'Cursor None))
-	      (XtUngrabButton shell AnyButton AnyModifier)
-	      ))
+	  (if (not (= (.xoffset newimage) 0)) (snd-display #__line__ ";xoffset: ~A" (.xoffset newimage)))
+	  (XPutPixel before 1 1 *basic-color*)
+	  (XGetPixel before 1 1)
+	  (XPutImage dpy (list 'Window (cadr rotpix)) sgc before 0 0 0 0 10 10)
+	  (XAddPixel before 1)
+	  (if (> (.bits_per_pixel before) 123) (snd-display #__line__ ";bits_per_pixel: ~A" (.bits_per_pixel before)))
+	  (XmInstallImage before "before_image")
+	  (XmUninstallImage before)
+	  (if (defined? 'XpmAttributes)
+	      (let ((i11 (XGetImage dpy (list 'Window (cadr pix)) 0 0 10 10 AllPlanes XYPixmap))
+		    (attr (XpmAttributes))
+		    (vals (XtGetValues (cadr (main-widgets)) (list XmNcolormap 0 XmNdepth 0)))
+		    (sym (XpmColorSymbol "basiccolor" #f *basic-color*)))
+		(if (not (string=? (.name sym) "basiccolor")) (snd-display #__line__ ";.name colorsymbol: ~A" (.name sym)))
+		(set! (.name sym) "hiho")
+		(if (not (string=? (.name sym) "hiho")) (snd-display #__line__ ";set .name colorsymbol: ~A" (.name sym)))
+		(set! (.visual attr) vis)
+		(if (not (equal? vis (.visual attr))) (snd-display #__line__ ";visual xpm attr: ~A" (.visual attr)))
+		(if (not (list? (.colorsymbols attr))) (snd-display #__line__ ";.colorsymbols attr: ~A" (.colorsymbols attr)))
+		(set! (.colorsymbols attr) (list sym))
+		(set! (.pixel sym) *basic-color*)
+		(set! (.numsymbols attr) 1)
+		(if (not (equal? 1 (.numsymbols attr))) (snd-display #__line__ ";numsymbols xpm attr: ~A" (.numsymbols attr)))
+		(set! (.depth attr) (vals 3))
+		(if (not (equal? (vals 3) (.depth attr))) (snd-display #__line__ ";depth xpm attr: ~A" (.depth attr)))
+		(set! (.colormap attr) (vals 1))
+		(if (not (equal? (vals 1) (.colormap attr))) (snd-display #__line__ ";colormap xpm attr: ~A" (.colormap attr)))
+		(set! (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual))
+		(if (not (= (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual)))
+		    (snd-display #__line__ ";valuemask: ~A" (.valuemask attr)))
+		(if (not (= (.x_hotspot attr) 0)) (snd-display #__line__ ";x_hotspot: ~A" (.x_hotspot attr)))
+		(if (not (= (.y_hotspot attr) 0)) (snd-display #__line__ ";y_hotspot: ~A" (.y_hotspot attr)))
+		(if (not (= (.npixels attr) 0)) (snd-display #__line__ ";npixels: ~A" (.npixels attr)))
+		(let ((err (XpmCreatePixmapFromData dpy win 
+						    (list "16 14 6 1"
+							  " 	c None s None"
+							  ".	c gray50"
+							  "X	c black"
+							  "o	c white"
+							  "O	c yellow"
+							  "-      c ivory2 s basiccolor"
+							  "------.XXX.-----"
+							  "-----X.ooo.X----"
+							  "----..oXXXo..---"
+							  "----XoX...XoX---"
+							  "----XoX.--XoX.--"
+							  "----XoX.--XoX.--"
+							  "---XXXXXXXXXXX--"
+							  "---XOOOOOOOOOX.-"
+							  "---XO.......OX.-"
+							  "---XOOOOOOOOOX.-"
+							  "---XO.......OX.-"
+							  "---XOOOOOOOOOX.-"
+							  "---XXXXXXXXXXX.-"
+							  "----...........-")
+						    attr)))
+		  (if (or (not (= (car err) XpmSuccess))
+			  (not (Pixmap? (cadr err))))
+		      (snd-display #__line__ ";XpmCreatePixmapFromData: ~A" err)))
+		
+		(let* ((shell (cadr (main-widgets)))
+		       (dpy (XtDisplay shell))
+		       (button (XmCreatePushButton shell "button" ()))
+		       (status-and-whatnot (XpmReadFileToPixmap dpy (XRootWindowOfScreen (XtScreen shell)) "bullet.xpm" #f))
+		       (status (car status-and-whatnot))
+		       (pixmap (cadr status-and-whatnot))
+		       (pixmap1 (caddr status-and-whatnot)))
+		  (if (not (string=? (XpmGetErrorString XpmSuccess) "XpmSuccess")) 
+		      (snd-display #__line__ ";XpmGetErrorString: ~A" (XpmGetErrorString XpmSuccess)))
+		  (if (not (= status XpmSuccess))
+		      (snd-display #__line__ "; XpmError ReadFileToPixmap: ~A" (XpmGetErrorString status)))
+		  (XtVaSetValues button (list XmNlabelType XmPIXMAP
+					      XmNlabelPixmap pixmap))
+		  (XpmWriteFileFromPixmap dpy "test.xpm" pixmap pixmap1 #f)
+		  (XpmCreateDataFromPixmap dpy pixmap pixmap1 #f)
+		  (let ((status (XpmReadFileToXpmImage "bullet.xpm"))
+			(symb (XpmColorSymbol "Foreground" "green" *basic-color*))
+			(attr (XpmAttributes)))
+		    (if (not (XpmImage? status))
+			(snd-display #__line__ "; XpmError ReadFileToXpmImage: ~A ~A" symb (XpmGetErrorString status)))
+		    (set! (.valuemask attr) XpmColorSymbols)
+		    (XpmCreatePixmapFromXpmImage dpy (XRootWindowOfScreen (XtScreen shell)) status attr)
+		    (XpmCreateXpmImageFromPixmap dpy pixmap pixmap1 attr)
+		    (for-each
+		     (lambda (func val name)
+		       (set! (func attr) val)
+		       (if (not (equal? (func attr) val)) (snd-display #__line__ ";attr ~A ~A" name (func attr))))
+		     (list .valuemask .depth .width .x_hotspot .y_hotspot .cpp .npixels .ncolors)
+		     (list 0 0 0 0 0 0 0 0)
+		     (list 'valuemask 'depth 'width 'x_hotspot 'y_hotspot 'cpp 'npixels 'ncolors)))
+		  )
+		(XDestroyImage i11)))
 	  
-	  (let* ((sgc (car (snd-gcs)))
-		 (grf1 (car (channel-widgets)))
-		 (dpy (XtDisplay grf1))
-		 (win (XtWindow grf1))
-		 (shl (cadr (main-widgets))))
-	    (let ((wid (XtWindowToWidget dpy win)))
-	      (if (not (equal? wid grf1))
-		  (snd-display #__line__ ";XtWindowToWidget: ~A ~A" grf1 win)))
+	  (XDestroyImage before)
+	  (XFreePixmap dpy pix)
+	  (XVisualIDFromVisual vis)
+	  (XGrabServer dpy)
+	  (XUngrabServer dpy)
+	  (XGrabPointer dpy win #t ButtonPressMask GrabModeSync GrabModeSync (list 'Window None) (list 'Cursor None) (list 'Time CurrentTime))
+	  (XUngrabPointer dpy (list 'Time CurrentTime))
+	  (XGrabKeyboard dpy win #t GrabModeSync GrabModeSync (list 'Time CurrentTime))
+	  (XUngrabKeyboard dpy (list 'Time CurrentTime))
+	  (XGrabKey dpy AnyKey AnyModifier win #t GrabModeSync GrabModeSync)
+	  (XUngrabKey dpy AnyKey AnyModifier win)
+	  (XGrabButton dpy AnyButton AnyModifier win #t ButtonPressMask GrabModeSync GrabModeSync (list 'Window None) (list 'Cursor None))
+	  (XUngrabButton dpy AnyButton AnyModifier win)
+	  (XtGrabPointer shell #t ButtonPressMask GrabModeSync GrabModeSync (list 'Window None) (list 'Cursor None) (list 'Time CurrentTime))
+	  (XtUngrabPointer shell (list 'Time CurrentTime))
+	  (XtGrabKeyboard shell #t GrabModeSync GrabModeSync (list 'Time CurrentTime))
+	  (XtUngrabKeyboard shell (list 'Time CurrentTime))
+	  (XtGrabKey shell (list 'KeyCode AnyKey) AnyModifier #t GrabModeSync GrabModeSync)
+	  (XtUngrabKey shell (list 'KeyCode AnyKey) AnyModifier)
+	  (XtGrabButton shell AnyButton AnyModifier #t ButtonPressMask GrabModeSync GrabModeSync (list 'Window None) (list 'Cursor None))
+	  (XtUngrabButton shell AnyButton AnyModifier)
+	  ))
+      
+      (let* ((sgc (car (snd-gcs)))
+	     (grf1 (car (channel-widgets)))
+	     (dpy (XtDisplay grf1))
+	     (win (XtWindow grf1))
+	     (shl (cadr (main-widgets))))
+	(let ((wid (XtWindowToWidget dpy win)))
+	  (if (not (equal? wid grf1))
+	      (snd-display #__line__ ";XtWindowToWidget: ~A ~A" grf1 win)))
 					; these are causing: X Error of failed request:  BadAccess (attempt to access private resource denied)
 					;	       (if (not (equal? (XGetTransientForHint dpy win) (list 0 #f)))
 					;		   (snd-display #__line__ ";XGetTransientForHint: ~A" (XGetTransientForHint dpy win)))
-	    (if (not (equal? (XGetErrorText dpy BadColor #f 9) (list 0 "BadColor")))
-		(snd-display #__line__ ";XGetErrorText: ~A" (XGetErrorText dpy BadColor #f 9)))
-	    (if (not (equal? (XGeometry dpy 0 "500x400" "500x400+10+10" 4 7 14 2 2) (list 12 10 10 500 400)))
-		(snd-display #__line__ ";XGeometry: ~A" (XGeometry dpy 0 "500x400" "500x400+10+10" 4 7 14 2 2)))
-	    (if (< (XEventsQueued dpy QueuedAlready) 0)
-		(snd-display #__line__ ";XEventsQueued: ~A" (XEventsQueued dpy QueuedAlready)))
+	(if (not (equal? (XGetErrorText dpy BadColor #f 9) (list 0 "BadColor")))
+	    (snd-display #__line__ ";XGetErrorText: ~A" (XGetErrorText dpy BadColor #f 9)))
+	(if (not (equal? (XGeometry dpy 0 "500x400" "500x400+10+10" 4 7 14 2 2) (list 12 10 10 500 400)))
+	    (snd-display #__line__ ";XGeometry: ~A" (XGeometry dpy 0 "500x400" "500x400+10+10" 4 7 14 2 2)))
+	(if (< (XEventsQueued dpy QueuedAlready) 0)
+	    (snd-display #__line__ ";XEventsQueued: ~A" (XEventsQueued dpy QueuedAlready)))
 					;	       (let ((coords (XTranslateCoordinates dpy (XtWindow shl) win 10 10)))
 					;		 (if (not (car coords))
 					;		     (snd-display #__line__ ";XTranslateCoordinates: ~A" coords)))
-	    (let ((coords (XtTranslateCoords shl 10 10)))
-	      (if (not (number? (car coords)))
-		  (snd-display #__line__ ";XtTranslateCoords: ~A" coords)))
-	    (if (not (XmIsVendorShell shl)) (snd-display #__line__ ";XmIsVendorShell?"))
-	    (if (XmIsPrimitive shl) (snd-display #__line__ ";XmIsPrimitive?"))
-	    (if (XmIsManager shl) (snd-display #__line__ ";XmIsManager?"))
-	    (if (XmIsIconGadget shl) (snd-display #__line__ ";XmIsIconGadget?"))
-	    (if (XmIsGadget shl) (snd-display #__line__ ";XmIsGadget?"))
-	    (if (XmIsIconHeader shl) (snd-display #__line__ ";XmIsHeader?"))
-	    (if (XmIsDropTransfer shl) (snd-display #__line__ ";XmIsDropTransfer?"))
-	    (if (XmIsDropSiteManager shl) (snd-display #__line__ ";XmIsDropSiteManager?"))
-	    (if (XmIsDragContext shl) (snd-display #__line__ ";XmIsDragContext?"))
-	    (if (XmIsDragIconObjectClass shl) (snd-display #__line__ ";XmIsDragIconObjectClass?"))
-	    (if (XmIsMessageBox shl) (snd-display #__line__ ";XmIsMessageBox?"))
-	    (if (XmIsScreen shl) (snd-display #__line__ ";XmIsScreen?"))
-	    (if (XmIsDisplay shl) (snd-display #__line__ ";XmIsDisplay?"))
+	(let ((coords (XtTranslateCoords shl 10 10)))
+	  (if (not (number? (car coords)))
+	      (snd-display #__line__ ";XtTranslateCoords: ~A" coords)))
+	(if (not (XmIsVendorShell shl)) (snd-display #__line__ ";XmIsVendorShell?"))
+	(if (XmIsPrimitive shl) (snd-display #__line__ ";XmIsPrimitive?"))
+	(if (XmIsManager shl) (snd-display #__line__ ";XmIsManager?"))
+	(if (XmIsIconGadget shl) (snd-display #__line__ ";XmIsIconGadget?"))
+	(if (XmIsGadget shl) (snd-display #__line__ ";XmIsGadget?"))
+	(if (XmIsIconHeader shl) (snd-display #__line__ ";XmIsHeader?"))
+	(if (XmIsDropTransfer shl) (snd-display #__line__ ";XmIsDropTransfer?"))
+	(if (XmIsDropSiteManager shl) (snd-display #__line__ ";XmIsDropSiteManager?"))
+	(if (XmIsDragContext shl) (snd-display #__line__ ";XmIsDragContext?"))
+	(if (XmIsDragIconObjectClass shl) (snd-display #__line__ ";XmIsDragIconObjectClass?"))
+	(if (XmIsMessageBox shl) (snd-display #__line__ ";XmIsMessageBox?"))
+	(if (XmIsScreen shl) (snd-display #__line__ ";XmIsScreen?"))
+	(if (XmIsDisplay shl) (snd-display #__line__ ";XmIsDisplay?"))
+	
+	(let ((val 0))
+	  (XSetErrorHandler (lambda (dpy e)
+			      (set! val (.error_code e))))
+	  (XGetAtomName dpy '(Atom 0))
+	  (if (not (= val 5)) (snd-display #__line__ ";XSetErrorHandler: ~A" val)))
+	
+	(XDrawImageString dpy win sgc 10 10 "hiho" 4)
+	(XDrawRectangle dpy win sgc 0 0 10 10)
+	(XDrawString dpy win sgc 10 10 "hi" 2)
+	(XDrawSegments dpy win sgc (list (XSegment 1 1 2 20) (XSegment 3 3 40 4)) 2)
+	(XDrawRectangles dpy win sgc (list (XRectangle 0 0 10 10) (XRectangle 20 20 30 30)) 2)
+	(XFillRectangles dpy win sgc (list (XRectangle 0 0 10 10) (XRectangle 20 20 30 30)) 2)
+	(XDrawRectangle dpy win sgc 10 10 10 10)
+	(XFillRectangle dpy win sgc 10 10 10 10)
+	(XDrawPoints dpy win sgc (list (XPoint 23 23) (XPoint 109 10)) 2 CoordModeOrigin)
+	(XDrawPoint dpy win sgc 10 10)
+	(XDrawLines dpy win sgc (list (XPoint 23 23) (XPoint 109 10)) 2 CoordModeOrigin)
+	(XDrawLine dpy win sgc 10 10 20 20)
+	(XDrawArcs dpy win sgc (list (XArc 10 10 4 4 0 360) (XArc 20 20 1 23 0 123)) 2)
+	(XFillArcs dpy win sgc (list (XArc 10 10 4 4 0 360) (XArc 20 20 1 23 0 123)) 2)
+	(XDrawArc dpy win sgc 0 0 10 10 45 90)
+	(XFillArc dpy win sgc 0 0 10 10 45 90)
+	(XFillPolygon dpy win sgc (list (XPoint 0 0) (XPoint 0 10) (XPoint 10 10) (XPoint 10 0) (XPoint 0 0)) 5 Convex CoordModeOrigin)
+	(XClearArea dpy win 10 10 20 20 #f)
+	(XClearWindow dpy win))
+      
+      (close-sound)
+      
+      (let ((button (XtCreateManagedWidget "button" xmPushButtonWidgetClass (cadr (main-widgets)) () 0))
+	    (val1 0))
+	(define (call1 w c i)
+	  (set! val1 (+ 1 val1)))
+	(let ((descr (XtAddCallback button XmNactivateCallback call1 #f)))
+	  (XtCallCallbacks button XmNactivateCallback #f)
+	  (if (not (= val1 1))
+	      (snd-display #__line__ ";XtCallCallbacks val1: ~A" val1))
+	  (XtRemoveCallback button XmNactivateCallback descr)
+	  (let ((calls (XtHasCallbacks button XmNactivateCallback)))
+	    (if (not (= calls XtCallbackHasNone))
+		(snd-display #__line__ ";XtRemoveCallbacks: ~A" calls))))
+	(XtUnmanageChild button)
+					;(XtDestroyWidget button)
+	)
+      
+      (let ((button (XtCreateManagedWidget "button" xmPushButtonWidgetClass (cadr (main-widgets)) () 0))
+	    (val1 0)
+	    (val2 0))
+	(define (call1 w c i)
+	  (set! val1 (+ 1 val1)))
+	(define (call2 w c i)
+	  (set! val2 (+ 1 val2)))
+	(let ((descr1 (XtAddCallback button XmNactivateCallback call1 #f))
+	      (descr2 (XtAddCallback button XmNactivateCallback call2 #f)))
+	  (XtCallCallbacks button XmNactivateCallback #f)
+	  (if (and (not (= val1 1)) (not (= val2 1)))
+	      (snd-display #__line__ ";XtCallCallbacks val12: ~A ~A" val1 val2))
+	  (XtRemoveCallbacks button XmNactivateCallback (list descr1 descr2))
+	  (let ((calls (XtHasCallbacks button XmNactivateCallback)))
+	    (if (not (= calls XtCallbackHasNone))
+		(snd-display #__line__ ";XtRemoveCallbacks: ~A" calls))))
+	(XtUnmanageChild button)
+					;(XtDestroyWidget button)
+	)
+      
+      (let ((button (XtCreateManagedWidget "button" xmPushButtonWidgetClass (cadr (main-widgets)) () 0))
+	    (val1 0)
+	    (val2 0))
+	(define (call1 w c i)
+	  (set! val1 (+ 1 val1)))
+	(define (call2 w c i)
+	  (set! val2 (+ 1 val2)))
+	(let ((descrs (XtAddCallbacks button XmNactivateCallback (list (list call1 #f) (list call2 #f)))))
+	  (XtCallCallbacks button XmNactivateCallback #f)
+	  (if (and (not (= val1 1)) (not (= val2 1)))
+	      (snd-display #__line__ ";XtCallCallbacks add val12: ~A ~A" val1 val2))
+	  (XtRemoveCallbacks button XmNactivateCallback descrs)
+	  (let ((calls (XtHasCallbacks button XmNactivateCallback)))
+	    (if (not (= calls XtCallbackHasNone))
+		(snd-display #__line__ ";XtRemoveCallbacks (add): ~A" calls))))
+	(XtUnmanageChild button)
+					;(XtDestroyWidget button)
+	)
+      
+      (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
+	     (browsed 0)
+	     (lst (XtCreateManagedWidget "lst" xmListWidgetClass frm
+					 (list XmNleftAttachment      XmATTACH_FORM
+					       XmNrightAttachment     XmATTACH_FORM
+					       XmNtopAttachment       XmATTACH_FORM
+					       XmNbottomAttachment    XmATTACH_FORM
+					       XmNautomaticSelection   XmNO_AUTO_SELECT
+					       XmNdoubleClickInterval  100
+					       XmNitemCount            3
+					       XmNitems                (list (XmStringCreate "one" XmFONTLIST_DEFAULT_TAG)
+									     (XmStringCreate "two" XmFONTLIST_DEFAULT_TAG)
+									     (XmStringCreate "three" XmFONTLIST_DEFAULT_TAG))
+					       XmNlistMarginHeight     4
+					       XmNlistMarginWidth      1
+					       XmNlistSizePolicy       XmVARIABLE
+					       XmNlistSpacing          2
+					       XmNmatchBehavior        XmQUICK_NAVIGATE
+					       XmNprimaryOwnership     XmOWN_NEVER
+					       XmNscrollBarDisplayPolicy XmAS_NEEDED
+					       XmNselectColor          *basic-color*
+					       XmNselectedPositions    (list 0 1)
+					       XmNselectionMode        XmNORMAL_MODE
+					       XmNselectionPolicy      XmBROWSE_SELECT))))
+	(XtAddCallback lst XmNbrowseSelectionCallback (lambda (w c i) (set! browsed 123)))
+	(let ((vals (XtVaGetValues lst
+				   (list XmNautomaticSelection 0 XmNdoubleClickInterval 0 XmNitemCount 0 XmNitems 0 XmNlistMarginHeight 0
+					 XmNlistMarginWidth 0 XmNlistSizePolicy 0 XmNlistSpacing 0 XmNmatchBehavior 0
+					 XmNprimaryOwnership 0  XmNscrollBarDisplayPolicy 0 XmNselectColor 0 XmNselectionMode 0
+					 XmNselectionPolicy 0 XmNhorizontalScrollBar 0 XmNselectedItemCount 0 XmNtopItemPosition 0))))
+	  (if (not (= (vals 1) XmNO_AUTO_SELECT)) (snd-display #__line__ ";XmNautomaticSelection: ~A" (vals 1)))
+	  (if (not (= (vals 3) 100)) (snd-display #__line__ ";XmNdoubleClickInterval: ~A" (vals 3)))
+	  (if (not (= (vals 5) 3)) (snd-display #__line__ ";XmNitemCount: ~A" (vals 5)))
+	  (if (or (null? (vals 7)) (not (XmString? (car (vals 7))))) (snd-display #__line__ ";XmNitems: ~A" (vals 7)))
+	  (if (not (= (vals 9) 4)) (snd-display #__line__ ";XmNlistMarginHeight: ~A" (vals 9)))
+	  (if (not (= (vals 11) 1)) (snd-display #__line__ ";XmNlistMarginWidth: ~A" (vals 11)))
+	  (if (not (= (vals 13) XmVARIABLE)) (snd-display #__line__ ";XmNlistSizePolicy: ~A" (vals 13)))
+	  (if (not (= (vals 15) 2)) (snd-display #__line__ ";XmNlistSpacing: ~A" (vals 15)))
+	  (if (not (= (vals 17) XmQUICK_NAVIGATE)) (snd-display #__line__ ";XmNmatchBehavior: ~A" (vals 17)))
+	  (if (not (= (vals 19) XmOWN_NEVER)) (snd-display #__line__ ";XmNprimaryOwnership : ~A" (vals 19)))
+	  (if (not (= (vals 21) XmAS_NEEDED)) (snd-display #__line__ ";XmNscrollBarDisplayPolicy: ~A" (vals 21)))
+	  (if (not (Pixel? (vals 23))) (snd-display #__line__ ";XmNselectColor: ~A" (vals 23)))
+	  (if (not (= (vals 25) XmNORMAL_MODE)) (snd-display #__line__ ";XmNselectionMode: ~A" (vals 25)))
+	  (if (not (= (vals 27) XmBROWSE_SELECT)) (snd-display #__line__ ";XmNselectionPolicy: ~A" (vals 27)))
+	  (if (vals 29) (snd-display #__line__ ";XmNhorizontalScrollBar: ~A" (vals 29)))
+	  (if (not (= (vals 31) 0)) (snd-display #__line__ ";XmNselectedItemCount : ~A" (vals 31)))
+	  (if (not (= (vals 33) 1)) (snd-display #__line__ ";XmNtopItemPosition: ~A" (vals 33)))
+	  
+	  (let ((tag (catch #t
+		       (lambda ()
+			 (XmListAddItem frm (XmStringCreate "four" XmFONTLIST_DEFAULT_TAG) 0))
+		       (lambda args (car args)))))
+	    (if (not (eq? tag 'wrong-type-arg))
+		(snd-display #__line__ ";list type check: ~A" tag)))
+	  
+	  (XmListAddItem lst (XmStringCreate "four" XmFONTLIST_DEFAULT_TAG) 0) ; 0 -> last position
+	  (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
+	  (if (not (= (vals 1) 4)) (snd-display #__line__ ";XmAddItem len: ~A" (vals 1)))
+	  (XmListAddItems lst (list (XmStringCreateLocalized "five") (XmStringCreateLocalized "six")) 2 0)
+	  (let ((tag (catch #t
+		       (lambda () (XmListAddItems lst (list (XmStringCreateLocalized "seven") 123) 2 0))
+		       (lambda args (car args)))))
+	    (if (not (eq? tag 'wrong-type-arg))
+		(snd-display #__line__ ";xstrings->list add: ~A" tag)))
+	  (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
+	  (if (not (= (vals 1) 6)) (snd-display #__line__ ";XmAddItems len: ~A" (vals 1)))
+	  
+	  (XmListDeletePos lst 1)
+	  (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
+	  (if (not (= (vals 1) 5)) (snd-display #__line__ ";XmListDeletePos len: ~A" (vals 1)))
+	  (XmListDeletePositions lst (list 2 4))
+	  (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
+	  (if (not (= (vals 1) 3)) (snd-display #__line__ ";XmListDeletePositions len: ~A" (vals 1)))
+	  
+	  (XmListAddItemUnselected lst (XmStringCreate "seven" XmFONTLIST_DEFAULT_TAG) 0) ; 0 -> last position
+	  (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
+	  (if (not (= (vals 1) 4)) (snd-display #__line__ ";XmListAddItemUnselected len: ~A" (vals 1)))
+	  (XmListAddItemsUnselected lst (list (XmStringCreateLocalized "eight") (XmStringCreateLocalized "nine")) 2 0)
+	  (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
+	  (if (not (= (vals 1) 6)) (snd-display #__line__ ";XmListAddItemsUnselected len: ~A" (vals 1)))
+	  
+	  (XmListDeleteAllItems lst)
+	  (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
+	  (if (not (= (vals 1) 0)) (snd-display #__line__ ";XmListDeleteAllItems len: ~A" (vals 1)))
+	  (if (pair? (vals 3))
+	      (snd-display #__line__ ";deleted all items: ~A" (vals 3)))
+	  
+	  (let ((item1 (XmStringCreate "one" XmFONTLIST_DEFAULT_TAG))
+		(item2 (XmStringCreate "two" XmFONTLIST_DEFAULT_TAG))
+		(item3 (XmStringCreate "three" XmFONTLIST_DEFAULT_TAG))
+		(item4 (XmStringCreate "four" XmFONTLIST_DEFAULT_TAG))
+		(item5 (XmStringCreate "five" XmFONTLIST_DEFAULT_TAG)))
+	    (XtVaSetValues lst 
+			   (list XmNitemCount 5
+				 XmNitems (list item1 item2 item3 item4 item5))) 
+	    (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
+	    (if (not (= (vals 1) 5)) (snd-display #__line__ ";Xt set items len: ~A" (vals 1)))
 	    
-	    (let ((val 0))
-	      (XSetErrorHandler (lambda (dpy e)
-				  (set! val (.error_code e))))
-	      (XGetAtomName dpy '(Atom 0))
-	      (if (not (= val 5)) (snd-display #__line__ ";XSetErrorHandler: ~A" val)))
+	    (XmListSelectItem lst item3 #t)
+	    (if (not (= browsed 123)) (snd-display #__line__ ";XmListSelectItem callback: ~A" browsed))
+	    (if (XmListPosSelected lst 1) (snd-display #__line__ ";XmList selected pos 1?"))
+	    (if (not (XmListPosSelected lst 3)) (snd-display #__line__ ";XmList didn't select pos 3?"))
+	    (set! vals (XtVaGetValues lst (list XmNselectedItemCount 0 XmNselectedItems 0)))
+	    (if (not (= (vals 1) 1)) (snd-display #__line__ ";selected count: ~A" (vals 1)))
+	    (set! vals (XmListGetSelectedPos lst))
+	    (if (not (= (length vals) 1)) (snd-display #__line__ ";XmListGetSelectedPos: ~A" vals))
+	    (if (not (= (car vals) 3)) (snd-display #__line__ ";XmListGetSelectedPos: ~A" vals))
+	    (set! browsed 0)
+	    (XmListSelectPos lst 1 #f)
+	    (if (not (= browsed 0)) (snd-display #__line__ ";XmListSelectPos callback: ~A" browsed))
+	    (if (not (XmListPosSelected lst 1)) (snd-display #__line__ ";XmList select pos?"))
+	    (if (not (= (XmListItemPos lst item3) 3)) (snd-display #__line__ ";XmListItemPos: ~A" (XmListItemPos lst item3)))
+	    (if (not (= (car (XmListGetMatchPos lst item3)) 3)) (snd-display #__line__ ";XmListGetMatchPos: ~A" (XmListGetMatchPos lst item3)))
+	    (if (not (XmListItemExists lst item3)) (snd-display #__line__ ";XmListItemExists?"))
 	    
-	    (XDrawImageString dpy win sgc 10 10 "hiho" 4)
-	    (XDrawRectangle dpy win sgc 0 0 10 10)
-	    (XDrawString dpy win sgc 10 10 "hi" 2)
-	    (XDrawSegments dpy win sgc (list (XSegment 1 1 2 20) (XSegment 3 3 40 4)) 2)
-	    (XDrawRectangles dpy win sgc (list (XRectangle 0 0 10 10) (XRectangle 20 20 30 30)) 2)
-	    (XFillRectangles dpy win sgc (list (XRectangle 0 0 10 10) (XRectangle 20 20 30 30)) 2)
-	    (XDrawRectangle dpy win sgc 10 10 10 10)
-	    (XFillRectangle dpy win sgc 10 10 10 10)
-	    (XDrawPoints dpy win sgc (list (XPoint 23 23) (XPoint 109 10)) 2 CoordModeOrigin)
-	    (XDrawPoint dpy win sgc 10 10)
-	    (XDrawLines dpy win sgc (list (XPoint 23 23) (XPoint 109 10)) 2 CoordModeOrigin)
-	    (XDrawLine dpy win sgc 10 10 20 20)
-	    (XDrawArcs dpy win sgc (list (XArc 10 10 4 4 0 360) (XArc 20 20 1 23 0 123)) 2)
-	    (XFillArcs dpy win sgc (list (XArc 10 10 4 4 0 360) (XArc 20 20 1 23 0 123)) 2)
-	    (XDrawArc dpy win sgc 0 0 10 10 45 90)
-	    (XFillArc dpy win sgc 0 0 10 10 45 90)
-	    (XFillPolygon dpy win sgc (list (XPoint 0 0) (XPoint 0 10) (XPoint 10 10) (XPoint 10 0) (XPoint 0 0)) 5 Convex CoordModeOrigin)
-	    (XClearArea dpy win 10 10 20 20 #f)
-	    (XClearWindow dpy win))
-	  
-	  (close-sound)
-	  
-	  (let ((button (XtCreateManagedWidget "button" xmPushButtonWidgetClass (cadr (main-widgets)) () 0))
-		(val1 0))
-	    (define (call1 w c i)
-	      (set! val1 (+ 1 val1)))
-	    (let ((descr (XtAddCallback button XmNactivateCallback call1 #f)))
-	      (XtCallCallbacks button XmNactivateCallback #f)
-	      (if (not (= val1 1))
-		  (snd-display #__line__ ";XtCallCallbacks val1: ~A" val1))
-	      (XtRemoveCallback button XmNactivateCallback descr)
-	      (let ((calls (XtHasCallbacks button XmNactivateCallback)))
-		(if (not (= calls XtCallbackHasNone))
-		    (snd-display #__line__ ";XtRemoveCallbacks: ~A" calls))))
-	    (XtUnmanageChild button)
-					;(XtDestroyWidget button)
-	    )
-	  
-	  (let ((button (XtCreateManagedWidget "button" xmPushButtonWidgetClass (cadr (main-widgets)) () 0))
-		(val1 0)
-		(val2 0))
-	    (define (call1 w c i)
-	      (set! val1 (+ 1 val1)))
-	    (define (call2 w c i)
-	      (set! val2 (+ 1 val2)))
-	    (let ((descr1 (XtAddCallback button XmNactivateCallback call1 #f))
-		  (descr2 (XtAddCallback button XmNactivateCallback call2 #f)))
-	      (XtCallCallbacks button XmNactivateCallback #f)
-	      (if (and (not (= val1 1)) (not (= val2 1)))
-		  (snd-display #__line__ ";XtCallCallbacks val12: ~A ~A" val1 val2))
-	      (XtRemoveCallbacks button XmNactivateCallback (list descr1 descr2))
-	      (let ((calls (XtHasCallbacks button XmNactivateCallback)))
-		(if (not (= calls XtCallbackHasNone))
-		    (snd-display #__line__ ";XtRemoveCallbacks: ~A" calls))))
-	    (XtUnmanageChild button)
-					;(XtDestroyWidget button)
-	    )
-	  
-	  (let ((button (XtCreateManagedWidget "button" xmPushButtonWidgetClass (cadr (main-widgets)) () 0))
-		(val1 0)
-		(val2 0))
-	    (define (call1 w c i)
-	      (set! val1 (+ 1 val1)))
-	    (define (call2 w c i)
-	      (set! val2 (+ 1 val2)))
-	    (let ((descrs (XtAddCallbacks button XmNactivateCallback (list (list call1 #f) (list call2 #f)))))
-	      (XtCallCallbacks button XmNactivateCallback #f)
-	      (if (and (not (= val1 1)) (not (= val2 1)))
-		  (snd-display #__line__ ";XtCallCallbacks add val12: ~A ~A" val1 val2))
-	      (XtRemoveCallbacks button XmNactivateCallback descrs)
-	      (let ((calls (XtHasCallbacks button XmNactivateCallback)))
-		(if (not (= calls XtCallbackHasNone))
-		    (snd-display #__line__ ";XtRemoveCallbacks (add): ~A" calls))))
-	    (XtUnmanageChild button)
-					;(XtDestroyWidget button)
-	    )
-	  
-	  (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
-		 (browsed 0)
-		 (lst (XtCreateManagedWidget "lst" xmListWidgetClass frm
-					     (list XmNleftAttachment      XmATTACH_FORM
-						   XmNrightAttachment     XmATTACH_FORM
-						   XmNtopAttachment       XmATTACH_FORM
-						   XmNbottomAttachment    XmATTACH_FORM
-						   XmNautomaticSelection   XmNO_AUTO_SELECT
-						   XmNdoubleClickInterval  100
-						   XmNitemCount            3
-						   XmNitems                (list (XmStringCreate "one" XmFONTLIST_DEFAULT_TAG)
-										 (XmStringCreate "two" XmFONTLIST_DEFAULT_TAG)
-										 (XmStringCreate "three" XmFONTLIST_DEFAULT_TAG))
-						   XmNlistMarginHeight     4
-						   XmNlistMarginWidth      1
-						   XmNlistSizePolicy       XmVARIABLE
-						   XmNlistSpacing          2
-						   XmNmatchBehavior        XmQUICK_NAVIGATE
-						   XmNprimaryOwnership     XmOWN_NEVER
-						   XmNscrollBarDisplayPolicy XmAS_NEEDED
-						   XmNselectColor          *basic-color*
-						   XmNselectedPositions    (list 0 1)
-						   XmNselectionMode        XmNORMAL_MODE
-						   XmNselectionPolicy      XmBROWSE_SELECT))))
-	    (XtAddCallback lst XmNbrowseSelectionCallback (lambda (w c i) (set! browsed 123)))
-	    (let ((vals (XtVaGetValues lst
-				       (list XmNautomaticSelection 0 XmNdoubleClickInterval 0 XmNitemCount 0 XmNitems 0 XmNlistMarginHeight 0
-					     XmNlistMarginWidth 0 XmNlistSizePolicy 0 XmNlistSpacing 0 XmNmatchBehavior 0
-					     XmNprimaryOwnership 0  XmNscrollBarDisplayPolicy 0 XmNselectColor 0 XmNselectionMode 0
-					     XmNselectionPolicy 0 XmNhorizontalScrollBar 0 XmNselectedItemCount 0 XmNtopItemPosition 0))))
-	      (if (not (= (vals 1) XmNO_AUTO_SELECT)) (snd-display #__line__ ";XmNautomaticSelection: ~A" (vals 1)))
-	      (if (not (= (vals 3) 100)) (snd-display #__line__ ";XmNdoubleClickInterval: ~A" (vals 3)))
-	      (if (not (= (vals 5) 3)) (snd-display #__line__ ";XmNitemCount: ~A" (vals 5)))
-	      (if (or (null? (vals 7)) (not (XmString? (car (vals 7))))) (snd-display #__line__ ";XmNitems: ~A" (vals 7)))
-	      (if (not (= (vals 9) 4)) (snd-display #__line__ ";XmNlistMarginHeight: ~A" (vals 9)))
-	      (if (not (= (vals 11) 1)) (snd-display #__line__ ";XmNlistMarginWidth: ~A" (vals 11)))
-	      (if (not (= (vals 13) XmVARIABLE)) (snd-display #__line__ ";XmNlistSizePolicy: ~A" (vals 13)))
-	      (if (not (= (vals 15) 2)) (snd-display #__line__ ";XmNlistSpacing: ~A" (vals 15)))
-	      (if (not (= (vals 17) XmQUICK_NAVIGATE)) (snd-display #__line__ ";XmNmatchBehavior: ~A" (vals 17)))
-	      (if (not (= (vals 19) XmOWN_NEVER)) (snd-display #__line__ ";XmNprimaryOwnership : ~A" (vals 19)))
-	      (if (not (= (vals 21) XmAS_NEEDED)) (snd-display #__line__ ";XmNscrollBarDisplayPolicy: ~A" (vals 21)))
-	      (if (not (Pixel? (vals 23))) (snd-display #__line__ ";XmNselectColor: ~A" (vals 23)))
-	      (if (not (= (vals 25) XmNORMAL_MODE)) (snd-display #__line__ ";XmNselectionMode: ~A" (vals 25)))
-	      (if (not (= (vals 27) XmBROWSE_SELECT)) (snd-display #__line__ ";XmNselectionPolicy: ~A" (vals 27)))
-	      (if (vals 29) (snd-display #__line__ ";XmNhorizontalScrollBar: ~A" (vals 29)))
-	      (if (not (= (vals 31) 0)) (snd-display #__line__ ";XmNselectedItemCount : ~A" (vals 31)))
-	      (if (not (= (vals 33) 1)) (snd-display #__line__ ";XmNtopItemPosition: ~A" (vals 33)))
-	      
-	      (let ((tag (catch #t
-				(lambda ()
-				  (XmListAddItem frm (XmStringCreate "four" XmFONTLIST_DEFAULT_TAG) 0))
-				(lambda args (car args)))))
-		(if (not (eq? tag 'wrong-type-arg))
-		    (snd-display #__line__ ";list type check: ~A" tag)))
-	      
-	      (XmListAddItem lst (XmStringCreate "four" XmFONTLIST_DEFAULT_TAG) 0) ; 0 -> last position
-	      (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
-	      (if (not (= (vals 1) 4)) (snd-display #__line__ ";XmAddItem len: ~A" (vals 1)))
-	      (XmListAddItems lst (list (XmStringCreateLocalized "five") (XmStringCreateLocalized "six")) 2 0)
-	      (let ((tag (catch #t
-				(lambda () (XmListAddItems lst (list (XmStringCreateLocalized "seven") 123) 2 0))
-				(lambda args (car args)))))
-		(if (not (eq? tag 'wrong-type-arg))
-		    (snd-display #__line__ ";xstrings->list add: ~A" tag)))
-	      (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
-	      (if (not (= (vals 1) 6)) (snd-display #__line__ ";XmAddItems len: ~A" (vals 1)))
-	      
-	      (XmListDeletePos lst 1)
-	      (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
-	      (if (not (= (vals 1) 5)) (snd-display #__line__ ";XmListDeletePos len: ~A" (vals 1)))
-	      (XmListDeletePositions lst (list 2 4))
-	      (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
-	      (if (not (= (vals 1) 3)) (snd-display #__line__ ";XmListDeletePositions len: ~A" (vals 1)))
-	      
-	      (XmListAddItemUnselected lst (XmStringCreate "seven" XmFONTLIST_DEFAULT_TAG) 0) ; 0 -> last position
-	      (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
-	      (if (not (= (vals 1) 4)) (snd-display #__line__ ";XmListAddItemUnselected len: ~A" (vals 1)))
-	      (XmListAddItemsUnselected lst (list (XmStringCreateLocalized "eight") (XmStringCreateLocalized "nine")) 2 0)
-	      (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
-	      (if (not (= (vals 1) 6)) (snd-display #__line__ ";XmListAddItemsUnselected len: ~A" (vals 1)))
-	      
-	      (XmListDeleteAllItems lst)
-	      (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
-	      (if (not (= (vals 1) 0)) (snd-display #__line__ ";XmListDeleteAllItems len: ~A" (vals 1)))
-	      (if (pair? (vals 3))
-		  (snd-display #__line__ ";deleted all items: ~A" (vals 3)))
-	      
-	      (let ((item1 (XmStringCreate "one" XmFONTLIST_DEFAULT_TAG))
-		    (item2 (XmStringCreate "two" XmFONTLIST_DEFAULT_TAG))
-		    (item3 (XmStringCreate "three" XmFONTLIST_DEFAULT_TAG))
-		    (item4 (XmStringCreate "four" XmFONTLIST_DEFAULT_TAG))
-		    (item5 (XmStringCreate "five" XmFONTLIST_DEFAULT_TAG)))
-		(XtVaSetValues lst 
-			       (list XmNitemCount 5
-				     XmNitems (list item1 item2 item3 item4 item5))) 
-		(set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
-		(if (not (= (vals 1) 5)) (snd-display #__line__ ";Xt set items len: ~A" (vals 1)))
-		
-		(XmListSelectItem lst item3 #t)
-		(if (not (= browsed 123)) (snd-display #__line__ ";XmListSelectItem callback: ~A" browsed))
-		(if (XmListPosSelected lst 1) (snd-display #__line__ ";XmList selected pos 1?"))
-		(if (not (XmListPosSelected lst 3)) (snd-display #__line__ ";XmList didn't select pos 3?"))
-		(set! vals (XtVaGetValues lst (list XmNselectedItemCount 0 XmNselectedItems 0)))
-		(if (not (= (vals 1) 1)) (snd-display #__line__ ";selected count: ~A" (vals 1)))
-		(set! vals (XmListGetSelectedPos lst))
-		(if (not (= (length vals) 1)) (snd-display #__line__ ";XmListGetSelectedPos: ~A" vals))
-		(if (not (= (car vals) 3)) (snd-display #__line__ ";XmListGetSelectedPos: ~A" vals))
-		(set! browsed 0)
-		(XmListSelectPos lst 1 #f)
-		(if (not (= browsed 0)) (snd-display #__line__ ";XmListSelectPos callback: ~A" browsed))
-		(if (not (XmListPosSelected lst 1)) (snd-display #__line__ ";XmList select pos?"))
-		(if (not (= (XmListItemPos lst item3) 3)) (snd-display #__line__ ";XmListItemPos: ~A" (XmListItemPos lst item3)))
-		(if (not (= (car (XmListGetMatchPos lst item3)) 3)) (snd-display #__line__ ";XmListGetMatchPos: ~A" (XmListGetMatchPos lst item3)))
-		(if (not (XmListItemExists lst item3)) (snd-display #__line__ ";XmListItemExists?"))
-		
-		(if (not (= (XmListYToPos lst 40) 2)) (snd-display #__line__ ";XmListYToPos: ~A" (XmListYToPos lst 40)))
-		(let ((box (XmListPosToBounds lst 2)))
-		  (if (and (not (= (cadr box) 3))
-			   (not (= (cadr box) 2)))
-		      (snd-display #__line__ ";XmListPosToBounds: ~A" box)))
-		(XmListDeselectPos lst 1)
-		(if (XmListPosSelected lst 1) (snd-display #__line__ ";XmList deselected pos?"))
-		(XmListSelectItem lst item3 #t)
-		(XmListDeselectAllItems lst)
-		(if (XmListPosSelected lst 3) (snd-display #__line__ ";XmList deselect all pos?"))
-		(XmListSelectItem lst item3 #f)
-		(XmListDeselectItem lst item3)
-		(if (XmListPosSelected lst 3) (snd-display #__line__ ";XmList deselect item?"))
-		
-		(XmListDeleteItem lst item2)
-		(set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
-		(if (not (= (vals 1) 4)) (snd-display #__line__ ";XmDeleteItem len: ~A" (vals 1)))
-		(XmListDeleteItems lst (list item1 item4))
-		(set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
-		(if (not (= (vals 1) 2)) (snd-display #__line__ ";XmDeleteItems len: ~A" (vals 1)))
-		(XmListDeleteAllItems lst)
-		(XtVaSetValues lst 
-			       (list XmNitemCount 5
-				     XmNitems (list item1 item2 item3 item4 item5))) 
-		
-		(XtUnmanageChild frm))))
-	  
-	  (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
-		 (current-time (list 'Time CurrentTime))
-		 (calls (make-vector 10 "none"))
-		 (txt (XtCreateManagedWidget "text" xmTextWidgetClass frm
-					     (list XmNeditable #t
-						   XmNleftAttachment      XmATTACH_FORM
-						   XmNrightAttachment     XmATTACH_FORM
-						   XmNtopAttachment       XmATTACH_FORM
-						   XmNbottomAttachment    XmATTACH_NONE
-						   XmNdestinationCallback 
-						   (list (lambda (w c i) 
-							   (set! (calls c) "dest")
-							   (if (< (.location_data i) 0) (snd-display #__line__ ";location_data: ~A" (.location_data i))))
-							 1)
-						   XmNactivateCallback (list (lambda (w c i) (set! (calls c) "act")) 2)
-						   XmNfocusCallback (list (lambda (w c i) (set! (calls c) "focus")) 3)
-						   XmNlosingFocusCallback (list (lambda (w c i) (set! (calls c) "losingfocus")) 4)
-						   XmNgainPrimaryCallback (list (lambda (w c i) (set! (calls c) "gain")) 5)
-						   XmNlosePrimaryCallback (list (lambda (w c i) (set! (calls c) "lose")) 6)
-						   XmNmodifyVerifyCallback 
-						   (list (lambda (w c i) 
-							   (set! (calls c) "modify")
-							   (if (< (.currInsert i) 0) (snd-display #__line__ ";currInsert: ~A" (.currInsert i)))
-							   (if (< (.newInsert i) 0) (snd-display #__line__ ";newInsert: ~A" (.newInsert i)))
-							   (if (string? (.doit i)) (snd-display #__line__ ";doit: ~A" (.doit i)))
-							   (if (< (.startPos i) 0) (snd-display #__line__ ";startPos: ~A" (.startPos i)))
-							   (if (< (.endPos i) 0) (snd-display #__line__ ";endPos: ~A" (.endPos i))))
-							 7)
-						   XmNmotionVerifyCallback (list (lambda (w c i) (set! (calls c) "motion")) 8)
-						   XmNvalueChangedCallback (list (lambda (w c i) (set! (calls c) "value")) 9)))))
-	    (letrec ((transfer-proc
-		      (lambda (w c info)
-			(let* ((dpy (XtDisplay w))
-			       (TARGETS (XmInternAtom dpy "TARGETS" #f))
-			       (CB_TARGETS (XmInternAtom dpy "_MOTIF_CLIPBOARD_TARGETS" #f)))
-			  (if (equal? (.target info) XA_STRING)
-			      (begin
+	    (if (not (= (XmListYToPos lst 40) 2)) (snd-display #__line__ ";XmListYToPos: ~A" (XmListYToPos lst 40)))
+	    (let ((box (XmListPosToBounds lst 2)))
+	      (if (and (not (= (cadr box) 3))
+		       (not (= (cadr box) 2)))
+		  (snd-display #__line__ ";XmListPosToBounds: ~A" box)))
+	    (XmListDeselectPos lst 1)
+	    (if (XmListPosSelected lst 1) (snd-display #__line__ ";XmList deselected pos?"))
+	    (XmListSelectItem lst item3 #t)
+	    (XmListDeselectAllItems lst)
+	    (if (XmListPosSelected lst 3) (snd-display #__line__ ";XmList deselect all pos?"))
+	    (XmListSelectItem lst item3 #f)
+	    (XmListDeselectItem lst item3)
+	    (if (XmListPosSelected lst 3) (snd-display #__line__ ";XmList deselect item?"))
+	    
+	    (XmListDeleteItem lst item2)
+	    (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
+	    (if (not (= (vals 1) 4)) (snd-display #__line__ ";XmDeleteItem len: ~A" (vals 1)))
+	    (XmListDeleteItems lst (list item1 item4))
+	    (set! vals (XtGetValues lst (list XmNitemCount 0 XmNitems 0)))
+	    (if (not (= (vals 1) 2)) (snd-display #__line__ ";XmDeleteItems len: ~A" (vals 1)))
+	    (XmListDeleteAllItems lst)
+	    (XtVaSetValues lst 
+			   (list XmNitemCount 5
+				 XmNitems (list item1 item2 item3 item4 item5))) 
+	    
+	    (XtUnmanageChild frm))))
+      
+      (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
+	     (current-time (list 'Time CurrentTime))
+	     (calls (make-vector 10 "none"))
+	     (txt (XtCreateManagedWidget "text" xmTextWidgetClass frm
+					 (list XmNeditable #t
+					       XmNleftAttachment      XmATTACH_FORM
+					       XmNrightAttachment     XmATTACH_FORM
+					       XmNtopAttachment       XmATTACH_FORM
+					       XmNbottomAttachment    XmATTACH_NONE
+					       XmNdestinationCallback 
+					       (list (lambda (w c i) 
+						       (set! (calls c) "dest")
+						       (if (< (.location_data i) 0) (snd-display #__line__ ";location_data: ~A" (.location_data i))))
+						     1)
+					       XmNactivateCallback (list (lambda (w c i) (set! (calls c) "act")) 2)
+					       XmNfocusCallback (list (lambda (w c i) (set! (calls c) "focus")) 3)
+					       XmNlosingFocusCallback (list (lambda (w c i) (set! (calls c) "losingfocus")) 4)
+					       XmNgainPrimaryCallback (list (lambda (w c i) (set! (calls c) "gain")) 5)
+					       XmNlosePrimaryCallback (list (lambda (w c i) (set! (calls c) "lose")) 6)
+					       XmNmodifyVerifyCallback 
+					       (list (lambda (w c i) 
+						       (set! (calls c) "modify")
+						       (if (< (.currInsert i) 0) (snd-display #__line__ ";currInsert: ~A" (.currInsert i)))
+						       (if (< (.newInsert i) 0) (snd-display #__line__ ";newInsert: ~A" (.newInsert i)))
+						       (if (string? (.doit i)) (snd-display #__line__ ";doit: ~A" (.doit i)))
+						       (if (< (.startPos i) 0) (snd-display #__line__ ";startPos: ~A" (.startPos i)))
+						       (if (< (.endPos i) 0) (snd-display #__line__ ";endPos: ~A" (.endPos i))))
+						     7)
+					       XmNmotionVerifyCallback (list (lambda (w c i) (set! (calls c) "motion")) 8)
+					       XmNvalueChangedCallback (list (lambda (w c i) (set! (calls c) "value")) 9)))))
+	(letrec ((transfer-proc
+		  (lambda (w c info)
+		    (let* ((dpy (XtDisplay w))
+			   (TARGETS (XmInternAtom dpy "TARGETS" #f))
+			   (CB_TARGETS (XmInternAtom dpy "_MOTIF_CLIPBOARD_TARGETS" #f)))
+		      (if (equal? (.target info) XA_STRING)
+			  (begin
 					;(XmTextInsert w (XmTextGetInsertionPosition w) (->string (.value info)))
 					;I think the .value field here is an XmString
-				(XmTransferDone (.transfer_id info) XmTRANSFER_DONE_SUCCEED))
-			      (if (and (or (equal? (.target info) TARGETS)
-					   (equal? (.target info) CB_TARGETS))
-				       (equal? (.type info) XA_ATOM))
-				  (let ((targets (->Atoms (.value info) (.length info)))
-					(happy #f))
-				    (for-each
-				     (lambda (targ)
-				       (if (equal? targ XA_STRING)
-					   (set! happy #t)))
-				     targets)
-				    (if happy
-					(XmTransferValue (.transfer_id info) 
-							 XA_STRING
-							 transfer-proc
-							 #f
-							 (XtLastTimestampProcessed dpy)))))))))
-		     (txtf (XtVaCreateManagedWidget "textfield" xmTextFieldWidgetClass frm
-						    (list XmNeditable #t
-							  XmNleftAttachment      XmATTACH_FORM
-							  XmNrightAttachment     XmATTACH_FORM
-							  XmNtopAttachment       XmATTACH_WIDGET
-							  XmNtopWidget           txt
-							  XmNbottomAttachment    XmATTACH_FORM))))
-	      
-	      (let ((vals (XtVaGetValues txt (list XmNrenderTable 0 XmNselectionArray 0))))
-		(if (not (XmRenderTable? (vals 1))) (snd-display #__line__ ";XmNrenderTable: ~A" (vals 1)))
-		(if (not (pair? (vals 3))) (snd-display #__line__ ";XmNselectionArray: ~A" (vals 3))))
-	      (if (not (XmTextGetEditable txt)) (snd-display #__line__ ";XmTextGetEditable?"))
-	      (if (not (XmTextFieldGetEditable txtf)) (snd-display #__line__ ";XmTextFieldGetEditable?"))
-	      (XmTextSetEditable txt #f)
-	      (XmTextFieldSetEditable txtf #f)
-	      (if (XmTextGetEditable txt) (snd-display #__line__ ";XmTextSetEditable?"))
-	      (if (XmTextFieldGetEditable txtf) (snd-display #__line__ ";XmTextFieldSetEditable?"))
-	      (XmTextSetEditable txt #t)
-	      (XmTextFieldSetEditable txtf #t)
-	      (XmTextSetString txt "0123456789")
-	      (XmTextFieldSetString txtf "0123456789")
-	      (XmTextFieldCopyLink txtf (list 'Time CurrentTime))
-	      (let ((val (XmTextGetString txt))
-		    (valf (XmTextFieldGetString txtf))
-		    (val1 (cadr (XtVaGetValues txt (list XmNvalue 0))))
-		    (val1f (cadr (XtVaGetValues txtf (list XmNvalue 0)))))
-		(if (not (string=? val "0123456789")) (snd-display #__line__ ";XmTextSetString: ~A" val))
-		(if (not (string=? valf "0123456789")) (snd-display #__line__ ";XmTextFieldSetString: ~A" valf))
-		(if (not (string=? val1 "0123456789")) (snd-display #__line__ ";text value: ~A" val1))
-		(if (not (string=? val1f "0123456789")) (snd-display #__line__ ";text field value: ~A" val)))
-	      (let ((untext (XtCreateWidget "untext" xmTextWidgetClass frm ()))
-		    (source (XmTextGetSource txt)))
-		(XmTextSetSource untext source 0 3)
-		(if (not (XmTextSource? source))
-		    (snd-display #__line__ ";XmTextSource? ~A" source))
-		(if (not (equal? (XmTextGetSource untext) source))
-		    (snd-display #__line__ ";XmTextSetSource: ~A ~A" source (XmTextGetSource untext)))
-		(if (XtIsSubclass untext xmFormWidgetClass)
-		    (snd-display #__line__ ";XtIsSubclass thinks untext is a form?"))
-		(if (not (XtIsSubclass untext coreWidgetClass))
-		    (snd-display #__line__ ";XtIsSubclass thinks untext is not a core widget"))
-		(XmTextCopyLink untext (list 'Time CurrentTime))
-		(XmTextPasteLink untext))
-	      (let ((val (XmTextGetSubstring txt 2 3))
-		    (valf (XmTextFieldGetSubstring txtf 2 3)))
-		(if (or (not (string? val)) (not (string=? val "234"))) (snd-display #__line__ ";XmTextGetSubstring: ~A" val))
-		(if (or (not (string? valf)) (not (string=? valf "234"))) (snd-display #__line__ ";XmTextFieldGetSubstring: ~A" valf)))
-	      (XmTextSetSelection txt 2 5 current-time)
-	      (let ((val (XmTextGetSelection txt)))
-		(if (or (not (string? val)) (not (string=? val "234"))) (snd-display #__line__ ";XmTextGetSelection: ~A" val)))
-	      (XmTextClearSelection txt current-time)
-	      (let ((val (XmTextGetSelection txt)))
-		(if val (snd-display #__line__ ";XmTextClearSelection: ~A" val)))
-	      (XmTextFieldSetSelection txtf 2 5 current-time)
-	      (let ((tag (catch #t
-				(lambda ()
-				  (XmTextFieldSetSelection txt 2 3 current-time))
-				(lambda args (car args)))))
-		(if (not (eq? tag 'wrong-type-arg))
-		    (snd-display #__line__ ";text field type check: ~A" tag)))
-	      (let ((tag (catch #t
-				(lambda ()
-				  (XmTextSetSelection frm 2 3 current-time))
-				(lambda args (car args)))))
-		(if (not (eq? tag 'wrong-type-arg))
-		    (snd-display #__line__ ";text type check: ~A" tag)))
-	      (let ((dpy (XtDisplay (cadr (main-widgets))))
-		    (win (XtWindow (cadr (main-widgets))))
-		    (app (car (main-widgets))))
-		(let ((tag (catch #t (lambda () (XmTransferSetParameters 123 123 123 123 "hiho")) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmTransferSetParameters type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XmDropSiteConfigureStackingOrder txtf txtf "hiho")) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmDropSiteConfigureStackingOrder type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XmScrollVisible txtf txtf 5 "hiho")) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmScrollVisible type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XmDragStart txtf (XEvent KeyPress) (list 0 1) "hiho")) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmDragStart type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XmClipboardStartRetrieve dpy win 1)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmClipboardStartRetrieve type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XmClipboardCopyByName dpy win 1 "hi" "hi" 1)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmClipboardCopyByName type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XmClipboardBeginCopy dpy win "hi" txtf #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmClipboardBeginCopy type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XmRemoveProtocolCallback txtf XA_STRING XA_STRING #f 1)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmRemoveProtocolCallback type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XSetRGBColormaps dpy win (list 'XStandardColormap 0) 1 #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetRGBColormap type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XSetWMHints dpy win 1)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetWMHints type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XWindowEvent dpy win #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XWindowEvent type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XStoreNamedColor dpy (list 'Colormap 0) "hi" 0 #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XStoreNamedColor type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XStoreColors dpy (list 'Colormap 0) (list 1 2) #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XStoreColors type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XStoreColor dpy (list 'Colormap 0) (list 1 2))) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XStoreColor type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XtDisplayInitialize app dpy "hi" "ho" 1 1)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtDisplayInitialize type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XtOwnSelectionIncremental txtf '(Atom 0) '(Time 0) #f #f #f #f #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtOwnSelectionIncremental type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XtOwnSelection txtf '(Atom 0) '(Time 0) #f #f #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtOwnSelection type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XtGetSelectionValue txtf '(Atom 0) '(Atom 0) #f #f #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtGetSelectionValue type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XtGetSelectionValues txtf '(Atom 0) (list (list 'Atom 0)) #f #f #f #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtGetSelectionValues type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XtDisownSelection txtf '(Atom 0) #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtDisownSelection type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XtGetSelectionRequest txtf '(Atom 0) #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtGetSelectionRequest type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XtGetSelectionValueIncremental txtf '(Atom 0) (list (list 'Atom 0)) 1 #f #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtGetSelectionValueIncremental type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XtGetSelectionValuesIncremental txtf '(Atom 0) '(Atom 0) 1 #f #f #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtGetSelectionValuesIncremental type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XtSendSelectionRequest txtf '(Atom 0) #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtSendSelectionRequest type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XReconfigureWMWindow dpy win 1 1 #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XReconfigureWMWindow type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XSetWMProtocols dpy win 1 1)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetWMProtocols type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XIconifyWindow dpy win #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XIconifyWindow type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XWithdrawWindow dpy win #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XWithdrawWindow type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XSetWMColormapWindows dpy win #f 1)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetWMColormapWindows type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XSetTransientForHint dpy win #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetTransientForHint type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XAllowEvents dpy 1 #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XAllowEvents type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XChangeActivePointerGrab dpy 1 '(Cursor 0) #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XChangeActivePointerGrab type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XChangeGC dpy '(GC 0) 1 #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XChangeGC type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XChangeKeyboardMapping dpy 1 1 (list 1 1) #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XChangeKeyboardMapping type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XConfigureWindow dpy win 1 #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XConfigureWindow type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XConvertSelection dpy '(Atom 0) '(Atom 0) '(Atom 0) win #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XConvertSelection type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XReparentWindow dpy win win 1 #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XReparentWindow type check: ~A" tag)))
-		
-		(let ((tag (catch #t (lambda () (XFreeColors dpy '(Colormap 0) (list 0) 1 #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XFreeColors type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XReadBitmapFile dpy win #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XReadBitmapFile type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XRebindKeysym dpy '(KeySym 0) (list 0) 1 "hi" #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XRebindKeysym type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XRestackWindows dpy (list 0) #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XRestackWindows type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XRotateWindowProperties dpy win (list 0) 1 #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XRotateWindowProperties type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XSelectInput dpy win #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSelectInput type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XSetFontPath dpy (list 0) #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetFontPath type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XSetInputFocus dpy win 1 #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetInputFocus type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XSetSelectionOwner dpy '(Atom 0) win #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetSelectionOwner type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XSetWindowColormap dpy win #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetWindowColormap type check: ~A" tag)))
-		(let ((tag (catch #t (lambda () (XmClipboardCancelCopy dpy win #f)) (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmClipboardCancelCopy type check: ~A" tag)))
-		
-		)
-	      
-	      (let ((valf (XmTextFieldGetSelection txtf)))
-		(if (not (string=? valf "234")) (snd-display #__line__ ";XmTextFieldGetSelection: ~A" valf)))
-	      (XmTextFieldClearSelection txtf current-time)
-	      (let ((valf (XmTextFieldGetSelection txtf)))
-		(if valf (snd-display #__line__ ";XmTextFieldClearSelection: ~A" valf)))
-	      (let ((val (XmTextGetInsertionPosition txt))
-		    (valf (XmTextFieldGetInsertionPosition txtf)))
-		(if (not (= val 5)) (snd-display #__line__ ";XmTextGetInsertionPosition: ~A" val))
-		(if (not (= valf 5)) (snd-display #__line__ ";XmTextFieldGetInsertionPosition: ~A" val)))
-	      
-	      (XmTextScroll txt 1)
-	      (XmTextScroll txt -1)
-	      (let ((pos (XmTextGetTopCharacter txt)))
-		(if (not (= pos 0)) (snd-display #__line__ ";XmTextGetTopCharacter after scroll: ~A" pos)))
-	      (XmTextShowPosition txt 0)
-	      (XmTextFieldShowPosition txtf 0)
-	      (XmTextSetTopCharacter txt 0)
-	      (XmTextXYToPos txt 10 10)
-	      (XmTextFieldXYToPos txtf 10 10)
-	      
-	      (XmTextSetHighlight txt 3 6 XmHIGHLIGHT_SELECTED)
-	      (XmTextFieldSetHighlight txtf 3 6 XmHIGHLIGHT_SELECTED)
-	      (XmTextFieldGetBaseline txtf)
-	      (XmTextSetAddMode txt #t)
-	      (if (not (XmTextGetAddMode txt)) (snd-display #__line__ ";XmTextSetAddMode?"))
-	      (XmTextFieldSetAddMode txtf #t)
-	      (if (not (XmTextFieldGetAddMode txtf)) (snd-display #__line__ ";XmTextFieldSetAddMode?"))
-	      
-	      (if (not (string=? (vector-ref calls 5) "gain")) (snd-display #__line__ ";gain callback: ~A" (vector-ref calls 5)))
-	      (if (not (string=? (vector-ref calls 7) "modify")) (snd-display #__line__ ";modify callback: ~A" (vector-ref calls 7)))
-	      (if (not (string=? (vector-ref calls 8) "motion")) (snd-display #__line__ ";motion callback: ~A" (vector-ref calls 8)))
-	      (if (not (string=? (vector-ref calls 9) "value")) (snd-display #__line__ ";value callback: ~A" (vector-ref calls 9)))
-	      
-	      (let ((txtf1 (XtVaCreateManagedWidget "textfield" xmTextFieldWidgetClass frm
-						    (list XmNeditable #t
-							  XmNleftAttachment      XmATTACH_FORM
-							  XmNrightAttachment     XmATTACH_FORM
-							  XmNtopAttachment       XmATTACH_WIDGET
-							  XmNtopWidget           txt
-							  XmNbottomAttachment    XmATTACH_FORM
-							  XmNdestinationCallback
-							  (list (lambda (w c info)
-								  (let* ((dpy (XtDisplay w))
-									 (TARGETS (XmInternAtom dpy "TARGETS" #f)))
-								    (XmTransferValue (.transfer_id info) 
-										     TARGETS 
-										     transfer-proc
-										     #f
-										     (XtLastTimestampProcessed dpy))))
-								#f)))))
-		(focus-widget txtf1)
-		(XmTextFieldPaste txtf1)
-		(XmTextFieldPasteLink txtf1)
-		(if (not (Widget? (XmGetTabGroup txtf1))) (snd-display #__line__ ";XmGetTabGroup: ~A " (XmGetTabGroup txtf1)))
-		(let ((fw (XmGetFocusWidget (cadr (main-widgets)))))
-		  (if (not (equal? fw txtf1))
-		      (snd-display #__line__ ";XmGetFocusWidget: ~A" fw)))
-		(let ((callback (lambda (w context ev flag)
-				  (XtSetValues w (list XmNbackground (white-pixel))))))
-		  (XtAddEventHandler txtf1 EnterWindowMask #f callback #f)
-		  (XtRemoveEventHandler txtf1 EnterWindowMask #f callback #f)
-		  (XtAddRawEventHandler txtf1 EnterWindowMask #f callback #f)
-		  (XtRemoveRawEventHandler txtf1 EnterWindowMask #f callback #f)
-		  (XtInsertEventHandler txtf1 EnterWindowMask #f callback #f XtListHead)
-		  (XtRemoveEventHandler txtf1 EnterWindowMask #f callback #f)
-		  (XtInsertRawEventHandler txtf1 EnterWindowMask #f callback #f XtListTail)
-		  (XtRemoveRawEventHandler txtf1 EnterWindowMask #f callback #f))
-		(XtRemoveAllCallbacks txtf1 XmNdestinationCallback))
-	      (XtAppAddActions (car (main-widgets)) (list (list "hiho" (lambda args (snd-print "hiho")))))
-	      (XtAugmentTranslations txt (XtParseTranslationTable "Ctrl <Key>i: hiho()\n"))
-	      (XtCallActionProc txt "hiho" (XEvent) #f 0)
-	      (XtUninstallTranslations txt)
-	      (XtUnmanageChild frm)))
+			    (XmTransferDone (.transfer_id info) XmTRANSFER_DONE_SUCCEED))
+			  (if (and (or (equal? (.target info) TARGETS)
+				       (equal? (.target info) CB_TARGETS))
+				   (equal? (.type info) XA_ATOM))
+			      (let ((targets (->Atoms (.value info) (.length info)))
+				    (happy #f))
+				(for-each
+				 (lambda (targ)
+				   (if (equal? targ XA_STRING)
+				       (set! happy #t)))
+				 targets)
+				(if happy
+				    (XmTransferValue (.transfer_id info) 
+						     XA_STRING
+						     transfer-proc
+						     #f
+						     (XtLastTimestampProcessed dpy)))))))))
+		 (txtf (XtVaCreateManagedWidget "textfield" xmTextFieldWidgetClass frm
+						(list XmNeditable #t
+						      XmNleftAttachment      XmATTACH_FORM
+						      XmNrightAttachment     XmATTACH_FORM
+						      XmNtopAttachment       XmATTACH_WIDGET
+						      XmNtopWidget           txt
+						      XmNbottomAttachment    XmATTACH_FORM))))
 	  
-	  (let* ((shell (cadr (main-widgets)))
-		 (dpy (XtDisplay shell))
-		 (win (XtWindow shell))
-		 (err (XmClipboardRegisterFormat dpy "SND_DATA" 8)))
-	    (if (not (= err ClipboardSuccess)) 
-		(snd-display #__line__ ";XmClipboardRegisterFormat: ~A" err)
-		(let ((vals (XmClipboardStartCopy dpy win
-						  (XmStringCreateLocalized "SND_DATA") 
-						  (list 'Time CurrentTime) 
-						  shell
-						  (lambda (w id pid reason)
-						    (XmClipboardCopyByName dpy win id "copy this" 10 123)))))
-		  (if (not (= (car vals) ClipboardSuccess))
-		      (snd-display #__line__ ";XmClipboardStartCopy: ~A" vals)
-		      (let ((data-id (cadr vals)))
-			(set! err (XmClipboardCopy dpy win data-id "SND_DATA" "copy this" 10 0))
-			(if (not (= (car err) ClipboardSuccess)) (snd-display #__line__ ";XmClipboardCopy: ~A" err))
-			(let ((item-id (cadr err)))
-			  (set! err (XmClipboardEndCopy dpy win data-id))
-			  (if (not (= err ClipboardSuccess)) (snd-display #__line__ ";copy ~A" err))
-			  (if (not (= (cadr (XmClipboardInquireLength dpy win "SND_DATA")) 10))
-			      (snd-display #__line__ ";clip len: ~A" (XmClipboardInquireLength dpy win "SND_DATA")))
-			  (let ((pend (XmClipboardInquirePendingItems dpy win "SND_DATA")))
-			    (if (not (= (car pend) ClipboardSuccess)) (snd-display #__line__ ";XmClipboardInquirePendingItems: ~A" pend)))
-			  (let ((formats1 (XmClipboardInquireCount dpy win)))
-			    (if (= (cadr formats1) 0) (snd-display #__line__ ";XmClipboardInquireCount: ~A" formats1))
-			    (XmClipboardInquireFormat dpy win 1 10)
-			    (let ((clip (XmClipboardRetrieve dpy win "SND_DATA" 10)))
-			      (if (not (string=? (cadr clip) "copy this")) (snd-display #__line__ ";XmClipboardRetrieve: ~A" clip))
-			      (XmClipboardWithdrawFormat dpy win item-id))))))))
-	    (let ((val (XmClipboardLock dpy win)))
-	      (if (not (= val ClipboardLocked))
-		  (XmClipboardUnlock dpy win #t)))
-	    (let ((selbox (XmCreateSelectionBox shell "selbox" () 0)))
-	      (XmSelectionBoxGetChild selbox XmDIALOG_APPLY_BUTTON)))
-	  
-	  (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
-		 (current-time (list 'Time CurrentTime))
-		 (box (XtCreateManagedWidget "box" xmContainerWidgetClass frm ()))
-		 (tgl (XtCreateManagedWidget "tgl" xmToggleButtonWidgetClass frm
-					     (list XmNleftAttachment      XmATTACH_FORM
-						   XmNrightAttachment     XmATTACH_FORM
-						   XmNtopAttachment       XmATTACH_FORM
-						   XmNbottomAttachment    XmATTACH_NONE)))
-		 (tgg (XtCreateManagedWidget "tgg" xmToggleButtonGadgetClass frm
-					     (list XmNleftAttachment      XmATTACH_FORM
-						   XmNrightAttachment     XmATTACH_FORM
-						   XmNtopAttachment       XmATTACH_WIDGET
-						   XmNtopWidget           tgl
-						   XmNbottomAttachment    XmATTACH_NONE)))
-		 (spn (XtCreateManagedWidget "spn" xmSimpleSpinBoxWidgetClass frm
-					     (list XmNleftAttachment      XmATTACH_FORM
-						   XmNrightAttachment     XmATTACH_FORM
-						   XmNtopAttachment       XmATTACH_WIDGET
-						   XmNtopWidget           tgg
-						   XmNbottomAttachment    XmATTACH_NONE)))
-		 (cmd (XtCreateManagedWidget "cmd" xmCommandWidgetClass frm
-					     (list XmNleftAttachment      XmATTACH_FORM
-						   XmNrightAttachment     XmATTACH_FORM
-						   XmNtopAttachment       XmATTACH_WIDGET
-						   XmNtopWidget           spn
-						   XmNbottomAttachment    XmATTACH_NONE)))
-		 (scl (XtCreateManagedWidget "scl" xmScaleWidgetClass frm
-					     (list XmNleftAttachment      XmATTACH_FORM
-						   XmNrightAttachment     XmATTACH_FORM
-						   XmNtopAttachment       XmATTACH_WIDGET
-						   XmNtopWidget           cmd
-						   XmNbottomAttachment    XmATTACH_NONE)))
-		 (notes (XtCreateManagedWidget "notes" xmNotebookWidgetClass frm
-					       (list XmNleftAttachment      XmATTACH_FORM
-						     XmNrightAttachment     XmATTACH_FORM
-						     XmNtopAttachment       XmATTACH_WIDGET
-						     XmNtopWidget           scl
-						     XmNbottomAttachment    XmATTACH_NONE)))
-		 
-		 (cmb (XtCreateManagedWidget "cmb" xmComboBoxWidgetClass frm
-					     (list XmNleftAttachment      XmATTACH_FORM
-						   XmNrightAttachment     XmATTACH_FORM
-						   XmNtopAttachment       XmATTACH_WIDGET
-						   XmNtopWidget           notes
-						   XmNbottomAttachment    XmATTACH_FORM)))
-		 (toggled 0))
-	    (XtCreateManagedWidget "one" xmPushButtonWidgetClass notes ())
-	    (XtCreateManagedWidget "two" xmPushButtonWidgetClass notes ())
-	    (let ((info (cadr (XmNotebookGetPageInfo notes 1))))
-	      (if (not (= (.page_number info) 1)) (snd-display #__line__ ";page_number: ~A" (.page_number info)))
-	      (if (.page_widget info) (snd-display #__line__ ";page_widget: ~A" (.page_widget info)))
-	      (if (.status_area_widget info) (snd-display #__line__ ";status_area_widget: ~A" (.status_area_widget info)))
-	      (if (not (Widget? (.major_tab_widget info))) (snd-display #__line__ ";major_tab_widget: ~A" (.major_tab_widget info)))
-	      (if (.minor_tab_widget info) (snd-display #__line__ ";minor_tab_widget: ~A" (.minor_tab_widget info)))
-					;(segfault)	(XtFree (cadr info))
-	      )
+	  (let ((vals (XtVaGetValues txt (list XmNrenderTable 0 XmNselectionArray 0))))
+	    (if (not (XmRenderTable? (vals 1))) (snd-display #__line__ ";XmNrenderTable: ~A" (vals 1)))
+	    (if (not (pair? (vals 3))) (snd-display #__line__ ";XmNselectionArray: ~A" (vals 3))))
+	  (if (not (XmTextGetEditable txt)) (snd-display #__line__ ";XmTextGetEditable?"))
+	  (if (not (XmTextFieldGetEditable txtf)) (snd-display #__line__ ";XmTextFieldGetEditable?"))
+	  (XmTextSetEditable txt #f)
+	  (XmTextFieldSetEditable txtf #f)
+	  (if (XmTextGetEditable txt) (snd-display #__line__ ";XmTextSetEditable?"))
+	  (if (XmTextFieldGetEditable txtf) (snd-display #__line__ ";XmTextFieldSetEditable?"))
+	  (XmTextSetEditable txt #t)
+	  (XmTextFieldSetEditable txtf #t)
+	  (XmTextSetString txt "0123456789")
+	  (XmTextFieldSetString txtf "0123456789")
+	  (XmTextFieldCopyLink txtf (list 'Time CurrentTime))
+	  (let ((val (XmTextGetString txt))
+		(valf (XmTextFieldGetString txtf))
+		(val1 (cadr (XtVaGetValues txt (list XmNvalue 0))))
+		(val1f (cadr (XtVaGetValues txtf (list XmNvalue 0)))))
+	    (if (not (string=? val "0123456789")) (snd-display #__line__ ";XmTextSetString: ~A" val))
+	    (if (not (string=? valf "0123456789")) (snd-display #__line__ ";XmTextFieldSetString: ~A" valf))
+	    (if (not (string=? val1 "0123456789")) (snd-display #__line__ ";text value: ~A" val1))
+	    (if (not (string=? val1f "0123456789")) (snd-display #__line__ ";text field value: ~A" val)))
+	  (let ((untext (XtCreateWidget "untext" xmTextWidgetClass frm ()))
+		(source (XmTextGetSource txt)))
+	    (XmTextSetSource untext source 0 3)
+	    (if (not (XmTextSource? source))
+		(snd-display #__line__ ";XmTextSource? ~A" source))
+	    (if (not (equal? (XmTextGetSource untext) source))
+		(snd-display #__line__ ";XmTextSetSource: ~A ~A" source (XmTextGetSource untext)))
+	    (if (XtIsSubclass untext xmFormWidgetClass)
+		(snd-display #__line__ ";XtIsSubclass thinks untext is a form?"))
+	    (if (not (XtIsSubclass untext coreWidgetClass))
+		(snd-display #__line__ ";XtIsSubclass thinks untext is not a core widget"))
+	    (XmTextCopyLink untext (list 'Time CurrentTime))
+	    (XmTextPasteLink untext))
+	  (let ((val (XmTextGetSubstring txt 2 3))
+		(valf (XmTextFieldGetSubstring txtf 2 3)))
+	    (if (or (not (string? val)) (not (string=? val "234"))) (snd-display #__line__ ";XmTextGetSubstring: ~A" val))
+	    (if (or (not (string? valf)) (not (string=? valf "234"))) (snd-display #__line__ ";XmTextFieldGetSubstring: ~A" valf)))
+	  (XmTextSetSelection txt 2 5 current-time)
+	  (let ((val (XmTextGetSelection txt)))
+	    (if (or (not (string? val)) (not (string=? val "234"))) (snd-display #__line__ ";XmTextGetSelection: ~A" val)))
+	  (XmTextClearSelection txt current-time)
+	  (let ((val (XmTextGetSelection txt)))
+	    (if val (snd-display #__line__ ";XmTextClearSelection: ~A" val)))
+	  (XmTextFieldSetSelection txtf 2 5 current-time)
+	  (let ((tag (catch #t
+		       (lambda ()
+			 (XmTextFieldSetSelection txt 2 3 current-time))
+		       (lambda args (car args)))))
+	    (if (not (eq? tag 'wrong-type-arg))
+		(snd-display #__line__ ";text field type check: ~A" tag)))
+	  (let ((tag (catch #t
+		       (lambda ()
+			 (XmTextSetSelection frm 2 3 current-time))
+		       (lambda args (car args)))))
+	    (if (not (eq? tag 'wrong-type-arg))
+		(snd-display #__line__ ";text type check: ~A" tag)))
+	  (let ((dpy (XtDisplay (cadr (main-widgets))))
+		(win (XtWindow (cadr (main-widgets))))
+		(app (car (main-widgets))))
+	    (let ((tag (catch #t (lambda () (XmTransferSetParameters 123 123 123 123 "hiho")) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmTransferSetParameters type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XmDropSiteConfigureStackingOrder txtf txtf "hiho")) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmDropSiteConfigureStackingOrder type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XmScrollVisible txtf txtf 5 "hiho")) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmScrollVisible type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XmDragStart txtf (XEvent KeyPress) (list 0 1) "hiho")) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmDragStart type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XmClipboardStartRetrieve dpy win 1)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmClipboardStartRetrieve type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XmClipboardCopyByName dpy win 1 "hi" "hi" 1)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmClipboardCopyByName type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XmClipboardBeginCopy dpy win "hi" txtf #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmClipboardBeginCopy type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XmRemoveProtocolCallback txtf XA_STRING XA_STRING #f 1)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmRemoveProtocolCallback type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XSetRGBColormaps dpy win (list 'XStandardColormap 0) 1 #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetRGBColormap type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XSetWMHints dpy win 1)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetWMHints type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XWindowEvent dpy win #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XWindowEvent type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XStoreNamedColor dpy (list 'Colormap 0) "hi" 0 #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XStoreNamedColor type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XStoreColors dpy (list 'Colormap 0) (list 1 2) #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XStoreColors type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XStoreColor dpy (list 'Colormap 0) (list 1 2))) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XStoreColor type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XtDisplayInitialize app dpy "hi" "ho" 1 1)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtDisplayInitialize type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XtOwnSelectionIncremental txtf '(Atom 0) '(Time 0) #f #f #f #f #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtOwnSelectionIncremental type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XtOwnSelection txtf '(Atom 0) '(Time 0) #f #f #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtOwnSelection type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XtGetSelectionValue txtf '(Atom 0) '(Atom 0) #f #f #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtGetSelectionValue type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XtGetSelectionValues txtf '(Atom 0) (list (list 'Atom 0)) #f #f #f #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtGetSelectionValues type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XtDisownSelection txtf '(Atom 0) #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtDisownSelection type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XtGetSelectionRequest txtf '(Atom 0) #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtGetSelectionRequest type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XtGetSelectionValueIncremental txtf '(Atom 0) (list (list 'Atom 0)) 1 #f #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtGetSelectionValueIncremental type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XtGetSelectionValuesIncremental txtf '(Atom 0) '(Atom 0) 1 #f #f #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtGetSelectionValuesIncremental type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XtSendSelectionRequest txtf '(Atom 0) #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XtSendSelectionRequest type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XReconfigureWMWindow dpy win 1 1 #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XReconfigureWMWindow type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XSetWMProtocols dpy win 1 1)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetWMProtocols type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XIconifyWindow dpy win #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XIconifyWindow type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XWithdrawWindow dpy win #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XWithdrawWindow type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XSetWMColormapWindows dpy win #f 1)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetWMColormapWindows type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XSetTransientForHint dpy win #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetTransientForHint type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XAllowEvents dpy 1 #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XAllowEvents type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XChangeActivePointerGrab dpy 1 '(Cursor 0) #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XChangeActivePointerGrab type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XChangeGC dpy '(GC 0) 1 #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XChangeGC type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XChangeKeyboardMapping dpy 1 1 (list 1 1) #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XChangeKeyboardMapping type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XConfigureWindow dpy win 1 #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XConfigureWindow type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XConvertSelection dpy '(Atom 0) '(Atom 0) '(Atom 0) win #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XConvertSelection type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XReparentWindow dpy win win 1 #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XReparentWindow type check: ~A" tag)))
 	    
-	    (XmSimpleSpinBoxAddItem spn (XmStringCreateLocalized "hiho") 0)
-	    (XmSimpleSpinBoxAddItem spn (XmStringCreateLocalized "away") 0)
-	    (XmSimpleSpinBoxDeletePos spn 0)
-	    (let ((vals (XtVaGetValues spn (list XmNvalues 0))))
-	      (XmSimpleSpinBoxSetItem spn (car (cadr vals))))
-	    (XmSimpleSpinBoxAddItem spn (XmStringCreateLocalized "another") 0)
-	    (let ((vals (XtGetValues spn (list XmNeditable 0 XmNtextField 0))))
-	      (if (not (vals 1)) (snd-display #__line__ ";XmNeditable spin box"))
-	      (if (not (Widget? (vals 3))) (snd-display #__line__ ";XmNtextField: ~A" (vals 3))))
+	    (let ((tag (catch #t (lambda () (XFreeColors dpy '(Colormap 0) (list 0) 1 #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XFreeColors type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XReadBitmapFile dpy win #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XReadBitmapFile type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XRebindKeysym dpy '(KeySym 0) (list 0) 1 "hi" #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XRebindKeysym type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XRestackWindows dpy (list 0) #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XRestackWindows type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XRotateWindowProperties dpy win (list 0) 1 #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XRotateWindowProperties type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XSelectInput dpy win #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSelectInput type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XSetFontPath dpy (list 0) #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetFontPath type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XSetInputFocus dpy win 1 #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetInputFocus type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XSetSelectionOwner dpy '(Atom 0) win #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetSelectionOwner type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XSetWindowColormap dpy win #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XSetWindowColormap type check: ~A" tag)))
+	    (let ((tag (catch #t (lambda () (XmClipboardCancelCopy dpy win #f)) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";XmClipboardCancelCopy type check: ~A" tag)))
 	    
-	    (XtAddCallback tgl XmNvalueChangedCallback (lambda (w c i) (set! toggled 123)) #f)
-	    (XmToggleButtonSetState tgl #f #f)
-	    (XmToggleButtonGadgetSetState tgg #f #f)
-	    (if (not (= toggled 0)) (snd-display #__line__ ";toggle calledback: ~A?" toggled))
-	    (if (XmToggleButtonGetState tgl) (snd-display #__line__ ";XmToggleButtonSetState #f"))
-	    (if (XmToggleButtonGadgetGetState tgg) (snd-display #__line__ ";XmToggleButtonGadgetSetState #f"))
-	    (XtVaSetValues tgl (list XmNtoggleMode XmTOGGLE_INDETERMINATE))
-	    (XmToggleButtonSetValue tgl XmINDETERMINATE #t)
-	    (XmToggleButtonGadgetSetValue tgg XmINDETERMINATE #t)
-	    (if (not (= toggled 123)) (snd-display #__line__ ";toggle not calledback: ~A?" toggled))
-	    
-	    (XmCommandAppendValue cmd (XmStringCreateLocalized "hiho"))
-	    (XmCommandError cmd (XmStringCreateLocalized "hiho"))
-	    (if (not (Widget? (XmCommandGetChild cmd XmDIALOG_COMMAND_TEXT)))
-		(snd-display #__line__ ";XmCommandGetChild: ~A" (XmCommandGetChild cmd XmDIALOG_COMMAND_TEXT)))
-	    (XmCommandSetValue cmd (XmStringCreateLocalized "hiho"))
-	    
-	    (let ((one1 (XmStringCreateLocalized "one"))
-		  (two1 (XmStringCreateLocalized "two"))
-		  (three1 (XmStringCreateLocalized "three")))
-	      (XmComboBoxAddItem cmb one1 0 #f)
-	      (XmComboBoxAddItem cmb two1 0 #f)
-	      (XmComboBoxAddItem cmb three1 0 #f)
-	      (XmComboBoxDeletePos cmb 1)
-	      (XmComboBoxSelectItem cmb three1)
-	      (XmComboBoxSetItem cmb three1) ; hunh??
-	      (XmComboBoxUpdate cmb)
-	      (let ((vals (cadr (XtGetValues cmb (list XmNitems 0)))))
-		(if (not (equal? vals (list two1 three1))) (snd-display #__line__ ";XmComboBox: ~A" vals))))
-	    
-	    (XmContainerCut box current-time)
-	    (XmContainerCopy box current-time)
-	    (XmContainerPaste box)
-	    (XmContainerCopyLink box (list 'Time CurrentTime))
-	    (XmContainerPasteLink box)
-	    (let ((vals (XtVaGetValues box (list XmNlargeIconX 0 XmNlargeIconY 0))))
-	      (if (or (null? (cdr vals))
-		      (not (real? (cadr vals)))
-		      (fneq (cadr vals) 0.0)
-		      (null? (cdddr vals))
-		      (not (real? (cadddr vals)))
-		      (fneq (cadddr vals) 0.0))
-		  (snd-display #__line__ ";xm-float resource vals: ~A" vals)))
-	    
-	    (XtAddCallback scl XmNvalueChangedCallback (lambda (w c i) #f))
-	    (XmScaleSetValue scl 25)
-	    (if (not (= (XmScaleGetValue scl) 25)) (snd-display #__line__ ";XmScaleSetValue: ~A" (XmScaleGetValue scl)))
-	    (if (XmGetTearOffControl (car (menu-widgets))) (snd-display #__line__ ";XmGetTearOffControl: ~A" (XmGetTearOffControl (car (menu-widgets)))))
-	    (let ((children (cadr (XtGetValues scl (list XmNchildren 0)))))
-	      (for-each 
-	       (lambda (w)
-		 (let ((name (XtName w)))
-		   (if (and (XmIsSeparatorGadget w)
-			    (or (string=? name "BigTic")
-				(string=? name "MedTic")
-				(string=? name "SmallTic")))
-		       (XtDestroyWidget w))))
-	       children))
-	    (XmScaleSetTicks scl 5 2 0 10 5 0)
 	    )
 	  
-	  (XmSetColorCalculation #f)
-	  (let* ((dpy (XtDisplay (cadr (main-widgets))))
-		 (scr1 (DefaultScreen dpy))
-		 (cmap (DefaultColormap dpy scr1))
-		 (screen (XDefaultScreenOfDisplay dpy))
-		 (scr (XmGetXmScreen (XDefaultScreenOfDisplay dpy)))
-		 ;(old-h (cadr (XtVaGetValues scr (list XmNhorizontalFontUnit 0))))
-		 ;(old-v (cadr (XtVaGetValues scr (list XmNverticalFontUnit 0))))
-		 )
-	    (if (not (XmIsScreen scr)) (snd-display #__line__ ";XmIsScreen: ~A" scr))
-	    (let ((colors (XmGetColors screen cmap *basic-color*)))
-	      (if (not (Pixel? (car colors)))
-		  (snd-display #__line__ ";colors: ~A " colors))
-	      (let ((color-proc (lambda (bg)
-				  (list (white-pixel) (black-pixel) (white-pixel) (black-pixel)))))
-		(XmSetColorCalculation color-proc)
-		(if (not (equal? (XmGetColorCalculation) color-proc))
-		    (snd-display #__line__ ";XmSetColorcalulcation ~A" (XmGetColorCalculation)))))
-	    (let ((vals (XtVaGetValues scr 
-				       (list XmNbitmapConversionModel 0 XmNdarkThreshold 0 XmNfont 0 XmNunpostBehavior 0))))
-	      (if (not (= (vals 1) XmMATCH_DEPTH)) (snd-display #__line__ ";XmNbitmapConversionModel: ~A" (vals 1)))
-	      (if (not (= (vals 3) 0)) (snd-display #__line__ ";XmNdarkThreshold: ~A" (vals 3)))
-	      (if (not (XFontStruct? (vals 5))) (snd-display #__line__ ";XmNfont: ~A" (vals 5)))
-	      (if (not (= (vals 7) XmUNPOST_AND_REPLAY)) (snd-display #__line__ ";XmNunpostBehavior: ~A" (vals 7)))
-	      (XSetScreenSaver dpy -1 5 DefaultBlanking DefaultExposures)
-	      ))
-	  (let ((dpy (XtDisplay (cadr (main-widgets)))))
-	    (let* ((dp (XmGetXmDisplay dpy))
-		   (vals (XtVaGetValues dp
-					(list XmNdragInitiatorProtocolStyle 0 XmNenableThinThickness 0 XmNmotifVersion 0))))
-	      (if (not (XmIsDisplay dp)) (snd-display #__line__ ";XmIsDisplay: ~A" dp))
-	      (if (not (= (vals 1) XmDRAG_PREFER_RECEIVER)) (snd-display #__line__ ";XmNdragInitiatorProtocolStyle: ~A" (vals 1)))
-	      (if (not (vals 3)) (snd-display #__line__ ";XmNenableThinThickness?"))
-	      (if (not (= (vals 5) 2002)) (snd-display #__line__ ";XmGetXmDisplay motif version: ~A" (vals 5)))
-	      (XtAddCallback dp XmNdragStartCallback (lambda (w c i) #f)))
-	    
-	    (if (not (string=? (XmCvtXmStringToCT (XmStringCreateLocalized "hiho")) "hiho"))
-		(snd-display #__line__ ";XmCvtXmStringToCT: ~A" (XmCvtXmStringToCT (XmStringCreateLocalized "hiho"))))
-	    (let ((val (XmConvertStringToUnits (XDefaultScreenOfDisplay dpy) "3.14 in" XmHORIZONTAL XmINCHES)))
-	      (if (not (= val 3)) (snd-display #__line__ ";XmConvertStringToUnits in->in ~A" val)))
-	    (let ((val (XmConvertStringToUnits (XDefaultScreenOfDisplay dpy) "3.14 in" XmHORIZONTAL XmPOINTS)))
-	      (if (not (= val 225)) (snd-display #__line__ ";XmConvertStringToUnits in->pts ~A" val)))
-	    (let ((val (XmConvertStringToUnits (XDefaultScreenOfDisplay dpy) "3.14 in" XmHORIZONTAL XmCENTIMETERS)))
-	      (if (not (= val 7)) (snd-display #__line__ ";XmConvertStringToUnits in->cm ~A" val)))
-	    (let ((val (XmConvertUnits (cadr (main-widgets)) XmHORIZONTAL XmCENTIMETERS 7 XmMILLIMETERS)))
-	      (if (not (= val 70)) (snd-display #__line__ ";XmConvertUnits cm->mm ~A" val)))
-	    (let ((val (XmConvertUnits (cadr (main-widgets)) XmHORIZONTAL XmCENTIMETERS 7 XmPIXELS)))
-	      (if (and (not (= val 278)) (not (= val 273))) (snd-display #__line__ ";XmConvertUnits cm->pix ~A" val)))
-	    (XmVaCreateSimpleRadioBox (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) ())
-	    (XmVaCreateSimpleCheckBox (caddr (main-widgets)) "hiho" (lambda (w c i) #f) ())
-	    (XmVaCreateSimplePulldownMenu (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) ())
-	    (XmVaCreateSimplePopupMenu (caddr (main-widgets)) "hiho" (lambda (w c i) #f) ())
-	    (XmVaCreateSimpleMenuBar (caddr (main-widgets)) "hiho" ())
-	    (zync)
-	    (make-pixmap (cadr (main-widgets)) arrow-strs)
-	    (display-scanned-synthesis)
-	    (add-mark-pane)
-	    (let ((ind (open-sound "oboe.snd")))
-	      (snd-clock-icon ind 6)
-	      (add-tooltip (cadr (channel-widgets)) "the w button")
-	      (with-minmax-button ind)
-	      (make-channel-drop-site ind 0)
-	      (set-channel-drop (lambda (file s c) (snd-print file)) ind 0)
-	      (let ((drop-site (find-child (XtParent (XtParent ((channel-widgets ind 0) 7))) "drop here")))
-		(if drop-site
-		    (begin
-		      (XtVaGetValues drop-site (list XmNdropRectangles 0))
-		      (let ((val (XmDropSiteRetrieve drop-site (list XmNnumImportTargets 0))))
-			(if (not (= (cadr val) 1)) (snd-display #__line__ ";XmDropSiteRetrieve num: ~A" val)))
-		      (XmDropSiteRetrieve drop-site (list XmNimportTargets 0))
-		      (if (not (XmDropSiteRegistered drop-site))
-			  (snd-display #__line__ ";XmDropSiteRegistered?"))
-		      (XmDropSiteUnregister drop-site))
-		    (snd-display #__line__ ";no drop site?"))))
-	    
-	    (add-mark 123)
-	    (let ((container
-		   (make-sound-box "sounds"
-				   ((main-widgets) 3)
-				   (lambda (file) 
-				     (mix file))
-				   (lambda (file chn)
-				     (define (without-directories filename)
-				       (call-with-exit
-					(lambda (return)
-					  (do ((i (- (string-length filename) 1) (- i 1)))
-					      ((= i 0) filename)
-					    (if (char=? (filename i) #\/)
-						(return (substring filename (+ i 1))))))))
-				     (format #f "~~/peaks/~A-peaks-~D" 
-					     (snd-test-clean-string (mus-expand-filename file))
-					     chn))
-				   (list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
-				   ())))
-	      (XmContainerRelayout container)
-	      (let ((vals (XtVaGetValues container 
-					 (list XmNlargeCellHeight 0 XmNcollapsedStatePixmap 0 XmNdetailOrder 0 XmNdetailTabList 0
-					       XmNselectedObjects 0 XmNconvertCallback 0 XmNdestinationCallback 0 XmNselectionCallback 0))))
-		(if (not (= (vals 1) 0)) (snd-display #__line__ ";XmNlargeCellHeight: ~A" (vals 1)))
-		(if (not (Pixmap? (vals 3))) (snd-display #__line__ ";XmNcollapsedStatePixmap: ~A" (vals 3)))
-		(let ((children ()))
-		  (for-each-child container
-				  (lambda (w)
-				    (if (XmIsIconGadget w)
-					(set! children (cons w children)))))
-		  (XmContainerReorder container children (length children)))
-		(let ((func (lambda (w) 0)))
-		  (XtSetValues container (list XmNinsertPosition func))
-		  (let ((func1 (cadr (XtGetValues container (list XmNinsertPosition 0)))))
-		    (if (not (equal? func func1)) (snd-display #__line__ ";XmNinsertPosition: ~A ~A" func func1))))))
-	    (close-sound))
+	  (let ((valf (XmTextFieldGetSelection txtf)))
+	    (if (not (string=? valf "234")) (snd-display #__line__ ";XmTextFieldGetSelection: ~A" valf)))
+	  (XmTextFieldClearSelection txtf current-time)
+	  (let ((valf (XmTextFieldGetSelection txtf)))
+	    (if valf (snd-display #__line__ ";XmTextFieldClearSelection: ~A" valf)))
+	  (let ((val (XmTextGetInsertionPosition txt))
+		(valf (XmTextFieldGetInsertionPosition txtf)))
+	    (if (not (= val 5)) (snd-display #__line__ ";XmTextGetInsertionPosition: ~A" val))
+	    (if (not (= valf 5)) (snd-display #__line__ ";XmTextFieldGetInsertionPosition: ~A" val)))
 	  
-	  ;; qualify proc is causing a segfault somehow
+	  (XmTextScroll txt 1)
+	  (XmTextScroll txt -1)
+	  (let ((pos (XmTextGetTopCharacter txt)))
+	    (if (not (= pos 0)) (snd-display #__line__ ";XmTextGetTopCharacter after scroll: ~A" pos)))
+	  (XmTextShowPosition txt 0)
+	  (XmTextFieldShowPosition txtf 0)
+	  (XmTextSetTopCharacter txt 0)
+	  (XmTextXYToPos txt 10 10)
+	  (XmTextFieldXYToPos txtf 10 10)
+	  
+	  (XmTextSetHighlight txt 3 6 XmHIGHLIGHT_SELECTED)
+	  (XmTextFieldSetHighlight txtf 3 6 XmHIGHLIGHT_SELECTED)
+	  (XmTextFieldGetBaseline txtf)
+	  (XmTextSetAddMode txt #t)
+	  (if (not (XmTextGetAddMode txt)) (snd-display #__line__ ";XmTextSetAddMode?"))
+	  (XmTextFieldSetAddMode txtf #t)
+	  (if (not (XmTextFieldGetAddMode txtf)) (snd-display #__line__ ";XmTextFieldSetAddMode?"))
+	  
+	  (if (not (string=? (vector-ref calls 5) "gain")) (snd-display #__line__ ";gain callback: ~A" (vector-ref calls 5)))
+	  (if (not (string=? (vector-ref calls 7) "modify")) (snd-display #__line__ ";modify callback: ~A" (vector-ref calls 7)))
+	  (if (not (string=? (vector-ref calls 8) "motion")) (snd-display #__line__ ";motion callback: ~A" (vector-ref calls 8)))
+	  (if (not (string=? (vector-ref calls 9) "value")) (snd-display #__line__ ";value callback: ~A" (vector-ref calls 9)))
+	  
+	  (let ((txtf1 (XtVaCreateManagedWidget "textfield" xmTextFieldWidgetClass frm
+						(list XmNeditable #t
+						      XmNleftAttachment      XmATTACH_FORM
+						      XmNrightAttachment     XmATTACH_FORM
+						      XmNtopAttachment       XmATTACH_WIDGET
+						      XmNtopWidget           txt
+						      XmNbottomAttachment    XmATTACH_FORM
+						      XmNdestinationCallback
+						      (list (lambda (w c info)
+							      (let* ((dpy (XtDisplay w))
+								     (TARGETS (XmInternAtom dpy "TARGETS" #f)))
+								(XmTransferValue (.transfer_id info) 
+										 TARGETS 
+										 transfer-proc
+										 #f
+										 (XtLastTimestampProcessed dpy))))
+							    #f)))))
+	    (focus-widget txtf1)
+	    (XmTextFieldPaste txtf1)
+	    (XmTextFieldPasteLink txtf1)
+	    (if (not (Widget? (XmGetTabGroup txtf1))) (snd-display #__line__ ";XmGetTabGroup: ~A " (XmGetTabGroup txtf1)))
+	    (let ((fw (XmGetFocusWidget (cadr (main-widgets)))))
+	      (if (not (equal? fw txtf1))
+		  (snd-display #__line__ ";XmGetFocusWidget: ~A" fw)))
+	    (let ((callback (lambda (w context ev flag)
+			      (XtSetValues w (list XmNbackground (white-pixel))))))
+	      (XtAddEventHandler txtf1 EnterWindowMask #f callback #f)
+	      (XtRemoveEventHandler txtf1 EnterWindowMask #f callback #f)
+	      (XtAddRawEventHandler txtf1 EnterWindowMask #f callback #f)
+	      (XtRemoveRawEventHandler txtf1 EnterWindowMask #f callback #f)
+	      (XtInsertEventHandler txtf1 EnterWindowMask #f callback #f XtListHead)
+	      (XtRemoveEventHandler txtf1 EnterWindowMask #f callback #f)
+	      (XtInsertRawEventHandler txtf1 EnterWindowMask #f callback #f XtListTail)
+	      (XtRemoveRawEventHandler txtf1 EnterWindowMask #f callback #f))
+	    (XtRemoveAllCallbacks txtf1 XmNdestinationCallback))
+	  (XtAppAddActions (car (main-widgets)) (list (list "hiho" (lambda args (snd-print "hiho")))))
+	  (XtAugmentTranslations txt (XtParseTranslationTable "Ctrl <Key>i: hiho()\n"))
+	  (XtCallActionProc txt "hiho" (XEvent) #f 0)
+	  (XtUninstallTranslations txt)
+	  (XtUnmanageChild frm)))
+      
+      (let* ((shell (cadr (main-widgets)))
+	     (dpy (XtDisplay shell))
+	     (win (XtWindow shell))
+	     (err (XmClipboardRegisterFormat dpy "SND_DATA" 8)))
+	(if (not (= err ClipboardSuccess)) 
+	    (snd-display #__line__ ";XmClipboardRegisterFormat: ~A" err)
+	    (let ((vals (XmClipboardStartCopy dpy win
+					      (XmStringCreateLocalized "SND_DATA") 
+					      (list 'Time CurrentTime) 
+					      shell
+					      (lambda (w id pid reason)
+						(XmClipboardCopyByName dpy win id "copy this" 10 123)))))
+	      (if (not (= (car vals) ClipboardSuccess))
+		  (snd-display #__line__ ";XmClipboardStartCopy: ~A" vals)
+		  (let ((data-id (cadr vals)))
+		    (set! err (XmClipboardCopy dpy win data-id "SND_DATA" "copy this" 10 0))
+		    (if (not (= (car err) ClipboardSuccess)) (snd-display #__line__ ";XmClipboardCopy: ~A" err))
+		    (let ((item-id (cadr err)))
+		      (set! err (XmClipboardEndCopy dpy win data-id))
+		      (if (not (= err ClipboardSuccess)) (snd-display #__line__ ";copy ~A" err))
+		      (if (not (= (cadr (XmClipboardInquireLength dpy win "SND_DATA")) 10))
+			  (snd-display #__line__ ";clip len: ~A" (XmClipboardInquireLength dpy win "SND_DATA")))
+		      (let ((pend (XmClipboardInquirePendingItems dpy win "SND_DATA")))
+			(if (not (= (car pend) ClipboardSuccess)) (snd-display #__line__ ";XmClipboardInquirePendingItems: ~A" pend)))
+		      (let ((formats1 (XmClipboardInquireCount dpy win)))
+			(if (= (cadr formats1) 0) (snd-display #__line__ ";XmClipboardInquireCount: ~A" formats1))
+			(XmClipboardInquireFormat dpy win 1 10)
+			(let ((clip (XmClipboardRetrieve dpy win "SND_DATA" 10)))
+			  (if (not (string=? (cadr clip) "copy this")) (snd-display #__line__ ";XmClipboardRetrieve: ~A" clip))
+			  (XmClipboardWithdrawFormat dpy win item-id))))))))
+	(let ((val (XmClipboardLock dpy win)))
+	  (if (not (= val ClipboardLocked))
+	      (XmClipboardUnlock dpy win #t)))
+	(let ((selbox (XmCreateSelectionBox shell "selbox" () 0)))
+	  (XmSelectionBoxGetChild selbox XmDIALOG_APPLY_BUTTON)))
+      
+      (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
+	     (current-time (list 'Time CurrentTime))
+	     (box (XtCreateManagedWidget "box" xmContainerWidgetClass frm ()))
+	     (tgl (XtCreateManagedWidget "tgl" xmToggleButtonWidgetClass frm
+					 (list XmNleftAttachment      XmATTACH_FORM
+					       XmNrightAttachment     XmATTACH_FORM
+					       XmNtopAttachment       XmATTACH_FORM
+					       XmNbottomAttachment    XmATTACH_NONE)))
+	     (tgg (XtCreateManagedWidget "tgg" xmToggleButtonGadgetClass frm
+					 (list XmNleftAttachment      XmATTACH_FORM
+					       XmNrightAttachment     XmATTACH_FORM
+					       XmNtopAttachment       XmATTACH_WIDGET
+					       XmNtopWidget           tgl
+					       XmNbottomAttachment    XmATTACH_NONE)))
+	     (spn (XtCreateManagedWidget "spn" xmSimpleSpinBoxWidgetClass frm
+					 (list XmNleftAttachment      XmATTACH_FORM
+					       XmNrightAttachment     XmATTACH_FORM
+					       XmNtopAttachment       XmATTACH_WIDGET
+					       XmNtopWidget           tgg
+					       XmNbottomAttachment    XmATTACH_NONE)))
+	     (cmd (XtCreateManagedWidget "cmd" xmCommandWidgetClass frm
+					 (list XmNleftAttachment      XmATTACH_FORM
+					       XmNrightAttachment     XmATTACH_FORM
+					       XmNtopAttachment       XmATTACH_WIDGET
+					       XmNtopWidget           spn
+					       XmNbottomAttachment    XmATTACH_NONE)))
+	     (scl (XtCreateManagedWidget "scl" xmScaleWidgetClass frm
+					 (list XmNleftAttachment      XmATTACH_FORM
+					       XmNrightAttachment     XmATTACH_FORM
+					       XmNtopAttachment       XmATTACH_WIDGET
+					       XmNtopWidget           cmd
+					       XmNbottomAttachment    XmATTACH_NONE)))
+	     (notes (XtCreateManagedWidget "notes" xmNotebookWidgetClass frm
+					   (list XmNleftAttachment      XmATTACH_FORM
+						 XmNrightAttachment     XmATTACH_FORM
+						 XmNtopAttachment       XmATTACH_WIDGET
+						 XmNtopWidget           scl
+						 XmNbottomAttachment    XmATTACH_NONE)))
+	     
+	     (cmb (XtCreateManagedWidget "cmb" xmComboBoxWidgetClass frm
+					 (list XmNleftAttachment      XmATTACH_FORM
+					       XmNrightAttachment     XmATTACH_FORM
+					       XmNtopAttachment       XmATTACH_WIDGET
+					       XmNtopWidget           notes
+					       XmNbottomAttachment    XmATTACH_FORM)))
+	     (toggled 0))
+	(XtCreateManagedWidget "one" xmPushButtonWidgetClass notes ())
+	(XtCreateManagedWidget "two" xmPushButtonWidgetClass notes ())
+	(let ((info (cadr (XmNotebookGetPageInfo notes 1))))
+	  (if (not (= (.page_number info) 1)) (snd-display #__line__ ";page_number: ~A" (.page_number info)))
+	  (if (.page_widget info) (snd-display #__line__ ";page_widget: ~A" (.page_widget info)))
+	  (if (.status_area_widget info) (snd-display #__line__ ";status_area_widget: ~A" (.status_area_widget info)))
+	  (if (not (Widget? (.major_tab_widget info))) (snd-display #__line__ ";major_tab_widget: ~A" (.major_tab_widget info)))
+	  (if (.minor_tab_widget info) (snd-display #__line__ ";minor_tab_widget: ~A" (.minor_tab_widget info)))
+					;(segfault)	(XtFree (cadr info))
+	  )
+	
+	(XmSimpleSpinBoxAddItem spn (XmStringCreateLocalized "hiho") 0)
+	(XmSimpleSpinBoxAddItem spn (XmStringCreateLocalized "away") 0)
+	(XmSimpleSpinBoxDeletePos spn 0)
+	(let ((vals (XtVaGetValues spn (list XmNvalues 0))))
+	  (XmSimpleSpinBoxSetItem spn (car (cadr vals))))
+	(XmSimpleSpinBoxAddItem spn (XmStringCreateLocalized "another") 0)
+	(let ((vals (XtGetValues spn (list XmNeditable 0 XmNtextField 0))))
+	  (if (not (vals 1)) (snd-display #__line__ ";XmNeditable spin box"))
+	  (if (not (Widget? (vals 3))) (snd-display #__line__ ";XmNtextField: ~A" (vals 3))))
+	
+	(XtAddCallback tgl XmNvalueChangedCallback (lambda (w c i) (set! toggled 123)) #f)
+	(XmToggleButtonSetState tgl #f #f)
+	(XmToggleButtonGadgetSetState tgg #f #f)
+	(if (not (= toggled 0)) (snd-display #__line__ ";toggle calledback: ~A?" toggled))
+	(if (XmToggleButtonGetState tgl) (snd-display #__line__ ";XmToggleButtonSetState #f"))
+	(if (XmToggleButtonGadgetGetState tgg) (snd-display #__line__ ";XmToggleButtonGadgetSetState #f"))
+	(XtVaSetValues tgl (list XmNtoggleMode XmTOGGLE_INDETERMINATE))
+	(XmToggleButtonSetValue tgl XmINDETERMINATE #t)
+	(XmToggleButtonGadgetSetValue tgg XmINDETERMINATE #t)
+	(if (not (= toggled 123)) (snd-display #__line__ ";toggle not calledback: ~A?" toggled))
+	
+	(XmCommandAppendValue cmd (XmStringCreateLocalized "hiho"))
+	(XmCommandError cmd (XmStringCreateLocalized "hiho"))
+	(if (not (Widget? (XmCommandGetChild cmd XmDIALOG_COMMAND_TEXT)))
+	    (snd-display #__line__ ";XmCommandGetChild: ~A" (XmCommandGetChild cmd XmDIALOG_COMMAND_TEXT)))
+	(XmCommandSetValue cmd (XmStringCreateLocalized "hiho"))
+	
+	(let ((one1 (XmStringCreateLocalized "one"))
+	      (two1 (XmStringCreateLocalized "two"))
+	      (three1 (XmStringCreateLocalized "three")))
+	  (XmComboBoxAddItem cmb one1 0 #f)
+	  (XmComboBoxAddItem cmb two1 0 #f)
+	  (XmComboBoxAddItem cmb three1 0 #f)
+	  (XmComboBoxDeletePos cmb 1)
+	  (XmComboBoxSelectItem cmb three1)
+	  (XmComboBoxSetItem cmb three1) ; hunh??
+	  (XmComboBoxUpdate cmb)
+	  (let ((vals (cadr (XtGetValues cmb (list XmNitems 0)))))
+	    (if (not (equal? vals (list two1 three1))) (snd-display #__line__ ";XmComboBox: ~A" vals))))
+	
+	(XmContainerCut box current-time)
+	(XmContainerCopy box current-time)
+	(XmContainerPaste box)
+	(XmContainerCopyLink box (list 'Time CurrentTime))
+	(XmContainerPasteLink box)
+	(let ((vals (XtVaGetValues box (list XmNlargeIconX 0 XmNlargeIconY 0))))
+	  (if (or (null? (cdr vals))
+		  (not (real? (cadr vals)))
+		  (fneq (cadr vals) 0.0)
+		  (null? (cdddr vals))
+		  (not (real? (cadddr vals)))
+		  (fneq (cadddr vals) 0.0))
+	      (snd-display #__line__ ";xm-float resource vals: ~A" vals)))
+	
+	(XtAddCallback scl XmNvalueChangedCallback (lambda (w c i) #f))
+	(XmScaleSetValue scl 25)
+	(if (not (= (XmScaleGetValue scl) 25)) (snd-display #__line__ ";XmScaleSetValue: ~A" (XmScaleGetValue scl)))
+	(if (XmGetTearOffControl (car (menu-widgets))) (snd-display #__line__ ";XmGetTearOffControl: ~A" (XmGetTearOffControl (car (menu-widgets)))))
+	(let ((children (cadr (XtGetValues scl (list XmNchildren 0)))))
+	  (for-each 
+	   (lambda (w)
+	     (let ((name (XtName w)))
+	       (if (and (XmIsSeparatorGadget w)
+			(or (string=? name "BigTic")
+			    (string=? name "MedTic")
+			    (string=? name "SmallTic")))
+		   (XtDestroyWidget w))))
+	   children))
+	(XmScaleSetTicks scl 5 2 0 10 5 0)
+	)
+      
+      (XmSetColorCalculation #f)
+      (let* ((dpy (XtDisplay (cadr (main-widgets))))
+	     (scr1 (DefaultScreen dpy))
+	     (cmap (DefaultColormap dpy scr1))
+	     (screen (XDefaultScreenOfDisplay dpy))
+	     (scr (XmGetXmScreen (XDefaultScreenOfDisplay dpy)))
+					;(old-h (cadr (XtVaGetValues scr (list XmNhorizontalFontUnit 0))))
+					;(old-v (cadr (XtVaGetValues scr (list XmNverticalFontUnit 0))))
+	     )
+	(if (not (XmIsScreen scr)) (snd-display #__line__ ";XmIsScreen: ~A" scr))
+	(let ((colors (XmGetColors screen cmap *basic-color*)))
+	  (if (not (Pixel? (car colors)))
+	      (snd-display #__line__ ";colors: ~A " colors))
+	  (let ((color-proc (lambda (bg)
+			      (list (white-pixel) (black-pixel) (white-pixel) (black-pixel)))))
+	    (XmSetColorCalculation color-proc)
+	    (if (not (equal? (XmGetColorCalculation) color-proc))
+		(snd-display #__line__ ";XmSetColorcalulcation ~A" (XmGetColorCalculation)))))
+	(let ((vals (XtVaGetValues scr 
+				   (list XmNbitmapConversionModel 0 XmNdarkThreshold 0 XmNfont 0 XmNunpostBehavior 0))))
+	  (if (not (= (vals 1) XmMATCH_DEPTH)) (snd-display #__line__ ";XmNbitmapConversionModel: ~A" (vals 1)))
+	  (if (not (= (vals 3) 0)) (snd-display #__line__ ";XmNdarkThreshold: ~A" (vals 3)))
+	  (if (not (XFontStruct? (vals 5))) (snd-display #__line__ ";XmNfont: ~A" (vals 5)))
+	  (if (not (= (vals 7) XmUNPOST_AND_REPLAY)) (snd-display #__line__ ";XmNunpostBehavior: ~A" (vals 7)))
+	  (XSetScreenSaver dpy -1 5 DefaultBlanking DefaultExposures)
+	  ))
+      (let ((dpy (XtDisplay (cadr (main-widgets)))))
+	(let* ((dp (XmGetXmDisplay dpy))
+	       (vals (XtVaGetValues dp
+				    (list XmNdragInitiatorProtocolStyle 0 XmNenableThinThickness 0 XmNmotifVersion 0))))
+	  (if (not (XmIsDisplay dp)) (snd-display #__line__ ";XmIsDisplay: ~A" dp))
+	  (if (not (= (vals 1) XmDRAG_PREFER_RECEIVER)) (snd-display #__line__ ";XmNdragInitiatorProtocolStyle: ~A" (vals 1)))
+	  (if (not (vals 3)) (snd-display #__line__ ";XmNenableThinThickness?"))
+	  (if (not (= (vals 5) 2002)) (snd-display #__line__ ";XmGetXmDisplay motif version: ~A" (vals 5)))
+	  (XtAddCallback dp XmNdragStartCallback (lambda (w c i) #f)))
+	
+	(if (not (string=? (XmCvtXmStringToCT (XmStringCreateLocalized "hiho")) "hiho"))
+	    (snd-display #__line__ ";XmCvtXmStringToCT: ~A" (XmCvtXmStringToCT (XmStringCreateLocalized "hiho"))))
+	(let ((val (XmConvertStringToUnits (XDefaultScreenOfDisplay dpy) "3.14 in" XmHORIZONTAL XmINCHES)))
+	  (if (not (= val 3)) (snd-display #__line__ ";XmConvertStringToUnits in->in ~A" val)))
+	(let ((val (XmConvertStringToUnits (XDefaultScreenOfDisplay dpy) "3.14 in" XmHORIZONTAL XmPOINTS)))
+	  (if (not (= val 225)) (snd-display #__line__ ";XmConvertStringToUnits in->pts ~A" val)))
+	(let ((val (XmConvertStringToUnits (XDefaultScreenOfDisplay dpy) "3.14 in" XmHORIZONTAL XmCENTIMETERS)))
+	  (if (not (= val 7)) (snd-display #__line__ ";XmConvertStringToUnits in->cm ~A" val)))
+	(let ((val (XmConvertUnits (cadr (main-widgets)) XmHORIZONTAL XmCENTIMETERS 7 XmMILLIMETERS)))
+	  (if (not (= val 70)) (snd-display #__line__ ";XmConvertUnits cm->mm ~A" val)))
+	(let ((val (XmConvertUnits (cadr (main-widgets)) XmHORIZONTAL XmCENTIMETERS 7 XmPIXELS)))
+	  (if (and (not (= val 278)) (not (= val 273))) (snd-display #__line__ ";XmConvertUnits cm->pix ~A" val)))
+	(XmVaCreateSimpleRadioBox (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) ())
+	(XmVaCreateSimpleCheckBox (caddr (main-widgets)) "hiho" (lambda (w c i) #f) ())
+	(XmVaCreateSimplePulldownMenu (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) ())
+	(XmVaCreateSimplePopupMenu (caddr (main-widgets)) "hiho" (lambda (w c i) #f) ())
+	(XmVaCreateSimpleMenuBar (caddr (main-widgets)) "hiho" ())
+	(zync)
+	(make-pixmap (cadr (main-widgets)) arrow-strs)
+	(display-scanned-synthesis)
+	(add-mark-pane)
+	(let ((ind (open-sound "oboe.snd")))
+	  (snd-clock-icon ind 6)
+	  (add-tooltip (cadr (channel-widgets)) "the w button")
+	  (with-minmax-button ind)
+	  (make-channel-drop-site ind 0)
+	  (set-channel-drop (lambda (file s c) (snd-print file)) ind 0)
+	  (let ((drop-site (find-child (XtParent (XtParent ((channel-widgets ind 0) 7))) "drop here")))
+	    (if drop-site
+		(begin
+		  (XtVaGetValues drop-site (list XmNdropRectangles 0))
+		  (let ((val (XmDropSiteRetrieve drop-site (list XmNnumImportTargets 0))))
+		    (if (not (= (cadr val) 1)) (snd-display #__line__ ";XmDropSiteRetrieve num: ~A" val)))
+		  (XmDropSiteRetrieve drop-site (list XmNimportTargets 0))
+		  (if (not (XmDropSiteRegistered drop-site))
+		      (snd-display #__line__ ";XmDropSiteRegistered?"))
+		  (XmDropSiteUnregister drop-site))
+		(snd-display #__line__ ";no drop site?"))))
+	
+	(add-mark 123)
+	(let ((container
+	       (make-sound-box "sounds"
+			       ((main-widgets) 3)
+			       (lambda (file) 
+				 (mix file))
+			       (lambda (file chn)
+				 (define (without-directories filename)
+				   (call-with-exit
+				    (lambda (return)
+				      (do ((i (- (string-length filename) 1) (- i 1)))
+					  ((= i 0) filename)
+					(if (char=? (filename i) #\/)
+					    (return (substring filename (+ i 1))))))))
+				 (format #f "~~/peaks/~A-peaks-~D" 
+					 (snd-test-clean-string (mus-expand-filename file))
+					 chn))
+			       (list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
+			       ())))
+	  (XmContainerRelayout container)
+	  (let ((vals (XtVaGetValues container 
+				     (list XmNlargeCellHeight 0 XmNcollapsedStatePixmap 0 XmNdetailOrder 0 XmNdetailTabList 0
+					   XmNselectedObjects 0 XmNconvertCallback 0 XmNdestinationCallback 0 XmNselectionCallback 0))))
+	    (if (not (= (vals 1) 0)) (snd-display #__line__ ";XmNlargeCellHeight: ~A" (vals 1)))
+	    (if (not (Pixmap? (vals 3))) (snd-display #__line__ ";XmNcollapsedStatePixmap: ~A" (vals 3)))
+	    (let ((children ()))
+	      (for-each-child container
+			      (lambda (w)
+				(if (XmIsIconGadget w)
+				    (set! children (cons w children)))))
+	      (XmContainerReorder container children (length children)))
+	    (let ((func (lambda (w) 0)))
+	      (XtSetValues container (list XmNinsertPosition func))
+	      (let ((func1 (cadr (XtGetValues container (list XmNinsertPosition 0)))))
+		(if (not (equal? func func1)) (snd-display #__line__ ";XmNinsertPosition: ~A ~A" func func1))))))
+	(close-sound))
+      
+      ;; qualify proc is causing a segfault somehow
 					;	    (let ((box (XmCreateFileSelectionBox (cadr (main-widgets)) "box" 
 					;						 (list XmNfileSearchProc (lambda (w c) #f)
 					;						       XmNqualifySearchDataProc (lambda (w c i)
 					;										  (display "qualifier was called!")
 					;										  )))))
 					;	      (XtUnmanageChild box))
-	  (let ((hi (XtCreateManagedWidget "hi" xmTextWidgetClass (cadr (main-widgets)) 
-					   (list XmNqualifySearchDataProc (lambda (w c i) "hi")
-						 XmNtransferProc (lambda (a b c d e f g) "ho")
-						 XmNcolorAllocationProc (lambda (a b c) #f)
-						 XmNcolorCalculationProc (lambda (a b) #f)
-						 XmNcreatePopupChildProc (lambda (a) #f)
-						 XmNlargeIconX 0.5
-						 ))))
-	    (XtVaSetValues hi (list XmNqualifySearchDataProc (lambda (w c i) "hi")
-				    XmNtransferProc (lambda (a b c d e f g) "ho")
-				    XmNcolorAllocationProc (lambda (a b c) #f)
-				    XmNcolorCalculationProc (lambda (a b) #f)
-				    XmNcreatePopupChildProc (lambda (a) #f)))
-	    (XtVaSetValues hi (list XmNqualifySearchDataProc #f
-				    XmNcolorAllocationProc #f
-				    XmNcolorCalculationProc #f
-				    XmNcreatePopupChildProc #f
-				    XmNx 10
-				    XmNsource (XmTextGetSource hi)
-				    ))
-	    (XtUnmanageChild hi))
-	  
-	  (if (and (defined? 'XmCreateFontSelector)
-		   (defined? 'XmCreateColorSelector))
-	      (let ((fonts-dialog #f)
-		    (colors-dialog #f))
-		(for-each
-		 (lambda (make-dialog)
-		   (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
-			  (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
-			  (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
-			  (titlestr (XmStringCreate "Fonts" XmFONTLIST_DEFAULT_TAG))
-			  (new-dialog (XmCreateTemplateDialog
-				       (cadr (main-widgets)) "Fonts"
-				       (list XmNcancelLabelString   xdismiss
-					     XmNhelpLabelString     xhelp
-					     XmNokLabelString       xok
-					     XmNautoUnmanage        #f
-					     XmNdialogTitle         titlestr
-					     XmNresizePolicy        XmRESIZE_GROW
-					     XmNnoResize            #f
-					     XmNbackground          *basic-color*
-					     XmNtransient           #f))))
-		     (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i) (XtUnmanageChild w)))
-		     (XtAddCallback new-dialog XmNhelpCallback (lambda (w c i) (help-dialog "Fonts" "no help yet")))
-		     (XtAddCallback new-dialog XmNokCallback (lambda (w c i) (XtUnmanageChild w)))
-		     (XmStringFree xhelp)
-		     (XmStringFree xok)
-		     (XmStringFree xdismiss)
-		     (XmStringFree titlestr)
-		     (if (not fonts-dialog)
-			 (set! fonts-dialog new-dialog)
-			 (set! colors-dialog new-dialog))
-		     (let* ((mainform (XtCreateManagedWidget "mainform" xmFormWidgetClass new-dialog
-							     (list XmNleftAttachment   XmATTACH_FORM
-								   XmNrightAttachment  XmATTACH_FORM
-								   XmNtopAttachment    XmATTACH_FORM
-								   XmNbottomAttachment XmATTACH_WIDGET
-								   XmNbottomWidget     (XmMessageBoxGetChild new-dialog XmDIALOG_SEPARATOR)
-								   XmNbackground       *basic-color*)))
-			    (fnts (make-dialog mainform)))
-		       (XtManageChild fnts)
-		       (if (not colors-dialog)
-			   (XtManageChild fonts-dialog)
-			   (XtManageChild colors-dialog)))))
-		 (list 
-		  (lambda (mainform)
-		    (XmCreateFontSelector mainform "Fonts" 
-					  (list XmNbackground *basic-color*
-						XmNcurrentFont "-*-times-bold-r-*-*-14-140-*-*-*-*-*-*"
-						XmNleftAttachment   XmATTACH_FORM
-						XmNrightAttachment  XmATTACH_FORM
-						XmNtopAttachment    XmATTACH_FORM
-						XmNbottomAttachment XmATTACH_NONE)))
-		  
-		  (lambda (mainform)
-		    (XmCreateColorSelector mainform "Colors" 
-					   (list XmNbackground *basic-color*
-						 XmNleftAttachment   XmATTACH_FORM
-						 XmNrightAttachment  XmATTACH_FORM
-						 XmNtopAttachment    XmATTACH_FORM
-						 XmNbottomAttachment XmATTACH_NONE)))))
-		(XtUnmanageChild fonts-dialog)
-		(XtUnmanageChild colors-dialog)))
-	  
-	  (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
-		 (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
-		 (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
-		 (titlestr (XmStringCreate "Fonts" XmFONTLIST_DEFAULT_TAG))
-		 (new-dialog (XmCreateTemplateDialog
-			      (cadr (main-widgets)) "Fonts"
-			      (list XmNcancelLabelString   xdismiss
-				    XmNhelpLabelString     xhelp
-				    XmNokLabelString       xok
-				    XmNautoUnmanage        #f
-				    XmNdialogTitle         titlestr
-				    XmNresizePolicy        XmRESIZE_GROW
-				    XmNnoResize            #f
-				    XmNbackground          *basic-color*
-				    XmNtransient           #f))))
-	    (XmStringFree xhelp)
-	    (XmStringFree xok)
-	    (XmStringFree xdismiss)
-	    (XmStringFree titlestr)
-	    (let* ((mainform (XtCreateManagedWidget "mainform" xmFormWidgetClass new-dialog
-						    (list XmNleftAttachment   XmATTACH_FORM
-							  XmNrightAttachment  XmATTACH_FORM
-							  XmNtopAttachment    XmATTACH_FORM
-							  XmNbottomAttachment XmATTACH_WIDGET
-							  XmNbottomWidget     (XmMessageBoxGetChild new-dialog XmDIALOG_SEPARATOR)
-							  XmNbackground       *basic-color*)))
-		   (fnts 
-		    (if (defined? 'XmIsColumn)
-			(let* ((w1 (XmCreateColumn mainform "column" ()))
-			       (w1-child (XtCreateManagedWidget "hihi" xmLabelWidgetClass w1 () 0))
-			       (w2 (XtCreateManagedWidget "column1" xmColumnWidgetClass mainform () 0)))
-			  (if (or (not (XmIsColumn w1))
-				  (not (XmIsColumn w2))
-				  (not (XmColumn? w1)))
-			      (snd-display #__line__ ";XmIsColumn: ~A ~A" w1 w2))
-			  (if (defined? 'XmColumnGetChildLabel)
-			      (let ((child (XmColumnGetChildLabel w1)))
-				(if (or (not (child)) (not (equal? child w1-child)))
-				    (snd-display #__line__ ";XmColumn child: ~A ~A" child w1-child))))
-			  (XtManageChild w1)
-			  w1)
-			#f))
-		   (fntt
-		    (if (defined? 'XmIsButtonBox)
-			(let ((w1 (XmCreateButtonBox mainform "box" (list XmNfillOption XmFillMajor))))
-			  (if (or (not (XmIsButtonBox w1))
-				  (not (XmButtonBox? w1)))
-			      (snd-display #__line__ ";XmIsButtonBox: ~A ~A ~A" w1 (XmIsButtonBox w1) (XmButtonBox? w1)))
-			  (XtManageChild w1)
-			  w1)
-			#f))
-		   (fntd 
-		    (if (defined? 'XmIsDropDown)
-			(let ((w1 (XmCreateDropDown mainform "drop" ())))
-			  (if (or (not (XmIsDropDown w1))
-				  (not (XmDropDown? w1)))
-			      (snd-display #__line__ ";XmIsDropDown: ~A ~A ~A" w1 (XmIsDropDown w1) (XmDropDown? w1)))
-			  (XtManageChild w1)
-			  (let ((text (XmDropDownGetText w1))
-				(label (XmDropDownGetLabel w1))
-				(arrow (XmDropDownGetArrow w1))
-				(lst (XmDropDownGetList w1)))
-			    (XmDropDownGetValue w1)
-			    (if (not (XmTextField? text)) (snd-display #__line__ ";dropdown text: ~A" text))
-			    (if (not (XmLabel? label)) (snd-display #__line__ ";dropdown label: ~A" label))
-			    (if (not (XmArrowButton? arrow)) (snd-display #__line__ ";dropdown arrow: ~A" arrow))
-			    (if (not (XmList? lst)) (snd-display #__line__ ";dropdown lst: ~A" text))
-			    w1))
-			#f))
-		   (fntda
-		    (if (defined? 'XmIsDataField)
-			(let ((w1 (XmCreateDataField mainform "data" ())))
-			  (if (or (not (XmIsDataField w1))
-				  (not (XmDataField? w1)))
-			      (snd-display #__line__ ";XmIsDataField: ~A ~A ~A" w1 (XmIsDataField w1) (XmDataField? w1)))
-			  (XmDataFieldGetString w1)
-			  (XmDataFieldGetSelection w1)
-			  (XmDataFieldSetString w1 "hiho")
-			  (XmDataFieldSetEditable w1 #t)
-			  (XmDataFieldSetAddMode w1 #f)
-			  (XmDataFieldShowPosition w1 0)
-			  (XmDataFieldXYToPos w1 0 0)
-			  (XmDataFieldSetHighlight w1 0 0 0)
-			  (XmDataFieldGetSelectionPosition w1)
-			  (XmDataFieldSetSelection w1 0 0 '(Time 0))
-			  (XmDataFieldCopy w1 '(Time 0))
-			  (XmDataFieldCut w1 '(Time 0))
-			  w1)
-			#f))
-		   (fnttab
-		    (if (defined? 'XmIsTabStack)
-			(let ((w1 (XmCreateTabStack mainform "hi" ())))
-			  (if (or (not (XmIsTabStack w1))
-				  (not (XmTabStack? w1)))
-			      (snd-display #__line__ ";XmIsTabStack: ~A ~A ~A" w1 (XmIsTabStack w1) (XmTabStack? w1)))
-			  (XmTabStackGetSelectedTab w1)
-			  (XmTabStackSelectTab w1 #f)
-			  w1)
-			#f)))
+      (let ((hi (XtCreateManagedWidget "hi" xmTextWidgetClass (cadr (main-widgets)) 
+				       (list XmNqualifySearchDataProc (lambda (w c i) "hi")
+					     XmNtransferProc (lambda (a b c d e f g) "ho")
+					     XmNcolorAllocationProc (lambda (a b c) #f)
+					     XmNcolorCalculationProc (lambda (a b) #f)
+					     XmNcreatePopupChildProc (lambda (a) #f)
+					     XmNlargeIconX 0.5
+					     ))))
+	(XtVaSetValues hi (list XmNqualifySearchDataProc (lambda (w c i) "hi")
+				XmNtransferProc (lambda (a b c d e f g) "ho")
+				XmNcolorAllocationProc (lambda (a b c) #f)
+				XmNcolorCalculationProc (lambda (a b) #f)
+				XmNcreatePopupChildProc (lambda (a) #f)))
+	(XtVaSetValues hi (list XmNqualifySearchDataProc #f
+				XmNcolorAllocationProc #f
+				XmNcolorCalculationProc #f
+				XmNcreatePopupChildProc #f
+				XmNx 10
+				XmNsource (XmTextGetSource hi)
+				))
+	(XtUnmanageChild hi))
+      
+      (if (and (defined? 'XmCreateFontSelector)
+	       (defined? 'XmCreateColorSelector))
+	  (let ((fonts-dialog #f)
+		(colors-dialog #f))
+	    (for-each
+	     (lambda (make-dialog)
+	       (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+		      (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+		      (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
+		      (titlestr (XmStringCreate "Fonts" XmFONTLIST_DEFAULT_TAG))
+		      (new-dialog (XmCreateTemplateDialog
+				   (cadr (main-widgets)) "Fonts"
+				   (list XmNcancelLabelString   xdismiss
+					 XmNhelpLabelString     xhelp
+					 XmNokLabelString       xok
+					 XmNautoUnmanage        #f
+					 XmNdialogTitle         titlestr
+					 XmNresizePolicy        XmRESIZE_GROW
+					 XmNnoResize            #f
+					 XmNbackground          *basic-color*
+					 XmNtransient           #f))))
+		 (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i) (XtUnmanageChild w)))
+		 (XtAddCallback new-dialog XmNhelpCallback (lambda (w c i) (help-dialog "Fonts" "no help yet")))
+		 (XtAddCallback new-dialog XmNokCallback (lambda (w c i) (XtUnmanageChild w)))
+		 (XmStringFree xhelp)
+		 (XmStringFree xok)
+		 (XmStringFree xdismiss)
+		 (XmStringFree titlestr)
+		 (if (not fonts-dialog)
+		     (set! fonts-dialog new-dialog)
+		     (set! colors-dialog new-dialog))
+		 (let* ((mainform (XtCreateManagedWidget "mainform" xmFormWidgetClass new-dialog
+							 (list XmNleftAttachment   XmATTACH_FORM
+							       XmNrightAttachment  XmATTACH_FORM
+							       XmNtopAttachment    XmATTACH_FORM
+							       XmNbottomAttachment XmATTACH_WIDGET
+							       XmNbottomWidget     (XmMessageBoxGetChild new-dialog XmDIALOG_SEPARATOR)
+							       XmNbackground       *basic-color*)))
+			(fnts (make-dialog mainform)))
+		   (XtManageChild fnts)
+		   (if (not colors-dialog)
+		       (XtManageChild fonts-dialog)
+		       (XtManageChild colors-dialog)))))
+	     (list 
+	      (lambda (mainform)
+		(XmCreateFontSelector mainform "Fonts" 
+				      (list XmNbackground *basic-color*
+					    XmNcurrentFont "-*-times-bold-r-*-*-14-140-*-*-*-*-*-*"
+					    XmNleftAttachment   XmATTACH_FORM
+					    XmNrightAttachment  XmATTACH_FORM
+					    XmNtopAttachment    XmATTACH_FORM
+					    XmNbottomAttachment XmATTACH_NONE)))
 	      
-	      (if (and (defined? 'XmToolTipGetLabel)
-		       (defined? 'XmNtoolTipString))
-		  (let ((wid1 (XtCreateManagedWidget "wid1" xmPushButtonWidgetClass mainform
-						     (list XmNtoolTipString (XmStringCreateLocalized "tooltip")
-							   XmNtoolTipPostDelay 100
-							   XmNtoolTipPostDuration 500
-							   XmNtoolTipEnable #t
-							   XmNanimate #f))))
-		    (let ((tip (XmToolTipGetLabel wid1)))
-		      (if (not (Widget? tip)) (snd-display #__line__ ";tooltip label: ~A ~A ~A ~A ~A ~A" tip fnttab fntda fntd fntt fnts)))))
-	      
-	      (XtManageChild new-dialog)
-	      (XtUnmanageChild new-dialog)))
+	      (lambda (mainform)
+		(XmCreateColorSelector mainform "Colors" 
+				       (list XmNbackground *basic-color*
+					     XmNleftAttachment   XmATTACH_FORM
+					     XmNrightAttachment  XmATTACH_FORM
+					     XmNtopAttachment    XmATTACH_FORM
+					     XmNbottomAttachment XmATTACH_NONE)))))
+	    (XtUnmanageChild fonts-dialog)
+	    (XtUnmanageChild colors-dialog)))
+      
+      (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+	     (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+	     (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
+	     (titlestr (XmStringCreate "Fonts" XmFONTLIST_DEFAULT_TAG))
+	     (new-dialog (XmCreateTemplateDialog
+			  (cadr (main-widgets)) "Fonts"
+			  (list XmNcancelLabelString   xdismiss
+				XmNhelpLabelString     xhelp
+				XmNokLabelString       xok
+				XmNautoUnmanage        #f
+				XmNdialogTitle         titlestr
+				XmNresizePolicy        XmRESIZE_GROW
+				XmNnoResize            #f
+				XmNbackground          *basic-color*
+				XmNtransient           #f))))
+	(XmStringFree xhelp)
+	(XmStringFree xok)
+	(XmStringFree xdismiss)
+	(XmStringFree titlestr)
+	(let* ((mainform (XtCreateManagedWidget "mainform" xmFormWidgetClass new-dialog
+						(list XmNleftAttachment   XmATTACH_FORM
+						      XmNrightAttachment  XmATTACH_FORM
+						      XmNtopAttachment    XmATTACH_FORM
+						      XmNbottomAttachment XmATTACH_WIDGET
+						      XmNbottomWidget     (XmMessageBoxGetChild new-dialog XmDIALOG_SEPARATOR)
+						      XmNbackground       *basic-color*)))
+	       (fnts 
+		(if (defined? 'XmIsColumn)
+		    (let* ((w1 (XmCreateColumn mainform "column" ()))
+			   (w1-child (XtCreateManagedWidget "hihi" xmLabelWidgetClass w1 () 0))
+			   (w2 (XtCreateManagedWidget "column1" xmColumnWidgetClass mainform () 0)))
+		      (if (or (not (XmIsColumn w1))
+			      (not (XmIsColumn w2))
+			      (not (XmColumn? w1)))
+			  (snd-display #__line__ ";XmIsColumn: ~A ~A" w1 w2))
+		      (if (defined? 'XmColumnGetChildLabel)
+			  (let ((child (XmColumnGetChildLabel w1)))
+			    (if (or (not (child)) (not (equal? child w1-child)))
+				(snd-display #__line__ ";XmColumn child: ~A ~A" child w1-child))))
+		      (XtManageChild w1)
+		      w1)
+		    #f))
+	       (fntt
+		(if (defined? 'XmIsButtonBox)
+		    (let ((w1 (XmCreateButtonBox mainform "box" (list XmNfillOption XmFillMajor))))
+		      (if (or (not (XmIsButtonBox w1))
+			      (not (XmButtonBox? w1)))
+			  (snd-display #__line__ ";XmIsButtonBox: ~A ~A ~A" w1 (XmIsButtonBox w1) (XmButtonBox? w1)))
+		      (XtManageChild w1)
+		      w1)
+		    #f))
+	       (fntd 
+		(if (defined? 'XmIsDropDown)
+		    (let ((w1 (XmCreateDropDown mainform "drop" ())))
+		      (if (or (not (XmIsDropDown w1))
+			      (not (XmDropDown? w1)))
+			  (snd-display #__line__ ";XmIsDropDown: ~A ~A ~A" w1 (XmIsDropDown w1) (XmDropDown? w1)))
+		      (XtManageChild w1)
+		      (let ((text (XmDropDownGetText w1))
+			    (label (XmDropDownGetLabel w1))
+			    (arrow (XmDropDownGetArrow w1))
+			    (lst (XmDropDownGetList w1)))
+			(XmDropDownGetValue w1)
+			(if (not (XmTextField? text)) (snd-display #__line__ ";dropdown text: ~A" text))
+			(if (not (XmLabel? label)) (snd-display #__line__ ";dropdown label: ~A" label))
+			(if (not (XmArrowButton? arrow)) (snd-display #__line__ ";dropdown arrow: ~A" arrow))
+			(if (not (XmList? lst)) (snd-display #__line__ ";dropdown lst: ~A" text))
+			w1))
+		    #f))
+	       (fntda
+		(if (defined? 'XmIsDataField)
+		    (let ((w1 (XmCreateDataField mainform "data" ())))
+		      (if (or (not (XmIsDataField w1))
+			      (not (XmDataField? w1)))
+			  (snd-display #__line__ ";XmIsDataField: ~A ~A ~A" w1 (XmIsDataField w1) (XmDataField? w1)))
+		      (XmDataFieldGetString w1)
+		      (XmDataFieldGetSelection w1)
+		      (XmDataFieldSetString w1 "hiho")
+		      (XmDataFieldSetEditable w1 #t)
+		      (XmDataFieldSetAddMode w1 #f)
+		      (XmDataFieldShowPosition w1 0)
+		      (XmDataFieldXYToPos w1 0 0)
+		      (XmDataFieldSetHighlight w1 0 0 0)
+		      (XmDataFieldGetSelectionPosition w1)
+		      (XmDataFieldSetSelection w1 0 0 '(Time 0))
+		      (XmDataFieldCopy w1 '(Time 0))
+		      (XmDataFieldCut w1 '(Time 0))
+		      w1)
+		    #f))
+	       (fnttab
+		(if (defined? 'XmIsTabStack)
+		    (let ((w1 (XmCreateTabStack mainform "hi" ())))
+		      (if (or (not (XmIsTabStack w1))
+			      (not (XmTabStack? w1)))
+			  (snd-display #__line__ ";XmIsTabStack: ~A ~A ~A" w1 (XmIsTabStack w1) (XmTabStack? w1)))
+		      (XmTabStackGetSelectedTab w1)
+		      (XmTabStackSelectTab w1 #f)
+		      w1)
+		    #f)))
 	  
-	  (let* ((shell (cadr (main-widgets)))
-		 (dpy (XtDisplay shell))
-		 (prop (XmInternAtom dpy "TESTING" #f))
-		 (proto1 (XmInternAtom dpy "TEST1" #f))
-		 (proto2 (XmInternAtom dpy "TEST2" #f))
-		 (val 0))
-	    (if (not (Atom? prop)) (snd-display #__line__ ";XmInternAtom: ~A" prop))
-	    (if (not (string=? (XmGetAtomName dpy prop) "TESTING")) (snd-display #__line__ ";XmGetAtomName: ~A" (XmGetAtomName dpy prop)))
-	    (XmAddProtocols shell prop (list proto1 proto2))
-	    (XmSetProtocolHooks shell
-				(XmInternAtom dpy "WM_PROTOCOLS" #f)
-				prop
-				(lambda (w c i)
-				  (snd-display #__line__ ";prehook: ~A ~A ~A" w c i))
-				12345
-				(lambda (w c i)
-				  (snd-display #__line__ ";posthook: ~A ~A ~A" w c i))
-				54321)
-	    (XmDeactivateProtocol shell prop proto2)
-	    (XmRemoveProtocols shell prop (list proto2))
-	    (XmAddProtocolCallback shell prop proto1 (lambda (w c i) (set! val c)) 123)
-	    (XmActivateProtocol shell prop proto1)
-	    (let ((e (XEvent ClientMessage))
-		  (window (XtWindow shell)))
-	      (set! (.window e) window)
-	      (set! (.display e) dpy)
-	      (set! (.format e) (if val 8))
-	      (set! (.message_type e) XA_STRING)
-	      (set! (.data e) "hiho")
-	      (XSendEvent dpy window #f 0 e))
-	    (XmRemoveProtocols shell prop (list proto1)))
-	  (XmCascadeButtonHighlight (XmCreateCascadeButton (cadr (main-widgets)) "cascade" ()) #f)
+	  (if (and (defined? 'XmToolTipGetLabel)
+		   (defined? 'XmNtoolTipString))
+	      (let ((wid1 (XtCreateManagedWidget "wid1" xmPushButtonWidgetClass mainform
+						 (list XmNtoolTipString (XmStringCreateLocalized "tooltip")
+						       XmNtoolTipPostDelay 100
+						       XmNtoolTipPostDuration 500
+						       XmNtoolTipEnable #t
+						       XmNanimate #f))))
+		(let ((tip (XmToolTipGetLabel wid1)))
+		  (if (not (Widget? tip)) (snd-display #__line__ ";tooltip label: ~A ~A ~A ~A ~A ~A" tip fnttab fntda fntd fntt fnts)))))
+	  
+	  (XtManageChild new-dialog)
+	  (XtUnmanageChild new-dialog)))
+      
+      (let* ((shell (cadr (main-widgets)))
+	     (dpy (XtDisplay shell))
+	     (prop (XmInternAtom dpy "TESTING" #f))
+	     (proto1 (XmInternAtom dpy "TEST1" #f))
+	     (proto2 (XmInternAtom dpy "TEST2" #f))
+	     (val 0))
+	(if (not (Atom? prop)) (snd-display #__line__ ";XmInternAtom: ~A" prop))
+	(if (not (string=? (XmGetAtomName dpy prop) "TESTING")) (snd-display #__line__ ";XmGetAtomName: ~A" (XmGetAtomName dpy prop)))
+	(XmAddProtocols shell prop (list proto1 proto2))
+	(XmSetProtocolHooks shell
+			    (XmInternAtom dpy "WM_PROTOCOLS" #f)
+			    prop
+			    (lambda (w c i)
+			      (snd-display #__line__ ";prehook: ~A ~A ~A" w c i))
+			    12345
+			    (lambda (w c i)
+			      (snd-display #__line__ ";posthook: ~A ~A ~A" w c i))
+			    54321)
+	(XmDeactivateProtocol shell prop proto2)
+	(XmRemoveProtocols shell prop (list proto2))
+	(XmAddProtocolCallback shell prop proto1 (lambda (w c i) (set! val c)) 123)
+	(XmActivateProtocol shell prop proto1)
+	(let ((e (XEvent ClientMessage))
+	      (window (XtWindow shell)))
+	  (set! (.window e) window)
+	  (set! (.display e) dpy)
+	  (set! (.format e) (if val 8))
+	  (set! (.message_type e) XA_STRING)
+	  (set! (.data e) "hiho")
+	  (XSendEvent dpy window #f 0 e))
+	(XmRemoveProtocols shell prop (list proto1)))
+      (XmCascadeButtonHighlight (XmCreateCascadeButton (cadr (main-widgets)) "cascade" ()) #f)
 					;(XmCascadeButtonGadgetHighlight (XmCreateCascadeButtonGadget (cadr (main-widgets)) "gadget" ()) #f)
-	  
-	  (let ((callbacks
-		 (list
-		  (list XmAnyCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event))
-		  (list XmArrowButtonCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) (list .click_count 'int '.click_count))
-		  (list XmCommandCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .value 'XmString '.value) (list .length 'int '.length #f))
-		  (list XmDragDropFinishCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .timeStamp 'Time '.timeStamp))
-		  (list XmDragMotionCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .timeStamp 'Time '.timeStamp) (list .operation 'uchar '.operation) 
-			(list .operations 'uchar '.operations #f) (list .dropSiteStatus 'uchar '.dropSiteStatus) 
-			(list .x 'Position '.x #f) (list .y 'Position '.y #f))
-		  (list XmDragProcCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .timeStamp 'Time '.timeStamp) (list .dragContext 'Widget '.dragContext #f) 
-			(list .x 'Position '.x #f) (list .y 'Position '.y #f) (list .dropSiteStatus 'uchar '.dropSiteStatus) 
-			(list .operation 'uchar '.operation) (list .operations 'uchar '.operations #f) (list .animate 'Boolean '.animate #f))
-		  (list XmDrawingAreaCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) (list .window 'Window '.window))
-		  (list XmDrawnButtonCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .window 'Window '.window) (list .click_count 'int '.click_count))
-		  (list XmDropFinishCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .timeStamp 'Time '.timeStamp) (list .operation 'uchar '.operation) 
-			(list .operations 'uchar '.operations #f) (list .dropSiteStatus 'uchar '.dropSiteStatus) 
-			(list .dropAction 'uchar '.dropAction #f) (list .completionStatus 'uchar '.completionStatus #f))
-		  (list XmDropProcCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .timeStamp 'Time '.timeStamp) (list .dragContext 'Widget '.dragContext #f) 
-			(list .x 'Position '.x #f) (list .y 'Position '.y #f) (list .dropSiteStatus 'uchar '.dropSiteStatus)
-			(list .operation 'uchar '.operation) (list .operations 'uchar '.operations #f) (list .dropAction 'uchar '.dropAction #f))
-		  (list XmDropSiteEnterCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .timeStamp 'Time '.timeStamp) (list .operation 'uchar '.operation) 
-			(list .operations 'uchar '.operations #f) (list .dropSiteStatus 'uchar '.dropSiteStatus) 
-			(list .x 'Position '.x #f) (list .y 'Position '.y #f))
-		  (list XmDropSiteLeaveCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .timeStamp 'Time '.timeStamp))
-		  (list XmDropStartCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .timeStamp 'Time '.timeStamp) (list .operation 'uchar '.operation) 
-			(list .operations 'uchar '.operations #f) (list .dropSiteStatus 'uchar '.dropSiteStatus) 
-			(list .dropAction 'uchar '.dropAction #f))
-		  (list XmFileSelectionBoxCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .value 'XmString '.value) (list .length 'int '.length #f) (list .mask 'XmString '.mask #f) 
-			(list .mask_length 'int '.mask_length #f) (list .dir 'XmString '.dir #f) (list .dir_length 'int '.dir_length #f) 
-			(list .pattern 'XmString '.pattern #f) (list .pattern_length 'int '.pattern_length #f))
-		  (list XmListCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .item 'XmString '.item #f) (list .item_length 'int '.item_length #f) (list .item_position 'int '.item_position #f) 
-			(list .selected_items 'XmString* '.selected_items) (list .selected_item_count 'int '.selected_item_count #f) 
-			(list .selected_item_positions 'int* '.selected_item_positions) (list .selection_type 'char '.selection_type #f) 
-			(list .auto_selection_type 'char '.auto_selection_type #f))
-		  (list XmOperationChangedCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .timeStamp 'Time '.timeStamp) (list .operation 'uchar '.operation) (list .operations 'uchar '.operations #f) 
-			(list .dropSiteStatus 'uchar '.dropSiteStatus))
-		  (list XmPushButtonCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) (list .click_count 'int '.click_count))
-		  (list XmRowColumnCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event)
-			(list .widget 'Widget '.widget #f) (list .data 'char* '.data #f) (list .callbackstruct 'char* '.callbackstruct #f))
-		  (list XmScaleCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) (list .value 'int '.value))
-		  (list XmScrollBarCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .value 'int '.value) (list .pixel 'int '.pixel #f))
-		  (list XmSelectionBoxCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .value 'XmString '.value) (list .length 'int '.length #f))
-		  (list XmTextVerifyCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .doit 'Boolean '.doit) (list .currInsert 'int '.currInsert #f) (list .newInsert 'int '.newInsert #f) 
-			(list .startPos 'int '.startPos #f) (list .endPos 'int '.endPos #f)
-			(list .text 'XmTextBlock '.text #f))
-		  (list XmToggleButtonCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) (list .set 'int '.set))
-		  (list XmDestinationCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .selection 'Atom '.selection #f) (list .operation 'uchar '.operation) (list .flags 'int '.flags #f) 
-			(list .transfer_id 'XtPointer '.transfer_id #f) (list .destination_data 'XtPointer '.destination_data #f) 
-			(list .location_data 'XtPointer '.location_data #f) (list .time 'Time '.time))
-		  (list XmConvertCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) (list .selection 'Atom '.selection #f) 
-			(list .target 'Atom '.target #f) (list .source_data 'XtPointer '.source_data #f)
-			(list .location_data 'XtPointer '.location_data #f) (list .flags 'int '.flags #f) (list .parm 'XtPointer '.parm #f) 
-			(list .parm_format 'int '.parm_format #f) (list .parm_length 'int '.parm_length #f) 
-			(list .parm_type 'Atom '.parm_type #f) (list .status 'int '.status #f) (list .value 'XtPointer '.value #f)
-			(list .type 'Atom '.type #f) (list .format 'int '.format #f) (list .length 'int '.length #f))
-		  (list XmComboBoxCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .item_or_text 'XmString '.item_or_text #f) (list .item_position 'int '.item_position #f))
-		  (list XmContainerOutlineCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .item 'Widget '.item #f) (list .new_outline_state 'uchar '.new_outline_state #f))
-		  (list XmContainerSelectCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .selected_items 'Widget* '.selected_items) (list .selected_item_count 'int '.selected_item_count #f) 
-			(list .auto_selection_type 'uchar '.auto_selection_type #f))
-		  (list XmNotebookCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .page_number 'int '.page_number #f) (list .page_widget 'Widget '.page_widget #f) 
-			(list .prev_page_number 'int '.prev_page_number #f) (list .prev_page_widget 'Widget '.prev_page_widget #f))
-		  (list XmSpinBoxCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .widget 'Widget '.widget #f) (list .doit 'Boolean '.doit) (list .position 'int '.position #f)
-			(list .value 'XmString '.value #f) (list .crossed_boundary 'Boolean '.crossed-boundary #f))
-		  (list XmTraverseObscuredCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .traversal_destination 'Widget '.traversal_destination #f))
-		  (list XmTopLevelLeaveCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .timeStamp 'Time '.timeStamp) (list .screen 'Screen '.screen) (list .window 'Window '.window))
-		  (list XmTopLevelEnterCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .timeStamp 'Time '.timeStamp) (list .screen 'Screen '.screen) (list .window 'Window '.window) 
-			(list .x 'Position '.x #f) (list .y 'Position '.y #f) (list .dragProtocolStyle 'uchar '.dragProtocolStyle #f))
-		  (list XmPopupHandlerCallbackStruct (list .reason 'int '.reason)
-			(list .event 'XEvent '.event) (list .menuToPost 'Widget '.menuToPost) (list .postIt 'Boolean '.postIt)
-			(list .target 'Widget '.target #f))
-		  (list XmSelectionCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .selection 'Atom '.selection #f) (list .target 'Atom '.target #f) (list .type 'Atom '.type #f)
-			(list .transfer_id 'XtPointer '.transfer_id #f) (list .flags 'int '.flags #f) (list .remaining 'int '.remaining #f) 
-			(list .value 'XtPointer '.value #f) (list .length 'int '.length #f) (list .format 'int '.format #f))
-		  (list XmTransferDoneCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event)  
-			(list .selection 'Atom '.selection #f) (list .transfer_id 'XtPointer '.transfer_id #f) (list .status 'int '.status #f) 
-			(list .client_data 'XtPointer '.client_data #f))
-		  (list XmDisplayCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .font_name 'char* '.font_name #f) (list .tag 'int '.tag #f)
-			(list .render_table 'XmRenderTable '.render_table #f)
-			(list .rendition 'XmRendition '.rendition #f))
-		  (list XmDragStartCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
-			(list .widget 'Widget '.widget #f) (list .doit 'Boolean '.doit))
-		  )))
-	    
-	    
-	    (for-each
-	     (lambda (call)
-	       (let ((struct ((car call)))
-		     (val #f))
-		 (set! (.event struct) (XEvent))
-		 (for-each
-		  (lambda (field)
-		    (if (not (pair? field)) (snd-display #__line__ ";~A: ~A" struct field))
-		    (set! val ((car field) struct))
-		    (if (< (length field) 4)
-			(case (cadr field)
-			  ((int) (set! ((car field) struct) 0))
-			  ((Atom) (set! ((car field) struct) XA_STRING))
-			  ((uchar) (set! ((car field) struct) val))
-			  ((Position) (set! ((car field) struct) 0))
-			  ((Widget) (set! ((car field) struct) (list 'Widget 0)))
-			  ((XmString) (set! ((car field) struct) (list 'XmString 0)))
-			  ((XtPointer) (set! ((car field) struct) 0))
-			  ((char*) (set! ((car field) struct) "hi"))
-			  ((Boolean) (set! ((car field) struct) #f))
-			  ((XEvent) #f) ; already being set
-			  ((XmString* int* Time Window Widget* Screen) #f) 
-			  ((char) (set! ((car field) struct) 0))
-			  )))
-		  (cdr call))))
-	     callbacks)
-	    )
-	  
-	  (let ((shell (cadr (main-widgets)))
-		(resource-list
-		 (list
-		  (list XmNaccelerator XM_STRING) (list XmNacceleratorText XM_XMSTRING) (list XmNaccelerators XM_ULONG)
-		  (list XmNactivateCallback XM_CALLBACK) (list XmNadjustLast XM_BOOLEAN) (list XmNadjustMargin XM_BOOLEAN)
-		  (list XmNalignment XM_UCHAR) (list XmNallowOverlap XM_BOOLEAN) (list XmNallowResize XM_BOOLEAN)
-		  (list XmNallowShellResize XM_BOOLEAN) (list XmNancestorSensitive XM_BOOLEAN) (list XmNanimationMask XM_PIXMAP)
-		  (list XmNanimationPixmap XM_PIXMAP) (list XmNanimationPixmapDepth XM_INT) (list XmNanimationStyle XM_UCHAR)
-		  (list XmNapplyCallback XM_CALLBACK) (list XmNapplyLabelString XM_XMSTRING) (list XmNargc XM_INT)
-		  (list XmNargv XM_STRING_LIST) (list XmNarmCallback XM_CALLBACK) (list XmNarmColor XM_PIXEL)
-		  (list XmNarmPixmap XM_PIXMAP) (list XmNarrowDirection XM_UCHAR) (list XmNattachment XM_UCHAR)
-		  (list XmNaudibleWarning XM_UCHAR) (list XmNautoShowCursorPosition XM_BOOLEAN) (list XmNautoUnmanage XM_BOOLEAN)
-		  (list XmNautomaticSelection XM_UCHAR) (list XmNbackground XM_PIXEL) (list XmNbackgroundPixmap XM_PIXMAP)
-		  (list XmNbaseHeight XM_INT) (list XmNbaseWidth XM_INT) (list XmNbitmap XM_PIXMAP)
-		  (list XmNblendModel XM_ULONG) (list XmNblinkRate XM_INT) (list XmNborderColor XM_PIXEL)
-		  (list XmNborderPixmap XM_PIXMAP) (list XmNborderWidth XM_DIMENSION) (list XmNbottomAttachment XM_UCHAR)
-		  (list XmNbottomOffset XM_INT) (list XmNbottomPosition XM_INT) (list XmNbottomShadowColor XM_PIXEL)
-		  (list XmNbottomShadowPixmap XM_PIXMAP) (list XmNbottomWidget XM_WIDGET) (list XmNbrowseSelectionCallback XM_CALLBACK)
-		  (list XmNbuttonAcceleratorText XM_STRING_TABLE) (list XmNbuttonAccelerators XM_STRING_TABLE) (list XmNbuttonCount XM_INT)
-		  (list XmNbuttonMnemonicCharSets XM_CHARSET_TABLE) (list XmNbuttonMnemonics XM_KEYSYM_TABLE) (list XmNbuttonSet XM_INT)
-		  (list XmNbuttonType XM_ULONG) (list XmNbuttons XM_STRING_TABLE) (list XmNcancelButton XM_WIDGET)
-		  (list XmNcancelCallback XM_CALLBACK) (list XmNcancelLabelString XM_XMSTRING) (list XmNcascadePixmap XM_PIXMAP)
-		  (list XmNcascadingCallback XM_CALLBACK) (list XmNchildHorizontalAlignment XM_UCHAR) (list XmNchildHorizontalSpacing XM_DIMENSION)
-		  (list XmNchildPlacement XM_UCHAR) (list XmNchildVerticalAlignment XM_UCHAR) (list XmNchildren XM_WIDGET_LIST)
-		  (list XmNclientData XM_ULONG) (list XmNclipWindow XM_WIDGET) (list XmNcolormap XM_COLORMAP)
-		  (list XmNcolumns XM_SHORT) (list XmNcommand XM_XMSTRING) (list XmNcommandChangedCallback XM_CALLBACK)
-		  (list XmNcommandEnteredCallback XM_CALLBACK) (list XmNcommandWindow XM_WIDGET) (list XmNcommandWindowLocation XM_UCHAR)
-		  (list XmNconvertProc XM_CONVERT_CALLBACK) (list XmNcreatePopupChildProc XM_POPUP_CALLBACK) (list XmNcursorBackground XM_PIXEL)
-		  (list XmNcursorForeground XM_PIXEL) (list XmNcursorPosition XM_INT) (list XmNcursorPositionVisible XM_BOOLEAN)
-		  (list XmNdarkThreshold XM_INT) (list XmNdecimalPoints XM_SHORT) (list XmNdecrementCallback XM_CALLBACK)
-		  (list XmNdefaultActionCallback XM_CALLBACK) (list XmNdefaultButton XM_WIDGET) (list XmNdefaultButtonShadowThickness XM_DIMENSION)
-		  (list XmNdefaultButtonType XM_UCHAR) (list XmNdefaultCopyCursorIcon XM_WIDGET) (list XmNdefaultInvalidCursorIcon XM_WIDGET)
-		  (list XmNdefaultLinkCursorIcon XM_WIDGET) (list XmNdefaultMoveCursorIcon XM_WIDGET) (list XmNdefaultNoneCursorIcon XM_WIDGET)
-		  (list XmNdefaultPosition XM_BOOLEAN) (list XmNdefaultSourceCursorIcon XM_WIDGET) (list XmNdefaultValidCursorIcon XM_WIDGET)
-		  (list XmNdeleteResponse XM_UCHAR) (list XmNdepth XM_INT) (list XmNdestroyCallback XM_CALLBACK)
-		  (list XmNdialogStyle XM_UCHAR) (list XmNdialogTitle XM_XMSTRING) (list XmNdialogType XM_UCHAR)
-		  (list XmNdirListItemCount XM_INT) (list XmNdirListItems XM_STRING_TABLE) (list XmNdirListLabelString XM_XMSTRING)
-		  (list XmNdirMask XM_XMSTRING) (list XmNdirSearchProc XM_SEARCH_CALLBACK) (list XmNdirSpec XM_XMSTRING)
-		  (list XmNdirectory XM_XMSTRING) (list XmNdirectoryValid XM_BOOLEAN) (list XmNdisarmCallback XM_CALLBACK)
-		  (list XmNdoubleClickInterval XM_INT) (list XmNdragDropFinishCallback XM_CALLBACK) (list XmNdragInitiatorProtocolStyle XM_UCHAR)
-		  (list XmNdragMotionCallback XM_CALLBACK) (list XmNdragOperations XM_UCHAR) (list XmNdragReceiverProtocolStyle XM_UCHAR)
-		  (list XmNdropFinishCallback XM_CALLBACK) (list XmNdropProc XM_DROP_CALLBACK) (list XmNdropRectangles XM_RECTANGLE_LIST)
-		  (list XmNdropSiteActivity XM_UCHAR) (list XmNdropSiteEnterCallback XM_CALLBACK) (list XmNdropSiteLeaveCallback XM_CALLBACK)
-		  (list XmNdropSiteOperations XM_UCHAR) (list XmNdropSiteType XM_UCHAR) (list XmNdropStartCallback XM_CALLBACK)
-		  (list XmNdropTransfers XM_TRANSFER_ENTRY_LIST) (list XmNeditMode XM_INT) (list XmNeditable XM_BOOLEAN)
-		  (list XmNentryAlignment XM_UCHAR) (list XmNentryBorder XM_DIMENSION) (list XmNentryCallback XM_CALLBACK)
-		  (list XmNentryClass XM_WIDGET_CLASS) (list XmNentryVerticalAlignment XM_UCHAR) (list XmNexportTargets XM_ATOM_LIST)
-		  (list XmNexposeCallback XM_CALLBACK) (list XmNextendedSelectionCallback XM_CALLBACK) (list XmNfileListItemCount XM_INT)
-		  (list XmNfileListItems XM_STRING_TABLE) (list XmNfileListLabelString XM_XMSTRING) (list XmNfileSearchProc XM_SEARCH_CALLBACK)
-		  (list XmNfileTypeMask XM_UCHAR) (list XmNfillOnArm XM_BOOLEAN) (list XmNfillOnSelect XM_BOOLEAN)
-		  (list XmNfilterLabelString XM_XMSTRING) (list XmNfocusCallback XM_CALLBACK) (list XmNfont XM_XFONTSTRUCT)
-		  (list XmNforeground XM_PIXEL) (list XmNforegroundThreshold XM_INT) (list XmNfractionBase XM_INT)
-		  (list XmNgainPrimaryCallback XM_CALLBACK) (list XmNgeometry XM_STRING) (list XmNheight XM_DIMENSION)
-		  (list XmNheightInc XM_INT) (list XmNhelpCallback XM_CALLBACK) (list XmNhelpLabelString XM_XMSTRING)
-		  (list XmNhighlightColor XM_PIXEL) (list XmNhighlightOnEnter XM_BOOLEAN) (list XmNhighlightPixmap XM_PIXMAP)
-		  (list XmNhighlightThickness XM_DIMENSION) (list XmNhistoryItemCount XM_INT) (list XmNhistoryItems XM_STRING_TABLE)
-		  (list XmNhistoryMaxItems XM_INT) (list XmNhistoryVisibleItemCount XM_INT) (list XmNhorizontalFontUnit XM_INT)
-		  (list XmNhorizontalScrollBar XM_WIDGET) (list XmNhorizontalSpacing XM_DIMENSION) (list XmNhotX XM_POSITION)
-		  (list XmNhotY XM_POSITION) (list XmNiconMask XM_PIXMAP) (list XmNiconName XM_STRING)
-		  (list XmNiconNameEncoding XM_ATOM) (list XmNiconPixmap XM_PIXMAP) (list XmNiconWindow XM_WIDGET)
-		  (list XmNiconX XM_INT) (list XmNiconY XM_INT) (list XmNiconic XM_BOOLEAN)
-		  (list XmNimportTargets XM_ATOM_LIST) (list XmNincrement XM_INT) (list XmNincrementCallback XM_CALLBACK)
-		  (list XmNincremental XM_BOOLEAN) (list XmNindicatorOn XM_INT) (list XmNindicatorSize XM_DIMENSION)
-		  (list XmNindicatorType XM_UCHAR) (list XmNinitialDelay XM_INT) (list XmNinitialFocus XM_WIDGET)
-		  (list XmNinitialResourcesPersistent XM_BOOLEAN) (list XmNinitialState XM_INT) (list XmNinput XM_BOOLEAN)
-		  (list XmNinputCallback XM_CALLBACK) (list XmNinputMethod XM_STRING) (list XmNinsertPosition XM_ORDER_CALLBACK)
-		  (list XmNinvalidCursorForeground XM_PIXEL) (list XmNisAligned XM_BOOLEAN) (list XmNisHomogeneous XM_BOOLEAN)
-		  (list XmNitemCount XM_INT) (list XmNitems XM_STRING_TABLE) (list XmNkeyboardFocusPolicy XM_UCHAR)
-		  (list XmNlabelInsensitivePixmap XM_PIXMAP) (list XmNlabelPixmap XM_PIXMAP) (list XmNlabelString XM_XMSTRING)
-		  (list XmNlabelType XM_UCHAR) (list XmNleftAttachment XM_UCHAR) (list XmNleftOffset XM_INT)
-		  (list XmNleftPosition XM_INT) (list XmNleftWidget XM_WIDGET) (list XmNlightThreshold XM_INT)
-		  (list XmNlistItemCount XM_INT) (list XmNlistItems XM_STRING_TABLE) (list XmNlistLabelString XM_XMSTRING)
-		  (list XmNlistMarginHeight XM_DIMENSION) (list XmNlistMarginWidth XM_DIMENSION) (list XmNlistSizePolicy XM_UCHAR)
-		  (list XmNlistSpacing XM_DIMENSION) (list XmNlistUpdated XM_BOOLEAN) (list XmNlistVisibleItemCount XM_INT)
-		  (list XmNlosePrimaryCallback XM_CALLBACK) (list XmNlosingFocusCallback XM_CALLBACK) (list XmNmainWindowMarginHeight XM_DIMENSION)
-		  (list XmNmainWindowMarginWidth XM_DIMENSION) (list XmNmapCallback XM_CALLBACK) (list XmNmappedWhenManaged XM_BOOLEAN)
-		  (list XmNmappingDelay XM_INT) (list XmNmargin XM_DIMENSION) (list XmNmarginBottom XM_DIMENSION)
-		  (list XmNmarginHeight XM_DIMENSION) (list XmNmarginLeft XM_DIMENSION) (list XmNmarginRight XM_DIMENSION)
-		  (list XmNmarginTop XM_DIMENSION) (list XmNmarginWidth XM_DIMENSION) (list XmNmask XM_PIXMAP)
-		  (list XmNmaxAspectX XM_INT) (list XmNmaxAspectY XM_INT) (list XmNmaxHeight XM_INT)
-		  (list XmNmaxLength XM_INT) (list XmNmaxWidth XM_INT) (list XmNmaximum XM_INT)
-		  (list XmNmenuAccelerator XM_STRING) (list XmNmenuBar XM_WIDGET) (list XmNmenuCursor XM_STRING)
-		  (list XmNmenuHelpWidget XM_WIDGET) (list XmNmenuHistory XM_WIDGET) (list XmNmenuPost XM_STRING)
-		  (list XmNmessageAlignment XM_UCHAR) (list XmNmessageString XM_XMSTRING) (list XmNmessageWindow XM_WIDGET)
-		  (list XmNminAspectX XM_INT) (list XmNminAspectY XM_INT) (list XmNminHeight XM_INT)
-		  (list XmNminWidth XM_INT) (list XmNminimizeButtons XM_BOOLEAN) (list XmNminimum XM_INT)
-		  (list XmNmnemonic XM_KEYSYM) (list XmNmnemonicCharSet XM_STRING) (list XmNmodifyVerifyCallback XM_CALLBACK)
-		  (list XmNmotionVerifyCallback XM_CALLBACK) (list XmNmoveOpaque XM_BOOLEAN) (list XmNmultiClick XM_UCHAR)
-		  (list XmNmultipleSelectionCallback XM_CALLBACK) (list XmNmustMatch XM_BOOLEAN) (list XmNmwmDecorations XM_INT)
-		  (list XmNmwmFunctions XM_INT) (list XmNmwmInputMode XM_INT) (list XmNmwmMenu XM_STRING)
-		  (list XmNnavigationType XM_UCHAR) (list XmNnoMatchCallback XM_CALLBACK) (list XmNnoMatchString XM_XMSTRING)
-		  (list XmNnoResize XM_BOOLEAN) (list XmNnoneCursorForeground XM_PIXEL) (list XmNnumChildren XM_INT)
-		  (list XmNnumColumns XM_SHORT) (list XmNnumDropRectangles XM_INT) (list XmNnumDropTransfers XM_INT)
-		  (list XmNnumExportTargets XM_INT) (list XmNnumImportTargets XM_INT) (list XmNoffsetX XM_POSITION)
-		  (list XmNoffsetY XM_POSITION) (list XmNokCallback XM_CALLBACK) (list XmNokLabelString XM_XMSTRING)
-		  (list XmNoperationChangedCallback XM_CALLBACK) (list XmNoperationCursorIcon XM_WIDGET) (list XmNoptionLabel XM_XMSTRING)
-		  (list XmNoptionMnemonic XM_KEYSYM) (list XmNorientation XM_UCHAR) (list XmNoverrideRedirect XM_BOOLEAN)
-		  (list XmNpacking XM_UCHAR) (list XmNpageDecrementCallback XM_CALLBACK) (list XmNpageIncrement XM_INT)
-		  (list XmNpageIncrementCallback XM_CALLBACK) (list XmNpaneMaximum XM_DIMENSION) (list XmNpaneMinimum XM_DIMENSION)
-		  (list XmNpattern XM_STRING_OR_XMSTRING) (list XmNpendingDelete XM_BOOLEAN) (list XmNpixmap XM_PIXMAP)
-		  (list XmNpopdownCallback XM_CALLBACK) (list XmNpopupCallback XM_CALLBACK) (list XmNpopupEnabled XM_INT)
-		  (list XmNpositionIndex XM_SHORT) (list XmNpostFromButton XM_INT) (list XmNpreeditType XM_STRING)
-		  (list XmNprocessingDirection XM_UCHAR) (list XmNpromptString XM_XMSTRING) (list XmNpushButtonEnabled XM_BOOLEAN)
-		  (list XmNqualifySearchDataProc XM_QUALIFY_CALLBACK) (list XmNradioAlwaysOne XM_BOOLEAN) (list XmNradioBehavior XM_BOOLEAN)
-		  (list XmNrecomputeSize XM_BOOLEAN) (list XmNrefigureMode XM_BOOLEAN) (list XmNrepeatDelay XM_INT)
-		  (list XmNresizable XM_BOOLEAN) (list XmNresizeCallback XM_CALLBACK) (list XmNresizeHeight XM_BOOLEAN)
-		  (list XmNresizePolicy XM_UCHAR) (list XmNresizeWidth XM_BOOLEAN) (list XmNrightAttachment XM_UCHAR)
-		  (list XmNrightOffset XM_INT) (list XmNrightPosition XM_INT) (list XmNrightWidget XM_WIDGET)
-		  (list XmNrowColumnType XM_UCHAR) (list XmNrows XM_SHORT) (list XmNrubberPositioning XM_BOOLEAN)
-		  (list XmNsashHeight XM_DIMENSION) (list XmNsashIndent XM_POSITION) (list XmNsashShadowThickness XM_DIMENSION)
-		  (list XmNsashWidth XM_DIMENSION) (list XmNsaveUnder XM_BOOLEAN) (list XmNscaleHeight XM_DIMENSION)
-		  (list XmNscaleMultiple XM_INT) (list XmNscaleWidth XM_DIMENSION) (list XmNscreen XM_SCREEN)
-		  (list XmNscrollBarDisplayPolicy XM_UCHAR) (list XmNscrollBarPlacement XM_UCHAR) (list XmNscrollHorizontal XM_BOOLEAN)
-		  (list XmNscrollLeftSide XM_BOOLEAN) (list XmNscrollTopSide XM_BOOLEAN) (list XmNscrollVertical XM_BOOLEAN)
-		  (list XmNscrolledWindowMarginHeight XM_DIMENSION) (list XmNscrolledWindowMarginWidth XM_DIMENSION) (list XmNscrollingPolicy XM_UCHAR)
-		  (list XmNselectColor XM_PIXEL) (list XmNselectInsensitivePixmap XM_PIXMAP) (list XmNselectPixmap XM_PIXMAP)
-		  (list XmNselectThreshold XM_INT) (list XmNselectedItemCount XM_INT) (list XmNselectedItems XM_STRING_TABLE)
-		  (list XmNselectionArray XM_INT_TABLE) (list XmNselectionArrayCount XM_INT) (list XmNselectionLabelString XM_XMSTRING)
-		  (list XmNselectionPolicy XM_UCHAR) (list XmNsensitive XM_BOOLEAN) (list XmNseparatorOn XM_BOOLEAN)
-		  (list XmNseparatorType XM_UCHAR) (list XmNset XM_UCHAR) (list XmNshadowThickness XM_DIMENSION)
-		  (list XmNshadowType XM_UCHAR) (list XmNshowArrows XM_BOOLEAN) (list XmNshowAsDefault XM_DIMENSION)
-		  (list XmNshowSeparator XM_BOOLEAN) (list XmNsimpleCallback XM_CALLBACK) (list XmNsingleSelectionCallback XM_CALLBACK)
-		  (list XmNskipAdjust XM_BOOLEAN) (list XmNsliderSize XM_INT) (list XmNsliderVisual XM_INT)
-		  (list XmNslidingMode XM_INT) (list XmNsource XM_TEXT_SOURCE) (list XmNsourceCursorIcon XM_WIDGET)
-		  (list XmNsourcePixmapIcon XM_WIDGET) (list XmNspacing XM_DIMENSION) (list XmNspotLocation XM_INT)
-		  (list XmNstateCursorIcon XM_WIDGET) (list XmNsubMenuId XM_WIDGET) (list XmNsymbolPixmap XM_PIXMAP)
-		  (list XmNtearOffMenuActivateCallback XM_CALLBACK) (list XmNtearOffMenuDeactivateCallback XM_CALLBACK) (list XmNtearOffModel XM_UCHAR)
-		  (list XmNtextAccelerators XM_ULONG) (list XmNtextColumns XM_SHORT) (list XmNtextString XM_XMSTRING)
-		  (list XmNtextTranslations XM_CALLBACK) (list XmNtitle XM_STRING) (list XmNtitleEncoding XM_ATOM)
-		  (list XmNtitleString XM_XMSTRING) (list XmNtoBottomCallback XM_CALLBACK) (list XmNtoTopCallback XM_CALLBACK)
-		  (list XmNtopAttachment XM_UCHAR) (list XmNtopCharacter XM_INT) (list XmNtopItemPosition XM_INT)
-		  (list XmNtopLevelEnterCallback XM_CALLBACK) (list XmNtopLevelLeaveCallback XM_CALLBACK) (list XmNtopOffset XM_INT)
-		  (list XmNtopPosition XM_INT) (list XmNtopShadowColor XM_PIXEL) (list XmNtopShadowPixmap XM_PIXMAP)
-		  (list XmNtopWidget XM_WIDGET) (list XmNtransferProc XM_TRANSFER_CALLBACK) (list XmNtransferStatus XM_UCHAR)
-		  (list XmNtransient XM_BOOLEAN) (list XmNtransientFor XM_WIDGET) (list XmNtranslations XM_CALLBACK)
-		  (list XmNtraversalOn XM_BOOLEAN) (list XmNtraverseObscuredCallback XM_CALLBACK) (list XmNtroughColor XM_PIXEL)
-		  (list XmNunitType XM_UCHAR) (list XmNunmapCallback XM_CALLBACK) (list XmNunpostBehavior XM_UCHAR)
-		  (list XmNuseAsyncGeometry XM_BOOLEAN) (list XmNuserData XM_ULONG) (list XmNvalidCursorForeground XM_PIXEL)
-		  (list XmNvalue XM_STRING_OR_INT) (list XmNvalueChangedCallback XM_CALLBACK) (list XmNverifyBell XM_BOOLEAN)
-		  (list XmNverticalFontUnit XM_INT) (list XmNverticalScrollBar XM_WIDGET) (list XmNverticalSpacing XM_DIMENSION)
-		  (list XmNvisibleItemCount XM_INT) (list XmNvisibleWhenOff XM_BOOLEAN) (list XmNvisual XM_VISUAL)
-		  (list XmNvisualPolicy XM_UCHAR) (list XmNwidth XM_DIMENSION) (list XmNwidthInc XM_INT)
-		  (list XmNwinGravity XM_INT) (list XmNwindow XM_WIDGET) (list XmNwindowGroup XM_WINDOW)
-		  (list XmNwmTimeout XM_INT) (list XmNwordWrap XM_BOOLEAN) (list XmNworkWindow XM_WIDGET)
-		  (list XmNx XM_POSITION) (list XmNy XM_POSITION) (list XmNarrowLayout XM_UCHAR)
-		  (list XmNarrowOrientation XM_UCHAR) (list XmNarrowSensitivity XM_UCHAR) (list XmNarrowSize XM_INT)
-		  (list XmNarrowSpacing XM_INT) (list XmNautoDragModel XM_INT) (list XmNbackPageBackground XM_PIXEL)
-		  (list XmNbackPageForeground XM_PIXEL) (list XmNbackPageNumber XM_INT) (list XmNbackPagePlacement XM_UCHAR)
-		  (list XmNbackPageSize XM_DIMENSION) (list XmNbindingPixmap XM_PIXMAP) (list XmNbindingType XM_UCHAR)
-		  (list XmNbindingWidth XM_INT) (list XmNbitmapConversionModel XM_INT) (list XmNbuttonRenderTable XM_RENDER_TABLE)
-		  (list XmNcollapsedStatePixmap XM_PIXMAP) (list XmNcolorAllocationProc XM_ALLOC_COLOR_CALLBACK) 
-		  (list XmNcolorCalculationProc XM_SCREEN_COLOR_CALLBACK)
-		  (list XmNcomboBoxType XM_UCHAR) (list XmNconvertCallback XM_CALLBACK) (list XmNcurrentPageNumber XM_INT)
-		  (list XmNdecimal XM_STRING) (list XmNdefaultArrowSensitivity XM_UCHAR) (list XmNdefaultButtonEmphasis XM_INT)
-		  (list XmNdefaultVirtualBindings XM_STRING) (list XmNdestinationCallback XM_CALLBACK) (list XmNdetail XM_STRING_TABLE)
-		  (list XmNdetailColumnHeading XM_INT) (list XmNdetailColumnHeadingCount XM_INT) (list XmNdetailCount XM_INT)
-		  (list XmNdetailOrder XM_INT_TABLE) (list XmNdetailOrderCount XM_INT) (list XmNdetailShadowThickness XM_INT)
-		  (list XmNdetailTabList XM_TAB_LIST) (list XmNdirTextLabelString XM_XMSTRING) (list XmNdragStartCallback XM_CALLBACK)
-		  (list XmNenableBtn1Transfer XM_INT) (list XmNenableButtonTab XM_BOOLEAN) (list XmNenableDragIcon XM_BOOLEAN)
-		  (list XmNenableEtchedInMenu XM_BOOLEAN) (list XmNenableMultiKeyBindings XM_BOOLEAN) (list XmNenableThinThickness XM_BOOLEAN)
-		  (list XmNenableToggleColor XM_BOOLEAN) (list XmNenableToggleVisual XM_BOOLEAN) (list XmNenableUnselectableDrag XM_BOOLEAN)
-		  (list XmNenableWarp XM_INT) (list XmNentryParent XM_WIDGET) (list XmNentryViewType XM_UCHAR)
-		  (list XmNexpandedStatePixmap XM_PIXMAP) (list XmNfileFilterStyle XM_INT) (list XmNfirstPageNumber XM_INT)
-		  (list XmNfontName XM_STRING) (list XmNfontType XM_UCHAR) (list XmNframeBackground XM_PIXEL)
-		  (list XmNframeChildType XM_UCHAR) (list XmNframeShadowThickness XM_DIMENSION) (list XmNgrabStyle XM_INT)
-		  (list XmNincludeStatus XM_INT) (list XmNincrementValue XM_INT) (list XmNindeterminateInsensitivePixmap XM_PIXMAP)
-		  (list XmNindeterminatePixmap XM_PIXMAP) (list XmNinnerMarginHeight XM_DIMENSION) (list XmNinnerMarginWidth XM_DIMENSION)
-		  (list XmNinputPolicy XM_ULONG) (list XmNinsensitiveStippleBitmap XM_PIXMAP) (list XmNinvokeParseProc XM_PARSE_CALLBACK)
-		  (list XmNlabelRenderTable XM_RENDER_TABLE) (list XmNlargeCellHeight XM_DIMENSION) (list XmNlargeCellWidth XM_DIMENSION)
-		  (list XmNlargeIconMask XM_PIXMAP) (list XmNlargeIconPixmap XM_PIXMAP) (list XmNlargeIconX XM_FLOAT)
-		  (list XmNlargeIconY XM_FLOAT) (list XmNlastPageNumber XM_INT) (list XmNlayoutDirection XM_UCHAR)
-		  (list XmNlayoutType XM_UCHAR) (list XmNlist XM_WIDGET) (list XmNloadModel XM_UCHAR)
-		  (list XmNmajorTabSpacing XM_DIMENSION) (list XmNmatchBehavior XM_UCHAR) (list XmNmaximumValue XM_INT)
-		  (list XmNminimumValue XM_INT) (list XmNminorTabSpacing XM_DIMENSION) (list XmNmotifVersion XM_INT)
-		  (list XmNnoFontCallback XM_CALLBACK) (list XmNnoRenditionCallback XM_CALLBACK) (list XmNnotebookChildType XM_UCHAR)
-		  (list XmNnumValues XM_INT) (list XmNoutlineButtonPolicy XM_UCHAR) (list XmNoutlineChangedCallback XM_CALLBACK)
-		  (list XmNoutlineColumnWidth XM_DIMENSION) (list XmNoutlineIndentation XM_DIMENSION) (list XmNoutlineLineStyle XM_UCHAR)
-		  (list XmNoutlineState XM_UCHAR) (list XmNpageChangedCallback XM_CALLBACK) (list XmNpageNumber XM_INT)
-		  (list XmNpathMode XM_INT) (list XmNpatternType XM_UCHAR) (list XmNpopupHandlerCallback XM_CALLBACK)
-		  (list XmNposition XM_INT) (list XmNpositionMode XM_INT) (list XmNpositionType XM_UCHAR)
-		  (list XmNprimaryOwnership XM_UCHAR) (list XmNrenderTable XM_RENDER_TABLE) (list XmNrenditionBackground XM_PIXEL)
-		  (list XmNrenditionForeground XM_PIXEL) (list XmNscrolledWindowChildType XM_UCHAR) (list XmNselectedItem XM_XMSTRING)
-		  (list XmNselectedObjectCount XM_INT) (list XmNselectedObjects XM_WIDGET_LIST) (list XmNselectedPosition XM_INT)
-		  (list XmNselectedPositionCount XM_INT) (list XmNselectedPositions XM_INT_TABLE) (list XmNselectionCallback XM_CALLBACK)
-		  (list XmNselectionMode XM_UCHAR) (list XmNselectionTechnique XM_UCHAR) (list XmNsliderMark XM_INT)
-		  (list XmNsmallCellHeight XM_DIMENSION) (list XmNsmallCellWidth XM_DIMENSION) (list XmNsmallIconMask XM_PIXMAP)
-		  (list XmNsmallIconPixmap XM_PIXMAP) (list XmNsmallIconX XM_FLOAT) (list XmNsmallIconY XM_FLOAT)
-		  (list XmNsnapBackMultiple XM_SHORT) (list XmNspatialIncludeModel XM_UCHAR) (list XmNspatialResizeModel XM_UCHAR)
-		  (list XmNspatialSnapModel XM_UCHAR) (list XmNspatialStyle XM_UCHAR) (list XmNspinBoxChildType XM_UCHAR)
-		  (list XmNstrikethruType XM_UCHAR) (list XmNsubstitute XM_XMSTRING) (list XmNtabList XM_TAB_LIST)
-		  (list XmNtag XM_STRING) (list XmNtearOffTitle XM_XMSTRING) (list XmNtextField XM_WIDGET)
-		  (list XmNtextRenderTable XM_RENDER_TABLE) (list XmNtoggleMode XM_UCHAR) (list XmNunderlineType XM_UCHAR)
-		  (list XmNunselectColor XM_PIXEL) (list XmNtabValue XM_FLOAT) (list XmNoffsetModel XM_INT)
-		  (list XmNcallback XM_CALLBACK) (list XmNwaitForWm XM_BOOLEAN) (list XmNuseColorObj XM_BOOLEAN)
-		  (list XmNvalues XM_STRING_TABLE) (list XmNviewType XM_UCHAR) (list XmNvisualEmphasis XM_UCHAR)
-		  (list XmNwrap XM_BOOLEAN)
-		  )))
-	    
-	    (for-each
-	     (lambda (n)
-	       (if (not (string? (car n))) (snd-display #__line__ ";resource ~A is not a string?" (car n)))
-	       (XtVaGetValues shell (list (car n) 0)))
-	     resource-list)
-	    )
-	  
-	  (if (not (XEvent? (XEvent)))
-	      (snd-display #__line__ ";xevent type trouble! ~A -> ~A" (XEvent) (XEvent? (XEvent))))
-	  (if (not (XGCValues? (XGCValues)))
-	      (snd-display #__line__ ";xgcvalues type trouble! ~A -> ~A" (XGCValues) (XGCValues? (XGCValues))))
-	  (if (not (= (.direction (XmTraverseObscuredCallbackStruct)) 0))
-	      (snd-display #__line__ ";.direction: ~A" (.direction (XmTraverseObscuredCallbackStruct))))
-	  (if (.ptr (XmTextBlock))
-	      (snd-display #__line__ ";.ptr block: ~A" (.ptr (XmTextBlock))))
-	  (let ((hi (XmTextBlock)))
-	    (set! (.ptr hi) "hi")
-	    (if (not (string=? (.ptr hi) "hi"))
-		(snd-display #__line__ ";.ptr set block: ~A" (.ptr hi)))
-	    (if (not (= (.length hi) 0)) (snd-display #__line__ ";.length block: ~A" (.length hi)))
-	    (set! (.length hi) 3)
-	    (if (not (= (.length hi) 3)) (snd-display #__line__ ";set .length block: ~A" (.length hi))))
-	  (if (not (= (.dashes (XGCValues)) 0)) (snd-display #__line__ ";dashes: ~A" (.dashes (XGCValues))))
-	  (set! (.dashes (XGCValues)) 1)
-	  (set! (.clip_mask (XGCValues)) (list 'Pixmap 0))
-	  (set! (.resourceid (XEvent -1)) 0)
-	  (set! (.error_code (XEvent -1)) 0)
-	  (set! (.request_code (XEvent -1)) 0)
-	  (if (not (= (.resourceid (XEvent -1)) 0)) (snd-display #__line__ ";error resourceid: ~A" (.resourceid (XEvent -1))))
-	  (if (not (= (.request_code (XEvent -1)) 0)) (snd-display #__line__ ";error request_code: ~A" (.request_code (XEvent -1))))
-	  (set! (.pad (XColor)) 1)
-	  )
+      
+      (let ((callbacks
+	     (list
+	      (list XmAnyCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event))
+	      (list XmArrowButtonCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) (list .click_count 'int '.click_count))
+	      (list XmCommandCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .value 'XmString '.value) (list .length 'int '.length #f))
+	      (list XmDragDropFinishCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .timeStamp 'Time '.timeStamp))
+	      (list XmDragMotionCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .timeStamp 'Time '.timeStamp) (list .operation 'uchar '.operation) 
+		    (list .operations 'uchar '.operations #f) (list .dropSiteStatus 'uchar '.dropSiteStatus) 
+		    (list .x 'Position '.x #f) (list .y 'Position '.y #f))
+	      (list XmDragProcCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .timeStamp 'Time '.timeStamp) (list .dragContext 'Widget '.dragContext #f) 
+		    (list .x 'Position '.x #f) (list .y 'Position '.y #f) (list .dropSiteStatus 'uchar '.dropSiteStatus) 
+		    (list .operation 'uchar '.operation) (list .operations 'uchar '.operations #f) (list .animate 'Boolean '.animate #f))
+	      (list XmDrawingAreaCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) (list .window 'Window '.window))
+	      (list XmDrawnButtonCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .window 'Window '.window) (list .click_count 'int '.click_count))
+	      (list XmDropFinishCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .timeStamp 'Time '.timeStamp) (list .operation 'uchar '.operation) 
+		    (list .operations 'uchar '.operations #f) (list .dropSiteStatus 'uchar '.dropSiteStatus) 
+		    (list .dropAction 'uchar '.dropAction #f) (list .completionStatus 'uchar '.completionStatus #f))
+	      (list XmDropProcCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .timeStamp 'Time '.timeStamp) (list .dragContext 'Widget '.dragContext #f) 
+		    (list .x 'Position '.x #f) (list .y 'Position '.y #f) (list .dropSiteStatus 'uchar '.dropSiteStatus)
+		    (list .operation 'uchar '.operation) (list .operations 'uchar '.operations #f) (list .dropAction 'uchar '.dropAction #f))
+	      (list XmDropSiteEnterCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .timeStamp 'Time '.timeStamp) (list .operation 'uchar '.operation) 
+		    (list .operations 'uchar '.operations #f) (list .dropSiteStatus 'uchar '.dropSiteStatus) 
+		    (list .x 'Position '.x #f) (list .y 'Position '.y #f))
+	      (list XmDropSiteLeaveCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .timeStamp 'Time '.timeStamp))
+	      (list XmDropStartCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .timeStamp 'Time '.timeStamp) (list .operation 'uchar '.operation) 
+		    (list .operations 'uchar '.operations #f) (list .dropSiteStatus 'uchar '.dropSiteStatus) 
+		    (list .dropAction 'uchar '.dropAction #f))
+	      (list XmFileSelectionBoxCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .value 'XmString '.value) (list .length 'int '.length #f) (list .mask 'XmString '.mask #f) 
+		    (list .mask_length 'int '.mask_length #f) (list .dir 'XmString '.dir #f) (list .dir_length 'int '.dir_length #f) 
+		    (list .pattern 'XmString '.pattern #f) (list .pattern_length 'int '.pattern_length #f))
+	      (list XmListCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .item 'XmString '.item #f) (list .item_length 'int '.item_length #f) (list .item_position 'int '.item_position #f) 
+		    (list .selected_items 'XmString* '.selected_items) (list .selected_item_count 'int '.selected_item_count #f) 
+		    (list .selected_item_positions 'int* '.selected_item_positions) (list .selection_type 'char '.selection_type #f) 
+		    (list .auto_selection_type 'char '.auto_selection_type #f))
+	      (list XmOperationChangedCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .timeStamp 'Time '.timeStamp) (list .operation 'uchar '.operation) (list .operations 'uchar '.operations #f) 
+		    (list .dropSiteStatus 'uchar '.dropSiteStatus))
+	      (list XmPushButtonCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) (list .click_count 'int '.click_count))
+	      (list XmRowColumnCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event)
+		    (list .widget 'Widget '.widget #f) (list .data 'char* '.data #f) (list .callbackstruct 'char* '.callbackstruct #f))
+	      (list XmScaleCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) (list .value 'int '.value))
+	      (list XmScrollBarCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .value 'int '.value) (list .pixel 'int '.pixel #f))
+	      (list XmSelectionBoxCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .value 'XmString '.value) (list .length 'int '.length #f))
+	      (list XmTextVerifyCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .doit 'Boolean '.doit) (list .currInsert 'int '.currInsert #f) (list .newInsert 'int '.newInsert #f) 
+		    (list .startPos 'int '.startPos #f) (list .endPos 'int '.endPos #f)
+		    (list .text 'XmTextBlock '.text #f))
+	      (list XmToggleButtonCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) (list .set 'int '.set))
+	      (list XmDestinationCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .selection 'Atom '.selection #f) (list .operation 'uchar '.operation) (list .flags 'int '.flags #f) 
+		    (list .transfer_id 'XtPointer '.transfer_id #f) (list .destination_data 'XtPointer '.destination_data #f) 
+		    (list .location_data 'XtPointer '.location_data #f) (list .time 'Time '.time))
+	      (list XmConvertCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) (list .selection 'Atom '.selection #f) 
+		    (list .target 'Atom '.target #f) (list .source_data 'XtPointer '.source_data #f)
+		    (list .location_data 'XtPointer '.location_data #f) (list .flags 'int '.flags #f) (list .parm 'XtPointer '.parm #f) 
+		    (list .parm_format 'int '.parm_format #f) (list .parm_length 'int '.parm_length #f) 
+		    (list .parm_type 'Atom '.parm_type #f) (list .status 'int '.status #f) (list .value 'XtPointer '.value #f)
+		    (list .type 'Atom '.type #f) (list .format 'int '.format #f) (list .length 'int '.length #f))
+	      (list XmComboBoxCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .item_or_text 'XmString '.item_or_text #f) (list .item_position 'int '.item_position #f))
+	      (list XmContainerOutlineCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .item 'Widget '.item #f) (list .new_outline_state 'uchar '.new_outline_state #f))
+	      (list XmContainerSelectCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .selected_items 'Widget* '.selected_items) (list .selected_item_count 'int '.selected_item_count #f) 
+		    (list .auto_selection_type 'uchar '.auto_selection_type #f))
+	      (list XmNotebookCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .page_number 'int '.page_number #f) (list .page_widget 'Widget '.page_widget #f) 
+		    (list .prev_page_number 'int '.prev_page_number #f) (list .prev_page_widget 'Widget '.prev_page_widget #f))
+	      (list XmSpinBoxCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .widget 'Widget '.widget #f) (list .doit 'Boolean '.doit) (list .position 'int '.position #f)
+		    (list .value 'XmString '.value #f) (list .crossed_boundary 'Boolean '.crossed-boundary #f))
+	      (list XmTraverseObscuredCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .traversal_destination 'Widget '.traversal_destination #f))
+	      (list XmTopLevelLeaveCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .timeStamp 'Time '.timeStamp) (list .screen 'Screen '.screen) (list .window 'Window '.window))
+	      (list XmTopLevelEnterCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .timeStamp 'Time '.timeStamp) (list .screen 'Screen '.screen) (list .window 'Window '.window) 
+		    (list .x 'Position '.x #f) (list .y 'Position '.y #f) (list .dragProtocolStyle 'uchar '.dragProtocolStyle #f))
+	      (list XmPopupHandlerCallbackStruct (list .reason 'int '.reason)
+		    (list .event 'XEvent '.event) (list .menuToPost 'Widget '.menuToPost) (list .postIt 'Boolean '.postIt)
+		    (list .target 'Widget '.target #f))
+	      (list XmSelectionCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .selection 'Atom '.selection #f) (list .target 'Atom '.target #f) (list .type 'Atom '.type #f)
+		    (list .transfer_id 'XtPointer '.transfer_id #f) (list .flags 'int '.flags #f) (list .remaining 'int '.remaining #f) 
+		    (list .value 'XtPointer '.value #f) (list .length 'int '.length #f) (list .format 'int '.format #f))
+	      (list XmTransferDoneCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event)  
+		    (list .selection 'Atom '.selection #f) (list .transfer_id 'XtPointer '.transfer_id #f) (list .status 'int '.status #f) 
+		    (list .client_data 'XtPointer '.client_data #f))
+	      (list XmDisplayCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .font_name 'char* '.font_name #f) (list .tag 'int '.tag #f)
+		    (list .render_table 'XmRenderTable '.render_table #f)
+		    (list .rendition 'XmRendition '.rendition #f))
+	      (list XmDragStartCallbackStruct (list .reason 'int '.reason) (list .event 'XEvent '.event) 
+		    (list .widget 'Widget '.widget #f) (list .doit 'Boolean '.doit))
+	      )))
 	
-	(if (defined? 'XShapeQueryExtents)
-	    (let* ((dpy (XtDisplay (cadr (main-widgets))))
-		   (win (XtWindow (cadr (main-widgets))))
-		   (vals (XShapeQueryExtents dpy win)))
-	      (if (not (= (car vals) 1))
-		  (snd-display #__line__ ";XShapeQueryExtents: ~A" vals))
-	      (set! vals (XShapeGetRectangles dpy win 0))
-	      (if (not (list? vals)) (snd-display #__line__ ";XShapeGetRectangles: ~A" vals))
+	
+	(for-each
+	 (lambda (call)
+	   (let ((struct ((car call)))
+		 (val #f))
+	     (set! (.event struct) (XEvent))
+	     (for-each
+	      (lambda (field)
+		(if (not (pair? field)) (snd-display #__line__ ";~A: ~A" struct field))
+		(set! val ((car field) struct))
+		(if (< (length field) 4)
+		    (case (cadr field)
+		      ((int) (set! ((car field) struct) 0))
+		      ((Atom) (set! ((car field) struct) XA_STRING))
+		      ((uchar) (set! ((car field) struct) val))
+		      ((Position) (set! ((car field) struct) 0))
+		      ((Widget) (set! ((car field) struct) (list 'Widget 0)))
+		      ((XmString) (set! ((car field) struct) (list 'XmString 0)))
+		      ((XtPointer) (set! ((car field) struct) 0))
+		      ((char*) (set! ((car field) struct) "hi"))
+		      ((Boolean) (set! ((car field) struct) #f))
+		      ((XEvent) #f) ; already being set
+		      ((XmString* int* Time Window Widget* Screen) #f) 
+		      ((char) (set! ((car field) struct) 0))
+		      )))
+	      (cdr call))))
+	 callbacks)
+	)
+      
+      (let ((shell (cadr (main-widgets)))
+	    (resource-list
+	     (list
+	      (list XmNaccelerator XM_STRING) (list XmNacceleratorText XM_XMSTRING) (list XmNaccelerators XM_ULONG)
+	      (list XmNactivateCallback XM_CALLBACK) (list XmNadjustLast XM_BOOLEAN) (list XmNadjustMargin XM_BOOLEAN)
+	      (list XmNalignment XM_UCHAR) (list XmNallowOverlap XM_BOOLEAN) (list XmNallowResize XM_BOOLEAN)
+	      (list XmNallowShellResize XM_BOOLEAN) (list XmNancestorSensitive XM_BOOLEAN) (list XmNanimationMask XM_PIXMAP)
+	      (list XmNanimationPixmap XM_PIXMAP) (list XmNanimationPixmapDepth XM_INT) (list XmNanimationStyle XM_UCHAR)
+	      (list XmNapplyCallback XM_CALLBACK) (list XmNapplyLabelString XM_XMSTRING) (list XmNargc XM_INT)
+	      (list XmNargv XM_STRING_LIST) (list XmNarmCallback XM_CALLBACK) (list XmNarmColor XM_PIXEL)
+	      (list XmNarmPixmap XM_PIXMAP) (list XmNarrowDirection XM_UCHAR) (list XmNattachment XM_UCHAR)
+	      (list XmNaudibleWarning XM_UCHAR) (list XmNautoShowCursorPosition XM_BOOLEAN) (list XmNautoUnmanage XM_BOOLEAN)
+	      (list XmNautomaticSelection XM_UCHAR) (list XmNbackground XM_PIXEL) (list XmNbackgroundPixmap XM_PIXMAP)
+	      (list XmNbaseHeight XM_INT) (list XmNbaseWidth XM_INT) (list XmNbitmap XM_PIXMAP)
+	      (list XmNblendModel XM_ULONG) (list XmNblinkRate XM_INT) (list XmNborderColor XM_PIXEL)
+	      (list XmNborderPixmap XM_PIXMAP) (list XmNborderWidth XM_DIMENSION) (list XmNbottomAttachment XM_UCHAR)
+	      (list XmNbottomOffset XM_INT) (list XmNbottomPosition XM_INT) (list XmNbottomShadowColor XM_PIXEL)
+	      (list XmNbottomShadowPixmap XM_PIXMAP) (list XmNbottomWidget XM_WIDGET) (list XmNbrowseSelectionCallback XM_CALLBACK)
+	      (list XmNbuttonAcceleratorText XM_STRING_TABLE) (list XmNbuttonAccelerators XM_STRING_TABLE) (list XmNbuttonCount XM_INT)
+	      (list XmNbuttonMnemonicCharSets XM_CHARSET_TABLE) (list XmNbuttonMnemonics XM_KEYSYM_TABLE) (list XmNbuttonSet XM_INT)
+	      (list XmNbuttonType XM_ULONG) (list XmNbuttons XM_STRING_TABLE) (list XmNcancelButton XM_WIDGET)
+	      (list XmNcancelCallback XM_CALLBACK) (list XmNcancelLabelString XM_XMSTRING) (list XmNcascadePixmap XM_PIXMAP)
+	      (list XmNcascadingCallback XM_CALLBACK) (list XmNchildHorizontalAlignment XM_UCHAR) (list XmNchildHorizontalSpacing XM_DIMENSION)
+	      (list XmNchildPlacement XM_UCHAR) (list XmNchildVerticalAlignment XM_UCHAR) (list XmNchildren XM_WIDGET_LIST)
+	      (list XmNclientData XM_ULONG) (list XmNclipWindow XM_WIDGET) (list XmNcolormap XM_COLORMAP)
+	      (list XmNcolumns XM_SHORT) (list XmNcommand XM_XMSTRING) (list XmNcommandChangedCallback XM_CALLBACK)
+	      (list XmNcommandEnteredCallback XM_CALLBACK) (list XmNcommandWindow XM_WIDGET) (list XmNcommandWindowLocation XM_UCHAR)
+	      (list XmNconvertProc XM_CONVERT_CALLBACK) (list XmNcreatePopupChildProc XM_POPUP_CALLBACK) (list XmNcursorBackground XM_PIXEL)
+	      (list XmNcursorForeground XM_PIXEL) (list XmNcursorPosition XM_INT) (list XmNcursorPositionVisible XM_BOOLEAN)
+	      (list XmNdarkThreshold XM_INT) (list XmNdecimalPoints XM_SHORT) (list XmNdecrementCallback XM_CALLBACK)
+	      (list XmNdefaultActionCallback XM_CALLBACK) (list XmNdefaultButton XM_WIDGET) (list XmNdefaultButtonShadowThickness XM_DIMENSION)
+	      (list XmNdefaultButtonType XM_UCHAR) (list XmNdefaultCopyCursorIcon XM_WIDGET) (list XmNdefaultInvalidCursorIcon XM_WIDGET)
+	      (list XmNdefaultLinkCursorIcon XM_WIDGET) (list XmNdefaultMoveCursorIcon XM_WIDGET) (list XmNdefaultNoneCursorIcon XM_WIDGET)
+	      (list XmNdefaultPosition XM_BOOLEAN) (list XmNdefaultSourceCursorIcon XM_WIDGET) (list XmNdefaultValidCursorIcon XM_WIDGET)
+	      (list XmNdeleteResponse XM_UCHAR) (list XmNdepth XM_INT) (list XmNdestroyCallback XM_CALLBACK)
+	      (list XmNdialogStyle XM_UCHAR) (list XmNdialogTitle XM_XMSTRING) (list XmNdialogType XM_UCHAR)
+	      (list XmNdirListItemCount XM_INT) (list XmNdirListItems XM_STRING_TABLE) (list XmNdirListLabelString XM_XMSTRING)
+	      (list XmNdirMask XM_XMSTRING) (list XmNdirSearchProc XM_SEARCH_CALLBACK) (list XmNdirSpec XM_XMSTRING)
+	      (list XmNdirectory XM_XMSTRING) (list XmNdirectoryValid XM_BOOLEAN) (list XmNdisarmCallback XM_CALLBACK)
+	      (list XmNdoubleClickInterval XM_INT) (list XmNdragDropFinishCallback XM_CALLBACK) (list XmNdragInitiatorProtocolStyle XM_UCHAR)
+	      (list XmNdragMotionCallback XM_CALLBACK) (list XmNdragOperations XM_UCHAR) (list XmNdragReceiverProtocolStyle XM_UCHAR)
+	      (list XmNdropFinishCallback XM_CALLBACK) (list XmNdropProc XM_DROP_CALLBACK) (list XmNdropRectangles XM_RECTANGLE_LIST)
+	      (list XmNdropSiteActivity XM_UCHAR) (list XmNdropSiteEnterCallback XM_CALLBACK) (list XmNdropSiteLeaveCallback XM_CALLBACK)
+	      (list XmNdropSiteOperations XM_UCHAR) (list XmNdropSiteType XM_UCHAR) (list XmNdropStartCallback XM_CALLBACK)
+	      (list XmNdropTransfers XM_TRANSFER_ENTRY_LIST) (list XmNeditMode XM_INT) (list XmNeditable XM_BOOLEAN)
+	      (list XmNentryAlignment XM_UCHAR) (list XmNentryBorder XM_DIMENSION) (list XmNentryCallback XM_CALLBACK)
+	      (list XmNentryClass XM_WIDGET_CLASS) (list XmNentryVerticalAlignment XM_UCHAR) (list XmNexportTargets XM_ATOM_LIST)
+	      (list XmNexposeCallback XM_CALLBACK) (list XmNextendedSelectionCallback XM_CALLBACK) (list XmNfileListItemCount XM_INT)
+	      (list XmNfileListItems XM_STRING_TABLE) (list XmNfileListLabelString XM_XMSTRING) (list XmNfileSearchProc XM_SEARCH_CALLBACK)
+	      (list XmNfileTypeMask XM_UCHAR) (list XmNfillOnArm XM_BOOLEAN) (list XmNfillOnSelect XM_BOOLEAN)
+	      (list XmNfilterLabelString XM_XMSTRING) (list XmNfocusCallback XM_CALLBACK) (list XmNfont XM_XFONTSTRUCT)
+	      (list XmNforeground XM_PIXEL) (list XmNforegroundThreshold XM_INT) (list XmNfractionBase XM_INT)
+	      (list XmNgainPrimaryCallback XM_CALLBACK) (list XmNgeometry XM_STRING) (list XmNheight XM_DIMENSION)
+	      (list XmNheightInc XM_INT) (list XmNhelpCallback XM_CALLBACK) (list XmNhelpLabelString XM_XMSTRING)
+	      (list XmNhighlightColor XM_PIXEL) (list XmNhighlightOnEnter XM_BOOLEAN) (list XmNhighlightPixmap XM_PIXMAP)
+	      (list XmNhighlightThickness XM_DIMENSION) (list XmNhistoryItemCount XM_INT) (list XmNhistoryItems XM_STRING_TABLE)
+	      (list XmNhistoryMaxItems XM_INT) (list XmNhistoryVisibleItemCount XM_INT) (list XmNhorizontalFontUnit XM_INT)
+	      (list XmNhorizontalScrollBar XM_WIDGET) (list XmNhorizontalSpacing XM_DIMENSION) (list XmNhotX XM_POSITION)
+	      (list XmNhotY XM_POSITION) (list XmNiconMask XM_PIXMAP) (list XmNiconName XM_STRING)
+	      (list XmNiconNameEncoding XM_ATOM) (list XmNiconPixmap XM_PIXMAP) (list XmNiconWindow XM_WIDGET)
+	      (list XmNiconX XM_INT) (list XmNiconY XM_INT) (list XmNiconic XM_BOOLEAN)
+	      (list XmNimportTargets XM_ATOM_LIST) (list XmNincrement XM_INT) (list XmNincrementCallback XM_CALLBACK)
+	      (list XmNincremental XM_BOOLEAN) (list XmNindicatorOn XM_INT) (list XmNindicatorSize XM_DIMENSION)
+	      (list XmNindicatorType XM_UCHAR) (list XmNinitialDelay XM_INT) (list XmNinitialFocus XM_WIDGET)
+	      (list XmNinitialResourcesPersistent XM_BOOLEAN) (list XmNinitialState XM_INT) (list XmNinput XM_BOOLEAN)
+	      (list XmNinputCallback XM_CALLBACK) (list XmNinputMethod XM_STRING) (list XmNinsertPosition XM_ORDER_CALLBACK)
+	      (list XmNinvalidCursorForeground XM_PIXEL) (list XmNisAligned XM_BOOLEAN) (list XmNisHomogeneous XM_BOOLEAN)
+	      (list XmNitemCount XM_INT) (list XmNitems XM_STRING_TABLE) (list XmNkeyboardFocusPolicy XM_UCHAR)
+	      (list XmNlabelInsensitivePixmap XM_PIXMAP) (list XmNlabelPixmap XM_PIXMAP) (list XmNlabelString XM_XMSTRING)
+	      (list XmNlabelType XM_UCHAR) (list XmNleftAttachment XM_UCHAR) (list XmNleftOffset XM_INT)
+	      (list XmNleftPosition XM_INT) (list XmNleftWidget XM_WIDGET) (list XmNlightThreshold XM_INT)
+	      (list XmNlistItemCount XM_INT) (list XmNlistItems XM_STRING_TABLE) (list XmNlistLabelString XM_XMSTRING)
+	      (list XmNlistMarginHeight XM_DIMENSION) (list XmNlistMarginWidth XM_DIMENSION) (list XmNlistSizePolicy XM_UCHAR)
+	      (list XmNlistSpacing XM_DIMENSION) (list XmNlistUpdated XM_BOOLEAN) (list XmNlistVisibleItemCount XM_INT)
+	      (list XmNlosePrimaryCallback XM_CALLBACK) (list XmNlosingFocusCallback XM_CALLBACK) (list XmNmainWindowMarginHeight XM_DIMENSION)
+	      (list XmNmainWindowMarginWidth XM_DIMENSION) (list XmNmapCallback XM_CALLBACK) (list XmNmappedWhenManaged XM_BOOLEAN)
+	      (list XmNmappingDelay XM_INT) (list XmNmargin XM_DIMENSION) (list XmNmarginBottom XM_DIMENSION)
+	      (list XmNmarginHeight XM_DIMENSION) (list XmNmarginLeft XM_DIMENSION) (list XmNmarginRight XM_DIMENSION)
+	      (list XmNmarginTop XM_DIMENSION) (list XmNmarginWidth XM_DIMENSION) (list XmNmask XM_PIXMAP)
+	      (list XmNmaxAspectX XM_INT) (list XmNmaxAspectY XM_INT) (list XmNmaxHeight XM_INT)
+	      (list XmNmaxLength XM_INT) (list XmNmaxWidth XM_INT) (list XmNmaximum XM_INT)
+	      (list XmNmenuAccelerator XM_STRING) (list XmNmenuBar XM_WIDGET) (list XmNmenuCursor XM_STRING)
+	      (list XmNmenuHelpWidget XM_WIDGET) (list XmNmenuHistory XM_WIDGET) (list XmNmenuPost XM_STRING)
+	      (list XmNmessageAlignment XM_UCHAR) (list XmNmessageString XM_XMSTRING) (list XmNmessageWindow XM_WIDGET)
+	      (list XmNminAspectX XM_INT) (list XmNminAspectY XM_INT) (list XmNminHeight XM_INT)
+	      (list XmNminWidth XM_INT) (list XmNminimizeButtons XM_BOOLEAN) (list XmNminimum XM_INT)
+	      (list XmNmnemonic XM_KEYSYM) (list XmNmnemonicCharSet XM_STRING) (list XmNmodifyVerifyCallback XM_CALLBACK)
+	      (list XmNmotionVerifyCallback XM_CALLBACK) (list XmNmoveOpaque XM_BOOLEAN) (list XmNmultiClick XM_UCHAR)
+	      (list XmNmultipleSelectionCallback XM_CALLBACK) (list XmNmustMatch XM_BOOLEAN) (list XmNmwmDecorations XM_INT)
+	      (list XmNmwmFunctions XM_INT) (list XmNmwmInputMode XM_INT) (list XmNmwmMenu XM_STRING)
+	      (list XmNnavigationType XM_UCHAR) (list XmNnoMatchCallback XM_CALLBACK) (list XmNnoMatchString XM_XMSTRING)
+	      (list XmNnoResize XM_BOOLEAN) (list XmNnoneCursorForeground XM_PIXEL) (list XmNnumChildren XM_INT)
+	      (list XmNnumColumns XM_SHORT) (list XmNnumDropRectangles XM_INT) (list XmNnumDropTransfers XM_INT)
+	      (list XmNnumExportTargets XM_INT) (list XmNnumImportTargets XM_INT) (list XmNoffsetX XM_POSITION)
+	      (list XmNoffsetY XM_POSITION) (list XmNokCallback XM_CALLBACK) (list XmNokLabelString XM_XMSTRING)
+	      (list XmNoperationChangedCallback XM_CALLBACK) (list XmNoperationCursorIcon XM_WIDGET) (list XmNoptionLabel XM_XMSTRING)
+	      (list XmNoptionMnemonic XM_KEYSYM) (list XmNorientation XM_UCHAR) (list XmNoverrideRedirect XM_BOOLEAN)
+	      (list XmNpacking XM_UCHAR) (list XmNpageDecrementCallback XM_CALLBACK) (list XmNpageIncrement XM_INT)
+	      (list XmNpageIncrementCallback XM_CALLBACK) (list XmNpaneMaximum XM_DIMENSION) (list XmNpaneMinimum XM_DIMENSION)
+	      (list XmNpattern XM_STRING_OR_XMSTRING) (list XmNpendingDelete XM_BOOLEAN) (list XmNpixmap XM_PIXMAP)
+	      (list XmNpopdownCallback XM_CALLBACK) (list XmNpopupCallback XM_CALLBACK) (list XmNpopupEnabled XM_INT)
+	      (list XmNpositionIndex XM_SHORT) (list XmNpostFromButton XM_INT) (list XmNpreeditType XM_STRING)
+	      (list XmNprocessingDirection XM_UCHAR) (list XmNpromptString XM_XMSTRING) (list XmNpushButtonEnabled XM_BOOLEAN)
+	      (list XmNqualifySearchDataProc XM_QUALIFY_CALLBACK) (list XmNradioAlwaysOne XM_BOOLEAN) (list XmNradioBehavior XM_BOOLEAN)
+	      (list XmNrecomputeSize XM_BOOLEAN) (list XmNrefigureMode XM_BOOLEAN) (list XmNrepeatDelay XM_INT)
+	      (list XmNresizable XM_BOOLEAN) (list XmNresizeCallback XM_CALLBACK) (list XmNresizeHeight XM_BOOLEAN)
+	      (list XmNresizePolicy XM_UCHAR) (list XmNresizeWidth XM_BOOLEAN) (list XmNrightAttachment XM_UCHAR)
+	      (list XmNrightOffset XM_INT) (list XmNrightPosition XM_INT) (list XmNrightWidget XM_WIDGET)
+	      (list XmNrowColumnType XM_UCHAR) (list XmNrows XM_SHORT) (list XmNrubberPositioning XM_BOOLEAN)
+	      (list XmNsashHeight XM_DIMENSION) (list XmNsashIndent XM_POSITION) (list XmNsashShadowThickness XM_DIMENSION)
+	      (list XmNsashWidth XM_DIMENSION) (list XmNsaveUnder XM_BOOLEAN) (list XmNscaleHeight XM_DIMENSION)
+	      (list XmNscaleMultiple XM_INT) (list XmNscaleWidth XM_DIMENSION) (list XmNscreen XM_SCREEN)
+	      (list XmNscrollBarDisplayPolicy XM_UCHAR) (list XmNscrollBarPlacement XM_UCHAR) (list XmNscrollHorizontal XM_BOOLEAN)
+	      (list XmNscrollLeftSide XM_BOOLEAN) (list XmNscrollTopSide XM_BOOLEAN) (list XmNscrollVertical XM_BOOLEAN)
+	      (list XmNscrolledWindowMarginHeight XM_DIMENSION) (list XmNscrolledWindowMarginWidth XM_DIMENSION) (list XmNscrollingPolicy XM_UCHAR)
+	      (list XmNselectColor XM_PIXEL) (list XmNselectInsensitivePixmap XM_PIXMAP) (list XmNselectPixmap XM_PIXMAP)
+	      (list XmNselectThreshold XM_INT) (list XmNselectedItemCount XM_INT) (list XmNselectedItems XM_STRING_TABLE)
+	      (list XmNselectionArray XM_INT_TABLE) (list XmNselectionArrayCount XM_INT) (list XmNselectionLabelString XM_XMSTRING)
+	      (list XmNselectionPolicy XM_UCHAR) (list XmNsensitive XM_BOOLEAN) (list XmNseparatorOn XM_BOOLEAN)
+	      (list XmNseparatorType XM_UCHAR) (list XmNset XM_UCHAR) (list XmNshadowThickness XM_DIMENSION)
+	      (list XmNshadowType XM_UCHAR) (list XmNshowArrows XM_BOOLEAN) (list XmNshowAsDefault XM_DIMENSION)
+	      (list XmNshowSeparator XM_BOOLEAN) (list XmNsimpleCallback XM_CALLBACK) (list XmNsingleSelectionCallback XM_CALLBACK)
+	      (list XmNskipAdjust XM_BOOLEAN) (list XmNsliderSize XM_INT) (list XmNsliderVisual XM_INT)
+	      (list XmNslidingMode XM_INT) (list XmNsource XM_TEXT_SOURCE) (list XmNsourceCursorIcon XM_WIDGET)
+	      (list XmNsourcePixmapIcon XM_WIDGET) (list XmNspacing XM_DIMENSION) (list XmNspotLocation XM_INT)
+	      (list XmNstateCursorIcon XM_WIDGET) (list XmNsubMenuId XM_WIDGET) (list XmNsymbolPixmap XM_PIXMAP)
+	      (list XmNtearOffMenuActivateCallback XM_CALLBACK) (list XmNtearOffMenuDeactivateCallback XM_CALLBACK) (list XmNtearOffModel XM_UCHAR)
+	      (list XmNtextAccelerators XM_ULONG) (list XmNtextColumns XM_SHORT) (list XmNtextString XM_XMSTRING)
+	      (list XmNtextTranslations XM_CALLBACK) (list XmNtitle XM_STRING) (list XmNtitleEncoding XM_ATOM)
+	      (list XmNtitleString XM_XMSTRING) (list XmNtoBottomCallback XM_CALLBACK) (list XmNtoTopCallback XM_CALLBACK)
+	      (list XmNtopAttachment XM_UCHAR) (list XmNtopCharacter XM_INT) (list XmNtopItemPosition XM_INT)
+	      (list XmNtopLevelEnterCallback XM_CALLBACK) (list XmNtopLevelLeaveCallback XM_CALLBACK) (list XmNtopOffset XM_INT)
+	      (list XmNtopPosition XM_INT) (list XmNtopShadowColor XM_PIXEL) (list XmNtopShadowPixmap XM_PIXMAP)
+	      (list XmNtopWidget XM_WIDGET) (list XmNtransferProc XM_TRANSFER_CALLBACK) (list XmNtransferStatus XM_UCHAR)
+	      (list XmNtransient XM_BOOLEAN) (list XmNtransientFor XM_WIDGET) (list XmNtranslations XM_CALLBACK)
+	      (list XmNtraversalOn XM_BOOLEAN) (list XmNtraverseObscuredCallback XM_CALLBACK) (list XmNtroughColor XM_PIXEL)
+	      (list XmNunitType XM_UCHAR) (list XmNunmapCallback XM_CALLBACK) (list XmNunpostBehavior XM_UCHAR)
+	      (list XmNuseAsyncGeometry XM_BOOLEAN) (list XmNuserData XM_ULONG) (list XmNvalidCursorForeground XM_PIXEL)
+	      (list XmNvalue XM_STRING_OR_INT) (list XmNvalueChangedCallback XM_CALLBACK) (list XmNverifyBell XM_BOOLEAN)
+	      (list XmNverticalFontUnit XM_INT) (list XmNverticalScrollBar XM_WIDGET) (list XmNverticalSpacing XM_DIMENSION)
+	      (list XmNvisibleItemCount XM_INT) (list XmNvisibleWhenOff XM_BOOLEAN) (list XmNvisual XM_VISUAL)
+	      (list XmNvisualPolicy XM_UCHAR) (list XmNwidth XM_DIMENSION) (list XmNwidthInc XM_INT)
+	      (list XmNwinGravity XM_INT) (list XmNwindow XM_WIDGET) (list XmNwindowGroup XM_WINDOW)
+	      (list XmNwmTimeout XM_INT) (list XmNwordWrap XM_BOOLEAN) (list XmNworkWindow XM_WIDGET)
+	      (list XmNx XM_POSITION) (list XmNy XM_POSITION) (list XmNarrowLayout XM_UCHAR)
+	      (list XmNarrowOrientation XM_UCHAR) (list XmNarrowSensitivity XM_UCHAR) (list XmNarrowSize XM_INT)
+	      (list XmNarrowSpacing XM_INT) (list XmNautoDragModel XM_INT) (list XmNbackPageBackground XM_PIXEL)
+	      (list XmNbackPageForeground XM_PIXEL) (list XmNbackPageNumber XM_INT) (list XmNbackPagePlacement XM_UCHAR)
+	      (list XmNbackPageSize XM_DIMENSION) (list XmNbindingPixmap XM_PIXMAP) (list XmNbindingType XM_UCHAR)
+	      (list XmNbindingWidth XM_INT) (list XmNbitmapConversionModel XM_INT) (list XmNbuttonRenderTable XM_RENDER_TABLE)
+	      (list XmNcollapsedStatePixmap XM_PIXMAP) (list XmNcolorAllocationProc XM_ALLOC_COLOR_CALLBACK) 
+	      (list XmNcolorCalculationProc XM_SCREEN_COLOR_CALLBACK)
+	      (list XmNcomboBoxType XM_UCHAR) (list XmNconvertCallback XM_CALLBACK) (list XmNcurrentPageNumber XM_INT)
+	      (list XmNdecimal XM_STRING) (list XmNdefaultArrowSensitivity XM_UCHAR) (list XmNdefaultButtonEmphasis XM_INT)
+	      (list XmNdefaultVirtualBindings XM_STRING) (list XmNdestinationCallback XM_CALLBACK) (list XmNdetail XM_STRING_TABLE)
+	      (list XmNdetailColumnHeading XM_INT) (list XmNdetailColumnHeadingCount XM_INT) (list XmNdetailCount XM_INT)
+	      (list XmNdetailOrder XM_INT_TABLE) (list XmNdetailOrderCount XM_INT) (list XmNdetailShadowThickness XM_INT)
+	      (list XmNdetailTabList XM_TAB_LIST) (list XmNdirTextLabelString XM_XMSTRING) (list XmNdragStartCallback XM_CALLBACK)
+	      (list XmNenableBtn1Transfer XM_INT) (list XmNenableButtonTab XM_BOOLEAN) (list XmNenableDragIcon XM_BOOLEAN)
+	      (list XmNenableEtchedInMenu XM_BOOLEAN) (list XmNenableMultiKeyBindings XM_BOOLEAN) (list XmNenableThinThickness XM_BOOLEAN)
+	      (list XmNenableToggleColor XM_BOOLEAN) (list XmNenableToggleVisual XM_BOOLEAN) (list XmNenableUnselectableDrag XM_BOOLEAN)
+	      (list XmNenableWarp XM_INT) (list XmNentryParent XM_WIDGET) (list XmNentryViewType XM_UCHAR)
+	      (list XmNexpandedStatePixmap XM_PIXMAP) (list XmNfileFilterStyle XM_INT) (list XmNfirstPageNumber XM_INT)
+	      (list XmNfontName XM_STRING) (list XmNfontType XM_UCHAR) (list XmNframeBackground XM_PIXEL)
+	      (list XmNframeChildType XM_UCHAR) (list XmNframeShadowThickness XM_DIMENSION) (list XmNgrabStyle XM_INT)
+	      (list XmNincludeStatus XM_INT) (list XmNincrementValue XM_INT) (list XmNindeterminateInsensitivePixmap XM_PIXMAP)
+	      (list XmNindeterminatePixmap XM_PIXMAP) (list XmNinnerMarginHeight XM_DIMENSION) (list XmNinnerMarginWidth XM_DIMENSION)
+	      (list XmNinputPolicy XM_ULONG) (list XmNinsensitiveStippleBitmap XM_PIXMAP) (list XmNinvokeParseProc XM_PARSE_CALLBACK)
+	      (list XmNlabelRenderTable XM_RENDER_TABLE) (list XmNlargeCellHeight XM_DIMENSION) (list XmNlargeCellWidth XM_DIMENSION)
+	      (list XmNlargeIconMask XM_PIXMAP) (list XmNlargeIconPixmap XM_PIXMAP) (list XmNlargeIconX XM_FLOAT)
+	      (list XmNlargeIconY XM_FLOAT) (list XmNlastPageNumber XM_INT) (list XmNlayoutDirection XM_UCHAR)
+	      (list XmNlayoutType XM_UCHAR) (list XmNlist XM_WIDGET) (list XmNloadModel XM_UCHAR)
+	      (list XmNmajorTabSpacing XM_DIMENSION) (list XmNmatchBehavior XM_UCHAR) (list XmNmaximumValue XM_INT)
+	      (list XmNminimumValue XM_INT) (list XmNminorTabSpacing XM_DIMENSION) (list XmNmotifVersion XM_INT)
+	      (list XmNnoFontCallback XM_CALLBACK) (list XmNnoRenditionCallback XM_CALLBACK) (list XmNnotebookChildType XM_UCHAR)
+	      (list XmNnumValues XM_INT) (list XmNoutlineButtonPolicy XM_UCHAR) (list XmNoutlineChangedCallback XM_CALLBACK)
+	      (list XmNoutlineColumnWidth XM_DIMENSION) (list XmNoutlineIndentation XM_DIMENSION) (list XmNoutlineLineStyle XM_UCHAR)
+	      (list XmNoutlineState XM_UCHAR) (list XmNpageChangedCallback XM_CALLBACK) (list XmNpageNumber XM_INT)
+	      (list XmNpathMode XM_INT) (list XmNpatternType XM_UCHAR) (list XmNpopupHandlerCallback XM_CALLBACK)
+	      (list XmNposition XM_INT) (list XmNpositionMode XM_INT) (list XmNpositionType XM_UCHAR)
+	      (list XmNprimaryOwnership XM_UCHAR) (list XmNrenderTable XM_RENDER_TABLE) (list XmNrenditionBackground XM_PIXEL)
+	      (list XmNrenditionForeground XM_PIXEL) (list XmNscrolledWindowChildType XM_UCHAR) (list XmNselectedItem XM_XMSTRING)
+	      (list XmNselectedObjectCount XM_INT) (list XmNselectedObjects XM_WIDGET_LIST) (list XmNselectedPosition XM_INT)
+	      (list XmNselectedPositionCount XM_INT) (list XmNselectedPositions XM_INT_TABLE) (list XmNselectionCallback XM_CALLBACK)
+	      (list XmNselectionMode XM_UCHAR) (list XmNselectionTechnique XM_UCHAR) (list XmNsliderMark XM_INT)
+	      (list XmNsmallCellHeight XM_DIMENSION) (list XmNsmallCellWidth XM_DIMENSION) (list XmNsmallIconMask XM_PIXMAP)
+	      (list XmNsmallIconPixmap XM_PIXMAP) (list XmNsmallIconX XM_FLOAT) (list XmNsmallIconY XM_FLOAT)
+	      (list XmNsnapBackMultiple XM_SHORT) (list XmNspatialIncludeModel XM_UCHAR) (list XmNspatialResizeModel XM_UCHAR)
+	      (list XmNspatialSnapModel XM_UCHAR) (list XmNspatialStyle XM_UCHAR) (list XmNspinBoxChildType XM_UCHAR)
+	      (list XmNstrikethruType XM_UCHAR) (list XmNsubstitute XM_XMSTRING) (list XmNtabList XM_TAB_LIST)
+	      (list XmNtag XM_STRING) (list XmNtearOffTitle XM_XMSTRING) (list XmNtextField XM_WIDGET)
+	      (list XmNtextRenderTable XM_RENDER_TABLE) (list XmNtoggleMode XM_UCHAR) (list XmNunderlineType XM_UCHAR)
+	      (list XmNunselectColor XM_PIXEL) (list XmNtabValue XM_FLOAT) (list XmNoffsetModel XM_INT)
+	      (list XmNcallback XM_CALLBACK) (list XmNwaitForWm XM_BOOLEAN) (list XmNuseColorObj XM_BOOLEAN)
+	      (list XmNvalues XM_STRING_TABLE) (list XmNviewType XM_UCHAR) (list XmNvisualEmphasis XM_UCHAR)
+	      (list XmNwrap XM_BOOLEAN)
+	      )))
+	
+	(for-each
+	 (lambda (n)
+	   (if (not (string? (car n))) (snd-display #__line__ ";resource ~A is not a string?" (car n)))
+	   (XtVaGetValues shell (list (car n) 0)))
+	 resource-list)
+	)
+      
+      (if (not (XEvent? (XEvent)))
+	  (snd-display #__line__ ";xevent type trouble! ~A -> ~A" (XEvent) (XEvent? (XEvent))))
+      (if (not (XGCValues? (XGCValues)))
+	  (snd-display #__line__ ";xgcvalues type trouble! ~A -> ~A" (XGCValues) (XGCValues? (XGCValues))))
+      (if (not (= (.direction (XmTraverseObscuredCallbackStruct)) 0))
+	  (snd-display #__line__ ";.direction: ~A" (.direction (XmTraverseObscuredCallbackStruct))))
+      (if (.ptr (XmTextBlock))
+	  (snd-display #__line__ ";.ptr block: ~A" (.ptr (XmTextBlock))))
+      (let ((hi (XmTextBlock)))
+	(set! (.ptr hi) "hi")
+	(if (not (string=? (.ptr hi) "hi"))
+	    (snd-display #__line__ ";.ptr set block: ~A" (.ptr hi)))
+	(if (not (= (.length hi) 0)) (snd-display #__line__ ";.length block: ~A" (.length hi)))
+	(set! (.length hi) 3)
+	(if (not (= (.length hi) 3)) (snd-display #__line__ ";set .length block: ~A" (.length hi))))
+      (if (not (= (.dashes (XGCValues)) 0)) (snd-display #__line__ ";dashes: ~A" (.dashes (XGCValues))))
+      (set! (.dashes (XGCValues)) 1)
+      (set! (.clip_mask (XGCValues)) (list 'Pixmap 0))
+      (set! (.resourceid (XEvent -1)) 0)
+      (set! (.error_code (XEvent -1)) 0)
+      (set! (.request_code (XEvent -1)) 0)
+      (if (not (= (.resourceid (XEvent -1)) 0)) (snd-display #__line__ ";error resourceid: ~A" (.resourceid (XEvent -1))))
+      (if (not (= (.request_code (XEvent -1)) 0)) (snd-display #__line__ ";error request_code: ~A" (.request_code (XEvent -1))))
+      (set! (.pad (XColor)) 1)
+      ;;)
+      
+      (if (defined? 'XShapeQueryExtents)
+	  (let* ((dpy (XtDisplay (cadr (main-widgets))))
+		 (win (XtWindow (cadr (main-widgets))))
+		 (vals (XShapeQueryExtents dpy win)))
+	    (if (not (= (car vals) 1))
+		(snd-display #__line__ ";XShapeQueryExtents: ~A" vals))
+	    (set! vals (XShapeGetRectangles dpy win 0))
+	    (if (not (list? vals)) (snd-display #__line__ ";XShapeGetRectangles: ~A" vals))
 					;(segfault)	  (XtFree (cadr vals)) 
-	      (set! vals (XShapeQueryExtension dpy))
-	      (if (not (equal? vals (list #t 64 0))) (snd-display #__line__ ";XShapeQueryExtension: ~A" vals))
-	      (set! vals (XShapeQueryVersion dpy))
-	      (if (and (not (equal? vals (list #t 1 0)))
-		       (not (equal? vals (list #t 1 1))))
-		  (snd-display #__line__ ";XShapeQueryVersion: ~A" vals))
-	      (if (XShapeOffsetShape dpy win 0 0 0) (snd-display #__line__ ";XShapeOffsetShape?"))
-	      
-	      (let* ((attr (XSetWindowAttributes #f *basic-color* #f *highlight-color*))
-		     (newwin (XCreateWindow dpy win 10 10 100 100 3 
-					    CopyFromParent InputOutput (list 'Visual CopyFromParent)
-					    (logior CWBackPixel CWBorderPixel)
-					    attr))
-		     (bitmap (XCreateBitmapFromData dpy win right-arrow 16 12))) ; right-arrow is in snd-motif.scm
-		(XShapeCombineMask dpy newwin ShapeClip 0 0 bitmap ShapeSet)
-		(XShapeCombineRectangles dpy newwin  ShapeUnion 0 0 
-					 (list (XRectangle 0 0 10 10) (XRectangle 0 0 10 30)) 2
-					 ShapeSet ShapeBounding)
-		(let ((newerwin (XCreateWindow dpy win 10 10 100 100 3 
-					       CopyFromParent InputOutput (list 'Visual CopyFromParent)
-					       (logior CWBackPixel CWBorderPixel)
-					       attr)))
-		  (XShapeCombineShape dpy newerwin ShapeIntersect 0 0 newwin ShapeSet ShapeClip))
-		(let ((reg1 (XPolygonRegion (list (XPoint 2 2) (XPoint 10 2) (XPoint 10 10) (XPoint 2 10)) 4 WindingRule)))
-		  (XShapeCombineRegion dpy newwin ShapeUnion 0 0 reg1 ShapeSet)))))
-	
-	(let ((classes (list xmArrowButtonWidgetClass xmBulletinBoardWidgetClass xmCascadeButtonWidgetClass xmCommandWidgetClass
-			     xmDrawingAreaWidgetClass xmDrawnButtonWidgetClass xmFileSelectionBoxWidgetClass xmFormWidgetClass
-			     xmFrameWidgetClass xmLabelWidgetClass xmListWidgetClass xmMainWindowWidgetClass xmManagerWidgetClass
-			     xmMessageBoxWidgetClass xmPanedWindowWidgetClass xmPrimitiveWidgetClass xmPushButtonWidgetClass
-			     xmRowColumnWidgetClass xmScaleWidgetClass xmScrollBarWidgetClass xmScrolledWindowWidgetClass
-			     xmSelectionBoxWidgetClass xmSeparatorWidgetClass xmTextFieldWidgetClass xmTextWidgetClass 
-			     xmToggleButtonWidgetClass xmContainerWidgetClass xmComboBoxWidgetClass xmNotebookWidgetClass))
-	      (wids ()))
-	  (for-each
-	   (lambda (class)
-	     (let* ((shell (cadr (main-widgets)))
-		    (wid (XtCreateWidget "hiho" class shell ())))
-	       (set! wids (cons wid wids))
-	       (XtAddCallback wid XmNhelpCallback (lambda (w c i) "help!"))))
-	   classes)
-	  (for-each
-	   (lambda (w)
-	     (XtCallCallbacks w XmNhelpCallback #f))
-	   wids))
-	
-	(let ((key (XStringToKeysym "Cancel")))
-	  (if (not (= (cadr key) XK_Cancel))
-	      (snd-display #__line__ ";XStringToKeysym ~A ~A" key XK_Cancel)))
-	
-	(let* ((win (XtWindow (cadr (main-widgets))))
-	       (xm-procs-1
-		(list
-		 XPutBackEvent XNextEvent
-		 XtAppProcessEvent XtAppMainLoop XtAppAddActions XtAppNextEvent XtAppPeekEvent
-		 
-		 XtSetArg XtManageChildren XtManageChild XtUnmanageChildren XtUnmanageChild
-		 XtDispatchEvent XtCallAcceptFocus XtIsSubclass XtIsObject XtIsManaged XtIsRealized
-		 XtIsSensitive XtOwnSelection XtOwnSelectionIncremental XtMakeResizeRequest XtTranslateCoords
-		 XtKeysymToKeycodeList XtParseTranslationTable XtParseAcceleratorTable XtOverrideTranslations XtAugmentTranslations
-		 XtInstallAccelerators XtInstallAllAccelerators XtUninstallTranslations XtAppAddActionHook
-		 XtRemoveActionHook XtGetActionList XtCallActionProc XtRegisterGrabAction XtSetMultiClickTime
-		 XtGetMultiClickTime XtGetActionKeysym XtTranslateKeycode XtTranslateKey XtSetKeyTranslator
-		 XtRegisterCaseConverter XtConvertCase XtAddEventHandler XtRemoveEventHandler XtAddRawEventHandler
-		 XtRemoveRawEventHandler XtInsertEventHandler XtInsertRawEventHandler XtDispatchEventToWidget
-		 XtBuildEventMask XtAddGrab XtRemoveGrab XtAddExposureToRegion XtSetKeyboardFocus
-		 XtGetKeyboardFocusWidget XtLastEventProcessed XtLastTimestampProcessed 
-		 XtAppAddTimeOut XtRemoveTimeOut XtAppAddInput XtRemoveInput XtAppPending
-		 XtRealizeWidget XtUnrealizeWidget XtSetSensitive XtNameToWidget XtWindowToWidget
-		 XtMergeArgLists XtVaCreateArgsList XtDisplay XtDisplayOfObject XtScreen XtScreenOfObject
-		 XtWindow XtWindowOfObject XtName XtSuperclass XtClass XtParent XtAddCallback XtRemoveCallback
-		 XtAddCallbacks XtRemoveCallbacks XtRemoveAllCallbacks XtCallCallbacks
-		 XtHasCallbacks XtCreatePopupShell XtVaCreatePopupShell XtPopup XtPopupSpringLoaded
-		 XtCallbackNone XtCallbackNonexclusive XtCallbackExclusive XtPopdown XtCallbackPopdown
-		 XtCreateWidget XtCreateManagedWidget XtVaCreateWidget XtVaCreateManagedWidget
-		 XtAppCreateShell XtVaAppCreateShell 
-		 XtDisplayToApplicationContext 
-		 XtSetValues XtVaSetValues XtGetValues XtVaGetValues
-		 XtAppSetErrorMsgHandler XtAppSetWarningMsgHandler
-		 XtAppErrorMsg XtAppWarningMsg XtAppSetErrorHandler
-		 XtAppSetWarningHandler XtAppError
-		 XtAppAddWorkProc XtGetGC XtAllocateGC XtDestroyGC XtReleaseGC
-		 XtFindFile XtResolvePathname XtDisownSelection XtGetSelectionValue
-		 XtGetSelectionValues XtAppSetSelectionTimeout XtAppGetSelectionTimeout
-		 XtGetSelectionRequest XtGetSelectionValueIncremental
-		 XtGetSelectionValuesIncremental XtCreateSelectionRequest XtSendSelectionRequest
-		 XtCancelSelectionRequest XtGrabKey XtUngrabKey
-		 XtGrabKeyboard XtUngrabKeyboard XtGrabButton XtUngrabButton XtGrabPointer XtUngrabPointer
-		 XtGetApplicationNameAndClass XtGetDisplays XtToolkitThreadInitialize XtAppLock XtAppUnlock XtIsRectObj XtIsWidget
-		 XtIsComposite XtIsConstraint XtIsShell XtIsOverrideShell XtIsWMShell XtIsVendorShell
-		 XtIsTransientShell XtIsTopLevelShell XtIsApplicationShell XtIsSessionShell XtMapWidget
-		 XtUnmapWidget XLoadQueryFont XQueryFont XGetMotionEvents XDeleteModifiermapEntry
-		 XGetModifierMapping XInsertModifiermapEntry XNewModifiermap XCreateImage XGetImage
-		 XGetSubImage XOpenDisplay XFetchBytes XFetchBuffer XGetAtomName XDisplayName XUniqueContext
-		 XKeysymToString XSynchronize XSetAfterFunction XInternAtom XCopyColormapAndFree XCreateColormap
-		 XCreatePixmapCursor XCreateGlyphCursor XCreateFontCursor XLoadFont XCreateGC XFlushGC
-		 XCreatePixmap XCreateBitmapFromData XCreatePixmapFromBitmapData XCreateSimpleWindow
-		 XGetSelectionOwner XCreateWindow XListInstalledColormaps XListFonts XListFontsWithInfo
-		 XListExtensions XListProperties ;XKeycodeToKeysym 
-		 XLookupKeysym
-		 XGetKeyboardMapping ;XStringToKeysym
-		 XDisplayMotionBufferSize XVisualIDFromVisual XMaxRequestSize XExtendedMaxRequestSize
-		 XRootWindow XDefaultRootWindow XRootWindowOfScreen
-		 XDefaultVisual XDefaultVisualOfScreen XDefaultGC XDefaultGCOfScreen XBlackPixel XWhitePixel
-		 XAllPlanes XBlackPixelOfScreen XWhitePixelOfScreen XNextRequest XLastKnownRequestProcessed
-		 XServerVendor XDisplayString XDefaultColormap XDefaultColormapOfScreen XDisplayOfScreen
-		 XScreenOfDisplay XDefaultScreenOfDisplay XEventMaskOfScreen XScreenNumberOfScreen
-		 XSetErrorHandler XSetIOErrorHandler XListPixmapFormats XListDepths XReconfigureWMWindow
-		 XGetWMProtocols XSetWMProtocols XIconifyWindow XWithdrawWindow XGetCommand XGetWMColormapWindows
-		 XSetTransientForHint XActivateScreenSaver
-		 XAllocColor XAllocColorCells XAllocColorPlanes XAllocNamedColor
-		 XAllowEvents XAutoRepeatOff XAutoRepeatOn XBell XBitmapBitOrder XBitmapPad XBitmapUnit
-		 XCellsOfScreen XChangeActivePointerGrab XChangeGC XChangeKeyboardControl XChangeKeyboardMapping
-		 XChangePointerControl XChangeProperty XChangeWindowAttributes ; XCheckIfEvent
-		 XCheckMaskEvent XCheckTypedEvent XCheckTypedWindowEvent XCheckWindowEvent XCirculateSubwindows
-		 XCirculateSubwindowsDown XCirculateSubwindowsUp XClearArea XClearWindow XCloseDisplay
-		 XConfigureWindow XConnectionNumber XConvertSelection XCopyArea XCopyGC XCopyPlane XDefaultDepth
-		 XDefaultDepthOfScreen XDefaultScreen XDefineCursor XDeleteProperty XDestroyWindow
-		 XDestroySubwindows XDoesBackingStore XDoesSaveUnders XDisableAccessControl XDisplayCells
-		 XDisplayHeight XDisplayHeightMM XDisplayKeycodes XDisplayPlanes XDisplayWidth XDisplayWidthMM
-		 XDrawArc XDrawArcs XDrawImageString XDrawLine XDrawLines XDrawLinesDirect XDrawPoint
-		 XDrawPoints XDrawRectangle XDrawRectangles XDrawSegments XDrawString XDrawText
-		 XEnableAccessControl XEventsQueued XFetchName XFillArc XFillArcs XFillPolygon XFillRectangle
-		 XFillRectangles XFlush XForceScreenSaver XFreeColormap XFreeColors XFreeCursor
-		 XFreeExtensionList XFreeFont XFreeFontInfo XFreeFontNames XFreeFontPath XFreeGC
-		 XFreeModifiermap XFreePixmap XGeometry XGetErrorText XGetFontProperty
-		 XGetGCValues XGCValues XEvent XGetGeometry XGetIconName XGetInputFocus XGetKeyboardControl
-		 XGetPointerControl XGetPointerMapping XGetScreenSaver XGetTransientForHint XGetWindowProperty
-		 XGetWindowAttributes XGrabButton XGrabKey XGrabKeyboard XGrabPointer XGrabServer
-		 XHeightMMOfScreen XHeightOfScreen XIfEvent XImageByteOrder XInstallColormap XKeysymToKeycode
-		 XKillClient XLookupColor XLowerWindow XMapRaised XMapSubwindows XMapWindow XMaskEvent
-		 XMaxCmapsOfScreen XMinCmapsOfScreen XMoveResizeWindow XMoveWindow XNoOp XParseColor
-		 XParseGeometry XPeekEvent XPeekIfEvent XPending XPlanesOfScreen XProtocolRevision
-		 XProtocolVersion XPutImage XQLength XQueryBestCursor XQueryBestSize XQueryBestStipple
-		 XQueryBestTile XQueryColor XQueryColors XQueryExtension XQueryKeymap XQueryPointer
-		 XQueryTextExtents XQueryTree XRaiseWindow XRebindKeysym XRecolorCursor XRefreshKeyboardMapping
-		 XReparentWindow XResetScreenSaver XResizeWindow
-		 XRestackWindows XRotateBuffers XRotateWindowProperties XScreenCount XSelectInput XSendEvent
-		 XSetAccessControl XSetArcMode XSetBackground XSetClipMask XSetClipOrigin XSetClipRectangles
-		 XSetCloseDownMode XSetCommand XSetDashes XSetFillRule XSetFillStyle XSetFont XSetFontPath
-		 XSetForeground XSetFunction XSetGraphicsExposures XSetIconName XSetInputFocus XSetLineAttributes
-		 XSetModifierMapping XSetPlaneMask XSetPointerMapping XSetScreenSaver XSetSelectionOwner
-		 XSetState XSetStipple XSetSubwindowMode XSetTSOrigin XSetTile XSetWindowBackground
-		 XSetWindowBackgroundPixmap XSetWindowBorder XSetWindowBorderPixmap XSetWindowBorderWidth
-		 XSetWindowColormap XStoreBuffer XStoreBytes XStoreColor XStoreColors XStoreName
-		 XStoreNamedColor XSync XTextExtents XTextWidth XTranslateCoordinates XUndefineCursor
-		 XUngrabButton XUngrabKey XUngrabKeyboard XUngrabPointer XUngrabServer XUninstallColormap
-		 XUnloadFont XUnmapSubwindows XUnmapWindow XVendorRelease XWarpPointer XWidthMMOfScreen
-		 XWidthOfScreen XWindowEvent XWriteBitmapFile XSupportsLocale XSetLocaleModifiers XCreateFontSet
-		 XFreeFontSet XFontsOfFontSet XBaseFontNameListOfFontSet XLocaleOfFontSet XContextDependentDrawing
-		 XDirectionalDependentDrawing XContextualDrawing XFilterEvent XAllocIconSize
-		 XAllocStandardColormap XAllocWMHints XClipBox XCreateRegion XDefaultString XDeleteContext
-		 XDestroyRegion XEmptyRegion XEqualRegion ;XFindContext 
-		 XGetIconSizes XGetRGBColormaps
-		 XGetVisualInfo XGetWMHints XIntersectRegion XConvertCase XLookupString
-		 XMatchVisualInfo XOffsetRegion XPointInRegion XPolygonRegion XRectInRegion XSaveContext
-		 XSetRGBColormaps XSetWMHints XSetRegion XShrinkRegion XSubtractRegion
-		 XUnionRectWithRegion XUnionRegion XXorRegion DefaultScreen DefaultRootWindow QLength
-		 ScreenCount ServerVendor ProtocolVersion ProtocolRevision VendorRelease DisplayString
-		 BitmapUnit BitmapBitOrder BitmapPad ImageByteOrder NextRequest LastKnownRequestProcessed
-		 DefaultScreenOfDisplay DisplayOfScreen RootWindowOfScreen BlackPixelOfScreen WhitePixelOfScreen
-		 DefaultColormapOfScreen DefaultDepthOfScreen DefaultGCOfScreen DefaultVisualOfScreen
-		 WidthOfScreen HeightOfScreen WidthMMOfScreen HeightMMOfScreen PlanesOfScreen CellsOfScreen
-		 MinCmapsOfScreen MaxCmapsOfScreen DoesSaveUnders DoesBackingStore EventMaskOfScreen RootWindow
-		 DefaultVisual DefaultGC BlackPixel WhitePixel DisplayWidth DisplayHeight DisplayWidthMM
-		 DisplayHeightMM DisplayPlanes DisplayCells DefaultColormap ScreenOfDisplay DefaultDepth
-		 IsKeypadKey IsPrivateKeypadKey IsCursorKey IsPFKey IsFunctionKey IsMiscFunctionKey
-		 IsModifierKey XmCreateMessageBox XmCreateMessageDialog XmCreateErrorDialog
-		 XmCreateInformationDialog XmCreateQuestionDialog XmCreateWarningDialog XmCreateWorkingDialog
-		 XmCreateTemplateDialog XmMessageBoxGetChild XmCreateArrowButtonGadget XmCreateArrowButton
-		 XmCreateNotebook XmNotebookGetPageInfo 
-		 XmTransferSetParameters XmTransferValue XmCreateComboBox
-		 XmCreateDropDownComboBox XmCreateDropDownList XmComboBoxAddItem XmComboBoxDeletePos
-		 XmComboBoxSelectItem XmComboBoxSetItem XmComboBoxUpdate XmCreateContainer
-		 XmContainerGetItemChildren XmContainerRelayout XmContainerReorder XmContainerCut XmContainerCopy
-		 XmContainerPaste XmContainerCopyLink XmContainerPasteLink XmCreateSpinBox
-		 XmSpinBoxValidatePosition XmCreateSimpleSpinBox XmSimpleSpinBoxAddItem XmSimpleSpinBoxDeletePos
-		 XmSimpleSpinBoxSetItem XmDropSiteRegistered XmTextFieldCopyLink XmTextFieldPasteLink
-		 XmTextGetCenterline XmToggleButtonGadgetSetValue XmCreateIconGadget
-		 XmCreateIconHeader XmObjectAtPoint XmConvertStringToUnits XmCreateGrabShell
-		 XmToggleButtonSetValue XmTextPasteLink XmTextCopyLink XmScaleSetTicks XmInternAtom XmGetAtomName
-		 XmCreatePanedWindow XmCreateBulletinBoard XmCreateBulletinBoardDialog XmCreateCascadeButtonGadget
-		 XmCascadeButtonGadgetHighlight XmAddProtocols XmRemoveProtocols XmAddProtocolCallback
-		 XmRemoveProtocolCallback XmActivateProtocol XmDeactivateProtocol XmSetProtocolHooks
-		 XmCreateCascadeButton XmCascadeButtonHighlight XmCreatePushButtonGadget XmCreatePushButton
-		 XmCreateCommand XmCommandGetChild XmCommandSetValue XmCommandAppendValue XmCommandError
-		 XmCreateCommandDialog XmMenuPosition XmCreateRowColumn XmCreateWorkArea XmCreateRadioBox
-		 XmCreateOptionMenu XmOptionLabelGadget XmOptionButtonGadget XmCreateMenuBar XmCreatePopupMenu
-		 XmCreatePulldownMenu XmGetPostedFromWidget XmGetTearOffControl 
-		 XmScaleSetValue XmScaleGetValue XmCreateScale
-		 XmClipboardStartCopy XmClipboardCopy XmClipboardEndCopy XmClipboardCancelCopy
-		 XmClipboardWithdrawFormat XmClipboardCopyByName XmClipboardUndoCopy XmClipboardLock
-		 XmClipboardUnlock XmClipboardStartRetrieve XmClipboardEndRetrieve XmClipboardRetrieve
-		 XmClipboardInquireCount XmClipboardInquireFormat XmClipboardInquireLength
-		 XmClipboardInquirePendingItems XmClipboardRegisterFormat XmGetXmScreen XmCreateScrollBar
-		 XmScrollBarGetValues XmScrollBarSetValues XmCreateDialogShell 
-		 XmCreateScrolledWindow XmScrollVisible XmGetDragContext XmGetXmDisplay XmSelectionBoxGetChild
-		 XmCreateSelectionBox XmCreateSelectionDialog XmCreatePromptDialog XmDragStart XmDragCancel
-		 XmTargetsAreCompatible XmCreateSeparatorGadget XmCreateDragIcon XmCreateSeparator
-		 XmCreateDrawingArea XmCreateDrawnButton XmDropSiteRegister XmDropSiteUnregister
-		 XmDropSiteStartUpdate XmDropSiteUpdate XmDropSiteEndUpdate XmDropSiteRetrieve
-		 XmDropSiteQueryStackingOrder XmDropSiteConfigureStackingOrder XmDropTransferStart
-		 XmDropTransferAdd XmTextFieldGetString XmTextFieldGetSubstring XmTextFieldGetLastPosition
-		 XmTextFieldSetString XmTextFieldReplace XmTextFieldInsert XmTextFieldSetAddMode
-		 XmTextFieldGetAddMode XmTextFieldGetEditable XmTextFieldSetEditable XmTextFieldGetMaxLength
-		 XmTextFieldSetMaxLength XmTextFieldGetCursorPosition XmTextFieldGetInsertionPosition
-		 XmTextFieldSetCursorPosition XmTextFieldSetInsertionPosition XmTextFieldGetSelectionPosition
-		 XmTextFieldGetSelection XmTextFieldRemove XmTextFieldCopy XmTextFieldCut XmTextFieldPaste
-		 XmTextFieldClearSelection XmTextFieldSetSelection XmTextFieldXYToPos XmTextFieldPosToXY
-		 XmTextFieldShowPosition XmTextFieldSetHighlight XmTextFieldGetBaseline XmCreateTextField
-		 XmFileSelectionBoxGetChild XmFileSelectionDoSearch XmCreateFileSelectionBox
-		 XmCreateFileSelectionDialog XmTextSetHighlight XmCreateScrolledText XmCreateText
-		 XmTextGetSubstring XmTextGetString XmTextGetLastPosition XmTextSetString XmTextReplace
-		 XmTextInsert XmTextSetAddMode XmTextGetAddMode XmTextGetEditable XmTextSetEditable
-		 XmTextGetMaxLength XmTextSetMaxLength XmTextGetTopCharacter XmTextSetTopCharacter
-		 XmTextGetCursorPosition XmTextGetInsertionPosition XmTextSetInsertionPosition
-		 XmTextSetCursorPosition XmTextRemove XmTextCopy XmTextCut XmTextPaste XmTextGetSelection
-		 XmTextSetSelection XmTextClearSelection XmTextGetSelectionPosition XmTextXYToPos XmTextPosToXY
-		 XmTextGetSource XmTextSetSource XmTextShowPosition XmTextScroll XmTextGetBaseline
-		 XmTextDisableRedisplay XmTextEnableRedisplay XmTextFindString XmCreateForm XmCreateFormDialog
-		 XmCreateFrame XmToggleButtonGadgetGetState XmToggleButtonGadgetSetState XmCreateToggleButtonGadget
-		 XmToggleButtonGetState XmToggleButtonSetState XmCreateToggleButton XmCreateLabelGadget
-		 XmCreateLabel XmIsMotifWMRunning XmListAddItem XmListAddItems XmListAddItemsUnselected
-		 XmListAddItemUnselected XmListDeleteItem XmListDeleteItems XmListDeletePositions XmListDeletePos
-		 XmListDeleteItemsPos XmListDeleteAllItems XmListReplaceItems XmListReplaceItemsPos
-		 XmListReplaceItemsUnselected XmListReplaceItemsPosUnselected XmListReplacePositions
-		 XmListSelectItem XmListSelectPos XmListDeselectItem XmListDeselectPos XmListDeselectAllItems
-		 XmListSetPos XmListSetBottomPos XmListSetItem XmListSetBottomItem XmListSetAddMode
-		 XmListItemExists XmListItemPos XmListGetKbdItemPos XmListSetKbdItemPos XmListYToPos
-		 XmListPosToBounds XmListGetMatchPos XmListGetSelectedPos XmListSetHorizPos
-		 XmListUpdateSelectedList XmListPosSelected XmCreateList XmCreateScrolledList XmTranslateKey
-		 XmInstallImage XmUninstallImage XmGetPixmap XmGetPixmapByDepth XmDestroyPixmap XmUpdateDisplay
-		 XmWidgetGetBaselines XmRegisterSegmentEncoding XmMapSegmentEncoding
-		 XmCvtCTToXmString XmCvtXmStringToCT XmConvertUnits
-		 XmCreateSimpleMenuBar XmCreateSimplePopupMenu XmCreateSimplePulldownMenu
-		 XmCreateSimpleOptionMenu XmCreateSimpleRadioBox XmCreateSimpleCheckBox XmVaCreateSimpleMenuBar
-		 XmVaCreateSimplePopupMenu XmVaCreateSimplePulldownMenu XmVaCreateSimpleOptionMenu
-		 XmVaCreateSimpleRadioBox XmVaCreateSimpleCheckBox XmTrackingEvent
-		 XmSetColorCalculation XmGetColorCalculation XmGetColors XmChangeColor XmStringCreate
-		 XmStringCreateLocalized XmStringDirectionCreate XmStringSeparatorCreate
-		 XmStringInitContext
-		 XmStringFreeContext 
-		 XmStringConcatAndFree XmStringIsVoid XmStringPeekNextTriple XmStringGetNextTriple
-		 XmStringComponentCreate XmStringUnparse XmStringParseText XmStringToXmStringTable
-		 XmStringTableToXmString XmStringTableUnparse XmStringTableParseStringArray
-		 XmDirectionToStringDirection XmStringDirectionToDirection XmStringGenerate XmStringPutRendition
-		 XmParseMappingGetValues XmParseMappingFree XmParseTableFree XmStringTableProposeTablist
-		 XmTabSetValue XmTabGetValues XmTabFree XmTabCreate XmTabListTabCount XmTabListRemoveTabs
-		 XmTabListReplacePositions XmTabListGetTab XmTabListCopy XmTabListInsertTabs
+	    (set! vals (XShapeQueryExtension dpy))
+	    (if (not (equal? vals (list #t 64 0))) (snd-display #__line__ ";XShapeQueryExtension: ~A" vals))
+	    (set! vals (XShapeQueryVersion dpy))
+	    (if (and (not (equal? vals (list #t 1 0)))
+		     (not (equal? vals (list #t 1 1))))
+		(snd-display #__line__ ";XShapeQueryVersion: ~A" vals))
+	    (if (XShapeOffsetShape dpy win 0 0 0) (snd-display #__line__ ";XShapeOffsetShape?"))
+	    
+	    (let* ((attr (XSetWindowAttributes #f *basic-color* #f *highlight-color*))
+		   (newwin (XCreateWindow dpy win 10 10 100 100 3 
+					  CopyFromParent InputOutput (list 'Visual CopyFromParent)
+					  (logior CWBackPixel CWBorderPixel)
+					  attr))
+		   (bitmap (XCreateBitmapFromData dpy win right-arrow 16 12))) ; right-arrow is in snd-motif.scm
+	      (XShapeCombineMask dpy newwin ShapeClip 0 0 bitmap ShapeSet)
+	      (XShapeCombineRectangles dpy newwin  ShapeUnion 0 0 
+				       (list (XRectangle 0 0 10 10) (XRectangle 0 0 10 30)) 2
+				       ShapeSet ShapeBounding)
+	      (let ((newerwin (XCreateWindow dpy win 10 10 100 100 3 
+					     CopyFromParent InputOutput (list 'Visual CopyFromParent)
+					     (logior CWBackPixel CWBorderPixel)
+					     attr)))
+		(XShapeCombineShape dpy newerwin ShapeIntersect 0 0 newwin ShapeSet ShapeClip))
+	      (let ((reg1 (XPolygonRegion (list (XPoint 2 2) (XPoint 10 2) (XPoint 10 10) (XPoint 2 10)) 4 WindingRule)))
+		(XShapeCombineRegion dpy newwin ShapeUnion 0 0 reg1 ShapeSet)))))
+      
+      (let ((classes (list xmArrowButtonWidgetClass xmBulletinBoardWidgetClass xmCascadeButtonWidgetClass xmCommandWidgetClass
+			   xmDrawingAreaWidgetClass xmDrawnButtonWidgetClass xmFileSelectionBoxWidgetClass xmFormWidgetClass
+			   xmFrameWidgetClass xmLabelWidgetClass xmListWidgetClass xmMainWindowWidgetClass xmManagerWidgetClass
+			   xmMessageBoxWidgetClass xmPanedWindowWidgetClass xmPrimitiveWidgetClass xmPushButtonWidgetClass
+			   xmRowColumnWidgetClass xmScaleWidgetClass xmScrollBarWidgetClass xmScrolledWindowWidgetClass
+			   xmSelectionBoxWidgetClass xmSeparatorWidgetClass xmTextFieldWidgetClass xmTextWidgetClass 
+			   xmToggleButtonWidgetClass xmContainerWidgetClass xmComboBoxWidgetClass xmNotebookWidgetClass))
+	    (wids ()))
+	(for-each
+	 (lambda (class)
+	   (let* ((shell (cadr (main-widgets)))
+		  (wid (XtCreateWidget "hiho" class shell ())))
+	     (set! wids (cons wid wids))
+	     (XtAddCallback wid XmNhelpCallback (lambda (w c i) "help!"))))
+	 classes)
+	(for-each
+	 (lambda (w)
+	   (XtCallCallbacks w XmNhelpCallback #f))
+	 wids))
+      
+      (let ((key (XStringToKeysym "Cancel")))
+	(if (not (= (cadr key) XK_Cancel))
+	    (snd-display #__line__ ";XStringToKeysym ~A ~A" key XK_Cancel)))
+      
+      (let* ((win (XtWindow (cadr (main-widgets))))
+	     (xm-procs-1
+	      (list
+	       XPutBackEvent XNextEvent
+	       XtAppProcessEvent XtAppMainLoop XtAppAddActions XtAppNextEvent XtAppPeekEvent
+	       
+	       XtSetArg XtManageChildren XtManageChild XtUnmanageChildren XtUnmanageChild
+	       XtDispatchEvent XtCallAcceptFocus XtIsSubclass XtIsObject XtIsManaged XtIsRealized
+	       XtIsSensitive XtOwnSelection XtOwnSelectionIncremental XtMakeResizeRequest XtTranslateCoords
+	       XtKeysymToKeycodeList XtParseTranslationTable XtParseAcceleratorTable XtOverrideTranslations XtAugmentTranslations
+	       XtInstallAccelerators XtInstallAllAccelerators XtUninstallTranslations XtAppAddActionHook
+	       XtRemoveActionHook XtGetActionList XtCallActionProc XtRegisterGrabAction XtSetMultiClickTime
+	       XtGetMultiClickTime XtGetActionKeysym XtTranslateKeycode XtTranslateKey XtSetKeyTranslator
+	       XtRegisterCaseConverter XtConvertCase XtAddEventHandler XtRemoveEventHandler XtAddRawEventHandler
+	       XtRemoveRawEventHandler XtInsertEventHandler XtInsertRawEventHandler XtDispatchEventToWidget
+	       XtBuildEventMask XtAddGrab XtRemoveGrab XtAddExposureToRegion XtSetKeyboardFocus
+	       XtGetKeyboardFocusWidget XtLastEventProcessed XtLastTimestampProcessed 
+	       XtAppAddTimeOut XtRemoveTimeOut XtAppAddInput XtRemoveInput XtAppPending
+	       XtRealizeWidget XtUnrealizeWidget XtSetSensitive XtNameToWidget XtWindowToWidget
+	       XtMergeArgLists XtVaCreateArgsList XtDisplay XtDisplayOfObject XtScreen XtScreenOfObject
+	       XtWindow XtWindowOfObject XtName XtSuperclass XtClass XtParent XtAddCallback XtRemoveCallback
+	       XtAddCallbacks XtRemoveCallbacks XtRemoveAllCallbacks XtCallCallbacks
+	       XtHasCallbacks XtCreatePopupShell XtVaCreatePopupShell XtPopup XtPopupSpringLoaded
+	       XtCallbackNone XtCallbackNonexclusive XtCallbackExclusive XtPopdown XtCallbackPopdown
+	       XtCreateWidget XtCreateManagedWidget XtVaCreateWidget XtVaCreateManagedWidget
+	       XtAppCreateShell XtVaAppCreateShell 
+	       XtDisplayToApplicationContext 
+	       XtSetValues XtVaSetValues XtGetValues XtVaGetValues
+	       XtAppSetErrorMsgHandler XtAppSetWarningMsgHandler
+	       XtAppErrorMsg XtAppWarningMsg XtAppSetErrorHandler
+	       XtAppSetWarningHandler XtAppError
+	       XtAppAddWorkProc XtGetGC XtAllocateGC XtDestroyGC XtReleaseGC
+	       XtFindFile XtResolvePathname XtDisownSelection XtGetSelectionValue
+	       XtGetSelectionValues XtAppSetSelectionTimeout XtAppGetSelectionTimeout
+	       XtGetSelectionRequest XtGetSelectionValueIncremental
+	       XtGetSelectionValuesIncremental XtCreateSelectionRequest XtSendSelectionRequest
+	       XtCancelSelectionRequest XtGrabKey XtUngrabKey
+	       XtGrabKeyboard XtUngrabKeyboard XtGrabButton XtUngrabButton XtGrabPointer XtUngrabPointer
+	       XtGetApplicationNameAndClass XtGetDisplays XtToolkitThreadInitialize XtAppLock XtAppUnlock XtIsRectObj XtIsWidget
+	       XtIsComposite XtIsConstraint XtIsShell XtIsOverrideShell XtIsWMShell XtIsVendorShell
+	       XtIsTransientShell XtIsTopLevelShell XtIsApplicationShell XtIsSessionShell XtMapWidget
+	       XtUnmapWidget XLoadQueryFont XQueryFont XGetMotionEvents XDeleteModifiermapEntry
+	       XGetModifierMapping XInsertModifiermapEntry XNewModifiermap XCreateImage XGetImage
+	       XGetSubImage XOpenDisplay XFetchBytes XFetchBuffer XGetAtomName XDisplayName XUniqueContext
+	       XKeysymToString XSynchronize XSetAfterFunction XInternAtom XCopyColormapAndFree XCreateColormap
+	       XCreatePixmapCursor XCreateGlyphCursor XCreateFontCursor XLoadFont XCreateGC XFlushGC
+	       XCreatePixmap XCreateBitmapFromData XCreatePixmapFromBitmapData XCreateSimpleWindow
+	       XGetSelectionOwner XCreateWindow XListInstalledColormaps XListFonts XListFontsWithInfo
+	       XListExtensions XListProperties ;XKeycodeToKeysym 
+	       XLookupKeysym
+	       XGetKeyboardMapping ;XStringToKeysym
+	       XDisplayMotionBufferSize XVisualIDFromVisual XMaxRequestSize XExtendedMaxRequestSize
+	       XRootWindow XDefaultRootWindow XRootWindowOfScreen
+	       XDefaultVisual XDefaultVisualOfScreen XDefaultGC XDefaultGCOfScreen XBlackPixel XWhitePixel
+	       XAllPlanes XBlackPixelOfScreen XWhitePixelOfScreen XNextRequest XLastKnownRequestProcessed
+	       XServerVendor XDisplayString XDefaultColormap XDefaultColormapOfScreen XDisplayOfScreen
+	       XScreenOfDisplay XDefaultScreenOfDisplay XEventMaskOfScreen XScreenNumberOfScreen
+	       XSetErrorHandler XSetIOErrorHandler XListPixmapFormats XListDepths XReconfigureWMWindow
+	       XGetWMProtocols XSetWMProtocols XIconifyWindow XWithdrawWindow XGetCommand XGetWMColormapWindows
+	       XSetTransientForHint XActivateScreenSaver
+	       XAllocColor XAllocColorCells XAllocColorPlanes XAllocNamedColor
+	       XAllowEvents XAutoRepeatOff XAutoRepeatOn XBell XBitmapBitOrder XBitmapPad XBitmapUnit
+	       XCellsOfScreen XChangeActivePointerGrab XChangeGC XChangeKeyboardControl XChangeKeyboardMapping
+	       XChangePointerControl XChangeProperty XChangeWindowAttributes ; XCheckIfEvent
+	       XCheckMaskEvent XCheckTypedEvent XCheckTypedWindowEvent XCheckWindowEvent XCirculateSubwindows
+	       XCirculateSubwindowsDown XCirculateSubwindowsUp XClearArea XClearWindow XCloseDisplay
+	       XConfigureWindow XConnectionNumber XConvertSelection XCopyArea XCopyGC XCopyPlane XDefaultDepth
+	       XDefaultDepthOfScreen XDefaultScreen XDefineCursor XDeleteProperty XDestroyWindow
+	       XDestroySubwindows XDoesBackingStore XDoesSaveUnders XDisableAccessControl XDisplayCells
+	       XDisplayHeight XDisplayHeightMM XDisplayKeycodes XDisplayPlanes XDisplayWidth XDisplayWidthMM
+	       XDrawArc XDrawArcs XDrawImageString XDrawLine XDrawLines XDrawLinesDirect XDrawPoint
+	       XDrawPoints XDrawRectangle XDrawRectangles XDrawSegments XDrawString XDrawText
+	       XEnableAccessControl XEventsQueued XFetchName XFillArc XFillArcs XFillPolygon XFillRectangle
+	       XFillRectangles XFlush XForceScreenSaver XFreeColormap XFreeColors XFreeCursor
+	       XFreeExtensionList XFreeFont XFreeFontInfo XFreeFontNames XFreeFontPath XFreeGC
+	       XFreeModifiermap XFreePixmap XGeometry XGetErrorText XGetFontProperty
+	       XGetGCValues XGCValues XEvent XGetGeometry XGetIconName XGetInputFocus XGetKeyboardControl
+	       XGetPointerControl XGetPointerMapping XGetScreenSaver XGetTransientForHint XGetWindowProperty
+	       XGetWindowAttributes XGrabButton XGrabKey XGrabKeyboard XGrabPointer XGrabServer
+	       XHeightMMOfScreen XHeightOfScreen XIfEvent XImageByteOrder XInstallColormap XKeysymToKeycode
+	       XKillClient XLookupColor XLowerWindow XMapRaised XMapSubwindows XMapWindow XMaskEvent
+	       XMaxCmapsOfScreen XMinCmapsOfScreen XMoveResizeWindow XMoveWindow XNoOp XParseColor
+	       XParseGeometry XPeekEvent XPeekIfEvent XPending XPlanesOfScreen XProtocolRevision
+	       XProtocolVersion XPutImage XQLength XQueryBestCursor XQueryBestSize XQueryBestStipple
+	       XQueryBestTile XQueryColor XQueryColors XQueryExtension XQueryKeymap XQueryPointer
+	       XQueryTextExtents XQueryTree XRaiseWindow XRebindKeysym XRecolorCursor XRefreshKeyboardMapping
+	       XReparentWindow XResetScreenSaver XResizeWindow
+	       XRestackWindows XRotateBuffers XRotateWindowProperties XScreenCount XSelectInput XSendEvent
+	       XSetAccessControl XSetArcMode XSetBackground XSetClipMask XSetClipOrigin XSetClipRectangles
+	       XSetCloseDownMode XSetCommand XSetDashes XSetFillRule XSetFillStyle XSetFont XSetFontPath
+	       XSetForeground XSetFunction XSetGraphicsExposures XSetIconName XSetInputFocus XSetLineAttributes
+	       XSetModifierMapping XSetPlaneMask XSetPointerMapping XSetScreenSaver XSetSelectionOwner
+	       XSetState XSetStipple XSetSubwindowMode XSetTSOrigin XSetTile XSetWindowBackground
+	       XSetWindowBackgroundPixmap XSetWindowBorder XSetWindowBorderPixmap XSetWindowBorderWidth
+	       XSetWindowColormap XStoreBuffer XStoreBytes XStoreColor XStoreColors XStoreName
+	       XStoreNamedColor XSync XTextExtents XTextWidth XTranslateCoordinates XUndefineCursor
+	       XUngrabButton XUngrabKey XUngrabKeyboard XUngrabPointer XUngrabServer XUninstallColormap
+	       XUnloadFont XUnmapSubwindows XUnmapWindow XVendorRelease XWarpPointer XWidthMMOfScreen
+	       XWidthOfScreen XWindowEvent XWriteBitmapFile XSupportsLocale XSetLocaleModifiers XCreateFontSet
+	       XFreeFontSet XFontsOfFontSet XBaseFontNameListOfFontSet XLocaleOfFontSet XContextDependentDrawing
+	       XDirectionalDependentDrawing XContextualDrawing XFilterEvent XAllocIconSize
+	       XAllocStandardColormap XAllocWMHints XClipBox XCreateRegion XDefaultString XDeleteContext
+	       XDestroyRegion XEmptyRegion XEqualRegion ;XFindContext 
+	       XGetIconSizes XGetRGBColormaps
+	       XGetVisualInfo XGetWMHints XIntersectRegion XConvertCase XLookupString
+	       XMatchVisualInfo XOffsetRegion XPointInRegion XPolygonRegion XRectInRegion XSaveContext
+	       XSetRGBColormaps XSetWMHints XSetRegion XShrinkRegion XSubtractRegion
+	       XUnionRectWithRegion XUnionRegion XXorRegion DefaultScreen DefaultRootWindow QLength
+	       ScreenCount ServerVendor ProtocolVersion ProtocolRevision VendorRelease DisplayString
+	       BitmapUnit BitmapBitOrder BitmapPad ImageByteOrder NextRequest LastKnownRequestProcessed
+	       DefaultScreenOfDisplay DisplayOfScreen RootWindowOfScreen BlackPixelOfScreen WhitePixelOfScreen
+	       DefaultColormapOfScreen DefaultDepthOfScreen DefaultGCOfScreen DefaultVisualOfScreen
+	       WidthOfScreen HeightOfScreen WidthMMOfScreen HeightMMOfScreen PlanesOfScreen CellsOfScreen
+	       MinCmapsOfScreen MaxCmapsOfScreen DoesSaveUnders DoesBackingStore EventMaskOfScreen RootWindow
+	       DefaultVisual DefaultGC BlackPixel WhitePixel DisplayWidth DisplayHeight DisplayWidthMM
+	       DisplayHeightMM DisplayPlanes DisplayCells DefaultColormap ScreenOfDisplay DefaultDepth
+	       IsKeypadKey IsPrivateKeypadKey IsCursorKey IsPFKey IsFunctionKey IsMiscFunctionKey
+	       IsModifierKey XmCreateMessageBox XmCreateMessageDialog XmCreateErrorDialog
+	       XmCreateInformationDialog XmCreateQuestionDialog XmCreateWarningDialog XmCreateWorkingDialog
+	       XmCreateTemplateDialog XmMessageBoxGetChild XmCreateArrowButtonGadget XmCreateArrowButton
+	       XmCreateNotebook XmNotebookGetPageInfo 
+	       XmTransferSetParameters XmTransferValue XmCreateComboBox
+	       XmCreateDropDownComboBox XmCreateDropDownList XmComboBoxAddItem XmComboBoxDeletePos
+	       XmComboBoxSelectItem XmComboBoxSetItem XmComboBoxUpdate XmCreateContainer
+	       XmContainerGetItemChildren XmContainerRelayout XmContainerReorder XmContainerCut XmContainerCopy
+	       XmContainerPaste XmContainerCopyLink XmContainerPasteLink XmCreateSpinBox
+	       XmSpinBoxValidatePosition XmCreateSimpleSpinBox XmSimpleSpinBoxAddItem XmSimpleSpinBoxDeletePos
+	       XmSimpleSpinBoxSetItem XmDropSiteRegistered XmTextFieldCopyLink XmTextFieldPasteLink
+	       XmTextGetCenterline XmToggleButtonGadgetSetValue XmCreateIconGadget
+	       XmCreateIconHeader XmObjectAtPoint XmConvertStringToUnits XmCreateGrabShell
+	       XmToggleButtonSetValue XmTextPasteLink XmTextCopyLink XmScaleSetTicks XmInternAtom XmGetAtomName
+	       XmCreatePanedWindow XmCreateBulletinBoard XmCreateBulletinBoardDialog XmCreateCascadeButtonGadget
+	       XmCascadeButtonGadgetHighlight XmAddProtocols XmRemoveProtocols XmAddProtocolCallback
+	       XmRemoveProtocolCallback XmActivateProtocol XmDeactivateProtocol XmSetProtocolHooks
+	       XmCreateCascadeButton XmCascadeButtonHighlight XmCreatePushButtonGadget XmCreatePushButton
+	       XmCreateCommand XmCommandGetChild XmCommandSetValue XmCommandAppendValue XmCommandError
+	       XmCreateCommandDialog XmMenuPosition XmCreateRowColumn XmCreateWorkArea XmCreateRadioBox
+	       XmCreateOptionMenu XmOptionLabelGadget XmOptionButtonGadget XmCreateMenuBar XmCreatePopupMenu
+	       XmCreatePulldownMenu XmGetPostedFromWidget XmGetTearOffControl 
+	       XmScaleSetValue XmScaleGetValue XmCreateScale
+	       XmClipboardStartCopy XmClipboardCopy XmClipboardEndCopy XmClipboardCancelCopy
+	       XmClipboardWithdrawFormat XmClipboardCopyByName XmClipboardUndoCopy XmClipboardLock
+	       XmClipboardUnlock XmClipboardStartRetrieve XmClipboardEndRetrieve XmClipboardRetrieve
+	       XmClipboardInquireCount XmClipboardInquireFormat XmClipboardInquireLength
+	       XmClipboardInquirePendingItems XmClipboardRegisterFormat XmGetXmScreen XmCreateScrollBar
+	       XmScrollBarGetValues XmScrollBarSetValues XmCreateDialogShell 
+	       XmCreateScrolledWindow XmScrollVisible XmGetDragContext XmGetXmDisplay XmSelectionBoxGetChild
+	       XmCreateSelectionBox XmCreateSelectionDialog XmCreatePromptDialog XmDragStart XmDragCancel
+	       XmTargetsAreCompatible XmCreateSeparatorGadget XmCreateDragIcon XmCreateSeparator
+	       XmCreateDrawingArea XmCreateDrawnButton XmDropSiteRegister XmDropSiteUnregister
+	       XmDropSiteStartUpdate XmDropSiteUpdate XmDropSiteEndUpdate XmDropSiteRetrieve
+	       XmDropSiteQueryStackingOrder XmDropSiteConfigureStackingOrder XmDropTransferStart
+	       XmDropTransferAdd XmTextFieldGetString XmTextFieldGetSubstring XmTextFieldGetLastPosition
+	       XmTextFieldSetString XmTextFieldReplace XmTextFieldInsert XmTextFieldSetAddMode
+	       XmTextFieldGetAddMode XmTextFieldGetEditable XmTextFieldSetEditable XmTextFieldGetMaxLength
+	       XmTextFieldSetMaxLength XmTextFieldGetCursorPosition XmTextFieldGetInsertionPosition
+	       XmTextFieldSetCursorPosition XmTextFieldSetInsertionPosition XmTextFieldGetSelectionPosition
+	       XmTextFieldGetSelection XmTextFieldRemove XmTextFieldCopy XmTextFieldCut XmTextFieldPaste
+	       XmTextFieldClearSelection XmTextFieldSetSelection XmTextFieldXYToPos XmTextFieldPosToXY
+	       XmTextFieldShowPosition XmTextFieldSetHighlight XmTextFieldGetBaseline XmCreateTextField
+	       XmFileSelectionBoxGetChild XmFileSelectionDoSearch XmCreateFileSelectionBox
+	       XmCreateFileSelectionDialog XmTextSetHighlight XmCreateScrolledText XmCreateText
+	       XmTextGetSubstring XmTextGetString XmTextGetLastPosition XmTextSetString XmTextReplace
+	       XmTextInsert XmTextSetAddMode XmTextGetAddMode XmTextGetEditable XmTextSetEditable
+	       XmTextGetMaxLength XmTextSetMaxLength XmTextGetTopCharacter XmTextSetTopCharacter
+	       XmTextGetCursorPosition XmTextGetInsertionPosition XmTextSetInsertionPosition
+	       XmTextSetCursorPosition XmTextRemove XmTextCopy XmTextCut XmTextPaste XmTextGetSelection
+	       XmTextSetSelection XmTextClearSelection XmTextGetSelectionPosition XmTextXYToPos XmTextPosToXY
+	       XmTextGetSource XmTextSetSource XmTextShowPosition XmTextScroll XmTextGetBaseline
+	       XmTextDisableRedisplay XmTextEnableRedisplay XmTextFindString XmCreateForm XmCreateFormDialog
+	       XmCreateFrame XmToggleButtonGadgetGetState XmToggleButtonGadgetSetState XmCreateToggleButtonGadget
+	       XmToggleButtonGetState XmToggleButtonSetState XmCreateToggleButton XmCreateLabelGadget
+	       XmCreateLabel XmIsMotifWMRunning XmListAddItem XmListAddItems XmListAddItemsUnselected
+	       XmListAddItemUnselected XmListDeleteItem XmListDeleteItems XmListDeletePositions XmListDeletePos
+	       XmListDeleteItemsPos XmListDeleteAllItems XmListReplaceItems XmListReplaceItemsPos
+	       XmListReplaceItemsUnselected XmListReplaceItemsPosUnselected XmListReplacePositions
+	       XmListSelectItem XmListSelectPos XmListDeselectItem XmListDeselectPos XmListDeselectAllItems
+	       XmListSetPos XmListSetBottomPos XmListSetItem XmListSetBottomItem XmListSetAddMode
+	       XmListItemExists XmListItemPos XmListGetKbdItemPos XmListSetKbdItemPos XmListYToPos
+	       XmListPosToBounds XmListGetMatchPos XmListGetSelectedPos XmListSetHorizPos
+	       XmListUpdateSelectedList XmListPosSelected XmCreateList XmCreateScrolledList XmTranslateKey
+	       XmInstallImage XmUninstallImage XmGetPixmap XmGetPixmapByDepth XmDestroyPixmap XmUpdateDisplay
+	       XmWidgetGetBaselines XmRegisterSegmentEncoding XmMapSegmentEncoding
+	       XmCvtCTToXmString XmCvtXmStringToCT XmConvertUnits
+	       XmCreateSimpleMenuBar XmCreateSimplePopupMenu XmCreateSimplePulldownMenu
+	       XmCreateSimpleOptionMenu XmCreateSimpleRadioBox XmCreateSimpleCheckBox XmVaCreateSimpleMenuBar
+	       XmVaCreateSimplePopupMenu XmVaCreateSimplePulldownMenu XmVaCreateSimpleOptionMenu
+	       XmVaCreateSimpleRadioBox XmVaCreateSimpleCheckBox XmTrackingEvent
+	       XmSetColorCalculation XmGetColorCalculation XmGetColors XmChangeColor XmStringCreate
+	       XmStringCreateLocalized XmStringDirectionCreate XmStringSeparatorCreate
+	       XmStringInitContext
+	       XmStringFreeContext 
+	       XmStringConcatAndFree XmStringIsVoid XmStringPeekNextTriple XmStringGetNextTriple
+	       XmStringComponentCreate XmStringUnparse XmStringParseText XmStringToXmStringTable
+	       XmStringTableToXmString XmStringTableUnparse XmStringTableParseStringArray
+	       XmDirectionToStringDirection XmStringDirectionToDirection XmStringGenerate XmStringPutRendition
+	       XmParseMappingGetValues XmParseMappingFree XmParseTableFree XmStringTableProposeTablist
+	       XmTabSetValue XmTabGetValues XmTabFree XmTabCreate XmTabListTabCount XmTabListRemoveTabs
+	       XmTabListReplacePositions XmTabListGetTab XmTabListCopy XmTabListInsertTabs
 					; XmRenderTableCvtFromProp XmRenderTableCvtToProp XmRenditionUpdate XmRenditionRetrieve
-		 XmRenditionFree XmRenditionCreate XmRenderTableGetRenditions XmRenderTableGetRendition
-		 XmRenderTableGetTags XmRenderTableFree XmRenderTableCopy XmRenderTableRemoveRenditions
-		 XmRenderTableAddRenditions 
-		 XmStringEmpty XmStringHasSubstring XmStringFree XmStringBaseline XmStringWidth XmStringHeight
-		 XmStringExtent XmStringLineCount XmStringDraw XmStringDrawImage XmStringDrawUnderline
-		 XmGetDestination XmIsTraversable XmGetVisibility XmGetTabGroup XmGetFocusWidget
-		 XmProcessTraversal XmCreateMenuShell XmIsMessageBox
-		 XmIsArrowButtonGadget XmIsArrowButton XmIsNotebook XmIsComboBox XmIsContainer
-		 XmIsGrabShell XmIsIconGadget XmIsIconHeader XmIsPanedWindow XmIsBulletinBoard XmIsPrimitive
-		 XmIsCascadeButtonGadget XmIsCascadeButton XmIsPushButtonGadget XmIsPushButton XmIsCommand
-		 XmIsRowColumn XmIsScale XmIsScreen XmIsScrollBar XmIsDialogShell XmIsScrolledWindow XmIsDisplay
-		 XmIsSelectionBox XmIsDragContext XmIsSeparatorGadget XmIsDragIconObjectClass
-		 XmIsSeparator XmIsDrawingArea XmIsDrawnButton XmIsDropSiteManager XmIsDropTransfer XmIsTextField
-		 XmIsFileSelectionBox XmIsText XmIsForm XmIsFrame XmIsGadget XmIsToggleButtonGadget
-		 XmIsToggleButton XmIsLabelGadget XmIsLabel XmIsVendorShell XmIsList XmIsManager
-		 XmIsMenuShell XGetPixel XDestroyImage XPutPixel XSubImage XAddPixel
-		 XtAppContext? XtRequestId? XtWorkProcId? XtInputId? XtIntervalId? Screen? XEvent?
-		 XRectangle? XArc? XPoint? XSegment? XColor? Atom? Colormap?
-		 XModifierKeymap? Depth? Display? Drawable? Font? GC? KeySym? Pixel? Pixmap? Region?
-		 Time? Visual? Window? XFontProp? XFontSet? XFontStruct? XGCValues? XImage? XVisualInfo?
-		 XWMHints? XWindowAttributes? XWindowChanges? KeyCode? XContext? XCharStruct? XTextItem?
-		 Widget? XmStringContext? WidgetClass? XmString?
-		 XmToggleButton? XmDrawingArea? XmPushButton? XmTextField? XmFileSelectionBox? XmText?
-		 XmFrame? XmLabel? XmList? XmArrowButton? XmScrollBar? XmCommand? XmScale? XmRowColumn?
-		 XmTab? XmNotebook? XmComboBox? XmContainer? XmIconHeader?
-		 XmGrabShell? XmRendition? XmRenderTable? XmIconGadget? XmTabList? XmParseMapping?
-		 XmPanedWindow? XmScrolledWindow? XmCascadeButton? XmForm? XmBulletinBoard? XmScreen?
-		 XmDialogShell? XmDisplay? XmSelectionBox? XmDragContext? XmDragIconObjectClass? XmSeparator?
-		 XmDropSiteManager? XmDropTransfer? XmVendorShell? XmMessageBox? XmManager?
-		 XmMenuShell? XmLabelGadget? XmPushButtonGadget? XmSeparatorGadget? XmArrowButtonGadget?
-		 XmCascadeButtonGadget? XmToggleButtonGadget? XmDrawnButton? XmPrimitive?
-		 XmTextSource? 
-
-		 XButtonEvent? XCirculateEvent? XCirculateRequestEvent? XClientMessageEvent? XColormapEvent?
-		 XConfigureEvent? XConfigureRequestEvent? XCreateWindowEvent? XCrossingEvent? XDeleteProperty
-		 XDestroyWindowEvent? XErrorEvent? XExposeEvent? XFocusChangeEvent? XGraphicsExposeEvent? XGravityEvent?
-		 XIconSize? XKeyEvent? XKeymapEvent? XMapEvent? XMapRequestEvent? XMappingEvent? XMotionEvent?
-		 XNoExposeEvent? XPropertyEvent? XReparentEvent? XResizeRequestEvent? XSelectionClearEvent?
-		 XSelectionEvent? XSelectionRequestEvent? XSetWindowAttributes? XStandardColormap? XUnmapEvent? XVisibilityEvent?
-
-		 ))
-	       (xm-procs (if (defined? 'XpmImage?)
-			     (append xm-procs-1
-				     (list 
-				      XpmCreatePixmapFromData XpmCreateDataFromPixmap XpmReadFileToPixmap
-				      XpmReadPixmapFile XpmWriteFileFromPixmap XpmWritePixmapFile XpmCreatePixmapFromXpmImage
-				      XpmCreateXpmImageFromPixmap XpmAttributes? XpmImage? XpmColorSymbol?))
-			     xm-procs-1))
-	       (xm-procs0 (remove-if (lambda (n) (not (aritable? n 0))) xm-procs))
-	       (xm-procs1 (remove-if (lambda (n) (not (aritable? n 1))) xm-procs))
-	       (xm-procs2 (remove-if (lambda (n) (not (aritable? n 2))) xm-procs))
-	       (xm-procs3 (remove-if (lambda (n) (not (aritable? n 3))) xm-procs))
-	       )
+	       XmRenditionFree XmRenditionCreate XmRenderTableGetRenditions XmRenderTableGetRendition
+	       XmRenderTableGetTags XmRenderTableFree XmRenderTableCopy XmRenderTableRemoveRenditions
+	       XmRenderTableAddRenditions 
+	       XmStringEmpty XmStringHasSubstring XmStringFree XmStringBaseline XmStringWidth XmStringHeight
+	       XmStringExtent XmStringLineCount XmStringDraw XmStringDrawImage XmStringDrawUnderline
+	       XmGetDestination XmIsTraversable XmGetVisibility XmGetTabGroup XmGetFocusWidget
+	       XmProcessTraversal XmCreateMenuShell XmIsMessageBox
+	       XmIsArrowButtonGadget XmIsArrowButton XmIsNotebook XmIsComboBox XmIsContainer
+	       XmIsGrabShell XmIsIconGadget XmIsIconHeader XmIsPanedWindow XmIsBulletinBoard XmIsPrimitive
+	       XmIsCascadeButtonGadget XmIsCascadeButton XmIsPushButtonGadget XmIsPushButton XmIsCommand
+	       XmIsRowColumn XmIsScale XmIsScreen XmIsScrollBar XmIsDialogShell XmIsScrolledWindow XmIsDisplay
+	       XmIsSelectionBox XmIsDragContext XmIsSeparatorGadget XmIsDragIconObjectClass
+	       XmIsSeparator XmIsDrawingArea XmIsDrawnButton XmIsDropSiteManager XmIsDropTransfer XmIsTextField
+	       XmIsFileSelectionBox XmIsText XmIsForm XmIsFrame XmIsGadget XmIsToggleButtonGadget
+	       XmIsToggleButton XmIsLabelGadget XmIsLabel XmIsVendorShell XmIsList XmIsManager
+	       XmIsMenuShell XGetPixel XDestroyImage XPutPixel XSubImage XAddPixel
+	       XtAppContext? XtRequestId? XtWorkProcId? XtInputId? XtIntervalId? Screen? XEvent?
+	       XRectangle? XArc? XPoint? XSegment? XColor? Atom? Colormap?
+	       XModifierKeymap? Depth? Display? Drawable? Font? GC? KeySym? Pixel? Pixmap? Region?
+	       Time? Visual? Window? XFontProp? XFontSet? XFontStruct? XGCValues? XImage? XVisualInfo?
+	       XWMHints? XWindowAttributes? XWindowChanges? KeyCode? XContext? XCharStruct? XTextItem?
+	       Widget? XmStringContext? WidgetClass? XmString?
+	       XmToggleButton? XmDrawingArea? XmPushButton? XmTextField? XmFileSelectionBox? XmText?
+	       XmFrame? XmLabel? XmList? XmArrowButton? XmScrollBar? XmCommand? XmScale? XmRowColumn?
+	       XmTab? XmNotebook? XmComboBox? XmContainer? XmIconHeader?
+	       XmGrabShell? XmRendition? XmRenderTable? XmIconGadget? XmTabList? XmParseMapping?
+	       XmPanedWindow? XmScrolledWindow? XmCascadeButton? XmForm? XmBulletinBoard? XmScreen?
+	       XmDialogShell? XmDisplay? XmSelectionBox? XmDragContext? XmDragIconObjectClass? XmSeparator?
+	       XmDropSiteManager? XmDropTransfer? XmVendorShell? XmMessageBox? XmManager?
+	       XmMenuShell? XmLabelGadget? XmPushButtonGadget? XmSeparatorGadget? XmArrowButtonGadget?
+	       XmCascadeButtonGadget? XmToggleButtonGadget? XmDrawnButton? XmPrimitive?
+	       XmTextSource? 
+	       
+	       XButtonEvent? XCirculateEvent? XCirculateRequestEvent? XClientMessageEvent? XColormapEvent?
+	       XConfigureEvent? XConfigureRequestEvent? XCreateWindowEvent? XCrossingEvent? XDeleteProperty
+	       XDestroyWindowEvent? XErrorEvent? XExposeEvent? XFocusChangeEvent? XGraphicsExposeEvent? XGravityEvent?
+	       XIconSize? XKeyEvent? XKeymapEvent? XMapEvent? XMapRequestEvent? XMappingEvent? XMotionEvent?
+	       XNoExposeEvent? XPropertyEvent? XReparentEvent? XResizeRequestEvent? XSelectionClearEvent?
+	       XSelectionEvent? XSelectionRequestEvent? XSetWindowAttributes? XStandardColormap? XUnmapEvent? XVisibilityEvent?
+	       
+	       ))
+	     (xm-procs (if (defined? 'XpmImage?)
+			   (append xm-procs-1
+				   (list 
+				    XpmCreatePixmapFromData XpmCreateDataFromPixmap XpmReadFileToPixmap
+				    XpmReadPixmapFile XpmWriteFileFromPixmap XpmWritePixmapFile XpmCreatePixmapFromXpmImage
+				    XpmCreateXpmImageFromPixmap XpmAttributes? XpmImage? XpmColorSymbol?))
+			   xm-procs-1))
+	     (xm-procs0 (remove-if (lambda (n) (not (aritable? n 0))) xm-procs))
+	     (xm-procs1 (remove-if (lambda (n) (not (aritable? n 1))) xm-procs))
+	     (xm-procs2 (remove-if (lambda (n) (not (aritable? n 2))) xm-procs))
+	     (xm-procs3 (remove-if (lambda (n) (not (aritable? n 3))) xm-procs))
+	     )
+	
+	;; ---------------- 0 Args
+	(for-each 
+	 (lambda (n)
+	   (catch #t
+	     (lambda () 
+	       (n))
+	     (lambda args (car args))))
+	 xm-procs0)
+	
+	;; ---------------- 1 Arg
+	(for-each 
+	 (lambda (arg)
+	   (for-each 
+	    (lambda (n)
+	      (catch #t
+		(lambda () (n arg))
+		(lambda args (car args))))
+	    xm-procs1))
+	 (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
+	       (lambda () #t) (curlet) (make-vector (list 2 3) 0.0 #t) :order 0 1 -1 #f #t () (make-vector 0)))
+	
+	;; ---------------- 2 Args
+	(for-each 
+	 (lambda (arg1)
+	   (for-each 
+	    (lambda (arg2)
+	      (for-each 
+	       (lambda (n)
+		 (catch #t
+		   (lambda () (n arg1 arg2))
+		   (lambda args (car args))))
+	       xm-procs2))
+	    (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95) #(0 1) 3/4 
+		  0+i (make-delay 32) :feedback -1 0 #f #t () (make-vector 0))))
+	 (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95) #(0 1) 3/4 
+	       0+i (make-delay 32) :frequency -1 0 #f #t () (make-vector 0)))
+	
+	(if all-args
+	    (begin
+	      
+	      ;; ---------------- 3 Args
+	      (for-each 
+	       (lambda (arg1)
+		 (for-each 
+		  (lambda (arg2)
+		    (for-each 
+		     (lambda (arg3)
+		       (for-each 
+			(lambda (n)
+			  (catch #t
+			    (lambda () (n arg1 arg2 arg3))
+			    (lambda args (car args))))
+			xm-procs3))
+		     (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #(0 1) 0+i (make-delay 32) 
+			   :start -1 0 #f #t () (make-vector 0))))
+		  (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #(0 1) 0+i (make-delay 32) 
+			:phase -1 0 #f #t () (make-vector 0))))
+	       (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #(0 1) 0+i (make-delay 32) 
+		     :channels -1 0 #f #t () (make-vector 0)))
+	      ))
+	
+	(let* ((struct-accessors-1 
+		(list  .pixel .red .green .blue .flags .pad .x .y .width .height .angle1 .angle2 .ptr
+		       .x1 .y1 .x2 .y2 .dashes .dash_offset .clip_mask .clip_y_origin .clip_x_origin .graphics_exposures
+		       .subwindow_mode .font .ts_y_origin .ts_x_origin .stipple .tile .arc_mode .fill_rule .fill_style
+		       .join_style .cap_style .line_style .line_width .background .foreground .plane_mask .function .delta
+		       .nchars .chars .name .depth .visual .mwidth .mheight .ndepths .depths .root_depth .root_visual
+		       .default_gc .cmap .white_pixel .black_pixel .max_maps .min_maps .backing_store .save_unders .root_input_mask
+		       .lbearing .rbearing .ascent .descent .attributes .card32 .fid .properties .min_bounds .max_bounds .per_char
+		       .input .initial_state .icon_pixmap .icon_window .icon_x .icon_y .icon_mask .window_group .visualid
+		       .class  .red_mask .green_mask .blue_mask .bits_per_rgb .map_entries .nvisuals .visuals .bits_per_pixel
+		       .background_pixmap .background_pixel .border_pixmap .border_pixel .bit_gravity .win_gravity .backing_planes
+		       .backing_pixel .save_under .event_mask .do_not_propagate_mask .cursor .map_installed .map_state .all_event_masks
+		       .your_event_mask .screen .xoffset .byte_order .bitmap_unit .bitmap_bit_order .bitmap_pad .bytes_per_line
+		       .obdata .sibling .stack_mode .red_max .red_mult .green_max .green_mult .blue_max .blue_mult .base_pixel
+		       .killid .data .min_height .max_height .min_width .max_width .height_inc .width_inc .page_number
+		       .page_widget .status_area_widget .major_tab_widget .minor_tab_widget .source_data .location_data .parm
+		       .parm_format .parm_length .parm_type .transfer_id .destination_data .remaining .item_or_text .auto_selection_type
+		       .new_outline_state .prev_page_number .prev_page_widget .rendition .render_table 
+					;			    .last_page 
+		       .crossed_boundary
+		       .client_data .status .font_name .tag .traversal_destination .dragProtocolStyle .direction .reason
+		       .timeStamp .operation .operations .dropSiteStatus .dropAction .iccHandle .completionStatus .dragContext
+		       .animate .length .click_count .widget .item_position .callbackstruct
+		       .set .item .item_length .selected_items .selected_item_count .selected_item_positions .selection_type
+		       .mask .mask_length .dir .dir_length .pattern .pattern_length .position .currInsert .newInsert .startPos
+		       .endPos .text .request_code .error_code .first_keycode .request .resourceid .format .message_type .new
+		       .property .display .target .requestor .owner .selection .atom .place .value_mask .above .from_configure
+		       .event .override_redirect .border_width .parent .minor_code .major_code .drawable .count .key_vector .focus
+		       .detail .mode .is_hint .button .same_screen .keycode .state .y_root .x_root .root .time .subwindow .window
+		       .send_event .serial .type .value .doit .colormap .menuToPost .postIt))
+	       (struct-accessors (if (defined? 'XpmImage?)
+				     (append struct-accessors-1
+					     (list .valuemask .ncolors .cpp .numsymbols .colorsymbols .npixels 
+						   .y_hotspot .x_hotspot .colormap_size))
+				     struct-accessors-1))
+	       
+	       (struct-accessor-names-1
+		(list  '.pixel '.red '.green '.blue '.flags '.pad '.x '.y '.width '.height '.angle1 '.angle2 '.ptr
+		       '.x1 '.y1 '.x2 '.y2 '.dashes '.dash_offset '.clip_mask '.clip_y_origin '.clip_x_origin '.graphics_exposures
+		       '.subwindow_mode '.font '.ts_y_origin '.ts_x_origin '.stipple '.tile '.arc_mode '.fill_rule '.fill_style
+		       '.join_style '.cap_style '.line_style '.line_width '.background '.foreground '.plane_mask '.function '.delta
+		       '.nchars '.chars '.name '.depth '.visual '.mwidth '.mheight '.ndepths '.depths '.root_depth '.root_visual
+		       '.default_gc '.cmap '.white_pixel '.black_pixel '.max_maps '.min_maps '.backing_store '.save_unders '.root_input_mask
+		       '.lbearing '.rbearing '.ascent '.descent '.attributes '.card32 '.fid '.properties '.min_bounds '.max_bounds '.per_char
+		       '.input '.initial_state '.icon_pixmap '.icon_window '.icon_x '.icon_y '.icon_mask '.window_group '.visualid
+		       '.class  '.red_mask '.green_mask '.blue_mask '.bits_per_rgb '.map_entries '.nvisuals '.visuals '.bits_per_pixel
+		       '.background_pixmap '.background_pixel '.border_pixmap '.border_pixel '.bit_gravity '.win_gravity '.backing_planes
+		       '.backing_pixel '.save_under '.event_mask '.do_not_propagate_mask '.cursor '.map_installed '.map_state '.all_event_masks
+		       '.your_event_mask '.screen '.xoffset '.byte_order '.bitmap_unit '.bitmap_bit_order '.bitmap_pad '.bytes_per_line
+		       '.obdata '.sibling '.stack_mode '.red_max '.red_mult '.green_max '.green_mult '.blue_max '.blue_mult '.base_pixel
+		       '.killid '.data '.min_height '.max_height '.min_width '.max_width '.height_inc '.width_inc '.page_number
+		       '.page_widget '.status_area_widget '.major_tab_widget '.minor_tab_widget '.source_data '.location_data '.parm
+		       '.parm_format '.parm_length '.parm_type '.transfer_id '.destination_data '.remaining '.item_or_text '.auto_selection_type
+		       '.new_outline_state '.prev_page_number '.prev_page_widget '.rendition '.render_table 
+					;			    '.last_page 
+		       '.crossed_boundary
+		       '.client_data '.status '.font_name '.tag '.traversal_destination '.dragProtocolStyle '.direction '.reason
+		       '.timeStamp '.operation '.operations '.dropSiteStatus '.dropAction '.iccHandle '.completionStatus '.dragContext
+		       '.animate '.length '.click_count '.widget '.item_position '.callbackstruct
+		       '.set '.item '.item_length '.selected_items '.selected_item_count '.selected_item_positions '.selection_type
+		       '.mask '.mask_length '.dir '.dir_length '.pattern '.pattern_length '.position '.currInsert '.newInsert '.startPos
+		       '.endPos '.text '.request_code '.error_code '.first_keycode '.request '.resourceid '.format '.message_type '.new
+		       '.property '.display '.target '.requestor '.owner '.selection '.atom '.place '.value_mask '.above '.from_configure
+		       '.event '.override_redirect '.border_width '.parent '.minor_code '.major_code '.drawable '.count '.key_vector '.focus
+		       '.detail '.mode '.is_hint '.button '.same_screen '.keycode '.state '.y_root '.x_root '.root '.time '.subwindow '.window
+		       '.send_event '.serial '.type '.value '.doit '.colormap '.menuToPost '.postIt))
+	       (struct-accessor-names (if (defined? 'XpmImage?)
+					  (append struct-accessor-names-1
+						  (list '.valuemask '.ncolors '.cpp
+							'.numsymbols '.colorsymbols '.npixels '.y_hotspot '.x_hotspot '.colormap_size))
+					  struct-accessor-names-1))
+	       (dpy (XtDisplay (cadr (main-widgets))))
+	       (win (XtWindow (cadr (main-widgets)))))
 	  
 	  ;; ---------------- 0 Args
 	  (for-each 
-	   (lambda (n)
-	     (catch #t
-		    (lambda () 
-		      (n))
-		    (lambda args (car args))))
-	   xm-procs0)
+	   (lambda (n name)
+	     (let ((tag
+		    (catch #t
+		      (lambda () 
+			(n))
+		      (lambda args (car args)))))
+	       (if (not (eq? tag 'wrong-number-of-args))
+		   (snd-display #__line__ ";(~A) -> ~A" name tag)))
+	     (if (dilambda? n)
+		 (let ((tag
+			(catch #t
+			  (lambda () 
+			    (set! (n) 0))
+			  (lambda args (car args)))))
+		   (if (not (eq? tag 'wrong-number-of-args))
+		       (snd-display #__line__ ";(~A) -> ~A" name tag)))))
+	   struct-accessors
+	   struct-accessor-names)
 	  
 	  ;; ---------------- 1 Arg
 	  (for-each 
 	   (lambda (arg)
 	     (for-each 
-	      (lambda (n)
-		(catch #t
-		       (lambda () (n arg))
-		       (lambda args (car args))))
-	      xm-procs1))
-	   (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
-		 (lambda () #t) (curlet) (make-vector (list 2 3) 0.0 #t) :order 0 1 -1 #f #t () (make-vector 0)))
-	  
-	  ;; ---------------- 2 Args
-	  (for-each 
-	   (lambda (arg1)
-	     (for-each 
-	      (lambda (arg2)
-		(for-each 
-		 (lambda (n)
-		   (catch #t
-			  (lambda () (n arg1 arg2))
-			  (lambda args (car args))))
-		 xm-procs2))
-	      (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95) #(0 1) 3/4 
-		    0+i (make-delay 32) :feedback -1 0 #f #t () (make-vector 0))))
-	   (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95) #(0 1) 3/4 
-		 0+i (make-delay 32) :frequency -1 0 #f #t () (make-vector 0)))
-	  
-	  (if all-args
-	      (begin
-		
-		;; ---------------- 3 Args
-		(for-each 
-		 (lambda (arg1)
-		   (for-each 
-		    (lambda (arg2)
-		      (for-each 
-		       (lambda (arg3)
-			 (for-each 
-			  (lambda (n)
-			    (catch #t
-				   (lambda () (n arg1 arg2 arg3))
-				   (lambda args (car args))))
-			  xm-procs3))
-		       (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #(0 1) 0+i (make-delay 32) 
-			     :start -1 0 #f #t () (make-vector 0))))
-		    (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #(0 1) 0+i (make-delay 32) 
-			  :phase -1 0 #f #t () (make-vector 0))))
-		 (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #(0 1) 0+i (make-delay 32) 
-		       :channels -1 0 #f #t () (make-vector 0)))
-		))
-	  
-	  (let* ((struct-accessors-1 
-		  (list  .pixel .red .green .blue .flags .pad .x .y .width .height .angle1 .angle2 .ptr
-			 .x1 .y1 .x2 .y2 .dashes .dash_offset .clip_mask .clip_y_origin .clip_x_origin .graphics_exposures
-			 .subwindow_mode .font .ts_y_origin .ts_x_origin .stipple .tile .arc_mode .fill_rule .fill_style
-			 .join_style .cap_style .line_style .line_width .background .foreground .plane_mask .function .delta
-			 .nchars .chars .name .depth .visual .mwidth .mheight .ndepths .depths .root_depth .root_visual
-			 .default_gc .cmap .white_pixel .black_pixel .max_maps .min_maps .backing_store .save_unders .root_input_mask
-			 .lbearing .rbearing .ascent .descent .attributes .card32 .fid .properties .min_bounds .max_bounds .per_char
-			 .input .initial_state .icon_pixmap .icon_window .icon_x .icon_y .icon_mask .window_group .visualid
-			 .class  .red_mask .green_mask .blue_mask .bits_per_rgb .map_entries .nvisuals .visuals .bits_per_pixel
-			 .background_pixmap .background_pixel .border_pixmap .border_pixel .bit_gravity .win_gravity .backing_planes
-			 .backing_pixel .save_under .event_mask .do_not_propagate_mask .cursor .map_installed .map_state .all_event_masks
-			 .your_event_mask .screen .xoffset .byte_order .bitmap_unit .bitmap_bit_order .bitmap_pad .bytes_per_line
-			 .obdata .sibling .stack_mode .red_max .red_mult .green_max .green_mult .blue_max .blue_mult .base_pixel
-			 .killid .data .min_height .max_height .min_width .max_width .height_inc .width_inc .page_number
-			 .page_widget .status_area_widget .major_tab_widget .minor_tab_widget .source_data .location_data .parm
-			 .parm_format .parm_length .parm_type .transfer_id .destination_data .remaining .item_or_text .auto_selection_type
-			 .new_outline_state .prev_page_number .prev_page_widget .rendition .render_table 
-					;			    .last_page 
-			 .crossed_boundary
-			 .client_data .status .font_name .tag .traversal_destination .dragProtocolStyle .direction .reason
-			 .timeStamp .operation .operations .dropSiteStatus .dropAction .iccHandle .completionStatus .dragContext
-			 .animate .length .click_count .widget .item_position .callbackstruct
-			 .set .item .item_length .selected_items .selected_item_count .selected_item_positions .selection_type
-			 .mask .mask_length .dir .dir_length .pattern .pattern_length .position .currInsert .newInsert .startPos
-			 .endPos .text .request_code .error_code .first_keycode .request .resourceid .format .message_type .new
-			 .property .display .target .requestor .owner .selection .atom .place .value_mask .above .from_configure
-			 .event .override_redirect .border_width .parent .minor_code .major_code .drawable .count .key_vector .focus
-			 .detail .mode .is_hint .button .same_screen .keycode .state .y_root .x_root .root .time .subwindow .window
-			 .send_event .serial .type .value .doit .colormap .menuToPost .postIt))
-		 (struct-accessors (if (defined? 'XpmImage?)
-				       (append struct-accessors-1
-					       (list .valuemask .ncolors .cpp .numsymbols .colorsymbols .npixels 
-						     .y_hotspot .x_hotspot .colormap_size))
-				       struct-accessors-1))
-		 
-		 (struct-accessor-names-1
-		  (list  '.pixel '.red '.green '.blue '.flags '.pad '.x '.y '.width '.height '.angle1 '.angle2 '.ptr
-			 '.x1 '.y1 '.x2 '.y2 '.dashes '.dash_offset '.clip_mask '.clip_y_origin '.clip_x_origin '.graphics_exposures
-			 '.subwindow_mode '.font '.ts_y_origin '.ts_x_origin '.stipple '.tile '.arc_mode '.fill_rule '.fill_style
-			 '.join_style '.cap_style '.line_style '.line_width '.background '.foreground '.plane_mask '.function '.delta
-			 '.nchars '.chars '.name '.depth '.visual '.mwidth '.mheight '.ndepths '.depths '.root_depth '.root_visual
-			 '.default_gc '.cmap '.white_pixel '.black_pixel '.max_maps '.min_maps '.backing_store '.save_unders '.root_input_mask
-			 '.lbearing '.rbearing '.ascent '.descent '.attributes '.card32 '.fid '.properties '.min_bounds '.max_bounds '.per_char
-			 '.input '.initial_state '.icon_pixmap '.icon_window '.icon_x '.icon_y '.icon_mask '.window_group '.visualid
-			 '.class  '.red_mask '.green_mask '.blue_mask '.bits_per_rgb '.map_entries '.nvisuals '.visuals '.bits_per_pixel
-			 '.background_pixmap '.background_pixel '.border_pixmap '.border_pixel '.bit_gravity '.win_gravity '.backing_planes
-			 '.backing_pixel '.save_under '.event_mask '.do_not_propagate_mask '.cursor '.map_installed '.map_state '.all_event_masks
-			 '.your_event_mask '.screen '.xoffset '.byte_order '.bitmap_unit '.bitmap_bit_order '.bitmap_pad '.bytes_per_line
-			 '.obdata '.sibling '.stack_mode '.red_max '.red_mult '.green_max '.green_mult '.blue_max '.blue_mult '.base_pixel
-			 '.killid '.data '.min_height '.max_height '.min_width '.max_width '.height_inc '.width_inc '.page_number
-			 '.page_widget '.status_area_widget '.major_tab_widget '.minor_tab_widget '.source_data '.location_data '.parm
-			 '.parm_format '.parm_length '.parm_type '.transfer_id '.destination_data '.remaining '.item_or_text '.auto_selection_type
-			 '.new_outline_state '.prev_page_number '.prev_page_widget '.rendition '.render_table 
-					;			    '.last_page 
-			 '.crossed_boundary
-			 '.client_data '.status '.font_name '.tag '.traversal_destination '.dragProtocolStyle '.direction '.reason
-			 '.timeStamp '.operation '.operations '.dropSiteStatus '.dropAction '.iccHandle '.completionStatus '.dragContext
-			 '.animate '.length '.click_count '.widget '.item_position '.callbackstruct
-			 '.set '.item '.item_length '.selected_items '.selected_item_count '.selected_item_positions '.selection_type
-			 '.mask '.mask_length '.dir '.dir_length '.pattern '.pattern_length '.position '.currInsert '.newInsert '.startPos
-			 '.endPos '.text '.request_code '.error_code '.first_keycode '.request '.resourceid '.format '.message_type '.new
-			 '.property '.display '.target '.requestor '.owner '.selection '.atom '.place '.value_mask '.above '.from_configure
-			 '.event '.override_redirect '.border_width '.parent '.minor_code '.major_code '.drawable '.count '.key_vector '.focus
-			 '.detail '.mode '.is_hint '.button '.same_screen '.keycode '.state '.y_root '.x_root '.root '.time '.subwindow '.window
-			 '.send_event '.serial '.type '.value '.doit '.colormap '.menuToPost '.postIt))
-		 (struct-accessor-names (if (defined? 'XpmImage?)
-					    (append struct-accessor-names-1
-						    (list '.valuemask '.ncolors '.cpp
-							  '.numsymbols '.colorsymbols '.npixels '.y_hotspot '.x_hotspot '.colormap_size))
-					    struct-accessor-names-1))
-		 (dpy (XtDisplay (cadr (main-widgets))))
-		 (win (XtWindow (cadr (main-widgets)))))
-	    
-	    ;; ---------------- 0 Args
-	    (for-each 
-	     (lambda (n name)
-	       (let ((tag
-		      (catch #t
-			     (lambda () 
-			       (n))
-			     (lambda args (car args)))))
-		 (if (not (eq? tag 'wrong-number-of-args))
-		     (snd-display #__line__ ";(~A) -> ~A" name tag)))
-	       (if (dilambda? n)
-		   (let ((tag
-			  (catch #t
-				 (lambda () 
-				   (set! (n) 0))
-				 (lambda args (car args)))))
-		     (if (not (eq? tag 'wrong-number-of-args))
-			 (snd-display #__line__ ";(~A) -> ~A" name tag)))))
-	     struct-accessors
-	     struct-accessor-names)
-	    
-	    ;; ---------------- 1 Arg
-	    (for-each 
-	     (lambda (arg)
-	       (for-each 
-		(lambda (n name)
-		  (let ((tag 
-			 (catch #t
-				(lambda () (n arg))
-				(lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg))
-			(snd-display #__line__ ";(~A ~A) -> ~A" name arg tag)))
-		  (if (dilambda? n)
-		      (begin
-			(let ((tag 
-			       (catch #t
-				      (lambda () (set! (n arg) 0))
-				      (lambda args (car args)))))
-			  (if (not (eq? tag 'wrong-type-arg))
-			      (snd-display #__line__ ";(~A ~A) -> ~A" name arg tag)))
-			(let ((tag 
-			       (catch #t
-				      (lambda () (set! (n 0) arg))
-				      (lambda args (car args)))))
-			  (if (not (eq? tag 'wrong-type-arg))
-			      (snd-display #__line__ ";(set ~A ~A) -> ~A" name arg tag))))))
-		struct-accessors
-		struct-accessor-names))
-	     (list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #\c '(Time 0) '(Font 0) (make-vector 0) '(Cursor 1))))
-	  )
-	(show-sounds-in-directory)
+	      (lambda (n name)
+		(let ((tag 
+		       (catch #t
+			 (lambda () (n arg))
+			 (lambda args (car args)))))
+		  (if (not (eq? tag 'wrong-type-arg))
+		      (snd-display #__line__ ";(~A ~A) -> ~A" name arg tag)))
+		(if (dilambda? n)
+		    (begin
+		      (let ((tag 
+			     (catch #t
+			       (lambda () (set! (n arg) 0))
+			       (lambda args (car args)))))
+			(if (not (eq? tag 'wrong-type-arg))
+			    (snd-display #__line__ ";(~A ~A) -> ~A" name arg tag)))
+		      (let ((tag 
+			     (catch #t
+			       (lambda () (set! (n 0) arg))
+			       (lambda args (car args)))))
+			(if (not (eq? tag 'wrong-type-arg))
+			    (snd-display #__line__ ";(set ~A ~A) -> ~A" name arg tag))))))
+	      struct-accessors
+	      struct-accessor-names))
+	   (list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #\c '(Time 0) '(Font 0) (make-vector 0) '(Cursor 1))))
+	)
+      (show-sounds-in-directory)
 					;(show-all-atoms)
-	)))
+      )))
 
 
 

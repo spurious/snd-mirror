@@ -6,6 +6,9 @@
       (if (not (defined? 'mark-sync-color)) 
 	  (load "snd-motif.scm"))))
 
+(when (provided? 'snd-motif)
+  (define mark-sync-color (*motif* 'mark-sync-color)))
+
 (if (provided? 'xg)
     (begin
       (require snd-gtk-effects-utils.scm)
@@ -108,8 +111,8 @@
 				 ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (cadr sliders)))
 				 )
 			       (lambda (w c i)
-				 (XtSetValues (sliders 0) (list XmNvalue play-between-marks-m1))
-				 (XtSetValues (sliders 1) (list XmNvalue play-between-marks-m2))))))
+				 ((*motif* 'XtSetValues) (sliders 0) (list (*motif* 'XmNvalue) play-between-marks-m1))
+				 ((*motif* 'XtSetValues) (sliders 1) (list (*motif* 'XmNvalue) play-between-marks-m2))))))
 
 		    (set! sliders
 			  (add-sliders 
@@ -120,7 +123,7 @@
 					     (set! play-between-marks-m1 (gtk_adjustment_get_value (GTK_ADJUSTMENT w)))
 					     (set-syncs))
 					   (lambda (w context info)
-					     (set! play-between-marks-m1 (gtk_adjustment_get_value info))
+					     (set! play-between-marks-m1 ((*motif* '.value) info))
 					     (set-syncs)))
 				       1)
 				 (list "mark two" 0 play-between-marks-m2 max-mark-id
@@ -129,12 +132,12 @@
 				 (set! play-between-marks-m2 (gtk_adjustment_get_value (GTK_ADJUSTMENT w)))
 				 (set-syncs))
 			       (lambda (w context info)
-				 (set! play-between-marks-m2 (.value info))
+				 (set! play-between-marks-m2 ((*motif* '.value) info))
 				 (set-syncs)))
 			   1))))
 
 		    (if (provided? 'snd-motif)
-			(begin
+			(with-let *motif*
 			  (hook-push select-channel-hook (lambda (hook)
 							   (let ((max-ms (max-mark))
 								 (min-ms (min-mark))
@@ -174,23 +177,23 @@
 
 ;;; -------- Loop play between marks
 
-(define loop-between-marks-m1 0)
-(define loop-between-marks-m2 1)
-(define loop-between-marks-buffer-size 512)
-(define loop-between-marks-label "Loop play between marks")
-(define loop-between-marks-dialog #f)
-(define loop-between-marks-default-buffer-widget #f)
-(define loop-between-marks-menu-label #f)
-
-(define use-combo-box-for-buffer-size #f) ; radio-buttons or combo-box choice
-
-(define (cp-loop-between-marks)
-  "(cp-loop-between-marks) loops between two marks, playing (marks-menu)"
-  (loop-between-marks (integer->mark loop-between-marks-m1) (integer->mark loop-between-marks-m2) loop-between-marks-buffer-size))
-
 (if (provided? 'xm)
-    (begin
+    (with-let *motif*
 
+      (define loop-between-marks-m1 0)
+      (define loop-between-marks-m2 1)
+      (define loop-between-marks-buffer-size 512)
+      (define loop-between-marks-label "Loop play between marks")
+      (define loop-between-marks-dialog #f)
+      (define loop-between-marks-default-buffer-widget #f)
+      (define loop-between-marks-menu-label #f)
+      
+      (define use-combo-box-for-buffer-size #f) ; radio-buttons or combo-box choice
+      
+      (define (cp-loop-between-marks)
+	"(cp-loop-between-marks) loops between two marks, playing (marks-menu)"
+	(loop-between-marks (integer->mark loop-between-marks-m1) (integer->mark loop-between-marks-m2) loop-between-marks-buffer-size))
+      
       (define (overall-max-mark-id default-max)
 	(let ((maxid default-max))
 	  (for-each 
@@ -204,7 +207,7 @@
 	      snd-marks))
 	   (marks))
 	  maxid))
-
+      
       (define (post-loop-between-marks-dialog)
         (if (not loop-between-marks-dialog)
             ;; if loop-between-marks-dialog doesn't exist, create it
@@ -215,116 +218,116 @@
               (set! loop-between-marks-dialog
                     (make-effect-dialog 
 		     loop-between-marks-label
-                                        (lambda (w context info) 
-					  (cp-loop-between-marks))
-                                        (lambda (w context info)
-                                          (help-dialog "Loop play between marks"
-                                                       "Move the sliders to set the mark numbers. Check a radio button to set the buffer size."))
-                                        (lambda (w c i)
-					  (stop-playing))))
+		     (lambda (w context info) 
+		       (cp-loop-between-marks))
+		     (lambda (w context info)
+		       (help-dialog "Loop play between marks"
+				    "Move the sliders to set the mark numbers. Check a radio button to set the buffer size."))
+		     (lambda (w c i)
+		       (stop-playing))))
               (set! sliders
                     (add-sliders 
 		     loop-between-marks-dialog
-                                 (list (list "mark one" 0 initial-loop-between-marks-m1 max-mark-id
-                                             (lambda (w context info)
-                                               (set! loop-between-marks-m1 (.value info)))
-                                             1)
-                                       (list "mark two" 0 initial-loop-between-marks-m2 max-mark-id
-                                             (lambda (w context info)
-                                               (set! loop-between-marks-m2 (.value info)))
-                                             1))))
-
+		     (list (list "mark one" 0 initial-loop-between-marks-m1 max-mark-id
+				 (lambda (w context info)
+				   (set! loop-between-marks-m1 (.value info)))
+				 1)
+			   (list "mark two" 0 initial-loop-between-marks-m2 max-mark-id
+				 (lambda (w context info)
+				   (set! loop-between-marks-m2 (.value info)))
+				 1))))
+	      
               ;; now add either a radio-button box or a combo-box for the buffer size
               ;;   need to use XtParent here since "mainform" isn't returned by add-sliders
-
+	      
               (if use-combo-box-for-buffer-size
                   ;; this block creates a "combo box" to handle the buffer size
                   (let* ((s1 (XmStringCreateLocalized "Buffer size"))
                          (frame (XtCreateManagedWidget "frame" xmFrameWidgetClass (XtParent (car sliders))
-                                   (list XmNborderWidth 1
-                                         XmNshadowType XmSHADOW_ETCHED_IN
-                                         XmNpositionIndex 2)))
+						       (list XmNborderWidth 1
+							     XmNshadowType XmSHADOW_ETCHED_IN
+							     XmNpositionIndex 2)))
                          (frm (XtCreateManagedWidget "frm" xmFormWidgetClass frame
-                                (list XmNleftAttachment      XmATTACH_FORM
-                                      XmNrightAttachment     XmATTACH_FORM
-				      XmNtopAttachment       XmATTACH_FORM
-                                      XmNbottomAttachment    XmATTACH_FORM
-                                      XmNbackground          *basic-color*)))
+						     (list XmNleftAttachment      XmATTACH_FORM
+							   XmNrightAttachment     XmATTACH_FORM
+							   XmNtopAttachment       XmATTACH_FORM
+							   XmNbottomAttachment    XmATTACH_FORM
+							   XmNbackground          *basic-color*)))
                          (lab (XtCreateManagedWidget "Buffer size" xmLabelWidgetClass frm
-                                   (list XmNleftAttachment      XmATTACH_FORM
-                                         XmNrightAttachment     XmATTACH_NONE
-                                         XmNtopAttachment       XmATTACH_FORM
-                                         XmNbottomAttachment    XmATTACH_FORM
-                                         XmNlabelString         s1
-                                         XmNbackground          *basic-color*)))
+						     (list XmNleftAttachment      XmATTACH_FORM
+							   XmNrightAttachment     XmATTACH_NONE
+							   XmNtopAttachment       XmATTACH_FORM
+							   XmNbottomAttachment    XmATTACH_FORM
+							   XmNlabelString         s1
+							   XmNbackground          *basic-color*)))
                          (buffer-labels (map XmStringCreateLocalized (list "64" "128" "256" "512" "1024" "2048" "4096")))
                          (combo (XtCreateManagedWidget "buffersize" xmComboBoxWidgetClass frm
-                                   (list XmNleftAttachment      XmATTACH_WIDGET
-                                         XmNleftWidget          lab
-                                         XmNrightAttachment     XmATTACH_FORM
-                                         XmNtopAttachment       XmATTACH_FORM
-                                         XmNbottomAttachment    XmATTACH_FORM
-                                         XmNitems               buffer-labels
-                                         XmNitemCount           (length buffer-labels)
-                                         XmNcomboBoxType        XmDROP_DOWN_COMBO_BOX
-                                         XmNbackground          *basic-color*))))
+						       (list XmNleftAttachment      XmATTACH_WIDGET
+							     XmNleftWidget          lab
+							     XmNrightAttachment     XmATTACH_FORM
+							     XmNtopAttachment       XmATTACH_FORM
+							     XmNbottomAttachment    XmATTACH_FORM
+							     XmNitems               buffer-labels
+							     XmNitemCount           (length buffer-labels)
+							     XmNcomboBoxType        XmDROP_DOWN_COMBO_BOX
+							     XmNbackground          *basic-color*))))
                     (set! loop-between-marks-default-buffer-widget combo)
                     (for-each XmStringFree buffer-labels)
                     (XmStringFree s1)
                     (XtSetValues combo (list XmNselectedPosition 1))
                     (XtAddCallback combo XmNselectionCallback
-                       (lambda (w c i)
-                         (let* ((selected (.item_or_text i))
-                                (size-as-string (XmStringUnparse selected #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
-                           (set! loop-between-marks-buffer-size (string->number size-as-string))))))
-
+				   (lambda (w c i)
+				     (let* ((selected (.item_or_text i))
+					    (size-as-string (XmStringUnparse selected #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
+				       (set! loop-between-marks-buffer-size (string->number size-as-string))))))
+		  
                   ;; this block creates a "radio button box"
                   (let* ((s1 (XmStringCreateLocalized "Buffer size"))
                          (frame (XtCreateManagedWidget "frame" xmFrameWidgetClass (XtParent (car sliders))
-                                   (list XmNborderWidth 1
-                                         XmNshadowType XmSHADOW_ETCHED_IN
-                                         XmNpositionIndex 2)))
+						       (list XmNborderWidth 1
+							     XmNshadowType XmSHADOW_ETCHED_IN
+							     XmNpositionIndex 2)))
                          (frm (XtCreateManagedWidget "frm" xmFormWidgetClass frame
-                                (list XmNleftAttachment      XmATTACH_FORM
-                                      XmNrightAttachment     XmATTACH_FORM
-                                      XmNtopAttachment       XmATTACH_FORM
-                                      XmNbottomAttachment    XmATTACH_FORM
-                                      XmNbackground          *basic-color*)))
+						     (list XmNleftAttachment      XmATTACH_FORM
+							   XmNrightAttachment     XmATTACH_FORM
+							   XmNtopAttachment       XmATTACH_FORM
+							   XmNbottomAttachment    XmATTACH_FORM
+							   XmNbackground          *basic-color*)))
                          (rc (XtCreateManagedWidget "rc" xmRowColumnWidgetClass frm
-                                   (list XmNorientation XmHORIZONTAL
-                                         XmNradioBehavior #t
-                                         XmNradioAlwaysOne #t
-                                         XmNentryClass xmToggleButtonWidgetClass
-                                         XmNisHomogeneous #t
-                                         XmNleftAttachment      XmATTACH_FORM
-                                         XmNrightAttachment     XmATTACH_FORM
-                                         XmNtopAttachment       XmATTACH_FORM
-                                         XmNbottomAttachment    XmATTACH_NONE
-                                         XmNbackground          *basic-color*))))
+						    (list XmNorientation XmHORIZONTAL
+							  XmNradioBehavior #t
+							  XmNradioAlwaysOne #t
+							  XmNentryClass xmToggleButtonWidgetClass
+							  XmNisHomogeneous #t
+							  XmNleftAttachment      XmATTACH_FORM
+							  XmNrightAttachment     XmATTACH_FORM
+							  XmNtopAttachment       XmATTACH_FORM
+							  XmNbottomAttachment    XmATTACH_NONE
+							  XmNbackground          *basic-color*))))
 		    (XtCreateManagedWidget "Buffer size" xmLabelWidgetClass frm
-                                   (list XmNleftAttachment      XmATTACH_FORM
-                                         XmNrightAttachment     XmATTACH_FORM
-                                         XmNtopAttachment       XmATTACH_WIDGET
-                                         XmNtopWidget           rc
-                                         XmNbottomAttachment    XmATTACH_FORM
-                                         XmNlabelString         s1
-                                         XmNalignment           XmALIGNMENT_BEGINNING
-                                         XmNbackground          *basic-color*))
+					   (list XmNleftAttachment      XmATTACH_FORM
+						 XmNrightAttachment     XmATTACH_FORM
+						 XmNtopAttachment       XmATTACH_WIDGET
+						 XmNtopWidget           rc
+						 XmNbottomAttachment    XmATTACH_FORM
+						 XmNlabelString         s1
+						 XmNalignment           XmALIGNMENT_BEGINNING
+						 XmNbackground          *basic-color*))
                     (for-each
-
-                    (lambda (size)
+		     
+		     (lambda (size)
                        (let ((button (XtCreateManagedWidget (format #f "~D" size) xmToggleButtonWidgetClass rc
-                                        (list XmNbackground           *basic-color*
-                                              XmNvalueChangedCallback (list (lambda (w c i) (if (.set i) (set! loop-between-marks-buffer-size c))) size)
-                                              XmNset                  (= size loop-between-marks-buffer-size)))))
+							    (list XmNbackground           *basic-color*
+								  XmNvalueChangedCallback (list (lambda (w c i) (if (.set i) (set! loop-between-marks-buffer-size c))) size)
+								  XmNset                  (= size loop-between-marks-buffer-size)))))
                          (if (= size loop-between-marks-buffer-size)
                              (set! loop-between-marks-default-buffer-widget button))))
                      (list 64 128 256 512 1024 2048 4096))
                     (XmStringFree s1)))))
         (activate-dialog loop-between-marks-dialog))
-
+      
       (set! loop-between-marks-menu-label (add-to-menu marks-menu "Loop play between marks" (lambda () (post-loop-between-marks-dialog))))
-
+      
       (set! marks-list (cons (lambda ()
 			       (let ((new-label (format #f "Loop play between marks (~D ~D ~D)"
 							loop-between-marks-m1 loop-between-marks-m2 loop-between-marks-buffer-size)))
@@ -453,9 +456,9 @@ using the granulate generator to fix up the selection duration (this still is no
 			   )
 			 (lambda (w c i)
 			   (set! fit-to-mark-one initial-fit-to-mark-one)
-			   (XtSetValues (sliders 0) (list XmNvalue fit-to-mark-one))
+			   ((*motif* 'XtSetValues) (sliders 0) (list (*motif* 'XmNvalue) fit-to-mark-one))
 			   (set! fit-to-mark-two initial-fit-to-mark-two)
-			   (XtSetValues (sliders 1) (list XmNvalue fit-to-mark-two))))))
+			   ((*motif* 'XtSetValues) (sliders 1) (list (*motif* 'XmNvalue) fit-to-mark-two))))))
 
 	      (set! sliders
 		    (add-sliders 
@@ -463,7 +466,7 @@ using the granulate generator to fix up the selection duration (this still is no
 		     (list (list "mark one" 0 initial-fit-to-mark-one 20
 				 (if (provided? 'snd-gtk)
 				     (lambda (w context) (set! fit-to-mark-one (gtk_adjustment_get_value (GTK_ADJUSTMENT w))))
-				     (lambda (w context info) (set! fit-to-mark-one (.value info))))
+				     (lambda (w context info) (set! fit-to-mark-one ((*motif* '.value) info))))
 				 1)
 			   (list "mark two" 0 initial-fit-to-mark-two 20
 				 (if (provided? 'snd-gtk)
@@ -544,9 +547,9 @@ using the granulate generator to fix up the selection duration (this still is no
 			   )
 			 (lambda (w c i)
 			   (set! define-by-mark-one initial-define-by-mark-one)
-			   (XtSetValues (sliders 0) (list XmNvalue define-by-mark-one))
+			   ((*motif* 'XtSetValues) (sliders 0) (list (*motif* 'XmNvalue) define-by-mark-one))
 			   (set! define-by-mark-two initial-define-by-mark-two)
-			   (XtSetValues (sliders 1) (list XmNvalue define-by-mark-two))))))
+			   ((*motif* 'XtSetValues) (sliders 1) (list (*motif* 'XmNvalue) define-by-mark-two))))))
 
 	      (set! sliders
 		    (add-sliders 
@@ -554,12 +557,12 @@ using the granulate generator to fix up the selection duration (this still is no
 		     (list (list "mark one" 0 initial-define-by-mark-one 25
 				 (if (provided? 'snd-gtk)
 				     (lambda (w context) (set! define-by-mark-one (gtk_adjustment_get_value (GTK_ADJUSTMENT w))))
-				     (lambda (w context info) (set! define-by-mark-one (.value info))))
+				     (lambda (w context info) (set! define-by-mark-one ((*motif* '.value) info))))
 				 1)
 			   (list "mark two" 0 initial-define-by-mark-two 25
 				 (if (provided? 'snd-gtk)
 				     (lambda (w context) (set! define-by-mark-two (gtk_adjustment_get_value (GTK_ADJUSTMENT w))))
-				     (lambda (w context info) (set! define-by-mark-two (.value info))))
+				     (lambda (w context info) (set! define-by-mark-two ((*motif* '.value) info))))
 				 1))))))
 	(activate-dialog define-by-mark-dialog))
 
@@ -634,7 +637,7 @@ using the granulate generator to fix up the selection duration (this still is no
 ;;; -------- mark loop dialog (this refers to sound header mark points, not Snd mark objects!)
 
 (if (provided? 'xm) 
-    (begin
+    (with-let *motif*
 
       ;; Here is a first stab at the loop dialog (I guessed a lot as to what these buttons
       ;; are supposed to do -- have never used these loop points).

@@ -1,6 +1,8 @@
 (provide 'snd-effects-utils.scm)
 (require snd-motif)
 
+(with-let *motif*
+
 (define (raise-dialog w)
   "(raise-dialog w) tries to put 'w' on top of any widgets that are obscuring it"
   (if (and (Widget? w) 
@@ -259,3 +261,4 @@ and returns a list of widgets (for reset callbacks)"
 	 new-slider))
      sliders)))
 
+)

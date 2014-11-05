@@ -32,13 +32,15 @@
 ;;; create-audit-dialog
 ;;; equalize-panes
 
+(provide 'snd-snd-motif.scm)
+(require snd-motif snd-extensions.scm snd-play.scm snd-dsp.scm)
+
+(with-let *motif*
+
 (define (find-if pred l)
   (cond ((null? l) #f)
 	((pred (car l)) (car l))
 	(else (find-if pred (cdr l)))))
-
-(provide 'snd-snd-motif.scm)
-(require snd-motif snd-extensions.scm snd-play.scm snd-dsp.scm)
 
 (define (load-font name)
   "(load-font name) loads the font 'name', returning the font id"
@@ -2981,3 +2983,6 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
   (if snd
       (equalize-sound snd)
       (for-each equalize-sound (sounds))))
+
+) ; end with-let *motif*
+

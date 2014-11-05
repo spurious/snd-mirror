@@ -1299,13 +1299,14 @@ Bye!
 <div class="innerheader" id="sndwithmotif">Snd and Motif</div>
 
 <p>It is possible to add your own user-interface elements using the xm (for Motif) or xg (for Gtk) modules
-included with Snd.
+included with Snd.  In the motif case, all the functions and constants are placed in the *motif* environment.
 Here's a dialog window with a slider:
 </p>
 
 <pre class="indented">
-(define scale-dialog #f)
-(define current-scaler 1.0)
+(with-let *motif*
+  (define scale-dialog #f)
+  (define current-scaler 1.0)
 
 (define (create-scale-dialog parent)
   (if (not (Widget? scale-dialog))
@@ -1352,7 +1353,7 @@ Here's a dialog window with a slider:
 					     (set! current-scaler (/ (.value info) 100.0)))))))
   (XtManageChild scale-dialog))
 
-(create-scale-dialog (cadr (<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>)))
+(create-scale-dialog (cadr (<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>))))
 </pre>
 
 <p>which creates a little dialog:

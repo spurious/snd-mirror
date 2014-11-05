@@ -1,7 +1,16 @@
 (provide 'snd-special-menu.scm)
 
 (if (provided? 'xm)
-    (require snd-effects-utils.scm snd-snd-motif.scm))
+    (require snd-effects-utils.scm snd-snd-motif.scm snd-edit-menu.scm))
+
+(when (provided? 'snd-motif)
+  (define update-label (*motif* 'update-label))
+  (define change-label (*motif* 'change-label))
+  (define make-effect-dialog (*motif* 'make-effect-dialog))
+  (define add-sliders (*motif* 'add-sliders))
+  (define activate-dialog (*motif* 'activate-dialog))
+  (define select-file (*motif* 'select-file))
+  )
 
 (if (provided? 'xg)
     (require snd-gtk-effects-utils.scm snd-snd-gtk.scm))
@@ -111,7 +120,7 @@ See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more 
 			   )
 			 (lambda (w c i)
 			   (set! play-panned-file initial-play-panned-file)
-			   (XtSetValues (car sliders) (list XmNvalue play-panned-file))))))
+			   ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) play-panned-file))))))
 
               (set! sliders
                     (add-sliders 
@@ -122,7 +131,7 @@ See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more 
 				     (lambda (w context)
 				       (set! play-panned-file (gtk_adjustment_get_value (GTK_ADJUSTMENT w))))
 				     (lambda (w context info)
-				       (set! play-panned-file (.value info))))
+				       (set! play-panned-file ((*motif* '.value) info))))
 				 1))))))
 
         (activate-dialog play-panned-dialog))
@@ -190,7 +199,7 @@ Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc.")))
 			   )
 			 (lambda (w c i)
 			   (set! save-as-mp3-wav-file-number initial-save-as-mp3-wav-file-number)
-			   (XtSetValues (car sliders) (list XmNvalue save-as-mp3-wav-file-number))))))
+			   ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) save-as-mp3-wav-file-number))))))
 
               (set! sliders
                     (add-sliders
@@ -200,7 +209,7 @@ Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc.")))
 				     (lambda (w data)
 				       (set! save-as-mp3-wav-file-number (gtk_adjustment_get_value (GTK_ADJUSTMENT w))))
 				     (lambda (w context info)
-				       (set! save-as-mp3-wav-file-number (.value info))))
+				       (set! save-as-mp3-wav-file-number ((*motif* '.value) info))))
 				 1))))))
         (activate-dialog save-as-mp3-dialog))
 
@@ -266,7 +275,7 @@ Please see the Web page at www.xiphophorus.org for details regarding the Ogg/Vor
 			   )
 			 (lambda (w c i)
 			   (set! save-as-ogg-wav-file-number initial-save-as-ogg-wav-file-number)
-			   (XtSetValues (car sliders) (list XmNvalue save-as-ogg-wav-file-number))))))
+			   ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) save-as-ogg-wav-file-number))))))
 
               (set! sliders
                     (add-sliders 
@@ -276,7 +285,7 @@ Please see the Web page at www.xiphophorus.org for details regarding the Ogg/Vor
 				     (lambda (w data)
 				       (set! save-as-ogg-wav-file-number (gtk_adjustment_get_value (GTK_ADJUSTMENT w))))
 				     (lambda (w context info)
-				       (set! save-as-ogg-wav-file-number (.value info))))
+				       (set! save-as-ogg-wav-file-number ((*motif* '.value) info))))
 				 1))))))
         (activate-dialog save-as-ogg-dialog))
 
