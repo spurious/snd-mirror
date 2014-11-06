@@ -2,30 +2,32 @@
 
 (provide 'snd-snd-gl.scm)
 
+(with-let *gl*
+
 ;;; ---------------- gl-info ----------------
 (define (gl-info)
   ;; taken loosely from glxvisuals.c
   "(gl-info) prints out GL-related info"
   (define (class-of n)
     (and (number? n)
-	 (cond ((= n StaticGray) "static-gray")
-	       ((= n GrayScale) "gray-scale")
-	       ((= n StaticColor) "static-color")
-	       ((= n PseudoColor) "pseudo-color")
-	       ((= n TrueColor) "true-color")
-	       ((= n DirectColor) "direct-color")
+	 (cond ((= n (*motif* 'StaticGray)) "static-gray")
+	       ((= n (*motif* 'GrayScale)) "gray-scale")
+	       ((= n (*motif* 'StaticColor)) "static-color")
+	       ((= n (*motif* 'PseudoColor)) "pseudo-color")
+	       ((= n (*motif* 'TrueColor)) "true-color")
+	       ((= n (*motif* 'DirectColor)) "direct-color")
 	       (#t "??"))))
   (let* ((cx (snd-glx-context))
-	 (dpy (XtDisplay (cadr (main-widgets))))
+	 (dpy ((*motif* 'XtDisplay) (cadr (main-widgets))))
 	 (version (glXQueryVersion dpy 0 0)))
     (if (car version)
-	(let ((visuals (XGetVisualInfo dpy 0 (list 'XVisualInfo 0))))
-	  (glXMakeCurrent dpy (XtWindow (cadr (main-widgets))) cx)
+	(let ((visuals ((*motif* 'XGetVisualInfo) dpy 0 (list 'XVisualInfo 0))))
+	  (glXMakeCurrent dpy ((*motif* 'XtWindow) (cadr (main-widgets))) cx)
 	  (snd-print (format #f "GL version: ~A.~A, (~A ~A ~A)~%"
 			     (cadr version) (caddr version)
 			     (glGetString GL_VENDOR) (glGetString GL_RENDERER) (glGetString GL_VERSION)))
 	  (snd-print (format #f "  with: ~A~A~%"
-			     (glXQueryExtensionsString dpy (XScreenNumberOfScreen (DefaultScreenOfDisplay dpy)))
+			     (glXQueryExtensionsString dpy ((*motif* 'XScreenNumberOfScreen) ((*motif* 'DefaultScreenOfDisplay) dpy)))
 			     (if (glXIsDirect dpy cx) ", direct rendering support" "")))
 	  (for-each 
 	   (lambda (visual)
@@ -47,7 +49,7 @@
 		       (acgreensize (cadr (glXGetConfig dpy visual GLX_ACCUM_GREEN_SIZE)))
 		       (acbluesize (cadr (glXGetConfig dpy visual GLX_ACCUM_BLUE_SIZE)))
 		       (acalphasize (cadr (glXGetConfig dpy visual GLX_ACCUM_ALPHA_SIZE))))
-		   (snd-print (format #f "  id: #x~X depth: ~D class: ~S~%" (.visualid visual) (.depth visual) (class-of (.class visual))))
+		   (snd-print (format #f "  id: #x~X depth: ~D class: ~S~%" ((*motif* '.visualid) visual) ((*motif* '.depth) visual) (class-of ((*motif* '.class) visual))))
 		   (snd-print (format #f "      buffersize: ~D, level: ~D, rgba: ~A, doublebuffer: ~A, stereo: ~A~%"
 				      buffersize level
 				      (if (= rgba 1) "#t" "#f")
@@ -307,13 +309,15 @@
 
 ;;; -------- complexify --------
 
+(require snd-snd-motif.scm)
+
 (define complexify
   (let ((gl-list #f)
 	(drawer #f))
     
     (define (redraw-graph)
-      (let ((win (XtWindow drawer))
-	    (dpy (XtDisplay drawer))
+      (let ((win ((*motif* 'XtWindow) drawer))
+	    (dpy ((*motif* 'XtDisplay) drawer))
 	    (cx (snd-glx-context)))
 	(glXMakeCurrent dpy win cx)
 	(if gl-list (glDeleteLists gl-list 1))
@@ -339,7 +343,7 @@
 	      (glVertex3f (/ i 256.0) (rl i) (im i)))
 	    (glEnd)
 	  (glEndList))
-	(let ((vals (XtVaGetValues drawer (list XmNwidth 0 XmNheight 0))))
+	(let ((vals ((*motif* 'XtVaGetValues) drawer (list (*motif* 'XmNwidth) 0 (*motif* 'XmNheight) 0))))
 	  (glViewport 0 0 (list-ref vals 1) (list-ref vals 3)))
 	(glMatrixMode GL_PROJECTION)
 	(glLoadIdentity)
@@ -353,26 +357,31 @@
 	(glDrawBuffer GL_BACK)))
     
       (define (add-main-pane name type args)
-	(XtCreateManagedWidget name type (list-ref (main-widgets) 3) args))
+	((*motif* 'XtCreateManagedWidget) name type (list-ref (main-widgets) 3) args))
 
       (lambda ()
 	(if (not drawer)
-	    (let ((outer (add-main-pane "Waterfall" xmFormWidgetClass
-					(list XmNbackground *basic-color*
-					      XmNpaneMinimum 320))))
-	      (set! drawer (XtCreateManagedWidget "draw" xmDrawingAreaWidgetClass outer
-						  (list XmNbackground       *graph-color*
-							XmNforeground       *data-color*
-							XmNleftAttachment   XmATTACH_FORM
-							XmNtopAttachment    XmATTACH_FORM
-							XmNbottomAttachment XmATTACH_FORM
-							XmNrightAttachment  XmATTACH_FORM)))
+	    (let ((outer (with-let *motif*
+			   (add-main-pane "Waterfall" xmFormWidgetClass
+					  (list XmNbackground *basic-color*
+						XmNpaneMinimum 320)))))
+	      (set! drawer (with-let (sublet *motif* 'outer outer)
+			     (XtCreateManagedWidget "draw" xmDrawingAreaWidgetClass outer
+						    (list XmNbackground       *graph-color*
+							  XmNforeground       *data-color*
+							  XmNleftAttachment   XmATTACH_FORM
+							  XmNtopAttachment    XmATTACH_FORM
+							  XmNbottomAttachment XmATTACH_FORM
+							  XmNrightAttachment  XmATTACH_FORM))))
 	      (set! *spectro-x-angle* 210.0)
 	      (set! *spectro-y-angle* 60.0)
 	      (set! *spectro-z-angle* 30.0)
 	      (set! *spectro-x-scale* 3.0)
-	      (XtAddCallback drawer XmNresizeCallback (lambda (w context info) (redraw-graph)))
-	      (XtAddCallback drawer XmNexposeCallback (lambda (w context info) (redraw-graph)))
+	      ((*motif* 'XtAddCallback) drawer (*motif* 'XmNresizeCallback) (lambda (w context info) (redraw-graph)))
+	      ((*motif* 'XtAddCallback) drawer (*motif* 'XmNexposeCallback) (lambda (w context info) (redraw-graph)))
 	      (hook-push after-graph-hook (lambda (hook) (redraw-graph)))
 	      (hook-push orientation-hook (lambda (hook) (redraw-graph)))
 	      (hook-push color-hook (lambda (hook) (redraw-graph))))))))
+)
+
+(define complexify (*gl* 'complexify))

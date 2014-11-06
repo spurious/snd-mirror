@@ -25196,22 +25196,22 @@ EDITS: 2
 	(for-each-child
 	 (car (menu-widgets))
 	 (lambda (w)
-	   (if (not (XmIsRowColumn w))
-	       (let ((option-holder (cadr (XtGetValues w (list XmNsubMenuId 0)))))
+	   (if (not ((*motif* 'XmIsRowColumn) w))
+	       (let ((option-holder (cadr ((*motif* 'XtGetValues) w (list (*motif* 'XmNsubMenuId) 0)))))
 		 (for-each-child
 		  option-holder
 		  (lambda (menu)
-		    (if (and (XmIsPushButton menu)
-			     (XtIsManaged menu)
-			     (XtIsSensitive menu)
-			     (not (member (XtName menu)
+		    (if (and ((*motif* 'XmIsPushButton) menu)
+			     ((*motif* 'XtIsManaged) menu)
+			     ((*motif* 'XtIsSensitive) menu)
+			     (not (member ((*motif* 'XtName) menu)
 					  (list "Exit" "New" 
 						"Save   C-x C-s" 
 						"Close  C-x k"
 						"Close all"
 						"Save current settings"
 						"Mixes" "clm" "fm-violin"))))
-			(XtCallCallbacks menu XmNactivateCallback (snd-global-state))))))))))
+			((*motif* 'XtCallCallbacks) menu (*motif* 'XmNactivateCallback) (snd-global-state))))))))))
     (for-each close-sound (sounds))
     (dismiss-all-dialogs))
   
@@ -44995,7 +44995,7 @@ EDITS: 1
 	   (provided? 'gl)
 	   (provided? 'xm))
       
-      (begin
+      (with-let (sublet *gl*)
 	(require snd-snd-gl.scm)
 	(gl-info)
 	(if all-args (gl-dump-state))
@@ -45067,8 +45067,8 @@ EDITS: 1
 		 (list (list 0 1) 0+i))
 		
 		(let ((ind (open-sound "oboe.snd")))
-		  (glXMakeCurrent (XtDisplay (cadr (main-widgets))) 
-				  (XtWindow (car (channel-widgets)))
+		  (glXMakeCurrent ((*motif* 'XtDisplay) (cadr (main-widgets))) 
+				  ((*motif* 'XtWindow) (car (channel-widgets)))
 				  (snd-glx-context))
 		  (glEnable GL_DEPTH_TEST)
 		  (glDepthFunc GL_LEQUAL)
@@ -45078,7 +45078,7 @@ EDITS: 1
 		  (gluPerspective 40.0 1.0 10.0 200.0)
 		  (glTranslatef 0.0 0.0 -50.0)
 		  (glRotatef -58.0 0.0 1.0 0.0)
-		  (let ((vals (XtVaGetValues (car (channel-widgets)) (list XmNwidth 0 XmNheight 0))))
+		  (let ((vals ((*motif* 'XtVaGetValues) (car (channel-widgets)) (list (*motif* 'XmNwidth) 0 (*motif* 'XmNheight) 0))))
 		    (glViewport 0 0 (vals 1) (vals 3)))
 		  (glClear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
 		  (glBegin GL_POLYGON)
@@ -45097,8 +45097,8 @@ EDITS: 1
 		  (glColor3f 0.0 0.0 1.0)   (glVertex3f 4.0 -9.0 -10.0)
 		  (glColor3f 1.0 0.0 1.0)   (glVertex3f 4.0 -6.0 -10.0)
 		  (glEnd)
-		  (glXSwapBuffers (XtDisplay (cadr (main-widgets))) 
-				  (XtWindow (car (channel-widgets))))
+		  (glXSwapBuffers ((*motif* 'XtDisplay) (cadr (main-widgets))) 
+				  ((*motif* 'XtWindow) (car (channel-widgets))))
 		  (glFlush)
 		  (close-sound ind)))))
 	)))

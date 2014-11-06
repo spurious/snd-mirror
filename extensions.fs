@@ -2,9 +2,9 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 05/12/18 19:21:00
-\ Changed: 14/04/28 03:52:17
+\ Changed: 14/11/06 00:58:34
 \
-\ @(#)extensions.fs	1.48 4/28/14
+\ @(#)extensions.fs	1.49 11/6/14
 
 \ With comments and doc strings from extensions.scm.
 \
@@ -601,54 +601,67 @@ previous
 
 \ ;;; -------- ramp-expt, env-expt-channel
 
-hide
-: rx-cb { rmp0 rmpd incr exponent -- prc; y self -- val }
-	1 proc-create ( prc )
-	rmp0 , rmpd , 0.0 ( angle ) , incr , exponent ,
-  does> { y self -- val }
-	self           @ { rmp0 }
-	self 1 cells + @ { rmpd }
-	self 2 cells + @ { angle }
-	self 3 cells + @ { incr }
-	self 4 cells + @ { exponent }
-	angle flog exponent f* fexp rmpd f* rmp0 f+ y f* ( val )
-	angle incr f+ self 2 cells + ! ( angle += incr )
-	( val )
-;
-set-current
-
 : ramp-expt
-<{ rmp0 rmp1 exponent :optional sym #t beg 0 dur #f snd #f chn #f ep #f -- r }>
-	doc" Connect RMP0 and RMP1 with an x^exponent curve."
+    <{ rmp0 rmp1 expt :optional sym #t beg 0 dur #f snd #f chn #f ep #f -- r }>
+	doc" Connect RMP0 and RMP1 with an x^EXPT curve."
 	\ ;; a^x = exp(x * log(a))
 	"%s %s %s %s %s %s %s"
-	    #( rmp0 rmp1 exponent sym beg dur get-func-name )
+	    #( rmp0 rmp1 expt sym beg dur get-func-name )
 	    string-format { origin }
 	dur number? if
 		dur
 	else
-		snd chn ep framples beg f-
-	then 1/f { incr }
-	rmp0 rmp1 rmp0 f- incr exponent rx-cb
-	    beg dur snd chn ep origin map-channel
+		snd chn ep framples beg d-
+	then { len }
+	len 1/f { incr }
+	beg len snd chn ep samples { data }
+	rmp1 rmp0 f- { scl }
+	0.0 { angle }
+	sym
+	rmp1 rmp0 f< && if
+		scl fnegate to scl
+		1.0 to angle
+		len 0 ?do
+			data i
+			    data i vct-ref
+			    rmp1 scl angle expt f** f* f+
+			    f*
+			    vct-set! drop
+			angle incr f- to angle
+		loop
+	else
+		0.0 to angle
+		len 0 ?do
+			data i
+			    data i vct-ref
+			    rmp0 scl angle expt f** f* f+
+			    f*
+			    vct-set! drop
+			angle incr f+ to angle
+		loop
+	then
+	data beg len snd chn current-edit-position origin vct->channel
 ;
-previous
 
 hide
-: expc-cb { symmetric exponent -- prc; r0 r1 b d s c e self -- val }
-	7 proc-create ( prc )
-	symmetric , exponent ,
+: expc-cb { sym expt -- prc; r0 r1 b d s c e self -- val }
+	7 proc-create ( prc ) expt , sym ,
   does> { r0 r1 b d s c e self -- val }
-	r0 r1 self cell+ @ ( exponent ) self @ ( symmetric ) b d s c e ramp-expt
+	r0 r1 self @ ( expt ) self cell+ @ ( sym ) b d s c e ramp-expt
 ;
 set-current
 
 : env-expt-channel
-    <{ en ex :optional sym #t beg 0 dur #f snd #f chn #f edpos #f -- r }>
+    <{ en ex :optional sym #t beg 0 dur #f snd #f chn #f ep #f -- r }>
 	doc" Connect ENV's dots with x^exponent curves."
-	"%s %s %s %s %s %s" #( en ex sym beg dur get-func-name )
-	    string-format { origin }
-	en sym ex expc-cb beg dur snd chn edpos origin any-env-channel
+	ex 1.0 f= if
+		en beg dur snd chn ep env-channel
+	else
+		"%s %s %s %s %s %s" #( en ex sym beg dur get-func-name )
+		    string-format { origin }
+		sym ex expc-cb { prc }
+		en prc beg dur snd chn ep origin any-env-channel
+	then
 ;
 previous
 

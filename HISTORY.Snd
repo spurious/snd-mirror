@@ -1,5 +1,7 @@
 Snd change log
 
+ 5-Nov:     moved all the motif (xm.c, snd-motif.scm etc) stuff to the *motif* environment,
+              and OpenGL stuff (gl.c, snd-gl.scm) to *gl*
  4-Nov:     Snd 15.1.
  25-Sep:    Snd 15.0.
  17-Sep:    moved snd-x*.c to snd-motif.c

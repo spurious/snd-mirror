@@ -1,29 +1,29 @@
 \ snd-test.fs -- Snd Forth code and tests
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-\ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Thu Sep 12 13:06:27 CEST 2013
+\ Created: 06/08/05 00:09:28
+\ Changed: 14/11/06 02:20:39
 
 \ Commentary:
-\ 
+\
 \ Tags:  FIXME - something is wrong
 \        XXX   - info marker
-\ 
+\
 \ Tested with:
-\   Snd 14.x
+\   Snd 15.x
 \   Fth 1.3.x
-\ 
+\
 \ The most Gtk tests will be skipped if not gtk3.
-\ 
+\
 \ Reads init file ./.sndtest.fs or ~/.sndtest.fs for global variables,
 \ hooks, etc.
-\ 
+\
 \ Example:
-\ 
+\
 \ cat ./.sndtest.fs
 \ "TMPDIR" getenv set-save-dir to original-save-dir
 \ save-dir set-temp-dir to original-temp-dir
-\ 
+\
 \ #t to with-big-file
 \ "/usr/opt/sound/SFiles/bigger.snd" to bigger-snd
 \ "/usr/opt/sound/sf1/" to sf-dir
@@ -33,13 +33,13 @@
 \ \ #t to *snd-test-ws-statistics*
 \ \ #t to *snd-test-ws-verbose*
 
-\ 
+\
 \ Start tests:
-\ 
+\
 \ snd -noinit -load snd-test.fs          \ all tests
 \ snd -noinit -load snd-test.fs 10 15 19 \ test 10 15 19
 \ snd -noinit -load snd-test.fs -23      \ all tests except 23
-\ 
+\
 \ test 00: constants
 \ test 01: defaults
 \ test 02: headers
@@ -658,7 +658,6 @@ reset-all-hooks
   regions each ( r )
     forget-region drop
   end-each
-  clear-sincs drop
   sounds if
     stop-playing drop
   then
@@ -978,7 +977,7 @@ SIGINT lambda: { sig -- }
      #( <'> dac-size 256 )
      #( <'> clipping #f )
      #( <'> default-output-chans 1 )
-     #( <'> default-output-sample-type mus-lfloat )
+     #( <'> default-output-data-format mus-lfloat )
      #( <'> default-output-srate 44100 )
      #( <'> default-output-header-type mus-next )
      #( <'> dot-size 1 )
@@ -1164,7 +1163,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> dac-combines-channels #t )
      #( <'> dac-size 256 )
      #( <'> default-output-chans 1 )
-     #( <'> default-output-sample-type mus-lfloat )
+     #( <'> default-output-data-format mus-lfloat )
      #( <'> default-output-header-type mus-next )
      #( <'> default-output-srate 44100 )
      #( <'> dot-size 1 )
@@ -1341,7 +1340,7 @@ black-and-white-colormap constant *better-colormap*
     file mus-sound-duration    { fdur }
     file mus-sound-sample-type { ffrm }
     file mus-sound-header-type { ftyp }
-    file mus-sound-framples      { fframes }
+    file mus-sound-framples    { fframples }
     file mus-sound-samples     { fsamps }
     file mus-sound-length      { flen }
     fchns chns lno name "chans"    test-header-check
@@ -1354,13 +1353,13 @@ black-and-white-colormap constant *better-colormap*
         flen 1+ fsize lno name "length" test-header-check
       then
     then
-    fframes fsr f/ fdur lno name "frames" test-header-check
-    fframes fsamps fchns f/ f- floor fabs f>s { res }
+    fframples fsr f/ fdur lno name "framples" test-header-check
+    fframples fsamps fchns f/ f- floor fabs f>s { res }
     res 1 > if
       res 1 lno name "samples" test-header-check
     then
     ftyp mus-header-type-name typ lno name "type"   test-header-check
-    ffrm mus-sample-type-name frm lno name "format" test-header-check
+    ffrm mus-data-format-name frm lno name "format" test-header-check
     file mus-sound-loop-info { lst }
     loop-start if
       lst nil? if
@@ -1623,7 +1622,6 @@ black-and-white-colormap constant *better-colormap*
   "oboe-ulaw.caf" 1 22050 2.305125 "caff" "mulaw (8 bits)" test-headers
   "oboe.nsp" 1 22050 2.305125 "CSL" "little endian short (16 bits)" 
     test-headers
-  "oboe.nvf" 1 8000 6.353500 "Creative NVF" "unknown" test-headers
   "oboe-ulaw.voc" 1 22050 2.305669 "VOC" "mulaw (8 bits)" test-headers
   "oboe-lf32.sf" 1 22050 2.305669 "IRCAM" "little endian float (32 bits)"
     test-headers
@@ -1889,7 +1887,7 @@ black-and-white-colormap constant *better-colormap*
      #( <'> dac-size 256 512 )
      #( <'> clipping #f #t )
      #( <'> default-output-chans 1 2 )
-     #( <'> default-output-sample-type 1 1 )
+     #( <'> default-output-data-format 1 1 )
      #( <'> default-output-srate 22050 44100 )
      #( <'> default-output-header-type mus-next mus-aifc )
      #( <'> dot-size 1 4 )
@@ -2156,7 +2154,7 @@ black-and-white-colormap constant *better-colormap*
      'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted
      'color-scale 'color?  'colormap 'colormap-name 'colormap-ref
      'colormap-size 'colormap? 'comb 'comb?  'combined-data-color
-     'comment 'connes-window 'continue-frame->file 'continue-sample->file
+     'comment 'connes-window 'continue-frample->file 'continue-sample->file
      'contrast-control 'contrast-control-amp 'contrast-control-bounds
      'contrast-control? 'contrast-enhancement 'controls->channel
      'convolution 'convolve 'convolve-files 'convolve-selection-with
@@ -2165,9 +2163,9 @@ black-and-white-colormap constant *better-colormap*
      'cursor-context 'cursor-cross 'cursor-in-middle 'cursor-in-view
      'cursor-line 'cursor-location-offset 'cursor-on-left 'cursor-on-right
      'cursor-position 'cursor-size 'cursor-style 'cursor-update-interval
-     'dac-combines-channels 'dac-size 'data-color 'sample-type
+     'dac-combines-channels 'dac-size 'data-color 'data-format
      'data-location 'data-size 'db->linear 'default-output-chans 
-     'default-output-sample-type 'default-output-header-type
+     'default-output-data-format 'default-output-header-type
      'default-output-srate 'define-envelope 'degrees->radians 'delay
      'delay-tick 'delay? 'delete-colormap
      'delete-mark 'delete-marks 'delete-sample 
@@ -2190,7 +2188,7 @@ black-and-white-colormap constant *better-colormap*
      'expand-control-length 'expand-control-ramp 'expand-control?
      'exponential-window 'fft 'fft-log-frequency 'fft-log-magnitude 
      'fft-window 'fft-window-alpha 'fft-window-beta 'fft-with-phases
-     'file->array 'file->frame 'file->frame? 'file->sample 'file->sample?
+     'file->array 'file->frample 'file->frample? 'file->sample 'file->sample?
      'file-name 'file-write-date 'fill-polygon 'fill-rectangle 'filter
      'filtered-comb 'filtered-comb? 'filter-channel 'filter-control-coeffs
      'filter-control-envelope 'filter-control-in-dB 'filter-control-in-hz
@@ -2202,8 +2200,7 @@ black-and-white-colormap constant *better-colormap*
      'comb-bank 'comb-bank? 'all-pass-bank 'all-pass-bank? 'filtered-comb-bank
      'filtered-comb-bank? 'make-comb-bank 'make-all-pass-bank
      'make-filtered-comb-bank 'fourier-transform
-     'frame 'frame* 'frame+ 'frame->file 'frame->file? 'frame->frame 
-     'frame->list 'frame->sample 'frame-ref 'frame-set! 'frame? 'frames 
+     'frample->file 'frample->file? 'frample->frample 'framples 
      'free-player 'free-sampler 'gaussian-window 'gc-off 'gc-on 
      'gl-graph->ps 'glSpectrogram 'goto-listener-end 'granulate 'granulate?
      'graph 'graph->ps 'graph-as-sonogram 'graph-as-spectrogram
@@ -2229,19 +2226,19 @@ black-and-white-colormap constant *better-colormap*
      'locsig? 'log-freq-start 'main-menu 'main-widgets 'make-all-pass
      'make-asymmetric-fm 'make-moving-average 'make-moving-max
      'make-bezier 'make-color 'make-comb 'make-filtered-comb 'make-convolve
-     'make-delay 'make-env 'make-fft-window 'make-file->frame
+     'make-delay 'make-env 'make-fft-window 'make-file->frample
      'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter
      'make-formant 'make-firmant 'make-formant-bank
-     'make-frame 'make-frame->file 'make-granulate 'make-graph-data
-     'make-iir-filter 'make-locsig 'make-mix-sampler 'make-mixer 
+     'make-frample->file 'make-granulate 'make-graph-data
+     'make-iir-filter 'make-locsig 'make-mix-sampler
      'make-move-sound 'make-notch 'make-one-pole
      'make-one-pole-all-pass 'make-one-zero
      'make-oscil 'make-phase-vocoder 'make-player 'make-polyshape 
      'make-polywave 'make-pulse-train 'make-rand 'make-rand-interp
      'make-readin 'make-region 'make-region-sampler 'make-sample->file
-     'make-sampler 'make-sawtooth-wave 'make-scalar-mixer 'make-nrxysin
+     'make-sampler 'make-sawtooth-wave 'make-nrxysin
      'make-nrxycos 'make-rxyk!cos 'make-rxyk!sin
-     'make-snd->sample 'make-sound-data 'make-square-wave 
+     'make-snd->sample 'make-square-wave 
      'make-src 'make-ssb-am 'make-ncos 'make-nsin 'make-table-lookup
      'make-triangle-wave 'make-two-pole 'make-two-zero
      'make-variable-graph 'make-vct 'make-wave-train 'map-chan
@@ -2255,8 +2252,7 @@ black-and-white-colormap constant *better-colormap*
      'mix-home 'mix-name 'mix-position 'mix-properties 'mix-property
      'mix-region 'mix-release-hook 'mix-sync 'mix-sync-max 'mix-sampler?
      'mix-selection 'mix-speed 'mix-tag-height 'mix-tag-width 'mix-tag-y
-     'mix-vct 'mix-waveform-height 'mix? 'mixer 'mixer* 'mixer+
-     'mixer-ref 'mixer-set! 'mixer? 'mixes 'mouse-click-hook 
+     'mix-vct 'mix-waveform-height 'mix? 'mixes 'mouse-click-hook 
      'mouse-drag-hook 'mouse-enter-graph-hook 'mouse-enter-label-hook
      'mouse-enter-listener-hook 'mouse-enter-text-hook
      'mouse-leave-graph-hook 'mouse-leave-label-hook
@@ -2271,8 +2267,8 @@ black-and-white-colormap constant *better-colormap*
      'mus-bicsf 'mus-bint 'mus-bintn 'mus-bshort 'mus-byte
      'mus-bytes-per-sample 'mus-caff 'mus-channel 'mus-channels
      'mus-chebyshev-first-kind 'mus-chebyshev-second-kind
-     'mus-clipping 'mus-close 'mus-data 'mus-sample-type->string
-     'mus-sample-type-name 'mus-describe 'mus-error-hook
+     'mus-clipping 'mus-close 'mus-data 'mus-data-format->string
+     'mus-data-format-name 'mus-describe 'mus-error-hook
      'mus-error-type->string 'mus-expand-filename 'mus-feedback
      'mus-feedforward 'mus-fft 'mus-file-buffer-size 'mus-file-clipping
      'mus-file-name 'mus-frequency 'mus-generator?
@@ -2284,7 +2280,7 @@ black-and-white-colormap constant *better-colormap*
      'mus-ircam 'mus-l24int 'mus-ldouble 'mus-ldouble-unscaled
      'mus-length 'mus-lfloat 'mus-lfloat-unscaled 'mus-lint 'mus-lintn 
      'mus-location 'mus-lshort 'mus-max-malloc 'mus-max-table-size 
-     'mus-mix 'mus-mulaw 'mus-name 'mus-next 'mus-nist 'mus-offset 
+     'mus-mulaw 'mus-name 'mus-next 'mus-nist 'mus-offset 
      'mus-order 'mus-oss-set-buffers 'mus-out-format 'mus-output?
      'mus-phase 'mus-ramp 'mus-rand-seed 'mus-random
      'mus-raw 'mus-reset 'mus-riff 'mus-run 'mus-scaler
@@ -2294,10 +2290,10 @@ black-and-white-colormap constant *better-colormap*
      'mus-sound-datum-size 'mus-sound-duration 'mus-sound-forget 
      'mus-sound-framples 'mus-sound-header-type 'mus-sound-length 
      'mus-sound-loop-info 'mus-sound-mark-info 'mus-sound-maxamp 
-     'mus-sound-maxamp-exists? 
-     'mus-sound-prune 
-     'mus-sound-report-cache 'mus-sound-samples 
-     'mus-sound-srate 'mus-sound-type-specifier 
+     'mus-sound-maxamp-exists?
+     'mus-sound-prune
+     'mus-sound-report-cache 'mus-sound-samples
+     'mus-sound-srate 'mus-sound-type-specifier
      'mus-sound-write-date 'mus-soundfont 'mus-srate 'mus-svx
      'mus-ubshort 'mus-ubyte 'mus-ulshort 'mus-unknown 'mus-unsupported 
      'mus-voc 'mus-width 'mus-xcoeff 'mus-xcoeffs 'mus-ycoeff
@@ -2334,7 +2330,7 @@ black-and-white-colormap constant *better-colormap*
      'reverb-control-scale-bounds 'reverb-control?  'reverse-channel
      'reverse-selection 'reverse-sound 'revert-sound 'riemann-window 
      'right-sample 'ring-modulate 'rv2-window 'rv3-window 'rv4-window
-     'samaraki-window 'sample 'sample->file 'sample->file? 'sample->frame
+     'samaraki-window 'sample 'sample->file 'sample->file?
      'sampler-at-end? 'sampler-home 'sampler-position 'sampler? 'samples 
      'samples->seconds 'sash-color 'save-controls 'save-dir 'save-edit-history
      'save-envelopes 'save-hook 'save-listener 'save-marks 'save-region
@@ -2378,15 +2374,15 @@ black-and-white-colormap constant *better-colormap*
      'syncd-marks 'table-lookup 'table-lookup? 'tap 'tap? 'temp-dir
      'text-focus-color 'time-graph 'time-graph-style 'time-graph-type 
      'time-graph? 'tiny-font 'tracking-cursor-style 'transform->vct
-     'transform-dialog 'transform-framples 'transform-graph 'transform-graph-style
-     'transform-graph-type 'transform-graph? 'transform-normalization
-     'transform-sample 'transform-size 'transform-type 'transform? 
-     'triangle-wave 'triangle-wave? 'tukey-window 
+     'transform-dialog 'transform-framples 'transform-graph
+     'transform-graph-style 'transform-graph-type 'transform-graph?
+     'transform-normalization 'transform-sample 'transform-size 'transform-type
+     'transform? 'triangle-wave 'triangle-wave? 'tukey-window 
      'two-pole 'two-pole? 'two-zero 'two-zero? 'ultraspherical-window
      'unbind-key  'undo 'undo-edit 'undo-hook 'unselect-all 'update-hook
      'update-lisp-graph 'update-sound 'update-time-graph
      'update-transform-graph 'variable-graph? 'vct 'vct* 'vct+
-     'vct->channel 'vct->list 'vct->sound-data 'vct->string 'vct->vector
+     'vct->channel 'vct->list 'vct->string 'vct->vector
      'vct-add! 'vct-length 'vct-max 'vct-min 'vct-move!
      'vct-multiply! 'vct-offset! 'vct-peak 'vct-ref 'vct-reverse! 'vct-scale!
      'vct-set! 'vct-subseq 'vct-subtract! 'vct? 'vector->vct 'walsh-transform
@@ -2424,32 +2420,6 @@ black-and-white-colormap constant *better-colormap*
 
 \ ---------------- test 04: sndlib ----------------
 
-: play-sound-1 ( file -- )
-  doc" play test func"
-  { file }
-  file mus-sound-open-input { sound-fd }
-  file mus-sound-chans      { chans }
-  file mus-sound-framples     { frames }
-  file mus-sound-srate      { srate }
-  256                       { bufsize }
-  chans bufsize make-sound-data { data }
-  bufsize chans * 2*        { bytes }
-  0 srate chans mus-lshort bytes mus-audio-open-output { audio-fd }
-  audio-fd -1 = if
-    0 srate chans mus-bshort bytes mus-audio-open-output to audio-fd
-  then
-  audio-fd -1 = if
-    "can't play %s" #( file ) snd-display
-  else
-    frames 0 ?do
-      sound-fd 0 bufsize 1- chans data mus-sound-read drop
-      audio-fd data bufsize 0 mus-audio-write drop
-    bufsize +loop
-    audio-fd mus-audio-close drop
-  then
-  sound-fd mus-sound-close-input drop
-;
-
 : sndlib-check-it { snd typ fmt samp -- }
   snd header-type typ "save-as %s" #( typ mus-header-type-name ) snd-test-neq
   "test.snd" mus-sound-header-type { ntyp }
@@ -2458,13 +2428,13 @@ black-and-white-colormap constant *better-colormap*
   "save-as %s -> %s"
   #( typ  mus-header-type-name
      ntyp mus-header-type-name ) snd-test-neq
-  snd sample-type fmt "save-as %s" #( fmt mus-sample-type-name ) snd-test-neq
+  snd data-format fmt "save-as %s" #( fmt mus-data-format-name ) snd-test-neq
   "test.snd" mus-sound-sample-type { nfmt }
   nfmt
   fmt
   "save-as %s -> %s"
-  #( fmt  mus-sample-type-name
-     nfmt mus-sample-type-name ) snd-test-neq
+  #( fmt  mus-data-format-name
+     nfmt mus-data-format-name ) snd-test-neq
   1000 snd sample samp "%s[1000]" #( typ mus-header-type-name ) snd-test-neq
 ;
 
@@ -2482,23 +2452,6 @@ black-and-white-colormap constant *better-colormap*
   then
 ;
 
-: frame->byte { file frame -- pos }
-  file mus-sound-chans
-  file mus-sound-datum-size *
-  frame *
-  file mus-sound-data-location +
-;
-
-: sound-data-channel->list { sd chan -- lst }
-  sd chan sd sound-data-length 0.0 make-vct sound-data->vct vct->list
-;
-
-: sound-data->list { sd -- lst }
-  sd sound-data-chans make-list map!
-    sd i sound-data-channel->list
-  end-map
-;
-
 : sndlib-test-map-10-times-cb <{ y -- y' }> y 10.0 f* ;
 
 : sndlib-test-map-add-cb { mx -- prc; y self -- y' }
@@ -2507,7 +2460,7 @@ black-and-white-colormap constant *better-colormap*
   y self @ ( mx ) f+
 ;
 
-0 value big-file-frames
+0 value big-file-framples
 
 : sndlib-test-map-x-cb { x incr -- prc; n self -- y }
   1 proc-create x , incr , ( prc )
@@ -2572,8 +2525,8 @@ black-and-white-colormap constant *better-colormap*
     vals 1 array-ref to siz
     frm mus-bytes-per-sample siz "mus-bytes-per-sample" #() snd-test-neq
   end-each
-  mus-bshort mus-sample-type->string "mus-bshort"
-    "mus-sample-type->string" #() snd-test-neq
+  mus-bshort mus-data-format->string "mus-bshort"
+    "mus-data-format->string" #() snd-test-neq
   mus-aifc mus-header-type->string "mus-aifc"
     "mus-header-type->string" #() snd-test-neq
   \ 
@@ -2585,7 +2538,7 @@ black-and-white-colormap constant *better-colormap*
   10 { req }
   chns  1             "oboe: mus-sound-chans"         #() snd-test-neq
   dl    28            "oboe: mus-sound-data-location" #() snd-test-neq
-  fr    50828         "oboe: mus-sound-framples"        #() snd-test-neq
+  fr    50828         "oboe: mus-sound-framples"      #() snd-test-neq
   smps  50828         "oboe: mus-sound-samples"       #() snd-test-neq
   len   50828 2* 28 + "oboe: mus-sound-length"        #() snd-test-neq
   size  2             "oboe: mus-sound-datum-size"    #() snd-test-neq
@@ -2694,7 +2647,7 @@ black-and-white-colormap constant *better-colormap*
   ind '( 1200 1400 4 3 2 1 ) set-sound-loop-info drop
   ind sound-loop-info '( 1200 1400 4 3 2 1 1 1 ) "set null loop-info" #()
     snd-test-neq
-  "fmv1.snd" :sound ind :header-type mus-aifc save-sound-as drop
+  "fmv1.snd" ind mus-aifc save-sound-as drop
   "fmv1.snd" mus-sound-loop-info '( 1200 1400 4 3 2 1 1 1 )
     "saved null loop-info" #() snd-test-neq
   ind close-sound drop
@@ -2761,7 +2714,6 @@ black-and-white-colormap constant *better-colormap*
   "%d-%b-%Y %H:%M" oboe-snd file-write-date strftime
   "15-Oct-2006 04:34"
   "oboe: file-write-date" #() snd-test-neq
-  oboe-snd play-sound-1
   \ 
   0 { lasth }
   begin
@@ -2774,10 +2726,10 @@ black-and-white-colormap constant *better-colormap*
   0 to lasth
   begin
     lasth 1+ to lasth
-    lasth mus-sample-type-name "unknown" string=
+    lasth mus-data-format-name "unknown" string=
   until
   lasth 10 < if
-    "sample-type[%d] = %s?" #( lasth dup mus-sample-type-name ) snd-display
+    "data-format[%d] = %s?" #( lasth dup mus-data-format-name ) snd-display
   then
   nil { name }
   #( 'dont-normalize
@@ -2838,7 +2790,7 @@ black-and-white-colormap constant *better-colormap*
   20 0.5 make-vct
   "10 set samples 0 at 1 for 0.1" #() snd-test-neq
   0 10 "fmv1.snd" ind 0 #t "another name" 1 0 #f set-samples drop
-  ind 0 frames 10 "11 set samples truncate" #() snd-test-neq
+  ind 0 framples 10 "11 set samples truncate" #() snd-test-neq
   ind revert-sound drop
   "fmv1.snd" file-delete
   \ ;; now try to confuse it
@@ -2903,7 +2855,7 @@ black-and-white-colormap constant *better-colormap*
       v i 1.0 val f- vct-set! drop
     loop
     v 0 len ind 0 vct->channel drop
-    "test1.snd" ind mus-next :sample-type typ save-sound-as drop
+    "test1.snd" ind mus-next typ save-sound-as drop
     ind close-sound drop
     "test1.snd" open-sound to ind
     0 len ind 0 channel->vct to v1
@@ -2916,7 +2868,7 @@ black-and-white-colormap constant *better-colormap*
     loop
     maxdiff allowed-diff f> if
       "%s: %s at %d (%s %s)?"
-        #( typ mus-sample-type-name
+        #( typ mus-data-format-name
            maxdiff
            maxpos
            v maxpos vct-ref
@@ -2955,8 +2907,7 @@ black-and-white-colormap constant *better-colormap*
   \ 
   output-comment-hook reset-hook!
   output-comment-hook <'> sndlib-check-string add-hook!
-  :file "test.snd" :sound ob :header-type mus-riff :sample-type mus-lfloat
-    save-sound-as drop
+  "test.snd" ob mus-riff mus-lfloat save-sound-as drop
   output-comment-hook reset-hook!
   "test.snd" open-sound to ab
   ab mus-riff mus-lfloat samp sndlib-check-it
@@ -2980,11 +2931,11 @@ black-and-white-colormap constant *better-colormap*
   ab mus-next mus-bshort samp sndlib-check-it
   update-hook reset-hook!
   '( -3.0 3.0 ) ab 0 set-y-bounds drop
-  ab mus-lshort set-sample-type drop
+  ab mus-lshort set-data-format drop
   \ ; these set!'s can change the index via update-sound
   "test.snd" find-sound to ab
-  ab sample-type to fmt
-  fmt mus-lshort "set-sample-type %s" #( fmt mus-sample-type-name ) snd-test-neq
+  ab data-format to fmt
+  fmt mus-lshort "set-data-format %s" #( fmt mus-data-format-name ) snd-test-neq
   ab 0 y-bounds '( -3.0 3.0 ) "set data format y-bounds" #() snd-test-neq
   '( 2.0 ) ab 0 set-y-bounds drop
   ab 0 y-bounds '( -2.0 2.0 ) "set data format y-bounds 1" #() snd-test-neq
@@ -3017,9 +2968,9 @@ black-and-white-colormap constant *better-colormap*
   "test.snd" ob mus-next mus-bshort save-sound-as drop
   ob close-sound drop
   "test.snd" open-sound to ab
-  mus-lshort set-sample-type drop
+  mus-lshort set-data-format drop
   "test.snd" find-sound to ab
-  sample-type mus-lshort "set-sample-type" #() snd-test-neq
+  data-format mus-lshort "set-data-format" #() snd-test-neq
   mus-aifc set-header-type drop
   "test.snd" find-sound to ab
   header-type mus-aifc "set-header-type" #() snd-test-neq
@@ -3035,16 +2986,16 @@ black-and-white-colormap constant *better-colormap*
   ab close-sound drop
   \ 
   "2a.snd" open-sound to ind
-  "test.snd" :sample-type mus-l24int :header-type mus-riff :channel 0
-    save-sound-as drop
+  "test.snd" :sample-type mus-l24int :header-type mus-riff
+    :channel 0 save-sound-as drop
   "test.snd" open-sound { ind0 }
   ind0 channels 1 "save-sound-as :channel 0 chans" #() snd-test-neq
-  ind0 sample-type mus-l24int "save-sound-as :channel 0 sample-type" #()
+  ind0 data-format mus-l24int "save-sound-as :channel 0 data-format" #()
     snd-test-neq
   ind0 header-type mus-riff "save-sound-as :channel 0 header-type" #()
     snd-test-neq
   ind0 srate ind srate "save-sound-as :channel 0 srates" #() snd-test-neq
-  ind0 frames ind 0 undef frames "save-sound-as :channel 0 frames" #()
+  ind0 framples ind 0 undef framples "save-sound-as :channel 0 framples" #()
     snd-test-neq
   ind0 maxamp ind 0 undef maxamp "save-sound-as :channel 0 maxamps" #()
     snd-test-neq
@@ -3054,12 +3005,12 @@ black-and-white-colormap constant *better-colormap*
     :srate 12345 save-sound-as drop
   "test.snd" open-sound to ind0
   ind0 channels 1 "save-sound-as :channel 1 chans" #() snd-test-neq
-  ind0 sample-type mus-bfloat "save-sound-as :channel 1 sample-type" #()
+  ind0 data-format mus-bfloat "save-sound-as :channel 1 data-format" #()
     snd-test-neq
   ind0 header-type mus-aifc "save-sound-as :channel 1 header-type" #()
     snd-test-neq
   ind0 srate 12345 "save-sound-as :channel 1 srates" #() snd-test-neq
-  ind0 frames ind 1 undef frames "save-sound-as :channel 1 frames" #()
+  ind0 framples ind 1 undef framples "save-sound-as :channel 1 framples" #()
     snd-test-neq
   ind0 maxamp ind 1 undef maxamp "save-sound-as :channel 1 maxamps" #()
     snd-test-neq
@@ -3068,13 +3019,13 @@ black-and-white-colormap constant *better-colormap*
   "test.snd" :channel 1 :comment "this is a test" save-sound-as drop
   "test.snd" open-sound to ind0
   ind0 channels 1 "save-sound-as :channel 1 (1) chans" #() snd-test-neq
-  ind0 sample-type ind sample-type
-    "save-sound-as :channel 1 (1) sample-type" #() snd-test-neq
+  ind0 data-format ind data-format
+    "save-sound-as :channel 1 (1) data-format" #() snd-test-neq
   ind0 header-type ind header-type 
     "save-sound-as :channel 1 (1) header-type" #() snd-test-neq
   ind0 srate ind srate "save-sound-as :channel 1 (1) srates" #() snd-test-neq
-  ind0 frames ind 1 undef frames
-    "save-sound-as :channel 1 (1) frames" #() snd-test-neq
+  ind0 framples ind 1 undef framples
+    "save-sound-as :channel 1 (1) framples" #() snd-test-neq
   ind0 0 maxamp ind 1 undef maxamp 
     "save-sound-as :channel 1 (1) maxamps" #() snd-test-neq
   ind0 comment "this is a test"
@@ -3139,12 +3090,12 @@ black-and-white-colormap constant *better-colormap*
       \ 
       fsnd <'> mus-sound-framples #t nil fth-catch ?dup-if
         car 'mus-error <> if
-          "%s: frames %d (%s)" #( fsnd fr res ) snd-display
+          "%s: framples %d (%s)" #( fsnd fr res ) snd-display
         then
         stack-reset
       else
         fr <> if
-          "%s: frames %d (%s)" #( fsnd fr res ) snd-display
+          "%s: framples %d (%s)" #( fsnd fr res ) snd-display
         then
       then
     then                        \ file-exists?
@@ -3189,154 +3140,6 @@ black-and-white-colormap constant *better-colormap*
     close-sound
   end-each
   \ 
-  "oboe.snd" open-sound { ob }
-  channel->vct vct->sound-data { sd }
-  sd sound-data-maxamp { mx }
-  sd sound-data-length 50828 "oboe->sd: len" #() snd-test-neq
-  sd 0 1000 sound-data-ref 0.0328369 "oboe->sd[1000]" #() snd-test-neq
-  mx length 1 "sound-data-maxamp oboe.snd" #() snd-test-neq
-  ob 0 maxamp mx car "sound-data-maxamp oboe.snd" #() snd-test-neq
-  sd sound-data-peak mx car "sound-data-peak oboe.snd" #() snd-test-neq
-  1 <'> set-selected-channel snd-test-catch to res
-  res car 'no-such-channel "set selected-channel bad chan: %s" #( res )
-    snd-test-neq
-  123456 1 <'> set-selected-channel snd-test-catch to res
-  res car 'no-such-sound "set selected-channel bad snd: %s" #( res )
-    snd-test-neq
-  sd 2 1000 <'> sound-data-ref snd-test-catch to res
-  res car 'out-of-range "sound-data-ref bad chan: %s" #( res ) snd-test-neq
-  sd -1 1000 <'> sound-data-ref snd-test-catch to res
-  res car 'out-of-range "sound-data-ref bad chan -1: %s" #( res ) snd-test-neq
-  sd 0 -1 <'> sound-data-ref snd-test-catch to res
-  res car 'out-of-range "sound-data-ref bad frame: %s" #( res ) snd-test-neq
-  sd 0 10000000 <'> sound-data-ref snd-test-catch to res
-  res car 'out-of-range "sound-data-ref bad frame high: %s" #( res ) 
-    snd-test-neq
-  sd 2 1000 1 <'> sound-data-set! snd-test-catch to res
-  res car 'out-of-range "sound-data-set! bad chan: %s" #( res ) snd-test-neq
-  sd 0 10000000 1 <'> sound-data-set! snd-test-catch to res
-  res car 'out-of-range "sound-data-set! bad frame: %s" #( res ) snd-test-neq
-  3 make-vct to v
-  v sd 2 <'> vct->sound-data snd-test-catch to res
-  res car 'out-of-range "vct->sound-data-set! bad chan: %s" #( res )
-    snd-test-neq
-  ob close-sound drop
-  selected-sound if
-    "selected-sound %s %s" #( selected-sound sounds ) snd-display
-  then
-  "a.sf2" check-file-name to fsnd
-  fsnd file-exists? if
-    fsnd open-sound { fil }
-    fil soundfont-info { loops }
-    loops nil?
-    loops car caddr 65390 <> ||
-    loops cadr cadr 65490 <> || if
-      "soundfont-info: %s" #( loops ) snd-display
-    then
-    fil close-sound drop
-  then
-  \ 
-  "fmv5.snd" file-delete
-  "fmv5.snd" 22050 1 mus-bshort mus-aiff "no comment"
-    mus-sound-open-output { fd }
-  1 100 make-sound-data { sdata }
-  100 0 do
-    sdata 0 i i 0.01 f* sound-data-set! drop
-  loop
-  12 set-print-length drop
-  sdata object->string { sdata-str }
-  "#<sound-data[chans=1, length=100]:\n    (0.000 0.010 0.020 0.030 0.040 0.050 0.060 0.070 0.080 0.090 0.100 0.110 ...)>"
-  sdata-str "print sound-data" #() snd-test-neq
-  sdata { edat }
-  1 100 make-sound-data { edat1 }
-  2 100 make-sound-data { edat2 }
-  sdata edat "sound-data not equal?" #() snd-test-neq
-  sdata edat1 "sound-data 1 equal?" #() snd-test-eq
-  edat2 edat1 "sound-data 2 equal?" #() snd-test-eq
-  100 0 do
-    edat1 0 i  sdata 0 i sound-data-ref  sound-data-set! drop
-  loop
-  sdata edat1 "sound-data 3 not equal?" #() snd-test-neq
-  100 make-vct to v0
-  3 make-vct to v1
-  sdata 0 v0 sound-data->vct drop
-  v0 10 vct-ref 0.1 "sound-data->vct" #() snd-test-neq
-  sdata 0 v1 sound-data->vct drop
-  v1 1 vct-ref 0.01 "sound-data->(small)vct" #() snd-test-neq
-  v0 sdata 0 vct->sound-data drop
-  sdata 0 10 sound-data-ref 0.1 "vct->sound-data" #() snd-test-neq
-  sdata #( 0 10 ) object-apply 0.1 "vct->sound-data applied" #() snd-test-neq
-  sdata 2 v0 <'> sound-data->vct snd-test-catch to res
-  res car 'out-of-range "sound-data->vct bad chan" #() snd-test-neq
-  1  3 3 make-sound-data   123   <'> mus-audio-write snd-test-catch to res
-  res car 'out-of-range "mus-audio-write bad frames" #() snd-test-neq
-  10 make-vct to v0
-  3 make-vct to v
-  2 10 make-sound-data { sdata2 }
-  10 0 do
-    sdata2 0 i 0.1 sound-data-set! drop
-    sdata2 1 i 0.2 sound-data-set! drop
-  loop
-  sdata2 0 v0 sound-data->vct drop
-  sdata2 0 v  sound-data->vct drop
-  v0 1 vct-ref 0.1 "sound-data->vct[1]" #() snd-test-neq
-  sdata2 1 v0 sound-data->vct drop
-  v0 1 vct-ref 0.2 "sound-data->vct[2]" #() snd-test-neq
-  v0 sdata2 0 vct->sound-data drop
-  sdata2 0 1 sound-data-ref 0.2 "vct->sound-data[2]" #() snd-test-neq
-  10 0.3 make-vct to v0
-  v0 sdata2 1 vct->sound-data drop
-  sdata2 1 1 sound-data-ref 0.3 "vct->sound-data[3]" #() snd-test-neq
-  v sdata2 0 vct->sound-data drop
-  fd 0 99 1 sdata mus-sound-write drop
-  fd mus-bshort mus-bytes-per-sample 100 * mus-sound-close-output drop
-  "fmv5.snd" 1 mus-bshort mus-aiff "fmv5.snd" mus-sound-data-location
-    mus-sound-reopen-output to fd
-  fd mus-bshort mus-bytes-per-sample 100 * mus-sound-close-output drop
-  "fmv5.snd" mus-sound-open-input to fd
-  fd 0 99 1 sdata mus-sound-read drop
-  sdata 0 10 sound-data-ref 0.1 "mus-sound-write" #() snd-test-neq
-  fd 20 mus-sound-seek-frame { pos }
-  \ XXX: fd io-fdopen io-tell pos "1 mus-sound-seek-frame" #() snd-test-neq
-  "fmv5.snd" 20 frame->byte pos "2 mus-sound-seek-frame(2)" #() snd-test-neq
-  fd 0 10 1 sdata mus-sound-read drop
-  sdata 0 0 sound-data-ref 0.2 "2 mus-sound-seek" #() snd-test-neq
-  fd mus-sound-close-input drop
-  \ 
-  2 10 make-sound-data to sd
-  10 0.25 make-vct sd 0 vct->sound-data drop
-  10 0.50 make-vct sd 1 vct->sound-data drop
-  sd 2.0 sound-data-scale! drop
-  sd 0 sound-data->vct 10 0.5 make-vct "sound-data-scale! chan 0" #()
-    snd-test-neq
-  sd 1 sound-data->vct 10 1.0 make-vct "sound-data-scale! chan 1" #()
-    snd-test-neq
-  \ 
-  "fmv.snd" 22050 -1 mus-bshort mus-aiff "no comment"
-    <'> mus-sound-open-output snd-test-catch to res
-  res car 'out-of-range "mus-sound-open-output bad chans" #() snd-test-neq
-  "fmv.snd" 22050 1 -1 mus-aiff "no comment"
-    <'> mus-sound-open-output snd-test-catch to res
-  res car 'out-of-range "mus-sound-open-output bad format" #() snd-test-neq
-  "fmv.snd" 22050 1 mus-bshort -1 "no comment"
-    <'> mus-sound-open-output snd-test-catch to res
-  res car 'out-of-range "mus-sound-open-output bad type" #() snd-test-neq
-  \ 
-  "fmv.snd" -1 mus-bshort mus-aiff #f
-    <'> mus-sound-reopen-output snd-test-catch to res
-  res car 'out-of-range "mus-sound-reopen-output bad chans" #() snd-test-neq
-  "fmv.snd" 1 -1 mus-aiff #f
-    <'> mus-sound-reopen-output snd-test-catch to res
-  res car 'out-of-range "mus-sound-reopen-output bad format" #() snd-test-neq
-  "fmv.snd" 1 mus-bshort -1 #f
-    <'> mus-sound-reopen-output snd-test-catch to res
-  res car 'out-of-range "mus-sound-reopen-output bad type" #() snd-test-neq
-  \ 
-  2 10 make-sound-data to sd
-  \ XXX: S7 fill! tests skipped
-  sd object-copy { sd1 }
-  sd sd1 "object-copy sd" #() snd-test-neq
-  \ 
   #( "trunc.snd"
      "trunc.aiff"
      "trunc.wav"
@@ -3355,166 +3158,14 @@ black-and-white-colormap constant *better-colormap*
   "empty.snd" check-file-name to fsnd
   fsnd file-exists? if
     fsnd open-sound to ind
-    ind sample-type   mus-bshort "open raw sample-type" #() snd-test-neq
+    ind data-format   mus-bshort "open raw data-format" #() snd-test-neq
     ind chans         1          "open raw chans" #() snd-test-neq
     ind srate         22050      "open raw srate" #() snd-test-neq
     ind data-location 0          "open raw data-location" #() snd-test-neq
-    ind frames        0          "open raw frames" #() snd-test-neq
+    ind framples      0          "open raw framples" #() snd-test-neq
     ind close-sound drop
   then
   open-raw-sound-hook reset-hook!
-  \ 
-  1 1 make-sound-data to sd
-  sd 0 0 sound-data-ref 0.0 "sound-data ref" #() snd-test-neq
-  sd 0 0 1.0 sound-data-set! drop
-  sd 0 0 sound-data-ref 1.0 "sound-data set" #() snd-test-neq
-  1 1 make-sound-data to sd1
-  sd1 0 0 1.0 sound-data-set! drop
-  sd sd1 "sound-data set not equal" #() snd-test-neq
-  \ 
-  2 3 make-sound-data to sd
-  sd 0 0 sound-data-ref 0.0 "sound-data ref (1)" #() snd-test-neq
-  sd 1 0 1.0 sound-data-set! drop
-  sd 1 0 sound-data-ref 1.0 "sound-data set (1 0)" #() snd-test-neq
-  sd 1 2 2.0 sound-data-set! drop
-  sd 1 2 sound-data-ref 2.0 "sound-data set (1 2)" #() snd-test-neq
-  2 3 make-sound-data to sd1
-  sd1 1 0 1.0 sound-data-set! drop
-  sd1 1 2 2.0 sound-data-set! drop
-  sd sd1 "sound-data set (3) not equal" #() snd-test-neq
-  \ 
-  #( #( mus-bshort mus-next )
-     #( mus-bfloat mus-aifc )
-     #( mus-lshort mus-aifc )
-     #( mus-lfloat mus-riff )
-     #( mus-lshort mus-nist )
-     #( mus-bint mus-aiff )
-     #( mus-lint mus-next )
-     #( mus-bintn mus-next )
-     #( mus-lintn mus-next )
-     #( mus-b24int mus-aifc )
-     #( mus-l24int mus-riff )
-     #( mus-bfloat mus-ircam )
-     #( mus-bfloat-unscaled mus-next )
-     #( mus-lfloat-unscaled mus-next )
-     #( mus-bdouble-unscaled mus-next )
-     #( mus-ldouble-unscaled mus-next )
-     #( mus-bdouble mus-next )
-     #( mus-ldouble mus-next )
-     #( mus-ulshort mus-next )
-     #( mus-ubshort mus-next ) ) to formats
-  nil nil nil nil { df ht samps ndata }
-  #( 1 2 4 8 ) each to chns
-    formats each to vals
-      vals 0 array-ref to df
-      vals 1 array-ref to ht
-      chns 1 = if
-        100000
-      else
-        chns 2 = if
-          50000
-        else
-          1000
-        then
-      then to samps
-      "fmv5.snd" file-delete
-      "fmv5.snd" 22050 chns df ht "no comment" mus-sound-open-output to fd
-      chns samps make-sound-data to sdata
-      chns samps make-sound-data to ndata
-      chns 0 do
-        samps 0 do
-          sdata j ( chn ) i ( samp ) 1.0 mus-random sound-data-set! drop
-        loop
-      loop
-      fd 0 samps 1- chns sdata mus-sound-write drop
-      fd samps chns * df mus-bytes-per-sample * mus-sound-close-output drop
-      "fmv5.snd" mus-sound-open-input to fd
-      fd 0 samps 1- chns ndata mus-sound-read drop
-      fd 100 mus-sound-seek-frame to pos
-      \ XXX: fd io-fdopen io-tell pos "mus-sound-seek-frame[%d]: chans %d"
-      \   #( pos chns ) snd-test-neq
-      "fmv5.snd" 100 frame->byte pos "mus-sound-seek-frame(100)" #()
-        snd-test-neq
-      fd mus-sound-close-input drop
-      chns 0 do
-        sdata i ( chn ) undef sound-data->vct
-          ndata i ( chn ) undef sound-data->vct
-          "read-write trouble: format %s header %s "
-          #( df mus-sample-type-name
-             ht mus-header-type-name ) snd-test-neq
-        loop
-    end-each
-  end-each
-  \ 
-  "fmv.snd" 22050 1 mus-bshort mus-next "no comment"
-    mus-sound-open-output to fd
-  1 10 make-sound-data to sdata
-  sdata 0 1 0.1 sound-data-set! drop
-  fd 0 9 1 sdata mus-sound-write drop
-  fd 20 mus-sound-close-output drop
-  "fmv.snd" mus-sound-open-input to fd
-  fd 0 9 1 sdata mus-sound-read drop
-  sdata 0 0 sound-data-ref 0.0 fneq
-  sdata 0 1 sound-data-ref 0.1 fneq ||
-  sdata 0 2 sound-data-ref 0.0 fneq ||
-  sdata 0 6 sound-data-ref 0.0 fneq || if
-    "read/write: %s?" #( sdata sound-data->list ) snd-display
-  then
-  fd mus-sound-close-input drop
-  "fmv.snd" 1 mus-bshort mus-next "fmv.snd" mus-sound-data-location
-    mus-sound-reopen-output to fd
-  fd 0 mus-sound-seek-frame drop
-  sdata 0 2 0.1 sound-data-set! drop
-  sdata 0 3 0.1 sound-data-set! drop
-  fd 0 9 1 sdata mus-sound-write drop
-  fd 20 mus-sound-close-output drop
-  "fmv.snd" mus-sound-open-input to fd
-  1 10 make-sound-data to ndata
-  fd 0 9 1 ndata mus-sound-read drop
-  ndata 0 0 sound-data-ref 0.0 fneq
-  ndata 0 1 sound-data-ref 0.1 fneq ||
-  ndata 0 2 sound-data-ref 0.1 fneq ||
-  ndata 0 3 sound-data-ref 0.1 fneq ||
-  ndata 0 6 sound-data-ref 0.0 fneq || if
-    ndata sound-data->list sdata sound-data->list "!=" "re-read/write" #()
-      snd-format #() snd-display
-  then
-  fd mus-sound-close-input drop
-  \ ;; check clipping choices
-  "oboe.snd" view-sound to ind
-  #f set-clipping drop
-  10.0 0 ind 0 undef frames ind 0 undef scale-channel drop
-  "test.snd" ind mus-next mus-bfloat save-sound-as drop
-  1 ind 0 undo drop
-  "test.snd" open-sound { ind1 }
-  ind1 0 undef maxamp ind 0 undef maxamp 10.0 f* "clipping 0" #() snd-test-neq
-  ind1 close-sound drop
-  "test.snd" file-delete
-  #t set-clipping drop
-  <'> sndlib-test-map-10-times-cb 0 ind 0 undef frames ind 0 map-channel drop
-  "test.snd" ind mus-next mus-bfloat save-sound-as drop
-  1 ind 0 undo drop
-  "test.snd" open-sound to ind1
-  ind1 0 undef maxamp 1.0 "clipping 1" #() snd-test-neq
-  ind1 close-sound drop
-  "test.snd" file-delete
-  #f set-clipping drop
-  ind maxamp to mx
-  mx sndlib-test-map-add-cb 0 ind 0 undef frames ind 0 map-channel drop
-  "test.snd" ind mus-next mus-bshort save-sound-as drop
-  "test.snd" open-sound to ind1
-  <'> f0< 1 make-proc scan-channel not #f "clipping 2" #() snd-test-neq
-  ind1 close-sound drop
-  "test.snd" file-delete
-  #t set-clipping drop
-  "test.snd" ind mus-next mus-bshort save-sound-as drop
-  "test.snd" open-sound to ind1
-  <'> f0< 1 make-proc scan-channel #f "clipping 3" #() snd-test-neq
-  ind1 close-sound drop
-  "test.snd" file-delete
-  #f set-clipping drop
-  ind close-sound drop
-  "fmv.snd" file-delete
   \ 
   #f set-clipping drop
   "test.snd" :sample-type mus-lshort new-sound { snd }
@@ -3556,138 +3207,6 @@ black-and-white-colormap constant *better-colormap*
   vct( 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000 )
   "clipped" #() snd-test-neq
   snd close-sound drop
-  \ 
-  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
-  data vct->sound-data to sdata
-  "test.snd" 22050 1 mus-lshort mus-riff "a comment"
-    mus-sound-open-output to snd
-  snd mus-file-clipping { old-clip }
-  snd { old-snd }
-  snd #f set-mus-file-clipping drop
-  snd 0 9 1 sdata mus-sound-write drop
-  snd 40 mus-sound-close-output drop
-  "test.snd" open-sound to snd
-  0 10 channel->vct
-  vct( 0.000 -1.000 -1.000 1.000 0.000 0.000 -0.700 0.700 -0.200 0.200 )
-  "unclipped 2" #() snd-test-neq
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
-  \ 
-  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) to data
-  data vct->sound-data to sdata
-  "test.snd" 22050 1 mus-lshort mus-riff "a comment"
-    mus-sound-open-output to snd
-  snd #t set-mus-file-clipping drop
-  snd 0 9 1 sdata mus-sound-write drop
-  snd #f set-mus-file-clipping drop
-  snd 40 mus-sound-close-output drop
-  snd old-snd equal? if
-    snd old-clip set-mus-file-clipping drop
-  then
-  "test.snd" open-sound to snd
-  0 10 channel->vct
-  vct( 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000 )
-  "clipped 1" #() snd-test-neq
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
-  \ 
-  #f set-mus-clipping drop
-  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) to data
-  data vct->sound-data to sdata
-  "test.snd" 22050 1 mus-lshort mus-riff "a comment"
-    mus-sound-open-output to snd
-  snd 0 9 1 sdata mus-sound-write drop
-  snd 40 mus-sound-close-output drop
-  "test.snd" open-sound to snd
-  0 10 channel->vct
-  vct( 0.000 -1.000 -1.000 1.000 0.000 0.000 -0.700 0.700 -0.200 0.200 )
-  "unclipped 3" #() snd-test-neq
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
-  \ 
-  #t set-mus-clipping drop
-  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) to data
-  data vct->sound-data to sdata
-  "test.snd" 22050 1 mus-lshort mus-riff "a comment"
-    mus-sound-open-output to snd
-  snd 0 9 1 sdata mus-sound-write drop
-  snd 40 mus-sound-close-output drop
-  "test.snd" open-sound to snd
-  0 10 channel->vct
-  vct( 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000 )
-  "clipped 2" #() snd-test-neq
-  snd close-sound drop
-  "test.snd" mus-sound-forget drop
-  \ 
-  #t set-mus-clipping drop
-  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) to data
-  data vct->sound-data to sdata
-  "test.snd" 22050 1 mus-lshort mus-riff "a comment"
-    mus-sound-open-output to snd
-  snd 0 10 1 sdata <'> mus-sound-write snd-test-catch to res
-  res car 'out-of-range "mus-sound-write too many bytes" #() snd-test-neq
-  snd 0 10 1 sdata <'> mus-sound-read snd-test-catch to res
-  res car 'out-of-range "mus-sound-read too many bytes" #() snd-test-neq
-  snd 0 mus-sound-close-output drop
-  "test.snd" file-delete
-  "test.snd" mus-sound-forget drop
-  #f set-mus-clipping drop    \ ; this is the default
-  #f set-clipping drop
-  \ 
-  "this is a comment which we'll repeat enough times to trigger an internal loop" { com }
-  3 0 do
-    com com $+ to com
-  loop
-  "fmv.snd" 22050 4 mus-lshort mus-riff com mus-sound-open-output to fd
-  4 10 make-sound-data to sdata
-  4 0 do
-    sdata i 1 0.1 sound-data-set! drop
-  loop
-  fd 0 9 4 sdata mus-sound-write drop
-  fd 80 mus-sound-close-output drop
-  "fmv.snd" mus-sound-open-input to fd
-  fd 0 9 4 sdata mus-sound-read drop
-  4 0 do
-    sdata i 0 sound-data-ref 0.0 fneq
-    sdata i 1 sound-data-ref 0.1 fneq ||
-    sdata i 2 sound-data-ref 0.0 fneq ||
-    sdata i 6 sound-data-ref 0.0 fneq || if
-      "1 read/write[%d]: %s?" #( i sdata i sound-data-channel->list )
-        snd-display
-    then
-  loop
-  fd mus-sound-close-input drop
-  "fmv.snd" 4 mus-lshort mus-riff "fmv.snd" mus-sound-data-location
-    mus-sound-reopen-output to fd
-  fd 0 mus-sound-seek-frame drop
-  4 0 do
-    sdata i 2 0.1 sound-data-set! drop
-    sdata i 3 0.1 sound-data-set! drop
-  loop
-  fd 0 9 4 sdata mus-sound-write drop
-  fd 80 mus-sound-close-output drop
-  "fmv.snd" mus-sound-open-input to fd
-  4 10 make-sound-data to ndata
-  fd 0 9 4 ndata mus-sound-read drop
-  4 0 do
-    ndata i 0 sound-data-ref 0.0 fneq
-    ndata i 1 sound-data-ref 0.1 fneq ||
-    ndata i 2 sound-data-ref 0.1 fneq ||
-    ndata i 3 sound-data-ref 0.1 fneq ||
-    ndata i 6 sound-data-ref 0.0 fneq || if
-      ndata i sound-data-channel->list
-      sdata i sound-data-channel->list "!=" "2 re-read/write[%d]" #( i )
-        snd-format #() snd-display
-    then
-  loop
-  fd mus-sound-close-input drop
-  \ 
-  "32bit.sf" check-file-name to fsnd
-  fsnd file-exists? if
-    fsnd open-sound to ind
-    ind 0 maxamp 0.228 "32bit max" #() snd-test-neq
-    ind close-sound drop
-  then
   \ 
   #( #( "next-dbl.snd" 10 10
         vct( 0.475 0.491 0.499 0.499 0.492 0.476 0.453 0.423 0.387 0.344 ) )
@@ -3742,12 +3261,6 @@ black-and-white-colormap constant *better-colormap*
      #( "wood.sds" 1000 10
         vct( -0.160 -0.216 -0.254 -0.239 -0.175
              -0.102 -0.042 0.005 0.041 0.059 ) )
-     #( "oboe.g721" 1000 10
-        vct( -0.037 -0.040 -0.040 -0.041 -0.042
-             -0.038 -0.028 -0.015 -0.005 0.002 ) )
-     #( "oboe.g723_40" 1000 10
-        vct( -0.037 -0.040 -0.041 -0.041 -0.041
-             -0.038 -0.028 -0.015 -0.005 0.003 ) )
      #( "mus10.snd" 10000 10
         vct( 0.004 0.001 0.005 0.009 0.017 0.015 0.008 0.011 0.009 0.012 ) )
      #( "ieee-text-16.snd" 1000 10
@@ -3921,14 +3434,14 @@ black-and-white-colormap constant *better-colormap*
     file open-sound to ind
     ind srate to cur-srate
     ind chans to cur-chans
-    ind sample-type to cur-format
+    ind data-format to cur-format
     ind header-type to cur-type
     ind data-location to cur-loc
-    ind frames to cur-samps
+    ind framples to cur-samps
     ind cur-srate 2* set-srate drop
     ind srate cur-srate 2* "%s set-srate" #( ind file-name ) snd-test-neq
-    cur-samps 2* ind set-frames drop
-    ind frames cur-samps 2* "%s set-frames" #( ind file-name ) snd-test-neq
+    cur-samps 2* ind set-framples drop
+    ind framples cur-samps 2* "%s set-framples" #( ind file-name ) snd-test-neq
     ind cur-chans 2* set-chans drop  \ ; this can change the index
     file find-sound to ind
     ind chans cur-chans 2* "%s set-chans" #( ind file-name ) snd-test-neq
@@ -3938,41 +3451,44 @@ black-and-white-colormap constant *better-colormap*
     ind mus-nist set-header-type drop
     ind header-type mus-nist "%s set-header-type" #( ind file-name )
       snd-test-neq
-    ind mus-lintn set-sample-type drop
-    ind sample-type mus-lintn "%s set-sample-type" #( ind file-name )
+    ind mus-lintn set-data-format drop
+    ind data-format mus-lintn "%s set-data-format" #( ind file-name )
       snd-test-neq
     ind cur-srate  set-srate drop
-    cur-samps ind  set-frames drop
+    cur-samps ind  set-framples drop
     ind cur-chans  set-chans drop
     ind cur-loc    set-data-location drop
     ind cur-type   set-header-type drop
-    ind cur-format set-sample-type drop
+    ind cur-format set-data-format drop
     ind close-sound drop
     file file-delete
   end-each
   with-big-file if
     bigger-snd file-exists? if
       \ ; silence as last .9 secs, so it probably wasn't written
-      44100 71999.1 f* floor f>d { probable-frames }
-      3175160310 { our-frames }
+      44100 71999.1 f* floor f>d { probable-framples }
+      3175160310 { our-framples }
       6350320648 { our-length }
-      bigger-snd mus-sound-samples our-frames "bigger samples" #() snd-test-neq
-      bigger-snd mus-sound-framples our-frames "bigger frames" #() snd-test-neq
-      bigger-snd mus-sound-framples probable-frames <'> d=
-        "bigger frames (probable)" #() snd-test-any-neq
+      bigger-snd mus-sound-samples our-framples "bigger samples"
+        #() snd-test-neq
+      bigger-snd mus-sound-framples our-framples "bigger framples"
+        #() snd-test-neq
+      bigger-snd mus-sound-framples probable-framples <'> d=
+        "bigger framples (probable)" #() snd-test-any-neq
       bigger-snd mus-sound-length our-length "bigger bytes" #() snd-test-neq
       bigger-snd mus-sound-duration 71999.1015 "bigger dur" #() snd-test-neq
       bigger-snd open-sound to ind
-      ind frames our-frames "bigger frames" #() snd-test-neq
-      ind frames to big-file-frames
-      big-file-frames probable-frames <'> d= "bigger frames (probable)"
+      ind framples our-framples "bigger framples" #() snd-test-neq
+      ind framples to big-file-framples
+      big-file-framples probable-framples <'> d= "bigger framples (probable)"
         #() snd-test-any-neq
-      big-file-frames ind 0 0 frames "bigger edpos-frames" #() snd-test-neq
+      big-file-framples ind 0 0 framples "bigger edpos-framples"
+        #() snd-test-neq
       44100 50000 d* ind add-mark to m1
       m1 mark-sample 44100 50000 d* "bigger mark at" #() snd-test-neq
       m1 44100 66000 d* set-mark-sample drop
       m1 mark-sample 44100 66000 d* "bigger mark to" #() snd-test-neq
-      "oboe.snd" 44100 60000 d* mix-sound car to mx
+      "oboe.snd" 44100 60000 d* mix-sound car { mx }
       mx mix? if
         mx mix-position 44100 60000 d* "bigger mix at" #() snd-test-neq
         mx 44100 61000 d* set-mix-position drop
@@ -3989,7 +3505,8 @@ black-and-white-colormap constant *better-colormap*
       selection-creates-region { old-select }
       #f set-selection-creates-region drop
       ind select-all drop
-      selection-framples ind 0 undef frames "bigger select all" #() snd-test-neq
+      selection-framples ind 0 undef framples "bigger select all"
+        #() snd-test-neq
       44100 50000 d* set-selection-position drop
       selection-position 44100 50000 d* "bigger select pos" #() snd-test-neq
       0 set-selection-position drop
@@ -4016,7 +3533,7 @@ black-and-white-colormap constant *better-colormap*
   "tmp.snd" mus-riff mus-l24int 22050 1 :size 100000 new-sound to ind
   selection-creates-region { old-selection-creates-region }
   #t set-selection-creates-region drop
-  undef undef undef frames to len
+  undef undef undef framples to len
   len 1/f { incr }
   -0.5 ( x )
   len 0.0 make-vct map!
@@ -4027,20 +3544,20 @@ black-and-white-colormap constant *better-colormap*
   "tmp.snd" open-sound to ind
   select-all { reg }
   "tmp1.snd" mus-next mus-l24int save-selection drop
-  "tmp1.snd" open-sound to ind1
-  -0.5 undef undef undef frames 1/f sndlib-test-scan-x-cb 0 100000 ind1
+  "tmp1.snd" open-sound { ind1 }
+  -0.5 undef undef undef framples 1/f sndlib-test-scan-x-cb 0 100000 ind1
     scan-channel to res
   res #f "l24 (next) selection not saved correctly" #() snd-test-neq
   ind1 close-sound drop
   "tmp1.snd" mus-aifc mus-l24int save-selection drop
   "tmp1.snd" open-sound to ind1
-  -0.5 undef undef undef frames 1/f sndlib-test-scan-x-cb 0 100000 ind1
+  -0.5 undef undef undef framples 1/f sndlib-test-scan-x-cb 0 100000 ind1
     scan-channel to res
   res #f "l24 (aifc) selection not saved correctly" #() snd-test-neq
   ind1 close-sound drop
   reg "tmp1.snd" mus-next mus-l24int save-region drop
   "tmp1.snd" open-sound to ind1
-  -0.5 undef undef undef frames 1/f sndlib-test-scan-x-cb 0 100000 ind1
+  -0.5 undef undef undef framples 1/f sndlib-test-scan-x-cb 0 100000 ind1
     scan-channel to res
   res #f "l24 (next) region not saved correctly" #() snd-test-neq
   ind1 close-sound drop
@@ -4072,12 +3589,12 @@ black-and-white-colormap constant *better-colormap*
   io "COMM" port-write
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
   io 0o000 port-putc  io 0o001 port-putc \ 1 chan
-  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io frms  port-putc \ frames
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io frms  port-putc \ framples
   io 0o000 port-putc  io bits  port-putc \ bits
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write      \ compression
+  io "NONE" port-write    \ compression
   io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
@@ -4248,7 +3765,7 @@ black-and-white-colormap constant *better-colormap*
   else
     to res
     res sound? if
-      "open-sound next bad format %s: %s" #( res sample-type res ) snd-display
+      "open-sound next bad format %s: %s" #( res data-format res ) snd-display
       res close-sound drop
     then
   then
@@ -4259,7 +3776,7 @@ black-and-white-colormap constant *better-colormap*
   \ ;;correct (make-aifc-file #o002 #o004 #o020)
   0o102 0o004 0o020 make-aifc-file
   "test.aif" open-sound to ind
-  ind frames 2 "bad frames in header" #() snd-test-neq
+  ind framples 2 "bad framples in header" #() snd-test-neq
   ind close-sound drop
   "test.aif" file-delete
   "test.aif" mus-sound-forget drop
@@ -4298,7 +3815,7 @@ black-and-white-colormap constant *better-colormap*
   else
     to res
     res sound? if
-      "open-sound bits 80 %s: %s" #( res sample-type res ) snd-display
+      "open-sound bits 80 %s: %s" #( res data-format res ) snd-display
       res close-sound drop
     then
   then
@@ -4314,12 +3831,12 @@ black-and-white-colormap constant *better-colormap*
   io "COMM" port-write
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
   io 0o000 port-putc  io 0o001 port-putc \ 1 chan
-  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o002 port-putc \ frames
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o002 port-putc \ framples
   io 0o000 port-putc  io 0o020 port-putc \ bits
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write      \ compression
+  io "NONE" port-write    \ compression
   io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
@@ -4357,12 +3874,12 @@ black-and-white-colormap constant *better-colormap*
   io "COMM" port-write
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
   io 0o000 port-putc  io 0o001 port-putc \ 1 chan
-  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o002 port-putc \ frames
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o002 port-putc \ framples
   io 0o000 port-putc  io 0o020 port-putc \ bits
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write      \ compression
+  io "NONE" port-write    \ compression
   io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
@@ -4375,7 +3892,8 @@ black-and-white-colormap constant *better-colormap*
   io port-close
   "test.aif" mus-sound-comment 0 3 string-substring "bil"
     "aifc trailing comt comments" #() snd-test-neq
-  "test.aif" mus-sound-framples 2 "aifc trailing comt frames" #() snd-test-neq
+  "test.aif" mus-sound-framples 2 "aifc trailing comt framples"
+    #() snd-test-neq
   "test.aif" open-sound to ind
   0 sample { s0 }
   1 sample { s1 }
@@ -4399,12 +3917,12 @@ black-and-white-colormap constant *better-colormap*
   io "COMM" port-write
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
   io 0o000 port-putc  io 0o001 port-putc \ 1 chan
-  io 0o000 port-putc  io 0o000 port-putc  io 0o100 port-putc  io 0o102 port-putc \ frames
+  io 0o000 port-putc  io 0o000 port-putc  io 0o100 port-putc  io 0o102 port-putc \ framples
   io 0o000 port-putc  io 0o020 port-putc \ bits
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write      \ compression
+  io "NONE" port-write    \ compression
   io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
@@ -4417,8 +3935,8 @@ black-and-white-colormap constant *better-colormap*
   io port-close
   "test.aif" mus-sound-comment 0 3 string-substring "bil" 
     "aifc trailing comt comments" #() snd-test-neq
-  "test.aif" mus-sound-framples 2 "aifc trailing comt (bogus) frames" #()
-    snd-test-neq
+  "test.aif" mus-sound-framples 2 "aifc trailing comt (bogus) framples"
+    #() snd-test-neq
   "test.aif" open-sound to ind
   0 sample to s0
   1 sample to s1
@@ -4442,12 +3960,12 @@ black-and-white-colormap constant *better-colormap*
   io "COMM" port-write
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
   io 0o000 port-putc  io 0o001 port-putc \ 1 chan
-  io 0o000 port-putc  io 0o000 port-putc  io 0o100 port-putc  io 0o102 port-putc \ frames
+  io 0o000 port-putc  io 0o000 port-putc  io 0o100 port-putc  io 0o102 port-putc \ framples
   io 0o000 port-putc  io 0o020 port-putc \ bits
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write      \ compression
+  io "NONE" port-write    \ compression
   io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
@@ -4498,12 +4016,12 @@ black-and-white-colormap constant *better-colormap*
   io "COMM" port-write
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
   io 0o000 port-putc  io 0o001 port-putc \ 1 chan
-  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o002 port-putc \ frames
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o002 port-putc \ framples
   io 0o000 port-putc  io 0o020 port-putc \ bits
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write      \ compression
+  io "NONE" port-write    \ compression
   io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
@@ -4531,7 +4049,7 @@ black-and-white-colormap constant *better-colormap*
   gen #( 2 ) object-apply 0.0 "file->sample chunked eof" #() snd-test-neq
   gen #( 3 ) object-apply 0.0 "file->sample chunked eof+1" #() snd-test-neq
   "test.aif" open-sound to ind
-  ind frames 2 "chunked frames" #() snd-test-neq
+  ind framples 2 "chunked framples" #() snd-test-neq
   0 sample 0.93948 "file chunked 0" #() snd-test-neq
   1 sample 0.50195 "file chunked 1" #() snd-test-neq
   2 sample 0.0 "file chunked eof" #() snd-test-neq
@@ -4556,12 +4074,12 @@ black-and-white-colormap constant *better-colormap*
   io "COMM" port-write
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
   io 0o000 port-putc  io 0o001 port-putc \ 1 chan
-  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o002 port-putc \ frames
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o002 port-putc \ framples
   io 0o000 port-putc  io 0o020 port-putc \ bits
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write      \ compression
+  io "NONE" port-write    \ compression
   io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
@@ -4576,7 +4094,7 @@ black-and-white-colormap constant *better-colormap*
   gen #( 2 ) object-apply 0.0 "file->sample chunked eof" #() snd-test-neq
   gen #( 3 ) object-apply 0.0 "file->sample chunked eof+1" #() snd-test-neq
   "test.aif" open-sound to ind
-  ind frames 2 "chunked frames" #() snd-test-neq
+  ind framples 2 "chunked framples" #() snd-test-neq
   0 sample 0.93948 "file chunked 0" #() snd-test-neq
   1 sample 0.50195 "file chunked 1" #() snd-test-neq
   2 sample 0.0 "file chunked eof" #() snd-test-neq
@@ -4602,12 +4120,12 @@ black-and-white-colormap constant *better-colormap*
   io "COMM" port-write
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o046 port-putc \ COMM chunk size
   io 0o000 port-putc  io 0o002 port-putc \ 2 chans
-  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o001 port-putc \ frames
+  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o001 port-putc \ framples
   io 0o000 port-putc  io 0o020 port-putc \ bits
   io 0o100 port-putc  io 0o016 port-putc  io 0o254 port-putc  io 0o104 port-putc  io 0o000 port-putc
   io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc  io 0o000 port-putc
   \ srate as 80-bit float (sheesh)
-  io "NONE" port-write      \ compression
+  io "NONE" port-write    \ compression
   io 0o016 port-putc      \ pascal string len
   io "not compressed" port-write
   io 0o000 port-putc
@@ -4624,7 +4142,7 @@ black-and-white-colormap constant *better-colormap*
   gen #( 1 1 ) object-apply 0.0 "file->sample chunked eof+1 (stereo)" #()
     snd-test-neq
   "test.aif" open-sound to ind
-  ind frames 1 "chunked frames (1)" #() snd-test-neq
+  ind framples 1 "chunked framples (1)" #() snd-test-neq
   0 ind 0 sample 0.93948 "file chunked 0 0" #() snd-test-neq
   0 ind 1 sample 0.50195 "file chunked 0 1" #() snd-test-neq
   1 ind 0 sample 0.0 "file chunked eof (stereo)" #() snd-test-neq
@@ -4653,13 +4171,13 @@ black-and-white-colormap constant *better-colormap*
   end-each
   \ 
   :size 0 new-sound to ind
-  ind frames 0 "new-sound :size 0 frames" #() snd-test-neq
+  ind framples 0 "new-sound :size 0 framples" #() snd-test-neq
   0 sample 0.0 "new-sound :size 0 sample 0" #() snd-test-neq
   ind file-name { new-file-name }
   ind close-sound drop
   new-file-name file-delete
   :size 1 new-sound to ind
-  ind frames 1 "new-sound :size 1 frames" #() snd-test-neq
+  ind framples 1 "new-sound :size 1 framples" #() snd-test-neq
   0 sample 0.0 "new-sound :size 1 sample 0" #() snd-test-neq
   ind file-name to new-file-name
   ind close-sound drop
@@ -4672,13 +4190,13 @@ black-and-white-colormap constant *better-colormap*
     fsnd read-ascii to ind
     ind sound? if
       ind 0 maxamp 0.723 "read-ascii maxamp" #() snd-test-neq
-      ind 0 frames 50000 "read-ascii frames" #() snd-test-neq
+      ind 0 framples 50000 "read-ascii framples" #() snd-test-neq
       ind srate    44100 "read-ascii srate"  #() snd-test-neq
       ind 8000 set-srate drop
-      ind 0 maxamp 0.723 "set srate clobbered new sound (maxamp)" #()
-        snd-test-neq
-      ind 0 frames 50000 "set srate clobbered new sound (frames)" #()
-        snd-test-neq
+      ind 0 maxamp 0.723 "set srate clobbered new sound (maxamp)"
+        #() snd-test-neq
+      ind 0 framples 50000 "set srate clobbered new sound (framples)"
+        #() snd-test-neq
       ind close-sound drop
     else
       "read-ascii can't find %s?" #( fsnd ) snd-display
@@ -4690,8 +4208,8 @@ black-and-white-colormap constant *better-colormap*
   ind close-sound drop
   "test space.snd" open-sound to ind
   ind short-file-name "test space.snd" "file name with space" #() snd-test-neq
-  ind frames "test space.snd" mus-sound-framples "spaced filename frames" #()
-    snd-test-neq
+  ind framples "test space.snd" mus-sound-framples "spaced filename framples"
+    #() snd-test-neq
   1234 ind 0 add-mark drop
   ind save-marks drop      \ ; should write "test space.marks"
   ind close-sound drop
@@ -4744,7 +4262,7 @@ half-pi fnegate constant -half-pi
 0 value g-init-val
 
 : append-sound { fname -- }
-  fname undef undef undef frames insert-sound drop
+  fname undef undef undef framples insert-sound drop
 ;
 
 : cc-01-cb { incr -- prc; y self -- r }
@@ -4761,7 +4279,7 @@ half-pi fnegate constant -half-pi
   pi dur if
       dur
     else
-      snd chn undef frames
+      snd chn undef framples
     then  f/ ( incr ) cc-01-cb beg dur snd chn edpos map-channel drop
 ;
 
@@ -4859,7 +4377,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
      <'> make-moving-max <'> make-comb
      <'> make-delay <'> make-env <'> make-fft-window <'> make-filter
      <'> make-filtered-comb <'> make-fir-filter <'> make-formant
-     <'> make-frame <'> make-iir-filter <'> make-locsig <'> make-mixer
+     <'> make-iir-filter <'> make-locsig
      <'> make-notch <'> make-one-pole <'> make-one-zero <'> make-oscil
      <'> make-pulse-train <'> make-rand <'> make-rand-interp
      <'> make-sawtooth-wave <'> make-polyshape <'> make-polywave
@@ -5360,18 +4878,13 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    #( lambda: <{ -- val }> 1 0.3 20 #f #f fp ;
       "lambda: <{ snd chn -- val }> 1 0.3 20 snd chn fp drop ;"
       "fp" )
-   #( lambda: <{ -- val }> #( 0 1 1 2 ) #f #f expsnd ;
-      "lambda: <{ snd chn -- val }> #( 0 1 1 2 ) snd chn expsnd drop ;"
-      "expsnd" )
+   #( lambda: <{ -- val }> #( 0 1 1 2 ) #f #f expsnd ; "lambda: <{ snd chn -- val }> #( 0 1 1 2 ) snd chn expsnd drop ;" "expsnd" )
    #( lambda: <{ -- val }> 1 256 2 2 #f #f voiced->unvoiced ;
       "lambda: <{ snd chn -- val }> 1 256 2 2 snd chn voiced->unvoiced drop ;"
-      "voiced->unvoided" )
-   #( lambda: <{ -- val }> #( 0 0 1 1 2 0 ) 2 #f #f env-sound-interp ;
-      "lambda: <{ snd chn -- val }> #( 0 0 1 1 2 0 ) 2 snd chn env-sound-interp drop ;"
-      "env-sound-interp" )
-   #( lambda: <{ -- val }> 
-        #( #( "1a.snd" ) #( "pistol.snd" 1 2 ) ) #f #f add-notes
-      ;
+      "voiced->unvoiced" )
+   \ FIXME: (examp.fs) with-sound failure?
+   \ #( lambda: <{ -- val }> #( 0 0 1 1 2 0 ) 2 #f #f env-sound-interp ; "lambda: <{ snd chn -- val }> #( 0 0 1 1 2 0 ) 2 snd chn env-sound-interp drop ;" "env-sound-interp" )
+   #( lambda: <{ -- val }> #( #( "1a.snd" ) #( "pistol.snd" 1 2 ) ) #f #f add-notes ;
       "lambda: <{ snd chn -- val }> #( #( \"1a.snd\" ) #( \"pistol.snd\" 1 2 ) ) snd chn add-notes drop ;"
       "add-notes" )
    #( lambda: <{ -- val }> #( 0 0 1 1 2 0 ) #f #f filtered-env ;
@@ -5529,7 +5042,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
 
 : 19-save/restore ( -- )
   "oboe.snd" open-sound { ind }
-  nil nil nil nil nil { vals func1 descr name func }
+  nil nil nil nil nil nil { vals func1 descr name func str }
   test19-*.fs each to vals
     vals 0 array-ref to func1
     vals 1 array-ref to descr
@@ -5539,9 +5052,8 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
     then
     func1 #() run-proc drop
     ind #f undef undef edit-list->function to func
-    func proc-source-ref descr string<> if
-      "edit-list->function %d: %s?" #( i func proc-source-ref ) snd-display
-    then
+    func proc-source-ref to str
+    str descr "edit-list->function %s [%d]" #( name i ) snd-test-neq
     ind revert-sound drop
     func #( ind 0 ) run-proc drop
     ind revert-sound drop
@@ -5829,14 +5341,17 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
   loop
 ;
 
-: sndclm-file->frame->file-test ( -- )
-  "stereo.snd" make-file->frame { input }
-  2 make-frame { frm }
+: sndclm-file->frample->file-test ( -- )
+  "stereo.snd" make-file->frample { input }
+  2 0.0 make-vct { frm }
+  0.0 0.0 { val0 val1 }
   "stereo.snd" mus-sound-framples ( len ) 0 ?do
-    input i frm file->frame ( frm ) 1 frame-ref ( val1 )
-    frm 0 frame-ref ( val0 ) frm 1 rot frame-set! drop
-    ( val1 ) frm 0 rot frame-set! drop
-    *output* i frm frame->file drop
+    input i frm file->frample to frm
+    frm 0 vct-ref to val0
+    frm 1 vct-ref to val1
+    frm 0 val1 vct-set! drop
+    frm 1 val0 vct-set! drop
+    *output* i frm frample->file drop
   loop
 ;
 
@@ -5987,7 +5502,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
     :comment over object->string :srate 22050 with-sound ws-close-sound
   <'> sndclm-asymmetric-fm-test
     :comment over object->string with-sound ws-close-sound
-  <'> sndclm-file->frame->file-test
+  <'> sndclm-file->frample->file-test
     :comment over object->string :channels 2 with-sound ws-close-sound
   <'> sndclm-readin-test
     :comment over object->string with-sound ws-close-sound
@@ -6077,7 +5592,6 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
   \ g0 g1 =
   \ g0 g2 <> at start
   g0 { g3 }
-  2 make-frame { gad }
   g0 g3 object-equal? unless
     "let %s: %s equal? %s?" #( g0 mus-name g0 g3 ) snd-display 
   then
@@ -6086,9 +5600,6 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
   then
   g0 g2 object-equal? if
     "%s: %s equal? %s?" #( g0 mus-name g0 g2 ) snd-display
-  then
-  g0 gad object-equal? if
-    "%s/frame: %s equal? %s?" #( g0 mus-name g0 gad ) snd-display
   then
   g0 0.0 0.0 mus-apply drop
   g3 #( 0.0 0.0 ) object-apply drop
@@ -6172,8 +5683,8 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
   else
     "c" 4 #t unbind-key drop
   then
-  \ new-sound
   "fmv.snd" mus-next mus-bshort 22050 1 "set-samples test" 100 new-sound { ind }
+  \ new-sound
   10  3  3 0.1 make-vct set-samples drop
   0 20 ind 0 channel->vct { res }
   res vct( 0 0 0 0 0 0 0 0 0 0 0.1 0.1 0.1 0 0 0 0 0 0 0 ) vequal? unless
@@ -6243,7 +5754,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
   3 make-delay { gen2 }
   4 :initial-contents #( 1.0 0.5 0.25 0.0 ) make-delay { gen1 }
   4 :initial-contents vct( 1.0 0.5 0.25 0.0 ) make-delay { gen3 }
-  gen "delay" "delay line[3, step]: [0.000 0.000 0.000]" print-and-check
+  gen "delay" "delay line[3, step]: [0 0 0]" print-and-check
   10 0.0 make-vct map
     gen i 0.0 delay
   end-map { v0 }
@@ -6731,28 +6242,13 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
 3 0.0 make-vct constant vct-3
 5 0.0 make-vct constant vct-5
 
-: make-identity-mixer <{ chans -- mx }>
-  #f { mx }
-  chans 256 < if
-    chans make-mixer to mx
-    mx mixer? if
-      chans 0 ?do
-        mx i i 1.0 mixer-set! drop
-      loop 
-    else
-      #f to mx
-    then
-  then
-  mx
-;
-
 #( <'> make-all-pass <'> make-asymmetric-fm <'> make-snd->sample
    <'> make-moving-average <'> make-comb <'> make-filtered-comb
    <'> make-convolve <'> make-delay <'> make-env <'> make-fft-window
-   <'> make-file->frame <'> make-file->sample <'> make-filter
-   <'> make-fir-filter <'> make-formant <'> make-firmant <'> make-frame
-   <'> make-frame->file <'> make-granulate <'> make-iir-filter 
-   <'> make-locsig <'> make-mixer <'> make-notch <'> make-one-pole
+   <'> make-file->frample <'> make-file->sample <'> make-filter
+   <'> make-fir-filter <'> make-formant <'> make-firmant
+   <'> make-frample->file <'> make-granulate <'> make-iir-filter 
+   <'> make-locsig <'> make-notch <'> make-one-pole
    <'> make-one-zero <'> make-oscil <'> make-pulse-train <'> make-rand
    <'> make-rand-interp <'> make-readin <'> make-sample->file
    <'> make-sawtooth-wave <'> make-nrxysin <'> make-nrxycos
@@ -6760,7 +6256,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> make-table-lookup <'> make-triangle-wave <'> make-two-pole
    <'> make-two-zero <'> make-wave-train <'> make-phase-vocoder
    <'> make-ssb-am <'> make-polyshape <'> make-polywave
-   <'> make-player <'> make-region <'> make-scalar-mixer ) constant make-procs
+   <'> make-player <'> make-region ) constant make-procs
 
 #( :frequency :initial-phase :wave :cosines :amplitude :ratio :size
    :a0 :a1 :a2 :b1 :b2 :input :srate :file :channel :start
@@ -6789,8 +6285,8 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> auto-update-interval <'> cursor 
    <'> with-tracking-cursor <'> cursor-size <'> cursor-style
    <'> tracking-cursor-style <'> dac-combines-channels <'> dac-size
-   <'> clipping <'> sample-type <'> data-location <'> data-size
-   <'> default-output-chans <'> default-output-sample-type
+   <'> clipping <'> data-format <'> data-location <'> data-size
+   <'> default-output-chans <'> default-output-data-format
    <'> default-output-srate <'> default-output-header-type
    <'> define-envelope <'> delete-mark <'> delete-marks
    <'> forget-region <'> delete-sample <'> delete-samples 
@@ -6811,7 +6307,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> enved-filter-order <'> enved-filter <'> filter-control-in-hz
    <'> filter-control-order <'> filter-selection <'> filter-channel
    <'> filter-control? <'> find-mark <'> find-sound
-   <'> finish-progress-report <'> frames <'> free-sampler <'> graph
+   <'> finish-progress-report <'> framples <'> free-sampler <'> graph
    <'> transform? <'> delete-transform <'> graph-cursor <'> graph->ps
    <'> gl-graph->ps <'> graph-style <'> lisp-graph? <'>  graphs-horizontal
    <'> header-type <'> in <'> insert-region <'> insert-sample
@@ -6884,14 +6380,14 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> with-relative-panes <'> with-gl <'> x-axis-style
    <'> beats-per-measure <'> beats-per-minute <'> x-bounds
    <'> x-position-slider <'> x-zoom-slider <'> mus-header-type->string 
-   <'> mus-sample-type->string <'> y-bounds <'> y-position-slider
+   <'> mus-data-format->string <'> y-bounds <'> y-position-slider
    <'> y-zoom-slider <'> zero-pad <'> zoom-focus-style <'> sync-style
    <'> mus-sound-samples <'> mus-sound-framples <'> mus-sound-duration
    <'> mus-sound-datum-size <'> mus-sound-data-location <'> data-size
    <'> mus-sound-chans <'> mus-sound-srate <'> mus-sound-header-type
    <'> mus-sound-sample-type <'> mus-sound-length
    <'> mus-sound-type-specifier <'> mus-header-type-name
-   <'> mus-sample-type-name <'> mus-sound-comment
+   <'> mus-data-format-name <'> mus-sound-comment
    <'> mus-sound-write-date <'> mus-bytes-per-sample 
    <'> mus-sound-loop-info <'> mus-alsa-squelch-warning 
    <'> mus-sound-maxamp <'> mus-sound-maxamp-exists?
@@ -6904,32 +6400,30 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> comb?  <'> filtered-comb <'> filtered-comb? <'> contrast-enhancement
    <'> convolution <'> convolve <'> convolve? <'> db->linear 
    <'> degrees->radians <'> delay <'> delay? <'> dot-product <'> env 
-   <'> env-interp <'> env? <'> file->array <'> file->frame <'> file->frame?
+   <'> env-interp <'> env? <'> file->array <'> file->frample <'> file->frample?
    <'>  file->sample <'> file->sample? <'> filter <'> filter? <'> fir-filter
-   <'> fir-filter? <'> formant <'> formant-bank <'> formant? <'> frame*
-   <'> frame+ <'> frame->file <'> frame->file? <'> frame->frame 
-   <'> frame->list <'> frame->sample <'> frame-ref <'> frame-set!
-   <'> frame?  <'> granulate <'> granulate? <'> hz->radians <'> iir-filter
+   <'> fir-filter? <'> formant <'> formant-bank <'> formant?
+   <'> frample->file <'> frample->file? <'> frample->frample 
+   <'> granulate <'> granulate? <'> hz->radians <'> iir-filter
    <'> iir-filter? <'>  in-any <'> ina <'> inb <'> linear->db <'> locsig
    <'> locsig-ref <'> locsig-reverb-ref <'> locsig-reverb-set! 
    <'> locsig-set! <'>  locsig? <'> make-all-pass <'> make-asymmetric-fm
    <'> make-comb <'> make-filtered-comb <'> make-convolve <'> make-delay
-   <'> make-env <'> make-fft-window <'> make-file->frame
+   <'> make-env <'> make-fft-window <'> make-file->frample
    <'> make-file->sample <'> make-filter <'> make-fir-filter
-   <'> make-formant <'> make-frame <'> make-frame->file <'> make-granulate
-   <'> make-iir-filter <'> make-locsig <'> move-locsig <'> make-mixer
+   <'> make-formant <'> make-frample->file <'> make-granulate
+   <'> make-iir-filter <'> make-locsig <'> move-locsig
    <'> make-notch <'> make-one-pole <'> make-one-zero <'> make-oscil
    <'> make-pulse-train <'> make-rand <'> make-rand-interp <'> make-readin
    <'> make-sample->file <'> make-sawtooth-wave <'> make-square-wave
    <'> make-src <'> make-ssb-am <'> make-table-lookup <'> make-triangle-wave
-   <'> make-two-pole <'> make-two-zero <'> make-wave-train <'> mixer*
-   <'> mixer-ref <'> mixer-set!  <'> mixer? <'> mixer+ <'> move-sound
+   <'> make-two-pole <'> make-two-zero <'> make-wave-train <'> move-sound
    <'> make-move-sound <'> move-sound? <'> mus-float-equal-fudge-factor
    <'> multiply-arrays <'> mus-array-print-length <'> mus-channel
    <'> mus-channels <'> make-polyshape <'> polyshape?  <'> mus-close 
    <'> mus-data <'> mus-feedback <'> mus-feedforward <'> mus-fft
    <'> mus-frequency <'> mus-hop <'> mus-increment <'> mus-input?
-   <'> mus-file-name <'> mus-length <'> mus-location <'> mus-mix
+   <'> mus-file-name <'> mus-length <'> mus-location
    <'> mus-order <'> mus-output? <'>  mus-phase <'> mus-ramp <'> mus-random
    <'> mus-scaler <'> mus-srate <'> mus-xcoeffs <'> mus-ycoeffs <'> notch
    <'> notch? <'> one-pole <'> one-pole?  <'> one-zero <'> one-zero? 
@@ -6938,7 +6432,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> polynomial <'> pulse-train <'> pulse-train?  <'> radians->degrees
    <'> radians->hz <'> rand <'> rand-interp <'> rand-interp? <'>  rand?
    <'> readin <'> readin?  <'> rectangular->polar <'> rectangular->magnitudes 
-   <'> ring-modulate <'> sample->file <'> sample->file?  <'> sample->frame 
+   <'> ring-modulate <'> sample->file <'> sample->file?
    <'> sawtooth-wave <'> sawtooth-wave?  <'> spectrum <'> square-wave
    <'> square-wave?  <'> src <'> src? <'> ssb-am <'> ssb-am? 
    <'> table-lookup <'> table-lookup? <'> tap <'> triangle-wave 
@@ -6956,7 +6450,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> pad-channel <'> normalize-channel <'> cursor-position
    <'> show-listener <'> mus-sound-prune <'> mus-sound-forget
    <'> xramp-channel <'> snd->sample <'> snd->sample? <'> make-snd->sample 
-   <'> make-scalar-mixer <'> beats-per-minute <'> beats-per-measure 
+   <'> beats-per-minute <'> beats-per-measure 
    <'> channel-amp-envs <'> convolve-files <'> filter-control-coeffs
    <'> locsig-type <'> make-phase-vocoder <'> mus-describe
    <'> mus-error-type->string <'> mus-file-buffer-size <'> mus-name
@@ -6970,7 +6464,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> channel-data <'> x-axis-label <'> variable-graph? <'> y-axis-label
    <'> snd-url <'> snd-urls <'> free-player <'> delete-mix <'> delay-tick
    <'> playing <'> pausing <'> copy-sampler <'> html-dir <'> html-program
-   <'> make-fir-coeffs <'> make-identity-mixer <'> mus-interp-type
+   <'> make-fir-coeffs <'> mus-interp-type
    <'> mus-run <'> phase-vocoder <'> player-home <'> redo-edit
    <'> undo-edit ) constant procs
 
@@ -6987,7 +6481,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> channel-property <'> with-tracking-cursor <'> cursor-size
    <'> cursor-style <'> tracking-cursor-style <'> dac-combines-channels
    <'> dac-size <'> clipping <'> default-output-chans
-   <'> default-output-sample-type <'> default-output-srate
+   <'> default-output-data-format <'> default-output-srate
    <'> default-output-header-type <'> dot-size <'> enved-envelope 
    <'> enved-base <'> enved-clip? <'> enved-in-dB <'> enved-style
    <'> enved-power <'> enved-target <'> enved-wave? <'> eps-file
@@ -7030,8 +6524,8 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> x-axis-style <'> beats-per-minute <'> zero-pad <'> zoom-focus-style
    <'> sync-style <'> with-relative-panes <'>  window-x <'> window-y
    <'> window-width <'> window-height <'> beats-per-measure <'> channels
-   <'> chans <'> comment <'> sample-type <'> data-location <'> data-size
-   <'> edit-position <'> frames <'> header-type <'> maxamp <'> read-only
+   <'> chans <'> comment <'> data-format <'> data-location <'> data-size
+   <'> edit-position <'> framples <'> header-type <'> maxamp <'> read-only
    <'> right-sample <'> sample <'> samples <'> selected-channel
    <'> selected-sound <'> selection-position <'> selection-framples 
    <'> selection-member? <'> sound-loop-info <'> srate <'> time-graph-type
@@ -7046,7 +6540,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> phase-vocoder-amp-increments <'> phase-vocoder-amps
    <'> phase-vocoder-freqs <'> phase-vocoder-phase-increments
    <'> phase-vocoder-phases <'> html-dir <'> html-program
-   <'> mus-interp-type <'> mixer-ref <'> frame-ref <'> locsig-ref
+   <'> mus-interp-type <'> locsig-ref
    <'> locsig-reverb-ref <'> mus-clipping <'> mus-file-clipping
    <'> mus-header-raw-defaults ) constant set-procs
 
@@ -7124,7 +6618,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   1 proc-create ind , ( prc )
  does> { y self -- val }
   y 0.4 f> if
-    1 self @ ( ind ) 0 set-frames drop
+    1 self @ ( ind ) 0 set-framples drop
   then
   y
 ;
@@ -7161,7 +6655,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> contrast-control <'> amp-control-bounds <'> speed-control-bounds
      <'> expand-control-bounds <'> contrast-control-bounds
      <'> reverb-control-length-bounds <'> reverb-control-scale-bounds
-     <'> contrast-control-amp <'> contrast-control? <'> sample-type
+     <'> contrast-control-amp <'> contrast-control? <'> data-format
      <'> data-location <'> data-size <'> expand-control
      <'> expand-control-hop <'> expand-control-jitter
      <'> expand-control-length <'> expand-control-ramp 
@@ -7179,7 +6673,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> start-progress-report <'> sync <'> swap-channels ) { prcs-1 }
   prcs-1 #(
      <'> apply-controls <'> close-sound <'> channels <'> chans
-     <'> file-name <'> frames <'> progress-report
+     <'> file-name <'> framples <'> progress-report
      <'> sound-property <'> sound-properties ) array-append each to prc
     123 integer->sound prc snd-test-catch to tag
     tag if
@@ -7189,7 +6683,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   end-each
   #( 1 make-array "hiho" 0+i 1.5 '( 1 0 ) #( 0 1 ) ) { args-1 }
-  #( vct-5 0+i 1.5 "hiho" delay-32 ) { args-2 }
+  #( vct-5 1+i "hiho" delay-32 ) { args-2 }
   nil { arg }
   args-1 each to arg
     prcs-1 #( <'> apply-controls
@@ -7204,7 +6698,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   args-2 each to arg
-    prcs-1 #( <'> channels <'> chans <'> frames ) array-append each to prc
+    prcs-1 #( <'> channels <'> chans <'> framples ) array-append each to prc
       \ XXX: snd/chn val | val snd/chn
       \ snd/chn before value
       \ g_set_channels(snd, val)           arg 0
@@ -7212,7 +6706,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       \ g_set_amp_control(val, snd, chn)   0 arg
       prc <'> channels      =
       prc <'> chans         = ||
-      prc <'> sample-type   = ||
+      prc <'> data-format   = ||
       prc <'> data-location = ||
       prc <'> data-size     = ||
       prc <'> header-type   = ||
@@ -7305,10 +6799,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     "vct[12]: %s" #( tag ) snd-display
   then
   #( <'> all-pass? <'> asymmetric-fm? <'> comb? <'> filtered-comb?
-     <'> convolve? <'> delay? <'> env? <'> file->frame? <'> file->sample?
+     <'> convolve? <'> delay? <'> env? <'> file->frample? <'> file->sample?
      <'> snd->sample? <'> filter? <'> fir-filter? <'> formant? <'> firmant?
-     <'> frame->file? <'> frame? <'> granulate? <'> iir-filter?
-     <'> locsig? <'> mixer? <'> move-sound? <'> mus-input? <'> mus-output?
+     <'> frample->file? <'> granulate? <'> iir-filter?
+     <'> locsig? <'> move-sound? <'> mus-input? <'> mus-output?
      <'> notch? <'> one-pole? <'> one-zero? <'> oscil? <'> phase-vocoder?
      <'> pulse-train? <'> rand-interp? <'> rand? <'> readin?
      <'> sample->file? <'> sawtooth-wave? <'> nrxysin? <'> nrxycos?
@@ -7354,12 +6848,12 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   #( <'> all-pass <'> asymmetric-fm <'> clear-array <'> comb
      <'> filtered-comb <'> convolve <'> db->linear <'> moving-average 
      <'> degrees->radians <'> delay <'> env <'> formant <'> firmant
-     <'> frame->list <'> granulate <'> hz->radians <'> linear->db 
+     <'> granulate <'> hz->radians <'> linear->db 
      <'> make-all-pass <'> make-asymmetric-fm <'> make-comb
      <'> make-filtered-comb <'> make-convolve <'> make-delay
-     <'> make-env <'> make-file->frame <'> make-file->sample
+     <'> make-env <'> make-file->frample <'> make-file->sample
      <'> make-filter <'> make-fir-filter <'> make-formant
-     <'> make-firmant <'> make-frame <'> make-granulate 
+     <'> make-firmant <'> make-granulate 
      <'> make-iir-filter <'> make-locsig <'> make-notch 
      <'> make-one-pole <'> make-one-zero <'> make-oscil
      <'> make-pulse-train <'> make-rand <'> make-rand-interp
@@ -7398,27 +6892,26 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   #( <'> all-pass <'> array-interp <'> asymmetric-fm <'> comb
      <'> filtered-comb <'> contrast-enhancement <'> convolution
      <'> convolve <'> moving-average <'> convolve-files
-     <'> delay <'> dot-product <'> env-interp <'> file->frame <'> file->sample
+     <'> delay <'> dot-product <'> env-interp <'> file->sample
      <'> snd->sample <'> filter <'> fir-filter <'> formant <'> firmant
-     <'> formant-bank <'> frame* <'> frame+ <'> frame->frame <'> frame-ref
-     <'> frame->sample <'> granulate <'> iir-filter <'> ina <'> inb
+     <'> formant-bank <'> granulate <'> iir-filter <'> ina <'> inb
      <'> locsig-ref <'> locsig-reverb-ref <'> make-all-pass
      <'> make-asymmetric-fm <'> make-comb <'> make-filtered-comb
      <'> make-delay <'> make-env <'> make-fft-window <'> make-filter
-     <'> make-fir-filter <'> make-formant <'> make-firmant <'> make-frame
+     <'> make-fir-filter <'> make-formant <'> make-firmant
      <'> make-granulate <'> make-iir-filter <'> make-locsig <'> make-notch 
      <'> make-one-pole <'> make-one-zero <'> make-oscil <'> make-phase-vocoder
      <'> make-pulse-train <'> make-rand <'> make-rand-interp
      <'> make-readin <'> make-sawtooth-wave <'> make-moving-average
      <'> make-nrxysin <'> make-nrxycos <'> make-square-wave <'> make-src
      <'> make-ncos <'> make-nsin <'> make-table-lookup <'> make-triangle-wave 
-     <'> make-two-pole <'> make-two-zero <'> make-wave-train <'> mixer*
-     <'> mixer+ <'> multiply-arrays <'> notch <'> one-pole <'> one-zero
+     <'> make-two-pole <'> make-two-zero <'> make-wave-train
+     <'> notch <'> one-pole <'> one-zero
      <'> oscil <'> partials->polynomial <'> partials->wave
      <'> make-polyshape <'> make-polywave <'> phase-partials->wave
      <'> phase-vocoder <'> polynomial <'> pulse-train <'> rand <'> rand-interp
      <'> rectangular->polar <'> rectangular->magnitudes <'> ring-modulate
-     <'> sample->frame <'> sawtooth-wave <'> nrxysin <'> nrxycos
+     <'> sawtooth-wave <'> nrxysin <'> nrxycos
      <'> square-wave <'> src <'> ncos <'> nsin <'> table-lookup <'> tap
      <'> triangle-wave <'> two-pole <'> two-zero <'> wave-train <'> ssb-am
      <'> make-ssb-am ) each to prc
@@ -7434,7 +6927,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   end-each
   #( <'> mus-channel <'> mus-channels <'> mus-data <'> mus-feedback
      <'> mus-feedforward <'> mus-frequency <'> mus-hop <'> mus-increment
-     <'> mus-length <'> mus-location <'> mus-mix <'> mus-name <'> mus-order
+     <'> mus-length <'> mus-location <'> mus-name <'> mus-order
      <'> mus-phase <'> mus-ramp <'> mus-random <'> mus-run <'> mus-scaler
      <'> mus-xcoeffs <'> mus-ycoeffs ) each to prc
     make-oscil vector-0 prc snd-test-catch to tag
@@ -7450,12 +6943,12 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> mus-sound-datum-size <'> mus-sound-data-location <'> mus-sound-chans
      <'> mus-sound-srate <'> mus-sound-header-type <'> mus-sound-sample-type
      <'> mus-sound-length <'> mus-sound-type-specifier
-     <'> mus-header-type-name <'> mus-sample-type-name <'> mus-sound-comment
+     <'> mus-header-type-name <'> mus-data-format-name <'> mus-sound-comment
      <'> mus-sound-write-date <'> mus-bytes-per-sample
      <'> mus-sound-loop-info <'> mus-sound-mark-info
      <'> mus-sound-maxamp <'> mus-sound-maxamp-exists?
      <'> mus-header-type->string
-     <'> mus-sample-type->string ) { mus-snd-prcs-1 }
+     <'> mus-data-format->string ) { mus-snd-prcs-1 }
   mus-snd-prcs-1 each to prc
     vct-5 prc snd-test-catch to tag
     tag if
@@ -7776,7 +7269,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> channel-style <'> color-cutoff <'> color-orientation-dialog
      <'> color-inverted <'> color-scale <'> cursor-color
      <'> dac-combines-channels <'> dac-size <'> clipping <'> data-color
-     <'> default-output-chans <'> default-output-sample-type 
+     <'> default-output-chans <'> default-output-data-format 
      <'> default-output-srate <'> default-output-header-type
      <'> enved-envelope <'> enved-base <'> enved-clip? <'> enved-in-dB
      <'> enved-dialog <'> enved-style <'> enved-power <'> enved-target
@@ -7849,12 +7342,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   0 "oboe.snd" -1 <'> make-sampler 'no-such-channel check-error-tag
   <char> p 0 <'> noop 2 make-proc <'> bind-key 'bad-arity check-error-tag
   <'> noop 1 make-proc <'> set-zoom-focus-style 'bad-arity check-error-tag
-  1 1.0 make-mixer { mx }
-  "oboe.snd" "pistol.snd" 0 12 0 mx "a string" <'> mus-mix 'wrong-type-arg
-    check-error-tag
-  "oboe.snd" sf-dir "bad_chans.aifc" $+ <'> mus-mix 'bad-header check-error-tag
-  "oboe.snd" sf-dir "bad_length.aifc" $+ <'> mus-mix 'mus-error check-error-tag
-  sf-dir "bad_chans.aifc" $+ "oboe.snd" <'> mus-mix 'bad-header check-error-tag
   123 #( 0 0 1 1 ) <'> set-sound-loop-info 'no-such-sound check-error-tag
   "fmv.snd" mus-nist mus-bfloat 22050 2 "comment" <'> new-sound 'bad-header
     check-error-tag
@@ -7881,9 +7368,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "test.snd" :size -1 <'> make-readin 'out-of-range check-error-tag
   "oboe.snd" 0 <'> make-file->sample 'out-of-range check-error-tag
   "oboe.snd" -1 <'> make-file->sample 'out-of-range check-error-tag
-  "oboe.snd" 0 <'> make-file->frame 'out-of-range check-error-tag
-  "oboe.snd" -1 <'> make-file->frame 'out-of-range check-error-tag
-  -1 <'> set-default-output-sample-type 'out-of-range check-error-tag
+  "oboe.snd" 0 <'> make-file->frample 'out-of-range check-error-tag
+  "oboe.snd" -1 <'> make-file->frample 'out-of-range check-error-tag
+  -1 <'> set-default-output-data-format 'out-of-range check-error-tag
   mus-soundfont <'> set-default-output-header-type 'out-of-range check-error-tag
   sf-dir "bad_location.nist" $+ <'> mus-sound-chans 'mus-error check-error-tag
   sf-dir "bad_field.nist" $+ <'> mus-sound-chans 'mus-error check-error-tag
@@ -7906,21 +7393,21 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   select-all drop
   "sel0.snd" :not-a-key 3 <'> save-selection 'mus-error check-error-tag
   '( ind ) <'> read-only 'wrong-type-arg check-error-tag
-  ind '( 0 ) <'> frames 'wrong-type-arg check-error-tag
+  ind '( 0 ) <'> framples 'wrong-type-arg check-error-tag
   0 -10 <'> smooth-sound 'wrong-type-arg check-error-tag
   0 ind 123 <'> mix-selection 'no-such-channel check-error-tag
   0 ind 123 <'> insert-selection 'no-such-channel check-error-tag
   ind 0 <'> set-channels 'out-of-range check-error-tag
-  ind -1 <'> set-channels 'out-of-range check-error-tag
+  ind -1 <'> set-channels 'wrong-type-arg check-error-tag
   ind 12340 <'> set-channels 'out-of-range check-error-tag
-  ind 12340 <'> set-sample-type 'out-of-range check-error-tag
+  ind 12340 <'> set-data-format 'out-of-range check-error-tag
   ind 12340 <'> set-header-type 'out-of-range check-error-tag
   ind 0 <'> set-srate 'out-of-range check-error-tag
-  ind -1 <'> set-data-location 'out-of-range check-error-tag
-  ind -1 <'> set-data-size 'out-of-range check-error-tag
+  ind -1 <'> set-data-location 'wrong-type-arg check-error-tag
+  ind -1 <'> set-data-size 'wrong-type-arg check-error-tag
   -1 -1 <'> set-sample 'no-such-sample check-error-tag
   -1 <'> sample 'no-such-sample check-error-tag
-  -10 <'> set-frames 'out-of-range check-error-tag
+  -10 <'> set-framples 'out-of-range check-error-tag
   0.0 <'> set-min-dB 'out-of-range check-error-tag
   0.0 ind 0 <'> set-min-dB 'out-of-range check-error-tag
   1 -22 <'> start-playing 'out-of-range check-error-tag
@@ -7975,7 +7462,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "/baddy/hiho.snd" <'> insert-sound 'no-such-file check-error-tag
   0 10 "/baddy/hiho.snd" <'> insert-samples 'no-such-file check-error-tag
   '() ind <'> set-filter-control-envelope 'no-data check-error-tag
-  ind 123 <'> set-sample-type 'out-of-range check-error-tag
+  ind 123 <'> set-data-format 'out-of-range check-error-tag
   ind 123 <'> set-header-type 'out-of-range check-error-tag
   ind 123 <'> set-selected-channel 'no-such-channel check-error-tag
   <'> noop 3 make-proc <'> set-search-procedure 'bad-arity check-error-tag
@@ -8003,7 +7490,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   #( 0.1 -0.1 ) <'> set-x-bounds 'out-of-range check-error-tag
   100 0 <'> make-region 'out-of-range check-error-tag
   -1 <'> delete-sample 'no-such-sample check-error-tag
-  ind frames 2* <'> delete-sample 'no-such-sample check-error-tag
+  ind framples 2* <'> delete-sample 'no-such-sample check-error-tag
   "/bad/baddy.snd" <'> play 'no-such-file check-error-tag
   1234 0 <'> play 'no-such-sound check-error-tag
   regions empty? if
@@ -8052,7 +7539,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   ind 0 -2 <'> edit-tree 'no-such-edit check-error-tag
   ind 0 101 <'> edit-tree 'no-such-edit check-error-tag
   -1 <'> add-mark 'no-such-sample check-error-tag
-  frames 2* <'> add-mark 'no-such-sample check-error-tag
+  framples 2* <'> add-mark 'no-such-sample check-error-tag
   "/bad/baddy" <'> convolve-with 'no-such-file check-error-tag
   "/bad/baddy" <'> mix 'no-such-file check-error-tag
   ind 0 123 <'> swap-channels 'no-such-sound check-error-tag
@@ -8084,7 +7571,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   '( 0.1 0.01 ) ind <'> set-reverb-control-scale-bounds 'out-of-range
     check-error-tag
   #f <'> scale-by 'wrong-type-arg check-error-tag
-  2 0.1 0.1 0.2 0.2 make-mixer <'> scale-by 'wrong-type-arg check-error-tag
   3.0 1.0 #t <'> src-sound 'wrong-type-arg check-error-tag
   3.0 1.0 ind #t <'> src-sound 'wrong-type-arg check-error-tag
   ind 0 123 <'> display-edits 'no-such-edit check-error-tag
@@ -8165,10 +7651,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   make-oscil 1 <'> set-mus-offset 'wrong-type-arg check-error-tag
   :channels 2 30 f** f>s <'> make-locsig 'out-of-range check-error-tag
   :width 3000 <'> make-src 'out-of-range check-error-tag
-  -1 <'> make-frame 'out-of-range check-error-tag
-  2 0.1 0.2 make-frame 3 <'> frame-ref 'mus-error check-error-tag
-  0 0.1 <'> make-scalar-mixer 'out-of-range check-error-tag
-  2 make-mixer 3 4 <'> mixer-ref 'mus-error check-error-tag
   *with-test-gui* if
     "baddy" <'> noop 0 make-proc <'> add-colormap 'bad-arity check-error-tag
     "baddy" <'> noop 3 make-proc <'> add-colormap 'bad-arity check-error-tag
@@ -8339,24 +7821,24 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   ind mc-2-cb map-channel drop
   100 ind 0 sample to s100
   s100 0.5 fneq if
-    "map + reset frames: %s" #( s100 ) snd-display
+    "map + reset framples: %s" #( s100 ) snd-display
   then
-  ind 0 frames { frms }
+  ind 0 framples { frms }
   frms 50828 <> if
-    "map + reset frames, frames: %s" #( frms ) snd-display
+    "map + reset framples, framples: %s" #( frms ) snd-display
   then
   1 ind 0 undo drop
-  ind 0 frames to frms
+  ind 0 framples to frms
   frms 1 <> if
-    "map + reset frames, undo frames: %s" #( frms ) snd-display
+    "map + reset framples, undo framples: %s" #( frms ) snd-display
   then
   ind revert-sound drop
   \ 
   100 0.5 ind 0 set-sample drop
   \ XXX: 'wrong-type-arg instead of 'wrong-number-of-args
   \ 
-  \ (set! (frames ind 0 1) 1) => too many arguments
-  \ 1 ind 0 1 set-frames => wrong type arg 1 (<sound 0>)
+  \ (set! (framples ind 0 1) 1) => too many arguments
+  \ 1 ind 0 1 set-framples => wrong type arg 1 (<sound 0>)
   \ 
   \ With Fth this doesn't work as expected.  If stack has more values than
   \ needed by the next word, no 'wrong-number-of-args exception can be
@@ -8364,14 +7846,14 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   \ why the first exception is 'wrong-type-arg because sound IND is not
   \ a number.
   \ 
-  \ frames ( snd chn edpos -- frms ) /* g_frames(snd, chn, edpos) */
-  \ set-frames ( on snd chn -- val ) /* g_set_frames(on, snd, chn) */
-  1 ind 0 1 <'> set-frames #t nil fth-catch to tag
+  \ framples ( snd chn edpos -- frms ) /* g_framples(snd, chn, edpos) */
+  \ set-framples ( on snd chn -- val ) /* g_set_framples(on, snd, chn) */
+  1 ind 0 1 <'> set-framples #t nil fth-catch to tag
   stack-reset
   tag if
     tag car 'wrong-number-of-args <>
     tag car 'wrong-type-arg       <> && if
-      "set frames + edpos: %s" #( tag ) snd-display
+      "set framples + edpos: %s" #( tag ) snd-display
     then
   then
   ind revert-sound drop
@@ -8416,29 +7898,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   then
   \ 
-  "oboe.snd" open-sound to ind
-  100 0.5 ind 0 set-sample drop
-  0.5 0 100 ind 0 ind edpos-1-cb <'> scale-channel #t nil fth-catch to tag
-  stack-reset
-  tag if
-    tag car 'bad-arity <> if
-      "edpos proc bad args: %s" #( tag ) snd-display
-    then
-  then
-  ind sound? unless
-    "edpos bad arity proc clobbers chan??: %s" #( ind ) snd-display
-  then
-  \ 
-  0.5 0 100 ind 0 <'> edpos-2-cb <'> scale-channel #t nil fth-catch to tag
-  stack-reset
-  tag if
-    tag car 'no-such-channel <> if
-      "edpos clobbers channel: %s" #( tag ) snd-display
-    then
-  then
-  ind sound? if
-    "edpos proc clobbers chan??: %s" #( ind ) snd-display
-  then
   set-procs04 length 2 = if
     "(%s %s)" set-procs04
   else
@@ -8677,7 +8136,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       end-each
     end-each
   end-each
-  clear-sincs drop
   stop-playing drop
   dismiss-all-dialogs
   gc-run
@@ -8700,7 +8158,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       end-each
     end-each
   end-each
-  clear-sincs drop
   dismiss-all-dialogs
   gc-run
   "6-args" check-args-progress-info
@@ -8787,7 +8244,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       end-each
     end-each
   end-each
-  clear-sincs drop
   dismiss-all-dialogs
   gc-run
   #f set-ask-about-unsaved-edits drop
@@ -8835,7 +8291,7 @@ let: ( -- )
   start-snd-test
   <'> 00-constants       run-fth-test
   <'> 01-defaults        run-fth-test
-  mus-ldouble set-default-output-sample-type drop
+  mus-ldouble set-default-output-data-format drop
   <'> 02-headers         run-fth-test
   <'> 03-variables       run-fth-test
   <'> 04-sndlib          run-fth-test

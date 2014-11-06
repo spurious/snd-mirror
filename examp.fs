@@ -2,9 +2,9 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 05/07/05 13:09:37
-\ Changed: 14/11/04 00:30:54
+\ Changed: 14/11/06 01:06:08
 \
-\ @(#)examp.fs	1.64 11/4/14
+\ @(#)examp.fs	1.65 11/6/14
 
 \ With original comments and doc strings from examp.scm.
 \
@@ -1854,7 +1854,8 @@ set-current
 	    :channels 1
 	    :output snd-tempnam with-sound ws-output { new-snd }
 	"%s %s %s" #( envelope time-scale get-func-name ) format { origin }
-	0 newlen new-snd snd chn #t origin 0 #f #t set-samples ( file-name )
+	0 newlen new-snd snd chn #t
+	    origin 0 current-edit-position #t set-samples ( file-name )
 ;
 previous
 
@@ -1917,7 +1918,8 @@ set-current
 	    :output snd-tempnam with-sound ws-output { new-snd }
 	"%s %s %s %s %s %s"
 	    #( en tscl grlen gren ohop get-func-name ) string-format { origin }
-	0 newlen new-snd snd chn #t origin set-samples ( file-name )
+	0 newlen new-snd snd chn #t
+	    origin 0 current-edit-position #t set-samples ( file-name )
 ;
 previous
 

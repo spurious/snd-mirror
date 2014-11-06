@@ -3049,7 +3049,18 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
 #endif
 
 #if HAVE_GL
+#if HAVE_SCHEME
+  {
+    s7_pointer gl, old_shadow;
+    s7_define_constant(s7, "*gl*", gl = s7_inlet(s7, s7_nil(s7)));
+    old_shadow = s7_shadow_rootlet(s7);
+    s7_set_shadow_rootlet(s7, gl);
+    Init_libgl();
+    s7_set_shadow_rootlet(s7, old_shadow);
+  }
+#else
   Init_libgl();
+#endif
 #endif
 
 #if HAVE_ALSA

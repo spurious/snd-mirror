@@ -36,7 +36,7 @@
  *
  * Documentation is in s7.h and s7.html.  
  * s7test.scm is a regression test.
- * glistener.c is a listener.
+ * glistener.c is a gtk-based listener.
  * cload.scm and lib*.scm tie in various C libraries.
  * lint.scm checks Scheme code for infelicities.
  * r7rs.scm implements some of r7rs (small).
@@ -69943,7 +69943,7 @@ int main(int argc, char **argv)
  * index    44300 | 3291 | 1725 | 1276 1243
  * bench    42736 | 8752 | 4220 | 3506 3506
  * lg             |      |      |      6497
- * t502        90 |   43 | 14.5 | 12.7 12.6
+ * t502        90 |   43 | 14.5 | 12.7 12.7
  * t455|6     265 |   89 |  9   |       8.4
  * t816           |   71 | 70.6 | 38.0 31.8
  * calls      359 |  275 | 54   | 34.7 34.7
@@ -69955,11 +69955,15 @@ int main(int argc, char **argv)
  *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers? (useful in object->string too)
  *
  * other libraries: xg, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
- *   perhaps put xg and sndlib in their own lets: *gtk* *gl*(libgl.scm?) *clm* -- or at least make it an option
+ *   perhaps put xg and sndlib in their own lets: *gtk* *clm* -- or at least make it an option
  *   prelookup?
  *
+ * for *gtk* signal_connect et al need to be handled via s7_define
+ * test 24 if GL in testsnd?
+ * run the checks in mmsg
  * one cost of *motif* -- functions that were previously global and therefore removed from the heap,
  *   are now local to *motif* so the GC mark costs rise significantly.
+ * could the snd-xen load be put off until needed? (only if xm.so is buildable and accessible)
  *
  *   need to check new openGL for API changes (GL_VERSION?)
  *   check motif+gl? -- glext.h has a ton of changes: 10000 names!!
