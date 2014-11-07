@@ -17,6 +17,8 @@
 (provide 'snd-snd-gtk.scm)
 (require snd-gtk snd-extensions.scm snd-play.scm)
 
+(with-let *gtk*
+
 (define load-font pango_font_description_from_string)
 
 (define (g-list-foreach glist func)
@@ -895,3 +897,4 @@
 (define (notebook-with-top-tabs)
   (gtk_notebook_set_tab_pos (GTK_NOTEBOOK ((main-widgets) 5)) GTK_POS_TOP))
 
+)

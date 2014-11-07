@@ -2,19 +2,17 @@
 	   (not (provided? 'snd-effects-utils.scm)))
   (load "effects-utils.scm"))
 
-(when (provided? 'snd-motif)
-  (define update-label (*motif* 'update-label))
-  (define change-label (*motif* 'change-label))
-  (define make-effect-dialog (*motif* 'make-effect-dialog))
-  (define add-sliders (*motif* 'add-sliders))
-  (define activate-dialog (*motif* 'activate-dialog))
-  (define mark-sync-color (*motif* 'mark-sync-color))
-  (define select-file (*motif* 'select-file))
-  )
-
 (if (and (provided? 'xg)
 	 (not (provided? 'snd-gtk-effects-utils.scm)))
     (load "gtk-effects-utils.scm"))
+
+(define *e* (if (provided? 'snd-motif) *motif* *gtk*))
+(define update-label (*e* 'update-label))
+(define change-label (*e* 'change-label))
+(define make-effect-dialog (*e* 'make-effect-dialog))
+(define add-sliders (*e* 'add-sliders))
+(define activate-dialog (*e* 'activate-dialog))
+(define select-file (*e* 'select-file))
 
 (require snd-examp.scm)
 
@@ -76,10 +74,8 @@ removes all energy below the low frequency and above the high frequency, then co
 			 (lambda (w data)
 			   (set! fft-edit-low-frequency initial-fft-edit-low-frequency)
 			   (set! fft-edit-high-frequency initial-fft-edit-high-frequency)
-			   (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders))  (floor fft-edit-low-frequency))
-			   ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders)))
-			   (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders))  (floor fft-edit-high-frequency))
-			   ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (cadr sliders)))
+			   ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders))  (floor fft-edit-low-frequency))
+			   ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (cadr sliders))  (floor fft-edit-high-frequency))
 			   )
 			 (lambda (w c i)
 			   (set! fft-edit-low-frequency initial-fft-edit-low-frequency)
@@ -93,13 +89,13 @@ removes all energy below the low frequency and above the high frequency, then co
 		     
 		     (list (list "low frequency" 20 initial-fft-edit-low-frequency 22050
 				 (if (provided? 'snd-gtk)
-				     (lambda (w data) (set! fft-edit-low-frequency (gtk_adjustment_get_value (GTK_ADJUSTMENT w))))
+				     (lambda (w data) (set! fft-edit-low-frequency ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
 				     (lambda (w context info) (set! fft-edit-low-frequency ((*motif* '.value) info))))
 				 1)
 			   
 			   (list "high frequency" 20 initial-fft-edit-high-frequency 22050
 				 (if (provided? 'snd-gtk) 
-				     (lambda (w data) (set! fft-edit-high-frequency (gtk_adjustment_get_value (GTK_ADJUSTMENT w))))
+				     (lambda (w data) (set! fft-edit-high-frequency ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
 				     (lambda (w context info) (set! fft-edit-high-frequency ((*motif* '.value) info))))
 				 1))))))
         (activate-dialog fft-edit-dialog))
@@ -157,8 +153,7 @@ removes all energy below the low frequency and above the high frequency, then co
 		     (if (provided? 'snd-gtk)
 			 (lambda (w data)
 			   (set! fft-squelch-amount initial-fft-squelch-amount)
-			   (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) (round (* fft-squelch-amount 100)))
-			   ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders)))
+			   ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) (round (* fft-squelch-amount 100)))
 			   )
 			 (lambda (w c i)
 			   (set! fft-squelch-amount initial-fft-squelch-amount)
@@ -170,7 +165,7 @@ removes all energy below the low frequency and above the high frequency, then co
 		     (list (list "squelch amount" 0.0 initial-fft-squelch-amount 1.0
 				 (if (provided? 'snd-gtk)
 				     (lambda (w data)
-				       (set! fft-squelch-amount (/ (gtk_adjustment_get_value (GTK_ADJUSTMENT w)) 100)))
+				       (set! fft-squelch-amount (/ ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w)) 100)))
 				     (lambda (w context info)
 				       (set! fft-squelch-amount (/ ((*motif* '.value) info) 100))))
 				 100))))))

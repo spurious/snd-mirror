@@ -30,7 +30,7 @@
 ;;;  test all done                              [46695]
 ;;;  test the end                               [46875]
 
-;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S...~%" (hook 'name)))))
+;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 (if (provided? 'pure-s7) (define make-rectangular make-complex))
 
 (define tests 1)
@@ -369,7 +369,7 @@
 		     (if ((*motif* 'XtIsManaged) dialog)
 			   ((*motif* 'XtUnmanageChild) dialog))
 		     (if (provided? 'snd-gtk)
-			 (gtk_widget_hide dialog)))
+			 ((*gtk* 'gtk_widget_hide) dialog)))
 		 (for-each
 		  (lambda (d)
 		    (if (symbol? (car d))
@@ -377,7 +377,7 @@
 			    (if ((*motif* 'XtIsManaged) d)
 				((*motif* 'XtUnmanageChild) d))
 			    (if (provided? 'snd-gtk)
-				(gtk_widget_hide d)))))
+				((*gtk* 'gtk_widget_hide) d)))))
 		  dialog))))
        (dialog-widgets))))
 
@@ -36226,6 +36226,7 @@ EDITS: 1
 		(snd-display #__line__ ";transform-framples of sonogram: ~A" size)))
 	  (graph->ps "aaa.eps")
 	  (let ((old-colormap *colormap*))
+	    (if (integer? old-colormap) (set! old-colormap (integer->colormap old-colormap)))
 	    (set! *colormap* black-and-white-colormap)
 	    (update-transform-graph)
 	    (set! (transform-graph-type ind1 0) graph-as-spectrogram)
@@ -39441,8 +39442,8 @@ EDITS: 1
 	(let ((tag (catch #t (lambda () (set! (sample 0 (car wid3) 0) .5)) (lambda args (car args)))))
 	  (if (> (edit-position (car wid3) 0) 0) (snd-display #__line__ ";edited variable graph? ~A ~A" tag (edit-position (car wid3) 0))))
 	(if (provided? 'snd-motif)
-	    ((*motif* 'XtUnmanageChild) variables-dialog) ; from snd-motif.scm
-	    (gtk_widget_hide variables-dialog))
+	    ((*motif* 'XtUnmanageChild) variables-dialog)
+	    ((*gtk* 'gtk_widget_hide) variables-dialog))
 	(close-sound (car wid3))
 	(close-sound (car wid4))
 	))

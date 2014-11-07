@@ -68277,6 +68277,10 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
   return(sc->UNDEFINED);
 }
 
+/* one cost of *motif* -- functions that were previously global and therefore removed from the heap,
+ *   are now local to *motif* so the GC mark costs rise significantly.
+ */
+
 
 /* -------------------------------- initialization -------------------------------- */
 
@@ -69940,7 +69944,7 @@ int main(int argc, char **argv)
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2
  * s7test    1721 | 1358 |  995 | 1194 1185
- * index    44300 | 3291 | 1725 | 1276 1243
+ * index    44300 | 3291 | 1725 | 1276 1243 1242
  * bench    42736 | 8752 | 4220 | 3506 3506
  * lg             |      |      |      6497
  * t502        90 |   43 | 14.5 | 12.7 12.7
@@ -69954,19 +69958,8 @@ int main(int argc, char **argv)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers? (useful in object->string too)
  *
- * other libraries: xg, sdl2, fftw, alsa, jack, clm? sndlib? tcod? -- libclm.so in CL version, libsndlib.so from sndlib makefile
- *   perhaps put xg and sndlib in their own lets: *gtk* *clm* -- or at least make it an option
- *   prelookup?
- *
- * for *gtk* signal_connect et al need to be handled via s7_define
- * test 24 if GL in testsnd?
- * run the checks in mmsg
- * one cost of *motif* -- functions that were previously global and therefore removed from the heap,
- *   are now local to *motif* so the GC mark costs rise significantly.
- * could the snd-xen load be put off until needed? (only if xm.so is buildable and accessible)
- *
- *   need to check new openGL for API changes (GL_VERSION?)
- *   check motif+gl? -- glext.h has a ton of changes: 10000 names!!
+ * prelookup?
+ * need to check new openGL for API changes (GL_VERSION?)
  * check out the GL support in gtk 3.16 -- this looks straightforward, snd-chn.c
  * snd-genv needs a lot of gtk3 work
  *

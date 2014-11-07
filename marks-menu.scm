@@ -13,12 +13,19 @@
     (begin
       (require snd-gtk-effects-utils.scm)
       (if (not (defined? 'mark-sync-color)) 
-	  (load "snd-gtk.scm"))))
+	  (define (mark-sync-color x) x))))
 
 (if (not (defined? 'mark-loops)) (load "examp.scm"))
 (if (not (defined? 'play-between-marks)) (load "marks.scm"))
 (if (not (defined? 'loop-between-marks)) (load "play.scm"))
 
+(define *e* (if (provided? 'snd-motif) *motif* *gtk*))
+(define update-label (*e* 'update-label))
+(define change-label (*e* 'change-label))
+(define make-effect-dialog (*e* 'make-effect-dialog))
+(define add-sliders (*e* 'add-sliders))
+(define activate-dialog (*e* 'activate-dialog))
+(define select-file (*e* 'select-file))
 
 (define marks-list ()) ; menu labels are updated to show current default settings
 
@@ -105,10 +112,8 @@
 
 			   (if (provided? 'snd-gtk)
 			       (lambda (w data)
-				 (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders))  play-between-marks-m1)
-				 ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders)))
-				 (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders))  play-between-marks-m2)
-				 ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (cadr sliders)))
+				 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders))  play-between-marks-m1)
+				 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (cadr sliders))  play-between-marks-m2)
 				 )
 			       (lambda (w c i)
 				 ((*motif* 'XtSetValues) (sliders 0) (list (*motif* 'XmNvalue) play-between-marks-m1))
@@ -120,7 +125,7 @@
 			   (list (list "mark one" 0 play-between-marks-m1 max-mark-id
 				       (if (provided? 'snd-gtk)
 					   (lambda (w context)
-					     (set! play-between-marks-m1 (gtk_adjustment_get_value (GTK_ADJUSTMENT w)))
+					     (set! play-between-marks-m1 ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w)))
 					     (set-syncs))
 					   (lambda (w context info)
 					     (set! play-between-marks-m1 ((*motif* '.value) info))
@@ -129,7 +134,7 @@
 				 (list "mark two" 0 play-between-marks-m2 max-mark-id
 			   (if (provided? 'snd-gtk)
 			       (lambda (w context)
-				 (set! play-between-marks-m2 (gtk_adjustment_get_value (GTK_ADJUSTMENT w)))
+				 (set! play-between-marks-m2 ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w)))
 				 (set-syncs))
 			       (lambda (w context info)
 				 (set! play-between-marks-m2 ((*motif* '.value) info))
@@ -448,11 +453,9 @@ using the granulate generator to fix up the selection duration (this still is no
 		     (if (provided? 'snd-gtk)
 			 (lambda (w data)
 			   (set! fit-to-mark-one initial-fit-to-mark-one)
-			   (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) fit-to-mark-one)
-			   ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders)))
+			   ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) fit-to-mark-one)
 			   (set! fit-to-mark-two initial-fit-to-mark-two)
-			   (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders)) fit-to-mark-two)
-			   ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (cadr sliders)))
+			   ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (cadr sliders)) fit-to-mark-two)
 			   )
 			 (lambda (w c i)
 			   (set! fit-to-mark-one initial-fit-to-mark-one)
@@ -465,12 +468,12 @@ using the granulate generator to fix up the selection duration (this still is no
 		     fit-to-mark-dialog
 		     (list (list "mark one" 0 initial-fit-to-mark-one 20
 				 (if (provided? 'snd-gtk)
-				     (lambda (w context) (set! fit-to-mark-one (gtk_adjustment_get_value (GTK_ADJUSTMENT w))))
+				     (lambda (w context) (set! fit-to-mark-one ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
 				     (lambda (w context info) (set! fit-to-mark-one ((*motif* '.value) info))))
 				 1)
 			   (list "mark two" 0 initial-fit-to-mark-two 20
 				 (if (provided? 'snd-gtk)
-				     (lambda (w context) (set! fit-to-mark-two (gtk_adjustment_get_value (GTK_ADJUSTMENT w))))
+				     (lambda (w context) (set! fit-to-mark-two ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
 				     (lambda (w context info) (set! fit-to-mark-two (.value info))))
 				 1))))))
 	(activate-dialog fit-to-mark-dialog))
@@ -539,11 +542,9 @@ using the granulate generator to fix up the selection duration (this still is no
 		     (if (provided? 'snd-gtk)
 			 (lambda (w data)
 			   (set! define-by-mark-one initial-define-by-mark-one)
-			   (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) define-by-mark-one)
-			   ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders)))
+			   ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) define-by-mark-one)
 			   (set! define-by-mark-two initial-define-by-mark-two)
-			   (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders)) define-by-mark-two)
-			   ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (cadr sliders)))
+			   ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (cadr sliders)) define-by-mark-two)
 			   )
 			 (lambda (w c i)
 			   (set! define-by-mark-one initial-define-by-mark-one)
@@ -556,12 +557,12 @@ using the granulate generator to fix up the selection duration (this still is no
 		     define-by-mark-dialog
 		     (list (list "mark one" 0 initial-define-by-mark-one 25
 				 (if (provided? 'snd-gtk)
-				     (lambda (w context) (set! define-by-mark-one (gtk_adjustment_get_value (GTK_ADJUSTMENT w))))
+				     (lambda (w context) (set! define-by-mark-one ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
 				     (lambda (w context info) (set! define-by-mark-one ((*motif* '.value) info))))
 				 1)
 			   (list "mark two" 0 initial-define-by-mark-two 25
 				 (if (provided? 'snd-gtk)
-				     (lambda (w context) (set! define-by-mark-two (gtk_adjustment_get_value (GTK_ADJUSTMENT w))))
+				     (lambda (w context) (set! define-by-mark-two ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
 				     (lambda (w context info) (set! define-by-mark-two ((*motif* '.value) info))))
 				 1))))))
 	(activate-dialog define-by-mark-dialog))

@@ -125,12 +125,9 @@
 ;;; replacement for change-menu-label
 (define (change-label widget new-label)
   "(change-label widget new-label) changes the label of 'widget' to be 'new-label'"
-  (if (provided? 'xg)
-      (gtk_label_set_text (GTK_LABEL (gtk_bin_get_child (GTK_BIN widget))) new-label)
-      (if (provided? 'xm)
-         (let ((str (XmStringCreateLocalized new-label)))
-           (XtSetValues widget (list XmNlabelString str))
-           (XmStringFree str)))))
+  (let ((str (XmStringCreateLocalized new-label)))
+    (XtSetValues widget (list XmNlabelString str))
+    (XmStringFree str)))
 
 
 ;;; -------- log scaler widget

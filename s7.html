@@ -8660,6 +8660,16 @@ assuming we have the usual Scheme-to-C linkages (see snd-glistener.c):
     (GTK_TEXT_BUFFER (gtk_text_view_get_buffer (GTK_TEXT_VIEW (listener-text-widget *listener*))))
     "" (list "weight" PANGO_WEIGHT_BOLD "foreground" "red")))
 </pre>
+
+<p>In Snd, all the gtk code is in the *gtk* environment, so we need to use:
+</p>
+<pre class="indented">
+(listener-set-prompt-tag *listener*
+  (with-let (sublet *gtk* 'textw (listener-text-widget *listener*)) ; use *gtk*
+    (gtk_text_buffer_create_tag 
+      (GTK_TEXT_BUFFER (gtk_text_view_get_buffer (GTK_TEXT_VIEW textw)))
+      "" (list "weight" PANGO_WEIGHT_BOLD "foreground" "red"))))
+</pre>
 </div>
 
 

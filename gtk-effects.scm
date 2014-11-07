@@ -3,6 +3,8 @@
 (provide 'snd-gtk-effects.scm)
 (require snd-gtk snd-gtk-effects-utils.scm snd-xm-enved.scm snd-moog.scm snd-rubber.scm snd-dsp.scm)
 
+(with-let *gtk*
+
 (define (plausible-mark-samples)
   ;; find two marks in the current channel (in or nearest to current window)
   (let* ((snd (selected-sound))
@@ -2810,3 +2812,5 @@ the synthesis amplitude, the FFT size, and the radius value."))
 (add-to-menu effects-menu "Invert" (lambda () (scale-by -1)))
 (add-to-menu effects-menu "Reverse" (lambda () (reverse-sound)))
 (add-to-menu effects-menu "Null phase" (lambda () (zero-phase)))
+
+)

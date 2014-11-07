@@ -2,6 +2,8 @@
 
 (provide 'snd-gtk-effects-utils.scm)
 
+(with-let *gtk* 
+
 (if (not (defined? 'all-chans))
     (define (all-chans)
       (let ((sndlist ())
@@ -158,7 +160,6 @@
 	       (gtk_widget_show hbox)
 	       (gtk_box_pack_start (GTK_BOX hbox) label #f #f 6))
 	     (gtk_grid_attach (GTK_GRID table) label 0 slider 1 1)
-	     ;(gtk_table_attach (GTK_TABLE table) label 0 1 slider (+ 1 slider) (logior GTK_FILL GTK_SHRINK) (logior GTK_FILL GTK_SHRINK) 0 0)
 	     )
 	 (gtk_widget_show label)
 	 (if (not (provided? 'gtk3)) (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE scale)) GTK_UPDATE_CONTINUOUS))
@@ -172,7 +173,6 @@
 	     (begin
 	       (gtk_widget_set_hexpand (GTK_WIDGET scale) #t)
 	       (gtk_grid_attach (GTK_GRID table) scale 1 slider 1 1)
-	       ;(gtk_table_attach (GTK_TABLE table) scale 1 2 slider (+ 1 slider) (logior GTK_FILL GTK_EXPAND GTK_SHRINK) (logior GTK_FILL GTK_EXPAND GTK_SHRINK) 0 0)
 	       (set! slider (+ 1 slider))))
 	 (gtk_widget_show scale)
 	 (if use-log
@@ -192,3 +192,4 @@
   (gtk_widget_show w)
   (gtk_window_present (GTK_WINDOW w)))
 
+)

@@ -1426,12 +1426,12 @@ Here's the scale-dialog in xg/gtk:
 </p>
 
 <pre class="indented">
-(define scale-dialog #f)
-(define current-scaler 1.0)
+(with-let *gtk*
+  (define scale-dialog #f)
+  (define current-scaler 1.0)
 
-(define (create-scale-dialog parent)
-  (if (not scale-dialog)
-      (begin
+  (define (create-scale-dialog parent)
+    (when (not scale-dialog)
 	(set! scale-dialog (gtk_dialog_new))
 	(g_signal_connect scale-dialog "delete-event"
 			     (lambda (w ev info)
@@ -1440,8 +1440,8 @@ Here's the scale-dialog in xg/gtk:
 	(gtk_widget_realize scale-dialog)
 	(let ((dismiss (gtk_button_new_with_label "Dismiss"))
 	      (help (gtk_button_new_with_label "Help")))
-	  (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG scale-dialog))) dismiss #t #t 4)
-	  (gtk_box_pack_end (GTK_BOX (.action_area (GTK_DIALOG scale-dialog))) help #t #t 4)	
+	  (gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG scale-dialog))) dismiss #t #t 4)
+	  (gtk_box_pack_end (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG scale-dialog))) help #t #t 4)	
 	  (g_signal_connect dismiss "clicked"
 			       (lambda (w info)
 				 (gtk_widget_hide scale-dialog)))
@@ -1451,68 +1451,23 @@ Here's the scale-dialog in xg/gtk:
 	  (gtk_widget_show dismiss)
 	  (gtk_widget_show help)
 	  (let* ((adj (gtk_adjustment_new 0.0 0.0 1.01 0.01 0.01 .01))
-		 (scale (if (provided? 'gtk2)
-		            (gtk_hscale_new (GTK_ADJUSTMENT adj))
-			    (gtk_scale_new GTK_ORIENTATION_HORIZONTAL (GTK_ADJUSTMENT adj)))))
-	    (if (provided? 'gtk2) (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE scale)) GTK_UPDATE_CONTINUOUS))
+		 (scale (gtk_scale_new GTK_ORIENTATION_HORIZONTAL (GTK_ADJUSTMENT adj))))
 	    (gtk_scale_set_draw_value (GTK_SCALE scale) #t)
 	    (gtk_scale_set_digits (GTK_SCALE scale) 2)
 	    (g_signal_connect adj "value_changed"
 				 (lambda (wadj info)
-				   (set! current-scaler (.value (GTK_ADJUSTMENT wadj)))))
-	    (gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG scale-dialog))) scale #f #f 6)
-	    (gtk_widget_show scale)))))
-  (gtk_widget_show scale-dialog))
+				   (set! current-scaler (gtk_adjustment_get_value (GTK_ADJUSTMENT wadj)))))
+	    (gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG scale-dialog))) scale #f #f 6)
+	    (gtk_widget_show scale))))
+    (gtk_widget_show scale-dialog))
 
-(create-scale-dialog (cadr (<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>)))
+(create-scale-dialog (cadr (<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>))))
 </pre>
-
 
 <p>The only change from the C code is the addition of GTK_ADJUSTMENT in the scale value_changed
 callback &mdash; currently the xg module assumes the first argument to the two-argument callback is
 a GtkWidget, so we have to cast a GtkAdjustment back to its original type.
 </p>
-
-<p>Here are a couple other examples of things that aren't covered by the gtk code in snd-gtk.scm and
-friends:
-</p>
-<pre class="indented">
-;; report on mouse scroll wheel changes when in the channel graph
-(g_signal_connect 
- (car (<a class=quiet href="extsnd.html#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a>)) "scroll_event" 
- (lambda (w e i)
-   (<a class=quiet href="extsnd.html#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%state: ~A, x: ~A, y: ~A, direction: ~A" 
-		      (.state (GDK_EVENT_SCROLL e))
-		      (.x (GDK_EVENT_SCROLL e))
-		      (.y (GDK_EVENT_SCROLL e))
-		      (.direction (GDK_EVENT_SCROLL e))))
-   #f))
-
-;; report which kind of click was received in the channel graph
-(g_signal_connect 
- (car (<a class=quiet href="extsnd.html#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a>)) "button_press_event"
- (lambda (w e i)
-   (<a class=quiet href="extsnd.html#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%button: ~A, ~A click" 
-		      (.type (GDK_EVENT_BUTTON e))
-		      (if (= (.type (GDK_EVENT_BUTTON e)) GDK_BUTTON_PRESS)
-			  "single"
-			  (if (= (.type (GDK_EVENT_BUTTON e)) GDK_2BUTTON_PRESS)
-			      "double"
-			      (if (= (.type (GDK_EVENT_BUTTON e)) GDK_3BUTTON_PRESS)
-				  "triple"
-				  "unknown")))))
-   #f))
-
-;; a double click is reported as single/single/double
-
-;; double-click time in milliseconds(?)
-(define (double-click-time)
-  (g_object_get (GPOINTER 
-                  (gtk_settings_get_for_screen 
-                    (gdk_display_get_default_screen 
-                      (gdk_display_get_default)))) 
-                "gtk-double-click-time" #f))
-</pre>
 
 
 

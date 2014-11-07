@@ -1439,7 +1439,7 @@ in gtk (see GtkSettings.html).  To set one from Scheme:
 </p>
 
 <pre class="indented">
-(g_object_set (GPOINTER (gtk_settings_get_default)) "gtk-menu-images" #t) 
+(with-let *gtk* (g_object_set (GPOINTER (gtk_settings_get_default)) "gtk-menu-images" #t))
 </pre>
 
 <p>To get the current value of one of these settings, you need to tell xg the expected return
@@ -1447,7 +1447,7 @@ type.  In the next example, we assume we're getting an integer:
 </p>
 
 <pre class="indented">
-&gt; (g_object_get (GPOINTER (gtk_settings_get_default)) "gtk-cursor-blink-time" #f)
+&gt; (with-let *gtk* (g_object_get (GPOINTER (gtk_settings_get_default)) "gtk-cursor-blink-time" #f))
 1200
 </pre>
 <div class="spacer"></div>
@@ -12284,13 +12284,14 @@ Forth:     main-widgets cadr
 
 <pre class="indented">
 &gt; (define (get-font)
-  (let ((fonts (gtk_font_chooser_dialog_new "fonts" (GTK_WINDOW (cadr (<em class=red>main-widgets</em>))))))
-    (let ((response (gtk_dialog_run (GTK_DIALOG fonts)))) ; don't return until a choice is made 
-      (let ((name (if (= response GTK_RESPONSE_OK)        ;   (cancel = GTK_RESPONSE_CANCEL)
-	              (gtk_font_chooser_get_font (GTK_FONT_CHOOSER fonts))
-		      'no-font-selected)))                ; perhaps pass in the current value instead?
-	(gtk_widget_destroy (GTK_WIDGET fonts))           ; clean up after the dialog
-	name))))                                          ; return new font
+  (with-let *gtk*
+    (let ((fonts (gtk_font_chooser_dialog_new "fonts" (GTK_WINDOW (cadr (<em class=red>main-widgets</em>))))))
+      (let ((response (gtk_dialog_run (GTK_DIALOG fonts)))) ; don't return until a choice is made 
+        (let ((name (if (= response GTK_RESPONSE_OK)        ;   (cancel = GTK_RESPONSE_CANCEL)
+	                (gtk_font_chooser_get_font (GTK_FONT_CHOOSER fonts))
+		        'no-font-selected)))                ; perhaps pass in the current value instead?
+	  (gtk_widget_destroy (GTK_WIDGET fonts))           ; clean up after the dialog
+	  name)))))                                         ; return new font
 get-font
 
 &gt; (set! (listener-font) (get-font))
