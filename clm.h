@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 5
-#define MUS_DATE "31-Oct-14"
+#define MUS_REVISION 6
+#define MUS_DATE "8-Nov-14"
 
 /* isn't mus_env_interp backwards? */
 
@@ -176,6 +176,7 @@ MUS_EXPORT mus_float_t mus_width(mus_any *gen);
 MUS_EXPORT mus_float_t mus_set_width(mus_any *gen, mus_float_t val);
 MUS_EXPORT char *mus_file_name(mus_any *ptr);
 MUS_EXPORT void mus_reset(mus_any *ptr);
+MUS_EXPORT mus_any *mus_copy(mus_any *gen);
 MUS_EXPORT mus_float_t *mus_xcoeffs(mus_any *ptr);
 MUS_EXPORT mus_float_t *mus_ycoeffs(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_xcoeff(mus_any *ptr, int index);
@@ -607,6 +608,7 @@ MUS_EXPORT void *mus_set_environ(mus_any *gen, void *e);
 
 /* Change log.
  *
+ * 8-Nov:      mus_copy.
  * 24-Oct:     mus_generator_set_feeders.
  * 10-Aug:     data-format -> sample-type.
  * 17-Apr:     moving_norm generator.

@@ -3452,7 +3452,7 @@
 			  "no increment method" "no offset method"
 			  "no xcoeff method" "no ycoeff method" "no xcoeffs method" "no ycoeffs method" "no reset" "bad size" "can't convert"
 			  "read error"
-			  "no feedforward method" "no feedback method" "no interp-type method" "no position method" "no order method"
+			  "no feedforward method" "no feedback method" "no interp-type method" "no position method" "no order method" "no copy method"
 			  "can't translate"
 			  )))
 	  (let ((happy #t)

@@ -173,6 +173,7 @@
 #define S_mus_chebyshev_tu_sum       "mus-chebyshev-tu-sum"
 #define S_mus_chebyshev_u_sum        "mus-chebyshev-u-sum"
 #define S_mus_close                  "mus-close"
+#define S_mus_copy                   "mus-copy"
 #define S_mus_data                   "mus-data"
 #define S_mus_describe               "mus-describe"
 #define S_mus_feedback               "mus-feedback"

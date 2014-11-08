@@ -1429,6 +1429,25 @@ static bool s7_equalp_mus_xen(void *val1, void *val2)
 #endif
 
 
+static Xen mus_xen_copy(mus_xen *ms)
+{
+  /* return an object -> copied mus_xen -> copied mus_any gen */
+  mus_xen *np;
+
+  np = mx_alloc(ms->nvcts);
+#if HAVE_SCHEME
+  np->type = ms->type; /* np->g is set to NULL by mx_alloc */
+#endif
+
+  np->gen = mus_copy(ms->gen);
+
+  if (ms->nvcts == 1)
+    np->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen));
+
+  return(mus_xen_to_object(np));
+}
+
+
 #if HAVE_RUBY
 static Xen mus_xen_to_s(Xen obj)
 {
@@ -1498,6 +1517,12 @@ static Xen mus_xen_apply(s7_scheme *sc, Xen gen, Xen args)
 static Xen s7_mus_length(s7_scheme *sc, Xen obj)
 {
   return(g_mus_length(obj));
+}
+
+static Xen g_mus_copy(Xen gen);
+static Xen s7_mus_copy(s7_scheme *sc, Xen obj)
+{
+  return(g_mus_copy(obj));
 }
 
 #endif
@@ -1611,6 +1636,26 @@ static Xen g_mus_reset(Xen gen)
   } 
 #endif
   Xen_check_type(false, gen, 1, S_mus_reset, "a generator");
+  return(gen);
+}
+
+
+static Xen g_mus_copy(Xen gen) 
+{
+  #define H_mus_copy "(" S_mus_copy " gen): return a copy of gen"
+  mus_xen *ms;
+
+  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
+  if (ms)
+    return(mus_xen_copy(ms));
+#if HAVE_SCHEME
+  {
+    s7_pointer func; 
+    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-copy"));
+    if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
+  }
+#endif
+  Xen_check_type(false, gen, 1, S_mus_copy, "a generator");
   return(gen);
 }
 
@@ -20785,6 +20830,7 @@ Xen_wrap_2_args(g_mus_set_scaler_w, g_mus_set_scaler)
 Xen_wrap_1_arg(g_mus_feedforward_w, g_mus_feedforward)
 Xen_wrap_2_args(g_mus_set_feedforward_w, g_mus_set_feedforward)
 Xen_wrap_1_arg(g_mus_reset_w, g_mus_reset)
+Xen_wrap_1_arg(g_mus_copy_w, g_mus_copy)
 Xen_wrap_1_arg(g_mus_offset_w, g_mus_offset)
 Xen_wrap_2_args(g_mus_set_offset_w, g_mus_set_offset)
 Xen_wrap_1_arg(g_mus_frequency_w, g_mus_frequency)
@@ -21092,7 +21138,7 @@ static void mus_xen_init(void)
   current_connect_func = Xen_false;
 
 #if HAVE_SCHEME
-  mus_xen_tag = s7_new_type_x("<generator>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, mus_xen_apply, NULL, s7_mus_length, NULL, NULL, NULL);
+  mus_xen_tag = s7_new_type_x("<generator>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, mus_xen_apply, NULL, s7_mus_length, s7_mus_copy, NULL, NULL);
   as_needed_arglist = Xen_list_1(Xen_integer_zero);
   Xen_GC_protect(as_needed_arglist);
   s7_set_object_print_readably(mus_xen_tag, mus_generator_to_readable_string);
@@ -21127,6 +21173,7 @@ static void mus_xen_init(void)
   rb_define_method(mus_xen_tag, "offset", Xen_procedure_cast g_mus_offset, 0);
   rb_define_method(mus_xen_tag, "offset=", Xen_procedure_cast g_mus_set_offset, 1);
   rb_define_method(mus_xen_tag, "reset", Xen_procedure_cast g_mus_reset, 0);
+  /* rb_define_method(mus_xen_tag, "copy", Xen_procedure_cast g_mus_copy, 0); */
   rb_define_method(mus_xen_tag, "length", Xen_procedure_cast g_mus_length, 0);
   rb_define_method(mus_xen_tag, "length=", Xen_procedure_cast g_mus_set_length, 1);
   rb_define_method(mus_xen_tag, "data", Xen_procedure_cast g_mus_data, 0);
@@ -21290,6 +21337,7 @@ static void mus_xen_init(void)
   Xen_define_safe_procedure(S_mus_describe,         g_mus_describe_w,  1, 0, 0,  H_mus_describe);
   Xen_define_safe_procedure(S_mus_file_name,        g_mus_file_name_w, 1, 0, 0,  H_mus_file_name);
   Xen_define_safe_procedure(S_mus_reset,            g_mus_reset_w,     1, 0, 0,  H_mus_reset);
+  Xen_define_safe_procedure(S_mus_copy,             g_mus_copy_w,      1, 0, 0,  H_mus_copy);
   Xen_define_procedure(S_mus_run,                   g_mus_run_w,       1, 2, 0,  H_mus_run);
 
   Xen_define_procedure_with_setter(S_mus_name,      g_mus_name_w,      H_mus_name,      S_setB S_mus_name,      g_mus_set_name_w,       1, 0, 2, 0);

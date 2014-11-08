@@ -5454,7 +5454,7 @@ The function takes one argument, the environment in which loads and evals should
 <details id="weaselwords">
 <summary class="indented">more on dynamic values</summary>
 <div class="indented">
-<p>So why, you are asking, the useless 'values' in our dynamic binding example?  The short answer: tail calls.
+<p>Why the useless 'values' in our dynamic binding example?  The short answer: tail calls.
 The long winded one goes something like this.  symbol-&gt;dynamic-value searches the stack to find
 the latest binding of its argument.  But because we want to support tail calls, "let" does not
 push anything on the stack.  If we call a function as the last thing that happens in that let's body,

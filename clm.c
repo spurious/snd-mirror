@@ -96,6 +96,7 @@ struct mus_any_class {
   void *original_class; /* class chain perhaps */
   void (*reset)(mus_any *ptr);
   void *(*set_closure)(mus_any *gen, void *e);
+  mus_any *(*copy)(mus_any *ptr);
 };
 
 
@@ -532,6 +533,16 @@ void mus_reset(mus_any *gen)
       (gen->core->reset))
     (*(gen->core->reset))(gen);
   else mus_error(MUS_NO_RESET, "can't reset %s", mus_name(gen));
+}
+
+
+mus_any *mus_copy(mus_any *gen)
+{
+  if ((check_gen(gen, S_mus_copy)) &&
+      (gen->core->copy))
+    return((*(gen->core->copy))(gen));
+  else mus_error(MUS_NO_COPY, "can't copy %s", mus_name(gen));
+  return(NULL);
 }
 
 
@@ -1382,6 +1393,14 @@ static mus_float_t oscil_set_phase(mus_any *ptr, mus_float_t val) {((osc *)ptr)-
 static mus_long_t oscil_cosines(mus_any *ptr) {return(1);}
 static void oscil_reset(mus_any *ptr) {((osc *)ptr)->phase = 0.0;}
 
+static mus_any *oscil_copy(mus_any *ptr)
+{
+  osc *g;
+  g = (osc *)malloc(sizeof(osc));
+  memcpy((void *)g, (void *)ptr, sizeof(osc));
+  return((mus_any *)g);
+}
+
 static mus_float_t fallback_scaler(mus_any *ptr) {return(1.0);}
 
 
@@ -1430,7 +1449,8 @@ static mus_any_class OSCIL_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &oscil_reset,
-  0
+  0,
+  &oscil_copy
 };
 
 
@@ -1457,6 +1477,7 @@ typedef struct {
   mus_any_class *core;
   int size, orig_size;
   mus_float_t *amps, *phases, *freqs;
+  bool free_phases;
 #if HAVE_SINCOS
   mus_float_t *sn1, *cs1, *sn2, *cs2, *phs;
   bool use_sc;
@@ -1475,12 +1496,43 @@ static int free_oscil_bank(mus_any *ptr)
       if (g->cs1) {free(g->cs1); g->cs1 = NULL;}
       if (g->cs2) {free(g->cs2); g->cs2 = NULL;}
       if (g->phs) {free(g->phs); g->phs = NULL;}
+      if ((g->phases) && (g->free_phases)) {free(g->phases); g->phases = NULL;}
       free(ptr);
     }
 #else
   if (ptr) free(ptr);
 #endif
   return(0);
+}
+
+static mus_any *ob_copy(mus_any *ptr)
+{
+  ob *g, *p;
+  int bytes;
+
+  p = (ob *)ptr;
+  g = (ob *)malloc(sizeof(ob));
+  memcpy((void *)g, (void *)ptr, sizeof(ob));
+  bytes = g->size * sizeof(mus_float_t);
+
+#if HAVE_SINCOS
+  g->sn1 = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->sn1), (void *)(p->sn1), bytes);
+  g->sn2 = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->sn2), (void *)(p->sn2), bytes);
+  g->cs1 = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->cs1), (void *)(p->cs1), bytes);
+  g->cs2 = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->cs2), (void *)(p->cs2), bytes);
+  g->phs = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->phs), (void *)(p->phs), bytes);
+#endif
+
+  /* we have to make a new phases array -- otherwise the original and copy step on each other */
+  g->free_phases = true;
+  g->phases = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->phases), (void *)(p->phases), bytes);
+  return((mus_any *)g);
 }
 
 
@@ -1528,7 +1580,8 @@ static bool oscil_bank_equalp(mus_any *p1, mus_any *p2)
 	 (o1->orig_size == o2->orig_size) &&
 	 (o1->amps == o2->amps) &&
 	 (o1->freqs == o2->freqs) &&
-	 (o1->phases == o2->phases));
+	 ((o1->phases == o2->phases) ||
+	  (clm_arrays_are_equal(o1->phases, o2->phases, o2->size))));
 }
 
 
@@ -1564,7 +1617,7 @@ static mus_any_class OSCIL_BANK_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &oscil_bank_reset,
-  0
+  0, &ob_copy
 };
 
 
@@ -1647,6 +1700,7 @@ mus_any *mus_make_oscil_bank(int size, mus_float_t *freqs, mus_float_t *phases, 
   gen->amps = amps;
   gen->freqs = freqs;
   gen->phases = phases;
+  gen->free_phases = false;
 
 #if HAVE_SINCOS
   gen->use_sc = false;
@@ -1795,6 +1849,14 @@ static mus_float_t ncos_set_scaler(mus_any *ptr, mus_float_t val) {((cosp *)ptr)
 
 static mus_long_t ncos_n(mus_any *ptr) {return(((cosp *)ptr)->n);}
 
+static mus_any *cosp_copy(mus_any *ptr)
+{
+  cosp *g;
+  g = (cosp *)malloc(sizeof(cosp));
+  memcpy((void *)g, (void *)ptr, sizeof(cosp));
+  return((mus_any *)g);
+}
+
 static mus_long_t ncos_set_n(mus_any *ptr, mus_long_t val) 
 {
   cosp *gen = (cosp *)ptr;
@@ -1860,7 +1922,8 @@ static mus_any_class NCOS_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &ncos_reset,
-  0
+  0,
+  &cosp_copy
 };
 
 
@@ -2098,7 +2161,8 @@ static mus_any_class NSIN_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &ncos_reset,
-  0
+  0,
+  &cosp_copy
 };
 
 
@@ -2129,6 +2193,14 @@ typedef struct {
 
 static int free_asymmetric_fm(mus_any *ptr) {if (ptr) free(ptr); return(0);}
 static void asyfm_reset(mus_any *ptr) {((asyfm *)ptr)->phase = 0.0;}
+
+static mus_any *asyfm_copy(mus_any *ptr)
+{
+  asyfm *g;
+  g = (asyfm *)malloc(sizeof(asyfm));
+  memcpy((void *)g, (void *)ptr, sizeof(asyfm));
+  return((mus_any *)g);
+}
 
 static mus_float_t asyfm_freq(mus_any *ptr) {return(mus_radians_to_hz(((asyfm *)ptr)->freq));}
 static mus_float_t asyfm_set_freq(mus_any *ptr, mus_float_t val) {((asyfm *)ptr)->freq = mus_hz_to_radians(val); return(val);}
@@ -2239,7 +2311,8 @@ static mus_any_class ASYMMETRIC_FM_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &asyfm_reset,
-  0
+  0,
+  &asyfm_copy
 };
 
 
@@ -2290,6 +2363,14 @@ typedef struct {
 
 static int free_nrxy(mus_any *ptr) {if (ptr) free(ptr); return(0);}
 static void nrxy_reset(mus_any *ptr) {((nrxy *)ptr)->phase = 0.0;}
+
+static mus_any *nrxy_copy(mus_any *ptr)
+{
+  nrxy *g;
+  g = (nrxy *)malloc(sizeof(nrxy));
+  memcpy((void *)g, (void *)ptr, sizeof(nrxy));
+  return((mus_any *)g);
+}
 
 static mus_float_t nrxy_freq(mus_any *ptr) {return(mus_radians_to_hz(((nrxy *)ptr)->freq));}
 static mus_float_t nrxy_set_freq(mus_any *ptr, mus_float_t val) {((nrxy *)ptr)->freq = mus_hz_to_radians(val); return(val);}
@@ -2461,7 +2542,8 @@ static mus_any_class NRXYSIN_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &nrxy_reset,
-  0
+  0,
+  &nrxy_copy
 };
 
 
@@ -2579,7 +2661,8 @@ static mus_any_class NRXYCOS_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &nrxy_reset,
-  0
+  0,
+  &nrxy_copy
 };
 
 
@@ -2605,6 +2688,14 @@ typedef struct {
 
 static int free_rxykcos(mus_any *ptr) {if (ptr) free(ptr); return(0);}
 static void rxyk_reset(mus_any *ptr) {((rxyk *)ptr)->phase = 0.0;}
+
+static mus_any *rxyk_copy(mus_any *ptr)
+{
+  rxyk *g;
+  g = (rxyk *)malloc(sizeof(rxyk));
+  memcpy((void *)g, (void *)ptr, sizeof(rxyk));
+  return((mus_any *)g);
+}
 
 static mus_float_t rxyk_freq(mus_any *ptr) {return(mus_radians_to_hz(((rxyk *)ptr)->freq));}
 static mus_float_t rxyk_set_freq(mus_any *ptr, mus_float_t val) {((rxyk *)ptr)->freq = mus_hz_to_radians(val); return(val);}
@@ -2698,7 +2789,8 @@ static mus_any_class RXYKCOS_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &rxyk_reset,
-  0
+  0,
+  &rxyk_copy
 };
 
 
@@ -2760,7 +2852,8 @@ static mus_any_class RXYKSIN_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &rxyk_reset,
-  0
+  0,
+  &rxyk_copy
 };
 
 
@@ -3007,6 +3100,22 @@ static int free_table_lookup(mus_any *ptr)
   return(0);
 }
 
+static mus_any *tbl_copy(mus_any *ptr)
+{
+  tbl *g;
+  g = (tbl *)malloc(sizeof(tbl));
+  memcpy((void *)g, (void *)ptr, sizeof(tbl));
+  if (g->table_allocated)
+    {
+      mus_long_t bytes;
+      tbl *p;
+      p = (tbl *)ptr;
+      bytes = g->table_size * sizeof(mus_float_t);
+      g->table = (mus_float_t *)malloc(bytes);
+      memcpy((void *)(g->table), (void *)(p->table), bytes);
+    }
+  return((mus_any *)g);
+}
 
 static mus_float_t *table_set_data(mus_any *ptr, mus_float_t *val) 
 {
@@ -3042,7 +3151,7 @@ static mus_any_class TABLE_LOOKUP_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &table_lookup_reset,
-  0
+  0, &tbl_copy
 };
 
 
@@ -3155,7 +3264,6 @@ mus_float_t *mus_normalize_partials(int num_partials, mus_float_t *partials)
 }
 
 
-
 typedef struct {
   mus_any_class *core;
   double phase, freq;
@@ -3181,6 +3289,13 @@ static int free_pw(mus_any *pt)
   return(0);
 }
 
+static mus_any *pw_copy(mus_any *ptr)
+{
+  pw *g;
+  g = (pw *)malloc(sizeof(pw));
+  memcpy((void *)g, (void *)ptr, sizeof(pw));
+  return((mus_any *)g);
+}
 
 static void pw_reset(mus_any *ptr)
 {
@@ -3814,7 +3929,7 @@ static mus_any_class POLYWAVE_CLASS = {
   &pw_ycoeff, &pw_set_ycoeff,
   &pw_data, &pw_udata, 0, 
   &pw_reset,
-  0
+  0, &pw_copy
 };
 
 
@@ -3830,16 +3945,6 @@ mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, in
   gen->n = n;
   gen->index = 1.0;
   gen->cheby_choice = cheby_choice;
-
-#if 0
-  {
-    int i, zeros = 0;
-    for (i = 0; i < n; i++)
-      if (coeffs[i] == 0.0) zeros++;
-    fprintf(stderr, "%d(%d/%d) ", cheby_choice, zeros, n);
-  }
-#endif
-
   if (cheby_choice != MUS_CHEBYSHEV_SECOND_KIND)
     {
       if (coeffs[0] == 0.0)
@@ -4042,7 +4147,7 @@ static mus_any_class POLYSHAPE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &pw_reset,
-  0
+  0, &pw_copy
 };
 
 
@@ -4097,6 +4202,19 @@ static int wt_interp_type(mus_any *ptr) {return((int)(((wt *)ptr)->interp_type))
 static mus_float_t *wt_data(mus_any *ptr) {return(((wt *)ptr)->wave);}
 static mus_float_t *wt_set_data(mus_any *ptr, mus_float_t *data) {((wt *)ptr)->wave = data; return(data);}
 
+static mus_any *wt_copy(mus_any *ptr)
+{
+  wt *g, *p;
+  int bytes;
+  p = (wt *)ptr;
+  g = (wt *)malloc(sizeof(wt));
+  memcpy((void *)g, (void *)ptr, sizeof(wt));
+  bytes = g->out_data_size * sizeof(mus_float_t);
+  g->out_data = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->out_data), (void *)(p->out_data), bytes);
+  /* g->wave is caller's data */
+  return((mus_any *)g);
+}
 
 static bool wt_equalp(mus_any *p1, mus_any *p2)
 {
@@ -4114,7 +4232,6 @@ static bool wt_equalp(mus_any *p1, mus_any *p2)
 	 (clm_arrays_are_equal(w1->wave, w2->wave, w1->wave_size)) &&
 	 (clm_arrays_are_equal(w1->out_data, w2->out_data, w1->out_data_size)));
 }
-
 
 static char *describe_wt(mus_any *ptr)
 {
@@ -4225,9 +4342,7 @@ mus_float_t mus_wave_train(mus_any *ptr, mus_float_t fm) {return(mus_wave_train_
 
 mus_float_t mus_wave_train_unmodulated(mus_any *ptr) {return(mus_wave_train(ptr, 0.0));}
 
-
 static mus_float_t run_wave_train(mus_any *ptr, mus_float_t fm, mus_float_t unused) {return(mus_wave_train_any(ptr, fm / w_rate));}
-
 
 static int free_wt(mus_any *p) 
 {
@@ -4281,7 +4396,7 @@ static mus_any_class WAVE_TRAIN_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &wt_reset,
-  0
+  0, &wt_copy
 };
 
 
@@ -4456,6 +4571,24 @@ static int free_delay(mus_any *gen)
   return(0);
 }
 
+static mus_any *dly_copy(mus_any *ptr)
+{
+  dly *g, *p;
+  p = (dly *)ptr;
+  g = (dly *)malloc(sizeof(dly));
+  memcpy((void *)g, (void *)ptr, sizeof(dly));
+  if (g->line_allocated)
+    {
+      mus_long_t bytes;
+      bytes = g->size * sizeof(mus_float_t);
+      g->line = (mus_float_t *)malloc(bytes);
+      memcpy((void *)(g->line), (void *)(p->line), bytes);
+    }
+  if (g->filt_allocated)
+    g->filt = mus_copy(p->filt);
+  return((mus_any *)g);
+}
+
 
 static char *describe_delay(mus_any *ptr)
 {
@@ -4587,7 +4720,7 @@ static mus_any_class DELAY_CLASS = {
   0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
-  0
+  0, &dly_copy
 };
 
 
@@ -4741,7 +4874,7 @@ static mus_any_class COMB_CLASS = {
   0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
-  0
+  0, &dly_copy
 };
 
 
@@ -4861,7 +4994,7 @@ static mus_any_class COMB_BANK_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &comb_bank_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -4991,7 +5124,7 @@ static mus_any_class NOTCH_CLASS = {
   0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
-  0
+  0, &dly_copy
 };
 
 
@@ -5138,7 +5271,7 @@ static mus_any_class ALL_PASS_CLASS = {
   0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
-  0
+  0, &dly_copy
 };
 
 
@@ -5250,7 +5383,7 @@ static mus_any_class ALL_PASS_BANK_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &all_pass_bank_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -5393,7 +5526,7 @@ static mus_any_class MOVING_AVERAGE_CLASS = {
   0, 0,
   0, 0, 0, 0, 0,
   &moving_average_reset,
-  0
+  0, &dly_copy
 };
 
 
@@ -5512,7 +5645,7 @@ static mus_any_class MOVING_MAX_CLASS = {
   0, 0,
   0, 0, 0, 0, 0,
   &moving_max_reset,
-  0
+  0, &dly_copy
 };
 
 
@@ -5609,7 +5742,7 @@ static mus_any_class MOVING_NORM_CLASS = {
   0, 0,
   0, 0, 0, 0, 0,
   &moving_norm_reset,
-  0
+  0, &dly_copy
 };
 
 
@@ -5725,7 +5858,7 @@ static mus_any_class FILTERED_COMB_CLASS = {
   0, 0,
   0, 0, 0, 0, 0,
   &filtered_comb_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -5843,7 +5976,7 @@ static mus_any_class FILTERED_COMB_BANK_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &filtered_comb_bank_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -5955,6 +6088,14 @@ static int free_sw(mus_any *ptr)
   return(0);
 }
 
+static mus_any *sw_copy(mus_any *ptr)
+{
+  sw *g;
+  g = (sw *)malloc(sizeof(sw));
+  memcpy((void *)g, (void *)ptr, sizeof(sw));
+  return((mus_any *)g);
+}
+
 
 mus_float_t mus_sawtooth_wave(mus_any *ptr, mus_float_t fm)
 {
@@ -6055,7 +6196,7 @@ static mus_any_class SAWTOOTH_WAVE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &sawtooth_reset,
-  0
+  0, &sw_copy
 };
 
 
@@ -6136,7 +6277,7 @@ static mus_any_class SQUARE_WAVE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &square_wave_reset,
-  0
+  0, &sw_copy
 };
 
 
@@ -6249,7 +6390,7 @@ static mus_any_class TRIANGLE_WAVE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &triangle_wave_reset,
-  0
+  0, &sw_copy
 };
 
 
@@ -6352,7 +6493,7 @@ static mus_any_class PULSE_TRAIN_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &pulse_train_reset,
-  0
+  0, &sw_copy
 };
 
 
@@ -6544,6 +6685,17 @@ bool mus_is_rand_interp(mus_any *ptr)
 
 static int free_noi(mus_any *ptr) {if (ptr) free(ptr); return(0);}
 
+static mus_any *noi_copy(mus_any *ptr)
+{
+  noi *g;
+  g = (noi *)malloc(sizeof(noi));
+  memcpy((void *)g, (void *)ptr, sizeof(noi));
+  /* if ptr->distribution, it comes from elsewhere -- we don't touch it here,
+   *   and in clm2xen, we merely wrap it.
+   */
+  return((mus_any *)g);
+}
+
 static mus_float_t noi_freq(mus_any *ptr) {return(mus_radians_to_hz(((noi *)ptr)->freq));}
 static mus_float_t noi_set_freq(mus_any *ptr, mus_float_t val) 
 {
@@ -6670,7 +6822,7 @@ static mus_any_class RAND_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &noi_reset,
-  0
+  0, &noi_copy
 };
 
 
@@ -6698,7 +6850,7 @@ static mus_any_class RAND_INTERP_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &noi_reset,
-  0
+  0, &noi_copy
 };
 
 
@@ -6772,6 +6924,14 @@ static int free_smpflt(mus_any *ptr)
 {
   if (ptr) free(ptr); 
   return(0);
+}
+
+static mus_any *smpflt_copy(mus_any *ptr)
+{
+  smpflt *g;
+  g = (smpflt *)malloc(sizeof(smpflt));
+  memcpy((void *)g, (void *)ptr, sizeof(smpflt));
+  return((mus_any *)g);
 }
 
 
@@ -6886,7 +7046,7 @@ static mus_any_class ONE_ZERO_CLASS = {
   0, 0, 
   &smp_xcoeffs, &smp_ycoeffs, 0,
   &smpflt_reset,
-  0
+  0, &smpflt_copy
 };
 
 
@@ -6940,7 +7100,7 @@ static mus_any_class ONE_POLE_CLASS = {
   &smp_ycoeff, &smp_set_ycoeff, 
   &smp_xcoeffs, &smp_ycoeffs, 0,
   &smpflt_reset,
-  0
+  0, &smpflt_copy
 };
 
 
@@ -7029,7 +7189,7 @@ static mus_any_class TWO_ZERO_CLASS = {
   0, 0,
   &smp_xcoeffs, &smp_ycoeffs, 0,
   &smpflt_reset,
-  0
+  0, &smpflt_copy
 };
 
 
@@ -7125,7 +7285,7 @@ static mus_any_class TWO_POLE_CLASS = {
   &smp_ycoeff, &smp_set_ycoeff, 
   &smp_xcoeffs, &smp_ycoeffs, 0,
   &smpflt_reset,
-  0
+  0, &smpflt_copy
 };
 
 
@@ -7306,7 +7466,7 @@ static mus_any_class FORMANT_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &frm_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -7953,7 +8113,7 @@ static mus_any_class FORMANT_BANK_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &formant_bank_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -8119,7 +8279,7 @@ static mus_any_class FIRMANT_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &frm_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -8766,7 +8926,7 @@ static mus_any_class FILTER_CLASS = {
   &filter_xcoeffs, &filter_ycoeffs, 
   0,
   &filter_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -8792,7 +8952,7 @@ static mus_any_class FIR_FILTER_CLASS = {
   0, 0, 
   &filter_xcoeffs, 0, 0,
   &filter_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -8818,7 +8978,7 @@ static mus_any_class IIR_FILTER_CLASS = {
   &filter_ycoeff, &filter_set_ycoeff, 
   0, &filter_ycoeffs, 0,
   &filter_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -9158,7 +9318,7 @@ static mus_any_class ONE_POLE_ALL_PASS_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &onepall_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -9668,7 +9828,7 @@ static mus_any_class ENV_CLASS = {
   0,
   0, 0, 0, 0, 0,
   &env_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -9973,7 +10133,7 @@ static mus_any_class PULSED_ENV_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &pulsed_env_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -10256,7 +10416,7 @@ static mus_any_class FILE_TO_SAMPLE_CLASS = {
   0, /* channel */
   0, 0, 0, 0, 0,
   &no_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -10390,7 +10550,7 @@ static mus_any_class READIN_CLASS = {
   &rd_channel,
   0, 0, 0, 0, 0,
   &no_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -10581,7 +10741,7 @@ static mus_any_class FILE_TO_FRAMPLE_CLASS = {
   0, /* channel */
   0, 0, 0, 0, 0,
   &no_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -10715,7 +10875,7 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
   0, 0, 0,
   0, 0, 0, 0, 0,
   &no_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -11358,7 +11518,7 @@ static mus_any_class FRAMPLE_TO_FILE_CLASS = {
   0, 0, 0,
   0, 0, 0, 0, 0,
   &no_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -11727,7 +11887,8 @@ static mus_any_class LOCSIG_CLASS = {
   0, 0, 
   &locsig_xcoeffs, 0, 0,
   &locsig_reset,
-  &locsig_set_closure  /* the method name is set_environ (clm2xen.c) */
+  &locsig_set_closure,  /* the method name is set_environ (clm2xen.c) */
+  NULL /* TODO */
 };
 
 
@@ -12424,6 +12585,7 @@ static mus_any_class MOVE_SOUND_CLASS = {
   0, 0, 0,
   &move_sound_reset,
   &move_sound_set_closure,
+  NULL /* TODO */
 };
 
 
@@ -12750,6 +12912,7 @@ static mus_any_class SRC_CLASS = {
   0, 0, 0, 0, 0,
   &src_reset,
   &src_set_closure, 
+  NULL /* TODO */
 };
 
 
@@ -13380,7 +13543,8 @@ static mus_any_class GRANULATE_CLASS = {
   &grn_location, &grn_set_location, /* local randx */
   0, 0, 0, 0, 0, 0,
   &grn_reset,
-  &grn_set_closure
+  &grn_set_closure,
+  NULL /* TODO */
 };
 
 
@@ -14961,7 +15125,8 @@ static mus_any_class CONVOLVE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &convolve_reset,
-  &conv_set_closure
+  &conv_set_closure,
+  NULL /* TODO */
 };
 
 
@@ -15305,7 +15470,8 @@ static mus_any_class PHASE_VOCODER_CLASS = {
   &pv_outctr, &pv_set_outctr,
   0, 0, 0, 0, 0, 0,
   &pv_reset,
-  &pv_set_closure
+  &pv_set_closure,
+  NULL /* TODO */
 };
 
 
@@ -15930,7 +16096,7 @@ static mus_any_class SSB_AM_CLASS = {
   0, 0, 
   &ssb_am_xcoeffs, 0, 0,
   &ssb_reset,
-  0
+  0, NULL /* TODO */
 };
 
 
@@ -16334,7 +16500,6 @@ void mus_file_mix(const char *outfile, const char *infile,
 		obufs[i][j] += (mus_float_t)(scaler * ibufs[i][j]);
 	    }
 	  break;
-
 	}
 
       if (j > 0) 
