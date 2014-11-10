@@ -1445,7 +1445,8 @@ static Xen mus_xen_copy(mus_xen *ms)
       if (ms->nvcts == 1)
 	{
 	  if ((mus_is_comb_bank(np->gen)) ||
-	      (mus_is_all_pass_bank(np->gen)))
+	      (mus_is_all_pass_bank(np->gen)) ||
+	      (mus_is_filtered_comb_bank(np->gen)))
 	    np->vcts[MUS_DATA_WRAPPER] = ms->vcts[MUS_DATA_WRAPPER];
 	  else np->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen));
 	}

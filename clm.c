@@ -5890,7 +5890,7 @@ static mus_any_class FILTERED_COMB_CLASS = {
   0, 0,
   0, 0, 0, 0, 0,
   &filtered_comb_reset,
-  0, NULL /* TODO */
+  0, &dly_copy
 };
 
 
@@ -5934,6 +5934,22 @@ static int free_filtered_comb_bank(mus_any *ptr)
       free(ptr); 
     }
   return(0);
+}
+
+
+static mus_any *fltcmb_bank_copy(mus_any *ptr)
+{
+  fltcmb_bank *g, *p;
+  int i;
+
+  p = (fltcmb_bank *)ptr;
+  g = (fltcmb_bank *)malloc(sizeof(fltcmb_bank));
+  memcpy((void *)g, (void *)ptr, sizeof(fltcmb_bank));
+  g->gens = (mus_any **)malloc(p->size * sizeof(mus_any *));
+  for (i = 0; i < p->size; i++)
+    g->gens[i] = mus_copy(p->gens[i]);
+
+  return((mus_any *)g);
 }
 
 
@@ -6008,7 +6024,7 @@ static mus_any_class FILTERED_COMB_BANK_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &filtered_comb_bank_reset,
-  0, NULL /* TODO */
+  0, &fltcmb_bank_copy
 };
 
 
@@ -7364,6 +7380,15 @@ static int free_frm(mus_any *ptr)
 }
 
 
+static mus_any *frm_copy(mus_any *ptr)
+{
+  frm *g;
+  g = (frm *)malloc(sizeof(frm));
+  memcpy((void *)g, (void *)ptr, sizeof(frm));
+  return((mus_any *)g);
+}
+
+
 bool mus_is_formant(mus_any *ptr) 
 {
   return((ptr) && 
@@ -7498,7 +7523,7 @@ static mus_any_class FORMANT_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &frm_reset,
-  0, NULL /* TODO */
+  0, &frm_copy
 };
 
 
@@ -7543,6 +7568,38 @@ static int free_formant_bank(mus_any *ptr)
   return(0);
 }
 
+static mus_any *frm_bank_copy(mus_any *ptr)
+{
+  frm_bank *g, *p;
+  int bytes;
+
+  p = (frm_bank *)ptr;
+  g = (frm_bank *)malloc(sizeof(frm_bank));
+  memcpy((void *)g, (void *)ptr, sizeof(frm_bank));
+  bytes = g->size * sizeof(mus_float_t);
+
+  g->x0 = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->x0), (void *)(p->x0), bytes);
+  g->x1 = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->x1), (void *)(p->x1), bytes);
+  g->x2 = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->x2), (void *)(p->x2), bytes);
+  g->y0 = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->y0), (void *)(p->y0), bytes);
+  g->y1 = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->y1), (void *)(p->y1), bytes);
+  g->y2 = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->y2), (void *)(p->y2), bytes);
+
+  g->rr = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->rr), (void *)(p->rr), bytes);
+  g->fdbk = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->fdbk), (void *)(p->fdbk), bytes);
+  g->gain = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->gain), (void *)(p->gain), bytes);
+
+  return((mus_any *)g);
+}
 
 static mus_float_t run_formant_bank(mus_any *ptr, mus_float_t input, mus_float_t unused) 
 {
@@ -7560,13 +7617,13 @@ static void formant_bank_reset(mus_any *ptr)
 {
   frm_bank *f = (frm_bank *)ptr;
   int size;
-  size = f->size;
-  memset((void *)(f->x0), 0, size * sizeof(mus_float_t));
-  memset((void *)(f->x1), 0, size * sizeof(mus_float_t));
-  memset((void *)(f->x2), 0, size * sizeof(mus_float_t));
-  memset((void *)(f->y0), 0, size * sizeof(mus_float_t));
-  memset((void *)(f->y1), 0, size * sizeof(mus_float_t));
-  memset((void *)(f->y2), 0, size * sizeof(mus_float_t));
+  size = f->size * sizeof(mus_float_t);
+  memset((void *)(f->x0), 0, size);
+  memset((void *)(f->x1), 0, size);
+  memset((void *)(f->x2), 0, size);
+  memset((void *)(f->y0), 0, size);
+  memset((void *)(f->y1), 0, size);
+  memset((void *)(f->y2), 0, size);
 }
 
 
@@ -8145,7 +8202,7 @@ static mus_any_class FORMANT_BANK_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &formant_bank_reset,
-  0, NULL /* TODO */
+  0, &frm_bank_copy
 };
 
 
@@ -8311,7 +8368,7 @@ static mus_any_class FIRMANT_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &frm_reset,
-  0, NULL /* TODO */
+  0, &frm_copy
 };
 
 

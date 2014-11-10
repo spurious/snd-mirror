@@ -37159,14 +37159,10 @@ static char *stacktrace_walker(s7_scheme *sc, s7_pointer code, s7_pointer e,
 
 static char *stacktrace_add_func(s7_scheme *sc, s7_pointer f, s7_pointer code, char *errstr, char *notes, int code_max, bool as_comment)
 {
-  int newlen, errlen, spaces_len;
+  int newlen, errlen;
   char *newstr, *str;
-  const char *spaces;
 
-  spaces = "                                                                                ";
-  spaces_len = strlen(spaces);
   errlen = strlen(errstr);
-
   if ((is_symbol(f)) &&
       (f != car(code)))
     {
@@ -37196,9 +37192,18 @@ static char *stacktrace_add_func(s7_scheme *sc, s7_pointer f, s7_pointer code, c
     }
   else
     {
-      snprintf(str, newlen, "%s%s%s%s\n", (as_comment) ? "; " : "", newstr, 
-	       (char *)(spaces + spaces_len - code_max + errlen + 1), 
-	       (notes) ? notes : "");
+      /* send out newstr, pad with spaces to code_max, then notes */
+      int len;
+      len = snprintf(str, newlen, "%s%s", (as_comment) ? "; " : "", newstr);
+      if (notes)
+	{
+	  int i;
+	  for (i = len; i < code_max - 1; i++)
+	    str[i] = ' ';
+	  str[i] = '\0';
+	  strcat(str, notes); 
+	  strcat(str, "\n");
+	}
     }
   free(newstr);
 
@@ -69892,15 +69897,7 @@ int main(int argc, char **argv)
 
   rl_readline_name = "s7";
   rl_attempted_completion_function = completion;
-  rl_initialize(); /* get the current COLS value */
-  if (COLS > 80)
-    {
-      char *str;
-      str = (char *)malloc(128 * sizeof(char));
-      snprintf(str, 128, "(with-let *stacktrace* (set! code-cols %d) (set! total-cols %d) (set! notes-start-col %d))", COLS - 45, COLS, COLS - 45);
-      s7_eval_c_string(s7, str);
-      free(str);
-    }
+  rl_initialize();
 
   if (argc == 2)
     {
