@@ -4922,6 +4922,22 @@ static int free_comb_bank(mus_any *ptr)
 }
 
 
+static mus_any *cmb_bank_copy(mus_any *ptr)
+{
+  cmb_bank *g, *p;
+  int i;
+
+  p = (cmb_bank *)ptr;
+  g = (cmb_bank *)malloc(sizeof(cmb_bank));
+  memcpy((void *)g, (void *)ptr, sizeof(cmb_bank));
+  g->gens = (mus_any **)malloc(p->size * sizeof(mus_any *));
+  for (i = 0; i < p->size; i++)
+    g->gens[i] = mus_copy(p->gens[i]);
+
+  return((mus_any *)g);
+}
+
+
 static mus_float_t run_comb_bank(mus_any *ptr, mus_float_t input, mus_float_t unused) 
 {
   return(mus_comb_bank(ptr, input));
@@ -4994,7 +5010,7 @@ static mus_any_class COMB_BANK_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &comb_bank_reset,
-  0, NULL /* TODO */
+  0, &cmb_bank_copy
 };
 
 
@@ -5312,6 +5328,22 @@ static int free_all_pass_bank(mus_any *ptr)
 }
 
 
+static mus_any *allp_bank_copy(mus_any *ptr)
+{
+  allp_bank *g, *p;
+  int i;
+
+  p = (allp_bank *)ptr;
+  g = (allp_bank *)malloc(sizeof(allp_bank));
+  memcpy((void *)g, (void *)ptr, sizeof(allp_bank));
+  g->gens = (mus_any **)malloc(p->size * sizeof(mus_any *));
+  for (i = 0; i < p->size; i++)
+    g->gens[i] = mus_copy(p->gens[i]);
+
+  return((mus_any *)g);
+}
+
+
 static mus_float_t run_all_pass_bank(mus_any *ptr, mus_float_t input, mus_float_t unused) 
 {
   return(mus_all_pass_bank(ptr, input));
@@ -5383,7 +5415,7 @@ static mus_any_class ALL_PASS_BANK_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &all_pass_bank_reset,
-  0, NULL /* TODO */
+  0, &allp_bank_copy
 };
 
 

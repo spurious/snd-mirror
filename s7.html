@@ -6729,6 +6729,8 @@ int main(int argc, char **argv)
 in Linux: gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -lrt -ldl -lm -Wl,-export-dynamic
 in *BSD:  gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -lm -Wl,-export-dynamic
 in OSX:   gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -lm
+
+You might also need to include -ltinfo.
 </pre>
 
 

@@ -99,7 +99,7 @@
  * in openBSD I think you need to include -ftrampolines in CFLAGS.
  *
  * if you want this file to compile into a stand-alone interpreter, define WITH_MAIN (this assumes access to readline)
- *   then load it with -lreadline -ldl -lm, etc.
+ *   then load it with -lreadline -ldl -lm, (and perhaps -ltinfo) etc.
  *
  * -O3 does not seem to gain us anything.
  */
@@ -69944,7 +69944,7 @@ int main(int argc, char **argv)
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2
  * s7test    1721 | 1358 |  995 | 1194 1185
- * index    44300 | 3291 | 1725 | 1276 1243 1242
+ * index    44300 | 3291 | 1725 | 1276 1243 1203
  * bench    42736 | 8752 | 4220 | 3506 3506
  * lg             |      |      |      6497
  * t502        90 |   43 | 14.5 | 12.7 12.7
@@ -69968,4 +69968,6 @@ int main(int argc, char **argv)
  *
  * cyclic-seq in rest of full-* 
  * cyclic-sequences is minimally tested in s7test (also c_object env)
+ * mus-copy
+ * expr-level profiler
  */
