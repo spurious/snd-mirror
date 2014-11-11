@@ -1487,21 +1487,19 @@ typedef struct {
 
 static int free_oscil_bank(mus_any *ptr) 
 {
-#if HAVE_SINCOS
   if (ptr)
     {
       ob *g = (ob *)ptr;
+#if HAVE_SINCOS
       if (g->sn1) {free(g->sn1); g->sn1 = NULL;}
       if (g->sn2) {free(g->sn2); g->sn2 = NULL;}
       if (g->cs1) {free(g->cs1); g->cs1 = NULL;}
       if (g->cs2) {free(g->cs2); g->cs2 = NULL;}
       if (g->phs) {free(g->phs); g->phs = NULL;}
+#endif
       if ((g->phases) && (g->free_phases)) {free(g->phases); g->phases = NULL;}
       free(ptr);
     }
-#else
-  if (ptr) free(ptr);
-#endif
   return(0);
 }
 
@@ -1535,6 +1533,7 @@ static mus_any *ob_copy(mus_any *ptr)
   return((mus_any *)g);
 }
 
+static mus_float_t *ob_data(mus_any *ptr) {return(((ob *)ptr)->phases);}
 
 static mus_float_t run_oscil_bank(mus_any *ptr, mus_float_t input, mus_float_t unused) 
 {
@@ -1602,7 +1601,7 @@ static mus_any_class OSCIL_BANK_CLASS = {
   &free_oscil_bank,
   &describe_oscil_bank,
   &oscil_bank_equalp,
-  0, 0,
+  &ob_data, 0,
   &oscil_bank_length, &oscil_bank_set_length,
   0, 0, 
   0, 0,
@@ -3102,18 +3101,18 @@ static int free_table_lookup(mus_any *ptr)
 
 static mus_any *tbl_copy(mus_any *ptr)
 {
-  tbl *g;
+  mus_long_t bytes;
+  tbl *g, *p;
+
+  p = (tbl *)ptr;
   g = (tbl *)malloc(sizeof(tbl));
   memcpy((void *)g, (void *)ptr, sizeof(tbl));
-  if (g->table_allocated)
-    {
-      mus_long_t bytes;
-      tbl *p;
-      p = (tbl *)ptr;
-      bytes = g->table_size * sizeof(mus_float_t);
-      g->table = (mus_float_t *)malloc(bytes);
-      memcpy((void *)(g->table), (void *)(p->table), bytes);
-    }
+
+  bytes = g->table_size * sizeof(mus_float_t);
+  g->table = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->table), (void *)(p->table), bytes);
+  g->table_allocated = true;
+
   return((mus_any *)g);
 }
 
@@ -4574,18 +4573,21 @@ static int free_delay(mus_any *gen)
 static mus_any *dly_copy(mus_any *ptr)
 {
   dly *g, *p;
+  mus_long_t bytes;
   p = (dly *)ptr;
   g = (dly *)malloc(sizeof(dly));
   memcpy((void *)g, (void *)ptr, sizeof(dly));
-  if (g->line_allocated)
+
+  bytes = g->size * sizeof(mus_float_t);
+  g->line = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->line), (void *)(p->line), bytes);
+  g->line_allocated = true;
+
+  if (p->filt)
     {
-      mus_long_t bytes;
-      bytes = g->size * sizeof(mus_float_t);
-      g->line = (mus_float_t *)malloc(bytes);
-      memcpy((void *)(g->line), (void *)(p->line), bytes);
+      g->filt = mus_copy(p->filt);
+      g->filt_allocated = true;
     }
-  if (g->filt_allocated)
-    g->filt = mus_copy(p->filt);
   return((mus_any *)g);
 }
 
@@ -8919,6 +8921,23 @@ static int free_filter(mus_any *ptr)
   return(0);
 }
 
+static mus_any *flt_copy(mus_any *ptr)
+{
+  flt *g, *p;
+  int bytes;
+
+  p = (flt *)ptr;
+  g = (flt *)malloc(sizeof(flt));
+  memcpy((void *)g, (void *)ptr, sizeof(flt));
+
+  /* we have to make a new state array -- otherwise the original and copy step on each other */
+  bytes = p->order * 2 * sizeof(mus_float_t);
+  g->state_allocated = true;
+  g->state = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->state), (void *)(p->state), bytes);
+  return((mus_any *)g);
+}
+
 
 static bool filter_equalp(mus_any *p1, mus_any *p2) 
 {
@@ -9015,7 +9034,7 @@ static mus_any_class FILTER_CLASS = {
   &filter_xcoeffs, &filter_ycoeffs, 
   0,
   &filter_reset,
-  0, NULL /* TODO */
+  0, &flt_copy
 };
 
 
@@ -9041,7 +9060,7 @@ static mus_any_class FIR_FILTER_CLASS = {
   0, 0, 
   &filter_xcoeffs, 0, 0,
   &filter_reset,
-  0, NULL /* TODO */
+  0, &flt_copy
 };
 
 
@@ -9067,7 +9086,7 @@ static mus_any_class IIR_FILTER_CLASS = {
   &filter_ycoeff, &filter_set_ycoeff, 
   0, &filter_ycoeffs, 0,
   &filter_reset,
-  0, NULL /* TODO */
+  0, &flt_copy
 };
 
 
@@ -9278,6 +9297,24 @@ static int free_onepall(mus_any *ptr)
   return(0);
 }
 
+static mus_any *onepall_copy(mus_any *ptr)
+{
+  onepall *g, *p;
+  int bytes;
+
+  p = (onepall *)ptr;
+  g = (onepall *)malloc(sizeof(onepall));
+  memcpy((void *)g, (void *)ptr, sizeof(onepall));
+
+  bytes = g->size * sizeof(mus_float_t);
+  g->x = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->x), (void *)(p->x), bytes);
+  g->y = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->y), (void *)(p->y), bytes);
+
+  return((mus_any *)g);
+}
+
 
 static mus_float_t run_onepall(mus_any *ptr, mus_float_t input, mus_float_t unused) 
 {
@@ -9407,7 +9444,7 @@ static mus_any_class ONE_POLE_ALL_PASS_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &onepall_reset,
-  0, NULL /* TODO */
+  0, &onepall_copy
 };
 
 

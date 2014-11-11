@@ -2,9 +2,9 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 05/07/05 13:09:37
-\ Changed: 14/11/06 01:06:08
+\ Changed: 14/11/11 00:08:48
 \
-\ @(#)examp.fs	1.65 11/6/14
+\ @(#)examp.fs	1.67 11/11/14
 
 \ With original comments and doc strings from examp.scm.
 \
@@ -84,8 +84,8 @@
 \ swap-selection-channels ( -- )
 \ make-sound-interp	( start :optional snd chn -- prc; loc self -- val )
 \ sound-interp		( func loc -- val )
-\ env-sound-interp	( env :optional time-scale snd chn -- file-name )
-\ granulated-sound-interp ( e :optional tscl glen genv ohop snd chn -- fname )
+\ env-sound-interp	( env :optional time-scale snd chn -- vct )
+\ granulated-sound-interp ( e :optional tscl glen genv ohop snd chn -- vct )
 \ filtered-env		( e :optional snd chn -- val )
 \  
 \ find-click		( loc -- pos )
@@ -385,7 +385,7 @@ It is intended for use with after-transform-hook."
 	       file mus-sound-chans
 	       file mus-sound-srate
 	       file mus-sound-header-type mus-header-type-name
-	       file mus-sound-sample-type mus-data-format-name
+	       file mus-sound-sample-type mus-sample-type-name
 	       file mus-sound-samples
 	       file mus-sound-chans
 	       file mus-sound-srate f* f/ ) string-format
@@ -1829,99 +1829,67 @@ from FUNC created by make-sound-interp."
 \ ;;   for this effect, but it is much more direct to apply the envelope
 \ ;;   to sound sample positions.
 
-hide
-: esi-ws-cb { envelope len newlen snd chn -- prc; self -- }
-	0 len snd chn #f channel->vct { data }
-	:envelope envelope :length newlen 1+ :scaler len make-env { read-env }
-	0 proc-create ( prc ) newlen , data , read-env , len ,
-  does> { self -- }
-	self @ { newlen }
-	self cell+ @ { data }
-	self 2 cells + @ { read-env }
-	self 3 cells + @ { len }
-	newlen 0 ?do
-		i data read-env env len array-interp *output* outa drop
-	loop
-;
-set-current
-
-: env-sound-interp <{ envelope :optional time-scale 1.0 snd #f chn #f -- file }>
-	doc" Read SND's channel CHN according to ENVELOPE and TIME-SCALE."
+: env-sound-interp <{ en :optional time-scale 1.0 snd #f chn #f -- vct }>
+	doc" Read SND's channel CHN according to EN and TIME-SCALE."
 	snd chn #f framples { len }
 	time-scale len f* fround->s { newlen }
-	envelope len newlen snd chn esi-ws-cb 
-	    :srate snd srate
-	    :channels 1
-	    :output snd-tempnam with-sound ws-output { new-snd }
-	"%s %s %s" #( envelope time-scale get-func-name ) format { origin }
-	0 newlen new-snd snd chn #t
-	    origin 0 current-edit-position #t set-samples ( file-name )
+	:envelope en :length newlen 1+ :scaler len make-env { read-env }
+	0 #f snd chn #f channel->vct { data }
+	newlen 0.0 make-vct map!
+		data read-env env len array-interp
+	end-map { new-snd }
+	"%s %s %s" #( en time-scale get-func-name ) string-format { origin }
+	0 newlen new-snd snd chn #t origin
+	    0 current-edit-position #t set-samples ( vct )
 ;
-previous
-
-hide
-: gsi-ws-cb { en len newlen grlen ohop gren snd -- prc; self -- }
-	:envelope en :length newlen :scaler len make-env { read-env }
-	grlen snd srate f* fround->s { grain-frames }
-	ohop snd srate f* fround->s { hop-frames }
-	grlen ohop f/ fround->s 1+ { num-reader }
-	num-reader make-array { readers }
-	num-reader make-array map!
-		:envelope gren :length grain-frames make-env
-	end-map { grain-envs }
-	snd srate 0.005 f* { jitter }
-	0 proc-create ( prc )
-	newlen , read-env , hop-frames , readers , grain-envs , jitter , snd ,
-  does> { self -- }
-	self @ { newlen }
-	self cell+ @ { read-env }
-	self 2 cells + @ { hop-frames }
-	self 3 cells + @ { readers }
-	self 4 cells + @ { grain-envs }
-	self 5 cells + @ { jitter }
-	self 6 cells + @ { snd }
-	0 { next-reader-startat }
-	0 { data-ctr }
-	newlen 0 ?do
-		read-env env { position-in-original }
-		i next-reader-startat >= if
-			readers cycle-start@ { next-reader }
-			readers
-			    position-in-original jitter mus-random f+ fround->s
-			    0 max
-			    snd 0 1 #f make-sampler cycle-set!
-			grain-envs next-reader array-ref mus-reset drop
-			hop-frames next-reader-startat + to next-reader-startat
-		then
-		0.0 ( sum )
-		readers each { rd }
-			rd sampler? if
-				grain-envs i array-ref env
-				    rd next-sample f* f+ ( sum += ... )
-			then
-		end-each { sum }
-		i sum *output* outa drop
-	loop
-;
-set-current
+\ #( 0 0 1 1 2 0 ) 2.0 env-sound-interp
 
 : granulated-sound-interp
-  <{ en :optional tscl 1.0 grlen 0.1 gren #f ohop 0.05 snd #f chn #f -- file }>
+  <{ en :optional tscl 1.0 grlen 0.1 gren #f ohop 0.05 snd #f chn #f -- vct }>
+	doc" Read the given channel following EN (as env-sound-interp), \
+using grains to create the re-tempo'd read."
 	gren empty? if
 		#( 0 0 1 1 2 1 3 0 ) to gren
 	then
 	snd chn #f framples { len }
 	tscl len f* fround->s { newlen }
-	en len newlen grlen ohop gren snd gsi-ws-cb
-	    :srate snd srate
-	    :channels 1
-	    :output snd-tempnam with-sound ws-output { new-snd }
+	:envelope en :length newlen :scaler len make-env { read-env }
+	snd srate { sr }
+	grlen sr f* fround->s { grain-framples }
+	ohop sr f* fround->s { hop-framples }
+	grlen ohop f/ fceil->s { num-readers }
+	0 0 { cur-readers next-reader }
+	sr 0.005 f* { jitter }
+	num-readers make-array { readers }
+	num-readers make-array map!
+		:envelope gren :length grain-framples make-env
+	end-map { grain-envs }
+	newlen 0.0 make-vct { new-snd }
+	newlen 0 ?do
+		read-env i set-mus-location drop
+		read-env env { position-in-original }
+		position-in-original jitter mus-random f+ fround->s 0 max { mx }
+		mx snd chn 1 #f make-sampler { srd }
+		readers srd cycle-set!
+		grain-envs next-reader array-ref mus-reset drop
+		readers cycle-start@ to next-reader
+		cur-readers next-reader < if
+			next-reader to cur-readers
+		then
+		cur-readers 0 ?do
+			grain-envs i array-ref { e }
+			readers i array-ref { rd }
+			\ j is index from outer loop
+			newlen hop-framples j + min j ?do
+				new-snd i e env rd next-sample f* vct-set! drop
+			loop
+		loop
+	hop-framples +loop
 	"%s %s %s %s %s %s"
 	    #( en tscl grlen gren ohop get-func-name ) string-format { origin }
-	0 newlen new-snd snd chn #t
-	    origin 0 current-edit-position #t set-samples ( file-name )
+	0 newlen new-snd snd chn #t origin
+	    0 current-edit-position #t set-samples ( vct )
 ;
-previous
 
 \ #( 0 0 1 .1 2 1 ) 1.0 0.2 #( 0 0 1 1 2 0 )      granulated-sound-interp
 \ #( 0 0 1 1 ) 2.0                                granulated-sound-interp

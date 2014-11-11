@@ -2,9 +2,9 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 04/03/15 19:25:58
-\ Changed: 14/11/04 00:30:54
+\ Changed: 14/11/11 01:37:20
 \
-\ @(#)clm.fs	1.113 11/4/14
+\ @(#)clm.fs	1.116 11/11/14
 
 \ clm-print		( fmt :optional args -- )
 \ clm-message		( fmt :optional args -- )
@@ -70,7 +70,6 @@
 \ make-sine-summation	( :key frequency initial-phase n a ratio -- gen )
 \ sine-summation	( gen :optional fm -- val )
 \ sine-summation?	( obj -- f )
-
 
 [ifundef] flog10
 	<'> flog  alias flog10
@@ -160,12 +159,12 @@ previous
 \ --- Pitches ---
 6.875 constant lowest-freq
 
-: interval->hertz ( n -- r )
-	{ n } 2.0 12.0 n 3.0 f+ f+ 12.0 f/ f** lowest-freq f*
+: interval->hertz { n -- 5 }
+	2.0 12.0 n 3.0 f+ f+ 12.0 f/ f** lowest-freq f*
 ;
 
-: keynum->hertz ( n -- r )
-	{ n } 2.0 n 3.0 f+ 12.0 f/ f** lowest-freq f*
+: keynum->hertz { n -- r }
+	2.0 n 3.0 f+ 12.0 f/ f** lowest-freq f*
 ;
 
 : hertz->keynum ( r -- n )
@@ -283,7 +282,7 @@ set-current
 previous
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-"fth 04-Nov-2014" value *clm-version*
+"fth 2014/11/11"  value *clm-version*
 #f 	      	  value *locsig*
 mus-lshort    	  value *clm-audio-format*
 #f            	  value *clm-comment*
@@ -313,16 +312,16 @@ Instruments using RUN or RUN-INSTRUMENT add entries to the list." help-set!
 	1          constant default-output-chans
 	44100      constant default-output-srate
 	mus-next   constant default-output-header-type
-	mus-lfloat constant default-output-data-format
+	mus-lfloat constant default-output-sample-type
 	mus-audio-default constant audio-output-device
-	512        constant dac-size
+	1024       constant dac-size
 [then]
 
 default-output-chans       value *clm-channels*
 default-output-srate       value *clm-srate*
 locsig-type                value *clm-locsig-type*
 default-output-header-type value *clm-header-type*
-default-output-data-format value *clm-data-format*
+default-output-sample-type value *clm-sample-type*
 audio-output-device        value *clm-output-device*
 dac-size                   value *clm-rt-bufsize*
 mus-file-buffer-size       value *clm-file-buffer-size*
@@ -330,7 +329,14 @@ mus-clipping               value *clm-clipped*
 mus-array-print-length     value *clm-array-print-length*
 clm-table-size             value *clm-table-size*
 clm-default-frequency      value *clm-default-frequency*
-  
+
+\ for backward compatibility
+*clm-sample-type* value *clm-data-format*
+<'> *clm-data-format* lambda: <{ val -- res }>
+	val to *clm-sample-type*
+	val
+; trace-var
+ 
 <'> *clm-default-frequency* lambda: <{ val -- res }>
 	val set-clm-default-frequency
 ; trace-var
@@ -386,8 +392,7 @@ Produces something like:\n\
 	       *clm-version* ) string-format
 ;
 
-: times->samples ( start dur -- len beg )
-	{ start dur }
+: times->samples { start dur -- len beg }
 	start seconds->samples { beg }
 	dur   seconds->samples { len }
 	beg len d+ beg
@@ -419,8 +424,7 @@ Produces something like:\n\
 	then
 ;
 
-: ws-info ( start dur vars -- start dur )
-	{ start dur vars }
+: ws-info { start dur vars -- start dur }
 	*clm-instruments*
 	    #( *clm-current-instrument* start dur vars ) array-push drop
 	*notehook* word? if
@@ -432,8 +436,7 @@ Produces something like:\n\
 hide
 : (run) ( start dur vars -- limit begin ) ws-info times->samples ;
 
-: (run-instrument) ( start dur args vars -- limit begin )
-	{ start dur args vars }
+: (run-instrument) { start dur args vars -- limit begin }
 	args hash? unless
 		#{} to args
 	then
@@ -512,8 +515,7 @@ set-current
 ; immediate compile-only
 previous
 
-: reverb-info ( caller in-chans out-chans -- )
-	{ caller in-chans out-chans }
+: reverb-info { caller in-chans out-chans -- }
 	"%s on %d in and %d out channels"
 	    #( caller in-chans out-chans ) clm-message
 ;
@@ -521,8 +523,7 @@ previous
 \ === Helper functions for instruments ===
 hide
 : ins-info ( ins-name -- )   to *clm-current-instrument* ;
-: event-info ( ev-name -- )
-	{ ename }
+: event-info { ename -- }
 	*clm-verbose* if
 		ename #() clm-message
 	then
@@ -615,7 +616,7 @@ set-current
 	"filename: %S" #( output ) clm-message
 	"   chans: %d, srate: %d" #( channels srate f>s ) clm-message
 	"  format: %s [%s]"
-	    #( output mus-sound-sample-type mus-data-format-name
+	    #( output mus-sound-sample-type mus-sample-type-name
 	       output mus-sound-header-type mus-header-type-name ) clm-message
 	"  length: %.3f  (%d frames)" #( dur frms ) clm-message
 	timer timer? if
@@ -657,7 +658,7 @@ previous
     srate         *clm-srate*
     channels      *clm-channels*
     audio-format  *clm-audio-format*
-    data-format   *clm-data-format*
+    sample-type   *clm-sample-type*
     header-type   *clm-header-type*
     comment       *clm-comment* -- }>
 	"%s removed" #( get-func-name ) fth-warning
@@ -723,7 +724,7 @@ previous
     srate         *clm-srate*
     channels      *clm-channels*
     audio-format  *clm-audio-format*
-    data-format   *clm-data-format*
+    sample-type   *clm-sample-type*
     header-type   *clm-header-type*
     comment       *clm-comment* -- }>
 	doc" Record from dac output device to the specified OUTPUT file."
@@ -738,7 +739,7 @@ previous
 		    string-format to comment
 	then
 	chans bufsize make-sound-data { data }
-	output srate chans data-format header-type comment
+	output srate chans sample-type header-type comment
 	    mus-sound-open-output { snd-fd }
 	snd-fd 0< if
 		'forth-error
@@ -754,9 +755,9 @@ previous
 		"  device: %d" #( output-device ) clm-message
 		"   chans: %d, srate: %d" #( chans srate ) clm-message
 		"r format: %s [Dac]"
-		    #( audio-format mus-data-format-name ) clm-message
+		    #( audio-format mus-sample-type-name ) clm-message
 		"w format: %s [%s]"
-		    #( data-format mus-data-format-name
+		    #( sample-type mus-sample-type-name
 		       header-type mus-header-type-name ) clm-message
 		"  length: %.3f  (%d frames)" #( duration frms ) clm-message
 		" comment: %S" #( comment ) clm-message
@@ -769,7 +770,7 @@ previous
 		snd-fd 0 bufsize 1- chans data mus-sound-write drop
 	bufsize +loop
 	dac-fd mus-audio-close drop
-	snd-fd frms chans * data-format mus-bytes-per-sample *
+	snd-fd frms chans * sample-type mus-bytes-per-sample *
 	mus-sound-close-output drop
 	old-srate set-mus-srate drop
 ;
@@ -847,8 +848,7 @@ hide
 	fname open-sound
 ;
 
-: ws-scaled-to ( ws -- )
-	{ ws }
+: ws-scaled-to { ws -- }
 	ws :scaled-to ws-ref { scale }
 	'snd provided? if
 		ws ws-get-snd { snd }
@@ -874,8 +874,7 @@ hide
 	then
 ;
 
-: ws-scaled-by ( ws -- )
-	{ ws }
+: ws-scaled-by { ws -- }
 	ws :scaled-by ws-ref { scale }
 	'snd provided? if
 		ws ws-get-snd { snd }
@@ -889,8 +888,7 @@ hide
 	then
 ;
 
-: ws-before-output ( ws -- )
-	{ ws }
+: ws-before-output { ws -- }
 	ws     :old-table-size         clm-table-size         ws-set!
 	( ws ) :old-file-buffer-size   mus-file-buffer-size   ws-set!
 	( ws ) :old-array-print-length mus-array-print-length ws-set!
@@ -916,7 +914,7 @@ hide
 		#( mus-bfloat
 		   mus-lfloat
 		   mus-bdouble
-		   mus-ldouble ) ws :data-format ws-ref array-member? if
+		   mus-ldouble ) ws :sample-type ws-ref array-member? if
 			#f set-mus-clipping
 		else
 			*clm-clipped* set-mus-clipping
@@ -928,8 +926,7 @@ hide
 	ws :locsig-type ws-ref set-locsig-type drop
 ;
 
-: ws-after-output ( ws -- ws )
-	{ ws }
+: ws-after-output { ws -- ws }
 	ws :old-table-size         ws-ref set-clm-table-size         drop
 	ws :old-file-buffer-size   ws-ref set-mus-file-buffer-size   drop
 	ws :old-array-print-length ws-ref set-mus-array-print-length drop
@@ -946,12 +943,11 @@ hide
 	*ws-args* array-pop
 ;
 
-: ws-statistics ( ws -- )
-	{ ws }
+: ws-statistics { ws -- }
 	ws :output ws-ref
-	    :reverb-file-name   ws :reverb-file-name ws-ref
-	    :scaled?   ws :scaled-to ws-ref ws :scaled-by ws-ref ||
-	    :timer   ws :timer ws-ref   snd-info
+	    :reverb-file-name ws :reverb-file-name ws-ref
+	    :scaled?          ws :scaled-to ws-ref ws :scaled-by ws-ref ||
+	    :timer            ws :timer ws-ref   snd-info
 ;
 
 \ player: xt, proc, string, or #f.
@@ -970,8 +966,7 @@ hide
 \	loop
 \ ;
 \ <'> play-3-times to *clm-player*
-: ws-play-it ( ws -- )
-	{ ws }
+: ws-play-it { ws -- }
 	ws :output ws-ref { output }
 	ws :player ws-ref { player }
 	player word? if
@@ -990,8 +985,7 @@ hide
 	then
 ;
 
-: set-args ( key def ws -- )
-	{ key def ws }
+: set-args { key def ws -- }
 	key def get-optkey ws key rot ws-set! to ws
 ;
 set-current
@@ -1008,7 +1002,7 @@ set-current
 	:clipped           *clm-clipped*          ws set-args
 	:comment           *clm-comment*          ws set-args
 	:continue-old-file #f                     ws set-args
-	:data-format       *clm-data-format*      ws set-args
+	:sample-type       *clm-sample-type*      ws set-args
 	:debug             *clm-debug*            ws set-args
 	:decay-time        *clm-decay-time*       ws set-args
 	:delete-reverb     *clm-delete-reverb*    ws set-args
@@ -1027,6 +1021,9 @@ set-current
 	:srate             *clm-srate*            ws set-args
 	:statistics        *clm-statistics*       ws set-args
 	:verbose           *clm-verbose*          ws set-args
+	\ for backward compatibility
+	:data-format *clm-sample-type* get-optkey
+	    ws :sample-type rot ws-set! to ws
 	ws
 ;  
 
@@ -1045,7 +1042,7 @@ set-current
 	:srate             ws1 :srate       	 ws-ref ws set-args
 	:locsig-type       ws1 :locsig-type 	 ws-ref ws set-args
 	:header-type       ws1 :header-type 	 ws-ref ws set-args
-	:data-format       ws1 :data-format 	 ws-ref ws set-args
+	:sample-type       ws1 :sample-type 	 ws-ref ws set-args
 	:comment "with-sound level %d"
 	    #( *ws-args* length ) string-format ws set-args
 	:notehook          ws1 :notehook         ws-ref ws set-args
@@ -1057,11 +1054,13 @@ set-current
 	:reverb-channels   ws1 :reverb-channels  ws-ref ws set-args
 	:reverb-file-name  ws1 :reverb-file-name ws-ref ws set-args
 	:decay-time        ws1 :decay-time       ws-ref ws set-args
+	\ for backward compatibility
+	:data-format ws1 :sample-type ws-ref get-optkey
+	    ws :sample-type rot ws-set! to ws
 	ws
 ;
 
-: with-sound-main ( body-xt ws -- ws )
-	{ body-xt ws }
+: with-sound-main { body-xt ws -- ws }
 	body-xt word? body-xt 1 "a proc or xt" assert-type
 	ws      ws?   ws      2 "a ws object"  assert-type
 	ws ws-before-output
@@ -1081,7 +1080,7 @@ set-current
 		output file-delete
 		output
 		ws :channels    ws-ref
-		ws :data-format ws-ref
+		ws :sample-type ws-ref
 		ws :header-type ws-ref
 		ws :comment ws-ref dup empty? if
 			drop make-default-comment
@@ -1106,7 +1105,7 @@ set-current
 			revput file-delete
 			revput
 			ws :reverb-channels ws-ref
-			ws :data-format     ws-ref
+			ws :sample-type     ws-ref
 			ws :header-type     ws-ref
 			"with-sound temporary reverb file" make-sample->file
 		then to *reverb*
@@ -1194,7 +1193,7 @@ previous
 :srate             *clm-srate*            (44100)\n\
 :locsig-type       *clm-locsig-type*      (mus-interp-linear)\n\
 :header-type       *clm-header-type*      (mus-next)\n\
-:data-format       *clm-data-format*      (mus-lfloat)\n\
+:sample-type       *clm-sample-type*      (mus-lfloat)\n\
 :clipped           *clm-clipped*          (#t)\n\
 :comment           *clm-comment*          (#f)\n\
 :notehook          *clm-notehook*         (#f)\n\
@@ -1399,8 +1398,7 @@ lambda: { tmp1 tmp2 }\n\
 ;
 
 \ === Example instruments, more in clm-ins.fs ===
-instrument: simp ( start dur freq amp -- )
-	{ start dur freq amp }
+instrument: simp { start dur freq amp -- }
 	:frequency freq make-oscil { os }
 	:envelope #( 0 0 25 1 75 1 100 0 )
 	    :duration dur :scaler amp make-env { en }
@@ -1411,16 +1409,14 @@ instrument: simp ( start dur freq amp -- )
 
 : run-test ( -- ) 0.0 1.0 330.0 0.5 simp ;
 
-: input-fn ( gen -- prc; dir self -- r )
-	{ gen }
+: input-fn { gen -- prc; dir self -- r }
 	1 proc-create ( prc )
 	gen ,
   does> { dir self -- r }
 	self @ ( gen ) readin
 ;
 
-instrument: src-simp ( start dur amp sr sr-env fname -- )
-	{ start dur amp sr sr-env fname }
+instrument: src-simp { start dur amp sr sr-env fname -- }
 	:file fname find-file make-readin { f }
 	:input f input-fn :srate sr make-src { sc }
 	:envelope sr-env :duration dur make-env { en }
@@ -1430,8 +1426,7 @@ instrument: src-simp ( start dur amp sr sr-env fname -- )
 	f mus-close drop
 ;instrument
 
-instrument: conv-simp ( start dur filt fname amp -- )
-	{ start dur filt fname amp }
+instrument: conv-simp { start dur filt fname amp -- }
 	:file fname find-file make-readin { f }
 	filt string? if
 		8192 0.0 make-vct { v }
@@ -1574,7 +1569,7 @@ event: inst-test ( -- )
 		48000 set-mus-srate drop
 		:file "arpeggio.snd"
 		    :header-type mus-next
-		    :data-format mus-bdouble
+		    :sample-type mus-bdouble
 		    :channels 2
 		    :srate mus-srate f>s
 		    :comment make-default-comment new-sound { snd }

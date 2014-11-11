@@ -69897,7 +69897,7 @@ int main(int argc, char **argv)
 
   rl_readline_name = "s7";
   rl_attempted_completion_function = completion;
-  rl_initialize();
+  /* rl_initialize(); */
 
   if (argc == 2)
     {
@@ -69965,6 +69965,7 @@ int main(int argc, char **argv)
  *
  * cyclic-seq in rest of full-* 
  * cyclic-sequences is minimally tested in s7test (also c_object env)
- * mus-copy
- * expr-level profiler
+ * mus-copy (16, snd-test, t816, valgrind for memleaks)
+ *   generators.scm: if gen has embedded gen, it needs a special copy method (e.g. adjustable-oscil),
+ *      but r2k!cos seems to work -- how? -- perhaps all output 0.0!
  */

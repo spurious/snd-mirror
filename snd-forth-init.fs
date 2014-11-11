@@ -1,6 +1,6 @@
 \ .snd_forth -- start up file for Snd/Forth
 \
-\ @(#)snd-forth-init.fs	1.42 4/28/14
+\ @(#)snd-forth-init.fs	1.43 11/11/14
 \
 
 \ You can install the *.fs scripts with:
@@ -66,7 +66,7 @@ hostname		constant *hostname*
 \ Set them before loading clm.fs.
 2		set-default-output-chans drop
 48000		set-default-output-srate drop
-mus-bdouble	set-default-output-data-format drop
+mus-bdouble	set-default-output-sample-type drop
 512		set-dac-size drop
 mus-clipping	set-clipping drop
 1024 1024 *	set-mus-file-buffer-size drop
@@ -95,6 +95,12 @@ require clm-ins
 	"%14s: %5.2f %5.2f" '( ins beg dur ) clm-message
 ;
 
+: clm-sox-player <{ output -- }>
+	"sox -qV1 %s -d" #( output ) string-format file-system unless
+		"exit %d\n" #( exit-status ) fth-print
+	then
+;
+
 440.0 to *clm-default-frequency*
 #t to *clm-play*
 #t to *clm-statistics*
@@ -104,6 +110,7 @@ require clm-ins
 *snd-home* "/sound/fth-test.reverb" $+ to *clm-reverb-file-name*
 #t to *clm-delete-reverb*
 <'> clm-print-instrument to *clm-notehook*
+<'> clm-sox-player to *clm-player*
 
 *snd-home* add-load-path
 "BROWSER" getenv "firefox" || set-html-program drop

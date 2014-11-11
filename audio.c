@@ -4910,7 +4910,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   int line, encode;
   audio_info_t a_info;
 
-  line = open("/dev/sound", O_WRONLY | O_NDELAY); /* /dev/audio assumes mono 8-bit mulaw */
+  line = open("/dev/sound", O_WRONLY); /* /dev/audio assumes mono 8-bit mulaw */
   if (line == -1)
     {
       if (errno == EBUSY) 
@@ -4976,15 +4976,16 @@ static int netbsd_formats(int ur_dev, int *val)
 
   dev = MUS_AUDIO_DEVICE(ur_dev);
   AUDIO_INITINFO(&info);
+
   audio_fd = open("/dev/sound", O_RDONLY | O_NONBLOCK, 0);
   if (audio_fd == -1) 
-    return_error_exit(MUS_AUDIO_CANT_READ, -1,
-		      mus_format("can't open /dev/sound: %s",
-				 strerror(errno)));
+    return_error_exit(MUS_AUDIO_CANT_READ, -1, mus_format("can't open /dev/sound: %s", strerror(errno)));
   err = ioctl(audio_fd, AUDIO_GETINFO, &info); 
   if (err == -1) 
-    return_error_exit(MUS_AUDIO_CANT_READ, audio_fd,
-		      mus_format("can't get dac info"));
+    {
+      close(audio_fd);
+      return_error_exit(MUS_AUDIO_CANT_READ, audio_fd, mus_format("can't get dac info"));
+    }
 
   for (i = 0; ; i++)
     {
@@ -4994,6 +4995,7 @@ static int netbsd_formats(int ur_dev, int *val)
       val[i + 1] = bsd_format_to_sndlib(e_info.encoding);
     }
   val[0] = i;
+  close(audio_fd);
   return(MUS_NO_ERROR);
 }
 

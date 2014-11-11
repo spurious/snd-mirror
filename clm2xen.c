@@ -1429,6 +1429,9 @@ static bool s7_equalp_mus_xen(void *val1, void *val2)
 #endif
 
 
+enum {G_FILTER_STATE, G_FILTER_XCOEFFS, G_FILTER_YCOEFFS};
+/* G_FILTER_STATE must = MUS_DATA_WRAPPER = 0 */
+
 static Xen mus_xen_copy(mus_xen *ms)
 {
   /* return an object -> copied mus_xen -> copied mus_any gen */
@@ -1446,9 +1449,44 @@ static Xen mus_xen_copy(mus_xen *ms)
 	{
 	  if ((mus_is_comb_bank(np->gen)) ||
 	      (mus_is_all_pass_bank(np->gen)) ||
-	      (mus_is_filtered_comb_bank(np->gen)))
+	      (mus_is_filtered_comb_bank(np->gen)) ||
+	      (mus_is_formant_bank(np->gen)))
 	    np->vcts[MUS_DATA_WRAPPER] = ms->vcts[MUS_DATA_WRAPPER];
 	  else np->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen));
+	}
+      else
+	{
+	  if (ms->nvcts == 3)
+	    {
+	      if (mus_is_oscil_bank(np->gen))
+		{
+		  np->vcts[0] = ms->vcts[0];
+		  np->vcts[1] = xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen));
+		  np->vcts[2] = ms->vcts[2];
+		}
+	      else
+		{
+		  np->vcts[G_FILTER_STATE] = xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen));
+		  np->vcts[G_FILTER_XCOEFFS] = ms->vcts[G_FILTER_XCOEFFS];
+		  np->vcts[G_FILTER_YCOEFFS] = ms->vcts[G_FILTER_YCOEFFS];
+		}
+	    }
+	  else
+	    {
+	      if (ms->nvcts == 2)
+		{
+		  if (mus_is_filtered_comb(np->gen))
+		    {
+		      np->vcts[0] = xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen));
+		      np->vcts[1] = XEN_FALSE; /* filt gen but it's not wrapped */
+		    }
+		  else
+		    {
+		      np->vcts[0] = ms->vcts[0];
+		      np->vcts[1] = ms->vcts[1];
+		    }
+		}
+	    }
 	}
     }
   return(mus_xen_to_object(np));
@@ -2133,10 +2171,6 @@ static Xen g_mus_set_data(Xen gen, Xen val)
   Xen_check_type(false, gen, 1, S_setB S_mus_data, "a generator with a data field");
   return(Xen_false);
 }
-
-
-enum {G_FILTER_STATE, G_FILTER_XCOEFFS, G_FILTER_YCOEFFS};
-/* G_FILTER_STATE must = MUS_DATA_WRAPPER = 0 */
 
 
 static Xen g_mus_xcoeffs(Xen gen) 

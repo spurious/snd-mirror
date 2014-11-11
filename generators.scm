@@ -4732,7 +4732,16 @@ index 10 (so 10/2 is the bes-jn arg):
 	    (set! (g 'top) (- 1.0 val))
 	    (if (not (= val 0.0))
 		(set! (g 'scl) (/ val)))
-	    val)))))
+	    val)))
+   (cons 'copy 
+	 (lambda (g)
+	   (inlet :frequency (g 'frequency)
+		  :duty-factor (g 'duty-factor)
+		  :gen (mus-copy (g 'gen))
+		  :top (g 'top)
+		  :scl (g 'scl)
+		  :fm 0.0)))))
+
   
 (defgenerator (adjustable-oscil 
 	       :make-wrapper (lambda (g)
