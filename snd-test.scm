@@ -1,34 +1,34 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [539]
-;;;  test 1: defaults                           [1219]
-;;;  test 2: headers                            [1583]
-;;;  test 3: variables                          [1898]
-;;;  test 4: sndlib                             [2464]
+;;;  test 0: constants                          [538]
+;;;  test 1: defaults                           [1218]
+;;;  test 2: headers                            [1582]
+;;;  test 3: variables                          [1897]
+;;;  test 4: sndlib                             [2463]
 ;;;  test 5: simple overall checks              [4465]
 ;;;  test 6: float-vectors                      [9197]
 ;;;  test 7: colors                             [9459]
 ;;;  test 8: clm                                [9978]
-;;;  test 9: mix                                [21914]
-;;;  test 10: marks                             [23685]
-;;;  test 11: dialogs                           [24626]
-;;;  test 12: extensions                        [24799]
-;;;  test 13: menus, edit lists, hooks, etc     [25064]
-;;;  test 14: all together now                  [26389]
-;;;  test 15: chan-local vars                   [27260]
-;;;  test 16: regularized funcs                 [28996]
-;;;  test 17: dialogs and graphics              [32763]
-;;;  test 18: save and restore                  [32875]
-;;;  test 19: transforms                        [34527]
-;;;  test 20: new stuff                         [36634]
-;;;  test 21: optimizer                         [37830]
-;;;  test 22: with-sound                        [38354]
-;;;  test 23: X/Xt/Xm                           [41311]
-;;;  test 24: GL                                [44990]
-;;;  test 25: errors                            [45113]
-;;;  test 26: s7                                [46630]
-;;;  test all done                              [46695]
-;;;  test the end                               [46875]
+;;;  test 9: mix                                [22007]
+;;;  test 10: marks                             [23778]
+;;;  test 11: dialogs                           [24722]
+;;;  test 12: extensions                        [24895]
+;;;  test 13: menus, edit lists, hooks, etc     [25160]
+;;;  test 14: all together now                  [26486]
+;;;  test 15: chan-local vars                   [27357]
+;;;  test 16: regularized funcs                 [29093]
+;;;  test 17: dialogs and graphics              [32860]
+;;;  test 18: save and restore                  [32972]
+;;;  test 19: transforms                        [34624]
+;;;  test 20: new stuff                         [36732]
+;;;  test 21: optimizer                         [37928]
+;;;  test 22: with-sound                        [38452]
+;;;  test 23: X/Xt/Xm                           [41409]
+;;;  test 24: GL                                [45085]
+;;;  test 25: errors                            [45208]
+;;;  test 26: s7                                [46725]
+;;;  test all done                              [46790]
+;;;  test the end                               [46970]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 (if (provided? 'pure-s7) (define make-rectangular make-complex))
@@ -9981,6 +9981,17 @@ EDITS: 2
 (if (defined? 'gsl-roots) (require snd-analog-filter.scm))
 
 (defgenerator sa1 freq (coscar #f) (sincar #f) (dly #f) (hlb #f))
+
+(define (copy-test o)
+  (let ((p (copy o)))
+    (if (not (equal? o p))
+	(snd-display #__line__ ";copy ~A != ~A~%" o p))
+    (mus-apply o 1.0)
+    (if (equal? o p)
+	(snd-display #__line__ ";copy/run ~A == ~A~%" o p))
+    (set! p (mus-copy o))
+    (if (not (equal? o p))
+	(snd-display #__line__ ";mus-copy ~A != ~A~%" o p))))
 
 (define (osc-opt)
   (let ((g1 (make-oscil 1000))
@@ -21907,6 +21918,88 @@ EDITS: 2
 	    (snd-display #__line__ ";pulsed-env: ~A" v)))
       (set! *clm-srate* old-srate))
     
+    (copy-test (make-oscil 330.0))
+    (copy-test (make-ncos 440.0 10))
+    (copy-test (make-nsin 440.0 10))
+    (copy-test (make-nrxycos 330.0 0.9 10))
+    (copy-test (make-nrxysin 330.0 0.9 10))
+    (copy-test (make-rxyk!cos 440.0))
+    (copy-test (make-rxyk!sin 440.0))
+    (copy-test (make-sawtooth-wave 100))
+    (copy-test (make-pulse-train 100))
+    (copy-test (make-triangle-wave 100))
+    (copy-test (make-square-wave 100))
+    (copy-test (make-one-zero .1 .2))
+    (copy-test (make-one-pole .1 .2))
+    (copy-test (make-two-zero .9 .1 .2))
+    (copy-test (make-two-pole .9 .1 .2))
+    (copy-test (make-polywave 440.0 '(1 .5 2 .5)))
+    (copy-test (make-polyshape 440.0 :coeffs (partials->polynomial '(1 1.0))))
+    (copy-test (make-oscil-bank (float-vector 100 200 300) (float-vector 0.0 1.0 2.0) (float-vector 0.5 0.25 0.125)))
+    (copy-test (make-delay 10))
+    (copy-test (make-comb .7 10))
+    (copy-test (make-notch .7 10))
+    (copy-test (make-all-pass .8 .7 10))
+    (copy-test (make-moving-average 10))
+    (copy-test (make-moving-norm 10))
+    (copy-test (make-moving-max 10))
+    (copy-test (make-comb-bank (vector (make-comb 0.742 99) (make-comb 0.733 49) (make-comb 0.715 53))))
+    (copy-test (make-all-pass-bank (vector (make-all-pass -0.700 0.700 51) (make-all-pass -0.700 0.700  33) (make-all-pass -0.700 0.700 11))))
+    (copy-test (make-filtered-comb .4 5 :filter (make-one-zero .3 .7)))
+    (copy-test (make-filtered-comb-bank (vector (make-filtered-comb .5 3) (make-filtered-comb .2 10) (make-filtered-comb -.7 11))))
+    (copy-test (make-formant 1200.0 0.9))
+    (copy-test (make-firmant 1200.0 0.9))
+    (copy-test (make-fir-filter 4 (float-vector 0.4 0.3 0.2 0.1)))
+    (copy-test (make-iir-filter 4 (float-vector 0.4 0.3 0.2 0.1)))
+    (copy-test (make-filter 4 (float-vector 0.4 0.3 0.2 0.1)))
+    (copy-test (make-one-pole-all-pass 8 .5))
+    (copy-test (make-readin "oboe.snd"))
+    
+    ;; formant-bank isn't really testing equality yet
+    
+    (let ((o (make-rand 100.0)))
+      (let ((p (copy o)))
+	(if (not (equal? o p))
+	    (snd-display #__line__ ";rand copy ~A != ~A~%" o p))))
+    
+    (let ((o (make-rand-interp 100.0)))
+      (let ((p (copy o)))
+	(if (not (equal? o p))
+	    (snd-display #__line__ ";rand-interp copy ~A != ~A~%" o p))))
+    
+    (let ((v1 (make-vector 10 .1 #t)))
+      (let ((o (make-rand 100.0 :distribution v1)))
+	(let ((p (copy o)))
+	  (if (not (equal? o p))
+	      (snd-display #__line__ ";rand+dist copy ~A != ~A~%" o p))))
+      
+      (let ((o (make-rand-interp 100.0 :distribution v1)))
+	(let ((p (copy o)))
+	  (if (not (equal? o p))
+	      (snd-display #__line__ ";rand-interp+dist copy ~A != ~A~%" o p)))))
+    
+    (let ((o (make-nssb 440.0)))
+      (let ((p (copy o)))
+	(if (not (equal? o p))
+	    (snd-display #__line__ ";nssb copy ~A != ~A~%" o p))
+	(nssb o 1.0)
+	(if (equal? o p)
+	    (snd-display #__line__ ";nssb copy/run ~A == ~A~%" o p))))
+    
+    (let ((v1 (float-vector 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9)))
+      (let ((o (make-wave-train 100 :wave v1)))
+	(let ((p (copy o)))
+	  (if (not (equal? o p))
+	      (snd-display #__line__ ";wave-train copy ~A != ~A~%" o p)))))
+    
+    (let ((v1 (float-vector 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9)))
+      (let ((o (make-table-lookup 440.0 :wave v1)))
+	(let ((p (copy o)))
+	  (if (not (equal? o p))
+	      (snd-display #__line__ ";table-lookup copy ~A != ~A~%" o p))
+	  (table-lookup o 1.0)
+	  (if (equal? o p)
+	      (snd-display #__line__ ";table-lookup run ~A == ~A~%" o p)))))
     ))
 
 
@@ -39928,6 +40021,7 @@ EDITS: 1
 	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.002\n"))
 	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.010\n"))
 	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.09999998\n  compute time: 0.001\n"))
+	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.09999998\n  compute time: 0.000\n"))
 	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.180\n")))
 	(snd-display #__line__ ";with-sound to float-vector stats: [~A]" stats-string))
     (with-sound (:output (make-vector (list 1 2210) 0.0 #t) :scaled-to .5 :statistics (lambda (str) (set! stats-string str)))
@@ -39937,6 +40031,7 @@ EDITS: 1
 	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.002\n"))
 	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.010\n"))
 	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.09999998\n  compute time: 0.001\n"))
+	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.09999998\n  compute time: 0.000\n"))
 	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.009\n")))
 	(snd-display #__line__ ";with-sound to float-vector stats: [~A]" stats-string))
     

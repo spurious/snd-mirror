@@ -1431,6 +1431,7 @@ static bool s7_equalp_mus_xen(void *val1, void *val2)
 
 enum {G_FILTER_STATE, G_FILTER_XCOEFFS, G_FILTER_YCOEFFS};
 /* G_FILTER_STATE must = MUS_DATA_WRAPPER = 0 */
+static void set_as_needed_input_choices(mus_any *gen, Xen obj, mus_xen *gn);
 
 static Xen mus_xen_copy(mus_xen *ms)
 {
@@ -1443,16 +1444,32 @@ static Xen mus_xen_copy(mus_xen *ms)
 #endif
 
   np->gen = mus_copy(ms->gen);
-  if (ms->nvcts > 0)
+  if (ms->nvcts == 0)
+    {
+    }
+  else
     {
       if (ms->nvcts == 1)
 	{
 	  if ((mus_is_comb_bank(np->gen)) ||
 	      (mus_is_all_pass_bank(np->gen)) ||
-	      (mus_is_filtered_comb_bank(np->gen)) ||
-	      (mus_is_formant_bank(np->gen)))
-	    np->vcts[MUS_DATA_WRAPPER] = ms->vcts[MUS_DATA_WRAPPER];
-	  else np->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen));
+	      (mus_is_filtered_comb_bank(np->gen)))
+	    {
+	      /* set up objects for new gens so that they will eventually be GC'd */
+	      Xen v;
+	      int i, len;
+	      len = Xen_vector_length(ms->vcts[MUS_DATA_WRAPPER]);
+	      v = Xen_make_vector(len, Xen_false);
+	      np->vcts[MUS_DATA_WRAPPER] = v;
+	      for (i = 0; i < len; i++)
+		Xen_vector_set(v, i, mus_xen_to_object(mus_any_to_mus_xen(mus_bank_generator(np->gen, i))));
+	    }
+	  else
+	    {
+	      if (mus_is_formant_bank(np->gen))
+		np->vcts[MUS_DATA_WRAPPER] = ms->vcts[MUS_DATA_WRAPPER];
+	      else np->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen));
+	    }
 	}
       else
 	{
@@ -1484,6 +1501,30 @@ static Xen mus_xen_copy(mus_xen *ms)
 		    {
 		      np->vcts[0] = ms->vcts[0];
 		      np->vcts[1] = ms->vcts[1];
+		    }
+		}
+	      else
+		{
+		  if (ms->nvcts == MUS_MAX_VCTS)
+		    {
+		      int i;
+		      for (i = 0; i < MUS_MAX_VCTS; i++)
+			np->vcts[i] = ms->vcts[i];
+
+		      if (mus_is_granulate(np->gen))
+			np->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_granulate_grain_max_length(np->gen), mus_data(np->gen));
+
+		      if ((mus_is_convolve(np->gen)) ||
+			  (mus_is_src(np->gen)) ||
+			  (mus_is_granulate(np->gen)) ||
+			  (mus_is_phase_vocoder(np->gen)))
+			{
+			  Xen c_obj;
+			  c_obj = mus_xen_to_object(np);
+			  np->vcts[MUS_SELF_WRAPPER] = c_obj;
+			  set_as_needed_input_choices(np->gen, np->vcts[MUS_INPUT_FUNCTION], np);
+			  return(c_obj);
+			}
 		    }
 		}
 	    }

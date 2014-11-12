@@ -4289,10 +4289,18 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
     Obj = (*(--(Sc->free_heap_top))); \
     } while (0)
 
+#if (!DEBUGGING)
 #define NEW_CELL_NO_CHECK(Sc, Obj) do {Obj = (*(--(Sc->free_heap_top)));} while (0)
   /* since sc->free_heap_trigger is GC_TRIGGER_SIZE above the free heap base, we don't need
    *   to check it repeatedly after the first such check.
    */
+#else
+#define NEW_CELL_NO_CHECK(Sc, Obj) \
+  do {						\
+    if (Sc->free_heap_top <= Sc->free_heap_trigger) fprintf(stderr, "%d: new_cell checked [%d]\n", __LINE__, (int)(sc->free_heap_top - sc->free_heap)); \
+    Obj = (*(--(Sc->free_heap_top))); \
+    } while (0)
+#endif
 
 
 static void expand_heap(s7_scheme *sc)
@@ -5189,6 +5197,19 @@ static s7_pointer make_simple_let(s7_scheme *sc)
     s7_pointer _slot_, _sym_, _val_;			\
     _sym_ = Symbol; _val_ = Value;			\
     NEW_CELL_NO_CHECK(sc, _slot_);\
+    slot_symbol(_slot_) = _sym_;\
+    slot_set_value(_slot_, _val_);	\
+    symbol_set_local(_sym_, let_id(Frame), _slot_); \
+    set_type(_slot_, T_SLOT | T_IMMUTABLE);\
+    next_slot(_slot_) = let_slots(Frame);\
+    let_slots(Frame) = _slot_;\
+  } while (0)
+
+#define ADD_SLOT_CHECKED(Frame, Symbol, Value) \
+  do { \
+    s7_pointer _slot_, _sym_, _val_;			\
+    _sym_ = Symbol; _val_ = Value;			\
+    NEW_CELL(sc, _slot_);\
     slot_symbol(_slot_) = _sym_;\
     slot_set_value(_slot_, _val_);	\
     symbol_set_local(_sym_, let_id(Frame), _slot_); \
@@ -30844,7 +30865,7 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
   #define H_vector "(vector ...) returns a vector whose elements are the arguments"
   s7_Int len;
   s7_pointer vec;
-  
+
   len = s7_list_length(sc, args);
   vec = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
   if (len > 0)
@@ -55933,7 +55954,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer val;
 		    val = ((s7_function)fcdr(args))(sc, car(args));
-		    ADD_SLOT(e, car(p), val);
+		    /* there can be a zillion args here (vector...), so we can't use ADD_SLOT */
+		    ADD_SLOT_CHECKED(e, car(p), val);
 		  }
 		sc->envir = e;
 		sc->z = sc->NIL;
@@ -69946,7 +69968,7 @@ int main(int argc, char **argv)
  * lg             |      |      |      6497
  * t502        90 |   43 | 14.5 | 12.7 12.7
  * t455|6     265 |   89 |  9   |       8.4
- * t816           |   71 | 70.6 | 38.0 31.8
+ * t816           |   71 | 70.6 | 38.0 31.8 30.2
  * calls      359 |  275 | 54   | 34.7 34.7
  *
  * --------------------------------------------------
@@ -69965,7 +69987,7 @@ int main(int argc, char **argv)
  *
  * cyclic-seq in rest of full-* 
  * cyclic-sequences is minimally tested in s7test (also c_object env)
- * mus-copy (16, snd-test, t816, valgrind for memleaks)
+ * mus-copy left-overs
  *   generators.scm: if gen has embedded gen, it needs a special copy method (e.g. adjustable-oscil),
  *      but r2k!cos seems to work -- how? -- perhaps all output 0.0!
  */

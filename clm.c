@@ -6120,6 +6120,17 @@ mus_float_t mus_filtered_comb_bank(mus_any *filtered_combs, mus_float_t inval)
 }
 
 
+mus_any *mus_bank_generator(mus_any *g, int i)
+{
+  if (mus_is_comb_bank(g))
+    return(((cmb_bank *)g)->gens[i]);
+  if (mus_is_all_pass_bank(g))
+    return(((allp_bank *)g)->gens[i]);
+  if (mus_is_filtered_comb_bank(g))
+    return(((fltcmb_bank *)g)->gens[i]);
+  return(NULL);
+}
+
 
 
 
@@ -10399,6 +10410,38 @@ static int free_file_to_sample(mus_any *p)
   return(0);
 }
 
+static mus_long_t make_ibufs(rdin *gen)
+{
+  int i;
+  mus_long_t len;
+  len = gen->file_end + 1;
+  if (len > gen->file_buffer_size) 
+    len = gen->file_buffer_size;
+	      
+  gen->ibufs = (mus_float_t **)malloc(gen->chans * sizeof(mus_float_t *));
+  for (i = 0; i < gen->chans; i++)
+    gen->ibufs[i] = (mus_float_t *)malloc(len * sizeof(mus_float_t));
+
+  return(len);
+}
+
+static mus_any *rdin_copy(mus_any *ptr)
+{
+  rdin *g, *p;
+  p = (rdin *)ptr;
+  g = (rdin *)malloc(sizeof(rdin));
+  memcpy((void *)g, (void *)ptr, sizeof(rdin));
+  g->file_name = mus_strdup(p->file_name);
+  if (p->ibufs)
+    {
+      int i;
+      mus_long_t len;
+      len = make_ibufs(g);
+      for (i = 0; i < g->chans; i++)
+	memcpy((void *)(g->ibufs[i]), (void *)(p->ibufs[i]), len * sizeof(mus_float_t));
+    }
+  return((mus_any *)g);
+}
 
 static mus_long_t file_to_sample_length(mus_any *ptr) {return((((rdin *)ptr)->file_end));}
 
@@ -10452,17 +10495,7 @@ static mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
       else
 	{ 
 	  if (gen->ibufs == NULL) 
-	    {
-	      int i;
-	      mus_long_t len;
-	      len = gen->file_end + 1;
-	      if (len > gen->file_buffer_size) 
-		len = gen->file_buffer_size;
-	      
-	      gen->ibufs = (mus_float_t **)malloc(gen->chans * sizeof(mus_float_t *));
-	      for (i = 0; i < gen->chans; i++)
-		gen->ibufs[i] = (mus_float_t *)malloc(len * sizeof(mus_float_t));
-	    }
+	    make_ibufs(gen);
 	  mus_file_seek_frample(fd, gen->data_start);
 
 	  if ((gen->data_start + gen->file_buffer_size) >= gen->file_end)
@@ -10542,7 +10575,7 @@ static mus_any_class FILE_TO_SAMPLE_CLASS = {
   0, /* channel */
   0, 0, 0, 0, 0,
   &no_reset,
-  0, NULL /* TODO */
+  0, &rdin_copy
 };
 
 
@@ -10676,7 +10709,7 @@ static mus_any_class READIN_CLASS = {
   &rd_channel,
   0, 0, 0, 0, 0,
   &no_reset,
-  0, NULL /* TODO */
+  0, &rdin_copy
 };
 
 
@@ -10867,7 +10900,7 @@ static mus_any_class FILE_TO_FRAMPLE_CLASS = {
   0, /* channel */
   0, 0, 0, 0, 0,
   &no_reset,
-  0, NULL /* TODO */
+  0, &rdin_copy
 };
 
 
@@ -12958,6 +12991,27 @@ static int free_src_gen(mus_any *srptr)
   return(0);
 }
 
+static mus_any *sr_copy(mus_any *ptr)
+{
+  sr *g, *p;
+  int bytes;
+
+  p = (sr *)ptr;
+  g = (sr *)malloc(sizeof(sr));
+  memcpy((void *)g, (void *)ptr, sizeof(sr));
+
+  bytes = (2 * g->lim + 1) * sizeof(mus_float_t);
+  g->data = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->data), (void *)(p->data), bytes);
+  
+  if (p->coeffs)
+    {
+      bytes = p->lim * sizeof(mus_float_t);
+      g->coeffs = (mus_float_t *)malloc(bytes);
+      memcpy((void *)(g->coeffs), (void *)(p->coeffs), bytes);
+    }
+  return((mus_any *)g);
+}
 
 static bool src_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 
@@ -13038,7 +13092,7 @@ static mus_any_class SRC_CLASS = {
   0, 0, 0, 0, 0,
   &src_reset,
   &src_set_closure, 
-  NULL /* TODO */
+  &sr_copy
 };
 
 
@@ -13566,6 +13620,27 @@ static int free_granulate(mus_any *ptr)
   return(0);
 }
 
+static mus_any *grn_info_copy(mus_any *ptr)
+{
+  grn_info *g, *p;
+  int bytes;
+
+  p = (grn_info *)ptr;
+  g = (grn_info *)malloc(sizeof(grn_info));
+  memcpy((void *)g, (void *)ptr, sizeof(grn_info));
+
+  bytes = g->out_data_len * sizeof(mus_float_t);
+  g->out_data = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->out_data), (void *)(p->out_data), bytes);
+
+  bytes = g->in_data_len * sizeof(mus_float_t);
+  g->in_data = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->in_data), (void *)(p->in_data), bytes);
+  g->grain = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->grain), (void *)(p->grain), bytes);
+  
+  return((mus_any *)g);
+}
 
 static mus_long_t grn_length(mus_any *ptr) {return(((grn_info *)ptr)->grain_len);}
 
@@ -13670,7 +13745,7 @@ static mus_any_class GRANULATE_CLASS = {
   0, 0, 0, 0, 0, 0,
   &grn_reset,
   &grn_set_closure,
-  NULL /* TODO */
+  &grn_info_copy
 };
 
 
@@ -15214,6 +15289,24 @@ static int free_convolve(mus_any *ptr)
   return(0);
 }
 
+static mus_any *conv_copy(mus_any *ptr)
+{
+  conv *g, *p;
+  int bytes;
+
+  p = (conv *)ptr;
+  g = (conv *)malloc(sizeof(conv));
+  memcpy((void *)g, (void *)ptr, sizeof(conv));
+  bytes = g->fftsize * sizeof(mus_float_t);
+  g->rl1 = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->rl1), (void *)(p->rl1), bytes);
+  g->rl2 = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->rl2), (void *)(p->rl2), bytes);
+  g->buf = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->buf), (void *)(p->buf), bytes);
+  return((mus_any *)g);
+}
+
 
 static mus_long_t conv_length(mus_any *ptr) {return(((conv *)ptr)->fftsize);}
 static mus_float_t run_convolve(mus_any *ptr, mus_float_t unused1, mus_float_t unused2) {return(mus_convolve(ptr, NULL));}
@@ -15252,7 +15345,7 @@ static mus_any_class CONVOLVE_CLASS = {
   0, 0, 0, 0, 0,
   &convolve_reset,
   &conv_set_closure,
-  NULL /* TODO */
+  &conv_copy
 };
 
 
@@ -15528,6 +15621,58 @@ static int free_phase_vocoder(mus_any *ptr)
 }
 
 
+static mus_any *pv_info_copy(mus_any *ptr)
+{
+  pv_info *g, *p;
+  int bytes;
+
+  p = (pv_info *)ptr;
+  g = (pv_info *)malloc(sizeof(pv_info));
+  memcpy((void *)g, (void *)ptr, sizeof(pv_info));
+
+  bytes = p->N * sizeof(mus_float_t);
+  g->freqs = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->freqs), (void *)(p->freqs), bytes);
+  g->ampinc = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->ampinc), (void *)(p->ampinc), bytes);
+  g->win = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->win), (void *)(p->win), bytes);
+  if (p->in_data)
+    {
+      g->in_data = (mus_float_t *)malloc(bytes);
+      memcpy((void *)(g->in_data), (void *)(p->in_data), bytes);
+    }
+
+  bytes = (p->N / 2) * sizeof(mus_float_t);
+  g->amps = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->amps), (void *)(p->amps), bytes);
+  g->phases = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->phases), (void *)(p->phases), bytes);
+  g->lastphase = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->lastphase), (void *)(p->lastphase), bytes);
+  g->phaseinc = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->phaseinc), (void *)(p->phaseinc), bytes);
+
+#if HAVE_SINCOS
+  bytes = (p->N / 2) * sizeof(int);
+  g->indices = (int *)malloc(bytes);
+  memcpy((void *)(g->indices), (void *)(p->indices), bytes);
+
+  bytes = p->N * sizeof(mus_float_t);
+  g->sn = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->sn), (void *)(p->sn), bytes);
+  g->cs = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->cs), (void *)(p->cs), bytes);
+
+  bytes = p->N * sizeof(bool);
+  g->sc_safe = (bool *)malloc(bytes);
+  memcpy((void *)(g->sc_safe), (void *)(p->sc_safe), bytes);
+#endif
+
+  return((mus_any *)g);
+}
+
+
 static mus_long_t pv_length(mus_any *ptr) {return(((pv_info *)ptr)->N);}
 
 static mus_long_t pv_hop(mus_any *ptr) {return(((pv_info *)ptr)->D);}
@@ -15597,7 +15742,7 @@ static mus_any_class PHASE_VOCODER_CLASS = {
   0, 0, 0, 0, 0, 0,
   &pv_reset,
   &pv_set_closure,
-  NULL /* TODO */
+  &pv_info_copy
 };
 
 
@@ -15961,6 +16106,7 @@ typedef struct {
 #else
   mus_float_t phase, freq, sign;
 #endif
+  int size;
 } ssbam;
 
 
@@ -16066,6 +16212,30 @@ static int free_ssb_am(mus_any *ptr)
       free(ptr); 
     }
   return(0);
+}
+
+
+static mus_any *ssbam_copy(mus_any *ptr)
+{
+  ssbam *g, *p;
+  int bytes;
+
+  p = (ssbam *)ptr;
+  g = (ssbam *)malloc(sizeof(ssbam));
+  memcpy((void *)g, (void *)ptr, sizeof(ssbam));
+
+  g->dly = mus_copy(p->dly);
+  g->hilbert = mus_copy(p->hilbert);
+#if (!HAVE_SINCOS)
+  g->cos_osc = mus_copy(p->cos_osc);
+  g->sin_osc = mus_copy(p->sin_osc);
+#endif
+
+  bytes = p->size * sizeof(mus_float_t);
+  g->coeffs = (mus_float_t *)malloc(bytes);
+  memcpy((void *)(g->coeffs), (void *)(p->coeffs), bytes);
+
+  return((mus_any *)g);
 }
 
 
@@ -16222,7 +16392,7 @@ static mus_any_class SSB_AM_CLASS = {
   0, 0, 
   &ssb_am_xcoeffs, 0, 0,
   &ssb_reset,
-  0, NULL /* TODO */
+  0, &ssbam_copy
 };
 
 
@@ -16253,7 +16423,8 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
 
   len = order * 2 + 1;
   flen = len + 1; /* even -- need 4 */
-  if ((flen & 2) != 0) flen += 2; 
+  if ((flen & 2) != 0) flen += 2;
+  gen->size = flen;
 
   if ((flen == ssb_am_last_flen) && (ssb_am_last_coeffs))
     {

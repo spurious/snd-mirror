@@ -599,6 +599,7 @@ MUS_EXPORT mus_float_t mus_ssb_am(mus_any *ptr, mus_float_t insig, mus_float_t f
 MUS_EXPORT void mus_clear_sinc_tables(void);
 MUS_EXPORT void *mus_environ(mus_any *gen);
 MUS_EXPORT void *mus_set_environ(mus_any *gen, void *e);
+MUS_EXPORT mus_any *mus_bank_generator(mus_any *g, int i);
 #ifdef __cplusplus
 }
 #endif
@@ -608,7 +609,7 @@ MUS_EXPORT void *mus_set_environ(mus_any *gen, void *e);
 
 /* Change log.
  *
- * 8-Nov:      mus_copy.
+ * 8-Nov:      mus_copy, mus_bank_generator.
  * 24-Oct:     mus_generator_set_feeders.
  * 10-Aug:     data-format -> sample-type.
  * 17-Apr:     moving_norm generator.
