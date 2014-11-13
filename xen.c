@@ -1411,16 +1411,7 @@ void xen_repl(int argc, char **argv)
 #if (WITH_READLINE)
   rl_readline_name = (char *)"xen";
   rl_attempted_completion_function = xen_completion;
-  rl_initialize(); /* get the current COLS value */
-  if (COLS > 80)
-    {
-      char *str;
-      str = (char *)calloc(128, sizeof(char));
-      snprintf(str, 128, "(with-let *stacktrace* (set! code-cols %d) (set! total-cols %d) (set! notes-start-col %d))",
-	       COLS - 45, COLS, COLS - 45);
-      s7_eval_c_string(s7, str);
-      free(str);
-    }
+  /* rl_initialize(); */
 #else
   int size = 512;
   bool expr_ok = true;

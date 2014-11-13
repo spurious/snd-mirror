@@ -9589,7 +9589,6 @@ static mus_float_t mus_env_line(mus_any *ptr)
 }
 
 
-bool mus_env_is_constant(mus_any *ptr);
 bool mus_env_is_constant(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
@@ -9837,6 +9836,24 @@ static int free_env_gen(mus_any *pt)
   return(0);
 }
 
+static mus_any *seg_copy(mus_any *ptr)
+{
+  seg *g, *p;
+  p = (seg *)ptr;
+  g = (seg *)malloc(sizeof(seg));
+  memcpy((void *)g, (void *)ptr, sizeof(seg));
+  if (p->rates)
+    {
+      int bytes;
+      bytes = p->size * sizeof(double);
+      g->rates = (double *)malloc(bytes);
+      memcpy((void *)(g->rates), (void *)(p->rates), bytes);
+      bytes = (p->size + 1) * sizeof(mus_long_t);
+      g->locs = (mus_long_t *)malloc(bytes);
+      memcpy((void *)(g->locs), (void *)(p->locs), bytes);
+    }
+  return((mus_any *)g);
+}
 
 static mus_float_t *env_data(mus_any *ptr) {return(((seg *)ptr)->original_data);}    /* mus-data */
 
@@ -9965,7 +9982,7 @@ static mus_any_class ENV_CLASS = {
   0,
   0, 0, 0, 0, 0,
   &env_reset,
-  0, NULL /* TODO */
+  0, &seg_copy
 };
 
 
@@ -10204,14 +10221,36 @@ mus_float_t mus_env_any(mus_any *e, mus_float_t (*connect_points)(mus_float_t va
 typedef struct {
   mus_any_class *core;
   mus_any *e, *p;
+  bool gens_allocated;
 } plenv;
 
 
 static int free_pulsed_env(mus_any *ptr) 
 {
   if (ptr) 
-    free(ptr); 
+    {
+      plenv *g;
+      g = (plenv *)ptr;
+      if (g->gens_allocated)
+	{
+	  mus_free(g->e);
+	  mus_free(g->p);
+	}
+      free(ptr); 
+    }
   return(0);
+}
+
+static mus_any *plenv_copy(mus_any *ptr)
+{
+  plenv *g, *p;
+  p = (plenv *)ptr;
+  g = (plenv *)malloc(sizeof(plenv));
+  memcpy((void *)g, (void *)ptr, sizeof(plenv));
+  g->gens_allocated = true;
+  g->e = mus_copy(p->e);
+  g->p = mus_copy(p->p);
+  return((mus_any *)g);
 }
 
 
@@ -10270,7 +10309,7 @@ static mus_any_class PULSED_ENV_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &pulsed_env_reset,
-  0, NULL /* TODO */
+  0, &plenv_copy
 };
 
 
@@ -10282,6 +10321,7 @@ mus_any *mus_make_pulsed_env(mus_any *e, mus_any *p)
   gen->core = &PULSED_ENV_CLASS;
   gen->e = e;
   gen->p = p;
+  gen->gens_allocated = false;
   return((mus_any *)gen);
 }
 
@@ -10998,6 +11038,31 @@ static int free_sample_to_file(mus_any *p)
   return(0);
 }
 
+static mus_any *rdout_copy(mus_any *ptr)
+{
+  rdout *g, *p;
+  p = (rdout *)ptr;
+  g = (rdout *)malloc(sizeof(rdout));
+  memcpy((void *)g, (void *)ptr, sizeof(rdout));
+  g->file_name = mus_strdup(p->file_name);
+  if (p->obufs)
+    {
+      int i;
+      mus_long_t bytes;
+      bytes = clm_file_buffer_size * sizeof(mus_float_t);
+      g->obufs = (mus_float_t **)malloc(g->chans * sizeof(mus_float_t *));
+      for (i = 0; i < g->chans; i++)
+	{
+	  g->obufs[i] = (mus_float_t *)malloc(bytes);
+	  memcpy((void *)(g->obufs[i]), (void *)(p->obufs[i]), bytes);
+	}
+      g->obuf0 = g->obufs[0];
+      if (g->chans > 1)
+	g->obuf1 = g->obufs[1];
+      else g->obuf1 = NULL;
+    }
+  return((mus_any *)g);
+}
 
 static int sample_to_file_channels(mus_any *ptr) {return((int)(((rdout *)ptr)->chans));}
 
@@ -11034,7 +11099,7 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
   0, 0, 0,
   0, 0, 0, 0, 0,
   &no_reset,
-  0, NULL /* TODO */
+  0, &rdout_copy
 };
 
 
@@ -11677,7 +11742,7 @@ static mus_any_class FRAMPLE_TO_FILE_CLASS = {
   0, 0, 0,
   0, 0, 0, 0, 0,
   &no_reset,
-  0, NULL /* TODO */
+  0, &rdout_copy
 };
 
 
@@ -11868,6 +11933,37 @@ static int free_locsig(mus_any *p)
   return(0);
 }
 
+static mus_any *locs_copy(mus_any *ptr)
+{
+  locs *g, *p;
+  int bytes;
+  p = (locs *)ptr;
+  g = (locs *)malloc(sizeof(locs));
+  memcpy((void *)g, (void *)ptr, sizeof(locs));
+  bytes = g->chans * sizeof(mus_float_t);
+  if (p->outn)
+    {
+      g->outn = (mus_float_t *)malloc(bytes);
+      memcpy((void *)(g->outn), (void *)(p->outn), bytes);
+    }
+  if (p->outf)
+    {
+      g->outf = (mus_float_t *)malloc(bytes);
+      memcpy((void *)(g->outf), (void *)(p->outf), bytes);
+    }
+  bytes = g->rev_chans * sizeof(mus_float_t);
+  if (p->revn)
+    {
+      g->revn = (mus_float_t *)malloc(bytes);
+      memcpy((void *)(g->revn), (void *)(p->revn), bytes);
+    }
+  if (p->revf)
+    {
+      g->revf = (mus_float_t *)malloc(bytes);
+      memcpy((void *)(g->revf), (void *)(p->revf), bytes);
+    }
+  return((mus_any *)g);
+}
 
 static mus_long_t locsig_length(mus_any *ptr) {return(((locs *)ptr)->chans);}
 
@@ -12047,7 +12143,7 @@ static mus_any_class LOCSIG_CLASS = {
   &locsig_xcoeffs, 0, 0,
   &locsig_reset,
   &locsig_set_closure,  /* the method name is set_environ (clm2xen.c) */
-  NULL /* TODO */
+  &locs_copy
 };
 
 
@@ -12556,7 +12652,6 @@ void mus_move_sound_set_detour(mus_any *ptr, void (*detour)(mus_any *ptr, mus_lo
 }
 
 
-
 static char *describe_move_sound(mus_any *ptr)
 {
   dloc *gen = (dloc *)ptr;
@@ -12644,6 +12739,56 @@ static int free_move_sound(mus_any *p)
   return(0);
 }
 
+static mus_any *dloc_copy(mus_any *ptr)
+{
+  dloc *g, *p;
+  int i, bytes;
+  p = (dloc *)ptr;
+  g = (dloc *)malloc(sizeof(dloc));
+  memcpy((void *)g, (void *)ptr, sizeof(dloc));
+
+  if (p->outf)
+    {
+      bytes = p->out_channels * sizeof(mus_float_t);
+      g->outf = (mus_float_t *)malloc(bytes);
+      memcpy((void *)(g->outf), (void *)(p->outf), bytes);
+    }
+  if (p->revf)
+    {
+      bytes = p->rev_channels * sizeof(mus_float_t);
+      g->revf = (mus_float_t *)malloc(bytes);
+      memcpy((void *)(g->revf), (void *)(p->revf), bytes);
+    }
+
+  g->free_arrays = true;
+  g->free_gens = true;
+  if (p->doppler_delay) g->doppler_delay = mus_copy(p->doppler_delay);
+  if (p->doppler_env) g->doppler_env = mus_copy(p->doppler_env);
+  if (p->rev_env) g->rev_env = mus_copy(p->rev_env);
+  if (p->out_envs) 
+    {
+      g->out_envs = (mus_any **)malloc(p->out_channels * sizeof(mus_any *));
+      for (i = 0; i < p->out_channels; i++) g->out_envs[i] = mus_copy(p->out_envs[i]);
+    }
+  if (p->rev_envs) 
+    {
+      g->rev_envs = (mus_any **)malloc(p->rev_channels * sizeof(mus_any *));
+      for (i = 0; i < p->rev_channels; i++) g->rev_envs[i] = mus_copy(p->rev_envs[i]);
+    }
+  if (p->out_delays) 
+    {
+      g->out_delays = (mus_any **)malloc(p->out_channels * sizeof(mus_any *));
+      for (i = 0; i < p->out_channels; i++) g->out_delays[i] = mus_copy(p->out_delays[i]);
+    }
+  if (p->out_map)
+    {
+      bytes = p->out_channels * sizeof(int);
+      g->out_map = (int *)malloc(bytes);
+      memcpy((void *)(g->out_map), (void *)(p->out_map), bytes);
+    }
+
+  return((mus_any *)g);
+}
 
 bool mus_is_move_sound(mus_any *ptr) 
 {
@@ -12744,7 +12889,7 @@ static mus_any_class MOVE_SOUND_CLASS = {
   0, 0, 0,
   &move_sound_reset,
   &move_sound_set_closure,
-  NULL /* TODO */
+  &dloc_copy
 };
 
 
