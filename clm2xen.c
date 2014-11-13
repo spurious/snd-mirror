@@ -15514,7 +15514,7 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 	{								\
 	  for (; pos < end;)						\
 	    {								\
-	      mus_long_t dlen2;						\
+              mus_long_t dstart, dend, dpos, dlen2;                     \
 	      mus_safe_out_any_to_file(pos++, Call, Chan, clm_output_gen); \
 	      dstart = mus_out_any_data_start(clm_output_gen);		\
 	      dend = mus_out_any_data_end(clm_output_gen);		\
@@ -15554,6 +15554,7 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 	{								\
 	  for (; pos < end;)						\
 	    {								\
+              mus_long_t dstart, dend, dpos;                            \
 	      (*ry) = (Ry_Call);					\
 	      mus_safe_out_any_to_file(pos++, Out_Call, Chan, clm_output_gen); \
 	      dstart = mus_out_any_data_start(clm_output_gen);		\
@@ -15587,6 +15588,7 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 	{								\
 	  for (; pos < end;)						\
 	    {								\
+              mus_long_t dstart, dend, dpos;                            \
 	      (*x1r) = (Rx1_Call);					\
 	      (*x2r) = (Rx2_Call);					\
 	      mus_safe_out_any_to_file(pos++, Out_Call, Chan, clm_output_gen); \
@@ -15623,7 +15625,7 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 	{								\
 	  for (; pos < end;)						\
 	    {								\
-	      mus_long_t dlen2;						\
+              mus_long_t dstart, dend, dpos, dlen2;			\
 	      mus_safe_out_any_to_file(pos++, Call, 0, clm_output_gen); \
 	      dstart = mus_out_any_data_start(clm_output_gen);		\
 	      dend = mus_out_any_data_end(clm_output_gen);		\
@@ -15824,7 +15826,7 @@ static s7_pointer g_indirect_outa_2_looped(s7_scheme *sc, s7_pointer args)
 
   mus_float_t **ob;
   mus_float_t *buf = NULL;
-  mus_long_t dstart, dend, dpos, dlen = 0;
+  mus_long_t dlen = 0;
 			  
   stepper = car(args);
   locsym = cadr(args);
@@ -15883,7 +15885,7 @@ static s7_pointer g_indirect_outa_2_temp_looped(s7_scheme *sc, s7_pointer args)
 
   mus_float_t **ob;
   mus_float_t *buf = NULL;
-  mus_long_t dstart, dend, dpos, dlen = 0;
+  mus_long_t dlen = 0;
 			  
   stepper = car(args);
   locsym = cadr(args);
@@ -16047,7 +16049,7 @@ static s7_pointer g_indirect_outa_two_let_looped(s7_scheme *sc, s7_pointer args)
 		{
 		  mus_float_t **ob;
 		  mus_float_t *buf = NULL;
-		  mus_long_t dstart, dend, dpos, dlen = 0;
+		  mus_long_t dlen = 0;
 		  s7_Double *x1r, *x2r;
 		  gf *lf1, *lf2;
 		  
@@ -16106,7 +16108,7 @@ static s7_pointer g_indirect_outa_two_let_looped(s7_scheme *sc, s7_pointer args)
       {
 	mus_float_t **ob;
 	mus_float_t *buf = NULL;
-	mus_long_t dstart, dend, dpos, dlen = 0;
+	mus_long_t dlen = 0;
 	  
 	if (mus_out_any_is_safe(clm_output_gen))
 	  {
@@ -16149,7 +16151,7 @@ static s7_pointer out_looped(s7_scheme *sc, s7_pointer args, int out_chan)
   s7_Int *step, *stop;
   mus_float_t **ob;
   mus_float_t *buf = NULL;
-  mus_long_t dstart, dend, dpos, dlen = 0;
+  mus_long_t dlen = 0;
   gf *gf1;
 
   stepper = car(args);
@@ -16285,7 +16287,7 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
 	{
 	  mus_float_t **ob;
 	  mus_float_t *buf = NULL;
-	  mus_long_t dstart, dend, dpos, dlen = 0;
+	  mus_long_t dlen = 0;
 	  
 	  if (mus_out_any_is_safe(clm_output_gen))
 	    {
@@ -16340,7 +16342,7 @@ static s7_pointer g_indirect_outa_2_temp_let_looped(s7_scheme *sc, s7_pointer ar
       {
 	mus_float_t **ob;
 	mus_float_t *buf = NULL;
-	mus_long_t dstart, dend, dpos, dlen = 0;
+	mus_long_t dlen = 0;
 	  
 	if (mus_out_any_is_safe(clm_output_gen))
 	  {
@@ -16423,7 +16425,7 @@ static s7_pointer g_indirect_outa_2_env_looped(s7_scheme *sc, s7_pointer args)
   s7_Int *step, *stop;
   mus_float_t **ob;
   mus_float_t *buf = NULL;
-  mus_long_t dstart, dend, dpos, dlen = 0;
+  mus_long_t dlen = 0;
   gf *gf1;
   mus_float_t (*ef)(mus_any *g);
 
@@ -16605,7 +16607,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
 	  /* fprintf(stderr, "%d hit %lld: (let %s %s)\n", __LINE__, end - pos, DISPLAY(vars), DISPLAY(callee)); */
 	  mus_float_t **ob;
 	  mus_float_t *buf = NULL;
-	  mus_long_t dstart, dend, dpos, dlen = 0;
+	  mus_long_t dlen = 0;
 	  
 	  if (mus_out_any_is_safe(clm_output_gen))
 	    {
@@ -16657,7 +16659,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
 	{
 	  mus_float_t **ob;
 	  mus_float_t *buf = NULL;
-	  mus_long_t dstart, dend, dpos, dlen = 0;
+	  mus_long_t dlen = 0;
 	  
 	  if (mus_out_any_is_safe(clm_output_gen))
 	    {
@@ -16912,7 +16914,7 @@ static s7_pointer g_outa_env_polywave_env_looped(s7_scheme *sc, s7_pointer args)
   {
     mus_float_t **ob;
     mus_float_t *buf = NULL;
-    mus_long_t dstart, dend, dpos, dlen = 0;
+    mus_long_t dlen = 0;
 
     if (mus_out_any_is_safe(clm_output_gen))
       {
@@ -16964,7 +16966,7 @@ static s7_pointer g_outa_env_polywave_env_ri_looped(s7_scheme *sc, s7_pointer ar
   {
     mus_float_t **ob;
     mus_float_t *buf = NULL;
-    mus_long_t dstart, dend, dpos, dlen = 0;
+    mus_long_t dlen = 0;
 
     if (mus_out_any_is_safe(clm_output_gen))
       {
@@ -17011,7 +17013,7 @@ static s7_pointer g_outa_env_oscil_env_looped(s7_scheme *sc, s7_pointer args)
   {
     mus_float_t **ob;
     mus_float_t *buf = NULL;
-    mus_long_t dstart, dend, dpos, dlen = 0;
+    mus_long_t dlen = 0;
 
     if (mus_out_any_is_safe(clm_output_gen))
       {
