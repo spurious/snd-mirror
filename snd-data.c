@@ -879,12 +879,13 @@ chan_info *color_selected_channel(snd_info *sp)
 
 void select_channel(snd_info *sp, int chan)
 {
-  chan_info *cp, *ncp;
+  chan_info *cp;
 
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL)) return;
   cp = selected_channel();
   if (cp != sp->chans[chan])
     {
+      chan_info *ncp;
       sp->selected_channel = chan;
       select_sound(sp);
       if (cp) 

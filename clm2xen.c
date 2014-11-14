@@ -2679,7 +2679,6 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
   mus_float_t initial_element = 0.0;
   int scaler_key = -1, feedback_key = -1, feedforward_key = -1, size_key = -1, initial_contents_key = -1;
   int initial_element_key = -1, max_size_key = -1, interp_type_key = -1, filter_key = -1;
-  bool max_size_set = false;
 
   switch (choice)
     {
@@ -2717,7 +2716,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 
   if (vals > 0)
     {
-      bool size_set = false;
+      bool size_set = false, max_size_set = false;
       /* try to catch obvious type/range errors before allocations 
        *   a major complication here is that size can be 0
        */
@@ -2969,10 +2968,9 @@ initial-contents can be either a list or a " S_vct "."
 
 typedef enum {G_MOVING_AVERAGE, G_MOVING_MAX, G_MOVING_NORM} xclm_moving_t;
 
-static Xen g_make_moving_any(xclm_moving_t choice, Xen arglist)
+static Xen g_make_moving_any(xclm_moving_t choice, const char *caller, Xen arglist)
 {
   mus_any *ge = NULL;
-  const char *caller = NULL;
   Xen args[8];
   Xen keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
@@ -3114,7 +3112,7 @@ static Xen g_make_moving_average(Xen args)
   #define H_make_moving_average "(" S_make_moving_average " (size) (initial-contents) (initial-element 0.0)): \
 return a new moving_average generator. initial-contents can be either a list or a " S_vct "."
 
-  return(g_make_moving_any(G_MOVING_AVERAGE, args));
+  return(g_make_moving_any(G_MOVING_AVERAGE, S_make_moving_average, args));
 }
 
 
@@ -3123,7 +3121,7 @@ static Xen g_make_moving_max(Xen args)
   #define H_make_moving_max "(" S_make_moving_max " (size) (initial-contents) (initial-element 0.0)): \
 return a new moving-max generator. initial-contents can be either a list or a " S_vct "."
 
-  return(g_make_moving_any(G_MOVING_MAX, args));
+  return(g_make_moving_any(G_MOVING_MAX, S_make_moving_max, args));
 }
 
 
@@ -3131,7 +3129,7 @@ static Xen g_make_moving_norm(Xen args)
 {
   #define H_make_moving_norm "(" S_make_moving_norm " (size (scaler 1.0))): return a new moving-norm generator."
 
-  return(g_make_moving_any(G_MOVING_NORM, args));
+  return(g_make_moving_any(G_MOVING_NORM, S_make_moving_norm, args));
 }
 
 
@@ -3972,9 +3970,8 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 
   vct *f;
   Xen table; 
-  Xen lst;
   mus_float_t *partial_data = NULL;
-  mus_long_t len = 0, i;
+  mus_long_t len = 0;
   bool partials_allocated = true;
 #if HAVE_SCHEME
   int gc_loc;
@@ -4027,6 +4024,8 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 
   if (!partial_data)
     {
+      Xen lst;
+      int i;
       partial_data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
       if (partial_data == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table", S_partials_to_wave));
@@ -4050,7 +4049,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 static Xen g_phase_partials_to_wave(Xen partials, Xen utable, Xen normalize)
 {
   vct *f;
-  Xen table, lst;
+  Xen table;
   mus_float_t *partial_data = NULL;
   mus_long_t len = 0;
   bool partials_allocated = true;
@@ -4121,6 +4120,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   if (!partial_data)
     {
       int i;
+      Xen lst;
       partial_data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
       if (partial_data == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table", S_phase_partials_to_wave));
@@ -11463,7 +11463,7 @@ static s7_pointer g_out_bank_looped(s7_scheme *sc, s7_pointer args)
 	  (len == 2) &&
 	  (mus_channels(clm_output_gen) >= 2))
 	{
-	  mus_long_t dstart, dend, dpos, dlen = 0;
+	  mus_long_t dlen;
 	  dlen = mus_file_buffer_size();
 
 	  {
@@ -11473,6 +11473,7 @@ static s7_pointer g_out_bank_looped(s7_scheme *sc, s7_pointer args)
 
 	    for (; pos < end;)
 	      {
+		mus_long_t dstart, dend, dpos;
 		(*step) = pos;
 		x = gf1->func(gf1);
 		mus_safe_out_any_to_file(pos, mus_delay_unmodulated_noz(dly1, x), 0, clm_output_gen);
@@ -11575,7 +11576,7 @@ static s7_pointer g_fm_violin_4_looped(s7_scheme *sc, s7_pointer u_args)
   s7_function vibf;
   s7_Int *step, *stop;
   mus_any *ampf, *locs, *carrier, *indf1, *fmosc1, *indf2, *fmosc2, *indf3, *fmosc3, *f, *t, *r;
-  double vibrato, fm1_rat, fm2_rat, fm3_rat;
+  double fm1_rat, fm2_rat, fm3_rat;
   void (*locf)(mus_any *gen, mus_long_t loc, mus_float_t fm);
 
   /* (with-sound () (fm-violin 0 1 440 .1 :fm1-rat 1.002)) */
@@ -11655,6 +11656,7 @@ static s7_pointer g_fm_violin_4_looped(s7_scheme *sc, s7_pointer u_args)
    */
   for (; pos < end; pos++)
     {
+      double vibrato;
       vibrato = mus_env(f) + mus_triangle_wave_unmodulated(t) + mus_rand_interp_unmodulated(r);			
       locf(locs, pos, 
 	   mus_env(ampf) * mus_oscil_fm(carrier, vibrato + (mus_env(indf1) * mus_oscil_fm(fmosc1, fm1_rat * vibrato)) +
@@ -11702,7 +11704,7 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
   s7_pointer stepper, callee, vib, loc, vargs, let, vars, body;
   s7_function vibf;
   s7_Int *step, *stop;
-  mus_any *e, *t, *m, *r, *o, *a, *lc, *f;
+  mus_any *e, *t, *m, *r, *o, *a, *lc;
   s7_Double vibrato;
   mus_float_t (*ef)(mus_any *gen);
   mus_float_t (*af)(mus_any *gen);
@@ -11964,6 +11966,7 @@ static s7_pointer g_fm_violin_2_looped(s7_scheme *sc, s7_pointer u_args)
     }
   else
     {                               /* gliss case */
+      mus_any *f;
       vargs = cdr(vib);
       GET_GENERATOR_CADAR(vargs, env, f);
       vargs = cdr(vargs);
@@ -12481,7 +12484,7 @@ static gf *fixup_multiple(s7_scheme *sc, s7_pointer expr, s7_pointer locals, boo
 {
   if (s7_list_length(sc, expr) == 3)
     {
-      gf *g, *g1 = NULL, *g2 = NULL;
+      gf *g1 = NULL, *g2 = NULL;
       int typ1;
       double x1, x2;
       double *rx1, *rx2;
@@ -12494,6 +12497,7 @@ static gf *fixup_multiple(s7_scheme *sc, s7_pointer expr, s7_pointer locals, boo
 	  typ2 = gf_parse(sc, caddr(expr), locals, &g2, &s2, &x2, &rx2);
 	  if (typ2 == GF_RX)
 	    {
+	      gf *g;
 	      g = gf_alloc();
 	      g->rx1 = rx1;
 	      g->rx2 = rx2;
@@ -12532,7 +12536,6 @@ static gf *fixup_remainder(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
   if (s7_list_length(sc, expr) == 3)
     {
       gf *g1 = NULL;
-      int typ;
       double x, x1 = 0.0;
       double *rx;
       s7_pointer r, s, y;
@@ -12549,6 +12552,7 @@ static gf *fixup_remainder(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 
       if (x1 != 0.0)
 	{
+	  int typ;
 	  typ = gf_parse(sc, cadr(expr), locals, &g1, &s, &x, &rx);
 	  if (typ == GF_G)
 	    {
@@ -14432,7 +14436,6 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 	       */
 	      if (its_gf)
 		{
-		  mus_any *grn;
 		  mus_xen *gn;
 		  if (s7_is_object(obj))
 		    gn = (mus_xen *)s7_object_value(obj);
@@ -14440,6 +14443,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 		  if ((gn) && (gn->gen) && 
 		      (mus_is_granulate((mus_any *)(gn->gen))))
 		    {
+		      mus_any *grn;
 		      s7_pointer f1, f2;
 		      grn = gn->gen;
 		      if (s7_is_symbol(caddr(expr)))
@@ -15111,7 +15115,7 @@ static s7_pointer g_jc_reverb_out_looped(s7_scheme *sc, s7_pointer args)
   if (mus_out_any_is_safe(clm_output_gen))
     {
       mus_float_t **ob;
-      mus_long_t dstart, dend, dpos, dlen = 0;
+      mus_long_t dlen;
 
       ob = mus_out_any_buffers(clm_output_gen);
       dlen = mus_file_buffer_size();
@@ -15120,6 +15124,7 @@ static s7_pointer g_jc_reverb_out_looped(s7_scheme *sc, s7_pointer args)
 
       if (is_delay)
 	{
+	  mus_long_t dstart, dend, dpos;
 	  if (size == 1)
 	    {
 	      mus_float_t *buf;
@@ -15313,7 +15318,7 @@ static s7_pointer g_nrev_out_looped(s7_scheme *sc, s7_pointer args)
   if (mus_out_any_is_safe(clm_output_gen))
     {
       mus_float_t **ob;
-      mus_long_t dstart, dend, dpos, dlen = 0;
+      mus_long_t dlen;
 
       ob = mus_out_any_buffers(clm_output_gen);
       dlen = mus_file_buffer_size();
@@ -15322,6 +15327,7 @@ static s7_pointer g_nrev_out_looped(s7_scheme *sc, s7_pointer args)
 
       if (is_all_pass)
 	{
+	  mus_long_t dstart, dend, dpos;
 	  if (size == 1)
 	    {
 	      mus_float_t *buf;
@@ -16534,7 +16540,6 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
   mus_any *e = NULL;
   s7_pointer stepper, callee, loc, letp, lets, letsym, let, vars, body, old_e;
   s7_Int *step, *stop;
-  s7_function letf;
 
   s7_Double *ry;
   s7_pointer y;
@@ -16687,6 +16692,7 @@ static s7_pointer g_indirect_outa_2_env_let_looped(s7_scheme *sc, s7_pointer arg
   if ((s7_function_choice_is_direct_to_real(sc, callee)) &&
       (s7_function_choice_is_direct_to_real(sc, letp)))
     {
+      s7_function letf;
       letf = s7_function_choice(sc, letp);
       letp = cdr(letp);
       

@@ -641,9 +641,9 @@ bool procedure_arity_ok(Xen proc, int args)
 
 char *procedure_ok(Xen proc, int args, const char *caller, const char *arg_name, int argn)
 {
+  int rargs;
   /* if string returned, needs to be freed */
   /* 0 args is special => "thunk" meaning in this case that optional args are not ok (applies to as-one-edit and two menu callbacks) */
-  int rargs;
 
   if (!(Xen_is_procedure(proc)))
     {
@@ -673,8 +673,7 @@ char *procedure_ok(Xen proc, int args, const char *caller, const char *arg_name,
 
 #if HAVE_SCHEME
       {
-	int oargs, restargs;
-	int loc;
+	int oargs, restargs, loc;
 
 	loc = snd_protect(arity);
 	rargs = Xen_integer_to_C_int(Xen_car(arity));
@@ -722,7 +721,6 @@ Xen snd_no_such_file_error(const char *caller, Xen filename)
 Xen snd_no_such_channel_error(const char *caller, Xen snd, Xen chn)
 {
   int index = NOT_A_SOUND;
-  snd_info *sp;
 
   if (Xen_is_integer(snd))
     index = Xen_integer_to_C_int(snd);
@@ -736,6 +734,7 @@ Xen snd_no_such_channel_error(const char *caller, Xen snd, Xen chn)
       (index < ss->max_sounds) && 
       (snd_ok(ss->sounds[index]))) /* good grief... */
     {
+      snd_info *sp;
       sp = ss->sounds[index];
       Xen_error(NO_SUCH_CHANNEL,
 		Xen_list_6(C_string_to_Xen_string("no-such-channel: (~A: sound: ~A, chan: ~A) (~S, chans: ~A))"),
@@ -1231,11 +1230,12 @@ static void string_to_stderr_and_listener(const char *msg, void *ignore)
 
 static bool snd_load_init_file_1(const char *filename)
 {
-  char *expr, *fullname;
+  char *fullname;
   bool happy = false;
   fullname = mus_expand_filename(filename);
   if (mus_file_probe(fullname))
     {
+      char *expr;
       happy = true;
 #if HAVE_SCHEME
       expr = mus_format("(load %s)", fullname);
@@ -2596,9 +2596,9 @@ static Xen g_add_source_file_extension(Xen ext)
 static char *find_source_file(const char *orig)
 {
   int i;
-  char *str;
   for (i = 0; i < source_file_extensions_end; i++)
     {
+      char *str;
       str = mus_format("%s.%s", orig, source_file_extensions[i]);
       if (mus_file_probe(str))
 	return(str);

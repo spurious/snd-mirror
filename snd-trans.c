@@ -70,10 +70,10 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, const cha
 {
   /* handle little-endian swap if necessary */
 #if MUS_LITTLE_ENDIAN
-  unsigned char tmp;
   int i;
   for (i = 0; i < bytes; i += 2)
     {
+      unsigned char tmp;
       tmp = buf[i];
       buf[i] = buf[i + 1];
       buf[i + 1] = tmp;
@@ -837,7 +837,7 @@ static int stepsizeTable[89] = {7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23,
 static int adpcm_decoder(unsigned char *indata, short *outdata, int totalbytes, int type)
 {
   unsigned int delta, inputbuffer = 0;
-  int step, valpred, vpdiff, index, i, j;
+  int valpred, index, i, j;
   bool happy;
   bool bufferstep = false;
   happy = true;
@@ -857,6 +857,7 @@ static int adpcm_decoder(unsigned char *indata, short *outdata, int totalbytes, 
   outdata[0] = valpred;
   while (happy)
     {
+      int step, vpdiff;
       if (bufferstep) 
 	{
 	  delta = inputbuffer & 0xf;
@@ -1030,7 +1031,6 @@ static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
 static int read_12bit(const char *oldname, const char *newname, char *hdr)
 {
   int chans, i, j, fs = -1, fd = -1;
-  ssize_t totalin;
   unsigned char *buf = NULL;
   short *buf1;
   mus_long_t loc, samps;
@@ -1049,6 +1049,7 @@ static int read_12bit(const char *oldname, const char *newname, char *hdr)
   buf1 = (short *)calloc(TRANS_BUF_SIZE, sizeof(short));
   while (samps > 0)
     {
+      ssize_t totalin;
       totalin = read(fd, buf, (int)(TRANS_BUF_SIZE * 1.5));
       if (totalin <= 0) break;
       for (i = 0, j = 0; i < totalin; i += 3, j += 2)

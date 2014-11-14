@@ -236,9 +236,9 @@ static int oss_mus_audio_initialize(void)
   static mixer_info mixinfo;
   int sysinfo_ok = 0;
 #endif
-  int num_mixers, num_dsps, nmix, ndsp;
   if (!audio_initialized)
     {
+      int num_mixers, num_dsps, nmix, ndsp;
       audio_initialized = true;
       audio_fd = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
       audio_open_ctr = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));

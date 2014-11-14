@@ -243,7 +243,7 @@ char *xen_scheme_procedure_to_ruby(const char *name)
 {
   char *new_name = NULL;
   int len;
-  len = strlen(name);
+  len = name ? strlen(name) : 0;
   if (len > 0)
     {
       int i, j;
@@ -1679,7 +1679,6 @@ static Xen g_tmpnam(void)
   #define BUFFER_SIZE 512
   static int file_ctr = 0;
   char *str, *tmpdir = NULL;
-  int len;
   Xen result;
 
   str = (char *)calloc(BUFFER_SIZE, sizeof(char));
@@ -1690,10 +1689,12 @@ static Xen g_tmpnam(void)
     tmpdir = xen_strdup(P_tmpdir); /* /usr/include/stdio.h */
   if (tmpdir)
     {
+      int len;
       len = strlen(tmpdir);
       if (len > 0)
 	{
-	  if (tmpdir[len - 1] == '/') tmpdir[len - 1] = 0;
+	  if (tmpdir[len - 1] == '/') 
+	    tmpdir[len - 1] = 0;
 	}
       else
 	{

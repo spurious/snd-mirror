@@ -4932,7 +4932,7 @@ s7_pointer s7_symbol_table_find_name(s7_scheme *sc, const char *name)
 static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym)
 {
   unsigned int loc;
-  s7_pointer x, y; 
+  s7_pointer x; 
 
   loc = symbol_hash(sym);
   x = vector_element(sc->symbol_table, loc);
@@ -4943,6 +4943,7 @@ static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym)
     }
   else
     {
+      s7_pointer y;
       for (y = x, x = cdr(x); is_not_null(x); y = x, x = cdr(x))
 	{
 	  if (car(x) == sym)
@@ -5558,10 +5559,11 @@ static void save_unlet(s7_scheme *sc)
   for (i = 0; i < vector_length(sc->symbol_table); i++) 
     for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x)) 
       {
-	s7_pointer sym, val;
+	s7_pointer sym;
 	sym = car(x);
 	if (is_slot(initial_slot(sym)))
 	  {
+	    s7_pointer val;
 	    val = slot_value(initial_slot(sym));
 	    if ((is_procedure(val)) || (is_syntax(val)))
 	      inits[k++] = initial_slot(sym);
@@ -5587,13 +5589,14 @@ static s7_pointer g_unlet(s7_scheme *sc, s7_pointer args)
    */
   int i;
   s7_pointer *inits;
-  s7_pointer x, sym;
+  s7_pointer x;
 
   sc->w = new_frame_in_env(sc, sc->envir);
   inits = vector_elements(sc->unlet);
 
   for (i = 0; (i < UNLET_ENTRIES) && (is_slot(inits[i])); i++)
     {
+      s7_pointer sym;
       x = slot_value(inits[i]);
       sym = slot_symbol(inits[i]);
       if (is_procedure(x))
@@ -5835,7 +5838,7 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
    */
   for (i = 1, fields = cdr(args); is_pair(fields); fields = cdr(fields), i++)
     {
-      s7_pointer field, slot, last_slot;
+      s7_pointer field, slot;
       field = car(fields);
       if (!is_symbol(field))
 	return(wrong_type_argument_with_type(sc, sc->CUTLET, small_int(i), field, A_SYMBOL));
@@ -5860,6 +5863,7 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 		}
 	      else
 		{
+		  s7_pointer last_slot;
 		  last_slot = slot;
 		  for (slot = next_slot(let_slots(e)); is_slot(slot); last_slot = slot, slot = next_slot(slot))
 		    {
@@ -6741,7 +6745,7 @@ static int closure_length(s7_scheme *sc, s7_pointer e)
 static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_defined "(defined? obj (env (curlet)) ignore-globals) returns #t if obj has a binding (a value) in the environment env"
-  s7_pointer sym, x;
+  s7_pointer sym;
 
   /* is this correct? 
    *    (defined? '_x) #f (symbol->value '_x) #<undefined>
@@ -6757,7 +6761,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 
   if (is_pair(cdr(args)))
     {
-      s7_pointer e, b;
+      s7_pointer e, b, x;
       e = cadr(args);
       if (!is_let(e))
 	return(wrong_type_argument_with_type(sc, sc->IS_DEFINED, small_int(2), e, AN_ENVIRONMENT));
@@ -18600,7 +18604,7 @@ s7_Double s7_random(s7_scheme *sc, s7_pointer state)
 static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 {
   #define H_random "(random num (state #f)) returns a random number between 0 and num (0 if num=0)."
-  s7_pointer num, state;
+  s7_pointer num;
   s7_rng_t *r;
 
   num = car(args);
@@ -18611,6 +18615,7 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
     }
   if (is_not_null(cdr(args)))
     {
+      s7_pointer state;
       state = cadr(args);
       if (!is_c_object(state))
 	{
@@ -25402,10 +25407,11 @@ static void write_closure_readably(s7_scheme *sc, s7_pointer obj, s7_pointer por
 
   if (!is_null(local_slots))
     {
-      s7_pointer x, slot;
+      s7_pointer x;
       port_write_string(port)(sc, "(let (", 6, port);
       for (x = local_slots; is_pair(x); x = cdr(x))
 	{
+	  s7_pointer slot;
 	  slot = car(x);
 	  port_write_character(port)(sc, '(', port);
 	  port_write_string(port)(sc, symbol_name(slot_symbol(slot)), symbol_name_length(slot_symbol(slot)), port);
@@ -27593,11 +27599,12 @@ s7_pointer s7_apply_n_3(s7_scheme *sc, s7_pointer args, s7_pointer (*f3)(s7_poin
 {
   if (is_pair(args))
     {
-      s7_pointer a1, a2;
+      s7_pointer a1;
       a1 = car(args);
       args = cdr(args);
       if (is_pair(args))
 	{
+	  s7_pointer a2;
 	  a2 = car(args);
 	  if (is_pair(cdr(args))) 
 	    return(f3(a1, a2, cadr(args)));
@@ -27612,15 +27619,17 @@ s7_pointer s7_apply_n_4(s7_scheme *sc, s7_pointer args, s7_pointer (*f4)(s7_poin
 {
   if (is_pair(args))
     {
-      s7_pointer a1, a2, a3;
+      s7_pointer a1;
       a1 = car(args);
       args = cdr(args);
       if (is_pair(args))
 	{
+	  s7_pointer a2;
 	  a2 = car(args);
 	  args = cdr(args);
 	  if (is_pair(args))
 	    {
+	      s7_pointer a3;
 	      a3 = car(args);
 	      if (is_pair(cdr(args)))
 		return(f4(a1, a2, a3, cadr(args)));
@@ -27638,19 +27647,22 @@ s7_pointer s7_apply_n_5(s7_scheme *sc, s7_pointer args,
 {
   if (is_pair(args))
     {
-      s7_pointer a1, a2, a3, a4;
+      s7_pointer a1;
       a1 = car(args);
       args = cdr(args);
       if (is_pair(args))
 	{
+	  s7_pointer a2;
 	  a2 = car(args);
 	  args = cdr(args);
 	  if (is_pair(args))
 	    {
+	      s7_pointer a3;
 	      a3 = car(args);
 	      args = cdr(args);
 	      if (is_pair(args))
 		{
+		  s7_pointer a4;
 		  a4 = car(args);
 		  if (is_pair(cdr(args))) 
 		    return(f5(a1, a2, a3, a4, cadr(args)));
@@ -30989,7 +31001,7 @@ a vector that points to the same elements as the original-vector but with differ
    * (let ((v1 #(1 2 3 4 5 6))) (let ((v2 (make-shared-vector v1 '(3 2)))) v2)) -> #2D((1 2) (3 4) (5 6))
    * this is most useful in generic functions -- they can still use (v n) as the accessor.
    */
-  s7_pointer orig, dims, y, x, off;
+  s7_pointer orig, dims, y, x;
   s7_vdims_t *v;
   int i;
   s7_Int new_len = 1, orig_len, offset = 0;
@@ -31004,6 +31016,7 @@ a vector that points to the same elements as the original-vector but with differ
 
   if (!is_null(cddr(args)))
     {
+      s7_pointer off;
       off = caddr(args);
       if (s7_is_integer(off))
 	{
@@ -31844,7 +31857,7 @@ static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_float_vector_ref "(float-vector-ref v ...) returns an element of the float-vector v."
 
-  s7_pointer v, index;
+  s7_pointer v;
   s7_Int ind;
 
   v = car(args);
@@ -31855,6 +31868,7 @@ static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
     }
   if (vector_rank(v) == 1)
     {
+      s7_pointer index;
       index = cadr(args);
       if (!s7_is_integer(index))
 	{
@@ -32457,12 +32471,13 @@ static unsigned int hash_loc(s7_scheme *sc, s7_pointer key)
        *   with stats like symbols/pairs/constants at top level, then use those to spread it out over all the locs.
        */
       {
-	s7_pointer p1, p2;
+	s7_pointer p1;
 	if (car(key) != key)
 	  loc = hash_loc(sc, car(key)) + 1;
 	p1 = cdr(key);
 	if (is_pair(p1))
 	  {
+	    s7_pointer p2;
 	    if ((car(p1) != key) && (car(p1) != p1))
 	      {
 		if (is_pair(car(p1)))
@@ -69893,12 +69908,12 @@ int main(int argc, char **argv)
 /* --------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2
- * s7test    1721 | 1358 |  995 | 1194 1185 1207
+ * s7test    1721 | 1358 |  995 | 1194 1185 1192
  * index    44300 | 3291 | 1725 | 1276 1243 1203
- * bench    42736 | 8752 | 4220 | 3506 3506 3504
- * lg             |      |      |      6497 6523
- * t502        90 |   43 | 14.5 | 12.7 12.7 12.7
- * t455|6     265 |   89 |  9   |       8.4  8.4
+ * bench    42736 | 8752 | 4220 | 3506 3506 3541
+ * lg             |      |      |      6497 6521
+ * t502        90 |   43 | 14.5 | 12.7 12.7 12.6
+ * t455|6     265 |   89 |  9   |       8.4  8.5
  * t816           |   71 | 70.6 | 38.0 31.8 30.2
  * calls      359 |  275 | 54   | 34.7 34.7 35.4
  *

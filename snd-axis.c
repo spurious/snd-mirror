@@ -1620,7 +1620,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   gc_t *gc;
 #endif
 
-  Xen val, xwid, xgc, xx0, xx1, xy0, xy1, xstyle, xaxes, label_ref;
+  Xen val, xwid, xgc, label_ref;
   double x0 = 0.0, x1 = 1.0; 
   mus_float_t y0 = -1.0, y1 = 1.0; 
   x_axis_style_t x_style = X_AXIS_IN_SECONDS;
@@ -1654,6 +1654,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   Xen_check_type(Xen_is_string(label_ref) || Xen_is_false(label_ref), label_ref, 3, S_draw_axes, "a string");
   if (len > 3) 
     {
+      XEN xx0, xx1, xy0, xy1, xstyle, xaxes;
       xx0 = Xen_list_ref(args, 3);
       Xen_check_type(Xen_is_number(xx0), xx0, 4, S_draw_axes, "a number");
       x0 = Xen_real_to_C_double(xx0);

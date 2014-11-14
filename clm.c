@@ -3350,7 +3350,7 @@ static int pw_choice(mus_any *ptr) {return(((pw *)ptr)->cheby_choice);}
 mus_float_t mus_chebyshev_tu_sum(mus_float_t x, int n, mus_float_t *tn, mus_float_t *un)
 {
   /* the Clenshaw algorithm -- beware of -cos(nx) where you'd expect cos(nx) */
-  double x2, tb, tb1 = 0.0, tb2, cx, ub, ub1 = 0.0, ub2;
+  double x2, tb, tb1 = 0.0, tb2, cx, ub, ub1 = 0.0;
   mus_float_t *tp, *up;
 
   cx = cos(x);
@@ -3363,6 +3363,7 @@ mus_float_t mus_chebyshev_tu_sum(mus_float_t x, int n, mus_float_t *tn, mus_floa
 
   while (up != un)
     {
+      double ub2;
       tb2 = tb1;
       tb1 = tb;
       tb = x2 * tb1 - tb2 + (*tp--);
@@ -3383,7 +3384,7 @@ mus_float_t mus_chebyshev_tu_sum(mus_float_t x, int n, mus_float_t *tn, mus_floa
 mus_float_t mus_chebyshev_t_sum(mus_float_t x, int n, mus_float_t *tn)
 {
   int i;
-  double x2, b, b1 = 0.0, b2 = 0.0, cx;
+  double x2, b, b1 = 0.0, cx;
 
   cx = cos(x);
   x2 = 2.0 * cx;
@@ -3392,6 +3393,7 @@ mus_float_t mus_chebyshev_t_sum(mus_float_t x, int n, mus_float_t *tn)
   b = tn[n - 1];
   for (i = n - 2; i >= 0; i--)
     {
+      double b2;
       b2 = b1;
       b1 = b;
       b = x2 * b1 - b2 + tn[i];
@@ -3429,7 +3431,7 @@ mus_float_t mus_chebyshev_t_sum(mus_float_t x, int n, mus_float_t *tn)
 mus_float_t mus_chebyshev_u_sum(mus_float_t x, int n, mus_float_t *un)
 {
   int i;
-  double x2, b, b1 = 0.0, b2 = 0.0, cx;
+  double x2, b, b1 = 0.0, cx;
 
   cx = cos(x);
   x2 = 2.0 * cx;
@@ -3438,6 +3440,7 @@ mus_float_t mus_chebyshev_u_sum(mus_float_t x, int n, mus_float_t *un)
   b = un[n - 1];
   for (i = n - 2; i > 0; i--)
     {
+      double b2;
       b2 = b1;
       b1 = b;
       b = x2 * b1 - b2 + un[i];
@@ -3450,7 +3453,7 @@ mus_float_t mus_chebyshev_u_sum(mus_float_t x, int n, mus_float_t *un)
 static mus_float_t mus_chebyshev_t_sum_with_index(mus_float_t x, mus_float_t index, int n, mus_float_t *tn)
 {
   int i;
-  double x2, b, b1 = 0.0, b2 = 0.0, cx;
+  double x2, b, b1 = 0.0, b2, cx;
   cx = index * cos(x);
   x2 = 2.0 * cx;
 
@@ -3488,7 +3491,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index(mus_float_t x, mus_float_t ind
 static mus_float_t mus_chebyshev_t_sum_with_index_2(mus_float_t x, mus_float_t index, int n, mus_float_t *tn)
 {
   int i;
-  double x2, b, b1 = 0.0, b2 = 0.0, cx;
+  double x2, b, b1 = 0.0, cx;
 
   cx = index * cos(x);
   x2 = 2.0 * cx;
@@ -3497,6 +3500,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index_2(mus_float_t x, mus_float_t i
   b = tn[n - 1];
   for (i = n - 2; i > 0;)
     {
+      double b2;
       b2 = b1;
       b1 = b;
       b = x2 * b1 - b2 + tn[i--];
@@ -3512,7 +3516,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index_2(mus_float_t x, mus_float_t i
 static mus_float_t mus_chebyshev_t_sum_with_index_3(mus_float_t x, mus_float_t index, int n, mus_float_t *tn)
 {
   int i;
-  double x2, b, b1 = 0.0, b2 = 0.0, cx;
+  double x2, b, b1 = 0.0, cx;
 
   cx = index * cos(x);
   x2 = 2.0 * cx;
@@ -3521,6 +3525,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index_3(mus_float_t x, mus_float_t i
   b = tn[n - 1];
   for (i = n - 2; i > 0;)
     {
+      double b2;
       b2 = b1;
       b1 = b;
       b = x2 * b1 - b2 + tn[i--];
@@ -3540,7 +3545,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index_3(mus_float_t x, mus_float_t i
 static mus_float_t mus_chebyshev_t_sum_with_index_5(mus_float_t x, mus_float_t index, int n, mus_float_t *tn)
 {
   int i;
-  double x2, b, b1 = 0.0, b2 = 0.0, cx;
+  double x2, b, b1 = 0.0, cx;
 
   cx = index * cos(x);
   x2 = 2.0 * cx;
@@ -3549,6 +3554,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index_5(mus_float_t x, mus_float_t i
   b = tn[n - 1];
   for (i = n - 2; i > 0;) /* this was >= ?? (also cases above) -- presumably a copy-and-paste typo? */
     {
+      double b2;
       b2 = b1;
       b1 = b;
       b = x2 * b1 - b2 + tn[i--];
@@ -3576,7 +3582,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index_5(mus_float_t x, mus_float_t i
 static mus_float_t mus_chebyshev_u_sum_with_index(mus_float_t x, mus_float_t index, int n, mus_float_t *un)
 {
   int i;
-  double x2, b, b1 = 0.0, b2 = 0.0, cx;
+  double x2, b, b1 = 0.0, cx;
 
   cx = index * cos(x);
   x2 = 2.0 * cx;
@@ -3585,6 +3591,7 @@ static mus_float_t mus_chebyshev_u_sum_with_index(mus_float_t x, mus_float_t ind
   b = un[n - 1];
   for (i = n - 2; i > 0; i--)
     {
+      double b2;
       b2 = b1;
       b1 = b;
       b = x2 * b1 - b2 + un[i];

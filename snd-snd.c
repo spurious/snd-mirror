@@ -1946,7 +1946,7 @@ static bool apply_controls(apply_state *ap)
 	     S_after_apply_controls_hook);
 
   sp->applying = false;
-  ap = free_apply_state(ap);
+  free_apply_state(ap);
   ss->stopped_explicitly = false;
   return(false);
 }

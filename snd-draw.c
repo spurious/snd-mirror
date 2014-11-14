@@ -958,7 +958,6 @@ static Xen g_widget_text(Xen wid)
 static Xen g_set_widget_text(Xen wid, Xen text)
 {
   widget_t w;
-  const char *str = NULL;
 
   Xen_check_type(Xen_is_widget(wid), wid, 1, S_setB S_widget_text, "a Widget");
   Xen_check_type(Xen_is_string(text) || Xen_is_false(text), text, 2, S_setB S_widget_text, "a string");
@@ -966,6 +965,7 @@ static Xen g_set_widget_text(Xen wid, Xen text)
   w = (widget_t)(Xen_unwrap_widget(wid));
   if (w)
     {
+      const char *str = NULL;
       if (Xen_is_string(text)) str = Xen_string_to_C_string(text);
 #if USE_MOTIF
       if ((XmIsText(w)) || (XmIsTextField(w)))

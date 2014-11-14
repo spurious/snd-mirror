@@ -242,7 +242,7 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
   sync_state *sc;
   sync_info *si;
   snd_info *sp = NULL;
-  int ip, stop_point = 0, filter_chans, dataformat, impulse_chan = 0;
+  int ip, stop_point = 0, filter_chans, dataformat;
   mus_long_t filtersize = 0, dataloc;
   chan_info *ncp, *ucp;
   char *origin;
@@ -286,6 +286,7 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
   if (!(ss->stopped_explicitly))
     {
       snd_info *gsp = NULL;
+      int impulse_chan = 0;
       for (ip = 0; ip < si->chans; ip++)
 	{
 	  char *ofile, *saved_chan_file;
@@ -3299,8 +3300,6 @@ static Xen map_channel_to_temp_file(chan_info *cp, snd_fd *sf, Xen proc, mus_lon
   int rpt4, ofd, datumb;
   char *filename;
   file_info *hdr;
-  mus_long_t kp, samps = 0;
-  int j = 0;
   bool reporting;
   io_error_t io_err = IO_NO_ERROR;
   Xen res = Xen_false;
@@ -3324,8 +3323,9 @@ static Xen map_channel_to_temp_file(chan_info *cp, snd_fd *sf, Xen proc, mus_lon
 	      snd_open_strerror());
   else
     {
-      int err = MUS_NO_ERROR, i, rpt = 0;
+      int err = MUS_NO_ERROR, i, j = 0, rpt = 0;
       mus_float_t **data = NULL;
+      mus_long_t kp, samps = 0;
       
       data = (mus_float_t **)malloc(1 * sizeof(mus_float_t *));
       data[0] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
@@ -3472,7 +3472,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
   mus_float_t *in_data;
   int gc_loc, proc_loc;
   bool use_apply;
-  s7_pointer arg_list, source, arg, body, e, slot;
+  s7_pointer arg_list, source, body, e, slot;
   s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
 
   arg_list = xen_nil;
@@ -3484,6 +3484,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
   source = s7_procedure_source(s7, proc);
   if (s7_is_pair(source))
     {
+      s7_pointer arg;
       body = s7_cddar(source);
 
       if (s7_is_null(s7, s7_cdr(body)))
@@ -3755,7 +3756,6 @@ static Xen g_map_chan_1(Xen proc_and_list, Xen s_beg, Xen s_end, Xen org, Xen sn
   mus_long_t beg = 0, end = 0, dur = 0;
   mus_long_t num;
   int pos;
-  bool temp_file = false, backup = false;
   Xen res = Xen_false;
   Xen proc;
 
@@ -3791,6 +3791,7 @@ static Xen g_map_chan_1(Xen proc_and_list, Xen s_beg, Xen s_end, Xen org, Xen sn
     {
       snd_fd *sf = NULL;
       char *errmsg = NULL;
+      bool temp_file, backup = false;
 
       errmsg = procedure_ok(proc, 1, caller, "", 1);
       if (errmsg)
@@ -3834,7 +3835,6 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   mus_long_t beg = 0, end = 0, dur = 0;
   snd_info *sp;
   snd_fd *sf;
-  Xen errstr;
   mus_long_t kp, num;
   int rpt = 0, rpt4 = 0;
   bool reporting = false;
@@ -3864,6 +3864,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   errmsg = procedure_ok(proc, 1, caller, "", 1);
   if (errmsg)
     {
+      Xen errstr;
       errstr = C_string_to_Xen_string(errmsg);
       free(errmsg);
       return(snd_bad_arity_error(caller, errstr, proc));
@@ -3962,7 +3963,6 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 		{
 		  /* res: (> y .1) or whatever */
 		  s7_pointer s;
-		  bool abs_case = false;
 		  s = s7_cadr(res);
 		  
 		  len = s7_list_length(s7, res);
@@ -3979,6 +3979,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 		       (!s7_is_pair(s7_caddr(res))) &&
 		       (s7_car(s) == s7_make_symbol(s7, "abs"))))
 		    {
+		      bool abs_case;
 		      /* not direct, so we're making the arg list, so no env is needed */
 		      abs_case = s7_is_pair(s);
 		      y = s7_make_mutable_real(s7, 1.5);
@@ -5124,10 +5125,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
     }
   else
     {
-      mus_float_t *data;
-      double *rates;
-      mus_any *e;
-      double seg0, seg1;
+      double seg0;
 
       seg0 = Xen_real_to_C_double(rmp0);
 
@@ -5135,8 +5133,12 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 	scale_channel(cp, seg0, samp, samps, pos, NOT_IN_AS_ONE_EDIT);
       else
 	{
-	  seg1 = Xen_real_to_C_double(rmp1);
+	  mus_any *e;
+	  double *rates;
+	  mus_float_t *data;
+	  double seg1;
 
+	  seg1 = Xen_real_to_C_double(rmp1);
 	  if (ebase == 1.0)
 	    ramp_channel(cp, seg0, (seg1 - seg0) / (double)(samps - 1), samp, samps, pos, NOT_IN_AS_ONE_EDIT);
 	  else
@@ -5233,7 +5235,7 @@ static Xen g_snd_spectrum(Xen data, Xen win, Xen len, Xen linear_or_dB, Xen beta
 magnitude spectrum of data (a " S_vct "), in data if in-place, using fft-window win and fft length len."
 
   bool linear = true, in_data = false, normed = true;
-  int i, j, n, n2, wtype;
+  int i, n, n2, wtype;
   mus_float_t maxa, lowest, b = 0.0;
   mus_float_t *rdat;
   vct *v;
@@ -5285,6 +5287,7 @@ magnitude spectrum of data (a " S_vct "), in data if in-place, using fft-window 
     
     n2 = n / 2;
   {
+    int j;
     mus_float_t *idat;
     idat = (mus_float_t *)calloc(n, sizeof(mus_float_t));
     mus_fft(rdat, idat, n, 1);
@@ -5652,7 +5655,6 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   int order_1 = 0, edpos_1 = AT_CURRENT_EDIT_POSITION;
   mus_long_t beg_1 = 0, dur_1 = 0;
   env *e_1 = NULL;
-  vct *v = NULL;
   mus_float_t *coeffs = NULL;
 
   Xen_check_type(Xen_is_list(e) || mus_is_vct(e), e, 1, S_filter_channel, "an envelope or a " S_vct);
@@ -5687,6 +5689,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
     }
   else 
     {
+      vct *v = NULL;
       int len;
       v = Xen_to_vct(e);
       len = mus_vct_length(v);
@@ -6153,7 +6156,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   #define RETRY_MULT 2
   #define INIT_TRIES 5000
 
-  int choice, n, size, counts = 0, day_counter = 0, free_top = 0, fft_size = 0;
+  int choice, n, size, counts = 0;
   mus_float_t increment = INCR_MAX, orig_incr, local_best = 1000.0, incr_mult = INCR_DOWN, overall_min;
   mus_float_t *min_phases = NULL, *temp_phases = NULL, *diff_phases = NULL, *initial_phases = NULL;
   const char *choice_name[4] = {"all", "odd", "even", "prime"};
@@ -6209,7 +6212,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   diff_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
 
   {
-    int start, n1;
+    int start, n1, day_counter, free_top, fft_size;
 
     if (choice == ALL)
       n1 = n;
@@ -6269,10 +6272,10 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 		if ((!just_best) ||
 		    (pk < overall_min))
 		  {
-		    FILE *ofile;
 		    for (k = 1; k < n; k++) min_phases[k] = temp_phases[k];
 		    if (pk < overall_min)
 		      {
+			FILE *ofile;
 			if (file)
 			  ofile = fopen(file, "a");
 			else ofile = stderr;
@@ -6378,10 +6381,10 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 		if ((!just_best) ||
 		    (pk < overall_min))
 		  {
-		    FILE *ofile;
 		    for (kk = 1; kk < llen; kk++) min_phases[kk] = new_pk->phases[kk];
 		    if (pk < overall_min)
 		      {
+			FILE *ofile;
 			if (file)
 			  ofile = fopen(file, "a");
 			else ofile = stderr;

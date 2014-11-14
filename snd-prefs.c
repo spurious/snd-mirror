@@ -2270,11 +2270,11 @@ static void cursor_size_down(prefs_info *prf)
 
 static void cursor_size_from_text(prefs_info *prf)
 {
-  int size;
   char *str;
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
     {
+      int size;
       prf->got_error = false;
 
       redirect_errors_to(redirect_post_prefs_error, (void *)prf);
@@ -2342,11 +2342,11 @@ static void dot_size_down(prefs_info *prf)
 
 static void dot_size_from_text(prefs_info *prf)
 {
-  int size;
   char *str;
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
     {
+      int size;
       prf->got_error = false;
 
       redirect_errors_to(redirect_post_prefs_error, (void *)prf);
@@ -2413,11 +2413,11 @@ static void fft_size_down(prefs_info *prf)
 
 static void fft_size_from_text(prefs_info *prf)
 {
-  mus_long_t size;
   char *str;
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
     {
+      mus_long_t size;
       prf->got_error = false;
 
       redirect_errors_to(redirect_post_prefs_error, (void *)prf);
@@ -2655,11 +2655,11 @@ static void speed_control_down(prefs_info *prf)
 
 static void speed_control_text(prefs_info *prf)
 {
-  int tones;
   char *str;
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
     {
+      int tones;
       prf->got_error = false;
       redirect_errors_to(redirect_post_prefs_error, (void *)prf);
       tones = string_to_int(str, MIN_SPEED_CONTROL_SEMITONES, "semitones");
@@ -3249,7 +3249,6 @@ static void show_axes_from_menu(prefs_info *prf, char *value)
 
 static void show_axes_from_text(prefs_info *prf)
 {
-  int i;
   char *str;
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
@@ -3259,7 +3258,7 @@ static void show_axes_from_text(prefs_info *prf)
       free_TEXT(str);
       if (mus_strlen(trimmed_str) > 0)
 	{
-	  int curpos = -1;
+	  int i, curpos = -1;
 	  for (i = 0; i < NUM_SHOW_AXES; i++)
 	    if (STRCMP(trimmed_str, show_axes_choices[i]) == 0)
 	      {
@@ -3307,7 +3306,6 @@ static void x_axis_style_from_menu(prefs_info *prf, char *value)
 
 static void x_axis_style_from_text(prefs_info *prf)
 {
-  int i;
   char *str;
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
@@ -3317,7 +3315,7 @@ static void x_axis_style_from_text(prefs_info *prf)
       free_TEXT(str);
       if (mus_strlen(trimmed_str) > 0)
 	{
-	  int curpos = -1;
+	  int i, curpos = -1;
 	  for (i = 0; i < NUM_X_AXIS_STYLES; i++)
 	    if (STRCMP(trimmed_str, x_axis_styles[i]) == 0)
 	      {
@@ -3387,7 +3385,6 @@ static void transform_type_from_menu(prefs_info *prf, char *value)
 
 static void transform_type_from_text(prefs_info *prf)
 {
-  int i;
   char *str;
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
@@ -3397,7 +3394,7 @@ static void transform_type_from_text(prefs_info *prf)
       free_TEXT(str);
       if (mus_strlen(trimmed_str) > 0)
 	{
-	  int curpos = -1;
+	  int i, curpos = -1;
 	  for (i = 0; i < NUM_BUILTIN_TRANSFORM_TYPES; i++)
 	    if (STRCMP(trimmed_str, transform_types[i]) == 0)
 	      {
@@ -3459,7 +3456,6 @@ static void fft_window_from_menu(prefs_info *prf, char *value)
 
 static void fft_window_from_text(prefs_info *prf)
 {
-  int i;
   char *str;
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
@@ -3469,7 +3465,7 @@ static void fft_window_from_text(prefs_info *prf)
       free_TEXT(str);
       if (mus_strlen(trimmed_str) > 0)
 	{
-	  int curpos = -1;
+	  int i, curpos = -1;
 	  for (i = 0; i < MUS_NUM_FFT_WINDOWS; i++)
 	    if (STRCMP(trimmed_str, mus_fft_window_name((mus_fft_window_t)i)) == 0)
 	      {
@@ -3527,7 +3523,6 @@ static void revert_colormap(prefs_info *prf)
 
 static void colormap_from_text(prefs_info *prf)
 {
-  int i;
   char *str;
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
@@ -3537,7 +3532,7 @@ static void colormap_from_text(prefs_info *prf)
       free_TEXT(str);
       if (mus_strlen(trimmed_str) > 0)
 	{
-	  int len, curpos = -1;
+	  int i, len, curpos = -1;
 	  len = num_colormaps();
 	  for (i = 0; i < len; i++)
 	    if ((colormap_name(i)) &&

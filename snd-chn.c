@@ -6171,10 +6171,10 @@ static void update_inset_axes(chan_info *cp, inset_graph_info_t *info, graphics_
       str = prettyf(info->maxamp, (info->maxamp > .1) ? 2 : ((info->maxamp > .01) ? 3 : 4));
       if (str)
 	{
-	  if (num_hgt == -1) num_hgt = number_height(TINY_FONT(ss));
 	  len = strlen(str);
 	  set_tiny_numbers_font(cp, cur_ax);
 #if (!USE_GTK)
+	  if (num_hgt == -1) num_hgt = number_height(TINY_FONT(ss));
 	  draw_string(cur_ax, info->x0 - 6 * len - 2, info->y0 + (num_hgt / 2), str, len);
 #else
 	  draw_string(cur_ax, info->x0 - 6 * len - 2, info->y0, str, len);

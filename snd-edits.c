@@ -4595,15 +4595,9 @@ bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, m
       else
 	{
 #if HAVE_FORTH
-	  if (len == num)
-	    new_ed->origin = mus_format("%.3f %lld" PROC_SEP PROC_FALSE " %s", scl, beg, S_scale_channel);
-	  else
-	    new_ed->origin = mus_format("%.3f %lld" PROC_SEP "%lld %s", scl, beg, num, S_scale_channel);
+	  new_ed->origin = mus_format("%.3f %lld" PROC_SEP "%lld %s", scl, beg, num, S_scale_channel);
 #else
-	  if (len == num)
-	      new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%lld" PROC_SEP PROC_FALSE, to_proc_name(S_scale_channel), scl, beg);
-	  else
-	    new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%lld" PROC_SEP "%lld", to_proc_name(S_scale_channel), scl, beg, num);
+	  new_ed->origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP "%lld" PROC_SEP "%lld", to_proc_name(S_scale_channel), scl, beg, num);
 #endif
 	}
     }

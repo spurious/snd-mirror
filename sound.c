@@ -165,7 +165,7 @@ int mus_make_error(const char *error_name)
   err = new_error - MUS_INITIAL_ERROR_TAG;
   if (error_name)
     {
-      int len, i;
+      int len;
       if (err >= mus_error_names_size)
 	{
 	  if (mus_error_names_size == 0)
@@ -175,6 +175,7 @@ int mus_make_error(const char *error_name)
 	    }
 	  else
 	    {
+	      int i;
 	      len = mus_error_names_size;
 	      mus_error_names_size += 8;
 	      mus_error_names = (char **)realloc(mus_error_names, mus_error_names_size * sizeof(char *));
@@ -538,10 +539,11 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 
   if (sf->maxamps)
     {
-      int i, lim;
+      int lim;
       lim = sf->maxamps_size;
       if (lim > 0)
 	{
+	  int i;
 	  if (lim > 64) 
 	    lim = 64;
 	  fprintf(fp, ", maxamp:");
