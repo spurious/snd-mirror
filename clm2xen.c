@@ -4277,7 +4277,6 @@ static Xen g_make_sw(xclm_wave_t type, mus_float_t def_phase, Xen arg1, Xen arg2
 	Xen_out_of_range_error(caller, orig_arg[0], keys[0], "freq > srate/2?");
 
       base = Xen_optkey_to_float(kw_amplitude, keys[1], caller, orig_arg[1], base);
-
       phase = Xen_optkey_to_float(kw_initial_phase, keys[2], caller, orig_arg[2], phase);
     }
 

@@ -428,7 +428,7 @@ void add_selection_or_region(int reg, chan_info *cp)
 static io_error_t insert_selection(chan_info *cp, sync_info *si_out, mus_long_t beg)
 {
   char *tempfile = NULL;
-  int i, out_format = MUS_OUT_FORMAT;
+  int out_format = MUS_OUT_FORMAT;
   io_error_t io_err = IO_NO_ERROR;
 
   if (mus_header_writable(MUS_NEXT, cp->sound->hdr->format))
@@ -438,6 +438,7 @@ static io_error_t insert_selection(chan_info *cp, sync_info *si_out, mus_long_t 
   io_err = save_selection(tempfile, MUS_NEXT, out_format, snd_srate(cp->sound), NULL, SAVE_ALL_CHANS);
   if (io_err == IO_NO_ERROR)
     {
+      int i;
       sync_info *si_in;
       si_in = selection_sync();
       if (si_in)

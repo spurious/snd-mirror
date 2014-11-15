@@ -1420,10 +1420,10 @@ mus_float_t string_to_mus_float_t(const char *str, mus_float_t lo, const char *f
 {
 #if HAVE_EXTENSION_LANGUAGE
   Xen res;
-  mus_float_t f;
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->float");
   if (Xen_is_number(res))
     {
+      mus_float_t f;
       f = Xen_real_to_C_double(res);
       if (f < lo)
 	snd_error("%s: %.3f is invalid", field_name, f);

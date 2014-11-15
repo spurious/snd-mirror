@@ -6045,8 +6045,6 @@ static void show_smpte_label(chan_info *cp, graphics_context *cur_ax)
 {
 #if (!USE_NO_GUI)
   #define SMPTE_FRAMPLES_PER_SECOND 24.0
-  static char label[12] = "00:00:00:00";
-
   if (cp->graph_time_on)
     {
       int grf_x, grf_y, grf_width, grf_height;
@@ -6064,6 +6062,7 @@ static void show_smpte_label(chan_info *cp, graphics_context *cur_ax)
 	  int width, height, framples, seconds, minutes, hours;
 	  double secs;
 	  char num_buf[3];
+	  static char label[12] = "00:00:00:00";
 
 	  try_tiny_font = (grf_height < 50);
 	  width = 8 + number_width(label, try_tiny_font);
@@ -6692,7 +6691,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
   snd_info *sp;
   int i;
   mus_float_t curamp, curf;
-  Xen res = Xen_empty_list, errstr;
+  Xen res = Xen_empty_list;
   if (Xen_is_true(snd))
     {
       for (i = ss->max_sounds - 1; i >= 0; i--)
@@ -6839,6 +6838,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
 	    }
 	  else 
 	    {
+	      Xen errstr;
 	      errstr = C_string_to_Xen_string(error);
 	      free(error);
 	      return(snd_bad_arity_error(S_setB S_cursor_style, errstr, on));
@@ -9258,7 +9258,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 
   chan_info *cp;
   lisp_grf *lg;
-  Xen data = Xen_undefined, lst;
+  Xen data = Xen_undefined;
   char *label = NULL;
   int i, len = 0, graphs;
   bool need_update = false;
@@ -9266,7 +9266,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   double nominal_x0 = 0.0, nominal_x1 = 1.0;
   int old_height = 0, old_width = 0, ww = 0;
   int old_y_offset = 0, gx0 = 0;
-  Xen arg, ldata, xlabel, x0 = Xen_undefined, x1 = Xen_undefined, y0, y1;
+  Xen arg, ldata, x0 = Xen_undefined, x1 = Xen_undefined;
   Xen snd = Xen_undefined, chn_n = Xen_undefined, force_display = Xen_undefined, show_axes = Xen_undefined;
 
   /* ldata can be a vct or a list of numbers or vcts */
@@ -9286,6 +9286,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   arg = Xen_cdr(arg);
   if (!Xen_is_null(arg))
     {
+      Xen xlabel;
       xlabel = Xen_car(arg);
       Xen_check_type(Xen_is_string(xlabel), xlabel, 2, S_graph, "a string (x axis label)");
       label = mus_strdup(Xen_string_to_C_string(xlabel)); 
@@ -9307,6 +9308,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	      arg = Xen_cdr(arg);
 	      if (!Xen_is_null(arg))
 		{
+		  Xen y0;
 		  y0 = Xen_car(arg);
 		  Xen_check_type(Xen_is_number(y0), y0, 5, S_graph, "a number (y0)");
 		  ymin = Xen_real_to_C_double(y0);
@@ -9314,6 +9316,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 		  arg = Xen_cdr(arg);
 		  if (!Xen_is_null(arg))
 		    {
+		      Xen y1;
 		      y1 = Xen_car(arg);
 		      Xen_check_type(Xen_is_number(y1), y1, 6, S_graph, "a number (y1)");
 		      ymax = Xen_real_to_C_double(y1);
@@ -9400,6 +9403,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   if ((Xen_is_list(ldata)) &&
       (Xen_is_number(Xen_car(ldata))))
     {
+      Xen lst;
       len = Xen_list_length(ldata);
       /* just one graph to display */
       lg = cp->lisp_info;

@@ -214,7 +214,7 @@ static bool is_string_member(const char *val, char **lst, int len)
 static char **load_path_to_string_array(int *len)
 {
   char **cdirs = NULL;
-  int dir_len = 0, i, j = 0;
+  int dir_len = 0, j = 0;
   Xen dirs;
 
   dirs = Xen_load_path;
@@ -222,6 +222,7 @@ static char **load_path_to_string_array(int *len)
 
   if (dir_len > 0)
     {
+      int i;
       cdirs = (char **)calloc(dir_len, sizeof(char *));
       for (i = 0; i < dir_len; i++)
 	{
@@ -275,7 +276,6 @@ static void save_prefs(void)
     {
       char **current_dirs = NULL;
       int i, current_dirs_len = 0;
-      char *unchecked_load_path = NULL;
 
       fprintf(fd, "\n");
 
@@ -301,6 +301,7 @@ static void save_prefs(void)
 
       if (load_path_text_widget)
 	{
+	  char *unchecked_load_path = NULL;
 	  unchecked_load_path = GET_TEXT(load_path_text_widget);
 	  if ((unchecked_load_path) &&                                                          /* text widget has an entry */
 	      (local_access(unchecked_load_path)) &&                                            /* it's a legit path */
@@ -2496,7 +2497,7 @@ static void cursor_location_text(prefs_info *prf)
       str = GET_TEXT(prf->rtxt);
       if ((str) && (*str))
 	{
-	  int loc = DEFAULT_CURSOR_LOCATION_OFFSET;
+	  int loc;
 
 	  redirect_errors_to(any_error_to_text, (void *)prf);
 	  loc = string_to_int(str, 0, "cursor offset");

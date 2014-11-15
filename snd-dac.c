@@ -2115,15 +2115,14 @@ int mus_audio_alsa_samples_per_channel(int dev);
 
 static bool start_audio_output_1(void)
 {
-  int i, d;
+  int i;
   static int out_dev[ALSA_MAX_DEVICES];
-  int alloc_devs = 0;
-  int alloc_chans = 0;
   int oss_available_chans = 2;
 
   /* -------------------- ALSA not OSS -------------------- */
   if (mus_audio_api() == MUS_ALSA_API) 
     {
+      int d, alloc_chans, alloc_devs;
       scan_audio_devices();
       /* allocate devices for playback */
       alloc_chans = 0;

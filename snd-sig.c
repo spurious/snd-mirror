@@ -5133,16 +5133,15 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 	scale_channel(cp, seg0, samp, samps, pos, NOT_IN_AS_ONE_EDIT);
       else
 	{
-	  mus_any *e;
-	  double *rates;
-	  mus_float_t *data;
 	  double seg1;
-
 	  seg1 = Xen_real_to_C_double(rmp1);
 	  if (ebase == 1.0)
 	    ramp_channel(cp, seg0, (seg1 - seg0) / (double)(samps - 1), samp, samps, pos, NOT_IN_AS_ONE_EDIT);
 	  else
 	    {
+	      mus_any *e;
+	      mus_float_t *data;
+	      double *rates;
 	      data = (mus_float_t *)malloc(4 * sizeof(mus_float_t));
 	      data[0] = 0.0;
 	      data[1] = seg0;

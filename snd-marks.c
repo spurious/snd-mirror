@@ -562,12 +562,11 @@ bool delete_mark_samp(mus_long_t samp, chan_info *cp)
       ed = cp->edits[cp->edit_ctr];
       if (ed->marks)
 	{
-	  int i;
 	  mark **mps;
 	  mps = ed->marks;
 	  if (mps)
 	    {
-	      int edm;
+	      int i, edm;
 	      edm = ed->mark_ctr;
 	      for (i = 0; i <= edm; i++)
 		{
@@ -651,11 +650,11 @@ static void delete_marks(chan_info *cp)
       ed = cp->edits[cp->edit_ctr];
       if (ed->marks)
 	{
-	  int i;
 	  mark **mps;
 	  mps = ed->marks;
 	  if (mps)
 	    {
+	      int i;
 	      for (i = 0; i < ed->mark_size; i++)
 		{
 		  mark *mp;
@@ -1326,14 +1325,14 @@ void set_mark_control(chan_info *cp, mark *mp, int key_state)
 	  if ((mark_sd->mark_ctr > 1) &&
 	      (mark_sd->marks[0] != mp))
 	    {
-	      mark *tm;
-	      int loc = 1;
-	      mus_long_t ts;
-	      chan_info *tc;
+	      int loc;
 	      for (loc = 1; loc < mark_sd->mark_ctr; loc++)
 		if (mark_sd->marks[loc] == mp) break;
 	      if (loc < mark_sd->mark_ctr)
 		{
+		  chan_info *tc;
+		  mus_long_t ts;
+		  mark *tm;
 		  tm = mark_sd->marks[0];
 		  ts = mark_sd->initial_samples[0];
 		  tc = mark_sd->chans[0];
@@ -1749,7 +1748,7 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
     }
   else
     {
-      mus_float_t ymin, ymax, msamp;
+      mus_float_t ymin, ymax;
       int xi;
       double xf;
       if (peak_env_usable(cp, samples_per_pixel, ap->hisamp, false, cp->edit_ctr, (samps > PEAK_ENV_CUTOFF)))
@@ -1761,7 +1760,7 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
 	   * this is confusing code!
 	   */
 	  double step, xk, xki;
-	  mus_long_t ii, kk;
+	  mus_long_t ii;
 	  peak_env_info *ep;
 	  ep = cp->edits[cp->edit_ctr]->peak_env;
 	  step = samples_per_pixel / (mus_float_t)(ep->samps_per_bin);
@@ -1775,6 +1774,7 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
 	  xki = (double)(ap->losamp);
 	  while (i <= ap->hisamp)
 	    {
+	      mus_long_t kk;
 	      k = (mus_long_t)xf;
 	      kk = (mus_long_t)(xf + step);
 	      if (((current_sample >= initial_sample) && 
@@ -1824,6 +1824,7 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
 	}
       else
 	{
+	  mus_float_t msamp;
 	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
 	  if (sf == NULL) return;
 	  j = 0;      /* graph point counter */
@@ -1893,7 +1894,7 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
 
 static void show_mark(chan_info *cp, mark *mp, bool show)
 {
-  int len, top, cx, y0, y1;
+  int top, cx, y0, y1;
   axis_info *ap;
   graphics_context *ax;
 
@@ -1917,6 +1918,7 @@ static void show_mark(chan_info *cp, mark *mp, bool show)
 
   if (mp->name)
     {
+      int len;
 #if USE_MOTIF
       ax->current_font = ss->peaks_fontstruct->fid;
       XSetFont(ax->dp, ax->gc, ss->peaks_fontstruct->fid);
@@ -2522,11 +2524,11 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 
   if (Xen_is_integer(snd) || xen_is_sound(snd))
       {
-	int i, pos;
 	int *ids;
-	Xen res;
 	if (Xen_is_integer(chn_n))
 	  {
+	    int pos;
+	    Xen res;
 	    cp = get_cp(snd, chn_n, S_marks);
 	    if (!cp) return(Xen_false);
 	    if (Xen_is_integer(pos_n)) 
@@ -2553,6 +2555,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 	  }
 	else
 	  {
+	    int i;
 	    sp = get_sp(snd);
 	    if (sp == NULL) 
 	      return(snd_no_such_sound_error(S_marks, snd));
@@ -2767,12 +2770,12 @@ The saved file is " Xen_language " code, so to restore the marks, load that file
   if (map_over_sound_chans(sp, find_any_marks)) /* are there any marks? */
     {
       char *newname = NULL;
-      int i, len;
       FILE *fd;
       if (Xen_is_string(filename))
 	newname = mus_strdup(Xen_string_to_C_string(filename));
       else
 	{
+	  int i, len;
 	  len = strlen(sp->filename);
 	  newname = (char *)calloc(len + 7, sizeof(char));
 	  strcopy(newname, sp->filename, len + 7);

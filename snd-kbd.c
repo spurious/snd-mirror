@@ -17,13 +17,14 @@ static macro_cmd **macro_cmds = NULL;
 
 static void allocate_macro_cmds(void)
 {
-  int i, old_size;
+  int old_size;
   old_size = macro_cmd_size;
   macro_cmd_size += 16;
   if (!macro_cmds)
     macro_cmds = (macro_cmd **)calloc(macro_cmd_size, sizeof(macro_cmd *));
   else 
     {
+      int i;
       macro_cmds = (macro_cmd **)realloc(macro_cmds, macro_cmd_size * sizeof(macro_cmd *));
       for (i = old_size; i < macro_cmd_size; i++) macro_cmds[i] = NULL;
     }
@@ -1567,7 +1568,7 @@ prefixed with C-x. 'key' can be a character, a key name such as 'Home', or an in
 
 static Xen g_bind_key_1(Xen key, Xen state, Xen code, Xen cx_extended, Xen origin, Xen prefs_info, const char *caller)
 {
-  int args, k = 0, s;
+  int k, s;
   bool e;
 
   Xen_check_type(Xen_is_integer(key) || Xen_is_string(key) || Xen_is_char(key), key, 1, caller, "an integer, char, or string");
@@ -1586,6 +1587,7 @@ static Xen g_bind_key_1(Xen key, Xen state, Xen code, Xen cx_extended, Xen origi
     set_keymap_entry(k, s, 0, Xen_undefined, e, NULL, NULL);
   else 
     {
+      int args;
       char buf[256];
       const char *comment = NULL, *prefs = NULL;
       args = Xen_required_args(code);

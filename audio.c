@@ -192,10 +192,10 @@ static char *dev_name = NULL;
 
 static char *oss_mus_audio_moniker(void)
 {
-  char version[LABEL_BUFFER_SIZE];
   if (version_name == NULL) version_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
   if (SOUND_VERSION < 361)
     {
+      char version[LABEL_BUFFER_SIZE];
       snprintf(version, LABEL_BUFFER_SIZE, "%d", SOUND_VERSION);
       snprintf(version_name, LABEL_BUFFER_SIZE, "OSS %c.%c.%c", version[0], version[1], version[2]);
     }
@@ -226,9 +226,7 @@ static int oss_mus_audio_initialize(void)
   /* here we need to set up the map of /dev/dsp and /dev/mixer to a given system */
   /* since this info is not passed to us by OSS, we have to work at it... */
   /* for the time being, I'll ignore auxiliary dsp and mixer ports (each is a special case) */
-  int i, fd = -1, md, err = 0;
-  char dname[LABEL_BUFFER_SIZE];
-  int amp, old_mixer_amp, old_dsp_amp, new_mixer_amp, responsive_field;
+  int amp, old_mixer_amp, old_dsp_amp, new_mixer_amp;
   int devmask;
 #ifdef NEW_OSS
   int status, ignored;
@@ -238,7 +236,7 @@ static int oss_mus_audio_initialize(void)
 #endif
   if (!audio_initialized)
     {
-      int num_mixers, num_dsps, nmix, ndsp;
+      int i, md, num_mixers, num_dsps, nmix, ndsp, err = 0, fd = -1, responsive_field;
       audio_initialized = true;
       audio_fd = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
       audio_open_ctr = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
@@ -302,6 +300,7 @@ static int oss_mus_audio_initialize(void)
       while ((nmix < num_mixers) && 
 	     (ndsp < num_dsps))
 	{
+	  char dname[LABEL_BUFFER_SIZE];
 	  /* for each mixer, find associated main dsp (assumed to be first in /dev/dsp ordering) */
 	  /*   if mixer's dsp overlaps or we run out of dsps first, ignore it (aux mixer) */
 	  /* our by-guess-or-by-gosh method here is to try to open the mixer.
@@ -1210,7 +1209,6 @@ static void alsa_dump_configuration(char *name, snd_pcm_hw_params_t *hw_params, 
 {
   int err; 
   char *str;
-  size_t len;
   snd_output_t *buf;
 
 #if (SND_LIB_MAJOR == 0) || ((SND_LIB_MAJOR == 1) && (SND_LIB_MINOR == 0) && (SND_LIB_SUBMINOR < 8))
@@ -1219,11 +1217,10 @@ static void alsa_dump_configuration(char *name, snd_pcm_hw_params_t *hw_params, 
 
   err = snd_output_buffer_open(&buf);
   if (err < 0) 
-    {
-      mus_print("could not open dump buffer: %s", snd_strerror(err));
-    } 
+    mus_print("could not open dump buffer: %s", snd_strerror(err));
   else 
     {
+      size_t len;
       if (hw_params) 
 	{
 	  snd_output_puts(buf, "hw_params status of ");
@@ -2014,12 +2011,12 @@ static bool xrun_warned = false;
 
 static int alsa_mus_audio_close(int id)
 {
-  int err = 0;
   xrun_warned = false;
   if (id == MUS_ERROR) return(MUS_ERROR);
   if (alsa_trace) mus_print( "%s: %d", __func__, id); 
   if (handles[id]) 
     {
+      int err;
       err = snd_pcm_drain(handles[id]);
       if (err != 0) 
 	mus_print("snd_pcm_drain: %s", snd_strerror(err)); 

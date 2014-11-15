@@ -34477,7 +34477,6 @@ static Xen gxg_gtk_init_check(Xen argc, Xen argv)
 static Xen gxg_make_target_entry(Xen lst)
 {
   GtkTargetEntry* targets;
-  Xen val;
   int i, len;
   #define H_make_target_entry "(make-target-entry lst): GtkTargetEntry*, each member of 'lst' should be (list target flags info)"
   Xen_check_type(Xen_is_list(lst), lst, 1, "make-target-entry", "a list of lists describing each target");
@@ -34486,6 +34485,7 @@ static Xen gxg_make_target_entry(Xen lst)
   targets = (GtkTargetEntry *)calloc(len, sizeof(GtkTargetEntry));
   for (i = 0; i < len; i++)
     {
+      Xen val;
       val = Xen_list_ref(lst, i);
       targets[i].target = xen_strdup(Xen_string_to_C_string(Xen_list_ref(val, 0)));
       targets[i].flags = (guint)Xen_ulong_to_C_ulong(Xen_list_ref(val, 1));
@@ -44826,7 +44826,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("06-Nov-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("14-Nov-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

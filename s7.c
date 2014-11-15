@@ -64587,49 +64587,33 @@ static s7_pointer g_is_bignum(s7_scheme *sc, s7_pointer args)
   return(s7_make_boolean(sc, is_big_number(car(args))));
 }
 
+#define get_result_type(Sc, Type, P) \
+  ((is_number(P)) ? normal_type_to_result_type(Type, type(p)) : ((is_big_number(P)) ? big_type_to_result_type(Type, type(p)) : result_type_via_method(Sc, Type, P)))
 
 static int result_type_via_method(s7_scheme *sc, int result_type, s7_pointer p)
 {
-  switch (type(p))
-    {
-    case T_INTEGER:
-    case T_RATIO:
-    case T_REAL:
-    case T_COMPLEX:
-      return(normal_type_to_result_type(result_type, type(p)));
+  s7_pointer f;
+  f = find_method(sc, find_let(sc, p), sc->IS_INTEGER);
+  if ((f != sc->UNDEFINED) &&
+      (is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL)))))
+    return(big_type_to_result_type(result_type, T_BIG_INTEGER));
+  
+  f = find_method(sc, find_let(sc, p), sc->IS_RATIONAL);
+  if ((f != sc->UNDEFINED) &&
+      (is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL)))))
+    return(big_type_to_result_type(result_type, T_BIG_RATIO));
+  
+  f = find_method(sc, find_let(sc, p), sc->IS_REAL);
+  if ((f != sc->UNDEFINED) &&
+      (is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL)))))
+    return(big_type_to_result_type(result_type, T_BIG_REAL));
+  
+  /* might be a number, but not complex (quaternion) */
+  f = find_method(sc, find_let(sc, p), sc->IS_COMPLEX);
+  if ((f != sc->UNDEFINED) &&
+      (is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL)))))
+    return(big_type_to_result_type(result_type, T_BIG_COMPLEX));
 
-    case T_BIG_INTEGER:
-    case T_BIG_RATIO:
-    case T_BIG_REAL:
-    case T_BIG_COMPLEX:
-      return(big_type_to_result_type(result_type, type(p)));
-
-    default:
-      {
-	s7_pointer f;
-	f = find_method(sc, find_let(sc, p), sc->IS_INTEGER);
-	if ((f != sc->UNDEFINED) &&
-	    (is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL)))))
-	  return(big_type_to_result_type(result_type, T_BIG_INTEGER));
-
-	f = find_method(sc, find_let(sc, p), sc->IS_RATIONAL);
-	if ((f != sc->UNDEFINED) &&
-	    (is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL)))))
-	  return(big_type_to_result_type(result_type, T_BIG_RATIO));
-
-	f = find_method(sc, find_let(sc, p), sc->IS_REAL);
-	if ((f != sc->UNDEFINED) &&
-	    (is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL)))))
-	  return(big_type_to_result_type(result_type, T_BIG_REAL));
-	
-	/* might be a number, but not complex (quaternion) */
-	f = find_method(sc, find_let(sc, p), sc->IS_COMPLEX);
-	if ((f != sc->UNDEFINED) &&
-	    (is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL)))))
-	  return(big_type_to_result_type(result_type, T_BIG_COMPLEX));
-      }
-      break;
-    }
   return(-1);
 }
       
@@ -64649,9 +64633,7 @@ static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer p;
       p = car(x);
-      if (!is_number_via_method(sc, p))
-	return(wrong_type_argument_n_with_type(sc, sc->ADD, position_of(x, args), p, A_NUMBER));
-      result_type = result_type_via_method(sc, result_type, p);
+      result_type = get_result_type(sc, result_type, p);
       if (result_type < 0)
 	return(g_add(sc, args));
     }
@@ -64770,9 +64752,7 @@ static s7_pointer big_subtract(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer p;
       p = car(x);
-      if (!is_number_via_method(sc, p))
-	return(wrong_type_argument_n_with_type(sc, sc->MINUS, position_of(x, args), p, A_NUMBER));
-      result_type = result_type_via_method(sc, result_type, p);
+      result_type = get_result_type(sc, result_type, p);
       if (result_type < 0)
 	return(g_subtract(sc, args));
     }
@@ -64840,9 +64820,7 @@ static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer p;
       p = car(x);
-      if (!is_number_via_method(sc, p))
-	return(wrong_type_argument_n_with_type(sc, sc->MULTIPLY, position_of(x, args), p, A_NUMBER));
-      result_type = result_type_via_method(sc, result_type, p);
+      result_type = get_result_type(sc, result_type, p);
       if (result_type < 0)
 	return(g_multiply(sc, args));
     }
@@ -65037,9 +65015,7 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
       /* if divisor is 0, gmp throws an exception and halts s7!
        *   I don't think we can trap gmp errors, and the abort is built into the library code.
        */
-      if (!is_number_via_method(sc, p))
-	return(wrong_type_argument_n_with_type(sc, sc->DIVIDE, position_of(x, args), p, A_NUMBER));
-      result_type = result_type_via_method(sc, result_type, p);
+      result_type = get_result_type(sc, result_type, p);
       if (result_type < 0)
 	return(g_divide(sc, args));
 
@@ -67113,7 +67089,7 @@ static int big_real_scan_args(s7_scheme *sc, s7_pointer args)
       p = car(arg);
       if (!is_real_via_method(sc, p))
 	return(-i);
-      result_type = result_type_via_method(sc, result_type, p);
+      result_type = get_result_type(sc, result_type, p);
     }
   return(result_type);
 }
@@ -67416,12 +67392,10 @@ static s7_pointer big_equal(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer p;
       p = car(x);
-      if (!is_number_via_method(sc, p))
-	return(wrong_type_argument_n_with_type(sc, sc->EQ, position_of(x, args), p, A_NUMBER));
 
-      result_type = result_type_via_method(sc, result_type, p);
+      result_type = get_result_type(sc, result_type, p);
       if (result_type < 0)
-	return(g_add(sc, args));
+	return(wrong_type_argument_n_with_type(sc, sc->EQ, position_of(x, args), p, A_NUMBER));
 
       switch (type(p))
 	{
@@ -67805,23 +67779,30 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
       else
 	{
 	  /* state was passed, check its type */
-
 	  if (c_object_type(state) == sc->rng_tag)
 	    {
 	      /* here "num" is a bignum, the state was passed, but it is intended for non-bignums */
-	      if (type(num) == T_BIG_REAL)
-		num = make_real(sc, (s7_Double)mpfr_get_d(big_real(num), GMP_RNDN));
-	      else
+	      switch (type(num))
 		{
-		  if (type(num) == T_BIG_INTEGER)
-		    num = make_integer(sc, big_integer_to_s7_Int(big_integer(num)));
-		  else
-		    {
-		      if (type(num) == T_BIG_RATIO)
-			num = s7_make_ratio(sc, 
-					    big_integer_to_s7_Int(mpq_numref(big_ratio(num))), 
-					    big_integer_to_s7_Int(mpq_denref(big_ratio(num))));
-		    }
+		case T_BIG_REAL: 
+		  num = make_real(sc, (s7_Double)mpfr_get_d(big_real(num), GMP_RNDN));
+		  break;
+
+		case T_BIG_INTEGER:
+		  num = make_integer(sc, big_integer_to_s7_Int(big_integer(num)));
+		  break;
+
+		case T_BIG_RATIO:
+		  num = s7_make_ratio(sc, 
+				      big_integer_to_s7_Int(mpq_numref(big_ratio(num))), 
+				      big_integer_to_s7_Int(mpq_denref(big_ratio(num))));
+		  break;
+
+		case T_BIG_COMPLEX:
+		  num = s7_make_complex(sc, 
+					(s7_Double)mpfr_get_d(mpc_realref(big_complex(num)), GMP_RNDN),
+					(s7_Double)mpfr_get_d(mpc_imagref(big_complex(num)), GMP_RNDN));
+		  break;
 		}
 	      return(g_random(sc, list_2(sc, num, state)));
 	    }
@@ -67916,7 +67897,6 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	  }
 	}
     }
-
   return(g_random(sc, args));
 }
 
@@ -69923,9 +69903,11 @@ int main(int argc, char **argv)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers? (useful in object->string too)
  *
- * prelookup?
+ * prelookup? [(#_*gtk* '...)? or (#.?)]
  * need to check new openGL for API changes (GL_VERSION?)
- * check out the GL support in gtk 3.16 -- this looks straightforward, snd-chn.c
+ *   test/Mesa-10.3.1/include/GL/glext.h|gl.h (current version appears to be 7.6)
+ *   how much of glext.h is needed?
+ *   check out the GL support in gtk 3.16 -- this looks straightforward, snd-chn.c
  * snd-genv needs a lot of gtk3 work
  *
  * undef id: cond-expand args and check for other cases via s7test/etc:

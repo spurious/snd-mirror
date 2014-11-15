@@ -2986,7 +2986,7 @@ static char *snd_finder(const char *name, bool got_help)
   /* desperation -- search *.scm/rb/fs then even *.html? for 'name' */
   const char *url = NULL;
   char *fgrep = NULL, *tempfile = NULL, *command = NULL;
-  bool is_defined = false;
+  bool is_defined;
   int a_def = 0, dir_len = 0, i;
   Xen dirs = Xen_empty_list;
 
@@ -3489,9 +3489,7 @@ and the location of the associated C code will be displayed, if it can be found.
 If " S_help_hook " is not empty, it is invoked with the subject and the snd-help result \
 and its value is returned."
 
-
   char *str = NULL, *subject = NULL;
-  int min_diff = 1000;
 
   if (Xen_is_keyword(text))
     return(C_string_to_Xen_string("keyword"));
@@ -3574,13 +3572,13 @@ and its value is returned."
 		  snprintf(str, 256, "this function appears to come from eval or eval-string?");
 		else
 		  {
-		    const char *url = NULL;
 		    s7_pointer x;
 		    /* (cdr (assoc '__func__ (let->list (funclet func)))) => (name file line) or name */
 		    x = s7_cdr(s7_assoc(s7, s7_make_symbol(s7, "__func__"), s7_let_to_list(s7, e)));
 
 		    if ((x) && (s7_is_pair(x)))
 		      {
+			const char *url;
 			subject = (char *)s7_symbol_name(s7_car(x));
 			url = snd_url(subject);
 			if (url)
@@ -3617,20 +3615,6 @@ and its value is returned."
 	  if (!subject) return(Xen_false);
 	  str = snd_finder(subject, false);
 	  need_free = true;
-	}
-      else 
-	{
-	  if ((min_diff < 1000) && (min_diff > 0))
-	    {
-	      char *more_str;
-	      more_str = snd_finder(subject, true);
-	      if (more_str)
-		{
-		  str = mus_format("%s\nOther possibilities:\n%s", str, more_str);
-		  need_free = true;
-		  free(more_str);
-		}
-	    }
 	}
       if (str)
 	{

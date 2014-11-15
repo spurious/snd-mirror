@@ -584,7 +584,7 @@ static Xen g_vct_multiply(Xen obj1, Xen obj2)
 static Xen g_vct_add(Xen obj1, Xen obj2, Xen offs)
 {
   #define H_vct_addB "(" S_vct_addB " v1 v2 :optional (offset 0)): element-wise add of " S_vct "s v1 and v2: v1[i + offset] += v2[i], returns v1"
-  mus_long_t i, lim, j, len1;
+  mus_long_t i, lim, len1;
   vct *v1, *v2;
   mus_float_t *d1, *d2;
 
@@ -602,6 +602,7 @@ static Xen g_vct_add(Xen obj1, Xen obj2, Xen offs)
 
   if (Xen_is_llong(offs))
     {
+      mus_long_t j;
       j = Xen_llong_to_C_llong(offs);
       if (j < 0) 
 	Xen_out_of_range_error(S_vct_addB, 3, offs, "offset < 0?");
@@ -840,7 +841,7 @@ Xen g_vct_peak(Xen obj)
 static Xen g_vct_peak_and_location(Xen obj)
 {
   #define H_vct_peak_and_location "(" S_vct_peak_and_location " v): max of abs of elements of v and its position in v"
-  mus_float_t val = 0.0, absv;
+  mus_float_t val = 0.0;
   mus_long_t i, loc = 0;
   vct *v;
   mus_float_t *d;
@@ -851,6 +852,7 @@ static Xen g_vct_peak_and_location(Xen obj)
 
   for (i = 0; i < mus_vct_length(v); i++)
     {
+      mus_float_t absv;
       absv = fabs(d[i]);
       if (absv > val) 
 	{
@@ -868,7 +870,7 @@ static Xen g_vct_subseq(Xen vobj, Xen start, Xen end, Xen newv)
   vct *vold, *vnew;
   mus_float_t *dnew, *dold;
   Xen res;
-  mus_long_t i, old_len, new_len, j, istart, iend;
+  mus_long_t i, old_len, new_len, j, istart;
 
   Xen_check_type(mus_is_vct(vobj), vobj, 1, S_vct_subseq, "a vct");
   Xen_check_type(Xen_is_llong(start), start, 2, S_vct_subseq, "an integer");
@@ -883,6 +885,7 @@ static Xen g_vct_subseq(Xen vobj, Xen start, Xen end, Xen newv)
 
   if (Xen_is_llong(end))
     {
+      mus_long_t iend;
       iend = Xen_llong_to_C_llong(end);
       if (iend < istart)
 	Xen_out_of_range_error(S_vct_subseq, 3, end, "end < start?");
@@ -1071,7 +1074,7 @@ static Xen g_vct_max(Xen vobj)
   #define H_vct_max "(" S_vct_max " v): returns the maximum element of " S_vct
   vct *v;
   mus_float_t *d;
-  mus_long_t i, len;
+  mus_long_t len;
   mus_float_t mx = 0.0;
 
   Xen_check_type(mus_is_vct(vobj), vobj, 1, S_vct_max, "a vct");
@@ -1080,6 +1083,7 @@ static Xen g_vct_max(Xen vobj)
   len = mus_vct_length(v);
   if (len > 0)
     {
+      mus_long_t i;
       d = mus_vct_data(v);
       mx = d[0];
       for (i = 1; i < len; i++)
@@ -1095,7 +1099,7 @@ static Xen g_vct_min(Xen vobj)
   #define H_vct_min "(" S_vct_min " v): returns the minimum element of " S_vct
   vct *v;
   mus_float_t *d;
-  mus_long_t i, len;
+  mus_long_t len;
   mus_float_t mx = 0.0;
 
   Xen_check_type(mus_is_vct(vobj), vobj, 1, S_vct_min, "a vct");
@@ -1104,6 +1108,7 @@ static Xen g_vct_min(Xen vobj)
   len = mus_vct_length(v);
   if (len > 0)
     {
+      mus_long_t i;
       d = mus_vct_data(v);
       mx = d[0];
       for (i = 1; i < len; i++)

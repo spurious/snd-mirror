@@ -106,7 +106,7 @@
 				 (format data-file "(~S~{ ~S~}) -> ~S~%" func c-args val))))))
 		  (lambda any 
 		    (if (and (memq (car any) '(wrong-type-arg syntax-error))
-			     (pair? (cdr (cadr any)))
+			     (pair? (cdadr any))
 			     (pair? (cddr (cadr any)))
 			     (integer? (caddr (cadr any))) ; if just 1 arg, arg num can be omitted
 			     (< (caddr (cadr any)) low))
@@ -134,6 +134,7 @@
 ;(set! low 3)
 ;(autotest string-set! () 0 3)
 
+
 (define baddies (list "exit" "emergency-exit" "abort" "autotest" 
 		      "all" "delete-file" "system" "set-cdr!" "stacktrace" "test-sym"
 		      "cutlet" "varlet" "dilambda" "gc" "cond-expand" "reader-cond"
@@ -146,8 +147,7 @@
 		      "environment->list" "open-environment" "open-environment?" "close-environment" "environment-ref" "environment-set!" 
 		      "environment" "environment*" "make-procedure-with-setter" "procedure-with-setter?" 
 
-		      "mus-audio-close" "mus-audio-read" "mus-audio-write" "mus-audio-open-output"
-		      "boolean=?" "symbol=?" "symbol-table"
+		      "symbol-table"
 
 		      (reader-cond ((> max-args 2) "copy" "hash-table-set!" "vector-set!" "let-set!"))
 		      (reader-cond ((> max-args 4) "float-vector-ref"))
@@ -155,6 +155,7 @@
 		      "mock-number" "mock-pair" "mock-string" "mock-char" "mock-vector" 
 		      "mock-symbol" "mock-port" "mock-hash-table"
 		      "outlet-member" "make-method" "make-object"))
+
 
 (define (test-sym sym)
   (if (defined? sym)
@@ -183,7 +184,7 @@
     (for-each test-sym st)
     ;(do ((i 0 (+ i 1)) (len (length st))) ((= i 1000)) (test-sym (st (random len))))
     (if data-file (close-output-port data-file))
-    (format *stderr* "~%~%all done~%")))
+    (format *stderr* "~%all done~%")))
 
 (all)
 (s7-version)

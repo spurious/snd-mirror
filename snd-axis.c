@@ -1654,27 +1654,31 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   Xen_check_type(Xen_is_string(label_ref) || Xen_is_false(label_ref), label_ref, 3, S_draw_axes, "a string");
   if (len > 3) 
     {
-      XEN xx0, xx1, xy0, xy1, xstyle, xaxes;
+      Xen xx0;
       xx0 = Xen_list_ref(args, 3);
       Xen_check_type(Xen_is_number(xx0), xx0, 4, S_draw_axes, "a number");
       x0 = Xen_real_to_C_double(xx0);
       if (len > 4) 
 	{
+	  Xen xx1;
 	  xx1 = Xen_list_ref(args, 4);
 	  Xen_check_type(Xen_is_number(xx1), xx1, 5, S_draw_axes, "a number");
 	  x1 = Xen_real_to_C_double(xx1);
 	  if (len > 5) 
 	    {
+	      Xen xy0;
 	      xy0 = Xen_list_ref(args, 5);
 	      Xen_check_type(Xen_is_number(xy0), xy0, 6, S_draw_axes, "a number");
 	      y0 = Xen_real_to_C_double(xy0);
 	      if (len > 6) 
 		{
+		  Xen xy1;
 		  xy1 = Xen_list_ref(args, 6);
 		  Xen_check_type(Xen_is_number(xy1), xy1, 7, S_draw_axes, "a number");
 		  y1 = Xen_real_to_C_double(xy1);
 		  if (len > 7) 
 		    {
+		      Xen xstyle;
 		      int tmp;
 		      xstyle = Xen_list_ref(args, 7);
 		      Xen_check_type(Xen_is_integer(xstyle), xstyle, 8, S_draw_axes, "axis style");
@@ -1684,6 +1688,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 		      x_style = (x_axis_style_t)tmp;
 		      if (len > 8) 
 			{
+			  Xen xaxes;
 			  xaxes = Xen_list_ref(args, 8);
 			  Xen_check_type(Xen_is_integer(xaxes), xaxes, 9, S_draw_axes, S_show_axes " choice");
 			  tmp = Xen_integer_to_C_int(xaxes);

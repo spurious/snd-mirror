@@ -1186,7 +1186,7 @@ void save_state(const char *save_state_name)
   fullname = mus_expand_filename(save_state_name);
   if (Xen_hook_has_list(before_save_state_hook))
     {
-      Xen res = Xen_false;
+      Xen res;
       res = run_or_hook(before_save_state_hook, 
 			Xen_list_1(C_string_to_Xen_string(fullname)),
 			S_before_save_state_hook);

@@ -13159,10 +13159,11 @@ static void gxm_XtCancelConvertSelectionProc(Widget w, Atom *a1, Atom *a2, XtReq
 
 static Boolean gxm_XtConvertSelectionProc(Widget w, Atom *a1, Atom *a2, Atom *a3, XtPointer* x, unsigned long *l, int *i) 
 {
-  Xen proc, val;
+  Xen proc;
   proc = unselmap(w, CONVERT);
   if (Xen_is_procedure(proc))
     {
+      Xen val;
       val = Xen_call_with_3_args(proc,
 		       C_to_Xen_Widget(w),
 		       C_to_Xen_Atom(*a1),

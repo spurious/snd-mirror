@@ -953,19 +953,20 @@ int syncd_channels(int sync)
 
 sync_info *snd_sync(int sync)
 {
-  int i, j, k, chans;
+  int chans;
   snd_info *sp;
   chans = syncd_channels(sync);
   if (chans > 0)
     {
+      int i, j;
       sync_info *si;
       si = (sync_info *)calloc(1, sizeof(sync_info));
       si->begs = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
       si->cps = (chan_info **)calloc(chans, sizeof(chan_info *));
       si->chans = chans;
-      j = 0;
-      for (i = 0; i < ss->max_sounds; i++)
+      for (i = 0, j = 0; i < ss->max_sounds; i++)
 	{
+	  int k;
 	  sp = ss->sounds[i];
 	  if ((sp) && 
 	      (sp->inuse == SOUND_NORMAL) && 
