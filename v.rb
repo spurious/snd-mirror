@@ -1,23 +1,19 @@
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Wed Nov 20 02:24:34 CET 2002
-# Changed: Sat Dec 22 01:51:53 CET 2012
+# Created: 02/11/20 02:24:34
+# Changed: 14/11/13 03:03:07
 
-# Comment:
-#
 # class Instrument
-#   fm_violin_rb(start, dur, freq, amp, *args)
+#   fm_violin(start, dur, freq, amp, *args)
 #   violin(start, dur, freq, amp, *args)
-#   jc_reverb_rb(*args)
+#   jc_reverb(*args)
 #
 # make_fm_violin(start, dur, freq, amp, *args)
-#
-# Code:
 
 require "ws"
 
 class Instrument
-  add_help(:fm_violin_rb,
-           "fm_violin([start=0.0[,dur=1.0[,freq=440.0[,amp=0.5[,*args]]]]])
+  add_help(:fm_violin,
+           "fm_violin(start=0.0, dur=1.0, freq=440.0, amp=0.5, *args)
  :fm_index              = 1.0
  :amp_env               = [0, 0, 25, 1, 75, 1, 100, 0]
  :periodic_vibrato_rate = 5.0
@@ -46,10 +42,10 @@ class Instrument
  :reverb_amount         = 0.01
  :degree                = kernel_rand(90.0)
  :distance              = 1.0
-  Ruby: fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0)
+  Ruby: fm_violin(0, 1, 440, 0.1, :fm_index, 2.0)
 Scheme: (fm-violin 0 1 440 0.1 :fm-index 2.0)
-Example: with_sound do fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0) end")
-  def fm_violin_rb(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.5, *args)
+Example: with_sound do fm_violin(0, 1, 440, 0.1, :fm_index, 2.0) end")
+  def fm_violin(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.5, *args)
     fm_index, amp_env, periodic_vibrato_rate, random_vibrato_rate = nil
     periodic_vibrato_amp, random_vibrato_amp, noise_amount, noise_freq = nil
     ind_noise_freq, ind_noise_amount, amp_noise_freq, amp_noise_amount = nil
@@ -157,8 +153,8 @@ Example: with_sound do fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0) end")
     end
   end
 
-  add_help(:jc_reverb_rb,
-           "jc_reverb_rb(*args)
+  add_help(:jc_reverb,
+           "jc_reverb(*args)
  :volume   = 1.0
  :delay1   = 0.013
  :delay2   = 0.011
@@ -168,7 +164,7 @@ Example: with_sound do fm_violin_rb(0, 1, 440, 0.1, :fm_index, 2.0) end")
  :double   = false
  :amp_env  = false
 Chowning reverb")
-  def jc_reverb_rb(*args)
+  def jc_reverb(*args)
     low_pass, volume, amp_env, delay1, delay2, delay3, delay4, double = nil
     optkey(args, binding,
            [:volume, 1.0],
@@ -204,7 +200,7 @@ Chowning reverb")
              false
            end
     comb_sum_1 = comb_sum = 0.0
-    reverb_frame = make_frame(@channels)
+    out_frample = Vct.new(@channels)
     run_reverb() do |ho, i|
       allpass_sum = all_pass(allpass3, all_pass(allpass2,
                       all_pass(allpass1, ho)))
@@ -223,32 +219,28 @@ Chowning reverb")
       if envA
         volume = env(envA)
       end
-      frame_set!(reverb_frame, 0, volume * delA)
+      out_frample[0] = volume * delA
       if chan2
         delB = delay(outdel2, all_sums)
         if double
           delB += delay(outdel4, all_sums)
         end
-        frame_set!(reverb_frame, 1, volume * delB)
+       out_frample[1] = volume * delB
         if chan4
-          frame_set!(reverb_frame, 2, volume * delay(outdel3, all_sums))
-          frame_set!(reverb_frame, 3, volume * delay(outdel4, all_sums))
+          out_frample[2] = volume * delay(outdel3, all_sums)
+          out_frample[3] = volume * delay(outdel4, all_sums)
         end
       end
-      reverb_frame
+      out_frample
     end
   end
 end
 
-class Snd_Instrument
-  alias fm_violin fm_violin_rb
-  alias jc_reverb jc_reverb_rb
-end
-
 # fm_violin generator
 
-add_help(:make_fm_violin, "make_fm_violin(start, dur, freq, amp, *args) \
-returns a proc with one arg for map_channel()
+add_help(:make_fm_violin,
+         "make_fm_violin(start, dur, freq, amp, *args)  \
+Returns a proc with one arg for map_channel()
 *args are like fm_violin's
 ins = new_sound(:file, \"fmv.snd\", :srate, 22050, :channels, 2)
 # proc with one arg

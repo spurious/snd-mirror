@@ -1,9 +1,9 @@
 #!/usr/bin/env ruby -w
-# grani.rb -- grani.ins CL --> Ruby -*- snd-ruby -*-
+# grani.rb -- grani.ins CL --> Ruby
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Tue Feb 01 00:47:00 CET 2005
-# Last: Thu Oct 15 00:15:57 CEST 2009
+# Created: 05/02/01 00:47:00
+# Changed: 14/11/13 05:03:02
 
 # Original header:
 
@@ -18,17 +18,19 @@
 # ;;; Mar 22 1997: working with src envelope (grain wise) & src spread
 # ;;; Jan 26 1998: started work on new version
 # ;;; Nov  7 1998: input soundfile duration calculation wrong
-# ;;; Nov 10 1998: bug in in-samples (thanks to Kristopher D. Giesing for this one)
+# ;;; Nov 10 1998: bug in in-samples (thanks to Kristopher D. Giesing
+# ;;;              for this one)
 # ;;; Dec 20 1998: added standard locsig code
-# ;;; Feb 19 1999: added "nil" as default value of where to avoid warning (by bill)
-# ;;; Jan 10 2000: added input-channel to select which channel of the input file 
-# ;;;              to process.
-# ;;;              added grain-start-in-seconds to be able to specify input file
-# ;;;              locations in seconds for the grain-start envelope
-# ;;; May 06 2002: fixed array passing of where-bins in clisp (reported by Charles
-# ;;;              Nichols and jennifer l doering
-# ;;; Mar 27 2003: added option for sending grains to all channels (requested by
-# ;;;              Oded Ben-Tal)
+# ;;; Feb 19 1999: added "nil" as default value of where to avoid warning
+# ;;;              (by bill)
+# ;;; Jan 10 2000: added input-channel to select which channel of the input
+# ;;;              file to process.
+# ;;;              added grain-start-in-seconds to be able to specify input
+# ;;;              file locations in seconds for the grain-start envelope
+# ;;; May 06 2002: fixed array passing of where-bins in clisp
+# ;;;              (reported by Charles Nichols and jennifer l doering)
+# ;;; Mar 27 2003: added option for sending grains to all channels
+# ;;;              (requested by Oded Ben-Tal)
 
 require "ws"
 require "env"
@@ -55,7 +57,9 @@ end
 # ;;; create a vct from an envelope
 def make_gr_env(env, length = 512)
   length_1 = (length - 1).to_f
-  make_vct!(length) do |i| envelope_interp(i / length_1, env) end
+  make_vct!(length) do |i|
+    envelope_interp(i / length_1, env)
+  end
 end
 
 # ;;; Grain envelopes
@@ -78,9 +82,9 @@ def raised_cosine(*args)
   end
 end
 
-# ;;;=============================================================================
+# ;;;=========================================================================
 # ;;; Granular synthesis instrument
-# ;;;=============================================================================
+# ;;;=========================================================================
 # 
 # ;;; input-channel:
 # ;;;   from which channel in the input file are samples read
@@ -93,7 +97,8 @@ end
 # ;;;   grain-envelope-trasition. If "grain-envelope-end" is nil interpolation
 # ;;;   is turned off and only grain-envelope is applied to the grains. 
 # ;;; grain-envelope-trasition:
-# ;;;   an enveloper that controls the interpolation between the two grain envelopes
+# ;;;   an enveloper that controls the interpolation between the two
+# ;;;   grain envelopes
 # ;;;   0 -> selects "grain-envelope"
 # ;;;   1 -> selects "grain-envelope-end"
 # ;;; grain-envelope-array-size
@@ -121,10 +126,12 @@ end
 # ;;; grain-start-spread:
 # ;;;   random spread around the value of "grain-start"
 # ;;; grain-start-in-seconds:
-# ;;;   nil -> grain-start y envelope expressed in percent of the duration of the input file
+# ;;;   nil -> grain-start y envelope expressed in percent of the duration
+# ;;;   of the input file
 # ;;;   t   -> grain-start y envelope expressed in seconds
 # ;;; grain-density:
-# ;;;   envelope that controls the number of grains per second generated in the output file
+# ;;;   envelope that controls the number of grains per second generated
+# ;;;   in the output file
 
 # ;;; grain-density-spread:
 
@@ -138,10 +145,13 @@ Grani_to_grain_allchans    = 5
 def grani(start, dur, amp, file, *args)
   input_channel             = get_args(args, :input_channel, 0)
   grains                    = get_args(args, :grains, 0)
-  amp_envelope              = get_args(args, :amp_envelope, [0, 0, 0.3, 1, 0.7, 1, 1, 0])
-  grain_envelope            = get_args(args, :grain_envelope, [0, 0, 0.3, 1, 0.7, 1, 1, 0])
+  amp_envelope              = get_args(args, :amp_envelope,
+                                       [0, 0, 0.3, 1, 0.7, 1, 1, 0])
+  grain_envelope            = get_args(args, :grain_envelope,
+                                       [0, 0, 0.3, 1, 0.7, 1, 1, 0])
   grain_envelope_end        = get_args(args, :grain_envelope_end, false)
-  grain_envelope_transition = get_args(args, :grain_envelope_transition, [0, 0, 1, 1])
+  grain_envelope_transition = get_args(args, :grain_envelope_transition,
+                                       [0, 0, 1, 1])
   grain_envelope_array_size = get_args(args, :grain_envelope_array_size, 512)
   grain_duration            = get_args(args, :grain_duration, 0.1)
   grain_duration_spread     = get_args(args, :grain_spread, 0.0)
@@ -167,51 +177,72 @@ def grani(start, dur, amp, file, *args)
   beg, fin = times2samples(start, dur)
   in_file_channels = mus_sound_chans(file)
   in_file_sr       = mus_sound_srate(file).to_f
-  in_file_dur      = mus_sound_frames(file) / in_file_sr
-  in_file_reader   = make_readin(:file, file, :channel, [input_channel, in_file_channels - 1].min)
+  in_file_dur      = mus_sound_framples(file) / in_file_sr
+  in_file_reader   = make_readin(:file, file,
+                                 :channel,
+                                 [input_channel, in_file_channels - 1].min)
   last_in_sample   = (in_file_dur * in_file_sr).round
   srate_ratio      = in_file_sr / mus_srate()
-  sr_env = make_env(:envelope, if srate_linear
-                                 envelope_or_number(srate)
-                               else
-                                 exp_envelope(envelope_or_number(srate),
-                                              :base, srate_base,
-                                              :error, srate_error)
-                               end,
-                    :scaler, srate_ratio,
-                    :duration, dur)
-  sr_spread_env = make_env(:envelope, envelope_or_number(srate_spread), :duration, dur)
+  sr_env = make_env(:envelope,
+                    if srate_linear
+                      envelope_or_number(srate)
+                    else
+                      exp_envelope(envelope_or_number(srate),
+                                   :base, srate_base,
+                                   :error, srate_error)
+                    end,
+                    :scaler, srate_ratio, :duration, dur)
+  sr_spread_env = make_env(:envelope, envelope_or_number(srate_spread),
+                           :duration, dur)
   amp_env = make_env(:envelope, amp_envelope, :scaler, amp, :duration, dur)
-  gr_dur = make_env(:envelope, envelope_or_number(grain_duration), :duration, dur)
-  gr_dur_spread = make_env(:envelope, envelope_or_number(grain_duration_spread), :duration, dur)
+  gr_dur = make_env(:envelope, envelope_or_number(grain_duration),
+                    :duration, dur)
+  gr_dur_spread = make_env(:envelope, envelope_or_number(grain_duration_spread),
+                           :duration, dur)
   gr_start_scaler = (grain_start_in_seconds ? 1.0 : in_file_dur)
-  gr_start = make_env(:envelope, envelope_or_number(grain_start), :duration, dur)
-  gr_start_spread = make_env(:envelope, envelope_or_number(grain_start_spread), :duration, dur)
-  gr_dens_env = make_env(:envelope, envelope_or_number(grain_density), :duration, dur)
-  gr_dens_spread_env = make_env(:envelope, envelope_or_number(grain_density_spread), :duration, dur)
+  gr_start = make_env(:envelope, envelope_or_number(grain_start),
+                      :duration, dur)
+  gr_start_spread = make_env(:envelope, envelope_or_number(grain_start_spread),
+                             :duration, dur)
+  gr_dens_env = make_env(:envelope, envelope_or_number(grain_density),
+                         :duration, dur)
+  gr_dens_spread_env = make_env(:envelope,
+                                envelope_or_number(grain_density_spread),
+                                :duration, dur)
   gr_env = make_table_lookup(:frequency, 1.0, "initial-phase".intern, 0.0,
-                             :wave, if vct?(grain_envelope)
-                                      grain_envelope
-                                    else
-                                      make_gr_env(grain_envelope, grain_envelope_array_size)
-                                    end)
+                             :wave,
+                             if vct?(grain_envelope)
+                               grain_envelope
+                             else
+                               make_gr_env(grain_envelope,
+                                           grain_envelope_array_size)
+                             end)
   gr_env_end = make_table_lookup(:frequency, 1.0, "initial-phase".intern, 0.0,
-                                 :wave, if grain_envelope_end
-                                          if vct?(grain_envelope_end)
-                                            grain_envelope_end
-                                          else
-                                            make_gr_env(grain_envelope_end,
-                                                        grain_envelope_array_size)
-                                          end
-                                        else
-                                          make_vct(512)
-                                        end)
-  gr_int_env = make_env(:envelope, envelope_or_number(grain_envelope_transition), :duration, dur)
+                                 :wave,
+                                 if grain_envelope_end
+                                   if vct?(grain_envelope_end)
+                                     grain_envelope_end
+                                   else
+                                     make_gr_env(grain_envelope_end,
+                                                 grain_envelope_array_size)
+                                   end
+                                 else
+                                   make_vct(512)
+                                 end)
+  gr_int_env = make_env(:envelope,
+                        envelope_or_number(grain_envelope_transition),
+                       :duration, dur)
   interp_gr_envs = grain_envelope_end
-  gr_dist = make_env(:envelope, envelope_or_number(grain_distance), :duration, dur)
-  gr_dist_spread = make_env(:envelope, envelope_or_number(grain_distance_spread), :duration, dur)
-  gr_degree = make_env(:envelope, envelope_or_number(grain_degree), :duration, dur)
-  gr_degree_spread = make_env(:envelope, envelope_or_number(grain_degree_spread), :duration, dur)
+  gr_dist = make_env(:envelope, envelope_or_number(grain_distance),
+                     :duration, dur)
+  gr_dist_spread = make_env(:envelope,
+                            envelope_or_number(grain_distance_spread),
+                            :duration, dur)
+  gr_degree = make_env(:envelope, envelope_or_number(grain_degree),
+                       :duration, dur)
+  gr_degree_spread = make_env(:envelope,
+                              envelope_or_number(grain_degree_spread),
+                              :duration, dur)
   loc = make_locsig(:degree, 45.0,
                     :distance, 1.0,
                     :output, @ws_output,
@@ -230,11 +261,14 @@ def grani(start, dur, amp, file, *args)
     if gr_offset < gr_samples
       gr_where = env(gr_int_env) if interp_gr_envs
       val = if interp_gr_envs
-              (1 - gr_where) * table_lookup(gr_env) + gr_where * table_lookup(gr_env_end)
+              (1 - gr_where) * table_lookup(gr_env) + 
+                gr_where * table_lookup(gr_env_end)
             else
               table_lookup(gr_env)
             end
-      locsig(loc, gr_start_sample + gr_offset, val * env(amp_env) * readin(in_file_reader))
+      locsig(loc,
+             gr_start_sample + gr_offset,
+             val * env(amp_env) * readin(in_file_reader))
       gr_offset += 1
     else
       if first_grain
@@ -242,7 +276,8 @@ def grani(start, dur, amp, file, *args)
         gr_start_sample = beg
       else
         gr_start_sample += seconds2samples(1.0 / (gr_dens + gr_dens_spread))
-        if (gr_start_sample > fin) or (grains.nonzero? and (grain_counter >= grains))
+        if (gr_start_sample > fin) or
+           (grains.nonzero? and (grain_counter >= grains))
           break
         end
       end
@@ -260,7 +295,8 @@ def grani(start, dur, amp, file, *args)
       in_start_value = env(gr_start) * gr_start_scaler +
         random_spread(env(gr_start_spread) * gr_start_scaler)
       in_start = (in_start_value * in_file_sr).round
-      gr_duration = [grain_duration_limit, env(gr_dur) + random_spread(env(gr_dur_spread))].max
+      gr_duration = [grain_duration_limit,
+                     env(gr_dur) + random_spread(env(gr_dur_spread))].max
       gr_samples = seconds2samples(gr_duration)
       gr_srate = if srate_linear
                    env(sr_env) + random_spread(env(sr_spread_env))
@@ -292,11 +328,14 @@ def grani(start, dur, amp, file, *args)
       if where.nonzero? and where_bins.length > 1
         (where_bins.length - 1).times do |chn|
           locsig_set!(loc, chn,
-                      ((where_bins[chn] < where and where < where_bins[chn + 1]) ? 1.0 : 0.0))
+                      ((where_bins[chn] < where and
+                        where < where_bins[chn + 1]) ? 1.0 : 0.0))
         end
       else
         if where_to == Grani_to_grain_allchans
-          @channels.times do |chn| locsig_set!(loc, chn, 1.0) end
+          @channels.times do |chn|
+            locsig_set!(loc, chn, 1.0)
+          end
         else
           set_mus_location(gr_dist, gr_from_beg)
           set_mus_location(gr_dist_spread, gr_from_beg)
@@ -306,7 +345,8 @@ def grani(start, dur, amp, file, *args)
           dist = env(gr_dist) + random_spread(env(gr_dist_spread))
           dist_scl = 1.0 / [dist, 1.0].max
           if @ws_reverb
-            locsig_reverb_set!(loc, 0, reverb_amount * (1.0 / sqrt([dist, 1.0].max)))
+            locsig_reverb_set!(loc, 0,
+                               reverb_amount * (1.0 / sqrt([dist, 1.0].max)))
           end
           if @channels == 1
             locsig_set!(loc, 0, dist_scl)
@@ -317,43 +357,47 @@ def grani(start, dur, amp, file, *args)
               locsig_set!(loc, 1, dist_scl * frac)
             else
               if @channels > 2
-                locsig_set!(loc, 0, if 0 <= deg and deg <= 90
-                                      dist_scl * ((90.0 - deg) / 90.0)
-                                    else
-                                      if 270 <= deg and deg <= 360
-                                        dist_scl * ((deg - 270.0) / 90.0)
-                                      else
-                                        0.0
-                                      end
-                                    end)
-                locsig_set!(loc, 1, if 90 <= deg and deg <= 180
-                                      dist_scl * (180.0 - deg) / 90.0
-                                    else
-                                      if 0 <= deg and deg <= 90
-                                        dist_scl * (deg / 90.0)
-                                      else
-                                        0.0
-                                      end
-                                    end)
-                locsig_set!(loc, 2, if 180 <= deg and deg <= 270
-                                      dist_scl * (270.0 - deg) / 90.0
-                                    else
-                                      if 90 <= deg and deg <= 180
-                                        dist_scl * (deg - 90.0) / 90.0
-                                      else
-                                        0.0
-                                      end
-                                    end)
+                locsig_set!(loc, 0,
+                            if 0 <= deg and deg <= 90
+                              dist_scl * ((90.0 - deg) / 90.0)
+                            else
+                              if 270 <= deg and deg <= 360
+                                dist_scl * ((deg - 270.0) / 90.0)
+                              else
+                                0.0
+                              end
+                            end)
+                locsig_set!(loc, 1,
+                            if 90 <= deg and deg <= 180
+                              dist_scl * (180.0 - deg) / 90.0
+                            else
+                              if 0 <= deg and deg <= 90
+                                dist_scl * (deg / 90.0)
+                              else
+                                0.0
+                              end
+                            end)
+                locsig_set!(loc, 2,
+                            if 180 <= deg and deg <= 270
+                              dist_scl * (270.0 - deg) / 90.0
+                            else
+                              if 90 <= deg and deg <= 180
+                                dist_scl * (deg - 90.0) / 90.0
+                              else
+                                0.0
+                              end
+                            end)
                 if @channels > 3
-                  locsig_set!(loc, 3, if 270 <= deg and deg <= 360
-                                        dist_scl * (360.0 - deg) / 90.0
-                                      else
-                                        if 180 <= deg and deg <= 270
-                                          dist_scl * (deg - 180.0) / 90.0
-                                        else
-                                          0.0
-                                        end
-                                      end)
+                  locsig_set!(loc, 3,
+                              if 270 <= deg and deg <= 360
+                                dist_scl * (360.0 - deg) / 90.0
+                              else
+                                if 180 <= deg and deg <= 270
+                                  dist_scl * (deg - 180.0) / 90.0
+                                else
+                                  0.0
+                                end
+                              end)
                 end
               end
             end
@@ -373,7 +417,7 @@ end
 
 =begin
 with_sound(:play, 1, :statistics, true, :channels, 1, :reverb, nil) do
-  grani(0.0, 2.0, 5.0, "/usr/gnu/sound/SFiles/oboe.snd", :grain_envelope, raised_cosine())
+  grani(0.0, 2.0, 5.0, "oboe.snd", :grain_envelope, raised_cosine())
 end
 =end
 

@@ -1,17 +1,14 @@
 # snd-xm.rb -- snd-motif and snd-gtk classes and functions
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Sat Dec  1 18:36:34 CET 2012
+# Created: 04/02/25 05:31:02
+# Changed: 14/11/14 08:46:00
 
-# Commentary:
-#
 # Requires --with-motif|gtk
 #
-# Tested with Snd 13.x
-#             Ruby 2.0
-#             Motif 2.3.4 X11R6
-#             Gtk+ 2.24.6, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+# Tested with Snd 15.x
+#             Ruby 2.x.x
+#             Motif 2.3.3 X11R6
 #
 # module Snd_XM
 #  make_snd_menu(name, args) do ... end
@@ -47,17 +44,6 @@
 #  add_main_pane(name, type, *args)
 #  show_disk_space(snd)
 #  
-#  class Level_meter
-#   initialize(parent, width, height, args, resizable)
-#   inspect
-#   make_meter
-#   display
-#   update_display
-#
-#  make_level_meter(parent, width, height, args, resizable)
-#  display_level(lm)
-#  with_level_meters(n)
-#
 #  class Scale_widget
 #    initialize(parent)
 #    scale
@@ -76,7 +62,7 @@
 #    clear_string(*args)
 #
 #  class Dialog < Dialog_base
-#    add_slider(title, low, init, high, scale, kind, parent) do |w, c, i| ... end
+#    add_slider(title, low, init, high, scl, kind, parent) do |w, c, i| ... end
 #    add_toggle(label, value) do |val| ... end
 #    add_target(labels) do |val| ... end
 #
@@ -126,10 +112,6 @@
 # >    create
 # >    display(var)
 # > 
-# >  class Variable_display_meter < Variable_display
-# >    create
-# >    display(var)
-# > 
 # >  class Variable_display_graph < Variable_display
 # >    create
 # >    display(var)
@@ -164,8 +146,6 @@
 #   entry(klass, *rest) or entry(name) do ... end
 #   separator
 #   cascade(name, args) do ... end
-
-# Code:
 
 require "clm"
 
@@ -235,33 +215,28 @@ module Snd_XM
   Gzy    = 9
 
   # dialog_widgets
-  Color_dialog          =  0
-  Orientation_dialog    =  0
-  Enved_dialog          =  1
-#  Error_dialog         =  3
-#  Yes_or_no_dialog     =  4
-  Transform_dialog      =  2
-  File_open_dialog      =  3
-  File_save_as_dialog   =  4
-  View_files_dialog     =  5
-  Raw_data_dialog       =  6
-  New_file_dialog       =  7
-  File_mix_dialog       =  8
-  Edit_header_dialog    =  9
-  Find_dialog           = 10
-  Help_dialog           = 11
-#  Completion_dialog    = 15
-  Mix_panel_dialog      = 12
-  Print_dialog          = 13
-#  Recorder_dialog      = 18
-  Region_dialog         = 14
-  Info_dialog           = 15
-#  Track_dialog         = 21
-  Extra_Controls_dialog = 16
-  Save_selection_dialog = 17
-  Insert_file_dialog    = 18
-  Save_regions_dialog   = 19
-  Preferences_dialog    = 20
+  Color_dialog        =  0
+  Orientation_dialog  =  1
+  Enved_dialog        =  2
+  Error_dialog        =  3
+  Yes_or_no_dialog    =  4
+  Transform_dialog    =  5
+  File_open_dialog    =  6
+  File_save_as_dialog =  7
+  View_files_dialog   =  8
+  Raw_data_dialog     =  9
+  New_file_dialog     = 10
+  File_mix_dialog     = 11
+  Edit_header_dialog  = 12
+  Find_dialog         = 13
+  Help_dialog         = 14
+  Completion_dialog   = 15
+  Mix_panel_dialog    = 16
+  Print_dialog        = 17
+  Recorder_dialog     = 18
+  Region_dialog       = 19
+  Info_dialog         = 20
+  Track_dialog        = 21
 
   # MAKE_MENU as well as MAKE_POPUP_MENU may be used in non-Snd
   # scripts.  MAKE_SND_MENU and MAKE_SND_POPUP (see popup.rb) are
@@ -303,7 +278,9 @@ module Snd_XM
                                                               :info)
     unless proc?(help_cb)
       if string?(help_str) and !help_str.empty?
-        help_cb = lambda do |w, c, i| help_dialog(label, help_str) end
+        help_cb = lambda do |w, c, i|
+          help_dialog(label, help_str)
+        end
       end
     end
     d = Dialog.new(label, ok_cb, reset_cb, clear_cb, target_cb, help_cb)
@@ -398,13 +375,16 @@ module Snd_XM
   
   def update_label(list)
     if array?(list) and (not widget?(list))
-      list.each do |prc| prc.call end
+      list.each do |prc|
+        prc.call
+      end
     end
   end
 
   add_help(:find_child,
            "find_child(widget, name)  \
-returns a widget named 'name', if one can be found in the widget hierarchy beneath 'widget'")
+Returns a widget named NAME, \
+if one can be found in the widget hierarchy beneath WIDGET.")
   def find_child(widget, name)
     res = false
     each_child(widget) do |child|
@@ -425,7 +405,10 @@ returns a widget named 'name', if one can be found in the widget hierarchy benea
   end
 
   def set_label_sensitive(widget, name, set_p = false)
-    if widget?(wid = Snd.catch(:no_such_widget) do find_child(widget, name) end.first)
+    wid = Snd.catch(:no_such_widget) do
+      find_child(widget, name)
+    end.first
+    if widget?(wid)
       set_sensitive(wid, set_p)
     end
   end
@@ -527,7 +510,8 @@ module Snd_Gtk
       if RGTK_IS_LABEL(widget)
         Rgtk_label_set_text(RGTK_LABEL(widget), string)
       else
-        Rgtk_label_set_text(RGTK_LABEL(Rgtk_bin_get_child(RGTK_BIN(widget))), string)
+        c = Rgtk_bin_get_child(RGTK_BIN(widget))
+        Rgtk_label_set_text(RGTK_LABEL(c), string)
       end
     end
   end
@@ -536,7 +520,9 @@ module Snd_Gtk
     if widget?(widget)
       body.call(widget)
       Rgtk_container_foreach(RGTK_CONTAINER(widget),
-                             lambda do |w, d| body.call(RGTK_WIDGET(w)) end)
+                             lambda do |w, d|
+                               body.call(RGTK_WIDGET(w))
+                             end)
     end
   end
   alias for_each_child each_child
@@ -599,7 +585,10 @@ module Snd_Gtk
   end
 
   def show_disk_space(snd)
-    unless previous_label = labelled_snds.detect do |n| n.first == snd end
+    previous_label = labelled_snds.detect do |n|
+      n.first == snd
+    end
+    unless previous_label
       name_form = sound_widgets[10]
       space = kmg(disk_kspace(file_name(snd)))
       new_label = Rgtk_label_new(space)
@@ -619,186 +608,32 @@ module Snd_Gtk
     Rg_timeout_add(10000, show_label, previous_label)
   end
   # $after_open_hook.add_hook!("disk-space", &method(:show_disk_space).to_proc)
-
-  # 
-  # level meter
-  # 
-  # with-level-meters, make-level-meter, display-level
   
-#  class Level_meter
-#    def initialize(parent, width, height, args = [], resizable = true)
-#      @parent = parent
-#      @width = width
-#      @height = height
-#      @meter = nil
-#      @level = 0.0
-#      @size = 1.0
-#      @last_level = 0.0
-#      @red_deg = 0.0
-#    end
-#    attr_accessor :level, :size
-#    attr_reader :width, :height, :meter, :last_level, :red_deg
-#
-#    def inspect
-#      format("make_level_meter(%s, %s, %s, [], true)", @parent, @width, @height)
-#    end
-#    
-#    def make_meter
-#      frame = Rgtk_frame_new(false)
-#      Rgtk_widget_set_size_request(frame, @width, @height)
-#      Rgtk_box_pack_start(RGTK_BOX(@parent), frame, true, true, 4)
-#      Rgtk_widget_show(frame)
-#      @meter = Rgtk_drawing_area_new()
-#      Rgtk_widget_set_events(@meter, RGDK_EXPOSURE_MASK | RGDK_STRUCTURE_MASK)
-#      Rgtk_container_add(RGTK_CONTAINER(frame), @meter)
-#      Rgtk_widget_show(@meter)
-#      add_event_handler(@meter, "expose_event") do |w, e, d| self.display end
-#      add_event_handler(@meter, "configure_event") do |w, e, d|
-#        xy = Rgdk_drawable_get_size(RGDK_DRAWABLE(Rgtk_widget_get_window(w)))
-#        @width = xy.car
-#        @height = xy.cadr
-#        self.display
-#      end
-#    end
-#
-#    def display
-#      win = RGDK_DRAWABLE(Rgtk_widget_get_window(@meter))
-#      major_tick = (@width / 24.0).round
-#      ang0 = 45 * 64
-#      ang1 = 90 * 64
-#      wid2 = (@width / 2.0).floor
-#      gc = snd_gcs[0]
-#      top = (@height / 3.2).round
-#      Rgdk_gc_set_foreground(gc, white_pixel)
-#      Rgdk_draw_rectangle(win, gc, true, 0, 0, @width, @height)
-#      Rgdk_gc_set_foreground(gc, black_pixel)
-#      Rgdk_draw_arc(win, gc, false, 0, top, @width, @width, ang0, ang1)
-#      Rgdk_draw_arc(win, gc, false, 0, top - 1, @width, @width, ang0, ang1)
-#      if @width > 100
-#        Rgdk_draw_arc(win, gc, false, 0, top - 2, @width, @width, ang0, ang1)
-#      end
-#      Rgdk_draw_arc(win, gc, false, 4, top + 4, @width - 8, @width - 8, ang0, ang1)
-#      5.times do |i|
-#        rdeg = degrees2radians(45 - i * 22.5)
-#        sinr = sin(rdeg)
-#        cosr = cos(rdeg)
-#        x0 = (wid2 + wid2 * sinr).round
-#        y0 = ((wid2 + top) - wid2 * cosr).round
-#        x1 = (wid2 + (wid2 + major_tick) * sinr).round
-#        y1 = ((wid2 + top) - (wid2 + major_tick) * cosr).round
-#        Rgdk_draw_line(win, gc, x0, y0, x1, y1)
-#        Rgdk_draw_line(win, gc, x0 + 1, y0, x1 + 1, y1)
-#        if i < 4
-#          1.upto(5) do |j|
-#            rdeg = degrees2radians(45 - i * 22.5 - j * (90.0 / 20.0))
-#            sinr = sin(rdeg)
-#            cosr = cos(rdeg)
-#            x0 = (wid2 * (1.0 + sinr)).round
-#            y0 = ((wid2 + top) - wid2 * cosr).round
-#            x1 = (wid2 + (wid2 + major_tick) * sinr).round
-#            y1 = ((wid2 + top) - (wid2 + major_tick) * cosr).round
-#            Rgdk_draw_line(win, gc, x0, y0, x1, y1)
-#          end
-#        end
-#      end
-#      needle_speed = 0.25
-#      bubble_speed = 0.025
-#      bubble_size = 15 * 64
-#      val = @level * needle_speed + @last_level * (1.0 - needle_speed)
-#      deg = val * 90.0 - 45.0
-#      rdeg = degrees2radians(deg)
-#      nx1 = (wid2 + (wid2 + major_tick) * sin(rdeg)).round
-#      ny1 = ((wid2 + top) - (wid2 + major_tick) * cos(rdeg)).round
-#      Rgdk_draw_line(win, gc, wid2, top + wid2, nx1, ny1)
-#      @last_level = val
-#      @red_deg = if val > @red_deg
-#                   val
-#                 else
-#                   val * bubble_size + @red_deg * (1.0 - bubble_speed)
-#                 end
-#      if @red_deg > 0.01
-#        Rgdk_gc_set_foreground(gc, red_pixel)
-#        redx = (@red_deg * 90.0 * 64).floor
-#        redy = [redx, bubble_size].min
-#        4.times do |i|
-#          width2 = @width - i * 2
-#          Rgdk_draw_arc(win, gc, false, i, top + i, width2, width2, 135 * 64 - redx, redy)
-#        end
-#        Rgdk_gc_set_foreground(gc, black_pixel)
-#      end
-#    end
-#  end
-#  
-#  def make_level_meter(parent, width, height, args = [], resizable = true)
-#    lm = Level_meter.new(parent, width, height, args, resizable)
-#    lm.make_meter
-#    lm
-#  end
-#
-#  def display_level(lm)
-#    lm.display
-#  end
-#
-#  def with_level_meters(n)
-#    if widget?(parent = (main_widgets[Notebook_outer_pane] or main_widgets[Main_sound_pane]))
-#      height = n > 2 ? 70 : 85
-#      window = Rgtk_widget_get_window(parent)
-#      width = (Rgdk_drawable_get_size(RGDK_DRAWABLE(window)).cadr / Float(n)).floor
-#      meters = Rgtk_box_new(RGTK_ORIENTATION_HORIZONTAL, 4)
-#      Rgtk_box_pack_start(RGTK_BOX(parent), meters, false, false, 4)
-#      Rgtk_widget_set_size_request(meters, width, height)
-#      Rgtk_widget_show(meters)
-#      meter_list = make_array(n) do |i| make_level_meter(meters, width, height) end
-#      $dac_hook.add_hook!(get_func_name) do |sd|
-#        maxes = sound_data_maxamp(sd)
-#        meter_list.each_with_index do |meter, i|
-#          meter.level = (maxes[i] or 0.0)
-#          meter.display
-#        end
-#      end
-#      if defined? Rg_idle_add
-#        $stop_dac_hook.add_hook!(get_func_name) do | |
-#          Rg_idle_add(let(0) do |ctr|
-#                        lambda do |ignored|
-#                          meter_list.each do |meter|
-#                            meter.level = 0.0
-#                            meter.display
-#                          end
-#                          ctr += 1
-#                          ctr < 200
-#                        end
-#                      end, false)
-#        end
-#      end
-#      meter_list
-#    end
-#  end
-#  
-#  # body.arity == 3
-#  # lambda do |w, e, d| ... end
-#  # cclosure_new "GClosure* g_cclosure_new(GCallback func,
-#  #                                        lambda_data func_data,
-#  #                                        GClosureNotify destroy_data)"
-#  def add_event_handler(parent, event, cb_data = false, &body)
-#    Rg_signal_connect_closure_by_id(RGPOINTER(parent),
-#                                    Rg_signal_lookup(event, RG_OBJECT_TYPE(RG_OBJECT(parent))),
-#                                    0,
-#                                    Rg_cclosure_new(lambda do |w, e, d|
-#                                                      body.call(w, e, d)
-#                                                    end, cb_data, false), false)
-#  end
-#
-#  # body.arity == 2
-#  # lambda do |w, d| ... end
-#  def add_callback(parent, event, cb_data = false, &body)
-#    Rg_signal_connect(parent, event, body, cb_data)
-#  end
-#  
-#  def g_list_each(glist)
-#    Rg_list_length(glist).times do |i|
-#      yield(Rg_list_nth_data(glist, i))
-#    end
-#  end
+  # body.arity == 3
+  # lambda do |w, e, d| ... end
+  # cclosure_new "GClosure* g_cclosure_new(GCallback func,
+  #                                        lambda_data func_data,
+  #                                        GClosureNotify destroy_data)"
+  def add_event_handler(parent, event, cb_data = false, &body)
+    t = RG_OBJECT_TYPE(RG_OBJECT(parent))
+    Rg_signal_connect_closure_by_id(RGPOINTER(parent),
+                                    Rg_signal_lookup(event, t),
+                                    0,
+                                    Rg_cclosure_new(body, cb_data, false),
+                                    false)
+  end
+
+  # body.arity == 2
+  # lambda do |w, d| ... end
+  def add_callback(parent, event, cb_data = false, &body)
+    Rg_signal_connect(parent, event, body, cb_data)
+  end
+  
+  def g_list_each(glist)
+    Rg_list_length(glist).times do |i|
+      yield(Rg_list_nth_data(glist, i))
+    end
+  end
   
   class Scale_widget
     include Snd_XM
@@ -887,20 +722,28 @@ module Snd_Gtk
       Rgtk_window_set_resizable(window, true)
       # 
       box = RGTK_BOX(Rgtk_dialog_get_action_area(RGTK_DIALOG(@dialog)))
-      add_event_handler(@dialog, "delete_event") do |w, e, d| Rgtk_widget_hide(@dialog) end
+      add_event_handler(@dialog, "delete_event") do |w, e, d|
+        Rgtk_widget_hide(@dialog)
+      end
       Rgtk_box_pack_start(box, @dismiss_button, true, true, 20)
-      add_callback(@dismiss_button, "clicked") do |w, d| Rgtk_widget_hide(@dialog) end
+      add_callback(@dismiss_button, "clicked") do |w, d|
+        Rgtk_widget_hide(@dialog)
+      end
       Rgtk_widget_show(@dismiss_button)
       # 
       Rgtk_box_pack_start(box, @okay_button, true, true, 20)
-      add_callback(@okay_button, "clicked") do |w, d| @ok_cb.call(w, d, nil) end
+      add_callback(@okay_button, "clicked") do |w, d|
+        @ok_cb.call(w, d, nil)
+      end
       Rgtk_widget_show(@okay_button)
       # 
       if @reset_cb
         @reset_button = Rgtk_button_new_with_label(@reset)
         Rgtk_widget_set_name(@reset_button, "reset_button")
         Rgtk_box_pack_start(box, @reset_button, true, true, 20)
-        add_callback(@reset_button, "clicked") do |w, d| @reset_cb.call(w, d, nil) end
+        add_callback(@reset_button, "clicked") do |w, d|
+          @reset_cb.call(w, d, nil)
+        end
         Rgtk_widget_show(@reset_button)
       end
       # 
@@ -908,13 +751,17 @@ module Snd_Gtk
         @clear_button = Rgtk_button_new_with_label(@clear)
         Rgtk_widget_set_name(@clear_button, "clear_button")
         Rgtk_box_pack_start(box, @clear_button, true, true, 20)
-        add_callback(@clear_button, "clicked") do |w, d| @clear_cb.call(w, d, nil) end
+        add_callback(@clear_button, "clicked") do |w, d|
+          @clear_cb.call(w, d, nil)
+        end
         Rgtk_widget_show(@clear_button)
       end
       Rgtk_box_pack_start(box, @help_button, true, true, 20)
       # 
       if @help_cb
-        add_callback(@help_button, "clicked") do |w, d| @help_cb.call(w, d, nil) end
+        add_callback(@help_button, "clicked") do |w, d|
+          @help_cb.call(w, d, nil)
+        end
       end
       Rgtk_widget_show(@help_button)
       # 
@@ -928,7 +775,8 @@ module Snd_Gtk
         end
       end
       # 
-      Rg_object_set_data(RG_OBJECT(@dialog), "ok-button", RGPOINTER(@okay_button))
+      Rg_object_set_data(RG_OBJECT(@dialog),
+                         "ok-button", RGPOINTER(@okay_button))
       @parent = Rgtk_dialog_get_content_area(RGTK_DIALOG(@dialog))
     end
 
@@ -938,7 +786,8 @@ module Snd_Gtk
     # slider = @dialog.add_slider(...)
     # slider.scale --> widget
     # slider.label --> label
-    def add_slider(title, low, init, high, scale = 1, kind = :linear, parent = @dialog, &func)
+    def add_slider(title, low, init, high,
+                   scale = 1, kind = :linear, parent = @dialog, &func)
       slider = Scale_widget.new(parent)
       slider.add_scale(title, low, init, high, scale, kind)
       add_callback(slider.scale, "value_changed") do |w, d|
@@ -971,7 +820,9 @@ module Snd_Gtk
         Rgtk_box_pack_start(RGTK_BOX(rc), button, false, false, 4)
         Rgtk_toggle_button_set_active(RGTK_TOGGLE_BUTTON(button), on)
         Rgtk_widget_show(button)
-        add_callback(button, "clicked") do |w, d| target_cb.call(type) end
+        add_callback(button, "clicked") do |w, d|
+          target_cb.call(type)
+        end
       end
     end
   end  
@@ -988,7 +839,10 @@ module Snd_Motif
   def create_color(color)
     col = RXColor()
     dpy = RXtDisplay(main_widgets[Top_level_shell])
-    if RXAllocNamedColor(dpy, RDefaultColormap(dpy, RDefaultScreen(dpy)), color, col, col).zero?
+    c = RXAllocNamedColor(dpy,
+                          RDefaultColormap(dpy, RDefaultScreen(dpy)),
+                          color, col, col)
+    if c.zero?
       Snd.raise(:no_such_color, color, "can't allocate")
     else
       Rpixel(col)
@@ -1009,8 +863,12 @@ module Snd_Motif
     RXmStringFree(xs)
   end
 
-  add_help(:each_child, "each_child(w, &func)  applies func to w and each of its children")
-  add_help(:for_each_child, "for_each_child(w, &func)  applies func to w and each of its children")
+  add_help(:each_child,
+           "each_child(w, &func)  \
+Applies FUNC to W and each of its children.")
+  add_help(:for_each_child,
+           "for_each_child(w, &func)  \
+Applies FUNC to W and each of its children.")
   def each_child(widget, &body)
     if RWidget?(widget)
       body.call(widget)
@@ -1061,10 +919,8 @@ module Snd_Motif
   end
   
   def add_main_pane(name, type, *args)
-    RXtCreateManagedWidget(name,
-                           type,
-                           (main_widgets[Notebook_outer_pane] or main_widgets[Main_sound_pane]),
-                           *args)
+    w = main_widgets[Notebook_outer_pane] or main_widgets[Main_sound_pane]
+    RXtCreateManagedWidget(name, type, w, *args)
   end
 
   def add_sound_pane(snd, name, type, *args)
@@ -1072,8 +928,8 @@ module Snd_Motif
   end
 
   def add_channel_pane(snd, chn, name, type, *args)
-    RXtCreateManagedWidget(name, type, RXtParent(RXtParent(channel_widgets(snd, chn)[Edhist])),
-                           *args)
+    xp = RXtParent(RXtParent(channel_widgets(snd, chn)[Edhist]))
+    RXtCreateManagedWidget(name, type, xp, *args)
   end
 
   # string must be freed
@@ -1083,7 +939,8 @@ module Snd_Motif
   end
 
   def compound2string(xstr)
-    RXmStringUnparse(xstr, false, RXmCHARSET_TEXT, RXmCHARSET_TEXT, false, 0, RXmOUTPUT_ALL)
+    RXmStringUnparse(xstr, false, RXmCHARSET_TEXT, RXmCHARSET_TEXT,
+                     false, 0, RXmOUTPUT_ALL)
   end
 
   def get_xtvalue(widget, item)
@@ -1095,13 +952,15 @@ module Snd_Motif
   end
 
   add_help(:current_screen,
-           "current_screen()  returns the current X screen number of the current display")
+           "current_screen()  \
+Returns the current X screen number of the current display.")
   def current_screen
     RDefaultScreenOfDisplay(RXtDisplay(main_widgets[Top_level_shell]))
   end
 
   def get_pixmap(screen, file)
-    pix = RXmGetPixmap(screen, file, RBlackPixelOfScreen(screen), RWhitePixelOfScreen(screen))
+    pix = RXmGetPixmap(screen, file, RBlackPixelOfScreen(screen),
+                       RWhitePixelOfScreen(screen))
     if pix == RXmUNSPECIFIED_PIXMAP
       Snd.raise(:snd_x_error, pix, "can't create pixmap")
     else
@@ -1115,7 +974,7 @@ module Snd_Motif
 
   add_help(:display_widget_tree,
            "display_widget_tree(widget, spaces=\"\")  \
-displays the hierarchy of widgets beneath 'widget'" )
+Displays the hierarchy of widgets beneath WIDGET." )
   def display_widget_tree(widget, spaces = "")
     if (name = RXtName(widget)).null?
       name = "<unnamed>"
@@ -1130,16 +989,20 @@ displays the hierarchy of widgets beneath 'widget'" )
 
   add_help(:show_disk_space,
            "show_disk_space(snd)  \
-adds a label to the minibuffer area showing \
-the current free space (for use with $after_open_hook)")
+Adds a label to the minibuffer area showing \
+the current free space (for use with $after_open_hook).")
   def show_disk_space(snd)
-    unless previous_label = labelled_snds.detect do |n| n.first == snd end
+    previous_label = labelled_snds.detect do |n|
+      n.first == snd
+    end
+    unless previous_label
       app = main_widgets[Top_level_application]
       minibuffer = sound_widgets(snd)[Minibuffer]
       name_form = RXtParent(minibuffer)
       space = kmg(disk_kspace(file_name(snd)))
       str = RXmStringCreateLocalized(space)
-      new_label = RXtCreateManagedWidget("space:", RxmLabelWidgetClass, name_form,
+      new_label = RXtCreateManagedWidget("space:",
+                                         RxmLabelWidgetClass, name_form,
                                          [RXmNbackground, basic_color,
                                           RXmNleftAttachment, RXmATTACH_WIDGET,
                                           RXmNleftWidget, minibuffer,
@@ -1164,7 +1027,8 @@ the current free space (for use with $after_open_hook)")
   # $after_open_hook.add_hook!("disk-space", &method(:show_disk_space).to_proc)
 
   add_help(:menu_option,
-           "menu_option(name)  finds the widget associated with a given menu item name")
+           "menu_option(name)  \
+Finds the widget associated with a given menu item NAME.")
   def menu_option(name)
     menu_widgets.cdr.each do |top_menu|
       each_child(top_menu) do |w|
@@ -1189,7 +1053,8 @@ the current free space (for use with $after_open_hook)")
   end
 
   add_help(:set_main_color_of_widget,
-           "set_main_color_of_widget(widget)  sets the background color of WIDGET")
+           "set_main_color_of_widget(widget)  \
+Sets the background color of WIDGET.")
   def set_main_color_of_widget(w)
     each_child(w) do |n|
       if RXtIsWidget(n)
@@ -1260,32 +1125,38 @@ the current free space (for use with $after_open_hook)")
                                      RXmNorientation, RXmVERTICAL,
                                      RXmNpaneMinimum, 100,
                                      RXmNbottomAttachment, RXmATTACH_FORM])
-        mark_label = RXtCreateManagedWidget("Marks", RxmLabelWidgetClass, mark_box,
-                                            [RXmNbackground, highlight_color,
-                                             RXmNleftAttachment, RXmATTACH_FORM,
-                                             RXmNrightAttachment, RXmATTACH_FORM,
-                                             RXmNalignment, RXmALIGNMENT_CENTER,
-                                             RXmNtopAttachment, RXmATTACH_FORM])
-        mark_scr = RXtCreateManagedWidget("mark-scr", RxmScrolledWindowWidgetClass, mark_box,
-                                          [RXmNbackground, basic_color,
-                                           RXmNscrollingPolicy, RXmAUTOMATIC,
-                                           RXmNscrollBarDisplayPolicy, RXmSTATIC,
-                                           RXmNleftAttachment, RXmATTACH_FORM,
-                                           RXmNrightAttachment, RXmATTACH_FORM,
-                                           RXmNtopAttachment, RXmATTACH_WIDGET,
-                                           RXmNtopWidget, mark_label,
-                                           RXmNbottomAttachment, RXmATTACH_FORM])
-        mlist = RXtCreateManagedWidget("mark-list", RxmRowColumnWidgetClass, mark_scr,
-                                       [RXmNorientation, RXmVERTICAL,
-                                        RXmNtopAttachment, RXmATTACH_FORM,
-                                        RXmNbottomAttachment, RXmATTACH_FORM,
-                                        RXmNspacing, 0])
+        ls = [RXmNbackground, highlight_color,
+              RXmNleftAttachment, RXmATTACH_FORM,
+              RXmNrightAttachment, RXmATTACH_FORM,
+              RXmNalignment, RXmALIGNMENT_CENTER,
+              RXmNtopAttachment, RXmATTACH_FORM]
+        mark_label = RXtCreateManagedWidget("Marks",
+                                            RxmLabelWidgetClass, mark_box, ls)
+        ls = [RXmNbackground, basic_color,
+              RXmNscrollingPolicy, RXmAUTOMATIC,
+              RXmNscrollBarDisplayPolicy, RXmSTATIC,
+              RXmNleftAttachment, RXmATTACH_FORM,
+              RXmNrightAttachment, RXmATTACH_FORM,
+              RXmNtopAttachment, RXmATTACH_WIDGET,
+              RXmNtopWidget, mark_label,
+              RXmNbottomAttachment, RXmATTACH_FORM]
+        mark_scr = RXtCreateManagedWidget("mark-scr",
+                                          RxmScrolledWindowWidgetClass,
+                                          mark_box, ls)
+        ls = [RXmNorientation, RXmVERTICAL,
+              RXmNtopAttachment, RXmATTACH_FORM,
+              RXmNbottomAttachment, RXmATTACH_FORM,
+              RXmNspacing, 0]
+        mlist = RXtCreateManagedWidget("mark-list",
+                                       RxmRowColumnWidgetClass, mark_scr, ls)
         set_main_color_of_widget(mark_scr)
         RXtSetValues(mark_box, [RXmNpaneMinimum, 1])
         set_list(snd, chn, mlist)
       end
       lst = list(snd, chn)
-      if (new_marks = Snd.marks(snd, chn)).length > (current_list_length = length(snd, chn))
+      new_marks = Snd.marks(snd, chn)
+      current_list_length = @mark_list_lengths.length
+      if new_marks.length > current_list_length
         current_list_length.upto(new_marks.length) do
           tf = RXtCreateWidget("field", RxmTextFieldWidgetClass, lst,
                                [RXmNbackground, basic_color])
@@ -1309,9 +1180,13 @@ the current free space (for use with $after_open_hook)")
                            RXtSetValues(w, [RXmNbackground, basic_color])
                          end)
           RXtAddEventHandler(tf, REnterWindowMask, false,
-                             lambda do |w, c, i, f| $mouse_enter_text_hook.call(w) end)
+                             lambda do |w, c, i, f|
+                               $mouse_enter_text_hook.call(w)
+                             end)
           RXtAddEventHandler(tf, RLeaveWindowMask, false,
-                             lambda do |w, c, i, f| $mouse_leave_text_hook.call(w) end)
+                             lambda do |w, c, i, f|
+                               $mouse_leave_text_hook.call(w)
+                             end)
         end
       end
       set_length(snd, chn, new_marks.length)
@@ -1319,8 +1194,7 @@ the current free space (for use with $after_open_hook)")
         break if new_marks.empty?
         if RXmIsTextField(n)
           mk = new_marks.shift
-          RXtSetValues(n, [RXmNvalue, mark_sample(mk).to_s,
-                           RXmNuserData, mk])
+          RXtSetValues(n, [RXmNvalue, mark_sample(mk).to_s, RXmNuserData, mk])
           RXtManageChild(n)
         end
       end
@@ -1341,7 +1215,10 @@ the current free space (for use with $after_open_hook)")
 
     private
     def find(snd, chn, dats)
-      if val = dats.detect do |dat| snd == dat.car and chn == dat.cadr end
+      val = dats.detect do |dat|
+        snd == dat.car and chn == dat.cadr
+      end
+      if val
         val.caddr
       else
         false
@@ -1353,190 +1230,15 @@ the current free space (for use with $after_open_hook)")
     end
 
     def set_length(snd, chn, len)
-      @mark_list_lengths.delete_if do |dat| snd == dat.car and chn == dat.cadr end
+      @mark_list_lengths.delete_if do |dat|
+        snd == dat.car and chn == dat.cadr
+      end
       @mark_list_lengths.push([snd, chn, len])
     end
 
     def set_list(snd, chn, wid)
       @mark_lists.push([snd, chn, wid])
     end
-  end
-  
-  # 
-  # level meter
-  # 
-  # with-level-meters, make-level-meter, display-level
-
-  class Level_meter
-    def initialize(parent, width, height, args, resizable = true)
-      @parent = parent
-      @width = width
-      @height = height
-      @args = args
-      @resizable = resizable
-      @meter = nil
-      @level = 0.0
-      @size = 1.0
-      @last_level = 0.0
-      @red_deg = 0.0
-    end
-    attr_accessor :level, :size
-    attr_reader :width, :height, :meter, :last_level, :red_deg
-
-    def inspect
-      format("make_level_meter(%s, %s, %s, %s, %s)", @parent, @width, @height, @args, @resizable)
-    end
-    
-    def make_meter
-      frame = RXtCreateManagedWidget("meter-frame", RxmFrameWidgetClass, @parent,
-                                     @args + [RXmNshadowType, RXmSHADOW_ETCHED_IN,
-                                       RXmNwidth, @width,
-                                       RXmNheight, @height,
-                                       RXmNshadowThickness, (@width > 500 ? 6 : 3)])
-      meter_args = [RXmNbackground, white_pixel,
-        RXmNforeground, black_pixel,
-        RXmNtopAttachment, RXmATTACH_FORM,
-        RXmNbottomAttachment, RXmATTACH_FORM,
-        RXmNleftAttachment, RXmATTACH_FORM,
-        RXmNrightAttachment, RXmATTACH_FORM]
-      if @resizable
-        meter_args + [RXmNwidth, @width, RXmNheight, @height, RXmNresizePolicy, RXmRESIZE_NONE]
-      end
-      @meter = RXtCreateManagedWidget("meter", RxmDrawingAreaWidgetClass, frame, meter_args)
-      RXtAddCallback(@meter, RXmNexposeCallback, lambda do |w, c, i| self.display end)
-      
-      if @resizable
-        RXtAddCallback(@meter, RXmNresizeCallback,
-                       lambda do |w, c, i|
-                         @width = RXtGetValues(w, [RXmNwidth, 0])[1]
-                         @height = RXtGetValues(w, [RXmNheight, 0])[1]
-                         self.display
-                       end)
-      end
-    end
-
-    def display
-      dpy = RXtDisplay(@meter)
-      win = RXtWindow(@meter)
-      major_tick = (@width / 24.0).round
-      ang0 = 45 * 64
-      ang1 = 90 * 64
-      wid2 = (@width / 2.0).floor
-      gc = snd_gcs[0]
-      top = (@height / 3.2).round
-      RXSetForeground(dpy, gc, white_pixel)
-      RXFillRectangle(dpy, win, gc, 0, 0, @width, @height)
-      RXSetForeground(dpy, gc, black_pixel)
-      RXDrawArc(dpy, win, gc, 0, top, @width, @width, ang0, ang1)
-      RXDrawArc(dpy, win, gc, 0, top - 2, @width, @width, ang0, ang1)
-      if @width > 100
-        RXDrawArc(dpy, win, gc, 0, top - 2, @width, @width, ang0, ang1)
-      end
-      RXDrawArc(dpy, win, gc, 4, top + 4, @width - 8, @width - 8, ang0, ang1)
-      5.times do |i|
-        rdeg = degrees2radians(45 - i * 22.5)
-        sinr = sin(rdeg)
-        cosr = cos(rdeg)
-        x0 = (wid2 + wid2 * sinr).round
-        y0 = ((wid2 + top) - wid2 * cosr).round
-        x1 = (wid2 + (wid2 + major_tick) * sinr).round
-        y1 = ((wid2 + top) - (wid2 + major_tick) * cosr).round
-        RXDrawLine(dpy, win, gc, x0, y0, x1, y1)
-        RXDrawLine(dpy, win, gc, x0 + 1, y0, x1 + 1, y1)
-        if i < 4
-          1.upto(5) do |j|
-            rdeg = degrees2radians(45 - i * 22.5 - j * (90.0 / 20.0))
-            sinr = sin(rdeg)
-            cosr = cos(rdeg)
-            x0 = (wid2 * (1.0 + sinr)).round
-            y0 = ((wid2 + top) - wid2 * cosr).round
-            x1 = (wid2 + (wid2 + major_tick) * sinr).round
-            y1 = ((wid2 + top) - (wid2 + major_tick) * cosr).round
-            RXDrawLine(dpy, win, gc, x0, y0, x1, y1)
-          end
-        end
-      end
-      needle_speed = 0.25
-      bubble_speed = 0.025
-      bubble_size = 15 * 64
-      val = @level * needle_speed + @last_level * (1.0 - needle_speed)
-      deg = val * 90.0 - 45.0
-      rdeg = degrees2radians(deg)
-      nx1 = (wid2 + (wid2 + major_tick) * sin(rdeg)).round
-      ny1 = ((wid2 + top) - (wid2 + major_tick) * cos(rdeg)).round
-      RXDrawLine(dpy, win, gc, wid2, top + wid2, nx1, ny1)
-      @last_level = val
-      @red_deg = if val > @red_deg
-                   val
-                 else
-                   val * bubble_size + @red_deg * (1.0 - bubble_speed)
-                 end
-      if @red_deg > 0.01
-        RXSetForeground(dpy, gc, red_pixel)
-        redx = (@red_deg * 90.0 * 64).floor
-        redy = [redx, bubble_size].min
-        4.times do |i|
-          RXDrawArc(dpy, win, gc, i, top + i, @width - i * 2, @width - i * 2, 135 * 64 - redx, redy)
-        end
-        RXSetForeground(dpy, gc, black_pixel)
-      end
-    end
-
-    def update_display
-      RXmUpdateDisplay(@meter)
-    end      
-  end
-  
-  def make_level_meter(parent, width, height, args, resizable = true)
-    lm = Level_meter.new(parent, width, height, args, resizable)
-    lm.make_meter
-    lm
-  end
-
-  def display_level(lm)
-    lm.display
-  end
-
-  def with_level_meters(n)
-    parent = (main_widgets[Notebook_outer_pane] or main_widgets[Main_sound_pane])
-    height = 70
-    width = (RXtGetValues(parent, [RXmNwidth, 0])[1] / Float(n)).floor
-    meters = RXtCreateManagedWidget("meters", RxmFormWidgetClass, parent,
-                                    [RXmNpositionIndex, 0,
-                                      RXmNbackground, basic_color,
-                                      RXmNfractionBase, n * 10,
-                                      RXmNpaneMinimum, height])
-    meter_list = make_array(n) do |i|
-      make_level_meter(meters, width, height,
-                       [RXmNtopAttachment, RXmATTACH_FORM,
-                         RXmNbottomAttachment, RXmATTACH_FORM,
-                         RXmNleftAttachment, RXmATTACH_POSITION,
-                         RXmNleftPosition, i * 10,
-                         RXmNrightAttachment, RXmATTACH_POSITION,
-                         RXmNrightPosition, (i + 1) * 10])
-    end
-    $dac_hook.add_hook!(get_func_name) do |sd|
-      maxes = sound_data_maxamp(sd)
-      meter_list.each_with_index do |meter, i|
-        meter.level = (maxes[i] or 0.0)
-        meter.display
-      end
-    end
-    $stop_dac_hook.add_hook!(get_func_name) do
-      RXtAppAddWorkProc(main_widgets[Top_level_shell],
-                        let(0) do |ctr|
-                          lambda do |ignored|
-                            meter_list.each do |meter|
-                              meter.level = 0.0
-                              meter.display
-                            end
-                            ctr += 1
-                            ctr > 200
-                          end
-                        end)
-    end
-    RXtSetValues(meters, [RXmNpaneMinimum, 1])
-    meter_list
   end
   
   class Variable_display
@@ -1546,7 +1248,7 @@ the current free space (for use with $after_open_hook)")
       @name = page_name
       @variable = variable_name
       @@dialog = nil unless defined? @@dialog
-      @@pages = {}   unless defined? @@pages
+      @@pages = {} unless defined? @@pages
       @@notebook = nil unless defined? @@notebook
       @widget = nil
       @snd = false
@@ -1567,7 +1269,8 @@ the current free space (for use with $after_open_hook)")
     def make_dialog
       xdismiss = RXmStringCreateLocalized("Dismiss")
       titlestr = RXmStringCreateLocalized("Variables")
-      @@dialog = RXmCreateTemplateDialog(main_widgets[Top_level_shell], "variables-dialog",
+      @@dialog = RXmCreateTemplateDialog(main_widgets[Top_level_shell],
+                                         "variables-dialog",
                                          [RXmNokLabelString, xdismiss,
                                           RXmNautoUnmanage, false,
                                           RXmNdialogTitle, titlestr,
@@ -1577,34 +1280,43 @@ the current free space (for use with $after_open_hook)")
                                           RXmNheight, 400,
                                           RXmNwidth, 400,
                                           RXmNbackground, basic_color])
-      RXtAddCallback(@@dialog, RXmNokCallback, lambda do |w, c, i| RXtUnmanageChild(@@dialog) end)
+      RXtAddCallback(@@dialog, RXmNokCallback,
+                     lambda do |w, c, i|
+                       RXtUnmanageChild(@@dialog)
+                     end)
       RXmStringFree(xdismiss)
       RXmStringFree(titlestr)
-      @@notebook = RXtCreateManagedWidget("variables-notebook", RxmNotebookWidgetClass, @@dialog,
-                                          [RXmNleftAttachment, RXmATTACH_FORM,
-                                            RXmNrightAttachment, RXmATTACH_FORM,
-                                            RXmNtopAttachment, RXmATTACH_FORM,
-                                            RXmNbottomAttachment, RXmATTACH_WIDGET,
-                                            RXmNbottomWidget,
-                                            RXmMessageBoxGetChild(@@dialog, RXmDIALOG_SEPARATOR),
-                                            RXmNbackground, basic_color,
-                                            RXmNframeBackground, zoom_color,
-                                            RXmNbindingWidth, 14])
+      ls = [RXmNleftAttachment, RXmATTACH_FORM,
+            RXmNrightAttachment, RXmATTACH_FORM,
+            RXmNtopAttachment, RXmATTACH_FORM,
+            RXmNbottomAttachment, RXmATTACH_WIDGET,
+            RXmNbottomWidget,
+            RXmMessageBoxGetChild(@@dialog, RXmDIALOG_SEPARATOR),
+            RXmNbackground, basic_color,
+            RXmNframeBackground, zoom_color,
+            RXmNbindingWidth, 14]
+      @@notebook = RXtCreateManagedWidget("variables-notebook",
+                                          RxmNotebookWidgetClass, @@dialog, ls)
       RXtManageChild(@@dialog)
-      @default_background = RWhitePixelOfScreen(RDefaultScreenOfDisplay(RXtDisplay(@@dialog)))
+      c = RDefaultScreenOfDisplay(RXtDisplay(@@dialog))
+      @default_background = RWhitePixelOfScreen(c)
     end
 
     def create
-      unless RWidget?(@@dialog) then make_dialog end
+      unless RWidget?(@@dialog)
+        make_dialog
+      end
       unless @@pages[@name]
-        panes = RXtCreateManagedWidget(@name, RxmPanedWindowWidgetClass, @@notebook, [])
-        simple_cases = RXtCreateManagedWidget(@name, RxmRowColumnWidgetClass, panes,
+        panes = RXtCreateManagedWidget(@name, RxmPanedWindowWidgetClass,
+                                       @@notebook, [])
+        simple_cases = RXtCreateManagedWidget(@name,
+                                              RxmRowColumnWidgetClass, panes,
                                               [RXmNorientation, RXmVERTICAL,
-                                                RXmNpaneMinimum, 30,
-                                                RXmNbackground, basic_color])
+                                               RXmNpaneMinimum, 30,
+                                               RXmNbackground, basic_color])
         RXtCreateManagedWidget(@name, RxmPushButtonWidgetClass, @@notebook,
                                [RXmNnotebookChildType, RXmMAJOR_TAB,
-                                 RXmNbackground, basic_color])
+                                RXmNbackground, basic_color])
         @@pages[@name] = [@name, panes, simple_cases]
       end
       @@pages[@name]
@@ -1626,12 +1338,14 @@ the current free space (for use with $after_open_hook)")
       row = RXtCreateManagedWidget(@variable + "-row",
                                    RxmRowColumnWidgetClass, row_pane,
                                    [RXmNorientation, RXmHORIZONTAL,
-                                     RXmNbackground, basic_color])
-      RXtCreateManagedWidget(var_label, RxmLabelWidgetClass, row, [RXmNbackground, basic_color])
-      @widget = RXtCreateManagedWidget(@variable + "-value", RxmTextFieldWidgetClass, row,
+                                    RXmNbackground, basic_color])
+      RXtCreateManagedWidget(var_label, RxmLabelWidgetClass, row,
+                             [RXmNbackground, basic_color])
+      @widget = RXtCreateManagedWidget(@variable + "-value",
+                                       RxmTextFieldWidgetClass, row,
                                        [RXmNeditable, false,
-                                         RXmNresizeWidth, true,
-                                         RXmNbackground, @default_background])
+                                        RXmNresizeWidth, true,
+                                        RXmNbackground, @default_background])
     end
 
     def display(var)
@@ -1639,7 +1353,9 @@ the current free space (for use with $after_open_hook)")
       new_str = var.to_s
       if old_str != new_str
         RXmTextFieldSetString(@widget, new_str)
-        if RXtIsManaged(@widget) then RXmUpdateDisplay(@widget) end
+        if RXtIsManaged(@widget)
+          RXmUpdateDisplay(@widget)
+        end
       end
       var
     end
@@ -1660,16 +1376,20 @@ the current free space (for use with $after_open_hook)")
       row_pane = page_info[2]
       var_label = @variable + ":"
       title = RXmStringCreateLocalized(var_label)
-      @widget = RXtCreateManagedWidget(@variable, RxmScaleWidgetClass, row_pane,
+      @widget = RXtCreateManagedWidget(@variable,
+                                       RxmScaleWidgetClass, row_pane,
                                        [RXmNbackground, basic_color,
-                                         RXmNslidingMode, RXmTHERMOMETER,
-                                         RXmNminimum, (100.0 * @range[0]).floor,
-                                         RXmNmaximum, (100.0 * @range[1]).floor,
-                                         RXmNdecimalPoints, 2,
-                                         RXmNtitleString, title,
-                                         RXmNorientation, RXmHORIZONTAL,
+                                        RXmNslidingMode, RXmTHERMOMETER,
+                                        RXmNminimum, (100.0 * @range[0]).floor,
+                                        RXmNmaximum, (100.0 * @range[1]).floor,
+                                        RXmNdecimalPoints, 2,
+                                        RXmNtitleString, title,
+                                        RXmNorientation, RXmHORIZONTAL,
                                         RXmNshowValue, RXmNEAR_BORDER])
-      if widget?(wid = Snd.catch(:no_such_widget) do find_child(@widget, "Scrollbar") end.first)
+      wid = Snd.catch(:no_such_widget) do
+        find_child(@widget, "Scrollbar")
+      end.first
+      if widget?(wid)
         RXtVaSetValues(wid, [RXmNtroughColor, red_pixel])
       end
       RXmStringFree(title)
@@ -1681,25 +1401,6 @@ the current free space (for use with $after_open_hook)")
     end
   end
 
-  class Variable_display_meter < Variable_display
-    def create
-      page_info = super
-      row_pane = page_info[2]
-      var_label = @variable + ":"
-      height = 70
-      width = 210
-      RXtCreateManagedWidget(var_label, RxmLabelWidgetClass, row_pane, [RXmNbackground, basic_color])
-      @widget = make_level_meter(row_pane, width, height, [], false)
-    end
-
-    def display(var)
-      @widget.level = var
-      @widget.display
-      @widget.update_display
-      var
-    end
-  end
-
   class Variable_display_graph < Variable_display
     def create
       page_info = super
@@ -1707,16 +1408,21 @@ the current free space (for use with $after_open_hook)")
       var_label = @variable + ":"
       form = RXtCreateManagedWidget(var_label, RxmFormWidgetClass, pane,
                                     [RXmNpaneMinimum, 100])
-      @snd = make_variable_graph(form, @variable + ": time", 2048, mus_srate.to_i)
+      @snd = make_variable_graph(form, @variable + ": time",
+                                 2048, mus_srate.to_i)
       @data = channel_data(@snd, 0)
     end
 
     def display(var)
       frames = @data.length
       loc = cursor(snd, 0)
-      @data[0, loc] = var
-      if time_graph?(@snd) then update_time_graph(@snd) end
-      if transform_graph?(@snd) then update_transform_graph(@snd) end
+      @data[loc] = var
+      if time_graph?(@snd)
+        update_time_graph(@snd)
+      end
+      if transform_graph?(@snd)
+        update_transform_graph(@snd)
+      end
       if loc + 1 == frames
         set_cursor(0, @snd, 0)
       else
@@ -1748,9 +1454,13 @@ the current free space (for use with $after_open_hook)")
     def display(var)
       frames = @data.length
       loc = cursor(snd, 0)
-      @data[0, loc] = var
-      if time_graph?(@snd) then update_time_graph(@snd) end
-      if transform_graph?(@snd) then update_transform_graph(@snd) end
+      @data[loc] = var
+      if time_graph?(@snd)
+        update_time_graph(@snd)
+      end
+      if transform_graph?(@snd)
+        update_transform_graph(@snd)
+      end
       if loc + 1 == frames
         set_cursor(0, @snd, 0)
       else
@@ -1765,14 +1475,13 @@ the current free space (for use with $after_open_hook)")
     end
   end
 
-  def make_variable_display(page_name, variable_name, type = :text, range = [0.0, 1.0])
+  def make_variable_display(page_name, variable_name,
+                            type = :text, range = [0.0, 1.0])
     case type
     when :text
       Variable_display_text.new(page_name, variable_name)
     when :scale
       Variable_display_scale.new(page_name, variable_name, range)
-    when :meter
-      Variable_display_meter.new(page_name, variable_name)
     when :graph
       Variable_display_graph.new(page_name, variable_name)
     when :spectrum
@@ -1815,33 +1524,41 @@ the current free space (for use with $after_open_hook)")
                                    RXmNbackground, highlight_color])
       case kind
       when :log
-        @label = RXtCreateManagedWidget(format("%1.2f", init),
-                                        RxmLabelWidgetClass, rc,
+        s = format("%1.2f", init),
+        @label = RXtCreateManagedWidget(s, RxmLabelWidgetClass, rc,
                                         [RXmNalignment, RXmALIGNMENT_BEGINNING,
                                          RXmNbackground, basic_color])
         @scale = general_scale(rc, title, xtitle)
-        RXtVaSetValues(@scale, [RXmNmaximum, $log_scale_ticks,
-                                RXmNvalue, scale_log2linear(low, init, high).round])
+        RXtVaSetValues(@scale,
+                       [RXmNmaximum, $log_scale_ticks,
+                        RXmNvalue, scale_log2linear(low, init, high).round])
         RXtAddCallback(@scale, RXmNvalueChangedCallback,
                        lambda do |w, c, i|
-                         change_label(@label, scale_log_label(low, Rvalue(i), high))
+                         change_label(@label,
+                                      scale_log_label(low, Rvalue(i), high))
                        end)
         RXtAddCallback(@scale, RXmNdragCallback,
                        lambda do |w, c, i|
-                         change_label(@label, scale_log_label(low, Rvalue(i), high))
+                         change_label(@label,
+                                      scale_log_label(low, Rvalue(i), high))
                        end)
       when :semi
-        @label = RXtCreateManagedWidget(format("semitones: %d", ratio2semitones(init)),
-                                        RxmLabelWidgetClass, rc,
+        s = format("semitones: %d", ratio2semitones(init))
+        @label = RXtCreateManagedWidget(s, RxmLabelWidgetClass, rc,
                                         [RXmNalignment, RXmALIGNMENT_BEGINNING,
                                          RXmNbackground, basic_color])
         @scale = general_scale(rc, title, xtitle)
-        RXtVaSetValues(@scale, [RXmNmaximum, 2 * $semi_range,
-                                RXmNvalue, $semi_range + ratio2semitones(init)])
+        RXtVaSetValues(@scale,
+                       [RXmNmaximum, 2 * $semi_range,
+                        RXmNvalue, $semi_range + ratio2semitones(init)])
         RXtAddCallback(@scale, RXmNvalueChangedCallback,
-                       lambda do |w, c, i| change_label(@label, semi_scale_label(Rvalue(i))) end)
+                       lambda do |w, c, i|
+                         change_label(@label, semi_scale_label(Rvalue(i)))
+                       end)
         RXtAddCallback(@scale, RXmNdragCallback,
-                       lambda do |w, c, i| change_label(@label, semi_scale_label(Rvalue(i))) end)
+                       lambda do |w, c, i|
+                         change_label(@label, semi_scale_label(Rvalue(i)))
+                       end)
       else
         @scale = linear_scale(rc, title, xtitle, low, init, high, scale)
       end
@@ -1912,27 +1629,42 @@ the current free space (for use with $after_open_hook)")
       [[RXmDIALOG_HELP_BUTTON,   highlight_color],
        [RXmDIALOG_CANCEL_BUTTON, highlight_color],
        [RXmDIALOG_OK_BUTTON,     highlight_color]].each do |button, color|
-        RXtVaSetValues(RXmMessageBoxGetChild(@dialog, button), [RXmNarmColor,   selection_color,
-                                                                RXmNbackground, color])
+        RXtVaSetValues(RXmMessageBoxGetChild(@dialog, button),
+                       [RXmNarmColor,   selection_color,
+                        RXmNbackground, color])
       end
       RXtAddCallback(@dialog, RXmNcancelCallback,
-                     lambda do |w, c, i| RXtUnmanageChild(@dialog) end)
+                     lambda do |w, c, i|
+                       RXtUnmanageChild(@dialog)
+                     end)
       RXtAddCallback(@dialog, RXmNhelpCallback,
-                     lambda do |w, c, i| @help_cb.call(w, c, i) end)
+                     lambda do |w, c, i|
+                       @help_cb.call(w, c, i)
+                     end)
       RXtAddCallback(@dialog, RXmNokCallback,
-                     lambda do |w, c, i| @ok_cb.call(w, c, i) end)
+                     lambda do |w, c, i|
+                       @ok_cb.call(w, c, i)
+                     end)
       vals = [RXmNbackground, highlight_color,
               RXmNforeground, black_pixel,
               RXmNarmColor,   selection_color]
       if @clear_cb
-        @clear_button = RXtCreateManagedWidget(@clear, RxmPushButtonWidgetClass, @dialog, vals)
+        @clear_button = RXtCreateManagedWidget(@clear,
+                                               RxmPushButtonWidgetClass,
+                                               @dialog, vals)
         RXtAddCallback(@clear_button, RXmNactivateCallback,
-                       lambda do |w, c, i| @clear_cb.call(w, c, i) end)
+                       lambda do |w, c, i|
+                         @clear_cb.call(w, c, i)
+                       end)
       end
       if @reset_cb
-        @reset_button = RXtCreateManagedWidget(@reset, RxmPushButtonWidgetClass, @dialog, vals)
+        @reset_button = RXtCreateManagedWidget(@reset,
+                                               RxmPushButtonWidgetClass,
+                                               @dialog, vals)
         RXtAddCallback(@reset_button, RXmNactivateCallback,
-                       lambda do |w, c, i| @reset_cb.call(w, c, i) end)
+                       lambda do |w, c, i|
+                         @reset_cb.call(w, c, i)
+                       end)
       end
       @help_button    = RXmMessageBoxGetChild(@dialog, RXmDIALOG_HELP_BUTTON)
       @dismiss_button = RXmMessageBoxGetChild(@dialog, RXmDIALOG_CANCEL_BUTTON)
@@ -1948,7 +1680,8 @@ the current free space (for use with $after_open_hook)")
           RXtSetSensitive(@okay_button, (not Snd.sounds.empty?))
         end
       end
-      @parent = RXtCreateManagedWidget("pane", RxmPanedWindowWidgetClass, @dialog,
+      @parent = RXtCreateManagedWidget("pane",
+                                       RxmPanedWindowWidgetClass, @dialog,
                                        [RXmNsashHeight,  1,
                                         RXmNsashWidth,   1,
                                         RXmNbackground,  basic_color,
@@ -1963,11 +1696,14 @@ the current free space (for use with $after_open_hook)")
     # slider = @dialog.add_slider(...)
     # slider.scale --> widget
     # slider.label --> label
-    def add_slider(title, low, init, high, scale = 1, kind = :linear, parent = @parent, &func)
+    def add_slider(title, low, init, high,
+                   scale = 1, kind = :linear, parent = @parent, &func)
       slider = Scale_widget.new(parent)
       slider.add_scale(title, low, init, high, scale, kind)
       unless proc?(func) and func.arity == 3
-        func = lambda do |w, c, i| func.call end
+        func = lambda do |w, c, i|
+          func.call
+        end
       end
       RXtAddCallback(slider.scale, RXmNvalueChangedCallback, func)
       slider
@@ -1975,13 +1711,16 @@ the current free space (for use with $after_open_hook)")
 
     # change_cb.arity == 1
     def add_toggle(label = "truncate at end", value = true, &change_cb)
-      button = RXtCreateManagedWidget(label, RxmToggleButtonWidgetClass, @parent,
+      button = RXtCreateManagedWidget(label,
+                                      RxmToggleButtonWidgetClass, @parent,
                                       [RXmNbackground, basic_color,
                                        RXmNalignment, RXmALIGNMENT_BEGINNING,
                                        RXmNset, value,
                                        RXmNselectColor, yellow_pixel])
       RXtAddCallback(button, RXmNvalueChangedCallback,
-                     lambda do |w, c, i| change_cb.call(Rset(i)) end)
+                     lambda do |w, c, i|
+                       change_cb.call(Rset(i))
+                     end)
       h = get_xtvalue(button, RXmNheight)
       h += (h * 0.1).round
       RXtVaSetValues(button, [RXmNpaneMinimum, h, RXmNpaneMaximum, h])
@@ -1996,21 +1735,21 @@ the current free space (for use with $after_open_hook)")
                              [RXmNorientation,   RXmHORIZONTAL,
                               RXmNseparatorType, RXmSHADOW_ETCHED_OUT,
                               RXmNbackground,    basic_color])
-      rc = RXtCreateManagedWidget("rc", RxmRowColumnWidgetClass, @parent,
-                                  [RXmNorientation,      RXmHORIZONTAL,
-                                   RXmNbackground,       basic_color,
-                                   RXmNradioBehavior,    true,
-                                   RXmNradioAlwaysOne,   true,
-                                   RXmNbottomAttachment, RXmATTACH_FORM,
-                                   RXmNleftAttachment,   RXmATTACH_FORM,
-                                   RXmNrightAttachment,  RXmATTACH_FORM,
-                                   RXmNentryClass,       RxmToggleButtonWidgetClass,
-                                   RXmNisHomogeneous,    true])
+      ls = [RXmNorientation,      RXmHORIZONTAL,
+            RXmNbackground,       basic_color,
+            RXmNradioBehavior,    true,
+            RXmNradioAlwaysOne,   true,
+            RXmNbottomAttachment, RXmATTACH_FORM,
+            RXmNleftAttachment,   RXmATTACH_FORM,
+            RXmNrightAttachment,  RXmATTACH_FORM,
+            RXmNentryClass,       RxmToggleButtonWidgetClass,
+            RXmNisHomogeneous,    true]
+      rc = RXtCreateManagedWidget("rc", RxmRowColumnWidgetClass, @parent, ls)
       labels.map do |name, type, on|
         RXtCreateManagedWidget(name, RxmToggleButtonWidgetClass, rc,
-                               [RXmNbackground,    basic_color,
-                                RXmNselectColor,   yellow_pixel,
-                                RXmNset,           on,
+                               [RXmNbackground, basic_color,
+                                RXmNselectColor, yellow_pixel,
+                                RXmNset, on,
                                 RXmNindicatorType, RXmONE_OF_MANY_ROUND,
                                 RXmNarmCallback, [lambda do |w, c, i|
                                                     target_cb.call(type)
@@ -2046,13 +1785,21 @@ the current free space (for use with $after_open_hook)")
                                            RXmNbackground, basic_color])
       RXtAddCallback(text_field, RXmNactivateCallback, activate_cb)
       RXtAddCallback(text_field, RXmNfocusCallback,
-                     lambda do |w, c, i| RXtSetValues(w, [RXmNbackground, text_focus_color]) end)
+                     lambda do |w, c, i|
+                       RXtSetValues(w, [RXmNbackground, text_focus_color])
+                     end)
       RXtAddCallback(text_field, RXmNlosingFocusCallback,
-                     lambda do |w, c, i| RXtSetValues(w, [RXmNbackground, basic_color]) end)
+                     lambda do |w, c, i|
+                       RXtSetValues(w, [RXmNbackground, basic_color])
+                     end)
       RXtAddEventHandler(text_field, REnterWindowMask, false,
-                         lambda do |w, c, i, f| $mouse_enter_text_hook.call(w) end)
+                         lambda do |w, c, i, f|
+                           $mouse_enter_text_hook.call(w)
+                         end)
       RXtAddEventHandler(text_field, RLeaveWindowMask, false,
-                         lambda do |w, c, i, f| $mouse_leave_text_hook.call(w) end)
+                         lambda do |w, c, i, f|
+                           $mouse_leave_text_hook.call(w)
+                         end)
       text_field
     end
 
@@ -2062,7 +1809,8 @@ the current free space (for use with $after_open_hook)")
                                                           [:columns, 60],
                                                           [:wordwrap, true],
                                                           [:value, ""],
-                                                          [:scroll_horizontal, false])
+                                                          [:scroll_horizontal,
+                                                           false])
       text = RXmCreateScrolledText(@parent, "text",
                                    [RXmNtopAttachment, RXmATTACH_WIDGET,
                                     RXmNeditMode, RXmMULTI_LINE_EDIT,
@@ -2073,13 +1821,21 @@ the current free space (for use with $after_open_hook)")
                                     RXmNvalue, value,
                                     RXmNbackground, basic_color])
       RXtAddCallback(text, RXmNfocusCallback,
-                     lambda do |w, c, i| RXtSetValues(w, [RXmNbackground, text_focus_color]) end)
+                     lambda do |w, c, i|
+                       RXtSetValues(w, [RXmNbackground, text_focus_color])
+                     end)
       RXtAddCallback(text, RXmNlosingFocusCallback,
-                     lambda do |w, c, i| RXtSetValues(w, [RXmNbackground, basic_color]) end)
+                     lambda do |w, c, i|
+                       RXtSetValues(w, [RXmNbackground, basic_color])
+                     end)
       RXtAddEventHandler(text, REnterWindowMask, false,
-                         lambda do |w, c, i, f| $mouse_enter_text_hook.call(w) end)
+                         lambda do |w, c, i, f|
+                           $mouse_enter_text_hook.call(w)
+                         end)
       RXtAddEventHandler(text, RLeaveWindowMask, false,
-                         lambda do |w, c, i, f| $mouse_leave_text_hook.call(w) end)
+                         lambda do |w, c, i, f|
+                           $mouse_leave_text_hook.call(w)
+                         end)
       RXtManageChild(text)
       text
     end
@@ -2177,7 +1933,9 @@ make_snd_menu("Effects") do
     entry(Modulated_echo, "Modulated echo")
   end
   separator
-  entry("Octave-down") do down_oct end
+  entry("Octave-down") do
+    down_oct
+  end
   entry("Remove DC") do
     lastx = lasty = 0.0
     map_chan(lambda do |inval|
@@ -2186,7 +1944,9 @@ make_snd_menu("Effects") do
                lasty
              end)
   end
-  entry("Spiker") do spike end
+  entry("Spiker") do
+    spike
+  end
 end
 =end
 
@@ -2201,8 +1961,8 @@ class Menu
   attr_reader :menu
 
   def inspect
-    format("#<%s: label: %s, menu: %s, args: %s>",
-           self.class, @label.inspect, @menu.inspect, @args.inspect)
+    format("#<%s: label: %p, menu: %p, args: %p>",
+           self.class, @label, @menu, @args)
   end
 
   def entry(name, *rest, &body)
@@ -2214,15 +1974,17 @@ class Menu
       child = RXtCreateManagedWidget(name, widget_class, @menu, args)
       case widget_class
       when RxmPushButtonWidgetClass
-        RXtAddCallback(child, RXmNactivateCallback, lambda do |w, c, i| body.call(w, c, i) end)
+        RXtAddCallback(child, RXmNactivateCallback, body)
       when RxmToggleButtonWidgetClass
-        RXtAddCallback(child, RXmNvalueChangedCallback, lambda do |w, c, i| body.call(w, c, i) end)
+        RXtAddCallback(child, RXmNvalueChangedCallback, body)
       end
     else
       child = Rgtk_menu_item_new_with_label(name)
       Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), child)
       Rgtk_widget_show(child)
-      add_callback(child, "activate") do |w, d| body.call(w, d, nil) end
+      add_callback(child, "activate") do |w, d|
+        body.call(w, d, nil)
+      end
     end
     child
   end
@@ -2242,7 +2004,8 @@ class Menu
   def separator(single = :single)
     if $with_motif
       line = (single == :double ? RXmDOUBLE_LINE : RXmSINGLE_LINE)
-      RXtCreateManagedWidget("s", RxmSeparatorWidgetClass, @menu, [RXmNseparatorType, line])
+      RXtCreateManagedWidget("s", RxmSeparatorWidgetClass, @menu,
+                             [RXmNseparatorType, line])
     else
       sep = Rgtk_menu_item_new()
       Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), sep)
@@ -2261,9 +2024,13 @@ class Menu
   def change_menu_color(new_color)
     color_pixel = get_color(new_color)
     if $with_motif
-      each_child(@menu) do |child| RXmChangeColor(child, color_pixel) end
+      each_child(@menu) do |child|
+        RXmChangeColor(child, color_pixel)
+      end
     else
-      each_child(@menu) do |child| Rgtk_widget_modify_bg(child, RGTK_STATE_NORMAL, color_pixel) end
+      each_child(@menu) do |child|
+        Rgtk_widget_modify_bg(child, RGTK_STATE_NORMAL, color_pixel)
+      end
     end
   end
 end
@@ -2286,8 +2053,12 @@ class Snd_main_menu < Menu
       menu = arg.new(*rest)
       if menu.respond_to?(:post_dialog)
         if $with_motif
-          child = RXtCreateManagedWidget(rest[0].to_s, RxmPushButtonWidgetClass, @menu, @args)
-          RXtAddCallback(child, RXmNactivateCallback, lambda do |w, c, i| menu.post_dialog end)
+          child = RXtCreateManagedWidget(rest[0].to_s,
+                                         RxmPushButtonWidgetClass, @menu, @args)
+          RXtAddCallback(child, RXmNactivateCallback,
+                         lambda do |w, c, i|
+                           menu.post_dialog
+                         end)
         else
           child = Rgtk_menu_item_new_with_label(rest[0].to_s)
           Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), child)
@@ -2298,11 +2069,12 @@ class Snd_main_menu < Menu
         end
         child
       else
-        Snd.raise(:snd_x_error, arg.class, "class does not respond to `post_dialog'")
+        Snd.raise(:snd_x_error, arg.class,
+                  "class does not respond to `post_dialog'")
       end
     else
       if block_given?
-        add_to_menu(@menu_number, arg, lambda do | | body.call end)
+        add_to_menu(@menu_number, arg, body)
       else
         Snd.raise(:wrong_number_of_args, "no block given")
       end
@@ -2325,14 +2097,18 @@ class Snd_main_menu < Menu
       @children = []
       if $with_motif
         @menu = RXmCreatePulldownMenu(parent, @label, @args)
-        cascade = RXtCreateManagedWidget(@label, RxmCascadeButtonWidgetClass, parent,
+        cascade = RXtCreateManagedWidget(@label,
+                                         RxmCascadeButtonWidgetClass,
+                                         parent,
                                          [RXmNsubMenuId, @menu] + @args)
         RXtAddCallback(cascade, RXmNcascadingCallback,
-                       lambda do |w, c, i| update_label(@children) end)
+                       lambda do |w, c, i|
+                         update_label(@children)
+                       end)
       else
         cascade = Rgtk_menu_item_new_with_label(@label)
-        Rgtk_menu_shell_append(RGTK_MENU_SHELL(Rgtk_menu_item_get_submenu(RGTK_MENU_ITEM(parent))),
-                               cascade)
+        s = RGTK_MENU_SHELL(Rgtk_menu_item_get_submenu(RGTK_MENU_ITEM(parent)))
+        Rgtk_menu_shell_append(s, cascade)
         Rgtk_widget_show(cascade)
         @menu = Rgtk_menu_new()
         Rgtk_menu_item_set_submenu(RGTK_MENU_ITEM(cascade), @menu)
@@ -2348,8 +2124,13 @@ class Snd_main_menu < Menu
         menu = arg.new(*rest)
         if menu.respond_to?(:post_dialog)
           if $with_motif
-            child = RXtCreateManagedWidget(rest[0].to_s, RxmPushButtonWidgetClass, @menu, @args)
-            RXtAddCallback(child, RXmNactivateCallback, lambda do |w, c, i| menu.post_dialog end)
+            child = RXtCreateManagedWidget(rest[0].to_s,
+                                           RxmPushButtonWidgetClass,
+                                           @menu, @args)
+            RXtAddCallback(child, RXmNactivateCallback,
+                           lambda do |w, c, i|
+                             menu.post_dialog
+                           end)
           else
             child = Rgtk_menu_item_new_with_label(rest[0].to_s)
             Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), child)
@@ -2358,15 +2139,23 @@ class Snd_main_menu < Menu
               menu.post_dialog
             end
           end
-          @children.push(lambda do | | change_label(child, menu.inspect) end)
+          @children.push(lambda do | |
+                           change_label(child, menu.inspect)
+                         end)
         else
-          Snd.raise(:snd_x_error, arg.class, "class does not respond to `post_dialog'")
+          Snd.raise(:snd_x_error, arg.class,
+                    "class does not respond to `post_dialog'")
         end
       else
         if block_given?
           if $with_motif
-            child = RXtCreateManagedWidget(arg.to_s, RxmPushButtonWidgetClass, @menu, @args)
-            RXtAddCallback(child, RXmNactivateCallback, lambda do |w, c, i| body.call end)
+            child = RXtCreateManagedWidget(arg.to_s,
+                                           RxmPushButtonWidgetClass,
+                                           @menu, @args)
+            RXtAddCallback(child, RXmNactivateCallback,
+                           lambda do |w, c, i|
+                             body.call
+                           end)
           else
             child = Rgtk_menu_item_new_with_label(arg.to_s)
             Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), child)
@@ -2386,7 +2175,8 @@ class Snd_main_menu < Menu
     def separator(single = :single)
       if $with_motif
         line = (single == :double ? RXmDOUBLE_LINE : RXmSINGLE_LINE)
-        RXtCreateManagedWidget("s", RxmSeparatorWidgetClass, @menu, [RXmNseparatorType, line])
+        RXtCreateManagedWidget("s", RxmSeparatorWidgetClass, @menu,
+                               [RXmNseparatorType, line])
       else
         sep = Rgtk_menu_item_new()
         Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), sep)
@@ -2407,13 +2197,15 @@ class Main_menu < Menu
       RXtVaSetValues(parent, [RXmNmenuHelpWidget, wid]) if name =~ /help/
     else
       wid = Rgtk_menu_item_new_with_label(@label)
-      Rgtk_menu_shell_append(RGTK_MENU_SHELL(Rgtk_menu_item_get_submenu(RGTK_MENU_ITEM(parent))),
-                             wid)
+      s = RGTK_MENU_SHELL(Rgtk_menu_item_get_submenu(RGTK_MENU_ITEM(parent)))
+      Rgtk_menu_shell_append(s, wid)
       Rgtk_widget_show(wid) 
       @menu = Rgtk_menu_new()
       Rgtk_menu_item_set_submenu(RGTK_MENU_ITEM(wid), @menu)
     end
-    instance_eval(&body) if block_given?
+    if block_given?
+      instance_eval(&body)
+    end
   end
 end
 
@@ -2448,7 +2240,9 @@ class Main_popup_menu < Menu
       label(@label)
       separator
     end
-    instance_eval(&body) if block_given?
+    if block_given?
+      instance_eval(&body)
+    end
   end
 end
 

@@ -1,14 +1,14 @@
 # clm-ins.rb -- CLM instruments translated to Snd/Ruby
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Tue Sep 16 01:27:09 CEST 2003
-# Changed: Sun Dec 23 01:00:48 CET 2012
+# Created: 03/09/16 01:27:09
+# Changed: 14/11/13 05:58:33
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
 #   with_dac   (dac output, except at least for fullmix)
 #
-# Tested with Snd 13.x and Ruby 2.x.x
+# Tested with Snd 15.x and Ruby 2.x.x
 
 # pluck                  reson
 # vox                    cellon
@@ -71,8 +71,12 @@ def normalize_partials(partials)
   sum = 0.0
   parts = partials.dup
   len = parts.length
-  1.step(len - 1, 2) do |i| sum += parts[i].abs end
-  1.step(len - 1, 2) do |i| parts[i] /= sum end
+  1.step(len - 1, 2) do |i|
+    sum += parts[i].abs
+  end
+  1.step(len - 1, 2) do |i|
+    parts[i] /= sum
+  end
   parts
 end unless defined? normalize_partials
 
@@ -97,12 +101,13 @@ end
 #  Plucked-String Algorithm" CMJ vol 7 no 2 Summer 1983, reprinted in
 #  "The Music Machine".  translated from CLM's pluck.ins
 add_help(:pluck,
-         "pluck(start, dur, freq, amp, weighting, lossfact) \
-implements the Jaffe-Smith plucked string physical model. 
-'weighting' is the ratio of the once-delayed to the twice-delayed samples.  \
-It defaults to 0.5=shortest decay. 
-Anything other than 0.5 = longer decay.  Must be between 0 and less than 1.0. 
-'lossfact' can be used to shorten decays.  \
+         "pluck(start, dur, freq, amp, weighting, lossfact)  \
+Implements the Jaffe-Smith plucked string physical model.
+WEIGHTING is the ratio of the once-delayed to the twice-delayed samples.  \
+It defaults to 0.5=shortest decay.
+Anything other than 0.5 = longer decay.  \
+Must be between 0 and less than 1.0.
+LOSSFACT can be used to shorten decays.  \
 Most useful values are between 0.8 and 1.0. pluck(0, 1, 330, 0.3, 0.95, 0.95)")
 def pluck(start, dur, freq, amp, weighting = 0.5, lossfact = 0.9)
   get_optimum_c = lambda do |s, o, p|
@@ -137,7 +142,9 @@ def pluck(start, dur, freq, amp, weighting = 0.5, lossfact = 0.9)
   # with white noise (between -1 and 1).
   allp = make_one_zero(lf * (1.0 - wt), lf * wt)
   feedb = make_one_zero(c, 1.0)     # or feedb = make_one_zero(1.0, c)
-  dlen.times do |i| tab[i] = 1.0 - random(2.0) end
+  dlen.times do |i|
+    tab[i] = 1.0 - random(2.0)
+  end
   run_instrument(start, dur) do
     val = tab.clm_cycle
     tab[tab.clm_cycle_index] = (1.0 - c) * one_zero(feedb, one_zero(allp, val))
@@ -270,8 +277,8 @@ end
 # FOF example
 add_help(:fofins,
          "fofins(beg, dur, frq, amp, vib, f0, a0, f1, a1, \
-f2, a2, ae=[0, 0, 25, 1, 75, 1, 100, 0]) \
-produces FOF synthesis: \
+f2, a2, ae=[0, 0, 25, 1, 75, 1, 100, 0])  \
+Produces FOF synthesis: \
 fofins(0, 1, 270, 0.2, 0.001, 730, 0.6, 1090, 0.3, 2440, 0.1)")
 def fofins(start, dur, frq, amp, vib, f0, a0, f1, a1, f2, a2,
            ae = [0, 0, 25, 1, 75, 1, 100,0])
@@ -407,7 +414,7 @@ end
 add_help(:pqw_vox,
          "pqw_vox(start, dur, freq, spacing_freq, \
 amp, ampfun, freqfun, freqscl, phonemes, formant_amps, formant_shapes)  \
-produces vocal sounds using phase quadrature waveshaping")
+Produces vocal sounds using phase quadrature waveshaping.")
 def pqw_vox(start, dur, freq, spacing_freq, amp, ampfun, freqfun, freqscl,
             phonemes, formant_amps, formant_shapes)
   vox_fun = lambda do |phons, which, newenv|
@@ -591,8 +598,8 @@ end
 # FM-BELL
 add_help(:fm_bell,
          "fm_bell(startime, dur, frequency, amplitude, \
-[amp-env=[...], [index_env=[...], [index=1.0]]]) \
-mixes in one fm bell note" )
+amp-env=[...], index_env=[...], index=1.0)  \
+Mixes in one fm bell note." )
 def fm_bell(start, dur, freq, amp,
             amp_env = [0, 0, 0.1, 1, 10, 0.6, 25, 0.3,
               50, 0.15, 90, 0.1, 100, 0],
@@ -1121,7 +1128,7 @@ end
 # lp_coeff controls the strength of the low pass filter inserted
 #   in the feedback loop
 # volume can be used to boost the reverb output
-def nrev_rb(*args)
+def nrev(*args)
   reverb_factor, lp_coeff, volume = nil
   optkey(args, binding,
          [:reverb_factor, 1.09],
@@ -1159,7 +1166,7 @@ def nrev_rb(*args)
   allpass6 = (chan2 ? make_all_pass(-0.7, 0.7, dly_len[12]) : nil)
   allpass7 = (chan4 ? make_all_pass(-0.7, 0.7, dly_len[13]) : nil)
   allpass8 = (chan4 ? make_all_pass(-0.7, 0.7, dly_len[14]) : nil)
-  reverb_frame = make_vct(@channels)
+  out_frample = Vct.new(@channels, 0.0)
   run_reverb() do |val, i|
     rev = volume * val
     outrev = all_pass(allpass4,
@@ -1173,16 +1180,16 @@ def nrev_rb(*args)
                                                           comb(comb4, rev) +
                                                           comb(comb5, rev) +
                                                           comb(comb6, rev))))))
-    vct_set!(reverb_frame, 0, all_pass(allpass5, outrev))
-    vct_set!(reverb_frame, 1, all_pass(allpass6, outrev)) if chan2
-    vct_set!(reverb_frame, 2, all_pass(allpass7, outrev)) if chan4
-    vct_set!(reverb_frame, 3, all_pass(allpass8, outrev)) if chan4
-    reverb_frame
+    out_frample[0] = all_pass(allpass5, outrev)
+    if chan2
+      out_frample[1] = all_pass(allpass6, outrev)
+    end
+    if chan4
+      out_frample[2] = all_pass(allpass7, outrev)
+      out_frample[3] = all_pass(allpass8, outrev)
+    end
+    out_frample
   end
-end
-
-class Snd_Instrument
-  alias nrev nrev_rb
 end
 
 def drone_canter_test(start = 0.0, dur = 1.0)
@@ -1287,7 +1294,9 @@ def reson(start, dur, pitch, amp, numformants,
   ranvib = make_rand_interp(:frequency, ranvibfreq,
                             :amplitude, hz2radians(ranvibpc * pitch))
   totalamp = 0.0
-  numformants.times do |i| totalamp += data[i][2] end
+  numformants.times do |i|
+    totalamp += data[i][2]
+  end
   numformants.times do |i|
     frmdat = data[i]
     ampf = frmdat[0]
@@ -1423,14 +1432,16 @@ def jl_reverb(*args)
   comb4 = make_comb(0.697, 11597)
   outdel1 = make_delay((0.013 * @srate).round)
   outdel2 = (@channels > 1 ? make_delay((0.011 * @srate).round) : false)
-  reverb_frame = make_vct(@channels)
+  out_frample = Vct.new(@channels, 0.0)
   run_reverb() do |ho, i|
     allpass_sum = all_pass(allpass3, all_pass(allpass2, all_pass(allpass1, ho)))
     comb_sum = (comb(comb1, allpass_sum) + comb(comb2, allpass_sum) +
                 comb(comb3, allpass_sum) + comb(comb4, allpass_sum))
-    vct_set!(reverb_frame, 0, delay(outdel1, comb_sum))
-    vct_set!(reverb_frame, 1, delay(outdel2, comb_sum)) if outdel2
-    reverb_frame
+    out_frample[0] = delay(outdel1, comb_sum)
+    if outdel2
+      out_frample[1] = delay(outdel2, comb_sum)
+    end
+    out_frample
   end
 end
 
@@ -1442,7 +1453,9 @@ def gran_synth(start, dur, freq, grain_dur, interval, amp)
   grain_size = ([grain_dur, interval].max * @srate).ceil
   grains = make_wave_train(:size, grain_size, :frequency, 1.0 / interval)
   grain = mus_data(grains)
-  grain_size.times do |i| grain[i] = env(grain_env) * oscil(carrier) end
+  grain_size.times do |i|
+    grain[i] = env(grain_env) * oscil(carrier)
+  end
   run_instrument(start, dur) do
     amp * wave_train(grains)
   end
@@ -1457,7 +1470,7 @@ end
 def touch_tone(start, number)
   touch_tab_1 = [0, 697, 697, 697, 770, 770, 770, 852, 852, 852, 941, 941, 941]
   touch_tab_2 = [0, 1209, 1336, 1477, 1209, 1336,
-    1477, 1209, 1336, 1477, 1209, 1336, 1477]
+                 1477, 1209, 1336, 1477, 1209, 1336, 1477]
   number.length.times do |i|
     k = number[i]
     ii = if k.kind_of?(Numeric)
@@ -2222,7 +2235,7 @@ end
 
 # SCRATCH
 def scratch(start, file, src_ratio, turntable)
-  assert_type(File.exists?(file), file, 1, "an existing file")
+  assert_type(File.exist?(file), file, 1, "an existing file")
   f = make_file2sample(file)
   turn_i = 1
   turns = turntable.length
@@ -2276,7 +2289,7 @@ end
 #
 # spectral modeling (SMS)
 def pins(start, dur, file, amp, *args)
-  assert_type(File.exists?(file), file, 2, "an existing file")
+  assert_type(File.exist?(file), file, 2, "an existing file")
   transposition, time_scaler, fftsize, highest_bin, max_peaks, attack = nil
   optkey(args, binding,
          [:transposition, 1.0], # this can be used to transpose the sound
@@ -2314,7 +2327,9 @@ def pins(start, dur, file, amp, *args)
   last_peak_amps = make_vct(max_oscils)
   peak_amps = make_vct(max_peaks)
   peak_freqs = make_vct(max_peaks)
-  resynth_oscils = make_array(max_oscils) do make_oscil(:frequency, 0) end
+  resynth_oscils = make_array(max_oscils) do
+    make_oscil(:frequency, 0)
+  end
   # run-time generated amplitude and frequency envelopes
   amps = make_vct(max_oscils)
   rates = make_vct(max_oscils)
@@ -2598,12 +2613,16 @@ end
 # CLM-EXPSRC
 def clm_expsrc(start, dur, in_file, exp_ratio, src_ratio, amp,
                rev = false, start_in_file = 0)
-  assert_type(File.exists?(in_file), in_file, 0, "an existing file")
+  assert_type(File.exist?(in_file), in_file, 0, "an existing file")
   stf = (start_in_file * srate(in_file)).floor
   fda = make_readin(in_file, :channel, 0, :start, stf)
-  exa = make_granulate(lambda do |dir| readin(fda) end, :expansion, exp_ratio)
-  srca = make_src(lambda do |dir| granulate(exa) end, :srate, src_ratio)
-  two_chans = (channels(in_file) == 2) and (channels(@output) == 2)
+  exa = make_granulate(lambda do |dir|
+                         readin(fda)
+                       end, :expansion, exp_ratio)
+  srca = make_src(lambda do |dir|
+                    granulate(exa)
+                  end, :srate, src_ratio)
+  two_chans = (channels(in_file) == 2) and (channels(@ws_output) == 2)
   revit = @reverb and rev
   beg = seconds2samples(start)
   fin = seconds2samples(dur) + beg
@@ -2611,21 +2630,25 @@ def clm_expsrc(start, dur, in_file, exp_ratio, src_ratio, amp,
   with_sound_info(get_func_name, start, dur)
   if two_chans
     fdb = make_readin(in_file, :channel, 1, :srate, stf)
-    exb = make_granulate(lambda do |dir| readin(fdb) end, :expansion, exp_ratio)
-    srcb = make_src(lambda do |dir| granulate(exb) end, :srate, src_ratio)
+    exb = make_granulate(lambda do |dir|
+                           readin(fdb)
+                         end, :expansion, exp_ratio)
+    srcb = make_src(lambda do |dir|
+                      granulate(exb)
+                    end, :srate, src_ratio)
     if revit
       rev_amp = rev * 0.5
       (beg..fin).each do |i|
         vala = src(srca) * amp
         valb = src(srcb) * amp
-        outa(i, vala, @output)
-        outb(i, valb, @output)
+        outa(i, vala, @ws_output)
+        outb(i, valb, @ws_output)
         outa(i, (vala + valb) * rev_amp, @reverb)
       end
     else                        # !revit
       (beg..fin).each do |i|
-        outa(i, src(srca) * amp, @output)
-        outb(i, src(srcb) * amp, @output)
+        outa(i, src(srca) * amp, @ws_output)
+        outb(i, src(srcb) * amp, @ws_output)
       end
     end                         # revit
   else                          # !two_chans
@@ -2633,19 +2656,19 @@ def clm_expsrc(start, dur, in_file, exp_ratio, src_ratio, amp,
       rev_amp = rev
       (beg..fin).each do |i|
         vala = src(srca) * amp
-        outa(i, vala, @output)
-        outa(i, vala * rev_amp, @reverb)
+        outa(i, vala, @ws_output)
+        outa(i, vala * rev_amp, @ws_reverb)
       end
     else                        # !revit
       (beg..fin).each do |i|
-        outa(i, src(srca) * amp, @output)
+        outa(i, src(srca) * amp, @ws_output)
       end
     end                         # revit
   end                           # two_chans
 end
 
 def clm_expsrc_test(start = 0.0, dur = 1.0)
-  clm_expsrc(start, dur, "oboe.snd", 2.0, 1.0, 1.0)
+  clm_expsrc(start, dur, "oboe.snd", 2.0, 1.0, 1.0, 0.05)
   $now = start + dur + 0.2
 end
 
@@ -2656,7 +2679,7 @@ end
 def exp_snd(file, start, dur, amp,
             exp_amt = 1.0, ramp = 0.4, seglen = 0.15,
             sr = 1.0, hop = 0.05, ampenv = nil)
-  assert_type(File.exists?(file), file, 0, "an existing file")
+  assert_type(File.exist?(file), file, 0, "an existing file")
   f0 = make_ws_reader(file, :start, 0)
   expenv = make_env(:envelope,
                     (exp_amt.kind_of?(Array) ?
@@ -2777,8 +2800,8 @@ Grn = Struct.new("Grn",
                  :loc, :segctr, :whichseg, :ramplen, :steadylen, :trigger)
 
 def expfil(start, dur, hopsecs, rampsecs, steadysecs, file1, file2)
-  assert_type(File.exists?(file1), file1, 5, "an existing file")
-  assert_type(File.exists?(file2), file2, 6, "an existing file")
+  assert_type(File.exist?(file1), file1, 5, "an existing file")
+  assert_type(File.exist?(file2), file2, 6, "an existing file")
   fil1 = make_file2sample(file1)
   fil2 = make_file2sample(file2)
   hop = seconds2samples(hopsecs)
@@ -2911,7 +2934,7 @@ nil doesnt print anything, which will speed up a bit the process.
 =end
 #
 def graph_eq(file, start, dur, *args)
-  assert_type(File.exists?(file), file, 0, "an existing file")
+  assert_type(File.exist?(file), file, 0, "an existing file")
   or_beg, amplitude, amp_env, amp_base, offset_gain = nil
   gain_freq_list, filt_gain_scale, filt_gain_base, a1 = nil
   optkey(args, binding,
@@ -2985,7 +3008,7 @@ end
 # noise
 # this is based on Perry Cook's Scrubber.m
 def anoi(infile, start, dur, fftsize = 128, amp_scaler = 1.0, r = TWO_PI)
-  assert_type(File.exists?(infile), infile, 0, "an existing file")
+  assert_type(File.exist?(infile), infile, 0, "an existing file")
   freq_inc = (fftsize / 2).floor
   fdi = make_vct(fftsize)
   fdr = make_vct(fftsize)
@@ -2999,7 +3022,9 @@ def anoi(infile, start, dur, fftsize = 128, amp_scaler = 1.0, r = TWO_PI)
   file = make_file2sample(infile)
   radius = 1.0 - r / fftsize.to_f
   bin = @srate / fftsize
-  fs = make_array(freq_inc) do |i| make_formant(i * bin, radius) end
+  fs = make_array(freq_inc) do |i|
+    make_formant(i * bin, radius)
+  end
   samp = 0
   run_instrument(start, dur) do
     inval = file2sample(file, samp)
@@ -3057,6 +3082,9 @@ Subject: [linux-audio-dev] Announce: alpha version of denoising
 mjkoskin@sci.fi
 =end
 
+=begin
+# FIXME: fullmix
+#
 # FULLMIX
 #
 # "matrix" can be a simple amplitude or a list of lists each inner
@@ -3070,12 +3098,11 @@ def fullmix(in_file,
             matrix = nil,
             srate = nil,
             reverb_amount = 0.05)
-  assert_type(File.exists?(in_file), in_file, 0, "an existing file")
+  assert_type(File.exist?(in_file), in_file, 0, "an existing file")
   dur = Float((outdur or (ws_duration(in_file) / Float((srate or 1.0)).abs)))
   in_chans = ws_channels(in_file)
   inloc = (Float(inbeg) * ws_srate(in_file)).round
   mx = file = envs = rev_mx = revframe = false
-  mx_chans = [in_chans, @channels].max
   if srate
     file = make_array(in_chans) do |chn|
       make_ws_reader(in_file, :start, inloc, :channel, chn)
@@ -3084,19 +3111,16 @@ def fullmix(in_file,
     file = in_file
   end
   mx = if matrix
-         make_vct(mx_chans * mx_chans)
+         make_mixer([in_chans, @channels].max)
        else
-         make_vct(mx_chans * mx_chans)
-         mx_chans.times do |i|
-           mx[(i * mx_chans) + i] = 1.0
-         end
+         make_scalar_mixer([in_chans, @channels].max, 1.0)
        end
   if @ws_reverb and reverb_amount.positive?
-    rev_mx = make_vct(in_chans * in_chans)
+    rev_mx = make_mixer(in_chans)
     in_chans.times do |chn|
-      vct_set!(rev_mx, (chn * in_chans) + chn, 0, reverb_amount)
+      mixer_set!(rev_mx, chn, 0, reverb_amount)
     end
-    revframe = make_vct(1)
+    revframe = make_frame(1)
   end
   case matrix
   when Array
@@ -3106,7 +3130,7 @@ def fullmix(in_file,
         outn = inlist[ochn]
         case outn
         when Numeric
-          vct_set!(mx, (ichn * mx_chans) + ochn, outn)
+          mixer_set!(mx, ichn, ochn, outn)
         when Array, Mus
           unless envs
             envs = make_array(in_chans) do
@@ -3127,7 +3151,7 @@ def fullmix(in_file,
     # matrix is a number in this case (a global scaler)
     in_chans.times do |i|
       if i < @channels
-        vct_set!(mx, (i * mx_chans) + i, matrix)
+        mixer_set!(mx, i, i, matrix)
       end
     end
   end
@@ -3136,7 +3160,11 @@ def fullmix(in_file,
   with_sound_info(get_func_name, start, dur)
   run_fullmix(start, dur, in_chans, srate,
               inloc, file, mx, rev_mx, revframe, envs)
-  array?(file) and file.each do |rd| close_ws_reader(rd) end
+  if array?(file)
+    file.each do |rd|
+      close_ws_reader(rd)
+    end
+  end
 end
 
 class Snd_Instrument
@@ -3146,11 +3174,11 @@ class Snd_Instrument
     samps = seconds2samples(dur)
     unless sr
       @out_snd = with_closed_sound(@out_snd) do |snd_name|
-        mus_file_mix(snd_name, file, beg, samps, inloc, mx, envs)
+        mus_mix(snd_name, file, beg, samps, inloc, mx, envs)
       end
       if rev_mx
         @rev_snd = with_closed_sound(@rev_snd) do |snd_name|
-          mus_file_mix(snd_name, file, beg, samps, inloc, rev_mx, false)
+          mus_mix(snd_name, file, beg, samps, inloc, rev_mx, false)
         end
       end
     else
@@ -3158,8 +3186,8 @@ class Snd_Instrument
       if rev_mx
         rev_data = make_sound_data(@reverb_channels, samps)
       end
-      inframe = make_vct(in_chans)
-      outframe = make_vct(@channels)
+      inframe = make_frame(in_chans)
+      outframe = make_frame(@channels)
       srcs = make_array(in_chans) do
         make_src(:srate, sr)
       end
@@ -3174,9 +3202,11 @@ class Snd_Instrument
           end
         end
         in_chans.times do |chn|
-          vct_set!(inframe, chn,
+          frame_set!(inframe, chn,
                      src(srcs[chn], 0.0,
-                         lambda do |dir| ws_readin(file[chn]) end))
+                         lambda do |dir|
+                           ws_readin(file[chn])
+                         end))
         end
         frame2sound_data!(out_data, i, frame2frame(inframe, mx, outframe))
         if rev_mx
@@ -3201,13 +3231,13 @@ class CLM_Instrument
     beg = seconds2samples(start)
     samps = seconds2samples(dur)
     unless sr
-      mus_file_mix(@ws_output, file, beg, samps, inloc, mx, envs)
+      mus_mix(@ws_output, file, beg, samps, inloc, mx, envs)
       if rev_mx
-        mus_file_mix(@ws_reverb, file, beg, samps, inloc, rev_mx, false)
+        mus_mix(@ws_reverb, file, beg, samps, inloc, rev_mx, false)
       end
     else
-      inframe = make_vct(in_chans)
-      outframe = make_vct(@channels)
+      inframe = make_frame(in_chans)
+      outframe = make_frame(@channels)
       srcs = make_array(in_chans) do
         make_src(:srate, sr)
       end
@@ -3216,19 +3246,21 @@ class CLM_Instrument
           in_chans.times do |chn|
             @channels.times do |ochn|
               if envs[chn] and env?(envs[chn][ochn])
-                vct_set!(mx, (chn * in_chans) + ochn, env(envs[chn][ochn]))
+                mixer_set!(mx, chn, ochn, env(envs[chn][ochn]))
               end
             end
           end
         end
         in_chans.times do |chn|
-          vct_set!(inframe, chn,
+          frame_set!(inframe, chn,
                      src(srcs[chn], 0.0,
-                         lambda do |dir| readin(file[chn]) end))
+                         lambda do |dir|
+                           readin(file[chn])
+                         end))
         end
-        frample2file(@ws_output, i, frample2frample(mx, inframe, outframe))
+        frame2file(@ws_output, i, frame2frame(inframe, mx, outframe))
         if rev_mx
-          frample2file(@ws_reverb, i, frample2frample(rev_mx, inframe, revframe))
+          frame2file(@ws_reverb, i, frame2frame(inframe, rev_mx, revframe))
         end
       end
     end
@@ -3243,6 +3275,7 @@ def fullmix_test(start = 0.0, dur = 1.0)
           [[0.1, make_env([0, 0, 1, 1], :duration, dur, :scaler, 0.5)]])
   $now += dur + 0.2
 end
+=end
 
 # Original header:
 
@@ -3376,7 +3409,7 @@ Grani_to_grain_random      = 4
 Grani_to_grain_allchans    = 5
 
 def grani(start, dur, amp, file, *args)
-  assert_type(File.exists?(file), file, 3, "an existing file")
+  assert_type(File.exist?(file), file, 3, "an existing file")
   input_channel = nil
   grains, amp_envelope, grain_envelope, grain_envelope_end = nil
   grain_envelope_transition, grain_envelope_array_size, grain_duration = nil
@@ -3804,7 +3837,8 @@ def clm_ins_test(start = 0.0, dur = 1.0)
   expfil_test($now, dur)
   graph_eq_test($now, dur)
   anoi_test($now, dur)
-  fullmix_test($now, dur)
+  # FIXME: fullmix test
+  # fullmix_test($now, dur)
   grani_test($now, dur)
   bes_fm_test($now, dur)
 end

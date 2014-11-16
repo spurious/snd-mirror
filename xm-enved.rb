@@ -1,15 +1,12 @@
 # xm-enved.rb -- Translation of xm-enved.scm and enved.scm
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Tue Mar 18 00:18:35 CET 2003
-# Changed: Tue Dec  4 21:51:37 CET 2012
+# Created: 03/03/18 00:18:35
+# Changed: 14/11/13 04:56:16
 
-# Commentary:
-#
-# Tested with Snd 13.x
-#             Ruby 20.0
-#             Motif 2.3.4 X11R6
-#             Gtk+ 2.24.6, Glib 2.28.8, Pango 1.28.4, Cairo 1.10.2
+# Tested with Snd 15.x
+#             Ruby 2.x.x
+#             Motif 2.3.3 X11R6
 #
 # module Snd_enved
 #  channel_enved(snd, chn)
@@ -24,31 +21,30 @@
 #  start_enveloping
 #  stop_enveloping
 #  play_with_envs(snd = false)
-#  play_panned(snd)
 #
 #  envelope?(obj)
-#  make_enved(enved = [0, 0, 1, 1])
+#  make_enved(enved)
 #  enved?(obj)
-#  make_graph_enved(enved = [0, 0, 1, 1], snd = Snd.snd, chn = Snd.chn)
+#  make_graph_enved(enved, snd, chn)
 #  graph_enved?(obj)
 #  make_xenved(name, parent, *rest)
 #  xenved?(obj)
 #  xenved_test(name)
 #
 # class Enved
-#  initialize(enved = [0, 0, 1, 1])
+#  initialize(enved)
 #  inspect
 #  to_s
 #  envelope
 #  envelope=(new_env)
 #  reset
-#  interp(x, base = 0)
-#  stretch(old_att = nil, new_att = nil, old_dec = nil, new_dec = nil)
-#  stretch!(old_att = nil, new_att = nil, old_dec = nil, new_dec = nil)
-#  scale(scale = 1.0, offset = 0.0)
-#  scale!(scale = 1.0, offset = 0.0)
-#  normalize(new_max = 1.0)
-#  normalize!(new_max = 1.0)
+#  interp(x, base)
+#  stretch(old_att, new_att, old_dec, new_dec)
+#  stretch!(old_att, new_att, old_dec, new_dec)
+#  scale(scale, offset)
+#  scale!(scale, offset)
+#  normalize(new_max)
+#  normalize!(new_max)
 #  reverse
 #  reverse!
 #  point(idx, *args)
@@ -67,33 +63,31 @@
 #  map
 #  map!
 #
-#   class Graph_enved < Enved
-#    initialize(enved, snd, chn)
-#    click_time
-#    click_time=(val)
-#    before_enved_hook
-#    after_enved_hook
-#    inspect
-#    to_s
-#    reset
-#    redraw
-#    mouse_press_cb(x, y)
-#    mouse_drag_cb(x, y)
-#    mouse_release_cb
+# class Graph_enved < Enved
+#  initialize(enved, snd, chn)
+#  click_time
+#  click_time=(val)
+#  before_enved_hook
+#  after_enved_hook
+#  inspect
+#  to_s
+#  reset
+#  redraw
+#  mouse_press_cb(x, y)
+#  mouse_drag_cb(x, y)
+#  mouse_release_cb
 #
-#     class Xenved < Graph_enved
-#      initialize(name, parent, enved, bounds, args, axis_label)
-#      inspect
-#      to_s
-#      clear
-#      envelope=(new_env)
-#      axis_bounds
-#      axis_bounds=(bounds)
-#      point(idx, *args)
-#      create
-#      close
-
-# Code:
+# class Xenved < Graph_enved
+#  initialize(name, parent, enved, bounds, args, axis_label)
+#  inspect
+#  to_s
+#  clear
+#  envelope=(new_env)
+#  axis_bounds
+#  axis_bounds=(bounds)
+#  point(idx, *args)
+#  create
+#  close
 
 require "env"
 require "hooks"
@@ -128,8 +122,8 @@ module Snd_enved
   end
   
   add_help(:channel_envelope,
-           "channel_envelope(snd, chn)  \
-returns the current enved envelope associated with snd's channel chn")
+           "channel_envelope(snd=false, chn=false)  \
+Returns the current enved envelope associated with SND's channel CHN.")
   def channel_envelope(snd = false, chn = false)
     if graph_enved?(ge = channel_enved(snd, chn))
       ge.envelope
@@ -187,7 +181,8 @@ returns the current enved envelope associated with snd's channel chn")
     # C-g returns to original env
     # C-. applies current env to amplitude
     if key == ?. and state == 4
-      env_channel((channel_envelope(snd, chn) or [0, 1, 1, 1]), 0, frames(snd, chn), snd, chn)
+      env_channel((channel_envelope(snd, chn) or [0, 1, 1, 1]),
+                  0, framples(snd, chn), snd, chn)
       true
     else
       if key == ?g and state == 4
@@ -203,7 +198,7 @@ returns the current enved envelope associated with snd's channel chn")
   
   add_help(:start_enveloping,
            "start_enveloping()  \
-starts the enved processes, displaying an envelope editor in each channel")
+Starts the enved processes, displaying an envelope editor in each channel.")
   def start_enveloping
     unless $after_open_hook.member?(Hook_name)
       $after_open_hook.add_hook!(Hook_name) do |snd|
@@ -215,8 +210,8 @@ starts the enved processes, displaying an envelope editor in each channel")
       $mouse_drag_hook.add_hook!(Hook_name) do |snd, chn, button, state, x, y|
         mouse_drag_envelope(snd, chn, button, state, x, y)
       end
-      $mouse_click_hook.add_hook!(Hook_name) do |snd, chn, button, state, x, y, axis|
-        mouse_release_envelope(snd, chn, button, state, x, y, axis)
+      $mouse_click_hook.add_hook!(Hook_name) do |snd, chn, but, st, x, y, axis|
+        mouse_release_envelope(snd, chn, but, st, x, y, axis)
       end
       $key_press_hook.add_hook!(Hook_name) do |snd, chn, key, state|
         enveloping_key_press(snd, chn, key, state)
@@ -228,58 +223,40 @@ starts the enved processes, displaying an envelope editor in each channel")
   end
 
   add_help(:stop_enveloping,
-           "stop_enveloping()  turns off the enved channel-specific envelope editors")
+           "stop_enveloping()  \
+Turns off the enved channel-specific envelope editors.")
   def stop_enveloping
     $after_open_hook.remove_hook!(Hook_name)
     $mouse_press_hook.remove_hook!(Hook_name)
     $mouse_drag_hook.remove_hook!(Hook_name)
     $mouse_click_hook.remove_hook!(Hook_name)
     $key_press_hook.remove_hook!(Hook_name)
-    Snd.catch do set_lisp_graph?(false, Snd.snd, Snd.chn) end
+    Snd.catch do
+      set_lisp_graph?(false, Snd.snd, Snd.chn)
+    end
     nil
   end
 
-  # some examples of using this envelope editor
+  # some examples
 
   add_help(:play_with_envs,
-           "play_with_envs([snd=false])  \
-sets channel amps during playback from the associated enved envelopes")
+           "play_with_envs(snd=false)  \
+Sets channel amps during playback from the associated enved envelopes.")
   def play_with_envs(snd = false)
     channel_envelope(snd, 0) or create_initial_envelopes(snd)
     channels(snd).times do |chn|
       player = make_player(snd, chn)
       e = make_env(:envelope, channel_envelope(snd, chn),
-                   :length, (frames(snd, chn).to_f / dac_size).floor)
-      add_player(player, 0, -1, -1, lambda { |reason| $play_hook.reset_hook! })
-      $play_hook.add_hook!(get_func_name) { |fr| set_amp_control(env(e), player) }
+                   :length, (framples(snd, chn).to_f / dac_size).floor)
+      add_player(player, 0, -1, -1,
+                 lambda do |reason|
+                   $play_hook.reset_hook!
+                 end)
+      $play_hook.add_hook!(get_func_name) do |fr|
+        set_amp_control(env(e), player)
+      end
     end
     start_playing(channels(snd), srate(snd))
-  end
-
-  add_help(:play_panned,
-           "play_panned(snd)  \
-pans a mono sound following its enved envelope into a stereo sound")
-  def play_panned(snd)
-    bufsize = 256
-    data = make_sound_data(2, bufsize)
-    bytes = bufsize * 4
-    audio_fd = mus_audio_open_output(0, srate(snd), 2, Mus_lshort, bytes)
-    samp = 0
-    len = frames(snd, 0)
-    if audio_fd != -1
-      channel_envelope(snd, 0) or create_initial_envelopes(snd)
-      e = make_env(:envelope, channel_envelope(snd, 0), :length, (len.to_f / dac_size).floor)
-      while samp < len
-        scaler = env(e)
-        samps0 = channel2vct(samp, bufsize)
-        samps1 = samps0.dup
-        vct2sound_data(samps0.scale(scaler), data, 0)
-        vct2sound_data(samps1.scale(1.0 - scaler), data, 1)
-        mus_audio_write(audio_fd, data, bufsize)
-        samp += bufsize
-      end
-      mus_audio_close(audio_fd)
-    end
   end
 
   def envelope?(obj)
@@ -287,7 +264,8 @@ pans a mono sound following its enved envelope into a stereo sound")
   end
 
   def make_enved(enved = [0, 0, 1, 1])
-    assert_type(envelope?(enved), enved, 0, "an envelope, at least 2 points [x0, y0, x1, y1, ...]")
+    assert_type(envelope?(enved), enved, 0,
+                "an envelope, at least 2 points [x0, y0, x1, y1, ...]")
     Enved.new(enved)
   end
 
@@ -296,7 +274,8 @@ pans a mono sound following its enved envelope into a stereo sound")
   end
 
   def make_graph_enved(enved = [0, 0, 1, 1], snd = Snd.snd, chn = Snd.chn)
-    assert_type(envelope?(enved), enved, 0, "an envelope, at least 2 points [x0, y0, x1, y1, ...]")
+    assert_type(envelope?(enved), enved, 0,
+                "an envelope, at least 2 points [x0, y0, x1, y1, ...]")
     (ge = Graph_enved.new(enved, snd, chn)).redraw
     ge
   end
@@ -312,10 +291,12 @@ pans a mono sound following its enved envelope into a stereo sound")
                                              [:axis_bounds, [0, 1, 0, 1]],
                                              [:args, []],
                                              :axis_label)
-      name = "xenved" unless string?(name) and (not name.empty?)
+      unless string?(name) and (not name.empty?)
+        name = "xenved"
+      end
       assert_type(widget?(parent), parent, 1, "a widget")
-      assert_type((array?(bounds) and bounds.length == 4),
-                  bounds, 3, "an array of 4 elements [x0, x1, y0, y1]")
+      assert_type((array?(bounds) and bounds.length == 4), bounds, 3,
+                  "an array of 4 elements [x0, x1, y0, y1]")
       unless array?(label) and label.length == 4
         label = bounds
       end
@@ -325,7 +306,6 @@ pans a mono sound following its enved envelope into a stereo sound")
     def xenved?(obj)
       obj.instance_of?(Xenved)
     end
-
 
     if $with_motif
       Test_widget_type = RxmFormWidgetClass
@@ -357,7 +337,9 @@ class Enved
   include Info
 
   def initialize(enved = [0, 0, 1, 1])
-    (@envelope = enved).map! do |x| x.to_f end
+    (@envelope = enved).map! do |x|
+      x.to_f
+    end
     @init = @envelope.dup
     set_enved_help
   end
@@ -372,8 +354,11 @@ class Enved
   end
 
   def envelope=(enved)
-    assert_type(envelope?(enved), enved, 0, "an envelope, at least 2 points [x0, y0, x1, y1, ...]")
-    @envelope = enved.map do |x| x.to_f end
+    assert_type(envelope?(enved), enved, 0,
+                "an envelope, at least 2 points [x0, y0, x1, y1, ...]")
+    @envelope = enved.map do |x|
+      x.to_f
+    end
   end
 
   def reset
@@ -476,23 +461,31 @@ class Enved
   end
 
   def each
-    0.step(@envelope.length - 1, 2) do |i| yield(@envelope[i, 2]) end
+    0.step(@envelope.length - 1, 2) do |i|
+      yield(@envelope[i, 2])
+    end
     @envelope
   end
 
   def each_with_index
-    0.step(@envelope.length - 1, 2) do |i| yield(@envelope[i, 2] + [i]) end
+    0.step(@envelope.length - 1, 2) do |i|
+      yield(@envelope[i, 2] + [i])
+    end
     @envelope
   end
 
   def map
     res = make_array(@envelope.length)
-    0.step(@envelope.length - 1, 2) do |i| res[i, 2] = yield(@envelope[i, 2]) end
+    0.step(@envelope.length - 1, 2) do |i|
+      res[i, 2] = yield(@envelope[i, 2])
+    end
     res
   end
 
   def map!
-    0.step(@envelope.length - 1, 2) do |i| @envelope[i, 2] = yield(@envelope[i, 2]) end
+    0.step(@envelope.length - 1, 2) do |i|
+      @envelope[i, 2] = yield(@envelope[i, 2])
+    end
     @envelope
   end
   
@@ -521,7 +514,7 @@ class Enved
 #   map do |x, y| ... end           map! do |x, y| ... end
 #   each do |x, y| ... end          each_with_index do |x, y, i| ... end
 #   length
-#   point(idx, *args)               # point(idx) --> [x, y]
+#   point(idx, *args)               # point(idx) ==> [x, y]
 #                                   # point(idx, :x, x_val, :y, y_val)
 #                                   # sets x, y or both and returns new [x, y]
 #   in_range?(x)   (x > first_x and x < last_x)
@@ -538,15 +531,15 @@ class Graph_enved < Enved
     @snd = snd
     @chn = chn
     @before_enved_hook = Hook.new("@before_enved_hook", 4, "\
-lambda do |pos, x, y, reason| ... end: called before changing a
-breakpoint in @envelope.  This hook runs the global $enved_hook as
+lambda do |pos, x, y, reason| ... end: called before changing a \
+breakpoint in @envelope.  This hook runs the global $enved_hook as \
 first hook, subsequent procedures can directly manipulate @envelope.
 
-This instance hook is like the global $enved_hook; POS is @envelope's
-x-position, X and Y are the new points, and REASON is one of
-Enved_add_point, Enved_delete_point, Enved_move_point.  If the last
-hook procedure in the hook list returns `false', the class changes the
-breakpoint, otherwise the hook procedures are responsible for
+This instance hook is like the global $enved_hook; POS is @envelope's \
+x-position, X and Y are the new points, and REASON is one of \
+Enved_add_point, Enved_delete_point, Enved_move_point.  If the last \
+hook procedure in the hook list returns `false', the class changes the \
+breakpoint, otherwise the hook procedures are responsible for \
 manipulating @envelope itself.
 
 From dlocsig.rb:
@@ -587,7 +580,8 @@ $enved_hook.add_hook!(\"snd-init-hook\") do |env, pt, x, y, reason|
     false
   end
 end")
-    @before_enved_hook.add_hook!("initialize-xm-enved-hook") do |pos, x, y, reason|
+    hn = "initialize-xm-enved-hook"
+    @before_enved_hook.add_hook!(hn) do |pos, x, y, reason|
       if $enved_hook.empty?
         false
       else
@@ -604,8 +598,8 @@ end")
       end
     end
     @after_enved_hook = Hook.new("@after_enved_hook", 2, "\
-lambda do |pos, reason| ... end: called after redrawing new or changed
-breakpoints.  POS is @envelope's x-position, and REASON is one of
+lambda do |pos, reason| ... end: called after redrawing new or changed \
+breakpoints.  POS is @envelope's x-position, and REASON is one of \
 Enved_add_point, Enved_delete_point, Enved_move_point.")
     init
     set_enved_help
@@ -620,7 +614,8 @@ Enved_add_point, Enved_delete_point, Enved_move_point.")
   end
   
   def to_s
-    format("#<%s: %s[%s:%s]: %s>", self.class, @graph_name, @snd, @chn, @envelope.to_string)
+    format("#<%s: %s[%s:%s]: %s>",
+           self.class, @graph_name, @snd, @chn, @envelope.to_string)
   end
 
   def init
@@ -719,7 +714,9 @@ Enved_add_point, Enved_delete_point, Enved_move_point.")
       true
     else
       e = nil
-      @before_enved_hook.run_hook do |prc| e = prc.call(@mouse_pos / 2, x, y, reason) end
+      @before_enved_hook.run_hook do |prc|
+        e = prc.call(@mouse_pos / 2, x, y, reason)
+      end
       e.class == FalseClass
     end
   end
@@ -731,7 +728,10 @@ Enved_add_point, Enved_delete_point, Enved_move_point.")
       idx = test_env.index(cur_pair) * 2
       @envelope[idx + 1] = y
     else
-      if cur_pair = test_env.detect do |pair| x < pair[0] end
+      cur_pair = test_env.detect do |pair|
+        x < pair[0]
+      end
+      if cur_pair
         idx = test_env.index(cur_pair) * 2
         @envelope.insert(idx, x, y)
       end
@@ -767,8 +767,8 @@ Enved_add_point, Enved_delete_point, Enved_move_point.")
 # more examples in xm-enved.rb, module Snd_enved
 
 ge = make_graph_enved([0, 0, 1, 1], 0, 0)
-ge.envelope                         # --> [0.0, 0.0, 1.0, 1.0]
-ge.click_time                       # --> 0.2
+ge.envelope                         # ==> [0.0, 0.0, 1.0, 1.0]
+ge.click_time                       # ==> 0.2
 ge.envelope = [0, 1, 1, 1]
 ge.help                             # this help
 "
@@ -782,14 +782,22 @@ if $with_gui
       super(enved)
       @name = name
       @parent = parent
-      @x0, @x1, @y0, @y1 = bounds.map do |x| x.to_f end
+      @x0, @x1, @y0, @y1 = bounds.map do |x|
+        x.to_f
+      end
       @args = args
       if $with_motif
-        @args += [RXmNforeground, data_color]  unless @args.member?(RXmNforeground)
-        @args += [RXmNbackground, graph_color] unless @args.member?(RXmNbackground)
+        unless @args.member?(RXmNforeground)
+          @args += [RXmNforeground, data_color]
+        end
+        unless @args.member?(RXmNbackground)
+          @args += [RXmNbackground, graph_color]
+        end
       end
       @lx0, @lx1, @ly0, @ly1 = if envelope?(axis_label)
-                                 axis_label.map do |x| x.to_f end
+                                 axis_label.map do |x|
+                                   x.to_f
+                                 end
                                else
                                  [0.0, 1.0, -1.0, 1.0]
                                end
@@ -803,9 +811,9 @@ if $with_gui
     alias help description
     
     def inspect
-      format("%s.new(%s, %s, %s, %s, %s, %s)",
+      format("%s.new(%p, %s, %s, %s, %s, %s)",
              self.class,
-             @name.inspect,
+             @name,
              @parent,
              @envelope,
              [@x0, @x1, @y0, @y1],
@@ -814,7 +822,8 @@ if $with_gui
     end
     
     def to_s
-      format("#<%s: name: %s, envelope: %s>", self.class, @name.inspect, @envelope.to_string)
+      format("#<%s: name: %p, envelope: %s>",
+             self.class, @name, @envelope.to_string)
     end
 
     def axis_bounds
@@ -822,9 +831,11 @@ if $with_gui
     end
     
     def axis_bounds=(bounds)
-      assert_type((array?(bounds) and bounds.length == 4),
-                  bounds, 0, "an array of 4 elements [x0, x1, y0, y1]")
-      @x0, @x1, @y0, @y1 = bounds.map do |x| x.to_f end
+      assert_type((array?(bounds) and bounds.length == 4), bounds, 0,
+                  "an array of 4 elements [x0, x1, y0, y1]")
+      @x0, @x1, @y0, @y1 = bounds.map do |x|
+        x.to_f
+      end
       self.envelope = @init
     end
 
@@ -865,8 +876,11 @@ if $with_gui
           @envelope.each_pair do |x, y|
             cx = grfx(x)
             cy = grfy(y)
-            RXFillArc(@dpy, @window, @gc, cx - Mouse_r, cy - Mouse_r, Mouse_d, Mouse_d, 0, 360*64)
-            RXDrawLine(@dpy, @window, @gc, lx, ly, cx, cy) if lx
+            RXFillArc(@dpy, @window, @gc,
+                      cx - Mouse_r, cy - Mouse_r, Mouse_d, Mouse_d, 0, 360 * 64)
+            if lx
+              RXDrawLine(@dpy, @window, @gc, lx, ly, cx, cy)
+            end
             lx, ly = cx, cy
           end
         end
@@ -875,8 +889,6 @@ if $with_gui
       def redraw
         if is_managed?(@drawer) and @px0 and @py0 > @py1
           size = widget_size(RGTK_WIDGET(@drawer))
-          # FIXME
-          # cairo = Rgdk_cairo_create(RGDK_DRAWABLE(Rgtk_widget_get_window(@drawer)))
           cairo = make_cairo(@drawer)
           Rcairo_push_group(cairo)
           Rcairo_set_source_rgb(cairo, 1.0, 1.0, 1.0)
@@ -946,11 +958,11 @@ if $with_gui
 # more examples in effects.rb
 
 xe = xenved_test
-xe.envelope                         # --> [0.0, 0.0, 1.0, 1.0]
-xe.click_time                       # --> 0.5
+xe.envelope                         # ==> [0.0, 0.0, 1.0, 1.0]
+xe.click_time                       # ==> 0.5
 xe.envelope = [0, 1, 1, 1]
 # some clicks later
-xe.envelope                         # --> [0.0, 0.0,
+xe.envelope                         # ==> [0.0, 0.0,
                                     #      0.190735694822888, 0.562264150943396,
                                     #      0.632152588555858, 0.932075471698113,
                                     #      0.848773841961853, 0.316981132075472,
@@ -965,11 +977,18 @@ xe.help                             # this help
 
     if $with_motif
       def create_enved
-        @drawer = RXtCreateManagedWidget(@name, RxmDrawingAreaWidgetClass, @parent, @args)
+        @drawer = RXtCreateManagedWidget(@name, RxmDrawingAreaWidgetClass,
+                                         @parent, @args)
         @dpy = RXtDisplay(@drawer)
         @window = RXtWindow(@drawer)
-        RXtAddCallback(@drawer, RXmNresizeCallback, lambda do |w, c, i| draw_axes_cb end)
-        RXtAddCallback(@drawer, RXmNexposeCallback, lambda do |w, c, i| draw_axes_cb end)
+        RXtAddCallback(@drawer, RXmNresizeCallback,
+                       lambda do |w, c, i|
+                         draw_axes_cb
+                       end)
+        RXtAddCallback(@drawer, RXmNexposeCallback,
+                       lambda do |w, c, i|
+                         draw_axes_cb
+                       end)
         RXtAddEventHandler(@drawer, RButtonPressMask, false,
                            lambda do |w, c, e, f|
                              mouse_press_cb(ungrfx(Rx(e)), ungrfy(Ry(e)))
@@ -1000,7 +1019,8 @@ xe.help                             # this help
         Rgtk_widget_show(@drawer)
         Rgtk_widget_set_name(@drawer, @name)
         Rgtk_widget_set_size_request(@drawer, -1, 200)
-        add_event_handler(@drawer, provided?(:gtk3) ? "draw" : "expose_event") do |w, e, d|
+        evname = provided?(:gtk3) ? "draw" : "expose_event"
+        add_event_handler(@drawer, evname) do |w, e, d|
           draw_axes_cb
           false
         end
@@ -1048,8 +1068,10 @@ xe.help                             # this help
       #           style=X_axis_in_seconds,
       #           axes=Show_all_axes)
       def draw_axes_cb
-        @px0, @py0, @px1, @py1 = draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1,
-                                           X_axis_in_seconds, Show_all_axes)
+        @px0, @py0, @px1, @py1 = draw_axes(@drawer, @gc, @name,
+                                           @lx0, @lx1, @ly0, @ly1,
+                                           X_axis_in_seconds,
+                                           Show_all_axes)
         redraw
       end
     end
@@ -1063,8 +1085,11 @@ xe.help                             # this help
       #           cairo)
       def draw_axes_cb
         cairo = make_cairo(@drawer)
-        @px0, @py0, @px1, @py1 = draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1,
-                                         X_axis_in_seconds, Show_all_axes, cairo)
+        @px0, @py0, @px1, @py1 = draw_axes(@drawer, @gc, @name,
+                                           @lx0, @lx1, @ly0, @ly1,
+                                           X_axis_in_seconds,
+                                           Show_all_axes,
+                                           cairo)
         free_cairo(cairo)
         redraw
       end
@@ -1074,7 +1099,8 @@ xe.help                             # this help
       if @px0 == @px1
         @x0
       else
-        [@x1, [@x0, @x0 + ((@x1 - @x0) * ((x - @px0) / (@px1.to_f - @px0)))].max].min
+        [@x1,
+         [@x0, @x0 + ((@x1 - @x0) * ((x - @px0) / (@px1.to_f - @px0)))].max].min
       end
     end
     
@@ -1082,7 +1108,8 @@ xe.help                             # this help
       if @py0 == @py1
         @y1
       else
-        [@y1, [@y0, @y0 + ((@y1 - @y0) * ((@py0 - y) / (@py0.to_f - @py1)))].max].min
+        [@y1,
+         [@y0, @y0 + ((@y1 - @y0) * ((@py0 - y) / (@py0.to_f - @py1)))].max].min
       end
     end
 
@@ -1090,7 +1117,10 @@ xe.help                             # this help
       if @px0 == @px1
         @px0
       else
-        [@px1, [@px0, (@px0 + ((@px1 - @px0) * ((x - @x0) / (@x1.to_f - @x0)))).round].max].min
+        [@px1,
+         [@px0,
+          (@px0 +
+           ((@px1 - @px0) * ((x - @x0) / (@x1.to_f - @x0)))).round].max].min
       end
     end
 
@@ -1098,7 +1128,10 @@ xe.help                             # this help
       if @py0 == @py1
         @py0
       else
-        [@py0, [@py1, (@py1 + ((@py0 - @py1) * ((y - @y1) / (@y0.to_f - @y1)))).round].max].min
+        [@py0,
+         [@py1,
+          (@py1 +
+           ((@py0 - @py1) * ((y - @y1) / (@y0.to_f - @y1)))).round].max].min
       end
     end
   end

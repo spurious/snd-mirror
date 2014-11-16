@@ -1,11 +1,9 @@
 # hooks.rb -- hook-related functions
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Sun Dec 21 13:48:01 CET 2003
-# Changed: Thu Jun 13 15:26:48 CEST 2013
+# Created: 03/12/21 13:48:01
+# Changed: 14/11/13 04:59:21
 
-# Commentary:
-#
 # If class Hook isn't compiled in, here is the corresponding Ruby
 # class and the initialization of all global hooks.
 
@@ -27,8 +25,6 @@ def unprotect(snd = false, chn = false)
 end
 =end
 
-# Contents:
-#
 # Snd_hooks             an array containing all global hook variables
 # 
 # $var_hook.member?("name of hook")
@@ -38,8 +34,6 @@ end
 #
 # with_local_hook(hook, *procs, &thunk)
 # reset_all_hooks()     clears all hook procedures
-
-# Code:
 
 require "clm"
 
@@ -51,7 +45,9 @@ unless defined?(Hook)
       @name = name
       @arity = arity
       @procs = []
-      if string?(help) and (not help.empty?) then add_help(name, help) end
+      if string?(help) and (not help.empty?)
+        add_help(name, help)
+      end
     end
     attr_reader :name, :arity
     
@@ -74,12 +70,16 @@ unless defined?(Hook)
 
     def call(*args)
       ret = nil
-      self.run_hook do |prc| ret = prc.call(*args) end
+      self.run_hook do |prc|
+        ret = prc.call(*args)
+      end
       ret
     end
     
     def to_a
-      @procs.map do |ary| ary.last end
+      @procs.map do |ary|
+        ary.last
+      end
     end
     
     def length
@@ -97,25 +97,27 @@ unless defined?(Hook)
     alias documentation describe
     
     def names
-      @procs.map do |ary| ary.first end
+      @procs.map do |ary|
+        ary.first
+      end
     end
     
     def inspect
-      format("#<%s name: %s, arity: %d, procs[%d]: %s>",
-             self.class, @name.inspect, @arity, self.length, self.names.inspect)
+      format("#<%s name: %p, arity: %d, procs[%d]: %p>",
+             self.class, @name, @arity, self.length, self.names)
     end
   end
 
   def make_hook(name, arity = 0, help = "", hook_name = nil, &body)
-    error_str = "make_hook(name, arity = 0, help = "", hook_name = nil, &body): \
-need a String or Symbol, not %s"
+    error_str = "make_hook(name, arity=0, help=\"\", hook_name=nil, &body): \
+need a String or Symbol, not %p"
     var_sym = case name
               when Symbol
                 name
               when String
                 name.intern
               else
-                raise format(error_str, name.inspect)
+                raise format(error_str, name)
               end
     if var_sym.to_s.split(//).first != "$"
       var_sym = format("$%s", var_sym.to_s).intern
@@ -151,6 +153,7 @@ need a String or Symbol, not %s"
   $before_transform_hook        = Hook.new("$before_transform_hook", 2)
   $clip_hook                    = Hook.new("$clip_hook", 1)
   $close_hook                   = Hook.new("$close_hook", 1)
+  $dac_hook                     = Hook.new("$dac_hook", 1)
   $draw_mark_hook               = Hook.new("$draw_mark_hook", 1)
   $draw_mix_hook                = Hook.new("$draw_mix_hook", 5)
   $drop_hook                    = Hook.new("$drop_hook", 1)
@@ -202,6 +205,7 @@ need a String or Symbol, not %s"
   $start_hook                   = Hook.new("$start_hook", 1)
   $start_playing_hook           = Hook.new("$start_playing_hook", 1)
   $start_playing_selection_hook = Hook.new("$start_playing_selection_hook", 0)
+  $stop_dac_hook                = Hook.new("$stop_dac_hook", 0)
   $stop_playing_hook            = Hook.new("$stop_playing_hook", 1)
   $stop_playing_selection_hook  = Hook.new("$stop_playing_selection_hook", 0)
   $update_hook                  = Hook.new("$update_hook", 1)
@@ -211,7 +215,9 @@ end
 
 class Hook
   def to_names
-    @procs.map do |ary| ary.first end
+    @procs.map do |ary|
+      ary.first
+    end
   end
 
   def member?(name)
@@ -232,7 +238,9 @@ class Hook
   alias show to_str
 
   def run_hook_by_name(name, *args)
-    if prc = @procs.assoc(name) then prc.last.call(*args) end
+    if prc = @procs.assoc(name)
+      prc.last.call(*args)
+    end
   end
 end
 
@@ -242,18 +250,25 @@ end
 
 add_help(:with_local_hook,
          "with_local_hook(hook, *procs, &thunk)  \
-evaluates thunk with hook set to procs, then restores hook to its previous state")
+Evaluates THUNK with HOOK set to PROCS, \
+then restores HOOK to its previous state.")
 def with_local_hook(hook, *procs, &thunk)
   old_procs = []
-  hook.to_names.each do |name| old_procs.push(hook.remove_hook!(name)) end
+  hook.to_names.each do |name|
+    old_procs.push(hook.remove_hook!(name))
+  end
   hook.reset_hook!
-  procs.each do |prc| hook.add_hook!(prc.object_id.to_s, &prc) end
+  procs.each do |prc|
+    hook.add_hook!(prc.object_id.to_s, &prc)
+  end
   thunk.call
 rescue Interrupt, ScriptError, StandardError
   Snd.display(verbose_message_string(true, nil, get_func_name))
 ensure
   hook.reset_hook!
-  old_procs.each do |name, prc| hook.add_hook!(name, &prc) end
+  old_procs.each do |name, prc|
+    hook.add_hook!(name, &prc)
+  end
 end
 
 if defined? $after_graph_hook
@@ -332,7 +347,9 @@ if defined? $after_graph_hook
   end
   
   def reset_all_hooks
-    Snd_hooks.each do |h| h.kind_of?(Hook) and h.reset_hook! end
+    Snd_hooks.each do |h|
+      h.kind_of?(Hook) and h.reset_hook!
+    end
     Snd.sounds.each do |snd|
       channels(snd).times do |chn|
         (h = edit_hook(snd, chn)).kind_of?(Hook)       and h.reset_hook!

@@ -1,11 +1,9 @@
 # draw.rb -- draw.scm --> draw.rb
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Tue Apr 05 00:17:04 CEST 2005
-# Changed: Fri Dec  7 00:50:21 CET 2012
+# Created: 05/04/05 00:17:04
+# Changed: 14/11/13 03:06:52
 
-# Commentary:
-#
 # examples of extensions to Snd's graphics
 # 
 # module Draw
@@ -17,17 +15,13 @@
 #  overlay_sounds(*rest)
 #  samples_via_colormap(snd, chn)
 #  click_for_listener_help(pos)
-#  
-
-# Code:
 
 require "extensions"
 
 module Draw
   add_help(:display_colored_samples,
-           "display_colored_samples(color, beg, dur, \
-[snd=false, [chn=false]])  \
-displays samples from beg for dur in color \
+           "display_colored_samples(color, beg, dur, snd=false, chn=false)  \
+Displays samples from beg for dur in color \
 whenever they're in the current view.")
   def display_colored_samples(color, beg, dur, snd = false, chn = false)
     unless array?(color) and number?(beg) and number?(dur)
@@ -75,23 +69,22 @@ whenever they're in the current view.")
   end
 
   add_help(:color_samples,
-           "color_samples(color, [beg=0, [dur=false, [snd=false, \
-[chn=false]]]])  \
-causes samples from beg to beg+dur to be displayed in color")
+           "color_samples(color, beg=0, dur=false, snd=false, chn=false)  \
+Causes samples from BEG to BEG+DUR to be displayed in COLOR.")
   def color_samples(color, beg = 0, dur = false, snd = Snd.snd, chn = Snd.chn)
     unless $after_graph_hook.member?("display-samples-in-color")
       $after_graph_hook.add_hook!("display-samples-in-color") do |s, c|
         display_samples_in_color(s, c)
       end
     end
-    unless dur then dur = frames(snd, chn) - beg end
+    unless dur then dur = framples(snd, chn) - beg end
     set_channel_property(:colored_samples, [color, beg, dur], snd, chn)
     update_time_graph(snd, chn)
   end
 
   add_help(:uncolor_samples,
-           "uncolor_samples([snd=false, [chn=false]])  \
-cancels sample coloring in the given channel")
+           "uncolor_samples(snd=false, chn=false)  \
+Cancels sample coloring in the given channel.")
   def uncolor_samples(snd = Snd.snd, chn = Snd.chn)
     set_channel_property(:colored_samples, [], snd, chn)
     update_time_graph(snd, chn)
@@ -99,8 +92,8 @@ cancels sample coloring in the given channel")
 
   add_help(:display_previous_edits,
            "display_previous_edits(snd, chn)  \
-displays all edits of the current sound, \
-with older versions gradually fading away")
+Displays all edits of the current sound, \
+with older versions gradually fading away.")
   def display_previous_edits(snd, chn)
     edits = edit_position(snd, chn)
     if edits > 0
@@ -133,7 +126,7 @@ with older versions gradually fading away")
 
   add_help(:overlay_sounds,
            "overlay_sounds(*rest)  \
-overlays onto its first argument all \
+Overlays onto its first argument all \
 subsequent arguments: overlay_sounds(1, 0, 3)")
   def overlay_sounds(*rest)
     base = rest.shift
@@ -154,8 +147,8 @@ subsequent arguments: overlay_sounds(1, 0, 3)")
 
   add_help(:samples_via_colormap,
            "samples_via_colormap(snd, chn)  \
-displays time domain graph using current \
-colormap (just an example of colormap_ref)")
+Displays time domain graph using current \
+colormap (just an example of colormap_ref).")
   def samples_via_colormap(snd, chn)
     left = left_sample(snd, chn)
     old_color = foreground_color(snd, chn)

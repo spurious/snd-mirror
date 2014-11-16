@@ -1,11 +1,9 @@
 # pvoc.rb -- pvoc.scm -> pvoc.rb
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Sat Mar 27 00:19:51 CET 2004
-# Changed: Sat Feb 19 17:21:21 CET 2011
+# Created: 04/03/27 00:19:51
+# Changed: 14/11/14 08:58:16
 
-# Comment:
-# 
 # versions of the Moore-Klingbeil-Trevisani-Edwards phase-vocoder
 #
 # class Pvocoder
@@ -22,8 +20,6 @@
 #  test_pv_4(gate)
 #  
 #  pvoc(*rest)
-#  
-# Code:
 
 require "ws"
 
@@ -34,7 +30,8 @@ class Pvocoder
     @hop        = overlap
     @filptr     = 0
     @N          = fftsize
-    @window     = vct_scale!(make_fft_window(Hamming_window, fftsize), 2.0 / (0.54 * fftsize))
+    @window     = make_fft_window(Hamming_window, fftsize)
+    @window.scale!(2.0 / (0.54 * fftsize))
     @D          = fftsize / overlap
     @in_data    = nil
     @ampinc     = make_vct(fftsize)
@@ -49,8 +46,9 @@ class Pvocoder
   end
 
   def inspect
-    format("#<%s outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s>",
-           self.class, @output, @interp, @filptr, @N, @D, @in_data.inspect)
+    format("#<%s outctr: %d, interp: %d, \
+filptr: %d, N: %d, D: %d, in_data: %p>",
+           self.class, @output, @interp, @filptr, @N, @D, @in_data)
   end
   
   def pvocoder(input)
@@ -61,10 +59,14 @@ class Pvocoder
         vct_fill!(@freqs, 0.0)
         @output = 0
         if (not vct?(@in_data))
-          @in_data = make_vct!(@N) do input.call end
+          @in_data = make_vct!(@N) do
+            input.call
+          end
         else
           vct_move!(@in_data, 0, @D)
-          ((@N - @D)...@N).each do |i| @in_data[i] = input.call end
+          ((@N - @D)...@N).each do |i|
+            @in_data[i] = input.call
+          end
         end
         buf = @filptr % @N
         if buf.zero?
@@ -120,8 +122,9 @@ class Pvocoder
 end
 
 add_help(:make_pvocoder,
-         "make_pvocoder(fftsize, overlap, interp, [analyze=false, [edit=false, [synthesize=false]]])
-makes a new (Ruby-based, not CLM) phase-vocoder generator")
+         "make_pvocoder(fftsize, overlap, interp, analyze=false, \
+edit=false, synthesize=false)  \
+Makes a new (Ruby-based, not CLM) phase-vocoder generator.")
 def make_pvocoder(fftsize = 512,
                   overlap = 4,
                   interp = 128,
@@ -132,7 +135,8 @@ def make_pvocoder(fftsize = 512,
 end
 
 add_help(:pvocoder,
-         "pvocoder(pv, input) is the phase-vocoder generator associated with make_pvocoder")
+         "pvocoder(pv, input)  \
+Is the phase-vocoder generator associated with make_pvocoder.")
 def pvocoder(pv, input)
   pv.pvocoder(input)
 end
@@ -153,22 +157,38 @@ end
 def test_pv_1
   pv = make_phase_vocoder(false, 512, 4, 128, 1.0, false, false, false)
   rd = make_sampler(0)
-  map_channel(lambda do |y| phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end)
+  map_channel(lambda do |y|
+                phase_vocoder(pv,
+                              lambda do |dir|
+                                next_sample(rd)
+                              end)
+              end)
   free_sampler(rd)
 end
 
 def test_pv_2(freq)
   pv = make_phase_vocoder(false, 512, 4, 128, freq, false, false, false)
   rd = make_sampler(0)
-  map_channel(lambda do |y| phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end)
+  map_channel(lambda do |y|
+                phase_vocoder(pv,
+                              lambda do |dir|
+                                next_sample(rd)
+                              end)
+              end)
   free_sampler(rd)
 end
 
 def test_pv_3(time)
-  pv = make_phase_vocoder(false, 512, 4, (time * 128.0).floor, 1.0, false, false, false)
+  pv = make_phase_vocoder(false, 512, 4, (time * 128.0).floor,
+                          1.0, false, false, false)
   rd = make_sampler(0)
-  len = (time * frames).floor
-  data = make_vct!(len) do phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end
+  len = (time * framples()).floor
+  data = make_vct!(len) do
+    phase_vocoder(pv,
+                  lambda do |dir|
+                    next_sample(rd)
+                  end)
+  end
   free_sampler(rd)
   vct2channel(data, 0, len)
 end
@@ -177,7 +197,7 @@ def test_pv_4(gate)
   pv = make_phase_vocoder(false,
                           512, 4, 128, 1.0,
                           false,
-                          lambda { |v|
+                          lambda do |v|
                             phase_vocoder_amp_increments(v).map! do |val|
                               if val < gate
                                 0.0
@@ -186,21 +206,36 @@ def test_pv_4(gate)
                               end
                               true
                             end
-                          }, false)
+                          end, false)
   rd = make_sampler(0)
-  map_channel(lambda do |y| phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end)
+  map_channel(lambda do |y|
+                phase_vocoder(pv,
+                              lambda do |dir|
+                                next_sample(rd)
+                              end)
+              end)
   free_sampler(rd)
 end
 
 # another version of the phase vocoder
 
 add_help(:pvoc,
-         "(pvoc, *rest) [fftsize, overlap, time, pitch, gate, hoffset, snd, chn] \
-applies the phase vocoder algorithm to the current sound (i.e. fft analysis, \
-oscil bank resynthesis). 'pitch' specifies the pitch transposition ratio, 'time' - \
-specifies the time dilation ratio, 'gate' specifies a resynthesis gate in dB (partials \
-with amplitudes lower than the gate value will not be synthesized), \
-'hoffset is a pitch offset in Hz.")
+         "pvoc(*rest)
+  :fftsize = 512
+  :overlap = 4
+  :time    = 1.0
+  :pitch   = 1.0
+  :gate    = 0.0
+  :hoffset = 0.0
+  :snd     = false
+  :chn     = false
+Applies the phase vocoder algorithm to the current sound (i.e. fft analysis, \
+oscil bank resynthesis).  \
+TIME specifies the time dilation ratio, \
+PITCH specifies the pitch transposition ratio, \
+GATE specifies a resynthesis gate in dB (partials with \
+amplitudes lower than the gate value will not be synthesized), \
+HOFFSET is a pitch offset in Hz.")
 def pvoc(*rest)
   fftsize, overlap, time, pitch, gate, hoffset, snd, chn = nil
   optkey(rest, binding,
@@ -212,10 +247,10 @@ def pvoc(*rest)
          [:hoffset, 0.0],
          [:snd, false],
          [:chn, false])
-  len = frames(snd, chn)
+  len = framples(snd, chn)
   filptr = 0
   sr = srate(snd)
-  fftsize2 = fftsize / 2
+  fftsize2 = (fftsize / 2.0).floor
   d = fftsize / overlap
   interp = d * time
   syngate = gate.zero? ? 0.0 : (10 ** (-gate.abs / 20.0))
@@ -230,11 +265,14 @@ def pvoc(*rest)
   freqinc = make_vct(fftsize2)
   fundamental = TWO_PI / fftsize
   output = interp
-  resynth_oscils = make_array(fftsize2) do make_oscil(:frequency, 0) end
+  # resynth_oscils = make_array(fftsize2) do
+  #   make_oscil(:frequency, 0)
+  # end
   outlen = (time * len).floor
   in_data = channel2vct(0, fftsize * 2, snd, chn)
   in_data_beg = 0
   vct_scale!(window, 2.0 / (0.54 * fftsize))
+  obank = make_oscil_bank(lastfreq, make_vct(fftsize2, 0.0), lastamp)
   out_data = make_vct([len, outlen].max)
   out_data.length.times do |i|
     if output >= interp
@@ -277,7 +315,8 @@ def pvoc(*rest)
             phasediff += TWO_PI
           end
         end
-        fdi[k] = pitch * ((phasediff * sr) / (d * sr) + k * fundamental + poffset)
+        fdi[k] = pitch *
+                 ((phasediff * sr) / (d * sr) + k * fundamental + poffset)
         if fdr[k] < syngate
           fdr[k] = 0.0
         end
@@ -288,7 +327,9 @@ def pvoc(*rest)
     output += 1
     vct_add!(lastamp, ampinc)
     vct_add!(lastfreq, freqinc)
-    out_data[i] = oscil_bank(lastamp, resynth_oscils, lastfreq)
+    # old_oscil_bank from extensions.rb
+    # out_data[i] = old_oscil_bank(lastamp, resynth_oscils, lastfreq)
+    out_data[i] = oscil_bank(obank)
   end
   vct2channel(out_data, 0, out_data.length)
 end

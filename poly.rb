@@ -1,8 +1,8 @@
-# poly.rb -- polynomial-related stuff; poly.scm --> poly.rb -*- snd-ruby -*-
+# poly.rb -- polynomial-related stuff; poly.scm --> poly.rb
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Sat Apr 09 23:55:07 CEST 2005
-# Changed: Mon Nov 22 13:27:11 CET 2010
+# Created: 05/04/09 23:55:07
+# Changed: 14/11/14 02:38:39
 
 # Commentary: (see poly.scm)
 #
@@ -18,8 +18,6 @@
 #  *(other)
 #  /(other)
 #  derivative
-#  resultant(other)
-#  discriminant
 #  gcd(other)
 #  roots
 #  eval(x)
@@ -153,20 +151,30 @@ class Poly < Vec
         nv = other.length - 1
         (n - nv).downto(0) do |i|
           q[i] = r[nv + i] / other[nv]
-          (nv + i - 1).downto(i) do |j| r[j] = r[j] - q[i] * other[j - i] end
+          (nv + i - 1).downto(i) do |j|
+            r[j] = r[j] - q[i] * other[j - i]
+          end
         end
-        nv.upto(n) do |i| r[i] = 0.0 end
+        nv.upto(n) do |i|
+          r[i] = 0.0
+        end
         [q, r]
       end
     end
   end
   alias / poly_div
-  # poly(-1.0, 0.0, 1.0) / poly(1.0, 1.0) ==> [poly(-1.0, 1.0, 0.0),       poly(0.0, 0.0, 0.0)]
-  # poly(-15, -32, -3, 2) / poly(-5, 1)   ==> [poly(3.0, 7.0, 2.0, 0.0),   poly(0.0, 0.0, 0.0, 0.0)]
-  # poly(-15, -32, -3, 2) / poly(3, 1)    ==> [poly(-5.0, -9.0, 2.0, 0.0), poly(0.0, 0.0, 0.0, 0.0)]
-  # poly(-15, -32, -3, 2) / poly(0.5, 1) ==> [poly(-30.0, -4.0, 2.0, 0.0), poly(0.0, 0.0, 0.0, 0.0)]
-  # poly(-15, -32, -3, 2) / poly(3, 7, 2) ==> [poly(-5.0, 1.0, 0.0, 0.0),  poly(0.0, 0.0, 0.0, 0.0)]
-  # poly(-15, -32, -3, 2) / 2.0           ==> [poly(-7.5, -16.0, -1.5, 1.0), poly(0.0)]
+  # poly(-1.0, 0.0, 1.0) / poly(1.0, 1.0)
+  #   ==> [poly(-1.0, 1.0, 0.0),       poly(0.0, 0.0, 0.0)]
+  # poly(-15, -32, -3, 2) / poly(-5, 1)
+  #   ==> [poly(3.0, 7.0, 2.0, 0.0),   poly(0.0, 0.0, 0.0, 0.0)]
+  # poly(-15, -32, -3, 2) / poly(3, 1)
+  #   ==> [poly(-5.0, -9.0, 2.0, 0.0), poly(0.0, 0.0, 0.0, 0.0)]
+  # poly(-15, -32, -3, 2) / poly(0.5, 1)
+  #   ==> [poly(-30.0, -4.0, 2.0, 0.0), poly(0.0, 0.0, 0.0, 0.0)]
+  # poly(-15, -32, -3, 2) / poly(3, 7, 2)
+  #   ==> [poly(-5.0, 1.0, 0.0, 0.0),  poly(0.0, 0.0, 0.0, 0.0)]
+  # poly(-15, -32, -3, 2) / 2.0
+  #   ==> [poly(-7.5, -16.0, -1.5, 1.0), poly(0.0)]
 
   def derivative
     len = self.length - 1
@@ -180,21 +188,22 @@ class Poly < Vec
   end
   # poly(0.5, 1.0, 2.0, 4.0).derivative ==> poly(1.0, 4.0, 12.0)
 
-#  include Mixer_matrix
+=begin
+  include Mixer_matrix
   def resultant(other)
     m = self.length
     m1 = m - 1
     n = other.length
     n1 = n - 1
-    mat = make_vct((n1 + m1) * (n1 + m1))
+    mat = make_mixer(n1 + m1)
     n1.times do |i|
       m.times do |j|
-        mat[(i * (n1 + m1)) + i + j] = self[m1 - j]
+        mixer_set!(mat, i, i + j, self[m1 - j])
       end
     end
     m1.times do |i|
       n.times do |j|
-        mat[((i + n1) * (n1 + m1)) + i + j] = other[n1 - j]
+        mixer_set!(mat, i + n1, i + j, other[n1 - j])
       end
     end
     mixer_determinant(mat)
@@ -209,17 +218,25 @@ class Poly < Vec
   end
   # poly(-1, 0, 1).discriminant ==> -4.0
   # poly(1, -2, 1).discriminant ==>  0.0
-  # (poly(-1, 1) * poly(-1, 1) * poly(3, 1)).reduce.discriminant              ==> 0.0
-  # (poly(-1, 1) * poly(-1, 1) * poly(3, 1) * poly(2, 1)).reduce.discriminant ==> 0.0
-  # (poly(1, 1) * poly(-1, 1) * poly(3, 1) * poly(2, 1)).reduce.discriminant  ==> 2304.0
-  # (poly(1, 1) * poly(-1, 1) * poly(3, 1) * poly(3, 1)).reduce.discriminant  ==> 0.0
+  # (poly(-1, 1) * poly(-1, 1) * poly(3, 1)).reduce.discriminant
+  #   ==> 0.0
+  # (poly(-1, 1) * poly(-1, 1) * poly(3, 1) * poly(2, 1)).reduce.discriminant
+  #   ==> 0.0
+  # (poly(1, 1) * poly(-1, 1) * poly(3, 1) * poly(2, 1)).reduce.discriminant
+  #   ==> 2304.0
+  # (poly(1, 1) * poly(-1, 1) * poly(3, 1) * poly(3, 1)).reduce.discriminant
+  #   ==> 0.0
+=end
   
   def gcd(other)
-    assert_type((array?(other) or vct?(other)), other, 0, "a poly, a vct or an array")
+    assert_type((array?(other) or vct?(other)), other, 0,
+                "a poly, a vct or an array")
     if self.length < other.length
       poly(0.0)
     else
-      qr = self.poly_div(other).map do |m| m.reduce end
+      qr = self.poly_div(other).map do |m|
+        m.reduce
+      end
       if qr[1].length == 1
         if qr[1][0].zero?
           Poly(other)
@@ -231,15 +248,23 @@ class Poly < Vec
       end
     end
   end
-  # (poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(2, 1))               ==> poly(2.0, 1.0)
-  # (poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(3, 1))               ==> poly(0.0)
-  # (poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(-3, 1))              ==> poly(-3.0, 1.0)
-  # (poly(8, 1) * poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(-3, 1)) ==> poly(-3.0, 1.0)
-  # (poly(8, 1) * poly(2, 1) * poly(-3, 1)).reduce.gcd((poly(8, 1) * poly(-3, 1)).reduce)
-  #                                                                 ==> poly(-24.0, 5.0, 1.0)
-  # poly(-1, 0, 1).gcd(poly(2, -2, -1, 1))                          ==> poly(0.0)
-  # poly(2, -2, -1, 1).gcd(poly(-1, 0, 1))                          ==> poly(1.0, -1.0)
-  # poly(2, -2, -1, 1).gcd(poly(-2.5, 1))                           ==> poly(0.0)
+  # (poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(2, 1))
+  #   ==> poly(2.0, 1.0)
+  # (poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(3, 1))
+  #   ==> poly(0.0)
+  # (poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(-3, 1))
+  #   ==> poly(-3.0, 1.0)
+  # (poly(8, 1) * poly(2, 1) * poly(-3, 1)).reduce.gcd(poly(-3, 1))
+  #   ==> poly(-3.0, 1.0)
+  # (poly(8, 1) * poly(2, 1) *
+  #  poly(-3, 1)).reduce.gcd((poly(8, 1) * poly(-3, 1)).reduce)
+  #   ==> poly(-24.0, 5.0, 1.0)
+  # poly(-1, 0, 1).gcd(poly(2, -2, -1, 1))
+  #   ==> poly(0.0)
+  # poly(2, -2, -1, 1).gcd(poly(-1, 0, 1))
+  #   ==> poly(1.0, -1.0)
+  # poly(2, -2, -1, 1).gcd(poly(-2.5, 1))
+  #   ==> poly(0.0)
 
   def roots
     rts = poly()
@@ -250,7 +275,9 @@ class Poly < Vec
         if deg == 1
           poly(0.0)
         else
-          Poly.new(deg) do |i| self[i + 1] end.roots.unshift(0.0)
+          Poly.new(deg) do |i|
+            self[i + 1]
+          end.roots.unshift(0.0)
         end
       else
         if deg == 1
@@ -259,14 +286,21 @@ class Poly < Vec
           if deg == 2
             quadratic_root(self[2], self[1], self[0])
           else
-            if deg == 3 and (rts = cubic_root(self[3], self[2], self[1], self[0]))
+            if deg == 3 and
+               (rts = cubic_root(self[3], self[2], self[1], self[0]))
               rts
             else
-              if deg == 4 and (rts = quartic_root(self[4], self[3], self[2], self[1], self[0]))
+              if deg == 4 and
+                 (rts = quartic_root(self[4], self[3],
+                                     self[2], self[1], self[0]))
                 rts
               else
                 ones = 0
-                1.upto(deg) do |i| if self[i].nonzero? then ones += 1 end end
+                1.upto(deg) do |i|
+                  if self[i].nonzero?
+                    ones += 1
+                  end
+                end
                 if ones == 1
                   nth_root(self[deg], self[0], deg)
                 else
@@ -283,7 +317,10 @@ class Poly < Vec
                         self[deg / 3].nonzero? and
                         self[(deg * 2) / 3].nonzero?
                       n = deg / 3
-                      poly(self[0],self[deg / 3],self[(deg * 2) / 3],self[deg]).roots.each do |qr|
+                      poly(self[0],
+                           self[deg / 3],
+                           self[(deg * 2) / 3],
+                           self[deg]).roots.each do |qr|
                         rts.push(*nth_root(1.0, -qr, n.to_f))
                       end
                       rts
@@ -296,9 +333,13 @@ class Poly < Vec
                       v = q.eval(x)
                       m = v.abs * v.abs
                       20.times do # until c_g?
-                        if (dx = v / qp.eval(x)).abs <= Poly_roots_epsilon then break end
+                        if (dx = v / qp.eval(x)).abs <= Poly_roots_epsilon
+                          break
+                        end
                         20.times do
-                          if dx.abs <= Poly_roots_epsilon then break end
+                          if dx.abs <= Poly_roots_epsilon
+                            break
+                          end
                           y = x - dx
                           v1 = q.eval(y)
                           if (m1 = v1.abs * v1.abs) < m
@@ -307,7 +348,7 @@ class Poly < Vec
                             m = m1
                             break
                           else
-                            dx /= 4.0 # /: slash to fool Emacs' indentation commands
+                            dx /= 4.0
                           end
                         end
                       end
@@ -320,7 +361,12 @@ class Poly < Vec
                         q = q.poly_div(poly(x.abs, 0.0, 1.0))
                         n -= 2
                       end
-                      rts = ((n > 0) ? q.car.reduce.roots : poly()) << x.to_f_or_c
+                      rts = if n > 0
+                              q.car.reduce.roots
+                            else
+                              poly()
+                            end
+                      rts << x.to_f_or_c
                       rts
                     end
                   end
@@ -335,7 +381,9 @@ class Poly < Vec
   
   def eval(x)
     sum = self.last
-    self.reverse[1..-1].each do |val| sum = sum * x + val end
+    self.reverse[1..-1].each do |val|
+      sum = sum * x + val
+    end
     sum
   end
 
@@ -371,9 +419,13 @@ class Poly < Vec
         s2 = r2 * exp(j * incr)
         z1 = simplify_complex((s1 + s2) - (a2 / 3))
         if pl.eval(z1).abs < Poly_roots_epsilon
-          z2 = simplify_complex((-0.5 * (s1 + s2)) + (a2 / -3) + ((s1 - s2) * 0.5 * sqrt3))
+          z2 = simplify_complex((-0.5 * (s1 + s2)) +
+                                (a2 / -3) +
+                                ((s1 - s2) * 0.5 * sqrt3))
           if pl.eval(z2).abs < Poly_roots_epsilon
-            z3 = simplify_complex((-0.5 * (s1 + s2)) + (a2 / -3) + ((s1 - s2) * -0.5 * sqrt3))
+            z3 = simplify_complex((-0.5 * (s1 + s2)) +
+                                  (a2 / -3) +
+                                  ((s1 - s2) * -0.5 * sqrt3))
             if pl.eval(z3).abs < Poly_roots_epsilon
               return poly(z1, z2, z3)
             end
@@ -398,16 +450,21 @@ class Poly < Vec
       yroot.each do |y1|
         r = sqrt((0.25 * a3 * a3) + (-a2 + y1))
         dd = if r.zero?
-              sqrt((0.75 * a3 * a3) + (-2 * a2) + (2 * sqrt(y1 * y1 - 4 * a0)))
+              sqrt((0.75 * a3 * a3) +
+                   (-2 * a2) +
+                   (2 * sqrt(y1 * y1 - 4 * a0)))
             else
               sqrt((0.75 * a3 * a3) + (-2 * a2) + (-(r * r)) +
                    (0.25 * ((4 * a3 * a2) + (-8 * a1) + (-(a3 * a3 * a3)))) / r)
             end
         ee = if r.zero?
-              sqrt((0.75 * a3 * a3) + (-2 * a2) + (-2 * sqrt((y1 * y1) - (4 * a0))))
+              sqrt((0.75 * a3 * a3) +
+                   (-2 * a2) +
+                   (-2 * sqrt((y1 * y1) - (4 * a0))))
             else
               sqrt((0.75 * a3 * a3) + (-2 * a2) + (-(r * r)) +
-                   (-0.25 * ((4 * a3 * a2) + (-8 * a1) + (-(a3 * a3 * a3)))) / r)
+                   (-0.25 *
+                    ((4 * a3 * a2) + (-8 * a1) + (-(a3 * a3 * a3)))) / r)
             end
         z1 = (-0.25 * a3) + ( 0.5 * r) + ( 0.5 * dd)
         z2 = (-0.25 * a3) + ( 0.5 * r) + (-0.5 * dd)
@@ -426,7 +483,9 @@ class Poly < Vec
     n = (-b / a) ** (1.0 / deg)
     incr = (TWO_PI * Complex::I) / deg
     rts = poly()
-    deg.to_i.times do |i| rts.unshift(simplify_complex(exp(i * incr) * n)) end
+    deg.to_i.times do |i|
+      rts.unshift(simplify_complex(exp(i * incr) * n))
+    end
     rts
   end
 
@@ -435,7 +494,9 @@ class Poly < Vec
     if a.imag.abs < Poly_roots_epsilon2
       (a.real.abs < Poly_roots_epsilon2) ? 0.0 : a.real.to_f
     else
-      if a.real.abs < Poly_roots_epsilon2 then a.real = 0.0 end
+      if a.real.abs < Poly_roots_epsilon2
+        a.real = 0.0
+      end
       a
     end
   end
@@ -506,9 +567,11 @@ class Vct
 end
 
 def Poly(obj)
-  if obj.nil? then obj = [] end
+  if obj.nil?
+    obj = []
+  end
   assert_type(obj.respond_to?(:to_poly), obj, 0,
-              "an object containing method 'to_poly' (Vct, String, Array and subclasses)")
+              "an object containing method 'to_poly'")
   obj.to_poly
 end
 
@@ -531,52 +594,62 @@ def poly(*vals)
 end
 
 def poly_reduce(obj)
-  assert_type(obj.respond_to?(:to_poly), obj, 0, "an object containing method 'to_poly'")
+  assert_type(obj.respond_to?(:to_poly), obj, 0,
+              "an object containing method 'to_poly'")
   Poly(obj).reduce
 end
 
 def poly_add(obj1, obj2)
   if number?(obj1)
-    assert_type(obj2.respond_to?(:to_poly), obj2, 1, "an object containing method 'to_poly'")
+    assert_type(obj2.respond_to?(:to_poly), obj2, 1,
+                "an object containing method 'to_poly'")
     Float(obj1) + Poly(obj2)
   else
-    assert_type(obj1.respond_to?(:to_poly), obj1, 0, "an object containing method 'to_poly'")
+    assert_type(obj1.respond_to?(:to_poly), obj1, 0,
+                "an object containing method 'to_poly'")
     Poly(obj1) + obj2
   end
 end
 
 def poly_multiply(obj1, obj2)
   if number?(obj1)
-    assert_type(obj2.respond_to?(:to_poly), obj2, 1, "an object containing method 'to_poly'")
+    assert_type(obj2.respond_to?(:to_poly), obj2, 1,
+                "an object containing method 'to_poly'")
     Float(obj1) * Poly(obj2)
   else
-    assert_type(obj1.respond_to?(:to_poly), obj1, 0, "an object containing method 'to_poly'")
+    assert_type(obj1.respond_to?(:to_poly), obj1, 0,
+                "an object containing method 'to_poly'")
     Poly(obj1) * obj2
   end
 end
 
 def poly_div(obj1, obj2)
   if number?(obj1)
-    assert_type(obj2.respond_to?(:to_poly), obj2, 1, "an object containing method 'to_poly'")
+    assert_type(obj2.respond_to?(:to_poly), obj2, 1,
+                "an object containing method 'to_poly'")
     Float(obj1) / Poly(obj2)
   else
-    assert_type(obj1.respond_to?(:to_poly), obj1, 0, "an object containing method 'to_poly'")
+    assert_type(obj1.respond_to?(:to_poly), obj1, 0,
+                "an object containing method 'to_poly'")
     Poly(obj1) / obj2
   end
 end
 
 def poly_derivative(obj)
-  assert_type(obj.respond_to?(:to_poly), obj, 0, "an object containing method 'to_poly'")
+  assert_type(obj.respond_to?(:to_poly), obj, 0,
+              "an object containing method 'to_poly'")
   Poly(obj).derivative
 end
 
 def poly_gcd(obj1, obj2)
-  assert_type(obj.respond_to?(:to_poly), obj, 0, "an object containing method 'to_poly'")
+  assert_type(obj.respond_to?(:to_poly), obj, 0,
+              "an object containing method 'to_poly'")
   Poly(obj1).gcd(obj2)
 end
 
 def poly_roots(obj)
-  assert_type(obj.respond_to?(:to_poly), obj, 0, "an object containing method 'to_poly'")
+  assert_type(obj.respond_to?(:to_poly), obj, 0,
+              "an object containing method 'to_poly'")
   Poly(obj).roots
 end
 

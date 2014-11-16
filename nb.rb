@@ -2,11 +2,9 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 02/12/10 22:08:15
-# Changed: 14/11/03 22:52:16
+# Changed: 14/11/13 03:02:23
 
-# Commentary:
-#
-# Tested with Snd 9.5, Motif 2.2.2, Ruby 1.6.6, 1.6.8 and 1.8.6.
+# Tested with Snd 15.x, Ruby 2.x.x
 #
 # type nb = make_nb
 #      nb.help
@@ -44,8 +42,6 @@ nb.open                      # adds mouse hooks
 nb.close                     # removes mouse hooks
 nb.help                      # this help
 =end
-
-# Code:
 
 require "hooks"
 with_silence do
@@ -118,7 +114,7 @@ class NB
   end
   
   def name=(filename)
-    if filename and File.exists?(File.expand_path(filename))
+    if filename and File.exist?(File.expand_path(filename))
       @name = filename
       show_popup_info
     else
@@ -162,7 +158,7 @@ class NB
   end
   
   def unb
-    if @name and File.exists?(File.expand_path(@name))
+    if @name and File.exist?(File.expand_path(@name))
       with_dbm do |db|
         db.delete(@name)
       end
@@ -181,7 +177,7 @@ class NB
   end
 
   def nb
-    if @name and File.exists?(File.expand_path(@name))
+    if @name and File.exist?(File.expand_path(@name))
       with_dbm do |db|
         db[@name] = @notes
       end
@@ -220,7 +216,7 @@ class NB
     len = format("%1.3f", mus_sound_samples(@name).to_f / (cs * sr.to_f))
     d_format = mus_data_format_name(mus_sound_sample_type(@name))
     h_type = mus_header_type_name(mus_sound_header_type(@name))
-    frms = mus_sound_frames(@name)
+    frms = mus_sound_framples(@name)
     max_amp = ""
     if mus_sound_maxamp_exists?(@name)
       str = ""
@@ -229,10 +225,11 @@ class NB
       end
       max_amp = format("\n maxamp: [%s]", str[0..-3])
     end
-    date = Time.at(mus_sound_write_date(@name)).localtime.strftime("%a %d-%b-%y %H:%M %Z")
+    fdate = Time.at(mus_sound_write_date(@name))
+    date = fdate.localtime.strftime("%a %d-%b-%y %H:%M %z")
     info_string = format("\
   chans: %d, srate: %d
- length: %1.3f (%d frames)
+ length: %1.3f (%d frms)
  format: %s [%s]%s
 written: %s\n", cs, sr, len, frms, d_format, h_type, max_amp, date)
     if defined?($info_comment_hook) and hook?($info_comment_hook)
@@ -241,7 +238,9 @@ written: %s\n", cs, sr, len, frms, d_format, h_type, max_amp, date)
           info_string += format("comment: %s\n", s)
         end
       else
-        $info_comment_hook.run_hook do |prc| info_string = prc.call(@name, info_string) end
+        $info_comment_hook.run_hook do |prc|
+          info_string = prc.call(@name, info_string)
+        end
       end
     else
       if s = mus_sound_comment(@name)
@@ -324,7 +323,9 @@ the $nb_database entries of SND will be returned.")
   attr_reader :popup_nb_hook
 
   def close
-    if @dialog.kind_of?(Dialog) and RWidget?(@dialog.dialog) and RXtIsManaged(@dialog.dialog)
+    if @dialog.kind_of?(Dialog) and
+       RWidget?(@dialog.dialog) and
+       RXtIsManaged(@dialog.dialog)
       RXtUnmanageChild(@dialog.dialog)
     end
     super
@@ -333,7 +334,7 @@ the $nb_database entries of SND will be returned.")
   protected
   def post_edit
     if !@name and RWidget?(@message_widget)
-      @name = if File.exists?(file = current_label(@message_widget).split[0])
+      @name = if File.exist?(file = current_label(@message_widget).split[0])
                 file
               else
                 format("no such file: %s", file.inspect)
@@ -349,7 +350,8 @@ the $nb_database entries of SND will be returned.")
         self.notes = RXmTextGetString(@text_widget)
       end
       @file_name = @dialog.add_label(@name)
-      @text_widget = @dialog.add_text(:rows, 16, :columns, 60, :wordwrap, true, :value, @notes)
+      @text_widget = @dialog.add_text(:rows, 16, :columns, 60,
+                                      :wordwrap, true, :value, @notes)
       @dialog.doit_string("Submit")
     end
     activate_dialog(@dialog.dialog)
@@ -383,12 +385,12 @@ o Submit:    submits info from edit widget
 #{self.description}",
                   ["{Libxm}: graphics module",
                    "{Ruby}: extension language",
-                   "{Motif}: Motif extensions via Libxm"])
+                   "{Motif}: Motif extensions via libxm"])
     end
 
   def post_popup?
     $mouse_enter_label_hook.member?(@db_hook_name) and
-      File.exists?(current_label(@message_widget).split[0])
+      File.exist?(current_label(@message_widget).split[0])
   end
 
   private
@@ -412,14 +414,18 @@ o Submit:    submits info from edit widget
   
   def setup_menu(wid)
     @message_widget = find_child(wid, "Message")
-    make_snd_popup("NB Edit Info", :where, :event, :parent, find_child(wid, "post-it-text")) do
+    make_snd_popup("NB Edit Info",
+                   :where, :event,
+                   :parent, find_child(wid, "post-it-text")) do
       entry("Edit Info") do |w, snd, chn| Kernel.xm_nb.post_edit end
       entry("Prune DB") do |w, snd, chn| Kernel.xm_nb.prune_db end
       entry("Clear current Info") do |w, snd, chn| Kernel.xm_nb.unb end
       entry("Close NB Edit") do |w, snd, chn| Kernel.xm_nb.close end
       separator
       entry("Help") do |w, snd, chn| Kernel.xm_nb.help_cb end
-      before_popup_hook.add_hook!("NB Edit Info") do |d1, d2, d3| Kernel.xm_nb.post_popup? end
+      before_popup_hook.add_hook!("NB Edit Info") do |d1, d2, d3|
+        Kernel.xm_nb.post_popup?
+      end
     end
   end
 
@@ -430,8 +436,12 @@ o Submit:    submits info from edit widget
 
   def show_edit_info
     xfname = string2compound(@name)
-    RWidget?(@file_name) and RXtVaSetValues(@file_name, [RXmNlabelString, xfname])
-    RWidget?(@text_widget) and RXtVaSetValues(@text_widget, [RXmNvalue, @notes])
+    if RWidget?(@file_name)
+      RXtVaSetValues(@file_name, [RXmNlabelString, xfname])
+    end
+    if RWidget?(@text_widget)
+      RXtVaSetValues(@text_widget, [RXmNvalue, @notes])
+    end
     RXmStringFree(xfname)
   end
 end if provided?("xm")

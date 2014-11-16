@@ -1,11 +1,9 @@
-# marks.rb -- marks.scm --> marks.rb -*- snd-ruby -*-
+# marks.rb -- marks.scm --> marks.rb
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Wed Mar 23 02:08:47 CET 2005
-# Changed: Thu Feb 23 15:29:03 CET 2012
+# Created: 05/03/23 02:08:47
+# Changed: 14/11/14 07:02:23
 
-# Commentary:
-#
 # examples of mark-related functions
 #
 # module Mark
@@ -40,9 +38,6 @@
 #  mark_click_info(id)
 #  eval_header(sndf)
 #  marks2string(sndf)
-#  
-
-# Code:
 
 require "hooks"
 
@@ -50,7 +45,8 @@ module Mark
   # mark_name2id is a global version of find-mark
 
   add_help(:mark_name2id,
-           "mark_name2id(name) is like find-mark but searches all currently accessible channels")
+           "mark_name2id(name)  \
+Is like find-mark but searches all currently accessible channels.")
   def mark_name2id(name)
     Snd.sounds.each do |snd|
       channels(snd).times do |chn|
@@ -65,24 +61,33 @@ module Mark
   # move_syncd_marks moves all syncd marks together
 
   add_help(:move_syncd_marks,
-           "move_syncd_marks(sync, diff) moves all marks sharing sync by diff samples")
+           "move_syncd_marks(sync, diff)  \
+Moves all marks sharing sync by diff samples.")
   def move_syncd_marks(sync, diff)
-    (syncd_marks(sync) or []).each do |m| set_mark_sample(m, mark_sample(m) + diff) end
+    (syncd_marks(sync) or []).each do |m|
+      set_mark_sample(m, mark_sample(m) + diff)
+    end
   end
 
   # describe_mark shows mark history
 
   add_help(:describe_mark,
-           "describe_mark(id) \
-returns a description of the movements of mark id over the channel's edit history")
+           "describe_mark(id)  \
+Returns a description of the movements of mark ID over \
+the channel's edit history.")
   def describe_mark(id)
-    if (mark_setting = Snd.catch do mark_home(id) end.first) == :no_such_mark
+    mark_setting = Snd.catch do
+      mark_home(id)
+    end.first
+    if mark_setting == :no_such_mark
       Snd.sounds.each do |snd|
         break if array?(mark_setting)
         channels(snd).times do |chn|
           break if array?(mark_setting)
           max_edits = 0
-          edits(snd, chn).each do |n| max_edits += n end
+          edits(snd, chn).each do |n|
+            max_edits += n
+          end
           0.upto(max_edits) do |ed|
             if (m = marks(snd, chn, ed)) and m.member?(id)
               mark_setting = [snd, chn]
@@ -95,7 +100,9 @@ returns a description of the movements of mark id over the channel's edit histor
     if array?(mark_setting)
       snd, chn = mark_setting
       max_edits = 0
-      edits(snd, chn).each do |n| max_edits += n end
+      edits(snd, chn).each do |n|
+        max_edits += n
+      end
       descr = [[:mark, id, :sound, snd, short_file_name(snd), :channel, chn]]
       0.upto(max_edits) do |ed|
         if marks(snd, chn, ed).member?(id)
@@ -136,11 +143,14 @@ returns a description of the movements of mark id over the channel's edit histor
   # syncronize sounds at a given mark
 
   add_help(:syncup,
-           "syncup(*ids) \
-pads the channels with zeros so that all the marks in ids list occur at the same time")
+           "syncup(*ids)  \
+Pads the channels with zeros so that all the marks in IDS list \
+occur at the same time.")
   def syncup(*args_ids)
     ids = args_ids.flatten
-    samps = ids.map do |id| mark?(id) and mark_sample(id) end
+    samps = ids.map do |id|
+      mark?(id) and mark_sample(id)
+    end
     max_samp = samps.max
     ids.zip(samps) do |id, samp|
       if samp < max_samp
@@ -151,11 +161,13 @@ pads the channels with zeros so that all the marks in ids list occur at the same
     end
   end
 
-  # fit selection between marks, expanding via granulate (this needs some tweaking...)
+  # fit selection between marks, expanding via granulate (this
+  # needs some tweaking...)
 
   add_help(:fit_selection_between_marks,
-           "fit_selection_between_marks(m1, m2) \
-fits (and mixes) the current selection (via granulate) between the given marks")
+           "fit_selection_between_marks(m1, m2)  \
+Fits (and mixes) the current selection (via granulate) \
+between the given marks.")
   def fit_selection_between_marks(m1, m2)
     m1_samp = mark_sample(m1)
     m2_samp = mark_sample(m2)
@@ -166,7 +178,7 @@ fits (and mixes) the current selection (via granulate) between the given marks")
                   m1, m1_home[0], m1_home[1], m2, m2_home[0], m2_home[1])
     else
       mark_samps = m2_samp - m1_samp
-      selection_samps = selection_frames
+      selection_samps = selection_framples()
       reg_data = region2vct
       reader = make_sampler(m1_samp)
       gr = make_granulate(:expansion, mark_samps / selection_samps.to_f)
@@ -191,7 +203,8 @@ fits (and mixes) the current selection (via granulate) between the given marks")
   # pad_marks inserts silence before each in a list of marks
 
   add_help(:pad_marks,
-           "pad_marks(ids, secs) inserts secs seconds of silence before each mark in ids")
+           "pad_marks(ids, secs)  \
+Inserts SECS seconds of silence before each mark in IDS.")
   def pad_marks(ids, secs)
     silence_length = (secs * srate()).floor
     silence_samps = Vct.new(silence_length)
@@ -207,7 +220,8 @@ fits (and mixes) the current selection (via granulate) between the given marks")
   # play_syncd_marks
 
   add_help(:play_syncd_marks,
-           "play_syncd_marks(sync) starts playing from all marks sharing sync")
+           "play_syncd_marks(sync)  \
+Starts playing from all marks sharing SYNC.")
   def play_syncd_marks(sync)
     chans = 1
     rate = 22050
@@ -222,8 +236,8 @@ fits (and mixes) the current selection (via granulate) between the given marks")
   end
 
   add_help(:play_between_marks,
-           "play_between_marks([mark1=false, [mark2=false]]) \
-plays the portion between the marks (searching for plausible default marks)")
+           "play_between_marks(mark1=false, mark2=false)  \
+Plays the portion between the marks (searching for plausible default marks).")
   def play_between_marks(mark1 = false, mark2 = false)
     snd = Snd.snd
     chn = Snd.chn
@@ -270,7 +284,8 @@ plays the portion between the marks (searching for plausible default marks)")
       pos2 = mark_sample(m2)
       beg = [pos1, pos2].min
       len = [pos1, pos2].max
-      play(mark_home(m1).car, :channel, mark_home(m1).cadr, :start, beg, :end, len)
+      play(mark_home(m1).car,
+           :channel, mark_home(m1).cadr, :start, beg, :end, len)
     end
   end
 
@@ -278,7 +293,9 @@ plays the portion between the marks (searching for plausible default marks)")
     def initialize(snd)
       @snd = snd
       @marklist = marks(@snd, 0)
-      @samplist = (@marklist or []).map do |m| mark_sample(m) end
+      @samplist = (@marklist or []).map do |m|
+        mark_sample(m)
+      end
       @samp = 0
     end
     
@@ -301,7 +318,8 @@ plays the portion between the marks (searching for plausible default marks)")
   # report_mark_names causes mark names to be posted in the minibuffer as a sound is played
 
   add_help(:report_mark_names,
-           "report_mark_names() causes mark names to be printed as they are passed while playing")
+           "report_mark_names()  \
+Causes mark names to be printed as they are passed while playing.")
   def report_mark_names
     $start_playing_hook.add_hook!("marks.rb") do |snd|
       rp = Mark_report.new(snd)
@@ -317,8 +335,9 @@ plays the portion between the marks (searching for plausible default marks)")
   # eval_between_marks
 
   add_help(:eval_between_marks,
-           "eval_between_marks(&func) \
-evaluates func between the leftmost marks; func takes one arg, the original sample")
+           "eval_between_marks(&func)  \
+Evaluates FUNC between the leftmost marks; \
+FUNC takes one arg, the original sample.")
   def eval_between_marks(func1 = nil, &func2)
     func = if block_given?
              func2
@@ -344,7 +363,9 @@ evaluates func between the leftmost marks; func takes one arg, the original samp
           beg = mark_sample(winl[0])
           len = mark_sample(winl[1]) - beg
           old_data = channel2vct(beg, len, snd, chn)
-          new_data = Vct.new(len) do |i| func.call(old_data[i]) end
+          new_data = Vct.new(len) do |i|
+            func.call(old_data[i])
+          end
           vct2channel(new_data, beg, len, snd, chn)
         end
       else
@@ -352,16 +373,21 @@ evaluates func between the leftmost marks; func takes one arg, the original samp
       end
     end
   end
-  # bind_key(?m, 0, lambda do | | prompt_in_minibuffer("mark eval:", eval_between_marks) end)
+  # bind_key(?m, 0,
+  #          lambda do | |
+  #            prompt_in_minibuffer("mark eval:", eval_between_marks)
+  #          end)
 
   # snap_marks
 
-  add_help(:snap_marks, "snap_marks() places marks at current selection boundaries")
+  add_help(:snap_marks,
+           "snap_marks()  \
+Places marks at current selection boundaries.")
   def snap_marks
     if selection?
       selection_members.each do |snd, chn|
         pos = selection_position(snd, chn)
-        len = selection_frames(snd, chn)
+        len = selection_framples(snd, chn)
         add_mark(pos, snd, chn)
         add_mark(pos + len, snd, chn)
       end
@@ -371,8 +397,8 @@ evaluates func between the leftmost marks; func takes one arg, the original samp
   # define_selection_via_marks
 
   add_help(:define_selection_via_marks,
-           "define_selection_via_marks(m1, m2) \
-defines the current selection to lie between the marks given")
+           "define_selection_via_marks(m1, m2)  \
+Defines the current selection to lie between the marks given.")
   def define_selection_via_marks(m1, m2)
     m1sc = mark_home(m1)
     m2sc = mark_home(m2)
@@ -385,17 +411,20 @@ defines the current selection to lie between the marks given")
       end
       set_selection_member?(true, snd, chn)
       set_selection_position(beg, snd, chn)
-      set_selection_frames(fin - beg + 1, snd, chn)
+      set_selection_framples(fin - beg + 1, snd, chn)
     else
-      Snd.raise(:snd_error, "define_selection_via_marks assumes the marks are in the same channel")
+      Snd.raise(:snd_error,
+                "define_selection_via_marks assumes the marks are \
+in the same channel")
     end
   end
 
   # snap_mark_to_beat
 
   add_help(:snap_mark_to_beat,
-           "snap_mark_to_beat() \
-ensures that when a mark is dragged, its released position is always on a beat")
+           "snap_mark_to_beat()  \
+Ensures that when a mark is dragged, \
+its released position is always on a beat.")
   def snap_mark_to_beat
     mark_release = 4
     $mark_hook.add_hook!(get_func_name) do |m, snd, chn, reason|
@@ -420,8 +449,8 @@ ensures that when a mark is dragged, its released position is always on a beat")
   # write out each section of a file between marks as a separate file
 
   add_help(:mark_explode,
-           "mark_explode([header_type=Mus_next, [sample_type=Mus_bfloat]]) \
-splits a sound into a bunch of sounds based on mark placements")
+           "mark_explode(header_type=Mus_next, data_format=Mus_bfloat)  \
+Splits a sound into a bunch of sounds based on mark placements.")
   def mark_explode(htype = Mus_next, dformat = Mus_bfloat)
     start = 0
     file_ctr = 0
@@ -435,9 +464,12 @@ splits a sound into a bunch of sounds based on mark placements")
           channels(snd).times do |chn|
             set_selection_member?(true, snd, chn)
             set_selection_position(start, snd, chn)
-            set_selection_frames(last - start, snd, chn)
+            set_selection_framples(last - start, snd, chn)
           end
-          save_selection(filename, :header_type, htype, :sample_type, dformat, :srate, srate(snd))
+          save_selection(filename,
+                         :header_type, htype,
+                         :sample_type, dformat,
+                         :srate, srate(snd))
           channels(snd).times do |chn|
             set_selection_member?(false, snd, chn)
           end
@@ -452,8 +484,8 @@ splits a sound into a bunch of sounds based on mark placements")
   # === Mark Properties ===
   #
   add_help(:save_mark_properties,
-           "save_mark_properties() \
-sets up an $after_save_state_hook function to save any mark-properties")
+           "save_mark_properties()  \
+Sets up an $after_save_state_hook function to save any mark-properties.")
   def save_mark_properties
     $after_save_state_hook.add_hook!(get_func_name) do |fname|
       File.open(File.expand_path(fname), "a+") do |f|
@@ -465,9 +497,11 @@ sets up an $after_save_state_hook function to save any mark-properties")
               if mp = mark_properties(m)
                 snd, chn = mark_home(m)
                 msamp = mark_sample(m)
-                f.printf("if sound?(snd = find_sound(%s))\n", file_name(snd).inspect)
-                f.printf("  if mark?(m = find_mark(%d, snd, %d))\n", msamp, chn)
-                f.printf("    set_mark_properties(m, %s)\n", mp.inspect)
+                f.printf("if sound?(snd = find_sound(%s))\n",
+                         file_name(snd).inspect)
+                f.printf("  if mark?(m = find_mark(%d, snd, %d))\n",
+                         msamp, chn)
+                f.printf("    set_mark_properties(m, %p)\n", mp)
                 f.printf("  end\n")
                 f.printf("end\n")
               end
@@ -482,22 +516,33 @@ sets up an $after_save_state_hook function to save any mark-properties")
   # === Mark Click Info ===
   # 
   add_help(:mark_click_info,
-           "mark_click_info(n) \
-is a $mark_click_hook function that describes a mark and its properties")
+           "mark_click_info(n)  \
+Is a $mark_click_hook function that describes a mark and its properties.")
   def mark_click_info(id)
     Snd.raise(:no_such_mark, id) unless mark?(id)
-    info_dialog("Mark info", format("\
+    mname = mark_name(id)
+    mnamestr = ""
+    if mname
+      mnamestr = format("\n   mark name: %p", mname)
+    end
+    msamp = mark_sample(id)
+    msync = mark_sync(id)
+    msyncstr = ""
+    if msync.nonzero?
+      msyncstr = format("\n        sync: %d", msync)
+    end
+    props = mark_properties(id)
+    propstr = ""
+    if props
+      propstr = format("\n  properties: %p", props)
+    end
+    info_dialog("Mark info",
+                format("\
      mark id: %s%s
       sample: %d (%1.3f secs)%s%s",
-                                    id,
-                                    ((s = mark_name(id)) ?
-                                     format("\n   mark name: %s", s.inspect) : ""),
-                                    mark_sample(id),
-                                    mark_sample(id) / srate(mark_home(id)[0]).to_f,
-                                    (mark_sync(id).nonzero? ?
-                                     format("\n        sync: %d", mark_sync(id)) : ""),
-                                    ((props = mark_properties(id)) ?
-                                     format("\n  properties: %s", props.inspect) : "")))
+                       id, mnamestr,
+                       msamp, msamp / srate(mark_home(id)[0]).to_f,
+                       msyncstr, propstr))
     true
   end
 
@@ -520,7 +565,9 @@ is a $mark_click_hook function that describes a mark and its properties")
     end
     str
   end
-  # $output_comment_hook.add_hook!("marks2string") do |str| marks2string(selected_sound()) end
+  # $output_comment_hook.add_hook!("marks2string") do |str|
+  #   marks2string(selected_sound())
+  # end
   # $after_open_hook.add_hook!("marks2string") do |snd|
   #   if string?(str = comment(snd))
   #     Snd.catch do eval(str, TOPLEVEL_BINDING, "(eval-header)", 1) end.first

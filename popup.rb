@@ -1,16 +1,14 @@
-# popup.rb -- Specialize Popup Menus converted from Guile to Ruby.
+# popup.rb -- Specialize Popup Menus converted from Scheme to Ruby.
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Tue Dec  4 21:50:50 CET 2012
+# Created: 02/09/05 22:28:49
+# Changed: 14/11/09 01:52:47
 
-# Commentary:
-#
 # Requires --with-motif
 # 
-# Tested with Snd 13.x
-#             Ruby 2.0
-#             Motif 2.3.4 X11R6
+# Tested with Snd 15.x
+#             Ruby 2.x.x
+#             Motif 2.3.3 X11R6
 #
 # $info_comment_hook: lambda do |file, info_string| ...; new_info_string; end
 # $edhist_save_hook:  lambda do |prc| ... end
@@ -30,11 +28,14 @@
 #     initialize(name, parent, args)
 #     values
 #     # listener
-#     children(set_cb, rest = false) do |snd| ... end             set_cb.arity == -1 or 0
+#     children(set_cb, rest = false) do |snd| ... end
+#       ==> set_cb.arity == -1 or 0
 #     # edhist
-#     children(set_cb, rest = false) do |snd, chn, idx| ... end   set_cb.arity == -1 or 0
+#     children(set_cb, rest = false) do |snd, chn, idx| ... end
+#       ==> set_cb.arity == -1 or 0
 #     # transform
-#     children(set_cb, rest = false) do |snd, chn, val| ... end   set_cb.arity == 3 (snd, chn, val)
+#     children(set_cb, rest = false) do |snd, chn, val| ... end
+#       ==> set_cb.arity == 3 (snd, chn, val)
 #
 # Usage:
 #
@@ -96,8 +97,6 @@
 # Change the appearance of menu entries with `before_popup_hook', a
 # hook per instance.  The example menus below may help.
 
-# Code:
-
 require "hooks"
 require "snd-xm"
 include Snd_XM
@@ -140,11 +139,13 @@ class Hook
   end
 end
 
-add_help(:make_snd_popup, "make_snd_popup(name, *rest) do ... end
-    name                                # menu name
-    :parent,  main_widgets[Main_pane]   # e.g. listener popup takes main_widgets[Listener_pane]
-    :target,  :channels                 # :channels, :edhist, :widget, :event
-    :args,    [RXmNbackground, highlight_color] # Motif arguments")
+add_help(:make_snd_popup,
+         "make_snd_popup(name, *rest) do ... end
+  NAME                             # menu name
+  :parent, main_widgets[Main_pane] # e.g. listener popup takes
+                                   # main_widgets[Listener_pane]
+  :target, :channels               # :channels, :edhist, :widget, :event
+  :args, [RXmNbackground, highlight_color] # Motif arguments")
 def make_snd_popup(name, *rest, &body)
   parent, target = nil
   optkey(rest, binding,
@@ -188,8 +189,8 @@ If it returns non-nil or non-false, the menu will be posted.")
     if block_given?
       RXtAddCallback(child, RXmNactivateCallback,
                      lambda do |w, c, i|
-                       chn = if snd = selected_sound
-                               selected_channel
+                       chn = if snd = selected_sound()
+                               selected_channel()
                              else
                                false
                              end
@@ -224,7 +225,8 @@ If it returns non-nil or non-false, the menu will be posted.")
   
   private
   def create(&body)
-    @menu = RXmCreatePopupMenu(@parent, @label, [RXmNpopupEnabled, RXmPOPUP_AUTOMATIC] + @args)
+    @menu = RXmCreatePopupMenu(@parent, @label,
+                               [RXmNpopupEnabled, RXmPOPUP_AUTOMATIC] + @args)
     unless @label.empty?
       label(@label)
       separator
@@ -235,7 +237,8 @@ If it returns non-nil or non-false, the menu will be posted.")
       Snd.sounds.each do |snd|
         set_channel_popup(snd)
       end
-      hook_name = format("%s-popup", (@label or "channels").downcase.tr(" ", "-"))
+      hook_name = format("%s-popup",
+                         (@label or "channels").downcase.tr(" ", "-"))
       $after_open_hook.add_hook!(hook_name) do |snd|
         set_channel_popup(snd)
       end
@@ -248,7 +251,10 @@ If it returns non-nil or non-false, the menu will be posted.")
 
   def set_channel_popup(snd)
     channels(snd).times do |chn|
-      unless @popups.detect do |c| c == [snd, chn] end
+      res = @popups.detect do |c|
+        c == [snd, chn]
+      end
+      unless res
         @popups.push([snd, chn])
         if @target == :edhist
           RXtAddCallback(channel_widgets(snd, chn)[Edhist],
@@ -265,7 +271,8 @@ If it returns non-nil or non-false, the menu will be posted.")
                          RXmNpopupHandlerCallback,
                          lambda do |w, c, i|
                            if Rtype(e = Revent(i)) == RButtonPress
-                             if @target == :channels and @before_popup_hook.empty?
+                             if @target == :channels and
+                                 @before_popup_hook.empty?
                                Rset_menuToPost(i, @menu)
                              else
                                xe = Rx_root(e) - RXtTranslateCoords(w, 0, 0)[0]
@@ -273,17 +280,16 @@ If it returns non-nil or non-false, the menu will be posted.")
                                  ye = Ry(e)
                                  if channel_style(snd) == Channels_combined
                                    ye = Ry(e)
-                                   chn = if (cn = (0...channels(snd)).detect do |cc|
-                                               ye < axis_info(snd, cc)[14]
-                                             end)
-                                           cn - 1
-                                         else
-                                           channels(snd) - 1
-                                         end
+                                   cn = (0...channels(snd)).detect do |cc|
+                                     ye < axis_info(snd, cc)[14]
+                                   end
+                                   chn = cn ? cn : channels(snd)
+                                   chn -= 1
                                  end
                                  unless chn.between?(0, channels(snd) - 1)
                                    # in case of chans(new-snd) < chans(old-snd)
-                                   # and new-snd has the same index like closed old-snd
+                                   # and new-snd has the same index like closed
+                                   # old-snd
                                    chn = channels(snd) - 1
                                  end
                                end
@@ -303,7 +309,9 @@ If it returns non-nil or non-false, the menu will be posted.")
     RXtAddCallback(@parent, RXmNpopupHandlerCallback,
                    lambda do |w, c, i|
                      if Rtype(Revent(i)) == RButtonPress
-                       @before_popup_hook.call(selected_sound, selected_channel, w)
+                       @before_popup_hook.call(selected_sound(),
+                                               selected_channel(),
+                                               w)
                        Rset_menuToPost(i, @menu)
                      end
                    end)
@@ -352,13 +360,18 @@ If it returns non-nil or non-false, the menu will be posted.")
       if no_widget
         widget = false
       else
-        widget = RXtCreateManagedWidget(@label, RxmPushButtonWidgetClass, @parent, @args)
+        widget = RXtCreateManagedWidget(@label, RxmPushButtonWidgetClass,
+                                        @parent, @args)
         RXtAddCallback(widget, RXmNactivateCallback,
-                       lambda do |w, c, i| body.call(set_cb.call.first) end)
+                       lambda do |w, c, i|
+                         body.call(set_cb.call.first)
+                       end)
       end
       RXtAddCallback(@cascade, RXmNcascadingCallback,
                      lambda do |w, c, i|
-                       @children.each do |child| RXtUnmanageChild(child) end
+                       @children.each do |child|
+                         RXtUnmanageChild(child)
+                       end
                        snds = set_cb.call.reverse
                        clen = @children.length
                        slen = snds.length
@@ -482,8 +495,12 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
         play(selection())
       end
     end
-    entry("Delete") do |snd, chn, w| delete_selection end
-    entry("Zero") do |snd, chn, w| scale_selection_by(0.0) end
+    entry("Delete") do |snd, chn, w|
+      delete_selection
+    end
+    entry("Zero") do |snd, chn, w|
+      scale_selection_by(0.0)
+    end
     entry("Crop") do |snd, chn, w|
       sndlist = []
       Snd.sounds.each do |s|
@@ -494,16 +511,20 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
       sndlist.each do |selection|
         snd, chn = selection
         beg = selection_position(snd, chn)
-        len = selection_frames(snd, chn)
+        len = selection_framples(snd, chn)
         as_one_edit(lambda do | |
                       delete_samples(0, beg, snd, chn) if beg > 0
-                      if len < frames(snd, chn)
-                        delete_samples(len + 1, frames(snd, chn) - len, snd, chn)
+                      if len < framples(snd, chn)
+                        delete_samples(len + 1,
+                                       framples(snd, chn) - len,
+                                       snd, chn)
                       end
                     end)
       end
     end
-    entry("Save as") do |snd, chn, w| save_selection_dialog end
+    entry("Save as") do |snd, chn, w|
+      save_selection_dialog
+    end
     entry("Copy->New") do |snd, chn, w|
       new_file_name = format("newf-%d.snd", selctr)
       selctr += 1
@@ -520,14 +541,14 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
     entry("Snap marks") do |snd, chn, w|
       selection_members.each do |s, c|
         pos = selection_position(s, c)
-        len = selection_frames(s, c) - 1
+        len = selection_framples(s, c) - 1
         add_mark(pos, s, c)
         add_mark(pos + len, s, c)
       end
     end
     entry("Selection Info") do |snd, chn, w|
-      beg = selection_position
-      len = selection_frames
+      beg = selection_position()
+      len = selection_framples()
       sr = srate.to_f
       str  = format("    start: %d, %.3f", beg, beg / sr)
       str += format("      end: %d, %.3f", beg + len, (beg + len) / sr)
@@ -535,12 +556,25 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
       str += format("    chans: %d", selection_chans)
       str += format("   maxamp: %.3f", selection_maxamp)
     end
-    entry("Apply controls") do |snd, chn, w| apply_controls(snd, 2) end # 2 == selection
-    entry("Reset controls") do |snd, chn, w| reset_controls end
-    entry("Unselect") do |snd, chn, w| set_selection_member?(false, true) end
-    entry("Revert") do |snd, chn, w| reverse_selection end
-    entry("Mix") do |snd, chn, w| mix_selection(cursor()) end
-    entry("Invert") do |snd, chn, w| scale_selection_by(-1) end
+    # 2 == selection
+    entry("Apply controls") do |snd, chn, w|
+      apply_controls(snd, 2)
+    end
+    entry("Reset controls") do |snd, chn, w|
+      reset_controls()
+    end
+    entry("Unselect") do |snd, chn, w|
+      set_selection_member?(false, true)
+    end
+    entry("Revert") do |snd, chn, w|
+      reverse_selection()
+    end
+    entry("Mix") do |snd, chn, w|
+      mix_selection(cursor())
+    end
+    entry("Invert") do |snd, chn, w|
+      scale_selection_by(-1)
+    end
     before_popup_hook.add_hook!("selection popup") do |snd, chn, xe|
       fax = if transform_graph?(snd, chn)
               axis_info(snd, chn, Transform_graph)
@@ -560,10 +594,13 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
         else
           if selection?
             sr = srate(snd).to_f
-            beg = selection_position(snd, chn) / sr
-            fin = (selection_position(snd, chn) + selection_frames(snd, chn)) / sr
+            pos = selection_position(snd, chn)
+            beg = pos / sr
+            fin = (pos + selection_framples(snd, chn)) / sr
           end
-          if selection? and xe >= x2position(beg, snd, chn) and xe <= x2position(fin, snd, chn)
+          if selection? and
+              xe >= x2position(beg, snd, chn) and
+              xe <= x2position(fin, snd, chn)
             true
           else
             false
@@ -585,7 +622,11 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
         change_label(stop_widget, "Play") if widget?(stop_widget)
       end
     end
-    entry("Play", :procedure, lambda do |w| stop_widget = w end) do |snd, chn, w|
+    entry("Play",
+          :procedure,
+          lambda do |w|
+            stop_widget = w
+          end) do |snd, chn, w|
       if stopping
         stopping = false
         change_label(w, "Play")
@@ -616,59 +657,99 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
       change_label(stop_widget, "Stop")
       play(snd, :channel, chn, :edit_position, 0)
     end
-    entry("Undo") do |snd, chn, w| undo_edit(1, snd, chn) end if defined? undo_edit
-    entry("Redo") do |snd, chn, w| redo_edit(1, snd, chn) end if defined? redo_edit
-    entry("Revert") do |snd, chn, w| revert_sound(snd) end
-    entry("Open") do |snd, chn, w| open_file_dialog end
-    entry("Save") do |snd, chn, w| save_sound(snd) end
+    entry("Undo") do |snd, chn, w|
+      undo_edit(1, snd, chn)
+    end if defined? undo_edit
+    entry("Redo") do |snd, chn, w|
+      redo_edit(1, snd, chn)
+    end if defined? redo_edit
+    entry("Revert") do |snd, chn, w|
+      revert_sound(snd)
+    end
+    entry("Open") do |snd, chn, w|
+      open_file_dialog
+    end
+    entry("Save") do |snd, chn, w|
+      save_sound(snd)
+    end
     entry("Save as") do |snd, chn, w|
       select_sound(snd)
       save_sound_dialog
     end
-    entry("Update") do |snd, chn, w| update_sound(snd) end
-    entry("Close") do |snd, chn, w| close_sound_extend(snd) end
-    entry("Mix selection") do |snd, chn, w| mix_selection(cursor(snd, chn), snd, chn) end
-    entry("Insert selection") do |snd, chn, w| insert_selection(cursor(snd, chn), snd, chn) end
+    entry("Update") do |snd, chn, w|
+      update_sound(snd)
+    end
+    entry("Close") do |snd, chn, w|
+      close_sound_extend(snd)
+    end
+    entry("Mix selection") do |snd, chn, w|
+      mix_selection(cursor(snd, chn), snd, chn)
+    end
+    entry("Insert selection") do |snd, chn, w|
+      insert_selection(cursor(snd, chn), snd, chn)
+    end
     entry("Replace with selection") do |snd, chn, w|
       beg = cursor(snd, chn)
-      len = selection_frames
-      sbeg = selection_position
-      if (not selection_member?(snd, chn)) or ((beg + len) < sbeg) or (beg > (sbeg + len))
+      len = selection_framples()
+      sbeg = selection_position()
+      if (not selection_member?(snd, chn)) or
+          ((beg + len) < sbeg) or
+          (beg > (sbeg + len))
         delete_samples(beg, len, snd, chn)
         insert_selection(beg, snd, chn)
       elsif beg < sbeg
         delete_samples(beg, sbeg - beg, snd, chn)
       end
     end
-    entry("Select all") do |snd, chn, w| select_all(snd, chn) end
-    entry("Unselect") do |snd, chn, w| set_selection_member?(false, true) end
-    entry("Apply controls") do |snd, chn, w| apply_controls end
-    entry("Reset controls") do |snd, chn, w| reset_controls end
+    entry("Select all") do |snd, chn, w|
+      select_all(snd, chn)
+    end
+    entry("Unselect") do |snd, chn, w|
+      set_selection_member?(false, true)
+    end
+    entry("Apply controls") do |snd, chn, w|
+      apply_controls()
+    end
+    entry("Reset controls") do |snd, chn, w|
+      reset_controls()
+    end
     entry("Info") do |snd, chn, w|
       file = file_name(snd)
-      date = Time.at(mus_sound_write_date(file)).localtime.strftime("%a %d-%b-%y %H:%M %Z")
+      fdate = Time.at(mus_sound_write_date(file))
+      date = fdate.localtime.strftime("%a %d-%b-%y %H:%M %z")
       info_string = format("\
   chans: %d, srate: %d
- length: %1.3f (%d frames)
+ length: %1.3f (%d frms)
  format: %s [%s]
  maxamp: %s
-written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
-                           frames(snd), mus_sample_type_name(sample_type(snd)),
+written: %s\n",
+                           channels(snd), srate(snd),
+                           framples(snd) / srate(snd).to_f, framples(snd),
+                           mus_data_format_name(data_format(snd)),
                            mus_header_type_name(header_type(snd)),
-                           maxamp(snd, true).to_string, date)
+                           maxamp(snd, true).to_string,
+                           date)
       if $info_comment_hook.empty?
         if s = comment(snd)
           info_string += format("comment: %s\n", s)
         end
       else
-        $info_comment_hook.run_hook do |prc| info_string = prc.call(file, info_string) end
+        $info_comment_hook.run_hook do |prc|
+          info_string = prc.call(file, info_string)
+        end
       end
-      if defined? XM_NB and defined? Kernel.xm_nb and Kernel.xm_nb.kind_of?(XM_NB)
-        Kernel.xm_nb.popup_nb_hook.run_hook do |prc| info_string = prc.call(snd, info_string) end
+      if defined? XM_NB and
+          defined? Kernel.xm_nb and
+          Kernel.xm_nb.kind_of?(XM_NB)
+        Kernel.xm_nb.popup_nb_hook.run_hook do |prc|
+          info_string = prc.call(snd, info_string)
+        end
       end
       info_dialog(file + " info", info_string)
     end
-    entry("Add mark") do |snd, chn, w| add_mark(cursor(snd, chn), snd, chn) end
+    entry("Add mark") do |snd, chn, w|
+      add_mark(cursor(snd, chn), snd, chn)
+    end
     entry("Delete mark") do |snd, chn, w|
       if (ms = marks(snd, chn)).nil? or ms.empty?
         false
@@ -687,14 +768,20 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
         delete_mark(id)
       end
     end
-    entry("Delete all marks") do |snd, chn, w| delete_marks(snd, chn) end
-    entry("To next mark") do |snd, chn, w| key(?j, 4, snd, chn) end
+    entry("Delete all marks") do |snd, chn, w|
+      delete_marks(snd, chn)
+    end
+    entry("To next mark") do |snd, chn, w|
+      key(?j, 4, snd, chn)
+    end
     entry("To last mark") do |snd, chn, w|
       key(?\-, 4, snd, chn)
       key(?j, 4, snd, chn)
     end
     separator(:double)
-    entry("Exit") do |snd, chn, w| exit(0) end
+    entry("Exit") do |snd, chn, w|
+      exit(0)
+    end
     before_popup_hook.add_hook!("graph popup") do |snd, chn, xe|
       fax = if transform_graph?(snd, chn)
               axis_info(snd, chn, Transform_graph)
@@ -715,8 +802,9 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
                else
                  if selection?
                    sr = srate(snd).to_f
-                   beg = selection_position(snd, chn) / sr
-                   fin = (selection_position(snd, chn) + selection_frames(snd, chn)) / sr
+                   pos = selection_position(snd, chn)
+                   beg = pos / sr
+                   fin = (pos + selection_framples(snd, chn)) / sr
                  end
                  if selection? and
                      xe >= x2position(beg, snd, chn) and
@@ -745,7 +833,8 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
             channels(snd) > 1 ? show_widget(w) : hide_widget(w)
           when "Redo"
             eds[1] > 0 ? show_widget(w) : hide_widget(w)
-          when "Mix selection", "Insert selection", "Unselect", "Replace with selection"
+          when "Mix selection", "Insert selection", "Unselect",
+                "Replace with selection"
             selection? ? show_widget(w) : hide_widget(w)
           when "Play from cursor"
             cursor(snd, chn) > 0 ? show_widget(w) : hide_widget(w)
@@ -754,7 +843,7 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
           when "Delete mark", "To next mark", "To last mark"
             marks(snd, chn) ? show_widget(w) : hide_widget(w)
           when "Delete all marks"
-            (marks(snd, chn) or []).length > 1 ? show_widget(w) : hide_widget(w)
+            Snd.marks(snd, chn).length > 1 ? show_widget(w) : hide_widget(w)
           end
         end
       end
@@ -774,19 +863,24 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
       end
     end
     entry("Peaks") do |snd, chn, w| 
-      set_show_transform_peaks(!show_transform_peaks(snd, chn), snd, choose_chan.call(snd, chn))
+      set_show_transform_peaks(!show_transform_peaks(snd, chn), snd,
+                               choose_chan.call(snd, chn))
     end
     entry("dB") do |snd, chn, w|
-      set_fft_log_magnitude(!fft_log_magnitude(snd, chn), snd, choose_chan.call(snd, chn))
+      set_fft_log_magnitude(!fft_log_magnitude(snd, chn), snd,
+                            choose_chan.call(snd, chn))
     end
     entry("Log freq") do |snd, chn, w|
-      set_fft_log_frequency(!fft_log_frequency(snd, chn), snd, choose_chan.call(snd, chn))
+      set_fft_log_frequency(!fft_log_frequency(snd, chn), snd,
+                            choose_chan.call(snd, chn))
     end
     entry("Normalize") do |snd, chn, w|
       if transform_normalization(snd, chn) == Dont_normalize
-        set_transform_normalization(Normalize_by_channel, snd, choose_chan.call(snd, chn))
+        set_transform_normalization(Normalize_by_channel, snd,
+                                    choose_chan.call(snd, chn))
       else
-        set_transform_normalization(Dont_normalize, snd, choose_chan.call(snd, chn))
+        set_transform_normalization(Dont_normalize, snd,
+                                    choose_chan.call(snd, chn))
       end
     end
     cascade("Graph type") do
@@ -831,7 +925,8 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
                      ["Hann-Poisson", Hann_poisson_window],
                      ["Connes", Connes_window],
                      ["Samaraki", Samaraki_window],
-                     ["Ultraspherical", Ultraspherical_window]]) do |snd, chn, val|
+                     ["Ultraspherical",
+                      Ultraspherical_window]]) do |snd, chn, val|
         set_fft_window(val, snd, choose_chan.call(snd, chn))
       end
     end
@@ -846,21 +941,24 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
                      ["Wavelet", $wavelet_transform]]) do |snd, chn, val|
         set_transform_type(val, snd, choose_chan.call(snd, chn))
       end
-      cascade("Wavelet type") do
-        children(lambda do |snd, chn, val|
-                   wavelet_type(snd, chn) != val
-                 end, ["daub4", "daub6", "daub8", "daub10",
-                       "daub12", "daub14", "daub16", "daub18",
-                       "daub20", "battle-lemarie", "burt-adelson",
-                       "beylkin", "coif2", "coif4", "coif6",
-                       "sym2", "sym3", "sym4", "sym5", "sym6"].map_with_index do |v, idx|
-                   [v, idx]
-                 end) do |snd, chn, val|
-          set_wavelet_type(val, snd, choose_chan.call(snd, chn))
-        end
+    end
+    cascade("Wavelet type") do
+      children(lambda do |snd, chn, val|
+                 wavelet_type(snd, chn) != val
+               end, ["daub4", "daub6", "daub8", "daub10",
+                     "daub12", "daub14", "daub16", "daub18",
+                     "daub20", "battle-lemarie", "burt-adelson",
+                     "beylkin", "coif2", "coif4", "coif6",
+                     "sym2", "sym3",
+                     "sym4", "sym5", "sym6"].map_with_index do |v, idx|
+                 [v, idx]
+               end) do |snd, chn, val|
+        set_wavelet_type(val, snd, choose_chan.call(snd, chn))
       end
     end
-    entry("Color/Orientation") do |snd, chn, w| color_orientation_dialog end
+    entry("Color/Orientation") do |snd, chn, w|
+      color_orientation_dialog()
+    end
     before_popup_hook.add_hook!("transform popup") do |snd, chn, xe|
       fax = if transform_graph?(snd, chn)
               axis_info(snd, chn, Transform_graph)
@@ -871,14 +969,19 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
         each_entry do |w|
           case widget_name(w)
           when "Peaks"
-            change_label(w, (show_transform_peaks(snd, chn) ? "No peaks" : "Peaks"))
+            change_label(w,
+                         show_transform_peaks(snd, chn) ? "No peaks" : "Peaks")
           when "dB"
-            change_label(w, (fft_log_magnitude(snd, chn) ? "Linear" : "dB"))
+            change_label(w,
+                         fft_log_magnitude(snd, chn) ? "Linear" : "dB")
           when "Log freq"
-            change_label(w, (fft_log_frequency(snd, chn) ? "Linear freq" : "Log freq"))
+            change_label(w,
+                         fft_log_frequency(snd, chn) ?
+                           "Linear freq" : "Log freq")
           when "Normalize"
-            change_label(w, (transform_normalization(snd, chn) == Dont_normalize ?
-                             "Normalize" : "Original"))
+            change_label(w,
+                         transform_normalization(snd, chn) == Dont_normalize ?
+                           "Normalize" : "Original")
           end
         end
         true
@@ -895,8 +998,11 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
     funcs = []
     make_hook("$edhist_save_hook", 1,
               "lambda do |prc| ... end:  for debugging; \
-called in menu entry Save with new delivered PROC from edit_list2function as only argument, e.g.\n\
-$edhist_save_hook.add_hook!(\"edhist save\") do |prc| Snd.display(prc.source) end")
+Called in menu entry Save with new delivered PROC \
+from edit_list2function as only argument, e.g.
+$edhist_save_hook.add_hook!(\"edhist save\") do |prc|
+  Snd.display(prc.source)
+end")
     $close_hook.add_hook!("edhist-close") do |snd|
       name = short_file_name(snd)
       channels(snd).times do |chn|
@@ -905,9 +1011,10 @@ $edhist_save_hook.add_hook!(\"edhist save\") do |prc| Snd.display(prc.source) en
         end
       end
     end
-    entry("Save")    do |snd, chn, w|
+    entry("Save") do |snd, chn, w|
       cur_edits = edits(snd, chn)
-      new_func = edit_list2function(snd, chn, cur_edits.car + 1, cur_edits.apply(:+))
+      new_func = edit_list2function(snd, chn,
+                                    cur_edits.car + 1, cur_edits.apply(:+))
       $edhist_save_hook.call(new_func)
       if old_val = funcs.assoc([snd, chn])
         old_val.cadr = new_func
@@ -916,39 +1023,58 @@ $edhist_save_hook.add_hook!(\"edhist save\") do |prc| Snd.display(prc.source) en
       end
     end
     entry("Reapply") do |snd, chn, w|
-      (val = funcs.assoc([snd, chn])) and proc?(prc = val.cadr) and prc.call(snd, chn)
+      val = funcs.assoc([snd, chn])
+      if val
+        prc = val.cadr
+        if proc?(prc)
+          prc.call(snd, chn)
+        end
+      end
     end
     cascade("Apply") do
-      children(lambda do | | funcs.map do |vals| vals.car end end, true) do |snd, chn, index|
+      children(lambda do | |
+                 funcs.map do |vals|
+                   vals.car
+                 end
+               end, true) do |snd, chn, index|
         index.between?(0, funcs.length - 1) and funcs[index].cadr.call(snd, chn)
       end
     end
-    entry("Clear")   do |snd, chn, w| funcs = [] end
+    entry("Clear") do |snd, chn, w|
+      funcs = []
+    end
     separator
-    entry("Help")    do |snd, chn, w|
+    entry("Help") do |snd, chn, w|
       help_dialog("Edit History Functions",
-                  "This popup menu gives access to the edit-list function handlers in Snd.  \
-At any time you can backup in the edit list, 'save' the current trailing edits, make some \
-new set of edits, then 'reapply' the saved edits.  The 'apply' choice gives access to all \
-currently saved edit lists -- any such list can be applied to any channel.  'Clear' deletes \
-all saved edit lists.",
+                  "This popup menu gives access to the \
+edit-list function handlers in Snd.  \
+At any time you can backup in the edit list, \
+'save' the current trailing edits, make some \
+new set of edits, then 'reapply' the saved edits.  \
+The 'apply' choice gives access to all \
+currently saved edit lists---any such list can be applied to any channel.  \
+'Clear' deletes all saved edit lists.",
                   ["{edit lists}" "{edit-list->function}"],
                   ["extsnd.html#editlists" "extsnd.html#editlist_to_function"])
     end
     before_popup_hook.add_hook!("edhist popup") do |snd, chn, wid|
-      each_value do |val| funcs.empty? ? hide_widget(val.caddr) : show_widget(val.caddr) end
+      each_value do |val|
+        funcs.empty? ? hide_widget(val.caddr) : show_widget(val.caddr)
+      end
       each_entry do |w|
-        set_sensitive(w, case widget_name(w)
-                         when "Save"
-                           (edits(snd,
-                                  (main_widgets[Notebook_outer_pane] ? false : chn)).apply(:+) > 0)
-                         when "Reapply"
-                           (not funcs.assoc([snd, chn]).nil?)
-                         when "Clear"
-                           (not funcs.empty?)
-                         else
-                           true
-                         end)
+        set_sensitive(w,
+                      case widget_name(w)
+                      when "Save"
+                        (edits(snd,
+                              (main_widgets[Notebook_outer_pane] ?
+                               false : chn)).apply(:+) > 0)
+                      when "Reapply"
+                        (not funcs.assoc([snd, chn]).nil?)
+                      when "Clear"
+                        (not funcs.empty?)
+                      else
+                        true
+                      end)
       end
       true
     end
@@ -967,26 +1093,45 @@ all saved edit lists.",
                               set_show_listener(false)
                               main_widgets[Listener_pane]
                             end) do
-      identity = lambda do | | Snd.sounds end
+      identity = lambda do | |
+        Snd.sounds
+      end
       edited = lambda do | |
         Snd.sounds.delete_if do |snd|
-          (0...channels(snd)).detect do |chn| edits(snd, chn).first.zero? end
+          (0...channels(snd)).detect do |chn|
+            edits(snd, chn).first.zero?
+          end
         end
       end
-      focused = lambda do | | (snds = Snd.sounds).length > 1 ? snds : [] end
-      cascade("Play") do
-        children(identity) do |snd| play(snd, 0) end
+      focused = lambda do | |
+        snds = Snd.sounds
+        snds.length > 1 ? snds : []
       end
-      entry("Open") do |snd, chn, w| open_file_dialog end
-      entry("Clear listener") do |snd, chn, w| clear_listener end
+      cascade("Play") do
+        children(identity) do |snd|
+          play(snd, 0)
+        end
+      end
+      entry("Open") do |snd, chn, w|
+        open_file_dialog
+      end
+      entry("Clear listener") do |snd, chn, w|
+        clear_listener
+      end
       cascade("Close") do
-        children(identity) do |snd| close_sound_extend(snd) end
+        children(identity) do |snd|
+          close_sound_extend(snd)
+        end
       end
       cascade("Save") do
-        children(edited) do |snd| save_sound(snd) end
+        children(edited) do |snd|
+          save_sound(snd)
+        end
       end
       cascade("Revert") do
-        children(edited) do |snd| revert_sound(snd) end
+        children(edited) do |snd|
+          revert_sound(snd)
+        end
       end
       cascade("Focus") do
         children(focused, true) do |snd|
@@ -994,22 +1139,32 @@ all saved edit lists.",
             set_selected_sound(snd)
           else
             pane = sound_widgets(snd)[Main_pane]
-            RXtVaSetValues(main_widgets[Top_level_shell], [RXmNallowShellResize, false])
-            Snd.sounds.each do |them| hide_widget(sound_widgets(them)[Main_pane]) end
+            RXtVaSetValues(main_widgets[Top_level_shell],
+                           [RXmNallowShellResize, false])
+            Snd.sounds.each do |them|
+              hide_widget(sound_widgets(them)[Main_pane])
+            end
             show_widget(pane)
-            RXtVaSetValues(main_widgets[Top_level_shell], [RXmNallowShellResize, auto_resize])
+            RXtVaSetValues(main_widgets[Top_level_shell],
+                           [RXmNallowShellResize, auto_resize])
           end
         end
       end
       entry("Help") do |snd, chn, w|
-        if help = (selected = listener_selection and snd_help(selected))
-          help_dialog(selected, help)
-        else
-          snd_warning(format("%s: no help found", selected.inspect))
+        selected = listener_selection()
+        if selected
+          help = snd_help(selected)
+          if help
+            help_dialog(selected, help)
+          else
+            snd_warning(format("%p: no help found", selected))
+          end
         end
       end
       separator(:double)
-      entry("Exit") do |snd, chn, w| exit(0) end
+      entry("Exit") do |snd, chn, w|
+        exit(0)
+      end
       before_popup_hook.add_hook!("listener popup") do |d1, d2, d3|
         each_value do |val|
           w = val[0]
@@ -1024,16 +1179,21 @@ all saved edit lists.",
             end
           end
           if len > 1
-            cas.each do |wid| show_widget(wid) end
+            cas.each do |wid|
+              show_widget(wid)
+            end
           else
-            cas.each do |wid| hide_widget(wid) end
+            cas.each do |wid|
+              hide_widget(wid)
+            end
           end
         end
         each_entry do |w1|
           if widget?(w1)
             if widget_name(w1) == "Help"
-              if subject = listener_selection
-                change_label(w1, format("Help on %s", subject.inspect))
+              subject = listener_selection()
+              if subject
+                change_label(w1, format("Help on %p", subject))
                 show_widget(w1)
               else
                 hide_widget(w1)

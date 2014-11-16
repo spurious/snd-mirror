@@ -1,11 +1,9 @@
 # clm.rb -- Ruby extension
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Wed Oct 14 23:02:57 CEST 2009
-# Changed: Thu Jun 13 15:39:27 CEST 2013
+# Created: 09/10/14 23:02:57
+# Changed: 14/11/13 03:00:05
 
-# Commentary:
-#
 # Ruby extensions:
 # 
 # array?(obj)   alias list?(obj)
@@ -129,7 +127,6 @@
 # class Vct
 #  Vct[]
 #  name
-#  to_sound_data(sd, chn)
 #  to_vct
 #  to_vector
 #  apply(func, *rest, &body)
@@ -146,21 +143,6 @@
 # class Float
 #  +(other)   handles other.offset on Vct, Array, and Vec
 #  *(other)   handles other.scale on Vct, Array, and Vec
-#
-# SoundData(ary)          can be used to reread evaled output from sound_data2string
-# sound_data2string(sd)   produces a string which can be evaled and reread with SoundData
-#
-# class SoundData
-#  name
-#  to_vct(chn)
-#  to_a
-#  length
-#  scale!(scl)
-#  fill!(val)
-#  each(chn)
-#  each_with_index(chn)
-#  map(chn)
-#  map!(chn)
 #
 # mus_a0(gen)
 # set_mus_a0(gen, val)
@@ -392,8 +374,8 @@ end
 
 def assert_type(condition, obj, pos, msg)
   condition or Kernel.raise(TypeError,
-                            format("%s: wrong type arg %d, %s, wanted %s",
-                                   get_func_name(2), pos, obj.inspect, msg))
+                            format("%s: wrong type arg %d, %p, wanted %s",
+                                   get_func_name(2), pos, obj, msg))
 end
 
 def identity(arg)
@@ -409,7 +391,9 @@ unless defined? $LOADED_FEATURES
 end
 
 def provided?(feature)
-  $LOADED_FEATURES.map do |f| File.basename(f) end.member?(feature.to_s.tr("_", "-"))
+  $LOADED_FEATURES.map do |f|
+    File.basename(f)
+  end.member?(feature.to_s.tr("_", "-"))
 end
 
 def provide(feature)
@@ -511,33 +495,6 @@ if provided? :snd
   alias make_average                    make_moving_average
   alias average                         moving_average
   alias average?                        moving_average?
-  # *windowed_maxamp -> dsp.rb
-  def samples2sound_data(beg = 0,
-                         num = false,
-                         snd = false,
-                         chn = false,
-                         obj = false,
-                         pos = false,
-                         sd_chan = 0)
-    len = (num or frames(snd, chn))
-    gen = (obj or make_sound_data(1, len))
-    vct2sound_data(channel2vct(beg, len, snd, chn, pos), gen, sd_chan)
-  end
-
-  def open_sound_file(*args)
-    mus_sound_open_output(get_args(args, :file, (little_endian ? "test.wav" : "test.snd")),
-                          get_args(args, :srate, 44100),
-                          get_args(args, :channels, 1),
-                          (little_endian ? Mus_lfloat : Mus_bfloat),
-                          get_args(args, :header_type, (little_endian ? Mus_riff : Mus_next)),
-                          get_args(args, :comment, ""))
-  end
-
-#  alias close_sound_file mus_sound_close_output
-
-  def vct2sound_file(fd, v, samps)
-    mus_sound_write(fd, 0, samps - 1, 1, vct2sound_data(v))
-  end
 
   # snd10.scm
   def make_sum_of_sines(*args)
@@ -728,11 +685,14 @@ if $DEBUG and RUBY_VERSION < "1.8.0"
   class Object
     def method_missing(id, *args)
       if id == :to_str
-        self.class.class_eval do define_method(id, lambda do | | self.to_s end) end
+        self.class.class_eval do
+          define_method(id, lambda do | | self.to_s end)
+        end
         id.id2name
       else
         Kernel.raise(NameError,
-                     format("[version %s] undefined method `%s'", RUBY_VERSION, id.id2name))
+                     format("[version %s] undefined method `%s'",
+                            RUBY_VERSION, id.id2name))
       end
     end
   end
@@ -765,7 +725,8 @@ module Info
   alias info= description=
   
   def description
-    if defined?(@description) and string?(@description) and (not @description.empty?)
+    if defined?(@description) and
+        string?(@description) and (not @description.empty?)
       @description
     else
       "no description available"
@@ -824,9 +785,9 @@ module Enumerable
   # Enumerable#zip, new in ruby core since 19-Nov-2002.
   # a = [4, 5, 6]
   # b = [7, 8, 9]
-  # [1, 2, 3].zip(a, b) --> [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
-  # [1, 2].zip(a, b)    --> [[1, 4, 7], [2, 5, 8]]
-  # a.zip([1, 2],[8])   --> [[4, 1, 8], [5, 2, nil], [6, nil, nil]]
+  # [1, 2, 3].zip(a, b) ==> [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
+  # [1, 2].zip(a, b)    ==> [[1, 4, 7], [2, 5, 8]]
+  # a.zip([1, 2],[8])   ==> [[4, 1, 8], [5, 2, nil], [6, nil, nil]]
   def clm_zip(*objs)
     args = objs.map do |obj| obj.to_a end
     res = self.to_a
@@ -857,7 +818,7 @@ def make_array(len = 0, init = nil)
       Array.new(len, init)
     end
   else
-    Kernel.raise(TypeError, format("array length < 0 (%s)?", len.inspect))
+    Kernel.raise(TypeError, format("array length < 0 (%p)?", len))
   end
 end
 
@@ -874,17 +835,19 @@ class Array
     self
   end unless defined? [].insert
 
-  # [0.0, 0.0, 0.5, 0.2, 1.0, 1.0].to_pairs --> [[0.0, 0.0], [0.5, 0.2], [1.0, 1.0]]
+  # [0.0, 0.0, 0.5, 0.2, 1.0, 1.0].to_pairs
+  #   ==> [[0.0, 0.0], [0.5, 0.2], [1.0, 1.0]]
   def to_pairs
     ary = []
     self.step(2) do |a, b| ary.push([a, b]) end
     ary
   end
 
-  # [0.0, 0.0, 0.5, 0.2, 1.0, 1.0].each_pair do |x, y| print x, " ", y, "\n" end
-  # --> 0.0 0.0
-  #     0.5 0.2
-  #     1.0 1.0
+  # [0.0, 0.0, 0.5, 0.2, 1.0, 1.0].each_pair do |x, y|
+  #   print x, " ", y, "\n"
+  # end ==> 0.0 0.0
+  #         0.5 0.2
+  #         1.0 1.0
   def each_pair
     ary = []
     self.step(2) do |a, b| ary.push(yield(a, b)) end
@@ -1059,11 +1022,11 @@ class Array
   end
 
   add_help(:apply,
-           "Array#apply([:func,] *rest, &body)
-applies function or procedure with possible rest args \
+           "Array#apply([:func,] *rest, &body)  \
+Applies function or procedure with possible rest args \
 to each element of Array or subclasses of Array.
-                                  [0, 1, 2].apply(\"a: %d\\n\") do |fmt, a| printf(fmt, a) end
-                                  [0, 1, 2].apply(:printf, \"a: %d\\n\")
+    [0, 1, 2].apply(\"a: %d\\n\") do |fmt, a| printf(fmt, a) end
+    [0, 1, 2].apply(:printf, \"a: %d\\n\")
 both produce
 a: 0
 a: 1
@@ -1090,12 +1053,15 @@ a: 2
         else
           receiver = self.compact.first
           meths = receiver.methods
-          if receiver and (meths.member?(func.to_s) or meths.member?(func.to_sym))
+          if receiver and
+              (meths.member?(func.to_s) or meths.member?(func.to_sym))
             # methods
             case func.to_sym
             when :+, :-, :*
               res = receiver
-              self[1..-1].compact.map do |item| res = res.send(func, *rest + [item]) end
+              self[1..-1].compact.map do |item|
+                res = res.send(func, *rest + [item])
+              end
               res
             else
               len = rest.length + ((array?(receiver) and receiver.length) or 1)
@@ -1116,7 +1082,8 @@ a: 2
     end
   end
 
-  # original operands +, -, and * can now handle nil and numberic (offset, multiply)
+  # original operands +, -, and * can now handle nil and numberic
+  # (offset, multiply)
   # 
   # [].+(ary)      concatenate arrays
   # [].+(number)   [].add(number)
@@ -1185,10 +1152,11 @@ class Vec < Array
         super(len, init)
       end
     else
-      Kernel.raise(TypeError, format("array length < 0 (%s)?", len.inspect))
+      Kernel.raise(TypeError, format("array length < 0 (%p)?", len))
     end
     if test = self.detect do |x| (not number?(x)) end
-      Kernel.raise(TypeError, format("only numeric elements (%s)?", test.inspect))
+      Kernel.raise(TypeError,
+                   format("only numeric elements (%p)?", test))
     end
   end
 
@@ -1247,7 +1215,8 @@ end
 def Vec(obj)
   if obj.nil? then obj = [] end
   assert_type(obj.respond_to?(:to_vector), obj, 0,
-              "an object containing method 'to_vector' (Vct, String, Array and subclasses)")
+              "an object containing method \
+'to_vector' (Vct, String, Array and subclasses)")
   obj.to_vector
 end
 
@@ -1284,7 +1253,8 @@ end
 def Vct(obj)
   if obj.nil? then obj = [] end
   assert_type(obj.respond_to?(:to_vct), obj, 0,
-              "an object containing method 'to_vct' (Vct, String, Array and subclasses)")
+              "an object containing method \
+'to_vct' (Vct, String, Array and subclasses)")
   obj.to_vct
 end
 
@@ -1304,16 +1274,8 @@ class Vct
   def name
     self.class.to_s.downcase
   end
-  
-  def to_sound_data(sd = nil, chn = 0)
-    if sound_data?(sd)
-      vct2sound_data(self, sd, chn)
-    else
-      vct2sound_data(self)
-    end
-  end
 
-  def to_vct(chn = 0)           # CHN for compatibility with sound-data
+  def to_vct
     self
   end
 
@@ -1477,91 +1439,6 @@ class Float
     alias image imag
   end
 end
-
-# def SoundData(ary)
-#   assert_type((array?(ary) and vct?(ary.first)), ary, 0, "an array of vcts")
-#   sd = SoundData.new(ary.length, ary.first.length)
-#   ary.each_with_index do |v, chn| vct2sound_data(v, sd, chn) end
-#   sd
-# end
-# 
-# def sound_data2string(sd)
-#   sd.to_a.to_s
-# end
-# 
-# def sound_data2vector(sd)
-#   make_array(sd.chans) do |chn|
-#     sound_data2vct(sd, chn).to_a
-#   end
-# end
-# 
-# class SoundData
-#   def name
-#     "sound-data"
-#   end
-#   
-#   def to_vct(chn = 0)
-#     sound_data2vct(self, chn)
-#   end
-#   
-#   # returns an array of sd.chans vcts
-#   def to_a
-#     sound_data2vector(self)
-#   end
-# 
-#   alias sd_length length
-#   def length
-#     self.size / self.chans
-#   end
-# 
-#   def fill!(val)
-#     sound_data_fill!(self, val)
-#   end
-#   
-#   alias sd_each each
-#   def each(chn = nil)
-#     if chn
-#       self.length.times do |i| yield(self[chn, i]) end
-#     else
-#       self.sd_each do |val| yield(val) end
-#     end
-#   end
-# 
-#   def each_with_index(chn = nil)
-#     if chn
-#       self.length.times do |i| yield(self[chn, i], i) end
-#     else
-#       self.length.times do |i|
-#         self.chans.times do |j| yield(self[j, i], i) end
-#       end
-#     end
-#   end
-#   
-#   def map(chn = nil)
-#     sd = nil
-#     if chn
-#       sd = self.dup
-#       self.each_with_index(chn) do |val, i| sd[chn, i] = yield(val) end
-#     else
-#       sd = SoundData.new(self.chans, self.length)
-#       self.chans.times do |j|
-#         self.each_with_index(j) do |val, i| sd[j, i] = yield(val) end
-#       end
-#     end
-#     sd
-#   end
-# 
-#   def map!(chn = nil)
-#     if chn
-#       self.each_with_index(chn) do |val, i| self[chn, i] = yield(val) end
-#     else
-#       self.chans.times do |j|
-#         self.each_with_index(j) do |val, i| self[j, i] = yield(val) end
-#       end
-#     end
-#     self
-#   end
-# end
 
 def mus_a0(gen)
   mus_xcoeff(gen, 0)
@@ -1750,12 +1627,13 @@ class Integer
   
   def prime?
     (self == 2) or
-    (self.odd? and 3.step(sqrt(self), 2) do |i| return false if self.modulo(i) == 0 end)
+    (self.odd? and
+     3.step(sqrt(self), 2) do |i| return false if self.modulo(i) == 0 end)
   end
 end
 
 class Float
-  # step accepts floats as arguments (still implemented in newer versions)
+  # step accepts floats as arguments (implemented in newer versions)
   def step(upto, step)
     counter = self
     while counter < upto
@@ -1780,15 +1658,18 @@ def as_one_edit_rb(*origin, &body)
 end
 
 def map_channel_rb(beg = 0, dur = false,
-                   snd = false, chn = false, edpos = false, edname = false, &func)
+                   snd = false, chn = false,
+                   edpos = false, edname = false, &func)
   map_channel(func, beg, dur, snd, chn, edpos, edname) 
 end
 
 add_help(:map_chan_rb,
-         "map_chan(func,[start=0,[end=false,[edname=false,[snd=false,[chn=false,[edpos=false]]]]]])\
-  map_chan applies func to samples in the specified channel.\
-  It is the old (\"irregular\") version of map_channel.")
-def map_chan_rb(beg = 0, dur = false, ednam = false, snd = false, chn = false, edpos = false, &func)
+         "map_chan(func, start=0, end=false, edname=false, \
+snd=false, chn=false, edpos=false)  \
+Applies FUNC to samples in the specified channel.  \
+It is the old (\"irregular\") version of map_channel.")
+def map_chan_rb(beg = 0, dur = false, ednam = false,
+                snd = false, chn = false, edpos = false, &func)
   map_chan(func, beg, dur, ednam, snd, chn, edpos) 
 end
 
@@ -1797,9 +1678,9 @@ class Proc
   alias run call
 
   add_help(:to_method,
-           "Proc#to_method(name, [klass=Object])  \
-converts a Proc to a Method 'name' in the given class, default Object.  \
-'name' can be a string or a symbol.
+           "Proc#to_method(name, klass=Object)  \
+Converts a Proc to a Method 'name' in the given class, default Object.  \
+NAME can be a string or a symbol.
 
 m = lambda do |*args| p args end
 m.to_method(:func)
@@ -1831,7 +1712,8 @@ lambda do |x| p x end.to_method(\"bar\"); bar(\"text2\") ==> \"text2\"")
   # eval'ed by the Snd listener (or in Emacs).  You must load the file
   # instead.
   # 
-  # with_sound(:notehook, lambda do |name| snd_print(name) if name =~ /viol/ end) do
+  # with_sound(:notehook,
+  #            lambda do |name| snd_print(name) if name =~ /viol/ end) do
   #   fm_violin(0, 1, 440, 0.3)
   # end
   # 
@@ -1853,15 +1735,17 @@ lambda do |x| p x end.to_method(\"bar\"); bar(\"text2\") ==> \"text2\"")
     file, line = self.to_s.sub(/>/, "").split(/@/).last.split(/:/)
     if file[0] == ?( and file[-1] == ?)
       if $VERBOSE
-        warning("%s#%s: no file found for procedure %s", self.class, get_func_name, self.inspect)
+        warning("%s#%s: no file found for procedure %p",
+                self.class, get_func_name, self)
       end
       body = ""
-    elsif (not File.exists?(file))
+    elsif (not File.exist?(file))
       if $VERBOSE
-        warning("%s#%s: Sorry, you need a higher ruby version to use Proc#to_str.
+        warning("%s#%s: \
+Sorry, you need a higher ruby version to use Proc#to_str.
 It works only with newer ruby versions (I assume >= 1.8.x).
-Proc#inspect must return #<Proc:0x01234567@xxx:x> not only %s!",
-             self.class, get_func_name, self.inspect)
+Proc#inspect must return #<Proc:0x01234567@xxx:x> not only %p!",
+             self.class, get_func_name, self)
       end
       body = ""
     else
@@ -1874,7 +1758,8 @@ Proc#inspect must return #<Proc:0x01234567@xxx:x> not only %s!",
         next if i < lineno
         body << ln
         if first_line
-          if (ln.scan(/\s*do\b|\{/).length - ln.scan(/\s*end\b|\}/).length).zero? and
+          if (ln.scan(/\s*do\b|\{/).length - 
+              ln.scan(/\s*end\b|\}/).length).zero? and
               (ln.scan(/\(/).length - ln.scan(/\)/).length).zero?
             break
           else
@@ -1936,7 +1821,9 @@ end
 # the current (or other) environment in the proc body:
 # 
 # os = make_oscil(:frequency, 330)
-# prc = make_proc_with_source(%(lambda do | | 10.times do |i| p os.run end end), binding)
+# prc = make_proc_with_source(%(lambda do | |
+#                                 10.times do |i| p os.run end
+#                               end), binding)
 # puts prc.source   ==> lambda do | | 10.times do |i| p os.run end end
 # prc.call          ==> ..., 0.748837699712728
 # puts
@@ -1970,10 +1857,12 @@ make_proc_with_setter(:proc_source,
 # start_emacs_eval               # installs emacs-eval-hook
 
 make_hook("$emacs_eval_hook", 1, "\
-emacs_eval_hook(line):  called each time inf-snd.el sends a line to the Snd process.  \
+emacs_eval_hook(line):  \
+called each time inf-snd.el sends a line to the Snd process.  \
 The hook functions may do their best to deal with multi-line input; \
 they can collect multi-line input and eval it by itself.  \
-One example is install_eval_hooks(file, retval, input, hook, &reset_cursor) in clm.rb.")
+One example is install_eval_hooks(file, retval, input, hook, &reset_cursor) \
+in clm.rb.")
 
 # inf-snd.el calls this function each time a line was sent to the
 # emacs buffer.
@@ -2017,8 +1906,8 @@ end
 
 class Snd_prompt
   # level number inserted into original prompt
-  # ">"     --> "(0)>"
-  # "snd> " --> "snd(0)> "
+  # ">"     ==> "(0)>"
+  # "snd> " ==> "snd(0)> "
   def initialize(level)
     @listener_prompt = listener_prompt
     @base_prompt = listener_prompt.split(/(\(\d+\))?(>)?\s*$/).car.to_s
@@ -2099,16 +1988,22 @@ end
 # Debugging resp. inspecting local variables
 
 make_proc_with_setter(:debug_properties,
-                      lambda do |name| property(name, :debug_property) end,
-                      lambda do |name, val| set_property(name, :debug_property, val) end)
+                      lambda do |name|
+                        property(name, :debug_property)
+                      end,
+                      lambda do |name, val|
+                        set_property(name, :debug_property, val)
+                      end)
 
 make_proc_with_setter(:debug_property,
                       lambda do |key, name|
                         hash?(h = debug_properties(name)) and h[key]
                       end,
                       lambda do |key, val, name|
-                        unless hash?(h = debug_properties(name)) and h.store(key, [val] + h[key])
-                          unless array?(a = property(:debug, :names)) and a.push(name)
+                        h = debug_properties(name)
+                        unless hash?(h) and h.store(key, [val] + h[key])
+                          a = property(:debug, :names)
+                          unless array?(a) and a.push(name)
                             set_property(:debug, :names, [name])
                           end
                           set_debug_properties(name, {key => [val]})
@@ -2120,7 +2015,8 @@ make_proc_with_setter(:debug_binding,
                         debug_property(:binding, name)
                       end,
                       lambda do |bind, *name|
-                        set_debug_property(:binding, bind, (name[0] or get_func_name(3)))
+                        set_debug_property(:binding, bind,
+                                           (name[0] or get_func_name(3)))
                       end)
 
 # Shows all local variables of last call of functions prepared with
@@ -2226,7 +2122,7 @@ else
 end
 
 add_help(:times2samples,
-         "times2samples(start, dur) \
+         "times2samples(start, dur)  \
 START and DUR are in seconds; returns array [beg, end] in samples.")
 def times2samples(start, dur)
   beg = seconds2samples(start)
@@ -2247,8 +2143,12 @@ def random(val)
 end
 
 def logn(r, b = 10)
-  if r <= 0 then Snd.raise(:ruby_error, r, "r must be > 0") end
-  if b <= 0 or b == 1 then Snd.raise(:ruby_error, b, "b must be > 0 and != 1") end
+  if r <= 0
+    Snd.raise(:ruby_error, r, "r must be > 0")
+  end
+  if b <= 0 or b == 1
+    Snd.raise(:ruby_error, b, "b must be > 0 and != 1")
+  end
   log(r) / log(b)
 end
 
@@ -2283,10 +2183,15 @@ def verbose_message_string(stack_p, remark, *args)
           format("%s%s", remark, str)
         end
   if $!
-    str += format("[%s] %s (%s)", rb_error_to_mus_tag.inspect, snd_error_to_message, $!.class)
-    if stack_p then str += format("\n%s%s", remark, $!.backtrace.join(fmt_remark)) end
+    str += format("[%p] %s (%s)",
+                  rb_error_to_mus_tag, snd_error_to_message, $!.class)
+    if stack_p
+      str += format("\n%s%s", remark, $!.backtrace.join(fmt_remark))
+    end
   else
-    if stack_p and caller(2) then str += format("\n%s%s", remark, caller(2).join(fmt_remark)) end
+    if stack_p and caller(2)
+      str += format("\n%s%s", remark, caller(2).join(fmt_remark))
+    end
   end
   str
 end
@@ -2311,8 +2216,10 @@ def error(*args)
 end
 
 make_proc_with_setter(:snd_input,
-                      lambda { property(:snd_input, :snd_listener) },
-                      lambda { |val| set_property(:snd_input, :snd_listener, val) })
+                      lambda do property(:snd_input, :snd_listener) end,
+                      lambda do |val|
+                        set_property(:snd_input, :snd_listener, val)
+                      end)
 
 # like clm_print(fmt, *args)
 
@@ -2342,12 +2249,12 @@ def message(*args)
   clm_message(verbose_message_string(false, "# ", *args))
 end
 
-# debug(var1, var2) --> #<DEBUG: ClassName: value1, ClassName: value2>
+# debug(var1, var2) ==> #<DEBUG: ClassName: value1, ClassName: value2>
 
 def debug(*args)
   fmt = ""
   args.each do |arg|
-    fmt += format("%s: %s", arg.class, arg.inspect)
+    fmt += format("%s: %p", arg.class, arg)
     fmt += ", "
   end
   message("#<DEBUG: %s>", fmt.chomp(", "))
@@ -2369,15 +2276,6 @@ class Snd
         Snd_path.push(path)
         add_directory_to_view_files_list(path)
       end
-      
-      def open_from_path(fname)
-        snd_file = Snd.fullname(fname)
-        find_sound(snd_file) or open_sound(snd_file)
-      end
-      
-      def find_from_path(fname)
-        find_sound(Snd.fullname(fname))
-      end
     else
       def add_sound_path(path)
         Snd_path.push(path)
@@ -2385,17 +2283,26 @@ class Snd
     end
 
     def fullname(fname)
-      if File.exists?(fname)
+      if File.exist?(fname)
         fname
       else
         f = File.basename(fname)
         Snd_path.each do |path|
-          if File.exists?(path + "/" + f)
+          if File.exist?(path + "/" + f)
             return path + "/" + f
           end
         end
         Snd.raise(:no_such_file, fname)
       end
+    end
+      
+    def open_from_path(fname)
+      snd_file = Snd.fullname(fname)
+      find_sound(snd_file) or open_sound(snd_file)
+    end
+      
+    def find_from_path(fname)
+      find_sound(Snd.fullname(fname))
     end
     
     def load_path
@@ -2574,7 +2481,7 @@ Snd_error_tags = [# clm2xen.c
                   :no_such_auto_delete_choice,
                   # snd-env.c
                   :env_error,
-                  # snd-xen.c
+                  # snd-error.c
                   :snd_error,
                   # snd-gxcolormaps.c
                   :no_such_colormap,
@@ -2636,7 +2543,7 @@ def rb_error_to_mus_tag
   when "ArgumentError"
     :wrong_number_of_args
   else
-    # converts ruby exceptions to symbols: NoMethodError --> :no_method_error
+    # converts ruby exceptions to symbols: NoMethodError ==> :no_method_error
     $!.class.to_s.gsub(/([A-Z])/) do |c|
       "_" + c.tr("A-Z", "a-z")
     end[1..-1].intern
@@ -2648,14 +2555,17 @@ def snd_error_to_message
 end
 
 add_help(:snd_catch,
-         "snd_catch([tag=:all, [retval=:undefined]])  \
-catchs snd_throw and exceptions and \
+         "snd_catch(tag=:all, retval=:undefined])  \
+Catchs snd_throw and exceptions and \
 returns body's last value wrapped in an array if all goes well.  \
 If a snd_throw tag meets snd_catch's, returns an array with the tag name, \
-the function name from where was thrown and optional arguments given to snd_throw.  \
+the function name from where was thrown \
+and optional arguments given to snd_throw.  \
 If an exception was risen and the exception name meets tag name, \
-returns an array with tag name and the exception message, otherwise reraises exception.  \
-If retval is given and tag matches exception or snd_throw tag, returns retval.  \
+returns an array with tag name and the exception message, \
+otherwise reraises exception.  \
+If retval is given and tag matches exception or snd_throw tag, \
+returns retval.  \
 If retval is a procedure, calls retval with tag name and message.
 
 res = snd_catch do 10 + 2 end
@@ -2664,8 +2574,8 @@ puts res ==> [12]
 res = Snd.catch(:no_such_file) do
   open_sound(\"unknown-file.snd\")
 end
-puts res ==> [:no_such_file,
-             \"open_sound: no_such_file: Unknown_file.snd No such file or directory\"]
+puts res ==> [:no_such_file, \
+\"open_sound: no_such_file: Unknown_file.snd No such file or directory\"]
 
 res = Snd.catch(:finish) do
   10.times do |i|
@@ -2677,7 +2587,8 @@ puts res ==> [:finish, \"top_level\", 8]
 res = Snd.catch(:all, lambda do |tag, msg| Snd.display([tag, msg]) end) do
   set_listener_prompt(17)
 end
-==> [:wrong_type_arg, \"set_listener-prompt: wrong type arg 0, 17, wanted a string\"]
+==> [:wrong_type_arg, \
+\"set_listener-prompt: wrong type arg 0, 17, wanted a string\"]
 puts res ==> nil
 
 The lambda function handles the error in the last case.")
@@ -2687,8 +2598,8 @@ end
 
 add_help(:snd_throw,
          "snd_throw(tag, *rest)  \
-jumps to the corresponding snd_catch('tag') and returns an array \
-with tag, function name and possible *rest strings or values.")
+Jumps to the corresponding snd_catch(TAG) and returns an array \
+with TAG, function name and possible *REST strings or values.")
 def snd_throw(tag, *rest)
   Snd.throw(tag, *rest)
 end
@@ -2725,9 +2636,9 @@ Ruby_exceptions = {
 
 add_help(:snd_raise,
          "snd_raise(tag, *rest)  \
-raises an exception 'tag' with an error message \
-containing function name, tag and possible *rest strings or values.  \
-'tag' is a symbol, \
+Raises an exception TAG with an error message \
+containing function name, TAG and possible *REST strings or values.  \
+TAG is a symbol, \
 a Ruby exception looks like :local_jump_error instead of LocalJumpError, \
 a Snd error tag looks like :no_such_sound.")
 def snd_raise(tag, *rest)
@@ -2748,9 +2659,9 @@ add_help(:gloop,
 
 args[0]: Range    (each)
          Hash(s)  (each)
-         Array(s) (each_with_index) [args.last == Fixnum --> step]
+         Array(s) (each_with_index) [args.last == Fixnum ==> step]
          Fixnum   (times)
-         Fixnum   [args[1] == :step --> step]
+         Fixnum   [args[1] == :step ==> step]
 
 A general purpose loop, handling Range, Hash, Array, Vec, Vct, Fixnum,
 with optional step.  Returns the result of body as array like map.
@@ -2878,7 +2789,8 @@ def optkey(args, *rest)
               get_class_or_key(args_1, *keys)
             else
               assert_type(keys.length.between?(1, 3), keys, 1,
-                          "an array of one to three elements [class, :key, default]")
+                          "an array of one to three \
+elements [class, :key, default]")
             end
           else
             name = keys.to_s
@@ -2897,13 +2809,13 @@ def optkey(args, *rest)
 end
 
 add_help(:load_init_file,
-         "load_init_file(file) \
-Returns false if file doesn't exist, otherwise loads it. \
-File may reside in current working dir or in $HOME dir.")
+         "load_init_file(file)  \
+Returns false if FILE doesn't exist, otherwise loads it.  \
+FILE may reside in current working dir or in $HOME dir.")
 def load_init_file(file)
-  if File.exists?(file)
+  if File.exist?(file)
     Snd.catch do load(file) end
-  elsif File.exists?(f = ENV["HOME"] + "/" + file)
+  elsif File.exist?(f = ENV["HOME"] + "/" + file)
     Snd.catch do load(f) end
   else
     false
@@ -2913,7 +2825,9 @@ end
 let(-1) do |count|
   # see rotate_phase(func, snd, chn) in dsp.rb
   # it's necessary to produce a uniq method name
-  make_proc_with_setter(:edit_list_proc_counter, lambda { count }, lambda { count += 1 })
+  make_proc_with_setter(:edit_list_proc_counter,
+                        lambda do count end,
+                        lambda do count += 1 end)
 end
 
 # clm.rb ends here

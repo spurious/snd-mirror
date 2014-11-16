@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 02/09/04 18:34:00
-# Changed: 14/11/03 22:52:16
+# Changed: 14/11/15 06:15:20
 
 # module Examp (examp.scm)
 #  selection_rms
@@ -45,8 +45,14 @@
 #  fft_edit(bottom, top, snd, chn)
 #  fft_squelch(squelch, snd, chn)
 #  fft_cancel(lo_freq, hi_freq, snd, chn)
-#  ramp(gen, up)
+#
+#  class Ramp < Musgen
+#   initialize(size)
+#   run_func(up, dummy)
+#   run(up)
+#
 #  make_ramp(size)
+#  ramp(gen, up)
 #  squelch_vowels(snd, chn)
 #  fft_env_data(fft_env, snd, chn)
 #  fft_env_edit(fft_env, snd, chn)
@@ -82,7 +88,7 @@
 #  sound_interp(func, loc)
 #  sound_via_sound(snd1, snd2)
 #  env_sound_interp(envelope, time_scale, snd, chn)
-#  granulated_sound_interp(envelope, time_scale, grain_length, grain_envelope, output_hop, snd, chn)
+#  granulated_sound_interp(en, time_scale, grain_len, grain_env, out_hop, s, c)
 #  filtered_env(en, snd, chn)
 #
 #  class Mouse
@@ -119,7 +125,8 @@
 #  reverse_within_blocks(block_len, snd, chn)
 #  sound2segment_data(main_dir, output_file)
 #  channel_clipped?(snd, chn)
-#  scan_sound(func, beg, dur, snd)      or scan_sound_rb(beg, dur, snd) do |y, chn| ... end
+#  scan_sound(func, beg, dur, snd)
+#  or scan_sound_rb(beg, dur, snd) do |y, chn| ... end
 #  
 # class Moog_filter < Musgen (moog.scm)
 #   initialize(freq, q)
@@ -130,8 +137,6 @@
 #  make_moog_filter(freq, q)
 #  moog_filter(moog, insig)
 #  moog(freq, q)
-# 
-# Code:
 
 require "clm"
 
@@ -140,11 +145,13 @@ module Examp
   #
   # this mainly involves keeping track of the current sound/channel
 
-  add_help(:selection_rms, "selection_rms() -> rms of selection data using samplers")
+  add_help(:selection_rms,
+           "selection_rms()  \
+Returns rms of selection data using samplers.")
   def selection_rms
     if selection?
       reader = make_sampler(selection_position, false, false)
-      len = selection_frames
+      len = selection_framples()
       sum = 0.0
       len.times do
         val = next_sample(reader)
@@ -157,7 +164,9 @@ module Examp
     end
   end
 
-  add_help(:region_rms, "region_rms([n=0]) -> rms of region n's data (chan 0)")
+  add_help(:region_rms,
+           "region_rms(n=0)  \
+Returns rms of region N's data (chan 0).")
   def region_rms(n = 0)
     if region?(n)
       data = region2vct(n, 0, 0)
@@ -167,8 +176,9 @@ module Examp
     end
   end
 
-  add_help(:window_samples, "window_samples([snd=false, [chn=false]]) \
--> samples in snd channel chn in current graph window")
+  add_help(:window_samples,
+           "window_samples(snd=false, chn=false)  \
+Returns samples in snd channel chn in current graph window.")
   def window_samples(snd = false, chn = false)
     wl = left_sample(snd, chn)
     wr = right_sample(snd, chn)
@@ -176,9 +186,11 @@ module Examp
   end
 
   add_help(:display_energy,
-           "display_energy(snd, chn) \
-is a $lisp_graph_hook function to display the time domain data as energy (squared).
-$lisp_graph_hook.add_hook!(\"display-energy\", &method(:display_energy).to_proc)")
+           "display_energy(snd, chn)  \
+Is a $lisp_graph_hook function to display the time domain \
+data as energy (squared):
+$lisp_graph_hook.add_hook!(\"display-energy\", \
+&method(:display_energy).to_proc)")
   def display_energy(snd, chn)
     ls = left_sample(snd, chn)
     rs = right_sample(snd, chn)
@@ -193,8 +205,8 @@ $lisp_graph_hook.add_hook!(\"display-energy\", &method(:display_energy).to_proc)
   end
 
   add_help(:display_db,
-           "display_db(snd, chn) \
-is a lisp-graph-hook function to display the time domain data in dB.
+           "display_db(snd, chn)  \
+Is a $lisp_graph_hook function to display the time domain data in dB:
 $lisp_graph_hook.add_hook!(\"display-db\", &method(:display_db).to_proc)")
   def display_db(snd, chn)
     if datal = make_graph_data(snd, chn)
@@ -214,7 +226,9 @@ $lisp_graph_hook.add_hook!(\"display-db\", &method(:display_db).to_proc)")
     end
   end
 
-  add_help(:window_rms, "window_rms() -> rms of data in currently selected graph window")
+  add_help(:window_rms,
+           "window_rms()  \
+Returns rms of data in currently selected graph window.")
   def window_rms
     ls = left_sample
     rs = right_sample
@@ -223,7 +237,8 @@ $lisp_graph_hook.add_hook!(\"display-db\", &method(:display_db).to_proc)")
   end
 
   add_help(:fft_peak,
-           "fft_peak(snd, chn, scale)  returns the peak spectral magnitude
+           "fft_peak(snd, chn, scale)  \
+Returns the peak spectral magnitude:
 $after_transform_hook.add_hook!(\"fft-peak\") do |snd, chn, scale|
   fft_peak(snd, chn, scale)
 end")
@@ -239,14 +254,16 @@ end")
 
   # 'info' from extsnd.html using format
 
-  add_help(:finfo, "finfo(file) -> description (as a string) of file")
+  add_help(:finfo,
+           "finfo(file)  \
+Returns description (as a string) of FILE.")
   def finfo(file)
     chans = mus_sound_chans(file)
     sr = mus_sound_srate(file)
     format("%s: chans: %d, srate: %d, %s, %s, len: %1.3f",
            file, chans, sr,
            mus_header_type_name(mus_sound_header_type(file)),
-           mus_data_format_name(mus_sound_sample_type(file)),
+           mus_sample_type_name(mus_sound_sample_type(file)),
            mus_sound_samples(file).to_f / (chans * sr.to_f))
   end
 
@@ -255,14 +272,14 @@ end")
   # correlation of channels in a stereo sound
 
   add_help(:display_correlate,
-           "display_correlate(snd, chn, y0, y1) \
-returns the correlation of snd's 2 channels (intended for use with $graph_hook)
+           "display_correlate(snd, chn, y0, y1)  \
+Returns the correlation of SND's 2 channels (intended for use with $graph_hook):
 $graph_hook.add_hook!(\"display_correlate\") do |snd, chn, y0, y1|
   display_correlate(snd, chn, y0, y1)
 end")
 
   def display_correlate(snd, chn, y0, y1)
-    if channels(snd) == 2 and frames(snd, 0) > 1 and frames(snd, 1) > 1
+    if channels(snd) == 2 and framples(snd, 0) > 1 and framples(snd, 1) > 1
       ls = left_sample(snd, 0)
       rs = right_sample(snd, 0)
       ilen = 1 + (rs - ls)
@@ -299,25 +316,30 @@ end")
   # also zoom spectrum based on y-axis zoom slider
 
   add_help(:zoom_spectrum,
-           "zoom_spectrum(snd, chn, y0, y1) \
-sets the transform size to correspond to the time-domain window size (use with $graph_hook)
+           "zoom_spectrum(snd, chn, y0, y1)  \
+Sets the transform size to correspond to the \
+time-domain window size (use with $graph_hook):
 $graph_hook.add_hook!(\"zoom-spectrum\") do |snd, chn, y0, y1|
   zoom_spectrum(snd, chn, y0, y1)
 end")
   def zoom_spectrum(snd, chn, y0, y1)
-    if transform_graph?(snd, chn) and transform_graph_type(snd, chn) == Graph_once
-      set_transform_size((2 ** (log(right_sample(snd, chn)-left_sample(snd, chn))/log(2.0))).to_i,
-                         snd, chn)
+    if transform_graph?(snd, chn) and
+       transform_graph_type(snd, chn) == Graph_once
+      set_transform_size((2 **
+                         (log(right_sample(snd, chn) -
+                              left_sample(snd, chn))/log(2.0))).to_i, snd, chn)
       set_spectrum_end(y_zoom_slider(snd, chn), snd, chn)
     end
     false
   end
 
   add_help(:zoom_fft,
-           "zoom_fft(snd, chn, y0, y1) \
-sets the transform size if the time domain is not displayed (use with $graph_hook) 
-It also sets the spectrum display start point based on the x position slider---\
-this can be confusing if fft normalization is on (the default)
+           "zoom_fft(snd, chn, y0, y1)  \
+Sets the transform size if the time domain is \
+not displayed (use with $graph_hook).  \
+It also sets the spectrum display start point \
+based on the x position slider---this can be confusing \
+if fft normalization is on (the default):
 $graph_hook.add_hook!(\"zoom-fft\") do |snd, chn, y0, y1|
   zoom_fft(snd, chn, y0, y1)
 end")
@@ -325,8 +347,9 @@ end")
     if transform_graph?(snd, chn) and
         (not time_graph?(snd, chn)) and
         transform_graph_type(snd, chn) == Graph_once
-      set_transform_size(2 ** (log(right_sample(snd, chn) - left_sample(snd, chn)) / log(2.0)).ceil,
-                         snd, chn)
+      set_transform_size(2 ** 
+                         (log(right_sample(snd, chn) - 
+                              left_sample(snd, chn)) / log(2.0)).ceil, snd, chn)
       set_spectrum_start(x_position_slider(snd, chn), snd, chn)
       set_spectrum_end(y_zoom_slider(snd, chn), snd, chn)
     end
@@ -336,8 +359,8 @@ end")
   # superimpose spectra of sycn'd sounds
 
   add_help(:superimpose_ffts,
-           "superimpose_ffts(snd, chn, y0, y1) \
-superimposes ffts of multiple (syncd) sounds (use with $graph_hook)
+           "superimpose_ffts(snd, chn, y0, y1)  \
+Superimposes ffts of multiple (syncd) sounds (use with $graph_hook):
 $graph_hook.add_hook!(\"superimpose-ffts\") do |snd, chn, y0, y1|
   superimpose_ffts(snd, chn, y0, y1)
 end")
@@ -370,8 +393,9 @@ end")
   # c-g? example (Anders Vinjar)
 
   add_help(:locate_zero,
-           "locate_zero(limit) \
-looks for successive samples that sum to less than 'limit', moving the cursor if successful")
+           "locate_zero(limit)  \
+Looks for successive samples that sum to less than LIMIT, \
+moving the cursor if successful.")
   def locate_zero(limit)
     start = cursor
     sf = make_sampler(start, false, false)
@@ -392,8 +416,10 @@ looks for successive samples that sum to less than 'limit', moving the cursor if
   # or to play a sound whenever a file is closed:
   #   $close-hook.add_hook!() do |snd| shell("sndplay wood16.wav"); false end
 
-  add_help(:shell, "shell(cmd, *rest) \
-sends 'cmd' to a shell (executes it as a shell command) and returns the result string.")
+  add_help(:shell,
+           "shell(cmd, *rest)  \
+Sends CMD to a shell (executes it as a shell command) \
+and returns the result string.")
   def shell(cmd, *rest)
     str = ""
     unless cmd.null?
@@ -404,10 +430,13 @@ sends 'cmd' to a shell (executes it as a shell command) and returns the result s
 
   # translate mpeg input to 16-bit linear and read into Snd
   # 
-  # mpg123 with the -s switch sends the 16-bit (mono or stereo) representation of
-  #   an mpeg file to stdout.  There's also apparently a switch to write 'wave' output.
+  # mpg123 with the -s switch sends the 16-bit (mono or stereo) representation
+  #   of an mpeg file to stdout.  There's also apparently a switch to write
+  #   'wave' output.
 
-  add_help(:mpg, "mpg(file, tmpname) converts file from MPEG to raw 16-bit samples using mpg123
+  add_help(:mpg,
+           "mpg(file, tmpname)  \
+Converts file from MPEG to raw 16-bit samples using mpg123: \
 mpg(\"mpeg.mpg\", \"mpeg.raw\")")
   def mpg(mpgfile, rawfile)
     b0 = b1 = b2 = b3 = 0
@@ -426,26 +455,28 @@ mpg(\"mpeg.mpg\", \"mpeg.raw\")")
       srate_index = (b2 & 0b1100) >> 2
       channel_mode = (b3 & 0b11000000) >> 6
       if id == 1
-        Snd.display("odd: %s is using a reserved Version ID", mpgfile.inspect)
+        Snd.display("odd: %s is using a reserved Version ID", mpgfile)
       end
       if layer == 0
-        Snd.display("odd: %s is using a reserved layer description", mpgfile.inspect)
+        Snd.display("odd: %s is using a reserved layer description", mpgfile)
       end
       chans = channel_mode == 3 ? 1 : 2
       mpegnum = id.zero? ? 4 : (id == 2 ? 2 : 1)
       mpeg_layer = layer == 3 ? 1 : (layer == 2 ? 2 : 3)
       srate = [44100, 48000, 32000, 0][srate_index] / mpegnum
       Snd.display("%s: %s Hz, %s, MPEG-%s",
-                  mpgfile.inspect, srate, chans == 1 ? "mono": "stereo", mpeg_layer)
+                  mpgfile, srate, chans == 1 ? "mono": "stereo", mpeg_layer)
       system(format("mpg123 -s %s > %s", mpgfile, rawfile))
-      open_raw_sound(rawfile, chans, srate, little_endian? ? Mus_lshort : Mus_bshort)
+      open_raw_sound(rawfile, chans, srate,
+                     little_endian? ? Mus_lshort : Mus_bshort)
     end
   end
 
   # read and write OGG files
 
   add_help(:read_ogg,
-           "read_ogg(filename) read OGG files
+           "read_ogg(filename)  \
+Read OGG files:
 $open_hook.add_hook!(\"read-ogg\") do |filename|
   if mus_sound_header_type(filename) == Mus_raw
     read_ogg(filename)
@@ -456,11 +487,14 @@ end")
   def read_ogg(filename)
     flag = false
     File.open(filename, "r") do |fd|
-      flag = fd.readchar == ?O and fd.readchar == ?g and fd.readchar == ?g and fd.readchar == ?S
+      flag = fd.readchar == ?O and 
+			fd.readchar == ?g and 
+			fd.readchar == ?g and 
+			fd.readchar == ?S
     end
     if flag
       aufile = filename + ".au"
-      File.unlink(aufile) if File.exists?(aufile)
+      File.unlink(aufile) if File.exist?(aufile)
       system(format("ogg123 -d au -f %s %s", aufile, filename))
       aufile
     else
@@ -483,7 +517,7 @@ end")
 
   def read_speex(filename)
     wavfile = filename + ".wav"
-    File.unlink(wavfile) if File.exists?(wavfile)
+    File.unlink(wavfile) if File.exist?(wavfile)
     system(format("speexdec %s %s", filename, wavfile))
     wavfile
   end
@@ -529,7 +563,7 @@ end")
                  out_srate = 44100)
     in_buffer = IO.readlines(in_filename)         # array of strings
     out_snd = new_sound(out_filename, out_type, out_format, out_srate, 1,
-                       format("created by %s: %s", get_func_name, in_filename))
+                        format("created by %s: %s", get_func_name, in_filename))
     bufsize = 512
     data = make_vct(bufsize)
     loc = 0
@@ -561,8 +595,9 @@ end")
   # many samples are displayed, etc
 
   add_help(:auto_dot,
-           "auto_dot(snd, chn, y0, y1) \
-sets the dot size depending on the number of samples being displayed (use with $graph_hook)
+           "auto_dot(snd, chn, y0, y1)  \
+Sets the dot size depending on the number \
+of samples being displayed (use with $graph_hook):
 $graph_hook.add_hook!(\"auto-dot\") do |snd, chn, y0, y1|
   auto_dot(snd, chn, y0, y1)
 end")
@@ -589,8 +624,8 @@ end")
   # control) will move the window left edge to that mark.
 
   add_help(:first_mark_in_window_at_left,
-           "first_mark_in_window_at_left() \
-moves the graph so that the leftmost visible mark is at the left edge
+           "first_mark_in_window_at_left()  \
+Moves the graph so that the leftmost visible mark is at the left edge:
 bind_key(?m, 0, lambda do | | first_mark_in_window_at_left end)")
   def first_mark_in_window_at_left
     keysnd = Snd.snd
@@ -600,7 +635,11 @@ bind_key(?m, 0, lambda do | | first_mark_in_window_at_left end)")
     if chan_marks.null?
       snd_print("no marks!")
     else
-      leftmost = chan_marks.map do |m| mark_sample(m) end.detect do |m| m > current_left_sample end
+      leftmost = chan_marks.map do |m|
+        mark_sample(m)
+      end.detect do |m|
+        m > current_left_sample
+      end
       if leftmost.null?
         snd_print("no mark in window")
       else
@@ -613,7 +652,8 @@ bind_key(?m, 0, lambda do | | first_mark_in_window_at_left end)")
   # flash selected data red and green
 
   add_help(:flash_selected_data,
-           "flash_selected_data(millisecs) causes the selected data to flash red and green")
+           "flash_selected_data(millisecs)  \
+Causes the selected data to flash red and green.")
   def flash_selected_data(interval)
     if selected_sound
       set_selected_data_color(selected_data_color == Red ? Green : Red)
@@ -624,7 +664,8 @@ bind_key(?m, 0, lambda do | | first_mark_in_window_at_left end)")
   # use loop info (if any) to set marks at loop points
 
   add_help(:mark_loops,
-           "mark_loops() places marks at loop points found in the selected sound's header")
+           "mark_loops()  \
+Places marks at loop points found in the selected sound's header.")
   def mark_loops
     loops = (sound_loop_info or mus_sound_loop_info(file_name))
     if loops and !loops.empty?
@@ -646,7 +687,8 @@ bind_key(?m, 0, lambda do | | first_mark_in_window_at_left end)")
 
   add_help(:do_all_chans,
            "do_all_chans(edhist) do |y| ... end  \
-applies func to all active channels, using edhist as the edit history indication:
+Applies func to all active channels, \
+using EDHIST as the edit history indication: \
 do_all_chans(\"double all samples\", do |val| 2.0 * val end)")
   def do_all_chans(origin, &func)
     Snd.sounds.each do |snd|
@@ -656,7 +698,9 @@ do_all_chans(\"double all samples\", do |val| 2.0 * val end)")
     end
   end
 
-  add_help(:update_graphs, "update_graphs() updates (redraws) all graphs")
+  add_help(:update_graphs,
+           "update_graphs()  \
+Updates (redraws) all graphs.")
   def update_graphs
     Snd.sounds.each do |snd|
       channels(snd).times do |chn|
@@ -667,14 +711,16 @@ do_all_chans(\"double all samples\", do |val| 2.0 * val end)")
 
   add_help(:do_chans,
            "do_chans(edhist) do |y| ... end  \
-applies func to all sync'd channels using edhist as the edit history indication")
+Applies func to all sync'd channels using EDHIST \
+as the edit history indication.")
   def do_chans(*origin, &func)
     snc = sync
     if snc > 0
       Snd.sounds.each do |snd|
         channels(snd).times do |chn|
           if sync(snd) == snc
-            map_channel(func, 0, false, snd, chn, false, (origin.empty? ? "" : format(*origin)))
+            map_channel(func, 0, false, snd, chn, false,
+                        (origin.empty? ? "" : format(*origin)))
           end
         end
       end
@@ -685,11 +731,13 @@ applies func to all sync'd channels using edhist as the edit history indication"
 
   add_help(:do_sound_chans,
            "do_sound_chans(edhist) do |y| ... end  \
-applies func to all selected channels using edhist as the edit history indication")
+Applies func to all selected channels using EDHIST \
+as the edit history indication.")
   def do_sound_chans(*origin, &func)
     if snd = selected_sound
       channels(snd).times do |chn|
-        map_channel(func, 0, false, snd, chn, false, (origin.empty? ? "" : format(*origin)))
+        map_channel(func, 0, false, snd, chn, false,
+                    (origin.empty? ? "" : format(*origin)))
       end
     else
       snd_warning("no selected sound")
@@ -698,18 +746,22 @@ applies func to all selected channels using edhist as the edit history indicatio
 
   add_help(:every_sample?,
            "every_sample? do |y| ... end  \
--> true if func is not false for all samples in the current channel, \
-otherwise it moves the cursor to the first offending sample")
+Returns true if func is not false for all samples in the current channel, \
+otherwise it moves the cursor to the first offending sample.")
   def every_sample?(&func)
     snd = Snd.snd
     chn = Snd.chn
-    if baddy = scan_channel(lambda do |y| (not func.call(y)) end, 0, frames(snd, chn), snd, chn)
+    if baddy = scan_channel(lambda do |y|
+                              (not func.call(y))
+                            end, 0, framples(snd, chn), snd, chn)
       set_cursor(baddy[1])
     end
     (not baddy)
   end
 
-  add_help(:sort_samples, "sort_samples(bins) provides a histogram in 'bins' bins")
+  add_help(:sort_samples,
+           "sort_samples(bins)  \
+Provides a histogram in BINS bins.")
   def sort_samples(nbins)
     bins = make_array(nbins, 0)
     scan_channel(lambda do |y|
@@ -723,37 +775,43 @@ otherwise it moves the cursor to the first offending sample")
   # mix mono sound into stereo sound panning according to env
 
   add_help(:place_sound,
-           "place_sound(mono_snd, stereo_snd, pan_env) \
-mixes a mono sound into a stereo sound, splitting it into two copies \
-whose amplitudes depend on the envelope 'pan-env'.  \
-If 'pan-env' is a number, the sound is split such that 0 is all in channel 0 \
+           "place_sound(mono_snd, stereo_snd, pan_env)  \
+Mixes a mono sound into a stereo sound, splitting it into two copies \
+whose amplitudes depend on the envelope PAN_ENV.  \
+If PAN_ENV is a number, \
+the sound is split such that 0 is all in channel 0 \
 and 90 is all in channel 1.")
   def place_sound(mono_snd, stereo_snd, pan_env)
-    len = frames(mono_snd)
+    len = framples(mono_snd)
     if number?(pan_env)
       pos = pan_env / 90.0
       rd0 = make_sampler(0, mono_snd, false)
       rd1 = make_sampler(0, mono_snd, false)
-      map_channel(lambda do |y| y + pos * read_sample(rd1) end, 0, len, stereo_snd, 1)
-      map_channel(lambda do |y| y + (1.0 - pos) * read_sample(rd0) end, 0, len, stereo_snd, 0)
+      map_channel(lambda do |y| y + pos * read_sample(rd1) end,
+                  0, len, stereo_snd, 1)
+      map_channel(lambda do |y| y + (1.0 - pos) * read_sample(rd0) end,
+                  0, len, stereo_snd, 0)
     else
       e0 = make_env(:envelope, pan_env, :length, len)
       e1 = make_env(:envelope, pan_env, :length, len)
       rd0 = make_sampler(0, mono_snd, false)
       rd1 = make_sampler(0, mono_snd, false)
-      map_channel(lambda do |y| y + env(e1) * read_sample(rd1) end, 0, len, stereo_snd, 1)
-      map_channel(lambda do |y| y + (1.0 - env(e0)) * read_sample(rd0) end, 0, len, stereo_snd, 0)
+      map_channel(lambda do |y| y + env(e1) * read_sample(rd1) end,
+                  0, len, stereo_snd, 1)
+      map_channel(lambda do |y| y + (1.0 - env(e0)) * read_sample(rd0) end,
+                  0, len, stereo_snd, 0)
     end
   end
 
   # FFT-based editing
 
   add_help(:fft_edit,
-           "fft_edit(low_Hz, high_Hz) \
-ffts an entire sound, removes all energy below low-Hz and all above high-Hz, then inverse ffts.")
+           "fft_edit(low_Hz, high_Hz)  \
+Ffts an entire sound, removes all energy below low-Hz and all above high-Hz, \
+then inverse ffts.")
   def fft_edit(bottom, top, snd = false, chn = false)
     sr = srate(snd).to_f
-    len = frames(snd, chn)
+    len = framples(snd, chn)
     fsize = (2.0 ** (log(len) / log(2.0)).ceil).to_i
     rdata = channel2vct(0, fsize, snd, chn)
     idata = make_vct(fsize)
@@ -774,14 +832,16 @@ ffts an entire sound, removes all energy below low-Hz and all above high-Hz, the
     end
     fft(rdata, idata, -1)
     vct_scale!(rdata, 1.0 / fsize)
-    vct2channel(rdata, 0, len - 1, snd, chn, false, format("%s(%s, %s", get_func_name, bottom, top))
+    vct2channel(rdata, 0, len - 1, snd, chn, false,
+                format("%s(%s, %s", get_func_name, bottom, top))
   end
 
   add_help(:fft_squelch,
-           "fft_squelch(squelch, [snd=false, [chn=false]]) \
-ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then inverse ffts")
+           "fft_squelch(squelch, snd=false, chn=false)  \
+Ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, \
+then inverse ffts.")
   def fft_squelch(squelch, snd = false, chn = false)
-    len = frames(snd, chn)
+    len = framples(snd, chn)
     fsize = (2.0 ** (log(len) / log(2.0)).ceil).to_i
     rdata = channel2vct(0, fsize, snd, chn)
     idata = make_vct(fsize)
@@ -802,16 +862,18 @@ ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then i
     end
     fft(rdata, idata, -1)
     vct_scale!(rdata, 1.0 / fsize)
-    vct2channel(rdata, 0, len - 1, snd, chn, false, format("%s(%s", get_func_name, squelch))
+    vct2channel(rdata, 0, len - 1, snd, chn, false,
+                format("%s(%s", get_func_name, squelch))
     scaler
   end
 
   add_help(:fft_cancel,
-           "fft_cancel(lo_freq, hi_freq, [snd=false, [chn=false]]) \
-ffts an entire sound, sets the bin(s) representing lo_freq to hi_freq to 0.0, then inverse ffts")
+           "fft_cancel(lo_freq, hi_freq, snd=false, chn=false)  \
+Ffts an entire sound, sets the bin(s) representing lo_freq to hi_freq to 0.0, \
+then inverse ffts.")
   def fft_cancel(lo_freq, hi_freq, snd = false, chn = false)
     sr = srate(snd).to_f
-    len = frames(snd, chn)
+    len = framples(snd, chn)
     fsize = (2.0 ** (log(len) / log(2.0)).ceil).to_i
     rdata = channel2vct(0, fsize, snd, chn)
     idata = make_vct(fsize)
@@ -836,57 +898,88 @@ ffts an entire sound, sets the bin(s) representing lo_freq to hi_freq to 0.0, th
 
   # same idea but used to distinguish vowels (steady-state) from consonants
 
-  add_help(:ramp,
-           "ramp(gen, up) \
-is a kind of CLM generator that produces a ramp of a given length, \
-then sticks at 0.0 or 1.0 until the 'up' argument changes")
-  def ramp(gen, up)
-    ctr, size = gen[0, 2]
-    val = ctr / size
-    gen[0] = [size, [0, ctr + (up ? 1 : -1)].max].min
-    val
+  class Ramp < Musgen
+    def initialize(size = 128)
+      super()
+      @val = 0.0
+      @size = size
+      @incr = 1.0 / size
+      @up = true
+    end
+
+    def inspect
+      format("%s.new(%d)", self.class, @size)
+    end
+
+    def to_s
+      format("#<%s size: %d, val: %1.3f, incr: %1.3f, up: %s>",
+             self.class, @size, @val, @incr, @up)
+    end
+
+    def run_func(up = true, dummy = false)
+      @up = up
+      @val += (@up ? @incr : -@incr)
+      @val = [1.0, [0.0, @val].max].min
+    end
+
+    def run(up = true)
+      self.run_func(up, false)
+    end
   end
 
-  add_help(:make_ramp, "make_ramp([size=128]) returns a ramp generator")
+  add_help(:make_ramp,
+           "make_ramp(size=128)  \
+Returns a ramp generator.")
   def make_ramp(size = 128)
-    [0, size]
+    Ramp.new(size)
+  end
+
+  add_help(:ramp,
+           "ramp(gen, up)  \
+Is a kind of CLM generator that produces a ramp of a given length, \
+then sticks at 0.0 or 1.0 until the UP argument changes.")
+  def ramp(gen, up)
+    gen.run_func(up, false)
   end
 
   add_help(:squelch_vowels,
-           "squelch_vowels([snd=false, [chn=false]]) \
-suppresses portions of a sound that look like steady-state")
+           "squelch_vowels(snd=false, chn=false)  \
+Suppresses portions of a sound that look like steady-state.")
   def squelch_vowels(snd = false, chn = false)
     fft_size = 32
-    fft_mid = fft_size / 2
-    rl = make_vct(fft_size)
-    im = make_vct(fft_size)
-    ramper = make_ramp(256)
-    peak = maxamp / fft_mid
+    fft_mid = (fft_size / 2.0).floor
+    ramper = Ramp.new(256)
+    peak = maxamp(snd, chn) / fft_mid
     read_ahead = make_sampler(0, snd, chn)
+    rl = Vct.new(fft_size) do
+      read_sample(read_ahead)
+    end
+    im = Vct.new(fft_size, 0.0)
     ctr = fft_size - 1
-    ctr.times do |i| rl[i] = read_sample(read_ahead) end
     in_vowel = false
     map_channel(lambda do |y|
-                  rl[ctr] = read_sample(read_ahead)
                   ctr += 1
                   if ctr == fft_size
-                    fft(rl, im, 1)
-                    vct_multiply!(rl, rl)
-                    vct_multiply!(im, im)
-                    vct_add!(rl, im)
-                    in_vowel = (rl[0] + rl[1] + rl[2] + rl[3]) > peak
-                    vct_fill!(im, 0.0)
                     ctr = 0
+                    fft(rl, im, 1)
+                    rl.multiply!(rl)
+                    im.multiply!(im)
+                    rl.add!(im)
+                    im.fill(0.0)
+                    in_vowel = (rl[0] + rl[1] + rl[2] + rl[3]) > peak
+                    rl.map! do
+                      read_sample(read_ahead)
+                    end
                   end
-                  y * (1.0 - ramp(ramper, in_vowel))
+                  y * (1.0 - ramper.run(in_vowel))
                 end, 0, false, snd, chn, false, "squelch_vowels(")
   end
 
   add_help(:fft_env_data,
-           "fft_env_data(fft-env, [snd=false, [chn=false]]) \
-applies fft_env as spectral env to current sound, returning vct of new data")
+           "fft_env_data(fft-env, snd=false, chn=false)  \
+Applies fft_env as spectral env to current sound, returning vct of new data.")
   def fft_env_data(fft_env, snd = false, chn = false)
-    len = frames(snd, chn)
+    len = framples(snd, chn)
     fsize = (2 ** (log(len) / log(2.0)).ceil).to_i
     rdata = channel2vct(0, fsize, snd, chn)
     idata = make_vct(fsize)
@@ -907,33 +1000,36 @@ applies fft_env as spectral env to current sound, returning vct of new data")
   end
 
   add_help(:fft_env_edit,
-           "fft_env_edit(fft-env, [snd=false, [chn=false]]) \
-edits (filters) current chan using fft_env")
+           "fft_env_edit(fft-env, snd=false, chn=false)  \
+Edits (filters) current chan using fft_env.")
   def fft_env_edit(fft_env, snd = false, chn = false)
-    vct2channel(fft_env_data(fft_env, snd, chn), 0, frames(snd, chn) - 1, snd, chn, false,
+    vct2channel(fft_env_data(fft_env, snd, chn), 0, framples(snd, chn) - 1,
+                snd, chn, false,
                 format("%s(%s", get_func_name, fft_env.inspect))
   end
 
   add_help(:fft_env_interp,
-           "fft_env_interp(env1, env2, interp, [snd=false, [chn=false]]) \
-interpolates between two fft-filtered versions (env1 and env2 are the spectral envelopes) \
-following interp (an env between 0 and 1)")
+           "fft_env_interp(env1, env2, interp, snd=false, chn=false)  \
+Interpolates between two fft-filtered \
+versions (env1 and env2 are the spectral envelopes) \
+following interp (an env between 0 and 1).")
   def fft_env_interp(env1, env2, interp, snd = false, chn = false)
     data1 = fft_env_data(env1, snd, chn)
     data2 = fft_env_data(env2, snd, chn)
-    len = frames(snd, chn)
+    len = framples(snd, chn)
     en = make_env(:envelope, interp, :length, len)
     new_data = make_vct!(len) do |i|
       pan = env(en)
       (1.0 - pan) * data1[i] + pan * data2[i]
     end
     vct2channel(new_data, 0, len - 1, snd, chn, false,
-                format("%s(%s, %s, %s", get_func_name, env1.inspect, env2.inspect, interp.inspect))
+                format("%s(%s, %s, %s", get_func_name,
+                       env1.inspect, env2.inspect, interp.inspect))
   end
 
   add_help(:fft_smoother,
-           "fft_smoother(cutoff, start, samps, [snd=false, [chn=false]]) \
-uses fft-filtering to smooth a section:
+           "fft_smoother(cutoff, start, samps, snd=false, chn=false)  \
+Uses fft-filtering to smooth a section: \
 vct2channel(fft_smoother(0.1, cursor, 400, 0, 0), cursor, 400)")
   def fft_smoother(cutoff, start, samps, snd = false, chn = false)
     fftpts = (2 ** (log(samps + 1) / log(2.0)).ceil).to_i
@@ -970,9 +1066,10 @@ vct2channel(fft_smoother(0.1, cursor, 400, 0, 0), cursor, 400)")
   # comb-filter 
 
   add_help(:comb_filter,
-           "comb_filter(scaler, size) \
-returns a comb-filter ready for map_channel etc: map_channel(comb_filter(0.8, 32)).  \
-If you're in a hurry use: clm_channel(make_comb(0.8, 32)) instead")
+           "comb_filter(scaler, size)  \
+Returns a comb-filter ready for map_channel etc: \
+map_channel(comb_filter(0.8, 32))  \
+If you're in a hurry use: clm_channel(make_comb(0.8, 32)) instead.")
   def comb_filter(scaler, size)
     cmb = make_comb(scaler, size)
     lambda do |inval| comb(cmb, inval) end
@@ -981,41 +1078,46 @@ If you're in a hurry use: clm_channel(make_comb(0.8, 32)) instead")
   # by using filters at harmonically related sizes, we can get chords:
 
   add_help(:comb_chord,
-           "comb_chord(scaler, size, amp, [interval_one=0.75, [interval_two=1.2]]) \
-returns a set of harmonically-related comb filters: map_channel(comb_chord(0.95, 100, 0.3))")
+           "comb_chord(scl, size, amp, interval_one=0.75, interval_two=1.2)  \
+Returns a set of harmonically-related comb filters: \
+map_channel(comb_chord(0.95, 100, 0.3))")
   def comb_chord(scaler, size, amp, interval_one = 0.75, interval_two = 1.2)
     c1 = make_comb(scaler, size.to_i)
     c2 = make_comb(scaler, (interval_one * size).to_i)
     c3 = make_comb(scaler, (interval_two * size).to_i)
-    lambda do |inval| amp * (comb(c1, inval) + comb(c2, inval) + comb(c3, inval)) end
+    lambda do |inval|
+      amp * (comb(c1, inval) + comb(c2, inval) + comb(c3, inval))
+    end
   end
 
   # or change the comb length via an envelope:
 
   add_help(:zcomb,
-           "zcomb(scaler, size, pm) \
-returns a comb filter whose length varies according to an envelope: \
+           "zcomb(scaler, size, pm)  \
+Returns a comb filter whose length varies according to an envelope: \
 map_channel(zcomb(0.8, 32, [0, 0, 1, 10]))")
   def zcomb(scaler, size, pm)
     max_envelope_1 = lambda do |en, mx|
       1.step(en.length - 1, 2) do |i| mx = [mx, en[i]].max.to_f end
       mx
     end
-    cmb = make_comb(scaler, size, :max_size, (max_envelope_1.call(pm, 0.0) + size + 1).to_i)
-    penv = make_env(:envelope, pm, :length, frames)
+    cmb = make_comb(scaler, size,
+                    :max_size, (max_envelope_1.call(pm, 0.0) + size + 1).to_i)
+    penv = make_env(:envelope, pm, :length, framples())
     lambda do |inval| comb(cmb, inval, env(penv)) end
   end
 
   add_help(:notch_filter,
-           "notch_filter(scaler, size) returns a notch-filter: map_channel(notch_filter(0.8, 32))")
+           "notch_filter(scaler, size)  \
+Returns a notch-filter: map_channel(notch_filter(0.8, 32))")
   def notch_filter(scaler, size)
     gen = make_notch(scaler, size)
     lambda do |inval| notch(gen, inval) end
   end
 
   add_help(:formant_filter,
-                   "formant_filter(radius, frequency) \
-returns a formant generator: map_channel(formant_filter(0.99, 2400)). \
+                   "formant_filter(radius, frequency)  \
+Returns a formant generator: map_channel(formant_filter(0.99, 2400))  \
 Faster is: filter_sound(make_formant(2400, 0.99))")
   def formant_filter(radius, freq)
     frm = make_formant(radius, freq)
@@ -1025,22 +1127,25 @@ Faster is: filter_sound(make_formant(2400, 0.99))")
   # to impose several formants, just add them in parallel:
 
   add_help(:formants,
-           "formants(r1, f1, r2, f2, r3, f3) \
-returns 3 formant filters in parallel: map_channel(formants(0.99, 900, 0.98, 1800, 0.99 2700))")
+           "formants(r1, f1, r2, f2, r3, f3)  \
+Returns 3 formant filters in parallel: \
+map_channel(formants(0.99, 900, 0.98, 1800, 0.99 2700))")
   def formants(r1, f1, r2, f2, r3, f3)
     fr1 = make_formant(f1, r1)
     fr2 = make_formant(f2, r2)
     fr3 = make_formant(f3, r3)
-    lambda do |inval| formant(fr1, inval) + formant(fr2, inval) + formant(fr3, inval) end
+    lambda do |inval|
+      formant(fr1, inval) + formant(fr2, inval) + formant(fr3, inval)
+    end
   end
 
   add_help(:moving_formant,
-           "moving_formant(radius, move) \
-returns a time-varying (in frequency) formant filter: \
+           "moving_formant(radius, move)  \
+Returns a time-varying (in frequency) formant filter: \
 map_channel(moving_formant(0.99, [0, 1200, 1, 2400]))")
   def moving_formant(radius, move)
     frm = make_formant(move[1], radius)
-    menv = make_env(:envelope, move, :length, frames)
+    menv = make_env(:envelope, move, :length, framples())
     lambda do |inval|
       val = formant(frm, inval)
       frm.frequency = env(menv)
@@ -1049,8 +1154,9 @@ map_channel(moving_formant(0.99, [0, 1200, 1, 2400]))")
   end
 
   add_help(:osc_formants,
-           "osc_formants(radius, bases, amounts, freqs) \
-set up any number of independently oscillating formants, then calls map_channel: \
+           "osc_formants(radius, bases, amounts, freqs)  \
+Set up any number of independently oscillating formants, \
+then calls map_channel: \
 osc_formants(0.99, vct(400, 800, 1200), vct(400, 800, 1200), vct(4, 2, 3))")
   def osc_formants(radius, bases, amounts, freqs)
     len = bases.length
@@ -1068,7 +1174,9 @@ osc_formants(0.99, vct(400, 800, 1200), vct(400, 800, 1200), vct(4, 2, 3))")
 
   # echo
 
-  add_help(:echo, "echo(scaler, secs) returns an echo maker: map_channel(echo(0.5, 0.5), 0 44100)")
+  add_help(:echo,
+           "echo(scaler, secs)  \
+Returns an echo maker: map_channel(echo(0.5, 0.5), 0 44100)")
   def echo(scaler, secs)
     del = make_delay((secs * srate()).round)
     lambda do |inval|
@@ -1077,8 +1185,9 @@ osc_formants(0.99, vct(400, 800, 1200), vct(400, 800, 1200), vct(4, 2, 3))")
   end
 
   add_help(:zecho,
-           "zecho(scaler, secs, freq, amp) \
-returns a modulated echo maker: map_channel(zecho(0.5, 0.75, 6, 10.0), 0, 65000)")
+           "zecho(scaler, secs, freq, amp)  \
+Returns a modulated echo maker: \
+map_channel(zecho(0.5, 0.75, 6, 10.0), 0, 65000)")
   def zecho(scaler, secs, freq, amp)
     os = make_oscil(freq)
     len = (secs * srate()).round
@@ -1089,8 +1198,9 @@ returns a modulated echo maker: map_channel(zecho(0.5, 0.75, 6, 10.0), 0, 65000)
   end
 
   add_help(:flecho,
-           "flecho(scaler, secs]) \
-returns a low-pass filtered echo maker: map_channel(flecho(0.5, 0.9), 0, 75000)" )
+           "flecho(scaler, secs)  \
+Returns a low-pass filtered echo maker: \
+map_channel(flecho(0.5, 0.9), 0, 75000)" )
   def flecho(scaler, secs)
     flt = make_fir_filter(:order, 4, :xcoeffs, vct(0.125, 0.25, 0.25, 0.125))
     del = make_delay((secs * srate()).round)
@@ -1104,17 +1214,19 @@ returns a low-pass filtered echo maker: map_channel(flecho(0.5, 0.9), 0, 75000)"
   # CLM instrument is ring-modulate.ins
 
   add_help(:ring_mod,
-           "ring_mod(freq, gliss_env) \
-returns a time-varying ring-modulation filter: \
+           "ring_mod(freq, gliss_env)  \
+Returns a time-varying ring-modulation filter: \
 map_channel(ring_mod(10, [0, 0, 1, hz2radians(100)]))")
   def ring_mod(freq, gliss_env)
     os = make_oscil(:frequency, freq)
-    len = frames()
+    len = framples()
     genv = make_env(:envelope, gliss_env, :length, len)
     lambda do |inval| oscil(os, env(genv)) * inval end
   end
 
-  add_help(:am, "am(freq) returns an amplitude-modulator: map_channel(am(440))")
+  add_help(:am,
+           "am(freq)  \
+returns an amplitude-modulator: map_channel(am(440))")
   def am(freq)
     os = make_oscil(freq)
     lambda do |inval| amplitude_modulate(1.0, inval, oscil(os)) end
@@ -1132,12 +1244,13 @@ map_channel(ring_mod(10, [0, 0, 1, hz2radians(100)]))")
   # CLM instrument version is in clm.html
 
   add_help(:hello_dentist,
-           "hello_dentist(frq, amp, [snd=false, [chn=false]]) \
-varies the sampling rate randomly, making a voice sound quavery: hello_dentist(40.0, 0.1)")
+           "hello_dentist(frq, amp, snd=false, chn=false)  \
+Varies the sampling rate randomly, \
+making a voice sound quavery: hello_dentist(40.0, 0.1)")
   def hello_dentist(freq, amp, snd = false, chn = false)
     rn = make_rand_interp(:frequency, freq, :amplitude, amp)
     i = 0
-    len = frames()
+    len = framples()
     in_data = channel2vct(0, len, snd, chn)
     out_len = (len * (1.0 + 2.0 * amp)).to_i
     out_data = make_vct(out_len)
@@ -1156,15 +1269,18 @@ varies the sampling rate randomly, making a voice sound quavery: hello_dentist(4
   # various "Forbidden Planet" sound effects:
 
   add_help(:fp,
-           "fp(sr, osamp, osfrq, [snd=false, [chn=false]]) \
-varies the sampling rate via an oscil: fp(1.0, 0.3, 20)")
+           "fp(sr, osamp, osfrq, snd=false, chn=false)  \
+Varies the sampling rate via an oscil: fp(1.0, 0.3, 20)")
   def fp(sr, osamp, osfreq, snd = false, chn = false)
     os = make_oscil(:frequency, osfreq)
     s = make_src(:srate, sr)
-    len = frames(snd, chn)
+    len = framples(snd, chn)
     sf = make_sampler(0, snd, chn)
     out_data = make_vct!(len) do
-      src(s, osamp * oscil(os), lambda do |dir| dir > 0 ? next_sample(sf) : previous_sample(sf) end)
+      src(s, osamp * oscil(os),
+          lambda do |dir|
+            dir > 0 ? next_sample(sf) : previous_sample(sf)
+          end)
     end
     free_sampler(sf)
     vct2channel(out_data, 0, len, snd, chn, false,
@@ -1173,9 +1289,11 @@ varies the sampling rate via an oscil: fp(1.0, 0.3, 20)")
 
   # compand
 
-  Compand_table = vct(-1.000, -0.960, -0.900, -0.820, -0.720, -0.600, -0.450, -0.250, 
-                       0.000, 0.250, 0.450, 0.600, 0.720, 0.820, 0.900, 0.960, 1.000)
-  add_help(:compand, "compand() returns a compander: map_channel(compand())")
+  Compand_table = vct(-1.0, -0.96, -0.9, -0.82, -0.72, -0.6, -0.45, -0.25, 
+                       0.0, 0.25, 0.45, 0.6, 0.72, 0.82, 0.9, 0.96, 1.0)
+  add_help(:compand,
+           "compand()  \
+Returns a compander: map_channel(compand())")
   def compand()
     lambda do |inval|
       array_interp(Compand_table, 8.0 + 8.0 * inval, Compand_table.length)
@@ -1189,9 +1307,10 @@ varies the sampling rate via an oscil: fp(1.0, 0.3, 20)")
   # reads the currently selected file.  CLM version is in expsrc.ins
 
   add_help(:expsrc,
-           "expsrc(rate, [snd=false, [chn=false]]) \
-uses sampling-rate conversion and granular synthesis to produce a sound \
-at a new pitch but at the original tempo.  It returns a function for map_chan.")
+           "expsrc(rate, snd=false, chn=false)  \
+Uses sampling-rate conversion and granular synthesis to produce a sound \
+at a new pitch but at the original tempo.  \
+It returns a function for map_chan.")
   def expsrc(rate, snd = false, chn = false)
     gr = make_granulate(:expansion, rate)
     sr = make_src(:srate, rate)
@@ -1221,14 +1340,16 @@ at a new pitch but at the original tempo.  It returns a function for map_chan.")
   # length.
 
   add_help(:expsnd,
-           "expsnd(gr_env, [snd=false, [chn=false]]) \
-uses the granulate generator to change tempo according to an envelope: expsnd([0, 0.5, 2, 2.0])")
+           "expsnd(gr_env, snd=false, chn=false)  \
+Uses the granulate generator to change tempo \
+according to an envelope: expsnd([0, 0.5, 2, 2.0])")
   def expsnd(gr_env, snd = false, chn = false)
-    dur = ((frames(snd, chn) / srate(snd)) * integrate_envelope(gr_env) / envelope_last_x(gr_env))
+    dur = ((framples(snd, chn) / srate(snd)) *
+           integrate_envelope(gr_env) / envelope_last_x(gr_env))
     gr = make_granulate(:expansion, gr_env[1], :jitter, 0)
     ge = make_env(:envelope, gr_env, :duration, dur)
     sound_len = (srate(snd) * dur).to_i
-    len = [sound_len, frames(snd, chn)].max
+    len = [sound_len, framples(snd, chn)].max
     sf = make_sampler(0, snd, chn)
     out_data = make_vct!(len) do
       val = granulate(gr, lambda do |dir| next_sample(sf) end)
@@ -1236,7 +1357,8 @@ uses the granulate generator to change tempo according to an envelope: expsnd([0
       val
     end
     free_sampler(sf)
-    vct2channel(out_data, 0, len, snd, chn, false, format("%s(%s", get_func_name, gr_env.inspect))
+    vct2channel(out_data, 0, len, snd, chn, false,
+                format("%s(%s", get_func_name, gr_env.inspect))
   end
 
   # cross-synthesis
@@ -1244,8 +1366,9 @@ uses the granulate generator to change tempo according to an envelope: expsnd([0
   # CLM version is in clm.html
 
   add_help(:cross_synthesis,
-           "cross_synthesis(cross_snd, amp, fftsize, r) \
-does cross-synthesis between 'cross-snd' (a sound index) and the currently selected sound: \
+           "cross_synthesis(cross_snd, amp, fftsize, r)  \
+Does cross-synthesis between CROSS_SND (a sound index) \
+and the currently selected sound: \
 map_channel(cross_synthesis(1, 0.5, 128, 6.0))")
   def cross_synthesis(cross_snd, amp, fftsize, r)
     freq_inc = fftsize / 2
@@ -1278,8 +1401,8 @@ map_channel(cross_synthesis(1, 0.5, 128, 6.0))")
   # similar ideas can be used for spectral cross-fades, etc -- for example:
 
   add_help(:voiced2unvoiced,
-           "voiced2unvoiced(amp, fftsize, r, tempo, [snd=false, [chn=false]]) \
-turns a vocal sound into whispering: voiced2unvoiced(1.0, 256, 2.0, 2.0)")
+           "voiced2unvoiced(amp, fftsize, r, tempo, snd=false, chn=false)  \
+Turns a vocal sound into whispering: voiced2unvoiced(1.0, 256, 2.0, 2.0)")
   def voiced2unvoiced(amp, fftsize, r, tempo, snd = false, chn = false)
     freq_inc = fftsize / 2
     fdr = make_vct(fftsize)
@@ -1290,7 +1413,7 @@ turns a vocal sound into whispering: voiced2unvoiced(1.0, 256, 2.0, 2.0)")
     ctr = freq_inc
     radius = 1.0 - r.to_f / fftsize
     bin = srate(snd).to_f / fftsize
-    len = frames(snd, chn)
+    len = framples(snd, chn)
     outlen = (len / tempo).floor
     hop = (freq_inc * tempo).floor
     out_data = make_vct([len, outlen].max)
@@ -1320,15 +1443,19 @@ turns a vocal sound into whispering: voiced2unvoiced(1.0, 256, 2.0, 2.0)")
     end
     vct_scale!(out_data, amp * (old_peak_amp / new_peak_amp))
     vct2channel(out_data, 0, [len, outlen].max, snd, chn, false,
-                format("%s(%s, %s, %s, %s", get_func_name, amp, fftsize, r, tempo))
+                format("%s(%s, %s, %s, %s", get_func_name,
+                       amp, fftsize, r, tempo))
   end
 
-  # very similar but use sum-of-cosines (glottal pulse train?) instead of white noise
+  # very similar but use sum-of-cosines (glottal pulse train?)
+  # instead of white noise
 
   add_help(:pulse_voice,
-           "pulse_voice(cosin, freq=440.0, amp=1.0, fftsize=256, r=2.0, snd=false, chn=false) \
-uses sum-of-cosines to manipulate speech sounds")
-  def pulse_voice(cosin, freq = 440.0, amp = 1.0, fftsize = 256, r = 2.0, snd = false, chn = false)
+           "pulse_voice(cosin, freq=440.0, amp=1.0, fftsize=256, r=2.0, \
+snd=false, chn=false)  \
+Uses sum-of-cosines to manipulate speech sounds.")
+  def pulse_voice(cosin, freq = 440.0, amp = 1.0,
+                  fftsize = 256, r = 2.0, snd = false, chn = false)
     freq_inc = fftsize / 2
     fdr = make_vct(fftsize)
     fdi = make_vct(fftsize)
@@ -1338,7 +1465,7 @@ uses sum-of-cosines to manipulate speech sounds")
     ctr = freq_inc
     radius = 1.0 - r / fftsize
     bin = srate(snd) / fftsize
-    len = frames(snd, chn)
+    len = framples(snd, chn)
     out_data = make_vct(len)
     old_peak_amp = new_peak_amp = 0.0
     fmts = make_array(freq_inc) do |i|
@@ -1375,14 +1502,17 @@ uses sum-of-cosines to manipulate speech sounds")
   # convolution example
 
   add_help(:cnvtest,
-           "cnvtest(snd0, snd1, amp) \
-convolves snd0 and snd1, scaling by amp, returns new max amp: cnvtest(0, 1, 0.1)")
+           "cnvtest(snd0, snd1, amp)  \
+Convolves snd0 and snd1, scaling by amp, \
+returns new max amp: cnvtest(0, 1, 0.1)")
   def cnvtest(snd0, snd1, amp)
-    flt_len = frames(snd0)
-    total_len = flt_len + frames(snd1)
+    flt_len = framples(snd0)
+    total_len = flt_len + framples(snd1)
     cnv = make_convolve(:filter, channel2vct(0, flt_len, snd0))
     sf = make_sampler(0, snd1, false)
-    out_data = make_vct!(total_len) do convolve(cnv, lambda do |dir| next_sample(sf) end) end
+    out_data = make_vct!(total_len) do
+      convolve(cnv, lambda do |dir| next_sample(sf) end)
+    end
     free_sampler(sf)
     vct_scale!(out_data, amp)
     max_samp = vct_peak(out_data)
@@ -1396,7 +1526,8 @@ convolves snd0 and snd1, scaling by amp, returns new max amp: cnvtest(0, 1, 0.1)
   # swap selection chans
 
   add_help(:swap_selection_channels,
-           "swap_selection_channels) swaps the currently selected data's channels")
+           "swap_selection_channels()  \
+Swaps the currently selected data's channels.")
   def swap_selection_channels
     find_selection_sound = lambda do |not_this|
       callcc do |ret|
@@ -1413,12 +1544,13 @@ convolves snd0 and snd1, scaling by amp, returns new max amp: cnvtest(0, 1, 0.1)
     end
     if selection?
       if selection_chans == 2
-        beg = selection_position
-        len = selection_frames
+        beg = selection_position()
+        len = selection_framples()
         snd_chn0 = find_selection_sound.call([])
         snd_chn1 = find_selection_sound.call(snd_chn0)
         if snd_chn1
-          swap_channels(snd_chn0[0], snd_chn0[1], snd_chn1[0], snd_chn1[1], beg, len)
+          swap_channels(snd_chn0[0], snd_chn0[1],
+                        snd_chn1[0], snd_chn1[1], beg, len)
         else
           Snd.raise(:wrong_number_of_channels, "need two channels to swap")
         end
@@ -1437,8 +1569,8 @@ convolves snd0 and snd1, scaling by amp, returns new max amp: cnvtest(0, 1, 0.1)
   # the corresponding "generator" is sound-interp
 
   add_help(:make_sound_interp,
-           "make_sound_interp(start, [snd=false, [chn=false]]) \
-an interpolating reader for snd's channel chn")
+           "make_sound_interp(start, snd=false, chn=false)  \
+An interpolating reader for SND's channel CHN.")
   def make_sound_interp(start, snd = false, chn = false)
     data = channel2vct(0, false, snd, chn)
     size = data.length
@@ -1448,19 +1580,22 @@ an interpolating reader for snd's channel chn")
   end
 
   add_help(:sound_interp,
-           "sound_interp(func, loc) \
-sample at loc (interpolated if necessary) from func created by make_sound_interp")
+           "sound_interp(func, loc)  \
+Sample at LOC (interpolated if necessary) from FUNC \
+created by make_sound_interp.")
   def sound_interp(func, loc)
     func.call(loc)
   end
 
   def sound_via_sound(snd1, snd2)
     intrp = make_sound_interp(0, snd1, 0)
-    len = frames(snd1, 0) - 1
+    len = framples(snd1, 0) - 1
     rd = make_sampler(0, snd2, 0)
     mx = maxamp(snd2, 0)
     map_channel(lambda do |val|
-                  sound_interp(intrp, (len * 0.5 * (1.0 + (read_sample(rd) / mx))).floor)
+                  sound_interp(intrp,
+                               (len * 0.5 * 
+																(1.0 + (read_sample(rd) / mx))).floor)
                 end)
   end
   
@@ -1478,36 +1613,27 @@ sample at loc (interpolated if necessary) from func created by make_sound_interp
   # positions.
 
   add_help(:env_sound_interp,
-           "env_sound_interp(env, [time_scale=1.0, [snd=false, [chn=false]]]) \
-reads snd's channel chn according to env and time-scale")
+           "env_sound_interp(env, time_scale=1.0, snd=false, chn=false)  \
+Reads SND's channel CHN according to ENV and TIME_SCALE.")
   def env_sound_interp(envelope, time_scale = 1.0, snd = false, chn = false)
-    len = frames(snd, chn)
+    len = framples(snd, chn)
     newlen = (time_scale.to_f * len).floor
-    rd = make_sound_interp(0, snd, chn)
-    read_env = make_env(:envelope, envelope, :length, newlen, :scaler, len)
-    tempfilename = snd_tempnam
-    fil = mus_sound_open_output(tempfilename, srate(snd), 1, false, Mus_next,
-                                format("%s temp file", get_func_name))
-    bufsize = 8192
-    data = make_sound_data(1, bufsize)
-    data_ctr = 0
-    newlen.times do |i|
-      data[0, data_ctr] = sound_interp(rd, env(read_env))
-      data_ctr += 1
-      if bufsize == data_ctr
-        mus_sound_write(fil, 0, bufsize - 1, 1, data)
-        data_ctr = 0
-      end
+    read_env = make_env(:envelope, envelope, :length, newlen + 1, :scaler, len)
+    data = channel2vct(0, false, snd, chn)
+    new_snd = Vct.new(newlen) do
+      array_interp(data, env(read_env), len)
     end
-    if data_ctr > 0
-      mus_sound_write(fil, 0, data_ctr - 1, 1, data)
-    end
-    mus_sound_close_output(fil, 4 * newlen)
-    set_samples(0, newlen, tempfilename, snd, chn, false,
-                format("%s(%s, %s", get_func_name, envelope.inspect, time_scale))
-    File.unlink(tempfilename)
+    set_samples(0, newlen, new_snd, snd, chn, true,
+                format("%s(%p, %s", get_func_name, envelope, time_scale),
+                0, Current_edit_position, true)
   end
+  # env_sound_interp([0, 0, 1, 1, 2, 0], 2.0)
 
+  add_help(:granulated_sound_interp,
+           "granulated_sound_interp(env, time_scale=1.0, grain_len=0.1, \
+grain_env=[0, 0, 1, 1, 2, 1, 3, 0], out_hop=0.05, snd=false, chn=false)  \
+Reads the given channel following ENV (as in env_sound_interp), \
+using grains to create the re-tempo'd read.")
   def granulated_sound_interp(envelope,
                               time_scale = 1.0,
                               grain_length = 0.1,
@@ -1515,79 +1641,78 @@ reads snd's channel chn according to env and time-scale")
                               output_hop = 0.05,
                               snd = false,
                               chn = false)
-    len = frames(snd, chn)
-    newlen = (time_scale * len).floor
+    len = framples(snd, chn)
+    newlen = (time_scale.to_f * len).floor
     read_env = make_env(envelope, :length, newlen, :scaler, len)
-    tempfilename = snd_tempnam
-    fil = mus_sound_open_output(tempfilename, srate(snd), 1, false, Mus_next,
-                                "granulated_sound_interp temp file")
-    grain_frames = (grain_length * srate).round
-    hop_frames = (output_hop * srate).round
+    sr = srate(snd)
+    grain_framples = (grain_length * sr).round
+    hop_framples = (output_hop * sr).round
     num_readers = (grain_length / output_hop).round + 1
-    readers = make_array(num_readers, false)
-    grain_envs = make_array(num_readers) do |i| make_env(grain_envelope, :length, grain_frames) end
-    next_reader_starts_at = 0
+    cur_readers = 0
     next_reader = 0
-    bufsize = 8192
-    data = make_sound_data(1, bufsize)
-    data_ctr = 0
-    jitter = srate * 0.005
-    newlen.times do |i|
+    jitter = sr * 0.005
+    readers = make_array(num_readers, false)
+    grain_envs = make_array(num_readers) do
+      make_env(grain_envelope, :length, grain_framples)
+    end
+    new_snd = Vct.new(newlen, 0.0)
+    0.step(newlen, hop_framples) do |i|
+      set_mus_location(read_env, i)
       position_in_original = env(read_env)
-      if i >= next_reader_starts_at
-        readers[next_reader] =
-          make_sampler([0, (position_in_original + mus_random(jitter)).round].max, false)
-        grain_envs[next_reader].reset
-        next_reader += 1
-        if next_reader >= num_readers then next_reader = 0 end
-        next_reader_starts_at += hop_frames
+      mx = [0, (position_in_original + mus_random(jitter)).round].max
+      if sampler?(readers[next_reader])
+        free_sampler(readers[next_reader])
       end
-      sum = 0.0
-      readers.each_with_index do |rd, j|
-        if sampler?(rd)
-          sum = sum + env(grain_envs[j]) * next_sample(rd)
+      readers[next_reader] = make_sampler(mx, snd, chn)
+      grain_envs[next_reader].reset
+      next_reader %= num_readers
+      if cur_readers < next_reader
+        cur_readers = next_reader
+      end
+      (0..cur_readers).each do |j|
+        en = grain_envs[j]
+        rd = readers[j]
+        (i..[newlen, hop_framples + 1].min).each do |k|
+          new_snd[k] = env(en) * next_sample(rd)
         end
       end
-      sound_data_set!(data, 0, data_ctr, sum)
-      data_ctr += 1
-      if bufsize == data_ctr
-        mus_sound_write(fil, 0, bufsize - 1, 1, data)
-        data_ctr = 0
+    end
+    readers.each do |g|
+      if sampler?(g)
+        free_sampler(g)
       end
     end
-    if data_ctr > 0
-      mus_sound_write(fil, 0, data_ctr - 1, 1, data)
-    end
-    mus_sound_close_output(fil, 4 * newlen)
-    set_samples(0, newlen, tempfilename, snd, chn, true,
-                format("%s(%s, %s, %s, %s, %s",
+    set_samples(0, newlen, new_snd, snd, chn, true,
+                format("%s(%p, %s, %s, %p, %s",
                        get_func_name,
-                       envelope.inspect,
+                       envelope,
                        time_scale,
                        grain_length,
-                       grain_envelope.inspect,
-                       output_hop))
-    File.unlink(tempfilename)
+                       grain_envelope,
+                       output_hop), 0, Current_edit_position, true)
   end
   # granulated_sound_interp([0, 0, 1, 0.1, 2, 1], 1.0, 0.2, [0, 0, 1, 1, 2, 0])
   # granulated_sound_interp([0, 0, 1, 1], 2.0)
-  # granulated_sound_interp([0, 0, 1, 0.1, 2, 1], 1.0, 0.2, [0, 0, 1, 1, 2, 0], 0.02)
+  # granulated_sound_interp([0, 0, 1, 0.1, 2, 1], 1.0, 0.2, [0, 0, 1, 1, 2, 0],
+  #                         0.02)
   
   # filtered-env 
 
   add_help(:filtered_env,
-           "filtered_env(env, [snd=false, [chn=false]]) \
-is a time-varying one-pole filter: when env is at 1.0, no filtering, \
-as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount move together")
+           "filtered_env(env, snd=false, chn=false)  \
+Is a time-varying one-pole filter: when ENV is at 1.0, no filtering, \
+as ENV moves to 0.0, low-pass gets more intense; \
+amplitude and low-pass amount move together.")
   def filtered_env(en, snd = false, chn = false)
     flt = make_one_pole(1.0, 0.0)
-    amp_env = make_env(:envelope, en, :length, frames)
+    amp_env = make_env(:envelope, en, :length, framples())
     map_channel(lambda do |val|
                   env_val = env(amp_env)
                   set_mus_xcoeff(flt, 0, env_val)
                   set_mus_ycoeff(flt, 1, env_val - 1.0)
                   one_pole(flt, env_val * val)
-                end, 0, false, snd, chn, false, format("%s(%s", get_func_name, en.inspect))
+                end, 0, false, snd, chn, false,
+                format("%s(%s", get_func_name, en.inspect))
   end
 
   # lisp graph with draggable x axis
@@ -1627,16 +1752,20 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
   # $mouse_enter_graph_hook.add_hook!("focus") do |snd, chn|
   #   focus_widget(channel_widgets(snd, chn)[0])
   # end
-  # $mouse_enter_listener_hook.add_hook!("focus") do |widget| focus_widget(widget) end
-  # $mouse_enter_text_hook.add_hook!("focus") do |widget| focus_widget(widget) end
+  # $mouse_enter_listener_hook.add_hook!("focus") do |widget|
+  #   focus_widget(widget)
+  # end
+  # $mouse_enter_text_hook.add_hook!("focus") do |widget|
+  #   focus_widget(widget)
+  # end
 
   # View: Files dialog chooses which sound is displayed
   #
   # by Anders Vinjar
 
   add_help(:files_popup_buffer,
-           "files_popup_buffer(type, position, name) \
-hides all sounds but the one the mouse touched in the current files list.  \
+           "files_popup_buffer(type, position, name)  \
+Hides all sounds but the one the mouse touched in the current files list.  \
 Use with $mouse_enter_label_hook.
 $mouse_enter_label_hook.add_hook!(\"files-popup\") do |type, position, name|
   files_popup_buffer(type, position, name)
@@ -1655,12 +1784,14 @@ end")
 
   # remove-clicks
 
-  add_help(:find_click, "find_click(loc) finds the next click starting at 'loc'")
+  add_help(:find_click,
+           "find_click(loc)  \
+Finds the next click starting at LOC.")
   def find_click(loc)
     reader = make_sampler(loc, false, false)
     samp0 = samp1 = samp2 = 0.0
     samps = make_vct(10)
-    len = frames()
+    len = framples()
     samps_ctr = 0
     (loc...len).each do |ctr|
       samp0, samp1, samp2 = samp1, samp2, next_sample(reader)
@@ -1680,7 +1811,9 @@ end")
     false
   end
 
-  add_help(:remove_clicks, "remove_clicks() tries to find and smooth-over clicks")
+  add_help(:remove_clicks,
+           "remove_clicks()  \
+Tries to find and smooth-over clicks.")
   def remove_clicks
     loc = 0
     while (click = find_click(loc))
@@ -1691,7 +1824,9 @@ end")
 
   # searching examples (zero+, next-peak)
 
-  add_help(:search_for_click, "search_for_click() looks for the next click (for use with C-s)")
+  add_help(:search_for_click,
+           "search_for_click()  \
+Looks for the next click (for use with C-s).")
   def search_for_click
     samp0 = samp1 = samp2 = 0.0
     samps = Vct.new(10)
@@ -1713,8 +1848,9 @@ end")
   end
 
   add_help(:zero_plus,
-           "zero_plus() \
-finds the next positive-going zero crossing (if searching forward) (for use with C-s)")
+           "zero_plus()  \
+Finds the next positive-going \
+zero crossing (if searching forward) (for use with C-s).")
   def zero_plus
     lastn = 0.0
     lambda do |n|
@@ -1725,8 +1861,9 @@ finds the next positive-going zero crossing (if searching forward) (for use with
   end
 
   add_help(:next_peak,
-           "next_peak() \
-finds the next max or min point in the time-domain waveform (for use with C-s)")
+           "next_peak()  \
+Finds the next max or min point \
+in the time-domain waveform (for use with C-s).")
   def next_peak
     last0 = last1 = false
     lambda do |n|
@@ -1738,9 +1875,11 @@ finds the next max or min point in the time-domain waveform (for use with C-s)")
   end
 
   add_help(:find_pitch,
-           "find_pitch(pitch) \
-finds the point in the current sound where 'pitch' (in Hz) predominates -- C-s find_pitch(300) \
-In most cases, this will be slightly offset from the true beginning of the note")
+           "find_pitch(pitch)  \
+Finds the point in the current sound where PITCH (in Hz) \
+predominates -- C-s find_pitch(300).  \
+In most cases, \
+this will be slightly offset from the true beginning of the note.")
   def find_pitch(pitch)
     interpolated_peak_offset = lambda do |la, ca, ra|
       pk = 0.001 + [la, ca, ra].max
@@ -1767,8 +1906,9 @@ In most cases, this will be slightly offset from the true beginning of the note"
               pkloc = i
             end
           end
-          pit = (pkloc + (pkloc > 0 ? interpolated_peak_offset.call(*spectr[pkloc - 1, 3]) : 0.0) *
-                        srate()) / transform_size
+          pit = (pkloc + (pkloc > 0 ?
+                 interpolated_peak_offset.call(*spectr[pkloc - 1, 3]) :
+                 0.0) * srate()) / transform_size
           if (pitch - pit).abs < srate / (2 * transform_size)
             rtn = -(transform_size / 2)
           end
@@ -1781,9 +1921,11 @@ In most cases, this will be slightly offset from the true beginning of the note"
 
   # file2vct and a sort of cue-list, I think
 
-  add_help(:file2vct, "file2vct(file) returns a vct with file's data")
+  add_help(:file2vct,
+           "file2vct(file)  \
+Returns a vct with FILE's data.")
   def file2vct(file)
-    len = mus_sound_frames(file)
+    len = mus_sound_framples(file)
     reader = make_sampler(0, file)
     data = make_vct!(len) do next_sample(reader) end
     free_sampler(reader)
@@ -1791,10 +1933,11 @@ In most cases, this will be slightly offset from the true beginning of the note"
   end
 
   add_help(:add_notes,
-           "add_notes(notes, [snd=false, [chn=false]]) \
-adds (mixes) 'notes' which is a list of lists of the form: \
+           "add_notes(notes, snd=false, chn=false)  \
+Adds (mixes) NOTES which is a list of lists of the form: \
 [file, offset=0.0, amp=1.0] starting at the cursor in the \
-currently selected channel: add_notes([[\"oboe.snd\"], [\"pistol.snd\", 1.0, 2.0]])")
+currently selected channel: \
+add_notes([[\"oboe.snd\"], [\"pistol.snd\", 1.0, 2.0]])")
   def add_notes(notes, snd = false, chn = false)
     start = cursor(snd, chn)
     as_one_edit_rb("%s(%s", get_func_name, notes.inspect) do
@@ -1812,8 +1955,9 @@ currently selected channel: add_notes([[\"oboe.snd\"], [\"pistol.snd\", 1.0, 2.0
   end
 
   add_help(:region_play_list,
-           "region_play_list(data) \
-'data' is list of lists [[time, reg], ...], time in secs, \ setting up a sort of play list: \
+           "region_play_list(data)  \
+DATA is list of lists [[time, reg], ...], time in secs, \
+setting up a sort of play list: \
 region_play_list([[0.0, 0], [0.5, 1], [1.0, 2], [1.0, 0]])")
   def region_play_list(data)
     (data or []).each do |tm, rg|
@@ -1825,14 +1969,14 @@ region_play_list([[0.0, 0], [0.5, 1], [1.0, 2], [1.0, 0]])")
   end
 
   add_help(:region_play_sequence,
-           "region_play_sequence(data) \
-'data' is list of region ids which will be played one after the other: \
+           "region_play_sequence(data)  \
+DATA is list of region ids which will be played one after the other: \
 region_play_sequence([0, 2, 1])")
   def region_play_sequence(data)
     time = 0.0
     region_play_list(data.map do |id|
                        cur = time
-                       time = time + region_frames(id) / region_srate(id)
+                       time = time + region_framples(id) / region_srate(id)
                        [cur, id]
                      end)
   end
@@ -1840,11 +1984,11 @@ region_play_sequence([0, 2, 1])")
   # replace-with-selection
 
   add_help(:replace_with_selection,
-           "replace_with_selection() \
-replaces the samples from the cursor with the current selection")
+           "replace_with_selection()  \
+Replaces the samples from the cursor with the current selection.")
   def replace_with_selection
     beg = cursor
-    len = selection_frames
+    len = selection_framples()
     delete_samples(beg, len)
     insert_selection(beg)
   end
@@ -1852,8 +1996,9 @@ replaces the samples from the cursor with the current selection")
   # explode-sf2
 
   add_help(:explode_sf2,
-           "explode_sf2() \
-turns the currently selected soundfont file into a bunch of files of the form sample-name.aif")
+           "explode_sf2()  \
+Turns the currently selected soundfont file into \
+a bunch of files of the form sample-name.aif.")
   def explode_sf2
     (soundfont_info() or []).each do |name, start, loop_start, loop_end|
       filename = name + ".aif"
@@ -1862,7 +2007,7 @@ turns the currently selected soundfont file into a bunch of files of the form sa
       end
       set_selection_member?(true)
       set_selection_position(start)
-      set_selection_frames(frames - start)
+      set_selection_framples(framples() - start)
       save_selection(filename, Mus_aifc)
       temp = open_sound(filename)
       set_sound_loop_info([loop_start, loop_end], temp)
@@ -1942,7 +2087,7 @@ turns the currently selected soundfont file into a bunch of files of the form sa
 
   def click_middle_button_to_open_next_file_in_directory
     nf = Next_file.new
-    $mouse_click_hook.add_hook!("next-file") do |snd, chn, button, state, x, y, axis|
+    $mouse_click_hook.add_hook!("next-file") do |s, c, button, st, x, y, ax|
       if button == 2
         nf.open_next_file_in_directory
       end
@@ -1976,12 +2121,17 @@ turns the currently selected soundfont file into a bunch of files of the form sa
 
 =begin
   with_sound() do
-    chain_dsps(0, 1.0, [0, 0, 1, 1, 2, 0], make_oscil(:frequency, 440))
-    chain_dsps(0, 1.0, [0, 0, 1, 1, 2, 0], make_one_pole(0.5), make_readin("oboe.snd"))
-    chain_dsps(0, 1.0, [0, 0, 1, 1, 2, 0], let(make_oscil(:frequency, 220),
-                                                make_oscil(:frequency, 440)) do |osc1, osc2|
-                  lambda do |val| osc1.run(val) + osc2.run(2.0 * val) end
-                end)
+    chain_dsps(0, 1.0, [0, 0, 1, 1, 2, 0],
+               make_oscil(:frequency, 440))
+    chain_dsps(0, 1.0, [0, 0, 1, 1, 2, 0],
+               make_one_pole(0.5), make_readin("oboe.snd"))
+    chain_dsps(0, 1.0, [0, 0, 1, 1, 2, 0],
+               let(make_oscil(:frequency, 220),
+                   make_oscil(:frequency, 440)) do |osc1, osc2|
+                  lambda do |val|
+                    osc1.run(val) + osc2.run(2.0 * val)
+                  end
+               end)
   end
 =end
 
@@ -2014,14 +2164,15 @@ turns the currently selected soundfont file into a bunch of files of the form sa
     set_max_regions(1024)
     set_with_mix_tags(false)
     scan_channel(lambda do |y|
-                   if (now_silent = moving_average(buffer, y * y) < silence) != in_silence
+                   now_silent = moving_average(buffer, y * y)
+                   if (now_silent < silence) != in_silence
                      edges.push(samp)
                    end
                    in_silence = now_silent
                    samp += 1
                    false
                  end)
-    edges.push(frames)
+    edges.push(framples())
     len = edges.length
     pieces = make_array(len)
     start = 0
@@ -2042,7 +2193,7 @@ turns the currently selected soundfont file into a bunch of files of the form sa
                       end
                     end
                     mix_region(reg, start)
-                    start += region_frames(reg)
+                    start += region_framples(reg)
                     forget_region(reg)
                   end
                 end)
@@ -2055,10 +2206,10 @@ turns the currently selected soundfont file into a bunch of files of the form sa
   # reorder blocks within channel
 
   add_help(:reverse_by_blocks,
-           "reverse_by_blocks(block_len, snd=false, chn=false) \
-divide sound into block-len blocks, recombine blocks in reverse order.")
+           "reverse_by_blocks(block_len, snd=false, chn=false)  \
+Divide sound into block-len blocks, recombine blocks in reverse order.")
   def reverse_by_blocks(block_len, snd = false, chn = false)
-    len = frames(snd, chn)
+    len = framples(snd, chn)
     num_blocks = (len / (srate(snd).to_f * block_len)).floor
     if num_blocks > 1
       actual_block_len = len / num_blocks
@@ -2078,19 +2229,21 @@ divide sound into block-len blocks, recombine blocks in reverse order.")
                     if beg == actual_block_len
                       ctr += 1
                       beg = 0
-                      rd = make_sampler([len - ctr * actual_block_len, 0].max, snd, chn)
+                      rd = make_sampler([len - ctr * actual_block_len, 0].max,
+                                        snd, chn)
                     end
                     val
-                  end,
-                  0, false, snd, chn, false, format("%s(%s", get_func_name, block_len))
+                  end, 0, false,
+                  snd, chn, false, format("%s(%s", get_func_name, block_len))
     end
   end
 
   add_help(:reverse_within_blocks,
-           "reverse_within_blocks(block_len, snd=false, chn=false) \
-divide sound into blocks, recombine in order, but each block internally reversed.")
+           "reverse_within_blocks(block_len, snd=false, chn=false)  \
+Divide sound into blocks, recombine in order, \
+but each block internally reversed.")
   def reverse_within_blocks(block_len, snd = false, chn = false)
-    len = frames(snd, chn)
+    len = framples(snd, chn)
     num_blocks = (len / (srate(snd).to_f * block_len)).floor
     if num_blocks > 1
       actual_block_len = len / num_blocks
@@ -2098,10 +2251,10 @@ divide sound into blocks, recombine in order, but each block internally reversed
       as_one_edit(lambda do | |
                     0.step(len, actual_block_len) do |beg|
                       reverse_channel(beg, actual_block_len, snd, chn)
-                      env_channel(no_clicks_env, beg, actual_block_len, snd, chn)
+                      env_channel(no_clicks_env, beg, actual_block_len,
+                                  snd, chn)
                     end
-                  end,
-                  format("%s(%s", get_func_name, block_len))
+                  end, format("%s(%s", get_func_name, block_len))
     else
       reverse_channel(0, false, snd, chn)
     end
@@ -2116,7 +2269,7 @@ divide sound into blocks, recombine in order, but each block internally reversed
   end
 
   def segment_sound(name, high, low)
-    len = mus_sound_frames(name)
+    len = mus_sound_framples(name)
     reader = make_sampler(0, name)
     avg = make_moving_average(:size, 128)
     lavg = make_moving_average(:size, 2048)
@@ -2165,7 +2318,8 @@ divide sound into blocks, recombine in order, but each block internally reversed
       0.step(segments, 2) do |bnd|
         segbeg = boundaries[bnd].to_i
         segbeg = boundaries[bnd + 1].to_i
-        fd.printf("(%s %s %s)", segbeg, segdur, segment_maxamp(sound_name, segbeg, segdur))
+        fd.printf("(%s %s %s)", segbeg, segdur,
+                  segment_maxamp(sound_name, segbeg, segdur))
         fd.printf(")")
       end
       mus_sound_forget(sound_name)
@@ -2183,7 +2337,8 @@ divide sound into blocks, recombine in order, but each block internally reversed
         fd.printf("\n\n# ---------------- %s ----------------", dir)
         if dir == "Piano"
           Dir[main_dir + dir].each do |inner_dir|
-            do_one_directory(fd, main_dir + dir + "/" + inner_dir, ins_name, 0.001, 0.0001)
+            do_one_directory(fd, main_dir + dir + "/" + inner_dir,
+                             ins_name, 0.001, 0.0001)
           end
         else
           do_one_directory(fd, main_dir + dir, ins_name)
@@ -2196,7 +2351,7 @@ divide sound into blocks, recombine in order, but each block internally reversed
 
   add_help(:channel_clipped?,
            "channel_clipped?(snd=false, chn=false)  \
-returns true and a sample number if it finds clipping.")
+Returns true and a sample number if it finds clipping.")
   def channel_clipped?(snd = false, chn = false)
     last_y = 0.0
     scan_channel(lambda do |y|
@@ -2213,7 +2368,7 @@ returns true and a sample number if it finds clipping.")
       if (chns = channels(index)) == 1
         scan_channel(lambda do |y| func.call(y, 0) end, beg, dur, index, 0)
       else
-        len = frames(index)
+        len = framples(index)
         fin = (dur ? [len, beg + dur].min : len)
         readers = make_array(chns) do |chn| make_sampler(beg, index, chn) end
         result = false
@@ -2275,7 +2430,8 @@ module Moog
                     0.287262, 0.285736, 0.284241, 0.282715, 0.28125, 0.279755,
                     0.27829, 0.276825, 0.275391, 0.273956, 0.272552, 0.271118,
                     0.269745, 0.268341, 0.266968, 0.265594, 0.264252, 0.262909,
-                    0.261566, 0.260223, 0.258911, 0.257599, 0.256317, 0.255035, 0.25375)
+                    0.261566, 0.260223, 0.258911, 0.257599, 0.256317, 0.255035,
+                    0.25375)
     Freqtable = [0, -1,
       0.03311111, -0.9,
       0.06457143, -0.8,
@@ -2338,7 +2494,9 @@ module Moog
       ix = @freqtable * 99.0
       ixint = ix.floor
       ixfrac = ix - ixint
-      @A = a * @Q * ((1.0 - ixfrac) * Gaintable[ixint + 99] + ixfrac * Gaintable[ixint + 100])
+      @A = a * @Q * 
+           ((1.0 - ixfrac) * Gaintable[ixint + 99] + 
+            ixfrac * Gaintable[ixint + 100])
       a
     end
 
@@ -2349,15 +2507,17 @@ module Moog
   end
 
   add_help(:make_moog_filter,
-           "make_moog_filter([freq=440.0, [Q=0]]) makes a new moog_filter generator. \
-'frequency' is the cutoff in Hz, \
-'Q' sets the resonance: 0 = no resonance, 1: oscillates at 'frequency'")
+           "make_moog_filter(freq=440.0, Q=0)  \
+Makes a new moog_filter generator. \
+FREQUENCY is the cutoff in Hz, \
+Q sets the resonance: 0 = no resonance, 1: oscillates at FREQUENCY.")
   def make_moog_filter(freq = 440.0, q = 0)
     Moog_filter.new(freq, q)
   end
 
   add_help(:moog_filter,
-           "moog_filter(moog, [insig=0.0]) is the generator associated with make_moog_filter")
+           "moog_filter(moog, insig=0.0)  \
+Is the generator associated with make_moog_filter.")
   def moog_filter(mg, insig = 0.0)
     mg.filter(insig)
   end

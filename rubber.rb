@@ -1,17 +1,17 @@
 # rubber.rb -- Translation of rubber.scm
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Fri Feb 28 03:04:03 CET 2003
-# Changed: Mon Nov 22 13:29:07 CET 2010
+# Created: 03/02/28 03:04:03
+# Changed: 14/11/13 05:00:45
 
 # module Rubber (see rubber.scm)
 #  add_named_mark(samp, name, snd, chn)
-#  derumble_sound(*args)
-#  sample_sound(*args)
-#  unsample_sound(*args)
+#  derumble_sound(snd, chn)
+#  sample_sound(snd, chn)
+#  unsample_sound(snd, chn)
 #  crossings()
 #  env_add(s0, s1, samps)
-#  rubber_sound(*args)
+#  rubber_sound(stretch, snd, chn)
 
 require "clm"
 
@@ -28,40 +28,42 @@ module Rubber
     m
   end
 
-  def derumble_sound(*args)
-    snd = (args[0] or false)
-    chn = (args[1] or false)
-    old_length = frames(snd, chn)
+  def derumble_sound(snd = false, chn = false)
+    old_length = framples(snd, chn)
     pow2 = (log([old_length, srate(snd)].min) / log(2)).ceil
     fftlen = (2 ** pow2).round
-    flt_env = [0.0, 0.0, 32.0 / srate(snd), 0.0, 40.0 / srate(snd), 1.0, 1.0, 1.0]
+    flt_env = [0.0, 0.0, 32.0 / srate(snd), 0.0,
+               40.0 / srate(snd), 1.0, 1.0, 1.0]
     filter_sound(flt_env, fftlen, snd, chn)
-    set_frames(old_length, snd, chn)
+    set_framples(old_length, snd, chn)
   end
 
-  def sample_sound(*args)
-    snd = (args[0] or false)
-    chn = (args[1] or false)
-    src_sound(1.0 / $extension, 1.0, snd, chn) unless $extension == 1.0
+  def sample_sound(snd = false, chn = false)
+    if $extension != 1.0
+      src_sound(1.0 / $extension, 1.0, snd, chn)
+    end
   end
 
-  def unsample_sound(*args)
-    snd = (args[0] or false)
-    chn = (args[1] or false)
-    src_sound($extension, 1.0, snd, chn) unless $extension == 1.0
+  def unsample_sound(snd = false, chn = false)
+    if $extension != 1.0
+      src_sound($extension, 1.0, snd, chn)
+    end
   end
 
   def crossings
     crosses = 0
     sr0 = make_sampler(0)
     samp0 = next_sample(sr0)
-    len = frames()
+    len = framples()
     sum = 0.0
     last_cross = 0
     silence = $extension * 0.001
     (0...len).each do |i|
       samp1 = next_sample(sr0)
-      if samp0 <= 0.0 and samp1 > 0.0 and (i - last_cross) > 4 and sum > silence
+      if samp0 <= 0.0 and
+          samp1 > 0.0 and
+          (i - last_cross) > 4 and
+          sum > silence
         crosses += 1
         last_cross = i
         sum = 0.0
@@ -85,10 +87,7 @@ module Rubber
     data
   end
 
-  def rubber_sound(*args)
-    stretch = args[0]
-    snd = (args[1] or false)
-    chn = (args[2] or false)
+  def rubber_sound(stretch, snd = false, chn = false)
     as_one_edit(lambda do | |
                   derumble_sound(snd, chn)
                   sample_sound(snd, chn)
@@ -99,14 +98,17 @@ module Rubber
                   cross_periods = make_vct(crosses)
                   sr0 = make_sampler(0, snd, chn)
                   samp0 = next_sample(sr0)
-                  len = frames()
+                  len = framples()
                   sum = 0.0
                   last_cross = 0
                   cross = 0
                   silence = $extension * 0.001
                   (0...len).each do |i|
                     samp1 = next_sample(sr0)
-                    if samp0 <= 0.0 and samp1 > 0.0 and (i - last_cross) > 4 and sum > silence
+                    if samp0 <= 0.0 and
+                        samp1 > 0.0 and
+                        (i - last_cross) > 4 and
+                        sum > silence
                       last_cross = i
                       sum = 0.0
                       cross_samples[cross] = i
@@ -124,7 +126,9 @@ module Rubber
                     len4 = fftlen / 4
                     data = make_vct(fftlen)
                     reader = make_sampler(s0.round)
-                    (0...fftlen).each do |j| data[j] = next_sample(reader) end
+                    (0...fftlen).each do |j|
+                      data[j] = next_sample(reader)
+                    end
                     autocorrelate(data)
                     autolen = 0
                     (1...len4).detect do |j|
@@ -195,12 +199,13 @@ module Rubber
                     else
                       cross_weights[i] = current_min
                       cross_marks[i] = current_mark
-                      cross_periods[i] = cross_samples[current_mark] - cross_samples[i]
+                      cross_periods[i] = cross_samples[current_mark] -
+                                         cross_samples[i]
                     end
                   end
-                  len = frames(snd, chn)
+                  len = framples(snd, chn)
                   adding = (stretch > 1.0)
-                  samps = ((stretch - 1.0).abs *  len).round
+                  samps = ((stretch - 1.0).abs * len).round
                   needed_samps = (adding ? samps : [len, samps * 2].min)
                   handled = 0
                   mult = 1
@@ -239,11 +244,15 @@ module Rubber
                       if adding
                         new_samps = env_add(beg, next_beg, len)
                         if $show_details
-                          add_named_mark(beg, format("%d:%d", i, (len / $extension).round))
+                          add_named_mark(beg,
+                                         format("%d:%d",
+                                                i, (len / $extension).round))
                         end
                         insert_samples(beg, len, new_samps)
                         if mult > 1
-                          (1...mult).each do |k| insert_samples(beg + k * len, len, new_samps) end
+                          (1...mult).each do |k|
+                            insert_samples(beg + k * len, len, new_samps)
+                          end
                         end
                         changed_len = changed_len + mult * len
                         (0...weights).each do |j|
@@ -253,9 +262,14 @@ module Rubber
                           end
                         end
                       else
-                        Snd.display("trouble at %d: %d of %d", i, beg, frames()) if beg >= frames()
+                        frms = framples()
+                        if beg >= frms
+                          Snd.display("trouble at %d: %d of %d", i, beg, frms)
+                        end
                         if $show_details
-                          add_named_mark(beg - 1, format("%d:%d", i, (len / $extension).round))
+                          add_named_mark(beg - 1,
+                                         format("%d:%d",
+                                                i, (len / $extension).round))
                         end
                         delete_samples(beg, len)
                         changed_len += len
@@ -274,14 +288,20 @@ module Rubber
                     end
                     changed_len > samps
                   end
-                  Snd.display("wanted: %d, got %d", samps.round, changed_len.round) if $show_details
+                  if $show_details
+                    Snd.display("wanted: %d, got %d",
+                                samps.round, changed_len.round)
+                  end
                   unsample_sound(snd, chn)
                   if $show_details
+                    frms0 = framples(snd, chn, 0)
                     Snd.display("%f -> %f (%f)",
-                                frames(snd, chn, 0), frames(snd,chn),
-                                (stretch * frames(snd, chn, 0)).round)
+                                frms0,
+                                framples(snd,chn),
+                                (stretch * frms0).round)
                   end
-                end, "(rubber_sound(#{args.join(', ')})")
+                end,
+                format("rubber_sound(%f, %p, %p,", stretch, snd, chn))
   end
 end
 
