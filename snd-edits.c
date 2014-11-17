@@ -9010,7 +9010,7 @@ static Xen g_is_snd_to_sample(Xen os)
 {
   #define H_is_snd_to_sample "(" S_is_snd_to_sample " gen): " PROC_TRUE " if gen is an " S_snd_to_sample " generator"
   return(C_bool_to_Xen_boolean((mus_is_xen(os)) && 
-			  (is_snd_to_sample(Xen_to_mus_any(os)))));
+			       (is_snd_to_sample(Xen_to_mus_any(os)))));
 }
 
 
