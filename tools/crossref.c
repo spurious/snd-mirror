@@ -808,7 +808,7 @@ int main(int argc, char **argv)
 		    if ((counts[qs[i]->i][j] > 0) &&
 			((strcmp(files[j], "snd-xen.c") == 0) ||
 			 ((strcmp(files[j], "snd-nogui.c") != 0) &&
-			  (strncmp(files[j], "snd-x", 5) != 0) &&
+			  (strcmp(files[j], "snd-motif.c") != 0) &&
 			  (strncmp(files[j], "snd-g", 5) != 0))))
 		      {
 			/* fprintf(stderr,"in %s\n", files[j]); */
@@ -840,7 +840,7 @@ int main(int argc, char **argv)
 		      
 		      if (x_case)
 			{
-			  if (((strncmp(files[j], "snd-x", 5) != 0) &&
+			  if (((strcmp(files[j], "snd-motif.c") != 0) &&
 			       (strncmp(files[j], "snd-g", 5) != 0)) ||
 			      (strcmp(files[j], "snd-xen.c") == 0))
 			    x_case = false;
@@ -863,9 +863,9 @@ int main(int argc, char **argv)
 			  (strcmp(files[j], qs[i]->def) != 0) &&
 			  (strcmp(files[j], "snd-nogui.c") != 0))
 			{
-			  if (((strncmp(files[j], "snd-x", 5) == 0) || 
+			  if (((strcmp(files[j], "snd-motif.c") == 0) || 
 			       (strncmp(files[j], "snd-g", 5) == 0)) &&
-			      ((strncmp(qs[i]->def, "snd-x", 5) == 0) || 
+			      ((strcmp(qs[i]->def, "snd-motif.c") == 0) || 
 			       (strncmp(qs[i]->def, "snd-g", 5) == 0)) &&
 			      (strcmp((const char *)(files[j] + 5), (const char *)(qs[i]->def + 5)) == 0))
 			    {
@@ -909,7 +909,7 @@ int main(int argc, char **argv)
 		  (qs[i]->def) &&
 		  (strcmp(qs[i]->hname, "snd-1.h") == 0) &&
 		  (strcmp(qs[i]->def, "snd-xen.c") != 0) &&
-		  ((strncmp(qs[i]->def, "snd-x", 5) == 0) || 
+		  ((strcmp(qs[i]->def, "snd-motif.c") == 0) || 
 		   (strncmp(qs[i]->def, "snd-g", 5) == 0)))
 		fprintf(FD, "\n    (all within gui)\n");
 

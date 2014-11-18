@@ -19445,8 +19445,8 @@ widget_t make_preferences_dialog(void)
     scroller = XmCreateScrolledWindow(preferences_dialog, (char *)"pref-scroller", args, n);
     XtManageChild(scroller);
     
-    XtSetArg(args[n], XmNbackground, ss->white); n++;
     n = attach_all_sides(args, 0);
+    XtSetArg(args[n], XmNbackground, ss->white); n++;
     XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
     topics = XtCreateManagedWidget("pref-topics", xmRowColumnWidgetClass, scroller, args, n);
     XtVaSetValues(scroller,
@@ -24467,8 +24467,7 @@ Widget make_textfield_widget(const char *name, Widget parent, Arg *args, int n, 
   XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
   df = XtCreateManagedWidget(name, xmTextFieldWidgetClass, parent, args, n);
 
-  if ((activatable != NOT_ACTIVATABLE_OR_FOCUSED) &&
-      (activatable != ACTIVATABLE_BUT_NOT_FOCUSED))
+  if (activatable != ACTIVATABLE_BUT_NOT_FOCUSED)
     {
       XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, NULL);
       XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);

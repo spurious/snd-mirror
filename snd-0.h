@@ -1542,4 +1542,5 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define HAVE_MOTIF use USE_MOTIF not HAVE!
 /* I keep using these HAVE_* forms by mistake */
 
+
 #endif

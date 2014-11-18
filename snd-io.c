@@ -655,7 +655,12 @@ snd_data *copy_snd_data(snd_data *sd, mus_long_t beg, int bufsize)
   sf->hdr = hdr;
   sf->temporary = DONT_DELETE_ME;
   sf->edit_ctr = sd->edit_ctr;
-  sf->open = FD_OPEN;
+
+  /* 17-Nov-14: this was sf->open = FD_OPEN; but I can't think of any reason to leave it open */
+  sf->open = FD_CLOSED; 
+  sf->io->fd = -1;
+  mus_file_close(fd); 
+
   sf->inuse = false;
   sf->copy = true;
   sf->chan = 0;
@@ -826,7 +831,7 @@ void set_up_snd_io(chan_info *cp, int i, int fd, const char *filename, file_info
 			    hdr->chans,
 			    hdr->type);
   io = make_file_state(fd, hdr, i, 0,
-		       (post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
+		       (post_close) ? MAX_BUFFER_SIZE : FILE_BUFFER_SIZE);
   cp->sounds[0] = make_snd_data_file(filename, io,
 				     copy_header(hdr->name, hdr),
 				     DONT_DELETE_ME, cp->edit_ctr, i);

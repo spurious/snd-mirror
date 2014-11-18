@@ -5521,7 +5521,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 
   if (((egen) && (mus_phase(egen) >= 0.0)) ||
       ((!egen) && (ratio >= 0.0))) /* ratio == 0.0 if env in use because env is the srate (as change arg) */
-    sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, (!egen) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
+    sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, (!egen) ? MAX_BUFFER_SIZE : FILE_BUFFER_SIZE);
   else sf = init_sample_read_any(beg + dur - 1, cp, READ_BACKWARD, pos);
 
   errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, S_src_channel, OVER_SOUND, &clm_err);

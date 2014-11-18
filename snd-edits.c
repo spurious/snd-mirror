@@ -5167,13 +5167,13 @@ snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_d
 
 snd_fd *init_sample_read_any(mus_long_t samp, chan_info *cp, read_direction_t direction, int edit_position)
 {
-  return(init_sample_read_any_with_bufsize(samp, cp, direction, edit_position, MIX_FILE_BUFFER_SIZE));
+  return(init_sample_read_any_with_bufsize(samp, cp, direction, edit_position, FILE_BUFFER_SIZE));
 }
 
 
 snd_fd *init_sample_read(mus_long_t samp, chan_info *cp, read_direction_t direction)
 {
-  return(init_sample_read_any_with_bufsize(samp, cp, direction, cp->edit_ctr, MIX_FILE_BUFFER_SIZE));
+  return(init_sample_read_any_with_bufsize(samp, cp, direction, cp->edit_ctr, FILE_BUFFER_SIZE));
 }
 
 
@@ -5259,7 +5259,7 @@ static void previous_sound_1(snd_fd *sf)
 	    {
 	      if (prev_snd->inuse) 
 		{
-		  prev_snd = copy_snd_data(prev_snd, ind0, MIX_FILE_BUFFER_SIZE);
+		  prev_snd = copy_snd_data(prev_snd, ind0, FILE_BUFFER_SIZE);
 		  if (prev_snd == NULL)
 		    {
 		      /* too many files open or something of that sort */
@@ -5358,7 +5358,7 @@ static void next_sound_1(snd_fd *sf)
 	    {
 	      if (nxt_snd->inuse)
 		{
-		  nxt_snd = copy_snd_data(nxt_snd, ind0, MIX_FILE_BUFFER_SIZE);
+		  nxt_snd = copy_snd_data(nxt_snd, ind0, FILE_BUFFER_SIZE);
 		  if (nxt_snd == NULL)
 		    {
 		      reader_out_of_data(sf);
@@ -6420,7 +6420,7 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, mus_long_t beg, mus_long_t len, i
 
       if (first_snd->inuse)
 	{
-	  first_snd = copy_snd_data(first_snd, beg, MIX_FILE_BUFFER_SIZE);
+	  first_snd = copy_snd_data(first_snd, beg, FILE_BUFFER_SIZE);
 	  if (!first_snd)
 	    return(cancel_reader(sf));
 	}
