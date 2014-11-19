@@ -9,6 +9,8 @@
 ;;;   of the method argument, or use #_method to override the name lookup, or use
 ;;;   the explicit call style: (((gen 'embedded-gen) 'shared-method) ...)
 
+;;; if gen has embedded gen, it needs a special copy method (see adjustable-oscil),
+
 
 (define-constant nearly-zero 1.0e-10) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
 (define two-pi (* 2.0 pi))

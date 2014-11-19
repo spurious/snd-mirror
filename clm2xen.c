@@ -20851,30 +20851,6 @@ static char *mus_generator_to_readable_string(s7_scheme *sc, void *obj)
   s7_error(sc, s7_make_symbol(sc, "io-error"), s7_list(sc, 1, s7_make_string(sc, "can't write a clm generator readably")));
   return(NULL);
 }
-
-static s7_pointer g_mus_arrays_are_equal(s7_scheme *sc, s7_pointer args)
-{
-  /* experimental: a1 a2 (err .001) */
-  mus_float_t err = 0.001;
-  s7_pointer a1, a2;
-  s7_Int len;
-
-  a1 = s7_car(args);
-  if (!s7_is_float_vector(a1))
-    return(s7_wrong_type_arg_error(sc, "mus-arrays-equal?", 1, a1, "a float vector"));
-
-  a2 = s7_cadr(args);
-  if (!s7_is_float_vector(a2))
-    return(s7_wrong_type_arg_error(sc, "mus-arrays-equal?", 2, a2, "a float vector"));
-  
-  len = s7_vector_length(a1);
-  if (len != s7_vector_length(a2))
-    return(s7_f(sc));
-
-  if (s7_is_pair(s7_cddr(args)))
-    err = s7_real(s7_caddr(args));
-  return(s7_make_boolean(sc, mus_arrays_are_equal(s7_float_vector_elements(a1), s7_float_vector_elements(a2), err, len)));
-}
 #endif
 
 
@@ -21768,8 +21744,6 @@ static void mus_xen_init(void)
 
     clm_reverb_accessor = s7_make_function(s7, "(set " S_reverb ")", g_clm_reverb_set, 2, 0, false, "called if " S_reverb " is set");
     s7_symbol_set_access(s7, s7_make_symbol(s7, S_reverb), clm_reverb_accessor);
-
-    Xen_define_safe_procedure("mus-arrays-equal?", g_mus_arrays_are_equal, 2, 1, 0, "an experiment");
   }
 #endif
 

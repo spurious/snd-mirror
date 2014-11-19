@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#)sndins.c	1.8 1/25/14
+ * @(#)sndins.c	1.11 11/18/14
  */
 
 /*
@@ -32,7 +32,7 @@
  *
  * mus_any *mus_make_fcomb(mus_float_t scaler, int size,
  *		mus_float_t a0, mus_float_t a1);
- * int mus_fcomb_p(mus_any *ptr);
+ * int mus_is_fcomb(mus_any *ptr);
  * mus_float_t mus_fcomb(mus_any *ptr, mus_float_t input, mus_float_t ignored);
  *
  * mus_long_t ins_fm_violin(mus_float_t start, mus_float_t dur, [...]);
@@ -43,7 +43,7 @@
  * void Init_sndins(void);
  */
 
-#if HAVE_CONFIG_H
+#if defined(HAVE_CONFIG_H)
 #include <mus-config.h>
 #endif
 #include <string.h>
@@ -60,26 +60,27 @@
 #include "clm2xen.h"
 #include "sndins.h"
 
-#ifndef XEN_PROVIDED_P
-#if HAVE_SCHEME
-#define XEN_PROVIDED_P(feature)						\
-	XEN_TO_C_BOOLEAN(XEN_MEMBER(C_STRING_TO_XEN_SYMBOL(feature),	\
-	XEN_NAME_AS_C_STRING_TO_VALUE("*features*")))
+#if !defined(Xen_is_provided)
+#if defined(HAVE_SCHEME)
+#define Xen_is_provided(feature)					\
+	Xen_boolean_to_C_bool(Xen_member(C_string_to_Xen_symbol(feature),\
+	    C_string_to_Xen_value("*features*")))
 #elif HAVE_RUBY
-#define XEN_PROVIDED_P(feature)	XEN_TO_C_BOOLEAN(rb_provided(feature))
+#define Xen_is_provided(feature) Xen_boolean_to_C_bool(rb_provided(feature))
 #elif HAVE_FORTH
-#define XEN_PROVIDED_P(feature)	fth_provided_p(feature)
+#define Xen_is_provided(feature) fth_provided_p(feature)
 #else
-#define XEN_PROVIDED_P(feature)	false
+#define Xen_is_provided(feature) false
 #endif
-#endif /* XEN_PROVIDED */
+#endif /* Xen_is_provided */
 
-#define INS_NO_MEMORY	XEN_ERROR_TYPE("sndins-no-memory-error")
-#define INS_MISC	XEN_ERROR_TYPE("sndins-misc-error")
+#define INS_NO_MEMORY	Xen_make_error_type("sndins-no-memory-error")
+#define INS_MISC	Xen_make_error_type("sndins-misc-error")
 
 #define INS_ERROR(Error, Caller, Msg)					\
-	XEN_ERROR(Error, 						\
-	    XEN_LIST_2(C_TO_XEN_STRING(Caller), C_TO_XEN_STRING(Msg)))
+	Xen_error(Error,						\
+	    Xen_list_2(C_string_to_Xen_string(Caller),			\
+		C_string_to_Xen_string(Msg)))
 #define INS_MISC_ERROR(Caller, Msg)	INS_ERROR(INS_MISC, Caller, Msg)
 #define INS_NO_MEMORY_ERROR(Caller)					\
 	INS_ERROR(INS_NO_MEMORY, Caller, "cannot allocate memory")
@@ -106,7 +107,7 @@
 #define SC_size				"size"
 #define SC_a0				"a0"
 #define SC_a1				"a1"
-#if HAVE_RUBY
+#if defined(HAVE_RUBY)
 #define SC_amp_env			"amp_env"
 #define SC_fm_index			"fm_index"
 #define SC_reverb_amount		"reverb_amount"
@@ -313,7 +314,7 @@ static char    *keywords[NKEYS] = {
 	SC_a1
 };
 
-#if HAVE_RUBY
+#if defined(HAVE_RUBY)
 #define INS_OUTPUT		"output"
 #define INS_REVERB		"reverb"
 #define INS_VERBOSE		"clm_verbose"
@@ -341,7 +342,7 @@ static char    *keywords[NKEYS] = {
 static mus_float_t *array2array(mus_float_t *list, int len);
 static bool	array_equal_p(mus_float_t *env1, int len1,
 		    mus_float_t *env2, int len2);
-static int	feq  (mus_float_t x, int i);
+static int	feq(mus_float_t x, int i);
 static char    *format_array(mus_float_t *line, int size);
 static bool	get_global_boolean(const char *name, bool def);
 static mus_float_t get_global_float(const char *name, mus_float_t def);
@@ -350,8 +351,9 @@ static mus_any *get_global_mus_gen(const char *name);
 static int	ins_message(const char *fmt,...);
 static int     *int_array2array(int *list, int len);
 static bool	prime_p(int x);
-static mus_float_t *xen_list2array(XEN list);
-static int     *xen_list2iarray(XEN list);
+static mus_float_t *xen_list2array(Xen list);
+static int     *xen_list2iarray(Xen list);
+static vct     *mus_optkey_to_vct(Xen key, const char *caller, int n, vct *def);
 
 /* fcomb generator */
 static char    *fcomb_describe(mus_any *ptr);
@@ -360,25 +362,25 @@ static int	fcomb_free(mus_any *ptr);
 static mus_long_t fcomb_length(mus_any *ptr);
 static mus_float_t fcomb_scaler(mus_any *ptr);
 
-/* XEN fcomb */
-static XEN	c_fcomb(XEN gen, XEN input);
-static XEN	c_fcomb_p(XEN gen);
-static XEN	c_make_fcomb(XEN args);
+/* Xen fcomb */
+static Xen	c_fcomb(Xen gen, Xen input);
+static Xen	c_is_fcomb(Xen gen);
+static Xen	c_make_fcomb(Xen args);
 
 /* instruments */
-#if HAVE_FORTH
-static void	c_fm_violin(XEN args);
-static void	c_freeverb(XEN args);
-static void	c_jc_reverb(XEN args);
-static void	c_nrev(XEN args);
+#if defined(HAVE_FORTH)
+static void	c_fm_violin(Xen args);
+static void	c_freeverb(Xen args);
+static void	c_jc_reverb(Xen args);
+static void	c_nrev(Xen args);
 #else
-static XEN	c_fm_violin(XEN args);
-static XEN	c_freeverb(XEN args);
-static XEN	c_jc_reverb(XEN args);
-static XEN	c_nrev(XEN args);
+static Xen	c_fm_violin(Xen args);
+static Xen	c_freeverb(Xen args);
+static Xen	c_jc_reverb(Xen args);
+static Xen	c_nrev(Xen args);
 #endif
 
-static XEN	allkeys[NKEYS];
+static Xen	allkeys[NKEYS];
 
 static void
 init_keywords(void)
@@ -386,31 +388,52 @@ init_keywords(void)
 	int i;
 
 	for (i = 0; i < NKEYS; i++)
-		allkeys[i] = XEN_MAKE_KEYWORD(keywords[i]);
+		allkeys[i] = Xen_make_keyword(keywords[i]);
 }
 
+/*
+ * from clm2xen.c
+ */
+static vct *
+mus_optkey_to_vct(Xen key, const char *caller, int n, vct *def)
+{
+	if (mus_is_vct(key))
+		return(Xen_to_vct(key));
+	if ((!(Xen_is_keyword(key))) && (!(Xen_is_false(key))))
+		Xen_check_type(false, key, n, caller, "a " S_vct);
+	return(def);
+}
+
+/*
+ * Required for getting $output|$reverb (Ruby) and *output*|*reverb* (Fth).
+ *
+ * XXX: *output*|*reverb* (S7)
+ * Doesn't work for S7.  (Tue Nov 18 22:43:18 CET 2014)
+ */
 static mus_any *
 get_global_mus_gen(const char *name)
 {
-	if (XEN_DEFINED_P(name)) {
-		XEN value;
+#if !defined(HAVE_SCHEME)
+	Xen value;
 
-		value = XEN_NAME_AS_C_STRING_TO_VALUE(name);
+	if (Xen_is_defined(name)) {
+		value = C_string_to_Xen_value(name);
 		if (mus_is_xen(value))
-			return (XEN_TO_MUS_ANY(value));
+			return (Xen_to_mus_any(value));
 	}
+#endif
 	return (NULL);
 }
 
 static bool
 get_global_boolean(const char *name, bool def)
 {
-	if (XEN_DEFINED_P(name)) {
-		XEN value;
+	if (Xen_is_defined(name)) {
+		Xen value;
 
-		value = XEN_NAME_AS_C_STRING_TO_VALUE(name);
-		if (XEN_BOOLEAN_P(value))
-			return (XEN_TO_C_BOOLEAN(value));
+		value = C_string_to_Xen_value(name);
+		if (Xen_is_boolean(value))
+			return (Xen_boolean_to_C_bool(value));
 	}
 	return (def);
 }
@@ -418,12 +441,12 @@ get_global_boolean(const char *name, bool def)
 static int
 get_global_int(const char *name, int def)
 {
-	if (XEN_DEFINED_P(name)) {
-		XEN value;
+	if (Xen_is_defined(name)) {
+		Xen value;
 
-		value = XEN_NAME_AS_C_STRING_TO_VALUE(name);
-		if (XEN_NUMBER_P(value))
-			return (XEN_TO_C_INT(value));
+		value = C_string_to_Xen_value(name);
+		if (Xen_is_number(value))
+			return (Xen_integer_to_C_int(value));
 	}
 	return (def);
 }
@@ -431,28 +454,28 @@ get_global_int(const char *name, int def)
 static mus_float_t
 get_global_float(const char *name, mus_float_t def)
 {
-	if (XEN_DEFINED_P(name)) {
-		XEN value;
+	if (Xen_is_defined(name)) {
+		Xen value;
 
-		value = XEN_NAME_AS_C_STRING_TO_VALUE(name);
-		if (XEN_NUMBER_P(value))
-			return (XEN_TO_C_DOUBLE(value));
+		value = C_string_to_Xen_value(name);
+		if (Xen_is_number(value))
+			return (Xen_real_to_C_double(value));
 	}
 	return (def);
 }
 
 /*
- * Return mus_float_t array initialized with contents of XEN list.
+ * Return mus_float_t array initialized with contents of Xen list.
  * (mus_make_env())
  */
 static mus_float_t *
-xen_list2array(XEN list)
+xen_list2array(Xen list)
 {
 	int len, i = 0;
 	mus_float_t *flist;
-	XEN lst;
+	Xen lst;
 
-	len = XEN_LIST_LENGTH(list);
+	len = Xen_list_length(list);
 	if (len == 0)
 		return (NULL);
 	flist = malloc(len * sizeof(mus_float_t));
@@ -461,23 +484,23 @@ xen_list2array(XEN list)
 		/* NOTREACHED */
 		return (NULL);
 	}
-	for (i = 0, lst = XEN_COPY_ARG(list); i < len; i++, lst = XEN_CDR(lst))
-		flist[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+	for (i = 0, lst = Xen_copy_arg(list); i < len; i++, lst = Xen_cdr(lst))
+		flist[i] = Xen_real_to_C_double(Xen_car(lst));
 	return (flist);
 }
 
 /*
- * Return int array initialized with contents of XEN list.
+ * Return int array initialized with contents of Xen list.
  * (mus_make_mixer())
  */
 static int *
-xen_list2iarray(XEN list)
+xen_list2iarray(Xen list)
 {
 	int len, i = 0;
 	int *ilist;
-	XEN lst;
+	Xen lst;
 
-	len = XEN_LIST_LENGTH(list);
+	len = Xen_list_length(list);
 	if (len == 0)
 		return (NULL);
 	ilist = malloc(len * sizeof(int));
@@ -486,8 +509,8 @@ xen_list2iarray(XEN list)
 		/* NOTREACHED */
 		return (NULL);
 	}
-	for (i = 0, lst = XEN_COPY_ARG(list); i < len; i++, lst = XEN_CDR(lst))
-		ilist[i] = XEN_TO_C_INT(XEN_CAR(lst));
+	for (i = 0, lst = Xen_copy_arg(list); i < len; i++, lst = Xen_cdr(lst))
+		ilist[i] = Xen_integer_to_C_int(Xen_car(lst));
 	return (ilist);
 }
 
@@ -557,12 +580,6 @@ array_equal_p(mus_float_t *env1, int len1, mus_float_t *env2, int len2)
 /*
  * Print message in listener.
  */
-#if HAVE_SCHEME
-#define INS_COMMENT_STRING ";;"
-#else
-#define INS_COMMENT_STRING XEN_COMMENT_STRING
-#endif
-
 static int
 ins_message(const char *fmt,...)
 {
@@ -580,10 +597,10 @@ ins_message(const char *fmt,...)
 	va_start(ap, fmt);
 	result = vsnprintf(s, len, fmt, ap);
 	va_end(ap);
-	if (XEN_PROVIDED_P("snd") && !XEN_PROVIDED_P("snd-nogui"))
-		mus_print(INS_COMMENT_STRING " %s", s);
+	if (Xen_is_provided("snd") && !Xen_is_provided("snd-nogui"))
+		mus_print(Xen_comment_mark " %s", s);
 	else
-		fprintf(stdout, INS_COMMENT_STRING " %s", s);
+		fprintf(stdout, Xen_comment_mark " %s", s);
 	free(s);
 	return (result);
 }
@@ -657,7 +674,7 @@ typedef struct {
 static int	MUS_FCOMB = 0;
 
 int
-mus_fcomb_p(mus_any *ptr)
+mus_is_fcomb(mus_any *ptr)
 {
 	return (ptr != NULL && mus_type(ptr) == MUS_FCOMB);
 }
@@ -686,8 +703,8 @@ fcomb_equal_p(mus_any *p1, mus_any *p2)
 
 	g1 = (fcomb *)p1;
 	g2 = (fcomb *)p2;
-	return (mus_fcomb_p(p1) && ((p1 == p2) ||
-	    (mus_fcomb_p(p2) &&
+	return (mus_is_fcomb(p1) && ((p1 == p2) ||
+	    (mus_is_fcomb(p2) &&
 	    g1->xs[0] == g2->xs[0] &&
 	    g1->xs[1] == g2->xs[1] &&
 	    g1->x1 == g2->x1)));
@@ -804,15 +821,15 @@ keyword arguments with default values:\n\
  :a1     0.0\n\
 Return new fcomb generator."
 
-#if HAVE_RUBY
+#if defined(HAVE_RUBY)
 #define S_make_fcomb	"make_fcomb"
 #else
 #define S_make_fcomb	"make-fcomb"
 #endif
 
-#if HAVE_RUBY
+#if defined(HAVE_RUBY)
 #define H_make_fcomb	S_make_fcomb "(*args)\n" h_make_fcomb_args
-#elif HAVE_FORTH
+#elif defined(HAVE_FORTH)
 #define H_make_fcomb	S_make_fcomb " ( args -- gen )\n" h_make_fcomb_args
 #else				/* HAVE_SCHEME */
 #define H_make_fcomb	"(" S_make_fcomb " . args)\n" h_make_fcomb_args
@@ -820,18 +837,18 @@ Return new fcomb generator."
 
 #define MAX_TABLE_SIZE (1024 * 1024 * 20)
 
-static XEN
-c_make_fcomb(XEN args)
+static Xen
+c_make_fcomb(Xen args)
 {
 #define FCOMB_LAST_KEY 4
 	int i, keyn, argn, vals, lst_len, size;
 	mus_float_t scaler, a0, a1;
-	XEN kargs[FCOMB_LAST_KEY * 2], keys[FCOMB_LAST_KEY];
+	Xen kargs[FCOMB_LAST_KEY * 2], keys[FCOMB_LAST_KEY];
 	int orig_arg[FCOMB_LAST_KEY] = {0};
 	mus_any *ge;
 
 	argn = 0;
-	lst_len = XEN_LIST_LENGTH(args);
+	lst_len = Xen_list_length(args);
 	size = 1;
 	scaler = 1.0;
 	a0 = a1 = 0.0;
@@ -840,9 +857,9 @@ c_make_fcomb(XEN args)
 	keys[argn++] = allkeys[C_a0];
 	keys[argn++] = allkeys[C_a1];
 	for (i = 0; i < FCOMB_LAST_KEY * 2; i++)
-		kargs[i] = XEN_UNDEFINED;
+		kargs[i] = Xen_undefined;
 	for (i = 0; i < lst_len; i++)
-		kargs[i] = XEN_LIST_REF(args, i);
+		kargs[i] = Xen_list_ref(args, i);
 	vals = mus_optkey_unscramble(S_make_fcomb, argn, keys, kargs, orig_arg);
 	if (vals > 0) {
 		keyn = 0;
@@ -852,10 +869,10 @@ c_make_fcomb(XEN args)
 		size = mus_optkey_to_int(keys[keyn], S_make_fcomb,
 		    orig_arg[keyn], size);
 		if (size < 0)
-			XEN_OUT_OF_RANGE_ERROR(S_make_fcomb, orig_arg[keyn],
+			Xen_out_of_range_error(S_make_fcomb, orig_arg[keyn],
 			    keys[keyn], "size < 0?");
 		if (size > MAX_TABLE_SIZE)
-			XEN_OUT_OF_RANGE_ERROR(S_make_fcomb, orig_arg[keyn],
+			Xen_out_of_range_error(S_make_fcomb, orig_arg[keyn],
 			    keys[keyn], "size too large");
 		keyn++;
 		a0 = mus_optkey_to_float(keys[keyn], S_make_fcomb,
@@ -868,7 +885,7 @@ c_make_fcomb(XEN args)
 	if (ge) {
 		fcomb *g;
 		mus_xen *fc;
-		XEN v1, v2;
+		Xen v1, v2;
 
 		g = (fcomb *)ge;
 		/* wrapper set v->dont_free = true */
@@ -877,57 +894,57 @@ c_make_fcomb(XEN args)
 		fc = mus_any_to_mus_xen_with_two_vcts(ge, v1, v2);
 		return (mus_xen_to_object(fc));
 	}
-	return (XEN_FALSE);
+	return (Xen_false);
 }
 
-#define S_fcomb_p	"fcomb?"
-#define h_fcomb_p_doc	"\
+#define S_is_fcomb	"fcomb?"
+#define h_is_fcomb_doc	"\
 Return " INS_TRUE " if GEN is an fcomb generator, otherwise " INS_FALSE "."
 
-#if HAVE_RUBY
-#define H_fcomb_p	S_fcomb_p "(gen)  " h_fcomb_p_doc
-#elif HAVE_FORTH
-#define H_fcomb_p	S_fcomb_p " ( gen -- f )  " h_fcomb_p_doc
+#if defined(HAVE_RUBY)
+#define H_is_fcomb	S_is_fcomb "(gen)  " h_is_fcomb_doc
+#elif defined(HAVE_FORTH)
+#define H_is_fcomb	S_is_fcomb " ( gen -- f )  " h_is_fcomb_doc
 #else				/* HAVE_SCHEME */
-#define H_fcomb_p	"(" S_fcomb_p " gen)  " h_fcomb_p_doc
+#define H_is_fcomb	"(" S_is_fcomb " gen)  " h_is_fcomb_doc
 #endif
 
-#define XEN_FCOMB_P(obj)						\
-	(mus_is_xen(obj) && mus_fcomb_p(XEN_TO_MUS_ANY(obj)))
+#define Xen_is_fcomb(obj)						\
+	(mus_is_xen(obj) && mus_is_fcomb(Xen_to_mus_any(obj)))
 
-static XEN
-c_fcomb_p(XEN obj)
+static Xen
+c_is_fcomb(Xen obj)
 {
-	return (C_TO_XEN_BOOLEAN(XEN_FCOMB_P(obj)));
+	return (C_bool_to_Xen_boolean(Xen_is_fcomb(obj)));
 }
 
 #define S_fcomb		"fcomb"
 #define h_fcomb_doc	"Return result of running fcomb generator."
 
-#if HAVE_RUBY
+#if defined(HAVE_RUBY)
 #define H_fcomb	S_fcomb	"(gen, input=0.0)  " h_fcomb_doc
-#elif HAVE_FORTH
+#elif defined(HAVE_FORTH)
 #define H_fcomb	S_fcomb	" ( gen input=0.0 -- res )  " h_fcomb_doc
 #else				/* HAVE_SCHEME */
 #define H_fcomb		"(" S_fcomb " gen (input 0.0))  " h_fcomb_doc
 #endif
 
-static XEN
-c_fcomb(XEN gen, XEN input)
+static Xen
+c_fcomb(Xen gen, Xen input)
 {
 	mus_any *ge;
 	mus_float_t fm;
 
 	fm = 0.0;
-	ge = XEN_TO_MUS_ANY(gen);
-	XEN_ASSERT_TYPE(mus_fcomb_p(ge), gen, 1, S_fcomb, "an fcomb");
-	if (XEN_BOUND_P(input))
-		fm = XEN_TO_C_DOUBLE(input);
-	return (C_TO_XEN_DOUBLE(mus_fcomb(ge, fm, 0.0)));
+	ge = Xen_to_mus_any(gen);
+	Xen_check_type(mus_is_fcomb(ge), gen, 1, S_fcomb, "an fcomb");
+	if (Xen_is_bound(input))
+		fm = Xen_real_to_C_double(input);
+	return (C_double_to_Xen_real(mus_fcomb(ge, fm, 0.0)));
 }
 
 /* --- instruments --- */
-#if HAVE_RUBY
+#if defined(HAVE_RUBY)
 #define S_fm_violin	"fm_violin"
 #define S_jc_reverb	"jc_reverb"
 #else
@@ -1404,7 +1421,9 @@ ins_nrev(mus_float_t start, mus_float_t dur, mus_float_t reverb_factor,
 }
 
 #define FV_WARN	"input must be mono or in channels must equal out channels"
-
+#define ins_fcomb(Gen, Val)	mus_fcomb(Gen, Val, 0.0)
+#define ins_delay(Gen, Val)	mus_delay_unmodulated(Gen, Val)
+#define ins_all_pass(Gen, Val)	mus_all_pass_unmodulated(Gen, Val)
 
 mus_long_t
 ins_freeverb(mus_float_t start, mus_float_t dur, mus_float_t room_decay,
@@ -1412,15 +1431,18 @@ ins_freeverb(mus_float_t start, mus_float_t dur, mus_float_t room_decay,
     mus_float_t output_gain, mus_float_t scale_room_decay,
     mus_float_t offset_room_decay, mus_float_t scale_damping,
     mus_float_t stereo_spread, int *combtuning, int comb_len,
-    int *allpasstuning, int all_len, mus_float_t *output_mixer,
+    int *allpasstuning, int all_len, vct *output_mixer,
     mus_any *out, mus_any *rev)
 {
 	mus_long_t i, beg, len;
-	int out_chans, in_chans;
+	int out_chans, in_chans, j, k, size;
 	mus_float_t srate_scale;
 	mus_float_t local_gain, global_gain;
-	mus_float_t tmp;
-	mus_any *out_mix = NULL, *out_buf = NULL, *f_out = NULL, *f_in = NULL;
+	mus_float_t room_decay_val, tmp;
+	vct *out_mix = NULL, *out_buf = NULL, *f_out = NULL, *f_in = NULL;
+	mus_any **predelays, ***allpasses, ***combs;
+	mus_any *g;
+	mus_float_t *om, *ob, *fo;
 
 	out_chans = in_chans = 0;
 	srate_scale = mus_srate() / 44100.0;
@@ -1435,122 +1457,138 @@ ins_freeverb(mus_float_t start, mus_float_t dur, mus_float_t room_decay,
 	in_chans = mus_channels(rev);
 	if (in_chans > 1 && in_chans != out_chans)
 		INS_MISC_ERROR(S_freeverb, FV_WARN);
-	out_buf = mus_float_t *calloc(out_chans, sizeof(mus_float_t));
-	f_out = mus_float_t *calloc(out_chans, sizeof(mus_float_t));
-	f_in = mus_float_t *calloc(in_chans, sizeof(mus_float_t));
+	out_buf = mus_vct_make(out_chans);
+	f_out = mus_vct_make(out_chans);
+	f_in = mus_vct_make(in_chans);
 	local_gain = (1.0 - global)*(1.0 - 1.0 / out_chans) + 1.0 / out_chans;
 	tmp = (out_chans * out_chans - out_chans);
 	if (tmp < 1.0)
 		tmp = 1.0;
 	global_gain = (out_chans - local_gain * out_chans) / tmp;
-	if (output_mixer)
+	if (output_mixer != NULL)
 		out_mix = output_mixer;
 	else {
-	  out_mix = (mus_float_t *)calloc(out_chans * out_chans, sizeof(mus_float_t));
+		out_mix = mus_vct_make(out_chans * out_chans);
 		for (i = 0; i < out_chans; i++) {
 			int j;
-			for (j = 0; j < out_chans; j++)
-				out_mix[i * out_chans + j] = 
-				    ((output_gain * ((i == j) ? local_gain : global_gain)) / out_chans);
+
+			for (j = 0; j < out_chans; j++) {
+				if (i == j)
+					tmp = output_gain * local_gain;
+				else
+					tmp = output_gain * global_gain;
+				mus_vct_data(out_mix)[i + j] = tmp / out_chans;
+			}
 		}
 	}
-	{
-		int j, k, size;
-		mus_float_t room_decay_val;
-		mus_any **predelays, ***allpasses, ***combs;
+	predelays = malloc(in_chans * sizeof(mus_any *));
+	if (predelays == NULL)
+		INS_NO_MEMORY_ERROR("ins_freeverb");
+	allpasses = malloc(out_chans * sizeof(mus_any **));
+	if (allpasses == NULL)
+		INS_NO_MEMORY_ERROR("ins_freeverb");
+	combs = malloc(out_chans * sizeof(mus_any **));
+	if (combs == NULL)
+		INS_NO_MEMORY_ERROR("ins_freeverb");
+	room_decay_val = room_decay * scale_room_decay +
+	    offset_room_decay;
+	for (i = 0; i < out_chans; i++) {
+		allpasses[i] = malloc(all_len * sizeof(mus_any *));
+		if (allpasses[i] == NULL)
+			INS_NO_MEMORY_ERROR("ins_freeverb");
+		combs[i] = malloc(comb_len * sizeof(mus_any *));
+		if (combs[i] == NULL)
+			INS_NO_MEMORY_ERROR("ins_freeverb");
+	}
+	/* predelays */
+	for (i = 0; i < in_chans; i++) {
+		size = (int)floor(mus_srate() * predelay);
+		predelays[i] = mus_make_delay(size, NULL, size,
+		    MUS_INTERP_LINEAR);
+	}
+	for (i = 0; i < out_chans; i++) {
+		/* comb filters */
+		for (j = 0; j < comb_len; j++) {
+			tmp = scale_damping * damping;
+			size = (int)floor(srate_scale * combtuning[j]);
+			if ((i % 2) != 0)
+				size += (int)floor(srate_scale * stereo_spread);
+			combs[i][j] = mus_make_fcomb(room_decay_val, size,
+			   1.0 - tmp, tmp);
+		}
+		/* allpass filters */
+		for (j = 0; j < all_len; j++) {
+			size = (int)floor(srate_scale * allpasstuning[j]);
+			if ((i % 2) != 0)
+				size += (int)floor(srate_scale * stereo_spread);
+			allpasses[i][j] = mus_make_all_pass(0.5, -1.0, size,
+			    NULL, size, MUS_INTERP_LINEAR);
+		}
+	}
+	om = mus_vct_data(out_mix);
+	ob = mus_vct_data(out_buf);
+	fo = mus_vct_data(f_out);
+	/* run loop */
+	if (in_chans == 1) {
+		mus_float_t f;
 
-		predelays = malloc(in_chans * sizeof(mus_any *));
-		if (predelays == NULL)
-			INS_NO_MEMORY_ERROR("ins_freeverb");
-		allpasses = malloc(out_chans * sizeof(mus_any **));
-		if (allpasses == NULL)
-			INS_NO_MEMORY_ERROR("ins_freeverb");
-		combs = malloc(out_chans * sizeof(mus_any **));
-		if (combs == NULL)
-			INS_NO_MEMORY_ERROR("ins_freeverb");
-		room_decay_val = room_decay * scale_room_decay +
-		    offset_room_decay;
-		for (i = 0; i < out_chans; i++) {
-			allpasses[i] = malloc(all_len * sizeof(mus_any *));
-			if (allpasses[i] == NULL)
-				INS_NO_MEMORY_ERROR("ins_freeverb");
-			combs[i] = malloc(comb_len * sizeof(mus_any *));
-			if (combs[i] == NULL)
-				INS_NO_MEMORY_ERROR("ins_freeverb");
-		}
-		/* predelays */
-		for (i = 0; i < in_chans; i++) {
-			size = (int)floor(mus_srate() * predelay);
-			predelays[i] = mus_make_delay(size, NULL, size,
-			    MUS_INTERP_LINEAR);
-		}
-		for (i = 0; i < out_chans; i++) {
-			/* comb filters */
-			for (j = 0; j < comb_len; j++) {
-				mus_float_t dmp;
-
-				dmp = scale_damping * damping;
-				size = (int)floor(srate_scale * combtuning[j]);
-				if ((i % 2) != 0)
-					size += (int)floor(srate_scale *
-					    stereo_spread);
-				combs[i][j] = mus_make_fcomb(room_decay_val,
-				    size, 1.0 - dmp, dmp);
-			}
-			/* allpass filters */
-			for (j = 0; j < all_len; j++) {
-				size = (int)floor(srate_scale *
-				    allpasstuning[j]);
-				if ((i % 2) != 0)
-					size += (int)floor(srate_scale *
-					    stereo_spread);
-				allpasses[i][j] = mus_make_all_pass(0.5, -1.0,
-				    size, NULL, size, MUS_INTERP_LINEAR);
-			}
-		}
-		/* run loop */
 		for (i = beg; i < len; i++) {
-			f_in = mus_file_to_frample(rev, i, f_in);
-			if (in_chans > 1) {
-				for (j = 0; j < out_chans; j++) {
-				  f_in[j] = mus_delay_unmodulated(predelays[j], f_in[j]);
-				  f_out[j] = 0.0;
-				  for (k = 0; k < comb_len; k++)
-				    f_out[j] += mus_fcomb(combs[j][k], f_in[j], 0.0);
-			                  }
-			} else {
-				f_in[0] = mus_delay_unmodulated(predelays[0], f_in[0]);
-				for (j = 0; j < out_chans; j++) {
-					f_out[j] = 0.0;
-					for (k = 0; k < comb_len; k++)
-						f_out[j] += mus_fcomb(combs[j][k], f_in[0], 0.0);
-				}
+			f = mus_file_to_sample(rev, i, 0);
+			f = ins_delay(predelays[0], f);
+			for (j = 0; j < out_chans; j++) {
+				fo[j] = 0.0;
+				for (k = 0; k < comb_len; k++)
+					fo[j] += ins_fcomb(combs[j][k], f);
 			}
 			for (j = 0; j < out_chans; j++)
-				for (k = 0; k < all_len; k++)
-					f_out[j] = mus_all_pass_unmodulated(allpasses[j][k], f_out[j]);
-			mus_frample_to_file(out, i, mus_frample_to_frample(out_mix,
-			    f_out, out_buf));
-		}		/* run loop */
-		for (i = 0; i < in_chans; i++)
-			mus_free(predelays[i]);
-		free(predelays);
-		for (i = 0; i < out_chans; i++) {
-			for (j = 0; j < comb_len; j++)
-				mus_free(combs[i][j]);
-			free(combs[i]);
-			for (j = 0; j < all_len; j++)
-				mus_free(allpasses[i][j]);
-			free(allpasses[i]);
+				for (k = 0; k < all_len; k++) {
+					g = allpasses[j][k];
+					fo[j] = ins_all_pass(g, fo[j]);
+				}
+			ob = mus_frample_to_frample(om, out_chans,
+			    fo, out_chans, ob, out_chans);
+			mus_frample_to_file(out, i, ob);
 		}
-		free(combs);
-		free(allpasses);
-	}			/* block */
+	} else {
+		mus_float_t *fi, f;
+
+		fi = mus_vct_data(f_in);
+		for (i = beg; i < len; i++) {
+			fi = mus_file_to_frample(rev, i, fi);
+			for (j = 0; j < out_chans; j++) {
+				f = ins_delay(predelays[j], fi[j]);
+				fo[j] = 0.0;
+				for (k = 0; k < comb_len; k++)
+					fo[j] += ins_fcomb(combs[j][k], f);
+			}
+			for (j = 0; j < out_chans; j++)
+				for (k = 0; k < all_len; k++) {
+					g = allpasses[j][k];
+					fo[j] = ins_all_pass(g, fo[j]);
+				}
+			ob = mus_frample_to_frample(om, out_chans,
+				fo, out_chans, ob, out_chans);
+			mus_frample_to_file(out, i, ob);
+		}
+	}		/* run loop */
+	for (i = 0; i < in_chans; i++)
+		mus_free(predelays[i]);
+	free(predelays);
+	for (i = 0; i < out_chans; i++) {
+		for (j = 0; j < comb_len; j++)
+			mus_free(combs[i][j]);
+		free(combs[i]);
+		for (j = 0; j < all_len; j++)
+			mus_free(allpasses[i][j]);
+		free(allpasses[i]);
+	}
+	free(combs);
+	free(allpasses);
 	if (!output_mixer)
-		free(out_mix);
-	free(out_buf);
-	free(f_out);
-	free(f_in);
+		mus_vct_free(out_mix);
+	mus_vct_free(out_buf);
+	mus_vct_free(f_out);
+	mus_vct_free(f_in);
 	return (i);
 }
 
@@ -1590,14 +1628,14 @@ keyword arguments with default values:\n\
  :index-type                    " INS_SYMBOL_PREFIX "violin (" INS_SYMBOL_PREFIX "cello or " INS_SYMBOL_PREFIX "violin)\n\
  :no-waveshaping                " INS_FALSE
 
-#if HAVE_RUBY
+#if defined(HAVE_RUBY)
 #define H_fm_violin S_fm_violin "(*args)\n" h_fm_violin_args "\n\
 require 'ws'\n\
 require 'sndins'\n\
 with_sound(:reverb, :jc_reverb, :reverb_data, [:volume, 0.8]) do\n\
   fm_violin(0, 1, 440, 0.2, :fm_index, 1.3)\n\
 end"
-#elif HAVE_FORTH
+#elif defined(HAVE_FORTH)
 #define H_fm_violin 	S_fm_violin " ( args -- )\n" h_fm_violin_args "\n\
 require clm\n\
 dl-load sndins Init_sndins\n\
@@ -1611,16 +1649,16 @@ dl-load sndins Init_sndins\n\
   (fm-violin 0 1 440 0.2 :fm-index 1.3))"
 #endif
 
-#if HAVE_FORTH
+#if defined(HAVE_FORTH)
 static void
 #else
-static XEN
+static Xen
 #endif
-c_fm_violin(XEN args)
+c_fm_violin(Xen args)
 {
-#define V_LAST_KEY 33
-#define XEN_V_INS_VIOLIN 1
-#define XEN_V_INS_CELLO  0
+#define V_LAST_KEY	33
+#define V_INS_VIOLIN	1
+#define V_INS_CELLO	0
 	mus_long_t result;
 	int i, vals, lst_len, mode, amp_len, gls_len;
 	int fm1_len, fm2_len, fm3_len;
@@ -1642,14 +1680,14 @@ c_fm_violin(XEN args)
 	mus_float_t *amp_env = NULL, *gliss_env = NULL;
 	mus_float_t *fm1_env = NULL, *fm2_env = NULL, *fm3_env = NULL;
 	mus_any *out = NULL, *rev = NULL;
-	XEN kargs[V_LAST_KEY * 2], keys[V_LAST_KEY];
+	Xen kargs[V_LAST_KEY * 2], keys[V_LAST_KEY];
 	int orig_arg[V_LAST_KEY] = {0};
 
-	lst_len = XEN_LIST_LENGTH(args);
+	lst_len = Xen_list_length(args);
 	mode = MUS_INTERP_LINEAR;
 	amp_len = fm1_len = fm2_len = fm3_len = 8;
 	gls_len = 4;
-	index_type = (bool)XEN_V_INS_VIOLIN;
+	index_type = (bool)V_INS_VIOLIN;
 	no_waveshaping = amp_del = gls_del = false;
 	fm1_del = fm2_del = fm3_del = false;
 	start = 0.0;
@@ -1711,9 +1749,9 @@ c_fm_violin(XEN args)
 	keys[i++] = allkeys[C_index_type];
 	keys[i++] = allkeys[C_no_waveshaping];
 	for (i = 0; i < V_LAST_KEY * 2; i++)
-		kargs[i] = XEN_UNDEFINED;
+		kargs[i] = Xen_undefined;
 	for (i = 0; i < lst_len; i++)
-		kargs[i] = XEN_LIST_REF(args, i);
+		kargs[i] = Xen_list_ref(args, i);
 	vals = mus_optkey_unscramble(S_fm_violin, V_LAST_KEY, keys, kargs,
 	    orig_arg);
 	if (vals > 0) {
@@ -1733,11 +1771,11 @@ c_fm_violin(XEN args)
 		fm_index = mus_optkey_to_float(keys[i], S_fm_violin,
 		    orig_arg[i], fm_index);
 		i++;
-		if (!(XEN_KEYWORD_P(keys[i]))) {
-			XEN_ASSERT_TYPE(XEN_LIST_P(keys[i]), keys[i],
+		if (!(Xen_is_keyword(keys[i]))) {
+			Xen_check_type(Xen_is_list(keys[i]), keys[i],
 			    orig_arg[i], S_fm_violin, "a list");
 			amp_env = xen_list2array(keys[i]);
-			amp_len = XEN_LIST_LENGTH(keys[i]);
+			amp_len = Xen_list_length(keys[i]);
 		}
 		i++;
 		periodic_vibrato_rate = mus_optkey_to_float(keys[i],
@@ -1770,35 +1808,35 @@ c_fm_violin(XEN args)
 		amp_noise_amount = mus_optkey_to_float(keys[i], S_fm_violin,
 		    orig_arg[i], amp_noise_amount);
 		i++;
-		if (!(XEN_KEYWORD_P(keys[i]))) {
-			XEN_ASSERT_TYPE(XEN_LIST_P(keys[i]), keys[i],
+		if (!(Xen_is_keyword(keys[i]))) {
+			Xen_check_type(Xen_is_list(keys[i]), keys[i],
 			    orig_arg[i], S_fm_violin, "a list");
 			gliss_env = xen_list2array(keys[i]);
-			gls_len = XEN_LIST_LENGTH(keys[i]);
+			gls_len = Xen_list_length(keys[i]);
 		}
 		i++;
 		gliss_amount = mus_optkey_to_float(keys[i], S_fm_violin,
 		    orig_arg[i], gliss_amount);
 		i++;
-		if (!(XEN_KEYWORD_P(keys[i]))) {
-			XEN_ASSERT_TYPE(XEN_LIST_P(keys[i]), keys[i],
+		if (!(Xen_is_keyword(keys[i]))) {
+			Xen_check_type(Xen_is_list(keys[i]), keys[i],
 			    orig_arg[i], S_fm_violin, "a list");
 			fm1_env = xen_list2array(keys[i]);
-			fm1_len = XEN_LIST_LENGTH(keys[i]);
+			fm1_len = Xen_list_length(keys[i]);
 		}
 		i++;
-		if (!(XEN_KEYWORD_P(keys[i]))) {
-			XEN_ASSERT_TYPE(XEN_LIST_P(keys[i]), keys[i],
+		if (!(Xen_is_keyword(keys[i]))) {
+			Xen_check_type(Xen_is_list(keys[i]), keys[i],
 			    orig_arg[i], S_fm_violin, "a list");
 			fm2_env = xen_list2array(keys[i]);
-			fm2_len = XEN_LIST_LENGTH(keys[i]);
+			fm2_len = Xen_list_length(keys[i]);
 		}
 		i++;
-		if (!(XEN_KEYWORD_P(keys[i]))) {
-			XEN_ASSERT_TYPE(XEN_LIST_P(keys[i]), keys[i],
+		if (!(Xen_is_keyword(keys[i]))) {
+			Xen_check_type(Xen_is_list(keys[i]), keys[i],
 			    orig_arg[i], S_fm_violin, "a list");
 			fm3_env = xen_list2array(keys[i]);
-			fm3_len = XEN_LIST_LENGTH(keys[i]);
+			fm3_len = Xen_list_length(keys[i]);
 		}
 		i++;
 		fm1_rat = mus_optkey_to_float(keys[i], S_fm_violin,
@@ -1810,17 +1848,17 @@ c_fm_violin(XEN args)
 		fm3_rat = mus_optkey_to_float(keys[i], S_fm_violin,
 		    orig_arg[i], fm3_rat);
 		i++;
-		if (!(XEN_KEYWORD_P(keys[i])))
-			if (XEN_NUMBER_P(keys[i]))
-				fm1_index = XEN_TO_C_DOUBLE(keys[i]);
+		if (!(Xen_is_keyword(keys[i])))
+			if (Xen_is_number(keys[i]))
+				fm1_index = Xen_real_to_C_double(keys[i]);
 		i++;
-		if (!(XEN_KEYWORD_P(keys[i])))
-			if (XEN_NUMBER_P(keys[i]))
-				fm2_index = XEN_TO_C_DOUBLE(keys[i]);
+		if (!(Xen_is_keyword(keys[i])))
+			if (Xen_is_number(keys[i]))
+				fm2_index = Xen_real_to_C_double(keys[i]);
 		i++;
-		if (!(XEN_KEYWORD_P(keys[i])))
-			if (XEN_NUMBER_P(keys[i]))
-				fm3_index = XEN_TO_C_DOUBLE(keys[i]);
+		if (!(Xen_is_keyword(keys[i])))
+			if (Xen_is_number(keys[i]))
+				fm3_index = Xen_real_to_C_double(keys[i]);
 		i++;
 		base = mus_optkey_to_float(keys[i], S_fm_violin,
 		    orig_arg[i], base);
@@ -1834,20 +1872,20 @@ c_fm_violin(XEN args)
 		reverb_amount = mus_optkey_to_float(keys[i], S_fm_violin,
 		    orig_arg[i], reverb_amount);
 		i++;
-		if (!(XEN_KEYWORD_P(keys[i]))) {
+		if (!(Xen_is_keyword(keys[i]))) {
 			/* cello == 0, violin == 1 */
-			if (XEN_SYMBOL_P(keys[i])) {
-				if (XEN_EQ_P(keys[i],
-				    C_STRING_TO_XEN_SYMBOL("cello")))
-					index_type = XEN_V_INS_CELLO;
-			} else if (XEN_INTEGER_P(keys[i]))
-				index_type = XEN_TO_C_INT(keys[i]);
+			if (Xen_is_symbol(keys[i])) {
+				if (Xen_is_eq(keys[i],
+				    C_string_to_Xen_symbol("cello")))
+					index_type = V_INS_CELLO;
+			} else if (Xen_is_integer(keys[i]))
+				index_type = Xen_integer_to_C_int(keys[i]);
 		}
 		i++;
-		if (!(XEN_KEYWORD_P(keys[i]))) {
-			XEN_ASSERT_TYPE(XEN_BOOLEAN_P(keys[i]), keys[i],
+		if (!(Xen_is_keyword(keys[i]))) {
+			Xen_check_type(Xen_is_boolean(keys[i]), keys[i],
 			    orig_arg[i], S_fm_violin, "a bool");
-			no_waveshaping = XEN_TO_C_BOOLEAN(keys[i]);
+			no_waveshaping = Xen_boolean_to_C_bool(keys[i]);
 		}
 	}
 	if (amp_env == NULL) {
@@ -1870,7 +1908,8 @@ c_fm_violin(XEN args)
 		fm3_env = array2array(tfm_env, 8);
 		fm3_del = true;
 	}
-	if (!mus_is_output(out = get_global_mus_gen(INS_OUTPUT)))
+	out = get_global_mus_gen(INS_OUTPUT);
+	if (!mus_is_output(out))
 		INS_MISC_ERROR(S_fm_violin, "needs an output generator");
 	rev = get_global_mus_gen(INS_REVERB);
 	mode = get_global_int(INS_LOCSIG_TYPE, MUS_INTERP_LINEAR);
@@ -1892,8 +1931,8 @@ c_fm_violin(XEN args)
 		free(fm2_env);
 	if (fm3_del)
 		free(fm3_env);
-#if !HAVE_FORTH
-	return (C_TO_XEN_INT(result));
+#if !defined(HAVE_FORTH)
+	return (C_int_to_Xen_integer(result));
 #endif
 }
 
@@ -1915,14 +1954,14 @@ keyword arguments with default values:\n\
  :doubled    " INS_FALSE "\n\
  :amp-env    " INS_FALSE
 
-#if HAVE_RUBY
+#if defined(HAVE_RUBY)
 #define H_jc_reverb	S_jc_reverb "(*args)\n" h_jc_reverb_args "\n\
 require 'ws'\n\
 require 'sndins'\n\
 with_sound(:reverb, :jc_reverb, :reverb_data, [:volume, 0.8]) do\n\
   fm_violin(0, 1, 440, 0.2, :fm_index, 1.3)\n\
 end"
-#elif HAVE_FORTH
+#elif defined(HAVE_FORTH)
 #define H_jc_reverb 	S_jc_reverb " ( args -- )\n" h_jc_reverb_args "\n\
 require clm\n\
 dl-load sndins Init_sndins\n\
@@ -1936,12 +1975,12 @@ dl-load sndins Init_sndins\n\
   (fm-violin 0 1 440 0.2 :fm-index 1.3))"
 #endif
 
-#if HAVE_FORTH
+#if defined(HAVE_FORTH)
 static void
 #else
-static XEN
+static Xen
 #endif
-c_jc_reverb(XEN args)
+c_jc_reverb(Xen args)
 {
 #define JC_LAST_KEY 8
 	mus_long_t result;
@@ -1951,10 +1990,10 @@ c_jc_reverb(XEN args)
 	mus_float_t *amp_env = NULL;
 	mus_any *out = NULL, *rev = NULL;
 	int orig_arg[JC_LAST_KEY] = {0};
-	XEN kargs[JC_LAST_KEY * 2], keys[JC_LAST_KEY];
+	Xen kargs[JC_LAST_KEY * 2], keys[JC_LAST_KEY];
 
 	amp_len = 0;
-	lst_len = XEN_LIST_LENGTH(args);
+	lst_len = Xen_list_length(args);
 	low_pass = doubled = false;
 	volume = 1.0;
 	delay1 = 0.013;
@@ -1971,26 +2010,26 @@ c_jc_reverb(XEN args)
 	keys[i++] = allkeys[C_delay4];
 	keys[i++] = allkeys[C_amp_env];
 	for (i = 0; i < JC_LAST_KEY * 2; i++)
-		kargs[i] = XEN_UNDEFINED;
+		kargs[i] = Xen_undefined;
 	for (i = 0; i < lst_len; i++)
-		kargs[i] = XEN_LIST_REF(args, i);
+		kargs[i] = Xen_list_ref(args, i);
 	vals = mus_optkey_unscramble(S_jc_reverb, JC_LAST_KEY, keys, kargs,
 	    orig_arg);
 	if (vals > 0) {
 		i = 0;
-		if (!(XEN_KEYWORD_P(keys[i]))) {
-			XEN_ASSERT_TYPE(XEN_BOOLEAN_P(keys[i]), keys[i],
+		if (!(Xen_is_keyword(keys[i]))) {
+			Xen_check_type(Xen_is_boolean(keys[i]), keys[i],
 			    orig_arg[i], S_jc_reverb, "a bool");
-			low_pass = XEN_TO_C_BOOLEAN(keys[i]);
+			low_pass = Xen_boolean_to_C_bool(keys[i]);
 		}
 		i++;
 		volume = mus_optkey_to_float(keys[i], S_jc_reverb,
 		    orig_arg[i], volume);
 		i++;
-		if (!(XEN_KEYWORD_P(keys[i]))) {
-			XEN_ASSERT_TYPE(XEN_BOOLEAN_P(keys[i]), keys[i],
+		if (!(Xen_is_keyword(keys[i]))) {
+			Xen_check_type(Xen_is_boolean(keys[i]), keys[i],
 			    orig_arg[i], S_jc_reverb, "a bool");
-			doubled = XEN_TO_C_BOOLEAN(keys[i]);
+			doubled = Xen_boolean_to_C_bool(keys[i]);
 		}
 		i++;
 		delay1 = mus_optkey_to_float(keys[i], S_jc_reverb,
@@ -2005,24 +2044,26 @@ c_jc_reverb(XEN args)
 		delay4 = mus_optkey_to_float(keys[i], S_jc_reverb,
 		    orig_arg[i], delay4);
 		i++;
-		if (!(XEN_KEYWORD_P(keys[i]))) {
-			XEN_ASSERT_TYPE(XEN_LIST_P(keys[i]), keys[i],
+		if (!(Xen_is_keyword(keys[i]))) {
+			Xen_check_type(Xen_is_list(keys[i]), keys[i],
 			    orig_arg[i], S_jc_reverb, "a list");
 			amp_env = xen_list2array(keys[i]);
-			amp_len = XEN_LIST_LENGTH(keys[i]);
+			amp_len = Xen_list_length(keys[i]);
 		}
 	}
-	if (!mus_is_output(out = get_global_mus_gen(INS_OUTPUT)))
+	out = get_global_mus_gen(INS_OUTPUT);
+	if (!mus_is_output(out))
 		INS_MISC_ERROR(S_jc_reverb, "needs an output generator");
-	if (!mus_is_input(rev = get_global_mus_gen(INS_REVERB)))
+	rev = get_global_mus_gen(INS_REVERB);
+	if (!mus_is_input(rev))
 		INS_MISC_ERROR(S_jc_reverb, "needs an input generator");
 	if (get_global_boolean(INS_VERBOSE, false))
 		INS_REV_MSG(S_jc_reverb, mus_channels(rev), mus_channels(out));
 	result = ins_jc_reverb(0.0, INS_REV_DUR(rev), volume, low_pass,
 	    doubled, delay1, delay2, delay3, delay4, amp_env, amp_len,
 	    out, rev);
-#if !HAVE_FORTH
-	return (C_TO_XEN_INT(result));
+#if !defined(HAVE_FORTH)
+	return (C_int_to_Xen_integer(result));
 #endif
 }
 
@@ -2035,14 +2076,14 @@ keyword arguments with default values:\n\
  :amp-env         " INS_LIST_BEG " 0 1 1 1 " INS_LIST_END "\n\
  :volume          1.0"
 
-#if HAVE_RUBY
+#if defined(HAVE_RUBY)
 #define H_nrev		S_nrev "(*args)\n" h_nrev_args "\n\
 require 'ws'\n\
 require 'sndins'\n\
 with_sound(:reverb, :nrev, :reverb_data, [:lp_coeff, 0.6]) do\n\
   fm_violin(0, 1, 440, 0.7, :fm_index, 1.3)\n\
 end"
-#elif HAVE_FORTH
+#elif defined(HAVE_FORTH)
 #define H_nrev 		S_nrev " ( args -- )\n" h_nrev_args "\n\
 require clm\n\
 dl-load sndins Init_sndins\n\
@@ -2056,12 +2097,12 @@ dl-load sndins Init_sndins\n\
   (fm-violin 0 1 440 0.7 :fm-index 1.3))"
 #endif
 
-#if HAVE_FORTH
+#if defined(HAVE_FORTH)
 static void
 #else
-static XEN
+static Xen
 #endif
-c_nrev(XEN args)
+c_nrev(Xen args)
 {
 #define N_LAST_KEY 6
 	mus_long_t result;
@@ -2073,9 +2114,9 @@ c_nrev(XEN args)
 	mus_float_t *amp_env = NULL;
 	mus_any *out = NULL, *rev = NULL;
 	int orig_arg[N_LAST_KEY] = {0};
-	XEN kargs[N_LAST_KEY * 2], keys[N_LAST_KEY];
+	Xen kargs[N_LAST_KEY * 2], keys[N_LAST_KEY];
 
-	lst_len = XEN_LIST_LENGTH(args);
+	lst_len = Xen_list_length(args);
 	amp_len = 4;
 	amp_del = false;
 	lp_coeff = 0.7;
@@ -2091,9 +2132,9 @@ c_nrev(XEN args)
 	keys[i++] = allkeys[C_amp_env];
 	keys[i++] = allkeys[C_volume];
 	for (i = 0; i < N_LAST_KEY * 2; i++)
-		kargs[i] = XEN_UNDEFINED;
+		kargs[i] = Xen_undefined;
 	for (i = 0; i < lst_len; i++)
-		kargs[i] = XEN_LIST_REF(args, i);
+		kargs[i] = Xen_list_ref(args, i);
 	vals = mus_optkey_unscramble(S_nrev, N_LAST_KEY, keys, kargs, orig_arg);
 	if (vals > 0) {
 		i = 0;
@@ -2109,11 +2150,11 @@ c_nrev(XEN args)
 		output_scale = mus_optkey_to_float(keys[i], S_nrev,
 		    orig_arg[i], output_scale);
 		i++;
-		if (!(XEN_KEYWORD_P(keys[i]))) {
-			XEN_ASSERT_TYPE(XEN_LIST_P(keys[i]), keys[i],
+		if (!(Xen_is_keyword(keys[i]))) {
+			Xen_check_type(Xen_is_list(keys[i]), keys[i],
 			    orig_arg[i], S_nrev, "a list");
 			amp_env = xen_list2array(keys[i]);
-			amp_len = XEN_LIST_LENGTH(keys[i]);
+			amp_len = Xen_list_length(keys[i]);
 		}
 		i++;
 		volume = mus_optkey_to_float(keys[i], S_nrev,
@@ -2123,9 +2164,11 @@ c_nrev(XEN args)
 		amp_env = array2array(tamp_env, 4);
 		amp_del = true;
 	}
-	if (!mus_is_output(out = get_global_mus_gen(INS_OUTPUT)))
+	out = get_global_mus_gen(INS_OUTPUT);
+	if (!mus_is_output(out))
 		INS_MISC_ERROR(S_nrev, "needs an output generator");
-	if (!mus_is_input(rev = get_global_mus_gen(INS_REVERB)))
+	rev = get_global_mus_gen(INS_REVERB);
+	if (!mus_is_input(rev))
 		INS_MISC_ERROR(S_nrev, "needs an input generator");
 	if (get_global_boolean(INS_VERBOSE, false))
 		INS_REV_MSG(S_nrev, mus_channels(rev), mus_channels(out));
@@ -2133,8 +2176,8 @@ c_nrev(XEN args)
 	    lp_out_coeff, output_scale, volume, amp_env, amp_len, out, rev);
 	if (amp_del)
 		free(amp_env);
-#if !HAVE_FORTH
-	return (C_TO_XEN_INT(result));
+#if !defined(HAVE_FORTH)
+	return (C_int_to_Xen_integer(result));
 #endif
 }
 
@@ -2153,14 +2196,14 @@ keyword arguments with default values:\n\
  :scale-damping       0.4\n\
  :stereo-spread       23.0"
 
-#if HAVE_RUBY
+#if defined(HAVE_RUBY)
 #define H_freeverb	S_freeverb "(*args)\n" h_freeverb_args "\n\
 require 'ws'\n\
 require 'sndins'\n\
 with_sound(:reverb, :freeverb, :reverb_data, [:room_decay, 0.8]) do\n\
   fm_violin(0, 1, 440, 0.7)\n\
 end"
-#elif HAVE_FORTH
+#elif defined(HAVE_FORTH)
 #define H_freeverb 	S_freeverb " ( args -- )\n" h_freeverb_args "\n\
 require clm\n\
 dl-load sndins Init_sndins\n\
@@ -2175,12 +2218,12 @@ dl-load sndins Init_sndins\n\
   (fm-violin 0 1 440 0.7))"
 #endif
 
-#if HAVE_FORTH
+#if defined(HAVE_FORTH)
 static void
 #else
-static XEN
+static Xen
 #endif
-c_freeverb(XEN args)
+c_freeverb(Xen args)
 {
 #define F_LAST_KEY 12
 	mus_long_t result;
@@ -2192,11 +2235,12 @@ c_freeverb(XEN args)
 	mus_float_t room_decay, global, damping;
 	mus_float_t predelay, output_gain, scale_room_decay;
 	mus_float_t offset_room_decay, scale_damping, stereo_spread;
-	mus_any *output_mixer = NULL, *out = NULL, *rev = NULL;
+	vct *output_mixer = NULL;
+	mus_any *out = NULL, *rev = NULL;
 	int orig_arg[F_LAST_KEY] = {0};
-	XEN kargs[F_LAST_KEY * 2], keys[F_LAST_KEY];
+	Xen kargs[F_LAST_KEY * 2], keys[F_LAST_KEY];
 
-	lst_len = XEN_LIST_LENGTH(args);
+	lst_len = Xen_list_length(args);
 	numcombs = 8;
 	numallpasses = 4;
 	comb_del = allpass_del = false;
@@ -2223,9 +2267,9 @@ c_freeverb(XEN args)
 	keys[i++] = allkeys[C_scale_damping];
 	keys[i++] = allkeys[C_stereo_spread];
 	for (i = 0; i < F_LAST_KEY * 2; i++)
-		kargs[i] = XEN_UNDEFINED;
+		kargs[i] = Xen_undefined;
 	for (i = 0; i < lst_len; i++)
-		kargs[i] = XEN_LIST_REF(args, i);
+		kargs[i] = Xen_list_ref(args, i);
 	vals = mus_optkey_unscramble(S_freeverb, F_LAST_KEY, keys, kargs,
 	    orig_arg);
 	if (vals > 0) {
@@ -2245,7 +2289,7 @@ c_freeverb(XEN args)
 		output_gain = mus_optkey_to_float(keys[i], S_freeverb,
 		    orig_arg[i], output_gain);
 		i++;
-		output_mixer = mus_optkey_to_mus_any(keys[i], S_freeverb,
+		output_mixer = mus_optkey_to_vct(keys[i], S_freeverb,
 		    orig_arg[i], output_mixer);
 		i++;
 		scale_room_decay = mus_optkey_to_float(keys[i], S_freeverb,
@@ -2254,18 +2298,18 @@ c_freeverb(XEN args)
 		offset_room_decay = mus_optkey_to_float(keys[i], S_freeverb,
 		    orig_arg[i], offset_room_decay);
 		i++;
-		if (!(XEN_KEYWORD_P(keys[i]))) {
-			XEN_ASSERT_TYPE(XEN_LIST_P(keys[i]), keys[i],
+		if (!(Xen_is_keyword(keys[i]))) {
+			Xen_check_type(Xen_is_list(keys[i]), keys[i],
 			    orig_arg[i], S_freeverb, "a list");
 			combtuning = xen_list2iarray(keys[i]);
-			numcombs = XEN_LIST_LENGTH(keys[i]);
+			numcombs = Xen_list_length(keys[i]);
 		}
 		i++;
-		if (!(XEN_KEYWORD_P(keys[i]))) {
-			XEN_ASSERT_TYPE(XEN_LIST_P(keys[i]), keys[i],
+		if (!(Xen_is_keyword(keys[i]))) {
+			Xen_check_type(Xen_is_list(keys[i]), keys[i],
 			    orig_arg[i], S_freeverb, "a list");
 			allpasstuning = xen_list2iarray(keys[i]);
-			numallpasses = XEN_LIST_LENGTH(keys[i]);
+			numallpasses = Xen_list_length(keys[i]);
 		}
 		i++;
 		scale_damping = mus_optkey_to_float(keys[i], S_freeverb,
@@ -2282,9 +2326,11 @@ c_freeverb(XEN args)
 		allpasstuning = int_array2array(tallpass, 4);
 		allpass_del = true;
 	}
-	if (!mus_output_p(out = get_global_mus_gen(INS_OUTPUT)))
+	out = get_global_mus_gen(INS_OUTPUT);
+	if (!mus_is_output(out))
 		INS_MISC_ERROR(S_freeverb, "needs an output generator");
-	if (!mus_input_p(rev = get_global_mus_gen(INS_REVERB)))
+	rev = get_global_mus_gen(INS_REVERB);
+	if (!mus_is_input(rev))
 		INS_MISC_ERROR(S_freeverb, "needs an input generator");
 	if (get_global_boolean(INS_VERBOSE, false))
 		INS_REV_MSG(S_freeverb, mus_channels(rev), mus_channels(out));
@@ -2296,15 +2342,15 @@ c_freeverb(XEN args)
 		free(combtuning);
 	if (allpass_del)
 		free(allpasstuning);
-#if !HAVE_FORTH
-	return (C_TO_XEN_INT(result));
+#if !defined(HAVE_FORTH)
+	return (C_int_to_Xen_integer(result));
 #endif
 }
 
-#ifdef XEN_ARGIFY_1
-XEN_VARGIFY(x_make_fcomb, c_make_fcomb)
-XEN_ARGIFY_2(x_fcomb, c_fcomb)
-XEN_NARGIFY_1(x_fcomb_p, c_fcomb_p)
+#if defined(Xen_wrap_1_optional_arg)
+Xen_wrap_any_args(x_make_fcomb, c_make_fcomb)
+Xen_wrap_2_optional_args(x_fcomb, c_fcomb)
+Xen_wrap_1_arg(x_is_fcomb, c_is_fcomb)
 #if defined(HAVE_FORTH)
 /* these are void functions */
 #define x_fm_violin 		c_fm_violin
@@ -2312,42 +2358,46 @@ XEN_NARGIFY_1(x_fcomb_p, c_fcomb_p)
 #define x_nrev			c_nrev
 #define x_freeverb		c_freeverb
 #else
-XEN_VARGIFY(x_fm_violin, c_fm_violin)
-XEN_VARGIFY(x_jc_reverb, c_jc_reverb)
-XEN_VARGIFY(x_nrev, c_nrev)
-XEN_VARGIFY(x_freeverb, c_freeverb)
+Xen_wrap_any_args(x_fm_violin, c_fm_violin)
+Xen_wrap_any_args(x_jc_reverb, c_jc_reverb)
+Xen_wrap_any_args(x_nrev, c_nrev)
+Xen_wrap_any_args(x_freeverb, c_freeverb)
 #endif
-#else	/* !XEN_ARGIFY_1 */
+#else	/* !Xen_wrap_1_optional_arg */
 #define x_make_fcomb		c_make_fcomb
 #define x_fcomb			c_fcomb
-#define x_fcomb_p 		c_fcomb_p
+#define x_is_fcomb 		c_is_fcomb
 #define x_fm_violin 		c_fm_violin
 #define x_jc_reverb		c_jc_reverb
 #define x_nrev			c_nrev
 #define x_freeverb		c_freeverb
-#endif	/* XEN_ARGIFY_1 */
+#endif	/* Xen_wrap_1_optional_arg */
 
 void
 Init_sndins(void)
 {
-	init_keywords();
-	XEN_DEFINE_PROCEDURE(S_make_fcomb, x_make_fcomb, 0, 0, 1, H_make_fcomb);
-	XEN_DEFINE_PROCEDURE(S_fcomb, x_fcomb, 1, 1, 0, H_fcomb);
-	XEN_DEFINE_PROCEDURE(S_fcomb_p, x_fcomb_p, 1, 0, 0, H_fcomb_p);
-#if HAVE_FORTH
-#define XEN_DEFINE_VOID_PROC(Name, Func, Req, Opt, Rest, Help)		\
-	fth_define_void_procedure(Name, Func, Req, Opt, Rest, Help)
-	XEN_DEFINE_VOID_PROC(S_fm_violin, x_fm_violin, 0, 0, 1, H_fm_violin);
-	XEN_DEFINE_VOID_PROC(S_jc_reverb, x_jc_reverb, 0, 0, 1, H_jc_reverb);
-	XEN_DEFINE_VOID_PROC(S_nrev, x_nrev, 0, 0, 1, H_nrev);
-	XEN_DEFINE_VOID_PROC(S_freeverb, x_freeverb, 0, 0, 1, H_freeverb);
-#else
-	XEN_DEFINE_PROCEDURE(S_fm_violin, x_fm_violin, 0, 0, 1, H_fm_violin);
-	XEN_DEFINE_PROCEDURE(S_jc_reverb, x_jc_reverb, 0, 0, 1, H_jc_reverb);
-	XEN_DEFINE_PROCEDURE(S_nrev, x_nrev, 0, 0, 1, H_nrev);
-	XEN_DEFINE_PROCEDURE(S_freeverb, x_freeverb, 0, 0, 1, H_freeverb);
+#if defined(HAVE_SCHEME)
+	if (s7 == NULL)
+		s7 = s7_init();
 #endif
-	XEN_PROVIDE("sndins");
+	init_keywords();
+	Xen_define_procedure(S_make_fcomb, x_make_fcomb, 0, 0, 1, H_make_fcomb);
+	Xen_define_procedure(S_fcomb, x_fcomb, 1, 1, 0, H_fcomb);
+	Xen_define_procedure(S_is_fcomb, x_is_fcomb, 1, 0, 0, H_is_fcomb);
+#if defined(HAVE_FORTH)
+#define Xen_define_void_proc(Name, Func, Req, Opt, Rest, Help)		\
+	fth_define_void_procedure(Name, Func, Req, Opt, Rest, Help)
+	Xen_define_void_proc(S_fm_violin, x_fm_violin, 0, 0, 1, H_fm_violin);
+	Xen_define_void_proc(S_jc_reverb, x_jc_reverb, 0, 0, 1, H_jc_reverb);
+	Xen_define_void_proc(S_nrev, x_nrev, 0, 0, 1, H_nrev);
+	Xen_define_void_proc(S_freeverb, x_freeverb, 0, 0, 1, H_freeverb);
+#else
+	Xen_define_procedure(S_fm_violin, x_fm_violin, 0, 0, 1, H_fm_violin);
+	Xen_define_procedure(S_jc_reverb, x_jc_reverb, 0, 0, 1, H_jc_reverb);
+	Xen_define_procedure(S_nrev, x_nrev, 0, 0, 1, H_nrev);
+	Xen_define_procedure(S_freeverb, x_freeverb, 0, 0, 1, H_freeverb);
+#endif
+	Xen_provide_feature("sndins");
 }
 
 /*

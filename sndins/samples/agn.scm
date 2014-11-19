@@ -1,13 +1,21 @@
+#! /usr/opt/bin/snd-s7-nogui -noinit
+!#
 ;;; agn.scm -- Bill Schottstaedt's agn.cl
 ;;;    (see clm-2/clm-example.clm and clm-2/bess5.cl)
 
 ;; Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-;; Created: Tue Jun 24 19:05:06 CEST 2003
-;; Changed: Sat Jul 28 00:33:36 CEST 2012
+;; Created: 03/06/24 19:05:06
+;; Changed: 14/11/18 22:59:13
 
 ;; Try (do-agn)
 
 (define *clm-c-version* #t)
+
+(if (not (provided? 'snd))
+    (begin
+      (define (snd-error . args)
+	(apply format #t args)
+	(exit 1))))
 
 (if (not (provided? 'sndlib))
     (let ((hsndlib (dlopen "libsndlib.so")))
@@ -22,18 +30,21 @@
             (dlinit hsndins "Init_sndins"))))
   (load "v.scm"))
 
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
-(if (not (provided? 'snd-env.scm)) (load "env.scm"))
+(if (provided? 'snd)
+    (load "ws.scm")
+    (load "sndlib-ws.scm"))
 
-(define *clm-play* #t)
-(define *clm-statistics* #t)
-(define *clm-verbose* #t)
-(define *clm-srate* 44100)
-(define *clm-channels* 2)
-(define *clm-reverb* jc-reverb)
-(define *clm-reverb-data* '(:volume 0.8))
-(define *clm-reverb-channels* 2)
-(define *clm-delete-reverb* #t)
+(set! *clm-play* #t)
+(set! *clm-statistics* #t)
+(set! *clm-verbose* #t)
+(set! *clm-srate* 44100)
+(set! *clm-channels* 2)
+(set! *clm-reverb* jc-reverb)
+(set! *clm-reverb-data* '(:volume 0.8))
+(set! *clm-reverb-channels* 2)
+(set! *clm-delete-reverb* #t)
+(set! *clm-header-type* mus-next)
+(set! *clm-sample-type* mus-bfloat)
 
 (define (snd-msg frm . args)
   (snd-print (apply format (append (list #f frm) args))))
@@ -42,7 +53,7 @@
   (do-agn (if (= 2 (length args)) (cadr args) "agn.clm")))
 
 (define* (do-agn (file "agn.clm"))
-  (let ((sndfile (format #f "~A.snd"  "agn")))
+  (let ((sndfile (format #f "~A.snd" "agn")))
     (snd-msg ";; Writing ~S~%" file)
     (agn file)
     (with-sound (:output sndfile)
@@ -162,5 +173,8 @@
 			 (set! cellctr cellbeg))))))
 	(format out-port "~%~%;; ~A ends here~%" file))))
   file)
+
+(do-agn)
+(exit 0)
 
 ;; agn.scm ends here

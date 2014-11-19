@@ -2,18 +2,14 @@
 \ fmviolin.fth -- CLM fmviolin.clm
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-\ Created: Mon Dec 06 17:23:22 CET 2004
-\ Changed: Sat Jul 28 03:13:10 CEST 2012
-
-\ Commentary:
+\ Created: 04/12/06 17:23:22
+\ Changed: 14/11/19 01:00:53
 
 \ A translation of Bill Schottstaedt's clm/fmviolin.clm from Lisp
 \ into Fth.
 
 \ short-example
 \ long-example
-
-\ Code:
 
 #t value *clm-c-version*
 
@@ -27,13 +23,15 @@ dl-load sndlib Init_sndlib
 require clm
 
 "test-ins-f.snd" to *clm-file-name*
-#t	to *clm-play*
-#t	to *clm-statistics*
-#t	to *clm-verbose*
-44100	to *clm-srate*
-2	to *clm-channels*
-2	to *clm-reverb-channels*
-#t	to *clm-delete-reverb*
+#t         to *clm-play*
+#t         to *clm-statistics*
+#t         to *clm-verbose*
+44100      to *clm-srate*
+2          to *clm-channels*
+2          to *clm-reverb-channels*
+#t         to *clm-delete-reverb*
+mus-next   to *clm-header-type*
+mus-bfloat to *clm-sample-type*
 
 1.0	value fmv-fm-index                   
 '( 0 0 25 1 75 1 100 0 ) value fmv-amp-env                    
@@ -217,8 +215,8 @@ event: fth-short-example ( -- )
 : test-info { ctime -- }
   *counter* 1+ to *counter*
   *timer* stop-timer
-  "\\ %02d: score %3d   utime %7.3f\n" '( *counter* ctime *timer* utime@ )
-    fth-print
+  "\\ %02d: score %3d   utime %7.3f\n"
+    '( *counter* ctime *timer* user-time@ ) fth-print
 ;
 
 event: fth-long-example ( -- )
@@ -1778,10 +1776,9 @@ event: fth-long-example ( -- )
 
 'snd provided? [unless]
   *argc* 2 > [if]
-    *argv* array-pop drop
-    long-example
-  [else]
     short-example
+  [else]
+    long-example
   [then]
 [then]
 

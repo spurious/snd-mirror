@@ -2,11 +2,10 @@
 
 The C/XEN library `libsndins.so' provides the instrument FM-VIOLIN
 and the reverberators JC-REVERB, NREV, and FREEVERB to use them in
-longer notelists in Snd/S7, Snd/Ruby, or Snd/Forth.  They are not
-so fast as Lisp's FFI versions, at least not on my machine, but
-they run much faster than Ruby or Forth variants.  In addition I
-have added the FCOMB example from sndscm.html which is used in
-freeverb.
+longer notelists in Snd/Ruby, or Snd/Forth.  They are not so fast
+as Lisp's FFI versions, at least not on my machine, but they run
+much faster than Ruby or Forth variants.  In addition I have added
+the FCOMB example from sndscm.html which is used in freeverb.
 
 The library is based on Bill Schottstaedt's `xen' and `sndlib'
 libraries and the Snd editor itself.  Thank you for these great
@@ -243,7 +242,7 @@ The following functions are accessible from C.
 		      int comb_len,
 		      int *allpasstuning,
 		      int all_len,
-		      mus_any *output_mixer,
+		      vct *output_mixer,
 		      mus_any *out,
 		      mus_any *rev);
 
@@ -285,7 +284,8 @@ have installed the library in the unusual path /usr/opt/lib., you
 can add it by:
 
 	(csh) setenv LD_LIBRARY_PATH /usr/opt/lib:${LD_LIBRARY_PATH}
-	(sh)  LD_LIBRARY_PATH=/usr/opt/lib:${LD_LIBRARY_PATH}; export LD_LIBRARY_PATH
+	(sh)  LD_LIBRARY_PATH=/usr/opt/lib:${LD_LIBRARY_PATH}
+	(sh)  export LD_LIBRARY_PATH
 
 In Snd/S7 one can add to the ~/.snd_s7 init file:
 
@@ -306,9 +306,8 @@ In Snd/S7 one can add to the ~/.snd_s7 init file:
 You can install sndlib.so and sndins.so in the ruby library path,
 e.g.
 
-    (csh) setenv RUBYLIB ${HOME}/share/ruby/site-ruby:${HOME}/share/snd:${HOME}/lib/ruby/site-ruby
-    (sh)  RUBYLIB=${HOME}/share/ruby/site-ruby:${HOME}/share/snd:${HOME}/lib/ruby/site-ruby
-    (sh)  export RUBYLIB
+    (csh) setenv RUBYLIB ${HOME}/share/snd:${HOME}/lib/ruby/site-ruby
+    (sh)  RUBYLIB=${HOME}/share/snd:${HOME}/lib/ruby/site-ruby; export RUBYLIB
     cd ${compile_sndlib_dir}
     make
     install -c sndlib.so ~/lib/ruby/site-ruby/
@@ -316,7 +315,7 @@ e.g.
     make
     install -c sndins.so ~/lib/ruby/site-ruby/
 
-So in Snd/Ruby one can add to the ~/.snd_ruby init file:
+In Snd/Ruby one can add to the ~/.snd_ruby init file:
 
     require "sndlib"
     require "sndins"
@@ -328,7 +327,7 @@ Installing so-libs in Forth is possible with these command lines:
     (csh) setenv FTH_FTHPATH ${HOME}/share/fth/site-fth
     (csh) setenv FTH_LIBPATH ${HOME}/lib/fth
     (sh)  FTH_FTHPATH=${HOME}/share/fth/site-fth; export FTH_FTHPATH
-    (sh)  FTH_LIBPATH=${HOME}/lib/fth;            export FTH_LIBPATH
+    (sh)  FTH_LIBPATH=${HOME}/lib/fth; export FTH_LIBPATH
 
     cd ${compile_sndlib_dir}
     make
@@ -372,11 +371,12 @@ If you have compiled and installed the Ruby sndlib and sndins
 libraries, you can type in a shell
 
     ./agn.rb [ outfile.rbm ]
-    ./fmviolin.rb [ -s ]
+    ./fmviolin.rb [ /dev/null ]
 
 The default outfile is agn.rbm.  A different outfile name may end
-in *.rbm.  The option -s can be everything, its only meaning is to
-choose the short_example, without an option long_example is chosen.
+in *.rbm.  The option /dev/null can be everything, its only meaning
+is to choose the short_example, without an option long_example is
+chosen.
 
 You can load these scripts into Snd too.
 
@@ -386,12 +386,12 @@ If you have compiled and installed the Forth sndlib and sndins
 libraries, you can type
 
     ./agn.fth [ outfile.fsm ]
-    ./fmviolin.fth [ -s ]
+    ./fmviolin.fth [ /dev/null ]
 
 The default outfile is agn.fsm.  A different outfile name should
-end in *.fsm.  The option -s can be everything, its only meaning
-is to choose the short-example, without an option long-example is
-chosen.
+end in *.fsm.  The option /dev/null can be everything, its only
+meaning is to choose the short-example, without an option long-example
+is chosen.
 
 You can load these scripts into Snd too.
 

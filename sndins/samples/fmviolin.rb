@@ -1,11 +1,9 @@
-#!/usr/bin/env ruby
+#! /usr/bin/env ruby
 # fmviolin.rb -- CLM fmviolin.clm --> RBM fmviolin.rb
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Fri Oct 18 11:29:08 CEST 2002
-# Changed: Sat Jul 28 03:12:42 CEST 2012
-
-# Commentary:
+# Created: 02/10/18 11:29:08 
+# Changed: 14/11/18 23:51:41
 
 # A translation of Bill Schottstaedt's clm/fmviolin.clm from Lisp
 # into Ruby.
@@ -13,35 +11,29 @@
 # short_example
 # long_example
 
-# Code:
-
 $clm_c_version = true
 
 require "sndlib"
 if $clm_c_version
   require "sndins"
 else
-  require "v"		# fm_violin_rb, jc_reverb_rb
-  require "clm-ins"	# nrev_rb
-  require "freeverb"	# freeverb_rb
-  class Instrument
-    alias fm_violin fm_violin_rb
-    alias jc_reverb jc_reverb_rb
-    alias nrev nrev_rb 
-    alias freeverb freeverb_rb 
-  end
+  require "v"		# fm_violin, jc_reverb
+  require "clm-ins"	# nrev
+  require "freeverb"	# freeverb
 end
 require "clm"
 require "ws"
 
-$clm_file_name	= "test-ins-r.snd"
-$clm_play	= true
-$clm_statistics	= true
-$clm_verbose	= true
-$clm_srate	= 44100
-$clm_channels	= 2
+$clm_file_name = "test-ins-r.snd"
+$clm_play = true
+$clm_statistics = true
+$clm_verbose = true
+$clm_srate = 44100
+$clm_channels = 2
 $clm_reverb_channels = 2
 $clm_delete_reverb = true
+$clm_header_type = Mus_next
+$clm_sample_type = Mus_bfloat
 
 # show progress of long example
 $show = true
@@ -1412,47 +1404,47 @@ def long_example
                50, 0.1200, 60, 0.0800, 70, 0.0400, 100, 0]
     ampfunc1 = [0, 0, 1, 1, 3, 1, 10, 0.5000, 30, 0.2, 60, 0.0500, 100, 0]
     restore_fm_violin_defaults()
-    violin($t + 0.2600, 0.0500, 80, 0.8, :fm_index, 5, :reverb_amount, 0, 
+    vln_one_sin($t + 0.2600, 0.0500, 80, 0.8, :fm_index, 5, :reverb_amount, 0, 
       :amp_env, ampfunc1, :fm1_env, indfunc2)
-    violin($t + 1.2610, 0.2, 80, 0.8, :fm_index, 4, :reverb_amount, 0, 
+    vln_one_sin($t + 1.2610, 0.2, 80, 0.8, :fm_index, 4, :reverb_amount, 0, 
       :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 2.2600, 0.0500, 80, 0.8, :fm_index, 5, :reverb_amount, 0,
+    vln_one_sin($t + 2.2600, 0.0500, 80, 0.8, :fm_index, 5, :reverb_amount, 0,
       :amp_env, ampfunc1, :fm1_env, indfunc2) 
-    violin($t + 2.2620, 0.2, 80, 0.8, :fm_index, 5, :reverb_amount, 0, 
+    vln_one_sin($t + 2.2620, 0.2, 80, 0.8, :fm_index, 5, :reverb_amount, 0, 
       :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 3.2600, 0.0500, 80, 0.8, :fm_index, 6, :reverb_amount, 0, 
+    vln_one_sin($t + 3.2600, 0.0500, 80, 0.8, :fm_index, 6, :reverb_amount, 0, 
       :amp_env, ampfunc1, :fm1_env, indfunc2) 
-    violin($t + 3.2630, 0.2, 80, 0.8, :fm_index, 6, :reverb_amount, 0, 
+    vln_one_sin($t + 3.2630, 0.2, 80, 0.8, :fm_index, 6, :reverb_amount, 0, 
       :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 4.2600, 0.0500, 80, 0.3, :fm_index, 4, :reverb_amount, 0, 
+    vln_one_sin($t + 4.2600, 0.0500, 80, 0.3, :fm_index, 4, :reverb_amount, 0, 
       :amp_env, ampfunc1, :fm1_env, indfunc2) 
-    violin($t + 4.2620, 0.1, 160, 0.3, :fm_index, 4, :reverb_amount, 0, 
+    vln_one_sin($t + 4.2620, 0.1, 160, 0.3, :fm_index, 4, :reverb_amount, 0, 
       :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 4.2620, 0.2500, 80, 0.8, :fm_index, 4, :reverb_amount, 0, 
+    vln_one_sin($t + 4.2620, 0.2500, 80, 0.8, :fm_index, 4, :reverb_amount, 0, 
       :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 5.2600, 0.0500, 80, 0.5000, :fm_index, 4, :reverb_amount, 0,
+    vln_one_sin($t + 5.2600, 0.0500, 80, 0.500, :fm_index, 4, :reverb_amount, 0,
       :amp_env, ampfunc1, :fm1_env, indfunc2)
-    violin($t + 5.2610, 0.1, 210, 0.3, :fm_index, 4, :reverb_amount, 0, 
+    vln_one_sin($t + 5.2610, 0.1, 210, 0.3, :fm_index, 4, :reverb_amount, 0, 
       :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 5.2620, 0.2, 80, 0.1, :fm_index, 4, :reverb_amount, 0, 
+    vln_one_sin($t + 5.2620, 0.2, 80, 0.1, :fm_index, 4, :reverb_amount, 0, 
       :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 5.2630, 0.2500, 320, 0.1, :fm_index, 2, :reverb_amount, 0, 
+    vln_one_sin($t + 5.2630, 0.2500, 320, 0.1, :fm_index, 2, :reverb_amount, 0, 
       :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 6.2600, 0.0500, 80, 0.8, :fm_index, 4, :reverb_amount, 0, 
+    vln_one_sin($t + 6.2600, 0.0500, 80, 0.8, :fm_index, 4, :reverb_amount, 0, 
       :amp_env, ampfunc1, :fm1_env, indfunc2) 
-    violin($t + 6.2610, 0.1, 210, 0.1, :fm_index, 2, :reverb_amount, 0, 
+    vln_one_sin($t + 6.2610, 0.1, 210, 0.1, :fm_index, 2, :reverb_amount, 0, 
       :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 6.2620, 0.2, 80, 0.2, :fm_index, 4, :reverb_amount, 0, 
+    vln_one_sin($t + 6.2620, 0.2, 80, 0.2, :fm_index, 4, :reverb_amount, 0, 
       :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 6.2630, 0.2500, 320, 0.3, :reverb_amount, 0,
+    vln_one_sin($t + 6.2630, 0.2500, 320, 0.3, :reverb_amount, 0,
       :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875) 
-    violin($t + 7.2600, 0.0500, 80, 0.8, :fm_index, 2, :reverb_amount, 0, 
+    vln_one_sin($t + 7.2600, 0.0500, 80, 0.8, :fm_index, 2, :reverb_amount, 0, 
       :amp_env, ampfunc1, :fm1_env, indfunc2) 
-    violin($t + 7.2610, 0.1, 210, 0.1, :fm_index, 2, :reverb_amount, 0, 
+    vln_one_sin($t + 7.2610, 0.1, 210, 0.1, :fm_index, 2, :reverb_amount, 0, 
       :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 7.2620, 0.2, 80, 0.2, :fm_index, 2, :reverb_amount, 0, 
+    vln_one_sin($t + 7.2620, 0.2, 80, 0.2, :fm_index, 2, :reverb_amount, 0, 
       :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
-    violin($t + 7.2630, 0.2500, 320, 0.3, :reverb_amount, 0, 
+    vln_one_sin($t + 7.2630, 0.2500, 320, 0.3, :reverb_amount, 0, 
       :amp_env, ampfunc, :fm1_env, indfunc, :fm2_rat, 0.6875)
 
     $t += 8.0

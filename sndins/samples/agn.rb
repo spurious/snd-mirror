@@ -1,10 +1,10 @@
-#!/usr/bin/env ruby
+#! /usr/bin/env ruby
 # agn.rb -- Bill Schottstaedt's agn.cl 
 #     (see clm-2/clm-example.clm and clm-2/bess5.cl)
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Sat May 24 20:35:03 CEST 2003
-# Changed: Sat Jul 28 00:37:44 CEST 2012
+# Created: 03/05/24 20:35:03
+# Changed: 14/11/18 23:29:44
 
 # Type do_agn
 # or start the script in a shell.
@@ -15,27 +15,24 @@ require "sndlib"
 if $clm_c_version
   require "sndins"
 else
-  require "v"		# fm_violin_rb, jc_reverb_rb
-  require "clm-ins"	# nrev_rb
-  class Instrument
-    alias fm_violin fm_violin_rb
-    alias jc_reverb jc_reverb_rb
-    alias nrev nrev_rb 
-  end
+  require "v"           # fm_violin, jc_reverb
+  require "clm-ins"     # nrev
 end
 require "clm"
 require "ws"
 require "env"
 
-$clm_play	= true
-$clm_statistics	= true
-$clm_verbose	= true
-$clm_srate	= 44100
-$clm_channels	= 2
-$clm_reverb	= :jc_reverb
+$clm_play = true
+$clm_statistics = true
+$clm_verbose = true
+$clm_srate = 44100
+$clm_channels = 2
+$clm_reverb = :jc_reverb
 $clm_reverb_data = [:volume, 0.8]
 $clm_reverb_channels = 2
 $clm_delete_reverb = true
+$clm_header_type = Mus_next
+$clm_sample_type = Mus_bfloat
 
 class Agn
   include Math
@@ -63,7 +60,7 @@ class Agn
 
   def agn(file)
     File.open(file, "w") do |f|
-      f << "# from agn.cl (see clm-2/clm-example.clm and clm-2/bess5.cl)\n"
+      f << "# from agn.cl (clm-2/clm-example.clm, clm-2/bess5.cl)\n"
       f << "#\n"
       f << make_default_comment() << "\n\n"
       wins = [[0, 0, 40, 0.1, 60, 0.2, 75, 0.4, 82, 1, 90, 1, 100, 0],
@@ -82,8 +79,8 @@ class Agn
         nextbeg = revamt = ranamt = beg = dur = freq = ampl = ind = 0.0
         while beg < Time and cellctr < Limit
           beg += nextbeg
-          nextbeg = dur = [0.25,
-	    mytempo * (0.9 + 0.2 * random(1.0)) * @rhys[cellctr]].max
+          nextbeg = dur = [
+            0.25, mytempo * (0.9 + 0.2 * random(1.0)) * @rhys[cellctr]].max
           freq = (16.352 / 2 ** mi) * tune(@pits[cellctr]) * 2 ** @octs[cellctr]
           dur += dur if freq < 100
           ampl = [0.003, @amps[cellctr] * (1.0 / (60 * base))].max
@@ -96,7 +93,7 @@ fm_violin(%f, %f, %f, %f, :fm_index, %f,
   :amp_env, %s,
   :reverb_amount, %f, :noise_amount, %f)\n",
             beg, dur, freq, ampl, ind,
-	    wins[winnum].inspect, revamt, ranamt)
+            wins[winnum].inspect, revamt, ranamt)
           cellctr += 1
           if cellctr > (cellsiz + cellbeg)
             cellbeg += 1

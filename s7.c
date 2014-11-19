@@ -35860,12 +35860,12 @@ static bool hash_tables_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointe
 
 static bool floats_are_morally_equal(s7_scheme *sc, s7_Double x, s7_Double y)
 {
-  if (is_NaN(x))
-    return(is_NaN(y));
+  if (x == y) return(true);
 
-  return((!is_NaN(y)) &&
-	 ((x == y) ||
-	  (fabs(x - y) <= sc->morally_equal_float_epsilon)));
+  if ((is_NaN(x)) || (is_NaN(y)))
+    return((is_NaN(x)) && (is_NaN(y)));
+
+  return(fabs(x - y) <= sc->morally_equal_float_epsilon);
 }
 
 
@@ -35925,19 +35925,39 @@ static bool structures_are_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer
 	    if (vector_dimension(x, j) != vector_dimension(y, j))
 	      return(false);
 
+	if (is_float_vector(x))
+	  {
+	    s7_Double *arr1, *arr2;
+	    s7_Double fudge;
+	    arr1 = float_vector_elements(x);
+	    arr2 = float_vector_elements(y);
+	    fudge = sc->morally_equal_float_epsilon;
+	    if (fudge == 0.0)
+	      {
+		for (i = 0; i < len; i++)
+		  if ((arr1[i] != arr2[i]) &&
+		      ((!is_NaN(arr1[i])) || (!is_NaN(arr2[i]))))
+		    return(false);
+	      }
+	    else
+	      {
+		for (i = 0; i < len; i++)
+		  {
+		    s7_Double diff;
+		    diff = fabs(arr1[i] - arr2[i]);
+		    if (diff > fudge) return(false);
+		    if ((is_NaN(diff)) &&
+			((!is_NaN(arr1[i])) || (!is_NaN(arr2[i]))))
+		      return(false);
+		  }
+	      }
+	    return(true);
+	  }
+
 	if (is_int_vector(x))
 	  {
 	    for (i = 0; i < len; i++)
 	      if (int_vector_element(x, i) != int_vector_element(y, i))
-		return(false);
-	    return(true);
-	  }
-	if (is_float_vector(x))
-	  {
-	    /* (morally-equal? (make-vector 1 1.0 #t) (make-vector 1 1.0 #t))
-	     */
-	    for (i = 0; i < len; i++)
-	      if (!floats_are_morally_equal(sc, float_vector_element(x, i), float_vector_element(y, i)))
 		return(false);
 	    return(true);
 	  }
@@ -69896,7 +69916,7 @@ int main(int argc, char **argv)
  * lg             |      |      |      6497 6521
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6
  * t455|6     265 |   89 |  9   |       8.4  8.5
- * t816           |   71 | 70.6 | 38.0 31.8 30.2
+ * t816           |   71 | 70.6 | 38.0 31.8 29.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.4
  *
  * --------------------------------------------------
@@ -69908,16 +69928,18 @@ int main(int argc, char **argv)
  * prelookup? [(#_*gtk* '...)? or (#.?)]
  * need to check new openGL for API changes (GL_VERSION?)
  *   test/Mesa-10.3.1/include/GL/glext.h|gl.h (current version appears to be 7.6)
- *   how much of glext.h is needed?
+ *   how much of glext.h is needed?  
+ *   GLU primarily for unproject (HAVE_GLU snd-chn) -- where is this in the new GL? -- in a separate package libglu
+ *   GL: snd-[0]|1|x0.h=#includes with glx.h, 
+ *       [snd-axis], [snd], snd-chn, [snd-draw], [snd-data], snd-motif, [snd-print], snd-xen, snd-help
+ *     snd-xen|help GLXContext and version -- motif-specific? (also snd-1.h)
  *   check out the GL support in gtk 3.16 -- this looks straightforward, snd-chn.c
+ *     gtk+-3.15.1/gtk/gtkglarea.c, gtk-demo/glarea.c, tests/gtkgears.c + testglarea.c, docs/reference/gtk/html/GtkGLArea.html
+ *     GdkGLContext -- needs expoxy/gl.h?
  * snd-genv needs a lot of gtk3 work
- *
- * undef id: cond-expand args and check for other cases via s7test/etc:
- *   defmacro, define-memoized and the like -- see test/undef
  *
  * cyclic-seq in rest of full-* 
  * cyclic-sequences is minimally tested in s7test (also c_object env)
- * mus-copy left-overs (only move-sound I think, and test env/pulsed-env/sample->file/locsig)
- *   generators.scm: if gen has embedded gen, it needs a special copy method (e.g. adjustable-oscil),
- *      but r2k!cos seems to work -- how? -- perhaps all output 0.0!
+ *
+ * why not snd-g* -> snd-gtk?
  */

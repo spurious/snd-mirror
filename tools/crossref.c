@@ -297,27 +297,10 @@ int main(int argc, char **argv)
   add_file("snd-xen.c");
   add_file("snd-ladspa.c");
   add_file("snd-motif.c");
-  /* add_file("snd-xutils.c"); */
-  /* add_file("snd-xhelp.c"); */
-  /* add_file("snd-xfind.c"); */
-  /* add_file("snd-xmenu.c"); */
-  /* add_file("snd-xdraw.c"); */
-  /* add_file("snd-xlistener.c"); */
   add_file("snd-listener.c");
-  /* add_file("snd-xchn.c"); */
-  /* add_file("snd-xsnd.c"); */
-  /* add_file("snd-xregion.c"); */
   add_file("snd-xref.c");
-  /*  add_file("snd-xdrop.c"); */
-  /* add_file("snd-xmain.c"); */
-  /* add_file("snd-xmix.c"); */
-  /* add_file("snd-xenv.c"); */
   add_file("snd-gxbitmaps.c");
   add_file("snd-gxcolormaps.c");
-  /* add_file("snd-xfft.c"); */
-  /* add_file("snd-xprint.c"); */
-  /* add_file("snd-xfile.c"); */
-  /* add_file("snd-xprefs.c"); */
   add_file("snd-gutils.c");
   add_file("snd-ghelp.c");
   add_file("snd-gfind.c");
@@ -327,12 +310,10 @@ int main(int argc, char **argv)
   add_file("snd-gchn.c");
   add_file("snd-gsnd.c");
   add_file("snd-gregion.c");
-  /* add_file("snd-gdrop.c"); */
   add_file("snd-gmain.c");
   add_file("snd-gmix.c");
   add_file("snd-genv.c");
   add_file("snd-gfft.c");
-  /* add_file("snd-gprint.c"); */
   add_file("snd-gfile.c");
   add_file("snd-gprefs.c");
   add_file("snd-prefs.c");

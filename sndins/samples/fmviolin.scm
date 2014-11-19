@@ -1,14 +1,16 @@
+#! /usr/opt/bin/snd-s7-nogui -noinit
+!#
 ;;; Examples of the fm violin (see v.ins) 
 ;;; This file semi-automatically translated from a sambox note list ca 1983.
 ;;;
 ;; Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-;; Created: Tue Jun 24 19:05:06 CEST 2003
-;; Changed: Sat Jul 28 04:16:19 CEST 2012
+;; Created: 03/06/24 19:05:06
+;; Changed: 14/11/18 23:54:35
 
 ;; Type (short-example)
 ;; or   (long-example)
 
-(define *clm-c-version* #t)
+(define *clm-c-version* #f)
 
 (if (not (provided? 'sndlib))
     (let ((hsndlib (dlopen "libsndlib.so")))
@@ -25,19 +27,24 @@
     (load "v.scm")
     (load "freeverb.scm")))
 
-(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (provided? 'snd)
+    (load "ws.scm")
+    (load "sndlib-ws.scm"))
 
-(define *clm-file-name* "test-ins-s.snd")
-(define *clm-play* #t)
-(define *clm-statistics* #t)
-(define *clm-verbose* #t)
-(define *clm-srate* 44100)
-(define *clm-channels* 2)
-(define *clm-reverb-channels* 2)
-(define *clm-delete-reverb* #t)
+(set! *clm-file-name* "test-ins-s.snd")
+(set! *clm-play* #t)
+(set! *clm-statistics* #t)
+(set! *clm-verbose* #t)
+(set! *clm-srate* 44100)
+(set! *clm-channels* 2)
+(set! *clm-reverb-channels* 2)
+(set! *clm-delete-reverb* #t)
+(set! *clm-header-type* mus-next)
+(set! *clm-sample-type* mus-bfloat)
 
-(define (main args)
-  (if (> (length args) 1)
+;; (script-args): ("-noinit" "./fmviolin.scm")
+(define (main)
+  (if (> (length (script-args)) 2)
       (short-example)
       (long-example)))
 
@@ -1974,5 +1981,8 @@
 		:fm-index .8000 :distance 1 :reverb-amount .0013
 		:amp-env
 		'(0 0 1.3333 1 5.3199 .6000 10.3030 .3 25.2525 .1 100 0))))
+
+(main)
+(exit 0)
 
 ;; fmviolin.scm ends here

@@ -315,6 +315,13 @@
 	  #f
 	  (fveql a (cdr b) (+ i 1)))))
 
+(define* (mus-arrays-equal? x y (err .001))
+  (let ((old-eps (*s7* 'morally-equal-float-epsilon)))
+    (set! (*s7* 'morally-equal-float-epsilon) err)
+    (let ((res (morally-equal? x y)))
+      (set! (*s7* 'morally-equal-float-epsilon) old-eps)
+      res)))
+
 (define sd-equal mus-arrays-equal?)
 (define vequal mus-arrays-equal?)
 
@@ -21954,6 +21961,8 @@ EDITS: 2
     (copy-test (make-filter 4 (float-vector 0.4 0.3 0.2 0.1)))
     (copy-test (make-one-pole-all-pass 8 .5))
     (copy-test (make-readin "oboe.snd"))
+    (copy-test (make-env '(0 0 1 1) :length 10))
+    (copy-test (make-pulsed-env '(0 0 1 1) .001 1000))
     
     ;; formant-bank isn't really testing equality yet
     
