@@ -227,6 +227,7 @@ static char *gl_version(void)
 
 static char *glx_version(void)
 {
+#if USE_MOTIF
   #define VERSION_SIZE 128
   char *version = NULL;
 
@@ -248,6 +249,9 @@ static char *glx_version(void)
     }
   if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
   return(version);
+#else
+  return(mus_strdup(" "));
+#endif
 }
 #endif
 

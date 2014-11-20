@@ -2949,6 +2949,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 #define CLEAR_GRAPH true
 
 #if HAVE_GL
+#if USE_MOTIF
 static void set_up_for_gl(chan_info *cp)
 {
   glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->cx);
@@ -2961,6 +2962,14 @@ static void gl_display(chan_info *cp)
     glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
   else glFlush();
 }
+#else
+static void set_up_for_gl(chan_info *cp)
+{
+}
+static void gl_display(chan_info *cp)
+{
+}
+#endif
 
 
 #define GL_COLOR_SET(R, G, B) glColor3us(R, G, B)

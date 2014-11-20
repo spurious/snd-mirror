@@ -339,7 +339,7 @@
 
 	(if (not (or (string=? type "Display*")     ; why are these 2 handled specially?
 		     (string=? type "XVisualInfo*")
-		     (string=? type "GLXContext"))) ; Snd g_snd_glx_context (snd-xmain.c) calls this a pointer
+		     (string=? type "GLXContext"))) ; Snd g_snd_gl_context (snd-motif.c) calls this a pointer
 	    (begin
 	      (if (member type glu-1-2) 
 		  (hey "#ifdef GLU_VERSION_1_2~%")

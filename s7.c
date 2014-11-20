@@ -489,7 +489,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "if", "if", "if", "if", "if", "if", "when", "unless",
    "and", "and", "and", "or", "or", "or", 
 
-   "if", 
+   "if", "if",
    "catch", "catch", "catch", "cond", "cond",
    "do", "do", "do", "do", "do", 
    "do", "do", "do", "do", "do", "do",
@@ -637,6 +637,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_C_op_opSSq_q_C, HOP_SAFE_C_op_opSSq_q_C, OP_SAFE_C_S_op_opSSq_opSSqq, HOP_SAFE_C_S_op_opSSq_opSSqq, 
       OP_SAFE_C_opSSq_op_opSSq_q, HOP_SAFE_C_opSSq_op_opSSq_q, OP_SAFE_C_op_opSSq_Sq_opSSq, HOP_SAFE_C_op_opSSq_Sq_opSSq,
       OP_SAFE_C_op_opSq_q, HOP_SAFE_C_op_opSq_q, OP_SAFE_C_C_op_S_opCqq, HOP_SAFE_C_C_op_S_opCqq, 
+      OP_SAFE_C_op_S_opSq_q, HOP_SAFE_C_op_S_opSq_q, 
 
       OP_SAFE_C_STAR_CD, HOP_SAFE_C_STAR_CD, 
       OP_SAFE_C_Z, HOP_SAFE_C_Z, OP_SAFE_C_ZZ, HOP_SAFE_C_ZZ, OP_SAFE_C_SZ, HOP_SAFE_C_SZ, OP_SAFE_C_ZS, HOP_SAFE_C_ZS, 
@@ -744,6 +745,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_op_opssq_q_c", "h_safe_c_op_opssq_q_c", "safe_c_s_op_opssq_opssqq", "h_safe_c_s_op_opssq_opssqq", 
       "safe_c_opssq_op_opssq_q", "h_safe_c_opssq_op_opssq_q", "safe_c_op_opssq_sq_opssq", "h_safe_c_op_opssq_sq_opssq",
       "safe_c_op_opsq_q", "h_safe_c_op_opsq_q", "safe_c_c_op_s_opcqq", "h_safe_c_c_op_s_opcqq",
+      "safe_c_op_s_opsq_q", "h_safe_c_op_s_opsq_q",
 
       "safe_c_z", "h_safe_c_z", "safe_c_zz", "h_safe_c_zz", "safe_c_sz", "h_safe_c_sz", "safe_c_zs", "h_safe_c_zs", 
       "safe_c_cz", "h_safe_c_cz", "safe_c_zc", "h_safe_c_zc", 
@@ -2048,7 +2050,7 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 {
   if ((typeflag(p) & (T_OPTIMIZED | T_LINE_NUMBER)) != 0)
     {
-      fprintf(stderr, "gcdr %s[%d]: set %p to %p but %s\n", func, line, p, x, (has_line_number(p)) ? "line number set" : "is optimized");
+      fprintf(stderr, "gcdr %s[%d]: set %p to %p (%s) but %s\n", func, line, p, x, DISPLAY(x), (has_line_number(p)) ? "line number set" : "is optimized");
       typeflag(p) &= ~(T_OPTIMIZED | T_LINE_NUMBER);
     }
   p->object.ext_cons.gcdr = x;
@@ -44275,6 +44277,9 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_opSq:
 	  return(OP_SAFE_C_op_opSq_q);
 
+	case OP_SAFE_C_S_opSq:
+	  return(OP_SAFE_C_op_S_opSq_q);
+
 	case OP_SAFE_C_A:
 	  return(OP_SAFE_C_opAq);
 
@@ -53864,6 +53869,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		car(sc->T1_1) = find_symbol_checked(sc, cadr(args));
 		car(sc->T1_1) = c_call(args)(sc, sc->T1_1);
 		car(sc->T1_1) = c_call(outer)(sc, sc->T1_1);
+		sc->value = c_call(code)(sc, sc->T1_1);
+		goto START;
+	      }
+	      
+	    case OP_SAFE_C_op_S_opSq_q:
+	      if (!a_is_ok(sc, code)) break;
+	      
+	    case HOP_SAFE_C_op_S_opSq_q:
+	      {
+		/* (exp (* r (cos x))) */
+		s7_pointer outer, args;
+		outer = cadr(code);
+		args = caddr(outer);
+		car(sc->T1_1) = find_symbol_checked(sc, cadr(args));
+		car(sc->T2_2) = c_call(args)(sc, sc->T1_1);
+		car(sc->T2_1) = find_symbol_checked(sc, cadr(outer));
+		car(sc->T1_1) = c_call(outer)(sc, sc->T2_1);
 		sc->value = c_call(code)(sc, sc->T1_1);
 		goto START;
 	      }
@@ -69912,7 +69934,7 @@ int main(int argc, char **argv)
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2
  * s7test    1721 | 1358 |  995 | 1194 1185 1192
  * index    44300 | 3291 | 1725 | 1276 1243 1203
- * bench    42736 | 8752 | 4220 | 3506 3506 3541
+ * bench    42736 | 8752 | 4220 | 3506 3506 3539
  * lg             |      |      |      6497 6521
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6
  * t455|6     265 |   89 |  9   |       8.4  8.5
@@ -69931,11 +69953,12 @@ int main(int argc, char **argv)
  *   how much of glext.h is needed?  
  *   GLU primarily for unproject (HAVE_GLU snd-chn) -- where is this in the new GL? -- in a separate package libglu
  *   GL: snd-[0]|1|x0.h=#includes with glx.h, 
- *       [snd-axis], [snd], snd-chn, [snd-draw], [snd-data], snd-motif, [snd-print], snd-xen, snd-help
- *     snd-xen|help GLXContext and version -- motif-specific? (also snd-1.h)
+ *       [snd-axis], [snd], snd-chn, [snd-draw], [snd-data], snd-motif, [snd-print], [snd-xen, snd-help]
+ *     [snd-xen|help GLXContext and version -- motif-specific?] (also snd-1.h)
  *   check out the GL support in gtk 3.16 -- this looks straightforward, snd-chn.c
  *     gtk+-3.15.1/gtk/gtkglarea.c, gtk-demo/glarea.c, tests/gtkgears.c + testglarea.c, docs/reference/gtk/html/GtkGLArea.html
  *     GdkGLContext -- needs expoxy/gl.h?
+ *     snd-axis: gdk_gl_font_use_pango... -- this is not in the gtk/cl code (it's ancient gtkglext stuff)
  * snd-genv needs a lot of gtk3 work
  *
  * cyclic-seq in rest of full-* 

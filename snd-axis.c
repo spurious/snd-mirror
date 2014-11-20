@@ -402,8 +402,8 @@ static void activate_gl_fonts(void)
     {
       label_base = glGenLists(128);
       number_base = glGenLists(128);
-      gdk_gl_font_use_pango_font(AXIS_LABEL_FONT(ss), 32, 96, label_base + 32);
-      gdk_gl_font_use_pango_font(AXIS_NUMBERS_FONT(ss), 32, 96, number_base + 32);
+      /* gdk_gl_font_use_pango_font(AXIS_LABEL_FONT(ss), 32, 96, label_base + 32); */
+      /* gdk_gl_font_use_pango_font(AXIS_NUMBERS_FONT(ss), 32, 96, number_base + 32); */
       gl_fonts_activated = true;
     }
 #endif
@@ -426,7 +426,7 @@ void reload_label_font(void)
     {
       glDeleteLists(label_base, 128);
       label_base = glGenLists(128);
-      gdk_gl_font_use_pango_font(AXIS_LABEL_FONT(ss), 32, 96, label_base + 32);
+      /* gdk_gl_font_use_pango_font(AXIS_LABEL_FONT(ss), 32, 96, label_base + 32); */
     }
 #endif
 }
@@ -448,7 +448,7 @@ void reload_number_font(void)
     {
       glDeleteLists(number_base, 128);
       number_base = glGenLists(128);
-      gdk_gl_font_use_pango_font(AXIS_NUMBERS_FONT(ss), 32, 96, number_base + 32);
+      /* gdk_gl_font_use_pango_font(AXIS_NUMBERS_FONT(ss), 32, 96, number_base + 32); */
     }
 #endif
 }

@@ -2699,13 +2699,13 @@ static char *legalize_path(const char *in_str)
 
 
 #if HAVE_GL
-static Xen g_snd_glx_context(void)
+static Xen g_snd_gl_context(void)
 {
-  return(Xen_list_2(C_string_to_Xen_symbol("GLXContext"), 
+  return(Xen_list_2(C_string_to_Xen_symbol("GLContext"), 
 		    Xen_wrap_C_pointer(ss->cx)));
 } 
 
-Xen_wrap_no_args(g_snd_glx_context_w, g_snd_glx_context)
+Xen_wrap_no_args(g_snd_gl_context_w, g_snd_gl_context)
 #endif
 
 
@@ -3020,7 +3020,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
 #endif
 
 #if HAVE_GL
-  Xen_define_procedure("snd-glx-context", g_snd_glx_context_w, 0, 0, 0, "OpenGL GLXContext");
+  Xen_define_procedure("snd-gl-context", g_snd_gl_context_w, 0, 0, 0, "GL Context");
 #endif
 
 #if USE_MOTIF

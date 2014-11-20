@@ -646,7 +646,9 @@ typedef struct snd_state {
   Cursor graph_cursor, wait_cursor, bounds_cursor, play_cursor, loop_play_cursor, yaxis_cursor;
   Widget requestor_dialog;
 #if HAVE_GL
+#if USE_MOTIF
   GLXContext cx;
+#endif
 #endif
   Widget *mw;
   bool axis_color_set;

@@ -54,7 +54,7 @@
     (define (redraw-graph)
       (let ((win (XtWindow drawer))
 	    (dpy (XtDisplay drawer))
-	    (cx (snd-glx-context)))
+	    (cx (snd-gl-context)))
 	(glXMakeCurrent dpy win cx)
 	(if gl-list (glDeleteLists gl-list 1))
 	(set! gl-list (glGenLists 1))
