@@ -9670,35 +9670,6 @@ Xen_wrap_no_args(g_get_internal_real_time_w, g_get_internal_real_time)
 
 /* vct stuff (originally in vct.c) */
 
-static s7_pointer vct_set_three;
-static s7_pointer g_vct_set_three(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer v;
-  mus_long_t loc;
-  s7_pointer val;
-  mus_float_t *d;
-
-  v = car(args);
-  if (!s7_is_float_vector(v))
-    {
-      val = s7_method(sc, v, s7_make_symbol(sc, "float-vector-set!"));
-      if (val == xen_undefined)
-	s7_wrong_type_arg_error(s7, "float-vector-set!", 1, v, "a " S_vct);
-      return(s7_apply_function(s7, val, args));
-    }
-  Xen_check_type((s7_vector_rank(v) == 1), v, 1, "float-vector-set!", "a 1-dimensional " S_vct);
-
-  loc = s7_number_to_integer_with_caller(sc, cadr(args), "float-vector-set!");
-  if ((loc < 0) || (loc>= mus_vct_length(v)))
-    Xen_out_of_range_error("float-vector-set!", 2, cadr(args), "index out of range");
-
-  val = caddr(args);
-  d = mus_vct_data(v);
-  d[loc] = Xen_real_to_C_double(val);
-  return(val);
-}
-
-
 #if WITH_GMP
   #define s7_cell_integer s7_integer
   #define s7_cell_real s7_real
@@ -10513,7 +10484,6 @@ static s7_pointer vct_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 	    }
 	}
 #endif
-      return(vct_set_three);
     }
   return(f);
 }
@@ -10941,24 +10911,20 @@ static s7_pointer outa_two;
 static s7_pointer g_outa_two(s7_scheme *sc, s7_pointer args)
 {
   mus_long_t pos;
-  s7_pointer x;
   pos = (mus_long_t)s7_number_to_integer_with_caller(sc, car(args), "outa");
   if (pos < 0) 
     Xen_out_of_range_error(S_outa, 1, car(args), "must be >= 0");    
-  x = cadr(args);
-  return(out_any_2(pos, s7_number_to_real_with_caller(sc, x, S_outa), 0, S_outa));
+  return(out_any_2(pos, s7_number_to_real_with_caller(sc, cadr(args), S_outa), 0, S_outa));
 }
 
 static s7_pointer outb_two;
 static s7_pointer g_outb_two(s7_scheme *sc, s7_pointer args)
 {
   mus_long_t pos;
-  s7_pointer x;
   pos = (mus_long_t)s7_number_to_integer_with_caller(sc, car(args), "outb");
   if (pos < 0) 
     Xen_out_of_range_error(S_outb, 1, car(args), "must be >= 0");    
-  x = cadr(args);
-  return(out_any_2(pos, s7_number_to_real_with_caller(sc, x, S_outb), 1, S_outb));
+  return(out_any_2(pos, s7_number_to_real_with_caller(sc, cadr(args), S_outb), 1, S_outb));
 }
 
 static s7_pointer src_one;
@@ -20814,8 +20780,6 @@ static void init_choosers(s7_scheme *sc)
 #endif
     s7_function_set_step_safe(f);
 
-    vct_set_three = s7_make_function(s7, "float-vector-set!", g_vct_set_three, 3, 0, false, "float-vector-set! opt");
-    s7_function_set_class(vct_set_three, f);
 #if (!WITH_GMP)
     vct_set_vector_ref = s7_make_function(s7, "float-vector-set!", g_vct_set_vector_ref, 3, 0, false, "float-vector-set! opt");
     s7_function_set_class(vct_set_vector_ref, f);
@@ -20832,13 +20796,13 @@ static void init_choosers(s7_scheme *sc)
     s7_function_set_class(vct_set_direct_looped, f);
     s7_function_set_looped(vct_set_direct, vct_set_direct_looped);
     s7_function_set_looped(vct_set_temp, vct_set_direct_looped);
-    s7_function_set_looped(vct_set_three, vct_set_direct_looped);
+    s7_function_set_looped(s7_name_to_value(s7, "float-vector-set!"), vct_set_direct_looped);
 
     vct_set_let_looped = s7_make_function(s7, "float-vector-set!", g_vct_set_let_looped, 3, 0, false, "float-vector-set! opt");
     s7_function_set_class(vct_set_let_looped, f);
     s7_function_set_let_looped(vct_set_direct, vct_set_let_looped);
     s7_function_set_let_looped(vct_set_temp, vct_set_let_looped);
-    s7_function_set_let_looped(vct_set_three, vct_set_let_looped);
+    s7_function_set_let_looped(s7_name_to_value(s7, "float-vector-set!"), vct_set_let_looped);
 #endif
   }
 }

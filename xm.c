@@ -6858,6 +6858,27 @@ to be executed when a protocol message is received from MWM"
   return(Xen_false);
 }
 
+static Xen gxm_XmSetWMProtocolHooks(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6)
+{
+  #define H_XmSetWMProtocolHooks "void XmSetWMProtocolHooks(Widget shell, Atom property, XtCallbackProc prehook, \
+XtPointer pre_closure, XtCallbackProc posthook, XtPointer post_closure) A VendorShell function that allows preactions and postactions \
+to be executed when a protocol message is received from MWM"
+  Xen descr1, descr2, wm_atom;
+  Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmSetProtocolHooks", "Widget");
+  Xen_check_type(Xen_is_Atom(arg2), arg2, 2, "XmSetProtocolHooks", "Atom");
+  Xen_check_type(Xen_is_procedure(arg3) && (Xen_is_aritable(arg3, 3)), arg3, 3, "XmSetProtocolHooks", "(XtCallbackProc widget data callb)");
+  Xen_check_type(Xen_is_procedure(arg5) && (Xen_is_aritable(arg5, 3)), arg5, 5, "XmSetProtocolHooks", "(XtCallbackProc widget data callb)");
+  wm_atom = C_to_Xen_Atom(XInternAtom(XtDisplay(Xen_to_C_Widget(arg1)), "WM_PROTOCOLS", false));
+  descr1 = C_to_Xen_XM_ProtocolHook(arg3, arg4, arg2, wm_atom);
+  descr2 = C_to_Xen_XM_ProtocolHook(arg5, arg6, arg2, wm_atom);
+  xm_protect(descr1);
+  xm_protect(descr2);
+  XmSetWMProtocolHooks(Xen_to_C_Widget(arg1), Xen_to_C_Atom(arg2),
+		       gxm_ProtocolProc, (XtPointer)descr1,
+		       gxm_ProtocolProc, (XtPointer)descr2);
+  return(Xen_false);
+}
+
 static Xen gxm_XmDeactivateProtocol(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmDeactivateProtocol "void XmDeactivateProtocol(Widget shell, Atom property, Atom protocol) \
@@ -6869,6 +6890,16 @@ deactivates a protocol without removing it"
   return(Xen_false);
 }
 
+static Xen gxm_XmDeactivateWMProtocol(Xen arg1, Xen arg2)
+{
+  #define H_XmDeactivateWMProtocol "void XmDeactivateWMProtocol(Widget shell, Atom property) \
+deactivates a property in WM_PROTOCOLS without removing it"
+  Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmDeactivateProtocol", "Widget");
+  Xen_check_type(Xen_is_Atom(arg2), arg2, 2, "XmDeactivateProtocol", "Atom");
+  XmDeactivateWMProtocol(Xen_to_C_Widget(arg1), Xen_to_C_Atom(arg2));
+  return(Xen_false);
+}
+
 static Xen gxm_XmActivateProtocol(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmActivateProtocol "oid XmActivateProtocol(Widget shell, Atom property, Atom protocol) activates a protocol"
@@ -6876,6 +6907,15 @@ static Xen gxm_XmActivateProtocol(Xen arg1, Xen arg2, Xen arg3)
   Xen_check_type(Xen_is_Atom(arg2), arg2, 2, "XmActivateProtocol", "Atom");
   Xen_check_type(Xen_is_Atom(arg3), arg3, 3, "XmActivateProtocol", "Atom");
   XmActivateProtocol(Xen_to_C_Widget(arg1), Xen_to_C_Atom(arg2), Xen_to_C_Atom(arg3));
+  return(Xen_false);
+}
+
+static Xen gxm_XmActivateWMProtocol(Xen arg1, Xen arg2)
+{
+  #define H_XmActivateWMProtocol "oid XmActivateWMProtocol(Widget shell, Atom property) activates a property in the WM_PROTOCOLS"
+  Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmActivateProtocol", "Widget");
+  Xen_check_type(Xen_is_Atom(arg2), arg2, 2, "XmActivateProtocol", "Atom");
+  XmActivateWMProtocol(Xen_to_C_Widget(arg1), Xen_to_C_Atom(arg2));
   return(Xen_false);
 }
 
@@ -6913,6 +6953,28 @@ XtPointer closure) removes a callback from the internal list"
   return(Xen_false);
 }
 
+static Xen gxm_XmRemoveWMProtocolCallback(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
+{
+  #define H_XmRemoveWMProtocolCallback "void XmRemoveWMProtocolCallback(Widget shell, Atom property, XtCallbackProc callback, \
+XtPointer closure) removes a callback from the WM_PROTOCOLS list"
+  Xen descr;
+  int loc, dloc;
+  Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmRemoveWMProtocolCallback", "Widget");
+  Xen_check_type(Xen_is_Atom(arg2), arg2, 2, "XmRemoveWMProtocolCallback", "Atom");
+  Xen_check_type(Xen_is_procedure(arg3) && (Xen_is_aritable(arg3, 3)), arg3, 3, "XmRemoveWMProtocolCallback", "XtCallbackProc (3 args)");
+  descr = C_to_Xen_XM_ProtocolProc(arg3, arg4, arg2, C_to_Xen_Atom(XInternAtom(XtDisplay(Xen_to_C_Widget(arg1)), "WM_PROTOCOLS", false)));
+  dloc = xm_protect(descr);
+  loc = map_over_protected_elements(unprotect_protocolproc, (unsigned long)descr);
+  XmRemoveWMProtocolCallback(Xen_to_C_Widget(arg1), 
+			     Xen_to_C_Atom(arg2), 
+			     gxm_ProtocolProc,
+			     (XtPointer)(Xen_vector_ref(xm_protected, loc))); /* this was the original tag passed in */
+  /* now unprotect the proc and our descr */
+  xm_unprotect_at(dloc);
+  xm_unprotect_at(loc);
+  return(Xen_false);
+}
+
 static Xen gxm_XmAddProtocolCallback(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5)
 {
   #define H_XmAddProtocolCallback "void XmAddProtocolCallback(Widget shell, Atom property, Atom protocol, XtCallbackProc callback, \
@@ -6929,6 +6991,23 @@ XtPointer closure) adds client callbacks for a protocol"
 			Xen_to_C_Atom(arg3),
 			gxm_ProtocolProc,
 			(XtPointer)descr);
+  return(Xen_false);
+}
+
+static Xen gxm_XmAddWMProtocolCallback(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
+{
+  #define H_XmAddWMProtocolCallback "void XmAddWMProtocolCallback(Widget shell, Atom property, XtCallbackProc callback, \
+XtPointer closure) adds client callbacks for the WM_PROTOCOLS"
+  Xen descr;
+  Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmAddWMProtocolCallback", "Widget");
+  Xen_check_type(Xen_is_Atom(arg2), arg2, 2, "XmAddWMProtocolCallback", "Atom");
+  Xen_check_type(Xen_is_procedure(arg3) && (Xen_is_aritable(arg3, 3)), arg3, 3, "XmAddWMProtocolCallback", "(XtCallbackProc widget data callb)");
+  descr = C_to_Xen_XM_ProtocolProc(arg3, arg4, arg2, C_to_Xen_Atom(XInternAtom(XtDisplay(Xen_to_C_Widget(arg1)), "WM_PROTOCOLS", false)));
+  xm_protect(descr);
+  XmAddWMProtocolCallback(Xen_to_C_Widget(arg1), 
+			  Xen_to_C_Atom(arg2), 
+			  gxm_ProtocolProc,
+			  (XtPointer)descr);
   return(Xen_false);
 }
 
@@ -6952,6 +7031,23 @@ removes the protocols from the protocol manager and deallocates the internal tab
   return(Xen_false);
 }
 
+static Xen gxm_XmRemoveWMProtocols(Xen arg1, Xen arg2, Xen arg3)
+{
+  #define H_XmRemoveWMProtocols "void XmRemoveWMProtocols(Widget shell, Atom *protocols, Cardinal num_protocols) \
+removes the protocols from WM_PROTOCOLS"
+  Atom *outs;
+  int len;
+  Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmRemoveWMProtocols", "Widget");
+  Xen_check_type(Xen_is_list(arg2), arg2, 2, "XmRemoveWMProtocols", "list of Atom");
+  Xen_check_type(Xen_is_integer_or_unbound(arg3), arg3, 3, "XmRemoveWMProtocols", "int");
+  if (Xen_is_integer(arg3)) len = Xen_integer_to_C_int(arg3); else len = Xen_list_length(arg2);
+  if (len <= 0) return(Xen_false);
+  outs = Xen_to_C_Atoms(arg2, len);
+  XmRemoveWMProtocols(Xen_to_C_Widget(arg1), outs, len);
+  free(outs);
+  return(Xen_false);
+}
+
 static Xen gxm_XmAddProtocols(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 {
   #define H_XmAddProtocols "void XmAddProtocols(Widget shell, Atom property, Atom *protocols, Cardinal num_protocols) \
@@ -6968,6 +7064,23 @@ adds the protocols to the protocol manager and allocates the internal tables"
   if (len <= 0) return(Xen_false);
   outs = Xen_to_C_Atoms(arg3, len);
   XmAddProtocols(Xen_to_C_Widget(arg1), Xen_to_C_Atom(arg2), outs, len);
+  free(outs);
+  return(Xen_false);
+}
+
+static Xen gxm_XmAddWMProtocols(Xen arg1, Xen arg2, Xen arg3)
+{
+  #define H_XmAddWMProtocols "void XmAddWMProtocols(Widget shell, Atom *protocols, Cardinal num_protocols) \
+adds the protocols to WM_PROTOCOLS"
+  Atom *outs;
+  int len;
+  Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmAddWMProtocols", "Widget");
+  Xen_check_type(Xen_is_list(arg2), arg2, 2, "XmAddWMProtocols", "list of Atom");
+  Xen_check_type(Xen_is_integer_or_unbound(arg3), arg3, 3, "XmAddWMProtocols", "int");
+  if (Xen_is_integer(arg3)) len = Xen_integer_to_C_int(arg3); else len = Xen_list_length(arg2);
+  if (len <= 0) return(Xen_false);
+  outs = Xen_to_C_Atoms(arg2, len);
+  XmAddWMProtocols(Xen_to_C_Widget(arg1), outs, len);
   free(outs);
   return(Xen_false);
 }
@@ -20656,11 +20769,17 @@ Xen_wrap_4_optional_args(gxm_XmCreateBulletinBoardDialog_w, gxm_XmCreateBulletin
 Xen_wrap_4_optional_args(gxm_XmCreateCascadeButtonGadget_w, gxm_XmCreateCascadeButtonGadget)
 Xen_wrap_2_args(gxm_XmCascadeButtonGadgetHighlight_w, gxm_XmCascadeButtonGadgetHighlight)
 Xen_wrap_4_optional_args(gxm_XmAddProtocols_w, gxm_XmAddProtocols)
+Xen_wrap_3_optional_args(gxm_XmAddWMProtocols_w, gxm_XmAddWMProtocols)
 Xen_wrap_4_optional_args(gxm_XmRemoveProtocols_w, gxm_XmRemoveProtocols)
+Xen_wrap_3_optional_args(gxm_XmRemoveWMProtocols_w, gxm_XmRemoveWMProtocols)
 Xen_wrap_5_args(gxm_XmAddProtocolCallback_w, gxm_XmAddProtocolCallback)
+Xen_wrap_4_args(gxm_XmAddWMProtocolCallback_w, gxm_XmAddWMProtocolCallback)
 Xen_wrap_5_args(gxm_XmRemoveProtocolCallback_w, gxm_XmRemoveProtocolCallback)
+Xen_wrap_4_args(gxm_XmRemoveWMProtocolCallback_w, gxm_XmRemoveWMProtocolCallback)
 Xen_wrap_3_args(gxm_XmActivateProtocol_w, gxm_XmActivateProtocol)
 Xen_wrap_3_args(gxm_XmDeactivateProtocol_w, gxm_XmDeactivateProtocol)
+Xen_wrap_2_args(gxm_XmActivateWMProtocol_w, gxm_XmActivateWMProtocol)
+Xen_wrap_2_args(gxm_XmDeactivateWMProtocol_w, gxm_XmDeactivateWMProtocol)
 Xen_wrap_7_args(gxm_XmSetProtocolHooks_w, gxm_XmSetProtocolHooks)
 Xen_wrap_4_optional_args(gxm_XmCreateCascadeButton_w, gxm_XmCreateCascadeButton)
 Xen_wrap_2_args(gxm_XmCascadeButtonHighlight_w, gxm_XmCascadeButtonHighlight)
@@ -22211,11 +22330,17 @@ static void define_procedures(void)
   XM_define_procedure(XmCreateCascadeButtonGadget, gxm_XmCreateCascadeButtonGadget_w, 3, 1, 0, H_XmCreateCascadeButtonGadget);
   XM_define_procedure(XmCascadeButtonGadgetHighlight, gxm_XmCascadeButtonGadgetHighlight_w, 2, 0, 0, H_XmCascadeButtonGadgetHighlight);
   XM_define_procedure(XmAddProtocols, gxm_XmAddProtocols_w, 3, 1, 0, H_XmAddProtocols);
+  XM_define_procedure(XmAddWMProtocols, gxm_XmAddWMProtocols_w, 2, 1, 0, H_XmAddWMProtocols);
   XM_define_procedure(XmRemoveProtocols, gxm_XmRemoveProtocols_w, 3, 1, 0, H_XmRemoveProtocols);
+  XM_define_procedure(XmRemoveWMProtocols, gxm_XmRemoveWMProtocols_w, 2, 1, 0, H_XmRemoveWMProtocols);
   XM_define_procedure(XmAddProtocolCallback, gxm_XmAddProtocolCallback_w, 5, 0, 0, H_XmAddProtocolCallback);
+  XM_define_procedure(XmAddWMProtocolCallback, gxm_XmAddWMProtocolCallback_w, 4, 0, 0, H_XmAddWMProtocolCallback);
   XM_define_procedure(XmRemoveProtocolCallback, gxm_XmRemoveProtocolCallback_w, 5, 0, 0, H_XmRemoveProtocolCallback);
+  XM_define_procedure(XmRemoveWMProtocolCallback, gxm_XmRemoveWMProtocolCallback_w, 4, 0, 0, H_XmRemoveWMProtocolCallback);
   XM_define_procedure(XmActivateProtocol, gxm_XmActivateProtocol_w, 3, 0, 0, H_XmActivateProtocol);
   XM_define_procedure(XmDeactivateProtocol, gxm_XmDeactivateProtocol_w, 3, 0, 0, H_XmDeactivateProtocol);
+  XM_define_procedure(XmActivateWMProtocol, gxm_XmActivateWMProtocol_w, 2, 0, 0, H_XmActivateWMProtocol);
+  XM_define_procedure(XmDeactivateWMProtocol, gxm_XmDeactivateWMProtocol_w, 2, 0, 0, H_XmDeactivateWMProtocol);
   XM_define_procedure(XmSetProtocolHooks, gxm_XmSetProtocolHooks_w, 7, 0, 0, H_XmSetProtocolHooks);
   XM_define_procedure(XmCreateCascadeButton, gxm_XmCreateCascadeButton_w, 3, 1, 0, H_XmCreateCascadeButton);
   XM_define_procedure(XmCascadeButtonHighlight, gxm_XmCascadeButtonHighlight_w, 2, 0, 0, H_XmCascadeButtonHighlight);
@@ -25492,68 +25617,7 @@ void Init_libxm(void)
       define_pointers();
       define_procedures();
       define_structs();
-#if HAVE_SCHEME
-      /* use s7_define directly because we want this to go to the *motif* environment in Snd */
-      s7_define(s7, s7_nil(s7), s7_make_symbol(s7, "XmAddWMProtocols"), 
-		Xen_eval_C_string("(lambda (s p n) (XmAddProtocols s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p n))"));
-      s7_define(s7, s7_nil(s7), s7_make_symbol(s7, "XmRemoveWMProtocols"), 
-		Xen_eval_C_string("(lambda (s p n) (XmRemoveProtocols s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p n))"));
-      s7_define(s7, s7_nil(s7), s7_make_symbol(s7, "XmAddWMProtocolCallback"), 
-		Xen_eval_C_string("(lambda (s p c cl) (XmAddProtocolCallback s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p c cl))"));
-      s7_define(s7, s7_nil(s7), s7_make_symbol(s7, "XmRemoveWMProtocolCallback"), 
-		Xen_eval_C_string("(lambda (s p c cl) (XmRemoveProtocolCallback s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p c cl))"));
-      s7_define(s7, s7_nil(s7), s7_make_symbol(s7, "XmActivateWMProtocol"), 
-		Xen_eval_C_string("(lambda (s p) (XmActivateProtocol s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p))"));
-      s7_define(s7, s7_nil(s7), s7_make_symbol(s7, "XmDeactivateWMProtocol"), 
-		Xen_eval_C_string("(lambda (s p) (XmDeactivateProtocol s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p))"));
-      s7_define(s7, s7_nil(s7), s7_make_symbol(s7, "XmSetWMProtocolHooks"), 
-		Xen_eval_C_string("(lambda (s p preh prec posth postc) (XmSetProtocolHooks s (XInternAtom (XtDisplay s) \"WM_PROTOCOLS\" #f) p preh prec posth postc))"));
-#endif
-#if HAVE_RUBY
-      Xen_eval_C_string("def RXmAddWMProtocols(s, p, n) \
-                            RXmAddProtocols(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p, n); end");
-      Xen_eval_C_string("def RXmRemoveWMProtocols(s, p, n) \
-                            RXmRemoveProtocols(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p, n); end");
-      Xen_eval_C_string("def RXmAddWMProtocolCallback(s, p, c, cl) \
-                            RXmAddProtocolCallback(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p, c, cl); end");
-      Xen_eval_C_string("def RXmRemoveWMProtocolCallback(s, p, c, cl) \
-                            RXmRemoveProtocolCallback(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p, c, cl); end");
-      Xen_eval_C_string("def RXmActivateWMProtocol(s, p) \
-                            RXmActivateProtocol(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p); end");
-      Xen_eval_C_string("def RXmDeactivateWMProtocol(s, p) \
-                            RXmDeactivateProtocol(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p); end");
-      Xen_eval_C_string("def RXmSetWMProtocolHooks(s, p, preh, prec, posth, postc) \
-                            RXmSetProtocolHooks(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p, preh, prec, posth, postc); end");
-#endif
-#if HAVE_FORTH
-      Xen_eval_C_string("\
-: wm-protocols-intern-atom ( wid -- atom )\n\
-  FXtDisplay \"WM_PROTOCOLS\" #f FXInternAtom\n\
-;\n\
-: FXmAddWMProtocols ( s p n -- x ) { s p n }\n\
-  s dup wm-protocols-intern-atom p n FXmAddProtocols\n\
-;\n\
-: FXmRemoveWMProtocols ( s p n -- x ) { s p n }\n\
-  s dup wm-protocols-intern-atom p n FXmRemoveProtocols\n\
-;\n\
-: FXmAddWMProtocolCallback ( s p c cl -- x ) { s p c cl }\n\
-  s dup wm-protocols-intern-atom p c cl FXmAddProtocolCallback\n\
-;\n\
-: FXmRemoveWMProtocolCallback  ( s p c cl -- x ) { s p c cl }\n\
-  s dup wm-protocols-intern-atom p c cl FXmRemoveProtocolCallback\n\
-;\n\
-: FXmActivateWMProtocol ( s p -- x ) { s p }\n\
-  s dup wm-protocols-intern-atom p FXmActivateProtocol\n\
-;\n\
-: FXmDeactivateWMProtocol ( s p -- x ) { s p }\n\
-  s dup wm-protocols-intern-atom p FXmDeactivateProtocol\n\
-;\n\
-: FXmSetWMProtocolHooks ( s p preh prec posth postc -- x ) { s p preh prec posth postc }\n\
-  s dup wm-protocols-intern-atom p preh prec posth postc FXmSetProtocolHooks\n\
-;\n");
-#endif
       Xen_define_procedure(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
-
       Xen_provide_feature("xm");
       Xen_define("xm-version", C_string_to_Xen_string(XM_DATE));
       xm_already_inited = true;

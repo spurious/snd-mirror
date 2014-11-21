@@ -967,7 +967,7 @@
 	   (reader-cond ((not (provided? 'openbsd)) (C-function ("wordexp.make" g_wordexp_make "" 0))))
 	   (reader-cond ((not (provided? 'openbsd)) (C-function ("wordexp.we_wordc" g_wordexp_we_wordc "" 1))))
 	   (reader-cond ((not (provided? 'openbsd)) (C-function ("wordexp.we_wordv" g_wordexp_we_wordv "" 1))))
-	   ;; (with-let *libc* (let ((w (wordexp.make))) (wordexp "~/cl/snd-gdraw" w 0) (wordexp.we_wordv w))) -> ("/home/bil/cl/snd-gdraw")
+	   ;; (with-let (sublet *libc*) (let ((w (wordexp.make))) (wordexp "~/cl/snd-gdraw" w 0) (wordexp.we_wordv w))) -> ("/home/bil/cl/snd-gdraw")
 	   
 	   
 	   ;; -------- glob.h --------

@@ -372,7 +372,7 @@
 
 (define time-string
   (let ((daytime (lambda args
-		   (with-let *libc*
+		   (with-let (sublet *libc*)
 		     (let ((timestr (make-string 64))) 
 		       (let ((len (strftime timestr 64 "%a %d-%b-%Y %H:%M %Z"
 					    (localtime 

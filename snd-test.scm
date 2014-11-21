@@ -25896,7 +25896,7 @@ EDITS: 2
 	(if (and (not gr)
 		 (provided? 'snd-motif) 
 		 (provided? 'xm))
-	    (with-let *motif* 
+	    (with-let (sublet *motif*)
 	      (do ((i 0 (+ i 1))
 		   (happy #f)
 		   (app (car (main-widgets))))

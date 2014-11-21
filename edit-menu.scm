@@ -137,34 +137,34 @@
 
 (if (and (not (provided? 'snd-gtk))
 	 (provided? 'xm))
-    (with-let *motif*
-    (let* ((edit-cascade (list-ref (menu-widgets) 2))
-	   (edit-menu (cadr (XtGetValues edit-cascade (list XmNsubMenuId 0)))))
-
-      (define (for-each-child w func)
-	"(for-each-child w func) applies func to w and its descendents"
-	(func w)
-	(if (XtIsComposite w)
-	    (for-each 
-	     (lambda (n)
-	       (for-each-child n func))
-	     (cadr (XtGetValues w (list XmNchildren 0) 1)))))
-
-      (XtAddCallback edit-cascade XmNcascadingCallback 
-	(lambda (w c i)
-	  (for-each-child 
-	   edit-menu
-	   (lambda (child)
-	     (if (or (string=? (XtName child) "Selection->new")
-		     (string=? (XtName child) "Cut selection->new")
-		     (string=? (XtName child) "Append selection"))
-		 (XtSetSensitive child (selection?))
-		 (if (string=? (XtName child) "Crop")
-		     (XtSetSensitive child (and (selected-sound)
-						(> (length (marks (selected-sound) (selected-channel))) 1)))
-		     (if (or (string=? (XtName child) "Trim front")
-			     (string=? (XtName child) "Trim back"))
-			 (XtSetSensitive child (and (selected-sound)
-						    (>= (length (marks (selected-sound) (selected-channel))) 1))))))))))))
+    (with-let (sublet *motif*)
+      (let* ((edit-cascade (list-ref (menu-widgets) 2))
+	     (edit-menu (cadr (XtGetValues edit-cascade (list XmNsubMenuId 0)))))
+	
+	(define (for-each-child w func)
+	  "(for-each-child w func) applies func to w and its descendents"
+	  (func w)
+	  (if (XtIsComposite w)
+	      (for-each 
+	       (lambda (n)
+		 (for-each-child n func))
+	       (cadr (XtGetValues w (list XmNchildren 0) 1)))))
+	
+	(XtAddCallback edit-cascade XmNcascadingCallback 
+		       (lambda (w c i)
+			 (for-each-child 
+			  edit-menu
+			  (lambda (child)
+			    (if (or (string=? (XtName child) "Selection->new")
+				    (string=? (XtName child) "Cut selection->new")
+				    (string=? (XtName child) "Append selection"))
+				(XtSetSensitive child (selection?))
+				(if (string=? (XtName child) "Crop")
+				    (XtSetSensitive child (and (selected-sound)
+							       (> (length (marks (selected-sound) (selected-channel))) 1)))
+				    (if (or (string=? (XtName child) "Trim front")
+					    (string=? (XtName child) "Trim back"))
+					(XtSetSensitive child (and (selected-sound)
+								   (>= (length (marks (selected-sound) (selected-channel))) 1))))))))))))
     )
 

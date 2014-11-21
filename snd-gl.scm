@@ -361,7 +361,7 @@
 
       (lambda ()
 	(if (not drawer)
-	    (let ((outer (with-let *motif*
+	    (let ((outer (with-let (sublet *motif*)
 			   (add-main-pane "Waterfall" xmFormWidgetClass
 					  (list XmNbackground *basic-color*
 						XmNpaneMinimum 320)))))

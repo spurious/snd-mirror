@@ -30020,8 +30020,18 @@ s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
 
   sc->w = sc->NIL;
   va_start(ap, num_values);
+#if DEBUGGING
+  for (i = 0; i < num_values; i++)
+    {
+      p = (s7_pointer)va_arg(ap, s7_pointer);
+      if (!s7_is_valid(sc, p))
+	fprintf(stderr, "s7_list at %d, %p is not a valid s7_pointer!\n", i);
+      sc->w = cons(sc, p, sc->w);
+    }
+#else
   for (i = 0; i < num_values; i++)
     sc->w = cons(sc, va_arg(ap, s7_pointer), sc->w);
+#endif
   va_end(ap);
 
   p = sc->w;
@@ -55171,7 +55181,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  set_optimize_data(code, OP_UNKNOWN_Q);
 		  goto OPT_EVAL;
 		}
-
 	      
 	    case HOP_SAFE_CLOSURE_Q:
 	      sc->envir = old_frame_with_slot(sc, closure_let(ecdr(code)), cadr(cadr(code)));
@@ -55801,7 +55810,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  set_optimize_data(code, OP_UNKNOWN_Q);
 		  goto OPT_EVAL;
 		}
-
 	      
 	    case HOP_CLOSURE_Q:
 	      sc->value = cadr(cadr(code));
@@ -56326,8 +56334,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    /* we can't ignore the recheck here (i.e. set the hop bit) because the closure, even if a global can be set later:
 		     *   (begin (define *x* #f) (define (test) (display (*x*))) (define (setx n) (set! *x* (lambda () n))) (setx 1) (test) (setx 2) (test))
 		     * this is a case where the name matters (we need a pristine global), so it's easily missed.
-		     *
-		     * TODO: this probably affects all the cases below.  op_unknown* can't be considered safe.
 		     */
 		    break;
 		    
@@ -62932,6 +62938,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      eval_type_error(sc, "with-let takes an environment argument: ~A", e);
 	    let_id(e) = ++sc->let_number;
 	    sc->envir = e;
+	    /* if the let in question has 10,000 names (e.g. *gtk*) this loop (which can't be avoided currently)
+	     *   will dominate the computation.  So, instead of saying (with-let *gtk* ...) use something
+	     *   equivalent to (with-let (sublet *gtk*) ...) which is cleaner anyway.
+	     */
 	    for (p = let_slots(e); is_slot(p); p = next_slot(p))
 	      {
 		s7_pointer sym;
@@ -69932,14 +69942,14 @@ int main(int argc, char **argv)
 /* --------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2
- * s7test    1721 | 1358 |  995 | 1194 1185 1192
+ * s7test    1721 | 1358 |  995 | 1194 1185 1185
  * index    44300 | 3291 | 1725 | 1276 1243 1203
  * bench    42736 | 8752 | 4220 | 3506 3506 3539
  * lg             |      |      |      6497 6521
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6
  * t455|6     265 |   89 |  9   |       8.4  8.5
  * t816           |   71 | 70.6 | 38.0 31.8 29.8
- * calls      359 |  275 | 54   | 34.7 34.7 35.4
+ * calls      359 |  275 | 54   | 34.7 34.7 35.3
  *
  * --------------------------------------------------
  *
@@ -69947,7 +69957,6 @@ int main(int argc, char **argv)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers? (useful in object->string too)
  *
- * prelookup? [(#_*gtk* '...)? or (#.?)]
  * need to check new openGL for API changes (GL_VERSION?)
  *   test/Mesa-10.3.1/include/GL/glext.h|gl.h (current version appears to be 7.6)
  *   how much of glext.h is needed?  

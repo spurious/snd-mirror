@@ -142,7 +142,7 @@
 			   1))))
 
 		    (if (provided? 'snd-motif)
-			(with-let *motif*
+			(with-let (sublet *motif*)
 			  (hook-push select-channel-hook (lambda (hook)
 							   (let ((max-ms (max-mark))
 								 (min-ms (min-mark))
@@ -183,7 +183,7 @@
 ;;; -------- Loop play between marks
 
 (if (provided? 'xm)
-    (with-let *motif*
+    (with-let (sublet *motif*)
 
       (define loop-between-marks-m1 0)
       (define loop-between-marks-m2 1)
@@ -638,7 +638,7 @@ using the granulate generator to fix up the selection duration (this still is no
 ;;; -------- mark loop dialog (this refers to sound header mark points, not Snd mark objects!)
 
 (if (provided? 'xm) 
-    (with-let *motif*
+    (with-let (sublet *motif*)
 
       ;; Here is a first stab at the loop dialog (I guessed a lot as to what these buttons
       ;; are supposed to do -- have never used these loop points).
