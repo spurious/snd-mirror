@@ -8962,7 +8962,7 @@ c-define-1
 
     ;; the rest of the function body exists in the *libc* environment, with the
     ;;   function parameters in-file and out-file imported, so, for example,
-    ;;   (open ...) below calls the libc function open.
+    ;;   (open ...) below calls the libc function open.  
 
     (let ((infd (open in-file O_RDONLY 0)))
       (if (= infd -1)

@@ -384,9 +384,9 @@ enum {OP_NO_OP,
       OP_CASE_SIMPLEST, OP_CASE_SIMPLEST_SS, OP_CASE_SIMPLEST_ELSE, OP_CASE_SIMPLEST_ELSE_C,
       OP_LET_C, OP_LET_S, OP_LET_Q, OP_LET_ALL_C, OP_LET_ALL_S, OP_LET_ALL_X,
       OP_LET_STAR_ALL_X, OP_LET_opCq, OP_LET_opSSq,
-      OP_IF_P_P_P, OP_IF_P_P, OP_IF_P_P_X, OP_IF_P_X_P, OP_IF_P_X_X, 
+      OP_IF_P_P_P, OP_IF_P_P, OP_IF_P_P_X, OP_IF_P_X_P, 
       OP_IF_B_P, OP_IF_ANDP_P, OP_IF_ANDP_P_P, OP_IF_ORP_P, OP_IF_ORP_P_P, 
-      OP_IF_PPP, OP_IF_PP, OP_IF_PPX, OP_IF_PXP, OP_IF_PXX, 
+      OP_IF_PPP, OP_IF_PP, OP_IF_PPX, OP_IF_PXP, 
       OP_IF_S_P_P, OP_IF_S_P, OP_IF_S_P_X, OP_IF_S_X_P, OP_IF_P_FEED, OP_IF_P_FEED_1, OP_WHEN_S, OP_UNLESS_S,
       OP_IF_UNCHECKED, OP_AND_UNCHECKED, OP_AND_P, OP_AND_P1, OP_OR_UNCHECKED, OP_OR_P, OP_OR_P1,
       
@@ -484,9 +484,9 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "let*", "let", "let",
 
    "if", "if", "if", "if", "if", 
-   "if", "if", "if", "if", "if", "if", 
    "if", "if", "if", "if", "if", 
-   "if", "if", "if", "if", "if", "if", "when", "unless",
+   "if", "if", "if", "if", "if", 
+   "if", "if", "if", "if", "if", "when", "unless",
    "and", "and", "and", "or", "or", "or", 
 
    "if", "if",
@@ -567,9 +567,9 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "case_simplest", "case_simplest_ss", "case_simplest_else", "case_simplest_else_c",
   "let_c", "let_s", "let_q", "let_all_c", "let_all_s", "let_all_x", 
   "let_star_all_x", "let_opcq", "let_opssq", 
-  "if_p_p_p", "if_p_p", "if_p_p_x", "if_p_x_p", "if_p_x_x", 
+  "if_p_p_p", "if_p_p", "if_p_p_x", "if_p_x_p", 
   "if_b_p", "if_andp_p", "if_andp_p_p", "if_orp_p", "if_orp_p_p", 
-  "if_ppp", "if_pp", "if_ppx", "if_pxp", "if_pxx", 
+  "if_ppp", "if_pp", "if_ppx", "if_pxp", 
   "if_s_p_p", "if_s_p", "if_s_p_x", "if_s_x_p", "if_p_feed", "if_p_feed_1", "when_s", "unless_s",
   "if_unchecked", "and_unchecked", "and_p", "and_p1", "or_unchecked", "or_p", "or_p1",
   
@@ -1329,7 +1329,7 @@ struct s7_scheme {
   s7_pointer Object_Set;               /* applicable object set method */
   s7_pointer FEED_TO;                  /* => */
   s7_pointer BODY, CLASS_NAME;
-  s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_ENV_UNCHECKED, WITH_ENV_S;
+  s7_pointer QUOTE_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_LET_UNCHECKED, WITH_LET_S;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, LETREC_STAR_UNCHECKED, COND_UNCHECKED, COND_SIMPLE;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_A;
   s7_pointer SET_SYMBOL_SAFE_S, SET_SYMBOL_SAFE_SS, SET_SYMBOL_SAFE_SSS, SET_SYMBOL_UNKNOWN_S;
@@ -1341,7 +1341,7 @@ struct s7_scheme {
   s7_pointer LET_C, LET_S, LET_Q, LET_ALL_C, LET_ALL_S, LET_ALL_X;
   s7_pointer LET_STAR_ALL_X, LET_opCq, LET_opSSq;
   s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, NAMED_LET_STAR, LET_STAR2, IF_UNCHECKED, AND_UNCHECKED, AND_P, OR_UNCHECKED, OR_P;
-  s7_pointer IF_P_P_P, IF_P_P, IF_B_P, IF_P_P_X, IF_P_X_P, IF_P_X_X, IF_S_P_P, IF_S_P, IF_S_P_X, IF_S_X_P, IF_P_FEED;
+  s7_pointer IF_P_P_P, IF_P_P, IF_B_P, IF_P_P_X, IF_P_X_P, IF_S_P_P, IF_S_P, IF_S_P_X, IF_S_X_P, IF_P_FEED;
   s7_pointer IF_Z_P, IF_Z_P_P, IF_A_P, IF_A_P_P, IF_ANDP_P, IF_ANDP_P_P, IF_ORP_P, IF_ORP_P_P, WHEN_UNCHECKED, UNLESS_UNCHECKED, WHEN_S, UNLESS_S;
 
   s7_pointer COND_ALL_X, COND_S;
@@ -6701,7 +6701,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
 }
 
 
-#define make_closure_with_env(Sc, X, Args, Code, Env)	\
+#define make_closure_with_let(Sc, X, Args, Code, Env)	\
   do { \
        NEW_CELL(Sc, X); \
        closure_args(X) = Args;	\
@@ -38162,7 +38162,7 @@ static bool found_catch(s7_scheme *sc, s7_pointer type, s7_pointer info, bool *r
 		    return(false);
 		  }
 		
-		/* since make_closure_with_env sets needs_copied_args and we're going to OP_APPLY,
+		/* since make_closure_with_let sets needs_copied_args and we're going to OP_APPLY,
 		 *   we don't need a new list here.
 		 */
 		car(sc->T2_1) = type;
@@ -48486,7 +48486,7 @@ static s7_pointer check_define(s7_scheme *sc)
 }
 
 
-static s7_pointer check_with_env(s7_scheme *sc)
+static s7_pointer check_with_let(s7_scheme *sc)
 {
   if (!is_pair(sc->code))                            /* (with-let . "hi") */
     return(eval_error(sc, "with-let takes an environment argument: ~A", sc->code));
@@ -48499,10 +48499,10 @@ static s7_pointer check_with_env(s7_scheme *sc)
   if ((is_overlaid(sc->code)) &&
       (cdr(ecdr(sc->code)) == sc->code))
     {
-      pair_set_syntax_symbol(sc->code, sc->WITH_ENV_UNCHECKED);
+      pair_set_syntax_symbol(sc->code, sc->WITH_LET_UNCHECKED);
       if ((is_symbol(car(sc->code))) &&
 	  (is_pair(cadr(sc->code))))
-	pair_set_syntax_symbol(sc->code, sc->WITH_ENV_S);
+	pair_set_syntax_symbol(sc->code, sc->WITH_LET_S);
     }
   return(sc->code);
 }
@@ -55050,7 +55050,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		
 		/* defer making the error lambda */
-		/* z = cdadr(args); make_closure_with_env(sc, y, car(z), cdr(z), sc->envir); */ 
+		/* z = cdadr(args); make_closure_with_let(sc, y, car(z), cdr(z), sc->envir); */ 
 		
 		NEW_CELL(sc, p);                     /* the catch object sitting on the stack */
 		
@@ -58967,7 +58967,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   us back to the previous case).
 	   */
 
-	  make_closure_with_env(sc, x, cdar(sc->code), cdr(sc->code), sc->envir);
+	  make_closure_with_let(sc, x, cdar(sc->code), cdr(sc->code), sc->envir);
 	  if (is_integer(fcdr(sc->code)))
 	    closure_arity(x) = integer(fcdr(sc->code));
 	  sc->value = x;
@@ -59789,7 +59789,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SET_SYMBOL_UNKNOWN_S:
       {
 	s7_pointer f, value, ind;
-
+	/* (set! x (v1 i)) */
 	value = cadr(sc->code);
 	f = find_symbol_checked(sc, car(value));
 	ind = find_symbol_checked(sc, cadr(value));
@@ -59859,7 +59859,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_INCREMENT_SAA:
       {
 	s7_pointer sym;
-
+	/* (set! sum (+ sum (expt k i) (expt (- k) i))) */
 	sym = find_symbol(sc, car(sc->code));
 	if (is_slot(sym))
 	  {
@@ -60702,22 +60702,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       sc->code = cadr(sc->code);
       goto EVAL; 
-      
-      
-    case OP_IF_P_X_X:
-      push_stack_no_args(sc, OP_IF_PXX, cdr(sc->code));
-      sc->code = car(sc->code);
-      goto EVAL; 
-      
-
-    case OP_IF_PXX:
-      if (is_true(sc, sc->value))
-	sc->value = car(sc->code);
-      else sc->value = cadr(sc->code);
-      
-      if (is_symbol(sc->value))
-	sc->value = find_symbol_checked(sc, sc->value);
-      goto START;
       
       
     case OP_IF_S_P_P:
@@ -62498,7 +62482,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
     case OP_LAMBDA_UNCHECKED:
-      make_closure_with_env(sc, sc->value, car(sc->code), cdr(sc->code), sc->envir);
+      make_closure_with_let(sc, sc->value, car(sc->code), cdr(sc->code), sc->envir);
       goto START;
 
 
@@ -62958,7 +62942,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_WITH_LET:
-      check_with_env(sc);
+      check_with_let(sc);
 
 
     case OP_WITH_LET_UNCHECKED:
@@ -68278,8 +68262,6 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 	}
       return(wrong_type_argument_with_type(sc, sc->LET_SET, small_int(1), val, make_string_wrapper(sc, "a random state object")));
     }
-
-  /* error? */
   return(sc->UNDEFINED);
 }
 
@@ -68727,8 +68709,8 @@ s7_scheme *s7_init(void)
   sc->NAMED_LET =             assign_internal_syntax(sc, "let",       OP_NAMED_LET);  
   sc->NAMED_LET_STAR =        assign_internal_syntax(sc, "let*",      OP_NAMED_LET_STAR);  
   sc->LET_STAR2 =             assign_internal_syntax(sc, "let*",      OP_LET_STAR2);  
-  sc->WITH_ENV_UNCHECKED =    assign_internal_syntax(sc, "with-let",  OP_WITH_LET_UNCHECKED);   
-  sc->WITH_ENV_S =            assign_internal_syntax(sc, "with-let",  OP_WITH_LET_S);   
+  sc->WITH_LET_UNCHECKED =    assign_internal_syntax(sc, "with-let",  OP_WITH_LET_UNCHECKED);   
+  sc->WITH_LET_S =            assign_internal_syntax(sc, "with-let",  OP_WITH_LET_S);   
   sc->SET_UNCHECKED =         assign_internal_syntax(sc, "set!",      OP_SET_UNCHECKED);  
   sc->SET_SYMBOL_C =          assign_internal_syntax(sc, "set!",      OP_SET_SYMBOL_C);  
   sc->SET_SYMBOL_S =          assign_internal_syntax(sc, "set!",      OP_SET_SYMBOL_S);  
@@ -68787,7 +68769,6 @@ s7_scheme *s7_init(void)
   sc->IF_B_P =                assign_internal_syntax(sc, "if",        OP_IF_B_P);
   sc->IF_P_P_X =              assign_internal_syntax(sc, "if",        OP_IF_P_P_X);
   sc->IF_P_X_P =              assign_internal_syntax(sc, "if",        OP_IF_P_X_P);
-  sc->IF_P_X_X =              assign_internal_syntax(sc, "if",        OP_IF_P_X_X);
   sc->IF_S_P_P =              assign_internal_syntax(sc, "if",        OP_IF_S_P_P);
   sc->IF_S_P =                assign_internal_syntax(sc, "if",        OP_IF_S_P);
   sc->IF_S_P_X =              assign_internal_syntax(sc, "if",        OP_IF_S_P_X);
@@ -69757,25 +69738,25 @@ s7_scheme *s7_init(void)
 
 
 #if (!DISABLE_DEPRECATED)
-  s7_eval_c_string(sc, "(define environment? let?)                  \n\
-                        (define global-environment rootlet)         \n\
-                        (define-constant initial-environment unlet) \n\
-                        (define outer-environment outlet)           \n\
-                        (define augment-environment sublet)         \n\
-                        (define augment-environment! varlet)        \n\
-                        (define current-environment curlet)         \n\
-                        (define error-environment owlet)            \n\
-                        (define procedure-environment funclet)      \n\
-                        (define environment->list let->list)        \n\
-                        (define open-environment openlet)           \n\
-                        (define open-environment? openlet?)         \n\
-                        (define close-environment coverlet)         \n\
-                        (define environment-ref let-ref)            \n\
-                        (define environment-set! let-set!)          \n\
-                        (define environment inlet)                  \n\
-                        (define environment* inlet)                 \n\
-                        (define make-procedure-with-setter dilambda)\n\
-                        (define procedure-with-setter? dilambda?)");
+  s7_eval_c_string(sc, "(define environment?                 let?)     \n\
+                        (define global-environment           rootlet)  \n\
+                        (define-constant initial-environment unlet)    \n\
+                        (define outer-environment            outlet)   \n\
+                        (define augment-environment          sublet)   \n\
+                        (define augment-environment!         varlet)   \n\
+                        (define current-environment          curlet)   \n\
+                        (define error-environment            owlet)    \n\
+                        (define procedure-environment        funclet)  \n\
+                        (define environment->list            let->list)\n\
+                        (define open-environment             openlet)  \n\
+                        (define open-environment?            openlet?) \n\
+                        (define close-environment            coverlet) \n\
+                        (define environment-ref              let-ref)  \n\
+                        (define environment-set!             let-set!) \n\
+                        (define environment                  inlet)    \n\
+                        (define environment*                 inlet)    \n\
+                        (define make-procedure-with-setter   dilambda) \n\
+                        (define procedure-with-setter?       dilambda?)");
 #endif
 
   /* fprintf(stderr, "size: %d, max op: %d, opt: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED, OPT_MAX_DEFINED); */
@@ -69949,7 +69930,7 @@ int main(int argc, char **argv)
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6
  * t455|6     265 |   89 |  9   |       8.4  8.5
  * t816           |   71 | 70.6 | 38.0 31.8 29.8
- * calls      359 |  275 | 54   | 34.7 34.7 35.3
+ * calls      359 |  275 | 54   | 34.7 34.7 35.2
  *
  * --------------------------------------------------
  *

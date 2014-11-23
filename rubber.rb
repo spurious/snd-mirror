@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 03/02/28 03:04:03
-# Changed: 14/11/13 05:00:45
+# Changed: 14/11/23 06:14:52
 
 # module Rubber (see rubber.scm)
 #  add_named_mark(samp, name, snd, chn)
@@ -237,9 +237,9 @@ module Rubber
                   weights = cross_weights.length
                   (0...curs).detect do |i|
                     best_mark = edits[i].round
-                    beg = cross_samples[best_mark]
+                    beg = cross_samples[best_mark].to_i
                     next_beg = cross_samples[cross_marks[best_mark].round]
-                    len = cross_periods[best_mark]
+                    len = cross_periods[best_mark].to_i
                     if len > 0
                       if adding
                         new_samps = env_add(beg, next_beg, len)

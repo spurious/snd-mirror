@@ -3,13 +3,13 @@
     (require snd-ws.scm)
     (require sndlib-ws.scm))
 
-;;; it is dangerous to use a method within a generator's definition of that method
+;;; it is dangerous to use a method within a generator's definition of that method --
 ;;;   if the gen is used as the environment in with-let, the embedded call
 ;;;   becomes a recursive call on that method.  You either need to check the type
 ;;;   of the method argument, or use #_method to override the name lookup, or use
 ;;;   the explicit call style: (((gen 'embedded-gen) 'shared-method) ...)
 
-;;; if gen has embedded gen, it needs a special copy method (see adjustable-oscil),
+;;; if gen has embedded gen, mus-copy needs a special copy method (see adjustable-oscil),
 
 
 (define-constant nearly-zero 1.0e-10) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)

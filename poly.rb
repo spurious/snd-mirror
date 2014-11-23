@@ -2,10 +2,8 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 05/04/09 23:55:07
-# Changed: 14/11/14 02:38:39
+# Changed: 14/11/21 05:06:17
 
-# Commentary: (see poly.scm)
-#
 # class Complex
 #  to_f
 #  to_f_or_c
@@ -18,6 +16,8 @@
 #  *(other)
 #  /(other)
 #  derivative
+#  resultant(other)
+#  discriminant
 #  gcd(other)
 #  roots
 #  eval(x)
@@ -47,11 +47,10 @@
 # poly_derivative(obj)
 # poly_gcd(obj1, obj2)
 # poly_roots(obj)
-#
-# Code:
 
 require "clm"
 require "mix"
+include Math
 
 class Complex
   attr_writer :real, :imag
@@ -188,25 +187,26 @@ class Poly < Vec
   end
   # poly(0.5, 1.0, 2.0, 4.0).derivative ==> poly(1.0, 4.0, 12.0)
 
-=begin
-  include Mixer_matrix
   def resultant(other)
     m = self.length
     m1 = m - 1
     n = other.length
     n1 = n - 1
-    mat = make_mixer(n1 + m1)
+    d = n1 + m1
+    mat = Array.new(d) do
+      Vct.new(d, 0.0)
+    end
     n1.times do |i|
       m.times do |j|
-        mixer_set!(mat, i, i + j, self[m1 - j])
+        mat[i][i + j] = self[m1 - j]
       end
     end
     m1.times do |i|
       n.times do |j|
-        mixer_set!(mat, i + n1, i + j, other[n1 - j])
+        mat[i + n1][i + j] = other[n1 - j]
       end
     end
-    mixer_determinant(mat)
+    determinant(mat)
   end
   # poly(-1, 0, 1).resultant([1, -2, 1]) ==> 0.0
   # poly(-1, 0, 2).resultant([1, -2, 1]) ==> 1.0
@@ -226,7 +226,6 @@ class Poly < Vec
   #   ==> 2304.0
   # (poly(1, 1) * poly(-1, 1) * poly(3, 1) * poly(3, 1)).reduce.discriminant
   #   ==> 0.0
-=end
   
   def gcd(other)
     assert_type((array?(other) or vct?(other)), other, 0,
@@ -388,6 +387,56 @@ class Poly < Vec
   end
 
   private
+  def submatrix(mx, row, col)
+    nmx = Array.new(mx.length - 1) do
+      Vct.new(mx.length - 1, 0.0)
+    end
+    ni = 0
+    mx.length.times do |i|
+      if i != row
+        nj = 0
+        mx.length.times do |j|
+          if j != col
+            nmx[ni][nj] = mx[i][j]
+            nj += 1
+          end
+        end
+        ni += 1
+      end
+    end
+    nmx
+  end
+
+  def determinant(mx)
+    if mx.length == 1
+      mx[0][0]
+    else
+      if mx.length == 2
+        mx[0][0] * mx[1][1] - mx[0][1] * mx[1][0]
+      else
+        if mx.length == 3
+          ((mx[0][0] * mx[1][1] * mx[2][2] +
+            mx[0][1] * mx[1][2] * mx[2][0] +
+            mx[0][2] * mx[1][0] * mx[2][1]) -
+           (mx[0][0] * mx[1][2] * mx[2][1] +
+            mx[0][1] * mx[1][0] * mx[2][2] +
+            mx[0][2] * mx[1][1] * mx[2][0]))
+        else
+          sum = 0.0
+          sign = 1
+          mx.length.times do |i|
+            mult = mx[0][i]
+            if mult != 0.0
+              sum = sum + sign * mult * determinant(submatrix(mx, 0, i))
+            end
+            sign = -sign
+          end
+          sum
+        end
+      end
+    end
+  end
+
   # ax + b
   def linear_root(a, b)
     poly(-b / a)

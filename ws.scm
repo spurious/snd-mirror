@@ -38,9 +38,7 @@
 ;;; -------- definstrument --------
 
 ;(define definstrument define*) -- old form 2-Nov-05
-
 (define *definstrument-hook* #f) ; for CM
-
 
 (define-macro (definstrument args . body)
   (let* ((name (car args))

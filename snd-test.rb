@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 05/02/18 10:18:34
-# Changed: 14/11/16 02:12:07
+# Changed: 14/11/23 06:16:44
 
 # Commentary:
 #
@@ -586,6 +586,30 @@ def vcneql(a, b)
     false
   end
 end
+
+def cequal?(a, b)
+  if number?(a) and number?(b)
+    fequal?(a.real, b.real) and fequal?(a.imag, b.imag)
+  else
+    false
+  end
+end
+
+def vcequal?(a, b)
+  if a.length != b.length
+    false
+  else
+    a.each_with_index do |x, i|
+      if cneq(x, b[i])
+        return false
+      end
+    end
+    true
+  end
+end
+
+alias cequal  cequal?
+alias vcequal vcequal?
 
 def vmaxdiff(v0, v1)
   v0.dup.subtract(v1).peak
@@ -6848,12 +6872,7 @@ def test_05_10
     snd_display("disk_kspace = %s", k)
   end
   k = disk_kspace("/baddy/hiho")
-  # XXX: disk_kspace
-  # #if !USE_STATFS in snd-file.c
-  # disk_kspace returns 1234567
-  if k != 1234567 and k != -1
-    snd_display("disk_kspace of bogus file = %s", k)
-  end
+  snd_test_neq(k, -1, "disk_kspace of bogus file")
   snd_test_neq(transform_framples, 0, "transform_framples")
   set_transform_size(512)
   set_transform_graph?(true)
@@ -11599,155 +11618,153 @@ end
 
 def poly_roots_tests
   # degree=0
-  unless (res = poly(0.0).roots).null?
-    snd_display("poly_roots 0.0: %s?", res)
-  end
-  unless (res = poly(12.3).roots).null?
-    snd_display("poly_roots 12.3: %s?", res)
-  end
+  res = poly(0.0).roots
+  req = poly()
+  snd_test_neq(res, req, "poly_roots 0.0")
+  res = poly(12.3).roots
+  req = poly()
+  snd_test_neq(res, req, "poly_roots 12.3")
   # degree 0 + x=0
-  if (res = poly(0.0, 1.0).roots) != [0.0]
-    snd_display("poly_roots 0.0 1.0: %s?", res)
-  end
-  if (res = poly(0.0, 0.0, 0.0, 121.0).roots) != [0.0, 0.0, 0.0]
-    snd_display("poly_roots 0.0 0.0 0.0 121.0: %s?", res)
-  end
+  res = poly(0.0, 1.0).roots
+  req = [0.0]
+  snd_test_neq(res, req, "poly_roots 0.0 1.0")
+  res = poly(0.0, 0.0, 0.0, 121.0).roots
+  req = [0.0, 0.0, 0.0]
+  snd_test_neq(res, req, "poly_roots 0.0 0.0 0.0 121.0")
   # degree=1
-  if (res = poly(-1.0, 1.0).roots) != [1.0]
-    snd_display("poly_roots -1.0 1.0: %s?", res)
-  end
-  if (res = poly(-2.0, 4.0).roots) != [0.5]
-    snd_display("poly_roots -2.0 4.0: %s?", res)
-  end
-  if (res = poly(Complex(0.0, -1.0), 1).roots) != [Complex(0.0, 1.0)]
-    snd_display("poly_roots -i 1: %s?", res)
-  end
+  res = poly(-1.0, 1.0).roots
+  req = [1.0]
+  snd_test_neq(res, req, "poly_roots -1.0 1.0")
+  res = poly(-2.0, 4.0).roots
+  req = [0.5]
+  snd_test_neq(res, req, "poly_roots -2.0 4.0")
+  res = poly(Complex(0.0, -1.0), 1).roots
+  req = [Complex(0.0, 1.0)]
+  snd_test_neq(res, req, "poly_roots -i 1")
   # linear x^n
-  vals = poly(-1.0, 0.0, 0.0, 0.0, 1.0).roots
-  if vcneql(vals, [Complex(0.0, -1.0), -1.0, Complex(0.0, 1.0), 1.0]) and
-      vcneql(vals, [1.0, -1.0, Complex(0.0, 1.0), Complex(-0.0, -1.0)])
-    snd_display("poly_roots -1 0 0 0 1: %s?", vals)
+  res = poly(-1.0, 0.0, 0.0, 0.0, 1.0).roots
+  req1 = [Complex(0.0, -1.0), -1.0, Complex(0.0, 1.0), 1.0]
+  req2 = [1.0, -1.0, Complex(0.0, 1.0), Complex(-0.0, -1.0)]
+  if vcneql(res, req1) and vcneql(res, req2)
+    snd_format_neq(res, req1, "poly_roots -1 0 0 0 1 (a)")
+    snd_format_neq(res, req2, "poly_roots -1 0 0 0 1 (b)")
   end
-  vals = poly(-16, 0, 0, 0, 1).roots
-  if vcneql(vals, [Complex(0.0, -2.0), -2.0, Complex(0.0, 2.0), 2.0]) and
-      vcneql(vals,  [2.0, -2.0, Complex(0.0, 2.0), Complex(-0.0, -2.0)])
-    snd_display("poly_roots -16 0 0 0 1: %s?", vals)
+  res = poly(-16, 0, 0, 0, 1).roots
+  req1 = [Complex(0.0, -2.0), -2.0, Complex(0.0, 2.0), 2.0]
+  req2 = [2.0, -2.0, Complex(0.0, 2.0), Complex(-0.0, -2.0)]
+  if vcneql(res, req1) and vcneql(res, req2)
+    snd_format_neq(res, req1, "poly_roots -16 0 0 0 1 (a)")
+    snd_format_neq(res, req2, "poly_roots -16 0 0 0 1 (b)")
   end
-  if vcneql(res = poly(-32, 0, 0, 0, 0, 0, 0.5).roots,
-            [Complex(1.0, -1.7320), Complex(-1.0, -1.7320), -2.0,
-             Complex(-1.0, 1.7320), Complex(1.0, 1.7320), 2.0])
-    snd_display("poly_roots -32 0 0 0 0 0 0.5: %s?", res)
-  end
+  res = poly(-32, 0, 0, 0, 0, 0, 0.5).roots
+  req = [Complex(1.0, -1.7320), Complex(-1.0, -1.7320), -2.0,
+         Complex(-1.0, 1.7320), Complex(1.0, 1.7320), 2.0]
+  snd_test_any_neq(res, req, :vcequal?, "poly_roots -32 0 0 0 0 0 0.5")
   # linear + x=0
-  if (res = poly(0, -2, 4).roots) != [0.0, 0.5]
-    snd_display("poly_roots 0 -2 4: %s?", res)
-  end
+  res = poly(0, -2, 4).roots
+  req = [0.0, 0.5]
+  snd_test_neq(res, req, "poly_roots 0 -2 4")
   # degree=2
-  if (res = poly(-1, 0, 1).roots) != [1.0, -1.0]
-    snd_display("poly_roots -1 0 1: %s?", res)
-  end
-  if (res = poly(15, -8, 1).roots) != [5.0, 3.0]
-    snd_display("poly_roots 15 -8 1: %s?", res)
-  end
-  if (res = poly(1, -2, 1).roots) != [1.0, 1.0]
-    snd_display("poly_roots 1 -2 1: %s?", res)
-  end
-  if (res = poly(-1, Complex(0.0, 2.0), 1).roots) != [Complex(0.0, -1.0), Complex(0.0, -1.0)]
-    snd_display("poly_roots -1 2i 1: %s?", res)
-  end
-  if vcneql(res = poly(1, 1, 5).roots, [Complex(-0.1, 0.43589), Complex(-0.1, -0.43589)])
-    snd_display("poly_roots 1 1 5: %s?", res)
-  end
+  res = poly(-1, 0, 1).roots
+  req = [1.0, -1.0]
+  snd_test_neq(res, req, "poly_roots -1 0 1")
+  res = poly(15, -8, 1).roots
+  req = [5.0, 3.0]
+  snd_test_neq(res, req, "poly_roots 15 -8 1")
+  res = poly(1, -2, 1).roots
+  req = [1.0, 1.0]
+  snd_test_neq(res, req, "poly_roots 1 -2 1")
+  res = poly(-1, Complex(0.0, 2.0), 1).roots
+  req = [Complex(0.0, -1.0), Complex(0.0, -1.0)]
+  snd_test_neq(res, req, "poly_roots -1 2i 1")
+  res = poly(1, 1, 5).roots
+  req = [Complex(-0.1, 0.43589), Complex(-0.1, -0.43589)]
+  snd_test_any_neq(res, req, :vcequal?, "poly_roots 1 1 5")
   # 2 + x=0
-  if (res = poly(0, 0, -1, 0, 1).roots) != [0.0, 0.0, 1.0, -1.0]
-    snd_display("poly_roots 0 0 -1 0 1: %s?", res)
-  end
+  res = poly(0, 0, -1, 0, 1).roots
+  req = [0.0, 0.0, 1.0, -1.0]
+  snd_test_neq(res, req, "poly_roots 0 0 -1 0 1")
   # quadratic in x^(n/2)
-  if (res = poly(1, 0, -2, 0, 1).roots) != [-1.0, 1.0, -1.0, 1.0] and res !=  [1.0, 1.0, -1.0, -1.0]
-    snd_display("poly_roots 1 0 -2 0 1: %s?", res)
+  res = poly(1, 0, -2, 0, 1).roots
+  req1 = [-1.0, 1.0, -1.0, 1.0]
+  req2 = [1.0, 1.0, -1.0, -1.0]
+  if res != req1 and res != req2
+    snd_format_neq(res, req1, "poly_roots 1 0 -2 0 1 (a)")
+    snd_format_neq(res, req2, "poly_roots 1 0 -2 0 1 (b)")
   end
-  if vcneql(res = poly(64, 0, 0, -16, 0, 0, 1).roots,
-            [Complex(-1.0, -1.73205), Complex(-1.0, 1.73205), 2.0,
-              Complex(-1.0, -1.73205), Complex(-1.0, 1.73205), 2.0])
-    snd_display("poly_roots 64 0 0 -16 0 0 1: %s?", res)
-  end
+  res = poly(64, 0, 0, -16, 0, 0, 1).roots
+  req = [Complex(-1.0, -1.73205), Complex(-1.0, 1.73205), 2.0,
+         Complex(-1.0, -1.73205), Complex(-1.0, 1.73205), 2.0]
+  snd_test_any_neq(res, req, :vcequal?, "poly_roots 64 0 0 -16 0 0 1")
   # degree=3
-  unless vequal(res = poly(-15, 23, -9, 1).roots, [5.0, 1.0, 3.0])
-    snd_display("poly_roots -15 23 -9 1: %s?", res)
-  end
-  if vcneql(res = poly(-126, -15, 0, 1).roots,
-            [6.0, Complex(-3.0, 3.46410), Complex(-3.0, -3.46410)])
-    snd_display("poly_roots -126 -15 0 1: %s?", res)
-  end
-  if (res = poly(-1, 3, -3, 1).roots) != [1.0, 1.0, 1.0]
-    snd_display("poly_roots -1 3 -3 1: %s?", res)
-  end
-  unless vequal(res = poly(1, -1, -1, 1).roots, [1.0, -1.0, 1.0])
-    snd_display("poly_roots 1 -1 -1 1: %s?", res)
-  end
-  unless vequal(res = poly(2, -2, -2, 2).roots, [1.0, -1.0, 1.0])
-    snd_display("poly_roots 2 -2 -2 2: %s %s %s?", res)
-  end
+  res = poly(-15, 23, -9, 1).roots
+  req = [5.0, 1.0, 3.0]
+  snd_test_any_neq(res, req, :vequal?, "poly_roots -15 23 -9 1")
+  res = poly(-126, -15, 0, 1).roots
+  req = [6.0, Complex(-3.0, 3.46410), Complex(-3.0, -3.46410)]
+  snd_test_any_neq(res, req, :vcequal?, "poly_roots -126 -15 0 1")
+  res = poly(-1, 3, -3, 1).roots
+  req = [1.0, 1.0, 1.0]
+  snd_test_neq(res, req, "poly_roots -1 3 -3 1")
+  res = poly(1, -1, -1, 1).roots
+  req = [1.0, -1.0, 1.0]
+  snd_test_any_neq(res, req, :vequal?, "poly_roots 1 -1 -1 1")
+  res = poly(2, -2, -2, 2).roots
+  req = [1.0, -1.0, 1.0]
+  snd_test_any_neq(res, req, :vequal?, "poly_roots 2 -2 -2 2")
   # degree=4
-  if (res = poly(-15, 8, 14, -8, 1).roots) != [5.0, 3.0, 1.0, -1.0]
-    snd_display("poly_roots -15 8 14 -8 1: [5.0, 3.0, 1.0, -1.0] != %s?", res)
-  end
-  vals = (poly(2, 1) * poly(-3, 1) * poly(8, 1) * poly(-9, 1)).reduce.roots
-  unless vequal(vals, [9, 3, -2, -8])
-    snd_display("poly_roots 4(1): %s?", vals)
-  end
-  vals = (poly(0.2, 1) * poly(-3, 1) * poly(0.8, 1) * poly(-9, 1)).reduce.roots
-  unless vequal(vals, [9, 3, -0.2, -0.8])
-    snd_display("poly_roots 4(2): %s?", vals)
-  end
-  vals = (poly(0.02, 1) * poly(-32, 1) * poly(0.8, 1) * poly(-9, 1)).reduce.roots
-  unless vequal(vals, [32, 9, -0.02, -0.8])
-    snd_display("poly_roots 4(3): %s?", vals)
-  end
+  res = poly(-15, 8, 14, -8, 1).roots
+  req = [5.0, 3.0, 1.0, -1.0]
+  snd_test_neq(res, req, "poly_roots -15 8 14 -8 1: [5.0, 3.0, 1.0, -1.0]")
+  res = (poly(2, 1) * poly(-3, 1) * poly(8, 1) * poly(-9, 1)).reduce.roots
+  req = [9, 3, -2, -8]
+  snd_test_neq(res, req, "poly_roots 4(1)")
+  res = (poly(0.2, 1) * poly(-3, 1) * poly(0.8, 1) * poly(-9, 1)).reduce.roots
+  req = [9, 3, -0.2, -0.8]
+  snd_test_any_neq(res, req, :vequal?, "poly_roots 4(2)")
+  res = (poly(0.02, 1) * poly(-32, 1) * poly(0.8, 1) * poly(-9, 1)).reduce.roots
+  req = [32, 9, -0.02, -0.8]
+  snd_test_any_neq(res, req, :vequal?, "poly_roots 4(3)")
   # degree>4
-  vals = (poly(1, 1) * poly(2, 1) * poly(-3, 1) * poly(-1, 1) * poly(-2, 1)).reduce.roots
-  unless vequal(vals, [3, 2, -1, -2, 1])
-    snd_display("poly_roots n(1): %s?", vals)
-  end
-  vals = (poly(1, 1) * poly(2, 1) * poly(-3, 1) * poly(8, 1) * poly(-9, 1)).reduce.roots
-  unless vequal(vals, [9, 3, -2, -8, -1])
-    snd_display("poly_roots n(2): %s?", vals)
-  end
-  vals = (poly(-1, 0, 1) * poly(9, 1) * poly(-3, 1) * poly(-10, 1) * poly(-2, 1)).reduce.roots
-  unless vequal(vals, [10, 3, -1, -9, 2, 1])
-    snd_display("poly_roots n(3): %s?", vals)
-  end
-  vals = poly(-1, 0, 1) * poly(-4, 0, 1) * poly(-3, 1) * poly(-10, 1) * poly(-9, 0, 1)
-  vals = vals.reduce.roots
-  unless vequal(vals, [10, 3, -2, -3, -1, 3, 2, 1])
-    snd_display("poly_roots n(4): %s?", vals)
-  end
-  vals = (poly(-1, 0, 1) * poly(-4, 0, 1) * poly(-16, 0, 1) * poly(-25, 0, 1) *
-            poly(-9, 0, 1)).reduce.roots
-  unless vequal(vals, [5, -3, -4, -5, 4, -2, 3, -1, 2, 1])
-    snd_display("poly_roots n(5): %s?", vals)
-  end
-  vals = (poly(1, 1) * poly(2, 1) * poly(-3, 1) * poly(1, 1) * poly(-2, 1)).reduce.roots
-  unless vequal(vals, [3, -1, -1, -2, 2])
-    snd_display("poly_roots n(6): %s?", vals)
-  end
-  vals = poly(-64, 0, 0, 0, 0, 0, 1).roots
-  if vcneql(vals, [Complex(0.999, -1.732), Complex(-1.0, -1.732), -2.0,
-                   Complex(-1.0, 1.732), Complex(1.0, 1.732), 2.0])
-    snd_display("poly_roots 64 6: %s?", vals)
-  end
-  vals = poly(64, 0, 0, -16, 0, 0, 1).roots
-  if vcneql(vals, [Complex(-1.0, -1.732), Complex(-1.0, 1.732), 2.0,
-                   Complex(-1.0, -1.732), Complex(-1.0, 1.732), 2.0])
-    snd_display("poly_roots 64 16 6: %s?", vals)
-  end
+  res = poly(1, 1) * poly(2, 1) * poly(-3, 1) * poly(-1, 1) * poly(-2, 1)
+  res = res.reduce.roots
+  req = [3, 2, -1, -2, 1]
+  snd_test_any_neq(res, req, :vequal?, "poly_roots n(1)")
+  res = poly(1, 1) * poly(2, 1) * poly(-3, 1) * poly(8, 1) * poly(-9, 1)
+  res = res.reduce.roots
+  req = [9, 3, -2, -8, -1]
+  snd_test_any_neq(res, req, :vequal?, "poly_roots n(2)")
+  res = poly(-1, 0, 1) * poly(9, 1) * poly(-3, 1) * poly(-10, 1) * poly(-2, 1)
+  res = res.reduce.roots
+  req = [10, 3, -1, -9, 2, 1]
+  snd_test_any_neq(res, req, :vequal?, "poly_roots n(3)")
+  res = poly(-1, 0, 1) * poly(-4, 0, 1) * poly(-3, 1) *
+        poly(-10, 1) * poly(-9, 0, 1)
+  res = res.reduce.roots
+  req = [10, 3, -2, -3, -1, 3, 2, 1]
+  snd_test_any_neq(res, req, :vequal?, "poly_roots n(4)")
+  res = poly(-1, 0, 1) * poly(-4, 0, 1) * poly(-16, 0, 1) *
+        poly(-25, 0, 1) * poly(-9, 0, 1)
+  res = res.reduce.roots
+  req = [5, -3, -4, -5, 4, -2, 3, -1, 2, 1]
+  snd_test_any_neq(res, req, :vequal?, "poly_roots n(5)")
+  res = poly(1, 1) * poly(2, 1) * poly(-3, 1) * poly(1, 1) * poly(-2, 1)
+  res = res.reduce.roots
+  req = [3, -1, -1, -2, 2]
+  snd_test_any_neq(res, req, :vequal?, "poly_roots n(6)")
+  res = poly(-64, 0, 0, 0, 0, 0, 1).roots
+  req = [Complex(0.999, -1.732), Complex(-1.0, -1.732), -2.0,
+         Complex(-1.0, 1.732), Complex(1.0, 1.732), 2.0]
+  snd_test_any_neq(res, req, :vcequal?, "poly_roots 64 6")
+  res = poly(64, 0, 0, -16, 0, 0, 1).roots
+  req = [Complex(-1.0, -1.732), Complex(-1.0, 1.732), 2.0,
+         Complex(-1.0, -1.732), Complex(-1.0, 1.732), 2.0]
+  snd_test_any_neq(res, req, :vcequal?, "poly_roots 64 16 6")
   10.times do poly(random(1.0), random(1.0), random(1.0)).roots end
   10.times do poly(mus_random(1.0), mus_random(1.0), mus_random(1.0)).roots end
-  vals1 = convolution(vct(1, 2, 3, 0, 0, 0, 0, 0), vct(1, 2, 3, 0, 0, 0, 0, 0), 8)
-  vals2 = poly(1, 2, 3, 0) * poly(1, 2, 3, 0)
-  unless vequal(vals1, vals2)
-    snd_display("poly_multiply convolve: %s %s?", vals1, vals2)
-  end
+  res = convolution(vct(1, 2, 3, 0, 0, 0, 0, 0), vct(1, 2, 3, 0, 0, 0, 0, 0), 8)
+  req = poly(1, 2, 3, 0) * poly(1, 2, 3, 0)
+  snd_test_any_neq(res, req, :vequal?, "poly_multiply convolve")
   10.times do
     poly(make_rectangular(mus_random(1.0), mus_random(1.0)),
          make_rectangular(mus_random(1.0), mus_random(1.0))).roots
@@ -11757,7 +11774,10 @@ def poly_roots_tests
          make_rectangular(mus_random(1.0), mus_random(1.0)),
          make_rectangular(mus_random(1.0), mus_random(1.0))).roots
   end
-  10.times do poly(mus_random(1.0), mus_random(1.0), mus_random(1.0), mus_random(1.0)).roots end
+  10.times do
+    poly(mus_random(1.0), mus_random(1.0),
+         mus_random(1.0), mus_random(1.0)).roots
+  end
   10.times do
     poly(make_rectangular(mus_random(1.0), mus_random(1.0)),
          make_rectangular(mus_random(1.0), mus_random(1.0)),
@@ -11765,7 +11785,8 @@ def poly_roots_tests
          make_rectangular(mus_random(1.0), mus_random(1.0))).roots
   end
   10.times do
-    poly(mus_random(1.0), mus_random(1.0), mus_random(1.0), mus_random(1.0), mus_random(1.0)).roots
+    poly(mus_random(1.0), mus_random(1.0), mus_random(1.0),
+         mus_random(1.0), mus_random(1.0)).roots
   end
   10.times do
     poly(make_rectangular(mus_random(1.0), mus_random(1.0)),
@@ -11787,36 +11808,36 @@ def poly_roots_tests
     v[(i - 1) / 2] = 1.0
     v.to_poly.roots
   end
-  unless vequal(res = poly(1, -1, -1, 1).roots, [1.0, -1.0, 1.0])
-    snd_display("poly_roots 1 -1 -1 1: %s?", res)
-  end
-  unless vequal(res = poly_roots(vct(2, -1, -2, 1)), [2.0, -1.0, 1.0])
-    snd_display("poly_roots 2 -1 -2 1: %s?", res)
-  end
-  # XXX: 0.544 comes first with poly.rb
-  if vcneql(res = poly(-1, 1, 1, 1).roots,
-            [0.544, Complex(-0.772, 1.115), Complex(-0.772, -1.115)]) and
-      vcneql(res = poly(-1, 1, 1, 1).roots,
-             [Complex(-0.772, 1.115), Complex(-0.772, -1.115), 0.544])
-    snd_display("poly_roots -1 1 1 1: %s?", res)
-  end
-  if (res = poly_roots(vct(-1, 3, -3, 1))) != [1.0, 1.0, 1.0]
-    snd_display("poly_roots -1 3 -3 1: %s?", res)
-  end
-  if (res = poly_roots(vct(1, -4, 6, -4, 1))) != [1.0, 1.0, 1.0, 1.0]
-    snd_display("poly_roots 1 -4 6 -4 1: %s?", res)
-  end
-  if vcneql(res = poly_roots(vct(0.5, 0, 0, 1)),
-            [Complex(0.397, -0.687), -0.794, Complex(0.397, 0.687)]) and
-      vcneql(res, [Complex(0.397, 0.687), Complex(0.397, -0.687), -0.794])
-    snd_display("poly_roots 0.5 0 0 1: %s?", res)
+  res = poly(1, -1, -1, 1).roots
+  req = [1.0, -1.0, 1.0]
+  snd_test_any_neq(res, req, :vequal?, "poly_roots 1 -1 -1 1")
+  res = poly_roots(vct(2, -1, -2, 1))
+  req = [2.0, -1.0, 1.0]
+  snd_test_any_neq(res, req, :vequal?, "poly_roots 2 -1 -2 1")
+  res = poly(-1, 1, 1, 1).roots
+  req = [0.544, Complex(-0.772, 1.115), Complex(-0.772, -1.115)]
+  snd_test_any_neq(res, req, :vcequal?, "poly_roots -1 1 1 1")
+  res = poly_roots(vct(-1, 3, -3, 1))
+  req = [1.0, 1.0, 1.0]
+  snd_test_neq(res, req, "poly_roots -1 3 -3 1")
+  res = poly_roots(vct(1, -4, 6, -4, 1))
+  req = [1.0, 1.0, 1.0, 1.0]
+  snd_test_neq(res, req, "poly_roots 1 -4 6 -4 1")
+  res = poly_roots(vct(0.5, 0, 0, 1))
+  req1 = [Complex(0.397, -0.687), -0.794, Complex(0.397, 0.687)]
+  req2 = [Complex(0.397, 0.687), Complex(0.397, -0.687), -0.794]
+  if vcneql(res, req1) and vcneql(res, req2)
+    snd_format_neq(res, req1, "poly_roots 0.5 0 0 1 (a)")
+    snd_format_neq(res, req2, "poly_roots 0.5 0 0 1 (b)")
   end
   # FIXME: reduce added (poly)
-  # without reduce: 3.0 -1.0 -2.0 -3.0 2.0-1.1555579666323415e-33i 1.0+2.9582283945787943e-31i
-  res = (poly(-1, 1) * poly(1, 1) * poly(-2, 1) * poly(2, 1) * poly(-3, 1) * poly(3, 1)).reduce.roots
-  if vcneql(res, [-3.0, 3.0, -1.0, 1.0, -2.0, 2.0])
-    snd_display("cube in 2: %s?", res)
-  end
+  # without reduce:
+  #   3.0 -1.0 -2.0 -3.0 2.0-1.1555579666323415e-33i 1.0+2.9582283945787943e-31i
+  res = poly(-1, 1) * poly(1, 1) * poly(-2, 1) * poly(2, 1) *
+        poly(-3, 1) * poly(3, 1)
+  res = res.reduce.roots
+  req = [-3.0, 3.0, -1.0, 1.0, -2.0, 2.0]
+  snd_test_any_neq(res, req, :vequal?, "cube in 2")
 end
 
 def jc_reverb_1(decay_dur, low_pass, volume, amp_env)
@@ -12499,177 +12520,194 @@ def test_08_00
   # 
   # POLY
   #
-  unless vequal(res = poly(0.1, 0.2, 0.3) + vct(0, 1, 2, 3, 4), vct(0.1, 1.2, 2.3, 3, 4))
-    snd_display("poly_add 1: %s?", res)
-  end
-  unless vequal(res = poly(0.1, 0.2, 0.3) + 0.5, vct(0.6, 0.2, 0.3))
-    snd_display("poly_add 2: %s?", res)
-  end
-  unless vequal(res = 0.5 + poly(0.1, 0.2, 0.3), vct(0.6, 0.2, 0.3))
-    snd_display("poly_add 3: %s?", res)
-  end
+  res = poly(0.1, 0.2, 0.3) + vct(0, 1, 2, 3, 4)
+  req = vct(0.1, 1.2, 2.3, 3, 4)
+  snd_test_neq(res, req, "poly_add 1")
+  res = poly(0.1, 0.2, 0.3) + 0.5
+  req = vct(0.6, 0.2, 0.3)
+  snd_test_neq(res, req, "poly_add 2")
+  res = 0.5 + poly(0.1, 0.2, 0.3)
+  req = vct(0.6, 0.2, 0.3)
+  snd_test_neq(res, req, "poly_add 3")
   # 
-  unless vequal(res = poly(1, 1) * vct(-1, 1), vct(-1, 0, 1, 0))
-    snd_display("poly_multiply 1: %s?", res)
-  end
-  unless vequal(res = poly(-5, 1) * vct(3, 7, 2), vct(-15, -32, -3, 2, 0))
-    snd_display("poly_multiply 2: %s?", res)
-  end
-  unless vequal(res = poly(-30, -4, 2) * vct(0.5, 1), vct(-15, -32, -3, 2, 0))
-    snd_display("poly_multiply 3: %s?", res)
-  end
-  unless vequal(res = poly(-30, -4, 2) * 0.5, vct(-15, -2, 1))
-    snd_display("poly_multiply 4: %s?", res)
-  end
-  unless vequal(res = 2.0 * poly(-30, -4, 2), vct(-60, -8, 4))
-    snd_display("poly_multiply 5: %s?", res)
-  end
+  res = poly(1, 1) * vct(-1, 1)
+  req = vct(-1, 0, 1, 0)
+  snd_test_neq(res, req, "poly_multiply 1")
+  res = poly(-5, 1) * vct(3, 7, 2)
+  req = vct(-15, -32, -3, 2, 0)
+  snd_test_neq(res, req, "poly_multiply 2")
+  res = poly(-30, -4, 2) * vct(0.5, 1)
+  req = vct(-15, -32, -3, 2, 0)
+  snd_test_neq(res, req, "poly_multiply 3")
+  res = poly(-30, -4, 2) * 0.5
+  req = vct(-15, -2, 1)
+  snd_test_neq(res, req, "poly_multiply 4")
+  res = 2.0 * poly(-30, -4, 2)
+  req = vct(-60, -8, 4)
+  snd_test_neq(res, req, "poly_multiply 5")
   #
-  if (not vequal((res = poly(-1, 0, 1) / vct(1, 1))[0], vct(-1, 1, 0))) or
-      (not vequal(res[1], vct(0, 0, 0)))
-    snd_display("poly_div 1: %s?", res)
+  res = poly(-1, 0, 1) / vct(1, 1)
+  req1 = vct(-1, 1, 0)
+  req2 = vct(0, 0, 0)
+  unless vequal(res[0], req1) or vequal(res[1], req2)
+    snd_format_neq(res[0], req1, "poly_div 1a")
+    snd_format_neq(res[1], req2, "poly_div 1b")
   end
-  if (not vequal((res = poly(-15, -32, -3, 2) / vct(-5, 1))[0], vct(3, 7, 2, 0))) or
-      (not vequal(res[1], vct(0, 0, 0, 0)))
-    snd_display("poly_div 2: %s?", res)
+  res = poly(-15, -32, -3, 2) / vct(-5, 1)
+  req1 = vct(3, 7, 2, 0)
+  req2 = vct(0, 0, 0, 0)
+  unless vequal(res[0], req1) or vequal(res[1], req2)
+    snd_format_neq(res[0], req1, "poly_div 2a")
+    snd_format_neq(res[1], req2, "poly_div 2b")
   end
-  if (not vequal((res = poly(-15, -32, -3, 2) / vct(3, 1))[0], vct(-5, -9, 2, 0))) or
-      (not vequal(res[1], vct(0, 0, 0, 0)))
-    snd_display("poly_div 3: %s?", res)
+  res = poly(-15, -32, -3, 2) / vct(3, 1)
+  req1 = vct(-5, -9, 2, 0)
+  req2 = vct(0, 0, 0, 0)
+  unless vequal(res[0], req1) or vequal(res[1], req2)
+    snd_format_neq(res[0], req1, "poly_div 3a")
+    snd_format_neq(res[1], req2, "poly_div 3b")
   end
-  if (not vequal((res = poly(-15, -32, -3, 2) / vct(0.5, 1))[0], vct(-30, -4, 2, 0))) or
-      (not vequal(res[1], vct(0, 0, 0, 0)))
-    snd_display("poly_div 4: %s?", res)
+  res = poly(-15, -32, -3, 2) / vct(0.5, 1)
+  req1 = vct(-30, -4, 2, 0)
+  req2 = vct(0, 0, 0, 0)
+  unless vequal(res[0], req1) or vequal(res[1], req2)
+    snd_format_neq(res[0], req1, "poly_div 4a")
+    snd_format_neq(res[1], req2, "poly_div 4b")
   end
-  if (not vequal((res = poly(-15, -32, -3, 2) / vct(3, 7, 2))[0], vct(-5, 1, 0, 0))) or
-      (not vequal(res[1], vct(0, 0, 0, 0)))
-    snd_display("poly_div 5: %s?", res)
+  res = poly(-15, -32, -3, 2) / vct(3, 7, 2)
+  req1 =  vct(-5, 1, 0, 0)
+  req2 = vct(0, 0, 0, 0)
+  unless vequal(res[0], req1) or vequal(res[1], req2)
+    snd_format_neq(res[0], req1, "poly_div 5a")
+    snd_format_neq(res[1], req2, "poly_div 5b")
   end
-  unless vequal((res = poly(-15, -32, -3, 2) / 2.0)[0], vct(-7.5, -16, -1.5, 1))
-    snd_display("poly_div 6: %s?", res)
+  res = poly(-15, -32, -3, 2) / 2.0
+  req = vct(-7.5, -16, -1.5, 1)
+  snd_test_neq(res[0], req, "poly_div 6")
+  res = poly(-1, 0, 0, 0, 1) / vct(1, 0, 1)
+  req1 = vct(-1, 0, 1, 0, 0)
+  req2 = vct(0, 0, 0, 0, 0)
+  unless vequal(res[0], req1) or vequal(res[1], req2)
+    snd_format_neq(res[0], req1, "poly_div 7a")
+    snd_format_neq(res[1], req2, "poly_div 7b")
   end
-  unless vequal((res = poly(-1, 0, 0, 0, 1) / vct(1, 0, 1))[0], vct(-1, 0, 1, 0, 0)) and
-      vequal(res[1], vct(0, 0, 0, 0, 0))
-    snd_display("poly_div 7: %s?", res)
+  res = poly(-1, 0, 0, 0, 0, 0, 0, 0, 1) / vct(1, 0, 0, 0, 1)
+  req1 = vct(-1, 0, 0, 0, 1, 0, 0, 0, 0)
+  req2 = vct(0, 0, 0, 0, 0, 0, 0, 0, 0)
+  unless vequal(res[0], req1) or vequal(res[1], req2)
+    snd_format_neq(res[0], req1, "poly_div 8a")
+    snd_format_neq(res[1], req2, "poly_div 8b")
   end
-  unless vequal((res = poly(-1, 0, 0, 0, 0, 0, 0, 0, 1) / vct(1, 0, 0, 0, 1))[0],
-                vct(-1, 0, 0, 0, 1, 0, 0, 0, 0)) and
-      vequal(res[1], vct(0, 0, 0, 0, 0, 0, 0, 0, 0))
-    snd_display("poly_div 8: %s?", res)
+  res = poly(-1, 0, 1) / vct(-1, 0, 1)
+  req1 = vct(1, 0, 0)
+  req2 = vct(0, 0, 0)
+    snd_format_neq(res[0], req1, "poly_div 9a")
+    snd_format_neq(res[1], req2, "poly_div 9b")
+  res = poly(-1, 0, 1) / vct(2, 1)
+  req1 = vct(-2, 1, 0)
+  req2 = vct(3, 0, 0)
+  unless vequal(res[0], req1) or vequal(res[1], req2)
+    snd_format_neq(res[0], req1, "poly_div 10a")
+    snd_format_neq(res[1], req2, "poly_div 10b")
   end
-  unless vequal((res = poly(-1, 0, 1) / vct(-1, 0, 1))[0], vct(1, 0, 0)) and
-      vequal(res[1], vct(0, 0, 0))
-    snd_display("poly_div 9: %s?", res)
+  res = poly(2, 1) / vct(-1, 0, 1)
+  req1 = vct(0)
+  req2 = vct(-1, 0, 1)
+  unless vequal(res[0], req1) or vequal(res[1], req2)
+    snd_format_neq(res[0], req1, "poly_div 11a")
+    snd_format_neq(res[1], req2, "poly_div 11b")
   end
-  unless vequal((res = poly(-1, 0, 1) / vct(2, 1))[0], vct(-2, 1, 0)) and
-      vequal(res[1], vct(3, 0, 0))
-    snd_display("poly_div 10: %s?", res)
-  end
-  unless vequal((res = poly(2, 1) / vct(-1, 0, 1))[0], vct(0)) and
-      vequal(res[1], vct(-1, 0, 1))
-    snd_display("poly_div 11: %s?", res)
-  end
-  unless vequal((res = poly(1, 2, 3, 0, 1) / vct(0, 0, 0, 1))[0], vct(0, 1, 0, 0, 0)) and
-      vequal(res[1], vct(1, 2, 3, 0, 0))
-    snd_display("poly_div 12: %s?", res)
+  res = poly(1, 2, 3, 0, 1) / vct(0, 0, 0, 1)
+  req1 = vct(0, 1, 0, 0, 0)
+  req2 = vct(1, 2, 3, 0, 0)
+  unless vequal(res[0], req1) or vequal(res[1], req2)
+    snd_format_neq(res[0], req1, "poly_div 12a")
+    snd_format_neq(res[1], req2, "poly_div 12b")
   end
   # 
   ind = open_sound("1a.snd")
   v1 = channel2vct(0, 100, ind, 0)
   v2 = channel2vct(0, 100, ind, 0)
-  vals = poly_div(v1, v2)[0]
-  res = make_vct(100)
-  res[0] = 1.0
-  unless vequal(vals, res)
-    snd_display("poly1 1a: %s?", valse)
-  end
+  res = poly_div(v1, v2)[0]
+  req = make_vct(100)
+  req[0] = 1.0
+  snd_test_neq(res, req, "poly1 1a")
   close_sound(ind)
   #
-  unless vequal(res = poly(0.5, 1, 2, 4).derivative, vct(1, 4, 12))
-    snd_display("poly_derivative: %s?", res)
-  end
+  res = poly(0.5, 1, 2, 4).derivative
+  req = vct(1, 4, 12)
+  snd_test_neq(res, req, "poly_derivative")
   # 
-  unless vequal(res = poly(1, 2, 3).reduce, vct(1, 2, 3))
-    snd_display("reduce 1: %s?", res)
-  end
-  unless vequal(res = poly(1, 2, 3, 0, 0, 0).reduce, vct(1, 2, 3))
-    snd_display("reduce 2: %s?", res)
-  end
-  unless vequal(res = poly(0, 0, 0, 0, 1, 0).reduce, vct(0, 0, 0, 0, 1))
-    snd_display("reduce 3: %s?", res)
-  end
+  res = poly(1, 2, 3).reduce
+  req = vct(1, 2, 3)
+  snd_test_neq(res, req, "reduce 1")
+  res = poly(1, 2, 3, 0, 0, 0).reduce
+  req = vct(1, 2, 3)
+  snd_test_neq(res, req, "reduce 2")
+  res = poly(0, 0, 0, 0, 1, 0).reduce
+  req = vct(0, 0, 0, 0, 1)
+  snd_test_neq(res, req, "reduce 3")
   #
   res = (poly(2, 1) * vct(-3, 1)).reduce.gcd(vct(2, 1))
-  unless vequal(res, vct(2, 1))
-    snd_display("poly_gcd 1: %s?", res)
-  end
+  req = vct(2, 1)
+  snd_test_neq(res, req, "poly_gcd 1")
   res = (poly(2, 1) * vct(-3, 1)).reduce.gcd(vct(3, 1))
-  unless vequal(res, vct(0))
-    snd_display("poly_gcd 2: %s?", res)
-  end
+  req = vct(0)
+  snd_test_neq(res, req, "poly_gcd 2")
   res = (poly(2, 1) * vct(-3, 1)).reduce.gcd(vct(-3, 1))
-  unless vequal(res, vct(-3, 1))
-    snd_display("poly_gcd 3: %s?", res)
-  end
+  req = vct(-3, 1)
+  snd_test_neq(res, req, "poly_gcd 3")
   res = (poly(8, 1) * poly(2, 1) * poly(-3, 1)).reduce.gcd(vct(-3, 1))
-  unless vequal(res, vct(-3, 1))
-    snd_display("poly_gcd 4: %s?", res)
-  end
-  res = (poly(8, 1) * poly(2, 1) * [-3, 1]).reduce.gcd((poly(8, 1) * [-3, 1]).reduce)
-  unless vequal(res, vct(-24, 5, 1))
-    snd_display("poly_gcd 5: %s?", res)
-  end
-  unless vequal(res = poly(-1, 0, 1).gcd([2, -2, -1, 1]), [0])
-    snd_display("poly_gcd 6: %s?", res)
-  end
-  unless vequal(res = poly(2, -2, -1, 1).gcd([-1, 0, 1]), [1, -1])
-    snd_display("poly_gcd 7: %s?", res)
-  end
-  unless vequal(res = poly(2, -2, -1, 1).gcd([-2.5, 1]), [0])
-    snd_display("poly_gcd 8: %s?", res)
-  end
+  req = vct(-3, 1)
+  snd_test_neq(res, req, "poly_gcd 4")
+  res = poly(8, 1) * poly(2, 1) * [-3, 1]
+  res = res.reduce.gcd((poly(8, 1) * [-3, 1]).reduce)
+  req = vct(-24, 5, 1)
+  snd_test_neq(res, req, "poly_gcd 5")
+  res = poly(-1, 0, 1).gcd([2, -2, -1, 1])
+  req = [0]
+  snd_test_neq(res, req, "poly_gcd 6")
+  res = poly(2, -2, -1, 1).gcd([-1, 0, 1])
+  req = [1, -1]
+  snd_test_neq(res, req, "poly_gcd 7")
+  res = poly(2, -2, -1, 1).gcd([-2.5, 1])
+  req = [0]
+  snd_test_neq(res, req, "poly_gcd 8")
   #
-  poly_roots_tests
+  poly_roots_tests()
   #
-=begin
-  # FIXME: poly.resultant is missing in poly.rb
-  if fneq(res = poly(-1, 0, 1).resultant([1, -2, 1]), 0.0)
-    snd_display("poly_resultant 0: %s?", res)
-  end
-  if fneq(res = poly(-1, 0, 2).resultant([1, -2, 1]), 1.0)
-    snd_display("poly_resultant 1: %s?", res)
-  end
-  if fneq(res = poly(-1, 0, 1).resultant([1, 1]), 0.0)
-    snd_display("poly_resultant 2: %s?", res)
-  end
-  if fneq(res = poly(-1, 0, 1).resultant([2, 1]), 3.0)
-    snd_display("poly_resultant 3: %s?", res)
-  end
-  # FIXME: poly.discriminant is missing in poly.rb
-  if fneq(poly(-1, 0, 1).discriminant, -4.0)
-    snd_display("poly_discriminat 0: %s?", res)
-  end
-  if fneq(poly(1, -2, 1).discriminant, 0.0)
-    snd_display("poly_discriminat 1: %s?", res)
-  end
+  res = poly(-1, 0, 1).resultant([1, -2, 1])
+  req = 0.0
+  snd_test_neq(res, req, "poly_resultant 0")
+  res = poly(-1, 0, 2).resultant([1, -2, 1])
+  req = 1.0
+  snd_test_neq(res, req, "poly_resultant 1")
+  res = poly(-1, 0, 1).resultant([1, 1])
+  req = 0.0
+  snd_test_neq(res, req, "poly_resultant 2")
+  res = poly(-1, 0, 1).resultant([2, 1])
+  req = 3.0
+  snd_test_neq(res, req, "poly_resultant 3")
+  #
+  res = poly(-1, 0, 1).discriminant
+  req = -4.0
+  snd_test_neq(res, req, "poly_discriminant 0")
+  res = poly(1, -2, 1).discriminant
+  req = 0.0
+  snd_test_neq(res, req, "poly_discriminant 1")
   res = (poly(-1, 1) * poly(-1, 1) * poly(3, 1)).reduce.discriminant
-  if fneq(res, 0.0)
-    snd_display("poly_discriminat 2: %s?", res)
-  end
+  req = 0.0
+  snd_test_neq(res, req, "poly_discriminant 2")
   res = (poly(-1, 1) * poly(-1, 1) *
          poly(3, 1) * poly(2, 1)).reduce.discriminant
-  if fneq(res, 0.0)
-    snd_display("poly_discriminat 3: %s?", res)
-  end
+  req = 0.0
+  snd_test_neq(res, req, "poly_discriminant 3")
   res = (poly(1, 1) * poly(-1, 1) * poly(3, 1) * poly(2, 1)).reduce.discriminant
-  if fneq(res, 2304.0)
-    snd_display("poly_discriminat 4: %s?", res)
-  end
+  req = 2304.0
+  snd_test_neq(res, req, "poly_discriminant 4")
   res = (poly(1, 1) * poly(-1, 1) * poly(3, 1) * poly(3, 1)).reduce.discriminant
-  if fneq(res, 0.0)
-    snd_display("poly_discriminat 5: %s?", res)
-  end
-=end
+  req = 0.0
+  snd_test_neq(res, req, "poly_discriminant 5")
   # 
   v0 = make_vct!(10) do |i| i end
   if fneq(res = array_interp(v0, 3.5), 3.5)
@@ -17736,8 +17774,8 @@ def test_08_15
     snd_display("gran edit 4* (1): %s %s?", mx, maxamp())
   end
   revert_sound(ind)
-  # FIXME make_sampler(0) not an input generator?
-  # grn = make_granulate(:expansion, 2.0, :input, make_sampler(0))
+  # XXX: grn = make_granulate(:expansion, 2.0, :input, make_sampler(0))
+  # Doesn't work with Ruby; make_sampler is not a procedure.
   rd = make_sampler(0)
   input_fnc = lambda do |dir|
     rd.call
@@ -19669,7 +19707,8 @@ def test_08_23
 end
 
 def test_08_24
-  random_args = [2.0 ** 21.5,
+  random_args = [
+    2.0 ** 21.5,
     2.0 ** -18.0,
     1.5,
     "/hiho",
@@ -19677,7 +19716,9 @@ def test_08_24
     1234,
     make_vct(3),
     make_color_with_catch(0.1, 0.2, 0.3),
-    sqrt(-1.0),
+    [0, 1],
+    Rational(3, 4),
+    Complex(0, 1), #sqrt(-1.0),
     make_delay(32),
     lambda do || 0.0 end,
     lambda do |dir| 1.0 end,
@@ -19698,6 +19739,8 @@ def test_08_24
     [:make_all_pass,
      :make_asymmetric_fm,
      :make_moving_average,
+     :make_moving_max,
+     :make_moving_norm,
      :make_table_lookup,
      :make_triangle_wave,
      :make_comb,
@@ -19712,6 +19755,7 @@ def test_08_24
      :make_locsig,
      :make_notch,
      :make_one_pole,
+     :make_one_pole_all_pass,
      :make_one_zero,
      :make_oscil,
      :make_pulse_train,
@@ -21364,10 +21408,7 @@ def test_10_02
   close_sound(ind)
   ind = open_sound("oboe.snd")
   add_mark(1, ind, 0, "new mark", 1)
-  # XXX: stop warning: mismatched indentations at 'end' with 'begin' at 11...
-  with_silence do
-    load("oboe.marks")
-  end
+  load("oboe.marks")
   if mark?(m = find_mark(123, ind, 0))
     if mark_name(m).length.nonzero?
       snd_display("saved mark 123 name: %s?", mark_name(m))
@@ -21441,10 +21482,7 @@ def test_10_02
   close_sound(ind1)
   #
   ind = open_sound("2a.snd")
-  # XXX: stop warning: mismatched indentations at 'end' with 'begin' at 11...
-  with_silence do
-    load("test.marks")
-  end
+  load("test.marks")
   m1 = find_mark(1, ind, 0)
   m2 = find_mark(2, ind, 1)
   if mark?(m1) and mark?(m2)
@@ -24391,8 +24429,6 @@ def test_15_00
   end
   # 
   revert_sound(obi)
-=begin
-  # FIXME: granulated_sound_interp: too many open files
   granulated_sound_interp([0, 0, 1, 0.1, 2, 1], 1.0, 0.2, [0, 0, 1, 1, 2, 0])
   snd_test_neq(edit_position(obi, 0), 1, "granulated_sound_interp no-op 1")
   snd_test_lt(maxamp(obi, 0), 0.15, "granulated_sound_interp 1 maxamp")
@@ -24411,7 +24447,6 @@ def test_15_00
   snd_test_lt(maxamp(obi, 0), 0.2, "granulated_sound_interp 3 maxamp")
   res = (framples(obi, 0) - 50828).abs
   snd_test_gt(res, 1000, "granulated_sound_interp 3 framples")
-=end
   close_sound(obi)
 end
 
@@ -24580,11 +24615,8 @@ def test_15_01
   end
   # XXX: S7 has here :wrong_type_arg
   # XXX: Ruby has still :bad_type
-  if (res = Snd.catch do
-        map_channel(lambda do |y| "hiho" end)
-      end).first != :bad_type
-    snd_display("map_channel bad val: %s", res.inspect)
-  end
+  res = Snd.catch do map_channel(lambda do |y| "hiho" end) end
+  snd_test_neq(res.first, :bad_type, "map_channel bad val")
   close_sound(id)
   #
   id = open_sound("oboe.snd")
@@ -28040,39 +28072,61 @@ def test_16_05
   close_sound(ind)
   #
   if $all_args
-    [[:scale_channel,         lambda { |snd, i| scale_channel(i * 0.01) }],
-     [:set_sample,            lambda { |snd, i| set_sample(i, 0.5) }],
-     [:env_channel,           lambda { |snd, i| env_channel([0, 0, 1, 1]) }],
-     [:env_channel_with_base, lambda { |snd, i| env_channel_with_base([0, 0, 1, 1], 32.0) }],
-     [:env_channel_with_base, lambda { |snd, i| env_channel_with_base([0, 0, 1, 1], 0.0) }],
-     [:delete_sample,         lambda { |snd, i| delete_sample(i * 10) }],
-     [:insert_sample,         lambda { |snd, i| insert_sample(i * 10, 0.5) }],
-     [:pad_channel,           lambda { |snd, i| pad_channel(i * 10, i * 10) }],
-     [:mix_no_tag,            lambda { |snd, i| mix("pistol.snd", 10 * i, 0, snd, 0, false) }],
-     [:mix_tag,               lambda { |snd, i| mix("pistol.snd", 10 * i, 0, snd, 0, true) }],
-     [:mix_scale_to,          lambda { |snd, i|
-          mx = mix("pistol.snd", 100 * i).car
-          set_mix_amp(mx, 0.01)
-        }],
-     [:mix_amp,               lambda { |snd, i| mix("pistol.snd", 100 * i); scale_to(0.5)}],
-     [:src_sound_1,           lambda { |snd, i| src_sound(2.0); undo_edit }],
-     [:src_sound_2,           lambda { |snd, i| src_sound(2.01); undo_edit }],
-     [:filter_channel_1,      lambda { |snd, i| filter_channel(vct(0.25, 0.5, 0.25, 0.1), 4) }],
-     [:filter_channel_2,      lambda { |snd, i| filter_channel(vct(0.25, 0.5, 0.5, 0.25), 4) }],
-     [:filter_channel_3,      lambda { |snd, i|
-          filter_channel(vct(0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1), 10)
-        }],
-     [:filter_channel_4,      lambda { |snd, i|
-          filter_channel(vct(0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1), 10)
-        }],
-     [:clm_channel,           lambda { |snd, i| clm_channel(make_two_zero(0.5, 0.5)) }],
-     [:reverse_channel, lambda { |snd, i| reverse_channel(i * 10, i * 100) }]].each do |name, func|
-      ["1.snd", "oboe.snd", "1a.snd"].each do |sound|
+    [[:scale_channel,
+      lambda do |snd, i| scale_channel(i * 0.01) end],
+     [:set_sample,
+      lambda do |snd, i| set_sample(i, 0.5) end],
+     [:env_channel,
+      lambda do |snd, i| env_channel([0, 0, 1, 1]) end],
+     [:env_channel_with_base,
+      lambda do |snd, i| env_channel_with_base([0, 0, 1, 1], 32.0) end],
+     [:env_channel_with_base,
+      lambda do |snd, i| env_channel_with_base([0, 0, 1, 1], 0.0) end],
+     [:delete_sample,
+      lambda do |snd, i| delete_sample(i * 10) end],
+     [:insert_sample,
+      lambda do |snd, i| insert_sample(i * 10, 0.5) end],
+     [:pad_channel,
+      lambda do |snd, i| pad_channel(i * 10, i * 10) end],
+     [:mix_no_tag,
+      lambda do |snd, i| mix("pistol.snd", 10 * i, 0, snd, 0, false) end],
+     [:mix_tag,
+      lambda do |snd, i| mix("pistol.snd", 10 * i, 0, snd, 0, true) end],
+     [:mix_scale_to,
+      lambda do |snd, i| set_mix_amp(mix("pistol.snd", 100 * i).car, 0.01) end],
+     [:mix_amp,
+      lambda do |snd, i| mix("pistol.snd", 100 * i); scale_to(0.5) end],
+     [:src_sound_1,
+      lambda do |snd, i| src_sound(2.0); undo_edit end],
+     [:src_sound_2,
+      lambda do |snd, i| src_sound(2.01); undo_edit end],
+     [:filter_channel_1,
+      lambda do |snd, i| filter_channel(vct(0.25, 0.5, 0.25, 0.1), 4) end],
+     [:filter_channel_2,
+      lambda do |snd, i| filter_channel(vct(0.25, 0.5, 0.5, 0.25), 4) end],
+     [:filter_channel_3,
+      lambda do |snd, i|
+       filter_channel(vct(0.1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1), 10)
+      end],
+     [:filter_channel_4,
+      lambda do |snd, i|
+       filter_channel(vct(0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1), 10)
+      end],
+     [:clm_channel,
+      lambda do |snd, i| clm_channel(make_two_zero(0.5, 0.5)) end],
+     [:reverse_channel,
+      lambda do |snd, i|
+        reverse_channel(i * 10, i * 100)
+      end]].each do |name, func|
+     ["1.snd", "oboe.snd", "1a.snd"].each do |sound|
         ind = open_sound(sound)
         with_time do
           set_squelch_update(true, ind, 0)
           with_time(format("%s() [%s]", name, sound)) do
-            256.times do |i| func.call(ind, i) end
+            256.times do |i|
+              revert_sound(ind) if (i % 10).zero?
+              func.call(ind, i)
+            end
           end
           revert_sound(ind)
           set_squelch_update(false, ind, 0)
@@ -33865,30 +33919,18 @@ def test_23_04
   $clm_array_print_length = old_arrp
   close_sound(ind)
   #
-  ind = find_sound(with_sound() do
-                     fm_violin(0, 3.0, 440, 0.1)
-                   end.output)
+  file = with_sound() do fm_violin(0, 3.0, 440, 0.1) end.output
+  ind = find_sound(file)
   set_amp_control(0.5, ind)
   set_x_bounds([1.0, 2.0], ind, 0)
-  # XXX: x_bounds(): update ws bounds: [0.000, 0.000]? we need a trick here
-  # ws = with_sound(:clm, false) do fm_violin(0, 4.0, 440, 0.1) end
-  # ind = find_sound(ws.output)
-  # This doesn't work as in ws.scm so we need a trick here:
-  file = file_name(ind)
-  ws = with_sound(:clm, false,
-                  :output, tempnam()) do
-    fm_violin(0, 4.0, 440, 0.1)
-  end
-  s = find_sound(ws.output)
-  mix_vct(channel2vct(0, framples(s), s), 0, ind)
-  remove_file(ws.output)
+  file = with_sound(:clm, false) do fm_violin(0, 4.0, 440, 0.1) end.output
   ind = find_sound(file)
-  if fneq(res = amp_control(ind), 0.5)
-    snd_display("update ws amp: %s?", res)
-  end
+  res = amp_control(ind)
+  snd_test_neq(res, 0.5, "update ws amp")
   res = x_bounds(ind, 0)
-  if (fneq(res[0], 1.0) or fneq(res[1], 2.0))
-    snd_display("update ws bounds: [%.3f, %.3f]?", res[0], res[1])
+  req = [1.0, 2.0]
+  if fneq(res[0], req[0]) or fneq(res[1], req[1])
+    snd_format_neq(res, req, "update ws bounds")
   end
   close_sound(ind)
   # 
@@ -35740,6 +35782,8 @@ end
 # ---------------- test all done
 
 def test_30
+  $bigtest_08 = true
+  test_08_24
 end
 
 main_test

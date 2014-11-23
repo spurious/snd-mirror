@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 02/09/04 18:34:00
-# Changed: 14/11/15 06:15:20
+# Changed: 14/11/23 06:02:48
 
 # module Examp (examp.scm)
 #  selection_rms
@@ -488,9 +488,9 @@ end")
     flag = false
     File.open(filename, "r") do |fd|
       flag = fd.readchar == ?O and 
-			fd.readchar == ?g and 
-			fd.readchar == ?g and 
-			fd.readchar == ?S
+      fd.readchar == ?g and 
+      fd.readchar == ?g and 
+      fd.readchar == ?S
     end
     if flag
       aufile = filename + ".au"
@@ -1595,7 +1595,7 @@ created by make_sound_interp.")
     map_channel(lambda do |val|
                   sound_interp(intrp,
                                (len * 0.5 * 
-																(1.0 + (read_sample(rd) / mx))).floor)
+                               (1.0 + (read_sample(rd) / mx))).floor)
                 end)
   end
   
@@ -1644,42 +1644,37 @@ using grains to create the re-tempo'd read.")
     len = framples(snd, chn)
     newlen = (time_scale.to_f * len).floor
     read_env = make_env(envelope, :length, newlen, :scaler, len)
-    sr = srate(snd)
-    grain_framples = (grain_length * sr).round
-    hop_framples = (output_hop * sr).round
-    num_readers = (grain_length / output_hop).round + 1
+    sr = srate(snd).to_f
+    grain_frames = (grain_length * sr).round
+    hop_frames = (output_hop * sr).round
+    num_readers = (grain_length.to_f / output_hop).ceil
     cur_readers = 0
     next_reader = 0
     jitter = sr * 0.005
-    readers = make_array(num_readers, false)
-    grain_envs = make_array(num_readers) do
-      make_env(grain_envelope, :length, grain_framples)
+    readers = Array.new(num_readers, false)
+    grain_envs = Array.new(num_readers) do
+      make_env(grain_envelope, :length, grain_frames)
     end
     new_snd = Vct.new(newlen, 0.0)
-    0.step(newlen, hop_framples) do |i|
+    0.step(newlen, hop_frames) do |i|
+      stop = [newlen, hop_frames + i].min
       set_mus_location(read_env, i)
+      read_env.location = i
       position_in_original = env(read_env)
       mx = [0, (position_in_original + mus_random(jitter)).round].max
-      if sampler?(readers[next_reader])
-        free_sampler(readers[next_reader])
-      end
       readers[next_reader] = make_sampler(mx, snd, chn)
       grain_envs[next_reader].reset
+      next_reader += 1
       next_reader %= num_readers
       if cur_readers < next_reader
         cur_readers = next_reader
       end
-      (0..cur_readers).each do |j|
+      (0...cur_readers).each do |j|
         en = grain_envs[j]
         rd = readers[j]
-        (i..[newlen, hop_framples + 1].min).each do |k|
-          new_snd[k] = env(en) * next_sample(rd)
+        (i...stop).each do |k|
+          new_snd[k] = env(en) * rd.call()
         end
-      end
-    end
-    readers.each do |g|
-      if sampler?(g)
-        free_sampler(g)
       end
     end
     set_samples(0, newlen, new_snd, snd, chn, true,
@@ -2157,51 +2152,65 @@ a bunch of files of the form sample-name.aif.")
     buffer = make_moving_average(128)
     silence = silence / 128.0
     edges = []
-    samp = 0
     in_silence = true
     old_max = max_regions
     old_tags = with_mix_tags
     set_max_regions(1024)
     set_with_mix_tags(false)
-    scan_channel(lambda do |y|
-                   now_silent = moving_average(buffer, y * y)
-                   if (now_silent < silence) != in_silence
-                     edges.push(samp)
-                   end
-                   in_silence = now_silent
-                   samp += 1
-                   false
-                 end)
+    rd = make_sampler()
+    framples().times do |i|
+      y = next_sample(rd)
+      sum_of_squares = moving_average(buffer, y * y)
+      now_silent = (sum_of_squares < silence)
+      if now_silent != in_silence
+        edges.push(i)
+      end
+      in_silence = now_silent
+    end
     edges.push(framples())
     len = edges.length
-    pieces = make_array(len)
     start = 0
-    edges.each_with_index do |fin, i|
-      pieces[i] = make_region(0, fin)
-      start = fin
+    pieces = Array.new(len) do |i|
+      en = edges[i]
+      re = make_region(start, en)
+      start = en
+      re
     end
     start = 0
-    as_one_edit(lambda do | |
-                  scale_by(0.0)
-                  len.times do
-                    this = random(len)
-                    reg, pieces[this] = pieces[this], false
-                    unless reg
-                      (this.round + 1).upto(len - 1) do |i|
-                        reg = pieces[i]
-                        reg and pieces[i] = false
-                      end
-                    end
-                    mix_region(reg, start)
-                    start += region_framples(reg)
-                    forget_region(reg)
-                  end
-                end)
-  rescue
-  ensure
+    fnc = lambda do | |
+      scale_by(0.0)
+      len.times do |i|
+        this = random(len)
+        reg = pieces[this]
+        pieces[this] = false
+        unless reg
+          (this + 1).upto(len - 1) do |j|
+            reg = pieces[j]
+            if reg
+              pieces[j] = false
+              break
+            end
+          end
+          unless reg
+            (this - 1).downto(0) do |j|
+              reg = pieces[j]
+              if reg
+                pieces[j] = false
+                break
+              end
+            end
+          end
+        end
+        mix_region(reg, start)
+        start += framples(reg)
+        forget_region(reg)
+      end
+    end
+    as_one_edit(fnc)
     set_max_regions(old_max)
     set_with_mix_tags(old_tags)
   end
+  # scramble_channel(0.01)
 
   # reorder blocks within channel
 

@@ -25,19 +25,40 @@
 # SUCH DAMAGE.
 #
 # Created: 03/04/08 17:05:03
-# Changed: 14/11/13 06:58:23
+# Changed: 14/11/23 06:18:17
 
 # module WS
+#   ws_getlogin
+#   ws_gethostname
 #   ws_break(*rest)
 #   with_sound(*args) do ... end
+#   with_dac(*args) do ... end
+#   with_snd(*args) do ... end
+#   with_clm(*args) do ... end
 #   with_full_sound(*args) do ... end
 #   with_temp_sound(*args) do ... end
-#   clm_load(rbm_file, *args)
 #   with_temp_snd(snd) do |temp_snd_file_name| ... end
+#   clm_load(rbm_file, *args)
 #   make_default_comment
 #   remove_file(file)
 #   each_sample(start, dur) do |samp| ... end
 #   process_times
+#
+# class XenSound
+#   name
+#   length
+#   update
+#   revert
+#   save
+#   close
+#   snd_file_name
+#   snd_maxamp(chn, edpos)
+#   snd_framples(chn, edpos)
+#   snd_sample_type    snd_sample_type=(v)
+#   snd_header_type    snd_header_type=(v)
+#   snd_comment        snd_comment=(v)
+#   snd_srate          snd_srate=(v)
+#   snd_channels       snd_channels=(v)
 #
 # class With_sound
 #   initialize(*args, &body)
@@ -53,28 +74,28 @@
 #   to_s
 #   describe   (show_local_variables)
 #   with_sound(*args) do ... end
+#   with_current_sound(*args) do ... end
 #   scaled_to(scale) do ... end
 #   scaled_by(scale) do ... end
 #   with_offset(secs) do ... end
-#   with_current_sound(*args) do ... end
 #   sound_let(*args) do |*sl_args| ... end
-#   clm_load(rbm_file, *args)
 #   with_mix(*args, file[, beg_time], body_string)
 #   with_sound_info(instrument_name, start, dur, binding)
 #   run_instrument(start, dur, *locsig_args) do |samp| ... end
-#   run_reverb() do |ho, samp| ... end
-#   clm_mix(infile, *args)
+#   run_reverb do |ho, samp| ... end
 #   run do ... end
+#   clm_mix(infile, *args)
 #
 # class Instrument
-#   my_simp(start, dur, freq, amp, amp_env = [0, 1, 1, 1])
+#   ws_simp(start, dur, freq, amp, amp_env)
+#   ws_violin(start, dur, freq, amp, fm_index, amp_env)
 #   make_ws_reader(file, *args)
 #   ws_readin(rd)
 #   close_ws_reader(rd)
 #   ws_location(rd)
-#   set_ws_location(rd, val)
+#   set_ws_location(rd, v)
 #   ws_increment(rd)
-#   set_ws_increment(rd, val)
+#   set_ws_increment(rd, v)
 #   ws_srate(file)
 #   ws_channels(file)
 #   ws_duration(file)
@@ -94,9 +115,9 @@
 #            |                |
 #            v                v
 #      Snd_Instrument  CLM_Instrument
-#            |                |
-#            v                v
-#         With_Snd         With_CLM
+#       |         |           |
+#       v         v           v
+#    With_Snd  With_DAC    With_CLM
 #
 # Instruments can use the generalized run-loop 'run_instrument'.
 #
@@ -419,11 +440,10 @@ end
 
 with_silence do
   # warning: undefined variable
-  $clm_version            = "ruby 2014/11/13"
+  $clm_version            = "ruby 2014/11/23"
   $output                 ||= false
   $reverb                 ||= false
   $clm_array_print_length ||= 8
-  $clm_audio_format       ||= Mus_lshort
   $clm_clipped            ||= true
   $clm_comment            ||= nil
   $clm_decay_time         ||= 1.0
@@ -451,14 +471,14 @@ with_silence do
     $clm_header_type   ||= default_output_header_type
     $clm_sample_type   ||= default_output_sample_type
     $clm_output_device ||= audio_output_device
-    $clm_rt_bufsize    ||= dac_size
+    $clm_dac_size      ||= dac_size
   else
     $clm_channels      ||= 1
     $clm_srate         ||= 44100
     $clm_header_type   ||= Mus_next
     $clm_sample_type   ||= Mus_lfloat
     $clm_output_device ||= Mus_audio_default
-    $clm_rt_bufsize    ||= 1024
+    $clm_dac_size      ||= 1024
   end
 end
 
@@ -467,50 +487,51 @@ $clm_data_format = $clm_sample_type
 trace_var(:$clm_data_format) do |val|
   $clm_sample_type = val
 end
+$clm_rt_bufsize = $clm_dac_size
+trace_var(:$clm_rt_bufsize) do |val|
+  $clm_dac_size = val
+end
 
 module WS
   ws_ht = mus_header_type2string($clm_header_type)
   ws_st = mus_sample_type2string($clm_sample_type)
-  ws_af = mus_sample_type2string($clm_audio_format)
+  if string?(ws_fn = $clm_file_name)
+    ws_fn = File.basename(ws_fn)
+  end
+  if string?(ws_rf = $clm_reverb_file_name)
+    ws_rf = File.basename(ws_rf)
+  end
   ws_doc = "\
- with_sound(*args) do ... end
- 
-   :output             $clm_file_name        (#{$clm_file_name.inspect})
+with_sound(*args) do ... end
+   :output             $clm_file_name        (#{ws_fn.inspect})
    :channels           $clm_channels         (#{$clm_channels})
    :srate              $clm_srate            (#{$clm_srate})
    :header_type        $clm_header_type      (#{ws_ht})
    :sample_type        $clm_sample_type      (#{ws_st})
-   :audio_format       $clm_audio_format     (#{ws_af})
- 
    :reverb             $clm_reverb           (#{$clm_reverb.inspect})
    :reverb_data        $clm_reverb_data      (#{$clm_reverb_data})
    :reverb_channels    $clm_reverb_channels  (#{$clm_reverb_channels})
-   :revfile            $clm_reverb_file_name (#{$clm_reverb_file_name.inspect})
+   :revfile            $clm_reverb_file_name (#{ws_rf.inspect})
    :delete_reverb      $clm_delete_reverb    (#{$clm_delete_reverb})
- 
    :decay_time         $clm_decay_time       (#{$clm_decay_time})
    :scaled_to          false
    :scaled_by          false
    :continue_old_file  false
    :notehook           $clm_notehook         (#{$clm_notehook})
-  
+   :dac_size           $clm_dac_size         (#{$clm_dac_size})
    :play               $clm_play             (#{$clm_play})
    :statistics         $clm_statistics       (#{$clm_statistics})
    :comment            $clm_comment          (#{$clm_comment.inspect})
    :locsig_type        $clm_locsig_type      (Mus_interp_linear)
    :verbose            $clm_verbose          (#{$clm_verbose})
-
-# next option works only with newer Ruby versions
-# save the with_sound-body in sound file's comment
    :save_body          false
-
-# if an instrument uses run_instrument/run_reverb and INFO is true, a
-# message will be printed: 'instrument_name: start 0.000, dur 0.000'
    :info               $clm_info             (#{$clm_info})
    :clipped            $clm_clipped          (#{$clm_clipped})
    :player             $clm_player           (#{$clm_player.inspect})
- 
- Usage: with_sound(:play, 1, :statistics, true) do fm_violin end"
+   :to_snd (true, false, nil)
+   :clm    (true, false, nil)
+   :help
+Usage: with_sound(:play, 1, :statistics, true) do fm_violin end"
 
   with_silence do
     unless defined? Etc.getlogin
@@ -548,29 +569,77 @@ module WS
     raise(Break, msg.chomp(","), caller(1))
   end
   
+  # :to_snd has the following arguments:
+  #   :snd or true  => With_Snd
+  #   :clm or false => With_CLM
+  #   :dac or nil   => With_DAC
+  # :clm has these (false and true swapped)
+  #   :snd or false => With_Snd
+  #   :clm or true  => With_CLM
+  #   :dac or nil   => With_DAC
+  # :output "dac"   => With_DAC
   add_help(:with_sound, ws_doc)
   def with_sound(*args, &body)
-    clm = get_args(args, :clm, true)
-    out = get_args(args, :out_buffer, false)
-    if vct?(out) or array?(out)
-      clm = false
+    if args.member?(:help)
+      return Snd.display(get_help(:with_sound))
     end
-    ws = if clm
-           With_CLM.new(*args, &body)
-         else
-           With_Snd.new(*args, &body)
-         end
-    if get_args(args, :help, false)
-      Snd.message(ws.help)
+    if (not provided?(:snd))
+      klass = With_CLM
+    elsif args.member?(:output) and args[args.index(:output) + 1] == "dac"
+      klass = With_DAC
+    elsif args.member?(:to_snd)
+      case args[args.index(:to_snd) + 1]
+      when :snd, TrueClass
+        klass = With_Snd
+      when :clm, FalseClass
+        klass = With_CLM
+      when :dac, NilClass
+        klass = With_DAC
+      end
+    elsif args.member?(:clm)
+      case args[args.index(:clm) + 1]
+      when :snd, FalseClass
+        klass = With_Snd
+      when :clm, TrueClass
+        klass = With_CLM
+      when :dac, NilClass
+        klass = With_DAC
+      end
     else
-      ws.run
+      klass = With_CLM
     end
+    ws = klass.new(*args, &body)
+    ws.run(&body)
     ws
+  end
+
+  # require "v"
+  # with_dac(:statistics, true,
+  #          :info, true,
+  #          :dac_size, 8192 * 4,
+  #          :srate, 22050) do
+  #   violin(0.5, 2.5, 440, 0.2, 0.1, [0, 0, 25, 1, 75, 1, 100, 0])
+  #   fm_violin(0, 5, 330, 0.2, :fm_index, 10.5)
+  #   fm_violin(1, 2, 660, 0.2, :fm_index, 0.8)
+  # end
+  add_help(:with_dac, ws_doc)
+  def with_dac(*args, &body)
+    with_sound(:to_snd, :dac, *args, &body)
+  end
+
+  add_help(:with_snd, ws_doc)
+  def with_snd(*args, &body)
+    with_sound(:to_snd, :snd, *args, &body)
+  end
+
+  add_help(:with_clm, ws_doc)
+  def with_clm(*args, &body)
+    with_sound(:to_snd, :clm, *args, &body)
   end
 
   add_help(:with_full_sound, ws_doc)
   def with_full_sound(*args, &body)
-    ws = with_sound(:clm, false, *args, &body)
+    ws = with_sound(:to_snd, :snd, *args, &body)
     len = framples($snd_opened_sound) / srate($snd_opened_sound).to_f
     set_x_bounds([0, len], $snd_opened_sound)
     ws
@@ -578,25 +647,13 @@ module WS
 
   add_help(:with_temp_sound, ws_doc)
   def with_temp_sound(*args, &body)
-    ws = with_sound(:clm, true, :output, tempnam(), *args, &body)
+    ws = with_sound(:to_snd, :clm, :output, tempnam(), *args, &body)
     remove_file(ws.output)
     ws
   end
-  
-  add_help(:clm_load,
-           "clm_load(rbm_file, *with_sound_args)\n" + ws_doc)
-  def clm_load(rbm_file, *args)
-    assert_type(File.exist?(rbm_file), rbm_file, 1, "an existing file")
-    with_sound(*args) do
-      if @verbose
-        Snd.message("Loading %s", rbm_file.inspect)
-      end
-      eval(File.open(rbm_file).read, nil, format("(clm_load %s)", rbm_file), 1)
-    end
-  end
 
   add_help(:with_temp_snd,
-           "with_temp_snd(snd = false) do |temp_snd_file_name| ... end  \
+           "with_temp_snd(snd=false) do |temp_snd_file_name| ... end  \
 Saves SND in a temporary file, which name can be accessed in the body code.  \
 After finishing the body, the file will be removed.")
   def with_temp_snd(snd = false, &body)
@@ -605,6 +662,18 @@ After finishing the body, the file will be removed.")
     ret = body.call(t)
     remove_file(t)
     ret
+  end
+ 
+  add_help(:clm_load,
+           "clm_load(rbm_file, *with_sound_args)\n" + ws_doc)
+  def clm_load(rbm_file, *args)
+    assert_type(File.exist?(rbm_file), rbm_file, 1, "an existing file")
+    with_sound(*args) do
+      if @verbose
+        Snd.message("Loading %s", rbm_file.inspect)
+      end
+      eval(File.open(rbm_file).read, nil, "(clm_load #{rbm_file})", 1)
+    end
   end
 
   if defined? snd_tempnam
@@ -629,17 +698,15 @@ After finishing the body, the file will be removed.")
   
   def remove_file(file)
     if provided?(:snd) and sound?(snd = find_sound(file))
-      revert_sound(snd)
+      snd.revert
       close_sound_extend(snd)
     end
      File.owned?(file) and File.unlink(file)
   end
 
-  def each_sample(start, dur)
+  def each_sample(start, dur, &body)
     beg, ends = times2samples(start, dur)
-    (beg...ends).each do |samp|
-      yield(samp)
-    end
+    (beg...ends).each(&body)
   end
 
   def process_times
@@ -648,6 +715,84 @@ After finishing the body, the file will be removed.")
     else
       Time.times
     end
+  end
+end
+
+class XenSound
+  def name
+    self.class.name
+  end
+
+  def length
+    framples(self, false, false)
+  end
+
+  def update
+    update_sound(self)
+  end
+
+  def revert
+    revert_sound(self)
+  end
+
+  def save
+    save_sound(self)
+  end
+
+  def close
+    close_sound(self)
+  end
+
+  def snd_file_name
+    file_name(self)
+  end
+
+  def snd_maxamp(chn = false, edpos = false)
+    maxamp(self, chn, edpos)
+  end
+
+  def snd_framples(chn = false, edpos = false)
+    framples(self, chn, edpos)
+  end
+
+  def snd_sample_type
+    sample_type(self)
+  end
+
+  def snd_sample_type=(v)
+    set_sample_type(self, v)
+  end
+
+  def snd_header_type
+    header_type(self)
+  end
+
+  def snd_header_type=(v)
+    set_header_type(self, v)
+  end
+
+  def snd_comment
+    comment(self)
+  end
+
+  def snd_comment=(v)
+    set_comment(self, v)
+  end
+
+  def snd_srate
+    srate(self)
+  end
+
+  def snd_srate=(v)
+    set_srate(self, v)
+  end
+
+  def snd_channels
+    channels(self)
+  end
+
+  def snd_channels=(v)
+    set_channels(self, v)
   end
 end
 
@@ -663,7 +808,6 @@ class With_sound
     # for backward compatibility
     @sample_type     = get_args(args, :data_format,       $clm_sample_type)
     @sample_type     = get_args(args, :sample_type,       $clm_sample_type)
-    @audio_format    = get_args(args, :audio_format,      $clm_audio_format)
     @out_buffer      = get_args(args, :out_buffer,        false)
 
     @reverb          = get_args(args, :reverb,            $clm_reverb)
@@ -679,6 +823,7 @@ class With_sound
 
     @continue        = get_args(args, :continue_old_file, false)
     @notehook        = get_args(args, :notehook,          $clm_notehook)
+    @dac_size        = get_args(args, :dac_size,          $clm_dac_size)
     @save_body       = get_args(args, :save_body,         false)
     @player          = get_args(args, :player,            $clm_player)
 
@@ -698,7 +843,6 @@ class With_sound
     @stat_comment     = nil
     @stat_maxamp      = nil
     @stat_revamp      = nil
-    @body = body
     if @reverb and @revfile.null?
       @revfile = make_reverb_file_name
     end
@@ -724,8 +868,8 @@ class With_sound
     unless string?(@comment)
       @comment = make_default_comment
     end
-    if @save_body and proc?(@body)
-      @comment << "\n" << @body.to_body
+    if @save_body and proc?(body)
+      @comment << "\n" << body.to_body
     end
     @old_srate = mus_srate
     @old_update_interval = if defined? auto_update_interval
@@ -767,10 +911,26 @@ installs the @with_sound_note_hook and prints the line
         snd_func(@notehook, name, start, dur)
       end
     end
-    set_help
+    self.description = get_help(:with_sound)
   end
   attr_reader :output, :out_snd, :with_sound_note_hook
   alias help description
+
+  def inspect
+    s = self.to_s
+    unless @clm_instruments.empty?
+      s += "\n#<clm_instruments: "
+      @clm_instruments.sort do |a, b|
+        a[1][1] <=> b[1][1]
+      end.each do |k, v|
+        s += format("%s [%1.3f-%1.3f]\n", *v)
+        s += " " * 19
+      end
+      s.strip!
+      s += ">"
+    end
+    s
+  end
   
   def to_s
     if @reverb
@@ -781,7 +941,6 @@ installs the @with_sound_note_hook and prints the line
     format("#<%s: output: %p, channels: %d, srate: %d%s>",
            self.class, @output, @channels, @srate.to_i, s)
   end
-  alias inspect to_s
 
   def describe
     show_local_variables
@@ -814,13 +973,12 @@ installs the @with_sound_note_hook and prints the line
            # for backward compatibility
            :sample_type, get_args(args, :data_format, @sample_type),
            :sample_type, get_args(args, :sample_type, @sample_type),
-           :audio_format, get_args(args, :audio_format, @audio_format),
            :verbose, get_args(args, :verbose, @verbose),
            :info, get_args(args, :info, @info),
            :clipped, get_args(args, :clipped, @clipped),
            :offset, get_args(args, :offset, 0.0),
            &body)
-    ws.run
+    ws.run(&body)
     ws
   end
 
@@ -882,33 +1040,31 @@ installs the @with_sound_note_hook and prints the line
   def with_mix(*args)
     body_str = args.pop
     assert_type(string?(body_str), body_str, 0, "a string (body string)")
-    start = if number?(args[-1])
-              args.pop
-            else
-              0
-            end
+    start = 0
+    if number?(args[-1])
+      start = args.pop
+    end
     fname = args.pop
     assert_type(string?(fname), fname, 0, "a string (filename)")
     out_file = fname + ".snd"
     rbm_file = fname + ".rbm"
-    snd_time = if File.exist?(out_file)
-                 File.mtime(out_file)
-               else
-                 :load
-               end
-    old_body = if File.exist?(rbm_file)
-                 File.open(rbm_file).read
-               else
-                 ""
-               end
-    rbm_time = if old_body == body_str
-                 File.mtime(rbm_file)
-               else
-                 File.open(rbm_file, "w") do |f|
-                   f << body_str
-                 end
-                 :load
-               end
+    snd_time = :load
+    if File.exist?(out_file)
+      snd_time = File.mtime(out_file)
+    end
+    old_body = ""
+    if File.exist?(rbm_file)
+      old_body = File.open(rbm_file).read
+    end
+    rbm_time = :load
+    if old_body == body_str
+      rbm_time = File.mtime(rbm_file)
+    else
+      File.open(rbm_file, "w") do |f|
+        f << body_str
+      end
+      rbm_file = :load
+    end
     if snd_time == :load or rbm_time == :load or snd_time < rbm_time
       if @verbose 
         Snd.message("mix remake %s at %1.3f", out_file, start)
@@ -917,7 +1073,9 @@ installs the @with_sound_note_hook and prints the line
       comm += format("[%s, %s]\n", args.to_s.inspect, body_str.inspect)
       self.with_sound(:output, out_file, :comment, comm, *args) do
         eval(File.open(rbm_file).read,
-             nil, format("(with_mix_load %s)", rbm_file), 1)
+             nil,
+             format("(with_mix_load %s)", rbm_file),
+             1)
       end
     else
       if @verbose
@@ -927,9 +1085,9 @@ installs the @with_sound_note_hook and prints the line
     clm_mix(out_file, :output_frame, seconds2samples(start))
   end
 
-  def with_sound_info(name, start, dur, environ = binding)
-    @clm_instruments.store(environ, [name, start, dur])
-    if @info
+  def with_sound_info(name, start, dur, body = binding)
+    @clm_instruments.store(body, [name, start, dur])
+    if @info and (not @notehook)
       Snd.message("%s: start %1.3f, dur %1.3f", name, start, dur)
     end
     if @notehook
@@ -937,20 +1095,17 @@ installs the @with_sound_note_hook and prints the line
     end
   end
   
-  def run_instrument(start, dur, *locsig_args, &environ)
+  def run_instrument(start, dur, body)
     @start_frame = seconds2samples(start + @offset)
-    with_sound_info(get_func_name(3), start, dur, environ)
+    with_sound_info(get_func_name(3), start, dur, body)
   end
 
   # Handles only the first channel of a reverb file.
   # body.call(sample, current_sample_index) => vct of @channels' length
-  def run_reverb(&environ)
+  def run_reverb(&body)
     name = get_func_name(3)
-    dur = samples2seconds(@ws_reverb.length)
-    if @clm
-      dur += @decay_time
-    end
-    with_sound_info("reverb " + name, 0, dur, environ)
+    dur = samples2seconds(@ws_reverb.length) + @decay_time
+    with_sound_info("reverb " + name, 0, dur, body)
     if @verbose
       Snd.message("%s on %d in and %d out channels",
                   name, @reverb_channels, @channels)
@@ -958,7 +1113,6 @@ installs the @with_sound_note_hook and prints the line
   end
   
   def run(&body)
-    @body ||= body
     set_mus_file_buffer_size($clm_file_buffer_size)
     set_mus_array_print_length($clm_array_print_length)
     if @clipped == :undefined
@@ -978,14 +1132,14 @@ installs the @with_sound_note_hook and prints the line
     before_output
     frm1 = ws_frample_location
     init_process_time
-    run_body
+    run_body(&body)
     after_output
     stop_process_time
     old_sync = false
     if provided? :snd
       if sound?(snd = find_sound(@output))
         old_sync = sync(snd)
-        @out_snd = update_sound(snd)
+        @out_snd = snd.update
       else
         if @header_type == Mus_raw
           @out_snd = open_raw_sound(@output, @channels,
@@ -1035,8 +1189,8 @@ installs the @with_sound_note_hook and prints the line
   #     ArgumentError: wrong number of arguments (1 for 0)
   #   if BODY: Proc.new do | | ... end
   #     okay (Proc ignores arity)
-  def run_body
-    instance_eval(&@body)
+  def run_body(&body)
+    instance_eval(&body)
   rescue Interrupt, ScriptError, NameError, StandardError
     finish_sound
     show_local_variables
@@ -1085,8 +1239,9 @@ installs the @with_sound_note_hook and prints the line
   end
 
   def make_reverb_file_name
-    path = File.split(@output).first
-    file = File.basename(@output, ".*") + ".reverb"
+    s = string?(@output) ? @output : @output.class.to_s
+    path = File.split(s).first
+    file = File.basename(s, ".*") + ".reverb"
     unless path == "."
       file = path + "/" + file
     end
@@ -1121,13 +1276,12 @@ installs the @with_sound_note_hook and prints the line
   end
   
   def statistics
-    obj_name = case @ws_output
-               when Mus, Vct
-                 " (" + @ws_output.name + ")"
-               else
-                 ""
-               end
-    Snd.message("filename: %s%s", @output.inspect, obj_name)
+    if string?(@ws_output)
+      obj_name = ""
+    else
+      obj_name = " (" + @ws_output.name + ")"
+    end
+    Snd.message("filename: %p%s", @output, obj_name)
     Snd.message("   chans: %d, srate: %d", @channels, @srate.to_i)
     if @stat_sample_type and @stat_header_type
       Snd.message("  format: %s [%s]",
@@ -1135,7 +1289,7 @@ installs the @with_sound_note_hook and prints the line
                   mus_header_type_name(@stat_header_type))
     end
     if @stat_framples > 0
-      Snd.message("  length: %1.3f (%d frms)",
+      Snd.message("  length: %1.3f (%d frames)",
                   @stat_framples / @srate.to_f, @stat_framples)
     end
     Snd.message("    real: %1.3f  (utime %1.3f, stime %1.3f)",
@@ -1182,51 +1336,6 @@ installs the @with_sound_note_hook and prints the line
       end
     end
   end
-  
-  def set_help
-    self.description = format("\
-# with_sound(*args) do ... end
-# 
-#   :output             $clm_file_name (#{$clm_file_name.inspect})
-#   :channels           $clm_channels (#$clm_channels)
-#   :srate              $clm_srate (#$clm_srate)
-#   :header_type        $clm_header_type (#$clm_header_type)
-#   :sample_type        $clm_sample_type (#$clm_sample_type)
-#   :audio_format       $clm_audio_format (#$clm_audio_format)
-#   :out_buffer         nil (vct or sound-data object)
-# 
-#   :reverb             $clm_reverb (#{$clm_reverb.inspect})
-#   :reverb_data        $clm_reverb_data (#{$clm_reverb_data.inspect})
-#   :reverb_channels    $clm_reverb_channels (#$clm_reverb_channels)
-#   :revfile            $clm_reverb_file_name (#{$clm_reverb_file_name.inspect})
-#   :delete_reverb      $clm_delete_reverb (#$clm_delete_reverb)
-#   :rev_buffer         nil (vct or sound-data object)
-# 
-#   :decay_time         $clm_decay_time (#{$clm_decay_time})
-#   :scaled_to          false
-#   :scaled_by          false
-#   :continue_old_file  false
-#   :notehook           $clm_notehook (#{$clm_notehook.inspect})
-#  
-#   :play               $clm_play (#$clm_play)
-#   :statistics         $clm_statistics (#$clm_statistics)
-#   :comment            $clm_comment (#{$clm_comment.inspect})
-#   :locsig_type        $clm_locsig_type (#{$clm_locsig_type})
-#   :verbose            $clm_verbose (#$clm_verbose)
-#
-## next option works only with newer Ruby versions
-## save the with_sound-body in sound file's comment
-#   :save_body          false
-#
-## if an instrument uses run_instrument/run_reverb and INFO is true, a
-## message will be printed: 'instrument_name: start 0.000, dur 0.000'
-#   :info               $clm_info (#$clm_info)
-#   :clipped            $clm_clipped (#$clm_clipped)
-#
-#   :player             $clm_player (#{$clm_player.inspect})
-#
-# Usage: with_sound(:play, 1, :statistics, true) do fm_violin end")
-  end
 end
 
 class Instrument < With_sound
@@ -1244,8 +1353,8 @@ class Instrument < With_sound
   end
 
   # simple violin, see snd/fm.html
-  def violin(start = 0, dur = 1, freq = 440, amp = 0.5, fm_index = 1,
-             amp_env = [0, 1, 1, 1])
+  def ws_violin(start = 0, dur = 1, freq = 440, amp = 0.5,
+                fm_index = 1, amp_env = [0, 1, 1, 1])
     frq_scl = hz2radians(freq)
     maxdev = frq_scl * fm_index
     index1 = maxdev * (5.0 / log(freq))
@@ -1274,71 +1383,70 @@ class Instrument < With_sound
               env(indf3) * oscil(fmosc3, 4.0 * vib))
     end
   end
+  alias violin ws_violin
 end
 
 # WSChannel2Vct and WSSampler are helper classes used by class
 # Snd_Instrument.  sampler has no possibility to set location
 # (and direction) which is needed by instrument grani (clm-ins.rb).
-if provided? :snd
-  class WSChannel2Vct
-    # (channel->vct (beg 0) (dur len) (snd #f) (chn #f) (edpos #f))
-    def initialize(snd = false, chn = false, start = 0, dir = 1)
-      @vct = channel2vct(0, framples(snd, chn), snd, chn, false)
-      @location = ((dir > 0) ? (start - 1) : (start + 1))
-      @start = start
-      @direction = dir
-      @snd = snd
-      @chn = chn
-      @last_location = @vct.length - 1
-    end
-    attr_accessor :direction
-    
-    def inspect
-      format("%s.new(%p, %p, %s, %s)",
-             self.class, @snd, @chn, @start, @direction)
-    end
-    
-    def to_s
-      format("#<%s snd: %p, chn: %p, location: %d, direction: %d, vct: %p>",
-             self.class, @snd, @chn, location, @direction, @vct)
-    end
+class WSChannel2Vct
+  # (channel->vct (beg 0) (dur len) (snd #f) (chn #f) (edpos #f))
+  def initialize(snd = false, chn = false, start = 0, dir = 1)
+    @vct = channel2vct(0, framples(snd, chn), snd, chn, false)
+    @location = ((dir > 0) ? (start - 1) : (start + 1))
+    @start = start
+    @direction = dir
+    @snd = snd
+    @chn = chn
+    @last_location = @vct.length - 1
+  end
+  attr_accessor :direction
+  
+  def inspect
+    format("%s.new(%p, %p, %s, %s)",
+           self.class, @snd, @chn, @start, @direction)
+  end
+  
+  def to_s
+    format("#<%s snd: %p, chn: %p, location: %d, direction: %d, vct: %p>",
+           self.class, @snd, @chn, location, @direction, @vct)
+  end
 
-    def next
-      if @direction > 0
-        if @location < @last_location
-          @location += 1
-          @vct[@location]
-        else
-          0.0
-        end
+  def next
+    if @direction > 0
+      if @location < @last_location
+        @location += 1
+        @vct[@location]
       else
-        if @location > 0
-          @location -= 1
-          @vct[@location]
-        else
-          0.0
-        end
+        0.0
+      end
+    else
+      if @location > 0
+        @location -= 1
+        @vct[@location]
+      else
+        0.0
       end
     end
-    
-    def close
-      # not needed
+  end
+  
+  def close
+    # not needed
+  end
+  
+  def location
+    if @direction > 0
+      @location + 1
+    else
+      @location - 1
     end
-    
-    def location
-      if @direction > 0
-        @location + 1
-      else
-        @location - 1
-      end
-    end
+  end
 
-    def location=(val)
-      if @direction > 0
-        @location = val - 1
-      else
-        @location = val + 1
-      end
+  def location=(v)
+    if @direction > 0
+      @location = v - 1
+    else
+      @location = v + 1
     end
   end
 end
@@ -1379,7 +1487,7 @@ class WSSampler
     sampler_position(@reader)
   end
 
-  def location=(val)
+  def location=(v)
     # sampler_position isn't settable
   end
 end
@@ -1387,25 +1495,6 @@ end
 class Snd_Instrument < Instrument
   # place holder for special Snd instruments, see FULLMIX in
   # clm-ins.rb.
-
-  def get_snd(file)
-    snd = if integer?(file)
-            integer2sound(file)
-          elsif string?(file)
-            if sound?(s = find_sound(file))
-              s
-            else
-              open_sound(file)
-            end
-          end
-    if sound?(snd)
-      snd
-    else
-      Snd.snd(snd)
-    end
-  end
-  private :get_snd
-  
   def make_ws_reader(file, *args)
     start, channel, direction = nil
     optkey(args, binding,
@@ -1432,16 +1521,16 @@ class Snd_Instrument < Instrument
     rd.location
   end
 
-  def set_ws_location(rd, val)
-    rd.location = val.to_i
+  def set_ws_location(rd, v)
+    rd.location = v.to_i
   end
 
   def ws_increment(rd)
     rd.direction
   end
 
-  def set_ws_increment(rd, val)
-    rd.direction = val.to_i
+  def set_ws_increment(rd, v)
+    rd.direction = v.to_i
   end
   
   def ws_srate(file)
@@ -1455,6 +1544,24 @@ class Snd_Instrument < Instrument
   def ws_duration(file)
     snd = get_snd(file)
     framples(snd) / srate(snd).to_f
+  end
+
+  private
+  def get_snd(file)
+    snd = if integer?(file)
+            integer2sound(file)
+          elsif string?(file)
+            if sound?(s = find_sound(file))
+              s
+            else
+              open_sound(file)
+            end
+          end
+    if sound?(snd)
+      snd
+    else
+      Snd.snd(snd)
+    end
   end
 end
 
@@ -1486,16 +1593,16 @@ class CLM_Instrument < Instrument
     mus_location(rd)
   end
 
-  def set_ws_location(rd, val)
-    set_mus_location(rd, val)
+  def set_ws_location(rd, v)
+    set_mus_location(rd, v)
   end
 
   def ws_increment(rd)
     mus_increment(rd)
   end
 
-  def set_ws_increment(rd, val)
-    set_mus_increment(rd, val)
+  def set_ws_increment(rd, v)
+    set_mus_increment(rd, v)
   end
 
   def ws_srate(file)
@@ -1512,88 +1619,41 @@ class CLM_Instrument < Instrument
 end
 
 class With_Snd < Snd_Instrument
-  def initialize(*args)
-    @clm = false
-    super
-  end
-
-  def run_instrument(start, dur, *locsig_args)
-    super
-    degree, distance, reverb_amount = nil
-    optkey(locsig_args, binding,
-           [:degree, random(90.0)],
-           [:distance, 1.0],
-           [:reverb_amount, 0.05])
-    if @reverb
-      # locsig
-      @ws_output = if vct?(@out_buffer)
-                     @out_buffer.fill!(0.0)
-                   elsif array?(@out_buffer)
-                     Vct.new(@out_buffer.length, 0.0)
-                   else
-                     Vct.new(seconds2samples(dur), 0.0)
-                   end
-      @ws_reverb = if vct?(@rev_buffer)
-                     @rev_buffer.fill!(0.0)
-                   elsif array?(@rev_buffer)
-                     Vct.new(@rev_buffer.length, 0.0)
-                   else
-                     Vct.new(seconds2samples(dur + @decay_time), 0.0)
-                   end
-      # locsig and Vct as :output and :revout handles only 1 channel.
-      @locsig = make_locsig(:degree,   degree,
-                            :distance, distance,
-                            :reverb,   reverb_amount,
-                            :output,   @ws_output,
-                            :revout,   @ws_reverb,
-                            :channels, @channels,
-                            :type,     @locsig_type)
-      @ws_output.length.times do |samp|
-        locsig(@locsig, samp, yield(@start_frame + samp))
-      end
-      @channels.times do |chn|
-        vct2channel(@ws_output, @start_frame, @ws_output.length,
-                    @out_snd, chn, false, "with_sound")
-      end
-      @reverb_channels.times do |chn|
-        mix_vct(@ws_reverb, @start_frame, @rev_snd, chn, false)
-      end
+  def run_instrument(start, dur, *locsig_args, &body)
+    super(start, dur, body)
+    # locsig and Vct as :output and :revout handles only 1 channel.
+    if @channels == 1 and @reverb_channels < 2
+      run_inst_with_locsig(start, dur, *locsig_args, &body)
     else
-      # vct.map
-      vout = if vct?(@out_buffer)
-               @out_buffer.fill!(0.0)
-             elsif array?(@out_buffer)
-               Vct.new(@out_buffer.length, 0.0)
-             else
-               Vct.new(seconds2samples(dur), 0.0)
-             end
-      @ws_output = vout.map_with_index do |x, i|
-        yield(@start_frame + i)
-      end
-      @channels.times do |chn|
-        vct2channel(@ws_output, @start_frame, @ws_output.length,
-                    @out_snd, chn, false, "with_sound")
-      end
+      run_inst_with_map(start, dur, *locsig_args, &body)
     end
   end
 
-  def run_reverb()
-    super
-    rev_out = @ws_reverb.map_with_index do |x, i|
-      yield(x, i)[0]
+  def run_reverb(&body)
+    super(&body)
+    # run_reverb handles only one reverb channel
+    vo = channel2vct(0, false, @rev_snd, 0, false)
+    vl = vo.length + seconds2samples(@decay_time)
+    vr = Array.new(@channels) do
+      Vct.new(vl, 0.0)
     end
+    vo.each_with_index do |s, i|
+      fr = body.call(s, i)
+      @channels.times do |chn|
+        vr[chn][i] = fr[chn]
+      end
+    end
+    origin = format("%s(&body", get_func_name)
     @channels.times do |chn|
-      mix_vct(rev_out, 0, @out_snd, chn, false)
+      mix_vct(vr[chn], 0, @out_snd, chn, false, origin)
     end
-    rev_out = false
-    @ws_reverb = false
   end
 
   add_help(:clm_mix,
            "clm_mix(infile, *args)
         :output       = false
         :output_frame = 0
-        :frames       = mus_sound_framples(infile)
+        :frames       = framples(infile)
         :input_frame  = 0
         :scaler       = false
 Example: clm_mix(\"tmp\")")
@@ -1602,7 +1662,7 @@ Example: clm_mix(\"tmp\")")
     optkey(args, binding,
            [:output, false],
            [:output_frame, 0],
-           [:frames, mus_sound_framples(infile)],
+           [:frames, framples(infile)],
            [:input_frame, 0],
            [:scaler, false])
     unless sound?(snd = find_sound(infile))
@@ -1619,29 +1679,76 @@ Example: clm_mix(\"tmp\")")
       mix_vct(channel2vct(input_frame, frames, snd, chn),
               output_frame, snd, chn, false)
     end
-    revert_sound(snd)
+    snd.revert
     close_sound_extend(snd)
   end
 
   protected
+  def run_inst_with_locsig(start, dur, *locsig_args, &body)
+    degree, distance, reverb_amount = nil
+    optkey(locsig_args, binding,
+           [:degree, random(90.0)],
+           [:distance, 1.0],
+           [:reverb_amount, 0.05])
+    vo = Vct.new(seconds2samples(dur), 0.0)
+    vr = @reverb ? Vct.new(seconds2samples(dur), 0.0) : false
+    @locsig = make_locsig(:degree,   degree,
+                          :distance, distance,
+                          :reverb,   reverb_amount,
+                          :output,   vo,
+                          :revout,   vr,
+                          :channels, @channels,
+                          :type,     @locsig_type)
+    vo.length.times do |i|
+      locsig(@locsig, i, body.call(@start_frame + i))
+    end
+    origin = format("run_instrument(%s, %s, %s, &body",
+                    start, dur,
+                    locsig_args.to_s[1..-2])     # get rid of '[' and ']'
+    mix_vct(vo, @start_frame, @out_snd, 0, false, origin)
+    if @reverb
+      mix_vct(vr, @start_frame, @rev_snd, 0, false, origin)
+    end
+  end
+
+  def run_inst_with_map(start, dur, *locsig_args, &body)
+    origin = format("run_instrument(%s, %s, %s, &body",
+                    start, dur,
+                    locsig_args.to_s[1..-2])
+    vo = Vct.new(seconds2samples(dur)) do |i|
+      body.call(@start_frame + i)
+    end
+    @channels.times do |chn|
+      mix_vct(vo, @start_frame, @out_snd, chn, false, origin)
+    end
+    if @reverb
+      ra = get_args(locsig_args, :reverb_amount, 0.05)
+      vr = vo.scale(ra)
+      @reverb_channels.times do |chn|
+        mix_vct(vr, @start_frame, @rev_snd, chn, false, origin)
+      end
+    end
+  end
+
   def before_output
     super
     snd = rsnd = false
     sr = mus_srate.to_i
+    snd = find_sound(@output)
     if sound?(snd = find_sound(@output))
       if @continue
-        @srate = set_mus_srate(srate(snd))
+        @srate = set_mus_srate(snd.snd_srate)
       else
-        set_header_type(snd, @header_type)
-        set_sample_type(snd, @sample_type)
-        set_srate(snd, sr)
-        set_channels(snd, @channels)
-        set_comment(snd, @comment)
-        channels(snd).times do |chn|
+        snd.snd_header_type = @header_type
+        snd.snd_sample_type = @sample_type
+        snd.snd_srate = sr
+        snd.snd_channels = @channels
+        snd.snd_comment = @comment
+        snd.snd_channels.times do |chn|
           set_framples(1, snd, chn)
         end
-        save_sound(snd)
-        snd = update_sound(snd)
+        snd.save
+        snd = snd.update
       end
     else
       unless @continue
@@ -1652,15 +1759,15 @@ Example: clm_mix(\"tmp\")")
     end
     if @reverb
       if sound?(rsnd = find_sound(@revfile)) and (not @continue)
-        set_header_type(@header_type, rsnd)
-        set_sample_type(@sample_type, rsnd)
-        set_srate(sr, rsnd)
-        set_channels(@reverb_channels, rsnd)
-        channels(rsnd).times do |chn|
+        rsnd.snd_header_type = @header_type
+        rsnd.snd_sample_type = @sample_type
+        rsnd.snd_srate = sr
+        rsnd.snd_channels = @reverb_channels
+        rsnd.snd_channels.times do |chn|
           set_framples(1, rsnd, chn)
         end
-        save_sound(rsnd)
-        rsnd = update_sound(rsnd)
+        rsnd.save
+        rsnd = rsnd.update
       else
         unless @continue
           remove_file(@revfile)
@@ -1669,17 +1776,17 @@ Example: clm_mix(\"tmp\")")
                          sr, @reverb_channels)
       end
     end
-    $output = @out_snd = snd
-    $reverb = @rev_snd = rsnd
+    $output = @ws_output = @out_snd = snd
+    $reverb = @ws_reverb = @rev_snd = rsnd
   end
 
   def after_output
     @reverb and run_reverb_body
-    save_sound(@out_snd)
+    @out_snd.save
   end
   
   def ws_frample_location
-    framples(@out_snd)
+    @out_snd.length
   end
   
   def scaled_to_sound(beg, len)
@@ -1687,24 +1794,24 @@ Example: clm_mix(\"tmp\")")
     @channels.times do |chn|
       scale_channel(scl, beg, len, @out_snd, chn)
     end
-    save_sound(@out_snd)
+    @out_snd.save
   end
 
   def scaled_by_sound(beg, len)
     @channels.times do |chn|
       scale_channel(@scaled_by, beg, len, @out_snd, chn)
     end
-    save_sound(@out_snd)
+    @out_snd.save
   end
   
   def set_statistics
-    @stat_framples    = framples(@out_snd)
-    @stat_sample_type = sample_type(@out_snd)
-    @stat_header_type = header_type(@out_snd)
-    @stat_comment     = comment(@out_snd)
-    @stat_maxamp      = maxamp(@out_snd, true)
+    @stat_framples    = @out_snd.length
+    @stat_sample_type = @out_snd.snd_sample_type
+    @stat_header_type = @out_snd.snd_header_type
+    @stat_comment     = @out_snd.snd_comment
+    @stat_maxamp      = @out_snd.snd_maxamp(true)
     if @reverb
-      @stat_revamp    = maxamp(@rev_snd, true)
+      @stat_revamp    = @rev_snd.snd_maxamp(true)
     end
   end
   
@@ -1721,8 +1828,8 @@ Example: clm_mix(\"tmp\")")
   # returns new snd index
   # see clm-ins.rb, run_fullmix
   def with_closed_sound(snd, &body)
-    snd_name = file_name(snd)
-    snd = update_sound(snd)
+    snd_name = snd.file_name
+    snd = snd.update
     close_sound_extend(snd)
     body.call(snd_name)
     open_sound(snd_name)
@@ -1730,13 +1837,8 @@ Example: clm_mix(\"tmp\")")
 end
 
 class With_CLM < CLM_Instrument
-  def initialize(*args)
-    @clm = true
-    super
-  end
-
-  def run_instrument(start, dur, *locsig_args)
-    super
+  def run_instrument(start, dur, *locsig_args, &body)
+    super(start, dur, body)
     degree, distance, reverb_amount = nil
     optkey(locsig_args, binding,
            [:degree, random(90.0)],
@@ -1749,15 +1851,15 @@ class With_CLM < CLM_Instrument
                           :revout,   @ws_reverb,
                           :channels, @channels,
                           :type,     @locsig_type)
-    @start_frame.upto((@start_frame + seconds2samples(dur)) - 1) do |samp|
-      locsig(@locsig, samp, yield(samp))
+    @start_frame.upto((@start_frame + seconds2samples(dur)) - 1) do |i|
+      locsig(@locsig, i, body.call(i))
     end
   end
 
-  def run_reverb()
-    super
+  def run_reverb(&body)
+    super(&body)
     (@ws_reverb.length + seconds2samples(@decay_time)).times do |i|
-      frample2file(@ws_output, i, yield(file2sample(@ws_reverb, i, 0), i))
+      frample2file(@ws_output, i, body.call(file2sample(@ws_reverb, i, 0), i))
     end
   end
 
@@ -1799,7 +1901,7 @@ Example: clm_mix(\"tmp\")")
     end
     mus_file_mix(output, infile, output_frame, frames, input_frame, mx)
     if outgen
-	    @ws_output = continue_sample2file(output)
+      @ws_output = continue_sample2file(output)
     end
   end
   
@@ -1831,15 +1933,15 @@ Example: clm_mix(\"tmp\")")
 
   def after_output
     if @reverb
-      mus_output?(@ws_reverb) and mus_close(@ws_reverb)
+      mus_output?(@ws_reverb) and @ws_reverb.close
       old_reverb = @ws_reverb
       # non-RUN_REVERB...END functions need it here
       $reverb = @ws_reverb = make_file2sample(@revfile)
       run_reverb_body
-      mus_input?(@ws_reverb) and mus_close(@ws_reverb)
+      mus_input?(@ws_reverb) and @ws_reverb.close
       $reverb = @ws_reverb = old_reverb
     end
-    mus_output?(@ws_output) and mus_close(@ws_output)
+    mus_output?(@ws_output) and @ws_output.close
   end
 
   def ws_frample_location
@@ -1854,7 +1956,7 @@ Example: clm_mix(\"tmp\")")
         @channels.times do |chn|
           scale_to(@scaled_to, @out_snd, chn)
         end
-        save_sound(@out_snd)
+        @out_snd.save
       end
     else
       omax = mus_sound_maxamp(@output)
@@ -1865,7 +1967,8 @@ Example: clm_mix(\"tmp\")")
       if mx.zero?
         mx = 1.0
       end
-      clm_mix(@output, :output_frame, beg, :frames, len, :scaler, @scaled_to/mx)
+      clm_mix(@output, :output_frame, beg,
+              :frames, len, :scaler, @scaled_to / mx)
     end
   end
 
@@ -1875,7 +1978,7 @@ Example: clm_mix(\"tmp\")")
         @channels.times do |chn|
           scale_channel(@scaled_by, beg, len, @out_snd, chn)
         end
-        save_sound(@out_snd)
+        @out_snd.save
       end
     else
       clm_mix(@output, :output_frame, beg, :frames, len, :scaler, @scaled_by)
@@ -1909,11 +2012,97 @@ Example: clm_mix(\"tmp\")")
     end
   end
 
-  def with_closed_output
-    mus_output?(@ws_output) and mus_close(@ws_output)
-    ret = yield
+  def with_closed_output(&body)
+    mus_output?(@ws_output) and @ws_output.close
+    ret = body.call()
     $output = @ws_output = continue_sample2file(@output)
     ret
+  end
+end
+
+class With_DAC < Snd_Instrument
+  def initialize(*args, &body)
+    super(:output, "dac", :reverb, false, *args, &body)
+  end
+
+  def to_s
+    format("#<%s: channels: %d, srate: %d, dac_size: %d>",
+           self.class, @channels, @srate.to_i, @dac_size)
+  end
+
+  def run_instrument(start, dur, *locsig_args, &body)
+    # dac.run_instrument needs get_func_name(2) here
+    with_sound_info(get_func_name(2), start, dur, body)
+    @locsig = false
+  end
+
+  def with_current_sound(*args, &body)
+  end
+
+  def run(&body)
+    before_output
+    set_mus_file_buffer_size($clm_file_buffer_size)
+    init_process_time
+    run_body(&body)
+    play_it
+    stop_process_time
+    if @statistics
+      statistics
+    end
+  end
+
+  protected
+  def statistics
+    Snd.message("filename: %s", @output)
+    Snd.message("   chans: %d, srate: %d", @channels, @srate.to_i)
+    Snd.message("    real: %1.3f  (utime %1.3f, stime %1.3f)",
+                @rtime, @utime, @stime)
+    if @stat_framples > 0
+      Snd.message("  length: %1.3f (%d frames)",
+                  @stat_framples / @srate.to_f, @stat_framples)
+    end
+  end
+
+  def play_it
+    len = 0
+    # [body, [name, start, dur]]
+    insts = @clm_instruments.sort do |a, b|
+      a[1][1] <=> b[1][1]
+    end.to_a.map! do |body, args|
+      start = args[1]
+      dur = args[2]
+      beg, ends = times2samples(start, dur)
+      if len < ends
+        len = ends
+      end
+      [beg, ends, body]
+    end
+    oc = mus_clipping()
+    set_mus_clipping(true)
+    od = dac_size()
+    set_dac_size(@dac_size)
+    len += @dac_size
+    len += mus_file_buffer_size()
+    @stat_framples = len
+    s = 0
+    play(lambda do
+           if s < len
+             sum = 0.0
+             insts.each do |args|
+               beg, ends, body = args
+               if s.between?(beg, ends)
+                 sum += body.call(s)
+               end
+             end
+             s += 1
+             sum
+           else
+             false
+           end
+         end)
+    set_mus_clipping(oc)
+    set_dac_size(od)
+    set_mus_srate(@old_srate)
   end
 end
 

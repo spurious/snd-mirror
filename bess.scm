@@ -237,7 +237,7 @@
 					       (XtUnmanageChild shell)))
 	    (set! work-proc (XtAppAddWorkProc app 
 					      (lambda (ignored-arg)
-						(let ((data (make-float-vector 256 0.0)))
+						(let ((data (make-float-vector bufsize 0.0)))
 						  (do ((i 0 (+ 1 i)))
 						      ((= i bufsize))
 						    (float-vector-set! data i (* amplitude playing

@@ -59,7 +59,7 @@ end
 
   
 chdir /home/bil/dist/snd/sndins
-foreach file (*.h *.c *.in)
+foreach file (*.h *.c *.in README)
   if (-e /home/bil/cl/sndins/$file) then
     diff -bcw /home/bil/cl/sndins/$file /home/bil/dist/snd/sndins/$file >> /home/bil/cl/hi
     find /home/bil/cl/sndins/$file -newer /home/bil/dist/snd/sndins/$file -exec echo ' updating ' sndins/$file \;
