@@ -2402,9 +2402,9 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
   mus_float_t val[1];
   mus_any *egen;
   mus_long_t *passes;
-  double *rates;
+  mus_float_t *rates;
   mus_float_t base;
-  double scaler, offset;
+  mus_float_t scaler, offset;
 
   if ((!e) && (!gen)) return;
   if (over_selection) dur = selection_len();
@@ -3011,6 +3011,8 @@ void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection)
 #if (!DISABLE_SINCOS) && defined(__GNUC__) && defined(__linux__)
   #define HAVE_SINCOS 1
   void sincos(double x, double *sin, double *cos);
+  void sincosl(long double x, long double *sin, long double *cos);
+  #define Sincos sincos
 #else
   #define HAVE_SINCOS 0
 #endif
@@ -3057,14 +3059,14 @@ static void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int ed
        */
 #if HAVE_SINCOS
       {
-	double sn, cs, isn, ics;
+	mus_float_t sn, cs, isn, ics;
 	mus_long_t dur1;
 	if (dur & 1) dur1 = dur - 1; else dur1 = dur;
-	sincos(incr, &isn, &ics);
+	Sincos(incr, &isn, &ics);
 	incr *= 2.0;
 	for (k = 0; k < dur1; k += 2, angle += incr) 
 	  {
-	    sincos(angle, &sn, &cs);
+	    Sincos(angle, &sn, &cs);
 	    data[k] = (off + scale * cs);
 	    data[k + 1] = (off + scale * (cs * ics - sn * isn));
 	  }
@@ -5141,7 +5143,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 	    {
 	      mus_any *e;
 	      mus_float_t *data;
-	      double *rates;
+	      mus_float_t *rates;
 	      data = (mus_float_t *)malloc(4 * sizeof(mus_float_t));
 	      data[0] = 0.0;
 	      data[1] = seg0;

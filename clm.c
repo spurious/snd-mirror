@@ -38,17 +38,19 @@
   #include <complex.h>
 #endif
 
-#ifndef TWO_PI
-  #define TWO_PI (2.0 * M_PI)
-#endif
-
 #if (!DISABLE_SINCOS) && defined(__GNUC__) && defined(__linux__)
   #define HAVE_SINCOS 1
+  /* nothing works here no matter what the docs claim.  So, if mus_float_t is long double, define Sincos to be sincosl */
   void sincos(double x, double *sin, double *cos);
+  void sincosl(long double x, long double *sin, long double *cos);
+  #define Sincos sincos
 #else
   #define HAVE_SINCOS 0
 #endif
 
+#ifndef TWO_PI
+  #define TWO_PI (2.0 * M_PI)
+#endif
 
 struct mus_any_class {
   int type;
@@ -270,7 +272,7 @@ mus_float_t mus_set_srate(mus_float_t val)
 
 
 mus_long_t mus_seconds_to_samples(mus_float_t secs) {return((mus_long_t)(secs * sampling_rate));}
-mus_float_t mus_samples_to_seconds(mus_long_t samps) {return((mus_float_t)((double)samps / (double)sampling_rate));}
+mus_float_t mus_samples_to_seconds(mus_long_t samps) {return((mus_float_t)((mus_float_t)samps / (mus_float_t)sampling_rate));}
 
 
 #define DESCRIBE_BUFFER_SIZE 2048
@@ -1009,7 +1011,7 @@ mus_float_t mus_dot_product(mus_float_t *data1, mus_float_t *data2, mus_long_t s
 
 complex double mus_edot_product(complex double freq, complex double *data, mus_long_t size)
 {
-  mus_long_t i;
+  int i;
   complex double sum = 0.0;
   for (i = 0; i < size; i++) 
     sum += (cexp(i * freq) * data[i]);
@@ -1020,7 +1022,7 @@ complex double mus_edot_product(complex double freq, complex double *data, mus_l
 
 mus_float_t mus_polynomial(mus_float_t *coeffs, mus_float_t x, int ncoeffs)
 {
-  double sum;
+  mus_float_t sum;
   int i;
   if (ncoeffs <= 0) return(0.0);
   if (ncoeffs == 1) return(coeffs[0]); /* just a constant term */
@@ -1082,7 +1084,7 @@ void mus_polar_to_rectangular(mus_float_t *rl, mus_float_t *im, mus_long_t size)
     {
 #if HAVE_SINCOS
       mus_float_t sx, cx;
-      sincos(-im[i], &sx, &cx);
+      Sincos(-im[i], &sx, &cx);
       im[i] = sx * rl[i];
       rl[i] *= cx;
 #else
@@ -1123,7 +1125,7 @@ mus_float_t mus_array_interp(mus_float_t *wave, mus_float_t phase, mus_long_t si
   if ((phase < 0.0) || (phase > size))
     {
       /* 28-Mar-01 changed to fmod; I was hoping to avoid this... */
-      phase = fmod((double)phase, (double)size);
+      phase = fmod((mus_float_t)phase, (mus_float_t)size);
       if (phase < 0.0) phase += size;
     }
 
@@ -1150,7 +1152,7 @@ static mus_float_t mus_array_all_pass_interp(mus_float_t *wave, mus_float_t phas
   mus_float_t frac_part;
   if ((phase < 0.0) || (phase > size))
     {
-      phase = fmod((double)phase, (double)size);
+      phase = fmod((mus_float_t)phase, (mus_float_t)size);
       if (phase < 0.0) phase += size;
     }
   int_part = (mus_long_t)floor(phase);
@@ -1180,7 +1182,7 @@ static mus_float_t mus_array_lagrange_interp(mus_float_t *wave, mus_float_t x, m
   mus_float_t p, pp;
   if ((x < 0.0) || (x > size))
     {
-      x = fmod((double)x, (double)size);
+      x = fmod((mus_float_t)x, (mus_float_t)size);
       if (x < 0.0) x += size;
     }
   x0 = (mus_long_t)floor(x);
@@ -1205,7 +1207,7 @@ static mus_float_t mus_array_hermite_interp(mus_float_t *wave, mus_float_t x, mu
   mus_float_t p, c0, c1, c2, c3, y0, y1, y2, y3;
   if ((x < 0.0) || (x > size))
     {
-      x = fmod((double)x, (double)size);
+      x = fmod((mus_float_t)x, (mus_float_t)size);
       if (x < 0.0) x += size;
     }
   x1 = (mus_long_t)floor(x); 
@@ -1236,7 +1238,7 @@ static mus_float_t mus_array_bezier_interp(mus_float_t *wave, mus_float_t x, mus
   mus_float_t p, y0, y1, y2, y3, ay, by, cy;
   if ((x < 0.0) || (x > size))
     {
-      x = fmod((double)x, (double)size);
+      x = fmod((mus_float_t)x, (mus_float_t)size);
       if (x < 0.0) x += size;
     }
   x1 = (mus_long_t)floor(x); 
@@ -1324,7 +1326,7 @@ mus_float_t mus_interpolate(mus_interp_t type, mus_float_t x, mus_float_t *table
 
 typedef struct {
   mus_any_class *core;
-  double phase, freq;
+  mus_float_t phase, freq;
 } osc;
 
 
@@ -1646,7 +1648,7 @@ mus_float_t mus_oscil_bank(mus_any *ptr)
 	{
 	  for (i = 0; i < p->size; i++)
 	    {
-	      sincos(p->phases[i], &s, &c);
+	      Sincos(p->phases[i], &s, &c);
 	      p->sn2[i] = s;
 	      p->cs2[i] = c;
 	      sum += s;
@@ -1657,7 +1659,7 @@ mus_float_t mus_oscil_bank(mus_any *ptr)
 	{
 	  for (i = 0; i < p->size; i++)
 	    {
-	      sincos(p->phases[i], &s, &c);
+	      Sincos(p->phases[i], &s, &c);
 	      p->sn2[i] = s;
 	      p->cs2[i] = c;
 	      sum += p->amps[i] * s;
@@ -1713,7 +1715,7 @@ mus_any *mus_make_oscil_bank(int size, mus_float_t *freqs, mus_float_t *phases, 
     mus_float_t s, c;
     for (i = 0; i < size; i++)
       {
-	sincos(freqs[i], &s, &c);
+	Sincos(freqs[i], &s, &c);
 	if (amps)
 	  {
 	    s *= amps[i];
@@ -1736,7 +1738,7 @@ mus_any *mus_make_oscil_bank(int size, mus_float_t *freqs, mus_float_t *phases, 
 typedef struct {
   mus_any_class *core;
   int n;
-  double scaler, cos5, phase, freq;
+  mus_float_t scaler, cos5, phase, freq;
 } cosp;
 
 #define DIVISOR_NEAR_ZERO(Den) (fabs(Den) < 1.0e-14)
@@ -1745,7 +1747,7 @@ mus_float_t mus_ncos(mus_any *ptr, mus_float_t fm)
 {
   /* changed 25-Apr-04: use less stupid formula */
   /*   (/ (- (/ (sin (* (+ n 0.5) angle)) (* 2 (sin (* 0.5 angle)))) 0.5) n) */
-  double val, den;
+  mus_float_t val, den;
   cosp *gen = (cosp *)ptr;
   den = sin(gen->phase * 0.5);
   if (DIVISOR_NEAR_ZERO(den))    /* see note -- this was den == 0.0 1-Aug-07 */
@@ -1803,7 +1805,7 @@ mus_float_t mus_ncos(mus_any *ptr, mus_float_t fm)
     -3.0
     :(/ (cos (* 1.5 pi 1.0000000000000008)) (cos (* 0.5 pi 1.0000000000000008)))
     -3.34939116712516
-    ;; 16 bits in is probably too much for doubles
+    ;; 16 bits in is probably too much for mus_float_ts
     ;; these numbers can be hit in normal cases:
 
  (define (ncos-with-inversions n x)
@@ -2107,19 +2109,19 @@ mus_float_t mus_nsin(mus_any *ptr, mus_float_t fm)
 	   (/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den)))
   */
 #if HAVE_SINCOS
-  double val, a2, ns, nc, s, c;
+  mus_float_t val, a2, ns, nc, s, c;
   cosp *gen = (cosp *)ptr;
   a2 = gen->phase * 0.5;
-  sincos(a2, &s, &c);
+  Sincos(a2, &s, &c);
   if (DIVISOR_NEAR_ZERO(s)) /* see note under ncos */
     val = 0.0;
   else 
     {
-      sincos(gen->n * a2, &ns, &nc);
+      Sincos(gen->n * a2, &ns, &nc);
       val = gen->scaler * ns * (ns * c + nc * s) / s;
     }
 #else
-  double val, den, a2;
+  mus_float_t val, den, a2;
   cosp *gen = (cosp *)ptr;
   a2 = gen->phase * 0.5;
   den = sin(a2);
@@ -2183,9 +2185,9 @@ mus_any *mus_make_nsin(mus_float_t freq, int n)
 typedef struct {
   mus_any_class *core;
   mus_float_t r;
-  double freq, phase;
+  mus_float_t freq, phase;
   mus_float_t ratio;
-  double cosr, sinr;
+  mus_float_t cosr, sinr;
   mus_float_t one;
 } asyfm;
 
@@ -2267,7 +2269,7 @@ mus_float_t mus_asymmetric_fm(mus_any *ptr, mus_float_t index, mus_float_t fm)
 {
   asyfm *gen = (asyfm *)ptr;
   mus_float_t result;
-  double mth;
+  mus_float_t mth;
   mth = gen->ratio * gen->phase;
   result = exp(index * gen->cosr * (gen->one + cos(mth))) * cos(gen->phase + index * gen->sinr * sin(mth));
   /* second index factor added 4-Mar-02 and (+/-)1.0 + cos to normalize amps 6-Sep-07 */
@@ -2354,9 +2356,9 @@ mus_any *mus_make_asymmetric_fm(mus_float_t freq, mus_float_t phase, mus_float_t
 
 typedef struct {
   mus_any_class *core;
-  double freq, phase;
+  mus_float_t freq, phase;
   int n;
-  double norm, r, r_to_n_plus_1, r_squared_plus_1, y_over_x;
+  mus_float_t norm, r, r_to_n_plus_1, r_squared_plus_1, y_over_x;
 } nrxy;
 
 
@@ -2449,7 +2451,7 @@ mus_float_t mus_nrxysin(mus_any *ptr, mus_float_t fm)
   /*   see also Durell and Robson "Advanced Trigonometry" p 175 */
 
   nrxy *gen = (nrxy *)ptr;
-  double x, y, r, divisor;
+  mus_float_t x, y, r, divisor;
   int n;
 
   x = gen->phase;
@@ -2466,28 +2468,28 @@ mus_float_t mus_nrxysin(mus_any *ptr, mus_float_t fm)
 	return(0.0);
       return((sin(x) - gen->r_to_n_plus_1 * (sin(x * (n + 2)) - r * sin(x * (n + 1)))) / divisor);
 #else
-      double sx, cx, snx, cnx;
-      sincos(x, &sx, &cx);
+      mus_float_t sx, cx, snx, cnx;
+      Sincos(x, &sx, &cx);
       divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * cx));
       if (DIVISOR_NEAR_ZERO(divisor))
 	return(0.0);
-      sincos((n + 1) * x, &snx, &cnx);
+      Sincos((n + 1) * x, &snx, &cnx);
       return((sx - gen->r_to_n_plus_1 * (sx * cnx + (cx - r) * snx)) / divisor);
 #endif
     }
 
 #if HAVE_SINCOS
   {
-    double xs, xc, ys, yc, nys, nyc, sin_x_y, sin_x_ny, sin_x_n1y, cos_x_ny;
+    mus_float_t xs, xc, ys, yc, nys, nyc, sin_x_y, sin_x_ny, sin_x_n1y, cos_x_ny;
 
     y = x * gen->y_over_x;
-    sincos(y, &ys, &yc);
+    Sincos(y, &ys, &yc);
     divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * yc));
     if (DIVISOR_NEAR_ZERO(divisor))
       return(0.0);
 
-    sincos(x, &xs, &xc);
-    sincos(n * y, &nys, &nyc);
+    Sincos(x, &xs, &xc);
+    Sincos(n * y, &nys, &nyc);
     sin_x_y = (xs * yc - ys * xc);
     sin_x_ny = (xs * nyc + nys * xc);
     cos_x_ny = (xc * nyc - xs * nys);
@@ -2586,7 +2588,7 @@ static char *describe_nrxycos(mus_any *ptr)
 mus_float_t mus_nrxycos(mus_any *ptr, mus_float_t fm)
 {
   nrxy *gen = (nrxy *)ptr;
-  double x, y, r, divisor;
+  mus_float_t x, y, r, divisor;
   int n;
 
   x = gen->phase;
@@ -2598,15 +2600,15 @@ mus_float_t mus_nrxycos(mus_any *ptr, mus_float_t fm)
 
 #if HAVE_SINCOS
   {
-    double xs, xc, ys, yc, nys, nyc, cos_x_y, cos_x_ny, cos_x_n1y, sin_x_ny;
+    mus_float_t xs, xc, ys, yc, nys, nyc, cos_x_y, cos_x_ny, cos_x_n1y, sin_x_ny;
 
-    sincos(y, &ys, &yc);
+    Sincos(y, &ys, &yc);
     divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * yc));
     if (DIVISOR_NEAR_ZERO(divisor))
       return(1.0);
 
-    sincos(x, &xs, &xc);
-    sincos(n * y, &nys, &nyc);
+    Sincos(x, &xs, &xc);
+    Sincos(n * y, &nys, &nyc);
     cos_x_y = (xc * yc + ys * xs);
     sin_x_ny = (xs * nyc + nys * xc);
     cos_x_ny = (xc * nyc - xs * nys);
@@ -2680,7 +2682,7 @@ mus_any *mus_make_nrxycos(mus_float_t frequency, mus_float_t y_over_x, int n, mu
 typedef struct {
   mus_any_class *core;
   mus_float_t r, ar;
-  double freq, phase;
+  mus_float_t freq, phase;
   mus_float_t ratio;
 } rxyk;
 
@@ -2876,7 +2878,7 @@ mus_any *mus_make_rxyksin(mus_float_t freq, mus_float_t phase, mus_float_t r, mu
 
 typedef struct {
   mus_any_class *core;
-  double freq, internal_mag, phase;
+  mus_float_t freq, internal_mag, phase;
   mus_float_t *table;
   mus_long_t table_size;
   mus_interp_t type;
@@ -2893,13 +2895,13 @@ mus_float_t *mus_partials_to_wave(mus_float_t *partial_data, int partials, mus_f
   memset((void *)table, 0, table_size * sizeof(mus_float_t));
   for (partial = 0, k = 1; partial < partials; partial++, k += 2)
     {
-      double amp;
+      mus_float_t amp;
       amp = partial_data[k];
       if (amp != 0.0)
 	{
 	  mus_long_t i;
-	  double freq, angle;
-	  freq = (partial_data[partial * 2] * TWO_PI) / (double)table_size;
+	  mus_float_t freq, angle;
+	  freq = (partial_data[partial * 2] * TWO_PI) / (mus_float_t)table_size;
 	  for (i = 0, angle = 0.0; i < table_size; i++, angle += freq) 
 	    table[i] += amp * sin(angle);
 	}
@@ -2916,13 +2918,13 @@ mus_float_t *mus_phase_partials_to_wave(mus_float_t *partial_data, int partials,
   memset((void *)table, 0, table_size * sizeof(mus_float_t));
   for (partial = 0, k = 1, n = 2; partial < partials; partial++, k += 3, n += 3)
     {
-      double amp;
+      mus_float_t amp;
       amp = partial_data[k];
       if (amp != 0.0)
 	{
 	  mus_long_t i;
-	  double freq, angle;
-	  freq = (partial_data[partial * 3] * TWO_PI) / (double)table_size;
+	  mus_float_t freq, angle;
+	  freq = (partial_data[partial * 3] * TWO_PI) / (mus_float_t)table_size;
 	  for (i = 0, angle = partial_data[n]; i < table_size; i++, angle += freq) 
 	    table[i] += amp * sin(angle);
 	}
@@ -3197,12 +3199,12 @@ mus_float_t *mus_partials_to_polynomial(int npartials, mus_float_t *partials, mu
   /* coeffs returned in partials */
   int i;
   mus_long_t *T0, *T1, *Tn;
-  double *Cc1;
+  mus_float_t *Cc1;
 
   T0 = (mus_long_t *)calloc(npartials + 1, sizeof(mus_long_t));
   T1 = (mus_long_t *)calloc(npartials + 1, sizeof(mus_long_t));
   Tn = (mus_long_t *)calloc(npartials + 1, sizeof(mus_long_t));
-  Cc1 = (double *)calloc(npartials + 1, sizeof(double));
+  Cc1 = (mus_float_t *)calloc(npartials + 1, sizeof(mus_float_t));
 
   if (kind == MUS_CHEBYSHEV_FIRST_KIND)
     T0[0] = 1;
@@ -3214,7 +3216,7 @@ mus_float_t *mus_partials_to_polynomial(int npartials, mus_float_t *partials, mu
   for (i = 1; i < npartials; i++)
     {
       int k;
-      double amp;
+      mus_float_t amp;
       amp = partials[i];
       if (amp != 0.0)
 	{
@@ -3249,7 +3251,7 @@ mus_float_t *mus_partials_to_polynomial(int npartials, mus_float_t *partials, mu
 mus_float_t *mus_normalize_partials(int num_partials, mus_float_t *partials)
 {
   int i;
-  double sum = 0.0;
+  mus_float_t sum = 0.0;
   for (i = 0; i < num_partials; i++)
     sum += fabs(partials[2 * i + 1]);
   if ((sum != 0.0) &&
@@ -3265,7 +3267,7 @@ mus_float_t *mus_normalize_partials(int num_partials, mus_float_t *partials)
 
 typedef struct {
   mus_any_class *core;
-  double phase, freq;
+  mus_float_t phase, freq;
   mus_float_t *coeffs, *ucoeffs;
   int n, cheby_choice;
   mus_float_t index;
@@ -3350,7 +3352,7 @@ static int pw_choice(mus_any *ptr) {return(((pw *)ptr)->cheby_choice);}
 mus_float_t mus_chebyshev_tu_sum(mus_float_t x, int n, mus_float_t *tn, mus_float_t *un)
 {
   /* the Clenshaw algorithm -- beware of -cos(nx) where you'd expect cos(nx) */
-  double x2, tb, tb1 = 0.0, tb2, cx, ub, ub1 = 0.0;
+  mus_float_t x2, tb, tb1 = 0.0, tb2, cx, ub, ub1 = 0.0;
   mus_float_t *tp, *up;
 
   cx = cos(x);
@@ -3363,7 +3365,7 @@ mus_float_t mus_chebyshev_tu_sum(mus_float_t x, int n, mus_float_t *tn, mus_floa
 
   while (up != un)
     {
-      double ub2;
+      mus_float_t ub2;
       tb2 = tb1;
       tb1 = tb;
       tb = x2 * tb1 - tb2 + (*tp--);
@@ -3384,7 +3386,7 @@ mus_float_t mus_chebyshev_tu_sum(mus_float_t x, int n, mus_float_t *tn, mus_floa
 mus_float_t mus_chebyshev_t_sum(mus_float_t x, int n, mus_float_t *tn)
 {
   int i;
-  double x2, b, b1 = 0.0, cx;
+  mus_float_t x2, b, b1 = 0.0, cx;
 
   cx = cos(x);
   x2 = 2.0 * cx;
@@ -3393,7 +3395,7 @@ mus_float_t mus_chebyshev_t_sum(mus_float_t x, int n, mus_float_t *tn)
   b = tn[n - 1];
   for (i = n - 2; i >= 0; i--)
     {
-      double b2;
+      mus_float_t b2;
       b2 = b1;
       b1 = b;
       b = x2 * b1 - b2 + tn[i];
@@ -3431,7 +3433,7 @@ mus_float_t mus_chebyshev_t_sum(mus_float_t x, int n, mus_float_t *tn)
 mus_float_t mus_chebyshev_u_sum(mus_float_t x, int n, mus_float_t *un)
 {
   int i;
-  double x2, b, b1 = 0.0, cx;
+  mus_float_t x2, b, b1 = 0.0, cx;
 
   cx = cos(x);
   x2 = 2.0 * cx;
@@ -3440,7 +3442,7 @@ mus_float_t mus_chebyshev_u_sum(mus_float_t x, int n, mus_float_t *un)
   b = un[n - 1];
   for (i = n - 2; i > 0; i--)
     {
-      double b2;
+      mus_float_t b2;
       b2 = b1;
       b1 = b;
       b = x2 * b1 - b2 + un[i];
@@ -3453,7 +3455,7 @@ mus_float_t mus_chebyshev_u_sum(mus_float_t x, int n, mus_float_t *un)
 static mus_float_t mus_chebyshev_t_sum_with_index(mus_float_t x, mus_float_t index, int n, mus_float_t *tn)
 {
   int i;
-  double x2, b, b1 = 0.0, b2, cx;
+  mus_float_t x2, b, b1 = 0.0, b2, cx;
   cx = index * cos(x);
   x2 = 2.0 * cx;
 
@@ -3491,7 +3493,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index(mus_float_t x, mus_float_t ind
 static mus_float_t mus_chebyshev_t_sum_with_index_2(mus_float_t x, mus_float_t index, int n, mus_float_t *tn)
 {
   int i;
-  double x2, b, b1 = 0.0, cx;
+  mus_float_t x2, b, b1 = 0.0, cx;
 
   cx = index * cos(x);
   x2 = 2.0 * cx;
@@ -3500,7 +3502,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index_2(mus_float_t x, mus_float_t i
   b = tn[n - 1];
   for (i = n - 2; i > 0;)
     {
-      double b2;
+      mus_float_t b2;
       b2 = b1;
       b1 = b;
       b = x2 * b1 - b2 + tn[i--];
@@ -3516,7 +3518,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index_2(mus_float_t x, mus_float_t i
 static mus_float_t mus_chebyshev_t_sum_with_index_3(mus_float_t x, mus_float_t index, int n, mus_float_t *tn)
 {
   int i;
-  double x2, b, b1 = 0.0, cx;
+  mus_float_t x2, b, b1 = 0.0, cx;
 
   cx = index * cos(x);
   x2 = 2.0 * cx;
@@ -3525,7 +3527,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index_3(mus_float_t x, mus_float_t i
   b = tn[n - 1];
   for (i = n - 2; i > 0;)
     {
-      double b2;
+      mus_float_t b2;
       b2 = b1;
       b1 = b;
       b = x2 * b1 - b2 + tn[i--];
@@ -3545,7 +3547,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index_3(mus_float_t x, mus_float_t i
 static mus_float_t mus_chebyshev_t_sum_with_index_5(mus_float_t x, mus_float_t index, int n, mus_float_t *tn)
 {
   int i;
-  double x2, b, b1 = 0.0, cx;
+  mus_float_t x2, b, b1 = 0.0, cx;
 
   cx = index * cos(x);
   x2 = 2.0 * cx;
@@ -3554,7 +3556,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index_5(mus_float_t x, mus_float_t i
   b = tn[n - 1];
   for (i = n - 2; i > 0;) /* this was >= ?? (also cases above) -- presumably a copy-and-paste typo? */
     {
-      double b2;
+      mus_float_t b2;
       b2 = b1;
       b1 = b;
       b = x2 * b1 - b2 + tn[i--];
@@ -3582,7 +3584,7 @@ static mus_float_t mus_chebyshev_t_sum_with_index_5(mus_float_t x, mus_float_t i
 static mus_float_t mus_chebyshev_u_sum_with_index(mus_float_t x, mus_float_t index, int n, mus_float_t *un)
 {
   int i;
-  double x2, b, b1 = 0.0, cx;
+  mus_float_t x2, b, b1 = 0.0, cx;
 
   cx = index * cos(x);
   x2 = 2.0 * cx;
@@ -3591,7 +3593,7 @@ static mus_float_t mus_chebyshev_u_sum_with_index(mus_float_t x, mus_float_t ind
   b = un[n - 1];
   for (i = n - 2; i > 0; i--)
     {
-      double b2;
+      mus_float_t b2;
       b2 = b1;
       b1 = b;
       b = x2 * b1 - b2 + un[i];
@@ -3680,7 +3682,7 @@ static mus_float_t polyw_first_5(mus_any *ptr, mus_float_t fm)
   pw *gen = (pw *)ptr;
   mus_float_t x;
   mus_float_t *tn;
-  double x2, b, b1, b2, cx;
+  mus_float_t x2, b, b1, b2, cx;
 
   x = gen->phase;
   tn = gen->coeffs;
@@ -3701,7 +3703,7 @@ static mus_float_t polyw_first_6(mus_any *ptr, mus_float_t fm)
   pw *gen = (pw *)ptr;
   mus_float_t x;
   mus_float_t *tn;
-  double x2, b, b1, b2, cx;
+  mus_float_t x2, b, b1, b2, cx;
 
   x = gen->phase;
   tn = gen->coeffs;
@@ -3723,7 +3725,7 @@ static mus_float_t polyw_first_8(mus_any *ptr, mus_float_t fm)
   pw *gen = (pw *)ptr;
   mus_float_t x;
   mus_float_t *tn;
-  double x2, b, b1, b2, cx;
+  mus_float_t x2, b, b1, b2, cx;
 
   x = gen->phase;
   tn = gen->coeffs;
@@ -3747,7 +3749,7 @@ static mus_float_t polyw_first_11(mus_any *ptr, mus_float_t fm)
   pw *gen = (pw *)ptr;
   mus_float_t x;
   mus_float_t *tn;
-  double x2, b, b1, b2, cx;
+  mus_float_t x2, b, b1, b2, cx;
 
   x = gen->phase;
   tn = gen->coeffs;
@@ -3782,7 +3784,7 @@ static mus_float_t polyw_first(mus_any *ptr, mus_float_t fm)
 static mus_float_t polyw_f1(mus_any *ptr, mus_float_t fm)
 {
   pw *gen = (pw *)ptr;
-  double cx;
+  mus_float_t cx;
   cx = gen->index * cos(gen->phase);
   gen->phase += (gen->freq + fm);
   return(cx * gen->coeffs[1]  + gen->coeffs[0]);
@@ -3833,7 +3835,7 @@ static mus_float_t polyw_second_5(mus_any *ptr, mus_float_t fm)
 {
   pw *gen = (pw *)ptr;
   mus_float_t *un;
-  double x, b, b1, cx;
+  mus_float_t x, b, b1, cx;
 
   x = gen->phase;
   gen->phase += (gen->freq + fm);
@@ -4181,7 +4183,7 @@ bool mus_is_polyshape(mus_any *ptr)
 
 typedef struct {
   mus_any_class *core;
-  double freq, phase;
+  mus_float_t freq, phase;
   mus_float_t *wave;        /* passed in from caller */
   mus_long_t wave_size;
   mus_float_t *out_data;
@@ -4289,7 +4291,7 @@ static mus_float_t mus_wave_train_any(mus_any *ptr, mus_float_t fm)
 	  phase = gen->phase;
 	  if ((phase < 0.0) || (phase > wave_size))
 	    {
-	      phase = fmod((double)phase, (double)wave_size);
+	      phase = fmod((mus_float_t)phase, (mus_float_t)wave_size);
 	      if (phase < 0.0) phase += wave_size;
 	    }
 
@@ -6146,7 +6148,7 @@ mus_any *mus_bank_generator(mus_any *g, int i)
 typedef struct {
   mus_any_class *core;
   mus_float_t current_value;
-  double freq, phase, base, width;
+  mus_float_t freq, phase, base, width;
 } sw;
 
 
@@ -6584,7 +6586,7 @@ mus_any *mus_make_pulse_train(mus_float_t freq, mus_float_t amp, mus_float_t pha
 
 typedef struct {
   mus_any_class *core;
-  double freq, phase, base, incr, norm;
+  mus_float_t freq, phase, base, incr, norm;
   mus_float_t output;
   mus_float_t *distribution;
   int distribution_size;
@@ -8564,7 +8566,7 @@ static mus_float_t filter_four(mus_any *ptr, mus_float_t input)
 
 static mus_float_t filter_two(mus_any *ptr, mus_float_t input)
 {
-  /* here the double-delay form is not faster, but use it for consistency */
+  /* here the mus_float_t-delay form is not faster, but use it for consistency */
   flt *gen = (flt *)ptr;
   mus_float_t *state, *ts, *y, *x;
 
@@ -9238,11 +9240,11 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
 	  mus_float_t s1, c1, s2, c2, qj1;
 	  xt = xt0;
 	  qj = q * (am - j);
-	  sincos(qj, &s1, &c1);
+	  Sincos(qj, &s1, &c1);
 	  qj1 = qj * 2.0;
 	  for (i = 1, x = qj; i < m; i += 2, x += qj1)
 	    {
-	      sincos(x, &s2, &c2);
+	      Sincos(x, &s2, &c2);
 	      xt += (envl[i] * c2);
 	      if (i < (m - 1))
 		xt += (envl[i + 1] * (c1 * c2 - s1 * s2));
@@ -9506,12 +9508,12 @@ typedef enum {MUS_ENV_LINEAR, MUS_ENV_EXPONENTIAL, MUS_ENV_STEP} mus_env_t;
 
 typedef struct {
   mus_any_class *core;
-  double rate, current_value, base, offset, scaler, power, init_y, init_power, original_scaler, original_offset;
+  mus_float_t rate, current_value, base, offset, scaler, power, init_y, init_power, original_scaler, original_offset;
   mus_long_t loc, end;
   mus_env_t style;
   int index, size;
   mus_float_t *original_data;
-  double *rates;
+  mus_float_t *rates;
   mus_long_t *locs;
   mus_float_t (*env_func)(mus_any *g);
   void *next;
@@ -9649,10 +9651,10 @@ static mus_float_t run_env(mus_any *ptr, mus_float_t unused1, mus_float_t unused
 }
 
 
-static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur, double scaler)
+static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur, mus_float_t scaler)
 { 
   int i, j, pts2;
-  double xscl, cur_loc, x1, y1, xdur;
+  mus_float_t xscl, cur_loc, x1, y1, xdur;
   mus_long_t samps, pre_loc;
 
   /* pts > 1 if we get here, so the loop below is always exercised */
@@ -9660,7 +9662,7 @@ static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur
   pts2 = pts * 2;
   xdur = data[pts2 - 2] - data[0];
   if (xdur > 0.0)
-    xscl = (double)(dur - 1) / xdur;
+    xscl = (mus_float_t)(dur - 1) / xdur;
   else xscl = 1.0;
   e->locs[pts - 2] = e->end;
 
@@ -9670,7 +9672,7 @@ static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur
 
   for (j = 0, i = 2, cur_loc = 0.0; i < pts2; i += 2, j++)
     {
-      double cur_dx, x0, y0;
+      mus_float_t cur_dx, x0, y0;
       x0 = x1;
       x1 = data[i];
       y0 = y1;
@@ -9690,7 +9692,7 @@ static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur
 
 	  if (samps == 0)
 	    e->rates[j] = 0.0;
-	  else e->rates[j] = scaler * (y1 - y0) / (double)samps;
+	  else e->rates[j] = scaler * (y1 - y0) / (mus_float_t)samps;
 	  break;
 
 	case MUS_ENV_EXPONENTIAL:
@@ -9700,7 +9702,7 @@ static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur
 
 	  if (samps == 0)
 	    e->rates[j] = 1.0;
-	  else e->rates[j] = exp((y1 - y0) / (double)samps);
+	  else e->rates[j] = exp((y1 - y0) / (mus_float_t)samps);
 	  break;
 
 	case MUS_ENV_STEP:
@@ -9715,9 +9717,9 @@ static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur
 }
 
 
-static mus_float_t *fixup_exp_env(seg *e, const mus_float_t *data, int pts, double offset, double scaler, double base)
+static mus_float_t *fixup_exp_env(seg *e, const mus_float_t *data, int pts, mus_float_t offset, mus_float_t scaler, mus_float_t base)
 {
-  double min_y, max_y, val = 0.0, tmp = 0.0, b1;
+  mus_float_t min_y, max_y, val = 0.0, tmp = 0.0, b1;
   int len, i;
   bool flat;
   mus_float_t *result = NULL;
@@ -9852,8 +9854,8 @@ static mus_any *seg_copy(mus_any *ptr)
   if (p->rates)
     {
       int bytes;
-      bytes = p->size * sizeof(double);
-      g->rates = (double *)malloc(bytes);
+      bytes = p->size * sizeof(mus_float_t);
+      g->rates = (mus_float_t *)malloc(bytes);
       memcpy((void *)(g->rates), (void *)(p->rates), bytes);
       bytes = (p->size + 1) * sizeof(mus_long_t);
       g->locs = (mus_long_t *)malloc(bytes);
@@ -9876,15 +9878,15 @@ static mus_float_t env_current_value(mus_any *ptr) {return(((seg *)ptr)->current
 
 mus_long_t *mus_env_passes(mus_any *gen) {return(((seg *)gen)->locs);}
 
-double *mus_env_rates(mus_any *gen) {return(((seg *)gen)->rates);}
+mus_float_t *mus_env_rates(mus_any *gen) {return(((seg *)gen)->rates);}
 
 static int env_position(mus_any *ptr) {return(((seg *)ptr)->index);}
 
-double mus_env_offset(mus_any *gen) {return(((seg *)gen)->offset);}
+mus_float_t mus_env_offset(mus_any *gen) {return(((seg *)gen)->offset);}
 
-double mus_env_scaler(mus_any *gen) {return(((seg *)gen)->scaler);}
+mus_float_t mus_env_scaler(mus_any *gen) {return(((seg *)gen)->scaler);}
 
-double mus_env_initial_power(mus_any *gen) {return(((seg *)gen)->init_power);}
+mus_float_t mus_env_initial_power(mus_any *gen) {return(((seg *)gen)->init_power);}
 
 static void env_set_location(mus_any *ptr, mus_long_t val);
 
@@ -9993,7 +9995,7 @@ static mus_any_class ENV_CLASS = {
 };
 
 
-mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offset, double base, double duration, mus_long_t end, mus_float_t *odata)
+mus_any *mus_make_env(mus_float_t *brkpts, int npts, mus_float_t scaler, mus_float_t offset, mus_float_t base, mus_float_t duration, mus_long_t end, mus_float_t *odata)
 {
   /* odata is ignored, brkpts are not freed by the new env gen when it is freed, but should be protected during its existence
    */
@@ -10056,7 +10058,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offse
       e = (seg *)malloc(sizeof(seg));
       e->core = &ENV_CLASS;
       e->size = npts;
-      e->rates = (double *)malloc(npts * sizeof(double));
+      e->rates = (mus_float_t *)malloc(npts * sizeof(mus_float_t));
       e->locs = (mus_long_t *)malloc((npts + 1) * sizeof(mus_long_t));
     }
 
@@ -10178,7 +10180,7 @@ static void env_set_location(mus_any *ptr, mus_long_t val)
 }
 
 
-double mus_env_interp(double x, mus_any *ptr)
+mus_float_t mus_env_interp(mus_float_t x, mus_any *ptr)
 {
   /* the accuracy depends on the duration here -- more samples = more accurate */
   seg *gen = (seg *)ptr;
@@ -10194,7 +10196,7 @@ mus_float_t mus_env_any(mus_any *e, mus_float_t (*connect_points)(mus_float_t va
   mus_float_t *pts;
   int pt, size;
   mus_float_t y0, y1, new_val, val;
-  double scaler, offset;
+  mus_float_t scaler, offset;
 
   scaler = gen->original_scaler;
   offset = gen->original_offset;
@@ -13041,7 +13043,7 @@ static int init_sinc_table(int width)
       sinc_freq = M_PI / (mus_float_t)SRC_SINC_DENSITY;
       sinc_phase = old_end * sinc_freq;
 #if HAVE_SINCOS
-      sincos(sinc_freq, &sn, &cs);
+      Sincos(sinc_freq, &sn, &cs);
       if (old_end == 1)
 	{
 	  sinc[1] = sin(sinc_phase) / (2.0 * sinc_phase);
@@ -13050,7 +13052,7 @@ static int init_sinc_table(int width)
 	}
       for (i = old_end; i < padded_size;)
 	{
-	  sincos(sinc_phase, &snp, &csp);
+	  Sincos(sinc_phase, &snp, &csp);
 	  sinc[i] = snp / (2.0 * sinc_phase);
 	  i++;
 	  sinc_phase += sinc_freq;
@@ -14168,7 +14170,7 @@ static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
 	  fftw_destroy_plan(c_r_plan); 
 	  fftw_destroy_plan(c_i_plan);
 	}
-      c_in_data = (fftw_complex *)fftw_malloc(n * sizeof(fftw_complex)); /* rl/im data is double */
+      c_in_data = (fftw_complex *)fftw_malloc(n * sizeof(fftw_complex)); /* rl/im data is mus_float_t */
       c_out_data = (fftw_complex *)fftw_malloc(n * sizeof(fftw_complex));
       c_r_plan = fftw_plan_dft_1d(n, c_in_data, c_out_data, FFTW_FORWARD, FFTW_ESTIMATE); 
       c_i_plan = fftw_plan_dft_1d(n, c_in_data, c_out_data, FFTW_BACKWARD, FFTW_ESTIMATE);
@@ -14224,53 +14226,6 @@ static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
 }
 
 
-#if 0
-/* here is the new (fftw3) form -- there is still a scaling issue somewhere, 
- * but I didn't chase it because the savings is not large enough to matter 
- */
-static double *rdata, *idata;
-static fftw_plan r_plan, i_plan;  
-static int last_c_fft_size = 0;  
-static fftw_iodim dims[1];
-
-static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
-{
-  if (n != last_c_fft_size)
-    {
-      dims[0].n = n;
-      dims[0].is = 1;
-      dims[0].os = 1;
-      if (rdata) 
-	{
-	  fftw_free(rdata); 
-	  fftw_free(idata); 
-	  fftw_destroy_plan(r_plan); 
-	}
-      rdata = (double *)fftw_malloc(n * sizeof(double));
-      idata = (double *)fftw_malloc(n * sizeof(double));
-      r_plan = fftw_plan_guru_split_dft(1, (const fftw_iodim *)dims, 0, NULL, rdata, idata, rdata, idata, FFTW_ESTIMATE); 
-      last_c_fft_size = n;
-    }
-  if (dir == 1)
-    {
-      memcpy((void *)rdata, (void *)rl, n * sizeof(double));
-      memcpy((void *)idata, (void *)im, n * sizeof(double));
-      fftw_execute_split_dft(r_plan, rdata, idata, rdata, idata);
-      memcpy((void *)rl, (void *)rdata, n * sizeof(double));
-      memcpy((void *)im, (void *)idata, n * sizeof(double));
-    }
-  else 
-    {
-      memcpy((void *)idata, (void *)rl, n * sizeof(double));
-      memcpy((void *)rdata, (void *)im, n * sizeof(double));
-      fftw_execute_split_dft(r_plan, rdata, idata, rdata, idata);
-      memcpy((void *)rl, (void *)idata, n * sizeof(double));
-      memcpy((void *)im, (void *)rdata, n * sizeof(double));
-    }
-}
-#endif
-
-
 void mus_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
 {
   /* simple timing tests indicate fftw is slightly faster than mus_fft in this context
@@ -14319,7 +14274,7 @@ void mus_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
    * see fxt/simplfft/fft.c (Joerg Arndt) 
    */
   int m, j, mh, ldm, lg, i, i2, j2, imh;
-  double u, vr, vi, angle;
+  mus_float_t u, vr, vi, angle;
 
   if (n >= (1 << 30))
     {
@@ -14335,7 +14290,7 @@ void mus_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
   angle = (M_PI * is);
   for (lg = 0; lg < imh; lg++)
     {
-      double c, s, ur, ui;
+      mus_float_t c, s, ur, ui;
       c = cos(angle);
       s = sin(angle);
       ur = 1.0;
@@ -14372,7 +14327,7 @@ static void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
 {
   mus_long_t m, j, mh, ldm, i, i2, j2;
   int imh, lg;
-  double u, vr, vi, angle;
+  mus_float_t u, vr, vi, angle;
 
   imh = (int)(log(n + 1) / log(2.0));
 
@@ -14403,7 +14358,7 @@ static void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
   angle = (M_PI * is);
   for (lg = 0; lg < imh; lg++)
     {
-      double c, s, ur, ui;
+      mus_float_t c, s, ur, ui;
       c = cos(angle);
       s = sin(angle);
       ur = 1.0;
@@ -14438,16 +14393,16 @@ static void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
 #if HAVE_GSL
 #include <gsl/gsl_sf_bessel.h>
 
-double mus_bessi0(mus_float_t x)
+mus_float_t mus_bessi0(mus_float_t x)
 {
   gsl_sf_result res;
   gsl_sf_bessel_I0_e(x, &res);
-  return(res.val);
+  return((mus_float_t)(res.val));
 }
 
 #else
 
-double mus_bessi0(mus_float_t x)
+mus_float_t mus_bessi0(mus_float_t x)
 { 
   if (x == 0.0) return(1.0);
   if (fabs(x) <= 15.0) 
@@ -14541,13 +14496,13 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
    */
 
   mus_long_t i, j, midn, midp1;
-  double freq, rate, angle = 0.0, cx;
+  mus_float_t freq, rate, angle = 0.0, cx;
   if (window == NULL) return(NULL);
 
   midn = size >> 1;
   midp1 = (size + 1) / 2;
-  freq = TWO_PI / (double)size;
-  rate = 1.0 / (double)midn;
+  freq = TWO_PI / (mus_float_t)size;
+  rate = 1.0 / (mus_float_t)midn;
 
   switch (type)
     {
@@ -14590,7 +14545,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 
     case MUS_BARTLETT_HANN_WINDOW:
       {
-	double ramp;
+	mus_float_t ramp;
 	rate *= 0.5;
 	/* this definition taken from mathworks docs: they use size - 1 throughout -- this makes very little
 	 *    difference unless you're using a small window.  I decided to be consistent with all the other
@@ -14606,7 +14561,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 
     case MUS_BOHMAN_WINDOW:
       {
-	double ramp;
+	mus_float_t ramp;
 	/* definition from diracdelta docs and "DSP Handbook" -- used in bispectrum ("minimum bispectrum bias supremum") */
 	for (i = 0, j = size - 1, angle = M_PI, ramp = 0.0; i <= midn; i++, j--, angle -= freq, ramp += rate)
 	  {
@@ -14833,8 +14788,8 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 
     case MUS_EXPONENTIAL_WINDOW:
       {
-	double expn, expsum = 1.0;
-	expn = log(2) / (double)midn + 1.0;
+	mus_float_t expn, expsum = 1.0;
+	expn = log(2) / (mus_float_t)midn + 1.0;
 	for (i = 0, j = size - 1; i <= midn; i++, j--) 
 	  {
 	    window[i] = expsum - 1.0; 
@@ -14846,7 +14801,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 
     case MUS_KAISER_WINDOW:
       {
-	double I0beta;
+	mus_float_t I0beta;
 	I0beta = mus_bessi0(beta); /* Harris multiplies beta by pi */
 	for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate)
 	  {
@@ -14875,7 +14830,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
     case MUS_HANN_POISSON_WINDOW:
       /* Hann * Poisson -- from JOS */
       {
-	double angle1;
+	mus_float_t angle1;
 	for (i = 0, j = size - 1, angle = 1.0, angle1 = 0.0; i <= midn; i++, j--, angle -= rate, angle1 += freq)
 	  {
 	    window[i] = exp((-beta) * angle) * (0.5 - 0.5 * cos(angle1));
@@ -14886,8 +14841,8 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 
     case MUS_RIEMANN_WINDOW:
       {
-	double sr1;
-	sr1 = TWO_PI / (double)size;
+	mus_float_t sr1;
+	sr1 = TWO_PI / (mus_float_t)size;
 	for (i = 0, j = size - 1; i <= midn; i++, j--) 
 	  {
 	    if (i == midn) 
@@ -14923,8 +14878,8 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 
     case MUS_MLT_SINE_WINDOW:
       {
-	double scl;
-	scl = M_PI / (double)size;
+	mus_float_t scl;
+	scl = M_PI / (mus_float_t)size;
 	for (i = 0, j = size - 1; i <= midn; i++, j--)
 	  {
 	    window[i] = sin((i + 0.5) * scl);
@@ -14939,8 +14894,8 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 	n2 = size / 2;
 	for (i = -n2; i < n2; i++)
 	  {
-	    double ratio, pratio;
-	    ratio = (double)i / (double)n2;
+	    mus_float_t ratio, pratio;
+	    ratio = (mus_float_t)i / (mus_float_t)n2;
 	    pratio = M_PI * ratio;
 	    window[i + n2] = (fabs(sin(pratio)) / M_PI) + (cos(pratio) * (1.0 - fabs(ratio)));
 	  }
@@ -14949,7 +14904,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 
     case MUS_SINC_WINDOW:
       {
-	double scl;
+	mus_float_t scl;
 	scl = 2 * M_PI / (size - 1);
 	for (i = -midn, j = 0; i < midn; i++, j++)
 	  {
@@ -14966,7 +14921,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 	/* from Verma, Bilbao, Meng, "The Digital Prolate Spheroidal Window"
 	 *   output checked using Julius Smith's dpssw.m, although my "beta" is different
 	 */
-	double *data;
+	double *data; /* "double" for gsl func */
 	double cw, n1, pk = 0.0;
 
 	cw = cos(2 * M_PI * beta);
@@ -15041,7 +14996,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
       {
 	mus_float_t *rl, *im;
 	mus_float_t pk = 0.0;
-	double alpha;
+	mus_float_t alpha;
 
 	freq = M_PI / (mus_float_t)size;
 	if (beta < 0.2) beta = 0.2;
@@ -15100,14 +15055,14 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
       {
 	mus_float_t *rl, *im;
 	mus_float_t pk;
-	double alpha;
+	mus_float_t alpha;
 
 	freq = M_PI / (mus_float_t)size;
 	if (beta < 0.2) beta = 0.2;
 	alpha = GSL_REAL(gsl_complex_cosh(
 			   gsl_complex_mul_real(
 			     gsl_complex_arccosh_real(pow(10.0, beta)),
-			     (double)(1.0 / (mus_float_t)size))));
+			     (mus_float_t)(1.0 / (mus_float_t)size))));
 
 	rl = (mus_float_t *)malloc(size * sizeof(mus_float_t));
 	im = (mus_float_t *)calloc(size, sizeof(mus_float_t));
@@ -15120,7 +15075,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 		rl[i] = GSL_REAL(gsl_complex_cos(
 			           gsl_complex_mul_real(
 			             gsl_complex_arccos_real(alpha * cos(angle)),
-				     (double)size)));
+				     (mus_float_t)size)));
 		break;
 
 	      case MUS_SAMARAKI_WINDOW:
@@ -15128,7 +15083,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 		                   gsl_complex_sin(
 			             gsl_complex_mul_real(
 			               gsl_complex_arccos_real(alpha * cos(angle)),
-				       (double)(size + 1.0))),
+				       (mus_float_t)(size + 1.0))),
 				   gsl_complex_sin(
 				     gsl_complex_arccos_real(alpha * cos(angle)))));
 		break;
@@ -15225,7 +15180,7 @@ mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_float_t *win
   n = n / 2;
   for (i = 0; i < n; i++)
     {
-      double val;
+      mus_float_t val;
       val = rdat[i] * rdat[i] + idat[i] * idat[i];
       if (val < lowest)
 	rdat[i] = 0.001;
@@ -15240,7 +15195,7 @@ mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_float_t *win
       maxa = 1.0 / maxa;
       if (type == MUS_SPECTRUM_IN_DB)
 	{
-	  double todb;
+	  mus_float_t todb;
 	  todb = 20.0 / log(10.0);
 	  for (i = 0; i < n; i++) 
 	    rdat[i] = todb * log(rdat[i] * maxa);
@@ -16078,7 +16033,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
       for (i = 0; i < N2; i++)
 	{
 #if HAVE_SINCOS
-	  double s, c;
+	  mus_float_t s, c;
 	  bool amp_zero;
 	  
 	  amp_zero = ((pv->amps[i] < 1e-7) && (pv->ampinc[i] == 0.0));
@@ -16089,7 +16044,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	      pv->sc_safe[i] = (fabs(pv->freqs[i] - pv->phaseinc[i]) < 0.02); /* .5 is too big, .01 and .03 ok by tests */
 	      if (pv->sc_safe[i])
 		{
-		  sincos((pv->freqs[i] + pv->phaseinc[i]) * 0.5, &s, &c);
+		  Sincos((pv->freqs[i] + pv->phaseinc[i]) * 0.5, &s, &c);
 		  pv->sn[i] = s;
 		  pv->cs[i] = c;
 		}
@@ -16139,8 +16094,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
       sum = 0.0;
       sum1 = 0.0;
 
-      /* float here, rather than double, is slower 
-       * amps can be negative here due to rounding troubles
+      /* amps can be negative here due to rounding troubles
        * sincos is faster (using shell time command) except in virtualbox running linux on a mac? 
        *   (callgrind does not handle sincos correctly).
        *
@@ -16158,13 +16112,13 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 #if HAVE_SINCOS
       for (j = 0; j < topN; j++)
 	{
-	  double sx, cx;
+	  mus_float_t sx, cx;
 
 	  i = pv->indices[j];
 	  pinc[i] += frq[i];
 	  ph[i] += pinc[i];
 	  amp[i] += panc[i];
-	  sincos(ph[i], &sx, &cx);
+	  Sincos(ph[i], &sx, &cx);
 	  sum += (amp[i] * sx);
 
 	  pinc[i] += frq[i];
@@ -16325,7 +16279,7 @@ mus_float_t mus_ssb_am_unmodulated(mus_any *ptr, mus_float_t insig)
 	 (mus_oscil_unmodulated(gen->sin_osc) * run_hilbert((flt *)(gen->hilbert), insig)));
 #else
   mus_float_t cx, sx;
-  sincos(gen->phase, &sx, &cx);
+  Sincos(gen->phase, &sx, &cx);
   gen->phase += gen->freq;
   return((cx * mus_delay_unmodulated_noz(gen->dly, insig)) +
          (sx * gen->sign * run_hilbert((flt *)(gen->hilbert), insig)));
@@ -16341,7 +16295,7 @@ mus_float_t mus_ssb_am(mus_any *ptr, mus_float_t insig, mus_float_t fm)
 	 (mus_oscil_fm(gen->sin_osc, fm) * run_hilbert((flt *)(gen->hilbert), insig)));
 #else
   mus_float_t cx, sx;
-  sincos(gen->phase, &sx, &cx);
+  Sincos(gen->phase, &sx, &cx);
   gen->phase += (fm + gen->freq);
   return((cx * mus_delay_unmodulated_noz(gen->dly, insig)) +
          (sx * gen->sign * run_hilbert((flt *)(gen->hilbert), insig)));

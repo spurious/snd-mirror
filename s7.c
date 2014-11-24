@@ -439,7 +439,7 @@ enum {OP_NO_OP,
 #endif
 /* ideally we'd use (2 * max(sizeof(s7_Int), sizeof(s7_Double))) for the padding,
  *   but I can't think of a way to do this short of a configuration script.
- *   If someone defines s7_Double to be long long double, we're in trouble.
+ *   If someone defines s7_Double to be long double, there's much wasted memory (and other more serious problems...)
  */
 
 /* these names are intended for error messages (eval_error_with_name) and debugging.  
@@ -18222,6 +18222,8 @@ sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
    *   in the num struct, we can get the actual bits of the double from the int.  The problem with doing this
    *   is that bignums don't use that struct.  Assume IEEE 754 and double = s7_Double.
    */
+  if (sizeof(s7_Double) != sizeof(double))
+    return(simple_out_of_range_error_prepackaged(sc, sc->INTEGER_DECODE_FLOAT, x, "s7_Double must be the same size as C double"));
 
   switch (type(x))
     {
@@ -69778,6 +69780,8 @@ s7_scheme *s7_init(void)
 #else
   if ((!opt_names[0]) || (!real_op_names[0])) fprintf(stderr, "right"); /* this is just to make a compiler warning go away */
 #endif
+  if (sizeof(void *) > sizeof(s7_Int))
+    fprintf(stderr, "s7_Int is too small: it has %d bytes, but void* has %d\n", (int)sizeof(s7_Int), (int)sizeof(void *));
 
   save_unlet(sc);
 #if WITH_COUNTS
@@ -69940,8 +69944,9 @@ int main(int argc, char **argv)
  *
  * need to check new openGL for API changes (GL_VERSION?)
  *   test/Mesa-10.3.1/include/GL/glext.h|gl.h (current version appears to be 7.6)
- *   how much of glext.h is needed?  
+ *   how much of glext.h is needed?  None, I think.  No gl.h diffs that matter.
  *   GLU primarily for unproject (HAVE_GLU snd-chn) -- where is this in the new GL? -- in a separate package libglu
+ *     also gldata has GLU ints
  *   GL: snd-[0]|1|x0.h=#includes with glx.h, 
  *       [snd-axis], [snd], snd-chn, [snd-draw], [snd-data], snd-motif, [snd-print], [snd-xen, snd-help]
  *     [snd-xen|help GLXContext and version -- motif-specific?] (also snd-1.h)
@@ -69949,10 +69954,20 @@ int main(int argc, char **argv)
  *     gtk+-3.15.1/gtk/gtkglarea.c, gtk-demo/glarea.c, tests/gtkgears.c + testglarea.c, docs/reference/gtk/html/GtkGLArea.html
  *     GdkGLContext -- needs expoxy/gl.h?
  *     snd-axis: gdk_gl_font_use_pango... -- this is not in the gtk/cl code (it's ancient gtkglext stuff)
+ *   need color-dialog use-gl button in gtk
  * snd-genv needs a lot of gtk3 work
  *
  * cyclic-seq in rest of full-* 
  * cyclic-sequences is minimally tested in s7test (also c_object env)
  *
  * why not snd-g* -> snd-gtk?
+ * if nogui, g_play in snd-dac.c only sends 1 buffer?
+ * perhaps in *s7*: integer-length, real-length, pointer-length, cell-length (double=8 etc)
+ * long double woes:
+ *   channels->float-vector assumes the stored data is mus_float_t -- it is?
+ *   sincos is a problem throughout
+ *   s7test has lots of trouble (display of real is confused: maybe %Lf 8890?)
+ *   binary-io assumes integer-decode-float will work
+ *   libgsl assumes doubles 
+ * perhaps if let/env is large, display contents more carefully (for pretty-print?)
  */

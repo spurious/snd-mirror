@@ -521,6 +521,23 @@ static void invert_color_callback(GtkWidget *w, gpointer context)
 }
 
 
+#if HAVE_GL
+static GtkWidget *gl_button = NULL;
+static void with_gl_callback(GtkWidget *w, gpointer context)
+{
+  sgl_save_currents();
+  in_set_with_gl(TOGGLE_BUTTON_ACTIVE(w));
+  sgl_set_currents(true);
+  for_each_chan(update_graph);
+}
+#endif
+
+void set_with_gl(bool val, bool with_dialogs)
+{
+  in_set_with_gl(val);
+}
+
+
 void set_color_inverted(bool val)
 {
   in_set_color_inverted(val);
@@ -856,12 +873,6 @@ static void reset_color_orientation_callback(GtkWidget *w, gpointer context)
 }
 
 
-void set_with_gl(bool val, bool with_dialogs)
-{
-  in_set_with_gl(val);
-}
-
-
 void view_color_orientation_callback(GtkWidget *w, gpointer context)
 {
   make_color_orientation_dialog(true);
@@ -953,6 +964,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       /* invert colormap
        * light -> dark
        * cutoff
+       * if gl, use gl button
        */
 
       map_box = gtk_hbox_new(false, 4);
@@ -1065,6 +1077,14 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       SG_SIGNAL_CONNECT(ccd_cutoff, "format-value", scale_pow_double_format_callback, NULL);
       gtk_box_pack_start(GTK_BOX(cutoff_box), ccd_cutoff, true, true, 0);
       gtk_widget_show(ccd_cutoff);
+
+#if HAVE_GL
+      gl_button = gtk_check_button_new_with_label("use GL");
+      SG_SIGNAL_CONNECT(gl_button, "toggled", with_gl_callback, NULL);
+      gtk_box_pack_start(GTK_BOX(colorbox), gl_button, false, false, 12);
+      gtk_widget_show(gl_button);
+      set_toggle_button(gl_button, with_gl(ss), false, NULL);
+#endif      
 
       set_dialog_widget(COLOR_ORIENTATION_DIALOG, ccd_dialog);
       if (color_map(ss) != BLACK_AND_WHITE_COLORMAP) slist_select(ccd_list, color_map(ss));

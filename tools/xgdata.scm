@@ -233,7 +233,7 @@
 (CINT "GDK_LAST_CURSOR " "GdkCursorType")
 ;;; 2.91.0 (CINT "GDK_CURSOR_IS_PIXMAP" "GdkCursorType")
 ;;;;(CFNC "GType gdk_cursor_get_type void")
-(CFNC "GdkCursor* gdk_cursor_new GdkCursorType cursor_type")
+;;; 3.15.2 (CFNC "GdkCursor* gdk_cursor_new GdkCursorType cursor_type")
 ;;; 2.91.0 (CFNC "GdkCursor* gdk_cursor_new_from_pixmap GdkPixmap* source GdkPixmap* mask GdkColor* fg GdkColor* bg gint x gint y")
 ;;; (CFNC-gtk2 "GdkCursor* gdk_cursor_ref GdkCursor* cursor")
 ;;; (CFNC-gtk2 "void gdk_cursor_unref GdkCursor* cursor")
@@ -9047,7 +9047,7 @@
 (CFNC-3.16 "GtkWidget* gtk_sidebar_new void")
 (CFNC-3.16 "void gtk_sidebar_set_stack GtkSidebar* sidebar GtkStack* stack")
 (CFNC-3.16 "GtkStack* gtk_sidebar_get_stack GtkSidebar* sidebar")
-(CFNC-3.16 "GdkVisual* gdk_gl_context_get_visual GdkGLContext* context")
+;;; 3.15.2 (CFNC-3.16 "GdkVisual* gdk_gl_context_get_visual GdkGLContext* context")
 (CFNC-3.16 "GdkWindow* gdk_gl_context_get_window GdkGLContext* context")
 (CFNC-3.16 "void gdk_gl_context_make_current GdkGLContext* context")
 (CFNC-3.16 "GdkGLContext* gdk_gl_context_get_current void")
@@ -9069,4 +9069,30 @@
 (CFNC-3.16 "void cairo_surface_set_device_scale cairo_surface_t* surface double x_scale double y_scale")
 (CFNC-3.16 "void cairo_surface_get_device_scale cairo_surface_t* surface double* [x_scale] double* [y_scale]")
 |#
+
+;;; 3.15.2:
+
+(CINT-3.16 "GDK_GL_DISABLE" "GdkGLFlags")
+(CINT-3.16 "GDK_GL_ALWAYS" "GdkGLFlags")
+(CINT-3.16 "GDK_GL_SOFTWARE_DRAW_GL" "GdkGLFlags")
+(CINT-3.16 "GDK_GL_SOFTWARE_DRAW_SURFACE" "GdkGLFlags")
+(CINT-3.16 "GDK_GL_TEXTURE_RECTANGLE" "GdkGLFlags")
+
+(CCAST-3.16 "GTK_POPOVER_MENU(object)" "GtkPopoverMenu*")
+(CCHK-3.16 "GTK_IS_POPOVER_MENU(object)" "GtkPopoverMenu*")
+
+(CFNC-3.16 "GdkDisplay* gdk_gl_context_get_display GdkGLContext* context")
+(CFNC-3.16 "GdkGLProfile gdk_gl_context_get_profile GdkGLContext* context")
+(CFNC-3.16 "GdkGLProfile gtk_gl_area_get_profile GtkGLArea* area")
+(CFNC-3.16 "void gtk_gl_area_set_profile GtkGLArea* area GdkGLProfile profile")
+(CFNC-3.16 "gboolean gtk_gl_area_get_has_stencil_buffer GtkGLArea* area")
+(CFNC-3.16 "void gtk_gl_area_set_has_stencil_buffer GtkGLArea* area gboolean has_stencil_buffer")
+(CFNC-3.16 "gboolean gtk_gl_area_get_auto_render GtkGLArea* area")
+(CFNC-3.16 "void gtk_gl_area_set_auto_render GtkGLArea* area gboolean auto_render")
+(CFNC-3.16 "void gtk_gl_area_queue_render GtkGLArea* area")
+(CFNC-3.16 "void gtk_gl_area_attach_buffers GtkGLArea* area")
+;(CFNC-3.16 "void gtk_gl_area_set_error GtkGLArea* area GError *error" 'const)
+(CFNC-3.16 "GError* gtk_gl_area_get_error GtkGLArea* area")
+(CFNC-3.16 "GtkWidget* gtk_popover_menu_new void")
+(CFNC-3.16 "void gtk_popover_menu_open_submenu GtkPopoverMenu* popover gchar* name" 'const)
 

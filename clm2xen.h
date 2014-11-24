@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 MUS_EXPORT mus_long_t clm_default_table_size_c(void);
-MUS_EXPORT double clm_default_frequency_c(void);
+MUS_EXPORT mus_float_t clm_default_frequency_c(void);
 
 MUS_EXPORT mus_any *mus_xen_gen(mus_xen *x);
 

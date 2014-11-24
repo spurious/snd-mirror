@@ -3683,15 +3683,6 @@ static Xen gxg_gluNurbsCallbackData(Xen nurb, Xen userData)
   return(Xen_false);
 }
 
-static Xen gxg_gluNurbsCallbackDataEXT(Xen nurb, Xen userData)
-{
-  #define H_gluNurbsCallbackDataEXT "void gluNurbsCallbackDataEXT(GLUnurbs* nurb, GLvoid* userData)"
-  Xen_check_type(Xen_is_GLUnurbs_(nurb), nurb, 1, "gluNurbsCallbackDataEXT", "GLUnurbs*");
-  Xen_check_type(Xen_is_GLvoid_(userData), userData, 2, "gluNurbsCallbackDataEXT", "GLvoid*");
-  gluNurbsCallbackDataEXT(Xen_to_C_GLUnurbs_(nurb), Xen_to_C_GLvoid_(userData));
-  return(Xen_false);
-}
-
 static Xen gxg_gluNurbsCurve(Xen nurb, Xen knotCount, Xen knots, Xen stride, Xen control, Xen order, Xen type)
 {
   #define H_gluNurbsCurve "void gluNurbsCurve(GLUnurbs* nurb, GLint knotCount, GLfloat* knots, GLint stride, \
@@ -4418,7 +4409,6 @@ Xen_wrap_2_args(gxg_gluNextContour_w, gxg_gluNextContour)
 #endif
 Xen_wrap_3_args(gxg_gluNurbsCallback_w, gxg_gluNurbsCallback)
 Xen_wrap_2_args(gxg_gluNurbsCallbackData_w, gxg_gluNurbsCallbackData)
-Xen_wrap_2_args(gxg_gluNurbsCallbackDataEXT_w, gxg_gluNurbsCallbackDataEXT)
 Xen_wrap_7_args(gxg_gluNurbsCurve_w, gxg_gluNurbsCurve)
 Xen_wrap_3_args(gxg_gluNurbsProperty_w, gxg_gluNurbsProperty)
 Xen_wrap_any_args(gxg_gluNurbsSurface_w, gxg_gluNurbsSurface)
@@ -4799,7 +4789,6 @@ static void define_functions(void)
 #endif
   GL_DEFINE_PROCEDURE(gluNurbsCallback, gxg_gluNurbsCallback_w, 3, 0, 0, H_gluNurbsCallback);
   GL_DEFINE_PROCEDURE(gluNurbsCallbackData, gxg_gluNurbsCallbackData_w, 2, 0, 0, H_gluNurbsCallbackData);
-  GL_DEFINE_PROCEDURE(gluNurbsCallbackDataEXT, gxg_gluNurbsCallbackDataEXT_w, 2, 0, 0, H_gluNurbsCallbackDataEXT);
   GL_DEFINE_PROCEDURE(gluNurbsCurve, gxg_gluNurbsCurve_w, 7, 0, 0, H_gluNurbsCurve);
   GL_DEFINE_PROCEDURE(gluNurbsProperty, gxg_gluNurbsProperty_w, 3, 0, 0, H_gluNurbsProperty);
   GL_DEFINE_PROCEDURE(gluNurbsSurface, gxg_gluNurbsSurface_w, 0, 0, 1, H_gluNurbsSurface);
@@ -5534,29 +5523,17 @@ static void define_integers(void)
   DEFINE_INTEGER(GLU_NURBS_ERROR);
   DEFINE_INTEGER(GLU_ERROR);
   DEFINE_INTEGER(GLU_NURBS_BEGIN);
-  DEFINE_INTEGER(GLU_NURBS_BEGIN_EXT);
   DEFINE_INTEGER(GLU_NURBS_VERTEX);
-  DEFINE_INTEGER(GLU_NURBS_VERTEX_EXT);
   DEFINE_INTEGER(GLU_NURBS_NORMAL);
-  DEFINE_INTEGER(GLU_NURBS_NORMAL_EXT);
   DEFINE_INTEGER(GLU_NURBS_COLOR);
-  DEFINE_INTEGER(GLU_NURBS_COLOR_EXT);
   DEFINE_INTEGER(GLU_NURBS_TEXTURE_COORD);
-  DEFINE_INTEGER(GLU_NURBS_TEX_COORD_EXT);
   DEFINE_INTEGER(GLU_NURBS_END);
-  DEFINE_INTEGER(GLU_NURBS_END_EXT);
   DEFINE_INTEGER(GLU_NURBS_BEGIN_DATA);
-  DEFINE_INTEGER(GLU_NURBS_BEGIN_DATA_EXT);
   DEFINE_INTEGER(GLU_NURBS_VERTEX_DATA);
-  DEFINE_INTEGER(GLU_NURBS_VERTEX_DATA_EXT);
   DEFINE_INTEGER(GLU_NURBS_NORMAL_DATA);
-  DEFINE_INTEGER(GLU_NURBS_NORMAL_DATA_EXT);
   DEFINE_INTEGER(GLU_NURBS_COLOR_DATA);
-  DEFINE_INTEGER(GLU_NURBS_COLOR_DATA_EXT);
   DEFINE_INTEGER(GLU_NURBS_TEXTURE_COORD_DATA);
-  DEFINE_INTEGER(GLU_NURBS_TEX_COORD_DATA_EXT);
   DEFINE_INTEGER(GLU_NURBS_END_DATA);
-  DEFINE_INTEGER(GLU_NURBS_END_DATA_EXT);
   DEFINE_INTEGER(GLU_NURBS_ERROR1);
   DEFINE_INTEGER(GLU_NURBS_ERROR2);
   DEFINE_INTEGER(GLU_NURBS_ERROR3);
@@ -5603,15 +5580,10 @@ static void define_integers(void)
   DEFINE_INTEGER(GLU_U_STEP);
   DEFINE_INTEGER(GLU_V_STEP);
   DEFINE_INTEGER(GLU_NURBS_MODE);
-  DEFINE_INTEGER(GLU_NURBS_MODE_EXT);
   DEFINE_INTEGER(GLU_NURBS_TESSELLATOR);
-  DEFINE_INTEGER(GLU_NURBS_TESSELLATOR_EXT);
   DEFINE_INTEGER(GLU_NURBS_RENDERER);
-  DEFINE_INTEGER(GLU_NURBS_RENDERER_EXT);
   DEFINE_INTEGER(GLU_OBJECT_PARAMETRIC_ERROR);
-  DEFINE_INTEGER(GLU_OBJECT_PARAMETRIC_ERROR_EXT);
   DEFINE_INTEGER(GLU_OBJECT_PATH_LENGTH);
-  DEFINE_INTEGER(GLU_OBJECT_PATH_LENGTH_EXT);
   DEFINE_INTEGER(GLU_PATH_LENGTH);
   DEFINE_INTEGER(GLU_PARAMETRIC_ERROR);
   DEFINE_INTEGER(GLU_DOMAIN_DISTANCE);
@@ -5684,7 +5656,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       Xen_provide_feature("gl");
-      Xen_define("gl-version", C_string_to_Xen_string("06-Aug-14"));
+      Xen_define("gl-version", C_string_to_Xen_string("24-Nov-14"));
       gl_already_inited = true;
     }
 }

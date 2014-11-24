@@ -2792,8 +2792,8 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
     prompt_insert(g, &start, true);
   }
 
-  if (!g->wait_cursor) g->wait_cursor = gdk_cursor_new(GDK_WATCH);
-  if (!g->arrow_cursor) g->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
+  if (!g->wait_cursor) g->wait_cursor = GDK_CURSOR_NEW(GDK_WATCH);
+  if (!g->arrow_cursor) g->arrow_cursor = GDK_CURSOR_NEW(GDK_LEFT_PTR);
 
 #if (HAVE_GTK_2)
   vb = gtk_table_new(2, 1, false);

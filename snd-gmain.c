@@ -305,13 +305,13 @@ static void startup_funcs(void)
   /* when iconified, we need to hide any dialogs as well */
   SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "window_state_event", window_iconify, NULL);
 
-  ss->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
-  ss->wait_cursor = gdk_cursor_new(GDK_WATCH);
-  ss->bounds_cursor = gdk_cursor_new(GDK_SB_H_DOUBLE_ARROW);
-  ss->yaxis_cursor = gdk_cursor_new(GDK_SB_V_DOUBLE_ARROW);
-  ss->play_cursor = gdk_cursor_new(GDK_SB_RIGHT_ARROW);
-  ss->loop_play_cursor = gdk_cursor_new(GDK_SB_LEFT_ARROW);
-  ss->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
+  ss->graph_cursor = GDK_CURSOR_NEW((GdkCursorType)in_graph_cursor(ss));
+  ss->wait_cursor = GDK_CURSOR_NEW(GDK_WATCH);
+  ss->bounds_cursor = GDK_CURSOR_NEW(GDK_SB_H_DOUBLE_ARROW);
+  ss->yaxis_cursor = GDK_CURSOR_NEW(GDK_SB_V_DOUBLE_ARROW);
+  ss->play_cursor = GDK_CURSOR_NEW(GDK_SB_RIGHT_ARROW);
+  ss->loop_play_cursor = GDK_CURSOR_NEW(GDK_SB_LEFT_ARROW);
+  ss->arrow_cursor = GDK_CURSOR_NEW(GDK_LEFT_PTR);
 
 #if HAVE_EXTENSION_LANGUAGE
   snd_load_init_file(noglob, noinit);

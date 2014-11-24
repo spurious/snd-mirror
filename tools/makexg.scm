@@ -838,6 +838,7 @@
 
 	(cons "GdkModifierIntent" "INT")
 	(cons "GtkAlign" "INT")
+	(cons "GdkGLFlags" "INT")
 	))
 
 (define (c-to-xen-macro-name typ str)

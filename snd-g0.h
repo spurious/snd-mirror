@@ -131,6 +131,13 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 
 #endif
 
+/* 3.16: gdk_cursor_new removed */
+#if GTK_CHECK_VERSION(3, 16, 0)
+  #define GDK_CURSOR_NEW(Type) gdk_cursor_new(Type)
+#else
+  #define GDK_CURSOR_NEW(Type) gdk_cursor_new_for_display(gdk_display_get_default(), Type)
+#endif
+
 
 #define Xen_wrap_widget(Value)   ((Value) ? Xen_list_2(C_string_to_Xen_symbol("GtkWidget_"), Xen_wrap_C_pointer(Value)) : Xen_false)
 #define Xen_wrap_window(Value)   ((Value) ? Xen_list_2(C_string_to_Xen_symbol("GdkWindow_"), Xen_wrap_C_pointer(Value)) : Xen_false)

@@ -232,7 +232,7 @@ int main(int argc, char **argv)
   glistener_set_completer(g2, completer);
 
   glistener_init(g1, g2);
-  arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
+  arrow_cursor = GDK_CURSOR_NEW(GDK_LEFT_PTR);
 
   gtk_widget_show(shell);
   gdk_window_resize(gtk_widget_get_window(shell), 500, 700);

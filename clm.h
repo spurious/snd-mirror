@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 6
-#define MUS_DATE "8-Nov-14"
+#define MUS_REVISION 7
+#define MUS_DATE "25-Nov-14"
 
 /* isn't mus_env_interp backwards? */
 
@@ -138,7 +138,7 @@ MUS_EXPORT void mus_rectangular_to_polar(mus_float_t *rl, mus_float_t *im, mus_l
 MUS_EXPORT void mus_rectangular_to_magnitudes(mus_float_t *rl, mus_float_t *im, mus_long_t size);
 MUS_EXPORT void mus_polar_to_rectangular(mus_float_t *rl, mus_float_t *im, mus_long_t size);
 MUS_EXPORT mus_float_t mus_array_interp(mus_float_t *wave, mus_float_t phase, mus_long_t size);
-MUS_EXPORT double mus_bessi0(mus_float_t x);
+MUS_EXPORT mus_float_t mus_bessi0(mus_float_t x);
 MUS_EXPORT mus_float_t mus_interpolate(mus_interp_t type, mus_float_t x, mus_float_t *table, mus_long_t table_size, mus_float_t y);
 MUS_EXPORT bool mus_is_interp_type(int val);
 MUS_EXPORT bool mus_is_fft_window(int val);
@@ -425,14 +425,15 @@ MUS_EXPORT mus_float_t mus_chebyshev_tu_sum(mus_float_t x, int n, mus_float_t *t
 MUS_EXPORT mus_float_t (*mus_polywave_function(mus_any *g))(mus_any *gen, mus_float_t fm);
 
 MUS_EXPORT mus_float_t mus_env(mus_any *ptr);
-MUS_EXPORT mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offset, double base, double duration, mus_long_t end, mus_float_t *odata);
+MUS_EXPORT mus_any *mus_make_env(mus_float_t *brkpts, int npts, mus_float_t scaler, mus_float_t offset, mus_float_t base, 
+				 mus_float_t duration, mus_long_t end, mus_float_t *odata);
 MUS_EXPORT bool mus_is_env(mus_any *ptr);
-MUS_EXPORT double mus_env_interp(double x, mus_any *env);
+MUS_EXPORT mus_float_t mus_env_interp(mus_float_t x, mus_any *env);
 MUS_EXPORT mus_long_t *mus_env_passes(mus_any *gen);        /* for Snd */
-MUS_EXPORT double *mus_env_rates(mus_any *gen);        /* for Snd */
-MUS_EXPORT double mus_env_offset(mus_any *gen);        /* for Snd */
-MUS_EXPORT double mus_env_scaler(mus_any *gen);        /* for Snd */
-MUS_EXPORT double mus_env_initial_power(mus_any *gen); /* for Snd */
+MUS_EXPORT mus_float_t *mus_env_rates(mus_any *gen);        /* for Snd */
+MUS_EXPORT mus_float_t mus_env_offset(mus_any *gen);        /* for Snd */
+MUS_EXPORT mus_float_t mus_env_scaler(mus_any *gen);        /* for Snd */
+MUS_EXPORT mus_float_t mus_env_initial_power(mus_any *gen); /* for Snd */
 MUS_EXPORT int mus_env_breakpoints(mus_any *gen);      /* for Snd */
 MUS_EXPORT mus_float_t mus_env_any(mus_any *e, mus_float_t (*connect_points)(mus_float_t val));
 MUS_EXPORT mus_float_t (*mus_env_function(mus_any *g))(mus_any *gen);
