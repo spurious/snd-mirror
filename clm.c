@@ -40,10 +40,7 @@
 
 #if (!DISABLE_SINCOS) && defined(__GNUC__) && defined(__linux__)
   #define HAVE_SINCOS 1
-  /* nothing works here no matter what the docs claim.  So, if mus_float_t is long double, define Sincos to be sincosl */
   void sincos(double x, double *sin, double *cos);
-  void sincosl(long double x, long double *sin, long double *cos);
-  #define Sincos sincos
 #else
   #define HAVE_SINCOS 0
 #endif
@@ -1084,7 +1081,7 @@ void mus_polar_to_rectangular(mus_float_t *rl, mus_float_t *im, mus_long_t size)
     {
 #if HAVE_SINCOS
       mus_float_t sx, cx;
-      Sincos(-im[i], &sx, &cx);
+      sincos(-im[i], &sx, &cx);
       im[i] = sx * rl[i];
       rl[i] *= cx;
 #else
@@ -1648,7 +1645,7 @@ mus_float_t mus_oscil_bank(mus_any *ptr)
 	{
 	  for (i = 0; i < p->size; i++)
 	    {
-	      Sincos(p->phases[i], &s, &c);
+	      sincos(p->phases[i], &s, &c);
 	      p->sn2[i] = s;
 	      p->cs2[i] = c;
 	      sum += s;
@@ -1659,7 +1656,7 @@ mus_float_t mus_oscil_bank(mus_any *ptr)
 	{
 	  for (i = 0; i < p->size; i++)
 	    {
-	      Sincos(p->phases[i], &s, &c);
+	      sincos(p->phases[i], &s, &c);
 	      p->sn2[i] = s;
 	      p->cs2[i] = c;
 	      sum += p->amps[i] * s;
@@ -1715,7 +1712,7 @@ mus_any *mus_make_oscil_bank(int size, mus_float_t *freqs, mus_float_t *phases, 
     mus_float_t s, c;
     for (i = 0; i < size; i++)
       {
-	Sincos(freqs[i], &s, &c);
+	sincos(freqs[i], &s, &c);
 	if (amps)
 	  {
 	    s *= amps[i];
@@ -2112,12 +2109,12 @@ mus_float_t mus_nsin(mus_any *ptr, mus_float_t fm)
   mus_float_t val, a2, ns, nc, s, c;
   cosp *gen = (cosp *)ptr;
   a2 = gen->phase * 0.5;
-  Sincos(a2, &s, &c);
+  sincos(a2, &s, &c);
   if (DIVISOR_NEAR_ZERO(s)) /* see note under ncos */
     val = 0.0;
   else 
     {
-      Sincos(gen->n * a2, &ns, &nc);
+      sincos(gen->n * a2, &ns, &nc);
       val = gen->scaler * ns * (ns * c + nc * s) / s;
     }
 #else
@@ -2469,11 +2466,11 @@ mus_float_t mus_nrxysin(mus_any *ptr, mus_float_t fm)
       return((sin(x) - gen->r_to_n_plus_1 * (sin(x * (n + 2)) - r * sin(x * (n + 1)))) / divisor);
 #else
       mus_float_t sx, cx, snx, cnx;
-      Sincos(x, &sx, &cx);
+      sincos(x, &sx, &cx);
       divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * cx));
       if (DIVISOR_NEAR_ZERO(divisor))
 	return(0.0);
-      Sincos((n + 1) * x, &snx, &cnx);
+      sincos((n + 1) * x, &snx, &cnx);
       return((sx - gen->r_to_n_plus_1 * (sx * cnx + (cx - r) * snx)) / divisor);
 #endif
     }
@@ -2483,13 +2480,13 @@ mus_float_t mus_nrxysin(mus_any *ptr, mus_float_t fm)
     mus_float_t xs, xc, ys, yc, nys, nyc, sin_x_y, sin_x_ny, sin_x_n1y, cos_x_ny;
 
     y = x * gen->y_over_x;
-    Sincos(y, &ys, &yc);
+    sincos(y, &ys, &yc);
     divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * yc));
     if (DIVISOR_NEAR_ZERO(divisor))
       return(0.0);
 
-    Sincos(x, &xs, &xc);
-    Sincos(n * y, &nys, &nyc);
+    sincos(x, &xs, &xc);
+    sincos(n * y, &nys, &nyc);
     sin_x_y = (xs * yc - ys * xc);
     sin_x_ny = (xs * nyc + nys * xc);
     cos_x_ny = (xc * nyc - xs * nys);
@@ -2602,13 +2599,13 @@ mus_float_t mus_nrxycos(mus_any *ptr, mus_float_t fm)
   {
     mus_float_t xs, xc, ys, yc, nys, nyc, cos_x_y, cos_x_ny, cos_x_n1y, sin_x_ny;
 
-    Sincos(y, &ys, &yc);
+    sincos(y, &ys, &yc);
     divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * yc));
     if (DIVISOR_NEAR_ZERO(divisor))
       return(1.0);
 
-    Sincos(x, &xs, &xc);
-    Sincos(n * y, &nys, &nyc);
+    sincos(x, &xs, &xc);
+    sincos(n * y, &nys, &nyc);
     cos_x_y = (xc * yc + ys * xs);
     sin_x_ny = (xs * nyc + nys * xc);
     cos_x_ny = (xc * nyc - xs * nys);
@@ -9240,11 +9237,11 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
 	  mus_float_t s1, c1, s2, c2, qj1;
 	  xt = xt0;
 	  qj = q * (am - j);
-	  Sincos(qj, &s1, &c1);
+	  sincos(qj, &s1, &c1);
 	  qj1 = qj * 2.0;
 	  for (i = 1, x = qj; i < m; i += 2, x += qj1)
 	    {
-	      Sincos(x, &s2, &c2);
+	      sincos(x, &s2, &c2);
 	      xt += (envl[i] * c2);
 	      if (i < (m - 1))
 		xt += (envl[i + 1] * (c1 * c2 - s1 * s2));
@@ -13043,7 +13040,7 @@ static int init_sinc_table(int width)
       sinc_freq = M_PI / (mus_float_t)SRC_SINC_DENSITY;
       sinc_phase = old_end * sinc_freq;
 #if HAVE_SINCOS
-      Sincos(sinc_freq, &sn, &cs);
+      sincos(sinc_freq, &sn, &cs);
       if (old_end == 1)
 	{
 	  sinc[1] = sin(sinc_phase) / (2.0 * sinc_phase);
@@ -13052,7 +13049,7 @@ static int init_sinc_table(int width)
 	}
       for (i = old_end; i < padded_size;)
 	{
-	  Sincos(sinc_phase, &snp, &csp);
+	  sincos(sinc_phase, &snp, &csp);
 	  sinc[i] = snp / (2.0 * sinc_phase);
 	  i++;
 	  sinc_phase += sinc_freq;
@@ -16044,7 +16041,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	      pv->sc_safe[i] = (fabs(pv->freqs[i] - pv->phaseinc[i]) < 0.02); /* .5 is too big, .01 and .03 ok by tests */
 	      if (pv->sc_safe[i])
 		{
-		  Sincos((pv->freqs[i] + pv->phaseinc[i]) * 0.5, &s, &c);
+		  sincos((pv->freqs[i] + pv->phaseinc[i]) * 0.5, &s, &c);
 		  pv->sn[i] = s;
 		  pv->cs[i] = c;
 		}
@@ -16118,7 +16115,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	  pinc[i] += frq[i];
 	  ph[i] += pinc[i];
 	  amp[i] += panc[i];
-	  Sincos(ph[i], &sx, &cx);
+	  sincos(ph[i], &sx, &cx);
 	  sum += (amp[i] * sx);
 
 	  pinc[i] += frq[i];
@@ -16279,7 +16276,7 @@ mus_float_t mus_ssb_am_unmodulated(mus_any *ptr, mus_float_t insig)
 	 (mus_oscil_unmodulated(gen->sin_osc) * run_hilbert((flt *)(gen->hilbert), insig)));
 #else
   mus_float_t cx, sx;
-  Sincos(gen->phase, &sx, &cx);
+  sincos(gen->phase, &sx, &cx);
   gen->phase += gen->freq;
   return((cx * mus_delay_unmodulated_noz(gen->dly, insig)) +
          (sx * gen->sign * run_hilbert((flt *)(gen->hilbert), insig)));
@@ -16295,7 +16292,7 @@ mus_float_t mus_ssb_am(mus_any *ptr, mus_float_t insig, mus_float_t fm)
 	 (mus_oscil_fm(gen->sin_osc, fm) * run_hilbert((flt *)(gen->hilbert), insig)));
 #else
   mus_float_t cx, sx;
-  Sincos(gen->phase, &sx, &cx);
+  sincos(gen->phase, &sx, &cx);
   gen->phase += (fm + gen->freq);
   return((cx * mus_delay_unmodulated_noz(gen->dly, insig)) +
          (sx * gen->sign * run_hilbert((flt *)(gen->hilbert), insig)));

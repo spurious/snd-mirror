@@ -26,9 +26,9 @@
 #endif
 
 #if GTK_CHECK_VERSION(3, 16, 0)
-  #define GDK_CURSOR_NEW(Type) gdk_cursor_new(Type)
-#else
   #define GDK_CURSOR_NEW(Type) gdk_cursor_new_for_display(gdk_display_get_default(), Type)
+#else
+  #define GDK_CURSOR_NEW(Type) gdk_cursor_new(Type)
 #endif
 
 typedef struct glistener glistener;

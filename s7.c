@@ -8844,6 +8844,7 @@ static char *floatify(char *str, int *nlen)
   return(str);
 }
 
+static const char *float_format_g = NULL;
 
 static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen, use_write_t choice) /* don't free result */
 {
@@ -8916,7 +8917,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 		  }
 		else
 		  {
-		    snprintf(rbuf, 128, "%.*g", precision, real_part(obj));
+		    snprintf(rbuf, 128, float_format_g, precision, real_part(obj));
 		    rp = rbuf;
 		  }
 	      }
@@ -8932,7 +8933,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 		  }
 		else
 		  {
-		    snprintf(ibuf, 128, "%.*g", precision, imag_part(obj));
+		    snprintf(ibuf, 128, float_format_g, precision, imag_part(obj));
 		    ip = ibuf;
 		  }
 	      }
@@ -18220,7 +18221,12 @@ sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
 
   /* frexp doesn't work in edge cases.  Since the double and long long int fields are equivalenced
    *   in the num struct, we can get the actual bits of the double from the int.  The problem with doing this
-   *   is that bignums don't use that struct.  Assume IEEE 754 and double = s7_Double.
+   *   is that bignums don't use that struct (and long doubles don't fit either).  Assume IEEE 754 and double = s7_Double.
+   * if (integer-decode-float x) -> '(sign mantissa exponent), then (* sign mantissa (expt 2 exponent)) -> x
+   *
+   * I think I won't try to support long double here because it is different in different versions of C (in gcc, it's
+   *   apparently 80-bit extended precision).  And float (as opposed to double) is never used anymore.
+   *   The next larger size is __float128 in gcc.
    */
   if (sizeof(s7_Double) != sizeof(double))
     return(simple_out_of_range_error_prepackaged(sc, sc->INTEGER_DECODE_FLOAT, x, "s7_Double must be the same size as C double"));
@@ -18249,7 +18255,6 @@ sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
       check_method(sc, x, sc->INTEGER_DECODE_FLOAT, args);
       return(simple_wrong_type_argument_with_type(sc, sc->INTEGER_DECODE_FLOAT, x, make_string_wrapper(sc, "a non-rational real")));
     }
-
   return(list_3(sc,
 		make_integer(sc, (s7_Int)((ix & 0xfffffffffffffLL) | 0x10000000000000LL)),
 		make_integer(sc, (s7_Int)(((ix & 0x7fffffffffffffffLL) >> 52) - 1023 - 52)),
@@ -24714,7 +24719,7 @@ static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
 		{
 		  if (is_float_vector(vec))
 		    {
-		      plen = snprintf(buf, 128, "%.*g", WRITE_REAL_PRECISION, float_vector_element(vec, flat_ref));
+		      plen = snprintf(buf, 128, float_format_g, WRITE_REAL_PRECISION, float_vector_element(vec, flat_ref));
 		      floatify(buf, &plen);
 		      port_write_string(port)(sc, buf, plen, port);
 		    }
@@ -24864,7 +24869,7 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 		{
 		  if (is_float_vector(vect))
 		    {
-		      plen = snprintf(buf, 128, "%.*g", WRITE_REAL_PRECISION, float_vector_element(vect, i));
+		      plen = snprintf(buf, 128, float_format_g, WRITE_REAL_PRECISION, float_vector_element(vect, i));
 		      floatify(buf, &plen);
 		      port_write_string(port)(sc, buf, plen, port);
 		    }
@@ -24908,12 +24913,13 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	    {
 	      if (is_float_vector(vect))
 		{
-		  plen = snprintf(buf, 128, "%.*g", WRITE_REAL_PRECISION, float_vector_element(vect, 0));
+		  plen = snprintf(buf, 128, float_format_g, WRITE_REAL_PRECISION, float_vector_element(vect, 0));
 		  floatify(buf, &plen);
 		  port_write_string(port)(sc, buf, plen, port);
 		  for (i = 1; i < len; i++)
 		    {
-		      plen = snprintf(buf, 128, " %.*g", WRITE_REAL_PRECISION, float_vector_element(vect, i));
+		      port_write_character(port)(sc, ' ', port);
+		      plen = snprintf(buf, 128, float_format_g, WRITE_REAL_PRECISION, float_vector_element(vect, i));
 		      floatify(buf, &plen);
 		      port_write_string(port)(sc, buf, plen, port);
 		    }
@@ -60674,7 +60680,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_optimized(sc->code))
 	goto OPT_EVAL;
       goto EVAL; 
-      
 
     case OP_IF_PPX:
       if (is_true(sc, sc->value))
@@ -60683,7 +60688,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL; 
 	}
       sc->value = cadr(sc->code);
-      if (is_symbol(sc->value)) /* lat 2592129 2592129 */
+      if (is_symbol(sc->value))
 	sc->value = find_symbol_checked(sc, sc->value);
       goto START;
       
@@ -60692,7 +60697,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack_no_args(sc, OP_IF_PXP, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL; 
-      
 
     case OP_IF_PXP:
       if (is_true(sc, sc->value))
@@ -60774,7 +60778,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack_no_args(sc, OP_SAFE_IF_Z_Z_1, fcdr(sc->code));
       sc->code = car(sc->code); 
       goto OPT_EVAL;
-      
 
     case OP_SAFE_IF_Z_Z_1:
       if (is_true(sc, sc->value))
@@ -68302,6 +68305,14 @@ s7_scheme *s7_init(void)
 #if (!WITH_PURE_S7)
       init_uppers();
 #endif
+      if (sizeof(s7_Double) >= 16)
+	float_format_g = "%.*Qg";       /* __float128 */
+      else
+	{
+	  if (sizeof(s7_Double) >= 10)
+	    float_format_g = "%.*Lg";   /* long double (80-bit precision, but is it 10 or 12 bytes?) */
+	  else float_format_g = "%.*g"; /* float and double */
+	}
     }
 
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
@@ -69954,20 +69965,11 @@ int main(int argc, char **argv)
  *     gtk+-3.15.1/gtk/gtkglarea.c, gtk-demo/glarea.c, tests/gtkgears.c + testglarea.c, docs/reference/gtk/html/GtkGLArea.html
  *     GdkGLContext -- needs expoxy/gl.h?
  *     snd-axis: gdk_gl_font_use_pango... -- this is not in the gtk/cl code (it's ancient gtkglext stuff)
- *   need color-dialog use-gl button in gtk
+ *   need color-dialog use-gl button in gtk callbacks for labels
  * snd-genv needs a lot of gtk3 work
  *
- * cyclic-seq in rest of full-* 
- * cyclic-sequences is minimally tested in s7test (also c_object env)
- *
+ * cyclic-seq in rest of full-* and cyclic-sequences is minimally tested in s7test (also c_object env)
  * why not snd-g* -> snd-gtk?
  * if nogui, g_play in snd-dac.c only sends 1 buffer?
- * perhaps in *s7*: integer-length, real-length, pointer-length, cell-length (double=8 etc)
- * long double woes:
- *   channels->float-vector assumes the stored data is mus_float_t -- it is?
- *   sincos is a problem throughout
- *   s7test has lots of trouble (display of real is confused: maybe %Lf 8890?)
- *   binary-io assumes integer-decode-float will work
- *   libgsl assumes doubles 
  * perhaps if let/env is large, display contents more carefully (for pretty-print?)
  */

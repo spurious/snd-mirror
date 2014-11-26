@@ -180,7 +180,7 @@
 	    (set! pts1 vect))))
     
     (define (redraw-graph)
-      (let* ((wn ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window scan-pane)))
+      (let* ((wn (GDK_WINDOW (gtk_widget_get_window scan-pane)))
 	     (cr (gdk_cairo_create wn)))
 	(set! bounds (draw-axes scan-pane gc "scanned synthesis" 0.0 1.0 -10.0 10.0 x-axis-in-seconds show-all-axes cr))
 	(set! ax0 (+ (car bounds) 4))
@@ -193,7 +193,7 @@
     (define (tick-synthesis n)
       ;; background process
       (compute-uniform-circular-string size gx0 gx1 gx2 mass xspring damp)
-      (let* ((wn ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window scan-pane)))
+      (let* ((wn (GDK_WINDOW (gtk_widget_get_window scan-pane)))
 	     (cr (gdk_cairo_create wn)))
 	(draw-graph cr)
 	(cairo_destroy cr))
@@ -232,7 +232,6 @@
 	      (adj (gtk_adjustment_new curval minval maxval 1.0 10.0 1.0))
 	      (scale (gtk_scale_new GTK_ORIENTATION_HORIZONTAL (GTK_ADJUSTMENT adj)))
 	      (label (gtk_label_new title)))
-	 (if (not (provided? 'gtk3)) (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE scale)) GTK_UPDATE_CONTINUOUS))
 	 (gtk_scale_set_digits (GTK_SCALE scale) decimals)
 	 (gtk_scale_set_value_pos (GTK_SCALE scale) GTK_POS_TOP)
 	 (gtk_scale_set_draw_value (GTK_SCALE scale) #t)
@@ -293,8 +292,6 @@
 	   (amp-scale (gtk_scale_new GTK_ORIENTATION_HORIZONTAL (GTK_ADJUSTMENT amp-adj)))
 	   (freq-label (gtk_label_new "frequency"))
 	   (amp-label (gtk_label_new "amplitude")))
-      (if (not (provided? 'gtk3)) (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE freq-scale)) GTK_UPDATE_CONTINUOUS))
-      (if (not (provided? 'gtk3)) (gtk_range_set_update_policy (GTK_RANGE (GTK_SCALE amp-scale)) GTK_UPDATE_CONTINUOUS))
       (gtk_scale_set_digits (GTK_SCALE freq-scale) 1)
       (gtk_scale_set_digits (GTK_SCALE amp-scale) 3)
       (gtk_scale_set_value_pos (GTK_SCALE freq-scale) GTK_POS_TOP)
@@ -313,11 +310,7 @@
       (g_signal_connect amp-adj "value_changed" (lambda (w d) (set! amplitude (gtk_adjustment_get_value (GTK_ADJUSTMENT amp-adj)))) #f)
       )
     
-    (g_signal_connect scan-pane 
-		      (if (provided? 'gtk3) "draw" "expose_event")
-		      (lambda (w e d) 
-			(redraw-graph)) 
-		      #f)
+    (g_signal_connect scan-pane "draw" (lambda (w e d) (redraw-graph)) #f)
     (g_signal_connect scan-pane "configure_event" (lambda (w e d) (redraw-graph)) #f)
     (g_signal_connect scan-pane "button_press_event" 
 		      (lambda (w e d) 
@@ -480,7 +473,7 @@
 
 (define snd-clock-icon
   (lambda (snd hour)
-    (let* ((window ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window ((sound-widgets snd) 8))))
+    (let* ((window (GDK_WINDOW (gtk_widget_get_window ((sound-widgets snd) 8))))
 	   (cr (gdk_cairo_create window))
 	   (bg (color->list *basic-color*)))
       (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg))
@@ -502,7 +495,7 @@
 ;;; this is the happy face progress bar
 
 (define (snd-happy-face snd progress)
-  (let* ((window ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window ((sound-widgets snd) 8))))
+  (let* ((window (GDK_WINDOW (gtk_widget_get_window ((sound-widgets snd) 8))))
 	 (cr (gdk_cairo_create window))
 	 (bg (color->list *basic-color*))
 	 (fc (list 1.0 progress 0.0)))
@@ -608,11 +601,7 @@
       (gtk_container_add (GTK_CONTAINER frame) meter)
       (gtk_widget_show meter)
       (let ((context (list meter 0.0 1.0 0.0 0.0 width height)))
-	(g_signal_connect meter 
-			  (if (provided? 'gtk3) "draw" "expose_event")
-			  (lambda (w e d) 
-			    (display-level d)) 
-			  context)
+	(g_signal_connect meter "draw" (lambda (w e d) (display-level d)) context)
 	(g_signal_connect meter "configure_event" 
 			  (lambda (w e d)
 			    (let ((xy (list (gtk_widget_get_allocated_width w)
@@ -631,7 +620,7 @@
 	 (width (meter-data 5))
 	 (height (meter-data 6))
 	 ;; (size (meter-data 2))
-	 (win ((if (provided? 'gtk3) GDK_WINDOW GDK_DRAWABLE) (gtk_widget_get_window meter))))
+	 (win (GDK_WINDOW (gtk_widget_get_window meter))))
 
     ;; this is too slow -- can we save the plate? (also if just 1 meter, put pivot higher?)
     (let ((cr (gdk_cairo_create win)))

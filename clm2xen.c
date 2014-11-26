@@ -52,8 +52,6 @@
 
 #if (!DISABLE_SINCOS) && defined(__GNUC__) && defined(__linux__)
   void sincos(double x, double *sin, double *cos);
-  void sincosl(long double x, long double *sin, long double *cos);
-  #define Sincos sincos
   #define HAVE_SINCOS 1
 #else
   #define HAVE_SINCOS 0
@@ -13873,7 +13871,7 @@ static mus_float_t gf_unmod_oscil_1a(void *p)
   mus_float_t ph;
   g->o1 = gf_unmod_oscil_1b;
   ph = g->x1;
-  Sincos(ph, &(g->x5), &(g->x6));
+  sincos(ph, &(g->x5), &(g->x6));
   g->x1 += g->x2;
   return(g->x5);
 }
@@ -13894,7 +13892,7 @@ static mus_float_t gf_unmod_scaled_oscil_1a(void *p)
   mus_float_t ph;
   g->o1 = gf_unmod_scaled_oscil_1b;
   ph = g->x1;
-  Sincos(ph, &(g->x5), &(g->x6));
+  sincos(ph, &(g->x5), &(g->x6));
   g->x1 += g->x2;
   return(g->x7 * g->x5);
 }
@@ -13916,7 +13914,7 @@ static mus_float_t gf_unmod_scaled_oscil_2a(void *p)
   mus_float_t ph;
   g->o1 = gf_unmod_scaled_oscil_2b;
   ph = g->x1;
-  Sincos(ph, &(g->x5), &(g->x6));
+  sincos(ph, &(g->x5), &(g->x6));
   g->x1 += g->x2;
   return((2.0 * g->x5 * g->x8 + g->x7) * g->x5 - g->x8);
   /* ((2.0 * cx * tn[2] + tn[1]) * cx - tn[2]) */
@@ -14182,7 +14180,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 		      p->func = gf_unmod_oscil_1;
 		      p->x1 = mus_phase((mus_any *)(p->gen));
 		      p->x2 = mus_increment((mus_any *)(p->gen));
-		      Sincos(p->x2, &sn, &cs);
+		      sincos(p->x2, &sn, &cs);
 		      p->x3 = sn;
 		      p->x4 = cs;
 		      p->x2 *= 2.0;
@@ -14229,7 +14227,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 			  p->x2 = mus_increment(pw); /* x2 doesn't need to be saved */
 			  p->x7 = mus_xcoeff(pw, 1);
 			  if (three_case) p->x8 = mus_xcoeff(pw, 2);
-			  Sincos(p->x2, &sn, &cs);
+			  sincos(p->x2, &sn, &cs);
 			  p->x3 = sn;
 			  p->x4 = cs;
 			  if (!three_case)
@@ -14344,7 +14342,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 		      p->gen = o;
 		      p->x1 = mus_phase((mus_any *)(p->gen));
 		      p->x2 = mus_increment((mus_any *)(p->gen)) + x;
-		      Sincos(p->x2, &sn, &cs);
+		      sincos(p->x2, &sn, &cs);
 		      p->x3 = sn;
 		      p->x4 = cs;
 		      p->x2 *= 2.0;

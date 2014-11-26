@@ -232,6 +232,11 @@
 (CINT "GDK_XTERM" "GdkCursorType")
 (CINT "GDK_LAST_CURSOR " "GdkCursorType")
 ;;; 2.91.0 (CINT "GDK_CURSOR_IS_PIXMAP" "GdkCursorType")
+
+;;; these were missed at some point:
+(CFNC "GdkCursor* gdk_cursor_new_for_display GdkDisplay* display GdkCursorType cursor_type")
+(CFNC "GdkDisplay* gdk_cursor_get_display GdkCursor* cursor")
+
 ;;;;(CFNC "GType gdk_cursor_get_type void")
 ;;; 3.15.2 (CFNC "GdkCursor* gdk_cursor_new GdkCursorType cursor_type")
 ;;; 2.91.0 (CFNC "GdkCursor* gdk_cursor_new_from_pixmap GdkPixmap* source GdkPixmap* mask GdkColor* fg GdkColor* bg gint x gint y")

@@ -145,7 +145,7 @@
 						  (and (> name-len 6)
 						       (or (string-ci=? "pango_" (substring name 0 6))
 							   (string-ci=? "cairo_" (substring name 0 6)))))
-					      (not (defined? (string->symbol name))))
+					      (not (defined? (string->symbol name) *gtk*)))
 					 (format #t "~A (~A[~D]) is not defined~%" name filename line-number))))
 			       (if (and (not (char=? chr #\_))
 					(not (char-alphabetic? chr))

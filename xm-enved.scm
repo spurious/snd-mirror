@@ -4,7 +4,6 @@
 ;;; (xe-envelope editor) -> current envelope (settable)
 
 (provide 'snd-xm-enved.scm)
-(define with-gtk3 (provided? 'gtk3))
 
 (if (and (provided? 'snd-motif)
 	 (not (provided? 'snd-snd-motif.scm)))
@@ -210,6 +209,8 @@
 	       (x1 (cadr axis-bounds))
 	       (y0 (caddr axis-bounds))
 	       (y1 (cadddr axis-bounds))
+	       (arrow-cursor (gdk_cursor_new_for_display (gdk_display_get_default) GDK_CROSSHAIR))
+	       (old-cursor (gdk_cursor_new_for_display (gdk_display_get_default) GDK_LEFT_PTR))
 	       (editor (list (list x0 y0 x1 y0) ; needs to be in user-coordinates (graph size can change)
 			     drawer 
 			     #f  ; axis pixel locs filled in when drawn
@@ -232,8 +233,7 @@
 	  (gtk_widget_set_size_request drawer -1 200)
 	  
 	  (g_signal_connect_closure_by_id (GPOINTER drawer)
-					  (g_signal_lookup (if with-gtk3 "draw" "expose_event")
-							   (G_OBJECT_TYPE (G_OBJECT drawer)))
+					  (g_signal_lookup "draw" (G_OBJECT_TYPE (G_OBJECT drawer)))
 					  0 (g_cclosure_new (lambda (w e d)
 							      (set! (editor 2) (apply local-draw-axes drawer gc name axis-bounds))
 							      (xe-redraw editor)
@@ -284,6 +284,21 @@
 							      #f)
 							    #f #f)
 					  #f)
+	  
+	  (g_signal_connect_closure_by_id (GPOINTER drawer)
+					  (g_signal_lookup "enter_notify_event" (G_OBJECT_TYPE (G_OBJECT drawer)))
+					  0 (g_cclosure_new (lambda (w e d)
+							      (gdk_window_set_cursor (gtk_widget_get_window w) arrow-cursor)
+							      #f)
+							    #f #f)
+					  #f)
+	  (g_signal_connect_closure_by_id (GPOINTER drawer)
+					  (g_signal_lookup "leave_notify_event" (G_OBJECT_TYPE (G_OBJECT drawer)))
+					  0 (g_cclosure_new (lambda (w e d)
+							      (gdk_window_set_cursor (gtk_widget_get_window w) old-cursor)
+							      #f)
+							    #f #f)
+					  #f)
 	  editor))))
 
 (define (xe-redraw drawer)
@@ -296,7 +311,7 @@
 	 (gc (car (drawer 4)))
 	 (name (drawer 5))
 	 (len (and (list? cur-env) (length cur-env)))
-	 (get_realized (if with-gtk3 (*gtk* 'gtk_widget_get_realized) (lambda (w) #t))))
+	 (get_realized (*gtk* 'gtk_widget_get_realized)))
     (if (and (list? ax-pix)
 	     (list? cur-env)
 	     (if (provided? 'snd-motif)
@@ -356,7 +371,7 @@
 		    ;; *gtk* 
 		    (let ((lx #f)
 			  (ly #f)
-			  (cr ((*gtk* 'gdk_cairo_create) ((if with-gtk3 (*gtk* 'GDK_WINDOW) (*gtk* 'GDK_DRAWABLE)) wn)))
+			  (cr ((*gtk* 'gdk_cairo_create) ((*gtk* 'GDK_WINDOW) wn)))
 			  (size (widget-size ((*gtk* 'GTK_WIDGET) widget))))
 		      
 		      ((*gtk* 'cairo_push_group) cr)
