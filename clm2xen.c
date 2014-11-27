@@ -6507,7 +6507,7 @@ static Xen g_make_env_q_length(s7_scheme *sc, s7_pointer args)
   mus_error_handler_t *old_error_handler;
   int npts, v_len;
   Xen len, v;
- 
+
   v = Xen_car(args);
   if (!s7_is_float_vector(v))
     return(g_make_env(args));
@@ -19775,6 +19775,10 @@ static s7_pointer clm_make_temp_function(s7_scheme *sc, const char *name, s7_fun
 					 s7_pointer e1)
 {		
   s7_pointer fin;
+  /* s7_make_safe_function works here and elsewhere (but not for symbol accessors perhaps), but is
+   *   a no-op -- it is the base function that the optimizer checks for safety, not the chooser-related stuff.
+   *   Also, callgrind is seriously confused about hop_c_all_x -- ignore the bogus stats!
+   */
   fin = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
   s7_function_set_class(fin, base_f);
   s7_function_chooser_set_data(sc, fin, (void *)make_choices(mul_c, mul_s, e, mul_c1, mul_s1, e1));
@@ -21702,7 +21706,7 @@ static void mus_xen_init(void)
     clm_output_slot = s7_slot(s7, clm_output);
     clm_reverb_slot = s7_slot(s7, clm_reverb);
     out_any_2 = out_any_2_to_mus_xen;
-
+    /* these can't be safe functions */
     clm_output_accessor = s7_make_function(s7, "(set " S_output ")", g_clm_output_set, 2, 0, false, "called if " S_output " is set");
     s7_symbol_set_access(s7, s7_make_symbol(s7, S_output), clm_output_accessor);
 

@@ -6,13 +6,11 @@
 
 
 typedef long long int s7_Int;
-/* This sets the size of integers in Scheme and s7.c; s7_Int can be almost any (signed) integer type: 
- *    "int" is ok, but "short" is problematic -- lots of things assume s7_Int is at least 32 bits.
+/* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer.
  */
 
 typedef double s7_Double;
-/* similarly for doubles (reals in Scheme) -- only "double" works in C++, and
- *    integer-decode-float assumes s7_Double is double, as do all the homogenous float vector functions.
+/* similarly for Scheme reals; only "double" works in C++
  */
 
 /* s7 itself is based on the types and functions in this file, so the first place to look for examples
@@ -40,9 +38,7 @@ typedef double s7_Double;
   #define bool	int
   #define true	1
   #define false	0
-  /* this fallback code does not actually work -- perhaps "bool" is not an int? in gcc it's _Bool.
-   *    we need stdbool.h 
-   */
+  /* this fallback code does not actually work -- we need stdbool.h */
 #endif
 #endif
 #endif

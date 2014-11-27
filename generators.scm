@@ -2649,7 +2649,8 @@
    (cons 'mus-phase
 	 (dilambda
 	  (lambda (g) (mus-phase (g 'osc)))
-	  (lambda (g val) (set! (mus-phase (g 'osc)) val))))))
+	  (lambda (g val) (set! (mus-phase (g 'osc)) val))))
+   (cons 'mus-copy copy)))
 
 (defgenerator (r2k!cos
 	       :make-wrapper (lambda (g)
@@ -4717,32 +4718,33 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; and just for laughs... (almost anything would fit in this hack)
 (define adjustable-oscil-methods
-  (list
-   (cons 'mus-frequency
-	 (dilambda
-	  (lambda (g) (mus-frequency (g 'gen)))
-	  (lambda (g val) (set! (mus-frequency (g 'gen)) val))))
-   (cons 'mus-phase
-	 (dilambda
-	  (lambda (g) (mus-phase (g 'gen)))
-	  (lambda (g val) (set! (mus-phase (g 'gen)) val))))
-   (cons 'mus-scaler
-	 (dilambda
-	  (lambda (g) (g 'duty-factor))
-	  (lambda (g val)
-	    (set! (g 'duty-factor) val)
-	    (set! (g 'top) (- 1.0 val))
-	    (if (not (= val 0.0))
-		(set! (g 'scl) (/ val)))
-	    val)))
-   (cons 'copy 
-	 (lambda (g)
-	   (inlet :frequency (g 'frequency)
-		  :duty-factor (g 'duty-factor)
-		  :gen (mus-copy (g 'gen))
-		  :top (g 'top)
-		  :scl (g 'scl)
-		  :fm 0.0)))))
+  (let ((copy-func (lambda (g)
+		     (inlet :frequency (g 'frequency)
+			    :duty-factor (g 'duty-factor)
+			    :gen (mus-copy (g 'gen))
+			    :top (g 'top)
+			    :scl (g 'scl)
+			    :fm 0.0))))
+    (list
+     (cons 'mus-frequency
+	   (dilambda
+	    (lambda (g) (mus-frequency (g 'gen)))
+	    (lambda (g val) (set! (mus-frequency (g 'gen)) val))))
+     (cons 'mus-phase
+	   (dilambda
+	    (lambda (g) (mus-phase (g 'gen)))
+	    (lambda (g val) (set! (mus-phase (g 'gen)) val))))
+     (cons 'mus-scaler
+	   (dilambda
+	    (lambda (g) (g 'duty-factor))
+	    (lambda (g val)
+	      (set! (g 'duty-factor) val)
+	      (set! (g 'top) (- 1.0 val))
+	      (if (not (= val 0.0))
+		  (set! (g 'scl) (/ val)))
+	      val)))
+     (cons 'copy copy-func)
+     (cons 'mus-copy copy-func))))
 
   
 (defgenerator (adjustable-oscil 

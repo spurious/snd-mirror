@@ -611,7 +611,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS, 
       OP_SAFE_C_Q, HOP_SAFE_C_Q, OP_SAFE_C_SQ, HOP_SAFE_C_SQ, OP_SAFE_C_QS, HOP_SAFE_C_QS, OP_SAFE_C_QQ, HOP_SAFE_C_QQ, 
       OP_SAFE_C_CQ, HOP_SAFE_C_CQ, OP_SAFE_C_QC, HOP_SAFE_C_QC, 
-      OP_SAFE_C_SSS, HOP_SAFE_C_SSS, OP_SAFE_C_SCS, HOP_SAFE_C_SCS, OP_SAFE_C_SSC, HOP_SAFE_C_SSC, OP_SAFE_C_CSS, HOP_SAFE_C_CSS,
+      OP_SAFE_C_SSS, HOP_SAFE_C_SSS, OP_SAFE_C_SCS, HOP_SAFE_C_SCS, OP_SAFE_C_SSC, HOP_SAFE_C_SSC, OP_SAFE_C_CSS, HOP_SAFE_C_CSS, OP_SAFE_C_SCC, HOP_SAFE_C_SCC,
       OP_SAFE_C_ALL_S, HOP_SAFE_C_ALL_S, OP_SAFE_C_ALL_X, HOP_SAFE_C_ALL_X, OP_SAFE_C_SSA, HOP_SAFE_C_SSA, 
       OP_SAFE_C_CSA, HOP_SAFE_C_CSA, OP_SAFE_C_SCA, HOP_SAFE_C_SCA, OP_SAFE_C_CAS, HOP_SAFE_C_CAS,
       OP_SAFE_C_A, HOP_SAFE_C_A, OP_SAFE_C_AA, HOP_SAFE_C_AA, OP_SAFE_C_AAA, HOP_SAFE_C_AAA, OP_SAFE_C_AAAA, HOP_SAFE_C_AAAA, 
@@ -719,7 +719,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_ss", "h_safe_c_ss", "safe_c_sc", "h_safe_c_sc", "safe_c_cs", "h_safe_c_cs", 
       "safe_c_q", "h_safe_c_q", "safe_c_sq", "h_safe_c_sq", "safe_c_qs", "h_safe_c_qs", "safe_c_qq", "h_safe_c_qq", 
       "safe_c_cq", "h_safe_c_cq", "safe_c_qc", "h_safe_c_qc", 
-      "safe_c_sss", "h_safe_c_sss", "safe_c_scs", "h_safe_c_scs", "safe_c_ssc", "h_safe_c_ssc", "safe_c_css", "h_safe_c_css",
+      "safe_c_sss", "h_safe_c_sss", "safe_c_scs", "h_safe_c_scs", "safe_c_ssc", "h_safe_c_ssc", "safe_c_css", "h_safe_c_css", "safe_c_scc", "h_safe_c_scc",
       "safe_c_all_s", "h_safe_c_all_s", "safe_c_all_x", "h_safe_c_all_x", "safe_c_ssa", "h_safe_c_ssa", 
       "safe_c_csa", "h_safe_c_csa", "safe_c_sca", "h_safe_c_sca", "safe_c_cas", "h_safe_c_cas",
       "safe_c_a", "h_safe_c_a", "safe_c_aa", "h_safe_c_aa", "safe_c_aaa", "h_safe_c_aaa", "safe_c_aaaa", "h_safe_c_aaaa", 
@@ -8503,7 +8503,6 @@ static int integer_length(s7_Int a)
   if (a < I_16) return(8 + bits[a >> 8]);
   if (a < I_24) return(16 + bits[a >> 16]);
   if (a < I_32) return(24 + bits[a >> 24]);
-  /* this generates compiler warnings if s7_Int = int: how to make C happy? (we can't assume SIZEOF* is available) */
   if (a < I_40) return(32 + bits[a >> 32]);
   if (a < I_48) return(40 + bits[a >> 40]);
   if (a < I_56) return(48 + bits[a >> 48]);
@@ -9915,7 +9914,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
       
       if (int_part != 0) /* 0.<310 zeros here>1e310 for example --
 			  *   pow (via ipow) thinks it has to be too big, returns Nan,
-			  *   then Nan * 0 -> Nan and the NaN progogates
+			  *   then Nan * 0 -> Nan and the NaN propogates
 			  */
 	{
 	  if (int_len <= max_len)
@@ -18201,64 +18200,48 @@ static s7_pointer g_integer_length(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if WITH_GMP
-typedef struct decode_float_t {
-  union {
-    s7_Int integer_value;
-    s7_Double real_value;
-  } value;
-} decode_float_t;
-#endif
-
 static s7_pointer g_integer_decode_float(s7_scheme *sc, s7_pointer args)
 {
   #define H_integer_decode_float "(integer-decode-float x) returns a list containing the significand, exponent, and \
 sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
 
-  s7_Int ix;
+  /* no matter what s7_Double is, integer-decode-float acts as if the real argument is a C double */
+
+  typedef struct decode_float_t {
+    union {
+      long long int ix;
+      double fx;
+    } value;
+  } decode_float_t;
+
+ decode_float_t num;
   s7_pointer x;
   x = car(args);
-
-  /* frexp doesn't work in edge cases.  Since the double and long long int fields are equivalenced
-   *   in the num struct, we can get the actual bits of the double from the int.  The problem with doing this
-   *   is that bignums don't use that struct (and long doubles don't fit either).  Assume IEEE 754 and double = s7_Double.
-   * if (integer-decode-float x) -> '(sign mantissa exponent), then (* sign mantissa (expt 2 exponent)) -> x
-   *
-   * I think I won't try to support long double here because it is different in different versions of C (in gcc, it's
-   *   apparently 80-bit extended precision).  And float (as opposed to double) is never used anymore.
-   *   The next larger size is __float128 in gcc.
-   */
-  if (sizeof(s7_Double) != sizeof(double))
-    return(simple_out_of_range_error_prepackaged(sc, sc->INTEGER_DECODE_FLOAT, x, "s7_Double must be the same size as C double"));
 
   switch (type(x))
     {
     case T_REAL:
-      if (real(x) == 0.0)
-	return(list_3(sc, small_int(0), small_int(0), small_int(1)));
-      ix = integer(x);
+      num.value.fx = (double)real(x);
       break;
 
 #if WITH_GMP
     case T_BIG_REAL:
-      {
-	decode_float_t num;
-	num.value.real_value = number_to_double(sc, x, "integer-decode-float");
-	if ((is_NaN(num.value.real_value)) || (is_inf(num.value.real_value)))   /* (integer-decode-float (bignum "1e310")) */
-	  return(simple_out_of_range(sc, sc->INTEGER_DECODE_FLOAT, x, "a real that s7_Double can handle"));
-	ix = num.value.integer_value;
-	break;
-      }
+      num.value.fx = (double)number_to_double(sc, x, "integer-decode-float");
+      break;
 #endif
 
     default:
       check_method(sc, x, sc->INTEGER_DECODE_FLOAT, args);
       return(simple_wrong_type_argument_with_type(sc, sc->INTEGER_DECODE_FLOAT, x, make_string_wrapper(sc, "a non-rational real")));
     }
+  
+  if (num.value.fx == 0.0)
+    return(list_3(sc, small_int(0), small_int(0), small_int(1)));
+
   return(list_3(sc,
-		make_integer(sc, (s7_Int)((ix & 0xfffffffffffffLL) | 0x10000000000000LL)),
-		make_integer(sc, (s7_Int)(((ix & 0x7fffffffffffffffLL) >> 52) - 1023 - 52)),
-		make_integer(sc, ((ix & 0x8000000000000000LL) != 0) ? -1 : 1)));
+		make_integer(sc, (s7_Int)((num.value.ix & 0xfffffffffffffLL) | 0x10000000000000LL)),
+		make_integer(sc, (s7_Int)(((num.value.ix & 0x7fffffffffffffffLL) >> 52) - 1023 - 52)),
+		make_integer(sc, ((num.value.ix & 0x8000000000000000LL) != 0) ? -1 : 1)));
 }
 
 
@@ -28063,22 +28046,17 @@ s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b)
   return(p);
 }
 
-
+/* TODO: check if len is known and trigger ok (map/for-each) -- cons_unchecked?
+ * also check set-car style returns
+ */
 static s7_pointer copy_list(s7_scheme *sc, s7_pointer lst)
 {
-  s7_pointer p;
-  sc->w = sc->NIL;
-  for (p = lst; is_pair(p); p = cdr(p))
-    {
-      sc->w = cons(sc, car(p), sc->w);
-      p = cdr(p);
-      if (!is_pair(p)) break;
-      sc->w = cons_unchecked(sc, car(p), sc->w);
-      p = cdr(p);
-      if (!is_pair(p)) break;
-      sc->w = cons_unchecked(sc, car(p), sc->w);
-    }
-  return(safe_reverse_in_place(sc, sc->w));
+  s7_pointer p, tp, np;
+  if (!is_pair(lst)) return(sc->NIL);
+  tp = cons(sc, car(lst), sc->NIL);
+  for (p = cdr(lst), np = tp; is_pair(p); p = cdr(p), np = cdr(np))
+    cdr(np) = cons(sc, car(p), sc->NIL);
+  return(tp);
 }
 
 
@@ -28540,7 +28518,7 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument(sc, sc->SET_CAR, small_int(1), p, T_PAIR));
     }
   car(p) = cadr(args);
-  return(cadr(args));
+  return(car(p));
 }
 
 
@@ -28556,7 +28534,7 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument(sc, sc->SET_CDR, small_int(1), p, T_PAIR));
     }
   cdr(p) = cadr(args);
-  return(cadr(args));
+  return(cdr(p));
 }
 
 
@@ -45557,15 +45535,28 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer car_x, s7_pointer
 			  else
 			    {
 			      if (!is_symbol(cadddar_x))
-				set_optimize_data(car_x, hop + OP_SAFE_C_SSC);
+				{
+				  if (is_keyword(caddar_x))
+				    set_optimize_data(car_x, hop + OP_SAFE_C_SCC);
+				  else set_optimize_data(car_x, hop + OP_SAFE_C_SSC);
+				}
 			      else set_optimize_data(car_x, hop + OP_SAFE_C_SCS);
 			    }
 			}
 		      else 
 			{
-			  set_optimize_data(car_x, hop + OP_SAFE_C_AAA); /* fallback on all_x_c and s here -- a kludge */
-			  annotate_args(sc, cdr(car_x));
-			  set_arglist_length(car_x, small_int(3));
+			  if (is_symbol(cadar_x))
+			    {
+			      set_ecdr(cdr(car_x), caddar_x);
+			      set_fcdr(cdr(car_x), cadddar_x);
+			      set_optimize_data(car_x, hop + OP_SAFE_C_SCC);
+			    }
+			  else
+			    {
+			      set_optimize_data(car_x, hop + OP_SAFE_C_AAA); /* fallback on all_x_c and s here -- a kludge */
+			      annotate_args(sc, cdr(car_x));
+			      set_arglist_length(car_x, small_int(3));
+			    }
 			}
 		    }
 		}
@@ -53820,6 +53811,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      
 
+	    case OP_SAFE_C_SCC:
+	      if (!c_function_is_ok(sc, code)) break;
+	      
+	    case HOP_SAFE_C_SCC:
+	      {
+		/* (make-env E :length 100) */
+		s7_pointer args;
+		args = cdr(code);
+		
+		car(sc->T3_1) = find_symbol_checked(sc, car(args));
+		car(sc->T3_2) = ecdr(args);
+		car(sc->T3_3) = fcdr(args);
+		sc->value = c_call(code)(sc, sc->T3_1);
+		goto START;
+	      }
+	      
+
 	    case OP_SAFE_C_CSS:
 	      if (!c_function_is_ok(sc, code)) break;
 	      
@@ -54886,8 +54894,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		return(apply_list_error(sc, sc->args));
 	      if (needs_copied_args(sc->code))
 		{
-		  if (!is_null(sc->args))
-		    sc->args = copy_list(sc, sc->args);
+		  sc->args = copy_list(sc, sc->args);
 		  if (is_any_macro(sc->code))                   /* (apply mac '(3)) -> (apply mac '((mac 3))) */
 		    {                                           /* these always copy args (except c_macros, sigh) */
 		      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
@@ -68305,14 +68312,11 @@ s7_scheme *s7_init(void)
 #if (!WITH_PURE_S7)
       init_uppers();
 #endif
-      if (sizeof(s7_Double) >= 16)
-	float_format_g = "%.*Qg";       /* __float128 */
-      else
-	{
-	  if (sizeof(s7_Double) >= 10)
-	    float_format_g = "%.*Lg";   /* long double (80-bit precision, but is it 10 or 12 bytes?) */
-	  else float_format_g = "%.*g"; /* float and double */
-	}
+      /* sizeof(__float128) == sizeof(long double) so how to distinguish them for printf (L vs Q)? */
+      /* if (sizeof(s7_Double) >= 16) float_format_g = "%.*Qg"; */      /* __float128 */
+      if (sizeof(s7_Double) > 8)
+	float_format_g = "%.*Lg";   /* long double (80-bit precision?) */
+      else float_format_g = "%.*g"; /* float and double */
     }
 
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
@@ -69943,8 +69947,8 @@ int main(int argc, char **argv)
  * bench    42736 | 8752 | 4220 | 3506 3506 3539
  * lg             |      |      |      6497 6521
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6
- * t455|6     265 |   89 |  9   |       8.4  8.5
- * t816           |   71 | 70.6 | 38.0 31.8 29.8
+ * t455|6     265 |   89 |  9   |       8.4  8.4
+ * t816           |   71 | 70.6 | 38.0 31.8 29.6
  * calls      359 |  275 | 54   | 34.7 34.7 35.2
  *
  * --------------------------------------------------
@@ -69972,4 +69976,5 @@ int main(int argc, char **argv)
  * why not snd-g* -> snd-gtk?
  * if nogui, g_play in snd-dac.c only sends 1 buffer?
  * perhaps if let/env is large, display contents more carefully (for pretty-print?)
+ * safe_c_opsq_opsq_opsq for gen?
  */
