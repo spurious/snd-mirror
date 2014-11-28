@@ -9256,7 +9256,7 @@ void g_init_edits(void)
   Xen_define_safe_procedure(S_scale_channel,          g_scale_channel_w,                1, 5, 0, H_scale_channel);
   Xen_define_safe_procedure(S_normalize_channel,      g_normalize_channel_w,            1, 5, 0, H_normalize_channel);
 
-#if HAVE_SCHEME
+#if HAVE_SCHEME && (!DISABLE_DEPRECATED)
   s7_eval_c_string(s7, "(define vct->channel float-vector->channel)");
   s7_eval_c_string(s7, "(define channel->vct channel->float-vector)");
 #endif

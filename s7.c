@@ -28046,9 +28046,7 @@ s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b)
   return(p);
 }
 
-/* TODO: check if len is known and trigger ok (map/for-each) -- cons_unchecked?
- * also check set-car style returns
- */
+
 static s7_pointer copy_list(s7_scheme *sc, s7_pointer lst)
 {
   s7_pointer p, tp, np;
@@ -30232,19 +30230,28 @@ static s7_vdims_t *make_vdims(s7_scheme *sc, bool elements_allocated, int dims, 
   s7_Int offset = 1;
 
   v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
-  v->ndims = dims;
-  v->elements_allocated = elements_allocated;
-  v->dimensions_allocated = true;
   v->original = sc->F;
-  v->dims = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
-  v->offsets = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
-
-  for (i = 0; i < dims; i++)
-    v->dims[i] = dim_info[i];
-  for (i = v->ndims - 1; i >= 0; i--)
+  v->elements_allocated = elements_allocated;
+  v->ndims = dims;
+  if (dims > 1)
     {
-      v->offsets[i] = offset;
-      offset *= v->dims[i];
+      v->dimensions_allocated = true;
+      v->dims = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
+      v->offsets = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
+
+      for (i = 0; i < dims; i++)
+	v->dims[i] = dim_info[i];
+      for (i = v->ndims - 1; i >= 0; i--)
+	{
+	  v->offsets[i] = offset;
+	  offset *= v->dims[i];
+	}
+    }
+  else 
+    {
+      v->dimensions_allocated = false;
+      v->dims = NULL;
+      v->offsets = NULL;
     }
   return(v);
 }
@@ -30284,7 +30291,7 @@ s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *da
   vector_length(x) = len;
   if (dim_info)
     vector_dimension_info(x) = make_vdims(sc, free_data, dims, dim_info);
-  else vector_dimension_info(x) = NULL;     /* data won't be freed */
+  else vector_dimension_info(x) = NULL;
   add_vector(sc, x);
 
   return(x);
@@ -31822,21 +31829,21 @@ s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
   s7_pointer new_vect;
 
   len = vector_length(old_vect);
-  if (is_int_vector(old_vect))
+  if (is_float_vector(old_vect))
     {
       if (vector_rank(old_vect) > 1)
-	new_vect = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, old_vect)), small_int(0), sc->T));
-      else new_vect = make_vector_1(sc, len, NOT_FILLED, T_INT_VECTOR);
-      memcpy((void *)(int_vector_elements(new_vect)), (void *)(int_vector_elements(old_vect)), len * sizeof(s7_Int));
+	new_vect = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, old_vect)), real_zero, sc->T));
+      else new_vect = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR);
+      memcpy((void *)(float_vector_elements(new_vect)), (void *)(float_vector_elements(old_vect)), len * sizeof(s7_Double));
     }
   else
     {
-      if (is_float_vector(old_vect))
+      if (is_int_vector(old_vect))
 	{
 	  if (vector_rank(old_vect) > 1)
-	    new_vect = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, old_vect)), real_zero, sc->T));
-	  else new_vect = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR);
-	  memcpy((void *)(float_vector_elements(new_vect)), (void *)(float_vector_elements(old_vect)), len * sizeof(s7_Double));
+	    new_vect = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, old_vect)), small_int(0), sc->T));
+	  else new_vect = make_vector_1(sc, len, NOT_FILLED, T_INT_VECTOR);
+	  memcpy((void *)(int_vector_elements(new_vect)), (void *)(int_vector_elements(old_vect)), len * sizeof(s7_Int));
 	}
       else
 	{
@@ -69948,7 +69955,7 @@ int main(int argc, char **argv)
  * lg             |      |      |      6497 6521
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6
  * t455|6     265 |   89 |  9   |       8.4  8.4
- * t816           |   71 | 70.6 | 38.0 31.8 29.6
+ * t816           |   71 | 70.6 | 38.0 31.8 28.6
  * calls      359 |  275 | 54   | 34.7 34.7 35.2
  *
  * --------------------------------------------------
@@ -69977,4 +69984,8 @@ int main(int argc, char **argv)
  * if nogui, g_play in snd-dac.c only sends 1 buffer?
  * perhaps if let/env is large, display contents more carefully (for pretty-print?)
  * safe_c_opsq_opsq_opsq for gen?
+ * vct.c: relative-difference or maybe float-vector-peak-difference?
+ * check copy-list analogs via reverse-in-place
+ * check if len is known and trigger ok (map/for-each) -- cons_unchecked?
+ * also check set-car style returns
  */

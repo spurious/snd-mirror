@@ -329,10 +329,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
     ;; multiply x[0]*x[1]*x[2]
     (let ((data1 (make-float-vector (+ len 1))))
       (copy data data1 1)
-      (float-vector-multiply! data1 data)
-      (do ((i 0 (+ i 1)))
-	  ((= i len))
-	(float-vector-set! data1 i (abs (float-vector-ref data1 i))))
+      (float-vector-abs! (float-vector-multiply! data1 data))
       (float-vector-multiply! data (make-shared-vector data1 (list len) 1))
       (let ((amp1 (/ amp (float-vector-peak data))))
 	(float-vector->channel (float-vector-scale! data amp1) 0 len snd chn current-edit-position "spike")))))
@@ -2217,9 +2214,7 @@ is assumed to be outside -1.0 to 1.0."
     ;; count clipped portions
     (let ((in-clip #f)
 	  (clip-beg 0))
-      (do ((i 0 (+ i 1)))
-	  ((= i len))
-	(float-vector-set! data i (abs (float-vector-ref data i))))
+      (float-vector-abs! data)
       (do ((i 0 (+ i 1)))
 	  ((= i len))
 	(if (> (float-vector-ref data i) .9999)                    ; this sample is clipped

@@ -24,7 +24,7 @@
 
 
 (define* (snddiff-1 v0 v1 (maxdiff 0.0))
-  (let ((diff (float-vector-subtract! (copy v0) v1)))
+  (let ((diff (float-vector-subtract! (float-vector-copy v0) v1)))
     (if (<= (float-vector-peak diff) maxdiff)
 	'no-difference
 	(let ((diffs 0)
@@ -60,7 +60,7 @@
 	      (size (float-vector-size v1)))
 	  (float-vector-subtract! 
 	   (float-vector-move! v1 0 pos)            ; align new copy with original (todo: move doesn't clear trailing entries)
-	   (float-vector-scale! (copy v0) scl)) ; subtract original scaled to fit first none zero point
+	   (float-vector-scale! (float-vector-copy v0) scl)) ; subtract original scaled to fit first none zero point
 
 	  (if (< (float-vector-size v1) size)
 	      (unconvolve-1 v0 v1 (cons (list scl pos) impulse-response))
@@ -82,7 +82,7 @@
 	     (begin
 	       (float-vector-move! v0 0 trim)
 	       (float-vector-move! v1 0 trim)))
-	 (let ((result (unconvolve-1 v0 (copy v1) ())))
+	 (let ((result (unconvolve-1 v0 (float-vector-copy v1) ())))
 	   (if (pair? result)
 	       (list 'filter (reverse result))
 	       #f)))))

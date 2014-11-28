@@ -4006,7 +4006,7 @@ void g_init_mix(void)
 
   Xen_define_procedure(S_mix,                    g_mix_w,                    1, 6, 0, H_mix);
   Xen_define_procedure(S_mix_vct,                g_mix_vct_w,                1, 5, 0, H_mix_vct);
-#if HAVE_SCHEME
+#if HAVE_SCHEME && (!DISABLE_DEPRECATED)
   s7_eval_c_string(s7, "(define mix-vct mix-float-vector)");
 #endif
   Xen_define_procedure(S_mixes,                  g_mixes_w,                  0, 2, 0, H_mixes);

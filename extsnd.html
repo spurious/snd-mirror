@@ -553,7 +553,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#singerdoc">singer</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(singer_doc_tip)">Perry Cook's vocal-tract physical model</td></tr>
 
-<tr><td><a href="sndscm.html#sndolddoc">snd11|12|13|14.scm</a></td>
+<tr><td><a href="sndscm.html#sndolddoc">snd11|12|13|14|15.scm</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(sndold_doc_tip)">Backwards compatibility</td></tr>
 
 <tr><td><a href="sndscm.html#snddiffdoc">snddiff</a></td>
@@ -3824,6 +3824,16 @@ sets an element.  (vct's are applicable objects, so vct-ref can always be omitte
 </pre>
 
 <p>vct? returns #t if 'v' is a vct.
+</p>
+<div class="spacer"></div>
+
+
+<!-- vct-abs! -->
+<pre class="indented">
+<em class=def id="vctabs">vct-abs!</em> v
+</pre>
+
+<p>vct-abs! replaces each element of 'v' with its absolute value.
 </p>
 <div class="spacer"></div>
 

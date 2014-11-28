@@ -2521,8 +2521,9 @@ of a moving mark:\n\
   Xen_define_procedure(S_transform_to_integer, g_transform_to_integer_w, 1, 0, 0, H_transform_to_integer);
 
 #if HAVE_SCHEME
+#if (!DISABLE_DEPRECATED)
   s7_eval_c_string(s7, "(define transform->vct transform->float-vector)");
-
+#endif
   s7_symbol_set_access(s7, ss->log_freq_start_symbol, s7_make_function(s7, "[acc-" S_log_freq_start, acc_log_freq_start, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->show_selection_transform_symbol, s7_make_function(s7, "[acc-" S_show_selection_transform, acc_show_selection_transform, 2, 0, false, "accessor"));
 
