@@ -825,7 +825,7 @@ typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_A
 
 typedef enum {FILE_PORT, STRING_PORT, FUNCTION_PORT} port_type_t;
 
-typedef struct s7_port_t {
+typedef struct port_t {
   bool needs_free;
   FILE *file;
   char *filename;
@@ -846,7 +846,7 @@ typedef struct s7_port_t {
   s7_pointer (*read_sharp)(s7_scheme *sc, s7_pointer pt);                /* internal get-next-sharp-constant reader */
   s7_pointer (*read_line)(s7_scheme *sc, s7_pointer pt, bool eol_case);  /* function to display or write a string up to \n */
   void (*display)(s7_scheme *sc, const char *s, s7_pointer pt);
-} s7_port_t;
+} port_t;
 
 
 typedef struct c_proc_ext_t {
@@ -873,15 +873,15 @@ typedef struct c_proc_t {
 typedef struct {               /* call/cc */
   unsigned int stack_size, op_stack_loc, op_stack_size;
   int local_key;
-} s7_continuation_t;
+} continuation_t;
 
 
-typedef struct s7_vdims_t {
+typedef struct vdims_t {
   unsigned int ndims;
-  bool elements_allocated, dimensions_allocated;
+  bool elements_allocated, dimensions_allocated; /* these are allocated as bytes, not ints, so the struct size is 32 */
   s7_Int *dims, *offsets;
   s7_pointer original;
-} s7_vdims_t;
+} vdims_t;
 
 
 typedef struct c_object_t {
@@ -942,7 +942,7 @@ typedef struct s7_cell {
     } number;
 
     struct {
-      s7_port_t *port;
+      port_t *port;
       unsigned char *data;
       unsigned int size, point;        /* these limit the in-core portion of a string-port to 2^31 bytes */
       unsigned int line_number, file_number;
@@ -969,7 +969,7 @@ typedef struct s7_cell {
 	s7_Int *ints;
 	s7_Double *floats;
       } elements;
-      s7_vdims_t *dim_info;
+      vdims_t *dim_info;
       s7_pointer (*vget)(s7_scheme *sc, s7_pointer vec, s7_Int loc);
       s7_pointer (*vset)(s7_scheme *sc, s7_pointer vec, s7_Int loc, s7_pointer val);
     } vector;
@@ -1083,7 +1083,7 @@ typedef struct s7_cell {
     } c_obj;
     
     struct {
-      s7_continuation_t *continuation;
+      continuation_t *continuation;
       s7_pointer stack;
       s7_pointer *stack_start, *stack_end, *op_stack;
     } cwcc;
@@ -1116,8 +1116,8 @@ typedef struct s7_cell {
 typedef struct {
   s7_pointer *objs;
   int size, top, ref;
-  int *refs;
   bool has_hits;
+  int *refs;
 } shared_info;
 
 
@@ -1214,6 +1214,7 @@ struct s7_scheme {
   double default_rationalize_error, morally_equal_float_epsilon, hash_table_float_epsilon;
   s7_Int default_hash_table_length, initial_string_port_length;
   s7_pointer *op_names_saved;
+  vdims_t *wrap_only;
 
   char *typnam;
   int typnam_len;
@@ -1364,7 +1365,7 @@ struct s7_scheme {
   int *autoload_names_sizes;
   bool **autoloaded_already;
   int autoload_names_loc, autoload_names_top;
-  s7_port_t *port_heap;
+  port_t *port_heap;
 
   int format_depth;
   int slash_str_size;
@@ -3220,20 +3221,20 @@ static void mark_noop(s7_pointer p)
 /* ports can be alloc'd and freed at a frightening pace, so I think I'll make a special free_heap for them.
  */
 
-static s7_port_t *alloc_port(s7_scheme *sc)
+static port_t *alloc_port(s7_scheme *sc)
 {
   if (sc->port_heap)
     {
-      s7_port_t *p;
+      port_t *p;
       p = sc->port_heap;
-      sc->port_heap = (s7_port_t *)(p->next);
+      sc->port_heap = (port_t *)(p->next);
       return(p);
     }
-  return((s7_port_t *)calloc(1, sizeof(s7_port_t)));
+  return((port_t *)calloc(1, sizeof(port_t)));
 }
 
 
-static void free_port(s7_scheme *sc, s7_port_t *p)
+static void free_port(s7_scheme *sc, port_t *p)
 {
   p->next = (void *)(sc->port_heap);
   sc->port_heap = p;
@@ -3314,7 +3315,8 @@ static void sweep(s7_scheme *sc)
 		    }
 		  if (vector_elements_allocated(a))
 		    free(vector_elements(a));      /* I think this will work for any vector (int/float too) */
-		  free(vector_dimension_info(a));
+		  if (vector_dimension_info(a) != sc->wrap_only)
+		    free(vector_dimension_info(a));
 		}
 	      else
 		{
@@ -7303,7 +7305,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   loc = s7_stack_top(sc);
 
   NEW_CELL(sc, x);
-  continuation_data(x) = (s7_continuation_t *)calloc(1, sizeof(s7_continuation_t));
+  continuation_data(x) = (continuation_t *)calloc(1, sizeof(continuation_t));
   continuation_stack(x) = copy_stack(sc, sc->stack, s7_stack_top(sc));
   continuation_stack_size(x) = vector_length(continuation_stack(x));   /* copy_stack can return a smaller stack than the current one */
   continuation_stack_start(x) = vector_elements(continuation_stack(x));
@@ -22432,7 +22434,7 @@ static void make_standard_ports(s7_scheme *sc)
   x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   set_type(x, T_OUTPUT_PORT | T_IMMUTABLE);
-  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_port(x) = (port_t *)calloc(1, sizeof(port_t));
   port_type(x) = FILE_PORT;
   port_data(x) = NULL;
   port_is_closed(x) = false;
@@ -22453,7 +22455,7 @@ static void make_standard_ports(s7_scheme *sc)
   x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   set_type(x, T_OUTPUT_PORT | T_IMMUTABLE);
-  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_port(x) = (port_t *)calloc(1, sizeof(port_t));
   port_type(x) = FILE_PORT;
   port_data(x) = NULL;
   port_is_closed(x) = false;
@@ -22474,7 +22476,7 @@ static void make_standard_ports(s7_scheme *sc)
   x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   set_type(x, T_INPUT_PORT | T_IMMUTABLE);
-  port_port(x) = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_port(x) = (port_t *)calloc(1, sizeof(port_t));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_original_input_string(x) = sc->NIL;
@@ -30222,23 +30224,37 @@ s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len)
   return(make_vector_1(sc, len, FILLED, T_VECTOR));
 }
 
-
-static s7_vdims_t *make_vdims(s7_scheme *sc, bool elements_allocated, int dims, s7_Int *dim_info)
+static vdims_t *make_wrap_only(s7_scheme *sc)
 {
-  s7_vdims_t *v;
-  int i;
-  s7_Int offset = 1;
+  vdims_t *v;
+  v = (vdims_t *)malloc(sizeof(vdims_t));
+  v->original = sc->F;
+  v->elements_allocated = false;
+  v->ndims = 1;
+  v->dimensions_allocated = false;
+  v->dims = NULL;
+  v->offsets = NULL;
+  return(v);
+}
 
-  v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
+#define make_vdims(Sc, Alloc, Dims, Info) ((((Dims) == 1) && (!(Alloc))) ? sc->wrap_only : make_vdims_1(Sc, Alloc, Dims, Info))
+
+static vdims_t *make_vdims_1(s7_scheme *sc, bool elements_allocated, int dims, s7_Int *dim_info)
+{
+  vdims_t *v;
+  
+  v = (vdims_t *)malloc(sizeof(vdims_t));
   v->original = sc->F;
   v->elements_allocated = elements_allocated;
   v->ndims = dims;
   if (dims > 1)
     {
+      int i;
+      s7_Int offset = 1;
       v->dimensions_allocated = true;
       v->dims = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
       v->offsets = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
-
+      
       for (i = 0; i < dims; i++)
 	v->dims[i] = dim_info[i];
       for (i = v->ndims - 1; i >= 0; i--)
@@ -30958,7 +30974,7 @@ static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args)
 static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_dims, s7_Int index)
 {
   s7_pointer x;
-  s7_vdims_t *v;
+  vdims_t *v;
 
   /* (let ((v #2d((1 2) (3 4)))) (v 1)) 
    * (let ((v (make-vector '(2 3 4) 0))) (v 1 2))
@@ -30972,7 +30988,7 @@ static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_di
   vector_getter(x) = vector_getter(vect);
   vector_setter(x) = vector_setter(vect);
 
-  v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
+  v = (vdims_t *)malloc(sizeof(vdims_t));
   v->ndims = vector_ndims(vect) - skip_dims;
   v->dims = (s7_Int *)(vector_dimensions(vect) + skip_dims);
   v->offsets = (s7_Int *)(vector_offsets(vect) + skip_dims);
@@ -31008,7 +31024,7 @@ a vector that points to the same elements as the original-vector but with differ
    * this is most useful in generic functions -- they can still use (v n) as the accessor.
    */
   s7_pointer orig, dims, y, x;
-  s7_vdims_t *v;
+  vdims_t *v;
   int i;
   s7_Int new_len = 1, orig_len, offset = 0;
 
@@ -31052,7 +31068,7 @@ a vector that points to the same elements as the original-vector but with differ
 	(s7_integer(car(y)) < 0))
       return(s7_error(sc, sc->WRONG_TYPE_ARG, list_1(sc, make_string_wrapper(sc, "a list of integers that fits the original vector"))));
 
-  v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
+  v = (vdims_t *)malloc(sizeof(vdims_t));
   v->ndims = safe_list_length(sc, dims);
   v->dims = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
   v->offsets = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
@@ -31647,9 +31663,9 @@ or a real, the vector can only hold numbers of that type (s7_Int or s7_Double)."
       int i;
       s7_Int offset = 1;
       s7_pointer y;
-      s7_vdims_t *v;
+      vdims_t *v;
 
-      v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
+      v = (vdims_t *)malloc(sizeof(vdims_t));
       v->ndims = safe_list_length(sc, x);
       v->dims = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
       v->offsets = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
@@ -44891,7 +44907,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 {
   s7_pointer cadar_x, caddar_x;
   bool func_is_safe, func_is_c_function, func_is_closure;
-  /* fprintf(stderr, "opt func_2 %s %s %d %d\n", DISPLAY(func), DISPLAY_80(car_x), pairs, bad_pairs); */
+  /* fprintf(stderr, "opt func_2 %s %s, pairs: %d, bad pairs: %d, hop: %d\n", DISPLAY(func), DISPLAY_80(car_x), pairs, bad_pairs, hop); */
 
   func_is_closure = is_closure(func);
   if ((func_is_closure) &&
@@ -46248,19 +46264,26 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 	    if ((is_procedure(func)) ||
 		(is_c_function(func)) ||
 		(is_safe_procedure(func))) /* built-in applicable objects like vectors */
-	      /* return(optimize_function(sc, x, func, hop, e)); */
 	      {
 		int pairs = 0, symbols = 0, args = 0, bad_pairs = 0, quotes = 0, orig_hop;
 		s7_pointer p;
 		/* fprintf(stderr, "opt_func func %s %s %d %s\n", DISPLAY(func), DISPLAY_80(x), hop, DISPLAY(e)); */
 		
 		orig_hop = hop;
-		if (is_any_closure(func))      /* can't depend on ecdr here because it might not be global, or might be redefined locally */
+		/* if (is_global(caar_x)) fprintf(stderr, "%s is global\n", DISPLAY(caar_x)); */
+
+		if ((is_any_closure(func)) ||      /* can't depend on ecdr here because it might not be global, or might be redefined locally */
+		    ((!is_global(caar_x)) &&
+		     ((!is_slot(initial_slot(caar_x))) ||
+		      (slot_value(initial_slot(caar_x)) != func))))
 		  {
 		    /* (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a)) (f1 12))
 		     * (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a 1)) (f1 12))
 		     * and similar define* cases
 		     */
+
+		    /* if (!is_any_closure(func)) fprintf(stderr, "%s in %s is not global\n", DISPLAY(caar_x), DISPLAY(car_x)); */
+
 		    hop = 0;
 		    /* this is very tricky!  See s7test for some cases.  Basically, we need to protect a recursive call
 		     *   of the current function being optimized from being confused with some previous definition
@@ -46274,6 +46297,14 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		     *   offend me much.  Consider each a sort of reader macro until someone redefines it -- previous
 		     *   uses may not be affected because they might have been optimized away -- the result depends on the
 		     *   current optimizer.
+		     *
+		     * Another case (from K Matheussen): 
+		     *   (define (call-func func arg1 arg2) (define (call) (func arg1 arg2)) (call)) (call-func + 1 2.5) (call-func - 5 2)
+		     *   when we get here originally "func" is +, hop=1, but just checking for !is_global(caar_x) is
+		     *   not good enough -- if we load mockery.scm, nothing is global!
+		     *
+		     * TODO: this added business for is_global needs recheck throughout the optimizer (about a half-dozen cases)
+		     *   even better: fix the a_is_ok check somehow
 		     */
 		  }
 		/* but if we make a recursive call on a func, we've obviously already looked up that function, and
@@ -48448,7 +48479,7 @@ static s7_pointer check_define(s7_scheme *sc)
       if ((is_pair(cadr(sc->code))) &&               /* look for (define sym (lambda ...)) and treat it like (define (sym ...)...) */
 	  (((symbol_id(sc->LAMBDA) == 0) && (caadr(sc->code) == sc->LAMBDA)) ||
 	   ((symbol_id(sc->LAMBDA_STAR) == 0) && (caadr(sc->code) == sc->LAMBDA_STAR))))
-	/* not is_global here because that bit might not be set for initial symbols (why not??) */
+	/* not is_global here because that bit might not be set for initial symbols (why not? -- redef as method etc) */
 	optimize_lambda(sc, caadr(sc->code) == sc->LAMBDA, x, cadr(cadr(sc->code)), cddr(cadr(sc->code)));
     }
   else
@@ -68584,6 +68615,7 @@ s7_scheme *s7_init(void)
   sc->num_fdats = 8;
   sc->direct_str = s7_make_permanent_string(NULL);
   sc->undefined_identifier_warnings = false;
+  sc->wrap_only = make_wrap_only(sc);
 
   sc->rootlet = s7_make_vector(sc, 512);
   set_type(sc->rootlet, T_ENVIRONMENT);
@@ -69955,7 +69987,7 @@ int main(int argc, char **argv)
  * lg             |      |      |      6497 6521
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6
  * t455|6     265 |   89 |  9   |       8.4  8.4
- * t816           |   71 | 70.6 | 38.0 31.8 28.6
+ * t816           |   71 | 70.6 | 38.0 31.8 28.2
  * calls      359 |  275 | 54   | 34.7 34.7 35.2
  *
  * --------------------------------------------------
@@ -69983,9 +70015,8 @@ int main(int argc, char **argv)
  * why not snd-g* -> snd-gtk?
  * if nogui, g_play in snd-dac.c only sends 1 buffer?
  * perhaps if let/env is large, display contents more carefully (for pretty-print?)
- * safe_c_opsq_opsq_opsq for gen?
  * vct.c: relative-difference or maybe float-vector-peak-difference?
- * check copy-list analogs via reverse-in-place
- * check if len is known and trigger ok (map/for-each) -- cons_unchecked?
- * also check set-car style returns
+ * keyword counts as constant and symbol! -- is optimizer confused by this? (should it look for symbol-but-not-key?)
+ * a_is_ok: check global first? -- it does -- the tree walker is dumb
+ *   and if the hop=1 only if global, is that check needed later? -- if not global give up, can we use find_symbol_unchecked?
  */
