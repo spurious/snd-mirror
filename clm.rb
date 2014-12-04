@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 09/10/14 23:02:57
-# Changed: 14/11/13 03:00:05
+# Changed: 14/11/30 18:00:42
 
 # Ruby extensions:
 # 
@@ -64,6 +64,7 @@
 #  make_array(len, init, &body)
 #  Array#insert
 #  Float#step
+#  Numeric#to_c
 #  Range#step
 #  Enumerable#each_index
 #  Enumerable#zip
@@ -436,33 +437,24 @@ def with_silence(exception = StandardError)
   ret
 end
 
-include Math
-
-TWO_PI  = PI * 2.0 unless defined? TWO_PI
-HALF_PI = PI * 0.5 unless defined? HALF_PI
-
 # ruby19 moved complex.rb and rational.rb to C
 # (See ruby/Changelog Sun Mar 16 08:51:41 2008.)
-# FIXME
-# Thu Nov 18 01:26:45 CET 2010
-# with ruby19 and C Complex
-# val < 1.0 ==> Math::DomainError: Numerical argument is out of domain - "acosh"
-#unless defined? Complex
-with_silence do
-  # lib/complex.rb is deprecated
-  require "complex"
-end
-unless defined? Rational
+if defined? Complex
+  require "cmath"
+  include CMath
+else
   with_silence do
-    # warning: method redefined; discarding old numerator|denominator|gcd|lcm
-    require "rational"
+    # lib/complex.rb is deprecated
+    require "complex"
   end
+  include Math
 end
 
-# ruby19 moved Continuation to 'continuation'!
-# (See ruby/ChangeLog Tue Jan 20 16:17:12 2009.)
-unless defined? Kernel.callcc
-  require "continuation"
+unless defined? Rational
+  with_silence do
+    # lib/rational.rb is deprecated
+    require "rational"
+  end
 end
 
 unless provided?(:sndlib)
@@ -471,6 +463,9 @@ unless provided?(:sndlib)
     require "sndlib"
   end
 end
+
+TWO_PI  = PI * 2.0 unless defined? TWO_PI
+HALF_PI = PI * 0.5 unless defined? HALF_PI
 
 #
 # Backward compatibility aliases and constants (from sndXX.scm)
@@ -549,17 +544,28 @@ end
 # Foo     == 0
 # Bar     == 1
 # FOO_BAR == 2
-def enum(*names)
-  cap_alpha = ?A.kind_of?(String) ? ?A.sum : ?A
-  lit_alpha = ?a.kind_of?(String) ? ?a.sum : ?a
-  letter_diff = cap_alpha - lit_alpha
-  names.flatten.map_with_index do |name, i|
-    const_name = name.to_s
-    if const_name[0].between?(?a, ?z)
-      const_name[0] += letter_diff
+if ?a.kind_of?(String)
+  def enum(*names)
+    names.map_with_index do |name, i|
+      const_name = name.to_s
+      const_name[0] = const_name[0].capitalize
+      Object.const_set(const_name, i)
+      const_name
     end
-    Object.const_set(const_name, i)
-    const_name
+  end
+else
+  def enum(*names)
+    cap_alpha = ?A.kind_of?(String) ? ?A.sum : ?A
+    lit_alpha = ?a.kind_of?(String) ? ?a.sum : ?a
+    letter_diff = cap_alpha - lit_alpha
+    names.map_with_index do |name, i|
+      const_name = name.to_s
+      if const_name[0].between?(?a, ?z)
+        const_name[0] += letter_diff
+      end
+      Object.const_set(const_name, i)
+      const_name
+    end
   end
 end
 
@@ -1614,6 +1620,13 @@ class Numeric
   def negative?
     self < 0
   end
+
+  # According to Ruby's ChangeLog-2.0.0:
+  # Wed Nov 21 21:53:29 2012  Tadayoshi Funaba  <tadf@dotrb.org>
+  # * complex.c (nucomp_to_c): added.
+  def to_c
+    Complex(self)
+  end unless defined? 1.to_c
 end
 
 class Integer
@@ -2200,10 +2213,10 @@ def warning(*args)
   str = "Warning: " << verbose_message_string($VERBOSE, nil, *args)
   if provided? :snd
     snd_warning(str)
-    nil
   else
     clm_message(str)
   end
+  nil
 end
 
 def die(*args)
@@ -2241,6 +2254,7 @@ def clm_message(*args)
   else
     $stdout.print(msg, "\n")
   end
+  nil
 end
 
 # like clm_print(*args), in emacs it prepends msg with a comment sign
@@ -2327,20 +2341,20 @@ class Snd
         else
           clm_print("\n%s", msg)
         end
-        nil
       else
         $stdout.print(msg, "\n")
       end
+      nil
     end
     
     def warning(*args)
       if provided? :snd
         snd_warning(verbose_message_string($VERBOSE, nil, *args))
-        nil
       else
         args[0] = "Warning: " + String(args[0])
         Snd.display(verbose_message_string($VERBOSE, "# ", *args))
       end
+      nil
     end
 
     def die(*args)

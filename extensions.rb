@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 04/01/03 17:30:23
-# Changed: 14/11/14 08:17:03
+# Changed: 14/12/03 17:13:44
 
 # module Compatibility
 #  scan_sound_chans(beg, end, snd, edpos) do |y| ... end
@@ -1328,23 +1328,6 @@ SND defaults to the currently selected sound.")
           channels(s).times do |i|
             add_chan_to_selection.call(beg, len, s, i)
           end
-        end
-      end
-    end
-  end
-  
-  add_help(:delete_selection_and_smooth,
-           "delete_selection_and_smooth()  \
-Deletes the current selection and smooths the splice.")
-  def delete_selection_and_smooth
-    if selection?
-      beg = selection_position()
-      len = selection_framples()
-      all_chans_zipped.map do |snd, chn|
-        if selection_member?(snd, chn)
-          smooth_beg = [0, beg - 16].max
-          delete_samples(beg, len, snd, chn)
-          smooth_sound(smooth_beg, 32, snd, chn)
         end
       end
     end

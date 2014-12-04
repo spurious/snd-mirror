@@ -6864,10 +6864,10 @@ static Xen gxm_XmSetWMProtocolHooks(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen 
 XtPointer pre_closure, XtCallbackProc posthook, XtPointer post_closure) A VendorShell function that allows preactions and postactions \
 to be executed when a protocol message is received from MWM"
   Xen descr1, descr2, wm_atom;
-  Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmSetProtocolHooks", "Widget");
-  Xen_check_type(Xen_is_Atom(arg2), arg2, 2, "XmSetProtocolHooks", "Atom");
-  Xen_check_type(Xen_is_procedure(arg3) && (Xen_is_aritable(arg3, 3)), arg3, 3, "XmSetProtocolHooks", "(XtCallbackProc widget data callb)");
-  Xen_check_type(Xen_is_procedure(arg5) && (Xen_is_aritable(arg5, 3)), arg5, 5, "XmSetProtocolHooks", "(XtCallbackProc widget data callb)");
+  Xen_check_type(Xen_is_Widget(arg1), arg1, 1, "XmSetWMProtocolHooks", "Widget");
+  Xen_check_type(Xen_is_Atom(arg2), arg2, 2, "XmSetWMProtocolHooks", "Atom");
+  Xen_check_type(Xen_is_procedure(arg3) && (Xen_is_aritable(arg3, 3)), arg3, 3, "XmSetWMProtocolHooks", "(XtCallbackProc widget data callb)");
+  Xen_check_type(Xen_is_procedure(arg5) && (Xen_is_aritable(arg5, 3)), arg5, 5, "XmSetWMProtocolHooks", "(XtCallbackProc widget data callb)");
   wm_atom = C_to_Xen_Atom(XInternAtom(XtDisplay(Xen_to_C_Widget(arg1)), "WM_PROTOCOLS", false));
   descr1 = C_to_Xen_XM_ProtocolHook(arg3, arg4, arg2, wm_atom);
   descr2 = C_to_Xen_XM_ProtocolHook(arg5, arg6, arg2, wm_atom);
@@ -20781,6 +20781,7 @@ Xen_wrap_3_args(gxm_XmDeactivateProtocol_w, gxm_XmDeactivateProtocol)
 Xen_wrap_2_args(gxm_XmActivateWMProtocol_w, gxm_XmActivateWMProtocol)
 Xen_wrap_2_args(gxm_XmDeactivateWMProtocol_w, gxm_XmDeactivateWMProtocol)
 Xen_wrap_7_args(gxm_XmSetProtocolHooks_w, gxm_XmSetProtocolHooks)
+Xen_wrap_6_args(gxm_XmSetWMProtocolHooks_w, gxm_XmSetWMProtocolHooks)
 Xen_wrap_4_optional_args(gxm_XmCreateCascadeButton_w, gxm_XmCreateCascadeButton)
 Xen_wrap_2_args(gxm_XmCascadeButtonHighlight_w, gxm_XmCascadeButtonHighlight)
 Xen_wrap_4_optional_args(gxm_XmCreatePushButtonGadget_w, gxm_XmCreatePushButtonGadget)
@@ -22342,6 +22343,7 @@ static void define_procedures(void)
   XM_define_procedure(XmActivateWMProtocol, gxm_XmActivateWMProtocol_w, 2, 0, 0, H_XmActivateWMProtocol);
   XM_define_procedure(XmDeactivateWMProtocol, gxm_XmDeactivateWMProtocol_w, 2, 0, 0, H_XmDeactivateWMProtocol);
   XM_define_procedure(XmSetProtocolHooks, gxm_XmSetProtocolHooks_w, 7, 0, 0, H_XmSetProtocolHooks);
+  XM_define_procedure(XmSetWMProtocolHooks, gxm_XmSetWMProtocolHooks_w, 6, 0, 0, H_XmSetWMProtocolHooks);
   XM_define_procedure(XmCreateCascadeButton, gxm_XmCreateCascadeButton_w, 3, 1, 0, H_XmCreateCascadeButton);
   XM_define_procedure(XmCascadeButtonHighlight, gxm_XmCascadeButtonHighlight_w, 2, 0, 0, H_XmCascadeButtonHighlight);
   XM_define_procedure(XmCreatePushButtonGadget, gxm_XmCreatePushButtonGadget_w, 3, 1, 0, H_XmCreatePushButtonGadget);

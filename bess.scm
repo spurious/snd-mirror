@@ -219,7 +219,7 @@
 	  (let* ((bufsize 256)
 		 (srate 22050)
 		 (work-proc #f)
-		 (data (make-float-vector bufsize 0.0))
+		 ;(data (make-float-vector bufsize 0.0))
 		 (port (mus-audio-open-output mus-audio-default srate 1 mus-lshort (* bufsize 2))))
 	    (if (< port 0) 
 		(format #t "can't open DAC!"))

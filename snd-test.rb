@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 05/02/18 10:18:34
-# Changed: 14/11/23 06:16:44
+# Changed: 14/12/04 01:44:26
 
 # Commentary:
 #
@@ -23,10 +23,6 @@
 # $VERBOSE = true
 # $DEBUG   = true
 
-# (ENV["RUBYLIB"] or $HOME + "/share/snd").split(/:/).each do |f|
-#   $LOAD_PATH.unshift(f)
-# end
-
 $original_save_dir       = set_save_dir(ENV["TMPDIR"])
 $original_temp_dir       = set_temp_dir(save_dir)
 $info_array_print_length = 4
@@ -38,9 +34,7 @@ $with_big_file           = true
 # $bigtest_08            = true
 # $tests                 = 2
 
-def bye(n = 0)
-  exit(n)
-end
+alias bye exit
 =end
 
 #
@@ -715,7 +709,7 @@ def with_file(file, verbose = $DEBUG, &body)
     body.call(full_name)
   else
     if verbose
-      snd_info("%s missing?", full_name)
+      snd_display_prev_caller("%s missing?", full_name)
     end
   end
 end
@@ -4579,7 +4573,6 @@ def test_04_08
                "file name with space readin")
   close_sound(ind)
   delete_files("test space.snd", "test space.marks")
-  # XXX: S7 specific tests skipped
 end
 
 def test_04
@@ -12275,15 +12268,15 @@ def test_08_00
     end
     10.times do
       val = mus_random(1.0)
-      if fneq(res1 = polynomial(lv7, val), res2 = cosh(7.0 * acosh(val)))
-        snd_display("ccosh cheb 7 %s: %s %s?", val, res1, res2)
-      end
-      if fneq(res1 = polynomial(lv7, val), res2 = cos(7.0 * acos(val)))
-        snd_display("cos cheb 7 %s: %s %s?", val, res1, res2)
-      end
-      if fneq(res1 = polynomial(lv8, val), res2 = sin(7.0 * acos(val)) / sin(acos(val)))
-        snd_display("acos cheb 7 %s: %s %s?", val, res1, res2)
-      end
+      res = polynomial(lv7, val)
+      req = cosh(7.0 * acosh(val)).to_f
+      snd_test_neq(res, req, "ccosh cheb 7 %s", val)
+      res = polynomial(lv7, val)
+      req = cos(7.0 * acos(val))
+      snd_test_neq(res, req, "cos cheb 7 %s", val)
+      res = polynomial(lv8, val)
+      req = sin(7.0 * acos(val)) / sin(acos(val))
+      snd_test_neq(res, req, "acos cheb 7 %s", val)
     end
   end
   # 
@@ -12508,7 +12501,7 @@ def test_08_00
   err = 0.0
   x = -10.0
   2000.times do |i|
-    diff = (Math.cos(x) - new_cos.call(x)).abs
+    diff = (cos(x) - new_cos.call(x)).abs
     if diff > err
       err = diff
     end
@@ -14422,8 +14415,6 @@ def test_08_05
     snd_display("bs rough spectrum: %s?", sp)
   end
   undo_edit
-  #
-  # XXX: analog_filter_tests without gsl okay?
   #
   analog_filter_tests
   #
@@ -24203,9 +24194,9 @@ end
 
 def test_15_00
   snds = match_sound_files do |file|
-    File.exist?(file) and # for $tests > 1
-      mus_sound_header_type(file) != Mus_raw and
-      mus_sound_chans(file) == 1
+    File.exist?(file) and              # for $tests > 1
+    mus_sound_header_type(file) != Mus_raw and
+    mus_sound_chans(file) == 1
   end
   if snds.length > 0
     obi = open_sound(snds.first)
@@ -24213,34 +24204,38 @@ def test_15_00
       snd_display("all_chans (1): %s?", all_chans)
     end
     snds1 = match_sound_files do |file|
-      File.exist?(file) and # for $tests > 1
-        mus_sound_chans(file) == 2
+      File.exist?(file) and            # for $tests > 1
+      mus_sound_chans(file) == 2
     end
     if snds1.length > 0
       s2i = open_sound(snds1.first)
-      if all_chans != [[obi, s2i, s2i], [0, 0, 1]] and all_chans != [[s2i, s2i, obi], [0, 1, 0]]
-        snd_display("all_chans (2): %s?", all_chans)
+      res = all_chans
+      req1 = [[obi, s2i, s2i], [0, 0, 1]]
+      req2 = [[s2i, s2i, obi], [0, 1, 0]]
+      if res != req1 and res != req2
+        snd_test_neq(res, req1, "all_chans (2a)")
+        snd_test_neq(res, req2, "all_chans (2b)")
       end
-      if finfo("oboe.snd") != "oboe.snd: chans: 1, srate: 22050, Sun/Next, big endian short (16 bits), len: 2.305"
-        snd_display("finfo: %s?", finfo("oboe.snd"))
-      end
+      res = finfo("oboe.snd")
+      req = "oboe.snd: chans: 1, srate: 22050, Sun/Next, big endian short (16 bits), len: 2.305"
+      snd_test_neq(res, req, "finfo")
       close_sound(s2i)
     else
       snd_display("No sound file found for s2i: %s", snds1)
     end
     close_sound(obi)
   else
-    snd_display("No sound file found obi: %s", snds)
+    snd_display("No sound file found obi: %p", snds)
   end
-  if all_chans != [[], []]
-    snd_display("all_chans (3): %s?", all_chans)
-  end
+  res = all_chans
+  req = [[], []]
+  snd_test_neq(res, req, "all_chans(0) (3)")
   obi = open_sound("oboe.snd")
   set_cursor(1000, obi)
-  if locate_zero(0.001) != 1050
-    snd_display("locate_zero: %s?", locate_zero(0.001))
+  snd_test_neq(locate_zero(0.001), 1050, "locate_zero")
+  $graph_hook.add_hook!("auto_dot") do |snd, chn, y0, y1|
+    auto_dot(snd, chn, y0, y1)
   end
-  $graph_hook.add_hook!("auto_dot") do |snd, chn, y0, y1| auto_dot(snd, chn, y0, y1) end
   $graph_hook.add_hook!("superimpose_ffts") do |snd, chn, y0, y1|
     superimpose_ffts(snd, chn, y0, y1)
   end
@@ -24248,14 +24243,12 @@ def test_15_00
   update_graphs
   # 
   snds = match_sound_files do |file|
-    File.exist?(file) and # for $tests > 1
-      mus_sound_chans(file) == 2
+    File.exist?(file) and              # for $tests > 1
+    mus_sound_chans(file) == 2
   end
   if snds.length > 0
     s2i = open_sound(snds.first)
-    if channels(s2i) != 2
-      snd_display("match 2 got %s with %s chans", short_file_name(s2i), channels(s2i))
-    end
+    snd_test_neq(channels(s2i), 2, "match 2 got %s", short_file_name(s2i))
     update_graphs
     $graph_hook.remove_hook!("auto_dot")
     $graph_hook.remove_hook!("superimpose_ffts")
@@ -24263,79 +24256,101 @@ def test_15_00
     select_sound(obi)
     m1 = add_mark(100, obi, 0)
     first_mark_in_window_at_left
-    if (res = left_sample(obi, 0) - 100).abs > 1
-      snd_display("first_mark_in_window_at_left: %s %s?", res, mark_sample(m1))
-    end
+    res = left_sample(obi, 0) - 100
+    snd_test_gt(res, 1, "first_mark_in_window_at_left %s", mark_sample(m1))
     delete_mark(m1)
     close_sound(s2i)
   else
-    snd_display("No sound file found: %s", snds)
+    $graph_hook.remove_hook!("auto_dot")
+    $graph_hook.remove_hook!("superimpose_ffts")
+    snd_display("No sound file found: %p", snds)
   end
   safe_make_selection(1000, 2000, obi)
-  unless selection?
-    make_selection(1000, 2000, obi, 0)
-  end
   delete_selection_and_smooth
-  if (res = edit_fragment(0, obi, 0)) != ["", "init", 0, 50828]
-    snd_display("edit_fragment (0): %s?", res)
-  end
-  if (res = edit_fragment(1, obi, 0)) != ["delete_samples(1000, 1001", "delete", 1000, 1001]
-    snd_display("edit_fragment (1): %s?", res)
-  end
-  if (res = edit_fragment(2, obi, 0)) != ["delete_selection_and_smooth(", "set", 968, 64]
-    snd_display("edit_fragment (2): %s?", res)
-  end
+  res = edit_fragment(0, obi, 0)
+  req = ["", "init", 0, 50828]
+  snd_test_neq(res, req, "edit_fragment (0)")
+  res = edit_fragment(1, obi, 0)
+  req = ["delete_samples(1000, 1001", "delete", 1000, 1001]
+  snd_test_neq(res, req, "edit_fragment (1)")
+  res = edit_fragment(2, obi, 0)
+  req = ["delete-selection-and-smooth", "set", 968, 64]
+  snd_test_neq(res, req, "edit_fragment (2)")
   #
   maxa = maxamp(obi)
   normalized_mix("pistol.snd", 1000, 0, obi, 0)
   nmaxa = maxamp(obi)
-  if fneq(maxa, nmaxa)
-    snd_display("normalized_mix: %s %s?", maxa, nmaxa)
-  end
+  snd_test_neq(nmaxa, maxa, "normalized_mix")
   revert_sound(obi)
   snds = match_sound_files do |file|
-    File.exist?(file) and # for $tests > 1
-      mus_sound_chans(file) == 2 and
-      mus_sound_framples(file) > 1000
+    File.exist?(file) and              # for $tests > 1
+    mus_sound_chans(file) == 2 and
+    mus_sound_framples(file) > 1000
   end
   if snds.length > 0
     s2i = open_sound(snds.first)
-    if channels(s2i) != 2
-      snd_display("match_sound_files: 2+1000 got %s with %s chans?",
-                  short_file_name(s2i), channels(s2i))
-    end
+    res = channels(s2i)
+    snd_test_neq(res, 2,
+      "match_sound_files: 2+1000 got %s with", short_file_name(s2i))
     o1 = sample(1000, obi, 0)
     s1 = sample(1000, s2i, 0)
     s2 = sample(1000, s2i, 1)
-    do_all_chans("double all samples") do |val| (val ? (2.0 * val) : false) end
+    do_all_chans("double all samples") do |val|
+      (val ? (2.0 * val) : false)
+    end
     o11 = sample(1000, obi, 0)
     s11 = sample(1000, s2i, 0)
     s21 = sample(1000, s2i, 1)
-    if fneq(2.0 * o1, o11) or fneq(2.0 * s1, s11) or fneq(2.0 * s2, s21)
-      snd_display("do_all_chans: %s?", [o1, s1, s2, o11, s11, s21])
+    reso1 = 2.0 * o1
+    ress1 = 2.0 * s1
+    ress2 = 2.0 * s2
+    if fneq(reso1, o11) or fneq(ress1, s11) or fneq(ress2, s21)
+      snd_test_neq(reso1, o11, "do_all_chans (a)")
+      snd_test_neq(ress1, s11, "do_all_chans (b)")
+      snd_test_neq(ress2, s21, "do_all_chans (c)")
     end
     update_graphs
     m1 = maxamp(obi, 0)
     m2 = maxamp(s2i, 0)
     m3 = maxamp(s2i, 1)
-    mc = [[obi, 0], [s2i, 0], [s2i, 1]].map do |snd, chn| maxamp(snd, chn) end
+    mc = [[obi, 0], [s2i, 0], [s2i, 1]].map do |snd, chn|
+      maxamp(snd, chn)
+    end
     if fneq(m1, mc[0]) or fneq(m2, mc[1]) or fneq(m3, mc[2])
-      snd_display("map maxamp: %s %s %s %s?", m1, m2, m3, mc)
+      snd_test_neq(m1, mc[0], "map maxamp (a)")
+      snd_test_neq(m2, mc[1], "map maxamp (b)")
+      snd_test_neq(m3, mc[2], "map maxamp (c)")
     end
     set_sync(1, obi)
     set_sync(1, s2i)
-    do_chans("*2") do |val| (val ? (2.0 * val) : false) end
-    mc1 = [[obi, 0], [s2i, 0], [s2i, 1]].map do |snd, chn| maxamp(snd, chn) end
-    if fneq(2.0 * m1, mc1[0]) or fneq(2.0 * m2, mc1[1]) or fneq(2.0 * m3, mc1[2])
-      snd_display("do_chans: %s %s?", mc, mc1)
+    do_chans("*2") do |val|
+      (val ? (2.0 * val) : false)
+    end
+    mc1 = [[obi, 0], [s2i, 0], [s2i, 1]].map do |snd, chn|
+      maxamp(snd, chn)
+    end
+    resm1 = 2.0 * m1
+    resm2 = 2.0 * m2
+    resm3 = 2.0 * m3
+    if fneq(resm1, mc1[0]) or fneq(resm2, mc1[1]) or fneq(resm3, mc1[2])
+      snd_test_neq(resm1, mc1[0], "do_chans (a)")
+      snd_test_neq(resm2, mc1[1], "do_chans (b)")
+      snd_test_neq(resm3, mc1[2], "do_chans (c)")
     end
     set_sync(0, obi)
     set_sync(0, s2i)
     select_sound(s2i)
-    do_sound_chans("/2") do |val| (val ? (0.5 * val) : false) end
-    mc2 = [[obi, 0], [s2i, 0], [s2i, 1]].map do |snd, chn| maxamp(snd, chn) end
-    if fneq(2.0 * m1, mc2[0]) or fneq(m2, mc2[1]) or fneq(m3, mc2[2])
-      snd_display("do_sound_chans: %s %s %s?", mc, mc1, mc2)
+    do_sound_chans("/2") do |val|
+      (val ? (0.5 * val) : false)
+    end
+    mc2 = [[obi, 0], [s2i, 0], [s2i, 1]].map do |snd, chn|
+      maxamp(snd, chn)
+    end
+    m1 *= 2.0
+    if fneq(m1, mc2[0]) or fneq(m2, mc2[1]) or fneq(m3, mc2[2])
+      snd_test_neq(m1, mc2[0], "do_sound_chans (a)")
+      snd_test_neq(m2, mc2[1], "do_sound_chans (b)")
+      snd_test_neq(m3, mc2[2], "do_sound_chans (c)")
     end
     if every_sample? do |val| val > 0.5 end
       snd_display("every_sample? (0)?")
@@ -24344,8 +24359,8 @@ def test_15_00
       snd_display("every_sample? (1)?")
     end
     select_sound(obi)
-    bins = sort_samples(32)
-    snd_test_neq(bins[1], 4504, "sort_samples")
+    res = sort_samples(32)[1]
+    snd_test_neq(res, 4504, "sort_samples")
     revert_sound(s2i)
     revert_sound(obi)
     set_sync(3, obi)
@@ -24361,19 +24376,33 @@ def test_15_00
     place_sound(obi, s2i, 45.0)
     s31 = sample(half_way, s2i, 0)
     s32 = sample(half_way, s2i, 1)
-    if fneq(s1 + 0.5 * o1, s21) or fneq(s2 + 0.5 * o1, s22) or fneq(s21, s31) or fneq(s22, s32)
-      snd_display("place_soundL %s?", [o1, s1, s2, s21, s22, s31, s32])
+    res1 = s1 + 0.5 * o1
+    res2 = s2 + 0.5 * o1
+    if fneq(res1, s21) or fneq(res2, s22) or fneq(s21, s31) or fneq(s22, s32)
+      snd_test_neq(res1, s21, "place_sound (a)")
+      snd_test_neq(res2, s22, "place_sound (b)")
+      snd_test_neq(s21, s31, "place_sound (c)")
+      snd_test_neq(s22, s32, "place_sound (d)")
     end
     revert_sound(s2i)
     revert_sound(obi)
     set_sync(0, obi)
     set_sync(0, s2i)
-    if fneq(res1 = compand.call(0.0), 0.0) or
-        fneq(res2 = compand.call(1.0), 1.0) or
-        fneq(res3 = compand.call(0.1), 0.2) or
-        fneq(res4 = compand.call(0.99), 0.997) or
-        fneq(res5 = compand.call(0.95), 0.984)
-      snd_display("compand: %s?", [res1, res2, res3, res4, res5])
+    res1 = compand.call(0.0)
+    res2 = compand.call(1.0)
+    res3 = compand.call(0.1)
+    res4 = compand.call(0.99)
+    res5 = compand.call(0.95)
+    if fneq(res1, 0.0) or
+       fneq(res2, 1.0) or
+       fneq(res3, 0.2) or
+       fneq(res4, 0.997) or
+       fneq(res5, 0.984)
+      snd_test_neq(res1, 0.0, "compand (a)")
+      snd_test_neq(res2, 1.0, "compand (b)")
+      snd_test_neq(res3, 0.2, "compand (c)")
+      snd_test_neq(res4, 0.997, "compand (d)")
+      snd_test_neq(res5, 0.984, "compand (e)")
     end
     close_sound(obi)
     revert_sound(s2i)
@@ -24387,25 +24416,28 @@ def test_15_00
       Snd.sounds.each do |snd|
         channels(snd).times do |chn|
           if selection_member?(snd, chn)
-            snd_display("%s[%s] at %s?", short_file_name(snd), chn, selection_position(snd, chn))
+            snd_display("%s[%s] at %s?",
+              short_file_name(snd), chn, selection_position(snd, chn))
           end
         end
       end
     end
-    if selection_srate != srate(s2i)
-      snd_display("selection_srate: %s %s?", selection_srate, srate(s2i))
-    end
+    res = selection_srate
+    req = srate(s2i)
+    snd_test_neq(res, req, "selection_srate")
     if selection_chans == 2
       swap_selection_channels
-      if fneq(s1, sample(1000, s2i, 1)) or fneq(s2, sample(1000, s2i, 0))
-        snd_display("swap_selection_channels: %s?",
-                    [s1, s2, sample(1000, s2i, 1), sample(1000, s2i, 0)])
+      res1 = sample(1000, s2i, 1)
+      res2 = sample(1000, s2i, 0)
+      if fneq(res1, s1) or fneq(res2, s2)
+        snd_test_neq(res1, s1, "swap_selection_channels (a)")
+        snd_test_neq(res2, s2, "swap_selection_channels (b)")
       end
     end
     revert_sound(s2i)
     close_sound(s2i)
   else
-    snd_display("No sound file found s2i: %s", snds)
+    snd_display("No sound file found s2i: %p", snds)
   end
   #
   obi = open_sound("oboe.snd")
@@ -33396,41 +33428,47 @@ def test_23_03
   set_default_output_srate(22050)
   with_sound(:channels, 2) do
     fullmix("pistol.snd")
-    fullmix("oboe.snd", 1, 2, 0, [[0.1, make_env([0, 0, 1, 1], :duration, 2, :scaler, 0.5)]])
+    fullmix("oboe.snd", 1, 2, 0,
+            [[0.1, make_env([0, 0, 1, 1], :duration, 2, :scaler, 0.5)]])
   end
   if sound?(ind = find_sound("test.snd"))
     close_sound(ind)
   end
   with_sound(:channels, 2) do
-    fullmix("4.aiff", 0.0, 0.1, 36.4, [[0.0, 0.0], [0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
+    fullmix("4.aiff", 0.0, 0.1, 36.4,
+            [[0.0, 0.0], [0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
   end
   if sound?(ind = find_sound("test.snd"))
     snd_test_neq(maxamp(), 0.8865, "4->2(0) fullmix")
     close_sound(ind)
   end
   with_sound(:channels, 1) do
-    fullmix("4.aiff", 0.0, 0.1, 36.4, [[1.0], [0.0], [0.0], [0.0]])
+    fullmix("4.aiff", 0.0, 0.1, 36.4,
+            [[1.0], [0.0], [0.0], [0.0]])
   end
   if sound?(ind = find_sound("test.snd"))
     snd_test_neq(maxamp(), 0.221649169921875, "4->1(0) fullmix")
     close_sound(ind)
   end
   with_sound(:channels, 1) do
-    fullmix("4.aiff", 0.0, 0.1, 36.4, [[0.0], [1.0], [0.0], [0.0]])
+    fullmix("4.aiff", 0.0, 0.1, 36.4,
+            [[0.0], [1.0], [0.0], [0.0]])
   end
   if sound?(ind = find_sound("test.snd"))
     snd_test_neq(maxamp(), 0.44329833984375, "4->1(1) fullmix")
     close_sound(ind)
   end
   with_sound(:channels, 1) do
-    fullmix("4.aiff", 0.0, 0.1, 36.4, [[0.0], [0.0], [1.0], [0.0]])
+    fullmix("4.aiff", 0.0, 0.1, 36.4,
+            [[0.0], [0.0], [1.0], [0.0]])
   end
   if sound?(ind = find_sound("test.snd"))
     snd_test_neq(maxamp(), 0.664947509765625, "4->1(2) fullmix")
     close_sound(ind)
   end
   with_sound(:channels, 1) do
-    fullmix("4.aiff", 0.0, 0.1, 36.4, [[0.0], [0.0], [0.0], [1.0]])
+    fullmix("4.aiff", 0.0, 0.1, 36.4,
+            [[0.0], [0.0], [0.0], [1.0]])
   end
   if sound?(ind = find_sound("test.snd"))
     snd_test_neq(maxamp(), 0.8865966796875, "4->1(3) fullmix")
@@ -33438,31 +33476,43 @@ def test_23_03
   end
   with_sound(:channels, 2) do
     fullmix("4.aiff", 0.0, 0.1, 36.4, 
-      [[0.0, 0.0], [0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
+            [[0.0, 0.0], [0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
   end
   if sound?(ind = find_sound("test.snd"))
-    snd_test_neq(maxamp(), 0.8865, "4->2(0) fullmix")
+    mxs = maxamp(ind, true)
+    req1 = 0.664947509765625
+    req2 = 0.8865966796875
+    if fneq(mxs[0], req1) or fneq(mxs[1], req2)
+      snd_test_neq(mxs[0], req1, "4->2(1a) fullmix")
+      snd_test_neq(mxs[1], req2, "4->2(1b) fullmix")
+    end
     close_sound(ind)
   end
   with_sound(:channels, 2) do
-    fullmix("4.aiff", 0.0, 0.1, 36.4, [[0.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 0.0]])
+    fullmix("4.aiff", 0.0, 0.1, 36.4,
+            [[0.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 0.0]])
   end
   if sound?(ind = find_sound("test.snd"))
-    req1 = 0.664947509765625
-    req2 = 0.8865966796875
     mxs = maxamp(ind, true)
-    snd_test_neq(mxs[0], 0.8865966796875, "4->2(2) fullmix")
-    snd_test_neq(mxs[1], 0.664947509765625, "4->2(2) fullmix")
+    req1 = 0.8865966796875
+    req2 = 0.664947509765625
+    if fneq(mxs[0], req1) or fneq(mxs[1], req2)
+      snd_test_neq(mxs[0], req2, "4->2(2a) fullmix")
+      snd_test_neq(mxs[1], req1, "4->2(2b) fullmix")
+    end
     close_sound(ind)
   end
   with_sound(:channels, 2, :reverb, :nrev) do
-    fullmix("pistol.snd", 0.0, 2.0, 0.25, nil, 2.0, 0.1)
+    fullmix("pistol.snd", 0.0, 2.0, 0.25, false, 2.0, 0.1)
     fullmix("pistol.snd", 1.0, 2.0, 0.25, 0.2, 2.0, 0.1)
-    fullmix("2a.snd", nil, nil, nil, [[0.5, 0.0], [0.0, 0.75]])
-    fullmix("oboe.snd", nil, nil, nil, [[[0, 0, 1, 1, 2, 0], 0.5]])
-    fullmix("oboe.snd", 3, 2, 0, [[0.1, make_env([0, 0, 1, 1], :duration, 2, :scaler, 0.5)]])
+    fullmix("2a.snd", false, false, false, [[0.5, 0.0], [0.0, 0.75]])
+    fullmix("oboe.snd", false, false, false, [[[0, 0, 1, 1, 2, 0], 0.5]])
+    fullmix("oboe.snd", 3, 2, 0,
+            [[0.1, make_env([0, 0, 1, 1], :duration, 2, :scaler, 0.5)]])
   end
-  Snd.sounds.apply(:close_sound)
+  if sound?(ind = find_sound("test.snd"))
+    close_sound(ind)
+  end
 end
 
 def test_23_04
@@ -33989,8 +34039,7 @@ def test_23
   test_23_00
   test_23_01
   test_23_02
-  # FIXME: fullmix
-  # test_23_03
+  test_23_03
   test_23_04
 end
 
@@ -34388,7 +34437,7 @@ end
 $delay_32 = make_oscil(440)
 $color_95 = vector(1, 2, 3)
 $vector_0 = make_comb(0.1, 3)
-$vct_3    = make_vct(3)
+$vct_3    = Vct.new(3)
 
 def test_28_00
   procs1 = [
@@ -34557,6 +34606,11 @@ def test_28_00
       snd_display("selection %s: %s", n, tag)
     end
   end
+  [:src_selection, :filter_selection, :env_selection].each do |n|
+    if (tag = Snd.catch do snd_func(n, 0.0) end).first != :no_active_selection
+      snd_display("selection %s: %s", n, tag)
+    end
+  end
   [make_vector(1), $color_95, [1.0]].each do |arg|
     [:all_pass, :asymmetric_fm, :clear_array, :comb, :filtered_comb,
      :convolve, :db2linear, :moving_average, :degrees2radians, :delay,
@@ -34577,7 +34631,7 @@ def test_28_00
      :mus_ramp, :mus_random, :mus_run, :mus_scaler, :mus_xcoeffs,
      :mus_ycoeffs, :notch, :one_pole, :one_zero, :make_moving_average,
      :seconds2samples, :samples2seconds, :oscil, :partials2polynomial,
-     :partials2wave, :phase_partials2wave, :phase_vocoder, :pulse_train,
+     :partials2wave, :phase_vocoder, :pulse_train,
      :radians2degrees, :radians2hz, :rand, :rand_interp, :readin,
      :sawtooth_wave, :square_wave, :src, :table_lookup, :tap,
      :triangle_wave, :two_pole, :two_zero, :wave_train, :ssb_am].each do |n|
@@ -34589,6 +34643,20 @@ def test_28_00
       else
         snd_display("clm %s: tag %s, arg %s", n, tag, arg)
       end
+    end
+  end
+  # XXX: phase_partials2wave in clm (test 28)
+  # Original included in test above but Ruby's phase_partials2wave
+  # takes Arrays and Vecs as lists.
+  [make_vector(1), $color_95.to_a + [0], [1.0]].each do |arg|
+    n = :phase_partials2wave
+    tag = Snd.catch do snd_func(n, arg) end
+    case tag.first
+    when :wrong_type_arg, :no_data, :no_such_method,
+         :bad_type, :error, :arg_error
+      next
+    else
+      snd_display("clm %s: tag %s, arg %s", n, tag, arg)
     end
   end
   [:all_pass, :array_interp, :asymmetric_fm, :comb, :filtered_comb,
@@ -35782,8 +35850,9 @@ end
 # ---------------- test all done
 
 def test_30
-  $bigtest_08 = true
-  test_08_24
+  # $bigtest_08 = true
+  # test_08_24
+  test_28_00
 end
 
 main_test

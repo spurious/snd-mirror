@@ -236,7 +236,7 @@ static int oss_mus_audio_initialize(void)
 #endif
   if (!audio_initialized)
     {
-      int i, md, num_mixers, num_dsps, nmix, ndsp, err = 0, fd = -1, responsive_field;
+      int i, num_mixers, num_dsps, nmix, ndsp, err = 0, fd = -1, responsive_field;
       audio_initialized = true;
       audio_fd = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
       audio_open_ctr = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
@@ -301,6 +301,7 @@ static int oss_mus_audio_initialize(void)
 	     (ndsp < num_dsps))
 	{
 	  char dname[LABEL_BUFFER_SIZE];
+	  int md;
 	  /* for each mixer, find associated main dsp (assumed to be first in /dev/dsp ordering) */
 	  /*   if mixer's dsp overlaps or we run out of dsps first, ignore it (aux mixer) */
 	  /* our by-guess-or-by-gosh method here is to try to open the mixer.

@@ -5164,8 +5164,8 @@ mus_float_t mus_notch_unmodulated(mus_any *ptr, mus_float_t input)
   return((input * ((dly *)ptr)->xscl) + mus_delay_unmodulated(ptr, input));
 }
 
-
-mus_float_t mus_notch_unmodulated_noz(mus_any *ptr, mus_float_t input) 
+#if 0
+static mus_float_t mus_notch_unmodulated_noz(mus_any *ptr, mus_float_t input) 
 {
   dly *gen = (dly *)ptr;
   mus_float_t result;
@@ -5176,7 +5176,7 @@ mus_float_t mus_notch_unmodulated_noz(mus_any *ptr, mus_float_t input)
     gen->loc = 0;
   return(result);
 }
-
+#endif
 
 bool mus_is_notch(mus_any *ptr) 
 {

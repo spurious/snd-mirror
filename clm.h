@@ -262,7 +262,6 @@ MUS_EXPORT mus_float_t mus_notch(mus_any *gen, mus_float_t input, mus_float_t pm
 MUS_EXPORT mus_float_t mus_notch_unmodulated(mus_any *gen, mus_float_t input);
 MUS_EXPORT mus_any *mus_make_notch(mus_float_t scaler, int size, mus_float_t *line, int line_size, mus_interp_t type);
 MUS_EXPORT bool mus_is_notch(mus_any *ptr);
-MUS_EXPORT mus_float_t mus_notch_unmodulated_noz(mus_any *ptr, mus_float_t input);
 
 MUS_EXPORT mus_float_t mus_all_pass(mus_any *gen, mus_float_t input, mus_float_t pm);
 MUS_EXPORT mus_float_t mus_all_pass_unmodulated(mus_any *gen, mus_float_t input);

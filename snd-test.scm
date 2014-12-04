@@ -26432,12 +26432,13 @@ EDITS: 2
       (hook-push before-save-as-hook
 		 (lambda (hook)
 		   (let ((index (hook 'snd))
-			 (filename (hook 'name))
-			 (selection (hook 'selection))
+			 ;(filename (hook 'name))
+			 ;(selection (hook 'selection))
 			 (sr (hook 'sampling-rate))
-			 (type (hook 'header-type))
-			 (dformat (hook 'sample-type))
-			 (comment (hook 'comment)))
+			 ;(type (hook 'header-type))
+			 ;(dformat (hook 'sample-type))
+			 ;(comment (hook 'comment))
+			 )
 		     (set! need-save-as-undo #f)
 		     (if (not (= sr (srate index)))
 			 (begin
@@ -41484,7 +41485,6 @@ EDITS: 1
       (define (XM_DIMENSION val)  (and (integer? val) (>= val 0) (< val 65536)))
       (define (XM_ATOM val)  (or (tagged-p val 'Atom) (and (number? val) (= val 0))))
       (define (XM_TEXT_SOURCE val)  (or (tagged-p val 'XmTextSource) (and (number? val) (= val 0))))
-      (define (XM_FONTLIST val)  (or (tagged-p val 'FontList) (and (number? val) (= val 0))))
       (define (XM_COLORMAP val)  (or (tagged-p val 'Colormap) (and (number? val) (= val 0))))
       (define (XM_KEYSYM val)  (or (tagged-p val 'KeySym) (and (number? val) (= val 0))))
       (define (XM_SCREEN val)  (or (tagged-p val 'Screen) (and (number? val) (= val 0))))
@@ -41493,7 +41493,6 @@ EDITS: 1
       (define (XM_WIDGET_CLASS val)  (or (tagged-p val 'WidgetClass) (and (number? val) (= val 0))))
       (define (XM_STRING_OR_INT val)  (or (string? val) (integer? val) (not val)))
       (define (XM_STRING_OR_XMSTRING val)  (or (string? val) (not val) (and (list? val) (pair? val) (eq? (car val) 'XmString)) (and (number? val) (= val 0))))
-      (define (XM_BOOLEAN_OR_INT val)  (or (boolean? val) (integer? val)))
       (define (XM_POSITION val)  (and (integer? val) (< (abs val) 65536)))
       (define (XM_SHORT val)  (and (integer? val) (< (abs val) 65536)))
       (define (XM_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
@@ -41506,7 +41505,6 @@ EDITS: 1
       (define (XM_POPUP_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
       (define (XM_SCREEN_COLOR_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
       (define (XM_DROP_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
-      (define (XM_DRAG_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
       (define (XM_PARSE_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
       
       ;; check some resource stuff first

@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 03/09/16 01:27:09
-# Changed: 14/11/13 05:58:33
+# Changed: 14/11/28 02:16:54
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
@@ -3082,188 +3082,127 @@ Subject: [linux-audio-dev] Announce: alpha version of denoising
 mjkoskin@sci.fi
 =end
 
-=begin
-# FIXME: fullmix
-#
 # FULLMIX
 #
-# "matrix" can be a simple amplitude or a list of lists each inner
-#     list represents one input channel's amps into one output channel
-#     each element of the list can be a number, a list (turned into an
-#     env) or an env
+# ;; "matrix" can be a simple amplitude or a list of lists each inner
+# ;;     list represents one input channel's amps into one output channel
+# ;;     each element of the list can be a number, a list (turned into an
+# ;;     env) or an env
+# ;;
+# ;; "srate" can be a negative number (read in reverse), or an envelope.
 def fullmix(in_file,
             start = 0.0,
-            outdur = nil,
+            outdur = false,
             inbeg = 0.0,
-            matrix = nil,
-            srate = nil,
-            reverb_amount = 0.05)
-  assert_type(File.exist?(in_file), in_file, 0, "an existing file")
-  dur = Float((outdur or (ws_duration(in_file) / Float((srate or 1.0)).abs)))
-  in_chans = ws_channels(in_file)
-  inloc = (Float(inbeg) * ws_srate(in_file)).round
-  mx = file = envs = rev_mx = revframe = false
-  if srate
-    file = make_array(in_chans) do |chn|
-      make_ws_reader(in_file, :start, inloc, :channel, chn)
-    end
-  else
-    file = in_file
+            matrix = false,
+            srate = false,
+            reverb_amount = false)
+  unless File.exist?(in_file)
+    Snd.raise(:no_such_file, in_file, "no such file")
   end
-  mx = if matrix
-         make_mixer([in_chans, @channels].max)
-       else
-         make_scalar_mixer([in_chans, @channels].max, 1.0)
-       end
-  if @ws_reverb and reverb_amount.positive?
-    rev_mx = make_mixer(in_chans)
-    in_chans.times do |chn|
-      mixer_set!(rev_mx, chn, 0, reverb_amount)
+  unless start
+    start = 0.0
+  end
+  unless inbeg
+    inbeg = 0.0
+  end
+  if number?(outdur)
+    dur = outdur
+  else
+    sr = number?(srate) ? srate.abs : 1.0
+    dur = (mus_sound_duration(in_file) - inbeg) / sr
+  end
+  in_chans = channels(in_file)
+  reversed = ((number?(srate) and srate.negative?) or
+              (array?(srate) and srate.cadr.negative?))
+  inloc = (Float(inbeg) * mus_sound_srate(in_file)).round
+  ochans = [in_chans, @channels].max
+  if @ws_reverb and number?(reverb_amount) and reverb_amount.positive?
+    rev_mx = Vct.new(in_chans * in_chans, reverb_amount)
+  else
+    rev_mx = false
+  end
+  dir = (reversed ? -1 : 1)
+  if (not srate) or (number?(srate) and srate == 1.0)
+    file = make_file2frample(in_file)
+  else
+    file = make_array(in_chans) do |i|
+      make_readin(in_file, i, inloc, :direction, dir)
     end
-    revframe = make_frame(1)
+  end
+  envs = false
+  if array?(srate)
+    srcenv = make_env(srate, :duration, dur, :scaler, Float(dir))
+  else
+    srcenv = false
   end
   case matrix
   when Array
-    in_chans.times do |ichn|
-      inlist = matrix[ichn]
-      @channels.times do |ochn|
-        outn = inlist[ochn]
+    mx = Vct.new(ochans * ochans, 0.0)
+    matrix.each_with_index do |inlist, inp|
+      break if inp >= in_chans
+      inlist.each_with_index do |outn, outp|
+        break if outp >= @channels
         case outn
         when Numeric
-          mixer_set!(mx, ichn, ochn, outn)
+          # mx[inp][outp] = outn
+          mx[inp * ochans + outp] = outn
         when Array, Mus
           unless envs
-            envs = make_array(in_chans) do
-              make_array(@channels, false)
-            end
+            envs = Array.new(in_chans * @channels, false)
           end
           if env?(outn)
-            envs[ichn][ochn] = outn
+            envs[inp * @channels + outp] = outn
           else
-            envs[ichn][ochn] = make_env(:envelope, outn, :duration, dur)
+            envs[inp * @channels + outp] = make_env(outn, :duration, dur)
           end
         else
-          Snd.warning("unknown element in matrix: %s", outn.inspect)
+          Snd.warning("unknown element in matrix: %p", outn)
         end
       end
     end
   when Numeric
-    # matrix is a number in this case (a global scaler)
-    in_chans.times do |i|
-      if i < @channels
-        mixer_set!(mx, i, i, matrix)
-      end
-    end
+    # ; matrix is a number in this case (a global scaler)
+    mx = Vct.new(ochans * ochans, matrix)
+  else
+    mx = Vct.new(ochans * ochans, 1.0)
   end
-  start = Float(start)
   # to satisfy with_sound-option :info and :notehook
   with_sound_info(get_func_name, start, dur)
-  run_fullmix(start, dur, in_chans, srate,
-              inloc, file, mx, rev_mx, revframe, envs)
-  if array?(file)
-    file.each do |rd|
-      close_ws_reader(rd)
-    end
-  end
-end
-
-class Snd_Instrument
-  def run_fullmix(start, dur, in_chans, sr,
-                  inloc, file, mx, rev_mx, revframe, envs)
-    beg = seconds2samples(start)
-    samps = seconds2samples(dur)
-    unless sr
-      @out_snd = with_closed_sound(@out_snd) do |snd_name|
-        mus_mix(snd_name, file, beg, samps, inloc, mx, envs)
-      end
-      if rev_mx
-        @rev_snd = with_closed_sound(@rev_snd) do |snd_name|
-          mus_mix(snd_name, file, beg, samps, inloc, rev_mx, false)
+  beg = seconds2samples(start)
+  samps = seconds2samples(dur)
+  if (not array?(file))
+    mxe = envs
+    if envs
+      mxe = Array.new(in_chans) do |i|
+        Array.new(@channels) do |j|
+          envs[i * @channels + j]
         end
+      end
+    end
+    if sound?(@ws_output)
+      output = file_name(@ws_output)
+      if sound?(@ws_reverb)
+        revout = file_name(@ws_reverb)
       end
     else
-      out_data = make_sound_data(@channels, samps)
-      if rev_mx
-        rev_data = make_sound_data(@reverb_channels, samps)
-      end
-      inframe = make_frame(in_chans)
-      outframe = make_frame(@channels)
-      srcs = make_array(in_chans) do
-        make_src(:srate, sr)
-      end
-      samps.times do |i|
-        if envs
-          in_chans.times do |chn|
-            @channels.times do |ochn|
-              if envs[chn] and env?(envs[chn][ochn])
-                mixer_set!(mx, chn, ochn, env(envs[chn][ochn]))
-              end
-            end
-          end
-        end
-        in_chans.times do |chn|
-          frame_set!(inframe, chn,
-                     src(srcs[chn], 0.0,
-                         lambda do |dir|
-                           ws_readin(file[chn])
-                         end))
-        end
-        frame2sound_data!(out_data, i, frame2frame(inframe, mx, outframe))
-        if rev_mx
-          frame2sound_data!(rev_data, i, frame2frame(inframe, rev_mx, revframe))
-        end
-      end
-      @channels.times do |chn|
-        mix_vct(out_data.to_vct(chn), beg, @out_snd, chn, false)
-      end
-      if rev_mx
-        @reverb_channels.times do |chn|
-          mix_vct(rev_data.to_vct(chn), beg, @rev_snd, chn, false)
-        end
-      end
+      output = @ws_output
+      revout = @ws_reverb
     end
-  end
-end
-
-class CLM_Instrument
-  def run_fullmix(start, dur, in_chans, sr,
-                  inloc, file, mx, rev_mx, revframe, envs)
-    beg = seconds2samples(start)
-    samps = seconds2samples(dur)
-    unless sr
-      mus_mix(@ws_output, file, beg, samps, inloc, mx, envs)
-      if rev_mx
-        mus_mix(@ws_reverb, file, beg, samps, inloc, rev_mx, false)
-      end
-    else
-      inframe = make_frame(in_chans)
-      outframe = make_frame(@channels)
-      srcs = make_array(in_chans) do
-        make_src(:srate, sr)
-      end
-      each_sample(start, dur) do |i|
-        if envs
-          in_chans.times do |chn|
-            @channels.times do |ochn|
-              if envs[chn] and env?(envs[chn][ochn])
-                mixer_set!(mx, chn, ochn, env(envs[chn][ochn]))
-              end
-            end
-          end
-        end
-        in_chans.times do |chn|
-          frame_set!(inframe, chn,
-                     src(srcs[chn], 0.0,
-                         lambda do |dir|
-                           readin(file[chn])
-                         end))
-        end
-        frame2file(@ws_output, i, frame2frame(inframe, mx, outframe))
-        if rev_mx
-          frame2file(@ws_reverb, i, frame2frame(inframe, rev_mx, revframe))
-        end
-      end
+    mus_file_mix(output, file, beg, samps, inloc, mx, mxe)
+    if rev_mx
+      mus_file_mix(revout, file, beg, samps, inloc, rev_mx)
     end
+  else
+    if sound?(@ws_output)
+      Snd.raise(:wrong_type_arg, "don't use :to_snd true")
+    end
+    sr = (number?(srate) ? srate.abs : 0.0)
+    srcs = Array.new(in_chans) do |i|
+      make_src(:input, file[i], :srate, sr)
+    end
+    mus_file_mix_with_envs(file, beg, samps, mx, rev_mx, envs, srcs, srcenv,
+                           @ws_output, @ws_reverb)
   end
 end
 
@@ -3275,7 +3214,6 @@ def fullmix_test(start = 0.0, dur = 1.0)
           [[0.1, make_env([0, 0, 1, 1], :duration, dur, :scaler, 0.5)]])
   $now += dur + 0.2
 end
-=end
 
 # Original header:
 
@@ -3837,8 +3775,7 @@ def clm_ins_test(start = 0.0, dur = 1.0)
   expfil_test($now, dur)
   graph_eq_test($now, dur)
   anoi_test($now, dur)
-  # FIXME: fullmix test
-  # fullmix_test($now, dur)
+  fullmix_test($now, dur)
   grani_test($now, dur)
   bes_fm_test($now, dur)
 end

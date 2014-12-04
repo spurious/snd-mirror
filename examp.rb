@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 02/09/04 18:34:00
-# Changed: 14/11/23 06:02:48
+# Changed: 14/12/04 01:16:16
 
 # module Examp (examp.scm)
 #  selection_rms
@@ -1529,37 +1529,31 @@ returns new max amp: cnvtest(0, 1, 0.1)")
            "swap_selection_channels()  \
 Swaps the currently selected data's channels.")
   def swap_selection_channels
-    find_selection_sound = lambda do |not_this|
-      callcc do |ret|
-        Snd.sounds.each do |snd|
-          channels(snd).times do |chn|
-            if selection_member?(snd, chn) and
-                (not_this.empty? or snd != not_this[0] or chn != not_this[1])
-              ret.call([snd, chn])
-            end
-          end
-        end
-        false
-      end
-    end
-    if selection?
-      if selection_chans == 2
-        beg = selection_position()
-        len = selection_framples()
-        snd_chn0 = find_selection_sound.call([])
-        snd_chn1 = find_selection_sound.call(snd_chn0)
-        if snd_chn1
-          swap_channels(snd_chn0[0], snd_chn0[1],
-                        snd_chn1[0], snd_chn1[1], beg, len)
-        else
-          Snd.raise(:wrong_number_of_channels, "need two channels to swap")
-        end
-      else
-        Snd.raise(:wrong_number_of_channels, "need a stereo selection")
-      end
-    else
+    if (not selection?)
       Snd.raise(:no_active_selection)
     end
+    if selection_chans != 2
+      Snd.raise(:wrong_number_of_channels, "need a stereo selection")
+    end  
+    beg = selection_position()
+    len = selection_framples()
+    snd_chn0 = snd_chn1 = nil
+    Snd.sounds.each do |snd|
+      channels(snd).times do |chn|
+        if selection_member?(snd, chn)
+          if snd_chn0.nil?
+            snd_chn0 = [snd, chn]
+          elsif snd_chn1.nil?
+            snd_chn1 = [snd, chn]
+            break
+          end
+        end
+      end
+    end
+    if snd_chn1.nil?
+      Snd.raise(:wrong_number_of_channels, "need two channels to swap")
+    end
+    swap_channels(snd_chn0[0], snd_chn0[1], snd_chn1[0], snd_chn1[1], beg, len)
   end
 
   # sound interp
@@ -1645,8 +1639,8 @@ using grains to create the re-tempo'd read.")
     newlen = (time_scale.to_f * len).floor
     read_env = make_env(envelope, :length, newlen, :scaler, len)
     sr = srate(snd).to_f
-    grain_frames = (grain_length * sr).round
-    hop_frames = (output_hop * sr).round
+    grain_frames = (grain_length * sr).to_i
+    hop_frames = (output_hop * sr).to_i
     num_readers = (grain_length.to_f / output_hop).ceil
     cur_readers = 0
     next_reader = 0
@@ -1658,7 +1652,6 @@ using grains to create the re-tempo'd read.")
     new_snd = Vct.new(newlen, 0.0)
     0.step(newlen, hop_frames) do |i|
       stop = [newlen, hop_frames + i].min
-      set_mus_location(read_env, i)
       read_env.location = i
       position_in_original = env(read_env)
       mx = [0, (position_in_original + mus_random(jitter)).round].max
