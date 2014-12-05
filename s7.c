@@ -655,8 +655,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_CLOSURE_A, HOP_CLOSURE_A, OP_CLOSURE_AA, HOP_CLOSURE_AA, 
       OP_CLOSURE_opSq_S, HOP_CLOSURE_opSq_S, OP_CLOSURE_opSq_opSq, HOP_CLOSURE_opSq_opSq, 
       OP_CLOSURE_S_opSq, HOP_CLOSURE_S_opSq, OP_CLOSURE_S_opSSq, HOP_CLOSURE_S_opSSq, OP_CLOSURE_opSSq_S, HOP_CLOSURE_opSSq_S, 
-      OP_CLOSURE_ALL_X, HOP_CLOSURE_ALL_X, 
-      OP_CLOSURE_ALL_S, HOP_CLOSURE_ALL_S, 
+      OP_CLOSURE_ALL_X, HOP_CLOSURE_ALL_X, OP_CLOSURE_ALL_S, HOP_CLOSURE_ALL_S, 
 
       OP_CLOSURE_STAR_S, HOP_CLOSURE_STAR_S, OP_CLOSURE_STAR_SX, HOP_CLOSURE_STAR_SX,
       OP_CLOSURE_STAR, HOP_CLOSURE_STAR, OP_CLOSURE_STAR_ALL_X, HOP_CLOSURE_STAR_ALL_X, 
@@ -664,8 +663,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_THUNK, HOP_SAFE_THUNK,
       OP_SAFE_CLOSURE_S, HOP_SAFE_CLOSURE_S, OP_SAFE_CLOSURE_C, HOP_SAFE_CLOSURE_C, OP_SAFE_CLOSURE_Q, HOP_SAFE_CLOSURE_Q, 
       OP_SAFE_CLOSURE_SS, HOP_SAFE_CLOSURE_SS, OP_SAFE_CLOSURE_SC, HOP_SAFE_CLOSURE_SC, OP_SAFE_CLOSURE_CS, HOP_SAFE_CLOSURE_CS, 
-      OP_SAFE_CLOSURE_A, HOP_SAFE_CLOSURE_A, 
-      OP_SAFE_CLOSURE_SA, HOP_SAFE_CLOSURE_SA, 
+      OP_SAFE_CLOSURE_A, HOP_SAFE_CLOSURE_A, OP_SAFE_CLOSURE_SA, HOP_SAFE_CLOSURE_SA, 
       OP_SAFE_CLOSURE_opSq_S, HOP_SAFE_CLOSURE_opSq_S, OP_SAFE_CLOSURE_opSq_opSq, HOP_SAFE_CLOSURE_opSq_opSq, 
       OP_SAFE_CLOSURE_S_opSq, HOP_SAFE_CLOSURE_S_opSq, OP_SAFE_CLOSURE_S_opSSq, HOP_SAFE_CLOSURE_S_opSSq, OP_SAFE_CLOSURE_opSSq_S, HOP_SAFE_CLOSURE_opSSq_S, 
       OP_SAFE_CLOSURE_SAA, HOP_SAFE_CLOSURE_SAA, 
@@ -684,13 +682,13 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
 
       OP_GOTO, HOP_GOTO, OP_GOTO_C, HOP_GOTO_C, OP_GOTO_S, HOP_GOTO_S, OP_GOTO_A, HOP_GOTO_A, 
       
-      OP_VECTOR_C, HOP_VECTOR_C, OP_VECTOR_S, HOP_VECTOR_S, OP_VECTOR_A, HOP_VECTOR_A, 
+      OP_VECTOR_C, HOP_VECTOR_C, OP_VECTOR_S, HOP_VECTOR_S, OP_VECTOR_A, HOP_VECTOR_A, OP_VECTOR_CC, HOP_VECTOR_CC, 
       OP_STRING_C, HOP_STRING_C, OP_STRING_S, HOP_STRING_S, OP_STRING_A, HOP_STRING_A, 
       OP_C_OBJECT, HOP_C_OBJECT, OP_C_OBJECT_C, HOP_C_OBJECT_C, OP_C_OBJECT_S, HOP_C_OBJECT_S, 
       OP_C_OBJECT_A, HOP_C_OBJECT_A, OP_C_OBJECT_SS, HOP_C_OBJECT_SS, OP_C_OBJECT_CC, HOP_C_OBJECT_CC, 
       OP_PAIR_C, HOP_PAIR_C, OP_PAIR_S, HOP_PAIR_S, OP_PAIR_A, HOP_PAIR_A, 
       OP_HASH_TABLE_C, HOP_HASH_TABLE_C, OP_HASH_TABLE_S, HOP_HASH_TABLE_S, OP_HASH_TABLE_A, HOP_HASH_TABLE_A, 
-      OP_ENVIRONMENT_S, HOP_ENVIRONMENT_S, OP_ENVIRONMENT_Q, HOP_ENVIRONMENT_Q, OP_ENVIRONMENT_A, HOP_ENVIRONMENT_A, 
+      OP_ENVIRONMENT_S, HOP_ENVIRONMENT_S, OP_ENVIRONMENT_Q, HOP_ENVIRONMENT_Q, OP_ENVIRONMENT_A, HOP_ENVIRONMENT_A, OP_ENVIRONMENT_C, HOP_ENVIRONMENT_C, 
       
       OP_UNKNOWN, HOP_UNKNOWN, OP_UNKNOWN_C, HOP_UNKNOWN_C, OP_UNKNOWN_S, HOP_UNKNOWN_S, OP_UNKNOWN_Q, HOP_UNKNOWN_Q,
       OP_UNKNOWN_SS, HOP_UNKNOWN_SS, OP_UNKNOWN_SSS, HOP_UNKNOWN_SSS, OP_UNKNOWN_ALL_S, HOP_UNKNOWN_ALL_S, OP_UNKNOWN_ALL_X, HOP_UNKNOWN_ALL_X,
@@ -762,8 +760,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "closure_a", "h_closure_a", "closure_aa", "h_closure_aa", 
       "closure_opsq_s", "h_closure_opsq_s", "closure_opsq_opsq", "h_closure_opsq_opsq", 
       "closure_s_opsq", "h_closure_s_opsq", "closure_s_opssq", "h_closure_s_opssq", "closure_opssq_s", "h_closure_opssq_s", 
-      "closure_all_x", "h_closure_all_x", 
-      "closure_all_s", "h_closure_all_s", 
+      "closure_all_x", "h_closure_all_x", "closure_all_s", "h_closure_all_s", 
 
       "closure_star_s", "h_closure_star_s", "closure_star_sx", "h_closure_star_sx", 
       "closure_star", "h_closure_star", "closure_star_all_x", "h_closure_star_all_x", 
@@ -771,8 +768,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_thunk", "h_safe_thunk",
       "safe_closure_s", "h_safe_closure_s", "safe_closure_c", "h_safe_closure_c", "safe_closure_q", "h_safe_closure_q", 
       "safe_closure_ss", "h_safe_closure_ss", "safe_closure_sc", "h_safe_closure_sc", "safe_closure_cs", "h_safe_closure_cs", 
-      "safe_closure_a", "h_safe_closure_a", 
-      "safe_closure_sa", "h_safe_closure_sa", 
+      "safe_closure_a", "h_safe_closure_a", "safe_closure_sa", "h_safe_closure_sa", 
       "safe_closure_opsq_s", "h_safe_closure_opsq_s", "safe_closure_opsq_opsq", "h_safe_closure_opsq_opsq", 
       "safe_closure_s_opsq", "h_safe_closure_s_opsq", "safe_closure_s_opssq", "h_safe_closure_s_opssq", "safe_closure_opssq_s", "h_safe_closure_opssq_s", 
       "safe_closure_saa", "h_safe_closure_saa", 
@@ -790,14 +786,14 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
 
       "goto", "h_goto", "goto_c", "h_goto_c", "goto_s", "h_goto_s", "goto_a", "h_goto_a", 
       
-      "vector_c", "h_vector_c", "vector_s", "h_vector_s", "vector_a", "h_vector_a", 
+      "vector_c", "h_vector_c", "vector_s", "h_vector_s", "vector_a", "h_vector_a", "vector_cc", "h_vector_cc", 
       "string_c", "h_string_c", "string_s", "h_string_s", "string_a", "h_string_a", 
       "c_object", "h_c_object", "c_object_c", "h_c_object_c", "c_object_s", "h_c_object_s", 
       "c_object_a", "h_c_object_a", 
       "c_object_ss", "h_c_object_ss", "c_object_cc", "h_c_object_cc", 
       "pair_c", "h_pair_c", "pair_s", "h_pair_s", "pair_a", "h_pair_a", 
       "hash_table_c", "h_hash_table_c", "hash_table_s", "h_hash_table_s", "hash_table_a", "h_hash_table_a", 
-      "environment_s", "h_environment_s", "environment_q", "h_environment_q", "environment_a", "h_environment_a", 
+      "environment_s", "h_environment_s", "environment_q", "h_environment_q", "environment_a", "h_environment_a", "environment_c", "h_environment_c", 
       
       "unknown", "h_unknown", "unknown_c", "h_unknown_c", "unknown_s", "h_unknown_s", "unknown_q", "h_unknown_q",
       "unknown_ss", "h_unknown_ss", "unknown_sss", "h_unknown_sss", "unknown_all_s", "h_unknown_all_s", "unknown_all_x", "h_unknown_all_x",
@@ -1622,6 +1618,7 @@ static void init_types(void)
   t_opt_all_x[HOP_SAFE_C_SQ] = true;
   t_opt_all_x[HOP_SAFE_C_SS] = true;
   t_opt_all_x[HOP_SAFE_C_CSA] = true; 
+  t_opt_all_x[HOP_SAFE_C_CAS] = true; 
   t_opt_all_x[HOP_SAFE_C_SCA] = true; 
   t_opt_all_x[HOP_SAFE_C_SSA] = true; 
   t_opt_all_x[HOP_SAFE_C_SSC] = true; 
@@ -2673,7 +2670,7 @@ static s7_pointer simple_out_of_range_error_prepackaged(s7_scheme *sc, s7_pointe
 static s7_pointer CAR_A_LIST, CDR_A_LIST;
 static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
 static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
-static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, AN_OPEN_PORT, A_NORMAL_REAL, A_RATIONAL, A_CLOSURE, A_BOOLEAN;
+static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, AN_OPEN_PORT, A_NORMAL_REAL, A_RATIONAL, A_FUNCTION, A_BOOLEAN;
 static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL, A_NON_NEGATIVE_INTEGER;
 static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BYTE, A_BINDING, A_NON_CONSTANT_SYMBOL, AN_EQ_FUNC, A_SEQUENCE;
 
@@ -23370,10 +23367,11 @@ defaults to the rootlet.  To load into the current environment instead, pass (cu
 	  {
 	    void *library;
 	    const char *init_name = NULL;
-	    char *pwd_name;
-	    pwd_name = full_filename(fname);
+	    char *pwd_name = NULL;
+	    if (fname[0] != '/')
+	      pwd_name = full_filename(fname);
 	    init_name = symbol_name(init);
-	    library = dlopen(pwd_name, RTLD_NOW);
+	    library = dlopen((pwd_name) ? pwd_name : fname, RTLD_NOW);
 	    if (library)
 	      {
 		void *init_func;
@@ -23382,17 +23380,17 @@ defaults to the rootlet.  To load into the current environment instead, pass (cu
 		  {
 		    typedef void *(*dl_func)(s7_scheme *sc);
 		    ((dl_func)init_func)(sc); 
-		    free(pwd_name);
+		    if (pwd_name) free(pwd_name);
 		    return(sc->T);
 		  }
 		else 
 		  {
-		    s7_warn(sc, 512, "loaded %s, but can't find %s (%s)?\n", pwd_name, init_name, dlerror());
+		    s7_warn(sc, 512, "loaded %s, but can't find %s (%s)?\n", fname, init_name, dlerror());
 		    dlclose(library);
 		  }
 	      }
-	    else s7_warn(sc, 512, "load %s failed: %s\n", pwd_name, dlerror());
-	    free(pwd_name);
+	    else s7_warn(sc, 512, "load %s failed: %s\n", (pwd_name) ? pwd_name : fname, dlerror());
+	    if (pwd_name) free(pwd_name);
 	  }
 	else s7_warn(sc, 512, "can't load %s: no init function\n", fname);
 	return(sc->F);
@@ -28573,7 +28571,7 @@ static void init_car_a_list(void)
   A_PROCEDURE = s7_make_permanent_string("a procedure");
   AN_ENVIRONMENT = s7_make_permanent_string("an environment");
   A_PROPER_LIST = s7_make_permanent_string("a proper list");
-  A_CLOSURE = s7_make_permanent_string("a function");
+  A_FUNCTION = s7_make_permanent_string("a function");
   A_BOOLEAN = s7_make_permanent_string("a boolean");
   AN_INPUT_PORT = s7_make_permanent_string("an input port");
   AN_OPEN_PORT = s7_make_permanent_string("an open port");
@@ -29210,7 +29208,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 
       eq_func = caddr(args);
       if (!is_procedure(eq_func))
-	return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(3), eq_func, A_CLOSURE));
+	return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(3), eq_func, A_FUNCTION));
 
       if (!s7_is_aritable(sc, eq_func, 2))
 	return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(3), eq_func, AN_EQ_FUNC));
@@ -32156,7 +32154,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
   if (!is_procedure(lessp))
     {
       check_method(sc, lessp, sc->SORT, args);
-      return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, A_CLOSURE));
+      return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, A_FUNCTION));
     }
   if ((is_continuation(lessp)) || is_goto(lessp))
     return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, make_string_wrapper(sc, "a normal procedure (not a continuation)")));
@@ -37496,7 +37494,6 @@ static const char *make_type_name(s7_scheme *sc, const char *name, int article)
 
 
 static const char *environments[3] =    {"environment",         "the environment",        "an environment"};
-static const char *closures[3] =        {"closure",             "the closure",            "a closure"};
 
 static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
 {
@@ -37510,8 +37507,9 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
   static const char *pairs[3] =         {"pair",               "the pair",                "a pair"};
   static const char *gotos[3] =         {"goto",               "the call-with-exit goto", "a goto (from call-with-exit)"};
   static const char *continuations[3] = {"continuation",       "the continuation",        "a continuation"};
-  static const char *functions[3] =     {"function",           "the function",            "a function"};
+  static const char *c_functions[3] =   {"c-function",         "the c-function",          "a c-function"};
   static const char *macros[3] =        {"macro",              "the macro",               "a macro"};
+  static const char *c_macros[3] =      {"c-macro",            "the c-macro",             "a c-macro"};
   static const char *bacros[3] =        {"bacro",              "the bacro",               "a bacro"};
   static const char *vectors[3] =       {"vector",             "the vector",              "a vector"};
   static const char *int_vectors[3] =   {"int-vector",         "the int-vector",          "an int-vector"};
@@ -37533,6 +37531,8 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
   static const char *big_reals[3] =     {"big real",           "the big real",            "a big real"};
   static const char *complexes[3] =     {"complex number",     "the complex number",      "a complex number"};
   static const char *big_complexes[3] = {"big complex number", "the big complex number",  "a big complex number"};
+  static const char *functions[3] =       {"function",            "the function",           "a function"};
+  static const char *function_stars[3] =  {"function*",           "the function*",          "a function*"};
 
   switch (typ)
     {
@@ -37551,14 +37551,16 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
     case T_C_RST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION_STAR:
-    case T_C_FUNCTION:   return(functions[article]);
-    case T_MACRO:
-    case T_C_MACRO:      return(macros[article]);
+    case T_C_FUNCTION:   return(c_functions[article]);
+    case T_CLOSURE:      return(functions[article]);
+    case T_CLOSURE_STAR: return(function_stars[article]);
+    case T_C_MACRO:      return(c_macros[article]);
     case T_C_POINTER:    return(c_pointers[article]);
     case T_CHARACTER:    return(characters[article]);
     case T_VECTOR:       return(vectors[article]);
     case T_INT_VECTOR:   return(int_vectors[article]);
     case T_FLOAT_VECTOR: return(float_vectors[article]);
+    case T_MACRO:        return(macros[article]);
     case T_BACRO:        return(bacros[article]);
     case T_CATCH:        return(catches[article]); /* are these 2 possible? */
     case T_DYNAMIC_WIND: return(dynamic_winds[article]);
@@ -37607,17 +37609,6 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
 	    return(make_type_name(sc, symbol_name(class_name), article));
 	}
       return(environments[article]);
-
-    case T_CLOSURE:      
-    case T_CLOSURE_STAR: 
-      if (has_methods(arg))
-	{
-	  s7_pointer class_name;
-	  class_name = find_method(sc, closure_let(arg), sc->CLASS_NAME);
-	  if (is_symbol(class_name))
-	    return(make_type_name(sc, symbol_name(class_name), article));
-	}
-      return(closures[article]);
     }
   return("messed up object");
 }
@@ -37625,7 +37616,6 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
 
 static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
 {
-  const char *name;
   s7_pointer p;
 
   if (has_methods(x))
@@ -37637,16 +37627,11 @@ static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
 	 *   return(make_string_wrapper(sc, make_type_name(sc, symbol_name(p), INDEFINITE_ARTICLE)));
 	*/
     }
+
   p = prepackaged_type_names[type(x)];
   if (is_string(p))
     return(p);
-
-  name = type_name(sc, x, INDEFINITE_ARTICLE); 
-  if (name == closures[INDEFINITE_ARTICLE])
-    return(A_CLOSURE);
-  if (name == environments[INDEFINITE_ARTICLE])
-    return(AN_ENVIRONMENT);
-  return(make_string_wrapper(sc, name));
+  return(make_string_wrapper(sc, type_name(sc, x, INDEFINITE_ARTICLE))); 
 }
 
 
@@ -44104,6 +44089,15 @@ static s7_pointer all_x_c_csa(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T3_1));
 }
 
+static s7_pointer all_x_c_cas(s7_scheme *sc, s7_pointer arg)
+{
+  sc->temp3 = ((s7_function)fcdr(cddr(arg)))(sc, caddr(arg));
+  car(sc->T3_1) = cadr(arg);
+  car(sc->T3_3) = find_symbol_checked(sc, cadddr(arg));
+  car(sc->T3_2) = sc->temp3;
+  return(c_call(arg)(sc, sc->T3_1));
+}
+
 static s7_pointer all_x_c_ssc(s7_scheme *sc, s7_pointer arg)
 {
   car(sc->T3_1) = find_symbol_checked(sc, cadr(arg));
@@ -44136,6 +44130,7 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
 	    case HOP_SAFE_C_SQ:           return(all_x_c_sq);
 	    case HOP_SAFE_C_SS:           return(all_x_c_ss);
 	    case HOP_SAFE_C_CSA:          return(all_x_c_csa);
+	    case HOP_SAFE_C_CAS:          return(all_x_c_cas);
 	    case HOP_SAFE_C_SCA:          return(all_x_c_sca);
 	    case HOP_SAFE_C_SSA:          return(all_x_c_ssa);
 	    case HOP_SAFE_C_SSC:          return(all_x_c_ssc);
@@ -44349,6 +44344,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	  return(OP_SAFE_C_S_opAAq);
 
 	case OP_SAFE_C_CSA:
+	case OP_SAFE_C_CAS:
 	case OP_SAFE_C_SCA:
 	case OP_SAFE_C_SSA:
 	case OP_SAFE_C_AAA:
@@ -44665,16 +44661,15 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 	      if (s7_is_vector(func))
 		{
 		  set_optimized(car_x);
-		  set_optimize_data(car_x, hop + ((is_symbol(cadar_x)) ? OP_VECTOR_S : OP_VECTOR_C));
+		  set_optimize_data(car_x, hop + ((symbols == 1) ? OP_VECTOR_S : OP_VECTOR_C));
 		  set_ecdr(car_x, func);
 		  return(true);
 		}
 
-	      if ((is_let(func)) &&
-		  (symbols == 1))
+	      if (is_let(func))
 		{
 		  set_optimized(car_x);
-		  set_optimize_data(car_x, hop + OP_ENVIRONMENT_S);
+		  set_optimize_data(car_x, hop + ((symbols == 1) ? OP_ENVIRONMENT_S : OP_ENVIRONMENT_C));
 		  set_ecdr(car_x, func);
 		  return(true);
 		}
@@ -53597,8 +53592,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (!a_is_ok(sc, code)) break;
 	      
 	    case HOP_SAFE_C_AA:
-	      /* 400000 of safe_c_op_opssq_sq_opssq
-	       */
+	      /* 400000 of safe_c_op_opssq_sq_opssq, snd-test:
+131072: (/ (+ (* a c1) b) (+ (* c c1) d))
+92008: (- (/ (sin nx) sxsx) (/ (* n (cos nx2)) sx22))
+54999: (* (exp (* r (cos x))) (cos (* r (sin x))))
+40409: (* (- 1.0 frac) (- (* yfax (oscil (vector-ref sin-evens k) fracf)) (* fax...
+40000: (/ (- (expt absr n) 1) (- absr 1))
+39910: (/ (sin (* 0.5 (+ n 1) x)) (* (+ n 1) den))
+34255: (atan (* 2.0 r (sin mx)) (- 1.0 (* r r)))
+30000: (* (cos x) (expt (cos y) n))
+30000: (+ (* c1 sig sig) (* c2 q))
+30000: (+ (* c1 sig sig) (* c2 r))
+29998: (/ (atan (oscil osc fm) sinha) (atan 1.0 sinha))
+28665: (* (sin cx) (sin (* index (sin mx))))
+28665: (* (cos cx) (sin (* index (cos mx))))
+27562: (- (* (+ 1.0 dry-coef) temp1) (* dry-coef dryTap-one-pole-swept))
+27562: (- (* (+ 1.0 wet-coef) temp1) (* wet-coef wetTap-one-pole-swept))
+	      */
 	      car(sc->A2_1) = ((s7_function)fcdr(cdr(code)))(sc, cadr(code));
 	      car(sc->A2_2) = ((s7_function)fcdr(cddr(code)))(sc, caddr(code));
 	      sc->value = c_call(code)(sc, sc->A2_1);
@@ -53611,6 +53621,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_SAFE_C_AAA:
 	      {
 		s7_pointer arg;
+		/* (includes opAAAq (snd-test)
+54100: (* (sin cx) ercosmx (sin rsinmx))                             ASA
+54100: (* (cos cx) ercosmx (cos rsinmx))                             ASA
+52038: (* interp (sin cxx) s1)                                       SAS
+50828: (mus-set-formant-radius-and-frequency filt (env re) (env fe)) SAA
+50000: (+ 1.0 (* -2.0 r (cos y)) (* r r))                            CAA
+40870: (+ (* r (sin mx)) (* rn (sin nmx)) (* rn1 (sin n1mx)))        AAA
+34255: (* (cos cxx) 0.5 (log (/ (+ rr1 cmx) (- rr1 cmx))))           ASA
+26416: (list-set! cur (- len 1) (car nvals))                         SAA
+23732: (float-vector-set! out-data (+ j 1) (formant-bank formants (rand noi))) SAA
+22050: (outb samp (* rev val2) *reverb*)                             SAS
+22050: (outa samp (* rev val1) *reverb*)                             SAS
+		*/
 		arg = cdr(code);
 		car(sc->A3_1) = ((s7_function)fcdr(arg))(sc, car(arg));
 		arg = cdr(arg);
@@ -56276,11 +56299,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* -------------------------------------------------------------------------------- */
 
 	      #define UNPRINT 0
+	      #define UNGAD 0
 	    case OP_UNKNOWN:
 	    case HOP_UNKNOWN:
 	      {
 		s7_pointer f;
 		f = find_symbol_checked(sc, car(code));
+		if (UNGAD) fprintf(stderr, "%s: %s %s\n", opt_name(code), type_name(sc, f, NO_ARTICLE), DISPLAY(code));
 		switch (type(f))
 		  {
 		  case T_C_OBJECT:
@@ -56308,7 +56333,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    break;
 		    
 		  default:
-		    if (UNPRINT) fprintf(stderr, "un: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
+		    if (UNPRINT) fprintf(stderr, "    un: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 		    break;
 		  }
 		break;
@@ -56320,6 +56345,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer f;
 		f = find_symbol_checked(sc, car(code));
+		if (UNGAD) fprintf(stderr, "%s: %s %s\n", opt_name(code), type_name(sc, f, NO_ARTICLE), DISPLAY(code));
 		
 		switch (type(f))
 		  {
@@ -56334,8 +56360,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      set_opt_and_goto_opt_eval(code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_Q : OP_CLOSURE_Q);
 		    break;
 		    
+		  case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+		    if (is_safe_procedure(f))
+		      {
+			set_optimize_data(code, OP_SAFE_C_Q);
+			set_c_function(code, f);
+			goto OPT_EVAL;
+		      }
+		    break;
+
 		  default:
-		    if (UNPRINT) fprintf(stderr, "un_q: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
+		    if (UNPRINT) fprintf(stderr, "    un_q: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 		    break;
 		  }
 		break;
@@ -56347,6 +56382,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer f;
 		f = find_symbol_checked(sc, car(code));
+		if (UNGAD) fprintf(stderr, "%s: %s %s\n", opt_name(code), type_name(sc, f, NO_ARTICLE), DISPLAY(code));
 		
 		switch (type(f))
 		  {
@@ -56407,7 +56443,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    set_opt_and_goto_opt_eval(code, f, OP_GOTO_S);
 		    
 		  default:
-		    if (UNPRINT) fprintf(stderr, "un_s: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); 
+		    if (UNPRINT) fprintf(stderr, "    un_s: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); 
 		    break;
 		  }
 		break;
@@ -56418,6 +56454,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer f;
 		f = find_symbol_checked(sc, car(code));
+		if (UNGAD) fprintf(stderr, "%s: %s %s\n", opt_name(code), type_name(sc, f, NO_ARTICLE), DISPLAY(code));
 		
 		if (s7_is_aritable(sc, f, 1)) 
 		  {
@@ -56458,6 +56495,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      case T_C_OBJECT:
 			set_opt_and_goto_opt_eval(code, f, OP_C_OBJECT_C);
 			
+		      case T_ENVIRONMENT:
+			set_opt_and_goto_opt_eval(code, f, OP_ENVIRONMENT_C);
+		    
 		      case T_HASH_TABLE:
 			set_opt_and_goto_opt_eval(code, f, OP_HASH_TABLE_C);
 
@@ -56467,7 +56507,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			/* no need for t_environment here because its argument can't be a constant ?? (e +) can happen though it's an error
 			 */
 		      default:
-			if (UNPRINT) fprintf(stderr, "un_c: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
+			if (UNPRINT) fprintf(stderr, "    un_c: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -56480,6 +56520,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer f;
 		f = find_symbol_checked(sc, car(code));
+		if (UNGAD) fprintf(stderr, "%s: %s %s\n", opt_name(code), type_name(sc, f, NO_ARTICLE), DISPLAY(code));
 		if (s7_is_aritable(sc, f, 2))
 		  {
 		    switch (type(f))
@@ -56531,7 +56572,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			set_opt_and_goto_opt_eval(code, f, OP_C_OBJECT_SS);
 
 		      default:
-			if (UNPRINT) fprintf(stderr, "un_ss: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); 
+			if (UNPRINT) fprintf(stderr, "    un_ss: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); 
 			break;
 		      }
 		  }
@@ -56544,6 +56585,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer f;
 		f = find_symbol_checked(sc, car(code));
+		if (UNGAD) fprintf(stderr, "%s: %s %s\n", opt_name(code), type_name(sc, f, NO_ARTICLE), DISPLAY(code));
 
 		if (s7_is_aritable(sc, f, 2))
 		  {
@@ -56579,7 +56621,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto OPT_EVAL;
 			
 		      default:
-			if (UNPRINT) fprintf(stderr, "un_sc: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); 
+			if (UNPRINT) fprintf(stderr, "    un_sc: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); 
 			/* vector */
 			break;
 		      }
@@ -56593,6 +56635,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer f;
 		f = find_symbol_checked(sc, car(code));
+		if (UNGAD) fprintf(stderr, "%s: %s %s\n", opt_name(code), type_name(sc, f, NO_ARTICLE), DISPLAY(code));
 
 		if (s7_is_aritable(sc, f, 2))
 		  {
@@ -56621,7 +56664,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			
 		      default:
 			/* vector */
-			if (UNPRINT) fprintf(stderr, "un_cs: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); 
+			if (UNPRINT) fprintf(stderr, "    un_cs: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); 
 			break;
 		      }
 		  }
@@ -56634,21 +56677,36 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer f;
 		f = find_symbol_checked(sc, car(code));
+		if (UNGAD) fprintf(stderr, "%s: %s %s\n", opt_name(code), type_name(sc, f, NO_ARTICLE), DISPLAY(code));
 
-		if ((is_c_function(f)) &&
-		    (s7_is_aritable(sc, f, 2)) &&
-		    (is_safe_procedure(f)))
+		if (s7_is_aritable(sc, f, 2))
 		  {
-		    set_optimize_data(code, OP_SAFE_C_C);
-		    set_c_function(code, f);
-		    goto OPT_EVAL;
-		  }
-		if (is_c_object(f))
-		  {
-		    set_opt_and_goto_opt_eval(code, f, OP_C_OBJECT_CC);
-		  }
+		    switch (type(f))
+		      {
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
+			if (is_safe_procedure(f))
+			  {
+			    set_optimize_data(code, OP_SAFE_C_C);
+			    set_c_function(code, f);
+			    goto OPT_EVAL;
+			  }
+			break;
+			
+		      case T_C_OBJECT:
+			set_opt_and_goto_opt_eval(code, f, OP_C_OBJECT_CC);
 
-		if (UNPRINT) fprintf(stderr, "un_cc: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); 
+		      case T_INT_VECTOR:
+		      case T_FLOAT_VECTOR:
+		      case T_VECTOR:
+			if ((is_integer(cadr(code))) &&
+			    (s7_integer(cadr(code)) >= 0) &&
+			    (is_integer(caddr(code))) &&
+			    (s7_integer(caddr(code)) >= 0))
+			  set_opt_and_goto_opt_eval(code, f, OP_VECTOR_CC);
+			break;
+		      }
+		  }
+		if (UNPRINT) fprintf(stderr, "    un_cc: found %s %s\n", type_name(sc, f, 0), DISPLAY(code)); 
 		/* pair/vector */
 	      }
 	      break;
@@ -56659,6 +56717,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer f;
 		f = find_symbol_checked(sc, car(code));
+		if (UNGAD) fprintf(stderr, "%s: %s %s\n", opt_name(code), type_name(sc, f, NO_ARTICLE), DISPLAY(code));
 
 		if (s7_is_aritable(sc, f, 3))
 		  {
@@ -56692,7 +56751,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto OPT_EVAL;
 			
 		      default:
-			if (UNPRINT) fprintf(stderr, "un_sss: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
+			if (UNPRINT) fprintf(stderr, "    un_sss: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -56706,6 +56765,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer f;
 		int num_args;
 		f = find_symbol_checked(sc, car(code));
+		if (UNGAD) fprintf(stderr, "%s: %s %s\n", opt_name(code), type_name(sc, f, NO_ARTICLE), DISPLAY(code));
 
 		num_args = integer(arglist_length(code));
 		if (s7_is_aritable(sc, f, num_args))
@@ -56734,7 +56794,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			goto OPT_EVAL;
 			
 		      default:
-			if (UNPRINT) fprintf(stderr, "un_all_s: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
+			if (UNPRINT) fprintf(stderr, "    un_all_s: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -56747,6 +56807,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer f;
 		f = find_symbol_checked(sc, car(code));
+		if (UNGAD) fprintf(stderr, "%s: %s %s\n", opt_name(code), type_name(sc, f, NO_ARTICLE), DISPLAY(code));
 		
 		if (s7_is_aritable(sc, f, 1))
 		  {
@@ -56760,11 +56821,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      case T_VECTOR:
 			set_opt_and_goto_opt_eval(code, f, OP_VECTOR_A);
 			
-		      case T_C_FUNCTION: 
-		      case T_C_FUNCTION_STAR: 
-		      case T_C_ANY_ARGS_FUNCTION: 
-		      case T_C_OPT_ARGS_FUNCTION: 
-		      case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if ((is_safe_procedure(f)) &&
 			    (is_optimized(cadr(code))))
 			  {
@@ -56825,7 +56882,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			set_opt_and_goto_opt_eval(code, f, OP_GOTO_A);
 			
 		      default:
-			if (UNPRINT) fprintf(stderr, "un_a: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
+			if (UNPRINT) fprintf(stderr, "    un_a: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -56838,6 +56895,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer f;
 		f = find_symbol_checked(sc, car(code));
+		if (UNGAD) fprintf(stderr, "%s: %s %s\n", opt_name(code), type_name(sc, f, NO_ARTICLE), DISPLAY(code));
 
 		if (s7_is_aritable(sc, f, 2))
 		  {
@@ -56868,17 +56926,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 
-		      case T_C_FUNCTION: 
-		      case T_C_FUNCTION_STAR: 
-		      case T_C_ANY_ARGS_FUNCTION: 
-		      case T_C_OPT_ARGS_FUNCTION: 
-		      case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_AA : OP_C_ALL_X);
 			set_c_function(code, f);
 			goto OPT_EVAL;
 
 		      default:
-			if (UNPRINT) fprintf(stderr, "un_all_x: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
+			if (UNPRINT) fprintf(stderr, "    un_all_x: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -56892,6 +56946,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer f;
 		int num_args;
 		f = find_symbol_checked(sc, car(code));
+		if (UNGAD) fprintf(stderr, "%s: %s %s\n", opt_name(code), type_name(sc, f, NO_ARTICLE), DISPLAY(code));
 
 		num_args = integer(arglist_length(code));
 		if (s7_is_aritable(sc, f, num_args))
@@ -56930,18 +56985,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			break;
 
-		      case T_C_FUNCTION: 
-		      case T_C_FUNCTION_STAR:
-		      case T_C_ANY_ARGS_FUNCTION:
-		      case T_C_OPT_ARGS_FUNCTION:
-		      case T_C_RST_ARGS_FUNCTION:
+		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_ALL_X : OP_C_ALL_X);
 			annotate_args(sc, cdr(code));
 			set_c_function(code, f);
 			goto OPT_EVAL;
 
 		      default:
-			if (UNPRINT) fprintf(stderr, "un_all_x: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
+			if (UNPRINT) fprintf(stderr, "    un_all_x: found %s %s\n", type_name(sc, f, 0), DISPLAY(code));
 			break;
 		      }
 		  }
@@ -57100,6 +57151,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    index = s7_integer(cadr(code));
 		    if ((index < vector_length(v)) &&
 			(index >= 0))
+		      {
+			sc->value = vector_getter(v)(sc, v, index);
+			goto START;
+		      }
+		  }
+		sc->value = vector_ref_1(sc, v, cdr(code));
+		goto START;
+	      }
+	      
+	      
+	    case OP_VECTOR_CC:
+	    case HOP_VECTOR_CC:
+	      {
+		s7_pointer v; 
+		v = find_symbol_checked(sc, car(code));
+		if (!s7_is_vector(v)) break;  /* we've checked that the args are non-negative ints */
+		if (vector_rank(v) == 2)
+		  {
+		    s7_Int index;
+		    index = s7_integer(cadr(code)) * vector_offset(v, 0) + s7_integer(caddr(code));
+		    if (index < vector_length(v))
 		      {
 			sc->value = vector_getter(v)(sc, v, index);
 			goto START;
@@ -57276,6 +57348,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s = find_symbol_checked(sc, car(code));
 		if (!is_hash_table(s)) break;
 		sc->value = s7_hash_table_ref(sc, s, ((s7_function)fcdr(cdr(code)))(sc, cadr(code)));
+		goto START;
+	      }
+	      
+	      
+	    case OP_ENVIRONMENT_C:
+	    case HOP_ENVIRONMENT_C:
+	      {
+		s7_pointer s;
+		s = find_symbol_checked(sc, car(code));
+		if (!is_let(s)) break;
+		sc->value = s7_let_ref(sc, s, cadr(code));
 		goto START;
 	      }
 	      
@@ -61379,6 +61462,30 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  { 
 	  LET1A:
 	    x = cadar(sc->code);
+	    /*
+92008: (- (/ (sin nx) sxsx) (/ (* n (cos nx2)) sx22))
+92008: (- (/ (* n (sin nx2)) sx22) (/ (- 1.0 (cos nx)) sxsx))
+40870: (* norm (+ 1.0 (* -2.0 r (cos mx)) (* r r)))
+29482: (abs (- mx (maxs e-bin)))
+29482: (abs (- mn (mins e-bin)))
+22051: (dline2 (+ j 1))
+22050: (out2 loc)
+22050: (out1 loc)
+22050: (glot-table int-loc)
+22050: (dline1 (- j 1))
+22050: (dline2 2)
+16800: (f (x j) arg1 arg2)
+14030: (max 0 (- n (+ L 1)))
+13231: (radii (- noseposition 2))
+13231: (radii (- noseposition 1))
+13231: (radii (+ tractlength 3))
+13231: (radii (+ tractlength 4))
+13231: (radii (+ tractlength 5))
+13231: (radii (+ tractlength 6))
+10000: (/ 0.5 (- (/ 1.0 (- 1.0 (/ (abs (- (sqrt (- (* a a) (* b b))) a)) b))) 1.0))
+9128: (+ (dot-product wk1 wk1 end) (dot-product wk2 wk2 end))
+	    */
+
 	    
 	    if (is_pair(x))
 	      {
@@ -61587,6 +61694,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{ 
 	  s7_pointer x;
 	  x = cadar(sc->code);
+	  /*
+41623: (* diff ramp-speed)
+41623: (- 0.5 (* mult curmax))
+23101: (* ratio phase)
+22100: (* (exp (* 0.5 index (- r r1) (+ one (cos modphase)))) (cos (+ phase (* 0.5...
+22100: (if (or (> r 1.0) (and (< r 0.0) (> r -1.0))) -1.0 1.0)
+22050: (modulo (+ loc 1 (floor dly1)) size)
+22050: (modulo (+ loc 1 (floor dly2)) size)
+22050: (modulo (+ loc (floor dly1)) size)
+22050: (modulo (+ loc (floor dly2)) size)
+22050: (min (max (+ rpos offset) (- amplitude)) amplitude)
+22050: (* vol (+ (* (- relamp vola) (nrssb-interp gen (* res1 vib) -1.0)) (* (+ (-...
+22050: (if (<= pos -1.0) 1.0 (if (>= pos 1.0) 0.0 (* (sqrt (- 1.0 pos)) 1/sqrt2)))
+22050: (if (<= pos -1.0) 0.0 (if (>= pos 1.0) 1.0 (* (sqrt (+ 1.0 pos)) 1/sqrt2)))
+22050: (+ (* h3freq (oscil mod1)) (env skenv))
+20000: (if (< (abs den) nearly-zero) 1.0 (let* ((n1 (+ n 1)) (result1 (let ((val (/...
+19955: (let ((val (/ (sin (* 0.5 n1 angle)) (* n1 den)))) (* val val))
+19955: (let ((val (/ (sin (* 0.5 p2n2 angle)) (* p2n2 den)))) (* val val))
+10000: (* (bes-j0 (* k a)) (bes-j0 (* k r)))
+10000: (- (bes-j0 (* k (sqrt (+ (* a a) (* r r) (* -2 a r))))) dc)
+10000: (* amp (sin (+ carrier-phase modulation)))
+10000: (- 1.0 (* r (cos angle2)))
+10000: (+ 1.0 (* r r) (* -2.0 r (cos angle2)))
+10000: (+ (* r r) (* a a) (* a (* -2.0 r (cos x))))
+	   */
 	  if (is_pair(x))
 	    {
 	      push_stack(sc, OP_LET_STAR1, sc->args, sc->code); 
@@ -65537,11 +65669,6 @@ static s7_pointer big_sin(s7_scheme *sc, s7_pointer args)
   return(big_trig(sc, args, mpfr_sin, mpc_sin, TRIG_NO_CHECK, sc->SIN));
 }
 
-s7_pointer s7_sin(s7_scheme *sc, s7_pointer x)
-{
-  return(big_sin(sc, cons(sc, x, sc->NIL)));
-}
-
 
 static s7_pointer big_cos(s7_scheme *sc, s7_pointer args)
 {
@@ -68694,6 +68821,7 @@ s7_scheme *s7_init(void)
 	prepackaged_type_names[i] = s7_make_permanent_string(str);
       else prepackaged_type_names[i] = sc->F;
     }
+  /* unset built-ins: T_STACK (can't happen), T_C_OBJECT (want actual name), T_INPUT|OUTPUT_PORT (want string|file|etc included) */
 
   sc->gc_off = false;
 
@@ -69692,8 +69820,8 @@ int main(int argc, char **argv)
  * bench    42736 | 8752 | 4220 | 3506 3506 3555
  * lg             |      |      |      6497 6500
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6
- * t455|6     265 |   89 |  9   |       8.4  8.4
- * t816           |   71 | 70.6 | 38.0 31.8 28.2
+ * t455|6     265 |   89 |  9   |       8.4  8.3
+ * t816           |   71 | 70.6 | 38.0 31.8 28.1
  * calls      359 |  275 | 54   | 34.7 34.7 35.2
  *
  * --------------------------------------------------
@@ -69723,5 +69851,7 @@ int main(int argc, char **argv)
  *   while is_number send buffers, dac_xen_sample, depends on check_for_event to call it as a (gui-driven) background process
  * perhaps if let/env is large, display contents more carefully (for pretty-print?)
  *
- * full_filename should check for initial "/" (g_load).
+ * g_load of .so file should try "./fname" and others unchanged?
+ * maybe unknown_gg for cs(qk?) cases
+ * closure*_allx could be folded into ss, sss, etc
  */
