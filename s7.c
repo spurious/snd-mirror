@@ -660,7 +660,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_CLOSURE_STAR_S, HOP_CLOSURE_STAR_S, OP_CLOSURE_STAR_SX, HOP_CLOSURE_STAR_SX,
       OP_CLOSURE_STAR, HOP_CLOSURE_STAR, OP_CLOSURE_STAR_ALL_X, HOP_CLOSURE_STAR_ALL_X, 
 
-      OP_SAFE_THUNK, HOP_SAFE_THUNK,
+      OP_SAFE_THUNK, HOP_SAFE_THUNK, 
       OP_SAFE_CLOSURE_S, HOP_SAFE_CLOSURE_S, OP_SAFE_CLOSURE_C, HOP_SAFE_CLOSURE_C, OP_SAFE_CLOSURE_Q, HOP_SAFE_CLOSURE_Q, 
       OP_SAFE_CLOSURE_SS, HOP_SAFE_CLOSURE_SS, OP_SAFE_CLOSURE_SC, HOP_SAFE_CLOSURE_SC, OP_SAFE_CLOSURE_CS, HOP_SAFE_CLOSURE_CS, 
       OP_SAFE_CLOSURE_A, HOP_SAFE_CLOSURE_A, OP_SAFE_CLOSURE_SA, HOP_SAFE_CLOSURE_SA, 
@@ -742,6 +742,8 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_op_opsq_q", "h_safe_c_op_opsq_q", "safe_c_c_op_s_opcqq", "h_safe_c_c_op_s_opcqq",
       "safe_c_op_s_opsq_q", "h_safe_c_op_s_opsq_q",
 
+      "safe_c*_cd", "h_safe_c*_cd",
+
       "safe_c_z", "h_safe_c_z", "safe_c_zz", "h_safe_c_zz", "safe_c_sz", "h_safe_c_sz", "safe_c_zs", "h_safe_c_zs", 
       "safe_c_cz", "h_safe_c_cz", "safe_c_zc", "h_safe_c_zc", 
       "safe_c_opcq_z", "h_safe_c_opcq_z", "safe_c_s_opszq", "h_safe_c_s_opszq", 
@@ -749,7 +751,6 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_c_zaa", "h_safe_c_zaa", "safe_c_aza", "h_safe_c_aza", "safe_c_aaz", "h_safe_c_aaz", "safe_c_ssz", "h_safe_c_ssz",
       "safe_c_zza", "h_safe_c_zza", "safe_c_zaz", "h_safe_c_zaz", "safe_c_azz", "h_safe_c_azz", 
       "safe_c_zzz", "h_safe_c_zzz", "safe_c_zzzz", "h_safe_c_zzzz",
-      "safe_c*_cd", "h_safe_c*_cd",
 
       "thunk", "h_thunk", 
       "closure_s", "h_closure_s", "closure_c", "h_closure_c", "closure_q", "h_closure_q", 
@@ -763,7 +764,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "closure_star_s", "h_closure_star_s", "closure_star_sx", "h_closure_star_sx", 
       "closure_star", "h_closure_star", "closure_star_all_x", "h_closure_star_all_x", 
 
-      "safe_thunk", "h_safe_thunk",
+      "safe_thunk", "h_safe_thunk", 
       "safe_closure_s", "h_safe_closure_s", "safe_closure_c", "h_safe_closure_c", "safe_closure_q", "h_safe_closure_q", 
       "safe_closure_ss", "h_safe_closure_ss", "safe_closure_sc", "h_safe_closure_sc", "safe_closure_cs", "h_safe_closure_cs", 
       "safe_closure_a", "h_safe_closure_a", "safe_closure_sa", "h_safe_closure_sa", 
@@ -43785,14 +43786,6 @@ static s7_pointer all_x_c_sss(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T3_1));
 }		    
 
-static s7_pointer all_x_c_sqs(s7_scheme *sc, s7_pointer arg)
-{
-  car(sc->T3_1) = find_symbol_checked(sc, cadr(arg));
-  car(sc->T3_2) = cadr(caddr(arg));
-  car(sc->T3_3) = find_symbol_checked(sc, cadddr(arg));
-  return(c_call(arg)(sc, sc->T3_1));
-}		    
-
 static s7_pointer all_x_c_scs(s7_scheme *sc, s7_pointer arg)
 {
   car(sc->T3_1) = find_symbol_checked(sc, cadr(arg));
@@ -44127,7 +44120,6 @@ static void all_x_function_init(void)
   all_x_function[HOP_SAFE_C_SSS] = all_x_c_sss;
   all_x_function[HOP_SAFE_C_SCS] = all_x_c_scs;
   all_x_function[HOP_SAFE_C_CSS] = all_x_c_css;
-  all_x_function[HOP_SAFE_C_SQS] = all_x_c_sqs;
 }
 
 static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
@@ -44145,7 +44137,9 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
 	    }
 	  return(all_x_function[optimize_data(arg)]);
 	}
-      return(all_x_q);
+      if (car(arg) == sc->QUOTE)
+	return(all_x_q);
+      return(NULL);
     }
   if (is_symbol(arg))
     {
@@ -44196,28 +44190,11 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer car_x, s7_pointer func, int
   if ((is_closure(func)) &&
       (is_null(closure_args(func))))                 /* no rest arg funny business */
     {
-      /* look for a case like (define (version) (s7-version)) 
-       */
-      if (is_null(cdr(closure_body(func))))          /* I think if the body is hop_safe_c_c, the current hop setting is irrelevant (local func -> 1 etc) */
-	{
-	  s7_pointer body;
-	  body = car(closure_body(func));
-	  if ((is_optimized(body)) &&
-	      (!is_unsafe(body)) &&
-	      (is_null(cdr(body))) &&                /* else (define (hi) (vector 0.0)) (define (ho) (hi)) -- the "C"'s don't match */
-	      (optimize_data(body) == HOP_SAFE_C_C)) /* see above */
-	    {
-	      set_optimized(car_x);
-	      set_optimize_data(car_x, HOP_SAFE_C_C);
-	      set_ecdr(car_x, ecdr(body));
-	      set_fcdr(car_x, fcdr(body));
-	      return(true);
-	    }
-	}
-
       set_unsafely_optimized(car_x);
       set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_THUNK : OP_THUNK));
-      /* it apparently never happens that the safe_thunk's body is one-line/allxable */
+      /* it rarely happens that the safe_thunk's body is one-line/allxable
+       *   so checking for that case above costs more than it saves.
+       */
       set_ecdr(car_x, func);
       return(false);                                /* false because currently the C_PP stuff assumes safe procedure calls */
     }
@@ -44282,7 +44259,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	  return(OP_SAFE_C_opAAAq);
 	}
       
-      /* fprintf(stderr, "z: %s %s\n", opt_name(e2), DISPLAY(e1)); */
+      /* fprintf(stderr, "z: %s %s\n", opt_names[op2], DISPLAY(e1)); */
       return(OP_SAFE_C_Z); /* this splits out to A in optimize_func_one_arg */
       break;
       
@@ -44384,6 +44361,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_opSSq:
 	  return(OP_SAFE_C_op_opSSq_q_C);
 	}
+
       /* fprintf(stderr, "zc: %s %s\n", opt_name(e2), DISPLAY(e1)); */
       return(OP_SAFE_C_ZC);
       break;
@@ -45329,7 +45307,8 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 	  set_optimized(car_x);
 	  if (bad_pairs == 0)
 	    {
-	      set_optimize_data(car_x, hop + ((is_symbol(cadar_x)) ? OP_SAFE_C_CZ : OP_SAFE_C_ZC));
+	      set_optimize_data(car_x, hop + ((is_pair(cadar_x)) ? OP_SAFE_C_CZ : OP_SAFE_C_ZC)); /* was symbol?? */
+	      /* fprintf(stderr, "%d %s: %s\n", __LINE__, opt_name(car_x), DISPLAY(car_x)); */
 	      choose_c_function(sc, car_x, func, 2);
 	      return(true);
 	    }
@@ -50185,7 +50164,7 @@ static s7_pointer check_cond(s7_scheme *sc)
 	  bool xopt = true, c_s_is_ok = true;
 	  pair_set_syntax_symbol(sc->code, sc->COND_SIMPLE);
 	  
-	  for (p = sc->code; (xopt) && (is_pair(p)); p = cdr(p))
+	  for (p = sc->code; xopt && (is_pair(p)); p = cdr(p))
 	    {
 	      xopt = is_all_x_safe(sc, caar(p));
 	      if ((c_s_is_ok) &&
@@ -50200,9 +50179,7 @@ static s7_pointer check_cond(s7_scheme *sc)
 		}
 	    }
 	  if (c_s_is_ok)
-	    {
-	      pair_set_syntax_symbol(sc->code, sc->COND_S);
-	    }
+	    pair_set_syntax_symbol(sc->code, sc->COND_S);
 	  else
 	    {
 	      if (xopt)
@@ -53096,27 +53073,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->cur_code = code;
 	  /* fprintf(stderr, "opt eval: %s %s %s\n", opt_names[optimize_op(code)], DISPLAY_80(code), describe_type_bits(sc, car(code))); */
 
-	  /* if (all_x_function[optimize_op(code)] == NULL) tick(optimize_op(code)); */
-
-	  /* 
-index: h_safe_c_opscq_c: 67659 (7.139051)
-lg:                       h_read_s: 43930 (1.011650)
-t502:  h_safe_c_opvsq_s: 608673 (8.917921)
-       h_safe_c_opscq_c: 330750 (4.845956)
-       h_safe_c_opvsq_opvsq: 237183 (3.475067)
-       h_safe_c_opssq_opcq: 210374 (3.082277)
-bench: h_safe_c_c_op_s_opcqq: 400200 (5.718801)
-                          h_read_s: 100001 (1.429000)
-       [safe_closure_s ideally -- safe_closure_s_to_a]
-          if one line, all-x-able, safe_closure_s(etc)_to_a -- and safe_closure(*)?
-t816:  [safe_thunk: 3925440 (33.326083) ideally]
-          if one line, all-x-able, safe_thunk_to_a
-                          h_safe_c_scc: 1701024 (14.441303)
-                          h_safe_c_sqs: 271980 (2.309048)
-       h_safe_c_opsq_opssq: 139850 (1.187294)
-t456:  h_safe_c_op_opsq_q: 196317 (2.143435)
-test:                     h_safe_c_sqs: 1153077 (4.373315)
-	   */	  
 	  switch (optimize_op(code))
 	    {
 	      /* -------------------------------------------------------------------------------- */
