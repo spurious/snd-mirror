@@ -1276,7 +1276,11 @@ static bool add_xen_to_play_list(Xen func)
       dp = make_dac_info(slot, NULL, NULL, NULL, NO_END_SPECIFIED, 0, DAC_XEN, func);
       if (dp)
 	{
+#if USE_NO_GUI
+	  start_dac((int)mus_srate(), 1, NOT_IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
+#else
 	  start_dac((int)mus_srate(), 1, IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
+#endif
 	  /*                          ^ output channels */
 	  return(true);
 	}
