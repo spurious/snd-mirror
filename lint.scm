@@ -3401,7 +3401,7 @@
 		    ((let)
 		     (if (< (length form) 3)
 			 (lint-format "let is messed up: ~A" name (truncated-list->string form))
-			 (let ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
+			 (let ((named-let (and (symbol? (cadr form)) (cadr form))))
 			   (let ((vars (if named-let 
 					   (list (make-var named-let 
 							   :fnc (and (pair? (cddr form)) ; trying to protect against badly formed let's here
@@ -3454,7 +3454,7 @@
 		    ((let*)
 		     (if (< (length form) 3)
 			 (lint-format "let* is messed up: ~A" name (truncated-list->string form))
-			 (let ((named-let (if (symbol? (cadr form)) (cadr form) #f)))
+			 (let ((named-let (and (symbol? (cadr form)) (cadr form))))
 			   (let ((vars (if named-let (list (make-var named-let)) ()))
 				 (varlist (if named-let (caddr form) (cadr form))))
 			     (if (and (not (null? varlist))
