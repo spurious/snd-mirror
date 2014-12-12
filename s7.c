@@ -305,7 +305,6 @@
       #define _Complex_I 1.0fi
     #endif
   #endif
-
 #ifndef CMPLX
   /* c11 addition? */
   #define CMPLX(r, i) ((r) + ((i) * _Complex_I))
@@ -2611,15 +2610,9 @@ static s7_pointer simple_out_of_range_error_prepackaged(s7_scheme *sc, s7_pointe
   wrong_type_arg_error_prepackaged(Sc, symbol_name_cell(Caller), make_integer(Sc, Num), Arg, sc->GC_NIL, Type)
 
 #define simple_out_of_range(Sc, Caller, Arg, Description) \
-  simple_out_of_range_error_prepackaged(Sc, symbol_name_cell(Caller), Arg, make_string_wrapper(Sc, Description))
-
-#define simple_out_of_range_str(Sc, Caller, Arg, Description) \
   simple_out_of_range_error_prepackaged(Sc, symbol_name_cell(Caller), Arg, Description)
 
-#define out_of_range(Sc, Caller, Arg_Num, Arg, Description) \
-  out_of_range_error_prepackaged(Sc, symbol_name_cell(Caller), Arg_Num, Arg, make_string_wrapper(Sc, Description))
-
-#define out_of_range_str(Sc, Caller, Arg_Num, Arg, Description)		\
+#define out_of_range(Sc, Caller, Arg_Num, Arg, Description)		\
   out_of_range_error_prepackaged(Sc, symbol_name_cell(Caller), Arg_Num, Arg, Description)
 
 
@@ -2629,7 +2622,10 @@ static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_
 static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, AN_OPEN_PORT, A_NORMAL_REAL, A_RATIONAL, A_FUNCTION, A_BOOLEAN;
 static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL, A_NON_NEGATIVE_INTEGER;
 static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BYTE, A_BINDING, A_NON_CONSTANT_SYMBOL, AN_EQ_FUNC, A_SEQUENCE;
-static s7_pointer ITS_TOO_LARGE, ITS_NEGATIVE, RESULT_IS_TOO_LARGE, ITS_NAN, ITS_INFINITE, TOO_MANY_INDICES;
+static s7_pointer ITS_TOO_LARGE, ITS_NEGATIVE, RESULT_IS_TOO_LARGE, ITS_NAN, ITS_INFINITE, TOO_MANY_INDICES, A_VALID_RADIX;
+#if (!HAVE_COMPLEX_NUMBERS)
+static s7_pointer NO_COMPLEX_NUMBERS;
+#endif
 
 
 /* --------------------------------------------------------------------------------
@@ -8252,7 +8248,7 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x, bool with_error)
 	    (val < S7_LLONG_MIN))
 	  {
 	    if (with_error)
-	      return(simple_out_of_range_str(sc, sc->INEXACT_TO_EXACT, x, ITS_TOO_LARGE));
+	      return(simple_out_of_range(sc, sc->INEXACT_TO_EXACT, x, ITS_TOO_LARGE));
 	    return(sc->NIL);
 	  }
 
@@ -8423,7 +8419,11 @@ s7_Double s7_real(s7_pointer p)
 #if (!WITH_GMP)
 static s7_Complex s7_complex(s7_pointer p)
 {
+#if HAVE_COMPLEX_NUMBERS
   return(CMPLX(s7_real_part(p), s7_imag_part(p)));
+#else
+  return(0.0);
+#endif
 }
 
 
@@ -9103,7 +9103,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 	  return(wrong_type_argument(sc, sc->NUMBER_TO_STRING, small_int(2), y, T_INTEGER));
 	}
       if ((radix < 2) || (radix > 16))
-	return(out_of_range(sc, sc->NUMBER_TO_STRING, small_int(2), y, "should be between 2 and 16"));
+	return(out_of_range(sc, sc->NUMBER_TO_STRING, small_int(2), y, A_VALID_RADIX));
     }
 
 #if WITH_GMP
@@ -10481,7 +10481,7 @@ the 'radix' it is ignored: (string->number \"#x11\" 2) -> 17 not 3."
       radix = s7_integer(rad);
       if ((radix < 2) ||              /* what about negative int as base (Knuth), reals such as phi, and some complex like -1+i */
 	  (radix > 16))               /* the only problem here is printing the number; perhaps put each digit in "()" in base 10: (123)(0)(34) */
-	return(out_of_range(sc, caller, small_int(2), rad, "should be between 2 and 16"));
+	return(out_of_range(sc, caller, small_int(2), rad, A_VALID_RADIX));
     }
   else radix = 10;
 
@@ -10715,7 +10715,7 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 	}
       err = number_to_double(sc, ex, "rationalize");
       if (is_NaN(err))
-	return(out_of_range(sc, sc->RATIONALIZE, small_int(2), cadr(args), "error term is NaN"));
+	return(out_of_range(sc, sc->RATIONALIZE, small_int(2), cadr(args), ITS_NAN));
       if (err < 0.0) err = -err;
     }
   else err = sc->default_rationalize_error;
@@ -10754,7 +10754,7 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 	  return(small_int(0));
 
 	if ((rat > 9.2233720368548e+18) || (rat < -9.2233720368548e+18))
-	  return(out_of_range(sc, sc->RATIONALIZE, small_int(1), x, "a real between most-negative-fixnum and most-positive-fixnum"));
+	  return(out_of_range(sc, sc->RATIONALIZE, small_int(1), x, ITS_TOO_LARGE));
 
 	if ((fabs(rat) + fabs(err)) < 1.0e-18)
 	  err = 1.0e-18;
@@ -10993,7 +10993,7 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
        *   (exp 0+1e20i) -> -0.66491178990701-0.74692189125949i, not 7.639704044417283004001468027378811228331E-1-6.45251285265780844205811711312523007406E-1i
        */
 #else
-      return(out_of_range(sc, sc->EXP, small_int(1), x, "it is complex"));
+      return(out_of_range(sc, sc->EXP, small_int(1), x, NO_COMPLEX_NUMBERS));
 #endif
 
     default:
@@ -11083,7 +11083,7 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 	  if ((y == small_int(0)) &&
 	      (x == small_int(1)))
 	    return(y);
-	  return(out_of_range(sc, sc->LOG, small_int(2), y, "can't be 0"));
+	  return(out_of_range(sc, sc->LOG, small_int(2), y, make_string_wrapper(sc, "can't be 0")));
 	}
 
       if (s7_is_one(y))          /* this used to raise an error, but the bignum case is simpler if we return inf */
@@ -11146,7 +11146,7 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
 #if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, csin(as_c_complex(x))));
 #else
-      return(out_of_range(sc, sc->SIN, small_int(1), x, "it is complex"));
+      return(out_of_range(sc, sc->SIN, small_int(1), x, NO_COMPLEX_NUMBERS));
 #endif
 
     default:
@@ -11189,7 +11189,7 @@ static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
 #if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, ccos(as_c_complex(x))));
 #else
-      return(out_of_range(sc, sc->COS, small_int(1), x, "it is complex"));
+      return(out_of_range(sc, sc->COS, small_int(1), x, NO_COMPLEX_NUMBERS));
 #endif
 
     default:
@@ -11248,7 +11248,7 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
 	return(s7_make_complex(sc, 0.0, -1.0));
       return(s7_from_c_complex(sc, ctan(as_c_complex(x))));
 #else
-      return(out_of_range(sc, sc->TAN, small_int(1), x, "it is complex"));
+      return(out_of_range(sc, sc->TAN, small_int(1), x, NO_COMPLEX_NUMBERS));
 #endif
 
     default:
@@ -11309,7 +11309,7 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
 	}
       return(s7_from_c_complex(sc, casin(as_c_complex(n))));
 #else
-      return(out_of_range(sc, sc->ASIN, small_int(1), n, "it is complex"));
+      return(out_of_range(sc, sc->ASIN, small_int(1), n, NO_COMPLEX_NUMBERS));
 #endif
 
     default:
@@ -11366,7 +11366,7 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
 	}
       return(s7_from_c_complex(sc, cacos(s7_complex(n))));
 #else
-      return(out_of_range(sc, sc->ACOS, small_int(1), n, "it is complex"));
+      return(out_of_range(sc, sc->ACOS, small_int(1), n, NO_COMPLEX_NUMBERS));
 #endif
 
     default:
@@ -11399,7 +11399,7 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
 #if HAVE_COMPLEX_NUMBERS
 	  return(s7_from_c_complex(sc, catan(as_c_complex(x))));
 #else
-	  return(out_of_range(sc, sc->ATAN, small_int(1), x, "it is complex"));
+	  return(out_of_range(sc, sc->ATAN, small_int(1), x, NO_COMPLEX_NUMBERS));
 #endif
 
 	default:
@@ -11442,7 +11442,7 @@ static s7_pointer g_sinh(s7_scheme *sc, s7_pointer args)
 #if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, csinh(as_c_complex(x))));
 #else
-      return(out_of_range(sc, sc->SINH, small_int(1), x, "it is complex"));
+      return(out_of_range(sc, sc->SINH, small_int(1), x, NO_COMPLEX_NUMBERS));
 #endif
 
     default:
@@ -11479,7 +11479,7 @@ static s7_pointer g_cosh(s7_scheme *sc, s7_pointer args)
 #if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, ccosh(as_c_complex(x))));
 #else
-      return(out_of_range(sc, sc->COSH, small_int(1), x, "it is complex"));
+      return(out_of_range(sc, sc->COSH, small_int(1), x, NO_COMPLEX_NUMBERS));
 #endif
 
     default:
@@ -11512,7 +11512,7 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
 	return(make_real(sc, -1.0));              /* closer than -0.0 which is what ctanh is about to return! */
       return(s7_from_c_complex(sc, ctanh(as_c_complex(x))));
 #else
-      return(out_of_range(sc, sc->TANH, small_int(1), x, "it is complex"));
+      return(out_of_range(sc, sc->TANH, small_int(1), x, NO_COMPLEX_NUMBERS));
 #endif
 
     default:
@@ -11541,7 +11541,7 @@ static s7_pointer g_asinh(s7_scheme *sc, s7_pointer args)
 #if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, casinh(as_c_complex(x))));
 #else
-      return(out_of_range(sc, sc->ASINH, small_int(1), x, "it is complex"));
+      return(out_of_range(sc, sc->ASINH, small_int(1), x, NO_COMPLEX_NUMBERS));
 #endif
 
     default:
@@ -11572,7 +11572,7 @@ static s7_pointer g_acosh(s7_scheme *sc, s7_pointer args)
       return(s7_from_c_complex(sc, cacosh(s7_complex(x)))); /* not as_c_complex because x might not be complex */
 #else
       /* since we can fall through to this branch, we need a better error message than "must be a number, not 0.0" */
-      return(out_of_range(sc, sc->ACOSH, small_int(1), x, "a number >= 1.0 (no complex numbers in this version of s7)"));
+      return(out_of_range(sc, sc->ACOSH, small_int(1), x, NO_COMPLEX_NUMBERS));
 #endif
 
     default:
@@ -11606,7 +11606,7 @@ static s7_pointer g_atanh(s7_scheme *sc, s7_pointer args)
 #if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, catanh(s7_complex(x))));
 #else
-      return(out_of_range(sc, sc->ATANH, small_int(1), x, "a number between -1.0 and 1.0 (no complex numbers in this version of s7)"));
+      return(out_of_range(sc, sc->ATANH, small_int(1), x, NO_COMPLEX_NUMBERS));
 #endif
 
     default:
@@ -11674,7 +11674,7 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
       return(s7_from_c_complex(sc, csqrt(as_c_complex(n))));
       break;
 #else
-      return(out_of_range(sc, sc->SQRT, small_int(1), n, "it is complex"));
+      return(out_of_range(sc, sc->SQRT, small_int(1), n, NO_COMPLEX_NUMBERS));
 #endif
 
     default:
@@ -11890,7 +11890,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 		}
 	    }
 #else
-	  return(out_of_range(sc, sc->EXPT, small_int(2), n, "it is complex"));
+	  return(out_of_range(sc, sc->EXPT, small_int(2), n, NO_COMPLEX_NUMBERS));
 #endif
 	  break;
 	}
@@ -12005,7 +12005,7 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 	  check_method(sc, x, sc->LCM, cons(sc, (d <= 1) ? make_integer(sc, n) : s7_make_ratio(sc, n, d), p));
 	  return(wrong_type_argument_n_with_type(sc, sc->LCM, position_of(p, args), x, A_RATIONAL));
 	}
-      if (n < 0) return(simple_out_of_range_str(sc, sc->LCM, args, RESULT_IS_TOO_LARGE));
+      if (n < 0) return(simple_out_of_range(sc, sc->LCM, args, RESULT_IS_TOO_LARGE));
       if (n == 0)
 	{
 	  for (p = cdr(p); is_pair(p); p = cdr(p))
@@ -12053,14 +12053,14 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 	case T_RATIO:
 	  n = c_gcd(n, s7_numerator(x));
 	  d = c_lcm(d, s7_denominator(x));
-	  if (d < 0) return(simple_out_of_range_str(sc, sc->GCD, args, RESULT_IS_TOO_LARGE));
+	  if (d < 0) return(simple_out_of_range(sc, sc->GCD, args, RESULT_IS_TOO_LARGE));
 	  break;
 
 	default:
 	  check_method(sc, x, sc->GCD, cons(sc, (d <= 1) ? make_integer(sc, n) : s7_make_ratio(sc, n, d), p));
 	  return(wrong_type_argument_n_with_type(sc, sc->GCD, position_of(p, args), x, A_RATIONAL));
 	}
-      if (n < 0) return(simple_out_of_range_str(sc, sc->GCD, args, RESULT_IS_TOO_LARGE));
+      if (n < 0) return(simple_out_of_range(sc, sc->GCD, args, RESULT_IS_TOO_LARGE));
     }
 
   if (d <= 1)
@@ -12073,7 +12073,7 @@ static s7_pointer s7_truncate(s7_scheme *sc, s7_pointer caller, s7_Double xf)   
 {
   if ((xf > S7_LLONG_MAX) ||
       (xf < S7_LLONG_MIN))
-    return(simple_out_of_range_str(sc, caller, make_real(sc, xf), ITS_TOO_LARGE));
+    return(simple_out_of_range(sc, caller, make_real(sc, xf), ITS_TOO_LARGE));
 
   if (xf > 0.0)
     return(make_integer(sc, (s7_Int)floor(xf)));
@@ -12101,7 +12101,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 	  if (integer(y) == 0) 
 	    return(division_by_zero_error(sc, sc->QUOTIENT, args));
 	  if ((integer(y) == -1) && (integer(x) == S7_LLONG_MIN))   /* (quotient most-negative-fixnum -1) */
-	    return(simple_out_of_range_str(sc, sc->QUOTIENT, args, ITS_TOO_LARGE));
+	    return(simple_out_of_range(sc, sc->QUOTIENT, args, ITS_TOO_LARGE));
 	  return(make_integer(sc, integer(x) / integer(y)));
 
 	case T_RATIO:
@@ -12245,7 +12245,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 
 	  pre_quo = (s7_Double)integer(x) / real(y);
 	  if ((pre_quo > S7_LLONG_MAX) || (pre_quo < S7_LLONG_MIN))
-	    return(simple_out_of_range_str(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
+	    return(simple_out_of_range(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
 	  if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
 	  return(make_real(sc, integer(x) - real(y) * quo));
 
@@ -12285,7 +12285,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 		    {
 		      pre_quo = ((long double)n1 / (long double)n2) * ((long double)d2 / (long double)d1);
 		      if ((pre_quo > S7_LLONG_MAX) || (pre_quo < S7_LLONG_MIN))
-			return(simple_out_of_range_str(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
+			return(simple_out_of_range(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
 		      if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
 		    }
 		  else quo = (n1 * d2) / (n2 * d1);
@@ -12302,7 +12302,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	      (integer_length(d1) + integer_length(d2) < s7_int_bits) &&
 	      (integer_length(n2) + integer_length(d1) + integer_length(quo) < s7_int_bits))
 	    return(s7_make_ratio(sc, n1 * d2 - n2 * d1 * quo, d1 * d2));
-	  return(simple_out_of_range(sc, sc->REMAINDER, args, "intermediate (a/b) is too large"));
+	  return(simple_out_of_range(sc, sc->REMAINDER, args, make_string_wrapper(sc, "intermediate (a/b) is too large")));
 
 	case T_REAL:
 	  {
@@ -12314,7 +12314,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	    frac = fraction(x);
 	    pre_quo = frac / real(y);
 	    if ((pre_quo > S7_LLONG_MAX) || (pre_quo < S7_LLONG_MIN))
-	      return(simple_out_of_range_str(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
+	      return(simple_out_of_range(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
 	    if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
 	    return(make_real(sc, frac - real(y) * quo));
 	  }
@@ -12335,7 +12335,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	    return(division_by_zero_error(sc, sc->REMAINDER, args));
 	  pre_quo = real(x) / (s7_Double)integer(y);
 	  if ((pre_quo > S7_LLONG_MAX) || (pre_quo < S7_LLONG_MIN))
-	    return(simple_out_of_range_str(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
+	    return(simple_out_of_range(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
 	  if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
 	  return(make_real(sc, real(x) - integer(y) * quo));
 
@@ -12348,7 +12348,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	    frac = fraction(y);
 	    pre_quo = real(x) / frac;
 	    if ((pre_quo > S7_LLONG_MAX) || (pre_quo < S7_LLONG_MIN))
-	      return(simple_out_of_range_str(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
+	      return(simple_out_of_range(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
 	    if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
 	    return(make_real(sc, real(x) - frac * quo));
 	  }
@@ -12361,7 +12361,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 
 	  pre_quo = real(x) / real(y);
 	  if ((pre_quo > S7_LLONG_MAX) || (pre_quo < S7_LLONG_MIN))
-	    return(simple_out_of_range_str(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
+	    return(simple_out_of_range(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
 	  if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
 
 	  return(make_real(sc, real(x) - real(y) * quo));
@@ -12419,9 +12419,9 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
 	s7_Double z;
 	z = real(x);
 	if (is_NaN(z))
-	  return(simple_out_of_range_str(sc, sc->FLOOR, x, ITS_NAN));
+	  return(simple_out_of_range(sc, sc->FLOOR, x, ITS_NAN));
 	if (fabs(z) > REAL_TO_INT_LIMIT)
-	  return(simple_out_of_range_str(sc, sc->FLOOR, x, ITS_TOO_LARGE));
+	  return(simple_out_of_range(sc, sc->FLOOR, x, ITS_TOO_LARGE));
 	return(make_integer(sc, (s7_Int)floor(z))); 
 	/* floor here rounds down, whereas a straight int<=real coercion apparently rounds towards 0 */
       }
@@ -12462,11 +12462,11 @@ static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
 	s7_Double z;
 	z = real(x);
 	if (is_NaN(z))
-	  return(simple_out_of_range_str(sc, sc->CEILING, x, ITS_NAN));
+	  return(simple_out_of_range(sc, sc->CEILING, x, ITS_NAN));
 	if ((is_inf(z)) ||
 	    (z > REAL_TO_INT_LIMIT) ||
 	    (z < -REAL_TO_INT_LIMIT))
-	  return(simple_out_of_range_str(sc, sc->CEILING, x, ITS_TOO_LARGE));
+	  return(simple_out_of_range(sc, sc->CEILING, x, ITS_TOO_LARGE));
 	return(make_integer(sc, (s7_Int)ceil(real(x)))); 
       }
 
@@ -12497,9 +12497,9 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
 	s7_Double z;
 	z = real(x);
 	if (is_NaN(z))
-	  return(simple_out_of_range_str(sc, sc->TRUNCATE, x, ITS_NAN));
+	  return(simple_out_of_range(sc, sc->TRUNCATE, x, ITS_NAN));
 	if (is_inf(z))
-	  return(simple_out_of_range_str(sc, sc->TRUNCATE, x, ITS_INFINITE));
+	  return(simple_out_of_range(sc, sc->TRUNCATE, x, ITS_INFINITE));
 	return(s7_truncate(sc, sc->TRUNCATE, real(x))); 
       }
 
@@ -12563,11 +12563,11 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
 	s7_Double z;
 	z = real(x);
 	if (is_NaN(z))
-	  return(simple_out_of_range_str(sc, sc->ROUND, x, ITS_NAN));
+	  return(simple_out_of_range(sc, sc->ROUND, x, ITS_NAN));
 	if ((is_inf(z)) ||
 	    (z > REAL_TO_INT_LIMIT) ||
 	    (z < -REAL_TO_INT_LIMIT))
-	  return(simple_out_of_range_str(sc, sc->ROUND, x, ITS_TOO_LARGE));
+	  return(simple_out_of_range(sc, sc->ROUND, x, ITS_TOO_LARGE));
 	return(make_integer(sc, (s7_Int)round_per_R5RS(z)));
       }
 
@@ -12683,7 +12683,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	  if ((n2 < 0) && (n1 < 0) && (n2 < n1)) return(x);
 
 	  if (n2 == S7_LLONG_MIN)
-	    return(simple_out_of_range(sc, sc->MODULO, y, "intermediate (a/b) is too large"));	
+	    return(simple_out_of_range(sc, sc->MODULO, y, make_string_wrapper(sc, "intermediate (a/b) is too large")));	
 	  /* the problem here is that (modulo 3/2 most-negative-fixnum)
 	   * will segfault with signal SIGFPE, Arithmetic exception, so try to trap it.
 	   */
@@ -12733,7 +12733,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	   *    (modulo 9223372036 1/9223372036) -> error, not 0?
 	   *    (modulo 1 1/9223372036854775807) -> error, not 0?
 	   */
-	  return(simple_out_of_range(sc, sc->MODULO, x, "intermediate (a/b) is too large"));	
+	  return(simple_out_of_range(sc, sc->MODULO, x, make_string_wrapper(sc, "intermediate (a/b) is too large")));	
       
 	case T_REAL:
 	  b = real(y);
@@ -18303,7 +18303,7 @@ order here follows gmp, and is the opposite of the CL convention.  (logbit? int 
     }
   index = s7_integer(y);
   if (index < 0)
-    return(out_of_range_str(sc, sc->LOGBIT, small_int(2), y, ITS_NEGATIVE));
+    return(out_of_range(sc, sc->LOGBIT, small_int(2), y, ITS_NEGATIVE));
 
 #if WITH_GMP
   if (type(x) == T_BIG_INTEGER)
@@ -18346,7 +18346,7 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
 
   arg2 = s7_integer(y);
   if (arg2 >= s7_int_bits)
-    return(out_of_range_str(sc, sc->ASH, small_int(2), cadr(args), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->ASH, small_int(2), cadr(args), ITS_TOO_LARGE));
 
   if (arg2 < -s7_int_bits)
     {
@@ -19729,9 +19729,9 @@ static s7_pointer g_make_string(s7_scheme *sc, s7_pointer args)
 
   len = s7_integer(n);
   if (len < 0)
-    return(out_of_range_str(sc, sc->MAKE_STRING, small_int(1), n, ITS_NEGATIVE));
+    return(out_of_range(sc, sc->MAKE_STRING, small_int(1), n, ITS_NEGATIVE));
   if (len > MAX_STRING_LENGTH)
-    return(out_of_range_str(sc, sc->MAKE_STRING, small_int(1), n, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->MAKE_STRING, small_int(1), n, ITS_TOO_LARGE));
 
   if (is_not_null(cdr(args))) 
     {
@@ -19839,7 +19839,7 @@ static s7_pointer string_ref_1(s7_scheme *sc, s7_pointer strng, s7_pointer index
   if (ind < 0)
     return(wrong_type_argument_with_type(sc, sc->STRING_REF, small_int(2), index, A_NON_NEGATIVE_INTEGER));
   if (ind >= string_length(strng))
-    return(out_of_range_str(sc, sc->STRING_REF, small_int(2), index, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->STRING_REF, small_int(2), index, ITS_TOO_LARGE));
 
   str = string_value(strng);
   return(s7_make_character(sc, ((unsigned char *)str)[ind]));
@@ -19875,7 +19875,7 @@ static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
   if (ind < 0)
     return(wrong_type_argument_with_type(sc, sc->STRING_REF, small_int(2), index, A_NON_NEGATIVE_INTEGER));
   if (ind >= string_length(strng))
-    return(out_of_range_str(sc, sc->STRING_REF, small_int(2), index, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->STRING_REF, small_int(2), index, ITS_TOO_LARGE));
 
   str = string_value(strng);
   return(s7_make_character(sc, ((unsigned char *)str)[ind]));
@@ -19912,7 +19912,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   if (ind < 0)
     return(wrong_type_argument_with_type(sc, sc->STRING_SET, small_int(2), index, A_NON_NEGATIVE_INTEGER));
   if (ind >= string_length(x))
-    return(out_of_range_str(sc, sc->STRING_SET, small_int(2), index, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->STRING_SET, small_int(2), index, ITS_TOO_LARGE));
   str = string_value(x);
 
   c = caddr(args);
@@ -20026,7 +20026,7 @@ static s7_pointer start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer fal
   index = s7_integer(pstart);
   if ((index < 0) ||
       (index > *end)) /* *end == length here */
-    return(out_of_range_str(sc, caller, small_int(position), pstart, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, caller, small_int(position), pstart, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
   *start = index;
 
   if (is_null(cdr(start_and_end_args)))
@@ -20047,7 +20047,7 @@ static s7_pointer start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer fal
   index = s7_integer(pend);
   if ((index < *start) ||
       (index > *end))
-    return(out_of_range_str(sc, caller, small_int(position + 1), pend, 
+    return(out_of_range(sc, caller, small_int(position + 1), pend, 
 			    (index < *start) ? make_string_wrapper(sc, "it is less than the start point") : ITS_TOO_LARGE));
   *end = index;
   return(sc->GC_NIL);
@@ -23036,7 +23036,7 @@ static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
   if (chars < 0)
     return(wrong_type_argument_with_type(sc, sc->READ_STRING, small_int(1), k, A_NON_NEGATIVE_INTEGER));
   if (chars > MAX_STRING_LENGTH)
-    return(out_of_range_str(sc, sc->READ_STRING, small_int(1), k, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->READ_STRING, small_int(1), k, ITS_TOO_LARGE));
 
   if (chars == 0)
     return(make_empty_string(sc, 0, 0));
@@ -26929,7 +26929,6 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		    /* how to handle non-integer arguments in the next 4 cases?  clisp just returns
 		     *   the argument: (format nil "~X" 1.25) -> "1.25" which is perverse (ClTl2 p 581:
 		     *   "if arg is not an integer, it is printed in ~A format and decimal base")!!
-		     *   Guile raises an error ("it is not an integer").  slib also raise an error.
 		     *   I think I'll use the type of the number to choose the output format.
 		     */
 		  case 'D': case 'd':
@@ -28196,10 +28195,10 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
     }
   len = s7_integer(car(args));            /* needs to be s7_Int here so that (make-list most-negative-fixnum) is handled correctly */
   if (len < 0)
-    return(out_of_range_str(sc, sc->MAKE_LIST, small_int(1), car(args), ITS_NEGATIVE));
+    return(out_of_range(sc, sc->MAKE_LIST, small_int(1), car(args), ITS_NEGATIVE));
   if (len == 0) return(sc->NIL);          /* what about (make-list 0 123)? */
   if (len > MAX_LIST_LENGTH)
-    return(out_of_range_str(sc, sc->MAKE_LIST, small_int(1), car(args), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->MAKE_LIST, small_int(1), car(args), ITS_TOO_LARGE));
 
   if (is_pair(cdr(args)))
     init = cadr(args);
@@ -28227,7 +28226,7 @@ static s7_pointer g_list_ref_ic(s7_scheme *sc, s7_pointer args)
   if (!is_pair(p))
     {
       if (is_null(p))
-	return(out_of_range_str(sc, sc->LIST_REF, small_int(2), cadr(args), ITS_TOO_LARGE));
+	return(out_of_range(sc, sc->LIST_REF, small_int(2), cadr(args), ITS_TOO_LARGE));
       return(wrong_type_argument_with_type(sc, sc->LIST_REF, small_int(1), lst, A_PROPER_LIST));
     }
   return(car(p));
@@ -28250,17 +28249,17 @@ static s7_pointer list_ref_1(s7_scheme *sc, s7_pointer lst, s7_pointer ind)
     }
   index = s7_integer(ind);
   if (index < 0)
-    return(out_of_range_str(sc, sc->LIST_REF, small_int(2), ind, ITS_NEGATIVE));
+    return(out_of_range(sc, sc->LIST_REF, small_int(2), ind, ITS_NEGATIVE));
 
   if (index > MAX_LIST_LENGTH)
-    return(out_of_range_str(sc, sc->LIST_REF, small_int(2), ind, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->LIST_REF, small_int(2), ind, ITS_TOO_LARGE));
   
   for (i = 0, p = lst; (i < index) && is_pair(p); i++, p = cdr(p)) {}
   
   if (!is_pair(p))
     {
       if (is_null(p))
-	return(out_of_range_str(sc, sc->LIST_REF, small_int(2), ind, ITS_TOO_LARGE));
+	return(out_of_range(sc, sc->LIST_REF, small_int(2), ind, ITS_TOO_LARGE));
       return(wrong_type_argument_with_type(sc, sc->LIST_REF, small_int(1), lst, A_PROPER_LIST));
     }
   return(car(p));
@@ -28326,17 +28325,17 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
     }
   index = s7_integer(ind);
   if (index < 0)
-    return(out_of_range_str(sc, sc->LIST_SET, small_int(arg_num), ind, ITS_NEGATIVE));
+    return(out_of_range(sc, sc->LIST_SET, small_int(arg_num), ind, ITS_NEGATIVE));
   
   if (index > MAX_LIST_LENGTH)
-    return(out_of_range_str(sc, sc->LIST_SET, small_int(arg_num), ind, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->LIST_SET, small_int(arg_num), ind, ITS_TOO_LARGE));
   
   for (i = 0, p = lst; (i < index) && is_pair(p); i++, p = cdr(p)) {}
   
   if (!is_pair(p))
     {
       if (is_null(p))
-	return(out_of_range_str(sc, sc->LIST_SET, small_int(arg_num), ind, ITS_TOO_LARGE));
+	return(out_of_range(sc, sc->LIST_SET, small_int(arg_num), ind, ITS_TOO_LARGE));
       return(wrong_type_argument_with_type(sc, sc->LIST_SET, small_int(1), lst, A_PROPER_LIST));
     }
   if (is_null(cddr(args)))
@@ -28372,7 +28371,7 @@ static s7_pointer g_list_set_ic(s7_scheme *sc, s7_pointer args)
   if (!is_pair(p))
     {
       if (is_null(p))
-	return(out_of_range_str(sc, sc->LIST_SET, small_int(2), cadr(args), ITS_TOO_LARGE));
+	return(out_of_range(sc, sc->LIST_SET, small_int(2), cadr(args), ITS_TOO_LARGE));
       return(wrong_type_argument_with_type(sc, sc->LIST_SET, small_int(1), lst, A_PROPER_LIST));
     }
 
@@ -28407,14 +28406,14 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
     }
   index = s7_integer(p);
   if (index < 0)
-    return(out_of_range_str(sc, sc->LIST_TAIL, small_int(2), p, ITS_NEGATIVE));
+    return(out_of_range(sc, sc->LIST_TAIL, small_int(2), p, ITS_NEGATIVE));
   if (index > MAX_LIST_LENGTH)
-    return(out_of_range_str(sc, sc->LIST_TAIL, small_int(2), p, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->LIST_TAIL, small_int(2), p, ITS_TOO_LARGE));
   
   for (i = 0, p = car(args); (i < index) && (is_pair(p)); i++, p = cdr(p)) {}
   
   if (i < index)
-    return(out_of_range_str(sc, sc->LIST_TAIL, small_int(2), cadr(args), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->LIST_TAIL, small_int(2), cadr(args), ITS_TOO_LARGE));
 
   /* I guess this would make sense with more than one index, but I'm not sure it's very important */
   return(p);
@@ -28549,6 +28548,10 @@ static void init_car_a_list(void)
   ITS_NAN = s7_make_permanent_string("NaN usually indicates a numerical error");
   ITS_INFINITE = s7_make_permanent_string("it is infinite");
   TOO_MANY_INDICES = s7_make_permanent_string("too many indices");
+  A_VALID_RADIX = s7_make_permanent_string("should be between 2 and 16");
+#if (!HAVE_COMPLEX_NUMBERS)
+  NO_COMPLEX_NUMBERS = s7_make_permanent_string("this version of s7 does not support complex numbers");
+#endif
 }
 
 
@@ -30132,7 +30135,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, int typ)
   if (len < 0)
     return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), A_NON_NEGATIVE_INTEGER));
   if (len > MAX_VECTOR_LENGTH)
-    return(out_of_range_str(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), ITS_TOO_LARGE));
 
   /* if (len == 0) typ = T_VECTOR; *//* all empty vectors are the same type */
   /* this produces odd results: (float-vector? (float-vector)) -> #f etc 
@@ -30523,7 +30526,7 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_Int index) 
 {
   if (index >= vector_length(vec))
-    return(out_of_range_str(sc, sc->VECTOR_REF, small_int(2), make_integer(sc, index), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), make_integer(sc, index), ITS_TOO_LARGE));
 
   return(vector_getter(vec)(sc, vec, index));
 }
@@ -30532,7 +30535,7 @@ s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_Int index)
 s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer a) 
 {
   if (index >= vector_length(vec))
-    return(out_of_range_str(sc, sc->VECTOR_SET, small_int(2), make_integer(sc, index), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->VECTOR_SET, small_int(2), make_integer(sc, index), ITS_TOO_LARGE));
 
   vector_setter(vec)(sc, vec, index, a);
   return(a);
@@ -30735,7 +30738,7 @@ s7_pointer s7_vector_ref_n(s7_scheme *sc, s7_pointer vector, int indices, ...)
 		  (ind >= dimensions[i]))
 		{
 		  va_end(ap);
-		  return(s7_out_of_range_error(sc, "s7_vector_ref_n", i, s7_make_integer(sc, ind), "should be a valid index"));
+		  return(out_of_range(sc, sc->VECTOR_REF, small_int(i), make_integer(sc, ind), (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
 		}
 	      index += (ind * offsets[i]);
 	    }
@@ -31012,7 +31015,7 @@ a vector that points to the same elements as the original-vector but with differ
 	  offset = s7_integer(off);
 	  if ((offset < 0) ||
 	      (offset >= orig_len))  /* we need this if, for example, offset == 9223372036854775807 */
-	    return(out_of_range_str(sc, sc->MAKE_SHARED_VECTOR, small_int(3), off, (offset < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	    return(out_of_range(sc, sc->MAKE_SHARED_VECTOR, small_int(3), off, (offset < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
 	}
       else 
 	{
@@ -31056,7 +31059,7 @@ a vector that points to the same elements as the original-vector but with differ
       free(v->dims);
       free(v->offsets);
       free(v);
-      return(out_of_range(sc, sc->MAKE_SHARED_VECTOR, small_int(2), dims, "a shared vector has to fit in the original vector"));
+      return(out_of_range(sc, sc->MAKE_SHARED_VECTOR, small_int(2), dims, make_string_wrapper(sc, "a shared vector has to fit in the original vector")));
     }
 
   NEW_CELL(sc, x);
@@ -31099,7 +31102,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 {
   s7_Int index = 0;
   if (vector_length(vect) == 0)
-    return(out_of_range_str(sc, sc->VECTOR_REF, small_int(1), vect, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->VECTOR_REF, small_int(1), vect, ITS_TOO_LARGE));
 
   if (vector_rank(vect) > 1)
     {
@@ -31122,14 +31125,14 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	  n = s7_integer(p);
 	  if ((n < 0) || 
 	      (n >= vector_dimension(vect, i)))
-	    return(out_of_range_str(sc, sc->VECTOR_REF, make_integer(sc, i + 2), p, (n < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	    return(out_of_range(sc, sc->VECTOR_REF, make_integer(sc, i + 2), p, (n < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
 
 	  index += n * vector_offset(vect, i);
 	}
       if (is_not_null(x))
 	{
 	  if (type(vect) != T_VECTOR)
-	    return(out_of_range_str(sc, sc->VECTOR_REF, small_int(2), indices, TOO_MANY_INDICES));
+	    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), indices, TOO_MANY_INDICES));
 	  return(implicit_index(sc, vector_element(vect, index), x));
 	}
 
@@ -31155,12 +31158,12 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
       index = s7_integer(p);
       if ((index < 0) ||
 	  (index >= vector_length(vect)))
-	return(out_of_range_str(sc, sc->VECTOR_REF, small_int(2), p, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	return(out_of_range(sc, sc->VECTOR_REF, small_int(2), p, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
       
       if (is_not_null(cdr(indices)))                /* (let ((L #(#(1 2 3) #(4 5 6)))) (vector-ref L 1 2)) */
 	{
 	  if (type(vect) != T_VECTOR)
-	    return(out_of_range_str(sc, sc->VECTOR_REF, small_int(2), indices, TOO_MANY_INDICES));
+	    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), indices, TOO_MANY_INDICES));
 	  return(implicit_index(sc, vector_element(vect, index), cdr(indices)));
 	}
     }
@@ -31192,7 +31195,7 @@ static s7_pointer g_vector_ref_ic_n(s7_scheme *sc, s7_pointer args, s7_Int index
       return(wrong_type_argument(sc, sc->VECTOR_REF, small_int(1), vec, T_VECTOR));
     }
   if (index >= vector_length(vec))
-    return(out_of_range_str(sc, sc->VECTOR_REF, small_int(2), cadr(args), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), ITS_TOO_LARGE));
   if (vector_rank(vec) > 1)
     return(make_shared_vector(sc, vec, 1, index));
   return(vector_getter(vec)(sc,vec, index));
@@ -31232,7 +31235,7 @@ static s7_pointer g_vector_ref_gs(s7_scheme *sc, s7_pointer args)
   index = s7_integer(x);
   if ((index < 0) ||
       (index >= vector_length(vec)))
-    return(out_of_range_str(sc, sc->VECTOR_REF, small_int(2), cadr(args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
 
   if (vector_rank(vec) > 1)
     return(make_shared_vector(sc, vec, 1, index));
@@ -31265,7 +31268,7 @@ static s7_pointer g_vector_ref_add1(s7_scheme *sc, s7_pointer args)
 
   if ((index < 0) ||
       (index >= vector_length(vec)))
-    return(out_of_range_str(sc, sc->VECTOR_REF, small_int(2), cadr(args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
 
   if (vector_rank(vec) > 1)
     return(make_shared_vector(sc, vec, 1, index));
@@ -31297,7 +31300,7 @@ static s7_pointer g_vector_ref_2(s7_scheme *sc, s7_pointer args)
   index = s7_integer(ind);
   if ((index < 0) ||
       (index >= vector_length(vec)))
-    return(out_of_range_str(sc, sc->VECTOR_REF, small_int(2), ind, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), ind, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
 
   return(vector_getter(vec)(sc, vec, index));
 }
@@ -31317,7 +31320,7 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument(sc, sc->VECTOR_SET, small_int(1), vec, T_VECTOR));
     }
   if (vector_length(vec) == 0)
-    return(out_of_range_str(sc, sc->VECTOR_SET, small_int(1), vec, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->VECTOR_SET, small_int(1), vec, ITS_TOO_LARGE));
   
   if (vector_rank(vec) > 1)
     {
@@ -31341,7 +31344,7 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
 	  n = s7_integer(p);
 	  if ((n < 0) || 
 	      (n >= vector_dimension(vec, i)))
-	    return(out_of_range_str(sc, sc->VECTOR_SET, make_integer(sc, i + 2), p, (n < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	    return(out_of_range(sc, sc->VECTOR_SET, make_integer(sc, i + 2), p, (n < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
 
 	  index += n * vector_offset(vec, i);
 	}
@@ -31369,7 +31372,7 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
       index = s7_integer(p);
       if ((index < 0) ||
 	  (index >= vector_length(vec)))
-	return(out_of_range_str(sc, sc->VECTOR_SET, small_int(2), p, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	return(out_of_range(sc, sc->VECTOR_SET, small_int(2), p, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
 
       if (is_not_null(cdddr(args)))
 	{
@@ -31403,7 +31406,7 @@ static s7_pointer g_vector_set_ic(s7_scheme *sc, s7_pointer args)
 
   index = s7_integer(cadr(args));
   if (index >= vector_length(vec))
-    return(out_of_range_str(sc, sc->VECTOR_SET, small_int(2), cadr(args), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->VECTOR_SET, small_int(2), cadr(args), ITS_TOO_LARGE));
 
   val = find_symbol_checked(sc, caddr(args));
   vector_setter(vec)(sc, vec, index, val);
@@ -31430,11 +31433,11 @@ static s7_pointer g_vector_set_vref(s7_scheme *sc, s7_pointer args)
 
   index1 = s7_integer(val1);
   if (index1 >= vector_length(vec))
-    return(out_of_range_str(sc, sc->VECTOR_SET, small_int(2), val1, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->VECTOR_SET, small_int(2), val1, ITS_TOO_LARGE));
 
   index2 = s7_integer(val2);
   if (index2 >= vector_length(vec))
-    return(out_of_range_str(sc, sc->VECTOR_REF, small_int(2), val2, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), val2, ITS_TOO_LARGE));
 
   vector_setter(vec)(sc, vec, index1, vector_getter(vec)(sc, vec, index2));
   return(val1);
@@ -31462,7 +31465,7 @@ static s7_pointer g_vector_set_vector_ref(s7_scheme *sc, s7_pointer args)
 
   index1 = s7_integer(val);
   if (index1 >= vector_length(vec))
-    return(out_of_range_str(sc, sc->VECTOR_SET, small_int(2), val, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->VECTOR_SET, small_int(2), val, ITS_TOO_LARGE));
 
   if (val2 != cadr(args))
     {
@@ -31476,7 +31479,7 @@ static s7_pointer g_vector_set_vector_ref(s7_scheme *sc, s7_pointer args)
 	}
       index2 = s7_integer(val2);
       if (index2 >= vector_length(vec))
-	return(out_of_range_str(sc, sc->VECTOR_REF, small_int(2), val, ITS_TOO_LARGE));
+	return(out_of_range(sc, sc->VECTOR_REF, small_int(2), val, ITS_TOO_LARGE));
     }
   else 
     {
@@ -31522,7 +31525,7 @@ static s7_pointer g_vector_set_3(s7_scheme *sc, s7_pointer args)
   index = s7_integer(ind);
   if ((index < 0) ||
       (index >= vector_length(vec)))
-    return(out_of_range_str(sc, sc->VECTOR_SET, small_int(2), ind, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->VECTOR_SET, small_int(2), ind, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
 
   val = caddr(args);
   vector_setter(vec)(sc, vec, index, val);
@@ -31574,7 +31577,7 @@ or a real, the vector can only hold numbers of that type (s7_Int or s7_Double)."
 	  if (dims <= 0)                /* 0 if circular, negative if dotted */
 	    return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(1), x, A_PROPER_LIST));
 	  if (dims > MAX_VECTOR_DIMENSIONS)
-	    return(out_of_range_str(sc, sc->MAKE_VECTOR, small_int(1), x, ITS_TOO_LARGE));
+	    return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), x, ITS_TOO_LARGE));
 
 	  for (len = 1, y = x; is_not_null(y); y = cdr(y))
 	    {
@@ -31867,9 +31870,9 @@ static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
 	}
       ind = s7_integer(index);
       if ((ind < 0) || (ind >= vector_length(v)))
-	return(simple_out_of_range_str(sc, sc->FLOAT_VECTOR_REF, index, (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	return(simple_out_of_range(sc, sc->FLOAT_VECTOR_REF, index, (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
       if (!is_null(cddr(args)))
-	return(out_of_range_str(sc, sc->FLOAT_VECTOR_REF, small_int(2), cdr(args), TOO_MANY_INDICES));
+	return(out_of_range(sc, sc->FLOAT_VECTOR_REF, small_int(2), cdr(args), TOO_MANY_INDICES));
     }
   else
     {
@@ -31889,12 +31892,12 @@ static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
 	  else n = s7_integer(car(x));
 	  if ((n < 0) || 
 	      (n >= vector_dimension(v, i)))
-	    return(out_of_range_str(sc, sc->FLOAT_VECTOR_REF, make_integer(sc, i + 2), car(x), (n < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	    return(out_of_range(sc, sc->FLOAT_VECTOR_REF, make_integer(sc, i + 2), car(x), (n < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
 
 	  ind += n * vector_offset(v, i);
 	}
       if (is_not_null(x))
-	return(out_of_range_str(sc, sc->FLOAT_VECTOR_REF, small_int(2), cdr(args), TOO_MANY_INDICES));
+	return(out_of_range(sc, sc->FLOAT_VECTOR_REF, small_int(2), cdr(args), TOO_MANY_INDICES));
 
       /* if not enough indices, return a shared vector covering whatever is left */
       if (i < vector_ndims(v))
@@ -31939,7 +31942,7 @@ static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
 	  else n = s7_integer(car(x));
 	  if ((n < 0) || 
 	      (n >= vector_dimension(vec, i)))
-	    return(out_of_range_str(sc, sc->FLOAT_VECTOR_SET, make_integer(sc, i + 2), car(x), (n < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	    return(out_of_range(sc, sc->FLOAT_VECTOR_SET, make_integer(sc, i + 2), car(x), (n < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
 
 	  index += n * vector_offset(vec, i);
 	}
@@ -31966,7 +31969,7 @@ static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
       else index = s7_integer(cadr(args));
       if ((index < 0) ||
 	  (index >= vector_length(vec)))
-	return(out_of_range_str(sc, sc->FLOAT_VECTOR_SET, small_int(2), cadr(args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	return(out_of_range(sc, sc->FLOAT_VECTOR_SET, small_int(2), cadr(args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
 
       if (is_not_null(cdddr(args)))
 	return(s7_wrong_number_of_args_error(sc, "too many args for float-vector-set!: ~S", args));
@@ -32808,9 +32811,9 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 	}
       size = s7_integer(p);
       if (size <= 0)                      /* we need s7_Int here to catch (make-hash-table most-negative-fixnum) etc */
-	return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, p, "should be a positive integer"));
+	return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, p, make_string_wrapper(sc, "should be a positive integer")));
       if (size > MAX_VECTOR_LENGTH)
-	return(simple_out_of_range_str(sc, sc->MAKE_HASH_TABLE, p, ITS_TOO_LARGE));
+	return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, p, ITS_TOO_LARGE));
 
       if (is_not_null(cdr(args)))
 	{
@@ -34381,9 +34384,9 @@ void *s7_vector_ref_object_value_checked(s7_scheme *sc, s7_pointer args, int typ
 
   index = s7_integer(i);
   if (index < 0)
-    return(out_of_range_str(sc, sc->VECTOR_REF, small_int(2), make_integer(sc, index), ITS_NEGATIVE));
+    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), make_integer(sc, index), ITS_NEGATIVE));
   if (index >= vector_length(vec))
-    return(out_of_range_str(sc, sc->VECTOR_REF, small_int(2), make_integer(sc, index), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), make_integer(sc, index), ITS_TOO_LARGE));
 
   obj = vector_element(vec, index);
   return(s7_object_value_checked(obj, type));
@@ -35177,7 +35180,7 @@ static s7_pointer g_is_aritable(s7_scheme *sc, s7_pointer args)
     }
   num = s7_integer(n);
   if (num < 0)
-    return(out_of_range_str(sc, sc->IS_ARITABLE, small_int(2), n, ITS_NEGATIVE));
+    return(out_of_range(sc, sc->IS_ARITABLE, small_int(2), n, ITS_NEGATIVE));
   if (num > MAX_ARITY) num = MAX_ARITY;
 
   return(make_boolean(sc, s7_is_aritable(sc, car(args), (int)num)));
@@ -50956,9 +50959,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	  }
 	sc->value = safe_reverse_in_place(sc, counter_result(args));
-	clear_type(args);
-	(*(sc->free_heap_top++)) = args;
-	/* sc->args = sc->NIL; */
 	goto START;
       }
 
@@ -50982,9 +50982,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       sc->value = safe_reverse_in_place(sc, counter_result(sc->args));
-      clear_type(sc->args);
-      (*(sc->free_heap_top++)) = sc->args;
-      /* sc->args = sc->NIL; */
+      /* here and below it is not safe to pre-release sc->args (the counter) */
       goto START;
 
       
@@ -51030,9 +51028,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto EVAL;
 	  }
 	sc->value = sc->UNSPECIFIED;
-	clear_type(sc->args);
-	(*(sc->free_heap_top++)) = sc->args;
-	/* sc->args = sc->NIL; */
 	goto START;
       }
 
@@ -51061,9 +51056,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto EVAL; 
 	  }
 	sc->value = sc->UNSPECIFIED;
-	clear_type(sc->args);
-	(*(sc->free_heap_top++)) = sc->args;
-	/* sc->args = sc->NIL; */
 	goto START;
       }
 
@@ -51117,9 +51109,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto EVAL;
 	  }
 	sc->value = sc->UNSPECIFIED;
-	clear_type(sc->args);
-	(*(sc->free_heap_top++)) = sc->args;
-	/* sc->args = sc->NIL; */
 	goto START;
       }
 
@@ -51135,9 +51124,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       sc->value = sc->UNSPECIFIED;
-      clear_type(sc->args);
-      (*(sc->free_heap_top++)) = sc->args;
-      /* sc->args = sc->NIL; */
       goto START;
 
 
@@ -57029,7 +57015,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    sc->value = vector_getter(v)(sc, v, index);
 			    goto START;
 			  }
-			out_of_range_str(sc, sc->VECTOR_REF, small_int(1), cadr(code), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+			out_of_range(sc, sc->VECTOR_REF, small_int(1), cadr(code), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
 		      }
 		    sc->value = vector_ref_1(sc, v, cons(sc, x, sc->NIL));
 		    goto START;
@@ -57059,7 +57045,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			sc->value = vector_getter(v)(sc, v, index);
 			goto START;
 		      }
-		    out_of_range_str(sc, sc->VECTOR_REF, small_int(1), cadr(code), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+		    out_of_range(sc, sc->VECTOR_REF, small_int(1), cadr(code), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
 		  }
 		sc->value = vector_ref_1(sc, v, cons(sc, ind, sc->NIL));
 		goto START;
@@ -57111,7 +57097,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			else sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
 			goto START;
 		      }
-		    out_of_range_str(sc, sc->STRING_REF, small_int(2), cadr(code), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+		    out_of_range(sc, sc->STRING_REF, small_int(2), cadr(code), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
 		  }
 		wrong_type_argument(sc, sc->STRING_REF, small_int(2), x, T_INTEGER);
 	      }
@@ -58405,7 +58391,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->value = vector_getter(sc->code)(sc, sc->code, index);
 		  goto START;
 		}
-	      else out_of_range_str(sc, sc->VECTOR_REF, small_int(2), car(sc->args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+	      else out_of_range(sc, sc->VECTOR_REF, small_int(2), car(sc->args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
 	    }
 	  sc->value = vector_ref_1(sc, sc->code, sc->args);
 	  goto START;
@@ -58786,7 +58772,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		ind = integer(ind1);
 		if ((ind < 0) ||
 		    (ind >= vector_length(f1)))
-		  out_of_range_str(sc, sc->VECTOR_REF, small_int(2), ind1, (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+		  out_of_range(sc, sc->VECTOR_REF, small_int(2), ind1, (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
 		else
 		  {
 		    scl = find_symbol_checked(sc, cadr(cadr(sc->code)));
@@ -58839,9 +58825,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    float_vector_element(f1, index1) = float_vector_element(f2, index2);
 		    IF_BEGIN_POP_STACK(sc); 
 		  }
-		else out_of_range_str(sc, sc->VECTOR_REF, small_int(1), cadr(value), (index2 < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+		else out_of_range(sc, sc->VECTOR_REF, small_int(1), cadr(value), (index2 < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
 	      }
-	    else out_of_range_str(sc, sc->VECTOR_REF, small_int(1), cadr(settee), (index1 < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+	    else out_of_range(sc, sc->VECTOR_REF, small_int(1), cadr(settee), (index1 < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
 	  }
 	pair_set_syntax_symbol(sc->code, sc->SET_PAIR_P);
 	/* fall through */
@@ -59487,7 +59473,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      }
 		    eval_type_error(sc, "set! ~A: unbound variable", car(sc->code));
 		  }
-		else out_of_range_str(sc, sc->VECTOR_REF, small_int(1), cadr(value), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+		else out_of_range(sc, sc->VECTOR_REF, small_int(1), cadr(value), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
 	      }
 	  }
 	pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_P);
@@ -59794,7 +59780,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    ind = s7_integer(index);
 		    if ((ind < 0) ||
 			(ind >= vector_length(cx)))
-		      out_of_range_str(sc, sc->VECTOR_SET, small_int(2), index, (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+		      out_of_range(sc, sc->VECTOR_SET, small_int(2), index, (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
 		    val = cadr(sc->code);
 		    if (!is_pair(val))
 		      {
@@ -59857,7 +59843,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    ind = s7_integer(index);
 		    if ((ind < 0) ||
 			(ind >= string_length(cx)))
-		      out_of_range_str(sc, sc->STRING_SET, small_int(2), index, (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+		      out_of_range(sc, sc->STRING_SET, small_int(2), index, (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
 		    
 		    val = cadr(sc->code);
 		    if (!is_pair(val))
@@ -65162,7 +65148,7 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 	  if (is_NaN(y))
 	    return(real_NaN);
 	  if (y == 0.0)
-	    return(out_of_range(sc, sc->LOG, small_int(2), p1, "can't be 0.0"));
+	    return(out_of_range(sc, sc->LOG, small_int(2), p1, make_string_wrapper(sc, "argument can't be 0.0")));
 	}
       if (x == 0.0)
 	return(s7_make_complex(sc, -INFINITY, M_PI));
@@ -66081,7 +66067,7 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
 	  if (!mpz_fits_sint_p(big_integer(p1)))
 	    {
 	      if (mpz_cmp_ui(big_integer(p1), 0) > 0)
-		return(out_of_range_str(sc, sc->ASH, small_int(2), p1, ITS_TOO_LARGE));
+		return(out_of_range(sc, sc->ASH, small_int(2), p1, ITS_TOO_LARGE));
 
 	      /* here if p0 is negative, we need to return -1 */
 	      if (p0_compared_to_zero == 1)
@@ -66254,7 +66240,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
       if (is_NaN(err_x))
 	{
 	  mpfr_clear(error);
-	  return(out_of_range(sc, sc->RATIONALIZE, small_int(2), cadr(args), "error term is NaN"));
+	  return(out_of_range(sc, sc->RATIONALIZE, small_int(2), cadr(args), ITS_NAN));
 	}
       if (mpfr_inf_p(error) != 0)
 	{
@@ -66274,13 +66260,13 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
     {
       mpfr_clear(ux);
       mpfr_clear(error);
-      return(out_of_range_str(sc, sc->RATIONALIZE, small_int(1), car(args), ITS_NAN));
+      return(out_of_range(sc, sc->RATIONALIZE, small_int(1), car(args), ITS_NAN));
     }
   if (mpfr_inf_p(ux) != 0)
     {
       mpfr_clear(ux);
       mpfr_clear(error);
-      return(out_of_range_str(sc, sc->RATIONALIZE, small_int(1), car(args), ITS_INFINITE));
+      return(out_of_range(sc, sc->RATIONALIZE, small_int(1), car(args), ITS_INFINITE));
     }
 
   mpfr_init_set(x0, ux, GMP_RNDN);        /* x0 = ux - error */
@@ -66522,7 +66508,7 @@ static s7_pointer big_convert_to_int(s7_scheme *sc, s7_pointer args,
     {
       if ((g_is_nan(sc, args) == sc->T) ||
 	  (g_is_infinite(sc, args)) == sc->T)
-	return(simple_out_of_range_str(sc, sym, p, (g_is_nan(sc, args) == sc->T) ? ITS_NAN : ITS_INFINITE));
+	return(simple_out_of_range(sc, sym, p, (g_is_nan(sc, args) == sc->T) ? ITS_NAN : ITS_INFINITE));
 
       mpz_init(n);
       mpfr_get_z(n, big_real(p), mode);
@@ -67866,7 +67852,7 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 	      sc->maximum_stack_size = (unsigned int)size;
 	      return(val);
 	    }
-	  return(simple_out_of_range(sc, sc->LET_SET, val, "should be greater than the initial stack size (512)"));
+	  return(simple_out_of_range(sc, sc->LET_SET, val, make_string_wrapper(sc, "should be greater than the initial stack size (512)")));
 	}
       return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
     }
