@@ -418,7 +418,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 			     (safe-find-if-1 obj))))
 		(safe-find-if-1 
 		 (lambda (seq)
-		   (when (not (memq seq cycles-traversed))
+		   (unless (memq seq cycles-traversed)
 		     (if (memq seq unseen-cycles)
 			 (begin
 			   (set! cycles-traversed (cons seq cycles-traversed))
@@ -1211,7 +1211,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 (define-macro (reactive-lambda* args . body)
   `(let ((f (lambda* ,args ,@body))
 	 (e (curlet)))
-     (when (not (eq? e (rootlet)))
+     (unless (eq? e (rootlet))
 
        (define (one-access s1 v)
 	 (let* ((syms (map car e))
@@ -1468,8 +1468,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
     (let ((vlp *vector-print-length*))
       (for-each
        (lambda (slot)
-	 (when (not (or (gensym? (car slot))
-			(eq? (cdr slot) e)))
+	 (unless (or (gensym? (car slot))
+		     (eq? (cdr slot) e))
 	   (set! *vector-print-length* *display-print-length*)
 	   (let ((str (sequence->string (cdr slot))))
 	     (set! *vector-print-length* 30)

@@ -1057,7 +1057,7 @@
 	(if (positive? (length (ind-sortby (tnames ctr))))
 	    (set! ctr (+ ctr 1))))
 
-      (when (not (= ctr n))
+      (unless (= ctr n)
         (set! n ctr)
 	(set! tnames (copy tnames (make-vector n))))
       
@@ -1351,7 +1351,7 @@
 		       ((>= i len))
 		     (case (string-ref line i)
 		       ((#\<)
-			(when (not scripting)
+			(unless scripting
 			  (if (and (not (zero? openctr))
 				   (not (positive? p-quotes))
 				   (not in-comment))
@@ -1375,7 +1375,7 @@
 		       ;; else c != <
 		       
 		       ((#\>)
-			(when (not scripting)
+			(unless scripting
 			  (set! openctr (- openctr 1))
 			  (if (and (>= i 2)
 				   (char=? (line (- i 1)) #\-)

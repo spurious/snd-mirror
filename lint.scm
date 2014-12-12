@@ -1079,7 +1079,8 @@
 	;; if name is in env, set its "I've been referenced" flag
 	(let ((data (or (var-member name env) (hash-table-ref globals name))))
 	  (if (var? data)
-	      (set! (var-ref data) #t))))
+	      (set! (var-ref data) #t)))
+	env)
       
       (define (set-set? name new-val env)
 	(let ((data (or (var-member name env) (hash-table-ref globals name))))
@@ -2566,7 +2567,7 @@
 					 (car arity) 
 					 (if (> (car arity) 1) "s" "") 
 					 (truncated-list->string form))
-			    (when (not (caddr arity))
+			    (unless (caddr arity)
 			      (set! max-arity (+ (car arity) (cadr arity)))
 			      (if (and (> (- args (keywords (cdr form))) (+ (car arity) (cadr arity)))
 				       (not (procedure-setter head-value)))
@@ -3079,9 +3080,7 @@
 	;; walk a form 
 	
 	(if (symbol? form)
-	    (begin
-	      (set-ref? form env)
-	      env)
+	    (set-ref? form env) ; returns env
 	    
 	    (if (pair? form)
 		(let ((head (car form)))
@@ -3680,6 +3679,14 @@
 		     (if (< (length form) 3)
 			 (lint-format "~A is messed up: ~A" name head (truncated-list->string form))
 			 (let ((test (cadr form)))
+			   (if (and (pair? test)
+				    (eq? (car test) 'not))
+			       (lint-format "possible optimization: ~A -> ~A"
+					    name 
+					    (truncated-list->string form)
+					    (truncated-list->string `(,(if (eq? head 'when) 'unless 'when)
+								      ,(cadr test)
+								      ,@(cddr form)))))
 			   (if (never-false test)
 			       (lint-format "~A test is never false: ~A" name head form)
 			       (if (never-true test)

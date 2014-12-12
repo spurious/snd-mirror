@@ -12,7 +12,7 @@
 ;;; if gen has embedded gen, mus-copy needs a special copy method (see adjustable-oscil),
 
 
-(define-constant nearly-zero 1.0e-10) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
+(define nearly-zero 1.0e-10) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
 (define two-pi (* 2.0 pi))
 
 ;;; --------------------------------------------------------------------------------
