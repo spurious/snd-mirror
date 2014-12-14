@@ -85,7 +85,7 @@
 		      (if data-file
 			  (format data-file "(~S~{ ~S~}) -> ~S~%" func args val))))))
 	   (lambda any
-	     (if (and (> args-now 0)
+	     (if (and (positive? args-now)
 		      (memq (car any) '(wrong-type-arg syntax-error))
 		      (not (memq func special-cases)))
 		 (quit)))))

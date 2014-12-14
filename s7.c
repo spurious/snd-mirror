@@ -885,6 +885,7 @@ typedef struct vdims_t {
 typedef struct c_object_t {
   int type, outer_type;
   const char *name;
+  s7_pointer scheme_name;
   char *(*print)(s7_scheme *sc, void *value);
   void (*free)(void *value);
   bool (*equal)(void *val1, void *val2);
@@ -1237,7 +1238,7 @@ struct s7_scheme {
   s7_pointer v, w, x, z;         /* evaluator local vars */
   s7_pointer temp1, temp2, temp3;
   s7_pointer temp_cell, temp_cell_1, temp_cell_2, temp_cell_3, temp_cell_4;
-  s7_pointer T1_1, T2_1, T2_2, T3_1, T3_2, T3_3;
+  s7_pointer T1_1, T2_1, T2_2, T3_1, T3_2, T3_3, Z2_1, Z2_2;
   s7_pointer A1_1, A2_1, A2_2, A3_1, A3_2, A3_3, A4_1, A4_2, A4_3, A4_4;
 
   jmp_buf goto_start;
@@ -2079,6 +2080,7 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define optimize_data_match(P, Q)     ((is_optimized(P)) && ((optimize_data(P) & 0xfffe) == Q))
 #define optimize_data_index(p)        (p)->object.cons.dat.d.data_index
 #define op_no_hop(P)                  (optimize_data(P) & 0xfffe)
+#define clear_hop(P)                  set_optimize_data(P, op_no_hop(P))
 static void set_optimize_data(s7_pointer p, unsigned short op) {p->object.cons.dat.d.data = op; optimize_data_index(p) = op;} 
 #define clear_optimize_data(P)        set_optimize_data(P, 0)
 #define optimize_op(p)                optimize_data_index(p)
@@ -2623,6 +2625,7 @@ static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, AN
 static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL, A_NON_NEGATIVE_INTEGER;
 static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BYTE, A_BINDING, A_NON_CONSTANT_SYMBOL, AN_EQ_FUNC, A_SEQUENCE;
 static s7_pointer ITS_TOO_LARGE, ITS_NEGATIVE, RESULT_IS_TOO_LARGE, ITS_NAN, ITS_INFINITE, TOO_MANY_INDICES, A_VALID_RADIX;
+static s7_pointer AN_INPUT_STRING_PORT, AN_INPUT_FILE_PORT, AN_OUTPUT_STRING_PORT, AN_OUTPUT_FILE_PORT;
 #if (!HAVE_COMPLEX_NUMBERS)
 static s7_pointer NO_COMPLEX_NUMBERS;
 #endif
@@ -26377,9 +26380,12 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
       if (str_len == 0)
 	{
 	  if (is_not_null(args))
-	    return(s7_error(sc, 
-			    sc->FORMAT_ERROR, 
-			    list_2(sc, make_string_wrapper(sc, "format control string is null, but there are other arguments: ~S"), args)));
+	    {
+	      static s7_pointer format_errstr = NULL;
+	      if (!format_errstr)
+		format_errstr = s7_make_permanent_string("format control string is null, but there are other arguments: ~S");
+	      return(s7_error(sc, sc->FORMAT_ERROR, list_2(sc, format_errstr, args)));
+	    }
 	  return(make_string_wrapper(sc, ""));
 	}
     }
@@ -28531,6 +28537,10 @@ static void init_car_a_list(void)
   AN_INPUT_PORT = s7_make_permanent_string("an input port");
   AN_OPEN_PORT = s7_make_permanent_string("an open port");
   AN_OUTPUT_PORT = s7_make_permanent_string("an output port");
+  AN_INPUT_STRING_PORT = s7_make_permanent_string("an input string port");
+  AN_INPUT_FILE_PORT = s7_make_permanent_string("an input file port");
+  AN_OUTPUT_STRING_PORT = s7_make_permanent_string("an output string port");
+  AN_OUTPUT_FILE_PORT = s7_make_permanent_string("an output file port");
   A_THUNK = s7_make_permanent_string("a thunk");
   A_SYMBOL = s7_make_permanent_string("a symbol");
   A_NON_NEGATIVE_INTEGER = s7_make_permanent_string("a non-negative integer");
@@ -31417,7 +31427,7 @@ static s7_pointer g_vector_set_ic(s7_scheme *sc, s7_pointer args)
 static s7_pointer vector_set_vref;
 static s7_pointer g_vector_set_vref(s7_scheme *sc, s7_pointer args)
 {
-  /* (vector-set! vec i (vector-ref vec j))? */
+  /* (vector-set! vec i (vector-ref vec j)) -- checked that the vector is the same */
   s7_pointer vec, val1, val2;
   s7_Int index1, index2;
 
@@ -31481,21 +31491,12 @@ static s7_pointer g_vector_set_vector_ref(s7_scheme *sc, s7_pointer args)
       if (index2 >= vector_length(vec))
 	return(out_of_range(sc, sc->VECTOR_REF, small_int(2), val, ITS_TOO_LARGE));
     }
-  else 
-    {
-      val2 = val;
-      index2 = index1;
-    }
+  else index2 = index1;
 
-  val = car(sc->T2_1);
-  val2 = car(sc->T2_2);
-  car(sc->T2_1) = vector_getter(vec)(sc, vec, index2);
-  car(sc->T2_2) = tc;
-  vector_setter(vec)(sc, vec, index1, c_call(arg3)(sc, sc->T2_1));
-  car(sc->T2_1) = val;
-  car(sc->T2_2) = val2;
-
-  return(val);
+  car(sc->Z2_1) = vector_getter(vec)(sc, vec, index2);
+  car(sc->Z2_2) = tc;
+  vector_setter(vec)(sc, vec, index1, tc = c_call(arg3)(sc, sc->Z2_1));
+  return(tc);
 }
 
 static s7_pointer vector_set_3;
@@ -34266,6 +34267,7 @@ int s7_new_type(const char *name,
   object_types[tag] = (c_object_t *)calloc(1, sizeof(c_object_t));
   object_types[tag]->type = tag;
   object_types[tag]->name = copy_string(name);
+  object_types[tag]->scheme_name = s7_make_permanent_string(name);
 
   if (free)
     object_types[tag]->free = free;
@@ -37473,8 +37475,6 @@ static const char *make_type_name(s7_scheme *sc, const char *name, int article)
 }
 
 
-static const char *environments[3] =    {"environment",         "the environment",        "an environment"};
-
 static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
 {
   static const char *frees[3] =         {"free cell",          "the free cell",           "a free cell"};
@@ -37564,11 +37564,6 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
 
 static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
 {
-  const char *str;
-
-  str = type_name_from_type(sc, type(arg), article);
-  if (str) return(str);
-
   switch (type(arg))
     {
     case T_C_OBJECT:     
@@ -37588,7 +37583,13 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
 	  if (is_symbol(class_name))
 	    return(make_type_name(sc, symbol_name(class_name), article));
 	}
-      return(environments[article]);
+
+    default:
+      {
+	const char *str;
+	str = type_name_from_type(sc, type(arg), article);
+	if (str) return(str);
+      }
     }
   return("messed up object");
 }
@@ -37603,15 +37604,23 @@ static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
       p = find_method(sc, find_let(sc, x), sc->CLASS_NAME);
       if (is_symbol(p))
 	return(symbol_name_cell(p));
-	/* prettier, but much more expensive:
-	 *   return(make_string_wrapper(sc, make_type_name(sc, symbol_name(p), INDEFINITE_ARTICLE)));
-	*/
     }
 
   p = prepackaged_type_names[type(x)];
-  if (is_string(p))
-    return(p);
-  return(make_string_wrapper(sc, type_name(sc, x, INDEFINITE_ARTICLE))); 
+  if (is_string(p)) return(p);
+
+  switch (type(x))
+    {
+    case T_C_OBJECT:     
+      return(object_types[c_object_type(x)]->scheme_name);
+
+    case T_INPUT_PORT:   
+      return((is_file_port(x)) ? AN_INPUT_FILE_PORT : ((is_string_port(x)) ? AN_INPUT_STRING_PORT : AN_INPUT_PORT));
+
+    case T_OUTPUT_PORT:  
+      return((is_file_port(x)) ? AN_OUTPUT_FILE_PORT : ((is_string_port(x)) ? AN_OUTPUT_STRING_PORT : AN_OUTPUT_PORT));
+    }
+  return(make_string_wrapper(sc, "unknown type!"));
 }
 
 
@@ -38287,7 +38296,6 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 {
   static int last_line = -1;
   bool reset_error_hook = false;
-  const char *call_name;
   s7_pointer cur_code;
 
   /* type is a symbol normally, and info is compatible with format: (apply format #f info) -- 
@@ -38299,8 +38307,6 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
    *   call its error-handler, else if *error-hook* is bound, call it,
    *   else send out the error info ourselves.
    */
-  call_name = sc->s7_call_name;
-  /* sc->s7_call_name = NULL; */
   sc->no_values = 0; 
   sc->format_depth = -1;
   sc->gc_off = false;  /* this is in case we were triggered from the sort function -- clumsy! */
@@ -38311,9 +38317,6 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 
   cur_code = sc->cur_code;
   slot_set_value(sc->error_code, cur_code);
-
-  /* (let ((x 32)) (define (h1 a) (* a "hi")) (define (h2 b) (+ b (h1 b))) (h2 1)) */
-
   if (has_line_number(cur_code)) /* could it ever be a function-env-with-line-info?  is it worth checking is_pair? */
     {
       int line;
@@ -38462,6 +38465,9 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	}
       else
 	{
+	  const char *call_name;
+	  call_name = sc->s7_call_name;
+	  /* sc->s7_call_name = NULL; */
 	  if (call_name)
 	    {
 	      sc->s7_call_name = NULL;
@@ -38709,7 +38715,7 @@ and applies it to the rest of the arguments."
     {
       if (is_string(car(args)))                    /* CL-style error? -- use tag = 'no-catch */
 	{
-	  s7_error(sc, sc->NO_CATCH, args);
+	  s7_error(sc, sc->NO_CATCH, args);        /* this can have trailing args (implicit format) */
 	  return(sc->UNSPECIFIED);
 	}
       return(s7_error(sc, car(args), cdr(args)));
@@ -44762,15 +44768,21 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		{
 		  int op;
 		  op = combine_ops(sc, E_C_P, car_x, cadar_x);
-		  /* fallback is Z */
-
 		  set_optimized(car_x);
 		  set_optimize_data(car_x, hop + op);
-		  if ((op == OP_SAFE_C_Z) &&
-		      (is_all_x_op(optimize_data(cadar_x))))
+		  /* fallback is Z */
+		  if (!hop) 
 		    {
-		      set_optimize_data(car_x, hop + OP_SAFE_C_A);
-		      annotate_arg(sc, cdr(car_x));
+		      clear_hop(cadar_x);
+		    }
+		  else
+		    {
+		      if ((op == OP_SAFE_C_Z) &&
+			  (is_all_x_op(optimize_data(cadar_x))))
+			{
+			  set_optimize_data(car_x, hop + OP_SAFE_C_A);
+			  annotate_arg(sc, cdr(car_x));
+			}
 		    }
 		  choose_c_function(sc, car_x, func, 1);
 		  return(true);
@@ -45069,40 +45081,46 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 		    {
 		      int op;
 		      op = combine_ops(sc, E_C_PP, cadar_x, caddar_x);
-		      /* fallback here is ZZ */
-
 		      set_optimized(car_x);
 		      set_optimize_data(car_x, hop + op);
-		      
-		      if (op == OP_SAFE_C_ZZ)
+		      /* fallback here is ZZ */
+		      if (!hop) 
 			{
-			  if (is_all_x_safe(sc, cadar_x))
+			  clear_hop(cadar_x);
+			  clear_hop(caddar_x);
+			}
+		      else
+			{
+			  if (op == OP_SAFE_C_ZZ)
 			    {
-			      if (is_all_x_safe(sc, caddar_x))
+			      if (is_all_x_safe(sc, cadar_x))
 				{
-				  set_optimize_data(car_x, hop + OP_SAFE_C_AA);
-				  annotate_args(sc, cdr(car_x));
-				  set_arglist_length(car_x, small_int(2));
+				  if (is_all_x_safe(sc, caddar_x))
+				    {
+				      set_optimize_data(car_x, hop + OP_SAFE_C_AA);
+				      annotate_args(sc, cdr(car_x));
+				      set_arglist_length(car_x, small_int(2));
+				    }
+				  else
+				    {
+				      if (optimize_data(cadar_x) == HOP_SAFE_C_C)
+					set_optimize_data(car_x, hop + OP_SAFE_C_opCq_Z);
+				      else 
+					{
+					  set_optimize_data(car_x, hop + OP_SAFE_C_AZ);
+					  annotate_arg(sc, cdr(car_x));
+					  set_arglist_length(car_x, small_int(2));
+					}
+				    }
 				}
 			      else
 				{
-				  if (optimize_data(cadar_x) == HOP_SAFE_C_C)
-				    set_optimize_data(car_x, hop + OP_SAFE_C_opCq_Z);
-				  else 
+				  if (is_all_x_safe(sc, caddar_x))
 				    {
-				      set_optimize_data(car_x, hop + OP_SAFE_C_AZ);
-				      annotate_arg(sc, cdr(car_x));
+				      set_optimize_data(car_x, hop + OP_SAFE_C_ZA);
+				      annotate_arg(sc, cddr(car_x));
 				      set_arglist_length(car_x, small_int(2));
 				    }
-				}
-			    }
-			  else
-			    {
-			      if (is_all_x_safe(sc, caddar_x))
-				{
-				  set_optimize_data(car_x, hop + OP_SAFE_C_ZA);
-				  annotate_arg(sc, cddr(car_x));
-				  set_arglist_length(car_x, small_int(2));
 				}
 			    }
 			}
@@ -45144,6 +45162,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 			    orig_op = E_C_PS;
 			  else orig_op = E_C_PC;
 			  op = combine_ops(sc, orig_op, car_x, cadar_x);
+			  if (!hop) clear_hop(cadar_x);
 			}
 		      else 
 			{
@@ -45151,8 +45170,9 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer car_x, s7_pointer f
 			    orig_op = E_C_SP;
 			  else orig_op = E_C_CP;
 			  op = combine_ops(sc, orig_op, car_x, caddar_x);
+			  if (!hop) clear_hop(caddar_x);
 			}
-		      
+
 		      set_optimized(car_x);
 		      set_optimize_data(car_x, hop + op);
 		      choose_c_function(sc, car_x, func, 2);
@@ -53461,7 +53481,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 	    case OP_SAFE_C_Z:
-	      if (!a_is_ok_cadr(sc, code)) break;
+	      if (!c_function_is_ok(sc, code)) break;
+	      /* I think a_is_ok of cadr here and below is redundant -- they'll be checked when Z is 
+	       *    because we cleared the hop bit after combine_ops.
+	       */
 	      
 	    case HOP_SAFE_C_Z:
 	      push_stack(sc, OP_SAFE_C_P_1, sc->NIL, code);
@@ -53470,7 +53493,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_SAFE_C_CZ:
-	      if (!a_is_ok_caddr(sc, code)) break;
+	      if (!c_function_is_ok(sc, code)) break;
 	      
 	    case HOP_SAFE_C_CZ:
 	      push_stack(sc, OP_SAFE_C_SZ_1, cadr(code), code);
@@ -53479,7 +53502,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_SAFE_C_ZC:
-	      if (!a_is_ok_cadr(sc, code)) break;
+	      if (!c_function_is_ok(sc, code)) break;
 
 	    case HOP_SAFE_C_ZC:
 	      push_stack(sc, OP_SAFE_C_ZS_1, caddr(code), code);
@@ -53488,7 +53511,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_SAFE_C_SZ:
-	      if (!a_is_ok_caddr(sc, code)) break;
+	      if (!c_function_is_ok(sc, code)) break;
 	      
 	    case HOP_SAFE_C_SZ:
 	      push_stack(sc, OP_SAFE_C_SZ_1, find_symbol_checked(sc, cadr(code)), code);
@@ -53496,6 +53519,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* splitting out the all_x cases here and elsewhere saves nothing */
 	      goto OPT_EVAL;
 	      
+	      
+	    case OP_SAFE_C_ZS:
+	      if (!a_is_ok_cadr(sc, code)) break;
+	      
+	    case HOP_SAFE_C_ZS:
+	      push_stack(sc, OP_SAFE_C_ZS_1, find_symbol_checked(sc, caddr(code)), code);
+	      sc->code = cadr(code);
+	      goto OPT_EVAL;
+	      /* b: h_safe_c_css: 166564, s: h_safe_c_opcq_s: 186404 h_safe_c_opssq: 138728
+	       */
+
 	      
 	    case OP_SAFE_C_opAq:
 	      if (!a_is_ok_cadr(sc, code)) break;
@@ -53587,17 +53621,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto OPT_EVAL;
 	      
 	      
-	    case OP_SAFE_C_ZS:
-	      if (!a_is_ok_cadr(sc, code)) break;
-	      
-	    case HOP_SAFE_C_ZS:
-	      push_stack(sc, OP_SAFE_C_ZS_1, find_symbol_checked(sc, caddr(code)), code);
-	      sc->code = cadr(code);
-	      goto OPT_EVAL;
-	      /* b: h_safe_c_css: 166564, s: h_safe_c_opcq_s: 186404 h_safe_c_opssq: 138728
-	       */
-
-	      
 	    case OP_SAFE_C_AZ:
 	      if (!a_is_ok(sc, code)) break;
 	      
@@ -53620,7 +53643,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      
 	    case OP_SAFE_C_ZZ:
-	      if (!a_is_ok(sc, code)) break;
+	      if (!c_function_is_ok(sc, code)) break;
 	      
 	    case HOP_SAFE_C_ZZ:
 	      /* most of the component Z's here are very complex:
@@ -53851,7 +53874,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		int num_args;
 		s7_pointer args, p;
-		
+
 		num_args = integer(arglist_length(code));
 		if ((num_args != 0) &&
 		    (num_args < NUM_SAFE_LISTS) &&
@@ -68007,88 +68030,27 @@ s7_scheme *s7_init(void)
   /* this way find_symbol of an undefined symbol returns #<undefined> not #<unspecified>
    */
 
-  sc->temp_cell = alloc_pointer();
-  set_type(sc->temp_cell, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  cdr(sc->temp_cell) = sc->NIL;
-  heap_location(sc->temp_cell) = NOT_IN_HEAP;
+  sc->temp_cell_1 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->temp_cell = permanent_cons(sc->temp_cell_1, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->temp_cell_2 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->temp_cell_3 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->temp_cell_4 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
 
-  sc->temp_cell_1 = alloc_pointer();
-  set_type(sc->temp_cell_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  car(sc->temp_cell_1) = cdr(sc->temp_cell_1) = sc->NIL;
-  car(sc->temp_cell) = sc->temp_cell_1;
-  heap_location(sc->temp_cell_1) = NOT_IN_HEAP;
+  sc->T1_1 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
 
-  sc->temp_cell_2 = alloc_pointer();  
-  set_type(sc->temp_cell_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  car(sc->temp_cell_2) = cdr(sc->temp_cell_2) = sc->NIL;
-  heap_location(sc->temp_cell_2) = NOT_IN_HEAP;
+  sc->T2_2 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->T2_1 = permanent_cons(sc->NIL, sc->T2_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->Z2_2 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->Z2_1 = permanent_cons(sc->NIL, sc->Z2_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
 
-  sc->temp_cell_3 = alloc_pointer();
-  set_type(sc->temp_cell_3, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  car(sc->temp_cell_3) = cdr(sc->temp_cell_3) = sc->NIL;
-  heap_location(sc->temp_cell_3) = NOT_IN_HEAP;
+  sc->T3_3 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->T3_2 = permanent_cons(sc->NIL, sc->T3_3, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->T3_1 = permanent_cons(sc->NIL, sc->T3_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
 
-  sc->temp_cell_4 = alloc_pointer();
-  set_type(sc->temp_cell_4, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  car(sc->temp_cell_4) = cdr(sc->temp_cell_4) = sc->NIL;
-  heap_location(sc->temp_cell_4) = NOT_IN_HEAP;
-
-  sc->T1_1 = alloc_pointer();
-  set_type(sc->T1_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  car(sc->T1_1) = sc->NIL;
-  cdr(sc->T1_1) = sc->NIL;
-  heap_location(sc->T1_1) = NOT_IN_HEAP;
-
-  sc->T2_1 = alloc_pointer();
-  sc->T2_2 = alloc_pointer();
-
-  set_type(sc->T2_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  car(sc->T2_1) = sc->NIL;
-  cdr(sc->T2_1) = sc->T2_2;
-  heap_location(sc->T2_1) = NOT_IN_HEAP;
-  set_type(sc->T2_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  car(sc->T2_2) = sc->NIL;
-  cdr(sc->T2_2) = sc->NIL;
-  heap_location(sc->T2_2) = NOT_IN_HEAP;
-
-  sc->T3_1 = alloc_pointer();
-  sc->T3_2 = alloc_pointer();
-  sc->T3_3 = alloc_pointer();
-
-  set_type(sc->T3_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  car(sc->T3_1) = sc->NIL;
-  cdr(sc->T3_1) = sc->T3_2;
-  heap_location(sc->T3_1) = NOT_IN_HEAP;
-  set_type(sc->T3_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  car(sc->T3_2) = sc->NIL;
-  cdr(sc->T3_2) = sc->T3_3;
-  heap_location(sc->T3_2) = NOT_IN_HEAP;
-  set_type(sc->T3_3, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  car(sc->T3_3) = sc->NIL;
-  cdr(sc->T3_3) = sc->NIL;
-  heap_location(sc->T3_3) = NOT_IN_HEAP;
-
-  sc->A4_1 = alloc_pointer();
-  sc->A4_2 = alloc_pointer();
-  sc->A4_3 = alloc_pointer();
-  sc->A4_4 = alloc_pointer();
-
-  set_type(sc->A4_1, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  car(sc->A4_1) = sc->NIL;
-  cdr(sc->A4_1) = sc->A4_2;
-  heap_location(sc->A4_1) = NOT_IN_HEAP;
-  set_type(sc->A4_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  car(sc->A4_2) = sc->NIL;
-  cdr(sc->A4_2) = sc->A4_3;
-  heap_location(sc->A4_2) = NOT_IN_HEAP;
-  set_type(sc->A4_3, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  car(sc->A4_3) = sc->NIL;
-  cdr(sc->A4_3) = sc->A4_4;
-  heap_location(sc->A4_3) = NOT_IN_HEAP;
-  set_type(sc->A4_4, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  car(sc->A4_4) = sc->NIL;
-  cdr(sc->A4_4) = sc->NIL;
-  heap_location(sc->A4_4) = NOT_IN_HEAP;
+  sc->A4_4 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->A4_3 = permanent_cons(sc->NIL, sc->A4_4, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->A4_2 = permanent_cons(sc->NIL, sc->A4_3, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->A4_1 = permanent_cons(sc->NIL, sc->A4_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
 
   sc->A1_1 = sc->A4_4;
   sc->A2_1 = sc->A4_3;
@@ -69585,12 +69547,12 @@ int main(int argc, char **argv)
 /* --------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2
- * s7test    1721 | 1358 |  995 | 1194 1185 1178
+ * s7test    1721 | 1358 |  995 | 1194 1185 1146
  * index    44300 | 3291 | 1725 | 1276 1243 1173
- * bench    42736 | 8752 | 4220 | 3506 3506 3132
- * lg             |      |      |      6497 6509
+ * bench    42736 | 8752 | 4220 | 3506 3506 3108
+ * lg             |      |      |      6497 6496
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6
- * t455|6     265 |   89 |  9   |       8.4  8.1
+ * t455|6     265 |   89 |  9   |       8.4  8.0
  * t816           |   71 | 70.6 | 38.0 31.8 28.2
  * calls      359 |  275 | 54   | 34.7 34.7 35.2
  *
@@ -69620,4 +69582,5 @@ int main(int argc, char **argv)
  * perhaps if let/env is large, display contents more carefully (for pretty-print?)
  * g_load of .so file should try "./fname" and others unchanged?
  * C-G in Snd listener can cause a segfault!
+ * if possible clear hops in all unhop Z and A cases making a_is_ok unnecessary (if hop==0 don't look for A cases) (only safe_c* has z cases)
  */

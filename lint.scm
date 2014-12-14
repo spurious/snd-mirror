@@ -766,6 +766,10 @@
 				    #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p
 				    #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
 				 chars))
+	  (f-types (list +any+ +boolean+ +symbol+ 'integer-or-f 'list-or-f 'number-or-f))
+	  (sel-types (list +any+ +symbol+ +boolean+ +character+ +integer+ +number+ +unspecified+ 'char-or-eof))
+	  (num-types (list integer? real? rational? complex?))
+	  (v-types (list +any+ +symbol+))
 	  (outport #t)
 	  (loaded-files #f)
 	  (globals #f)
@@ -845,7 +849,7 @@
 	    (let ((type (if (pair? expr)
 			    (hash-table-ref function-types (car expr))
 			    (->type expr))))
-	      (not (member type (list +any+ +boolean+ +symbol+ 'integer-or-f 'list-or-f 'number-or-f))))))
+	      (not (member type f-types)))))
 	
       (define (never-true expr)
 	(or (not expr)
@@ -1044,7 +1048,7 @@
 			    (if (and (var? var-data)
 				     (not (var-ref var-data)) ; a stop-gap -- refd?
 				     (not (var-set var-data)) ;               set?
-				     (not (memq (var-type var-data) (list +any+ +symbol+)))
+				     (not (memq (var-type var-data) v-types))
 				     (not (checker (var-type var-data))))
 				(lint-format "~A's argument ~D might not be a~A ~A: ~S:~A" 
 					     name head arg-number 
@@ -1398,7 +1402,7 @@
 					  (and (memq func '(null? list?))
 					       pair?)))
 			    (args (cdar b)))
-		       (if (memq arg-type (list integer? real? rational? complex?))
+		       (if (memq arg-type num-types)
 			   (set! arg-type number?)
 			   (if (eq? arg-type list?)
 			       (set! arg-type pair?)))
@@ -3315,7 +3319,7 @@
 				    (symbol? (car selector)))
 			       (begin
 				 (set! sel-type (hash-table-ref function-types (car selector)))
-				 (if (not (member sel-type (list +any+ +symbol+ +boolean+ +character+ +integer+ +number+ +unspecified+ 'char-or-eof)))
+				 (if (not (member sel-type sel-types))
 				     (lint-format "case selector may not work with eqv: ~A" name (truncated-list->string selector)))))
 			   (let ((all-keys ())
 				 (ctr 0)

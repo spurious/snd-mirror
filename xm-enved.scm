@@ -311,7 +311,7 @@
 	 (gc (car (drawer 4)))
 	 (name (drawer 5))
 	 (len (and (list? cur-env) (length cur-env)))
-	 (get_realized (*gtk* 'gtk_widget_get_realized)))
+	 (get_realized (if (provided? 'snd-gtk) (*gtk* 'gtk_widget_get_realized))))
     (if (and (list? ax-pix)
 	     (list? cur-env)
 	     (if (provided? 'snd-motif)

@@ -26662,15 +26662,19 @@ EDITS: 2
 	
 	(set! open-ctr (length open-files))
 	(if (= open-ctr 0)
-	    (let ((fd (view-sound "oboe.snd")))
+	    (let ((fd (view-sound "1a.snd")))
 	      (set! open-ctr 1)
 	      (set! open-files (cons fd open-files))))
 	
-	(let ((choose-fd (lambda () ((sounds) (random (length (sounds)))))))
+	(let ((choose-fd (lambda () 
+			   (if (zero? test-ctr) ; I think randomness here is messing up my timing comparisons
+			       (or (find-sound "1a.snd") (open-sound "1a.snd"))
+			       ((sounds) (random (length (sounds))))))))
 	  (let* (;(frame-list (map framples open-files))
 		 (curfd (choose-fd))
 		 (curloc (max 0 (min 1200 (framples curfd 0))))
 		 (old-marks (length (marks curfd 0))))
+	    ;(format *stderr* "~S (~A)~%" (file-name curfd) (duration curfd))
 	    (if (> (duration curfd) 0.0)
 		(begin
 		  (set! (x-bounds curfd) (list 0.0 (min (duration curfd) 1.0)))
