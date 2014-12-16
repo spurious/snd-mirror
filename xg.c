@@ -31658,6 +31658,35 @@ gchar* name)"
   return(Xen_false);
 }
 
+static Xen gxg_gtk_entry_grab_focus_without_selecting(Xen entry)
+{
+  #define H_gtk_entry_grab_focus_without_selecting "void gtk_entry_grab_focus_without_selecting(GtkEntry* entry)"
+  Xen_check_type(Xen_is_GtkEntry_(entry), entry, 1, "gtk_entry_grab_focus_without_selecting", "GtkEntry*");
+  gtk_entry_grab_focus_without_selecting(Xen_to_C_GtkEntry_(entry));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_scrollable_get_border(Xen scrollable, Xen border)
+{
+  #define H_gtk_scrollable_get_border "gboolean gtk_scrollable_get_border(GtkScrollable* scrollable, \
+GtkBorder* border)"
+  Xen_check_type(Xen_is_GtkScrollable_(scrollable), scrollable, 1, "gtk_scrollable_get_border", "GtkScrollable*");
+  Xen_check_type(Xen_is_GtkBorder_(border), border, 2, "gtk_scrollable_get_border", "GtkBorder*");
+  return(C_to_Xen_gboolean(gtk_scrollable_get_border(Xen_to_C_GtkScrollable_(scrollable), Xen_to_C_GtkBorder_(border))));
+}
+
+static Xen gxg_gtk_text_buffer_insert_markup(Xen buffer, Xen iter, Xen markup, Xen len)
+{
+  #define H_gtk_text_buffer_insert_markup "void gtk_text_buffer_insert_markup(GtkTextBuffer* buffer, \
+GtkTextIter* iter, gchar* markup, gint len)"
+  Xen_check_type(Xen_is_GtkTextBuffer_(buffer), buffer, 1, "gtk_text_buffer_insert_markup", "GtkTextBuffer*");
+  Xen_check_type(Xen_is_GtkTextIter_(iter), iter, 2, "gtk_text_buffer_insert_markup", "GtkTextIter*");
+  Xen_check_type(Xen_is_gchar_(markup), markup, 3, "gtk_text_buffer_insert_markup", "gchar*");
+  Xen_check_type(Xen_is_gint(len), len, 4, "gtk_text_buffer_insert_markup", "gint");
+  gtk_text_buffer_insert_markup(Xen_to_C_GtkTextBuffer_(buffer), Xen_to_C_GtkTextIter_(iter), (const gchar*)Xen_to_C_gchar_(markup), Xen_to_C_gint(len));
+  return(Xen_false);
+}
+
 #endif
 
 static Xen gxg_cairo_create(Xen target)
@@ -38238,6 +38267,9 @@ Xen_wrap_1_arg(gxg_gtk_gl_area_attach_buffers_w, gxg_gtk_gl_area_attach_buffers)
 Xen_wrap_1_arg(gxg_gtk_gl_area_get_error_w, gxg_gtk_gl_area_get_error)
 Xen_wrap_no_args(gxg_gtk_popover_menu_new_w, gxg_gtk_popover_menu_new)
 Xen_wrap_2_args(gxg_gtk_popover_menu_open_submenu_w, gxg_gtk_popover_menu_open_submenu)
+Xen_wrap_1_arg(gxg_gtk_entry_grab_focus_without_selecting_w, gxg_gtk_entry_grab_focus_without_selecting)
+Xen_wrap_2_args(gxg_gtk_scrollable_get_border_w, gxg_gtk_scrollable_get_border)
+Xen_wrap_4_args(gxg_gtk_text_buffer_insert_markup_w, gxg_gtk_text_buffer_insert_markup)
 #endif
 
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
@@ -42292,6 +42324,9 @@ static void define_functions(void)
   Xg_define_procedure(gtk_gl_area_get_error, gxg_gtk_gl_area_get_error_w, 1, 0, 0, H_gtk_gl_area_get_error);
   Xg_define_procedure(gtk_popover_menu_new, gxg_gtk_popover_menu_new_w, 0, 0, 0, H_gtk_popover_menu_new);
   Xg_define_procedure(gtk_popover_menu_open_submenu, gxg_gtk_popover_menu_open_submenu_w, 2, 0, 0, H_gtk_popover_menu_open_submenu);
+  Xg_define_procedure(gtk_entry_grab_focus_without_selecting, gxg_gtk_entry_grab_focus_without_selecting_w, 1, 0, 0, H_gtk_entry_grab_focus_without_selecting);
+  Xg_define_procedure(gtk_scrollable_get_border, gxg_gtk_scrollable_get_border_w, 2, 0, 0, H_gtk_scrollable_get_border);
+  Xg_define_procedure(gtk_text_buffer_insert_markup, gxg_gtk_text_buffer_insert_markup_w, 4, 0, 0, H_gtk_text_buffer_insert_markup);
 #endif
 
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
@@ -44968,7 +45003,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("24-Nov-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("15-Dec-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

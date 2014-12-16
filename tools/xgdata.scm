@@ -9101,3 +9101,11 @@
 (CFNC-3.16 "GtkWidget* gtk_popover_menu_new void")
 (CFNC-3.16 "void gtk_popover_menu_open_submenu GtkPopoverMenu* popover gchar* name" 'const)
 
+;;; 3.15.3:
+
+(CFNC-3.16 "void gtk_entry_grab_focus_without_selecting GtkEntry* entry")
+(CFNC-3.16 "gboolean gtk_scrollable_get_border GtkScrollable* scrollable GtkBorder* border")
+(CFNC-3.16 "void gtk_text_buffer_insert_markup GtkTextBuffer* buffer GtkTextIter* iter gchar* markup gint len" 'const)
+
+;(CFNC-3.16 "GActionGroup* gtk_widget_get_action_group GtkWidget* widget gchar* prefix" 'const)
+;(CNFC-3.16 "gchar** gtk_widget_list_action_prefixes GtkWidget* widget" 'const)

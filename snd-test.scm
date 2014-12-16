@@ -31431,7 +31431,7 @@ EDITS: 2
 	  (let ((len (floor (* 1.25 (framples)))))
 	    (do ((i 0 (+ i 1)))
 		((= i 100))
-	      (case (floor (random 10))
+	      (case (if (zero? test-ctr) 3 (floor (random 10)))
 		((0) (pad-channel (random len) (random 1000)))
 		((1) (env-channel '(0 0 1 1 2 0) (random len) (random 1000)))
 		((2) (env-sound '(0 0 1 1 2 0) (random len) (random 1000)))

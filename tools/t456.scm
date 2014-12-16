@@ -73,7 +73,7 @@
 
 (define (autotest func args args-now args-left)
   ;; args-left is at least 1, args-now starts at 0, args starts at ()
-  ;(if (macro? func) (format *stderr* "~A: ~D ~D (~D ~D): ~A~%" func (length args) args-now low args-left args))
+  ;(format *stderr* "~A: ~D ~D (~D ~D): ~A~%" func (length args) args-now low args-left args))
     
   (call-with-exit
    (lambda (quit)
@@ -186,6 +186,7 @@
     (if data-file (close-output-port data-file))
     (format *stderr* "~%all done~%")))
 
+;(test-sym 'sort!)
 (all)
 (s7-version)
 (exit)
