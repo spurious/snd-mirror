@@ -509,7 +509,7 @@
 	  #f
 	  (cadr addr))))
   
-  (define (apropos-1 alist)
+  (define (apropos-1 e)
     (for-each
      (lambda (binding)
        (if (pair? binding)
@@ -518,13 +518,7 @@
 	     (if (procedure? value)
 		 (let ((file (where-is value)))
 		   (if (and file
-			    (not (string=? file "~/.snd_s7"))
-			    (not (string=? file "/home/bil/.snd_s7"))
-			    (not (string=? file "t.scm"))
-			    (not (string=? file "/home/bil/cl/t.scm"))
-			    (not (string=? file "make-index.scm"))
-			    (not (string=? file "/home/bil/cl/make-index.scm"))
-			    )
+			    (not (member file '("~/.snd_s7" "/home/bil/.snd_s7" "t.scm" "/home/bil/cl/t.scm" "make-index.scm" "/home/bil/cl/make-index.scm"))))
 		       (let ((pos (char-position #\/ file)))
 			 (if pos
 			     (do ((k (char-position #\/ file (+ pos 1)) (char-position #\/ file (+ pos 1))))
@@ -536,7 +530,7 @@
 			       (if (not (memq symbol cur-names))
 				   (hash-table-set! names file (cons symbol cur-names)))
 			       (hash-table-set! names file (list symbol)))))))))))
-     alist))
+     e))
   
   ;; handle the main macros by hand
   (for-each
@@ -889,7 +883,7 @@
     (list '*libgsl* "libgsl.scm")
     ))
 
-  (apropos-1 (reverse (let->list (rootlet))))
+  (apropos-1 (rootlet))
   
   (let ((syms ())
 	(size 0))

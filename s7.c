@@ -423,6 +423,7 @@ enum {OP_NO_OP,
        */
 
       OP_SAFE_C_opSq_P_1, OP_SAFE_C_opSq_P_MV, OP_C_P_1, OP_C_P_2, OP_C_SP_1, OP_C_SP_2,
+      OP_CLOSURE_P_1, OP_CLOSURE_P_2, OP_SAFE_CLOSURE_P_1,
       OP_MAX_DEFINED_1};
 
 #define OP_MAX_DEFINED (OP_MAX_DEFINED_1 + 1)
@@ -516,6 +517,7 @@ static const char *op_names[OP_MAX_DEFINED + 1] =
    "c_zzz_1", "c_zzz_2", "c_zzz_3", "zzzz_1", "zzzz_2", "zzzz_3", "zzzz_4",
 
    "c_opsq_p_1", "c_opsq_p_mv", "c_p_1", "c_p_2", "c_sp_1", "c_sp_2",
+   "closure_p_1", "closure_p_2", "safe_closure_p_1",
    "op-max"
   };
 
@@ -601,6 +603,7 @@ static const char *real_op_names[OP_MAX_DEFINED + 1] = {
   "safe_c_zzzz_1", "safe_c_zzzz_2", "safe_c_zzzz_3", "safe_c_zzzz_4", 
 
   "safe_c_opsq_p_1", "safe_c_opsq_p_mv", "c_p_1", "c_p_2", "c_sp_1", "c_sp_2",
+  "closure_p_1", "closure_p_2", "safe_closure_p_2",
   "max_defined_1"};
 
 typedef enum{E_C_P, E_C_PP, E_C_CP, E_C_SP, E_C_PC, E_C_PS} combine_op_t;
@@ -657,7 +660,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_CLOSURE_S_opSq, HOP_CLOSURE_S_opSq, OP_CLOSURE_S_opSSq, HOP_CLOSURE_S_opSSq, OP_CLOSURE_opSSq_S, HOP_CLOSURE_opSSq_S, 
       OP_CLOSURE_ALL_X, HOP_CLOSURE_ALL_X, OP_CLOSURE_ALL_S, HOP_CLOSURE_ALL_S, 
       
-      OP_GLOSURE_A, HOP_GLOSURE_A, OP_GLOSURE_S, HOP_GLOSURE_S,
+      OP_GLOSURE_A, HOP_GLOSURE_A, OP_GLOSURE_S, HOP_GLOSURE_S, OP_GLOSURE_P, HOP_GLOSURE_P, 
 
       OP_CLOSURE_STAR_S, HOP_CLOSURE_STAR_S, OP_CLOSURE_STAR_SX, HOP_CLOSURE_STAR_SX,
       OP_CLOSURE_STAR, HOP_CLOSURE_STAR, OP_CLOSURE_STAR_ALL_X, HOP_CLOSURE_STAR_ALL_X, 
@@ -670,8 +673,8 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_CLOSURE_S_opSq, HOP_SAFE_CLOSURE_S_opSq, OP_SAFE_CLOSURE_S_opSSq, HOP_SAFE_CLOSURE_S_opSSq, OP_SAFE_CLOSURE_opSSq_S, HOP_SAFE_CLOSURE_opSSq_S, 
       OP_SAFE_CLOSURE_SAA, HOP_SAFE_CLOSURE_SAA, 
       OP_SAFE_CLOSURE_ALL_X, HOP_SAFE_CLOSURE_ALL_X, OP_SAFE_CLOSURE_AA, HOP_SAFE_CLOSURE_AA, 
-
-      OP_SAFE_GLOSURE_A, HOP_SAFE_GLOSURE_A, OP_SAFE_GLOSURE_S, HOP_SAFE_GLOSURE_S,
+      
+      OP_SAFE_GLOSURE_A, HOP_SAFE_GLOSURE_A, OP_SAFE_GLOSURE_S, HOP_SAFE_GLOSURE_S, OP_SAFE_GLOSURE_P, HOP_SAFE_GLOSURE_P, 
 
       OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, OP_SAFE_CLOSURE_STAR_SS, HOP_SAFE_CLOSURE_STAR_SS, 
       OP_SAFE_CLOSURE_STAR_SC, HOP_SAFE_CLOSURE_STAR_SC, OP_SAFE_CLOSURE_STAR_SA, HOP_SAFE_CLOSURE_STAR_SA, OP_SAFE_CLOSURE_STAR_S0, HOP_SAFE_CLOSURE_STAR_S0,
@@ -765,8 +768,8 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "closure_opsq_s", "h_closure_opsq_s", "closure_opsq_opsq", "h_closure_opsq_opsq", 
       "closure_s_opsq", "h_closure_s_opsq", "closure_s_opssq", "h_closure_s_opssq", "closure_opssq_s", "h_closure_opssq_s", 
       "closure_all_x", "h_closure_all_x", "closure_all_s", "h_closure_all_s", 
-
-      "glosure_a", "h_glosure_a", "glosure_s", "h_glosure_s",
+      
+      "glosure_a", "h_glosure_a", "glosure_s", "h_glosure_s", "closure_p", "h_closure_p", 
 
       "closure_star_s", "h_closure_star_s", "closure_star_sx", "h_closure_star_sx", 
       "closure_star", "h_closure_star", "closure_star_all_x", "h_closure_star_all_x", 
@@ -779,8 +782,8 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "safe_closure_s_opsq", "h_safe_closure_s_opsq", "safe_closure_s_opssq", "h_safe_closure_s_opssq", "safe_closure_opssq_s", "h_safe_closure_opssq_s", 
       "safe_closure_saa", "h_safe_closure_saa", 
       "safe_closure_all_x", "h_safe_closure_all_x", "safe_closure_aa", "h_safe_closure_aa", 
-
-      "safe_glosure_a", "h_safe_glosure_a", "safe_glosure_s", "h_safe_glosure_s",
+      
+      "safe_glosure_a", "h_safe_glosure_a", "safe_glosure_s", "h_safe_glosure_s", "safe_closure_p", "h_safe_closure_p", 
 
       "safe_closure_star_s", "h_safe_closure_star_s", "safe_closure_star_ss", "h_safe_closure_star_ss", 
       "safe_closure_star_sc", "h_safe_closure_star_sc", "safe_closure_star_sa", "h_safe_closure_star_sa", "safe_closure_star_s0", "h_safe_closure_star_s0",
@@ -1615,7 +1618,9 @@ static void init_types(void)
       p->current_alloc_func = __func__; \
       p->current_alloc_type = f; \
       p->uses++; \
-      typeflag(p) = f; if (is_free(p)) fprintf(stderr, "%d: set %p type %x\n", __LINE__, p, f); \
+      if (((f) & 0xff) == T_FREE) fprintf(stderr, "%d: set free %p type to %x\n", __LINE__, p, f); \
+      else if ((is_immutable(p)) && ((typeflag(p) != (f)))) fprintf(stderr, "%d: set immutable %p type %x to %x\n", __LINE__, p, unchecked_type(p), f); \
+      typeflag(p) = f; \
     } while (0)
   #define clear_type(p) do {p->gc_line = __LINE__; p->gc_func = __func__; typeflag(p) = 0;} while (0)
 #else
@@ -39597,22 +39602,17 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	    }
 	}
 
-      /* we have to copy the args if any of them is a list:
-       *     (let* ((x (list (list 1 2 3))) (y (apply for-each abs x))) (list x y))
-       *  (is this trying to say that the for-each loop might otherwise change the original list as it cdrs down it?)
-       */
-
       if (is_not_null(cddr(args)))
 	{
 	  for (x = cddr(args); is_not_null(x); x = cdr(x))
 	    {
-	      sc->args = cons(sc, sc->NIL, sc->args);          /* we're making a list to be filled in later with the individual args */
+	      sc->args = cons(sc, sc->NIL, sc->args); /* we're making a list to be filled in later with the individual args */
 
 	      if (is_hash_table(car(x)))
 		sc->z = cons_unchecked(sc, g_make_hash_table_iterator(sc, x), sc->z);
 	      else
 		{
-		  if (is_let(car(x)))
+		  if (is_let(car(x)))                 /* (let ((a 1) (b 2)) (for-each (lambda (x) (format *stderr* "~A~%" x)) (curlet))) -> (b . 2) (a .1) */
 		    sc->z = cons(sc, make_let_iterator(sc, car(x)), sc->z);
 		  else sc->z = cons_unchecked(sc, car(x), sc->z);
 		}
@@ -40006,7 +40006,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	    stack_args(sc->stack, top) = cons(sc, car(x), stack_args(sc->stack, top));
 	  return(car(x));
 
-	  /* in the next set, the main evaluator branches blithly assume no multiple-values,
+	  /* in the next set, the main evaluator branches blithely assume no multiple-values,
 	   *   and if it happens anyway, we vector to a different branch here 
 	   */
 	case OP_SAFE_C_opSq_P_1:
@@ -40035,6 +40035,11 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 
 	case OP_C_P_1:
 	  vector_element(sc->stack, top) = (s7_pointer)OP_C_P_2;
+	  return(args);
+
+	case OP_SAFE_CLOSURE_P_1:
+	case OP_CLOSURE_P_1:
+	  vector_element(sc->stack, top) = (s7_pointer)OP_CLOSURE_P_2;
 	  return(args);
 
 	case OP_C_SP_1:
@@ -44589,7 +44594,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
   bool func_is_safe, func_is_c_function, func_is_closure;
   s7_pointer cadar_x;
   /* very often, car_x is already optimized */
-  /* fprintf(stderr, "func_one_arg: %s: %d\n", DISPLAY_80(car_x), hop); */
+  /* fprintf(stderr, "func_one_arg: %s: hop: %d, pairs: %d %d\n", DISPLAY_80(car_x), hop, pairs, bad_pairs); */
 
   func_is_closure = is_closure(func);
   if ((func_is_closure) &&
@@ -44815,6 +44820,13 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		      set_ecdr(car_x, func);
 		      return(false);
 		    }
+		  if (is_global(car(car_x)))
+		    {
+		      set_unsafely_optimized(car_x);
+		      set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_GLOSURE_P : OP_GLOSURE_P));
+		      set_ecdr(car_x, func);
+		      return(false); 
+		    }
 		}
 	    }
 	}
@@ -44875,6 +44887,15 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 		  set_optimize_data(car_x, hop + OP_C_P);
 		  choose_c_function(sc, car_x, func, 1);
 		  return(false);
+		}
+
+	      if ((func_is_closure) &&
+		  (is_global(car(car_x))))
+		{
+		  set_unsafely_optimized(car_x);
+		  set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_GLOSURE_P : OP_GLOSURE_P));
+		  set_ecdr(car_x, func);
+		  return(false); 
 		}
 	    }
 	}
@@ -55285,6 +55306,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto BEGIN1;
 	      
 	      
+	    case OP_SAFE_GLOSURE_P:
+	      if ((symbol_id(car(code)) != 0) || (ecdr(code) != slot_value(global_slot(car(code))))) break;
+
+	    case HOP_SAFE_GLOSURE_P:
+	      push_stack(sc, OP_SAFE_CLOSURE_P_1, sc->NIL, code);
+	      sc->code = cadr(code);
+	      goto EVAL;
+
+
 	    case OP_SAFE_CLOSURE_A:
 	      if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1)) {set_optimize_data(code, OP_UNKNOWN_A); goto OPT_EVAL;}
 	      if (!indirect_c_function_is_ok(sc, cadr(code))) break;
@@ -55802,8 +55832,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_GLOSURE_A:
 	      sc->value = ((s7_function)fcdr(cdr(code)))(sc, cadr(code));
 	      goto UNSAFE_CLOSURE_ONE;
-	      
-	      
+
+
+	    case OP_GLOSURE_P:
+	      if ((symbol_id(car(code)) != 0) || (ecdr(code) != slot_value(global_slot(car(code))))) break;
+
+	    case HOP_GLOSURE_P:
+	      push_stack(sc, OP_CLOSURE_P_1, sc->NIL, code);
+	      sc->code = cadr(code);
+	      goto EVAL;
+
+
 	    case OP_GLOSURE_S:
 	      if ((symbol_id(car(code)) != 0) ||
 		  (ecdr(code) != slot_value(global_slot(car(code)))))
@@ -60720,7 +60759,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = sc->UNSPECIFIED;
       goto START;
 
-      
+
     case OP_SAFE_C_P_1:
       car(sc->T1_1) = sc->value;
       sc->value = c_call(sc->code)(sc, sc->T1_1);
@@ -60808,6 +60847,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->args = copy_list(sc, sc->value);
       goto APPLY;
       
+
+    case OP_SAFE_CLOSURE_P_1:
+      sc->envir = old_frame_with_slot(sc, closure_let(ecdr(sc->code)), sc->value);
+      sc->code = closure_body(ecdr(sc->code));
+      goto BEGIN1;
+
+    case OP_CLOSURE_P_1:
+      /* sc->value is presumably the argument value */
+      CHECK_STACK_SIZE(sc);
+      sc->code = ecdr(sc->code);
+      NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_let(sc->code), sc->envir, car(closure_args(sc->code)), sc->value);
+      sc->code = closure_body(sc->code);
+      goto BEGIN1;
+
+    case OP_CLOSURE_P_2:
+      /* here we got multiple values */
+      sc->code = ecdr(sc->code);
+      sc->args = copy_list(sc, sc->value);
+      goto APPLY;
+
 
     case OP_C_SP_1:
       sc->value = c_call(sc->code)(sc, list_2(sc, sc->args, sc->value));
@@ -69347,7 +69406,7 @@ int main(int argc, char **argv)
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2
  * s7test    1721 | 1358 |  995 | 1194 1185 1144
  * index    44300 | 3291 | 1725 | 1276 1243 1173
- * bench    42736 | 8752 | 4220 | 3506 3506 3105
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104
  * lg             |      |      | 6547 6497 6494
  * t455|6     265 |   89 |  9   |       8.4  8.0
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6
@@ -69381,4 +69440,5 @@ int main(int argc, char **argv)
  * g_load of .so file should try "./fname" and others unchanged?
  * C-G in Snd listener can cause a segfault!
  * if possible clear hops in all unhop Z and A cases making a_is_ok unnecessary (if hop==0 don't look for A cases) (only safe_c* has z cases)
+ * check out send-region in snd-inf.el
  */

@@ -2,8 +2,8 @@
 
 (define gl-file (open-output-file "gl.c"))
 
-(define (hey . args)
-  (display (apply format #f args) gl-file))
+(define-expansion (hey . args)
+  `(format gl-file ,@args))
 
 (define (heyc arg)
   (display arg gl-file))
@@ -42,49 +42,31 @@
 	(set! in-glu #f))))
 
 (define (cadr-str data)
-  (let ((sp1 -1)
-	(len (string-length data)))
-    (call-with-exit
-     (lambda (return)
-       (do ((i 0 (+ i 1)))
-	   ((= i len) (substring data sp1))
-	 (if (char=? (data i) #\space)
-	     (if (= sp1 -1)
-		 (set! sp1 i)
-		 (return (substring data (+ 1 sp1) i)))))))))
+  (let ((sp1 (char-position #\space data)))
+    (let ((sp2 (char-position #\space data (+ sp1 1))))
+      (if sp2
+	  (substring data (+ sp1 1) sp2)
+	  (substring data sp1)))))
 
 (define (caddr-str data)
-  (let ((sp1 -1)
-	(sp2 -1)
-	(len (string-length data)))
-    (call-with-exit
-     (lambda (return)
-       (do ((i 0 (+ i 1)))
-	   ((= i len) (substring data sp2))
-	 (if (char=? (data i) #\space)
-	     (if (= sp1 -1)
-		 (set! sp1 i)
-		 (if (= sp2 -1)
-		     (set! sp2 i)
-		     (return (substring data (+ 1 sp2)))))))))))
+  (let ((sp1 (char-position #\space data)))
+    (let ((sp2 (char-position #\space data (+ sp1 1))))
+      (let ((sp3 (char-position #\space data (+ sp2 1))))
+	(if sp3
+	    (substring data (+ sp2 1))
+	    (substring data sp2))))))
 
 (define (car-str data)
-  (let ((len (string-length data)))
-    (call-with-exit
-     (lambda (return)
-       (do ((i 0 (+ i 1)))
-	   ((= i len) data)
-	 (if (char=? (data i) #\space)
-	     (return (substring data 0 i))))))))
+  (let ((sp (char-position #\space data)))
+    (if sp
+	(substring data 0 sp)
+	data)))
 
 (define (cdr-str data)
-  (let ((len (string-length data)))
-    (call-with-exit
-     (lambda (return)
-       (do ((i 0 (+ i 1)))
-	   ((= i len) data)
-	 (if (char=? (data i) #\space)
-	     (return (substring data (+ i 1)))))))))
+  (let ((sp (char-position #\space data)))
+    (if sp
+	(substring data (+ sp 1))
+	data)))
 
 (define (ref-arg? arg)
   (and (= (length arg) 3)

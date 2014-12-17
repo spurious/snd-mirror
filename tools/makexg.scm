@@ -2,8 +2,8 @@
 
 (define xg-file (open-output-file "xg.c"))
 
-(define (hey . args)
-  (display (apply format #f args) xg-file))
+(define-expansion (hey . args)
+  `(format xg-file ,@args))
 
 (define (heyc arg)
   (display arg xg-file))
@@ -161,57 +161,31 @@
 	))
 
 (define (cadr-str data)
-  (let ((sp1 -1)
-	(len (string-length data)))
-    (call-with-exit
-     (lambda (return)
-       (do ((i 0 (+ i 1)))
-	   ((= i len) (substring data sp1))
-	 (if (char=? (data i) #\space)
-	     (if (= sp1 -1)
-		 (set! sp1 i)
-		 (return (substring data (+ 1 sp1) i)))))))))
+  (let ((sp1 (char-position #\space data)))
+    (let ((sp2 (char-position #\space data (+ sp1 1))))
+      (if sp2
+	  (substring data (+ sp1 1) sp2)
+	  (substring data sp1)))))
 
 (define (caddr-str data)
-  (let ((sp1 -1)
-	(sp2 -1)
-	(len (string-length data)))
-    (call-with-exit
-     (lambda (return)
-       (do ((i 0 (+ i 1)))
-	   ((= i len) (substring data sp2))
-	 (if (char=? (data i) #\space)
-	     (if (= sp1 -1)
-		 (set! sp1 i)
-		 (if (= sp2 -1)
-		     (set! sp2 i)
-		     (return (substring data (+ 1 sp2)))))))))))
+  (let ((sp1 (char-position #\space data)))
+    (let ((sp2 (char-position #\space data (+ sp1 1))))
+      (let ((sp3 (char-position #\space data (+ sp2 1))))
+	(if sp3
+	    (substring data (+ sp2 1))
+	    (substring data sp2))))))
 
 (define (car-str data)
-  (let ((len (string-length data)))
-    (call-with-exit
-     (lambda (return)
-       (do ((i 0 (+ i 1)))
-	   ((= i len) data)
-	 (if (char=? (data i) #\space)
-	     (return (substring data 0 i))))))))
+  (let ((sp (char-position #\space data)))
+    (if sp
+	(substring data 0 sp)
+	data)))
 
 (define (cdr-str data)
-  (let ((len (string-length data)))
-    (call-with-exit
-     (lambda (return)
-       (do ((i 0 (+ i 1)))
-	   ((= i len) data)
-	 (if (char=? (data i) #\space)
-	     (return (substring data (+ i 1)))))))))
-
-(define (string-upcase name)
-  (let* ((len (string-length name))
-	 (str (make-string len)))
-    (do ((i 0 (+ i 1)))
-	((= i len))
-      (set! (str i) (char-upcase (name i))))
-    str))
+  (let ((sp (char-position #\space data)))
+    (if sp
+	(substring data (+ sp 1))
+	data)))
 
 (define (remove-if p l)
   (cond ((null? l) ())
@@ -266,25 +240,11 @@
     (string-append "ref_" name)))
 
 (define (derefable type)
-  (let ((len (string-length type)))
-    (call-with-exit
-     (lambda (return)
-       (do ((i (- len 1) (- i 1))
-	    (ctr 0 (+ ctr 1)))
-	   ((= i 0) #f)
-	 (if (not (char=? (type i) #\*))
-	     (return (> ctr 1))))))))
+  (let ((st (char-position #\* type)))
+    (and st (char-position #\* type (+ st 1)))))
 
 (define (has-stars type)
-  (let ((len (string-length type)))
-    (call-with-exit
-     (lambda (return)
-       (do ((i (- len 1) (- i 1))
-	    (ctr 0 (+ ctr 1)))
-	   ((= i 0) #f)
-	 (if (char=? (type i) #\*)
-	     (return #t)))
-       #f))))
+  (char-position #\* type))
 
 (define (no-stars type)
   (let ((len (string-length type))
@@ -295,14 +255,10 @@
 	  (set! (val i) #\_)))))
 
 (define (no-arg-or-stars name)
-  (let ((len (string-length name)))
-    (call-with-exit
-     (lambda (return)
-       (do ((i 0 (+ i 1)))
-	   ((= i len) name)
-	 (if (or (char=? (name i) #\()
-		 (char=? (name i) #\*))
-	     (return (substring name 0 i))))))))
+  (let ((pos (char-position "(*" name)))
+    (if pos
+	(substring name 0 pos)
+	name)))
 
 (define (parse-args args extra)
   (let ((data ())

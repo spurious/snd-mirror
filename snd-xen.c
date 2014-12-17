@@ -2954,29 +2954,30 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
   /* needed in snd-test.scm and hooks.scm */
 
   Xen_eval_C_string("\
-        (define* (apropos name port)\
-          \"(apropos name (port #f)) looks for 'name' as a part of any symbol name, and sends matches to 'port'\"\
-          (define (apropos-1 e)\
-            (for-each\
-             (lambda (binding)\
-               (if (and (pair? binding) (symbol? (car binding))\
-                        (string-position name (symbol->string (car binding))))\
-                   (let ((str (format #f \"~%~A: ~A\" \
-	        	              (car binding) \
-	        	              (if (procedure? (cdr binding))\
-	        	                  (procedure-documentation (cdr binding))\
-	        	                  (cdr binding)))))\
-                     (if (not port)\
-                         (snd-print str)\
-	                 (display str port)))))\
-             e))\
-          (if (or (not (string? name))\
-                  (= (length name) 0))\
-              (error 'wrong-type-arg \"apropos argument should be a non-nil string\")\
-              (begin \
-                 (if (not (eq? (curlet) (rootlet)))\
-                     (for-each apropos-1 (let->list (curlet)))) \
-                 (apropos-1 (rootlet)))))");
+    (define* (apropos name (port #f) (e (rootlet)))  \
+      \"(apropos name (port *stdout*) (env (rootlet))) looks for 'name' as a part of any symbol name, and sends matches to 'port'\"  \
+      (let ((ap-name (if (string? name)   \
+		         name   \
+		         (if (symbol? name)   \
+			     (symbol->string name)  \
+			     (error 'wrong-type-arg \"apropos argument 1 should be a string or a symbol\"))))  \
+	    (ap-env (if (let? e)   \
+		        e   \
+		        (error 'wrong-type-arg \"apropos argument 3 should be an environment\")))  \
+	    (ap-port (if (or (not port) (output-port? port))   \
+		         port  \
+                         (error 'wrong-type-arg \"apropos argument 2 should be an output port\"))))  \
+        (for-each  \
+         (lambda (binding)  \
+           (if (and (pair? binding)  \
+		    (string-position ap-name (symbol->string (car binding))))  \
+	       (snd-print \
+                 (format ap-port \"~%~A: ~A\"   \
+		         (car binding)   \
+		         (if (procedure? (cdr binding))  \
+		             (procedure-documentation (cdr binding))  \
+		             (cdr binding))))))  \
+         ap-env)))");
 
   Xen_eval_C_string("\
 (define break-ok #f)\

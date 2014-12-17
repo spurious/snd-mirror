@@ -1243,7 +1243,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
 #|
 (let ((x 0.0)) (reactive-let ((y (sin x))) (set! x 1.0) y)) -- so "lifting" comes for free?
 
-(map (lambda (s) (symbol-access (car s) e)) (let->list e))
+(map (lambda (s) (symbol-access (car s) e)) e)
 
 (let ((a 1))
   (reactive-let ((b (+ a 1))
@@ -1425,6 +1425,32 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences."
     `(define-bacro* (,(gensym) ,@arg-defaults)
        `((lambda ,',arg-names ,'(begin ,@body)) ,,@arg-names))))
 
+
+;;; ----------------
+
+(if (not (provided? 'snd)) ; this is built-into Snd
+    (define* (apropos name (port *stdout*) (e (rootlet)))
+      (let ((ap-name (if (string? name) 
+			 name 
+			 (if (symbol? name) 
+			     (symbol->string name)
+			     (error 'wrong-type-arg "apropos argument 1 should be a string or a symbol"))))
+	    (ap-env (if (let? e) 
+			e 
+			(error 'wrong-type-arg "apropos argument 3 should be an environment")))
+	    (ap-port (if (output-port? port) 
+			 port
+			 (error 'wrong-type-arg "apropos argument 2 should be an output port"))))
+	(for-each
+	 (lambda (binding)
+	   (if (and (pair? binding)
+		    (string-position ap-name (symbol->string (car binding))))
+	       (format ap-port "~A: ~A~%" 
+		       (car binding) 
+		       (if (procedure? (cdr binding))
+			   (procedure-documentation (cdr binding))
+			   (cdr binding)))))
+	 ap-env))))
 
 
 ;;; ----------------

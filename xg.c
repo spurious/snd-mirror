@@ -45003,7 +45003,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("15-Dec-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("16-Dec-14"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND
