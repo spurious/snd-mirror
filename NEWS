@@ -1,13 +1,14 @@
-Snd 15.1.
+Snd 15.2
 
-Juan Reyes donated his Leslie instrument, rotates, in leslie.cms
-  and leslie.ins (in clm).
+Mike Scholz fixed bugs in clm and the NetBSD audio code, and updated many of the scripts.
+Anders Vinjar added lispworks code for gnuplot in dlocsig.lisp.
 
-s7 now has a s7webserver directory containing Kjetil Matheussen's
-  s7 web repl.
+all the motif stuff (xm.c, snd-motif.scm etc) has moved to the *motif* environment,
+  OpenGL (gl.c, snd-gl.scm) to *gl*, and gtk (xg.c, snd-gtk.scm etc) to *gtk*.
 
-Mike Scholz updated the Forth and Ruby scripts.
+mus-copy (or copy) copies a generator.
+added snd15.scm (old vct names)
 
-checked: sbcl 1.2.4|5, gtk 3.14.0|1|2|3|4, 3.15.0|1
+checked: gtk 3.15.2|3, FC 21, sbcl 1.2.6
 
-Thanks!: Kjetil Matheussen, Juan Reyes, Mike Scholz.
+Thanks!: Mike Scholz, Matti Koskinen, Kjetil Matheussen, Anders Vinjar, Tito Latini

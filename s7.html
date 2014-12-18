@@ -5707,10 +5707,10 @@ rootlet-size                  the number of globals
 heap-size                     total cells currently available
 free-heap-size                the number of currently unused cells
 gc-freed                      number of cells freed by the last GC pass
-gc-protected-objects          number of objects permanently protected from the GC
+gc-protected-objects          vector of the objects permanently protected from the GC
 gc-stats                      #f (#t turns on printout of the GC activity)
 
-the next 8 are vectors (mainly for GC debugging)
+the next 8 are vectors (mainly for GC debugging):
     gensyms, input-ports, output-ports, strings, vectors, 
     hash-tables, continuations, c-objects
 </pre>

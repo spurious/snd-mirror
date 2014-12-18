@@ -889,7 +889,8 @@ typedef struct vdims_t {
 
 
 typedef struct c_object_t {
-  int type, outer_type;
+  int type;
+  unsigned int outer_type;
   const char *name;
   s7_pointer scheme_name;
   char *(*print)(s7_scheme *sc, void *value);
@@ -2558,7 +2559,7 @@ static s7_pointer file_error(s7_scheme *sc, const char *caller, const char *desc
 static void s7_warn(s7_scheme *sc, int len, const char *ctrl, ...);
 static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list);
 static s7_pointer cons_unchecked(s7_scheme *sc, s7_pointer a, s7_pointer b);
-static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type);
+static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, unsigned int type);
 static void free_object(s7_pointer a);
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol, bool with_error);
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
@@ -27373,7 +27374,7 @@ static s7_pointer cons_unchecked(s7_scheme *sc, s7_pointer a, s7_pointer b)
 }
 
 
-static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type)
+static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, unsigned int type)
 {
   /* for the symbol table which is never GC'd (and its contents aren't marked) */
   s7_pointer x;
@@ -30147,7 +30148,7 @@ static s7_pointer float_vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc)
 #define FILLED true
 #define NOT_FILLED false
 
-static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, int typ) 
+static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, unsigned int typ) 
 {
   s7_pointer x;
   if (len < 0)
@@ -33553,7 +33554,7 @@ s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr)
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   c_proc_t *ptr;
-  int ftype = T_C_FUNCTION;
+  unsigned int ftype = T_C_FUNCTION;
   s7_pointer x;
 
   x = alloc_pointer();
@@ -62315,6 +62316,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       call_exit_active(sc->args) = false;      /* as we leave the call-with-exit body, deactivate the exiter */
       goto START;
 
+
     case OP_ERROR_HOOK_QUIT:
       sc->error_hook = sc->code;  /* restore old value */
 
@@ -62336,6 +62338,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_GET_OUTPUT_STRING_1:        /* from call-with-output-string and with-output-to-string -- return the port string directly */
+      if ((!is_output_port(sc->code)) || 
+	  (port_is_closed(sc->code)))
+	simple_wrong_type_argument_with_type(sc, sc->WITH_OUTPUT_TO_STRING, sc->code, make_string_wrapper(sc, "an open string output port"));	
+
       sc->value = make_string_uncopied_with_length(sc, (char *)port_data(sc->code), port_position(sc->code));
       string_value(sc->value)[port_position(sc->code)] = 0;
       port_data(sc->code) = NULL;
@@ -62356,11 +62362,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    (!port_is_closed(sc->args)))
 	  sc->output_port = sc->args;
        
-       if (is_file)
-	 {
-	   if (is_multiple_value(sc->value)) 
-	     sc->value = splice_in_values(sc, multiple_value(sc->value));
-	 }
+	if ((is_file) &&
+	    (is_multiple_value(sc->value)))
+	  sc->value = splice_in_values(sc, multiple_value(sc->value));
        goto START;
       }
 
@@ -67801,7 +67805,7 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- initialization -------------------------------- */
 
-static s7_pointer make_unique_object(const char* name, int typ)
+static s7_pointer make_unique_object(const char* name, unsigned int typ)
 {
   s7_pointer p;
   p = alloc_pointer();
@@ -69403,7 +69407,7 @@ int main(int argc, char **argv)
 
 /* --------------------------------------------------
  *
- *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2
+ *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3
  * s7test    1721 | 1358 |  995 | 1194 1185 1144
  * index    44300 | 3291 | 1725 | 1276 1243 1173
  * bench    42736 | 8752 | 4220 | 3506 3506 3104
@@ -69440,5 +69444,6 @@ int main(int argc, char **argv)
  * g_load of .so file should try "./fname" and others unchanged?
  * C-G in Snd listener can cause a segfault!
  * if possible clear hops in all unhop Z and A cases making a_is_ok unnecessary (if hop==0 don't look for A cases) (only safe_c* has z cases)
- * check out send-region in snd-inf.el
+ * check out send-region in snd-inf.el -- xen_repl needs to be smarter I think
+ * add --with-s7webserver
  */

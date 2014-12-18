@@ -2701,8 +2701,15 @@ static char *legalize_path(const char *in_str)
 #if HAVE_GL
 static Xen g_snd_gl_context(void)
 {
-  return(Xen_list_2(C_string_to_Xen_symbol("GLContext"), 
-		    Xen_wrap_C_pointer(ss->cx)));
+#if USE_GTK
+  return(Xen_list_2(C_string_to_Xen_symbol("GLContext"), Xen_wrap_C_pointer(ss->cx)));
+#else
+#if USE_MOTIF
+  return(Xen_list_2(C_string_to_Xen_symbol("GLXContext"), Xen_wrap_C_pointer(ss->cx)));
+#else
+  return(XEN_FALSE);
+#endif
+#endif
 } 
 
 Xen_wrap_no_args(g_snd_gl_context_w, g_snd_gl_context)
