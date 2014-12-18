@@ -1405,6 +1405,10 @@ static char **xen_completion(const char *text, int start, int end)
 #include <curses.h>
 #endif
 
+#if USE_SND
+char *stdin_check_for_full_expression(const char *newstr);
+void stdin_free_str(void);
+#endif
 
 void xen_repl(int argc, char **argv)
 {
@@ -1466,11 +1470,22 @@ void xen_repl(int argc, char **argv)
 	    }
 	  if (expr_ok)
 	    {
-	      char *temp;
-	      temp = (char *)malloc(len + 128);
-	      snprintf(temp, len + 128, "(write %s)", buffer);    /* use write, not display so that strings are in double quotes */
+	      char *str, *temp;
+#if USE_SND
+	      str = stdin_check_for_full_expression(buffer); /* "str" here is actually stdin_str, so we need to clear it explicitly */
+	      if (!str) {expr_ok = false; continue;}
+	      len = strlen(str) + 16;
+	      temp = (char *)malloc(len * sizeof(char));
+	      snprintf(temp, len, "(write %s)", str);  
 	      Xen_eval_C_string(temp);
 	      free(temp);
+	      stdin_free_str();
+#else
+	      temp = (char *)malloc(len + 16);
+	      snprintf(temp, len + 16, "(write %s)", buffer);    /* use write, not display so that strings are in double quotes */
+	      Xen_eval_C_string(temp);
+	      free(temp);
+#endif
 	    }
 	}
 #endif

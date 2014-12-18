@@ -69444,6 +69444,5 @@ int main(int argc, char **argv)
  * g_load of .so file should try "./fname" and others unchanged?
  * C-G in Snd listener can cause a segfault!
  * if possible clear hops in all unhop Z and A cases making a_is_ok unnecessary (if hop==0 don't look for A cases) (only safe_c* has z cases)
- * check out send-region in snd-inf.el -- xen_repl needs to be smarter I think
  * add --with-s7webserver
  */

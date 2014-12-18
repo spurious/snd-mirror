@@ -1154,6 +1154,9 @@ void snd_warning_without_format(const char *msg);
 void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), void *data);
 void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd), void *data);
 
+char *stdin_check_for_full_expression(const char *newstr);
+void stdin_free_str(void);
+
 void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_everything_to(void (*handler)(const char *msg, void *ufd), void *data);

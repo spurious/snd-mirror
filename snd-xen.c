@@ -1140,7 +1140,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 #endif
 
 
-static char *stdin_check_for_full_expression(const char *newstr)
+char *stdin_check_for_full_expression(const char *newstr)
 {
 #if HAVE_SCHEME
   int end_of_text;
@@ -1166,6 +1166,12 @@ static char *stdin_check_for_full_expression(const char *newstr)
   return(NULL);
 #endif
   return(stdin_str);
+}
+
+void stdin_free_str(void)
+{
+  if (stdin_str) free(stdin_str);
+  stdin_str = NULL;
 }
 
 
@@ -1194,9 +1200,8 @@ void snd_eval_stdin_str(const char *buf)
       redirect_everything_to(NULL, NULL);
 
       loc = snd_protect(result);
-      if (stdin_str) free(stdin_str);
-      /* same as str here */
-      stdin_str = NULL;
+      stdin_free_str();
+
       str = gl_print(result);
       string_to_stdout(str, NULL);
 
