@@ -557,3 +557,17 @@ Or use clang without the aforementioned flags:
 There is also a port in /usr/ports/audio/snd with version 13.0 from August 
 2012. 
 
+
+-------- Debian --------
+
+The last time I installed Debian (via netinstall) I installed the following
+Snd-related packages by hand:
+
+  libgmp-dev
+  fftw-dev
+  libgtk-3-dev
+  libmpfr-dev
+  libmpc-dev
+  libgsl0-dev
+  libasound2-dev
+  libgl1-mesa-dev

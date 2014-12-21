@@ -110,7 +110,7 @@
 #ifndef INITIAL_HEAP_SIZE
 #define INITIAL_HEAP_SIZE 128000
 /* the heap grows as needed, this is its initial size. 
- * If the initial heap is small, s7 can run in less than 2 Mbytes of memory. There are cases where a bigger heap is faster.
+ * If the initial heap is small, s7 can run in less than 2 Mbytes of memory. There are (many) cases where a bigger heap is faster.
  * As of 5-May-2011, the heap size must be a multiple of 32.  Each object takes about 60 bytes (48 + 8?) so this represents 6 Mbytes?
  */
 #endif
@@ -2796,84 +2796,31 @@ static int sort_data(const void *v1, const void *v2)
 }
 static void report_counts(s7_scheme *sc)
 {
-  int len, i, loc = 0, entries, top_hist = 0;
+  int len, i, loc = 0, entries;
   s7_pointer *elements;
   datum **data;
-  int *lens, *hist;
-  #define HIST_SIZE 100
 
   len = hash_table_length(hashes);
   elements = hash_table_elements(hashes);
   entries = hash_table_entries(hashes);
   data = (datum **)calloc(entries, sizeof(datum *));
-  hist = (int *)calloc(HIST_SIZE, sizeof(int));
 
-  lens = (int *)calloc(len, sizeof(int));
   for (i = 0; i < len; i++)
     {
       int k;
       s7_pointer x;
       for (k = 0, x = elements[i]; is_pair(x); x = cdr(x), k++)
 	data[loc++] = new_datum(s7_integer(cdar(x)), caar(x));
-      lens[i] = k;
     }
-
-  {
-    int n, ctr = 0, total = 0, ents;
-    for (n = 0; n < len; n++)
-      if (is_pair(elements[n])) 
-	{
-	  ctr++;
-	  ents = s7_list_length(sc, elements[n]);
-	  total += ents;
-	  if (ents >= HIST_SIZE) ents = HIST_SIZE - 1;
-	  hist[ents]++;
-	  if (ents > top_hist) top_hist = ents;
-	}
-    fprintf(stderr, "\n%d locs of %d are in use for %d items\n", ctr, len, total);
-    
-    for (n = 0; n < 4; n++)
-      {
-	int mx, mxj = 0, j, a;
-	s7_pointer p;
-	mx = 0;
-	
-	for (j = 0; j < len; j++)
-	  {
-	    if (lens[j] > mx)
-	      {
-		mx = lens[j];
-		mxj = j;
-	      }
-	  }
-	if (mx > 0)
-	  {
-	    fprintf(stderr, "%d: %d\n", mxj, mx);
-	    lens[mxj] = 0;
-	    for (a = 0, p = elements[mxj]; (a < 10) && (is_pair(p)); p = cdr(p), a++)
-	      fprintf(stderr, "    %s\n", DISPLAY_80(caar(p)));
-	    if (is_pair(p)) fprintf(stderr, "    ...\n");
-	  }
-	else break;
-      }
-
-    for (n = 1; n < top_hist; n++)
-      {
-	fprintf(stderr, "%d ", hist[n]);
-	if ((n % 20) == 0) fprintf(stderr, "\n");
-      }
-  }
-  fprintf(stderr, "\n\n");
 
   qsort((void *)data, loc, sizeof(datum *), sort_data);
   if (loc > 400) loc = 400;
+  fprintf(stderr, "\n");
   for (i = 0; i < loc; i++)
     if (data[i]->count > 0)
       fprintf(stderr, "%lld: %s\n", data[i]->count, DISPLAY_80(data[i]->expr));
 
   free(data);
-  free(hist);
-  free(lens);
 }
 void add_code(s7_scheme *sc);
 void add_code(s7_scheme *sc)
@@ -3966,7 +3913,6 @@ static void unmark_permanent_objects(s7_scheme *sc)
 }
 
 
-
 #ifndef _MSC_VER
   #include <time.h>
   #include <sys/time.h>
@@ -4192,7 +4138,7 @@ static int gc(s7_scheme *sc)
       double secs;
       gettimeofday(&t0, &z0);
       secs = (t0.tv_sec - start_time.tv_sec) +  0.000001 * (t0.tv_usec - start_time.tv_usec);
-      fprintf(stdout, "freed %d/%u, time: %f\n", (int)(sc->free_heap_top - old_free_heap_top), sc->heap_size, secs);
+      fprintf(stdout, "freed %d/%u, time: %f\n", sc->gc_freed, sc->heap_size, secs);
 #else
       fprintf(stdout, "freed %d/%u\n", sc->gc_freed, sc->heap_size);
 #endif
@@ -4279,7 +4225,7 @@ static void expand_heap(s7_scheme *sc)
   if (sc->heap_size < 512000)
     sc->heap_size *= 2;
   else sc->heap_size += 512000;
-  
+
   sc->heap = (s7_cell **)realloc(sc->heap, sc->heap_size * sizeof(s7_cell *));
   if (!(sc->heap))
     s7_warn(sc, 256, "heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));
@@ -18997,6 +18943,11 @@ static s7_pointer g_chars_are_leq(s7_scheme *sc, s7_pointer args)
   return(g_char_cmp_not(sc, args, 1, sc->CHAR_LEQ));
 }
 
+static s7_pointer simple_char_eq;
+static s7_pointer g_simple_char_eq(s7_scheme *sc, s7_pointer args)
+{
+  return(make_boolean(sc, character(car(args)) == character(cadr(args))));
+}
 
 static s7_pointer char_equal_s_ic, char_equal_2;
 static s7_pointer g_char_equal_s_ic(s7_scheme *sc, s7_pointer args)
@@ -32915,7 +32866,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
 		  
 		default:
 		  hash_table_function(table) = hash_equal;
-		  /* if every key structure is simple, we'd like to use a simple_equal checker (no circles),
+		  /* if every key structure is simple, we'd like to use a simple equal checker (no circles),
 		   *    but circles can sneak in!  lists (etc) are dangerous keys:
 		   *
 		   (let ((ht (make-hash-table))
@@ -39236,6 +39187,7 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
 static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 {
   #define H_s7_version "(s7-version) returns some string describing the current s7"
+
 #if WITH_COUNTS
   report_counts(sc);
 #endif
@@ -42011,18 +41963,27 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 {
   if (args == 2)
     {
+      s7_pointer arg2;
+      arg2 = caddr(expr);
       if (is_symbol(cadr(expr)))
 	{
-	  if ((s7_is_integer(caddr(expr))) &&
-	      (s7_integer(caddr(expr)) >= 0))
+	  if ((s7_is_integer(arg2)) &&
+	      (s7_integer(arg2) >= 0))
 	    {
 	      set_optimize_data(expr, HOP_SAFE_C_C);
-	      return(vector_ref_ic);
+	      switch (integer(arg2))
+		{
+		case 0: return(vector_ref_ic_0); break;
+		case 1: return(vector_ref_ic_1); break;
+		case 2: return(vector_ref_ic_2); break;
+		case 3: return(vector_ref_ic_3); break;
+		default: return(vector_ref_ic);
+		}
 	    }
 
 	  if (is_global(cadr(expr)))
 	    {
-	      if (is_symbol(caddr(expr)))
+	      if (is_symbol(arg2))
 		{
 		  set_optimize_data(expr, HOP_SAFE_C_C);
 		  return(vector_ref_gs);
@@ -42033,9 +41994,9 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 		}
 	    }
 
-	  if ((is_pair(caddr(expr))) &&
-	      (is_safely_optimized(caddr(expr))) &&
-	      (c_call(caddr(expr)) == g_add_cs1))
+	  if ((is_pair(arg2)) &&
+	      (is_safely_optimized(arg2)) &&
+	      (c_call(arg2) == g_add_cs1))
 	    {
 	      set_optimize_data(expr, HOP_SAFE_C_C);
 	      return(vector_ref_add1);
@@ -42046,6 +42007,7 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
     }
   return(f);
 }
+
 
 
 static s7_pointer vector_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -42786,8 +42748,24 @@ static s7_pointer char_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 {
   if (args == 2)
     {
-      if ((is_symbol(cadr(expr))) &&
-	  (s7_is_character(caddr(expr))))
+      s7_pointer arg1, arg2;
+      arg1 = cadr(expr);
+      arg2 = caddr(expr);
+
+      if (((s7_is_character(arg1)) ||
+	   ((is_h_optimized(arg1)) &&
+	    (car(arg1) == sc->STRING_REF))) &&
+	  ((s7_is_character(arg2)) ||
+	   ((is_h_optimized(arg2)) &&
+	    (car(arg2) == sc->STRING_REF))))
+	{
+	  return(simple_char_eq);
+	  /* TODO: others: all 9 char rel checks with string-ref|char-upcase|integer->char -- any char expr
+	   *       int/int cases perhaps symbol/symbol
+	   */
+	}
+      if ((is_symbol(arg1)) &&
+	  (s7_is_character(arg2)))
 	{
 	  set_optimize_data(expr, HOP_SAFE_C_C);
 	  return(char_equal_s_ic);
@@ -43444,6 +43422,7 @@ static void init_choosers(s7_scheme *sc)
   /* char=? */
   f = set_function_chooser(sc, sc->CHAR_EQ, char_equal_chooser);
 
+  simple_char_eq = make_function_with_class(sc, f, "char=?", g_simple_char_eq, 2, 0, false, "char=? opt");
   char_equal_s_ic = make_function_with_class(sc, f, "char=?", g_char_equal_s_ic, 2, 0, false, "char=? opt");
   char_equal_2 = make_function_with_class(sc, f, "char=?", g_char_equal_2, 2, 0, false, "char=? opt");
 
@@ -44005,6 +43984,20 @@ static s7_pointer all_x_c_opscq(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T1_1));
 }
 		    
+#if 0
+static s7_pointer all_x_c_opscq_s(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs, val;
+  val = find_symbol_checked(sc, caddr(arg));
+  largs = cadr(arg);
+  car(sc->T2_1) = find_symbol_checked(sc, cadr(largs));
+  car(sc->T2_2) = caddr(largs);
+  car(sc->T2_1) = c_call(largs)(sc, sc->T2_1);
+  car(sc->T2_2) = val;
+  return(c_call(arg)(sc, sc->T2_1));
+}
+#endif
+		    
 static s7_pointer all_x_c_opsqq(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer largs;
@@ -44202,6 +44195,9 @@ static void all_x_function_init(void)
   all_x_function[HOP_SAFE_C_C_opCq] = all_x_c_c_opcq;
   all_x_function[HOP_SAFE_C_opSSq_C] = all_x_c_opssq_c;
   all_x_function[HOP_SAFE_C_opSSq_S] = all_x_c_opssq_s;
+#if 0
+  all_x_function[HOP_SAFE_C_opSCq_S] = all_x_c_opscq_s;
+#endif
   all_x_function[HOP_SAFE_C_S_opSSq] = all_x_c_s_opssq;
   all_x_function[HOP_SAFE_C_opSq_opSq] = all_x_c_opsq_opsq;
   all_x_function[HOP_SAFE_C_opCq_opCq] = all_x_c_opcq_opcq;
@@ -44280,10 +44276,7 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer car_x, s7_pointer func, int
       (is_null(closure_args(func))))                 /* no rest arg funny business */
     {
       set_unsafely_optimized(car_x);
-      set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_THUNK : OP_THUNK));
-      /* it rarely happens that the safe_thunk's body is one-line/allxable
-       *   so checking for that case above costs more than it saves.
-       */
+      set_optimize_data(car_x, ((is_safe_closure(func)) ? OP_SAFE_THUNK : OP_THUNK));
       set_ecdr(car_x, func);
       return(false);                                /* false because currently the C_PP stuff assumes safe procedure calls */
     }
@@ -44293,7 +44286,7 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer car_x, s7_pointer func, int
       (has_simple_args(closure_body(func))))
     {
       set_unsafely_optimized(car_x);
-      set_optimize_data(car_x, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR : OP_CLOSURE_STAR));
+      set_optimize_data(car_x, ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR : OP_CLOSURE_STAR));
       set_ecdr(car_x, func);
       return(false); 
     }
@@ -44672,21 +44665,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer car_x, s7_pointer fu
 			  (is_optimized(car(body))) &&  /* snd-test: (power-env pe) is safe_closure but body is not optimized? and c_call is nil */
 			  (car(closure_args(func)) == cadar(body)))
 			{
-			  if ((is_null(cdddr(car(body)))) &&
-			      (c_call(car(body)) == g_vector_ref_ic) &&
-			      (integer(caddr(car(body))) >= 0) && (integer(caddr(car(body))) < 4))
-			    {
-			      switch (integer(caddr(car(body))))
-				{
-				case 0: set_c_function(car_x, vector_ref_ic_0); break;
-				case 1: set_c_function(car_x, vector_ref_ic_1); break;
-				case 2: set_c_function(car_x, vector_ref_ic_2); break;
-				case 3: set_c_function(car_x, vector_ref_ic_3); break;
-				}
-			      set_optimize_data(car_x, HOP_SAFE_C_C); /* not hop+OP because c_function_is_ok gets confused -- need to fix this! */
-			      set_optimized(car_x);
-			      return(true);
-			    }
 			  if (is_safe_c_s(car(body)))
 			    {
 			      /* direct safe_c_s call by moving body pointers out a level -- this currently never happens
@@ -46653,15 +46631,6 @@ static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
 
 #define indirect_c_function_is_ok(Sc, X) (((optimize_data(X) & 0x1) != 0) || (c_function_is_ok(Sc, X)))
 
-static bool is_hop_safe_closure(s7_pointer p)
-{
-  int op;
-  op = optimize_data(p);
-  return(((op & 1) == 1) &&
-	 (op >= HOP_SAFE_THUNK) &&
-	 (op < OP_SAFE_CLOSURE_STAR_S));
-}
-
 static bool tree_match(s7_scheme *sc, s7_pointer tree)
 {
   if (is_null(tree))
@@ -46921,8 +46890,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
   else /* car(x) is not syntactic ?? */
     {
       if ((!is_optimized(x)) || 
-	  ((is_unsafe(x)) &&
-	   (!is_hop_safe_closure(x))))
+	  (is_unsafe(x)))
 	{
 	  if (car_x == func) /* try to catch tail call */
 	    {
@@ -46961,8 +46929,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 		      for (p = cdr(x); is_pair(p); p = cdr(p))
 			if ((is_pair(car(p))) &&
 			    ((!is_optimized(car(p))) ||
-			     ((is_unsafe(car(p))) &&
-			      (!is_hop_safe_closure(car(p))))))
+			     (is_unsafe(car(p)))))
 			  {
 			    if ((caar(p) != func) ||
 				(!is_null(cdr(p))))
@@ -53003,28 +52970,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* sc->code is the stuff after "do" */
       if (is_null(check_do(sc)))
 	{
-	  if (car(ecdr(sc->code)) == sc->SIMPLE_DO)
-	    goto SIMPLE_DO;
-	  if (car(ecdr(sc->code)) == sc->SIMPLE_DO_P)
-	    goto SIMPLE_DO_P;
-	  if (car(ecdr(sc->code)) == sc->SIMPLE_DO_A)
-	    goto SIMPLE_DO_A;
-	  if (car(ecdr(sc->code)) == sc->DOTIMES_P)
-	    goto DOTIMES_P;
-	  if (car(ecdr(sc->code)) == sc->SAFE_DOTIMES_C_A)
-	    goto SAFE_DOTIMES_C_A;
-	  if (car(ecdr(sc->code)) == sc->SAFE_DOTIMES_C_C)
-	    goto SAFE_DOTIMES_C_C;
-	  if (car(ecdr(sc->code)) == sc->SIMPLE_SAFE_DOTIMES)
-	    goto SIMPLE_SAFE_DOTIMES;
-	  if (car(ecdr(sc->code)) == sc->SAFE_DO)
-	    goto SAFE_DO;
-	  if (car(ecdr(sc->code)) == sc->DOX)
-	    goto DOX;
-	  if (car(ecdr(sc->code)) == sc->DO_ALL_X)
-	    goto DO_ALL_X;
-	  if (car(ecdr(sc->code)) == sc->SIMPLE_DO_FOREVER)
-	    goto SIMPLE_DO_FOREVER;
+	  s7_pointer op;
+	  op = car(ecdr(sc->code));
+	  if (op == sc->SIMPLE_DO)           goto SIMPLE_DO;
+	  if (op == sc->SIMPLE_DO_P)         goto SIMPLE_DO_P;
+	  if (op == sc->SIMPLE_DO_A)         goto SIMPLE_DO_A;
+	  if (op == sc->DOTIMES_P)           goto DOTIMES_P;
+	  if (op == sc->SAFE_DOTIMES_C_A)    goto SAFE_DOTIMES_C_A;
+	  if (op == sc->SAFE_DOTIMES_C_C)    goto SAFE_DOTIMES_C_C;
+	  if (op == sc->SIMPLE_SAFE_DOTIMES) goto SIMPLE_SAFE_DOTIMES;
+	  if (op == sc->SAFE_DO)	     goto SAFE_DO;
+	  if (op == sc->DOX)	             goto DOX;
+	  if (op == sc->DO_ALL_X)	     goto DO_ALL_X;
+	  if (op == sc->SIMPLE_DO_FOREVER)   goto SIMPLE_DO_FOREVER;
 	  goto SAFE_DOTIMES;
 	}
 
@@ -55247,6 +55205,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* this recursion check is consistent with the other unsafe closure calls, but we're probably in big trouble:
 	       *   (letrec ((a (lambda () (cons 1 (b)))) (b (lambda () (a)))) (b))
 	       * unfortunately the alternative is a segfault when we wander off the end of the stack.
+	       *
+	       * It seems that we could use the hop bit here (since it is always off) to choose between BEGIN1 and OPT_EVAL or EVAL,
+	       *   but the EVAL choice gains nothing in time, and the OPT_EVAL choice is too tricky -- it is a two-level optimization,
+	       *   so if the inner (car(closure_body)) gets unopt'd for some reason, the outer HOP_THUNK never finds
+	       *   out, and peculiar things start to happen.  (Also, is_h_optimized would need to be smarter).
 	       */
 	      NEW_FRAME(sc, closure_let(ecdr(code)), sc->envir);
 	      sc->code = closure_body(ecdr(code));
@@ -69408,14 +69371,14 @@ int main(int argc, char **argv)
 /* --------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3
- * s7test    1721 | 1358 |  995 | 1194 1185 1144
- * index    44300 | 3291 | 1725 | 1276 1243 1173
- * bench    42736 | 8752 | 4220 | 3506 3506 3104
- * lg             |      |      | 6547 6497 6494
- * t455|6     265 |   89 |  9   |       8.4  8.0
- * t502        90 |   43 | 14.5 | 12.7 12.7 12.6
- * t816           |   71 | 70.6 | 38.0 31.8 28.2
- * calls      359 |  275 | 54   | 34.7 34.7 35.2
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1149
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1158
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3041
+ * lg             |      |      | 6547 6497 6494 6297
+ * t455|6     265 |   89 |  9   |       8.4 8045 8026
+ * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
+ * t816           |   71 | 70.6 | 38.0 31.8 28.2 27.9
+ * calls      359 |  275 | 54   | 34.7 34.7 35.2 35.0
  *
  * --------------------------------------------------
  *
@@ -69438,11 +69401,13 @@ int main(int argc, char **argv)
  *   need color-dialog use-gl button in gtk callbacks for labels
  * snd-genv needs a lot of gtk3 work
  *
+ * *s7* should have most-positive|negative-fixnum
  * cyclic-seq in rest of full-* and cyclic-sequences is minimally tested in s7test (also c_object env)
  * why not snd-g* -> snd-gtk?
  * perhaps if let/env is large, display contents more carefully (for pretty-print?)
  * g_load of .so file should try "./fname" and others unchanged?
  * C-G in Snd listener can cause a segfault!
  * if possible clear hops in all unhop Z and A cases making a_is_ok unnecessary (if hop==0 don't look for A cases) (only safe_c* has z cases)
- * add --with-s7webserver
+ * need info and what type checks are most onerous currently [these are internal] (simple_char_eq could check func rtn type)
+ * read/-string|line? via tmp_str (substring_to_temp etc) 
  */
