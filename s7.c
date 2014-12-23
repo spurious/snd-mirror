@@ -56,8 +56,7 @@
  * Currently we assume we have setjmp.h (used by the error handlers).
  *
  * Complex number support which is problematic in C++, Solaris, and netBSD
- *   is on the HAVE_COMPLEX_NUMBERS switch. On a Mac, or in Linux, if you're not using C++,
- *   I use:
+ *   is on the HAVE_COMPLEX_NUMBERS switch. In OSX or Linux, if you're not using C++,
  *
  *   #define HAVE_COMPLEX_NUMBERS 1
  *   #define HAVE_COMPLEX_TRIG 1
@@ -71,20 +70,18 @@
  *
  *   Some systems (FreeBSD) have complex.h, but some random subset of the trig funcs, so
  *   HAVE_COMPLEX_NUMBERS means we can find
- *
  *      cimag creal cabs csqrt carg conj
- *
  *   and HAVE_COMPLEX_TRIG means we have
- *
  *      cacos cacosh casin casinh catan catanh ccos ccosh cexp clog cpow csin csinh ctan ctanh
  * 
- * When HAVE_COMPLEX_NUMBERS is 0 or undefined, the complex functions are stubs that simply return their
+ * When HAVE_COMPLEX_NUMBERS is 0, the complex functions are stubs that simply return their
  *   argument -- this will be very confusing for the s7 user because, for example, (sqrt -2)
  *   will return something bogus (it will not signal an error).
  *
  *
  * To get multiprecision arithmetic, set WITH_GMP to 1.
  *   You'll also need libgmp, libmpfr, and libmpc (version 0.8.0 or later)
+ *   In highly numerical contexts, the gmp version of s7 is about 10 times slower than the non-gmp version.
  *
  * if WITH_SYSTEM_EXTRAS is 1 (default is 1 unless _MSC_VER), various OS and file related functions are included.
  *
@@ -102,6 +99,7 @@
  *   then load it with -lreadline -ldl -lm, (and perhaps -ltinfo) etc.
  *
  * -O3 does not seem to gain us anything.
+ * -march=native -fomit-frame-pointer -m64 -funroll-loops gains about .1% -- almost nothing.
  */
 
 
@@ -1259,9 +1257,9 @@ struct s7_scheme {
   format_data **fdats;
   int num_fdats;
 
-  s7_pointer *strings, *vectors, *input_ports, *output_ports, *continuations, *c_objects, *hash_tables, *gensyms;
-  int strings_size, vectors_size, input_ports_size, output_ports_size, continuations_size, c_objects_size, hash_tables_size, gensyms_size;
-  int strings_loc, vectors_loc, input_ports_loc, output_ports_loc, continuations_loc, c_objects_loc, hash_tables_loc, gensyms_loc;
+  s7_pointer *strings, *vectors, *input_ports, *output_ports, *continuations, *c_objects, *hash_tables, *gensyms, *setters;
+  int strings_size, vectors_size, input_ports_size, output_ports_size, continuations_size, c_objects_size, hash_tables_size, gensyms_size, setters_size;
+  int strings_loc, vectors_loc, input_ports_loc, output_ports_loc, continuations_loc, c_objects_loc, hash_tables_loc, gensyms_loc, setters_loc;
 
   unsigned int syms_tag;
   int ht_iter_tag, rng_tag, baffle_ctr;
@@ -3557,7 +3555,38 @@ static void init_gc_caches(s7_scheme *sc)
   sc->bignumbers_loc = 0;
   sc->bignumbers = (s7_pointer *)malloc(sc->bignumbers_size * sizeof(s7_pointer));
 #endif
+
+  /* slightly unrelated... */
+  sc->setters_size = 4;
+  sc->setters_loc = 0;
+  sc->setters = (s7_pointer *)malloc(sc->c_objects_size * sizeof(s7_pointer));
 }
+
+
+static void add_setter(s7_scheme *sc, s7_pointer p, s7_pointer setter)
+{
+  /* procedure-setters GC-protected. The c_function_setter field can't be used because the built-in functions
+   *   are often removed from the heap and never thereafter marked.
+   */
+  int i;
+  for (i = 0; i < sc->setters_loc; i++)
+    {
+      s7_pointer x;
+      x = sc->setters[i];
+      if (car(x) == p)
+	{
+	  cdr(x) = setter;
+	  return;
+	}
+    }
+  if (sc->setters_loc == sc->setters_size)
+    {
+      sc->setters_size *= 2;
+      sc->setters = (s7_pointer *)realloc(sc->setters, sc->setters_size * sizeof(s7_pointer));
+    }
+  sc->setters[sc->setters_loc++] = permanent_cons(p, setter, T_PAIR | T_IMMUTABLE);
+}
+
 
 static void mark_vector_1(s7_pointer p, s7_Int top)
 {
@@ -3618,21 +3647,11 @@ static void just_mark(s7_pointer p)
 }
 
 
-static void mark_c_proc(s7_pointer p)
-{
-  if (!is_marked(p)) /* this is needed since it is remotely possible a function is its own setter(?!?) and otherwise we get an infinite loop */
-    {
-      set_mark(p);
-      S7_MARK(c_function_setter(p));
-    }
-}
-
 static void mark_c_proc_star(s7_pointer p)
 {
   if (!is_marked(p)) 
     {
       set_mark(p);
-      S7_MARK(c_function_setter(p));
       if (!c_function_simple_defaults(p))
 	{
 	  s7_pointer arg;
@@ -3641,6 +3660,7 @@ static void mark_c_proc_star(s7_pointer p)
 	}
     }
 }
+
 
 static void mark_pair(s7_pointer p)
 {
@@ -3860,7 +3880,7 @@ static void init_mark_functions(void)
   mark_function[T_BAFFLE]              = just_mark;
   mark_function[T_C_MACRO]             = just_mark;
   mark_function[T_C_POINTER]           = just_mark;
-  mark_function[T_C_FUNCTION]          = just_mark;  /* these change if needed to mark_c_proc when setter is a scheme function */
+  mark_function[T_C_FUNCTION]          = just_mark;  
   mark_function[T_C_FUNCTION_STAR]     = just_mark;  /* change to mark_c_proc_star if defaults involve an expression */
   mark_function[T_C_ANY_ARGS_FUNCTION] = just_mark;
   mark_function[T_C_OPT_ARGS_FUNCTION] = just_mark;
@@ -4005,6 +4025,8 @@ static int gc(s7_scheme *sc)
       if (list_is_in_use(sc->safe_lists[i]))
 	for (p = sc->safe_lists[i]; is_pair(p); p = cdr(p))
 	  S7_MARK(car(p));
+    for (i = 0; i < sc->setters_loc; i++)
+      S7_MARK(cdr(sc->setters[i]));
   }
 
   S7_MARK(sc->protected_objects);
@@ -34571,18 +34593,18 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
     case T_C_RST_ARGS_FUNCTION:
       c_function_setter(p) = setter;
       if (is_any_closure(setter))
-	mark_function[type(p)] = mark_c_proc;
+	add_setter(sc, p, setter);
       break;
 
     case T_C_FUNCTION_STAR:
       c_function_setter(p) = setter;
       if (is_any_closure(setter))
-	mark_function[T_C_FUNCTION_STAR] = mark_c_proc_star;
+	add_setter(sc, p, setter);
       break;
 
     case T_C_MACRO:
       if (is_any_closure(setter))
-	mark_function[T_C_MACRO] = mark_c_proc;
+	add_setter(sc, p, setter);
       c_macro_setter(p) = setter;
       break;
 
@@ -41987,10 +42009,6 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 		{
 		  set_optimize_data(expr, HOP_SAFE_C_C);
 		  return(vector_ref_gs);
-
-		  /* (define global_vector (vector 1 2 3))
-		   * (define (hi i) (vector-ref global_vector i))
-		   */
 		}
 	    }
 
@@ -43984,20 +44002,6 @@ static s7_pointer all_x_c_opscq(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T1_1));
 }
 		    
-#if 0
-static s7_pointer all_x_c_opscq_s(s7_scheme *sc, s7_pointer arg)
-{
-  s7_pointer largs, val;
-  val = find_symbol_checked(sc, caddr(arg));
-  largs = cadr(arg);
-  car(sc->T2_1) = find_symbol_checked(sc, cadr(largs));
-  car(sc->T2_2) = caddr(largs);
-  car(sc->T2_1) = c_call(largs)(sc, sc->T2_1);
-  car(sc->T2_2) = val;
-  return(c_call(arg)(sc, sc->T2_1));
-}
-#endif
-		    
 static s7_pointer all_x_c_opsqq(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer largs;
@@ -44195,9 +44199,6 @@ static void all_x_function_init(void)
   all_x_function[HOP_SAFE_C_C_opCq] = all_x_c_c_opcq;
   all_x_function[HOP_SAFE_C_opSSq_C] = all_x_c_opssq_c;
   all_x_function[HOP_SAFE_C_opSSq_S] = all_x_c_opssq_s;
-#if 0
-  all_x_function[HOP_SAFE_C_opSCq_S] = all_x_c_opscq_s;
-#endif
   all_x_function[HOP_SAFE_C_S_opSSq] = all_x_c_s_opssq;
   all_x_function[HOP_SAFE_C_opSq_opSq] = all_x_c_opsq_opsq;
   all_x_function[HOP_SAFE_C_opCq_opCq] = all_x_c_opcq_opcq;
@@ -69372,12 +69373,12 @@ int main(int argc, char **argv)
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1149
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1158
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1157
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3041
- * lg             |      |      | 6547 6497 6494 6297
+ * lg             |      |      | 6547 6497 6494 6288
  * t455|6     265 |   89 |  9   |       8.4 8045 8026
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
- * t816           |   71 | 70.6 | 38.0 31.8 28.2 27.9
+ * t816           |   71 | 70.6 | 38.0 31.8 28.2 27.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 35.0
  *
  * --------------------------------------------------
@@ -69408,6 +69409,9 @@ int main(int argc, char **argv)
  * g_load of .so file should try "./fname" and others unchanged?
  * C-G in Snd listener can cause a segfault!
  * if possible clear hops in all unhop Z and A cases making a_is_ok unnecessary (if hop==0 don't look for A cases) (only safe_c* has z cases)
+ *   surely something is confused here -- all a ops are hop-safe? -- this is s7test and indecision about globals
  * need info and what type checks are most onerous currently [these are internal] (simple_char_eq could check func rtn type)
- * read/-string|line? via tmp_str (substring_to_temp etc) 
+ * read-string|line? via tmp_str (substring_to_temp etc) 
+ * procedure-predicate? -- predicate, temp-case, no-check-case
+ * format often knows how many ~'s there are in advance, also check strchr at 26987
  */

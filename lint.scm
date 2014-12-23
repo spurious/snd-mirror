@@ -65,7 +65,6 @@
 (define-macro (reader-cond . clauses) `(values))          ; clobber reader-cond to avoid dumb unbound-variable errors
 
 
-
 ;;; --------------------------------------------------------------------------------
 ;;; for snd-test.scm
 
@@ -779,28 +778,35 @@
 	  (line-number -1))
 
 
-      ;; vector or list versions
+      ;; list versions
+      (define var-name car)
+      (define var-ref cadr)
+      (define var-set caddr)
+      (define var-func-info cadddr)
+      (set! (procedure-setter cadr) (lambda (v val) (list-set! v 1 val)))
+      (set! (procedure-setter caddr) (lambda (v val) (list-set! v 2 val)))
+      (set! (procedure-setter cadddr) (lambda (v val) (list-set! v 3 val)))
+      (define var-type (dilambda (lambda (v) (list-ref v 4)) (lambda (v x) (list-set! v 4 x))))
+      (define var-value (dilambda (lambda (v) (list-ref v 5)) (lambda (v x) (list-set! v 5 x))))
+      (define* (make-var name ref set fnc typ val :allow-other-keys)
+	;(reflective-probe)
+	(list name ref set fnc typ val))
+      (define var? pair?)
+      (define var-member assq)
+#|      
+      ;; vector version
       (define var-name (dilambda (lambda (v) (v 0)) (lambda (v x) (set! (v 0) x))))
       (define var-ref (dilambda (lambda (v) (v 1)) (lambda (v x) (set! (v 1) x))))
       (define var-set (dilambda (lambda (v) (v 2)) (lambda (v x) (set! (v 2) x))))
       (define var-func-info (dilambda (lambda (v) (v 3)) (lambda (v x) (set! (v 3) x))))
       (define var-type (dilambda (lambda (v) (v 4)) (lambda (v x) (set! (v 4) x))))
       (define var-value (dilambda (lambda (v) (v 5)) (lambda (v x) (set! (v 5) x))))
-#|      
-      ;; vector version
       (define* (make-var name ref set fnc typ val :allow-other-keys) 
         (vector name ref set fnc typ val))
       (define var? vector?)
       (define (mf a b) (eq? a (vector-ref b 0)))
       (define (var-member v q) (let ((lst (member v q mf))) (and lst (car lst))))
-|#
-      ;; list version
-      (define* (make-var name ref set fnc typ val :allow-other-keys)
-	;(reflective-probe)
-	(list name ref set fnc typ val))
-      (define var? pair?)
-      (define var-member assq)
-#|
+
       ;; environment version
       (define var-name (dilambda (lambda (v) (v 'name)) (lambda (v x) (set! (v 'name) x))))
       (define var-ref (dilambda (lambda (v) (v 'ref)) (lambda (v x) (set! (v 'ref) x))))
