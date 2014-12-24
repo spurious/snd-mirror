@@ -355,42 +355,45 @@
 				   (set! j (+ j 1))))
 			     (set! happy #f))))))))))
 
-(define (dismiss-all-dialogs)
-  "(dismiss-all-dialogs) hides all dialogs"
-  (if (or (provided? 'xm)
-	  (provided? 'xg))
-      (for-each
-       (lambda (dialog)
-	 (if dialog
-	     (if (symbol? (car dialog))
-		 (if (provided? 'snd-motif)
-		     (if ((*motif* 'XtIsManaged) dialog)
-			   ((*motif* 'XtUnmanageChild) dialog))
-		     (if (provided? 'snd-gtk)
-			 ((*gtk* 'gtk_widget_hide) dialog)))
-		 (for-each
-		  (lambda (d)
-		    (if (symbol? (car d))
-			(if (provided? 'snd-motif)
-			    (if ((*motif* 'XtIsManaged) d)
-				((*motif* 'XtUnmanageChild) d))
-			    (if (provided? 'snd-gtk)
-				((*gtk* 'gtk_widget_hide) d)))))
-		  dialog))))
-       (dialog-widgets))))
+(define dismiss-all-dialogs
+  (let ((documentation "(dismiss-all-dialogs) hides all dialogs"))
+    (lambda ()
+      (if (or (provided? 'xm)
+	      (provided? 'xg))
+	  (for-each
+	   (lambda (dialog)
+	     (if dialog
+		 (if (symbol? (car dialog))
+		     (if (provided? 'snd-motif)
+			 (if ((*motif* 'XtIsManaged) dialog)
+			     ((*motif* 'XtUnmanageChild) dialog))
+			 (if (provided? 'snd-gtk)
+			     ((*gtk* 'gtk_widget_hide) dialog)))
+		     (for-each
+		      (lambda (d)
+			(if (symbol? (car d))
+			    (if (provided? 'snd-motif)
+				(if ((*motif* 'XtIsManaged) d)
+				    ((*motif* 'XtUnmanageChild) d))
+				(if (provided? 'snd-gtk)
+				    ((*gtk* 'gtk_widget_hide) d)))))
+		      dialog))))
+	   (dialog-widgets))))))
 
 (define safe-color (make-color 1 0 0))
-(define (make-color-with-catch c1 c2 c3)
-  "make-color but catch 'no-such-color"
-  (catch 'no-such-color
-	 (lambda () (make-color c1 c2 c3))
-	 (lambda args safe-color)))
+(define make-color-with-catch 
+  (let ((documentation "make-color but catch 'no-such-color"))
+    (lambda (c1 c2 c3)
+      (catch 'no-such-color
+	(lambda () (make-color c1 c2 c3))
+	(lambda args safe-color)))))
 
-(define* (safe-display-edits snd chn edpos)
-  "display-edits but catch all errors"
-  (catch #t
-	 (lambda () (display-edits snd chn edpos))
-	 (lambda args (snd-display #__line__ ";display-edits error: ~A" args))))
+(define safe-display-edits 
+  (let ((documentation "display-edits but catch all errors"))
+    (lambda* (snd chn edpos)
+      (catch #t
+	(lambda () (display-edits snd chn edpos))
+	(lambda args (snd-display #__line__ ";display-edits error: ~A" args))))))
 
 (define (safe-divide a b)
   (if (zero? b)
@@ -10207,13 +10210,14 @@ EDITS: 2
 ;;; see bird.scm for lots more birds
 
 
-(define (scissor begin-time) ; test 23 also
-  "(scissor beg) is the scissor-tailed flycatcher"
-  (let ((scissorf '(0 0  40 1  60 1  100 0)))
-    (bigbird begin-time 0.05 1800 1800 .2 
-	     scissorf 
-	     '(0 0  25 1  75 1  100 0) 
-	     '(1 .5  2 1  3 .5  4 .1  5 .01))))
+(define scissor 
+  (let ((documentation "(scissor beg) is the scissor-tailed flycatcher"))
+    (lambda (begin-time) ; test 23 also
+      (let ((scissorf '(0 0  40 1  60 1  100 0)))
+	(bigbird begin-time 0.05 1800 1800 .2 
+		 scissorf 
+		 '(0 0  25 1  75 1  100 0) 
+		 '(1 .5  2 1  3 .5  4 .1  5 .01))))))
 
 
 (define (snd_test_8)
@@ -10293,44 +10297,46 @@ EDITS: 2
 	mx)))
   
   ;; ----------------
-  (define (make-papoulis-window n)
-    "(make-papoulis-window size) returns a papoulis window os the given size"
-    (let ((v (make-float-vector n))
-	  (n2 (/ n 2)))
-      (do ((i (- n2) (+ i 1)))
-	  ((= i n2))
-	(let* ((ratio (/ i n))
-	       (pratio (* 2 pi ratio)))
-	  (set! (v (+ i n2)) (+ (/ (abs (sin pratio)) pi)
-				(* (- 1.0 (* 2 (abs ratio)))
-				   (cos pratio))))))
-      v))
-  
+  (define make-papoulis-window 
+    (let ((documentation "(make-papoulis-window size) returns a papoulis window os the given size"))
+      (lambda (n)
+	(let ((v (make-float-vector n))
+	      (n2 (/ n 2)))
+	  (do ((i (- n2) (+ i 1)))
+	      ((= i n2))
+	    (let* ((ratio (/ i n))
+		   (pratio (* 2 pi ratio)))
+	      (set! (v (+ i n2)) (+ (/ (abs (sin pratio)) pi)
+				    (* (- 1.0 (* 2 (abs ratio)))
+				       (cos pratio))))))
+	  v))))
+      
   ;; ----------------
-  (define (make-dpss-window n w)
-    "(make-dpss-window size w) returns a prolate spheriodal (slepian) window of the given size"
-    ;; from Verma, Bilbao, Meng, "The Digital Prolate Spheroidal Window"
-    ;; output checked using Julius Smith's dpssw.m, although my "w" is different
-    (let ((mat (make-float-vector (list n n) 0.0))
-	  (cw (cos (* 2 pi w))))
-      (do ((i 0 (+ i 1)))
-	  ((= i n))
-	(let ((n2 (- (* 0.5 (- n 1)) i))) 
-	  (set! (mat i i) (* cw n2 n2))
-	  (if (< i (- n 1))
-	      (set! (mat i (+ i 1)) (* 0.5 (+ i 1) (- n 1 i))))
-	  (if (> i 0)
-	      (set! (mat i (- i 1)) (* 0.5 i (- n i))))))
-      (let* ((vc (vector-ref (cadr (gsl-eigenvectors mat)) 0)) ; cadr->vector of fv-vectors
-	     (v (copy vc (make-float-vector (length vc))))
-	     (pk 0.0))
-	;; sign of eigenvalue is arbitrary, and eigenvector is scaled to sum to 1.0
-	;;   but we want peak of 1.0 to serve as fft window
-	(do ((i 0 (+ i 1)))
-	    ((= i n))
-	  (if (> (abs (v i)) (abs pk))
-	      (set! pk (v i)))) 
-	(float-vector-scale! v (/ 1.0 pk)))))
+  (define make-dpss-window 
+    (let ((documentation "(make-dpss-window size w) returns a prolate spheriodal (slepian) window of the given size"))
+      ;; from Verma, Bilbao, Meng, "The Digital Prolate Spheroidal Window"
+      ;; output checked using Julius Smith's dpssw.m, although my "w" is different
+      (lambda (n w)
+	(let ((mat (make-float-vector (list n n) 0.0))
+	      (cw (cos (* 2 pi w))))
+	  (do ((i 0 (+ i 1)))
+	      ((= i n))
+	    (let ((n2 (- (* 0.5 (- n 1)) i))) 
+	      (set! (mat i i) (* cw n2 n2))
+	      (if (< i (- n 1))
+		  (set! (mat i (+ i 1)) (* 0.5 (+ i 1) (- n 1 i))))
+	      (if (> i 0)
+		  (set! (mat i (- i 1)) (* 0.5 i (- n i))))))
+	  (let* ((vc (vector-ref (cadr (gsl-eigenvectors mat)) 0)) ; cadr->vector of fv-vectors
+		 (v (copy vc (make-float-vector (length vc))))
+		 (pk 0.0))
+	    ;; sign of eigenvalue is arbitrary, and eigenvector is scaled to sum to 1.0
+	    ;;   but we want peak of 1.0 to serve as fft window
+	    (do ((i 0 (+ i 1)))
+		((= i n))
+	      (if (> (abs (v i)) (abs pk))
+		  (set! pk (v i)))) 
+	    (float-vector-scale! v (/ 1.0 pk)))))))
   
   ;; ----------------
   (define (test-lpc)
@@ -11492,19 +11498,20 @@ EDITS: 2
 	  (snd-display #__line__ ";fm-components are unexpected:~%~S" str)))))
   
   ;; ----------------
-  (define (fltit)
-    "(fltit) returns a time-varying filter: (map-channel (fltit))"
-    (let* ((coeffs (float-vector .1 .2 .3 .4 .4 .3 .2 .1))
-	   (flt (make-fir-filter 8 coeffs))
-	   (xcof (mus-xcoeffs flt)) ; maybe a copy?
-	   (es (make-float-vector 8)))
-      (do ((i 0 (+ i 1)))
-	  ((= i 8))
-	(set! (es i) 0.9994)) ; something like (+ 1.0 (/ (log 1e-5) (* 0.5 *clm-srate*)))
-      (set! (es 5) 1.00002)
-      (lambda (x)
-	(float-vector-multiply! xcof es)
-	(fir-filter flt x))))
+  (define fltit
+    (let ((documentation "(fltit) returns a time-varying filter: (map-channel (fltit))"))
+      (lambda ()
+	(let* ((coeffs (float-vector .1 .2 .3 .4 .4 .3 .2 .1))
+	       (flt (make-fir-filter 8 coeffs))
+	       (xcof (mus-xcoeffs flt)) ; maybe a copy?
+	       (es (make-float-vector 8)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 8))
+	    (set! (es i) 0.9994)) ; something like (+ 1.0 (/ (log 1e-5) (* 0.5 *clm-srate*)))
+	  (set! (es 5) 1.00002)
+	  (lambda (x)
+	    (float-vector-multiply! xcof es)
+	    (fir-filter flt x))))))
   
 ;;; (with-sound (:output "test.snd") (let ((p (make-pulse-train 1000))) (do ((i 0 (+ i 1))) ((= i 44100)) (outa i (* .5 (pulse-train p))))))
 ;;; (map-channel (fltit))
@@ -26483,18 +26490,19 @@ EDITS: 2
 
 (define sfile 0) ; used globally by save-state stuff (... is this a bug?)
 
-(define (safe-make-selection beg end snd) ; used in test_15 also
-  "make-region with error checks"
-  (let ((len (framples snd))
-	(old-choice *selection-creates-region*))
-    (set! *selection-creates-region* #t)
-    (if (> len 1)
-	(if (< end len)
-	    (make-selection beg end snd)
-	    (if (< beg len)
-		(make-selection beg (- len 1) snd)
-		(make-selection 0 (- len 1) snd))))
-    (set! *selection-creates-region* old-choice)))
+(define safe-make-selection 
+  (let ((documentation "make-region with error checks"))
+    (lambda (beg end snd) ; used in test_15 also
+      (let ((len (framples snd))
+	    (old-choice *selection-creates-region*))
+	(set! *selection-creates-region* #t)
+	(if (> len 1)
+	    (if (< end len)
+		(make-selection beg end snd)
+		(if (< beg len)
+		    (make-selection beg (- len 1) snd)
+		    (make-selection 0 (- len 1) snd))))
+	(set! *selection-creates-region* old-choice)))))
 
 (define (flatten lst)
   (cond ((null? lst) ())
@@ -32866,25 +32874,25 @@ EDITS: 1
 
 (define (snd_test_17)
   
-  (define (-> x0 y0 size snd chn cr)
-    "draw an arrow pointing (from the left) at the point (x0 y0)"
-    (let ((points (make-vector 8)))
-      (define (point i x y)
-	(set! (points (* i 2)) x)
-	(set! (points (+ (* i 2) 1)) y))
-      (define (arrow-head x y)
-	(point 0 x y)
-	(point 1 (- x (* 2 size)) (- y size))
-	(point 2 (- x (* 2 size)) (+ y size))
-	(point 3 x y)
-	(fill-polygon points snd chn time-graph cr))
-      (arrow-head x0 y0)
-      (fill-rectangle (- x0 (* 4 size)) 
-		      (floor (- y0 (* .4 size)))
-		      (* 2 size)
-		      (floor (* .8 size))
-		      snd chn time-graph #f cr)))  
-  
+  (define -> 
+    (let ((documentation "draw an arrow pointing (from the left) at the point (x0 y0)"))
+      (lambda (x0 y0 size snd chn cr)
+	(let ((points (make-vector 8)))
+	  (define (point i x y)
+	    (set! (points (* i 2)) x)
+	    (set! (points (+ (* i 2) 1)) y))
+	  (define (arrow-head x y)
+	    (point 0 x y)
+	    (point 1 (- x (* 2 size)) (- y size))
+	    (point 2 (- x (* 2 size)) (+ y size))
+	    (point 3 x y)
+	    (fill-polygon points snd chn time-graph cr))
+	  (arrow-head x0 y0)
+	  (fill-rectangle (- x0 (* 4 size)) 
+			  (floor (- y0 (* .4 size)))
+			  (* 2 size)
+			  (floor (* .8 size))
+			  snd chn time-graph #f cr)))))
   (if with-gui
       (begin
 	
@@ -32988,27 +32996,28 @@ EDITS: 1
 
 (define (snd_test_18)
   
-  (define* (hilbert-transform-via-fft snd chn)
-    "same as FIR version but use FFT and change phases by hand"
-    (let* ((size (framples snd chn))
-	   (len (expt 2 (ceiling (log size 2.0))))
-	   (rl (make-float-vector len))
-	   (im (make-float-vector len))
-	   (rd (make-sampler 0 snd chn))
-	   (pi2 (* 0.5 pi)))
-      (do ((i 0 (+ i 1)))
-	  ((= i size))
-	(set! (rl i) (rd)))
-      (mus-fft rl im len)
-      (rectangular->polar rl im)
-      (float-vector-offset! im (- pi2))
-      (do ((i (/ len 2) (+ i 1)))
-	  ((= i len))
-	(float-vector-set! im i (+ (float-vector-ref im i) pi)))
-      (polar->rectangular rl im)
-      (mus-fft rl im len -1)
-      (float-vector-scale! rl (/ 1.0 len))
-      (float-vector->channel rl 0 len snd chn #f "hilbert-transform-via-fft")))
+  (define hilbert-transform-via-fft 
+    (let ((documentation "same as FIR version but use FFT and change phases by hand"))
+      (lambda* (snd chn)
+	(let* ((size (framples snd chn))
+	       (len (expt 2 (ceiling (log size 2.0))))
+	       (rl (make-float-vector len))
+	       (im (make-float-vector len))
+	       (rd (make-sampler 0 snd chn))
+	       (pi2 (* 0.5 pi)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i size))
+	    (set! (rl i) (rd)))
+	  (mus-fft rl im len)
+	  (rectangular->polar rl im)
+	  (float-vector-offset! im (- pi2))
+	  (do ((i (/ len 2) (+ i 1)))
+	      ((= i len))
+	    (float-vector-set! im i (+ (float-vector-ref im i) pi)))
+	  (polar->rectangular rl im)
+	  (mus-fft rl im len -1)
+	  (float-vector-scale! rl (/ 1.0 len))
+	  (float-vector->channel rl 0 len snd chn #f "hilbert-transform-via-fft")))))
   
   ;; echoes with each echo at a new pitch via ssb-am etc
   
@@ -36770,49 +36779,50 @@ EDITS: 1
 			  (snd-display #__line__ ";draw error: ~A" args)))))))
        comments)))
   
-  (define (display-samps-in-red snd chn)
-    "display samples 1000 to 2000 in red whenever they're in the current view"
-    (catch #t
-	   (lambda ()
-	     (let ((left (left-sample snd chn))
-		   (right (right-sample snd chn))
-		   (old-color (foreground-color snd chn))
-		   (red (make-color-with-catch 1 0 0)))
-	       (if (and (< left 2000)
-			(> right 1000))
-		   (let ((data (make-graph-data snd chn)))
-		     (if data
-			 (if (float-vector? data)                      ;the simple, one-sided graph case
-			     (let* ((samps (- (min right 2000)
-					      (max left 1000)))
-				    (offset (max 0 (- 1000 left)))
-				    (new-data (float-vector-subseq data offset (+ offset samps)))
-				    (cr (make-cairo (car (channel-widgets snd chn)))))
-			       (set! (foreground-color snd chn) red)
-			       (graph-data new-data snd chn copy-context (max 1000 left) (min 2000 right) graph-lines cr)
-			       (free-cairo cr)
-			       (set! (foreground-color snd chn) old-color))
-			     (let* ((low-data (car data))     ;the two-sided envelope graph case
-				    (high-data (cadr data))
-				    ;; we need to place the red portion correctly in the current graph
-				    ;; so the following is getting the "bin" numbers associated with 
-				    ;; samples 1000 and 2000
-				    (size (length low-data))
-				    (samps (- right left))
-				    (left-offset (max 0 (- 1000 left)))
-				    (left-bin (round (/ (* size left-offset) samps)))
-				    (right-offset (- (min 2000 right) left))
-				    (right-bin (round (/ (* size right-offset) samps)))
-				    (new-low-data (float-vector-subseq low-data left-bin right-bin))
-				    (new-high-data (float-vector-subseq high-data left-bin right-bin))
-				    (cr (make-cairo (car (channel-widgets snd chn)))))
-			       (set! (foreground-color snd chn) red)
-			       (graph-data 
-				(list new-low-data new-high-data) snd chn copy-context left-bin right-bin graph-lines cr)
-			       (free-cairo cr)
-			       (set! (foreground-color snd chn) old-color))))))))
-	   (lambda args
-	     (snd-display #__line__ ";draw error: ~A" args))))
+  (define display-samps-in-red 
+    (let ((documentation "display samples 1000 to 2000 in red whenever they're in the current view"))
+      (lambda (snd chn)
+	(catch #t
+	  (lambda ()
+	    (let ((left (left-sample snd chn))
+		  (right (right-sample snd chn))
+		  (old-color (foreground-color snd chn))
+		  (red (make-color-with-catch 1 0 0)))
+	      (if (and (< left 2000)
+		       (> right 1000))
+		  (let ((data (make-graph-data snd chn)))
+		    (if data
+			(if (float-vector? data)                      ;the simple, one-sided graph case
+			    (let* ((samps (- (min right 2000)
+					     (max left 1000)))
+				   (offset (max 0 (- 1000 left)))
+				   (new-data (float-vector-subseq data offset (+ offset samps)))
+				   (cr (make-cairo (car (channel-widgets snd chn)))))
+			      (set! (foreground-color snd chn) red)
+			      (graph-data new-data snd chn copy-context (max 1000 left) (min 2000 right) graph-lines cr)
+			      (free-cairo cr)
+			      (set! (foreground-color snd chn) old-color))
+			    (let* ((low-data (car data))     ;the two-sided envelope graph case
+				   (high-data (cadr data))
+				   ;; we need to place the red portion correctly in the current graph
+				   ;; so the following is getting the "bin" numbers associated with 
+				   ;; samples 1000 and 2000
+				   (size (length low-data))
+				   (samps (- right left))
+				   (left-offset (max 0 (- 1000 left)))
+				   (left-bin (round (/ (* size left-offset) samps)))
+				   (right-offset (- (min 2000 right) left))
+				   (right-bin (round (/ (* size right-offset) samps)))
+				   (new-low-data (float-vector-subseq low-data left-bin right-bin))
+				   (new-high-data (float-vector-subseq high-data left-bin right-bin))
+				   (cr (make-cairo (car (channel-widgets snd chn)))))
+			      (set! (foreground-color snd chn) red)
+			      (graph-data 
+			       (list new-low-data new-high-data) snd chn copy-context left-bin right-bin graph-lines cr)
+			      (free-cairo cr)
+			      (set! (foreground-color snd chn) old-color))))))))
+	  (lambda args
+	    (snd-display #__line__ ";draw error: ~A" args))))))
   
   (define* (show-greeting (snd 0) (chn 0))
     (let ((ls (left-sample snd chn))
@@ -41416,17 +41426,18 @@ EDITS: 1
 	     (provided? 'xm)) 
     (with-let (sublet *motif*)
 	
-      (define (x->snd-color color-name)
-	"(x->snd-color color-name) returns a Snd color object corresponding to the X11 color name 'color-name'"
-	(let* ((col (XColor))
-	       (dpy (XtDisplay (cadr (main-widgets))))
-	       (scr (DefaultScreen dpy))
-	       (cmap (DefaultColormap dpy scr)))
-	  (if (= (XAllocNamedColor dpy cmap color-name col col) 0)
-	      (snd-error (format #f "can't allocate ~A" color-name))
-	      (make-color-with-catch (/ (.red col) 65535.0)
-				     (/ (.green col) 65535.0)
-				     (/ (.blue col) 65535.0)))))
+      (define x->snd-color 
+	(let ((documentation "(x->snd-color color-name) returns a Snd color object corresponding to the X11 color name 'color-name'"))
+	  (lambda (color-name)
+	    (let* ((col (XColor))
+		   (dpy (XtDisplay (cadr (main-widgets))))
+		   (scr (DefaultScreen dpy))
+		   (cmap (DefaultColormap dpy scr)))
+	      (if (= (XAllocNamedColor dpy cmap color-name col col) 0)
+		  (snd-error (format #f "can't allocate ~A" color-name))
+		  (make-color-with-catch (/ (.red col) 65535.0)
+					 (/ (.green col) 65535.0)
+					 (/ (.blue col) 65535.0)))))))
       
       (define (snd-test-clean-string str)
 	;; full file name should be unique, so I think we need only fix it up to look like a flat name
@@ -45233,21 +45244,22 @@ EDITS: 1
 	     chans)
 	    (save-selection "test.snd")))))
   
-  (define* (notch-out-rumble-and-hiss snd chn)
-    "(notch-out-rumble-and-hiss s c) applies a bandpass filter with cutoffs at 40 Hz and 3500 Hz"
-    (let ((cur-srate (exact->inexact (srate snd))))
-      (filter-sound
-       (list 0.0 0.0                    ; get rid of DC
-	     (/ 80.0 cur-srate) 0.0     ; get rid of anything under 40 Hz (1.0=srate/2 here)
-	     (/ 90.0 cur-srate) 1.0     ; now the passband
-	     (/ 7000.0 cur-srate) 1.0 
-	     (/ 8000.0 cur-srate) 0.0   ; end passband (40..4000)
-	     1.0 0.0)                   ; get rid of some of the hiss
-       ;; since the minimum band is 10 Hz here, 
-       ;;   cur-srate/10 rounded up to next power of 2 seems a safe filter size
-       ;;   filter-sound will actually use overlap-add convolution in this case
-       (expt 2 (ceiling (log (/ cur-srate 10.0) 2.0)))
-       snd chn)))
+  (define notch-out-rumble-and-hiss 
+    (let ((documentation "(notch-out-rumble-and-hiss s c) applies a bandpass filter with cutoffs at 40 Hz and 3500 Hz"))
+      (lambda* (snd chn)
+	(let ((cur-srate (exact->inexact (srate snd))))
+	  (filter-sound
+	   (list 0.0 0.0                    ; get rid of DC
+		 (/ 80.0 cur-srate) 0.0     ; get rid of anything under 40 Hz (1.0=srate/2 here)
+		 (/ 90.0 cur-srate) 1.0     ; now the passband
+		 (/ 7000.0 cur-srate) 1.0 
+		 (/ 8000.0 cur-srate) 0.0   ; end passband (40..4000)
+		 1.0 0.0)                   ; get rid of some of the hiss
+	   ;; since the minimum band is 10 Hz here, 
+	   ;;   cur-srate/10 rounded up to next power of 2 seems a safe filter size
+	   ;;   filter-sound will actually use overlap-add convolution in this case
+	   (expt 2 (ceiling (log (/ cur-srate 10.0) 2.0)))
+	   snd chn)))))
   
   (define* (reverse-channels snd)
     (let* ((ind (or snd (selected-sound) (car (sounds))))

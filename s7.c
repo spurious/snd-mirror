@@ -98,8 +98,9 @@
  * if you want this file to compile into a stand-alone interpreter, define WITH_MAIN (this assumes access to readline)
  *   then load it with -lreadline -ldl -lm, (and perhaps -ltinfo) etc.
  *
- * -O3 does not seem to gain us anything.
+ * -O3 is sometimes slower, sometimes faster
  * -march=native -fomit-frame-pointer -m64 -funroll-loops gains about .1% -- almost nothing.
+ * -ffast-math makes a mess of NaNs, and does not appear to be faster
  */
 
 
@@ -338,94 +339,6 @@
 #define DISPLAY(Obj) s7_object_to_c_string(sc, Obj)
 #define DISPLAY_80(Obj) object_to_truncated_string(sc, Obj, 80)
 
-enum {OP_NO_OP, 
-      OP_READ_INTERNAL, OP_EVAL, 
-      OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_EVAL_ARGS2, OP_EVAL_ARGS3, OP_EVAL_ARGS4, OP_EVAL_ARGS5,
-      OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, 
-      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN_UNCHECKED, OP_BEGIN1,
-      OP_IF, OP_IF1, OP_WHEN, OP_WHEN1, OP_UNLESS, OP_UNLESS1, OP_SET, OP_SET1, OP_SET2,
-      OP_LET, OP_LET1, OP_LET_STAR, OP_LET_STAR1, OP_LET_STAR2,
-      OP_LETREC, OP_LETREC1, OP_LETREC_STAR, OP_LETREC_STAR1, OP_COND, OP_COND1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
-      OP_AND, OP_AND1, OP_OR, OP_OR1, 
-      OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
-      OP_CASE, OP_CASE1, OP_READ_LIST, OP_READ_NEXT, OP_READ_DOT, OP_READ_QUOTE, 
-      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_APPLY_VALUES,
-      OP_READ_VECTOR, OP_READ_BYTEVECTOR, OP_READ_DONE, 
-      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_DONE,
-      OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
-      OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
-      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_LAMBDA_STAR_DEFAULT, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
-      OP_ERROR_HOOK_QUIT, 
-      OP_WITH_LET, OP_WITH_LET1, OP_WITH_LET_UNCHECKED, OP_WITH_LET_S, 
-      OP_WITH_BAFFLE, OP_WITH_BAFFLE_UNCHECKED, OP_EXPANSION,
-      OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_FOR_EACH_SIMPLER, OP_FOR_EACH_SIMPLEST,
-      OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
-
-      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
-      OP_GET_OUTPUT_STRING, OP_GET_OUTPUT_STRING_1, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT_PAIR_END, OP_SORT_VECTOR_END, OP_SORT_STRING_END, 
-      OP_EVAL_STRING_1, OP_EVAL_STRING_2, 
-      OP_MEMBER_IF, OP_ASSOC_IF, OP_MEMBER_IF1, OP_ASSOC_IF1,
-      
-      OP_QUOTE_UNCHECKED, OP_LAMBDA_UNCHECKED, OP_LET_UNCHECKED, OP_CASE_UNCHECKED, OP_WHEN_UNCHECKED, OP_UNLESS_UNCHECKED,
-      OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_Z, OP_SET_SYMBOL_A,
-      OP_SET_SYMBOL_SAFE_S, OP_SET_SYMBOL_SAFE_C, 
-      OP_SET_SYMBOL_SAFE_SS, OP_SET_SYMBOL_SAFE_SSS, 
-      OP_SET_SYMBOL_UNKNOWN_G,
-      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_A, OP_SET_PAIR_P, OP_SET_PAIR_ZA, OP_SET_PAIR_UNKNOWN_G,
-      OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_ENV_S, OP_SET_ENV_ALL_X,
-      OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE, OP_SET_FV_SCALED,
-      OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_LETREC_STAR_UNCHECKED, OP_COND_UNCHECKED,
-      OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, OP_DEFINE_FUNCHECKED,
-      OP_DEFINE_WITH_ACCESSOR, OP_DEFINE_MACRO_WITH_ACCESSOR,
-      OP_LET_NO_VARS, OP_NAMED_LET, OP_NAMED_LET_NO_VARS, OP_NAMED_LET_STAR,
-      OP_CASE_SIMPLE, OP_CASE_SIMPLER, OP_CASE_SIMPLER_1, OP_CASE_SIMPLER_SS,
-      OP_CASE_SIMPLEST, OP_CASE_SIMPLEST_SS, OP_CASE_SIMPLEST_ELSE, OP_CASE_SIMPLEST_ELSE_C,
-      OP_LET_C, OP_LET_S, OP_LET_Q, OP_LET_ALL_C, OP_LET_ALL_S, OP_LET_ALL_X,
-      OP_LET_STAR_ALL_X, OP_LET_opCq, OP_LET_opSSq,
-      OP_IF_P_P_P, OP_IF_P_P, OP_IF_P_P_X, OP_IF_A_P_X, OP_IF_P_X_P, 
-      OP_IF_B_P, OP_IF_ANDP_P, OP_IF_ANDP_P_P, OP_IF_ORP_P, OP_IF_ORP_P_P, 
-      OP_IF_PPP, OP_IF_PP, OP_IF_PPX, OP_IF_PXP, 
-      OP_IF_S_P_P, OP_IF_S_P, OP_IF_S_P_X, OP_IF_S_X_P, OP_IF_P_FEED, OP_IF_P_FEED_1, OP_WHEN_S, OP_UNLESS_S,
-      OP_IF_UNCHECKED, OP_AND_UNCHECKED, OP_AND_P, OP_AND_P1, OP_OR_UNCHECKED, OP_OR_P, OP_OR_P1,
-      
-      OP_SAFE_IF_Z_Z, OP_SAFE_IF_A_Z, 
-      OP_CATCH_1, OP_CATCH_2, OP_CATCH_ALL, OP_COND_ALL_X, OP_COND_S,
-      OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_SAFE_DOTIMES, OP_SAFE_DOTIMES_STEP, OP_SAFE_DOTIMES_STEP_P, OP_SAFE_DOTIMES_STEP_O, OP_SAFE_DOTIMES_STEP_A,
-      OP_SIMPLE_SAFE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_SAFE_DO_STEP_1, OP_SAFE_DOTIMES_C_C,
-      OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_DOX, OP_DOX_STEP, OP_DOX_STEP_P, OP_SIMPLE_DO_FOREVER,
-      OP_DOTIMES_P, OP_DOTIMES_STEP_P, OP_SAFE_DOTIMES_C_A,
-      OP_SIMPLE_DO_A, OP_SIMPLE_DO_STEP_A, OP_DO_ALL_X, OP_DO_ALL_X_STEP,
-      OP_SAFE_IF_Z_Z_1, OP_SAFE_IF_CC_X_P, OP_SAFE_IF_CC_P_P, 
-      OP_SAFE_IF_CS_P_P, OP_SAFE_IF_CS_X_P, OP_SAFE_IF_IS_NULL_S_P, OP_SAFE_IF_CC_P, OP_SAFE_IF_CS_P, OP_SAFE_IF_CS_P_X, OP_SAFE_IF_IS_NULL_Q_P,
-      OP_SAFE_IF_CSS_X_P, OP_SAFE_IF_CSC_X_P, OP_SAFE_IF_CSC_X_O_A,
-      OP_SAFE_IF_CSQ_P, OP_SAFE_IF_CSQ_P_P, OP_SAFE_IF_CSS_P, OP_SAFE_IF_CSS_P_P, OP_SAFE_IF_CSC_P, OP_SAFE_IF_CSC_P_P, 
-      OP_SAFE_IF_IS_PAIR_P, OP_SAFE_IF_IS_PAIR_P_X, OP_SAFE_IF_IS_PAIR_P_P, OP_SAFE_IF_C_SS_P,
-      OP_SAFE_IF_IS_SYMBOL_P, OP_SAFE_IF_IS_SYMBOL_P_P, OP_SAFE_IF_NOT_S_P,
-      OP_IF_Z_P, OP_IF_Z_P_P, OP_IF_A_P, OP_IF_A_P_P, 
-      OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_2, OP_SAFE_C_PP_3, OP_SAFE_C_PP_4, OP_SAFE_C_PP_5, OP_SAFE_C_PP_6, 
-      OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_1_MV, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_2_MV, 
-      OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_3_MV, OP_EVAL_ARGS_P_4_MV, 
-      OP_EVAL_ARGS_SSP_1, OP_EVAL_ARGS_SSP_MV, OP_EVAL_MACRO_MV,
-      OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CONS, 
-      OP_INCREMENT_SS, OP_INCREMENT_SSS, OP_INCREMENT_SZ, OP_INCREMENT_C_TEMP, OP_INCREMENT_SA, OP_INCREMENT_SAA,
-      OP_LET_R, OP_LET_ALL_R, OP_LET_C_D, OP_LET_R_P, OP_LET_CAR_P, OP_LET_ONE, OP_LET_ONE_1, OP_LET_Z, OP_LET_Z_1,
-
-      OP_SAFE_C_ZZ_1, OP_SAFE_C_ZZ_2, OP_SAFE_C_SZ_1, OP_SAFE_C_ZS_1, OP_SAFE_C_ZA_1, OP_INCREMENT_SZ_1, OP_SAFE_C_SZ_SZ,
-      OP_SAFE_C_ZAA_1, OP_SAFE_C_AZA_1, OP_SAFE_C_AAZ_1, OP_SAFE_C_SSZ_1, 
-      OP_SAFE_C_ZZA_1, OP_SAFE_C_ZZA_2, OP_SAFE_C_ZAZ_1, OP_SAFE_C_ZAZ_2, OP_SAFE_C_AZZ_1, OP_SAFE_C_AZZ_2, 
-      OP_SAFE_C_ZZZ_1, OP_SAFE_C_ZZZ_2, OP_SAFE_C_ZZZ_3, 
-      OP_SAFE_C_ZZZZ_1, OP_SAFE_C_ZZZZ_2, OP_SAFE_C_ZZZZ_3, OP_SAFE_C_ZZZZ_4, 
-      /* the zzzz cases exist only to trigger later optimizations (canter in clm-ins.scm and many in animals.scm) 
-       *   we need the top of the do-loop outa expr to be optimized
-       *   so that the direct_looped function is called which then calls find_gf.  Perhaps add possible_direct_loop?
-       */
-
-      OP_SAFE_C_opSq_P_1, OP_SAFE_C_opSq_P_MV, OP_C_P_1, OP_C_P_2, OP_C_SP_1, OP_C_SP_2,
-      OP_CLOSURE_P_1, OP_CLOSURE_P_2, OP_SAFE_CLOSURE_P_1,
-      OP_MAX_DEFINED_1};
-
-#define OP_MAX_DEFINED (OP_MAX_DEFINED_1 + 1)
-
 #if (((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4)) || ((defined(__SIZEOF_POINTER__)) && (__SIZEOF_POINTER__ == 4)))
   #define opcode_t unsigned int
   #define PRINT_NAME_PADDING 8
@@ -439,385 +352,6 @@ enum {OP_NO_OP,
  *   but I can't think of a way to do this short of a configuration script.
  *   If someone defines s7_Double to be long double, there's much wasted memory (and other more serious problems...)
  */
-
-/* these names are intended for error messages (eval_error_with_name) and debugging.  
- */
-static const char *op_names[OP_MAX_DEFINED + 1] = 
-  {"no-op", 
-   "read-internal", "eval", 
-   "eval-args", "eval-args1", "eval-args2", "eval-args3", "eval-args4", "eval-args5",
-   "apply", "eval-macro", "lambda", "quote", 
-   "define", "define", "begin", "begin", "begin",
-   "if", "if", "when", "when", "unless", "unless", "set!", "set!", "set!", 
-   "let", "let", "let*", "let*", "let*",
-   "letrec", "letrec", "letrec*", "letrec*", "cond", "cond", "cond", "cond",
-   "and", "and", "or", "or", 
-   "define-macro", "define-macro*", "define-expansion",
-   "case", "case", "read-list", "read-list", "read-dot", "read-quote", 
-   "read-quasiquote", "read-quasiquote-vector", "read-unquote", "read-apply-values",
-   "read-vector", "read-bytevector", "read-done", 
-   "load", "load", "eval-string", "eval",
-   "catch", "dynamic-wind", "define-constant", "define-constant", 
-   "do", "do", "do", "do", "do", "do",
-   "define*", "lambda*", "lambda*", "error-quit", "unwind-input", "unwind-output", 
-   "error-hook-quit", "with-let", "with-let", "with-let", "with-let", 
-   "with-baffle", "with-baffle", "define-expansion",
-   "for-each", "for-each", "for-each", "for-each",
-   "map", "map", "barrier", "deactivate-goto",
-   "define-bacro", "define-bacro*", 
-   "get-output-string", "get-output-string", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!",
-   "eval-string", "eval-string", 
-   "member", "assoc", "member", "assoc",
-   
-   "quote", "lambda", "let", "case", "when", "unless",
-   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
-   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
-   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
-   "let*", "letrec", "letrec*", "cond",
-   "lambda*", "do", "define", "define*", "define",
-   "define", "define-macro",
-   "let", "let", "let", "let*",
-   "case", "case", "case", "case",
-   "case", "case", "case", "case", 
-   "let", "let", "let", "let", "let", "let",
-   "let*", "let", "let",
-
-   "if", "if", "if", "if", "if", "if",
-   "if", "if", "if", "if", "if", 
-   "if", "if", "if", "if", "if", 
-   "if", "if", "if", "if", "if", "when", "unless",
-   "and", "and", "and", "or", "or", "or", 
-
-   "if", "if",
-   "catch", "catch", "catch", "cond", "cond",
-   "do", "do", "do", "do", "do", 
-   "do", "do", "do", "do", "do", "do",
-   "do", "do", "do", "do", "do",
-   "do", "do", "do", "do", "do",
-   "do", "do", "do", "do", "do",
-   "if", "if", "if", "if",
-   "if", "if", "if", "if", "if", 
-   "if", "if", "if",
-   "if", "if", "if", "if", "if", "if", "if",
-   "if", "if", "if", "if",
-   "if", "if", "if", "if", "if", "if",
-   "c_p_1", "c_pp_1", "c_pp_2", "c_pp_3", "c_pp_4", "c_pp_5", "c_pp_6", 
-   "eval_args_p_1", "eval_args_p_1_mv", "eval_args_p_2", "eval_args_p_2_mv", 
-   "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv", 
-   "eval_args_ssp_1", "eval_args_ssp_mv", "eval_macro_mv",
-   "increment_1", "decrement_1", "set_cons", 
-   "increment_ss", "increment_sss", "increment_sz", "increment_c_temp", "increment_sa", "increment_saa",
-   "let", "let", "let", "let", "let", "let", "let", "let", "let", 
-
-   "c_zz_1", "c_zz_2", "c_sz_1", "c_zs_1", "c_za_1", "increment_sz_1", "c_sz_sz",
-   "c_zaa_1", "c_aza_1", "c_aaz_1", "c_ssz_1", 
-   "c_zza_1", "c_zza_2", "c_zaz_1", "c_zaz_2", "c_azz_1", "c_azz_2", 
-   "c_zzz_1", "c_zzz_2", "c_zzz_3", "zzzz_1", "zzzz_2", "zzzz_3", "zzzz_4",
-
-   "c_opsq_p_1", "c_opsq_p_mv", "c_p_1", "c_p_2", "c_sp_1", "c_sp_2",
-   "closure_p_1", "closure_p_2", "safe_closure_p_1",
-   "op-max"
-  };
-
-
-/* these are just for debugging but it's annoying to keep setting the DEBUGGING switch */
-static const char *real_op_names[OP_MAX_DEFINED + 1] = {
-  "no_op", 
-  "read_internal", "eval", 
-  "eval_args", "eval_args1", "eval_args2", "eval_args3", "eval_args4", "eval_args5",
-  "apply", "eval_macro", "lambda", "quote", 
-  "define", "define1", "begin", "begin-unchecked", "begin1",
-  "if", "if1", "when", "when1", "unless", "unless1", "set", "set1", "set2",
-  "let", "let1", "let_star", "let_star1", "let_star2", 
-  "letrec", "letrec1", "letrec_star", "letrec_star1", "cond", "cond1", "cond_simple", "cond1_simple",
-  "and", "and1", "or", "or1", 
-  "define_macro", "define_macro_star", "define_expansion",
-  "case", "case1", "read_list", "read_next", "read_dot", "read_quote", 
-  "read_quasiquote", "read_quasiquote_vector", "read_unquote", "read_apply_values",
-  "read_vector", "read_bytevector", "read_done", 
-  "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", "eval_done",
-  "catch", "dynamic_wind", "define_constant", "define_constant1", 
-  "do", "do_end", "do_end1", "do_step", "do_step2", "do_init",
-  "define_star", "lambda_star", "lambda_star_default", "error_quit", "unwind_input", "unwind_output", 
-  "error_hook_quit", 
-  "with_let", "with_let1", "with_let_unchecked", "with_let_s", 
-  "with_baffle", "with_baffle_unchecked", "expansion",
-  "for_each", "for_each_simple", "for_each_simpler", "for_each_simplest",
-  "map", "map_simple", "barrier", "deactivate_goto",
-  
-  "define_bacro", "define_bacro_star", 
-  "get_output_string", "get-output-string-1", "sort", "sort1", "sort2", "sort3", "sort_pair_end", "sort_vector_end", "sort_string_end", 
-  "eval_string_1", "eval_string_2", 
-  "member_if", "assoc_if", "member_if1", "assoc_if1",
-  
-  "quote_unchecked", "lambda_unchecked", "let_unchecked", "case_unchecked", "when_unchecked", "unless_unchecked",
-  "set_unchecked", "set_symbol_c", "set_symbol_s", "set_symbol_q", "set_symbol_p", "set_symbol_z", "set_symbol_a",
-  "set_symbol_safe_s", "set_symbol_safe_c", 
-  "set_symbol_safe_ss", "set_symbol_safe_sss",
-  "set_symbol_unknown_g",
-  "set_normal", "set_pair", "set_pair_z", "set_pair_a", "set_pair_p", "set_pair_za", "set_pair_unknown_g",
-  "set_pair_p_1", "set_with_accessor", "set_pws", "set_env_s", "set_env_all_x",
-  "set_pair_c", "set_pair_c_p", "set_pair_c_p_1", "set_safe", "set_fv_scaled",
-  "let_star_unchecked", "letrec_unchecked", "letrec_star_unchecked", "cond_unchecked",
-  "lambda_star_unchecked", "do_unchecked", "define_unchecked", "define_star_unchecked", "define_funchecked",
-  "define_with_accessor", "define_macro_with_accessor",
-  "let_no_vars", "named_let", "named_let_no_vars", "named_let_star",
-  "case_simple", "case_simpler", "case_simpler_1", "case_simpler_ss",
-  "case_simplest", "case_simplest_ss", "case_simplest_else", "case_simplest_else_c",
-  "let_c", "let_s", "let_q", "let_all_c", "let_all_s", "let_all_x", 
-  "let_star_all_x", "let_opcq", "let_opssq", 
-  "if_p_p_p", "if_p_p", "if_p_p_x", "if_a_p_x", "if_p_x_p", 
-  "if_b_p", "if_andp_p", "if_andp_p_p", "if_orp_p", "if_orp_p_p", 
-  "if_ppp", "if_pp", "if_ppx", "if_pxp", 
-  "if_s_p_p", "if_s_p", "if_s_p_x", "if_s_x_p", "if_p_feed", "if_p_feed_1", "when_s", "unless_s",
-  "if_unchecked", "and_unchecked", "and_p", "and_p1", "or_unchecked", "or_p", "or_p1",
-  
-  "safe_if_z_z", "safe_if_a_z", 
-  "catch_1", "catch_2", "catch_all", "cond_all_x", "cond_s",
-  "simple_do", "simple_do_step", "safe_dotimes", "safe_dotimes_step", "safe_dotimes_step_p", "safe_dotimes_step_o", "safe_dotimes_step_a",
-  "simple_safe_dotimes", "safe_do", "safe_do_step", "safe_do_step_1", "safe_dotimes_c_c",
-  "simple_do_p", "simple_do_step_p", "dox", "dox_step", "dox_step_p", "simple_do_forever",
-  "dotimes_p", "dotimes_step_p", "safe_dotimes_c_a",
-  "simple_do_a", "simple_do_step_a", "do_all_x", "do_all_x_step",
-  "safe_if_z_z_1", "safe_if_cc_x_p", "safe_if_cc_p_p", 
-  "safe_if_cs_p_p", "safe_if_cs_x_p", "safe_if_is_null_s_p", "safe_if_cc_p", "safe_if_cs_p", "safe_if_cs_p_x", "safe_if_is_null_q_p",
-  "safe_if_css_x_p", "safe_if_csc_x_p", "safe_if_csc_x_o_a",
-  "safe_if_csq_p", "safe_if_csq_p_p", "safe_if_css_p", "safe_if_css_p_p", "safe_if_csc_p", "safe_if_csc_p_p", 
-  "safe_if_is_pair_p", "safe_if_is_pair_p_x", "safe_if_is_pair_p_p", "safe_if_c_ss_p", 
-  "safe_if_is_symbol_p", "safe_if_is_symbol_p_p", "safe_if_not_s_p",
-  "if_z_p", "if_z_p_p", "if_a_p", "if_a_p_p", 
-  "safe_c_p_1", "safe_c_pp_1", "safe_c_pp_2", "safe_c_pp_3", "safe_c_pp_4", "safe_c_pp_5", "safe_c_pp_6", 
-  "eval_args_p_1", "eval_args_p_1_mv", "eval_args_p_2", "eval_args_p_2_mv", 
-  "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv", 
-  "eval_args_ssp_1", "eval_args_ssp_mv", "eval_macro_mv",
-  "increment_1", "decrement_1", "set_cons", 
-  "increment_ss", "increment_sss", "increment_sz", "increment_c_temp", "increment_sa", "increment_saa",
-  "let_r", "let_all_r", "let_c_d", "let_r_p", "let_car_p", "let_one", "let_one_1", "let_z", "let_z_1",
-
-  "safe_c_zz_1", "safe_c_zz_2", "safe_c_sz_1", "safe_c_zs_1", "safe_c_za_1", "increment_sz_1", "safe_c_sz_sz",
-  "safe_c_zaa_1", "safe_c_aza_1", "safe_c_aaz_1", "safe_c_ssz_1", 
-  "safe_c_zza_1", "safe_c_zza_2", "safe_c_zaz_1", "safe_c_zaz_2", "safe_c_azz_1", "safe_c_azz_2", 
-  "safe_c_zzz_1", "safe_c_zzz_2", "safe_c_zzz_3", 
-  "safe_c_zzzz_1", "safe_c_zzzz_2", "safe_c_zzzz_3", "safe_c_zzzz_4", 
-
-  "safe_c_opsq_p_1", "safe_c_opsq_p_mv", "c_p_1", "c_p_2", "c_sp_1", "c_sp_2",
-  "closure_p_1", "closure_p_2", "safe_closure_p_2",
-  "max_defined_1"};
-
-typedef enum{E_C_P, E_C_PP, E_C_CP, E_C_SP, E_C_PC, E_C_PS} combine_op_t;
-
-enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, 
-      OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS, 
-      OP_SAFE_C_Q, HOP_SAFE_C_Q, OP_SAFE_C_SQ, HOP_SAFE_C_SQ, OP_SAFE_C_QS, HOP_SAFE_C_QS, OP_SAFE_C_QQ, HOP_SAFE_C_QQ, 
-      OP_SAFE_C_CQ, HOP_SAFE_C_CQ, OP_SAFE_C_QC, HOP_SAFE_C_QC, 
-      OP_SAFE_C_SSS, HOP_SAFE_C_SSS, OP_SAFE_C_SCS, HOP_SAFE_C_SCS, OP_SAFE_C_SSC, HOP_SAFE_C_SSC, OP_SAFE_C_CSS, HOP_SAFE_C_CSS, 
-      OP_SAFE_C_SCC, HOP_SAFE_C_SCC, OP_SAFE_C_CSC, HOP_SAFE_C_CSC,
-      OP_SAFE_C_ALL_S, HOP_SAFE_C_ALL_S, OP_SAFE_C_ALL_X, HOP_SAFE_C_ALL_X, OP_SAFE_C_SSA, HOP_SAFE_C_SSA, 
-      OP_SAFE_C_CSA, HOP_SAFE_C_CSA, OP_SAFE_C_SCA, HOP_SAFE_C_SCA, OP_SAFE_C_CAS, HOP_SAFE_C_CAS,
-      OP_SAFE_C_A, HOP_SAFE_C_A, OP_SAFE_C_AA, HOP_SAFE_C_AA, OP_SAFE_C_AAA, HOP_SAFE_C_AAA, OP_SAFE_C_AAAA, HOP_SAFE_C_AAAA, 
-      OP_SAFE_C_SQS, HOP_SAFE_C_SQS, OP_SAFE_C_opAq, HOP_SAFE_C_opAq, OP_SAFE_C_opAAq, HOP_SAFE_C_opAAq, OP_SAFE_C_opAAAq, HOP_SAFE_C_opAAAq,
-      OP_SAFE_C_S_opAAq, HOP_SAFE_C_S_opAAq, OP_SAFE_C_S_opAAAq, HOP_SAFE_C_S_opAAAq, 
-
-      OP_SAFE_C_opCq, HOP_SAFE_C_opCq, OP_SAFE_C_opSq, HOP_SAFE_C_opSq, 
-      OP_SAFE_C_opSSq, HOP_SAFE_C_opSSq, OP_SAFE_C_opSCq, HOP_SAFE_C_opSCq, OP_SAFE_C_opSQq, HOP_SAFE_C_opSQq, 
-      OP_SAFE_C_opCSq, HOP_SAFE_C_opCSq, OP_SAFE_C_S_opSq, HOP_SAFE_C_S_opSq,
-      OP_SAFE_C_C_opSCq, HOP_SAFE_C_C_opSCq, 
-      OP_SAFE_C_S_opSCq, HOP_SAFE_C_S_opSCq, OP_SAFE_C_S_opCSq, HOP_SAFE_C_S_opCSq, 
-      OP_SAFE_C_opSq_S, HOP_SAFE_C_opSq_S, OP_SAFE_C_opSq_C, HOP_SAFE_C_opSq_C, 
-      OP_SAFE_C_opSq_opSq, HOP_SAFE_C_opSq_opSq, OP_SAFE_C_S_opSSq, HOP_SAFE_C_S_opSSq, OP_SAFE_C_C_opSq, HOP_SAFE_C_C_opSq, 
-      OP_SAFE_C_C_opCSq, HOP_SAFE_C_C_opCSq, OP_SAFE_C_opCSq_C, HOP_SAFE_C_opCSq_C, 
-      OP_SAFE_C_S_opCq, HOP_SAFE_C_S_opCq, OP_SAFE_C_opSSq_C, HOP_SAFE_C_opSSq_C, OP_SAFE_C_C_opSSq, HOP_SAFE_C_C_opSSq, 
-      OP_SAFE_C_C_opCq, HOP_SAFE_C_C_opCq, OP_SAFE_C_opCq_S, HOP_SAFE_C_opCq_S, 
-      OP_SAFE_C_opCq_opCq, HOP_SAFE_C_opCq_opCq, OP_SAFE_C_opCq_C, HOP_SAFE_C_opCq_C, 
-      OP_SAFE_C_opSCq_opSCq, HOP_SAFE_C_opSCq_opSCq, OP_SAFE_C_opSSq_opSSq, HOP_SAFE_C_opSSq_opSSq, 
-      OP_SAFE_C_opSSq_opCq, HOP_SAFE_C_opSSq_opCq, OP_SAFE_C_opSSq_opSq, HOP_SAFE_C_opSSq_opSq, OP_SAFE_C_opSq_opSSq, HOP_SAFE_C_opSq_opSSq,
-      OP_SAFE_C_opSSq_S, HOP_SAFE_C_opSSq_S, OP_SAFE_C_opSCq_S, HOP_SAFE_C_opSCq_S, OP_SAFE_C_opCSq_S, HOP_SAFE_C_opCSq_S,
-      OP_SAFE_C_opSCq_C, HOP_SAFE_C_opSCq_C, OP_SAFE_C_opCq_opSSq, HOP_SAFE_C_opCq_opSSq, 
-      OP_SAFE_C_S_op_opSSq_Sq, HOP_SAFE_C_S_op_opSSq_Sq, OP_SAFE_C_S_op_S_opSSqq, HOP_SAFE_C_S_op_S_opSSqq, 
-      OP_SAFE_C_op_opSSq_q_C, HOP_SAFE_C_op_opSSq_q_C, OP_SAFE_C_S_op_opSSq_opSSqq, HOP_SAFE_C_S_op_opSSq_opSSqq, 
-      OP_SAFE_C_opSSq_op_opSSq_q, HOP_SAFE_C_opSSq_op_opSSq_q, OP_SAFE_C_op_opSSq_Sq_opSSq, HOP_SAFE_C_op_opSSq_Sq_opSSq,
-      OP_SAFE_C_op_opSq_q, HOP_SAFE_C_op_opSq_q, OP_SAFE_C_C_op_S_opCqq, HOP_SAFE_C_C_op_S_opCqq, 
-      OP_SAFE_C_op_S_opSq_q, HOP_SAFE_C_op_S_opSq_q, 
-
-      OP_SAFE_C_STAR_CD, HOP_SAFE_C_STAR_CD, 
-
-      OP_SAFE_C_Z, HOP_SAFE_C_Z, OP_SAFE_C_ZZ, HOP_SAFE_C_ZZ, OP_SAFE_C_SZ, HOP_SAFE_C_SZ, OP_SAFE_C_ZS, HOP_SAFE_C_ZS, 
-      OP_SAFE_C_CZ, HOP_SAFE_C_CZ, OP_SAFE_C_ZC, HOP_SAFE_C_ZC, 
-      OP_SAFE_C_opCq_Z, HOP_SAFE_C_opCq_Z, OP_SAFE_C_S_opSZq, HOP_SAFE_C_S_opSZq, 
-      OP_SAFE_C_AZ, HOP_SAFE_C_AZ, OP_SAFE_C_ZA, HOP_SAFE_C_ZA, 
-      OP_SAFE_C_ZAA, HOP_SAFE_C_ZAA, OP_SAFE_C_AZA, HOP_SAFE_C_AZA, OP_SAFE_C_AAZ, HOP_SAFE_C_AAZ, OP_SAFE_C_SSZ, HOP_SAFE_C_SSZ,
-      OP_SAFE_C_ZZA, HOP_SAFE_C_ZZA, OP_SAFE_C_ZAZ, HOP_SAFE_C_ZAZ, OP_SAFE_C_AZZ, HOP_SAFE_C_AZZ, 
-      OP_SAFE_C_ZZZ, HOP_SAFE_C_ZZZ, OP_SAFE_C_ZZZZ, HOP_SAFE_C_ZZZZ,
-      
-      OP_THUNK, HOP_THUNK, 
-      OP_CLOSURE_S, HOP_CLOSURE_S, OP_CLOSURE_C, HOP_CLOSURE_C, OP_CLOSURE_Q, HOP_CLOSURE_Q, 
-      OP_CLOSURE_SS, HOP_CLOSURE_SS, OP_CLOSURE_SSb, HOP_CLOSURE_SSb, 
-      OP_CLOSURE_SC, HOP_CLOSURE_SC, OP_CLOSURE_CS, HOP_CLOSURE_CS, 
-      OP_CLOSURE_A, HOP_CLOSURE_A, OP_CLOSURE_AA, HOP_CLOSURE_AA, 
-      OP_CLOSURE_opSq_S, HOP_CLOSURE_opSq_S, OP_CLOSURE_opSq_opSq, HOP_CLOSURE_opSq_opSq, 
-      OP_CLOSURE_S_opSq, HOP_CLOSURE_S_opSq, OP_CLOSURE_S_opSSq, HOP_CLOSURE_S_opSSq, OP_CLOSURE_opSSq_S, HOP_CLOSURE_opSSq_S, 
-      OP_CLOSURE_ALL_X, HOP_CLOSURE_ALL_X, OP_CLOSURE_ALL_S, HOP_CLOSURE_ALL_S, 
-      
-      OP_GLOSURE_A, HOP_GLOSURE_A, OP_GLOSURE_S, HOP_GLOSURE_S, OP_GLOSURE_P, HOP_GLOSURE_P, 
-
-      OP_CLOSURE_STAR_S, HOP_CLOSURE_STAR_S, OP_CLOSURE_STAR_SX, HOP_CLOSURE_STAR_SX,
-      OP_CLOSURE_STAR, HOP_CLOSURE_STAR, OP_CLOSURE_STAR_ALL_X, HOP_CLOSURE_STAR_ALL_X, 
-
-      OP_SAFE_THUNK, HOP_SAFE_THUNK, 
-      OP_SAFE_CLOSURE_S, HOP_SAFE_CLOSURE_S, OP_SAFE_CLOSURE_C, HOP_SAFE_CLOSURE_C, OP_SAFE_CLOSURE_Q, HOP_SAFE_CLOSURE_Q, 
-      OP_SAFE_CLOSURE_SS, HOP_SAFE_CLOSURE_SS, OP_SAFE_CLOSURE_SC, HOP_SAFE_CLOSURE_SC, OP_SAFE_CLOSURE_CS, HOP_SAFE_CLOSURE_CS, 
-      OP_SAFE_CLOSURE_A, HOP_SAFE_CLOSURE_A, OP_SAFE_CLOSURE_SA, HOP_SAFE_CLOSURE_SA, 
-      OP_SAFE_CLOSURE_opSq_S, HOP_SAFE_CLOSURE_opSq_S, OP_SAFE_CLOSURE_opSq_opSq, HOP_SAFE_CLOSURE_opSq_opSq, 
-      OP_SAFE_CLOSURE_S_opSq, HOP_SAFE_CLOSURE_S_opSq, OP_SAFE_CLOSURE_S_opSSq, HOP_SAFE_CLOSURE_S_opSSq, OP_SAFE_CLOSURE_opSSq_S, HOP_SAFE_CLOSURE_opSSq_S, 
-      OP_SAFE_CLOSURE_SAA, HOP_SAFE_CLOSURE_SAA, 
-      OP_SAFE_CLOSURE_ALL_X, HOP_SAFE_CLOSURE_ALL_X, OP_SAFE_CLOSURE_AA, HOP_SAFE_CLOSURE_AA, 
-      
-      OP_SAFE_GLOSURE_A, HOP_SAFE_GLOSURE_A, OP_SAFE_GLOSURE_S, HOP_SAFE_GLOSURE_S, OP_SAFE_GLOSURE_P, HOP_SAFE_GLOSURE_P, 
-
-      OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, OP_SAFE_CLOSURE_STAR_SS, HOP_SAFE_CLOSURE_STAR_SS, 
-      OP_SAFE_CLOSURE_STAR_SC, HOP_SAFE_CLOSURE_STAR_SC, OP_SAFE_CLOSURE_STAR_SA, HOP_SAFE_CLOSURE_STAR_SA, OP_SAFE_CLOSURE_STAR_S0, HOP_SAFE_CLOSURE_STAR_S0,
-      OP_SAFE_CLOSURE_STAR, HOP_SAFE_CLOSURE_STAR, OP_SAFE_CLOSURE_STAR_ALL_X, HOP_SAFE_CLOSURE_STAR_ALL_X, 
-
-      /* these can't be embedded, and have to be the last thing called */
-      OP_APPLY_SS, HOP_APPLY_SS,
-      OP_C_ALL_X, HOP_C_ALL_X, OP_CALL_WITH_EXIT, HOP_CALL_WITH_EXIT, OP_C_CATCH, HOP_C_CATCH, OP_C_CATCH_ALL, HOP_C_CATCH_ALL,
-      OP_C_S_opSq, HOP_C_S_opSq, OP_C_S_opCq, HOP_C_S_opCq, 
-      OP_C_FOR_EACH_LS, HOP_C_FOR_EACH_LS, OP_C_FOR_EACH_LS_2, HOP_C_FOR_EACH_LS_2, OP_C_FOR_EACH_L_opSq, HOP_C_FOR_EACH_L_opSq, 
-      OP_C_S, HOP_C_S, OP_READ_S, HOP_READ_S, OP_C_P, HOP_C_P, OP_C_SP, HOP_C_SP, OP_C_A, HOP_C_A,
-
-      OP_GOTO, HOP_GOTO, OP_GOTO_C, HOP_GOTO_C, OP_GOTO_S, HOP_GOTO_S, OP_GOTO_A, HOP_GOTO_A, 
-      
-      OP_VECTOR_C, HOP_VECTOR_C, OP_VECTOR_S, HOP_VECTOR_S, OP_VECTOR_A, HOP_VECTOR_A, OP_VECTOR_CC, HOP_VECTOR_CC, 
-      OP_STRING_C, HOP_STRING_C, OP_STRING_S, HOP_STRING_S, OP_STRING_A, HOP_STRING_A, 
-      OP_C_OBJECT, HOP_C_OBJECT, OP_C_OBJECT_C, HOP_C_OBJECT_C, OP_C_OBJECT_S, HOP_C_OBJECT_S, 
-      OP_C_OBJECT_A, HOP_C_OBJECT_A, OP_C_OBJECT_SS, HOP_C_OBJECT_SS, OP_C_OBJECT_CC, HOP_C_OBJECT_CC, 
-      OP_PAIR_C, HOP_PAIR_C, OP_PAIR_S, HOP_PAIR_S, OP_PAIR_A, HOP_PAIR_A, 
-      OP_HASH_TABLE_C, HOP_HASH_TABLE_C, OP_HASH_TABLE_S, HOP_HASH_TABLE_S, OP_HASH_TABLE_A, HOP_HASH_TABLE_A, 
-      OP_ENVIRONMENT_S, HOP_ENVIRONMENT_S, OP_ENVIRONMENT_Q, HOP_ENVIRONMENT_Q, OP_ENVIRONMENT_A, HOP_ENVIRONMENT_A, OP_ENVIRONMENT_C, HOP_ENVIRONMENT_C, 
-      
-      OP_UNKNOWN, HOP_UNKNOWN, OP_UNKNOWN_ALL_S, HOP_UNKNOWN_ALL_S, OP_UNKNOWN_ALL_X, HOP_UNKNOWN_ALL_X,
-      OP_UNKNOWN_G, HOP_UNKNOWN_G, OP_UNKNOWN_GG, HOP_UNKNOWN_GG, OP_UNKNOWN_A, HOP_UNKNOWN_A, OP_UNKNOWN_AA, HOP_UNKNOWN_AA, 
-
-      OP_SAFE_C_opVSq_S, HOP_SAFE_C_opVSq_S, OP_SAFE_C_S_opVSq, HOP_SAFE_C_S_opVSq, OP_SAFE_C_opVSq_opVSq, HOP_SAFE_C_opVSq_opVSq, 
-      
-      OP_SAFE_C_P, HOP_SAFE_C_P, OP_SAFE_C_PP, HOP_SAFE_C_PP,
-      OP_SAFE_C_opSq_P, HOP_SAFE_C_opSq_P, 
-      OP_SAFE_C_SP, HOP_SAFE_C_SP, OP_SAFE_C_CP, HOP_SAFE_C_CP, OP_SAFE_C_QP, HOP_SAFE_C_QP, OP_SAFE_C_AP, HOP_SAFE_C_AP, 
-      OP_SAFE_C_PS, HOP_SAFE_C_PS, OP_SAFE_C_PC, HOP_SAFE_C_PC, OP_SAFE_C_PQ, HOP_SAFE_C_PQ,
-      OP_SAFE_C_SSP, HOP_SAFE_C_SSP, 
-      OPT_MAX_DEFINED
-};
-
-#define is_safe_c_op(op) ((op < OP_THUNK) && (op >= OP_SAFE_C_C)) /* used only in safe_stepper */
-                                                                  /* for an unsigned int op, op is always >= OP_SAFE_C_C (0) */
-#define is_unknown_op(op) ((op >= OP_UNKNOWN) && (op < OP_SAFE_C_P))
-#define is_callable_c_op(op) (((op < OP_THUNK) && (op >= OP_SAFE_C_C)) || (op >= OP_SAFE_C_opVSq_S)) /* used only in check_set */
-
-/* also for debugging */
-static const char *opt_names[OPT_MAX_DEFINED + 1] =
-  {   "safe_c_c", "h_safe_c_c", "safe_c_s", "h_safe_c_s", 
-      "safe_c_ss", "h_safe_c_ss", "safe_c_sc", "h_safe_c_sc", "safe_c_cs", "h_safe_c_cs", 
-      "safe_c_q", "h_safe_c_q", "safe_c_sq", "h_safe_c_sq", "safe_c_qs", "h_safe_c_qs", "safe_c_qq", "h_safe_c_qq", 
-      "safe_c_cq", "h_safe_c_cq", "safe_c_qc", "h_safe_c_qc", 
-      "safe_c_sss", "h_safe_c_sss", "safe_c_scs", "h_safe_c_scs", "safe_c_ssc", "h_safe_c_ssc", "safe_c_css", "h_safe_c_css", 
-      "safe_c_scc", "h_safe_c_scc", "safe_c_csc", "h_safe_c_csc",
-      "safe_c_all_s", "h_safe_c_all_s", "safe_c_all_x", "h_safe_c_all_x", "safe_c_ssa", "h_safe_c_ssa", 
-      "safe_c_csa", "h_safe_c_csa", "safe_c_sca", "h_safe_c_sca", "safe_c_cas", "h_safe_c_cas",
-      "safe_c_a", "h_safe_c_a", "safe_c_aa", "h_safe_c_aa", "safe_c_aaa", "h_safe_c_aaa", "safe_c_aaaa", "h_safe_c_aaaa", 
-      "safe_c_sqs", "h_safe_c_sqs", "safe_c_opaq", "h_safe_c_opaq", "safe_c_opaaq", "h_safe_c_opaaq", "safe_c_opaaaq", "h_safe_c_opaaaq", 
-      "safe_c_s_opaaq", "h_safe_c_s_opaaq", "safe_c_s_opaaaq", "h_safe_c_s_opaaaq", 
-      
-      "safe_c_opcq", "h_safe_c_opcq", "safe_c_opsq", "h_safe_c_opsq", 
-      "safe_c_opssq", "h_safe_c_opssq", "safe_c_opscq", "h_safe_c_opscq", "safe_c_opsqq", "h_safe_c_opsqq", 
-      "safe_c_opcsq", "h_safe_c_opcsq", "safe_c_s_opsq", "h_safe_c_s_opsq",
-      "safe_c_c_opscq", "h_safe_c_c_opscq", 
-      "safe_c_s_opscq", "h_safe_c_s_opscq", "safe_c_s_opcsq", "h_safe_c_s_opcsq", 
-      "safe_c_opsq_s", "h_safe_c_opsq_s", "safe_c_opsq_c", "h_safe_c_opsq_c", 
-      "safe_c_opsq_opsq", "h_safe_c_opsq_opsq", "safe_c_s_opssq", "h_safe_c_s_opssq", "safe_c_c_opsq", "h_safe_c_c_opsq", 
-      "safe_c_c_opcsq", "h_safe_c_c_opcsq", "safe_c_opcsq_c", "h_safe_c_opcsq_c", 
-      "safe_c_s_opcq", "h_safe_c_s_opcq", "safe_c_opssq_c", "h_safe_c_opssq_c", "safe_c_c_opssq", "h_safe_c_c_opssq", 
-      "safe_c_c_opcq", "h_safe_c_c_opcq", "safe_c_opcq_s", "h_safe_c_opcq_s", 
-      "safe_c_opcq_opcq", "h_safe_c_opcq_opcq", "safe_c_opcq_c", "h_safe_c_opcq_c", 
-      "safe_c_opscq_opscq", "h_safe_c_opscq_opscq", "safe_c_opssq_opssq", "h_safe_c_opssq_opssq", 
-      "safe_c_opssq_opcq", "h_safe_c_opssq_opcq", "safe_c_opssq_opsq", "h_safe_c_opssq_opsq", "safe_c_opsq_opssq", "h_safe_c_opsq_opssq",
-      "safe_c_opssq_s", "h_safe_c_opssq_s", "safe_c_opscq_s", "h_safe_c_opscq_s", "safe_c_opcsq_s", "h_safe_c_opcsq_s",
-      "safe_c_opscq_c", "h_safe_c_opscq_c", "safe_c_opcq_opssq", "h_safe_c_opcq_opssq",
-      "safe_c_s_op_opssq_sq", "h_safe_c_s_op_opssq_sq", "safe_c_s_op_s_opssqq", "h_safe_c_s_op_s_opssqq", 
-      "safe_c_op_opssq_q_c", "h_safe_c_op_opssq_q_c", "safe_c_s_op_opssq_opssqq", "h_safe_c_s_op_opssq_opssqq", 
-      "safe_c_opssq_op_opssq_q", "h_safe_c_opssq_op_opssq_q", "safe_c_op_opssq_sq_opssq", "h_safe_c_op_opssq_sq_opssq",
-      "safe_c_op_opsq_q", "h_safe_c_op_opsq_q", "safe_c_c_op_s_opcqq", "h_safe_c_c_op_s_opcqq",
-      "safe_c_op_s_opsq_q", "h_safe_c_op_s_opsq_q",
-
-      "safe_c*_cd", "h_safe_c*_cd",
-
-      "safe_c_z", "h_safe_c_z", "safe_c_zz", "h_safe_c_zz", "safe_c_sz", "h_safe_c_sz", "safe_c_zs", "h_safe_c_zs", 
-      "safe_c_cz", "h_safe_c_cz", "safe_c_zc", "h_safe_c_zc", 
-      "safe_c_opcq_z", "h_safe_c_opcq_z", "safe_c_s_opszq", "h_safe_c_s_opszq", 
-      "safe_c_az", "h_safe_c_az", "safe_c_za", "h_safe_c_za", 
-      "safe_c_zaa", "h_safe_c_zaa", "safe_c_aza", "h_safe_c_aza", "safe_c_aaz", "h_safe_c_aaz", "safe_c_ssz", "h_safe_c_ssz",
-      "safe_c_zza", "h_safe_c_zza", "safe_c_zaz", "h_safe_c_zaz", "safe_c_azz", "h_safe_c_azz", 
-      "safe_c_zzz", "h_safe_c_zzz", "safe_c_zzzz", "h_safe_c_zzzz",
-
-      "thunk", "h_thunk", 
-      "closure_s", "h_closure_s", "closure_c", "h_closure_c", "closure_q", "h_closure_q", 
-      "closure_ss", "h_closure_ss", "closure_ssb", "h_closure_ssb",
-      "closure_sc", "h_closure_sc", "closure_cs", "h_closure_cs", 
-      "closure_a", "h_closure_a", "closure_aa", "h_closure_aa", 
-      "closure_opsq_s", "h_closure_opsq_s", "closure_opsq_opsq", "h_closure_opsq_opsq", 
-      "closure_s_opsq", "h_closure_s_opsq", "closure_s_opssq", "h_closure_s_opssq", "closure_opssq_s", "h_closure_opssq_s", 
-      "closure_all_x", "h_closure_all_x", "closure_all_s", "h_closure_all_s", 
-      
-      "glosure_a", "h_glosure_a", "glosure_s", "h_glosure_s", "closure_p", "h_closure_p", 
-
-      "closure_star_s", "h_closure_star_s", "closure_star_sx", "h_closure_star_sx", 
-      "closure_star", "h_closure_star", "closure_star_all_x", "h_closure_star_all_x", 
-
-      "safe_thunk", "h_safe_thunk", 
-      "safe_closure_s", "h_safe_closure_s", "safe_closure_c", "h_safe_closure_c", "safe_closure_q", "h_safe_closure_q", 
-      "safe_closure_ss", "h_safe_closure_ss", "safe_closure_sc", "h_safe_closure_sc", "safe_closure_cs", "h_safe_closure_cs", 
-      "safe_closure_a", "h_safe_closure_a", "safe_closure_sa", "h_safe_closure_sa", 
-      "safe_closure_opsq_s", "h_safe_closure_opsq_s", "safe_closure_opsq_opsq", "h_safe_closure_opsq_opsq", 
-      "safe_closure_s_opsq", "h_safe_closure_s_opsq", "safe_closure_s_opssq", "h_safe_closure_s_opssq", "safe_closure_opssq_s", "h_safe_closure_opssq_s", 
-      "safe_closure_saa", "h_safe_closure_saa", 
-      "safe_closure_all_x", "h_safe_closure_all_x", "safe_closure_aa", "h_safe_closure_aa", 
-      
-      "safe_glosure_a", "h_safe_glosure_a", "safe_glosure_s", "h_safe_glosure_s", "safe_closure_p", "h_safe_closure_p", 
-
-      "safe_closure_star_s", "h_safe_closure_star_s", "safe_closure_star_ss", "h_safe_closure_star_ss", 
-      "safe_closure_star_sc", "h_safe_closure_star_sc", "safe_closure_star_sa", "h_safe_closure_star_sa", "safe_closure_star_s0", "h_safe_closure_star_s0",
-      "safe_closure_star", "h_safe_closure_star", "safe_closure_star_all_x", "h_safe_closure_star_all_x", 
-      
-      "apply_ss", "h_apply_ss",
-      "c_all_x", "h_c_all_x", "call_with_exit", "h_call_with_exit", "c_catch", "h_c_catch", "c_catch_all", "h_c_catch_all",
-      "c_s_opsq", "h_c_s_opsq", "c_s_opcq", "h_c_s_opcq", 
-      "c_for_each_ls", "h_c_for_each_ls", "c_for_each_ls_2", "h_c_for_each_ls_2", "c_for_each_l_opsq", "h_c_for_each_l_opsq", 
-      "c_s", "h_c_s", "read_s", "h_read_s", "c_p", "h_c_p", "c_sp", "h_c_sp", "c_a", "h_c_a",
-
-      "goto", "h_goto", "goto_c", "h_goto_c", "goto_s", "h_goto_s", "goto_a", "h_goto_a", 
-      
-      "vector_c", "h_vector_c", "vector_s", "h_vector_s", "vector_a", "h_vector_a", "vector_cc", "h_vector_cc", 
-      "string_c", "h_string_c", "string_s", "h_string_s", "string_a", "h_string_a", 
-      "c_object", "h_c_object", "c_object_c", "h_c_object_c", "c_object_s", "h_c_object_s", 
-      "c_object_a", "h_c_object_a", 
-      "c_object_ss", "h_c_object_ss", "c_object_cc", "h_c_object_cc", 
-      "pair_c", "h_pair_c", "pair_s", "h_pair_s", "pair_a", "h_pair_a", 
-      "hash_table_c", "h_hash_table_c", "hash_table_s", "h_hash_table_s", "hash_table_a", "h_hash_table_a", 
-      "environment_s", "h_environment_s", "environment_q", "h_environment_q", "environment_a", "h_environment_a", "environment_c", "h_environment_c", 
-      
-      "unknown", "h_unknown", "unknown_all_s", "h_unknown_all_s", "unknown_all_x", "h_unknown_all_x",
-      "unknown_g", "h_unknown_g", "unknown_gg", "h_unknown_gg", "unknown_a", "h_unknown_a", "unknown_aa", "h_unknown_aa", 
-
-      "safe_c_opvsq_s", "h_safe_c_opvsq_s", "safe_c_s_opvsq", "h_safe_c_s_opvsq", "safe_c_opvsq_opvsq", "h_safe_c_opvsq_opvsq", 
-      
-      "safe_c_p", "h_safe_c_p", "safe_c_pp", "h_safe_c_pp",
-      "safe_c_opsq_p", "h_safe_c_opsq_p", 
-      "safe_c_sp", "h_safe_c_sp", "safe_c_cp", "h_safe_c_cp", "safe_c_qp", "h_safe_c_qp", "safe_c_ap", "h_safe_c_ap", 
-      "safe_c_ps", "h_safe_c_ps", "safe_c_pc", "h_safe_c_pc", "safe_c_pq", "h_safe_c_pq",
-      "safe_c_ssp", "h_safe_c_ssp", 
-      "opt_max_defined"
-  };
-
-#define opt_name(E) ((is_optimized(E)) ? opt_names[optimize_data(E)] : "unopt")
 
 #define NUM_CHARS 256
 
@@ -1320,7 +854,7 @@ struct s7_scheme {
   /* these are the associated functions, not symbols */
   s7_pointer Vector_Set, String_Set, List_Set, Hash_Table_Set, Let_Set; /* Cons (see the setter stuff at the end) */
 
-  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, MACROEXPAND, DEFINE_EXPANSION, BAFFLE, WITH_LET;
+  s7_pointer LAMBDA, LAMBDA_STAR, LET, QUOTE, UNQUOTE, MACROEXPAND, DEFINE_EXPANSION, BAFFLE, WITH_LET, DOCUMENTATION;
 #if (!DISABLE_DEPRECATED)
   s7_pointer WITH_ENVIRONMENT;
 #endif
@@ -2047,7 +1581,6 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 
 #define caddddr(p)                    car(cdr(cdr(cdr(cdr(p)))))
 
-
 #if WITH_GCC
   /* slightly tricky because cons can be called recursively */
   #define cons(Sc, A, B)             ({s7_pointer _X_; NEW_CELL(sc, _X_); car(_X_) = A; cdr(_X_) = B; set_type(_X_, T_PAIR | T_SAFE_PROCEDURE); _X_;})
@@ -2543,7 +2076,8 @@ static int safe_strcmp(const char *s1, const char *s2)
 }
 
 
-/* forward decls */
+/* ---------------- forward decls ---------------- */
+
 static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen, use_write_t choice);
 static bool is_proper_list(s7_scheme *sc, s7_pointer lst);
 static bool is_all_x_safe(s7_scheme *sc, s7_pointer p);
@@ -2638,9 +2172,477 @@ static s7_pointer NO_COMPLEX_NUMBERS;
 #endif
 
 
-/* --------------------------------------------------------------------------------
- * profiling junk
+/* ---------------- evaluator ops ---------------- */
+
+enum {OP_NO_OP, 
+      OP_READ_INTERNAL, OP_EVAL, 
+      OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_EVAL_ARGS2, OP_EVAL_ARGS3, OP_EVAL_ARGS4, OP_EVAL_ARGS5,
+      OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, 
+      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN_UNCHECKED, OP_BEGIN1,
+      OP_IF, OP_IF1, OP_WHEN, OP_WHEN1, OP_UNLESS, OP_UNLESS1, OP_SET, OP_SET1, OP_SET2,
+      OP_LET, OP_LET1, OP_LET_STAR, OP_LET_STAR1, OP_LET_STAR2,
+      OP_LETREC, OP_LETREC1, OP_LETREC_STAR, OP_LETREC_STAR1, OP_COND, OP_COND1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
+      OP_AND, OP_AND1, OP_OR, OP_OR1, 
+      OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
+      OP_CASE, OP_CASE1, OP_READ_LIST, OP_READ_NEXT, OP_READ_DOT, OP_READ_QUOTE, 
+      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_APPLY_VALUES,
+      OP_READ_VECTOR, OP_READ_BYTEVECTOR, OP_READ_DONE, 
+      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_DONE,
+      OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
+      OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
+      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_LAMBDA_STAR_DEFAULT, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
+      OP_ERROR_HOOK_QUIT, 
+      OP_WITH_LET, OP_WITH_LET1, OP_WITH_LET_UNCHECKED, OP_WITH_LET_S, 
+      OP_WITH_BAFFLE, OP_WITH_BAFFLE_UNCHECKED, OP_EXPANSION,
+      OP_FOR_EACH, OP_FOR_EACH_SIMPLE, OP_FOR_EACH_SIMPLER, OP_FOR_EACH_SIMPLEST,
+      OP_MAP, OP_MAP_SIMPLE, OP_BARRIER, OP_DEACTIVATE_GOTO,
+
+      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, 
+      OP_GET_OUTPUT_STRING, OP_GET_OUTPUT_STRING_1, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT_PAIR_END, OP_SORT_VECTOR_END, OP_SORT_STRING_END, 
+      OP_EVAL_STRING_1, OP_EVAL_STRING_2, 
+      OP_MEMBER_IF, OP_ASSOC_IF, OP_MEMBER_IF1, OP_ASSOC_IF1,
+      
+      OP_QUOTE_UNCHECKED, OP_LAMBDA_UNCHECKED, OP_LET_UNCHECKED, OP_CASE_UNCHECKED, OP_WHEN_UNCHECKED, OP_UNLESS_UNCHECKED,
+      OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_Z, OP_SET_SYMBOL_A,
+      OP_SET_SYMBOL_SAFE_S, OP_SET_SYMBOL_SAFE_C, 
+      OP_SET_SYMBOL_SAFE_SS, OP_SET_SYMBOL_SAFE_SSS, 
+      OP_SET_SYMBOL_UNKNOWN_G,
+      OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_A, OP_SET_PAIR_P, OP_SET_PAIR_ZA, OP_SET_PAIR_UNKNOWN_G,
+      OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_ENV_S, OP_SET_ENV_ALL_X,
+      OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE, OP_SET_FV_SCALED,
+      OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_LETREC_STAR_UNCHECKED, OP_COND_UNCHECKED,
+      OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, OP_DEFINE_FUNCHECKED,
+      OP_DEFINE_WITH_ACCESSOR, OP_DEFINE_MACRO_WITH_ACCESSOR,
+      OP_LET_NO_VARS, OP_NAMED_LET, OP_NAMED_LET_NO_VARS, OP_NAMED_LET_STAR,
+      OP_CASE_SIMPLE, OP_CASE_SIMPLER, OP_CASE_SIMPLER_1, OP_CASE_SIMPLER_SS,
+      OP_CASE_SIMPLEST, OP_CASE_SIMPLEST_SS, OP_CASE_SIMPLEST_ELSE, OP_CASE_SIMPLEST_ELSE_C,
+      OP_LET_C, OP_LET_S, OP_LET_Q, OP_LET_ALL_C, OP_LET_ALL_S, OP_LET_ALL_X,
+      OP_LET_STAR_ALL_X, OP_LET_opCq, OP_LET_opSSq,
+      OP_IF_P_P_P, OP_IF_P_P, OP_IF_P_P_X, OP_IF_A_P_X, OP_IF_P_X_P, 
+      OP_IF_B_P, OP_IF_ANDP_P, OP_IF_ANDP_P_P, OP_IF_ORP_P, OP_IF_ORP_P_P, 
+      OP_IF_PPP, OP_IF_PP, OP_IF_PPX, OP_IF_PXP, 
+      OP_IF_S_P_P, OP_IF_S_P, OP_IF_S_P_X, OP_IF_S_X_P, OP_IF_P_FEED, OP_IF_P_FEED_1, OP_WHEN_S, OP_UNLESS_S,
+      OP_IF_UNCHECKED, OP_AND_UNCHECKED, OP_AND_P, OP_AND_P1, OP_OR_UNCHECKED, OP_OR_P, OP_OR_P1,
+      
+      OP_SAFE_IF_Z_Z, OP_SAFE_IF_A_Z, 
+      OP_CATCH_1, OP_CATCH_2, OP_CATCH_ALL, OP_COND_ALL_X, OP_COND_S,
+      OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_SAFE_DOTIMES, OP_SAFE_DOTIMES_STEP, OP_SAFE_DOTIMES_STEP_P, OP_SAFE_DOTIMES_STEP_O, OP_SAFE_DOTIMES_STEP_A,
+      OP_SIMPLE_SAFE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_SAFE_DO_STEP_1, OP_SAFE_DOTIMES_C_C,
+      OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_DOX, OP_DOX_STEP, OP_DOX_STEP_P, OP_SIMPLE_DO_FOREVER,
+      OP_DOTIMES_P, OP_DOTIMES_STEP_P, OP_SAFE_DOTIMES_C_A,
+      OP_SIMPLE_DO_A, OP_SIMPLE_DO_STEP_A, OP_DO_ALL_X, OP_DO_ALL_X_STEP,
+      OP_SAFE_IF_Z_Z_1, OP_SAFE_IF_CC_X_P, OP_SAFE_IF_CC_P_P, 
+      OP_SAFE_IF_CS_P_P, OP_SAFE_IF_CS_X_P, OP_SAFE_IF_IS_NULL_S_P, OP_SAFE_IF_CC_P, OP_SAFE_IF_CS_P, OP_SAFE_IF_CS_P_X, OP_SAFE_IF_IS_NULL_Q_P,
+      OP_SAFE_IF_CSS_X_P, OP_SAFE_IF_CSC_X_P, OP_SAFE_IF_CSC_X_O_A,
+      OP_SAFE_IF_CSQ_P, OP_SAFE_IF_CSQ_P_P, OP_SAFE_IF_CSS_P, OP_SAFE_IF_CSS_P_P, OP_SAFE_IF_CSC_P, OP_SAFE_IF_CSC_P_P, 
+      OP_SAFE_IF_IS_PAIR_P, OP_SAFE_IF_IS_PAIR_P_X, OP_SAFE_IF_IS_PAIR_P_P, OP_SAFE_IF_C_SS_P,
+      OP_SAFE_IF_IS_SYMBOL_P, OP_SAFE_IF_IS_SYMBOL_P_P, OP_SAFE_IF_NOT_S_P,
+      OP_IF_Z_P, OP_IF_Z_P_P, OP_IF_A_P, OP_IF_A_P_P, 
+      OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_2, OP_SAFE_C_PP_3, OP_SAFE_C_PP_4, OP_SAFE_C_PP_5, OP_SAFE_C_PP_6, 
+      OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_1_MV, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_2_MV, 
+      OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_3_MV, OP_EVAL_ARGS_P_4_MV, 
+      OP_EVAL_ARGS_SSP_1, OP_EVAL_ARGS_SSP_MV, OP_EVAL_MACRO_MV,
+      OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CONS, 
+      OP_INCREMENT_SS, OP_INCREMENT_SSS, OP_INCREMENT_SZ, OP_INCREMENT_C_TEMP, OP_INCREMENT_SA, OP_INCREMENT_SAA,
+      OP_LET_R, OP_LET_ALL_R, OP_LET_C_D, OP_LET_R_P, OP_LET_CAR_P, OP_LET_ONE, OP_LET_ONE_1, OP_LET_Z, OP_LET_Z_1,
+
+      OP_SAFE_C_ZZ_1, OP_SAFE_C_ZZ_2, OP_SAFE_C_SZ_1, OP_SAFE_C_ZS_1, OP_SAFE_C_ZA_1, OP_INCREMENT_SZ_1, OP_SAFE_C_SZ_SZ,
+      OP_SAFE_C_ZAA_1, OP_SAFE_C_AZA_1, OP_SAFE_C_AAZ_1, OP_SAFE_C_SSZ_1, 
+      OP_SAFE_C_ZZA_1, OP_SAFE_C_ZZA_2, OP_SAFE_C_ZAZ_1, OP_SAFE_C_ZAZ_2, OP_SAFE_C_AZZ_1, OP_SAFE_C_AZZ_2, 
+      OP_SAFE_C_ZZZ_1, OP_SAFE_C_ZZZ_2, OP_SAFE_C_ZZZ_3, 
+      OP_SAFE_C_ZZZZ_1, OP_SAFE_C_ZZZZ_2, OP_SAFE_C_ZZZZ_3, OP_SAFE_C_ZZZZ_4, 
+      /* the zzzz cases exist only to trigger later optimizations (canter in clm-ins.scm and many in animals.scm) 
+       *   we need the top of the do-loop outa expr to be optimized
+       *   so that the direct_looped function is called which then calls find_gf.  Perhaps add possible_direct_loop?
+       */
+
+      OP_SAFE_C_opSq_P_1, OP_SAFE_C_opSq_P_MV, OP_C_P_1, OP_C_P_2, OP_C_SP_1, OP_C_SP_2,
+      OP_CLOSURE_P_1, OP_CLOSURE_P_2, OP_SAFE_CLOSURE_P_1,
+      OP_MAX_DEFINED_1};
+
+#define OP_MAX_DEFINED (OP_MAX_DEFINED_1 + 1)
+
+/* these names are intended for error messages (eval_error_with_name) and debugging.  
  */
+static const char *op_names[OP_MAX_DEFINED + 1] = 
+  {"no-op", 
+   "read-internal", "eval", 
+   "eval-args", "eval-args1", "eval-args2", "eval-args3", "eval-args4", "eval-args5",
+   "apply", "eval-macro", "lambda", "quote", 
+   "define", "define", "begin", "begin", "begin",
+   "if", "if", "when", "when", "unless", "unless", "set!", "set!", "set!", 
+   "let", "let", "let*", "let*", "let*",
+   "letrec", "letrec", "letrec*", "letrec*", "cond", "cond", "cond", "cond",
+   "and", "and", "or", "or", 
+   "define-macro", "define-macro*", "define-expansion",
+   "case", "case", "read-list", "read-list", "read-dot", "read-quote", 
+   "read-quasiquote", "read-quasiquote-vector", "read-unquote", "read-apply-values",
+   "read-vector", "read-bytevector", "read-done", 
+   "load", "load", "eval-string", "eval",
+   "catch", "dynamic-wind", "define-constant", "define-constant", 
+   "do", "do", "do", "do", "do", "do",
+   "define*", "lambda*", "lambda*", "error-quit", "unwind-input", "unwind-output", 
+   "error-hook-quit", "with-let", "with-let", "with-let", "with-let", 
+   "with-baffle", "with-baffle", "define-expansion",
+   "for-each", "for-each", "for-each", "for-each",
+   "map", "map", "barrier", "deactivate-goto",
+   "define-bacro", "define-bacro*", 
+   "get-output-string", "get-output-string", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!", "sort!",
+   "eval-string", "eval-string", 
+   "member", "assoc", "member", "assoc",
+   
+   "quote", "lambda", "let", "case", "when", "unless",
+   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
+   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
+   "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!", "set!",
+   "let*", "letrec", "letrec*", "cond",
+   "lambda*", "do", "define", "define*", "define",
+   "define", "define-macro",
+   "let", "let", "let", "let*",
+   "case", "case", "case", "case",
+   "case", "case", "case", "case", 
+   "let", "let", "let", "let", "let", "let",
+   "let*", "let", "let",
+
+   "if", "if", "if", "if", "if", "if",
+   "if", "if", "if", "if", "if", 
+   "if", "if", "if", "if", "if", 
+   "if", "if", "if", "if", "if", "when", "unless",
+   "and", "and", "and", "or", "or", "or", 
+
+   "if", "if",
+   "catch", "catch", "catch", "cond", "cond",
+   "do", "do", "do", "do", "do", 
+   "do", "do", "do", "do", "do", "do",
+   "do", "do", "do", "do", "do",
+   "do", "do", "do", "do", "do",
+   "do", "do", "do", "do", "do",
+   "if", "if", "if", "if",
+   "if", "if", "if", "if", "if", 
+   "if", "if", "if",
+   "if", "if", "if", "if", "if", "if", "if",
+   "if", "if", "if", "if",
+   "if", "if", "if", "if", "if", "if",
+   "c_p_1", "c_pp_1", "c_pp_2", "c_pp_3", "c_pp_4", "c_pp_5", "c_pp_6", 
+   "eval_args_p_1", "eval_args_p_1_mv", "eval_args_p_2", "eval_args_p_2_mv", 
+   "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv", 
+   "eval_args_ssp_1", "eval_args_ssp_mv", "eval_macro_mv",
+   "increment_1", "decrement_1", "set_cons", 
+   "increment_ss", "increment_sss", "increment_sz", "increment_c_temp", "increment_sa", "increment_saa",
+   "let", "let", "let", "let", "let", "let", "let", "let", "let", 
+
+   "c_zz_1", "c_zz_2", "c_sz_1", "c_zs_1", "c_za_1", "increment_sz_1", "c_sz_sz",
+   "c_zaa_1", "c_aza_1", "c_aaz_1", "c_ssz_1", 
+   "c_zza_1", "c_zza_2", "c_zaz_1", "c_zaz_2", "c_azz_1", "c_azz_2", 
+   "c_zzz_1", "c_zzz_2", "c_zzz_3", "zzzz_1", "zzzz_2", "zzzz_3", "zzzz_4",
+
+   "c_opsq_p_1", "c_opsq_p_mv", "c_p_1", "c_p_2", "c_sp_1", "c_sp_2",
+   "closure_p_1", "closure_p_2", "safe_closure_p_1",
+   "op-max"
+  };
+
+
+/* these are just for debugging but it's annoying to keep setting the DEBUGGING switch */
+static const char *real_op_names[OP_MAX_DEFINED + 1] = {
+  "no_op", 
+  "read_internal", "eval", 
+  "eval_args", "eval_args1", "eval_args2", "eval_args3", "eval_args4", "eval_args5",
+  "apply", "eval_macro", "lambda", "quote", 
+  "define", "define1", "begin", "begin-unchecked", "begin1",
+  "if", "if1", "when", "when1", "unless", "unless1", "set", "set1", "set2",
+  "let", "let1", "let_star", "let_star1", "let_star2", 
+  "letrec", "letrec1", "letrec_star", "letrec_star1", "cond", "cond1", "cond_simple", "cond1_simple",
+  "and", "and1", "or", "or1", 
+  "define_macro", "define_macro_star", "define_expansion",
+  "case", "case1", "read_list", "read_next", "read_dot", "read_quote", 
+  "read_quasiquote", "read_quasiquote_vector", "read_unquote", "read_apply_values",
+  "read_vector", "read_bytevector", "read_done", 
+  "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", "eval_done",
+  "catch", "dynamic_wind", "define_constant", "define_constant1", 
+  "do", "do_end", "do_end1", "do_step", "do_step2", "do_init",
+  "define_star", "lambda_star", "lambda_star_default", "error_quit", "unwind_input", "unwind_output", 
+  "error_hook_quit", 
+  "with_let", "with_let1", "with_let_unchecked", "with_let_s", 
+  "with_baffle", "with_baffle_unchecked", "expansion",
+  "for_each", "for_each_simple", "for_each_simpler", "for_each_simplest",
+  "map", "map_simple", "barrier", "deactivate_goto",
+  
+  "define_bacro", "define_bacro_star", 
+  "get_output_string", "get-output-string-1", "sort", "sort1", "sort2", "sort3", "sort_pair_end", "sort_vector_end", "sort_string_end", 
+  "eval_string_1", "eval_string_2", 
+  "member_if", "assoc_if", "member_if1", "assoc_if1",
+  
+  "quote_unchecked", "lambda_unchecked", "let_unchecked", "case_unchecked", "when_unchecked", "unless_unchecked",
+  "set_unchecked", "set_symbol_c", "set_symbol_s", "set_symbol_q", "set_symbol_p", "set_symbol_z", "set_symbol_a",
+  "set_symbol_safe_s", "set_symbol_safe_c", 
+  "set_symbol_safe_ss", "set_symbol_safe_sss",
+  "set_symbol_unknown_g",
+  "set_normal", "set_pair", "set_pair_z", "set_pair_a", "set_pair_p", "set_pair_za", "set_pair_unknown_g",
+  "set_pair_p_1", "set_with_accessor", "set_pws", "set_env_s", "set_env_all_x",
+  "set_pair_c", "set_pair_c_p", "set_pair_c_p_1", "set_safe", "set_fv_scaled",
+  "let_star_unchecked", "letrec_unchecked", "letrec_star_unchecked", "cond_unchecked",
+  "lambda_star_unchecked", "do_unchecked", "define_unchecked", "define_star_unchecked", "define_funchecked",
+  "define_with_accessor", "define_macro_with_accessor",
+  "let_no_vars", "named_let", "named_let_no_vars", "named_let_star",
+  "case_simple", "case_simpler", "case_simpler_1", "case_simpler_ss",
+  "case_simplest", "case_simplest_ss", "case_simplest_else", "case_simplest_else_c",
+  "let_c", "let_s", "let_q", "let_all_c", "let_all_s", "let_all_x", 
+  "let_star_all_x", "let_opcq", "let_opssq", 
+  "if_p_p_p", "if_p_p", "if_p_p_x", "if_a_p_x", "if_p_x_p", 
+  "if_b_p", "if_andp_p", "if_andp_p_p", "if_orp_p", "if_orp_p_p", 
+  "if_ppp", "if_pp", "if_ppx", "if_pxp", 
+  "if_s_p_p", "if_s_p", "if_s_p_x", "if_s_x_p", "if_p_feed", "if_p_feed_1", "when_s", "unless_s",
+  "if_unchecked", "and_unchecked", "and_p", "and_p1", "or_unchecked", "or_p", "or_p1",
+  
+  "safe_if_z_z", "safe_if_a_z", 
+  "catch_1", "catch_2", "catch_all", "cond_all_x", "cond_s",
+  "simple_do", "simple_do_step", "safe_dotimes", "safe_dotimes_step", "safe_dotimes_step_p", "safe_dotimes_step_o", "safe_dotimes_step_a",
+  "simple_safe_dotimes", "safe_do", "safe_do_step", "safe_do_step_1", "safe_dotimes_c_c",
+  "simple_do_p", "simple_do_step_p", "dox", "dox_step", "dox_step_p", "simple_do_forever",
+  "dotimes_p", "dotimes_step_p", "safe_dotimes_c_a",
+  "simple_do_a", "simple_do_step_a", "do_all_x", "do_all_x_step",
+  "safe_if_z_z_1", "safe_if_cc_x_p", "safe_if_cc_p_p", 
+  "safe_if_cs_p_p", "safe_if_cs_x_p", "safe_if_is_null_s_p", "safe_if_cc_p", "safe_if_cs_p", "safe_if_cs_p_x", "safe_if_is_null_q_p",
+  "safe_if_css_x_p", "safe_if_csc_x_p", "safe_if_csc_x_o_a",
+  "safe_if_csq_p", "safe_if_csq_p_p", "safe_if_css_p", "safe_if_css_p_p", "safe_if_csc_p", "safe_if_csc_p_p", 
+  "safe_if_is_pair_p", "safe_if_is_pair_p_x", "safe_if_is_pair_p_p", "safe_if_c_ss_p", 
+  "safe_if_is_symbol_p", "safe_if_is_symbol_p_p", "safe_if_not_s_p",
+  "if_z_p", "if_z_p_p", "if_a_p", "if_a_p_p", 
+  "safe_c_p_1", "safe_c_pp_1", "safe_c_pp_2", "safe_c_pp_3", "safe_c_pp_4", "safe_c_pp_5", "safe_c_pp_6", 
+  "eval_args_p_1", "eval_args_p_1_mv", "eval_args_p_2", "eval_args_p_2_mv", 
+  "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv", 
+  "eval_args_ssp_1", "eval_args_ssp_mv", "eval_macro_mv",
+  "increment_1", "decrement_1", "set_cons", 
+  "increment_ss", "increment_sss", "increment_sz", "increment_c_temp", "increment_sa", "increment_saa",
+  "let_r", "let_all_r", "let_c_d", "let_r_p", "let_car_p", "let_one", "let_one_1", "let_z", "let_z_1",
+
+  "safe_c_zz_1", "safe_c_zz_2", "safe_c_sz_1", "safe_c_zs_1", "safe_c_za_1", "increment_sz_1", "safe_c_sz_sz",
+  "safe_c_zaa_1", "safe_c_aza_1", "safe_c_aaz_1", "safe_c_ssz_1", 
+  "safe_c_zza_1", "safe_c_zza_2", "safe_c_zaz_1", "safe_c_zaz_2", "safe_c_azz_1", "safe_c_azz_2", 
+  "safe_c_zzz_1", "safe_c_zzz_2", "safe_c_zzz_3", 
+  "safe_c_zzzz_1", "safe_c_zzzz_2", "safe_c_zzzz_3", "safe_c_zzzz_4", 
+
+  "safe_c_opsq_p_1", "safe_c_opsq_p_mv", "c_p_1", "c_p_2", "c_sp_1", "c_sp_2",
+  "closure_p_1", "closure_p_2", "safe_closure_p_2",
+  "max_defined_1"};
+
+typedef enum{E_C_P, E_C_PP, E_C_CP, E_C_SP, E_C_PC, E_C_PS} combine_op_t;
+
+enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, 
+      OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS, 
+      OP_SAFE_C_Q, HOP_SAFE_C_Q, OP_SAFE_C_SQ, HOP_SAFE_C_SQ, OP_SAFE_C_QS, HOP_SAFE_C_QS, OP_SAFE_C_QQ, HOP_SAFE_C_QQ, 
+      OP_SAFE_C_CQ, HOP_SAFE_C_CQ, OP_SAFE_C_QC, HOP_SAFE_C_QC, 
+      OP_SAFE_C_SSS, HOP_SAFE_C_SSS, OP_SAFE_C_SCS, HOP_SAFE_C_SCS, OP_SAFE_C_SSC, HOP_SAFE_C_SSC, OP_SAFE_C_CSS, HOP_SAFE_C_CSS, 
+      OP_SAFE_C_SCC, HOP_SAFE_C_SCC, OP_SAFE_C_CSC, HOP_SAFE_C_CSC,
+      OP_SAFE_C_ALL_S, HOP_SAFE_C_ALL_S, OP_SAFE_C_ALL_X, HOP_SAFE_C_ALL_X, OP_SAFE_C_SSA, HOP_SAFE_C_SSA, 
+      OP_SAFE_C_CSA, HOP_SAFE_C_CSA, OP_SAFE_C_SCA, HOP_SAFE_C_SCA, OP_SAFE_C_CAS, HOP_SAFE_C_CAS,
+      OP_SAFE_C_A, HOP_SAFE_C_A, OP_SAFE_C_AA, HOP_SAFE_C_AA, OP_SAFE_C_AAA, HOP_SAFE_C_AAA, OP_SAFE_C_AAAA, HOP_SAFE_C_AAAA, 
+      OP_SAFE_C_SQS, HOP_SAFE_C_SQS, OP_SAFE_C_opAq, HOP_SAFE_C_opAq, OP_SAFE_C_opAAq, HOP_SAFE_C_opAAq, OP_SAFE_C_opAAAq, HOP_SAFE_C_opAAAq,
+      OP_SAFE_C_S_opAAq, HOP_SAFE_C_S_opAAq, OP_SAFE_C_S_opAAAq, HOP_SAFE_C_S_opAAAq, 
+
+      OP_SAFE_C_opCq, HOP_SAFE_C_opCq, OP_SAFE_C_opSq, HOP_SAFE_C_opSq, 
+      OP_SAFE_C_opSSq, HOP_SAFE_C_opSSq, OP_SAFE_C_opSCq, HOP_SAFE_C_opSCq, OP_SAFE_C_opSQq, HOP_SAFE_C_opSQq, 
+      OP_SAFE_C_opCSq, HOP_SAFE_C_opCSq, OP_SAFE_C_S_opSq, HOP_SAFE_C_S_opSq,
+      OP_SAFE_C_C_opSCq, HOP_SAFE_C_C_opSCq, 
+      OP_SAFE_C_S_opSCq, HOP_SAFE_C_S_opSCq, OP_SAFE_C_S_opCSq, HOP_SAFE_C_S_opCSq, 
+      OP_SAFE_C_opSq_S, HOP_SAFE_C_opSq_S, OP_SAFE_C_opSq_C, HOP_SAFE_C_opSq_C, 
+      OP_SAFE_C_opSq_opSq, HOP_SAFE_C_opSq_opSq, OP_SAFE_C_S_opSSq, HOP_SAFE_C_S_opSSq, OP_SAFE_C_C_opSq, HOP_SAFE_C_C_opSq, 
+      OP_SAFE_C_C_opCSq, HOP_SAFE_C_C_opCSq, OP_SAFE_C_opCSq_C, HOP_SAFE_C_opCSq_C, 
+      OP_SAFE_C_S_opCq, HOP_SAFE_C_S_opCq, OP_SAFE_C_opSSq_C, HOP_SAFE_C_opSSq_C, OP_SAFE_C_C_opSSq, HOP_SAFE_C_C_opSSq, 
+      OP_SAFE_C_C_opCq, HOP_SAFE_C_C_opCq, OP_SAFE_C_opCq_S, HOP_SAFE_C_opCq_S, 
+      OP_SAFE_C_opCq_opCq, HOP_SAFE_C_opCq_opCq, OP_SAFE_C_opCq_C, HOP_SAFE_C_opCq_C, 
+      OP_SAFE_C_opSCq_opSCq, HOP_SAFE_C_opSCq_opSCq, OP_SAFE_C_opSSq_opSSq, HOP_SAFE_C_opSSq_opSSq, 
+      OP_SAFE_C_opSSq_opCq, HOP_SAFE_C_opSSq_opCq, OP_SAFE_C_opSSq_opSq, HOP_SAFE_C_opSSq_opSq, OP_SAFE_C_opSq_opSSq, HOP_SAFE_C_opSq_opSSq,
+      OP_SAFE_C_opSSq_S, HOP_SAFE_C_opSSq_S, OP_SAFE_C_opSCq_S, HOP_SAFE_C_opSCq_S, OP_SAFE_C_opCSq_S, HOP_SAFE_C_opCSq_S,
+      OP_SAFE_C_opSCq_C, HOP_SAFE_C_opSCq_C, OP_SAFE_C_opCq_opSSq, HOP_SAFE_C_opCq_opSSq, 
+      OP_SAFE_C_S_op_opSSq_Sq, HOP_SAFE_C_S_op_opSSq_Sq, OP_SAFE_C_S_op_S_opSSqq, HOP_SAFE_C_S_op_S_opSSqq, 
+      OP_SAFE_C_op_opSSq_q_C, HOP_SAFE_C_op_opSSq_q_C, OP_SAFE_C_S_op_opSSq_opSSqq, HOP_SAFE_C_S_op_opSSq_opSSqq, 
+      OP_SAFE_C_opSSq_op_opSSq_q, HOP_SAFE_C_opSSq_op_opSSq_q, OP_SAFE_C_op_opSSq_Sq_opSSq, HOP_SAFE_C_op_opSSq_Sq_opSSq,
+      OP_SAFE_C_op_opSq_q, HOP_SAFE_C_op_opSq_q, OP_SAFE_C_C_op_S_opCqq, HOP_SAFE_C_C_op_S_opCqq, 
+      OP_SAFE_C_op_S_opSq_q, HOP_SAFE_C_op_S_opSq_q, 
+
+      OP_SAFE_C_STAR_CD, HOP_SAFE_C_STAR_CD, 
+
+      OP_SAFE_C_Z, HOP_SAFE_C_Z, OP_SAFE_C_ZZ, HOP_SAFE_C_ZZ, OP_SAFE_C_SZ, HOP_SAFE_C_SZ, OP_SAFE_C_ZS, HOP_SAFE_C_ZS, 
+      OP_SAFE_C_CZ, HOP_SAFE_C_CZ, OP_SAFE_C_ZC, HOP_SAFE_C_ZC, 
+      OP_SAFE_C_opCq_Z, HOP_SAFE_C_opCq_Z, OP_SAFE_C_S_opSZq, HOP_SAFE_C_S_opSZq, 
+      OP_SAFE_C_AZ, HOP_SAFE_C_AZ, OP_SAFE_C_ZA, HOP_SAFE_C_ZA, 
+      OP_SAFE_C_ZAA, HOP_SAFE_C_ZAA, OP_SAFE_C_AZA, HOP_SAFE_C_AZA, OP_SAFE_C_AAZ, HOP_SAFE_C_AAZ, OP_SAFE_C_SSZ, HOP_SAFE_C_SSZ,
+      OP_SAFE_C_ZZA, HOP_SAFE_C_ZZA, OP_SAFE_C_ZAZ, HOP_SAFE_C_ZAZ, OP_SAFE_C_AZZ, HOP_SAFE_C_AZZ, 
+      OP_SAFE_C_ZZZ, HOP_SAFE_C_ZZZ, OP_SAFE_C_ZZZZ, HOP_SAFE_C_ZZZZ,
+      
+      OP_THUNK, HOP_THUNK, 
+      OP_CLOSURE_S, HOP_CLOSURE_S, OP_CLOSURE_C, HOP_CLOSURE_C, OP_CLOSURE_Q, HOP_CLOSURE_Q, 
+      OP_CLOSURE_SS, HOP_CLOSURE_SS, OP_CLOSURE_SSb, HOP_CLOSURE_SSb, 
+      OP_CLOSURE_SC, HOP_CLOSURE_SC, OP_CLOSURE_CS, HOP_CLOSURE_CS, 
+      OP_CLOSURE_A, HOP_CLOSURE_A, OP_CLOSURE_AA, HOP_CLOSURE_AA, 
+      OP_CLOSURE_opSq_S, HOP_CLOSURE_opSq_S, OP_CLOSURE_opSq_opSq, HOP_CLOSURE_opSq_opSq, 
+      OP_CLOSURE_S_opSq, HOP_CLOSURE_S_opSq, OP_CLOSURE_S_opSSq, HOP_CLOSURE_S_opSSq, OP_CLOSURE_opSSq_S, HOP_CLOSURE_opSSq_S, 
+      OP_CLOSURE_ALL_X, HOP_CLOSURE_ALL_X, OP_CLOSURE_ALL_S, HOP_CLOSURE_ALL_S, 
+      
+      OP_GLOSURE_A, HOP_GLOSURE_A, OP_GLOSURE_S, HOP_GLOSURE_S, OP_GLOSURE_P, HOP_GLOSURE_P, 
+
+      OP_CLOSURE_STAR_S, HOP_CLOSURE_STAR_S, OP_CLOSURE_STAR_SX, HOP_CLOSURE_STAR_SX,
+      OP_CLOSURE_STAR, HOP_CLOSURE_STAR, OP_CLOSURE_STAR_ALL_X, HOP_CLOSURE_STAR_ALL_X, 
+
+      OP_SAFE_THUNK, HOP_SAFE_THUNK, 
+      OP_SAFE_CLOSURE_S, HOP_SAFE_CLOSURE_S, OP_SAFE_CLOSURE_C, HOP_SAFE_CLOSURE_C, OP_SAFE_CLOSURE_Q, HOP_SAFE_CLOSURE_Q, 
+      OP_SAFE_CLOSURE_SS, HOP_SAFE_CLOSURE_SS, OP_SAFE_CLOSURE_SC, HOP_SAFE_CLOSURE_SC, OP_SAFE_CLOSURE_CS, HOP_SAFE_CLOSURE_CS, 
+      OP_SAFE_CLOSURE_A, HOP_SAFE_CLOSURE_A, OP_SAFE_CLOSURE_SA, HOP_SAFE_CLOSURE_SA, 
+      OP_SAFE_CLOSURE_opSq_S, HOP_SAFE_CLOSURE_opSq_S, OP_SAFE_CLOSURE_opSq_opSq, HOP_SAFE_CLOSURE_opSq_opSq, 
+      OP_SAFE_CLOSURE_S_opSq, HOP_SAFE_CLOSURE_S_opSq, OP_SAFE_CLOSURE_S_opSSq, HOP_SAFE_CLOSURE_S_opSSq, OP_SAFE_CLOSURE_opSSq_S, HOP_SAFE_CLOSURE_opSSq_S, 
+      OP_SAFE_CLOSURE_SAA, HOP_SAFE_CLOSURE_SAA, 
+      OP_SAFE_CLOSURE_ALL_X, HOP_SAFE_CLOSURE_ALL_X, OP_SAFE_CLOSURE_AA, HOP_SAFE_CLOSURE_AA, 
+      
+      OP_SAFE_GLOSURE_A, HOP_SAFE_GLOSURE_A, OP_SAFE_GLOSURE_S, HOP_SAFE_GLOSURE_S, OP_SAFE_GLOSURE_P, HOP_SAFE_GLOSURE_P, 
+
+      OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, OP_SAFE_CLOSURE_STAR_SS, HOP_SAFE_CLOSURE_STAR_SS, 
+      OP_SAFE_CLOSURE_STAR_SC, HOP_SAFE_CLOSURE_STAR_SC, OP_SAFE_CLOSURE_STAR_SA, HOP_SAFE_CLOSURE_STAR_SA, OP_SAFE_CLOSURE_STAR_S0, HOP_SAFE_CLOSURE_STAR_S0,
+      OP_SAFE_CLOSURE_STAR, HOP_SAFE_CLOSURE_STAR, OP_SAFE_CLOSURE_STAR_ALL_X, HOP_SAFE_CLOSURE_STAR_ALL_X, 
+
+      /* these can't be embedded, and have to be the last thing called */
+      OP_APPLY_SS, HOP_APPLY_SS,
+      OP_C_ALL_X, HOP_C_ALL_X, OP_CALL_WITH_EXIT, HOP_CALL_WITH_EXIT, OP_C_CATCH, HOP_C_CATCH, OP_C_CATCH_ALL, HOP_C_CATCH_ALL,
+      OP_C_S_opSq, HOP_C_S_opSq, OP_C_S_opCq, HOP_C_S_opCq, 
+      OP_C_FOR_EACH_LS, HOP_C_FOR_EACH_LS, OP_C_FOR_EACH_LS_2, HOP_C_FOR_EACH_LS_2, OP_C_FOR_EACH_L_opSq, HOP_C_FOR_EACH_L_opSq, 
+      OP_C_S, HOP_C_S, OP_READ_S, HOP_READ_S, OP_C_P, HOP_C_P, OP_C_SP, HOP_C_SP, OP_C_A, HOP_C_A,
+
+      OP_GOTO, HOP_GOTO, OP_GOTO_C, HOP_GOTO_C, OP_GOTO_S, HOP_GOTO_S, OP_GOTO_A, HOP_GOTO_A, 
+      
+      OP_VECTOR_C, HOP_VECTOR_C, OP_VECTOR_S, HOP_VECTOR_S, OP_VECTOR_A, HOP_VECTOR_A, OP_VECTOR_CC, HOP_VECTOR_CC, 
+      OP_STRING_C, HOP_STRING_C, OP_STRING_S, HOP_STRING_S, OP_STRING_A, HOP_STRING_A, 
+      OP_C_OBJECT, HOP_C_OBJECT, OP_C_OBJECT_C, HOP_C_OBJECT_C, OP_C_OBJECT_S, HOP_C_OBJECT_S, 
+      OP_C_OBJECT_A, HOP_C_OBJECT_A, OP_C_OBJECT_SS, HOP_C_OBJECT_SS, OP_C_OBJECT_CC, HOP_C_OBJECT_CC, 
+      OP_PAIR_C, HOP_PAIR_C, OP_PAIR_S, HOP_PAIR_S, OP_PAIR_A, HOP_PAIR_A, 
+      OP_HASH_TABLE_C, HOP_HASH_TABLE_C, OP_HASH_TABLE_S, HOP_HASH_TABLE_S, OP_HASH_TABLE_A, HOP_HASH_TABLE_A, 
+      OP_ENVIRONMENT_S, HOP_ENVIRONMENT_S, OP_ENVIRONMENT_Q, HOP_ENVIRONMENT_Q, OP_ENVIRONMENT_A, HOP_ENVIRONMENT_A, OP_ENVIRONMENT_C, HOP_ENVIRONMENT_C, 
+      
+      OP_UNKNOWN, HOP_UNKNOWN, OP_UNKNOWN_ALL_S, HOP_UNKNOWN_ALL_S, OP_UNKNOWN_ALL_X, HOP_UNKNOWN_ALL_X,
+      OP_UNKNOWN_G, HOP_UNKNOWN_G, OP_UNKNOWN_GG, HOP_UNKNOWN_GG, OP_UNKNOWN_A, HOP_UNKNOWN_A, OP_UNKNOWN_AA, HOP_UNKNOWN_AA, 
+
+      OP_SAFE_C_opVSq_S, HOP_SAFE_C_opVSq_S, OP_SAFE_C_S_opVSq, HOP_SAFE_C_S_opVSq, OP_SAFE_C_opVSq_opVSq, HOP_SAFE_C_opVSq_opVSq, 
+      
+      OP_SAFE_C_P, HOP_SAFE_C_P, OP_SAFE_C_PP, HOP_SAFE_C_PP,
+      OP_SAFE_C_opSq_P, HOP_SAFE_C_opSq_P, 
+      OP_SAFE_C_SP, HOP_SAFE_C_SP, OP_SAFE_C_CP, HOP_SAFE_C_CP, OP_SAFE_C_QP, HOP_SAFE_C_QP, OP_SAFE_C_AP, HOP_SAFE_C_AP, 
+      OP_SAFE_C_PS, HOP_SAFE_C_PS, OP_SAFE_C_PC, HOP_SAFE_C_PC, OP_SAFE_C_PQ, HOP_SAFE_C_PQ,
+      OP_SAFE_C_SSP, HOP_SAFE_C_SSP, 
+      OPT_MAX_DEFINED
+};
+
+#define is_safe_c_op(op) ((op < OP_THUNK) && (op >= OP_SAFE_C_C)) /* used only in safe_stepper */
+                                                                  /* for an unsigned int op, op is always >= OP_SAFE_C_C (0) */
+#define is_unknown_op(op) ((op >= OP_UNKNOWN) && (op < OP_SAFE_C_P))
+#define is_callable_c_op(op) (((op < OP_THUNK) && (op >= OP_SAFE_C_C)) || (op >= OP_SAFE_C_opVSq_S)) /* used only in check_set */
+
+/* also for debugging */
+static const char *opt_names[OPT_MAX_DEFINED + 1] =
+  {   "safe_c_c", "h_safe_c_c", "safe_c_s", "h_safe_c_s", 
+      "safe_c_ss", "h_safe_c_ss", "safe_c_sc", "h_safe_c_sc", "safe_c_cs", "h_safe_c_cs", 
+      "safe_c_q", "h_safe_c_q", "safe_c_sq", "h_safe_c_sq", "safe_c_qs", "h_safe_c_qs", "safe_c_qq", "h_safe_c_qq", 
+      "safe_c_cq", "h_safe_c_cq", "safe_c_qc", "h_safe_c_qc", 
+      "safe_c_sss", "h_safe_c_sss", "safe_c_scs", "h_safe_c_scs", "safe_c_ssc", "h_safe_c_ssc", "safe_c_css", "h_safe_c_css", 
+      "safe_c_scc", "h_safe_c_scc", "safe_c_csc", "h_safe_c_csc",
+      "safe_c_all_s", "h_safe_c_all_s", "safe_c_all_x", "h_safe_c_all_x", "safe_c_ssa", "h_safe_c_ssa", 
+      "safe_c_csa", "h_safe_c_csa", "safe_c_sca", "h_safe_c_sca", "safe_c_cas", "h_safe_c_cas",
+      "safe_c_a", "h_safe_c_a", "safe_c_aa", "h_safe_c_aa", "safe_c_aaa", "h_safe_c_aaa", "safe_c_aaaa", "h_safe_c_aaaa", 
+      "safe_c_sqs", "h_safe_c_sqs", "safe_c_opaq", "h_safe_c_opaq", "safe_c_opaaq", "h_safe_c_opaaq", "safe_c_opaaaq", "h_safe_c_opaaaq", 
+      "safe_c_s_opaaq", "h_safe_c_s_opaaq", "safe_c_s_opaaaq", "h_safe_c_s_opaaaq", 
+      
+      "safe_c_opcq", "h_safe_c_opcq", "safe_c_opsq", "h_safe_c_opsq", 
+      "safe_c_opssq", "h_safe_c_opssq", "safe_c_opscq", "h_safe_c_opscq", "safe_c_opsqq", "h_safe_c_opsqq", 
+      "safe_c_opcsq", "h_safe_c_opcsq", "safe_c_s_opsq", "h_safe_c_s_opsq",
+      "safe_c_c_opscq", "h_safe_c_c_opscq", 
+      "safe_c_s_opscq", "h_safe_c_s_opscq", "safe_c_s_opcsq", "h_safe_c_s_opcsq", 
+      "safe_c_opsq_s", "h_safe_c_opsq_s", "safe_c_opsq_c", "h_safe_c_opsq_c", 
+      "safe_c_opsq_opsq", "h_safe_c_opsq_opsq", "safe_c_s_opssq", "h_safe_c_s_opssq", "safe_c_c_opsq", "h_safe_c_c_opsq", 
+      "safe_c_c_opcsq", "h_safe_c_c_opcsq", "safe_c_opcsq_c", "h_safe_c_opcsq_c", 
+      "safe_c_s_opcq", "h_safe_c_s_opcq", "safe_c_opssq_c", "h_safe_c_opssq_c", "safe_c_c_opssq", "h_safe_c_c_opssq", 
+      "safe_c_c_opcq", "h_safe_c_c_opcq", "safe_c_opcq_s", "h_safe_c_opcq_s", 
+      "safe_c_opcq_opcq", "h_safe_c_opcq_opcq", "safe_c_opcq_c", "h_safe_c_opcq_c", 
+      "safe_c_opscq_opscq", "h_safe_c_opscq_opscq", "safe_c_opssq_opssq", "h_safe_c_opssq_opssq", 
+      "safe_c_opssq_opcq", "h_safe_c_opssq_opcq", "safe_c_opssq_opsq", "h_safe_c_opssq_opsq", "safe_c_opsq_opssq", "h_safe_c_opsq_opssq",
+      "safe_c_opssq_s", "h_safe_c_opssq_s", "safe_c_opscq_s", "h_safe_c_opscq_s", "safe_c_opcsq_s", "h_safe_c_opcsq_s",
+      "safe_c_opscq_c", "h_safe_c_opscq_c", "safe_c_opcq_opssq", "h_safe_c_opcq_opssq",
+      "safe_c_s_op_opssq_sq", "h_safe_c_s_op_opssq_sq", "safe_c_s_op_s_opssqq", "h_safe_c_s_op_s_opssqq", 
+      "safe_c_op_opssq_q_c", "h_safe_c_op_opssq_q_c", "safe_c_s_op_opssq_opssqq", "h_safe_c_s_op_opssq_opssqq", 
+      "safe_c_opssq_op_opssq_q", "h_safe_c_opssq_op_opssq_q", "safe_c_op_opssq_sq_opssq", "h_safe_c_op_opssq_sq_opssq",
+      "safe_c_op_opsq_q", "h_safe_c_op_opsq_q", "safe_c_c_op_s_opcqq", "h_safe_c_c_op_s_opcqq",
+      "safe_c_op_s_opsq_q", "h_safe_c_op_s_opsq_q",
+
+      "safe_c*_cd", "h_safe_c*_cd",
+
+      "safe_c_z", "h_safe_c_z", "safe_c_zz", "h_safe_c_zz", "safe_c_sz", "h_safe_c_sz", "safe_c_zs", "h_safe_c_zs", 
+      "safe_c_cz", "h_safe_c_cz", "safe_c_zc", "h_safe_c_zc", 
+      "safe_c_opcq_z", "h_safe_c_opcq_z", "safe_c_s_opszq", "h_safe_c_s_opszq", 
+      "safe_c_az", "h_safe_c_az", "safe_c_za", "h_safe_c_za", 
+      "safe_c_zaa", "h_safe_c_zaa", "safe_c_aza", "h_safe_c_aza", "safe_c_aaz", "h_safe_c_aaz", "safe_c_ssz", "h_safe_c_ssz",
+      "safe_c_zza", "h_safe_c_zza", "safe_c_zaz", "h_safe_c_zaz", "safe_c_azz", "h_safe_c_azz", 
+      "safe_c_zzz", "h_safe_c_zzz", "safe_c_zzzz", "h_safe_c_zzzz",
+
+      "thunk", "h_thunk", 
+      "closure_s", "h_closure_s", "closure_c", "h_closure_c", "closure_q", "h_closure_q", 
+      "closure_ss", "h_closure_ss", "closure_ssb", "h_closure_ssb",
+      "closure_sc", "h_closure_sc", "closure_cs", "h_closure_cs", 
+      "closure_a", "h_closure_a", "closure_aa", "h_closure_aa", 
+      "closure_opsq_s", "h_closure_opsq_s", "closure_opsq_opsq", "h_closure_opsq_opsq", 
+      "closure_s_opsq", "h_closure_s_opsq", "closure_s_opssq", "h_closure_s_opssq", "closure_opssq_s", "h_closure_opssq_s", 
+      "closure_all_x", "h_closure_all_x", "closure_all_s", "h_closure_all_s", 
+      
+      "glosure_a", "h_glosure_a", "glosure_s", "h_glosure_s", "closure_p", "h_closure_p", 
+
+      "closure_star_s", "h_closure_star_s", "closure_star_sx", "h_closure_star_sx", 
+      "closure_star", "h_closure_star", "closure_star_all_x", "h_closure_star_all_x", 
+
+      "safe_thunk", "h_safe_thunk", 
+      "safe_closure_s", "h_safe_closure_s", "safe_closure_c", "h_safe_closure_c", "safe_closure_q", "h_safe_closure_q", 
+      "safe_closure_ss", "h_safe_closure_ss", "safe_closure_sc", "h_safe_closure_sc", "safe_closure_cs", "h_safe_closure_cs", 
+      "safe_closure_a", "h_safe_closure_a", "safe_closure_sa", "h_safe_closure_sa", 
+      "safe_closure_opsq_s", "h_safe_closure_opsq_s", "safe_closure_opsq_opsq", "h_safe_closure_opsq_opsq", 
+      "safe_closure_s_opsq", "h_safe_closure_s_opsq", "safe_closure_s_opssq", "h_safe_closure_s_opssq", "safe_closure_opssq_s", "h_safe_closure_opssq_s", 
+      "safe_closure_saa", "h_safe_closure_saa", 
+      "safe_closure_all_x", "h_safe_closure_all_x", "safe_closure_aa", "h_safe_closure_aa", 
+      
+      "safe_glosure_a", "h_safe_glosure_a", "safe_glosure_s", "h_safe_glosure_s", "safe_closure_p", "h_safe_closure_p", 
+
+      "safe_closure_star_s", "h_safe_closure_star_s", "safe_closure_star_ss", "h_safe_closure_star_ss", 
+      "safe_closure_star_sc", "h_safe_closure_star_sc", "safe_closure_star_sa", "h_safe_closure_star_sa", "safe_closure_star_s0", "h_safe_closure_star_s0",
+      "safe_closure_star", "h_safe_closure_star", "safe_closure_star_all_x", "h_safe_closure_star_all_x", 
+      
+      "apply_ss", "h_apply_ss",
+      "c_all_x", "h_c_all_x", "call_with_exit", "h_call_with_exit", "c_catch", "h_c_catch", "c_catch_all", "h_c_catch_all",
+      "c_s_opsq", "h_c_s_opsq", "c_s_opcq", "h_c_s_opcq", 
+      "c_for_each_ls", "h_c_for_each_ls", "c_for_each_ls_2", "h_c_for_each_ls_2", "c_for_each_l_opsq", "h_c_for_each_l_opsq", 
+      "c_s", "h_c_s", "read_s", "h_read_s", "c_p", "h_c_p", "c_sp", "h_c_sp", "c_a", "h_c_a",
+
+      "goto", "h_goto", "goto_c", "h_goto_c", "goto_s", "h_goto_s", "goto_a", "h_goto_a", 
+      
+      "vector_c", "h_vector_c", "vector_s", "h_vector_s", "vector_a", "h_vector_a", "vector_cc", "h_vector_cc", 
+      "string_c", "h_string_c", "string_s", "h_string_s", "string_a", "h_string_a", 
+      "c_object", "h_c_object", "c_object_c", "h_c_object_c", "c_object_s", "h_c_object_s", 
+      "c_object_a", "h_c_object_a", 
+      "c_object_ss", "h_c_object_ss", "c_object_cc", "h_c_object_cc", 
+      "pair_c", "h_pair_c", "pair_s", "h_pair_s", "pair_a", "h_pair_a", 
+      "hash_table_c", "h_hash_table_c", "hash_table_s", "h_hash_table_s", "hash_table_a", "h_hash_table_a", 
+      "environment_s", "h_environment_s", "environment_q", "h_environment_q", "environment_a", "h_environment_a", "environment_c", "h_environment_c", 
+      
+      "unknown", "h_unknown", "unknown_all_s", "h_unknown_all_s", "unknown_all_x", "h_unknown_all_x",
+      "unknown_g", "h_unknown_g", "unknown_gg", "h_unknown_gg", "unknown_a", "h_unknown_a", "unknown_aa", "h_unknown_aa", 
+
+      "safe_c_opvsq_s", "h_safe_c_opvsq_s", "safe_c_s_opvsq", "h_safe_c_s_opvsq", "safe_c_opvsq_opvsq", "h_safe_c_opvsq_opvsq", 
+      
+      "safe_c_p", "h_safe_c_p", "safe_c_pp", "h_safe_c_pp",
+      "safe_c_opsq_p", "h_safe_c_opsq_p", 
+      "safe_c_sp", "h_safe_c_sp", "safe_c_cp", "h_safe_c_cp", "safe_c_qp", "h_safe_c_qp", "safe_c_ap", "h_safe_c_ap", 
+      "safe_c_ps", "h_safe_c_ps", "safe_c_pc", "h_safe_c_pc", "safe_c_pq", "h_safe_c_pq",
+      "safe_c_ssp", "h_safe_c_ssp", 
+      "opt_max_defined"
+  };
+
+#define opt_name(E) ((is_optimized(E)) ? opt_names[optimize_data(E)] : "unopt")
+
+
+/* ---------------- profiling ---------------- */
 #define WITH_COUNTS 0
 #if WITH_COUNTS
 #if 0
@@ -2908,7 +2910,6 @@ static s7_pointer check_values(s7_scheme *sc, s7_pointer obj, s7_pointer args)
  */
 
 
-
 /* -------------------------------- constants -------------------------------- */
 
 s7_pointer s7_f(s7_scheme *sc) 
@@ -3008,7 +3009,6 @@ static s7_pointer g_is_constant(s7_scheme *sc, s7_pointer args)
   #define H_is_constant "(constant? obj) returns #t if obj is a constant (unsettable): (constant? pi) -> #t"
   check_boolean_method(sc, s7_is_constant, sc->IS_CONSTANT, args);
 }
-
 
 
 /* -------------------------------- GC -------------------------------- */
@@ -3118,9 +3118,7 @@ static void mark_symbol(s7_pointer p)
    */
 }
 
-static void mark_noop(s7_pointer p)
-{
-}
+static void mark_noop(s7_pointer p) {}
 
 /* ports can be alloc'd and freed at a frightening pace, so I think I'll make a special free_heap for them.
  */
@@ -3833,11 +3831,6 @@ static void mark_input_port(s7_pointer p)
 }
 
 
-static void mark_syntax(s7_pointer p)
-{
-}
-
-
 static void init_mark_functions(void)
 {
   mark_function[T_FREE]                = mark_noop;
@@ -3872,7 +3865,7 @@ static void init_mark_functions(void)
   mark_function[T_CATCH]               = mark_catch;
   mark_function[T_DYNAMIC_WIND]        = mark_dynamic_wind;
   mark_function[T_HASH_TABLE]          = mark_hash_table;
-  mark_function[T_SYNTAX]              = mark_syntax;
+  mark_function[T_SYNTAX]              = mark_noop;
   mark_function[T_ENVIRONMENT]         = mark_let;
   mark_function[T_STACK]               = mark_stack;
   mark_function[T_COUNTER]             = mark_counter;
@@ -26985,11 +26978,14 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
       else /* str[i] is not #\~ */
 	{
 	  int j, new_len;
-	  for (j = i + 1; j < str_len; j++)
-	    if (str[j] == '~') 
-	      break;
-	  
+	  char *p;
+
+	  p = strchr((const char *)(str + i + 1), (int)'~');
+	  if (!p)
+	    j = str_len;
+	  else j = (int)(p - str);
 	  new_len = j - i;
+
 	  if ((port_has_buffer) &&
 	      ((port_position(port) + new_len) < port_data_size(port)))
 	    {
@@ -29169,6 +29165,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 
       if (!s7_is_aritable(sc, eq_func, 2))
 	return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(3), eq_func, AN_EQ_FUNC));
+
       /* now maybe there's a simple case */
       if (s7_list_length(sc, x) > 0)
 	{
@@ -29195,7 +29192,8 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 	    }
 
 	  if ((is_closure(eq_func)) &&
-	      (is_pair(closure_args(eq_func))))
+	      (is_pair(closure_args(eq_func))) &&
+	      (is_pair(cdr(closure_args(eq_func))))) /* not dotted arg list */
 	    {
 	      s7_pointer body;
 	      body = closure_body(eq_func);
@@ -29654,7 +29652,8 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 	    }
 
 	  if ((is_closure(eq_func)) &&
-	      (is_pair(closure_args(eq_func))))
+	      (is_pair(closure_args(eq_func))) &&
+	      (is_pair(cdr(closure_args(eq_func))))) /* not dotted arg list */
 	    {
 	      s7_pointer body;
 	      body = closure_body(eq_func);
@@ -33940,20 +33939,17 @@ s7_pointer set_c_function_call_args(s7_scheme *sc)
  *   by placing closure_arity in the same block as funclet_file, freeing up a pointer for the original.
  *   But it's tricky: the optimizer places a lot of info in car(body) and the arity setting needs to
  *   be accessible in different contexts than funclet*.  
+ *
+ * Dec-14: the doc string is now no longer in the function body, but lives in the function's environment
+ *   under the name 'documentation.
  */
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 {
-  char *help = NULL;
-  #define HELP_ARGLIST_SIZE 512
-
   if (is_symbol(x))
     {
-      if (symbol_has_help(x))
-	{
-	  if (is_global(x))
-	    return(symbol_help(x));
-	  help = symbol_help(x);
-	}
+      if ((symbol_has_help(x)) &&
+	  (is_global(x)))
+	return(symbol_help(x));
       x = s7_symbol_value(sc, x); /* this is needed by Snd */
     }
 
@@ -33961,39 +33957,21 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
       (is_c_macro(x)))
     return((char *)c_function_documentation(x));
   
-  if (is_any_closure(x))
+  if ((is_any_closure(x)) ||
+      (s7_is_macro(sc, x)))
     {
-      char *args;
-      if (is_string(car(closure_body(x))))
-	return(string_value(car(closure_body(x))));
-
-      if (help) return(help);
-
-      if (!sc->help_arglist)
-	sc->help_arglist = (char *)malloc(HELP_ARGLIST_SIZE * sizeof(char));
-      args = s7_object_to_c_string(sc, closure_args(x));
-      if (args)
+      s7_pointer val;
+      val = find_local_symbol(sc, sc->DOCUMENTATION, closure_let(x));
+      if (!is_slot(val))
+	val = find_local_symbol(sc, sc->DOCUMENTATION, outlet(closure_let(x)));
+      if (is_slot(val))
 	{
-	  snprintf(sc->help_arglist, HELP_ARGLIST_SIZE, "args: %s", args);
-	  free(args);
-	  return(sc->help_arglist);
+	  val = slot_value(val);
+	  if (is_string(val))
+	    return(string_value(val));
 	}
     }
-  
-  if ((s7_is_macro(sc, x)) &&
-      (is_pair(closure_body(x))))
-    {
-      s7_pointer p;
-      p = car(closure_body(x));
-      if ((is_pair(p)) &&
-	  (is_pair(cdr(p))) &&
-	  (is_pair(cadr(p))) &&
-	  (is_pair(cdadr(p))) &&
-	  (is_pair(cddr(cadr(p)))) &&
-	  (is_string(caddr(cadr(p)))))
-	return(string_value(caddr(cadr(p))));
-    }
-  return(help);
+  return(NULL);
 }
 
 
@@ -43737,17 +43715,10 @@ static s7_pointer collect_collisions(s7_scheme *sc, s7_pointer lst, s7_pointer e
       s7_pointer car_p;
       car_p = car(p);
       if (is_pair(car_p))
-	{
-	  if ((is_symbol(car(car_p))) &&
-	      (global_slot(car(car_p)) != sc->NIL))
-	    sc->w = cons(sc, add_sym_to_list(sc, car(car_p)), sc->w);
-	}
-      else
-	{
-	  if ((is_symbol(car_p)) &&
-	      (global_slot(car_p) != sc->NIL))
-	    sc->w = cons(sc, add_sym_to_list(sc, car_p), sc->w);
-	}
+	car_p = car(car_p);
+      if ((is_symbol(car_p)) &&
+	  (global_slot(car_p) != sc->NIL))
+	sc->w = cons(sc, add_sym_to_list(sc, car_p), sc->w);
     }
   return(sc->w);
 }
@@ -46254,8 +46225,13 @@ static bool rdirect_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer symbols)
   if (symbol_tag(symbol) != sc->syms_tag)
     return(false);
   for (x = symbols; is_pair(x); x = cdr(x))
-    if (car(x) == symbol)
-      return(true);
+    {
+      if (car(x) == symbol)
+	return(true);
+      x = cdr(x);
+      if (car(x) == symbol) /* car(nil)=unspec, cdr(unspec)=unspec! This only works for lists known to be undotted and non-circular */
+	return(true);
+    }
   return(false);
 }
 
@@ -46336,7 +46312,6 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		     */
 
 		    /* if (!is_any_closure(func)) fprintf(stderr, "%s in %s is not global\n", DISPLAY(caar_x), DISPLAY(car_x)); */
-
 		    hop = 0;
 		    /* this is very tricky!  See s7test for some cases.  Basically, we need to protect a recursive call
 		     *   of the current function being optimized from being confused with some previous definition
@@ -48449,9 +48424,10 @@ static s7_pointer check_define(s7_scheme *sc)
 	    s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
 	  set_local(x);
 	}
+
       if ((is_pair(cadr(sc->code))) &&               /* look for (define sym (lambda ...)) and treat it like (define (sym ...)...) */
-	  (((symbol_id(sc->LAMBDA) == 0) && (caadr(sc->code) == sc->LAMBDA)) ||
-	   ((symbol_id(sc->LAMBDA_STAR) == 0) && (caadr(sc->code) == sc->LAMBDA_STAR))))
+	  ((caadr(sc->code) == sc->LAMBDA) || (caadr(sc->code) == sc->LAMBDA_STAR)) &&
+	  (symbol_id(caadr(sc->code)) == 0))
 	/* not is_global here because that bit might not be set for initial symbols (why not? -- redef as method etc) */
 	optimize_lambda(sc, caadr(sc->code) == sc->LAMBDA, x, cadr(cadr(sc->code)), cddr(cadr(sc->code)));
     }
@@ -48469,7 +48445,6 @@ static s7_pointer check_define(s7_scheme *sc)
       if (sc->op == OP_DEFINE_STAR)
 	cdar(sc->code) = check_lambda_star_args(sc, cdar(sc->code), &arity);
       else check_lambda_args(sc, cdar(sc->code), &arity);
-
       optimize_lambda(sc, sc->op == OP_DEFINE, x, cdar(sc->code), cdr(sc->code));
     }
 
@@ -61973,14 +61948,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  eval_error(sc, "lambda: no args or no body? ~A", code);
 	
 	/* in many cases, this is a no-op -- we already checked at define */
-	/* why can't we optimize hop=1 here?  
-	 *    First because 'safety might be checking sort functions for infinite loops.
-	 *    Second because the body might not be at top level, so optimizations might interpose global for local functions.
-	 *    Third because something is broken in the optimizer: ((sc->safety == 0) && (sc->envir == sc->NIL)) should be sufficient!
-	 */
 	check_lambda_args(sc, car(code), NULL);
 	clear_syms_in_list(sc);
-	optimize(sc, body, 0, sc->NIL);
+	
+	/* look for (define f (let (...) (lambda ...))) and treat as equivalent to (define (f ...)...)
+	 *   this allows us to put the docstring (and other such stuff) in the funclet, not the function body
+	 *   without losing any optimization.  It's actually safe to ignore main_stack_op, but s7test has
+	 *   some dubious tests that this check gets around -- need to decide about these cases!
+	 */
+	if ((sc->safety != 0) ||
+	    (main_stack_op(sc) != OP_DEFINE1))
+	  optimize(sc, body, 0, sc->NIL);
+	else optimize(sc, body, 1, collect_collisions(sc, car(code), sc->NIL));
 
 	if ((is_overlaid(code)) &&
 	    (cdr(ecdr(code)) == code))
@@ -61999,7 +61978,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       car(sc->code) = check_lambda_star_args(sc, car(sc->code), NULL);
       clear_syms_in_list(sc);
-      optimize(sc, cdr(sc->code), 0, sc->NIL);
+
+      if ((sc->safety != 0) ||
+	  (main_stack_op(sc) != OP_DEFINE1))
+	optimize(sc, cdr(sc->code), 0, sc->NIL);
+      else optimize(sc, cdr(sc->code), 1, collect_collisions(sc, car(sc->code), sc->NIL));
 
       if ((is_overlaid(sc->code)) &&
 	  (cdr(ecdr(sc->code)) == sc->code))
@@ -68287,6 +68270,8 @@ s7_scheme *s7_init(void)
 
   sc->LAMBDA =                make_symbol(sc, "lambda");
   sc->LAMBDA_STAR =           make_symbol(sc, "lambda*");
+  sc->LET =                   make_symbol(sc, "let");
+  sc->DOCUMENTATION =         make_symbol(sc, "documentation");
   sc->QUOTE =                 make_symbol(sc, "quote");
 #if (!DISABLE_DEPRECATED)
   sc->WITH_ENVIRONMENT =      make_symbol(sc, "with-environment");
@@ -69374,12 +69359,12 @@ int main(int argc, char **argv)
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1149
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1157
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3041
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3026
  * lg             |      |      | 6547 6497 6494 6288
  * t455|6     265 |   89 |  9   |       8.4 8045 8026
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
- * t816           |   71 | 70.6 | 38.0 31.8 28.2 27.8
- * calls      359 |  275 | 54   | 34.7 34.7 35.2 35.0
+ * t816           |   71 | 70.6 | 38.0 31.8 28.2 27.7
+ * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.7
  *
  * --------------------------------------------------
  *
@@ -69412,6 +69397,10 @@ int main(int argc, char **argv)
  *   surely something is confused here -- all a ops are hop-safe? -- this is s7test and indecision about globals
  * need info and what type checks are most onerous currently [these are internal] (simple_char_eq could check func rtn type)
  * read-string|line? via tmp_str (substring_to_temp etc) 
- * procedure-predicate? -- predicate, temp-case, no-check-case
- * format often knows how many ~'s there are in advance, also check strchr at 26987
+ *
+ * procedure-predicate? -- predicate, temp-case, no-check-case, see also lint.scm
+ *   built-in predicates via define_safe_function_with_predicate?
+ *   need to rewrite everything to use the new doc syntax, and make sure it is local
+ *
+ * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  */

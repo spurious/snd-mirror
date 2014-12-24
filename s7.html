@@ -4026,20 +4026,31 @@ function's closure to store whatever information is needed:
 (<em class=def id="aritablep">aritable?</em> obj num-args)
 </pre>
 
-<p>procedure-source, procedure-arity, procedure-setter, procedure-documentation, and help provide a look into a
-Scheme function.
-procedure-documentation returns the documentation string associated with a procedure: the initial string in the
-function's body. procedure-arity returns a list describing the argument list of a function: <code>'(required-args optional-args rest-arg?)</code>.
+<p>
 procedure-setter returns or sets the set function associated with a procedure (set-car! with car, for example).
-procedure-source returns the procedure source (a list). funclet returns
-a procedure's environment.  procedure-name returns the procedure's name.
+funclet returns
+a procedure's environment.  
+procedure-name returns the procedure's name.
+procedure-source returns the procedure source (a list). 
 </p>
 
 <pre class="indented">
 (define (procedure-arglist f) (cadr (procedure-source f)))
 </pre>
 
-<p>In s7 lots of things are applicable, so procedure-arity is too restricted,
+<p>
+procedure-documentation returns the documentation string associated with a procedure.  This used to be 
+the initial string in the function's body (as in CL), but now it is the value of the 'documentation variable, if any,
+in the procedure's local environment.  That is, <code>(define (f a) "doc string" a)</code> is now
+<code>(define f (let ((documentation "doc string")) (lambda (a) a)))</code>.  This change gets the 
+string out of the body (where it can slow down evaluation of the function to no purpose), and
+makes it possible to extend the function information arbitrarily.  <code>((funclet f) 'documentation)</code>
+is the function documentation, and anything else easily fits in the same system.
+</p>
+
+<p>
+procedure-arity returns a list describing the argument list of a function: <code>'(required-args optional-args rest-arg?)</code>.
+In s7 lots of things are applicable, so procedure-arity is too restricted,
 and in its main use (checking that a function can be applied to some arguments),
 it is very clumsy.
 So, s7 has two generic functions:
