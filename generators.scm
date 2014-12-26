@@ -5840,7 +5840,7 @@ returns the sum of the last n inputs weighted by (-n/(n+1))^k"))
 ;;;
 ;;; since initial phases are 0 or pi in peak-phases.scm if n>20, this code could be optimized
 
-(define* (make-noid (frequency 0.0) (n 1) (phases #f) (choice 'all))
+(define* (make-noid (frequency 0.0) (n 1) phases (choice 'all))
   (make-polyoid frequency
 		(let ((amps (make-vector (* 3 n) 0.0)))
 		  (do ((i 1 (+ i 1))

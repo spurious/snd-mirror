@@ -53,7 +53,7 @@
 (define *report-unused-top-level-functions* #f)
 (define *report-multiply-defined-top-level-functions* #f) ; same name defined at top level in more than one file
 (define *report-shadowed-variables* #f)
-(define *report-minor-stuff* #t)                          ; let*, docstring checks, (= 1.5 x), numerical and boolean simplification
+(define *report-minor-stuff* #t)                          ; let*, (= 1.5 x), numerical and boolean simplification
 
 
 (define *load-file-first* #f)                             ; this will actually load the file, so errors will stop lint
@@ -2939,7 +2939,9 @@
 	(if (and (pair? body)
 		 (pair? (cdr body))
 		 (string? (car body)))
-	    (set! body (cdr body))) ; ignore old-style doc-string
+	    (begin
+	      ;(format *stderr* "old-style doc string: ~S~%" (car body))
+	      (set! body (cdr body)))) ; ignore old-style doc-string
 	(lint-walk-body name head body env)
 	env)
       
@@ -3165,10 +3167,7 @@
 				   (set! settee (do ((sym (car settee) (car sym)))
 						    ((not (pair? sym)) sym)))))
 			     (if (symbol? settee)
-				 (begin
-				   (if (constant? settee)
-				       (lint-format "can't set! a constant:~A" name (truncated-list->string form)))
-				   (set-set? settee setval env)))
+				 (set-set? settee setval env))
 			     
 			     (if (and (symbol? settee)
 				      (equal? (cadr form) (caddr form))) ; not settee and setval here!

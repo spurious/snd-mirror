@@ -576,7 +576,7 @@
 	  (revfile *clm-reverb-file-name*)
 	  (reverb-data *clm-reverb-data*)
 	  (reverb-channels *clm-reverb-channels*)
-	  (continue-old-file #f)
+	  continue-old-file
 	  (statistics *clm-statistics*)
 	  scaled-to
 	  (play *clm-play*)

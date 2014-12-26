@@ -86,9 +86,6 @@
 </head>
 <body class="body">
 
-<script type="text/javascript" src="wz_tooltip.js"></script>
-<script type="text/javascript" src="wz_data.js"></script>
-
 <div class="centered1"><img src="pix/s.png" alt="S"><img src="pix/n.png" alt="n"><img src="pix/d.png" alt="d"></div>
 
 <div class="center">Bill Schottstaedt (bil@ccrma.stanford.edu)</div>
@@ -96,28 +93,28 @@
 <div class="center"><img class="mapped" src="pix/title.png" usemap="#sndwindow" alt="standard Snd appearance"></div>
 <map name="sndwindow">
   <area shape=rect coords="0,0,608,20" href="#overview" alt="title bar">
-  <area shape=rect coords="0,20,50,50" href="#fileoperations" alt="File menu" onmouseout="UnTip()" onmouseover="Tip('open, close, save a file, exit Snd...')">
-  <area shape=rect coords="65,20,105,50" href="#editoperations" alt="Edit menu" onmouseout="UnTip()" onmouseover="Tip('cut, paste, save selection, undo...')">
-  <area shape=rect coords="110,20,150,50" href="#viewing" alt="View menu" onmouseout="UnTip()" onmouseover="Tip('various dialogs, graphing choices')">
-  <area shape=rect coords="160,20,230,50" href="#options" alt="Options menu" onmouseout="UnTip()" onmouseover="Tip('save session, fft choices, preferences')">
-  <area shape=rect coords="540,20,570,50" href="#options" alt="Help menu" onmouseout="UnTip()" onmouseover="Tip('helpful essays')">
-  <area shape=rect coords="12,60,20,70" href="#gettingstarted" alt="edit history list" onmouseout="UnTip()" onmouseover="Tip('this opens a list of the current edits')">
-  <area shape=rect coords="23,60,32,190" href="#gettingstarted" alt="Y axis zoom" onmouseout="UnTip()" onmouseover="Tip('this slider changes the y-axis bounds')">
-  <area shape=rect coords="34,60,44,190" href="#gettingstarted" alt="Y axis position" onmouseout="UnTip()" onmouseover="Tip('this slider changes the y-axis midpoint')">
-  <area shape=rect coords="20,205,50,220" href="#gettingstarted" alt="fft button" onmouseout="UnTip()" onmouseover="Tip('this button turns on the fft display')">
-  <area shape=rect coords="20,230,50,245" href="#gettingstarted" alt="waveform button" onmouseout="UnTip()" onmouseover="Tip('this button turns on the time-domain display')">
-  <area shape=rect coords="50,60,100,220" href="#gettingstarted" alt="graphs" onmouseout="UnTip()" onmouseover="Tip('the y axis bounds')">
-  <area shape=rect coords="101,60,580,195" href="#gettingstarted" alt="graphs" onmouseout="UnTip()" onmouseover="Tip('time domain, FFT, and special-purpose graphs')">
-  <area shape=rect coords="101,196,580,220" href="#gettingstarted" alt="graphs" onmouseout="UnTip()" onmouseover="Tip('x axis bounds (in seconds)')">
-  <area shape=rect coords="50,227,580,239" href="#gettingstarted" alt="X axis position" onmouseout="UnTip()" onmouseover="Tip('this slider changes where we are in the sound')">
-  <area shape=rect coords="50,240,580,250" href="#gettingstarted" alt="X axis zoom" onmouseout="UnTip()" onmouseover="Tip('this slider changes how much of the sound we see (zoom in and out)')">
-  <area shape=rect coords="30,260,130,280" href="#gettingstarted" alt="sound file name" onmouseout="UnTip()" onmouseover="Tip('sound file name')">
-  <area shape=rect coords="0,260,29,280" href="#gettingstarted" alt="sound file name" onmouseout="UnTip()" onmouseover="Tip('sound index (used by many of the extension language functions)')">
-  <area shape=rect coords="140,260,450,280" href="#gettingstarted" alt="status area" onmouseout="UnTip()" onmouseover="Tip('error messages get displayed here')">
-  <area shape=rect coords="460,260,475,280" href="#syncbutton" alt="sync button" onmouseout="UnTip()" onmouseover="Tip('this button can make all chans/sounds move together.')">
-  <area shape=rect coords="522,260,535,280" href="#menuplay" alt="play button" onmouseout="UnTip()" onmouseover="Tip('play the sound')">
-  <area shape=rect coords="563,255,573,262" href="#menuplay" alt="play button" onmouseout="UnTip()" onmouseover="Tip('this opens the control panel')">
-  <area shape=rect coords="0,0,25,20" href="#menuplay" alt="play button" onmouseout="UnTip()" onmouseover="Tip('an icon!')">
+  <area shape=rect coords="0,20,50,50" href="#fileoperations" alt="File menu">
+  <area shape=rect coords="65,20,105,50" href="#editoperations" alt="Edit menu">
+  <area shape=rect coords="110,20,150,50" href="#viewing" alt="View menu">
+  <area shape=rect coords="160,20,230,50" href="#options" alt="Options menu">
+  <area shape=rect coords="540,20,570,50" href="#options" alt="Help menu">
+  <area shape=rect coords="12,60,20,70" href="#gettingstarted" alt="edit history list">
+  <area shape=rect coords="23,60,32,190" href="#gettingstarted" alt="Y axis zoom">
+  <area shape=rect coords="34,60,44,190" href="#gettingstarted" alt="Y axis position">
+  <area shape=rect coords="20,205,50,220" href="#gettingstarted" alt="fft button">
+  <area shape=rect coords="20,230,50,245" href="#gettingstarted" alt="waveform button">
+  <area shape=rect coords="50,60,100,220" href="#gettingstarted" alt="graphs">
+  <area shape=rect coords="101,60,580,195" href="#gettingstarted" alt="graphs">
+  <area shape=rect coords="101,196,580,220" href="#gettingstarted" alt="graphs">
+  <area shape=rect coords="50,227,580,239" href="#gettingstarted" alt="X axis position">
+  <area shape=rect coords="50,240,580,250" href="#gettingstarted" alt="X axis zoom">
+  <area shape=rect coords="30,260,130,280" href="#gettingstarted" alt="sound file name">
+  <area shape=rect coords="0,260,29,280" href="#gettingstarted" alt="sound file name">
+  <area shape=rect coords="140,260,450,280" href="#gettingstarted" alt="status area">
+  <area shape=rect coords="460,260,475,280" href="#syncbutton" alt="sync button">
+  <area shape=rect coords="522,260,535,280" href="#menuplay" alt="play button">
+  <area shape=rect coords="563,255,573,262" href="#menuplay" alt="play button">
+  <area shape=rect coords="0,0,25,20" href="#menuplay" alt="play button">
 </map>
 
 
@@ -138,13 +135,13 @@ is included in <a href="http://ccrma.stanford.edu/planetccrma/software/">PlanetC
 
 <div class="related">
 related documentation: &nbsp;
-<a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html &nbsp;</a>
-<a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html &nbsp;</a>
-<a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html &nbsp;</a>
-<a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html &nbsp;</a>
-<a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html &nbsp;</a>
-<a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html &nbsp;</a>
-<a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
+<a href="extsnd.html">extsnd.html &nbsp;</a>
+<a href="grfsnd.html">grfsnd.html &nbsp;</a>
+<a href="sndscm.html">sndscm.html &nbsp;</a>
+<a href="sndclm.html">sndclm.html &nbsp;</a>
+<a href="fm.html">fm.html &nbsp;</a>
+<a href="sndlib.html">sndlib.html &nbsp;</a>
+<a href="s7.html">s7.html &nbsp;</a>
 <a href="index.html">index.html</a>
 </div>
 
@@ -204,24 +201,24 @@ related documentation: &nbsp;
       <ul>
       <li><a href="extsnd.html#sndglobalvars">Global variables</a>
       <li><a href="extsnd.html#sndgenericfuncs">Generic functions</a>
-      <li><a href="extsnd.html#sndhooks" onmouseout="UnTip()" onmouseover="Tip('callbacks')">Hooks</a>
+      <li><a href="extsnd.html#sndhooks">Hooks</a>
       </ul>
     <li><a href="extsnd.html#sndobjects">Snd's objects</a>
       <ul>
-      <li><a href="extsnd.html#samplers" onmouseout="UnTip()" onmouseover="Tip('sound data iterators', WIDTH, 200)">Samplers</a>
-      <li><a href="extsnd.html#Vcts" onmouseout="UnTip()" onmouseover="Tip('real arrays', WIDTH, 100)">Vcts</a>
-      <li><a href="extsnd.html#extsndlib" onmouseout="UnTip()" onmouseover="Tip('the underlying library that handles sound data and files')">Sndlib</a>
-      <li><a href="extsnd.html#sndmarks" onmouseout="UnTip()" onmouseover="Tip('location markers in sound data')">Marks</a>
-      <li><a href="extsnd.html#sndmixes" onmouseout="UnTip()" onmouseover="Tip('mixed sounds and groups of mixed sounds')">Mixes</a>
-      <li><a href="extsnd.html#sndregions" onmouseout="UnTip()" onmouseover="Tip('selected or saved portions of sound data')">Regions and Selections</a>
-      <li><a href="extsnd.html#sndsounds" onmouseout="UnTip()" onmouseover="Tip('editing functions, per-channel display decisions, etc')">Sounds and channels</a>
+      <li><a href="extsnd.html#samplers">Samplers</a>
+      <li><a href="extsnd.html#Vcts">Vcts</a>
+      <li><a href="extsnd.html#extsndlib">Sndlib</a>
+      <li><a href="extsnd.html#sndmarks">Marks</a>
+      <li><a href="extsnd.html#sndmixes">Mixes</a>
+      <li><a href="extsnd.html#sndregions">Regions and Selections</a>
+      <li><a href="extsnd.html#sndsounds">Sounds and channels</a>
         <ul>
-          <li><a href="extsnd.html#customcontrols" onmouseout="UnTip()" onmouseover="Tip('a set of common sound effects below the main graph')">the control panel</a>
-          <li><a href="extsnd.html#editlists" onmouseout="UnTip()" onmouseover="Tip('current edit sequence', WIDTH, 200)">edit lists</a>
+          <li><a href="extsnd.html#customcontrols">the control panel</a>
+          <li><a href="extsnd.html#editlists">edit lists</a>
         </ul>
-      <li><a href="extsnd.html#sndtransforms" onmouseout="UnTip()" onmouseover="Tip('Fourier transform, wavelets, autocorelation, etc')">Transforms</a>
-      <li><a href="extsnd.html#snddialogs" onmouseout="UnTip()" onmouseover="Tip('customizing the built-in dialogs, etc')">Dialogs and Other Widgets</a>
-      <li><a href="extsnd.html#sndmisc" onmouseout="UnTip()" onmouseover="Tip('bind-key, exit, etc')">Miscellaneous functions</a>
+      <li><a href="extsnd.html#sndtransforms">Transforms</a>
+      <li><a href="extsnd.html#snddialogs">Dialogs and Other Widgets</a>
+      <li><a href="extsnd.html#sndmisc">Miscellaneous functions</a>
       <li><a href="extsnd.html#sndconstants">Constants</a>
       <li><a href="extsnd.html#snderrors">Errors and Debugging</a>
       </ul>
@@ -229,7 +226,7 @@ related documentation: &nbsp;
       <ul>
       <li><a href="extsnd.html#colors">Colors</a>
       <li><a href="extsnd.html#fonts">Fonts</a>
-      <li><a href="extsnd.html#graphics" onmouseout="UnTip()" onmouseover="Tip('write your own sound display functions or customize Snd\'s')">Graphics</a>
+      <li><a href="extsnd.html#graphics">Graphics</a>
       </ul>
 
     </ul>
@@ -239,29 +236,29 @@ related documentation: &nbsp;
   <ul>
   <li><a href="grfsnd.html#startup">Snd Startup</a>
     <ul>
-    <li><a href="grfsnd.html#sndswitches" onmouseout="UnTip()" onmouseover="Tip('startup switches such as -l and -p')">Snd invocation flags</a>
-    <li><a href="grfsnd.html#sndinitfile" onmouseout="UnTip()" onmouseover="Tip('~/.snd, ~/.snd_s7, ~/.snd_prefs_s7, etc')">The initialization file</a>
-    <li><a href="grfsnd.html#sndconfigurationswitches" onmouseout="UnTip()" onmouseover="Tip('this refers to the configure script used to build Snd')">Configuration choices</a>
-    <li><a href="grfsnd.html#sndenvvars" onmouseout="UnTip()" onmouseover="Tip('mostly related to audio hardware choices')">Environment variables</a>
+    <li><a href="grfsnd.html#sndswitches">Snd invocation flags</a>
+    <li><a href="grfsnd.html#sndinitfile">The initialization file</a>
+    <li><a href="grfsnd.html#sndconfigurationswitches">Configuration choices</a>
+    <li><a href="grfsnd.html#sndenvvars">Environment variables</a>
     </ul>
   <li><a href="grfsnd.html#snddynamic">Runtime modules and external programs</a>
     <ul>
-    <li><a href="grfsnd.html#emacssnd" onmouseout="UnTip()" onmouseover="Tip('Use Emacs as the listener')">Snd as an Emacs subjob</a>
-    <li><a href="grfsnd.html#dynamic" onmouseout="UnTip()" onmouseover="Tip('Load your own C code into Snd')">Dynamically loaded modules</a>
-    <li><a href="grfsnd.html#sndwithclm" onmouseout="UnTip()" onmouseover="Tip('CLM is built into Snd')">Snd and CLM</a>
-    <li><a href="grfsnd.html#sndwithcm" onmouseout="UnTip()" onmouseover="Tip('CM is Rick Taube\'s composition environment')">Snd and Common Music</a>
-    <li><a href="grfsnd.html#sndwithmotif" onmouseout="UnTip()" onmouseover="Tip('Motif extensions from xm.c')">Snd and Motif</a>
-    <li><a href="grfsnd.html#sndwithgtk" onmouseout="UnTip()" onmouseover="Tip('Gtk extensions from xg.c')">Snd and Gtk</a>
+    <li><a href="grfsnd.html#emacssnd">Snd as an Emacs subjob</a>
+    <li><a href="grfsnd.html#dynamic">Dynamically loaded modules</a>
+    <li><a href="grfsnd.html#sndwithclm">Snd and CLM</a>
+    <li><a href="grfsnd.html#sndwithcm">Snd and Common Music</a>
+    <li><a href="grfsnd.html#sndwithmotif">Snd and Motif</a>
+    <li><a href="grfsnd.html#sndwithgtk">Snd and Gtk</a>
     <li><a href="grfsnd.html#sndwithnogui">Snd with no GUI and as script engine</a>
-    <li><a href="grfsnd.html#sndandruby" onmouseout="UnTip()" onmouseover="Tip('Ruby is a scripting/extension language somewhat like Python')">Snd with Ruby</a>
-    <li><a href="grfsnd.html#sndandforth" onmouseout="UnTip()" onmouseover="Tip('Forth is a postfix extension language')">Snd with Forth</a>
-    <li><a href="grfsnd.html#sndands7" onmouseout="UnTip()" onmouseover="Tip('s7 is yet another Scheme extension language')">Snd with s7</a>
-    <li><a href="grfsnd.html#sndandladspa" onmouseout="UnTip()" onmouseover="Tip('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
-    <li><a href="grfsnd.html#sndandjack" onmouseout="UnTip()" onmouseover="Tip('This is the Jack audio library')">Snd and Jack</a>
-    <li><a href="grfsnd.html#sndandalsa" onmouseout="UnTip()" onmouseover="Tip('This is the new Linux audio library')">Snd and ALSA</a>
-    <li><a href="grfsnd.html#sndandgl" onmouseout="UnTip()" onmouseover="Tip('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
-    <li><a href="grfsnd.html#sndandgsl" onmouseout="UnTip()" onmouseover="Tip('include some special functions from GSL')">Snd and GSL</a>
-    <li><a href="grfsnd.html#sndandgmp" onmouseout="UnTip()" onmouseover="Tip('include multiprecision arithmetic')">Snd and multiprecision arithmetic</a>
+    <li><a href="grfsnd.html#sndandruby">Snd with Ruby</a>
+    <li><a href="grfsnd.html#sndandforth">Snd with Forth</a>
+    <li><a href="grfsnd.html#sndands7">Snd with s7</a>
+    <li><a href="grfsnd.html#sndandladspa">Snd and LADSPA plugins</a>
+    <li><a href="grfsnd.html#sndandjack">Snd and Jack</a>
+    <li><a href="grfsnd.html#sndandalsa">Snd and ALSA</a>
+    <li><a href="grfsnd.html#sndandgl">Snd and OpenGL</a>
+    <li><a href="grfsnd.html#sndandgsl">Snd and GSL</a>
+    <li><a href="grfsnd.html#sndandgmp">Snd and multiprecision arithmetic</a>
     </ul>
   <li><a href="grfsnd.html#otherstuff">Other stuff</a>
   <li><a href="sndscm.html#introduction">Scheme, Ruby, and Forth</a>
@@ -576,11 +573,11 @@ and separate windows for each sound (-separate).
 
 <map name="opendialogmap">
   <area shape=rect coords="365,40,400,60" 
-     onmouseout="UnTip()" 
-     onmouseover="Tip('In Motif, you can right-click the text widget to<br>get a drop-down list of previous file filters, but<br>in Gtk, you have to click this weird icon')">
+     
+    >
   <area shape=rect coords="365,350,400,370" 
-     onmouseout="UnTip()" 
-     onmouseover="Tip('In Motif, you can right-click the text widget to<br>get a drop-down list of previous files, but<br>in Gtk, you have to click this weird icon')">
+     
+    >
 </map>
 
 <p id="updatefile">A file can be opened from the File menu via Open
@@ -746,11 +743,11 @@ edit.
 <img class="indented" src="pix/edithistory.png" alt="edit history list" usemap="#edithistorymap">
 
 <map name="edithistorymap">
-  <area shape=rect coords="0,30,245,230" onmouseout="UnTip()" onmouseover="Tip('this is the edit history list. We\'ve made 4 edits so far.')">
-  <area shape=rect coords="285,30,420,210" onmouseout="UnTip()" onmouseover="Tip('this is the time domain graph with display-current-window.')">
-  <area shape=rect coords="530,30,760,210" onmouseout="UnTip()" onmouseover="Tip('this is the frequency domain (FFT) graph with peaks.')">
-  <area shape=rect coords="0,285,750,415" onmouseout="UnTip()" onmouseover="Tip('this is the listener showing the edits.')">
-  <area shape=rect coords="210,245,570,275" onmouseout="UnTip()" onmouseover="Tip('this is the status area telling us about the cursor.')">
+  <area shape=rect coords="0,30,245,230">
+  <area shape=rect coords="285,30,420,210">
+  <area shape=rect coords="530,30,760,210">
+  <area shape=rect coords="0,285,750,415">
+  <area shape=rect coords="210,245,570,275">
 </map>
 
 
@@ -884,15 +881,15 @@ If you'd like the fft size to reflect the current time domain
 window size:</p>
 
 <pre class="indented">
-(hook-push <a class=quiet href="extsnd.html#graphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphhook_tip)">graph-hook</a>
+(hook-push <a class=quiet href="extsnd.html#graphhook">graph-hook</a>
   (lambda (hook)
     ;; check that we are displaying an FFT, 
     ;; if so, set the FFT size to reflect the graph boundaries
-    (if (and (<a class=quiet href="extsnd.html#transformgraphp" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphp_tip)">transform-graph?</a>) 
-             (= (<a class=quiet href="extsnd.html#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphtype_tip)">transform-graph-type</a>) <a class=quiet href="extsnd.html#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphonce_tip)">graph-once</a>))
-        (let ((size (expt 2 (ceiling (log (+ 1.0 (- (<a class=quiet href="extsnd.html#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>) (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>))) 2.0)))))
-          (if (not (= size (<a class=quiet href="extsnd.html#transformsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformsize_tip)">transform-size)</a>))
-              (set! (<a class=quiet href="extsnd.html#transformsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformsize_tip)">transform-size)</a> size))))))
+    (if (and (<a class=quiet href="extsnd.html#transformgraphp">transform-graph?</a>) 
+             (= (<a class=quiet href="extsnd.html#transformgraphtype">transform-graph-type</a>) <a class=quiet href="extsnd.html#transformgraphtype">graph-once</a>))
+        (let ((size (expt 2 (ceiling (log (+ 1.0 (- (<a class=quiet href="extsnd.html#rightsample">right-sample</a>) (<a class=quiet href="extsnd.html#leftsample">left-sample</a>))) 2.0)))))
+          (if (not (= size (<a class=quiet href="extsnd.html#transformsize">transform-size)</a>))
+              (set! (<a class=quiet href="extsnd.html#transformsize">transform-size)</a> size))))))
 </pre>
 
 <p>
@@ -951,7 +948,7 @@ through a 3-D landscape, you can use the
 The first trace is at the bottom of the graph, moving from left to right.
 The same rotation commands apply to this display,
 with the additional variable <a href="extsnd.html#wavohop">wavo-hop</a> which sets the
-density of the traces.  To get this display <code>(set! (<a href="extsnd.html#timegraphtype">time-graph-type</a>) <a class=quiet href="extsnd.html#timegraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_timegraphtype_tip)">graph-as-wavogram</a>)</code>.  It is
+density of the traces.  To get this display <code>(set! (<a href="extsnd.html#timegraphtype">time-graph-type</a>) <a class=quiet href="extsnd.html#timegraphtype">graph-as-wavogram</a>)</code>.  It is
 important to set the length of each trace
 so that successive peaks line up.  The
 trace length in samples is set by the variable <a href="extsnd.html#wavotrace">wavo-trace</a>,
@@ -1034,10 +1031,10 @@ set the <a href="extsnd.html#selecteddatacolor">selected-data-color</a>
 or the <a href="extsnd.html#selectedgraphcolor">selected-graph-color</a>:</p>
 
 <pre class="indented">
-(define beige (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0.96 0.96 0.86))
-(define blue (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0 0 1))
-(set! (<a class=quiet href="extsnd.html#selectedgraphcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedgraphcolor_tip)">selected-graph-color</a>) beige)
-(set! (<a class=quiet href="extsnd.html#selecteddatacolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selecteddatacolor_tip)">selected-data-color</a>) blue)
+(define beige (<a class=quiet href="extsnd.html#makecolor">make-color</a> 0.96 0.96 0.86))
+(define blue (<a class=quiet href="extsnd.html#makecolor">make-color</a> 0 0 1))
+(set! (<a class=quiet href="extsnd.html#selectedgraphcolor">selected-graph-color</a>) beige)
+(set! (<a class=quiet href="extsnd.html#selecteddatacolor">selected-data-color</a>) blue)
 </pre>
 
 <p>The selected channel receives keyboard commands.  You can
@@ -1433,10 +1430,10 @@ set of sync'd channels, or just one argument. In the
 latter case, scale-by uses that scaler for all its
 channels, and scale-to normalizes all the channels
 together so that the loudest reaches that amplitude
-(that is, (<a class=quiet href="extsnd.html#scaleto" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleto_tip)">scale-to</a> .5) when applied to a stereo file
+(that is, (<a class=quiet href="extsnd.html#scaleto">scale-to</a> .5) when applied to a stereo file
 means that both channels are scaled by the same amount so
 that the loudest point in the file becomes .5).  There's
-one special case here: if you (<a class=quiet href="extsnd.html#scaleto" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleto_tip)">scale-to</a> 1.0) in a sound 
+one special case here: if you (<a class=quiet href="extsnd.html#scaleto">scale-to</a> 1.0) in a sound 
 that is stored as short ints and you haven't set the clipping
 variable to #t, since 1.0 itself is not representable,
 the actual scaled-to value is just less than 1.0 to avoid the
@@ -1489,7 +1486,7 @@ C-z       set current sample to zero
 C-x C-z   smooth data using cosine (<a href="extsnd.html#smoothsound">smooth-sound</a>)
 </pre>
 
-<p><code>(set! (<a class=quiet href="extsnd.html#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)) .1)</code> sets the sample
+<p><code>(set! (<a class=quiet href="extsnd.html#sample">sample</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>)) .1)</code> sets the sample
 at the cursor to .1.  To set several samples to zero, use C-u &lt;number&gt; C-z.
 </p>
 
@@ -1554,9 +1551,9 @@ red: playback paused.</p>
 If you're getting
 interruptions while playing a sound (stereo 44.1 kHz sounds can be problematic),
 try using a very large dac buffer.  Use set! to change this:
-<code>(set! (<a class=quiet href="extsnd.html#dacsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dacsize_tip)">dac-size</a>) 65536)</code>.
+<code>(set! (<a class=quiet href="extsnd.html#dacsize">dac-size</a>) 65536)</code>.
 If you're getting clicks in Linux despite a large dac-size, try setting the OSS fragment sizes by hand: <code>
-(<a class=quiet href="extsnd.html#musosssetbuffers" onmouseout="UnTip()" onmouseover="Tip(extsnd_musosssetbuffers_tip)">mus-oss-set-buffers</a> fragments fragment-size)</code>. OSS's
+(<a class=quiet href="extsnd.html#musosssetbuffers">mus-oss-set-buffers</a> fragments fragment-size)</code>. OSS's
 defaults are 16 and 12 which make the control panel controls very sluggish.  Snd used to
 default to 4 and 12, but this seems to cause trouble for a variety of new sound cards.
 My initialization file uses <code>(mus-oss-set-buffers 2 12)</code>.
@@ -1798,7 +1795,7 @@ window.  Use the <a href="extsnd.html#ybounds">y-bounds</a> function to set the 
 small number, then use the position scroller to find the signal.
 For example, if your signal is a very soft recording setting only the lowest two bits
 of a 16 bit signal but with DC offset due to the recording conditions,
-<code>(set! (<a class=quiet href="extsnd.html#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a>) '(-.01 .01))</code>
+<code>(set! (<a class=quiet href="extsnd.html#ybounds">y-bounds</a>) '(-.01 .01))</code>
 and try the scroller.</p>
 
 
@@ -1853,25 +1850,25 @@ beneath the channel graphs.
 <img class="indented" src="pix/controls.png" alt="picture of Snd control panel" usemap="#controlsmap">
 
 <map name="controlsmap">
-  <area shape=rect coords="0,0,25,25" onmouseout="UnTip()" onmouseover="Tip('This is our icon!')">
-  <area shape=rect coords="650,60,820,95" onmouseout="UnTip()" onmouseover="Tip('See with-inset-graph')">
+  <area shape=rect coords="0,0,25,25">
+  <area shape=rect coords="650,60,820,95">
 
-  <area shape=rect coords="0,295,820,310" onmouseout="UnTip()" onmouseover="Tip('amplitude control')">
-  <area shape=rect coords="0,311,800,325" onmouseout="UnTip()" onmouseover="Tip('speed (sampling rate) control')">
-  <area shape=rect coords="801,311,820,325" onmouseout="UnTip()" onmouseover="Tip('resampling direction (click the arrow to change direction)')">
-  <area shape=rect coords="0,326,800,345" onmouseout="UnTip()" onmouseover="Tip('expansion control (tempo change); uses granular synthesis')">
-  <area shape=rect coords="801,326,820,345" onmouseout="UnTip()" onmouseover="Tip('this button turns on/off the expansion effect')">
-  <area shape=rect coords="0,346,800,365" onmouseout="UnTip()" onmouseover="Tip('contrast enhancement; this can make loud portions more intense')">
-  <area shape=rect coords="801,346,820,365" onmouseout="UnTip()" onmouseover="Tip('this button turns on/off the contrast enhancement effect')">
-  <area shape=rect coords="0,366,499,380" onmouseout="UnTip()" onmouseover="Tip('reverb amount')">
-  <area shape=rect coords="500,366,800,380" onmouseout="UnTip()" onmouseover="Tip('reverb length')">
-  <area shape=rect coords="801,366,820,380" onmouseout="UnTip()" onmouseover="Tip('this button turns on/off the reverberator')">
-  <area shape=rect coords="80,381,130,400" onmouseout="UnTip()" onmouseover="Tip('filter order')">
-  <area shape=rect coords="131,381,710,400" onmouseout="UnTip()" onmouseover="Tip('filter frequency response envelope; 1.0 = srate/2')">
-  <area shape=rect coords="711,381,760,400" onmouseout="UnTip()" onmouseover="Tip('filter graph y-axis displayed in dB or linear')">
-  <area shape=rect coords="761,381,800,400" onmouseout="UnTip()" onmouseover="Tip('filter graph x-axis displayed in Hz or 0..1')">
-  <area shape=rect coords="801,381,820,400" onmouseout="UnTip()" onmouseover="Tip('this button turns on/off the filter')">
-  <area shape=rect coords="0,401,820,525" onmouseout="UnTip()" onmouseover="Tip('this graph shows the desired frequency response,<br>and the actual one given the current filter order')">
+  <area shape=rect coords="0,295,820,310">
+  <area shape=rect coords="0,311,800,325">
+  <area shape=rect coords="801,311,820,325">
+  <area shape=rect coords="0,326,800,345">
+  <area shape=rect coords="801,326,820,345">
+  <area shape=rect coords="0,346,800,365">
+  <area shape=rect coords="801,346,820,365">
+  <area shape=rect coords="0,366,499,380">
+  <area shape=rect coords="500,366,800,380">
+  <area shape=rect coords="801,366,820,380">
+  <area shape=rect coords="80,381,130,400">
+  <area shape=rect coords="131,381,710,400">
+  <area shape=rect coords="711,381,760,400">
+  <area shape=rect coords="761,381,800,400">
+  <area shape=rect coords="801,381,820,400">
+  <area shape=rect coords="0,401,820,525">
 </map>
 
 <p>The controls are: amp, speed, expand, contrast,
@@ -1985,13 +1982,13 @@ For information on initialization, configuration, and connections to other progr
 
 <div class="related">
 related documentation: &nbsp;
-<a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html &nbsp;</a>
-<a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html &nbsp;</a>
-<a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html &nbsp;</a>
-<a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html &nbsp;</a>
-<a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html &nbsp;</a>
-<a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html &nbsp;</a>
-<a href="s7.html" onmouseout="UnTip()" onmouseover="Tip(s7_html_tip)">s7.html &nbsp;</a>
+<a href="extsnd.html">extsnd.html &nbsp;</a>
+<a href="grfsnd.html">grfsnd.html &nbsp;</a>
+<a href="sndscm.html">sndscm.html &nbsp;</a>
+<a href="sndclm.html">sndclm.html &nbsp;</a>
+<a href="fm.html">fm.html &nbsp;</a>
+<a href="sndlib.html">sndlib.html &nbsp;</a>
+<a href="s7.html">s7.html &nbsp;</a>
 <a href="index.html">index.html</a>
 </div>
 

@@ -4057,7 +4057,7 @@ applied to that many arguments.
 </p>
 
 <pre class="indented">
-&gt; (define* (add-2 a (b 32)) "add-2 adds its 2 args" (+ a b))
+&gt; (define add-2 (let ((documentation "add-2 adds its 2 args")) (lambda* (a (b 32)) (+ a b))))
 add-2
 
 &gt; (procedure-documentation add-2)
@@ -5405,41 +5405,41 @@ Here we scan the symbol table looking for any function that doesn't have documen
 </p>
 
 <pre class="indented">
-(define (<em class=def id="profile">profile</em> expression)
-  "(profile func) evaluates the function, then reports profiling information. \
-The function takes one argument, the environment in which loads and evals should operate."
+(define <em class=def id="profile">profile</em> 
+  (let ((documentation "(profile func) evaluates the function, then reports profiling information. \
+The function takes one argument, the environment in which loads and evals should operate."))
+    (lambda (expression)
+      (define calls (make-vector 1024 (cons 'unused -1)))
+      (define call 0)
 
-  (define calls (make-vector 1024 (cons 'unused -1)))
-  (define call 0)
-
-  (define (profile-1 n)
-    (set! (cdr (calls n)) (+ (cdr (calls n)) 1)))
+      (define (profile-1 n)
+        (set! (cdr (calls n)) (+ (cdr (calls n)) 1)))
   
-  (define (wrap-all)
-    (let ((e (inlet)))
-      (for-each
-        (lambda (sym)
-          (if (and (<em class=red>defined?</em> sym)
-	           (not (constant? sym)))
-	      (let ((val (<em class=red>symbol-&gt;value</em> sym)))
-	        (if (procedure? val)
-	            (let ((new-val (apply lambda 'args `((profile-1 ,call) (apply ,val args)))))
-		      (set! (calls call) (cons sym 0))
-		      (set! call (+ call 1))
-		      (if (&gt;= call (length calls))
-			  (set! calls (copy calls (make-vector (* 2 (length calls)) (cons 'unused -1)))))
-		      (if (procedure-setter val)
-		          (set! (procedure-setter new-val) (procedure-setter val)))
-		      (varlet e sym new-val))))))
-       (<em class=red>symbol-table</em>))
-      e))
+      (define (wrap-all)
+        (let ((e (inlet)))
+          (for-each
+            (lambda (sym)
+              (if (and (<em class=red>defined?</em> sym)
+	               (not (constant? sym)))
+	          (let ((val (<em class=red>symbol-&gt;value</em> sym)))
+	            (if (procedure? val)
+	                (let ((new-val (apply lambda 'args `((profile-1 ,call) (apply ,val args)))))
+		          (set! (calls call) (cons sym 0))
+		          (set! call (+ call 1))
+		          (if (&gt;= call (length calls))
+			      (set! calls (copy calls (make-vector (* 2 (length calls)) (cons 'unused -1)))))
+		          (if (procedure-setter val)
+		              (set! (procedure-setter new-val) (procedure-setter val)))
+		          (varlet e sym new-val))))))
+           (<em class=red>symbol-table</em>))
+          e))
 
-  (expression (wrap-all))
-  (sort! calls (lambda (a b) (&gt; (cdr a) (cdr b))))
-  (do ((i 0 (+ i 1)))
-      ((= i call))
-    (if (&gt; (cdr (calls i)) 0)
-	(format #t "~&lt; (car (calls i)) ~&gt;: ~&lt; (cdr (calls i)) ~&gt;~%"))))
+      (expression (wrap-all))
+      (sort! calls (lambda (a b) (&gt; (cdr a) (cdr b))))
+      (do ((i 0 (+ i 1)))
+          ((= i call))
+        (if (&gt; (cdr (calls i)) 0)
+	    (format #t "~&lt; (car (calls i)) ~&gt;: ~&lt; (cdr (calls i)) ~&gt;~%"))))))
 
 &gt; (profile (lambda (e) 
              (load "lint.scm" e) 
@@ -5560,17 +5560,6 @@ macro that returns an anonymous macro that returns an anonymous function that &m
 "(caadar lst) returns (car (car (cdr (car lst)))): (caadar '((1 (2 3)))) -&gt; 2"
 </pre>
 
-<p>If the initial expression in a function body is a string constant, it is assumed to be a documentation string (accessible via help or procedure-documentation):
-</p>
-
-<pre class="indented">
-(define (add1 a)
-  "(add1 a) adds 1 to its argument"
-  (+ a 1))
-
-&gt; (help add1)
-"(add1 a) adds 1 to its argument"
-</pre>
 
 
 <div class="separator"></div>

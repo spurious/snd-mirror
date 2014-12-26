@@ -187,7 +187,7 @@
 				       "Gain"
 				       
 				       (lambda (w data) 
-					 "Gain scales amplitude by gain amount."
+					 ;; Gain scales amplitude by gain amount.
 					 (let ((with-env (and (not (equal? (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0)))
 							      (scale-envelope (xe-envelope gain-envelope) gain-amount))))
 					   (if (eq? gain-target 'sound)
@@ -1097,7 +1097,7 @@ the modulation frequency, and the echo amplitude."))
       
       (define new-comb-chord
 	(lambda (scaler size amp interval-one interval-two)
-	  "Comb chord filter: create chords by using filters at harmonically related sizes."
+	  ;; Comb chord filter: create chords by using filters at harmonically related sizes.
 	  (let ((cs (make-comb-bank (vector (make-comb scaler size)
 					    (make-comb scaler (* size interval-one))
 					    (make-comb scaler (* size interval-two))))))
@@ -2095,9 +2095,9 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 	  (place-sound-envelope #f))
       
       (define (place-sound mono-snd stereo-snd pan-env)
-	"(place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting 
-it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is 
-a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1."
+	;; (place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting
+	;; it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is 
+	;; a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1.
 	(if (number? pan-env)
 	    (let ((pos (/ pan-env 90.0)))
 	      (effects-position-sound mono-snd pos stereo-snd 1)

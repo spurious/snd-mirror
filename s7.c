@@ -392,7 +392,7 @@ typedef struct c_proc_ext_t {
   void *chooser_data;
   s7_pointer *arg_defaults, *arg_names;
   s7_pointer call_args;
-  int keyed_args;
+  int keyed_args;       /* 2 * args == number of args if all are specified via keywords */
   bool simple_defaults;
 } c_proc_ext_t;
 
@@ -33533,7 +33533,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
 
-  ptr = (c_proc_t *)calloc(1, sizeof(c_proc_t));
+  ptr = (c_proc_t *)malloc(sizeof(c_proc_t));
   if (required_args == 0)
     {
       if (rest_arg)
@@ -33561,6 +33561,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   c_function_name_length(x) = safe_strlen(name);
   if (doc)
     c_function_documentation(x) = make_permanent_string(doc);
+  else c_function_documentation(x) = NULL;
 
   c_function_required_args(x) = required_args;
   c_function_optional_args(x) = optional_args;
@@ -69392,15 +69393,12 @@ int main(int argc, char **argv)
  * need info and what type checks are most onerous currently [these are internal] (simple_char_eq could check func rtn type)
  * read-string|line? via tmp_str (substring_to_temp etc) 
  *
- * finish doc in generators
- * procedure-predicate? -- predicate, temp-case, no-check-case, see also lint.scm
- *   built-in predicates via define_safe_function_with_predicate?
+ * doc strings in docs
+ * procedure-predicate? -- predicate, temp-case, no-check-case
  *   lint.scm:
  *      snd|s7-lint-info.scm: all the func type/arg data using predicates, lint also using these
- *      no built-in data here (fill hash-tables via local loads)
- *      '(func 'type-predicate arg1-pred...) or (f t . arg) if all args have same etc
- *      '(+ number? . number?), '(abs real? real?) etc
  *      also cload: libc libgsl etc arg types/return types
+ *   s7_define_typed_function
  *
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  */
