@@ -2,67 +2,59 @@
 
 (provide 'snd-index.scm)
 
-(define (html obj)
-  "(html arg) where arg can be a string, symbol, or procedure looks for a corresponding url 
-and if one is found, and the Snd documentation can be found, calls *html-program* with that url"
-  (letrec ((find-close-paren
-	    (lambda (str)
-	      (let loop ((pos 0)) ;from slib/strsrch.scm
-		(cond
-		 ((>= pos (string-length str)) #f)
-		 ((char=? #\) (str pos)) pos)
-		 ((char=? #\space (str pos)) pos)
-		 (else (loop (+ 1 pos)))))))
-	   
-	   (goto-html
-	    (lambda (n)
-	      ;; look for doc on current dir, then html dir, then global dir
-	      ;; snd.html is what we'll search for
-	      (let ((dir (if (file-exists? "snd.html") 
-			     (getcwd)
-			     (if (and (string? *html-dir*)
-				      (file-exists? (string-append *html-dir* "/snd.html")))
-				 *html-dir*
-				 (if (file-exists? "/usr/share/doc/snd-15/snd.html")
-				     "/usr/share/doc/snd-15"
-				     (if (file-exists? "/usr/local/share/doc/snd-15/snd.html")
-					 "/usr/local/share/doc/snd-15"
-					 (if (file-exists? "/usr/doc/snd-15/snd.html")
-					     "/usr/doc/snd-15"
-					     (if (file-exists? "/usr/share/doc/snd-14/snd.html")
-						 "/usr/share/doc/snd-14"
-						 (if (file-exists? "/usr/local/share/doc/snd-14/snd.html")
-						     "/usr/local/share/doc/snd-14"
-						     (if (file-exists? "/usr/doc/snd-14/snd.html")
-							 "/usr/doc/snd-14"
-							 #f))))))))))
-		(if dir
-		    (system (string-append *html-program* " file:" dir "/" n)))))))
-    
-    (let ((name (if (string? obj) 
-		    obj
-		    (if (symbol? obj) 
-			(symbol->string obj)
-			(let ((doc (and (procedure? obj)
-					(procedure-documentation obj))))
-			  (if (and (string? doc)
-				   (char=? (doc 0) #\())
-			      (let ((pos (find-close-paren doc)))
-				(if pos
-				    (substring doc 1 pos)
-				    #f))))))))
-      (if (and name (string? name))
-	  (let ((url (snd-url name)))
-	    (if url 
-		(goto-html url)
-		(snd-print (format #f "no url for ~A?" name))))
-	  (snd-print (format #f "no doc for ~A?" name))))))
-
-#|
-(define (? obj)
-  "(? obj) prints out any help it can find for obj, and tries to find obj in the docs via firefox, netscape or mozilla"
-  (let ((hlp (snd-help obj)))
-    (if (string? hlp)
-	(snd-print hlp))
-    (html obj)))
-|#
+(define html 
+  (let ((documentation "(html arg) where arg can be a string, symbol, or procedure looks for a corresponding url 
+and if one is found, and the Snd documentation can be found, calls *html-program* with that url"))
+    (lambda (obj)
+      (letrec ((find-close-paren
+		(lambda (str)
+		  (let loop ((pos 0)) ;from slib/strsrch.scm
+		    (cond
+		     ((>= pos (string-length str)) #f)
+		     ((char=? #\) (str pos)) pos)
+		     ((char=? #\space (str pos)) pos)
+		     (else (loop (+ 1 pos)))))))
+	       
+	       (goto-html
+		(lambda (n)
+		  ;; look for doc on current dir, then html dir, then global dir
+		  ;; snd.html is what we'll search for
+		  (let ((dir (if (file-exists? "snd.html") 
+				 (getcwd)
+				 (if (and (string? *html-dir*)
+					  (file-exists? (string-append *html-dir* "/snd.html")))
+				     *html-dir*
+				     (if (file-exists? "/usr/share/doc/snd-15/snd.html")
+					 "/usr/share/doc/snd-15"
+					 (if (file-exists? "/usr/local/share/doc/snd-15/snd.html")
+					     "/usr/local/share/doc/snd-15"
+					     (if (file-exists? "/usr/doc/snd-15/snd.html")
+						 "/usr/doc/snd-15"
+						 (if (file-exists? "/usr/share/doc/snd-14/snd.html")
+						     "/usr/share/doc/snd-14"
+						     (if (file-exists? "/usr/local/share/doc/snd-14/snd.html")
+							 "/usr/local/share/doc/snd-14"
+							 (if (file-exists? "/usr/doc/snd-14/snd.html")
+							     "/usr/doc/snd-14"
+							     #f))))))))))
+		    (if dir
+			(system (string-append *html-program* " file:" dir "/" n)))))))
+	
+	(let ((name (if (string? obj) 
+			obj
+			(if (symbol? obj) 
+			    (symbol->string obj)
+			    (let ((doc (and (procedure? obj)
+					    (procedure-documentation obj))))
+			      (if (and (string? doc)
+				       (char=? (doc 0) #\())
+				  (let ((pos (find-close-paren doc)))
+				    (if pos
+					(substring doc 1 pos)
+					#f))))))))
+	  (if (and name (string? name))
+	      (let ((url (snd-url name)))
+		(if url 
+		    (goto-html url)
+		    (snd-print (format #f "no url for ~A?" name))))
+	      (snd-print (format #f "no doc for ~A?" name))))))))

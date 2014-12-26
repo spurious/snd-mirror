@@ -12,7 +12,6 @@
 (define xe-envelope
   (dilambda
    (lambda (drawer)
-     "accessor for the current xm-enved envelope"
      (or (car drawer) 
 	 (let ((ax-inf (drawer 3)))
 	   (list (ax-inf 0)

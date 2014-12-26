@@ -26,24 +26,24 @@
   (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm)
 
 
-(define* (nssb gen (fm 0.0))
-;;  "(make-nssb frequency (ratio 1.0) (n 1)) creates an nssb generator, similar to nxysin.\n\
-;;   (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced by frequency * ratio."
-  
-  (let-set! gen 'fm fm)
-  (with-let gen
-    (let* ((cx angle)
-	   (mx (* cx ratio))
-	   (den (sin (* 0.5 mx))))
-      (set! angle (+ angle fm frequency))
-      (if (< (abs den) nearly-zero)
-	  -1.0
-	  (/ (- (* (sin cx) 
-		   (sin (* mx (/ (+ n 1) 2)))
-		   (sin (/ (* n mx) 2)))
-		(* (cos cx) 
-		   0.5 (+ den (sin (* mx (+ n 0.5))))))
-	     (* (+ n 1) den))))))
+(define nssb 
+  (let ((documentation "(make-nssb frequency (ratio 1.0) (n 1)) creates an nssb generator, similar to nxysin. (nssb gen (fm 0.0)) 
+returns n sinusoids from frequency spaced by frequency * ratio."))
+    (lambda* (gen (fm 0.0))
+      (let-set! gen 'fm fm)
+      (with-let gen
+	(let* ((cx angle)
+	       (mx (* cx ratio))
+	       (den (sin (* 0.5 mx))))
+	  (set! angle (+ angle fm frequency))
+	  (if (< (abs den) nearly-zero)
+	      -1.0
+	      (/ (- (* (sin cx) 
+		       (sin (* mx (/ (+ n 1) 2)))
+		       (sin (/ (* n mx) 2)))
+		    (* (cos cx) 
+		       0.5 (+ den (sin (* mx (+ n 0.5))))))
+		 (* (+ n 1) den))))))))
   
 #|
 (with-sound (:clipped #f :statistics #t :play #t)

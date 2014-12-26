@@ -44532,6 +44532,7 @@ static void opt_generator(s7_scheme *sc, s7_pointer func, s7_pointer car_x, int 
 {
   /* this is an optimization aimed at generators.  So we might as well go all out... */
   s7_pointer body;
+
   body = closure_body(func);
   if ((s7_list_length(sc, body) == 2) &&
       (caar(body) == sc->LET_SET) &&
@@ -48328,7 +48329,6 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 {
   int len;
   len = s7_list_length(sc, body);
-
   if (len < 0)                                                               /* (define (hi) 1 . 2) */
     return(eval_error_with_name(sc, "~A: function body messed up, ~A", sc->code));
 
@@ -48338,6 +48338,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 
       clear_syms_in_list(sc);
       optimize(sc, body, 1, collect_collisions(sc, args, list_1(sc, add_sym_to_list(sc, x))));
+
       /* if the body is safe, we can optimize the calling sequence */
       if ((is_proper_list(sc, args)) &&
 	  (!arglist_has_rest(sc, args)))
@@ -48424,9 +48425,10 @@ static s7_pointer check_define(s7_scheme *sc)
 	    s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
 	  set_local(x);
 	}
-
+      
       if ((is_pair(cadr(sc->code))) &&               /* look for (define sym (lambda ...)) and treat it like (define (sym ...)...) */
-	  ((caadr(sc->code) == sc->LAMBDA) || (caadr(sc->code) == sc->LAMBDA_STAR)) &&
+	  ((caadr(sc->code) == sc->LAMBDA) || 
+	   (caadr(sc->code) == sc->LAMBDA_STAR)) &&
 	  (symbol_id(caadr(sc->code)) == 0))
 	/* not is_global here because that bit might not be set for initial symbols (why not? -- redef as method etc) */
 	optimize_lambda(sc, caadr(sc->code) == sc->LAMBDA, x, cadr(cadr(sc->code)), cddr(cadr(sc->code)));
@@ -61959,7 +61961,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if ((sc->safety != 0) ||
 	    (main_stack_op(sc) != OP_DEFINE1))
 	  optimize(sc, body, 0, sc->NIL);
-	else optimize(sc, body, 1, collect_collisions(sc, car(code), sc->NIL));
+	else 
+	  {
+	    /* optimize(sc, body, 1, collect_collisions(sc, car(code), sc->NIL)); */
+	    optimize_lambda(sc, true, sc->LAMBDA, car(code), body);
+	  }
 
 	if ((is_overlaid(code)) &&
 	    (cdr(ecdr(code)) == code))
@@ -61982,12 +61988,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((sc->safety != 0) ||
 	  (main_stack_op(sc) != OP_DEFINE1))
 	optimize(sc, cdr(sc->code), 0, sc->NIL);
-      else optimize(sc, cdr(sc->code), 1, collect_collisions(sc, car(sc->code), sc->NIL));
+      else
+	{
+	  /* optimize(sc, cdr(sc->code), 1, collect_collisions(sc, car(sc->code), sc->NIL)); */
+	  optimize_lambda(sc, false, sc->LAMBDA_STAR, car(sc->code), cdr(sc->code));
+	}
 
       if ((is_overlaid(sc->code)) &&
 	  (cdr(ecdr(sc->code)) == sc->code))
 	pair_set_syntax_symbol(sc->code, sc->LAMBDA_STAR_UNCHECKED);
-
 
     case OP_LAMBDA_STAR_UNCHECKED:
       sc->value = make_closure(sc, car(sc->code), cdr(sc->code), T_CLOSURE_STAR);
@@ -69360,7 +69369,7 @@ int main(int argc, char **argv)
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1149
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1157
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3026
- * lg             |      |      | 6547 6497 6494 6288
+ * lg             |      |      | 6547 6497 6494 6251
  * t455|6     265 |   89 |  9   |       8.4 8045 8026
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 27.7
@@ -69398,9 +69407,18 @@ int main(int argc, char **argv)
  * need info and what type checks are most onerous currently [these are internal] (simple_char_eq could check func rtn type)
  * read-string|line? via tmp_str (substring_to_temp etc) 
  *
+ * finish doc in generators
  * procedure-predicate? -- predicate, temp-case, no-check-case, see also lint.scm
  *   built-in predicates via define_safe_function_with_predicate?
- *   need to rewrite everything to use the new doc syntax, and make sure it is local
+ *   lint.scm:
+ *      snd|s7-lint-info.scm: all the func type/arg data using predicates, lint also using these
+ *      no built-in data here (fill hash-tables via local loads)
+ *      '(func 'type-predicate arg1-pred...) or (f t . arg) if all args have same etc
+ *      '(+ number? . number?), '(abs real? real?) etc
+ *      also cload: libc libgsl etc arg types/return types
+ * deprecate procedure-arity [lint s7test, but optarg number is not obvious if rest is #t, and there's s7_procedure_arity (not used?)]
+ *   s7_p_a used only in ffitest and once in s7
+ * built-in doc via ((funclet abs) 'documentation)
  *
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  */

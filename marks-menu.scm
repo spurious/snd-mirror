@@ -31,14 +31,15 @@
 
 (define marks-menu (add-to-main-menu "Marks" (lambda ()
 					       (update-label marks-list))))
-(define (find-two-marks)
-  "(find-two-marks) looks for the marks for the marks-menu functions to use"
-  (let* ((snd (selected-sound))
-	 (chn (selected-channel))
-	 (ms (marks snd chn)))
-    (if (> (length ms) 1)
-	(map mark->integer (list (car ms) (cadr ms)))
-	(list))))
+(define find-two-marks
+  (let ((documentation "(find-two-marks) looks for the marks for the marks-menu functions to use"))
+    (lambda ()
+      (let* ((snd (selected-sound))
+	     (chn (selected-channel))
+	     (ms (marks snd chn)))
+	(if (> (length ms) 1)
+	    (map mark->integer (list (car ms) (cadr ms)))
+	    (list))))))
 
 
 ;;; -------- Play between by marks
@@ -49,14 +50,15 @@
 (define play-between-marks-dialog #f)
 (define play-between-marks-menu-label #f)
 
-(define (cp-play-between-marks)
-  "(cp-play-between-marks) plays between 2 marks (marks-menu)"
-  (play-between-marks (integer->mark play-between-marks-m1) (integer->mark play-between-marks-m2)))
+(define cp-play-between-marks
+  (let ((documentation "(cp-play-between-marks) plays between 2 marks (marks-menu)"))
+    (lambda ()
+      (play-between-marks (integer->mark play-between-marks-m1) (integer->mark play-between-marks-m2)))))
 
 (if (or (provided? 'xm) 
 	(provided? 'xg))
     (begin
-
+      
       (define (set-syncs)
 	(for-each 
 	 (lambda (snd-marks)
@@ -72,22 +74,22 @@
 	    snd-marks))
 	 (marks))
 	(update-time-graph))
-
+      
       (define (max-mark) ; "id" here
 	(apply max (map mark->integer (marks (selected-sound) (selected-channel)))))
-
+      
       (define (min-mark)
 	(apply min (map mark->integer (marks (selected-sound) (selected-channel)))))
-
+      
       (define (post-play-between-marks-dialog)
         (if (not play-between-marks-dialog)
             (let ((inits (find-two-marks))
 		  (max-mark-id (max-mark))
 		  (sliders ()))
-
+	      
 	      (if (null? inits)
 		  (snd-display ";no marks")
-
+		  
 		  (begin
 		    (set! play-between-marks-m1 (car inits))
 		    (set! play-between-marks-m2 (cadr inits))
@@ -97,11 +99,11 @@
 		    (set! play-between-marks-dialog 
 			  (make-effect-dialog 
 			   play-between-marks-label
-
+			   
 			   (if (provided? 'snd-gtk)
 			       (lambda (w context) (cp-play-between-marks))
 			       (lambda (w context info) (cp-play-between-marks)))
-
+			   
 			   (if (provided? 'snd-gtk)
 			       (lambda (w context)
 				 (help-dialog "Define selection by marks Help"
@@ -109,7 +111,7 @@
 			       (lambda (w context info)
 				 (help-dialog "Define selection by marks Help"
 					      "Plays area between specified marks. Use the sliders to select the boundary marks.")))
-
+			   
 			   (if (provided? 'snd-gtk)
 			       (lambda (w data)
 				 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders))  play-between-marks-m1)
@@ -118,7 +120,7 @@
 			       (lambda (w c i)
 				 ((*motif* 'XtSetValues) (sliders 0) (list (*motif* 'XmNvalue) play-between-marks-m1))
 				 ((*motif* 'XtSetValues) (sliders 1) (list (*motif* 'XmNvalue) play-between-marks-m2))))))
-
+		    
 		    (set! sliders
 			  (add-sliders 
 			   play-between-marks-dialog
@@ -132,15 +134,15 @@
 					     (set-syncs)))
 				       1)
 				 (list "mark two" 0 play-between-marks-m2 max-mark-id
-			   (if (provided? 'snd-gtk)
-			       (lambda (w context)
-				 (set! play-between-marks-m2 ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w)))
-				 (set-syncs))
-			       (lambda (w context info)
-				 (set! play-between-marks-m2 ((*motif* '.value) info))
-				 (set-syncs)))
-			   1))))
-
+				       (if (provided? 'snd-gtk)
+					   (lambda (w context)
+					     (set! play-between-marks-m2 ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w)))
+					     (set-syncs))
+					   (lambda (w context info)
+					     (set! play-between-marks-m2 ((*motif* '.value) info))
+					     (set-syncs)))
+				       1))))
+		    
 		    (if (provided? 'snd-motif)
 			(with-let (sublet *motif*)
 			  (hook-push select-channel-hook (lambda (hook)
@@ -168,23 +170,23 @@
 						      sliders))))))))
 	      (if play-between-marks-dialog
 		  (activate-dialog play-between-marks-dialog)))))
-
+      
       (set! play-between-marks-menu-label (add-to-menu marks-menu "Play between marks" (lambda () (post-play-between-marks-dialog)))))
-
+    
     (set! play-between-marks-menu-label (add-to-menu marks-menu play-between-marks-label cp-play-between-marks)))
 
 (set! marks-list (cons (lambda ()
-                           (let ((new-label (format #f "Play between marks (~D ~D)" play-between-marks-m1 play-between-marks-m2)))
-                             (if play-between-marks-menu-label (change-label play-between-marks-menu-label new-label))
-                             (set! play-between-marks-label new-label)))
-                         marks-list))
+			 (let ((new-label (format #f "Play between marks (~D ~D)" play-between-marks-m1 play-between-marks-m2)))
+			   (if play-between-marks-menu-label (change-label play-between-marks-menu-label new-label))
+			   (set! play-between-marks-label new-label)))
+		       marks-list))
 
 
 ;;; -------- Loop play between marks
 
 (if (provided? 'xm)
     (with-let (sublet *motif*)
-
+      
       (define loop-between-marks-m1 0)
       (define loop-between-marks-m2 1)
       (define loop-between-marks-buffer-size 512)
@@ -196,7 +198,7 @@
       (define use-combo-box-for-buffer-size #f) ; radio-buttons or combo-box choice
       
       (define (cp-loop-between-marks)
-	"(cp-loop-between-marks) loops between two marks, playing (marks-menu)"
+	;; cp-loop-between-marks) loops between two marks, playing (marks-menu)
 	(loop-between-marks (integer->mark loop-between-marks-m1) (integer->mark loop-between-marks-m2) loop-between-marks-buffer-size))
       
       (define (overall-max-mark-id default-max)
@@ -345,63 +347,66 @@
 
 ;;; -------- trim from and back (goes by first or last mark)
 
-(define (trim-front)
-  "trim-front finds the first mark in each of the syncd channels and removes all samples before it"
-  (let ((snc (sync)))
-    (define (trim-front-one-channel snd chn)
-      (if (< (length (marks snd chn)) 1)
-          (status-report "trim-front needs a mark" snd)
-          (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)))
-    (if (> snc 0)
-        (apply map
-               (lambda (snd chn)
-                 (if (= (sync snd) snc)
-                     (trim-front-one-channel snd chn)))
-               (all-chans))
-        (trim-front-one-channel (selected-sound) (selected-channel)))))
+(define trim-front
+  (let ((documentation "trim-front finds the first mark in each of the syncd channels and removes all samples before it"))
+    (lambda ()
+      (let ((snc (sync)))
+	(define (trim-front-one-channel snd chn)
+	  (if (< (length (marks snd chn)) 1)
+	      (status-report "trim-front needs a mark" snd)
+	      (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)))
+	(if (> snc 0)
+	    (apply map
+		   (lambda (snd chn)
+		     (if (= (sync snd) snc)
+			 (trim-front-one-channel snd chn)))
+		   (all-chans))
+	    (trim-front-one-channel (selected-sound) (selected-channel)))))))
 
 (add-to-menu marks-menu "Trim before mark" trim-front)
 
-(define (trim-back)
-  "trim-back finds the last mark in each of the syncd channels and removes all samples after it"
-  (let ((snc (sync)))
-    (define (trim-back-one-channel snd chn)
-      (if (< (length (marks snd chn)) 1)
-          (status-report "trim-back needs a mark" snd)
-          (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
-            (delete-samples (+ endpt 1) (- (framples snd chn) endpt)))))
-    (if (> snc 0)
-        (apply map
-               (lambda (snd chn)
-                 (if (= (sync snd) snc)
-                     (trim-back-one-channel snd chn)))
-               (all-chans))
-        (trim-back-one-channel (selected-sound) (selected-channel)))))
+(define trim-back
+  (let ((documentation "trim-back finds the last mark in each of the syncd channels and removes all samples after it"))
+    (lambda ()
+      (let ((snc (sync)))
+	(define (trim-back-one-channel snd chn)
+	  (if (< (length (marks snd chn)) 1)
+	      (status-report "trim-back needs a mark" snd)
+	      (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
+		(delete-samples (+ endpt 1) (- (framples snd chn) endpt)))))
+	(if (> snc 0)
+	    (apply map
+		   (lambda (snd chn)
+		     (if (= (sync snd) snc)
+			 (trim-back-one-channel snd chn)))
+		   (all-chans))
+	    (trim-back-one-channel (selected-sound) (selected-channel)))))))
 
 (add-to-menu marks-menu "Trim behind mark" trim-back)
 
 
 ;;; -------- crop (trims front and back)
 
-(define (crop)
-  "crop finds the first and last marks in each of the syncd channels and removes all samples outside them"
-  (let ((snc (sync)))
-    (define (crop-one-channel snd chn)
-      (if (< (length (marks snd chn)) 2)
-          (status-report "crop needs start and end marks" snd)
-          (as-one-edit
-           (lambda ()
-             (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)
-             (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
-               (delete-samples (+ endpt 1) (- (framples snd chn) endpt))))
-           "crop")))
-    (if (> snc 0)
-        (apply map
-               (lambda (snd chn)
-                 (if (= (sync snd) snc)
-                     (crop-one-channel snd chn)))
-               (all-chans))
-        (crop-one-channel (selected-sound) (selected-channel)))))
+(define crop
+  (let ((documentation "crop finds the first and last marks in each of the syncd channels and removes all samples outside them"))
+    (lambda ()
+      (let ((snc (sync)))
+	(define (crop-one-channel snd chn)
+	  (if (< (length (marks snd chn)) 2)
+	      (status-report "crop needs start and end marks" snd)
+	      (as-one-edit
+	       (lambda ()
+		 (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)
+		 (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
+		   (delete-samples (+ endpt 1) (- (framples snd chn) endpt))))
+	       "crop")))
+	(if (> snc 0)
+	    (apply map
+		   (lambda (snd chn)
+		     (if (= (sync snd) snc)
+			 (crop-one-channel snd chn)))
+		   (all-chans))
+	    (crop-one-channel (selected-sound) (selected-channel)))))))
 
 (add-to-menu marks-menu "Crop around marks" crop)
 
@@ -416,30 +421,31 @@
 (define fit-to-mark-dialog #f)
 (define fit-to-mark-menu-label #f)
 
-(define (cp-fit-to-marks)
-  "(cp-fit-to-marks) fits the selection between two marks (marks-menu)"
-  (if (selection?)
-      (fit-selection-between-marks (integer->mark fit-to-mark-one) (integer->mark fit-to-mark-two))
-      (define-selection-via-marks (integer->mark fit-to-mark-one) (integer->mark fit-to-mark-two))))
+(define cp-fit-to-marks
+  (let ((documentation "(cp-fit-to-marks) fits the selection between two marks (marks-menu)"))
+    (lambda ()
+      (if (selection?)
+	  (fit-selection-between-marks (integer->mark fit-to-mark-one) (integer->mark fit-to-mark-two))
+	  (define-selection-via-marks (integer->mark fit-to-mark-one) (integer->mark fit-to-mark-two))))))
 
 (if (or (provided? 'xm) 
 	(provided? 'xg))
     (begin
-
+      
       (define (post-fit-to-mark-dialog)
         (if (not fit-to-mark-dialog)
             (let ((initial-fit-to-mark-one 0)
                   (initial-fit-to-mark-two 1)
                   (sliders ()))
-
+	      
               (set! fit-to-mark-dialog 
 		    (make-effect-dialog 
 		     fit-to-mark-label
-
+		     
 		     (if (provided? 'snd-gtk)
 			 (lambda (w context) (cp-fit-to-marks))
 			 (lambda (w context info) (cp-fit-to-marks)))
-
+		     
 		     (if (provided? 'snd-gtk)
 			 (lambda (w context)
 			   (help-dialog "Fit selection to marks Help"
@@ -449,7 +455,7 @@ using the granulate generator to fix up the selection duration (this still is no
 			   (help-dialog "Fit selection to marks Help"
 					"Fit-selection-between-marks tries to squeeze the current selection between two marks,\
 using the granulate generator to fix up the selection duration (this still is not perfect). Move the sliders to set the mark numbers.")))
-
+		     
 		     (if (provided? 'snd-gtk)
 			 (lambda (w data)
 			   (set! fit-to-mark-one initial-fit-to-mark-one)
@@ -462,7 +468,7 @@ using the granulate generator to fix up the selection duration (this still is no
 			   ((*motif* 'XtSetValues) (sliders 0) (list (*motif* 'XmNvalue) fit-to-mark-one))
 			   (set! fit-to-mark-two initial-fit-to-mark-two)
 			   ((*motif* 'XtSetValues) (sliders 1) (list (*motif* 'XmNvalue) fit-to-mark-two))))))
-
+	      
 	      (set! sliders
 		    (add-sliders 
 		     fit-to-mark-dialog
@@ -477,16 +483,16 @@ using the granulate generator to fix up the selection duration (this still is no
 				     (lambda (w context info) (set! fit-to-mark-two (.value info))))
 				 1))))))
 	(activate-dialog fit-to-mark-dialog))
-
+      
       (set! fit-to-mark-menu-label (add-to-menu marks-menu "Fit selection to marks" (lambda () (post-fit-to-mark-dialog)))))
-
+    
     (set! fit-to-mark-menu-label (add-to-menu marks-menu fit-to-mark-label cp-fit-to-marks)))
 
 (set! marks-list (cons (lambda ()
-                           (let ((new-label (format #f "Fit selection to marks (~D ~D)" fit-to-mark-one fit-to-mark-two)))
-                             (if fit-to-mark-menu-label (change-label fit-to-mark-menu-label new-label))
-                             (set! fit-to-mark-label new-label)))
-                         marks-list))
+			 (let ((new-label (format #f "Fit selection to marks (~D ~D)" fit-to-mark-one fit-to-mark-two)))
+			   (if fit-to-mark-menu-label (change-label fit-to-mark-menu-label new-label))
+			   (set! fit-to-mark-label new-label)))
+		       marks-list))
 
 
 ;;; -------- Define selection by marks
@@ -497,40 +503,41 @@ using the granulate generator to fix up the selection duration (this still is no
 (define define-by-mark-dialog #f)
 (define define-by-mark-menu-label #f)
 
-(define (define-selection-via-marks m1 m2)
-  "(define-selection-via-marks m1 m2) defines the selection via marks (marks-menu)"
-  (let ((m1sc (mark-home m1))
-        (m2sc (mark-home m2)))
-    (if (not (equal? m1sc m2sc))
-        (snd-error "define-selection-via-marks assumes the marks are in the same channel")
-        (let ((beg (min (mark-sample m1) (mark-sample m2)))
-              (end (max (mark-sample m1) (mark-sample m2)))
-              (snd (car m1sc))
-              (chn (cadr m1sc)))
-          (set! (selection-member? snd chn) #t)
-          (set! (selection-position snd chn) beg)
-          (set! (selection-framples snd chn) (+ 1 (- end beg)))))))
+(define define-selection-via-marks 
+  (let ((documentation "(define-selection-via-marks m1 m2) defines the selection via marks (marks-menu)"))
+    (lambda (m1 m2)
+      (let ((m1sc (mark-home m1))
+	    (m2sc (mark-home m2)))
+	(if (not (equal? m1sc m2sc))
+	    (snd-error "define-selection-via-marks assumes the marks are in the same channel")
+	    (let ((beg (min (mark-sample m1) (mark-sample m2)))
+		  (end (max (mark-sample m1) (mark-sample m2)))
+		  (snd (car m1sc))
+		  (chn (cadr m1sc)))
+	      (set! (selection-member? snd chn) #t)
+	      (set! (selection-position snd chn) beg)
+	      (set! (selection-framples snd chn) (+ 1 (- end beg)))))))))
 
 (define (cp-define-by-marks)
- (define-selection-via-marks (integer->mark define-by-mark-one) (integer->mark define-by-mark-two)))
+  (define-selection-via-marks (integer->mark define-by-mark-one) (integer->mark define-by-mark-two)))
 
 (if (or (provided? 'xm) (provided? 'xg))
     (begin
-
+      
       (define (post-define-by-mark-dialog)
         (if (not define-by-mark-dialog)
             (let ((initial-define-by-mark-one 0)
                   (initial-define-by-mark-two 1)
                   (sliders ()))
-
+	      
               (set! define-by-mark-dialog 
 		    (make-effect-dialog 
 		     define-by-mark-label
-
+		     
 		     (if (provided? 'snd-gtk)
 			 (lambda (w context) (cp-define-by-marks))
 			 (lambda (w context info) (cp-define-by-marks)))
-
+		     
 		     (if (provided? 'snd-gtk)
 			 (lambda (w context)
 			   (help-dialog "Define selection by marks Help"
@@ -538,7 +545,7 @@ using the granulate generator to fix up the selection duration (this still is no
 			 (lambda (w context info)
 			   (help-dialog "Define selection by marks Help"
 					"Selects and highlights area between marks. Use the sliders to choose the boundary marks.")))
-
+		     
 		     (if (provided? 'snd-gtk)
 			 (lambda (w data)
 			   (set! define-by-mark-one initial-define-by-mark-one)
@@ -551,7 +558,7 @@ using the granulate generator to fix up the selection duration (this still is no
 			   ((*motif* 'XtSetValues) (sliders 0) (list (*motif* 'XmNvalue) define-by-mark-one))
 			   (set! define-by-mark-two initial-define-by-mark-two)
 			   ((*motif* 'XtSetValues) (sliders 1) (list (*motif* 'XmNvalue) define-by-mark-two))))))
-
+	      
 	      (set! sliders
 		    (add-sliders 
 		     define-by-mark-dialog
@@ -566,16 +573,16 @@ using the granulate generator to fix up the selection duration (this still is no
 				     (lambda (w context info) (set! define-by-mark-two ((*motif* '.value) info))))
 				 1))))))
 	(activate-dialog define-by-mark-dialog))
-
+      
       (set! define-by-mark-menu-label (add-to-menu marks-menu "Define selection by marks" (lambda () (post-define-by-mark-dialog)))))
-
+    
     (set! define-by-mark-menu-label (add-to-menu marks-menu define-by-mark-label cp-define-by-marks)))
 
 (set! marks-list (cons (lambda ()
-                           (let ((new-label (format #f "Define selection by marks (~D ~D)" define-by-mark-one define-by-mark-two)))
-                             (if define-by-mark-menu-label (change-label define-by-mark-menu-label new-label))
-                             (set! define-by-mark-label new-label)))
-                         marks-list))
+			 (let ((new-label (format #f "Define selection by marks (~D ~D)" define-by-mark-one define-by-mark-two)))
+			   (if define-by-mark-menu-label (change-label define-by-mark-menu-label new-label))
+			   (set! define-by-mark-label new-label)))
+		       marks-list))
 
 (add-to-menu marks-menu #f #f)
 
@@ -586,18 +593,21 @@ using the granulate generator to fix up the selection duration (this still is no
 
 (define mark-sync-number 0)
 
-(define (start-sync) 
-  "(start-sync) starts mark syncing (marks-menu)"
-  (set! mark-sync-number (+ (mark-sync-max) 1)))
+(define start-sync 
+  (let ((documentation "(start-sync) starts mark syncing (marks-menu)"))
+    (lambda ()
+      (set! mark-sync-number (+ (mark-sync-max) 1)))))
 
-(define (stop-sync) 
-  "(stop-sync) stops mark-syncing (marks-menu)"
-  (set! mark-sync-number 0))
+(define stop-sync 
+  (let ((documentation "(stop-sync) stops mark-syncing (marks-menu)"))
+    (lambda ()
+      (set! mark-sync-number 0))))
 
-(define (click-to-sync id)
-  "(click-to-sync id) sets a mark's sync field when it is clicked (marks-menu)"
-  (set! (sync id) mark-sync-number)
-  #f)
+(define click-to-sync 
+  (let ((documentation "(click-to-sync id) sets a mark's sync field when it is clicked (marks-menu)"))
+    (lambda (id)
+      (set! (sync id) mark-sync-number)
+      #f)))
 
 (hook-push mark-click-hook (lambda (hook) (click-to-sync (hook 'id))))
 
@@ -606,18 +616,20 @@ using the granulate generator to fix up the selection duration (this still is no
 (define m-sync-label "Mark sync (On)")
 (define no-m-sync-label "Mark sync (Off)")
 
-(define (msync!)
-  "(msync!) starts mark syncing (marks-menu)"
-  (set! m-sync #t)
-  (if mark-sync-menu-label (change-label mark-sync-menu-label m-sync-label))
-  (start-sync)
-  (mark-sync-color "yellow"))
+(define msync!
+  (let ((documentation "(msync!) starts mark syncing (marks-menu)"))
+    (lambda ()
+      (set! m-sync #t)
+      (if mark-sync-menu-label (change-label mark-sync-menu-label m-sync-label))
+      (start-sync)
+      (mark-sync-color "yellow"))))
 
-(define (unmsync!)
-  "(unmsync!) stops mark syncing (marks-menu)"
-  (set! m-sync #f)
-  (if mark-sync-menu-label (change-label mark-sync-menu-label no-m-sync-label))
-  (stop-sync))
+(define unmsync!
+  (let ((documentation "(unmsync!) stops mark syncing (marks-menu)"))
+    (lambda ()
+      (set! m-sync #f)
+      (if mark-sync-menu-label (change-label mark-sync-menu-label no-m-sync-label))
+      (stop-sync))))
 
 (set! mark-sync-menu-label 
       (add-to-menu marks-menu no-m-sync-label
@@ -639,7 +651,7 @@ using the granulate generator to fix up the selection duration (this still is no
 
 (if (provided? 'xm) 
     (with-let (sublet *motif*)
-
+      
       ;; Here is a first stab at the loop dialog (I guessed a lot as to what these buttons
       ;; are supposed to do -- have never used these loop points).
       
@@ -941,17 +953,18 @@ using the granulate generator to fix up the selection duration (this still is no
 
 ;;; -------- Explode all marks to separate files
 
-(define (mark-explode)
-  "(mark-explode) produces separate files as delineated by successive marks (marks-menu)"
-  (let ((start 0))
-    (for-each
-     (lambda (mark)
-       (let ((len (- (mark-sample mark) start))
-              (filename (snd-tempnam)))
-         (array->file filename
-                      (channel->float-vector start len)
-                      len (srate) 1)
-         (set! start (mark-sample mark))))
-     (caar (marks)))))
+(define mark-explode
+  (let ((documentation "(mark-explode) produces separate files as delineated by successive marks (marks-menu)"))
+    (lambda ()
+      (let ((start 0))
+	(for-each
+	 (lambda (mark)
+	   (let ((len (- (mark-sample mark) start))
+		 (filename (snd-tempnam)))
+	     (array->file filename
+			  (channel->float-vector start len)
+			  len (srate) 1)
+	     (set! start (mark-sample mark))))
+	 (caar (marks)))))))
 
 (add-to-menu marks-menu "Explode marks to files" mark-explode)

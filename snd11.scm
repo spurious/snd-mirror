@@ -13,7 +13,7 @@
 
 (define hook->list hook-functions)
 
-(define* (add-hook! hook func (at-end #f))
+(define* (add-hook! hook func at-end)
   (set! (hook-functions hook)
 	(if (not at-end)
 	    (cons func (hook-functions hook))
@@ -79,30 +79,32 @@
 ;;;                              (fm-violin 1 2 660 .1))
 ;;; ...)
 
-(define (with-mix-find-file-with-extensions file extensions)
-  "(with-mix-find-file-with-extensions file extensions) helps the with-mix macro find checkpoint files"
-  (if (file-exists? file)
-      file
-      (call-with-exit
-       (lambda (found-one)
-	 (for-each
-	  (lambda (ext)
-	    (let ((new-file (string-append file "." ext)))
-	      (if (file-exists? new-file)
-		  (found-one new-file))))
-	  extensions)
-	 #f))))
+(define with-mix-find-file-with-extensions
+  (let ((documentation "(with-mix-find-file-with-extensions file extensions) helps the with-mix macro find checkpoint files"))
+    (lambda (file extensions)
+      (if (file-exists? file)
+	  file
+	  (call-with-exit
+	   (lambda (found-one)
+	     (for-each
+	      (lambda (ext)
+		(let ((new-file (string-append file "." ext)))
+		  (if (file-exists? new-file)
+		      (found-one new-file))))
+	      extensions)
+	     #f))))))
 
-(define (with-mix-file-extension file default)
-  "(with-mix-file-extension file default) is a helper function for the with-mix macro"
-  (let ((len (string-length file)))
-    (call-with-exit
-     (lambda (ok)
-       (do ((i (- len 1) (- i 1)))
-	   ((= i 0))
-	 (if (char=? (file i) #\.)
-	     (ok (substring file (+ 1 i) len))))
-       default))))
+(define with-mix-file-extension 
+  (let ((documentation "(with-mix-file-extension file default) is a helper function for the with-mix macro"))
+    (lambda (file default)
+      (let ((len (string-length file)))
+	(call-with-exit
+	 (lambda (ok)
+	   (do ((i (- len 1) (- i 1)))
+	       ((= i 0))
+	     (if (char=? (file i) #\.)
+		 (ok (substring file (+ 1 i) len))))
+	   default))))))
 
 (define-macro (with-mix options ur-chkpt-file ur-beg . body)
   `(let ((chkpt-file ,ur-chkpt-file)

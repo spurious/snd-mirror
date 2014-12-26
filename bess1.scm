@@ -57,34 +57,32 @@
 	(mus-audio-close *output*)
 	#t)))
 
-(define* (make-rt-violin dur freq amp
-			       (fm-index 1.0)
-			       (amp-env '(0 0 25 1 75 1 100 0)))
-  "(make-rt-violin dur freq amp (fm-index 1.0) (amp-env '(0 0 25 1 75 1
-100 0))) real time simple violin (see fm.html)"
-  (let* ((frq-scl (hz->radians freq))
-         (maxdev (* frq-scl fm-index))
-         (index1 (* maxdev (/ 5.0 (log freq))))
-         (index2 (* maxdev 3.0 (/ (- 8.5 (log freq)) (+ 3.0 (/ freq 1000)))))
-         (index3 (* maxdev (/ 4.0 (sqrt freq))))
-         (carrier (make-oscil :frequency freq))
-         (fmosc1 (make-oscil :frequency freq))
-         (fmosc2 (make-oscil :frequency (* 3 freq)))
-         (fmosc3 (make-oscil :frequency (* 4 freq)))
-         (ampf  (make-env :envelope amp-env :scaler amp :duration dur))
-         (indf1 (make-env :envelope '(0 1 25 0.4 75 0.6 100 0) :scaler index1 :duration dur))
-         (indf2 (make-env :envelope '(0 1 25 0.4 75 0.6 100 0) :scaler index2 :duration dur))
-         (indf3 (make-env :envelope '(0 1 25 0.4 75 0.6 100 0) :scaler index3 :duration dur))
-         (pervib (make-triangle-wave :frequency 5 :amplitude (* 0.0025 frq-scl)))
-         (ranvib (make-rand-interp :frequency 16 :amplitude (* 0.005 frq-scl))))
-    (lambda ()
-      (let ((vib (+ (triangle-wave pervib) (rand-interp ranvib))))
-	(* (env ampf)
-	   (oscil carrier
-		  (+ vib 
-		     (* (env indf1) (oscil fmosc1 vib))
-		     (* (env indf2) (oscil fmosc2 (* 3.0 vib)))
-		     (* (env indf3) (oscil fmosc3 (* 4.0 vib))))))))))
+(define make-rt-violin 
+  (let ((documentation "(make-rt-violin dur freq amp (fm-index 1.0) (amp-env '(0 0 25 1 75 1 100 0))) real time simple violin (see fm.html)"))
+    (lambda* (dur freq amp (fm-index 1.0) (amp-env '(0 0 25 1 75 1 100 0)))
+      (let* ((frq-scl (hz->radians freq))
+	     (maxdev (* frq-scl fm-index))
+	     (index1 (* maxdev (/ 5.0 (log freq))))
+	     (index2 (* maxdev 3.0 (/ (- 8.5 (log freq)) (+ 3.0 (/ freq 1000)))))
+	     (index3 (* maxdev (/ 4.0 (sqrt freq))))
+	     (carrier (make-oscil :frequency freq))
+	     (fmosc1 (make-oscil :frequency freq))
+	     (fmosc2 (make-oscil :frequency (* 3 freq)))
+	     (fmosc3 (make-oscil :frequency (* 4 freq)))
+	     (ampf  (make-env :envelope amp-env :scaler amp :duration dur))
+	     (indf1 (make-env :envelope '(0 1 25 0.4 75 0.6 100 0) :scaler index1 :duration dur))
+	     (indf2 (make-env :envelope '(0 1 25 0.4 75 0.6 100 0) :scaler index2 :duration dur))
+	     (indf3 (make-env :envelope '(0 1 25 0.4 75 0.6 100 0) :scaler index3 :duration dur))
+	     (pervib (make-triangle-wave :frequency 5 :amplitude (* 0.0025 frq-scl)))
+	     (ranvib (make-rand-interp :frequency 16 :amplitude (* 0.005 frq-scl))))
+	(lambda ()
+	  (let ((vib (+ (triangle-wave pervib) (rand-interp ranvib))))
+	    (* (env ampf)
+	       (oscil carrier
+		      (+ vib 
+			 (* (env indf1) (oscil fmosc1 vib))
+			 (* (env indf2) (oscil fmosc2 (* 3.0 vib)))
+			 (* (env indf3) (oscil fmosc3 (* 4.0 vib))))))))))))
 
 (define lim 256)
 

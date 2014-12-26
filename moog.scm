@@ -73,25 +73,24 @@
 #|
 (defgenerator moog freq Q s y fc gain sig)
 
-(define (make-moog-filter frequency Q)
-
-  "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz,
-'Q' sets the resonance: 0 = no resonance, 1: oscillates at 'frequency'"
-
-  (let ((frq (envelope-interp (/ frequency (* *clm-srate* 0.5)) moog-freqtable)))
-    (make-moog :freq frequency 
-	       :Q Q 
-	       :s (make-float-vector 4) 
-	       :y 0.0 
-	       :fc frq
-	       :gain (* Q (array-interp moog-gaintable (+ 99.0 (* frq 99.0)))))))
-
+(define make-moog-filter 
+  (let ((documentation "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz,
+'Q' sets the resonance: 0 = no resonance, 1: oscillates at 'frequency'"))
+    (lambda (frequency Q)
+      (let ((frq (envelope-interp (/ frequency (* *clm-srate* 0.5)) moog-freqtable)))
+	(make-moog :freq frequency 
+		   :Q Q 
+		   :s (make-float-vector 4) 
+		   :y 0.0 
+		   :fc frq
+		   :gain (* Q (array-interp moog-gaintable (+ 99.0 (* frq 99.0)))))))))
+    
 
 (define moog-frequency
   (dilambda
-   (lambda (gen)
-     "(moog-frequency gen) accesses the cutoff frequency of the Moog filter 'gen'"
-     (gen 'freq))
+   (let ((documentation "(moog-frequency gen) accesses the cutoff frequency of the Moog filter 'gen'"))
+     (lambda (gen)
+       (gen 'freq)))
    (lambda (gen frq)
      (let ((fr (envelope-interp (/ frq (* *clm-srate* 0.5)) moog-freqtable)))
        (set! (gen 'freq) frq)
@@ -99,22 +98,22 @@
        (set! (gen 'gain) (* (gen 'Q) (array-interp moog-gaintable (+ 99.0 (* fr 99.0)))))))))
 
 
-(define (moog-filter m sig)
-  ;"(moog-filter m sig) is the generator associated with make-moog-filter"
-  (let-set! m 'sig sig)
-  (with-let m
-    (let ((A (* 0.25 (- sig y)))
-	  (st 0.0))
-      (do ((cell 0 (+ 1 cell)))
-	  ((= cell 4))
-	(set! st (float-vector-ref s cell))
-	(set! A (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
-	(float-vector-set! s cell A)
-	(set! A (min 0.95 (max -0.95 (+ A st)))))
-      (set! y (* A gain))
-      A)))
-
-
+(define moog-filter 
+  (let ((documentation "(moog-filter m sig) is the generator associated with make-moog-filter"))
+    (lambda (m sig)
+      (let-set! m 'sig sig)
+      (with-let m
+	(let ((A (* 0.25 (- sig y)))
+	      (st 0.0))
+	  (do ((cell 0 (+ 1 cell)))
+	      ((= cell 4))
+	    (set! st (float-vector-ref s cell))
+	    (set! A (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
+	    (float-vector-set! s cell A)
+	    (set! A (min 0.95 (max -0.95 (+ A st)))))
+	  (set! y (* A gain))
+	  A)))))
+    
 ;;; (let ((gen (make-moog-filter 500.0 .1))) (map-channel (lambda (y) (moog-filter gen y))))
 
 |#
@@ -123,24 +122,23 @@
 
 (defgenerator moog freq Q s0 s1 s2 s3 y fc gain sig)
 
-(define (make-moog-filter frequency Q)
-
-  "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz,
-'Q' sets the resonance: 0 = no resonance, 1: oscillates at 'frequency'"
-
-  (let ((frq (envelope-interp (/ frequency (* *clm-srate* 0.5)) moog-freqtable)))
-    (make-moog :freq frequency 
-	       :Q Q 
-	       :y 0.0 :s0 0.0 :s1 0.0 :s2 0.0 :s3 0.0
-	       :fc frq
-	       :gain (* Q (array-interp moog-gaintable (+ 99.0 (* frq 99.0)))))))
-
+(define make-moog-filter 
+  (let ((documentation "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz,
+'Q' sets the resonance: 0 = no resonance, 1: oscillates at 'frequency'"))
+    (lambda (frequency Q)
+      (let ((frq (envelope-interp (/ frequency (* *clm-srate* 0.5)) moog-freqtable)))
+	(make-moog :freq frequency 
+		   :Q Q 
+		   :y 0.0 :s0 0.0 :s1 0.0 :s2 0.0 :s3 0.0
+		   :fc frq
+		   :gain (* Q (array-interp moog-gaintable (+ 99.0 (* frq 99.0)))))))))
+    
 
 (define moog-frequency
   (dilambda
-   (lambda (gen)
-     "(moog-frequency gen) accesses the cutoff frequency of the Moog filter 'gen'"
-     (gen 'freq))
+   (let ((documentation "(moog-frequency gen) accesses the cutoff frequency of the Moog filter 'gen'"))
+     (lambda (gen)
+       (gen 'freq)))
    (lambda (gen frq)
      (let ((fr (envelope-interp (/ frq (* *clm-srate* 0.5)) moog-freqtable)))
        (set! (gen 'freq) frq)
@@ -148,56 +146,58 @@
        (set! (gen 'gain) (* (gen 'Q) (array-interp moog-gaintable (+ 99.0 (* fr 99.0)))))))))
 
 
-(define (moog-filter m sig)
-  ;"(moog-filter m sig) is the generator associated with make-moog-filter"
-  ;  see below for the "saturate" option
-  (let-set! m 'sig sig)
-  (with-let m
-    (let ((A (* 0.25 (- sig y)))
-	  (st 0.0))
+(define moog-filter 
+  (let ((documentation "(moog-filter m sig) is the generator associated with make-moog-filter"))
+    (lambda (m sig)
+					;  see below for the "saturate" option
+      (let-set! m 'sig sig)
+      (with-let m
+	(let ((A (* 0.25 (- sig y)))
+	      (st 0.0))
+	  
+	  (set! st s0)
+	  (set! s0 (+ A (* fc (- A st))))
+	  (set! A (+ s0 st))
+	  
+	  (set! st s1)
+	  (set! s1 (+ A (* fc (- A st))))
+	  (set! A (+ s1 st))
+	  
+	  (set! st s2)
+	  (set! s2 (+ A (* fc (- A st))))
+	  (set! A (+ s2 st))
+	  
+	  (set! st s3)
+	  (set! s3 (+ A (* fc (- A st))))
+	  (set! A (+ s3 st))
+	  
+	  (set! y (* A gain))
+	  A)))))
 
-	(set! st s0)
-	(set! s0 (+ A (* fc (- A st))))
-	(set! A (+ s0 st))
-
-	(set! st s1)
-	(set! s1 (+ A (* fc (- A st))))
-	(set! A (+ s1 st))
-
-	(set! st s2)
-	(set! s2 (+ A (* fc (- A st))))
-	(set! A (+ s2 st))
-
-	(set! st s3)
-	(set! s3 (+ A (* fc (- A st))))
-	(set! A (+ s3 st))
-
-	(set! y (* A gain))
-	A)))
-
-(define (moog-filter-saturated m sig)
-  ;"(moog-filter-saturated m sig) is the generator associated with make-moog-filter with internal saturation"
-  (let-set! m 'sig sig)
-  (with-let m
-    (let ((A (* 0.25 (- sig y)))
-	  (st 0.0))
-
-	(set! st s0)
-	(set! s0 (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
-	(set! A (min 0.95 (max -0.95 (+ s0 st))))
-
-	(set! st s1)
-	(set! s1 (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
-	(set! A (min 0.95 (max -0.95 (+ s1 st))))
-
-	(set! st s2)
-	(set! s2 (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
-	(set! A (min 0.95 (max -0.95 (+ s2 st))))
-
-	(set! st s3)
-	(set! s3 (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
-	(set! A (min 0.95 (max -0.95 (+ s3 st))))
-
-	(set! y (* A gain))
-	A)))
+(define moog-filter-saturated 
+  (let ((documentation "(moog-filter-saturated m sig) is the generator associated with make-moog-filter with internal saturation"))
+    (lambda (m sig)
+      (let-set! m 'sig sig)
+      (with-let m
+	(let ((A (* 0.25 (- sig y)))
+	      (st 0.0))
+	  
+	  (set! st s0)
+	  (set! s0 (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
+	  (set! A (min 0.95 (max -0.95 (+ s0 st))))
+	  
+	  (set! st s1)
+	  (set! s1 (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
+	  (set! A (min 0.95 (max -0.95 (+ s1 st))))
+	  
+	  (set! st s2)
+	  (set! s2 (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
+	  (set! A (min 0.95 (max -0.95 (+ s2 st))))
+	  
+	  (set! st s3)
+	  (set! s3 (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
+	  (set! A (min 0.95 (max -0.95 (+ s3 st))))
+	  
+	  (set! y (* A gain))
+	  A)))))
 

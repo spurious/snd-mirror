@@ -30,9 +30,10 @@
 
 (set! *clm-file-buffer-size* 65536)
 
-(define (times->samples beg dur) 
-  "(times->samples beg dur) converts beg and (+ beg dur) to samples, returning both in a list"
-  (list (seconds->samples beg) (seconds->samples (+ beg dur))))
+(define times->samples 
+  (let ((documentation "(times->samples beg dur) converts beg and (+ beg dur) to samples, returning both in a list"))
+    (lambda (beg dur) 
+      (list (seconds->samples beg) (seconds->samples (+ beg dur))))))
 
 
 ;;; -------- definstrument --------
@@ -52,24 +53,25 @@
 			      (set! arg-names (cons (car a) arg-names)))))
 		    targs)
 		   (reverse arg-names))))
-  `(begin 
-     (define* (,name ,@targs)
-       (if *clm-notehook*
-	   (*clm-notehook* (symbol->string ',name) ,@utargs))
-       ,@body)
-     ,@(if *definstrument-hook*
-           (list (*definstrument-hook* name targs))
-           (list)))))
-#|
-
-(define-macro (definstrument args . body)
-  (let ((name (car args))
-	(targs (cdr args)))
-    `(define* (,name ,@targs)
-       (let ((_start_ (get-internal-real-time)))
-	 ,@body
-	 (format #t "~A: ~A~%" (- (get-internal-real-time) _start_) ,name)))))
-|#
+    (if (string? (car body))
+	`(begin
+	   (define ,name
+	     (let ((documentation ,(car body)))
+	       (lambda* ,targs
+		 (if *clm-notehook*
+		     (*clm-notehook* (symbol->string ',name) ,@utargs))
+		 ,@(cdr body))))
+	   ,@(if *definstrument-hook*
+		 (list (*definstrument-hook* name targs))
+		 (list)))
+	`(begin 
+	   (define* (,name ,@targs)
+	     (if *clm-notehook*
+		 (*clm-notehook* (symbol->string ',name) ,@utargs))
+	     ,@body)
+	   ,@(if *definstrument-hook*
+		 (list (*definstrument-hook* name targs))
+		 (list))))))
 
      
 
@@ -82,21 +84,21 @@
 			    (header-type *clm-header-type*)
 			    data-format
 			    (sample-type *clm-sample-type*)
-			    (comment #f)
+			    comment
 			    (verbose *clm-verbose*)
 			    (reverb *clm-reverb*)
 			    (revfile *clm-reverb-file-name*)
 			    (reverb-data *clm-reverb-data*)
 			    (reverb-channels *clm-reverb-channels*)
-			    (continue-old-file #f)
+			    continue-old-file
 			    (statistics *clm-statistics*)
-			    (scaled-to #f)
+			    scaled-to
 			    (play *clm-play*)
 			    (to-snd *to-snd*)
 			    (clipped 'unset)
 			    (notehook *clm-notehook*)               ; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
-			    (scaled-by #f)
-			    (ignore-output #f))
+			    scaled-by
+			    ignore-output)
   (let ((old-srate *clm-srate*)
 	(old-*output* *output*)
 	(old-*reverb* *reverb*)
@@ -366,9 +368,10 @@
 
 ;;; -------- clm-load --------
 
-(define (clm-load file . args) 
-  "(clm-load file . args) loads 'file' in the context of with-sound"
-  (apply with-sound-helper (lambda () (load file)) args))
+(define clm-load
+  (let ((documentation "(clm-load file . args) loads 'file' in the context of with-sound"))
+    (lambda (file . args)
+      (apply with-sound-helper (lambda () (load file)) args))))
 
 
 ;;; -------- with-mixed-sound --------
@@ -567,7 +570,7 @@
 	  (header-type *clm-header-type*)
 	  data-format
 	  (sample-type *clm-sample-type*)
-	  (comment #f)
+	  comment
 	  ;(verbose *clm-verbose*) ; why is this commented out?
 	  (reverb *clm-reverb*)
 	  (revfile *clm-reverb-file-name*)
@@ -575,12 +578,10 @@
 	  (reverb-channels *clm-reverb-channels*)
 	  (continue-old-file #f)
 	  (statistics *clm-statistics*)
-	  (scaled-to #f)
+	  scaled-to
 	  (play *clm-play*)
 	  (to-snd *to-snd*)
-	  (scaled-by #f))
-  "(init-with-sound . args) is the first half of with-sound; it sets up the CLM output choices, reverb, etc. Use \
-finish-with-sound to complete the process."
+	  scaled-by)
   (let ((old-srate *clm-srate*)
 	(start (if statistics (get-internal-real-time)))
 	(output-to-file (string? output))
@@ -632,7 +633,6 @@ finish-with-sound to complete the process."
 	  start)))
 
 (define (finish-with-sound wsd)
-  "(finish-with-sound wsd) closes the notelist process started by init-with-sound"
   (if (eq? (car wsd) 'with-sound-data)
       (let ((cycles 0)
 	    (output (wsd 1))
@@ -686,36 +686,37 @@ finish-with-sound to complete the process."
 
 (define wsdat-play ; for cm
   (dilambda
-   (lambda (w)
-     "accessor for play field of init-with-sound struct"
-     (w 9))
+   (let ((documentation "accessor for play field of init-with-sound struct"))
+     (lambda (w)
+       (w 9)))
    (lambda (w val)
      (set! (w 9) val))))
 
 
 ;;; -------- with-sound save state --------
 
-(define (ws-save-state hook)
-  "(ws-save-state filename) is an after-save-state-hook function that saves the current with-sound global settings"
-  (let ((filename (hook 'name)))
+(define ws-save-state 
+  (let ((documentation "(ws-save-state filename) is an after-save-state-hook function that saves the current with-sound global settings"))
+    (lambda (hook)
+      (let ((filename (hook 'name)))
 
-    (define (open-appending filename)
-      (open-output-file filename "a"))
+	(define (open-appending filename)
+	  (open-output-file filename "a"))
     
-    (define close-appending close-output-port)
+	(define close-appending close-output-port)
     
-    (let ((fd (open-appending filename)))
-      ;; fd is a Scheme port at this point (not an integer), so we can use format etc
-      ;; should the save-state file load this file if it hasn't been loaded? (what path?)
-      (format fd "~%~%;;; from ws.scm~%")
-      (format fd "(if (defined? '*clm-srate*)~%")
-      (format fd "    (begin~%")
-      (format fd "      (set! *clm-srate* ~A)~%" *clm-srate*)
-      (format fd "      (set! *clm-file-name* ~S)~%" *clm-file-name*)
-      (format fd "      (set! *clm-channels* ~A)~%" *clm-channels*)
-      (format fd "      (set! *clm-sample-type* ~A)~%" (mus-sample-type->string *clm-sample-type*))
-      (format fd "      (set! *clm-header-type* ~A)))~%" (mus-header-type->string *clm-header-type*))
-      (close-appending fd))))
+	(let ((fd (open-appending filename)))
+	  ;; fd is a Scheme port at this point (not an integer), so we can use format etc
+	  ;; should the save-state file load this file if it hasn't been loaded? (what path?)
+	  (format fd "~%~%;;; from ws.scm~%")
+	  (format fd "(if (defined? '*clm-srate*)~%")
+	  (format fd "    (begin~%")
+	  (format fd "      (set! *clm-srate* ~A)~%" *clm-srate*)
+	  (format fd "      (set! *clm-file-name* ~S)~%" *clm-file-name*)
+	  (format fd "      (set! *clm-channels* ~A)~%" *clm-channels*)
+	  (format fd "      (set! *clm-sample-type* ~A)~%" (mus-sample-type->string *clm-sample-type*))
+	  (format fd "      (set! *clm-header-type* ~A)))~%" (mus-header-type->string *clm-header-type*))
+	  (close-appending fd))))))
 
 (if (not (memq ws-save-state (hook-functions after-save-state-hook)))
     (set! (hook-functions after-save-state-hook) (list ws-save-state)))
@@ -726,11 +727,10 @@ finish-with-sound to complete the process."
 (define ->frequency
   (let ((main-pitch (/ 440.0 (expt 2.0 (/ 57 12)))) ; a4 = 440Hz is pitch 57 in our numbering
 	(last-octave 0)                             ; octave number can be omitted
-	(ratios (vector 1.0 256/243 9/8 32/27 81/64 4/3 1024/729 3/2 128/81 27/16 16/9 243/128 2.0)))
-
+	(ratios (vector 1.0 256/243 9/8 32/27 81/64 4/3 1024/729 3/2 128/81 27/16 16/9 243/128 2.0))
+	(documentation "(->frequency pitch pythagorean) returns the frequency (Hz) of the 'pitch', a CLM/CM style note name as a \
+symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small-integer ratios, rather than equal-tempered tuning."))
     (lambda* (pitch pythagorean)          ; pitch can be pitch name or actual frequency
-      "(->frequency pitch pythagorean) returns the frequency (Hz) of the 'pitch', a CLM/CM style note name as a \
-symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small-integer ratios, rather than equal-tempered tuning."
       (if (symbol? pitch)
 	  (let* ((name (string-downcase (symbol->string pitch)))
 		 (base-char (name 0))
@@ -759,9 +759,10 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 ;;; -------- ->sample --------
 
-(define (->sample beg)
-  "(->sample time-in-seconds) -> time-in-samples"
-  (round (* (if (pair? (sounds)) (srate) *clm-srate*) beg)))
+(define ->sample 
+  (let ((documentation "(->sample time-in-seconds) -> time-in-samples"))
+    (lambda (beg)
+      (round (* (if (pair? (sounds)) (srate) *clm-srate*) beg)))))
 
 
 

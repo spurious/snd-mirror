@@ -18,7 +18,7 @@
 
 (definstrument (expandn time duration filename amplitude
 			(expand 1.0)
-			(matrix #f)
+			matrix
 			(ramp 0.4)
 			(seglen 0.15)
 			(srate 1.0)
@@ -26,7 +26,7 @@
 			(amp-env '(0 0 50 1 100 0))
 			(input-start 0.0)
 			(grain-amp 0.8)
-			(reverb #f))
+			reverb)
 
   (let ((fnam (file-name filename)))
     (if (not (file-exists? fnam))

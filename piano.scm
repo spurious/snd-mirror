@@ -64,7 +64,7 @@
 (definstrument (p start (duration 1.0)
 		  (keyNum 60.0)                    ; middleC=60: can use fractional part to detune
 		  (strike-velocity 0.5)            ; corresponding normalized velocities (range: 0.0--1.0)
-		  (pedal-down #f)                  ; set to #t for sustain pedal down...pedal-down-times not yet implemented
+		  pedal-down                       ; set to #t for sustain pedal down...pedal-down-times not yet implemented
 		  (release-time-margin 0.75)       ; extra compute time allowed beyond duration
 		  (amp .5)                         ; amp scale of noise inputs...
 		  

@@ -5,7 +5,7 @@
     (require sndlib-ws.scm))
 
 
-(definstrument (jc-reverb (low-pass #f) (volume 1.0) (amp-env #f))
+(definstrument (jc-reverb low-pass (volume 1.0) amp-env)
   "(jc-reverb (low-pass #f) (volume 1.0) (amp-env #f)) -- Chowning reverb"
   (let ((allpass1 (make-all-pass -0.700 0.700 1051))
 	(allpass2 (make-all-pass -0.700 0.700  337))

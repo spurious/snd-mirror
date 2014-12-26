@@ -110,13 +110,14 @@
 	(else (envelope-interp x (cddr e) base)))) ;go on looking for x segment
 |#
 
-(define (x-norm e xmax)
-  "(x-norm e xmax) changes 'e' x axis values so that they run to 'xmax'"
-  (define (x-norm-1 e scl new-e)
-    (if (null? e)
-	(reverse! new-e)
-	(x-norm-1 (cddr e) scl (cons (cadr e) (cons (* scl (car e)) new-e)))))
-  (x-norm-1 e (/ xmax (e (- (length e) 2))) ()))
+(define x-norm 
+  (let ((documentation "(x-norm e xmax) changes 'e' x axis values so that they run to 'xmax'"))
+    (lambda (e xmax)
+      (define (x-norm-1 e scl new-e)
+	(if (null? e)
+	    (reverse! new-e)
+	    (x-norm-1 (cddr e) scl (cons (cadr e) (cons (* scl (car e)) new-e)))))
+      (x-norm-1 e (/ xmax (e (- (length e) 2))) ()))))
 
 
 
@@ -126,32 +127,38 @@
 ;;; Define the base in which all angles are expressed
 (define dlocsig-one-turn 360)
 
-(define (one-turn-is unit)
-  "(one-turn-is unit) sets dlocsig's angle unit (degrees=360, the default or radians=2*pi)"
-  (set! dlocsig-one-turn unit))
+(define one-turn-is 
+  (let ((documentation "(one-turn-is unit) sets dlocsig's angle unit (degrees=360, the default or radians=2*pi)"))
+    (lambda (unit)
+      (set! dlocsig-one-turn unit))))
 
-(define (angles-in-degree)
-  "(angles-in-degree) sets dlocsig's unit to degrees (the default)"
-  (one-turn-is 360))
+(define angles-in-degree
+  (let ((documentation "(angles-in-degree) sets dlocsig's unit to degrees (the default)"))
+    (lambda ()
+      (one-turn-is 360))))
 
-(define (angles-in-radians)
-  "(angles-in-radians) sets dlocsig's unit to radians (default is degrees)"
-  (one-turn-is (* 2 pi)))
+(define angles-in-radians
+  (let ((documentation "(angles-in-radians) sets dlocsig's unit to radians (default is degrees)"))
+    (lambda ()
+      (one-turn-is (* 2 pi)))))
 
-(define (angles-in-turns)
-  "(angles-in-turns) sets dlocsig's angle unit to turns"
-  (one-turn-is 1))
+(define angles-in-turns
+  (let ((documentation "(angles-in-turns) sets dlocsig's angle unit to turns"))
+    (lambda ()
+      (one-turn-is 1))))
 
 ;; speed of sound in air, in meters per second under normal conditions
 (define dlocsig-speed-of-sound 344)
 
-(define (distances-in-meters)
-  "(distances-in-meters) sets dlocsig's distances in meters (the default)"
-  (set! dlocsig-speed-of-sound 344))
+(define distances-in-meters
+  (let ((documentation "(distances-in-meters) sets dlocsig's distances in meters (the default)"))
+    (lambda ()
+      (set! dlocsig-speed-of-sound 344))))
 
-(define (distances-in-feet)
-  "(distances-in-feet) sets dlocsig's distances in feet (default is meters)"
-  (set! dlocsig-speed-of-sound 1128))
+(define distances-in-feet
+  (let ((documentation "(distances-in-feet) sets dlocsig's distances in feet (default is meters)"))
+    (lambda ()
+      (set! dlocsig-speed-of-sound 1128))))
 
 ;; default for whether to use two or three-dimensional speaker configurations
 (define dlocsig-3d #f)
@@ -189,37 +196,41 @@
 ;;; omap:      mapping of speakers to output channels
 ;;;            content should be output channel number, zero based
 
-(define (cis a)
-  "(cis a) returns e^(ia)"
-  (exp (* 0.0+1.0i a)))
+(define cis 
+  (let ((documentation "(cis a) returns e^(ia)"))
+    (lambda (a)
+      (exp (* 0.0+1.0i a)))))
 
-; built-in 1-Feb-14
-;(define-macro (when test . forms)
-;  `(if ,test (begin ,@forms)))
+;; built-in 1-Feb-14
+;; (define-macro (when test . forms) `(if ,test (begin ,@forms)))
 
-(define (third a) 
-  "(third lst) returns the 3rd element of 'lst'"
-  (if (>= (length a) 3) (a 2) #f))
+(define third 
+  (let ((documentation "(third lst) returns the 3rd element of 'lst'"))
+    (lambda (a) 
+      (if (>= (length a) 3) (a 2) #f))))
 
-(define (fourth a) 
-  "(fourth lst) returns the 4th element of 'lst'"
-  (if (>= (length a) 4) (a 3) #f))
+(define fourth 
+  (let ((documentation "(fourth lst) returns the 4th element of 'lst'"))
+    (lambda (a) 
+      (if (>= (length a) 4) (a 3) #f))))
 
-(define* (last a n) 
-  "(last lst n) returns the last 'n' elements of 'lst' as a list"
-  (if (null? a)
-      #f
-      (if (not n)
-	  (list (a (- (length a) 1)))
-	  (let ((res ()))
-	    (do ((i 0 (+ i 1)))
-		((= i n))
-	      (set! res (cons (a (- (length a) (+ i 1))) res)))
-	    res))))
+(define last 
+  (let ((documentation "(last lst n) returns the last 'n' elements of 'lst' as a list"))
+    (lambda* (a n) 
+      (if (null? a)
+	  #f
+	  (if (not n)
+	      (list (a (- (length a) 1)))
+	      (let ((res ()))
+		(do ((i 0 (+ i 1)))
+		    ((= i n))
+		  (set! res (cons (a (- (length a) (+ i 1))) res)))
+		res))))))
 
-(define (listp a) 
-  "(listp lst) is #t is 'lst' is a non-null list"
-  (and (list? a) (pair? a)))
+(define listp 
+  (let ((documentation "(listp lst) is #t is 'lst' is a non-null list"))
+    (lambda (a) 
+      (and (list? a) (pair? a)))))
 
 (define (make-list-1 n val)
   (let ((lst ()))
@@ -384,10 +395,10 @@
 		      ((= i (length speakers)))
 		    (set! (v i) (let ((distance (and (pair? distances) (distances i)))
 				      (dly (and (pair? delays) (delays i))))
-				    (or dly
-					(and distance 
-					     (/ (- distance min-dist) dlocsig-speed-of-sound))
-					0.0))))
+				  (or dly
+				      (and distance 
+					   (/ (- distance min-dist) dlocsig-speed-of-sound))
+				      0.0))))
 		  v))
 	 
 	 ;; create the group structures
@@ -524,25 +535,27 @@
 
 ;;; Set a particular speaker configuration
 
-(define* (set-speaker-configuration config (configs dlocsig-speaker-configs))
-  "(set-speaker-configuration config (configs dlocsig-speaker-configs)) sets a dlocsig speaker configuration"
-  (let ((lst (if (< (speaker-config-dimension config) 3)
-		 (car configs)
-		 (cadr configs)))
-	(num (speaker-config-number config)))
-    (set! (lst num) config)))
+(define set-speaker-configuration 
+  (let ((documentation "(set-speaker-configuration config (configs dlocsig-speaker-configs)) sets a dlocsig speaker configuration"))
+    (lambda* (config (configs dlocsig-speaker-configs))
+      (let ((lst (if (< (speaker-config-dimension config) 3)
+		     (car configs)
+		     (cadr configs)))
+	    (num (speaker-config-number config)))
+	(set! (lst num) config)))))
 
 
 ;;; Get the speaker configuration for a given number of output channels
 
-(define* (get-speaker-configuration channels (3d dlocsig-3d) (configs dlocsig-speaker-configs))
-  "(get-speaker-configuration channels (3d dlocsig-3d) (configs dlocsig-speaker-configs)) returns a dlocsig speaker configuration"
-  (let ((config (if 3d ((cadr configs) channels) ((car configs) channels))))
-    (if (null? config)
-	(error 'mus-error "ERROR: no speaker configuration exists for ~A ~A output channel~A~%~%" 
-	       (if 3d "tridimensional" "bidimensional")
-	       channels (if (= channels 1) "s" "")))
-    config))
+(define get-speaker-configuration 
+  (let ((documentation "(get-speaker-configuration channels (3d dlocsig-3d) (configs dlocsig-speaker-configs)) returns a dlocsig speaker configuration"))
+    (lambda* (channels (3d dlocsig-3d) (configs dlocsig-speaker-configs))
+      (let ((config (if 3d ((cadr configs) channels) ((car configs) channels))))
+	(if (null? config)
+	    (error 'mus-error "ERROR: no speaker configuration exists for ~A ~A output channel~A~%~%" 
+		   (if 3d "tridimensional" "bidimensional")
+		   channels (if (= channels 1) "s" "")))
+	config))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -684,9 +697,10 @@
 
 ;;; Return the best possible set of coordinates
 
-(define (list?? a) 
-  "list?? returns a if it is a list"
-  (and (listp a) a))
+(define list?? 
+  (let ((documentation "list?? returns a if it is a list"))
+    (lambda (a) 
+      (and (listp a) a))))
 
 (define (path-x path)
   (or (list?? (path-tx path))
@@ -735,7 +749,7 @@
 (define bezier-error     (dilambda (lambda (p) (p 20)) (lambda (p val) (set! (p 20) val))))
 (define bezier-curvature (dilambda (lambda (p) (p 21)) (lambda (p val) (set! (p 21) val))))
 
-(define* (make-bezier-path (path ()) (3d #t) (polar #f) (error 0.01) (curvature #f))
+(define* (make-bezier-path (path ()) (3d #t) polar (error 0.01) curvature)
   (list 'bezier-path () () () () () () () () () path 3d polar () () () () () () () error curvature))
 
 
@@ -744,7 +758,7 @@
 (define initial-direction (dilambda (lambda (p) (p 22)) (lambda (p val) (set! (p 22) val))))
 (define final-direction   (dilambda (lambda (p) (p 23)) (lambda (p val) (set! (p 23) val))))
 
-(define* (make-open-bezier-path (path ()) (3d #t) (polar #f) (error 0.01) (curvature #f) 
+(define* (make-open-bezier-path (path ()) (3d #t) polar (error 0.01) curvature 
 				(initial-direction '(0.0 0.0 0.0)) (final-direction '(0.0 0.0 0.0)))
   (list 'open-bezier-path () () () () () () () () () path 3d polar () () () () () () () error curvature initial-direction final-direction))
 
@@ -854,141 +868,143 @@
 
 ;;; Parse a set of 2d or 3d points into the separate coordinates
 
-(define (parse-cartesian-coordinates points 3d)
-  "(parse-cartesian-coordinates points 3d) parses a set of 2d or 3d points into the separate coordinates"
-  (if (list? (car points))
-      ;; decode a list of lists into x:y:z:v components
-      ;; 3d -> t [default]
-      ;;   '((x0 y0 z0 v0) (x1 y1 z1 v1)...(xn yn zn vn))
-      ;;   '((x0 y0 z0) (x1 y1 z1)...(xn yn zn))
-      ;;   '((x0 y0) (x1 y1)...(xn yn)) 
-      ;;      v: relative velocity
-      ;;      x, y, z: coordinates of source [missing z's assumed 0.0]
-      ;; 3d -> nil
-      ;;   '((x0 y0 v0) (x1 y1 v1)...(xn yn vn))
-      ;;   '((x0 y0) (x1 y1)...(xn yn))
-      ;;      v: relative velocity
-      ;;      x, y, z: coordinates of source [missing z's assumed 0.0]
-      (let ((v ())
-	     (x ())
-	     (y ())
-	     (z ()))
-	(for-each
-	 (lambda (p)
-	   (set! x (cons (car p) x))
-	   (set! y (cons (cadr p) y))
-	   (set! z (cons (if 3d (or (third p) 0.0) 0.0) z))
-	   (set! v (cons (if 3d 
-			     (fourth p)
-			     (third p))
-			 v)))
-	 points)
-	(list (reverse x) (reverse y) (reverse z) (reverse v)))
-      
-      ;; decode a plain list
-      (if 3d
-	  ;; it's a three dimensional list
-	  ;; '(x0 y0 z0 x1 y1 z1 ... xn yn zn)
-	  ;;     x, y, z: coordinates of source
-	  (let ((px ())
-		(py ())
-		(pz ())
-		(len (length points)))
-	    (do ((i 0 (+ i 3)))
-		((>= i len))
-	      (set! px (cons (points i) px))
-	      (set! py (cons (points (+ i 1)) py))
-	      (set! pz (cons (points (+ i 2)) pz)))
-	    (list (reverse px) (reverse py) (reverse pz) (make-list-1 (length px) #f)))
+(define parse-cartesian-coordinates 
+  (let ((documentation "(parse-cartesian-coordinates points 3d) parses a set of 2d or 3d points into the separate coordinates"))
+    (lambda (points 3d)
+      (if (list? (car points))
+	  ;; decode a list of lists into x:y:z:v components
+	  ;; 3d -> t [default]
+	  ;;   '((x0 y0 z0 v0) (x1 y1 z1 v1)...(xn yn zn vn))
+	  ;;   '((x0 y0 z0) (x1 y1 z1)...(xn yn zn))
+	  ;;   '((x0 y0) (x1 y1)...(xn yn)) 
+	  ;;      v: relative velocity
+	  ;;      x, y, z: coordinates of source [missing z's assumed 0.0]
+	  ;; 3d -> nil
+	  ;;   '((x0 y0 v0) (x1 y1 v1)...(xn yn vn))
+	  ;;   '((x0 y0) (x1 y1)...(xn yn))
+	  ;;      v: relative velocity
+	  ;;      x, y, z: coordinates of source [missing z's assumed 0.0]
+	  (let ((v ())
+		(x ())
+		(y ())
+		(z ()))
+	    (for-each
+	     (lambda (p)
+	       (set! x (cons (car p) x))
+	       (set! y (cons (cadr p) y))
+	       (set! z (cons (if 3d (or (third p) 0.0) 0.0) z))
+	       (set! v (cons (if 3d 
+				 (fourth p)
+				 (third p))
+			     v)))
+	     points)
+	    (list (reverse x) (reverse y) (reverse z) (reverse v)))
 	  
-	  ;; it's a two dimensional list
-	  ;; '(x0 y0 x1 y1 ... xn yn)
-	  ;;     x, y, z: coordinates of source [missing z's assumed 0.0]
-	  (let ((px ())
-		(py ())
-		(len (length points)))
-	    (do ((i 0 (+ i 2)))
-		((>= i len))
-	      (set! px (cons (points i) px))
-	      (set! py (cons (points (+ i 1)) py)))
-	    (list (reverse px) (reverse py) (make-list-1 (length px) 0.0) (make-list-1 (length px) #f))))))
+	  ;; decode a plain list
+	  (if 3d
+	      ;; it's a three dimensional list
+	      ;; '(x0 y0 z0 x1 y1 z1 ... xn yn zn)
+	      ;;     x, y, z: coordinates of source
+	      (let ((px ())
+		    (py ())
+		    (pz ())
+		    (len (length points)))
+		(do ((i 0 (+ i 3)))
+		    ((>= i len))
+		  (set! px (cons (points i) px))
+		  (set! py (cons (points (+ i 1)) py))
+		  (set! pz (cons (points (+ i 2)) pz)))
+		(list (reverse px) (reverse py) (reverse pz) (make-list-1 (length px) #f)))
+	      
+	      ;; it's a two dimensional list
+	      ;; '(x0 y0 x1 y1 ... xn yn)
+	      ;;     x, y, z: coordinates of source [missing z's assumed 0.0]
+	      (let ((px ())
+		    (py ())
+		    (len (length points)))
+		(do ((i 0 (+ i 2)))
+		    ((>= i len))
+		  (set! px (cons (points i) px))
+		  (set! py (cons (points (+ i 1)) py)))
+		(list (reverse px) (reverse py) (make-list-1 (length px) 0.0) (make-list-1 (length px) #f))))))))
 
 ;;; Parse a set of 2d or 3d polar points into the separate coordinates
 
-(define (parse-polar-coordinates points 3d)
-  "(parse-polar-coordinates points 3d) parses a polar path"
-  (if (list? (car points))
-      ;; decode a list of lists of d:a:e:v into x:y:z:v components
-      ;; 3d --> t [default]
-      ;;   '((d0 a0 e0 v0) (d1 a1 e1 v1)...(dn an en vn))
-      ;;   '((d0 a0 e0) (d1 a1 e1)...(dn an en))
-      ;;   '((d0 a0) (d1 a1)...(dn an))  
-      ;; 3d --> nil
-      ;;   '((d0 a0 v0) (d1 a1 v1)...(dn an vn))
-      ;;   '((d0 a0) (d1 a1)...(dn an))
-      ;;      v: velocity
-      ;;      d: distance
-      ;;      a: azimut angle
-      ;;      e: elevarion angle [missing elevations assumed 0.0]
-      (let ((x ())
-	    (y ())
-	    (z ())
-	    (v ()))
-	(for-each
-	 (lambda (p)
-	   (let* ((d (car p))
-		  (a (cadr p))
-		  (e (if 3d (if (pair? (cddr p)) (caddr p) 0.0) 0.0))
-		  (evec (cis (* (/ e dlocsig-one-turn) 2 pi)))
-		  (dxy (* d (real-part evec)))
-		  (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
-	     (set! x (cons (* dxy (imag-part avec)) x))
-	     (set! y (cons (* dxy (real-part avec)) y))
-	     (set! z (cons (* d (imag-part evec)) z))
-	     (set! v (cons (if 3d (fourth p) (third p)) v))))
-	 points)
-	(list (reverse x) (reverse y) (reverse z) (reverse v)))
-      
-      ;; decode a list of d:a:e components
-      (if 3d
-	  ;; decode a three dimensional list
-	  ;;   '(d0 a0 e0 d1 a1 e1 ... dn an en)
+(define parse-polar-coordinates 
+  (let ((documentation "(parse-polar-coordinates points 3d) parses a polar path"))
+    (lambda (points 3d)
+      (if (list? (car points))
+	  ;; decode a list of lists of d:a:e:v into x:y:z:v components
+	  ;; 3d --> t [default]
+	  ;;   '((d0 a0 e0 v0) (d1 a1 e1 v1)...(dn an en vn))
+	  ;;   '((d0 a0 e0) (d1 a1 e1)...(dn an en))
+	  ;;   '((d0 a0) (d1 a1)...(dn an))  
+	  ;; 3d --> nil
+	  ;;   '((d0 a0 v0) (d1 a1 v1)...(dn an vn))
+	  ;;   '((d0 a0) (d1 a1)...(dn an))
+	  ;;      v: velocity
 	  ;;      d: distance
 	  ;;      a: azimut angle
 	  ;;      e: elevarion angle [missing elevations assumed 0.0]
 	  (let ((x ())
 		(y ())
 		(z ())
-		(len (length points)))
-	    (do ((i 0 (+ i 3)))
-		((>= i len))
-	      (let* ((d (points i))
-		     (a (points (+ i 1)))
-		     (e (points (+ i 2)))
-		     (evec (cis (* (/ e dlocsig-one-turn) 2 pi)))
-		     (dxy (* d (real-part evec)))
-		     (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
-		(set! x (cons (* dxy (imag-part avec)) x))
-		(set! y (cons (* dxy (real-part avec)) y))
-		(set! z (cons (* d (imag-part evec)) z))))
-	    (list (reverse x) (reverse y) (reverse z) (make-list-1 (length x) #f)))
+		(v ()))
+	    (for-each
+	     (lambda (p)
+	       (let* ((d (car p))
+		      (a (cadr p))
+		      (e (if 3d (if (pair? (cddr p)) (caddr p) 0.0) 0.0))
+		      (evec (cis (* (/ e dlocsig-one-turn) 2 pi)))
+		      (dxy (* d (real-part evec)))
+		      (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
+		 (set! x (cons (* dxy (imag-part avec)) x))
+		 (set! y (cons (* dxy (real-part avec)) y))
+		 (set! z (cons (* d (imag-part evec)) z))
+		 (set! v (cons (if 3d (fourth p) (third p)) v))))
+	     points)
+	    (list (reverse x) (reverse y) (reverse z) (reverse v)))
 	  
-	  ;; decode a two dimensional list
-	  ;;   '(d0 a0 d1 a1 ... dn an)
-	  ;;      d: distance
-	  ;;      a: azimut angle
-	  ;;      e: elevarion angle [missing elevations assumed 0.0]
-	  (let ((x ())
-		(y ())
-		(len (length points)))
-	    (do ((i 0 (+ i 2)))
-		((>= i len))
-	      (let* ((d (points i))
-		     (a (points (+ i 1)))
-		     (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
-		(set! x (cons (* d (imag-part avec)) x))
-		(set! y (cons (* d (real-part avec)) y))))
-	    (list (reverse x) (reverse y) (make-list-1 (length x) 0.0) (make-list-1 (length x) #f))))))
+	  ;; decode a list of d:a:e components
+	  (if 3d
+	      ;; decode a three dimensional list
+	      ;;   '(d0 a0 e0 d1 a1 e1 ... dn an en)
+	      ;;      d: distance
+	      ;;      a: azimut angle
+	      ;;      e: elevarion angle [missing elevations assumed 0.0]
+	      (let ((x ())
+		    (y ())
+		    (z ())
+		    (len (length points)))
+		(do ((i 0 (+ i 3)))
+		    ((>= i len))
+		  (let* ((d (points i))
+			 (a (points (+ i 1)))
+			 (e (points (+ i 2)))
+			 (evec (cis (* (/ e dlocsig-one-turn) 2 pi)))
+			 (dxy (* d (real-part evec)))
+			 (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
+		    (set! x (cons (* dxy (imag-part avec)) x))
+		    (set! y (cons (* dxy (real-part avec)) y))
+		    (set! z (cons (* d (imag-part evec)) z))))
+		(list (reverse x) (reverse y) (reverse z) (make-list-1 (length x) #f)))
+	      
+	      ;; decode a two dimensional list
+	      ;;   '(d0 a0 d1 a1 ... dn an)
+	      ;;      d: distance
+	      ;;      a: azimut angle
+	      ;;      e: elevarion angle [missing elevations assumed 0.0]
+	      (let ((x ())
+		    (y ())
+		    (len (length points)))
+		(do ((i 0 (+ i 2)))
+		    ((>= i len))
+		  (let* ((d (points i))
+			 (a (points (+ i 1)))
+			 (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
+		    (set! x (cons (* d (imag-part avec)) x))
+		    (set! y (cons (* d (real-part avec)) y))))
+		(list (reverse x) (reverse y) (make-list-1 (length x) 0.0) (make-list-1 (length x) #f))))))))
 
 
 (define (xparse-path xpath)
@@ -1023,9 +1039,10 @@
 
 ;;; Pythagoras
 
-(define (distance x y z)
-  "(distance x y z) returns the euclidean distance of (x y z) from the origin"
-  (sqrt (+ (* x x) (* y y) (* z z))))
+(define distance 
+  (let ((documentation "(distance x y z) returns the euclidean distance of (x y z) from the origin"))
+    (lambda (x y z)
+      (sqrt (+ (* x x) (* y y) (* z z))))))
 
 ;;; Nearest point in a line
 
@@ -1613,7 +1630,7 @@
 	    (set! (path-rz path) xrz)
 	    (set! (path-rt path) 
 		  (let ((tf (times (- (length times) 1)))
-			 (val ()))
+			(val ()))
 		    (for-each
 		     (lambda (ti)
 		       (set! val (cons (/ ti tf) val)))
@@ -1901,14 +1918,14 @@
 	      ;; rotation
 	      (if rotation
 		  (let ((xr (+ (* ((matrix 0) 0) xw)
-				(* ((matrix 1) 0) yw)
-				(* ((matrix 2) 0) zw)))
+			       (* ((matrix 1) 0) yw)
+			       (* ((matrix 2) 0) zw)))
 			(yr (+ (* ((matrix 0) 1) xw)
-				(* ((matrix 1) 1) yw)
-				(* ((matrix 2) 1) zw)))
+			       (* ((matrix 1) 1) yw)
+			       (* ((matrix 2) 1) zw)))
 			(zr (+ (* ((matrix 0) 2) xw)
-				(* ((matrix 1) 2) yw)
-				(* ((matrix 2) 2) zw))))
+			       (* ((matrix 1) 2) yw)
+			       (* ((matrix 2) 2) zw))))
 		    (set! xw xr)
 		    (set! yw yr)
 		    (set! zw zr)))
@@ -1962,14 +1979,13 @@
 
 ;;; Rotate a path
 
-(define* (rotate-path path rotation
-		      rotation-center
-		      (rotation-axis '(0.0 0.0 1.0)))
-  "rotate-path is a dlocsig function that rotates a dlocsig path"
-  (transform-path path 
-		  :rotation rotation 
-		  :rotation-center rotation-center
-		  :rotation-axis rotation-axis))
+(define rotate-path 
+  (let ((documentation "rotate-path is a dlocsig function that rotates a dlocsig path"))
+    (lambda* (path rotation rotation-center (rotation-axis '(0.0 0.0 1.0)))
+      (transform-path path 
+		      :rotation rotation 
+		      :rotation-center rotation-center
+		      :rotation-axis rotation-axis))))
 
 ;;; Mirror a path around an axis
 
@@ -1993,51 +2009,52 @@
 
 ;;; Change the times of the rendered envelope so that the velocity is constant
 
-(define (constant-velocity path)
-  "constant-velocity is a dlocsig function that changes the times of the rendered envelope so that the velocity is constant"
-  (if (not (path-rx path))
-      (render-path path))
-  (reset-transformation path)
-  (let* ((xcoords (path-x path))
-	 (ycoords (path-y path))
-	 (zcoords (path-z path))
-	 (tcoords (path-time path))
-	 (total-distance 
-	  (let ((sum 0.0)
-		 (len (length xcoords)))
-	    (do ((i 0 (+ i 1)))
-		((= i len))
-	      (let ((x1 (xcoords i))
-		    (x2 (xcoords (+ i 1)))
-		    (y1 (ycoords i))
-		    (y2 (ycoords (+ i 1)))
-		    (z1 (zcoords i))
-		    (z2 (zcoords (+ i 1))))
-		(set! sum (+ sum (distance (- x2 x1) (- y2 y1) (- z2 z1))))))
-	    sum))
-	 (start-time (car tcoords))
-	 (end-time (tcoords (- (length tcoords) 1)))
-	 (total-time (- end-time start-time))
-	 (velocity (/ total-distance total-time)))
-    (let ((len (length xcoords))
-	  (now ())
-	  (dist 0.0))
-      (do ((i 0 (+ i 1)))
-	  ((= i len))
-	(let ((xp (xcoords i))
-	      (x (xcoords (+ i 1)))
-	      (yp (ycoords i))
-	      (y (ycoords (+ i 1)))
-	      (zp (zcoords i))
-	      (z (zcoords (+ i 1))))
-	  (set! dist (+ dist (distance (- x xp) (- y yp) (- z zp))))
-	  (set! now (cons (/ dist velocity) now))))
-      (set! now (reverse now))
-      (set! (path-rt path) (append (list start-time) now))
-      (set! (path-tx path) (copy (path-rx path)))
-      (set! (path-ty path) (copy (path-ry path)))
-      (set! (path-tz path) (copy (path-rz path)))))
-  path)
+(define constant-velocity 
+  (let ((documentation "constant-velocity is a dlocsig function that changes the times of the rendered envelope so that the velocity is constant"))
+    (lambda (path)
+      (if (not (path-rx path))
+	  (render-path path))
+      (reset-transformation path)
+      (let* ((xcoords (path-x path))
+	     (ycoords (path-y path))
+	     (zcoords (path-z path))
+	     (tcoords (path-time path))
+	     (total-distance 
+	      (let ((sum 0.0)
+		    (len (length xcoords)))
+		(do ((i 0 (+ i 1)))
+		    ((= i len))
+		  (let ((x1 (xcoords i))
+			(x2 (xcoords (+ i 1)))
+			(y1 (ycoords i))
+			(y2 (ycoords (+ i 1)))
+			(z1 (zcoords i))
+			(z2 (zcoords (+ i 1))))
+		    (set! sum (+ sum (distance (- x2 x1) (- y2 y1) (- z2 z1))))))
+		sum))
+	     (start-time (car tcoords))
+	     (end-time (tcoords (- (length tcoords) 1)))
+	     (total-time (- end-time start-time))
+	     (velocity (/ total-distance total-time)))
+	(let ((len (length xcoords))
+	      (now ())
+	      (dist 0.0))
+	  (do ((i 0 (+ i 1)))
+	      ((= i len))
+	    (let ((xp (xcoords i))
+		  (x (xcoords (+ i 1)))
+		  (yp (ycoords i))
+		  (y (ycoords (+ i 1)))
+		  (zp (zcoords i))
+		  (z (zcoords (+ i 1))))
+	      (set! dist (+ dist (distance (- x xp) (- y yp) (- z zp))))
+	      (set! now (cons (/ dist velocity) now))))
+	  (set! now (reverse now))
+	  (set! (path-rt path) (append (list start-time) now))
+	  (set! (path-tx path) (copy (path-rx path)))
+	  (set! (path-ty path) (copy (path-ry path)))
+	  (set! (path-tz path) (copy (path-rz path)))))
+      path)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2154,7 +2171,7 @@
 	 (o-offset #f)
 	 (p-offset #f)
 	 (q-offset #f))
-
+    
     (if (= render-using ambisonics)
 	;; calculate output channel offsets for ambisonics rendering
 	(let ((offset 3))
@@ -2191,8 +2208,8 @@
 		;; add P Q
 		(set! p-offset offset)
 		(set! q-offset (+ offset 1)))
-		(set! offset (+ offset 2)))))
-
+	      (set! offset (+ offset 2)))))
+    
     (define (equalp-intersection l1 l2)
       (if (null? l2) 
 	  l2

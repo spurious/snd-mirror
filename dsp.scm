@@ -1155,8 +1155,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (reverse freq-response)))
 
 (define notch-channel
-  (let ((documentation "(notch-channel freqs (filter-order #f) beg dur snd chn edpos (truncate #t) (notch-width 2)) -> notch filter removing freqs"))
-    (lambda* (freqs (filter-order #f) beg dur snd chn edpos (truncate #t) (notch-width 2))
+  (let ((documentation "(notch-channel freqs filter-order beg dur snd chn edpos (truncate #t) (notch-width 2)) -> notch filter removing freqs"))
+    (lambda* (freqs filter-order beg dur snd chn edpos (truncate #t) (notch-width 2))
       (filter-channel (make-notch-frequency-response (* 1.0 (srate snd)) freqs notch-width)
 		      (or filter-order (min (framples snd chn) (expt 2 (floor (log (/ (srate snd) notch-width) 2)))))
 		      beg dur snd chn edpos truncate

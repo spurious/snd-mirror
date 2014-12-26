@@ -37,7 +37,7 @@
 		       (error 0.01)
 		       (scaler 1)
 		       (offset 0)
-		       (cutoff #f)
+		       cutoff
 		       (out-scaler 1))
   (let* ((base (exact->inexact base))
 	 (error (exact->inexact error))
@@ -320,7 +320,7 @@
 		      (grains 0)
 		      (amp-envelope '(0 0 0.3 1 0.7 1 1 0))
 		      (grain-envelope '(0 0 0.3 1 0.7 1 1 0)) 
-		      (grain-envelope-end #f)
+		      grain-envelope-end
 		      (grain-envelope-transition '(0 0 1 1)) 
 		      (grain-envelope-array-size 512)
 		      (grain-duration 0.1)
@@ -328,18 +328,18 @@
 		      (grain-duration-limit 0.002)
 		      (srate 0.0)
 		      (srate-spread 0.0)
-		      (srate-linear #f)
+		      srate-linear
 		      (srate-base grani-default-base)
 		      (srate-error 0.01)
 		      (grain-start '(0 0 1 1)) 
 		      (grain-start-spread 0.0)
-		      (grain-start-in-seconds #f)
+		      grain-start-in-seconds
 		      (grain-density 10.0)
 		      (grain-density-spread 0.0)
 		      (reverb-amount 0.01)
-		      (reversed #f) ; change this from "reverse" 18-Nov-13
+		      reversed  ; change this from "reverse" 18-Nov-13
 		      (where-to 0)
-		      (where-bins #f) ; a float-vector, not a list
+		      where-bins  ; a float-vector, not a list
 		      (grain-distance 1.0)
 		      (grain-distance-spread 0.0)
 		      (grain-degree 45.0)

@@ -9,37 +9,40 @@
 
 ;;; -------- selection -> new file
 
-(define (selection->new)
-  "(selection-<new) saves the selection in a new file, then opens that file"
-  (if (selection?)
-      (let ((new-file-name (snd-tempnam)))
-	(save-selection new-file-name)
-	(open-sound new-file-name))
-      #f))
+(define selection->new
+  (let ((documentation "(selection-<new) saves the selection in a new file, then opens that file"))
+    (lambda ()
+      (if (selection?)
+	  (let ((new-file-name (snd-tempnam)))
+	    (save-selection new-file-name)
+	    (open-sound new-file-name))
+	  #f))))
 
 (add-to-menu edit-menu "Selection->new" selection->new 8) ;pos=8 puts this in the selection section in the Edit menu
 
 
 ;;; -------- cut selection -> new file
 
-(define (cut-selection->new)
-  "(cut-selection->new) saves the selection, deletes it, then opens the saved file"
-  (if (selection?)
-      (let ((new-file-name (snd-tempnam)))
-	(save-selection new-file-name)
-	(delete-selection)
-	(open-sound new-file-name))
-      #f))
+(define cut-selection->new
+  (let ((documentation "(cut-selection->new) saves the selection, deletes it, then opens the saved file"))
+    (lambda ()
+      (if (selection?)
+	  (let ((new-file-name (snd-tempnam)))
+	    (save-selection new-file-name)
+	    (delete-selection)
+	    (open-sound new-file-name))
+	  #f))))
 
 (add-to-menu edit-menu "Cut selection->new" cut-selection->new 9)
 
 
 ;;; -------- append selection
 
-(define (append-selection)
-  "(append-selection) appends the current selection"
-  (if (selection?)
-      (insert-selection (framples))))
+(define append-selection
+  (let ((documentation "(append-selection) appends the current selection"))
+    (lambda ()
+      (if (selection?)
+	  (insert-selection (framples))))))
 
 (add-to-menu edit-menu "Append selection" append-selection 10)
 
@@ -65,42 +68,44 @@
 
 ;;; -------- trim front and back (goes by first or last mark)
 
-(define (trim-front)
-  "(trim-front) finds the first mark in each of the syncd channels and removes all samples before it"
-  (let ((snc (sync)))
-    (define (trim-front-one-channel snd chn)
-      (if (< (length (marks snd chn)) 1)
-	  (status-report "trim-front needs a mark" snd)
-	  (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)))
-    (if (> snc 0)
-	(apply map
-	       (lambda (snd chn)
-		 (if (= (sync snd) snc)
-		     (trim-front-one-channel snd chn)))
-	       (all-chans))
-	(trim-front-one-channel 
-	 (or (selected-sound) (car (sounds))) 
-	 (or (selected-channel) 0)))))
+(define trim-front
+  (let ((documentation "(trim-front) finds the first mark in each of the syncd channels and removes all samples before it"))
+    (lambda ()
+      (let ((snc (sync)))
+	(define (trim-front-one-channel snd chn)
+	  (if (< (length (marks snd chn)) 1)
+	      (status-report "trim-front needs a mark" snd)
+	      (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)))
+	(if (> snc 0)
+	    (apply map
+		   (lambda (snd chn)
+		     (if (= (sync snd) snc)
+			 (trim-front-one-channel snd chn)))
+		   (all-chans))
+	    (trim-front-one-channel 
+	     (or (selected-sound) (car (sounds))) 
+	     (or (selected-channel) 0)))))))
 
 (add-to-menu edit-menu "Trim front" trim-front)
 
-(define (trim-back)
-  "(trim-back) finds the last mark in each of the syncd channels and removes all samples after it"
-  (let ((snc (sync)))
-    (define (trim-back-one-channel snd chn)
-      (if (< (length (marks snd chn)) 1)
-	  (status-report "trim-back needs a mark" snd)
-	  (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
-	    (delete-samples (+ endpt 1) (- (framples snd chn) endpt)))))
-    (if (> snc 0)
-	(apply map
-	       (lambda (snd chn)
-		 (if (= (sync snd) snc)
-		     (trim-back-one-channel snd chn)))
-	       (all-chans))
-	(trim-back-one-channel 
-	 (or (selected-sound) (car (sounds))) 
-	 (or (selected-channel) 0)))))
+(define trim-back
+  (let ((documentation "(trim-back) finds the last mark in each of the syncd channels and removes all samples after it"))
+    (lambda ()
+      (let ((snc (sync)))
+	(define (trim-back-one-channel snd chn)
+	  (if (< (length (marks snd chn)) 1)
+	      (status-report "trim-back needs a mark" snd)
+	      (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
+		(delete-samples (+ endpt 1) (- (framples snd chn) endpt)))))
+	(if (> snc 0)
+	    (apply map
+		   (lambda (snd chn)
+		     (if (= (sync snd) snc)
+			 (trim-back-one-channel snd chn)))
+		   (all-chans))
+	    (trim-back-one-channel 
+	     (or (selected-sound) (car (sounds))) 
+	     (or (selected-channel) 0)))))))
 
 (add-to-menu edit-menu "Trim back" trim-back)
 
@@ -117,18 +122,19 @@
 	   (delete-samples (+ endpt 1) (- (framples snd chn) endpt))))
        "crop-one-channel")))
 
-(define (crop)
-  "(crop) finds the first and last marks in each of the syncd channels and removes all samples outside them"
-  (let ((snc (sync)))
-    (if (> snc 0)
-	(apply map
-	       (lambda (snd chn)
-		 (if (= (sync snd) snc)
-		     (crop-one-channel snd chn)))
-	       (all-chans))
-	(crop-one-channel 
-	 (or (selected-sound) (car (sounds)))
-	 (or (selected-channel) 0)))))
+(define crop
+  (let ((documentation "(crop) finds the first and last marks in each of the syncd channels and removes all samples outside them"))
+    (lambda ()
+      (let ((snc (sync)))
+	(if (> snc 0)
+	    (apply map
+		   (lambda (snd chn)
+		     (if (= (sync snd) snc)
+			 (crop-one-channel snd chn)))
+		   (all-chans))
+	    (crop-one-channel 
+	     (or (selected-sound) (car (sounds)))
+	     (or (selected-channel) 0)))))))
 
 (add-to-menu edit-menu "Crop" crop)
 
@@ -142,7 +148,7 @@
 	     (edit-menu (cadr (XtGetValues edit-cascade (list XmNsubMenuId 0)))))
 	
 	(define (for-each-child w func)
-	  "(for-each-child w func) applies func to w and its descendents"
+	  ;; (for-each-child w func) applies func to w and its descendents
 	  (func w)
 	  (if (XtIsComposite w)
 	      (for-each 
@@ -167,4 +173,3 @@
 					(XtSetSensitive child (and (selected-sound)
 								   (>= (length (marks (selected-sound) (selected-channel))) 1))))))))))))
     )
-

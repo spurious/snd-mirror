@@ -51,20 +51,21 @@
   (/ (factorial n)
      (* (factorial m) (factorial (- n m)))))
 
-(define (n-choose-k n k)
-  "(n-choose-k n k) computes the binomial coefficient C(N,K)"
-  (let ((mn (min k (- n k))))
-    (if (< mn 0)
-	0
-	(if (= mn 0)
-	    1
-	    (let* ((mx (max k (- n k)))
-		   (cnk (+ 1 mx)))
-	      (do ((i 2 (+ i 1)))
-		  ((> i mn) cnk)
-		(set! cnk (/ (* cnk (+ mx i)) i))))))))
-
-
+(define n-choose-k 
+  (let ((documentation "(n-choose-k n k) computes the binomial coefficient C(N,K)"))
+    (lambda (n k)
+      (let ((mn (min k (- n k))))
+	(if (< mn 0)
+	    0
+	    (if (= mn 0)
+		1
+		(let* ((mx (max k (- n k)))
+		       (cnk (+ 1 mx)))
+		  (do ((i 2 (+ i 1)))
+		      ((> i mn) cnk)
+		    (set! cnk (/ (* cnk (+ mx i)) i))))))))))
+    
+    
 
 ;;; --------------------------------------------------------------------------------
 ;;; from Numerical Recipes

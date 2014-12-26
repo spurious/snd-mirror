@@ -38601,7 +38601,7 @@ EDITS: 1
 				     (amp-env '(0 1 1 1))
 				     (path (make-path :path '(-10 10 0 5 10 10)))
 				     (decode amplitude-panning)
-				     (initdly #f))
+				     initdly)
     (let* ((vals (make-dlocsig :start-time start-time
 			       :duration duration
 			       :render-using decode

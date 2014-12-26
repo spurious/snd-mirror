@@ -2881,14 +2881,12 @@
 		 (lint-format "~A ~A named ~A is asking for trouble" name head type (var-name arg))
 		 (if (not (symbol? (var-name arg)))
 		     (lint-format "bad ~A ~A name: ~S" name head type (var-name arg))))
-	     
-	     ;(format *stderr* "~A~%" arg)
-
 	     (if (and (not (var-ref arg))
 		      (not (hash-table-ref other-identifiers (var-name arg))))
 		 (if (var-set arg)
 		     (set! set (cons (var-name arg) set))
-		     (set! unused (cons (var-name arg) unused)))))
+		     (if (not (eq? (var-name arg) 'documentation))
+			 (set! unused (cons (var-name arg) unused))))))
 	   vars)
 	  
 	  (if (pair? set)
@@ -2946,50 +2944,7 @@
 	(if (and (pair? body)
 		 (pair? (cdr body))
 		 (string? (car body)))
-	    (begin
-	      (if *report-minor-stuff*
-		  (let* ((doc (car body))
-			 (doclen (string-length doc))
-			 (func (object->string name))
-			 (funclen (if (string? func) (string-length func) -1)))
-		    ;; check, then discard the doc string
-		    ;;   look for the current function name and arg names.
-		    
-		    (if (and (> doclen funclen)
-			     (char=? (string-ref doc 0) #\()
-			     (string=? (substring doc 1 (+ funclen 1)) func))
-			(let ((p 1)
-			      (end 0))
-			  (do ((i 1 (+ i 1)))
-			      ((or (= p 0)
-				   (= i doclen)))
-			    (case (string-ref doc i)
-			      ((#\() (set! p (+ p 1)))
-			      ((#\)) (set! p (- p 1))))
-			    (if (= p 0) 
-				(set! end i)))
-			  
-			  (if (not (zero? p))
-			      (lint-format "docstring is messed up: ~S" name doc)
-			      (if (< end doclen)
-				  (let* ((arglst (catch #t 
-						   (lambda ()
-						     (eval-string (string-append "'" (substring doc 0 (+ 1 end)))))
-						   (lambda ignore-catch-error-args 
-						     #f)))
-					 (keys (if arglst (keywords arglst) 0))
-					 (argn (if (or (pair? arglst) 
-						       (null? arglst)) 
-						   (- (length (proper-list arglst)) keys 1) 
-						   0)))
-				    (if (and arglst
-					     (not (= (length arg-data) argn)))
-					(lint-format "possible docstring mismatch:       ~S~%        ~S~%" 
-						     name (substring doc 0 (+ end 1)) (append (list name) args))))))))))
-	      
-	      ;; in any case, skip the docstring during the walk
-	      (set! body (cdr body))))
-
+	    (set! body (cdr body))) ; ignore old-style doc-string
 	(lint-walk-body name head body env)
 	env)
       
@@ -3071,7 +3026,10 @@
 						 (begin
 						   (lint-format "strange parameter for ~A: ~S" name head arg)
 						   (values))
-						 (make-var (car arg)))))
+						 (begin
+						   (if (eq? (cadr arg) #f)
+						       (lint-format "s7 default is #f ~A ~A" name head arg))
+						   (make-var (car arg))))))
 				       (proper-list args)))))
 		  
 		    (lint-walk-function-body name head args arg-data val (append arg-data (if ldata (append (list ldata) env) env)))
@@ -3784,89 +3742,82 @@
 		env)))
       
     ;;; --------------------------------------------------------------------------------
-      
-      (lambda* (file (outp *lint-output-port*))
-	"(lint file port) looks for infelicities in file's scheme code"
-	(set! outport outp)
-	(set! globals (make-hash-table))
-	(set! other-identifiers (make-hash-table))
-	(set! loaded-files ())
-	(set! last-simplify-boolean-line-number -1)
-	(set! last-simplify-numeric-line-number -1)
-	(set! line-number -1)
-
-	;(format *stderr* "lint ~S~%" file)
-
-	(let ((fp (if (input-port? file)
-		      file
-		      (begin
-			(set! *current-file* file)
-			(if *load-file-first* ; this can improve the error checks
-			    (load file))
-			(catch #t
-			  (lambda ()
-			    (let ((p (open-input-file file)))
-			      (if (not (string=? file "t631-temp.scm"))
-				  (format outport ";~A~%" file))
-			      (set! loaded-files (cons file loaded-files))
-			      p))
-			  (lambda args
-			    (format outport "  can't open ~S: ~A~%" file (apply format #f (cadr args)))
-			    #f))))))
+      (let ((documentation "(lint file port) looks for infelicities in file's scheme code"))
+	(lambda* (file (outp *lint-output-port*))
+	  (set! outport outp)
+	  (set! globals (make-hash-table))
+	  (set! other-identifiers (make-hash-table))
+	  (set! loaded-files ())
+	  (set! last-simplify-boolean-line-number -1)
+	  (set! last-simplify-numeric-line-number -1)
+	  (set! line-number -1)
 	  
-	  (if (input-port? fp)
-	      (let ((vars ())
-		    (line 0)
-		    (last-form #f)
-		    (last-line-number -1))
-		(do ((form (read fp) (read fp)))
-		    ((eof-object? form))
-		  (if (pair? form)
-		      (set! line (max line (pair-line-number form))))
+	  ;;(format *stderr* "lint ~S~%" file)
+	  
+	  (let ((fp (if (input-port? file)
+			file
+			(begin
+			  (set! *current-file* file)
+			  (if *load-file-first* ; this can improve the error checks
+			      (load file))
+			  (catch #t
+			    (lambda ()
+			      (let ((p (open-input-file file)))
+				(if (not (string=? file "t631-temp.scm"))
+				    (format outport ";~A~%" file))
+				(set! loaded-files (cons file loaded-files))
+				p))
+			    (lambda args
+			      (format outport "  can't open ~S: ~A~%" file (apply format #f (cadr args)))
+			      #f))))))
+	    
+	    (if (input-port? fp)
+		(let ((vars ())
+		      (line 0)
+		      (last-form #f)
+		      (last-line-number -1))
+		  (do ((form (read fp) (read fp)))
+		      ((eof-object? form))
+		    (if (pair? form)
+			(set! line (max line (pair-line-number form))))
+		    
+		    (if (and (not (= last-line-number -1))
+			     (not (side-effect? last-form vars)))
+			(format outport "  top-level (line ~D): this has no effect:~A~%" 
+				last-line-number
+				(truncated-list->string last-form)))
+		    (set! last-form form)
+		    (set! last-line-number line)
+		    (set! vars (lint-walk (if (symbol? form) 
+					      form 
+					      (if (pair? form) 
+						  (car form)
+						  #f))
+					  form 
+					  vars)))
 		  
-		  (if (and (not (= last-line-number -1))
-			   (not (side-effect? last-form vars)))
-		      (format outport "  top-level (line ~D): this has no effect:~A~%" 
-			      last-line-number
-			      (truncated-list->string last-form)))
-		  (set! last-form form)
-		  (set! last-line-number line)
-		  (set! vars (lint-walk (if (symbol? form) 
-					    form 
-					    (if (pair? form) 
-						(car form)
-						#f))
-					form 
-					vars)))
-		
-		(if *report-multiply-defined-top-level-functions*
-		    (for-each
-		     (lambda (var)
-		       (let ((var-file (hash-table-ref *top-level-objects* (car var))))
-			 (if (not var-file)
-			     (hash-table-set! *top-level-objects* (car var) *current-file*)
-			     (if (and (string? *current-file*)
-				      (not (string=? var-file *current-file*)))
-				 (format outport ";~S is defined at the top level in ~S and ~S~%" (car var) var-file *current-file*)))))
-		     vars))
-		
-		(if (and (string? file)
-			 *report-unused-top-level-functions*)
-		    (report-usage file 'top-level-var "" vars))
-		
-		(if (not (input-port? file))
-		    (close-input-port fp)))))))))
+		  (if *report-multiply-defined-top-level-functions*
+		      (for-each
+		       (lambda (var)
+			 (let ((var-file (hash-table-ref *top-level-objects* (car var))))
+			   (if (not var-file)
+			       (hash-table-set! *top-level-objects* (car var) *current-file*)
+			       (if (and (string? *current-file*)
+					(not (string=? var-file *current-file*)))
+				   (format outport ";~S is defined at the top level in ~S and ~S~%" (car var) var-file *current-file*)))))
+		       vars))
+		  
+		  (if (and (string? file)
+			   *report-unused-top-level-functions*)
+		      (report-usage file 'top-level-var "" vars))
+		  
+		  (if (not (input-port? file))
+		      (close-input-port fp))))))))))
 
 
 
 ;;; macros that cause definitions are ignored (this also affects variable usage stats)
 ;;; and cload'ed identifiers are missed
-;;;
-;;; snd|s7-lint-info.scm: all the func type/arg data using predicates, lint also using these
-;;;   no built-in data here (fill hash-tables via local loads)
-;;;   '(func 'type-predicate arg1-pred...) or (f t . arg) if all args have same etc
-;;;   '(+ number? . number?), '(abs real? real?) etc
-;;;   also cload: libc libgsl etc arg types/return types
 ;;;
 ;;; what about cond expr that can't be true given previous exprs? -- like or (1508)  and test (cond (#f ...)...)?
 ;;;  also (set! x 32) (set! x 123) etc [list-set!...]

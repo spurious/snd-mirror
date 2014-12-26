@@ -932,7 +932,7 @@
 (define n-array-length 2048)
 (define g-array-length 128)
 
-(define* (make-index-1 file-names (output "test.html") (cols 3) (capitalized #f) no-bold with-scm)
+(define* (make-index-1 file-names (output "test.html") (cols 3) capitalized no-bold with-scm)
   ;; read html file, gather all names, create index (in lower-case, *=space in sort)
   (let ((n 0)
 	(g 0)

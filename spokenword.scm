@@ -144,32 +144,27 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (bind-key #\i 0
-  (lambda ()
-	"Mark an in-position"
+  (lambda () ; Mark an in-position
     (mark-in (cursor))
     cursor-in-view))
 
 (bind-key #\o 0
-  (lambda ()
-	"Mark an out-position"
+  (lambda () ; Mark an out-position
     (mark-out (cursor))
     cursor-in-view))
 
 (bind-key #\c 4
-  (lambda ()
-	"Clear all marks"
+  (lambda () ; Clear all marks
     (delete-marks)
     cursor-in-view))
 
 (bind-key "BackSpace" 4
-  (lambda ()
-	"Commit delete from mark Out to mark In"
+  (lambda () ; Commit delete from mark Out to mark In
     (delete-from-out-to-in)
     cursor-in-view))
 
 (bind-key #\p 0
-  (lambda ()
-	"Play from cursor"
+  (lambda () ; Play from cursor
     (set! *with-tracking-cursor* #t)
     (if (playing)
         (stop-playing)
@@ -177,8 +172,7 @@
     cursor-in-view))
 
 (bind-key #\l 0
-  (lambda ()
-	"Listen to a preview before commiting delete or listen from cursor"
+  (lambda () ; Listen to a preview before commiting delete or listen from cursor
     (set! *with-tracking-cursor* #f)
     (if (playing)
         (stop-playing)
@@ -186,25 +180,21 @@
     cursor-in-view))
 
 (bind-key "Right" 0
-  (lambda () 
-    "Move cursor to the right"
+  (lambda () ; Move cursor to the right
     (set! (cursor) (+ (cursor) some-size))
     cursor-in-view))
 
 (bind-key "Right" 4
-  (lambda () 
-    "Move cursor to next interesting position"
+  (lambda () ; Move cursor to next interesting position
     (set! (cursor) (next-phrase (cursor)))
     cursor-in-view))
 
 (bind-key "Left" 0
-  (lambda () 
-    "Move cursor to the left"
+  (lambda () ; Move cursor to the left
     (set! (cursor) (- (cursor) some-size))
     cursor-in-view))
 
 (bind-key "Left" 4
-  (lambda () 
-    "Move cursor to previous interesting position"
+  (lambda () ; Move cursor to previous interesting position
     (set! (cursor) (previous-phrase (cursor)))
     cursor-in-view))
