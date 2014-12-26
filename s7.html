@@ -4017,7 +4017,6 @@ function's closure to store whatever information is needed:
 <pre class="indented">
 (<em class=def id="procedurename">procedure-name</em> proc)
 (<em class=def id="proceduresource">procedure-source</em> proc)
-(<em class=def id="procedurearity">procedure-arity</em> proc) ; obsolete
 (<em class=def id="proceduredocumentation">procedure-documentation</em> proc)
 (<em class=def id="proceduresetter">procedure-setter</em> proc)
 (funclet proc)
@@ -4044,17 +4043,13 @@ the initial string in the function's body (as in CL), but now it is the value of
 in the procedure's local environment.  That is, <code>(define (f a) "doc string" a)</code> is now
 <code>(define f (let ((documentation "doc string")) (lambda (a) a)))</code>.  This change gets the 
 string out of the body (where it can slow down evaluation of the function to no purpose), and
-makes it possible to extend the function information arbitrarily.  <code>((funclet f) 'documentation)</code>
-is the function documentation, and anything else easily fits in the same system.
+makes it possible to extend the function information arbitrarily.  If 'f' is a
+function defined in scheme code (not built-in), <code>((funclet f) 'documentation)</code>
+is its documentation, and other such information can easily fit in the same system.
 </p>
 
 <p>
-procedure-arity returns a list describing the argument list of a function: <code>'(required-args optional-args rest-arg?)</code>.
-In s7 lots of things are applicable, so procedure-arity is too restricted,
-and in its main use (checking that a function can be applied to some arguments),
-it is very clumsy.
-So, s7 has two generic functions:
-arity and aritable?.  arity takes any object and returns either #f if it is not applicable,
+arity takes any object and returns either #f if it is not applicable,
 or a cons containing the minimum and maximum number of arguments acceptable.  If the maximum reported
 is a really big number, that means any number of arguments is ok.
 aritable? takes two arguments, an object and an integer, and returns #t if the object can be
@@ -4067,9 +4062,6 @@ add-2
 
 &gt; (procedure-documentation add-2)
 "add-2 adds its 2 args"
-
-&gt; (procedure-arity add-2)
-(0 2 #f)
 
 &gt; (procedure-source add-2)
 (lambda* (a (b 32)) "add-2 adds its 2 args" (+ a b))
@@ -5399,16 +5391,13 @@ Here we scan the symbol table looking for any function that doesn't have documen
 	(if (<em class=red>defined?</em> sym)
 	    (let ((val (<em class=red>symbol-&gt;value</em> sym)))
               (if (procedure? val)
-	          (let* ((arity (procedure-arity val))
-		         (req (car arity))
-		         (opt (cadr arity))
-		         (rst (caddr arity)))
-	            (if (or (&gt; (+ opt req) 4)
-	       	            (member (symbol-&gt;string sym) '("exit" "abort")))
+	          (let ((max-args (cdr (arity val))))
+	            (if (or (&gt; max-args 4)
+	       	            (memq sym '(exit abort)))
 		        (format #t ";skip ~&lt;sym~&gt; for now~%")
 		        (begin
 		          (format #t ";whack on ~&lt;sym~&gt;...~%")
-		          (autotest val () (+ req opt 1 (if rst 1 0))))))))))
+		          (autotest val () max-args))))))))
     (<em class=red>symbol-table</em>)))
 </pre>
 

@@ -186,7 +186,7 @@
 		  nan? negative? not null? number->string number? numerator 
 		  object->string odd? open-environment? openlet? or outer-environment outlet output-port? 
 		  pair? pair-line-number port-closed? port-filename port-line-number positive? 
-		  procedure-arity procedure-documentation procedure-environment funclet
+		  procedure-documentation procedure-environment funclet
 		  procedure-name procedure-setter procedure-source dilambda? procedure? provided? 
 		  quasiquote quote quotient 
 		  random random-state? rational? rationalize real-part real? remainder reverse round 
@@ -371,7 +371,6 @@
 			   'port-file-name +string+
 			   'port-line-number +integer+
 			   'positive? +boolean+
-			   'procedure-arity 'list-or-f
 			   'procedure-environment +environment+
 			   'procedure-name +string+
 			   'procedure? +boolean+
@@ -609,7 +608,6 @@
 			  'port-filename input-port?
 			  'port-line-number input-port?
 			  'positive? real?
-			  'procedure-arity procedure?
 			  'procedure-documentation procedure?
 			  'procedure-environment procedure?
 			  'procedure-setter procedure?
@@ -2566,23 +2564,20 @@
 		       (procedure? (symbol->value head)))
 		  ;; check arg number
 		  (let* ((head-value (symbol->value head)) ; head might be "arity"!
-			 (arity (procedure-arity head-value))
 			 (args (length (cdr form)))
-			 (max-arity 123123123))
-		    (if (pair? arity)
-			(if (< args (car arity))
-			    (lint-format "~A needs ~A~D argument~A:~A" 
-					 name head 
-					 (if (and (= 0 (cadr arity)) (not (caddr arity))) "" "at least ")
-					 (car arity) 
-					 (if (> (car arity) 1) "s" "") 
-					 (truncated-list->string form))
-			    (unless (caddr arity)
-			      (set! max-arity (+ (car arity) (cadr arity)))
-			      (if (and (> (- args (keywords (cdr form))) (+ (car arity) (cadr arity)))
-				       (not (procedure-setter head-value)))
-				  (lint-format "~A has too many arguments:~A" name head (truncated-list->string form))))))
-
+			 (ary (arity head-value))
+			 (min-arity (car ary))
+			 (max-arity (cdr ary)))
+		    (if (< args min-arity)
+			(lint-format "~A needs ~A~D argument~A:~A" 
+				     name head 
+				     (if (= min-arity max-arity) "" "at least ")
+				     min-arity
+				     (if (> min-arity 1) "s" "") 
+				     (truncated-list->string form))
+			(if (and (not (procedure-setter head-value))
+				 (> (- args (keywords (cdr form))) max-arity))
+			    (lint-format "~A has too many arguments:~A" name head (truncated-list->string form))))
 		    (if (pair? (cdr form)) ; there are args (the not-enough-args case is checked above)
 			(if (zero? max-arity)
 			    (lint-format "too many arguments:~A" name (truncated-list->string form))    
@@ -2661,31 +2656,31 @@
 						    (if (= len 2) "" "s") 
 						    (truncated-list->string form)))
 				   (let ((func (cadr form))
-					 (arity #f))
+					 (ary #f))
 				     (if (and (symbol? func)
 					      (defined? func)
 					      (procedure? (symbol->value func)))
-					 (set! arity (procedure-arity (symbol->value func)))
-					 
+					 (set! ary (arity (symbol->value func)))
+
 					 (if (and (pair? func)
 						  (memq (car func) '(lambda lambda*))
 						  (pair? (cadr func)))
 					     (let ((arglen (length (cadr func))))
 					       (if (eq? (car func) 'lambda)
 						   (if (negative? arglen)
-						       (set! arity (list (abs arglen) 0 #t))
-						       (set! arity (list arglen 0 #f)))
-						   (if (negative? arglen)
-						       (set! arity (list 0 (abs arglen) #t))
-						       (set! arity (list 0 arglen (memq :rest (cadr func)))))))))
+						       (set! ary (cons (abs arglen) 512000))
+						       (set! ary (cons arglen arglen)))
+						   (if (or (negative? arglen)
+							   (memq :rest (cadr func)))
+						       (set! ary (cons 0 512000))
+						       (set! ary (cons 0 arglen)))))))
 				     
-				     (if (pair? arity)
-					 (if (< args (car arity))
+				     (if (pair? ary)
+					 (if (< args (car ary))
 					     (lint-format "~A has too few arguments in: ~A"
 							  name head 
 							  (truncated-list->string form))
-					     (if (and (not (caddr arity))
-						      (> args (+ (car arity) (cadr arity))))
+					     (if (> args (cdr ary))
 						 (lint-format "~A has too many arguments in: ~A"
 							      name head 
 							      (truncated-list->string form)))))
@@ -2958,17 +2953,16 @@
 				 (string? (car val)))
 			    (cdr val)
 			    val)))
-	      (if (and (pair? bval)          ; not (define (hi a) . 1)!
+	      (if (and (pair? bval)           ; not (define (hi a) . 1)!
 		       (pair? (car bval))
 		       (null? (cdr bval))
 		       (symbol? (caar bval))) ; not (define (hi) ((if #f + abs) 0))
 		  (if (equal? args (cdar bval))
 		      (let* ((cval (caar bval))
-			     (p (symbol->value cval)))
+			     (p (symbol->value cval))
+			     (ary (arity p)))
 			(if (or (and (procedure? p)
-				     (zero? (cadr (procedure-arity p)))
-				     (not (caddr (procedure-arity p)))) ; might be deliberately limiting args
-					; but this flushes such things as (define (v x) (vector x) because procedure-arity vector) -> (0 0 #t) 
+				     (= (car ary) (cdr ary)))
 				(let ((e (or (var-member cval env) 
 					     (hash-table-ref globals cval))))
 				  (and e

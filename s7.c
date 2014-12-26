@@ -99,8 +99,9 @@
  *   then load it with -lreadline -ldl -lm, (and perhaps -ltinfo) etc.
  *
  * -O3 is sometimes slower, sometimes faster
- * -march=native -fomit-frame-pointer -m64 -funroll-loops gains about .1% -- almost nothing.
+ * -march=native -fomit-frame-pointer -m64 -funroll-loops gains about .1%
  * -ffast-math makes a mess of NaNs, and does not appear to be faster
+ * for timing tests, I use: -O2 -DINITIAL_HEAP_SIZE=1024000 -march=native -fomit-frame-pointer -funroll-loops
  */
 
 
@@ -831,7 +832,7 @@ struct s7_scheme {
   s7_pointer NOT, IS_NULL, IS_NUMBER, NUMBER_TO_STRING, NUMERATOR, OBJECT_TO_STRING, IS_ODD, OPENLET, IS_OPENLET, OPEN_INPUT_FILE;
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTLET, IS_OUTPUT_PORT, IS_PAIR, PAIR_LINE_NUMBER, PEEK_CHAR;
   s7_pointer IS_PORT_CLOSED, PORT_FILENAME, PORT_LINE_NUMBER;
-  s7_pointer IS_POSITIVE, IS_PROCEDURE, PROCEDURE_ARITY, PROCEDURE_DOCUMENTATION, FUNCLET, PROCEDURE_NAME, PROCEDURE_SOURCE;
+  s7_pointer IS_POSITIVE, IS_PROCEDURE, PROCEDURE_DOCUMENTATION, FUNCLET, PROCEDURE_NAME, PROCEDURE_SOURCE;
   s7_pointer IS_DILAMBDA, PROVIDE;
   s7_pointer IS_PROVIDED, QUOTIENT, RANDOM, IS_RANDOM_STATE, RANDOM_STATE_TO_LIST, RATIONALIZE, IS_RATIONAL, READ, READ_BYTE, READ_CHAR, READ_LINE, IS_REAL;
   s7_pointer READ_STRING, REAL_PART, REMAINDER, REQUIRE, REVERSE, REVERSEB, ROUND, SET_CAR, SET_CDR, SIN, SINH, SORT, SQRT, STACKTRACE;
@@ -34678,6 +34679,7 @@ static s7_pointer g_procedure_name(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- arity -------------------------------- */
 
+#if (!DISABLE_DEPRECATED)
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 {
   if (is_any_c_function(x))
@@ -34738,27 +34740,7 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 
   return(sc->NIL);
 }
-
-
-static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
-{
-  #define H_procedure_arity "(procedure-arity func) returns a list describing func's arguments: '(required optional rest)"
-  s7_pointer p;
-
-  p = car(args);
-  if (is_symbol(p))
-    {
-      p = s7_symbol_value(sc, p);
-      if (p == sc->UNDEFINED)
-	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-			list_2(sc, make_string_wrapper(sc, "procedure-arity arg, '~S, is unbound"), car(args))));
-    }
-
-  check_method(sc, p, sc->PROCEDURE_ARITY, args);
-  if (!is_procedure(p))
-    return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_ARITY, p, A_PROCEDURE));
-  return(s7_procedure_arity(sc, p));
-}
+#endif
 
 
 static s7_pointer closure_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_pointer x_args)
@@ -34853,12 +34835,8 @@ static int closure_star_arity_to_int(s7_scheme *sc, s7_pointer x)
 }
 
 
-static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
+s7_pointer s7_arity(s7_scheme *sc, s7_pointer x)
 {
-  #define H_arity "(arity obj) the min and max acceptable args for obj if it is applicable, otherwise #f."
-  s7_pointer x;
-
-  x = car(args);
   switch (type(x))
     {
     case T_C_OPT_ARGS_FUNCTION:
@@ -34898,11 +34876,11 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 	return(sc->F);
 
     case T_ENVIRONMENT:
-      check_method(sc, x, sc->ARITY, args);
+      /* check_method(sc, x, sc->ARITY, args); */
       return(s7_cons(sc, small_int(1), small_int(1)));
       
     case T_C_OBJECT:
-      check_method(sc, x, sc->ARITY, args);
+      /* check_method(sc, x, sc->ARITY, args); */
       if (is_procedure(x))
 	return(s7_cons(sc, small_int(0), max_arity));
       return(sc->F);
@@ -34959,8 +34937,15 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 	  return(s7_cons(sc, small_int(0), max_arity));
 	}
     }
-
   return(sc->F);
+}
+
+
+static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
+{
+  #define H_arity "(arity obj) the min and max acceptable args for obj if it is applicable, otherwise #f."
+  /* check_method(sc, p, sc->ARITY, args); */
+  return(s7_arity(sc, car(args)));
 }
 
 
@@ -68784,7 +68769,6 @@ s7_scheme *s7_init(void)
   sc->IS_PROCEDURE =          s7_define_safe_function(sc, "procedure?",              g_is_procedure,           1, 0, false, H_is_procedure);
   sc->PROCEDURE_DOCUMENTATION = s7_define_safe_function(sc, "procedure-documentation", g_procedure_documentation, 1, 0, false, H_procedure_documentation);
   sc->HELP =                  s7_define_safe_function(sc, "help",                    g_help,                   1, 0, false, H_help);
-  sc->PROCEDURE_ARITY =       s7_define_safe_function(sc, "procedure-arity",         g_procedure_arity,        1, 0, false, H_procedure_arity);
   sc->PROCEDURE_SOURCE =      s7_define_safe_function(sc, "procedure-source",        g_procedure_source,       1, 0, false, H_procedure_source);
   sc->FUNCLET =               s7_define_safe_function(sc, "funclet",                 g_funclet,                1, 0, false, H_funclet);
   sc->PROCEDURE_NAME =        s7_define_safe_function(sc, "procedure-name",          g_procedure_name,         1, 0, false, H_procedure_name);
@@ -69197,7 +69181,8 @@ s7_scheme *s7_init(void)
                         (define environment                  inlet)    \n\
                         (define environment*                 inlet)    \n\
                         (define make-procedure-with-setter   dilambda) \n\
-                        (define procedure-with-setter?       dilambda?)");
+                        (define procedure-with-setter?       dilambda?)\n\
+                        (define (procedure-arity obj) (let ((c (arity obj))) (list (car c) (- (cdr c) (car c)) (> (cdr c) 100000))))");
 #endif
 
   /* fprintf(stderr, "size: %d, max op: %d, opt: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED, OPT_MAX_DEFINED); */
@@ -69369,8 +69354,8 @@ int main(int argc, char **argv)
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1149
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1157
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3026
- * lg             |      |      | 6547 6497 6494 6251
- * t455|6     265 |   89 |  9   |       8.4 8045 8026
+ * lg             |      |      | 6547 6497 6494 6174
+ * t455|6     265 |   89 |  9   |       8.4 8045 7970
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 27.7
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.7
@@ -69416,9 +69401,6 @@ int main(int argc, char **argv)
  *      '(func 'type-predicate arg1-pred...) or (f t . arg) if all args have same etc
  *      '(+ number? . number?), '(abs real? real?) etc
  *      also cload: libc libgsl etc arg types/return types
- * deprecate procedure-arity [lint s7test, but optarg number is not obvious if rest is #t, and there's s7_procedure_arity (not used?)]
- *   s7_p_a used only in ffitest and once in s7
- * built-in doc via ((funclet abs) 'documentation)
  *
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  */

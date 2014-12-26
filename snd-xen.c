@@ -673,26 +673,25 @@ char *procedure_ok(Xen proc, int args, const char *caller, const char *arg_name,
 
 #if HAVE_SCHEME
       {
-	int oargs, restargs, loc;
+	int oargs, loc;
 
 	loc = snd_protect(arity);
 	rargs = Xen_integer_to_C_int(Xen_car(arity));
-	oargs = Xen_integer_to_C_int(Xen_cadr(arity));
-	restargs = ((Xen_is_true(Xen_caddr(arity))) ? 1 : 0);
+	oargs = Xen_integer_to_C_int(Xen_cdr(arity));
 	snd_unprotect_at(loc);
 
 	if (rargs > args)
 	  return(mus_format("%s function (%s arg %d) should take %d argument%s, but instead requires %d",
 			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
 
-	if ((restargs == 0) && ((rargs + oargs) < args))
+	if ((rargs + oargs) < args)
 	  return(mus_format("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d",
 			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
 
 	if ((args == 0) &&
-	    ((rargs != 0) || (oargs != 0) || (restargs != 0)))
+	    ((rargs != 0) || (oargs != 0)))
 	  return(mus_format("%s function (%s arg %d) should take no args, not %d", 
-			    arg_name, caller, argn, rargs + oargs + restargs));
+			    arg_name, caller, argn, rargs + oargs));
       }
 #endif
 

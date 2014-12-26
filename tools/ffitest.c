@@ -1291,12 +1291,6 @@ int main(int argc, char **argv)
 
   
   p1 = s7_name_to_value(sc, "abs");
-  p = s7_procedure_arity(sc, p1);
-  s1 = TO_STR(p);
-  if (strcmp(s1, "(1 0 #f)") != 0)
-    {fprintf(stderr, "%d: (procedure-arity abs) = %s?\n", __LINE__, s1);}
-  free(s1);
-
   if (!s7_is_procedure(p1))
     {fprintf(stderr, "%d: (procedure? abs) = #f?\n", __LINE__);}
   if (s7_is_macro(sc, p1))
@@ -1336,12 +1330,6 @@ int main(int argc, char **argv)
     {fprintf(stderr, "%d: procedure-source is %s?\n", __LINE__, s1);}
   free(s1);
   
-  p1 = s7_procedure_arity(sc, p);
-  s1 = TO_STR(p1);
-  if (strcmp(s1, "(2 0 #t)") != 0)
-    {fprintf(stderr, "%d: (procedure-arity lambda case) = %s?\n", __LINE__, s1);}
-  free(s1);
-
   if (!s7_is_aritable(sc, p, 2))
     {fprintf(stderr, "%d: aritable? lambda 2 = #f?\n", __LINE__);}
   if (s7_is_aritable(sc, p, 1))

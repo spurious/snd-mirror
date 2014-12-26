@@ -459,14 +459,12 @@
 
 (define (set-arity-ok func args)
   (let ((arit (if (dilambda? func)
-		   (procedure-arity (procedure-setter func))
+		   (arity (procedure-setter func))
 		   (and (procedure? (procedure-setter func))
-			(procedure-arity (procedure-setter func))))))
+			(arity (procedure-setter func))))))
     (and (pair? arit)
 	 (>= args (car arit))
-	 (or (and (pair? (cddr arit))
-		  (caddr arit))
-	     (<= args (+ (car arit) (cadr arit)))))))
+	 (<= args (cdr arit)))))
 
 (define* (scale-sound-by scl beg dur snd chn edpos)
   (if (integer? chn)

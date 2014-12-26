@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.15"
-#define S7_DATE "5-Nov-14"
+#define S7_VERSION "3.16"
+#define S7_DATE "27-Dec-14"
 
 
 typedef long long int s7_Int;
@@ -395,9 +395,9 @@ bool s7_is_macro(s7_scheme *sc, s7_pointer x);                              /* (
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);                /* (procedure-source x) if it can be found */
 s7_pointer s7_funclet(s7_scheme *sc, s7_pointer p);                         /* (funclet x) */
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);        /* (procedure-documentation x) if any (don't free the string) */
-s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);                 /* (procedure-arity x) -- returns a list (required optional rest?) */
 bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args);                 /* (aritable? x args) */
 const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc);              /* (procedure-name x) -- don't free the string! */
+s7_pointer s7_arity(s7_scheme *sc, s7_pointer x);                           /* (arity x) */
 
 const char *s7_help(s7_scheme *sc, s7_pointer obj);                         /* (help obj) */
 
@@ -785,6 +785,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 #define s7_object_set_environment s7_object_set_let
 
 s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_pointer e); /* replaced by s7_method */
+s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);  /* replaced by s7_arity */
 #endif
 
 
@@ -792,7 +793,9 @@ s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_point
 /* --------------------------------------------------------------------------------
  * 
  *        s7 changes
- *		
+ *
+ * --------
+ * 26-Dec:    s7_arity replaces s7_procedure_arity.
  * 5-Nov:     s7_shadow_rootlet and s7_set_shadow_rootlet.
  * 30-Aug:    s7_make_safe_function (for cload.scm).
  * 25-July:   define and friends now return the value, not the symbol.

@@ -10,12 +10,13 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 22
-#define XEN_VERSION "3.22"
+#define XEN_MINOR_VERSION 23
+#define XEN_VERSION "3.23"
 
 /* HISTORY:
  *
  *  --------
+ *  27-Dec:    Xen_arity in s7 now uses s7_arity.
  *  21-Feb:    Xen_is_number and friends.
  *  7-Jan-14:  in s7, C_TO_XEN_STRING and XEN_TO_C_STRING now treat a null string as a string (not #f).
  *  --------
@@ -1168,7 +1169,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   s7_dilambda(s7, Get_Name, Get_Func, Get_Req, Get_Opt, Set_Func, Set_Req, Set_Opt, Get_Help)
 
-#define XEN_ARITY(Func)                                               s7_procedure_arity(s7, Func)
+#define XEN_ARITY(Func)                                               s7_arity(s7, Func)
 #define XEN_REQUIRED_ARGS(Func)                                       XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func)))
 #define XEN_REQUIRED_ARGS_OK(Func, Args)                              s7_is_aritable(s7, Func, Args) /* (XEN_REQUIRED_ARGS(Func) == Args) */
 
