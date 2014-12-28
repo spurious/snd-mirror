@@ -401,7 +401,7 @@ typedef struct c_proc_t {
   int name_length;
   unsigned int id;
   char *doc;
-  s7_pointer generic_ff;
+  s7_pointer generic_ff, otype;
   s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
   c_proc_ext_t *ext;
 } c_proc_t;
@@ -1778,6 +1778,7 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {pair_sy
 #define c_function_class(f)           c_function_data(f)->id
 #define c_function_chooser(f)         c_function_data(f)->chooser
 #define c_function_base(f)            c_function_data(f)->generic_ff
+#define c_function_type(f)            c_function_data(f)->otype
 
 #define c_function_ext(f)             c_function_data(f)->ext
 #define c_function_chooser_data(f)    c_function_ext(f)->chooser_data
@@ -19413,26 +19414,38 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer char_position_cs;
-static s7_pointer g_char_position_cs(s7_scheme *sc, s7_pointer args)
+static s7_pointer char_position_csi;
+static s7_pointer g_char_position_csi(s7_scheme *sc, s7_pointer args)
 {
-  /* assume char arg1, no start */
+  /* assume char arg1, no end */
   const char *porig, *p;
   char c;
   s7_pointer arg2;
+  s7_Int start, len;
 
   c = character(car(args));
   arg2 = cadr(args);
 
   if (!is_string(arg2))
-    {
-      check_method(sc, arg2, sc->CHAR_POSITION, args);
-      return(wrong_type_argument(sc, sc->CHAR_POSITION, small_int(2), arg2, T_STRING));
-    }
-  if (string_length(arg2) == 0) return(sc->F);
+    return(g_char_position(sc, args));
+
+  len = string_length(arg2);
+  if (len == 0) return(sc->F);
   porig = string_value(arg2);
 
-  p = strchr(porig, (int)c);
+  if (is_pair(cddr(args)))
+    {
+      s7_pointer arg3;
+      arg3 = caddr(args);
+      if (!s7_is_integer(arg3))
+	return(g_char_position(sc, args));
+      start = s7_integer(arg3);
+      if (start < 0)
+	return(wrong_type_argument_with_type(sc, sc->CHAR_POSITION, small_int(3), arg3, A_NON_NEGATIVE_INTEGER));
+      if (start >= len) return(sc->F);
+    }
+  else start = 0;
+  p = strchr((const char *)(porig + start), (int)c);
   if (p)
     return(make_integer(sc, p - porig));
   return(sc->F);
@@ -30946,7 +30959,7 @@ static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_di
   NEW_CELL(sc, x);
   vector_length(x) = 0;
   vector_elements(x) = NULL;
-  set_type(x, type(vect) | T_SAFE_PROCEDURE);
+  set_type(x, typeflag(vect) | T_SAFE_PROCEDURE);
   vector_getter(x) = vector_getter(vect);
   vector_setter(x) = vector_setter(vect);
 
@@ -31055,7 +31068,7 @@ a vector that points to the same elements as the original-vector but with differ
     }
 
   NEW_CELL(sc, x);
-  set_type(x, type(orig) | T_SAFE_PROCEDURE);
+  set_type(x, typeflag(orig) | T_SAFE_PROCEDURE);
   vector_dimension_info(x) = v;
   vector_length(x) = new_len;                 /* might be less than original length */
   vector_getter(x) = vector_getter(orig);
@@ -33572,6 +33585,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 
   c_function_class(x) = ++sc->f_class;
   c_function_chooser(x) = fallback_chooser;
+  c_function_type(x) = NULL;
   c_function_ext(x) = NULL;
 
   return(x);
@@ -33582,7 +33596,7 @@ s7_pointer s7_make_safe_function(s7_scheme *sc, const char *name, s7_function f,
 {
   s7_pointer p;
   p = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
-  set_type(p, type(p) | T_SAFE_PROCEDURE);
+  typeflag(p) |= T_SAFE_PROCEDURE;  /* not set_type(p, type(p) ...) because that accidentally clears the T_PROCEDURE bit */
   return(p);
 }
 
@@ -33732,7 +33746,8 @@ static s7_pointer g_funclet(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
+s7_pointer s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, 
+			      int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer func, sym;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
@@ -33742,18 +33757,32 @@ s7_pointer s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, 
 }
 
 
-s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
+s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, 
+				   int required_args, int optional_args, bool rest_arg, const char *doc)
 {
+  /* returns (string->symbol name), not the c_proc_t func */
   s7_pointer func, sym;
-  func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  typeflag(func) |= T_SAFE_PROCEDURE;
+  func = s7_make_safe_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   sym = make_symbol(sc, name);
   s7_define(sc, sc->NIL, sym, func);
   return(sym);
 }
 
 
-static s7_pointer s7_define_constant_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
+static s7_pointer s7_define_typed_function(s7_scheme *sc, const char *name, s7_function fnc, 
+					   int required_args, int optional_args, bool rest_arg, const char *doc, s7_pointer type_sym)
+{
+  s7_pointer func, sym;
+  func = s7_make_safe_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
+  c_function_type(func) = type_sym;
+  sym = make_symbol(sc, name);
+  s7_define(sc, sc->NIL, sym, func);
+  return(sym);
+}
+
+
+static s7_pointer s7_define_constant_function(s7_scheme *sc, const char *name, s7_function fnc, 
+					      int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer func, sym, p;
   sym = make_symbol(sc, name);
@@ -33767,7 +33796,8 @@ static s7_pointer s7_define_constant_function(s7_scheme *sc, const char *name, s
 }
 
 
-s7_pointer s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
+s7_pointer s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, 
+			   int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer func, sym;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
@@ -34459,12 +34489,9 @@ s7_pointer s7_dilambda(s7_scheme *sc,
   internal_set_name = (char *)malloc(len * sizeof(char));
   snprintf(internal_set_name, len, "[set-%s]", name);
 
-  get_func = s7_make_function(sc, name, getter, get_req_args, get_opt_args, false, documentation); 
-  typeflag(get_func) |= T_SAFE_PROCEDURE; 
+  get_func = s7_make_safe_function(sc, name, getter, get_req_args, get_opt_args, false, documentation); 
   s7_define(sc, sc->NIL, make_symbol(sc, name), get_func);
   set_func = s7_make_function(sc, internal_set_name, setter, set_req_args, set_opt_args, false, documentation); 
-  /* typeflag(set_func) |= T_SAFE_PROCEDURE; */
-  /* s7_define(sc, sc->NIL, make_symbol(sc, internal_set_name), set_func); */
   c_function_setter(get_func) = set_func;
 
   return(get_func);
@@ -42725,6 +42752,15 @@ static s7_pointer is_negative_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
 #endif
 /* end (!WITH_GMP) */
 
+static bool returns_char(s7_scheme *sc, s7_pointer arg)
+{
+  /* c_call(arg) == g_string_ref (fcdr(arg)) == c_function_call(ecdr(arg)), c_function_type(ecdr(arg)) == sc->IS_CHAR, is_c_function(ecdr(arg)) is true
+   */
+  if (s7_is_character(arg)) return(true);
+  return((is_h_optimized(arg)) &&
+	 (is_c_function(ecdr(arg))) &&
+	 (c_function_type(ecdr(arg)) == sc->IS_CHAR));
+}
 
 static s7_pointer char_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
@@ -42733,19 +42769,8 @@ static s7_pointer char_equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
       s7_pointer arg1, arg2;
       arg1 = cadr(expr);
       arg2 = caddr(expr);
-
-      if (((s7_is_character(arg1)) ||
-	   ((is_h_optimized(arg1)) &&
-	    (car(arg1) == sc->STRING_REF))) &&
-	  ((s7_is_character(arg2)) ||
-	   ((is_h_optimized(arg2)) &&
-	    (car(arg2) == sc->STRING_REF))))
-	{
-	  return(simple_char_eq);
-	  /* TODO: others: all 9 char rel checks with string-ref|char-upcase|integer->char -- any char expr
-	   *       int/int cases perhaps symbol/symbol
-	   */
-	}
+      if ((returns_char(sc, arg1)) && (returns_char(sc, arg2)))
+	return(simple_char_eq);
       if ((is_symbol(arg1)) &&
 	  (s7_is_character(arg2)))
 	{
@@ -42888,9 +42913,9 @@ static void check_for_substring_temp(s7_scheme *sc, s7_pointer expr)
 
 static s7_pointer char_position_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if ((args == 2) &&
+  if (((args == 2) || (args == 3)) &&
       (s7_is_character(cadr(expr))))
-    return(char_position_cs);
+    return(char_position_csi);
   return(f);
 }
 
@@ -43466,7 +43491,7 @@ static void init_choosers(s7_scheme *sc)
 
   /* char-position */
   f = set_function_chooser(sc, sc->CHAR_POSITION, char_position_chooser);
-  char_position_cs = make_function_with_class(sc, f, "char-position", g_char_position_cs, 2, 0, false, "char-position opt");
+  char_position_csi = make_function_with_class(sc, f, "char-position", g_char_position_csi, 2, 1, false, "char-position opt");
 
   /* string->symbol */
   f = set_function_chooser(sc, sc->STRING_TO_SYMBOL, string_to_symbol_chooser);
@@ -43604,7 +43629,7 @@ static void init_choosers(s7_scheme *sc)
   format_allg = make_function_with_class(sc, f, "format", g_format_allg, 1, 0, true, "format opt");
   format_allg_no_column = make_function_with_class(sc, f, "format", g_format_allg_no_column, 1, 0, true, "format opt");
   format_just_newline = make_function_with_class(sc, f, "format", g_format_just_newline, 2, 0, false, "format opt");
-  set_type(format_just_newline, type(format_just_newline) | T_SAFE_PROCEDURE);
+  set_type(format_just_newline, typeflag(format_just_newline) | T_SAFE_PROCEDURE);
 
   /* not */
   f = set_function_chooser(sc, sc->NOT, not_chooser);
@@ -68570,10 +68595,10 @@ s7_scheme *s7_init(void)
   sc->NUMBER_TO_STRING =      s7_define_safe_function(sc, "number->string",          g_number_to_string,       1, 1, false, H_number_to_string);
   sc->STRING_TO_NUMBER =      s7_define_safe_function(sc, "string->number",          g_string_to_number,       1, 1, false, H_string_to_number);
   
-  sc->CHAR_UPCASE =           s7_define_safe_function(sc, "char-upcase",             g_char_upcase,            1, 0, false, H_char_upcase);
-  sc->CHAR_DOWNCASE =         s7_define_safe_function(sc, "char-downcase",           g_char_downcase,          1, 0, false, H_char_downcase);
+  sc->CHAR_UPCASE =           s7_define_typed_function(sc, "char-upcase",            g_char_upcase,            1, 0, false, H_char_upcase, sc->IS_CHAR);
+  sc->CHAR_DOWNCASE =         s7_define_typed_function(sc, "char-downcase",          g_char_downcase,          1, 0, false, H_char_downcase, sc->IS_CHAR);
   sc->CHAR_TO_INTEGER =       s7_define_safe_function(sc, "char->integer",           g_char_to_integer,        1, 0, false, H_char_to_integer);
-  sc->INTEGER_TO_CHAR =       s7_define_safe_function(sc, "integer->char",           g_integer_to_char,        1, 0, false, H_integer_to_char);
+  sc->INTEGER_TO_CHAR =       s7_define_typed_function(sc, "integer->char",          g_integer_to_char,        1, 0, false, H_integer_to_char, sc->IS_CHAR);
   
   sc->IS_CHAR_UPPER_CASE =    s7_define_safe_function(sc, "char-upper-case?",        g_is_char_upper_case,     1, 0, false, H_is_char_upper_case);
   sc->IS_CHAR_LOWER_CASE =    s7_define_safe_function(sc, "char-lower-case?",        g_is_char_lower_case,     1, 0, false, H_is_char_lower_case);
@@ -68600,7 +68625,7 @@ s7_scheme *s7_init(void)
   sc->IS_STRING =             s7_define_safe_function(sc, "string?",                 g_is_string,              1, 0, false, H_is_string);
   sc->MAKE_STRING =           s7_define_safe_function(sc, "make-string",             g_make_string,            1, 1, false, H_make_string);
   sc->STRING_LENGTH =         s7_define_safe_function(sc, "string-length",           g_string_length,          1, 0, false, H_string_length);
-  sc->STRING_REF =            s7_define_safe_function(sc, "string-ref",              g_string_ref,             2, 0, false, H_string_ref);
+  sc->STRING_REF =            s7_define_typed_function(sc, "string-ref",             g_string_ref,             2, 0, false, H_string_ref, sc->IS_CHAR);
   sc->STRING_SET =            s7_define_safe_function(sc, "string-set!",             g_string_set,             3, 0, false, H_string_set);
   sc->STRING_EQ =             s7_define_safe_function(sc, "string=?",                g_strings_are_equal,      2, 0, true,  H_strings_are_equal);
   sc->STRING_LT =             s7_define_safe_function(sc, "string<?",                g_strings_are_less,       2, 0, true,  H_strings_are_less);
@@ -68617,7 +68642,7 @@ s7_scheme *s7_init(void)
   sc->STRING_DOWNCASE =       s7_define_safe_function(sc, "string-downcase",         g_string_downcase,        1, 0, false, H_string_downcase);
   sc->STRING_UPCASE =         s7_define_safe_function(sc, "string-upcase",           g_string_upcase,          1, 0, false, H_string_upcase);
   sc->STRING_APPEND =         s7_define_safe_function(sc, "string-append",           g_string_append,          0, 0, true,  H_string_append);
-  sc->STRING_FILL =           s7_define_safe_function(sc, "string-fill!",            g_string_fill,            2, 2, false, H_string_fill);
+  sc->STRING_FILL =           s7_define_typed_function(sc, "string-fill!",           g_string_fill,            2, 2, false, H_string_fill, sc->IS_CHAR);
   sc->STRING_COPY =           s7_define_safe_function(sc, "string-copy",             g_string_copy,            1, 0, false, H_string_copy);
   sc->SUBSTRING =             s7_define_safe_function(sc, "substring",               g_substring,              2, 1, false, H_substring);
   sc->STRING =                s7_define_safe_function(sc, "string",                  g_string,                 0, 0, true,  H_string);
@@ -69354,8 +69379,8 @@ int main(int argc, char **argv)
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1149
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1157
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3026
- * lg             |      |      | 6547 6497 6494 6174
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3014
+ * lg             |      |      | 6547 6497 6494 6163
  * t455|6     265 |   89 |  9   |       8.4 8045 7970
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 27.7
@@ -69393,12 +69418,13 @@ int main(int argc, char **argv)
  * need info and what type checks are most onerous currently [these are internal] (simple_char_eq could check func rtn type)
  * read-string|line? via tmp_str (substring_to_temp etc) 
  *
- * doc strings in docs
- * procedure-predicate? -- predicate, temp-case, no-check-case
- *   lint.scm:
+ * procedure-predicate? procedure->type? -- predicate (pompous, but type is ambiguous), temp-case, no-check-case
  *      snd|s7-lint-info.scm: all the func type/arg data using predicates, lint also using these
  *      also cload: libc libgsl etc arg types/return types
- *   s7_define_typed_function
+ *        currently using s7_make_safe_function, but if typed, need "integer?" as symbol
+ *      else using Xen_define_safe_function throughout and C_int_to_Xen_integer, I guess
+ *   [int symbol? real string bool?]
+ *   temp of sym->str just returns str_cell?  [also doc that opt assumes these types -- already the case for char=? string-ref]
  *
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  */

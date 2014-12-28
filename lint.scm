@@ -313,7 +313,7 @@
 			   'keyword->symbol +symbol+
 			   'keyword? +boolean+
 			   'lcm +number+
-			   'length +integer+
+			   'length +integer+   ; actually integer or #f
 			   'let->list +list+
 			   'let? +boolean+
 			   'list +list+
@@ -3147,31 +3147,34 @@
 
 			   (let ((result (lint-walk name setval env)))
 
-			     (if (and (symbol? settee)
-				      (pair? setval)
-				      (> (length setval) 2) ; not (set! i (+))
-				      (eq? (car setval) '+)
-				      (not (eq? (cadr setval) settee))
-				      (or (not (equal? (cadr setval) 1)) (pair? (cdddr setval))) ; ignore (+ 1 i) -- it's handled ok
-				      (memq settee setval))
-				 (lint-format "possible optimization: ~A -> ~A"
-					      name form
-					      `(set! ,settee (+ ,settee ,(cadr setval) ,@(remove settee (cddr setval))))))
-			     
-			     (if (pair? settee)
-				 (begin
-				   (if (and *report-minor-stuff*
-					    (memq (car settee) '(vector-ref list-ref string-ref hash-table-ref)))
-				       (lint-format "~A as target of set!~A" name (car settee) (truncated-list->string form)))
-				   (lint-walk name settee env) ; this counts as a reference since it's by reference so to speak
-				   (set! settee (do ((sym (car settee) (car sym)))
-						    ((not (pair? sym)) sym)))))
 			     (if (symbol? settee)
-				 (set-set? settee setval env))
+				 (begin
+				   (if (and (pair? setval)
+					    (> (length setval) 2) ; not (set! i (+))
+					    (eq? (car setval) '+)
+					    (not (eq? (cadr setval) settee))
+					    (or (not (equal? (cadr setval) 1)) (pair? (cdddr setval))) ; ignore (+ 1 i) -- it's handled ok
+					    (memq settee setval))
+				       (lint-format "possible optimization: ~A -> ~A"
+						    name form
+						    `(set! ,settee (+ ,settee ,(cadr setval) ,@(remove settee (cddr setval))))))
+				   (if (constant? settee)
+				       (lint-format "can't set! a constant:~A" name (truncated-list->string form))))
 			     
-			     (if (and (symbol? settee)
-				      (equal? (cadr form) (caddr form))) ; not settee and setval here!
-				 (lint-format "pointless set!~A" name (truncated-list->string form)))
+				 (if (pair? settee)
+				     (begin
+				       (if (and *report-minor-stuff*
+						(memq (car settee) '(vector-ref list-ref string-ref hash-table-ref)))
+					   (lint-format "~A as target of set!~A" name (car settee) (truncated-list->string form)))
+				       (lint-walk name settee env) ; this counts as a reference since it's by reference so to speak
+				       (set! settee (do ((sym (car settee) (car sym)))
+							((not (pair? sym)) sym))))))
+
+			     (if (symbol? settee) ; might be changed in loop above
+				 (begin
+				   (set-set? settee setval env)
+				   (if (equal? (cadr form) (caddr form)) ; not settee and setval here!
+				       (lint-format "pointless set!~A" name (truncated-list->string form)))))
 			     
 			     result))))
 		    
