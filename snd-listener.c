@@ -257,9 +257,9 @@ void g_init_listener(void)
   Xen_define_procedure(S_save_listener,  g_save_listener_w,  1, 0, 0, H_save_listener);
   Xen_define_procedure(S_clear_listener, g_clear_listener_w, 0, 0, 0, H_clear_listener);
 
-  Xen_define_procedure_with_setter(S_show_listener, g_show_listener_w, H_show_listener, S_setB S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_listener_prompt, g_listener_prompt_w, H_listener_prompt, S_setB S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_listener_colorized, g_listener_colorized_w, H_listener_colorized,
+  Xen_define_dilambda(S_show_listener, g_show_listener_w, H_show_listener, S_setB S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_listener_prompt, g_listener_prompt_w, H_listener_prompt, S_setB S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_listener_colorized, g_listener_colorized_w, H_listener_colorized,
 				   S_setB S_listener_colorized, g_listener_set_colorized_w,  0, 0, 1, 0);
 
   #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \

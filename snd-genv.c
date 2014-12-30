@@ -1371,9 +1371,9 @@ Xen_wrap_1_arg(g_set_enved_envelope_w, g_set_enved_envelope)
 
 void g_init_gxenv(void)
 {
-  Xen_define_procedure_with_setter(S_enved_filter, g_enved_filter_w, H_enved_filter,
+  Xen_define_dilambda(S_enved_filter, g_enved_filter_w, H_enved_filter,
 				   S_setB S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_enved_envelope, g_enved_envelope_w, H_enved_envelope,
+  Xen_define_dilambda(S_enved_envelope, g_enved_envelope_w, H_enved_envelope,
 				   S_setB S_enved_envelope, g_set_enved_envelope_w,  0, 0, 1, 0);
 }
 

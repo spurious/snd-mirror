@@ -2914,13 +2914,13 @@ void g_init_marks(void)
   mark_drag_hook = Xen_define_hook(S_mark_drag_hook, "(make-hook 'id)", 1, H_mark_drag_hook);
   mark_hook = Xen_define_hook(S_mark_hook, "(make-hook 'id 'snd 'chn 'reason)", 4, H_mark_hook); 
 
-  Xen_define_procedure_with_setter(S_mark_sample, g_mark_sample_w, H_mark_sample,
+  Xen_define_dilambda(S_mark_sample, g_mark_sample_w, H_mark_sample,
 				   S_setB S_mark_sample, g_set_mark_sample_w, 1, 1, 2, 0);
 
-  Xen_define_procedure_with_setter(S_mark_sync, g_mark_sync_w, H_mark_sync,
+  Xen_define_dilambda(S_mark_sync, g_mark_sync_w, H_mark_sync,
 				   S_setB S_mark_sync, g_set_mark_sync_w, 1, 0, 2, 0);
 
-  Xen_define_procedure_with_setter(S_mark_name, g_mark_name_w, H_mark_name,
+  Xen_define_dilambda(S_mark_name, g_mark_name_w, H_mark_name,
 				   S_setB S_mark_name, g_set_mark_name_w, 1, 0, 2, 0);
 
   Xen_define_procedure(S_mark_sync_max,   g_mark_sync_max_w,   0, 0, 0, H_mark_sync_max);
@@ -2937,16 +2937,16 @@ void g_init_marks(void)
   Xen_define_procedure(S_integer_to_mark, g_integer_to_mark_w, 1, 0, 0, H_integer_to_mark);
   Xen_define_procedure(S_mark_to_integer, g_mark_to_integer_w, 1, 0, 0, H_mark_to_integer);
 
-  Xen_define_procedure_with_setter(S_mark_tag_width, g_mark_tag_width_w, H_mark_tag_width,
+  Xen_define_dilambda(S_mark_tag_width, g_mark_tag_width_w, H_mark_tag_width,
 				   S_setB S_mark_tag_width, g_set_mark_tag_width_w, 0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_mark_tag_height, g_mark_tag_height_w, H_mark_tag_height,
+  Xen_define_dilambda(S_mark_tag_height, g_mark_tag_height_w, H_mark_tag_height,
 				   S_setB S_mark_tag_height, g_set_mark_tag_height_w, 0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_mark_properties, g_mark_properties_w, H_mark_properties, 
+  Xen_define_dilambda(S_mark_properties, g_mark_properties_w, H_mark_properties, 
 				   S_setB S_mark_properties, g_set_mark_properties_w, 1, 0, 2, 0);
 
-  Xen_define_procedure_with_setter(S_mark_property, g_mark_property_w, H_mark_property, 
+  Xen_define_dilambda(S_mark_property, g_mark_property_w, H_mark_property, 
 				   S_setB S_mark_property, g_set_mark_property_w, 2, 0, 3, 0);
 
   #define H_draw_mark_hook S_draw_mark_hook " (id): called before a mark is drawn. \

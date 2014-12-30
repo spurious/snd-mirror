@@ -16,7 +16,7 @@
 /* HISTORY:
  *
  *  --------
- *  27-Dec:    Xen_arity in s7 now uses s7_arity.
+ *  27-Dec:    Xen_arity in s7 now uses s7_arity. Xen_define_integer_procedure, Xen_define_dilambda.
  *  21-Feb:    Xen_is_number and friends.
  *  7-Jan-14:  in s7, C_TO_XEN_STRING and XEN_TO_C_STRING now treat a null string as a string (not #f).
  *  --------
@@ -1643,7 +1643,13 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define Xen_define_hook(a, b, c, d)                  XEN_DEFINE_HOOK(a, b, c, d)
 #define Xen_define_procedure(a, b, c, d, e, f)       XEN_DEFINE_PROCEDURE(a, b, c, d, e, f)
 #define Xen_define_procedure_with_setter(a, b, c, d, e, f, g, h, i) XEN_DEFINE_PROCEDURE_WITH_SETTER(a, b, c, d, e, f, g, h, i)
+#define Xen_define_dilambda(a, b, c, d, e, f, g, h, i) XEN_DEFINE_PROCEDURE_WITH_SETTER(a, b, c, d, e, f, g, h, i)
 #define Xen_define_safe_procedure(a, b, c, d, e, f)  XEN_DEFINE_SAFE_PROCEDURE(a, b, c, d, e, f)
+#if HAVE_SCHEME
+#define Xen_define_integer_procedure(a, b, c, d, e, f)  s7_define_integer_function(s7, a, b, c, d, e, f)
+#else
+#define Xen_define_integer_procedure(a, b, c, d, e, f)  XEN_DEFINE_SAFE_PROCEDURE(a, b, c, d, e, f)
+#endif
 #define Xen_define_simple_hook(a, b)                 XEN_DEFINE_SIMPLE_HOOK(a, b)
 #define Xen_define_variable(a, b, c)                 XEN_DEFINE_VARIABLE(a, b, c)
 #define Xen_out_of_range_error(a, b, c, d)           XEN_OUT_OF_RANGE_ERROR(a, b, c, d)

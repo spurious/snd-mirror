@@ -1870,9 +1870,9 @@ void g_init_selection(void)
   init_selection_keywords();
   init_xen_selection();
 
-  Xen_define_procedure_with_setter(S_selection_position, g_selection_position_w, H_selection_position, S_setB S_selection_position, g_set_selection_position_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_selection_framples, g_selection_framples_w, H_selection_framples, S_setB S_selection_framples, g_set_selection_framples_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_selection_member, g_selection_member_w, H_selection_member, S_setB S_selection_member, g_set_selection_member_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_selection_position, g_selection_position_w, H_selection_position, S_setB S_selection_position, g_set_selection_position_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_selection_framples, g_selection_framples_w, H_selection_framples, S_setB S_selection_framples, g_set_selection_framples_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_selection_member, g_selection_member_w, H_selection_member, S_setB S_selection_member, g_set_selection_member_w, 0, 2, 1, 2);
 
   Xen_define_safe_procedure(S_selection,        g_selection_w,        0, 0, 0, H_selection);
   Xen_define_safe_procedure(S_is_selection,      g_is_selection_w,      0, 1, 0, H_is_selection);

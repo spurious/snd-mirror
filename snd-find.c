@@ -275,6 +275,6 @@ Xen_wrap_1_arg(g_set_search_procedure_w, g_set_search_procedure)
 
 void g_init_find(void)
 {
-  Xen_define_procedure_with_setter(S_search_procedure, g_search_procedure_w, H_search_procedure,
+  Xen_define_dilambda(S_search_procedure, g_search_procedure_w, H_search_procedure,
 				   S_setB S_search_procedure, g_set_search_procedure_w,  0, 0, 1, 0);
 }

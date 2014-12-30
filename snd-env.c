@@ -1856,15 +1856,15 @@ void g_init_env(void)
   Xen_define_constant(S_envelope_linear,      ENVELOPE_LINEAR,      S_enved_style " choice: linear connections between breakpoints");
   Xen_define_constant(S_envelope_exponential, ENVELOPE_EXPONENTIAL, S_enved_style " choice: exponential connections between breakpoints");
 
-  Xen_define_procedure_with_setter(S_enved_base,   g_enved_base_w,   H_enved_base,   S_setB S_enved_base,   g_set_enved_base_w,    0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_enved_power,  g_enved_power_w,  H_enved_power,  S_setB S_enved_power,  g_set_enved_power_w,   0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_enved_clipping, g_enved_clipping_w, H_enved_clipping, S_setB S_enved_clipping, g_set_enved_clipping_w,  0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_enved_style,  g_enved_style_w,  H_enved_style,  S_setB S_enved_style,  g_set_enved_style_w,   0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_enved_target, g_enved_target_w, H_enved_target, S_setB S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_enved_with_wave, g_enved_with_wave_w, H_enved_with_wave, S_setB S_enved_with_wave, g_set_enved_with_wave_w,  0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  S_setB S_enved_in_dB,  g_set_enved_in_dB_w,   0, 0, 1, 0);
+  Xen_define_dilambda(S_enved_base,   g_enved_base_w,   H_enved_base,   S_setB S_enved_base,   g_set_enved_base_w,    0, 0, 1, 0);
+  Xen_define_dilambda(S_enved_power,  g_enved_power_w,  H_enved_power,  S_setB S_enved_power,  g_set_enved_power_w,   0, 0, 1, 0);
+  Xen_define_dilambda(S_enved_clipping, g_enved_clipping_w, H_enved_clipping, S_setB S_enved_clipping, g_set_enved_clipping_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_enved_style,  g_enved_style_w,  H_enved_style,  S_setB S_enved_style,  g_set_enved_style_w,   0, 0, 1, 0);
+  Xen_define_dilambda(S_enved_target, g_enved_target_w, H_enved_target, S_setB S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_enved_with_wave, g_enved_with_wave_w, H_enved_with_wave, S_setB S_enved_with_wave, g_set_enved_with_wave_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  S_setB S_enved_in_dB,  g_set_enved_in_dB_w,   0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,
+  Xen_define_dilambda(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,
 				   S_setB S_enved_filter_order, g_set_enved_filter_order_w,  0, 0, 1, 0);
 
   Xen_define_procedure(S_enved_dialog,    g_enved_dialog_w,    0, 0, 0, H_enved_dialog);

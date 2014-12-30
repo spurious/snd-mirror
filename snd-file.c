@@ -3835,7 +3835,7 @@ static s7_pointer acc_clipping(s7_scheme *sc, s7_pointer args) {return(g_set_cli
 void g_init_file(void)
 {
   Xen_define_safe_procedure(S_add_sound_file_extension, g_add_sound_file_extension_w, 1, 0, 0, H_add_sound_file_extension);
-  Xen_define_procedure_with_setter(S_sound_file_extensions, g_sound_file_extensions_w, H_sound_file_extensions,
+  Xen_define_dilambda(S_sound_file_extensions, g_sound_file_extensions_w, H_sound_file_extensions,
 				   S_setB S_sound_file_extensions, g_set_sound_file_extensions_w,  0, 0, 1, 0);
 
   Xen_define_safe_procedure(S_is_sound_file,                     g_is_sound_file_w,                     1, 0, 0, H_is_sound_file);
@@ -3854,7 +3854,7 @@ void g_init_file(void)
   Xen_define_procedure(S_new_sound_dialog,                 g_new_sound_dialog_w,                 0, 1, 0, H_new_sound_dialog);
   Xen_define_procedure(S_info_dialog,                      g_info_dialog_w,                      2, 0, 0, H_info_dialog);
 
-  Xen_define_procedure_with_setter(S_sound_loop_info,      g_sound_loop_info_w, H_sound_loop_info,
+  Xen_define_dilambda(S_sound_loop_info,      g_sound_loop_info_w, H_sound_loop_info,
 				   S_setB S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
 
   Xen_define_variable(S_snd_opened_sound, snd_opened_sound, Xen_false);
@@ -3946,64 +3946,64 @@ the newly updated sound may have a different index."
 
   Xen_define_safe_procedure(S_snd_tempnam,        g_snd_tempnam_w,        0, 0, 0, H_snd_tempnam);
 
-  Xen_define_procedure_with_setter(S_auto_update, g_auto_update_w, H_auto_update,
+  Xen_define_dilambda(S_auto_update, g_auto_update_w, H_auto_update,
 				   S_setB S_auto_update, g_set_auto_update_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_auto_update_interval, g_auto_update_interval_w, H_auto_update_interval,
+  Xen_define_dilambda(S_auto_update_interval, g_auto_update_interval_w, H_auto_update_interval,
 				   S_setB S_auto_update_interval, g_set_auto_update_interval_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_ask_before_overwrite, g_ask_before_overwrite_w, H_ask_before_overwrite,
+  Xen_define_dilambda(S_ask_before_overwrite, g_ask_before_overwrite_w, H_ask_before_overwrite,
 				   S_setB S_ask_before_overwrite, g_set_ask_before_overwrite_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_with_toolbar, g_with_toolbar_w, H_with_toolbar,
+  Xen_define_dilambda(S_with_toolbar, g_with_toolbar_w, H_with_toolbar,
 				   S_setB S_with_toolbar, g_set_with_toolbar_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_with_tooltips, g_with_tooltips_w, H_with_tooltips,
+  Xen_define_dilambda(S_with_tooltips, g_with_tooltips_w, H_with_tooltips,
 				   S_setB S_with_tooltips, g_set_with_tooltips_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_with_menu_icons, g_with_menu_icons_w, H_with_menu_icons,
+  Xen_define_dilambda(S_with_menu_icons, g_with_menu_icons_w, H_with_menu_icons,
 				   S_setB S_with_menu_icons, g_set_with_menu_icons_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_save_as_dialog_src, g_save_as_dialog_src_w, H_save_as_dialog_src,
+  Xen_define_dilambda(S_save_as_dialog_src, g_save_as_dialog_src_w, H_save_as_dialog_src,
 				   S_setB S_save_as_dialog_src, g_set_save_as_dialog_src_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_save_as_dialog_auto_comment, g_save_as_dialog_auto_comment_w, H_save_as_dialog_auto_comment,
+  Xen_define_dilambda(S_save_as_dialog_auto_comment, g_save_as_dialog_auto_comment_w, H_save_as_dialog_auto_comment,
 				   S_setB S_save_as_dialog_auto_comment, g_set_save_as_dialog_auto_comment_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_remember_sound_state, g_remember_sound_state_w, H_remember_sound_state,
+  Xen_define_dilambda(S_remember_sound_state, g_remember_sound_state_w, H_remember_sound_state,
 				   S_setB S_remember_sound_state, g_set_remember_sound_state_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_ask_about_unsaved_edits, g_ask_about_unsaved_edits_w, H_ask_about_unsaved_edits,
+  Xen_define_dilambda(S_ask_about_unsaved_edits, g_ask_about_unsaved_edits_w, H_ask_about_unsaved_edits,
 				   S_setB S_ask_about_unsaved_edits, g_set_ask_about_unsaved_edits_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_show_full_duration, g_show_full_duration_w, H_show_full_duration,
+  Xen_define_dilambda(S_show_full_duration, g_show_full_duration_w, H_show_full_duration,
 				   S_setB S_show_full_duration, g_set_show_full_duration_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_show_full_range, g_show_full_range_w, H_show_full_range,
+  Xen_define_dilambda(S_show_full_range, g_show_full_range_w, H_show_full_range,
 				   S_setB S_show_full_range, g_set_show_full_range_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_initial_beg, g_initial_beg_w, H_initial_beg,
+  Xen_define_dilambda(S_initial_beg, g_initial_beg_w, H_initial_beg,
 				   S_setB S_initial_beg, g_set_initial_beg_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_initial_dur, g_initial_dur_w, H_initial_dur,
+  Xen_define_dilambda(S_initial_dur, g_initial_dur_w, H_initial_dur,
 				   S_setB S_initial_dur, g_set_initial_dur_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_default_output_chans, g_default_output_chans_w, H_default_output_chans,
+  Xen_define_dilambda(S_default_output_chans, g_default_output_chans_w, H_default_output_chans,
 				   S_setB S_default_output_chans, g_set_default_output_chans_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_default_output_srate, g_default_output_srate_w, H_default_output_srate,
+  Xen_define_dilambda(S_default_output_srate, g_default_output_srate_w, H_default_output_srate,
 				   S_setB S_default_output_srate, g_set_default_output_srate_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_default_output_header_type, g_default_output_header_type_w, H_default_output_header_type,
+  Xen_define_dilambda(S_default_output_header_type, g_default_output_header_type_w, H_default_output_header_type,
 				   S_setB S_default_output_header_type, g_set_default_output_header_type_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_default_output_sample_type, g_default_output_sample_type_w, H_default_output_sample_type,
+  Xen_define_dilambda(S_default_output_sample_type, g_default_output_sample_type_w, H_default_output_sample_type,
 				   S_setB S_default_output_sample_type, g_set_default_output_sample_type_w,  0, 0, 1, 0);
 #if (!DISABLE_DEPRECATED)
-  Xen_define_procedure_with_setter(S_default_output_data_format, g_default_output_sample_type_w, H_default_output_sample_type,
+  Xen_define_dilambda(S_default_output_data_format, g_default_output_sample_type_w, H_default_output_sample_type,
 				   S_setB S_default_output_data_format, g_set_default_output_sample_type_w,  0, 0, 1, 0);
 #endif
-  Xen_define_procedure_with_setter(S_clipping, g_clipping_w, H_clipping,
+  Xen_define_dilambda(S_clipping, g_clipping_w, H_clipping,
 				   S_setB S_clipping, g_set_clipping_w,  0, 0, 1, 0);
 
   Xen_define_safe_procedure(S_add_file_filter,    g_add_file_filter_w,    2, 0, 0, H_add_file_filter);

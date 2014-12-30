@@ -1373,17 +1373,17 @@ void mus_sndlib_xen_initialize(void)
 
   Xen_define_constant(S_mus_audio_default,        MUS_AUDIO_DEFAULT,        "default audio device");
 
-  Xen_define_procedure_with_setter(S_mus_sound_samples, g_mus_sound_samples_w, H_mus_sound_samples, 
+  Xen_define_dilambda(S_mus_sound_samples, g_mus_sound_samples_w, H_mus_sound_samples, 
 				   S_setB S_mus_sound_samples, g_mus_sound_set_samples_w, 1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_mus_sound_data_location, g_mus_sound_data_location_w, H_mus_sound_data_location,
+  Xen_define_dilambda(S_mus_sound_data_location, g_mus_sound_data_location_w, H_mus_sound_data_location,
 				   S_setB S_mus_sound_data_location, g_mus_sound_set_data_location_w, 1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_mus_sound_chans, g_mus_sound_chans_w, H_mus_sound_chans,
+  Xen_define_dilambda(S_mus_sound_chans, g_mus_sound_chans_w, H_mus_sound_chans,
 				   S_setB S_mus_sound_chans, g_mus_sound_set_chans_w, 1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_mus_sound_srate, g_mus_sound_srate_w, H_mus_sound_srate,
+  Xen_define_dilambda(S_mus_sound_srate, g_mus_sound_srate_w, H_mus_sound_srate,
 				   S_setB S_mus_sound_srate, g_mus_sound_set_srate_w, 1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_mus_sound_header_type, g_mus_sound_header_type_w, H_mus_sound_header_type,
+  Xen_define_dilambda(S_mus_sound_header_type, g_mus_sound_header_type_w, H_mus_sound_header_type,
 				   S_setB S_mus_sound_header_type, g_mus_sound_set_header_type_w, 1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_mus_sound_sample_type, g_mus_sound_sample_type_w, H_mus_sound_sample_type,
+  Xen_define_dilambda(S_mus_sound_sample_type, g_mus_sound_sample_type_w, H_mus_sound_sample_type,
 				   S_setB S_mus_sound_sample_type, g_mus_sound_set_sample_type_w, 1, 0, 2, 0);
 
 
@@ -1407,10 +1407,10 @@ void mus_sndlib_xen_initialize(void)
 #if HAVE_SCHEME
   Xen_define_safe_procedure(S_mus_sample_type_name,     g_mus_sample_type_name_w,       1, 0, 0, H_mus_sample_type_name);
   Xen_define_safe_procedure(S_mus_sample_type_to_string,g_mus_sample_type_to_string_w,  1, 0, 0, H_mus_sample_type_to_string);
-  Xen_define_procedure_with_setter(S_mus_sound_sample_type, g_mus_sound_sample_type_w, H_mus_sound_sample_type,
+  Xen_define_dilambda(S_mus_sound_sample_type, g_mus_sound_sample_type_w, H_mus_sound_sample_type,
 				   S_setB S_mus_sound_sample_type, g_mus_sound_set_sample_type_w, 1, 0, 2, 0);
 #if (!DISABLE_DEPRECATED)
-  Xen_define_procedure_with_setter(S_mus_sound_data_format, g_mus_sound_sample_type_w, H_mus_sound_sample_type,
+  Xen_define_dilambda(S_mus_sound_data_format, g_mus_sound_sample_type_w, H_mus_sound_sample_type,
 				   S_setB S_mus_sound_data_format, g_mus_sound_set_sample_type_w, 1, 0, 2, 0);
 #endif
 #endif
@@ -1438,36 +1438,36 @@ void mus_sndlib_xen_initialize(void)
 
   Xen_define_safe_procedure(S_mus_sound_preload,        g_mus_sound_preload_w,          1, 0, 0, H_mus_sound_preload);
 
-  Xen_define_procedure_with_setter(S_mus_header_raw_defaults, g_mus_header_raw_defaults_w, H_mus_header_raw_defaults,
+  Xen_define_dilambda(S_mus_header_raw_defaults, g_mus_header_raw_defaults_w, H_mus_header_raw_defaults,
 				   S_setB S_mus_header_raw_defaults, g_mus_header_set_raw_defaults_w, 0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_mus_clipping, g_mus_clipping_w, H_mus_clipping,
+  Xen_define_dilambda(S_mus_clipping, g_mus_clipping_w, H_mus_clipping,
 				   S_setB S_mus_clipping, g_mus_set_clipping_w, 0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_mus_file_clipping, g_mus_file_clipping_w, H_mus_file_clipping,
+  Xen_define_dilambda(S_mus_file_clipping, g_mus_file_clipping_w, H_mus_file_clipping,
 				   S_setB S_mus_file_clipping, g_mus_file_set_clipping_w, 1, 0, 2, 0);
 
-  Xen_define_procedure_with_setter(S_mus_sound_maxamp, g_mus_sound_maxamp_w, H_mus_sound_maxamp,
+  Xen_define_dilambda(S_mus_sound_maxamp, g_mus_sound_maxamp_w, H_mus_sound_maxamp,
 				   S_setB S_mus_sound_maxamp, g_mus_sound_set_maxamp_w, 1, 0, 2, 0);
 
   /* these are no-ops if not ALSA, but that makes it easier to maintain global initialization files */
-  Xen_define_procedure_with_setter(S_mus_alsa_buffers, g_mus_alsa_buffers_w, H_mus_alsa_buffers,
+  Xen_define_dilambda(S_mus_alsa_buffers, g_mus_alsa_buffers_w, H_mus_alsa_buffers,
 				   S_setB S_mus_alsa_buffers, g_mus_alsa_set_buffers_w, 0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_mus_alsa_buffer_size, g_mus_alsa_buffer_size_w, H_mus_alsa_buffer_size,
+  Xen_define_dilambda(S_mus_alsa_buffer_size, g_mus_alsa_buffer_size_w, H_mus_alsa_buffer_size,
 				   S_setB S_mus_alsa_buffer_size, g_mus_alsa_set_buffer_size_w, 0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_mus_alsa_device, g_mus_alsa_device_w, H_mus_alsa_device,
+  Xen_define_dilambda(S_mus_alsa_device, g_mus_alsa_device_w, H_mus_alsa_device,
 				   S_setB S_mus_alsa_device, g_mus_alsa_set_device_w, 0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_mus_alsa_playback_device, g_mus_alsa_playback_device_w, H_mus_alsa_playback_device,
+  Xen_define_dilambda(S_mus_alsa_playback_device, g_mus_alsa_playback_device_w, H_mus_alsa_playback_device,
 				   S_setB S_mus_alsa_playback_device, g_mus_alsa_set_playback_device_w, 0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_mus_alsa_capture_device, g_mus_alsa_capture_device_w, H_mus_alsa_capture_device,
+  Xen_define_dilambda(S_mus_alsa_capture_device, g_mus_alsa_capture_device_w, H_mus_alsa_capture_device,
 				   S_setB S_mus_alsa_capture_device, g_mus_alsa_set_capture_device_w, 0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_mus_alsa_squelch_warning, g_mus_alsa_squelch_warning_w, H_mus_alsa_squelch_warning,
+  Xen_define_dilambda(S_mus_alsa_squelch_warning, g_mus_alsa_squelch_warning_w, H_mus_alsa_squelch_warning,
 				   S_setB S_mus_alsa_squelch_warning, g_mus_alsa_set_squelch_warning_w, 0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_mus_max_malloc, g_mus_max_malloc_w, H_mus_max_malloc,
+  Xen_define_dilambda(S_mus_max_malloc, g_mus_max_malloc_w, H_mus_max_malloc,
 				   S_setB S_mus_max_malloc, g_mus_set_max_malloc_w, 0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_mus_max_table_size, g_mus_max_table_size_w, H_mus_max_table_size,
+  Xen_define_dilambda(S_mus_max_table_size, g_mus_max_table_size_w, H_mus_max_table_size,
 				   S_setB S_mus_max_table_size, g_mus_set_max_table_size_w, 0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_mus_sound_path, g_mus_sound_path_w, H_mus_sound_path,
+  Xen_define_dilambda(S_mus_sound_path, g_mus_sound_path_w, H_mus_sound_path,
 				   S_setB S_mus_sound_path, g_mus_set_sound_path_w, 0, 0, 1, 0);
 
 #if HAVE_SCHEME

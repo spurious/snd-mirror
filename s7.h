@@ -490,6 +490,7 @@ s7_pointer s7_make_safe_function(s7_scheme *sc, const char *name, s7_function fn
 s7_pointer s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
+s7_pointer s7_define_integer_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 void s7_define_safe_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc);
   /* this is now the same as s7_dilambda (different args) */
@@ -795,7 +796,7 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);  /* replaced by s7_a
  *        s7 changes
  *
  * --------
- * 26-Dec:    s7_arity replaces s7_procedure_arity.
+ * 26-Dec:    s7_arity replaces s7_procedure_arity.  s7_define_integer_function.
  * 5-Nov:     s7_shadow_rootlet and s7_set_shadow_rootlet.
  * 30-Aug:    s7_make_safe_function (for cload.scm).
  * 25-July:   define and friends now return the value, not the symbol.

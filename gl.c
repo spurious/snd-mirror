@@ -4452,7 +4452,7 @@ Xen_wrap_any_args(gxg_gluUnProject4_w, gxg_gluUnProject4)
 #endif
 static void define_functions(void)
 {
-  #define GL_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) Xen_define_procedure(XL_PRE #Name XL_POST, Value, A1, A2, A3, Help)
+  #define GL_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) Xen_define_safe_procedure(XL_PRE #Name XL_POST, Value, A1, A2, A3, Help)
 #if USE_MOTIF
   GL_DEFINE_PROCEDURE(glXChooseVisual, gxg_glXChooseVisual_w, 3, 0, 0, H_glXChooseVisual);
   GL_DEFINE_PROCEDURE(glXCopyContext, gxg_glXCopyContext_w, 4, 0, 0, H_glXCopyContext);
@@ -4837,11 +4837,7 @@ static void define_functions(void)
 static void define_integers(void)
 {
 
-#if HAVE_SCHEME
-#define DEFINE_INTEGER(Name) s7_define_constant(s7, XL_PRE #Name XL_POST, C_int_to_Xen_integer(Name))
-#else
 #define DEFINE_INTEGER(Name) Xen_define(XL_PRE #Name XL_POST, C_int_to_Xen_integer(Name))
-#endif
 
 #if USE_MOTIF
   DEFINE_INTEGER(GLX_USE_GL);
@@ -5656,7 +5652,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       Xen_provide_feature("gl");
-      Xen_define("gl-version", C_string_to_Xen_string("16-Dec-14"));
+      Xen_define("gl-version", C_string_to_Xen_string("29-Dec-14"));
       gl_already_inited = true;
     }
 }

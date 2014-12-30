@@ -2191,9 +2191,9 @@ void g_init_regions(void)
   Xen_define_safe_procedure(S_integer_to_region,      g_integer_to_region_w,      1, 0, 0, H_integer_to_region);
   Xen_define_safe_procedure(S_region_to_integer,      g_region_to_integer_w,      1, 0, 0, H_region_to_integer);
 
-  Xen_define_procedure_with_setter(S_max_regions, g_max_regions_w, H_max_regions, S_setB S_max_regions, g_set_max_regions_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_max_regions, g_max_regions_w, H_max_regions, S_setB S_max_regions, g_set_max_regions_w, 0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_region_graph_style, g_region_graph_style_w, H_region_graph_style,
+  Xen_define_dilambda(S_region_graph_style, g_region_graph_style_w, H_region_graph_style,
 				   S_setB S_region_graph_style, g_set_region_graph_style_w,  0, 0, 1, 0);
 
 #if HAVE_SCHEME

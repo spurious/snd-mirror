@@ -5845,9 +5845,9 @@ Xen_wrap_1_arg(g_set_enved_envelope_w, g_set_enved_envelope)
 
 void g_init_gxenv(void)
 {
-  Xen_define_procedure_with_setter(S_enved_filter, g_enved_filter_w, H_enved_filter,
+  Xen_define_dilambda(S_enved_filter, g_enved_filter_w, H_enved_filter,
 				   S_setB S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_enved_envelope, g_enved_envelope_w, H_enved_envelope,
+  Xen_define_dilambda(S_enved_envelope, g_enved_envelope_w, H_enved_envelope,
 				   S_setB S_enved_envelope, g_set_enved_envelope_w,  0, 0, 1, 0);
 }
 /* Transform settings dialog */
@@ -17643,24 +17643,24 @@ to popup file info as follows: \n\
   mouse_enter_label_hook = Xen_define_hook(S_mouse_enter_label_hook, "(make-hook 'type 'position 'label)", 3, H_mouse_enter_label_hook);
   mouse_leave_label_hook = Xen_define_hook(S_mouse_leave_label_hook, "(make-hook 'type 'position 'label)", 3, H_mouse_leave_label_hook);
 
-  Xen_define_procedure_with_setter(S_view_files_amp, g_view_files_amp_w, H_view_files_amp,
+  Xen_define_dilambda(S_view_files_amp, g_view_files_amp_w, H_view_files_amp,
 				   S_setB S_view_files_amp, g_view_files_set_amp_w,  1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_view_files_amp_env, g_view_files_amp_env_w, H_view_files_amp_env,
+  Xen_define_dilambda(S_view_files_amp_env, g_view_files_amp_env_w, H_view_files_amp_env,
 				   S_setB S_view_files_amp_env, g_view_files_set_amp_env_w,  1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_view_files_speed_style, g_view_files_speed_style_w, H_view_files_speed_style,
+  Xen_define_dilambda(S_view_files_speed_style, g_view_files_speed_style_w, H_view_files_speed_style,
 				   S_setB S_view_files_speed_style, g_view_files_set_speed_style_w,  1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_view_files_speed, g_view_files_speed_w, H_view_files_speed,
+  Xen_define_dilambda(S_view_files_speed, g_view_files_speed_w, H_view_files_speed,
 				   S_setB S_view_files_speed, g_view_files_set_speed_w,  1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_view_files_files, g_view_files_files_w, H_view_files_files,
+  Xen_define_dilambda(S_view_files_files, g_view_files_files_w, H_view_files_files,
 				   S_setB S_view_files_files, g_view_files_set_files_w,  1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_view_files_selected_files, g_view_files_selected_files_w, H_view_files_selected_files,
+  Xen_define_dilambda(S_view_files_selected_files, g_view_files_selected_files_w, H_view_files_selected_files,
 				   S_setB S_view_files_selected_files, g_view_files_set_selected_files_w,  1, 0, 2, 0);
 
   Xen_define_safe_procedure(S_add_directory_to_view_files_list, g_add_directory_to_view_files_list_w, 1, 1, 0, H_add_directory_to_view_files_list);
   Xen_define_safe_procedure(S_add_file_to_view_files_list,      g_add_file_to_view_files_list_w,      1, 1, 0, H_add_file_to_view_files_list);
   Xen_define_procedure(S_view_files_dialog,                g_view_files_dialog_w,                0, 2, 0, H_view_files_dialog);
 
-  Xen_define_procedure_with_setter(S_view_files_sort, g_view_files_sort_w, H_view_files_sort,
+  Xen_define_dilambda(S_view_files_sort, g_view_files_sort_w, H_view_files_sort,
 				   S_setB S_view_files_sort, g_set_view_files_sort_w,  0, 1, 1, 1);
 
   Xen_add_to_hook_list(ss->snd_open_file_hook, vf_open_file_watcher_w, "view-files-dialog-open-file-handler", "view-files dialog open-file handler");
@@ -26789,7 +26789,7 @@ void g_init_gxchn(void)
 {
   Xen_define_procedure(S_in,            g_in_w,             2, 0, 0, H_in);
 
-  Xen_define_procedure_with_setter(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
+  Xen_define_dilambda(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
 				   S_setB S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
 
   Xen_define_procedure(S_channel_widgets, g_channel_widgets_w, 0, 2, 0, H_channel_widgets);

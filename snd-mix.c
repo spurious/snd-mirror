@@ -4018,27 +4018,27 @@ void g_init_mix(void)
   Xen_define_procedure(S_view_mixes_dialog,      g_view_mixes_dialog_w,      0, 0, 0, H_view_mixes_dialog);
   Xen_define_procedure(S_mix_sync_max,           g_mix_sync_max_w,           0, 0, 0, H_mix_sync_max);
 
-  Xen_define_procedure_with_setter(S_mix_position,   g_mix_position_w,   H_mix_position,   S_setB S_mix_position,   g_set_mix_position_w,   1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_mix_speed,      g_mix_speed_w,      H_mix_speed,      S_setB S_mix_speed,      g_set_mix_speed_w,      1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_mix_amp,        g_mix_amp_w,        H_mix_amp,        S_setB S_mix_amp,        g_set_mix_amp_w,        1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_mix_amp_env,    g_mix_amp_env_w,    H_mix_amp_env,    S_setB S_mix_amp_env,    g_set_mix_amp_env_w,    1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_position,   g_mix_position_w,   H_mix_position,   S_setB S_mix_position,   g_set_mix_position_w,   1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_speed,      g_mix_speed_w,      H_mix_speed,      S_setB S_mix_speed,      g_set_mix_speed_w,      1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_amp,        g_mix_amp_w,        H_mix_amp,        S_setB S_mix_amp,        g_set_mix_amp_w,        1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_amp_env,    g_mix_amp_env_w,    H_mix_amp_env,    S_setB S_mix_amp_env,    g_set_mix_amp_env_w,    1, 0, 2, 0);
 
-  Xen_define_procedure_with_setter(S_mix_name,       g_mix_name_w,       H_mix_name,       S_setB S_mix_name,       g_set_mix_name_w,       1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_mix_sync,       g_mix_sync_w,       H_mix_sync,       S_setB S_mix_sync,       g_set_mix_sync_w,       1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_mix_properties, g_mix_properties_w, H_mix_properties, S_setB S_mix_properties, g_set_mix_properties_w, 1, 0, 2, 0);
-  Xen_define_procedure_with_setter(S_mix_property,   g_mix_property_w,   H_mix_property,   S_setB S_mix_property,   g_set_mix_property_w,   2, 0, 3, 0);
-  Xen_define_procedure_with_setter(S_mix_tag_y,      g_mix_tag_y_w,      H_mix_tag_y,      S_setB S_mix_tag_y,      g_set_mix_tag_y_w,      1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_name,       g_mix_name_w,       H_mix_name,       S_setB S_mix_name,       g_set_mix_name_w,       1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_sync,       g_mix_sync_w,       H_mix_sync,       S_setB S_mix_sync,       g_set_mix_sync_w,       1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_properties, g_mix_properties_w, H_mix_properties, S_setB S_mix_properties, g_set_mix_properties_w, 1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_property,   g_mix_property_w,   H_mix_property,   S_setB S_mix_property,   g_set_mix_property_w,   2, 0, 3, 0);
+  Xen_define_dilambda(S_mix_tag_y,      g_mix_tag_y_w,      H_mix_tag_y,      S_setB S_mix_tag_y,      g_set_mix_tag_y_w,      1, 0, 2, 0);
 
-  Xen_define_procedure_with_setter(S_mix_tag_width,  g_mix_tag_width_w,  H_mix_tag_width,  S_setB S_mix_tag_width,  g_set_mix_tag_width_w,  0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_mix_tag_height, g_mix_tag_height_w, H_mix_tag_height, S_setB S_mix_tag_height, g_set_mix_tag_height_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_mix_tag_width,  g_mix_tag_width_w,  H_mix_tag_width,  S_setB S_mix_tag_width,  g_set_mix_tag_width_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_mix_tag_height, g_mix_tag_height_w, H_mix_tag_height, S_setB S_mix_tag_height, g_set_mix_tag_height_w, 0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_mix_waveform_height, g_mix_waveform_height_w, H_mix_waveform_height,
+  Xen_define_dilambda(S_mix_waveform_height, g_mix_waveform_height_w, H_mix_waveform_height,
 				   S_setB S_mix_waveform_height, g_set_mix_waveform_height_w, 0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,
+  Xen_define_dilambda(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,
 				   S_setB S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_mix_dialog_mix, g_mix_dialog_mix_w, H_mix_dialog_mix, 
+  Xen_define_dilambda(S_mix_dialog_mix, g_mix_dialog_mix_w, H_mix_dialog_mix, 
 				   S_setB S_mix_dialog_mix, g_set_mix_dialog_mix_w, 0, 0, 1, 0);
 
 

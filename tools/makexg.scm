@@ -1411,6 +1411,7 @@
 (hey " *~%")
 (hey " * HISTORY:~%")
 (hey " *~%")
+(hey " *     27-Dec:    integer procedure stuff.~%")
 (hey " *     16-Apr:    changed max-args to 8.~%")
 (hey " *     6-Mar:     changed most macros.~%")
 (hey " *     21-Feb-14: changed _p to _is_.~%")
@@ -2430,15 +2431,15 @@
 ;;; (hey "  #define Xg_define_reader(Name, Value, A1, A2, A3) Xen_define_procedure(Xg_field_pre #Name Xg_post, Value, A1, A2, A3, #Name \" field reader\")~%")
 (hey "  #if HAVE_RUBY~%")
 (hey "    #define Xg_define_accessor(Name, Value, SetValue, A1, A2, A3, A4) \\~%")
-(hey "      Xen_define_procedure_with_setter(Xg_field_pre #Name Xg_post, Value, #Name \" field accessor\", Xg_field_pre \"set_\" #Name Xg_post, SetValue, A1, A2, A3, A4)~%")
+(hey "      Xen_define_dilambda(Xg_field_pre #Name Xg_post, Value, #Name \" field accessor\", Xg_field_pre \"set_\" #Name Xg_post, SetValue, A1, A2, A3, A4)~%")
 (hey "  #endif~%")
 (hey "  #if HAVE_SCHEME~%")
 (hey "    #define Xg_define_accessor(Name, Value, SetValue, A1, A2, A3, A4) \\~%")
-(hey "      Xen_define_procedure_with_setter(Xg_field_pre #Name Xg_post, Value, #Name \" field accessor\", \"set! \" Xg_field_pre #Name Xg_post, SetValue, A1, A2, A3, A4)~%")
+(hey "      Xen_define_dilambda(Xg_field_pre #Name Xg_post, Value, #Name \" field accessor\", \"set! \" Xg_field_pre #Name Xg_post, SetValue, A1, A2, A3, A4)~%")
 (hey "  #endif~%~%")
 (hey "  #if HAVE_FORTH~%")
 (hey "    #define Xg_define_accessor(Name, Value, SetValue, A1, A2, A3, A4) \\~%")
-(hey "      Xen_define_procedure_with_setter(Xg_field_pre #Name Xg_post, Value, #Name \" field accessor\", \"set-\" Xg_field_pre #Name Xg_post, SetValue, A1, A2, A3, A4)~%")
+(hey "      Xen_define_dilambda(Xg_field_pre #Name Xg_post, Value, #Name \" field accessor\", \"set-\" Xg_field_pre #Name Xg_post, SetValue, A1, A2, A3, A4)~%")
 (hey "  #endif~%")
 
 (define (array->list type)
@@ -2784,8 +2785,9 @@
 
 
 ;;; --------------------------------------------------------------------------------
-(hey "  #define Xg_define_procedure(Name, Value, A1, A2, A3, Help) Xen_define_procedure(Xg_pre #Name Xg_post, Value, A1, A2, A3, Help)~%")
-
+(hey "  #define Xg_define_procedure(Name, Value, A1, A2, A3, Help) Xen_define_safe_procedure(Xg_pre #Name Xg_post, Value, A1, A2, A3, Help)~%")
+(hey "  #define Xg_define_integer_procedure(Name, Value, A1, A2, A3, Help) Xen_define_integer_procedure(Xg_pre #Name Xg_post, Value, A1, A2, A3, Help)~%")
+(hey "~%")
 (hey "static void define_functions(void)~%")
 (hey "{~%")
 
@@ -2798,9 +2800,14 @@
 (define (defun func)
   (let* ((cargs (length (caddr func)))
 	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
-	 (args (- cargs refargs)))
-    
-    (hey "  Xg_define_procedure(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
+	 (args (- cargs refargs))
+	 (return-type (cadr func))
+	 (typ (assoc return-type direct-types)))
+    (hey "  Xg_define_~Aprocedure(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
+	 (if (and typ (cdr typ) (string? (cdr typ))
+		  (member (cdr typ) '("INT" "ULONG")))
+	     "integer_"
+	     "")
 	 (car func) (car func) 
 	 (if (>= cargs max-args) 0 args)
 	 (if (>= cargs max-args) 0 refargs)
@@ -2912,11 +2919,7 @@
 (hey "/* ---------------------------------------- constants ---------------------------------------- */~%~%")
 (hey "static void define_integers(void)~%")
 (hey "{~%")
-(hey "#if HAVE_SCHEME~%")
-(hey "  #define define_integer(Name) s7_define_constant(s7, Xg_pre #Name Xg_post, C_int_to_Xen_integer(Name))~%")
-(hey "#else~%")
-(hey "  #define define_integer(Name) Xen_define(Xg_pre #Name Xg_post, C_int_to_Xen_integer(Name))~%")
-(hey "#endif~%")
+(hey "#define define_integer(Name) Xen_define(Xg_pre #Name Xg_post, C_int_to_Xen_integer(Name))~%")
 (hey "~%")
 (hey "#if !GLIB_CHECK_VERSION(2,35,0)~%")
 (hey "  g_type_init();~%")
@@ -2940,11 +2943,7 @@
 
 (hey "static void define_doubles(void)~%")
 (hey "{~%")
-(hey "#if HAVE_SCHEME~%")
-(hey "  #define define_double(Name) s7_define_constant(s7, Xg_pre #Name Xg_post, C_double_to_Xen_real(Name))~%")
-(hey "#else~%")
-(hey "  #define define_double(Name) Xen_define(Xg_pre #Name Xg_post, C_double_to_Xen_real(Name))~%")
-(hey "#endif~%")
+(hey "#define define_double(Name) Xen_define(Xg_pre #Name Xg_post, C_double_to_Xen_real(Name))~%")
 (hey "~%")
 
 (for-each
@@ -2958,11 +2957,7 @@
 (hey "~%")
 (hey "static void define_atoms(void)~%")
 (hey "{~%")
-(hey "#if HAVE_SCHEME~%")
-(hey "  #define define_atom(Name) s7_define_constant(s7, Xg_pre #Name Xg_post, C_to_Xen_GdkAtom(Name))~%")
-(hey "#else~%")
-(hey "  #define define_atom(Name) Xen_define(Xg_pre #Name Xg_post, C_to_Xen_GdkAtom(Name))~%")
-(hey "#endif~%")
+(hey "#define define_atom(Name) Xen_define(Xg_pre #Name Xg_post, C_to_Xen_GdkAtom(Name))~%")
 (hey "~%")
 
 (for-each
@@ -2993,11 +2988,7 @@
 (hey "static void define_strings(void)~%")
 (hey "{~%")
 (hey "  ~%")
-(hey "#if HAVE_SCHEME~%")
-(hey "  #define define_string(Name) s7_define_constant(s7, Xg_pre #Name Xg_post, s7_make_permanent_string(Name))~%")
-(hey "#else~%")
-(hey "  #define define_string(Name) Xen_define(Xg_pre #Name Xg_post, C_string_to_Xen_string(Name))~%")
-(hey "#endif~%")
+(hey "#define define_string(Name) Xen_define(Xg_pre #Name Xg_post, C_string_to_Xen_string(Name))~%")
 
 (for-each (lambda (str) (hey "  define_string(~A);~%" str)) (reverse strings))
 (for-each

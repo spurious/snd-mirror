@@ -1277,8 +1277,8 @@ void g_init_gxcolormaps(void)
   Xen_define_procedure(S_colormap_name, g_colormap_name_w,     1, 0, 0, H_colormap_name);
   Xen_define_procedure(S_delete_colormap, g_delete_colormap_w, 1, 0, 0, H_delete_colormap);
 
-  Xen_define_procedure_with_setter(S_colormap,      g_colormap_w,      H_colormap,      S_setB S_colormap,      g_set_colormap_w,      0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_colormap_size, g_colormap_size_w, H_colormap_size, S_setB S_colormap_size, g_set_colormap_size_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_colormap,      g_colormap_w,      H_colormap,      S_setB S_colormap,      g_set_colormap_w,      0, 0, 1, 0);
+  Xen_define_dilambda(S_colormap_size, g_colormap_size_w, H_colormap_size, S_setB S_colormap_size, g_set_colormap_size_w, 0, 0, 1, 0);
 
   Xen_define_procedure(S_integer_to_colormap,       g_integer_to_colormap_w, 1, 0, 0, H_integer_to_colormap);
   Xen_define_procedure(S_colormap_to_integer,       g_colormap_to_integer_w, 1, 0, 0, H_colormap_to_integer);

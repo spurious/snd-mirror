@@ -3460,8 +3460,8 @@ void g_init_dac(void)
   Xen_define_procedure(S_play,           g_play_w,           0, 0, 1, H_play);
   Xen_define_procedure(S_stop_playing,   g_stop_playing_w,   0, 1, 0, H_stop_playing);
 
-  Xen_define_procedure_with_setter(S_pausing, g_pausing_w, H_pausing, S_setB S_pausing, g_set_pausing_w, 0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_playing, g_playing_w, H_playing, S_setB S_playing, g_set_playing_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_pausing, g_pausing_w, H_pausing, S_setB S_pausing, g_set_pausing_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_playing, g_playing_w, H_playing, S_setB S_playing, g_set_playing_w, 0, 0, 1, 0);
 
   Xen_define_procedure(S_make_player,    g_make_player_w,    0, 2, 0, H_make_player);
   Xen_define_procedure(S_add_player,     g_add_player_w,     1, 5, 0, H_add_player);
@@ -3472,19 +3472,19 @@ void g_init_dac(void)
   Xen_define_procedure(S_players,        g_players_w,        0, 0, 0, H_players);
   Xen_define_procedure(S_is_player,      g_is_player_w,      1, 0, 0, H_is_player);
 
-  Xen_define_procedure_with_setter(S_with_tracking_cursor, g_with_tracking_cursor_w, H_with_tracking_cursor,
+  Xen_define_dilambda(S_with_tracking_cursor, g_with_tracking_cursor_w, H_with_tracking_cursor,
 				   S_setB S_with_tracking_cursor, g_set_with_tracking_cursor_w, 0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_dac_size, g_dac_size_w, H_dac_size,
+  Xen_define_dilambda(S_dac_size, g_dac_size_w, H_dac_size,
 				   S_setB S_dac_size, g_set_dac_size_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_dac_combines_channels, g_dac_combines_channels_w, H_dac_combines_channels,
+  Xen_define_dilambda(S_dac_combines_channels, g_dac_combines_channels_w, H_dac_combines_channels,
 				   S_setB S_dac_combines_channels, g_set_dac_combines_channels_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_cursor_update_interval, g_cursor_update_interval_w, H_cursor_update_interval,
+  Xen_define_dilambda(S_cursor_update_interval, g_cursor_update_interval_w, H_cursor_update_interval,
 				   S_setB S_cursor_update_interval, g_set_cursor_update_interval_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_cursor_location_offset, g_cursor_location_offset_w, H_cursor_location_offset,
+  Xen_define_dilambda(S_cursor_location_offset, g_cursor_location_offset_w, H_cursor_location_offset,
 				   S_setB S_cursor_location_offset, g_set_cursor_location_offset_w,  0, 0, 1, 0);
 
   #define H_stop_playing_hook S_stop_playing_hook " (snd): called when a sound finishes playing."

@@ -915,9 +915,13 @@
 		       gsl_wavelet_daubechies gsl_wavelet_daubechies_centered gsl_wavelet_haar gsl_wavelet_haar_centered gsl_wavelet_bspline
 		       gsl_wavelet_bspline_centered))
 	   
-	   (reader-cond ((>= gsl-version 1.16)
-			 (c-pointer (gsl_multifit_robust_default gsl_multifit_robust_bisquare gsl_multifit_robust_cauchy gsl_multifit_robust_fair
-				     gsl_multifit_robust_huber gsl_multifit_robust_ols gsl_multifit_robust_welsch))))
+	   (reader-cond ((>= gsl-version 1.16) (c-pointer gsl_multifit_robust_default)))
+	   (reader-cond ((>= gsl-version 1.16) (c-pointer gsl_multifit_robust_bisquare)))
+	   (reader-cond ((>= gsl-version 1.16) (c-pointer gsl_multifit_robust_cauchy)))
+	   (reader-cond ((>= gsl-version 1.16) (c-pointer gsl_multifit_robust_fair)))
+	   (reader-cond ((>= gsl-version 1.16) (c-pointer gsl_multifit_robust_huber)))
+	   (reader-cond ((>= gsl-version 1.16) (c-pointer gsl_multifit_robust_ols)))
+	   (reader-cond ((>= gsl-version 1.16) (c-pointer gsl_multifit_robust_welsch)))
 	   
 	   (int (gsl_message_mask gsl_check_range))
 	   

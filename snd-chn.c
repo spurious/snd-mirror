@@ -10015,18 +10015,18 @@ void g_init_chn(void)
   Xen_define_safe_procedure(S_update_lisp_graph,       g_update_lisp_graph_w,      0, 2, 0, H_update_lisp_graph);
   Xen_define_safe_procedure(S_update_transform_graph,  g_update_transform_graph_w, 0, 2, 0, H_update_transform_graph);
 
-  Xen_define_procedure_with_setter(S_x_position_slider, g_ap_sx_w, H_x_position_slider, S_setB S_x_position_slider, g_set_ap_sx_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_y_position_slider, g_ap_sy_w, H_y_position_slider, S_setB S_y_position_slider, g_set_ap_sy_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_x_zoom_slider, g_ap_zx_w, H_x_zoom_slider, S_setB S_x_zoom_slider, g_set_ap_zx_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_y_zoom_slider, g_ap_zy_w, H_y_zoom_slider, S_setB S_y_zoom_slider, g_set_ap_zy_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_framples, g_framples_w, H_framples, S_setB S_framples, g_set_framples_w, 0, 3, 1, 2);
-  Xen_define_procedure_with_setter(S_maxamp, g_maxamp_w, H_maxamp, S_setB S_maxamp, g_set_maxamp_w, 0, 3, 1, 2);
+  Xen_define_dilambda(S_x_position_slider, g_ap_sx_w, H_x_position_slider, S_setB S_x_position_slider, g_set_ap_sx_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_y_position_slider, g_ap_sy_w, H_y_position_slider, S_setB S_y_position_slider, g_set_ap_sy_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_x_zoom_slider, g_ap_zx_w, H_x_zoom_slider, S_setB S_x_zoom_slider, g_set_ap_zx_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_y_zoom_slider, g_ap_zy_w, H_y_zoom_slider, S_setB S_y_zoom_slider, g_set_ap_zy_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_framples, g_framples_w, H_framples, S_setB S_framples, g_set_framples_w, 0, 3, 1, 2);
+  Xen_define_dilambda(S_maxamp, g_maxamp_w, H_maxamp, S_setB S_maxamp, g_set_maxamp_w, 0, 3, 1, 2);
 
   Xen_define_safe_procedure(S_maxamp_position,   g_maxamp_position_w, 0, 3, 0,   H_maxamp_position);
   Xen_define_safe_procedure(S_cursor_position,   g_cursor_position_w, 0, 2, 0,   H_cursor_position);
 
-  Xen_define_procedure_with_setter(S_edit_position, g_edit_position_w, H_edit_position, S_setB S_edit_position, g_set_edit_position_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_transform_graph_on, g_transform_graph_on_w, H_transform_graph_on, S_setB S_transform_graph_on, g_set_transform_graph_on_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_edit_position, g_edit_position_w, H_edit_position, S_setB S_edit_position, g_set_edit_position_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_transform_graph_on, g_transform_graph_on_w, H_transform_graph_on, S_setB S_transform_graph_on, g_set_transform_graph_on_w, 0, 2, 1, 2);
 
   #define H_graph_once "The value for the various graph-type variables that displays the standard waveform"
   #define H_graph_as_wavogram "The value for " S_time_graph_type " to make a spectrogram-like form of the time-domain data"
@@ -10042,10 +10042,10 @@ void g_init_chn(void)
   Xen_define_constant(S_graph_as_spectrogram, GRAPH_AS_SPECTROGRAM, H_graph_as_spectrogram);
   /* Xen_define_constant(S_graph_as_complex,     GRAPH_AS_COMPLEX,     H_graph_as_complex); */
 
-  Xen_define_procedure_with_setter(S_time_graph_on, g_timer_graph_on_w, H_timer_graph_on, S_setB S_time_graph_on, g_set_timer_graph_on_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_lisp_graph_on, g_lisp_graph_on_w, H_lisp_graph_on, S_setB S_lisp_graph_on, g_set_lisp_graph_on_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_squelch_update, g_squelch_update_w, H_squelch_update, S_setB S_squelch_update, g_set_squelch_update_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_cursor, g_cursor_w, H_cursor, S_setB S_cursor, g_set_cursor_w, 0, 3, 1, 3);
+  Xen_define_dilambda(S_time_graph_on, g_timer_graph_on_w, H_timer_graph_on, S_setB S_time_graph_on, g_set_timer_graph_on_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_lisp_graph_on, g_lisp_graph_on_w, H_lisp_graph_on, S_setB S_lisp_graph_on, g_set_lisp_graph_on_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_squelch_update, g_squelch_update_w, H_squelch_update, S_setB S_squelch_update, g_set_squelch_update_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_cursor, g_cursor_w, H_cursor, S_setB S_cursor, g_set_cursor_w, 0, 3, 1, 3);
   
   #define H_cursor_cross "The value for " S_cursor_style " that causes is to be a cross (the default)"
   #define H_cursor_line "The value for " S_cursor_style " that causes is to be a full vertical line"
@@ -10053,49 +10053,49 @@ void g_init_chn(void)
   Xen_define_constant(S_cursor_cross,          CURSOR_CROSS, H_cursor_cross);
   Xen_define_constant(S_cursor_line,           CURSOR_LINE,  H_cursor_line);
 
-  Xen_define_procedure_with_setter(S_cursor_style, g_cursor_style_w, H_cursor_style, S_setB S_cursor_style, g_set_cursor_style_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_tracking_cursor_style, g_tracking_cursor_style_w, H_tracking_cursor_style, S_setB S_tracking_cursor_style, g_set_tracking_cursor_style_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_cursor_size, g_cursor_size_w, H_cursor_size, S_setB S_cursor_size, g_set_cursor_size_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_left_sample, g_left_sample_w, H_left_sample, S_setB S_left_sample, g_set_left_sample_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_right_sample, g_right_sample_w, H_right_sample, S_setB S_right_sample, g_set_right_sample_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_channel_properties, g_channel_properties_w, H_channel_properties, S_setB S_channel_properties, g_set_channel_properties_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_channel_property, g_channel_property_w, H_channel_property, S_setB S_channel_property, g_set_channel_property_w, 1, 2, 2, 2);
-  Xen_define_procedure_with_setter(S_edit_properties, g_edit_properties_w, H_edit_properties, S_setB S_edit_properties, g_set_edit_properties_w, 0, 3, 1, 3);
-  Xen_define_procedure_with_setter(S_edit_property, g_edit_property_w, H_edit_property, S_setB S_edit_property, g_set_edit_property_w, 1, 3, 2, 3);
-  Xen_define_procedure_with_setter(S_max_transform_peaks, g_max_transform_peaks_w, H_max_transform_peaks, S_setB S_max_transform_peaks, g_set_max_transform_peaks_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_show_y_zero, g_show_y_zero_w, H_show_y_zero, S_setB S_show_y_zero, g_set_show_y_zero_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_show_grid, g_show_grid_w, H_show_grid, S_setB S_show_grid, g_set_show_grid_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_grid_density, g_grid_density_w, H_grid_density, S_setB S_grid_density, g_set_grid_density_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_show_sonogram_cursor, g_show_sonogram_cursor_w, H_show_sonogram_cursor, S_setB S_show_sonogram_cursor, g_set_show_sonogram_cursor_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_show_marks, g_show_marks_w, H_show_marks, S_setB S_show_marks, g_set_show_marks_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_time_graph_type, g_time_graph_type_w, H_time_graph_type, S_setB S_time_graph_type, g_set_time_graph_type_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_wavo_hop, g_wavo_hop_w, H_wavo_hop, S_setB S_wavo_hop, g_set_wavo_hop_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_wavo_trace, g_wavo_trace_w, H_wavo_trace, S_setB S_wavo_trace, g_set_wavo_trace_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_show_transform_peaks, g_show_transform_peaks_w, H_show_transform_peaks, S_setB S_show_transform_peaks, g_set_show_transform_peaks_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_zero_pad, g_zero_pad_w, H_zero_pad, S_setB S_zero_pad, g_set_zero_pad_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_with_verbose_cursor, g_with_verbose_cursor_w, H_with_verbose_cursor, S_setB S_with_verbose_cursor, g_set_with_verbose_cursor_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_fft_log_frequency, g_fft_log_frequency_w, H_fft_log_frequency, S_setB S_fft_log_frequency, g_set_fft_log_frequency_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_fft_log_magnitude, g_fft_log_magnitude_w, H_fft_log_magnitude, S_setB S_fft_log_magnitude, g_set_fft_log_magnitude_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_fft_with_phases, g_fft_with_phases_w, H_fft_with_phases, S_setB S_fft_with_phases, g_set_fft_with_phases_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_min_dB, g_min_dB_w, H_min_dB, S_setB S_min_dB, g_set_min_dB_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_wavelet_type, g_wavelet_type_w, H_wavelet_type, S_setB S_wavelet_type, g_set_wavelet_type_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_spectrum_end, g_spectrum_end_w, H_spectrum_end, S_setB S_spectrum_end, g_set_spectrum_end_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_spectrum_start, g_spectrum_start_w, H_spectrum_start, S_setB S_spectrum_start, g_set_spectrum_start_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_spectro_x_angle, g_spectro_x_angle_w, H_spectro_x_angle, S_setB S_spectro_x_angle, g_set_spectro_x_angle_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_spectro_x_scale, g_spectro_x_scale_w, H_spectro_x_scale, S_setB S_spectro_x_scale, g_set_spectro_x_scale_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_spectro_y_angle, g_spectro_y_angle_w, H_spectro_y_angle, S_setB S_spectro_y_angle, g_set_spectro_y_angle_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_spectro_y_scale, g_spectro_y_scale_w, H_spectro_y_scale, S_setB S_spectro_y_scale, g_set_spectro_y_scale_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_spectro_z_angle, g_spectro_z_angle_w, H_spectro_z_angle, S_setB S_spectro_z_angle, g_set_spectro_z_angle_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_spectro_z_scale, g_spectro_z_scale_w, H_spectro_z_scale, S_setB S_spectro_z_scale, g_set_spectro_z_scale_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_fft_window_beta, g_fft_window_beta_w, H_fft_window_beta, S_setB S_fft_window_beta, g_set_fft_window_beta_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_fft_window_alpha, g_fft_window_alpha_w, H_fft_window_alpha, S_setB S_fft_window_alpha, g_set_fft_window_alpha_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_spectro_hop, g_spectro_hop_w, H_spectro_hop, S_setB S_spectro_hop, g_set_spectro_hop_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_transform_size, g_transform_size_w, H_transform_size, S_setB S_transform_size, g_set_transform_size_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_transform_graph_type, g_transform_graph_type_w, H_transform_graph_type, S_setB S_transform_graph_type, g_set_transform_graph_type_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_fft_window, g_fft_window_w, H_fft_window, S_setB S_fft_window, g_set_fft_window_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_transform_type, g_transform_type_w, H_transform_type, S_setB S_transform_type, g_set_transform_type_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_transform_normalization, g_transform_normalization_w, H_transform_normalization, S_setB S_transform_normalization, g_set_transform_normalization_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_show_mix_waveforms, g_show_mix_waveforms_w, H_show_mix_waveforms, S_setB S_show_mix_waveforms, g_set_show_mix_waveforms_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_cursor_style, g_cursor_style_w, H_cursor_style, S_setB S_cursor_style, g_set_cursor_style_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_tracking_cursor_style, g_tracking_cursor_style_w, H_tracking_cursor_style, S_setB S_tracking_cursor_style, g_set_tracking_cursor_style_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_cursor_size, g_cursor_size_w, H_cursor_size, S_setB S_cursor_size, g_set_cursor_size_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_left_sample, g_left_sample_w, H_left_sample, S_setB S_left_sample, g_set_left_sample_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_right_sample, g_right_sample_w, H_right_sample, S_setB S_right_sample, g_set_right_sample_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_channel_properties, g_channel_properties_w, H_channel_properties, S_setB S_channel_properties, g_set_channel_properties_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_channel_property, g_channel_property_w, H_channel_property, S_setB S_channel_property, g_set_channel_property_w, 1, 2, 2, 2);
+  Xen_define_dilambda(S_edit_properties, g_edit_properties_w, H_edit_properties, S_setB S_edit_properties, g_set_edit_properties_w, 0, 3, 1, 3);
+  Xen_define_dilambda(S_edit_property, g_edit_property_w, H_edit_property, S_setB S_edit_property, g_set_edit_property_w, 1, 3, 2, 3);
+  Xen_define_dilambda(S_max_transform_peaks, g_max_transform_peaks_w, H_max_transform_peaks, S_setB S_max_transform_peaks, g_set_max_transform_peaks_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_show_y_zero, g_show_y_zero_w, H_show_y_zero, S_setB S_show_y_zero, g_set_show_y_zero_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_show_grid, g_show_grid_w, H_show_grid, S_setB S_show_grid, g_set_show_grid_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_grid_density, g_grid_density_w, H_grid_density, S_setB S_grid_density, g_set_grid_density_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_show_sonogram_cursor, g_show_sonogram_cursor_w, H_show_sonogram_cursor, S_setB S_show_sonogram_cursor, g_set_show_sonogram_cursor_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_show_marks, g_show_marks_w, H_show_marks, S_setB S_show_marks, g_set_show_marks_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_time_graph_type, g_time_graph_type_w, H_time_graph_type, S_setB S_time_graph_type, g_set_time_graph_type_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_wavo_hop, g_wavo_hop_w, H_wavo_hop, S_setB S_wavo_hop, g_set_wavo_hop_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_wavo_trace, g_wavo_trace_w, H_wavo_trace, S_setB S_wavo_trace, g_set_wavo_trace_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_show_transform_peaks, g_show_transform_peaks_w, H_show_transform_peaks, S_setB S_show_transform_peaks, g_set_show_transform_peaks_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_zero_pad, g_zero_pad_w, H_zero_pad, S_setB S_zero_pad, g_set_zero_pad_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_with_verbose_cursor, g_with_verbose_cursor_w, H_with_verbose_cursor, S_setB S_with_verbose_cursor, g_set_with_verbose_cursor_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_fft_log_frequency, g_fft_log_frequency_w, H_fft_log_frequency, S_setB S_fft_log_frequency, g_set_fft_log_frequency_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_fft_log_magnitude, g_fft_log_magnitude_w, H_fft_log_magnitude, S_setB S_fft_log_magnitude, g_set_fft_log_magnitude_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_fft_with_phases, g_fft_with_phases_w, H_fft_with_phases, S_setB S_fft_with_phases, g_set_fft_with_phases_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_min_dB, g_min_dB_w, H_min_dB, S_setB S_min_dB, g_set_min_dB_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_wavelet_type, g_wavelet_type_w, H_wavelet_type, S_setB S_wavelet_type, g_set_wavelet_type_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_spectrum_end, g_spectrum_end_w, H_spectrum_end, S_setB S_spectrum_end, g_set_spectrum_end_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_spectrum_start, g_spectrum_start_w, H_spectrum_start, S_setB S_spectrum_start, g_set_spectrum_start_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_spectro_x_angle, g_spectro_x_angle_w, H_spectro_x_angle, S_setB S_spectro_x_angle, g_set_spectro_x_angle_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_spectro_x_scale, g_spectro_x_scale_w, H_spectro_x_scale, S_setB S_spectro_x_scale, g_set_spectro_x_scale_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_spectro_y_angle, g_spectro_y_angle_w, H_spectro_y_angle, S_setB S_spectro_y_angle, g_set_spectro_y_angle_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_spectro_y_scale, g_spectro_y_scale_w, H_spectro_y_scale, S_setB S_spectro_y_scale, g_set_spectro_y_scale_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_spectro_z_angle, g_spectro_z_angle_w, H_spectro_z_angle, S_setB S_spectro_z_angle, g_set_spectro_z_angle_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_spectro_z_scale, g_spectro_z_scale_w, H_spectro_z_scale, S_setB S_spectro_z_scale, g_set_spectro_z_scale_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_fft_window_beta, g_fft_window_beta_w, H_fft_window_beta, S_setB S_fft_window_beta, g_set_fft_window_beta_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_fft_window_alpha, g_fft_window_alpha_w, H_fft_window_alpha, S_setB S_fft_window_alpha, g_set_fft_window_alpha_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_spectro_hop, g_spectro_hop_w, H_spectro_hop, S_setB S_spectro_hop, g_set_spectro_hop_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_transform_size, g_transform_size_w, H_transform_size, S_setB S_transform_size, g_set_transform_size_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_transform_graph_type, g_transform_graph_type_w, H_transform_graph_type, S_setB S_transform_graph_type, g_set_transform_graph_type_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_fft_window, g_fft_window_w, H_fft_window, S_setB S_fft_window, g_set_fft_window_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_transform_type, g_transform_type_w, H_transform_type, S_setB S_transform_type, g_set_transform_type_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_transform_normalization, g_transform_normalization_w, H_transform_normalization, S_setB S_transform_normalization, g_set_transform_normalization_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_show_mix_waveforms, g_show_mix_waveforms_w, H_show_mix_waveforms, S_setB S_show_mix_waveforms, g_set_show_mix_waveforms_w, 0, 2, 1, 2);
   
   /* should these be named "graph-with-lines" etc? */
   #define H_graph_lines "The value for " S_graph_style " that causes graphs to use line-segments"
@@ -10110,11 +10110,11 @@ void g_init_chn(void)
   Xen_define_constant(S_graph_dots_and_lines,  GRAPH_DOTS_AND_LINES, H_graph_dots_and_lines);
   Xen_define_constant(S_graph_lollipops,       GRAPH_LOLLIPOPS,      H_graph_lollipops);
   
-  Xen_define_procedure_with_setter(S_time_graph_style, g_time_graph_style_w, H_time_graph_style, S_setB S_time_graph_style, g_set_time_graph_style_w, 1, 1, 1, 2);
-  Xen_define_procedure_with_setter(S_lisp_graph_style, g_lisp_graph_style_w, H_lisp_graph_style, S_setB S_lisp_graph_style, g_set_lisp_graph_style_w, 1, 1, 1, 2);
-  Xen_define_procedure_with_setter(S_transform_graph_style, g_transform_graph_style_w, H_transform_graph_style, S_setB S_transform_graph_style, g_set_transform_graph_style_w, 1, 1, 1, 2);
-  Xen_define_procedure_with_setter(S_graph_style, g_graph_style_w, H_graph_style, S_setB S_graph_style, g_set_graph_style_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_dot_size, g_dot_size_w, H_dot_size, S_setB S_dot_size, g_set_dot_size_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_time_graph_style, g_time_graph_style_w, H_time_graph_style, S_setB S_time_graph_style, g_set_time_graph_style_w, 1, 1, 1, 2);
+  Xen_define_dilambda(S_lisp_graph_style, g_lisp_graph_style_w, H_lisp_graph_style, S_setB S_lisp_graph_style, g_set_lisp_graph_style_w, 1, 1, 1, 2);
+  Xen_define_dilambda(S_transform_graph_style, g_transform_graph_style_w, H_transform_graph_style, S_setB S_transform_graph_style, g_set_transform_graph_style_w, 1, 1, 1, 2);
+  Xen_define_dilambda(S_graph_style, g_graph_style_w, H_graph_style, S_setB S_graph_style, g_set_graph_style_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_dot_size, g_dot_size_w, H_dot_size, S_setB S_dot_size, g_set_dot_size_w, 0, 2, 1, 2);
 
   #define H_x_axis_in_seconds    "The value for " S_x_axis_style " that displays the x axis using seconds"
   #define H_x_axis_in_samples    "The value for " S_x_axis_style " that displays the x axis using sample numbers"
@@ -10130,9 +10130,9 @@ void g_init_chn(void)
   Xen_define_constant(S_x_axis_as_percentage,  X_AXIS_AS_PERCENTAGE, H_x_axis_as_percentage);
   Xen_define_constant(S_x_axis_as_clock,       X_AXIS_AS_CLOCK,      H_x_axis_as_clock);
 
-  Xen_define_procedure_with_setter(S_x_axis_style, g_x_axis_style_w, H_x_axis_style, S_setB S_x_axis_style, g_set_x_axis_style_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_beats_per_minute, g_beats_per_minute_w, H_beats_per_minute, S_setB S_beats_per_minute, g_set_beats_per_minute_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_beats_per_measure, g_beats_per_measure_w, H_beats_per_measure, S_setB S_beats_per_measure, g_set_beats_per_measure_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_x_axis_style, g_x_axis_style_w, H_x_axis_style, S_setB S_x_axis_style, g_set_x_axis_style_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_beats_per_minute, g_beats_per_minute_w, H_beats_per_minute, S_setB S_beats_per_minute, g_set_beats_per_minute_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_beats_per_measure, g_beats_per_measure_w, H_beats_per_measure, S_setB S_beats_per_measure, g_set_beats_per_measure_w, 0, 2, 1, 2);
 
   #define H_show_all_axes "The value for " S_show_axes " that causes both the x and y axes to be displayed"
   #define H_show_all_axes_unlabelled "The value for " S_show_axes " that causes both the x and y axes to be displayed, but without any label"
@@ -10148,8 +10148,8 @@ void g_init_chn(void)
   Xen_define_constant(S_show_x_axis_unlabelled,  SHOW_X_AXIS_UNLABELLED,   H_show_x_axis_unlabelled);
   Xen_define_constant(S_show_bare_x_axis,        SHOW_BARE_X_AXIS,         H_show_bare_x_axis);
 
-  Xen_define_procedure_with_setter(S_show_axes, g_show_axes_w, H_show_axes, S_setB S_show_axes, g_set_show_axes_w, 0, 2, 1, 2);
-  Xen_define_procedure_with_setter(S_graphs_horizontal, g_graphs_horizontal_w, H_graphs_horizontal, S_setB S_graphs_horizontal, g_set_graphs_horizontal_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_show_axes, g_show_axes_w, H_show_axes, S_setB S_show_axes, g_set_show_axes_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_graphs_horizontal, g_graphs_horizontal_w, H_graphs_horizontal, S_setB S_graphs_horizontal, g_set_graphs_horizontal_w, 0, 2, 1, 2);
 
   #define H_zoom_focus_left "The value for " S_zoom_focus_style " that causes zooming to maintain the left edge steady"
   #define H_zoom_focus_right "The value for " S_zoom_focus_style " that causes zooming to maintain the right edge steady"
@@ -10161,8 +10161,8 @@ void g_init_chn(void)
   Xen_define_constant(S_zoom_focus_active,     ZOOM_FOCUS_ACTIVE, H_zoom_focus_active);
   Xen_define_constant(S_zoom_focus_middle,     ZOOM_FOCUS_MIDDLE, H_zoom_focus_middle);
 
-  Xen_define_procedure_with_setter(S_zoom_focus_style, g_zoom_focus_style_w, H_zoom_focus_style, S_setB S_zoom_focus_style, g_set_zoom_focus_style_w,  0, 0, 1, 0);
-  Xen_define_procedure_with_setter(S_with_gl, g_with_gl_w, H_with_gl, S_setB S_with_gl, g_set_with_gl_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_zoom_focus_style, g_zoom_focus_style_w, H_zoom_focus_style, S_setB S_zoom_focus_style, g_set_zoom_focus_style_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_with_gl, g_with_gl_w, H_with_gl, S_setB S_with_gl, g_set_with_gl_w,  0, 0, 1, 0);
 
   #define H_sync_none     "The " S_sync_style " choice that leaves every sound and channel unsync'd at the start"
   #define H_sync_all      "The " S_sync_style " choice that syncs together every sound and channel at the start"
@@ -10172,7 +10172,7 @@ void g_init_chn(void)
   Xen_define_constant(S_sync_all,      SYNC_ALL,      H_sync_all);
   Xen_define_constant(S_sync_by_sound, SYNC_BY_SOUND, H_sync_by_sound);
 
-  Xen_define_procedure_with_setter(S_sync_style, g_sync_style_w, H_sync_style, S_setB S_sync_style, g_set_sync_style_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_sync_style, g_sync_style_w, H_sync_style, S_setB S_sync_style, g_set_sync_style_w,  0, 0, 1, 0);
 
 #if HAVE_GL
   Xen_define_safe_procedure(S_glSpectrogram, g_gl_spectrogram_w, 9, 0, 0, H_glSpectrogram);

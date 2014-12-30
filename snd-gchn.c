@@ -1377,7 +1377,7 @@ void g_init_gxchn(void)
 {
   Xen_define_procedure(S_in,            g_in_w,             2, 0, 0, H_in);
 
-  Xen_define_procedure_with_setter(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
+  Xen_define_dilambda(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
 				   S_setB S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
 
   Xen_define_procedure(S_channel_widgets, g_channel_widgets_w, 0, 2, 0, H_channel_widgets);

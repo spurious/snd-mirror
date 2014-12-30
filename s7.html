@@ -4170,26 +4170,6 @@ its bindings (this is borrowed from "nuntius" at reddit lisp):
 
 <div class="indented">
 
-<p>In define*, an argument's default value can be a function, so we can store
-argument-specific documentation in the documentation string:
-</p>
-<pre class="indented">
-(define (arg-info f n) 
-  ((procedure-source f) 1 n 1 0 2)) ; get the documentation string of f's n-th argument
-
-(define* (add-1 (arg ((lambda () "arg should be an integer" 0)))) 
-  (+ arg 1))          ; the default value of arg is 0
-
-&gt; (add-1)
-1
-&gt; (arg-info add-1 0)
-"arg should be an integer"
-</pre>
-
-</div>
-
-<div class="indented">
-
 <p>A minor footnote: there are cases in s7 where aritable? can't tell whether
 a given number of arguments can be applied to an object.  For example,
 <code>((list 1 (list 2 3)) 0 1)</code> is an error, but
@@ -4218,11 +4198,6 @@ what actual arguments you pass.  In these cases, aritable? returns <code>#f</cod
 </div>
 
 </blockquote>
-
-
-
-
-
 
 
 <div class="header" id="evalstring"><h4>eval</h4></div>

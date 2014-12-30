@@ -799,7 +799,7 @@
 ;;; ---------------- procedure linkages
 (hey "static void define_functions(void)~%")
 (hey "{~%")
-(hey "  #define GL_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) Xen_define_procedure(XL_PRE #Name XL_POST, Value, A1, A2, A3, Help)~%")
+(hey "  #define GL_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) Xen_define_safe_procedure(XL_PRE #Name XL_POST, Value, A1, A2, A3, Help)~%")
 
 (define (defun func)
   (let* ((cargs (length (caddr func)))
@@ -831,11 +831,7 @@
 (hey "/* ---------------------------------------- constants ---------------------------------------- */~%~%")
 (hey "static void define_integers(void)~%")
 (hey "{~%~%")
-(hey "#if HAVE_SCHEME~%")
-(hey "#define DEFINE_INTEGER(Name) s7_define_constant(s7, XL_PRE #Name XL_POST, C_int_to_Xen_integer(Name))~%")
-(hey "#else~%")
 (hey "#define DEFINE_INTEGER(Name) Xen_define(XL_PRE #Name XL_POST, C_int_to_Xen_integer(Name))~%")
-(hey "#endif~%")
 (hey "~%")
 
 (hey "#if USE_MOTIF~%")

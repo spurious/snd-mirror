@@ -464,7 +464,7 @@ Xen xen_make_vct_wrapper(mus_long_t len, mus_float_t *data)
 {
   s7_Int di[1];
   di[0] = len;
-  return(s7_make_float_vector_wrapper(s7, len, (s7_Double *)data, 1, di, false));   /* not freed by s7 */
+  return(s7_make_float_vector_wrapper(s7, len, (s7_Double *)data, 1, di, false));     /* not freed by s7 */
 }
 
 vct *mus_vct_wrap(mus_long_t len, mus_float_t *data)
@@ -1556,7 +1556,7 @@ void mus_vct_init(void)
   Xen_define_safe_procedure(S_vct_copy,          g_vct_copy_w,      1, 0, 0, H_vct_copy);
 
 #if HAVE_FORTH
-  Xen_define_procedure_with_setter(S_vct_ref,    g_vct_ref_w, H_vct_ref, "set-" S_vct_ref, g_vct_set_w,  2, 0, 3, 0);
+  Xen_define_dilambda(S_vct_ref,    g_vct_ref_w, H_vct_ref, "set-" S_vct_ref, g_vct_set_w,  2, 0, 3, 0);
 #else
 #if (!HAVE_SCHEME)
   Xen_define_procedure(S_vct_ref,                g_vct_ref_w,       2, 0, 0, H_vct_ref);

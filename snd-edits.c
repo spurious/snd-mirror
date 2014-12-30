@@ -9265,8 +9265,8 @@ void g_init_edits(void)
   Xen_define_procedure(S_insert_samples_with_origin,   g_insert_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
   Xen_define_procedure(S_override_samples_with_origin, g_override_samples_with_origin_w, 5, 1, 0, "internal function used in save-state");
 
-  Xen_define_procedure_with_setter(S_sample,  g_sample_w,  H_sample,  S_setB S_sample,  g_set_sample_w,  0, 4, 1, 4);
-  Xen_define_procedure_with_setter(S_samples, g_samples_w, H_samples, S_setB S_samples, g_set_samples_w, 0, 5, 3, 7);
+  Xen_define_dilambda(S_sample,  g_sample_w,  H_sample,  S_setB S_sample,  g_set_sample_w,  0, 4, 1, 4);
+  Xen_define_dilambda(S_samples, g_samples_w, H_samples, S_setB S_samples, g_set_samples_w, 0, 5, 3, 7);
 
 #if HAVE_SCHEME
   Xen_define_procedure("set-sample",                   orig_g_set_sample_w,              2, 3, 0, H_sample);   /* for edit-list->function */

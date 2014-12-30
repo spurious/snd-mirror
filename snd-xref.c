@@ -1750,7 +1750,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11348] = {
+static const char *snd_names[11346] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -6587,7 +6587,6 @@ static const char *snd_names[11348] = {
     "nrcos?", "generators.scm",
     "nrev", "nrev.scm",
     "nrev", "clm-ins.scm",
-    "nrsin", "generators.scm",
     "nrsin?", "generators.scm",
     "nrssb", "generators.scm",
     "nrssb-interp", "generators.scm",
@@ -7429,7 +7428,7 @@ static const char *snd_names[11348] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5674);
+  s7_autoload_set_names(sc, snd_names, 5673);
 }
 #endif
 

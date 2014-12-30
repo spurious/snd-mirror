@@ -2036,10 +2036,10 @@ void g_init_axis(void)
   Xen_define_safe_procedure(S_axis_info,     g_axis_info_w,       0, 3, 0, H_axis_info);
   Xen_define_safe_procedure(S_draw_axes,     g_draw_axes_w,       0, 0, 1, H_draw_axes);
   
-  Xen_define_procedure_with_setter(S_x_axis_label, g_x_axis_label_w, H_x_axis_label, S_setB S_x_axis_label, g_set_x_axis_label_w, 0, 3, 1, 3);
-  Xen_define_procedure_with_setter(S_y_axis_label, g_y_axis_label_w, H_y_axis_label, S_setB S_y_axis_label, g_set_y_axis_label_w, 0, 3, 1, 3);
-  Xen_define_procedure_with_setter(S_x_bounds, g_x_bounds_w, H_x_bounds, S_setB S_x_bounds, g_set_x_bounds_w, 0, 3, 1, 3);
-  Xen_define_procedure_with_setter(S_y_bounds, g_y_bounds_w, H_y_bounds, S_setB S_y_bounds, g_set_y_bounds_w, 0, 3, 1, 3);
+  Xen_define_dilambda(S_x_axis_label, g_x_axis_label_w, H_x_axis_label, S_setB S_x_axis_label, g_set_x_axis_label_w, 0, 3, 1, 3);
+  Xen_define_dilambda(S_y_axis_label, g_y_axis_label_w, H_y_axis_label, S_setB S_y_axis_label, g_set_y_axis_label_w, 0, 3, 1, 3);
+  Xen_define_dilambda(S_x_bounds, g_x_bounds_w, H_x_bounds, S_setB S_x_bounds, g_set_x_bounds_w, 0, 3, 1, 3);
+  Xen_define_dilambda(S_y_bounds, g_y_bounds_w, H_y_bounds, S_setB S_y_bounds, g_set_y_bounds_w, 0, 3, 1, 3);
 
   Xen_define_constant(S_time_graph,      TIME_AXIS_INFO,      "time domain graph axis info");
   Xen_define_constant(S_transform_graph, TRANSFORM_AXIS_INFO, "frequency domain graph axis info");

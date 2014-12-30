@@ -698,7 +698,7 @@ static Xen gxm_XGCValues(void)
   static Xen gxm_ ## Name (void) {Name *e; e = (Name *)calloc(1, sizeof(Name)); return(wrap_for_Xen_OBJ(#Name, e));} \
   Xen_wrap_no_args(gxm_ ## Name ## _w, gxm_ ## Name)
 #define XM_Declare(Name) \
-  Xen_define_procedure(XM_PREFIX #Name XM_POSTFIX, gxm_ ## Name ## _w, 0, 0, 0, "Make an " #Name " struct")
+  Xen_define_safe_procedure(XM_PREFIX #Name XM_POSTFIX, gxm_ ## Name ## _w, 0, 0, 0, "Make an " #Name " struct")
 
 XM_Make(XmAnyCallbackStruct)
 XM_Make(XmArrowButtonCallbackStruct)
@@ -773,7 +773,7 @@ static void define_makes(void)
   XM_Declare(XmSelectionBoxCallbackStruct);
   XM_Declare(XmTextVerifyCallbackStruct);
   XM_Declare(XmToggleButtonCallbackStruct);
-  Xen_define_procedure(XM_PREFIX "XmTextBlock" XM_POSTFIX, gxm_XmTextBlock_w, 0, 0, 0, "Make an XmTextBlock struct");
+  Xen_define_safe_procedure(XM_PREFIX "XmTextBlock" XM_POSTFIX, gxm_XmTextBlock_w, 0, 0, 0, "Make an XmTextBlock struct");
   XM_Declare(XmDestinationCallbackStruct);
   XM_Declare(XmConvertCallbackStruct);
   XM_Declare(XmComboBoxCallbackStruct);
@@ -21629,7 +21629,7 @@ Xen_wrap_2_args(c_to_xen_xrectangles_w, c_to_xen_xrectangles)
 
 static void define_procedures(void)
 {
-  #define XM_define_procedure(Name, Value, A1, A2, A3, Help) Xen_define_procedure(XM_PREFIX #Name XM_POSTFIX, Value, A1, A2, A3, Help)
+  #define XM_define_procedure(Name, Value, A1, A2, A3, Help) Xen_define_safe_procedure(XM_PREFIX #Name XM_POSTFIX, Value, A1, A2, A3, Help)
 
   xm_gc_table = Xen_make_vector(1, Xen_false);
   Xen_GC_protect(xm_gc_table);
@@ -22820,11 +22820,11 @@ static void define_procedures(void)
   XM_define_procedure(XpmColorSymbol?, g_is_XpmColorSymbol_w, 1, 0, 0, PROC_TRUE " if arg is a XpmColorSymbol");
 
 #if HAVE_SCHEME
-  Xen_define_procedure("->string", c_to_xen_string_w, 1, 0, 0, H_to_string);
-  Xen_define_procedure("->strings", c_to_xen_strings_w, 2, 0, 0, H_to_strings);
-  Xen_define_procedure("->ints", c_to_xen_ints_w, 2, 0, 0, H_to_ints);
-  Xen_define_procedure("->Atoms", c_to_xen_atoms_w, 2, 0, 0, H_to_Atoms);
-  Xen_define_procedure("->XRectangles", c_to_xen_xrectangles_w, 2, 0, 0, H_to_XRectangles);
+  Xen_define_safe_procedure("->string", c_to_xen_string_w, 1, 0, 0, H_to_string);
+  Xen_define_safe_procedure("->strings", c_to_xen_strings_w, 2, 0, 0, H_to_strings);
+  Xen_define_safe_procedure("->ints", c_to_xen_ints_w, 2, 0, 0, H_to_ints);
+  Xen_define_safe_procedure("->Atoms", c_to_xen_atoms_w, 2, 0, 0, H_to_Atoms);
+  Xen_define_safe_procedure("->XRectangles", c_to_xen_xrectangles_w, 2, 0, 0, H_to_XRectangles);
 #endif
 #if WITH_EDITRES
   XM_define_procedure(_XEditResCheckMessages, gxm_XEditResCheckMessages_w, 4, 0, 0, NULL);
@@ -22847,8 +22847,8 @@ static void define_procedures(void)
 static void define_structs(void)
 {
   #define XM_define_accessor(Name, Value, SetName, SetValue, A1, A2, A3, A4) \
-     Xen_define_procedure_with_setter(XM_FIELD_PREFIX #Name XM_POSTFIX, Value, #Name " field accessor", XM_FIELD_PREFIX #SetName XM_POSTFIX, SetValue, A1, A2, A3, A4)
-  #define XM_define_reader(Name, Value, A1, A2, A3) Xen_define_procedure(XM_FIELD_PREFIX #Name XM_POSTFIX, Value, A1, A2, A3, #Name " field reader")
+     Xen_define_dilambda(XM_FIELD_PREFIX #Name XM_POSTFIX, Value, #Name " field accessor", XM_FIELD_PREFIX #SetName XM_POSTFIX, SetValue, A1, A2, A3, A4)
+  #define XM_define_reader(Name, Value, A1, A2, A3) Xen_define_safe_procedure(XM_FIELD_PREFIX #Name XM_POSTFIX, Value, A1, A2, A3, #Name " field reader")
 
   XM_define_accessor(pixel, gxm_pixel_w, set_pixel, gxm_set_pixel_w, 1, 0, 2, 0);
   XM_define_accessor(red, gxm_red_w, set_red, gxm_set_red_w, 1, 0, 2, 0);
@@ -23183,17 +23183,10 @@ static xm_resource_t resource_type(const char *name)
 
 static void define_strings(void)
 {
-#if HAVE_SCHEME
-  #define define_string(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, s7_make_permanent_string(Name))
-  #define define_resource(Name, Type) \
-            s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, s7_make_permanent_string(Name)); \
-            hash_resource(Name, Type)
-#else
   #define define_string(Name) Xen_define(XM_PREFIX #Name XM_POSTFIX, C_string_to_Xen_string(Name))
   #define define_resource(Name, Type) \
             Xen_define(XM_PREFIX #Name XM_POSTFIX, C_string_to_Xen_string(Name)); \
             hash_resource(Name, Type)
-#endif
 
   xm_hash = (hdata **)calloc(XM_HASH_SIZE, sizeof(hdata *));
 
@@ -23861,13 +23854,8 @@ Xen_wrap_2_args(g_add_resource_w, g_add_resource)
 
 static void define_integers(void)
 {
-#if HAVE_SCHEME
-  #define define_integer(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_int_to_Xen_integer(Name))
-  #define define_ulong(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_ulong_to_Xen_ulong(Name))
-#else
   #define define_integer(Name) Xen_define(XM_PREFIX #Name XM_POSTFIX, C_int_to_Xen_integer(Name))
   #define define_ulong(Name) Xen_define(XM_PREFIX #Name XM_POSTFIX, C_ulong_to_Xen_ulong(Name))
-#endif
   
   define_ulong(AllPlanes);
   define_integer(XC_num_glyphs);
@@ -25427,11 +25415,7 @@ static void define_integers(void)
 
 static void define_pointers(void)
 {
-#if HAVE_SCHEME
-  #define define_pointer(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_to_Xen_WidgetClass(Name))
-#else
   #define define_pointer(Name) Xen_define(XM_PREFIX #Name XM_POSTFIX, C_to_Xen_WidgetClass(Name))
-#endif
 
   define_pointer(compositeWidgetClass);
   define_pointer(constraintWidgetClass);
@@ -25502,11 +25486,7 @@ static void define_pointers(void)
 
 static void define_Atoms(void)
 {
-#if HAVE_SCHEME
-  #define define_atom(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_to_Xen_Atom(Name))
-#else
   #define define_atom(Name) Xen_define(XM_PREFIX #Name XM_POSTFIX, C_to_Xen_Atom(Name))
-#endif
 
   define_atom(XA_PRIMARY);
   define_atom(XA_SECONDARY);
@@ -25619,7 +25599,7 @@ void Init_libxm(void)
       define_pointers();
       define_procedures();
       define_structs();
-      Xen_define_procedure(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
+      Xen_define_safe_procedure(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
       Xen_provide_feature("xm");
       Xen_define("xm-version", C_string_to_Xen_string(XM_DATE));
       xm_already_inited = true;

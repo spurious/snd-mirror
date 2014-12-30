@@ -812,16 +812,16 @@ void g_init_print(void)
   Xen_define_procedure(S_graph_to_ps, g_graph_to_ps_w, 0, 1, 0, H_graph_to_ps);
   Xen_define_procedure(S_gl_graph_to_ps, g_gl_graph_to_ps_w, 0, 4, 0, H_gl_graph_to_ps);
 
-  Xen_define_procedure_with_setter(S_eps_file, g_eps_file_w, H_eps_file,
+  Xen_define_dilambda(S_eps_file, g_eps_file_w, H_eps_file,
 				   S_setB S_eps_file, g_set_eps_file_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_eps_left_margin, g_eps_left_margin_w, H_eps_left_margin,
+  Xen_define_dilambda(S_eps_left_margin, g_eps_left_margin_w, H_eps_left_margin,
 				   S_setB S_eps_left_margin, g_set_eps_left_margin_w,  0, 0, 1, 0);
   
-  Xen_define_procedure_with_setter(S_eps_bottom_margin, g_eps_bottom_margin_w, H_eps_bottom_margin,
+  Xen_define_dilambda(S_eps_bottom_margin, g_eps_bottom_margin_w, H_eps_bottom_margin,
 				   S_setB S_eps_bottom_margin, g_set_eps_bottom_margin_w,  0, 0, 1, 0);
 
-  Xen_define_procedure_with_setter(S_eps_size, g_eps_size_w, H_eps_size,
+  Xen_define_dilambda(S_eps_size, g_eps_size_w, H_eps_size,
 				   S_setB S_eps_size, g_set_eps_size_w,  0, 0, 1, 0);
 
 #if HAVE_GL && WITH_GL2PS

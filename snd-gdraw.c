@@ -1333,7 +1333,7 @@ Xen_wrap_1_arg(g_set_background_gradient_w, g_set_background_gradient)
 
 void g_init_gxdraw(void)
 {
-  Xen_define_procedure_with_setter(S_background_gradient, g_background_gradient_w, H_background_gradient,
+  Xen_define_dilambda(S_background_gradient, g_background_gradient_w, H_background_gradient,
 				   S_setB S_background_gradient, g_set_background_gradient_w,  0, 0, 1, 0);
 
   #define H_orientation_hook S_orientation_hook " (): called whenever one of the variables associated with the \

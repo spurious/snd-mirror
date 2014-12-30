@@ -571,6 +571,7 @@ typedef struct s7_cell {
       s7_pointer name, global_slot, local_slot;
       long long int id;
       int op;  
+      unsigned int type;
     } sym;
 
     struct {                       /* syntax */
@@ -1636,6 +1637,7 @@ static void set_optimize_data(s7_pointer p, unsigned short op) {p->object.cons.d
 #define symbol_has_accessor(p)        has_accessor(p)
 #define symbol_set_has_accessor(p)    set_has_accessor(p)
 #define symbol_id(p)                  (p)->object.sym.id
+#define symbol_constant_type(p)       (p)->object.sym.type
 
 /* we need 64-bits here, since we don't want this thing to wrap around, and frames are created at a great rate 
  *    callgrind says this is faster than an unsigned int!
@@ -2643,6 +2645,14 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
 
 #define opt_name(E) ((is_optimized(E)) ? opt_names[optimize_data(E)] : "unopt")
 
+static bool is_h_optimized(s7_pointer p)
+{
+  return((is_optimized(p)) &&
+	 ((optimize_data(p) & 1) != 0) &&
+	 (!is_unknown_op(optimize_data(p))));
+}
+
+
 
 /* ---------------- profiling ---------------- */
 #define WITH_COUNTS 0
@@ -2996,13 +3006,11 @@ static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 
 bool s7_is_constant(s7_pointer p) 
 { 
-  /* this means "always evaluates to the same thing", sort of
-   *   not "evaluates to itself":
+  /* this means "always evaluates to the same thing", sort of, not "evaluates to itself":
    *   (let ((x 'x)) (and (not (constant? x)) (equal? x (eval x))))
    *   (and (constant? (list + 1)) (not (equal? (list + 1) (eval (list + 1)))))
    */
-  return((type(p) != T_SYMBOL) ||
-	 ((typeflag(p) & (T_KEYWORD | T_IMMUTABLE)) != 0));
+  return((type(p) != T_SYMBOL) || (is_immutable(p)));
 }
 
 
@@ -4695,10 +4703,11 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
   heap_location(x) = NOT_IN_HEAP;
   symbol_name_cell(x) = str;
   set_type(x, T_SYMBOL);
-  global_slot(x) = sc->UNDEFINED; /* was sc->NIL; */
+  global_slot(x) = sc->UNDEFINED;                          /* was sc->NIL; */
   initial_slot(x) = sc->UNDEFINED;
   symbol_set_local(x, 0LL, sc->NIL);
   symbol_tag(x) = 0;
+  symbol_constant_type(x) = T_FREE;
   symbol_hash(x) = location;
 
   if (symbol_name_length(x) > 1)                           /* not 0, otherwise : is a keyword */
@@ -4708,6 +4717,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
 	  typeflag(x) |= (T_IMMUTABLE | T_KEYWORD); 
 	  keyword_symbol(x) = make_symbol_with_length(sc, (char *)(name + 1), len - 1);
 	  global_slot(x) = s7_make_slot(sc, sc->NIL, x, x);
+	  symbol_constant_type(x) = T_SYMBOL;
 	}
       else
 	{
@@ -4723,6 +4733,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
 	      memcpy((void *)kstr, (void *)name, klen);
 	      typeflag(x) |= (T_IMMUTABLE | T_KEYWORD); 
 	      keyword_symbol(x) = make_symbol_with_length(sc, kstr, klen);
+	      symbol_constant_type(x) = T_SYMBOL;
 	      global_slot(x) = s7_make_slot(sc, sc->NIL, x, x);
 	      free(kstr);
 	    }
@@ -4993,6 +5004,20 @@ static s7_pointer g_is_symbol(s7_scheme *sc, s7_pointer args)
   check_boolean_method(sc, is_symbol, sc->IS_SYMBOL, args);
 }
 
+#if 0
+static bool returns_symbol(s7_scheme *sc, s7_pointer arg)
+{
+  if (is_symbol(arg)) return(symbol_constant_type(arg) == T_SYMBOL); 
+  if (is_pair(arg))
+    {
+      if (car(arg) == sc->QUOTE) return(is_symbol(cadr(arg)));
+      return((is_h_optimized(arg)) &&
+	     (is_c_function(ecdr(arg))) &&
+	     (c_function_type(ecdr(arg)) == sc->IS_SYMBOL));
+    }
+  return(false);
+}
+#endif
 
 const char *s7_symbol_name(s7_pointer p)   
 { 
@@ -6800,13 +6825,12 @@ s7_pointer s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
   sym = make_symbol(sc, name);
   s7_define(sc, sc->NIL, sym, value);
   set_immutable(sym);
+  symbol_constant_type(sym) = type(value);
   return(sym);
 }
 
-/* (define (func a) (let ((cvar (+ a 1))) cvar))
- * (define-constant cvar 23)
- * (func 1)
- * ;can't bind an immutable object: cvar
+/* (define (func a) (let ((cvar (+ a 1))) cvar)) (define-constant cvar 23) (func 1) -> ;can't bind an immutable object: cvar
+ * (let ((aaa 1)) (define-constant aaa 32) (set! aaa 3)) -> set!: can't alter immutable object: aaa
  */
 
 s7_pointer s7_define_constant_with_documentation(s7_scheme *sc, const char *name, s7_pointer value, const char *help)
@@ -6862,17 +6886,14 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
 {
   s7_pointer sym;
   char *name;
-  unsigned int len, slen;
-  
+  unsigned int slen;
   slen = safe_strlen(key);
   name = (char *)malloc((slen + 2) * sizeof(char));
-  len = snprintf(name, slen + 2, ":%s", key);                     /* prepend ":" */
-  sym = make_symbol_with_length(sc, name, len);
-  typeflag(sym) |= (T_IMMUTABLE); 
+  name[0] = ':';                                     /* prepend ":" */
+  name[1] = '\0';
+  name = strcat(name, key);
+  sym = make_symbol_with_length(sc, name, slen + 1); /* keyword slot etc taken care of here (in new_symbol actually) */
   free(name);
-  keyword_symbol(sym) = make_symbol_with_length(sc, key, slen);
-  
-  s7_make_slot(sc, sc->NIL, sym, sym); /* make it global, not in the local env! */
   return(sym);
 }
 
@@ -7757,6 +7778,14 @@ bool s7_is_integer(s7_pointer p)
 #else
   return(is_integer(p));
 #endif
+}
+
+static bool returns_integer(s7_scheme *sc, s7_pointer arg)
+{
+  if (s7_is_integer(arg)) return(true);
+  return((is_h_optimized(arg)) &&
+	 (is_c_function(ecdr(arg))) &&
+	 (c_function_type(ecdr(arg)) == sc->IS_INTEGER));
 }
 
 
@@ -13156,7 +13185,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer add_1, add_2, add_1s, add_s1, add_cs1, add_si, add_si_i, add_is, add_sf, add_fs, add_2_temp, add_s_temp, add_temp_s, add_s_direct;
+static s7_pointer add_1, add_2, add_1s, add_s1, add_cs1, add_si, add_si_i, add_is, add_sf, add_fs, add_2_temp, add_s_temp, add_temp_s, add_s_direct, add_2i;
 
 static s7_pointer add_ratios(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
@@ -13280,6 +13309,11 @@ static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
       return(wrong_type_argument_with_type(sc, sc->ADD, small_int(1), x, A_NUMBER));
     }
   return(x);
+}
+
+static s7_pointer g_add_2i(s7_scheme *sc, s7_pointer args)
+{
+  return(make_integer(sc, integer(car(args)) + integer(cadr(args))));
 }
 
 static s7_pointer g_add_s1(s7_scheme *sc, s7_pointer args)
@@ -33780,6 +33814,14 @@ static s7_pointer s7_define_typed_function(s7_scheme *sc, const char *name, s7_f
   return(sym);
 }
 
+#define s7_define_character_function(Sc, Name, Fnc, Req, Opt, Rst, Doc) s7_define_typed_function(Sc, Name, Fnc, Req, Opt, Rst, Doc, Sc->IS_CHAR)
+#define s7_define_symbol_function(Sc, Name, Fnc, Req, Opt, Rst, Doc) s7_define_typed_function(Sc, Name, Fnc, Req, Opt, Rst, Doc, Sc->IS_SYMBOL)
+
+s7_pointer s7_define_integer_function(s7_scheme *sc, const char *name, s7_function fnc, 
+				      int required_args, int optional_args, bool rest_arg, const char *doc)
+{
+  return(s7_define_typed_function(sc, name, fnc, required_args, optional_args, rest_arg, doc, sc->IS_INTEGER));
+}
 
 static s7_pointer s7_define_constant_function(s7_scheme *sc, const char *name, s7_function fnc, 
 					      int required_args, int optional_args, bool rest_arg, const char *doc)
@@ -33788,9 +33830,9 @@ static s7_pointer s7_define_constant_function(s7_scheme *sc, const char *name, s
   sym = make_symbol(sc, name);
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   s7_define(sc, sc->NIL, sym, func);
-  set_immutable(slot_symbol(global_slot(sym)));
-
-  p = s7_symbol_value(sc, sym); /* make_symbol(sc, name)); */
+  set_immutable(sym);
+  symbol_constant_type(sym) = type(func);
+  p = s7_symbol_value(sc, sym); 
   typeflag(p) &= ~(T_SAFE_PROCEDURE);
   return(p);
 }
@@ -41540,14 +41582,6 @@ static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol)
 #define is_h_safe_c_s(P) ((is_optimized(P)) && (optimize_data(P) == HOP_SAFE_C_S))
 #define is_safe_c_s(P)   ((is_optimized(P)) && (op_no_hop(P) == OP_SAFE_C_S))
 
-static bool is_h_optimized(s7_pointer p)
-{
-  return((is_optimized(p)) &&
-	 ((optimize_data(p) & 1) != 0) &&
-	 (!is_unknown_op(optimize_data(p))));
-}
-
-
 static s7_pointer is_pair_car, is_pair_cdr, is_pair_cadr;
 static s7_pointer g_is_pair_car(s7_scheme *sc, s7_pointer args) 
 {
@@ -42158,10 +42192,14 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
     {
       s7_pointer arg1, arg2;
       arg1 = cadr(expr);
+      arg2 = caddr(expr);
+
+      if ((returns_integer(sc, arg1)) && (returns_integer(sc, arg2)))
+	return(add_2i);
+
       if (arg1 == small_int(1))
 	return(add_1s);
 
-      arg2 = caddr(expr);
       if (arg2 == small_int(1))
 	{
 	  if (is_symbol(arg1))
@@ -42757,6 +42795,7 @@ static bool returns_char(s7_scheme *sc, s7_pointer arg)
   /* c_call(arg) == g_string_ref (fcdr(arg)) == c_function_call(ecdr(arg)), c_function_type(ecdr(arg)) == sc->IS_CHAR, is_c_function(ecdr(arg)) is true
    */
   if (s7_is_character(arg)) return(true);
+  /* if (is_symbol(arg)) return(symbol_constant_type(arg) == T_CHARACTER); */ /* this never happens in current scheme code */
   return((is_h_optimized(arg)) &&
 	 (is_c_function(ecdr(arg))) &&
 	 (c_function_type(ecdr(arg)) == sc->IS_CHAR));
@@ -43283,6 +43322,7 @@ static void init_choosers(s7_scheme *sc)
   add_s1 = make_function_with_class(sc, f, "+", g_add_s1, 2, 0, false, "+ opt");
   add_cs1 = make_function_with_class(sc, f, "+", g_add_cs1, 2, 0, false, "+ opt");
   add_si_i = make_function_with_class(sc, f, "+", g_add_si_i, 2, 0, false, "+ opt");
+  add_2i = make_function_with_class(sc, f, "+", g_add_2i, 2, 0, false, "+ opt");
   add_si = make_function_with_class(sc, f, "+", g_add_si, 2, 0, false, "+ opt");
   add_is = make_function_with_class(sc, f, "+", g_add_is, 2, 0, false, "+ opt");
   add_sf = make_function_with_class(sc, f, "+", g_add_sf, 2, 0, false, "+ opt");
@@ -43714,8 +43754,6 @@ static void init_choosers(s7_scheme *sc)
   if_s_direct = s7_make_function(sc, "if", g_if_s_direct, 2, 1, false, "if opt");
 }
 
-
-static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer e);
 
 static s7_pointer collect_collisions(s7_scheme *sc, s7_pointer lst, s7_pointer e)
 {
@@ -46020,6 +46058,8 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer car_x, s7_pointer 
   return(is_optimized(car_x));
 }
 
+
+static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer e);
 
 static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int hop, s7_pointer e)
 {
@@ -58468,7 +58508,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer lx;
 	lx = find_symbol(sc, car(sc->code));
 	if (is_slot(lx))
-	  set_immutable(slot_symbol(lx));
+	  {
+	    set_immutable(slot_symbol(lx));
+	    symbol_constant_type(slot_symbol(lx)) = type(slot_value(lx));
+	  }
 	goto START;
       }
 
@@ -68387,13 +68430,13 @@ s7_scheme *s7_init(void)
 
   sc->gc_off = false;
 
-  sc->GENSYM =                s7_define_safe_function(sc, "gensym",                  g_gensym,                 0, 1, false, H_gensym);
+  sc->IS_SYMBOL =             s7_define_safe_function(sc, "symbol?",                 g_is_symbol,              1, 0, false, H_is_symbol);
+  sc->GENSYM =                s7_define_symbol_function(sc, "gensym",                g_gensym,                 0, 1, false, H_gensym);
   sc->IS_GENSYM =             s7_define_safe_function(sc, "gensym?",                 g_is_gensym,              1, 0, false, H_is_gensym);
                               s7_define_safe_function(sc, "symbol-table",            g_symbol_table,           0, 0, false, H_symbol_table);
-  sc->IS_SYMBOL =             s7_define_safe_function(sc, "symbol?",                 g_is_symbol,              1, 0, false, H_is_symbol);
   sc->SYMBOL_TO_STRING =      s7_define_safe_function(sc, "symbol->string",          g_symbol_to_string,       1, 0, false, H_symbol_to_string);
-  sc->STRING_TO_SYMBOL =      s7_define_safe_function(sc, "string->symbol",          g_string_to_symbol,       1, 0, false, H_string_to_symbol);
-  sc->SYMBOL =                s7_define_safe_function(sc, "symbol",                  g_symbol,                 1, 0, false, H_symbol);
+  sc->STRING_TO_SYMBOL =      s7_define_symbol_function(sc, "string->symbol",        g_string_to_symbol,       1, 0, false, H_string_to_symbol);
+  sc->SYMBOL =                s7_define_symbol_function(sc, "symbol",                g_symbol,                 1, 0, false, H_symbol);
   sc->SYMBOL_TO_VALUE =       s7_define_safe_function(sc, "symbol->value",           g_symbol_to_value,        1, 1, false, H_symbol_to_value);
   sc->SYMBOL_TO_DYNAMIC_VALUE = s7_define_safe_function(sc, "symbol->dynamic-value", g_symbol_to_dynamic_value,1, 0, false, H_symbol_to_dynamic_value);
   s7_dilambda(sc, "symbol-access", g_symbol_access, 1, 1, g_symbol_set_access, 2, 1, H_symbol_access);
@@ -68431,9 +68474,9 @@ s7_scheme *s7_init(void)
   sc->IS_MACRO =              s7_define_safe_function(sc, "macro?",                  g_is_macro,               1, 0, false, H_is_macro);
 
   sc->IS_KEYWORD =            s7_define_safe_function(sc, "keyword?",                g_is_keyword,             1, 0, false, H_is_keyword);
-  sc->MAKE_KEYWORD =          s7_define_safe_function(sc, "make-keyword",            g_make_keyword,           1, 0, false, H_make_keyword);
+  sc->MAKE_KEYWORD =          s7_define_symbol_function(sc, "make-keyword",          g_make_keyword,           1, 0, false, H_make_keyword);
   sc->SYMBOL_TO_KEYWORD =     s7_define_safe_function(sc, "symbol->keyword",         g_symbol_to_keyword,      1, 0, false, H_symbol_to_keyword);
-  sc->KEYWORD_TO_SYMBOL =     s7_define_safe_function(sc, "keyword->symbol",         g_keyword_to_symbol,      1, 0, false, H_keyword_to_symbol);
+  sc->KEYWORD_TO_SYMBOL =     s7_define_symbol_function(sc, "keyword->symbol",       g_keyword_to_symbol,      1, 0, false, H_keyword_to_symbol);
 
   sc->IS_C_POINTER =          s7_define_safe_function(sc, "c-pointer?",              g_is_c_pointer,           1, 0, false, H_is_c_pointer);
   sc->C_POINTER =             s7_define_safe_function(sc, "c-pointer",               g_c_pointer,              1, 0, false, H_c_pointer);  
@@ -68504,10 +68547,16 @@ s7_scheme *s7_init(void)
 #endif
 #endif
   
+  sc->IS_INTEGER =            s7_define_safe_function(sc, "integer?",                g_is_integer,             1, 0, false, H_is_integer);
+  sc->IS_NUMBER =             s7_define_safe_function(sc, "number?",                 g_is_number,              1, 0, false, H_is_number);
+  sc->IS_REAL =               s7_define_safe_function(sc, "real?",                   g_is_real,                1, 0, false, H_is_real);
+  sc->IS_COMPLEX =            s7_define_safe_function(sc, "complex?",                g_is_complex,             1, 0, false, H_is_complex);
+  sc->IS_RATIONAL =           s7_define_safe_function(sc, "rational?",               g_is_rational,            1, 0, false, H_is_rational);
+
   sc->REAL_PART =             s7_define_safe_function(sc, "real-part",               g_real_part,              1, 0, false, H_real_part);
   sc->IMAG_PART =             s7_define_safe_function(sc, "imag-part",               g_imag_part,              1, 0, false, H_imag_part);
-  sc->NUMERATOR =             s7_define_safe_function(sc, "numerator",               g_numerator,              1, 0, false, H_numerator);
-  sc->DENOMINATOR =           s7_define_safe_function(sc, "denominator",             g_denominator,            1, 0, false, H_denominator);
+  sc->NUMERATOR =             s7_define_integer_function(sc, "numerator",            g_numerator,              1, 0, false, H_numerator);
+  sc->DENOMINATOR =           s7_define_integer_function(sc, "denominator",          g_denominator,            1, 0, false, H_denominator);
   sc->IS_EVEN =               s7_define_safe_function(sc, "even?",                   g_is_even,                1, 0, false, H_is_even);
   sc->IS_ODD =                s7_define_safe_function(sc, "odd?",                    g_is_odd,                 1, 0, false, H_is_odd);
   sc->IS_ZERO =               s7_define_safe_function(sc, "zero?",                   g_is_zero,                1, 0, false, H_is_zero);
@@ -68543,10 +68592,10 @@ s7_scheme *s7_init(void)
   sc->ATANH =                 s7_define_safe_function(sc, "atanh",                   g_atanh,                  1, 0, false, H_atanh);
   sc->SQRT =                  s7_define_safe_function(sc, "sqrt",                    g_sqrt,                   1, 0, false, H_sqrt);
   sc->EXPT =                  s7_define_safe_function(sc, "expt",                    g_expt,                   2, 0, false, H_expt);
-  sc->FLOOR =                 s7_define_safe_function(sc, "floor",                   g_floor,                  1, 0, false, H_floor);
-  sc->CEILING =               s7_define_safe_function(sc, "ceiling",                 g_ceiling,                1, 0, false, H_ceiling);
-  sc->TRUNCATE =              s7_define_safe_function(sc, "truncate",                g_truncate,               1, 0, false, H_truncate);
-  sc->ROUND =                 s7_define_safe_function(sc, "round",                   g_round,                  1, 0, false, H_round);
+  sc->FLOOR =                 s7_define_integer_function(sc, "floor",                g_floor,                  1, 0, false, H_floor);
+  sc->CEILING =               s7_define_integer_function(sc, "ceiling",              g_ceiling,                1, 0, false, H_ceiling);
+  sc->TRUNCATE =              s7_define_integer_function(sc, "truncate",             g_truncate,               1, 0, false, H_truncate);
+  sc->ROUND =                 s7_define_integer_function(sc, "round",                g_round,                  1, 0, false, H_round);
   sc->LCM =                   s7_define_safe_function(sc, "lcm",                     g_lcm,                    0, 0, true,  H_lcm);
   sc->GCD =                   s7_define_safe_function(sc, "gcd",                     g_gcd,                    0, 0, true,  H_gcd);
   sc->ADD =                   s7_define_safe_function(sc, "+",                       g_add,                    0, 0, true,  H_add);
@@ -68567,12 +68616,12 @@ s7_scheme *s7_init(void)
   sc->INEXACT_TO_EXACT =      s7_define_safe_function(sc, "inexact->exact",          g_inexact_to_exact,       1, 0, false, H_inexact_to_exact);
   sc->EXACT_TO_INEXACT =      s7_define_safe_function(sc, "exact->inexact",          g_exact_to_inexact,       1, 0, false, H_exact_to_inexact);
 
-  sc->INTEGER_LENGTH =        s7_define_safe_function(sc, "integer-length",          g_integer_length,         1, 0, false, H_integer_length);
-  sc->LOGIOR =                s7_define_safe_function(sc, "logior",                  g_logior,                 0, 0, true,  H_logior);
-  sc->LOGXOR =                s7_define_safe_function(sc, "logxor",                  g_logxor,                 0, 0, true,  H_logxor);
-  sc->LOGAND =                s7_define_safe_function(sc, "logand",                  g_logand,                 0, 0, true,  H_logand);
-  sc->LOGNOT =                s7_define_safe_function(sc, "lognot",                  g_lognot,                 1, 0, false, H_lognot);
-  sc->ASH =                   s7_define_safe_function(sc, "ash",                     g_ash,                    2, 0, false, H_ash);
+  sc->INTEGER_LENGTH =        s7_define_integer_function(sc, "integer-length",       g_integer_length,         1, 0, false, H_integer_length);
+  sc->LOGIOR =                s7_define_integer_function(sc, "logior",               g_logior,                 0, 0, true,  H_logior);
+  sc->LOGXOR =                s7_define_integer_function(sc, "logxor",               g_logxor,                 0, 0, true,  H_logxor);
+  sc->LOGAND =                s7_define_integer_function(sc, "logand",               g_logand,                 0, 0, true,  H_logand);
+  sc->LOGNOT =                s7_define_integer_function(sc, "lognot",               g_lognot,                 1, 0, false, H_lognot);
+  sc->ASH =                   s7_define_integer_function(sc, "ash",                  g_ash,                    2, 0, false, H_ash);
 #endif
   sc->LOGBIT =                s7_define_safe_function(sc, "logbit?",                 g_logbit,                 2, 0, false, H_logbit);
   sc->INTEGER_DECODE_FLOAT =  s7_define_safe_function(sc, "integer-decode-float",    g_integer_decode_float,   1, 0, false, H_integer_decode_float);
@@ -68584,28 +68633,23 @@ s7_scheme *s7_init(void)
   sc->MAKE_RANDOM_STATE =     s7_define_safe_function(sc, "make-random-state",       s7_make_random_state,     1, 1, false, H_make_random_state);
   sc->RANDOM =                s7_define_safe_function(sc, "random",                  g_random,                 1, 1, false, H_random);
 
-  sc->IS_NUMBER =             s7_define_safe_function(sc, "number?",                 g_is_number,              1, 0, false, H_is_number);
-  sc->IS_INTEGER =            s7_define_safe_function(sc, "integer?",                g_is_integer,             1, 0, false, H_is_integer);
-  sc->IS_REAL =               s7_define_safe_function(sc, "real?",                   g_is_real,                1, 0, false, H_is_real);
-  sc->IS_COMPLEX =            s7_define_safe_function(sc, "complex?",                g_is_complex,             1, 0, false, H_is_complex);
-  sc->IS_RATIONAL =           s7_define_safe_function(sc, "rational?",               g_is_rational,            1, 0, false, H_is_rational);
   sc->IS_EXACT =              s7_define_safe_function(sc, "exact?",                  g_is_exact,               1, 0, false, H_is_exact);
   sc->IS_INEXACT =            s7_define_safe_function(sc, "inexact?",                g_is_inexact,             1, 0, false, H_is_inexact);
 
   sc->NUMBER_TO_STRING =      s7_define_safe_function(sc, "number->string",          g_number_to_string,       1, 1, false, H_number_to_string);
   sc->STRING_TO_NUMBER =      s7_define_safe_function(sc, "string->number",          g_string_to_number,       1, 1, false, H_string_to_number);
   
-  sc->CHAR_UPCASE =           s7_define_typed_function(sc, "char-upcase",            g_char_upcase,            1, 0, false, H_char_upcase, sc->IS_CHAR);
-  sc->CHAR_DOWNCASE =         s7_define_typed_function(sc, "char-downcase",          g_char_downcase,          1, 0, false, H_char_downcase, sc->IS_CHAR);
-  sc->CHAR_TO_INTEGER =       s7_define_safe_function(sc, "char->integer",           g_char_to_integer,        1, 0, false, H_char_to_integer);
-  sc->INTEGER_TO_CHAR =       s7_define_typed_function(sc, "integer->char",          g_integer_to_char,        1, 0, false, H_integer_to_char, sc->IS_CHAR);
+  sc->IS_CHAR =               s7_define_safe_function(sc, "char?",                   g_is_char,                1, 0, false, H_is_char);
+  sc->CHAR_UPCASE =           s7_define_character_function(sc, "char-upcase",        g_char_upcase,            1, 0, false, H_char_upcase);
+  sc->CHAR_DOWNCASE =         s7_define_character_function(sc, "char-downcase",      g_char_downcase,          1, 0, false, H_char_downcase);
+  sc->CHAR_TO_INTEGER =       s7_define_integer_function(sc, "char->integer",        g_char_to_integer,        1, 0, false, H_char_to_integer);
+  sc->INTEGER_TO_CHAR =       s7_define_character_function(sc, "integer->char",      g_integer_to_char,        1, 0, false, H_integer_to_char);
   
   sc->IS_CHAR_UPPER_CASE =    s7_define_safe_function(sc, "char-upper-case?",        g_is_char_upper_case,     1, 0, false, H_is_char_upper_case);
   sc->IS_CHAR_LOWER_CASE =    s7_define_safe_function(sc, "char-lower-case?",        g_is_char_lower_case,     1, 0, false, H_is_char_lower_case);
   sc->IS_CHAR_ALPHABETIC =    s7_define_safe_function(sc, "char-alphabetic?",        g_is_char_alphabetic,     1, 0, false, H_is_char_alphabetic);
   sc->IS_CHAR_NUMERIC =       s7_define_safe_function(sc, "char-numeric?",           g_is_char_numeric,        1, 0, false, H_is_char_numeric);
   sc->IS_CHAR_WHITESPACE =    s7_define_safe_function(sc, "char-whitespace?",        g_is_char_whitespace,     1, 0, false, H_is_char_whitespace);
-  sc->IS_CHAR =               s7_define_safe_function(sc, "char?",                   g_is_char,                1, 0, false, H_is_char);
   
   sc->CHAR_EQ =               s7_define_safe_function(sc, "char=?",                  g_chars_are_equal,        2, 0, true,  H_chars_are_equal);
   sc->CHAR_LT =               s7_define_safe_function(sc, "char<?",                  g_chars_are_less,         2, 0, true,  H_chars_are_less);
@@ -68624,8 +68668,8 @@ s7_scheme *s7_init(void)
   
   sc->IS_STRING =             s7_define_safe_function(sc, "string?",                 g_is_string,              1, 0, false, H_is_string);
   sc->MAKE_STRING =           s7_define_safe_function(sc, "make-string",             g_make_string,            1, 1, false, H_make_string);
-  sc->STRING_LENGTH =         s7_define_safe_function(sc, "string-length",           g_string_length,          1, 0, false, H_string_length);
-  sc->STRING_REF =            s7_define_typed_function(sc, "string-ref",             g_string_ref,             2, 0, false, H_string_ref, sc->IS_CHAR);
+  sc->STRING_LENGTH =         s7_define_integer_function(sc, "string-length",        g_string_length,          1, 0, false, H_string_length);
+  sc->STRING_REF =            s7_define_character_function(sc, "string-ref",         g_string_ref,             2, 0, false, H_string_ref);
   sc->STRING_SET =            s7_define_safe_function(sc, "string-set!",             g_string_set,             3, 0, false, H_string_set);
   sc->STRING_EQ =             s7_define_safe_function(sc, "string=?",                g_strings_are_equal,      2, 0, true,  H_strings_are_equal);
   sc->STRING_LT =             s7_define_safe_function(sc, "string<?",                g_strings_are_less,       2, 0, true,  H_strings_are_less);
@@ -68642,7 +68686,7 @@ s7_scheme *s7_init(void)
   sc->STRING_DOWNCASE =       s7_define_safe_function(sc, "string-downcase",         g_string_downcase,        1, 0, false, H_string_downcase);
   sc->STRING_UPCASE =         s7_define_safe_function(sc, "string-upcase",           g_string_upcase,          1, 0, false, H_string_upcase);
   sc->STRING_APPEND =         s7_define_safe_function(sc, "string-append",           g_string_append,          0, 0, true,  H_string_append);
-  sc->STRING_FILL =           s7_define_typed_function(sc, "string-fill!",           g_string_fill,            2, 2, false, H_string_fill, sc->IS_CHAR);
+  sc->STRING_FILL =           s7_define_character_function(sc, "string-fill!",       g_string_fill,            2, 2, false, H_string_fill);
   sc->STRING_COPY =           s7_define_safe_function(sc, "string-copy",             g_string_copy,            1, 0, false, H_string_copy);
   sc->SUBSTRING =             s7_define_safe_function(sc, "substring",               g_substring,              2, 1, false, H_substring);
   sc->STRING =                s7_define_safe_function(sc, "string",                  g_string,                 0, 0, true,  H_string);
@@ -68724,7 +68768,7 @@ s7_scheme *s7_init(void)
   sc->IS_VECTOR =             s7_define_safe_function(sc, "vector?",                 g_is_vector,              1, 0, false, H_is_vector);
   sc->VECTOR_APPEND =         s7_define_safe_function(sc, "vector-append",           g_vector_append,          0, 0, true,  H_vector_append);
   sc->VECTOR_FILL =           s7_define_safe_function(sc, "vector-fill!",            g_vector_fill,            2, 2, false, H_vector_fill);
-  sc->VECTOR_LENGTH =         s7_define_safe_function(sc, "vector-length",           g_vector_length,          1, 0, false, H_vector_length);
+  sc->VECTOR_LENGTH =         s7_define_integer_function(sc, "vector-length",        g_vector_length,          1, 0, false, H_vector_length);
   sc->VECTOR_REF =            s7_define_safe_function(sc, "vector-ref",              g_vector_ref,             2, 0, true,  H_vector_ref);
   sc->VECTOR_SET =            s7_define_safe_function(sc, "vector-set!",             g_vector_set,             3, 0, true,  H_vector_set);
   sc->VECTOR_DIMENSIONS =     s7_define_safe_function(sc, "vector-dimensions",       g_vector_dimensions,      1, 0, false, H_vector_dimensions);
@@ -68753,8 +68797,8 @@ s7_scheme *s7_init(void)
   sc->MAKE_HASH_TABLE =       s7_define_safe_function(sc, "make-hash-table",         g_make_hash_table,        0, 2, false, H_make_hash_table);
   sc->HASH_TABLE_REF =        s7_define_safe_function(sc, "hash-table-ref",          g_hash_table_ref,         2, 0, true,  H_hash_table_ref);
   sc->HASH_TABLE_SET =        s7_define_safe_function(sc, "hash-table-set!",         g_hash_table_set,         3, 0, false, H_hash_table_set);
-  sc->HASH_TABLE_SIZE =       s7_define_safe_function(sc, "hash-table-size",         g_hash_table_size,        1, 0, false, H_hash_table_size);
-  sc->HASH_TABLE_ENTRIES =    s7_define_safe_function(sc, "hash-table-entries",      g_hash_table_entries,     1, 0, false, H_hash_table_entries);
+  sc->HASH_TABLE_SIZE =       s7_define_integer_function(sc, "hash-table-size",      g_hash_table_size,        1, 0, false, H_hash_table_size);
+  sc->HASH_TABLE_ENTRIES =    s7_define_integer_function(sc, "hash-table-entries",   g_hash_table_entries,     1, 0, false, H_hash_table_entries);
                               s7_define_safe_function(sc, "hash-table-index",        g_hash_table_index,       1, 0, false, "an experiment");
 
   sc->ht_iter_tag = s7_new_type_x("<hash-table-iterator>", print_ht_iter, ht_iter_free, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
@@ -69378,7 +69422,7 @@ int main(int argc, char **argv)
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1149
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1157
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1140
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3014
  * lg             |      |      | 6547 6497 6494 6163
  * t455|6     265 |   89 |  9   |       8.4 8045 7970
@@ -69407,7 +69451,6 @@ int main(int argc, char **argv)
  *   need color-dialog use-gl button in gtk callbacks for labels
  * snd-genv needs a lot of gtk3 work
  *
- * *s7* should have most-positive|negative-fixnum
  * cyclic-seq in rest of full-* and cyclic-sequences is minimally tested in s7test (also c_object env)
  * why not snd-g* -> snd-gtk?
  * perhaps if let/env is large, display contents more carefully (for pretty-print?)
@@ -69418,13 +69461,12 @@ int main(int argc, char **argv)
  * need info and what type checks are most onerous currently [these are internal] (simple_char_eq could check func rtn type)
  * read-string|line? via tmp_str (substring_to_temp etc) 
  *
- * procedure-predicate? procedure->type? -- predicate (pompous, but type is ambiguous), temp-case, no-check-case
- *      snd|s7-lint-info.scm: all the func type/arg data using predicates, lint also using these
  *      also cload: libc libgsl etc arg types/return types
  *        currently using s7_make_safe_function, but if typed, need "integer?" as symbol
- *      else using Xen_define_safe_function throughout and C_int_to_Xen_integer, I guess
- *   [int symbol? real string bool?]
- *   temp of sym->str just returns str_cell?  [also doc that opt assumes these types -- already the case for char=? string-ref]
+ *   [int real string bool][also doc that opt assumes these types -- already the case for char=? string-ref]
+ * procedure->type? ->type in funclet for scheme-level (->argument-types?)
  *
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
+ * check libgsl in debian, libc in freebsd (int IPPORT_ECHO looks bogus)
+ * if '+ add_2i->add_2?
  */
