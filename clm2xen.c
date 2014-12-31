@@ -14056,7 +14056,6 @@ static gf *find_gf(s7_scheme *sc, s7_pointer expr)
   return(find_gf_with_locals(sc, expr, s7_outlet(s7_curlet(sc))));
 }
 
-
 #define return_null(Arg) return(NULL) /* {fprintf(stderr, "%d %s\n", __LINE__, DISPLAY(Arg)); return(NULL);} */
 bool mus_env_is_constant(mus_any *ptr);
 
@@ -20696,23 +20695,22 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, S_ina);
   s7_function_set_chooser(sc, f, ina_chooser);
+  store_gf_fixup(s7, f, fixup_ina);
 
   ina_ss = clm_make_function_no_choice(sc, S_ina, g_ina_ss, 2, 0, false, "ina opt", f);
   ina_reverb_2 = clm_make_function_no_choice(sc, S_ina, g_ina_reverb_2, 2, 0, false, "ina opt", f);
   mul_s_ina_reverb_2 = clm_make_function_no_choice(sc, "*", g_mul_s_ina_reverb_2, 2, 0, false, "* opt", f);
   s7_function_chooser_set_data(sc, ina_reverb_2, (void *)make_choices(NULL, mul_s_ina_reverb_2, NULL, NULL, NULL, NULL));
 
-  f = s7_name_to_value(sc, "make-env");
-  s7_function_set_chooser(sc, f, make_env_chooser);
-  make_env_q_length = clm_make_function_no_choice(sc, "make-env", g_make_env_q_length, 3, 0, false, "make-env opt", f);
-
-  store_gf_fixup(s7, f, fixup_ina);
-
   f = s7_name_to_value(sc, "inb");
   store_gf_fixup(s7, f, fixup_inb);
 
   f = s7_name_to_value(sc, "in-any");
   store_gf_fixup(s7, f, fixup_in_any);
+
+  f = s7_name_to_value(sc, "make-env");
+  s7_function_set_chooser(sc, f, make_env_chooser);
+  make_env_q_length = clm_make_function_no_choice(sc, "make-env", g_make_env_q_length, 3, 0, false, "make-env opt", f);
 
   f = s7_name_to_value(sc, "frample->file");
   s7_function_set_chooser(sc, f, frample_to_file_chooser);

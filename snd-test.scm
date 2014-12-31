@@ -14905,8 +14905,9 @@ EDITS: 2
       
       (let ((b (make-butter-high-pass 440.0))
 	    (v (make-float-vector 10))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (butter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (filter b 1.0))
+	(fill-float-vector v (delay d (filter b 0.0)))
 	(if (not (vequal v (float-vector 0.915 -0.162 -0.146 -0.131 -0.117 -0.103 -0.090 -0.078 -0.066 -0.056)))
 	    (snd-display #__line__ ";butter high: ~A" v))
 	(set! b (make-butter-high-pass 1000.0))
@@ -14919,8 +14920,9 @@ EDITS: 2
       
       (let ((b (make-butter-low-pass 440.0))
 	    (v (make-float-vector 10))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (butter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (filter b 1.0))
+	(fill-float-vector v (delay d (filter b 0.0)))
 	(if (not (vequal v (float-vector 0.004 0.014 0.026 0.035 0.043 0.049 0.053 0.055 0.057 0.057)))
 	    (snd-display #__line__ ";butter low: ~A" v))
 	(set! b (make-butter-low-pass 1000.0))
@@ -14932,8 +14934,9 @@ EDITS: 2
       
       (let ((b (make-butter-band-pass 440.0 50.0))
 	    (v (make-float-vector 10))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (butter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (filter b 1.0))
+	(fill-float-vector v (delay d (filter b 0.0)))
 	(if (not (vequal v (float-vector 0.007 0.014 0.013 0.013 0.012 0.011 0.009 0.008 0.007 0.005)))
 	    (snd-display #__line__ ";butter bandpass: ~A" v))
 	(set! b (make-butter-band-pass 1000.0 500.0))
@@ -14995,8 +14998,9 @@ EDITS: 2
       
       (let ((b (make-highpass (hz->radians 1000.0) 10))
 	    (v (make-float-vector 20))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (fir-filter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (fir-filter b 1.0))
+	(fill-float-vector v (delay d (fir-filter b 0.0)))
 	(if (not (vequal v (float-vector -0.001 -0.002 -0.005 -0.011 -0.021 -0.034 -0.049 -0.065 -0.078 -0.087 
 				0.909 -0.087 -0.078 -0.065 -0.049 -0.034 -0.021 -0.011 -0.005 -0.002)))
 	    (snd-display #__line__ ";dsp.scm high: ~A" v))
@@ -15010,8 +15014,9 @@ EDITS: 2
       
       (let ((b (make-lowpass (hz->radians 1000.0) 10))
 	    (v (make-float-vector 20))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (fir-filter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (fir-filter b 1.0))
+	(fill-float-vector v (delay d (fir-filter b 0.0)))
 	(if (not (vequal v (float-vector 0.001 0.002 0.005 0.011 0.021 0.034 0.049 0.065 0.078 0.087 0.091 0.087 0.078 0.065
 				0.049 0.034 0.021 0.011 0.005 0.002)))
 	    (snd-display #__line__ ";dsp.scm low: ~A" v))
@@ -15024,8 +15029,9 @@ EDITS: 2
       
       (let ((b (make-bandpass (hz->radians 1500.0) (hz->radians 2000.0) 10))
 	    (v (make-float-vector 20))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (fir-filter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (fir-filter b 1.0))
+	(fill-float-vector v (delay d (fir-filter b 0.0)))
 	(if (not (vequal v (float-vector 0.001 -0.001 -0.005 -0.011 -0.017 -0.019 -0.013 0.003 0.022 0.039 0.045
 				0.039 0.022 0.003 -0.013 -0.019 -0.017 -0.011 -0.005 -0.001)))
 	    (snd-display #__line__ ";dsp.scm bp: ~A" v))
@@ -15038,8 +15044,9 @@ EDITS: 2
       
       (let ((b (make-bandstop (hz->radians 1500.0) (hz->radians 2000.0) 10))
 	    (v (make-float-vector 20))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (fir-filter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (fir-filter b 1.0))
+	(fill-float-vector v (delay d (fir-filter b 0.0)))
 	(if (not (vequal v (float-vector -0.001 0.001 0.005 0.011 0.017 0.019 0.013 -0.003 -0.022 -0.039 0.955
 				-0.039 -0.022 -0.003 0.013 0.019 0.017 0.011 0.005 0.001)))
 	    (snd-display #__line__ ";dsp.scm bs: ~A" v))
@@ -15053,8 +15060,9 @@ EDITS: 2
       
       (let ((b (make-differentiator 10))
 	    (v (make-float-vector 20))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (fir-filter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (fir-filter b 1.0))
+	(fill-float-vector v (delay d (fir-filter b 0.0)))
 	(if (not (vequal v (float-vector -0.008 0.011 -0.021 0.039 -0.066 0.108 -0.171 0.270 -0.456 0.977
 				0.000 -0.977 0.456 -0.270 0.171 -0.108 0.066 -0.039 0.021 -0.011)))
 	    (snd-display #__line__ ";dsp.scm df: ~A" v))
@@ -15067,8 +15075,9 @@ EDITS: 2
       
       (let ((b (make-iir-high-pass-2 440.0))
 	    (v (make-float-vector 10))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (butter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (filter b 1.0))
+	(fill-float-vector v (delay d (filter b 0.0)))
 	(if (not (vequal v (float-vector 0.915 -0.162 -0.146 -0.131 -0.117 -0.103 -0.090 -0.078 -0.066 -0.056)))
 	    (snd-display #__line__ ";iir-2 high: ~A" v))
 	(set! b (make-iir-high-pass-2 1000.0))
@@ -15081,8 +15090,9 @@ EDITS: 2
       
       (let ((b (make-iir-low-pass-2 440.0))
 	    (v (make-float-vector 10))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (butter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (filter b 1.0))
+	(fill-float-vector v (delay d (filter b 0.0)))
 	(if (not (vequal v (float-vector 0.004 0.014 0.026 0.035 0.043 0.049 0.053 0.055 0.057 0.057)))
 	    (snd-display #__line__ ";iir-2 low: ~A" v))
 	(set! b (make-iir-low-pass-2 1000.0))
@@ -15094,8 +15104,9 @@ EDITS: 2
       
       (let ((b (make-iir-band-pass-2 440.0 490.0))
 	    (v (make-float-vector 10))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (filter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (filter b 1.0))
+	(fill-float-vector v (delay d (filter b 0.0)))
 	(if (not (vequal v (float-vector 0.007 0.014 0.013 0.013 0.012 0.010 0.009 0.008 0.006 0.004)))
 	    (snd-display #__line__ ";iir bp-2 bandpass: ~A" v))
 	(set! b (make-iir-band-pass-2 1000.0 1500.0))
@@ -15107,8 +15118,9 @@ EDITS: 2
       
       (let ((b (make-iir-band-stop-2 440.0 500.0))
 	    (v (make-float-vector 10))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (filter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (filter b 1.0))
+	(fill-float-vector v (delay d (filter b 0.0)))
 	(if (not (vequal v (float-vector 0.992 -0.017 -0.016 -0.015 -0.014 -0.012 -0.011 -0.009 -0.007 -0.005)))
 	    (snd-display #__line__ ";iir-2 bandstop: ~A" v))
 	(set! b (make-iir-band-stop-2 1000.0 1500.0))
@@ -15121,8 +15133,9 @@ EDITS: 2
       
       (let ((b (make-butter-hp 4 440.0))
 	    (v (make-float-vector 10))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (filter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (filter b 1.0))
+	(fill-float-vector v (delay d (filter b 0.0)))
 	(if (and (not (vequal v (float-vector 0.725 -0.466 -0.315 -0.196 -0.104 -0.036 0.014 0.047 0.0685 0.0775)))
 		 (not (vequal v (float-vector 0.725 -0.466 -0.315 -0.196 -0.104 -0.035 0.015 0.049 0.070 0.081)))
 		 (not (vequal v (float-vector 0.725 -0.466 -0.315 -0.196 -0.104 -0.035 0.014 0.049 0.069 0.079))))
@@ -15140,8 +15153,9 @@ EDITS: 2
       
       (let ((b (make-butter-lp 4 440.0))
 	    (v (make-float-vector 10))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (filter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (filter b 1.0))
+	(fill-float-vector v (delay d (filter b 0.0)))
 	(if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000))) ;; ???
 	    (snd-display #__line__ ";butter lp: ~A" v))
 	(set! b (make-butter-lp 4 1000.0))
@@ -15154,8 +15168,9 @@ EDITS: 2
       
       (let ((b (make-butter-bp 4 440.0 500.0))
 	    (v (make-float-vector 10))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (filter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (filter b 1.0))
+	(fill-float-vector v (delay d (filter b 0.0)))
 	(if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
 	    (snd-display #__line__ ";butter bp: ~A" v))
 	(set! b (make-butter-bp 4 1000.0 1500.0))
@@ -15164,8 +15179,9 @@ EDITS: 2
       
       (let ((b (make-butter-bs 4 440.0 500.0))
 	    (v (make-float-vector 10))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (filter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (filter b 1.0))
+	(fill-float-vector v (delay d (filter b 0.0)))
 	(if (and (not (vequal v (float-vector 0.978 -0.043 -0.041 -0.038 -0.035 -0.031 -0.026 -0.0225 -0.015 -0.0085)))
 		 (not (vequal v (float-vector 0.978 -0.043 -0.041 -0.038 -0.035 -0.031 -0.027 -0.022 -0.017 -0.011)))
 		 (not (vequal v (float-vector 0.978 -0.043 -0.041 -0.038 -0.035 -0.031 -0.027 -0.021 -0.014 -0.011))))

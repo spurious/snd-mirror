@@ -1441,34 +1441,26 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_dilambda(S_mus_header_raw_defaults, g_mus_header_raw_defaults_w, H_mus_header_raw_defaults,
 				   S_setB S_mus_header_raw_defaults, g_mus_header_set_raw_defaults_w, 0, 0, 1, 0);
 
-  Xen_define_dilambda(S_mus_clipping, g_mus_clipping_w, H_mus_clipping,
-				   S_setB S_mus_clipping, g_mus_set_clipping_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_file_clipping, g_mus_file_clipping_w, H_mus_file_clipping,
-				   S_setB S_mus_file_clipping, g_mus_file_set_clipping_w, 1, 0, 2, 0);
+  Xen_define_dilambda(S_mus_clipping, g_mus_clipping_w, H_mus_clipping, S_setB S_mus_clipping, g_mus_set_clipping_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_mus_file_clipping, g_mus_file_clipping_w, H_mus_file_clipping, S_setB S_mus_file_clipping, g_mus_file_set_clipping_w, 1, 0, 2, 0);
 
-  Xen_define_dilambda(S_mus_sound_maxamp, g_mus_sound_maxamp_w, H_mus_sound_maxamp,
-				   S_setB S_mus_sound_maxamp, g_mus_sound_set_maxamp_w, 1, 0, 2, 0);
+  Xen_define_dilambda(S_mus_sound_maxamp, g_mus_sound_maxamp_w, H_mus_sound_maxamp, S_setB S_mus_sound_maxamp, g_mus_sound_set_maxamp_w, 1, 0, 2, 0);
 
   /* these are no-ops if not ALSA, but that makes it easier to maintain global initialization files */
-  Xen_define_dilambda(S_mus_alsa_buffers, g_mus_alsa_buffers_w, H_mus_alsa_buffers,
-				   S_setB S_mus_alsa_buffers, g_mus_alsa_set_buffers_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_alsa_buffer_size, g_mus_alsa_buffer_size_w, H_mus_alsa_buffer_size,
-				   S_setB S_mus_alsa_buffer_size, g_mus_alsa_set_buffer_size_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_alsa_device, g_mus_alsa_device_w, H_mus_alsa_device,
-				   S_setB S_mus_alsa_device, g_mus_alsa_set_device_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_alsa_playback_device, g_mus_alsa_playback_device_w, H_mus_alsa_playback_device,
-				   S_setB S_mus_alsa_playback_device, g_mus_alsa_set_playback_device_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_alsa_capture_device, g_mus_alsa_capture_device_w, H_mus_alsa_capture_device,
-				   S_setB S_mus_alsa_capture_device, g_mus_alsa_set_capture_device_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_alsa_squelch_warning, g_mus_alsa_squelch_warning_w, H_mus_alsa_squelch_warning,
-				   S_setB S_mus_alsa_squelch_warning, g_mus_alsa_set_squelch_warning_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_mus_alsa_buffers, g_mus_alsa_buffers_w, H_mus_alsa_buffers, S_setB S_mus_alsa_buffers, g_mus_alsa_set_buffers_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_mus_alsa_buffer_size, g_mus_alsa_buffer_size_w, H_mus_alsa_buffer_size, S_setB S_mus_alsa_buffer_size, g_mus_alsa_set_buffer_size_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_mus_alsa_device, g_mus_alsa_device_w, H_mus_alsa_device, S_setB S_mus_alsa_device, g_mus_alsa_set_device_w, 0, 0, 1, 0);
 
-  Xen_define_dilambda(S_mus_max_malloc, g_mus_max_malloc_w, H_mus_max_malloc,
-				   S_setB S_mus_max_malloc, g_mus_set_max_malloc_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_max_table_size, g_mus_max_table_size_w, H_mus_max_table_size,
-				   S_setB S_mus_max_table_size, g_mus_set_max_table_size_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_sound_path, g_mus_sound_path_w, H_mus_sound_path,
-				   S_setB S_mus_sound_path, g_mus_set_sound_path_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_mus_alsa_playback_device, g_mus_alsa_playback_device_w, H_mus_alsa_playback_device, 
+		      S_setB S_mus_alsa_playback_device, g_mus_alsa_set_playback_device_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_mus_alsa_capture_device, g_mus_alsa_capture_device_w, H_mus_alsa_capture_device, 
+		      S_setB S_mus_alsa_capture_device, g_mus_alsa_set_capture_device_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_mus_alsa_squelch_warning, g_mus_alsa_squelch_warning_w, H_mus_alsa_squelch_warning,
+		      S_setB S_mus_alsa_squelch_warning, g_mus_alsa_set_squelch_warning_w, 0, 0, 1, 0);
+
+  Xen_define_dilambda(S_mus_max_malloc, g_mus_max_malloc_w, H_mus_max_malloc, S_setB S_mus_max_malloc, g_mus_set_max_malloc_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_mus_max_table_size, g_mus_max_table_size_w, H_mus_max_table_size, S_setB S_mus_max_table_size, g_mus_set_max_table_size_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_mus_sound_path, g_mus_sound_path_w, H_mus_sound_path, S_setB S_mus_sound_path, g_mus_set_sound_path_w, 0, 0, 1, 0);
 
 #if HAVE_SCHEME
   mus_max_table_size_symbol = s7_define_variable(s7, "*" S_mus_max_table_size "*", s7_make_integer(s7, MUS_MAX_TABLE_SIZE_DEFAULT));

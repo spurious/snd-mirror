@@ -4032,14 +4032,9 @@ void g_init_mix(void)
   Xen_define_dilambda(S_mix_tag_width,  g_mix_tag_width_w,  H_mix_tag_width,  S_setB S_mix_tag_width,  g_set_mix_tag_width_w,  0, 0, 1, 0);
   Xen_define_dilambda(S_mix_tag_height, g_mix_tag_height_w, H_mix_tag_height, S_setB S_mix_tag_height, g_set_mix_tag_height_w, 0, 0, 1, 0);
 
-  Xen_define_dilambda(S_mix_waveform_height, g_mix_waveform_height_w, H_mix_waveform_height,
-				   S_setB S_mix_waveform_height, g_set_mix_waveform_height_w, 0, 0, 1, 0);
-
-  Xen_define_dilambda(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags,
-				   S_setB S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_mix_dialog_mix, g_mix_dialog_mix_w, H_mix_dialog_mix, 
-				   S_setB S_mix_dialog_mix, g_set_mix_dialog_mix_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_mix_waveform_height, g_mix_waveform_height_w, H_mix_waveform_height, S_setB S_mix_waveform_height, g_set_mix_waveform_height_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags, S_setB S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_mix_dialog_mix, g_mix_dialog_mix_w, H_mix_dialog_mix, S_setB S_mix_dialog_mix, g_set_mix_dialog_mix_w, 0, 0, 1, 0);
 
 
   #define H_mix_release_hook S_mix_release_hook " (id samples): called after the mouse has dragged a mix to some new position. \

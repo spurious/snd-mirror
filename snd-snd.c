@@ -5934,10 +5934,8 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_safe_procedure(S_select_sound,          g_select_sound_w,     1, 0, 0, H_select_sound);
   Xen_define_safe_procedure(S_select_channel,        g_select_channel_w,   0, 1, 0, H_select_channel);
 
-  Xen_define_dilambda(S_selected_sound, g_selected_sound_w, H_selected_sound, 
-				   S_setB S_selected_sound, g_select_sound_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_selected_channel, g_selected_channel_w, H_selected_channel, 
-				   S_setB S_selected_channel, g_set_selected_channel_w,  0, 1, 0, 2);
+  Xen_define_dilambda(S_selected_sound, g_selected_sound_w, H_selected_sound, S_setB S_selected_sound, g_select_sound_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_selected_channel, g_selected_channel_w, H_selected_channel, S_setB S_selected_channel, g_set_selected_channel_w,  0, 1, 0, 2);
 
   Xen_define_procedure(S_start_progress_report,  g_start_progress_report_w,   0, 2, 0, H_start_progress_report);
   Xen_define_procedure(S_finish_progress_report, g_finish_progress_report_w,  0, 2, 0, H_finish_progress_report);

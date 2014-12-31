@@ -2372,23 +2372,15 @@ void g_init_main(void)
   Xen_define_procedure(S_exit,         g_exit_w,         0, 1, 0, H_exit);
 #endif
 
-  Xen_define_dilambda(S_save_state_file, g_save_state_file_w, H_save_state_file,
-				   S_setB S_save_state_file, g_set_save_state_file_w, 0, 0, 1, 0);
-  
-  Xen_define_dilambda(S_save_dir, g_save_dir_w, H_save_dir,
-				   S_setB S_save_dir, g_set_save_dir_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_save_state_file, g_save_state_file_w, H_save_state_file, S_setB S_save_state_file, g_set_save_state_file_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_save_dir, g_save_dir_w, H_save_dir,S_setB S_save_dir, g_set_save_dir_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_open_file_dialog_directory, g_open_file_dialog_directory_w, H_open_file_dialog_directory,
 				   S_setB S_open_file_dialog_directory, g_set_open_file_dialog_directory_w,  0, 0, 1, 0);
 
-  Xen_define_dilambda(S_peak_env_dir, g_peak_env_dir_w, H_peak_env_dir,
-				   S_setB S_peak_env_dir, g_set_peak_env_dir_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_temp_dir, g_temp_dir_w, H_temp_dir,
-				   S_setB S_temp_dir, g_set_temp_dir_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_ladspa_dir, g_ladspa_dir_w, H_ladspa_dir,
-				   S_setB S_ladspa_dir, g_set_ladspa_dir_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_peak_env_dir, g_peak_env_dir_w, H_peak_env_dir, S_setB S_peak_env_dir, g_set_peak_env_dir_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_temp_dir, g_temp_dir_w, H_temp_dir, S_setB S_temp_dir, g_set_temp_dir_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_ladspa_dir, g_ladspa_dir_w, H_ladspa_dir, S_setB S_ladspa_dir, g_set_ladspa_dir_w,  0, 0, 1, 0);
 
   #define H_start_hook S_start_hook " (name): called upon start-up. If it returns " PROC_TRUE ", snd exits immediately."
   start_hook = Xen_define_hook(S_start_hook, "(make-hook 'name)", 1, H_start_hook); 
@@ -2413,17 +2405,10 @@ the hook functions return " PROC_TRUE ", the save state process opens the file '
   Xen_define_dilambda(S_script_arg, g_script_arg_w, H_script_arg, S_setB S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);
   Xen_define_procedure(S_script_args, g_script_args_w, 0, 0, 0, H_script_args);
 
-  Xen_define_dilambda(S_window_x, g_window_x_w, H_window_x,
-				   S_setB S_window_x, g_set_window_x_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_window_y, g_window_y_w, H_window_y,
-				   S_setB S_window_y, g_set_window_y_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_window_width, g_window_width_w, H_window_width,
-				   S_setB S_window_width, g_set_window_width_w,  0, 0, 1, 0);  
-
-  Xen_define_dilambda(S_window_height, g_window_height_w, H_window_height,
-				   S_setB S_window_height, g_set_window_height_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_window_x, g_window_x_w, H_window_x, S_setB S_window_x, g_set_window_x_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_window_y, g_window_y_w, H_window_y, S_setB S_window_y, g_set_window_y_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_window_width, g_window_width_w, H_window_width, S_setB S_window_width, g_set_window_width_w,  0, 0, 1, 0);  
+  Xen_define_dilambda(S_window_height, g_window_height_w, H_window_height, S_setB S_window_height, g_set_window_height_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_audio_output_device, g_audio_output_device_w, H_audio_output_device,
 				   S_setB S_audio_output_device, g_set_audio_output_device_w,  0, 0, 1, 0);
@@ -2431,26 +2416,16 @@ the hook functions return " PROC_TRUE ", the save state process opens the file '
   Xen_define_dilambda(S_audio_input_device, g_audio_input_device_w, H_audio_input_device,
 				   S_setB S_audio_input_device, g_set_audio_input_device_w,  0, 0, 1, 0);
 
-  Xen_define_dilambda(S_auto_resize, g_auto_resize_w, H_auto_resize,
-				   S_setB S_auto_resize, g_set_auto_resize_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_color_cutoff, g_color_cutoff_w, H_color_cutoff,
-				   S_setB S_color_cutoff, g_set_color_cutoff_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_color_inverted, g_color_inverted_w, H_color_inverted,
-				   S_setB S_color_inverted, g_set_color_inverted_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_color_scale, g_color_scale_w, H_color_scale,
-				   S_setB S_color_scale, g_set_color_scale_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_auto_resize, g_auto_resize_w, H_auto_resize, S_setB S_auto_resize, g_set_auto_resize_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_color_cutoff, g_color_cutoff_w, H_color_cutoff, S_setB S_color_cutoff, g_set_color_cutoff_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_color_inverted, g_color_inverted_w, H_color_inverted, S_setB S_color_inverted, g_set_color_inverted_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_color_scale, g_color_scale_w, H_color_scale, S_setB S_color_scale, g_set_color_scale_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_selection_creates_region, g_selection_creates_region_w, H_selection_creates_region,
 				   S_setB S_selection_creates_region, g_set_selection_creates_region_w,  0, 0, 1, 0);
 
-  Xen_define_dilambda(S_print_length, g_print_length_w, H_print_length,
-				   S_setB S_print_length, g_set_print_length_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_show_indices, g_show_indices_w, H_show_indices,
-				   S_setB S_show_indices, g_set_show_indices_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_print_length, g_print_length_w, H_print_length, S_setB S_print_length, g_set_print_length_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_show_indices, g_show_indices_w, H_show_indices, S_setB S_show_indices, g_set_show_indices_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_with_relative_panes, g_with_relative_panes_w, H_with_relative_panes,
 				   S_setB S_with_relative_panes, g_set_with_relative_panes_w,  0, 0, 1, 0);
@@ -2458,44 +2433,19 @@ the hook functions return " PROC_TRUE ", the save state process opens the file '
   Xen_define_dilambda(S_with_background_processes, g_with_background_processes_w, H_with_background_processes,
 				   S_setB S_with_background_processes, g_set_with_background_processes_w,  0, 0, 1, 0);
 
-  Xen_define_dilambda(S_with_file_monitor, g_with_file_monitor_w, H_with_file_monitor,
-				   S_setB S_with_file_monitor, g_set_with_file_monitor_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_tiny_font, g_tiny_font_w, H_tiny_font,
-				   S_setB S_tiny_font, g_set_tiny_font_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_peaks_font, g_peaks_font_w, H_peaks_font,
-				   S_setB S_peaks_font, g_set_peaks_font_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_bold_peaks_font, g_bold_peaks_font_w, H_bold_peaks_font,
-				   S_setB S_bold_peaks_font, g_set_bold_peaks_font_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_axis_label_font, g_axis_label_font_w, H_axis_label_font,
-				   S_setB S_axis_label_font, g_set_axis_label_font_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_axis_numbers_font, g_axis_numbers_font_w, H_axis_numbers_font,
-				   S_setB S_axis_numbers_font, g_set_axis_numbers_font_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_listener_font, g_listener_font_w, H_listener_font,
-				   S_setB S_listener_font, g_set_listener_font_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_just_sounds, g_just_sounds_w, H_just_sounds, 
-				   S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_play_arrow_size, g_play_arrow_size_w, H_play_arrow_size, 
-				   S_setB S_play_arrow_size, g_set_play_arrow_size_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_with_inset_graph, g_with_inset_graph_w, H_with_inset_graph, 
-				   S_setB S_with_inset_graph, g_set_with_inset_graph_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_with_interrupts, g_with_interrupts_w, H_with_interrupts, 
-				   S_setB S_with_interrupts, g_set_with_interrupts_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_with_smpte_label, g_with_smpte_label_w, H_with_smpte_label, 
-				   S_setB S_with_smpte_label, g_set_with_smpte_label_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_with_pointer_focus, g_with_pointer_focus_w, H_with_pointer_focus, 
-				   S_setB S_with_pointer_focus, g_set_with_pointer_focus_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_with_file_monitor, g_with_file_monitor_w, H_with_file_monitor, S_setB S_with_file_monitor, g_set_with_file_monitor_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_tiny_font, g_tiny_font_w, H_tiny_font, S_setB S_tiny_font, g_set_tiny_font_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_peaks_font, g_peaks_font_w, H_peaks_font, S_setB S_peaks_font, g_set_peaks_font_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_bold_peaks_font, g_bold_peaks_font_w, H_bold_peaks_font, S_setB S_bold_peaks_font, g_set_bold_peaks_font_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_axis_label_font, g_axis_label_font_w, H_axis_label_font, S_setB S_axis_label_font, g_set_axis_label_font_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_axis_numbers_font, g_axis_numbers_font_w, H_axis_numbers_font, S_setB S_axis_numbers_font, g_set_axis_numbers_font_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_listener_font, g_listener_font_w, H_listener_font, S_setB S_listener_font, g_set_listener_font_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_just_sounds, g_just_sounds_w, H_just_sounds, S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_play_arrow_size, g_play_arrow_size_w, H_play_arrow_size, S_setB S_play_arrow_size, g_set_play_arrow_size_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_with_inset_graph, g_with_inset_graph_w, H_with_inset_graph, S_setB S_with_inset_graph, g_set_with_inset_graph_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_with_interrupts, g_with_interrupts_w, H_with_interrupts, S_setB S_with_interrupts, g_set_with_interrupts_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_with_smpte_label, g_with_smpte_label_w, H_with_smpte_label, S_setB S_with_smpte_label, g_set_with_smpte_label_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_with_pointer_focus, g_with_pointer_focus_w, H_with_pointer_focus, S_setB S_with_pointer_focus, g_set_with_pointer_focus_w,  0, 0, 1, 0);
 
   Xen_define_safe_procedure(S_snd_version,         g_snd_version_w,              0, 0, 0, H_snd_version);
   Xen_define_procedure(S_color_orientation_dialog, g_color_orientation_dialog_w, 0, 1, 0, H_color_orientation_dialog);
