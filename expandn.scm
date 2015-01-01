@@ -99,8 +99,8 @@
 		    (max-len (ceiling (* *clm-srate*
 					 (+ (max max-out-hop max-in-hop)
 					    max-seg-len))))
-		    (invals (make-vector ochans 0.0 #t))
-		    (outvals (make-vector ochans 0.0 #t)))
+		    (invals (make-float-vector ochans 0.0))
+		    (outvals (make-float-vector ochans 0.0)))
 		
 		(if (or minramp-bug maxramp-bug)
 		    (error 'out-of-range (list expand 
@@ -285,8 +285,8 @@
 			      (if rev-mx
 				  (frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans))))))
 			
-			(let ((samples-0 (make-vector in-chans 0.0))
-			      (samples-1 (make-vector in-chans 0.0)))
+			(let ((samples-0 (make-float-vector in-chans 0.0))
+			      (samples-1 (make-float-vector in-chans 0.0)))
 			  ;; more than 2 chans in input file
 			  (do ((i beg (+ i 1)))
 			      ((= i end))
@@ -317,8 +317,8 @@
 				    (do ((ix 0 (+ ix 1)))
 					((= ix in-chans))
 				      (let ((gen (vector-ref ex-array ix)))
-					(vector-set! samples-0 ix (* vol (granulate gen)))
-					(vector-set! samples-1 ix (* vol (granulate gen)))))
+					(float-vector-set! samples-0 ix (* vol (granulate gen)))
+					(float-vector-set! samples-1 ix (* vol (granulate gen)))))
 				    (set! ex-samp (+ ex-samp 1))
 				    (set! next-samp ex-samp))
 				  (begin
@@ -330,21 +330,21 @@
 					    (do ((ix 0 (+ ix 1)))
 						((= ix in-chans))
 					      (let ((gen (vector-ref ex-array ix)))
-						(vector-set! samples-0 ix (vector-ref samples-1 ix))
-						(vector-set! samples-1 ix (* vol (granulate gen))))))
+						(float-vector-set! samples-0 ix (float-vector-ref samples-1 ix))
+						(float-vector-set! samples-1 ix (* vol (granulate gen))))))
 					  (set! ex-samp (+ ex-samp samps))))))
 			      
 			      (if (= next-samp ex-samp)
 				  ;; output actual samples
 				  (do ((ix 0 (+ ix 1)))
 				      ((= ix in-chans))
-				    (set! (invals ix) (vector-ref samples-0 ix)))
+				    (float-vector-set! invals ix (float-vector-ref samples-0 ix)))
 				  ;; output interpolated samples
 				  (do ((ix 0 (+ ix 1)))
 				      ((= ix in-chans))
-				    (let ((v0 (vector-ref samples-0 ix))
-					  (v1 (vector-ref samples-1 ix)))
-				      (set! (invals ix) (+ v0 (* (- next-samp ex-samp) (- v1 v0)))))))
+				    (let ((v0 (float-vector-ref samples-0 ix))
+					  (v1 (float-vector-ref samples-1 ix)))
+				      (float-vector-set! invals ix (+ v0 (* (- next-samp ex-samp) (- v1 v0)))))))
 			      ;; output mixed result
 			      (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
 			      ;; if reverb is turned on, output to the reverb streams

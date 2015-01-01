@@ -187,7 +187,7 @@
 		  object->string odd? open-environment? openlet? or outer-environment outlet output-port? 
 		  pair? pair-line-number port-closed? port-filename port-line-number positive? 
 		  procedure-documentation procedure-environment funclet
-		  procedure-name procedure-setter procedure-source dilambda? procedure? provided? 
+		  procedure-setter procedure-source dilambda? procedure? provided? 
 		  quasiquote quote quotient 
 		  random random-state? rational? rationalize real-part real? remainder reverse round 
 		  s7-version sin sinh sqrt string string->list string->number string->symbol string-append string-ci<=? string-ci<? 
@@ -372,7 +372,6 @@
 			   'port-line-number +integer+
 			   'positive? +boolean+
 			   'procedure-environment +environment+
-			   'procedure-name +string+
 			   'procedure? +boolean+
 			   'provided? +boolean+
 			   'quotient +number+
@@ -760,7 +759,7 @@
 				  (lambda (c)
 				    (vector-set! chars (char->integer c) #t))
 				  '(#\A #\S #\C #\F #\E #\G #\O #\D #\B #\X #\, #\{ #\} #\@ #\P #\* #\< #\>
-				    #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p
+				    #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p #\N #\n
 				    #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
 				 chars))
 	  (f-types (list +any+ +boolean+ +symbol+ 'integer-or-f 'list-or-f 'number-or-f))

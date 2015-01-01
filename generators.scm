@@ -2317,9 +2317,10 @@ returns many cosines from spaced by frequency with amplitude too messy to write 
 	       :make-wrapper (lambda (g)
 			       (set! (g 'osc) (make-oscil (g 'frequency) (* 0.5 pi)))
 			       (set! (g 'r) (generator-clamp-r (g 'r))) ; or clip at 0.0?
+			       (set! (g 'norm) (log (- 1.0 (abs (g 'r)))))
 			       g)
 	       :methods rkcos-methods)
-  (frequency *clm-default-frequency*) (r 0.5) fm
+  (frequency *clm-default-frequency*) (r 0.5) norm fm
   (osc #f))
 
 ;;; not very flexible, and very similar to others in the r^k mold
@@ -2335,7 +2336,7 @@ returns many cosines from spaced by frequency with amplitude (r^k)/k."))
       (with-let gen
 	(let ((cs (oscil osc fm)))
 	  (/ (* 0.5 (log (+ 1.0 (* -2.0 r cs) (* r r))))
-	     (log (- 1.0 (abs r))))))))) ; norm
+	     norm))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -3228,8 +3229,11 @@ returns many sines spaced by frequency with amplitude kr^k."))
 (defgenerator (abcos
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'ab) (sqrt (- (* (g 'a) (g 'a)) (* (g 'b) (g 'b)))))
+			       (set! (g 'norm) (/ 0.5 (- (/ 1.0 (- 1.0 (/ (abs (- (g 'ab) (g 'a))) (g 'b)))) 1.0)))
+			       ;; i.e. 1/(1-r) -1 because we start at k=1, r=the complicated a/b business
 			       g))
-  (frequency *clm-default-frequency*) (a 0.5) (b 0.25) (angle 0.0) fm)
+  (frequency *clm-default-frequency*) (a 0.5) (b 0.25) (angle 0.0) ab norm fm)
 
 
 (define abcos 
@@ -3240,16 +3244,9 @@ returns many cosines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let ((x angle)
-	      (norm (/ 0.5 (- (/ 1.0 
-				 (- 1.0 (/ (abs (- (sqrt (- (* a a) (* b b))) 
-						   a)) 
-					   b))) 
-			      1.0)))) ;; i.e. 1/(1-r) -1 because we start at k=1, r=the complicated a/b business
+	(let ((x angle))
 	  (set! angle (+ angle fm frequency))
-	  (* norm (- (/ (sqrt (- (* a a) (* b b)))
-			(+ a (* b (cos x))))
-		     1.0)))))))
+	  (* norm (- (/ ab (+ a (* b (cos x)))) 1.0)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -3264,8 +3261,9 @@ returns many cosines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k
 (defgenerator (absin
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
+			       (set! (g 'ab) (sqrt (- (* (g 'a) (g 'a)) (* (g 'b) (g 'b)))))
 			       g))
-  (frequency *clm-default-frequency*) (a 0.5) (b 0.25) (angle 0.0) fm)
+  (frequency *clm-default-frequency*) (a 0.5) (b 0.25) (angle 0.0) ab fm)
 
 
 (define absin 
@@ -3278,8 +3276,7 @@ returns many sines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k."
       (with-let gen
 	(let ((x angle))
 	  (set! angle (+ angle fm frequency))
-	  (/ (* (sin x) 
-		(sqrt (- (* a a) (* b b))))
+	  (/ (* ab (sin x) )
 	     (+ a (* b (cos x)))))))))
 
 #|
@@ -3938,8 +3935,9 @@ returns a sum of cosines scaled in a very complicated way."))
 
 (defgenerator (jncos :make-wrapper (lambda (g)
 				     (set! (g 'frequency) (hz->radians (g 'frequency)))
+				     (set! (g 'ra) (+ (* (g 'a) (g 'a)) (* (g 'r) (g 'r))))
 				     g))
-  (frequency *clm-default-frequency*) (r 0.5) (a 1.0) (n 0) (angle 0.0) fm)
+  (frequency *clm-default-frequency*) (r 0.5) (a 1.0) (n 0) (angle 0.0) ra fm)
 
 
 (define jncos 
@@ -3950,9 +3948,7 @@ returns a sum of cosines scaled in a very complicated way."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let ((arg (sqrt (+ (* r r) 
-			    (* a a)
-			    (* a (* -2.0 r (cos angle)))))))
+	(let ((arg (sqrt (+ ra (* a (* -2.0 r (cos angle)))))))
 	  (set! angle (+ angle fm frequency))
 	  (if (< arg nearly-zero)
 	      1.0
@@ -5577,11 +5573,13 @@ returns the length of the values in a window over the last few inputs."))
 
 (defgenerator (weighted-moving-average
 	       :make-wrapper (lambda (g)
-			       (let ((dly (make-moving-average (g 'n))))
-				 (set! (mus-increment dly) 1.0)
-				 (set! (g 'dly) dly)
-				 g)))
-  (n 128) (dly #f) (num 0.0) (sum 0.0) y)
+			       (let ((n (g 'n)))
+				 (let ((dly (make-moving-average n)))
+				   (set! (mus-increment dly) 1.0)
+				   (set! (g 'dly) dly)
+				   (set! (g 'den) (* 0.5 (+ n 1) n))
+				   g))))
+  (n 128) (dly #f) (num 0.0) (sum 0.0) y den)
 
 
 (define weighted-moving-average 
@@ -5592,11 +5590,9 @@ generator. (weighted-moving-average gen y) returns the sum of the last n inputs 
     (lambda (gen y)
       (let-set! gen 'y y)
       (with-let gen
-	(let* ((n (mus-order dly))
-	       (den (/ (* (+ 1 n) n) 2)))
-	  (set! num (- (+ num (* n y)) sum))
-	  (set! sum (moving-average dly y))
-	  (/ num den))))))
+	(set! num (- (+ num (* n y)) sum))
+	(set! sum (moving-average dly y))
+	(/ num den)))))
 
 
 
@@ -5606,6 +5602,7 @@ generator. (weighted-moving-average gen y) returns the sum of the last n inputs 
 ;;;
 ;;; geometric (r^n) weights
 
+#|
 (defgenerator (exponentially-weighted-moving-average
 	       :make-wrapper (lambda (g)
 			       (let* ((n (g 'n))
@@ -5623,7 +5620,11 @@ returns the sum of the last n inputs weighted by (-n/(n+1))^k"))
 
     (lambda (gen y)
       (one-pole (gen 'gen) y))))
+|#
 
+(define* (make-exponentially-weighted-moving-average (n 128)) (make-one-pole (/ 1.0 n) (/ (- n) (+ 1.0 n))))
+(define exponentially-weighted-moving-average? one-pole?)
+(define exponentially-weighted-moving-average one-pole)
 
 
 
@@ -6570,7 +6571,7 @@ input from the readin generator 'reader'.  The output data is available via mus-
 	      (set! val 0.0)
 	      (let* ((la (data (- peak-loc 1)))
 		     (ra (data (+ peak-loc 1)))
-		     (logla (log (/ (max la .0000001) peak) 10))
+		     (logla (log (/ (max la .0000001) peak) 10))  ; (positive la)?
 		     (logra (log (/ (max ra .0000001) peak) 10)))
 		(set! val
 		      (/ *clm-srate*

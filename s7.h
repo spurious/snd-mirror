@@ -396,7 +396,6 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);                /* (
 s7_pointer s7_funclet(s7_scheme *sc, s7_pointer p);                         /* (funclet x) */
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);        /* (procedure-documentation x) if any (don't free the string) */
 bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args);                 /* (aritable? x args) */
-const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc);              /* (procedure-name x) -- don't free the string! */
 s7_pointer s7_arity(s7_scheme *sc, s7_pointer x);                           /* (arity x) */
 
 const char *s7_help(s7_scheme *sc, s7_pointer obj);                         /* (help obj) */
@@ -787,6 +786,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 
 s7_pointer s7_search_open_environment(s7_scheme *sc, s7_pointer symbol, s7_pointer e); /* replaced by s7_method */
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);  /* replaced by s7_arity */
+const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc);
 #endif
 
 
@@ -796,7 +796,7 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);  /* replaced by s7_a
  *        s7 changes
  *
  * --------
- * 26-Dec:    s7_arity replaces s7_procedure_arity.  s7_define_integer_function.
+ * 26-Dec:    s7_arity replaces s7_procedure_arity.  s7_define_integer_function. deprecate s7_procedure_name.
  * 5-Nov:     s7_shadow_rootlet and s7_set_shadow_rootlet.
  * 30-Aug:    s7_make_safe_function (for cload.scm).
  * 25-July:   define and friends now return the value, not the symbol.

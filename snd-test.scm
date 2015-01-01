@@ -14948,8 +14948,9 @@ EDITS: 2
       
       (let ((b (make-butter-band-reject 440.0 50.0))
 	    (v (make-float-vector 10))
-	    (inv 1.0))
-	(fill-float-vector v (let ((val (butter b inv))) (set! inv 0.0) val))
+	    (d (make-delay 1)))
+	(delay d (filter b 1.0))
+	(fill-float-vector v (delay d (filter b 0.0)))
 	(if (not (vequal v (float-vector 0.993 -0.014 -0.013 -0.013 -0.012 -0.011 -0.009 -0.008 -0.007 -0.005)))
 	    (snd-display #__line__ ";butter bandstop: ~A" v))
 	(set! b (make-butter-band-reject 1000.0 500.0))

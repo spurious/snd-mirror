@@ -3704,11 +3704,18 @@ original.
 ~F        float to string, (format #f "~F" 100.1) -&gt; "100.100000",   (%f in C)
 ~G        float to string, (format #f "~G" 100.1) -&gt; "100.1",        (%g in C)
 ~T        insert spaces (padding)
+~N        get numeric argument from argument list
 ~W        object-&gt;string with :readable (write readably; s7 is the intended reader)
 </pre>
 
 <p>The eight directives before ~W take the usual numeric arguments to specify field width and precision.
+These can also be ~N or ~n in which case the numeric argument is read from the list of arguments:
 </p>
+<pre class="indented">
+(format #f "~ND" 20 1234) ; =&gt; (format "~20D" 1234)
+"                1234"
+</pre>
+
 <p>
 <code>(format #f ...)</code> simply returns the formatted string; <code>(format #t ...)</code>
 also sends it to *stdout*.  To send the string to *stderr* instead, <code>(format *stderr* ...)</code>.
@@ -3804,10 +3811,6 @@ if the code in the brackets raises an error (even within a catch), you may get a
 incomplete evaluation.  
 </p>
 <br>
-<p>Many Schemes provide ~_ with a numeric argument for spaces.  In s7, use 
-something like <code>(format #f (format #f "~~~DC" n) #\space)</code>
-which outputs n spaces.
-</p>
 
 <p>Since any sequence can be passed to ~{~}, we need a way to truncate output and represent
 the rest of the sequence with "...", but ~^ only stops at the end of the sequence.  ~|
@@ -4015,7 +4018,6 @@ function's closure to store whatever information is needed:
 
 
 <pre class="indented">
-(<em class=def id="procedurename">procedure-name</em> proc)
 (<em class=def id="proceduresource">procedure-source</em> proc)
 (<em class=def id="proceduredocumentation">procedure-documentation</em> proc)
 (<em class=def id="proceduresetter">procedure-setter</em> proc)
@@ -4029,7 +4031,6 @@ function's closure to store whatever information is needed:
 procedure-setter returns or sets the set function associated with a procedure (set-car! with car, for example).
 funclet returns
 a procedure's environment.  
-procedure-name returns the procedure's name.
 procedure-source returns the procedure source (a list). 
 </p>
 
@@ -4043,9 +4044,7 @@ the initial string in the function's body (as in CL), but now it is the value of
 in the procedure's local environment.  That is, <code>(define (f a) "doc string" a)</code> is now
 <code>(define f (let ((documentation "doc string")) (lambda (a) a)))</code>.  This change gets the 
 string out of the body (where it can slow down evaluation of the function to no purpose), and
-makes it possible to extend the function information arbitrarily.  If 'f' is a
-function defined in scheme code (not built-in), <code>((funclet f) 'documentation)</code>
-is its documentation, and other such information can easily fit in the same system.
+makes it possible to extend the function information arbitrarily. 
 </p>
 
 <p>

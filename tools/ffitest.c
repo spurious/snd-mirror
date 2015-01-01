@@ -1301,9 +1301,6 @@ int main(int argc, char **argv)
   if (s7_is_aritable(sc, p1, 2))
     {fprintf(stderr, "%d: (aritable? abs 2) = #t?\n", __LINE__);}
 
-  if (strcmp(s7_procedure_name(sc, p1), "abs") != 0)
-    {fprintf(stderr, "%d: (procedure-name abs) = %s?\n", __LINE__, s7_procedure_name(sc, p1));}
-
   p = s7_funclet(sc, p1);
   if (p != s7_rootlet(sc))
     {fprintf(stderr, "%d: (funclet abs) = %s?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
