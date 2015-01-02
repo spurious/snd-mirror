@@ -9,7 +9,9 @@
 ;;;   of the method argument, or use #_method to override the name lookup, or use
 ;;;   the explicit call style: (((gen 'embedded-gen) 'shared-method) ...)
 
-;;; if gen has embedded gen, mus-copy needs a special copy method (see adjustable-oscil),
+;;; if gen has embedded gen, mus-copy needs a special copy method (see adjustable-oscil)
+;;; a problem with a special copy method: if you change the generator, remember to change its copy method!
+;;; also, I think (inlet e) is a way to copy e without accidentally invoking any 'copy method in e
 
 
 (define nearly-zero 1.0e-10) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
@@ -4755,12 +4757,13 @@ where the duty-factor sets the ratio of pulse duration to pulse period."))
 		 (let ((df (g 'duty-factor)))
 		   (set! (g 'gen) (make-triangle-wave (g 'frequency)))
 		   (set! (g 'top) (- 1.0 df))
+		   (set! (g 'mtop) (- (g 'top)))
 		   (if (not (= df 0.0))
 		       (set! (g 'scl) (/ (g 'amplitude) df)))
 		   g))
 	       :methods adjustable-triangle-wave-methods)
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0) 
-  (gen #f) (top 0.0) (scl 0.0) fm)
+  (gen #f) (top 0.0) (mtop 0.0) (scl 0.0) val fm)
 
 
 (define adjustable-triangle-wave 
@@ -4772,8 +4775,8 @@ duty-factor sets the ratio of pulse duration to pulse period."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let ((val (triangle-wave gen fm)))
-	  (* scl (- val (max (- top) (min top val)))))))))
+	(set! val (triangle-wave gen fm))
+	(* scl (- val (max mtop (min top val))))))))
 
 #|
 (with-sound ()
@@ -4800,6 +4803,7 @@ duty-factor sets the ratio of pulse duration to pulse period."))
 	  (lambda (g val)
 	    (set! (g 'duty-factor) val)
 	    (set! (g 'top) (- 1.0 val))
+	    (set! (g 'mtop) (- val 1.0))
 	    (if (not (= val 0.0))
 		(set! (g 'scl) (/ (g 'amplitude) val)))
 	    val)))))
@@ -4810,12 +4814,13 @@ duty-factor sets the ratio of pulse duration to pulse period."))
 		 (let ((df (g 'duty-factor)))
 		   (set! (g 'gen) (make-sawtooth-wave (g 'frequency)))
 		   (set! (g 'top) (- 1.0 df))
+		   (set! (g 'mtop) (- df 1.0))
 		   (if (not (= df 0.0))
 		       (set! (g 'scl) (/ (g 'amplitude) df)))
 		   g))
 	       :methods adjustable-sawtooth-wave-methods)
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0) 
-  (gen #f) (top 0.0) (scl 0.0) fm)
+  (gen #f) (top 0.0) (mtop 0.0) (scl 0.0) val fm)
 
 
 (define adjustable-sawtooth-wave 
@@ -4827,8 +4832,8 @@ the duty-factor sets the ratio of pulse duration to pulse period."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let ((val (sawtooth-wave gen fm)))
-	  (* scl (- val (max (- top) (min top val)))))))))
+	(set! val (sawtooth-wave gen fm))
+	(* scl (- val (max mtop (min top val))))))))
 
 #|
 (with-sound ()
@@ -4842,12 +4847,9 @@ the duty-factor sets the ratio of pulse duration to pulse period."))
 ;;; and just for laughs... (almost anything would fit in this hack)
 (define adjustable-oscil-methods
   (let ((copy-func (lambda (g)
-		     (inlet :frequency (g 'frequency)
-			    :duty-factor (g 'duty-factor)
-			    :gen (mus-copy (g 'gen))
-			    :top (g 'top)
-			    :scl (g 'scl)
-			    :fm 0.0))))
+		     (let ((e (inlet g))) ; (copy g) without invoking (g 'copy)
+		       (let-set! e 'gen (mus-copy (g 'gen)))
+		       e))))
     (list
      (cons 'mus-frequency
 	   (dilambda
@@ -4863,6 +4865,7 @@ the duty-factor sets the ratio of pulse duration to pulse period."))
 	    (lambda (g val)
 	      (set! (g 'duty-factor) val)
 	      (set! (g 'top) (- 1.0 val))
+	      (set! (g 'mtop) (- val 1.0))
 	      (if (not (= val 0.0))
 		  (set! (g 'scl) (/ val)))
 	      val)))
@@ -4875,12 +4878,13 @@ the duty-factor sets the ratio of pulse duration to pulse period."))
 			       (let ((df (g 'duty-factor)))
 				 (set! (g 'gen) (make-oscil (g 'frequency)))
 				 (set! (g 'top) (- 1.0 df))
+				 (set! (g 'mtop) (- df 1.0))
 				 (if (not (= df 0.0))
 				     (set! (g 'scl) (/ df)))
 				 g))
 	       :methods adjustable-oscil-methods)
   (frequency *clm-default-frequency*) (duty-factor 0.5)
-  (gen #f) (top 0.0) (scl 0.0) fm)
+  (gen #f) (top 0.0) (mtop 0.0) (scl 0.0) val fm)
 
 
 (define adjustable-oscil 
@@ -4888,11 +4892,11 @@ the duty-factor sets the ratio of pulse duration to pulse period."))
   (let ((documentation "(make-adjustable-oscil frequency (duty-factor 0.5)) creates an adjustable-oscil 
 generator. (adjustable-oscil gen (fm 0.0)) returns a sinusoid where the duty-factor sets the ratio of pulse duration to pulse period."))
   
-    (lambda* (gen (fm 0.0))
-      (let-set! gen 'fm fm)
-      (with-let gen
-	(let ((val (oscil gen fm)))
-	  (* scl (- val (max (- top) (min top val)))))))))
+    (lambda* (g (fm 0.0))
+      (let-set! g 'fm fm)
+      (with-let g
+	(set! val (oscil gen fm))
+	(* scl (- val (max mtop (min top val))))))))
 
 #|
 (with-sound ()

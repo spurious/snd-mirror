@@ -865,7 +865,7 @@
       (define (truncated-list->string form)
 	;; return form -> string with limits on its length
 	(let* ((str (object->string form))
-	       (len (length str)))
+	       (len (string-length str)))
 	  (if (< len 8)
 	      (format #f " ~A" str)
 	      (if (<= len 80)
@@ -1684,6 +1684,13 @@
 		     (rational? (car form))
 		     (just-rationals? (cdr form)))))
 	  
+	  (define (just-reals? form)
+	    (or (null? form)
+		(real? form)
+		(and (pair? form)
+		     (real? (car form))
+		     (just-reals? (cdr form)))))
+	  
 	  (define (just-integers? form)
 	    (or (null? form)
 		(integer? form)
@@ -2184,9 +2191,31 @@
 		     (set! args (remove-duplicates (splice-if (lambda (x) (eq? x (car form))) args)))
 		     (if (= len 1)
 			 (car args)
-			 (if (just-rationals? args)
+			 (if (just-reals? args)
 			     (apply (symbol->value (car form)) args)
-			     `(,(car form) ,@args))))
+			     (let ((nums (collect-if list number? args)))
+			       (if (and (pair? nums)
+					(just-reals? nums)) ; non-real case checked elsewhere (later)
+				   (let ((other (if (eq? (car form) 'min) 'max 'min))
+					 (relop (if (eq? (car form) 'min) >= <=)))
+				     (if (> (length nums) 1)
+					 (set! nums (list (apply (symbol->value (car form)) nums))))
+				     (let ((new-args (append nums (collect-if list (lambda (x) (not (number? x))) args))))
+				       (let ((c1 (car nums)))
+					 (set! new-args (collect-if list (lambda (x)
+									   (or (not (pair? x))
+									       (<= (length x) 2)
+									       (not (eq? (car x) other))
+									       (let ((c2 (find-if number? (cdr x))))
+										 (or (not c2)
+										     (relop c1 c2)))))
+								    new-args)))
+				       (if (< (length new-args) (length args))
+					   (set! args new-args)))))
+				     ;; if (max c1 (min c2 . args1) . args2) where (>= c1 c2) -> (max c1 . args2)
+				     ;; if (min c1 (max c2 . args1) . args2) where (<= c1 c2) -> (min c1 . args2)
+				       
+			       `(,(car form) ,@args)))))
 		   form))
 	      
 	      (else `(,(car form) ,@args))))))
@@ -3570,7 +3599,32 @@
 						     ;; the possibilities are endless, so I'll stick to the simplest
 						     (if (not (vector-ref format-control-char (char->integer c)))
 							 (lint-format "unrecognized format directive: ~C in ~S, ~S" name c str form))
-						     (set! dirs (+ dirs 1))))
+						     (set! dirs (+ dirs 1))
+						     
+						     ;; ~n so try to figure out how many args are needed (this is not complete)
+						     (when (char-ci=? c #\n)
+						       (let ((j (+ i 1)))
+							 (if (>= j len)
+							     (lint-format "missing format directive: ~S" name str)
+							     (begin
+							       ;; if ,n -- add another, if then not T, add another
+							       (if (char=? (string-ref str j) #\,)
+								   (begin
+								     (if (>= (+ j 1) len)
+									 (lint-format "missing format directive: ~S" name str)
+									 (begin
+									   (if (char-ci=? (string-ref str (+ j 1)) #\n)
+									       (begin
+										 (set! dirs (+ dirs 1))
+										 (set! j (+ j 2)))
+									       (if (char-numeric? (string-ref str (+ j 1)))
+										   (set! j (+ j 2))
+										   (set! j ( + j 1))))))))
+							       (if (>= j len)
+								   (lint-format "missing format directive: ~S" name str)
+								   (if (not (char-ci=? (string-ref str j) #\t))
+								       (set! dirs (+ dirs 1))))))))))
+					       
 					       (set! tilde-time #f)
 					       (case c 
 						 ((#\{) (set! curlys (+ curlys 1)))

@@ -2540,9 +2540,11 @@ use varlet.  Both of these functions accept nil as the
 'env' argument as shorthand for <code>(rootlet)</code>.
 Both also accept other environments as well as individual bindings,
 adding all the argument's bindings to the new environment.
-inlet is very similar, but omits the environment argument and
-just takes the keys and their values.  These can be passed as
+inlet is very similar, but normally omits the environment argument.
+The arguments to sublet and inlet can be passed as
 symbol/value pairs, as a cons, or using keywords as if in define*.
+inlet can also be used to copy an environment without accidentally invoking
+that environment's copy method.
 </p>
 
 <p>One way to add reader and writer functions to an individual environment slot is:
@@ -4063,7 +4065,10 @@ add-2
 "add-2 adds its 2 args"
 
 &gt; (procedure-source add-2)
-(lambda* (a (b 32)) "add-2 adds its 2 args" (+ a b))
+(lambda* (a (b 32)) (+ a b))
+
+&gt; (arity add-2)
+(0 . 2)
 </pre>
 
 

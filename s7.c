@@ -14486,7 +14486,6 @@ static s7_pointer multiply_2_temp, multiply_3_temp, multiply_1_any, multiply_s_t
 static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, y;
-
   x = car(args);
   y = cadr(args);
 
@@ -41170,19 +41169,6 @@ static bool direct_memq(s7_pointer symbol, s7_pointer symbols)
 }
 
 
-bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree)
-{
-  if (is_null(tree))
-    return(false);
-  if (symbol == tree)
-    return(true);
-  if (is_pair(tree))
-    return((s7_tree_memq(sc, symbol, car(tree))) ||
-	   (s7_tree_memq(sc, symbol, cdr(tree))));
-  return(false);
-}
-
-
 static s7_pointer g_pair_line_number(s7_scheme *sc, s7_pointer args)
 {
   #define H_pair_line_number "(pair-line-number pair) returns the line number at which it read 'pair'"
@@ -42312,7 +42298,7 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       /* (* c c) -- types are manifest (as is the result...)
        * (* 1.0 x) -> float(x)
        * (* pi x) special too
-       * (* 2 (frames)) -- we know both are ints
+       * (* 2 (framples)) -- we know both are ints -- this does not happen often
        */
       return(multiply_2);
     }
@@ -44178,11 +44164,7 @@ static s7_function cond_all_x_eval(s7_scheme *sc, s7_pointer arg)
 }
 
 
-static void choose_c_function(s7_scheme *sc, s7_pointer expr, s7_pointer func, int args)
-{
-  set_c_function(expr, c_function_chooser(func)(sc, func, args, expr));
-}
-
+#define choose_c_function(Sc, Expr, Func, Args) set_c_function(Expr, c_function_chooser(Func)(Sc, Func, Args, Expr))
 
 static bool optimize_thunk(s7_scheme *sc, s7_pointer car_x, s7_pointer func, int hop)
 {
@@ -49673,6 +49655,20 @@ static s7_pointer check_do_all_x(s7_scheme *sc, s7_pointer code)
     }
   return(sc->code);
 }
+
+
+bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree)
+{
+  if (is_null(tree))
+    return(false);
+  if (symbol == tree)
+    return(true);
+  if (is_pair(tree))
+    return((s7_tree_memq(sc, symbol, car(tree))) ||
+	   (s7_tree_memq(sc, symbol, cdr(tree))));
+  return(false);
+}
+
 
 enum {DOX_STEP_DEFAULT, DOX_STEP_SS, DOX_STEP_S, DOX_STEP_ADD, DOX_STEP_SUBTRACT};
 
@@ -69274,10 +69270,10 @@ int main(int argc, char **argv)
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1149
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1140
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 2998
- * lg             |      |      | 6547 6497 6494 6160
+ * lg             |      |      | 6547 6497 6494 6174
  * t455|6     265 |   89 |  9   |       8.4 8045 7791
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
- * t816           |   71 | 70.6 | 38.0 31.8 28.2 27.7
+ * t816           |   71 | 70.6 | 38.0 31.8 28.2 27.6
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.5
  *
  * --------------------------------------------------
@@ -69315,5 +69311,4 @@ int main(int argc, char **argv)
  *   perhaps clm2xen use ->type real? to try to handle closure* body
  *
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
- * test format ~N, lint
  */
