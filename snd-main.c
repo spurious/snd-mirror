@@ -2403,7 +2403,7 @@ the hook functions return " PROC_TRUE ", the save state process opens the file '
   before_save_state_hook = Xen_define_hook(S_before_save_state_hook, "(make-hook 'name)", 1, H_before_save_state_hook);
 
   Xen_define_dilambda(S_script_arg, g_script_arg_w, H_script_arg, S_setB S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);
-  Xen_define_procedure(S_script_args, g_script_args_w, 0, 0, 0, H_script_args);
+  Xen_define_safe_procedure(S_script_args, g_script_args_w, 0, 0, 0, H_script_args);
 
   Xen_define_dilambda(S_window_x, g_window_x_w, H_window_x, S_setB S_window_x, g_set_window_x_w,  0, 0, 1, 0);
   Xen_define_dilambda(S_window_y, g_window_y_w, H_window_y, S_setB S_window_y, g_set_window_y_w,  0, 0, 1, 0);
@@ -2448,10 +2448,10 @@ the hook functions return " PROC_TRUE ", the save state process opens the file '
   Xen_define_dilambda(S_with_pointer_focus, g_with_pointer_focus_w, H_with_pointer_focus, S_setB S_with_pointer_focus, g_set_with_pointer_focus_w,  0, 0, 1, 0);
 
   Xen_define_safe_procedure(S_snd_version,         g_snd_version_w,              0, 0, 0, H_snd_version);
-  Xen_define_procedure(S_color_orientation_dialog, g_color_orientation_dialog_w, 0, 1, 0, H_color_orientation_dialog);
-  Xen_define_procedure(S_transform_dialog,         g_transform_dialog_w,         0, 1, 0, H_transform_dialog);
-  Xen_define_procedure(S_print_dialog,             g_print_dialog_w,             0, 2, 0, H_print_dialog);
-  Xen_define_procedure(S_preferences_dialog,       g_preferences_dialog_w,       0, 0, 0, H_preferences_dialog);
+  Xen_define_safe_procedure(S_color_orientation_dialog, g_color_orientation_dialog_w, 0, 1, 0, H_color_orientation_dialog);
+  Xen_define_safe_procedure(S_transform_dialog,         g_transform_dialog_w,         0, 1, 0, H_transform_dialog);
+  Xen_define_safe_procedure(S_print_dialog,             g_print_dialog_w,             0, 2, 0, H_print_dialog);
+  Xen_define_safe_procedure(S_preferences_dialog,       g_preferences_dialog_w,       0, 0, 0, H_preferences_dialog);
   Xen_define_procedure(S_abort,                    g_abort_w,                    0, 0, 0, H_abort);
 #if (!HAVE_SCHEME)
   Xen_define_procedure(S_c_g,                      g_abortq_w,                   0, 0, 0, H_abortQ);

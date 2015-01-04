@@ -1271,17 +1271,17 @@ void g_init_gxcolormaps(void)
   Xen_define_variable("phases-colormap",          colormap_temp[15], C_int_to_Xen_colormap(15));
 #endif
 
-  Xen_define_procedure(S_is_colormap, g_is_colormap_w,         1, 0, 0, H_is_colormap);
-  Xen_define_procedure(S_colormap_ref, g_colormap_ref_w,       2, 0, 0, H_colormap_ref);
-  Xen_define_procedure(S_add_colormap, g_add_colormap_w,       2, 0, 0, H_add_colormap);
-  Xen_define_procedure(S_colormap_name, g_colormap_name_w,     1, 0, 0, H_colormap_name);
-  Xen_define_procedure(S_delete_colormap, g_delete_colormap_w, 1, 0, 0, H_delete_colormap);
+  Xen_define_safe_procedure(S_is_colormap, g_is_colormap_w,         1, 0, 0, H_is_colormap);
+  Xen_define_safe_procedure(S_colormap_ref, g_colormap_ref_w,       2, 0, 0, H_colormap_ref);
+  Xen_define_safe_procedure(S_add_colormap, g_add_colormap_w,       2, 0, 0, H_add_colormap);
+  Xen_define_safe_procedure(S_colormap_name, g_colormap_name_w,     1, 0, 0, H_colormap_name);
+  Xen_define_safe_procedure(S_delete_colormap, g_delete_colormap_w, 1, 0, 0, H_delete_colormap);
 
   Xen_define_dilambda(S_colormap,      g_colormap_w,      H_colormap,      S_setB S_colormap,      g_set_colormap_w,      0, 0, 1, 0);
   Xen_define_dilambda(S_colormap_size, g_colormap_size_w, H_colormap_size, S_setB S_colormap_size, g_set_colormap_size_w, 0, 0, 1, 0);
 
-  Xen_define_procedure(S_integer_to_colormap,       g_integer_to_colormap_w, 1, 0, 0, H_integer_to_colormap);
-  Xen_define_procedure(S_colormap_to_integer,       g_colormap_to_integer_w, 1, 0, 0, H_colormap_to_integer);
+  Xen_define_safe_procedure(S_integer_to_colormap,       g_integer_to_colormap_w, 1, 0, 0, H_integer_to_colormap);
+  Xen_define_safe_procedure(S_colormap_to_integer,       g_colormap_to_integer_w, 1, 0, 0, H_colormap_to_integer);
 
 #if HAVE_SCHEME
   s7_symbol_set_access(s7, ss->color_map_size_symbol, s7_make_function(s7, "[acc-" S_colormap_size, acc_colormap_size, 2, 0, false, "accessor"));

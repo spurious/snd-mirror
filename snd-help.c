@@ -3828,9 +3828,9 @@ void g_init_help(void)
   Xen_eval_C_string("(define s7-help help)");
   Xen_define_procedure("help",        g_listener_help_w,  0, 2, 0, H_snd_help); /* override s7's help */
 #endif
-  Xen_define_procedure(S_snd_url,     g_snd_url_w,        1, 0, 0, H_snd_url);
-  Xen_define_procedure(S_snd_urls,    g_snd_urls_w,       0, 0, 0, H_snd_urls);
-  Xen_define_procedure(S_help_dialog, g_help_dialog_w,    2, 2, 0, H_help_dialog);
+  Xen_define_safe_procedure(S_snd_url,     g_snd_url_w,        1, 0, 0, H_snd_url);
+  Xen_define_safe_procedure(S_snd_urls,    g_snd_urls_w,       0, 0, 0, H_snd_urls);
+  Xen_define_safe_procedure(S_help_dialog, g_help_dialog_w,    2, 2, 0, H_help_dialog);
 
   #define H_help_hook S_help_hook "(subject message): called from " S_snd_help ".  If \
 it returns a string, it replaces 'message' (the default help)"

@@ -2864,7 +2864,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
   Xen_define_real_procedure("lgamma", g_lgamma_w, 1, 0, 0, H_lgamma);
 #endif
 
-  Xen_define_procedure(S_bes_i0, g_i0_w,     1, 0, 0, H_i0);
+  Xen_define_safe_procedure(S_bes_i0, g_i0_w,     1, 0, 0, H_i0);
 
 #if HAVE_GSL
   Xen_define_safe_procedure(S_bes_i1, g_i1_w,     1, 0, 0, H_i1);

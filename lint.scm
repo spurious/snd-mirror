@@ -2214,6 +2214,8 @@
 					   (set! args new-args)))))
 				     ;; if (max c1 (min c2 . args1) . args2) where (>= c1 c2) -> (max c1 . args2)
 				     ;; if (min c1 (max c2 . args1) . args2) where (<= c1 c2) -> (min c1 . args2)
+			       
+			       ;; there are more such cases: (max x (min x 3)) -> x ?
 				       
 			       `(,(car form) ,@args)))))
 		   form))

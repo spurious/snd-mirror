@@ -2503,13 +2503,13 @@ of a moving mark:\n\
   Xen_define_constant(S_normalize_by_sound,    NORMALIZE_BY_SOUND,   H_normalize_by_sound);
   Xen_define_constant(S_normalize_globally,    NORMALIZE_GLOBALLY,   H_normalize_globally);
 
-  Xen_define_procedure(S_transform_framples,   g_transform_framples_w, 0, 2, 0, H_transform_framples);
-  Xen_define_procedure(S_transform_sample,     g_transform_sample_w, 0, 4, 0, H_transform_sample);
-  Xen_define_procedure(S_transform_to_vct,     g_transform_to_vct_w, 0, 3, 0, H_transform_to_vct);
-  Xen_define_procedure(S_add_transform,        g_add_transform_w,    5, 0, 0, H_add_transform);
-  Xen_define_procedure(S_is_transform,         g_is_transform_w,     1, 0, 0, H_is_transform);
-  Xen_define_procedure(S_delete_transform,     g_delete_transform_w, 1, 0, 0, H_delete_transform);
-  Xen_define_procedure("snd-transform",        g_snd_transform_w,    2, 1, 0, H_snd_transform);
+  Xen_define_safe_procedure(S_transform_framples,   g_transform_framples_w, 0, 2, 0, H_transform_framples);
+  Xen_define_safe_procedure(S_transform_sample,     g_transform_sample_w, 0, 4, 0, H_transform_sample);
+  Xen_define_safe_procedure(S_transform_to_vct,     g_transform_to_vct_w, 0, 3, 0, H_transform_to_vct);
+  Xen_define_safe_procedure(S_add_transform,        g_add_transform_w,    5, 0, 0, H_add_transform);
+  Xen_define_safe_procedure(S_is_transform,         g_is_transform_w,     1, 0, 0, H_is_transform);
+  Xen_define_safe_procedure(S_delete_transform,     g_delete_transform_w, 1, 0, 0, H_delete_transform);
+  Xen_define_safe_procedure("snd-transform",        g_snd_transform_w,    2, 1, 0, H_snd_transform);
 
   Xen_define_dilambda(S_log_freq_start, g_log_freq_start_w, H_log_freq_start,
 				   S_setB S_log_freq_start, g_set_log_freq_start_w,  0, 0, 1, 0);
@@ -2517,8 +2517,8 @@ of a moving mark:\n\
   Xen_define_dilambda(S_show_selection_transform, g_show_selection_transform_w, H_show_selection_transform,
 				   S_setB S_show_selection_transform, g_set_show_selection_transform_w,  0, 0, 1, 0);
 
-  Xen_define_procedure(S_integer_to_transform, g_integer_to_transform_w, 1, 0, 0, H_integer_to_transform);
-  Xen_define_procedure(S_transform_to_integer, g_transform_to_integer_w, 1, 0, 0, H_transform_to_integer);
+  Xen_define_safe_procedure(S_integer_to_transform, g_integer_to_transform_w, 1, 0, 0, H_integer_to_transform);
+  Xen_define_safe_procedure(S_transform_to_integer, g_transform_to_integer_w, 1, 0, 0, H_transform_to_integer);
 
 #if HAVE_SCHEME
 #if (!DISABLE_DEPRECATED)

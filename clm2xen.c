@@ -8314,7 +8314,7 @@ static void set_as_needed_input_choices(mus_any *gen, Xen obj, mus_xen *gn)
 #if HAVE_SCHEME
   if (Xen_is_procedure(obj))
     {
-      s7_pointer source, arg, body, res;
+      s7_pointer source, body, res;
       source = s7_procedure_source(s7, obj);
       if (s7_is_pair(source))
 	{
@@ -8328,9 +8328,10 @@ static void set_as_needed_input_choices(mus_any *gen, Xen obj, mus_xen *gn)
 		  mus_generator_set_feeders(gen, as_needed_input_float, as_needed_block_input_float);
 		  return;
 		}
-	      arg = s7_caadar(source);
 	      if (s7_is_pair(res))
 		{
+		  s7_pointer arg;
+		  arg = s7_caadar(source);
 #if USE_SND
 		  if ((arg == s7_caddr(res)) &&
 		      (s7_car(res) == s7_make_symbol(s7, "read-sample-with-direction")))

@@ -3465,12 +3465,12 @@ void g_init_dac(void)
 
   Xen_define_procedure(S_make_player,    g_make_player_w,    0, 2, 0, H_make_player);
   Xen_define_procedure(S_add_player,     g_add_player_w,     1, 5, 0, H_add_player);
-  Xen_define_procedure(S_player_home,    g_player_home_w,    1, 0, 0, H_player_home);
+  Xen_define_safe_procedure(S_player_home,    g_player_home_w,    1, 0, 0, H_player_home);
   Xen_define_procedure(S_start_playing,  g_start_playing_w,  0, 3, 0, H_start_playing);
   Xen_define_procedure(S_stop_player,    g_stop_player_w,    1, 0, 0, H_stop_player);
   Xen_define_procedure(S_free_player,    g_free_player_w,    1, 0, 0, H_free_player);
-  Xen_define_procedure(S_players,        g_players_w,        0, 0, 0, H_players);
-  Xen_define_procedure(S_is_player,      g_is_player_w,      1, 0, 0, H_is_player);
+  Xen_define_safe_procedure(S_players,        g_players_w,        0, 0, 0, H_players);
+  Xen_define_safe_procedure(S_is_player,      g_is_player_w,      1, 0, 0, H_is_player);
 
   Xen_define_dilambda(S_with_tracking_cursor, g_with_tracking_cursor_w, H_with_tracking_cursor,
 				   S_setB S_with_tracking_cursor, g_set_with_tracking_cursor_w, 0, 0, 1, 0);

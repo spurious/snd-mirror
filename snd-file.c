@@ -3844,15 +3844,15 @@ void g_init_file(void)
   Xen_define_safe_procedure(S_sound_files_in_directory,         g_sound_files_in_directory_w,         0, 1, 0, H_sound_files_in_directory);
   Xen_define_safe_procedure(S_disk_kspace,                      g_disk_kspace_w,                      1, 0, 0, H_disk_kspace);
 
-  Xen_define_procedure(S_open_file_dialog,                 g_open_file_dialog_w,                 0, 1, 0, H_open_file_dialog);
-  Xen_define_procedure(S_mix_file_dialog,                  g_mix_file_dialog_w,                  0, 1, 0, H_mix_file_dialog);
-  Xen_define_procedure(S_insert_file_dialog,               g_insert_file_dialog_w,               0, 1, 0, H_insert_file_dialog);
-  Xen_define_procedure(S_edit_header_dialog,               g_edit_header_dialog_w,               0, 1, 0, H_edit_header_dialog);
-  Xen_define_procedure(S_save_selection_dialog,            g_save_selection_dialog_w,            0, 1, 0, H_save_selection_dialog);
-  Xen_define_procedure(S_save_region_dialog,               g_save_region_dialog_w,               0, 1, 0, H_save_region_dialog);
-  Xen_define_procedure(S_save_sound_dialog,                g_save_sound_dialog_w,                0, 1, 0, H_save_sound_dialog);
-  Xen_define_procedure(S_new_sound_dialog,                 g_new_sound_dialog_w,                 0, 1, 0, H_new_sound_dialog);
-  Xen_define_procedure(S_info_dialog,                      g_info_dialog_w,                      2, 0, 0, H_info_dialog);
+  Xen_define_safe_procedure(S_open_file_dialog,                 g_open_file_dialog_w,                 0, 1, 0, H_open_file_dialog);
+  Xen_define_safe_procedure(S_mix_file_dialog,                  g_mix_file_dialog_w,                  0, 1, 0, H_mix_file_dialog);
+  Xen_define_safe_procedure(S_insert_file_dialog,               g_insert_file_dialog_w,               0, 1, 0, H_insert_file_dialog);
+  Xen_define_safe_procedure(S_edit_header_dialog,               g_edit_header_dialog_w,               0, 1, 0, H_edit_header_dialog);
+  Xen_define_safe_procedure(S_save_selection_dialog,            g_save_selection_dialog_w,            0, 1, 0, H_save_selection_dialog);
+  Xen_define_safe_procedure(S_save_region_dialog,               g_save_region_dialog_w,               0, 1, 0, H_save_region_dialog);
+  Xen_define_safe_procedure(S_save_sound_dialog,                g_save_sound_dialog_w,                0, 1, 0, H_save_sound_dialog);
+  Xen_define_safe_procedure(S_new_sound_dialog,                 g_new_sound_dialog_w,                 0, 1, 0, H_new_sound_dialog);
+  Xen_define_safe_procedure(S_info_dialog,                      g_info_dialog_w,                      2, 0, 0, H_info_dialog);
 
   Xen_define_dilambda(S_sound_loop_info,      g_sound_loop_info_w, H_sound_loop_info,
 				   S_setB S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);

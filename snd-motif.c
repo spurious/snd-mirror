@@ -3126,8 +3126,8 @@ Xen_wrap_no_args(g_find_dialog_widgets_w, g_find_dialog_widgets)
 
 void g_init_gxfind(void)
 {
-  Xen_define_procedure(S_find_dialog, g_find_dialog_w, 0, 2, 0, H_find_dialog);
-  Xen_define_procedure("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "internal auto-test function");
+  Xen_define_safe_procedure(S_find_dialog, g_find_dialog_w, 0, 2, 0, H_find_dialog);
+  Xen_define_safe_procedure("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "internal auto-test function");
 }
 
 
@@ -8486,7 +8486,7 @@ Xen_wrap_no_args(g_view_regions_dialog_w, g_view_regions_dialog)
 
 void g_init_gxregion(void)
 {
-  Xen_define_procedure(S_view_regions_dialog, g_view_regions_dialog_w, 0, 0, 0,  H_view_regions_dialog);
+  Xen_define_safe_procedure(S_view_regions_dialog, g_view_regions_dialog_w, 0, 0, 0,  H_view_regions_dialog);
 }
 
 
@@ -17658,7 +17658,7 @@ to popup file info as follows: \n\
 
   Xen_define_safe_procedure(S_add_directory_to_view_files_list, g_add_directory_to_view_files_list_w, 1, 1, 0, H_add_directory_to_view_files_list);
   Xen_define_safe_procedure(S_add_file_to_view_files_list,      g_add_file_to_view_files_list_w,      1, 1, 0, H_add_file_to_view_files_list);
-  Xen_define_procedure(S_view_files_dialog,                g_view_files_dialog_w,                0, 2, 0, H_view_files_dialog);
+  Xen_define_safe_procedure(S_view_files_dialog,                g_view_files_dialog_w,                0, 2, 0, H_view_files_dialog);
 
   Xen_define_dilambda(S_view_files_sort, g_view_files_sort_w, H_view_files_sort,
 				   S_setB S_view_files_sort, g_set_view_files_sort_w,  0, 1, 1, 1);
@@ -22673,7 +22673,7 @@ Xen_wrap_no_args(g_menu_widgets_w, g_menu_widgets)
 
 void g_init_gxmenu(void)
 {
-  Xen_define_procedure(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
+  Xen_define_safe_procedure(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
 }
 
 /* Motif bug: the button backgrounds remain in the original highlight color? but the widget (if it is one) is not the child of any obvious widget
@@ -25093,9 +25093,9 @@ $mouse_enter_text_hook.add_hook!(\"enter\") do |w|\n\
   mouse_enter_text_hook = Xen_define_hook(S_mouse_enter_text_hook, "(make-hook 'widget)", 1, H_mouse_enter_text_hook);
   mouse_leave_text_hook = Xen_define_hook(S_mouse_leave_text_hook, "(make-hook 'widget)", 1, H_mouse_leave_text_hook);
 
-  Xen_define_procedure(S_listener_selection,    g_listener_selection_w,     0, 0, 0, H_listener_selection);
-  Xen_define_procedure(S_reset_listener_cursor, g_reset_listener_cursor_w,  0, 0, 0, H_reset_listener_cursor);
-  Xen_define_procedure(S_goto_listener_end,     g_goto_listener_end_w,      0, 0, 0, H_goto_listener_end);
+  Xen_define_safe_procedure(S_listener_selection,    g_listener_selection_w,     0, 0, 0, H_listener_selection);
+  Xen_define_safe_procedure(S_reset_listener_cursor, g_reset_listener_cursor_w,  0, 0, 0, H_reset_listener_cursor);
+  Xen_define_safe_procedure(S_goto_listener_end,     g_goto_listener_end_w,      0, 0, 0, H_goto_listener_end);
 
   #define H_listener_click_hook S_listener_click_hook " (position): called when listener clicked; position is text pos of click in listener"
   listener_click_hook = Xen_define_hook(S_listener_click_hook, "(make-hook 'position)", 1,   H_listener_click_hook);
@@ -26792,7 +26792,7 @@ void g_init_gxchn(void)
   Xen_define_dilambda(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
 				   S_setB S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
 
-  Xen_define_procedure(S_channel_widgets, g_channel_widgets_w, 0, 2, 0, H_channel_widgets);
+  Xen_define_safe_procedure(S_channel_widgets, g_channel_widgets_w, 0, 2, 0, H_channel_widgets);
 
 #if HAVE_SCHEME
   #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
@@ -30118,7 +30118,7 @@ Xen_wrap_1_optional_arg(g_sound_widgets_w, g_sound_widgets)
 void g_init_gxsnd(void)
 {
   Xen_add_to_hook_list(ss->snd_open_file_hook, reflect_file_close_in_sync_w, "sync-open-file-watcher", "sound sync open-file-hook handler");
-  Xen_define_procedure(S_sound_widgets,  g_sound_widgets_w,  0, 1, 0, H_sound_widgets);
+  Xen_define_safe_procedure(S_sound_widgets,  g_sound_widgets_w,  0, 1, 0, H_sound_widgets);
 }
 
 

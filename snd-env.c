@@ -1867,12 +1867,12 @@ void g_init_env(void)
   Xen_define_dilambda(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,
 				   S_setB S_enved_filter_order, g_set_enved_filter_order_w,  0, 0, 1, 0);
 
-  Xen_define_procedure(S_enved_dialog,    g_enved_dialog_w,    0, 0, 0, H_enved_dialog);
-  Xen_define_procedure(S_save_envelopes,  g_save_envelopes_w,  0, 1, 0, H_save_envelopes);
+  Xen_define_safe_procedure(S_enved_dialog,    g_enved_dialog_w,    0, 0, 0, H_enved_dialog);
+  Xen_define_safe_procedure(S_save_envelopes,  g_save_envelopes_w,  0, 1, 0, H_save_envelopes);
 
 
 #if HAVE_SCHEME
-  Xen_define_procedure(S_define_envelope "-1", g_define_envelope_w, 2, 1, 0, H_define_envelope);
+  Xen_define_safe_procedure(S_define_envelope "-1", g_define_envelope_w, 2, 1, 0, H_define_envelope);
   Xen_eval_C_string("(define-macro (define-envelope a . b) `(define-envelope-1 ',a ,@b))");
 #else
   Xen_define_procedure(S_define_envelope, g_define_envelope_w, 2, 1, 0, H_define_envelope);

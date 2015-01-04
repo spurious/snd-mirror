@@ -354,6 +354,6 @@ static Xen g_file_to_string(Xen name)
 void g_init_utils(void)
 {
 #if HAVE_SCHEME
-  Xen_define_procedure(S_file_to_string, g_file_to_string_w, 1, 0, 0, "file contents as string");
+  Xen_define_safe_procedure(S_file_to_string, g_file_to_string_w, 1, 0, 0, "file contents as string");
 #endif
 }

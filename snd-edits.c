@@ -9273,7 +9273,7 @@ void g_init_edits(void)
 #endif
   Xen_define_procedure("set-samples",                  orig_g_set_samples_w,             0, 0, 1, H_set_samples);
 
-  Xen_define_procedure(S_is_snd_to_sample,             g_is_snd_to_sample_w,             1, 0, 0, H_is_snd_to_sample);
+  Xen_define_safe_procedure(S_is_snd_to_sample,             g_is_snd_to_sample_w,             1, 0, 0, H_is_snd_to_sample);
   Xen_define_procedure(S_make_snd_to_sample,           g_make_snd_to_sample_w,           0, 1, 0, H_make_snd_to_sample);
   Xen_define_procedure(S_snd_to_sample,                g_snd_to_sample_w,                2, 1, 0, H_snd_to_sample);
   Xen_define_procedure(S_edit_list_to_function,        g_edit_list_to_function_w,        0, 4, 0, H_edit_list_to_function);

@@ -4009,14 +4009,14 @@ void g_init_mix(void)
 #if HAVE_SCHEME && (!DISABLE_DEPRECATED)
   s7_eval_c_string(s7, "(define mix-vct mix-float-vector)");
 #endif
-  Xen_define_procedure(S_mixes,                  g_mixes_w,                  0, 2, 0, H_mixes);
-  Xen_define_procedure(S_mix_home,               g_mix_home_w,               1, 0, 0, H_mix_home);
-  Xen_define_procedure(S_is_mix,                  g_is_mix_w,                  1, 0, 0, H_is_mix);
-  Xen_define_procedure(S_mix_length,             g_mix_length_w,             1, 0, 0, H_mix_length);
-  Xen_define_procedure(S_integer_to_mix,         g_integer_to_mix_w,         1, 0, 0, H_integer_to_mix);
-  Xen_define_procedure(S_mix_to_integer,         g_mix_to_integer_w,         1, 0, 0, H_mix_to_integer);
-  Xen_define_procedure(S_view_mixes_dialog,      g_view_mixes_dialog_w,      0, 0, 0, H_view_mixes_dialog);
-  Xen_define_procedure(S_mix_sync_max,           g_mix_sync_max_w,           0, 0, 0, H_mix_sync_max);
+  Xen_define_safe_procedure(S_mixes,                  g_mixes_w,                  0, 2, 0, H_mixes);
+  Xen_define_safe_procedure(S_mix_home,               g_mix_home_w,               1, 0, 0, H_mix_home);
+  Xen_define_safe_procedure(S_is_mix,                  g_is_mix_w,                  1, 0, 0, H_is_mix);
+  Xen_define_safe_procedure(S_mix_length,             g_mix_length_w,             1, 0, 0, H_mix_length);
+  Xen_define_safe_procedure(S_integer_to_mix,         g_integer_to_mix_w,         1, 0, 0, H_integer_to_mix);
+  Xen_define_safe_procedure(S_mix_to_integer,         g_mix_to_integer_w,         1, 0, 0, H_mix_to_integer);
+  Xen_define_safe_procedure(S_view_mixes_dialog,      g_view_mixes_dialog_w,      0, 0, 0, H_view_mixes_dialog);
+  Xen_define_safe_procedure(S_mix_sync_max,           g_mix_sync_max_w,           0, 0, 0, H_mix_sync_max);
 
   Xen_define_dilambda(S_mix_position,   g_mix_position_w,   H_mix_position,   S_setB S_mix_position,   g_set_mix_position_w,   1, 0, 2, 0);
   Xen_define_dilambda(S_mix_speed,      g_mix_speed_w,      H_mix_speed,      S_setB S_mix_speed,      g_set_mix_speed_w,      1, 0, 2, 0);
