@@ -364,6 +364,13 @@
 		       (set! (outstr j) #\{)
 		       (set! j (+ j 1)))))
 		
+		((#\")
+		 (begin
+		   (set! (outstr j) #\\)
+		   (set! j (+ j 1))
+		   (set! (outstr j) c)
+		   (set! j (+ j 1))))
+		
 		((#\&)
 		 (if (and (< (+ i 4) len) 
 			  (string=? (substring xref i (+ i 4)) "&gt;"))
@@ -377,13 +384,6 @@
 		   (set! (outstr j) #\")
 		   (set! j (+ j 1))
 		   (set! need-start #t)))
-		
-		((#\")
-		 (begin
-		   (set! (outstr j) #\\)
-		   (set! j (+ j 1))
-		   (set! (outstr j) c)
-		   (set! j (+ j 1))))
 		
 		(else
 		 (begin
@@ -1395,6 +1395,17 @@
 			      (format #t "~A[~D]: untranslated '>': ~A~%" file linectr line))))
 		       ;; else c != < or >
 		       
+		       ((#\()
+			(set! p-parens (+ p-parens 1)))
+		       
+		       ((#\)) 
+			(set! p-parens (- p-parens 1)))
+		       
+		       ((#\")
+			(if (or (= i 0)
+				(not (char=? (line (- i 1)) #\\)))
+			    (set! p-quotes (+ p-quotes 1))))
+
 		       ((#\&) 
 			(if (and (not in-comment)
 				 (case (string-ref line (+ i 1))
@@ -1412,22 +1423,11 @@
 				   (else #t)))
 			    (format #t "~A[~D]: unknown escape sequence: ~A~%" file linectr line)))
 		       
-		       ((#\()
-			(set! p-parens (+ p-parens 1)))
-		       
-		       ((#\)) 
-			(set! p-parens (- p-parens 1)))
-		       
 		       ((#\{) 
 			(set! p-curlys (+ p-curlys 1)))
 		       
 		       ((#\})
-			(set! p-curlys (- p-curlys 1)))
-		       
-		       ((#\")
-			(if (or (= i 0)
-				(not (char=? (line (- i 1)) #\\)))
-			    (set! p-quotes (+ p-quotes 1))))))
+			(set! p-curlys (- p-curlys 1)))))
 		   
 		   ;; end line scan
 		   (if (not in-comment)
@@ -1438,20 +1438,6 @@
 			     (do ((i pos (or (char-position "</! >" line (+ i 1)) len)))
 				 ((>= i len))
 			       (case (string-ref line i)
-				 ((#\<)
-				  (if start
-				      (if (and (not scripting)
-					       (not (positive? p-quotes)))
-					  (format #t "~A[~D]: nested < ~A~%" file linectr line))
-				      (set! start i)))
-				 ((#\/)
-				  (if (and start (= start (- i 1)))
-				      (set! closing #t)))
-				 
-				 ((#\!)
-				  (if (and start (= start (- i 1)))
-				      (set! start #f)))
-				 
 				 ((#\space #\>)
 				  (if start
 				      (begin
@@ -1581,7 +1567,21 @@
 								    (if (not (memq opener '(br meta spacer li hr area)))
 									(set! commands (cons opener commands)))))))))))
 					;; end if closing
-					(set! start #f))))))))
+					(set! start #f))))
+
+				 ((#\<)
+				  (if start
+				      (if (and (not scripting)
+					       (not (positive? p-quotes)))
+					  (format #t "~A[~D]: nested < ~A~%" file linectr line))
+				      (set! start i)))
+				 ((#\/)
+				  (if (and start (= start (- i 1)))
+				      (set! closing #t)))
+				 
+				 ((#\!)
+				  (if (and start (= start (- i 1)))
+				      (set! start #f)))))))
 		       ) ; if not in-comment...
 		   
 		   ;; search for name
