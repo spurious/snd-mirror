@@ -203,14 +203,6 @@ MUS_EXPORT const char *mus_sample_type_name(int format);
 MUS_EXPORT const char *mus_sample_type_to_string(int format);
 MUS_EXPORT const char *mus_sample_type_short_name(int format);
 
-#if (!DISABLE_DEPRECATED)
-#define mus_sound_data_format mus_sound_sample_type
-#define mus_data_format_name mus_sample_type_name
-#define mus_data_format_to_string mus_sample_type_to_string
-#define mus_data_format_short_name mus_sample_type_short_name
-#define mus_sound_set_data_format mus_sound_set_sample_type
-#endif
-
 MUS_EXPORT char *mus_sound_comment(const char *name);
 MUS_EXPORT int mus_bytes_per_sample(int format);
 MUS_EXPORT float mus_sound_duration(const char *arg);
@@ -346,9 +338,6 @@ MUS_EXPORT char *mus_strcat(char *errmsg, const char *str, int *err_size);
 /* -------- headers.c -------- */
 
 MUS_EXPORT bool mus_is_sample_type(int n);
-#if (!DISABLE_DEPRECATED)
-#define mus_is_data_format mus_is_sample_type
-#endif
 MUS_EXPORT bool mus_is_header_type(int n);
 
 MUS_EXPORT mus_long_t mus_header_samples(void);

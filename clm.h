@@ -144,9 +144,6 @@ MUS_EXPORT bool mus_is_interp_type(int val);
 MUS_EXPORT bool mus_is_fft_window(int val);
 
 MUS_EXPORT int mus_sample_type_zero(int format);
-#if (!DISABLE_DEPRECATED)
-#define mus_data_format_zero mus_sample_type_zero;
-#endif
 MUS_EXPORT mus_float_t (*mus_run_function(mus_any *g))(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
 
 
@@ -610,6 +607,7 @@ MUS_EXPORT mus_any *mus_bank_generator(mus_any *g, int i);
 
 /* Change log.
  *
+ * --------
  * 8-Nov:      mus_copy, mus_bank_generator.
  * 24-Oct:     mus_generator_set_feeders.
  * 10-Aug:     data-format -> sample-type.

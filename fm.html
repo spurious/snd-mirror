@@ -686,7 +686,7 @@ the 15 main components, with their sum in black:
 	     ((= i 88200))
 	   (outa i (polyoid gen 0.0)))))))
 
-(with-sound (:output "test1.snd")
+(with-sound ("test1.snd")
   (let* ((cgen (make-oscil 1000))
          (mgen (make-oscil 100))
 	 (index (hz->radians (* 3 100))))

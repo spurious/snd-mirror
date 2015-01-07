@@ -4586,6 +4586,7 @@ static void increase_stack_size(s7_scheme *sc)
 
   loc = s7_stack_top(sc);
   new_size = sc->stack_size * 2;
+
   /* how can we trap infinite recursions?  Is a warning in order here?
    *   I think I'll add 'maximum-stack-size
    *   size currently reaches 8192 in s7test
@@ -4613,7 +4614,6 @@ static void increase_stack_size(s7_scheme *sc)
       if ((Sc->begin_hook) && (call_begin_hook(Sc))) return(Sc->F); \
       increase_stack_size(Sc); \
     }  
-
 
 
 
@@ -5932,24 +5932,6 @@ s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env)
 
       entries = vector_elements(env);
       lim2 = sc->rootlet_entries;
-
-#if DEBUGGING
-      for (i = 0; i < lim2; i++)
-	if (is_slot(entries[i]))
-	  {
-	    if (!is_symbol(slot_symbol(entries[i])))
-	      {
-		fprintf(stderr, " rootlet[%d/%d]: %p slot: ", i, lim2, entries[i]);
-		fprintf(stderr, "%s ", DISPLAY(slot_symbol(entries[i])));
-		fprintf(stderr, "%s", DISPLAY(slot_value(entries[i])));
-		if (is_macro(slot_value(entries[i])))
-		  fprintf(stderr, ": %s\n", DISPLAY(closure_args(entries[i])));
-		else fprintf(stderr, "\n");
-	      }
-	  }
-	else fprintf(stderr, "rootlet[%d] is not a slot?\n", i);
-#endif
-
       if (lim2 & 1) lim2--;
 
       for (i = 0; i < lim2; )
@@ -7097,7 +7079,7 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
 
 static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
 {
-  #define CC_INITIAL_STACK_SIZE 128
+#define CC_INITIAL_STACK_SIZE 256 /* 128 is too small here */
   int i, len;
   s7_pointer new_v;
   s7_pointer *nv, *ov;
@@ -7106,9 +7088,16 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
    *   leftover space here, so choose the original stack size if it's smaller.
    */
   len = vector_length(old_v);
-  if ((len > CC_INITIAL_STACK_SIZE) &&
-      (top < len / 4))
-    len = top * 4;
+  if (len > CC_INITIAL_STACK_SIZE)
+    {
+      if (top < CC_INITIAL_STACK_SIZE / 4)
+	len = CC_INITIAL_STACK_SIZE;
+    }
+  else
+    {
+      if (len < CC_INITIAL_STACK_SIZE)
+	len = CC_INITIAL_STACK_SIZE;
+    }
 
   new_v = s7_make_vector(sc, len);
   set_type(new_v, T_STACK);
@@ -24075,7 +24064,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
   buf = (char *)malloc(512 * sizeof(char));
 
   snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s", 
-	   type(obj), 
+	   unchecked_type(obj), 
 	   type_name(sc, obj, NO_ARTICLE),
 	   typeflag(obj),
 	   is_procedure(obj) ?          " procedure" : "",
@@ -31998,16 +31987,8 @@ static bool c_function_is_ok(s7_scheme *sc, s7_pointer x)
   p = car(x);
   if (is_global(p)) p = slot_value(global_slot(p)); else p = find_symbol_unchecked(sc, p);
   /* this is nearly always global and p == ecdr(x) */
-#if 0
-  if ((!is_global(car(x))) || (symbol_id(car(x)) != 0))
-    fprintf(stderr, "%s: %d %lld, ecdr: %p %p, ok: %d\n", 
-	    DISPLAY(x), is_global(car(x)), symbol_id(car(x)), p, ecdr(x),
-	    (p == ecdr(x)) ||
-	    ((is_any_c_function(p)) &&
-	     (c_function_class(p) == c_function_class(ecdr(x)))));
-#endif
   return((p == ecdr(x)) ||
-	 ((is_any_c_function(p)) &&
+	 ((is_any_c_function(p)) && (ecdr(x)) &&
 	  (c_function_class(p) == c_function_class(ecdr(x)))));
 }
 
@@ -37496,7 +37477,7 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
 
 static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
 {
-  switch (type(arg))
+  switch (unchecked_type(arg))
     {
     case T_C_OBJECT:     
       return(make_type_name(sc, object_types[c_object_type(arg)]->name, article));
@@ -37519,7 +37500,7 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
     default:
       {
 	const char *str;
-	str = type_name_from_type(sc, type(arg), article);
+	str = type_name_from_type(sc, unchecked_type(arg), article);
 	if (str) return(str);
       }
     }
@@ -39895,7 +39876,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 {
-  if (sc->stack_end > sc->stack_start)
+  if (sc->stack_end >= sc->stack_start)
     {
       int top;
       s7_pointer x;
@@ -46588,6 +46569,7 @@ static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
 
 
 #define indirect_c_function_is_ok(Sc, X) (((optimize_data(X) & 0x1) != 0) || (c_function_is_ok(Sc, X)))
+#define indirect_cq_function_is_ok(Sc, X) (((optimize_data(X) & 0x1) != 0) || (car(X) == sc->QUOTE) || (c_function_is_ok(Sc, X)))
 
 static bool tree_match(s7_scheme *sc, s7_pointer tree)
 {
@@ -50424,7 +50406,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 }
 
 
-/* this is transitional(?) -- first step toward collapsing the unknown fixups */
+/* this is transitional(?) */
 #define set_opt_and_goto_opt_eval(Code, Func, Op)    \
   {						     \
     set_optimize_data(Code, Op);		     \
@@ -53429,6 +53411,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (!c_function_is_ok(sc, code)) break;
 	      
 	    case HOP_SAFE_C_CZ:
+	      /* it's possible in a case like this to overflow the stack -- s7test has an infinitely deeply
+	       *   nested expression involving (+ c (+ c (+ ... ))) all opt'd as safe_c_cz -- if we're close
+	       *   to the stack end at the start, it runs off the end.  Not sure how to catch such a weird case.
+	       */
 	      push_stack(sc, OP_SAFE_C_SZ_1, cadr(code), code);
 	      sc->code = caddr(code);
 	      goto OPT_EVAL;
@@ -53454,7 +53440,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_SAFE_C_ZS:
-	      if (!a_is_ok_cadr(sc, code)) break;
+	      if (!c_function_is_ok(sc, code)) break;
 	      
 	    case HOP_SAFE_C_ZS:
 	      push_stack(sc, OP_SAFE_C_ZS_1, find_symbol_checked(sc, caddr(code)), code);
@@ -53615,7 +53601,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_SAFE_C_SSZ:
-	      if (!a_is_ok_cadddr(sc, code)) break;
+	      if (!c_function_is_ok(sc, code)) break;
 	      
 	    case HOP_SAFE_C_SSZ:
 	      push_stack(sc, OP_SAFE_C_SSZ_1, find_symbol_checked(sc, cadr(code)), code);
@@ -53661,7 +53647,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_SAFE_C_ZZZ:
-	      if (!a_is_ok(sc, code)) break;
+	      if (!c_function_is_ok(sc, code)) break;
 	      
 	    case HOP_SAFE_C_ZZZ:
 	      push_stack(sc, OP_SAFE_C_ZZZ_1, sc->NIL, code);
@@ -53670,7 +53656,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 	    case OP_SAFE_C_ZZZZ:
-	      if (!a_is_ok(sc, code)) break;
+	      if (!c_function_is_ok(sc, code)) break;
 
 	    case HOP_SAFE_C_ZZZZ:
 	      push_stack(sc, OP_SAFE_C_ZZZZ_1, sc->NIL, code);
@@ -55779,11 +55765,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_GLOSURE_A:
-#if 0
-	      if (((symbol_id(car(code)) == 0) && (!is_global(car(code)))) ||
-		  ((symbol_id(car(code)) != 0) && (is_global(car(code)))))
-		fprintf(stderr, "%s %d %lld\n", DISPLAY(code), is_global(car(code)), symbol_id(car(code)));
-#endif
 	      if ((symbol_id(car(code)) != 0) ||
 		  (ecdr(code) != slot_value(global_slot(car(code)))))
 		{set_optimize_data(code, OP_UNKNOWN_A); goto OPT_EVAL;}
@@ -55937,6 +55918,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      
 	    case OP_CLOSURE_ALL_X:
+	      CHECK_STACK_SIZE(sc);
 	      if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, integer(arglist_length(code)))) 
 		{
 		  set_optimize_data(code, OP_UNKNOWN_ALL_X);
@@ -55948,7 +55930,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* here also, all the args are simple, major case is 3 args but would closure_aaa be faster?
 		 */
 		s7_pointer args, p, func, e;
-		CHECK_STACK_SIZE(sc);
 
 		func = ecdr(code);
 		NEW_FRAME(sc, closure_let(func), e);
@@ -56502,7 +56483,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      break;
 	      
-	      
 	    case OP_UNKNOWN_A:
 	    case HOP_UNKNOWN_A:
 	      {
@@ -56596,7 +56576,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		break;
 	      }
-
 
 	    case OP_UNKNOWN_AA:
 	    case HOP_UNKNOWN_AA:
@@ -56891,7 +56870,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_VECTOR_A:
-	      if (!indirect_c_function_is_ok(sc, cadr(code))) break;
+	      if (!indirect_cq_function_is_ok(sc, cadr(code))) break;
 	    case HOP_VECTOR_A:
 	      {
 		s7_pointer v, x; 
@@ -56973,7 +56952,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_STRING_A:
-	      if (!indirect_c_function_is_ok(sc, cadr(code))) break;
+	      if (!indirect_cq_function_is_ok(sc, cadr(code))) break;
 	    case HOP_STRING_A:
 	      {
 		s7_Int index;
@@ -57049,7 +57028,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_HASH_TABLE_A:
-	      if (!indirect_c_function_is_ok(sc, cadr(code))) break;
+	      if (!indirect_cq_function_is_ok(sc, cadr(code))) break;
 	    case HOP_HASH_TABLE_A:
 	      {
 		s7_pointer s;
@@ -57094,7 +57073,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_ENVIRONMENT_A:
-	      if (!indirect_c_function_is_ok(sc, cadr(code))) break;
+	      if (!indirect_cq_function_is_ok(sc, cadr(code))) break;
 	    case HOP_ENVIRONMENT_A:
 	      {
 		s7_pointer s;
@@ -57117,7 +57096,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_PAIR_A:
-	      if (!indirect_c_function_is_ok(sc, cadr(code))) break;
+	      if (!indirect_cq_function_is_ok(sc, cadr(code))) break;
 	    case HOP_PAIR_A:
 	      {
 		s7_pointer s, x;
@@ -57164,7 +57143,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case OP_C_OBJECT_A:
-	      if (!indirect_c_function_is_ok(sc, cadr(code))) break;
+	      if (!indirect_cq_function_is_ok(sc, cadr(code))) break;
 	    case HOP_C_OBJECT_A:
 	      {
 		s7_pointer c;
@@ -57254,7 +57233,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	    /* -------------------------------------------------------------------------------- */
 	    /* trailers */
-	    
 	    if (is_symbol(carc))
 	      {
 		/* car is a symbol, sc->code a list */
@@ -57279,9 +57257,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			if (has_cyclic_sequence(sc, carc))
 			  return(eval_error(sc, "attempt to evaluate a circular list: ~A", carc));
-#if DEBUGGING
-			fprintf(stderr, "stack is about to overflow: %s\n", DISPLAY(carc));
-#endif
+			increase_stack_size(sc);
 		      }
 
 		    push_stack(sc, OP_EVAL_ARGS, sc->NIL, cdr(code));
@@ -57965,7 +57941,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     APPLY:
       /* fprintf(stderr, "apply %s to %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
-
       switch (type(sc->code))
 	{
 	case T_C_FUNCTION: 	                    /* -------- C-based function -------- */
@@ -58407,9 +58382,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	closure_body(new_func) = cdr(code);
 	closure_setter(new_func) = sc->F; 
 
-#if DEBUGGING
-	if (!(fcdr(code))) {fprintf(stderr, "%d: no fcdr!\n", __LINE__); set_fcdr(code, small_int(512));}
-#endif
 	/* fcdr can be nil if we have a function, call it (so check_define+opt), then 
 	 *   walk the procedure source while redefining the function, then call it again.
 	 *   To be safe, we should actually call check_define, but how to force that?
@@ -69346,10 +69318,10 @@ int main(int argc, char **argv)
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1149
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1134
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 2994
- * lg             |      |      | 6547 6497 6494 6143
- * t455|6     265 |   89 |  9   |       8.4 8045 7783
+ * lg             |      |      | 6547 6497 6494 6146
+ * t455|6     265 |   89 |  9   |       8.4 8045 7780
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
- * t816           |   71 | 70.6 | 38.0 31.8 28.2 27.2
+ * t816           |   71 | 70.6 | 38.0 31.8 28.2 24.2
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.5
  *
  * --------------------------------------------------
@@ -69385,6 +69357,8 @@ int main(int argc, char **argv)
  *   also cload: libc libgsl etc arg types/return types [real string ?]
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  *
- * or|and_p_2? case_2|3? cond_2?
- * lint dw #f ... #f?
+ * how to catch the stack overflow op_cz case?
+ *
+ * no out-func in t816
+ * float-vector-relative-difference
  */

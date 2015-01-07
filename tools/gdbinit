@@ -138,7 +138,7 @@ define s7cell
          printf "string:         "
       end
       printf "length: %d, hash: %d, needs_free: %d, tag: %d, initial_slot: %p", \
-         $cell.object.string.length, $cell.object.string.hash, $cell.object.string.str_ext.needs_free, $cell.object.string.tag, $cell.object.string.initial_slot
+         $cell.object.string.length, $cell.object.string.hash, $cell.object.string.str_ext.needs_free, $cell.object.string.tag2, $cell.object.string.initial_slot
       if ($type == T_STRING)
          printf "svalue: %s, documentation: %s", $cell.object.string.svalue, $cell.object.string.doc.documentation
       end
@@ -150,7 +150,7 @@ define s7cell
   end
 
   if (($type == T_SYNTAX) || ($is_bad_type))
-      printf "syn:            symbol: %p, op: %d, let: %p, mark: %p\n", $cell.object.syn.symbol, $cell.object.syn.op, $cell.object.syn.let, $cell.object.syn.gc_mark
+      printf "syn:            symbol: %p, op: %d\n", $cell.object.syn.symbol, $cell.object.syn.op
   end
 
   if (($type == T_CONTINUATION) || ($is_bad_type))

@@ -78,11 +78,10 @@
 ;;; -------- with-sound --------
 
 (define* (with-sound-helper thunk 
-			    (srate *clm-srate*) 
 			    (output *clm-file-name*) 
 			    (channels *clm-channels*)
+			    (srate *clm-srate*) 
 			    (header-type *clm-header-type*)
-			    data-format
 			    (sample-type *clm-sample-type*)
 			    comment
 			    (verbose *clm-verbose*)
@@ -125,7 +124,7 @@
        (set! *auto-update-interval* 0.0) 
        (if (equal? clipped 'unset)
 	   (if (and (or scaled-by scaled-to)
-		    (member (or data-format sample-type) (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble)))
+		    (member sample-type (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble)))
 	       (set! (mus-clipping) #f)
 	       (set! (mus-clipping) *clm-clipped*))
 	   (set! (mus-clipping) clipped))
@@ -144,7 +143,7 @@
 		 (begin
 		   (if (file-exists? output-1) 
 		       (delete-file output-1))
-		   (set! *output* (make-sample->file output-1 channels (or data-format sample-type) header-type comment)))))
+		   (set! *output* (make-sample->file output-1 channels sample-type header-type comment)))))
 	   (begin
 	     (if (and (not continue-old-file)
 		      (vector? output-1))
@@ -163,7 +162,7 @@
 							 reverb-channels 
 							 (if (mus-header-writable header-type mus-ldouble)
 							     mus-ldouble
-							     (or data-format sample-type))
+							     sample-type)
 							 header-type)))))
 	       (begin
 		 (if (and (not continue-old-file)
@@ -227,7 +226,7 @@
 		 (if cur 
 		     (set! snd-output (update-sound cur))
 		     (if (= header-type mus-raw)
-			 (set! snd-output (open-raw-sound output-1 channels (floor srate) (or data-format sample-type)))
+			 (set! snd-output (open-raw-sound output-1 channels (floor srate) sample-type))
 			 ;; open-sound here would either ask for raw settings or use possibly irrelevant defaults
 			 (set! snd-output (open-sound output-1))))
 		 (set! (sync snd-output) #t)))
@@ -238,7 +237,7 @@
 		    (if to-snd 
 			snd-print 
 			display))
-		(format #f (if (not (member (or data-format sample-type) (list mus-bdouble mus-ldouble)))
+		(format #f (if (not (member sample-type (list mus-bdouble mus-ldouble)))
 			       "~%;~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
 			       "~%;~A:~%  maxamp~A:~{ ~,8F~}~%~A  compute time: ~,3F~%")
 			(if output-to-file
@@ -905,16 +904,19 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 |#
 
 
-(define* (with-simple-sound-helper thunk (output "test.snd") (channels 1) (srate 44100) (data-format mus-lfloat) (sample-type mus-lfloat) (header-type mus-next))
+(define* (with-simple-sound-helper thunk (output "test.snd") (channels 1) (srate 44100) (sample-type mus-lfloat) (header-type mus-next))
   (let ((old-output *output*))
     (dynamic-wind
 	(lambda ()
-	  (set! *output* (make-sample->file output channels (or data-format sample-type) header-type "with-simple-sound output")))
+	  (if (string? output)
+	      (set! *output* (make-sample->file output channels sample-type header-type "with-simple-sound output"))
+	      (set! *output* output)))
 	(lambda ()
 	  (thunk)
 	  output)
 	(lambda ()
-	  (mus-close *output*)
+	  (if (string? output)
+	      (mus-close *output*))
 	  (set! *output* old-output)))))
 
 (define-macro (with-simple-sound args . body)

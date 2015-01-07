@@ -5918,9 +5918,6 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_dilambda(S_data_location, g_data_location_w, H_data_location, S_setB S_data_location, g_set_data_location_w,  0, 1, 1, 1);
   Xen_define_dilambda(S_data_size,     g_data_size_w,     H_data_size,     S_setB S_data_size,     g_set_data_size_w,      0, 1, 1, 1);
   Xen_define_dilambda(S_sample_type,   g_sample_type_w,   H_sample_type,   S_setB S_sample_type,   g_set_sample_type_w,    0, 1, 1, 1);
-#if (!DISABLE_DEPRECATED)
-  Xen_define_dilambda(S_data_format,   g_sample_type_w,   H_sample_type,   S_setB S_data_format,   g_set_sample_type_w,    0, 1, 1, 1);
-#endif
   Xen_define_dilambda(S_header_type,   g_header_type_w,   H_header_type,   S_setB S_header_type,   g_set_header_type_w,    0, 1, 1, 1);
   Xen_define_dilambda(S_comment,       g_comment_w,       H_comment,       S_setB S_comment,       g_set_comment_w,        0, 1, 1, 1);
 

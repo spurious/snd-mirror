@@ -1473,7 +1473,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
       
       (let* ((len (framples snd chn))
 	     (newlen (floor (* time-scale len))))
-	(let ((new-snd (with-sound (:output (snd-tempnam) :to-snd #f :srate (srate snd))
+	(let ((new-snd (with-sound ((snd-tempnam) :to-snd #f :srate (srate snd))
 			 (let ((data (channel->float-vector 0 #f snd chn))
 			       (read-env (make-env envelope :length (+ 1 newlen) :scaler len)))
 			   (do ((i 0 (+ i 1)))
@@ -1512,7 +1512,7 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 		((= i num-readers))
 	      (set! (grain-envs i) (make-env grain-envelope :length grain-frames)))
 	    
-	    (let ((new-snd (with-sound (:output (snd-tempnam) :to-snd #f :srate (srate snd))
+	    (let ((new-snd (with-sound ((snd-tempnam) :to-snd #f :srate (srate snd))
 			     
 			     (do ((i 0 (+ i hop-frames)))
 				 ((>= i newlen))

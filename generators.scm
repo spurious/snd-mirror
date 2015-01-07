@@ -3805,7 +3805,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		   (oscil cr vb)
 		   (j0evencos md (* vb mc-ratio))))))))
 
-(with-sound (:output "test1.snd" :play #t) (jfm 0 3.0 400.0 0.5 .5 4.0 '(0 1  1 2  2 .5)))
+(with-sound ("test1.snd" :play #t) (jfm 0 3.0 400.0 0.5 .5 4.0 '(0 1  1 2  2 .5)))
 |#
 
 
@@ -4023,7 +4023,7 @@ returns a sum of cosines scaled in a very complicated way."))
 (do ((i 0 (+ i 1)))
     ((= i 10))
   (let ((pk (maxamp 
-	     (with-sound (:output (make-float-vector 10000))
+	     (with-sound ((make-float-vector 10000))
   	       (let ((gen (make-j0j1cos 100.0 i)))
 		 (do ((i 0 (+ i 1)))
 		     ((= i 10000))

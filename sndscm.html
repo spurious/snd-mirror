@@ -11561,9 +11561,9 @@ with-sound returns its :output argument.
 
 <pre class="indented">
   <em class=def id="withsound">with-sound</em>
-     (srate *clm-srate*)                    ; output sampling rate (44100)
           (output *clm-file-name*)               ; output file name ("test.snd")
 	  (channels *clm-channels*)              ; channels in output (1)
+          (srate *clm-srate*)                    ; output sampling rate (44100)
 	  (header-type *clm-header-type*)        ; output header type (mus-next or mus-aifc)
 	  (sample-type *clm-sample-type*)        ; output sample data type (mus-bfloat or mus-lshort)
 	  (comment #f)                           ; any comment to store in the header (a string)

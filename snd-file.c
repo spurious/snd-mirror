@@ -3999,10 +3999,6 @@ the newly updated sound may have a different index."
 
   Xen_define_dilambda(S_default_output_sample_type, g_default_output_sample_type_w, H_default_output_sample_type,
 				   S_setB S_default_output_sample_type, g_set_default_output_sample_type_w,  0, 0, 1, 0);
-#if (!DISABLE_DEPRECATED)
-  Xen_define_dilambda(S_default_output_data_format, g_default_output_sample_type_w, H_default_output_sample_type,
-				   S_setB S_default_output_data_format, g_set_default_output_sample_type_w,  0, 0, 1, 0);
-#endif
   Xen_define_dilambda(S_clipping, g_clipping_w, H_clipping,
 				   S_setB S_clipping, g_set_clipping_w,  0, 0, 1, 0);
 

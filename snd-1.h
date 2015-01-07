@@ -1561,7 +1561,7 @@ void amp_env_env(chan_info *cp, mus_float_t *brkpts, int npts, int pos, mus_floa
 peak_env_info *copy_peak_env_info(peak_env_info *old_ep, bool reversed);
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, mus_long_t beg, mus_long_t num, int pos);
 void peak_env_insert_zeros(chan_info *cp, mus_long_t beg, mus_long_t num, int pos);
-snd_info *snd_new_file(const char *newname, int header_type, int data_format, int srate, int chans, const char *new_comment, mus_long_t samples);
+snd_info *snd_new_file(const char *newname, int header_type, int sample_type, int srate, int chans, const char *new_comment, mus_long_t samples);
 #if XEN_HAVE_RATIOS
   void snd_rationalize(mus_float_t a, int *num, int *den);
 #endif

@@ -3003,13 +3003,13 @@ The peak amplitude should be pi/4, but the Gibbs phenomenon adds .14.
 	   ((= i end))
 	 (outa i (* amp (oscil osc))))))
 
-(with-sound (:output "4-sines.snd")
+(with-sound ("4-sines.snd")
   (sine-wave 0 1 10.0 1.0)
   (sine-wave 0 1 30.0 .333)
   (sine-wave 0 1 50.0 .2)
   (sine-wave 0 1 70.0 .143))
 
-(with-sound (:output "100-sines.snd")
+(with-sound ("100-sines.snd")
   (do ((i 1 (+ i 2)))
       ((> i 200))
     (sine-wave 0 1 (* i 10.0) (/ 1.0 i))))
@@ -7831,7 +7831,7 @@ use its :output argument:
 
 <pre class="indented">
 (let ((input (<a class=quiet href="#make-readin">make-readin</a> "oboe.snd" :start 1000)))
-  (with-sound (:output (make-vector 10 0.0 #t))
+  (with-sound ((make-vector 10 0.0 #t))
     (do ((i 0 (+ i 1)))
 	((= i 10))
       (<em class=red>outa</em> i (<em class=red>ina</em> i (lambda (loc chn)
@@ -8711,7 +8711,7 @@ snd -horizontal
 		      (- (cos (* ind (oscil md)))
 			 (bes-j0 ind))))))))
 
-(with-sound (:output "test.snd") (fm 0 1.0 2000.0 0.5 .1 20.0 '(0 0 1 1)))
+(with-sound ("test.snd") (fm 0 1.0 2000.0 0.5 .1 20.0 '(0 0 1 1)))
 
 (define* (jfm beg dur freq amp mc-ratio index (index-env '(0 1 100 1)))
   (let* ((start (seconds->samples beg))
@@ -8725,7 +8725,7 @@ snd -horizontal
 	 (outa i (* (env ampf)
                     (j0evencos md))))))
 
-(with-sound (:output "test1.snd") (jfm 0 1.0 2000.0 0.5 .1 20.0 '(0 0 1 1)))
+(with-sound ("test1.snd") (jfm 0 1.0 2000.0 0.5 .1 20.0 '(0 0 1 1)))
 
 x 314 1.36
 y 327 .4
@@ -9222,7 +9222,7 @@ The ercoser instrument uses ercos:
 </pre>
 
 <!--
-(with-sound (:output "r7.snd")
+(with-sound ("r7.snd")
   (let ((gen (make-rksin 100.0 :r .7)))
     (do ((i 0 (+ i 1)))
         ((= i 44100))

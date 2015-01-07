@@ -252,7 +252,7 @@
 ;;; -------- hum
 
 (define (test-notch-hum)
-  (let ((test (with-sound (:output "test.snd" :srate 22050)
+  (let ((test (with-sound ("test.snd" :srate 22050)
 		(let ((osc (make-oscil 60.0))
 		      (e (make-env '(0 0 1 .5 9 .5 10 0) :length 44100)))
 		   (do ((i 0 (+ i 1)))
@@ -264,7 +264,7 @@
       (if (> mx .02)
 	  (format #t "~%;notch hum 0: ~A" mx)))
     (close-sound (find-sound test)))
-  (let ((test (with-sound (:output "test.snd" :srate 22050)
+  (let ((test (with-sound ("test.snd" :srate 22050)
 		(let ((p (make-polywave 20.0 (list 2 1 3 1 4 1)))
 		      (e (make-env '(0 0 1 .3 9 .3 10 0) :scaler 1/3 :length 44100)))
 		   (do ((i 0 (+ i 1)))
@@ -284,7 +284,7 @@
 	    (format #t "~%;notch 60: ~A ~A ~A -> ~A ~A ~A" v40 v60 v80 e40 e60 e80))))
     (close-sound (find-sound test)))
 
-  (let ((test (with-sound (:output "test.snd" :srate 22050)
+  (let ((test (with-sound ("test.snd" :srate 22050)
 		(let ((p (make-polywave 5.0 (list 11 1 12 1 13 1)))
 		      (e (make-env '(0 0 1 .3 9 .3 10 0) :scaler 1/3 :length 44100)))
 		   (do ((i 0 (+ i 1)))

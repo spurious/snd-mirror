@@ -61,11 +61,10 @@
 ;;; -------- with-sound --------
 
 (define* (with-sound-helper thunk 
-			    (srate *clm-srate*) 
 			    (output *clm-file-name*) 
 			    (channels *clm-channels*)
+			    (srate *clm-srate*) 
 			    (header-type *clm-header-type*)
-			    data-format
 			    (sample-type *clm-sample-type*)
 			    (comment #f)
 			    (verbose *clm-verbose*)
@@ -109,7 +108,7 @@
        (set! (mus-array-print-length) *clm-array-print-length*)
        (if (equal? clipped 'unset)
 	   (if (and (or scaled-by scaled-to)
-		    (member (or data-format sample-type) (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble)))
+		    (member sample-type (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble)))
 	       (set! (mus-clipping) #f)
 	       (set! (mus-clipping) *clm-clipped*))
 	   (set! (mus-clipping) clipped))
@@ -125,7 +124,7 @@
 		 (begin
 		   (if (file-exists? output-1) 
 		       (delete-file output-1))
-		   (set! *output* (make-sample->file output-1 channels (or data-format sample-type) header-type comment)))))
+		   (set! *output* (make-sample->file output-1 channels sample-type header-type comment)))))
 	   (begin
 	     (if (and (not continue-old-file)
 		      (vector? output-1))
@@ -140,7 +139,7 @@
 		     (begin
 		       (if (file-exists? reverb-1) 
 			   (delete-file reverb-1))
-		       (set! *reverb* (make-sample->file reverb-1 reverb-channels (or data-format sample-type) header-type)))))
+		       (set! *reverb* (make-sample->file reverb-1 reverb-channels sample-type header-type)))))
 	       (begin
 		 (if (and (not continue-old-file)
 			  (vector? reverb-1))
@@ -212,7 +211,7 @@
 				  ((>= i (length mx-lst)) (/ scaled-to mx))
 				(set! mx (max mx (list-ref mx-lst i)))))))
 		       (out-file (substring output-1 0 (- (string-length output-1) 5))))
-		   (let ((g (make-sample->file out-file channels (or data-format sample-type) header-type #f)))
+		   (let ((g (make-sample->file out-file channels sample-type header-type #f)))
 		     (mus-close g))
 		   (mus-file-mix out-file output-1 0 (mus-sound-framples output-1) 0 
 				 (let ((mx (make-float-vector (list channels channels) 0.0)))

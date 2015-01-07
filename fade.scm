@@ -152,8 +152,8 @@
 
 
 
-;;; (float-vector->channel (with-sound (:output (make-float-vector 22050)) (cross-fade 0 .1 1 0 1 .01 .01 0 .1 256 2)))
-;;; (float-vector->channel (with-sound (:output (make-float-vector 44100)) (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2)))
+;;; (float-vector->channel (with-sound ((make-float-vector 22050)) (cross-fade 0 .1 1 0 1 .01 .01 0 .1 256 2)))
+;;; (float-vector->channel (with-sound ((make-float-vector 44100)) (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2)))
 ;;; (with-sound (:statistics #t) (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2))
 ;;; (with-sound () (cross-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 0.5 1.0 0 .1 256 2))
 ;;; these fades seem more successful to me when done relatively quickly (the opposite of the dissolve below
@@ -257,7 +257,7 @@
 
 
 ;;; (with-sound (:statistics #t) (dissolve-fade 0 1 1.0 "oboe.snd" "trumpet.snd" 256 2 0 128))
-;;; (float-vector->channel (with-sound (:output (make-float-vector 44100)) (dissolve-fade 0 2 1 0 1 4096 2 2 #f)))
+;;; (float-vector->channel (with-sound ((make-float-vector 44100)) (dissolve-fade 0 2 1 0 1 4096 2 2 #f)))
 ;;;
 ;;; another neat effect here is to simply let the random changes float along with no
 ;;; direction -- if the hit is 1.0 send it toward 0.0 and vice versa -- strange
@@ -268,13 +268,13 @@
 #|
 ;;; make it easy to see and hear:
 
-(with-sound (:output "p1.snd") 
+(with-sound ("p1.snd") 
   (let ((g (make-ncos 200 100)))
     (do ((i 0 (+ i 1)))
 	((= i 100000))
       (outa i (ncos g)))))
 
-(with-sound (:output "p2.snd") 
+(with-sound ("p2.snd") 
   (let ((g (make-ncos 123 100)))
     (do ((i 0 (+ i 1)))
 	((= i 100000))

@@ -725,7 +725,7 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
 written: %s\n",
                            channels(snd), srate(snd),
                            framples(snd) / srate(snd).to_f, framples(snd),
-                           mus_data_format_name(data_format(snd)),
+                           mus_sample_type_name(sample_type(snd)),
                            mus_header_type_name(header_type(snd)),
                            maxamp(snd, true).to_string,
                            date)

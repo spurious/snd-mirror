@@ -1373,18 +1373,15 @@ void mus_sndlib_xen_initialize(void)
 
   Xen_define_constant(S_mus_audio_default,        MUS_AUDIO_DEFAULT,        "default audio device");
 
-  Xen_define_dilambda(S_mus_sound_samples, g_mus_sound_samples_w, H_mus_sound_samples, 
-				   S_setB S_mus_sound_samples, g_mus_sound_set_samples_w, 1, 0, 2, 0);
+  Xen_define_dilambda(S_mus_sound_samples, g_mus_sound_samples_w, H_mus_sound_samples,  S_setB S_mus_sound_samples, g_mus_sound_set_samples_w, 1, 0, 2, 0);
   Xen_define_dilambda(S_mus_sound_data_location, g_mus_sound_data_location_w, H_mus_sound_data_location,
-				   S_setB S_mus_sound_data_location, g_mus_sound_set_data_location_w, 1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_sound_chans, g_mus_sound_chans_w, H_mus_sound_chans,
-				   S_setB S_mus_sound_chans, g_mus_sound_set_chans_w, 1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_sound_srate, g_mus_sound_srate_w, H_mus_sound_srate,
-				   S_setB S_mus_sound_srate, g_mus_sound_set_srate_w, 1, 0, 2, 0);
+		      S_setB S_mus_sound_data_location, g_mus_sound_set_data_location_w, 1, 0, 2, 0);
+  Xen_define_dilambda(S_mus_sound_chans, g_mus_sound_chans_w, H_mus_sound_chans, S_setB S_mus_sound_chans, g_mus_sound_set_chans_w, 1, 0, 2, 0);
+  Xen_define_dilambda(S_mus_sound_srate, g_mus_sound_srate_w, H_mus_sound_srate, S_setB S_mus_sound_srate, g_mus_sound_set_srate_w, 1, 0, 2, 0);
   Xen_define_dilambda(S_mus_sound_header_type, g_mus_sound_header_type_w, H_mus_sound_header_type,
-				   S_setB S_mus_sound_header_type, g_mus_sound_set_header_type_w, 1, 0, 2, 0);
+		      S_setB S_mus_sound_header_type, g_mus_sound_set_header_type_w, 1, 0, 2, 0);
   Xen_define_dilambda(S_mus_sound_sample_type, g_mus_sound_sample_type_w, H_mus_sound_sample_type,
-				   S_setB S_mus_sound_sample_type, g_mus_sound_set_sample_type_w, 1, 0, 2, 0);
+		      S_setB S_mus_sound_sample_type, g_mus_sound_set_sample_type_w, 1, 0, 2, 0);
 
 
   /* -------------------------------------------------------------------------------- */
@@ -1400,19 +1397,9 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_safe_procedure(S_mus_header_writable,      g_mus_header_writable_w,        2, 0, 0, H_mus_header_writable);
   Xen_define_safe_procedure(S_mus_sample_type_name,     g_mus_sample_type_name_w,       1, 0, 0, H_mus_sample_type_name);
   Xen_define_safe_procedure(S_mus_sample_type_to_string,g_mus_sample_type_to_string_w,  1, 0, 0, H_mus_sample_type_to_string);
-#if (!DISABLE_DEPRECATED)
-  Xen_define_safe_procedure(S_mus_data_format_name,     g_mus_sample_type_name_w,       1, 0, 0, H_mus_sample_type_name);
-  Xen_define_safe_procedure(S_mus_data_format_to_string,g_mus_sample_type_to_string_w,  1, 0, 0, H_mus_sample_type_to_string);
-#endif
 #if HAVE_SCHEME
-  Xen_define_safe_procedure(S_mus_sample_type_name,     g_mus_sample_type_name_w,       1, 0, 0, H_mus_sample_type_name);
-  Xen_define_safe_procedure(S_mus_sample_type_to_string,g_mus_sample_type_to_string_w,  1, 0, 0, H_mus_sample_type_to_string);
   Xen_define_dilambda(S_mus_sound_sample_type, g_mus_sound_sample_type_w, H_mus_sound_sample_type,
-				   S_setB S_mus_sound_sample_type, g_mus_sound_set_sample_type_w, 1, 0, 2, 0);
-#if (!DISABLE_DEPRECATED)
-  Xen_define_dilambda(S_mus_sound_data_format, g_mus_sound_sample_type_w, H_mus_sound_sample_type,
-				   S_setB S_mus_sound_data_format, g_mus_sound_set_sample_type_w, 1, 0, 2, 0);
-#endif
+		      S_setB S_mus_sound_sample_type, g_mus_sound_set_sample_type_w, 1, 0, 2, 0);
 #endif
   Xen_define_safe_procedure(S_mus_sound_comment,        g_mus_sound_comment_w,          1, 0, 0, H_mus_sound_comment);
   Xen_define_safe_procedure(S_mus_sound_write_date,     g_mus_sound_write_date_w,       1, 0, 0, H_mus_sound_write_date);
@@ -1439,11 +1426,10 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_safe_procedure(S_mus_sound_preload,        g_mus_sound_preload_w,          1, 0, 0, H_mus_sound_preload);
 
   Xen_define_dilambda(S_mus_header_raw_defaults, g_mus_header_raw_defaults_w, H_mus_header_raw_defaults,
-				   S_setB S_mus_header_raw_defaults, g_mus_header_set_raw_defaults_w, 0, 0, 1, 0);
+		      S_setB S_mus_header_raw_defaults, g_mus_header_set_raw_defaults_w, 0, 0, 1, 0);
 
   Xen_define_dilambda(S_mus_clipping, g_mus_clipping_w, H_mus_clipping, S_setB S_mus_clipping, g_mus_set_clipping_w, 0, 0, 1, 0);
   Xen_define_dilambda(S_mus_file_clipping, g_mus_file_clipping_w, H_mus_file_clipping, S_setB S_mus_file_clipping, g_mus_file_set_clipping_w, 1, 0, 2, 0);
-
   Xen_define_dilambda(S_mus_sound_maxamp, g_mus_sound_maxamp_w, H_mus_sound_maxamp, S_setB S_mus_sound_maxamp, g_mus_sound_set_maxamp_w, 1, 0, 2, 0);
 
   /* these are no-ops if not ALSA, but that makes it easier to maintain global initialization files */
