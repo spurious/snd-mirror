@@ -9445,6 +9445,12 @@ EDITS: 2
 	  (do ((i 0 (+ i 1)))
 	      ((= i 100))
 	    (float-vector-set! x 0 (* (env e1) (oscil osc (float-vector-ref x 0))))))
+
+	(if (fneq (float-vector-equal? (float-vector 1.0) (float-vector 1.1) .1) .0909)
+	    (snd-display #__line__ ";float-vector-equal? 0.0909: ~A" (float-vector-equal? (float-vector 1.0) (float-vector 1.1) .1)))
+	(if (float-vector-equal? (float-vector 1.0) (float-vector 1.1) .01)
+	    (snd-display #__line__ ";float-vector-equal? #f: ~A" (float-vector-equal? (float-vector 1.0) (float-vector 1.1) .01)))
+	
 	))))
 
 

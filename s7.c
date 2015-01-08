@@ -2814,6 +2814,11 @@ static void report_counts(s7_scheme *sc)
   len = hash_table_length(hashes);
   elements = hash_table_elements(hashes);
   entries = hash_table_entries(hashes);
+  if (entries == 0)
+    {
+      fprintf(stderr, "no counts\n");
+      return;
+    }
   data = (datum **)calloc(entries, sizeof(datum *));
 
   for (i = 0; i < len; i++)
@@ -4956,7 +4961,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   NEW_CELL(sc, x);
   symbol_name_cell(x) = str;
   set_type(x, T_SYMBOL | T_GENSYM);
-  global_slot(x) = sc->NIL;
+  global_slot(x) = sc->UNDEFINED; /* was sc->NIL */
   initial_slot(x) = sc->UNDEFINED;
   symbol_set_local(x, 0LL, sc->NIL);
   symbol_hash(x) = location;
@@ -6692,7 +6697,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
       else b = sc->F;
 
       if (e == sc->rootlet)
-	return(make_boolean(sc, global_slot(sym) != sc->UNDEFINED)); /* new_symbol initializes global_slot to #<undefined> */
+	return(make_boolean(sc, is_slot(global_slot(sym)))); /* new_symbol and gensym initialize global_slot to #<undefined> */
 
       x = find_local_symbol(sc, sym, e); 
       if (is_slot(x))
@@ -6716,7 +6721,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
        *          (format #t "~A: ~A" (defined? 'abs e) (eval '(abs -1) e)))))
        *    "#f: 1"
        */
-      return(make_boolean(sc, global_slot(sym) != sc->UNDEFINED));
+      return(make_boolean(sc, is_slot(global_slot(sym))));
     }
   else 
     {
@@ -6753,7 +6758,7 @@ void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer va
     {
       s7_make_slot(sc, envir, symbol, value); /* I think this means C code can override "constant" defs */
       if ((envir == sc->shadow_rootlet) &&
-	  (global_slot(symbol) == sc->UNDEFINED))
+	  (!is_slot(global_slot(symbol))))
 	{
 	  set_global(symbol); /* is_global => global_slot is usable */
 	  global_slot(symbol) = local_slot(symbol);
@@ -37025,7 +37030,7 @@ static char *stacktrace_walker(s7_scheme *sc, s7_pointer code, s7_pointer e,
   if (is_symbol(code))
     {
       if ((!direct_memq(code, syms)) &&
-	  (global_slot(code) == sc->UNDEFINED))
+	  (!is_slot(global_slot(code))))
 	{
 	  s7_pointer val;
 
@@ -43644,6 +43649,7 @@ static void init_choosers(s7_scheme *sc)
 
 static s7_pointer collect_collisions(s7_scheme *sc, s7_pointer lst, s7_pointer e)
 {
+  /* collect local variable names from let/do/lambda arglists/etc */
   s7_pointer p;
   sc->w = e;
   for (p = lst; is_pair(p); p = cdr(p))
@@ -43652,10 +43658,10 @@ static s7_pointer collect_collisions(s7_scheme *sc, s7_pointer lst, s7_pointer e
       car_p = car(p);
       if (is_pair(car_p))
 	car_p = car(car_p);
-      if ((is_symbol(car_p)) &&
-	  (global_slot(car_p) != sc->NIL))
+      if (is_symbol(car_p))
 	sc->w = cons(sc, add_sym_to_list(sc, car_p), sc->w);
     }
+  /* fprintf(stderr, "%s collect %s -> %s\n", DISPLAY(lst), DISPLAY(e), DISPLAY(sc->w)); */
   return(sc->w);
 }
 
@@ -44786,39 +44792,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 		}
 	    }
 	}
-
-      if ((quotes == 0) &&
-	  (func_is_c_function))
-	{
-	  if (func_is_safe)
-	    {
-	      set_optimized(expr);
-	      if (bad_pairs == 0)
-		{
-		  if (is_all_x_safe(sc, arg1))
-		    {
-		      set_optimize_data(expr, hop + OP_SAFE_C_A);
-		      annotate_arg(sc, cdr(expr));
-		    }
-		  else set_optimize_data(expr, hop + OP_SAFE_C_Z); 
-		  choose_c_function(sc, expr, func, 1);
-		  set_arglist_length(expr, small_int(1));
-		  return(true);
-		}
-	      set_unsafe(expr);
-	      set_optimize_data(expr, hop + OP_SAFE_C_P); /* not c_z because there might be multiple values */
-	      choose_c_function(sc, expr, func, 1);
-	      return(false);
-	      /* didn't we do all this already? */
-	    }
-	  else
-	    {
-	      set_unsafely_optimized(expr);
-	      set_optimize_data(expr, hop + OP_C_P);
-	      choose_c_function(sc, expr, func, 1);
-	      return(false);
-	    }
-	}
     }
 
   if (pairs == (quotes + all_x_count(expr)))
@@ -44837,6 +44810,17 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 	  return(false);
 	}
     }
+
+  if ((func_is_c_function) &&
+      (!func_is_safe))
+    {
+      set_unsafely_optimized(expr);
+      set_optimize_data(expr, hop + OP_C_P);
+      choose_c_function(sc, expr, func, 1);
+      return(false);
+    }
+
+  /* unknown_* is set later */
   return(is_optimized(expr));  
 }
 
@@ -45985,7 +45969,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
     case OP_LET:
       if (is_symbol(cadr(p)))
 	{
-	  if (global_slot(cadr(p)) != sc->NIL)
+	  if (is_slot(global_slot(cadr(p))))
 	    sc->w = cons(sc, add_sym_to_list(sc, cadr(p)), sc->w);
 	  sc->w = collect_collisions(sc, caddr(p), sc->w);
 	}
@@ -46013,7 +45997,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
     case OP_LAMBDA_STAR:
       if (is_symbol(cadr(p))) /* (lambda args ...) */
 	{
-	  if (global_slot(cadr(p)) != sc->NIL)
+	  if (is_slot(global_slot(cadr(p))))
 	    sc->w = cons(sc, add_sym_to_list(sc, cadr(p)), sc->w);
 	}
       else sc->w = collect_collisions(sc, cadr(p), sc->w);
@@ -46021,7 +46005,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 
     case OP_SET:
       if ((is_symbol(cadr(p))) &&
-	  (global_slot(cadr(p)) != sc->NIL))
+	  (is_slot(global_slot(cadr(p)))))
 	sc->w = cons(sc, add_sym_to_list(sc, cadr(p)), sc->w);
       break;
 
@@ -46203,7 +46187,7 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer symbol, s7
   s7_pointer x;
   long long int id;
 
-  if (rdirect_memq(sc, symbol, e))
+  if (rdirect_memq(sc, symbol, e)) /* it's probably a local variable reference */
     return(sc->NIL);
 
   if (is_global(symbol))
@@ -46547,6 +46531,8 @@ static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
 {
   s7_pointer x;
   bool happy = true;
+  if (sc->safety > 1) return(false);
+
   /* fprintf(stderr, "optimize %s %d %s\n", DISPLAY_80(code), hop, DISPLAY_80(e)); */
 
   for (x = code; is_pair(x) && (!is_checked(x)); x = cdr(x))
@@ -61921,11 +61907,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if ((sc->safety != 0) ||
 	    (main_stack_op(sc) != OP_DEFINE1))
 	  optimize(sc, body, 0, sc->NIL);
-	else 
-	  {
-	    /* optimize(sc, body, 1, collect_collisions(sc, car(code), sc->NIL)); */
-	    optimize_lambda(sc, true, sc->LAMBDA, car(code), body);
-	  }
+	else optimize_lambda(sc, true, sc->LAMBDA, car(code), body);
 
 	if ((is_overlaid(code)) &&
 	    (cdr(ecdr(code)) == code))
@@ -61948,11 +61930,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((sc->safety != 0) ||
 	  (main_stack_op(sc) != OP_DEFINE1))
 	optimize(sc, cdr(sc->code), 0, sc->NIL);
-      else
-	{
-	  /* optimize(sc, cdr(sc->code), 1, collect_collisions(sc, car(sc->code), sc->NIL)); */
-	  optimize_lambda(sc, false, sc->LAMBDA_STAR, car(sc->code), cdr(sc->code));
-	}
+      else optimize_lambda(sc, false, sc->LAMBDA_STAR, car(sc->code), cdr(sc->code));
 
       if ((is_overlaid(sc->code)) &&
 	  (cdr(ecdr(sc->code)) == sc->code))
@@ -69315,13 +69293,13 @@ int main(int argc, char **argv)
 /* --------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3
- * s7test    1721 | 1358 |  995 | 1194 1185 1144 1149
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1134
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1163
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1132
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 2994
  * lg             |      |      | 6547 6497 6494 6146
  * t455|6     265 |   89 |  9   |       8.4 8045 7780
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
- * t816           |   71 | 70.6 | 38.0 31.8 28.2 24.2
+ * t816           |   71 | 70.6 | 38.0 31.8 28.2 24.0
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.5
  *
  * --------------------------------------------------
@@ -69358,7 +69336,7 @@ int main(int argc, char **argv)
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  *
  * how to catch the stack overflow op_cz case?
- *
- * no out-func in t816
- * float-vector-relative-difference
+ * new-sound et al in new with-sound arg order
+ * _cq_function_is_ok needs fixup
+ * check opt_syntax global_slots
  */

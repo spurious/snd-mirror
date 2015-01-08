@@ -25,6 +25,7 @@
  *   (vct-fill! v1 val)               v1[i] = val -> v1
  *   (vct-map! v1 proc)               set each element of v1 to value of function proc()
  *   (vct-peak v1)                    max val (abs) in v
+ *   (vct-equal? v1 v2 diff)          is element-wise relative-difference of v1 and v2 ever greater than diff?
  *   (list->vct lst)                  return vct with elements of list lst
  *   (vct->list v1)                   return list with elements of vct v1
  *   (vector->vct vect)               return vct with elements of vector vect
@@ -90,6 +91,7 @@ mus_float_t *mus_vct_data(vct *v) {return(v->data);}
 #define S_vct_fillB      "float-vector-fill!"
 #define S_vct_setB       "float-vector-set!"
 #define S_vct_peak       "float-vector-peak"
+#define S_vct_equal      "float-vector-equal?"
 #define S_is_vct         "float-vector?"
 #define S_list_to_vct    "list->float-vector"
 #define S_vct_to_list    "float-vector->list"
@@ -116,6 +118,7 @@ mus_float_t *mus_vct_data(vct *v) {return(v->data);}
 #define S_vct_fillB      "vct-fill!"
 #define S_vct_setB       "vct-set!"
 #define S_vct_peak       "vct-peak"
+#define S_vct_equal      "vct-equal?"
 #define S_is_vct         "vct?"
 #define S_list_to_vct    "list->vct"
 #define S_vct_to_list    "vct->list"
@@ -703,6 +706,50 @@ static Xen g_vct_abs(Xen obj)
   lim = mus_vct_length(v);
   for (i = 0; i < lim; i++) d[i] = fabs(d[i]);
   return(obj);
+}
+
+
+static Xen g_vct_equal(Xen uv1, Xen uv2, Xen udiff)
+{
+  #define H_vct_equal "(" S_vct_equal " v1 v2 diff): is element-wise relative-difference of v1 and v2 ever greater than diff?"
+  mus_long_t i, lim;
+  vct *v1, *v2;
+  mus_float_t *d1, *d2;
+  mus_float_t diff, max_diff = 0.0;
+
+  Xen_check_type(mus_is_vct(uv1), uv1, 1, S_vct_equal, A_VCT);
+  Xen_check_type(mus_is_vct(uv2), uv2, 2, S_vct_equal, A_VCT);
+  Xen_check_type(Xen_is_number(udiff), udiff, 3, S_vct_equal, "a number");
+
+  v1 = Xen_to_vct(uv1);
+  d1 = mus_vct_data(v1);
+  v2 = Xen_to_vct(uv2);
+  d2 = mus_vct_data(v2);
+  diff = Xen_real_to_C_double(udiff);
+
+  lim = mus_vct_length(v1);
+  if (mus_vct_length(v2) < lim) lim = mus_vct_length(v2);
+
+  for (i = 0; i < lim; i++)
+    {
+      mus_float_t x1, x2, z;
+      x1 = fabs(d1[i]);
+      x2 = fabs(d2[i]);
+      z = fabs(d1[i] - d2[i]);
+      if (x1 > x2)
+	z /= x1;
+      else 
+	{
+	  if (x2 > 0.0)
+	    z /= x2;
+	}
+      if (z > diff)
+	return(Xen_false);
+      if (z > max_diff) 
+	max_diff = z;
+    }
+
+  return(C_double_to_Xen_real(max_diff));
 }
 
 
@@ -1464,6 +1511,7 @@ Xen_wrap_3_optional_args(g_vct_add_w, g_vct_add)
 Xen_wrap_2_args(g_vct_subtract_w, g_vct_subtract)
 Xen_wrap_2_args(g_vct_offset_w, g_vct_offset)
 Xen_wrap_1_arg(g_vct_peak_w, g_vct_peak)
+Xen_wrap_3_args(g_vct_equal_w, g_vct_equal)
 Xen_wrap_1_arg(g_vct_peak_and_location_w, g_vct_peak_and_location)
 Xen_wrap_4_optional_args(g_vct_move_w, g_vct_move)
 Xen_wrap_4_optional_args(g_vct_subseq_w, g_vct_subseq)
@@ -1570,6 +1618,7 @@ void mus_vct_init(void)
   Xen_define_safe_procedure(S_vct_min,           g_vct_min_w,       1, 0, 0, H_vct_min);
   Xen_define_safe_procedure(S_vct_scaleB,        g_vct_scale_w,     2, 0, 0, H_vct_scaleB);
   Xen_define_safe_procedure(S_vct_absB,          g_vct_abs_w,       1, 0, 0, H_vct_absB);
+  Xen_define_safe_procedure(S_vct_equal,         g_vct_equal_w,     3, 0, 0, H_vct_equal);
 
 #if (!HAVE_SCHEME)
   Xen_define_safe_procedure(S_vct_setB,          g_vct_set_w,       3, 0, 0, H_vct_setB);

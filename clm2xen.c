@@ -19714,6 +19714,27 @@ static s7_pointer outb_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
   return(f);
 }
 
+
+static s7_pointer out_any_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if (args == 3)
+    {
+      s7_pointer arg3;
+      arg3 = cadddr(expr);
+      if (s7_is_integer(arg3))
+	{
+	  s7_Int c;
+	  c = s7_integer(arg3);
+	  if (c == 0)
+	    return(outa_chooser(sc, f, 2, expr));
+	  if (c == 1)
+	    return(outb_chooser(sc, f, 2, expr));
+	}
+    }
+  return(f);
+}
+
+
 static s7_pointer ina_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 2)
@@ -19729,6 +19750,8 @@ static s7_pointer ina_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
     }
   return(f);
 }
+
+/* (file->sample obj loc chan) -> (ina loc obj)?? only ina_ss but that requires expr not be a temp? */
 
 
 static s7_pointer frample_to_file_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -20693,6 +20716,9 @@ static void init_choosers(s7_scheme *sc)
   indirect_outb_two_looped = clm_make_function_no_choice(sc, S_outb, g_indirect_outb_two_looped, 3, 0, false, "outb opt", f);
   s7_function_set_looped(outb_two, indirect_outb_two_looped);
 #endif
+
+  f = s7_name_to_value(sc, S_out_any);
+  s7_function_set_chooser(sc, f, out_any_chooser);
 
   f = s7_name_to_value(sc, S_ina);
   s7_function_set_chooser(sc, f, ina_chooser);

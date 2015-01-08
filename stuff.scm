@@ -7,7 +7,7 @@
   (let ((documentation "(empty? obj) returns #t if obj is an empty sequence"))
     (lambda (obj) 
       (if (hash-table? obj)
-	  (= (hash-table-entries obj) 0) ; length here is table size
+	  (zero? (hash-table-entries obj)) ; length here is table size
 	  (equal? (length obj) 0)))))
 
 (define applicable? arity)
