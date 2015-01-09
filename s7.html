@@ -5218,7 +5218,10 @@ I need to know where something unexpected happened.  So:
 </p>
 
 <p><b>reverse!</b> is an in-place version of the built-in function reverse.  That is, 
-it modifies the list passed to it in the process of reversing its contents.
+it modifies the list passed to it in the process of reversing its contents.  Use set!:
+<code>(set! p (reverse! p))</code>.  This is somewhat inconsistent with other cases,
+but historically, lisp programmers have treated the in-place reverse as the fast
+version, so s7 follows suit.
 <b>list-set!</b> sets a member of a list.  <b>sort!</b> sorts a sequence using the
 function passed as its second argument to choose the new ordering.
 </p>
@@ -8729,7 +8732,7 @@ variables at the start of lint.scm to control additional output:
 
 <p>lint is not smart about functions defined outside the current file, so *report-undefined-variables*
 sometimes gets confused.  *report-minor-stuff* adds output about overly complicated boolean and numerical
-expressions, dangerous floating point operations, bad docstrings (this check can get confused), and
+expressions, dangerous floating point operations, and
 whatever else it thinks is odd.
 </p>
 

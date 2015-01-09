@@ -12041,6 +12041,12 @@ static s7_pointer g_ina_ss(s7_scheme *sc, s7_pointer args)
   return(g_in_any_1(S_ina, s7_car_value(sc, args), 0, s7_cadr_value(sc, args)));
 }
 
+static s7_pointer file_to_sample_ss;
+static s7_pointer g_file_to_sample_ss(s7_scheme *sc, s7_pointer args)
+{
+  return(g_in_any_1(S_ina, s7_cadr_value(sc, args), 0, s7_car_value(sc, args)));
+}
+
 static s7_pointer ina_reverb_2;
 static s7_pointer g_ina_reverb_2(s7_scheme *sc, s7_pointer args)
 {
@@ -19752,6 +19758,23 @@ static s7_pointer ina_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 }
 
 /* (file->sample obj loc chan) -> (ina loc obj)?? only ina_ss but that requires expr not be a temp? */
+static s7_pointer file_to_sample_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 2) ||
+      ((args == 3) &&
+       (s7_is_integer(cadddr(expr))) &&
+       (s7_integer(cadddr(expr)) == 0)))
+    {
+      if ((s7_is_symbol(cadr(expr))) &&
+	  (s7_is_symbol(caddr(expr))))
+	{
+	  s7_function_choice_set_direct(sc, expr);
+	  return(file_to_sample_ss);
+	}
+    }
+  return(f);
+}
+
 
 
 static s7_pointer frample_to_file_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -20734,6 +20757,10 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "in-any");
   store_gf_fixup(s7, f, fixup_in_any);
+
+  f = s7_name_to_value(sc, S_file_to_sample);
+  s7_function_set_chooser(sc, f, file_to_sample_chooser);
+  file_to_sample_ss = clm_make_function_no_choice(sc, S_file_to_sample, g_file_to_sample_ss, 2, 1, false, "file->sample opt", f);
 
   f = s7_name_to_value(sc, "make-env");
   s7_function_set_chooser(sc, f, make_env_chooser);

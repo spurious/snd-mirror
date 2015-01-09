@@ -30907,7 +30907,7 @@ static s7_pointer g_float_vector(s7_scheme *sc, s7_pointer args)
   if (len == 0)
     return(make_vector_1(sc, 0, NOT_FILLED, T_VECTOR));
 
-  vec = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR);
+  vec = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR); /* dangerous: assumes number_to_double won't trigger GC even if bignums */
   for (x = args, i = 0; is_pair(x); x = cdr(x), i++) 
     {
       if (s7_is_real(car(x))) /* bignum is ok here */
@@ -31982,8 +31982,6 @@ static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
 
 
 
-/* -------- sort! -------- */
-
 static bool c_function_is_ok(s7_scheme *sc, s7_pointer x) 
 {
   /* macro version of this (below) is much slower! */
@@ -32070,6 +32068,37 @@ static void initialize_dox_end_vars(s7_scheme *sc, s7_pointer end)
 }
 
 
+
+/* -------- sort! -------- */
+
+static int dbl_less(const void *f1, const void *f2)
+{
+  if ((*((s7_Double *)f1)) < (*((s7_Double *)f2))) return(-1);
+  if ((*((s7_Double *)f1)) > (*((s7_Double *)f2))) return(1);
+  return(0);
+}
+
+static int int_less(const void *f1, const void *f2)
+{
+  if ((*((s7_Int *)f1)) < (*((s7_Int *)f2))) return(-1);
+  if ((*((s7_Int *)f1)) > (*((s7_Int *)f2))) return(1);
+  return(0);
+}
+
+static int dbl_greater(const void *f1, const void *f2) {return(-dbl_less(f1, f2));}
+static int int_greater(const void *f1, const void *f2) {return(-int_less(f1, f2));}
+
+
+static int byte_less(const void *f1, const void *f2)
+{
+  if ((*((unsigned char *)f1)) < (*((unsigned char *)f2))) return(-1);
+  if ((*((unsigned char *)f1)) > (*((unsigned char *)f2))) return(1);
+  return(0);
+}
+
+static int byte_greater(const void *f1, const void *f2) {return(-byte_less(f1, f2));}
+
+
 static s7_scheme *compare_sc;
 static s7_function compare_func;
 static s7_pointer compare_args;
@@ -32101,10 +32130,16 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 {
   #define H_sort "(sort! sequence less?) sorts a sequence using the function 'less?' to compare elements."
 
-  s7_pointer data, lessp;
+  s7_pointer data, lessp, lx;
   s7_Int len = 0, n, k;
   int (*sort_func)(const void *v1, const void *v2);
   s7_pointer *elements;
+  int gc_loc = -1; 
+
+  /* both the intermediate vector (if any) and the current args pointer need GC protection,
+   *   but it is a real bother to unprotect args at every return statement, so I'll use temp3
+   */
+  sc->temp3 = args;
 
   data = car(args);
   if (is_null(data)) 
@@ -32158,27 +32193,38 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	   *   without any extra work up front.  compare_func needs to be a dox-like-version of c_call(expr)
 	   *   where the 2 args are placed in dox1|2 before calling the actual function.
 	   */
-	  s7_pointer expr, args;
+	  s7_pointer expr, largs;
 	  s7_function sort_f;
-	  expr = car(closure_body(lessp));
-	  args = closure_args(lessp);
 
-	  if ((is_pair(args)) &&
-	      (!arglist_has_rest(sc, args)) &&
+	  expr = car(closure_body(lessp));
+	  largs = closure_args(lessp);
+
+	  if ((is_pair(largs)) &&
+	      (!arglist_has_rest(sc, largs)) &&
 	      (((optimize_data(expr) & 1) != 0) ||
 	       (c_function_is_ok(sc, expr))))
 	    {
 	      int orig_data;
 	      orig_data = optimize_data(expr);
 	      set_optimize_data(expr, optimize_data(expr) | 1);
-	      sort_f = end_dox_eval(sc, expr);
-	      if (sort_f)
+	      if ((optimize_data(expr) == HOP_SAFE_C_SS) &&
+		  (car(largs) == cadr(expr)) &&
+		  (cadr(largs) == caddr(expr)))
 		{
-		  NEW_FRAME_WITH_TWO_SLOTS(sc, closure_let(lessp), sc->envir, car(args), sc->F, cadr(args), sc->F);
-		  initialize_dox_end_vars(sc, expr);
-		  compare_func = sort_f;
-		  sort_func = dox_compare;
-		  compare_args = expr;
+		  lessp = find_symbol_unchecked(sc, car(expr));
+		  compare_func = c_function_call(lessp);
+		}
+	      else
+		{
+		  sort_f = end_dox_eval(sc, expr);
+		  if (sort_f)
+		    {
+		      NEW_FRAME_WITH_TWO_SLOTS(sc, closure_let(lessp), sc->envir, car(largs), sc->F, cadr(largs), sc->F);
+		      initialize_dox_end_vars(sc, expr);
+		      compare_func = sort_f;
+		      sort_func = dox_compare;
+		      compare_args = expr;
+		    }
 		}
 	      set_optimize_data(expr, orig_data);
 	    }
@@ -32200,6 +32246,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	  s7_pointer vec, p;
 
 	  vec = g_vector(sc, data);
+	  gc_loc = s7_gc_protect(sc, vec);
 	  elements = s7_vector_elements(vec);
 
 	  sc->v = vec;
@@ -32207,6 +32254,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	  for (p = data, i = 0; i < len; i++, p = cdr(p))
 	    car(p) = elements[i];
 
+	  s7_gc_unprotect_at(sc, gc_loc);
 	  return(data);
 	}
 
@@ -32216,13 +32264,32 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 
     case T_STRING:
       {
+	/* bytevectors here also, so this isn't completely silly */
 	int i;
 	s7_pointer vec;
 	unsigned char *chrs;
 
 	len = string_length(data);
 	if (len < 2) return(data);
+
+	if (is_c_function(lessp))
+	  {
+	    if (((!is_bytevector(data)) && (compare_func == g_chars_are_less)) ||
+		((is_bytevector(data)) && (compare_func == g_less)))
+	      {
+		qsort((void *)vector_elements(data), len, sizeof(unsigned char), byte_less);
+		return(data);
+	      }
+	    if (((!is_bytevector(data)) && (compare_func == g_chars_are_greater)) ||
+		((is_bytevector(data)) && (compare_func == g_greater)))
+	      {
+		qsort((void *)vector_elements(data), len, sizeof(unsigned char), byte_greater);
+		return(data);
+	      }
+	  }
+
 	vec = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
+	gc_loc = s7_gc_protect(sc, vec);
 	elements = s7_vector_elements(vec);
 	chrs = (unsigned char *)string_value(data);
 
@@ -32252,11 +32319,13 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 		for (i = 0; i < len; i++)
 		  chrs[i] = character(elements[i]);
 	      }
+	    s7_gc_unprotect_at(sc, gc_loc);
 	    return(data);
 	  }
 	
 	push_stack(sc, OP_SORT_STRING_END, cons(sc, data, lessp), sc->code);
 	car(args) = vec;
+	s7_gc_unprotect_at(sc, gc_loc);
       }
       break;
 
@@ -32266,17 +32335,38 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	int i;
 	s7_pointer vec;
 	
+	len = vector_length(data);
+	if (len < 2) return(data);
+
+	if (is_c_function(lessp))
+	  {
+	    if (compare_func == g_less)
+	      {
+		if (type(data) == T_FLOAT_VECTOR)
+		  qsort((void *)vector_elements(data), len, sizeof(s7_Double), dbl_less);
+		else qsort((void *)vector_elements(data), len, sizeof(s7_Int), int_less);
+		return(data);
+	      }
+	    if (compare_func == g_greater)
+	      {
+		if (type(data) == T_FLOAT_VECTOR)
+		  qsort((void *)vector_elements(data), len, sizeof(s7_Double), dbl_greater);
+		else qsort((void *)vector_elements(data), len, sizeof(s7_Int), int_greater);
+		return(data);
+	      }
+	  }
+
 	/* currently we have to make the ordinary vector here even if not compare_func
 	 *   because the sorter uses vector_element to access sort args (see SORT_DATA in eval).
 	 *   This is probably better than passing down getter/setter (fewer allocations).
 	 *   get/set macro in eval is SORT_DATA(k) then s7_vector_to_list if pair at start (sort_*_end)
-	 *
-	 * if we know the underlying C function (say < or >), we could greatly optimize this --
-	 *   is it worth the effort?  What are the most common cases here -- I expect sort vector of strings.
 	 */
-	len = vector_length(data);
-	if (len < 2) return(data);
-	vec = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
+	vec = make_vector_1(sc, len, FILLED, T_VECTOR);
+	/* we need this vector prefilled because vector_getter below makes reals/int, causing possible GC
+	 *   at any time during that loop, and the GC mark process expects the vector to have an s7_pointer
+	 *   at every element.
+	 */
+	gc_loc = s7_gc_protect(sc, vec);
 	elements = s7_vector_elements(vec);
 
 	for (i = 0; i < len; i++)
@@ -32289,11 +32379,14 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	    
 	    for (i = 0; i < len; i++)
 	      vector_setter(data)(sc, data, i, elements[i]);
+
+	    s7_gc_unprotect_at(sc, gc_loc);
 	    return(data);
 	  }
 	
 	push_stack(sc, OP_SORT_VECTOR_END, cons(sc, data, lessp), sc->code); /* save and gc protect the original homogenous vector and func */
 	car(args) = vec;
+	s7_gc_unprotect_at(sc, gc_loc);
       }
       break;
 
@@ -32314,25 +32407,24 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 
   n = len - 1;
   k = ((int)(n / 2)) + 1;
-  {
-    s7_pointer lx;
 
-    lx = s7_make_vector(sc, (sc->safety == 0) ? 4 : 6); 
-    sc->v = lx;
-
-    vector_element(lx, 0) = make_mutable_integer(sc, n);
-    vector_element(lx, 1) = make_mutable_integer(sc, k);
-    vector_element(lx, 2) = make_mutable_integer(sc, 0);
-    vector_element(lx, 3) = make_mutable_integer(sc, 0);
-    if (sc->safety != 0)
-      {
-	vector_element(lx, 4) = make_mutable_integer(sc, 0);
-	vector_element(lx, 5) = make_integer(sc, n * n);
-      }
-    push_stack(sc, OP_SORT, args, lx);
-  }
-  return(sc->F);
+  lx = s7_make_vector(sc, (sc->safety == 0) ? 4 : 6); 
+  gc_loc = s7_gc_protect(sc, lx);
+  sc->v = lx;
   
+  vector_element(lx, 0) = make_mutable_integer(sc, n);
+  vector_element(lx, 1) = make_mutable_integer(sc, k);
+  vector_element(lx, 2) = make_mutable_integer(sc, 0);
+  vector_element(lx, 3) = make_mutable_integer(sc, 0);
+  if (sc->safety != 0)
+    {
+      vector_element(lx, 4) = make_mutable_integer(sc, 0);
+      vector_element(lx, 5) = make_integer(sc, n * n);
+    }
+  push_stack(sc, OP_SORT, args, lx);
+  s7_gc_unprotect_at(sc, gc_loc);
+
+  return(sc->F);
   /* if the comparison function waffles, sort! can hang: (sort! '(1 2 3) (lambda (a b) (= a b)))
    * set 'safety to 1 to add a check for this loop, but the "safe" procedures are direct, so unchecked.
    */
@@ -36710,6 +36802,13 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
       if (is_null(p))
 	return(simple_wrong_type_argument_with_type(sc, sc->REVERSEB, p, A_PROPER_LIST));
       break;
+      /* (reverse! p) is supposed to change p directly and lisp programmers expect reverse! to be fast
+       * so in a sense this is different from the other cases: it assumes (set! p (reverse! p))
+       * To make (reverse! p) direct:
+       *    for (l = p, r = cdr(p); is_pair(r); l = r, r = cdr(r)) ecdr(r) = l;
+       *    if (!is_null(r)) return(simple_wrong_type_argument_with_type(sc, sc->REVERSEB, p, A_PROPER_LIST));
+       *    for (r = l, l = p; l != r; l = cdr(l)) {t = car(l); car(l) = car(r); car(r) = t; if (cdr(l) != r) r = ecdr(r);}
+       */
 
     case T_STRING:
       {
@@ -45968,11 +46067,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 
     case OP_LET:
       if (is_symbol(cadr(p)))
-	{
-	  if (is_slot(global_slot(cadr(p))))
-	    sc->w = cons(sc, add_sym_to_list(sc, cadr(p)), sc->w);
-	  sc->w = collect_collisions(sc, caddr(p), sc->w);
-	}
+	sc->w = collect_collisions(sc, caddr(p), cons(sc, add_sym_to_list(sc, cadr(p)), sc->w));
       else sc->w = collect_collisions(sc, cadr(p), sc->w);
       break;
       
@@ -45996,16 +46091,12 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
     case OP_LAMBDA:
     case OP_LAMBDA_STAR:
       if (is_symbol(cadr(p))) /* (lambda args ...) */
-	{
-	  if (is_slot(global_slot(cadr(p))))
-	    sc->w = cons(sc, add_sym_to_list(sc, cadr(p)), sc->w);
-	}
+	sc->w = cons(sc, add_sym_to_list(sc, cadr(p)), sc->w);
       else sc->w = collect_collisions(sc, cadr(p), sc->w);
       break;
 
     case OP_SET:
-      if ((is_symbol(cadr(p))) &&
-	  (is_slot(global_slot(cadr(p)))))
+      if (is_symbol(cadr(p)))
 	sc->w = cons(sc, add_sym_to_list(sc, cadr(p)), sc->w);
       break;
 
@@ -46017,12 +46108,10 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
       if (sc->safety != 0)
 	hop = 0;
       /* we can't trust anything here, so hop ought to be off.  For example,
-       *
        *    (define (hi)
        *      (let ((e (sublet (curlet)
        *                 (cons 'abs (lambda (a) (- a 1))))))
        *        (with-let e (abs -1))))
-       *
        * returns 1 if hop is 1, but -2 outside the function body.
        */
       break;
@@ -46207,7 +46296,6 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer symbol, s7
     }
   
   return(global_slot(symbol)); /* it's no longer global perhaps (local definition now inaccessible) */
-  /* return(sc->NIL); */
 } 
 
 
@@ -50760,7 +50848,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	SORT_K = k - 1;
 	SORT_K1 = k - 1;
-
 	push_stack(sc, OP_SORT, sc->args, sc->code);
 	goto HEAPSORT;
       }
@@ -50802,7 +50889,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
     case OP_SORT_VECTOR_END:
-      /* sc->value is the sort vector which needs to be copied into the original list */
+      /* sc->value is the sort (s7_pointer) vector which needs to be copied into the original (double/int) vector */
       {
 	s7_pointer *elements;
 	int i, len;
@@ -69293,7 +69380,7 @@ int main(int argc, char **argv)
 /* --------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3
- * s7test    1721 | 1358 |  995 | 1194 1185 1144 1163
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1132
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 2994
  * lg             |      |      | 6547 6497 6494 6146
@@ -69301,6 +69388,7 @@ int main(int argc, char **argv)
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 24.0
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.5
+ * t137           |      |      |           7179 6588
  *
  * --------------------------------------------------
  *
@@ -69336,7 +69424,6 @@ int main(int argc, char **argv)
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  *
  * how to catch the stack overflow op_cz case?
- * new-sound et al in new with-sound arg order
+ * new-sound et al in new with-sound arg order -- get list of these
  * _cq_function_is_ok needs fixup
- * check opt_syntax global_slots
  */
