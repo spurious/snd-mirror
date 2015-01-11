@@ -828,7 +828,7 @@
 
     (list 'snd-clm23.scm "clm23.scm")
     (list 'snd-edit123.scm "edit123.scm")
-    (list 'snd-snd11.scm "snd11.scm")
+;    (list 'snd-snd11.scm "snd11.scm")
     (list 'snd-new-backgrounds.scm "new-backgrounds.scm")
     (list 'snd-new-effects.scm "new-effects.scm")
     (list 'snd-bess1.scm "bess1.scm")

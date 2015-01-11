@@ -4688,7 +4688,7 @@ To evaluate the error handler in the environment of the error:
 	     (list args x y)))))    ; we have access to 'y'
 </pre>
 
-<p>To limit the maximum size of the stack, set (*s7* 'maximum-stack-size).
+<p>To limit the maximum size of the stack, set (*s7* 'max-stack-size).
 </p>
 </div>
 
@@ -5659,7 +5659,7 @@ c-types                       a list of c-object type names (from s7_new_type, e
 
 stack-top                     current stack location
 stack-size                    current stack size
-maximum-stack-size            max stack size (settable)
+max-stack-size                max stack size (settable)
 stack                         the current stack entries
 
 symbol-table                  a vector

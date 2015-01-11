@@ -696,7 +696,7 @@ struct s7_scheme {
   s7_pointer *stack_start, *stack_end, *stack_resize_trigger;
   
   s7_pointer *op_stack, *op_stack_now, *op_stack_end;
-  unsigned int op_stack_size, maximum_stack_size;
+  unsigned int op_stack_size, max_stack_size;
   s7_pointer stacktrace_env;
 
   s7_cell **heap, **free_heap, **free_heap_top, **free_heap_trigger, **previous_free_heap_top;
@@ -916,7 +916,7 @@ struct s7_scheme {
   /* s7 env symbols */
   s7_pointer stack_top_symbol, symbol_table_is_locked_symbol, heap_size_symbol, gc_freed_symbol, gc_protected_objects_symbol;
   s7_pointer free_heap_size_symbol, file_names_symbol, symbol_table_symbol, hash_tables_symbol, gensyms_symbol, cpu_time_symbol;
-  s7_pointer stack_size_symbol, rootlet_size_symbol, c_types_symbol, safety_symbol, maximum_stack_size_symbol, gc_stats_symbol;
+  s7_pointer stack_size_symbol, rootlet_size_symbol, c_types_symbol, safety_symbol, max_stack_size_symbol, gc_stats_symbol;
   s7_pointer strings_symbol, vectors_symbol, input_ports_symbol, output_ports_symbol, continuations_symbol, c_objects_symbol;
   s7_pointer catches_symbol, exits_symbol, stack_symbol, default_rationalize_error_symbol, max_string_length_symbol, default_random_state_symbol;
   s7_pointer max_list_length_symbol, max_vector_length_symbol, max_vector_dimensions_symbol, default_hash_table_length_symbol;
@@ -4593,11 +4593,11 @@ static void increase_stack_size(s7_scheme *sc)
   new_size = sc->stack_size * 2;
 
   /* how can we trap infinite recursions?  Is a warning in order here?
-   *   I think I'll add 'maximum-stack-size
+   *   I think I'll add 'max-stack-size
    *   size currently reaches 8192 in s7test
    */
-  if (new_size > sc->maximum_stack_size)
-    s7_error(sc, s7_make_symbol(sc, "stack-too-big"), list_1(sc, make_string_wrapper(sc, "stack has grown past (*s7* 'maximum-stack-size)")));
+  if (new_size > sc->max_stack_size)
+    s7_error(sc, s7_make_symbol(sc, "stack-too-big"), list_1(sc, make_string_wrapper(sc, "stack has grown past (*s7* 'max-stack-size)")));
 
   vector_elements(sc->stack) = (s7_pointer *)realloc(vector_elements(sc->stack), new_size * sizeof(s7_pointer));
   if (vector_elements(sc->stack) == NULL)
@@ -7383,7 +7383,7 @@ static bool call_with_current_continuation(s7_scheme *sc)
 
 static void call_with_exit(s7_scheme *sc)
 {
-  int i, new_stack_top;
+  int i, new_stack_top, quit = 0;
   
   if (!call_exit_active(sc->code))
     s7_error(sc, sc->INVALID_ESCAPE_FUNCTION, list_1(sc, make_string_wrapper_with_length(sc, "call-with-exit escape procedure called outside its block", 56)));
@@ -7447,12 +7447,19 @@ static void call_with_exit(s7_scheme *sc)
 	  sc->input_port = stack_args(sc->stack, i);         /* "args" = port that we shadowed */
 	  break;
 
+	case OP_EVAL_DONE: /* goto called in a method -- put off the inner eval return(s) until we clean up the stack */
+	  quit++;
+	  break;
+
 	default:
 	  break;
 	}
     }
 	    
   sc->stack_end = (s7_pointer *)(sc->stack_start + new_stack_top);
+  
+  for (i = 0; i < quit; i++)
+    push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->NIL);
 
   /* the return value should have an implicit values call, just as in call/cc */
   if (is_null(sc->args))
@@ -13876,8 +13883,6 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 
 
 static s7_pointer subtract_1, subtract_s1, subtract_cs1, subtract_2, subtract_csn;
-
-
 static s7_pointer g_subtract_1(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p;
@@ -14190,6 +14195,22 @@ static s7_pointer g_subtract_2_temp(s7_scheme *sc, s7_pointer args)
   arg1 = car(args);
   return(remake_real(sc, arg1, real(arg1) - real(cadr(args))));
 }
+
+#if (!WITH_GMP)
+/* (define (hi) (- (random 100) 50)) (define (ho) (- (random 1.0) 0.5)) */
+static double next_random(s7_rng_t *r);
+static s7_pointer sub_random_ic, sub_random_rc;
+static s7_pointer g_sub_random_ic(s7_scheme *sc, s7_pointer args)
+{
+  return(make_integer(sc, ((s7_Int)(integer(cadar(args)) * next_random(sc->default_rng))) - integer(cadr(args))));
+}
+
+static s7_pointer g_sub_random_rc(s7_scheme *sc, s7_pointer args)
+{
+  return(make_real(sc, real(cadar(args)) * next_random(sc->default_rng) - real(cadr(args))));
+}
+#endif
+
 
 
 /* ---------------------------------------- multiply ---------------------------------------- */
@@ -30114,7 +30135,7 @@ static s7_pointer int_vector_setter(s7_scheme *sc, s7_pointer vec, s7_Int loc, s
 
 static s7_pointer int_vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc) 
 {
-  return(s7_make_integer(sc, int_vector_element(vec, loc)));
+  return(make_integer(sc, int_vector_element(vec, loc)));
 }
 
 static s7_pointer float_vector_setter(s7_scheme *sc, s7_pointer vec, s7_Int loc, s7_pointer val)
@@ -32231,6 +32252,17 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	}
     }
 
+  if (compare_func)
+    {
+      if (compare_func == g_less)
+	compare_func = g_less_2;
+      else
+	{
+	  if (compare_func == g_greater)
+	    compare_func = g_greater_2;
+	}
+    }
+
   switch (type(data))
     {
     case T_PAIR:
@@ -32275,13 +32307,13 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	if (is_c_function(lessp))
 	  {
 	    if (((!is_bytevector(data)) && (compare_func == g_chars_are_less)) ||
-		((is_bytevector(data)) && (compare_func == g_less)))
+		((is_bytevector(data)) && (compare_func == g_less_2)))
 	      {
 		qsort((void *)vector_elements(data), len, sizeof(unsigned char), byte_less);
 		return(data);
 	      }
 	    if (((!is_bytevector(data)) && (compare_func == g_chars_are_greater)) ||
-		((is_bytevector(data)) && (compare_func == g_greater)))
+		((is_bytevector(data)) && (compare_func == g_greater_2)))
 	      {
 		qsort((void *)vector_elements(data), len, sizeof(unsigned char), byte_greater);
 		return(data);
@@ -32340,14 +32372,14 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 
 	if (is_c_function(lessp))
 	  {
-	    if (compare_func == g_less)
+	    if (compare_func == g_less_2)
 	      {
 		if (type(data) == T_FLOAT_VECTOR)
 		  qsort((void *)vector_elements(data), len, sizeof(s7_Double), dbl_less);
 		else qsort((void *)vector_elements(data), len, sizeof(s7_Int), int_less);
 		return(data);
 	      }
-	    if (compare_func == g_greater)
+	    if (compare_func == g_greater_2)
 	      {
 		if (type(data) == T_FLOAT_VECTOR)
 		  qsort((void *)vector_elements(data), len, sizeof(s7_Double), dbl_greater);
@@ -39094,6 +39126,9 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
   sc->args = args;
   sc->code = fnc;
   eval(sc, OP_APPLY);
+  /* we're limited in choices here -- the caller might be (say) car(sc->T1_1) = c_call(...) where the c_call
+   *   happens to fallback on a method -- we can't just push OP_APPLY and drop back into the evaluator normally.
+   */
   return(sc->value);
 }
 
@@ -42457,12 +42492,21 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	      return(subtract_sf);
 	    }
 	  if ((is_pair(arg1)) &&
-	      (is_safely_optimized(arg1)) &&
-	      (optimize_data(arg1) == HOP_SAFE_C_C) &&
-	      (c_call(arg1) == g_multiply_sf))
+	      (is_safely_optimized(arg1)))
 	    {
-	      set_optimize_data(expr, HOP_SAFE_C_C);
-	      return(subtract_sf_f);
+	      if ((optimize_data(arg1) == HOP_SAFE_C_C) &&
+		  (c_call(arg1) == g_multiply_sf))
+		{
+		  set_optimize_data(expr, HOP_SAFE_C_C);
+		  return(subtract_sf_f);
+		}
+#if (!WITH_GMP)
+	      if (c_call(arg1) == g_random_rc)
+		{
+		  set_optimize_data(expr, HOP_SAFE_C_C);
+		  return(sub_random_rc);
+		}
+#endif
 	    }
 	}
 
@@ -42482,11 +42526,20 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	    }
 	}
 
-      if ((s7_is_integer(arg2)) &&
-	  (is_symbol(arg1)))
+      if (s7_is_integer(arg2))
 	{
-	  set_optimize_data(expr, HOP_SAFE_C_C);
-	  return(subtract_csn);
+	  if (is_symbol(arg1))
+	    {
+	      set_optimize_data(expr, HOP_SAFE_C_C);
+	      return(subtract_csn);
+	    }
+#if (!WITH_GMP)
+	  if (c_call(arg1) == g_random_ic)
+	    {
+	      set_optimize_data(expr, HOP_SAFE_C_C);
+	      return(sub_random_ic);
+	    }
+#endif
 	}
 
       if ((is_optimized(arg1)) &&
@@ -43326,6 +43379,10 @@ static void init_choosers(s7_scheme *sc)
   subtract_sf_f = make_function_with_class(sc, f, "-", g_subtract_sf_f, 2, 0, false, "- opt");
   subtract_2_temp = make_temp_function_with_class(sc, f, "-", g_subtract_2_temp, 2, 0, false, "- opt");
   subtract_f_sqr = make_function_with_class(sc, f, "-", g_subtract_f_sqr, 2, 0, false, "- opt");
+
+  sub_random_ic = make_function_with_class(sc, f, "random", g_sub_random_ic, 2, 0, false, "- opt");
+  sub_random_rc = make_function_with_class(sc, f, "random", g_sub_random_rc, 2, 0, false, "- opt");
+  set_returns_temp(sub_random_rc);
 
   /* * */
   f = set_function_chooser(sc, sc->MULTIPLY, multiply_chooser);
@@ -67562,7 +67619,7 @@ static void init_s7_env(s7_scheme *sc)
   sc->safety_symbol =                        s7_make_symbol(sc, "safety");
   sc->undefined_identifier_warnings_symbol = s7_make_symbol(sc, "undefined-identifier-warnings");
   sc->gc_stats_symbol =                      s7_make_symbol(sc, "gc-stats");
-  sc->maximum_stack_size_symbol =            s7_make_symbol(sc, "maximum-stack-size");
+  sc->max_stack_size_symbol =                s7_make_symbol(sc, "max-stack-size");
   sc->cpu_time_symbol =                      s7_make_symbol(sc, "cpu-time");
   sc->catches_symbol =                       s7_make_symbol(sc, "catches");
   sc->exits_symbol =                         s7_make_symbol(sc, "exits");
@@ -67588,8 +67645,8 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
     return(s7_make_integer(sc, (sc->stack_end - sc->stack_start) / 4));
   if (sym == sc->stack_size_symbol)                                      /* stack-size (max so far) */
     return(s7_make_integer(sc, sc->stack_size));
-  if (sym == sc->maximum_stack_size_symbol)                              /* maximum-stack-size */
-    return(s7_make_integer(sc, sc->maximum_stack_size));
+  if (sym == sc->max_stack_size_symbol)                                  /* max-stack-size */
+    return(s7_make_integer(sc, sc->max_stack_size));
 
   if (sym == sc->symbol_table_is_locked_symbol)                          /* symbol-table-locked? */
     return(make_boolean(sc, sc->symbol_table_is_locked));
@@ -67693,7 +67750,7 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 
   if (sym == sc->symbol_table_is_locked_symbol) {sc->symbol_table_is_locked = (val != sc->F); return(val);}
 
-  if (sym == sc->maximum_stack_size_symbol)
+  if (sym == sc->max_stack_size_symbol)
     {
       if (s7_is_integer(val))
 	{
@@ -67701,7 +67758,7 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 	  size = s7_integer(val);
 	  if (size >= INITIAL_STACK_SIZE)
 	    {
-	      sc->maximum_stack_size = (unsigned int)size;
+	      sc->max_stack_size = (unsigned int)size;
 	      return(val);
 	    }
 	  return(simple_out_of_range(sc, sc->LET_SET, val, make_string_wrapper(sc, "should be greater than the initial stack size (512)")));
@@ -67960,7 +68017,7 @@ s7_scheme *s7_init(void)
   sc->stack_size = INITIAL_STACK_SIZE;
   sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
   set_type(sc->stack, T_STACK);
-  sc->maximum_stack_size = (1 << 30);
+  sc->max_stack_size = (1 << 30);
 
   initialize_op_stack(sc);
   
@@ -69384,11 +69441,11 @@ int main(int argc, char **argv)
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1132
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 2994
  * lg             |      |      | 6547 6497 6494 6146
+ * t137           |      |      | 7932           6811
  * t455|6     265 |   89 |  9   |       8.4 8045 7780
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 24.0
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.5
- * t137           |      |      |           7179 6588
  *
  * --------------------------------------------------
  *
@@ -69424,6 +69481,12 @@ int main(int argc, char **argv)
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  *
  * how to catch the stack overflow op_cz case?
- * new-sound et al in new with-sound arg order -- get list of these
+ * new-sound et al in new with-sound arg order [output channels srate sample-type header-type comment]:
+ *   before-save-as-hook mus-raw-header-defaults save-region save-selection save-sound-as array->file(?)
  * _cq_function_is_ok needs fixup
+ *
+ * t140 -> s7test
+ *    if this is ok, ultrasafe closure in qsort via eval (like s7_apply_function but underneath apply)
+ * ht timing tests
+ * fulltest switch for s7test perhaps
  */

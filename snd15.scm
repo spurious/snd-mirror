@@ -20,3 +20,12 @@
 (define transform->vct transform->float-vector)
 (define vct->channel float-vector->channel)
 (define channel->vct channel->float-vector)
+
+(define data-format sample-type)
+(define mus-sound-data-format mus-sound-sample-type)
+(define mus-data-format-name mus-sample-type-name)
+(define mus-data-format->string mus-sample-type->string)
+(define default-output-data-format (dilambda 
+				    (lambda () *default-output-sample-type*)
+				    (lambda (val) (set! *default-output-sample-type* val))))
+

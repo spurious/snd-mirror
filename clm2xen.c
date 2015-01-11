@@ -19184,27 +19184,6 @@ static s7_pointer pulsed_env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 }
 
 
-static s7_pointer mus_random_c;
-static s7_pointer g_mus_random_c(s7_scheme *sc, s7_pointer args)
-{
-  return(s7_make_real(sc, mus_random(s7_cell_real(car(args)))));
-}
-
-static s7_pointer mus_random_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if (args == 1)
-    {
-      if ((s7_is_real(cadr(expr))) &&
-	  (!s7_is_rational(cadr(expr))))
-	{
-	  s7_function_choice_set_direct(sc, expr);
-	  return(mus_random_c);
-	}
-    }
-  return(f);
-}
-
-
 static s7_pointer rand_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 1)
@@ -20495,8 +20474,6 @@ static void init_choosers(s7_scheme *sc)
 
 
   f = s7_name_to_value(sc, "mus-random");
-  s7_function_set_chooser(sc, f, mus_random_chooser);
-  mus_random_c = clm_make_temp_function_no_choice(sc, "mus-random", g_mus_random_c, 1, 0, false, "mus-random opt", f);
   direct_choice_1(sc, f, (mus_float_t (*)(mus_xen *))wrapped_mus_random_1, wrapped_mus_random_p);
 
 

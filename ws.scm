@@ -81,8 +81,8 @@
 			    (output *clm-file-name*) 
 			    (channels *clm-channels*)
 			    (srate *clm-srate*) 
-			    (header-type *clm-header-type*)
 			    (sample-type *clm-sample-type*)
+			    (header-type *clm-header-type*)
 			    comment
 			    (verbose *clm-verbose*)
 			    (reverb *clm-reverb*)
