@@ -3,6 +3,10 @@
 (provide 'snd-clean.scm)
 (require snd-dsp.scm snd-generators.scm)
 
+(when (provided? 'make-complex)
+  (define magnitude abs)
+  (define make-rectangular make-complex))
+
 (define goertzel-channel
   (let ((documentation "(goertzel-channel freq beg dur snd chn) returns the amplitude of the 'freq' spectral component"))
     (lambda* (freq (beg 0) dur snd chn)

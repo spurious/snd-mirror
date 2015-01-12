@@ -2,6 +2,10 @@
 ;;;    ENVELOPES (env.scm)
 ;;; *************************
 
+(when (provided? 'pure-s7)
+  (define-macro (call-with-values producer consumer) `(,consumer (,producer))))
+
+
 ;;;=============================================================================
 ;;; Exponential envelopes
 ;;;=============================================================================

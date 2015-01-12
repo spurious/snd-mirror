@@ -162,7 +162,7 @@
   #define WITH_IMMUTABLE_UNQUOTE 1
   #define WITH_QUASIQUOTE_VECTOR 0
   #define WITH_MAKE_COMPLEX 1
-  /* also omitted: *-ci* functions, char-ready? */
+  /* also omitted: *-ci* functions, char-ready?, cond-expand, multiple-values-bind|set!, call-with-values, defmacro(*) */
 #endif
 
 #ifndef WITH_EXTRA_EXPONENT_MARKERS
@@ -818,8 +818,8 @@ struct s7_scheme {
   s7_pointer CAADR, CAAR, CADAAR, CADADR, CADAR, CADDAR, CADDDR, CADDR, CADR, CALL_CC, CALL_WITH_CURRENT_CONTINUATION, CALL_WITH_EXIT, COVERLET;
   s7_pointer CALL_WITH_INPUT_FILE, CALL_WITH_INPUT_STRING, CALL_WITH_OUTPUT_FILE, CALL_WITH_OUTPUT_STRING, CAR, CATCH, CDAAAR;
   s7_pointer CDAADR, CDAAR, CDADAR, CDADDR, CDADR, CDAR, CDDAAR, CDDADR, CDDAR, CDDDAR, CDDDDR, CDDDR, CDDR, CDR, CEILING;
-  s7_pointer CHAR_LEQ, CHAR_LT, CHAR_EQ, CHAR_GEQ, CHAR_GT, IS_CHAR, CHAR_POSITION, CHAR_TO_INTEGER, IS_CHAR_ALPHABETIC, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ;
-  s7_pointer CHAR_CI_GEQ, CHAR_CI_GT, CHAR_DOWNCASE, IS_CHAR_LOWER_CASE, IS_CHAR_NUMERIC, IS_CHAR_READY, CHAR_UPCASE, IS_CHAR_UPPER_CASE;
+  s7_pointer CHAR_LEQ, CHAR_LT, CHAR_EQ, CHAR_GEQ, CHAR_GT, IS_CHAR, CHAR_POSITION, CHAR_TO_INTEGER, IS_CHAR_ALPHABETIC;
+  s7_pointer CHAR_DOWNCASE, IS_CHAR_LOWER_CASE, IS_CHAR_NUMERIC, CHAR_UPCASE, IS_CHAR_UPPER_CASE;
   s7_pointer IS_CHAR_WHITESPACE, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, IS_COMPLEX, CONS, IS_CONSTANT, IS_CONTINUATION, COPY, COS, COSH, C_POINTER, IS_C_POINTER;
   s7_pointer IS_DEFINED, DENOMINATOR, DISPLAY, DYNAMIC_WIND, IS_LET, INLET, LET_REF, LET_REF_FALLBACK, LET_SET, LET_SET_FALLBACK, LET_TO_LIST;
   s7_pointer IS_EOF_OBJECT, IS_EQ, IS_EQUAL, IS_EQV, ERROR, EVAL, EVAL_STRING, IS_EVEN, IS_EXACT;
@@ -828,23 +828,30 @@ struct s7_scheme {
   s7_pointer IS_HASH_TABLE, IS_HASH_TABLE_ITERATOR, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_SIZE, HASH_TABLE_ENTRIES, HELP, IMAG_PART, IS_INEXACT, INEXACT_TO_EXACT;
   s7_pointer IS_INFINITE, IS_INPUT_PORT, IS_INTEGER, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, IS_KEYWORD, KEYWORD_TO_SYMBOL, LCM, LENGTH;
   s7_pointer LIST, IS_LIST, LIST_TO_STRING, LIST_TO_VECTOR, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBIT, LOGIOR, LOGNOT, LOGXOR;
-  s7_pointer IS_MACRO, MAGNITUDE, MAKE_BYTEVECTOR, MAKE_FLOAT_VECTOR, MAKE_HASH_TABLE, MAKE_HASH_TABLE_ITERATOR, MAKE_KEYWORD, MAKE_LIST, MAKE_POLAR, MAKE_RANDOM_STATE;
-  s7_pointer MAKE_RECTANGULAR, MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, IS_MORALLY_EQUAL, IS_NAN, IS_NEGATIVE, NEWLINE;
+  s7_pointer IS_MACRO, MAKE_BYTEVECTOR, MAKE_FLOAT_VECTOR, MAKE_HASH_TABLE, MAKE_HASH_TABLE_ITERATOR, MAKE_KEYWORD, MAKE_LIST, MAKE_RANDOM_STATE;
+  s7_pointer MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, IS_MORALLY_EQUAL, IS_NAN, IS_NEGATIVE, NEWLINE;
   s7_pointer NOT, IS_NULL, IS_NUMBER, NUMBER_TO_STRING, NUMERATOR, OBJECT_TO_STRING, IS_ODD, OPENLET, IS_OPENLET, OPEN_INPUT_FILE;
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTLET, IS_OUTPUT_PORT, IS_PAIR, PAIR_LINE_NUMBER, PEEK_CHAR;
   s7_pointer IS_PORT_CLOSED, PORT_FILENAME, PORT_LINE_NUMBER;
   s7_pointer IS_POSITIVE, IS_PROCEDURE, PROCEDURE_DOCUMENTATION, FUNCLET, PROCEDURE_SOURCE;
-  s7_pointer IS_DILAMBDA, PROVIDE;
+  s7_pointer IS_DILAMBDA, PROVIDE, MAKE_RECTANGULAR;
   s7_pointer IS_PROVIDED, QUOTIENT, RANDOM, IS_RANDOM_STATE, RANDOM_STATE_TO_LIST, RATIONALIZE, IS_RATIONAL, READ, READ_BYTE, READ_CHAR, READ_LINE, IS_REAL;
   s7_pointer READ_STRING, REAL_PART, REMAINDER, REQUIRE, REVERSE, REVERSEB, ROUND, SET_CAR, SET_CDR, SIN, SINH, SORT, SQRT, STACKTRACE;
   s7_pointer STRING, STRING_DOWNCASE, STRING_UPCASE, STRING_LEQ, STRING_LT, STRING_EQ;
-  s7_pointer STRING_GEQ, STRING_GT, IS_STRING, STRING_POSITION, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND, STRING_CI_LEQ, STRING_CI_LT;
-  s7_pointer STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_COPY, STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
+  s7_pointer STRING_GEQ, STRING_GT, IS_STRING, STRING_POSITION, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND;
+  s7_pointer STRING_COPY, STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
   s7_pointer SYMBOL_ACCESS, IS_SYMBOL, SYMBOL_TO_KEYWORD, SYMBOL_TO_STRING, SYMBOL_TO_DYNAMIC_VALUE, SYMBOL_TO_VALUE;
   s7_pointer TAN, TANH, THROW, TO_BYTEVECTOR, TRUNCATE, VALUES, VECTOR, VECTOR_APPEND;
   s7_pointer IS_VECTOR, VECTOR_TO_LIST, VECTOR_DIMENSIONS, VECTOR_FILL, VECTOR_LENGTH, VECTOR_REF, VECTOR_SET, WITH_INPUT_FROM_FILE;
   s7_pointer WITH_INPUT_FROM_STRING, WITH_OUTPUT_TO_FILE, WITH_OUTPUT_TO_STRING, WRITE, WRITE_BYTE, WRITE_CHAR, WRITE_STRING, IS_ZERO;
   s7_pointer S7_FEATURES, LOAD_PATH, PI;
+#if (!WITH_MAKE_COMPLEX)
+  s7_pointer MAGNITUDE, MAKE_POLAR; /* MAKE_RECTANGULAR stands in for MAKE_COMPLEX if pure-s7 */
+#endif
+#if (!WITH_PURE_S7)
+  s7_pointer IS_CHAR_READY, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ, CHAR_CI_GEQ, CHAR_CI_GT;
+  s7_pointer STRING_CI_LEQ, STRING_CI_LT, STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT;
+#endif
 
 #if WITH_GMP
   s7_pointer BIGNUM, BIGNUM_PRECISION;
@@ -2875,6 +2882,9 @@ static s7_pointer check_values(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   return(sc->GC_NIL);
 }
 
+/* if a method is shadowing a built-in like abs, it should expect the same args as abs and 
+ *   behave the same -- no multiple values etc.
+ */
 #define check_method(Sc, Obj, Method, Args)     \
   {                                             \
     s7_pointer func; 	                        \
@@ -10586,7 +10596,7 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 #endif
 
     default:
-      check_method(sc, x, sc->ABS, args);
+      check_method(sc, x, sc->ABS, args); /* not sc->MAGNITUDE also here because it is not set in the make-complex case */
       return(simple_wrong_type_argument(sc, sc->ABS, x, T_REAL));
     }
 }
@@ -32128,8 +32138,7 @@ static int vector_compare(const void *v1, const void *v2)
 {
   car(compare_args) = (*(s7_pointer *)v1);
   cadr(compare_args) = (*(s7_pointer *)v2);
-  if (is_true(compare_sc, (*(compare_func))(compare_sc, compare_args)))
-    return(-1);
+  if ((*(compare_func))(compare_sc, compare_args) != compare_sc->F) return(-1);
   return(1);
 }
 
@@ -32141,8 +32150,29 @@ static int dox_compare(const void *v1, const void *v2)
    */
   slot_set_value(let_slots(compare_sc->envir), (*(s7_pointer *)v1));
   slot_set_value(next_slot(let_slots(compare_sc->envir)), (*(s7_pointer *)v2));
-  if (is_true(compare_sc, (*(compare_func))(compare_sc, compare_args)))
-    return(-1);
+  if ((*(compare_func))(compare_sc, compare_args) != compare_sc->F) return(-1);
+  return(1);
+}
+
+static int closure_compare(const void *v1, const void *v2)
+{
+  slot_set_value(let_slots(compare_sc->envir), (*(s7_pointer *)v1));
+  slot_set_value(next_slot(let_slots(compare_sc->envir)), (*(s7_pointer *)v2));
+  push_stack(compare_sc, OP_EVAL_DONE, compare_sc->args, compare_sc->code);
+  compare_sc->code = compare_args;
+  eval(compare_sc, OP_EVAL);
+  if (compare_sc->value != compare_sc->F) return(-1);
+  return(1);
+}
+
+static int closure_compare_begin(const void *v1, const void *v2)
+{
+  slot_set_value(let_slots(compare_sc->envir), (*(s7_pointer *)v1));
+  slot_set_value(next_slot(let_slots(compare_sc->envir)), (*(s7_pointer *)v2));
+  push_stack(compare_sc, OP_EVAL_DONE, compare_sc->args, compare_sc->code);
+  compare_sc->code = compare_args;
+  eval(compare_sc, OP_BEGIN1);
+  if (compare_sc->value != compare_sc->F) return(-1);
   return(1);
 }
 
@@ -32202,52 +32232,73 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
     {
       /* other similar cases are assoc/member (and for-each/map but they never happen in this context -- see op_for_each_ls_2 below)
        */
-      if ((is_closure(lessp)) &&
-	  (is_null(cdr(closure_body(lessp)))) &&
-	  (is_optimized(car(closure_body(lessp)))))
-	{
-	  /* since (sort seq (lambda (a b) ...)) can't return a "safe closure" (the hop bit is off in
-	   *   optimize in this case, for some arcane reason), the optimized expression won't be hop_safe,
-	   *   but that is irrelevant at this point -- if c_function_is_ok, we're good to go.
-	   *   So, treat it as if it were a dox end expression, creating a frame and using dox1|2 for
-	   *   any symbols. This way we can handle slightly tricky cases like (lambda (a b) (< (car b) a))
-	   *   without any extra work up front.  compare_func needs to be a dox-like-version of c_call(expr)
-	   *   where the 2 args are placed in dox1|2 before calling the actual function.
-	   */
-	  s7_pointer expr, largs;
-	  s7_function sort_f;
+      /* fprintf(stderr, "sort: %d %s\n", is_safe_closure(lessp), DISPLAY(car(closure_body(lessp)))); */
 
+      if (is_closure(lessp))
+	{
+	  s7_pointer expr, largs;
 	  expr = car(closure_body(lessp));
 	  largs = closure_args(lessp);
-
-	  if ((is_pair(largs)) &&
-	      (!arglist_has_rest(sc, largs)) &&
-	      (((optimize_data(expr) & 1) != 0) ||
-	       (c_function_is_ok(sc, expr))))
+	      
+	  if ((is_null(cdr(closure_body(lessp)))) &&
+	      (is_optimized(expr)))
 	    {
-	      int orig_data;
-	      orig_data = optimize_data(expr);
-	      set_optimize_data(expr, optimize_data(expr) | 1);
-	      if ((optimize_data(expr) == HOP_SAFE_C_SS) &&
-		  (car(largs) == cadr(expr)) &&
-		  (cadr(largs) == caddr(expr)))
+	      /* since (sort seq (lambda (a b) ...)) can't return a "safe closure" (the hop bit is off in
+	       *   optimize in this case, for some arcane reason), the optimized expression won't be hop_safe,
+	       *   but that is irrelevant at this point -- if c_function_is_ok, we're good to go.
+	       *   So, treat it as if it were a dox end expression, creating a frame and using dox1|2 for
+	       *   any symbols. This way we can handle slightly tricky cases like (lambda (a b) (< (car b) a))
+	       *   without any extra work up front.  compare_func needs to be a dox-like-version of c_call(expr)
+	       *   where the 2 args are placed in dox1|2 before calling the actual function.
+	       */
+	      s7_function sort_f;
+	      
+	      if ((is_pair(largs)) &&
+		  (!arglist_has_rest(sc, largs)) &&
+		  (((optimize_data(expr) & 1) != 0) ||
+		   (c_function_is_ok(sc, expr))))
 		{
-		  lessp = find_symbol_unchecked(sc, car(expr));
-		  compare_func = c_function_call(lessp);
+		  int orig_data;
+		  orig_data = optimize_data(expr);
+		  set_optimize_data(expr, optimize_data(expr) | 1);
+		  if ((optimize_data(expr) == HOP_SAFE_C_SS) &&
+		      (car(largs) == cadr(expr)) &&
+		      (cadr(largs) == caddr(expr)))
+		    {
+		      lessp = find_symbol_unchecked(sc, car(expr));
+		      compare_func = c_function_call(lessp);
+		    }
+		  else
+		    {
+		      sort_f = end_dox_eval(sc, expr); /* safe_c_opsq_opsq for the car car case */
+		      if (sort_f)
+			{
+			  NEW_FRAME_WITH_TWO_SLOTS(sc, closure_let(lessp), sc->envir, car(largs), sc->F, cadr(largs), sc->F);
+			  initialize_dox_end_vars(sc, expr);
+			  compare_func = sort_f;
+			  sort_func = dox_compare;
+			  compare_args = expr;
+			  /* expr example: (< (cadr a) (cadr b)) */
+			}
+		    }
+		  set_optimize_data(expr, orig_data);
+		}
+	    }
+	  if ((!compare_func) &&
+	      (is_safe_closure(lessp)))
+	    {
+	      NEW_FRAME_WITH_TWO_SLOTS(sc, closure_let(lessp), sc->envir, car(largs), sc->F, cadr(largs), sc->F);
+	      compare_func = (s7_function)lessp;       /* not used -- just a flag */
+	      if (is_null(cdr(closure_body(lessp))))
+		{
+		  compare_args = car(closure_body(lessp));
+		  sort_func = closure_compare;
 		}
 	      else
 		{
-		  sort_f = end_dox_eval(sc, expr);
-		  if (sort_f)
-		    {
-		      NEW_FRAME_WITH_TWO_SLOTS(sc, closure_let(lessp), sc->envir, car(largs), sc->F, cadr(largs), sc->F);
-		      initialize_dox_end_vars(sc, expr);
-		      compare_func = sort_f;
-		      sort_func = dox_compare;
-		      compare_args = expr;
-		    }
+		  compare_args = closure_body(lessp);
+		  sort_func = closure_compare_begin;
 		}
-	      set_optimize_data(expr, orig_data);
 	    }
 	}
     }
@@ -32427,6 +32478,9 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
       if (len < 2) return(data);
       if (compare_func)
 	{
+	  /* here if, for example, compare_func == string<?, we could precheck for strings,
+	   *   then qsort without the type checks.  Also common is (lambda (a b) (f (car a) (car b))).
+	   */
 	  qsort((void *)s7_vector_elements(data), len, sizeof(s7_pointer), sort_func);
 	  return(data);
 	}
@@ -69125,6 +69179,14 @@ s7_scheme *s7_init(void)
    */
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, H_quasiquote);
 
+  /* ---------------- dilambda ---------------- */
+  s7_eval_c_string(sc, "(define (dilambda g s)                                                                \n\
+                          (if (or (not (procedure? g)) (not (procedure? s)))                                  \n\
+                              (error 'wrong-type-arg \"dilambda takes 2 procedures: ~A ~A\" g s)              \n\
+                              (set! (procedure-setter g) s))                                                  \n\
+                          g)");
+
+#if (!WITH_PURE_S7)
   /* CL-style macros */
   s7_eval_c_string(sc, "(define-macro (defmacro name args . body) `(define-macro ,(cons name args) ,@body))");
   s7_eval_c_string(sc, "(define-macro (defmacro* name args . body) `(define-macro* ,(cons name args) ,@body))");
@@ -69139,8 +69201,7 @@ s7_scheme *s7_init(void)
                            (if (or (symbol? vars) (negative? (length vars)))                                  \n\
                                `((lambda ,vars ,@body) ,expression)                                           \n\
                                `((lambda* (,@vars . ,(gensym)) ,@body) ,expression)))");
-  /* (multiple-value-bind (a b) (values 1 2) (+ a b)) */
-  /*   named "receive" in srfi-8 which strikes me as perverse */
+  /* (multiple-value-bind (a b) (values 1 2) (+ a b)), named "receive" in srfi-8 which strikes me as perverse */
 
   s7_eval_c_string(sc, "(define-macro (multiple-value-set! vars expr . body)                                  \n\
                           (let ((local-vars (map (lambda (n) (gensym)) vars)))                                \n\
@@ -69149,20 +69210,7 @@ s7_scheme *s7_init(void)
                                 ,@body)                                                                       \n\
                               ,expr)))");
 
-
-  /* ---------------- dilambda ---------------- */
-
-  s7_eval_c_string(sc, "(define (dilambda g s)                                                                \n\
-                          (if (or (not (procedure? g)) (not (procedure? s)))                                  \n\
-                              (error 'wrong-type-arg \"dilambda takes 2 procedures: ~A ~A\" g s)              \n\
-                              (set! (procedure-setter g) s))                                                  \n\
-                          g)");
-
-
-  /* ---------------- cond-expand ---------------- */
-
-  /* cond-expand (uses *features*) 
-   */
+  /* cond-expand (uses *features*) */
   s7_eval_c_string(sc, "(define-macro (cond-expand . clauses)                                                 \n\
                           (letrec ((traverse (lambda (tree)                                                   \n\
 		                               (if (pair? tree)                                               \n\
@@ -69174,7 +69222,7 @@ s7_scheme *s7_init(void)
 		                             (cons (traverse (car clause))                                    \n\
 			                           (if (null? (cdr clause)) '(#f) (cdr clause))))             \n\
 		                          clauses))))");
-
+#endif
 
   s7_eval_c_string(sc, "(define-expansion (reader-cond . clauses)                                             \n\
                           (call-with-exit                                                                     \n\
@@ -69190,7 +69238,6 @@ s7_scheme *s7_init(void)
 
 
   /* ---------------- hooks ---------------- */
-
   s7_eval_c_string(sc, "(define (make-hook . args)                                                            \n\
                           (let ((init ())                                                                     \n\
 	                        (body ())                                                                     \n\
@@ -69441,7 +69488,7 @@ int main(int argc, char **argv)
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1132
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 2994
  * lg             |      |      | 6547 6497 6494 6146
- * t137           |      |      | 7932           6811
+ * t137           |      |      | 8296           3554
  * t455|6     265 |   89 |  9   |       8.4 8045 7780
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 24.0
@@ -69485,8 +69532,11 @@ int main(int argc, char **argv)
  *   before-save-as-hook mus-raw-header-defaults save-region save-selection save-sound-as array->file(?)
  * _cq_function_is_ok needs fixup
  *
- * t140 -> s7test
- *    if this is ok, ultrasafe closure in qsort via eval (like s7_apply_function but underneath apply)
+ * sort: need multistatement case tests, car-case, precheck types, string case
+ * can we get rid of setjmp/longjmp via op_eval_done? -- more jump tests using op_eval_done (perhaps in sc?)
  * ht timing tests
  * fulltest switch for s7test perhaps
+ * inexact/pure s7 and in all scm files, eof
+ *    add autoload for these perhaps?  also check lint
+ * reset_stack if no longjmp -- debug check for lost op_eval_done?
  */

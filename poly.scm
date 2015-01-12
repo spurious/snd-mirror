@@ -5,7 +5,14 @@
 ;;; this file really needs doubles (--with-doubles in configure, double as s7_Double in s7.h)
 
 (provide 'snd-poly.scm)
-(if (provided? 'pure-s7) (define make-rectangular make-complex))
+
+(when (provided? 'make-complex)
+  (define magnitude abs)
+  (define make-rectangular make-complex)
+  (define (make-polar mag ang)
+    (if (and (real? mag) (real? ang))
+	(make-complex (* mag (cos ang)) (* mag (sin ang)))
+	(error 'wrong-type-arg "make-polar args should be real"))))
 
 (define (vector->float-vector v) (copy v (make-vector (length v) 0.0 #t)))
 (define (float-vector->vector v) (copy v (make-vector (length v) 0.0)))

@@ -5,6 +5,14 @@
 (require cload.scm)
 (provide 'libgsl.scm)
 
+(when (provided? 'make-complex)
+  (define magnitude abs)
+  (define make-rectangular make-complex)
+  (define (make-polar mag ang)
+    (if (and (real? mag) (real? ang))
+	(make-complex (* mag (cos ang)) (* mag (sin ang)))
+	(error 'wrong-type-arg "make-polar args should be real"))))
+
 ;; since we might be loading this locally, reader-cond (in that case) won't find gsl-version unless...
 (if (not (defined? '*libgsl*))
     (with-let (rootlet)

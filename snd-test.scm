@@ -31,7 +31,14 @@
 ;;;  test the end                               [46970]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
-(if (provided? 'pure-s7) (define make-rectangular make-complex))
+
+(when (provided? 'make-complex)
+  (define magnitude abs)
+  (define make-rectangular make-complex)
+  (define (make-polar mag ang)
+    (if (and (real? mag) (real? ang))
+	(make-complex (* mag (cos ang)) (* mag (sin ang)))
+	(error 'wrong-type-arg "make-polar args should be real"))))
 
 (define tests 1)
 (define keep-going #f)
