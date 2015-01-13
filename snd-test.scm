@@ -25025,7 +25025,7 @@ EDITS: 2
 			    (set! open-ctr (+ open-ctr 1))
 			    (set! open-files (cons fd open-files)))))
 		    (if (and (> len 0) (> (random 1.0) 0.3))
-			(let* ((choice (floor (random (exact->inexact (length open-files)))))
+			(let* ((choice (floor (random (* 1.0 (length open-files)))))
 			       (fd (open-files choice)))
 			  (close-sound fd)
 			  (set! open-files (remove-if (lambda (a) (equal? a fd)) open-files)))))))
@@ -26426,7 +26426,7 @@ EDITS: 2
 			 (let ((chns (chans index)))
 			   (do ((i 0 (+ i 1)))
 			       ((= i chns))
-			     (src-channel (exact->inexact (/ (srate index) sr)) 0 #f index i))
+			     (src-channel (* 1.0 (/ (srate index) sr)) 0 #f index i))
 			   (save-sound-as filename index :header-type type :sample-type dformat :srate sr :comment comment) 
 			   ;; hook won't be invoked recursively
 			   (do ((i 0 (+ i 1)))
@@ -26458,7 +26458,7 @@ EDITS: 2
 		     (set! need-save-as-undo #f)
 		     (if (not (= sr (srate index)))
 			 (begin
-			   (src-sound (exact->inexact (/ (srate index) sr)) 1.0 index)
+			   (src-sound (* 1.0 (/ (srate index) sr)) 1.0 index)
 			   (set! need-save-as-undo #t))))))
       (hook-push after-save-as-hook
 		 (lambda (hook)
@@ -28170,7 +28170,7 @@ EDITS: 2
 		     (player (make-player ind 0))
 		     (len (framples ind 0))
 		     (incr *dac-size*)
-		     (e (make-env '(0 0 1 1) :length (+ 1 (floor (exact->inexact (/ len incr))))))
+		     (e (make-env '(0 0 1 1) :length (+ 1 (floor (* 1.0 (/ len incr))))))
 		     (samp 0))
 		(add-player player 0 -1 -1 
 			    (lambda (reason) 
@@ -28180,8 +28180,8 @@ EDITS: 2
 			   (lambda (hook)
 			     (set! (amp-control player) (env e))
 			     (if (fneq (amp-control ind) 1.0) (snd-display #__line__ ";amp-control snd: ~A" (amp-control ind)))
-			     (if (> (abs (- (amp-control player) (exact->inexact (/ samp len)))) 1.0)
-				 (snd-display #__line__ ";amp-control player: ~A ~A" (amp-control player) (exact->inexact (/ samp len))))
+			     (if (> (abs (- (amp-control player) (* 1.0 (/ samp len)))) 1.0)
+				 (snd-display #__line__ ";amp-control player: ~A ~A" (amp-control player) (* 1.0 (/ samp len))))
 			     (set! samp (+ samp incr))))
 		(start-playing 1 (srate ind)))
 	      (if (find-sound "1a.snd") (snd-display #__line__ ";stop proc didn't close?"))
@@ -32068,8 +32068,8 @@ EDITS: 1
 	(if (and all-args (= test-16 0))
 	    (let ((tries 256))
 	      (snd-display #__line__ ";framples: ~,2F ~,2F" 
-			   (exact->inexact (/ (mus-sound-framples "1.snd") (mus-sound-framples "oboe.snd")))
-			   (exact->inexact (/ (mus-sound-framples "1.snd") (mus-sound-framples "1a.snd"))))
+			   (* 1.0 (/ (mus-sound-framples "1.snd") (mus-sound-framples "oboe.snd")))
+			   (* 1.0 (/ (mus-sound-framples "1.snd") (mus-sound-framples "1a.snd"))))
 	      (snd-display #__line__ ";~12T~A~28T~A~44T~A~56T(1/oboe, 1/1a)" "1.snd" "oboe.snd" "1a.snd")
 	      (for-each
 	       (lambda (name func)
@@ -32116,9 +32116,9 @@ EDITS: 1
 						(hundred (- mid-time-2 start-time-2)) (hundred (- end-time-2 mid-time-2))
 						(hundred (- mid-time start-time)) (hundred (- end-time mid-time))
 						
-						(exact->inexact (/ (+ (hundred (- mid-time-1 start-time-1)) (hundred (- end-time-1 mid-time-1)))
+						(* 1.0 (/ (+ (hundred (- mid-time-1 start-time-1)) (hundred (- end-time-1 mid-time-1)))
 								   (max 1 (+ (hundred (- mid-time-2 start-time-2)) (hundred (- end-time-2 mid-time-2))))))
-						(exact->inexact (/ (+ (hundred (- mid-time-1 start-time-1)) (hundred (- end-time-1 mid-time-1)))
+						(* 1.0 (/ (+ (hundred (- mid-time-1 start-time-1)) (hundred (- end-time-1 mid-time-1)))
 								   (max 1 (+ (hundred (- mid-time start-time)) (hundred (- end-time mid-time)))))))))))))))))
 	       
 	       (list "scale" "set!" "env" "env-exp" "env-step" "delete" "insert" "pad"
@@ -45275,7 +45275,7 @@ EDITS: 1
   (define notch-out-rumble-and-hiss 
     (let ((documentation "(notch-out-rumble-and-hiss s c) applies a bandpass filter with cutoffs at 40 Hz and 3500 Hz"))
       (lambda* (snd chn)
-	(let ((cur-srate (exact->inexact (srate snd))))
+	(let ((cur-srate (* 1.0 (srate snd))))
 	  (filter-sound
 	   (list 0.0 0.0                    ; get rid of DC
 		 (/ 80.0 cur-srate) 0.0     ; get rid of anything under 40 Hz (1.0=srate/2 here)

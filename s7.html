@@ -847,6 +847,7 @@ f
 
 <p><em class=def id="definemacro">define-macro</em>, 
 <em class=def id="definemacrostar">define-macro*</em>, 
+<em class=def id="macroexpand">macroexpand</em>,
 <em class=def id="gensym">gensym</em>, 
 <em class=def id="gensym?">gensym?</em>, and 
 <em class=def id="macrop">macro?</em>
@@ -3651,6 +3652,17 @@ from a simple procedure.
       'bummer))
 </pre>
 
+<!--
+(define-macro (call-with-exit func)
+  (let ((tag (caadr func)))
+    `(catch ',tag
+       (lambda ()
+	 (define-macro (,tag . body) 
+	   `(throw ',',tag ,@body))
+	 ,@(cddr func))
+       (lambda (type info)
+	 (car info)))))
+-->
 
 
 

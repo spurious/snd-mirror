@@ -227,7 +227,7 @@
 (provide 'snd-animals.scm)
 
 (require snd-generators.scm)
-;;     rxyk!cos rk!cos blackman=polywave rcos rxycos
+;;     rk!cos blackman=polywave rcos rxycos
 (if (provided? 'snd)
     (require snd-ws.scm)
     (require sndlib-ws.scm))

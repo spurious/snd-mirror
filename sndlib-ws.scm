@@ -179,7 +179,7 @@
 
 	 (if statistics 
 	     (begin
-	       (set! cycles (exact->inexact (/ (- (get-internal-real-time) start) internal-time-units-per-second)))
+	       (set! cycles (- (get-internal-real-time) start))
 	       (format #t "~%;~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
 		       (if output-to-file
 			   (if (or scaled-to scaled-by)

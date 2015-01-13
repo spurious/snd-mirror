@@ -815,7 +815,7 @@
 	    (let ((diff (* 0.05 (- ay1 ay0))) ; assuming -10 to 10 
 		  (dpy (XtDisplay scan-pane))
 		  (wn (XtWindow scan-pane))
-		  (xincr (exact->inexact (/ (- ax1 ax0) size))))
+		  (xincr (* 1.0 (/ (- ax1 ax0) size))))
 	      (if pts1
 		  (XDrawLinesDirect dpy wn egc pts1 size 0)
 		  (XFillRectangle dpy wn egc ; erase previous graph

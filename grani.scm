@@ -43,11 +43,11 @@
 		       (offset 0)
 		       cutoff
 		       (out-scaler 1))
-  (let* ((base (exact->inexact base))
-	 (error (exact->inexact error))
-	 (scaler (exact->inexact scaler))
-	 (offset (exact->inexact offset))
-	 (out-scaler (exact->inexact out-scaler))
+  (let* ((base (* 1.0 base))
+	 (error (* 1.0 error))
+	 (scaler (* 1.0 scaler))
+	 (offset (* 1.0 offset))
+	 (out-scaler (* 1.0 out-scaler))
 	 (ycutoff (and cutoff (expt base (+ offset (* cutoff scaler)))))
 	 (result ()))
     ;; linear interpolation
@@ -83,9 +83,9 @@
       ;; loop for each segment in the envelope
       (let segs ((en env1))
 	(let* ((x (car en))
-	       (y (exact->inexact (cadr en)))
+	       (y (* 1.0 (cadr en)))
 	       (nx (caddr en))
-	       (ny (exact->inexact (cadddr en)))
+	       (ny (* 1.0 (cadddr en)))
 	       (yscl (+ offset (* y scaler)))
 	       (nyscl (+ offset (* ny scaler)))
 	       (xy (list x (if (or (not ycutoff)
@@ -239,7 +239,7 @@
 
 (define* (make-gr-env env1 (len 512))
   (let ((env-float-vector (make-float-vector len))
-	(length-1 (exact->inexact (- len 1))))
+	(length-1 (* 1.0 (- len 1))))
     (do ((i 0 (+ 1 i)))
 	((= i len) env-float-vector)
       (set! (env-float-vector i) (envelope-interp (/ i length-1) env1)))))
@@ -351,7 +351,7 @@
 		      (verbose #t))
   (let ((ts (times->samples start-time duration))
 	 (in-file-channels (channels file))
-	 (in-file-sr (exact->inexact (mus-sound-srate file))))
+	 (in-file-sr (* 1.0 (mus-sound-srate file))))
 
     (let ((beg (car ts))
 	  (end (cadr ts))

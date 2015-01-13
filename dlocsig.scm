@@ -1104,7 +1104,7 @@
     (set! (path-ak-even (- m 1)) (make-vector m))
     (do ((k 1 (+ k 1)))
 	((> k m))
-      (set! ((path-ak-even (- m 1)) (- k 1)) (exact->inexact (/ (- (g (- m k))) (g m)))))))
+      (set! ((path-ak-even (- m 1)) (- k 1)) (* 1.0 (/ (- (g (- m k))) (g m)))))))
 
 (define path-ftab #f)
 
@@ -1128,7 +1128,7 @@
     (set! (path-ak-odd (- m 1)) (make-vector m))
     (do ((k 1 (+ k 1)))
 	((> k m))
-      (set! ((path-ak-odd (- m 1)) (- k 1)) (exact->inexact (/ (- (f (- m k))) (f m)))))))
+      (set! ((path-ak-odd (- m 1)) (- k 1)) (* 1.0 (/ (- (f (- m k))) (f m)))))))
 
 ;;; Calculate bezier difference vectors for the given path
 ;;; (path-x (make-path '((-10 10)(0 5)(10 10))))

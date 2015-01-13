@@ -403,7 +403,7 @@
 				   (format #f " (~S)" name)
 				   ""))
 			     (mark-sample n)
-			     (exact->inexact (/ (mark-sample n) (srate (car (mark-home n)))))
+			     (* 1.0 (/ (mark-sample n) (srate (car (mark-home n)))))
 			     (if (not (= (sync n) 0))
 				 (format #f "~%  sync: ~A" (sync n))
 				 "")

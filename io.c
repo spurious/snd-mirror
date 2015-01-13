@@ -35,35 +35,6 @@
 
 #define HAVE_BYTESWAP_H __linux__
 
-
-/* ---------------------------------------- */
-/* in io.c but not in _sndlib.h (these are now internal to sndlib, but I don't like the C-oid "_" prefix): */
-void mus_bint_to_char(unsigned char *j, int x);
-int mus_char_to_bint(const unsigned char *inp);
-void mus_lint_to_char(unsigned char *j, int x);
-int mus_char_to_lint(const unsigned char *inp);
-mus_long_t mus_char_to_llong(const unsigned char *inp);
-mus_long_t mus_char_to_blong(const unsigned char *inp);
-int mus_char_to_uninterpreted_int(const unsigned char *inp);
-void mus_bfloat_to_char(unsigned char *j, float x);
-float mus_char_to_bfloat(const unsigned char *inp);
-void mus_lfloat_to_char(unsigned char *j, float x);
-float mus_char_to_lfloat(const unsigned char *inp);
-void mus_bshort_to_char(unsigned char *j, short x);
-short mus_char_to_bshort(const unsigned char *inp);
-void mus_lshort_to_char(unsigned char *j, short x);
-short mus_char_to_lshort(const unsigned char *inp);
-unsigned short mus_char_to_ubshort(const unsigned char *inp);
-unsigned short mus_char_to_ulshort(const unsigned char *inp);
-double mus_char_to_ldouble(const unsigned char *inp);
-double mus_char_to_bdouble(const unsigned char *inp);
-void mus_bdouble_to_char(unsigned char *j, double x);
-void mus_blong_to_char(unsigned char *j, mus_long_t x);
-void mus_llong_to_char(unsigned char *j, mus_long_t x);
-unsigned int mus_char_to_ubint(const unsigned char *inp);
-unsigned int mus_char_to_ulint(const unsigned char *inp);
-/* ---------------------------------------- */
-
 #define MUS_BYTE_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 7)))
 #define MUS_SHORT_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 15)))
 #define MUS_INT_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 23)))

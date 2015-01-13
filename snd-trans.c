@@ -20,15 +20,6 @@
 
 #include "snd.h"
 
-
-/* from io.c, but no longer in sndlib.h */
-void mus_bint_to_char(unsigned char *j, int x);
-void mus_bshort_to_char(unsigned char *j, short x);
-int mus_char_to_bint(const unsigned char *inp);
-short mus_char_to_bshort(const unsigned char *inp);
-short mus_char_to_lshort(const unsigned char *inp);
-
-
 #define TRANS_BUF_SIZE 8192
 
 static char write_error_buffer[PRINT_BUFFER_SIZE];

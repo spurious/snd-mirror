@@ -7397,6 +7397,7 @@ static void call_with_exit(s7_scheme *sc)
   
   if (!call_exit_active(sc->code))
     s7_error(sc, sc->INVALID_ESCAPE_FUNCTION, list_1(sc, make_string_wrapper_with_length(sc, "call-with-exit escape procedure called outside its block", 56)));
+
   call_exit_active(sc->code) = false;
   new_stack_top = call_exit_goto_loc(sc->code);
   sc->op_stack_now = (s7_pointer *)(sc->op_stack + call_exit_op_loc(sc->code));
@@ -7468,9 +7469,6 @@ static void call_with_exit(s7_scheme *sc)
 	    
   sc->stack_end = (s7_pointer *)(sc->stack_start + new_stack_top);
   
-  for (i = 0; i < quit; i++)
-    push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->NIL);
-
   /* the return value should have an implicit values call, just as in call/cc */
   if (is_null(sc->args))
     sc->value = sc->NIL;
@@ -7480,6 +7478,14 @@ static void call_with_exit(s7_scheme *sc)
 	sc->value = car(sc->args);
       else sc->value = splice_in_values(sc, sc->args);
     }
+
+  if ((quit > 0) && (sc->longjmp_ok))
+    {
+      pop_stack(sc);
+      longjmp(sc->goto_start, 1);
+    }
+  for (i = 0; i < quit; i++)
+    push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->NIL);
 }
 
 
@@ -32119,7 +32125,6 @@ static int int_less(const void *f1, const void *f2)
 static int dbl_greater(const void *f1, const void *f2) {return(-dbl_less(f1, f2));}
 static int int_greater(const void *f1, const void *f2) {return(-int_less(f1, f2));}
 
-
 static int byte_less(const void *f1, const void *f2)
 {
   if ((*((unsigned char *)f1)) < (*((unsigned char *)f2))) return(-1);
@@ -32128,6 +32133,29 @@ static int byte_less(const void *f1, const void *f2)
 }
 
 static int byte_greater(const void *f1, const void *f2) {return(-byte_less(f1, f2));}
+
+static int dbl_less_2(const void *f1, const void *f2)
+{
+  s7_pointer p1, p2;
+  p1 = (*((s7_pointer *)f1));
+  p2 = (*((s7_pointer *)f2));
+  if (real(p1) < real(p2)) return(-1);
+  if (real(p1) > real(p2)) return(1);
+  return(0);
+}
+
+static int int_less_2(const void *f1, const void *f2)
+{
+  s7_pointer p1, p2;
+  p1 = (*((s7_pointer *)f1));
+  p2 = (*((s7_pointer *)f2));
+  if (integer(p1) < integer(p2)) return(-1);
+  if (integer(p1) > integer(p2)) return(1);
+  return(0);
+}
+
+static int dbl_greater_2(const void *f1, const void *f2) {return(-dbl_less_2(f1, f2));}
+static int int_greater_2(const void *f1, const void *f2) {return(-int_less_2(f1, f2));}
 
 
 static s7_scheme *compare_sc;
@@ -32176,7 +32204,6 @@ static int closure_compare_begin(const void *v1, const void *v2)
   return(1);
 }
 
-
 static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 {
   #define H_sort "(sort! sequence less?) sorts a sequence using the function 'less?' to compare elements."
@@ -32191,7 +32218,6 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
    *   but it is a real bother to unprotect args at every return statement, so I'll use temp3
    */
   sc->temp3 = args;
-
   data = car(args);
   if (is_null(data)) 
     {
@@ -32232,8 +32258,6 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
     {
       /* other similar cases are assoc/member (and for-each/map but they never happen in this context -- see op_for_each_ls_2 below)
        */
-      /* fprintf(stderr, "sort: %d %s\n", is_safe_closure(lessp), DISPLAY(car(closure_body(lessp)))); */
-
       if (is_closure(lessp))
 	{
 	  s7_pointer expr, largs;
@@ -32270,7 +32294,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 		    }
 		  else
 		    {
-		      sort_f = end_dox_eval(sc, expr); /* safe_c_opsq_opsq for the car car case */
+		      sort_f = end_dox_eval(sc, expr);
 		      if (sort_f)
 			{
 			  NEW_FRAME_WITH_TWO_SLOTS(sc, closure_let(lessp), sc->envir, car(largs), sc->F, cadr(largs), sc->F);
@@ -32284,8 +32308,10 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 		  set_optimize_data(expr, orig_data);
 		}
 	    }
-	  if ((!compare_func) &&
-	      (is_safe_closure(lessp)))
+
+	  if ((!compare_func) && 
+	      (is_pair(largs)) &&       /* closure args not a symbol, etc */
+	      (is_safe_closure(lessp))) /* no embedded sort! or call/cc, etc */
 	    {
 	      NEW_FRAME_WITH_TWO_SLOTS(sc, closure_let(lessp), sc->envir, car(largs), sc->F, cadr(largs), sc->F);
 	      compare_func = (s7_function)lessp;       /* not used -- just a flag */
@@ -32303,15 +32329,21 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	}
     }
 
-  if (compare_func)
+  /* to generalize (i.e. get rid of the eval heapsort code):
+   *   need to put current compare_func/args in e|fcdr of expr?          (easy)
+   *   if unsafe also need new env on each call,                         (easy)
+   *   goto is deactivated somewhere, probably in the inner eval call    (moderately hard)
+   *   safety check for infinite loop fails, original returned by qsort? (can live with this, but...:)
+   *   segfault: (call/cc (lambda (return) (sort! '(1 2 3) (lambda (a b) (return "oops"))))) 
+   *      [in closure_compare, next_slot(let_slots(sc->envir)) is null! -- is this c stack trouble due to the recursive eval call?]
+   */
+
+  if (compare_func == g_less)
+    compare_func = g_less_2;
+  else
     {
-      if (compare_func == g_less)
-	compare_func = g_less_2;
-      else
-	{
-	  if (compare_func == g_greater)
-	    compare_func = g_greater_2;
-	}
+      if (compare_func == g_greater)
+	compare_func = g_greater_2;
     }
 
   switch (type(data))
@@ -32481,6 +32513,30 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	  /* here if, for example, compare_func == string<?, we could precheck for strings,
 	   *   then qsort without the type checks.  Also common is (lambda (a b) (f (car a) (car b))).
 	   */
+	  if ((compare_func == g_less_2) || (compare_func == g_greater_2))
+	    {
+	      int i, typ;
+	      s7_pointer *els;
+	      els = s7_vector_elements(data);
+	      typ = type(els[0]);
+	      if ((typ == T_INTEGER) || (typ == T_REAL))
+		for (i = 1; i < len; i++)
+		  if (type(els[i]) != typ)
+		    {
+		      typ = T_FREE;
+		      break;
+		    }
+	      if (typ == T_INTEGER)
+		{
+		  qsort((void *)els, len, sizeof(s7_pointer), ((compare_func == g_less_2) ? int_less_2 : int_greater_2));
+		  return(data);
+		}
+	      if (typ == T_REAL)
+		{
+		  qsort((void *)els, len, sizeof(s7_pointer), ((compare_func == g_less_2) ? dbl_less_2 : dbl_greater_2));
+		  return(data);
+		}
+	    }
 	  qsort((void *)s7_vector_elements(data), len, sizeof(s7_pointer), sort_func);
 	  return(data);
 	}
@@ -37088,7 +37144,6 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 	{
 	  s7_pointer x, iterator;
 	  int gc_iter;
-	  /* (format #f "~{~A ~}" (hash-table '(a . 1) '(b . 2))) */
 	  
 	  iterator = g_make_hash_table_iterator(sc, list_1(sc, obj));
 	  gc_iter = s7_gc_protect(sc, iterator);
@@ -37100,9 +37155,9 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 	      if (is_null(x)) break;
 	      sc->w = cons(sc, x, sc->w);
 	    }
-	  
 	  x = sc->w;
 	  sc->w = sc->NIL;
+
 	  s7_gc_unprotect_at(sc, gc_iter);
 	  return(x);
 	}
@@ -46753,8 +46808,14 @@ static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
 }
 
 
-#define indirect_c_function_is_ok(Sc, X) (((optimize_data(X) & 0x1) != 0) || (c_function_is_ok(Sc, X)))
-#define indirect_cq_function_is_ok(Sc, X) (((optimize_data(X) & 0x1) != 0) || (car(X) == sc->QUOTE) || (c_function_is_ok(Sc, X)))
+#if WITH_GCC
+  #define indirect_c_function_is_ok(Sc, X) ({s7_pointer _X_; _X_ = X; (((optimize_data(_X_) & 0x1) != 0) || (c_function_is_ok(Sc, _X_)));})
+  #define indirect_cq_function_is_ok(Sc, X) ({s7_pointer _X_; _X_ = X; ((!is_optimized(_X_)) || ((optimize_data(_X_) & 0x1) != 0) || (c_function_is_ok(Sc, _X_)));})
+#else
+  #define indirect_c_function_is_ok(Sc, X) (((optimize_data(X) & 0x1) != 0) || (c_function_is_ok(Sc, X)))
+  #define indirect_cq_function_is_ok(Sc, X) ((!is_optimized(X)) || ((optimize_data(X) & 0x1) != 0) || (c_function_is_ok(Sc, X)))
+#endif
+
 
 static bool tree_match(s7_scheme *sc, s7_pointer tree)
 {
@@ -67880,7 +67941,7 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 }
 
 /* one cost of *motif* -- functions that were previously global and therefore removed from the heap,
- *   are now local to *motif* so the GC mark costs rise significantly.
+ *   are now local to *motif* so the GC mark costs rise significantly.  (Is this still true?)
  */
 
 
@@ -67965,7 +68026,6 @@ s7_scheme *s7_init(void)
    */
   let_id(sc->NIL) = -1;
   cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED; 
-
   cdr(sc->UNDEFINED) = sc->UNDEFINED;
   /* this way find_symbol of an undefined symbol returns #<undefined> not #<unspecified> */
 
@@ -68562,9 +68622,9 @@ s7_scheme *s7_init(void)
 #if (!WITH_PURE_S7)
   sc->IS_CHAR_READY =         s7_define_safe_function(sc, "char-ready?",             g_is_char_ready,          0, 1, false, H_is_char_ready);
 #endif
+
   sc->IS_EOF_OBJECT =         s7_define_safe_function(sc, "eof-object?",             g_is_eof_object,          1, 0, false, H_is_eof_object);
-  /* this should be named eof? (what isn't an object?) */
-  
+
                               s7_define_safe_function(sc, "current-input-port",      g_current_input_port,     0, 0, false, H_current_input_port);
                               s7_define_safe_function(sc, "current-output-port",     g_current_output_port,    0, 0, false, H_current_output_port);
                               s7_define_safe_function(sc, "current-error-port",      g_current_error_port,     0, 0, false, H_current_error_port);
@@ -69146,7 +69206,7 @@ s7_scheme *s7_init(void)
     sc->default_rng->ran_seed = (unsigned int)time(NULL);
     sc->default_rng->ran_carry = 1675393560;
 
-    /* for s7_Double, float gives about 9 digits, double 18, long Double claims 28 but I don't see more than about 22? */
+    /* for s7_Double, float gives about 9 digits, double 18, long Double about 22 */
 
     for (i = 0; i < 10; i++) sc->singletons[(unsigned char)'0' + i] = small_int(i);
     sc->singletons[(unsigned char)'+'] = sc->ADD;
@@ -69170,8 +69230,8 @@ s7_scheme *s7_init(void)
 
   /* macroexpand 
    *   needs to be a bacro so locally defined macros are expanded:
-   *   (let () (define-macro (hi a) `(+ ,a 1)) (macroexpand (hi 2)))
-   *   we could use a gensym in place of __mac__ (see s7.html for an example), but then symbol mark in the gc sweep is less optimized.
+   *     (let () (define-macro (hi a) `(+ ,a 1)) (macroexpand (hi 2)))
+   *   we could use a gensym in place of __mac__
    */
   s7_eval_c_string(sc, "(define-bacro (macroexpand __mac__) `(,(procedure-source (car __mac__)) ',__mac__))");
   
@@ -69487,9 +69547,9 @@ int main(int argc, char **argv)
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1132
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 2994
- * lg             |      |      | 6547 6497 6494 6146
- * t137           |      |      | 8296           3554
- * t455|6     265 |   89 |  9   |       8.4 8045 7780
+ * lg             |      |      | 6547 6497 6494 6144
+ * t137           |      |      | 8296           3461
+ * t455|6     265 |   89 |  9   |       8.4 8045 7790
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 24.0
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.5
@@ -69517,26 +69577,27 @@ int main(int argc, char **argv)
  *
  * cyclic-seq in rest of full-* and cyclic-sequences is minimally tested in s7test (also c_object env)
  * why not snd-g* -> snd-gtk?
- * perhaps if let/env is large, display contents more carefully (for pretty-print?)
  * g_load of .so file should try "./fname" and others unchanged?
- * C-G in Snd listener can cause a segfault!
- * if possible clear hops in all unhop Z and A cases making a_is_ok unnecessary (if hop==0 don't look for A cases) (only safe_c* has z cases)
- *   surely something is confused here -- all a ops are hop-safe? -- this is s7test and indecision about globals
- *
+ * C-G in Snd listener can cause a segfault!  Need a repeatable test case.
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)
  *   also cload: libc libgsl etc arg types/return types [real string ?]
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
- *
  * how to catch the stack overflow op_cz case?
  * new-sound et al in new with-sound arg order [output channels srate sample-type header-type comment]:
  *   before-save-as-hook mus-raw-header-defaults save-region save-selection save-sound-as array->file(?)
- * _cq_function_is_ok needs fixup
- *
- * sort: need multistatement case tests, car-case, precheck types, string case
- * can we get rid of setjmp/longjmp via op_eval_done? -- more jump tests using op_eval_done (perhaps in sc?)
- * ht timing tests
- * fulltest switch for s7test perhaps
- * inexact/pure s7 and in all scm files, eof
- *    add autoload for these perhaps?  also check lint
- * reset_stack if no longjmp -- debug check for lost op_eval_done?
+ * inexact/pure s7:
+ *    (define exact? rational?)
+ *    (define (inexact? x) (not (rational? x)))
+ *    (define inexact->exact round)
+ *    (define (exact->inexact x) (* x 1.0))
+ *    but do we also get rid of #i and #e?
+ * let-iterator?
+ *   there is already make_let_iterator, then the iteration happens by seeing T_SLOT (in map for example),
+ *   and returning (cons sym val) while going to the next slot.
+ * can methods call call/cc??  sort! is unhappy in a parallel case, but this will affect all s7_apply_function uses!
+ *   this seems to work: (call/cc (lambda (return) (((openlet (inlet 'mtd (lambda (x) (return "oops")))) 'mtd) 3)))
+ *                       (call-with-exit (lambda (return) (((openlet (inlet 'mtd (lambda (x) (return "oops")))) 'mtd) 3)))
+ *   but these all depend on being unopt'd: see t142.scm -- call-with-exit from method doesn't work if method
+ *     has been opt'd into all_x* call.  How to deal with this? -- method 'abs but it hasn't been evaluated yet.
+ *     longjmp needed here?
  */

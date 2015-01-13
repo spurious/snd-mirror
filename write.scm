@@ -407,3 +407,16 @@
 	form))
   `(pretty-print ',(expand form)))
 
+#|
+(define* (pp-hash ht)
+  (let ((hti (make-hash-table-iterator ht))
+	(strs ()))
+    (do ((i 0 (+ i 1))
+	 (entry (hti) (hti)))
+	((or (= i *vector-print-length*)
+	     (null? entry))
+	 (if (pair? entry)
+	     (apply string-append (append (reverse! strs) (list "...")))
+	     (apply string-append (reverse! strs))))
+      (set! strs (cons (format #f "~A~A ~S" (if (> i 0) ", " "") (car entry) (cdr entry)) strs)))))
+|#
