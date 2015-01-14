@@ -520,6 +520,16 @@ typedef struct s7_cell {
       s7_pointer (*hash_func)(s7_scheme *sc, s7_pointer table, s7_pointer key); 
       s7_pointer eq_func;
     } hasher;
+
+    struct {
+      s7_pointer table, lst;
+      int loc;
+    } hash_iter;
+    
+    struct {
+      s7_pointer let, slot;
+      int loc;
+    } let_iter;
     
     struct {
       c_proc_t *c_proc;                /* C functions, macros */
@@ -826,7 +836,8 @@ struct s7_scheme {
   s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOAT_VECTOR, IS_FLOAT_VECTOR, FLOAT_VECTOR_REF, FLOAT_VECTOR_SET;
   s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, IS_GENSYM, GET_OUTPUT_STRING, HASH_TABLE, HASH_TABLE_STAR;
   s7_pointer IS_HASH_TABLE, IS_HASH_TABLE_ITERATOR, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_SIZE, HASH_TABLE_ENTRIES, HELP, IMAG_PART, IS_INEXACT, INEXACT_TO_EXACT;
-  s7_pointer IS_INFINITE, IS_INPUT_PORT, IS_INTEGER, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, IS_KEYWORD, KEYWORD_TO_SYMBOL, LCM, LENGTH;
+  s7_pointer IS_INFINITE, IS_INPUT_PORT, IS_INTEGER, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, IS_KEYWORD, KEYWORD_TO_SYMBOL;
+  s7_pointer LCM, LENGTH, IS_LET_ITERATOR, MAKE_LET_ITERATOR;
   s7_pointer LIST, IS_LIST, LIST_TO_STRING, LIST_TO_VECTOR, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBIT, LOGIOR, LOGNOT, LOGXOR;
   s7_pointer IS_MACRO, MAKE_BYTEVECTOR, MAKE_FLOAT_VECTOR, MAKE_HASH_TABLE, MAKE_HASH_TABLE_ITERATOR, MAKE_KEYWORD, MAKE_LIST, MAKE_RANDOM_STATE;
   s7_pointer MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, IS_MORALLY_EQUAL, IS_NAN, IS_NEGATIVE, NEWLINE;
@@ -1010,23 +1021,25 @@ typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_w
 #define T_CATCH               28
 #define T_DYNAMIC_WIND        29
 #define T_HASH_TABLE          30
-#define T_ENVIRONMENT         31
-#define T_STACK               32
-#define T_COUNTER             33
-#define T_SLOT                34
-#define T_C_POINTER           35
-#define T_C_MACRO             36
-#define T_OUTPUT_PORT         37
-#define T_INPUT_PORT          38
-#define T_BAFFLE              39
+#define T_HASH_TABLE_ITERATOR 31
+#define T_ENVIRONMENT         32
+#define T_LET_ITERATOR        33
+#define T_STACK               34
+#define T_COUNTER             35
+#define T_SLOT                36
+#define T_C_POINTER           37
+#define T_C_MACRO             38
+#define T_OUTPUT_PORT         39
+#define T_INPUT_PORT          40
+#define T_BAFFLE              41
 
-#define T_C_FUNCTION_STAR     40
-#define T_C_FUNCTION          41
-#define T_C_ANY_ARGS_FUNCTION 42
-#define T_C_OPT_ARGS_FUNCTION 43
-#define T_C_RST_ARGS_FUNCTION 44
+#define T_C_FUNCTION_STAR     42
+#define T_C_FUNCTION          43
+#define T_C_ANY_ARGS_FUNCTION 44
+#define T_C_OPT_ARGS_FUNCTION 45
+#define T_C_RST_ARGS_FUNCTION 46
 
-#define NUM_TYPES        45
+#define NUM_TYPES        47
 
 /* T_STACK, T_SLOT, T_BAFFLE, and T_COUNTER are internal
  * I tried T_CASE_SELECTOR that turned a case statement into an array, but it was slower!
@@ -1103,6 +1116,8 @@ static void init_types(void)
   t_applicable_p[T_INT_VECTOR] = true;
   t_applicable_p[T_FLOAT_VECTOR] = true;
   t_applicable_p[T_HASH_TABLE] = true;
+  t_applicable_p[T_HASH_TABLE_ITERATOR] = true; /* (apply hti ())?? */
+  t_applicable_p[T_LET_ITERATOR] = true; 
   t_applicable_p[T_ENVIRONMENT] = true;
   t_applicable_p[T_C_OBJECT] = true;
   t_applicable_p[T_C_MACRO] = true;
@@ -1731,6 +1746,16 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {pair_sy
 #define hash_table_entries(p)         (p)->object.hasher.entries
 #define hash_table_function(p)        (p)->object.hasher.hash_func
 #define hash_table_eq_function(p)     (p)->object.hasher.eq_func
+
+#define is_hash_table_iterator(p)     (type(p) == T_HASH_TABLE_ITERATOR)
+#define hash_table_iterator_table(p)  (p)->object.hash_iter.table
+#define hash_table_iterator_loc(p)    (p)->object.hash_iter.loc
+#define hash_table_iterator_lst(p)    (p)->object.hash_iter.lst
+
+#define is_let_iterator(p)            (type(p) == T_LET_ITERATOR)
+#define let_iterator_let(p)           (p)->object.let_iter.let
+#define let_iterator_slot(p)          (p)->object.let_iter.slot
+#define let_iterator_loc(p)           (p)->object.let_iter.loc
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT) 
 #if DEBUGGING
@@ -3822,7 +3847,6 @@ static void mark_dynamic_wind(s7_pointer p)
     }
 }
 
-
 static void mark_hash_table(s7_pointer p)
 {
   if (!is_marked(p))
@@ -3843,6 +3867,24 @@ static void mark_hash_table(s7_pointer p)
     }
 }
 
+static void mark_hash_table_iterator(s7_pointer p)
+{
+  if (!is_marked(p))
+    {
+      set_mark(p);
+      S7_MARK(hash_table_iterator_table(p));
+      S7_MARK(hash_table_iterator_lst(p));
+    }
+}
+
+static void mark_let_iterator(s7_pointer p)
+{
+  if (!is_marked(p))
+    {
+      set_mark(p);
+      S7_MARK(let_iterator_let(p));
+    }
+}
 
 static void mark_input_port(s7_pointer p)
 {
@@ -3888,6 +3930,8 @@ static void init_mark_functions(void)
   mark_function[T_CATCH]               = mark_catch;
   mark_function[T_DYNAMIC_WIND]        = mark_dynamic_wind;
   mark_function[T_HASH_TABLE]          = mark_hash_table;
+  mark_function[T_HASH_TABLE_ITERATOR] = mark_hash_table_iterator;
+  mark_function[T_LET_ITERATOR]        = mark_let_iterator;
   mark_function[T_SYNTAX]              = mark_noop;
   mark_function[T_ENVIRONMENT]         = mark_let;
   mark_function[T_STACK]               = mark_stack;
@@ -6324,6 +6368,77 @@ static s7_pointer g_set_outlet(s7_scheme *sc, s7_pointer args)
   if (env != sc->rootlet)
     outlet(env) = new_outer;
   return(new_outer);
+}
+
+
+static s7_pointer let_iterator_copy(s7_scheme *sc, s7_pointer p)
+{
+  s7_pointer iter;
+  NEW_CELL(sc, iter);
+  let_iterator_let(iter) = let_iterator_let(p);
+  let_iterator_slot(iter) = let_iterator_slot(p);
+  let_iterator_loc(iter) = let_iterator_loc(p);
+  set_type(iter, T_LET_ITERATOR | T_SAFE_PROCEDURE);
+  return(iter);
+}
+
+static bool let_iterators_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
+{
+  return((let_iterator_let(x) == let_iterator_let(y)) &&
+	 (let_iterator_slot(x) == let_iterator_slot(y)));
+}
+
+
+static s7_pointer g_make_let_iterator(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_let_iterator "(make-let-iterator let) returns a function of no arguments that \
+returns the next (symbol . value) pair in the let bindings each time it is called.  When there are no more bindings, it returns nil."
+
+  s7_pointer e, iter;
+  e = car(args);
+  if (!is_let(e))
+    {
+      check_method(sc, e, sc->MAKE_LET_ITERATOR, args);
+      return(simple_wrong_type_argument(sc, sc->MAKE_LET_ITERATOR, e, T_LET_ITERATOR));
+    }
+
+  NEW_CELL(sc, iter);
+  let_iterator_let(iter) = e;
+  let_iterator_loc(iter) = 0;
+  if (e == sc->rootlet)
+    let_iterator_slot(iter) = vector_element(e, 0);
+  else let_iterator_slot(iter) = let_slots(e);
+  set_type(iter, T_LET_ITERATOR | T_SAFE_PROCEDURE);
+  return(iter);
+}
+
+
+static s7_pointer g_is_let_iterator(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_let_iterator "(let-iterator? obj) returns #t if obj is a let-iterator"
+  check_boolean_method(sc, is_let_iterator, sc->IS_LET_ITERATOR, args);
+}
+
+
+static s7_pointer let_iterate(s7_scheme *sc, s7_pointer iterator)
+{
+  s7_pointer slot;
+  slot = let_iterator_slot(iterator);
+  if (is_slot(slot))
+    {
+      if (let_iterator_let(iterator) == sc->rootlet)
+	{
+	  if (let_iterator_loc(iterator) < sc->rootlet_entries)
+	    {
+	      let_iterator_loc(iterator)++;
+	      let_iterator_slot(iterator) = vector_element(sc->rootlet, let_iterator_loc(iterator));
+	    }
+	  else let_iterator_slot(iterator) = sc->NIL;
+	}
+      else let_iterator_slot(iterator) = next_slot(slot);
+      return(cons(sc, slot_symbol(slot), slot_value(slot)));
+    }
+  return(sc->NIL);
 }
 
 
@@ -25453,6 +25568,18 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       hash_table_to_port(sc, obj, port, use_write, to_file, ci);
       break;
 
+    case T_HASH_TABLE_ITERATOR:
+      if (use_write == USE_READABLE_WRITE)
+	write_readably_error(sc, "a hash-table iterator");
+      else port_write_string(port)(sc, "#<hash-table-iterator>", 22, port);
+      break;
+
+    case T_LET_ITERATOR:
+      if (use_write == USE_READABLE_WRITE)
+	write_readably_error(sc, "a let iterator");
+      else port_write_string(port)(sc, "#<let-iterator>", 15, port);
+      break;
+
     case T_ENVIRONMENT:
       environment_to_port(sc, obj, port, use_write, to_file, ci);
       break;
@@ -33453,58 +33580,22 @@ static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
 
 /* ---------------- hash-table iterators ---------------- */
 
-typedef struct {
-  s7_pointer table, lst;
-  int loc;
-} ht_iter;
-
-static char *print_ht_iter(s7_scheme *sc, void *val)
+static s7_pointer hash_table_iterator_copy(s7_scheme *sc, s7_pointer p)
 {
-  char *str;
-  str = (char *)malloc(32 * sizeof(char));
-  snprintf(str, 32, "#<hash-table-iterator>");
-  return(str);
+  s7_pointer iter;
+  NEW_CELL(sc, iter);
+  hash_table_iterator_table(iter) = hash_table_iterator_table(p);
+  hash_table_iterator_lst(iter) = hash_table_iterator_lst(p);
+  hash_table_iterator_loc(iter) = hash_table_iterator_loc(p);
+  set_type(iter, T_HASH_TABLE_ITERATOR | T_SAFE_PROCEDURE);
+  return(iter);
 }
 
-static void ht_iter_free(void *p) {free(p);}
-
-static bool equal_ht_iter(void *val1, void *val2)
+static bool hash_table_iterators_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
-  ht_iter *h1, *h2;
-  if (val1 == val2) return(true);
-  h1 = (ht_iter *)val1;
-  h2 = (ht_iter *)val2;
-  return((h1->table == h2->table) &&
-	 (h1->loc == h2->loc)&&
-	 (h1->lst == h2->lst));
-}
-
-static void mark_ht_iter(void *val)
-{
-  ht_iter *iter = (ht_iter *)val;
-  s7_mark_object(iter->table);
-  s7_mark_object(iter->lst);
-}
-
-
-static char *write_ht_iter_readably(s7_scheme *sc, void *val)
-{
-  write_readably_error(sc, "a hash-table-iterator");
-  return(NULL);
-}
-
-
-static s7_pointer copy_ht_iter(s7_scheme *sc, s7_pointer obj)
-{
-  ht_iter *new_iter, *old_iter;
-  old_iter = (ht_iter *)s7_object_value(obj);
-  
-  new_iter = (ht_iter *)malloc(sizeof(ht_iter));
-  new_iter->lst = old_iter->lst;
-  new_iter->table = old_iter->table;
-  new_iter->loc = old_iter->loc;
-
-  return(s7_make_object(sc, sc->ht_iter_tag, (void *)new_iter));
+  return((hash_table_iterator_table(x) == hash_table_iterator_table(y)) &&
+	 (hash_table_iterator_lst(x) == hash_table_iterator_lst(y)) &&
+	 (hash_table_iterator_loc(x) == hash_table_iterator_loc(y)));
 }
 
 
@@ -33513,80 +33604,60 @@ static s7_pointer g_make_hash_table_iterator(s7_scheme *sc, s7_pointer args)
   #define H_make_hash_table_iterator "(make-hash-table-iterator table) returns a function of no arguments that \
 returns the next (key . value) pair in the hash-table each time it is called.  When there are no more pairs, it returns nil."
 
-  ht_iter *iter;
+  s7_pointer iter;
   if (!is_hash_table(car(args)))
     {
       check_method(sc, car(args), sc->MAKE_HASH_TABLE_ITERATOR, args);
-      return(simple_wrong_type_argument(sc, sc->MAKE_HASH_TABLE_ITERATOR, car(args), T_HASH_TABLE));
+      return(simple_wrong_type_argument(sc, sc->MAKE_HASH_TABLE_ITERATOR, car(args), T_HASH_TABLE_ITERATOR));
     }
-  iter = (ht_iter *)malloc(sizeof(ht_iter));
-  iter->lst = sc->NIL;
-  iter->table = car(args);
-  iter->loc = -1;
 
-  return(s7_make_object(sc, sc->ht_iter_tag, (void *)iter));
+  NEW_CELL(sc, iter);
+  hash_table_iterator_table(iter) = car(args);
+  hash_table_iterator_lst(iter) = sc->NIL;
+  hash_table_iterator_loc(iter) = -1;
+  set_type(iter, T_HASH_TABLE_ITERATOR | T_SAFE_PROCEDURE);
+  return(iter);
 }
 
 
 static s7_pointer g_is_hash_table_iterator(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_hash_table_iterator "(hash-table-iterator? obj) returns #t if obj is a hash-table iterator."
-  s7_pointer obj;
-
-  obj = car(args);
-  if ((s7_is_object(obj)) && 
-      (c_object_type(obj) == sc->ht_iter_tag))
-    return(sc->T);
-
-  check_method(sc, obj, sc->IS_HASH_TABLE_ITERATOR, args);
-  return(sc->F);
+  #define H_is_hash_table_iterator "(hash-table-iterator? obj) returns #t if obj is a hash-table-iterator"
+  check_boolean_method(sc, is_hash_table_iterator, sc->IS_HASH_TABLE_ITERATOR, args);
 }
 
 
 static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator)
 {
   s7_pointer lst, table;
-  ht_iter *iter;
   int loc, len;
   s7_pointer *elements;
 
-  iter = (ht_iter *)s7_object_value(iterator);
-  lst = iter->lst;
+  lst = hash_table_iterator_lst(iterator);
   if (is_pair(lst))
     {
-      iter->lst = cdr(lst);
+      hash_table_iterator_lst(iterator) = cdr(lst);
       return(car(lst));
     }
 
-  table = iter->table;
+  table = hash_table_iterator_table(iterator);
   len = hash_table_length(table);
   elements = hash_table_elements(table);
 
-  for (loc = iter->loc + 1; loc < len;  loc++)
+  for (loc = hash_table_iterator_loc(iterator) + 1; loc < len;  loc++)
     {
       s7_pointer x;
       x = elements[loc];
       if (is_not_null(x))
 	{
-	  iter->loc = loc;
-	  iter->lst = cdr(x);
+	  hash_table_iterator_loc(iterator) = loc;
+	  hash_table_iterator_lst(iterator) = cdr(x);
 	  return(car(x));
 	}
     }
-  iter->loc = len;
+  hash_table_iterator_loc(iterator) = len;
   return(sc->NIL);
 }
-
-
-static s7_pointer ref_ht_iter(s7_scheme *sc, s7_pointer obj, s7_pointer args)
-{
-  /* don't check args -- it's simpler in map/for-each to pass an int to all objects in this context
-   */
-  return(hash_table_iterate(sc, obj));
-}
-
-/* no obvious meaning for length of a hash-table-iterator, or set!, fill!, and reverse
- */
 
 
 
@@ -35100,6 +35171,10 @@ s7_pointer s7_arity(s7_scheme *sc, s7_pointer x)
     case T_HASH_TABLE:
       return(s7_cons(sc, small_int(1), max_arity));
 
+    case T_HASH_TABLE_ITERATOR:
+    case T_LET_ITERATOR:
+      return(s7_cons(sc, small_int(0), small_int(0)));
+
     case T_SYNTAX:
       switch (syntax_opcode(x))
 	{
@@ -35275,6 +35350,10 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
     case T_HASH_TABLE:
     case T_PAIR:
       return(args == 1);
+
+    case T_HASH_TABLE_ITERATOR:
+    case T_LET_ITERATOR:
+      return(args == 0);
 
     case T_SYNTAX:
       switch (syntax_opcode(x))
@@ -35926,6 +36005,12 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
     case T_HASH_TABLE:
       return(hash_tables_are_equal(sc, x, y, new_shared_info(sc)));
 
+    case T_HASH_TABLE_ITERATOR:
+      return(hash_table_iterators_are_equal(sc, x, y));
+
+    case T_LET_ITERATOR:
+      return(let_iterators_are_equal(sc, x, y));
+
     case T_PAIR:
 #if (!WITH_GMP)
       return((type(car(x)) == type(car(y))) &&
@@ -36197,6 +36282,12 @@ static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, share
   
     case T_HASH_TABLE:
       return(structures_are_morally_equal(sc, x, y, (ci) ? ci : new_shared_info(sc)));
+      
+    case T_HASH_TABLE_ITERATOR:
+      return(hash_table_iterators_are_equal(sc, x, y));
+
+    case T_LET_ITERATOR:
+      return(let_iterators_are_equal(sc, x, y));
 
     case T_ENVIRONMENT:
       if (has_methods(x))
@@ -36529,6 +36620,12 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
 
     case T_HASH_TABLE:              /* this has to copy nearly everything */
       return(hash_table_copy(sc, obj));
+
+    case T_HASH_TABLE_ITERATOR:
+      return(hash_table_iterator_copy(sc, obj));
+      
+    case T_LET_ITERATOR:
+      return(let_iterator_copy(sc, obj));
       
     case T_ENVIRONMENT:             
       check_method(sc, obj, sc->COPY, list_1(sc, obj)); /* the cons happens only if we have a copy method, but it's still wasteful */
@@ -37635,86 +37732,90 @@ static const char *make_type_name(s7_scheme *sc, const char *name, int article)
 
 static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
 {
-  static const char *frees[3] =         {"free cell",          "the free cell",           "a free cell"};
-  static const char *nils[3] =          {"nil",                "the null list",           "nil"};
-  static const char *uniques[3] =       {"untyped",            "the untyped",             "untyped"};
-  static const char *booleans[3] =      {"boolean",            "the boolean",             "boolean"};
-  static const char *strings[3] =       {"string",             "the string",              "a string"};
-  static const char *symbols[3] =       {"symbol",             "the symbol",              "a symbol"};
-  static const char *syntaxes[3] =      {"syntax",             "the syntactic",           "syntactic"};
-  static const char *pairs[3] =         {"pair",               "the pair",                "a pair"};
-  static const char *gotos[3] =         {"goto",               "the call-with-exit goto", "a goto (from call-with-exit)"};
-  static const char *continuations[3] = {"continuation",       "the continuation",        "a continuation"};
-  static const char *c_functions[3] =   {"c-function",         "the c-function",          "a c-function"};
-  static const char *macros[3] =        {"macro",              "the macro",               "a macro"};
-  static const char *c_macros[3] =      {"c-macro",            "the c-macro",             "a c-macro"};
-  static const char *bacros[3] =        {"bacro",              "the bacro",               "a bacro"};
-  static const char *vectors[3] =       {"vector",             "the vector",              "a vector"};
-  static const char *int_vectors[3] =   {"int-vector",         "the int-vector",          "an int-vector"};
-  static const char *float_vectors[3] = {"float-vector",       "the float-vector",        "a float-vector"};
-  static const char *c_pointers[3] =    {"C pointer",          "the raw C pointer",       "a raw C pointer"};
-  static const char *counters[3] =      {"internal counter",   "the internal counter",    "an internal counter"};
-  static const char *baffles[3] =       {"baffle",             "the baffle",              "a baffle"};
-  static const char *slots[3] =         {"slot",               "the slot (name binding)", "a slot (variable binding)"};
-  static const char *characters[3] =    {"character",          "the character",           "a character"};
-  static const char *catches[3] =       {"catch",              "the catch",               "a catch"};
-  static const char *dynamic_winds[3] = {"dynamic-wind",       "the dynamic-wind",        "a dynamic-wind"};
-  static const char *hash_tables[3] =   {"hash-table",         "the hash-table",          "a hash-table"};
-  static const char *environments[3] =  {"environment",        "the environment",         "an environment"};
-  static const char *integers[3] =      {"integer",            "the integer",             "an integer"};
-  static const char *big_integers[3] =  {"big integer",        "the big integer",         "a big integer"};
-  static const char *ratios[3] =        {"ratio",              "the ratio",               "a ratio"};
-  static const char *big_ratios[3] =    {"big ratio",          "the big ratio",           "a big ratio"};
-  static const char *reals[3] =         {"real",               "the real",                "a real"};
-  static const char *big_reals[3] =     {"big real",           "the big real",            "a big real"};
-  static const char *complexes[3] =     {"complex number",     "the complex number",      "a complex number"};
-  static const char *big_complexes[3] = {"big complex number", "the big complex number",  "a big complex number"};
-  static const char *functions[3] =     {"function",           "the function",            "a function"};
-  static const char *function_stars[3] ={"function*",          "the function*",           "a function*"};
+  static const char *frees[3] =                {"free cell",          "the free cell",           "a free cell"};
+  static const char *nils[3] =                 {"nil",                "the null list",           "nil"};
+  static const char *uniques[3] =              {"untyped",            "the untyped",             "untyped"};
+  static const char *booleans[3] =             {"boolean",            "the boolean",             "boolean"};
+  static const char *strings[3] =              {"string",             "the string",              "a string"};
+  static const char *symbols[3] =              {"symbol",             "the symbol",              "a symbol"};
+  static const char *syntaxes[3] =             {"syntax",             "the syntactic",           "syntactic"};
+  static const char *pairs[3] =                {"pair",               "the pair",                "a pair"};
+  static const char *gotos[3] =                {"goto",               "the call-with-exit goto", "a goto (from call-with-exit)"};
+  static const char *continuations[3] =        {"continuation",       "the continuation",        "a continuation"};
+  static const char *c_functions[3] =          {"c-function",         "the c-function",          "a c-function"};
+  static const char *macros[3] =               {"macro",              "the macro",               "a macro"};
+  static const char *c_macros[3] =             {"c-macro",            "the c-macro",             "a c-macro"};
+  static const char *bacros[3] =               {"bacro",              "the bacro",               "a bacro"};
+  static const char *vectors[3] =              {"vector",             "the vector",              "a vector"};
+  static const char *int_vectors[3] =          {"int-vector",         "the int-vector",          "an int-vector"};
+  static const char *float_vectors[3] =        {"float-vector",       "the float-vector",        "a float-vector"};
+  static const char *c_pointers[3] =           {"C pointer",          "the raw C pointer",       "a raw C pointer"};
+  static const char *counters[3] =             {"internal counter",   "the internal counter",    "an internal counter"};
+  static const char *baffles[3] =              {"baffle",             "the baffle",              "a baffle"};
+  static const char *slots[3] =                {"slot",               "the slot (name binding)", "a slot (variable binding)"};
+  static const char *characters[3] =           {"character",          "the character",           "a character"};
+  static const char *catches[3] =              {"catch",              "the catch",               "a catch"};
+  static const char *dynamic_winds[3] =        {"dynamic-wind",       "the dynamic-wind",        "a dynamic-wind"};
+  static const char *hash_tables[3] =          {"hash-table",         "the hash-table",          "a hash-table"};
+  static const char *hash_table_iterators[3] = {"hash-table-iterator","the hash-table-iterator", "a hash-table-iterator"};
+  static const char *let_iterators[3] =        {"let-iterator",       "the let-iterator",        "a let-iterator"};
+  static const char *environments[3] =         {"environment",        "the environment",         "an environment"};
+  static const char *integers[3] =             {"integer",            "the integer",             "an integer"};
+  static const char *big_integers[3] =         {"big integer",        "the big integer",         "a big integer"};
+  static const char *ratios[3] =               {"ratio",              "the ratio",               "a ratio"};
+  static const char *big_ratios[3] =           {"big ratio",          "the big ratio",           "a big ratio"};
+  static const char *reals[3] =                {"real",               "the real",                "a real"};
+  static const char *big_reals[3] =            {"big real",           "the big real",            "a big real"};
+  static const char *complexes[3] =            {"complex number",     "the complex number",      "a complex number"};
+  static const char *big_complexes[3] =        {"big complex number", "the big complex number",  "a big complex number"};
+  static const char *functions[3] =            {"function",           "the function",            "a function"};
+  static const char *function_stars[3] =       {"function*",          "the function*",           "a function*"};
 
   switch (typ)
     {
-    case T_FREE:         return(frees[article]);
-    case T_NIL:          return(nils[article]);
-    case T_UNIQUE:       return(uniques[article]);
-    case T_UNSPECIFIED:  return(uniques[article]);
-    case T_BOOLEAN:      return(booleans[article]);
-    case T_STRING:       return(strings[article]);
-    case T_SYMBOL:       return(symbols[article]);
-    case T_SYNTAX:       return(syntaxes[article]);
-    case T_PAIR:         return(pairs[article]);
-    case T_GOTO:         return(gotos[article]);
-    case T_CONTINUATION: return(continuations[article]);
+    case T_FREE:                return(frees[article]);
+    case T_NIL:                 return(nils[article]);
+    case T_UNIQUE:              return(uniques[article]);
+    case T_UNSPECIFIED:         return(uniques[article]);
+    case T_BOOLEAN:             return(booleans[article]);
+    case T_STRING:              return(strings[article]);
+    case T_SYMBOL:              return(symbols[article]);
+    case T_SYNTAX:              return(syntaxes[article]);
+    case T_PAIR:                return(pairs[article]);
+    case T_GOTO:                return(gotos[article]);
+    case T_CONTINUATION:        return(continuations[article]);
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION_STAR:
-    case T_C_FUNCTION:   return(c_functions[article]);
-    case T_CLOSURE:      return(functions[article]);
-    case T_CLOSURE_STAR: return(function_stars[article]);
-    case T_C_MACRO:      return(c_macros[article]);
-    case T_C_POINTER:    return(c_pointers[article]);
-    case T_CHARACTER:    return(characters[article]);
-    case T_VECTOR:       return(vectors[article]);
-    case T_INT_VECTOR:   return(int_vectors[article]);
-    case T_FLOAT_VECTOR: return(float_vectors[article]);
-    case T_MACRO:        return(macros[article]);
-    case T_BACRO:        return(bacros[article]);
-    case T_CATCH:        return(catches[article]); /* are these 2 possible? */
-    case T_DYNAMIC_WIND: return(dynamic_winds[article]);
-    case T_HASH_TABLE:   return(hash_tables[article]);
-    case T_ENVIRONMENT:  return(environments[article]);
-    case T_COUNTER:      return(counters[article]);
-    case T_BAFFLE:       return(baffles[article]);
-    case T_SLOT:         return(slots[article]);
-    case T_INTEGER:      return(integers[article]);
-    case T_RATIO:        return(ratios[article]);
-    case T_REAL:         return(reals[article]);
-    case T_COMPLEX:      return(complexes[article]);
-    case T_BIG_INTEGER:  return(big_integers[article]);
-    case T_BIG_RATIO:    return(big_ratios[article]);
-    case T_BIG_REAL:     return(big_reals[article]);
-    case T_BIG_COMPLEX:  return(big_complexes[article]);
+    case T_C_FUNCTION:          return(c_functions[article]);
+    case T_CLOSURE:             return(functions[article]);
+    case T_CLOSURE_STAR:        return(function_stars[article]);
+    case T_C_MACRO:             return(c_macros[article]);
+    case T_C_POINTER:           return(c_pointers[article]);
+    case T_CHARACTER:           return(characters[article]);
+    case T_VECTOR:              return(vectors[article]);
+    case T_INT_VECTOR:          return(int_vectors[article]);
+    case T_FLOAT_VECTOR:        return(float_vectors[article]);
+    case T_MACRO:               return(macros[article]);
+    case T_BACRO:               return(bacros[article]);
+    case T_CATCH:               return(catches[article]); /* are these 2 possible? */
+    case T_DYNAMIC_WIND:        return(dynamic_winds[article]);
+    case T_HASH_TABLE:          return(hash_tables[article]);
+    case T_HASH_TABLE_ITERATOR: return(hash_table_iterators[article]);
+    case T_LET_ITERATOR:        return(let_iterators[article]);
+    case T_ENVIRONMENT:         return(environments[article]);
+    case T_COUNTER:             return(counters[article]);
+    case T_BAFFLE:              return(baffles[article]);
+    case T_SLOT:                return(slots[article]);
+    case T_INTEGER:             return(integers[article]);
+    case T_RATIO:               return(ratios[article]);
+    case T_REAL:                return(reals[article]);
+    case T_COMPLEX:             return(complexes[article]);
+    case T_BIG_INTEGER:         return(big_integers[article]);
+    case T_BIG_RATIO:           return(big_ratios[article]);
+    case T_BIG_REAL:            return(big_reals[article]);
+    case T_BIG_COMPLEX:         return(big_complexes[article]);
     }
   return(NULL);
 }
@@ -39464,6 +39565,8 @@ static s7_Int applicable_length(s7_scheme *sc, s7_pointer obj)
 	return(closure_length(sc, obj));
       return(-1);
 
+    case T_HASH_TABLE_ITERATOR:
+    case T_LET_ITERATOR:
     case T_NIL:
       return(0);
     }
@@ -39536,9 +39639,12 @@ static bool next_for_each(s7_scheme *sc)
 	  }
 	  break;
 	  
-	case T_SLOT:
-	  car(x) = cons(sc, slot_symbol(car_y), slot_value(car_y));
-	  car(y) = next_slot(car_y);
+	case T_HASH_TABLE_ITERATOR:
+	  car(x) = hash_table_iterate(sc, car_y);
+	  break;
+
+	case T_LET_ITERATOR:
+	  car(x) = let_iterate(sc, car_y);
 	  break;
 
 	default:           /* see comment in next_map: (let ((L (list 1 2 3 4 5))) (for-each (lambda (x) (set-cdr! (cddr L) 5) (display x)) L)) */
@@ -39590,26 +39696,6 @@ static s7_pointer make_simple_counter(s7_scheme *sc, s7_pointer lst)
   counter_args(x) = sc->NIL;
   set_type(x, T_COUNTER);
   return(x);
-}
-
-
-static s7_pointer rootlet_vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc) 
-{
-  s7_pointer p;
-  p = vector_element(vec, loc);
-  return(cons(sc, slot_symbol(p), slot_value(p)));
-}
-
-static s7_pointer make_let_iterator(s7_scheme *sc, s7_pointer let)
-{
-  if (let == sc->rootlet)
-    {
-      s7_pointer p;
-      p = make_vector_wrapper(sc, sc->rootlet_entries, vector_elements(sc->rootlet));
-      vector_getter(p) = rootlet_vector_getter;
-      return(p);
-    }
-  return(let_slots(let));
 }
 
 
@@ -39738,7 +39824,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	  if (is_let(obj))
 	    {
 	      check_method(sc, obj, sc->FOR_EACH, args);
-	      sc->z = list_1(sc, make_let_iterator(sc, obj));
+	      sc->z = list_1(sc, g_make_let_iterator(sc, cdr(args)));
 	    }
 	  else
 	    {
@@ -39759,7 +39845,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	      else
 		{
 		  if (is_let(car(x)))                 /* (let ((a 1) (b 2)) (for-each (lambda (x) (format *stderr* "~A~%" x)) (curlet))) -> (b . 2) (a .1) */
-		    sc->z = cons(sc, make_let_iterator(sc, car(x)), sc->z);
+		    sc->z = cons_unchecked(sc, g_make_let_iterator(sc, x), sc->z);
 		  else sc->z = cons_unchecked(sc, car(x), sc->z);
 		}
 	    }
@@ -39934,9 +40020,12 @@ static bool next_map(s7_scheme *sc)
 	  }
 	  break;
 
-	case T_SLOT:
-	  x = cons(sc, slot_symbol(car_y), slot_value(car_y));
-	  car(y) = next_slot(car_y);
+	case T_HASH_TABLE_ITERATOR:
+	  x = hash_table_iterate(sc, car_y);
+	  break;
+
+	case T_LET_ITERATOR:
+	  x = let_iterate(sc, car_y);
 	  break;
 
 	default: 
@@ -40056,7 +40145,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  if (is_let(obj))
 	    {
 	      check_method(sc, obj, sc->MAP, args);
-	      sc->z = list_1(sc, make_let_iterator(sc, obj));
+	      sc->z = list_1(sc, g_make_let_iterator(sc, cdr(args)));
 	    }
 	  else 
 	    {
@@ -40087,7 +40176,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      else
 		{
 		  if (is_let(car(x)))
-		    sc->z = cons_unchecked(sc, make_let_iterator(sc, car(x)), sc->z);
+		    sc->z = cons_unchecked(sc, g_make_let_iterator(sc, x), sc->z);
 		  else sc->z = cons_unchecked(sc, car(x), sc->z);
 		}
 	    }
@@ -51430,17 +51519,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto APPLY;
 
 
-      /* ---------------- OP_APPLY ---------------- */
-    case OP_APPLY:      /* apply 'code' to 'args' */
-      if (needs_copied_args(sc->code))
-	sc->args = copy_list(sc, sc->args);
-      goto APPLY;
-      /* (let ((lst '((1 2)))) (define (identity x) x) (cons (apply identity lst) lst))
-       */
-
-
       /* -------------------------------- DO -------------------------------- */
-
       /* opt order should probably be looped, ex_fallback, direct */
 
       /* this is the fm-violin optimization */
@@ -58543,6 +58622,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->value = implicit_index(sc, sc->value, cdr(sc->args));
 	  goto START;
 	  
+
+	case T_HASH_TABLE_ITERATOR:               /* -------- hash-table-iterator as applicable object -------- */
+	  sc->value = hash_table_iterate(sc, sc->code);
+	  goto START;
+	  
+	case T_LET_ITERATOR:                      /* -------- let-iterator as applicable object -------- */
+	  sc->value = let_iterate(sc, sc->code);
+	  goto START;
+	  
 	  
 	case T_ENVIRONMENT:                       /* -------- environment as applicable object -------- */
 	  if (is_null(sc->args))
@@ -58568,7 +58656,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	default:
 	  return(apply_error(sc, sc->code, sc->args));
 	}
-      /* ---------------- end APPLY/EVAL ---------------- */
+
+      /* ---------------- OP_APPLY ---------------- */
+    case OP_APPLY:      /* apply 'code' to 'args' */
+      if (needs_copied_args(sc->code))
+	sc->args = copy_list(sc, sc->args);
+      goto APPLY;
+      /* (let ((lst '((1 2)))) (define (identity x) x) (cons (apply identity lst) lst)) */
       
       
     case OP_LAMBDA_STAR_DEFAULT:
@@ -68598,6 +68692,9 @@ s7_scheme *s7_init(void)
   sc->LET_REF_FALLBACK = make_symbol(sc, "let-ref-fallback");
   sc->LET_SET_FALLBACK = make_symbol(sc, "let-set!-fallback");
 
+  sc->MAKE_LET_ITERATOR =     s7_define_safe_function(sc, "make-let-iterator",       g_make_let_iterator,      1, 0, false, H_make_let_iterator);
+  sc->IS_LET_ITERATOR =       s7_define_safe_function(sc, "let-iterator?",           g_is_let_iterator,        1, 0, false, H_is_let_iterator);
+
   sc->IS_PROVIDED =           s7_define_safe_function(sc, "provided?",               g_is_provided,            1, 0, false, H_is_provided);
   sc->PROVIDE =               s7_define_safe_function(sc, "provide",                 g_provide,                1, 0, false, H_provide);
   sc->IS_DEFINED =            s7_define_safe_function(sc, "defined?",                g_is_defined,             1, 2, false, H_is_defined);
@@ -68932,10 +69029,8 @@ s7_scheme *s7_init(void)
   sc->HASH_TABLE_ENTRIES =    s7_define_integer_function(sc, "hash-table-entries",   g_hash_table_entries,     1, 0, false, H_hash_table_entries);
                               s7_define_safe_function(sc, "hash-table-index",        g_hash_table_index,       1, 0, false, "an experiment");
 
-  sc->ht_iter_tag = s7_new_type_x("<hash-table-iterator>", print_ht_iter, ht_iter_free, equal_ht_iter, mark_ht_iter, ref_ht_iter, NULL, NULL, copy_ht_iter, NULL, NULL);
   sc->MAKE_HASH_TABLE_ITERATOR = s7_define_safe_function(sc, "make-hash-table-iterator", g_make_hash_table_iterator, 1, 0, false, H_make_hash_table_iterator);
   sc->IS_HASH_TABLE_ITERATOR =   s7_define_safe_function(sc, "hash-table-iterator?",     g_is_hash_table_iterator,   1, 0, false, H_is_hash_table_iterator);
-  s7_set_object_print_readably(sc->ht_iter_tag, write_ht_iter_readably);
 
                               s7_define_function(sc,      "cyclic-sequences",        g_cyclic_sequences,       1, 0, false, H_cyclic_sequences);
   sc->CALL_CC =               s7_define_function(sc,      "call/cc",                 g_call_cc,                1, 0, false, H_call_cc);
@@ -69549,7 +69644,7 @@ int main(int argc, char **argv)
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 2994
  * lg             |      |      | 6547 6497 6494 6144
  * t137           |      |      | 8296           3461
- * t455|6     265 |   89 |  9   |       8.4 8045 7790
+ * t455|6     265 |   89 |  9   |       8.4 8045 7800
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 24.0
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.5
@@ -69575,7 +69670,7 @@ int main(int argc, char **argv)
  *   need color-dialog use-gl button in gtk callbacks for labels
  * snd-genv needs a lot of gtk3 work
  *
- * cyclic-seq in rest of full-* and cyclic-sequences is minimally tested in s7test (also c_object env)
+ * cyclic-seq in rest of full-* and cyclic-sequences is minimally tested in s7test (also c_object env) [piggy-back on circular tests]
  * why not snd-g* -> snd-gtk?
  * g_load of .so file should try "./fname" and others unchanged?
  * C-G in Snd listener can cause a segfault!  Need a repeatable test case.
@@ -69590,14 +69685,8 @@ int main(int argc, char **argv)
  *    (define (inexact? x) (not (rational? x)))
  *    (define inexact->exact round)
  *    (define (exact->inexact x) (* x 1.0))
- *    but do we also get rid of #i and #e?
- * let-iterator?
- *   there is already make_let_iterator, then the iteration happens by seeing T_SLOT (in map for example),
- *   and returning (cons sym val) while going to the next slot.
- * can methods call call/cc??  sort! is unhappy in a parallel case, but this will affect all s7_apply_function uses!
- *   this seems to work: (call/cc (lambda (return) (((openlet (inlet 'mtd (lambda (x) (return "oops")))) 'mtd) 3)))
- *                       (call-with-exit (lambda (return) (((openlet (inlet 'mtd (lambda (x) (return "oops")))) 'mtd) 3)))
- *   but these all depend on being unopt'd: see t142.scm -- call-with-exit from method doesn't work if method
- *     has been opt'd into all_x* call.  How to deal with this? -- method 'abs but it hasn't been evaluated yet.
- *     longjmp needed here?
+ *    also get rid of #i and #e?
+ * the 3-func version of catch could be an option (catch-if in s7.html) -- then allow #f in dynamic-wind and they're similar (trilambda)
+ * lti format?
+ * print-length most-pos|neg-fix to *s7*
  */

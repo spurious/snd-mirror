@@ -179,9 +179,9 @@
 		  if imag-part inexact->exact inexact? infinite? initial-environment unlet input-port? integer->char integer-decode-float 
 		  integer-length integer? 
 		  keyword->symbol keyword? 
-		  lambda lcm length let let* letrec letrec* list list->string list->vector list-ref list-tail 
+		  lambda lcm length let let* let-iterator? letrec letrec* list list->string list->vector list-ref list-tail 
 		  list? log logand logbit? logior lognot logxor 
-		  macro? magnitude make-hash-table make-hash-table-iterator make-hook make-keyword make-list make-polar dilambda
+		  macro? magnitude make-hash-table make-hash-table-iterator make-hook make-keyword make-let-iterator make-list make-polar dilambda
 		  make-random-state make-rectangular make-string make-vector map max member memq memv min modulo morally-equal?
 		  nan? negative? not null? number->string number? numerator 
 		  object->string odd? open-environment? openlet? or outer-environment outlet output-port? 
@@ -575,6 +575,7 @@
 			  'magnitude number?
 			  'make-hash-table non-negative-integer?
 			  'make-hash-table-iterator hash-table?
+			  'make-let-iterator let?
 			  'make-hook (list list? string?)
 			  'make-keyword string?
 			  'make-list (list non-negative-integer?)
@@ -2499,7 +2500,7 @@
 		    (eq? (car (cadr form)) 'format)
 		    (not (cadr (cadr form))))
 	       (lint-format "~A could be ~A" name form `(format #t ,@(cddr (cadr form))))))
-	  
+
 	  ((reverse list->vector vector->list list->string string->list symbol->string string->symbol number->string)
 	   (let ((inverses '((reverse . reverse) 
 			     (list->vector . vector->list)

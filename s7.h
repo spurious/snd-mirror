@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.16"
-#define S7_DATE "27-Dec-14"
+#define S7_VERSION "3.17"
+#define S7_DATE "14-Jan-15"
 
 
 typedef long long int s7_Int;
@@ -795,6 +795,7 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc);
  * 
  *        s7 changes
  *
+ * 14-Jan:    make-let-iterator, let-iterator?
  * --------
  * 26-Dec:    s7_arity replaces s7_procedure_arity.  s7_define_integer_function. deprecate s7_procedure_name.
  * 5-Nov:     s7_shadow_rootlet and s7_set_shadow_rootlet.

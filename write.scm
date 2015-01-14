@@ -419,4 +419,16 @@
 	     (apply string-append (append (reverse! strs) (list "...")))
 	     (apply string-append (reverse! strs))))
       (set! strs (cons (format #f "~A~A ~S" (if (> i 0) ", " "") (car entry) (cdr entry)) strs)))))
+
+(define* (pp-let lt)
+  (let ((lti (make-let-iterator lt))
+	(strs ()))
+    (do ((i 0 (+ i 1))
+	 (entry (lti) (lti)))
+	((or (= i *vector-print-length*)
+	     (null? entry))
+	 (if (pair? entry)
+	     (apply string-append (append (reverse! strs) (list "...")))
+	     (apply string-append (reverse! strs))))
+      (set! strs (cons (format #f "~A~A ~S" (if (> i 0) ", " "") (car entry) (cdr entry)) strs)))))
 |#
