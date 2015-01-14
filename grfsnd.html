@@ -2344,7 +2344,7 @@ bignum-fft performs an FFT using big floats; rl and im are vectors of big floats
 
 
 <!-- bignum-precision -->
-<div class="bluish"><em class=emdef>bignum-precision</em> <code></code></div>
+<div class="bluish"><em class=emdef>(*s7* 'bignum-precision)</em> <code></code></div>
 
 <p>bignum-precision sets the number of bits used in floating-point big numbers (integer 
 bignums have whatever size it takes to represent them).  The default is 128 which gives
@@ -2354,7 +2354,7 @@ about 40 decimal digits.
 <pre class="indented">
 &gt; (* 2 pi)
 6.283185307179586476925286766559005768391E0
-&gt; (set! (bignum-precision) 256)
+&gt; (set! (*s7* 'bignum-precision) 256)
 256
 &gt; (* 2 pi)
 6.283185307179586476925286766559005768394338798750211641949889184615632812572396E0
@@ -2367,7 +2367,7 @@ you can get confusing results:
 <pre class="indented">
 &gt; (rationalize 385817946978768113605842402465609185854927496022065152.5)
 385817946978768113605842402465609185854927496022065152
-&gt; (set! (bignum-precision) 512)
+&gt; (set! (*s7* 'bignum-precision) 512)
 512
 &gt; (rationalize 385817946978768113605842402465609185854927496022065152.5)
 771635893957536227211684804931218371709854992044130305/2

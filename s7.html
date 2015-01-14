@@ -281,17 +281,17 @@ most-positive-fixnum and most-negative-fixnum.
 s7 can be built with multiprecision support 
 for all types,  using the gmp, mpfr, and mpc libraries (set WITH_GMP to 1 in s7.c).  
 If multiprecision arithmetic is
-enabled, the following functions are included: bignum, and bignum?, and the variable *bignum-precision*.
-<em class=def id="bignumprecision">*bignum-precision*</em>, defaults to 128; it sets the number of bits each float takes.
-pi automatically reflects the current *bignum-precision*:
+enabled, the following functions are included: bignum, and bignum?, and the variable (*s7* 'bignum-precision).
+(*s7* 'bignum-precision) defaults to 128; it sets the number of bits each float takes.
+pi automatically reflects the current (*s7* 'bignum-precision):
 </p>
 
 <pre class="indented">
 &gt; pi
 3.141592653589793238462643383279502884195E0
-&gt; *bignum-precision*
+&gt; (*s7* 'bignum-precision)
 128
-&gt; (set! *bignum-precision* 256)
+&gt; (set! (*s7* 'bignum-precision) 256)
 256
 &gt; pi
 3.141592653589793238462643383279502884197169399375105820974944592307816406286198E0
@@ -316,7 +316,7 @@ Its argument is a string representing the desired number:
 <div class="indented">
 
 <p>In the non-gmp case, if s7 is built using doubles (s7_Double in s7.h), the float "epsilon" is
-around (expt 2 -53), or about 1e-16.  In the gmp case, it is around (expt 2 (- *bignum-precision*)).
+around (expt 2 -53), or about 1e-16.  In the gmp case, it is around (expt 2 (- (*s7* 'bignum-precision))).
 So in the default case (precision = 128), using gmp:
 </p>
 
@@ -338,13 +338,13 @@ So in the default case (precision = 128), using gmp:
 </pre>
 
 <p>In the gmp case, integers and ratios are limited only by the size of memory,
-but reals are limited by *bignum-precision*.  This means, for example, that
+but reals are limited by (*s7* 'bignum-precision).  This means, for example, that
 </p>
 
 <pre class="indented">
-&gt; (floor 1e56) ; *bignum-precision* is 128
+&gt; (floor 1e56) ; (*s7* 'bignum-precision) is 128
 99999999999999999999999999999999999999927942405962072064
-&gt; (set! *bignum-precision* 256)
+&gt; (set! (*s7* 'bignum-precision) 256)
 256
 &gt; (floor 1e56)
 100000000000000000000000000000000000000000000000000000000
@@ -3830,9 +3830,9 @@ incomplete evaluation.
 
 <p>Since any sequence can be passed to ~{~}, we need a way to truncate output and represent
 the rest of the sequence with "...", but ~^ only stops at the end of the sequence.  ~|
-is like ~^ but it also stops after it handles *vector-print-length* elements and prints
+is like ~^ but it also stops after it handles (*s7* 'print-length) elements and prints
 "...".  So, <code>(format #f "~{~A~| ~}" #(0 1 2 3 4))</code> returns "0 1 2 ..."
-if *vector-print-length* is 3.
+if (*s7* 'print-length) is 3.
 </p>
 
 </div>
@@ -4352,8 +4352,8 @@ are:
 <li>current-error-port, set-current-error-port
 </ul>
 
-<p>The variable <em class=def id="vectorprintlength">*vector-print-length*</em> sets
-the upper limit on how many vector elements are printed by object-&gt;string and format.
+<p>The variable (*s7* 'print-length) sets
+the upper limit on how many elements of a sequence are printed by object-&gt;string and format.
 The end-of-file object is #&lt;eof&gt;. 
 When running s7 behind a GUI, you often want input to come from and output to go to
 arbitrary widgets. The function ports provide a way to redirect IO in C.  See <a href="#functionportexample">below</a>
@@ -5649,6 +5649,7 @@ if *debugging* is #t; otherwise assert expands into nothing.
 state: 
 </p>
 <pre class="indented">
+print-length                  number of elements of a sequence to print
 max-string-length             max size arg to make-string and read-string
 max-list-length               max size arg to make-list
 max-vector-length             max size arg to make-vector and make-hash-table
@@ -5659,6 +5660,7 @@ initial-string-port-length    128, initial size of a string port's buffer
 default-rationalize-error     1e-12 (settable)
 morally-equal-float-epsilon   1e-15 (settable)
 hash-table-float-epsilon      1e-12 (settable, but currently limited to less than 1e-3).
+bignum-precision              bits for bignum floats (128)
 default-random-state          the default arg for random (settable)
 
 cpu-time                      run time so far
@@ -5807,10 +5809,8 @@ Better ideas are always welcome!
 <p>Here are the built-in s7 variables:
 </p>
 <ul>
-<li>*bignum-precision*
 <li>*features*
 <li>*libraries*
-<li>*vector-print-length*
 <li>*load-path*
 <li>*autoload*
 <li>*#readers*

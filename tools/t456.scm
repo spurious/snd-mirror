@@ -1,5 +1,5 @@
 (set! (hook-functions *unbound-variable-hook*) ())
-(set! *vector-print-length* 6)
+(set! (*s7* 'print-length) 6)
 ;(set! (*s7* 'gc-stats) #t)
 
 (if (provided? 'snd)
@@ -149,6 +149,9 @@
 
 		      "symbol-table"
 
+;		      "string-set!" "list-set!" "set-car!" "hash-table-set!" "vector-set!" "let-set!" "float-vector-set!"
+;		      "vector-fill!" "fill!" "string-fill!" "sort!"
+
 		      (reader-cond ((> max-args 2) "copy" "hash-table-set!" "vector-set!" "let-set!"))
 		      (reader-cond ((> max-args 4) "float-vector-ref"))
 
@@ -184,9 +187,10 @@
     (for-each test-sym st)
     ;(do ((i 0 (+ i 1)) (len (length st))) ((= i 1000)) (test-sym (st (random len))))
     (if data-file (close-output-port data-file))
-    (format *stderr* "~%all done~%")))
+    (format *stderr* "~%all done~%")
+    (s7-version)
+    ))
 
 ;(test-sym 'sort!)
 (all)
-(s7-version)
 (exit)

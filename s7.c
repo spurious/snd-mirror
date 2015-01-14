@@ -749,7 +749,6 @@ struct s7_scheme {
   s7_pointer standard_input, standard_output, standard_error;
 
   s7_pointer sharp_readers;           /* the binding pair for the global *#readers* list */
-  s7_pointer vector_print_length;     /* same for *vector-print-length* */
   s7_pointer load_hook;               /* *load-hook* hook object */
   s7_pointer unbound_variable_hook;   /* *unbound-variable-hook* hook object */
   s7_pointer error_hook;              /* *error-hook* hook object */
@@ -762,7 +761,7 @@ struct s7_scheme {
   bool symbol_table_is_locked;  
   unsigned long long int let_number;
   double default_rationalize_error, morally_equal_float_epsilon, hash_table_float_epsilon;
-  s7_Int default_hash_table_length, initial_string_port_length;
+  s7_Int default_hash_table_length, initial_string_port_length, print_length;
   s7_pointer *op_names_saved;
   vdims_t *wrap_only;
 
@@ -808,7 +807,7 @@ struct s7_scheme {
   int strings_loc, vectors_loc, input_ports_loc, output_ports_loc, continuations_loc, c_objects_loc, hash_tables_loc, gensyms_loc, setters_loc;
 
   unsigned int syms_tag, syms_tag2;
-  int ht_iter_tag, rng_tag, baffle_ctr;
+  int ht_iter_tag, rng_tag, baffle_ctr, bignum_precision;
   s7_rng_t *default_rng;
 
 #if WITH_GMP
@@ -865,7 +864,7 @@ struct s7_scheme {
 #endif
 
 #if WITH_GMP
-  s7_pointer BIGNUM, BIGNUM_PRECISION;
+  s7_pointer BIGNUM;
 #endif
 #if WITH_SYSTEM_EXTRAS
   s7_pointer IS_DIRECTORY, FILE_EXISTS, DELETE_FILE, GETENV, SYSTEM, DIRECTORY_TO_LIST, FILE_MTIME;
@@ -939,7 +938,7 @@ struct s7_scheme {
   s7_pointer catches_symbol, exits_symbol, stack_symbol, default_rationalize_error_symbol, max_string_length_symbol, default_random_state_symbol;
   s7_pointer max_list_length_symbol, max_vector_length_symbol, max_vector_dimensions_symbol, default_hash_table_length_symbol;
   s7_pointer hash_table_float_epsilon_symbol, morally_equal_float_epsilon_symbol, initial_string_port_length_symbol;
-  s7_pointer undefined_identifier_warnings_symbol;
+  s7_pointer undefined_identifier_warnings_symbol, print_length_symbol, bignum_precision_symbol;
 
   bool undefined_identifier_warnings;
 
@@ -24385,11 +24384,11 @@ static s7_pointer hash_eq_func(s7_scheme *sc, s7_pointer table, s7_pointer key);
 
 static void collect_vector_info(s7_scheme *sc, shared_info *ci, s7_pointer top, bool stop_at_print_length)
 {
-  int i, plen;
+  s7_Int i, plen;
 
   if (stop_at_print_length)
     {
-      plen = s7_vector_print_length(sc); 
+      plen = sc->print_length;
       if (plen > vector_length(top))
 	plen = vector_length(top);
     }
@@ -24881,7 +24880,7 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
        *       (write vect))))
        */
 
-      plen = s7_vector_print_length(sc);
+      plen = sc->print_length;
       if (plen <= 0)
 	{
 	  if (vector_rank(vect) > 1)
@@ -25039,13 +25038,14 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 
 static void bytevector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write, bool to_file)
 {
-  s7_Int i, len, plen;
+  s7_Int i, len;
+  int plen;
   bool too_long = false;
 
   len = string_length(vect);
   if (use_write == USE_READABLE_WRITE)
     plen = len;
-  else plen = s7_vector_print_length(sc);
+  else plen = sc->print_length;
 
   if (len == 0)
     port_write_string(port)(sc, "#u8()", 5, port);
@@ -25251,8 +25251,8 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
   if ((use_write != USE_READABLE_WRITE) &&
       ((!to_file) || (port == sc->standard_output) || (port == sc->standard_error)))
     {
-      int plen;
-      plen = s7_vector_print_length(sc);
+      s7_Int plen;
+      plen = sc->print_length;
       if (plen <= 0)
 	{
 	  port_write_string(port)(sc, "#<hash-table ...>", 17, port);
@@ -26652,7 +26652,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 
 	    case '|':                           /* -------- exit if args nil or ctr > *vector-print-length* -------- */
 	      if ((is_pair(fdat->args)) &&
-		  (fdat->ctr >= (int)s7_integer(slot_value(sc->vector_print_length))))
+		  (fdat->ctr >= sc->print_length))
 		{
 		  format_append_string(sc, fdat, " ...", 4, port);
 		  fdat->args = sc->NIL;
@@ -30464,19 +30464,22 @@ s7_Int s7_vector_length(s7_pointer vec)
 
 s7_Int s7_vector_print_length(s7_scheme *sc)
 {
-  return(s7_integer(slot_value(sc->vector_print_length)));
+  return(sc->print_length);
 }
 
 
 s7_Int s7_set_vector_print_length(s7_scheme *sc, s7_Int new_len)
 {
   s7_Int old_len;
-  old_len = s7_integer(slot_value(sc->vector_print_length));
-  slot_set_value(sc->vector_print_length, make_integer(sc, new_len));
-  return(old_len);
+  old_len = sc->print_length;
+  sc->print_length = new_len;
+#if (!DISABLE_DEPRECATED)
+  s7_symbol_set_value(sc, s7_make_symbol(sc, "*vector-print-length*"), make_integer(sc, new_len));
+#endif
+ return(old_len);
 }
 
-
+#if (!DISABLE_DEPRECATED)
 static s7_pointer g_vector_print_length_set(s7_scheme *sc, s7_pointer args)
 {
   if (s7_is_integer(cadr(args)))
@@ -30484,11 +30487,14 @@ static s7_pointer g_vector_print_length_set(s7_scheme *sc, s7_pointer args)
       s7_Int len;
       len = s7_integer(cadr(args));
       if (len >= 0)
-	return(cadr(args));
+	{
+	  sc->print_length = len;
+	  return(cadr(args));
+	}
     }
   return(sc->ERROR);
 }
-
+#endif
 
 #if (!WITH_GMP)
 void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
@@ -32465,6 +32471,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
    *      [in closure_compare, next_slot(let_slots(sc->envir)) is null! -- is this c stack trouble due to the recursive eval call?]
    */
 
+#if (!WITH_GMP)
   if (compare_func == g_less)
     compare_func = g_less_2;
   else
@@ -32472,6 +32479,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
       if (compare_func == g_greater)
 	compare_func = g_greater_2;
     }
+#endif
 
   switch (type(data))
     {
@@ -32514,6 +32522,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	len = string_length(data);
 	if (len < 2) return(data);
 
+#if (!WITH_GMP)
 	if (is_c_function(lessp))
 	  {
 	    if (((!is_bytevector(data)) && (compare_func == g_chars_are_less)) ||
@@ -32529,6 +32538,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 		return(data);
 	      }
 	  }
+#endif
 
 	vec = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
 	gc_loc = s7_gc_protect(sc, vec);
@@ -32580,6 +32590,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	len = vector_length(data);
 	if (len < 2) return(data);
 
+#if (!WITH_GMP)
 	if (is_c_function(lessp))
 	  {
 	    if (compare_func == g_less_2)
@@ -32597,6 +32608,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 		return(data);
 	      }
 	  }
+#endif
 
 	/* currently we have to make the ordinary vector here even if not compare_func
 	 *   because the sorter uses vector_element to access sort args (see SORT_DATA in eval).
@@ -32640,6 +32652,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	  /* here if, for example, compare_func == string<?, we could precheck for strings,
 	   *   then qsort without the type checks.  Also common is (lambda (a b) (f (car a) (car b))).
 	   */
+#if (!WITH_GMP)
 	  if ((compare_func == g_less_2) || (compare_func == g_greater_2))
 	    {
 	      int i, typ;
@@ -32664,6 +32677,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 		  return(data);
 		}
 	    }
+#endif
 	  qsort((void *)s7_vector_elements(data), len, sizeof(s7_pointer), sort_func);
 	  return(data);
 	}
@@ -43577,10 +43591,11 @@ static void init_choosers(s7_scheme *sc)
   subtract_sf_f = make_function_with_class(sc, f, "-", g_subtract_sf_f, 2, 0, false, "- opt");
   subtract_2_temp = make_temp_function_with_class(sc, f, "-", g_subtract_2_temp, 2, 0, false, "- opt");
   subtract_f_sqr = make_function_with_class(sc, f, "-", g_subtract_f_sqr, 2, 0, false, "- opt");
-
+#if (!WITH_GMP)
   sub_random_ic = make_function_with_class(sc, f, "random", g_sub_random_ic, 2, 0, false, "- opt");
   sub_random_rc = make_function_with_class(sc, f, "random", g_sub_random_rc, 2, 0, false, "- opt");
   set_returns_temp(sub_random_rc);
+#endif
 
   /* * */
   f = set_function_chooser(sc, sc->MULTIPLY, multiply_chooser);
@@ -67453,26 +67468,20 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_set_bignum_precision(s7_scheme *sc, s7_pointer args)
+static s7_pointer set_bignum_precision(s7_scheme *sc, int precision)
 {
   mp_prec_t bits;
-  s7_Int precision;
-  s7_pointer prec;
-
-  prec = cadr(args);
-  if (!s7_is_integer(prec))
-    return(simple_wrong_type_argument(sc, sc->BIGNUM_PRECISION, prec, T_INTEGER));
-
-  precision = s7_integer(prec);
   if (precision <= 1)                   /* (set! *bignum-precision* 1) causes mpfr to segfault! (also 0 and -1) */
-    return(s7_out_of_range_error(sc, "set! *bignum-precision*", 0, prec, "has to be greater than 1"));    
+    return(s7_out_of_range_error(sc, "set! *bignum-precision*", 0, make_integer(sc, precision), "has to be greater than 1"));    
 
   bits = (mp_prec_t)precision;
   mpfr_set_default_prec(bits);
   mpc_set_default_precision(bits);
   s7_symbol_set_value(sc, sc->PI, big_pi(sc));
-
-  return(prec);
+#if (!DISABLE_DEPRECATED)
+  s7_symbol_set_value(sc, s7_make_symbol(sc, "*bignum-precision*"), make_integer(sc, precision));
+#endif
+  return(sc->F);
 }
 
 
@@ -67779,9 +67788,10 @@ static void s7_gmp_init(s7_scheme *sc)
   sc->BIGNUM =          s7_define_function(sc, "bignum",              g_bignum,             1, 1, false, H_bignum);
   s7_define_function(sc,                       "bignum?",             g_is_bignum,          1, 0, false, H_is_bignum);
 
-  sc->BIGNUM_PRECISION = s7_define_variable(sc, "*bignum-precision*", small_int(DEFAULT_BIGNUM_PRECISION));
-  s7_symbol_set_access(sc, sc->BIGNUM_PRECISION,
-		       s7_make_function(sc, "(set *bignum-precision*)", g_set_bignum_precision, 2, 0, false, "*bignum-precision* accessor")); 
+#if (!DISABLE_DEPRECATED)
+  s7_define_variable(sc, "*bignum-precision*", small_int(DEFAULT_BIGNUM_PRECISION));
+  sc->bignum_precision = DEFAULT_BIGNUM_PRECISION;
+#endif
 
   mpfr_set_default_prec((mp_prec_t)DEFAULT_BIGNUM_PRECISION); 
   mpc_set_default_precision((mp_prec_t)DEFAULT_BIGNUM_PRECISION);
@@ -67843,12 +67853,17 @@ static void init_s7_env(s7_scheme *sc)
   sc->default_random_state_symbol =          s7_make_symbol(sc, "default-random-state");
   sc->morally_equal_float_epsilon_symbol =   s7_make_symbol(sc, "morally-equal-float-epsilon");
   sc->hash_table_float_epsilon_symbol =      s7_make_symbol(sc, "hash-table-float-epsilon");
+  sc->print_length_symbol =                  s7_make_symbol(sc, "print-length");	
+  sc->bignum_precision_symbol =              s7_make_symbol(sc, "bignum-precision");	
 }
 
 static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer sym;
   sym = cadr(args);
+
+  if (sym == sc->print_length_symbol)                                    /* print-length */
+    return(s7_make_integer(sc, sc->print_length));
 
   if (sym == sc->stack_top_symbol)                                       /* stack-top = #frames active (4 stack entries per frame) */
     return(s7_make_integer(sc, (sc->stack_end - sc->stack_start) / 4));
@@ -67940,6 +67955,9 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
       return(res);
     }
 
+  if (sym == sc->bignum_precision_symbol)                                /* bignum-precision */
+    return(s7_make_integer(sc, sc->bignum_precision));
+
   /* sc->unlet is a scheme vector of slots -- not very useful at the scheme level */
   return(sc->UNDEFINED);
 }
@@ -67950,6 +67968,21 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 
   sym = cadr(args);
   val = caddr(args);
+
+  if (sym == sc->print_length_symbol)
+    {
+      if (s7_is_integer(val))
+	{
+	  if (integer(val) < 0)
+	    return(simple_out_of_range(sc, sc->LET_SET, val, make_string_wrapper(sc, "should be a positive integer")));
+	  sc->print_length = integer(val);
+#if (!DISABLE_DEPRECATED)
+	  s7_symbol_set_value(sc, s7_make_symbol(sc, "*vector-print-length*"), val);
+#endif
+	  return(val);
+	}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+    }
 
   if (sym == sc->gc_stats_symbol)
     {
@@ -68031,6 +68064,20 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 	}
       return(wrong_type_argument_with_type(sc, sc->LET_SET, small_int(1), val, make_string_wrapper(sc, "a random state object")));
     }
+
+  if (sym == sc->bignum_precision_symbol)
+    {
+      if (s7_is_integer(val)) 
+	{
+	  sc->bignum_precision = s7_integer(val); 
+#if WITH_GMP
+	  set_bignum_precision(sc, sc->bignum_precision);
+#endif
+	  return(val);
+	}
+      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+    }
+
   return(sc->UNDEFINED);
 }
 
@@ -68265,6 +68312,7 @@ s7_scheme *s7_init(void)
   sc->s7_call_file = NULL;
   sc->s7_call_name = NULL;
   sc->safety = 0;
+  sc->print_length = 8;
   sc->baffle_ctr = 0;
   sc->syms_tag = 0;
   sc->syms_tag2 = 0;
@@ -69096,10 +69144,11 @@ s7_scheme *s7_init(void)
   sc->S7_FEATURES = s7_define_variable(sc, "*features*", sc->NIL);
   s7_symbol_set_access(sc, sc->S7_FEATURES, s7_make_function(sc, "(set *features*)", g_features_set, 2, 0, false, "*features* accessor"));
 
+#if (!DISABLE_DEPRECATED)
   /* -------- *vector-print-length* -------- */
-  sym = s7_define_variable(sc, "*vector-print-length*", small_int(8));
-  sc->vector_print_length = global_slot(sym);
+  sym = s7_define_variable(sc, "*vector-print-length*", small_int(sc->print_length));
   s7_symbol_set_access(sc, sym, s7_make_function(sc, "(set *vector-print-length*)", g_vector_print_length_set, 2, 0, false, "*vector-print-length* accessor"));
+#endif
 
   /* -------- *load-path* -------- */
   sc->LOAD_PATH = s7_define_variable_with_documentation(sc, "*load-path*", sc->NIL, "*load-path* is a list of directories (strings) that the load function searches if it is passed an incomplete file name");
@@ -69687,6 +69736,5 @@ int main(int argc, char **argv)
  *    (define (exact->inexact x) (* x 1.0))
  *    also get rid of #i and #e?
  * the 3-func version of catch could be an option (catch-if in s7.html) -- then allow #f in dynamic-wind and they're similar (trilambda)
- * lti format?
- * print-length most-pos|neg-fix to *s7*
+ * *stacktrace*??, most-pos|neg-fix to *s7*
  */
