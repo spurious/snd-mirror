@@ -1836,18 +1836,68 @@ types, so I'm not as attracted to making '&gt;' generic; you can't, for example,
 or even <code>(&gt; 1 0+i)</code>.
 </p>
 
-<pre>
+<pre class="indented">
 <em class=def id="sortb">sort!</em>
 <em class=def id="reverseb">reverse!</em>
 <em class=def id="fillb">fill!</em>
 <em class=def id="s7copy">copy</em>
 <em class=def id="objecttostring">object-&gt;string</em>
+</pre>
 
+<p><b>reverse!</b> is an in-place version of the built-in function reverse.  That is, 
+it modifies the list passed to it in the process of reversing its contents.  Use set!:
+<code>(set! p (reverse! p))</code>.  This is somewhat inconsistent with other cases,
+but historically, lisp programmers have treated the in-place reverse as the fast
+version, so s7 follows suit.
+</p>
+
+<p>
+<b>sort!</b> sorts a sequence using the
+function passed as its second argument to choose the new ordering.
+</p>
+
+<pre class="indented">
+&gt; (sort! (list 3 4 8 2 0 1 5 9 7 6) &lt;)
+(0 1 2 3 4 5 6 7 8 9)
+
+(define (mix-notelists . notelists)
+  ;; assume the second parameter is the begin time in seconds (the first is the instrument name)
+  (<em class=red>sort!</em>
+   (apply append notelists)
+   (lambda (note1 note2)
+     (&lt; (cadr note1) (cadr note2)))))
+
+&gt; (mix-notelists '((fm-violin 0 1 440 .1)
+		   (fm-violin 1 1 550 .1))
+	         '((bird 0 .1 )
+		   (bird .2 .1)
+		   (bird 1.2 .3)
+		   (bird .5 .5)))
+
+((bird 0 0.1) (fm-violin 0 1 440 0.1) (bird 0.2 0.1) (bird 0.5 0.5) (fm-violin 1 1 550 0.1) (bird 1.2 0.3))
+</pre>
+
+<br>
+<pre class="indented">
 <em class=def id="makeiterator">make-iterator</em>
 <em class=def id="iteratorp">iterator?</em>
 <em class=def id="iterate">iterate</em>
 <em class=def id="iteratorsequence">iterator-sequence</em>
 </pre>
+
+<p><b>make-iterator</b> takes a sequence argument and returns an iterator object that traverses
+that sequence as it is called.  The iterator itself can be treated as a function of no arguments,
+or (for code clarity) it can be the argument to <b>iterate</b>, which does the same thing.
+That is <code>(iter)</code> is the same as <code>(iterate iter)</code>.  The original sequence
+is <b>iterator-sequence</b>.
+</p>
+
+<p>When an iterator reaches the end of its sequence, it returns #&lt;eof&gt;.  I used to
+return nil, and can't decide whether this change is an improvement.  If an iterator over a
+list notices that its list is circular, it returns #&lt;eof&gt;.  map and for-each use
+iterators, so if you pass a circular list to either, it will stop eventually.
+</p>
+
 </div>
 
 </blockquote>
@@ -5096,38 +5146,6 @@ I need to know where something unexpected happened.  So:
 
 <p id="makelist">(<b>make-list</b> length (initial-element #f)) returns a list of 'length' elements defaulting to 'initial-element'.
 </p>
-
-<p><b>reverse!</b> is an in-place version of the built-in function reverse.  That is, 
-it modifies the list passed to it in the process of reversing its contents.  Use set!:
-<code>(set! p (reverse! p))</code>.  This is somewhat inconsistent with other cases,
-but historically, lisp programmers have treated the in-place reverse as the fast
-version, so s7 follows suit.
-<b>list-set!</b> sets a member of a list.  <b>sort!</b> sorts a sequence using the
-function passed as its second argument to choose the new ordering.
-</p>
-
-<pre class="indented">
-&gt; (sort! (list 3 4 8 2 0 1 5 9 7 6) &lt;)
-(0 1 2 3 4 5 6 7 8 9)
-
-(define (mix-notelists . notelists)
-  ;; assume the second parameter is the begin time in seconds (the first is the instrument name)
-  (<em class=red>sort!</em>
-   (apply append notelists)
-   (lambda (note1 note2)
-     (&lt; (cadr note1) (cadr note2)))))
-
-&gt; (mix-notelists '((fm-violin 0 1 440 .1)
-		   (fm-violin 1 1 550 .1))
-	         '((bird 0 .1 )
-		   (bird .2 .1)
-		   (bird 1.2 .3)
-		   (bird .5 .5)))
-
-((bird 0 0.1) (fm-violin 0 1 440 0.1) (bird 0.2 0.1) (bird 0.5 0.5) (fm-violin 1 1 550 0.1) (bird 1.2 0.3))
-</pre>
-
-
 
 <div class="separator"></div>
 

@@ -2535,7 +2535,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_APPLY_SS, HOP_APPLY_SS,
       OP_C_ALL_X, HOP_C_ALL_X, OP_CALL_WITH_EXIT, HOP_CALL_WITH_EXIT, OP_C_CATCH, HOP_C_CATCH, OP_C_CATCH_ALL, HOP_C_CATCH_ALL,
       OP_C_S_opSq, HOP_C_S_opSq, OP_C_S_opCq, HOP_C_S_opCq, 
-      OP_C_FOR_EACH_LS, HOP_C_FOR_EACH_LS, OP_C_FOR_EACH_L_opSq, HOP_C_FOR_EACH_L_opSq, 
+      OP_C_FOR_EACH_1, HOP_C_FOR_EACH_1, OP_C_FOR_EACH_CATCH, HOP_C_FOR_EACH_CATCH, 
       OP_C_S, HOP_C_S, OP_READ_S, HOP_READ_S, OP_C_P, HOP_C_P, OP_C_SP, HOP_C_SP, OP_C_A, HOP_C_A, OP_C_SCS, HOP_C_SCS,
 
       OP_GOTO, HOP_GOTO, OP_GOTO_C, HOP_GOTO_C, OP_GOTO_S, HOP_GOTO_S, OP_GOTO_A, HOP_GOTO_A, 
@@ -2643,7 +2643,7 @@ static const char *opt_names[OPT_MAX_DEFINED + 1] =
       "apply_ss", "h_apply_ss",
       "c_all_x", "h_c_all_x", "call_with_exit", "h_call_with_exit", "c_catch", "h_c_catch", "c_catch_all", "h_c_catch_all",
       "c_s_opsq", "h_c_s_opsq", "c_s_opcq", "h_c_s_opcq", 
-      "c_for_each_ls", "h_c_for_each_ls", "c_for_each_l_opsq", "h_c_for_each_l_opsq", 
+      "c_for_each_1", "h_c_for_each_1", "c_for_each_catch", "h_c_for_each_catch", 
       "c_s", "h_c_s", "read_s", "h_read_s", "c_p", "h_c_p", "c_sp", "h_c_sp", "c_a", "h_c_a", "c_scs", "h_c_scs",
 
       "goto", "h_goto", "goto_c", "h_goto_c", "goto_s", "h_goto_s", "goto_a", "h_goto_a", 
@@ -24390,7 +24390,11 @@ static s7_pointer make_iterator(s7_scheme *sc, s7_pointer e)
     case T_ENVIRONMENT:
       if (e == sc->rootlet)
 	iterator_current(iter) = vector_element(e, 0);
-      else iterator_current(iter) = let_slots(e);
+      else 
+	{
+	  check_method(sc, e, sc->MAKE_ITERATOR, list_1(sc, e));
+	  iterator_current(iter) = let_slots(e);
+	}
       iterator_next(iter) = let_iterate;
       break;
 
@@ -45227,11 +45231,11 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 			      if (is_symbol(arg2))
 				{
 				  set_unsafely_optimized(expr);
-				  set_optimize_data(expr, hop + OP_C_FOR_EACH_LS);
+				  set_optimize_data(expr, hop + OP_C_FOR_EACH_1);
 				  return(false);
 				}
 			      set_unsafely_optimized(expr);
-			      set_optimize_data(expr, hop + OP_C_FOR_EACH_L_opSq);
+			      set_optimize_data(expr, hop + OP_C_FOR_EACH_CATCH);
 			      return(false);
 			    }
 			}
@@ -54952,11 +54956,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      } 
 	      
 	      
-	    case OP_C_FOR_EACH_LS:
+	    case OP_C_FOR_EACH_1:
 	      if (!c_function_is_ok(sc, code)) break;
 	      check_lambda_args(sc, cadr(cadr(code)), NULL);
 	      
-	    case HOP_C_FOR_EACH_LS:
+	    case HOP_C_FOR_EACH_1:
 	      {
 		/* for_each_1: (let () (define (f b) b) (define (hi) (let ((lst '(1 2 3))) (for-each (lambda (a) 123 (f a)) lst))) (hi)) */
 		s7_pointer x, y, z;
@@ -54978,30 +54982,34 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	      
 	      
-	    case OP_C_FOR_EACH_L_opSq:
+	    case OP_C_FOR_EACH_CATCH:
 	      if ((!c_function_is_ok(sc, code)) || (!indirect_c_function_is_ok(sc, caddr(code)))) break;
 	      check_lambda_args(sc, cadr(cadr(code)), NULL);
 	      
-	    case HOP_C_FOR_EACH_L_opSq:
+	    case HOP_C_FOR_EACH_CATCH:
 	      {
-		s7_pointer x, y, z;
+		s7_pointer y, z;
 		
 		y = cdadr(code);
-		make_closure_without_capture(sc, x, car(y), cdr(y), sc->envir);
+		make_closure_without_capture(sc, sc->x, car(y), cdr(y), sc->envir);
 		
 		y = caddr(code);
 		car(sc->T1_1) = find_symbol_checked(sc, cadr(y));
 		z = c_call(y)(sc, sc->T1_1);
 		
-		if ((!is_pair(z)) ||
-		    (s7_list_length(sc, z) == 0) ||
-		    (!is_optimized(car(closure_body(x)))) ||   
-		    (optimize_data(car(closure_body(x))) != HOP_C_CATCH_ALL))
+		if (is_null(z))
 		  {
-		    sc->value = g_for_each(sc, list_2(sc, x, z));
+		    sc->value = sc->UNSPECIFIED;
 		    goto START;
 		  }
-		sc->code = x;
+
+		sc->code = sc->x;
+		if ((!is_optimized(car(closure_body(sc->x)))) ||   
+		    (optimize_data(car(closure_body(sc->x))) != HOP_C_CATCH_ALL))
+		  {
+		    sc->args = make_counter(sc, make_iterator(sc, z));
+		    goto FOR_EACH_1;
+		  }
 		sc->args = make_counter(sc, z);
 		goto FOR_EACH_CATCH;
 	      }
@@ -69253,7 +69261,7 @@ int main(int argc, char **argv)
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1138
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3005
- * lg             |      |      | 6547 6497 6494 6144
+ * lg             |      |      | 6547 6497 6494 6243
  * t137           |      |      | 8296           3461
  * t455|6     265 |   89 |  9   |       8.4 8045 7828
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
@@ -69296,9 +69304,6 @@ int main(int argc, char **argv)
  * the 3-func version of catch could be an option (catch-if in s7.html) -- then allow #f in dynamic-wind and they're similar (trilambda)
  * *stacktrace*??, most-pos|neg-fix to *s7*
  *
- * need iterate doc: generic func section with sort! etc
- * returned iterate value is #<eof>, cycles halt map etc, 
  * no methods yet for iterators, method map/for-each, mock iterator? iter-diffs
- * ls->for_each_1 (lg), auto gc change [new generic procs so timing is ok] -- change these c_for_each names!
  * extend t137 to include these
  */
