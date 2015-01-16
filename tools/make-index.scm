@@ -889,9 +889,9 @@
 	(size 0))
     (call-with-output-file "indexer.data"
       (lambda (p)
-	(let ((hti (make-hash-table-iterator names)))
-	  (do ((ns (hti) (hti)))
-	      ((null? ns))
+	(let ((hti (make-iterator names)))
+	  (do ((ns (iterate hti) (iterate hti)))
+	      ((eof-object? ns))
 	    (let ((file (car ns))
 		  (symbols (cdr ns)))
 	      (set! size (+ size (length symbols)))
@@ -907,9 +907,7 @@
 	   syms)
 	  (format p "~%};~%"))
 	(format p "~%static void autoload_info(s7_scheme *sc)~%{~%  s7_autoload_set_names(sc, snd_names, ~D);~%}~%" size)))
-  ))
-  
-
+    ))
 
 
 

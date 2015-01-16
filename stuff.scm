@@ -569,7 +569,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 			  null? pair? list? 
 			  keyword? gensym? symbol?
 			  char? string?
-			  hash-table? hash-table-iterator? 
+			  hash-table?
+			  iterator?
 			  continuation? 
 			  input-port? output-port? 
 			  let? 			     

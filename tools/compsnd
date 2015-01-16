@@ -43,7 +43,6 @@ echo ' '
 
 ./snd --version
 ./snd -noinit --features "'clm 'snd-s7 'snd-motif 'sndlib"
-./snd tools/check-help.scm
 ./snd -e '(begin (load "cload.scm") (set! *cload-cflags* "-Wall"))' libm.scm libc.scm libgdbm.scm libdl.scm libgsl.scm -e '(exit)'
 
 echo ' -------------------------------------------------------------------------------- '

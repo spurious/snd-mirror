@@ -118,6 +118,10 @@ define s7cell
       printf "envr:           slots: %p, nxt: %p, id: %lld\n", $cell.object.envr.slots,  $cell.object.envr.nxt,  $cell.object.envr.id
   end
 
+  if ($type == T_ITERATOR)
+      printf "iter:           obj: %p, cur: %p, loc: %lld\n", $cell.object.iter.obj,  $cell.object.iter.cur,  $cell.object.iter.loc
+  end
+
   if ($type == T_COUNTER)
       printf "ctr:            result: %p, list: %p, env: %p, val: %lld, len: %lld\n", \
          $cell.object.ctr.result, $cell.object.ctr.list, $cell.object.ctr.env, $cell.object.ctr.val, $cell.object.ctr.len
