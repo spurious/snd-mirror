@@ -1715,7 +1715,7 @@ Their inverses are (and always have been) equally trivial.
 
 <p>The applicable object syntax makes it easy to write generic functions.
 For example, s7test.scm has implementations of Common Lisp's sequence functions.
-length, copy, reverse, fill!, map and for-each are generic in this sense (map always returns a list).
+length, copy, reverse, fill!, iterate, map and for-each are generic in this sense (map always returns a list).
 </p>
 
 <pre class="indented">
@@ -1723,20 +1723,6 @@ length, copy, reverse, fill!, map and for-each are generic in this sense (map al
 (5 -3 9)
 &gt; (length "hi")
 2
-</pre>
-
-<p>Here is a function that returns an iterator.  It works for anything that
-accepts an integer argument (e.g. list, string, vector, ...):
-</p>
-
-<pre class="indented">
-(define (make-iterator obj)
-  (let ((ctr 0))
-    (lambda ()
-      (and (&lt; ctr <em class=red>(length obj)</em>)
-	   (let ((val <em class=red>(obj ctr)</em>))
-	     (set! ctr (+ ctr 1))
-	     val)))))
 </pre>
 
 <p>
@@ -1849,127 +1835,18 @@ to compare strings and lists, as well as numbers.  In map and for-each, however,
 types, so I'm not as attracted to making '&gt;' generic; you can't, for example, <code>(&gt; "hi" 32.1)</code>,
 or even <code>(&gt; 1 0+i)</code>.
 </p>
-</div>
 
-<details>
-<summary class="indented">function copy</summary>
-<div class="indented">
-<p>The make-iterator function above raises an interesting issue.  What should the copy function
-do if passed a closure?  To be consistent with copy as applied
-to a hash-table-iterator, we want a snapshot of the current
-state of the iteration:
-</p>
+<pre>
+<em class=def id="sortb">sort!</em>
+<em class=def id="reverseb">reverse!</em>
+<em class=def id="fillb">fill!</em>
+<em class=def id="s7copy">copy</em>
+<em class=def id="objecttostring">object-&gt;string</em>
 
-<pre class="indented">
-(define (iterator-&gt;string iterator)
-  (let ((look-ahead (<em class="red">copy</em> iterator)))
-    (string-append "#&lt;iterator ... " 
-		   (object-&gt;string (look-ahead)) " "
-		   (object-&gt;string (look-ahead)) " "
-		   (object-&gt;string (look-ahead))
-		   " ...&gt;")))
-
-(let ((v (vector 0 1 2 3 4 5 6 7 8 9)))
-  (let ((iterator (<em class=red>make-iterator</em> v)))
-    (let* ((vals (list (iterator) (iterator) (iterator)))
-           (description (iterator-&gt;string iterator))
-           (more-vals (list (iterator) (iterator))))
-      (list vals description more-vals))))
-</pre>
-
-<p>
-which returns <code>'((0 1 2) "#&lt;iterator ... 3 4 5 ...&gt;" (3 4))</code>
-But this consistency requires that we
-copy the function's environment chain (all its non-global "closed over" state),
-and each value in that chain:
-</p>
-
-<pre class="indented">
-(define (make-iterator-with-filter obj func)
-  (let ((iterator (make-iterator obj)))
-    (letrec ((filter (lambda ()
-		       (or (func (iterator))
-			   (filter)))))
-      filter)))
-
-(let ((v (vector 0 1 2 3 4 5 6 7 8 9)))
-  (let ((iterator (make-iterator-with-filter v 
-		    (lambda (val)
-		      (if (number? val)
-			  (and (even? val)
-			       val)
-			  :all-done)))))
-    ...))
-</pre>
-
-<p>			  
-Now if we <code>(copy iterator)</code> in the let body above, but don't copy the internal iterator in the copy function,
-the two iterators step on each other because they share the same 'ctr' variable.
-If the copy function copies any closure it finds in the environment (so that the inner iterator is copied), we get an infinite loop
-because 'filter' is in its own closure (thanks to letrec).
-And if it copies all values in the environment, it copies the vector 
-that is deliberately shared!  Our motto is "hack now, think later", so we try to add
-circle checks and copy only closure environments, but now we have a big pile of
-queasy code that assumes we have thought of everything.  Not likely.  And copy has
-become incredibly wasteful; we might end up copying hundreds of local variables,
-when all we actually want is access to the 'ctr' and 'obj' variables in the
-current iterator's environment.  I'm getting ahead of the story, but suffice it
-to say that <a href="#environments">environments</a> are first class citizens of s7.
-We can think of the make-iterator function as defining an implicit class that contains
-the slots 'ctr' and 'obj', and that returns an instance of that class.
-So...
-</p>
-
-<pre class="indented">
-(define-macro (with-iterator obj . body) 
-  `(with-let (funclet ,obj) ,@body))
-
-;; just for fun:
-(define (reset-iterator iter)
-  (with-iterator iter (set! ctr 0)))	
-
-(define (iterator-obj iter)
-  (with-iterator iter obj))
-
-(define iterator-ctr 
-  (dilambda 
-   (lambda (iter)
-     (with-iterator iter ctr))
-   (lambda (iter new-ctr)
-     (with-let (sublet (funclet iter) :new-ctr new-ctr)
-      (set! ctr new-ctr)))))
-
-(define (iterator-copy iter)
-  (let ((new-iter (make-iterator (iterator-obj iter))))
-    (set! (iterator-ctr new-iter) (iterator-ctr iter))
-    new-iter))
-</pre>
-
-<p>
-After all that, the copy function simply returns its argument if passed a closure.
-</p>
-</div>
-</details>
-
-<!-- this doesn't combine in the way you'd want in an object system; if we
-     (iterator-copy filter-iterator), the environment of the copy has
-         ((filter . #-closure-))
-         ((iterator . #-closure-))
-         ((obj . #(0 1 2 3 4 5 6 7 8 9)) (func . #-closure-))
-     so 'ctr' is not defined in the filter-iterator environment.
--->
-
-<div class="indented">
-<p>I don't know why this pleases me so much, but you can use make-iterator
-to define a function whose argument takes a different default value each time it is called:
-</p>
-
-<pre class="indented">
-&gt; (let ((iter (make-iterator #(10 9 8 7 6 5))))
-     (define* (func (val (iter))) 
-       val)
-     (list (func) (func 32) (func) (func)))
-&gt; (10 32 8 7)
+<em class=def id="makeiterator">make-iterator</em>
+<em class=def id="iteratorp">iterator?</em>
+<em class=def id="iterate">iterate</em>
+<em class=def id="iteratorsequence">iterator-sequence</em>
 </pre>
 </div>
 
@@ -2327,8 +2204,6 @@ but a function grabs all remaining indices.  Trickier than I expected!
 <li>(<em class=def id="hashtablep">hash-table?</em> obj)
 <li>(<em class=def id="hashtablesize">hash-table-size</em> ht)
 <li>(<em class=def id="hashtableentries">hash-table-entries</em> ht)
-<li>(<em class=def id="hashtableiterator">make-hash-table-iterator</em> ht)
-<li>(<em class=def id="hashtableiteratorp">hash-table-iterator?</em> obj)
 </ul>
 
 <p>
@@ -2350,11 +2225,6 @@ If you pass a table size that is not a power of 2, make-hash-table rounds it up 
 The result is a new hash-table with those values preinstalled: <code>(hash-table '("hi" . 32) '("ho" . 1))</code>.
 After much use, I now think it is more convenient here, as in inlet, to use hash-table*; its arguments are
 simply the keys and values, without the consing: <code>(hash-table* 'a 1 'b 2)</code>.
-</p>
-<p>
-make-hash-table-iterator returns a function of no arguments (a "thunk").  Each time you call this function, it
-returns the next entry in the hash table.  When it runs out of entries, it returns nil.  hash-table-iterator?
-returns #t if passed one of these iterators.
 </p>
 
 
@@ -2382,8 +2252,7 @@ make-sparse-array
 <div class="indented">
 
 <p>map and for-each accept hash-table arguments. On each iteration, the map or for-each function is passed
-an entry, <code>'(key . value)</code>, in whatever order the entries are encountered in the table.  (Both use
-make-hash-table-iterator internally).
+an entry, <code>'(key . value)</code>, in whatever order the entries are encountered in the table. 
 </p>
 
 <pre class="indented">
@@ -2492,9 +2361,6 @@ Environments are first class (and applicable) objects in s7.
 (<em class=def id="openlet">openlet</em> env)            mark env as open (see below)
 (<em class=def id="openletp">openlet?</em> env)           #t is env is open
 (<em class=def id="coverlet">coverlet</em> env)           mark env as closed (undo an earlier openlet)
-
-(<em class=def id="letiterator">make-let-iterator</em> e)
-(<em class=def id="letiteratorp">let-iterator?</em> obj)
 </pre>
 
 <br>
@@ -5666,7 +5532,7 @@ default-random-state          the default arg for random (settable)
 cpu-time                      run time so far
 file-names                    currently loaded files (a list)
 
-safety                        0 (non zero turns on various infinite loop checks)
+safety                        0
 undefined-identifier-warnings #f 
 
 catches                       a list of the currently active catch tags
@@ -5978,8 +5844,7 @@ it is GC'd.  Here is an example:
 
 <p>Put this is a file, load it into the interpreter, then call <code>(bad-idea)</code> a
 few times.  You can turn off the optimization in question by setting the variable <code>(*s7* 'safety)</code>
-to 1.  <code>(*s7* 'safety)</code> defaults to 0.  (Also, if 'safety is not 0, sort! is safe from infinite loops,
-and some exceedingly rare local method cases are handled more carefully).
+to 1.  <code>(*s7* 'safety)</code> defaults to 0.  
 </p>
 
 <!-- there is another problem here: if the list constant in question is a program fragment

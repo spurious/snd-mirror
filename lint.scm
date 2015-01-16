@@ -175,13 +175,13 @@
 		  eof-object? eq? equal? eqv? error-environment owlet even? exact->inexact exact? exp expt 
 		  floor ;for-each 
 		  gcd gensym gensym? global-environment rootlet
-		  hash-table hash-table* hash-table-ref hash-table-size hash-table-entries hash-table? hash-table-iterator? hook-functions 
+		  hash-table hash-table* hash-table-ref hash-table-size hash-table-entries hash-table? iterator? hook-functions 
 		  if imag-part inexact->exact inexact? infinite? initial-environment unlet input-port? integer->char integer-decode-float 
 		  integer-length integer? 
 		  keyword->symbol keyword? 
-		  lambda lcm length let let* let-iterator? letrec letrec* list list->string list->vector list-ref list-tail 
+		  lambda lcm length let let* letrec letrec* list list->string list->vector list-ref list-tail 
 		  list? log logand logbit? logior lognot logxor 
-		  macro? magnitude make-hash-table make-hash-table-iterator make-hook make-keyword make-let-iterator make-list make-polar dilambda
+		  macro? magnitude make-hash-table make-iterator make-hook make-keyword make-list make-polar dilambda
 		  make-random-state make-rectangular make-string make-vector map max member memq memv min modulo morally-equal?
 		  nan? negative? not null? number->string number? numerator 
 		  object->string odd? open-environment? openlet? or outer-environment outlet output-port? 
@@ -296,7 +296,6 @@
 			   'hash-table +hash-table+
 			   'hash-table* +hash-table+
 			   'hash-table-entries +integer+
-			   'hash-table-iterator? +boolean+
 			   'hash-table-size +integer+
 			   'hash-table? +boolean+
 			   'imag-part +number+
@@ -310,6 +309,7 @@
 			   'integer-decode-float +list+
 			   'integer-length +integer+
 			   'integer? +boolean+
+			   'iterator? +boolean+
 			   'keyword->symbol +symbol+
 			   'keyword? +boolean+
 			   'lcm +number+
@@ -574,8 +574,6 @@
 			  'logxor (list integer? integer?)
 			  'magnitude number?
 			  'make-hash-table non-negative-integer?
-			  'make-hash-table-iterator hash-table?
-			  'make-let-iterator let?
 			  'make-hook (list list? string?)
 			  'make-keyword string?
 			  'make-list (list non-negative-integer?)
