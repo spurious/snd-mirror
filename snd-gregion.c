@@ -15,7 +15,7 @@ static void sg_left_justify_button(GtkWidget *button)
 #if (!HAVE_GTK_3)
 static void sg_left_justify_label(GtkWidget *label)
 {
-  /* the label justify function in Gtk refers to the text of the lines after the 1st! */
+  /* the label justify function in Gtk refers to the text of the lines after the first! */
   gfloat x, y;
   gtk_misc_get_alignment(GTK_MISC(GTK_LABEL(label)), &x, &y);
   gtk_misc_set_alignment(GTK_MISC(GTK_LABEL(label)), 0.05, y);

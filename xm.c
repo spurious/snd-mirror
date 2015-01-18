@@ -3063,7 +3063,7 @@ static Xen gxm_XmStringTableProposeTablist(Xen arg1, Xen arg2, Xen arg3, Xen arg
 {
   #define H_XmStringTableProposeTablist "XmTabList XmStringTableProposeTablist(XmStringTable strings, Cardinal num_strings, Widget widget, \
 float pad_value, XmOffsetModel offset_model): returns a tab list"
-  /* DIFF: XmStringTableProposetablist 1st arg is list of XmStrings
+  /* DIFF: XmStringTableProposetablist first arg is list of XmStrings
    */
   XmStringTable tab;
   XmTabList tabl;
@@ -3315,7 +3315,7 @@ static Xen gxm_XmStringTableUnparse(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen 
   #define H_XmStringTableUnparse "XtPointer *XmStringTableUnparse(XmStringTable table, Cardinal count, XmStringTag tag, XmTextType tag_type, \
 XmTextType output_type, XmParseTable parse, Cardinal parse_count, XmParseModel parse_model) converts a table of \
 compound strings to an array of text"
-  /* DIFF: XmStringTableUnparse returns list of strings, 1st arg is list of XmStrings
+  /* DIFF: XmStringTableUnparse returns list of strings, first arg is list of XmStrings
    */
   Xen lst = Xen_empty_list;
   char **tab;
@@ -3364,7 +3364,7 @@ static Xen gxm_XmStringTableToXmString(Xen arg1, Xen arg2, Xen arg3)
 {
   #define H_XmStringTableToXmString "XmString XmStringTableToXmString(XmStringTable table, Cardinal count, XmString break_component) \
 converts a compound string table to a single compound string"
-  /* DIFF: XmStringTableToXmString 1st arg is list of XmStrings
+  /* DIFF: XmStringTableToXmString first arg is list of XmStrings
    */
   int count;
   XmStringTable tab;
@@ -3750,7 +3750,7 @@ static Xen gxm_XmStringInitContext(Xen arg2)
 {
   #define H_XmStringInitContext "Boolean XmStringInitContext(XmString string) creates \
 a data structure for scanning an XmString component by component"
-  /* DIFF XmStringInitContext 1st arg omitted and rtn
+  /* DIFF XmStringInitContext first arg omitted and rtn
    */
   int val;
   Xen_check_type(Xen_is_XmString(arg2), arg2, 1, "XmStringInitContext", "XmString");
@@ -15229,7 +15229,7 @@ static Xen gxm_XtVaCreateArgsList(Xen arg1, Xen ignore2)
 {
   #define H_XtVaCreateArgsList "XtVarArgsList XtVaCreateArgsList(unused, ...) allocates memory and copies its arguments into a single \
 list pointer, which may be used with XtVaNestedList."
-  /* DIFF: XtVaCreateArgsList just returns its 1st arg
+  /* DIFF: XtVaCreateArgsList just returns its first arg
    */
   return(arg1);
 }

@@ -2051,7 +2051,7 @@ bool mus_is_nsin(mus_any *ptr)
   *
   * -(cos(x/2)sin(nx/2)sin((n+1)x/2))/(2sin^2(x/2)) + ncos(nx/2)sin((n+1)x/2)/(2sin(x/2)) + (n+1)sin(nx/2)cos((n+1)x/2)/(2sin(x/2))
   *
-  * and find the 1st 0 when n is very large -- it is very close to 3pi/(4*n)
+  * and find the first 0 when n is very large -- it is very close to 3pi/(4*n)
   */
 #endif
 
@@ -15007,7 +15007,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 	    switch (type)
 	      {
 	      case MUS_DOLPH_CHEBYSHEV_WINDOW:
-		rl[i] = creal(ccos(cacos(alpha * cos(angle)) * size)); /* here is Tn (Chebyshev polynomial 1st kind) */
+		rl[i] = creal(ccos(cacos(alpha * cos(angle)) * size)); /* here is Tn (Chebyshev polynomial first kind) */
 		break;
 
 	      case MUS_SAMARAKI_WINDOW:

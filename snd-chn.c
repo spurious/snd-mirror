@@ -6587,7 +6587,7 @@ static Xen channel_get(Xen snd, Xen chn_n, cp_field_t fld, const char *caller)
 	    case CP_EDPOS_FRAMPLES:            return(C_llong_to_Xen_llong(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
 
 	    case CP_UPDATE_TIME:
-	      /* any display-oriented background process must 1st be run to completion
+	      /* any display-oriented background process must first be run to completion
 	       *       display checks for waiting process and does not update display if one found!
 	       */
 	      finish_peak_env(cp);

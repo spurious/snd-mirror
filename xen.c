@@ -231,7 +231,7 @@ static char *scheme_to_ruby(const char *name)
 
 char *xen_scheme_constant_to_ruby(const char *name)
 {
-  /* upcase 1st char */
+  /* upcase first char */
   char *new_name;
   new_name = scheme_to_ruby(name);
   new_name[0] = toupper(new_name[0]);

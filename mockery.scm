@@ -46,11 +46,10 @@
 
 		   'let-ref            (lambda (obj i) (#_vector-ref (obj 'value) i))   ; the implicit case, so 'i can't be the culprit
 		   'vector-length      (lambda (obj) (#_vector-length (obj 'value)))
-		   'map                (lambda (f obj) (map f (obj 'value)))
-		   'for-each           (lambda (f obj) (for-each f (obj 'value)))
 		   'vector-append      (make-method #_vector-append (lambda (obj) (obj 'value)))
 		   'reverse            (lambda (obj) (#_reverse (obj 'value)))
 		   'sort!              (lambda (obj f) (#_sort! (obj 'value) f))
+		   'make-iterator      (lambda (obj) (#_make-iterator (obj 'value)))
 		   'arity              (lambda (obj) (#_arity (obj 'value)))
 		   'object->string     (lambda* (obj (w #t)) "#<mock-vector-class>")
 		   'vector-dimensions  (lambda (obj) (#_vector-dimensions (obj 'value)))
@@ -172,11 +171,10 @@
 		   ;;
 		   ;; (round (openlet (inlet 'round (lambda (obj) (#_round (obj 'value))) 'let-ref-fallback (lambda args 3)))) -> 3
 		   
-		   'map                (lambda (f obj)        (map f (obj 'mock-hash-table-table)))
-		   'for-each           (lambda (f obj)        (for-each f (obj 'mock-hash-table-table)))
 		   'fill!              (lambda (obj val)      (#_fill! (obj 'mock-hash-table-table) val))
 		   'reverse            (lambda (obj)          (#_reverse (obj 'mock-hash-table-table)))
 		   'object->string     (lambda* (obj (w #t))  "#<mock-hash-table-class>")
+		   'make-iterator      (lambda (obj)          (#_make-iterator (obj 'mock-hash-table-table)))
 		   'arity              (lambda (obj)          (#_arity (obj 'mock-hash-table-table)))
 		   'copy               (lambda* (source dest . args)
 					 (if (mock-hash-table? source)
@@ -258,11 +256,10 @@
 		   'reverse                (lambda (obj) (#_reverse (obj 'value)))
 		   'object->string         (lambda* (obj (w #t)) "#<mock-string-class>")
 		   'arity                  (lambda (obj) (#_arity (obj 'value)))
+		   'make-iterator          (lambda (obj) (#_make-iterator (obj 'value)))
 		   'let-ref                (lambda (obj i) (#_string-ref (obj 'value) i))           ; these are the implicit cases
 		   'let-set!               (lambda (obj i val) (string-set! (obj 'value) i val))
 		   'string-length          (lambda (obj) (#_string-length (obj 'value)))
-		   'map                    (lambda (f obj) (map f (obj 'value)))
-		   'for-each               (lambda (f obj) (for-each f (obj 'value)))
 		   'string->list           (make-method #_string->list (lambda (obj) (obj 'value)))
 		   'string-append          (make-method #_string-append (lambda (obj) (obj 'value)))
 		   'string-copy            (lambda (obj) (#_string-copy (obj 'value)))
@@ -879,8 +876,7 @@
 		   'reverse          (lambda (obj) (#_reverse (obj 'value)))
 		   'reverse!         (lambda (obj) (set! (obj 'value) (#_reverse (obj 'value))))
 		   'sort!            (lambda (obj f) (#_sort! (obj 'value) f))
-		   'for-each         (lambda (f obj) (#_for-each f (obj 'value)))
-		   'map              (lambda (f obj) (#_map f (obj 'value)))
+		   'make-iterator    (lambda (obj) (#_make-iterator (obj 'value)))
 		   'eval             (lambda (f obj) (#_eval (obj 'value)))
 		   'list->vector     (lambda (obj) (#_list->vector (obj 'value)))
 

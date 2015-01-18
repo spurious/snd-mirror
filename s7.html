@@ -1859,22 +1859,6 @@ function passed as its second argument to choose the new ordering.
 <pre class="indented">
 &gt; (sort! (list 3 4 8 2 0 1 5 9 7 6) &lt;)
 (0 1 2 3 4 5 6 7 8 9)
-
-(define (mix-notelists . notelists)
-  ;; assume the second parameter is the begin time in seconds (the first is the instrument name)
-  (<em class=red>sort!</em>
-   (apply append notelists)
-   (lambda (note1 note2)
-     (&lt; (cadr note1) (cadr note2)))))
-
-&gt; (mix-notelists '((fm-violin 0 1 440 .1)
-		   (fm-violin 1 1 550 .1))
-	         '((bird 0 .1 )
-		   (bird .2 .1)
-		   (bird 1.2 .3)
-		   (bird .5 .5)))
-
-((bird 0 0.1) (fm-violin 0 1 440 0.1) (bird 0.2 0.1) (bird 0.5 0.5) (fm-violin 1 1 550 0.1) (bird 1.2 0.3))
 </pre>
 
 <br>
@@ -1895,8 +1879,17 @@ is <b>iterator-sequence</b>.
 <p>When an iterator reaches the end of its sequence, it returns #&lt;eof&gt;.  I used to
 return nil, and can't decide whether this change is an improvement.  If an iterator over a
 list notices that its list is circular, it returns #&lt;eof&gt;.  map and for-each use
-iterators, so if you pass a circular list to either, it will stop eventually.
+iterators, so if you pass a circular list to either, it will stop eventually.  (An
+arcane consequence for method writers: specialize make-iterator, not map or for-each).
 </p>
+
+<pre class="indented">
+(define (find-if f sequence)
+  (let ((iter (make-iterator sequence)))
+    (do ((x (iter) (iter)))
+	((or (f x) (eof-object? x))
+	 (and (not (eof-object? x)) x)))))
+</pre>
 
 </div>
 

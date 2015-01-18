@@ -1528,7 +1528,7 @@ static s7_pointer set_ecdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const ch
 static s7_pointer fcdr_1(s7_scheme *sc, s7_pointer p, const char *func, int line) 
 {
   if (!fcdr_is_set(p))
-    fprintf(stderr, "fcdr %s[%d]: %p->%p\n", func, line, p, p->object.cons.fcdr); 
+    fprintf(stderr, "ref unset fcdr %s[%d]: %p fcdr: %p\n", func, line, p, p->object.cons.fcdr); 
   return(p->object.cons.fcdr);
 }
 
@@ -2141,7 +2141,7 @@ static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol);
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym);
 static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_pointer body, bool at_end, bool *bad_set);
 static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer x, s7_pointer args, s7_pointer body);
-static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer e);
+static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e);
 
 
 #if WITH_GCC
@@ -3366,9 +3366,7 @@ static void sweep(s7_scheme *sc)
 	  s7_pointer s1;
 	  s1 = sc->bigints[i];
 	  if (is_free_and_clear(s1))
-	    {
-	      mpz_clear(big_integer(s1));
-	    }
+	    mpz_clear(big_integer(s1));
 	  else sc->bigints[j++] = s1;
 	}
       sc->bigints_loc = j;
@@ -3381,9 +3379,7 @@ static void sweep(s7_scheme *sc)
 	  s7_pointer s1;
 	  s1 = sc->bigratios[i];
 	  if (is_free_and_clear(s1))
-	    {
-	      mpq_clear(big_ratio(s1));
-	    }
+	    mpq_clear(big_ratio(s1));
 	  else sc->bigratios[j++] = s1;
 	}
       sc->bigratios_loc = j;
@@ -3396,9 +3392,7 @@ static void sweep(s7_scheme *sc)
 	  s7_pointer s1;
 	  s1 = sc->bigreals[i];
 	  if (is_free_and_clear(s1))
-	    {
-	      mpfr_clear(big_real(s1));
-	    }
+	    mpfr_clear(big_real(s1));
 	  else sc->bigreals[j++] = s1;
 	}
       sc->bigreals_loc = j;
@@ -3411,9 +3405,7 @@ static void sweep(s7_scheme *sc)
 	  s7_pointer s1;
 	  s1 = sc->bignumbers[i];
 	  if (is_free_and_clear(s1))
-	    {
-	      mpc_clear(big_complex(s1));
-	    }
+	    mpc_clear(big_complex(s1));
 	  else sc->bignumbers[j++] = s1;
 	}
       sc->bignumbers_loc = j;
@@ -9826,7 +9818,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 
       /*           2e12341234123123123123213123123123 -> 0.0
        * but exp len is not the decider: 2e00000000000000000000000000000000000000001 -> 20.0
-       * 1st zero: 2e123412341231231231231
+       * first zero: 2e123412341231231231231
        * then:     2e12341234123123123123123123 -> inf
        * then:     2e123412341231231231231231231231231231 -> 0.0
        *           2e-123412341231231231231 -> inf
@@ -24358,7 +24350,21 @@ static s7_pointer other_iterate(s7_scheme *sc, s7_pointer obj)
   return(sc->ITERATOR_END);
 }
 
+static s7_pointer pair_iterate_1(s7_scheme *sc, s7_pointer obj);
 static s7_pointer pair_iterate(s7_scheme *sc, s7_pointer obj)
+{
+  s7_pointer result;
+  if (is_pair(iterator_current(obj)))
+    {
+      result = car(iterator_current(obj));
+      iterator_current(obj) = cdr(iterator_current(obj));
+      iterator_next(obj) = pair_iterate_1;
+      return(result);
+    }
+  return(sc->ITERATOR_END);
+}
+
+static s7_pointer pair_iterate_1(s7_scheme *sc, s7_pointer obj)
 {
   s7_pointer result;
   if (is_pair(iterator_current(obj)))
@@ -24367,9 +24373,8 @@ static s7_pointer pair_iterate(s7_scheme *sc, s7_pointer obj)
       iterator_current(obj) = cdr(iterator_current(obj));
       if (iterator_current(obj) == iterator_slow(obj))
 	return(sc->ITERATOR_END);
-      iterator_position(obj)++;
-      if ((iterator_position(obj) & 1) == 0)
-	iterator_slow(obj) = cdr(iterator_slow(obj));
+      iterator_slow(obj) = cdr(iterator_slow(obj));
+      iterator_next(obj) = pair_iterate;
       return(result);
     }
   return(sc->ITERATOR_END);
@@ -24382,7 +24387,6 @@ static s7_pointer make_iterator(s7_scheme *sc, s7_pointer e)
   NEW_CELL(sc, iter);
   iterator_sequence(iter) = e;
   iterator_position(iter) = 0;
-  iterator_length(iter) = 0;
   set_type(iter, T_ITERATOR | T_SAFE_PROCEDURE);
 
   switch (type(e))
@@ -24426,16 +24430,15 @@ static s7_pointer make_iterator(s7_scheme *sc, s7_pointer e)
 
     case T_CLOSURE:
     case T_CLOSURE_STAR:
+      iterator_next(iter) = other_iterate;
+      if (has_methods(e))
+	iterator_length(iter) = closure_length(sc, e);
+      else return(simple_wrong_type_argument_with_type(sc, sc->MAKE_ITERATOR, e, A_SEQUENCE));
+      break;
+
     case T_C_OBJECT:
       iterator_next(iter) = other_iterate;
-      if (type(e) == T_C_OBJECT)
-	iterator_length(iter) = object_length_to_int(sc, e);
-      else 
-	{
-	  if (has_methods(e))
-	    iterator_length(iter) = closure_length(sc, e);
-	  else return(simple_wrong_type_argument_with_type(sc, sc->MAKE_ITERATOR, e, A_SEQUENCE));
-	}
+      iterator_length(iter) = object_length_to_int(sc, e);
       break;
 
     default:
@@ -29987,7 +29990,6 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
    */
 
   s7_pointer x, y, obj;
-
   x = cadr(args);
 
   if (!is_pair(x))
@@ -39661,7 +39663,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
       return(wrong_type_argument_with_type(sc, sc->FOR_EACH, small_int(1), sc->code, SOMETHING_APPLICABLE));
     }
 
-  sc->z = sc->NIL;
+  sc->z = sc->NIL;                                    /* don't use sc->args here -- it needs GC protection until we get the iterators */
   for (i = 0, p = cdr(args); is_not_null(p); p = cdr(p), i++)
     {
       if (car(p) == sc->NIL)
@@ -42367,7 +42369,8 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	      return(subtract_csn);
 	    }
 #if (!WITH_GMP)
-	  if (c_call(arg1) == g_random_ic)
+	  if ((is_optimized(arg1)) &&
+	      (c_call(arg1) == g_random_ic))
 	    {
 	      set_optimize_data(expr, HOP_SAFE_C_C);
 	      return(sub_random_ic);
@@ -45794,27 +45797,12 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
 
 static bool optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop, int args, int pairs, int symbols, int quotes, int bad_pairs)
 {
-  bool func_is_safe, func_is_c_function, func_is_closure;
-
-  func_is_closure = is_closure(func);
-
-  if ((func_is_closure) &&
-      (closure_arity_to_int(sc, func) != args))
-    return(false);
-
-  if ((is_closure_star(func)) &&
-      ((!has_simple_args(closure_body(func))) ||
-       (closure_star_arity_to_int(sc, func) < args) ||
-       (arglist_has_keyword(cdr(expr)))))
-    return(false);
-
+  bool func_is_closure;
   if (bad_pairs > quotes) return(false);
 
-  func_is_safe = is_safe_procedure(func);
-  func_is_c_function = is_c_function(func);
-  if (func_is_c_function)
+  if (is_c_function(func))
     {
-      if (func_is_safe)
+      if (is_safe_procedure(func))
 	{
 	  if (pairs == 0)
 	    {
@@ -45837,12 +45825,57 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 		  return(true);
 		}
 	    }
+
+	  if ((args < GC_TRIGGER_SIZE) &&
+	      (pairs == (quotes + all_x_count(expr))))
+	    {
+	      set_optimized(expr);
+	      if (args == 4) 
+		set_optimize_data(expr, hop + OP_SAFE_C_AAAA);
+	      else set_optimize_data(expr, hop + OP_SAFE_C_ALL_X);
+	      annotate_args(sc, cdr(expr));
+	      if (args < NUM_SMALL_INTS)
+		set_arglist_length(expr, small_int(args));
+	      else set_arglist_length(expr, make_permanent_integer(args));
+	      choose_c_function(sc, expr, func, args);
+	      return(true);
+	    }
+
+	  if (bad_pairs == 0)
+	    {
+	      if ((args == 4) && (pairs == 4))
+		{
+		  set_optimized(expr);
+		  set_optimize_data(expr, hop + OP_SAFE_C_ZZZZ);
+		}
+	      choose_c_function(sc, expr, func, args); /* don't assume hop_safe_c_c here -- let chooser set that */
+	    }
 	}
+      else /* c_func is not safe */
+	{
+	  if ((args < GC_TRIGGER_SIZE) &&
+	      (pairs == (quotes + all_x_count(expr))))
+	    {
+	      set_unsafely_optimized(expr);
+	      set_optimize_data(expr, hop + OP_C_ALL_X);
+	      annotate_args(sc, cdr(expr));
+	      if (args < NUM_SMALL_INTS)
+		set_arglist_length(expr, small_int(args));
+	      else set_arglist_length(expr, make_permanent_integer(args));
+	      choose_c_function(sc, expr, func, args);
+	      return(false); 
+	    }
+	}
+      return(is_optimized(expr));
     }
-  else
+
+  func_is_closure = is_closure(func);
+  if (func_is_closure)
     {
-      if ((func_is_closure) &&
-	  (pairs == 0) &&
+      if (closure_arity_to_int(sc, func) != args)
+	return(false);
+
+      if ((pairs == 0) &&
 	  ((symbols == args) || (symbols == 0)) &&
 	  (args < GC_TRIGGER_SIZE))
 	{
@@ -45855,7 +45888,7 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	    set_arglist_length(expr, small_int(args));
 	  else set_arglist_length(expr, make_permanent_integer(args));
 	  set_ecdr(expr, func);
-	      
+	  
 	  if ((!safe_case) &&
 	      (symbols == args) &&
 	      (!arglist_has_rest(sc, closure_args(func))))
@@ -45863,40 +45896,15 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	  return(false);
 	}
     }
-  
-  if ((func_is_c_function) &&
-      (!func_is_safe) &&
-      (pairs == (quotes + all_x_count(expr))) &&
-      (args < GC_TRIGGER_SIZE))
-    {
-      set_unsafely_optimized(expr);
-      set_optimize_data(expr, hop + OP_C_ALL_X);
-      annotate_args(sc, cdr(expr));
-      if (args < NUM_SMALL_INTS)
-	set_arglist_length(expr, small_int(args));
-      else set_arglist_length(expr, make_permanent_integer(args));
-      choose_c_function(sc, expr, func, args);
-      return(false); 
-      /* else use all_x below */
-    }
-  
+
+  if ((is_closure_star(func)) &&
+      ((!has_simple_args(closure_body(func))) ||
+       (closure_star_arity_to_int(sc, func) < args) ||
+       (arglist_has_keyword(cdr(expr)))))
+    return(false);
+
   if (args < GC_TRIGGER_SIZE)
     {
-      if ((func_is_c_function) &&
-	  (func_is_safe) &&
-	  (pairs == (quotes + all_x_count(expr))))
-	{
-	  set_optimized(expr);
-	  if (args == 4) 
-	    set_optimize_data(expr, hop + OP_SAFE_C_AAAA);
-	  else set_optimize_data(expr, hop + OP_SAFE_C_ALL_X);
-	  annotate_args(sc, cdr(expr));
-	  if (args < NUM_SMALL_INTS)
-	    set_arglist_length(expr, small_int(args));
-	  else set_arglist_length(expr, make_permanent_integer(args));
-	  choose_c_function(sc, expr, func, args);
-	  return(true);
-	}
       if (((func_is_closure) ||
 	   (is_closure_star(func))) && 
 	  (!arglist_has_rest(sc, closure_args(func))) &&
@@ -45914,31 +45922,17 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	  return(false); 
 	}
     }
-  
-  if ((bad_pairs == 0) &&
-      (func_is_c_function) &&
-      (func_is_safe))
-    {
-      if ((args == 4) && (pairs == 4))
-	{
-	  set_optimized(expr);
-	  set_optimize_data(expr, hop + OP_SAFE_C_ZZZZ);
-	}
-      choose_c_function(sc, expr, func, args); /* don't assume hop_safe_c_c here -- let chooser set that */
-    }
   return(is_optimized(expr));
 }
 
 
-static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int hop, s7_pointer e)
+static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop, s7_pointer e)
 {
-  s7_pointer p;
   opcode_t op;
+  s7_pointer p;
+  /* fprintf(stderr, "opt syntax %s\n     hop: %d, e: %s\n", DISPLAY(expr), hop, DISPLAY(e)); */
 
-  p = car(x);
-  /* fprintf(stderr, "opt syntax %s\n     hop: %d, e: %s\n", DISPLAY(p), hop, DISPLAY(e)); */
-
-  if (!is_pair(cdr(p))) /* cddr(p) might be null if, for example, (begin (let ...)) */
+  if (!is_pair(cdr(expr))) /* cddr(expr) might be null if, for example, (begin (let ...)) */
     return(false);
 
   op = (opcode_t)syntax_opcode(func);
@@ -45949,15 +45943,15 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
       return(false);
 
     case OP_LET:
-      if (is_symbol(cadr(p)))
-	sc->w = collect_collisions(sc, caddr(p), cons(sc, add_sym_to_list(sc, cadr(p)), sc->w));
-      else sc->w = collect_collisions(sc, cadr(p), sc->w);
+      if (is_symbol(cadr(expr)))
+	sc->w = collect_collisions(sc, caddr(expr), cons(sc, add_sym_to_list(sc, cadr(expr)), sc->w));
+      else sc->w = collect_collisions(sc, cadr(expr), sc->w);
       break;
       
     case OP_LET_STAR:
     case OP_LETREC:
     case OP_LETREC_STAR:
-      sc->w = collect_collisions(sc, cadr(p), sc->w);
+      sc->w = collect_collisions(sc, cadr(expr), sc->w);
       break;
 
     case OP_DEFINE_MACRO:
@@ -45966,25 +45960,25 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
     case OP_DEFINE_BACRO_STAR:
     case OP_DEFINE:
     case OP_DEFINE_STAR:
-      if ((is_pair(cadr(p))) &&
-	  (is_symbol(caadr(p))))
-	sc->w = cons(sc, add_sym_to_list(sc, caadr(p)), sc->w);
+      if ((is_pair(cadr(expr))) &&
+	  (is_symbol(caadr(expr))))
+	sc->w = cons(sc, add_sym_to_list(sc, caadr(expr)), sc->w);
       /* fall through */
 
     case OP_LAMBDA:
     case OP_LAMBDA_STAR:
-      if (is_symbol(cadr(p))) /* (lambda args ...) */
-	sc->w = cons(sc, add_sym_to_list(sc, cadr(p)), sc->w);
-      else sc->w = collect_collisions(sc, cadr(p), sc->w);
+      if (is_symbol(cadr(expr))) /* (lambda args ...) */
+	sc->w = cons(sc, add_sym_to_list(sc, cadr(expr)), sc->w);
+      else sc->w = collect_collisions(sc, cadr(expr), sc->w);
       break;
 
     case OP_SET:
-      if (is_symbol(cadr(p)))
-	sc->w = cons(sc, add_sym_to_list(sc, cadr(p)), sc->w);
+      if (is_symbol(cadr(expr)))
+	sc->w = cons(sc, add_sym_to_list(sc, cadr(expr)), sc->w);
       break;
 
     case OP_DO:
-      sc->w = collect_collisions(sc, cadr(p), sc->w);
+      sc->w = collect_collisions(sc, cadr(expr), sc->w);
       break;
 
     case OP_WITH_LET:
@@ -46000,10 +45994,10 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
       break;
 
     case OP_CASE:
-      if (is_pair(cddr(p)))
+      if (is_pair(cddr(expr)))
 	{
 	  s7_pointer kp;
-	  for (kp = cddr(p); is_pair(kp); kp = cdr(kp))
+	  for (kp = cddr(expr); is_pair(kp); kp = cdr(kp))
 	    if (is_pair(car(kp)))
 	      {
 		s7_pointer k;
@@ -46018,29 +46012,29 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
     default:
       break;
     }
-  for (p = cdar(x); is_pair(p); p = cdr(p))
+
+  for (p = cdr(expr); is_pair(p); p = cdr(p))
     if ((is_pair(car(p))) &&
 	(!is_checked(car(p))))
-      optimize_expression(sc, p, hop, sc->w);
+      optimize_expression(sc, car(p), hop, sc->w);
   
   if ((hop == 1) &&
-      (symbol_id(caar(x)) == 0))
+      (symbol_id(car(expr)) == 0))
     {
       if ((op == OP_IF) || (op == OP_OR) || (op == OP_AND))
 	{
 	  bool happy = true;
-	  for (p = cdar(x); (happy) && (is_pair(p)); p = cdr(p))
+	  for (p = cdr(expr); (happy) && (is_pair(p)); p = cdr(p))
 	    happy = is_all_x_safe(sc, car(p));
 	  
 	  if ((happy) &&
 	      (is_null(p)))    /* catch the syntax error later: (or #f . 2) etc */
 	    {
 	      int args, symbols = 0, pairs = 0, rest = 0;
-	      s7_pointer car_x, sym = NULL;
+	      s7_pointer sym = NULL;
 	      bool c_s_is_ok = true;
 	      
-	      car_x = car(x);
-	      for (args = 0, p = cdar(x); is_pair(p); p = cdr(p), args++)
+	      for (args = 0, p = cdr(expr); is_pair(p); p = cdr(p), args++)
 		{
 		  if (is_symbol(car(p)))
 		    symbols++;
@@ -46064,18 +46058,18 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 		  ((args < 2) || (args > 3))) /* syntax error */
 		return(false); 
 	      
-	      set_optimized(car_x);
-	      set_optimize_data(car_x, hop + OP_SAFE_C_C);
+	      set_optimized(expr);
+	      set_optimize_data(expr, hop + OP_SAFE_C_C);
 	      
 	      if (pairs == 0)
 		{
 		  if (op == OP_OR)
-		    set_c_function(car_x, or_direct);
+		    set_c_function(expr, or_direct);
 		  else
 		    {
 		      if (op == OP_AND)
-			set_c_function(car_x, and_direct);
-		      else set_c_function(car_x, if_direct);
+			set_c_function(expr, and_direct);
+		      else set_c_function(expr, if_direct);
 		    }
 		  return(true);
 		}
@@ -46084,47 +46078,47 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer x, s7_pointer func, int ho
 		  (c_s_is_ok)) 
 		{
 		  if (op == OP_OR)
-		    set_c_function(car_x, or_s_direct);
+		    set_c_function(expr, or_s_direct);
 		  else
 		    {
 		      if (op == OP_AND)
-			set_c_function(car_x, and_s_direct);
-		      else set_c_function(car_x, if_s_direct);
+			set_c_function(expr, and_s_direct);
+		      else set_c_function(expr, if_s_direct);
 		    }
 		  return(true);
 		}
 
-	      for (p = cdar(x); is_pair(p); p = cdr(p))
+	      for (p = cdr(expr); is_pair(p); p = cdr(p))
 		set_fcdr(p, (s7_pointer)all_x_eval(sc, car(p)));
 	      
 	      if (op == OP_OR)
 		{
-		  if (s7_list_length(sc, cdar(x)) == 2)
-		    set_c_function(car_x, or_all_x_2);
-		  else set_c_function(car_x, or_all_x);
+		  if (s7_list_length(sc, cdr(expr)) == 2)
+		    set_c_function(expr, or_all_x_2);
+		  else set_c_function(expr, or_all_x);
 		}
 	      else
 		{
 		  if (op == OP_AND)
 		    {
-		      if (s7_list_length(sc, cdar(x)) == 2)
-			set_c_function(car_x, and_all_x_2);
-		      else set_c_function(car_x, and_all_x);
+		      if (s7_list_length(sc, cdr(expr)) == 2)
+			set_c_function(expr, and_all_x_2);
+		      else set_c_function(expr, and_all_x);
 		    }
 		  else 
 		    {
-		      if ((fcdr(cddr(car_x)) == (s7_pointer)all_x_q) &&
-			  (is_pair(cdddr(car_x))))
+		      if ((fcdr(cddr(expr)) == (s7_pointer)all_x_q) &&
+			  (is_pair(cdddr(expr))))
 			{
-			  if (fcdr(cdddr(car_x)) == (s7_pointer)all_x_q)
-			    set_c_function(car_x, if_all_x_qq);
-			  else set_c_function(car_x, if_all_x_qa);
+			  if (fcdr(cdddr(expr)) == (s7_pointer)all_x_q)
+			    set_c_function(expr, if_all_x_qq);
+			  else set_c_function(expr, if_all_x_qa);
 			}
 		      else 
 			{
-			  if (is_null(cdddr(car_x)))
-			    set_c_function(car_x, if_all_x1);
-			  else set_c_function(car_x, if_all_x2);
+			  if (is_null(cdddr(expr)))
+			    set_c_function(expr, if_all_x1);
+			  else set_c_function(expr, if_all_x2);
 			}
 		    }
 		}
@@ -46182,165 +46176,164 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer symbol, s7
 } 
 
 
-static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer e)
+static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e)
 {
-  s7_pointer car_x, caar_x;
+  s7_pointer car_expr;
   /* fprintf(stderr, "opt expr: %s, hop: %d\n", DISPLAY_80(x), hop); */
 
-  car_x = car(x);
-  set_checked(car_x);
-  caar_x = car(car_x);
+  set_checked(expr);
+  car_expr = car(expr);
 
-  if (is_symbol(caar_x))
+  if (is_symbol(car_expr))
     {
-      if (is_syntactic(caar_x))
-	return(optimize_syntax(sc, x, slot_value(global_slot(caar_x)), hop, e));
+      s7_pointer func;
+      if (is_syntactic(car_expr))
+	return(optimize_syntax(sc, expr, slot_value(global_slot(car_expr)), hop, e));
 
-      if (caar_x == sc->QUOTE)
+      if (car_expr == sc->QUOTE)
 	return(false);
 
-      {
-	s7_pointer func;
-	func = find_uncomplicated_symbol(sc, caar_x, e);
-	if (is_slot(func))
-	  {
-	    func = slot_value(func);
-	    if (is_syntactic(func))
-	      return(optimize_syntax(sc, x, func, hop, e));
+      func = find_uncomplicated_symbol(sc, car_expr, e);
+      if (is_slot(func))
+	{
+	  func = slot_value(func);
+	  if (is_syntactic(func))
+	    return(optimize_syntax(sc, expr, func, hop, e));
+	  
+	  /* we miss implicit indexing here because at this time, the data are not set */
+	  if ((is_procedure(func)) ||
+	      (is_c_function(func)) ||
+	      (is_safe_procedure(func))) /* built-in applicable objects like vectors */
+	    {
+	      int pairs = 0, symbols = 0, args = 0, bad_pairs = 0, quotes = 0, orig_hop;
+	      s7_pointer p;
+	      
+	      orig_hop = hop;
+	      /* if (is_global(car_expr)) fprintf(stderr, "%s is global\n", DISPLAY(car_expr)); */
+	      
+	      if ((is_any_closure(func)) ||      /* can't depend on ecdr here because it might not be global, or might be redefined locally */
+		  ((!is_global(car_expr)) &&
+		   ((!is_slot(global_slot(car_expr))) ||
+		    (slot_value(global_slot(car_expr)) != func))))
+		{
+		  /* (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a)) (f1 12))
+		   * (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a 1)) (f1 12))
+		   * and similar define* cases
+		   */
+		  
+		  /* if (!is_any_closure(func)) fprintf(stderr, "%s in %s is not global\n", DISPLAY(car_expr), DISPLAY(expr)); */
+		  hop = 0;
+		  /* this is very tricky!  See s7test for some cases.  Basically, we need to protect a recursive call
+		   *   of the current function being optimized from being confused with some previous definition
+		   *   of the same name.  But method lists have global names so the global bit is off even though the
+		   *   thing is actually a safe global.  But no closure can be considered safe in the hop sense --
+		   *   even a global function might be redefined at anuy time, and previous uses of it in other functions
+		   *   need to reflect its new value.  
+		   *   So, closures are always checked, but built-in functions are used as if never redefined until that redefinition.
+		   *   costs: index 6/1380, t502: 2/12900, bench: 43/4134, snd-test: 22/37200
+		   * Syntax handling is already impure in s7, so the special handling of built-in functions doesn't
+		   *   offend me much.  Consider each a sort of reader macro until someone redefines it -- previous
+		   *   uses may not be affected because they might have been optimized away -- the result depends on the
+		   *   current optimizer.
+		   * Another case (from K Matheussen): 
+		   *   (define (call-func func arg1 arg2) (define (call) (func arg1 arg2)) (call)) (call-func + 1 2.5) (call-func - 5 2)
+		   *   when we get here originally "func" is +, hop=1, but just checking for !is_global(car_expr) is
+		   *   not good enough -- if we load mockery.scm, nothing is global!
+		   */
+		}
+	      /* but if we make a recursive call on a func, we've obviously already looked up that function, and
+	       *   if it has not been shadowed, then we don't need to check it -- so the hop bit should be on
+	       *   for that one case.
+	       */
+	      
+	      for (p = cdr(expr); is_pair(p); p = cdr(p), args++) /* check the args (the calling expression) */
+		{
+		  s7_pointer car_p;
+		  car_p = car(p);
+		  if (is_symbol(car_p))
+		    symbols++;
+		  else
+		    {
+		      if (is_pair(car_p))
+			{
+			  pairs++;
+			  if (!is_checked(car_p))
+			    {
+			      if (!optimize_expression(sc, car_p, orig_hop, e))
+				{
+				  bad_pairs++;
+				  if ((car(car_p) == sc->QUOTE) &&
+				      (is_pair(cdr(car_p))) &&
+				      (is_null(cddr(car_p))))
+				    quotes++;
+				}
+			    }
+			  else 
+			    {
+			      if ((!is_optimized(car_p)) ||
+				  (is_unsafe(car_p)))
+				{
+				  bad_pairs++;
+				  if ((car(car_p) == sc->QUOTE) &&
+				      (is_pair(cdr(car_p))) &&
+				      (is_null(cddr(car_p))))
+				    quotes++;
+				}
+			    }
+			}
+		    }
+		}
+	      if ((is_null(p)) &&                    /* if not null, dotted list of args? */
+		  (s7_is_aritable(sc, func, args)))  /* we have a legit call, at least syntactically */
+		{
+		  switch (args)
+		    {
+		    case 0: 
+		      return(optimize_thunk(sc, expr, func, hop));
+		      
+		    case 1:
+		      return(optimize_func_one_arg(sc, expr, func, hop, pairs, symbols, quotes, bad_pairs));
+		      
+		    case 2:
+		      return(optimize_func_two_args(sc, expr, func, hop, pairs, symbols, quotes, bad_pairs));
+		      
+		    case 3:
+		      return(optimize_func_three_args(sc, expr, func, hop, pairs, symbols, quotes, bad_pairs));
+		      
+		    default:
+		      return(optimize_func_many_args(sc, expr, func, hop, args, pairs, symbols, quotes, bad_pairs));
+		    }
+		}
+	      return(false);
+	    }
+	}
+      else
+	{
+	  if ((sc->undefined_identifier_warnings) &&
+	      (func == sc->UNDEFINED) &&         /* car_expr is not in e or global */
+	      (symbol_tag(car_expr) == 0))         /*    and we haven't looked it up earlier */
+	    {
+	      s7_pointer p;
+	      p = sc->input_port;
+	      if ((is_input_port(p)) &&
+		  (port_file(p) != stdin) &&
+		  (!port_is_closed(p)) &&
+		  (port_filename(p)))
+		s7_warn(sc, 1024, "%s might be undefined (%s %u)\n", DISPLAY(car_expr), port_filename(p), port_line_number(p));
+	      else s7_warn(sc, 1024, "; %s might be undefined\n", DISPLAY(car_expr));
+	      symbol_tag(car_expr) = 1;             /* one warning is enough */
+	    }
+	  /* we need local definitions and func args in e?  also check is_symbol case below
+	   */
+	}
 
-	    /* we miss implicit indexing here because at this time, the data are not set */
-	    if ((is_procedure(func)) ||
-		(is_c_function(func)) ||
-		(is_safe_procedure(func))) /* built-in applicable objects like vectors */
-	      {
-		int pairs = 0, symbols = 0, args = 0, bad_pairs = 0, quotes = 0, orig_hop;
-		s7_pointer p;
-		
-		orig_hop = hop;
-		/* if (is_global(caar_x)) fprintf(stderr, "%s is global\n", DISPLAY(caar_x)); */
-
-		if ((is_any_closure(func)) ||      /* can't depend on ecdr here because it might not be global, or might be redefined locally */
-		    ((!is_global(caar_x)) &&
-		     ((!is_slot(global_slot(caar_x))) ||
-		      (slot_value(global_slot(caar_x)) != func))))
-		  {
-		    /* (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a)) (f1 12))
-		     * (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a 1)) (f1 12))
-		     * and similar define* cases
-		     */
-
-		    /* if (!is_any_closure(func)) fprintf(stderr, "%s in %s is not global\n", DISPLAY(caar_x), DISPLAY(car_x)); */
-		    hop = 0;
-		    /* this is very tricky!  See s7test for some cases.  Basically, we need to protect a recursive call
-		     *   of the current function being optimized from being confused with some previous definition
-		     *   of the same name.  But method lists have global names so the global bit is off even though the
-		     *   thing is actually a safe global.  But no closure can be considered safe in the hop sense --
-		     *   even a global function might be redefined at anuy time, and previous uses of it in other functions
-		     *   need to reflect its new value.  
-		     *   So, closures are always checked, but built-in functions are used as if never redefined until that redefinition.
-		     *   costs: index 6/1380, t502: 2/12900, bench: 43/4134, snd-test: 22/37200
-		     * Syntax handling is already impure in s7, so the special handling of built-in functions doesn't
-		     *   offend me much.  Consider each a sort of reader macro until someone redefines it -- previous
-		     *   uses may not be affected because they might have been optimized away -- the result depends on the
-		     *   current optimizer.
-		     * Another case (from K Matheussen): 
-		     *   (define (call-func func arg1 arg2) (define (call) (func arg1 arg2)) (call)) (call-func + 1 2.5) (call-func - 5 2)
-		     *   when we get here originally "func" is +, hop=1, but just checking for !is_global(caar_x) is
-		     *   not good enough -- if we load mockery.scm, nothing is global!
-		     */
-		  }
-		/* but if we make a recursive call on a func, we've obviously already looked up that function, and
-		 *   if it has not been shadowed, then we don't need to check it -- so the hop bit should be on
-		 *   for that one case.
-		 */
-
-		for (p = cdr(car_x); is_pair(p); p = cdr(p), args++) /* check the args (the calling expression) */
-		  {
-		    if (is_symbol(car(p)))
-		      symbols++;
-		    else
-		      {
-			if (is_pair(car(p)))
-			  {
-			    pairs++;
-			    if (!is_checked(car(p)))
-			      {
-				if (!optimize_expression(sc, p, orig_hop, e))
-				  {
-				    bad_pairs++;
-				    if ((caar(p) == sc->QUOTE) &&
-					(is_pair(cdar(p))) &&
-					(is_null(cddar(p))))
-				      quotes++;
-				  }
-			      }
-			    else 
-			      {
-				if ((!is_optimized(car(p))) ||
-				    (is_unsafe(car(p))))
-				  {
-				    bad_pairs++;
-				    if ((caar(p) == sc->QUOTE) &&
-					(is_pair(cdar(p))) &&
-					(is_null(cddar(p))))
-				      quotes++;
-				  }
-			      }
-			  }
-		      }
-		  }
-		if ((is_null(p)) &&                    /* if not null, dotted list of args? */
-		    (s7_is_aritable(sc, func, args)))  /* we have a legit call, at least syntactically */
-		  {
-		    switch (args)
-		      {
-		      case 0: 
-			return(optimize_thunk(sc, car_x, func, hop));
-			
-		      case 1:
-			return(optimize_func_one_arg(sc, car_x, func, hop, pairs, symbols, quotes, bad_pairs));
-			
-		      case 2:
-			return(optimize_func_two_args(sc, car_x, func, hop, pairs, symbols, quotes, bad_pairs));
-			
-		      case 3:
-			return(optimize_func_three_args(sc, car_x, func, hop, pairs, symbols, quotes, bad_pairs));
-			
-		      default:
-			return(optimize_func_many_args(sc, car_x, func, hop, args, pairs, symbols, quotes, bad_pairs));
-		      }
-		  }
-		return(false);
-	      }
-	  }
-	else
-	  {
-	    if ((sc->undefined_identifier_warnings) &&
-		(func == sc->UNDEFINED) &&         /* caar_x is not in e or global */
-		(symbol_tag(caar_x) == 0))         /*    and we haven't looked it up earlier */
-	      {
-		s7_pointer p;
-		p = sc->input_port;
-		if ((is_input_port(p)) &&
-		    (port_file(p) != stdin) &&
-		    (!port_is_closed(p)) &&
-		    (port_filename(p)))
-		  s7_warn(sc, 1024, "%s might be undefined (%s %u)\n", DISPLAY(caar_x), port_filename(p), port_line_number(p));
-		else s7_warn(sc, 1024, "; %s might be undefined\n", DISPLAY(caar_x));
-		symbol_tag(caar_x) = 1;             /* one warning is enough */
-	      }
-	    /* we need local definitions and func args in e?  also check is_symbol case below
-	     */
-	  }
-      }
-
-      /* caar(x) is a symbol but it's not a known procedure or a "safe" case = vector etc */
+      /* car_expr is a symbol but it's not a known procedure or a "safe" case = vector etc */
       {
 	/* else maybe it's something like a let variable binding: (sqrtfreq (sqrt frequency)) */
 	s7_pointer p;
 	int len = 0, pairs = 0, symbols = 0, quotes = 0;
 
-	for (p = cdr(car_x); is_pair(p); p = cdr(p), len++)
+	for (p = cdr(expr); is_pair(p); p = cdr(p), len++)
 	  {
 	    s7_pointer car_p;
 	    car_p = car(p);
@@ -46350,7 +46343,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		if ((hop != 0) && (car(car_p) == sc->QUOTE))
 		  quotes++;
 		if (!is_checked(car_p))
-		  optimize_expression(sc, p, hop, e);
+		  optimize_expression(sc, car_p, hop, e);
 	      }
 	    else
 	      {
@@ -46360,26 +46353,26 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 	  }
 
 	if ((is_null(p)) &&              /* (+ 1 . 2) */
-	    (!is_optimized(car_x)))
+	    (!is_optimized(expr)))
 	  {
 	    /* len=0 case is almost entirely arglists */
-	    set_ecdr(car_x, sc->GC_NIL);
+	    set_ecdr(expr, sc->GC_NIL);
 	    if (pairs == 0)
 	      {
 		if (len == 0)
 		  {
 		    /* hoping to catch object application here, as in readers in Snd */
-		    set_unsafely_optimized(car_x);
-		    set_optimize_data(car_x, hop + OP_UNKNOWN);
+		    set_unsafely_optimized(expr);
+		    set_optimize_data(expr, hop + OP_UNKNOWN);
 		    return(false);
 		  }
 
 		if (len == 1)
 		  {
-		    if (caar_x != sc->QUOTE) /* !! quote can be redefined locally, unsetting the T_SYNTACTIC flag -- can this happen elsewhere? */
+		    if (car_expr != sc->QUOTE) /* !! quote can be redefined locally, unsetting the T_SYNTACTIC flag -- can this happen elsewhere? */
 		      {
-			set_unsafely_optimized(car_x);
-			set_optimize_data(car_x, hop + OP_UNKNOWN_G);
+			set_unsafely_optimized(expr);
+			set_optimize_data(expr, hop + OP_UNKNOWN_G);
 			/* hooboy -- we get here in let bindings...
 			 * to save access to the caller, we'd need to pass it as an arg to optimize_expression
 			 */
@@ -46389,18 +46382,18 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 
 		if (len == 2)
 		  {
-		    set_unsafely_optimized(car_x);
+		    set_unsafely_optimized(expr);
 		    if (symbols == 2)
-		      set_optimize_data(car_x, hop + OP_UNKNOWN_GG);
+		      set_optimize_data(expr, hop + OP_UNKNOWN_GG);
 		    else
 		      {
 			if (symbols == 0)
-			  set_optimize_data(car_x, hop + OP_UNKNOWN_GG);
+			  set_optimize_data(expr, hop + OP_UNKNOWN_GG);
 			else
 			  {
-			    if (is_symbol(cadr(car_x)))
-			      set_optimize_data(car_x, hop + OP_UNKNOWN_GG);
-			    else set_optimize_data(car_x, hop + OP_UNKNOWN_GG);
+			    if (is_symbol(cadr(expr)))
+			      set_optimize_data(expr, hop + OP_UNKNOWN_GG);
+			    else set_optimize_data(expr, hop + OP_UNKNOWN_GG);
 			  }
 		      }
 		    return(false); 
@@ -46409,34 +46402,34 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 		if ((len >= 3) &&
 		    (len == symbols))
 		  {
-		    set_unsafely_optimized(car_x);
-		    set_optimize_data(car_x, hop + OP_UNKNOWN_ALL_S);
+		    set_unsafely_optimized(expr);
+		    set_optimize_data(expr, hop + OP_UNKNOWN_ALL_S);
 		    if (len < NUM_SMALL_INTS)
-		      set_arglist_length(car_x, small_int(len));
-		    else set_arglist_length(car_x, make_permanent_integer(len));
+		      set_arglist_length(expr, small_int(len));
+		    else set_arglist_length(expr, make_permanent_integer(len));
 		    return(false); 
 		  }
 	      }
 	    else /* pairs != 0 */
 	      {
 		s7_pointer arg1;
-		arg1 = cadr(car_x);
+		arg1 = cadr(expr);
 		if (pairs == 1)
 		  {
 		    if (len == 1)
 		      {
 			if (quotes == 1)
 			  {
-			    set_unsafely_optimized(car_x);
-			    set_optimize_data(car_x, hop + OP_UNKNOWN_A);
+			    set_unsafely_optimized(expr);
+			    set_optimize_data(expr, hop + OP_UNKNOWN_A);
 			    return(false); 
 			  }
 
 			if (is_all_x_safe(sc, arg1))
 			  {
-			    set_arglist_length(car_x, small_int(1));
-			    set_unsafely_optimized(car_x);
-			    set_optimize_data(car_x, hop + OP_UNKNOWN_A);
+			    set_arglist_length(expr, small_int(1));
+			    set_unsafely_optimized(expr);
+			    set_optimize_data(expr, hop + OP_UNKNOWN_A);
 			    return(false); 
 			  }
 		      }
@@ -46445,11 +46438,11 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 			if (len == 2)
 			  {
 			    if ((is_all_x_safe(sc, arg1)) &&
-				(is_all_x_safe(sc, caddr(car_x))))
+				(is_all_x_safe(sc, caddr(expr))))
 			      {
-				set_arglist_length(car_x, small_int(2));
-				set_unsafely_optimized(car_x);
-				set_optimize_data(car_x, hop + OP_UNKNOWN_AA);
+				set_arglist_length(expr, small_int(2));
+				set_unsafely_optimized(expr);
+				set_optimize_data(expr, hop + OP_UNKNOWN_AA);
 				return(false); 
 			      }
 			  }
@@ -46458,22 +46451,22 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
 
 		if ((len == 2) &&
 		    (is_all_x_safe(sc, arg1)) &&
-		    (is_all_x_safe(sc, caddr(car_x))))
+		    (is_all_x_safe(sc, caddr(expr))))
 		  {
-		    set_arglist_length(car_x, small_int(2));
-		    set_unsafely_optimized(car_x);
-		    set_optimize_data(car_x, hop + OP_UNKNOWN_AA);
+		    set_arglist_length(expr, small_int(2));
+		    set_unsafely_optimized(expr);
+		    set_optimize_data(expr, hop + OP_UNKNOWN_AA);
 		    return(false); 
 		  }
 
-		if ((pairs == (quotes + all_x_count(car_x))) &&
+		if ((pairs == (quotes + all_x_count(expr))) &&
 		    (len < GC_TRIGGER_SIZE))
 		  {
-		    set_unsafely_optimized(car_x);
-		    set_optimize_data(car_x, hop + ((len == 1) ? OP_UNKNOWN_A : OP_UNKNOWN_ALL_X));
+		    set_unsafely_optimized(expr);
+		    set_optimize_data(expr, hop + ((len == 1) ? OP_UNKNOWN_A : OP_UNKNOWN_ALL_X));
 		    if (len < NUM_SMALL_INTS)
-		      set_arglist_length(car_x, small_int(len));
-		    else set_arglist_length(car_x, make_permanent_integer(len));
+		      set_arglist_length(expr, small_int(len));
+		    else set_arglist_length(expr, make_permanent_integer(len));
 		    return(false); 
 		  }
 	      }
@@ -46482,16 +46475,14 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer x, int hop, s7_pointer
     }
   else
     {
-      /* caar(x) is not a symbol, but there might be interesting stuff here */
+      /* car(expr) is not a symbol, but there might be interesting stuff here */
       /* (define (hi a) (case 1 ((1) (if (> a 2) a 2)))) */
       s7_pointer p;
-      for (p = car_x; is_pair(p); p = cdr(p))
+      for (p = expr; is_pair(p); p = cdr(p))
 	{
-	  if (is_pair(car(p)))
-	    {
-	      if (!is_checked(car(p)))
-		optimize_expression(sc, p, hop, e);
-	    }
+	  if ((is_pair(car(p))) &&
+	      (!is_checked(car(p))))
+	    optimize_expression(sc, car(p), hop, e);
 	}
     }
   return(false);
@@ -46511,7 +46502,7 @@ static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
       set_checked(x);
       if (is_pair(car(x)))
 	{
-	  if (!optimize_expression(sc, x, hop, e))
+	  if (!optimize_expression(sc, car(x), hop, e))
 	    happy = false;
 	}
     }
@@ -46633,17 +46624,17 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 		s7_pointer vars;
 		for (vars = cadr(x); is_pair(vars); vars = cdr(vars))
 		  {
-		    s7_pointer car_vars;
-		    car_vars = car(vars);
-		    if ((!is_pair(car_vars)) ||
-			(!is_pair(cdr(car_vars))))
+		    s7_pointer let_var;
+		    let_var = car(vars);
+		    if ((!is_pair(let_var)) ||
+			(!is_pair(cdr(let_var))))
 		      return(false);
 		    
-		    if ((is_pair(cadr(car_vars))) &&
-			(!form_is_safe(sc, func, args, cadr(car_vars), false, bad_set)))
+		    if ((is_pair(cadr(let_var))) &&
+			(!form_is_safe(sc, func, args, cadr(let_var), false, bad_set)))
 		      happy = false;
 		    
-		    if (car(car_vars) == func)
+		    if (car(let_var) == func)
 		      return(false); /* it's shadowed */
 		  }
 	      }
@@ -46712,20 +46703,22 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	      s7_pointer vars;
 	      for (vars = cadr(x); is_pair(vars); vars = cdr(vars))
 		{
-		  if (!is_pair(car(vars)))
+		  s7_pointer do_var;
+		  do_var = car(vars);
+		  if (!is_pair(do_var))
 		    return(false);
 		  
-		  if ((caar(vars) == func) || 
-		      (!is_pair(cdar(vars))))   /* (do ((a . 1) (b . 2)) ...) */
+		  if ((car(do_var) == func) || 
+		      (!is_pair(cdr(do_var))))   /* (do ((a . 1) (b . 2)) ...) */
 		    return(false);
 		  
-		  if ((is_pair(cadar(vars))) &&
-		      (!form_is_safe(sc, func, args, cadar(vars), false, bad_set)))
+		  if ((is_pair(cadr(do_var))) &&
+		      (!form_is_safe(sc, func, args, cadr(do_var), false, bad_set)))
 		    return(false);
 
-		  if ((is_pair(cddar(vars))) &&
-		      (is_pair(caddar(vars))) &&
-		      (!form_is_safe(sc, func, args, caddar(vars), false, bad_set)))
+		  if ((is_pair(cddr(do_var))) &&
+		      (is_pair(caddr(do_var))) &&
+		      (!form_is_safe(sc, func, args, caddr(do_var), false, bad_set)))
 		    return(false);
 		}
 	    }
@@ -50858,6 +50851,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
 
+      /* -------------------------------- MAP -------------------------------- */
     case OP_MAP_GATHER_1:
       if (sc->value != sc->NO_VALUE)
 	{
@@ -50941,7 +50935,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
       /* -------------------------------- FOR-EACH -------------------------------- */
-
     case OP_FOR_EACH:
       {
 	s7_pointer x, y, iterators, saved_args;
@@ -51003,6 +50996,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->code = closure_body(code);
 	goto BEGIN1;
       }
+
       
     FOR_EACH_CATCH:
       NEW_FRAME(sc, counter_let(sc->args), counter_result(sc->args));
@@ -51055,6 +51049,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* -------------------------------- MEMBER -------------------------------- */
     case OP_MEMBER_IF:
+    case OP_MEMBER_IF1:
       /* code=func, args = (list original args) with ecdr->position in cadr (the list), value = result of comparison
        */
       if (sc->value != sc->F)            /* previous comparison was not #f -- return list */
@@ -51062,48 +51057,32 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = ecdr(sc->args);
 	  goto START;
 	}
-
       if (!is_pair(cdr(ecdr(sc->args))))     /* no more args -- return #f */
 	{
 	  sc->value = sc->F;
 	  goto START;
 	}
       set_ecdr(sc->args, cdr(ecdr(sc->args)));  /* cdr down arg list */
-      push_stack(sc, OP_MEMBER_IF1, sc->args, sc->code);
-      sc->args = list_2(sc, caar(sc->args), car(ecdr(sc->args)));
-      goto APPLY;
-
-
-    case OP_MEMBER_IF1:
-      if (sc->value != sc->F)            /* previous comparison was not #f -- return list */
+      
+      if (sc->op == OP_MEMBER_IF1)
 	{
-	  sc->value = ecdr(sc->args);
-	  goto START;
+	  /* circular list check */
+	  if (ecdr(sc->args) == fcdr(sc->args))
+	    {
+	      sc->value = sc->F;
+	      goto START;
+	    }
+	  set_fcdr(sc->args, cdr(fcdr(sc->args)));  /* cdr down the slow list (check for circular list) */
+	  push_stack(sc, OP_MEMBER_IF, sc->args, sc->code);
 	}
-
-      if (!is_pair(cdr(ecdr(sc->args))))     /* no more args -- return #f */
-	{
-	  sc->value = sc->F;
-	  goto START;
-	}
-      set_ecdr(sc->args, cdr(ecdr(sc->args)));  /* cdr down arg list */
-
-      /* circular list check */
-      if (ecdr(sc->args) == fcdr(sc->args))
-	{
-	  sc->value = sc->F;
-	  goto START;
-	}
-      set_fcdr(sc->args, cdr(fcdr(sc->args)));  /* cdr down the slow list (check for circular list) */
-
-      push_stack(sc, OP_MEMBER_IF, sc->args, sc->code);
+      else push_stack(sc, OP_MEMBER_IF1, sc->args, sc->code);
       sc->args = list_2(sc, caar(sc->args), car(ecdr(sc->args)));
       goto APPLY;
 
 
       /* -------------------------------- ASSOC -------------------------------- */
-    case OP_ASSOC_IF1:
     case OP_ASSOC_IF:
+    case OP_ASSOC_IF1:
       /* code=func, args=(list args) with f/ecdr=list, value=result of comparison
        *   (assoc 3 '((1 . a) (2 . b) (3 . c) (4 . d)) =)
        */
@@ -51112,7 +51091,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = car(ecdr(sc->args));
 	  goto START;
 	}
-
       if (!is_pair(cdr(ecdr(sc->args))))     /* (assoc 3 '((1 . 2) . 3) =) or nil */
 	{
 	  sc->value = sc->F;
@@ -55530,7 +55508,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case HOP_SAFE_CLOSURE_STAR_S0:
 	      /* here we know we have (let-set! arg1 'name arg2) (with-env arg1 ...) as the safe closure body.
-	       *   since no errors can come from the 1st, there's no need for the procedure env.
+	       *   since no errors can come from the first, there's no need for the procedure env.
 	       *   so do the set and with-env by hand, leaving with the env body.
 	       */
 	      {
@@ -60617,7 +60595,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * 5: done (1 mv, 2 normal)
        * 6: done (both mv)
        *
-       * I think safe_c_ppp would require 18 branches
+       * I think safe_c_ppp would require 18 branches (or maybe just collect the args and concatenate at the end?)
        */
       push_stack(sc, OP_SAFE_C_PP_2, sc->value, sc->code); /* mv -> 3 */
       sc->code = caddr(sc->code);
@@ -69259,11 +69237,11 @@ int main(int argc, char **argv)
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1138
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1137
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3005
- * lg             |      |      | 6547 6497 6494 6243
- * t137           |      |      | 8296           3461
- * t455|6     265 |   89 |  9   |       8.4 8045 7828
+ * lg             |      |      | 6547 6497 6494 6226
+ * t137           |      |      | 8296           3471
+ * t455|6     265 |   89 |  9   |       8.4 8045 7916
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 24.0
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.5
@@ -69302,8 +69280,6 @@ int main(int argc, char **argv)
  * inexact/pure s7: (define exact? rational?) (define (inexact? x) (not (rational? x))) (define inexact->exact round) (define (exact->inexact x) (* x 1.0))
  *    also get rid of #i and #e?
  * the 3-func version of catch could be an option (catch-if in s7.html) -- then allow #f in dynamic-wind and they're similar (trilambda)
- * *stacktrace*??, most-pos|neg-fix to *s7*
- *
- * no methods yet for iterators, method map/for-each, mock iterator? iter-diffs
- * extend t137 to include these
+ *   catch-if is not in s7test -- are there more of these?
+ * clean up func_1|2|3_args
  */
