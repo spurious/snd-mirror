@@ -45432,38 +45432,20 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 static bool optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop, int pairs, int symbols, int quotes, int bad_pairs)
 {
   s7_pointer arg1, arg2, arg3;
-  bool func_is_safe, func_is_c_function, func_is_closure;
-  /* fprintf(stderr, "func_three: %s\n", DISPLAY(expr)); */
-
-  func_is_closure = is_closure(func);
-
-  if ((func_is_closure) &&
-      (closure_arity_to_int(sc, func) != 3))
-    return(false);
-
-  if ((is_closure_star(func)) &&
-      ((!has_simple_args(closure_body(func))) ||
-       (closure_star_arity_to_int(sc, func) < 3) ||
-       (arglist_has_keyword(cdr(expr)))))
-    return(false);
 
   arg1 = cadr(expr);
   arg2 = caddr(expr);
   arg3 = cadddr(expr);
 
-  func_is_safe = is_safe_procedure(func);
-  func_is_c_function = ((is_c_function(func)) ||
-			((is_c_function_star(func)) && 
-			 (c_function_all_args(func) == 3) &&
-			 (!is_keyword(arg1)) &&
-			 (!is_keyword(arg2))));
-
-  /* here quotes in safe functions are somewhat rare: list-ref, format, etc */
-  if (pairs == 0)
+  if ((is_c_function(func)) ||
+      ((is_c_function_star(func)) && 
+       (c_function_all_args(func) == 3) &&
+       (!is_keyword(arg1)) &&
+       (!is_keyword(arg2))))
     {
-      if (func_is_c_function)
+      if (is_safe_procedure(func))
 	{
-	  if (func_is_safe)
+	  if (pairs == 0)
 	    {
 	      set_optimized(expr);
 	      if (symbols == 0)
@@ -45516,38 +45498,19 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
 				  set_optimize_data(expr, hop + OP_SAFE_C_AAA); /* fallback on all_x_c and s here -- a kludge */
 				  annotate_args(sc, cdr(expr));
 				  set_arglist_length(expr, small_int(3));
-				}
-			    }
-			}
-		    }
+				}			    
+			    }			
+			}		    
+		    }		
 		}
 	      choose_c_function(sc, expr, func, 3);
 	      return(true);
-	    }
-	}
-      else
-	{
-	  if ((func_is_closure) &&
-	      (symbols == 3) &&
-	      (!is_safe_closure(func)) &&
-	      (!arglist_has_rest(sc, closure_args(func))))
-	    {
-	      set_unsafely_optimized(expr);
-	      set_ecdr(expr, func);
-	      set_arglist_length(expr, small_int(3));
-	      set_optimize_data(expr, hop + OP_CLOSURE_ALL_S);
-	      return(false);
-	    }
-	}
-    }
+	    } 
 
-  if (pairs == quotes + all_x_count(expr))
-    {
-      if (func_is_c_function)
-	{
-	  set_optimized(expr);
-	  if (func_is_safe)
+	  /* pairs != 0 */
+	  if (pairs == quotes + all_x_count(expr))
 	    {
+	      set_optimized(expr);
 	      if ((symbols == 2) &&
 		  (quotes == 1))
 		{
@@ -45564,7 +45527,7 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
 	      annotate_args(sc, cdr(expr));
 	      set_arglist_length(expr, small_int(3));
 	      set_optimize_data(expr, hop + OP_SAFE_C_AAA);
-
+	      
 	      if ((pairs == 1) &&
 		  (symbols == 1))
 		{
@@ -45589,9 +45552,91 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
 		  /* perhaps SAFE_C_SS_opSq or opCq */
 		}
 	      choose_c_function(sc, expr, func, 3);
-	    }
-	  else 
+	      return(true);
+	    } 
+	  
+	  if (bad_pairs == 0)
 	    {
+	      if ((symbols == 2) &&
+		  (is_symbol(arg1)) &&
+		  (is_symbol(arg2)))
+		{
+		  set_optimize_data(expr, hop + OP_SAFE_C_SSZ);
+		}
+	      else
+		{
+		  /* use either X or Z in all 8 choices */
+		  if ((!is_pair(arg1)) ||
+		      (is_all_x_op(optimize_data(arg1))))
+		    {
+		      annotate_arg(sc, cdr(expr));
+		      if ((!is_pair(arg2)) ||
+			  (is_all_x_op(optimize_data(arg2))))
+			{
+			  set_optimize_data(expr, hop + OP_SAFE_C_AAZ); /* here last can't be A because we checked for that above */
+			  annotate_arg(sc, cddr(expr));
+			}
+		      else
+			{
+			  if ((!is_pair(arg3)) ||
+			      (is_all_x_op(optimize_data(arg3))))
+			    {
+			      set_optimize_data(expr, hop + OP_SAFE_C_AZA); 
+			      annotate_arg(sc, cdddr(expr));
+			    }
+			  else set_optimize_data(expr, hop + OP_SAFE_C_AZZ); 
+			}
+		    }
+		  else
+		    {
+		      if ((!is_pair(arg2)) ||
+			  (is_all_x_op(optimize_data(arg2))))
+			{
+			  annotate_arg(sc, cddr(expr));
+			  if ((!is_pair(arg3)) ||
+			      (is_all_x_op(optimize_data(arg3))))
+			    {
+			      set_optimize_data(expr, hop + OP_SAFE_C_ZAA); 
+			      annotate_arg(sc, cdddr(expr));
+			    }
+			  else set_optimize_data(expr, hop + OP_SAFE_C_ZAZ); 
+			}
+		      else
+			{
+			  if ((!is_pair(arg3)) ||
+			      (is_all_x_op(optimize_data(arg3))))
+			    {
+			      set_optimize_data(expr, hop + OP_SAFE_C_ZZA); 
+			      annotate_arg(sc, cdddr(expr));
+			    }
+			  else set_optimize_data(expr, hop + OP_SAFE_C_ZZZ); 
+			}
+		    }
+		}
+	      set_optimized(expr);		  
+	      choose_c_function(sc, expr, func, 3);
+	      set_arglist_length(expr, small_int(3));
+	      return(true);
+	    }
+	  
+	  /* aap is not better than ssp, sap also saves very little */
+	  if ((pairs == 1) &&
+	      (bad_pairs == 1) &&
+	      (symbols == 2) &&
+	      (is_pair(arg3)))
+	    {
+	      set_optimized(expr);
+	      set_unsafe(expr);
+	      set_optimize_data(expr, hop + OP_SAFE_C_SSP);
+	      choose_c_function(sc, expr, func, 3);
+	      return(false);
+	    }
+	}
+      else /* func is not safe */
+	{
+	  if (pairs == quotes + all_x_count(expr))
+	    {
+	      set_optimized(expr);
 	      if ((symbols == 2) &&
 		  (pairs == 0) &&
 		  (is_symbol(arg1)) &&
@@ -45609,184 +45654,131 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
 		  set_unsafe(expr);
 		  return(false); 
 		}
+	      return(true);
 	    }
-	  return(true);
-	}
-      else 
-	{
-	  if (((func_is_closure) ||
-	       (is_closure_star(func))) &&
-	      (!arglist_has_rest(sc, closure_args(func))))
+	  
+	  /* (define (hi) (catch #t (lambda () 1) (lambda args 2))) 
+	   *   first arg list must be (), second a symbol
+	   */
+	  if (c_function_call(func) == g_catch)
 	    {
-	      set_unsafely_optimized(expr);
-	      if (func_is_closure)
+	      if (((bad_pairs == 2) && (!is_pair(arg1))) ||
+		  ((bad_pairs == 3) && (car(arg1) == sc->QUOTE)))
 		{
-		  if (is_safe_closure(func))
+		  s7_pointer body_lambda, error_lambda;
+		  body_lambda = arg2;
+		  error_lambda = arg3;
+		  
+		  if ((is_pair(body_lambda)) &&
+		      (is_lambda(sc, car(body_lambda))) &&
+		      (is_pair(error_lambda)) &&
+		      (is_lambda(sc, car(error_lambda))) &&
+		      (is_null(cadr(body_lambda))) &&
+		      (is_not_null(cddr(body_lambda))) &&
+		      (is_symbol(cadr(error_lambda))) &&
+		      (!is_immutable(cadr(error_lambda))) &&
+		      (is_not_null(cddr(error_lambda))))
 		    {
-		      if (is_symbol(arg1))
-			set_optimize_data(expr, hop + OP_SAFE_CLOSURE_SAA);
-		      else set_optimize_data(expr, hop + OP_SAFE_CLOSURE_ALL_X);
+		      s7_pointer error_result;
+		      error_result = caddr(error_lambda);
+		      set_unsafely_optimized(expr);
+		      if ((arg1 == sc->T) &&
+			  (is_null(cdddr(error_lambda))) &&
+			  (!is_symbol(error_result)) &&
+			  ((!is_pair(error_result)) || (car(error_result) == sc->QUOTE)))
+			{
+			  set_optimize_data(expr, hop + OP_C_CATCH_ALL);
+			  set_c_function(expr, func);
+			  if (is_pair(error_result))
+			    set_fcdr(expr, cadr(error_result));
+			  else set_fcdr(expr, error_result);
+			  set_ecdr(cdr(expr), cddr(body_lambda));
+			}
+		      else 
+			{
+			  set_optimize_data(expr, hop + OP_C_CATCH);
+			  choose_c_function(sc, expr, func, 3);
+			}
+		      return(false);
 		    }
-		  else set_optimize_data(expr, hop + OP_CLOSURE_ALL_X);
-		}
-	      else set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X)));
-	      annotate_args(sc, cdr(expr));
-	      set_ecdr(expr, func);
-	      set_arglist_length(expr, small_int(3));
-	      return(false);
-	    }
-	}
-    }
-
-  if ((bad_pairs == 0) &&
-      (func_is_c_function) &&
-      (func_is_safe) &&
-      (pairs > 0))
-    {
-      if ((symbols == 2) &&
-	  (is_symbol(arg1)) &&
-	  (is_symbol(arg2)))
-	{
-	  set_optimize_data(expr, hop + OP_SAFE_C_SSZ);
-	}
-      else
-	{
-	  /* use either X or Z in all 8 choices */
-	  if ((!is_pair(arg1)) ||
-	      (is_all_x_op(optimize_data(arg1))))
-	    {
-	      annotate_arg(sc, cdr(expr));
-	      if ((!is_pair(arg2)) ||
-		  (is_all_x_op(optimize_data(arg2))))
-		{
-		  set_optimize_data(expr, hop + OP_SAFE_C_AAZ); /* here last can't be A because we checked for that above */
-		  annotate_arg(sc, cddr(expr));
 		}
 	      else
 		{
-		  if ((!is_pair(arg3)) ||
-		      (is_all_x_op(optimize_data(arg3))))
+		  if ((is_symbol(arg2)) &&
+		      ((bad_pairs == 1) ||
+		       ((bad_pairs == 2) && (car(arg1) == sc->QUOTE))))
 		    {
-		      set_optimize_data(expr, hop + OP_SAFE_C_AZA); 
-		      annotate_arg(sc, cdddr(expr));
+		      s7_pointer error_lambda;
+		      error_lambda = arg3;
+		      
+		      if ((is_pair(error_lambda)) &&
+			  (is_lambda(sc, car(error_lambda))) &&
+			  (is_symbol(cadr(error_lambda))) &&
+			  (!is_immutable(cadr(error_lambda))) &&
+			  (is_not_null(cddr(error_lambda))))
+			{
+			  set_unsafely_optimized(expr);
+			  set_optimize_data(expr, hop + OP_C_CATCH);
+			  choose_c_function(sc, expr, func, 3);
+			  return(false);
+			}
 		    }
-		  else set_optimize_data(expr, hop + OP_SAFE_C_AZZ); 
-		}
-	    }
-	  else
-	    {
-	      if ((!is_pair(arg2)) ||
-		  (is_all_x_op(optimize_data(arg2))))
-		{
-		  annotate_arg(sc, cddr(expr));
-		  if ((!is_pair(arg3)) ||
-		      (is_all_x_op(optimize_data(arg3))))
-		    {
-		      set_optimize_data(expr, hop + OP_SAFE_C_ZAA); 
-		      annotate_arg(sc, cdddr(expr));
-		    }
-		  else set_optimize_data(expr, hop + OP_SAFE_C_ZAZ); 
-		}
-	      else
-		{
-		  if ((!is_pair(arg3)) ||
-		      (is_all_x_op(optimize_data(arg3))))
-		    {
-		      set_optimize_data(expr, hop + OP_SAFE_C_ZZA); 
-		      annotate_arg(sc, cdddr(expr));
-		    }
-		  else set_optimize_data(expr, hop + OP_SAFE_C_ZZZ); 
 		}
 	    }
 	}
-      set_optimized(expr);		  
-      choose_c_function(sc, expr, func, 3);
-      set_arglist_length(expr, small_int(3));
+      return(is_optimized(expr));
     }
-
-  /* aap is not better than ssp, sap also saves very little */
-  if ((pairs == 1) &&
-      (bad_pairs == 1) &&
-      (symbols == 2) &&
-      (func_is_c_function) &&
-      (func_is_safe) &&
-      (is_pair(arg3)))
+  
+  /* not c func */
+  if(is_closure(func))
     {
-      set_optimized(expr);
-      set_unsafe(expr);
-      set_optimize_data(expr, hop + OP_SAFE_C_SSP);
-      choose_c_function(sc, expr, func, 3);
-      return(false);
-    }
+      if (closure_arity_to_int(sc, func) != 3)
+	return(false);
 
-  /* (define (hi) (catch #t (lambda () 1) (lambda args 2))) 
-   *   first arg list must be (), second a symbol
-   */
-  if ((func_is_c_function) &&
-      (c_function_call(func) == g_catch))
-    {
-      if (((bad_pairs == 2) && (!is_pair(arg1))) ||
-	  ((bad_pairs == 3) && (car(arg1) == sc->QUOTE)))
+      if ((symbols == 3) &&
+	  (!is_safe_closure(func)) &&
+	  (!arglist_has_rest(sc, closure_args(func))))
 	{
-	  s7_pointer body_lambda, error_lambda;
-	  body_lambda = arg2;
-	  error_lambda = arg3;
-
-	  if ((is_pair(body_lambda)) &&
-	      (is_lambda(sc, car(body_lambda))) &&
-	      (is_pair(error_lambda)) &&
-	      (is_lambda(sc, car(error_lambda))) &&
-	      (is_null(cadr(body_lambda))) &&
-	      (is_not_null(cddr(body_lambda))) &&
-	      (is_symbol(cadr(error_lambda))) &&
-	      (!is_immutable(cadr(error_lambda))) &&
-	      (is_not_null(cddr(error_lambda))))
-	    {
-	      s7_pointer error_result;
-	      error_result = caddr(error_lambda);
-	      set_unsafely_optimized(expr);
-	      if ((arg1 == sc->T) &&
-		  (is_null(cdddr(error_lambda))) &&
-		  (!is_symbol(error_result)) &&
-		  ((!is_pair(error_result)) || (car(error_result) == sc->QUOTE)))
-		{
-		  set_optimize_data(expr, hop + OP_C_CATCH_ALL);
-		  set_c_function(expr, func);
-		  if (is_pair(error_result))
-		    set_fcdr(expr, cadr(error_result));
-		  else set_fcdr(expr, error_result);
-		  set_ecdr(cdr(expr), cddr(body_lambda));
-		}
-	      else 
-		{
-		  set_optimize_data(expr, hop + OP_C_CATCH);
-		  choose_c_function(sc, expr, func, 3);
-		}
-	      return(false);
-	    }
+	  set_unsafely_optimized(expr);
+	  set_ecdr(expr, func);
+	  set_arglist_length(expr, small_int(3));
+	  set_optimize_data(expr, hop + OP_CLOSURE_ALL_S);
+	  return(false);
 	}
-      else
+
+      if (pairs == quotes + all_x_count(expr))
 	{
-	  if ((is_symbol(arg2)) &&
-	      ((bad_pairs == 1) ||
-	       ((bad_pairs == 2) && (car(arg1) == sc->QUOTE))))
+	  if (is_safe_closure(func))
 	    {
-	      s7_pointer error_lambda;
-	      error_lambda = arg3;
-	      
-	      if ((is_pair(error_lambda)) &&
-		  (is_lambda(sc, car(error_lambda))) &&
-		  (is_symbol(cadr(error_lambda))) &&
-		  (!is_immutable(cadr(error_lambda))) &&
-		  (is_not_null(cddr(error_lambda))))
-		{
-		  /* hop = 0; */
-		  set_unsafely_optimized(expr);
-		  set_optimize_data(expr, hop + OP_C_CATCH);
-		  choose_c_function(sc, expr, func, 3);
-		  return(false);
-		}
+	      if (is_symbol(arg1))
+		set_optimize_data(expr, hop + OP_SAFE_CLOSURE_SAA);
+	      else set_optimize_data(expr, hop + OP_SAFE_CLOSURE_ALL_X);
 	    }
+	  else set_optimize_data(expr, hop + OP_CLOSURE_ALL_X);
+	  set_unsafely_optimized(expr);
+	  annotate_args(sc, cdr(expr));
+	  set_ecdr(expr, func);
+	  set_arglist_length(expr, small_int(3));
+	  return(false);
+	}
+    }
+
+  if (is_closure_star(func))
+    {
+      if ((!has_simple_args(closure_body(func))) ||
+	  (closure_star_arity_to_int(sc, func) < 3) ||
+	  (arglist_has_keyword(cdr(expr))) ||
+	  (arglist_has_rest(sc, closure_args(func)))) /* is this redundant? */
+	return(false);
+
+      if (pairs == quotes + all_x_count(expr))
+	{
+	  set_unsafely_optimized(expr);
+	  set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X)));
+	  annotate_args(sc, cdr(expr));
+	  set_ecdr(expr, func);
+	  set_arglist_length(expr, small_int(3));
+	  return(false);
 	}
     }
 
@@ -69244,7 +69236,7 @@ int main(int argc, char **argv)
  * t455|6     265 |   89 |  9   |       8.4 8045 7916
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 24.0
- * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.5
+ * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3
  *
  * --------------------------------------------------
  *
@@ -69281,5 +69273,6 @@ int main(int argc, char **argv)
  *    also get rid of #i and #e?
  * the 3-func version of catch could be an option (catch-if in s7.html) -- then allow #f in dynamic-wind and they're similar (trilambda)
  *   catch-if is not in s7test -- are there more of these?
+ *   fix the generic func section in s7.html
  * clean up func_1|2|3_args
  */

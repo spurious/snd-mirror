@@ -1835,6 +1835,9 @@ to compare strings and lists, as well as numbers.  In map and for-each, however,
 types, so I'm not as attracted to making '&gt;' generic; you can't, for example, <code>(&gt; "hi" 32.1)</code>,
 or even <code>(&gt; 1 0+i)</code>.
 </p>
+</div>
+</blockquote>
+
 
 <pre class="indented">
 <em class=def id="sortb">sort!</em>
@@ -1891,9 +1894,7 @@ arcane consequence for method writers: specialize make-iterator, not map or for-
 	 (and (not (eof-object? x)) x)))))
 </pre>
 
-</div>
 
-</blockquote>
 
 
 
