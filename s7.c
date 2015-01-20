@@ -33907,7 +33907,7 @@ void s7_function_chooser_set_data(s7_scheme *sc, s7_pointer f, void *data)
 
 s7_function s7_function_choice(s7_scheme *sc, s7_pointer expr)
 {
-  if ((is_optimized(expr)) &&
+  if ((is_safely_optimized(expr)) &&
       (is_symbol(car(expr))) &&
       (car(expr) != sc->QUOTE) &&
       (ecdr(expr)) &&
@@ -42369,7 +42369,7 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	      return(subtract_csn);
 	    }
 #if (!WITH_GMP)
-	  if ((is_optimized(arg1)) &&
+	  if ((is_safely_optimized(arg1)) &&
 	      (c_call(arg1) == g_random_ic))
 	    {
 	      set_optimize_data(expr, HOP_SAFE_C_C);
@@ -44175,6 +44175,9 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int 
 
   if (is_c_function(func))
     {
+      if (c_function_required_args(func) != 0)
+	return(false);
+
       if ((is_safe_procedure(func)) ||
 	  (c_function_call(func) == g_list) ||          /* (list) is safe */
 	  (c_function_call(func) == g_values))          /* (values) is safe */
@@ -44460,7 +44463,6 @@ static void annotate_arg(s7_scheme *sc, s7_pointer arg)
   set_fcdr(arg, (s7_pointer)all_x_eval(sc, car(arg)));
 }
 
-static s7_pointer check_or(s7_scheme *sc);
 
 static void opt_generator(s7_scheme *sc, s7_pointer func, s7_pointer expr, int hop)
 {
@@ -44487,39 +44489,27 @@ static void opt_generator(s7_scheme *sc, s7_pointer func, s7_pointer expr, int h
 
 static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop, int pairs, int symbols, int quotes, int bad_pairs)
 {
-  bool func_is_safe, func_is_c_function, func_is_closure;
   s7_pointer arg1;
   /* very often, expr is already optimized */
   /* fprintf(stderr, "func_one_arg: %s: hop: %d, pairs: %d %d\n", DISPLAY_80(expr), hop, pairs, bad_pairs); */
 
-  func_is_closure = is_closure(func);
-  if ((func_is_closure) &&
-      (closure_arity_to_int(sc, func) != 1))
-    return(false); 
-  /* this is checking for dotted arglists: boolean=? for example.  To optimize these calls, we need op_closure cases that
-   *   bind the dotted name to the remaining args as a list.  This does not happen enough to be worth the trouble.
-   */
-
-  if ((is_closure_star(func)) &&
-      ((!has_simple_args(closure_body(func))) || 
-       (is_null(closure_args(func)))))
-    return(false);
-
-  func_is_safe = is_safe_procedure(func);
-  func_is_c_function = ((is_c_function(func)) || 
-			((is_c_function_star(func)) && 
-			 (c_function_all_args(func) == 1))); /* surely no need to check key here? */
   arg1 = cadr(expr);
 
-  if (pairs == 0)
+  if (((is_c_function(func)) &&
+       (c_function_required_args(func) <= 1) &&
+       (c_function_all_args(func) >= 1)) ||
+      ((is_c_function_star(func)) && 
+       (c_function_all_args(func) == 1))) /* surely no need to check key here? */
     {
-      if (func_is_c_function)
+      bool func_is_safe;
+      func_is_safe = is_safe_procedure(func);
+      if (pairs == 0)
 	{
 	  if (func_is_safe)                  /* safe c function */
 	    {     
 	      set_optimized(expr);
 	      set_optimize_data(expr, hop + ((symbols == 0) ? OP_SAFE_C_C : OP_SAFE_C_S));
-
+	      
 	      /* we can't simply check is_global here to forego symbol value lookup later because we aren't
 	       *    tracking local vars, so the global bit may be on right now, but won't be when
 	       *    this code is evaluated.  But memq(sym, e) would catch such cases.
@@ -44527,7 +44517,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 	       *    But global symbols are rare, and I don't see a huge savings in the lookup time --
 	       *    in callgrind it's about 7/lookup in both cases.
 	       */
-
+	      
 	      choose_c_function(sc, expr, func, 1);
 	      return(true);
 	    }
@@ -44550,110 +44540,9 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 	      return(false); 
 	    }
 	}
-      else                                   /* func is from scheme */
+      else /* pairs == 1 */
 	{
-	  if (func_is_closure)
-	    {
-	      if (is_symbol(arg1))
-		{
-		  bool safe_case;
-		  safe_case = is_safe_closure(func);
-		  if (safe_case)
-		    {
-		      s7_pointer body;
-		      body = closure_body(func);
-		      /* (let () (define (f1 x) (vector-ref x 0)) (define (f2 x) (f1 x)) (f2 #(0))) 
-		       * someday it might be worth pursuing this further
-		       */
-		      if ((is_pair(body)) &&
-			  (is_null(cdr(body))) &&
-			  (is_optimized(car(body))) &&  /* snd-test: (power-env pe) is safe_closure but body is not optimized? and c_call is nil */
-			  (car(closure_args(func)) == cadar(body)))
-			{
-			  if (is_safe_c_s(car(body)))
-			    {
-			      /* direct safe_c_s call by moving body pointers out a level -- this currently never happens
-			       *   (let () (define (f1 x) (abs x)) (define (f2 x) (f1 x)) (f2 -1))
-			       */
-			      set_optimize_data(expr, optimize_data(car(body)));
-			      set_optimized(expr);
-			      set_ecdr(expr, ecdr(car(body)));
-			      set_fcdr(expr, fcdr(car(body)));
-			      return(true);
-			    }
-			}
-		      set_optimize_data(expr, hop + ((is_global(car(expr))) ? OP_SAFE_GLOSURE_S : OP_SAFE_CLOSURE_S));
-		    }
-		  else set_optimize_data(expr, hop + ((is_global(car(expr))) ? OP_GLOSURE_S : OP_CLOSURE_S));
-		}
-	      else set_optimize_data(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_C : OP_CLOSURE_C));
-	      set_ecdr(expr, func);
-	      set_fcdr(expr, arg1);
-	      set_unsafely_optimized(expr);
-	      return(false); 
-	    }
-	  else /* not closure with normal arglist */
-	    {
-	      if (s7_is_vector(func))
-		{
-		  set_optimized(expr);
-		  set_optimize_data(expr, hop + ((symbols == 1) ? OP_VECTOR_S : OP_VECTOR_C));
-		  set_ecdr(expr, func);
-		  return(true);
-		}
-
-	      if (is_let(func))
-		{
-		  set_optimized(expr);
-		  set_optimize_data(expr, hop + ((symbols == 1) ? OP_ENVIRONMENT_S : OP_ENVIRONMENT_C));
-		  set_ecdr(expr, func);
-		  return(true);
-		}
-
-	      /* pairs == 0 here */
-	      if ((is_closure_star(func)) &&
-		  (symbols == 1))
-		{
-		  set_unsafely_optimized(expr);
-		  if (is_safe_closure(func))
-		    {
-		      set_optimize_data(expr, hop + OP_SAFE_CLOSURE_STAR_S);
-		      if (closure_star_arity_to_int(sc, func) == 2)
-			{
-			  s7_pointer defarg2;
-			  defarg2 = cadr(closure_args(func));
-			  if ((is_pair(defarg2)) &&
-			      (is_real(cadr(defarg2))) &&
-			      (real(cadr(defarg2)) == 0.0))
-			    opt_generator(sc, func, expr, hop);
-			}
-		    }
-		  else set_optimize_data(expr, hop + OP_CLOSURE_STAR_S);
-		  set_ecdr(expr, func);
-		  set_fcdr(expr, arg1);
-		  return(false); 
-		}
-
-	      if ((func_is_safe) &&
-		  (symbols == 0) &&
-		  (is_c_function_star(func)) &&
-		  (c_function_simple_defaults(func)))
-		{
-		  set_optimized(expr);
-		  set_optimize_data(expr, hop + OP_SAFE_C_STAR_CD);
-		  set_c_function(expr, func);
-		  return(true);
-		}
-	    }
-	}
-    }
-  
-  if (pairs == 1)
-    {
-      if (bad_pairs == 0)
-	{
-	  /* we can optimize whatever the arg involves */
-	  if (func_is_c_function)
+	  if (bad_pairs == 0)
 	    {
 	      if (func_is_safe)
 		{
@@ -44688,37 +44577,9 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 		  return(false); 
 		}
 	    }
-	  else      /* func is from scheme */
+	  else /* bad_pairs == 1 */
 	    {
-	      if (func_is_closure)
-		{
-		  if ((is_optimized(arg1)) &&
-		      (is_all_x_op(optimize_data(arg1))))
-		    {
-		      set_unsafely_optimized(expr);
-		      annotate_arg(sc, cdr(expr));
-		      set_arglist_length(expr, small_int(1));
-		      if (is_safe_closure(func))
-			set_optimize_data(expr, hop + ((is_global(car(expr))) ? OP_SAFE_GLOSURE_A : OP_SAFE_CLOSURE_A));
-		      else set_optimize_data(expr, hop + ((is_global(car(expr))) ? OP_GLOSURE_A : OP_CLOSURE_A));
-		      set_ecdr(expr, func);
-		      return(false);
-		    }
-		  if (is_global(car(expr)))
-		    {
-		      set_unsafely_optimized(expr);
-		      set_optimize_data(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_GLOSURE_P : OP_GLOSURE_P));
-		      set_ecdr(expr, func);
-		      return(false); 
-		    }
-		}
-	    }
-	}
-      else      /* bad_pairs is 1 */
-	{
-	  if (quotes == 1)
-	    {
-	      if (func_is_c_function)
+	      if (quotes == 1)
 		{
 		  if (func_is_safe)
 		    {
@@ -44734,17 +44595,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 		  choose_c_function(sc, expr, func, 1);
 		  return(false); 
 		}
-	      if (func_is_closure)
-		{
-		  set_unsafely_optimized(expr);
-		  set_optimize_data(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_Q : OP_CLOSURE_Q));
-		  set_ecdr(expr, func);
-		  return(false); 
-		}
-	    }
-	  else    /* bad pair is not quoted */
-	    {
-	      if (func_is_c_function)
+	      else  /* quotes == 0 */
 		{
 		  if (!func_is_safe)
 		    {
@@ -44772,45 +44623,190 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 		  choose_c_function(sc, expr, func, 1);
 		  return(false);
 		}
+	    }
+	}
+      
+      if (!func_is_safe)
+	{
+	  set_unsafely_optimized(expr);
+	  set_optimize_data(expr, hop + OP_C_P);
+	  choose_c_function(sc, expr, func, 1);
+	  return(false);
+	}
+      return(is_optimized(expr));  
+    }
 
-	      if ((func_is_closure) &&
-		  (is_global(car(expr))))
+  if (is_closure(func))
+    {
+      if (closure_arity_to_int(sc, func) != 1)
+	return(false); 
+      /* this is checking for dotted arglists: boolean=? for example.  To optimize these calls, we need op_closure cases that
+       *   bind the dotted name to the remaining args as a list.  This does not happen enough to be worth the trouble.
+       */
+
+      if (pairs == 0)
+	{
+	  if (is_symbol(arg1))
+	    {
+	      bool safe_case;
+	      safe_case = is_safe_closure(func);
+	      if (safe_case)
+		{
+		  s7_pointer body;
+		  body = closure_body(func);
+		  /* (let () (define (f1 x) (vector-ref x 0)) (define (f2 x) (f1 x)) (f2 #(0))) 
+		   * someday it might be worth pursuing this further
+		   */
+		  if ((is_pair(body)) &&
+		      (is_null(cdr(body))) &&
+		      (is_optimized(car(body))) &&  /* snd-test: (power-env pe) is safe_closure but body is not optimized? and c_call is nil */
+		      (car(closure_args(func)) == cadar(body)))
+		    {
+		      if (is_safe_c_s(car(body)))
+			{
+			  /* direct safe_c_s call by moving body pointers out a level -- this currently never happens
+			   *   (let () (define (f1 x) (abs x)) (define (f2 x) (f1 x)) (f2 -1))
+			   */
+			  set_optimize_data(expr, optimize_data(car(body)));
+			  set_optimized(expr);
+			  set_ecdr(expr, ecdr(car(body)));
+			  set_fcdr(expr, fcdr(car(body)));
+			  return(true);
+			}
+		    }
+		  set_optimize_data(expr, hop + ((is_global(car(expr))) ? OP_SAFE_GLOSURE_S : OP_SAFE_CLOSURE_S));
+		}
+	      else set_optimize_data(expr, hop + ((is_global(car(expr))) ? OP_GLOSURE_S : OP_CLOSURE_S));
+	    }
+	  else set_optimize_data(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_C : OP_CLOSURE_C));
+	  set_ecdr(expr, func);
+	  set_fcdr(expr, arg1);
+	  set_unsafely_optimized(expr);
+	  return(false); 
+	}
+      else /* pairs == 1 */
+	{
+	  if (bad_pairs == 0)
+	    {
+	      if ((is_optimized(arg1)) &&
+		  (is_all_x_op(optimize_data(arg1))))
 		{
 		  set_unsafely_optimized(expr);
-		  set_optimize_data(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_GLOSURE_P : OP_GLOSURE_P));
+		  annotate_arg(sc, cdr(expr));
+		  set_arglist_length(expr, small_int(1));
+		  if (is_safe_closure(func))
+		    set_optimize_data(expr, hop + ((is_global(car(expr))) ? OP_SAFE_GLOSURE_A : OP_SAFE_CLOSURE_A));
+		  else set_optimize_data(expr, hop + ((is_global(car(expr))) ? OP_GLOSURE_A : OP_CLOSURE_A));
+		  set_ecdr(expr, func);
+		  return(false);
+		}
+	    }
+	  else /* bad_pairs == 1 */
+	    {
+	      if (quotes == 1)
+		{
+		  set_unsafely_optimized(expr);
+		  set_optimize_data(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_Q : OP_CLOSURE_Q));
 		  set_ecdr(expr, func);
 		  return(false); 
 		}
 	    }
+	  if ((quotes == 0) &&
+	      (is_global(car(expr))))
+	    {
+	      set_unsafely_optimized(expr);
+	      set_optimize_data(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_GLOSURE_P : OP_GLOSURE_P));
+	      set_ecdr(expr, func);
+	      return(false); 
+	    }
 	}
-    }
-
-  if (pairs == (quotes + all_x_count(expr)))
-    {
-      if (((func_is_closure) ||
-	   (is_closure_star(func))) &&
-	  (!arglist_has_rest(sc, closure_args(func))))
+      
+      if (pairs == (quotes + all_x_count(expr)))
 	{
 	  set_unsafely_optimized(expr);
-	  if (func_is_closure)
-	    set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_A : OP_CLOSURE_A)));
-	  else set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X))); 
+	  set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_A : OP_CLOSURE_A)));
 	  annotate_arg(sc, cdr(expr));
 	  set_ecdr(expr, func);
 	  set_arglist_length(expr, small_int(1));
 	  return(false);
 	}
+      return(is_optimized(expr));  
     }
-
-  if ((func_is_c_function) &&
-      (!func_is_safe))
+  
+  if (is_closure_star(func))
     {
-      set_unsafely_optimized(expr);
-      set_optimize_data(expr, hop + OP_C_P);
-      choose_c_function(sc, expr, func, 1);
-      return(false);
+      if ((!has_simple_args(closure_body(func))) || 
+	  (is_null(closure_args(func))))
+	return(false);
+
+      if ((pairs == 0) &&
+	  (symbols == 1))
+	{
+	  set_unsafely_optimized(expr);
+	  if (is_safe_closure(func))
+	    {
+	      set_optimize_data(expr, hop + OP_SAFE_CLOSURE_STAR_S);
+	      if (closure_star_arity_to_int(sc, func) == 2)
+		{
+		  s7_pointer defarg2;
+		  defarg2 = cadr(closure_args(func));
+		  if ((is_pair(defarg2)) &&
+		      (is_real(cadr(defarg2))) &&
+		      (real(cadr(defarg2)) == 0.0))
+		    opt_generator(sc, func, expr, hop);
+		}
+	    }
+	  else set_optimize_data(expr, hop + OP_CLOSURE_STAR_S);
+	  set_ecdr(expr, func);
+	  set_fcdr(expr, arg1);
+	  return(false); 
+	}
+
+      if ((!arglist_has_rest(sc, closure_args(func))) &&
+	  (pairs == (quotes + all_x_count(expr))))
+	{
+	  set_unsafely_optimized(expr);
+	  set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X))); 
+	  annotate_arg(sc, cdr(expr));
+	  set_ecdr(expr, func);
+	  set_arglist_length(expr, small_int(1));
+	  return(false);
+	}
+      return(is_optimized(expr));  
     }
 
+  if (pairs == 0)
+    {
+      if (is_c_function_star(func))
+	{
+	  if ((symbols == 0) &&
+	      (is_safe_procedure(func)) &&
+	      (c_function_simple_defaults(func)))
+	    {
+	      set_optimized(expr);
+	      set_optimize_data(expr, hop + OP_SAFE_C_STAR_CD);
+	      set_c_function(expr, func);
+	      return(true);
+	    }
+	  return(is_optimized(expr));  
+	}
+      
+      if (s7_is_vector(func))
+	{
+	  set_optimized(expr);
+	  set_optimize_data(expr, hop + ((symbols == 1) ? OP_VECTOR_S : OP_VECTOR_C));
+	  set_ecdr(expr, func);
+	  return(true);
+	}
+      
+      if (is_let(func))
+	{
+	  set_optimized(expr);
+	  set_optimize_data(expr, hop + ((symbols == 1) ? OP_ENVIRONMENT_S : OP_ENVIRONMENT_C));
+	  set_ecdr(expr, func);
+	  return(true);
+	}
+    }
   /* unknown_* is set later */
   return(is_optimized(expr));  
 }
@@ -44819,43 +44815,29 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 static bool optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop, int pairs, int symbols, int quotes, int bad_pairs)
 {
   s7_pointer arg1, arg2;
-  bool func_is_safe, func_is_c_function, func_is_closure;
   /* fprintf(stderr, "opt func_2 %s %s, pairs: %d, bad pairs: %d, hop: %d\n", DISPLAY(func), DISPLAY_80(expr), pairs, bad_pairs, hop); */
-
-  func_is_closure = is_closure(func);
-  if (func_is_closure)
-    {
-      if (closure_arity_to_int(sc, func) != 2)
-	return(false);
-    }
-  else
-    {
-      if ((is_closure_star(func)) &&
-	  ((!has_simple_args(closure_body(func))) ||
-	   (closure_star_arity_to_int(sc, func) < 2) ||
-	   (arglist_has_keyword(cdr(expr)))))
-	return(false);
-    }
 
   arg1 = cadr(expr);
   arg2 = caddr(expr);
 
-  func_is_c_function = ((is_c_function(func)) ||
-			((is_c_function_star(func)) && 
-			 (c_function_all_args(func) == 2) &&
-			 (!is_keyword(arg1))));
-  func_is_safe = is_safe_procedure(func);
-
-  if (pairs == 0)
+  if ((is_c_function(func) &&
+       (c_function_required_args(func) <= 2) &&
+       (c_function_all_args(func) >= 2)) ||
+      ((is_c_function_star(func)) && 
+       (c_function_all_args(func) == 2) &&
+       (!is_keyword(arg1))))
     {
-      if (func_is_c_function)
+      /* this is a mess */
+      bool func_is_safe;
+      func_is_safe = is_safe_procedure(func);
+      if (pairs == 0)
 	{
 	  if ((func_is_safe) ||
 	      (c_function_call(func) == g_member) || /* the unsafe case has a third arg */
 	      (c_function_call(func) == g_assoc))
 	    {
 	      /* another case here: set-car! and set-cdr! are safe if symbols==1 and arg1 is the symbol (i.e. arg2 is a constant) */
-
+	      
 	      if (symbols == 0)
 		set_optimize_data(expr, hop + OP_SAFE_C_C);
 	      else
@@ -44904,526 +44886,517 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 	    }
 	  return(false); 
 	}
-      else
+
+      /* pairs != 0 */
+      if ((bad_pairs == 0) &&
+	  (pairs == 2))
 	{
-	  if ((func_is_closure) &&
-	      (symbols >= 1))
+	  if ((func_is_safe) ||
+	      (c_function_call(func) == g_member) ||
+	      (c_function_call(func) == g_assoc))
 	    {
-	      set_unsafely_optimized(expr);
-	      if (symbols == 2)
+	      int op;
+	      op = combine_ops(sc, E_C_PP, arg1, arg2);
+	      set_optimized(expr);
+	      set_optimize_data(expr, hop + op);
+	      /* fallback here is ZZ */
+	      if (!hop) 
 		{
-		  bool safe_case;
-		  safe_case = is_safe_closure(func);
-		  if (safe_case)
-		    set_optimize_data(expr, hop + OP_SAFE_CLOSURE_SS);
-		  else
-		    {
-		      if (!arglist_has_rest(sc, closure_args(func)))
-			set_optimize_data(expr, hop + OP_CLOSURE_SSb);
-		      else set_optimize_data(expr, hop + OP_CLOSURE_SS);
-		    }
+		  clear_hop(arg1);
+		  clear_hop(arg2);
 		}
 	      else
 		{
-		  if (is_symbol(arg1))
-		    set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_SC : OP_CLOSURE_SC)));
-		  else set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_CS : OP_CLOSURE_CS)));
-		}
-	      set_ecdr(expr, func);
-	      set_fcdr(expr, arg2);
-	      return(false);
-	    }
-	  if ((is_closure_star(func)) &&
-	      (symbols >= 1) &&
-	      (is_symbol(arg1)))
-	    {
-	      set_unsafely_optimized(expr);
-	      if (symbols == 2)
-		set_optimize_data(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SX));
-	      else 
-		{
-		  if (is_safe_closure(func))
+		  if (op == OP_SAFE_C_ZZ)
 		    {
-		      set_optimize_data(expr, hop + OP_SAFE_CLOSURE_STAR_SC);
-		      if (arg2 == real_zero)
-			opt_generator(sc, func, expr, hop);
-		    }
-		  else set_optimize_data(expr, hop + OP_CLOSURE_STAR_SX);
-		}
-	      set_ecdr(expr, func);
-	      set_fcdr(expr, arg2);
-	      return(false); 
-	    }
-	}
-    }
-  else /* pairs != 0 */
-    {
-      if (bad_pairs == 0)
-	{
-	  /* using safe_c_aa here whenever possible was much slower */
-	  
-	  if (pairs == 2)
-	    {
-	      if (func_is_c_function)
-		{
-		  if ((func_is_safe) ||
-		      (c_function_call(func) == g_member) ||
-		      (c_function_call(func) == g_assoc))
-		    {
-		      int op;
-		      op = combine_ops(sc, E_C_PP, arg1, arg2);
-		      set_optimized(expr);
-		      set_optimize_data(expr, hop + op);
-		      /* fallback here is ZZ */
-		      if (!hop) 
+		      if (is_all_x_safe(sc, arg1))
 			{
-			  clear_hop(arg1);
-			  clear_hop(arg2);
-			}
-		      else
-			{
-			  if (op == OP_SAFE_C_ZZ)
+			  if (is_all_x_safe(sc, arg2))
 			    {
-			      if (is_all_x_safe(sc, arg1))
+			      set_optimize_data(expr, hop + OP_SAFE_C_AA);
+			      annotate_args(sc, cdr(expr));
+			      set_arglist_length(expr, small_int(2));
+			    }
+			  else
+			    {
+			      if (optimize_data(arg1) == HOP_SAFE_C_C)
+				set_optimize_data(expr, hop + OP_SAFE_C_opCq_Z);
+			      else 
 				{
-				  if (is_all_x_safe(sc, arg2))
-				    {
-				      set_optimize_data(expr, hop + OP_SAFE_C_AA);
-				      annotate_args(sc, cdr(expr));
-				      set_arglist_length(expr, small_int(2));
-				    }
-				  else
-				    {
-				      if (optimize_data(arg1) == HOP_SAFE_C_C)
-					set_optimize_data(expr, hop + OP_SAFE_C_opCq_Z);
-				      else 
-					{
-					  set_optimize_data(expr, hop + OP_SAFE_C_AZ);
-					  annotate_arg(sc, cdr(expr));
-					  set_arglist_length(expr, small_int(2));
-					}
-				    }
-				}
-			      else
-				{
-				  if (is_all_x_safe(sc, arg2))
-				    {
-				      set_optimize_data(expr, hop + OP_SAFE_C_ZA);
-				      annotate_arg(sc, cddr(expr));
-				      set_arglist_length(expr, small_int(2));
-				    }
+				  set_optimize_data(expr, hop + OP_SAFE_C_AZ);
+				  annotate_arg(sc, cdr(expr));
+				  set_arglist_length(expr, small_int(2));
 				}
 			    }
 			}
-		      choose_c_function(sc, expr, func, 2); /* this might change the op to safe_c_c, so it has to be last */
-		      return(true);
+		      else
+			{
+			  if (is_all_x_safe(sc, arg2))
+			    {
+			      set_optimize_data(expr, hop + OP_SAFE_C_ZA);
+			      annotate_arg(sc, cddr(expr));
+			      set_arglist_length(expr, small_int(2));
+			    }
+			}
 		    }
 		}
-	      else
+	      choose_c_function(sc, expr, func, 2); /* this might change the op to safe_c_c, so it has to be last */
+	      return(true);
+	    }
+	}
+      
+      if ((bad_pairs == 0) &&
+	  (pairs == 1))
+	{
+	  if ((func_is_safe) ||
+	      (c_function_call(func) == g_member) ||
+	      (c_function_call(func) == g_assoc))
+	    {
+	      combine_op_t orig_op;
+	      int op;
+	      
+	      if (is_pair(arg1))
 		{
-		  if ((func_is_closure) &&
-		      (is_safe_c_s(arg1)) &&
-		      (is_safe_c_s(arg2)))
+		  if (is_symbol(arg2))
+		    orig_op = E_C_PS;
+		  else orig_op = E_C_PC;
+		  op = combine_ops(sc, orig_op, expr, arg1);
+		  if (!hop) clear_hop(arg1);
+		}
+	      else 
+		{
+		  if (is_symbol(arg1))
+		    orig_op = E_C_SP;
+		  else orig_op = E_C_CP;
+		  op = combine_ops(sc, orig_op, expr, arg2);
+		  if (!hop) clear_hop(arg2);
+		}
+	      
+	      set_optimized(expr);
+	      set_optimize_data(expr, hop + op);
+	      choose_c_function(sc, expr, func, 2);
+	      return(true);
+	    }
+	  if (symbols == 1)
+	    {
+	      if (is_symbol(arg1))
+		{
+		  if (is_safe_c_s(arg2))
 		    {
 		      set_unsafely_optimized(expr);
-		      if (is_safe_closure(func))
-			set_optimize_data(expr, hop + OP_SAFE_CLOSURE_opSq_opSq);
-		      else set_optimize_data(expr, hop + OP_CLOSURE_opSq_opSq);
-		      set_ecdr(expr, func);
-		      set_fcdr(expr, cadr(arg2));
-		      set_fcdr(cdr(expr), cadr(arg1));
+		      set_optimize_data(expr, hop + OP_C_S_opSq);
+		      set_ecdr(cdr(expr), cadr(arg2));
+		      choose_c_function(sc, expr, func, 2);
+		      return(false);
+		    }
+		  if (optimize_data_match(arg2, OP_SAFE_C_C))
+		    {
+		      set_unsafely_optimized(expr);
+		      set_optimize_data(expr, hop + OP_C_S_opCq);
+		      set_ecdr(cdr(expr), cdr(arg2));
+		      choose_c_function(sc, expr, func, 2);
 		      return(false);
 		    }
 		}
 	    }
-	  if (pairs == 1)
+	}
+      
+      if ((bad_pairs == 1) && (quotes == 1))
+	{
+	  if ((func_is_safe) ||
+	      (c_function_call(func) == g_member) ||
+	      (c_function_call(func) == g_assoc))
 	    {
-	      if (func_is_c_function)
+	      if  (symbols == 1)
 		{
-		  if ((func_is_safe) ||
-		      (c_function_call(func) == g_member) ||
-		      (c_function_call(func) == g_assoc))
+		  set_optimized(expr);
+		  if (is_symbol(arg1))
+		    set_optimize_data(expr, hop + OP_SAFE_C_SQ);
+		  else set_optimize_data(expr, hop + OP_SAFE_C_QS);
+		  choose_c_function(sc, expr, func, 2);
+		  return(true);
+		}
+	      else
+		{
+		  if (pairs == 1)
 		    {
-		      combine_op_t orig_op;
-		      int op;
-		      
-		      if (is_pair(arg1))
-			{
-			  if (is_symbol(arg2))
-			    orig_op = E_C_PS;
-			  else orig_op = E_C_PC;
-			  op = combine_ops(sc, orig_op, expr, arg1);
-			  if (!hop) clear_hop(arg1);
-			}
-		      else 
-			{
-			  if (is_symbol(arg1))
-			    orig_op = E_C_SP;
-			  else orig_op = E_C_CP;
-			  op = combine_ops(sc, orig_op, expr, arg2);
-			  if (!hop) clear_hop(arg2);
-			}
-
+		      /* Q must be 1, symbols = 0, pairs = 1 (the quote), so this must be CQ or QC?
+		       */
 		      set_optimized(expr);
-		      set_optimize_data(expr, hop + op);
+		      if (is_pair(arg1))
+			set_optimize_data(expr, hop + OP_SAFE_C_QC);
+		      else set_optimize_data(expr, hop + OP_SAFE_C_CQ);
 		      choose_c_function(sc, expr, func, 2);
 		      return(true);
 		    }
-		  if (symbols == 1)
-		    {
-		      if (is_symbol(arg1))
-			{
-			  if (is_safe_c_s(arg2))
-			    {
-			      set_unsafely_optimized(expr);
-			      set_optimize_data(expr, hop + OP_C_S_opSq);
-			      set_ecdr(cdr(expr), cadr(arg2));
-			      choose_c_function(sc, expr, func, 2);
-			      return(false);
-			    }
-			  if (optimize_data_match(arg2, OP_SAFE_C_C))
-			    {
-			      set_unsafely_optimized(expr);
-			      set_optimize_data(expr, hop + OP_C_S_opCq);
-			      set_ecdr(cdr(expr), cdr(arg2));
-			      choose_c_function(sc, expr, func, 2);
-			      return(false);
-			    }
-			}
-		    }
-		}
-	      else
-		{
-		  if (func_is_closure)
-		    {
-		      if (is_symbol(arg1))
-			{
-			  if (is_safe_c_s(arg2))
-			    {
-			      set_unsafely_optimized(expr);
-			      set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_S_opSq : OP_CLOSURE_S_opSq)));
-			      set_ecdr(expr, func);
-			      return(false); 
-			    }
-			  if ((is_optimized(arg2)) &&
-			      (op_no_hop(arg2) == OP_SAFE_C_SS))
-			    {
-			      set_unsafely_optimized(expr);
-			      set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_S_opSSq : OP_CLOSURE_S_opSSq)));
-			      set_ecdr(expr, func);
-			      return(false); 
-			    }
-			}
-		      if (is_symbol(arg2))
-			{
-			  if (is_safe_c_s(arg1))
-			    {
-			      set_unsafely_optimized(expr);
-			      set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_opSq_S : OP_CLOSURE_opSq_S)));
-			      set_ecdr(expr, func);
-			      set_fcdr(expr, arg2);
-			      return(false); 
-			    }
-			  if ((is_optimized(arg1)) &&
-			      (op_no_hop(arg1) == OP_SAFE_C_SS))
-			    {
-			      set_unsafely_optimized(expr);
-			      set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_opSSq_S : OP_CLOSURE_opSSq_S)));
-			      set_ecdr(expr, func);
-			      return(false); 
-			    }
-			}
-		    }
-		}
-	    }
-	}
-      else /* pairs != 0 and bad_pairs != 0 */
-	{
-	  if ((bad_pairs == 1) && (quotes == 1))
-	    {
-	      if (func_is_c_function)
-		{
-		  if ((func_is_safe) ||
-		      (c_function_call(func) == g_member) ||
-		      (c_function_call(func) == g_assoc))
-		    {
-		      if  (symbols == 1)
-			{
-			  set_optimized(expr);
-			  if (is_symbol(arg1))
-			    set_optimize_data(expr, hop + OP_SAFE_C_SQ);
-			  else set_optimize_data(expr, hop + OP_SAFE_C_QS);
-			  choose_c_function(sc, expr, func, 2);
-			  return(true);
-			}
-		      else
-			{
-			  if (pairs == 1)
-			    {
-			      /* Q must be 1, symbols = 0, pairs = 1 (the quote), so this must be CQ or QC?
-			       */
-			      set_optimized(expr);
-			      if (is_pair(arg1))
-				set_optimize_data(expr, hop + OP_SAFE_C_QC);
-			      else set_optimize_data(expr, hop + OP_SAFE_C_CQ);
-			      choose_c_function(sc, expr, func, 2);
-			      return(true);
-			    }
-			}
-		    }
-		  else
-		    {
-		      if (pairs == 1)
-			{
-			  set_unsafely_optimized(expr);
-			  set_optimize_data(expr, hop + OP_C_ALL_X);
-			  annotate_args(sc, cdr(expr));
-			  set_arglist_length(expr, small_int(2));
-			  choose_c_function(sc, expr, func, 2);
-			  return(false); 
-			}
-		    }
 		}
 	    }
 	  else
 	    {
-	      if (quotes == 2)
+	      if (pairs == 1)
 		{
-		  if (func_is_c_function)
-		    {
-		      if ((func_is_safe) ||
-			  (c_function_call(func) == g_member) ||
-			  (c_function_call(func) == g_assoc))
-			{
-			  set_optimized(expr);
-			  set_optimize_data(expr, hop + OP_SAFE_C_QQ);
- 			  choose_c_function(sc, expr, func, 2);
-			  return(true);
-			}
-		      set_unsafely_optimized(expr);
-		      set_optimize_data(expr, hop + OP_C_ALL_X);
-		      annotate_args(sc, cdr(expr));
-		      set_arglist_length(expr, small_int(2));
-		      choose_c_function(sc, expr, func, 2);
-		      return(false); 
-		    }
-		}
-	      else
-		{
-		  if ((bad_pairs == 1) &&
-		      (is_pair(arg1)) &&
-		      (func_is_c_function) &&
-		      ((is_symbol(arg2)) ||
-		       ((pairs == 2) &&
-			(is_safe_c_s(arg2)))))
-		    {
-		      s7_pointer lambda_expr;
-		      lambda_expr = arg1;
-		      
-		      if ((is_pair(lambda_expr)) &&
-			  (is_lambda(sc, car(lambda_expr))) && /* check for stuff like (define (f) (for-each (lambda 2) ...)) */
-			  (is_pair(cdr(lambda_expr))) &&   
-			  (is_pair(cddr(lambda_expr))) &&
-			  (s7_list_length(sc, cadr(lambda_expr)) == 1) &&
-			  (is_symbol(caadr(lambda_expr))) &&
-			  (!is_immutable(caadr(lambda_expr))))
-			{
-			  choose_c_function(sc, expr, func, 2);
-			  if (c_call(expr) == g_for_each_1)
-			    {
-			      if (is_symbol(arg2))
-				{
-				  set_unsafely_optimized(expr);
-				  set_optimize_data(expr, hop + OP_C_FOR_EACH_1);
-				  return(false);
-				}
-			      set_unsafely_optimized(expr);
-			      set_optimize_data(expr, hop + OP_C_FOR_EACH_CATCH);
-			      return(false);
-			    }
-			}
-		    }
+		  set_unsafely_optimized(expr);
+		  set_optimize_data(expr, hop + OP_C_ALL_X);
+		  annotate_args(sc, cdr(expr));
+		  set_arglist_length(expr, small_int(2));
+		  choose_c_function(sc, expr, func, 2);
+		  return(false); 
 		}
 	    }
 	}
-    }
-
-  if ((pairs == 1) &&
-      (quotes == 0) &&
-      (func_is_c_function) &&
-      ((func_is_safe) ||
-       (c_function_call(func) == g_member) ||
-       (c_function_call(func) == g_assoc)))
-    {
-      if (symbols == 1)
+      
+      if (quotes == 2)
 	{
-	  set_optimized(expr);
-	  if (bad_pairs == 0)
+	  if ((func_is_safe) ||
+	      (c_function_call(func) == g_member) ||
+	      (c_function_call(func) == g_assoc))
 	    {
-	      set_optimize_data(expr, hop + ((is_symbol(arg1)) ? OP_SAFE_C_SZ : OP_SAFE_C_ZS));
+	      set_optimized(expr);
+	      set_optimize_data(expr, hop + OP_SAFE_C_QQ);
 	      choose_c_function(sc, expr, func, 2);
 	      return(true);
 	    }
-	  /* unknowns get here: (* amp (amps 0))
-	   * also list: (make-polywave pitch (list 1 0.93 2 0.07))
-	   * and (* vol (granulate gen))
-	   */
-	  set_unsafe(expr);
-	  set_optimize_data(expr, hop + ((is_symbol(arg1)) ? OP_SAFE_C_SP : OP_SAFE_C_PS));
-	  choose_c_function(sc, expr, func, 2);
-	  
-	  if (is_symbol(arg2))
-	    {
-	      if ((is_optimized(arg1)) &&
-		  (is_symbol(car(arg1))) && /* this is *really* tricky but sc->QQ_List is the bad case (i.e. function itself can be car) */
-		  (is_symbol(cadr(arg1))) &&
-		  (optimize_data(arg1) == HOP_UNKNOWN_G))
-		set_optimize_data(expr, hop + OP_SAFE_C_opVSq_S);
-	    }
-	  else
-	    {
-	      if ((is_optimized(arg2)) &&
-		  (is_symbol(car(arg2))) &&
-		  (is_symbol(cadr(arg2))) &&
-		  (optimize_data(arg2) == HOP_UNKNOWN_G))
-		set_optimize_data(expr, hop + OP_SAFE_C_S_opVSq);
-	    }
-	  return(false);
-	}
-      if (symbols == 0)
-	{
-	  set_optimized(expr);
-	  if (bad_pairs == 0)
-	    {
-	      set_optimize_data(expr, hop + ((is_pair(arg1)) ? OP_SAFE_C_CZ : OP_SAFE_C_ZC)); /* was symbol?? */
-	      /* fprintf(stderr, "%d %s: %s\n", __LINE__, opt_name(expr), DISPLAY(expr)); */
-	      choose_c_function(sc, expr, func, 2);
-	      return(true);
-	    }
-	  else
-	    {
-	      set_unsafe(expr);
-	      set_optimize_data(expr, hop + ((is_pair(arg1)) ? OP_SAFE_C_PC : OP_SAFE_C_CP));
-	      choose_c_function(sc, expr, func, 2);
-	      return(false);
-	    }
-	}
-    }
-  
-  if ((pairs == 2) &&
-      (func_is_c_function) &&
-      ((func_is_safe) ||
-       (c_function_call(func) == g_member) ||
-       (c_function_call(func) == g_assoc)))
-    {
-      if ((bad_pairs == 1) &&
-	  (is_safe_c_s(arg1)))
-	{
-	  /* unsafe func here won't work unless we check that later and make the new arg list (for {list} etc)
-	   *   (and it has to be the last pair else the unknown_g stuff can mess up)
-	   */
 	  set_unsafely_optimized(expr);
-	  set_optimize_data(expr, hop + OP_SAFE_C_opSq_P);
+	  set_optimize_data(expr, hop + OP_C_ALL_X);
+	  annotate_args(sc, cdr(expr));
+	  set_arglist_length(expr, small_int(2));
 	  choose_c_function(sc, expr, func, 2);
-	  return(false);
+	  return(false); 
 	}
-      else
+      
+      if ((bad_pairs == 1) &&
+	  (is_pair(arg1)) &&
+	  ((is_symbol(arg2)) ||
+	   ((pairs == 2) &&
+	    (is_safe_c_s(arg2)))))
 	{
-	  if (quotes == 0) 
+	  s7_pointer lambda_expr;
+	  lambda_expr = arg1;
+	  
+	  if ((is_pair(lambda_expr)) &&
+	      (is_lambda(sc, car(lambda_expr))) && /* check for stuff like (define (f) (for-each (lambda 2) ...)) */
+	      (is_pair(cdr(lambda_expr))) &&   
+	      (is_pair(cddr(lambda_expr))) &&
+	      (s7_list_length(sc, cadr(lambda_expr)) == 1) &&
+	      (is_symbol(caadr(lambda_expr))) &&
+	      (!is_immutable(caadr(lambda_expr))))
 	    {
-	      set_unsafely_optimized(expr);
-	      if (is_all_x_safe(sc, arg1))
+	      choose_c_function(sc, expr, func, 2);
+	      if (c_call(expr) == g_for_each_1)
 		{
-		  set_optimize_data(expr, hop + OP_SAFE_C_AP);
-		  annotate_arg(sc, cdr(expr));
+		  if (is_symbol(arg2))
+		    {
+		      set_unsafely_optimized(expr);
+		      set_optimize_data(expr, hop + OP_C_FOR_EACH_1);
+		      return(false);
+		    }
+		  set_unsafely_optimized(expr);
+		  set_optimize_data(expr, hop + OP_C_FOR_EACH_CATCH);
+		  return(false);
 		}
-	      else 
+	    }
+	}
+      
+      if ((pairs == 1) &&
+	  (quotes == 0) &&
+	  ((func_is_safe) ||
+	   (c_function_call(func) == g_member) ||
+	   (c_function_call(func) == g_assoc)))
+	{
+	  if (symbols == 1)
+	    {
+	      set_optimized(expr);
+	      if (bad_pairs == 0)
 		{
-		  set_optimize_data(expr, hop + OP_SAFE_C_PP);
+		  set_optimize_data(expr, hop + ((is_symbol(arg1)) ? OP_SAFE_C_SZ : OP_SAFE_C_ZS));
+		  choose_c_function(sc, expr, func, 2);
+		  return(true);
+		}
+	      /* unknowns get here: (* amp (amps 0))
+	       * also list: (make-polywave pitch (list 1 0.93 2 0.07))
+	       * and (* vol (granulate gen))
+	       */
+	      set_unsafe(expr);
+	      set_optimize_data(expr, hop + ((is_symbol(arg1)) ? OP_SAFE_C_SP : OP_SAFE_C_PS));
+	      choose_c_function(sc, expr, func, 2);
+	      
+	      if (is_symbol(arg2))
+		{
 		  if ((is_optimized(arg1)) &&
-		      (is_symbol(car(arg1))) &&
+		      (is_symbol(car(arg1))) && /* this is *really* tricky but sc->QQ_List is the bad case (i.e. function itself can be car) */
 		      (is_symbol(cadr(arg1))) &&
-		      (optimize_data(arg1) == HOP_UNKNOWN_G) &&
-		      (is_optimized(arg2)) &&
+		      (optimize_data(arg1) == HOP_UNKNOWN_G))
+		    set_optimize_data(expr, hop + OP_SAFE_C_opVSq_S);
+		}
+	      else
+		{
+		  if ((is_optimized(arg2)) &&
 		      (is_symbol(car(arg2))) &&
 		      (is_symbol(cadr(arg2))) &&
 		      (optimize_data(arg2) == HOP_UNKNOWN_G))
-		    set_optimize_data(expr, hop + OP_SAFE_C_opVSq_opVSq);
+		    set_optimize_data(expr, hop + OP_SAFE_C_S_opVSq);
 		}
-	      choose_c_function(sc, expr, func, 2);
 	      return(false);
 	    }
-	  else
+	  if (symbols == 0)
 	    {
-	      if (quotes == 1)
+	      set_optimized(expr);
+	      if (bad_pairs == 0)
 		{
-		  if (car(arg1) == sc->QUOTE)
-		    set_optimize_data(expr, hop + OP_SAFE_C_QP);
-		  else set_optimize_data(expr, hop + OP_SAFE_C_PQ);
-		  set_unsafely_optimized(expr);
+		  set_optimize_data(expr, hop + ((is_pair(arg1)) ? OP_SAFE_C_CZ : OP_SAFE_C_ZC)); /* was symbol?? */
+		  choose_c_function(sc, expr, func, 2);
+		  return(true);
+		}
+	      else
+		{
+		  set_unsafe(expr);
+		  set_optimize_data(expr, hop + ((is_pair(arg1)) ? OP_SAFE_C_PC : OP_SAFE_C_CP));
 		  choose_c_function(sc, expr, func, 2);
 		  return(false);
 		}
 	    }
 	}
-    }
-
-  if (pairs == (quotes + all_x_count(expr)))
-    {
-      if ((func_is_c_function) &&
-	  (func_is_safe))
+      
+      if ((pairs == 2) &&
+	  ((func_is_safe) ||
+	   (c_function_call(func) == g_member) ||
+	   (c_function_call(func) == g_assoc)))
 	{
-	  set_optimized(expr);
-	  set_optimize_data(expr, hop + OP_SAFE_C_AA);
-	  annotate_args(sc, cdr(expr));
-	  set_arglist_length(expr, small_int(2));
-	  choose_c_function(sc, expr, func, 2);
-	  return(true);
+	  if ((bad_pairs == 1) &&
+	      (is_safe_c_s(arg1)))
+	    {
+	      /* unsafe func here won't work unless we check that later and make the new arg list (for {list} etc)
+	       *   (and it has to be the last pair else the unknown_g stuff can mess up)
+	       */
+	      set_unsafely_optimized(expr);
+	      set_optimize_data(expr, hop + OP_SAFE_C_opSq_P);
+	      choose_c_function(sc, expr, func, 2);
+	      return(false);
+	    }
+	  else
+	    {
+	      if (quotes == 0) 
+		{
+		  set_unsafely_optimized(expr);
+		  if (is_all_x_safe(sc, arg1))
+		    {
+		      set_optimize_data(expr, hop + OP_SAFE_C_AP);
+		      annotate_arg(sc, cdr(expr));
+		    }
+		  else 
+		    {
+		      set_optimize_data(expr, hop + OP_SAFE_C_PP);
+		      if ((is_optimized(arg1)) &&
+			  (is_symbol(car(arg1))) &&
+			  (is_symbol(cadr(arg1))) &&
+			  (optimize_data(arg1) == HOP_UNKNOWN_G) &&
+			  (is_optimized(arg2)) &&
+			  (is_symbol(car(arg2))) &&
+			  (is_symbol(cadr(arg2))) &&
+			  (optimize_data(arg2) == HOP_UNKNOWN_G))
+			set_optimize_data(expr, hop + OP_SAFE_C_opVSq_opVSq);
+		    }
+		  choose_c_function(sc, expr, func, 2);
+		  return(false);
+		}
+	      else
+		{
+		  if (quotes == 1)
+		    {
+		      if (car(arg1) == sc->QUOTE)
+			set_optimize_data(expr, hop + OP_SAFE_C_QP);
+		      else set_optimize_data(expr, hop + OP_SAFE_C_PQ);
+		      set_unsafely_optimized(expr);
+		      choose_c_function(sc, expr, func, 2);
+		      return(false);
+		    }
+		}
+	    }
 	}
-      if (((func_is_closure) ||
-	   (is_closure_star(func))) &&
-	  (!arglist_has_rest(sc, closure_args(func))))
+      
+      if (func_is_safe)
+	{
+	  if (pairs == (quotes + all_x_count(expr)))
+	    {
+	      set_optimized(expr);
+	      set_optimize_data(expr, hop + OP_SAFE_C_AA);
+	      annotate_args(sc, cdr(expr));
+	      set_arglist_length(expr, small_int(2));
+	      choose_c_function(sc, expr, func, 2);
+	      return(true);
+	    }
+	}
+      
+      if ((pairs == 1) &&
+	  (symbols == 1) &&
+	  (quotes == 0) &&
+	  (!func_is_safe) &&
+	  (is_symbol(arg1)))
 	{
 	  set_unsafely_optimized(expr);
-	  if (func_is_closure)
+	  set_optimize_data(expr, hop + OP_C_SP);
+	  choose_c_function(sc, expr, func, 2);
+	  return(false);
+	}
+      return(is_optimized(expr));  
+    }
+  
+  if (is_closure(func))
+    {
+      if (closure_arity_to_int(sc, func) != 2)
+	return(false);
+
+      if ((pairs == 0) &&
+	  (symbols >= 1))
+	{
+	  set_unsafely_optimized(expr);
+	  if (symbols == 2)
 	    {
-	      if (is_safe_closure(func))
+	      bool safe_case;
+	      safe_case = is_safe_closure(func);
+	      if (safe_case)
+		set_optimize_data(expr, hop + OP_SAFE_CLOSURE_SS);
+	      else
 		{
-		  if (is_symbol(arg1))
-		    set_optimize_data(expr, hop + OP_SAFE_CLOSURE_SA);
-		  else set_optimize_data(expr, hop + OP_SAFE_CLOSURE_AA);
+		  if (!arglist_has_rest(sc, closure_args(func)))
+		    set_optimize_data(expr, hop + OP_CLOSURE_SSb);
+		  else set_optimize_data(expr, hop + OP_CLOSURE_SS);
 		}
-	      else set_optimize_data(expr, hop + OP_CLOSURE_AA);
 	    }
-	  else 
+	  else
 	    {
-	      if (is_safe_closure(func))
-		{
-		  if ((is_symbol(arg1)) &&
-		      (closure_star_arity_to_int(sc, func) == 2))
-		    set_optimize_data(expr, hop + OP_SAFE_CLOSURE_STAR_SA);
-		  else set_optimize_data(expr, hop + OP_SAFE_CLOSURE_STAR_ALL_X);
-		}
-	      else set_optimize_data(expr, hop + OP_CLOSURE_STAR_ALL_X);
+	      if (is_symbol(arg1))
+		set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_SC : OP_CLOSURE_SC)));
+	      else set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_CS : OP_CLOSURE_CS)));
 	    }
+	  set_ecdr(expr, func);
+	  set_fcdr(expr, arg2);
+	  return(false);
+	}
+      
+      if (bad_pairs == 0)
+	{
+	  if (pairs == 1)
+	    {
+	      if (is_symbol(arg1))
+		{
+		  if (is_safe_c_s(arg2))
+		    {
+		      set_unsafely_optimized(expr);
+		      set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_S_opSq : OP_CLOSURE_S_opSq)));
+		      set_ecdr(expr, func);
+		      return(false); 
+		    }
+		  if ((is_optimized(arg2)) &&
+		      (op_no_hop(arg2) == OP_SAFE_C_SS))
+		    {
+		      set_unsafely_optimized(expr);
+		      set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_S_opSSq : OP_CLOSURE_S_opSSq)));
+		      set_ecdr(expr, func);
+		      return(false); 
+		    }
+		}
+	      if (is_symbol(arg2))
+		{
+		  if (is_safe_c_s(arg1))
+		    {
+		      set_unsafely_optimized(expr);
+		      set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_opSq_S : OP_CLOSURE_opSq_S)));
+		      set_ecdr(expr, func);
+		      set_fcdr(expr, arg2);
+		      return(false); 
+		    }
+		  if ((is_optimized(arg1)) &&
+		      (op_no_hop(arg1) == OP_SAFE_C_SS))
+		    {
+		      set_unsafely_optimized(expr);
+		      set_optimize_data(expr, hop + ((is_safe_closure(func) ? OP_SAFE_CLOSURE_opSSq_S : OP_CLOSURE_opSSq_S)));
+		      set_ecdr(expr, func);
+		      return(false); 
+		    }
+		}
+	    }
+
+	  if ((pairs == 2) &&
+	      (is_safe_c_s(arg1)) &&
+	      (is_safe_c_s(arg2)))
+	    {
+	      set_unsafely_optimized(expr);
+	      if (is_safe_closure(func))
+		set_optimize_data(expr, hop + OP_SAFE_CLOSURE_opSq_opSq);
+	      else set_optimize_data(expr, hop + OP_CLOSURE_opSq_opSq);
+	      set_ecdr(expr, func);
+	      set_fcdr(expr, cadr(arg2));
+	      set_fcdr(cdr(expr), cadr(arg1));
+	      return(false);
+	    }
+	}
+
+      if ((!arglist_has_rest(sc, closure_args(func))) &&
+	  (pairs == (quotes + all_x_count(expr))))
+	{
+	  set_unsafely_optimized(expr);
+	  if (is_safe_closure(func))
+	    {
+	      if (is_symbol(arg1))
+		set_optimize_data(expr, hop + OP_SAFE_CLOSURE_SA);
+	      else set_optimize_data(expr, hop + OP_SAFE_CLOSURE_AA);
+	    }
+	  else set_optimize_data(expr, hop + OP_CLOSURE_AA);
 	  annotate_args(sc, cdr(expr));
 	  set_ecdr(expr, func);
 	  set_arglist_length(expr, small_int(2));
 	  return(false);
 	}
+      return(is_optimized(expr));  
     }
 
-  if ((pairs == 1) &&
-      (symbols == 1) &&
-      (quotes == 0) &&
-      (func_is_c_function) &&
-      (!func_is_safe) &&
-      (is_symbol(arg1)))
+  if (is_closure_star(func))
     {
-      set_unsafely_optimized(expr);
-      set_optimize_data(expr, hop + OP_C_SP);
-      choose_c_function(sc, expr, func, 2);
-      return(false);
+      if (((!has_simple_args(closure_body(func))) ||
+	   (closure_star_arity_to_int(sc, func) < 2) ||
+	   (arglist_has_keyword(cdr(expr)))))
+	return(false);
+
+      if ((pairs == 0) &&
+	  (symbols >= 1) &&
+	  (is_symbol(arg1)))
+	{
+	  set_unsafely_optimized(expr);
+	  if (symbols == 2)
+	    set_optimize_data(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SX));
+	  else 
+	    {
+	      if (is_safe_closure(func))
+		{
+		  set_optimize_data(expr, hop + OP_SAFE_CLOSURE_STAR_SC);
+		  if (arg2 == real_zero)
+		    opt_generator(sc, func, expr, hop);
+		}
+	      else set_optimize_data(expr, hop + OP_CLOSURE_STAR_SX);
+	    }
+	  set_ecdr(expr, func);
+	  set_fcdr(expr, arg2);
+	  return(false); 
+	}
+
+      if ((!arglist_has_rest(sc, closure_args(func))) &&
+	  (pairs == (quotes + all_x_count(expr))))
+	{
+	  set_unsafely_optimized(expr);
+	  if (is_safe_closure(func))
+	    {
+	      if ((is_symbol(arg1)) &&
+		  (closure_star_arity_to_int(sc, func) == 2))
+		set_optimize_data(expr, hop + OP_SAFE_CLOSURE_STAR_SA);
+	      else set_optimize_data(expr, hop + OP_SAFE_CLOSURE_STAR_ALL_X);
+	    }
+	  else set_optimize_data(expr, hop + OP_CLOSURE_STAR_ALL_X);
+	  annotate_args(sc, cdr(expr));
+	  set_ecdr(expr, func);
+	  set_arglist_length(expr, small_int(2));
+	  return(false);
+	}
     }
   return(is_optimized(expr));  
 }
@@ -45437,7 +45410,9 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
   arg2 = caddr(expr);
   arg3 = cadddr(expr);
 
-  if ((is_c_function(func)) ||
+  if ((is_c_function(func) &&
+       (c_function_required_args(func) <= 3) &&
+       (c_function_all_args(func) >= 3)) ||
       ((is_c_function_star(func)) && 
        (c_function_all_args(func) == 3) &&
        (!is_keyword(arg1)) &&
@@ -45790,9 +45765,12 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
 static bool optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop, int args, int pairs, int symbols, int quotes, int bad_pairs)
 {
   bool func_is_closure;
+
   if (bad_pairs > quotes) return(false);
 
-  if (is_c_function(func))
+  if ((is_c_function(func)) &&
+      (c_function_required_args(func) <= args) &&
+      (c_function_all_args(func) >= args))
     {
       if (is_safe_procedure(func))
 	{
@@ -46275,8 +46253,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poin
 			}
 		    }
 		}
-	      if ((is_null(p)) &&                    /* if not null, dotted list of args? */
-		  (s7_is_aritable(sc, func, args)))  /* we have a legit call, at least syntactically */
+	      if (is_null(p))                    /* if not null, dotted list of args? */
 		{
 		  switch (args)
 		    {
@@ -55448,7 +55425,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* (let () (define* (hi (a 1)) (+ a 1)) (define (ho) (hi (* 2 3))) (ho)) 
 		 * (do ((i 0 (+ i 1))) ((= i 11)) (envelope-interp (/ i 21) '(0 0 100 1)))
 		 */
-
 		e = closure_let(ecdr(code));
 		for (args = cdr(code), p = let_slots(e), orig_args = closure_args(ecdr(code)); 
 		     is_pair(args); 
@@ -69227,15 +69203,15 @@ int main(int argc, char **argv)
 
 /* --------------------------------------------------
  *
- *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3
+ *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1137
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1136
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3005
  * lg             |      |      | 6547 6497 6494 6226
  * t137           |      |      | 8296           3471
- * t455|6     265 |   89 |  9   |       8.4 8045 7916
+ * t455|6     265 |   89 |  9   |       8.4 8045 7888
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
- * t816           |   71 | 70.6 | 38.0 31.8 28.2 24.0
+ * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3
  *
  * --------------------------------------------------
@@ -69274,5 +69250,4 @@ int main(int argc, char **argv)
  * the 3-func version of catch could be an option (catch-if in s7.html) -- then allow #f in dynamic-wind and they're similar (trilambda)
  *   catch-if is not in s7test -- are there more of these?
  *   fix the generic func section in s7.html
- * clean up func_1|2|3_args
  */
