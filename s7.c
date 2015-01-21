@@ -656,7 +656,7 @@ typedef struct s7_cell {
   } object;
 
 #if DEBUGGING
-  int current_alloc_line, previous_alloc_line, current_alloc_type, previous_alloc_type, debugger_bits, gc_line, uses;
+  int current_alloc_line, previous_alloc_line, current_alloc_type, previous_alloc_type, debugger_bits, gc_line, alloc_line, uses;
   const char *current_alloc_func, *previous_alloc_func, *gc_func;
 #endif
 
@@ -1604,7 +1604,7 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 
 #if WITH_GCC
   /* slightly tricky because cons can be called recursively */
-  #define cons(Sc, A, B)             ({s7_pointer _X_; NEW_CELL(sc, _X_); car(_X_) = A; cdr(_X_) = B; set_type(_X_, T_PAIR | T_SAFE_PROCEDURE); _X_;})
+  #define cons(Sc, A, B)   ({s7_pointer _X_, _A_, _B_; _A_ = A; _B_ = B; NEW_CELL(sc, _X_, T_PAIR | T_SAFE_PROCEDURE); car(_X_) = _A_; cdr(_X_) = _B_; _X_;})
 #else
   #define cons(Sc, A, B)              s7_cons(Sc, A, B)
 #endif
@@ -1959,17 +1959,16 @@ static void set_print_name(s7_pointer p, const char *name, int len)
 
 #if WITH_GCC
 #define make_integer(Sc, N) \
-  ({ s7_Int _N_; _N_ = N; (is_small(_N_) ? small_int(_N_) : ({ s7_pointer _X_; NEW_CELL(Sc, _X_); set_type(_X_, T_INTEGER); integer(_X_) = _N_; _X_;}) ); })
+  ({ s7_Int _N_; _N_ = N; (is_small(_N_) ? small_int(_N_) : ({ s7_pointer _X_; NEW_CELL(Sc, _X_, T_INTEGER); integer(_X_) = _N_; _X_;}) ); })
 
 #define make_real(Sc, X) \
-  ({ s7_Double _N_ = X; ((_N_ == 0.0) ? real_zero : ({ s7_pointer _X_; NEW_CELL(Sc, _X_); set_type(_X_, T_REAL); real(_X_) = _N_; _X_;}) ); })
+  ({ s7_Double _N_ = X; ((_N_ == 0.0) ? real_zero : ({ s7_pointer _X_; NEW_CELL(Sc, _X_, T_REAL); real(_X_) = _N_; _X_;}) ); })
                      /* the x == 0.0 check saves more than it costs */
 
 #define remake_real(Sc, R, X) ({ s7_Double _x_; _x_ = X; ((is_simple_real(R)) ? ({real(R) = _x_; R;}) : make_real(Sc, _x_)); })
 
 #define make_complex(Sc, R, I)						\
-  ({ s7_Double im; im = I; ((im == 0.0) ? make_real(Sc, R) :       \
-	({ s7_pointer _X_; NEW_CELL(Sc, _X_); set_type(_X_, T_COMPLEX); real_part(_X_) = R; imag_part(_X_) = im; _X_;}) ); })
+  ({ s7_Double im; im = I; ((im == 0.0) ? make_real(Sc, R) : ({ s7_pointer _X_; NEW_CELL(Sc, _X_, T_COMPLEX); real_part(_X_) = R; imag_part(_X_) = im; _X_;}) ); })
 
 #define real_to_double(Sc, X, Caller)   ({ s7_pointer _x_; _x_ = X; ((type(_x_) == T_REAL) ? real(_x_) : s7_number_to_real_with_caller(sc, _x_, Caller)); })
 #define rational_to_double(Sc, X)       ({ s7_pointer _x_; _x_ = X; ((type(_x_) == T_INTEGER) ? (s7_Double)integer(_x_) : fraction(_x_)); })
@@ -2142,7 +2141,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym);
 static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_pointer body, bool at_end, bool *bad_set);
 static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer x, s7_pointer args, s7_pointer body);
 static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e);
-
+static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e);
 
 #if WITH_GCC
 #define find_symbol_checked(Sc, Sym) ({s7_pointer _x_; _x_ = find_symbol_unchecked(Sc, Sym); ((_x_) ? _x_ : unbound_variable(Sc, Sym));})
@@ -3977,7 +3976,9 @@ static void unmark_permanent_objects(s7_scheme *sc)
   static struct timezone z0;
 #endif
 
+
 #if DEBUGGING
+static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port, int nlen);
 static int gc_last_line;
 static const char *gc_last_func;
 #define gc(Sc) gc_1(Sc, __func__, __LINE__)
@@ -4190,6 +4191,46 @@ static int gc(s7_scheme *sc)
   }
 #endif
 
+#if DEBUGGING
+  {
+    s7_pointer *fp, *tp, *heap_top;
+    int cells[NUM_TYPES];
+    int i;
+    
+    fp = sc->free_heap_top;
+    tp = sc->heap;
+    heap_top = (s7_pointer *)(sc->heap + sc->heap_size);
+    
+    for (i = 0; i < NUM_TYPES; i++) cells[i] = 0;
+    while (tp < heap_top)
+      {
+	s7_pointer p;
+	p = (*tp++);
+	cells[unchecked_type(p)]++;
+      }
+    if (cells[0] != sc->free_heap_top - sc->free_heap)
+      {
+	fprintf(stderr, "free cells: %d, free_heap: %ld\n", cells[0], sc->free_heap_top - sc->free_heap);
+	tp = sc->heap;
+	while (tp < heap_top)
+	  {
+	    s7_pointer p;
+	    p = (*tp++);
+	    if (unchecked_type(p) == T_FREE)
+	      {
+		s7_pointer *fp;
+		for (fp = sc->free_heap; fp < sc->free_heap_top; fp++)
+		  if (*fp == p) break;
+		
+		if (fp >= sc->free_heap_top)
+		  print_debugging_state(sc, p, sc->NIL, 0);
+	      }
+	  }
+	abort();
+      }
+  }
+#endif
+
   if (sc->gc_stats)
     {
 #ifndef _MSC_VER
@@ -4197,7 +4238,7 @@ static int gc(s7_scheme *sc)
       double secs;
       gettimeofday(&t0, &z0);
       secs = (t0.tv_sec - start_time.tv_sec) +  0.000001 * (t0.tv_usec - start_time.tv_usec);
-      fprintf(stdout, "freed %d/%u, time: %f\n", sc->gc_freed, sc->heap_size, secs);
+      fprintf(stdout, "freed %d/%u (free: %ld), time: %f\n", sc->gc_freed, sc->heap_size, sc->free_heap_top - sc->free_heap, secs);
 #else
       fprintf(stdout, "freed %d/%u\n", sc->gc_freed, sc->heap_size);
 #endif
@@ -4224,49 +4265,40 @@ int s7_gc_freed(s7_scheme *sc)
 }
 
 
-#define WITH_DUMP_HEAP 0
-#if WITH_DUMP_HEAP
-static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
-{
-  FILE *fd;
-  s7_pointer *tp;
-
-  gc(sc);
-
-  fd = fopen("heap.data", "w");
-  for (tp = sc->heap; (*tp); tp++)
-    {
-      s7_pointer p;
-      p = (*tp);
-      if (!is_free_and_clear(p))
-	fprintf(fd, "%s\n", s7_object_to_c_string(sc, p));
-    }
-
-  fflush(fd);
-  fclose(fd);
-  return(sc->NIL);
-}
-#endif
-
-
 #define GC_TRIGGER_SIZE 64
 
-#define NEW_CELL(Sc, Obj) \
+/* NEW_CELL has to include the new cell's type.  In the free list, it is 0 (T_FREE).  If we remove it here,
+ *   but then hit some error before setting the type, the GC sweep thinks it is a free cell already and
+ *   does not return it to the free list: a memory leak.
+ */
+
+#if (!DEBUGGING)
+#define NEW_CELL(Sc, Obj, Type)			\
   do {						\
     if (Sc->free_heap_top <= Sc->free_heap_trigger) try_to_call_gc(Sc); \
     Obj = (*(--(Sc->free_heap_top))); \
+    set_type(Obj, Type);	      \
     } while (0)
 
-#if (!DEBUGGING)
-#define NEW_CELL_NO_CHECK(Sc, Obj) do {Obj = (*(--(Sc->free_heap_top)));} while (0)
+#define NEW_CELL_NO_CHECK(Sc, Obj, Type) do {Obj = (*(--(Sc->free_heap_top))); set_type(Obj, Type);} while (0)
   /* since sc->free_heap_trigger is GC_TRIGGER_SIZE above the free heap base, we don't need
    *   to check it repeatedly after the first such check.
    */
 #else
-#define NEW_CELL_NO_CHECK(Sc, Obj) \
+#define NEW_CELL(Sc, Obj, Type)			\
   do {						\
-    if (Sc->free_heap_top <= Sc->free_heap_trigger) fprintf(stderr, "%d: new_cell checked [%d]\n", __LINE__, (int)(sc->free_heap_top - sc->free_heap)); \
+    if (Sc->free_heap_top <= Sc->free_heap_trigger) try_to_call_gc(Sc); \
     Obj = (*(--(Sc->free_heap_top))); \
+    Obj->alloc_line = __LINE__;	      \
+    set_type(Obj, Type);	      \
+    } while (0)
+
+#define NEW_CELL_NO_CHECK(Sc, Obj, Type)		\
+  do {						\
+    if (Sc->free_heap_top < Sc->free_heap_trigger) fprintf(stderr, "%d: new_cell checked [%d]\n", __LINE__, (int)(sc->free_heap_top - sc->free_heap)); \
+    Obj = (*(--(Sc->free_heap_top)));					\
+    Obj->alloc_line = __LINE__;						\
+    set_type(Obj, Type);						\
     } while (0)
 #endif
 
@@ -4277,6 +4309,10 @@ static void expand_heap(s7_scheme *sc)
   unsigned int old_size, old_free;
   unsigned int k;
   s7_cell *cells;
+
+#if DEBUGGING
+  fprintf(stderr, "expand_heap %u\n", sc->heap_size);
+#endif
 
   old_size = sc->heap_size;
   
@@ -4424,7 +4460,7 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_PAIR:
       heap_location(x) = NOT_IN_HEAP;
       p = alloc_pointer();
-      clear_type(p);
+      /* clear_type(p); */
       sc->heap[loc] = p;
       (*sc->free_heap_top++) = p;
       heap_location(p) = loc;
@@ -4989,9 +5025,8 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   string_needs_free(str) = false;
 
   /* allocate the symbol in the heap so GC'd when inaccessible */
-  NEW_CELL(sc, x);
+  NEW_CELL(sc, x, T_SYMBOL | T_GENSYM);
   symbol_name_cell(x) = str;
-  set_type(x, T_SYMBOL | T_GENSYM);
   global_slot(x) = sc->UNDEFINED; /* was sc->NIL */
   initial_slot(x) = sc->UNDEFINED;
   symbol_set_local(x, 0LL, sc->NIL);
@@ -5122,27 +5157,25 @@ static s7_pointer add_sym_to_list(s7_scheme *sc, s7_pointer sym)
 
 /* -------------------------------- environments -------------------------------- */
 
-#define NEW_FRAME(Sc, Old_Env, New_Env)  \
-  do {                                   \
-      s7_pointer _x_;                      \
-      NEW_CELL(Sc, _x_);                   \
-      let_id(_x_) = ++sc->let_number; \
-      let_slots(_x_) = Sc->NIL;                  \
-      outlet(_x_) = Old_Env;		         \
-      set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
-      New_Env = _x_;		   \
-     } while (0)
+#define NEW_FRAME(Sc, Old_Env, New_Env)		      \
+  do {						      \
+    s7_pointer _x_;				      \
+      NEW_CELL(Sc, _x_, T_ENVIRONMENT | T_IMMUTABLE); \
+      let_id(_x_) = ++sc->let_number;		      \
+      let_slots(_x_) = Sc->NIL;			      \
+      outlet(_x_) = Old_Env;			      \
+      New_Env = _x_;				      \
+  } while (0)
 
 
 static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env) 
 { 
   /* return(cons(sc, sc->NIL, old_env)); */
   s7_pointer x;
-  NEW_CELL(sc, x);
+  NEW_CELL(sc, x, T_ENVIRONMENT | T_IMMUTABLE);
   let_id(x) = ++sc->let_number;
   let_slots(x) = sc->NIL;
   outlet(x) = old_env;
-  set_type(x, T_ENVIRONMENT | T_IMMUTABLE);
   return(x);
 } 
 
@@ -5150,11 +5183,10 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 static s7_pointer make_simple_let(s7_scheme *sc)
 {
   s7_pointer frame;
-  NEW_CELL(sc, frame);
+  NEW_CELL(sc, frame, T_ENVIRONMENT | T_IMMUTABLE);
   let_id(frame) = sc->let_number + 1;
   let_slots(frame) = sc->NIL;
   outlet(frame) = sc->envir;
-  set_type(frame, T_ENVIRONMENT | T_IMMUTABLE);
   return(frame);
 }
 
@@ -5162,97 +5194,88 @@ static s7_pointer make_simple_let(s7_scheme *sc)
 /* in all these macros, symbol_set_local should follow slot_set_value so that we can evaluate the
  *    slot's value in its old state.
  */
-#define ADD_SLOT(Frame, Symbol, Value) \
-  do { \
+#define ADD_SLOT(Frame, Symbol, Value)			\
+  do {							\
     s7_pointer _slot_, _sym_, _val_;			\
     _sym_ = Symbol; _val_ = Value;			\
-    NEW_CELL_NO_CHECK(sc, _slot_);\
-    slot_symbol(_slot_) = _sym_;\
-    slot_set_value(_slot_, _val_);	\
-    symbol_set_local(_sym_, let_id(Frame), _slot_); \
-    set_type(_slot_, T_SLOT | T_IMMUTABLE);\
-    next_slot(_slot_) = let_slots(Frame);\
-    let_slots(Frame) = _slot_;\
+    NEW_CELL_NO_CHECK(sc, _slot_, T_SLOT | T_IMMUTABLE);\
+    slot_symbol(_slot_) = _sym_;			\
+    slot_set_value(_slot_, _val_);			\
+    symbol_set_local(_sym_, let_id(Frame), _slot_);	\
+    next_slot(_slot_) = let_slots(Frame);		\
+    let_slots(Frame) = _slot_;				\
   } while (0)
 
-#define ADD_SLOT_CHECKED(Frame, Symbol, Value) \
-  do { \
+#define ADD_SLOT_CHECKED(Frame, Symbol, Value)		\
+  do {							\
     s7_pointer _slot_, _sym_, _val_;			\
     _sym_ = Symbol; _val_ = Value;			\
-    NEW_CELL(sc, _slot_);\
-    slot_symbol(_slot_) = _sym_;\
-    slot_set_value(_slot_, _val_);	\
-    symbol_set_local(_sym_, let_id(Frame), _slot_); \
-    set_type(_slot_, T_SLOT | T_IMMUTABLE);\
-    next_slot(_slot_) = let_slots(Frame);\
-    let_slots(Frame) = _slot_;\
+    NEW_CELL(sc, _slot_, T_SLOT | T_IMMUTABLE);		\
+    slot_symbol(_slot_) = _sym_;			\
+    slot_set_value(_slot_, _val_);			\
+    symbol_set_local(_sym_, let_id(Frame), _slot_);	\
+    next_slot(_slot_) = let_slots(Frame);		\
+    let_slots(Frame) = _slot_;				\
   } while (0)
 
 /* no set_local here -- presumably done earlier in check_* 
  */
 
 #define NEW_FRAME_WITH_SLOT(Sc, Old_Env, New_Env, Symbol, Value) \
-  do {                                   \
-    s7_pointer _x_, _slot_, _sym_, _val_;	 \
-      _sym_ = Symbol; _val_ = Value;		 \
-      NEW_CELL(Sc, _x_);                   \
-      let_id(_x_) = ++sc->let_number; \
-      outlet(_x_) = Old_Env;		         \
-      set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
-      New_Env = _x_;		   \
-      NEW_CELL_NO_CHECK(Sc, _slot_);\
-      slot_symbol(_slot_) = _sym_;\
-      slot_set_value(_slot_, _val_);	\
-      symbol_set_local(_sym_, sc->let_number, _slot_); \
-      set_type(_slot_, T_SLOT | T_IMMUTABLE);\
-      next_slot(_slot_) = sc->NIL;\
-      let_slots(_x_) = _slot_;\
-     } while (0)
+  do {								 \
+    s7_pointer _x_, _slot_, _sym_, _val_;			\
+    _sym_ = Symbol; _val_ = Value;				\
+    NEW_CELL(Sc, _x_, T_ENVIRONMENT | T_IMMUTABLE);		\
+    let_id(_x_) = ++sc->let_number;				\
+    outlet(_x_) = Old_Env;					\
+    New_Env = _x_;						\
+    NEW_CELL_NO_CHECK(Sc, _slot_, T_SLOT | T_IMMUTABLE);	\
+    slot_symbol(_slot_) = _sym_;                                \
+    slot_set_value(_slot_, _val_);	                        \
+    symbol_set_local(_sym_, sc->let_number, _slot_);            \
+    next_slot(_slot_) = sc->NIL;                                \
+    let_slots(_x_) = _slot_;                                    \
+  } while (0)
 
 
 #define NEW_FRAME_WITH_TWO_SLOTS(Sc, Old_Env, New_Env, Symbol1, Value1, Symbol2, Value2) \
   do {                                   \
     s7_pointer _x_, _slot_, _sym1_, _val1_, _sym2_, _val2_;	\
-      _sym1_ = Symbol1; _val1_ = Value1;				\
-      _sym2_ = Symbol2; _val2_ = Value2;				\
-      NEW_CELL(Sc, _x_);                   \
-      let_id(_x_) = ++sc->let_number; \
-      outlet(_x_) = Old_Env;		         \
-      set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
-      New_Env = _x_;		   \
-      NEW_CELL_NO_CHECK(Sc, _slot_);\
-      slot_symbol(_slot_) = _sym1_;\
-      slot_set_value(_slot_, _val1_);	\
-      symbol_set_local(_sym1_, sc->let_number, _slot_); \
-      set_type(_slot_, T_SLOT | T_IMMUTABLE);\
-      let_slots(_x_) = _slot_;\
-      NEW_CELL_NO_CHECK(Sc, _x_);\
-      slot_symbol(_x_) = _sym2_;\
-      slot_set_value(_x_, _val2_);	\
-      symbol_set_local(_sym2_, sc->let_number, _x_); \
-      set_type(_x_, T_SLOT | T_IMMUTABLE);\
-      next_slot(_x_) = sc->NIL;\
-      next_slot(_slot_) = _x_;\
-     } while (0)
+    _sym1_ = Symbol1; _val1_ = Value1;					\
+    _sym2_ = Symbol2; _val2_ = Value2;					\
+    NEW_CELL(Sc, _x_, T_ENVIRONMENT | T_IMMUTABLE);			\
+    let_id(_x_) = ++sc->let_number;					\
+    outlet(_x_) = Old_Env;						\
+    New_Env = _x_;							\
+    NEW_CELL_NO_CHECK(Sc, _slot_, T_SLOT | T_IMMUTABLE);		\
+    slot_symbol(_slot_) = _sym1_;					\
+    slot_set_value(_slot_, _val1_);					\
+    symbol_set_local(_sym1_, sc->let_number, _slot_);			\
+    let_slots(_x_) = _slot_;						\
+    NEW_CELL_NO_CHECK(Sc, _x_, T_SLOT | T_IMMUTABLE);			\
+    slot_symbol(_x_) = _sym2_;						\
+    slot_set_value(_x_, _val2_);					\
+    symbol_set_local(_sym2_, sc->let_number, _x_);			\
+    next_slot(_x_) = sc->NIL;						\
+    next_slot(_slot_) = _x_;						\
+  } while (0)
 
 
 #define NEW_FRAME_WITH_CHECKED_SLOT(Sc, Old_Env, New_Env, Symbol, Value) \
   do {                                   \
     s7_pointer _x_, _slot_, _sym_, _val_;	 \
-      _sym_ = Symbol; _val_ = Value;		 \
-      NEW_CELL(Sc, _x_);                   \
-      let_id(_x_) = ++sc->let_number; \
-      outlet(_x_) = Old_Env;		         \
-      set_type(_x_, T_ENVIRONMENT | T_IMMUTABLE); \
-      New_Env = _x_;		   \
-      NEW_CELL_NO_CHECK(Sc, _slot_);\
-      slot_symbol(_slot_) = _sym_;\
-      slot_set_value(_slot_, _val_);		\
-      symbol_set_local(_sym_, sc->let_number, _slot_); \
-      set_type(_slot_, T_SLOT | T_IMMUTABLE);\
-      next_slot(_slot_) = sc->NIL;\
-      let_slots(_x_) = _slot_;\
-     } while (0)
+    _sym_ = Symbol; _val_ = Value;		      \
+    NEW_CELL(Sc, _x_, T_ENVIRONMENT | T_IMMUTABLE);   \
+    let_id(_x_) = ++sc->let_number;		      \
+    outlet(_x_) = Old_Env;			      \
+    New_Env = _x_;							\
+    NEW_CELL_NO_CHECK(Sc, _slot_, T_SLOT | T_IMMUTABLE);		\
+    slot_symbol(_slot_) = _sym_;					\
+    slot_set_value(_slot_, _val_);					\
+    symbol_set_local(_sym_, sc->let_number, _slot_);			\
+    next_slot(_slot_) = sc->NIL;					\
+    let_slots(_x_) = _slot_;						\
+  } while (0)
 
 
 static s7_pointer old_frame_in_env(s7_scheme *sc, s7_pointer frame, s7_pointer next_frame)
@@ -5455,10 +5478,9 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
     {
       set_local(symbol); 
 
-      NEW_CELL(sc, slot);
+      NEW_CELL(sc, slot, T_SLOT | T_IMMUTABLE);
       slot_symbol(slot) = symbol;
       slot_set_value(slot, value);
-      set_type(slot, T_SLOT | T_IMMUTABLE);
       next_slot(slot) = let_slots(env);
       let_slots(env) = slot;
       /* this is called by varlet so we have to be careful about the resultant let_id
@@ -5479,10 +5501,9 @@ static s7_pointer add_slot(s7_scheme *sc, s7_pointer variable, s7_pointer value)
   /* this is called when it is guaranteed that there is a local environment */
   s7_pointer y;
 
-  NEW_CELL(sc, y);
+  NEW_CELL(sc, y, T_SLOT | T_IMMUTABLE);
   slot_symbol(y) = variable;
   slot_set_value(y, value);
-  set_type(y, T_SLOT | T_IMMUTABLE);
   next_slot(y) = let_slots(sc->envir);
   let_slots(sc->envir) = y;
   set_local(variable);
@@ -5495,10 +5516,9 @@ static s7_pointer make_slot(s7_scheme *sc, s7_pointer variable, s7_pointer value
 {
   /* this is for a do-loop optimization -- an unattached slot */
   s7_pointer y;
-  NEW_CELL(sc, y);
+  NEW_CELL(sc, y, T_SLOT | T_IMMUTABLE);
   slot_symbol(y) = variable;
   slot_set_value(y, value);
-  set_type(y, T_SLOT | T_IMMUTABLE);
   return(y);
 }
 
@@ -6619,12 +6639,145 @@ static s7_pointer g_symbol_to_dynamic_value(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* make macros and closures */
+
+static s7_pointer quotify(s7_scheme *sc, s7_pointer pars)
+{
+  /* the default parameter values of define-macro* and define-bacro* should not be evaluated until
+   * the expansion is evaluated.  That is, 
+   *   (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(let ((x -1)) (+ x ,a))) (list (hi) x))
+   * should return the same value as the equivalent explicit form:
+   *   (let ((x 0)) (define-macro (hi a) `(let ((x -1)) (+ x ,a))) (list (hi (let () (set! x (+ x 1)) x)) x))
+   * '(-1 0) in both cases.
+   *
+   * But at the point in eval where we handle lambda* arguments, we can't easily tell whether we're part of
+   * a function or a macro, so at definition time of a macro* we scan the parameter list for an expression
+   * as a default value, and replace it with (quote expr).
+   *
+   * and... (define-macro* ((a x)) ...) should behave the same as (define-macro* ((a (+ x 0))) ...)
+   */
+  s7_pointer tmp;
+  for (tmp = pars; is_pair(tmp); tmp = cdr(tmp))
+    if ((is_pair(car(tmp))) &&
+	(is_pair(cdar(tmp))) &&
+	((is_pair(cadar(tmp))) ||
+	 (is_symbol(cadar(tmp))) ||
+	 (is_syntax(cadar(tmp)))))
+      cadar(tmp) = list_2(sc, sc->QUOTE, cadar(tmp));
+  return(pars);
+}
+
+
+static void fixup_macro_overlay(s7_scheme *sc, s7_pointer p)
+{
+  if ((is_pair(p)) &&
+      (is_proper_list(sc, p)) &&
+      (!is_overlaid(p))) /* this was sc->code?! -- that can't be right, and probably doesn't matter anyway */
+    {
+      if (is_pair(cdr(p)))
+	{
+	  if (is_symbol(car(p)))
+	    {
+	      set_ecdr(cdr(p), p);
+	      set_overlay(cdr(p));
+	    }
+	  fixup_macro_overlay(sc, cdr(p));
+	}
+      fixup_macro_overlay(sc, car(p));       /* there's no check for circles through car */
+    }
+}
+
+
+static s7_pointer make_macro(s7_scheme *sc)
+{
+  s7_pointer lx, cx, zx, body;
+  
+  cx = caar(sc->code);
+  zx = cdr(sc->code);
+  lx = s7_gensym(sc, symbol_name(cx));
+  
+  /* (define-macro (hi a b) `(+ ,a ,b)) becomes:
+   *   cx: hi
+   *   sc->code: (lambda ({hi}-14) (apply (lambda (a b) ({list} '+ a b)) (cdr {hi}-14)))
+   */
+
+  body = list_1(sc, cons(sc, 
+			 sc->Apply,
+			 cons(sc, 
+			      cons(sc, 
+				   ((sc->op == OP_DEFINE_MACRO_STAR) || 
+				    (sc->op == OP_DEFINE_BACRO_STAR)) ? sc->LAMBDA_STAR : sc->LAMBDA,
+				   cons(sc,                /* cdar(sc->code) is the parameter list */
+					((sc->op == OP_DEFINE_MACRO_STAR) || 
+					 (sc->op == OP_DEFINE_BACRO_STAR)) ? quotify(sc, cdar(sc->code)) : cdar(sc->code),
+					zx)),
+			      list_1(sc, list_2(sc, sc->CDR, lx)))));
+
+  NEW_CELL_NO_CHECK(sc, sc->value, T_MACRO);
+  closure_args(sc->value) = list_1(sc, lx);
+  closure_body(sc->value) = body;
+  closure_let(sc->value) = sc->envir;
+  closure_setter(sc->value) = sc->F;
+  closure_arity(sc->value) = CLOSURE_ARITY_NOT_SET;
+  sc->capture_env_counter++;
+  sc->code = cx; 
+  
+  if ((sc->op == OP_DEFINE_BACRO) ||
+      (sc->op == OP_DEFINE_BACRO_STAR))
+    set_type(sc->value, T_BACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS);
+  else
+    {
+      if (sc->op == OP_DEFINE_EXPANSION)
+	{
+	  /* perhaps define-expansion should be define-reader-macro but that collides with historical uses. 
+	   */
+	  set_type(sc->value, T_MACRO | T_EXPANSION | T_DONT_EVAL_ARGS | T_COPY_ARGS);
+	  set_type(sc->code, EXPANSION_TYPE);
+	}
+      else set_type(sc->value, T_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS); 
+    }
+  
+  fixup_macro_overlay(sc, closure_body(sc->value));
+  
+  /* symbol? macro name has already been checked */
+  /* find name in environment, and define it */
+  
+  cx = find_local_symbol(sc, sc->code, sc->envir); 
+  if (is_slot(cx))
+    slot_set_value(cx, sc->value); 
+  else s7_make_slot(sc, sc->envir, sc->code, sc->value); /* was current but we've checked immutable already */
+  
+  optimize(sc, closure_body(sc->value), 0, sc->NIL);
+  
+  /* here sc->value is the macro, sc->code is its name (a symbol),
+   *   (symbol? (define (f a) (+ a 1))) -> #t, so I guess define-macro should follow suit.
+   */
+  /* sc->value = sc->code; */ /* 25-Jul-14 */
+  return(sc->value);
+}
+
+
 static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, int type) 
 {
   /* this is called every time a lambda form is evaluated, or during letrec, etc */
 
   s7_pointer x;
-  NEW_CELL(sc, x);
+  unsigned int typ;
+
+  if (is_safe_closure(code))
+    {
+      if (type == T_CLOSURE)
+	typ = T_CLOSURE | T_PROCEDURE | T_SAFE_CLOSURE | T_COPY_ARGS;
+      else typ = T_CLOSURE_STAR | T_PROCEDURE | T_SAFE_CLOSURE;
+    }
+  else
+    {
+      if (type == T_CLOSURE)
+	typ = T_CLOSURE | T_PROCEDURE | T_COPY_ARGS;
+      else typ = T_CLOSURE_STAR | T_PROCEDURE;
+    }
+
+  NEW_CELL(sc, x, typ);
   closure_args(x) = args;
   closure_body(x) = code;
   closure_setter(x) = sc->F;
@@ -6632,50 +6785,40 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
     closure_arity(x) = 0;
   else closure_arity(x) = CLOSURE_ARITY_NOT_SET;
   closure_let(x) = sc->envir;
-  if (is_safe_closure(code))
-    {
-      if (type == T_CLOSURE)
-	set_type(x, T_CLOSURE | T_PROCEDURE | T_SAFE_CLOSURE | T_COPY_ARGS);
-      else set_type(x, T_CLOSURE_STAR | T_PROCEDURE | T_SAFE_CLOSURE);
-    }
-  else
-    {
-      if (type == T_CLOSURE)
-	set_type(x, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS);
-      else set_type(x, T_CLOSURE_STAR | T_PROCEDURE);
-    }
   sc->capture_env_counter++;
   return(x);
 }
 
 
 #define make_closure_with_let(Sc, X, Args, Code, Env)	\
-  do { \
-       NEW_CELL(Sc, X); \
-       closure_args(X) = Args;	\
-       closure_body(X) = Code; \
-       closure_setter(X) = sc->F; \
-       if (is_null(Args)) closure_arity(X) = 0; else closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
-       closure_let(X) = Env; \
-       if (is_safe_closure(closure_body(X))) \
-          set_type(X, T_CLOSURE | T_PROCEDURE | T_SAFE_CLOSURE | T_COPY_ARGS); \
-       else set_type(X, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); \
-       sc->capture_env_counter++; \
-      } while (0)
+  do {							\
+    unsigned int _T_;							\
+    if (is_safe_closure(Code))						\
+      _T_ = T_CLOSURE | T_PROCEDURE | T_SAFE_CLOSURE | T_COPY_ARGS;	\
+    else _T_ = T_CLOSURE | T_PROCEDURE | T_COPY_ARGS;			\
+    NEW_CELL(Sc, X, _T_);						\
+    closure_args(X) = Args;						\
+    closure_body(X) = Code;						\
+    closure_setter(X) = sc->F;						\
+    if (is_null(Args)) closure_arity(X) = 0; else closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
+    closure_let(X) = Env;						\
+    sc->capture_env_counter++;						\
+  } while (0)
 
 
 #define make_closure_without_capture(Sc, X, Args, Code, Env)	\
-  do { \
-       NEW_CELL(Sc, X); \
-       closure_args(X) = Args;	\
-       closure_body(X) = Code; \
-       closure_setter(X) = sc->F; \
-       if (is_null(Args)) closure_arity(X) = 0; else closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
-       closure_let(X) = Env; \
-       if (is_safe_closure(closure_body(X))) \
-          set_type(X, T_CLOSURE | T_PROCEDURE | T_SAFE_CLOSURE | T_COPY_ARGS); \
-       else set_type(X, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); \
-      } while (0)
+  do {								\
+    unsigned int _T_;							\
+    if (is_safe_closure(Code))						\
+      _T_ = T_CLOSURE | T_PROCEDURE | T_SAFE_CLOSURE | T_COPY_ARGS;	\
+    else _T_ = T_CLOSURE | T_PROCEDURE | T_COPY_ARGS;			\
+    NEW_CELL(Sc, X, _T_);						\
+    closure_args(X) = Args;						\
+    closure_body(X) = Code;						\
+    closure_setter(X) = sc->F;						\
+    if (is_null(Args)) closure_arity(X) = 0; else closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
+    closure_let(X) = Env;						\
+  } while (0)
 
 
 static int closure_length(s7_scheme *sc, s7_pointer e)
@@ -6960,8 +7103,7 @@ void *s7_c_pointer(s7_pointer p)
 s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr)
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
-  set_type(x, T_C_POINTER);
+  NEW_CELL(sc, x, T_C_POINTER);
   raw_pointer(x) = ptr;
   return(x);
 }
@@ -7068,14 +7210,13 @@ static s7_pointer copy_arg_list(s7_scheme *sc, s7_pointer lst)
 static s7_pointer copy_counter(s7_scheme *sc, s7_pointer obj)
 {
   s7_pointer nobj;
-  NEW_CELL(sc, nobj);
+  NEW_CELL(sc, nobj, T_COUNTER);
   counter_result(nobj) = counter_result(obj);
   counter_list(nobj) = counter_list(obj);
   counter_count(nobj) = counter_count(obj);
   counter_capture(nobj) = counter_capture(obj);
   counter_let(nobj) = counter_let(obj);
   counter_args(nobj) = counter_args(obj);
-  set_type(nobj, T_COUNTER);
   return(nobj);
 }
 
@@ -7086,7 +7227,6 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
   s7_pointer nobj;
   int nloc;
 
-  /* NEW_CELL(sc, nobj); */
   /* since the GC is off, NEW_CELL ignores the free_heap trigger, causing it to exhaust the free list sometimes,
    *   so we check explicitly -- we don't want to call the gc mark/sweep process here.
    */
@@ -7175,11 +7315,10 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
 static s7_pointer make_goto(s7_scheme *sc) 
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
+  NEW_CELL(sc, x, T_GOTO | T_PROCEDURE);
   call_exit_goto_loc(x) = s7_stack_top(sc);
   call_exit_op_loc(x) = (int)(sc->op_stack_now - sc->op_stack);
   call_exit_active(x) = true;
-  set_type(x, T_GOTO | T_PROCEDURE);
   return(x);
 }
 
@@ -7210,9 +7349,8 @@ static s7_pointer *copy_op_stack(s7_scheme *sc)
 static s7_pointer make_baffle(s7_scheme *sc)
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
+  NEW_CELL(sc, x, T_BAFFLE);
   baffle_key(x) = sc->baffle_ctr++;
-  set_type(x, T_BAFFLE);
   return(x);
 }
 
@@ -7261,7 +7399,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
 
   loc = s7_stack_top(sc);
 
-  NEW_CELL(sc, x);
+  NEW_CELL(sc, x, T_CONTINUATION | T_PROCEDURE);
   continuation_data(x) = (continuation_t *)calloc(1, sizeof(continuation_t));
   continuation_stack(x) = copy_stack(sc, sc->stack, s7_stack_top(sc));
   continuation_stack_size(x) = vector_length(continuation_stack(x));   /* copy_stack can return a smaller stack than the current one */
@@ -7273,8 +7411,6 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   continuation_op_size(x) = sc->op_stack_size;
 
   continuation_key(x) = find_any_baffle(sc);
-
-  set_type(x, T_CONTINUATION | T_PROCEDURE);
   add_continuation(sc, x);
   return(x);
 }
@@ -8040,10 +8176,8 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
   if (is_small(n))
     return(small_int(n));
 
-  NEW_CELL(sc, x);
-  set_type(x, T_INTEGER);
+  NEW_CELL(sc, x, T_INTEGER);
   integer(x) = n;
-
   return(x);
 }
 
@@ -8051,8 +8185,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
 static s7_pointer make_mutable_integer(s7_scheme *sc, s7_Int n)
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
-  set_type(x, T_INTEGER | T_MUTABLE);
+  NEW_CELL(sc, x, T_INTEGER | T_MUTABLE);
   integer(x) = n;
   return(x);
 }
@@ -8077,8 +8210,7 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double n)
   if (n == 0.0)
     return(real_zero);
 
-  NEW_CELL(sc, x);
-  set_type(x, T_REAL);
+  NEW_CELL(sc, x, T_REAL);
   real(x) = n;
   
   return(x);
@@ -8088,8 +8220,7 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double n)
 s7_pointer s7_make_mutable_real(s7_scheme *sc, s7_Double n) 
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
-  set_type(x, T_REAL | T_MUTABLE);
+  NEW_CELL(sc, x, T_REAL | T_MUTABLE);
   real(x) = n;
   return(x);
 }
@@ -8131,15 +8262,14 @@ s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n)
 s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b)
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
   if (b == 0.0)
     {
-      set_type(x, T_REAL);
+      NEW_CELL(sc, x, T_REAL);
       real(x) = a;
     }
   else
     {
-      set_type(x, T_COMPLEX);
+      NEW_CELL(sc, x, T_COMPLEX);
       real_part(x) = a;
       imag_part(x) = b;
     }
@@ -8199,8 +8329,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
   if (b == 1)
     return(make_integer(sc, a));
   
-  NEW_CELL(sc, x);
-  set_type(x, T_RATIO);
+  NEW_CELL(sc, x, T_RATIO);
   numerator(x) = a;
   denominator(x) = b;
 
@@ -17592,8 +17721,7 @@ static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
       {
 	s7_pointer x;
        
-	NEW_CELL(sc, x);
-	set_type(x, T_BIG_REAL);
+	NEW_CELL(sc, x, T_BIG_REAL);
 	mpfr_init(big_real(x));
 	mpc_real(big_real(x), big_complex(p), GMP_RNDN);
 	
@@ -17639,8 +17767,7 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
       {
 	s7_pointer x;
        
-	NEW_CELL(sc, x);
-	set_type(x, T_BIG_REAL);
+	NEW_CELL(sc, x, T_BIG_REAL);
 	mpfr_init(big_real(x));
 	mpc_imag(big_real(x), big_complex(p), GMP_RNDN);
 	
@@ -18143,8 +18270,7 @@ unsigned long s7_ulong(s7_pointer p)
 s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long n) 
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
-  set_type(x, T_INTEGER);
+  NEW_CELL(sc, x, T_INTEGER);
   x->object.number.ul_value = n;
   return(x);
 }
@@ -18165,8 +18291,7 @@ unsigned long long s7_ulong_long(s7_pointer p)
 s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n) 
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
-  set_type(x, T_INTEGER);
+  NEW_CELL(sc, x, T_INTEGER);
   x->object.number.ull_value = n;
   return(x);
 }
@@ -19568,8 +19693,7 @@ static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len) 
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_SAFE_PROCEDURE); /* should this follow the malloc? */
+  NEW_CELL(sc, x, T_STRING | T_SAFE_PROCEDURE); /* should this follow the malloc? */
   string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
   if (len != 0)                                             /* memcpy can segfault if string_value(x) is NULL */
     memcpy((void *)string_value(x), (void *)str, len + 1);
@@ -19585,8 +19709,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
 static s7_pointer s7_make_terminated_string_with_length(s7_scheme *sc, const char *str, int len) 
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_SAFE_PROCEDURE); /* should this follow the malloc? */
+  NEW_CELL(sc, x, T_STRING | T_SAFE_PROCEDURE); 
   string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
   if (len != 0)                                             /* memcpy can segfault if string_value(x) is NULL */
     memcpy((void *)string_value(x), (void *)str, len);
@@ -19602,8 +19725,7 @@ static s7_pointer s7_make_terminated_string_with_length(s7_scheme *sc, const cha
 static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int len) 
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_SAFE_PROCEDURE);
+  NEW_CELL(sc, x, T_STRING | T_SAFE_PROCEDURE);
   string_value(x) = str;
   string_length(x) = len;
   string_hash(x) = 0;
@@ -19616,8 +19738,7 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
 static s7_pointer make_string_wrapper_with_length(s7_scheme *sc, const char *str, int len)
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_IMMUTABLE | T_SAFE_PROCEDURE);
+  NEW_CELL(sc, x, T_STRING | T_IMMUTABLE | T_SAFE_PROCEDURE);
   string_value(x) = (char *)str;
   string_length(x) = len;
   string_hash(x) = 0;
@@ -19633,8 +19754,7 @@ static s7_pointer make_string_wrapper(s7_scheme *sc, const char *str)
 static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill) 
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
-  set_type(x, T_STRING);
+  NEW_CELL(sc, x, T_STRING);
   
   if (fill == 0)
     string_value(x) = (char *)calloc((len + 1), sizeof(char));
@@ -20967,26 +21087,23 @@ static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
 static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str, int len)
 {
   int i;
-  s7_pointer p;
+  s7_pointer result;
 
-  if (len == 0)
-    return(sc->NIL);
+  if (len == 0) return(sc->NIL);
 
-  if (len < (sc->free_heap_top - sc->free_heap))
+  if (len >= (sc->free_heap_top - sc->free_heap))
     {
-      sc->w = s7_cons(sc, s7_make_character(sc, ((unsigned char)str[len - 1])), sc->NIL);
-      for (i = len - 2; i >= 0; i--)
-	sc->w = cons_unchecked(sc, s7_make_character(sc, ((unsigned char)str[i])), sc->w);
+      gc(sc);
+      while (len >= (sc->free_heap_top - sc->free_heap))
+	expand_heap(sc);
     }
-  else
-    {
-      sc->w = sc->NIL;
-      for (i = len - 1; i >= 0; i--)
-	sc->w = cons(sc, s7_make_character(sc, ((unsigned char)str[i])), sc->w);
-    }
-  p = sc->w;
-  sc->w = sc->NIL;
-  return(p);
+
+  sc->v = sc->NIL;
+  for (i = len - 1; i >= 0; i--)
+    sc->v = cons_unchecked(sc, s7_make_character(sc, ((unsigned char)str[i])), sc->v);
+  result = sc->v;
+  sc->v = sc->NIL;
+  return(result);
 }
 
 
@@ -22252,9 +22369,8 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
 #endif
   int port_loc;
 
-  NEW_CELL(sc, port);
+  NEW_CELL(sc, port, T_INPUT_PORT);
   port_loc = s7_gc_protect(sc, port);
-  set_type(port, T_INPUT_PORT);
   port_port(port) = alloc_port(sc);
   port_is_closed(port) = false;
   port_original_input_string(port) = sc->NIL;
@@ -22544,9 +22660,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
       return(file_error(sc, "open-output-file", strerror(errno), name));
     }
 
-  NEW_CELL(sc, x);
-  set_type(x, T_OUTPUT_PORT);
-  
+  NEW_CELL(sc, x, T_OUTPUT_PORT);
   port_port(x) = alloc_port(sc);
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
@@ -22595,9 +22709,7 @@ static s7_pointer g_open_output_file(s7_scheme *sc, s7_pointer args)
 static s7_pointer open_input_string(s7_scheme *sc, const char *input_string, int len)
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
-  set_type(x, T_INPUT_PORT);
-  
+  NEW_CELL(sc, x, T_INPUT_PORT);
   port_port(x) = alloc_port(sc);
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
@@ -22668,9 +22780,7 @@ static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
 static s7_pointer open_output_string(s7_scheme *sc, int len)
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
-  set_type(x, T_OUTPUT_PORT);
-  
+  NEW_CELL(sc, x, T_OUTPUT_PORT);
   port_port(x) = alloc_port(sc);
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
@@ -22728,9 +22838,7 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port))
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
-  set_type(x, T_INPUT_PORT);
-  
+  NEW_CELL(sc, x, T_INPUT_PORT);
   port_port(x) = alloc_port(sc);
   port_type(x) = FUNCTION_PORT;
   port_is_closed(x) = false;
@@ -22750,9 +22858,7 @@ s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_schem
 s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc, unsigned char c, s7_pointer port))
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
-  set_type(x, T_OUTPUT_PORT);
-  
+  NEW_CELL(sc, x, T_OUTPUT_PORT);
   port_port(x) = alloc_port(sc);
   port_type(x) = FUNCTION_PORT;
   port_data(x) = NULL;
@@ -24211,13 +24317,12 @@ bool s7_is_valid(s7_scheme *sc, s7_pointer arg)
 static s7_pointer iterator_copy(s7_scheme *sc, s7_pointer p)
 {
   s7_pointer iter;
-  NEW_CELL(sc, iter);
+  NEW_CELL(sc, iter, T_ITERATOR | T_SAFE_PROCEDURE);
   iterator_sequence(iter) = iterator_sequence(p);
   iterator_position(iter) = iterator_position(p);
   iterator_length(iter) = iterator_length(p);
   iterator_current(iter) = iterator_current(p);
   iterator_next(iter) = iterator_next(p);
-  set_type(iter, T_ITERATOR | T_SAFE_PROCEDURE);
   return(iter);
 }
 
@@ -24384,10 +24489,9 @@ static s7_pointer make_iterator(s7_scheme *sc, s7_pointer e)
 {
   s7_pointer iter;
 
-  NEW_CELL(sc, iter);
+  NEW_CELL(sc, iter, T_ITERATOR | T_SAFE_PROCEDURE);
   iterator_sequence(iter) = e;
   iterator_position(iter) = 0;
-  set_type(iter, T_ITERATOR | T_SAFE_PROCEDURE);
 
   switch (type(e))
     {
@@ -25751,6 +25855,50 @@ static void write_closure_readably(s7_scheme *sc, s7_pointer obj, s7_pointer por
   s7_gc_unprotect_at(sc, gc_loc);
 }
 
+#if DEBUGGING
+static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port, int nlen)
+{
+  /* show current state, current allocated state, and previous allocated state.
+   */
+  char *current_bits, *allocated_bits, *previous_bits, *str;
+  int save_typeflag, len;
+  const char *excl_name;
+  
+  if (is_free(obj))
+    excl_name = "free cell!";
+  else excl_name = "unknown object!";
+  
+  current_bits = describe_type_bits(sc, obj);
+  save_typeflag = typeflag(obj);
+  typeflag(obj) = obj->current_alloc_type;
+  allocated_bits = describe_type_bits(sc, obj);
+  typeflag(obj) = obj->previous_alloc_type;
+  previous_bits = describe_type_bits(sc, obj);
+  typeflag(obj) = save_typeflag;
+  
+  len = safe_strlen(excl_name) + 
+    safe_strlen(current_bits) + safe_strlen(allocated_bits) + safe_strlen(previous_bits) + 
+    safe_strlen(obj->previous_alloc_func) + safe_strlen(obj->current_alloc_func) + 512;
+  str = (char *)malloc(len * sizeof(char));
+  
+  nlen = snprintf(str, len, 
+		  "\n<%s %s,\n  current: %s[%d] %s,\n  previous: %s[%d] %s\n  hloc: %d (%d uses), freed: %s[%d], %s[%d], alloc: %d>", 
+		  excl_name, current_bits, 
+		  obj->current_alloc_func, obj->current_alloc_line, allocated_bits,
+		  obj->previous_alloc_func, obj->previous_alloc_line, previous_bits,
+		  heap_location(obj), obj->uses,
+		  gc_last_func, gc_last_line, obj->gc_func, obj->gc_line, obj->alloc_line);
+  
+  free(current_bits);
+  free(allocated_bits);
+  free(previous_bits);
+  if (is_null(port))
+    fprintf(stderr, "%p: %s\n", obj, str);
+  else port_write_string(port)(sc, str, nlen, port);
+  free(str);
+}
+#endif
+
 
 static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
@@ -26113,44 +26261,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 
     default:
 #if DEBUGGING
-      {
-	/* show current state, current allocated state, and previous allocated state.
-	 */
-	char *current_bits, *allocated_bits, *previous_bits, *str;
-	int save_typeflag, len;
-	const char *excl_name;
-	
-	if (is_free(obj))
-	  excl_name = "free cell!";
-	else excl_name = "unknown object!";
-	
-	current_bits = describe_type_bits(sc, obj);
-	save_typeflag = typeflag(obj);
-	typeflag(obj) = obj->current_alloc_type;
-	allocated_bits = describe_type_bits(sc, obj);
-	typeflag(obj) = obj->previous_alloc_type;
-	previous_bits = describe_type_bits(sc, obj);
-	typeflag(obj) = save_typeflag;
-	
-	len = safe_strlen(excl_name) + 
-          safe_strlen(current_bits) + safe_strlen(allocated_bits) + safe_strlen(previous_bits) + 
-          safe_strlen(obj->previous_alloc_func) + safe_strlen(obj->current_alloc_func) + 512;
-	str = (char *)malloc(len * sizeof(char));
-	
-	nlen = snprintf(str, len, 
-			"\n<%s %s,\n  current: %s[%d] %s,\n  previous: %s[%d] %s\n  hloc: %d (%d uses), last gc: %s[%d], %s[%d]>", 
-			excl_name, current_bits, 
-			obj->current_alloc_func, obj->current_alloc_line, allocated_bits,
-			obj->previous_alloc_func, obj->previous_alloc_line, previous_bits,
-			heap_location(obj), obj->uses,
-			gc_last_func, gc_last_line, obj->gc_func, obj->gc_line);
-
-	free(current_bits);
-	free(allocated_bits);
-	free(previous_bits);
-	port_write_string(port)(sc, str, nlen, port);
-	free(str);
-      }
+      print_debugging_state(sc, obj, port, nlen);
 #else
       {
 	char *str, *tmp;
@@ -27700,10 +27811,9 @@ static s7_pointer g_file_mtime(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b) 
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
+  NEW_CELL(sc, x, T_PAIR | T_SAFE_PROCEDURE);
   car(x) = a;
   cdr(x) = b;
-  set_type(x, T_PAIR | T_SAFE_PROCEDURE);
   return(x);
 }
 
@@ -27712,10 +27822,9 @@ static s7_pointer cons_unchecked(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
   /* apparently slightly faster as a function? */
   s7_pointer x;
-  NEW_CELL_NO_CHECK(sc, x);
+  NEW_CELL_NO_CHECK(sc, x, T_PAIR | T_SAFE_PROCEDURE);
   car(x) = a;
   cdr(x) = b;
-  set_type(x, T_PAIR | T_SAFE_PROCEDURE);
   return(x);
 }
 
@@ -28507,7 +28616,6 @@ static s7_pointer g_is_list(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer make_list(s7_scheme *sc, int len, s7_pointer init)
 {
-  /* sc->v used only here */
   switch (len)
     {
     case 0: return(sc->NIL);
@@ -28522,21 +28630,26 @@ static s7_pointer make_list(s7_scheme *sc, int len, s7_pointer init)
     case 7: return(cons_unchecked(sc, init, cons_unchecked(sc, init, cons_unchecked(sc, init,
 		    cons_unchecked(sc, init, cons_unchecked(sc, init, cons_unchecked(sc, init, cons(sc, init, sc->NIL))))))));
     default:
-      sc->v = sc->NIL;
-      if (len < (sc->free_heap_top - sc->free_heap))
-	{
-	  int i;
-	  for (i = 0; i < len; i++)
-	    sc->v = cons_unchecked(sc, init, sc->v);
-	}
-      else
-	{
-	  int i;
-	  for (i = 0; i < len; i++)
-	    sc->v = cons(sc, init, sc->v);
+      {
+	s7_pointer result;
+	int i;
+
+	if (len >= (sc->free_heap_top - sc->free_heap))
+	  {
+	    gc(sc);
+	    while (len >= (sc->free_heap_top - sc->free_heap))
+	      expand_heap(sc);
+	  }
+
+	sc->v = sc->NIL;
+	for (i = 0; i < len; i++)
+	  sc->v = cons_unchecked(sc, init, sc->v);
+	result = sc->v;
+	sc->v = sc->NIL;
+	return(result);
 	}
     }
-  return(sc->v);
+  return(sc->NIL); /* never happens, I hope */
 }
 
 
@@ -28819,10 +28932,9 @@ static s7_pointer g_cons(s7_scheme *sc, s7_pointer args)
    */
   s7_pointer x;
 
-  NEW_CELL(sc, x);
+  NEW_CELL(sc, x, T_PAIR | T_SAFE_PROCEDURE);
   car(x) = car(args);
   cdr(x) = cadr(args);
-  set_type(x, T_PAIR | T_SAFE_PROCEDURE);
   return(x);
 }
 
@@ -30515,10 +30627,9 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, unsigned
    */
 
   /* this has to follow the error checks!  (else garbage in free_heap temps portion confuses GC when "vector" is finalized) */
-  NEW_CELL(sc, x);                     
+  NEW_CELL(sc, x, typ | T_SAFE_PROCEDURE); /* (v 0) as vector-ref is safe */
   vector_length(x) = 0;
   vector_elements(x) = NULL;
-  set_type(x, typ | T_SAFE_PROCEDURE); /* (v 0) as vector-ref is safe */
 
   if (len > 0)
     {
@@ -30640,8 +30751,7 @@ s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *da
    */
   s7_pointer x;
 
-  NEW_CELL(sc, x);                     
-  set_type(x, T_FLOAT_VECTOR | T_SAFE_PROCEDURE);
+  NEW_CELL(sc, x, T_FLOAT_VECTOR | T_SAFE_PROCEDURE);
   float_vector_elements(x) = data;
   vector_getter(x) = float_vector_getter;
   vector_setter(x) = float_vector_setter;
@@ -31177,26 +31287,24 @@ s7_pointer s7_vector_set_n(s7_scheme *sc, s7_pointer vector, s7_pointer value, i
 s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
 {
   s7_Int i, len;
-  s7_pointer p;
+  s7_pointer result;
 
   len = vector_length(vect);
   if (len == 0) return(sc->NIL);
 
-  if (len < (sc->free_heap_top - sc->free_heap))
+  if (len >= (sc->free_heap_top - sc->free_heap))
     {
-      sc->w = cons(sc, vector_getter(vect)(sc, vect, len - 1), sc->NIL);
-      for (i = len - 2; i >= 0; i--)
-	sc->w = cons_unchecked(sc, vector_getter(vect)(sc, vect, i), sc->w);
+      gc(sc);
+      while (len >= (sc->free_heap_top - sc->free_heap))
+	expand_heap(sc);
     }
-  else
-    {
-      sc->w = sc->NIL;
-      for (i = len - 1; i >= 0; i--)
-	sc->w = cons(sc, vector_getter(vect)(sc, vect, i), sc->w);
-    }
-  p = sc->w;
-  sc->w = sc->NIL;
-  return(p);
+
+  sc->v = sc->NIL;
+  for (i = len - 1; i >= 0; i--)
+    sc->v = cons_unchecked(sc, vector_getter(vect)(sc, vect, i), sc->v);
+  result = sc->v;
+  sc->v = sc->NIL;
+  return(result);
 }
 
 
@@ -31328,10 +31436,9 @@ static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_di
    * (let ((v #3d(((0 1 2 3) (4 5 6 7) (8 9 10 11)) ((12 13 14 15) (16 17 18 19) (20 21 22 23))))) (v 0 1))
    */
 
-  NEW_CELL(sc, x);
+  NEW_CELL(sc, x, typeflag(vect) | T_SAFE_PROCEDURE);
   vector_length(x) = 0;
   vector_elements(x) = NULL;
-  set_type(x, typeflag(vect) | T_SAFE_PROCEDURE);
   vector_getter(x) = vector_getter(vect);
   vector_setter(x) = vector_setter(vect);
 
@@ -31439,8 +31546,7 @@ a vector that points to the same elements as the original-vector but with differ
       return(out_of_range(sc, sc->MAKE_SHARED_VECTOR, small_int(2), dims, make_string_wrapper(sc, "a shared vector has to fit in the original vector")));
     }
 
-  NEW_CELL(sc, x);
-  set_type(x, typeflag(orig) | T_SAFE_PROCEDURE);
+  NEW_CELL(sc, x, typeflag(orig) | T_SAFE_PROCEDURE);
   vector_dimension_info(x) = v;
   vector_length(x) = new_len;                 /* might be less than original length */
   vector_getter(x) = vector_getter(orig);
@@ -31463,10 +31569,9 @@ a vector that points to the same elements as the original-vector but with differ
 static s7_pointer make_vector_wrapper(s7_scheme *sc, s7_Int size, s7_pointer *elements)
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
+  NEW_CELL(sc, x, T_VECTOR | T_SAFE_PROCEDURE);
   vector_length(x) = size;
   vector_elements(x) = elements;
-  set_type(x, T_VECTOR | T_SAFE_PROCEDURE);
   vector_getter(x) = default_vector_getter;
   vector_setter(x) = default_vector_setter;
   vector_dimension_info(x) = NULL;
@@ -33320,6 +33425,7 @@ static s7_pointer hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)
 s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 {
   s7_pointer table;
+  s7_pointer *els;
   int i;
   /* size is rounded up to the next power of 2 */
 
@@ -33336,18 +33442,18 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
     }
   size++;
 
-  NEW_CELL(sc, table);
+  els = (s7_pointer *)malloc(size * sizeof(s7_pointer));
+  if (!els) return(s7_error(sc, make_symbol(sc, "out-of-memory"), list_1(sc, make_string_wrapper(sc, "make-hash-table allocation failed!"))));
+
+  NEW_CELL(sc, table, T_HASH_TABLE | T_SAFE_PROCEDURE);
   hash_table_length(table) = size;
-  hash_table_elements(table) = (s7_pointer *)malloc(size * sizeof(s7_pointer));
-  if (!(hash_table_elements(table)))
-    return(s7_error(sc, make_symbol(sc, "out-of-memory"), list_1(sc, make_string_wrapper(sc, "make-hash-table allocation failed!"))));
+  hash_table_elements(table) = els;
   for (i = 0; i < size; i++)
     hash_table_element(table, i) = sc->NIL;
   /* or use the vector fill stuff here, but that now just unrolls the loop */
   hash_table_function(table) = hash_empty;
   hash_table_eq_function(table) = NULL;
   hash_table_entries(table) = 0;
-  set_type(table, T_HASH_TABLE | T_SAFE_PROCEDURE);
   add_hash_table(sc, table);
 
   return(table);
@@ -34837,7 +34943,7 @@ int s7_object_type(s7_pointer obj)
 s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
+  NEW_CELL(sc, x, object_types[type]->outer_type);
   
   /* c_object_info(x) = &(object_types[type]); */
   /* that won't work because object_types can move when it is realloc'd and the old stuff is freed by realloc
@@ -34846,7 +34952,6 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
   c_object_type(x) = type;
   c_object_value(x) = value;
   c_object_let(x) = sc->NIL;
-  set_type(x, c_object_outer_type(x));
   add_c_object(sc, x);
   return(x);
 }
@@ -38135,11 +38240,10 @@ each a function of no arguments, guaranteeing that finish is called even if body
    *   even if the thunk check was removed, we'd still be trying to apply the original function.
    */
   
-  NEW_CELL(sc, p);
+  NEW_CELL(sc, p, T_DYNAMIC_WIND);                          /* don't mark car/cdr, don't copy */
   dynamic_wind_in(p) = closure_or_f(sc, car(args));
   dynamic_wind_body(p) = cadr(args);
   dynamic_wind_out(p) = closure_or_f(sc, caddr(args));
-  set_type(p, T_DYNAMIC_WIND);                          /* atom -> don't mark car/cdr, don't copy */
   
   /* since we don't care about the in and out results, and they are thunks, if the body is not a pair,
    *   or is a quoted thing, we just ignore that function.
@@ -38192,12 +38296,11 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
     return(wrong_type_argument_with_type(sc, sc->CATCH, small_int(3), err, SOMETHING_APPLICABLE));
   /* if (is_let(err)) check_method(sc, err, sc->CATCH, args); */ /* causes exit from s7! */
 
-  NEW_CELL(sc, p);
+  NEW_CELL(sc, p, T_CATCH);
   catch_tag(p) = car(args);
   catch_goto_loc(p) = s7_stack_top(sc);
   catch_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
   catch_handler(p) = err;
-  set_type(p, T_CATCH);
 
   if (is_any_macro(err))
     push_stack(sc, OP_CATCH_2, args, p);
@@ -38477,7 +38580,7 @@ static bool catch_1_function(s7_scheme *sc, int i, s7_pointer type, s7_pointer i
 	}
       if (op == OP_CATCH_1)
 	{
-	  s7_pointer y;
+	  s7_pointer y = NULL;
 	  make_closure_without_capture(sc, y, car(error_func), cdr(error_func), stack_let(sc->stack, i));
 	  sc->code = y;
 	}
@@ -39635,14 +39738,13 @@ static s7_pointer g_abort(s7_scheme *sc, s7_pointer args) {abort();}
 static s7_pointer make_counter(s7_scheme *sc, s7_pointer iter)
 {
   s7_pointer x;
-  NEW_CELL(sc, x);
+  NEW_CELL(sc, x, T_COUNTER);
   counter_result(x) = sc->NIL;
   counter_list(x) = iter;        /* iterator */
   counter_count(x) = 0;
   counter_capture(x) = 0;        /* will be capture_env_counter */
   counter_let(x) = sc->NIL;      /* will be the saved env */
   counter_args(x) = sc->NIL;
-  set_type(x, T_COUNTER);
   return(x);
 }
 
@@ -39653,8 +39755,8 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 Each object can be a list, string, vector, hash-table, or any other sequence."
 
   s7_pointer p;
-  bool got_nil = false;
   int i, len;
+  bool got_nil = false;
 
   sc->code = car(args);                               /* the function */
   if (!is_applicable(sc->code))
@@ -39663,22 +39765,33 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
       return(wrong_type_argument_with_type(sc, sc->FOR_EACH, small_int(1), sc->code, SOMETHING_APPLICABLE));
     }
 
-  sc->z = sc->NIL;                                    /* don't use sc->args here -- it needs GC protection until we get the iterators */
   for (i = 0, p = cdr(args); is_not_null(p); p = cdr(p), i++)
     {
-      if (car(p) == sc->NIL)
+      if (!is_sequence(car(p)))
+	return(simple_wrong_type_argument_with_type(sc, sc->FOR_EACH, car(p), A_SEQUENCE));
+      if (is_null(car(p)))
 	got_nil = true;
-      else sc->z = cons(sc, make_iterator(sc, car(p)), sc->z);
     }
-  len = i;
 
+  len = i;
   if (!s7_is_aritable(sc, sc->code, len))
     return(s7_wrong_number_of_args_error(sc, "for-each function: ~A args?", small_int(len)));
 
-  if (got_nil)
-    return(sc->UNSPECIFIED);
+  if (got_nil) return(sc->UNSPECIFIED);
 
-  sc->args = cons(sc, safe_reverse_in_place(sc, sc->z), make_list(sc, len, sc->NIL));
+  sc->temp3 = args;
+  sc->z = sc->NIL;                                    /* don't use sc->args here -- it needs GC protection until we get the iterators */
+  for (p = cdr(args); is_not_null(p); p = cdr(p))
+    {
+      s7_pointer iter;
+      iter = make_iterator(sc, car(p));
+      sc->z = cons(sc, iter, sc->z);
+    }
+
+  sc->x = make_list(sc, len, sc->NIL);
+  sc->z = safe_reverse_in_place(sc, sc->z);
+  sc->args = cons(sc, sc->z, sc->x);
+  sc->z = sc->NIL;
 
   /* if function is safe c func, do the for-each locally */
   if ((is_safe_procedure(sc->code)) &&
@@ -39687,6 +39800,22 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
       s7_function func;
       func = c_function_call(sc->code);
       push_stack(sc, OP_NO_OP, sc->args, sc->code); /* temporary GC protection */
+      if (len == 1)
+	{
+	  s7_pointer x, y;
+	  x = caar(sc->args);
+	  y = cdr(sc->args);
+	  while (true)
+	    {
+	      car(y) = iterate(sc, x);
+	      if (car(y) == sc->ITERATOR_END)
+		{
+		  pop_stack(sc);
+		  return(sc->UNSPECIFIED);
+		}
+	      (*func)(sc, y);
+	    }
+	}
       while (true)
 	{
 	  s7_pointer x, y;
@@ -39712,7 +39841,6 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
       push_stack(sc, OP_FOR_EACH_1, make_counter(sc, caar(sc->args)), sc->code);
       return(sc->UNSPECIFIED);
     }
-
   push_stack(sc, OP_FOR_EACH, sc->args, sc->code);
   return(sc->UNSPECIFIED);
 }
@@ -39775,33 +39903,42 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 a list of the results.  Its arguments can be lists, vectors, strings, hash-tables, or any applicable objects."
 
   s7_pointer p;
-  bool got_nil = false;
   int i, len;
+  bool got_nil = false;
 
-  sc->code = car(args);
+  sc->code = car(args);                               /* the function */
   if (!is_applicable(sc->code))
     {
-      check_method(sc, car(args), sc->MAP, args);
+      check_method(sc, sc->code, sc->MAP, args);
       return(wrong_type_argument_with_type(sc, sc->MAP, small_int(1), sc->code, SOMETHING_APPLICABLE));
     }
 
-  sc->z = sc->NIL;
   for (i = 0, p = cdr(args); is_not_null(p); p = cdr(p), i++)
     {
-      if (car(p) == sc->NIL)
+      if (!is_sequence(car(p)))
+	return(simple_wrong_type_argument_with_type(sc, sc->MAP, car(p), A_SEQUENCE));
+      if (is_null(car(p)))
 	got_nil = true;
-      else sc->z = cons(sc, make_iterator(sc, car(p)), sc->z);
     }
 
   len = i;
-  if ((!is_pair(sc->code)) && 
+  if ((!is_pair(sc->code)) &&
       (!s7_is_aritable(sc, sc->code, len)))
     return(s7_wrong_number_of_args_error(sc, "map function: ~A args?", small_int(len)));
 
-  if (got_nil)
-    return(sc->NIL);
+  if (got_nil) return(sc->NIL);
+
+  sc->temp3 = args;
+  sc->z = sc->NIL;                                    /* don't use sc->args here -- it needs GC protection until we get the iterators */
+  for (p = cdr(args); is_not_null(p); p = cdr(p))
+    {
+      s7_pointer iter;
+      iter = make_iterator(sc, car(p));
+      sc->z = cons(sc, iter, sc->z);
+    }
 
   sc->args = safe_reverse_in_place(sc, sc->z);
+  sc->z = sc->NIL;
 
   /* if function is safe c func, do the map locally */
   if ((is_safe_procedure(sc->code)) &&
@@ -41135,37 +41272,6 @@ static s7_pointer g_pair_line_number(s7_scheme *sc, s7_pointer args)
   if (has_line_number(p))
     return(make_integer(sc, (s7_Int)(remembered_line_number(pair_line_number(p)))));
   return(small_int(0));
-}
-
-
-static s7_pointer quotify(s7_scheme *sc, s7_pointer pars)
-{
-  /* the default parameter values of define-macro* and define-bacro* should not be evaluated until
-   * the expansion is evaluated.  That is, 
-   *
-   *   (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(let ((x -1)) (+ x ,a))) (list (hi) x))
-   *
-   * should return the same value as the equivalent explicit form:
-   *
-   *   (let ((x 0)) (define-macro (hi a) `(let ((x -1)) (+ x ,a))) (list (hi (let () (set! x (+ x 1)) x)) x))
-   *
-   * '(-1 0) in both cases.
-   *
-   * But at the point in eval where we handle lambda* arguments, we can't easily tell whether we're part of
-   * a function or a macro, so at definition time of a macro* we scan the parameter list for an expression
-   * as a default value, and replace it with (quote expr).
-   *
-   * and... (define-macro* ((a x)) ...) should behave the same as (define-macro* ((a (+ x 0))) ...)
-   */
-  s7_pointer tmp;
-  for (tmp = pars; is_pair(tmp); tmp = cdr(tmp))
-    if ((is_pair(car(tmp))) &&
-	(is_pair(cdar(tmp))) &&
-	((is_pair(cadar(tmp))) ||
-	 (is_symbol(cadar(tmp))) ||
-	 (is_syntax(cadar(tmp)))))
-      cadar(tmp) = list_2(sc, sc->QUOTE, cadar(tmp));
-  return(pars);
 }
 
 
@@ -50078,26 +50184,6 @@ static s7_pointer check_define_macro(s7_scheme *sc)
 }
 
 
-static void fixup_macro_overlay(s7_scheme *sc, s7_pointer p)
-{
-  if ((is_pair(p)) &&
-      (is_proper_list(sc, p)) &&
-      (!is_overlaid(p))) /* this was sc->code?! -- that can't be right, and probably doesn't matter anyway */
-    {
-      if (is_pair(cdr(p)))
-	{
-	  if (is_symbol(car(p)))
-	    {
-	      set_ecdr(cdr(p), p);
-	      set_overlay(cdr(p));
-	    }
-	  fixup_macro_overlay(sc, cdr(p));
-	}
-      fixup_macro_overlay(sc, car(p));       /* there's no check for circles through car */
-    }
-}
-
-
 static s7_pointer check_cond(s7_scheme *sc)
 {
   bool has_feed_to = false;
@@ -50404,11 +50490,22 @@ static s7_pointer free_let(s7_scheme *sc, s7_pointer e)
 
 #if WITH_GCC
 #undef NEW_CELL
-#define NEW_CELL(Sc, Obj) \
+#if (!DEBUGGING)
+#define NEW_CELL(Sc, Obj, Type)			\
+  do {						\
+    if (Sc->free_heap_top <= Sc->free_heap_trigger) {try_to_call_gc(Sc); if ((Sc->begin_hook) && (call_begin_hook(Sc))) return(Sc->F);} \
+    Obj = (*(--(Sc->free_heap_top)));					\
+    set_type(Obj, Type);						\
+    } while (0)
+#else
+#define NEW_CELL(Sc, Obj, Type)			\
   do {						\
     if (Sc->free_heap_top <= Sc->free_heap_trigger) {try_to_call_gc(Sc); if ((Sc->begin_hook) && (call_begin_hook(Sc))) return(Sc->F);} \
     Obj = (*(--(Sc->free_heap_top))); \
+    Obj->alloc_line = __LINE__;	      \
+    set_type(Obj, Type);	      \
     } while (0)
+#endif
 #endif
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op) 
@@ -51870,10 +51967,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	else 
 	  {
 	    s7_pointer slot;
-	    NEW_CELL_NO_CHECK(sc, slot);
+	    NEW_CELL_NO_CHECK(sc, slot, T_SLOT | T_IMMUTABLE);
 	    slot_symbol(slot) = end;
 	    slot_set_value(slot, end);
-	    set_type(slot, T_SLOT | T_IMMUTABLE);
 	    sc->args = slot;
 	  }
 	dox_slot2(sc->envir) = sc->args;
@@ -52146,10 +52242,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	else 
 	  {
 	    s7_pointer slot;
-	    NEW_CELL_NO_CHECK(sc, slot);
+	    NEW_CELL_NO_CHECK(sc, slot, T_SLOT | T_IMMUTABLE);
 	    slot_symbol(slot) = end;
 	    slot_set_value(slot, end);
-	    set_type(slot, T_SLOT | T_IMMUTABLE);
 	    sc->args = slot;
 	  }
 	dox_slot2(sc->envir) = sc->args;
@@ -52231,10 +52326,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	else 
 	  {
 	    s7_pointer slot;
-	    NEW_CELL_NO_CHECK(sc, slot);
+	    NEW_CELL_NO_CHECK(sc, slot, T_SLOT | T_IMMUTABLE);
 	    slot_symbol(slot) = end;
 	    slot_set_value(slot, end);
-	    set_type(slot, T_SLOT | T_IMMUTABLE);
 	    sc->args = slot;
 	  }
 	dox_slot2(sc->envir) = sc->args;
@@ -52327,25 +52421,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	NEW_FRAME(sc, sc->envir, frame); /* new frame is not tied into the symbol lookup process yet */
 	for (vars = car(sc->code); is_pair(vars); vars = cdr(vars))
 	  {
-	    s7_pointer expr;
-	    NEW_CELL_NO_CHECK(sc, slot);	
-	    slot_symbol(slot) = caar(vars);
-	    
+	    s7_pointer expr, val;
 	    expr = cadar(vars);
 	    if (is_pair(expr))
 	      {
 		if (car(expr) == sc->QUOTE)
-		  slot_set_value(slot, cadr(expr));
-		else slot_set_value(slot, ((dox_function)fcdr(cdar(vars)))(sc, expr, NULL));
+		  val = cadr(expr);
+		else val = ((dox_function)fcdr(cdar(vars)))(sc, expr, NULL);
 	      }
 	    else
 	      {
 		if (is_symbol(expr))
-		  slot_set_value(slot, find_symbol_checked(sc, expr));
-		else slot_set_value(slot, expr);
+		  val = find_symbol_checked(sc, expr);
+		else val = expr;
 	      }
+	    NEW_CELL_NO_CHECK(sc, slot, T_SLOT | T_IMMUTABLE);
+	    slot_symbol(slot) = caar(vars);
+	    slot_set_value(slot, val);
 	    slot_expression(slot) = cddar(vars);
-	    set_type(slot, T_SLOT | T_IMMUTABLE);
 	    next_slot(slot) = let_slots(frame);
 	    let_slots(frame) = slot;
 	  }
@@ -52686,13 +52779,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	NEW_FRAME(sc, sc->envir, frame); /* new frame is not tied into the symbol lookup process yet */
 	for (vars = car(sc->code); is_pair(vars); vars = cdr(vars))
 	  {
-	    s7_pointer var;
-	    NEW_CELL_NO_CHECK(sc, slot);
+	    s7_pointer var, val;
 	    var = car(vars);
+	    val = ((s7_function)fcdr(cdr(var)))(sc, cadr(var));
+	    NEW_CELL_NO_CHECK(sc, slot, T_SLOT | T_IMMUTABLE);
 	    slot_symbol(slot) = car(var);
-	    slot_set_value(slot, ((s7_function)fcdr(cdr(var)))(sc, cadr(var)));
+	    slot_set_value(slot, val);
 	    slot_expression(slot) = cddr(var);
-	    set_type(slot, T_SLOT | T_IMMUTABLE);
 	    next_slot(slot) = let_slots(frame);
 	    let_slots(frame) = slot;
 	  }
@@ -54971,7 +55064,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* (catch #t (lambda () (set! ("hi") #\a)) (lambda args args)) 
 		 *    code is (catch #t (lambda () ....) (lambda args ....))
 		 */
-		s7_pointer p, e = NULL, f, body, args;
+		s7_pointer p, e = NULL, f, body, args, tag;
 		
 		args = cddr(code);
 		body = car(args);
@@ -54997,22 +55090,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* defer making the error lambda */
 		/* z = cdadr(args); make_closure_with_let(sc, y, car(z), cdr(z), sc->envir); */ 
 		
-		NEW_CELL(sc, p);                     /* the catch object sitting on the stack */
-		
 		/* check target */
 		f = cadr(code);
 		if (!is_pair(f))                     /* (catch #t ...) or (catch sym ...) */
 		  {
 		    if (is_symbol(f))
-		      catch_tag(p) = find_symbol_checked(sc, f);
-		    else catch_tag(p) = f;
+		      tag = find_symbol_checked(sc, f);
+		    else tag = f;
 		  }
-		else catch_tag(p) = cadr(f);         /* (catch 'sym ...) */
+		else tag = cadr(f);                  /* (catch 'sym ...) */
 		
+		NEW_CELL(sc, p, T_CATCH);            /* the catch object sitting on the stack */
+		catch_tag(p) = tag;
 		catch_goto_loc(p) = s7_stack_top(sc);
 		catch_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
 		catch_handler(p) = cdadr(args);      /* not yet a closure... */
-		set_type(p, T_CATCH);
 		
 		push_stack(sc, OP_CATCH_1, code, p); /* code ignored here, except by GC */
 		NEW_FRAME(sc, e, sc->envir); 
@@ -57228,10 +57320,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	else
 	  {
-	    NEW_CELL(sc, x); 
-	    set_type(x, T_PAIR);
-	    NEW_CELL_NO_CHECK(sc, y); 
-	    set_type(y, T_PAIR);
+	    NEW_CELL(sc, x, T_PAIR);
+	    NEW_CELL_NO_CHECK(sc, y, T_PAIR);
 	  }
 	
 	car(x) = sc->code;
@@ -57255,8 +57345,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  x = sc->temp_cell_2;
 	else
 	  {
-	    NEW_CELL(sc, x);
-	    set_type(x, T_PAIR);
+	    NEW_CELL(sc, x, T_PAIR);
 	  }
 	car(x) = sc->value;
 	cdr(x) = sc->args;
@@ -57582,10 +57671,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	else
 	  {
-	    NEW_CELL(sc, x); 
-	    set_type(x, T_PAIR);
-	    NEW_CELL_NO_CHECK(sc, y);
-	    set_type(y, T_PAIR);
+	    NEW_CELL(sc, x, T_PAIR);
+	    NEW_CELL_NO_CHECK(sc, y, T_PAIR);
 	  }
 	car(x) = sc->value;
 	cdr(x) = sc->args;
@@ -57605,11 +57692,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       {
         s7_pointer x;
-	NEW_CELL(sc, x);
+	NEW_CELL(sc, x, T_PAIR);
 	car(x) = sc->value;
 	cdr(x) = sc->args;
-	set_type(x, T_PAIR);
-	sc->args = x; /* all the others reverse -- why not this case? -- reverse is at end? (below) */
+	sc->args = x;          /* all the others reverse -- why not this case? -- reverse is at end? (below) */
 	goto EVAL_ARGS_PAIR;
       }
       
@@ -57617,10 +57703,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_EVAL_ARGS1:
       {
         s7_pointer x;
-	NEW_CELL(sc, x);
+	NEW_CELL(sc, x, T_PAIR);
 	car(x) = sc->value;
 	cdr(x) = sc->args;
-	set_type(x, T_PAIR);
 	sc->args = x;
       }
       
@@ -57698,10 +57783,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 		  else
 		    {
-		      NEW_CELL(sc, x); 
-		      set_type(x, T_PAIR);
-		      NEW_CELL_NO_CHECK(sc, y); 
-		      set_type(y, T_PAIR);
+		      NEW_CELL(sc, x, T_PAIR);
+		      NEW_CELL_NO_CHECK(sc, y, T_PAIR);
 		    }
 		  car(x) = sc->value;
 		  cdr(x) = sc->args;
@@ -57716,10 +57799,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   *   sc->value is the previous arg's value
 		   */
 		  s7_pointer x;
-		  NEW_CELL(sc, x); 
+		  NEW_CELL(sc, x, T_PAIR); 
 		  car(x) = sc->value;
 		  cdr(x) = sc->args;
-		  set_type(x, T_PAIR);
 		  sc->args = x;
 		  goto EVAL_ARGS_PAIR;
 		}
@@ -57751,10 +57833,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (typ == T_SYMBOL)
 		    val = find_symbol_checked(sc, car_code); /* this has to precede the set_type below */
 		  else val = car_code;
-		  NEW_CELL(sc, x); 
+		  NEW_CELL(sc, x, T_PAIR); 
 		  car(x) = val;
 		  cdr(x) = sc->args;
-		  set_type(x, T_PAIR);
 		}
 	      
 	      if (!is_null(sc->args))
@@ -58226,8 +58307,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DEFINE_STAR_UNCHECKED:
       {
 	s7_pointer x;
-	/* make_closure* */
-	NEW_CELL(sc, x);
+	unsigned int typ;
+	if (is_safe_closure(cdr(sc->code)))
+	  typ = T_CLOSURE_STAR | T_PROCEDURE | T_SAFE_CLOSURE;
+	else typ = T_CLOSURE_STAR | T_PROCEDURE;
+	NEW_CELL(sc, x, typ);
 	closure_args(x) = cdar(sc->code);
 	closure_body(x) = cdr(sc->code);
 	closure_let(x) = sc->envir;
@@ -58235,9 +58319,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  closure_arity(x) = integer(fcdr(sc->code));
 	else closure_arity(x) = CLOSURE_ARITY_NOT_SET;
 	closure_setter(x) = sc->F;
-	if (is_safe_closure(cdr(sc->code)))
-	  set_type(x, T_CLOSURE_STAR | T_PROCEDURE | T_SAFE_CLOSURE);
-	else set_type(x, T_CLOSURE_STAR | T_PROCEDURE);
 	sc->capture_env_counter++;
 	sc->value = x;
 	sc->code = caar(sc->code);
@@ -58251,8 +58332,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	code = sc->code;
 	sc->value = caar(code);
 
-	/* make_closure... */
-	NEW_CELL(sc, new_func);
+	NEW_CELL(sc, new_func, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); 
 	closure_args(new_func) = cdar(code);
 	closure_body(new_func) = cdr(code);
 	closure_setter(new_func) = sc->F; 
@@ -58264,7 +58344,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	 * later: I think this is fixed now -- we're using fcdr as an int below!
 	 */
 	closure_arity(new_func) = integer(fcdr(code));
-	set_type(new_func, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS); 
 	sc->capture_env_counter++; 
 	
 	if (is_safe_closure(cdr(code)))
@@ -58272,11 +58351,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer arg;
 	    set_safe_closure(new_func);
 	    
-	    NEW_CELL_NO_CHECK(sc, new_env);
+	    NEW_CELL_NO_CHECK(sc, new_env, T_ENVIRONMENT | T_IMMUTABLE | T_FUNCTION_ENV);
 	    let_id(new_env) = ++sc->let_number;
 	    let_slots(new_env) = sc->NIL;
 	    outlet(new_env) = sc->envir;
-	    set_type(new_env, T_ENVIRONMENT | T_IMMUTABLE | T_FUNCTION_ENV);
 	    closure_let(new_func) = new_env;
 	    funclet_function(new_env) = sc->value;
 	    
@@ -58411,7 +58489,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   cases (via sc->envir == sc->NIL).
 	   */
 
-	  NEW_CELL_NO_CHECK(sc, new_env);                   
+	  NEW_CELL_NO_CHECK(sc, new_env, T_ENVIRONMENT | T_IMMUTABLE | T_FUNCTION_ENV); 
 	  let_id(new_env) = ++sc->let_number; 
 	  outlet(new_env) = closure_let(new_func);
 	  closure_let(new_func) = new_env;		   
@@ -58423,11 +58501,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      (port_file(sc->input_port) != stdin))
 	    {
 	      /* unbound_variable will be called if __func__ is encountered, and will return this info as if __func__ had some meaning */
-	      set_type(new_env, T_ENVIRONMENT | T_IMMUTABLE | T_FUNCTION_ENV | T_LINE_NUMBER); 
+	      typeflag(new_env) |= T_LINE_NUMBER;
 	      let_file(new_env) = port_file_number(sc->input_port);
 	      let_line(new_env) = port_line_number(sc->input_port);
 	    }
-	  else set_type(new_env, T_ENVIRONMENT | T_IMMUTABLE | T_FUNCTION_ENV); 
 
 	  /* this should happen only if the closure* default values do not refer in any way to
 	   *   the enclosing environment (else we can accidentally shadow something that happens
@@ -60917,10 +60994,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* not named, but has vars */
       {
 	s7_pointer x;
-	NEW_CELL(sc, x);
+	NEW_CELL(sc, x, T_PAIR);
 	car(x) = sc->code;
 	cdr(x) = sc->NIL;
-	set_type(x, T_PAIR);
 	sc->args = x;
 	sc->code = car(sc->code);
 	goto LET1A;
@@ -60963,10 +61039,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	s7_pointer x, y;
 	
-	NEW_CELL(sc, x);
+	NEW_CELL(sc, x, T_PAIR);
 	car(x) = sc->value; /* the first time (now handled above), this saves the entire let body across the evaluations -- we pick it up later */
 	cdr(x) = sc->args;
-	set_type(x, T_PAIR);
 	sc->args = x;
 	
 	if (is_pair(sc->code)) 
@@ -61712,65 +61787,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
     DEFINE_MACRO2:
-      {
-	s7_pointer lx, cx, zx;
-	cx = caar(sc->code);
-	zx = cdr(sc->code);
-	lx = s7_gensym(sc, symbol_name(cx));
-	/* (define-macro (hi a b) `(+ ,a ,b)) becomes:
-	 *   cx: hi
-	 *   sc->code: (lambda ({hi}-14) (apply (lambda (a b) ({list} '+ a b)) (cdr {hi}-14)))
-	 */
-	NEW_CELL_NO_CHECK(sc, sc->value);
-	closure_args(sc->value) = list_1(sc, lx);
-	closure_body(sc->value) = list_1(sc, cons(sc, 
-						  sc->Apply,
-						  cons(sc, 
-						       cons(sc, 
-							    ((sc->op == OP_DEFINE_MACRO_STAR) || 
-							     (sc->op == OP_DEFINE_BACRO_STAR)) ? sc->LAMBDA_STAR : sc->LAMBDA,
-							    cons(sc,                /* cdar(sc->code) is the parameter list */
-								 ((sc->op == OP_DEFINE_MACRO_STAR) || 
-								  (sc->op == OP_DEFINE_BACRO_STAR)) ? quotify(sc, cdar(sc->code)) : cdar(sc->code),
-								 zx)),
-						       list_1(sc, list_2(sc, sc->CDR, lx)))));
-	closure_let(sc->value) = sc->envir;
-	closure_setter(sc->value) = sc->F;
-	closure_arity(sc->value) = CLOSURE_ARITY_NOT_SET;
-	sc->capture_env_counter++;
-	sc->code = cx; 
-	
-	if ((sc->op == OP_DEFINE_BACRO) ||
-	    (sc->op == OP_DEFINE_BACRO_STAR))
-	  set_type(sc->value, T_BACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS);
-	else
-	  {
-	    if (sc->op == OP_DEFINE_EXPANSION)
-	      {
-		/* perhaps define-expansion should be define-reader-macro but that collides with historical uses. 
-		 */
-		set_type(sc->value, T_MACRO | T_EXPANSION | T_DONT_EVAL_ARGS | T_COPY_ARGS);
-		set_type(sc->code, EXPANSION_TYPE);
-	      }
-	    else set_type(sc->value, T_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS); 
-	  }
+      make_macro(sc);
+      goto START;
 
-	fixup_macro_overlay(sc, closure_body(sc->value));
-	/* symbol? macro name has already been checked */
-	/* find name in environment, and define it */
-	cx = find_local_symbol(sc, sc->code, sc->envir); 
-	if (is_slot(cx))
-	  slot_set_value(cx, sc->value); 
-	else s7_make_slot(sc, sc->envir, sc->code, sc->value); /* was current but we've checked immutable already */
-	
-	optimize(sc, closure_body(sc->value), 0, sc->NIL);
-	
-	/* here sc->value is the macro, sc->code is its name (a symbol),
-	 *   (symbol? (define (f a) (+ a 1))) -> #t, so I guess define-macro should follow suit.
-	 */
-	/* sc->value = sc->code; */ /* 25-Jul-14 */
-	goto START;
-      }
       
     case OP_LAMBDA: 
       /* code is a lambda form minus the "lambda": ((a b) (+ a b)) */
@@ -62322,10 +62341,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /*    was: sc->args = cons(sc, sc->value, sc->args); */ 
       {
 	s7_pointer x;
-	NEW_CELL(sc, x);
+	NEW_CELL(sc, x, T_PAIR);
 	car(x) = sc->value;
 	cdr(x) = sc->args;
-	set_type(x, T_PAIR);
 	sc->args = x;
       }
       
@@ -62677,11 +62695,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 #if WITH_GCC
 #undef NEW_CELL
-#define NEW_CELL(Sc, Obj) \
+#if (!DEBUGGING)
+#define NEW_CELL(Sc, Obj, Type)			\
+  do {						\
+    if (Sc->free_heap_top <= Sc->free_heap_trigger) try_to_call_gc(Sc); \
+    Obj = (*(--(Sc->free_heap_top)));					\
+    set_type(Obj, Type);						\
+    } while (0)
+#else
+#define NEW_CELL(Sc, Obj, Type)			\
   do {						\
     if (Sc->free_heap_top <= Sc->free_heap_trigger) try_to_call_gc(Sc); \
     Obj = (*(--(Sc->free_heap_top))); \
+    Obj->alloc_line = __LINE__;	      \
+    set_type(Obj, Type);	      \
     } while (0)
+#endif
 #endif
 
 
@@ -62894,8 +62923,7 @@ static s7_pointer string_to_big_integer(s7_scheme *sc, const char *str, int radi
 {
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_INTEGER);
+  NEW_CELL(sc, x, T_BIG_INTEGER);
   add_bigint(sc, x);
   mpz_init_set_str(big_integer(x), (str[0] == '+') ? (const char *)(str + 1) : str, radix);
 
@@ -62907,8 +62935,7 @@ static s7_pointer mpz_to_big_integer(s7_scheme *sc, mpz_t val)
 {
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_INTEGER);
+  NEW_CELL(sc, x, T_BIG_INTEGER);
   add_bigint(sc, x);
   mpz_init_set(big_integer(x), val);
 
@@ -62935,8 +62962,7 @@ static s7_pointer string_to_big_ratio(s7_scheme *sc, const char *str, int radix)
     x = mpz_to_big_integer(sc, mpq_numref(n));
   else
     {
-      NEW_CELL(sc, x);
-      set_type(x, T_BIG_RATIO);
+      NEW_CELL(sc, x, T_BIG_RATIO);
       add_bigratio(sc, x);
       mpq_init(big_ratio(x));
       mpq_set_num(big_ratio(x), mpq_numref(n));
@@ -62952,8 +62978,7 @@ static s7_pointer mpq_to_big_ratio(s7_scheme *sc, mpq_t val)
 {
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_RATIO);
+  NEW_CELL(sc, x, T_BIG_RATIO);
   add_bigratio(sc, x);
   mpq_init(big_ratio(x));
   mpq_set_num(big_ratio(x), mpq_numref(val));
@@ -62973,8 +62998,7 @@ static s7_pointer mpz_to_big_ratio(s7_scheme *sc, mpz_t val)
 {
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_RATIO);
+  NEW_CELL(sc, x, T_BIG_RATIO);
   add_bigratio(sc, x);
   mpq_init(big_ratio(x));
   mpq_set_num(big_ratio(x), val);
@@ -62995,8 +63019,7 @@ static s7_pointer string_to_big_real(s7_scheme *sc, const char *str, int radix)
 {
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_REAL);
+  NEW_CELL(sc, x, T_BIG_REAL);
   add_bigreal(sc, x);
   mpfr_init_set_str(big_real(x), str, radix, GMP_RNDN);
 
@@ -63009,8 +63032,7 @@ static s7_pointer s7_number_to_big_real(s7_scheme *sc, s7_pointer p)
 {
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_REAL);
+  NEW_CELL(sc, x, T_BIG_REAL);
   add_bigreal(sc, x);
 
   switch (type(p))
@@ -63061,8 +63083,7 @@ static s7_pointer mpz_to_big_real(s7_scheme *sc, mpz_t val)
 {
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_REAL);
+  NEW_CELL(sc, x, T_BIG_REAL);
   add_bigreal(sc, x);
   mpfr_init_set_z(big_real(x), val, GMP_RNDN);
 
@@ -63074,8 +63095,7 @@ static s7_pointer mpq_to_big_real(s7_scheme *sc, mpq_t val)
 {
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_REAL);
+  NEW_CELL(sc, x, T_BIG_REAL);
   add_bigreal(sc, x);
   mpfr_init_set_q(big_real(x), val, GMP_RNDN);
 
@@ -63087,8 +63107,7 @@ static s7_pointer mpfr_to_big_real(s7_scheme *sc, mpfr_t val)
 {
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_REAL);
+  NEW_CELL(sc, x, T_BIG_REAL);
   add_bigreal(sc, x);
   mpfr_init_set(big_real(x), val, GMP_RNDN);
 
@@ -63106,8 +63125,7 @@ static s7_pointer big_pi(s7_scheme *sc)
 {
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_REAL);
+  NEW_CELL(sc, x, T_BIG_REAL);
   add_bigreal(sc, x);
   mpfr_init(big_real(x));
   mpfr_const_pi(big_real(x), GMP_RNDN);
@@ -63120,8 +63138,7 @@ static s7_pointer s7_number_to_big_complex(s7_scheme *sc, s7_pointer p)
 {
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_COMPLEX);
+  NEW_CELL(sc, x, T_BIG_COMPLEX);
   add_bignumber(sc, x);
   mpc_init(big_complex(x));
 
@@ -63190,8 +63207,7 @@ static s7_pointer mpz_to_big_complex(s7_scheme *sc, mpz_t val)
   mpfr_t temp;
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_COMPLEX);
+  NEW_CELL(sc, x, T_BIG_COMPLEX);
   add_bignumber(sc, x);
   mpc_init(big_complex(x));
   mpfr_init_set_z(temp, val, GMP_RNDN);
@@ -63207,8 +63223,7 @@ static s7_pointer mpq_to_big_complex(s7_scheme *sc, mpq_t val)
   mpfr_t temp;
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_COMPLEX);
+  NEW_CELL(sc, x, T_BIG_COMPLEX);
   add_bignumber(sc, x);
   mpc_init(big_complex(x));
   mpfr_init_set_q(temp, val, GMP_RNDN);
@@ -63223,8 +63238,7 @@ static s7_pointer mpfr_to_big_complex(s7_scheme *sc, mpfr_t val)
 {
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_COMPLEX);
+  NEW_CELL(sc, x, T_BIG_COMPLEX);
   add_bignumber(sc, x);
   mpc_init(big_complex(x));
   mpc_set_fr(big_complex(x), val, MPC_RNDNN);
@@ -63237,8 +63251,7 @@ static s7_pointer mpc_to_big_complex(s7_scheme *sc, mpc_t val)
 {
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_COMPLEX);
+  NEW_CELL(sc, x, T_BIG_COMPLEX);
   add_bignumber(sc, x);
   mpc_init(big_complex(x));
   mpc_set(big_complex(x), val, MPC_RNDNN);
@@ -63261,8 +63274,7 @@ static s7_pointer make_big_complex(s7_scheme *sc, mpfr_t rl, mpfr_t im)
    */
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_COMPLEX);
+  NEW_CELL(sc, x, T_BIG_COMPLEX);
   add_bignumber(sc, x);
   mpc_init(big_complex(x));
   mpc_set_fr_fr(big_complex(x), rl ,im, MPC_RNDNN);
@@ -63311,8 +63323,7 @@ static s7_pointer s7_Int_to_big_integer(s7_scheme *sc, s7_Int val)
 {
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_INTEGER);
+  NEW_CELL(sc, x, T_BIG_INTEGER);
   add_bigint(sc, x);
   mpz_init_set_s7_Int(big_integer(x), val);
 
@@ -63401,8 +63412,7 @@ static s7_pointer s7_ratio_to_big_ratio(s7_scheme *sc, s7_Int num, s7_Int den)
   /* den here always comes from denominator(x) or some positive constant so it is not negative */
   s7_pointer x;
 
-  NEW_CELL(sc, x);
-  set_type(x, T_BIG_RATIO);
+  NEW_CELL(sc, x, T_BIG_RATIO);
   add_bigratio(sc, x);
   mpq_init(big_ratio(x));
 
@@ -64237,8 +64247,7 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 	{
 	  mpz_t n1, d1;
 
-	  NEW_CELL(sc, x);
-	  set_type(x, T_BIG_RATIO);
+	  NEW_CELL(sc, x, T_BIG_RATIO);
 	  add_bigratio(sc, x);
 
 	  mpz_init_set_s7_Int(n1, 1);
@@ -64286,8 +64295,7 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 	    return(s7_make_integer(sc, -1));
 	  }
 
-	NEW_CELL(sc, x);
-	set_type(x, T_BIG_RATIO);
+	NEW_CELL(sc, x, T_BIG_RATIO);
 	add_bigratio(sc, x);
 	mpq_init(big_ratio(x));
 
@@ -64320,8 +64328,7 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 	  }
 	mpz_clear(n);
 
-	NEW_CELL(sc, x);
-	set_type(x, T_BIG_RATIO);
+	NEW_CELL(sc, x, T_BIG_RATIO);
 	add_bigratio(sc, x);
 
 	mpq_init(big_ratio(x));
@@ -64430,8 +64437,7 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
     {
     case T_BIG_INTEGER:
       {
-	NEW_CELL(sc, x);
-	set_type(x, T_BIG_RATIO);
+	NEW_CELL(sc, x, T_BIG_RATIO);
 	add_bigratio(sc, x);
 
 	mpq_init(big_ratio(x));
@@ -64611,8 +64617,7 @@ static s7_pointer big_angle(s7_scheme *sc, s7_pointer args)
     case T_BIG_COMPLEX:
       {
 	s7_pointer x;
-	NEW_CELL(sc, x);
-	set_type(x, T_BIG_REAL);
+	NEW_CELL(sc, x, T_BIG_REAL);
 	add_bigreal(sc, x);
 	mpfr_init(big_real(x));
 	mpc_arg(big_real(x), big_complex(p), GMP_RNDN);
@@ -64663,8 +64668,7 @@ static s7_pointer big_make_rectangular(s7_scheme *sc, s7_pointer args)
 
   mpfr_init_set(rl, big_real(promote_number(sc, T_BIG_REAL, p0)), GMP_RNDN);
 
-  NEW_CELL(sc, p);
-  set_type(p, T_BIG_COMPLEX);
+  NEW_CELL(sc, p, T_BIG_COMPLEX);
   add_bignumber(sc, p);
   mpc_init(big_complex(p));
   mpc_set_fr_fr(big_complex(p), rl, im, MPC_RNDNN);
@@ -64741,8 +64745,7 @@ static s7_pointer big_make_polar(s7_scheme *sc, s7_pointer args)
   mpfr_cos(rl, rl, GMP_RNDN);
   mpfr_mul(rl, rl, mag, GMP_RNDN);
 
-  NEW_CELL(sc, p);
-  set_type(p, T_BIG_COMPLEX);
+  NEW_CELL(sc, p, T_BIG_COMPLEX);
   add_bignumber(sc, p);
   mpc_init(big_complex(p));
   mpc_set_fr_fr(big_complex(p), rl, im, MPC_RNDNN);
@@ -64820,8 +64823,7 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 	      if ((s7_is_rational(car(args))) &&
 		  (mpfr_integer_p(n) != 0))
 		{
-		  NEW_CELL(sc, p);
-		  set_type(p, T_BIG_INTEGER);
+		  NEW_CELL(sc, p, T_BIG_INTEGER);
 		  add_bigint(sc, p);
 		  mpz_init(big_integer(p));
 		  mpfr_get_z(big_integer(p), n, GMP_RNDN);
@@ -64840,8 +64842,7 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 	      (s7_is_rational(cadr(args))) &&
 	      (mpfr_integer_p(n) != 0))
 	    {
-	      NEW_CELL(sc, p);
-	      set_type(p, T_BIG_INTEGER);
+	      NEW_CELL(sc, p, T_BIG_INTEGER);
 	      add_bigint(sc, p);
 	      mpz_init(big_integer(p));
 	      mpfr_get_z(big_integer(p), n, GMP_RNDN);
@@ -68879,10 +68880,6 @@ s7_scheme *s7_init(void)
   s7_gmp_init(sc);
 #endif
 
-#if WITH_DUMP_HEAP  
-  s7_define_function(sc, "dump-heap", g_dump_heap, 0, 0, false, "write heap contents to heap.data"); 
-#endif
-
   init_choosers(sc);
 
   /* macroexpand 
@@ -69205,11 +69202,11 @@ int main(int argc, char **argv)
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1136
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3005
- * lg             |      |      | 6547 6497 6494 6226
- * t137           |      |      | 8296           3471
- * t455|6     265 |   89 |  9   |       8.4 8045 7888
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1141
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020
+ * lg             |      |      | 6547 6497 6494 6237
+ * t137           |      |      | 11.0           5031
+ * t455|6     265 |   89 |  9   |       8.4 8045 7530
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3
@@ -69219,6 +69216,7 @@ int main(int argc, char **argv)
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers? (useful in object->string too)
+ * cyclic-seq in rest of full-*
  *
  * need to check new openGL for API changes (GL_VERSION?)
  *   test/Mesa-10.3.1/include/GL/glext.h|gl.h (current version appears to be 7.6)
@@ -69235,7 +69233,6 @@ int main(int argc, char **argv)
  *   need color-dialog use-gl button in gtk callbacks for labels
  * snd-genv needs a lot of gtk3 work
  *
- * cyclic-seq in rest of full-* and cyclic-sequences is minimally tested in s7test (also c_object env) [piggy-back on circular tests]
  * why not snd-g* -> snd-gtk?
  * g_load of .so file should try "./fname" and others unchanged?
  * C-G in Snd listener can cause a segfault!  Need a repeatable test case.
@@ -69247,7 +69244,7 @@ int main(int argc, char **argv)
  *   before-save-as-hook mus-raw-header-defaults save-region save-selection save-sound-as array->file(?)
  * inexact/pure s7: (define exact? rational?) (define (inexact? x) (not (rational? x))) (define inexact->exact round) (define (exact->inexact x) (* x 1.0))
  *    also get rid of #i and #e?
- * the 3-func version of catch could be an option (catch-if in s7.html) -- then allow #f in dynamic-wind and they're similar (trilambda)
- *   catch-if is not in s7test -- are there more of these?
- *   fix the generic func section in s7.html
+ *
+ * iterator display should include abbreviated sequence
+ * check cons args etc, clean up map/for-each lists
  */

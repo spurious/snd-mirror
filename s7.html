@@ -1838,17 +1838,25 @@ or even <code>(&gt; 1 0+i)</code>.
 </div>
 </blockquote>
 
+<div class="separator"></div>
+
+<p>The somewhat non-standard generic sequence functions in s7 are:
+</p>
 
 <pre class="indented">
-<em class=def id="sortb">sort!</em>
-<em class=def id="reverseb">reverse!</em>
-<em class=def id="fillb">fill!</em>
-<em class=def id="s7copy">copy</em>
-<em class=def id="objecttostring">object-&gt;string</em>
+(<em class=def id="sortb">sort!</em> sequence less?)
+(<em class=def id="reverseb">reverse!</em> sequence) and (reverse sequence)
+(<em class=def id="fillb">fill!</em> sequence value)
+(<em class=def id="s7copy">copy</em> obj) and (copy source destination start end)
+(<em class=def id="objecttostring">object-&gt;string</em> obj)
+(length obj)
+(map func . sequences) and (for-each func . sequences)
+(<a href="#morallyequalp">morally-equal?</a> obj1 obj2)
 </pre>
 
-<p><b>reverse!</b> is an in-place version of the built-in function reverse.  That is, 
-it modifies the list passed to it in the process of reversing its contents.  Use set!:
+<p><b>reverse!</b> is an in-place version of reverse.  That is, 
+it modifies the sequence passed to it in the process of reversing its contents.  
+If the sequence is a list, remember to use set!:
 <code>(set! p (reverse! p))</code>.  This is somewhat inconsistent with other cases,
 but historically, lisp programmers have treated the in-place reverse as the fast
 version, so s7 follows suit.
@@ -1856,7 +1864,7 @@ version, so s7 follows suit.
 
 <p>
 <b>sort!</b> sorts a sequence using the
-function passed as its second argument to choose the new ordering.
+function passed as its second argument:
 </p>
 
 <pre class="indented">
@@ -1864,18 +1872,20 @@ function passed as its second argument to choose the new ordering.
 (0 1 2 3 4 5 6 7 8 9)
 </pre>
 
-<br>
+<p>Underlying some of these functions are generic iterators, also built-into s7:
+</p>
+
 <pre class="indented">
-<em class=def id="makeiterator">make-iterator</em>
-<em class=def id="iteratorp">iterator?</em>
-<em class=def id="iterate">iterate</em>
-<em class=def id="iteratorsequence">iterator-sequence</em>
+(<em class=def id="makeiterator">make-iterator</em> sequence)
+(<em class=def id="iteratorp">iterator?</em> obj)
+(<em class=def id="iterate">iterate</em> iterator)
+(<em class=def id="iteratorsequence">iterator-sequence</em> iterator)
 </pre>
 
 <p><b>make-iterator</b> takes a sequence argument and returns an iterator object that traverses
 that sequence as it is called.  The iterator itself can be treated as a function of no arguments,
 or (for code clarity) it can be the argument to <b>iterate</b>, which does the same thing.
-That is <code>(iter)</code> is the same as <code>(iterate iter)</code>.  The original sequence
+That is <code>(iter)</code> is the same as <code>(iterate iter)</code>.  The sequence that an iterator is traversing
 is <b>iterator-sequence</b>.
 </p>
 
@@ -1890,13 +1900,9 @@ arcane consequence for method writers: specialize make-iterator, not map or for-
 (define (find-if f sequence)
   (let ((iter (make-iterator sequence)))
     (do ((x (iter) (iter)))
-	((or (f x) (eof-object? x))
+	((or (eof-object? x) (f x))
 	 (and (not (eof-object? x)) x)))))
 </pre>
-
-
-
-
 
 
 
