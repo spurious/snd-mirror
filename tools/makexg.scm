@@ -229,11 +229,11 @@
 
 (define (deref-type arg)
   (let ((type (car arg)))
-    (substring type 0 (- (string-length type) 1))))
+    (substring type 0 (- (length type) 1))))
 
 (define (deref-element-type arg)
   (let ((type (car arg)))
-    (substring type 0 (- (string-length type) 2))))
+    (substring type 0 (- (length type) 2))))
 
 (define (deref-name arg)
   (let ((name (cadr arg)))
@@ -247,8 +247,8 @@
   (char-position #\* type))
 
 (define (no-stars type)
-  (let ((len (string-length type))
-	(val (string-copy type)))
+  (let ((len (length type))
+	(val (copy type)))
     (do ((i 0 (+ i 1)))
 	((= i len) val)
       (if (char=? (val i) #\*)
@@ -264,7 +264,7 @@
   (let ((data ())
 	(sp -1)
 	(type #f)
-	(len (string-length args)))
+	(len (length args)))
     (if (string=? args "void")
 	()
 	(do ((i 0 (+ i 1)))
@@ -278,12 +278,12 @@
 			    (reftype #f))
 			(if (char=? (given-name 0) #\@)
 			    (set! data (cons (list type 
-						   (substring given-name 1 (string-length given-name))
+						   (substring given-name 1 (length given-name))
 						   'null)
 					     data))
 			    (if (char=? (given-name 0) #\#)
 				(set! data (cons (list type 
-						       (substring given-name 1 (string-length given-name))
+						       (substring given-name 1 (length given-name))
 						       'opt)
 						 data))
 				(if (or (char=? (given-name 0) #\[)
@@ -292,12 +292,12 @@
 				    (begin
 				      (set! reftype (deref-type (list type)))
 				      (set! data (cons (list type 
-							     (substring given-name 1 (- (string-length given-name) 1))
+							     (substring given-name 1 (- (length given-name) 1))
 							     given-name) 
 						       data)))
 				    (if (char=? (given-name 0) #\&)
 					(set! data (cons (list type 
-							       (substring given-name 1 (string-length given-name))
+							       (substring given-name 1 (length given-name))
 							       'set)
 							 data))
 					(set! data (cons (list type given-name) data))))))
@@ -1111,8 +1111,8 @@
 
 (define (helpify name type args)
   (let* ((initial (format #f "  #define H_~A \"~A ~A(" name type name))
-	 (line-len (string-length initial))
-	 (len (string-length args))
+	 (line-len (length initial))
+	 (len (length args))
 	 (typed #f)
 	 (help-max 100))
     (hey initial)
@@ -1271,7 +1271,7 @@
       structs))))
 
 (define (no-arg name)
-  (let ((len (string-length name)))
+  (let ((len (length name)))
     (call-with-exit
      (lambda (return)
        (do ((i 0 (+ i 1)))
@@ -1286,7 +1286,7 @@
 (define listable-types ())
 (for-each
  (lambda (type)
-   (let* ((len (string-length type))
+   (let* ((len (length type))
 	  (dereftype (if (and (char=? (type (- len 1)) #\*)
 			      (not (string=? type "char*")) ; these are surely strings (and set would need Xen_to_C_gchar etc)
 			      (not (string=? type "GError*"))
@@ -1829,7 +1829,7 @@
 		      (if (eq? gctype 'permanent-gcc)
 			  (hey "#if (!(defined(__cplusplus)))~%  ")) ; const arg conversion causes trouble if g++
 		      (let ((castlen (+ 12 (if (not void?) 
-					       (+ 2 (string-length (format #f "return(Xen_to_C_~A" (no-stars type))))
+					       (+ 2 (length (format #f "return(Xen_to_C_~A" (no-stars type))))
 					       1))))
 			(if (not void?)
 			    (hey "return(Xen_to_C_~A("
@@ -1925,12 +1925,12 @@
       (define (hey-on . args)
 	;; no cr -- just append
 	(let ((line (apply format #f args)))
-	  (set! line-len (+ line-len (string-length line)))
+	  (set! line-len (+ line-len (length line)))
 	  (heyc line)))
       
       (define (hey-ok arg)
 	;; cr ok after arg
-	(set! line-len (+ line-len (string-length arg)))
+	(set! line-len (+ line-len (length arg)))
 	(heyc arg)
 	(if (> line-len line-max)
 	    (begin

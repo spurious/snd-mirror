@@ -747,7 +747,7 @@
 	(stop (seconds->samples (+ beg dur))))
     (let ((pulsef (make-env '(0.000 0.000 0.065 0.5 0.117 0.85 0.179 1.0 0.236 0.9 0.503 0.4 0.606 0.2 1.000 0.000) :duration pulse-dur))
 	  (pulses (if (> (random 1.0) .6) 5 4))
-	  (pulse-amps (list->vector (map (lambda (x) (* amp x)) '(.7 .9 1.0 .9 .6))))
+	  (pulse-amps (apply vector (map (lambda (x) (* amp x)) '(.7 .9 1.0 .9 .6))))
 	  
 	  (gen1 (make-oscil (* pitch 10) (* 0.5 pi)))
 	  (gen3 (make-oscil (* pitch 18) (* 0.5 pi)))

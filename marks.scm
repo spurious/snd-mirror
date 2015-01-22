@@ -399,7 +399,7 @@
 		     (format #f "Mark ~A~A:~%  sample: ~D = ~,3F secs~A~A"
 			     n 
 			     (let ((name (mark-name n)))
-			       (if (> (string-length name) 0)
+			       (if (> (length name) 0)
 				   (format #f " (~S)" name)
 				   ""))
 			     (mark-sample n)
@@ -439,7 +439,7 @@
 				       (mark-sample m)
 				       chan
 				       (if (and (string? (mark-name m))
-						(> (string-length (mark-name m)) 0))
+						(> (length (mark-name m)) 0))
 					   (format #f "~S" (mark-name m))
 					   #f)
 				       (sync m))))

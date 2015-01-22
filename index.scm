@@ -10,7 +10,7 @@ and if one is found, and the Snd documentation can be found, calls *html-program
 		(lambda (str)
 		  (let loop ((pos 0)) ;from slib/strsrch.scm
 		    (cond
-		     ((>= pos (string-length str)) #f)
+		     ((>= pos (length str)) #f)
 		     ((char=? #\) (str pos)) pos)
 		     ((char=? #\space (str pos)) pos)
 		     (else (loop (+ 1 pos)))))))

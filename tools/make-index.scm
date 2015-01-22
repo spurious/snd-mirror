@@ -858,7 +858,7 @@
   ;;  big-ring-modulate big-oscil? make-big-oscil big-ncos? make-big-ncos big-nsin? make-big-nsin big-table-lookup? 
   ;;  make-big-table-lookup big-one-zero? make-big-one-zero big-one-pole? make-big-one-pole 
   ;;  hilbert-transform highpass lowpass bandpass bandstop differentiator butter channel-lp-inf savitzky-golay-filter 
-  ;;  stop-dac dlocsig vector-copy array-ref sound-comment 
+  ;;  stop-dac dlocsig array-ref sound-comment 
 
 
   ;; alternate: (autoload sym (lambda (e) (let ((m (load file))) (varlet (rootlet) (cons sym (m sym))))))

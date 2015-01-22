@@ -15,14 +15,14 @@
        (average (make-moving-average 14)) ; 2-week average
        (average1 (make-moving-average 90)) ; 3-month average
        (ind (find-sound
-	     (with-sound (:channels 6 :data-format mus-lfloat) ; float output to be sure it can handle the full range
+	     (with-sound (:channels 6 :sample-type mus-lfloat) ; float output to be sure it can handle the full range
 	      (let ((samp 0))	    
 		(call-with-input-file 
 		    (list-ref (script-args) 1) ; invocation arg = text file of data ("snd heart.scm data.txt")
 		  (lambda (file)
 		    (let loop ((line (read-line file #t)))
 		      (or (eof-object? line)
-			  (let ((len (string-length line)))
+			  (let ((len (length line)))
 			    (do ((i 0 (+ 1 i)))
 				((>= i (- len 14)))
 			      (if (and (char=? (line i) #\[)

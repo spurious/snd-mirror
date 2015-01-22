@@ -154,7 +154,7 @@
 			      (lambda (w c i)
 				(let ((new-name (XmTextFieldGetString rename-text)))
 				  (if (and (string? new-name)
-					   (> (string-length new-name) 0)
+					   (> (length new-name) 0)
 					   (>= (selected-sound) 0))
 				      (let ();(current-name (file-name)))
 					(save-sound-as new-name)

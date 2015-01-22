@@ -1,5 +1,5 @@
 (define (no-dashes-or-cr str)
-  (let ((len (string-length str))
+  (let ((len (length str))
 	(newstr (make-string 0))
 	(last-ch #\-))
     (do ((i 0 (1+ i)))
@@ -19,7 +19,7 @@
       (let loop ((line (read-line file #t)))
 	(set! ctr (1+ ctr))
 	(or (eof-object? line)
-	    (let ((len (string-length line)))
+	    (let ((len (length line)))
 	      (if (and (> len 30)
 		       (string=? ";;; ---------------- test "
 				 (substring line 0 26)))

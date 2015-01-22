@@ -69202,7 +69202,7 @@ int main(int argc, char **argv)
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020
- * lg             |      |      | 6547 6497 6494 6237
+ * lg             |      |      | 6547 6497 6494 6235
  * t137           |      |      | 11.0           5031
  * t455|6     265 |   89 |  9   |       8.4 8045 7530
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
@@ -69241,8 +69241,12 @@ int main(int argc, char **argv)
  * how to catch the stack overflow op_cz case?
  * new-sound et al in new with-sound arg order [output channels srate sample-type header-type comment]:
  *   before-save-as-hook mus-raw-header-defaults save-region save-selection save-sound-as array->file(?)
+ *
  * inexact/pure s7: (define exact? rational?) (define (inexact? x) (not (rational? x))) (define inexact->exact round) (define (exact->inexact x) (* x 1.0))
  *    also get rid of #i and #e?
+ *    remove *-length|copy and the various converters to and from lists
+ *    remove setters for output-ports
+ * most-pos-fix stacktrace -> *s7*
  *
  * iterator display should include abbreviated sequence
  * temp funcs need a way to access the direct value

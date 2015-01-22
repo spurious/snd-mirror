@@ -38,8 +38,6 @@
 	  (set! (p1 i) (* scl (p1 i))))
 	p1))))
 
-(define vector-copy copy)
-
 (define poly-as-vector-eval 
   (let ((documentation "(poly-as-vector-eval v x) treats 'v' as a vector of polynomial coefficients, returning the value of the polynomial at x"))
     (lambda (v x)
@@ -84,12 +82,12 @@
       (if (vector? p1)
 	  (if (vector? p2)
 	      (if (> (length p1) (length p2))
-		  (vector-add! (vector-copy p1) p2)
-		  (vector-add! (vector-copy p2) p1))
-	      (let ((v (vector-copy p1)))
+		  (vector-add! (copy p1) p2)
+		  (vector-add! (copy p2) p1))
+	      (let ((v (copy p1)))
 		(set! (v 0) (+ (v 0) p2))
 		v))
-	  (let ((v (vector-copy p2)))
+	  (let ((v (copy p2)))
 	    (set! (v 0) (+ (v 0) p1))
 	    v)))))
 
@@ -121,8 +119,8 @@
 		      ((= j p2len))
 		    (set! (m (+ i j)) (+ (m (+ i j)) (* (p1 i) (p2 j))))))
 		m)
-	      (vector-scale! (vector-copy p1) p2))
-	  (vector-scale! (vector-copy p2) p1)))))
+	      (vector-scale! (copy p1) p2))
+	  (vector-scale! (copy p2) p1)))))
 
 (define poly* 
   (let ((documentation "(poly* p1 p2) multiplies the polynomials (float-vectors or vectors) p1 and p2"))
@@ -513,9 +511,9 @@
 				      ;; perhaps get derivative roots, plug in main -- need to get nth derivative to be safe in this
 				      ;; from Cohen, "Computational Algebraic Number Theory"
 				      (let* ((roots ())
-					     (q (vector-copy p1))
+					     (q (copy p1))
 					     (pp (poly-as-vector-derivative p1))
-					     (qp (vector-copy pp))
+					     (qp (copy pp))
 					     (n deg)
 					     (x 1.3+0.314159i)
 					     (v (poly-as-vector-eval q x))

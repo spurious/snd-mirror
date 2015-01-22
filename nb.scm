@@ -83,7 +83,7 @@ It causes a description of the file to popup when the mouse crosses the filename
 		  (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date file)))
 		  (let ((comment (mus-sound-comment file)))
 		    (if (and (string? comment)
-			     (> (string-length comment) 0))
+			     (> (length comment) 0))
 			(format #f "~%  comment: ~A" comment)
 			""))
 		  (if (and use-gdbm

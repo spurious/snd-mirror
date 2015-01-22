@@ -1816,7 +1816,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
     (define (file-from-path curfile)
       (let ((last-slash 0))
 	(do ((i 0 (+ i 1)))
-	    ((= i (string-length curfile)))
+	    ((= i (length curfile)))
 	  (if (char=? (curfile i) #\/)
 	      (set! last-slash i)))
 	(substring curfile (+ 1 last-slash))))
@@ -1824,7 +1824,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
     (define (directory-from-path curfile)
       (let ((last-slash 0))
 	(do ((i 0 (+ i 1)))
-	    ((= i (string-length curfile)))
+	    ((= i (length curfile)))
 	  (if (char=? (curfile i) #\/)
 	      (set! last-slash i)))
 	(substring curfile 0 last-slash)))
@@ -1902,7 +1902,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
       ;;        the calls are ordered out->in (or last first)
       ;; we take this list and create and evaluate a new function
       
-      (let ((dsp-chain (list->vector (reverse (map (lambda (gen)
+      (let ((dsp-chain (apply vector (reverse (map (lambda (gen)
 						     (if (list? gen)
 							 (make-env gen :duration dur)
 							 gen))
@@ -1987,7 +1987,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
       
       (let ((len (length new-order)))
 	(if (> len 1)
-	    (let ((end-chans (list->vector new-order))
+	    (let ((end-chans (apply vector new-order))
 		  (cur-chans (make-vector len)))
 	      (do ((i 0 (+ i 1)))
 		  ((= i len))

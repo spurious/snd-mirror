@@ -100,14 +100,14 @@
 
 (define (deref-type arg)
   (let ((type (car arg)))
-    (substring type 0 (- (string-length type) 1))))
+    (substring type 0 (- (length type) 1))))
 
 (define (deref-name arg)
   (let ((name (cadr arg)))
     (string-append "ref_" name)))
 
 (define (derefable type)
-  (let ((len (string-length type)))
+  (let ((len (length type)))
     (call-with-exit
      (lambda (return)
        (do ((i (- len 1) (- i 1))
@@ -117,7 +117,7 @@
 	     (return (> ctr 1))))))))
 
 (define (has-stars type)
-  (let ((len (string-length type)))
+  (let ((len (length type)))
     (call-with-exit
      (lambda (return)
        (do ((i (- len 1) (- i 1))
@@ -132,7 +132,7 @@
       "Display"
       (if (string=? type "XVisualInfo*")
 	  "XVisualInfo"
-	  (let ((len (string-length type))
+	  (let ((len (length type))
 		(val (string-copy type)))
 	    (do ((i 0 (+ i 1)))
 		((= i len) val)
@@ -140,7 +140,7 @@
 		  (set! (val i) #\_)))))))
 
 (define (no-arg-or-stars name)
-  (let ((len (string-length name)))
+  (let ((len (length name)))
     (call-with-exit
      (lambda (return)
        (do ((i 0 (+ i 1)))
@@ -153,7 +153,7 @@
   (let ((data ())
 	(sp -1)
 	(type #f)
-	(len (string-length args)))
+	(len (length args)))
     (if (string=? args "void")
 	()
 	(do ((i 0 (+ i 1)))
@@ -167,19 +167,19 @@
 			    (reftype #f))
 			(if (char=? (given-name 0) #\@)
 			    (set! data (cons (list type 
-						   (substring given-name 1 (string-length given-name))
+						   (substring given-name 1 (length given-name))
 						   'null)
 					       data))
 			    (if (char=? (given-name 0) #\#)
 				(set! data (cons (list type 
-						       (substring given-name 1 (string-length given-name))
+						       (substring given-name 1 (length given-name))
 						       'opt)
 						 data))
 				(if (char=? (given-name 0) #\[) 
 				    (begin
 				      (set! reftype (deref-type (list type)))
 				      (set! data (cons (list type 
-							     (substring given-name 1 (- (string-length given-name) 1))
+							     (substring given-name 1 (- (length given-name) 1))
 							     given-name) 
 						       data)))
 				    (set! data (cons (list type given-name) data)))))
@@ -197,8 +197,8 @@
 
 (define (helpify name type args)
   (let* ((initial (format #f "  #define H_~A \"~A ~A(" name type name))
-	 (line-len (string-length initial))
-	 (len (string-length args))
+	 (line-len (length initial))
+	 (len (length args))
 	 (typed #f)
 	 (help-max 100))
     (hey initial)
@@ -393,7 +393,7 @@
 	(set! names (cons (cons name 'int) names)))))
 
 (define (no-arg name)
-  (let ((len (string-length name)))
+  (let ((len (length name)))
     (call-with-exit
      (lambda (return)
        (do ((i 0 (+ i 1)))
@@ -591,12 +591,12 @@
      (define (hey-on . args)
        ;; no cr -- just append
        (let ((line (apply format #f args)))
-	 (set! line-len (+ line-len (string-length line)))
+	 (set! line-len (+ line-len (length line)))
 	 (heyc line)))
 
      (define (hey-ok arg)
        ;; cr ok after arg
-       (set! line-len (+ line-len (string-length arg)))
+       (set! line-len (+ line-len (length arg)))
        (heyc arg)
        (if (> line-len line-max)
 	   (begin

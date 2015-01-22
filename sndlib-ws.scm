@@ -183,7 +183,7 @@
 	       (format #t "~%;~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
 		       (if output-to-file
 			   (if (or scaled-to scaled-by)
-			       (substring output-1 0 (- (string-length output-1) 5))
+			       (substring output-1 0 (- (length output-1) 5))
 			       output-1)
 			   (if (vector? output-1) "vector" "flush"))
 		       (if (or scaled-to scaled-by) 
@@ -210,7 +210,7 @@
 			      (do ((i 1 (+ i 2)))
 				  ((>= i (length mx-lst)) (/ scaled-to mx))
 				(set! mx (max mx (list-ref mx-lst i)))))))
-		       (out-file (substring output-1 0 (- (string-length output-1) 5))))
+		       (out-file (substring output-1 0 (- (length output-1) 5))))
 		   (let ((g (make-sample->file out-file channels sample-type header-type #f)))
 		     (mus-close g))
 		   (mus-file-mix out-file output-1 0 (mus-sound-framples output-1) 0 
@@ -219,7 +219,7 @@
 				       ((= i channels) mx)
 				     (set! (mx i i) scaling))))
 		   (delete-file output-1)
-		   (set! output-1 (substring output-1 0 (- (string-length output-1) 5))))
+		   (set! output-1 (substring output-1 0 (- (length output-1) 5))))
 
 		 (if (float-vector? output-1)
 		     (if scaled-to
@@ -419,14 +419,14 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
       (if (symbol? pitch)
 	  (let* ((name (string-downcase (symbol->string pitch)))
 		 (base-char (name 0))
-		 (sign-char (and (> (string-length name) 1)
+		 (sign-char (and (> (length name) 1)
 				 (not (char-numeric? (name 1)))
 				 (not (char=? (name 1) #\n))
 				 (name 1)))
-		 (octave-char (if (and (> (string-length name) 1)
+		 (octave-char (if (and (> (length name) 1)
 				       (char-numeric? (name 1))) 
 				  (name 1)
-				  (if (and (> (string-length name) 2) 
+				  (if (and (> (length name) 2) 
 					   (char-numeric? (name 2)))
 				      (name 2)
 				      #f)))

@@ -122,7 +122,7 @@
     
     (define (non-null-string? x)
       (and (string? x)
-	   (> (string-length x) 0)))
+	   (> (length x) 0)))
     
     (define (non-null-vector? x)
       (and (vector? x)
@@ -864,7 +864,7 @@
       (define (truncated-list->string form)
 	;; return form -> string with limits on its length
 	(let* ((str (object->string form))
-	       (len (string-length str)))
+	       (len (length str)))
 	  (if (< len 8)
 	      (format #f " ~A" str)
 	      (if (<= len 80)
@@ -877,9 +877,9 @@
       (define (lists->string f1 f2)
 	;; same but 2 strings that may need to be lined up vertically
 	(let* ((str1 (object->string f1))
-	       (len1 (string-length str1))
+	       (len1 (length str1))
 	       (str2 (object->string f2))
-	       (len2 (string-length str2)))
+	       (len2 (length str2)))
 	  (if (< (+ len1 len2) 20)
 	      (format #f " ~A -> ~A" str1 str2)
 	      (if (< (+ len1 len2) 70)
@@ -3578,7 +3578,7 @@
 				   (dirs 0)
 				   (pos (char-position #\~ str)))
 			       (if pos
-				   (let ((len (string-length str))
+				   (let ((len (length str))
 					 (tilde-time #t)) 
 				     (do ((i (+ pos 1) (+ i 1)))
 					 ((>= i len))

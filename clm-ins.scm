@@ -1763,7 +1763,7 @@ is a physical model of a flute:
 (definstrument (scratch start file src-ratio turnaroundlist)
   (let ((f (make-file->sample file))
 	(beg (seconds->samples start))
-	(turntable (list->vector turnaroundlist))
+	(turntable (apply vector turnaroundlist))
 	(turn-i 1)
 	(turns (length turnaroundlist)))
     (let ((cur-sample (seconds->samples (turntable 0)))
