@@ -801,7 +801,6 @@ static Xen g_vct_scale(Xen obj1, Xen obj2)
 static Xen g_vct_offset(Xen obj1, Xen obj2)
 {
   #define H_vct_offsetB "(" S_vct_offsetB " v val): add val to each element of v: v[i] += val, returns v"
-  mus_long_t i;
   vct *v1;
   mus_float_t scl;
   mus_float_t *d;
@@ -815,8 +814,11 @@ static Xen g_vct_offset(Xen obj1, Xen obj2)
 
   scl = Xen_real_to_C_double(obj2);
   if (scl != 0.0)
-    for (i = 0; i < mus_vct_length(v1); i++) 
-      d[i] += scl;
+    {
+      mus_long_t i;
+      for (i = 0; i < mus_vct_length(v1); i++) 
+	d[i] += scl;
+    }
   return(obj1);
 }
 

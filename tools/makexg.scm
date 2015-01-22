@@ -776,6 +776,7 @@
 	(cons "GtkWidgetHelpType" "INT")
 	(cons "GtkWidgetFlags" "INT")
 	(cons "GtkRcTokenType" "INT")
+	(cons "GtkTextExtendSelection" "INT")
 					;(cons "GtkNotebookTab" "INT")
 	(cons "GtkScrollType" "INT")
 	(cons "GtkMovementStep" "INT")

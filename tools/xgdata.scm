@@ -9109,3 +9109,12 @@
 
 ;(CFNC-3.16 "GActionGroup* gtk_widget_get_action_group GtkWidget* widget gchar* prefix" 'const)
 ;(CNFC-3.16 "gchar** gtk_widget_list_action_prefixes GtkWidget* widget" 'const)
+
+;;; 3.15,4:
+
+(CFNC-3.16 "gchar* gdk_device_get_vendor_id GdkDevice* device" 'const-return)
+(CFNC-3.16 "gchar* gdk_device_get_product_id GdkDevice* device" 'const-return)
+
+(CINT-3.16 "GTK_TEXT_EXTEND_SELECTION_WORD" "GtkTextExtendSelection")
+(CINT-3.16 "GTK_TEXT_EXTEND_SELECTION_LINE" "GtkTextExtendSelection")
+

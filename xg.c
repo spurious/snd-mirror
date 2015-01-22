@@ -31688,6 +31688,20 @@ GtkTextIter* iter, gchar* markup, gint len)"
   return(Xen_false);
 }
 
+static Xen gxg_gdk_device_get_vendor_id(Xen device)
+{
+  #define H_gdk_device_get_vendor_id "gchar* gdk_device_get_vendor_id(GdkDevice* device)"
+  Xen_check_type(Xen_is_GdkDevice_(device), device, 1, "gdk_device_get_vendor_id", "GdkDevice*");
+    return(C_to_Xen_gchar_((gchar*)gdk_device_get_vendor_id(Xen_to_C_GdkDevice_(device))));
+}
+
+static Xen gxg_gdk_device_get_product_id(Xen device)
+{
+  #define H_gdk_device_get_product_id "gchar* gdk_device_get_product_id(GdkDevice* device)"
+  Xen_check_type(Xen_is_GdkDevice_(device), device, 1, "gdk_device_get_product_id", "GdkDevice*");
+    return(C_to_Xen_gchar_((gchar*)gdk_device_get_product_id(Xen_to_C_GdkDevice_(device))));
+}
+
 #endif
 
 static Xen gxg_cairo_create(Xen target)
@@ -38271,6 +38285,8 @@ Xen_wrap_2_args(gxg_gtk_popover_menu_open_submenu_w, gxg_gtk_popover_menu_open_s
 Xen_wrap_1_arg(gxg_gtk_entry_grab_focus_without_selecting_w, gxg_gtk_entry_grab_focus_without_selecting)
 Xen_wrap_2_args(gxg_gtk_scrollable_get_border_w, gxg_gtk_scrollable_get_border)
 Xen_wrap_4_args(gxg_gtk_text_buffer_insert_markup_w, gxg_gtk_text_buffer_insert_markup)
+Xen_wrap_1_arg(gxg_gdk_device_get_vendor_id_w, gxg_gdk_device_get_vendor_id)
+Xen_wrap_1_arg(gxg_gdk_device_get_product_id_w, gxg_gdk_device_get_product_id)
 #endif
 
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
@@ -42330,6 +42346,8 @@ static void define_functions(void)
   Xg_define_procedure(gtk_entry_grab_focus_without_selecting, gxg_gtk_entry_grab_focus_without_selecting_w, 1, 0, 0, H_gtk_entry_grab_focus_without_selecting);
   Xg_define_procedure(gtk_scrollable_get_border, gxg_gtk_scrollable_get_border_w, 2, 0, 0, H_gtk_scrollable_get_border);
   Xg_define_procedure(gtk_text_buffer_insert_markup, gxg_gtk_text_buffer_insert_markup_w, 4, 0, 0, H_gtk_text_buffer_insert_markup);
+  Xg_define_procedure(gdk_device_get_vendor_id, gxg_gdk_device_get_vendor_id_w, 1, 0, 0, H_gdk_device_get_vendor_id);
+  Xg_define_procedure(gdk_device_get_product_id, gxg_gdk_device_get_product_id_w, 1, 0, 0, H_gdk_device_get_product_id);
 #endif
 
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
@@ -44211,6 +44229,8 @@ static void define_integers(void)
   define_integer(GDK_GL_SOFTWARE_DRAW_GL);
   define_integer(GDK_GL_SOFTWARE_DRAW_SURFACE);
   define_integer(GDK_GL_TEXTURE_RECTANGLE);
+  define_integer(GTK_TEXT_EXTEND_SELECTION_WORD);
+  define_integer(GTK_TEXT_EXTEND_SELECTION_LINE);
 #endif
 
   define_integer(CAIRO_STATUS_SUCCESS);
@@ -44990,7 +45010,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("29-Dec-14"));
+      Xen_define("xg-version", C_string_to_Xen_string("21-Jan-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

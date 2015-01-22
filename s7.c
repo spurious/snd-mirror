@@ -24299,8 +24299,9 @@ bool s7_is_valid(s7_scheme *sc, s7_pointer arg)
 		  (arg->hloc < (int)sc->heap_size) && (sc->heap[arg->hloc] == arg))));
 
 #if TRAP_SEGFAULT
-  signal(SIGSEGV, old_segv);
+      signal(SIGSEGV, old_segv);
     }
+  else result = sc->NIL;
   can_jump = 0;
 #endif
 
@@ -28495,7 +28496,6 @@ static s7_pointer revappend(s7_scheme *sc, s7_pointer a, s7_pointer b)
   /* (map (lambda (x) (if (odd? x) (apply values '(1 2 3)) (values))) (list 1 2 3 4)) 
    *   is a bad case -- we have to copy the incoming list.
    */
-   
   s7_pointer p = b, q;
   
   if (is_not_null(a)) 
@@ -33447,9 +33447,8 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 
   NEW_CELL(sc, table, T_HASH_TABLE | T_SAFE_PROCEDURE);
   hash_table_length(table) = size;
+  for (i = 0; i < size; i++) els[i] = sc->NIL;
   hash_table_elements(table) = els;
-  for (i = 0; i < size; i++)
-    hash_table_element(table, i) = sc->NIL;
   /* or use the vector fill stuff here, but that now just unrolls the loop */
   hash_table_function(table) = hash_empty;
   hash_table_eq_function(table) = NULL;
@@ -39882,9 +39881,8 @@ static s7_pointer for_each_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       lexpr = cadr(expr);
       if (is_lambda(sc, car(lexpr)))
 	{
-	  s7_pointer largs, lbody;
+	  s7_pointer largs;
 	  largs = cadr(lexpr);
-	  lbody = cddr(lexpr);
       	  if ((is_pair(largs)) &&
 	      (is_null(cdr(largs))) &&
 	      (!is_immutable(car(largs))))
@@ -43256,7 +43254,8 @@ static s7_pointer g_if_s_direct(s7_scheme *sc, s7_pointer args)
 static s7_pointer make_function_with_class(s7_scheme *sc, s7_pointer cls, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer uf;
-  uf = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
+  /* the "safe_function" business here doesn't matter -- this is after the optimizer decides what is safe */
+  uf = s7_make_safe_function(sc, name, f, required_args, optional_args, rest_arg, doc);
   s7_function_set_class(uf, cls);
   return(uf);
 }
@@ -43264,7 +43263,7 @@ static s7_pointer make_function_with_class(s7_scheme *sc, s7_pointer cls, const 
 static s7_pointer make_temp_function_with_class(s7_scheme *sc, s7_pointer cls, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer uf;
-  uf = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
+  uf = s7_make_safe_function(sc, name, f, required_args, optional_args, rest_arg, doc);
   s7_function_set_class(uf, cls);
   s7_function_set_returns_temp(uf);
   return(uf);
@@ -43649,7 +43648,6 @@ static void init_choosers(s7_scheme *sc)
   format_allg = make_function_with_class(sc, f, "format", g_format_allg, 1, 0, true, "format opt");
   format_allg_no_column = make_function_with_class(sc, f, "format", g_format_allg_no_column, 1, 0, true, "format opt");
   format_just_newline = make_function_with_class(sc, f, "format", g_format_just_newline, 2, 0, false, "format opt");
-  set_type(format_just_newline, typeflag(format_just_newline) | T_SAFE_PROCEDURE);
 
   /* not */
   f = set_function_chooser(sc, sc->NOT, not_chooser);
@@ -54918,7 +54916,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer a1, a2;
 		a1 = cdr(code);
 		a2 = cdr(a1);
-		sc->args = list_3(sc, find_symbol_checked(sc, car(a1)), car(a2), find_symbol_unchecked(sc, cadr(a2)));
+		sc->args = list_3(sc, find_symbol_checked(sc, car(a1)), car(a2), find_symbol_checked(sc, cadr(a2))); /* was unchecked? */
 		sc->value = c_call(code)(sc, sc->args);
 		goto START;
 	      }
@@ -69217,6 +69215,7 @@ int main(int argc, char **argv)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers? (useful in object->string too)
  * cyclic-seq in rest of full-*
+ * ancient macro layout modernized
  *
  * need to check new openGL for API changes (GL_VERSION?)
  *   test/Mesa-10.3.1/include/GL/glext.h|gl.h (current version appears to be 7.6)
@@ -69246,5 +69245,5 @@ int main(int argc, char **argv)
  *    also get rid of #i and #e?
  *
  * iterator display should include abbreviated sequence
- * check cons args etc, clean up map/for-each lists
+ * temp funcs need a way to access the direct value
  */

@@ -113,7 +113,7 @@ void get_current_color(int index, int n, rgb_t *r, rgb_t *g, rgb_t *b)
     }
 }
 
-
+#if HAVE_GL
 rgb_t *color_map_reds(int index)
 {
   if (is_colormap(index))
@@ -157,7 +157,7 @@ rgb_t *color_map_blues(int index)
     }
   return(NULL);
 }
-
+#endif
 
 
 static cmap *new_cmap(const char *name, int size, mus_float_t **rgb)

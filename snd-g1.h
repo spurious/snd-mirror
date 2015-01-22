@@ -175,9 +175,11 @@ char *colormap_name(int n);
 bool is_colormap(int n);
 int num_colormaps(void);
 void get_current_color(int colormap, int n, rgb_t *r, rgb_t *g, rgb_t *b);
+#if HAVE_GL
 rgb_t *color_map_reds(int index);
 rgb_t *color_map_greens(int index);
 rgb_t *color_map_blues(int index);
+#endif
 void g_init_gxcolormaps(void);
 void phases_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b);
 
