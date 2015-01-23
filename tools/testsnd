@@ -34,6 +34,7 @@ echo ' '
 echo ' '
 
 echo ' -------------------------------- without-gui DEBUGGING=1 -------------------------------- '
+make allclean
 rm -f snd
 rm -f config.cache
 ./configure --quiet CFLAGS="-Wall -I/usr/local/include -DDEBUGGING" --without-gui --disable-deprecated
@@ -49,6 +50,7 @@ echo ' '
 echo ' '
 
 echo ' -------------------------------- pure-s7 -------------------------------- '
+make allclean
 rm -f snd
 rm -f config.cache
 ./configure --quiet CFLAGS="-Wall -I/usr/local/include -DWITH_PURE_S7=1" --without-gui --disable-deprecated

@@ -4193,11 +4193,10 @@ static int gc(s7_scheme *sc)
 
 #if DEBUGGING
   {
-    s7_pointer *fp, *tp, *heap_top;
+    s7_pointer *tp, *heap_top;
     int cells[NUM_TYPES];
     int i;
     
-    fp = sc->free_heap_top;
     tp = sc->heap;
     heap_top = (s7_pointer *)(sc->heap + sc->heap_size);
     
@@ -7554,7 +7553,12 @@ static void call_with_exit(s7_scheme *sc)
   int i, new_stack_top, quit = 0;
   
   if (!call_exit_active(sc->code))
-    s7_error(sc, sc->INVALID_ESCAPE_FUNCTION, list_1(sc, make_string_wrapper_with_length(sc, "call-with-exit escape procedure called outside its block", 56)));
+    {
+      static s7_pointer call_with_exit_error = NULL;
+      if (!call_with_exit_error)
+	call_with_exit_error = s7_make_permanent_string("call-with-exit escape procedure called outside its block");
+      s7_error(sc, sc->INVALID_ESCAPE_FUNCTION, list_1(sc, call_with_exit_error));
+    }
 
   call_exit_active(sc->code) = false;
   new_stack_top = call_exit_goto_loc(sc->code);
@@ -21386,7 +21390,7 @@ static s7_pointer g_current_input_port(s7_scheme *sc, s7_pointer args)
   return(sc->input_port);
 }
 
-
+#if (!WITH_PURE_S7)
 static s7_pointer g_set_current_input_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_set_current_input_port "(set-current-input-port port) sets the current-input port to port and returns the previous value of the input port"
@@ -21404,7 +21408,7 @@ static s7_pointer g_set_current_input_port(s7_scheme *sc, s7_pointer args)
     }
   return(old_port);
 }
-
+#endif
 
 s7_pointer s7_set_current_input_port(s7_scheme *sc, s7_pointer port)
 {
@@ -21436,7 +21440,7 @@ static s7_pointer g_current_output_port(s7_scheme *sc, s7_pointer args)
   return(sc->output_port);
 }
 
-
+#if (!WITH_PURE_S7)
 static s7_pointer g_set_current_output_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_set_current_output_port "(set-current-output-port port) sets the current-output port to port and returns the previous value of the output port"
@@ -21455,7 +21459,7 @@ static s7_pointer g_set_current_output_port(s7_scheme *sc, s7_pointer args)
     }
   return(old_port);
 }
-
+#endif
 
 s7_pointer s7_current_error_port(s7_scheme *sc)
 {
@@ -39774,7 +39778,12 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 
   len = i;
   if (!s7_is_aritable(sc, sc->code, len))
-    return(s7_wrong_number_of_args_error(sc, "for-each function: ~A args?", small_int(len)));
+    {
+      static s7_pointer for_each_args_error = NULL;
+      if (!for_each_args_error)
+	for_each_args_error = s7_make_permanent_string("for-each ~A: ~A args?");
+      return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, list_3(sc, for_each_args_error, sc->code, small_int(len))));
+    }
 
   if (got_nil) return(sc->UNSPECIFIED);
 
@@ -39922,7 +39931,12 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   len = i;
   if ((!is_pair(sc->code)) &&
       (!s7_is_aritable(sc, sc->code, len)))
-    return(s7_wrong_number_of_args_error(sc, "map function: ~A args?", small_int(len)));
+    {
+      static s7_pointer map_args_error = NULL;
+      if (!map_args_error)
+	map_args_error = s7_make_permanent_string("map ~A: ~A args?");
+      return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, list_3(sc, map_args_error, sc->code, small_int(len))));
+    }
 
   if (got_nil) return(sc->NIL);
 
@@ -45873,8 +45887,8 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
   if (bad_pairs > quotes) return(false);
 
   if ((is_c_function(func)) &&
-      (c_function_required_args(func) <= args) &&
-      (c_function_all_args(func) >= args))
+      (c_function_required_args(func) <= (unsigned int)args) &&
+      (c_function_all_args(func) >= (unsigned int)args))
     {
       if (is_safe_procedure(func))
 	{
@@ -68288,9 +68302,11 @@ s7_scheme *s7_init(void)
                               s7_define_safe_function(sc, "current-input-port",      g_current_input_port,     0, 0, false, H_current_input_port);
                               s7_define_safe_function(sc, "current-output-port",     g_current_output_port,    0, 0, false, H_current_output_port);
                               s7_define_safe_function(sc, "current-error-port",      g_current_error_port,     0, 0, false, H_current_error_port);
+                              s7_define_safe_function(sc, "set-current-error-port",  g_set_current_error_port, 1, 0, false, H_set_current_error_port);
+#if (!WITH_PURE_S7)
                               s7_define_safe_function(sc, "set-current-input-port",  g_set_current_input_port, 1, 0, false, H_set_current_input_port);
                               s7_define_safe_function(sc, "set-current-output-port", g_set_current_output_port,1, 0, false, H_set_current_output_port);
-                              s7_define_safe_function(sc, "set-current-error-port",  g_set_current_error_port, 1, 0, false, H_set_current_error_port);
+#endif
 
   sc->CLOSE_INPUT_PORT =      s7_define_safe_function(sc, "close-input-port",        g_close_input_port,       1, 0, false, H_close_input_port);
   sc->CLOSE_OUTPUT_PORT =     s7_define_safe_function(sc, "close-output-port",       g_close_output_port,      1, 0, false, H_close_output_port);
@@ -68807,12 +68823,21 @@ s7_scheme *s7_init(void)
   set_setter(sc->SET_CDR);
   set_setter(s7_symbol_value(sc, sc->SET_CDR));
 
+#if (!WITH_PURE_S7)
   set_setter(s7_make_symbol(sc, "set-current-input-port"));
   set_setter(s7_make_symbol(sc, "set-current-output-port"));
-  set_setter(s7_make_symbol(sc, "set-current-error-port"));
   s7_function_set_setter(sc, "current-input-port",  "set-current-input-port");
   s7_function_set_setter(sc, "current-output-port", "set-current-output-port");
+#endif
+
+  set_setter(s7_make_symbol(sc, "set-current-error-port"));
   s7_function_set_setter(sc, "current-error-port",  "set-current-error-port");
+  /* despite the similar names, current-error-port is different from the other two, and a setter is needed
+   *    in scheme because error and warn send output to it by default.  It is not a "dynamic variable" unlike
+   *    the other two.  In the input/output cases, setting the port can only cause confusion.
+   *    current-error-port should simply be an s7 variable with a name like *error* and an accessor to
+   *    ensure its new value, if any, is an output port.
+   */
 
   s7_function_set_setter(sc, "car",                 "set-car!");
   s7_function_set_setter(sc, "cdr",                 "set-cdr!");
@@ -69204,7 +69229,7 @@ int main(int argc, char **argv)
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020
  * lg             |      |      | 6547 6497 6494 6235
  * t137           |      |      | 11.0           5031
- * t455|6     265 |   89 |  9   |       8.4 8045 7530
+ * t455|6     265 |   89 |  9   |       8.4 8045 7482
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3
@@ -69216,6 +69241,7 @@ int main(int argc, char **argv)
  *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers? (useful in object->string too)
  * cyclic-seq in rest of full-*
  * ancient macro layout modernized
+ * temp funcs need a way to access the direct value
  *
  * need to check new openGL for API changes (GL_VERSION?)
  *   test/Mesa-10.3.1/include/GL/glext.h|gl.h (current version appears to be 7.6)
@@ -69241,13 +69267,20 @@ int main(int argc, char **argv)
  * how to catch the stack overflow op_cz case?
  * new-sound et al in new with-sound arg order [output channels srate sample-type header-type comment]:
  *   before-save-as-hook mus-raw-header-defaults save-region save-selection save-sound-as array->file(?)
+ * iterator display should include abbreviated sequence
  *
  * inexact/pure s7: (define exact? rational?) (define (inexact? x) (not (rational? x))) (define inexact->exact round) (define (exact->inexact x) (* x 1.0))
+ *    perhaps current-error-port -> *error*
  *    also get rid of #i and #e?
  *    remove *-length|copy and the various converters to and from lists
- *    remove setters for output-ports
+ *    (define string-length length) (define hash-table-size length) (define vector-length length) (define string-copy copy)
+ *    (define (list->string lst) (apply string lst)) (define (list->vector lst) (apply vector lst))
+ *    (define (string->list str) (copy str (make-list (length str)))) (define (vector->list v) (copy v (make-list (length v))))
+ *
  * most-pos-fix stacktrace -> *s7*
  *
- * iterator display should include abbreviated sequence
- * temp funcs need a way to access the direct value
+ * can the snd-sig loops be moved into s7 via iterators? func passed iter-of-sound -> collector
+ *   or a fallback scheme function map-chan
+ *   is make-sampler an iterator? (for-each f sampler) -- next-sample needs to return #<eof> somehow at end (sampler-at-end? ...)
+ *   maybe (make-iterator (inlet...)) to package this, but that seems slow
  */

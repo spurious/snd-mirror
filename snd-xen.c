@@ -2988,7 +2988,8 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
 		         (if (procedure? (cdr binding))  \
 		             (procedure-documentation (cdr binding))  \
 		             (cdr binding))))))  \
-         ap-env)))");
+         ap-env) \
+         #f))");
 
   Xen_eval_C_string("\
 (define break-ok #f)\

@@ -216,10 +216,8 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	(set! (x0 i) (+ (* p1 (x1 i))
 			(* p2 (+ (circle-ref x1 (- i 1)) (circle-ref x1 (+ i 1))))
 			(* p3 (x2 i)))))
-      (fill! x2 0.0)
-      (float-vector-add! x2 x1)
-      (fill! x1 0.0)
-      (float-vector-add! x1 x0))))
+      (copy x1 x2)
+      (copy x0 x1))))
 
 ;;; (compute-uniform-circular-string 100 (make-float-vector 100) (make-float-vector 100) (make-float-vector 100) .5 .5 .5)
 |#
@@ -239,10 +237,8 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	((= i s1))
       (float-vector-set! x0 i (+ (float-vector-ref x0 i) (* p2 (+ (float-vector-ref x1 (- i 1)) (float-vector-ref x1 (+ i 1)))))))
     (set! (x0 s1) (+ (x0 s1) (* p2 (+ (x1 (- s1 1)) (x1 0)))))
-    (fill! x2 0.0)
-    (float-vector-add! x2 x1)
-    (fill! x1 0.0)
-    (float-vector-add! x1 x0)))
+    (copy x1 x2)
+    (copy x0 x1)))
 
 (define (compute-string size x0 x1 x2 masses xsprings esprings damps haptics)
   ;; this is the more general form
@@ -263,10 +259,8 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 			    (* p2 (+ (x1 j) (x1 k)))
 			    (* p3 (x2 i))
 			    p4)))))))
-  (do ((i 0 (+ i 1)))
-      ((= i size))
-    (set! (x2 i) (x1 i))
-    (set! (x1 i) (x0 i))))
+  (copy x1 x2)
+  (copy x0 x1))
 
 
 ;;; -------- "frequency division" -- an effect from sed_sed@my-dejanews.com
@@ -1719,10 +1713,11 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	  (float-vector-add! newv (float-vector-scale! (copy sound) (coeffs 1)))
 	  (if (> num-coeffs 2)
 	      (let ((peak (maxamp snd chn)))
-		(float-vector-add! (float-vector-scale! rl1 0.0) sound)
+		(copy sound rl1)
 		(do ((i 2 (+ i 1)))
 		    ((= i num-coeffs))
-		  (convolution rl1 (float-vector-add! (float-vector-scale! rl2 0.0) sound) fft-len)
+		  (copy sound rl2)
+		  (convolution rl1 rl2 fft-len)
 		  (let ((pk (float-vector-peak rl1)))
 		    (float-vector-add! newv (float-vector-scale! (copy rl1) (/ (* (coeffs i) peak) pk)))))
 		(let ((pk (float-vector-peak newv)))

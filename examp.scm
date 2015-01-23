@@ -195,8 +195,7 @@
 	      (fft rl1 im1 1)
 	      (fft rl2 im2 1)
 	      (let ((tmprl (copy rl1))
-		    (tmpim (copy im1))
-		    (data3 (make-float-vector fftlen)))
+		    (tmpim (copy im1)))
 		(float-vector-multiply! tmprl rl2)     ; (* tempr1 tempr2)
 		(float-vector-multiply! tmpim im2)     ; (* tempi1 tempi2)
 		(float-vector-multiply! im2 rl1)       ; (* tempr1 tempi2)
@@ -204,23 +203,11 @@
 		(float-vector-add! tmprl tmpim)        ; add the first two
 		(float-vector-subtract! im2 rl2)       ; subtract the 4th from the 3rd
 		(fft tmprl im2 -1)
-		(float-vector-add! data3 tmprl)        ; copy into data3
-		(float-vector-scale! data3 fftscale)   ; scale by fftscale
-		(graph data3 "lag time" 0 fftlen)))
+		(float-vector-scale! tmprl fftscale)   ; scale by fftscale
+		(graph tmprl "lag time" 0 fftlen)))
 	    (status-report "display-correlation wants stereo input"))))))
 
 					;(hook-push graph-hook display-correlation)
-
-;;; The inner let body could also be:
-;;;
-;;;	   (graph
-;;;	    (float-vector-scale! 
-;;;	     (float-vector-add! data3
-;;;		       (fft (float-vector-add! (float-vector-multiply! tmprl rl2) (float-vector-multiply! tmpim im2))
-;;;			    (float-vector-subtract! (float-vector-multiply! im2 rl1) (float-vector-multiply! rl2 im1))
-;;;			    -1))
-;;;	     fftscale) "lag time" 0 fftlen2)))
-
 
 
 ;;; -------- set transform-size based on current time domain window size

@@ -82,10 +82,8 @@
 				 (* p2 (+ (circle-float-vector-ref x1 (- i 1)) (circle-float-vector-ref x1 (+ i 1))))
 				 (* p3 (x2 i)))
 			      1000.0)))
-	  (fill! x2 0.0)
-	  (float-vector-add! x2 x1)
-	  (fill! x1 0.0)
-	  (float-vector-add! x1 x0))))
+	  (copy x1 x2)
+	  (copy x0 x1))))
     
     (set! *clm-srate* 22050.0)
     

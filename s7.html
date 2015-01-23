@@ -5715,7 +5715,20 @@ Better ideas are always welcome!
 <p>__func__ is the name (or name and location) of the function currently being called, as in C.
 </p>
 
+<p>Currently WITH_PURE_S7:
+</p>
+<ul>
+<li>places 'pure-s7 in *features*
+<li>omits char-ready, char-ci*, string-ci*
+<li>omits cond-expand, multiple-values-bind|set!, call-with-values, defmacro(*)
+<li>omits d/f/s/l exponents
+<li>omits unquote (the name), and quasiquoted vector constants
+<li>omits make-polar, angle, magnitude, and renames make-rectangular to make-complex
+<li>omits set-current-output-port and set-current-input-port
+</ul>
+
 </div>
+
 
 
 <details>
