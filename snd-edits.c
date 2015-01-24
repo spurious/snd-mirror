@@ -2904,7 +2904,7 @@ static void backup_edit_list_1(chan_info *cp, bool freeing)
   int cur, i;
   ed_list *old_ed, *new_ed;
   mus_long_t old_end, new_end;
-  ed_fragment *top;
+  ed_fragment *top = NULL;
 
   cur = cp->edit_ctr;
   if (cur <= 0) return;

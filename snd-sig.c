@@ -1679,7 +1679,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
   /* calls gen over cp[beg for dur] data, replacing. */
   snd_info *sp;
   file_info *hdr = NULL;
-  int j, ofd = 0, datumb = 0;
+  int j = 0, ofd = 0, datumb = 0;
   bool temp_file;
   mus_long_t k, alloc_len;
   mus_float_t **data;

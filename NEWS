@@ -1,14 +1,30 @@
-Snd 15.2
+Snd 15.3
 
-Mike Scholz fixed bugs in clm and the NetBSD audio code, and updated many of the scripts.
-Anders Vinjar added lispworks code for gnuplot in dlocsig.lisp.
+procedure-documentation no longer refers to an optional string that happens
+  to be the first thing in a procedure body, but to the value of a variable
+  named 'documentation' in the procedure's environment.
 
-all the motif stuff (xm.c, snd-motif.scm etc) has moved to the *motif* environment,
-  OpenGL (gl.c, snd-gl.scm) to *gl*, and gtk (xg.c, snd-gtk.scm etc) to *gtk*.
+procedure-arity is deprecated, s7_procedure_arity replaced by s7_arity.
+  procedure-name is deprecated. data-format removed (see snd15.scm).
 
-mus-copy (or copy) copies a generator.
-added snd15.scm (old vct names)
+format has another control directive: ~N or ~n which gets a numeric argument
+  from the argument list: (format #f "~nD" 20 123)
 
-checked: gtk 3.15.2|3, FC 21, sbcl 1.2.6
+with-sound argument order changed slightly. It is now: output channels srate.
+  Ideally, other Snd functions like new-sound would follow the same argument
+  order -- let me know if this change would cause you problems.
 
-Thanks!: Mike Scholz, Matti Koskinen, Kjetil Matheussen, Anders Vinjar, Tito Latini
+float-vector-equal? -- relative difference of two float-vectors.
+
+make-iterator, iterate, iterator? -- replace make-hash-table-iterator and 
+  hash-table-iterator? These are generic functions to traverse sequences.
+
+if (*s7* 'safety) > 1, optimization is turned off
+(*s7* 'maximum-stack-size) is now (*s7* 'max-stack-size)
+(*s7* 'print-length) replaces *vector-print-length*
+(*s7* 'bignum-precision) replaces *bignum-precision*
+(*s7* 'stacktrace-defaults) replaces *stacktrace*
+
+checked: sbcl 1.2.7, gtk 3.15.4
+
+
