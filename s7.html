@@ -5561,6 +5561,7 @@ stack-top                     current stack location
 stack-size                    current stack size
 max-stack-size                max stack size (settable)
 stack                         the current stack entries
+stacktrace-defaults           stacktrace formatting info for error handler
 
 symbol-table                  a vector
 symbol-table-locked?          #f (if #t, no new symbols can be added to the symbol table)
@@ -5581,6 +5582,16 @@ the next 8 are vectors (mainly for GC debugging):
 Use the standard environment syntax to access these fields:
 <code>(*s7* 'stack-top)</code>.  Set (*s7* 'safety) to 2 or higher
 to turn off optimization.
+</p>
+
+<p>stacktrace-defaults is a list of four integers and a boolean that tell the error
+handler how to format stacktrace information.  The four integers are: 
+how many frames to display, 
+how many columns are devoted to code display,
+how many columns are available for a line of data,
+and where to place comments.
+The boolean sets whether the entire output should be displayed as a comment.
+The defaults are '(3 45 80 45 #t).
 </p>
 
 
@@ -5673,7 +5684,7 @@ loading code that calls gcd.
 same kind of name (or +pi+ to show it is a constant?).  
 Perhaps object-&gt;string should be -&gt;string.
 get-output-string should be current-output-string. write-char behaves like display, not write.
-define-expansion should be define-reader-macro.  provided? should be featured? or *features* should be *provisions*.
+define-expansion should be define-reader-macro.  provided? should be feature? or *features* should be *provisions*.
 </p>
 
 <p>
@@ -5705,7 +5716,6 @@ Better ideas are always welcome!
 <ul>
 <li>pi
 <li>*stdin* *stdout* *stderr*
-<li>*stacktrace*
 <li>*s7*
 <li>nan.0 -nan.0 inf.0 -inf.0 (what crappy names! nan.0 is an inexact integer that is not a number?)
 <li>most-positive-fixnum most-negative-fixnum

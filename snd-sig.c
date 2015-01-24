@@ -3628,6 +3628,8 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
     }
   proc_loc = s7_gc_protect(s7, proc);
 #endif
+
+  /* fprintf(stderr, "%lld %s\n", num, DISPLAY(s7_cddar(s7_procedure_source(s7, proc)))); */
   
   data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
 #if HAVE_SCHEME
@@ -3635,11 +3637,6 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
   samples_to_vct_with_reader(num, in_data, sf);
 #endif
   cur_size = num;
-
-  /* fprintf(stderr, "buffer %lld: %s\n", num, DISPLAY(s7_car(source))); */
-  /*
-50828: (lambda (x) (+ x (* (- m 1.0) (filter flt x)))) -- not real->temp?
-   */
 
   for (kp = 0; kp < num; kp++)
     {

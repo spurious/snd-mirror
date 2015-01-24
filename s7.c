@@ -707,7 +707,6 @@ struct s7_scheme {
   
   s7_pointer *op_stack, *op_stack_now, *op_stack_end;
   unsigned int op_stack_size, max_stack_size;
-  s7_pointer stacktrace_env;
 
   s7_cell **heap, **free_heap, **free_heap_top, **free_heap_trigger, **previous_free_heap_top;
   unsigned int heap_size;
@@ -762,6 +761,7 @@ struct s7_scheme {
   unsigned long long int let_number;
   double default_rationalize_error, morally_equal_float_epsilon, hash_table_float_epsilon;
   s7_Int default_hash_table_length, initial_string_port_length, print_length;
+  s7_pointer stacktrace_defaults;
   s7_pointer *op_names_saved;
   vdims_t *wrap_only;
 
@@ -938,7 +938,7 @@ struct s7_scheme {
   s7_pointer catches_symbol, exits_symbol, stack_symbol, default_rationalize_error_symbol, max_string_length_symbol, default_random_state_symbol;
   s7_pointer max_list_length_symbol, max_vector_length_symbol, max_vector_dimensions_symbol, default_hash_table_length_symbol;
   s7_pointer hash_table_float_epsilon_symbol, morally_equal_float_epsilon_symbol, initial_string_port_length_symbol;
-  s7_pointer undefined_identifier_warnings_symbol, print_length_symbol, bignum_precision_symbol;
+  s7_pointer undefined_identifier_warnings_symbol, print_length_symbol, bignum_precision_symbol, stacktrace_defaults_symbol;
 
   bool undefined_identifier_warnings;
 
@@ -4040,6 +4040,7 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->input_port_stack);
   set_mark(sc->output_port);
   set_mark(sc->error_port);
+  S7_MARK(sc->stacktrace_defaults);
 
   mark_pair(sc->temp_cell_1);
   mark_pair(sc->temp_cell_2);
@@ -25689,32 +25690,27 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
        */
       if (use_write == USE_READABLE_WRITE)
 	{
-	  if (obj == sc->stacktrace_env)
-	    port_write_string(port)(sc, "*stacktrace*", 12, port);
-	  else
+	  s7_pointer x;
+	  port_write_string(port)(sc, "(let (({e} (inlet))) ", 21, port);
+	  if ((ci) &&
+	      (shared_ref(ci, obj) < 0))
 	    {
-	      s7_pointer x;
-	      port_write_string(port)(sc, "(let (({e} (inlet))) ", 21, port);
-	      if ((ci) &&
-		  (shared_ref(ci, obj) < 0))
-		{
-		  int plen;
-		  char buf[64];
-		  plen = snprintf(buf, 64, "(set! {%d} {e}) ", -shared_ref(ci, obj));
-		  port_write_string(port)(sc, buf, plen, port);
-		}
-	      
-	      port_write_string(port)(sc, "(apply varlet {e} (reverse (list ", 33, port);
-	      for (x = let_slots(obj); is_slot(x); x = next_slot(x))
-		{
-		  port_write_string(port)(sc, "(cons ", 6, port);
-		  object_to_port(sc, slot_symbol(x), port, use_write, to_file, ci);
-		  port_write_character(port)(sc, ' ', port);
-		  object_to_port_with_circle_check(sc, slot_value(x), port, use_write, to_file, ci);
-		  port_write_character(port)(sc, ')', port);
-		}
-	      port_write_string(port)(sc, "))) {e})", 8, port);
+	      int plen;
+	      char buf[64];
+	      plen = snprintf(buf, 64, "(set! {%d} {e}) ", -shared_ref(ci, obj));
+	      port_write_string(port)(sc, buf, plen, port);
 	    }
+	  
+	  port_write_string(port)(sc, "(apply varlet {e} (reverse (list ", 33, port);
+	  for (x = let_slots(obj); is_slot(x); x = next_slot(x))
+	    {
+	      port_write_string(port)(sc, "(cons ", 6, port);
+	      object_to_port(sc, slot_symbol(x), port, use_write, to_file, ci);
+	      port_write_character(port)(sc, ' ', port);
+	      object_to_port_with_circle_check(sc, slot_value(x), port, use_write, to_file, ci);
+	      port_write_character(port)(sc, ')', port);
+	    }
+	  port_write_string(port)(sc, "))) {e})", 8, port);
 	}
       else
 	{
@@ -25930,7 +25926,11 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
     case T_ITERATOR:
       if (use_write == USE_READABLE_WRITE)
 	write_readably_error(sc, "an iterator");
-      else port_write_string(port)(sc, "#<iterator>", 11, port);
+      else 
+	{
+	  nlen = snprintf(buf, 64, "#<iterator: %s>", type_name(sc, iterator_sequence(obj), NO_ARTICLE));
+	  port_write_string(port)(sc, buf, nlen, port);
+	}
       break;
 
     case T_ENVIRONMENT:
@@ -38860,12 +38860,9 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
        *
        * if at all possible, get some indication of where we are!
        */
-      s7_pointer error_port;
-      error_port = s7_current_error_port(sc);
-      
       if ((!s7_is_list(sc, info)) ||
 	  (!is_string(car(info))))
-	format_to_port(sc, error_port, "\n;~S ~S", list_2(sc, type, info), NULL, false, 7);
+	format_to_port(sc, sc->error_port, "\n;~S ~S", list_2(sc, type, info), NULL, false, 7);
       else
 	{
 	  const char *carstr;
@@ -38889,10 +38886,10 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	      len += 8;
 	      errstr = (char *)malloc(len * sizeof(char));
 	      str_len = snprintf(errstr, len, "\n;%s", string_value(car(info)));
-	      format_to_port(sc, error_port, errstr, cdr(info), NULL, false, str_len);
+	      format_to_port(sc, sc->error_port, errstr, cdr(info), NULL, false, str_len);
 	      free(errstr);
 	    }
-	  else format_to_port(sc, error_port, "\n;~S ~S", list_2(sc, type, info), NULL, false, 7);
+	  else format_to_port(sc, sc->error_port, "\n;~S ~S", list_2(sc, type, info), NULL, false, 7);
 	}
       
       /* now display location at end */
@@ -38908,12 +38905,12 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	  line = port_line_number(sc->input_port);
 	  
 	  if (filename)
-	    format_to_port(sc, error_port, "\n;  ~A[~D]", list_2(sc, make_string_wrapper(sc, filename), make_integer(sc, line)), NULL, false, 10);
+	    format_to_port(sc, sc->error_port, "\n;  ~A[~D]", list_2(sc, make_string_wrapper(sc, filename), make_integer(sc, line)), NULL, false, 10);
 	  else 
 	    {
 	      if ((line > 0) &&
 		  (slot_value(sc->error_line) != sc->F))
-		format_to_port(sc, error_port, "\n;  line ~D", list_1(sc, make_integer(sc, line)), NULL, false, 11);
+		format_to_port(sc, sc->error_port, "\n;  line ~D", list_1(sc, make_integer(sc, line)), NULL, false, 11);
 	      else
 		{
 		  if (is_pair(sc->input_port_stack))
@@ -38927,7 +38924,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 			  filename = port_filename(p);
 			  line = port_line_number(p);
 			  if (filename)
-			    format_to_port(sc, error_port, "\n;  ~A[~D]", list_2(sc, make_string_wrapper(sc, filename), make_integer(sc, line)), NULL, false, 10);
+			    format_to_port(sc, sc->error_port, "\n;  ~A[~D]", list_2(sc, make_string_wrapper(sc, filename), make_integer(sc, line)), NULL, false, 10);
 			}
 		    }
 		}
@@ -38944,7 +38941,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	      if ((sc->s7_call_file != NULL) &&
 		  (sc->s7_call_line >= 0))
 		{
-		  format_to_port(sc, error_port, "\n;  ~A ~A[~D]",
+		  format_to_port(sc, sc->error_port, "\n;  ~A ~A[~D]",
 				 list_3(sc, 
 					make_string_wrapper(sc, call_name), 
 					make_string_wrapper(sc, sc->s7_call_file), 
@@ -38953,41 +38950,41 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 		}
 	    }
 	}
-      s7_newline(sc, error_port);
+      s7_newline(sc, sc->error_port);
       
       if (is_string(slot_value(sc->error_file)))
 	{
-	  format_to_port(sc, error_port, ";    ~S, line ~D",
+	  format_to_port(sc, sc->error_port, ";    ~S, line ~D",
 			 list_2(sc, slot_value(sc->error_file),	slot_value(sc->error_line)),
 			 NULL, false, 16);
-	  s7_newline(sc, error_port);
+	  s7_newline(sc, sc->error_port);
 	}
       
       /* look for __func__ in the error environment etc
        */
-      if (error_port != sc->F)
+      if (sc->error_port != sc->F)
 	{
 	  char *errstr;
 	  errstr = stacktrace_1(sc, 
-				s7_integer(let_ref_1(sc, sc->stacktrace_env, s7_make_symbol(sc, "max-frames"))),
-				s7_integer(let_ref_1(sc, sc->stacktrace_env, s7_make_symbol(sc, "code-cols"))),
-				s7_integer(let_ref_1(sc, sc->stacktrace_env, s7_make_symbol(sc, "total-cols"))),
-				s7_integer(let_ref_1(sc, sc->stacktrace_env, s7_make_symbol(sc, "notes-start-col"))),
-				s7_boolean(sc, let_ref_1(sc, sc->stacktrace_env, s7_make_symbol(sc, "as-comment"))));
+				s7_integer(car(sc->stacktrace_defaults)),
+				s7_integer(cadr(sc->stacktrace_defaults)),
+				s7_integer(caddr(sc->stacktrace_defaults)),
+				s7_integer(cadddr(sc->stacktrace_defaults)),
+				s7_boolean(sc, s7_list_ref(sc, sc->stacktrace_defaults, 4)));
 	  if (errstr)
 	    {
-	      port_write_string(error_port)(sc, ";\n", 2, error_port);
-	      port_write_string(error_port)(sc, errstr, strlen(errstr), error_port);
+	      port_write_string(sc->error_port)(sc, ";\n", 2, sc->error_port);
+	      port_write_string(sc->error_port)(sc, errstr, strlen(errstr), sc->error_port);
 	      free(errstr);
-	      port_write_character(error_port)(sc, '\n', error_port);
+	      port_write_character(sc->error_port)(sc, '\n', sc->error_port);
 	    }
 	}
       else
 	{
 	  if (is_pair(slot_value(sc->error_code)))
 	    {
-	      format_to_port(sc, error_port, ";    ~S", list_1(sc, slot_value(sc->error_code)), NULL, false, 7);
-	      s7_newline(sc, error_port);
+	      format_to_port(sc, sc->error_port, ";    ~S", list_1(sc, slot_value(sc->error_code)), NULL, false, 7);
+	      s7_newline(sc, sc->error_port);
 	    }
 	}
       
@@ -39758,17 +39755,17 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 Each object can be a list, string, vector, hash-table, or any other sequence."
 
   s7_pointer p;
-  int i, len;
+  int len;
   bool got_nil = false;
 
-  sc->code = car(args);                               /* the function */
+  sc->code = car(args);                               /* the function, using sc->code here for GC protection */
   if (!is_applicable(sc->code))
     {
       check_method(sc, sc->code, sc->FOR_EACH, args);
       return(wrong_type_argument_with_type(sc, sc->FOR_EACH, small_int(1), sc->code, SOMETHING_APPLICABLE));
     }
 
-  for (i = 0, p = cdr(args); is_not_null(p); p = cdr(p), i++)
+  for (len = 0, p = cdr(args); is_not_null(p); p = cdr(p), len++)
     {
       if (!is_sequence(car(p)))
 	return(simple_wrong_type_argument_with_type(sc, sc->FOR_EACH, car(p), A_SEQUENCE));
@@ -39776,7 +39773,6 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	got_nil = true;
     }
 
-  len = i;
   if (!s7_is_aritable(sc, sc->code, len))
     {
       static s7_pointer for_each_args_error = NULL;
@@ -39910,7 +39906,7 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 a list of the results.  Its arguments can be lists, vectors, strings, hash-tables, or any applicable objects."
 
   s7_pointer p;
-  int i, len;
+  int len;
   bool got_nil = false;
 
   sc->code = car(args);                               /* the function */
@@ -39920,7 +39916,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
       return(wrong_type_argument_with_type(sc, sc->MAP, small_int(1), sc->code, SOMETHING_APPLICABLE));
     }
 
-  for (i = 0, p = cdr(args); is_not_null(p); p = cdr(p), i++)
+  for (len = 0, p = cdr(args); is_not_null(p); p = cdr(p), len++)
     {
       if (!is_sequence(car(p)))
 	return(simple_wrong_type_argument_with_type(sc, sc->MAP, car(p), A_SEQUENCE));
@@ -39928,7 +39924,6 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	got_nil = true;
     }
 
-  len = i;
   if ((!is_pair(sc->code)) &&
       (!s7_is_aritable(sc, sc->code, len)))
     {
@@ -46651,17 +46646,17 @@ static bool arg_match(s7_scheme *sc, s7_pointer expr, s7_pointer args)
 static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_pointer x, bool at_end, bool *bad_set)
 {
   /* called only from body_is_safe and itself */
-  s7_pointer car_x;
+  s7_pointer expr;
 
   sc->cycle_counter++;
   if ((!is_proper_list(sc, x)) ||
       (sc->cycle_counter > 5000))
     return(false);
 
-  car_x = car(x);
-  if (is_syntactic(car_x))
+  expr = car(x);
+  if (is_syntactic(expr))
     {
-      switch (symbol_syntax_op(car_x))
+      switch (symbol_syntax_op(expr))
 	{
 	case OP_OR:
 	case OP_AND:
@@ -46847,11 +46842,6 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	   */
 	  if (!body_is_safe(sc, sc->F, sc->NIL, cddr(x), at_end, bad_set))
 	    return(false);
-#if 0
-	  if ((!direct_memq(cadr(x), args)) &&
-	      (!body_is_safe(sc, func, args, cddr(x), at_end, bad_set)))
-	    return(false);
-#endif
 	  break;
 
 
@@ -46875,7 +46865,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
       if ((!is_optimized(x)) || 
 	  (is_unsafe(x)))
 	{
-	  if (car_x == func) /* try to catch tail call */
+	  if (expr == func) /* try to catch tail call */
 	    {
 	      s7_pointer p;
 
@@ -46895,12 +46885,12 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	      return(false);
 	    }
 	  
-	  if (is_symbol(car_x))
+	  if (is_symbol(expr))
 	    {
-	      if (is_global(car_x))
+	      if (is_global(expr))
 		{
 		  s7_pointer f;
-		  f = find_symbol_checked(sc, car_x);
+		  f = find_symbol_checked(sc, expr);
 		  if (((is_c_function(f)) &&
 		       ((is_safe_procedure(f)) ||
 			((is_null(cdddr(x))) &&
@@ -46925,7 +46915,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	      else
 		{
 		  s7_pointer f;
-		  f = find_symbol(sc, car_x);
+		  f = find_symbol(sc, expr);
 		  if (is_slot(f))
 		    {
 		      if ((is_syntax(slot_value(f))) || (is_any_macro(slot_value(f))))
@@ -67345,6 +67335,7 @@ static void init_s7_env(s7_scheme *sc)
 {
   sc->stack_top_symbol =                     s7_make_symbol(sc, "stack-top");
   sc->stack_size_symbol =                    s7_make_symbol(sc, "stack-size");
+  sc->stacktrace_defaults_symbol =           s7_make_symbol(sc, "stacktrace-defaults");
   sc->symbol_table_is_locked_symbol =        s7_make_symbol(sc, "symbol-table-locked?");
   sc->heap_size_symbol =                     s7_make_symbol(sc, "heap-size");
   sc->free_heap_size_symbol =                s7_make_symbol(sc, "free-heap-size");
@@ -67398,6 +67389,8 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
     return(s7_make_integer(sc, sc->stack_size));
   if (sym == sc->max_stack_size_symbol)                                  /* max-stack-size */
     return(s7_make_integer(sc, sc->max_stack_size));
+  if (sym == sc->stacktrace_defaults_symbol)                             /* stacktrace-defaults (used to be *stacktrace*) */
+    return(sc->stacktrace_defaults);
 
   if (sym == sc->symbol_table_is_locked_symbol)                          /* symbol-table-locked? */
     return(make_boolean(sc, sc->symbol_table_is_locked));
@@ -67590,6 +67583,20 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 	  return(val);
 	}
       return(wrong_type_argument_with_type(sc, sc->LET_SET, small_int(1), val, make_string_wrapper(sc, "a random state object")));
+    }
+
+  if (sym == sc->stacktrace_defaults_symbol)
+    {
+      if ((is_pair(val)) &&
+	  (s7_list_length(sc, val) == 5) &&
+	  (is_integer(car(val))) &&
+	  (is_integer(cadr(val))) &&
+	  (is_integer(caddr(val))) &&
+	  (is_integer(cadddr(val))) &&
+	  (s7_is_boolean(s7_list_ref(sc,val, 4))))
+	sc->stacktrace_defaults = val;
+      else return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_PAIR));
+      return(val);
     }
 
   if (sym == sc->bignum_precision_symbol)
@@ -68630,6 +68637,7 @@ s7_scheme *s7_init(void)
   sc->CATCH =                 s7_define_function(sc,      "catch",                   g_catch,                  3, 0, false, H_catch);
   sc->THROW =                 s7_define_function(sc,      "throw",                   g_throw,                  1, 0, true,  H_throw);
   sc->ERROR =                 s7_define_function(sc,      "error",                   g_error,                  0, 0, true,  H_error);
+  sc->STACKTRACE =            s7_define_safe_function(sc, "stacktrace",              g_stacktrace,             0, 5, false, H_stacktrace);
 
   /* these are internal for quasiquote's use -- they are values, not symbols */
   sc->QQ_Apply_Values =       s7_define_constant_function(sc, "{apply_values}",      g_apply_values,           0, 0, true,  H_apply_values);
@@ -68704,21 +68712,13 @@ s7_scheme *s7_init(void)
   s7_autoload(sc, make_symbol(sc, "libgdbm.scm"),  s7_make_permanent_string("libgdbm.scm"));
 
   sc->REQUIRE = s7_define_macro(sc, "require", g_require, 0, 0, true, H_require);  
+  sc->stacktrace_defaults = s7_list(sc, 5, small_int(3), small_int(45), small_int(80), small_int(45), sc->T);
 
 
   /* -------- *#readers* -------- */
   sym = s7_define_variable(sc, "*#readers*", sc->NIL);
   sc->sharp_readers = global_slot(sym);
   s7_symbol_set_access(sc, sym, s7_make_function(sc, "(set *#readers*)", g_sharp_readers_set, 2, 0, false, "*#readers* accessor"));
-
-  sc->STACKTRACE = s7_define_safe_function(sc, "stacktrace", g_stacktrace, 0, 5, false, H_stacktrace);
-  sc->stacktrace_env = s7_inlet(sc, s7_list(sc, 5, 
-			 cons(sc, s7_make_symbol(sc, "max-frames"), small_int(3)),
-			 cons(sc, s7_make_symbol(sc, "code-cols"), small_int(45)),
-			 cons(sc, s7_make_symbol(sc, "total-cols"), small_int(80)),
-			 cons(sc, s7_make_symbol(sc, "notes-start-col"), small_int(45)),
-			 cons(sc, s7_make_symbol(sc, "as-comment"), sc->T)));
-  s7_define_constant(sc, "*stacktrace*", sc->stacktrace_env);
 
   /* sigh... I don't like these! */
   s7_define_constant(sc, "nan.0", real_NaN);
@@ -69267,20 +69267,9 @@ int main(int argc, char **argv)
  * how to catch the stack overflow op_cz case?
  * new-sound et al in new with-sound arg order [output channels srate sample-type header-type comment]:
  *   before-save-as-hook mus-raw-header-defaults save-region save-selection save-sound-as array->file(?)
- * iterator display should include abbreviated sequence
  *
  * inexact/pure s7: (define exact? rational?) (define (inexact? x) (not (rational? x))) (define inexact->exact round) (define (exact->inexact x) (* x 1.0))
  *    perhaps current-error-port -> *error*
  *    also get rid of #i and #e?
- *    remove *-length|copy and the various converters to and from lists
- *    (define string-length length) (define hash-table-size length) (define vector-length length) (define string-copy copy)
- *    (define (list->string lst) (apply string lst)) (define (list->vector lst) (apply vector lst))
- *    (define (string->list str) (copy str (make-list (length str)))) (define (vector->list v) (copy v (make-list (length v))))
- *
- * most-pos-fix stacktrace -> *s7*
- *
- * can the snd-sig loops be moved into s7 via iterators? func passed iter-of-sound -> collector
- *   or a fallback scheme function map-chan
- *   is make-sampler an iterator? (for-each f sampler) -- next-sample needs to return #<eof> somehow at end (sampler-at-end? ...)
- *   maybe (make-iterator (inlet...)) to package this, but that seems slow
+ *    remove *-length|copy and the various converters to and from lists, sequence->list could be (map values sequence)
  */

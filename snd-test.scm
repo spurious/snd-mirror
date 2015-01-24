@@ -32520,7 +32520,7 @@ EDITS: 1
 	    
 	    (undo)
 	    (let ((data (make-float-vector 2 0.0)))
-	      (map-channel (lambda (y) (set! (data 0) y) data)))
+	      (map-channel (lambda (y) (float-vector-set! data 0 y) data)))
 	    (if (not (= (framples ind 0) 20))
 		(snd-display #__line__ ";map-channel -> float-vector: ~A" (framples ind 0))
 		(if (not (vequal (channel->float-vector) (float-vector 0.400 0.000 0.400 0.000 0.400 0.000 0.400 0.000 0.400 0.000 0.400 0.000 0.400 0.000 0.400 0.000 0.400 0.000 0.400 0.000)))

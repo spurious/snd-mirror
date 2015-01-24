@@ -154,11 +154,6 @@ mus_float_t *mus_vct_data(vct *v) {return(v->data);}
   #define VCT_PRINT_LENGTH 10
 #endif
 
-#ifndef MIN
-  #define MIN(a, b) ((a > b) ? (b) : (a))
-#endif
-
-
 static int vct_print_length = VCT_PRINT_LENGTH;
 
 void mus_vct_set_print_length(int len) 
@@ -578,7 +573,7 @@ static Xen g_vct_set(Xen obj, Xen pos, Xen val)
 static Xen g_vct_multiply(Xen obj1, Xen obj2)
 {
   #define H_vct_multiplyB "(" S_vct_multiplyB " v1 v2): element-wise multiply of " S_vct "s v1 and v2: v1[i] *= v2[i], returns v1"
-  mus_long_t i, lim;
+  mus_long_t i, lim, lim1;
   vct *v1, *v2;
   mus_float_t *d1, *d2;
 
@@ -589,7 +584,9 @@ static Xen g_vct_multiply(Xen obj1, Xen obj2)
   v2 = Xen_to_vct(obj2);
   d1 = mus_vct_data(v1);
   d2 = mus_vct_data(v2);
-  lim = MIN(mus_vct_length(v1), mus_vct_length(v2));
+  lim = mus_vct_length(v1);
+  lim1 = mus_vct_length(v2);
+  if (lim > lim1) lim = lim1;
   for (i = 0; i < lim; i++) d1[i] *= d2[i];
   return(obj1);
 }
@@ -611,7 +608,8 @@ static Xen g_vct_add(Xen obj1, Xen obj2, Xen offs)
   d1 = mus_vct_data(v1);
   d2 = mus_vct_data(v2);
   len1 = mus_vct_length(v1);
-  lim = MIN(len1, mus_vct_length(v2));
+  lim = mus_vct_length(v2);
+  if (lim > len1) lim = len1;
   if (lim == 0) return(obj1);
 
   if (Xen_is_llong(offs))
@@ -663,7 +661,7 @@ static Xen g_vct_add(Xen obj1, Xen obj2, Xen offs)
 static Xen g_vct_subtract(Xen obj1, Xen obj2)
 {
   #define H_vct_subtractB "(" S_vct_subtractB " v1 v2): element-wise subtract of " S_vct "s v1 and v2: v1[i] -= v2[i], returns v1"
-  mus_long_t i, lim, lim4;
+  mus_long_t i, lim, lim1, lim4;
   vct *v1, *v2;
   mus_float_t *d1, *d2;
 
@@ -674,7 +672,9 @@ static Xen g_vct_subtract(Xen obj1, Xen obj2)
   v2 = Xen_to_vct(obj2);
   d1 = mus_vct_data(v1);
   d2 = mus_vct_data(v2);
-  lim = MIN(mus_vct_length(v1), mus_vct_length(v2));
+  lim = mus_vct_length(v1);
+  lim1 = mus_vct_length(v2);
+  if (lim > lim1) lim = lim1;
   lim4 = lim - 4;
 
   i = 0;
