@@ -512,7 +512,14 @@ typedef struct s7_cell {
       s7_pointer (*vget)(s7_scheme *sc, s7_pointer vec, s7_Int loc);
       s7_pointer (*vset)(s7_scheme *sc, s7_pointer vec, s7_Int loc, s7_pointer val);
     } vector;
-    
+
+    struct {
+      s7_Int length;
+      s7_pointer *objects;
+      vdims_t *dim_info;
+      int top;
+    } stk;
+
     struct {
       s7_Int length;
       s7_pointer *elements;
@@ -656,8 +663,8 @@ typedef struct s7_cell {
   } object;
 
 #if DEBUGGING
-  int current_alloc_line, previous_alloc_line, current_alloc_type, previous_alloc_type, debugger_bits, gc_line, alloc_line, uses;
-  const char *current_alloc_func, *previous_alloc_func, *gc_func;
+  int current_alloc_line, previous_alloc_line, current_alloc_type, previous_alloc_type, debugger_bits, gc_line, clear_line, alloc_line, uses;
+  const char *current_alloc_func, *previous_alloc_func;
 #endif
 
 } s7_cell;
@@ -785,8 +792,8 @@ struct s7_scheme {
   char *read_line_buf;
   unsigned int read_line_buf_size;
 
-  s7_pointer v, w, x, z;         /* evaluator local vars */
-  s7_pointer temp1, temp2, temp3;
+  s7_pointer v, w, x, y, z;         /* evaluator local vars */
+  s7_pointer temp1, temp2, temp3, temp4, temp5, temp6;
   s7_pointer temp_cell, temp_cell_1, temp_cell_2, temp_cell_3, temp_cell_4;
   s7_pointer T1_1, T2_1, T2_2, T3_1, T3_2, T3_3, Z2_1, Z2_2;
   s7_pointer A1_1, A2_1, A2_2, A3_1, A3_2, A3_3, A4_1, A4_2, A4_3, A4_4;
@@ -1176,7 +1183,7 @@ static void init_types(void)
       else if ((is_immutable(p)) && ((typeflag(p) != (f)))) fprintf(stderr, "%d: set immutable %p type %x to %x\n", __LINE__, p, unchecked_type(p), f); \
       typeflag(p) = f; \
     } while (0)
-  #define clear_type(p) do {p->gc_line = __LINE__; p->gc_func = __func__; typeflag(p) = 0;} while (0)
+  #define clear_type(p) do {p->clear_line = __LINE__; typeflag(p) = T_FREE;} while (0)
 #else
   #define unchecked_type(p)           ((p)->tf.type_field)
   #define type(p)                     ((p)->tf.type_field)
@@ -1752,6 +1759,9 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {pair_sy
 #define iterator_current(p)           (p)->object.iter.cur
 #define iterator_next(p)              (p)->object.iter.next
 
+#define temp_stack_elements(p)        (p)->object.stk.objects
+#define temp_stack_top(p)             (p)->object.stk.top
+
 #define is_input_port(p)              (type(p) == T_INPUT_PORT) 
 #if DEBUGGING
 #define is_output_port(p)             (unchecked_type(p) == T_OUTPUT_PORT)
@@ -2142,6 +2152,7 @@ static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer x, s7_pointer args, s7_pointer body);
 static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e);
 static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e);
+static double next_random(s7_rng_t *r);
 
 #if WITH_GCC
 #define find_symbol_checked(Sc, Sym) ({s7_pointer _x_; _x_ = find_symbol_unchecked(Sc, Sym); ((_x_) ? _x_ : unbound_variable(Sc, Sym));})
@@ -3094,7 +3105,7 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x)
     vector_element(sc->protected_objects, i) = sc->GC_NIL;
   vector_length(sc->protected_objects) = new_size;
   sc->protected_objects_size = new_size;
-  sc->protected_objects_loc = size + 1;
+  sc->protected_objects_loc = size;
 
   vector_element(sc->protected_objects, size) = x;
   return(size);
@@ -3738,14 +3749,12 @@ static void mark_closure(s7_pointer p)
     }
 }
 
-static void mark_stack(s7_pointer p)
-{
-}
-
 static void mark_stack_1(s7_pointer p, s7_Int top)
 {
   s7_pointer *tp, *tend;
-
+#if DEBUGGING
+  if (is_marked(p)) fprintf(stderr, "stack is already marked\n");
+#endif
   set_mark(p);
 
   tp = (s7_pointer *)(vector_elements(p));
@@ -3759,6 +3768,15 @@ static void mark_stack_1(s7_pointer p, s7_Int top)
       S7_MARK(*tp++);
       tp++;
     }
+}
+
+static void mark_stack(s7_pointer p)
+{
+  /* we can have a bare stack awaiting a continuation to hold it if the NEW_CELL for the continuation
+   *    triggers the GC!  But we need a top-of-stack??
+   */
+  if (!is_marked(p))
+    mark_stack_1(p, temp_stack_top(p));
 }
 
 
@@ -3979,13 +3997,10 @@ static void unmark_permanent_objects(s7_scheme *sc)
 
 #if DEBUGGING
 static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port, int nlen);
-static int gc_last_line;
-static const char *gc_last_func;
-#define gc(Sc) gc_1(Sc, __func__, __LINE__)
-static int gc_1(s7_scheme *sc, const char *func, int line)
-#else
-static int gc(s7_scheme *sc)
+static int last_gc_line = 0;
 #endif
+
+static int gc(s7_scheme *sc)
 {
   s7_cell **old_free_heap_top;
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
@@ -3998,13 +4013,10 @@ static int gc(s7_scheme *sc)
       { \
         if (!is_free_and_clear(p))		\
           { \
-	    p->debugger_bits = 0;\
+	    p->debugger_bits = 0; p->gc_line = last_gc_line;	\
             clear_type(p);	\
             (*fp++) = p;\
           }}
-
-  gc_last_line = line;
-  gc_last_func = func;
 #else
   #define GC_CALL(P, Tp) p = (*tp++); if (is_marked(p)) clear_mark(p); else {if (!is_free_and_clear(p)) {clear_type(p); (*fp++) = p;}}
 #endif
@@ -4012,6 +4024,9 @@ static int gc(s7_scheme *sc)
   if (sc->gc_stats)
     {
       fprintf(stdout, "gc ");
+#if DEBUGGING
+      fprintf(stdout, "line %d ", last_gc_line);
+#endif
 #ifndef _MSC_VER
       /* this is apparently deprecated in favor of clock_gettime -- what compile-time switch to use here?
        */
@@ -4029,12 +4044,16 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->v);
   S7_MARK(sc->w);
   S7_MARK(sc->x);
+  S7_MARK(sc->y);
   S7_MARK(sc->z);
   S7_MARK(sc->value);  
 
   S7_MARK(sc->temp1);
   S7_MARK(sc->temp2);
   S7_MARK(sc->temp3);
+  S7_MARK(sc->temp4);
+  S7_MARK(sc->temp5);
+  S7_MARK(sc->temp6);
 
   set_mark(sc->input_port);
   S7_MARK(sc->input_port_stack);
@@ -4285,9 +4304,22 @@ int s7_gc_freed(s7_scheme *sc)
    *   to check it repeatedly after the first such check.
    */
 #else
+static bool for_any_other_reason(s7_scheme *sc)
+{
+  if ((sc->default_rng) &&
+      (!sc->gc_off))
+    {
+      s7_Double x;
+      x = next_random(sc->default_rng);
+      if (x > .99)
+	return(true);
+    }
+  return(false);
+}
+
 #define NEW_CELL(Sc, Obj, Type)			\
   do {						\
-    if (Sc->free_heap_top <= Sc->free_heap_trigger) try_to_call_gc(Sc); \
+    if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc))) {last_gc_line = __LINE__; try_to_call_gc(Sc);} \
     Obj = (*(--(Sc->free_heap_top))); \
     Obj->alloc_line = __LINE__;	      \
     set_type(Obj, Type);	      \
@@ -4355,9 +4387,14 @@ static void try_to_call_gc(s7_scheme *sc)
     {
       unsigned int freed_heap;
       freed_heap = gc(sc);
+#if (!DEBUGGING)
       if ((freed_heap < sc->heap_size / 2) &&
 	  (freed_heap < 1000000)) /* if huge heap */
 	expand_heap(sc);
+#else
+      if (sc->free_heap_top - sc->free_heap < sc->heap_size / 2)
+	expand_heap(sc);
+#endif
     }
 }
 
@@ -5088,8 +5125,7 @@ static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
       check_method(sc, sym, sc->SYMBOL_TO_STRING, args);
       return(simple_wrong_type_argument(sc, sc->SYMBOL_TO_STRING, sym, T_SYMBOL));
     }
-  /* s7_make_string uses strlen which stops at an embedded null
-   */
+  /* s7_make_string uses strlen which stops at an embedded null */
   return(s7_make_string_with_length(sc, symbol_name(sym), symbol_name_length(sym)));    /* return a copy */
 }
 
@@ -6690,70 +6726,71 @@ static void fixup_macro_overlay(s7_scheme *sc, s7_pointer p)
 
 static s7_pointer make_macro(s7_scheme *sc)
 {
-  s7_pointer lx, cx, zx, body;
+  s7_pointer cx, zx, lx, mac;
+
+  NEW_CELL_NO_CHECK(sc, mac, T_MACRO);
+  sc->temp4 = mac;
+  closure_args(mac) = sc->NIL;
+  closure_body(mac) = sc->NIL;
+  closure_setter(mac) = sc->F;
+  closure_let(mac) = sc->envir;
+  closure_arity(mac) = CLOSURE_ARITY_NOT_SET;
   
   cx = caar(sc->code);
   zx = cdr(sc->code);
   lx = s7_gensym(sc, symbol_name(cx));
+  closure_args(mac) = list_1(sc, lx);
   
   /* (define-macro (hi a b) `(+ ,a ,b)) becomes:
    *   cx: hi
    *   sc->code: (lambda ({hi}-14) (apply (lambda (a b) ({list} '+ a b)) (cdr {hi}-14)))
    */
-
-  body = list_1(sc, cons(sc, 
-			 sc->Apply,
-			 cons(sc, 
-			      cons(sc, 
-				   ((sc->op == OP_DEFINE_MACRO_STAR) || 
-				    (sc->op == OP_DEFINE_BACRO_STAR)) ? sc->LAMBDA_STAR : sc->LAMBDA,
-				   cons(sc,                /* cdar(sc->code) is the parameter list */
-					((sc->op == OP_DEFINE_MACRO_STAR) || 
-					 (sc->op == OP_DEFINE_BACRO_STAR)) ? quotify(sc, cdar(sc->code)) : cdar(sc->code),
-					zx)),
-			      list_1(sc, list_2(sc, sc->CDR, lx)))));
-
-  NEW_CELL_NO_CHECK(sc, sc->value, T_MACRO);
-  closure_args(sc->value) = list_1(sc, lx);
-  closure_body(sc->value) = body;
-  closure_let(sc->value) = sc->envir;
-  closure_setter(sc->value) = sc->F;
-  closure_arity(sc->value) = CLOSURE_ARITY_NOT_SET;
+  closure_body(mac) = list_1(sc, cons(sc, 
+				      sc->Apply,
+				      cons(sc, 
+					   cons(sc, 
+						((sc->op == OP_DEFINE_MACRO_STAR) || 
+						 (sc->op == OP_DEFINE_BACRO_STAR)) ? sc->LAMBDA_STAR : sc->LAMBDA,
+						cons(sc,                /* cdar(sc->code) is the parameter list */
+						     ((sc->op == OP_DEFINE_MACRO_STAR) || 
+						      (sc->op == OP_DEFINE_BACRO_STAR)) ? quotify(sc, cdar(sc->code)) : cdar(sc->code),
+						     zx)),
+					   list_1(sc, list_2(sc, sc->CDR, lx)))));
   sc->capture_env_counter++;
   sc->code = cx; 
   
   if ((sc->op == OP_DEFINE_BACRO) ||
       (sc->op == OP_DEFINE_BACRO_STAR))
-    set_type(sc->value, T_BACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS);
+    set_type(mac, T_BACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS);
   else
     {
       if (sc->op == OP_DEFINE_EXPANSION)
 	{
 	  /* perhaps define-expansion should be define-reader-macro but that collides with historical uses. 
 	   */
-	  set_type(sc->value, T_MACRO | T_EXPANSION | T_DONT_EVAL_ARGS | T_COPY_ARGS);
+	  set_type(mac, T_MACRO | T_EXPANSION | T_DONT_EVAL_ARGS | T_COPY_ARGS);
 	  set_type(sc->code, EXPANSION_TYPE);
 	}
-      else set_type(sc->value, T_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS); 
+      else set_type(mac, T_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS); 
     }
   
-  fixup_macro_overlay(sc, closure_body(sc->value));
+  fixup_macro_overlay(sc, closure_body(mac));
   
   /* symbol? macro name has already been checked */
   /* find name in environment, and define it */
   
   cx = find_local_symbol(sc, sc->code, sc->envir); 
   if (is_slot(cx))
-    slot_set_value(cx, sc->value); 
-  else s7_make_slot(sc, sc->envir, sc->code, sc->value); /* was current but we've checked immutable already */
+    slot_set_value(cx, mac); 
+  else s7_make_slot(sc, sc->envir, sc->code, mac); /* was current but we've checked immutable already */
   
-  optimize(sc, closure_body(sc->value), 0, sc->NIL);
+  optimize(sc, closure_body(mac), 0, sc->NIL);
   
-  /* here sc->value is the macro, sc->code is its name (a symbol),
+  /* here mac is the macro, sc->code is its name (a symbol),
    *   (symbol? (define (f a) (+ a 1))) -> #t, so I guess define-macro should follow suit.
    */
-  /* sc->value = sc->code; */ /* 25-Jul-14 */
-  return(sc->value);
+  sc->temp4 = sc->NIL;
+  return(mac);
 }
 
 
@@ -7278,13 +7315,14 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
 
   new_v = s7_make_vector(sc, len);
   set_type(new_v, T_STACK);
+  temp_stack_top(new_v) = top;
+
   /* we can't leave the upper stuff simply malloc-garbage because we're sure to call the GC.
    *   We also can't just copy the vector since that seems to confuse the gc mark process.
    */
 
   nv = vector_elements(new_v);
   ov = vector_elements(old_v);
-  
   s7_gc_on(sc, false);
 
   for (i = 0; i < top; i += 4)
@@ -7387,8 +7425,8 @@ static int find_any_baffle(s7_scheme *sc)
 
 s7_pointer s7_make_continuation(s7_scheme *sc) 
 {
-  s7_pointer x;
-  int loc;
+  s7_pointer x, stack;
+  int loc, gc_loc = -1;
   if ((int)(sc->free_heap_top - sc->free_heap) < (int)(sc->heap_size / 4))
     gc(sc);
 
@@ -7396,22 +7434,28 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
    *   we can end up hitting the end of the gc free list time after time while
    *   in successive copy_stack's below, causing s7 to core up until it runs out of memory.
    */
-
   loc = s7_stack_top(sc);
+  stack = copy_stack(sc, sc->stack, loc);
+  gc_loc = s7_gc_protect(sc, stack);
 
   NEW_CELL(sc, x, T_CONTINUATION | T_PROCEDURE);
+
   continuation_data(x) = (continuation_t *)calloc(1, sizeof(continuation_t));
-  continuation_stack(x) = copy_stack(sc, sc->stack, s7_stack_top(sc));
+  continuation_stack(x) = stack;
   continuation_stack_size(x) = vector_length(continuation_stack(x));   /* copy_stack can return a smaller stack than the current one */
   continuation_stack_start(x) = vector_elements(continuation_stack(x));
   continuation_stack_end(x) = (s7_pointer *)(continuation_stack_start(x) + loc);
-
-  continuation_op_stack(x) = copy_op_stack(sc);
+  continuation_op_stack(x) = copy_op_stack(sc);                        /* no heap allocation here */
   continuation_op_loc(x) = (int)(sc->op_stack_now - sc->op_stack);
   continuation_op_size(x) = sc->op_stack_size;
-
   continuation_key(x) = find_any_baffle(sc);
+  /*
+  fprintf(stderr, " -> data %p, stack %p, size %d, start %p, end %p, op %p, op loc %d\n", continuation_data(x), continuation_stack(x),
+	  continuation_stack_size(x), continuation_stack_start(x), continuation_stack_end(x),
+	  continuation_op_stack(x), continuation_op_loc(x));
+  */
   add_continuation(sc, x);
+  s7_gc_unprotect_at(sc, gc_loc);
   return(x);
 }
 
@@ -11173,7 +11217,6 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   
   x = car(args);
-
   if (!s7_is_number(x))
     {
       check_method(sc, x, sc->LOG, args);
@@ -14373,7 +14416,6 @@ static s7_pointer g_subtract_2_temp(s7_scheme *sc, s7_pointer args)
 
 #if (!WITH_GMP)
 /* (define (hi) (- (random 100) 50)) (define (ho) (- (random 1.0) 0.5)) */
-static double next_random(s7_rng_t *r);
 static s7_pointer sub_random_ic, sub_random_rc;
 static s7_pointer g_sub_random_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -22882,8 +22924,10 @@ s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc
 
 static void push_input_port(s7_scheme *sc, s7_pointer new_port)
 {
-  sc->input_port_stack = cons(sc, sc->input_port, sc->input_port_stack);
+  sc->temp4 = sc->input_port;
   sc->input_port = new_port;
+  sc->input_port_stack = cons(sc, sc->temp4, sc->input_port_stack);
+  sc->temp4 = sc->NIL;
 }
 
 
@@ -25883,12 +25927,12 @@ static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port
   str = (char *)malloc(len * sizeof(char));
   
   nlen = snprintf(str, len, 
-		  "\n<%s %s,\n  current: %s[%d] %s,\n  previous: %s[%d] %s\n  hloc: %d (%d uses), freed: %s[%d], %s[%d], alloc: %d>", 
+		  "\n<%s %s,\n  current: %s[%d] %s,\n  previous: %s[%d] %s\n  hloc: %d (%d uses), free: %d, clear: %d, alloc: %d>", 
 		  excl_name, current_bits, 
 		  obj->current_alloc_func, obj->current_alloc_line, allocated_bits,
 		  obj->previous_alloc_func, obj->previous_alloc_line, previous_bits,
 		  heap_location(obj), obj->uses,
-		  gc_last_func, gc_last_line, obj->gc_func, obj->gc_line, obj->alloc_line);
+		  obj->gc_line, obj->clear_line, obj->alloc_line);
   
   free(current_bits);
   free(allocated_bits);
@@ -26382,7 +26426,9 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t 
 
   strport = open_output_string(sc, FORMAT_PORT_LENGTH);
   gc_loc = s7_gc_protect(sc, strport);
-
+#if DEBUGGING
+  if (is_free(obj)) abort();
+#endif
   if (has_structure(obj))
     {
       if (obj != sc->rootlet)
@@ -28489,8 +28535,10 @@ static s7_pointer copy_list(s7_scheme *sc, s7_pointer lst)
   s7_pointer p, tp, np;
   if (!is_pair(lst)) return(sc->NIL);
   tp = cons(sc, car(lst), sc->NIL);
+  sc->y = tp;
   for (p = cdr(lst), np = tp; is_pair(p); p = cdr(p), np = cdr(np))
     cdr(np) = cons(sc, car(p), sc->NIL);
+  sc->y = sc->NIL;
   return(tp);
 }
 
@@ -36778,7 +36826,9 @@ list has infinite length.  Length of anything else returns #f."
 
   s7_pointer lst;
   lst = car(args);
-
+#if DEBUGGING
+  if (is_free(lst)) abort();
+#endif
   switch (type(lst))
     {
     case T_PAIR:
@@ -50502,7 +50552,7 @@ static s7_pointer free_let(s7_scheme *sc, s7_pointer e)
 #else
 #define NEW_CELL(Sc, Obj, Type)			\
   do {						\
-    if (Sc->free_heap_top <= Sc->free_heap_trigger) {try_to_call_gc(Sc); if ((Sc->begin_hook) && (call_begin_hook(Sc))) return(Sc->F);} \
+    if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc))) {last_gc_line = __LINE__; try_to_call_gc(Sc); if ((Sc->begin_hook) && (call_begin_hook(Sc))) return(Sc->F);} \
     Obj = (*(--(Sc->free_heap_top))); \
     Obj->alloc_line = __LINE__;	      \
     set_type(Obj, Type);	      \
@@ -53234,6 +53284,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer val, args;
 		args = cdr(code);
 		val = find_symbol_checked(sc, car(args));
+		sc->temp5 = val;
 		car(sc->T2_2) = find_symbol_checked(sc, cadr(args));
 		car(sc->T2_1) = val;
 		sc->value = c_call(code)(sc, sc->T2_1);
@@ -53920,7 +53971,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		args = cdr(code);
 		
 		val1 = find_symbol_checked(sc, car(args));
+		sc->temp5 = val1;
 		val2 = find_symbol_checked(sc, ecdr(args));
+		sc->temp6 = val2;
 		car(sc->T3_3) = find_symbol_checked(sc, fcdr(args));
 		car(sc->T3_1) = val1;
 		car(sc->T3_2) = val2;
@@ -57278,7 +57331,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* 
 	       * pass a list (mac . args) to the macro expander
 	       */
-	      sc->args = list_1(sc, cons(sc, sc->value, sc->code));
+	      sc->args = cons(sc, sc->value, sc->code);
+	      sc->args = list_1(sc, sc->args); /* two-step to GC protect cons, then list_1 of it */
 	      sc->code = sc->value;
 	      goto APPLY;                      /* not UNSAFE_CLOSURE because it might be a bacro */
 	    }
@@ -58024,10 +58078,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (is_not_null(z))
 		  return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, list_3(sc, sc->TOO_MANY_ARGUMENTS, closure_name(sc, sc->code), sc->cur_code)));
 	      } 
-	    else add_slot(sc, x, z); /* the rest arg */
+	    else add_slot(sc, x, sc->temp6 = z); /* the rest arg */
 	  }
 	  
 	  sc->code = closure_body(sc->code);
+	  /* TODO: begin_check -- apparently not (x . 5) -- it goes through lambda?? then jump to OP_BEGIN1 in any case ? 
+	   *   don't we check closure_body before getting here?
+	   */
+
 	  if (is_pair(cdr(sc->code)))
 	    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
 	  else
@@ -61074,6 +61132,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	x = safe_reverse_in_place(sc, sc->args);
 	sc->code = car(x); /* restore the original form */
 	y = cdr(x);        /* use sc->args as the new frame */
+	sc->y = y;
 	sc->envir = old_frame_in_env(sc, x, sc->envir);
 	
 	{
@@ -61157,6 +61216,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = cdr(sc->code);
 	    }
 	}
+	sc->y = sc->NIL;
 	goto BEGIN1;
       }
       
@@ -61671,7 +61731,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL; 
 	}
 
-      /* by going direct without a push_stack on the last one we get "tail recursion",
+      /* by going direct without a push_stack on the last one we get tail calls,
        *   but if the last arg (also in "and" above) is "values", there is a slight
        *   inconsistency: the values are returned and spliced into the caller if trailing, but
        *   are spliced into the "or" if not trailing, so
@@ -61685,29 +61745,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *
        * The tail recursion is more important.  This behavior matches that of "begin" -- if the
        * values statement is last, it splices into the next outer arglist.
-       *
-       * I tried implementing dynamic-binding by walking up the stack looking at envs, but
-       *   for that to work in some cases, every new frame needs to be on the stack, hence
-       *   OP_LET_UNWIND.  But that means the stack grows on every let, so tail recursion is
-       *   defeated.  I'd have to notice tail calls and pop the stack, but I decided that
-       *   was too much work for a minor (unneeded) feature.  Although the stack does not
-       *   grow, we're depending on the GC to take care of the old local envs after the
-       *   tail call.  My test:
-       *
-       * (let ((max-stack 0))
-       *   (define (tc-1 a c) 
-       *     (let ((b (+ a 1)) 
-       *           (d (make-vector 1000)))
-       *       (if (> (s7-stack-size) max-stack)
-       *           (set! max-stack (s7-stack-size)))
-       *       (if (< b c) 
-       *           (tc-1 b c))))
-       * (tc-1 0 3200000) max-stack)
-       * 4
-       *
-       * indicated (via "top") that the memory footprint was not growing, and the "4"
-       * shows the stack was ok, so I currently believe that s7 is doing tail calls
-       * correctly.
        */
 
 
@@ -61789,7 +61826,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
     DEFINE_MACRO2:
-      make_macro(sc);
+      sc->value = make_macro(sc);
       goto START;
 
       
@@ -62707,7 +62744,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #else
 #define NEW_CELL(Sc, Obj, Type)			\
   do {						\
-    if (Sc->free_heap_top <= Sc->free_heap_trigger) try_to_call_gc(Sc); \
+    if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc))) {last_gc_line = __LINE__; try_to_call_gc(Sc);} \
     Obj = (*(--(Sc->free_heap_top))); \
     Obj->alloc_line = __LINE__;	      \
     set_type(Obj, Type);	      \
@@ -67752,11 +67789,15 @@ s7_scheme *s7_init(void)
   sc->v = sc->NIL;
   sc->w = sc->NIL;
   sc->x = sc->NIL;
+  sc->y = sc->NIL;
   sc->z = sc->NIL;
 
   sc->temp1 = sc->NIL;
   sc->temp2 = sc->NIL;
   sc->temp3 = sc->NIL;
+  sc->temp4 = sc->NIL;
+  sc->temp5 = sc->NIL;
+  sc->temp6 = sc->NIL;
 
   sc->begin_hook = NULL;
   sc->default_rng = NULL;
@@ -69269,7 +69310,7 @@ int main(int argc, char **argv)
  *   before-save-as-hook mus-raw-header-defaults save-region save-selection save-sound-as array->file(?)
  *
  * inexact/pure s7: (define exact? rational?) (define (inexact? x) (not (rational? x))) (define inexact->exact round) (define (exact->inexact x) (* x 1.0))
- *    perhaps current-error-port -> *error*
  *    also get rid of #i and #e?
+ *    perhaps current-error-port -> *error-port*
  *    remove *-length|copy and the various converters to and from lists, sequence->list could be (map values sequence)
  */
