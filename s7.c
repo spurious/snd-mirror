@@ -664,7 +664,7 @@ typedef struct s7_cell {
 
 #if DEBUGGING
   int current_alloc_line, previous_alloc_line, current_alloc_type, previous_alloc_type, debugger_bits, gc_line, clear_line, alloc_line, uses;
-  const char *current_alloc_func, *previous_alloc_func;
+  const char *current_alloc_func, *previous_alloc_func, *gc_func, *alloc_func;
 #endif
 
 } s7_cell;
@@ -794,7 +794,7 @@ struct s7_scheme {
 
   s7_pointer v, w, x, y, z;         /* evaluator local vars */
   s7_pointer temp1, temp2, temp3, temp4, temp5, temp6;
-  s7_pointer temp_cell, temp_cell_1, temp_cell_2, temp_cell_3, temp_cell_4;
+  s7_pointer temp_cell, temp_cell_1, temp_cell_2;
   s7_pointer T1_1, T2_1, T2_2, T3_1, T3_2, T3_3, Z2_1, Z2_2;
   s7_pointer A1_1, A2_1, A2_2, A3_1, A3_2, A3_3, A4_1, A4_2, A4_3, A4_4;
 
@@ -1169,7 +1169,7 @@ static void init_types(void)
 
 #if DEBUGGING
   #define unchecked_type(p)           ((p)->tf.type_field)
-  #define type(p) ({unsigned char _t_; _t_ = (p)->tf.type_field; if (_t_ == T_FREE) fprintf(stderr, "%p is free (line %d)\n", p, __LINE__); _t_;})
+  #define type(p) ({unsigned char _t_; _t_ = (p)->tf.type_field; if (_t_ == T_FREE) print_gc_info(p, __LINE__); _t_;})
   #define set_type(p, f) \
   do { \
       p->previous_alloc_line = p->current_alloc_line; \
@@ -1178,7 +1178,7 @@ static void init_types(void)
       p->current_alloc_line = __LINE__; \
       p->current_alloc_func = __func__; \
       p->current_alloc_type = f; \
-      p->uses++; \
+      p->uses++; p->clear_line = 0;					\
       if (((f) & 0xff) == T_FREE) fprintf(stderr, "%d: set free %p type to %x\n", __LINE__, p, f); \
       else if ((is_immutable(p)) && ((typeflag(p) != (f)))) fprintf(stderr, "%d: set immutable %p type %x to %x\n", __LINE__, p, unchecked_type(p), f); \
       typeflag(p) = f; \
@@ -2153,6 +2153,10 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e);
 static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e);
 static double next_random(s7_rng_t *r);
+#if DEBUGGING
+static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port, int nlen);
+static void print_gc_info(s7_pointer obj, int line);
+#endif
 
 #if WITH_GCC
 #define find_symbol_checked(Sc, Sym) ({s7_pointer _x_; _x_ = find_symbol_unchecked(Sc, Sym); ((_x_) ? _x_ : unbound_variable(Sc, Sym));})
@@ -3710,17 +3714,26 @@ static void mark_pair(s7_pointer p)
 {
   if (!is_marked(p)) 
     {
+      s7_pointer x;
       set_mark(p);
       S7_MARK(car(p));
       /* if the list is huge, the recursion to cdr(p) is problematic when there are strict limits on the stack size
        *  (C is not tail recursive apparently), so I'll try something else... (This form is faster according to callgrind).
+       *
+       * in snd-14 or so through 15.3, sc->temp_cell_2|3 were used for trailing args in eval, but that meant
+       *   the !is_marked check below (which is intended to catch cyclic lists) caused cells to be missed;
+       *   since sc->args could contain permanently marked cells, if these were passed to g_vector, for example, and
+       *   make_vector_1 triggered a GC call, we needed to mark both the permanent (always marked) cell and its contents,
+       *   and continue through the rest of the list.  But adding temp_cell_2|3 to sc->permanent_objects was not enough.
+       *   Now I've already forgotten the rest of the story, and it was just an hour ago! -- the upshot is that temp_cell_2|3
+       *   are not now used as arg list members.
        */
-      for (p = cdr(p); is_pair(p) && (!is_marked(p)); p = cdr(p)) /* this order much faster */
+      for (x = cdr(p); is_pair(x) && (!is_marked(x)); x = cdr(x))
 	{
-	  set_mark(p);
-	  S7_MARK(car(p));
+	  set_mark(x);
+	  S7_MARK(car(x));
 	}
-      if (!is_marked(p)) S7_MARK(p);      /* checked is much faster */
+      if (!is_marked(x)) S7_MARK(x);
     }
 }
 
@@ -3752,9 +3765,6 @@ static void mark_closure(s7_pointer p)
 static void mark_stack_1(s7_pointer p, s7_Int top)
 {
   s7_pointer *tp, *tend;
-#if DEBUGGING
-  if (is_marked(p)) fprintf(stderr, "stack is already marked\n");
-#endif
   set_mark(p);
 
   tp = (s7_pointer *)(vector_elements(p));
@@ -3996,8 +4006,8 @@ static void unmark_permanent_objects(s7_scheme *sc)
 
 
 #if DEBUGGING
-static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port, int nlen);
 static int last_gc_line = 0;
+static const char *last_gc_func = NULL;
 #endif
 
 static int gc(s7_scheme *sc)
@@ -4012,8 +4022,8 @@ static int gc(s7_scheme *sc)
     else \
       { \
         if (!is_free_and_clear(p))		\
-          { \
-	    p->debugger_bits = 0; p->gc_line = last_gc_line;	\
+          {								\
+	    p->debugger_bits = 0; p->gc_line = last_gc_line; p->gc_func = last_gc_func;	\
             clear_type(p);	\
             (*fp++) = p;\
           }}
@@ -4025,7 +4035,7 @@ static int gc(s7_scheme *sc)
     {
       fprintf(stdout, "gc ");
 #if DEBUGGING
-      fprintf(stdout, "line %d ", last_gc_line);
+      fprintf(stdout, "line %s[%d] ", last_gc_func, last_gc_line);
 #endif
 #ifndef _MSC_VER
       /* this is apparently deprecated in favor of clock_gettime -- what compile-time switch to use here?
@@ -4063,8 +4073,6 @@ static int gc(s7_scheme *sc)
 
   mark_pair(sc->temp_cell_1);
   mark_pair(sc->temp_cell_2);
-  mark_pair(sc->temp_cell_3);
-  mark_pair(sc->temp_cell_4);
   S7_MARK(car(sc->T1_1));
   S7_MARK(car(sc->T2_1));
   S7_MARK(car(sc->T2_2));
@@ -4088,7 +4096,6 @@ static int gc(s7_scheme *sc)
   }
 
   S7_MARK(sc->protected_objects);
-  mark_permanent_objects(sc);
   
   /* now protect recent allocations using the free_heap cells above the current free_heap_top (if any).
    *
@@ -4113,6 +4120,7 @@ static int gc(s7_scheme *sc)
       S7_MARK(*tmps++);
   }
   mark_op_stack(sc);
+  mark_permanent_objects(sc);
 
   /* free up all unmarked objects */
   old_free_heap_top = sc->free_heap_top;
@@ -4211,7 +4219,7 @@ static int gc(s7_scheme *sc)
   }
 #endif
 
-#if DEBUGGING
+#if 0
   {
     s7_pointer *tp, *heap_top;
     int cells[NUM_TYPES];
@@ -4311,7 +4319,7 @@ static bool for_any_other_reason(s7_scheme *sc)
     {
       s7_Double x;
       x = next_random(sc->default_rng);
-      if (x > .99)
+      if (x > .999)
 	return(true);
     }
   return(false);
@@ -4319,9 +4327,9 @@ static bool for_any_other_reason(s7_scheme *sc)
 
 #define NEW_CELL(Sc, Obj, Type)			\
   do {						\
-    if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc))) {last_gc_line = __LINE__; try_to_call_gc(Sc);} \
+    if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc))) {last_gc_line = __LINE__; last_gc_func = __func__; try_to_call_gc(Sc);} \
     Obj = (*(--(Sc->free_heap_top))); \
-    Obj->alloc_line = __LINE__;	      \
+    Obj->alloc_line = __LINE__;	 Obj->alloc_func = __func__;	\
     set_type(Obj, Type);	      \
     } while (0)
 
@@ -4329,7 +4337,7 @@ static bool for_any_other_reason(s7_scheme *sc)
   do {						\
     if (Sc->free_heap_top < Sc->free_heap_trigger) fprintf(stderr, "%d: new_cell checked [%d]\n", __LINE__, (int)(sc->free_heap_top - sc->free_heap)); \
     Obj = (*(--(Sc->free_heap_top)));					\
-    Obj->alloc_line = __LINE__;						\
+    Obj->alloc_line = __LINE__;	 Obj->alloc_func = __func__;		\
     set_type(Obj, Type);						\
     } while (0)
 #endif
@@ -4341,10 +4349,6 @@ static void expand_heap(s7_scheme *sc)
   unsigned int old_size, old_free;
   unsigned int k;
   s7_cell *cells;
-
-#if DEBUGGING
-  fprintf(stderr, "expand_heap %u\n", sc->heap_size);
-#endif
 
   old_size = sc->heap_size;
   
@@ -7449,11 +7453,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   continuation_op_loc(x) = (int)(sc->op_stack_now - sc->op_stack);
   continuation_op_size(x) = sc->op_stack_size;
   continuation_key(x) = find_any_baffle(sc);
-  /*
-  fprintf(stderr, " -> data %p, stack %p, size %d, start %p, end %p, op %p, op loc %d\n", continuation_data(x), continuation_stack(x),
-	  continuation_stack_size(x), continuation_stack_start(x), continuation_stack_end(x),
-	  continuation_op_stack(x), continuation_op_loc(x));
-  */
+
   add_continuation(sc, x);
   s7_gc_unprotect_at(sc, gc_loc);
   return(x);
@@ -25705,13 +25705,9 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
 	{
 	  s7_pointer p;
 	  /* what needs to be protected here? for one, the function might not return a string! */
-	  push_stack(sc, OP_NO_OP, sc->temp_cell_2, sc->temp_cell_3);
 	  if (use_write == USE_WRITE)
 	    p = s7_apply_function(sc, print_func, list_1(sc, obj));
 	  else p = s7_apply_function(sc, print_func, list_2(sc, obj, (use_write == USE_DISPLAY) ? sc->F : sc->KEY_READABLE));
-	  sc->temp_cell_2 = main_stack_args(sc);
-	  sc->temp_cell_3 = main_stack_code(sc);
-	  pop_main_stack(sc);
 	  
 	  if ((is_string(p)) && (string_length(p) > 0))
 	    port_write_string(port)(sc, string_value(p), string_length(p), port);
@@ -25901,6 +25897,16 @@ static void write_closure_readably(s7_scheme *sc, s7_pointer obj, s7_pointer por
 }
 
 #if DEBUGGING
+static void print_gc_info(s7_pointer obj, int line)
+{
+  fprintf(stderr, "%p is free (line %d), current: %s[%d], previous: %s[%d],  free: %s[%d], clear: %d, alloc: %s[%d]\n",
+	  obj, line,
+	  obj->current_alloc_func, obj->current_alloc_line, 
+	  obj->previous_alloc_func, obj->previous_alloc_line, 
+	  obj->gc_func, obj->gc_line, obj->clear_line, obj->alloc_func, obj->alloc_line);
+  abort();
+}
+
 static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port, int nlen)
 {
   /* show current state, current allocated state, and previous allocated state.
@@ -25927,12 +25933,12 @@ static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port
   str = (char *)malloc(len * sizeof(char));
   
   nlen = snprintf(str, len, 
-		  "\n<%s %s,\n  current: %s[%d] %s,\n  previous: %s[%d] %s\n  hloc: %d (%d uses), free: %d, clear: %d, alloc: %d>", 
+		  "\n<%s %s,\n  current: %s[%d] %s,\n  previous: %s[%d] %s\n  hloc: %d (%d uses), free: %s[%d], clear: %d, alloc: %s[%d]>", 
 		  excl_name, current_bits, 
 		  obj->current_alloc_func, obj->current_alloc_line, allocated_bits,
 		  obj->previous_alloc_func, obj->previous_alloc_line, previous_bits,
 		  heap_location(obj), obj->uses,
-		  obj->gc_line, obj->clear_line, obj->alloc_line);
+		  obj->gc_func, obj->gc_line, obj->clear_line, obj->alloc_func, obj->alloc_line);
   
   free(current_bits);
   free(allocated_bits);
@@ -26426,9 +26432,7 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t 
 
   strport = open_output_string(sc, FORMAT_PORT_LENGTH);
   gc_loc = s7_gc_protect(sc, strport);
-#if DEBUGGING
-  if (is_free(obj)) abort();
-#endif
+
   if (has_structure(obj))
     {
       if (obj != sc->rootlet)
@@ -30678,10 +30682,11 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, unsigned
    *   but keeping the type means equal? has to be smarter about empty vectors.
    */
 
-  /* this has to follow the error checks!  (else garbage in free_heap temps portion confuses GC when "vector" is finalized) */
+  /* this has to follow the error checks! (else garbage in free_heap temps portion confuses GC when "vector" is finalized) */
   NEW_CELL(sc, x, typ | T_SAFE_PROCEDURE); /* (v 0) as vector-ref is safe */
   vector_length(x) = 0;
   vector_elements(x) = NULL;
+  vector_dimension_info(x) = NULL;
 
   if (len > 0)
     {
@@ -30717,7 +30722,6 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, unsigned
 	return(s7_error(sc, make_symbol(sc, "out-of-memory"), list_1(sc, make_string_wrapper(sc, "make-vector allocation failed!"))));
     }
 
-  vector_dimension_info(x) = NULL;
   add_vector(sc, x);
   return(x);
 }
@@ -31910,9 +31914,9 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
 
       if (is_not_null(cdddr(args)))
 	{
-	  car(sc->temp_cell_4) = vector_getter(vec)(sc, vec, index);
-	  cdr(sc->temp_cell_4) = cddr(args);
-	  return(g_vector_set(sc, sc->temp_cell_4));
+	  car(sc->temp_cell_2) = vector_getter(vec)(sc, vec, index);
+	  cdr(sc->temp_cell_2) = cddr(args);
+	  return(g_vector_set(sc, sc->temp_cell_2));
 	}
       val = caddr(args);
     }
@@ -34115,6 +34119,7 @@ s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr)
 #else
   val = s7_real(temp);
 #endif
+
   if (is_simple_real(temp)) /* i.e. not immutable, not integer or something else unexpected */
     {
       clear_type(temp);
@@ -36826,9 +36831,7 @@ list has infinite length.  Length of anything else returns #f."
 
   s7_pointer lst;
   lst = car(args);
-#if DEBUGGING
-  if (is_free(lst)) abort();
-#endif
+
   switch (type(lst))
     {
     case T_PAIR:
@@ -41219,6 +41222,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	      sc->ubh_hook_loc = s7_gc_protect(sc, old_hook);
 	      sc->unbound_variable_hook = sc->error_hook;      /* avoid the infinite loop mentioned above */
 	      result = s7_call(sc, old_hook, list_1(sc, sym)); /* not s7_apply_function */
+	      sc->temp6 = result; 
 	      sc->unbound_variable_hook = old_hook;
 	      s7_gc_unprotect_at(sc, sc->ubh_hook_loc);
 	      sc->ubh_hook_loc = -1;
@@ -50552,9 +50556,9 @@ static s7_pointer free_let(s7_scheme *sc, s7_pointer e)
 #else
 #define NEW_CELL(Sc, Obj, Type)			\
   do {						\
-    if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc))) {last_gc_line = __LINE__; try_to_call_gc(Sc); if ((Sc->begin_hook) && (call_begin_hook(Sc))) return(Sc->F);} \
+    if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc))) {last_gc_line = __LINE__; last_gc_func = __func__; try_to_call_gc(Sc); if ((Sc->begin_hook) && (call_begin_hook(Sc))) return(Sc->F);} \
     Obj = (*(--(Sc->free_heap_top))); \
-    Obj->alloc_line = __LINE__;	      \
+    Obj->alloc_line = __LINE__;	Obj->alloc_func = __func__;	\
     set_type(Obj, Type);	      \
     } while (0)
 #endif
@@ -53284,7 +53288,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer val, args;
 		args = cdr(code);
 		val = find_symbol_checked(sc, car(args));
-		sc->temp5 = val;
 		car(sc->T2_2) = find_symbol_checked(sc, cadr(args));
 		car(sc->T2_1) = val;
 		sc->value = c_call(code)(sc, sc->T2_1);
@@ -53971,9 +53974,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		args = cdr(code);
 		
 		val1 = find_symbol_checked(sc, car(args));
-		sc->temp5 = val1;
 		val2 = find_symbol_checked(sc, ecdr(args));
-		sc->temp6 = val2;
 		car(sc->T3_3) = find_symbol_checked(sc, fcdr(args));
 		car(sc->T3_1) = val1;
 		car(sc->T3_2) = val2;
@@ -57369,17 +57370,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer x, y, lx;
 	
 	lx = pop_op_stack(sc);
-	if (is_safe_procedure(lx))
-	  {
-	    x = sc->temp_cell_3;
-	    y = sc->temp_cell_2;
-	  }
-	else
-	  {
-	    NEW_CELL(sc, x, T_PAIR);
-	    NEW_CELL_NO_CHECK(sc, y, T_PAIR);
-	  }
-	
+	NEW_CELL(sc, x, T_PAIR);
+	NEW_CELL_NO_CHECK(sc, y, T_PAIR);
 	car(x) = sc->code;
 	cdr(x) = sc->args;
 	car(y) = sc->value;
@@ -57397,12 +57389,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_pointer x;
 	
 	sc->code = pop_op_stack(sc);
-	if (is_safe_procedure(sc->code))
-	  x = sc->temp_cell_2;
-	else
-	  {
-	    NEW_CELL(sc, x, T_PAIR);
-	  }
+	NEW_CELL(sc, x, T_PAIR);
 	car(x) = sc->value;
 	cdr(x) = sc->args;
 	if (!is_null(sc->args))
@@ -57720,16 +57707,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  val = find_symbol_checked(sc, val);
 	
 	lx = pop_op_stack(sc);
-	if (is_safe_procedure(lx))
-	  {
-	    x = sc->temp_cell_3;
-	    y = sc->temp_cell_2;
-	  }
-	else
-	  {
-	    NEW_CELL(sc, x, T_PAIR);
-	    NEW_CELL_NO_CHECK(sc, y, T_PAIR);
-	  }
+	NEW_CELL(sc, x, T_PAIR);
+	NEW_CELL_NO_CHECK(sc, y, T_PAIR);
 	car(x) = sc->value;
 	cdr(x) = sc->args;
 	car(y) = val;
@@ -57832,16 +57811,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  /* get the current arg, which is not a list */
 		  sc->code = pop_op_stack(sc);
-		  if (is_safe_procedure(sc->code)) /* this check does not currently pay for itself, I think */
-		    {
-		      x = sc->temp_cell_3; /* these are already pairs */
-		      y = sc->temp_cell_2;
-		    }
-		  else
-		    {
-		      NEW_CELL(sc, x, T_PAIR);
-		      NEW_CELL_NO_CHECK(sc, y, T_PAIR);
-		    }
+		  NEW_CELL(sc, x, T_PAIR);
+		  NEW_CELL_NO_CHECK(sc, y, T_PAIR);
 		  car(x) = sc->value;
 		  cdr(x) = sc->args;
 		  car(y) = val;
@@ -57866,33 +57837,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      /* here we've reached the last arg (sc->code == nil) 
 	       *   it is not a pair (typ == T_PAIR was caught earlier)
-	       *   if this is a safe function, we're going straight to
-	       *   apply with no complications, so we can use temp_cell_2.
 	       */
-	      s7_pointer x;
+	      s7_pointer x, val;
 	      
 	      if (!is_null(cdr(sc->code)))
 		improper_arglist_error(sc);
 	      
 	      sc->code = pop_op_stack(sc);
-	      if (is_safe_procedure(sc->code))
-		{
-		  x = sc->temp_cell_2;
-		  if (typ == T_SYMBOL)
-		    car(x) = find_symbol_checked(sc, car_code);
-		  else car(x) = car_code;
-		  cdr(x) = sc->args;
-		}
-	      else
-		{
-		  s7_pointer val;
-		  if (typ == T_SYMBOL)
-		    val = find_symbol_checked(sc, car_code); /* this has to precede the set_type below */
-		  else val = car_code;
-		  NEW_CELL(sc, x, T_PAIR); 
-		  car(x) = val;
-		  cdr(x) = sc->args;
-		}
+	      if (typ == T_SYMBOL)
+		val = find_symbol_checked(sc, car_code); /* this has to precede the set_type below */
+	      else val = car_code;
+	      NEW_CELL(sc, x, T_PAIR); 
+	      car(x) = val;
+	      cdr(x) = sc->args;
 	      
 	      if (!is_null(sc->args))
 		sc->args = safe_reverse_in_place(sc, x);
@@ -58078,7 +58035,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (is_not_null(z))
 		  return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, list_3(sc, sc->TOO_MANY_ARGUMENTS, closure_name(sc, sc->code), sc->cur_code)));
 	      } 
-	    else add_slot(sc, x, sc->temp6 = z); /* the rest arg */
+	    else 
+	      {
+		sc->temp6 = z; /* the rest arg */
+		add_slot(sc, x, z);
+		sc->temp6 = sc->NIL;
+	      }
 	  }
 	  
 	  sc->code = closure_body(sc->code);
@@ -62744,9 +62706,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #else
 #define NEW_CELL(Sc, Obj, Type)			\
   do {						\
-    if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc))) {last_gc_line = __LINE__; try_to_call_gc(Sc);} \
+    if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc))) {last_gc_line = __LINE__; last_gc_func = __func__; try_to_call_gc(Sc);} \
     Obj = (*(--(Sc->free_heap_top))); \
-    Obj->alloc_line = __LINE__;	      \
+    Obj->alloc_line = __LINE__;	Obj->alloc_func = __func__;	\
     set_type(Obj, Type);	      \
     } while (0)
 #endif
@@ -67663,7 +67625,7 @@ static s7_pointer make_unique_object(const char* name, unsigned int typ)
 {
   s7_pointer p;
   p = alloc_pointer();
-  set_type(p, typ | T_GC_MARK | T_IMMUTABLE);
+  set_type(p, typ | T_IMMUTABLE);
   unique_name_length(p) = safe_strlen(name);
   unique_name(p) = copy_string_with_length(name, unique_name_length(p));
   heap_location(p) = NOT_IN_HEAP;
@@ -67741,27 +67703,25 @@ s7_scheme *s7_init(void)
   cdr(sc->UNDEFINED) = sc->UNDEFINED;
   /* this way find_symbol of an undefined symbol returns #<undefined> not #<unspecified> */
 
-  sc->temp_cell_1 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  sc->temp_cell = permanent_cons(sc->temp_cell_1, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  sc->temp_cell_2 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  sc->temp_cell_3 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  sc->temp_cell_4 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->temp_cell_1 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_IMMUTABLE);
+  sc->temp_cell = permanent_cons(sc->temp_cell_1, sc->NIL, T_PAIR | T_IMMUTABLE);
+  sc->temp_cell_2 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_IMMUTABLE);
 
-  sc->T1_1 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->T1_1 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_IMMUTABLE);
 
-  sc->T2_2 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  sc->T2_1 = permanent_cons(sc->NIL, sc->T2_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  sc->Z2_2 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  sc->Z2_1 = permanent_cons(sc->NIL, sc->Z2_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->T2_2 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_IMMUTABLE);
+  sc->T2_1 = permanent_cons(sc->NIL, sc->T2_2, T_PAIR | T_IMMUTABLE);
+  sc->Z2_2 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_IMMUTABLE);
+  sc->Z2_1 = permanent_cons(sc->NIL, sc->Z2_2, T_PAIR | T_IMMUTABLE);
 
-  sc->T3_3 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  sc->T3_2 = permanent_cons(sc->NIL, sc->T3_3, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  sc->T3_1 = permanent_cons(sc->NIL, sc->T3_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->T3_3 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_IMMUTABLE);
+  sc->T3_2 = permanent_cons(sc->NIL, sc->T3_3, T_PAIR | T_IMMUTABLE);
+  sc->T3_1 = permanent_cons(sc->NIL, sc->T3_2, T_PAIR | T_IMMUTABLE);
 
-  sc->A4_4 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  sc->A4_3 = permanent_cons(sc->NIL, sc->A4_4, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  sc->A4_2 = permanent_cons(sc->NIL, sc->A4_3, T_PAIR | T_GC_MARK | T_IMMUTABLE);
-  sc->A4_1 = permanent_cons(sc->NIL, sc->A4_2, T_PAIR | T_GC_MARK | T_IMMUTABLE);
+  sc->A4_4 = permanent_cons(sc->NIL, sc->NIL, T_PAIR | T_IMMUTABLE);
+  sc->A4_3 = permanent_cons(sc->NIL, sc->A4_4, T_PAIR | T_IMMUTABLE);
+  sc->A4_2 = permanent_cons(sc->NIL, sc->A4_3, T_PAIR | T_IMMUTABLE);
+  sc->A4_1 = permanent_cons(sc->NIL, sc->A4_2, T_PAIR | T_IMMUTABLE);
 
   sc->A1_1 = sc->A4_4;
   sc->A2_1 = sc->A4_3;
@@ -68548,15 +68508,8 @@ s7_scheme *s7_init(void)
   sc->LIST_TO_STRING =        s7_define_safe_function(sc, "list->string",            g_list_to_string,         1, 0, false, H_list_to_string);
   sc->STRING_TO_LIST =        s7_define_safe_function(sc, "string->list",            g_string_to_list,         1, 2, false, H_string_to_list);
   sc->OBJECT_TO_STRING =      s7_define_safe_function(sc, "object->string",          g_object_to_string,       1, 1, false, H_object_to_string);
-  sc->FORMAT =                s7_define_function(sc,      "format",                  g_format,                 1, 0, true,  H_format);
-
-  /* as format runs through the saved args, "~A" can call object->string; it can call format, and 
-   *    sc->temp_cell_2 can be stepped on in the arg evaluation of the recursive format call,
-   *    so format isn't safe if we've seen open_env + object->string.  This isn't called
-   *    millions of times, normally, so I think I'll just leave it "unsafe" (rather than
-   *    clearing that flag in openlet).  Any other function that keeps sc->args
-   *    in play long enough for s7_call should also be unsafe.
-   * Would it fix this to save/restore the temp cells across the object->string method application? -- no.
+  sc->FORMAT =                s7_define_safe_function(sc, "format",                  g_format,                 1, 0, true,  H_format);
+  /* this was unsafe, but was that due to the (ill-advised) use of temp_call_2 in the arg lists?
    */
 
   sc->IS_NULL =               s7_define_safe_function(sc, "null?",                   g_is_null,                1, 0, false, H_is_null);
