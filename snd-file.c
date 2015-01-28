@@ -1985,7 +1985,7 @@ void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, boo
 static Xen before_save_as_hook;
 static bool before_save_as_hook_active = false;
 
-bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int type, int format, const char *comment)
+bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int smp_type, int hd_type, const char *comment)
 {
   /* might be save-selection, as well as save-sound-as */
   if (before_save_as_hook_active) return(false);
@@ -1998,8 +1998,8 @@ bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool se
 					 C_string_to_Xen_string(save_as_filename),
 					 C_bool_to_Xen_boolean(selection),
 					 C_int_to_Xen_integer(srate),
-					 C_int_to_Xen_integer(type),
-					 C_int_to_Xen_integer(format),
+					 C_int_to_Xen_integer(smp_type),
+					 C_int_to_Xen_integer(hd_type),
 					 (comment) ? C_string_to_Xen_string(comment) : Xen_false),
 			      S_before_save_as_hook);
       before_save_as_hook_active = false;
@@ -3873,7 +3873,7 @@ Return " PROC_TRUE " to give up on that file."
   #define H_after_save_as_hook S_after_save_as_hook " (snd name dialog): called \
 upon File:Save as or " S_save_sound_as " completion."
 
-  #define H_before_save_as_hook S_before_save_as_hook " (snd name selection sampling-rate header-type sample-type comment): called \
+  #define H_before_save_as_hook S_before_save_as_hook " (snd name selection sampling-rate sample-type header-type comment): called \
 before File:Save as or " S_save_sound_as ". Provides a way to fixup a sound just before it is saved."
 
   #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, but before data has been read."
@@ -3917,7 +3917,7 @@ that name is presented in the New File dialog."
   close_hook =          Xen_define_hook(S_close_hook,          "(make-hook 'snd)",                 1, H_close_hook);
   bad_header_hook =     Xen_define_hook(S_bad_header_hook,     "(make-hook 'name)",                1, H_bad_header_hook);
   after_save_as_hook =  Xen_define_hook(S_after_save_as_hook,  "(make-hook 'snd 'name 'dialog)",   3, H_after_save_as_hook);
-  before_save_as_hook = Xen_define_hook(S_before_save_as_hook, "(make-hook 'snd 'name 'selection 'sampling-rate 'header-type 'sample-type 'comment)", 7, H_before_save_as_hook); 
+  before_save_as_hook = Xen_define_hook(S_before_save_as_hook, "(make-hook 'snd 'name 'selection 'sampling-rate 'sample-type 'header-type 'comment)", 7, H_before_save_as_hook); 
   during_open_hook =    Xen_define_hook(S_during_open_hook,    "(make-hook 'fd 'name 'reason)",    3, H_during_open_hook);
   after_open_hook =     Xen_define_hook(S_after_open_hook,     "(make-hook 'snd)",                 1, H_after_open_hook);
   output_name_hook =    Xen_define_hook(S_output_name_hook,    "(make-hook 'name)",                1, H_output_name_hook);

@@ -105,7 +105,7 @@ static s7_pointer g_listener_load_hook(s7_scheme *sc, s7_pointer args)
   hook = s7_car(args);
   file = s7_let_ref(s7, hook, s7_make_symbol(s7, "name"));
   if (!s7_is_string(file))
-    s7_wrong_type_arg_error(sc, "glistener-load-hook", 1, file, "hook's name field should be the file being loaded");
+    s7_wrong_type_arg_error(sc, "glistener *load-hook*", 1, file, "a hook with a 'name field, the file being loaded");
   snprintf(msg, 128, "loading %s", s7_string(file));
   glistener_post_status(ss->listener, msg);
   return(args);

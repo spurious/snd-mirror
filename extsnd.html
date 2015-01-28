@@ -2042,7 +2042,7 @@ If the hook returns #t, Snd does not exit.
 
 <!-- before-save-as-hook -->
 <pre class="indented">
-<em class=def id="beforesaveashook">before-save-as-hook</em> (snd name selection sampling-rate header-type sample-type comment)
+<em class=def id="beforesaveashook">before-save-as-hook</em> (snd name selection sampling-rate sample-type header-type comment)
 </pre>
 
 <p>This hook is called before <a href="#savesoundas">save-sound-as</a> or File:Save as.  
@@ -2056,7 +2056,7 @@ we're saving the selection.
 <pre class="indented">
 (hook-push <em class=red>before-save-as-hook</em>
   (lambda (hook)	   
-    ((lambda (index filename sr htype dformat comment)
+    ((lambda (index filename sr dformat htype comment)
       (if (not (= sr (<a class=quiet href="#srate">srate</a> index)))
           (let ((chns (<a class=quiet href="#chans">channels</a> index)))
 	    (do ((i 0 (+ i 1)))

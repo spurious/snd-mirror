@@ -11642,7 +11642,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
     }
 
   fullname = mus_expand_filename(str);
-  if (run_before_save_as_hook(sp, fullname, sd->type != SOUND_SAVE_AS, srate, type, format, comment))
+  if (run_before_save_as_hook(sp, fullname, sd->type != SOUND_SAVE_AS, srate, format, type, comment))
     {
       msg = mus_format("%s cancelled by %s", (saving) ? "save" : "extract", S_before_save_as_hook);
       post_file_dialog_error((const char *)msg, sd->panel_data);

@@ -793,7 +793,7 @@ struct s7_scheme {
   unsigned int read_line_buf_size;
 
   s7_pointer v, w, x, y, z;         /* evaluator local vars */
-  s7_pointer temp1, temp2, temp3, temp4, temp5, temp6;
+  s7_pointer temp1, temp2, temp3, temp4, temp6;
   s7_pointer temp_cell, temp_cell_1, temp_cell_2;
   s7_pointer T1_1, T2_1, T2_2, T3_1, T3_2, T3_3, Z2_1, Z2_2;
   s7_pointer A1_1, A2_1, A2_2, A3_1, A3_2, A3_3, A4_1, A4_2, A4_3, A4_4;
@@ -3166,7 +3166,7 @@ s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc)
 
 static void (*mark_function[NUM_TYPES])(s7_pointer p);
 
-#define S7_MARK(Obj) do {s7_pointer _p_; _p_ = Obj; (*mark_function[unchecked_type(_p_)])(_p_);} while (0)
+#define S7_MARK(Obj) do {s7_pointer _p_; _p_ = Obj; if (!is_marked(_p_)) (*mark_function[unchecked_type(_p_)])(_p_);} while (0)
 
 static void mark_symbol(s7_pointer p)
 {
@@ -3661,19 +3661,16 @@ static void mark_vector_1(s7_pointer p, s7_Int top)
 
 static void mark_slot(s7_pointer p)
 {
-  if (!is_marked(p)) 
-    {
-      set_mark(p);
-      S7_MARK(slot_value(p));
-      if (slot_has_accessor(p))
-	S7_MARK(slot_accessor(p));
-
-      /* should this also mark any pending_value? -- currently we don't initialize it.
-       *   perhaps a bit if pending_value is in use checked here.  This procedure is not
-       *   called very often, but the pending value set happens a lot.
-       *   slot_set_pending_value and slot_transfer_pending_value.
-       */
-    }
+  set_mark(p);
+  S7_MARK(slot_value(p));
+  if (slot_has_accessor(p))
+    S7_MARK(slot_accessor(p));
+  
+  /* should this also mark any pending_value? -- currently we don't initialize it.
+   *   perhaps a bit if pending_value is in use checked here.  This procedure is not
+   *   called very often, but the pending value set happens a lot.
+   *   slot_set_pending_value and slot_transfer_pending_value.
+   */
 }
 
 static void mark_let(s7_pointer env)
@@ -3682,84 +3679,71 @@ static void mark_let(s7_pointer env)
   for (x = env; is_let(x) && (!is_marked(x)); x = outlet(x)) 
     { 
       s7_pointer y;
-      for (y = let_slots(x); is_slot(y); y = next_slot(y))
-	mark_slot(y);
       set_mark(x);
+      for (y = let_slots(x); is_slot(y); y = next_slot(y))
+	if (!is_marked(y)) /* slot value might be the enclosing let */
+	  mark_slot(y);
     }
 }
-
 
 static void just_mark(s7_pointer p)
 {
   set_mark(p);
 }
 
-
 static void mark_c_proc_star(s7_pointer p)
 {
-  if (!is_marked(p)) 
+  set_mark(p);
+  if (!c_function_simple_defaults(p))
     {
-      set_mark(p);
-      if (!c_function_simple_defaults(p))
-	{
-	  s7_pointer arg;
-	  for (arg = c_function_call_args(p); is_pair(arg); arg = cdr(arg))
-	    S7_MARK(car(arg));
-	}
+      s7_pointer arg;
+      for (arg = c_function_call_args(p); is_pair(arg); arg = cdr(arg))
+	S7_MARK(car(arg));
     }
 }
 
 
 static void mark_pair(s7_pointer p)
 {
-  if (!is_marked(p)) 
+  s7_pointer x;
+  set_mark(p);
+  S7_MARK(car(p));
+  /* if the list is huge, the recursion to cdr(p) is problematic when there are strict limits on the stack size
+   *  (C is not tail recursive apparently), so I'll try something else... (This form is faster according to callgrind).
+   *
+   * in snd-14 or so through 15.3, sc->temp_cell_2|3 were used for trailing args in eval, but that meant
+   *   the !is_marked check below (which is intended to catch cyclic lists) caused cells to be missed;
+   *   since sc->args could contain permanently marked cells, if these were passed to g_vector, for example, and
+   *   make_vector_1 triggered a GC call, we needed to mark both the permanent (always marked) cell and its contents,
+   *   and continue through the rest of the list.  But adding temp_cell_2|3 to sc->permanent_objects was not enough.
+   *   Now I've already forgotten the rest of the story, and it was just an hour ago! -- the upshot is that temp_cell_2|3
+   *   are not now used as arg list members.
+   */
+  for (x = cdr(p); is_pair(x) && (!is_marked(x)); x = cdr(x))
     {
-      s7_pointer x;
-      set_mark(p);
-      S7_MARK(car(p));
-      /* if the list is huge, the recursion to cdr(p) is problematic when there are strict limits on the stack size
-       *  (C is not tail recursive apparently), so I'll try something else... (This form is faster according to callgrind).
-       *
-       * in snd-14 or so through 15.3, sc->temp_cell_2|3 were used for trailing args in eval, but that meant
-       *   the !is_marked check below (which is intended to catch cyclic lists) caused cells to be missed;
-       *   since sc->args could contain permanently marked cells, if these were passed to g_vector, for example, and
-       *   make_vector_1 triggered a GC call, we needed to mark both the permanent (always marked) cell and its contents,
-       *   and continue through the rest of the list.  But adding temp_cell_2|3 to sc->permanent_objects was not enough.
-       *   Now I've already forgotten the rest of the story, and it was just an hour ago! -- the upshot is that temp_cell_2|3
-       *   are not now used as arg list members.
-       */
-      for (x = cdr(p); is_pair(x) && (!is_marked(x)); x = cdr(x))
-	{
-	  set_mark(x);
-	  S7_MARK(car(x));
-	}
-      if (!is_marked(x)) S7_MARK(x);
+      set_mark(x);
+      S7_MARK(car(x));
     }
+  S7_MARK(x);
 }
 
 static void mark_counter(s7_pointer p)
 {
-  if (!is_marked(p)) 
-    {
-      set_mark(p);
-      S7_MARK(counter_result(p));
-      S7_MARK(counter_list(p));
-      S7_MARK(counter_let(p));
-      S7_MARK(counter_args(p));
-    }
+  set_mark(p);
+  S7_MARK(counter_result(p));
+  S7_MARK(counter_list(p));
+  S7_MARK(counter_let(p));
+  S7_MARK(counter_args(p));
 }
 
 
 static void mark_closure(s7_pointer p)
 {
-  if (!is_marked(p)) 
-    {
-      set_mark(p);
-      S7_MARK(closure_args(p));
-      S7_MARK(closure_body(p));
-      mark_let(closure_let(p));
-      S7_MARK(closure_setter(p));
-    }
+  set_mark(p);
+  S7_MARK(closure_args(p));
+  S7_MARK(closure_body(p));
+  mark_let(closure_let(p));
+  S7_MARK(closure_setter(p));
 }
 
 static void mark_stack_1(s7_pointer p, s7_Int top)
@@ -3785,119 +3769,91 @@ static void mark_stack(s7_pointer p)
   /* we can have a bare stack awaiting a continuation to hold it if the NEW_CELL for the continuation
    *    triggers the GC!  But we need a top-of-stack??
    */
-  if (!is_marked(p))
-    mark_stack_1(p, temp_stack_top(p));
+  mark_stack_1(p, temp_stack_top(p));
 }
 
 
 static void mark_continuation(s7_pointer p)
 {
-  if (!is_marked(p)) 
-    {
-      unsigned int i;
-      set_mark(p);
-      mark_stack_1(continuation_stack(p), continuation_stack_top(p));
-      for (i = 0; i < continuation_op_loc(p); i++)
-	S7_MARK(continuation_op_stack(p)[i]);
-    }
+  unsigned int i;
+  set_mark(p);
+  mark_stack_1(continuation_stack(p), continuation_stack_top(p));
+  for (i = 0; i < continuation_op_loc(p); i++)
+    S7_MARK(continuation_op_stack(p)[i]);
 }
 
 static void mark_vector(s7_pointer p)
 {
-  if (!is_marked(p)) 
-    {
-      /* If a subvector (an inner dimension) of a vector is the only remaining reference
-       *    to the main vector, we want to make sure the main vector is not GC'd until
-       *    the subvector is also GC-able.  The shared_vector field either points to the
-       *    parent vector, or it is sc->F, so we need to check for a vector parent if
-       *    the current is multidimensional (this will include 1-dim slices).  We need
-       *    to keep the parent case separate (i.e. sc->F means the current is the original)
-       *    so that we only free once (or remove_from_heap once).
-       */
-      if ((vector_has_dimensional_info(p)) &&
-	  (s7_is_vector(shared_vector(p))))
-	mark_vector(shared_vector(p));
-      mark_vector_1(p, vector_length(p));
-    }
+  /* If a subvector (an inner dimension) of a vector is the only remaining reference
+   *    to the main vector, we want to make sure the main vector is not GC'd until
+   *    the subvector is also GC-able.  The shared_vector field either points to the
+   *    parent vector, or it is sc->F, so we need to check for a vector parent if
+   *    the current is multidimensional (this will include 1-dim slices).  We need
+   *    to keep the parent case separate (i.e. sc->F means the current is the original)
+   *    so that we only free once (or remove_from_heap once).
+   */
+  if ((vector_has_dimensional_info(p)) &&
+      (s7_is_vector(shared_vector(p))))
+    mark_vector(shared_vector(p));
+  mark_vector_1(p, vector_length(p));
 }
 
 static void mark_int_or_float_vector(s7_pointer p)
 {
-  if (!is_marked(p)) 
-    {
-      if ((vector_has_dimensional_info(p)) &&
-	  (s7_is_vector(shared_vector(p))))
-	mark_int_or_float_vector(shared_vector(p));
-      set_mark(p);
-    }
+  if ((vector_has_dimensional_info(p)) &&
+      (s7_is_vector(shared_vector(p))))
+    mark_int_or_float_vector(shared_vector(p));
+  set_mark(p);
 }
 
 static void mark_c_object(s7_pointer p)
 {
-  if (!is_marked(p)) 
-    {
-      set_mark(p);
-      mark_embedded_objects(p);
-    }
+  set_mark(p);
+  mark_embedded_objects(p);
 }
 
 static void mark_catch(s7_pointer p)
 {
-  if (!is_marked(p))
-    {
-      set_mark(p);
-      S7_MARK(catch_tag(p));
-      S7_MARK(catch_handler(p));
-    }
+  set_mark(p);
+  S7_MARK(catch_tag(p));
+  S7_MARK(catch_handler(p));
 }
 
 static void mark_dynamic_wind(s7_pointer p)
 {
-  if (!is_marked(p)) 
-    {
-      set_mark(p);
-      S7_MARK(dynamic_wind_in(p));
-      S7_MARK(dynamic_wind_out(p));
-      S7_MARK(dynamic_wind_body(p));
-    }
+  set_mark(p);
+  S7_MARK(dynamic_wind_in(p));
+  S7_MARK(dynamic_wind_out(p));
+  S7_MARK(dynamic_wind_body(p));
 }
 
 static void mark_hash_table(s7_pointer p)
 {
-  if (!is_marked(p))
+  set_mark(p);
+  if (hash_table_entries(p) > 0)
     {
-      set_mark(p);
-      if (hash_table_entries(p) > 0)
+      s7_pointer *tp, *tend;
+      tp = (s7_pointer *)(hash_table_elements(p));
+      tend = (s7_pointer *)(tp + hash_table_length(p));
+      while (tp < tend)
 	{
-	  s7_pointer *tp, *tend;
-	  tp = (s7_pointer *)(hash_table_elements(p));
-	  tend = (s7_pointer *)(tp + hash_table_length(p));
-	  while (tp < tend)
-	    {
-	      if (is_pair(*tp))
-		mark_pair(*tp);
-	      tp++;
-	    }
+	  if (is_pair(*tp))
+	    mark_pair(*tp);
+	  tp++;
 	}
     }
 }
 
 static void mark_iterator(s7_pointer p)
 {
-  if (!is_marked(p))
-    {
-      set_mark(p);
-      S7_MARK(iterator_sequence(p));
-    }
+  set_mark(p);
+  S7_MARK(iterator_sequence(p));
 }
 
 static void mark_input_port(s7_pointer p)
 {
-  if (!is_marked(p)) 
-    {
-      set_mark(p);
-      set_mark(port_original_input_string(p));
-    }
+  set_mark(p);
+  set_mark(port_original_input_string(p));
 }
 
 
@@ -3961,7 +3917,6 @@ static void mark_op_stack(s7_scheme *sc)
     S7_MARK(*p++);
 }
 
-
 static void mark_rootlet(s7_scheme *sc)
 {
   s7_pointer ge;
@@ -3975,7 +3930,6 @@ static void mark_rootlet(s7_scheme *sc)
   while (tmp < top)
     S7_MARK(slot_value(*tmp++));
 }
-
 
 void s7_mark_object(s7_pointer p)
 {
@@ -4062,7 +4016,6 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->temp2);
   S7_MARK(sc->temp3);
   S7_MARK(sc->temp4);
-  S7_MARK(sc->temp5);
   S7_MARK(sc->temp6);
 
   set_mark(sc->input_port);
@@ -4219,45 +4172,6 @@ static int gc(s7_scheme *sc)
   }
 #endif
 
-#if 0
-  {
-    s7_pointer *tp, *heap_top;
-    int cells[NUM_TYPES];
-    int i;
-    
-    tp = sc->heap;
-    heap_top = (s7_pointer *)(sc->heap + sc->heap_size);
-    
-    for (i = 0; i < NUM_TYPES; i++) cells[i] = 0;
-    while (tp < heap_top)
-      {
-	s7_pointer p;
-	p = (*tp++);
-	cells[unchecked_type(p)]++;
-      }
-    if (cells[0] != sc->free_heap_top - sc->free_heap)
-      {
-	fprintf(stderr, "free cells: %d, free_heap: %ld\n", cells[0], sc->free_heap_top - sc->free_heap);
-	tp = sc->heap;
-	while (tp < heap_top)
-	  {
-	    s7_pointer p;
-	    p = (*tp++);
-	    if (unchecked_type(p) == T_FREE)
-	      {
-		s7_pointer *fp;
-		for (fp = sc->free_heap; fp < sc->free_heap_top; fp++)
-		  if (*fp == p) break;
-		
-		if (fp >= sc->free_heap_top)
-		  print_debugging_state(sc, p, sc->NIL, 0);
-	      }
-	  }
-	abort();
-      }
-  }
-#endif
-
   if (sc->gc_stats)
     {
 #ifndef _MSC_VER
@@ -4312,22 +4226,30 @@ int s7_gc_freed(s7_scheme *sc)
    *   to check it repeatedly after the first such check.
    */
 #else
-static bool for_any_other_reason(s7_scheme *sc)
+static bool for_any_other_reason(s7_scheme *sc, int line)
 {
+#if 0
+  static int ctr = 0;
   if ((sc->default_rng) &&
-      (!sc->gc_off))
+      (!sc->gc_off) &&
+      (ctr > GC_TRIGGER_SIZE))
     {
       s7_Double x;
       x = next_random(sc->default_rng);
-      if (x > .999)
-	return(true);
+      if (x > .995)
+	{
+	  ctr = 0;
+	  return(true);
+	}
     }
+  ctr++;
+#endif
   return(false);
 }
 
 #define NEW_CELL(Sc, Obj, Type)			\
   do {						\
-    if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc))) {last_gc_line = __LINE__; last_gc_func = __func__; try_to_call_gc(Sc);} \
+    if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc, __LINE__))) {last_gc_line = __LINE__; last_gc_func = __func__; try_to_call_gc(Sc);} \
     Obj = (*(--(Sc->free_heap_top))); \
     Obj->alloc_line = __LINE__;	 Obj->alloc_func = __func__;	\
     set_type(Obj, Type);	      \
@@ -6733,7 +6655,7 @@ static s7_pointer make_macro(s7_scheme *sc)
   s7_pointer cx, zx, lx, mac;
 
   NEW_CELL_NO_CHECK(sc, mac, T_MACRO);
-  sc->temp4 = mac;
+  sc->temp6 = mac;
   closure_args(mac) = sc->NIL;
   closure_body(mac) = sc->NIL;
   closure_setter(mac) = sc->F;
@@ -6793,7 +6715,7 @@ static s7_pointer make_macro(s7_scheme *sc)
   /* here mac is the macro, sc->code is its name (a symbol),
    *   (symbol? (define (f a) (+ a 1))) -> #t, so I guess define-macro should follow suit.
    */
-  sc->temp4 = sc->NIL;
+  sc->temp6 = sc->NIL;
   return(mac);
 }
 
@@ -22924,10 +22846,10 @@ s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc
 
 static void push_input_port(s7_scheme *sc, s7_pointer new_port)
 {
-  sc->temp4 = sc->input_port;
+  sc->temp6 = sc->input_port;
   sc->input_port = new_port;
-  sc->input_port_stack = cons(sc, sc->temp4, sc->input_port_stack);
-  sc->temp4 = sc->NIL;
+  sc->input_port_stack = cons(sc, sc->temp6, sc->input_port_stack);
+  sc->temp6 = sc->NIL;
 }
 
 
@@ -23419,7 +23341,7 @@ static s7_pointer s7_load_1(s7_scheme *sc, const char *filename, s7_pointer e)
     return(file_error(sc, "load", "can't open", filename));
 
   if (is_pair(s7_hook_functions(sc, sc->load_hook)))
-    s7_call(sc, sc->load_hook, list_1(sc, s7_make_string(sc, filename)));
+    s7_call(sc, sc->load_hook, list_1(sc, sc->temp4 = s7_make_string(sc, filename)));
 
   port = read_file(sc, fp, filename, -1, "load");   /* -1 means always read its contents into a local string */
   port_file_number(port) = remember_file_name(sc, filename);
@@ -40970,8 +40892,8 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  break;
 
 	case TOKEN_VECTOR:         /* already read #( -- TOKEN_VECTOR is triggered by #( */
-	    push_stack_no_code(sc, OP_READ_VECTOR, sc->w);   /* sc->w is the dimensions */
-	    /* fall through */
+	  push_stack_no_code(sc, OP_READ_VECTOR, sc->w);   /* sc->w is the dimensions */
+	  /* fall through */
 	  
 	case TOKEN_LEFT_PAREN:
 	  sc->tok = token(sc);
@@ -50556,7 +50478,7 @@ static s7_pointer free_let(s7_scheme *sc, s7_pointer e)
 #else
 #define NEW_CELL(Sc, Obj, Type)			\
   do {						\
-    if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc))) {last_gc_line = __LINE__; last_gc_func = __func__; try_to_call_gc(Sc); if ((Sc->begin_hook) && (call_begin_hook(Sc))) return(Sc->F);} \
+    if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc, __LINE__))) {last_gc_line = __LINE__; last_gc_func = __func__; try_to_call_gc(Sc); if ((Sc->begin_hook) && (call_begin_hook(Sc))) return(Sc->F);} \
     Obj = (*(--(Sc->free_heap_top))); \
     Obj->alloc_line = __LINE__;	Obj->alloc_func = __func__;	\
     set_type(Obj, Type);	      \
@@ -57700,13 +57622,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* sc->value is the next-to-last arg, and we know the last arg is not a list (so values can't mess us up!)
        */
       {
-	s7_pointer x, y, lx, val;
+	s7_pointer x, y, val;
 
 	val = sc->code;
 	if (is_symbol(val))
 	  val = find_symbol_checked(sc, val);
 	
-	lx = pop_op_stack(sc);
 	NEW_CELL(sc, x, T_PAIR);
 	NEW_CELL_NO_CHECK(sc, y, T_PAIR);
 	car(x) = sc->value;
@@ -57714,7 +57635,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	car(y) = val;
 	cdr(y) = x;
 	sc->args = safe_reverse_in_place(sc, y); 
-	sc->code = lx;
+	sc->code = pop_op_stack(sc);
 	goto APPLY;
       }
       
@@ -57808,7 +57729,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (typ == T_SYMBOL)
 		    val = find_symbol_checked(sc, car_code);
 		  else val = car_code;
-		  
+		  sc->temp4 = val;
+
 		  /* get the current arg, which is not a list */
 		  sc->code = pop_op_stack(sc);
 		  NEW_CELL(sc, x, T_PAIR);
@@ -57847,6 +57769,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (typ == T_SYMBOL)
 		val = find_symbol_checked(sc, car_code); /* this has to precede the set_type below */
 	      else val = car_code;
+	      sc->temp4 = val;
 	      NEW_CELL(sc, x, T_PAIR); 
 	      car(x) = val;
 	      cdr(x) = sc->args;
@@ -58044,20 +57967,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	  
 	  sc->code = closure_body(sc->code);
-	  /* TODO: begin_check -- apparently not (x . 5) -- it goes through lambda?? then jump to OP_BEGIN1 in any case ? 
-	   *   don't we check closure_body before getting here?
-	   */
-
-	  if (is_pair(cdr(sc->code)))
-	    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
-	  else
-	    {
-	      if (!is_null(cdr(sc->code)))
-		return(eval_error(sc, "closure body: stray dot? ~A", sc->code));		
-	    }
-	  sc->code = car(sc->code);
-	  goto EVAL;
-	  
+	  goto BEGIN1;
 	  
 	case T_CLOSURE_STAR:	                  /* -------- define* (lambda*) -------- */
 	  { 
@@ -62706,7 +62616,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #else
 #define NEW_CELL(Sc, Obj, Type)			\
   do {						\
-    if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc))) {last_gc_line = __LINE__; last_gc_func = __func__; try_to_call_gc(Sc);} \
+    if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc, __LINE__))) {last_gc_line = __LINE__; last_gc_func = __func__; try_to_call_gc(Sc);} \
     Obj = (*(--(Sc->free_heap_top))); \
     Obj->alloc_line = __LINE__;	Obj->alloc_func = __func__;	\
     set_type(Obj, Type);	      \
@@ -67756,7 +67666,6 @@ s7_scheme *s7_init(void)
   sc->temp2 = sc->NIL;
   sc->temp3 = sc->NIL;
   sc->temp4 = sc->NIL;
-  sc->temp5 = sc->NIL;
   sc->temp6 = sc->NIL;
 
   sc->begin_hook = NULL;
@@ -69218,15 +69127,15 @@ int main(int argc, char **argv)
 /* --------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4
- * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1141
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020
- * lg             |      |      | 6547 6497 6494 6235
- * t137           |      |      | 11.0           5031
- * t455|6     265 |   89 |  9   |       8.4 8045 7482
- * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6
- * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8
- * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1180
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1140
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3019
+ * lg             |      |      | 6547 6497 6494 6235 6233
+ * t137           |      |      | 11.0           5031 5006
+ * t455|6     265 |   89 |  9   |       8.4 8045 7482 7488
+ * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.6
+ * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 23.8
+ * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 34.4
  *
  * --------------------------------------------------
  *
@@ -69259,8 +69168,10 @@ int main(int argc, char **argv)
  *   also cload: libc libgsl etc arg types/return types [real string ?]
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  * how to catch the stack overflow op_cz case?
+ *
  * new-sound et al in new with-sound arg order [output channels srate sample-type header-type comment]:
- *   before-save-as-hook mus-raw-header-defaults save-region save-selection save-sound-as array->file(?)
+ *   (set_)mus-header-raw-defaults save-region save-selection save-sound-as array->file(?)
+ *   these involve lots of rewrites in all 4 languages
  *
  * inexact/pure s7: (define exact? rational?) (define (inexact? x) (not (rational? x))) (define inexact->exact round) (define (exact->inexact x) (* x 1.0))
  *    also get rid of #i and #e?
