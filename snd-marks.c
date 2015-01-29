@@ -2058,11 +2058,13 @@ static bool s7_xen_mark_equalp(void *obj1, void *obj2)
 }
 
 
-static Xen s7_xen_mark_copy(s7_scheme *sc, s7_pointer obj)
+static Xen s7_xen_mark_copy(s7_scheme *sc, s7_pointer args)
 {
+  s7_pointer obj;
   int id;
   mark *m, *new_m;
   chan_info *cps[1] = {NULL};
+  obj = s7_car(args);
   id = xen_mark_to_int(obj);
   m = find_mark_from_id(id, cps, AT_CURRENT_EDIT_POSITION);
   new_m = add_mark(m->samp, m->name, cps[0]);
@@ -2075,7 +2077,7 @@ static Xen s7_xen_mark_copy(s7_scheme *sc, s7_pointer obj)
 static void init_xen_mark(void)
 {
 #if HAVE_SCHEME
-  xen_mark_tag = s7_new_type_x("<mark>", print_xen_mark, free_xen_mark, s7_xen_mark_equalp, NULL, NULL, NULL, NULL, s7_xen_mark_copy, NULL, NULL);
+  xen_mark_tag = s7_new_type_x(s7, "<mark>", print_xen_mark, free_xen_mark, s7_xen_mark_equalp, NULL, NULL, NULL, NULL, s7_xen_mark_copy, NULL, NULL);
 #else
 #if HAVE_RUBY
   xen_mark_tag = Xen_make_object_type("XenMark", sizeof(xen_mark));

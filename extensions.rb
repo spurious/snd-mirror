@@ -340,7 +340,7 @@ Applies map_chan with PROC to all channels in parallel.")
 Writes selection data as (multichannel) file (for external program).")
   def selection_to_temp(type = Mus_next, format = Mus_out_format)
     data = [snd_tempnam]
-    save_selection(data.first, type, format)
+    save_selection(data.first, 44100, format, type)
     data
   end
 
@@ -362,7 +362,7 @@ Writes sound data as (multichannel) file (for external program).")
     cursync = sync(cursnd)
     if cursync.zero? or syncd_sounds(cursync) == 1
       data = [snd_tempnam]
-      save_sound_as(data.first, selected_sound, type, format,
+      save_sound_as(data.first, selected_sound, :header_type, type, :sample_type, format,
                     :edit_position, edpos)
       data
     else
@@ -378,7 +378,7 @@ Writes selection data as mono files (for external program).")
   def selection_to_temps(type = Mus_next, format = Mus_out_format)
     data = make_array(selection_chans) do |chn|
       outname = snd_tempnam
-      save_selection(outname, type, format, :channel, chn)
+      save_selection(outname, 44100, format, type, :channel, chn)
       outname
     end
     data
@@ -393,7 +393,7 @@ Writes sound data as mono files (for external program).")
     if cursync.zero? or syncd_sounds(cursync) == 1
       make_array(channels(cursnd)) do |chn|
         outname = snd_tempnam
-        save_sound_as(outname, selected_sound, type, format,
+        save_sound_as(outname, selected_sound, :header_type, type, :sample_type, format,
                       :channel, chn, :edit_position, edpos)
         outname
       end

@@ -1754,8 +1754,7 @@ Example: clm_mix(\"tmp\")")
       unless @continue
         remove_file(@output)
       end
-      snd = new_sound(@output, @header_type, @sample_type,
-                      sr, @channels, @comment)
+      snd = new_sound(@output, @channels, sr, @sample_type, @header_type, @comment)
     end
     if @reverb
       if sound?(rsnd = find_sound(@revfile)) and (not @continue)
@@ -1772,8 +1771,7 @@ Example: clm_mix(\"tmp\")")
         unless @continue
           remove_file(@revfile)
         end
-        rsnd = new_sound(@revfile, @header_type, @sample_type,
-                         sr, @reverb_channels)
+        rsnd = new_sound(@revfile, @reverb_channels, sr, @sample_type, @header_type)
       end
     end
     $output = @ws_output = @out_snd = snd

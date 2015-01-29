@@ -1559,7 +1559,7 @@
 (hey "static void define_xm_obj(void)~%")
 (hey "{~%")
 (hey "#if HAVE_SCHEME~%")
-(hey " xm_obj_tag = s7_new_type_x(\"<XmObj>\", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL, NULL, NULL, NULL, NULL);~%")
+(hey " xm_obj_tag = s7_new_type_x(s7, \"<XmObj>\", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL, NULL, NULL, NULL, NULL);~%")
 (hey "#else~%")
 (hey "  xm_obj_tag = Xen_make_object_type(\"XmObj\", sizeof(void *));~%")
 (hey "#endif~%")

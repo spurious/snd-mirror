@@ -1269,7 +1269,7 @@ void save_region_backpointer(snd_info *sp)
 }
 
 
-io_error_t save_region(int rg, const char *name, int type, int format, const char *comment)
+io_error_t save_region(int rg, const char *name, int samp_type, int head_type, const char *comment)
 {
   region *r;
   io_error_t io_err = IO_NO_ERROR;
@@ -1278,7 +1278,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
   if (r->use_temp_file == REGION_DEFERRED) 
     deferred_region_to_temp_file(r);
 
-  io_err = snd_write_header(name, type, region_srate(rg), r->chans, r->chans * r->framples, format, comment, NULL);
+  io_err = snd_write_header(name, head_type, region_srate(rg), r->chans, r->chans * r->framples, samp_type, comment, NULL);
   if (io_err == IO_NO_ERROR)
     {
       mus_long_t oloc;
@@ -1289,10 +1289,10 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
       if (ofd != -1)
 	{
 	  int ifd;
-	  snd_file_open_descriptors(ofd, name, format, oloc, r->chans, type);
+	  snd_file_open_descriptors(ofd, name, samp_type, oloc, r->chans, head_type);
 	  mus_file_set_clipping(ofd, clipping(ss));
 	  lseek(ofd, oloc, SEEK_SET);
-	  /* copy r->filename with possible header/data format changes */
+	  /* copy r->filename with possible header/sample type changes */
 
 	  ifd = snd_open_read(r->filename);
 	  if (ifd != -1)
@@ -1479,7 +1479,7 @@ static Xen s7_xen_region_length(s7_scheme *sc, Xen obj)
 static void init_xen_region(void)
 {
 #if HAVE_SCHEME
-  xen_region_tag = s7_new_type_x("<region>", print_xen_region, free_xen_region, s7_xen_region_equalp, NULL, NULL, NULL, s7_xen_region_length, NULL, NULL, NULL);
+  xen_region_tag = s7_new_type_x(s7, "<region>", print_xen_region, free_xen_region, s7_xen_region_equalp, NULL, NULL, NULL, s7_xen_region_length, NULL, NULL, NULL);
 #else
 #if HAVE_RUBY
   xen_region_tag = Xen_make_object_type("XenRegion", sizeof(xen_region));
@@ -1924,11 +1924,11 @@ static void save_region_to_xen_error(const char *msg, void *data)
 
 static Xen g_save_region(Xen n, Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg5, Xen arg6, Xen arg7, Xen arg8)
 {
-  #define H_save_region "(" S_save_region " region file header-type sample-type comment): save region in file \
-using data format (default depends on machine byte order), header type (" S_mus_next "), and comment"
+  #define H_save_region "(" S_save_region " region file sample-type header-type comment): save region in file \
+using sample-type (default depends on machine byte order), header-type (" S_mus_next "), and comment"
 
   char *name = NULL;
-    const char *file = NULL, *com = NULL;
+  const char *file = NULL, *com = NULL;
   int rg, sample_type = MUS_OUT_FORMAT, header_type = MUS_NEXT;
   Xen args[8]; 
   Xen keys[4];
@@ -1936,8 +1936,8 @@ using data format (default depends on machine byte order), header type (" S_mus_
   int vals;
 
   keys[0] = kw_file;
-  keys[1] = kw_header_type;
-  keys[2] = kw_sample_type;
+  keys[1] = kw_sample_type;
+  keys[2] = kw_header_type;
   keys[3] = kw_comment;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8; 
 
@@ -1951,8 +1951,8 @@ using data format (default depends on machine byte order), header type (" S_mus_
   if (vals > 0)
     {
       file = mus_optkey_to_string(keys[0], S_save_region, orig_arg[0], NULL);
-      header_type = mus_optkey_to_int(keys[1], S_save_region, orig_arg[1], header_type);
-      sample_type = mus_optkey_to_int(keys[2], S_save_region, orig_arg[2], sample_type);
+      sample_type = mus_optkey_to_int(keys[1], S_save_region, orig_arg[1], sample_type);
+      header_type = mus_optkey_to_int(keys[2], S_save_region, orig_arg[2], header_type);
       com = mus_optkey_to_string(keys[3], S_save_region, orig_arg[3], NULL);
     }
 
@@ -1975,7 +1975,7 @@ using data format (default depends on machine byte order), header type (" S_mus_
     }
 
   redirect_snd_error_to(save_region_to_xen_error, NULL); /* could perhaps pass name here for free in case of error */
-  save_region(rg, name, header_type, sample_type, com);
+  save_region(rg, name, sample_type, header_type, com);
   redirect_snd_error_to(NULL, NULL);
 
   if (name) free(name);

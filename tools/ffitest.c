@@ -319,11 +319,12 @@ static s7_pointer g_block_length(s7_scheme *sc, s7_pointer obj)
   return(s7_make_integer(sc, g->size));
 }
 
-static s7_pointer g_block_copy(s7_scheme *sc, s7_pointer obj)
+static s7_pointer g_block_copy(s7_scheme *sc, s7_pointer args)
 {
-  g_block *g = (g_block *)s7_object_value(obj);
-  g_block *g1;
-  s7_pointer new_g;
+  s7_pointer obj, new_g;
+  g_block *g, *g1;
+  obj = s7_car(args);
+  g = (g_block *)s7_object_value(obj);
   new_g = g_make_block(sc, s7_cons(sc, s7_make_integer(sc, g->size), s7_nil(sc)));
   g1 = (g_block *)s7_object_value(new_g);
   memcpy((void *)(g1->data), (void *)(g->data), g->size * sizeof(double));
@@ -343,12 +344,15 @@ static s7_pointer g_block_reverse(s7_scheme *sc, s7_pointer obj)
   return(new_g);
 }
 
-static s7_pointer g_block_fill(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+static s7_pointer g_block_fill(s7_scheme *sc, s7_pointer args)
 {
+  s7_pointer obj;
   size_t i;
   double fill_val;
-  g_block *g = (g_block *)s7_object_value(obj);
-  fill_val = s7_number_to_real(sc, s7_car(args));
+  g_block *g;
+  obj = s7_car(args);
+  g = (g_block *)s7_object_value(obj);
+  fill_val = s7_number_to_real(sc, s7_cadr(args));
   for (i = 0; i < g->size; i++)
     g->data[i] = fill_val;
   return(obj);
@@ -1335,7 +1339,7 @@ int main(int argc, char **argv)
   s7_gc_unprotect_at(sc, gc_loc);
 
 
-  g_block_type = s7_new_type_x("#<block>", 
+  g_block_type = s7_new_type_x(sc, "#<block>", 
 			       g_block_display, g_block_free, 
 			       g_block_is_equal, g_block_mark,
 			       g_block_ref, g_block_set, g_block_length, 

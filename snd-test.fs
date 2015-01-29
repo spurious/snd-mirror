@@ -2644,21 +2644,21 @@ black-and-white-colormap constant *better-colormap*
     ind '( 12000 14000 1 2 3 4 ) set-sound-loop-info drop
     ind sound-loop-info  '( 12000 14000 1 2 3 4 1 1 )  "set-loop-info"
       #() snd-test-neq
-    "fmv1.snd" ind mus-aifc save-sound-as drop
+    "fmv1.snd" ind :header-type mus-aifc save-sound-as drop
     ind close-sound drop
     "fmv1.snd" mus-sound-loop-info  '( 12000 14000 1 2 3 4 1 1 )
       "saved-loop-info" #() snd-test-neq
   then
   \ 
   oboe-snd open-sound to ind
-  "fmv.snd" ind mus-aifc save-sound-as drop
+  "fmv.snd" ind :header-type mus-aifc save-sound-as drop
   ind close-sound drop
   "fmv.snd" open-sound to ind
   ind sound-loop-info '() "null loop-info" #() snd-test-neq
   ind '( 1200 1400 4 3 2 1 ) set-sound-loop-info drop
   ind sound-loop-info '( 1200 1400 4 3 2 1 1 1 ) "set null loop-info" #()
     snd-test-neq
-  "fmv1.snd" ind mus-aifc save-sound-as drop
+  "fmv1.snd" ind :header-type mus-aifc save-sound-as drop
   "fmv1.snd" mus-sound-loop-info '( 1200 1400 4 3 2 1 1 1 )
     "saved null loop-info" #() snd-test-neq
   ind close-sound drop
@@ -2666,7 +2666,7 @@ black-and-white-colormap constant *better-colormap*
   '( 1200 1400 4 3 2 1 1 0 ) set-sound-loop-info drop
   ind sound-loop-info '( 1200 1400 0 0 2 1 1 0 ) 
     "set null loop-info (no mode1)" #() snd-test-neq
-  "fmv1.snd" ind mus-aifc save-sound-as drop
+  "fmv1.snd" ind :header-type mus-aifc save-sound-as drop
   ind close-sound drop
   "fmv1.snd" mus-sound-loop-info '( 1200 1400 0 0 2 1 1 0 )
     "saved null loop-info (no mode1)" #() snd-test-neq
@@ -2752,7 +2752,7 @@ black-and-white-colormap constant *better-colormap*
       "set-transform-normalization %s" #( name ) snd-test-neq
   end-each
   \ 
-  "fmv.snd" mus-next mus-bshort 22050 1 "set-samples test" 100 new-sound to ind
+  "fmv.snd" 1 22050 mus-bshort mus-next "set-samples test" 100 new-sound to ind
   10 3 3 0.1 make-vct set-samples drop
   0 20 ind 0 channel->vct
   vct( 0 0 0 0 0 0 0 0 0 0 0.1 0.1 0.1 0 0 0 0 0 0 0 )
@@ -2844,7 +2844,7 @@ black-and-white-colormap constant *better-colormap*
   types each to vals
     vals 0 array-ref to typ
     vals 1 array-ref to allowed-diff
-    "test.snd" mus-next mus-bfloat 22050 1 new-sound to ind
+    "test.snd" 1 22050 mus-bfloat mus-next new-sound to ind
     len 0.0 make-vct to v
     0.0 to maxdiff
     #f to maxpos
@@ -2866,7 +2866,7 @@ black-and-white-colormap constant *better-colormap*
       v i 1.0 val f- vct-set! drop
     loop
     v 0 len ind 0 vct->channel drop
-    "test1.snd" ind mus-next typ save-sound-as drop
+    "test1.snd" ind :header-type mus-next :sample-type typ save-sound-as drop
     ind close-sound drop
     "test1.snd" open-sound to ind
     0 len ind 0 channel->vct to v1
@@ -2894,7 +2894,7 @@ black-and-white-colormap constant *better-colormap*
   "written %s" #( "%a %d-%b-%Y %H:%M %Z" current-time strftime )
     string-format { str }
   ob str set-comment drop
-  "test.snd" ob mus-aifc mus-bdouble <'> save-sound-as snd-test-catch to res
+  "test.snd" ob :header-type mus-aifc :sample-type mus-bdouble <'> save-sound-as snd-test-catch to res
   res car 'cannot-save "save-sound-as test.snd write trouble" #() snd-test-eq
   #t set-filter-control-in-hz drop
   "test.snd" open-sound { ab }
@@ -2906,19 +2906,19 @@ black-and-white-colormap constant *better-colormap*
     snd-test-neq
   #f set-filter-control-in-hz drop
   \ 
-  "test.snd" ob mus-raw save-sound-as drop
+  "test.snd" ob :header-type mus-raw save-sound-as drop
   "test.snd" 1 22050 mus-bshort open-raw-sound to ab
   ab mus-raw mus-bshort samp sndlib-check-it
   ab close-sound drop
   \ 
-  "test.snd" ob mus-nist mus-bint save-sound-as drop
+  "test.snd" ob :header-type mus-nist :sample-type mus-bint save-sound-as drop
   "test.snd" open-sound to ab
   ab mus-nist mus-bint samp sndlib-check-it
   ab close-sound drop
   \ 
   output-comment-hook reset-hook!
   output-comment-hook <'> sndlib-check-string add-hook!
-  "test.snd" ob mus-riff mus-lfloat save-sound-as drop
+  "test.snd" ob :header-type mus-riff :sample-type mus-lfloat save-sound-as drop
   output-comment-hook reset-hook!
   "test.snd" open-sound to ab
   ab mus-riff mus-lfloat samp sndlib-check-it
@@ -2932,12 +2932,12 @@ black-and-white-colormap constant *better-colormap*
   types each to vals
     vals 0 array-ref to typ
     vals 1 array-ref to fmt
-    "test.snd" ob typ fmt save-sound-as drop
+    "test.snd" ob :header-type typ :sample-type fmt save-sound-as drop
     "test.snd" open-sound to ab
     ab typ fmt samp sndlib-check-it
     ab close-sound drop
   end-each
-  "test.snd" ob mus-next mus-bshort save-sound-as drop
+  "test.snd" ob :header-type mus-next :sample-type mus-bshort save-sound-as drop
   "test.snd" open-sound to ab
   ab mus-next mus-bshort samp sndlib-check-it
   update-hook reset-hook!
@@ -2971,12 +2971,12 @@ black-and-white-colormap constant *better-colormap*
   ab srate 12345 "set-srate" #() snd-test-neq
   ab close-sound drop
   \ 
-  "test.snd" ob mus-next mus-bfloat save-sound-as drop
+  "test.snd" ob :header-type mus-next :sample-type mus-bfloat save-sound-as drop
   "test.snd" open-sound to ab
   ab mus-next mus-bfloat samp sndlib-check-it
   ab close-sound drop
   \ 
-  "test.snd" ob mus-next mus-bshort save-sound-as drop
+  "test.snd" ob :header-type mus-next :sample-type mus-bshort save-sound-as drop
   ob close-sound drop
   "test.snd" open-sound to ab
   mus-lshort set-sample-type drop
@@ -3405,9 +3405,9 @@ black-and-white-colormap constant *better-colormap*
   "oboe.snd" cur-format set-mus-sound-sample-type drop
   \ 
   "oboe.snd" open-sound to ind
-  "test.wave" ind mus-riff save-sound-as drop
-  "test.rf64" ind mus-rf64 save-sound-as drop
-  "test.aifc" ind mus-aifc save-sound-as drop
+  "test.wave" ind :header-type mus-riff save-sound-as drop
+  "test.rf64" ind :header-type mus-rf64 save-sound-as drop
+  "test.aifc" ind :header-type mus-aifc save-sound-as drop
   ind close-sound drop
   \ 
   #( "test.wave" "test.rf64" "test.aifc" ) each to file
@@ -3542,7 +3542,7 @@ black-and-white-colormap constant *better-colormap*
     then                        \ bigger-snd file-exists?
   then                          \ with-big-file
   \ 
-  "tmp.snd" mus-riff mus-l24int 22050 1 :size 100000 new-sound to ind
+  "tmp.snd" 1 22050 mus-l24int mus-riff :size 100000 new-sound to ind
   selection-creates-region { old-selection-creates-region }
   #t set-selection-creates-region drop
   undef undef undef framples to len
@@ -3555,19 +3555,19 @@ black-and-white-colormap constant *better-colormap*
   ind close-sound drop
   "tmp.snd" open-sound to ind
   select-all { reg }
-  "tmp1.snd" mus-next mus-l24int save-selection drop
+  "tmp1.snd" 22050 mus-l24int mus-next save-selection drop
   "tmp1.snd" open-sound { ind1 }
   -0.5 undef undef undef framples 1/f sndlib-test-scan-x-cb 0 100000 ind1
     scan-channel to res
   res #f "l24 (next) selection not saved correctly" #() snd-test-neq
   ind1 close-sound drop
-  "tmp1.snd" mus-aifc mus-l24int save-selection drop
+  "tmp1.snd" 22050 mus-l24int mus-aifc save-selection drop
   "tmp1.snd" open-sound to ind1
   -0.5 undef undef undef framples 1/f sndlib-test-scan-x-cb 0 100000 ind1
     scan-channel to res
   res #f "l24 (aifc) selection not saved correctly" #() snd-test-neq
   ind1 close-sound drop
-  reg "tmp1.snd" mus-next mus-l24int save-region drop
+  reg "tmp1.snd" mus-l24int mus-next save-region drop
   "tmp1.snd" open-sound to ind1
   -0.5 undef undef undef framples 1/f sndlib-test-scan-x-cb 0 100000 ind1
     scan-channel to res
@@ -3578,7 +3578,7 @@ black-and-white-colormap constant *better-colormap*
   "tmp.snd" file-delete
   old-selection-creates-region set-selection-creates-region drop
   \ 
-  "tmp.snd" mus-next mus-bfloat 22050 1 :size 10 :comment #f new-sound to ind
+  "tmp.snd" 1 22050 mus-bfloat mus-next :size 10 :comment #f new-sound to ind
   <'> sndlib-test-map-set-1.0 map-channel drop
   '( 0 0 0.1 0.1 0.2 0.2 0.3 0.3 0.4 0.4 0.5 0.5
      0.6 0.6 0.7 0.7 0.8 0.8 0.9 0.9 ) env-channel drop
@@ -4565,7 +4565,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
 
 : 15-chan-local-vars ( -- )
   \ dsp.fs
-  "test.snd" mus-next mus-bfloat 22050 1 "src-* tests" 10000 new-sound { ind }
+  "test.snd" 1 22050 mus-bfloat mus-next "src-* tests" 10000 new-sound { ind }
   \ src-duration tests
   #( 0 1 1 2 )      src-duration { d1 }
   #( 0 2 1 1 )      src-duration { d2 }
@@ -5460,7 +5460,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
     "with-sound balance?" snd-display
   then
   "test.snd" "test23-balance" *lineno* check-maxamp
-  "tmp.snd" mus-next mus-bfloat 22050 1 new-sound to ind
+  "tmp.snd" 1 22050 mus-bfloat mus-next new-sound to ind
   0 1000 ind 0 pad-channel drop
   100.0 make-oscil { mg }
   1000 make-ssb-fm { gen }
@@ -5715,7 +5715,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
   else
     "c" 4 #t unbind-key drop
   then
-  "fmv.snd" mus-next mus-bshort 22050 1 "set-samples test" 100 new-sound to ind
+  "fmv.snd" 1 22050 mus-bshort mus-next "set-samples test" 100 new-sound to ind
   \ new-sound
   10  3  3 0.1 make-vct set-samples drop
   0 20 ind 0 channel->vct { res }
@@ -5857,7 +5857,7 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
   *with-test-gtk* unless
     \ FIXME: set-mix-amp-env (gtk segfault)
     \ crashes in set-mix-amp-env with gtk
-    "hiho.wave" mus-next mus-bshort 22050 1 new-sound { new-index }
+    "hiho.wave" 1 22050 mus-bshort mus-next new-sound { new-index }
     new-index select-sound drop
     0 new-index 0 find-mix to res
     res if
@@ -7375,7 +7375,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   <char> p 0 <'> noop 2 make-proc <'> bind-key 'bad-arity check-error-tag
   <'> noop 1 make-proc <'> set-zoom-focus-style 'bad-arity check-error-tag
   123 #( 0 0 1 1 ) <'> set-sound-loop-info 'no-such-sound check-error-tag
-  "fmv.snd" mus-nist mus-bfloat 22050 2 "comment" <'> new-sound 'bad-header
+  "fmv.snd" 2 22050 mus-bfloat mus-nist "comment" <'> new-sound 'bad-header
     check-error-tag
   123 <'> player-home 'wrong-type-arg check-error-tag
   "/hiho" <'> set-temp-dir 'no-such-file check-error-tag
@@ -7409,9 +7409,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   snd-motif-error-checks
   -1 <'> main-menu 'no-such-menu check-error-tag
   111 <'> main-menu 'no-such-menu check-error-tag
-  "hiho" 123 <'> new-sound 'out-of-range check-error-tag
-  "hiho" mus-nist 123 <'> new-sound 'out-of-range check-error-tag
-  "hiho" mus-nist mus-bfloat <'> new-sound 'bad-header check-error-tag
+  "hiho" :header-type 123 <'> new-sound 'out-of-range check-error-tag
+  "hiho" :header-type mus-nist :sample-type 123 <'> new-sound 'out-of-range check-error-tag
+  "hiho" :header-type mus-nist :sample-type mus-bfloat <'> new-sound 'bad-header check-error-tag
   -1 <'> set-mus-array-print-length 'out-of-range check-error-tag
   -1 <'> set-print-length 'out-of-range check-error-tag
   -1 <'> set-play-arrow-size 'out-of-range check-error-tag
@@ -7457,17 +7457,17 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   sf-dir "bad_chans.snd" $+ <'> insert-sound 'bad-header check-error-tag
   sf-dir "bad_chans.snd" $+ <'> convolve-with 'IO-error check-error-tag
   "hiho.snd" ind -12 <'> save-sound-as 'cannot-save check-error-tag
-  "hiho.snd" ind mus-next -12 <'> save-sound-as 'cannot-save check-error-tag
-  "test.snd" ind mus-nist mus-bdouble <'> save-sound-as 'cannot-save
+  "hiho.snd" ind :header-type mus-next :sample-type -12 <'> save-sound-as 'cannot-save check-error-tag
+  "test.snd" ind :header-type mus-nist :sample-type mus-bdouble <'> save-sound-as 'cannot-save
     check-error-tag
-  "test.snd" ind mus-aifc mus-lfloat <'> save-sound-as 'cannot-save
+  "test.snd" ind :header-type mus-aifc :sample-type mus-lfloat <'> save-sound-as 'cannot-save
     check-error-tag
-  "test.snd" ind mus-riff mus-bshort <'> save-sound-as 'cannot-save
+  "test.snd" ind :header-type mus-riff :sample-type mus-bshort <'> save-sound-as 'cannot-save
     check-error-tag
-  "test.snd" ind mus-voc  mus-bshort  <'> save-sound-as 'cannot-save
+  "test.snd" ind :header-type mus-voc  :sample-type mus-bshort  <'> save-sound-as 'cannot-save
     check-error-tag
-  "test.snd" mus-riff mus-bshort <'> save-selection 'cannot-save check-error-tag
-  "test.snd" mus-voc mus-bshort <'> save-selection 'cannot-save check-error-tag
+  "test.snd" 22050 mus-bshort mus-riff <'> save-selection 'cannot-save check-error-tag
+  "test.snd" 22050 mus-bshort mus-voc <'> save-selection 'cannot-save check-error-tag
   #( 0 0 1 1 ) :length 11 make-env <'> src-channel 'out-of-range check-error-tag
   #( 0 1 1 0 ) :length 11 make-env <'> src-channel 'out-of-range check-error-tag
   #( 0 1 1 -1 ) :length 11 make-env <'> src-channel 'out-of-range 

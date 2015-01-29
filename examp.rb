@@ -505,7 +505,7 @@ end")
   def write_ogg(snd)
     if edits(snd)[0] > 0 or header_type(snd) != Mus_riff
       file = file_name(snd) + ".tmp"
-      save_sound_as(file, snd, Mus_riff)
+      save_sound_as(file, snd, :header_type, Mus_riff)
       system("oggenc " + file)
       File.unlink(file)
     else
@@ -526,7 +526,7 @@ end")
     if edits(snd)[0] > 0 or header_type(snd) != Mus_riff
       file = file_name(snd) + ".wav"
       spxfile = file_name(snd) + "spx"
-      save_sound_as(file, snd, Mus_riff)
+      save_sound_as(file, snd, :header_type, Mus_riff)
       system(format("speexenc %s %s", file, spxfile))
       File.unlink(file)
     else
@@ -543,7 +543,7 @@ end")
   def write_flac(snd)
     if edits(snd)[0] > 0 or header_type(snd) != Mus_riff
       file = file_name(snd) + ".wav"
-      save_sound_as(file, snd, Mus_riff)
+      save_sound_as(file, snd, :header_type, Mus_riff)
       system(format("flac %s", file))
       File.unlink(file)
     else
@@ -562,7 +562,7 @@ end")
                  out_format = Mus_bshort,
                  out_srate = 44100)
     in_buffer = IO.readlines(in_filename)         # array of strings
-    out_snd = new_sound(out_filename, out_type, out_format, out_srate, 1,
+    out_snd = new_sound(out_filename, 1, out_srate, out_format, out_type,
                         format("created by %s: %s", get_func_name, in_filename))
     bufsize = 512
     data = make_vct(bufsize)
@@ -1996,7 +1996,7 @@ a bunch of files of the form sample-name.aif.")
       set_selection_member?(true)
       set_selection_position(start)
       set_selection_framples(framples() - start)
-      save_selection(filename, Mus_aifc)
+      save_selection(filename, selection_srate(), Mus_bshort, Mus_aifc)
       temp = open_sound(filename)
       set_sound_loop_info([loop_start, loop_end], temp)
       close_sound(temp)

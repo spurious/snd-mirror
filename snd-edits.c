@@ -9200,7 +9200,7 @@ Xen_wrap_1_arg(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 void g_init_edits(void)
 {
 #if HAVE_SCHEME
-  sf_tag = s7_new_type_x("<sampler>", print_sf, free_sf, s7_equalp_sf, NULL, s7_read_sample, NULL, NULL, NULL, NULL, NULL);
+  sf_tag = s7_new_type_x(s7, "<sampler>", print_sf, free_sf, s7_equalp_sf, NULL, s7_read_sample, NULL, NULL, NULL, NULL, NULL);
 #else
   sf_tag = Xen_make_object_type("Sampler", sizeof(snd_fd));
 #endif

@@ -317,8 +317,9 @@ class Sndplot
       set_sound_property(:dlocsig_created, false, @snd)
       select_sound(@snd)
     else
-      @snd = new_sound(snd_tempnam, default_output_header_type, default_output_sample_type,
-                       default_output_srate, @chns)
+      @snd = new_sound(snd_tempnam, @chns, default_output_srate, 
+                       default_output_sample_type,
+                       default_output_header_type)
       set_sound_property(:dlocsig_created, true, @snd)
     end
     channels(@snd).times do |chn|

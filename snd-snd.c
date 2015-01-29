@@ -2227,9 +2227,11 @@ static Xen s7_xen_sound_length(s7_scheme *sc, Xen obj)
 }
 
 
-static Xen s7_xen_sound_copy(s7_scheme *sc, Xen obj)
+static Xen s7_xen_sound_copy(s7_scheme *sc, Xen args)
 {
   snd_info *sp;
+  s7_pointer obj;
+  obj = s7_car(args);
   sp = get_sp(obj);
   if (sp)
     {
@@ -2252,16 +2254,21 @@ static Xen s7_xen_sound_copy(s7_scheme *sc, Xen obj)
 }
 
 
-static Xen s7_xen_sound_fill(s7_scheme *sc, Xen obj, Xen val)
+static Xen s7_xen_sound_fill(s7_scheme *sc, Xen args)
 {
   snd_info *sp;
+  s7_pointer obj;
+
+  obj = s7_car(args);
   sp = get_sp(obj);
   if (sp)
     {
       mus_float_t valf;
       chan_info *cp;
       int i;
-
+      s7_pointer val;
+      
+      val = s7_cadr(args);
       valf = Xen_real_to_C_double(val);
       if (valf == 0.0)
 	{
@@ -2305,8 +2312,8 @@ static Xen s7_xen_sound_fill(s7_scheme *sc, Xen obj, Xen val)
 static void init_xen_sound(void)
 {
 #if HAVE_SCHEME
-  xen_sound_tag = s7_new_type_x("<sound>", print_xen_sound, free_xen_sound, s7_xen_sound_equalp, 
-				       NULL, NULL, NULL, s7_xen_sound_length, s7_xen_sound_copy, NULL, s7_xen_sound_fill);
+  xen_sound_tag = s7_new_type_x(s7, "<sound>", print_xen_sound, free_xen_sound, s7_xen_sound_equalp, 
+				NULL, NULL, NULL, s7_xen_sound_length, s7_xen_sound_copy, NULL, s7_xen_sound_fill);
 #else
 #if HAVE_RUBY
   xen_sound_tag = Xen_make_object_type("XenSound", sizeof(xen_sound));
@@ -4082,16 +4089,16 @@ static Xen g_view_sound(Xen filename)
 static Xen g_save_sound_as(Xen arglist)
 {
   #if HAVE_SCHEME
-    #define save_as_example "(" S_save_sound_as " \"test.snd\" index " S_mus_next " " S_mus_bshort ")"
+    #define save_as_example "(" S_save_sound_as " \"test.snd\" index 44100 " S_mus_bshort " " S_mus_next ")"
   #endif
   #if HAVE_RUBY
-    #define save_as_example "save_sound_as(\"test.snd\", index, Mus_next, Mus_bshort)"
+    #define save_as_example "save_sound_as(\"test.snd\", index, 44100, Mus_bshort, Mus_next)"
   #endif
   #if HAVE_FORTH
-    #define save_as_example "\"test.snd\" index mus-next mus-bshort save-sound-as"
+    #define save_as_example "\"test.snd\" index 44100 mus-bshort mus-next save-sound-as"
   #endif
 
-  #define H_save_sound_as "("  S_save_sound_as " file sound header-type sample-type srate channel edit-position comment): \
+  #define H_save_sound_as "("  S_save_sound_as " file sound srate sample-type header-type channel edit-position comment): \
 save sound in file using the indicated attributes.  If channel is specified, only that channel is saved (extracted). \
 Omitted arguments take their value from the sound being saved.\n  " save_as_example
   
@@ -4110,9 +4117,9 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 
   keys[0] = kw_file;
   keys[1] = kw_sound;
-  keys[2] = kw_header_type;
+  keys[2] = kw_srate;
   keys[3] = kw_sample_type;
-  keys[4] = kw_srate;
+  keys[4] = kw_header_type;
   keys[5] = kw_channel;
   keys[6] = kw_edit_position;
   keys[7] = kw_comment;
@@ -4126,11 +4133,11 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
     {
       file = mus_optkey_to_string(keys[0], S_save_sound_as, orig_arg[0], NULL);
       if (!(Xen_is_keyword(keys[1]))) index = keys[1];
-      ht = mus_optkey_to_int(keys[2], S_save_sound_as, orig_arg[2], ht);
+      ht = mus_optkey_to_int(keys[4], S_save_sound_as, orig_arg[4], ht);
       df = mus_optkey_to_int(keys[3], S_save_sound_as, orig_arg[3], df);
-      sr = mus_optkey_to_int(keys[4], S_save_sound_as, orig_arg[4], sr);
+      sr = mus_optkey_to_int(keys[2], S_save_sound_as, orig_arg[2], sr);
 
-      if ((sr <= 0) && (!Xen_is_keyword(keys[4])))
+      if ((sr <= 0) && (!Xen_is_keyword(keys[2])))
 	Xen_error(CANNOT_SAVE,
 		  Xen_list_2(C_string_to_Xen_string(S_save_sound_as ": srate (~A) can't be <= 0"),
 			     C_int_to_Xen_integer(sr)));
@@ -4262,16 +4269,16 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 static Xen g_new_sound(Xen arglist)
 {
   #if HAVE_SCHEME
-    #define new_sound_example "(" S_new_sound " \"test.snd\" " S_mus_next " " S_mus_bshort " 22050 1 \"no comment\" 1000)"
+    #define new_sound_example "(" S_new_sound " \"test.snd\" 1 22050 " S_mus_bshort " " S_mus_next " \"no comment\" 1000)"
   #endif
   #if HAVE_RUBY
-    #define new_sound_example "new_sound(\"test.snd\", Mus_next, Mus_bshort, 22050, 1, \"no comment\", 1000)"
+    #define new_sound_example "new_sound(\"test.snd\", 1, 22050, Mus_bshort, Mus_next, \"no comment\", 1000)"
   #endif
   #if HAVE_FORTH
-    #define new_sound_example "\"test.snd\" mus-next mus-bshort 22050 1 \"no comment\" 1000 new-sound"
+    #define new_sound_example "\"test.snd\" 1 22050 mus-bshort mus-next \"no comment\" 1000 new-sound"
   #endif
 
-  #define H_new_sound "(" S_new_sound " file header-type sample-type srate channels comment size): \
+  #define H_new_sound "(" S_new_sound " file channels srate sample-type header-type comment size): \
 creates a new sound file with the indicated attributes; if any are omitted, the corresponding default-output variable is used. \
 The 'size' argument sets the number of samples (zeros) in the newly created sound. \n  " new_sound_example
 
@@ -4288,10 +4295,10 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   io_error_t io_err;
 
   keys[0] = kw_file;
-  keys[1] = kw_header_type;
-  keys[2] = kw_sample_type;
-  keys[3] = kw_srate;
-  keys[4] = kw_channels;
+  keys[1] = kw_channels;
+  keys[2] = kw_srate;
+  keys[3] = kw_sample_type;
+  keys[4] = kw_header_type;
   keys[5] = kw_comment;
   keys[6] = kw_size;
 
@@ -4309,19 +4316,19 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
     {
       file = mus_optkey_to_string(keys[0], S_new_sound, orig_arg[0], NULL);
       /* this can be null if :file is not passed as an arg (use temp name below) */
-      ht = mus_optkey_to_int(keys[1], S_new_sound, orig_arg[1], ht);
-      df = mus_optkey_to_int(keys[2], S_new_sound, orig_arg[2], df);
-      sr = mus_optkey_to_int(keys[3], S_new_sound, orig_arg[3], sr);
-      ch = mus_optkey_to_int(keys[4], S_new_sound, orig_arg[4], ch);
+      ht = mus_optkey_to_int(keys[4], S_new_sound, orig_arg[4], ht);
+      df = mus_optkey_to_int(keys[3], S_new_sound, orig_arg[3], df);
+      sr = mus_optkey_to_int(keys[2], S_new_sound, orig_arg[2], sr);
+      ch = mus_optkey_to_int(keys[1], S_new_sound, orig_arg[1], ch);
       com = mus_optkey_to_string(keys[5], S_new_sound, orig_arg[5], NULL);
       len = mus_optkey_to_mus_long_t(keys[6], S_new_sound, orig_arg[6], len);
     }
 
   if (!(mus_is_header_type(ht)))
-    Xen_out_of_range_error(S_new_sound, orig_arg[1], keys[1], "invalid header type");
+    Xen_out_of_range_error(S_new_sound, orig_arg[4], keys[4], "invalid header type");
 
   if (!(mus_is_sample_type(df)))
-    Xen_out_of_range_error(S_new_sound, orig_arg[2], keys[2], "invalid data format");
+    Xen_out_of_range_error(S_new_sound, orig_arg[3], keys[3], "invalid data format");
 
   if (!(mus_header_writable(ht, df)))
     Xen_error(BAD_HEADER,
@@ -4330,10 +4337,10 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
 			 C_string_to_Xen_string(mus_header_type_name(ht))));
 
   if (sr <= 0)
-    Xen_out_of_range_error(S_new_sound, orig_arg[3], keys[3], "srate <= 0?");
+    Xen_out_of_range_error(S_new_sound, orig_arg[2], keys[2], "srate <= 0?");
 
   if (ch <= 0)
-    Xen_out_of_range_error(S_new_sound, orig_arg[4], keys[4], "channels <= 0?");
+    Xen_out_of_range_error(S_new_sound, orig_arg[1], keys[1], "channels <= 0?");
 
   if (len < 0)
     Xen_out_of_range_error(S_new_sound, orig_arg[6], keys[6], "size < 0?");

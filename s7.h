@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.17"
-#define S7_DATE "14-Jan-15"
+#define S7_VERSION "3.18"
+#define S7_DATE "29-Jan-15"
 
 
 typedef long long int s7_Int;
@@ -590,7 +590,8 @@ int s7_new_type(const char *name,
 		s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
 		s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
 
-int s7_new_type_x(const char *name, 
+int s7_new_type_x(s7_scheme *sc,
+		  const char *name, 
 		  char *(*print)(s7_scheme *sc, void *value), 
 		  void (*free)(void *value), 
 		  bool (*equal)(void *val1, void *val2),
@@ -598,9 +599,9 @@ int s7_new_type_x(const char *name,
 		  s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
 		  s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
 		  s7_pointer (*length)(s7_scheme *sc, s7_pointer obj),
-		  s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj),
+		  s7_pointer (*copy)(s7_scheme *sc, s7_pointer args),
 		  s7_pointer (*reverse)(s7_scheme *sc, s7_pointer obj),
-		  s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
+		  s7_pointer (*fill)(s7_scheme *sc, s7_pointer args));
 
 bool s7_is_object(s7_pointer p);
 int s7_object_type(s7_pointer obj);
@@ -795,6 +796,7 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc);
  * 
  *        s7 changes
  *
+ * 29-Jan:    changed args to s7_new_type_x (added s7_scheme arg, fill! takes s7_function).
  * 14-Jan:    make-let-iterator, let-iterator?
  * --------
  * 26-Dec:    s7_arity replaces s7_procedure_arity.  s7_define_integer_function. deprecate s7_procedure_name.

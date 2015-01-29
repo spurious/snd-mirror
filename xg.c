@@ -170,7 +170,7 @@ static Xen make_xm_obj(void *ptr)
 static void define_xm_obj(void)
 {
 #if HAVE_SCHEME
- xm_obj_tag = s7_new_type_x("<XmObj>", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+ xm_obj_tag = s7_new_type_x(s7, "<XmObj>", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 #else
   xm_obj_tag = Xen_make_object_type("XmObj", sizeof(void *));
 #endif
@@ -45010,7 +45010,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("22-Jan-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("28-Jan-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

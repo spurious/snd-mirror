@@ -1236,7 +1236,7 @@ bool delete_selection(cut_selection_regraph_t regraph);
 void move_selection(chan_info *cp, int x);
 void finish_selection_creation(void);
 int select_all(chan_info *cp);
-io_error_t save_selection(const char *ofile, int type, int format, int srate, const char *comment, int chan);
+io_error_t save_selection(const char *ofile, int srate, int samp_type, int head_type, const char *comment, int chan);
 bool selection_creation_in_progress(void);
 void add_selection_or_region(int reg, chan_info *cp);
 void insert_selection_from_menu(void);
@@ -1273,7 +1273,7 @@ snd_fd *init_region_read(mus_long_t beg, int n, int chan, read_direction_t direc
 void cleanup_region_temp_files(void);
 int snd_regions(void);
 void save_regions(FILE *fd);
-io_error_t save_region(int rg, const char *name, int type, int format, const char *comment);
+io_error_t save_region(int rg, const char *name, int samp_type, int head_type, const char *comment);
 void region_edit(int reg);
 void clear_region_backpointer(snd_info *sp);
 void save_region_backpointer(snd_info *sp);

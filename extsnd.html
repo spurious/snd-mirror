@@ -6119,7 +6119,7 @@ deleted.
 
 <!-- save-region -->
 <pre class="indented">
-<em class=def id="saveregion">save-region</em> reg :file :header-type :sample-type :comment
+<em class=def id="saveregion">save-region</em> reg :file :sample-type :header-type :comment
 </pre>
 
 <p>save-region saves the region 'reg' in 'file' in the given sample type and header type.
@@ -6130,7 +6130,7 @@ The following calls are equivalent:
 <pre class="indented">
 (save-region reg "reg0.snd")
 (save-region reg :file "reg0.snd" :header-type mus-next)
-(save-region reg "reg0.snd" mus-next <a class=quiet href="#sampletype">mus-bfloat</a> "a comment")
+(save-region reg "reg0.snd" <a class=quiet href="#sampletype">mus-bfloat</a> mus-next "a comment")
 (save-region reg :file "reg0.snd" :comment "a comment" :sample-type <a class=quiet href="#sampletype">mus-bfloat</a>)
 </pre>
 
@@ -6255,7 +6255,7 @@ The Edit:Mix selection menu choice is (mix-selection (cursor)).
 
 <!-- save-selection -->
 <pre class="indented">
-<em class=def id="saveselection">save-selection</em> :file (:header-type mus-next) :sample-type :srate :comment :channel
+<em class=def id="saveselection">save-selection</em> :file :srate :sample-type (:header-type mus-next) :comment :channel
 </pre>
 
 <p id="extractchannels">save-selection saves the selection in 'file'.  If 'channel' is given, it saves only that channel.
@@ -8226,7 +8226,7 @@ actual dB value calculated to -140.0 or -180.0 (depending on which function is c
 
 <!-- new-sound -->
 <pre class="indented">
-<em class=def id="newsound">new-sound</em> :file :header-type :sample-type :srate :channels :comment :size
+<em class=def id="newsound">new-sound</em> :file :channels :srate :sample-type :header-type :comment :size
 </pre>
 
 <p>new-sound creates a new sound named 'file'.  The following function opens a new sound named "test.snd",
@@ -9003,7 +9003,7 @@ save the current fft peak info: <a href="extsnd.html#peaks">peaks</a><br>
 
 <!-- save-sound-as -->
 <pre class="indented">
-<em class=def id="savesoundas">save-sound-as</em> :file :sound :header-type :sample-type :srate :channel :edit-position :comment
+<em class=def id="savesoundas">save-sound-as</em> :file :sound :srate :sample-type :header-type :channel :edit-position :comment
 </pre>
 
 <p>This saves 'sound' as 'file' (like the 'File:Save as' menu option).  If 'channel' is specified,
@@ -11393,7 +11393,7 @@ put in it something like:
 </p>
 
 <pre class="indented">
-(let ((myfile (<a class=quiet href="#newsound">new-sound</a> "mysound.snd" mus-aifc <a class=quiet href="#sampletype">mus-bshort</a> 44100 2 "this is my sound")))
+(let ((myfile (<a class=quiet href="#newsound">new-sound</a> "mysound.snd" 2 44100 mus-bshort mus-aifc "this is my sound")))
 	;; this is equivalent to the New file menu option
   (<a class=quiet href="#mix">mix</a> "oboe.snd" 0 0 myfile 0)
   ;; this mixes in the mono file oboe.snd at sample 0 in channel 0

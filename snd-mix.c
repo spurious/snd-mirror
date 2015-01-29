@@ -2661,8 +2661,10 @@ static bool s7_xen_mix_equalp(void *obj1, void *obj2)
 }
 
 
-static Xen s7_xen_mix_copy(s7_scheme *sc, s7_pointer obj)
+static Xen s7_xen_mix_copy(s7_scheme *sc, s7_pointer args)
 {
+  s7_pointer obj;
+  obj = s7_car(args);
   return(new_xen_mix(copy_mix(Xen_mix_to_C_int(obj))));
 }
 #endif
@@ -2671,7 +2673,7 @@ static Xen s7_xen_mix_copy(s7_scheme *sc, s7_pointer obj)
 static void init_xen_mix(void)
 {
 #if HAVE_SCHEME
-  xen_mix_tag = s7_new_type_x("<mix>", print_xen_mix, free_xen_mix, s7_xen_mix_equalp, NULL, NULL, NULL, s7_xen_mix_length, s7_xen_mix_copy, NULL, NULL);
+  xen_mix_tag = s7_new_type_x(s7, "<mix>", print_xen_mix, free_xen_mix, s7_xen_mix_equalp, NULL, NULL, NULL, s7_xen_mix_length, s7_xen_mix_copy, NULL, NULL);
 #else
 #if HAVE_RUBY
   xen_mix_tag = Xen_make_object_type("XenMix", sizeof(xen_mix));
@@ -3334,7 +3336,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
    * mix in-object out-object :start :end :channel :edit-position :out-channel :with-tag :auto-delete :origin ?
    *   from
    * play object :start :end :channel :edit-position :out-channel :with-sync :wait :stop): 
-   * save_sound_as :file :sound :header-type :sample-type :srate :channel :edit-position :comment): 
+   * save_sound_as :file :sound :srate :sample-type :header-type :channel :edit-position :comment): 
    */
 
   Xen_check_type(Xen_is_string(file), file, 1, S_mix, "a string");
@@ -3983,7 +3985,7 @@ void g_init_mix(void)
   init_xen_mix();
 
 #if HAVE_SCHEME
-  mf_tag = s7_new_type_x("<mix-sampler>", print_mf, free_mf, s7_equalp_mf, NULL, s7_read_mix_sample, NULL, NULL, NULL, NULL, NULL);
+  mf_tag = s7_new_type_x(s7, "<mix-sampler>", print_mf, free_mf, s7_equalp_mf, NULL, s7_read_mix_sample, NULL, NULL, NULL, NULL, NULL);
 #else
   mf_tag = Xen_make_object_type("MixSampler", sizeof(mix_fd));
 #endif

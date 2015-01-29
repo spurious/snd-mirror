@@ -1612,9 +1612,9 @@ static Xen s7_mus_length(s7_scheme *sc, Xen obj)
 }
 
 static Xen g_mus_copy(Xen gen);
-static Xen s7_mus_copy(s7_scheme *sc, Xen obj)
+static Xen s7_mus_copy(s7_scheme *sc, Xen args)
 {
-  return(g_mus_copy(obj));
+  return(g_mus_copy(s7_car(args)));
 }
 
 #endif
@@ -14097,7 +14097,7 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
       gf *(*fixup_gf)(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
       gf *p;
       bool its_gf = true;
-      void *(*vf)(void *p);
+      void *(*vf)(void *p) = NULL;
 
       /* check for special case handlers */
 
@@ -21213,7 +21213,7 @@ static void mus_xen_init(void)
   current_connect_func = Xen_false;
 
 #if HAVE_SCHEME
-  mus_xen_tag = s7_new_type_x("<generator>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, mus_xen_apply, NULL, s7_mus_length, s7_mus_copy, NULL, NULL);
+  mus_xen_tag = s7_new_type_x(s7, "<generator>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, mus_xen_apply, NULL, s7_mus_length, s7_mus_copy, NULL, NULL);
   as_needed_arglist = Xen_list_1(Xen_integer_zero);
   Xen_GC_protect(as_needed_arglist);
   s7_set_object_print_readably(mus_xen_tag, mus_generator_to_readable_string);

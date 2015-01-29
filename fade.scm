@@ -77,14 +77,14 @@
 		 (if (>= ramp 0.5)
 		     (begin
 		       (set! mid (floor (* (- (* 2.0 ramp) 1.0) fs)))
-		       (vector-fill! inputs inval2 0 mid)
+		       (fill! inputs inval2 0 mid)
 		       (do ((k mid (+ k 1))
 			    (ks 1.0 (- ks ifs)))
 			   ((>= k fs))
 			 (float-vector-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1)))))
 		     (begin
 		       (set! mid (min fs (floor (* 2.0 ramp fs))))
-		       (vector-fill! inputs inval1 mid)
+		       (fill! inputs inval1 mid)
 		       (do ((k 0 (+ k 1))
 			    (ks (* 2.0 ramp) (- ks ifs)))
 			   ((= k mid))
@@ -102,14 +102,14 @@
 		 (if (>= ramp 0.5)
 		     (let ((r2 (- (* 2.0 ramp) 1.0)))
 		       (set! mid (min fs (ceiling (* (- 1.0 r2) fs))))
-		       (vector-fill! inputs inval2 mid)
+		       (fill! inputs inval2 mid)
 		       (do ((k 0 (+ k 1))
 			    (ks r2 (+ ks ifs)))
 			   ((= k mid))
 			 (float-vector-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1)))))
 		     (begin
 		       (set! mid (ceiling (* (- 1.0 (* 2.0 ramp)) fs)))
-		       (vector-fill! inputs inval1 0 mid)
+		       (fill! inputs inval1 0 mid)
 		       (do ((k mid (+ k 1))
 			    (ks 0.0 (+ ks ifs)))
 			   ((>= k fs))
@@ -125,7 +125,7 @@
 		   ;; now the choice of spectral fade -- we should end with all bank1 0.0 and all bank2 1.0
 		   (set! ramp (+ ramp ramp-incr))
 		   ;; sweep from midpoint out
-		   (vector-fill! inputs inval1)
+		   (fill! inputs inval1)
 		   (set! mid (min half-fs (floor (* fs ramp))))
 		   (do ((k (- half-fs mid) (+ k 1))
 			(hk (+ half-fs mid -1) (- hk 1))
@@ -220,7 +220,7 @@
 	
 	(let ((inval1 (read-sample fil1))
 	      (inval2 (read-sample fil2)))
-	  (vector-fill! inputs inval1)
+	  (fill! inputs inval1)
 
 	  (do ((k 0 (+ k 1)))
 	      ((= k in2-ctr))

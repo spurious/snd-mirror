@@ -2637,12 +2637,12 @@
 		  (set! (sound-loop-info index) (list 12000 14000 1 2 3 4))
 		  (if (not (equal? (sound-loop-info index) (list 12000 14000 1 2 3 4 1 1)))
 		      (snd-display #__line__ ";set loop-info: ~A" (sound-loop-info index)))
-		  (save-sound-as "fmv1.snd" index mus-aifc)
+		  (save-sound-as "fmv1.snd" index :header-type mus-aifc)
 		  (close-sound index)
 		  (if (not (equal? (mus-sound-loop-info "fmv1.snd") (list 12000 14000 1 2 3 4 1 1)))
 		      (snd-display #__line__ ";saved loop-info: ~A" (mus-sound-loop-info "fmv1.snd"))))))
 	  (let ((index (open-sound "oboe.snd")))
-	    (save-sound-as "fmv.snd" index mus-aifc)
+	    (save-sound-as "fmv.snd" index :header-type mus-aifc)
 	    (close-sound index))
 	  (let ((index (open-sound "fmv.snd")))
 	    (if (not (equal? (sound-loop-info index) ()))
@@ -2658,7 +2658,7 @@
 	    (set! (sound-loop-info) (list 1200 1400 4 3 2 1 1 0))
 	    (if (not (equal? (sound-loop-info index) (list 1200 1400 0 0 2 1 1 0)))
 		(snd-display #__line__ ";set null loop-info (no mode1): ~A" (sound-loop-info index)))
-	    (save-sound-as "fmv1.snd" index mus-aifc)
+	    (save-sound-as "fmv1.snd" index :header-type mus-aifc)
 	    (close-sound index)
 	    (if (not (equal? (mus-sound-loop-info "fmv1.snd") (list 1200 1400 0 0 2 1 1 0)))
 		(snd-display #__line__ ";saved null loop-info (no mode1): ~A" (mus-sound-loop-info "fmv1.snd")))))
@@ -2807,7 +2807,7 @@
 	(if (not (= *transform-normalization* normalize-by-channel))
 	    (snd-display #__line__ ";set-transform-normalization channel -> ~A" *transform-normalization*))
 	
-	(let ((ind (new-sound "fmv.snd" mus-next mus-ldouble 22050 1 "set-samples test" 100)))
+	(let ((ind (new-sound "fmv.snd" 1 22050 mus-ldouble mus-next "set-samples test" 100)))
 	  (set! (samples 10 3) (make-float-vector 3 .1))
 	  (if (not (vequal (channel->float-vector 0 20 ind 0) (float-vector 0 0 0 0 0 0 0 0 0 0 .1 .1 .1 0 0 0 0 0 0 0)))
 	      (snd-display #__line__ ";1 set samples 0 for .1: ~A" (channel->float-vector 0 20 ind 0)))
@@ -2880,7 +2880,7 @@
 	(let ((len 100))
 	  (for-each
 	   (lambda (type allowed-diff)
-	     (let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050 1))
+	     (let ((ind (new-sound "test.snd" 1 22050 mus-ldouble mus-next))
 		   (v (make-float-vector len))
 		   (maxdiff 0.0)
 		   (maxpos #f))
@@ -2901,7 +2901,7 @@
 		       (snd-display #__line__ ";random 2.0 -> ~A?" val))
 		   (set! (v i) (- 1.0 val))))
 	       (float-vector->channel v 0 len ind 0)
-	       (save-sound-as "test1.snd" ind mus-next :sample-type type)
+	       (save-sound-as "test1.snd" ind :header-type mus-next :sample-type type)
 	       (close-sound ind)
 	       (set! ind (open-sound "test1.snd"))
 	       (let ((v1 (channel->float-vector 0 len ind 0)))
@@ -2936,7 +2936,7 @@
 	  (set! (comment ob) str)
 	  (let ((tag (catch #t
 			    (lambda ()
-			      (save-sound-as "test.snd" ob mus-aifc mus-bdouble))
+			      (save-sound-as "test.snd" ob :header-type mus-aifc :sample-type mus-bdouble))
 			    (lambda args (car args)))))
 	    (if (eq? tag 'cannot-save) (snd-display #__line__ ";save-sound-as test.snd write trouble")))
 	  (set! *filter-control-in-hz* #t)
@@ -2956,7 +2956,7 @@
 	  (if (not (equal? old-comment (mus-sound-comment "oboe.snd")))
 	      (snd-display #__line__ ";set-comment overwrote current ~A ~A" old-comment (mus-sound-comment "oboe.snd")))
 	  (set! *filter-control-in-hz* #f)
-	  (save-sound-as "test.snd" ob mus-raw)
+	  (save-sound-as "test.snd" ob :header-type mus-raw)
 	  (let ((ab (open-raw-sound "test.snd" 1 22050 mus-bshort)))
 	    (if (not (= (header-type ab) mus-raw)) 
 		(snd-display #__line__ ";save-as raw -> ~A?" (mus-header-type-name (header-type ab))))
@@ -2964,7 +2964,7 @@
 		(snd-display #__line__ ";saved-as raw -> ~A?" (mus-header-type-name (mus-sound-header-type "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";raw[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
-	  (save-sound-as "test.snd" ob mus-nist mus-bint)
+	  (save-sound-as "test.snd" ob :header-type mus-nist :sample-type mus-bint)
 	  (let ((ab (open-sound "test.snd")))
 	    (if (not (= (header-type ab) mus-nist)) 
 		(snd-display #__line__ ";save-as nist -> ~A?" (mus-header-type-name (header-type ab))))
@@ -2999,7 +2999,7 @@
 						   " [written by me]"))))
 		(snd-display #__line__ ";output-comment-hook: ~A~%(~A)" (comment ab) (mus-sound-comment "test.snd")))
 	    (close-sound ab))
-	  (save-sound-as "test.snd" ob mus-aiff mus-b24int)
+	  (save-sound-as "test.snd" ob :header-type mus-aiff :sample-type mus-b24int)
 	  (let ((ab (open-sound "test.snd")))
 	    (if (not (= (header-type ab) mus-aiff)) 
 		(snd-display #__line__ ";save-as aiff -> ~A?" (mus-header-type-name (header-type ab))))
@@ -3011,7 +3011,7 @@
 		(snd-display #__line__ ";saved-as 24-bit -> ~A?" (mus-sample-type-name (mus-sound-sample-type "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";aiff[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
-	  (save-sound-as "test.snd" ob mus-ircam mus-mulaw)
+	  (save-sound-as "test.snd" ob :header-type mus-ircam :sample-type mus-mulaw)
 	  (let ((ab (open-sound "test.snd")))
 	    (if (not (= (header-type ab) mus-ircam)) 
 		(snd-display #__line__ ";save-as ircam -> ~A?" (mus-header-type-name (header-type ab))))
@@ -3023,7 +3023,7 @@
 		(snd-display #__line__ ";saved-as mulaw -> ~A?" (mus-sample-type-name (mus-sound-sample-type "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";ircam[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
-	  (save-sound-as "test.snd" ob mus-next mus-alaw)
+	  (save-sound-as "test.snd" ob :header-type mus-next :sample-type mus-alaw)
 	  (let ((ab (open-sound "test.snd")))
 	    (if (not (= (header-type ab) mus-next)) 
 		(snd-display #__line__ ";save-as next -> ~A?" (mus-header-type-name (header-type ab))))
@@ -3035,7 +3035,7 @@
 		(snd-display #__line__ ";saved-as alaw -> ~A?" (mus-sample-type-name (mus-sound-sample-type "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";next (alaw)[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
-	  (save-sound-as "test.snd" ob mus-next mus-ldouble)
+	  (save-sound-as "test.snd" ob :header-type mus-next :sample-type mus-ldouble)
 	  (let ((ab (open-sound "test.snd")))
 	    (if (not (= (header-type ab) mus-next)) 
 		(snd-display #__line__ ";save-as dbl next -> ~A?" (mus-header-type-name (header-type ab))))
@@ -3043,7 +3043,7 @@
 		(snd-display #__line__ ";save-as dbl -> ~A?" (mus-sample-type-name (sample-type ab))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";next (dbl)[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
-	  (save-sound-as "test.snd" ob mus-next mus-bshort)
+	  (save-sound-as "test.snd" ob :header-type mus-next :sample-type mus-bshort)
 	  (let ((ab (open-sound "test.snd")))
 	    (if (not (= (header-type ab) mus-next)) 
 		(snd-display #__line__ ";save-as next -> ~A?" (mus-header-type-name (header-type ab))))
@@ -3082,7 +3082,7 @@
 	    (if (not (equal? ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd")))
 	    (if (not (= (srate ab) 12345)) (snd-display #__line__ ";set srate: ~A?" (srate ab)))
 	    (close-sound ab))
-	  (save-sound-as "test.snd" ob mus-next mus-bfloat)
+	  (save-sound-as "test.snd" ob :header-type mus-next :sample-type mus-bfloat)
 	  (let ((ab (open-sound "test.snd")))
 	    (if (not (= (header-type ab) mus-next)) 
 		(snd-display #__line__ ";save-as next -> ~A?" (mus-header-type-name (header-type ab))))
@@ -3094,7 +3094,7 @@
 		(snd-display #__line__ ";saved-as float -> ~A?" (mus-sample-type-name (mus-sound-sample-type "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";next (float)[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
-	  (save-sound-as "test.snd" ob mus-next mus-ldouble)
+	  (save-sound-as "test.snd" ob :header-type mus-next :sample-type mus-ldouble)
 	  (close-sound ob)
 	  (let ((ab (open-sound "test.snd")))
 	    (set! (sample-type) mus-lshort)
@@ -3309,7 +3309,7 @@
 	(let ((ind (view-sound "oboe.snd")))
 	  (set! *clipping* #f)
 	  (scale-channel 10.0)
-	  (save-sound-as "test.snd" ind mus-next mus-ldouble)
+	  (save-sound-as "test.snd" ind :header-type mus-next :sample-type mus-ldouble)
 	  (undo 1 ind 0)
 	  (let ((ind1 (open-sound "test.snd")))
 	    (if (fneq (maxamp ind1 0) (* 10 (maxamp ind 0)))
@@ -3318,7 +3318,7 @@
 	  (delete-file "test.snd")
 	  (set! *clipping* #t)
 	  (map-channel (lambda (y) (* y 10.0)) 0 (framples) ind 0)
-	  (save-sound-as "test.snd" ind mus-next mus-lshort)
+	  (save-sound-as "test.snd" ind :header-type mus-next :sample-type mus-lshort)
 	  (undo 1 ind 0)
 	  (let ((ind1 (open-sound "test.snd")))
 	    (if (fneq (maxamp ind1 0) 1.0)
@@ -3329,7 +3329,7 @@
 	  (let* ((mx (maxamp ind))
 		 (sub (- 1.001 mx)))
 	    (map-channel (lambda (y) (+ y sub)) 0 (framples) ind 0)
-	    (save-sound-as "test.snd" ind mus-next mus-lfloat)
+	    (save-sound-as "test.snd" ind :header-type mus-next :sample-type mus-lfloat)
 	    (let ((ind1 (open-sound "test.snd"))
 		  (baddy (scan-channel (lambda (y) (< y 0.0)))))
 	      (if baddy
@@ -3337,7 +3337,7 @@
 	      (close-sound ind1))
 	    (delete-file "test.snd")
 	    (set! *clipping* #t)
-	    (save-sound-as "test.snd" ind mus-next mus-ldouble)
+	    (save-sound-as "test.snd" ind :header-type mus-next :sample-type mus-ldouble)
 	    (let ((ind1 (open-sound "test.snd"))
 		  (baddy (scan-channel (lambda (y) (< y 0.0)))))
 	      (if baddy
@@ -3506,9 +3506,9 @@
 	  (set! (mus-sound-sample-type "oboe.snd") cur-format))
 	
 	(let ((ind (open-sound "oboe.snd")))
-	  (save-sound-as "test.wave" ind mus-riff)
-	  (save-sound-as "test.rf64" ind mus-rf64)
-	  (save-sound-as "test.aifc" ind mus-aifc)
+	  (save-sound-as "test.wave" ind :header-type mus-riff)
+	  (save-sound-as "test.rf64" ind :header-type mus-rf64)
+	  (save-sound-as "test.aifc" ind :header-type mus-aifc)
 	  (close-sound ind)
 	  
 	  (for-each
@@ -3646,7 +3646,7 @@
 		(if (not (= (cursor ind) (* 44123 51234))) (snd-display #__line__ ";bigger cursor 123: ~A" (cursor ind)))
 		(close-sound ind))))
 	
-	(let ((ind (new-sound "tmp.snd" mus-riff mus-l24int 22050 1 :size 100000))
+	(let ((ind (new-sound "tmp.snd" 1 22050 mus-l24int mus-riff :size 100000))
 	      (old-selection-creates-region *selection-creates-region*))
 	  (set! *selection-creates-region* #t)
 	  (let ((incr (/ 1.0 (framples)))
@@ -3661,7 +3661,7 @@
 	  (close-sound ind)
 	  (set! ind (open-sound "tmp.snd"))
 	  (let ((reg (select-all)))
-	    (save-selection "tmp1.snd" mus-next mus-l24int)
+	    (save-selection "tmp1.snd" 22050 mus-l24int mus-next)
 	    (let ((ind1 (open-sound "tmp1.snd")))
 	      (let ((incr (/ 1.0 (framples))))
 		(let ((v0 (samples 0 100000 ind1 0))
@@ -3674,7 +3674,7 @@
 		      (snd-display #__line__ ";l24 (next) selection not saved correctly? ~A" v0))))
 	      (close-sound ind1))
 
-	    (save-selection "tmp1.snd" mus-aifc mus-l24int)
+	    (save-selection "tmp1.snd" 22050 mus-l24int mus-aifc)
 	    (let ((ind1 (open-sound "tmp1.snd")))
 	      (let ((incr (/ 1.0 (framples))))
 		(let ((v0 (samples 0 100000 ind1 0))
@@ -3687,7 +3687,7 @@
 		      (snd-display #__line__ ";l24 (aifc) selection not saved correctly? ~A" v0))))
 	      (close-sound ind1))
 
-	    (save-region reg "tmp1.snd" mus-next mus-l24int)
+	    (save-region reg "tmp1.snd" mus-l24int mus-next)
 	    (let ((ind1 (open-sound "tmp1.snd")))
 	      (let ((incr (/ 1.0 (framples))))
 		(let ((v0 (samples 0 100000 ind1 0))
@@ -3704,7 +3704,7 @@
 	    (delete-file "tmp.snd"))
 	  (set! *selection-creates-region* old-selection-creates-region))
 	
-	(let ((ind (new-sound "tmp.snd" mus-next mus-ldouble 22050 1 :size 10 :comment #f)))
+	(let ((ind (new-sound "tmp.snd" 1 22050 mus-ldouble mus-next :size 10 :comment #f)))
 	  (map-channel (lambda (y) 1.0))
 	  (env-channel '(0 0 .1 .1 .2 .2 .3 .3 .4 .4 .5 .5 .6 .6 .7 .7 .8 .8 .9  .9))
 	  (if (not (vequal (channel->float-vector) (float-vector 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
@@ -6027,7 +6027,7 @@ EDITS: 5
 		  (fneq (sample 301) .75)
 		  (not (= (framples index) 50835)))
 	      (snd-display #__line__ ";insert-samples: ~A ~A ~A?" (sample 201) (sample 301) (framples index))))
-	(save-sound-as "hiho.snd" index mus-next mus-ldouble :srate 22050)
+	(save-sound-as "hiho.snd" index 22050 mus-ldouble mus-next)
 	(let ((nindex (view-sound "hiho.snd")))
 	  (if (fneq (sample 101 nindex) (sample 101 index))
 	      (snd-display #__line__ ";save-sound-as: ~A ~A?" (sample 101 nindex) (sample 101 index)))
@@ -6200,7 +6200,7 @@ EDITS: 5
 	    (if (not (= (region-position id 0) 0))
 		(snd-display #__line__ ";save-region position: ~A" (region-position id 0)))
 	    (delete-file "fmv.snd")
-	    (save-region id "fmv.snd" mus-riff mus-lshort "this is a comment")
+	    (save-region id "fmv.snd" mus-lshort mus-riff "this is a comment")
 	    (if (not (= (mus-sound-header-type "fmv.snd") mus-riff))
 		(snd-display #__line__ ";save-region riff header: ~A?" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
 	    (if (not (= (mus-sound-sample-type "fmv.snd") mus-lshort))
@@ -6238,10 +6238,11 @@ EDITS: 5
 	    (delete-file "fmv.snd")
 	    ))
 	(close-sound index)
-	(let ((var (catch #t (lambda () (new-sound "hi.snd" 0 1 100 0)) (lambda args args))))
-	  (if (not (eq? (car var) 'out-of-range))
+	(let ((var (catch #t (lambda () (new-sound "hi.snd" :channels 0)) (lambda args args))))
+	  (if (or (not (pair? var))
+		  (not (eq? (car var) 'out-of-range)))
 	      (snd-display #__line__ ";new-sound bad chan: ~A" var)))
-	(set! index (new-sound "fmv.snd" mus-next mus-ldouble 22050 2 "unequal lens"))
+	(set! index (new-sound "fmv.snd" 2 22050 mus-ldouble mus-next "unequal lens"))
 	(insert-silence 0 1000 index 1)
 	(if (or (not (= (framples index 0) 1))
 		(not (= (framples index 1) 1001)))
@@ -6261,7 +6262,7 @@ EDITS: 5
 	(close-sound index)
 	(delete-file "fmv.snd")
 	
-	(set! index (new-sound "fmv.snd" mus-next mus-ldouble 22050 2 "unequal lens"))
+	(set! index (new-sound "fmv.snd" 2 22050 mus-ldouble mus-next "unequal lens"))
 	(pad-channel 0 1000 index 1)
 	(if (or (not (= (framples index 0) 1))
 		(not (= (framples index 1) 1001)))
@@ -6288,7 +6289,7 @@ EDITS: 5
 	  (revert-sound ind)
 	  (close-sound ind))
 	
-	(set! index (new-sound "fmv.snd" mus-ircam mus-bshort 22050 1 "this is a comment"))
+	(set! index (new-sound "fmv.snd" 1 22050 mus-bshort mus-ircam "this is a comment"))
 	(let ((v0 (make-float-vector 128)))
 	  (set! (v0 64) .5)
 	  (set! (v0 127) .5)
@@ -6340,7 +6341,7 @@ EDITS: 5
 	  (set! v0 (channel->float-vector 0 128 index 0)) 
 	  (if (or (fneq (sample 64) 1.0) (fneq (sample 20) .3125) (fneq (sample 119) 0.127))
 	      (snd-display #__line__ ";env-selection [len: ~A]: ~A ~A ~A ~A?" (selection-framples) (sample 64) (sample 20) (sample 119) v0))
-	  (save-selection "fmv5.snd" mus-next mus-bint 22050 "") ;1.0->-1.0 if short
+	  (save-selection "fmv5.snd" 22050 mus-bint mus-next "") ;1.0->-1.0 if short
 	  (revert-sound index)
 	  (let ((tag (catch #t (lambda () (file->array "/baddy/hiho" 0 0 128 v0)) (lambda args (car args)))))
 	    (if (not (eq? tag 'no-such-file)) (snd-display #__line__ ";file->array w/o file: ~A" tag)))
@@ -6361,7 +6362,7 @@ EDITS: 5
 	  (float-vector->channel v0 0 128 index 0) 
 	  (select-all) 
 	  (without-errors (reverse-selection)) 
-	  (save-selection "fmv4.snd" mus-riff mus-lfloat 44100 "this is a comment")
+	  (save-selection "fmv4.snd" 44100 mus-lfloat mus-riff "this is a comment")
 	  (set! v0 (channel->float-vector 0 128 index 0)) 
 	  (if (or (fneq (sample 27) 0.5) (fneq (sample 125) -.5))
 	      (snd-display #__line__ ";reverse-selection: ~A?" v0))
@@ -7468,7 +7469,7 @@ EDITS: 5
 	      (if (> (mx i) -0.5) (begin (snd-display #__line__ ";1 peak max: ~A ~A" (mx i) i) (set! happy #f)))))
 	  (close-sound ind))
 	
-	(let ((index (new-sound "fmv.snd" mus-next mus-ldouble 22050 2 "channel tests")))
+	(let ((index (new-sound "fmv.snd" 2 22050 mus-ldouble mus-next "channel tests")))
 	  (define (test-channel-func func val-func init-val)
 	    (let ((len (framples index))
 		  (chns (chans index))
@@ -7704,7 +7705,7 @@ EDITS: 5
 	    (set! (hook-functions save-state-hook) ())
 	    ))
 	
-	(let ((index (new-sound "fmv.snd" mus-next mus-ldouble 22050 2 "channel tests"))
+	(let ((index (new-sound "fmv.snd" 2 22050 mus-ldouble mus-next "channel tests"))
 	      (v (make-float-vector 10))
 	      (sw *sinc-width*))
 	  (set! *sinc-width* 10)
@@ -8033,7 +8034,7 @@ EDITS: 5
 	    (if (not (equal? (edits ind) (list 1 0))) (snd-display #__line__ ";view read-only ignored? ~A" (edits ind))))
 	  (close-sound ind))
 	
-	(let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050 1)))
+	(let ((ind (new-sound "test.snd" 1 22050 mus-ldouble mus-next)))
 	  (insert-silence 0 150000)
 	  (map-channel (lambda (y) 0.5))
 	  (env-sound '(0 0 1 1 2 0))
@@ -8043,7 +8044,7 @@ EDITS: 5
 	    (play :wait #t)
 	    (set! *with-tracking-cursor* old-curse))
 	  (close-sound ind))
-	(let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050 1)))
+	(let ((ind (new-sound "test.snd" 1 22050 mus-ldouble mus-next)))
 	  (for-each
 	   (lambda (dur)
 	     (insert-silence 0 dur)
@@ -8064,7 +8065,7 @@ EDITS: 5
 	     (revert-sound))
 	   (list 150 1500 150000))
 	  (close-sound ind))
-	(let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050 1)))
+	(let ((ind (new-sound "test.snd" 1 22050 mus-ldouble mus-next)))
 	  (insert-silence 0 1000)
 	  (map-channel (lambda (y) 1.0))
 	  (env-sound '(0 0 1 1 2 0))
@@ -8088,7 +8089,7 @@ EDITS: 5
 		       (format #t "~%;trouble in reverse read 2 at ~D ~A ~A" i old new)
 		       (quit)))))))
 	  (close-sound ind))
-	(let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050 1)))
+	(let ((ind (new-sound "test.snd" 1 22050 mus-ldouble mus-next)))
 	  (insert-silence 0 150000)
 	  (map-channel (lambda (y) 1.0))
 	  (let ((edpos (edit-position)))
@@ -8320,7 +8321,7 @@ EDITS: 5
 	
 	(reset-all-hooks)
 	
-	(let ((ind (new-sound  "test.snd" mus-next mus-ldouble 22050 1 "1st ramp re-order tests" 100)))
+	(let ((ind (new-sound  "test.snd" 1 22050 mus-ldouble mus-next "1st ramp re-order tests" 100)))
 	  (map-channel (lambda (y) 1.0))
 	  (for-each
 	   (lambda (lst)
@@ -8797,7 +8798,7 @@ EDITS: 2
 	(if (not (eq? tag 'bad-arity))
 	    (snd-display #__line__ ";as-one-edit arg? ~A" tag)))
       (close-sound ind))
-    (let ((ind (new-sound  "test.snd" mus-next mus-ldouble 22050 1 "more tests" 10)))
+    (let ((ind (new-sound  "test.snd" 1 22050 mus-ldouble mus-next "more tests" 10)))
       ;; offset-channel
       (offset-channel .1)
       (if (not (vequal (channel->float-vector 0 10) (make-float-vector 10 .1)))
@@ -8821,7 +8822,7 @@ EDITS: 2
       (if (not (vequal (channel->float-vector) (float-vector 1.000 0.976 0.905 0.794 0.655 0.500 0.345 0.206 0.095 0.024)))
 	  (snd-display #__line__ ";sine-ramp 1 0: ~A" (channel->float-vector)))
       (close-sound ind)
-      (set! ind (new-sound  "test.snd" mus-next mus-ldouble 22050 1 "sine-env tests" 100))
+      (set! ind (new-sound  "test.snd" 1 22050 mus-ldouble mus-next "sine-env tests" 100))
       (map-channel (lambda (y) 1.0))
       (sine-env-channel '(0 0 1 1 2 -.5 3 1))
       (if (not (= (edit-position ind 0) 2)) (snd-display #__line__ ";as-one-edit sine-env-channel: ~A" (edit-position ind 0)))
@@ -8864,7 +8865,7 @@ EDITS: 2
 	(revert-sound ind1)
 	(close-sound ind1)))
     
-    (let ((ind (new-sound  "test.snd" mus-next mus-ldouble 22050 1 "special env tests" 100)))
+    (let ((ind (new-sound  "test.snd" 1 22050 mus-ldouble mus-next "special env tests" 100)))
       (map-channel (lambda (y) 1.0))
       
       (blackman4-ramp 0.0 1.0)
@@ -8973,7 +8974,7 @@ EDITS: 2
 	  (undo)
 	  (close-sound ind))))
     
-    (let ((ind (new-sound  "test.snd" mus-next mus-ldouble 22050 1 "3rd ramp re-order tests" 101)))
+    (let ((ind (new-sound  "test.snd" 1 22050 mus-ldouble mus-next "3rd ramp re-order tests" 101)))
       (offset-channel 1.0)
       (env-sound '(0 0 1 1))
       (contrast-channel 1.0)
@@ -10406,7 +10407,7 @@ EDITS: 2
   
   ;; ----------------
   (define (test-unclip-channel)
-    (let ((ind (new-sound "test.snd" mus-next mus-lfloat 22050 2 "unclip-channel test" 1)))
+    (let ((ind (new-sound "test.snd" 2 22050 mus-lfloat mus-next "unclip-channel test" 1)))
       (set! (sync ind) 1)
       
       (mix "oboe.snd" 0 0 ind 0 #f)
@@ -10721,7 +10722,7 @@ EDITS: 2
 	(map-channel (chordalize))
 	(close-sound ind))
 
-      (let ((ind (new-sound "sweep.snd" mus-next mus-ldouble 22050 1 #f 22050)))
+      (let ((ind (new-sound "sweep.snd" 1 22050 mus-ldouble mus-next #f 22050)))
 	(let ((ph (make-one-pole 1.0 -1.0))
 	      (fq (make-one-pole 1.0 -1.0))
 	      (incr (/ pi 22050.0)))
@@ -14909,7 +14910,7 @@ EDITS: 2
       (if (not (vequal val (float-vector 1.000 -1.500 0.480 -0.330 0.938 -0.533 0.000)))
 	  (snd-display #__line__ ";cascade->canonical 1: ~A" val)))
     
-    (let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050)))
+    (let ((ind (new-sound "test.snd" 1 22050 mus-ldouble mus-next)))
       (pad-channel 0 10000)
       (freq-sweep .45)
       (let ((sp (rough-spectrum ind)))
@@ -19656,7 +19657,7 @@ EDITS: 2
       )
     
     ;; granulate with jitter=0, small hop (comb filter effect)
-    (let ((ind (new-sound "tmp.snd" mus-next mus-ldouble 22050 1 :size 10000)))
+    (let ((ind (new-sound "tmp.snd" 1 22050 mus-ldouble mus-next :size 10000)))
       (let ((gen (make-granulate :expansion 20.0
 				 :input (lambda (dir) .01)
 				 :length .00995
@@ -19955,7 +19956,7 @@ EDITS: 2
 	  (snd-display #__line__ ";*output* ~A" *output*)
 	  (set! *output* #f)))
     
-    (let ((nind (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "this is a comment")))
+    (let ((nind (new-sound "fmv.snd" 1 22050 mus-bshort mus-aifc "this is a comment")))
       (time (mix-float-vector (with-temp-sound (:output (make-float-vector 22050)) (fm-violin 0 1 440 .1)) 0 nind 0))
       (play nind :wait #t)
       (save-sound nind)
@@ -20000,7 +20001,7 @@ EDITS: 2
 	  (snd-display #__line__ ";new-sound default srate: ~A ~A?" (srate nind) *default-output-srate*))
       (close-sound nind)
       (if (file-exists? "fmv.snd") (delete-file "fmv.snd")))
-    (let ((nind (new-sound "fmv.snd" mus-nist mus-bshort 22050 1 "this is a comment")))
+    (let ((nind (new-sound "fmv.snd" 1 22050 mus-bshort mus-nist "this is a comment")))
       (set! (sample 0 nind) 1.0) 
       (start-progress-report nind)
       (convolve-with "oboe.snd") 
@@ -20027,7 +20028,7 @@ EDITS: 2
 	  (snd-display #__line__ ";src-sound: ~A ~A ~A?" (sample 1000) (sample 1024) (sample 1010)))
       (revert-sound)
       (close-sound nind))
-    (let ((nind (new-sound "fmv.snd" mus-riff mus-lshort 22050 1 "this is a comment" 22050)))
+    (let ((nind (new-sound "fmv.snd" 1 22050 mus-lshort mus-riff "this is a comment" 22050)))
       (if (not (= (framples nind) 22050)) (snd-display #__line__ "; new-sound initial-length: ~A" (framples nind)))
       (mix "pistol.snd") 
       (map-channel (expsrc 2.0 nind)) 
@@ -22550,9 +22551,9 @@ EDITS: 2
 	      (set! (hook-functions mix-release-hook) ())
 	      (close-sound ind)))
 	  
-	  (let ((ind (new-sound "fmv.snd" mus-next mus-ldouble 22050 1 "mix tests")))
+	  (let ((ind (new-sound "fmv.snd" 1 22050 mus-ldouble mus-next "mix tests")))
 	    (insert-silence 0 20 ind)
-	    (let ((indout (new-sound "test.snd" mus-next mus-ldouble 22050 1 "mix tests")))
+	    (let ((indout (new-sound "test.snd" 1 22050 mus-ldouble mus-next "mix tests")))
 	      (insert-silence 0 10 indout)
 	      (set! (sample 2 indout 0) .5)
 	      (set! (sample 5 indout 0) .25)
@@ -22585,7 +22586,7 @@ EDITS: 2
 		    (snd-display #__line__ ";mix 1->1 at 0 #f: ~A ~A" samps v)))
 	      (if (mix? tag) (snd-display #__line__ ";mix 1->1 at 5 #f tag: ~A" tag))
 	      (undo))
-	    (let ((indout (new-sound "test.snd" mus-next mus-ldouble 22050 2 "mix tests")))
+	    (let ((indout (new-sound "test.snd" 2 22050 mus-ldouble mus-next "mix tests")))
 	      (insert-silence 0 10 indout 0)
 	      (insert-silence 0 10 indout 1)
 	      (set! (sample 2 indout 0) .5)
@@ -22613,7 +22614,7 @@ EDITS: 2
 	      (if (not (mix? tag)) (snd-display #__line__ ";mix 2->1 at 5 tag: ~A" tag))
 	      (undo))
 	    (close-sound ind)
-	    (set! ind (new-sound "fmv.snd" mus-next mus-ldouble 22050 2 "mix tests"))
+	    (set! ind (new-sound "fmv.snd" 2 22050 mus-ldouble mus-next "mix tests"))
 	    (insert-silence 0 20 ind 0)
 	    (insert-silence 0 20 ind 1)
 	    (let ((tag (car (mix "test.snd" 0 #t))))
@@ -22825,7 +22826,7 @@ EDITS: 2
 		(snd-display #__line__ ";mix-amp-env no-op: ~A ~A" (mix-amp-env id) (edit-position ind 0)))
 	    (close-sound ind))
 	  
-	  (let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050 1 "color-mix tests" 300))
+	  (let ((ind (new-sound "test.snd" 1 22050 mus-ldouble mus-next "color-mix tests" 300))
 		(old-color *mix-color*))
 	    (set! *mix-color* (make-color-with-catch 1 1 0))
 	    (let ((mix1 (mix-float-vector (make-float-vector 10 .5) 10)))
@@ -22845,7 +22846,7 @@ EDITS: 2
 		(if (file-exists? "test1.snd") (delete-file "test1.snd"))))
 	    (close-sound ind))
 	  
-	  (let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050 1 "lock mix tests" 300))
+	  (let ((ind (new-sound "test.snd" 1 22050 mus-ldouble mus-next "lock mix tests" 300))
 		(mix1 (mix-float-vector (make-float-vector 10 .5) 10)))
 	    (set! (mix-amp mix1) 0.0)
 	    (if (fneq (maxamp ind 0) 0.0) (snd-display #__line__ ";delete-mix maxamp: ~A" (maxamp ind 0)))
@@ -23558,7 +23559,7 @@ EDITS: 2
 	    (close-sound selind))
 	  
 	  
-	  (let ((new-index (new-sound "hiho.wave" mus-next mus-ldouble 22050 1)))
+	  (let ((new-index (new-sound "hiho.wave" 1 22050 mus-ldouble mus-next)))
 	    (log-mem test-ctr)
 	    (select-sound new-index)
 	    (if (find-mix 0 new-index 0) (snd-display #__line__ ";found non-existent mix? ~A" (find-mix 0 new-index 0)))
@@ -23655,7 +23656,7 @@ EDITS: 2
 	(dismiss-all-dialogs)
 	
 	;; pan-mix tests
-	(let ((ind (new-sound "fmv.snd" mus-next mus-ldouble 22050 1 "pan-mix tests")))
+	(let ((ind (new-sound "fmv.snd" 1 22050 mus-ldouble mus-next "pan-mix tests")))
 	  
 	  (let ((id0 (car (pan-mix "1a.snd" 10000 '(0 0 1 1)))))
 	    (if (or (fneq (mix-amp id0) 1.0)
@@ -23678,7 +23679,7 @@ EDITS: 2
 	    (revert-sound ind))
 	  (close-sound ind))
 	
-	(let ((ind (new-sound "fmv.snd" mus-next mus-ldouble 22050 2 "pan-mix tests")))
+	(let ((ind (new-sound "fmv.snd" 2 22050 mus-ldouble mus-next "pan-mix tests")))
 	  (let* ((ids (pan-mix "1a.snd" 100 '(0 0 1 1 2 0)))
 		 (id0 (car ids))
 		 (id1 (cadr ids)))
@@ -23717,7 +23718,7 @@ EDITS: 2
 	    (revert-sound ind))
 	  (close-sound ind))
 	
-	(let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050 2 "pan-mix-* tests" 1000)))
+	(let ((ind (new-sound "test.snd" 2 22050 mus-ldouble mus-next "pan-mix-* tests" 1000)))
 	  (let* ((ids (pan-mix-float-vector (make-float-vector 100 .3) 100 '(0 0 1 1)))
 		 (id0 (car ids))
 		 (id1 (cadr ids)))
@@ -23893,7 +23894,7 @@ EDITS: 2
 	(set! (vc 9) (mix-float-vector v0 4000 ind1))
 	(close-sound ind0)
 	(close-sound ind1)
-	(set! ind0 (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "this is a comment"))
+	(set! ind0 (new-sound "fmv.snd" 1 22050 mus-bshort mus-aifc "this is a comment"))
 	(let ((v0 (make-vector 10)))
 	  (do ((i 0 (+ i 1))) ((= i 10)) (vector-set! v0 i 1.0))
 	  (insert-samples 0 10 v0 ind0) 
@@ -23943,9 +23944,9 @@ EDITS: 2
 	    (revert-sound)))
 	(close-sound ind0)
 	
-	(set! ind0 (new-sound "fmv.snd" mus-aifc mus-bshort 22050 2 "this is a comment"))
+	(set! ind0 (new-sound "fmv.snd" 2 22050 mus-bshort mus-aifc "this is a comment"))
 	(let ((v0 (make-vector 10))
-	      (ind1 (new-sound "fmv1.snd" mus-aifc mus-bshort 22050 1 "this is a comment")))
+	      (ind1 (new-sound "fmv1.snd" 1 22050 mus-bshort mus-aifc "this is a comment")))
 	  (set! (sync ind0) 123)
 	  (set! (sync ind1) 123)
 	  (do ((i 0 (+ i 1))) ((= i 10)) (vector-set! v0 i 1.0))
@@ -23989,7 +23990,7 @@ EDITS: 2
 	  (close-sound ind1))
 	(close-sound ind0)
 	
-	(set! ind0 (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "this is a comment"))
+	(set! ind0 (new-sound "fmv.snd" 1 22050 mus-bshort mus-aifc "this is a comment"))
 	(let ((v0 (make-float-vector 10))
 	      (old5 (sample 5 ind0)))
 	  (fill! v0 0.1)
@@ -24008,8 +24009,8 @@ EDITS: 2
 	  (if (or (fneq (v0 3) 0.133) (fneq (v0 8) .196)) (snd-display #__line__ ";env-sound 05: ~A" v0)))
 	
 	(close-sound ind0)
-	(set! ind0 (new-sound "fmv.snd" mus-aifc mus-bshort 22050 2 "this is a comment"))
-	(set! ind1 (new-sound "fmv1.snd" mus-next mus-ldouble 22050 1 "this is a comment"))
+	(set! ind0 (new-sound "fmv.snd" 2 22050 mus-bshort mus-aifc "this is a comment"))
+	(set! ind1 (new-sound "fmv1.snd" 1 22050 mus-ldouble mus-next "this is a comment"))
 	(let ((v0 (make-vector 10)))
 	  (do ((i 0 (+ i 1))) ((= i 10)) (vector-set! v0 i 1.0))
 	  (insert-samples 0 10 v0 ind0 0) 
@@ -24032,7 +24033,7 @@ EDITS: 2
 	(close-sound ind0)
 	(close-sound ind1)
 	
-	(set! ind0 (new-sound "fmv.snd" mus-aifc mus-bshort 22050 2 "this is a comment"))
+	(set! ind0 (new-sound "fmv.snd" 2 22050 mus-bshort mus-aifc "this is a comment"))
 	(mix "oboe.snd")
 	(let ((m1 (add-mark 100)))
 	  (delete-sample 10)
@@ -25738,7 +25739,7 @@ EDITS: 2
 		     (set! save-as-name name)
 		     (set! save-as-dialog dial))))
       (let ((ind (open-sound "oboe.snd")))
-	(save-sound-as "test.snd" ind mus-raw)
+	(save-sound-as "test.snd" ind :header-type mus-raw)
 	(close-sound ind)
 	(set! (hook-functions open-raw-sound-hook) ())
 	(set! (hook-functions after-save-as-hook) ())
@@ -26480,7 +26481,7 @@ EDITS: 2
       (set! (mus-clipping) #t)
       (set! (hook-functions clip-hook) ())
       
-      (let ((index (new-sound "test.snd" mus-next mus-ldouble 22050 1 "clip-hook test" 10)))
+      (let ((index (new-sound "test.snd" 1 22050 mus-ldouble mus-next "clip-hook test" 10)))
 	(map-channel (lambda (y) (mus-random 0.999))) ; -amp to amp
 	(set! (sample 2) 1.0001)
 	(set! (sample 4) -1.0)
@@ -28251,7 +28252,7 @@ EDITS: 2
 	      (close-sound ind))
 	    
 	    (set! *clm-srate* 22050)
-	    (let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050 1 "src-* tests" 10000))
+	    (let ((ind (new-sound "test.snd" 1 22050 mus-ldouble mus-next "src-* tests" 10000))
 		  (osc (make-oscil 500)))
 	      
 	      (define f3neq (lambda (a b) (> (abs (- a b)) 10)))
@@ -28729,7 +28730,7 @@ EDITS: 2
 		   ;(loc (data-location oboe))
 		   ;(com (comment oboe))
 		   )
-	      (save-sound-as "test.aif" oboe mus-aifc)
+	      (save-sound-as "test.aif" oboe :header-type mus-aifc)
 	      (let ((oboe-aif (open-sound "test.aif")))
 		(if (not (= (header-type oboe-aif) mus-aifc)) (snd-display #__line__ ";oboe-aif header: ~A?" (mus-header-type-name (header-type oboe-aif))))
 		(set! (srate oboe-aif) (* sr 2.0))
@@ -28740,7 +28741,7 @@ EDITS: 2
 		(if (not (= (data-location oboe-aif) 28)) (snd-display #__line__ ";set! data-location: ~A?" (data-location oboe-aif)))
 		(set! (sample-type oboe-aif) mus-mulaw)
 		(if (not (= (sample-type oboe-aif) mus-mulaw)) (snd-display #__line__ ";set! format: ~A?" (mus-sample-type-name (sample-type oboe-aif))))
-		(save-sound-as "test.aif" oboe-aif mus-aifc mus-bshort 22050 0)
+		(save-sound-as "test.aif" oboe-aif 22050 mus-bshort mus-aifc 0)
 		(close-sound oboe-aif)
 		(delete-file "test.aif")
 		(set! (selected-sound) a4)
@@ -29605,7 +29606,7 @@ EDITS: 2
 	      (snd-display #__line__ ";~A: backward data[~D]: ~A ~A" name i val (data i)))))))
   
   (define (init-sound val dur chans)
-    (let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050 chans)))
+    (let ((ind (new-sound "test.snd" chans 22050 mus-ldouble mus-next)))
       (do ((i 0 (+ i 1)))
 	  ((= i chans))
 	(insert-silence 0 dur ind i)
@@ -30058,7 +30059,7 @@ EDITS: 2
 	
 	(for-each 
 	 (lambda (out-chans)
-	   (let ((ind (new-sound "new.snd" mus-next mus-ldouble 22050 out-chans "edpos testing"))
+	   (let ((ind (new-sound "new.snd" out-chans 22050 mus-ldouble mus-next "edpos testing"))
 		 (mx (apply max (map sync (sounds)))))
 	     (set! (sync ind) (+ mx 1))
 	     (for-each 
@@ -30232,7 +30233,7 @@ EDITS: 2
 	
 	(if (mus-clipping) (set! (mus-clipping) #f))
 	(if *clipping* (set! *clipping* #f))
-	(let ((ind (new-sound "fmv.snd" mus-next mus-ldouble 22050 1 "edit trees"))
+	(let ((ind (new-sound "fmv.snd" 1 22050 mus-ldouble mus-next "edit trees"))
 	      (vals (make-float-vector 100)))
 	  (select-sound ind)
 	  (select-channel 0)
@@ -30715,7 +30716,7 @@ EDITS: 2
 	     ))
 	 (list 10 10000))
 	
-	(let ((ind (new-sound "fmv.snd" mus-next mus-ldouble 22050 1 "envd edit trees"))
+	(let ((ind (new-sound "fmv.snd" 1 22050 mus-ldouble mus-next "envd edit trees"))
 	      (vals (make-float-vector 10000)))
 	  (select-sound ind)
 	  (select-channel 0)
@@ -30921,7 +30922,7 @@ EDITS: 2
 	(for-each
 	 (lambda (dur)
 	   (let ((i1 (new-sound))
-		 (i2 (new-sound "fmv1.snd" mus-next mus-ldouble 44100 2))
+		 (i2 (new-sound "fmv1.snd" 2 44100 mus-ldouble mus-next))
 		 (v (make-float-vector dur 1.0)))
 	     (define (check-env name r e)
 	       (let ((v0 (make-float-vector dur))
@@ -31249,7 +31250,7 @@ EDITS: 2
 		(set! (squelch-update) #f)
 		(close-sound ind))))
 	
-	(let ((ind (new-sound "fmv.snd" mus-next mus-ldouble)))
+	(let ((ind (new-sound "fmv.snd" :header-type mus-next :sample-type mus-ldouble)))
 	  (set! *sinc-width* 10)
 	  (pad-channel 0 1000 ind)
 	  (set! (sample 100) 0.5)
@@ -33302,8 +33303,8 @@ EDITS: 1
       (close-sound ind)
       (delete-file "t1.scm"))
     
-    (let ((ind (new-sound "fmv.snd" mus-next mus-ldouble 22050 8 "this is an 8-channel save-state test"))
-	  (ind1 (new-sound "fmv1.snd" mus-next mus-ldouble 22050 2 "this is a 2-channel save-state test")))
+    (let ((ind (new-sound "fmv.snd" 8 22050 mus-ldouble mus-next "this is an 8-channel save-state test"))
+	  (ind1 (new-sound "fmv1.snd" 2 22050 mus-ldouble mus-next "this is a 2-channel save-state test")))
       (set! (sample 10 ind 0) .1)
       (set! (sample 10 ind 1) .2)
       (set! (sample 10 ind 2) .3)
@@ -33524,7 +33525,7 @@ EDITS: 1
     (let ((ctr 1))
       (for-each 
        (lambda (func test)
-	 (let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050 1 "mono save-state tests" 100)))
+	 (let ((ind (new-sound "test.snd" 1 22050 mus-ldouble mus-next "mono save-state tests" 100)))
 	   (func ind)
 	   (if (file-exists? "s61.scm") (delete-file "s61.scm"))
 	   (save-state "s61.scm")
@@ -34050,7 +34051,7 @@ EDITS: 1
 	(env-channel '(0 0 1 1 2 0))
 	(let ((func (edit-list->function)))
 	  (close-sound ind)
-	  (set! ind (new-sound "tmp.snd" mus-next mus-ldouble 22050 1 :size 20 :comment #f))
+	  (set! ind (new-sound "tmp.snd" 1 22050 mus-ldouble mus-next :size 20 :comment #f))
 	  (map-channel (lambda (y) 1.0))
 	  (func ind 0)
 	  (let ((data (channel->float-vector)))
@@ -36367,7 +36368,7 @@ EDITS: 1
 	    (set! *colormap* old-colormap))
 	  (close-sound ind1))
 	
-	(let ((ind (new-sound "test.snd" mus-next mus-ldouble)))
+	(let ((ind (new-sound "test.snd" :header-type mus-next :sample-type mus-ldouble)))
 	  (pad-channel 0 1000)
 	  (set! (transform-graph-type ind 0) graph-once)
 	  (set! (show-transform-peaks ind 0) #t)
@@ -37014,7 +37015,7 @@ EDITS: 1
 	    (if (file-exists? name) (delete-file name))))
 	(set! *clm-srate* old-srate))
       
-      (let ((ind (new-sound "tmp.snd" mus-next mus-ldouble 22050 1 :size 50)))
+      (let ((ind (new-sound "tmp.snd" 1 22050 mus-ldouble mus-next :size 50)))
 	(set! (sample 3) 1.0)
 	(filter-channel (float-vector .5 1.0 .5) 3)
 	(let ((data (channel->float-vector 0 10)))
@@ -37039,7 +37040,7 @@ EDITS: 1
 	(close-sound ind))
       
       (let ()
-	(new-sound "tmp.snd" mus-next mus-ldouble 22050 1 #f 100)
+	(new-sound "tmp.snd" 1 22050 mus-ldouble mus-next #f 100)
 	(set! (sample 10) 0.5)
 	(filter-sound (float-vector 1.0 0.0 1.0) 3)
 	(if (not (vequal (channel->float-vector 5 10) (float-vector 0.000 0.000 0.000 0.000 0.000 0.500 0.000 0.500 0.000 0.000)))
@@ -37111,7 +37112,7 @@ EDITS: 1
 	(undo)
 	(close-sound))
       
-      (let ((ind (new-sound "tmp.snd" mus-next mus-ldouble 22050 2 #f 100)))
+      (let ((ind (new-sound "tmp.snd" 2 22050 mus-ldouble mus-next #f 100)))
 	(set! (sample 10) 0.5)
 	(set! (sample 5 ind 1) -0.5)
 	(set! (sync ind) 1)
@@ -37159,14 +37160,14 @@ EDITS: 1
 	(undo 1 ind 1)
 	(close-sound ind))
       
-      (let ((ind (new-sound "tmp.snd" mus-next mus-bshort 22050 1 :size 100))) ; short out needed here
+      (let ((ind (new-sound "tmp.snd" 1 22050 mus-bshort mus-next :size 100))) ; short out needed here
 	(set! (sample 10) 0.5)
 	(set! (sample 20) -0.5)
 	(scale-to 1.0)
 	(if (fneq (sample 10) .999) (snd-display #__line__ ";scale-to 1.0 short (10): ~A" (sample 10)))
 	(if (fneq (sample 20) -.999) (snd-display #__line__ ";scale-to 1.0 short (20): ~A" (sample 10)))
 	(close-sound ind))
-      (let ((ind (new-sound "tmp.snd" mus-next mus-byte 22050 1 :size 100)))
+      (let ((ind (new-sound "tmp.snd" 1 22050 mus-byte mus-next :size 100)))
 	(set! (sample 10) 0.5)
 	(set! (sample 20) -0.5)
 	(scale-to 1.0)
@@ -37248,8 +37249,8 @@ EDITS: 1
 	       (test-sound-func (lambda (func name ind-1 ind-2 new-val eq-func leq-func settable)
 				  (test-sound-func-1 func name ind-1 ind-2 new-val eq-func leq-func settable #f #f))))
 	
-	(let ((ind-1 (new-sound "test-1.snd" mus-next mus-lfloat 22050 1 "mono testing" 100))
-	      (ind-2 (new-sound "test-2.snd" mus-aifc mus-bshort 44100 2 "stereo testing" 300)))
+	(let ((ind-1 (new-sound "test-1.snd" 1 22050 mus-lfloat mus-next "mono testing" 100))
+	      (ind-2 (new-sound "test-2.snd" 2 44100 mus-bshort mus-aifc "stereo testing" 300)))
 	  
 	  (for-each
 	   (lambda (data)
@@ -37329,8 +37330,8 @@ EDITS: 1
 		    (lambda (func name ind-1 ind-2 new-val eq-func leq-func settable global)
 		      (test-sound-func-1 func name ind-1 ind-2 new-val eq-func leq-func settable #t global)
 		      (test-channel-func-1 func name ind-1 ind-2 new-val eq-func leq-func settable global))))
-	    (let ((ind-1 (new-sound "test-1.snd" mus-next mus-ldouble 22050 1 "mono testing" 100))
-		  (ind-2 (new-sound "test-2.snd" mus-aifc mus-bshort 44100 2 "stereo testing" 300)))
+	    (let ((ind-1 (new-sound "test-1.snd" 1 22050 mus-ldouble mus-next "mono testing" 100))
+		  (ind-2 (new-sound "test-2.snd" 2 44100 mus-bshort mus-aifc "stereo testing" 300)))
 	      (set! (sample 1 ind-1 0) .1)
 	      (set! (sample 2 ind-2 0) .2)
 	      (set! (sample 3 ind-2 1) .3)
@@ -37449,8 +37450,8 @@ EDITS: 1
 		    (if (not (eq-func (func ind-2) old-2))
 			(snd-display #__line__ ";~A set arg #t (2): ~A ~A" name (func ind-2) old-2))))))
 	
-	(let ((ind-1 (new-sound "test-1.snd" mus-next mus-ldouble 22050 1 "mono testing" 100))
-	      (ind-2 (new-sound "test-2.snd" mus-aifc mus-bshort 44100 2 "stereo testing" 300)))
+	(let ((ind-1 (new-sound "test-1.snd" 1 22050 mus-ldouble mus-next "mono testing" 100))
+	      (ind-2 (new-sound "test-2.snd" 2 44100 mus-bshort mus-aifc "stereo testing" 300)))
 	  
 	  (for-each
 	   (lambda (data)
@@ -37807,7 +37808,7 @@ EDITS: 1
       
       (for-each close-sound (sounds))
 
-      (let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050 1 "insert-* tests" 10)))
+      (let ((ind (new-sound "test.snd" 1 22050 mus-ldouble mus-next "insert-* tests" 10)))
 	(map-channel (lambda (y) 1.0) 0 10 ind 0)
 	(insert-float-vector (make-float-vector 5 .1) 2)
 	(if (not (= (framples ind) 15)) (snd-display #__line__ ";insert-float-vector len: ~A" (framples ind)))
@@ -37825,7 +37826,7 @@ EDITS: 1
 	      (snd-display #__line__ ";insert-float-vector 1 vals: ~A" vals)))
 	(close-sound ind))
       
-      (let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050 4 "insert-* tests" 5)))
+      (let ((ind (new-sound "test.snd" 4 22050 mus-ldouble mus-next "insert-* tests" 5)))
 	(map-channel (lambda (y) 0.4) 0 5 ind 0)
 	(map-channel (lambda (y) 0.5) 0 5 ind 1)
 	(map-channel (lambda (y) 0.6) 0 5 ind 2)
@@ -37864,7 +37865,7 @@ EDITS: 1
 	
 	(close-sound ind))
       
-      (let ((ind (new-sound "test.snd" mus-next mus-ldouble 22050 4 "mix-* tests" 5)))
+      (let ((ind (new-sound "test.snd" 4 22050 mus-ldouble mus-next "mix-* tests" 5)))
 	(map-channel (lambda (y) 0.4) 0 5 ind 0)
 	(map-channel (lambda (y) 0.5) 0 5 ind 1)
 	(map-channel (lambda (y) 0.6) 0 5 ind 2)
@@ -39882,7 +39883,7 @@ EDITS: 1
   
   (let ((mg (make-oscil 100.0))
 	(gen (make-ssb-fm 1000))
-	(ind (new-sound "tmp.snd" mus-next mus-ldouble 22050 1)))
+	(ind (new-sound "tmp.snd" 1 22050 mus-ldouble mus-next)))
     (pad-channel 0 1000 ind 0)
     (catch #t (lambda () (map-channel (lambda (y) (ssb-fm gen (* .02 (oscil mg)))))) (lambda arg (display arg) arg))
     (close-sound ind))
@@ -39897,7 +39898,7 @@ EDITS: 1
 		   (if (provided? 'snd-dlocsig.scm) "" "not "))
       (begin
 	
-	(let ((file (new-sound "tmp.snd" mus-next mus-ldouble 22050 4)))
+	(let ((file (new-sound "tmp.snd" 4 22050 mus-ldouble mus-next)))
 	  (mix-move-sound 0 "oboe.snd" (make-spiral-path :turns 3))
 	  (close-sound file))
 	
@@ -45258,7 +45259,7 @@ EDITS: 1
   (define (traced a) (+ 2 a))
   
   (define (extract-channel filename snd chn)
-    (save-sound-as filename snd #f #f #f chn))
+    (save-sound-as filename snd :channel chn))
   
   (define* (extract-channels :rest chans)
     ;; extract a list of channels from the current sound and save as test.snd: (extract-channels 0 2)
@@ -46252,7 +46253,7 @@ EDITS: 1
 		(check-error-tag 'mus-error (lambda () (mus-file-mix "oboe.snd" (string-append sf-dir "bad_length.aifc"))))
 		(check-error-tag 'bad-header (lambda () (mus-file-mix (string-append sf-dir "bad_chans.aifc") "oboe.snd")))
 		(check-error-tag 'no-such-sound (lambda () (set! (sound-loop-info 123) '(0 0 1 1))))
-		(check-error-tag 'bad-header (lambda () (new-sound "fmv.snd" mus-nist mus-bfloat 22050 2 "this is a comment")))
+		(check-error-tag 'bad-header (lambda () (new-sound "fmv.snd" 2 22050 mus-bfloat mus-nist "this is a comment")))
 		(check-error-tag 'wrong-type-arg (lambda () (player-home 123)))
 		(check-error-tag 'no-such-file (lambda () (set! *temp-dir* "/hiho")))
 		(check-error-tag 'no-such-file (lambda () (set! *save-dir* "/hiho")))
@@ -46291,9 +46292,9 @@ EDITS: 1
 		      ))
 		(check-error-tag 'no-such-menu (lambda () (main-menu -1)))
 		(check-error-tag 'no-such-menu (lambda () (main-menu 111)))
-		(check-error-tag 'out-of-range (lambda () (new-sound "hiho" 123)))
-		(check-error-tag 'out-of-range (lambda () (new-sound "hiho" mus-nist 123)))
-		(check-error-tag 'bad-header (lambda () (new-sound "hiho" mus-nist mus-bfloat)))
+		(check-error-tag 'out-of-range (lambda () (new-sound "hiho" :header-type 123)))
+		(check-error-tag 'out-of-range (lambda () (new-sound "hiho" :header-type mus-nist :sample-type 123)))
+		(check-error-tag 'bad-header (lambda () (new-sound "hiho" :header-type mus-nist :sample-type mus-bfloat)))
 		(check-error-tag 'out-of-range (lambda () (set! *mus-array-print-length* -1)))
 		(check-error-tag 'out-of-range (lambda () (set! *print-length* -1)))
 		(check-error-tag 'out-of-range (lambda () (set! *play-arrow-size* -1)))
@@ -46337,13 +46338,13 @@ EDITS: 1
 		  (check-error-tag 'bad-header (lambda () (insert-sound (string-append sf-dir "bad_chans.snd"))))
 		  (check-error-tag 'IO-error (lambda () (convolve-with (string-append sf-dir "bad_chans.snd"))))
 		  (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind -12)))
-		  (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind mus-next -12)))
-		  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind mus-nist mus-bdouble)))
-		  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind mus-aifc mus-lfloat)))
-		  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind mus-riff mus-bshort)))
-		  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind mus-voc mus-bshort)))
-		  (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" mus-riff mus-bshort)))
-		  (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" mus-voc mus-bshort)))
+		  (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind :header-type mus-next :sample-type -12)))
+		  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind :header-type mus-nist :sample-type mus-bdouble)))
+		  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind :header-type mus-aifc :sample-type mus-lfloat)))
+		  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind :header-type mus-riff :sample-type mus-bshort)))
+		  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind :header-type mus-voc :sample-type mus-bshort)))
+		  (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" 22050 mus-bshort mus-riff)))
+		  (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" 22050 mus-bshort mus-voc)))
 		  (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 0 1 1) :length 11))))
 		  (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 1 1 0) :length 11))))
 		  (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 1 1 -1) :length 11))))

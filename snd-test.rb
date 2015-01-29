@@ -2905,14 +2905,14 @@ def test_04_00
     set_sound_loop_info(ind, [12000, 14000, 1, 2, 3, 4])
     snd_test_neq(sound_loop_info(ind),
       [12000, 14000, 1, 2, 3, 4, 1, 1], "set_loop_info")
-    save_sound_as("fmv1.snd", ind, Mus_aifc)
+    save_sound_as("fmv1.snd", ind, :header_type, Mus_aifc)
     close_sound(ind)
     snd_test_neq(mus_sound_loop_info("fmv1.snd"),
       [12000, 14000, 1, 2, 3, 4, 1, 1], "saved loop_info")
   end
   #
   ind = open_sound(oboe_snd)
-  save_sound_as("fmv.snd", ind, Mus_aifc)
+  save_sound_as("fmv.snd", ind, :header_type, Mus_aifc)
   close_sound(ind)
   ind = open_sound("fmv.snd")
   snd_test_neq(sound_loop_info(ind), nil, "null loop_info")
@@ -2927,7 +2927,7 @@ def test_04_00
   set_sound_loop_info(ind, [1200, 1400, 4, 3, 2, 1, 1, 0])
   snd_test_neq(sound_loop_info(ind),
     [1200, 1400, 0, 0, 2, 1, 1, 0], "set null loop_info (no mode1)")
-  save_sound_as("fmv1.snd", ind, Mus_aifc)
+  save_sound_as("fmv1.snd", ind, :header_type, Mus_aifc)
   close_sound(ind)
   snd_test_neq(mus_sound_loop_info("fmv1.snd"),
     [1200, 1400, 0, 0, 2, 1, 1, 0], "saved null loop_info (no mode1)")
@@ -3107,7 +3107,7 @@ def test_04_00
    [Mus_bfloat,  2 ** -23],
    [Mus_bdouble, 2 ** -23],
    [Mus_ldouble, 2 ** -23]].each do |type, allowed_diff|
-    ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1)
+    ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next)
     v = make_vct(len)
     maxdiff = 0.0
     maxpos = false
@@ -3128,7 +3128,7 @@ def test_04_00
       v[i] = 1.0 - val
     end
     vct2channel(v, 0, len, ind, 0)
-    save_sound_as("test1.snd", ind, Mus_next, :sample_type, type)
+    save_sound_as("test1.snd", ind, :header_type, Mus_next, :sample_type, type)
     close_sound(ind)
     ind = open_sound("test1.snd")
     v1 = channel2vct(0, len, ind, 0)
@@ -3178,7 +3178,7 @@ def test_04_00
   end
   #
   tag = Snd.catch do
-    save_sound_as("test.snd", ob, Mus_aifc, Mus_bdouble)
+    save_sound_as("test.snd", ob, :header_type, Mus_aifc, :sample_type, Mus_bdouble)
   end
   if tag.first == :cannot_save
     snd_display("save_sound_as test.snd write trouble: %s", tag)
@@ -3194,12 +3194,12 @@ def test_04_00
     "set_comment overwrote current")
   set_filter_control_in_hz(false)
   #
-  save_sound_as("test.snd", ob, Mus_raw)
+  save_sound_as("test.snd", ob, :header_type, Mus_raw)
   ab = open_raw_sound("test.snd", 1, 22050, Mus_bshort)
   check_it.call(ab, Mus_raw, Mus_bshort)
   close_sound(ab)
   #
-  save_sound_as("test.snd", ob, Mus_nist, Mus_bint)
+  save_sound_as("test.snd", ob, :header_type, Mus_nist, :sample_type, Mus_bint)
   ab = open_sound("test.snd")
   check_it.call(ab, Mus_nist, Mus_bint)
   close_sound(ab)
@@ -3219,12 +3219,12 @@ def test_04_00
    [Mus_ircam, Mus_mulaw],
    [Mus_next,  Mus_alaw],
    [Mus_next,  Mus_ldouble]].each do |type, fmt|
-    save_sound_as("test.snd", ob, type, fmt)
+    save_sound_as("test.snd", ob, :header_type, type, :sample_type, fmt)
     ab = open_sound("test.snd")
     check_it.call(ab, type, fmt)
     close_sound(ab)
   end
-  save_sound_as("test.snd", ob, Mus_next, Mus_bshort)
+  save_sound_as("test.snd", ob, :header_type, Mus_next, :sample_type, Mus_bshort)
   ab = open_sound("test.snd")
   check_it.call(ab, Mus_next, Mus_bshort)
   $update_hook.reset_hook!
@@ -3271,12 +3271,12 @@ def test_04_00
   snd_test_neq(srate(ab), 12345, "set_srate")
   close_sound(ab)
   #
-  save_sound_as("test.snd", ob, Mus_next, Mus_bfloat)
+  save_sound_as("test.snd", ob, :header_type, Mus_next, :sample_type, Mus_bfloat)
   ab = open_sound("test.snd")
   check_it.call(ab, Mus_next, Mus_bfloat)
   close_sound(ab)
   #
-  save_sound_as("test.snd", ob, Mus_next, Mus_bshort)
+  save_sound_as("test.snd", ob, :header_type, Mus_next, :sample_type, Mus_bshort)
   close_sound(ob)
   ab = open_sound("test.snd")
   set_sample_type(Mus_lshort)
@@ -3473,7 +3473,7 @@ def test_04_03
   ind = view_sound("oboe.snd")
   set_clipping(false)
   scale_channel(10.0)
-  save_sound_as("test.snd", ind, Mus_next, Mus_bfloat)
+  save_sound_as("test.snd", ind, :header_type, Mus_next, :sample_type, Mus_bfloat)
   undo_edit(1, ind, 0)
   ind1 = open_sound("test.snd")
   snd_test_neq(maxamp(ind1, 0), 10.0 * maxamp(ind, 0), "clipping 0")
@@ -3482,7 +3482,7 @@ def test_04_03
   #
   set_clipping(true)
   map_channel(lambda do |y| y * 10.0 end, 0, framples(), ind, 0)
-  save_sound_as("test.snd", ind, Mus_next, Mus_bfloat)
+  save_sound_as("test.snd", ind, :header_type, Mus_next, :sample_type, Mus_bfloat)
   undo_edit(1, ind, 0)
   ind1 = open_sound("test.snd")
   snd_test_neq(maxamp(ind1, 0), 1.0, "clipping 1")
@@ -3492,7 +3492,7 @@ def test_04_03
   set_clipping(false)
   mx = maxamp(ind)
   map_channel(lambda do |y| y + (1.001 - mx) end, 0, framples(), ind, 0)
-  save_sound_as("test.snd", ind, Mus_next, Mus_bshort)
+  save_sound_as("test.snd", ind, :header_type, Mus_next, :sample_type, Mus_bshort)
   ind1 = open_sound("test.snd")
   unless res = scan_channel(lambda do |y| y < 0.0 end)
     snd_display("clipping 2: %s?", res)
@@ -3501,7 +3501,7 @@ def test_04_03
   delete_file("test.snd")
   #
   set_clipping(true)
-  save_sound_as("test.snd", ind, Mus_next, Mus_bshort)
+  save_sound_as("test.snd", ind, :header_type, Mus_next, :sample_type, Mus_bshort)
   ind1 = open_sound("test.snd")
   if res = scan_channel(lambda do |y| y < 0.0 end)
     snd_display("clipping 3: %s?", res)
@@ -3726,9 +3726,9 @@ def test_04_04
   set_mus_sound_sample_type(oboe_snd, cur_format)
   #
   ind = open_sound("oboe.snd")
-  save_sound_as("test.wave", ind, Mus_riff)
-  save_sound_as("test.rf64", ind, Mus_rf64)
-  save_sound_as("test.aifc", ind, Mus_aifc)
+  save_sound_as("test.wave", ind, :header_type, Mus_riff)
+  save_sound_as("test.rf64", ind, :header_type, Mus_rf64)
+  save_sound_as("test.aifc", ind, :header_type, Mus_aifc)
   close_sound(ind)
   ["test.wave",
    "test.rf64",
@@ -3868,7 +3868,7 @@ def test_04_05
 end
 
 def test_04_06
-  ind = new_sound("tmp.snd", Mus_riff, Mus_l24int, 22050, 1, :size, 100000)
+  ind = new_sound("tmp.snd", 1, 22050, Mus_l24int, Mus_riff, :size, 100000)
   old_selection_creates_region = selection_creates_region()
   set_selection_creates_region(true)
   x = -0.5
@@ -3884,7 +3884,7 @@ def test_04_06
   reg = select_all
   [[:Mus_next, :Mus_l24int],
    [:Mus_aifc, :Mus_l24int]].each do |ht, df|
-    save_selection("tmp1.snd", Module.const_get(ht), Module.const_get(df))
+    save_selection("tmp1.snd", 44100, Module.const_get(df), Module.const_get(ht))
     ind1 = open_sound("tmp1.snd")
     x = -0.5
     incr = 1.0 / framples()
@@ -3898,7 +3898,7 @@ def test_04_06
     end
     close_sound(ind1)
   end
-  save_region(reg, "tmp1.snd", Mus_next, Mus_l24int)
+  save_region(reg, "tmp1.snd", Mus_l24int, Mus_next)
   ind1 = open_sound("tmp1.snd")
   x = -0.5
   incr = 1.0 / framples()
@@ -3916,7 +3916,7 @@ def test_04_06
   delete_file("tmp.snd")
   set_selection_creates_region(old_selection_creates_region)
   #
-  ind = new_sound("tmp.snd", Mus_next, Mus_bfloat, 22050, 1,
+  ind = new_sound("tmp.snd", 1, 22050, Mus_bfloat, Mus_next,
                   :size, 10, :comment, false)
   map_channel($init_channel)
   env_channel([0.0, 0.0, 0.1, 0.1, 0.2, 0.2, 0.3, 0.3, 0.4, 0.4,
@@ -4051,7 +4051,7 @@ def read_ascii(in_filename,
                out_format = Mus_bshort,
                out_srate = 44100)
   in_buffer = IO.readlines(in_filename)         # array of strings
-  out_snd = new_sound(out_filename, out_type, out_format, out_srate, 1,
+  out_snd = new_sound(out_filename, 1, out_srate, out_format, out_type, 
                       format("created by %s: %s", get_func_name, in_filename))
   bufsize = 512
   data = make_vct(bufsize)
@@ -7228,7 +7228,7 @@ def test_05_10
   snd_test_neq(sample(201), 0.25, "insert_samples (201)")
   snd_test_neq(sample(301), 0.75, "insert_samples (301)")
   snd_test_neq(framples(ind), 50835, "insert_samples (framples)")
-  save_sound_as("hiho.snd", ind, Mus_next, Mus_bshort, :srate, 22050)
+  save_sound_as("hiho.snd", ind, 22050, Mus_bshort, Mus_next)
   nind = view_sound("hiho.snd")
   snd_test_neq(sample(101, nind), sample(101, ind), "save_sound_as")
   unless read_only(nind)
@@ -7392,7 +7392,7 @@ def test_05_10
     snd_display("save_region position: %s", region_position(id, 0))
   end
   delete_file("fmv.snd")
-  save_region(id, "fmv.snd", Mus_riff, Mus_lshort, "this is a comment")
+  save_region(id, "fmv.snd", Mus_lshort, Mus_riff, "this is a comment")
   [[:mus_sound_header_type, Mus_riff],
    [:mus_sound_sample_type, Mus_lshort],
    [:mus_sound_comment, "this is a comment"],
@@ -7438,12 +7438,12 @@ def test_05_10
 end
 
 def test_05_11
-  res = Snd.catch do new_sound("hi.snd", 0, 1, 100, 0) end
+  res = Snd.catch do new_sound("hi.snd", :channels, 0) end
   if res.first != :out_of_range
     snd_display("new_sound bad chan: %s?", res)
   end
   # 
-  ind = new_sound("fmv.snd", Mus_next, Mus_ldouble, 22050, 2, "unequal lens")
+  ind = new_sound("fmv.snd", 2, 22050, Mus_ldouble, Mus_next, "unequal lens")
   insert_silence(0, 1000, ind, 1)
   res1 = framples(ind, 0)
   res2 = framples(ind, 1)
@@ -7469,7 +7469,7 @@ def test_05_11
   close_sound(ind)
   delete_file("fmv.snd")
   # 
-  ind = new_sound("fmv.snd", Mus_next, Mus_bshort, 22050, 2, "unequal lens")
+  ind = new_sound("fmv.snd", 2, 22050, Mus_bshort, Mus_next, "unequal lens")
   pad_channel(0, 1000, ind, 1)
   if (res1 = framples(ind, 0)) != 1 or (res2 = framples(ind, 1)) != 1001
     snd_display("silence: %s %s?", res1, res2)
@@ -7491,8 +7491,8 @@ def test_05_11
   close_sound(ind)
   delete_file("fmv.snd")
   # 
-  ind = new_sound("fmv.snd", Mus_ircam, Mus_bshort,
-                  22050, 1, "this is a comment")
+  ind = new_sound("fmv.snd", 1, 22050, Mus_bshort, Mus_ircam, 
+                  "this is a comment")
   v0 = make_vct(128)
   v0[64] = 0.5
   v0[127] = 0.5
@@ -7559,7 +7559,7 @@ def test_05_11
     fneq(sample(119), 0.127)
     snd_display("env_selection: %s?", v0)
   end
-  save_selection("fmv5.snd", Mus_next, Mus_bint, 22050, "")
+  save_selection("fmv5.snd", 22050, Mus_bint, Mus_next, "")
   revert_sound(ind)
   # 
   res = Snd.catch do file2array("/baddy/hiho", 0, 0, 128, v0) end
@@ -7589,7 +7589,7 @@ def test_05_11
   vct2channel(v0)
   select_all
   Snd.catch do reverse_selection end
-  save_selection("fmv4.snd", Mus_riff, Mus_lfloat, 44100, "this is a comment")
+  save_selection("fmv4.snd", 44100, Mus_lfloat, Mus_riff, "this is a comment")
   v0 = channel2vct(0, 128, ind, 0)
   if fneq(sample(27), 0.5) or fneq(sample(125), -0.5)
     snd_display("reverse_selection: %s?", v0)
@@ -9103,7 +9103,7 @@ def test_channel_func(name, index, init_val, func, &val_func)
 end
 
 def test_05_23
-  index = new_sound("fmv.snd", Mus_next, Mus_bshort, 22050, 2, "channel tests")
+  index = new_sound("fmv.snd", 2, 22050, Mus_bshort, Mus_next, "channel tests")
   insert_silence(0, 10, index, 0)
   insert_silence(0, 10, index, 1)
   test_channel_func(:env, index, 0.0,
@@ -9237,7 +9237,7 @@ def test_05_23
 end
 
 def test_05_24
-  index = new_sound("fmv.snd", Mus_next, Mus_bshort, 22050, 2, "channel tests")
+  index = new_sound("fmv.snd", 2, 22050, Mus_bshort, Mus_next, "channel tests")
   sw = sinc_width
   set_sinc_width(10)
   v0 = make_vct(10)
@@ -9574,7 +9574,7 @@ def test_05_25
   snd_test_neq(edits(ind), [1, 0], "view read_only ignored")
   close_sound(ind)
   #
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1)
+  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next)
   insert_silence(0, 150000)
   map_channel(lambda do |y| 0.5 end)
   env_sound([0, 0, 1, 1, 2, 0])
@@ -9585,7 +9585,7 @@ def test_05_25
   set_with_tracking_cursor(old_cursor)
   close_sound(ind)
   #
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1)
+  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next)
   [150, 1500, 150000].each do |dur|
     insert_silence(0, dur)
     map_channel($init_channel)
@@ -9610,7 +9610,7 @@ def test_05_25
   end
   close_sound(ind)
   #
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1)
+  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next)
   insert_silence(0, 1000)
   map_channel($init_channel)
   env_sound([0, 0, 1, 1, 2, 0])
@@ -9632,7 +9632,7 @@ def test_05_25
   end)
   close_sound(ind)
   #
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1)
+  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next)
   insert_silence(0, 150000)
   map_channel($init_channel)
   edpos = edit_position
@@ -9839,8 +9839,8 @@ def test_05_26
   undo_edit
   close_sound(ind)
   #
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat,
-                  22050, 1, "ramp re-order tests", 100)
+  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next,
+                  "ramp re-order tests", 100)
   map_channel(lambda do |y| 1.0 end)
   [["ramp-xramp", true,
       lambda do
@@ -9939,8 +9939,8 @@ def test_05_26
   end
   close_sound(ind)
   # offset channel
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat,
-                  22050, 1, "offset tests", 10)
+  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next, 
+                  "offset tests", 10)
   offset_channel(0.1)
   snd_test_neq(channel2vct(0, 10), Vct.new(10, 0.1), "offset_channel (0.1)")
   offset_channel(-0.2, 5, 5)
@@ -9965,8 +9965,8 @@ def test_05_26
                    0.345, 0.206, 0.095, 0.024), "sine_ramp 1 0")
   close_sound(ind)
   # 
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat,
-                  22050, 1, "sine_env tests", 100)
+  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next, 
+                  "sine_env tests", 100)
   # map_channel($init_channel)
   map_channel(lambda do |y| 1.0 end)
   sine_env_channel([0, 0, 1, 1, 2, -0.5, 3, 1])
@@ -10020,8 +10020,8 @@ def test_05_26
 end
 
 def test_05_27
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat,
-                  22050, 1, "special env tests", 100)
+  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next,
+                  "special env tests", 100)
   map_channel($init_channel)
   blackman4_ramp(0.0, 1.0)
   vals = channel2vct
@@ -10995,7 +10995,7 @@ def analog_filter_tests
   map_channel(chordalize())
   close_sound(ind)
   #
-  ind = new_sound("sweep.snd", Mus_next, Mus_bfloat, 22050, 1, false, 22050)
+  ind = new_sound("sweep.snd", 1, 22050, Mus_bfloat, Mus_next, false, 22050)
   phase = 0.0
   freq = 0.0
   incr = PI / 22050.0
@@ -14353,7 +14353,7 @@ def test_08_05
     snd_display("cascade2canonical 3: %s?", res)
   end
   #
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050)
+  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next)
   pad_channel(0, 10000)
   freq_sweep(0.45)
   sp = rough_spectrum(ind)
@@ -18479,7 +18479,7 @@ def test_08_16
 end
 
 def test_08_17
-  ind = new_sound("tmp.snd", Mus_next, Mus_bfloat, 22050, 1, :size, 10000)
+  ind = new_sound("tmp.snd", 1, 22050, Mus_bfloat, Mus_next, :size, 10000)
   gen = make_granulate(:expansion, 20.0,
                        :input, lambda do |dir| 0.01 end,
                        :length, 0.00995,
@@ -18827,7 +18827,7 @@ def test_08_18
   end
   close_sound(ind)
   #
-  nind = new_sound("fmv.snd", Mus_aifc, Mus_bshort, 22050, 1, "this is a comment")
+  nind = new_sound("fmv.snd", 1, 22050, Mus_bshort, Mus_aifc, "this is a comment")
   with_time("fm_violin_1(0, 1, 440, 0.1)") do fm_violin_1(0, 1, 440, 0.1) end
   play(nind, :wait, true)
   save_sound(nind)
@@ -18889,7 +18889,7 @@ def test_08_18
 end
 
 def test_08_19
-  nind = new_sound("fmv.snd", Mus_nist, Mus_bshort, 22050, 1, "this is a comment")
+  nind = new_sound("fmv.snd", 1, 22050, Mus_bshort, Mus_nist, "this is a comment")
   set_sample(0, 1.0, nind)
   start_progress_report(nind)
   convolve_with("oboe.snd")
@@ -18923,7 +18923,7 @@ def test_08_19
   revert_sound(nind)
   close_sound(nind)
   # 
-  nind = new_sound("fmv.snd", Mus_riff, Mus_lshort, 22050, 1, "this is a comment", 22050)
+  nind = new_sound("fmv.snd", 1, 22050, Mus_lshort, Mus_riff, "this is a comment", 22050)
   if framples(nind) != 22050
     snd_display("new_sound initial_length: %s?", framples(nind))
   end
@@ -19817,7 +19817,7 @@ end
 # ---------------- test 09: mix ----------------
 
 def test_09_00
-  new_index = new_sound("hiho.wave", Mus_next, Mus_bshort, 22050, 1)
+  new_index = new_sound("hiho.wave", 1, 22050, Mus_bshort, Mus_next)
   select_sound(new_index)
   if res = find_mix(0, new_index, 0)
     snd_display("found non-existent mix: %s?", res)
@@ -20013,9 +20013,9 @@ def test_09_00
 end
 
 def test_09_02
-  ind = new_sound("fmv.snd", Mus_next, Mus_bshort, 22050, 1, "mix tests")
+  ind = new_sound("fmv.snd", 1, 22050, Mus_bshort, Mus_next, "mix tests")
   insert_silence(0, 20, ind)
-  indout = new_sound("test.snd", Mus_next, Mus_bshort, 22050, 1, "mix tests")
+  indout = new_sound("test.snd", 1, 22050, Mus_bshort, Mus_next, "mix tests")
   insert_silence(0, 10, indout)
   set_sample(2, 0.5, indout, 0)
   set_sample(5, 0.25, indout, 0)
@@ -20057,7 +20057,7 @@ def test_09_02
     snd_display("mix 1->1 at 0 tag: %s?", tag)
   end
   undo_edit
-  indout = new_sound("test.snd", Mus_next, Mus_bshort, 22050, 2, "mix tests")
+  indout = new_sound("test.snd", 2, 22050, Mus_bshort, Mus_next, "mix tests")
   insert_silence(0, 10, indout, 0)
   insert_silence(0, 10, indout, 1)
   set_sample(2, 0.5, indout, 0)
@@ -20092,7 +20092,7 @@ def test_09_02
   undo_edit
   close_sound(ind)
   #
-  ind = new_sound("fmv.snd", Mus_next, Mus_bshort, 22050, 2, "mix tests")
+  ind = new_sound("fmv.snd", 2, 22050, Mus_bshort, Mus_next, "mix tests")
   insert_silence(0, 20, ind, 0)
   insert_silence(0, 20, ind, 1)
   tag = mix("test.snd", 0, true).car
@@ -20378,7 +20378,7 @@ def test_09_03
   end
   close_sound(ind)
   # 
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "lock mix tests", 300)
+  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next, "lock mix tests", 300)
   mix1 = mix_vct(Vct.new(10, 0.5), 10)
   set_mix_amp(mix1, 0.0)
   if fneq(res = maxamp(ind, 0), 0.0)
@@ -20592,8 +20592,8 @@ def data_max1(beg, fin, snd, chn)
 end
 
 def test_10_00
-  ind0 = new_sound("fmv.snd",  Mus_aifc, Mus_bshort, 22050, 2, "this is a comment")
-  ind1 = new_sound("fmv1.snd", Mus_aifc, Mus_bshort, 22050, 1, "this is a comment")
+  ind0 = new_sound("fmv.snd",  2, 22050, Mus_bshort, Mus_aifc, "this is a comment")
+  ind1 = new_sound("fmv1.snd", 1, 22050, Mus_bshort, Mus_aifc, "this is a comment")
   v0 = make_array(10, 1.0)
   set_sync(123, ind0)
   set_sync(123, ind1)
@@ -20657,7 +20657,7 @@ def test_10_00
   close_sound(ind0)
   close_sound(ind1)
   #
-  ind0 = new_sound("fmv.snd", Mus_aifc, Mus_bshort, 22050, 1, "this is a comment")
+  ind0 = new_sound("fmv.snd", 1, 22050, Mus_bshort, Mus_aifc, "this is a comment")
   v0 = Vct.new(10, 0.1)
   old5 = sample(5, ind0)
   insert_samples(10, 10, v0, ind0)
@@ -20684,8 +20684,8 @@ def test_10_00
   end
   close_sound(ind0)
   #
-  ind0 = new_sound("fmv.snd", Mus_aifc, Mus_bshort, 22050, 2, "this is a comment")
-  ind1 = new_sound("fmv1.snd", Mus_next, Mus_bshort, 22050, 1, "this is a comment")
+  ind0 = new_sound("fmv.snd", 2, 22050, Mus_bshort, Mus_aifc, "this is a comment")
+  ind1 = new_sound("fmv1.snd", 1, 22050, Mus_bshort, Mus_next, "this is a comment")
   insert_samples(0, 10, make_array(10, 1.00), ind0, 0)
   insert_samples(0, 10, make_array(10, 0.10), ind0, 1)
   insert_samples(0, 10, make_array(10, 0.01), ind1, 0)
@@ -20712,7 +20712,7 @@ def test_10_00
 end
 
 def test_10_01
-  ind0 = new_sound("fmv.snd", Mus_aifc, Mus_bshort, 22050, 2, "this is a comment")
+  ind0 = new_sound("fmv.snd", 2, 22050, Mus_bshort, Mus_aifc, "this is a comment")
   mix("oboe.snd")
   m1 = add_mark(100)
   delete_sample(10)
@@ -22358,7 +22358,7 @@ def test_13_01
     save_as_dialog = dial
   end
   ind = open_sound("oboe.snd")
-  save_sound_as("test.snd", ind, Mus_raw)
+  save_sound_as("test.snd", ind, :header_type, Mus_raw)
   close_sound(ind)
   $open_raw_sound_hook.reset_hook!
   $after_save_as_hook.reset_hook!
@@ -23051,7 +23051,7 @@ def test_13_02
   set_clipping(true)
   set_mus_clipping(true)
   $clip_hook.reset_hook!
-  index = new_sound("test.snd", Mus_next, Mus_bshort, 22050, 1, "clip-hook test", 10)
+  index = new_sound("test.snd", 1, 22050, Mus_bshort, Mus_next, "clip-hook test", 10)
   map_channel(lambda do |y| mus_random(0.999) end)
   set_sample(2,  1.0001)
   set_sample(4, -1.0)
@@ -25014,7 +25014,7 @@ def test_15_02
   #
   # src-duration tests
   #
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "src-* tests", 10000)
+  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next,  "src-* tests", 10000)
   osc = make_oscil(:frequency, 500)
   if fneq(res1 = src_duration([0, 1, 1, 2]), 0.693147180559945) or
       fneq(res2 = src_duration([0, 2, 1, 1]), src_duration([0, 1, 1, 2])) or
@@ -25413,7 +25413,7 @@ def test_15_03
   oboe = open_sound("oboe.snd")
   a4 = open_sound("4.aiff")
   sr = srate(oboe)
-  save_sound_as("test.aif", oboe, Mus_aifc)
+  save_sound_as("test.aif", oboe, :header_type, Mus_aifc)
   oboe_aif = open_sound("test.aif")
   if (res = header_type(oboe_aif)) != Mus_aifc
     snd_display("oboe_aif header: %s?", mus_header_type_name(res))
@@ -25434,7 +25434,7 @@ def test_15_03
   if (res = sample_type(oboe_aif)) != Mus_mulaw
     snd_display("set_sample_type: %s?", mus_sample_type_name(res))
   end
-  save_sound_as("test.aif", oboe_aif, Mus_aifc, Mus_bshort, 22050, 0)
+  save_sound_as("test.aif", oboe_aif, 22050, Mus_bshort, Mus_aifc, 0)
   close_sound(oboe_aif)
   delete_file("test.aif")
   set_selected_sound(a4)
@@ -26089,7 +26089,7 @@ def reversed_read(snd, chn)
 end
 
 def init_sound(val, dur, chns)
-  ind = new_sound("test.snd", Mus_next, Mus_bshort, 22050, chns)
+  ind = new_sound("test.snd", chns, 22050, Mus_bshort, Mus_next)
   chns.times do |chn|
     insert_silence(0, dur, ind, chn)
     map_channel(lambda do |y| val end, 0, framples, ind, chn)
@@ -26498,8 +26498,8 @@ def test_16_01
   set_x_axis_style(X_axis_in_seconds)
   #
   [1, 2, 4].each do |out_chans|
-    ind = new_sound("new.snd", Mus_next, Mus_bfloat,
-                    22050, out_chans, "edpos testing")
+    ind = new_sound("new.snd", out_chans, 22050, Mus_bfloat, Mus_next, 
+                    "edpos testing")
     mx = Snd.sounds.map do |s| sync(s) end.max
     set_sync(mx + 1, ind)
     ["2a.snd", "1a.snd", "4a.snd"].each do |in_snd|
@@ -26720,7 +26720,7 @@ end
 def test_16_02
   mus_clipping and set_mus_clipping(false)
   clipping and set_clipping(false)
-  ind = new_sound("fmv.snd", Mus_next, Mus_bfloat, 22050, 1,"edit trees") 
+  ind = new_sound("fmv.snd", 1, 22050, Mus_bfloat, Mus_next, "edit trees") 
   select_sound(ind)
   select_channel(0)
   check_edit_tree([[0, 0, 0, 0, 0.0, 0.0, 0.0, 1],
@@ -27318,7 +27318,7 @@ def test_16_02
 end
 
 def test_16_03
-  ind = new_sound("fmv.snd", Mus_next, Mus_bfloat, 22050, 1, "envd edit trees")
+  ind = new_sound("fmv.snd", 1, 22050, Mus_bfloat, Mus_next, "envd edit trees")
   vals = Vct.new(10000, 1.0)
   select_sound(ind)
   select_channel(0)
@@ -27608,7 +27608,7 @@ end
 def test_16_04
   [10, 10000].each do |dur|
     i1 = new_sound
-    i2 = new_sound("fmv1.snd", Mus_next, Mus_bfloat, 44100, 2)
+    i2 = new_sound("fmv1.snd", 2, 44100, Mus_bfloat, Mus_next)
     v = Vct.new(dur, 1.0)
     vct2channel(v, 0, dur, i1)
     vct2channel(v, 0, dur, i2, 0)
@@ -27719,7 +27719,7 @@ def test_16_04
     snd_info(" storm: %s", str)
   end
   #
-  ind = new_sound("fmv.snd", Mus_next, Mus_bfloat)
+  ind = new_sound("fmv.snd", :header_type, Mus_next, :sample_type, Mus_bfloat)
   set_sinc_width(10)
   pad_channel(0, 1000, ind)
   set_sample(100, 0.5)
@@ -28481,9 +28481,9 @@ def test_19_00
   close_sound(ind)
   delete_file("t1.rb")
   #
-  ind = new_sound("fmv.snd", Mus_next, Mus_bshort, 22050, 8,
+  ind = new_sound("fmv.snd", 8, 22050, Mus_bshort, Mus_next, 
                   "this is an 8-channel save-state test")
-  ind1 = new_sound("fmv1.snd", Mus_next, Mus_bshort, 22050, 2,
+  ind1 = new_sound("fmv1.snd", 2, 22050, Mus_bshort, Mus_next, 
                    "this is an 2-channel save-state test")
   set_sample(10, 0.1, ind, 0)
   set_sample(10, 0.2, ind, 1)
@@ -28973,7 +28973,7 @@ def test_19_01
     }]].each_with_index do |args, i|
     func = args[0]
     test = args[1]
-    ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "mono save-state tests", 100)
+    ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next, "mono save-state tests", 100)
     func.call(ind)
     delete_file("s61.rb")
     save_state("s61.rb")
@@ -29432,7 +29432,7 @@ def test_19_02
   env_channel([0, 0, 1, 1, 2, 0])
   func = edit_list2function
   close_sound(ind)
-  ind = new_sound("tmp.snd", Mus_next, Mus_bfloat, 22050, 1, :size, 20, :comment, false)
+  ind = new_sound("tmp.snd", 1, 22050, Mus_bfloat, Mus_next, :size, 20, :comment, false)
   map_channel(lambda do |y| 1.0 end)
   func.call(ind, 0)
   unless vequal(res = channel2vct,
@@ -31406,7 +31406,7 @@ def test_20_01
   set_colormap(old_colormap)
   close_sound(ind1)
   # 
-  ind = new_sound("test.snd", Mus_next, Mus_bfloat)
+  ind = new_sound("test.snd", :header_type, Mus_next, :sample_type, Mus_bfloat)
   pad_channel(0, 1000)
   set_transform_graph_type(Graph_once, ind, 0)
   set_show_transform_peaks(true, ind, 0)
@@ -32036,7 +32036,7 @@ def test_21_00
   $graph_hook.remove_hook!("test-21-zoom-spectrum")
   close_sound(ind2)
   #
-  ind = new_sound("tmp.snd", Mus_next, Mus_bfloat, 22050, 1, :size, 50)
+  ind = new_sound("tmp.snd", 1, 22050, Mus_bfloat, Mus_next, :size, 50)
   set_sample(3, 1.0)
   filter_channel(vct(0.5, 1.0, 0.5), 3)
   unless vequal(res = channel2vct(0, 10), vct(0, 0, 0, 0.5, 1, 0.5, 0, 0, 0, 0))
@@ -32060,7 +32060,7 @@ def test_21_00
   undo_edit
   close_sound(ind)
   # 
-  ind = new_sound("tmp.snd", Mus_next, Mus_bfloat, 22050, 1, false, 100)
+  ind = new_sound("tmp.snd", 1, 22050, Mus_bfloat, Mus_next, false, 100)
   set_sample(10, 0.5)
   filter_sound(vct(1, 0, 1), 3)
   unless vequal(res = channel2vct(5, 10), vct(0, 0, 0, 0, 0, 0.5, 0, 0.5, 0, 0))
@@ -32154,7 +32154,7 @@ def test_21_00
   undo_edit
   close_sound(ind)
   # 
-  ind = new_sound("tmp.snd", Mus_next, Mus_bfloat, 22050, 2, false, 100)
+  ind = new_sound("tmp.snd", 2, 22050, Mus_bfloat, Mus_next, false, 100)
   set_sample(10, 0.5)
   set_sample(5, -0.5, ind, 1)
   set_sync(1, ind)
@@ -32220,7 +32220,7 @@ def test_21_00
   undo_edit(1, ind, 1)
   close_sound(ind)
   # 
-  ind = new_sound("tmp.snd", Mus_next, Mus_bshort, 22050, 1, :size, 100)
+  ind = new_sound("tmp.snd", 1, 22050, Mus_bshort, Mus_next, :size, 100)
   set_sample(10, 0.5)
   set_sample(20, -0.5)
   scale_to(1.0)
@@ -32231,7 +32231,7 @@ def test_21_00
     snd_display("scale_to 1.0 Mus_bshort (20): %s?", sample(20))
   end
   close_sound(ind)
-  ind = new_sound("tmp.snd", Mus_next, Mus_byte, 22050, 1, :size, 100)
+  ind = new_sound("tmp.snd", 1, 22050, Mus_byte, Mus_next, :size, 100)
   set_sample(10, 0.5)
   set_sample(20, -0.5)
   scale_to(1.0)
@@ -32260,10 +32260,10 @@ def test_21_00
   set_spectro_hop(4)
   set_fft_window_alpha(0.0)
   set_fft_window_beta(0.0)
-  ind_1 = new_sound("test-1.snd", Mus_next, Mus_lfloat,
-                    22050, 1, "mono testing", 100)
-  ind_2 = new_sound("test-2.snd", Mus_aifc, Mus_bshort,
-                    44100, 2, "stereo testing", 300)
+  ind_1 = new_sound("test-1.snd", 1, 22050, Mus_lfloat, Mus_next,
+                    "mono testing", 100)
+  ind_2 = new_sound("test-2.snd", 2, 44100, Mus_bshort, Mus_aifc, 
+                    "stereo testing", 300)
   [[:srate,                 48000,    :st_equal?, :st_eql?,  :swap],
    [:sample_type,           Mus_byte, :st_equal?, :st_eql?,  :swap],
    [:data_location,         123,      :st_equal?, :st_eql?,  :swap],
@@ -32301,8 +32301,8 @@ def test_21_00
   # 
   # snd chn cases
   # 
-  ind_1 = new_sound("test-1.snd", Mus_next, Mus_bfloat, 22050, 1, "mono testing", 100)
-  ind_2 = new_sound("test-2.snd", Mus_aifc, Mus_bshort, 44100, 2, "stereo testing", 300)
+  ind_1 = new_sound("test-1.snd", 1, 22050, Mus_bfloat, Mus_next, "mono testing", 100)
+  ind_2 = new_sound("test-2.snd", 2, 44100, Mus_bshort, Mus_aifc, "stereo testing", 300)
   set_sample(1, 0.1, ind_1, 0)
   set_sample(2, 0.2, ind_2, 0)
   set_sample(3, 0.3, ind_2, 1)
@@ -32368,8 +32368,8 @@ def test_21_00
     snd_display("sounds after close_sound(false) twice: %s?", sounds)
   end
   # 
-  ind_1 = new_sound("test-1.snd", Mus_next, Mus_bfloat, 22050, 1, "mono testing", 100)
-  ind_2 = new_sound("test-2.snd", Mus_aifc, Mus_bshort, 44100, 2, "stereo testing", 300)
+  ind_1 = new_sound("test-1.snd", 1, 22050, Mus_bfloat, Mus_next, "mono testing", 100)
+  ind_2 = new_sound("test-2.snd", 2, 44100, Mus_bshort, Mus_aifc, "stereo testing", 300)
   # test_sound_func_2
   [[:filter_control_in_dB,         true,                      :st_eql?,   :st_eql?],
    [:filter_control_in_hz,         true,                      :st_eql?,   :st_eql?],
@@ -35014,7 +35014,7 @@ def test_28_02
   check_error_tag(:bad_arity) do set_zoom_focus_style(lambda do |a| 0 end) end
   check_error_tag(:no_such_sound) do set_sound_loop_info(123, [0, 0, 1, 1]) end
   check_error_tag(:bad_header) do
-    new_sound("fmv.snd", Mus_nist, Mus_bfloat, 22050, 2, "this is a comment")
+    new_sound("fmv.snd", 2, 22050, Mus_bfloat, Mus_nist, "this is a comment")
   end
   check_error_tag(:wrong_type_arg) do player_home(123) end
   check_error_tag(:no_such_file) do set_temp_dir("/hiho") end
@@ -35052,9 +35052,9 @@ def test_28_02
   end
   check_error_tag(:no_such_menu) do main_menu(-1) end
   check_error_tag(:no_such_menu) do main_menu(111) end
-  check_error_tag(:out_of_range) do new_sound("hiho", 123) end
-  check_error_tag(:out_of_range) do new_sound("hiho", Mus_nist, 123) end
-  check_error_tag(:bad_header) do new_sound("hiho", Mus_nist, Mus_bfloat) end
+  check_error_tag(:out_of_range) do new_sound("hiho", :header_type, 123) end
+  check_error_tag(:out_of_range) do new_sound("hiho", :header_type, Mus_nist, :sample_type, 123) end
+  check_error_tag(:bad_header) do new_sound("hiho", :header_type, Mus_nist, :sample_type, Mus_bfloat) end
   check_error_tag(:out_of_range) do set_mus_array_print_length(-1) end
   check_error_tag(:out_of_range) do set_print_length(-1) end
   check_error_tag(:out_of_range) do set_play_arrow_size(-1) end
@@ -35103,13 +35103,13 @@ def test_28_02
   check_error_tag(:bad_header) do insert_sound($sf_dir + "bad_chans.snd") end
   check_error_tag(:io_error) do convolve_with($sf_dir + "bad_chans.snd") end
   check_error_tag(:cannot_save) do save_sound_as("hiho.snd", ind, -12) end
-  check_error_tag(:cannot_save) do save_sound_as("hiho.snd", ind, Mus_next, -12) end
-  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, Mus_nist, Mus_bdouble) end
-  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, Mus_aifc, Mus_lfloat) end
-  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, Mus_riff, Mus_bshort) end
-  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, Mus_voc, Mus_bshort) end
-  check_error_tag(:cannot_save) do save_selection("test.snd", Mus_riff, Mus_bshort) end
-  check_error_tag(:cannot_save) do save_selection("test.snd", Mus_voc, Mus_bshort) end
+  check_error_tag(:cannot_save) do save_sound_as("hiho.snd", ind, :header_type, Mus_next, :sample_type, -12) end
+  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, :header_type, Mus_nist, :sample_type, Mus_bdouble) end
+  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, :header_type, Mus_aifc, :sample_type, Mus_lfloat) end
+  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, :header_type, Mus_riff, :sample_type, Mus_bshort) end
+  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, :header_type, Mus_voc, :sample_type, Mus_bshort) end
+  check_error_tag(:cannot_save) do save_selection("test.snd", 22050, Mus_bshort, Mus_riff) end
+  check_error_tag(:cannot_save) do save_selection("test.snd", 22050, Mus_bshort, Mus_voc) end
   check_error_tag(:out_of_range) do src_channel(make_env([0, 0, 1, 1], :length, 11)) end
   check_error_tag(:out_of_range) do src_channel(make_env([0, 1, 1, 0], :length, 11)) end
   check_error_tag(:out_of_range) do src_channel(make_env([0, 1, 1, -1], :length, 11)) end

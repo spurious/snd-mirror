@@ -433,9 +433,9 @@ typedef struct c_object_t {
   s7_pointer (*ref)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
   s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
   s7_pointer (*length)(s7_scheme *sc, s7_pointer obj);
-  s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj);
+  s7_pointer (*copy)(s7_scheme *sc, s7_pointer args);
   s7_pointer (*reverse)(s7_scheme *sc, s7_pointer obj);
-  s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer val);
+  s7_pointer (*fill)(s7_scheme *sc, s7_pointer args);
   char *(*print_readably)(s7_scheme *sc, void *value);
 } c_object_t;
 
@@ -844,7 +844,7 @@ struct s7_scheme {
   s7_pointer IS_HASH_TABLE, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_SIZE, HASH_TABLE_ENTRIES, HELP, IMAG_PART, IS_INEXACT, INEXACT_TO_EXACT;
   s7_pointer IS_INFINITE, IS_INPUT_PORT, IS_INTEGER, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, IS_KEYWORD, KEYWORD_TO_SYMBOL;
   s7_pointer LCM, LENGTH, IS_ITERATOR, MAKE_ITERATOR, ITERATE, ITERATOR_SEQUENCE;
-  s7_pointer LIST, IS_LIST, LIST_TO_STRING, LIST_TO_VECTOR, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBIT, LOGIOR, LOGNOT, LOGXOR;
+  s7_pointer LIST, IS_LIST, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBIT, LOGIOR, LOGNOT, LOGXOR;
   s7_pointer IS_MACRO, MAKE_BYTEVECTOR, MAKE_FLOAT_VECTOR, MAKE_HASH_TABLE, MAKE_KEYWORD, MAKE_LIST, MAKE_RANDOM_STATE;
   s7_pointer MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, IS_MORALLY_EQUAL, IS_NAN, IS_NEGATIVE, NEWLINE;
   s7_pointer NOT, IS_NULL, IS_NUMBER, NUMBER_TO_STRING, NUMERATOR, OBJECT_TO_STRING, IS_ODD, OPENLET, IS_OPENLET, OPEN_INPUT_FILE;
@@ -856,10 +856,10 @@ struct s7_scheme {
   s7_pointer READ_STRING, REAL_PART, REMAINDER, REQUIRE, REVERSE, REVERSEB, ROUND, SET_CAR, SET_CDR, SIN, SINH, SORT, SQRT, STACKTRACE;
   s7_pointer STRING, STRING_DOWNCASE, STRING_UPCASE, STRING_LEQ, STRING_LT, STRING_EQ;
   s7_pointer STRING_GEQ, STRING_GT, IS_STRING, STRING_POSITION, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND;
-  s7_pointer STRING_COPY, STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
+  s7_pointer STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
   s7_pointer SYMBOL_ACCESS, IS_SYMBOL, SYMBOL_TO_KEYWORD, SYMBOL_TO_STRING, SYMBOL_TO_DYNAMIC_VALUE, SYMBOL_TO_VALUE;
-  s7_pointer TAN, TANH, THROW, TO_BYTEVECTOR, TRUNCATE, VALUES, VECTOR, VECTOR_APPEND;
-  s7_pointer IS_VECTOR, VECTOR_TO_LIST, VECTOR_DIMENSIONS, VECTOR_FILL, VECTOR_LENGTH, VECTOR_REF, VECTOR_SET, WITH_INPUT_FROM_FILE;
+  s7_pointer TAN, TANH, THROW, TO_BYTEVECTOR, TRUNCATE, VALUES, VECTOR, VECTOR_APPEND, VECTOR_FILL;
+  s7_pointer IS_VECTOR, VECTOR_TO_LIST, VECTOR_DIMENSIONS, VECTOR_LENGTH, VECTOR_REF, VECTOR_SET, WITH_INPUT_FROM_FILE;
   s7_pointer WITH_INPUT_FROM_STRING, WITH_OUTPUT_TO_FILE, WITH_OUTPUT_TO_STRING, WRITE, WRITE_BYTE, WRITE_CHAR, WRITE_STRING, IS_ZERO;
   s7_pointer S7_FEATURES, LOAD_PATH, PI;
 #if (!WITH_MAKE_COMPLEX)
@@ -867,7 +867,7 @@ struct s7_scheme {
 #endif
 #if (!WITH_PURE_S7)
   s7_pointer IS_CHAR_READY, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ, CHAR_CI_GEQ, CHAR_CI_GT;
-  s7_pointer STRING_CI_LEQ, STRING_CI_LT, STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT;
+  s7_pointer STRING_CI_LEQ, STRING_CI_LT, STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_COPY, LIST_TO_STRING, LIST_TO_VECTOR;
 #endif
 
 #if WITH_GMP
@@ -2932,7 +2932,7 @@ static s7_pointer check_values(s7_scheme *sc, s7_pointer obj, s7_pointer args)
     {                                                                                       \
       s7_pointer func;							                    \
       func = find_method(Sc, find_let(Sc, Obj), Method1);                           \
-      if ((func == Sc->UNDEFINED) && (Method2)) func = find_method(Sc, find_let(Sc, Obj), Method2); \
+      if ((func == Sc->UNDEFINED) && (Method1 != Method2) && (Method2)) func = find_method(Sc, find_let(Sc, Obj), Method2); \
       if (func != Sc->UNDEFINED) return(s7_apply_function(Sc, func, Args)); \
     }
 
@@ -18574,8 +18574,10 @@ Pass this as the second argument to 'random' to get a repeatable random number s
 }
 
 
-static s7_pointer copy_random_state(s7_scheme *sc, s7_pointer obj)
+static s7_pointer copy_random_state(s7_scheme *sc, s7_pointer args)
 {
+  s7_pointer obj;
+  obj = car(args);
   if (c_object_type(obj) == sc->rng_tag)
     {
       s7_rng_t *r, *new_r;
@@ -20127,7 +20129,7 @@ static s7_pointer g_string_append(s7_scheme *sc, s7_pointer args)
   return(newstr);
 }
 
-
+#if (!WITH_PURE_S7)
 static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_copy "(string-copy str) returns a copy of its string argument"
@@ -20140,7 +20142,7 @@ static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
     }
   return(s7_make_terminated_string_with_length(sc, string_value(p), string_length(p)));
 }
-
+#endif
 
 static s7_pointer start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer fallback,
 				s7_pointer start_and_end_args, s7_pointer args, int position, s7_Int *start, s7_Int *end)
@@ -20175,7 +20177,6 @@ static s7_pointer start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer fal
     return(sc->GC_NIL);
 
   pend = cadr(start_and_end_args);
-  /* if (pend == sc->F) return(sc->GC_NIL); */
   if (!s7_is_integer(pend))
     {
       if (!s7_is_integer(p = check_values(sc, pend, cdr(start_and_end_args))))
@@ -20190,7 +20191,7 @@ static s7_pointer start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer fal
   if ((index < *start) ||
       (index > *end))
     return(out_of_range(sc, caller, small_int(position + 1), pend, 
-			    (index < *start) ? make_string_wrapper(sc, "it is less than the start point") : ITS_TOO_LARGE));
+			(index < *start) ? make_string_wrapper(sc, "it is less than the start point") : ITS_TOO_LARGE));
   *end = index;
   return(sc->GC_NIL);
 }
@@ -20953,7 +20954,7 @@ static s7_pointer g_string_ci_leq_2(s7_scheme *sc, s7_pointer args)
     }
   return(make_boolean(sc, scheme_strcasecmp(car(args), cadr(args)) != 1));
 }
-#endif /* not pure s7 */
+#endif
 
 
 static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
@@ -21037,7 +21038,7 @@ static s7_pointer g_string(s7_scheme *sc, s7_pointer args)
   return(g_string_1(sc, args, sc->STRING));
 }
 
-
+#if (!WITH_PURE_S7)
 static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_list_to_string "(list->string lst) appends all the list's characters into one string; (apply string lst)"
@@ -21051,7 +21052,7 @@ static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
     }
   return(g_string_1(sc, car(args), sc->LIST_TO_STRING));
 }
-
+#endif
 
 static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str, int len)
 {
@@ -31372,7 +31373,7 @@ static s7_pointer g_float_vector(s7_scheme *sc, s7_pointer args)
   return(vec);
 }
 
-
+#if (!WITH_PURE_S7)
 static s7_pointer g_list_to_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_list_to_vector "(list->vector lst) returns a vector containing the elements of lst; (apply vector lst)"
@@ -31387,7 +31388,7 @@ static s7_pointer g_list_to_vector(s7_scheme *sc, s7_pointer args)
     }
   return(g_vector(sc, car(args)));
 }
-
+#endif
 
 static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args)
 {
@@ -34813,7 +34814,8 @@ int s7_new_type(const char *name,
 }
 
 
-int s7_new_type_x(const char *name, 
+int s7_new_type_x(s7_scheme *sc,
+		  const char *name, 
 		  char *(*print)(s7_scheme *sc, void *value), 
 		  void (*free)(void *value), 
 		  bool (*equal)(void *val1, void *val2),
@@ -34821,9 +34823,9 @@ int s7_new_type_x(const char *name,
 		  s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
 		  s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
 		  s7_pointer (*length)(s7_scheme *sc, s7_pointer obj),
-		  s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj),
+		  s7_pointer (*copy)(s7_scheme *sc, s7_pointer args),
 		  s7_pointer (*reverse)(s7_scheme *sc, s7_pointer obj),
-		  s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer val))
+		  s7_pointer (*fill)(s7_scheme *sc, s7_pointer args))
 {
   int tag;
   tag = s7_new_type(name, print, free, equal, gc_mark, apply, set);
@@ -34971,10 +34973,12 @@ static s7_Int object_length_to_int(s7_scheme *sc, s7_pointer obj)
 }
 
 
-static s7_pointer object_copy(s7_scheme *sc, s7_pointer obj)
+static s7_pointer object_copy(s7_scheme *sc, s7_pointer args)
 {
+  s7_pointer obj;
+  obj = car(args);
   if (c_object_copy(obj))
-    return((*(c_object_copy(obj)))(sc, obj));
+    return((*(c_object_copy(obj)))(sc, args));
   return(eval_error(sc, "attempt to copy ~S?", obj));
 }
 
@@ -36822,7 +36826,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
 
     case T_C_OBJECT:
       check_method(sc, obj, sc->COPY, list_1(sc, obj));
-      return(object_copy(sc, obj));
+      return(object_copy(sc, list_1(sc, obj)));
 
     case T_HASH_TABLE:              /* this has to copy nearly everything */
       return(hash_table_copy(sc, obj));
@@ -37328,41 +37332,51 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer list_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
+static s7_pointer list_fill(s7_scheme *sc, s7_pointer args)
 {
   /* ambiguous ("tree-fill"?) but if it's like vector-fill, we just stomp on the top level */
-  s7_pointer x, y;
+  s7_pointer x, y, obj, val;
+  s7_Int i, start = 0, end, len;
 
-  x = obj;
-  y = obj;
+  obj = car(args);
+  len = s7_list_length(sc, obj);
+  end = len;
+  if (end < 0) end = -end; else {if (end == 0) end = 123123123;}
+  val = cadr(args);
 
-  while (true)
+  if (!is_null(cddr(args)))
     {
-      if (!is_pair(x)) return(val);
-      car(x) = val;
-      if (is_pair(cdr(x)))
+      s7_pointer p;
+      p = start_and_end(sc, sc->FILL, sc->FILL, cddr(args), args, 3, &start, &end);
+      if (p != sc->GC_NIL) return(p);
+      if (start == end) return(val);
+    }
+
+  if (len > 0)
+    {
+      s7_Int i;
+      s7_pointer p;
+      if (end < len) len = end;
+      for (i = 0, p = obj; i < len; p = cdr(p), i++)
+	if (i >= start)
+	  car(p) = val;
+      return(val);
+    }
+
+  for (x = obj, y = obj, i = 0; ;i++)
+    {
+      if ((end > 0) && (i >= end))
+	return(val);
+      if (i >= start) car(x) = val;
+      if (!is_pair(cdr(x)))
 	{
-	  x = cdr(x);
-	  car(x) = val;
-	  if (is_pair(cdr(x)))
-	    {
-	      x = cdr(x);
-	      y = cdr(y);
-	      if (x == y) return(val);
-	    }
-	  else
-	    {
-	      if (is_not_null(cdr(x)))
-		cdr(x) = val;
-	      return(val);
-	    }
-	}
-      else
-	{
-	  if (is_not_null(cdr(x)))
+	  if (!is_null(cdr(x)))
 	    cdr(x) = val;
 	  return(val);
 	}
+      x = cdr(x);
+      if ((i & 1) != 0) y = cdr(y);
+      if (x == y) return(val);
     }
   return(val);
 }
@@ -37370,7 +37384,7 @@ static s7_pointer list_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
 
 static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
 {
-  #define H_fill "(fill! obj val) fills obj with the value val"
+  #define H_fill "(fill! obj val (start 0) end) fills obj with val"
   s7_pointer p;
   
   p = car(args);
@@ -37378,6 +37392,17 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
     {
     case T_STRING:
       return(g_string_fill(sc, args)); /* redundant type check here and below */
+
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
+    case T_VECTOR:
+      return(g_vector_fill(sc, args));
+
+    case T_PAIR: 
+      return(list_fill(sc, args));
+
+    case T_NIL:
+      return(cadr(args));        /* this parallels the empty vector case */
 
     case T_HASH_TABLE:
       if (is_not_null(cadr(args)))
@@ -37387,22 +37412,11 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
 	}
       return(hash_table_clear(sc, p));
 
-    case T_INT_VECTOR:
-    case T_FLOAT_VECTOR:
-    case T_VECTOR:
-      return(g_vector_fill(sc, args));
-
     case T_C_OBJECT:
       check_method(sc, p, sc->FILL, args);
       if (c_object_fill(p))
-	return((*(c_object_fill(p)))(sc, p, cadr(args)));
+	return((*(c_object_fill(p)))(sc, args));
       return(eval_error(sc, "attempt to fill ~S?", p));
-
-    case T_PAIR:
-      return(list_fill(sc, p, cadr(args)));
-
-    case T_NIL:
-      return(cadr(args));        /* this parallels the empty vector case */
 
     default:
       check_method(sc, p, sc->FILL, args);
@@ -68350,7 +68364,7 @@ s7_scheme *s7_init(void)
   sc->LOGBIT =                s7_define_safe_function(sc, "logbit?",                 g_logbit,                 2, 0, false, H_logbit);
   sc->INTEGER_DECODE_FLOAT =  s7_define_safe_function(sc, "integer-decode-float",    g_integer_decode_float,   1, 0, false, H_integer_decode_float);
 
-  sc->rng_tag = s7_new_type_x("<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL, NULL, copy_random_state, NULL, NULL);
+  sc->rng_tag = s7_new_type_x(sc, "<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL, NULL, copy_random_state, NULL, NULL);
   s7_set_object_print_readably(sc->rng_tag, print_rng_readably);
   sc->IS_RANDOM_STATE =       s7_define_safe_function(sc, "random-state?",           g_is_random_state,        1, 0, false, H_is_random_state);
   sc->RANDOM_STATE_TO_LIST =  s7_define_safe_function(sc, "random-state->list",      s7_random_state_to_list,  0, 1, false, H_random_state_to_list);
@@ -68406,15 +68420,15 @@ s7_scheme *s7_init(void)
   sc->STRING_CI_GT =          s7_define_safe_function(sc, "string-ci>?",             g_strings_are_ci_greater, 2, 0, true,  H_strings_are_ci_greater);
   sc->STRING_CI_LEQ =         s7_define_safe_function(sc, "string-ci<=?",            g_strings_are_ci_leq,     2, 0, true,  H_strings_are_ci_leq);
   sc->STRING_CI_GEQ =         s7_define_safe_function(sc, "string-ci>=?",            g_strings_are_ci_geq,     2, 0, true,  H_strings_are_ci_geq);
+  sc->STRING_COPY =           s7_define_safe_function(sc, "string-copy",             g_string_copy,            1, 0, false, H_string_copy);
+  sc->STRING_FILL =           s7_define_character_function(sc, "string-fill!",       g_string_fill,            2, 2, false, H_string_fill);
+  sc->LIST_TO_STRING =        s7_define_safe_function(sc, "list->string",            g_list_to_string,         1, 0, false, H_list_to_string);
 #endif  
   sc->STRING_DOWNCASE =       s7_define_safe_function(sc, "string-downcase",         g_string_downcase,        1, 0, false, H_string_downcase);
   sc->STRING_UPCASE =         s7_define_safe_function(sc, "string-upcase",           g_string_upcase,          1, 0, false, H_string_upcase);
   sc->STRING_APPEND =         s7_define_safe_function(sc, "string-append",           g_string_append,          0, 0, true,  H_string_append);
-  sc->STRING_FILL =           s7_define_character_function(sc, "string-fill!",       g_string_fill,            2, 2, false, H_string_fill);
-  sc->STRING_COPY =           s7_define_safe_function(sc, "string-copy",             g_string_copy,            1, 0, false, H_string_copy);
   sc->SUBSTRING =             s7_define_safe_function(sc, "substring",               g_substring,              2, 1, false, H_substring);
   sc->STRING =                s7_define_safe_function(sc, "string",                  g_string,                 0, 0, true,  H_string);
-  sc->LIST_TO_STRING =        s7_define_safe_function(sc, "list->string",            g_list_to_string,         1, 0, false, H_list_to_string);
   sc->STRING_TO_LIST =        s7_define_safe_function(sc, "string->list",            g_string_to_list,         1, 2, false, H_string_to_list);
   sc->OBJECT_TO_STRING =      s7_define_safe_function(sc, "object->string",          g_object_to_string,       1, 1, false, H_object_to_string);
   sc->FORMAT =                s7_define_safe_function(sc, "format",                  g_format,                 1, 0, true,  H_format);
@@ -68480,11 +68494,16 @@ s7_scheme *s7_init(void)
   sc->REVERSEB =              s7_define_safe_function(sc, "reverse!",                g_reverse_in_place,       1, 0, false, H_reverse_in_place); /* same 8-9-14 */
   sc->SORT =                  s7_define_function(sc,      "sort!",                   g_sort,                   2, 0, false, H_sort);
 
-  sc->LIST_TO_VECTOR =        s7_define_safe_function(sc, "list->vector",            g_list_to_vector,         1, 0, false, H_list_to_vector);
   sc->VECTOR_TO_LIST =        s7_define_safe_function(sc, "vector->list",            g_vector_to_list,         1, 2, false, H_vector_to_list);
   sc->IS_VECTOR =             s7_define_safe_function(sc, "vector?",                 g_is_vector,              1, 0, false, H_is_vector);
   sc->VECTOR_APPEND =         s7_define_safe_function(sc, "vector-append",           g_vector_append,          0, 0, true,  H_vector_append);
+#if (!WITH_PURE_S7)
+  sc->LIST_TO_VECTOR =        s7_define_safe_function(sc, "list->vector",            g_list_to_vector,         1, 0, false, H_list_to_vector);
   sc->VECTOR_FILL =           s7_define_safe_function(sc, "vector-fill!",            g_vector_fill,            2, 2, false, H_vector_fill);
+#else
+  sc->VECTOR_FILL = sc->FILL;
+  sc->STRING_FILL = sc->FILL;
+#endif
   sc->VECTOR_LENGTH =         s7_define_integer_function(sc, "vector-length",        g_vector_length,          1, 0, false, H_vector_length);
   sc->VECTOR_REF =            s7_define_safe_function(sc, "vector-ref",              g_vector_ref,             2, 0, true,  H_vector_ref);
   sc->VECTOR_SET =            s7_define_safe_function(sc, "vector-set!",             g_vector_set,             3, 0, true,  H_vector_set);
@@ -69169,12 +69188,14 @@ int main(int argc, char **argv)
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  * how to catch the stack overflow op_cz case?
  *
- * new-sound et al in new with-sound arg order [output channels srate sample-type header-type comment]:
- *   (set_)mus-header-raw-defaults save-region save-selection save-sound-as array->file(?)
- *   these involve lots of rewrites in all 4 languages
- *
  * inexact/pure s7: (define exact? rational?) (define (inexact? x) (not (rational? x))) (define inexact->exact round) (define (exact->inexact x) (* x 1.0))
  *    also get rid of #i and #e?
  *    perhaps current-error-port -> *error-port*
- *    remove *-length|copy and the various converters to and from lists, sequence->list could be (map values sequence)
+ *    remove *-length and the various converters to and from lists, sequence->list could be (map values sequence)
+ *       string-length vector-length hash-table-size
+ *       string->list vector->list [let->list random-state->list]
+ *    are the indices in string|vector->list an r7rs addition?
+ *
+ * c_object_t make-iterator support -- why not pass an env and fill in from that?
+ * test fill fade
  */

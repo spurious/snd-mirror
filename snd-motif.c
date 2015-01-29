@@ -11736,7 +11736,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	if (file_exists) /* file won't exist if we're encoding, so this isn't as wasteful as it looks */
 	  ofile = snd_tempnam();
 	else ofile = mus_strdup(tmpfile);
-	io_err = save_selection(ofile, type, format, srate, comment, (saving) ? SAVE_ALL_CHANS : chan);
+	io_err = save_selection(ofile, srate, format, type, comment, (saving) ? SAVE_ALL_CHANS : chan);
 	if (io_err == IO_NO_ERROR)
 	  io_err = move_file(ofile, fullname);
 	free(ofile);
@@ -11751,7 +11751,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	    if (file_exists)
 	      ofile = snd_tempnam();
 	    else ofile = mus_strdup(tmpfile);
-	    io_err = save_region(region_dialog_region(), ofile, type, format, comment);
+	    io_err = save_region(region_dialog_region(), ofile, format, type, comment);
 	    if (io_err == IO_NO_ERROR)
 	      io_err = move_file(ofile, fullname);
 	    free(ofile);
@@ -21786,7 +21786,7 @@ static void popup_cut_to_new_callback_1(bool cut)
   io_error_t io_err = IO_NO_ERROR;
 
   temp_file = snd_tempnam();
-  io_err = save_selection(temp_file, default_output_header_type(ss), default_output_sample_type(ss), selection_srate(), NULL, SAVE_ALL_CHANS);
+  io_err = save_selection(temp_file, selection_srate(), default_output_sample_type(ss), default_output_header_type(ss), NULL, SAVE_ALL_CHANS);
   if (io_err == IO_NO_ERROR)
     {
       if (cut) delete_selection(UPDATE_DISPLAY);

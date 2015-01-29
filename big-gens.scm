@@ -51,7 +51,7 @@
 ;;; -------- arrays (vectors in this context) --------
 
 (define (big-array-clear v)
-  (vector-fill! v 0.0))
+  (fill! v 0.0))
 
 (define (big-array-normalize v)
   (let ((len (length v))

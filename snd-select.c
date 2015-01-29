@@ -372,7 +372,7 @@ static int mix_selection(chan_info *cp, sync_info *si_out, mus_long_t beg, io_er
   io_error_t io_err = IO_NO_ERROR;
 
   tempfile = snd_tempnam();
-  io_err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, snd_srate(cp->sound), NULL, SAVE_ALL_CHANS);
+  io_err = save_selection(tempfile, snd_srate(cp->sound), MUS_OUT_FORMAT, MUS_NEXT, NULL, SAVE_ALL_CHANS);
   if (io_err == IO_NO_ERROR)
     {
       char *origin = NULL;
@@ -435,7 +435,7 @@ static io_error_t insert_selection(chan_info *cp, sync_info *si_out, mus_long_t 
     out_format = cp->sound->hdr->format;
   tempfile = snd_tempnam();
 
-  io_err = save_selection(tempfile, MUS_NEXT, out_format, snd_srate(cp->sound), NULL, SAVE_ALL_CHANS);
+  io_err = save_selection(tempfile, snd_srate(cp->sound), out_format, MUS_NEXT, NULL, SAVE_ALL_CHANS);
   if (io_err == IO_NO_ERROR)
     {
       int i;
@@ -973,14 +973,14 @@ static bool s7_xen_selection_equalp(void *obj1, void *obj2)
 }
 
 
-static Xen s7_xen_selection_copy(s7_scheme *sc, Xen obj)
+static Xen s7_xen_selection_copy(s7_scheme *sc, Xen args)
 {
   if (selection_is_active())
     {
       snd_info *sp;
       char *name;
       name = snd_tempnam();
-      save_selection(name, MUS_NEXT, MUS_OUT_FORMAT, selection_srate(), NULL, SAVE_ALL_CHANS);
+      save_selection(name, selection_srate(), MUS_OUT_FORMAT, MUS_NEXT, NULL, SAVE_ALL_CHANS);
       sp = snd_open_file(name, FILE_READ_WRITE);
       free(name);
       return(new_xen_sound(sp->index));
@@ -989,11 +989,13 @@ static Xen s7_xen_selection_copy(s7_scheme *sc, Xen obj)
 }
 
 
-static Xen s7_xen_selection_fill(s7_scheme *sc, Xen obj, Xen val)
+static Xen s7_xen_selection_fill(s7_scheme *sc, Xen args)
 {
   sync_info *si;
   mus_float_t valf;
+  s7_pointer val;
 
+  val = s7_cadr(args);
   valf = Xen_real_to_C_double(val);
   if (valf == 0.0)
     {
@@ -1029,10 +1031,10 @@ static Xen s7_xen_selection_fill(s7_scheme *sc, Xen obj, Xen val)
 static void init_xen_selection(void)
 {
 #if HAVE_SCHEME
-  xen_selection_tag = s7_new_type_x("<selection>", 
-					   print_xen_selection, free_xen_selection, s7_xen_selection_equalp, 
-					   NULL, NULL, NULL, s7_xen_selection_length, 
-					   s7_xen_selection_copy, NULL, s7_xen_selection_fill);
+  xen_selection_tag = s7_new_type_x(s7, "<selection>", 
+				    print_xen_selection, free_xen_selection, s7_xen_selection_equalp, 
+				    NULL, NULL, NULL, s7_xen_selection_length, 
+				    s7_xen_selection_copy, NULL, s7_xen_selection_fill);
 #else
 #if HAVE_RUBY
   xen_selection_tag = Xen_make_object_type("XenSelection", sizeof(xen_selection));
@@ -1059,7 +1061,7 @@ static void init_xen_selection(void)
 
 
 
-io_error_t save_selection(const char *ofile, int type, int format, int srate, const char *comment, int chan)
+io_error_t save_selection(const char *ofile, int srate, int samp_type, int head_type, const char *comment, int chan)
 {
   /* type and format have already been checked */
   int ofd;
@@ -1076,22 +1078,22 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   si = selection_sync();
   if ((si) && (si->cps) && (si->cps[0])) sp = si->cps[0]->sound;
 
-  if (type == -1)
+  if (head_type == -1)
     {
       if ((sp) && (mus_header_writable(sp->hdr->type, -2))) /* -2 = ignore data format for the moment */
-	type = sp->hdr->type;
-      else type = MUS_NEXT;
+	head_type = sp->hdr->type;
+      else head_type = MUS_NEXT;
     }
-  if (format == -1)
+  if (samp_type == -1)
     {
-      if ((sp) && (mus_header_writable(type, sp->hdr->format)))
-	format = sp->hdr->format;
-      else format = MUS_OUT_FORMAT;
+      if ((sp) && (mus_header_writable(head_type, sp->hdr->format)))
+	samp_type = sp->hdr->format;
+      else samp_type = MUS_OUT_FORMAT;
     }
-  if (!mus_header_writable(type, format))
+  if (!mus_header_writable(head_type, samp_type))
     {
-      type = MUS_NEXT;
-      format = MUS_OUT_FORMAT;
+      head_type = MUS_NEXT;
+      samp_type = MUS_OUT_FORMAT;
     }
   if (srate == -1)
     srate = selection_srate();
@@ -1101,7 +1103,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
     chans = si->chans;
   else chans = 1;
 
-  io_err = snd_write_header(ofile, type, srate, chans, chans * dur, format, comment, NULL);
+  io_err = snd_write_header(ofile, head_type, srate, chans, chans * dur, samp_type, comment, NULL);
   if (io_err != IO_NO_ERROR)
     {
       si = free_sync_info(si);
@@ -1118,7 +1120,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
       disk_space_t no_space;
       bool copy_ok = false;
 
-      bps = mus_bytes_per_sample(format);
+      bps = mus_bytes_per_sample(samp_type);
       num = dur * bps * chans;
 
       no_space = disk_has_space(num, ofile);
@@ -1129,7 +1131,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	  return(IO_DISK_FULL);
 	}
 
-      copy_ok = ((format == sp->hdr->format) && 
+      copy_ok = ((samp_type == sp->hdr->format) && 
 		 (chans == sp->nchans) &&
 		 (chan == SAVE_ALL_CHANS));
       if (copy_ok)
@@ -1207,7 +1209,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
       sfs[0] = init_sample_read(selection_beg(si->cps[chan]), si->cps[chan], READ_FORWARD);
     }
 
-  snd_file_open_descriptors(ofd, ofile, format, oloc, chans, type);
+  snd_file_open_descriptors(ofd, ofile, samp_type, oloc, chans, head_type);
   mus_file_set_clipping(ofd, clipping(ss));
   lseek(ofd, oloc, SEEK_SET);
   data = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
@@ -1394,7 +1396,7 @@ static Xen g_selection_to_mix(void)
       cp = si_out->cps[0];
 
       tempfile = snd_tempnam();
-      io_err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, snd_srate(cp->sound), NULL, SAVE_ALL_CHANS);
+      io_err = save_selection(tempfile, snd_srate(cp->sound), MUS_OUT_FORMAT, MUS_NEXT, NULL, SAVE_ALL_CHANS);
       if (is_serious_io_error(io_err))
 	{
 	  if (tempfile) free(tempfile);
@@ -1652,10 +1654,10 @@ static void init_selection_keywords(void)
 
 static Xen g_save_selection(Xen arglist)
 {
-  #define H_save_selection "(" S_save_selection " file header-type sample-type srate comment channel): \
+  #define H_save_selection "(" S_save_selection " file srate sample-type header-type comment channel): \
 save the current selection in file using the indicated file attributes.  If channel is given, save only that channel."
 
-  int type = -1, format = -1, sr = -1, chn = 0;
+  int head_type = -1, samp_type = -1, sr = -1, chn = 0;
   io_error_t io_err = IO_NO_ERROR;
   const char *com = NULL, *file = NULL;
   char *fname = NULL;
@@ -1672,9 +1674,9 @@ save the current selection in file using the indicated file attributes.  If chan
    */
 
   keys[0] = kw_file;
-  keys[1] = kw_header_type;
+  keys[1] = kw_srate;
   keys[2] = kw_sample_type;
-  keys[3] = kw_srate;
+  keys[3] = kw_header_type;
   keys[4] = kw_comment;
   keys[5] = kw_channel;
 
@@ -1686,9 +1688,9 @@ save the current selection in file using the indicated file attributes.  If chan
   if (vals > 0)
     {
       file = mus_optkey_to_string(keys[0], S_save_selection, orig_arg[0], NULL);
-      type = mus_optkey_to_int(keys[1], S_save_selection, orig_arg[1], type);
-      format = mus_optkey_to_int(keys[2], S_save_selection, orig_arg[2], format);
-      sr = mus_optkey_to_int(keys[3], S_save_selection, orig_arg[3], selection_srate());
+      sr = mus_optkey_to_int(keys[1], S_save_selection, orig_arg[1], selection_srate());
+      samp_type = mus_optkey_to_int(keys[2], S_save_selection, orig_arg[2], samp_type);
+      head_type = mus_optkey_to_int(keys[3], S_save_selection, orig_arg[3], head_type);
       com = mus_optkey_to_string(keys[4], S_save_selection, orig_arg[4], NULL);
       chn = mus_optkey_to_int(keys[5], S_save_selection, orig_arg[5], SAVE_ALL_CHANS);
     }
@@ -1697,16 +1699,16 @@ save the current selection in file using the indicated file attributes.  If chan
     Xen_error(Xen_make_error_type("IO-error"),
 	      Xen_list_1(C_string_to_Xen_string(S_save_selection ": no output file?")));
 
-  if ((type != -1) && (!(mus_header_writable(type, -2))))
+  if ((head_type != -1) && (!(mus_header_writable(head_type, -2))))
     Xen_error(CANNOT_SAVE,
 	      Xen_list_2(C_string_to_Xen_string(S_save_selection ": can't write a ~A header"),
-			 C_string_to_Xen_string(mus_header_type_name(type))));
+			 C_string_to_Xen_string(mus_header_type_name(head_type))));
 
-  if ((type != -1) && (format != -1) && (!(mus_header_writable(type, format))))
+  if ((head_type != -1) && (samp_type != -1) && (!(mus_header_writable(head_type, samp_type))))
     Xen_error(CANNOT_SAVE,
 	      Xen_list_3(C_string_to_Xen_string(S_save_selection ": can't write ~A data to a ~A header"),
-			 C_string_to_Xen_string(mus_sample_type_name(format)),
-			 C_string_to_Xen_string(mus_header_type_name(type))));
+			 C_string_to_Xen_string(mus_sample_type_name(samp_type)),
+			 C_string_to_Xen_string(mus_header_type_name(head_type))));
 
   if ((sr != -1) && (sr <= 0))
     Xen_error(CANNOT_SAVE,
@@ -1714,7 +1716,7 @@ save the current selection in file using the indicated file attributes.  If chan
 			 C_int_to_Xen_integer(sr)));
 
   fname = mus_expand_filename(file);
-  io_err = save_selection(fname, type, format, sr, com, chn);
+  io_err = save_selection(fname, sr, samp_type, head_type, com, chn);
 
   if (fname) free(fname);
   if ((io_err != IO_NO_ERROR) &&

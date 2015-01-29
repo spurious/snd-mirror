@@ -158,7 +158,7 @@ See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more 
 (define save-as-mp3-menu-label #f)
 
 (define (cp-save-as-mp3)
-  (save-sound-as "tmp.wav" save-as-mp3-wav-file-number mus-riff)
+  (save-sound-as "tmp.wav" save-as-mp3-wav-file-number :header-type mus-riff)
   (system (format #f "bladeenc tmp.wav tmp-~D.mp3" save-as-mp3-wav-file-number)))
 
 (if (or (provided? 'xm)
@@ -232,7 +232,7 @@ Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc.")))
 (define save-as-ogg-menu-label #f)
 
 (define (cp-save-as-ogg)
-  (save-sound-as "tmp.wav" save-as-ogg-wav-file-number mus-riff)
+  (save-sound-as "tmp.wav" save-as-ogg-wav-file-number :header-type mus-riff)
   (system (format #f "oggenc tmp.wav -o tmp-~D.ogg" save-as-ogg-wav-file-number)))
 
 (if (or (provided? 'xm)

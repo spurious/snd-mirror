@@ -28,15 +28,8 @@
   (let ((stop (or end (length s)))) 
     (copy s (make-string (- stop start)) start stop)))
 
-(define* (r7rs-vector-fill! seq fill start end)
-  (if (not start)
-      (fill! seq fill)
-      (let ((len (or end (length seq))))
-	(do ((i start (+ i 1)))
-	    ((= i len) seq)
-	  (set! (seq i) fill)))))
-
-(define r7rs-string-fill! vector-fill!)
+(define r7rs-vector-fill! fill!) ; or do these return the sequence, not the filler?
+(define r7rs-string-fill! fill!)
 
 (define* (vector-copy! dest at src (start 0) end) ; apparently end is exclusive here?
   (let ((len (or end (length src))))

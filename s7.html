@@ -1846,8 +1846,8 @@ or even <code>(&gt; 1 0+i)</code>.
 <pre class="indented">
 (<em class=def id="sortb">sort!</em> sequence less?)
 (<em class=def id="reverseb">reverse!</em> sequence) and (reverse sequence)
-(<em class=def id="fillb">fill!</em> sequence value)
-(<em class=def id="s7copy">copy</em> obj) and (copy source destination start end)
+(<em class=def id="fillb">fill!</em> sequence value (start 0) end)
+(<em class=def id="s7copy">copy</em> obj) and (copy source destination (start 0) end)
 (<em class=def id="objecttostring">object-&gt;string</em> obj)
 (length obj)
 (map func . sequences) and (for-each func . sequences)
@@ -5730,6 +5730,7 @@ Better ideas are always welcome!
 <ul>
 <li>places 'pure-s7 in *features*
 <li>omits char-ready, char-ci*, string-ci*
+<li>omits string-copy, string-fill!, vector-fill!, list-&gt;string, list-&gt;vector
 <li>omits cond-expand, multiple-values-bind|set!, call-with-values, defmacro(*)
 <li>omits d/f/s/l exponents
 <li>omits unquote (the name), and quasiquoted vector constants
