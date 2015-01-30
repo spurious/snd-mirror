@@ -20,5 +20,4 @@ make-index.scm         		Build index.html, snd-xref.c, elaborate html error chec
 snd.supp			Valgrind suppressions
 make-snd-diffs
 exs7.c                          some s7 examples (extracted from s7.h)
-check-help.scm                  bug checks for help strings
 sam.c				Samson box emulator
