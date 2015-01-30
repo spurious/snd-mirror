@@ -1065,7 +1065,7 @@ fx
     (if (pair? form)
 	(if (and (symbol? (car form))
 		 (macro? (symbol-&gt;value (car form))))
-	    (expand ((eval (procedure-source (symbol-&gt;value (car form)))) form))
+	    (expand (apply (eval (procedure-source (symbol-&gt;value (car form)))) (cdr form)))
 	    (cons (expand (car form))
 		  (expand (cdr form))))
 	form))
@@ -1090,16 +1090,12 @@ It's almost as easy to write the actual macro body as the backquoted version of 
 &gt; (define-macro (hi a) `(+ 1 ,a))
 hi
 &gt; (procedure-source hi)
-(lambda ({hi}-16) (apply (lambda (a) <em class=red>({list} '+ 1 a))</em> (cdr {hi}-16)))
-
-;; so (define-macro (hi a) ({list} + 1 a)) is the same
+(lambda (a) <em class=red>({list} '+ 1 a)</em>)
 
 &gt; (define-macro (hi a) `(+ 1 ,@a))
 hi
 &gt; (procedure-source hi)
-(lambda ({hi}-17) (apply (lambda (a) <em class=red>({list} '+ 1 ({apply_values} a)))</em> (cdr {hi}-17)))
-
-;; same: (define-macro (hi a) ({list} + 1 ({apply_values} a)))
+(lambda (a) <em class=red>({list} '+ 1 ({apply_values} a))</em>)
 </pre>
 
 <p>{list} is a special version of list to avoid name collisions
@@ -5730,7 +5726,9 @@ Better ideas are always welcome!
 <ul>
 <li>places 'pure-s7 in *features*
 <li>omits char-ready, char-ci*, string-ci*
-<li>omits string-copy, string-fill!, vector-fill!, list-&gt;string, list-&gt;vector
+<li>omits string-copy, string-fill!, vector-fill!
+<li>omits list-&gt;string, list-&gt;vector, string-&gt;list, vector-&gt;list
+<li>omits string-length, vector-length, hash-table-size
 <li>omits cond-expand, multiple-values-bind|set!, call-with-values, defmacro(*)
 <li>omits d/f/s/l exponents
 <li>omits unquote (the name), and quasiquoted vector constants

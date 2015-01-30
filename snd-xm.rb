@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 04/02/25 05:31:02
-# Changed: 14/11/14 08:46:00
+# Changed: 14/12/07 06:34:47
 
 # Requires --with-motif|gtk
 #
@@ -213,30 +213,39 @@ module Snd_XM
   Edhist = 7
   Gsy    = 8
   Gzy    = 9
+  Channel_main_pane = 10
 
   # dialog_widgets
+  Orientation_dialog  =  0
+  Enved_dialog        =  1
+  Transform_dialog    =  2
+  File_open_dialog    =  3
+  File_save_as_dialog =  4
+  View_files_dialog   =  5
+  Raw_data_dialog     =  6
+  New_file_dialog     =  7
+  File_mix_dialog     =  8
+  Edit_header_dialog  =  9
+  Find_dialog         = 10
+  Help_dialog         = 11
+  Mix_panel_dialog    = 12
+  Print_dialog        = 13
+  Region_dialog       = 14
+  Info_dialog         = 15
+  Extra_controls_dialog = 16
+  Save_selection_dialog = 17
+  Insert_file_dialog  = 18
+  Save_region_dialog  = 19
+  Preferences_dialog  = 20
+  #
+  # old names
+  #
   Color_dialog        =  0
-  Orientation_dialog  =  1
-  Enved_dialog        =  2
-  Error_dialog        =  3
-  Yes_or_no_dialog    =  4
-  Transform_dialog    =  5
-  File_open_dialog    =  6
-  File_save_as_dialog =  7
-  View_files_dialog   =  8
-  Raw_data_dialog     =  9
-  New_file_dialog     = 10
-  File_mix_dialog     = 11
-  Edit_header_dialog  = 12
-  Find_dialog         = 13
-  Help_dialog         = 14
-  Completion_dialog   = 15
-  Mix_panel_dialog    = 16
-  Print_dialog        = 17
-  Recorder_dialog     = 18
-  Region_dialog       = 19
-  Info_dialog         = 20
-  Track_dialog        = 21
+  Error_dialog        =  0
+  Yes_or_no_dialog    =  0
+  Completion_dialog   =  0
+  Recorder_dialog     =  0
+  Track_dialog        =  0
 
   # MAKE_MENU as well as MAKE_POPUP_MENU may be used in non-Snd
   # scripts.  MAKE_SND_MENU and MAKE_SND_POPUP (see popup.rb) are

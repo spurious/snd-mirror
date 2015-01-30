@@ -39,7 +39,7 @@
 
   (define (lower-case-and-no-spaces name)
     (let* ((new-name (string-downcase name))
-	   (len (string-length new-name)))
+	   (len (length new-name)))
       (do ((i 0 (+ i 1)))
 	  ((= i len) new-name)
 	(if (char=? (new-name i) #\space)
@@ -121,7 +121,7 @@
       (let ((old-fam (with-file-monitor))) 
 	(set! (with-file-monitor) #f) ; no need to monitor these guys
 	(format fd ";;; sound data from ~S" main-dir)
-	(if (not (char=? (main-dir (- (string-length main-dir) 1)) #\/))
+	(if (not (char=? (main-dir (- (length main-dir) 1)) #\/))
 	    (set! main-dir (string-append main-dir "/")))
 	(for-each
 	 (lambda (dir)

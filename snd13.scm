@@ -884,7 +884,7 @@ read, even if not playing.  'files' is a list of files to be played."
 (define with-mix-file-extension 
   (let ((documentation "(with-mix-file-extension file default) is a helper function for the with-mix macro"))
     (lambda (file default)
-      (let ((len (string-length file)))
+      (let ((len (length file)))
 	(call-with-exit
 	 (lambda (ok)
 	   (do ((i (- len 1) (- i 1)))

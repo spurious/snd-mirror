@@ -2,9 +2,9 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 05/12/18 19:21:00
-\ Changed: 14/11/06 00:58:34
+\ Changed: 14/12/03 17:15:55
 \
-\ @(#)extensions.fs	1.49 11/6/14
+\ @(#)extensions.fs	1.50 12/3/14
 
 \ With comments and doc strings from extensions.scm.
 \
@@ -22,7 +22,6 @@
 \ match-sound-files		( func :optional dir -- ary )
 \ selection-members		( -- array-of-arrays )
 \ make-selection		( :optional beg end snd chn -- )
-\ delete-selection-and-smooth	( -- )
 \
 \ mix-channel			( fdata :optional beg dur s c edp -- val )
 \ insert-channel		( fdata :optional beg 0 dur s c edp -- val )
@@ -279,25 +278,6 @@ SND defaults to the currently selected sound."
 	then
 ;
 previous
-
-\ ;;; -------- delete selected portion and smooth the splice
-
-: delete-selection-and-smooth ( -- )
-	doc" Delete the current selection and smooth the splice."
-	undef selection? unless
-		exit
-	then
-	#f #f selection-position { beg }
-	#f #f selection-framples { len }
-	all-chans each { lst }
-		lst car { snd }
-		lst cadr { chn }
-		snd chn selection-member? if
-			beg len snd chn #f delete-samples drop
-			beg 16 - 0 max 32 snd chn smooth-sound drop
-		then
-	end-each
-;
 
 \ ;;; -------- mix-channel, insert-channel, c-channel
 

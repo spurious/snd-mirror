@@ -41,7 +41,7 @@
 
     (let ((change-times (let* ((len (length beg-samps))
 			       (nbegs (append beg-samps (list (beg-samps (- len 1))))))
-			  (list->vector nbegs)))
+			  (apply vector nbegs)))
 	  
 	  (shps (map cadr data))
 	  (glts (map caddr data))

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 02/09/04 18:34:00
-# Changed: 14/12/04 01:16:16
+# Changed: 15/01/29 23:09:30
 
 # module Examp (examp.scm)
 #  selection_rms
@@ -562,8 +562,8 @@ end")
                  out_format = Mus_bshort,
                  out_srate = 44100)
     in_buffer = IO.readlines(in_filename)         # array of strings
-    out_snd = new_sound(out_filename, 1, out_srate, out_format, out_type,
-                        format("created by %s: %s", get_func_name, in_filename))
+    com = format("created by %s: %s", get_func_name, in_filename)
+    out_snd = new_sound(out_filename, 1, out_srate, out_format, out_type, com)
     bufsize = 512
     data = make_vct(bufsize)
     loc = 0

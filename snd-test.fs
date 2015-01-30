@@ -2,10 +2,8 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 06/08/05 00:09:28
-\ Changed: 14/11/11 08:15:04
+\ Changed: 15/01/30 02:12:47
 
-\ Commentary:
-\
 \ Tags:  FIXME - something is wrong
 \        XXX   - info marker
 \
@@ -607,7 +605,9 @@ reset-all-hooks
 : run-fth-test ( xt -- )
   { xt }
   xt xt->name { name }
-  test-numbers  name 0 2 string-substring string->number  array-member? if
+  name 0 2 string-substring { num }
+  num string->number to num
+  test-numbers num array-member? if
     name #f snd-test-message
     stack-reset
     gc-run
@@ -2894,7 +2894,8 @@ black-and-white-colormap constant *better-colormap*
   "written %s" #( "%a %d-%b-%Y %H:%M %Z" current-time strftime )
     string-format { str }
   ob str set-comment drop
-  "test.snd" ob :header-type mus-aifc :sample-type mus-bdouble <'> save-sound-as snd-test-catch to res
+  "test.snd" ob :header-type mus-aifc :sample-type mus-bdouble
+    <'> save-sound-as snd-test-catch to res
   res car 'cannot-save "save-sound-as test.snd write trouble" #() snd-test-eq
   #t set-filter-control-in-hz drop
   "test.snd" open-sound { ab }
@@ -4324,9 +4325,9 @@ half-pi fnegate constant -half-pi
 
 \ ---------------- test 08: clm ----------------
 
-lambda: <{ -- x }> 0.0 ; value 08-clm-lambda-0.0
-lambda: <{ dir -- x }> 1.0 ; value 08-clm-lambda-dir-1.0
-lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
+lambda: <{ -- r }> 0.0 ; value 08-clm-lambda-0.0
+lambda: <{ dir -- r }> 1.0 ; value 08-clm-lambda-dir-1.0
+lambda: <{ a b c -- r }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
 32 make-delay constant make-delay-32
 
 \ xen-mus-apply (using mus-run):
@@ -4386,15 +4387,16 @@ lambda: <{ a b c -- x }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
      32
      '( 1 2 ) ) { random-args }
   #( <'> make-all-pass <'> make-asymmetric-fm <'> make-moving-average
-     <'> make-moving-max <'> make-comb
-     <'> make-delay <'> make-env <'> make-fft-window <'> make-filter
-     <'> make-filtered-comb <'> make-fir-filter <'> make-formant
-     <'> make-iir-filter <'> make-locsig
-     <'> make-notch <'> make-one-pole <'> make-one-zero <'> make-oscil
-     <'> make-pulse-train <'> make-rand <'> make-rand-interp
-     <'> make-sawtooth-wave <'> make-polyshape <'> make-polywave
-     <'> make-square-wave <'> make-two-pole <'> make-two-zero
-     <'> make-wave-train <'> make-ssb-am ) { gen-make-procs }
+     <'> make-moving-max <'> make-moving-norm <'> make-table-lookup
+     <'> make-triangle-wave <'> make-comb <'> make-delay <'> make-env
+     <'> make-fft-window <'> make-filter <'> make-filtered-comb
+     <'> make-fir-filter <'> make-formant <'> make-iir-filter <'> make-locsig
+     <'> make-notch <'> make-one-pole <'> make-one-pole-all-pass
+     <'> make-one-zero <'> make-oscil <'> make-pulse-train
+     <'> make-rand <'> make-rand-interp <'> make-sawtooth-wave
+     <'> make-polyshape <'> make-polywave <'> make-square-wave
+     <'> make-two-pole <'> make-two-zero <'> make-wave-train
+     <'> make-ssb-am ) { gen-make-procs }
   nil { make-prc }
   nil nil nil nil { arg1 arg2 arg3 arg4 }
   gen-make-procs each to make-prc
@@ -7457,17 +7459,20 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   sf-dir "bad_chans.snd" $+ <'> insert-sound 'bad-header check-error-tag
   sf-dir "bad_chans.snd" $+ <'> convolve-with 'IO-error check-error-tag
   "hiho.snd" ind -12 <'> save-sound-as 'cannot-save check-error-tag
-  "hiho.snd" ind :header-type mus-next :sample-type -12 <'> save-sound-as 'cannot-save check-error-tag
-  "test.snd" ind :header-type mus-nist :sample-type mus-bdouble <'> save-sound-as 'cannot-save
-    check-error-tag
-  "test.snd" ind :header-type mus-aifc :sample-type mus-lfloat <'> save-sound-as 'cannot-save
-    check-error-tag
-  "test.snd" ind :header-type mus-riff :sample-type mus-bshort <'> save-sound-as 'cannot-save
-    check-error-tag
-  "test.snd" ind :header-type mus-voc  :sample-type mus-bshort  <'> save-sound-as 'cannot-save
-    check-error-tag
-  "test.snd" 22050 mus-bshort mus-riff <'> save-selection 'cannot-save check-error-tag
-  "test.snd" 22050 mus-bshort mus-voc <'> save-selection 'cannot-save check-error-tag
+  "hiho.snd" ind :header-type mus-next :sample-type -12
+    <'> save-sound-as 'cannot-save check-error-tag
+  "test.snd" ind :header-type mus-nist :sample-type mus-bdouble
+    <'> save-sound-as 'cannot-save check-error-tag
+  "test.snd" ind :header-type mus-aifc :sample-type mus-lfloat
+    <'> save-sound-as 'cannot-save check-error-tag
+  "test.snd" ind :header-type mus-riff :sample-type mus-bshort
+    <'> save-sound-as 'cannot-save check-error-tag
+  "test.snd" ind :header-type mus-voc :sample-type mus-bshort
+    <'> save-sound-as 'cannot-save check-error-tag
+  "test.snd" 22050 mus-bshort mus-riff
+    <'> save-selection 'cannot-save check-error-tag
+  "test.snd" 22050 mus-bshort mus-voc
+    <'> save-selection 'cannot-save check-error-tag
   #( 0 0 1 1 ) :length 11 make-env <'> src-channel 'out-of-range check-error-tag
   #( 0 1 1 0 ) :length 11 make-env <'> src-channel 'out-of-range check-error-tag
   #( 0 1 1 -1 ) :length 11 make-env <'> src-channel 'out-of-range 

@@ -2,9 +2,9 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 04/03/15 19:25:58
-\ Changed: 14/11/11 01:37:20
+\ Changed: 14/11/12 16:45:42
 \
-\ @(#)clm.fs	1.116 11/11/14
+\ @(#)clm.fs	1.118 11/12/14
 
 \ clm-print		( fmt :optional args -- )
 \ clm-message		( fmt :optional args -- )
@@ -39,7 +39,7 @@
 \ find-file		( file -- fname|#f )
 \ snd-info		( output :key reverb-file-name scaled? timer -- )
 \
-\ clm-mix		( ifile :key output output-frame frms ... -- )
+\ clm-mix		( ifile keyword-args -- )
 \ ws-output		( ws -- fname )
 \ with-sound		( body-xt keyword-args -- ws )
 \ clm-load		( fname keyword-args -- ws )
@@ -49,6 +49,8 @@
 \ with-offset		( body-xt secs -- )
 \ with-mix		( body-str|nil args fname start -- )
 \ sound-let		( ws-xt-lst body-xt -- )
+\
+\ play-sound		( :key verbose player :optional input -- )
 \
 \ example instruments:
 \ simp			( star dur freq amp -- )
@@ -84,7 +86,6 @@
 	<'> noop alias close-sound
 	<'> noop alias find-sound
 	<'> noop alias open-sound
-	<'> noop alias play
 	<'> noop alias save-sound
 	<'> noop alias scale-channel
 	<'> noop alias sound?
@@ -282,7 +283,7 @@ set-current
 previous
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-"fth 2014/11/11"  value *clm-version*
+"fth 2014/11/12"  value *clm-version*
 #f 	      	  value *locsig*
 mus-lshort    	  value *clm-audio-format*
 #f            	  value *clm-comment*
@@ -634,154 +635,12 @@ set-current
 ;
 previous
 
-\ === Playing and Recording one or two Channel Sounds ===
-\
-\ FIXME play-sound
-\
-\ play-sound		( :key verbose dac-size audio-format :optional ... -- )
-\ record-sound		( output keyword-args -- )
-
-: play-sound <{ :key
-    verbose      *clm-verbose*
-    dac-size     *clm-rt-bufsize*
-    audio-format *clm-audio-format*
-    :optional
-    input        *clm-file-name* -- }>
-	"%s removed" #( get-func-name ) fth-warning
-;
-
-: record-sound <{ output :key
-    duration      10.0
-    verbose       *clm-verbose*
-    output-device *clm-output-device*
-    dac-size      *clm-rt-bufsize*
-    srate         *clm-srate*
-    channels      *clm-channels*
-    audio-format  *clm-audio-format*
-    sample-type   *clm-sample-type*
-    header-type   *clm-header-type*
-    comment       *clm-comment* -- }>
-	"%s removed" #( get-func-name ) fth-warning
-;
-
-0 [if]
-: play-sound <{ :key
-    verbose      *clm-verbose*
-    dac-size     *clm-rt-bufsize*
-    audio-format *clm-audio-format*
-    :optional
-    input        *clm-file-name* -- }>
-	doc" Play sound file INPUT.\n\
-\"bell.snd\" :verbose #t play-sound"
-	input find-file to input
-	input false? if
-		'no-such-file #( "%s: %s" get-func-name input ) fth-throw
-	then
-	input mus-sound-framples { frms }
-	input mus-sound-srate  { srate }
-	input mus-sound-chans  { chans }
-	chans 2 > if
-		"%s: we can only handle 2 chans, not %d"
-		    #( get-func-name chans ) fth-warning
-		2 to chans
-	then
-	verbose if
-		input snd-info
-	then
-	dac-size frms min { bufsize }
-	bufsize 0= if
-		"nothing to play for %S (%d frames)"
-		    #( input bufsize ) fth-warning
-		exit
-	then
-	chans bufsize make-sound-data { data }
-	input mus-sound-open-input { snd-fd }
-	snd-fd 0< if
-		'forth-error
-		    #( "%s: can't open %S" get-func-name input ) fth-throw
-	then
-	0 srate chans 2 min audio-format bufsize
-	    mus-audio-open-output { dac-fd }
-	dac-fd 0< if
-		'forth-error #( "%s: can't open dac" get-func-name ) fth-throw
-	then
-	frms 0 ?do
-		i bufsize + frms > if
-			frms i - to bufsize
-		then
-		snd-fd 0 bufsize 1- chans data mus-sound-read drop
-		dac-fd data bufsize mus-audio-write drop
-	bufsize +loop
-	snd-fd mus-sound-close-input drop
-	dac-fd mus-audio-close drop
-;
-
-: record-sound <{ output :key
-    duration      10.0
-    verbose       *clm-verbose*
-    output-device *clm-output-device*
-    dac-size      *clm-rt-bufsize*
-    srate         *clm-srate*
-    channels      *clm-channels*
-    audio-format  *clm-audio-format*
-    sample-type   *clm-sample-type*
-    header-type   *clm-header-type*
-    comment       *clm-comment* -- }>
-	doc" Record from dac output device to the specified OUTPUT file."
-	\ INFO: mus-srate must be set before seconds->samples! [ms]
-	mus-srate { old-srate }
-	srate set-mus-srate drop
-	duration seconds->samples { frms }
-	dac-size frms min { bufsize }
-	channels 2 min { chans }
-	comment empty? if
-		"written %s by %s" #( date get-func-name )
-		    string-format to comment
-	then
-	chans bufsize make-sound-data { data }
-	output srate chans sample-type header-type comment
-	    mus-sound-open-output { snd-fd }
-	snd-fd 0< if
-		'forth-error
-		    #( "%s: can't open %S" get-func-name output ) fth-throw
-	then
-	output-device srate chans audio-format bufsize
-	    mus-audio-open-input { dac-fd }
-	dac-fd 0< if
-		'forth-error #( "%s: can't open dac" get-func-name ) fth-throw
-	then
-	verbose if
-		"filename: %s" #( output ) clm-message
-		"  device: %d" #( output-device ) clm-message
-		"   chans: %d, srate: %d" #( chans srate ) clm-message
-		"r format: %s [Dac]"
-		    #( audio-format mus-sample-type-name ) clm-message
-		"w format: %s [%s]"
-		    #( sample-type mus-sample-type-name
-		       header-type mus-header-type-name ) clm-message
-		"  length: %.3f  (%d frames)" #( duration frms ) clm-message
-		" comment: %S" #( comment ) clm-message
-	then
-	frms 0 ?do
-		i bufsize + frms > if
-			frms i - to bufsize
-		then
-		dac-fd data bufsize mus-audio-read drop
-		snd-fd 0 bufsize 1- chans data mus-sound-write drop
-	bufsize +loop
-	dac-fd mus-audio-close drop
-	snd-fd frms chans * sample-type mus-bytes-per-sample *
-	mus-sound-close-output drop
-	old-srate set-mus-srate drop
-;
-[then]
-
 : clm-mix <{ infile :key
     output #f
     output-frame 0
     frames #f
     input-frame 0
-    scaler 1.0 -- }>
+    scaler #f -- }>
 	doc" Mix files in with-sound's *output* generator.\n\
 \"oboe.snd\" clm-mix\n\
 Mixes oboe.snd in *output* at *output*'s \
@@ -791,7 +650,7 @@ The whole oboe.snd file will be mixed in because :frames is not specified."
 	*output* mus-output? { outgen }
 	output unless
 		outgen if
-			*output* mus-channels  to chans
+			*output* mus-channels to chans
 			*output* mus-file-name to output
 		else
 			'with-sound-error
@@ -811,12 +670,19 @@ The whole oboe.snd file will be mixed in because :frames is not specified."
 	outgen if
 		*output* mus-close drop
 	then
+	chans 0>
+	scaler &&
+	scaler f0<> && if
+		chans chans * scaler make-vct
+	else
+		#f
+	then { mx }
 	output       ( outfile )
 	infile       ( infile )
 	output-frame ( outloc )
 	frames       ( frames )
 	input-frame  ( inloc )
-	#f           ( matrix )
+	mx           ( matrix )
 	#f           ( envs ) mus-file-mix drop
 	outgen if
 		output continue-sample->file to *output*
@@ -950,6 +816,11 @@ hide
 	    :timer            ws :timer ws-ref   snd-info
 ;
 
+: set-args { key def ws -- }
+	key def get-optkey ws key rot ws-set! to ws
+;
+set-current
+
 \ player: xt, proc, string, or #f.
 \
 \       xt: output player execute
@@ -966,29 +837,25 @@ hide
 \	loop
 \ ;
 \ <'> play-3-times to *clm-player*
+
+defer ws-play
 : ws-play-it { ws -- }
 	ws :output ws-ref { output }
 	ws :player ws-ref { player }
 	player word? if
-		player #( output ) run-proc drop
+		player #( output ) run-proc
 	else
 		player string? if
-			"%s %s" #( player output )
-			    string-format file-system drop
+			player $space $+ output $+ file-system
 		else
 			'snd provided? if
-				output find-file :wait #t play drop
+				output find-file :wait #t ws-play
 			else
-				output :verbose #f play-sound
+				"sndplay " output $+ file-system
 			then
 		then
-	then
+	then drop
 ;
-
-: set-args { key def ws -- }
-	key def get-optkey ws key rot ws-set! to ws
-;
-set-current
 
 : ws-output ( ws -- fname )
 	:output ws-ref
@@ -1396,6 +1263,26 @@ lambda: { tmp1 tmp2 }\n\
 		file-delete
 	end-each
 ;
+
+\ === Playing Sounds ===
+: play-sound <{ :key verbose *clm-verbose* player *clm-player*
+    :optional input *clm-file-name* -- }>
+	doc" Play sound file INPUT.\n\
+\"bell.snd\" :verbose #t play-sound"
+	input find-file to input
+	input unless
+		'no-such-file #( "%s: %s" get-func-name input ) fth-throw
+	then
+	verbose if
+		input snd-info
+	then
+	#w{} :output input ws-set! :player player ws-set! ws-play-it
+;
+
+'snd provided? [unless]
+	<'> play-sound alias play
+[then]
+<'> play is ws-play
 
 \ === Example instruments, more in clm-ins.fs ===
 instrument: simp { start dur freq amp -- }

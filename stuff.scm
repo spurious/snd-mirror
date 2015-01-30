@@ -982,7 +982,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
 #|
 (define-bacro (reflective-probe)
-  (with-let (inlet 'e (outlet (outlet (curlet))))
+  (with-let (inlet 'e (outlet (curlet)))
     (for-each (lambda (var)
 		(format *stderr* "~S: ~S~%" (car var) (cdr var)))
 	      e)))
@@ -993,7 +993,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 ;; perhaps if we want it to disappear:
 
 (define-bacro (reflective-probe . body)
-  (with-let (inlet :e (outlet (outlet (curlet))) 
+  (with-let (inlet :e (outlet (curlet)) 
 		   :body body)
     (for-each (lambda (var)
 		(format *stderr* "~S: ~S~%" (car var) (cdr var)))
@@ -1046,7 +1046,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 (define-bacro (reactive-set! place value)
   (with-let (inlet 'place place                      ; with-let here gives us control over the names
 		   'value value 
-		   'e (outlet (outlet (curlet))))    ; the run-time (calling) environment
+		   'e (outlet (curlet)))             ; the run-time (calling) environment
     (let ((nv (gensym))
 	  (ne (gensym)))
       `(begin
@@ -1115,7 +1115,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	(append code `(_))))
     
     (define-bacro (reactive-vector . args)
-      (apply ((funclet 'reactive-vector) 'reactive-vector-1) (outlet (outlet (curlet))) args))))
+      (apply ((funclet 'reactive-vector) 'reactive-vector-1) (outlet (curlet)) args))))
 
 
 #|
@@ -1128,7 +1128,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 ;; another experiment:
 
 (define-bacro (reactive-format port ctrl . args)
-  (with-let (inlet 'e (outlet (outlet (curlet)))
+  (with-let (inlet 'e (outlet (curlet))
 		   'args args
 		   'port port
 		   'ctrl ctrl)
@@ -1173,7 +1173,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	  (set! name (gensym "v"))))))
 
 (define-bacro (reactive-let vars . body)
-  (with-let (inlet 'vars vars 'body body 'e (outlet (outlet (curlet))))
+  (with-let (inlet 'vars vars 'body body 'e (outlet (curlet)))
     (let ((bindings ())
 	  (accessors ())
 	  (setters ())
@@ -1350,7 +1350,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		      (swap-symbols (cdr old-code) syms))
 		(copy old-code)))))
 
-  (let ((e (outlet (outlet (curlet))))
+  (let ((e (outlet (curlet)))
 	(source (cddr (cadr (caddr (procedure-source bac))))))
     (let ((symbols (gather-symbols source (rootlet) () ()))
 	  (exsyms (gather-symbols (cadr example) (rootlet) () ())))

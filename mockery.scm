@@ -45,7 +45,7 @@
 					     (error 'wrong-type-arg "vector-ref ~S ~S" obj i)))
 
 		   'let-ref            (lambda (obj i) (#_vector-ref (obj 'value) i))   ; the implicit case, so 'i can't be the culprit
-		   'vector-length      (lambda (obj) (#_vector-length (obj 'value)))
+		   'vector-length      (lambda (obj) (#_length (obj 'value)))
 		   'vector-append      (make-method #_vector-append (lambda (obj) (obj 'value)))
 		   'reverse            (lambda (obj) (#_reverse (obj 'value)))
 		   'sort!              (lambda (obj f) (#_sort! (obj 'value) f))
@@ -55,9 +55,9 @@
 		   'vector-dimensions  (lambda (obj) (#_vector-dimensions (obj 'value)))
 		   'fill!              (lambda (obj val) (#_fill! (obj 'value) val))
 
-		   'vector->list       (lambda (obj . args) 
+		   'vector->list       (lambda (obj . args)
 					 (if (mock-vector? obj)
-					     (apply #_vector->list (obj 'value) args)
+					     (map values (obj 'value))
 					     (error 'wrong-type-arg "vector->list ~S ~S" obj args)))
 
 		   'make-shared-vector (lambda* (obj dim (off 0))
@@ -65,9 +65,9 @@
 					     (#_make-shared-vector (obj 'value) dim off)
 					     (error 'wrong-type-arg "make-shared-vector ~S ~S ~S" obj dim off)))
 
-		   'vector-fill!       (lambda* (obj val (start 0) end) 
+		   'vector-fill!       (lambda (obj . args)
 					 (if (mock-vector? obj)
-					     (#_vector-fill! (obj 'value) val start (or end (#_vector-length (obj 'value))))
+					     (apply #_fill! (obj 'value) args)
 					     (error 'wrong-type-arg "vector-fill! ~S ~S ~S ~S" obj val start end)))
 
 		   'copy               (lambda* (source dest . args)
@@ -89,7 +89,7 @@
 					     (error 'wrong-type-arg "copy ~S ~S ~S" source dest args)))
 		   'vector?            (lambda (obj) #t)
 		   'values             (lambda (obj . args) (obj 'value))
-		   'length             (lambda (obj) (#_vector-length (obj 'value)))
+		   'length             (lambda (obj) (#_length (obj 'value)))
 		   'class-name         'mock-vector))))
       
       (define* (make-mock-vector len (init #<unspecified>))
@@ -157,7 +157,7 @@
 	    (inlet 'morally-equal?     (lambda (x y)          (#_morally-equal? (x 'mock-hash-table-table) y))
 		   'hash-table-ref     (lambda (obj key)      (#_hash-table-ref (obj 'mock-hash-table-table) key))
 		   'hash-table-set!    (lambda (obj key val)  (#_hash-table-set! (obj 'mock-hash-table-table) key val))
-		   'hash-table-size    (lambda (obj)          (#_hash-table-size (obj 'mock-hash-table-table)))
+		   'hash-table-size    (lambda (obj)          (#_length (obj 'mock-hash-table-table)))
 		   'hash-table-entries (lambda (obj)          (#_hash-table-entries (obj 'mock-hash-table-table)))
 		   'make-iterator      (lambda (obj)          (#_make-iterator (obj 'mock-hash-table-table)))
 		   'let-ref-fallback   (lambda (obj key)      (#_hash-table-ref (obj 'mock-hash-table-table) key))
@@ -187,7 +187,7 @@
 					     (error 'wrong-type-arg "copy ~S ~S ~S" source dest args)))
 		   'hash-table?        (lambda (obj) #t)
 		   'values             (lambda (obj . args) (obj 'mock-hash-table-table))
-		   'length             (lambda (obj)          (#_hash-table-size (obj 'mock-hash-table-table)))
+		   'length             (lambda (obj)          (#_length (obj 'mock-hash-table-table)))
 		   'class-name         'mock-hash-table))))
 
       (define* (make-mock-hash-table (len 511))
@@ -259,10 +259,10 @@
 		   'make-iterator          (lambda (obj) (#_make-iterator (obj 'value)))
 		   'let-ref                (lambda (obj i) (#_string-ref (obj 'value) i))           ; these are the implicit cases
 		   'let-set!               (lambda (obj i val) (string-set! (obj 'value) i val))
-		   'string-length          (lambda (obj) (#_string-length (obj 'value)))
+		   'string-length          (lambda (obj) (#_length (obj 'value)))
 		   'string->list           (make-method #_string->list (lambda (obj) (obj 'value)))
 		   'string-append          (make-method #_string-append (lambda (obj) (obj 'value)))
-		   'string-copy            (lambda (obj) (#_string-copy (obj 'value)))
+		   'string-copy            (lambda (obj) (#_copy (obj 'value)))
 		   'string=?               (make-method #_string=? (lambda (obj) (obj 'value)))
 		   'string<?               (make-method #_string<? (lambda (obj) (obj 'value)))
 		   'string>?               (make-method #_string>? (lambda (obj) (obj 'value)))

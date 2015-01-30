@@ -4,8 +4,8 @@
 (provide 'r7rs.scm)
 
 
-(define (vector-map p . args) (list->vector (apply map p args)))
-(define (string-map p . args) (list->string (apply map p args)))
+(define (vector-map p . args) (apply vector (apply map p args)))
+(define (string-map p . args) (apply string (apply map p args)))
 (define vector-for-each for-each) 
 (define string-for-each for-each) 
 

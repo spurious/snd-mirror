@@ -841,7 +841,7 @@ struct s7_scheme {
   s7_pointer IS_EOF_OBJECT, IS_EQ, IS_EQUAL, IS_EQV, ERROR, EVAL, EVAL_STRING, IS_EVEN, IS_EXACT;
   s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOAT_VECTOR, IS_FLOAT_VECTOR, FLOAT_VECTOR_REF, FLOAT_VECTOR_SET;
   s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, IS_GENSYM, GET_OUTPUT_STRING, HASH_TABLE, HASH_TABLE_STAR;
-  s7_pointer IS_HASH_TABLE, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_SIZE, HASH_TABLE_ENTRIES, HELP, IMAG_PART, IS_INEXACT, INEXACT_TO_EXACT;
+  s7_pointer IS_HASH_TABLE, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_ENTRIES, HELP, IMAG_PART, IS_INEXACT, INEXACT_TO_EXACT;
   s7_pointer IS_INFINITE, IS_INPUT_PORT, IS_INTEGER, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, IS_KEYWORD, KEYWORD_TO_SYMBOL;
   s7_pointer LCM, LENGTH, IS_ITERATOR, MAKE_ITERATOR, ITERATE, ITERATOR_SEQUENCE;
   s7_pointer LIST, IS_LIST, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBIT, LOGIOR, LOGNOT, LOGXOR;
@@ -855,11 +855,11 @@ struct s7_scheme {
   s7_pointer IS_PROVIDED, QUOTIENT, RANDOM, IS_RANDOM_STATE, RANDOM_STATE_TO_LIST, RATIONALIZE, IS_RATIONAL, READ, READ_BYTE, READ_CHAR, READ_LINE, IS_REAL;
   s7_pointer READ_STRING, REAL_PART, REMAINDER, REQUIRE, REVERSE, REVERSEB, ROUND, SET_CAR, SET_CDR, SIN, SINH, SORT, SQRT, STACKTRACE;
   s7_pointer STRING, STRING_DOWNCASE, STRING_UPCASE, STRING_LEQ, STRING_LT, STRING_EQ;
-  s7_pointer STRING_GEQ, STRING_GT, IS_STRING, STRING_POSITION, STRING_TO_LIST, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND;
-  s7_pointer STRING_FILL, STRING_LENGTH, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
+  s7_pointer STRING_GEQ, STRING_GT, IS_STRING, STRING_POSITION, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND;
+  s7_pointer STRING_FILL, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
   s7_pointer SYMBOL_ACCESS, IS_SYMBOL, SYMBOL_TO_KEYWORD, SYMBOL_TO_STRING, SYMBOL_TO_DYNAMIC_VALUE, SYMBOL_TO_VALUE;
   s7_pointer TAN, TANH, THROW, TO_BYTEVECTOR, TRUNCATE, VALUES, VECTOR, VECTOR_APPEND, VECTOR_FILL;
-  s7_pointer IS_VECTOR, VECTOR_TO_LIST, VECTOR_DIMENSIONS, VECTOR_LENGTH, VECTOR_REF, VECTOR_SET, WITH_INPUT_FROM_FILE;
+  s7_pointer IS_VECTOR, VECTOR_DIMENSIONS, VECTOR_REF, VECTOR_SET, WITH_INPUT_FROM_FILE;
   s7_pointer WITH_INPUT_FROM_STRING, WITH_OUTPUT_TO_FILE, WITH_OUTPUT_TO_STRING, WRITE, WRITE_BYTE, WRITE_CHAR, WRITE_STRING, IS_ZERO;
   s7_pointer S7_FEATURES, LOAD_PATH, PI;
 #if (!WITH_MAKE_COMPLEX)
@@ -867,7 +867,8 @@ struct s7_scheme {
 #endif
 #if (!WITH_PURE_S7)
   s7_pointer IS_CHAR_READY, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ, CHAR_CI_GEQ, CHAR_CI_GT;
-  s7_pointer STRING_CI_LEQ, STRING_CI_LT, STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_COPY, LIST_TO_STRING, LIST_TO_VECTOR;
+  s7_pointer STRING_CI_LEQ, STRING_CI_LT, STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_TO_LIST, VECTOR_TO_LIST;
+  s7_pointer STRING_LENGTH, STRING_COPY, LIST_TO_STRING, LIST_TO_VECTOR, VECTOR_LENGTH, HASH_TABLE_SIZE;
 #endif
 
 #if WITH_GMP
@@ -1015,36 +1016,37 @@ typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_w
 
 #define T_STRING              17
 #define T_C_OBJECT            18
-#define T_CLOSURE             19
-#define T_CLOSURE_STAR        20
-#define T_CONTINUATION        21
-#define T_VECTOR              22
-#define T_INT_VECTOR          23
-#define T_FLOAT_VECTOR        24
-#define T_MACRO               25
-#define T_BACRO               26
-#define T_GOTO                27
-#define T_CATCH               28
-#define T_DYNAMIC_WIND        29
-#define T_HASH_TABLE          30
-#define T_ENVIRONMENT         31
-#define T_ITERATOR            32
-#define T_STACK               33
-#define T_COUNTER             34
-#define T_SLOT                35
-#define T_C_POINTER           36
-#define T_C_MACRO             37
-#define T_OUTPUT_PORT         38
-#define T_INPUT_PORT          39
-#define T_BAFFLE              40
+#define T_VECTOR              19
+#define T_INT_VECTOR          20
+#define T_FLOAT_VECTOR        21
+#define T_GOTO                22
+#define T_CATCH               23
+#define T_DYNAMIC_WIND        24
+#define T_HASH_TABLE          25
+#define T_ENVIRONMENT         26
+#define T_ITERATOR            27
+#define T_STACK               28
+#define T_COUNTER             29
+#define T_SLOT                30
+#define T_C_POINTER           31
+#define T_OUTPUT_PORT         32
+#define T_INPUT_PORT          33
+#define T_BAFFLE              34
+#define T_CONTINUATION        35
+#define T_CLOSURE             36
+#define T_CLOSURE_STAR        37
+#define T_C_MACRO             38
+#define T_MACRO               39
+#define T_MACRO_STAR          40
+#define T_BACRO               41
+#define T_BACRO_STAR          42
+#define T_C_FUNCTION_STAR     43
+#define T_C_FUNCTION          44
+#define T_C_ANY_ARGS_FUNCTION 45
+#define T_C_OPT_ARGS_FUNCTION 46
+#define T_C_RST_ARGS_FUNCTION 47
 
-#define T_C_FUNCTION_STAR     41
-#define T_C_FUNCTION          42
-#define T_C_ANY_ARGS_FUNCTION 43
-#define T_C_OPT_ARGS_FUNCTION 44
-#define T_C_RST_ARGS_FUNCTION 45
-
-#define NUM_TYPES        46
+#define NUM_TYPES        48
 
 /* T_STACK, T_SLOT, T_BAFFLE, and T_COUNTER are internal
  * I tried T_CASE_SELECTOR that turned a case statement into an array, but it was slower!
@@ -1127,6 +1129,8 @@ static void init_types(void)
   t_applicable_p[T_C_MACRO] = true;
   t_applicable_p[T_MACRO] = true;
   t_applicable_p[T_BACRO] = true;
+  t_applicable_p[T_MACRO_STAR] = true;
+  t_applicable_p[T_BACRO_STAR] = true;
   t_applicable_p[T_SYNTAX] = true;
   t_applicable_p[T_C_FUNCTION] = true;
   t_applicable_p[T_C_FUNCTION_STAR] = true;
@@ -1141,6 +1145,8 @@ static void init_types(void)
   t_any_macro_p[T_C_MACRO] = true;
   t_any_macro_p[T_MACRO] = true;
   t_any_macro_p[T_BACRO] = true;
+  t_any_macro_p[T_MACRO_STAR] = true;
+  t_any_macro_p[T_BACRO_STAR] = true;
 
   t_any_closure_p[T_CLOSURE] = true;
   t_any_closure_p[T_CLOSURE_STAR] = true;
@@ -1863,6 +1869,8 @@ bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_optimized
 #define is_goto(p)                    (type(p) == T_GOTO)
 #define is_macro(p)                   (type(p) == T_MACRO)
 #define is_bacro(p)                   (type(p) == T_BACRO)
+#define is_macro_star(p)              (type(p) == T_MACRO_STAR)
+#define is_bacro_star(p)              (type(p) == T_BACRO_STAR)
 
 #define is_closure(p)                 (type(p) == T_CLOSURE)
 #define is_closure_star(p)            (type(p) == T_CLOSURE_STAR)
@@ -3885,6 +3893,8 @@ static void init_mark_functions(void)
   mark_function[T_FLOAT_VECTOR]        = mark_int_or_float_vector; /* need to track the shared vector case, else just_mark would work here */
   mark_function[T_MACRO]               = mark_closure;
   mark_function[T_BACRO]               = mark_closure;
+  mark_function[T_MACRO_STAR]          = mark_closure;
+  mark_function[T_BACRO_STAR]          = mark_closure;
   mark_function[T_C_OBJECT]            = mark_c_object;
   mark_function[T_GOTO]                = just_mark;
   mark_function[T_OUTPUT_PORT]         = just_mark;
@@ -4482,6 +4492,8 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_CLOSURE_STAR:
     case T_MACRO:
     case T_BACRO:
+    case T_MACRO_STAR:
+    case T_BACRO_STAR:
       heap_location(x) = NOT_IN_HEAP;
       p = alloc_pointer();
       clear_type(p);
@@ -5348,6 +5360,8 @@ static s7_pointer find_let(s7_scheme *sc, s7_pointer obj)
 
     case T_MACRO:
     case T_BACRO:
+    case T_MACRO_STAR:
+    case T_BACRO_STAR:
     case T_CLOSURE:
     case T_CLOSURE_STAR:
       return(closure_let(obj));
@@ -6086,9 +6100,8 @@ static s7_pointer call_accessor(s7_scheme *sc, s7_pointer slot, s7_pointer old_v
       if (is_any_macro(func))
 	{
 	  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
-	  sc->args = list_1(sc, cons(sc, func, list_2(sc, slot_symbol(slot), old_value)));
+	  sc->args = list_2(sc, slot_symbol(slot), old_value);
 	  sc->code = func;
-	  push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
 	  eval(sc, OP_APPLY);
 	  new_value = sc->value;
 	}
@@ -6603,33 +6616,6 @@ static s7_pointer g_symbol_to_dynamic_value(s7_scheme *sc, s7_pointer args)
 
 /* make macros and closures */
 
-static s7_pointer quotify(s7_scheme *sc, s7_pointer pars)
-{
-  /* the default parameter values of define-macro* and define-bacro* should not be evaluated until
-   * the expansion is evaluated.  That is, 
-   *   (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(let ((x -1)) (+ x ,a))) (list (hi) x))
-   * should return the same value as the equivalent explicit form:
-   *   (let ((x 0)) (define-macro (hi a) `(let ((x -1)) (+ x ,a))) (list (hi (let () (set! x (+ x 1)) x)) x))
-   * '(-1 0) in both cases.
-   *
-   * But at the point in eval where we handle lambda* arguments, we can't easily tell whether we're part of
-   * a function or a macro, so at definition time of a macro* we scan the parameter list for an expression
-   * as a default value, and replace it with (quote expr).
-   *
-   * and... (define-macro* ((a x)) ...) should behave the same as (define-macro* ((a (+ x 0))) ...)
-   */
-  s7_pointer tmp;
-  for (tmp = pars; is_pair(tmp); tmp = cdr(tmp))
-    if ((is_pair(car(tmp))) &&
-	(is_pair(cdar(tmp))) &&
-	((is_pair(cadar(tmp))) ||
-	 (is_symbol(cadar(tmp))) ||
-	 (is_syntax(cadar(tmp)))))
-      cadar(tmp) = list_2(sc, sc->QUOTE, cadar(tmp));
-  return(pars);
-}
-
-
 static void fixup_macro_overlay(s7_scheme *sc, s7_pointer p)
 {
   if ((is_pair(p)) &&
@@ -6652,54 +6638,46 @@ static void fixup_macro_overlay(s7_scheme *sc, s7_pointer p)
 
 static s7_pointer make_macro(s7_scheme *sc)
 {
-  s7_pointer cx, zx, lx, mac;
+  s7_pointer cx, mac;
+  int typ;
 
-  NEW_CELL_NO_CHECK(sc, mac, T_MACRO);
+  if (sc->op == OP_DEFINE_MACRO)
+    typ = T_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS;
+  else
+    {
+      if (sc->op == OP_DEFINE_MACRO_STAR)
+	typ = T_MACRO_STAR | T_DONT_EVAL_ARGS | T_COPY_ARGS;
+      else
+	{
+	  if (sc->op == OP_DEFINE_BACRO)
+	    typ = T_BACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS;
+	  else
+	    {
+	      if (sc->op == OP_DEFINE_BACRO_STAR)
+		typ = T_BACRO_STAR | T_DONT_EVAL_ARGS | T_COPY_ARGS;
+	      else
+		{
+		  if (sc->op == OP_DEFINE_EXPANSION)
+		    typ = T_MACRO | T_EXPANSION | T_DONT_EVAL_ARGS | T_COPY_ARGS;
+		  else typ = T_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS; 
+		}
+	    }
+	}
+    }
+
+  NEW_CELL_NO_CHECK(sc, mac, typ);
   sc->temp6 = mac;
-  closure_args(mac) = sc->NIL;
-  closure_body(mac) = sc->NIL;
+  closure_args(mac) = cdar(sc->code);
+  closure_body(mac) = cdr(sc->code);
   closure_setter(mac) = sc->F;
   closure_let(mac) = sc->envir;
   closure_arity(mac) = CLOSURE_ARITY_NOT_SET;
   
-  cx = caar(sc->code);
-  zx = cdr(sc->code);
-  lx = s7_gensym(sc, symbol_name(cx));
-  closure_args(mac) = list_1(sc, lx);
-  
-  /* (define-macro (hi a b) `(+ ,a ,b)) becomes:
-   *   cx: hi
-   *   sc->code: (lambda ({hi}-14) (apply (lambda (a b) ({list} '+ a b)) (cdr {hi}-14)))
-   */
-  closure_body(mac) = list_1(sc, cons(sc, 
-				      sc->Apply,
-				      cons(sc, 
-					   cons(sc, 
-						((sc->op == OP_DEFINE_MACRO_STAR) || 
-						 (sc->op == OP_DEFINE_BACRO_STAR)) ? sc->LAMBDA_STAR : sc->LAMBDA,
-						cons(sc,                /* cdar(sc->code) is the parameter list */
-						     ((sc->op == OP_DEFINE_MACRO_STAR) || 
-						      (sc->op == OP_DEFINE_BACRO_STAR)) ? quotify(sc, cdar(sc->code)) : cdar(sc->code),
-						     zx)),
-					   list_1(sc, list_2(sc, sc->CDR, lx)))));
   sc->capture_env_counter++;
-  sc->code = cx; 
-  
-  if ((sc->op == OP_DEFINE_BACRO) ||
-      (sc->op == OP_DEFINE_BACRO_STAR))
-    set_type(mac, T_BACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS);
-  else
-    {
-      if (sc->op == OP_DEFINE_EXPANSION)
-	{
-	  /* perhaps define-expansion should be define-reader-macro but that collides with historical uses. 
-	   */
-	  set_type(mac, T_MACRO | T_EXPANSION | T_DONT_EVAL_ARGS | T_COPY_ARGS);
-	  set_type(sc->code, EXPANSION_TYPE);
-	}
-      else set_type(mac, T_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS); 
-    }
-  
+  sc->code = caar(sc->code);
+  if (sc->op == OP_DEFINE_EXPANSION)
+    set_type(sc->code, EXPANSION_TYPE);
+
   fixup_macro_overlay(sc, closure_body(mac));
   
   /* symbol? macro name has already been checked */
@@ -19889,7 +19867,7 @@ static s7_pointer g_make_string(s7_scheme *sc, s7_pointer args)
   return(make_empty_string(sc, (int)len, fill));
 }
 
-
+#if (!WITH_PURE_S7)
 static s7_pointer g_string_length(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_length "(string-length str) returns the length of the string str"
@@ -19902,7 +19880,7 @@ static s7_pointer g_string_length(s7_scheme *sc, s7_pointer args)
     }
   return(make_integer(sc, string_length(p)));
 }
-
+#endif
 
 static s7_pointer g_string_downcase(s7_scheme *sc, s7_pointer args)
 {
@@ -21076,7 +21054,7 @@ static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str, int len)
   return(result);
 }
 
-
+#if (!WITH_PURE_S7)
 static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_to_list "(string->list str start end) returns the elements of the string str in a list; (map values str)"
@@ -21112,6 +21090,7 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
   sc->w = sc->NIL;
   return(p);
 }
+#endif
 
 
 /* -------------------------------- bytevectors -------------------------------- 
@@ -23899,12 +23878,7 @@ static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer arg
   p = cadr(args);
   port_original_input_string(port) = car(args);
   push_stack(sc, OP_UNWIND_INPUT, sc->input_port, port);
-  if (is_any_macro(p))
-    {
-      push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
-      push_stack(sc, OP_APPLY, list_1(sc, list_2(sc, p, port)), p);
-    }
-  else push_stack(sc, OP_APPLY, list_1(sc, port), p);
+  push_stack(sc, OP_APPLY, list_1(sc, port), p);
   return(sc->F);
 }
 
@@ -23970,12 +23944,7 @@ static s7_pointer with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
   port_original_input_string(port) = car(args);
   push_stack(sc, OP_UNWIND_INPUT, old_input_port, port);
   p = cadr(args);
-  if (is_any_macro(p))
-    {
-      push_stack(sc, OP_EVAL_MACRO, sc->NIL, cdr(args));
-      push_stack(sc, OP_APPLY, list_1(sc, cdr(args)), p);
-    }
-  else push_stack(sc, OP_APPLY, sc->NIL, p);
+  push_stack(sc, OP_APPLY, sc->NIL, p);
   return(sc->F);
 }
 
@@ -25688,17 +25657,13 @@ static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
 static void write_macro_readably(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 {
   s7_pointer arglist, body, expr;
-  bool starred = false;
 
-  body = cadar(closure_body(obj));
-  arglist = cadr(body);
-  if ((car(body) == sc->LAMBDA_STAR) || (car(body) == sc->LAMBDA_STAR_UNCHECKED))
-    starred = true;
-  body = cddr(body);
+  body = closure_body(obj);
+  arglist = closure_args(obj);
 
   port_write_string(port)(sc, "(define-", 8, port);
-  port_write_string(port)(sc, (type(obj) == T_MACRO) ? "macro" : "bacro", 5, port); 
-  if (starred)
+  port_write_string(port)(sc, ((is_macro(obj)) || (is_macro_star(obj))) ? "macro" : "bacro", 5, port); 
+  if ((is_macro_star(obj)) || (is_bacro_star(obj)))
     port_write_character(port)(sc, '*', port);
   port_write_string(port)(sc, " (_m_", 5, port);
   if (is_symbol(arglist))
@@ -26126,12 +26091,14 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_MACRO:
+    case T_MACRO_STAR:
       if (use_write == USE_READABLE_WRITE)
 	write_macro_readably(sc, obj, port);
       else port_write_string(port)(sc, "#<macro>", 8, port);
       break;
 
     case T_BACRO:
+    case T_BACRO_STAR:
       if (use_write == USE_READABLE_WRITE)
 	write_macro_readably(sc, obj, port);
       else port_write_string(port)(sc, "#<bacro>", 8, port);
@@ -26506,12 +26473,7 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
 
   port = s7_open_output_string(sc);
   push_stack(sc, OP_GET_OUTPUT_STRING_1, sc->F, port);
-  if (is_any_macro(proc))                             /* (let () (define-macro (m p) `(write 123 ,p)) (call-with-output-string m)) */
-    {
-      push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
-      push_stack(sc, OP_APPLY, list_1(sc, list_2(sc, proc, port)), proc);
-    }
-  else push_stack(sc, OP_APPLY, list_1(sc, port), proc);
+  push_stack(sc, OP_APPLY, list_1(sc, port), proc);
   return(sc->F);
 }
 
@@ -26541,12 +26503,7 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
 
   port = s7_open_output_file(sc, string_value(file), "w");
   push_stack(sc, OP_UNWIND_OUTPUT, sc->F, port);
-  if (is_any_macro(proc))                             /* (let () (define-macro (m p) `(write 123 ,p)) (call-with-output-file "test" m)) */
-    {
-      push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
-      push_stack(sc, OP_APPLY, list_1(sc, list_2(sc, proc, port)), proc);
-    }
-  else push_stack(sc, OP_APPLY, list_1(sc, port), proc);
+  push_stack(sc, OP_APPLY, list_1(sc, port), proc);
   return(sc->F);
 }
 
@@ -26566,12 +26523,7 @@ static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
   sc->output_port = s7_open_output_string(sc);
   push_stack(sc, OP_GET_OUTPUT_STRING_1, old_output_port, sc->output_port);
 
-  if (is_any_macro(p))
-    {
-      push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
-      push_stack(sc, OP_APPLY, list_1(sc, args), p);
-    }
-  else push_stack(sc, OP_APPLY, sc->NIL, p);
+  push_stack(sc, OP_APPLY, sc->NIL, p);
   return(sc->F);
 }
 
@@ -26602,12 +26554,7 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
   sc->output_port = s7_open_output_file(sc, string_value(file), "w");
   push_stack(sc, OP_UNWIND_OUTPUT, old_output_port, sc->output_port);
 
-  if (is_any_macro(proc))
-    {
-      push_stack(sc, OP_EVAL_MACRO, sc->NIL, cdr(args));
-      push_stack(sc, OP_APPLY, list_1(sc, cdr(args)), proc);
-    }
-  else push_stack(sc, OP_APPLY, sc->NIL, proc);
+  push_stack(sc, OP_APPLY, sc->NIL, proc);
   return(sc->F);
 }
 
@@ -28466,6 +28413,23 @@ static s7_pointer copy_list(s7_scheme *sc, s7_pointer lst)
   for (p = cdr(lst), np = tp; is_pair(p); p = cdr(p), np = cdr(np))
     cdr(np) = cons(sc, car(p), sc->NIL);
   sc->y = sc->NIL;
+  return(tp);
+}
+
+
+static s7_pointer copy_list_with_arglist_error(s7_scheme *sc, s7_pointer lst)
+{
+  s7_pointer p, tp, np;
+  if (is_null(lst)) return(sc->NIL);
+  if (!is_pair(lst))
+    s7_error(sc, sc->SYNTAX_ERROR, list_2(sc, make_string_wrapper(sc, "stray dot?: ~S"), lst));
+  tp = cons(sc, car(lst), sc->NIL);
+  sc->y = tp;
+  for (p = cdr(lst), np = tp; is_pair(p); p = cdr(p), np = cdr(np))
+    cdr(np) = cons(sc, car(p), sc->NIL);
+  sc->y = sc->NIL;
+  if (!is_null(p))
+    s7_error(sc, sc->SYNTAX_ERROR, list_2(sc, make_string_wrapper(sc, "improper list of arguments: ~S"), lst));
   return(tp);
 }
 
@@ -31286,7 +31250,7 @@ s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
   return(result);
 }
 
-
+#if (!WITH_PURE_S7)
 static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
 {
   s7_Int i, start = 0, end;
@@ -31317,7 +31281,7 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
   sc->w = sc->NIL;
   return(p);
 }
-
+#endif
 
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill)
 {
@@ -31388,7 +31352,7 @@ static s7_pointer g_list_to_vector(s7_scheme *sc, s7_pointer args)
     }
   return(g_vector(sc, car(args)));
 }
-#endif
+
 
 static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args)
 {
@@ -31403,7 +31367,7 @@ static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args)
     }
   return(make_integer(sc, vector_length(vec)));
 }
-
+#endif
 
 static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_dims, s7_Int index)
 {
@@ -33013,7 +32977,7 @@ static s7_pointer g_is_hash_table(s7_scheme *sc, s7_pointer args)
   check_boolean_method(sc, is_hash_table, sc->IS_HASH_TABLE, args);
 }
 
-
+#if (!WITH_PURE_S7)
 static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_size "(hash-table-size obj) returns the size of the hash-table obj"
@@ -33024,7 +32988,7 @@ static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
     }
   return(make_integer(sc, hash_table_length(car(args))));
 }
-
+#endif
 
 static s7_pointer g_hash_table_entries(s7_scheme *sc, s7_pointer args)
 {
@@ -34201,14 +34165,14 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
     return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_SOURCE, p, make_string_wrapper(sc, "a scheme macro")));
 
   check_method(sc, p, sc->PROCEDURE_SOURCE, args);
-  if (is_any_closure(p) || is_macro(p) || is_bacro(p))
+  if ((is_any_closure(p)) || (is_macro(p)) || (is_macro_star(p)) || (is_bacro(p)) || (is_bacro_star(p)))
     {
       s7_pointer body;
       body = closure_body(p);
       if (is_safe_closure(body))
 	clear_safe_closure(body);
       return(append_in_place(sc, 
-			     list_2(sc, (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, closure_args(p)),
+			     list_2(sc, ((is_closure_star(p)) || (is_macro_star(p)) || (is_bacro_star(p))) ? sc->LAMBDA_STAR : sc->LAMBDA, closure_args(p)),
 			     body));
     }
 
@@ -34333,7 +34297,7 @@ s7_pointer s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc,
 
 bool s7_is_macro(s7_scheme *sc, s7_pointer x)
 {
-  return((is_macro(x)) || (is_bacro(x)) || (is_c_macro(x)));
+  return((is_macro(x)) || (is_macro_star(x)) || (is_bacro(x)) || (is_bacro_star(x)) || (is_c_macro(x)));
 }
 
 
@@ -35052,6 +35016,8 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
     {
     case T_MACRO:
     case T_BACRO:
+    case T_MACRO_STAR:
+    case T_BACRO_STAR:
       /* macros are closures internally */
     case T_CLOSURE:
     case T_CLOSURE_STAR:
@@ -35109,6 +35075,8 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
     {
     case T_MACRO:
     case T_BACRO:
+    case T_MACRO_STAR:
+    case T_BACRO_STAR:
     case T_CLOSURE:
     case T_CLOSURE_STAR:
       closure_setter(p) = setter;
@@ -35342,24 +35310,18 @@ s7_pointer s7_arity(s7_scheme *sc, s7_pointer x)
     case T_C_FUNCTION_STAR:
       return(s7_cons(sc, small_int(0), s7_make_integer(sc, c_function_all_args(x)))); /* should this be *2? */
 
+    case T_MACRO:
+    case T_BACRO:
     case T_CLOSURE:
       return(closure_arity_to_cons(sc, x, closure_args(x)));
 
+    case T_MACRO_STAR:
+    case T_BACRO_STAR:
     case T_CLOSURE_STAR:
       return(closure_star_arity_to_cons(sc, x, closure_args(x)));
 
     case T_C_MACRO:
       return(s7_cons(sc, s7_make_integer(sc, c_macro_required_args(x)), s7_make_integer(sc, c_macro_all_args(x))));
-
-    case T_MACRO:
-    case T_BACRO:
-      {
-	s7_pointer op;
-	op = cadar(closure_body(x));
-	if ((car(op) == sc->LAMBDA) || (car(op) == sc->LAMBDA_UNCHECKED))
-	  return(closure_arity_to_cons(sc, x, cadr(op)));
-	return(closure_star_arity_to_cons(sc, x, cadr(op)));
-      }
 
     case T_GOTO:
     case T_CONTINUATION:
@@ -35517,30 +35479,19 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
     case T_C_FUNCTION_STAR:
       return((int)c_function_all_args(x) >= args);
 
+    case T_MACRO:
+    case T_BACRO:
     case T_CLOSURE:
       return(closure_is_aritable(sc, x, closure_args(x), args));
 
+    case T_MACRO_STAR:
+    case T_BACRO_STAR:
     case T_CLOSURE_STAR:
       return(closure_star_is_aritable(sc, x, closure_args(x), args));
 
     case T_C_MACRO:
       return(((int)c_macro_required_args(x) <= args) &&
 	     ((int)c_macro_all_args(x) >= args));
-
-    case T_MACRO:
-    case T_BACRO:
-      {
-	s7_pointer op;
-	op = cadar(closure_body(x));
-	/* we need to look at the embedded lambda to choose between closure and closure_star 
-	 *   closure_body here is of the form: ((apply (lambda (a b) ...) (cdr {mac}-14)))
-	 *   so car is                          (apply (lambda (a b) ...) (cdr {mac}-14))
-	 *      cadr(car) is                           (lambda (a b) ...)
-	 */
-	if ((car(op) == sc->LAMBDA) || (car(op) == sc->LAMBDA_UNCHECKED))
-	  return(closure_is_aritable(sc, x, cadr(op), args));
-	return(closure_star_is_aritable(sc, x, cadr(op), args));
-      }
 
     case T_GOTO:
     case T_CONTINUATION:
@@ -36691,6 +36642,10 @@ static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, share
 	  return(false);
 	}
 
+    case T_MACRO:
+    case T_BACRO:
+    case T_MACRO_STAR:
+    case T_BACRO_STAR:
     case T_CLOSURE:
     case T_CLOSURE_STAR:
       if (type(x) != type(y))
@@ -36706,34 +36661,6 @@ static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, share
       return((s7_is_morally_equal(sc, closure_args(x), closure_args(y), ci)) &&
 	     (s7_is_morally_equal(sc, closure_let(x), closure_let(y), ci)) &&
 	     (s7_is_morally_equal(sc, closure_body(x), closure_body(y), ci)));
-
-    case T_MACRO:
-    case T_BACRO:
-      /* these are hard to check because the body has the gensymmed arg name
-       *
-       * args:   ({mac}-16) 
-       *         ({mac}-17)
-       * bodies: ((apply (lambda (a) ({list} '+ 1 a)) (cdr {mac}-16))) 
-       *         ((apply (lambda (a) ({list} '+ 1 a)) (cdr {mac}-17)))
-       * 
-       * the "args" and "body" are not relevant: we create these shells internally, so the true args are in the applied lambda
-       * so ignore args, and check (cadr (car body)) => (lambda (a) ({list} '+ 1 a))
-       *
-       * if the "ci" arg is omitted, this hangs:
-       *    (morally-equal? 
-       *      (let () 
-       *        (define-macro* (a_func (an_arg (lambda () #t))) 
-       *          `,an_arg) 
-       *        (a_func)) 
-       *      (let () 
-       *        (define-macro (a_func an_arg) 
-       *          `,an_arg) 
-       *        (a_func (lambda () #t))))
-       */
-      return((type(y) == type(x)) &&
-	     (s7_is_morally_equal(sc, closure_let(x), closure_let(y), ci)) &&
-	     (s7_is_morally_equal(sc, cadr(car(closure_body(x))), cadr(car(closure_body(y))), ci)));
-
     }
   return(false);
 }
@@ -38000,7 +37927,9 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
     case T_VECTOR:          return(vectors[article]);
     case T_INT_VECTOR:      return(int_vectors[article]);
     case T_FLOAT_VECTOR:    return(float_vectors[article]);
+    case T_MACRO_STAR:
     case T_MACRO:           return(macros[article]);
+    case T_BACRO_STAR:
     case T_BACRO:           return(bacros[article]);
     case T_CATCH:           return(catches[article]); /* are these 2 possible? */
     case T_DYNAMIC_WIND:    return(dynamic_winds[article]);
@@ -38245,22 +38174,12 @@ each a function of no arguments, guaranteeing that finish is called even if body
   if (dynamic_wind_in(p) != sc->F)
     {
       dynamic_wind_state(p) = DWIND_INIT;
-      if (is_any_macro(dynamic_wind_in(p)))
-	{
-	  push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
-	  push_stack(sc, OP_APPLY, list_1(sc, list_1(sc, dynamic_wind_in(p))), dynamic_wind_in(p));
-	}
-      else push_stack(sc, OP_APPLY, sc->NIL, dynamic_wind_in(p));
+      push_stack(sc, OP_APPLY, sc->NIL, dynamic_wind_in(p));
     }
   else
     {
       dynamic_wind_state(p) = DWIND_BODY;
-      if (is_any_macro(dynamic_wind_body(p)))
-	{
-	  push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
-	  push_stack(sc, OP_APPLY, list_1(sc, list_1(sc, dynamic_wind_body(p))), dynamic_wind_body(p));
-	}
-      else push_stack(sc, OP_APPLY, sc->NIL, dynamic_wind_body(p));
+      push_stack(sc, OP_APPLY, sc->NIL, dynamic_wind_body(p));
     }
   return(sc->F);
 }
@@ -38306,12 +38225,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
     }
   else 
     {
-      if (is_any_macro(proc))
-	{
-	  push_stack(sc, OP_EVAL_MACRO, sc->NIL, args);
-	  push_stack(sc, OP_APPLY, list_1(sc, list_1(sc, proc)), proc);
-	}
-      else push_stack(sc, OP_APPLY, sc->NIL, proc);
+      push_stack(sc, OP_APPLY, sc->NIL, proc);
     }
   return(sc->F);
 }
@@ -38487,12 +38401,10 @@ static bool catch_2_function(s7_scheme *sc, int i, s7_pointer type, s7_pointer i
       sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
       sc->code = catch_handler(x);
       
-      car(sc->T3_1) = sc->code;
-      car(sc->T3_2) = type;
-      car(sc->T3_3) = info;
-      sc->args = list_1(sc, sc->T3_1);
+      car(sc->T2_1) = type;
+      car(sc->T2_2) = info;
+      sc->args = sc->T2_1; /* copied in op_apply? */
       
-      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
       sc->op = OP_APPLY;
       return(true);
     }
@@ -38619,12 +38531,7 @@ static bool catch_dw_function(s7_scheme *sc, int i, s7_pointer type, s7_pointer 
 	{
 	  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
 	  sc->code = dynamic_wind_out(x);
-	  if (is_any_macro(sc->code))
-	    {
-	      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
-	      sc->args = list_1(sc, list_1(sc, sc->code));
-	    }
-	  else sc->args = sc->NIL;
+	  sc->args = sc->NIL;
 	  eval(sc, OP_APPLY);                  /* I guess this means no call/cc out of the exit thunk in an error-catching context */
 	}
     }
@@ -39514,11 +39421,6 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 	}
     }
 
-  if (is_any_macro(sc->code))                   /* (apply mac '(3)) -> (apply mac '((mac 3))) */
-    {
-      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
-      sc->args = list_1(sc, cons(sc, sc->code, sc->args));
-    }
   push_stack(sc, OP_APPLY, sc->args, sc->code);
   return(sc->NIL);
 }
@@ -50530,6 +50432,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
    */
 
  START_WITHOUT_POP_STACK:
+  /* fprintf(stderr, "op: %s\n", real_op_names[sc->op]); */
   switch (sc->op) 
     {
     case OP_NO_OP:
@@ -50973,19 +50876,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->args = sc->x;
 	sc->x = sc->NIL;
 
-	if (is_any_macro(sc->code))
-	  {
-	    /* (let ((lst '(1 2 3))) 
-	     *   (define-macro (hiho a) `(+ 1 ,a)) 
-	     *   (map hiho lst)) 
-	     * -> '(2 3 4)
-	     * quasiquote is a C macro (T_C_MACRO) so is_macro omits it, as well as bacros
-	     */
-	    push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
-	    car(sc->temp_cell_1) = sc->code;
-	    cdr(sc->temp_cell_1) = sc->args;
-	    sc->args = sc->temp_cell;
-	  }
 	if (needs_copied_args(sc->code))
 	  sc->args = copy_list(sc, sc->args);
 	goto APPLY;
@@ -51009,15 +50899,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	push_stack(sc, OP_FOR_EACH, sc->args, sc->code);
 	sc->args = saved_args;
-
-	if (is_any_macro(sc->code))
-	  {
-	    push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
-	    /* we can use a temp here because the arg list will be copied in OP_FOR_EACH */
-	    car(sc->temp_cell_1) = sc->code;
-	    cdr(sc->temp_cell_1) = sc->args;
-	    sc->args = sc->temp_cell;
-	  }
 
 	if (needs_copied_args(sc->code))
 	  sc->args = copy_list(sc, sc->args);
@@ -53168,6 +53049,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   at this point, it's sc->code we care about; sc->args is not relevant.
        */
       /* fprintf(stderr, "    eval: %s\n", DISPLAY_80(sc->code)); */
+
       if (typesflag(sc->code) == SYNTACTIC_PAIR)  /* xor is not faster here */
 	{
 	  sc->cur_code = sc->code;                /* in case an error occurs, this helps tell us where we are */
@@ -54949,11 +54831,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (needs_copied_args(sc->code))
 		{
 		  sc->args = copy_list(sc, sc->args);
-		  if (is_any_macro(sc->code))                   /* (apply mac '(3)) -> (apply mac '((mac 3))) */
-		    {                                           /* these always copy args (except c_macros, sigh) */
-		      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
-		      sc->args = list_1(sc, cons(sc, sc->code, sc->args));
-		    }
 		}
 	      goto APPLY;
 
@@ -57264,16 +57141,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_any_macro(sc->value))
 	    {    
 	      /* macro expansion */
-	      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->code); /* sc->code is here for (vital) GC protection */
-	      /* 
-	       * pass a list (mac . args) to the macro expander
-	       */
-	      sc->args = cons(sc, sc->value, sc->code);
-	      sc->args = list_1(sc, sc->args); /* two-step to GC protect cons, then list_1 of it */
+	      sc->args = copy_list_with_arglist_error(sc, sc->code);
 	      sc->code = sc->value;
 	      goto APPLY;                      /* not UNSAFE_CLOSURE because it might be a bacro */
 	    }
-	  
+
 	  /* (define progn begin)
 	   * (progn (display "hi") (+ 1 23))
 	   */
@@ -57834,6 +57706,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     APPLY:
       /* fprintf(stderr, "apply %s to %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
+
       switch (type(sc->code))
 	{
 	case T_C_FUNCTION: 	                    /* -------- C-based function -------- */
@@ -57885,18 +57758,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_C_MACRO: 	                    /* -------- C-based macro -------- */
 	  {
 	    int len;
-	    /* fprintf(stderr, "args: %s\n", DISPLAY(sc->args)); */
-	    if (is_pair(car(sc->args)))            /* normally args is ((mac-name ...)) */
-	      {                                    /*   but in a case like (call-with-exit quasiquote), args is (#<goto>) */
-		if (!s7_is_list(sc, cdar(sc->args)))  /* (quasiquote . 1) */
-		  eval_error(sc, "improper list of arguments: ~A", car(sc->args));
-		sc->args = cdar(sc->args);         
-	      }
-	    /* otherwise sc->args is already ok -- I think this can only be triggered by quasiquote */
-	    
 	    len = s7_list_length(sc, sc->args);
-	    if (len <= 0)                          /* (quasiquote 0 . 1) */
-	      return(s7_error(sc, sc->SYNTAX_ERROR, list_3(sc, make_string_wrapper(sc, "~A: improper list of arguments: ~S"), sc->code, sc->args)));
 	    
 	    if (len < (int)c_macro_required_args(sc->code))
 	      return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
@@ -57904,11 +57766,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if ((int)c_macro_all_args(sc->code) < len)
 	      return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
 
+	    push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
 	    sc->value = c_macro_call(sc->code)(sc, sc->args);
 	    goto START;
 	  }
 	  
+	case T_MACRO:
+	  if (!is_expansion(sc->code))
+	    push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
+	  NEW_FRAME(sc, closure_let(sc->code), sc->envir);
+	  goto BACRO;
+	  
 	case T_BACRO:                                /* -------- bacro -------- */
+	  push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
 	  NEW_FRAME(sc, sc->envir, sc->envir);       /* like let* -- we'll be adding macro args, so might as well sequester things here */
 	  goto BACRO;
 	  /* another choice is to do expansion and evaluation in the definition env,
@@ -57922,10 +57792,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_CLOSURE:                              /* -------- normal function (lambda), or macro -------- */
 	  /* not often safe closure here, and very confusing if so to get identity macro args handled correctly */
 	  CHECK_STACK_SIZE(sc);
-	  
-	case T_MACRO:
 	  NEW_FRAME(sc, closure_let(sc->code), sc->envir);
-	  
+
 	BACRO:
 	  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
 	  
@@ -57937,6 +57805,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * hangs -- this is equivalent to (eval <circular-list>) which also hangs.
 	   */
 	  
+	  /* fprintf(stderr, "body: %s, args: %s\n", DISPLAY(closure_body(sc->code)), DISPLAY(sc->args)); */
 	  {
 	    s7_pointer x, z, e;
 	    unsigned long long int id;
@@ -57979,16 +57848,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->temp6 = sc->NIL;
 	      }
 	  }
-	  
 	  sc->code = closure_body(sc->code);
 	  goto BEGIN1;
+
 	  
+	case T_MACRO_STAR:
+	  push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
+	  NEW_FRAME(sc, closure_let(sc->code), sc->envir);
+	  goto MACRO_STAR;
+	  
+	case T_BACRO_STAR:  
+	  push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
+	  NEW_FRAME(sc, sc->envir, sc->envir); 
+	  goto MACRO_STAR;
+
 	case T_CLOSURE_STAR:	                  /* -------- define* (lambda*) -------- */
 	  { 
 	    s7_pointer z, top, nxt;
 	    CHECK_STACK_SIZE(sc);
 	    sc->envir = new_frame_in_env(sc, closure_let(sc->code)); 
-	    
+
+	  MACRO_STAR:	    
 	    /* to check for and fixup unset args from defaults, we need to traverse the slots in left-to-right order
 	     *   but they are stored backwards in the environment, so use pending_value as a back-pointer.
 	     * We have to build the environment before calling lambda_star_set_args because keywords can
@@ -58012,7 +57892,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    else
 		      {
 			s7_pointer y;
-			/* y = add_slot(sc, car(car_z), sc->UNDEFINED); */
 			ADD_SLOT(sc->envir, car(car_z), sc->UNDEFINED);
 			y = let_slots(sc->envir);
 			slot_expression(y) = cadr(car_z);
@@ -58060,35 +57939,39 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    if (slot_value(z) == sc->UNDEFINED)
 		      {
-			s7_pointer val;
-			val = slot_expression(z);
-			if (is_symbol(val))
+			if (is_closure_star(sc->code))
 			  {
-			    slot_set_value(z, find_symbol_checked(sc, val));
-			    if (slot_value(z) == sc->UNDEFINED)
-			      return(eval_error(sc, "lambda* defaults: ~A is unbound", slot_symbol(z)));
-			    /* but #f is default if no expr, so there's some inconsistency here */
-			  }
-			else
-			  {
-			    if (is_pair(val))
+			    s7_pointer val;
+			    val = slot_expression(z);
+			    if (is_symbol(val))
 			      {
-				if (car(val) == sc->QUOTE)
-				  {
-				    if ((!is_pair(cdr(val))) ||      /* (lambda* ((a (quote))) a) or (lambda* ((a (quote 1 1))) a) etc */
-					(is_pair(cddr(val))))
-				      return(eval_error(sc, "lambda* default: ~A is messed up", val));
-				    slot_set_value(z, cadr(val));
-				  }
-				else
-				  {
-				    push_stack(sc, OP_LAMBDA_STAR_DEFAULT, sc->args, sc->code);
-				    sc->code = val;
-				    goto EVAL; 
-				  }
+				slot_set_value(z, find_symbol_checked(sc, val));
+				if (slot_value(z) == sc->UNDEFINED)
+				  return(eval_error(sc, "lambda* defaults: ~A is unbound", slot_symbol(z)));
+				/* but #f is default if no expr, so there's some inconsistency here */
 			      }
-			    else slot_set_value(z, val);
+			    else
+			      {
+				if (is_pair(val))
+				  {
+				    if (car(val) == sc->QUOTE)
+				      {
+					if ((!is_pair(cdr(val))) ||      /* (lambda* ((a (quote))) a) or (lambda* ((a (quote 1 1))) a) etc */
+					    (is_pair(cddr(val))))
+					  return(eval_error(sc, "lambda* default: ~A is messed up", val));
+					slot_set_value(z, cadr(val));
+				      }
+				    else
+				      {
+					push_stack(sc, OP_LAMBDA_STAR_DEFAULT, sc->args, sc->code);
+					sc->code = val;
+					goto EVAL; 
+				      }
+				  }
+				else slot_set_value(z, val);
+			      }
 			  }
+			else slot_set_value(z, slot_expression(z));
 		      }
 		    sc->args = slot_pending_value(z);
 		    goto LAMBDA_STAR_DEFAULT;
@@ -58854,10 +58737,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		if (is_any_macro(c_function_setter(obj)))
 		  {
-		    push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
-		    if (is_null(cdar(sc->code)))
-		      sc->args = list_1(sc, cons(sc, c_function_setter(obj), cdr(sc->code)));
-		    else sc->args = list_1(sc, cons(sc, c_function_setter(obj), s7_append(sc, cdar(sc->code), cdr(sc->code))));
+		    sc->args = list_2(sc, arg, value);
 		    sc->code = c_function_setter(obj);
 		    goto APPLY;
 		  }
@@ -58867,6 +58747,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	  case T_MACRO:
 	  case T_BACRO:
+	  case T_MACRO_STAR:
+	  case T_BACRO_STAR:
 	  case T_CLOSURE:
 	  case T_CLOSURE_STAR:
 	    if (is_procedure(closure_setter(obj)))
@@ -58888,10 +58770,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		if (is_any_macro(closure_setter(obj)))
 		  {
-		    push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
-		    if (is_null(cdar(sc->code)))
-		      sc->args = list_1(sc, cons(sc, closure_setter(obj), cdr(sc->code)));
-		    else sc->args = list_1(sc, cons(sc, closure_setter(obj), s7_append(sc, cdar(sc->code), cdr(sc->code))));
+		    sc->args = list_2(sc, arg, value);
 		    sc->code = closure_setter(obj);
 		    goto APPLY;
 		  }
@@ -59823,10 +59702,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  if (is_any_macro(c_function_setter(cx)))
 		    {
-		      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
 		      if (is_null(cdar(sc->code)))
-			sc->args = list_1(sc, cons(sc, c_function_setter(cx), cdr(sc->code)));
-		      else sc->args = list_1(sc, cons(sc, c_function_setter(cx), s7_append(sc, cdar(sc->code), cdr(sc->code))));
+			sc->args = copy_list(sc, cdr(sc->code));
+		      else sc->args = s7_append(sc, cdar(sc->code), cdr(sc->code));
 		      sc->code = c_function_setter(cx);
 		      goto APPLY;
 		    }
@@ -59836,6 +59714,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case T_MACRO:
 	    case T_BACRO:
+	    case T_MACRO_STAR:
+	    case T_BACRO_STAR:
 	    case T_CLOSURE:
 	    case T_CLOSURE_STAR:
 	      if (is_procedure(closure_setter(cx))) /* appears to be caar_code */
@@ -59860,10 +59740,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  if (is_any_macro(closure_setter(cx)))
 		    {
-		      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
 		      if (is_null(cdar(sc->code)))
-			sc->args = list_1(sc, cons(sc, closure_setter(cx), cdr(sc->code)));
-		      else sc->args = list_1(sc, cons(sc, closure_setter(cx), s7_append(sc, cdar(sc->code), cdr(sc->code))));
+			sc->args = copy_list(sc, cdr(sc->code));
+		      else sc->args = s7_append(sc, cdar(sc->code), cdr(sc->code));
 		      sc->code = closure_setter(cx);
 		      goto APPLY;
 		    }
@@ -59930,9 +59809,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (is_any_macro(func))
 		      {
 			push_stack(sc, OP_SET_WITH_ACCESSOR, sc->args, lx); /* args only for error (see below) */
-			sc->args = list_1(sc, cons(sc, func, list_2(sc, sc->code, sc->value)));
+			sc->args = list_2(sc, sc->code, sc->value);
 			sc->code = func;
-			push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->args);
 			goto APPLY;
 		      }
 		  }
@@ -62108,12 +61986,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  dynamic_wind_state(sc->code) = DWIND_BODY;
 	  push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, sc->code);
 	  sc->code = dynamic_wind_body(sc->code);
-	  if (is_any_macro(sc->code))
-	    {
-	      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
-	      sc->args = list_1(sc, list_1(sc, sc->code));
-	    }
-	  else sc->args = sc->NIL;
+	  sc->args = sc->NIL;
 	  goto APPLY;
 	}
       else
@@ -62125,12 +61998,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  push_stack(sc, OP_DYNAMIC_WIND, sc->value, sc->code);
 		  sc->code = dynamic_wind_out(sc->code);
-		  if (is_any_macro(sc->code))
-		    {
-		      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
-		      sc->args = list_1(sc, list_1(sc, sc->code));
-		    }
-		  else sc->args = sc->NIL;
+		  sc->args = sc->NIL;
 		  goto APPLY;
 		}
 	      else
@@ -62433,7 +62301,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    {
 		      push_stack(sc, OP_EXPANSION, sc->NIL, sc->NIL);
 		      sc->code = slot_value(find_symbol(sc, car(sc->value)));
-		      sc->args = list_1(sc, sc->value); 
+		      sc->args = copy_list(sc, cdr(sc->value));
 		      goto APPLY;
 		    }
 		}
@@ -68406,7 +68274,6 @@ s7_scheme *s7_init(void)
   
   sc->IS_STRING =             s7_define_safe_function(sc, "string?",                 g_is_string,              1, 0, false, H_is_string);
   sc->MAKE_STRING =           s7_define_safe_function(sc, "make-string",             g_make_string,            1, 1, false, H_make_string);
-  sc->STRING_LENGTH =         s7_define_integer_function(sc, "string-length",        g_string_length,          1, 0, false, H_string_length);
   sc->STRING_REF =            s7_define_character_function(sc, "string-ref",         g_string_ref,             2, 0, false, H_string_ref);
   sc->STRING_SET =            s7_define_safe_function(sc, "string-set!",             g_string_set,             3, 0, false, H_string_set);
   sc->STRING_EQ =             s7_define_safe_function(sc, "string=?",                g_strings_are_equal,      2, 0, true,  H_strings_are_equal);
@@ -68423,13 +68290,14 @@ s7_scheme *s7_init(void)
   sc->STRING_COPY =           s7_define_safe_function(sc, "string-copy",             g_string_copy,            1, 0, false, H_string_copy);
   sc->STRING_FILL =           s7_define_character_function(sc, "string-fill!",       g_string_fill,            2, 2, false, H_string_fill);
   sc->LIST_TO_STRING =        s7_define_safe_function(sc, "list->string",            g_list_to_string,         1, 0, false, H_list_to_string);
+  sc->STRING_LENGTH =         s7_define_integer_function(sc, "string-length",        g_string_length,          1, 0, false, H_string_length);
+  sc->STRING_TO_LIST =        s7_define_safe_function(sc, "string->list",            g_string_to_list,         1, 2, false, H_string_to_list);
 #endif  
   sc->STRING_DOWNCASE =       s7_define_safe_function(sc, "string-downcase",         g_string_downcase,        1, 0, false, H_string_downcase);
   sc->STRING_UPCASE =         s7_define_safe_function(sc, "string-upcase",           g_string_upcase,          1, 0, false, H_string_upcase);
   sc->STRING_APPEND =         s7_define_safe_function(sc, "string-append",           g_string_append,          0, 0, true,  H_string_append);
   sc->SUBSTRING =             s7_define_safe_function(sc, "substring",               g_substring,              2, 1, false, H_substring);
   sc->STRING =                s7_define_safe_function(sc, "string",                  g_string,                 0, 0, true,  H_string);
-  sc->STRING_TO_LIST =        s7_define_safe_function(sc, "string->list",            g_string_to_list,         1, 2, false, H_string_to_list);
   sc->OBJECT_TO_STRING =      s7_define_safe_function(sc, "object->string",          g_object_to_string,       1, 1, false, H_object_to_string);
   sc->FORMAT =                s7_define_safe_function(sc, "format",                  g_format,                 1, 0, true,  H_format);
   /* this was unsafe, but was that due to the (ill-advised) use of temp_call_2 in the arg lists?
@@ -68494,17 +68362,17 @@ s7_scheme *s7_init(void)
   sc->REVERSEB =              s7_define_safe_function(sc, "reverse!",                g_reverse_in_place,       1, 0, false, H_reverse_in_place); /* same 8-9-14 */
   sc->SORT =                  s7_define_function(sc,      "sort!",                   g_sort,                   2, 0, false, H_sort);
 
-  sc->VECTOR_TO_LIST =        s7_define_safe_function(sc, "vector->list",            g_vector_to_list,         1, 2, false, H_vector_to_list);
   sc->IS_VECTOR =             s7_define_safe_function(sc, "vector?",                 g_is_vector,              1, 0, false, H_is_vector);
   sc->VECTOR_APPEND =         s7_define_safe_function(sc, "vector-append",           g_vector_append,          0, 0, true,  H_vector_append);
 #if (!WITH_PURE_S7)
   sc->LIST_TO_VECTOR =        s7_define_safe_function(sc, "list->vector",            g_list_to_vector,         1, 0, false, H_list_to_vector);
   sc->VECTOR_FILL =           s7_define_safe_function(sc, "vector-fill!",            g_vector_fill,            2, 2, false, H_vector_fill);
+  sc->VECTOR_LENGTH =         s7_define_integer_function(sc, "vector-length",        g_vector_length,          1, 0, false, H_vector_length);
+  sc->VECTOR_TO_LIST =        s7_define_safe_function(sc, "vector->list",            g_vector_to_list,         1, 2, false, H_vector_to_list);
 #else
   sc->VECTOR_FILL = sc->FILL;
   sc->STRING_FILL = sc->FILL;
 #endif
-  sc->VECTOR_LENGTH =         s7_define_integer_function(sc, "vector-length",        g_vector_length,          1, 0, false, H_vector_length);
   sc->VECTOR_REF =            s7_define_safe_function(sc, "vector-ref",              g_vector_ref,             2, 0, true,  H_vector_ref);
   sc->VECTOR_SET =            s7_define_safe_function(sc, "vector-set!",             g_vector_set,             3, 0, true,  H_vector_set);
   sc->VECTOR_DIMENSIONS =     s7_define_safe_function(sc, "vector-dimensions",       g_vector_dimensions,      1, 0, false, H_vector_dimensions);
@@ -68533,7 +68401,9 @@ s7_scheme *s7_init(void)
   sc->MAKE_HASH_TABLE =       s7_define_safe_function(sc, "make-hash-table",         g_make_hash_table,        0, 2, false, H_make_hash_table);
   sc->HASH_TABLE_REF =        s7_define_safe_function(sc, "hash-table-ref",          g_hash_table_ref,         2, 0, true,  H_hash_table_ref);
   sc->HASH_TABLE_SET =        s7_define_safe_function(sc, "hash-table-set!",         g_hash_table_set,         3, 0, false, H_hash_table_set);
+#if (!WITH_PURE_S7)
   sc->HASH_TABLE_SIZE =       s7_define_integer_function(sc, "hash-table-size",      g_hash_table_size,        1, 0, false, H_hash_table_size);
+#endif
   sc->HASH_TABLE_ENTRIES =    s7_define_integer_function(sc, "hash-table-entries",   g_hash_table_entries,     1, 0, false, H_hash_table_entries);
                               s7_define_safe_function(sc, "hash-table-index",        g_hash_table_index,       1, 0, false, "an experiment");
 
@@ -68832,7 +68702,7 @@ s7_scheme *s7_init(void)
    *     (let () (define-macro (hi a) `(+ ,a 1)) (macroexpand (hi 2)))
    *   we could use a gensym in place of __mac__
    */
-  s7_eval_c_string(sc, "(define-bacro (macroexpand __mac__) `(,(procedure-source (car __mac__)) ',__mac__))");
+  s7_eval_c_string(sc, "(define-bacro (macroexpand __mac__) `(,(procedure-source (car __mac__)) ',@(cdr __mac__)))");
   
   /* quasiquote
    */
@@ -69146,12 +69016,12 @@ int main(int argc, char **argv)
 /* --------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4
- * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1180
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1140
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3019
- * lg             |      |      | 6547 6497 6494 6235 6233
- * t137           |      |      | 11.0           5031 5006
- * t455|6     265 |   89 |  9   |       8.4 8045 7482 7488
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1149
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1142
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3015
+ * lg             |      |      | 6547 6497 6494 6235 6234
+ * t137           |      |      | 11.0           5031 5028
+ * t455|6     265 |   89 |  9   |       8.4 8045 7482 7542
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.6
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 23.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 34.4
@@ -69162,7 +69032,6 @@ int main(int argc, char **argv)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers? (useful in object->string too)
  * cyclic-seq in rest of full-*
- * ancient macro layout modernized
  * temp funcs need a way to access the direct value
  *
  * need to check new openGL for API changes (GL_VERSION?)
@@ -69191,11 +69060,8 @@ int main(int argc, char **argv)
  * inexact/pure s7: (define exact? rational?) (define (inexact? x) (not (rational? x))) (define inexact->exact round) (define (exact->inexact x) (* x 1.0))
  *    also get rid of #i and #e?
  *    perhaps current-error-port -> *error-port*
- *    remove *-length and the various converters to and from lists, sequence->list could be (map values sequence)
- *       string-length vector-length hash-table-size
- *       string->list vector->list [let->list random-state->list]
- *    are the indices in string|vector->list an r7rs addition?
+ *    perhaps remove let->list: (reverse! (map values e)), random-state->list
  *
  * c_object_t make-iterator support -- why not pass an env and fill in from that?
- * test fill fade
+ * add tests to complete is_any_macro blocks in s7test
  */

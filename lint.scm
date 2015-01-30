@@ -126,7 +126,7 @@
     
     (define (non-null-vector? x)
       (and (vector? x)
-	   (> (vector-length x) 0)))
+	   (> (length x) 0)))
     
     (define (port? p)
       (or (input-port? p)

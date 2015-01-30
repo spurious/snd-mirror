@@ -2,10 +2,8 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 05/02/18 10:18:34
-# Changed: 14/12/04 01:44:26
+# Changed: 15/01/30 02:10:52
 
-# Commentary:
-#
 # Tags: FIXME - something is wrong
 #       XXX   - info marker
 #
@@ -3002,8 +3000,8 @@ def test_04_00
       "set_transform_normalization(%s)", val_sym)
   end
   #
-  ind = new_sound("fmv.snd",
-    Mus_next, Mus_bshort, 22050, 1, "set_samples test", 100)
+  ind = new_sound("fmv.snd", 1, 22050, Mus_bshort, Mus_next,
+                  "set_samples test", 100)
   set_samples(10, 3, Vct.new(3, 0.1))
   snd_test_neq(channel2vct(0, 20, ind, 0),
     vct(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.1, 0.1, 0.1, 0, 0, 0, 0, 0, 0, 0),
@@ -3178,7 +3176,8 @@ def test_04_00
   end
   #
   tag = Snd.catch do
-    save_sound_as("test.snd", ob, :header_type, Mus_aifc, :sample_type, Mus_bdouble)
+    save_sound_as("test.snd", ob,
+                  :header_type, Mus_aifc, :sample_type, Mus_bdouble)
   end
   if tag.first == :cannot_save
     snd_display("save_sound_as test.snd write trouble: %s", tag)
@@ -3209,7 +3208,9 @@ def test_04_00
     string + " [written by me]"
   end
   save_sound_as(:file, "test.snd",
-    :sound, ob, :header_type, Mus_riff, :sample_type, Mus_lfloat)
+                :sound, ob,
+                :header_type, Mus_riff,
+                :sample_type, Mus_lfloat)
   $output_comment_hook.reset_hook!
   ab = open_sound("test.snd")
   check_it.call(ab, Mus_riff, Mus_lfloat)
@@ -3224,7 +3225,8 @@ def test_04_00
     check_it.call(ab, type, fmt)
     close_sound(ab)
   end
-  save_sound_as("test.snd", ob, :header_type, Mus_next, :sample_type, Mus_bshort)
+  save_sound_as("test.snd", ob,
+                :header_type, Mus_next, :sample_type, Mus_bshort)
   ab = open_sound("test.snd")
   check_it.call(ab, Mus_next, Mus_bshort)
   $update_hook.reset_hook!
@@ -3271,12 +3273,14 @@ def test_04_00
   snd_test_neq(srate(ab), 12345, "set_srate")
   close_sound(ab)
   #
-  save_sound_as("test.snd", ob, :header_type, Mus_next, :sample_type, Mus_bfloat)
+  save_sound_as("test.snd", ob,
+                :header_type, Mus_next, :sample_type, Mus_bfloat)
   ab = open_sound("test.snd")
   check_it.call(ab, Mus_next, Mus_bfloat)
   close_sound(ab)
   #
-  save_sound_as("test.snd", ob, :header_type, Mus_next, :sample_type, Mus_bshort)
+  save_sound_as("test.snd", ob,
+                :header_type, Mus_next, :sample_type, Mus_bshort)
   close_sound(ob)
   ab = open_sound("test.snd")
   set_sample_type(Mus_lshort)
@@ -3473,7 +3477,8 @@ def test_04_03
   ind = view_sound("oboe.snd")
   set_clipping(false)
   scale_channel(10.0)
-  save_sound_as("test.snd", ind, :header_type, Mus_next, :sample_type, Mus_bfloat)
+  save_sound_as("test.snd", ind,
+                :header_type, Mus_next, :sample_type, Mus_bfloat)
   undo_edit(1, ind, 0)
   ind1 = open_sound("test.snd")
   snd_test_neq(maxamp(ind1, 0), 10.0 * maxamp(ind, 0), "clipping 0")
@@ -3482,7 +3487,8 @@ def test_04_03
   #
   set_clipping(true)
   map_channel(lambda do |y| y * 10.0 end, 0, framples(), ind, 0)
-  save_sound_as("test.snd", ind, :header_type, Mus_next, :sample_type, Mus_bfloat)
+  save_sound_as("test.snd", ind,
+                :header_type, Mus_next, :sample_type, Mus_bfloat)
   undo_edit(1, ind, 0)
   ind1 = open_sound("test.snd")
   snd_test_neq(maxamp(ind1, 0), 1.0, "clipping 1")
@@ -3492,7 +3498,8 @@ def test_04_03
   set_clipping(false)
   mx = maxamp(ind)
   map_channel(lambda do |y| y + (1.001 - mx) end, 0, framples(), ind, 0)
-  save_sound_as("test.snd", ind, :header_type, Mus_next, :sample_type, Mus_bshort)
+  save_sound_as("test.snd", ind,
+                :header_type, Mus_next, :sample_type, Mus_bfloat)
   ind1 = open_sound("test.snd")
   unless res = scan_channel(lambda do |y| y < 0.0 end)
     snd_display("clipping 2: %s?", res)
@@ -3501,7 +3508,8 @@ def test_04_03
   delete_file("test.snd")
   #
   set_clipping(true)
-  save_sound_as("test.snd", ind, :header_type, Mus_next, :sample_type, Mus_bshort)
+  save_sound_as("test.snd", ind,
+                :header_type, Mus_next, :sample_type, Mus_bshort)
   ind1 = open_sound("test.snd")
   if res = scan_channel(lambda do |y| y < 0.0 end)
     snd_display("clipping 3: %s?", res)
@@ -3884,7 +3892,9 @@ def test_04_06
   reg = select_all
   [[:Mus_next, :Mus_l24int],
    [:Mus_aifc, :Mus_l24int]].each do |ht, df|
-    save_selection("tmp1.snd", 44100, Module.const_get(df), Module.const_get(ht))
+    save_selection("tmp1.snd", 44100,
+                   Module.const_get(df),
+                   Module.const_get(ht))
     ind1 = open_sound("tmp1.snd")
     x = -0.5
     incr = 1.0 / framples()
@@ -7491,7 +7501,7 @@ def test_05_11
   close_sound(ind)
   delete_file("fmv.snd")
   # 
-  ind = new_sound("fmv.snd", 1, 22050, Mus_bshort, Mus_ircam, 
+  ind = new_sound("fmv.snd", 1, 22050, Mus_bshort, Mus_ircam,
                   "this is a comment")
   v0 = make_vct(128)
   v0[64] = 0.5
@@ -9939,7 +9949,7 @@ def test_05_26
   end
   close_sound(ind)
   # offset channel
-  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next, 
+  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next,
                   "offset tests", 10)
   offset_channel(0.1)
   snd_test_neq(channel2vct(0, 10), Vct.new(10, 0.1), "offset_channel (0.1)")
@@ -9965,7 +9975,7 @@ def test_05_26
                    0.345, 0.206, 0.095, 0.024), "sine_ramp 1 0")
   close_sound(ind)
   # 
-  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next, 
+  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next,
                   "sine_env tests", 100)
   # map_channel($init_channel)
   map_channel(lambda do |y| 1.0 end)
@@ -18827,7 +18837,8 @@ def test_08_18
   end
   close_sound(ind)
   #
-  nind = new_sound("fmv.snd", 1, 22050, Mus_bshort, Mus_aifc, "this is a comment")
+  nind = new_sound("fmv.snd", 1, 22050, Mus_bshort, Mus_aifc,
+                   "this is a comment")
   with_time("fm_violin_1(0, 1, 440, 0.1)") do fm_violin_1(0, 1, 440, 0.1) end
   play(nind, :wait, true)
   save_sound(nind)
@@ -18889,7 +18900,8 @@ def test_08_18
 end
 
 def test_08_19
-  nind = new_sound("fmv.snd", 1, 22050, Mus_bshort, Mus_nist, "this is a comment")
+  nind = new_sound("fmv.snd", 1, 22050, Mus_bshort, Mus_nist,
+                   "this is a comment")
   set_sample(0, 1.0, nind)
   start_progress_report(nind)
   convolve_with("oboe.snd")
@@ -18923,7 +18935,8 @@ def test_08_19
   revert_sound(nind)
   close_sound(nind)
   # 
-  nind = new_sound("fmv.snd", 1, 22050, Mus_lshort, Mus_riff, "this is a comment", 22050)
+  nind = new_sound("fmv.snd", 1, 22050, Mus_lshort, Mus_riff,
+                   "this is a comment", 22050)
   if framples(nind) != 22050
     snd_display("new_sound initial_length: %s?", framples(nind))
   end
@@ -20592,8 +20605,10 @@ def data_max1(beg, fin, snd, chn)
 end
 
 def test_10_00
-  ind0 = new_sound("fmv.snd",  2, 22050, Mus_bshort, Mus_aifc, "this is a comment")
-  ind1 = new_sound("fmv1.snd", 1, 22050, Mus_bshort, Mus_aifc, "this is a comment")
+  ind0 = new_sound("fmv.snd", 2, 22050, Mus_bshort, Mus_aifc,
+                   "this is a comment")
+  ind1 = new_sound("fmv1.snd", 1, 22050, Mus_bshort, Mus_aifc,
+                   "this is a comment")
   v0 = make_array(10, 1.0)
   set_sync(123, ind0)
   set_sync(123, ind1)
@@ -20657,7 +20672,8 @@ def test_10_00
   close_sound(ind0)
   close_sound(ind1)
   #
-  ind0 = new_sound("fmv.snd", 1, 22050, Mus_bshort, Mus_aifc, "this is a comment")
+  ind0 = new_sound("fmv.snd", 1, 22050, Mus_bshort, Mus_aifc,
+                   "this is a comment")
   v0 = Vct.new(10, 0.1)
   old5 = sample(5, ind0)
   insert_samples(10, 10, v0, ind0)
@@ -20684,8 +20700,10 @@ def test_10_00
   end
   close_sound(ind0)
   #
-  ind0 = new_sound("fmv.snd", 2, 22050, Mus_bshort, Mus_aifc, "this is a comment")
-  ind1 = new_sound("fmv1.snd", 1, 22050, Mus_bshort, Mus_next, "this is a comment")
+  ind0 = new_sound("fmv.snd", 2, 22050, Mus_bshort, Mus_aifc,
+                   "this is a comment")
+  ind1 = new_sound("fmv1.snd", 1, 22050, Mus_bshort, Mus_next,
+                   "this is a comment")
   insert_samples(0, 10, make_array(10, 1.00), ind0, 0)
   insert_samples(0, 10, make_array(10, 0.10), ind0, 1)
   insert_samples(0, 10, make_array(10, 0.01), ind1, 0)
@@ -20712,7 +20730,8 @@ def test_10_00
 end
 
 def test_10_01
-  ind0 = new_sound("fmv.snd", 2, 22050, Mus_bshort, Mus_aifc, "this is a comment")
+  ind0 = new_sound("fmv.snd", 2, 22050, Mus_bshort, Mus_aifc,
+                   "this is a comment")
   mix("oboe.snd")
   m1 = add_mark(100)
   delete_sample(10)
@@ -23051,7 +23070,8 @@ def test_13_02
   set_clipping(true)
   set_mus_clipping(true)
   $clip_hook.reset_hook!
-  index = new_sound("test.snd", 1, 22050, Mus_bshort, Mus_next, "clip-hook test", 10)
+  index = new_sound("test.snd", 1, 22050, Mus_bshort, Mus_next,
+                    "clip-hook test", 10)
   map_channel(lambda do |y| mus_random(0.999) end)
   set_sample(2,  1.0001)
   set_sample(4, -1.0)
@@ -25014,7 +25034,8 @@ def test_15_02
   #
   # src-duration tests
   #
-  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next,  "src-* tests", 10000)
+  ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next,
+                  "src-* tests", 10000)
   osc = make_oscil(:frequency, 500)
   if fneq(res1 = src_duration([0, 1, 1, 2]), 0.693147180559945) or
       fneq(res2 = src_duration([0, 2, 1, 1]), src_duration([0, 1, 1, 2])) or
@@ -26498,7 +26519,7 @@ def test_16_01
   set_x_axis_style(X_axis_in_seconds)
   #
   [1, 2, 4].each do |out_chans|
-    ind = new_sound("new.snd", out_chans, 22050, Mus_bfloat, Mus_next, 
+    ind = new_sound("new.snd", out_chans, 22050, Mus_bfloat, Mus_next,
                     "edpos testing")
     mx = Snd.sounds.map do |s| sync(s) end.max
     set_sync(mx + 1, ind)
@@ -27617,9 +27638,10 @@ def test_16_04
     set_sync(1, i2)
     env_sound([0, 0, 1, 1])
     check_envs(:ramps,
-               lambda { |s, c| make_sampler(0, s, c) },
-               lambda { |s, c| make_env(:envelope, [0, 0, 1, 1], :length, dur) },
-               dur, i1, i2)
+               lambda do |s, c| make_sampler(0, s, c) end,
+               lambda do |s, c|
+                 make_env(:envelope, [0, 0, 1, 1], :length, dur)
+               end, dur, i1, i2)
     reverse_sound
     check_envs(:rev_ramps,
                lambda { |s, c| make_sampler(0, s, c) },
@@ -28481,9 +28503,9 @@ def test_19_00
   close_sound(ind)
   delete_file("t1.rb")
   #
-  ind = new_sound("fmv.snd", 8, 22050, Mus_bshort, Mus_next, 
+  ind = new_sound("fmv.snd", 8, 22050, Mus_bshort, Mus_next,
                   "this is an 8-channel save-state test")
-  ind1 = new_sound("fmv1.snd", 2, 22050, Mus_bshort, Mus_next, 
+  ind1 = new_sound("fmv1.snd", 2, 22050, Mus_bshort, Mus_next,
                    "this is an 2-channel save-state test")
   set_sample(10, 0.1, ind, 0)
   set_sample(10, 0.2, ind, 1)
@@ -28973,7 +28995,8 @@ def test_19_01
     }]].each_with_index do |args, i|
     func = args[0]
     test = args[1]
-    ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next, "mono save-state tests", 100)
+    ind = new_sound("test.snd", 1, 22050, Mus_bfloat, Mus_next,
+                    "mono save-state tests", 100)
     func.call(ind)
     delete_file("s61.rb")
     save_state("s61.rb")
@@ -29432,7 +29455,8 @@ def test_19_02
   env_channel([0, 0, 1, 1, 2, 0])
   func = edit_list2function
   close_sound(ind)
-  ind = new_sound("tmp.snd", 1, 22050, Mus_bfloat, Mus_next, :size, 20, :comment, false)
+  ind = new_sound("tmp.snd", 1, 22050, Mus_bfloat, Mus_next,
+                  :size, 20, :comment, false)
   map_channel(lambda do |y| 1.0 end)
   func.call(ind, 0)
   unless vequal(res = channel2vct,
@@ -32262,7 +32286,7 @@ def test_21_00
   set_fft_window_beta(0.0)
   ind_1 = new_sound("test-1.snd", 1, 22050, Mus_lfloat, Mus_next,
                     "mono testing", 100)
-  ind_2 = new_sound("test-2.snd", 2, 44100, Mus_bshort, Mus_aifc, 
+  ind_2 = new_sound("test-2.snd", 2, 44100, Mus_bshort, Mus_aifc,
                     "stereo testing", 300)
   [[:srate,                 48000,    :st_equal?, :st_eql?,  :swap],
    [:sample_type,           Mus_byte, :st_equal?, :st_eql?,  :swap],
@@ -32301,8 +32325,10 @@ def test_21_00
   # 
   # snd chn cases
   # 
-  ind_1 = new_sound("test-1.snd", 1, 22050, Mus_bfloat, Mus_next, "mono testing", 100)
-  ind_2 = new_sound("test-2.snd", 2, 44100, Mus_bshort, Mus_aifc, "stereo testing", 300)
+  ind_1 = new_sound("test-1.snd", 1, 22050, Mus_bfloat, Mus_next,
+                    "mono testing", 100)
+  ind_2 = new_sound("test-2.snd", 2, 44100, Mus_bshort, Mus_aifc,
+                    "stereo testing", 300)
   set_sample(1, 0.1, ind_1, 0)
   set_sample(2, 0.2, ind_2, 0)
   set_sample(3, 0.3, ind_2, 1)
@@ -32368,8 +32394,10 @@ def test_21_00
     snd_display("sounds after close_sound(false) twice: %s?", sounds)
   end
   # 
-  ind_1 = new_sound("test-1.snd", 1, 22050, Mus_bfloat, Mus_next, "mono testing", 100)
-  ind_2 = new_sound("test-2.snd", 2, 44100, Mus_bshort, Mus_aifc, "stereo testing", 300)
+  ind_1 = new_sound("test-1.snd", 1, 22050, Mus_bfloat, Mus_next,
+                    "mono testing", 100)
+  ind_2 = new_sound("test-2.snd", 2, 44100, Mus_bshort, Mus_aifc,
+                    "stereo testing", 300)
   # test_sound_func_2
   [[:filter_control_in_dB,         true,                      :st_eql?,   :st_eql?],
    [:filter_control_in_hz,         true,                      :st_eql?,   :st_eql?],
@@ -35001,11 +35029,14 @@ def test_28_01
 end
 
 def test_28_02
-  not_an_env = nil # otherwise name_error: no such variable or function
+  # XXX: 'not_an_env = nil' otherwise name_error: no such variable or function
+  not_an_env = nil
   check_error_tag(:no_such_envelope) do set_enved_envelope("not_an_env") end
   check_error_tag(:cannot_save) do save_envelopes("/bad/baddy") end
   check_error_tag(:cannot_save) do mus_sound_report_cache("/bad/baddy") end
-  check_error_tag(:bad_arity) do set_search_procedure(lambda do |a, b, c| a end) end
+  check_error_tag(:bad_arity) do
+    set_search_procedure(lambda do |a, b, c| a end)
+  end
   check_error_tag(:no_such_channel) do make_sampler(0, "oboe.snd", 1) end
   check_error_tag(:no_such_channel) do make_sampler(0, "oboe.snd", -1) end
   check_error_tag(:bad_arity) do
@@ -35019,12 +35050,24 @@ def test_28_02
   check_error_tag(:wrong_type_arg) do player_home(123) end
   check_error_tag(:no_such_file) do set_temp_dir("/hiho") end
   check_error_tag(:no_such_file) do set_save_dir("/hiho") end
-  check_error_tag(:out_of_range) do snd_transform(integer2transform(20), make_vct(4)) end
-  check_error_tag(:bad_header) do mus_sound_maxamp($sf_dir + "bad_chans.snd") end
-  check_error_tag(:bad_header) do set_mus_sound_maxamp($sf_dir + "bad_chans.snd", [0.0, 0.0]) end
-  check_error_tag(:mus_error) do make_iir_filter(:order, 32, :ycoeffs, make_vct(4)) end
-  check_error_tag(:mus_error) do make_iir_filter(:coeffs, make_vct(4), :ycoeffs, make_vct(4)) end
-  check_error_tag(:mus_error) do make_iir_filter(:coeffs, make_vct(4), :xcoeffs, make_vct(4)) end
+  check_error_tag(:out_of_range) do
+    snd_transform(integer2transform(20), make_vct(4))
+  end
+  check_error_tag(:bad_header) do
+    mus_sound_maxamp($sf_dir + "bad_chans.snd")
+  end
+  check_error_tag(:bad_header) do
+    set_mus_sound_maxamp($sf_dir + "bad_chans.snd", [0.0, 0.0])
+  end
+  check_error_tag(:mus_error) do
+    make_iir_filter(:order, 32, :ycoeffs, make_vct(4))
+  end
+  check_error_tag(:mus_error) do
+    make_iir_filter(:coeffs, make_vct(4), :ycoeffs, make_vct(4))
+  end
+  check_error_tag(:mus_error) do
+    make_iir_filter(:coeffs, make_vct(4), :xcoeffs, make_vct(4))
+  end
   check_error_tag(:out_of_range) do make_table_lookup(:size, 123456789) end
   check_error_tag(:out_of_range) do make_granulate(:ramp, -0.5) end
   check_error_tag(:out_of_range) do make_granulate(:ramp, 1.5) end
@@ -35039,22 +35082,38 @@ def test_28_02
   check_error_tag(:out_of_range) do make_file2frample("oboe.snd", 0) end
   check_error_tag(:out_of_range) do make_file2frample("oboe.snd", -1) end
   check_error_tag(:out_of_range) do set_default_output_sample_type(-1) end
-  check_error_tag(:out_of_range) do set_default_output_header_type(Mus_soundfont) end
-  check_error_tag(:mus_error) do mus_sound_chans($sf_dir + "bad_location.nist") end
+  check_error_tag(:out_of_range) do
+    set_default_output_header_type(Mus_soundfont)
+  end
+  check_error_tag(:mus_error) do
+    mus_sound_chans($sf_dir + "bad_location.nist")
+  end
   check_error_tag(:mus_error) do mus_sound_chans($sf_dir + "bad_field.nist") end
   if $with_test_motif
     check_error_tag(:no_such_widget) do widget_position([:Widget, 0]) end
     check_error_tag(:no_such_widget) do widget_size([:Widget, 0]) end
     check_error_tag(:no_such_widget) do widget_text([:Widget, 0]) end
-    check_error_tag(:no_such_widget) do set_widget_position([:Widget, 0], [0, 0]) end
-    check_error_tag(:no_such_widget) do set_widget_size([:Widget, 0], [10, 10]) end
-    check_error_tag(:no_such_widget) do set_widget_text([:Widget, 0], "hiho") end
+    check_error_tag(:no_such_widget) do
+      set_widget_position([:Widget, 0], [0, 0])
+    end
+    check_error_tag(:no_such_widget) do
+      set_widget_size([:Widget, 0], [10, 10])
+    end
+    check_error_tag(:no_such_widget) do
+      set_widget_text([:Widget, 0], "hiho")
+    end
   end
   check_error_tag(:no_such_menu) do main_menu(-1) end
   check_error_tag(:no_such_menu) do main_menu(111) end
-  check_error_tag(:out_of_range) do new_sound("hiho", :header_type, 123) end
-  check_error_tag(:out_of_range) do new_sound("hiho", :header_type, Mus_nist, :sample_type, 123) end
-  check_error_tag(:bad_header) do new_sound("hiho", :header_type, Mus_nist, :sample_type, Mus_bfloat) end
+  check_error_tag(:out_of_range) do
+    new_sound("hiho", :header_type, 123)
+  end
+  check_error_tag(:out_of_range) do
+    new_sound("hiho", :header_type, Mus_nist, :sample_type, 123)
+  end
+  check_error_tag(:bad_header) do
+    new_sound("hiho", :header_type, Mus_nist, :sample_type, Mus_bfloat)
+  end
   check_error_tag(:out_of_range) do set_mus_array_print_length(-1) end
   check_error_tag(:out_of_range) do set_print_length(-1) end
   check_error_tag(:out_of_range) do set_play_arrow_size(-1) end
@@ -35094,7 +35153,9 @@ def test_28_02
   check_error_tag(:out_of_range) do
     set_filter_control_envelope([0.0, 1.0, 0.1, 1.1, 1.0, 0.0], ind)
   end
-  check_error_tag(:env_error) do filter_sound([0, 0, 0.1, 0.1, 0.05, 0.1, 1, 1], 32) end
+  check_error_tag(:env_error) do
+    filter_sound([0, 0, 0.1, 0.1, 0.05, 0.1, 1, 1], 32)
+  end
   check_error_tag(:out_of_range) do apply_controls(ind, 123) end
   check_error_tag(:out_of_range) do set_speed_control_bounds([0.0, 2.0]) end
   check_error_tag(:out_of_range) do set_expand_control_bounds([0.0, 2.0]) end
@@ -35102,27 +35163,68 @@ def test_28_02
   check_error_tag(:out_of_range) do set_expand_control_bounds([2.0, 0.0]) end
   check_error_tag(:bad_header) do insert_sound($sf_dir + "bad_chans.snd") end
   check_error_tag(:io_error) do convolve_with($sf_dir + "bad_chans.snd") end
-  check_error_tag(:cannot_save) do save_sound_as("hiho.snd", ind, -12) end
-  check_error_tag(:cannot_save) do save_sound_as("hiho.snd", ind, :header_type, Mus_next, :sample_type, -12) end
-  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, :header_type, Mus_nist, :sample_type, Mus_bdouble) end
-  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, :header_type, Mus_aifc, :sample_type, Mus_lfloat) end
-  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, :header_type, Mus_riff, :sample_type, Mus_bshort) end
-  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, :header_type, Mus_voc, :sample_type, Mus_bshort) end
-  check_error_tag(:cannot_save) do save_selection("test.snd", 22050, Mus_bshort, Mus_riff) end
-  check_error_tag(:cannot_save) do save_selection("test.snd", 22050, Mus_bshort, Mus_voc) end
-  check_error_tag(:out_of_range) do src_channel(make_env([0, 0, 1, 1], :length, 11)) end
-  check_error_tag(:out_of_range) do src_channel(make_env([0, 1, 1, 0], :length, 11)) end
-  check_error_tag(:out_of_range) do src_channel(make_env([0, 1, 1, -1], :length, 11)) end
-  check_error_tag(:out_of_range) do src_channel(make_env([0, -1, 1, 1], :length, 11)) end
-  check_error_tag(:out_of_range) do src_sound(make_env([0, 0, 1, 1], :length, 11)) end
-  check_error_tag(:out_of_range) do src_sound(make_env([0, 1, 1, 0], :length, 11)) end
-  check_error_tag(:out_of_range) do src_sound(make_env([0, 1, 1, -1], :length, 11)) end
-  check_error_tag(:out_of_range) do src_sound(make_env([0, -1, 1, 1], :length, 11)) end
-  check_error_tag(:mus_error) do make_readin(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) end
+  check_error_tag(:cannot_save) do
+    save_sound_as("hiho.snd", ind, -12)
+  end
+  check_error_tag(:cannot_save) do
+    save_sound_as("hiho.snd", ind,
+                  :header_type, Mus_next, :sample_type, -12)
+  end
+  check_error_tag(:cannot_save) do
+    save_sound_as("test.snd", ind,
+                  :header_type, Mus_nist, :sample_type, Mus_bdouble)
+  end
+  check_error_tag(:cannot_save) do
+    save_sound_as("test.snd", ind,
+                  :header_type, Mus_aifc, :sample_type, Mus_lfloat)
+  end
+  check_error_tag(:cannot_save) do
+    save_sound_as("test.snd", ind,
+                  :header_type, Mus_riff, :sample_type, Mus_bshort)
+  end
+  check_error_tag(:cannot_save) do
+    save_sound_as("test.snd", ind,
+                  :header_type, Mus_voc, :sample_type, Mus_bshort)
+  end
+  check_error_tag(:cannot_save) do
+    save_selection("test.snd", 22050, Mus_bshort, Mus_riff)
+  end
+  check_error_tag(:cannot_save) do
+    save_selection("test.snd", 22050, Mus_bshort, Mus_voc)
+  end
+  check_error_tag(:out_of_range) do
+    src_channel(make_env([0, 0, 1, 1], :length, 11))
+  end
+  check_error_tag(:out_of_range) do
+    src_channel(make_env([0, 1, 1, 0], :length, 11))
+  end
+  check_error_tag(:out_of_range) do
+    src_channel(make_env([0, 1, 1, -1], :length, 11))
+  end
+  check_error_tag(:out_of_range) do
+    src_channel(make_env([0, -1, 1, 1], :length, 11))
+  end
+  check_error_tag(:out_of_range) do
+    src_sound(make_env([0, 0, 1, 1], :length, 11))
+  end
+  check_error_tag(:out_of_range) do
+    src_sound(make_env([0, 1, 1, 0], :length, 11))
+  end
+  check_error_tag(:out_of_range) do
+    src_sound(make_env([0, 1, 1, -1], :length, 11))
+  end
+  check_error_tag(:out_of_range) do
+    src_sound(make_env([0, -1, 1, 1], :length, 11))
+  end
+  check_error_tag(:mus_error) do
+    make_readin(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
   check_error_tag(:out_of_range) do filter_sound($vct_3, 32) end
   check_error_tag(:out_of_range) do filter_sound([0, 0, 1, 1], 0) end
   check_error_tag(:no_such_sound) do swap_channels(ind, 0, 12345, 0) end
-  check_error_tag(:no_such_sample) do mix_vct(vct(0.1, 0.2, 0.3), -1, ind, 0, true) end
+  check_error_tag(:no_such_sample) do
+    mix_vct(vct(0.1, 0.2, 0.3), -1, ind, 0, true)
+  end
   check_error_tag(:out_of_range) do snd_spectrum(Vct.new(8), 0, -123) end
   check_error_tag(:out_of_range) do snd_spectrum(Vct.new(8), 0, 0) end
   check_error_tag(:no_such_file) do play("/baddy/hiho") end
@@ -35138,12 +35240,20 @@ def test_28_02
   check_error_tag(:out_of_range) do set_sample_type(ind, 123) end
   check_error_tag(:out_of_range) do set_header_type(ind, 123) end
   check_error_tag(:no_such_channel) do set_selected_channel(ind, 123) end
-  check_error_tag(:bad_arity) do set_search_procedure(lambda do |a, b, c| true end) end
+  check_error_tag(:bad_arity) do
+    set_search_procedure(lambda do |a, b, c| true end)
+  end
   check_error_tag(:bad_arity) do map_chan(lambda do |a, b, c| 1.0 end) end
   check_error_tag(:bad_arity) do scan_channel(lambda do |a, b, c| 1.0 end) end
-  check_error_tag(:bad_arity) do set_cursor_style(lambda do |a| 32 end, ind, 0) end
-  check_error_tag(:no_such_graphics_context) do draw_line(0, 0, 1, 1, ind, 0, 1234) end
-  check_error_tag(:no_such_graphics_context) do foreground_color(ind, 0, 1234) end
+  check_error_tag(:bad_arity) do
+    set_cursor_style(lambda do |a| 32 end, ind, 0)
+  end
+  check_error_tag(:no_such_graphics_context) do
+    draw_line(0, 0, 1, 1, ind, 0, 1234)
+  end
+  check_error_tag(:no_such_graphics_context) do
+    foreground_color(ind, 0, 1234)
+  end
   check_error_tag(:no_such_graphics_context) do current_font(ind, 0, 1234) end
   check_error_tag(:no_such_graphics_context) do
     graph_data([$vct_3, $vct_3], ind, 0, 1234, 0, 1, 0)
@@ -35154,10 +35264,12 @@ def test_28_02
   check_error_tag(:no_such_axis) do y2position(100, ind, 0, 1234) end
   check_error_tag(:no_such_axis) do axis_info(ind, 0, 1234) end
   check_error_tag(:out_of_range) do
-    draw_axes(channel_widgets.car, snd_gcs.car, "hiho", 0.0, 1.0, -1.0, 1.0, X_axis_in_seconds,1234)
+    draw_axes(channel_widgets.car, snd_gcs.car, "hiho",
+              0.0, 1.0, -1.0, 1.0, X_axis_in_seconds,1234)
   end
   check_error_tag(:out_of_range) do
-    draw_axes(channel_widgets.car, snd_gcs.car, "hiho", 0.0, 1.0, -1.0, 1.0, 1234)
+    draw_axes(channel_widgets.car, snd_gcs.car, "hiho",
+              0.0, 1.0, -1.0, 1.0, 1234)
   end
   check_error_tag(:no_such_channel) do axis_info(ind, 1234) end
   check_error_tag(:no_such_sound) do axis_info(1234) end
@@ -35174,16 +35286,26 @@ def test_28_02
   check_error_tag(:cannot_save) do save_sound_as("/bad/baddy.snd") end
   check_error_tag(:no_such_sound) do transform_sample(0, 1, 1234) end
   check_error_tag(:no_such_channel) do transform_sample(0, 1, ind, 1234) end
-  check_error_tag(:no_such_sound) do graph(vct(0, 1), "hi", 0, 1, 0, 1, 1234) end
-  check_error_tag(:no_such_channel) do graph(vct(0, 1), "hi", 0, 1, 0, 1, ind, 1234) end
+  check_error_tag(:no_such_sound) do
+    graph(vct(0, 1), "hi", 0, 1, 0, 1, 1234)
+  end
+  check_error_tag(:no_such_channel) do
+    graph(vct(0, 1), "hi", 0, 1, 0, 1, ind, 1234)
+  end
   set_selection_member?(false, true)
-  check_error_tag(:no_active_selection) do filter_selection(vct(0, 0, 1, 1), 4) end
+  check_error_tag(:no_active_selection) do
+    filter_selection(vct(0, 0, 1, 1), 4)
+  end
   check_error_tag(:no_active_selection) do save_selection("/bad/baddy.snd") end
   check_error_tag(:no_active_selection) do env_selection([0, 0, 1, 1]) end
-  check_error_tag(:no_such_region) do save_region(integer2region(1234), "/bad/baddy.snd") end
+  check_error_tag(:no_such_region) do
+    save_region(integer2region(1234), "/bad/baddy.snd")
+  end
   make_region(0, 100, ind, 0)
   check_error_tag(:cannot_save) do save_selection("/bad/baddy.snd") end
-  check_error_tag(:cannot_save) do save_region(regions.car, "/bad/baddy.snd") end
+  check_error_tag(:cannot_save) do
+    save_region(regions.car, "/bad/baddy.snd")
+  end
   check_error_tag(:no_such_mix) do make_mix_sampler(integer2mix(1234)) end
   check_error_tag(:no_such_sound) do make_region(0, 12, 1234, true) end
   set_read_only(true, ind)
@@ -35218,36 +35340,66 @@ def test_28_02
   check_error_tag(:wrong_type_arg) do amp_control([0]) end
   check_error_tag(:wrong_type_arg) do sound_loop_info([0]) end
   check_error_tag(:wrong_type_arg) do add_mark(123, [0]) end
-  check_error_tag(:no_such_sound) do filter_channel([0, 0, 1, 1], 100, false, false, 1234, 0) end
-  check_error_tag(:no_such_channel) do filter_channel([0, 0, 1, 1], 100, false, false, ind, 1) end
-  check_error_tag(:no_such_channel) do filter_channel(vct(0, 0, 1, 1), 4, false, false, ind, 1) end
+  check_error_tag(:no_such_sound) do
+    filter_channel([0, 0, 1, 1], 100, false, false, 1234, 0)
+  end
+  check_error_tag(:no_such_channel) do
+    filter_channel([0, 0, 1, 1], 100, false, false, ind, 1)
+  end
+  check_error_tag(:no_such_channel) do
+    filter_channel(vct(0, 0, 1, 1), 4, false, false, ind, 1)
+  end
   check_error_tag(:out_of_range) do filter_sound(vct(0, 0, 1, 1), 0) end
   check_error_tag(:out_of_range) do filter_sound(vct(0, 0, 1, 1), 10) end
-  check_error_tag(:out_of_range) do set_reverb_control_length_bounds([0.1, 0.01], ind) end
-  check_error_tag(:out_of_range) do set_reverb_control_scale_bounds([0.1, 0.01], ind) end
+  check_error_tag(:out_of_range) do
+    set_reverb_control_length_bounds([0.1, 0.01], ind)
+  end
+  check_error_tag(:out_of_range) do
+    set_reverb_control_scale_bounds([0.1, 0.01], ind)
+  end
   check_error_tag(:wrong_type_arg) do scale_by(false) end
   check_error_tag(:wrong_type_arg) do src_sound(3.0, 1.0, true) end
   check_error_tag(:wrong_type_arg) do src_sound(3.0, 1.0, ind, true) end
   check_error_tag(:no_such_edit) do display_edits(ind, 0, 123) end
   check_error_tag(:no_such_edit) do marks(ind, 0, 123) end
-  check_error_tag(:no_such_edit) do save_sound_as("test.snd", :edit_position, 123) end
-  check_error_tag(:no_such_auto_delete_choice) do insert_sound("1a.snd", 0, 0, ind, 0, 0, 123) end
+  check_error_tag(:no_such_edit) do
+    save_sound_as("test.snd", :edit_position, 123)
+  end
+  check_error_tag(:no_such_auto_delete_choice) do
+    insert_sound("1a.snd", 0, 0, ind, 0, 0, 123)
+  end
   close_sound(ind)
-  check_error_tag(:bad_arity) do add_transform("hiho", "time", 0, 1, lambda do | | 1.0 end) end
+  check_error_tag(:bad_arity) do
+    add_transform("hiho", "time", 0, 1, lambda do | | 1.0 end)
+  end
   check_error_tag(:cannot_save) do save_state("/bad/baddy") end
-  check_error_tag(:no_such_menu) do add_to_menu(1234, "hi", lambda do | | false end) end
-  check_error_tag(:bad_arity) do add_to_main_menu("hi", lambda do |a, b| false end) end
-  check_error_tag(:bad_arity) do add_to_menu(1, "hi", lambda do |a, b| false end) end
-  check_error_tag(:wrong_type_arg) do set_transform_type(integer2transform(-1)) end
-  check_error_tag(:out_of_range) do set_transform_type(integer2transform(123)) end
+  check_error_tag(:no_such_menu) do
+    add_to_menu(1234, "hi", lambda do | | false end)
+  end
+  check_error_tag(:bad_arity) do
+    add_to_main_menu("hi", lambda do |a, b| false end)
+  end
+  check_error_tag(:bad_arity) do
+    add_to_menu(1, "hi", lambda do |a, b| false end)
+  end
+  check_error_tag(:wrong_type_arg) do
+    set_transform_type(integer2transform(-1))
+  end
+  check_error_tag(:out_of_range) do
+    set_transform_type(integer2transform(123))
+  end
   check_error_tag(:wrong_type_arg) do help_dialog([0, 1], "hiho") end
   check_error_tag(:wrong_type_arg) do info_dialog([0, 1], "hiho") end
   check_error_tag(:no_such_sound) do edit_header_dialog(1234) end
   check_error_tag(:no_such_file) do open_sound("/bad/baddy.snd") end
-  check_error_tag(:no_such_file) do open_raw_sound("/bad/baddy.snd", 1, 22050, Mus_lshort) end
+  check_error_tag(:no_such_file) do
+    open_raw_sound("/bad/baddy.snd", 1, 22050, Mus_lshort)
+  end
   check_error_tag(:no_such_file) do view_sound("/bad/baddy.snd") end
   check_error_tag(:no_such_file) do make_sampler(0, "/bad/baddy.snd") end
-  check_error_tag(:no_such_region) do make_region_sampler(integer2region(1234567), 0) end
+  check_error_tag(:no_such_region) do
+    make_region_sampler(integer2region(1234567), 0)
+  end
   check_error_tag(:no_such_key) do bind_key(12345678, 0, false) end
   check_error_tag(:no_such_key) do bind_key(-1, 0, false) end
   check_error_tag(:no_such_key) do bind_key(12, 17, false) end
@@ -35256,27 +35408,41 @@ def test_28_02
   check_error_tag(:no_such_key) do key_binding(-1, 0) end
   check_error_tag(:no_such_key) do key_binding(12, 17) end
   check_error_tag(:no_such_key) do key_binding(12, -1) end
-  check_error_tag(:bad_header) do file2array($sf_dir + "bad_chans.snd", 0, 0, 123, Vct.new(123)) end
+  check_error_tag(:bad_header) do
+    file2array($sf_dir + "bad_chans.snd", 0, 0, 123, Vct.new(123))
+  end
   check_error_tag(:bad_header) do make_readin($sf_dir + "bad_chans.snd") end
   check_error_tag(:mus_error) do make_iir_filter(30, Vct.new(3)) end
   check_error_tag(:out_of_range) do make_wave_train(:size, 2 ** 30) end
   check_error_tag(:out_of_range) do set_mus_srate(0.0) end
   check_error_tag(:out_of_range) do set_mus_srate(-1000) end
   check_error_tag(:out_of_range) do dot_product(Vct.new(3), Vct.new(3), -1) end
-  check_error_tag(:out_of_range) do multiply_arrays(Vct.new(3), Vct.new(3), -1) end
+  check_error_tag(:out_of_range) do
+    multiply_arrays(Vct.new(3), Vct.new(3), -1)
+  end
   check_error_tag(:out_of_range) do
     make_delay(3, :initial_element, 0.0, :initial_contents, vct(0.1, 0.2, 0.3))
   end
   check_error_tag(:out_of_range) do
     make_delay(3, :max_size, 100, :initial_contents, vct(0.1, 0.2, 0.3))
   end
-  check_error_tag(:out_of_range) do make_table_lookup(:size, 100, :wave, Vct.new(3)) end
-  check_error_tag(:out_of_range) do make_wave_train(:size, 100, :wave, Vct.new(3)) end
+  check_error_tag(:out_of_range) do
+    make_table_lookup(:size, 100, :wave, Vct.new(3))
+  end
+  check_error_tag(:out_of_range) do
+    make_wave_train(:size, 100, :wave, Vct.new(3))
+  end
   check_error_tag(:out_of_range) do make_ssb_am(100, 12345678) end
-  check_error_tag(:mus_error) do make_rand(:envelope, [0, 0, 1, 1], :distribution, Vct.new(10)) end
+  check_error_tag(:mus_error) do
+    make_rand(:envelope, [0, 0, 1, 1], :distribution, Vct.new(10))
+  end
   check_error_tag(:mus_error) do make_rand(:envelope, [0, 0, 1]) end
-  check_error_tag(:out_of_range) do make_rand(:envelope, [0, 0, 1, 1], :size, -2) end
-  check_error_tag(:out_of_range) do make_rand(:envelope, [0, 0, 1, 1], :size, 1234567890) end
+  check_error_tag(:out_of_range) do
+    make_rand(:envelope, [0, 0, 1, 1], :size, -2)
+  end
+  check_error_tag(:out_of_range) do
+    make_rand(:envelope, [0, 0, 1, 1], :size, 1234567890)
+  end
   check_error_tag(:bad_arity) do
     grn = make_granulate
     granulate(grn, false, lambda do |a, s, d| false end)
@@ -35309,25 +35475,37 @@ def test_28_02
     f = make_filter(3, :xcoeffs, $vct_3, :ycoeffs, $vct_3)
     set_mus_ycoeff(f, 4, 1.0)
   end
-  check_error_tag(:mus_error) do make_filter(:ycoeffs, Vct.new(4), :order, 12) end
+  check_error_tag(:mus_error) do
+    make_filter(:ycoeffs, Vct.new(4), :order, 12)
+  end
   check_error_tag(:mus_error) do
     hi = make_oscil
     set_mus_offset(hi, 1)
   end
   check_error_tag(:out_of_range) do make_locsig(:channels, 2 ** 30) end
   check_error_tag(:out_of_range) do make_src(:width, 3000) end
-  check_error_tag(:bad_arity) do add_colormap("baddy", lambda do | | false end) end
-  check_error_tag(:bad_arity) do add_colormap("baddy", lambda do |a, b, c| false end) end
+  check_error_tag(:bad_arity) do
+    add_colormap("baddy", lambda do | | false end)
+  end
+  check_error_tag(:bad_arity) do
+    add_colormap("baddy", lambda do |a, b, c| false end)
+  end
   check_error_tag(:out_of_range) do
     sr = make_src(:input, lambda do |dir| 1.0 end)
     src(sr, 2000000.0)
   end
   check_error_tag(:out_of_range) do partials2polynomial([1, 1], -1) end
   check_error_tag(:out_of_range) do partials2polynomial([1, 1], 3) end
-  check_error_tag(:out_of_range) do make_polyshape(440.0, :partials, [1, 1], :kind, -1) end
-  check_error_tag(:out_of_range) do make_polyshape(440.0, :partials, [1, 1], :kind, 3) end
+  check_error_tag(:out_of_range) do
+    make_polyshape(440.0, :partials, [1, 1], :kind, -1)
+  end
+  check_error_tag(:out_of_range) do
+    make_polyshape(440.0, :partials, [1, 1], :kind, 3)
+  end
   check_error_tag(:wrong_type_arg) do set_mus_header_raw_defaults(1234) end
-  check_error_tag(:wrong_type_arg) do set_mus_header_raw_defaults([44100, 2.123, "hi"]) end
+  check_error_tag(:wrong_type_arg) do
+    set_mus_header_raw_defaults([44100, 2.123, "hi"])
+  end
   check_error_tag(:wrong_type_arg) do set_with_toolbar(123) end
   check_error_tag(:wrong_type_arg) do set_with_tooltips(123) end
   check_error_tag(:wrong_type_arg) do set_with_menu_icons(123) end
@@ -35335,13 +35513,18 @@ def test_28_02
   check_error_tag(:wrong_type_arg) do set_save_as_dialog_auto_comment(123) end
   check_error_tag(:wrong_type_arg) do set_with_smpte_label(123) end
   check_error_tag(:wrong_type_arg) do set_ask_about_unsaved_edits(123) end
-  check_error_tag(:no_such_mix) do mix_properties(integer2mix(mix_sync_max + 1)) end
-  check_error_tag(:no_such_mix) do set_mix_properties(integer2mix(mix_sync_max + 1), 1) end
+  check_error_tag(:no_such_mix) do
+    mix_properties(integer2mix(mix_sync_max + 1))
+  end
+  check_error_tag(:no_such_mix) do
+    set_mix_properties(integer2mix(mix_sync_max + 1), 1)
+  end
   # 
   if $with_test_motif
     [:widget_position, :widget_size, :widget_text,
       :hide_widget, :show_widget, :focus_widget].each do |n|
-      if (tag = Snd.catch do snd_func(n, [:Widget, 0]) end).first != :no_such_widget
+      tag = Snd.catch do snd_func(n, [:Widget, 0]) end
+      if tag.first != :no_such_widget
         snd_display("%s of null widget: %s", n, tag)
       end
     end
@@ -35368,8 +35551,9 @@ def test_28_03
      :make_sawtooth_wave,
      :make_rand,
      :make_rand_interp].each do |g|
-      if (res = Snd.catch do snd_func(g, :frequency, 440.0) end).first != :out_of_range
-        snd_display("srate %s: %s -> %s", n, g, res.inspect)
+      tag = Snd.catch do snd_func(g, :frequency, 440.0) end
+      if tag.first != :out_of_range
+        snd_display("srate %s: %s -> %s", n, g, tag.inspect)
       end
     end
   end

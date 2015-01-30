@@ -2,9 +2,9 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 05/07/05 13:09:37
-\ Changed: 14/11/11 00:08:48
+\ Changed: 15/01/29 23:39:32
 \
-\ @(#)examp.fs	1.67 11/11/14
+\ @(#)examp.fs	1.68 1/29/15
 
 \ With original comments and doc strings from examp.scm.
 \
@@ -635,10 +635,10 @@ hide
 set-current
 
 : read-ascii
-    <{ fl :optional sf "test.snd" tp mus-next fmt mus-bshort sr 44100 -- snd }>
+    <{ fl :optional sf "test.snd" st mus-next ht mus-bshort sr 44100 -- snd }>
 	doc" Try to read an ASCII sound file."
-	sf tp fmt sr 1 "created by %s: %s"
-	    #( get-func-name fl ) string-format new-sound { snd }
+	"created by %s: %s" #( get-func-name fl ) string-format { com }
+	sf 1 sr ht st com new-sound { snd }
 	fl snd read-ascii-cb as-one-edit drop
 	snd
 ;
