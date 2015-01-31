@@ -52,7 +52,7 @@
 			(make-shared-vector (make-shared-vector (make-vector '(2 3) 1.0 #t) '(6)) '(2 2))
 			(vector-ref #2d((#(1 2 3)) (#(3 4 5))) 0 0) (define-macro (m a) `(+ ,a 1))
 			(c-pointer 0) (c-pointer -1) :readable :else (define-bacro* (m (a 1)) `(+ ,a 1))
-			(bytevector 0 1 2) (bytevector) (bytevector 255 0 127) (make-iterator (hash-table '(a . 2)))
+			(bytevector 0 1 2) (bytevector) (bytevector 255 0 127) (make-iterator (vector '(a . 2)))
 			(lambda (dir) 1.0) (float-vector) (make-float-vector '(2 32)) 
 			;(openlet (inlet 'value 1 '+ (lambda args 1)))
 			"t105.scm" "~,3F" "~{~A~}"
@@ -73,7 +73,8 @@
 
 (define (autotest func args args-now args-left)
   ;; args-left is at least 1, args-now starts at 0, args starts at ()
-  ;(format *stderr* "~A: ~D ~D (~D ~D): ~A~%" func (length args) args-now low args-left args))
+  ;(format *stderr* "~A: ~D ~D (~D ~D): ~A~%" func (length args) args-now low args-left args)
+  ;(if (pair? args) (format *stderr* "~A " (car args)))
     
   (call-with-exit
    (lambda (quit)
@@ -186,6 +187,8 @@
   (let ((st (symbol-table)))
     (for-each test-sym st)
     ;(do ((i 0 (+ i 1)) (len (length st))) ((= i 1000)) (test-sym (st (random len))))
+;    (test-sym 'for-each)
+;    (test-sym 'map)
     (if data-file (close-output-port data-file))
     (format *stderr* "~%all done~%")
     (s7-version)

@@ -110,7 +110,7 @@
 #ifndef INITIAL_HEAP_SIZE
 #define INITIAL_HEAP_SIZE 128000
 /* the heap grows as needed, this is its initial size. 
- * If the initial heap is small, s7 can run in less than 2 Mbytes of memory. There are (many) cases where a bigger heap is faster.
+ * If the initial heap is small, s7 can run in about 2.5 Mbytes of memory. There are (many) cases where a bigger heap is faster.
  * As of 5-May-2011, the heap size must be a multiple of 32.  Each object takes about 60 bytes (48 + 8?) so this represents 6 Mbytes?
  */
 #endif
@@ -837,7 +837,7 @@ struct s7_scheme {
   s7_pointer CHAR_LEQ, CHAR_LT, CHAR_EQ, CHAR_GEQ, CHAR_GT, IS_CHAR, CHAR_POSITION, CHAR_TO_INTEGER, IS_CHAR_ALPHABETIC;
   s7_pointer CHAR_DOWNCASE, IS_CHAR_LOWER_CASE, IS_CHAR_NUMERIC, CHAR_UPCASE, IS_CHAR_UPPER_CASE;
   s7_pointer IS_CHAR_WHITESPACE, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, IS_COMPLEX, CONS, IS_CONSTANT, IS_CONTINUATION, COPY, COS, COSH, C_POINTER, IS_C_POINTER;
-  s7_pointer IS_DEFINED, DENOMINATOR, DISPLAY, DYNAMIC_WIND, IS_LET, INLET, LET_REF, LET_REF_FALLBACK, LET_SET, LET_SET_FALLBACK, LET_TO_LIST;
+  s7_pointer IS_DEFINED, DENOMINATOR, DISPLAY, DYNAMIC_WIND, IS_LET, INLET, LET_REF, LET_REF_FALLBACK, LET_SET, LET_SET_FALLBACK;
   s7_pointer IS_EOF_OBJECT, IS_EQ, IS_EQUAL, IS_EQV, ERROR, EVAL, EVAL_STRING, IS_EVEN, IS_EXACT;
   s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOAT_VECTOR, IS_FLOAT_VECTOR, FLOAT_VECTOR_REF, FLOAT_VECTOR_SET;
   s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, IS_GENSYM, GET_OUTPUT_STRING, HASH_TABLE, HASH_TABLE_STAR;
@@ -866,7 +866,7 @@ struct s7_scheme {
   s7_pointer MAGNITUDE, MAKE_POLAR; /* MAKE_RECTANGULAR stands in for MAKE_COMPLEX if pure-s7 */
 #endif
 #if (!WITH_PURE_S7)
-  s7_pointer IS_CHAR_READY, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ, CHAR_CI_GEQ, CHAR_CI_GT;
+  s7_pointer IS_CHAR_READY, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ, CHAR_CI_GEQ, CHAR_CI_GT, LET_TO_LIST;
   s7_pointer STRING_CI_LEQ, STRING_CI_LT, STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_TO_LIST, VECTOR_TO_LIST;
   s7_pointer STRING_LENGTH, STRING_COPY, LIST_TO_STRING, LIST_TO_VECTOR, VECTOR_LENGTH, HASH_TABLE_SIZE;
 #endif
@@ -1242,7 +1242,7 @@ static void init_types(void)
 #define T_PROCEDURE                   (1 << (TYPE_BITS + 2))
 #define is_procedure(p)               ((typesflag(p) & T_PROCEDURE) != 0)
 /* closure, c_function, applicable object, goto or continuation, should be in 2nd byte
- *   perhaps this should be T_APPLICABLE?
+ *   perhaps this should be T_APPLICABLE? macros?
  */
 
 #define T_OPTIMIZED                   (1 << (TYPE_BITS + 3))
@@ -1765,7 +1765,6 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {pair_sy
 #define iterator_current(p)           (p)->object.iter.cur
 #define iterator_next(p)              (p)->object.iter.next
 
-#define temp_stack_elements(p)        (p)->object.stk.objects
 #define temp_stack_top(p)             (p)->object.stk.top
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT) 
@@ -4609,11 +4608,11 @@ static void resize_op_stack(s7_scheme *sc)
  *   sc->code and sc->args to currently free objects.  
  */
 
-#define main_stack_op(Sc)             ((opcode_t)(Sc->stack_end[-1]))
-#define main_stack_args(Sc)           (Sc->stack_end[-2])
-#define main_stack_let(Sc)    (Sc->stack_end[-3])
-#define main_stack_code(Sc)           (Sc->stack_end[-4])
-#define pop_main_stack(Sc)            Sc->stack_end -= 4
+#define main_stack_op(Sc)   ((opcode_t)(Sc->stack_end[-1]))
+#define main_stack_args(Sc) (Sc->stack_end[-2])
+#define main_stack_let(Sc)  (Sc->stack_end[-3])
+#define main_stack_code(Sc) (Sc->stack_end[-4])
+#define pop_main_stack(Sc)  Sc->stack_end -= 4
 
 /* ideally we'd split out these cases in the optimizer, but for now... */
 #define IF_BEGIN_POP_STACK(Sc) do {if (main_stack_op(Sc) == OP_BEGIN1) goto POP_BEGIN; goto START;} while (0)
@@ -5984,7 +5983,7 @@ s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env)
   return(x);
 }
 
-
+#if (!WITH_PURE_S7)
 static s7_pointer g_let_to_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_let_to_list "(let->list env) returns env's bindings as a list of cons's: '(symbol . value)."
@@ -6001,6 +6000,7 @@ static s7_pointer g_let_to_list(s7_scheme *sc, s7_pointer args)
     }
   return(s7_let_to_list(sc, env));
 }
+#endif
 
 
 static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
@@ -6078,7 +6078,7 @@ static s7_pointer call_accessor(s7_scheme *sc, s7_pointer slot, s7_pointer old_v
   new_value = sc->ERROR;
   func = slot_accessor(slot);
 
-  if (is_procedure(func))
+  if (is_procedure_or_macro(func))
     {
       if (is_c_function(func))
 	{
@@ -6095,18 +6095,7 @@ static s7_pointer call_accessor(s7_scheme *sc, s7_pointer slot, s7_pointer old_v
 	  sc->gc_off = old_off;
 	}
     }
-  else
-    {
-      if (is_any_macro(func))
-	{
-	  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
-	  sc->args = list_2(sc, slot_symbol(slot), old_value);
-	  sc->code = func;
-	  eval(sc, OP_APPLY);
-	  new_value = sc->value;
-	}
-      else return(old_value);
-    }
+  else return(old_value);
 
   if (new_value == sc->ERROR)
     return(s7_error(sc, sc->ERROR, list_3(sc, make_string_wrapper(sc, "can't set! ~S to ~S"), slot_symbol(slot), old_value)));
@@ -22762,6 +22751,7 @@ static s7_pointer g_open_output_string(s7_scheme *sc, s7_pointer args)
 const char *s7_get_output_string(s7_scheme *sc, s7_pointer p)
 {
   return((const char *)port_data(p));
+  /* apparently in r7rs, this also clears the port string! */
 }
 
 
@@ -23832,19 +23822,12 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 }
 
 
-#if DEBUGGING
-static const char *last_eval_string;
-#endif
-
 static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_eval_string "(eval-string str (env (curlet))) returns the result of evaluating the string str as Scheme code"
   s7_pointer port, str;
   
   str = car(args);
-#if DEBUGGING
-  last_eval_string = string_value(str);
-#endif
   if (!is_string(str))
     {
       check_method(sc, str, sc->EVAL_STRING, args);
@@ -29911,6 +29894,18 @@ static s7_pointer memq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 }
 
 
+bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree)
+{ 
+  /* currently used only in snd-sig.c and clm2xen.c */
+  if (symbol == tree)
+    return(true);
+  if (is_pair(tree))
+    return((s7_tree_memq(sc, symbol, car(tree))) ||
+	   (s7_tree_memq(sc, symbol, cdr(tree))));
+  return(false);
+}
+
+
 static s7_pointer memv_number(s7_scheme *sc, s7_pointer obj, s7_pointer x)
 {
   s7_pointer y;
@@ -34171,9 +34166,7 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
       body = closure_body(p);
       if (is_safe_closure(body))
 	clear_safe_closure(body);
-      return(append_in_place(sc, 
-			     list_2(sc, ((is_closure_star(p)) || (is_macro_star(p)) || (is_bacro_star(p))) ? sc->LAMBDA_STAR : sc->LAMBDA, closure_args(p)),
-			     body));
+      return(append_in_place(sc, list_2(sc, ((is_closure_star(p)) || (is_macro_star(p)) || (is_bacro_star(p))) ? sc->LAMBDA_STAR : sc->LAMBDA, closure_args(p)), body));
     }
 
   if (!is_procedure(p))
@@ -34448,15 +34441,7 @@ s7_pointer set_c_function_call_args(s7_scheme *sc)
   return(call_args);
 }
 
-/* at first glance, it looks simple to get the doc string out of the eval loop by saving the original
- *   closure_body, setting the eval version to cdr(body), and using the original in the gc mark sweep,
- *   by placing closure_arity in the same block as funclet_file, freeing up a pointer for the original.
- *   But it's tricky: the optimizer places a lot of info in car(body) and the arity setting needs to
- *   be accessible in different contexts than funclet*.  
- *
- * Dec-14: the doc string is now no longer in the function body, but lives in the function's environment
- *   under the name 'documentation.
- */
+
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 {
   if (is_symbol(x))
@@ -34610,18 +34595,7 @@ shorthand for (define func (lambda args ...))");
 	case OP_DEFINE_BACRO_STAR:
 	  return("(define-bacro* (mac args) ...) defines mac to be a bacro with optional/keyword arguments.");
 	}
-      
       return(NULL);
-
-      /* others: macroexpand
-            :(define-macro (hiho a) "a test" `(+ 1 ,a))
-            hiho
-            :(hiho 2)
-            3
-            :(s7-help hiho)
-            "a test"
-            with-sound #f etc -- all macros at least
-       */
     }
 
   if (is_symbol(obj))
@@ -34635,8 +34609,7 @@ shorthand for (define func (lambda args ...))");
   if (is_procedure_or_macro(obj))
     return(s7_procedure_documentation(sc, obj));
 
-  /* if is string, apropos? (can scan symbol table)
-   */
+  /* if is string, apropos? (can scan symbol table) */
   return(NULL);
 }
 
@@ -35018,7 +34991,6 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
     case T_BACRO:
     case T_MACRO_STAR:
     case T_BACRO_STAR:
-      /* macros are closures internally */
     case T_CLOSURE:
     case T_CLOSURE_STAR:
       return(closure_setter(p));
@@ -35751,7 +35723,7 @@ static s7_pointer bind_accessed_symbol(s7_scheme *sc, opcode_t op, s7_pointer sy
   s7_pointer func;
 
   func = g_symbol_access(sc, list_2(sc, symbol, sc->envir));
-  if (is_procedure(func))
+  if (is_procedure_or_macro(func))
     {
       if (is_c_function(func))
 	{
@@ -35771,7 +35743,6 @@ static s7_pointer bind_accessed_symbol(s7_scheme *sc, opcode_t op, s7_pointer sy
 	  return(sc->NO_VALUE); /* this means the accessor in set! needs to goto APPLY to get the new value */
 	}
     }
-  /* perhaps add macro case? */
   return(new_value);
 }
 
@@ -37392,7 +37363,9 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
       return(sc->NIL);
       
     case T_ENVIRONMENT:
+#if (!WITH_PURE_S7)
       check_method(sc, obj, sc->LET_TO_LIST, sc->NIL);
+#endif
       return(s7_let_to_list(sc, obj));
 
     case T_C_OBJECT:
@@ -40522,16 +40495,13 @@ static token_t read_comma(s7_scheme *sc, s7_pointer pt)
      hi
      :(hi 2)
      ;foo: unbound variable
-	 
      but
      :(define-macro (hi .foo) `(+ ,.foo 1))
      hi
      :(hi 2)
      3
-
      and ambiguous:
      :(define-macro (hi @foo . foo) `(list ,@foo))
-
      what about , @foo -- is the space significant?  We accept ,@ foo.
   */
 
@@ -48377,6 +48347,152 @@ static s7_pointer check_with_let(s7_scheme *sc)
 }
 
 
+static s7_pointer check_define_macro(s7_scheme *sc)
+{
+  s7_pointer x, y;
+
+  if (!is_pair(sc->code))                                               /* (define-macro . 1) */
+    return(eval_error_with_name(sc, "~A name missing (stray dot?): ~A", sc->code));
+  if (!is_pair(car(sc->code)))                                          /* (define-macro a ...) */
+    return(s7_wrong_type_arg_error(sc, op_names[(int)(sc->op)], 1, car(sc->code), "a list (name ...)"));
+  
+  x = caar(sc->code);
+  if (!is_symbol(x))
+    return(eval_error_with_name(sc, "~A: ~S is not a symbol?", x));
+  if (dont_eval_args(x))                                               /* (define-macro (quote a) quote) */
+    {
+      if (sc->safety > 0)
+	s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
+      set_local(x);
+    }
+  if (is_immutable(x))
+    return(eval_error_with_name(sc, "~A: ~S is immutable", x));
+  
+  if (!is_pair(cdr(sc->code)))                /* (define-macro (...)) */
+    return(eval_error_with_name(sc, "~A ~A, but no body?", x));
+  
+  y = cdar(sc->code);            /* the arglist */
+  if ((!s7_is_list(sc, y)) &&
+      (!is_symbol(y)))
+    return(s7_error(sc, sc->SYNTAX_ERROR,                                      /* (define-macro (mac . 1) ...) */
+		    list_3(sc, make_string_wrapper(sc, "define-macro ~A argument list is ~S?"), x, y)));
+  
+  for ( ; is_pair(y); y = cdr(y))
+    if ((!is_symbol(car(y))) &&
+	((sc->op == OP_DEFINE_MACRO) || (sc->op == OP_DEFINE_BACRO)))
+      return(s7_error(sc, sc->SYNTAX_ERROR,                                    /* (define-macro (mac 1) ...) */
+		      list_3(sc, make_string_wrapper(sc, "define-macro ~A argument name is not a symbol: ~S"), x, y)));
+
+  if ((sc->op == OP_DEFINE_MACRO_STAR) || (sc->op == OP_DEFINE_BACRO_STAR))
+    check_lambda_star_args(sc, cdar(sc->code), NULL);
+  else check_lambda_args(sc, cdar(sc->code), NULL);
+
+  /* optimize_lambda(sc, (sc->op == OP_DEFINE_MACRO) || (sc->op == OP_DEFINE_BACRO), x, cdar(sc->code), cdr(sc->code)); */
+
+  return(sc->code);
+}
+
+
+static s7_pointer check_cond(s7_scheme *sc)
+{
+  bool has_feed_to = false;
+  s7_pointer x;
+  if (!is_pair(sc->code))                                             /* (cond) or (cond . 1) */
+    return(eval_error(sc, "cond, but no body: ~A", sc->code));
+
+  for (x = sc->code; is_pair(x); x = cdr(x))
+    {
+      if (!is_pair(car(x)))                                           /* (cond 1) or (cond (#t 1) 3) */
+	return(eval_error(sc, "every clause in cond must be a list: ~A", car(x)));
+      else
+	{
+	  s7_pointer y;
+	  y = car(x);
+	  if ((!is_pair(cdr(y))) && (!is_null(cdr(y))))               /* (cond (1 . 2)) */
+	    return(eval_error(sc, "cond: stray dot? ~A", sc->code));
+	  if ((cadr(y) == sc->FEED_TO) &&
+	      (s7_symbol_value(sc, sc->FEED_TO) == sc->UNDEFINED))
+	    {
+	      has_feed_to = true;
+	      if (!is_pair(cddr(y)))                                  /* (cond (#t =>)) or (cond (#t => . 1)) */
+		return(eval_error(sc, "cond: '=>' target missing?  ~A", x));
+	      if (is_pair(cdddr(y)))                                  /* (cond (1 => + abs)) */
+		return(eval_error(sc, "cond: '=>' has too many targets: ~A", x));
+	    }
+	  /* currently we accept:
+	   *     (cond (1 2) (=> . =>)) and all variants thereof, e.g. (cond (1 2) (=> 1 . 2) (1 2)) or 
+	   *     (cond (1) (=>)) but Guile accepts this?
+	   *     (cond (1) (1 =>))
+	   * amusing (correct) case: (cond (1 => "hi")) -> #\i
+	   */
+	}
+    }
+  if (is_not_null(x))                                             /* (cond ((1 2)) . 1) */
+    return(eval_error(sc, "cond: stray dot? ~A", sc->code));
+
+  if ((is_overlaid(sc->code)) &&
+      (cdr(ecdr(sc->code)) == sc->code))
+    {
+      if (has_feed_to)
+	{
+	  pair_set_syntax_symbol(sc->code, sc->COND_UNCHECKED);
+	  if (is_null(cdr(sc->code)))
+	    {
+	      s7_pointer expr, f, arg;
+	      expr = car(sc->code);
+	      f = caddr(expr);
+	      arg = cadr(f);
+
+	      if ((is_pair(f)) &&
+		  (car(f) == sc->LAMBDA) &&
+		  (is_pair(arg)) &&
+		  (is_null(cdr(arg))) &&
+		  (is_symbol(car(arg))) &&
+		  (is_null(cdr(cddr(f)))))
+		{
+		  /* (define (hi) (cond (#t => (lambda (s) s)))) */
+		  set_fcdr(sc->code, caddar(sc->code));
+		  pair_set_syntax_symbol(sc->code, sc->IF_P_FEED);
+		}
+	    }
+	}
+      else 
+	{
+	  s7_pointer p, sym = NULL;
+	  bool xopt = true, c_s_is_ok = true;
+	  pair_set_syntax_symbol(sc->code, sc->COND_SIMPLE);
+	  
+	  for (p = sc->code; xopt && (is_pair(p)); p = cdr(p))
+	    {
+	      xopt = is_all_x_safe(sc, caar(p));
+	      if ((c_s_is_ok) &&
+		  (caar(p) != sc->T) &&
+		  (caar(p) != sc->ELSE))
+		{
+		  if ((!is_pair(caar(p))) || 
+		      (!is_h_safe_c_s(caar(p))) ||
+		      ((sym) && (sym != cadaar(p))))
+		    c_s_is_ok = false;
+		  else sym = cadaar(p);
+		}
+	    }
+	  if (c_s_is_ok)
+	    pair_set_syntax_symbol(sc->code, sc->COND_S);
+	  else
+	    {
+	      if (xopt)
+		{
+		  pair_set_syntax_symbol(sc->code, sc->COND_ALL_X);
+		  for (p = sc->code; is_pair(p); p = cdr(p))
+		    set_fcdr(car(p), (s7_pointer)cond_all_x_eval(sc, caar(p))); /* handle 'else' specially here */
+		}
+	    }
+	}
+    }
+  return(sc->code);
+}
+
+
 static s7_pointer check_set(s7_scheme *sc)
 {
   if (!is_pair(sc->code))
@@ -49608,18 +49724,6 @@ static s7_pointer check_do_all_x(s7_scheme *sc, s7_pointer code)
 }
 
 
-bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree)
-{ 
-  /* currently used only in snd-sig.c and clm2xen.c */
-  if (symbol == tree)
-    return(true);
-  if (is_pair(tree))
-    return((s7_tree_memq(sc, symbol, car(tree))) ||
-	   (s7_tree_memq(sc, symbol, cdr(tree))));
-  return(false);
-}
-
-
 static bool tree_tag2(s7_scheme *sc, s7_pointer tree)
 {
   if (is_symbol(tree))
@@ -50032,152 +50136,6 @@ static s7_pointer check_do(s7_scheme *sc)
 }
 
 
-static s7_pointer check_define_macro(s7_scheme *sc)
-{
-  s7_pointer x, y;
-
-  if (!is_pair(sc->code))                                               /* (define-macro . 1) */
-    return(eval_error_with_name(sc, "~A name missing (stray dot?): ~A", sc->code));
-  if (!is_pair(car(sc->code)))                                          /* (define-macro a ...) */
-    return(s7_wrong_type_arg_error(sc, op_names[(int)(sc->op)], 1, car(sc->code), "a list (name ...)"));
-  
-  x = caar(sc->code);
-  if (!is_symbol(x))
-    return(eval_error_with_name(sc, "~A: ~S is not a symbol?", x));
-  if (dont_eval_args(x))                                               /* (define-macro (quote a) quote) */
-    {
-      if (sc->safety > 0)
-	s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
-      set_local(x);
-    }
-  if (is_immutable(x))
-    return(eval_error_with_name(sc, "~A: ~S is immutable", x));
-  
-  if (!is_pair(cdr(sc->code)))                /* (define-macro (...)) */
-    return(eval_error_with_name(sc, "~A ~A, but no body?", x));
-  
-  y = cdar(sc->code);            /* the arglist */
-  if ((!s7_is_list(sc, y)) &&
-      (!is_symbol(y)))
-    return(s7_error(sc, sc->SYNTAX_ERROR,                                      /* (define-macro (mac . 1) ...) */
-		    list_3(sc, make_string_wrapper(sc, "define-macro ~A argument list is ~S?"), x, y)));
-  
-  for ( ; is_pair(y); y = cdr(y))
-    if ((!is_symbol(car(y))) &&
-	((sc->op == OP_DEFINE_MACRO) || (sc->op == OP_DEFINE_BACRO)))
-      return(s7_error(sc, sc->SYNTAX_ERROR,                                    /* (define-macro (mac 1) ...) */
-		      list_3(sc, make_string_wrapper(sc, "define-macro ~A argument name is not a symbol: ~S"), x, y)));
-
-  if ((sc->op == OP_DEFINE_MACRO_STAR) || (sc->op == OP_DEFINE_BACRO_STAR))
-    check_lambda_star_args(sc, cdar(sc->code), NULL);
-  else check_lambda_args(sc, cdar(sc->code), NULL);
-
-  /* optimize_lambda(sc, (sc->op == OP_DEFINE_MACRO) || (sc->op == OP_DEFINE_BACRO), x, cdar(sc->code), cdr(sc->code)); */
-
-  return(sc->code);
-}
-
-
-static s7_pointer check_cond(s7_scheme *sc)
-{
-  bool has_feed_to = false;
-  s7_pointer x;
-  if (!is_pair(sc->code))                                             /* (cond) or (cond . 1) */
-    return(eval_error(sc, "cond, but no body: ~A", sc->code));
-
-  for (x = sc->code; is_pair(x); x = cdr(x))
-    {
-      if (!is_pair(car(x)))                                           /* (cond 1) or (cond (#t 1) 3) */
-	return(eval_error(sc, "every clause in cond must be a list: ~A", car(x)));
-      else
-	{
-	  s7_pointer y;
-	  y = car(x);
-	  if ((!is_pair(cdr(y))) && (!is_null(cdr(y))))               /* (cond (1 . 2)) */
-	    return(eval_error(sc, "cond: stray dot? ~A", sc->code));
-	  if ((cadr(y) == sc->FEED_TO) &&
-	      (s7_symbol_value(sc, sc->FEED_TO) == sc->UNDEFINED))
-	    {
-	      has_feed_to = true;
-	      if (!is_pair(cddr(y)))                                  /* (cond (#t =>)) or (cond (#t => . 1)) */
-		return(eval_error(sc, "cond: '=>' target missing?  ~A", x));
-	      if (is_pair(cdddr(y)))                                  /* (cond (1 => + abs)) */
-		return(eval_error(sc, "cond: '=>' has too many targets: ~A", x));
-	    }
-	  /* currently we accept:
-	   *     (cond (1 2) (=> . =>)) and all variants thereof, e.g. (cond (1 2) (=> 1 . 2) (1 2)) or 
-	   *     (cond (1) (=>)) but Guile accepts this?
-	   *     (cond (1) (1 =>))
-	   * amusing (correct) case: (cond (1 => "hi")) -> #\i
-	   */
-	}
-    }
-  if (is_not_null(x))                                             /* (cond ((1 2)) . 1) */
-    return(eval_error(sc, "cond: stray dot? ~A", sc->code));
-
-  if ((is_overlaid(sc->code)) &&
-      (cdr(ecdr(sc->code)) == sc->code))
-    {
-      if (has_feed_to)
-	{
-	  pair_set_syntax_symbol(sc->code, sc->COND_UNCHECKED);
-	  if (is_null(cdr(sc->code)))
-	    {
-	      s7_pointer expr, f, arg;
-	      expr = car(sc->code);
-	      f = caddr(expr);
-	      arg = cadr(f);
-
-	      if ((is_pair(f)) &&
-		  (car(f) == sc->LAMBDA) &&
-		  (is_pair(arg)) &&
-		  (is_null(cdr(arg))) &&
-		  (is_symbol(car(arg))) &&
-		  (is_null(cdr(cddr(f)))))
-		{
-		  /* (define (hi) (cond (#t => (lambda (s) s)))) */
-		  set_fcdr(sc->code, caddar(sc->code));
-		  pair_set_syntax_symbol(sc->code, sc->IF_P_FEED);
-		}
-	    }
-	}
-      else 
-	{
-	  s7_pointer p, sym = NULL;
-	  bool xopt = true, c_s_is_ok = true;
-	  pair_set_syntax_symbol(sc->code, sc->COND_SIMPLE);
-	  
-	  for (p = sc->code; xopt && (is_pair(p)); p = cdr(p))
-	    {
-	      xopt = is_all_x_safe(sc, caar(p));
-	      if ((c_s_is_ok) &&
-		  (caar(p) != sc->T) &&
-		  (caar(p) != sc->ELSE))
-		{
-		  if ((!is_pair(caar(p))) || 
-		      (!is_h_safe_c_s(caar(p))) ||
-		      ((sym) && (sym != cadaar(p))))
-		    c_s_is_ok = false;
-		  else sym = cadaar(p);
-		}
-	    }
-	  if (c_s_is_ok)
-	    pair_set_syntax_symbol(sc->code, sc->COND_S);
-	  else
-	    {
-	      if (xopt)
-		{
-		  pair_set_syntax_symbol(sc->code, sc->COND_ALL_X);
-		  for (p = sc->code; is_pair(p); p = cdr(p))
-		    set_fcdr(car(p), (s7_pointer)cond_all_x_eval(sc, caar(p))); /* handle 'else' specially here */
-		}
-	    }
-	}
-    }
-  return(sc->code);
-}
-
-
 #if (!WITH_GCC)
 #define closure_is_ok(Sc, Code, Type, Args)          (find_symbol_unchecked(Sc, car(Code)) == ecdr(Code))
 #define closure_star_is_ok(Sc, Code, Type, Args)     (find_symbol_unchecked(Sc, car(Code)) == ecdr(Code))
@@ -50534,9 +50492,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    assume caller (C via g_eval_c_string) is dealing with the string port
        */
     case OP_EVAL_STRING:
-      /* this is the C side s7_eval_c_string. 
-       */
-
       /* (eval-string (string-append "(list 1 2 3)" (string #\newline) (string #\newline))) 
        *    needs to be sure to get rid of the trailing white space before checking for EOF
        *    else it tries to eval twice and gets "attempt to apply 1?, line 2"
@@ -57796,16 +57751,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	BACRO:
 	  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
-	  
-	  /* (define-macro (hi a b) `(+ ,a ,b))
-	   *   -> code: #<macro>, args: ((hi 2 3)), closure args: (hi-9)
-	   *   then back again: code: #<closure>, args: (2 3), closure args: (a b)
-	   *
-	   * (let* ((mac (let () (define-macro (mac1 a) `(+ ,a 1)) mac1)) (lst (list 1))) (set-cdr! lst lst) (apply mac lst ()))
-	   * hangs -- this is equivalent to (eval <circular-list>) which also hangs.
-	   */
-	  
-	  /* fprintf(stderr, "body: %s, args: %s\n", DISPLAY(closure_body(sc->code)), DISPLAY(sc->args)); */
 	  {
 	    s7_pointer x, z, e;
 	    unsigned long long int id;
@@ -58718,7 +58663,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  case T_C_FUNCTION_STAR:
 	    /* obj here is a c_function, but its setter could be a closure and vice versa below
 	     */
-	    if (is_procedure(c_function_setter(obj)))
+	    if (is_procedure_or_macro(c_function_setter(obj)))
 	      {
 		if (is_c_function(c_function_setter(obj)))
 		  {
@@ -58733,16 +58678,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto APPLY;
 		  }
 	      }
-	    else
-	      {
-		if (is_any_macro(c_function_setter(obj)))
-		  {
-		    sc->args = list_2(sc, arg, value);
-		    sc->code = c_function_setter(obj);
-		    goto APPLY;
-		  }
-		else eval_error(sc, "no generalized set for ~A", obj); 
-	      }
+	    else eval_error(sc, "no generalized set for ~A", obj); 
 	    break;
 	    
 	  case T_MACRO:
@@ -58751,7 +58687,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  case T_BACRO_STAR:
 	  case T_CLOSURE:
 	  case T_CLOSURE_STAR:
-	    if (is_procedure(closure_setter(obj)))
+	    if (is_procedure_or_macro(closure_setter(obj)))
 	      {
 		if (is_c_function(closure_setter(obj)))
 		  {
@@ -58766,16 +58702,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto APPLY;
 		  }
 	      }
-	    else
-	      {
-		if (is_any_macro(closure_setter(obj)))
-		  {
-		    sc->args = list_2(sc, arg, value);
-		    sc->code = closure_setter(obj);
-		    goto APPLY;
-		  }
-		else eval_error(sc, "no generalized set for ~A", obj); 
-	      }
+	    else eval_error(sc, "no generalized set for ~A", obj); 
 	    break;
 	    
 	  default:                                         /* (set! (1 2) 3) */
@@ -59786,7 +59713,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer func;
 		func = slot_accessor(lx);
-		if (is_procedure(func))
+		if (is_procedure_or_macro(func))
 		  {
 		    if (is_c_function(func))
 		      {
@@ -59800,16 +59727,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			sc->args = list_2(sc, sc->code, sc->value);
 			push_stack(sc, OP_SET_WITH_ACCESSOR, sc->args, lx); /* op, args, code */
-			sc->code = func;
-			goto APPLY;
-		      }
-		  }
-		else
-		  {
-		    if (is_any_macro(func))
-		      {
-			push_stack(sc, OP_SET_WITH_ACCESSOR, sc->args, lx); /* args only for error (see below) */
-			sc->args = list_2(sc, sc->code, sc->value);
 			sc->code = func;
 			goto APPLY;
 		      }
@@ -67406,9 +67323,6 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
   return(sc->UNDEFINED);
 }
 
-/* one cost of *motif* -- functions that were previously global and therefore removed from the heap,
- *   are now local to *motif* so the GC mark costs rise significantly.  (Is this still true?)
- */
 
 
 /* -------------------------------- initialization -------------------------------- */
@@ -68050,7 +67964,9 @@ s7_scheme *s7_init(void)
   sc->CUTLET =                s7_define_function(sc,      "cutlet",                  g_cutlet,                 1, 0, true,  H_cutlet);
   sc->INLET =                 s7_define_safe_function(sc, "inlet",                   s7_inlet,                 0, 0, true,  H_inlet);
   sc->IS_LET =                s7_define_safe_function(sc, "let?",                    g_is_let,                 1, 0, false, H_is_let);
+#if (!WITH_PURE_S7)
   sc->LET_TO_LIST =           s7_define_safe_function(sc, "let->list",               g_let_to_list,            1, 0, false, H_let_to_list);
+#endif
                               s7_define_safe_function(sc, "owlet",                   g_owlet,                  0, 0, false, H_owlet);
   sc->COVERLET =              s7_define_safe_function(sc, "coverlet",                g_coverlet,               1, 0, false, H_coverlet);
   sc->OPENLET =               s7_define_safe_function(sc, "openlet",                 g_openlet,                1, 0, false, H_openlet);
@@ -68627,7 +68543,7 @@ s7_scheme *s7_init(void)
   /* despite the similar names, current-error-port is different from the other two, and a setter is needed
    *    in scheme because error and warn send output to it by default.  It is not a "dynamic variable" unlike
    *    the other two.  In the input/output cases, setting the port can only cause confusion.
-   *    current-error-port should simply be an s7 variable with a name like *error* and an accessor to
+   *    current-error-port should simply be an s7 variable with a name like *error-port* and an accessor to
    *    ensure its new value, if any, is an output port.
    */
 
@@ -68704,8 +68620,7 @@ s7_scheme *s7_init(void)
    */
   s7_eval_c_string(sc, "(define-bacro (macroexpand __mac__) `(,(procedure-source (car __mac__)) ',@(cdr __mac__)))");
   
-  /* quasiquote
-   */
+  /* quasiquote */
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, H_quasiquote);
 
   /* ---------------- dilambda ---------------- */
@@ -68834,7 +68749,7 @@ s7_scheme *s7_init(void)
                         (define current-environment          curlet)   \n\
                         (define error-environment            owlet)    \n\
                         (define procedure-environment        funclet)  \n\
-                        (define environment->list            let->list)\n\
+                        (define (environment->list e)        (reverse (map values e)))\n\
                         (define open-environment             openlet)  \n\
                         (define open-environment?            openlet?) \n\
                         (define close-environment            coverlet) \n\
@@ -69021,7 +68936,7 @@ int main(int argc, char **argv)
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3015
  * lg             |      |      | 6547 6497 6494 6235 6234
  * t137           |      |      | 11.0           5031 5028
- * t455|6     265 |   89 |  9   |       8.4 8045 7482 7542
+ * t455|6     265 |   89 |  9   |       8.4 8045 7482 7524
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.6
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 23.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 34.4
@@ -69060,8 +68975,4 @@ int main(int argc, char **argv)
  * inexact/pure s7: (define exact? rational?) (define (inexact? x) (not (rational? x))) (define inexact->exact round) (define (exact->inexact x) (* x 1.0))
  *    also get rid of #i and #e?
  *    perhaps current-error-port -> *error-port*
- *    perhaps remove let->list: (reverse! (map values e)), random-state->list
- *
- * c_object_t make-iterator support -- why not pass an env and fill in from that?
- * add tests to complete is_any_macro blocks in s7test
  */

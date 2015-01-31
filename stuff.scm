@@ -2,6 +2,10 @@
 
 (provide 'stuff.scm)
 
+(when (provided? 'pure-s7)
+  (define (let->list e) (reverse! (map values e))))
+
+
 ;;; ----------------
 (define empty? 
   (let ((documentation "(empty? obj) returns #t if obj is an empty sequence"))

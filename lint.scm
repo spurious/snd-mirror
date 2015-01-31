@@ -25,6 +25,11 @@
       (define (string-ci>=? . strs) (apply string>=? (map string-upcase strs)))
       (define (string-ci<? . strs) (apply string<? (map string-upcase strs)))
       (define (string-ci>? . strs) (apply string>? (map string-upcase strs)))
+
+      (define (let->list e)
+	(if (let? e)
+	    (reverse! (map values e))
+	    (error 'wrong-type-arg "let->list argument should be an environment: ~A" str)))
       ))
 
 (if (not (defined? 'environment?))

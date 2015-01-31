@@ -5666,7 +5666,7 @@ loading code that calls gcd.
 <li>remove even? and odd?, gcd and lcm.
 <li>remove string-length, vector-length, and hash-table-size.
 <li>remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!, set-car!|cdr!, and set-current-output|input|error-port.
-<li>change file-exists? to file? (or omit it and assume use of libc.scm &mdash; why reinvent the wheel?).
+<li>change file-exists? to file? (or omit it and assume the use of libc.scm &mdash; why reinvent the wheel?).
 <li>remove all the conversion and copy functions like vector-&gt;list and vector-copy (use copy or map).
 <li>add typeq? and perhaps make null? generic (see stuff.scm).
 <li>change string-&gt;symbol to symbol (what to do with symbol-&gt;string in that case?)
@@ -5727,7 +5727,7 @@ Better ideas are always welcome!
 <li>places 'pure-s7 in *features*
 <li>omits char-ready, char-ci*, string-ci*
 <li>omits string-copy, string-fill!, vector-fill!
-<li>omits list-&gt;string, list-&gt;vector, string-&gt;list, vector-&gt;list
+<li>omits list-&gt;string, list-&gt;vector, string-&gt;list, vector-&gt;list, let-&gt;list
 <li>omits string-length, vector-length, hash-table-size
 <li>omits cond-expand, multiple-values-bind|set!, call-with-values, defmacro(*)
 <li>omits d/f/s/l exponents
