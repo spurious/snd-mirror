@@ -2543,8 +2543,7 @@ The 'srate:' and 'channels:' labels are actually drop-down menus providing quick
 The default values for the fields can be set by clicking 'Reset'.  These values \
 are " S_default_output_chans ", " S_default_output_sample_type ", " S_default_output_srate ", and " S_default_output_header_type ".  \
 The notation \"(be)\" in the data format lists stands for big endian; similarly, \"(le)\" is little endian.\
-The file name field can be set upon each invocation through " S_output_name_hook ", and the \
-comment field via " S_output_comment_hook ".  Click 'Ok' to open the new sound. The actual new file representing the new sound is not written \
+Click 'Ok' to open the new sound. The actual new file representing the new sound is not written \
 until you save the new sound.",
 #else
 "This dialog sets the new file's output header type, data format, srate, chans, and comment. \

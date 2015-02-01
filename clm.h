@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 7
-#define MUS_DATE "25-Nov-14"
+#define MUS_REVISION 8
+#define MUS_DATE "31-Jan-15"
 
 /* isn't mus_env_interp backwards? */
 
@@ -93,9 +93,6 @@ MUS_EXPORT void mus_generator_set_channel(mus_any_class *p, int (*channel)(mus_a
 MUS_EXPORT void mus_generator_set_file_name(mus_any_class *p, char *(*file_name)(mus_any *ptr));
 MUS_EXPORT void mus_generator_set_extended_type(mus_any_class *p, mus_clm_extended_t extended_type);
 MUS_EXPORT void mus_generator_set_read_sample(mus_any_class *p, mus_float_t (*read_sample)(mus_any *ptr, mus_long_t samp, int chan));
-#if (!DISABLE_DEPRECATED)
-MUS_EXPORT void mus_generator_set_feeder(mus_any *g, mus_float_t (*feed)(void *arg, int direction)); /* backwards compatibility */
-#endif
 MUS_EXPORT void mus_generator_set_feeders(mus_any *g, 
 					  mus_float_t (*feed)(void *arg, int direction),
 					  mus_float_t (*block_feed)(void *arg, int direction, mus_float_t *block, mus_long_t start, mus_long_t end));
@@ -132,7 +129,6 @@ MUS_EXPORT bool mus_arrays_are_equal(mus_float_t *arr1, mus_float_t *arr2, mus_f
 MUS_EXPORT mus_float_t mus_polynomial(mus_float_t *coeffs, mus_float_t x, int ncoeffs);
 #if (!DISABLE_DEPRECATED)
 MUS_EXPORT void mus_clear_array(mus_float_t *arr, mus_long_t size);
-MUS_EXPORT void mus_multiply_arrays(mus_float_t *data, mus_float_t *window, mus_long_t len);
 #endif
 MUS_EXPORT void mus_rectangular_to_polar(mus_float_t *rl, mus_float_t *im, mus_long_t size);
 MUS_EXPORT void mus_rectangular_to_magnitudes(mus_float_t *rl, mus_float_t *im, mus_long_t size);
@@ -607,6 +603,7 @@ MUS_EXPORT mus_any *mus_bank_generator(mus_any *g, int i);
 
 /* Change log.
  *
+ * 31-Jan:     removed mus_multiply_arrays.
  * --------
  * 8-Nov:      mus_copy, mus_bank_generator.
  * 24-Oct:     mus_generator_set_feeders.

@@ -2978,7 +2978,7 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, mus_float_t cutoff, b
 			   rgb_t br, rgb_t bg, rgb_t bb)
 {
   mus_float_t lin_dB = 0.0;
-  mus_float_t xincr, yincr, x0, y0, x1, y1;
+  mus_float_t xincr, yincr, y0, x1;
   int bins = 0, slice, i, j;
   float inv_scl;
   int **js = NULL;
@@ -3012,6 +3012,7 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, mus_float_t cutoff, b
 
   for (slice = 0; slice < si->active_slices - 1; slice++)
     {
+      mus_float_t x0, y1;
       x0 = x1;
       x1 += xincr;
       y1 = -0.5;
@@ -3458,9 +3459,8 @@ static int make_wavogram(chan_info *cp)
       int **js = NULL;
       float x0, x1, y0, y1; /* x5inc, y5inc; */
       mus_float_t xinc, yinc;
-      rgb_t *rs = NULL, *gs = NULL, *bs = NULL;
-      /* each line is wavo_trace samps, there are (height / wave_hop) of these? */
       int lines = 0, len = 0;
+      rgb_t *rs = NULL;
       
       if (need_new_list)
 	{
@@ -3529,7 +3529,9 @@ static int make_wavogram(chan_info *cp)
       if (rs)
 	{
 	  int len1, lines1;
-	  mus_float_t xf, yf;
+	  mus_float_t xf;
+	  rgb_t *gs, *bs;
+	  /* each line is wavo_trace samps, there are (height / wave_hop) of these? */
 
 	  gs = color_map_greens(color_map(ss));
 	  bs = color_map_blues(color_map(ss));
@@ -3539,6 +3541,7 @@ static int make_wavogram(chan_info *cp)
 
 	  for (j = 0; j < lines1; j++)
 	    {
+	      mus_float_t yf;
 	      x1 = -1.0;
 	      y0 = y1;
 	      y1 += yinc;

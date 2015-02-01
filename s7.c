@@ -7699,9 +7699,11 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 #define s7_Int_abs(x) ((x) >= 0 ? (x) : -(x))
 /* can't use abs even in gcc -- it doesn't work with long long ints! */
 
-#define s7_fabsl(x) (((x) < 0.0) ? -(x) : (x))
-/* fabsl doesn't exist in netBSD! There is a __NetBSD__ flag I think
- */
+#if (!__NetBSD__)
+  #define s7_fabsl(X) fabsl(X)
+#else
+  static double s7_fabsl(long double x) {if (x < 0.0) return(-x);  return(x);}
+#endif
 
 static bool is_NaN(s7_Double x) {return(x != x);}
 /* callgrind says this is faster than isnan, I think (very confusing data...) */
@@ -23322,12 +23324,11 @@ static s7_pointer s7_load_1(s7_scheme *sc, const char *filename, s7_pointer e)
    *   but in that case, we actually want it to behave like g_load and continue the evaluation upon completion
    */
   sc->envir = e;
+  push_stack(sc, OP_LOAD_RETURN_IF_EOF, port, sc->code);
   
   if (!sc->longjmp_ok)
     {
       bool old_longjmp;
-      push_stack(sc, OP_LOAD_RETURN_IF_EOF, port, sc->code);
-      
       old_longjmp = sc->longjmp_ok;
       if (!sc->longjmp_ok)
 	{
@@ -23337,18 +23338,11 @@ static s7_pointer s7_load_1(s7_scheme *sc, const char *filename, s7_pointer e)
 	  else eval(sc, OP_READ_INTERNAL);
 	}
       sc->longjmp_ok = old_longjmp;  
-      pop_input_port(sc);
-      s7_close_input_port(sc, port);
     }
-  else
-    {
-      /* caller here is assuming the load will be complete before this function returns */
-      push_stack(sc, OP_LOAD_RETURN_IF_EOF, sc->args, sc->code);
+  else eval(sc, OP_READ_INTERNAL);
 
-      eval(sc, OP_READ_INTERNAL);
-      pop_input_port(sc);
-      s7_close_input_port(sc, port);
-    }
+  pop_input_port(sc);
+  s7_close_input_port(sc, port);
   return(sc->value);
 }
 
@@ -23504,11 +23498,11 @@ defaults to the rootlet.  To load into the current environment instead, pass (cu
   push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
   
   /* now we've opened and moved to the file to be loaded, and set up the stack to return
-   *   to where we were when it is read.  Call *load-hook* if it is a procedure.
+   *   to where we were.  Call *load-hook* if it is a procedure.
    */
   
   if (is_not_null(s7_hook_functions(sc, sc->load_hook)))
-    s7_apply_function(sc, sc->load_hook, list_1(sc, s7_make_string(sc, fname)));
+    s7_apply_function(sc, sc->load_hook, list_1(sc, sc->temp4 = s7_make_string(sc, fname)));
 
   return(sc->UNSPECIFIED);
 }
@@ -24314,9 +24308,9 @@ static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator)
 
 static s7_pointer string_iterate(s7_scheme *sc, s7_pointer obj)
 {
-  s7_pointer result;
   if (iterator_position(obj) < iterator_length(obj))
     {
+      s7_pointer result;
       result = s7_make_character(sc, (unsigned char)(string_value(iterator_sequence(obj))[iterator_position(obj)]));
       iterator_position(obj)++;
       return(result);
@@ -24326,9 +24320,9 @@ static s7_pointer string_iterate(s7_scheme *sc, s7_pointer obj)
 
 static s7_pointer bytevector_iterate(s7_scheme *sc, s7_pointer obj)
 {
-  s7_pointer result;
   if (iterator_position(obj) < iterator_length(obj))
     {
+      s7_pointer result;
       result = small_int((unsigned char)(string_value(iterator_sequence(obj))[iterator_position(obj)]));
       iterator_position(obj)++;
       return(result);
@@ -24338,9 +24332,9 @@ static s7_pointer bytevector_iterate(s7_scheme *sc, s7_pointer obj)
 
 static s7_pointer vector_iterate(s7_scheme *sc, s7_pointer obj)
 {
-  s7_pointer result;
   if (iterator_position(obj) < iterator_length(obj))
     {
+      s7_pointer result;
       result = vector_getter(iterator_sequence(obj))(sc, iterator_sequence(obj), iterator_position(obj));
       iterator_position(obj)++;
       return(result);
@@ -24383,9 +24377,9 @@ static s7_pointer other_iterate(s7_scheme *sc, s7_pointer obj)
 static s7_pointer pair_iterate_1(s7_scheme *sc, s7_pointer obj);
 static s7_pointer pair_iterate(s7_scheme *sc, s7_pointer obj)
 {
-  s7_pointer result;
   if (is_pair(iterator_current(obj)))
     {
+      s7_pointer result;
       result = car(iterator_current(obj));
       iterator_current(obj) = cdr(iterator_current(obj));
       iterator_next(obj) = pair_iterate_1;
@@ -24396,9 +24390,9 @@ static s7_pointer pair_iterate(s7_scheme *sc, s7_pointer obj)
 
 static s7_pointer pair_iterate_1(s7_scheme *sc, s7_pointer obj)
 {
-  s7_pointer result;
   if (is_pair(iterator_current(obj)))
     {
+      s7_pointer result;
       result = car(iterator_current(obj));
       iterator_current(obj) = cdr(iterator_current(obj));
       if (iterator_current(obj) == iterator_slow(obj))
@@ -36471,7 +36465,7 @@ static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, share
 	  return(integer(x) == integer(y));
 
 	case T_RATIO:
-	  return(fabs(integer(x) - fraction(y)) <= sc->morally_equal_float_epsilon);
+	  return(s7_fabsl(integer(x) - fraction(y)) <= sc->morally_equal_float_epsilon);
 
 	case T_REAL:
 	  return((!is_NaN(real(y))) &&
@@ -36499,10 +36493,10 @@ static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, share
 #endif
 	  
 	case T_INTEGER:
-	  return(fabs(fraction(x) - integer(y)) <= sc->morally_equal_float_epsilon);
+	  return(s7_fabsl(fraction(x) - integer(y)) <= sc->morally_equal_float_epsilon);
 
 	case T_RATIO:
-	  return(fabs(fraction(x) - fraction(y)) <= sc->morally_equal_float_epsilon);
+	  return(s7_fabsl(fraction(x) - fraction(y)) <= sc->morally_equal_float_epsilon);
 
 	case T_REAL:
 	  return(floats_are_morally_equal(sc, fraction(x), real(y)));
@@ -36510,7 +36504,7 @@ static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, share
 	case T_COMPLEX:
 	  return((!is_NaN(real_part(y))) &&
 		 (!is_NaN(imag_part(y))) &&
-		 (fabs(fraction(x) - real_part(y)) <= sc->morally_equal_float_epsilon) &&
+		 (s7_fabsl(fraction(x) - real_part(y)) <= sc->morally_equal_float_epsilon) &&
 		 (fabs(imag_part(y)) <= sc->morally_equal_float_epsilon));
 
 	default:
@@ -36534,7 +36528,7 @@ static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, share
 
 	case T_RATIO:
 	  return((!is_NaN(real(x))) &&
-		 (fabs(real(x) - fraction(y)) <= sc->morally_equal_float_epsilon));
+		 (s7_fabsl(real(x) - fraction(y)) <= sc->morally_equal_float_epsilon));
 
 	case T_REAL:
 	  return(floats_are_morally_equal(sc, real(x), real(y)));
@@ -36575,7 +36569,7 @@ static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, share
 	case T_RATIO:
 	  return((!is_NaN(real_part(x))) &&
 		 (!is_NaN(imag_part(x))) &&
-		 (fabs(real_part(x) - fraction(y)) <= sc->morally_equal_float_epsilon) &&
+		 (s7_fabsl(real_part(x) - fraction(y)) <= sc->morally_equal_float_epsilon) &&
 		 (fabs(imag_part(x)) <= sc->morally_equal_float_epsilon));
 
 	case T_REAL:
@@ -38706,16 +38700,16 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
       (is_procedure(sc->error_hook)) &&
       (is_pair(s7_hook_functions(sc, sc->error_hook))))
     {
-      s7_pointer error_list;
+      s7_pointer error_hook_func;
       /* (set! (hook-functions *error-hook*) (list (lambda (h) (format *stderr* "got error ~A~%" (h 'args))))) */
       
-      error_list = sc->error_hook;
+      error_hook_func = sc->error_hook;
       sc->error_hook = sc->F;
       /* if the *error-hook* functions trigger an error, we had better not have *error-hook* still set! */
       
-      push_stack(sc, OP_ERROR_HOOK_QUIT, sc->NIL, error_list); /* restore *error-hook* upon successful (or any!) evaluation */
+      push_stack(sc, OP_ERROR_HOOK_QUIT, sc->NIL, error_hook_func); /* restore *error-hook* upon successful (or any!) evaluation */
       sc->args = list_2(sc, type, info);
-      sc->code = error_list;
+      sc->code = error_hook_func;
       
       /* if we drop into the longjmp below, the hook functions are not called!
        *   OP_ERROR_HOOK_QUIT performs the longjmp, so it should be safe to go to eval.
@@ -68683,16 +68677,12 @@ s7_scheme *s7_init(void)
 
   /* ---------------- hooks ---------------- */
   s7_eval_c_string(sc, "(define (make-hook . args)                                                            \n\
-                          (let ((init ())                                                                     \n\
-	                        (body ())                                                                     \n\
-	                        (end ()))                                                                     \n\
+                          (let ((body ()))                                                                    \n\
                             (apply lambda* args                                                               \n\
                               '(let ((result #<unspecified>))                                                 \n\
                                  (let ((e (curlet)))                                                          \n\
-                                   (dynamic-wind                                                              \n\
-	                             (lambda () (for-each (lambda (f) (f e)) init))                           \n\
-	                             (lambda () (for-each (lambda (f) (f e)) body) result)                    \n\
-	                             (lambda () (for-each (lambda (f) (f e)) end)))))                         \n\
+                                   (for-each (lambda (f) (f e)) body)                                         \n\
+                                   result))                                                                   \n\
                               ())))");
 
   s7_eval_c_string(sc, "(define hook-functions                                                                \n\
@@ -68735,8 +68725,8 @@ s7_scheme *s7_init(void)
   s7_define_constant(sc, "*s7*", 
     s7_openlet(s7_inlet(sc, 
        s7_list(sc, 2, 
-	       s7_cons(sc, s7_make_symbol(sc, "let-ref-fallback"), s7_make_function(sc, "s7-let-ref", g_s7_let_ref_fallback, 2, 0, false, "*s7* reader")),
-	       s7_cons(sc, s7_make_symbol(sc, "let-set!-fallback"), s7_make_function(sc, "s7-let-set", g_s7_let_set_fallback, 3, 0, false, "*s7* writer"))))));
+	       s7_cons(sc, sc->LET_REF_FALLBACK, s7_make_function(sc, "s7-let-ref", g_s7_let_ref_fallback, 2, 0, false, "*s7* reader")),
+	       s7_cons(sc, sc->LET_SET_FALLBACK, s7_make_function(sc, "s7-let-set", g_s7_let_set_fallback, 3, 0, false, "*s7* writer"))))));
 
 
 #if (!DISABLE_DEPRECATED)
@@ -68975,4 +68965,21 @@ int main(int argc, char **argv)
  * inexact/pure s7: (define exact? rational?) (define (inexact? x) (not (rational? x))) (define inexact->exact round) (define (exact->inexact x) (* x 1.0))
  *    also get rid of #i and #e?
  *    perhaps current-error-port -> *error-port*
+ *
+ * hook -> env
+ *   (let ((e (openlet (inlet :result #f 
+ *                            :body (list (lambda (e) (display "1")) (lambda (e) (display "2")) (lambda (e) (newline))) 
+ *                            :let-ref-fallback (lambda (e sym) (for-each (lambda (f) (f e)) (e 'body)))))))
+ *     (e 'run)) ; code=e args='(run) or whatever
+ *     probably cleaner to have an explicit 'run and call it ((e 'run) e)
+ *
+ *     make-hook : `(inlet ... ,@(map (lambda (f) (values (symbol->keyword f) #f)) args)) ; (define (hi a) (apply quote (list a)))
+ *
+ *   in s7:   (is_procedure(sc->error_hook)) && (is_pair(s7_hook_functions(sc, sc->error_hook)))) then use hook itself as sc->code
+ *   s7_hook_functions -> 'body
+ *   *load-hook* is a before-hook and does not capture load's result
+ *   *error-hook* and *unbound-variable-hook* look unproblematic
+ *   unused: mouse-enter|leave-graph-hook drop-hook mouse-enter|leave-listener-hook mark-drag-hook enved-hook listener-click-hook before-close-hook
+ *   can the graphics hooks be moved into graphics-specific cases?
+ *   in motif, xm.c has XtAddEventHandler (mouse-enter-graph)
  */

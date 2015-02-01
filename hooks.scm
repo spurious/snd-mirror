@@ -10,15 +10,15 @@
       (list after-graph-hook after-lisp-graph-hook lisp-graph-hook before-transform-hook mix-release-hook save-hook mus-error-hook
 	    mouse-enter-graph-hook mouse-leave-graph-hook open-raw-sound-hook select-channel-hook after-open-hook close-hook drop-hook update-hook
 	    mark-click-hook mark-drag-hook name-click-hook open-hook help-hook before-save-state-hook
-	    output-comment-hook play-hook snd-error-hook snd-warning-hook start-hook start-playing-hook stop-playing-hook
+	    output-comment-hook play-hook snd-error-hook snd-warning-hook start-playing-hook stop-playing-hook
 	    mouse-enter-listener-hook mouse-leave-listener-hook select-sound-hook
-	    exit-hook output-name-hook during-open-hook after-transform-hook mouse-enter-label-hook mouse-leave-label-hook initial-graph-hook
+	    exit-hook during-open-hook after-transform-hook mouse-enter-label-hook mouse-leave-label-hook initial-graph-hook
 	    graph-hook key-press-hook mouse-drag-hook mouse-press-hook enved-hook mouse-click-hook new-widget-hook
 	    mark-hook stop-playing-selection-hook after-apply-controls-hook draw-mark-hook
 	    bad-header-hook save-state-hook new-sound-hook color-hook orientation-hook listener-click-hook mix-click-hook after-save-state-hook
 	    mouse-enter-text-hook mouse-leave-text-hook mix-drag-hook 
-	    start-playing-selection-hook after-save-as-hook before-save-as-hook peak-env-hook draw-mix-hook
-	    before-exit-hook before-close-hook clip-hook info-popup-hook))))
+	    start-playing-selection-hook after-save-as-hook before-save-as-hook draw-mix-hook
+	    before-exit-hook before-close-hook clip-hook))))
 
 (define reset-all-hooks
   (let ((documentation "(reset-all-hooks) removes all Snd hook functions"))
@@ -35,19 +35,6 @@
 	   (set! (hook-functions (after-edit-hook snd chn)) ())
 	   (set! (hook-functions (undo-hook snd chn)) ())))
        (sounds)))))
-
-
-(define (add-to-all-hook-inits func)
-  (for-each 
-   (lambda (n)
-     (set! ((funclet n) 'init) (list func ((funclet n) 'init))))
-   (snd-hooks)))
-
-(define (add-to-all-hook-ends func)
-  (for-each 
-   (lambda (n)
-     (set! ((funclet n) 'end) (list func ((funclet n) 'end))))
-   (snd-hooks)))
 
 
 

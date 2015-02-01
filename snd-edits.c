@@ -9228,8 +9228,8 @@ void g_init_edits(void)
   Xen_define_safe_procedure(S_free_sampler,           g_free_sampler_w,           1, 0, 0, H_free_sampler);
   Xen_define_safe_procedure(S_sampler_home,           g_sampler_home_w,           1, 0, 0, H_sampler_home);
   Xen_define_safe_procedure(S_is_sampler,             g_is_sampler_w,              1, 0, 0, H_is_sampler);
-  Xen_define_safe_procedure(S_is_region_sampler,       g_region_is_sampler_w,       1, 0, 0, H_region_is_sampler);
-  Xen_define_safe_procedure(S_is_sampler_at_end,       g_sampler_at_end_w,         1, 0, 0, H_sampler_at_end);
+  Xen_define_safe_procedure(S_is_region_sampler,      g_region_is_sampler_w,       1, 0, 0, H_region_is_sampler);
+  Xen_define_safe_procedure(S_is_sampler_at_end,      g_sampler_at_end_w,         1, 0, 0, H_sampler_at_end);
   Xen_define_safe_procedure(S_sampler_position,       g_sampler_position_w,       1, 0, 0, H_sampler_position);
   Xen_define_safe_procedure(S_copy_sampler,           g_copy_sampler_w,           1, 0, 0, H_copy_sampler);
 
@@ -9255,11 +9255,6 @@ void g_init_edits(void)
   Xen_define_safe_procedure(S_insert_sound,           g_insert_sound_w,                 1, 6, 0, H_insert_sound);
   Xen_define_safe_procedure(S_scale_channel,          g_scale_channel_w,                1, 5, 0, H_scale_channel);
   Xen_define_safe_procedure(S_normalize_channel,      g_normalize_channel_w,            1, 5, 0, H_normalize_channel);
-
-#if HAVE_SCHEME && (!DISABLE_DEPRECATED)
-  s7_eval_c_string(s7, "(define vct->channel float-vector->channel)");
-  s7_eval_c_string(s7, "(define channel->vct channel->float-vector)");
-#endif
 
   Xen_define_procedure(S_change_samples_with_origin,   g_change_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
   Xen_define_procedure(S_insert_samples_with_origin,   g_insert_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");

@@ -1030,15 +1030,6 @@ mus_float_t mus_polynomial(mus_float_t *coeffs, mus_float_t x, int ncoeffs)
   return((mus_float_t)sum);
 }
 
-#if (!DISABLE_DEPRECATED)
-void mus_multiply_arrays(mus_float_t *data, mus_float_t *window, mus_long_t len)
-{
-  mus_long_t i;
-  for (i = 0; i < len; i++) 
-    data[i] *= window[i];
-}
-#endif
-
 void mus_rectangular_to_polar(mus_float_t *rl, mus_float_t *im, mus_long_t size) 
 {
   mus_long_t i; 
@@ -16188,13 +16179,6 @@ void mus_generator_set_feeders(mus_any *g,
 	}
     }
 }
-
-#if (!DISABLE_DEPRECATED)
-void mus_generator_set_feeder(mus_any *g, mus_float_t (*feed)(void *arg, int direction))
-{
-  mus_generator_set_feeders(g, feed, NULL);
-}
-#endif
 
 
 /* ---------------- single sideband "suppressed carrier" amplitude modulation (ssb-am) ---------------- */

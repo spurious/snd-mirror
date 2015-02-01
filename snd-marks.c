@@ -1692,7 +1692,7 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
   int j = 0;
   mus_long_t i, k, samps;
   axis_info *ap;
-  double samples_per_pixel, samp, x, incr;  
+  double samples_per_pixel, x;  
   int pixels;
   snd_fd *sf = NULL;
   int x_start, x_end;
@@ -1721,6 +1721,7 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
   if ((samples_per_pixel < 5.0) && 
       (samps < POINT_BUFFER_SIZE))
     {
+      double incr;
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
       if (sf == NULL) return;
       incr = (double)1.0 / cur_srate;
@@ -1738,6 +1739,7 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
 	{
 	  for (j = 0, i = ap->losamp, x = start_time; i <= ap->hisamp; i++, j++, x += incr)
 	    {
+	      double samp;
 	      if ((i < initial_sample) || (i >= current_sample)) 
 		samp = read_sample(sf);
 	      else samp = 0.0;

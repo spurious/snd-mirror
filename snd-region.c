@@ -2197,9 +2197,6 @@ void g_init_regions(void)
 				   S_setB S_region_graph_style, g_set_region_graph_style_w,  0, 0, 1, 0);
 
 #if HAVE_SCHEME
-#if (!DISABLE_DEPRECATED)
-  s7_eval_c_string(s7, "(define region->vct region->float-vector)");
-#endif
   s7_symbol_set_access(s7, ss->max_regions_symbol, s7_make_function(s7, "[acc-" S_max_regions, acc_max_regions, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->region_graph_style_symbol, s7_make_function(s7, "[acc-" S_region_graph_style, acc_region_graph_style, 2, 0, false, "accessor"));
 

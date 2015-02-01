@@ -244,19 +244,23 @@ static void save_a_color(FILE *Fp, color_info *default_color, color_info *curren
 	    rgb_to_float(current_color->blue),
 	    S_make_color,
 	    ext_name); 
-#else
+#endif
 #if HAVE_SCHEME
     fprintf(Fp, "(set! (%s) (%s %.3f %.3f %.3f))\n", 
-#endif
-#if HAVE_RUBY
-    fprintf(Fp, "set_%s(%s(%.3f, %.3f, %.3f))\n", 
-#endif
 	    to_proc_name(ext_name), 
 	    to_proc_name(S_make_color),
 	    rgb_to_float(current_color->red),
 	    rgb_to_float(current_color->green),
 	    rgb_to_float(current_color->blue));
-#endif /* not forth */
+#endif
+#if HAVE_RUBY
+    fprintf(Fp, "set_%s(%s(%.3f, %.3f, %.3f))\n", 
+	    to_proc_name(ext_name), 
+	    to_proc_name(S_make_color),
+	    rgb_to_float(current_color->red),
+	    rgb_to_float(current_color->green),
+	    rgb_to_float(current_color->blue));
+#endif 
 #endif /* ext lang */
 
   free(default_color); /* macro has rgb_to_color which allocates */

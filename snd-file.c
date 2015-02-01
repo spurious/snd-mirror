@@ -1132,7 +1132,9 @@ static Xen close_hook;
 static Xen before_close_hook;
 static Xen during_open_hook;
 static Xen after_open_hook;
+#if (!DISABLE_DEPRECATED)
 static Xen output_name_hook;
+#endif
 
 void during_open(int fd, const char *file, open_reason_t reason)
 {
@@ -1188,6 +1190,7 @@ void after_open(snd_info *sp)
 
 char *output_name(const char *current_name)
 {
+#if (!DISABLE_DEPRECATED)
   if (Xen_hook_has_list(output_name_hook))
     {
 #if HAVE_SCHEME
@@ -1210,6 +1213,7 @@ char *output_name(const char *current_name)
 	}
 #endif
     }
+#endif
   return(mus_strdup(current_name));
 }
 
@@ -2822,7 +2826,9 @@ char *dialog_get_title(widget_t dialog)
 
 /* -------- info popup -------- */
 
+#if (!DISABLE_DEPRECATED)
 static Xen info_popup_hook;
+#endif
 
 #if (!USE_NO_GUI)
 
@@ -2887,6 +2893,7 @@ void display_info(snd_info *sp)
       post_it(sp->short_filename, buffer);
       if (ampstr) free(ampstr);
 
+#if (!DISABLE_DEPRECATED)
       /* run info-popup-hook, appending each string */
       if (Xen_hook_has_list(info_popup_hook))
 	{
@@ -2907,6 +2914,7 @@ void display_info(snd_info *sp)
 	    }
 #endif
 	}
+#endif
 
       snprintf(buffer, INFO_BUFFER_SIZE, "\n----------------------------------------\n%s:", sp->filename);
       post_it_append(buffer);
@@ -3909,8 +3917,14 @@ This provides a way to set various sound-specific defaults. \n\
 ; add-hook!"
 #endif
 
+#if (!DISABLE_DEPRECATED)
   #define H_output_name_hook S_output_name_hook " (name): called from the File:New dialog.  If it returns a filename, \
 that name is presented in the New File dialog."
+  output_name_hook =    Xen_define_hook(S_output_name_hook,    "(make-hook 'name)",                1, H_output_name_hook);
+
+  #define H_info_popup_hook S_info_popup_hook " (snd): called by the info popup dialog."
+  info_popup_hook = Xen_define_hook(S_info_popup_hook, "(make-hook 'snd)", 1, H_info_popup_hook); 
+#endif
 
   open_hook =           Xen_define_hook(S_open_hook,           "(make-hook 'name)",                1, H_open_hook);
   before_close_hook =   Xen_define_hook(S_before_close_hook,   "(make-hook 'snd)",                 1, H_before_close_hook);
@@ -3920,7 +3934,6 @@ that name is presented in the New File dialog."
   before_save_as_hook = Xen_define_hook(S_before_save_as_hook, "(make-hook 'snd 'name 'selection 'sampling-rate 'sample-type 'header-type 'comment)", 7, H_before_save_as_hook); 
   during_open_hook =    Xen_define_hook(S_during_open_hook,    "(make-hook 'fd 'name 'reason)",    3, H_during_open_hook);
   after_open_hook =     Xen_define_hook(S_after_open_hook,     "(make-hook 'snd)",                 1, H_after_open_hook);
-  output_name_hook =    Xen_define_hook(S_output_name_hook,    "(make-hook 'name)",                1, H_output_name_hook);
 
   #define H_open_raw_sound_hook S_open_raw_sound_hook " (name state): called when a headerless sound file is opened. \
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). \
@@ -3938,11 +3951,6 @@ Snd tries to maintain the index across the update, but if you change the number 
 the newly updated sound may have a different index."
 
   update_hook = Xen_define_hook(S_update_hook, "(make-hook 'snd)", 1, H_update_hook);
-
-  #define H_info_popup_hook S_info_popup_hook " (snd): called by the info popup dialog."
-
-  info_popup_hook = Xen_define_hook(S_info_popup_hook, "(make-hook 'snd)", 1, H_info_popup_hook); 
-
 
   Xen_define_safe_procedure(S_snd_tempnam,        g_snd_tempnam_w,        0, 0, 0, H_snd_tempnam);
 

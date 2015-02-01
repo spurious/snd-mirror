@@ -474,7 +474,7 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
     }
 }
 
-
+#if (!DISABLE_DEPRECATED)
 static Xen peak_env_hook;
 
 static void run_peak_env_hook(chan_info *cp)
@@ -485,7 +485,7 @@ static void run_peak_env_hook(chan_info *cp)
 			C_int_to_Xen_integer(cp->chan)),
 	     S_peak_env_hook);
 }
-
+#endif
 
 void finish_peak_env(chan_info *cp)
 {
@@ -533,7 +533,9 @@ idle_func_t get_peak_env(any_pointer_t ptr)
 	      update_graph(cp);
 	      cp->new_peaks = false;
 	    }
+#if (!DISABLE_DEPRECATED)
 	  run_peak_env_hook(cp);
+#endif
 	  return(BACKGROUND_QUIT);
 	}
       else return(BACKGROUND_CONTINUE);
@@ -596,7 +598,9 @@ bool peak_env_usable(chan_info *cp, mus_float_t samples_per_pixel, mus_long_t hi
 	  cp->waiting_to_make_graph = false;
 	  update_graph(cp);
 	}
+#if (!DISABLE_DEPRECATED)
       run_peak_env_hook(cp);
+#endif
       return(peak_env_usable(cp, samples_per_pixel, hisamp, start_new, edit_pos, false));
     }
 
@@ -5903,11 +5907,13 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
 
   #define H_after_apply_controls_hook S_after_apply_controls_hook " (snd): called when " S_apply_controls " finishes."
 
+#if (!DISABLE_DEPRECATED)
   #define H_peak_env_hook S_peak_env_hook " (snd chn): called when a new peak env is ready."
 
+  peak_env_hook =             Xen_define_hook(S_peak_env_hook,             "(make-hook 'snd 'chn)", 2, H_peak_env_hook);
+#endif
   name_click_hook =           Xen_define_hook(S_name_click_hook,           "(make-hook 'snd)",      1, H_name_click_hook);
   after_apply_controls_hook = Xen_define_hook(S_after_apply_controls_hook, "(make-hook 'snd)",      1, H_after_apply_controls_hook);
-  peak_env_hook =             Xen_define_hook(S_peak_env_hook,             "(make-hook 'snd 'chn)", 2, H_peak_env_hook);
 
   #define H_channels_separate "The value for " S_channel_style " that causes channel graphs to occupy separate panes"
   #define H_channels_combined "The value for " S_channel_style " that causes channel graphs to occupy one pane (set by the 'unite' button)"

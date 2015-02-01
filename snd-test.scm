@@ -2296,7 +2296,7 @@
 		       'hann-poisson-window 'hann-window 'header-type 'help-dialog
 		       'help-hook 'hide-widget 'highlight-color 'html-dir 'html-program
 		       'hz->radians 'iir-filter 'iir-filter? 'in 'in-any
-		       'ina 'inb 'info-dialog 'info-popup-hook 'initial-graph-hook
+		       'ina 'inb 'info-dialog 'initial-graph-hook
 		       'insert-file-dialog 'insert-region 'insert-sample 'insert-samples 'insert-samples-with-origin
 		       'insert-selection 'insert-silence 'insert-sound 'just-sounds 'kaiser-window
 		       'key 'key-binding 'key-press-hook 'keyboard-no-action  'peak-env-dir
@@ -2371,9 +2371,9 @@
 		       'one-zero 'one-zero? 'open-file-dialog 'open-file-dialog-directory 'open-hook 'open-raw-sound 'open-raw-sound-hook
 		       'open-sound
 		       'orientation-hook 'oscil 'oscil? 'out-any 'outa
-		       'outb 'outc 'outd 'output-comment-hook 'output-name-hook 
+		       'outb 'outc 'outd 'output-comment-hook
 		       'override-samples-with-origin 'pad-channel 'partials->polynomial 'partials->wave
-		       'parzen-window 'pausing 'peak-env-hook 'peaks 'peaks-font
+		       'parzen-window 'pausing 'peaks 'peaks-font
 		       'phase-partials->wave 'phase-vocoder 'phase-vocoder-amp-increments 'phase-vocoder-amps 'phase-vocoder-freqs
 		       'phase-vocoder-phase-increments 'phase-vocoder-phases 'phase-vocoder? 'play 'play-arrow-size
 		       'play-hook 'player-home 'player? 'players
@@ -2424,7 +2424,7 @@
 		       'spectrum 'speed-control 'speed-control-as-float 'speed-control-as-ratio 'speed-control-as-semitone
 		       'speed-control-bounds 'speed-control-style 'speed-control-tones 'square-wave 'square-wave?
 		       'squelch-update 'srate 'src 'src-channel 'src-selection
-		       'src-sound 'src? 'ssb-am 'ssb-am? 'start-hook
+		       'src-sound 'src? 'ssb-am 'ssb-am?
 		       'start-playing 'start-playing-hook 'start-playing-selection-hook 'start-progress-report
 		       'stop-player 'stop-playing 'stop-playing-hook 'stop-playing-selection-hook 'ncos
 		       'ncos? 'nsin 'nsin? 'swap-channels 'sync 'sync-style 'sync-none 'sync-all 'sync-by-sound

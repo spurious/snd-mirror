@@ -2344,20 +2344,6 @@ procedure <a href="sndscm.html#html">html</a> called any time snd-help is called
 <div class="spacer"></div>
 
 
-
-<!-- info-popup-hook -->
-<pre class="indented">
-<em class=def id="infopopuphook">info-popup-hook</em> (snd) 
-</pre>
-
-<p>This hook is called whenever you invoke the info item in the graph popup menu.
-If it returns a
-string, that string is added to the information in the info dialog.
-</p>
-<div class="spacer"></div>
-
-
-
 <!-- initial-graph-hook -->
 <pre class="indented">
 <em class=def id="initialgraphhook">initial-graph-hook</em> (snd chn duration) 
@@ -3016,40 +3002,6 @@ If there is more than one hook function, each function's result is passed as inp
 <div class="spacer"></div>
 
 
-
-<!-- output-name-hook -->
-<pre class="indented">
-<em class=def id="outputnamehook">output-name-hook</em> (name)
-</pre>
-
-<p>This hook is called in the New File dialog. If it returns a filename, that name is presented in the New File dialog,
-making it slightly easier to set default output names.
-</p>
-
-<pre class="indented">
-(let ((file-ctr -1))
-  (hook-push <em class=red>output-name-hook</em>
-    (lambda (hook)
-      (set! file-ctr (+ file-ctr 1))
-      (set! (hook 'result) 
-            (<a class=quiet>format</a> #f "~A-~D.snd"    ; make new file name, e.g.: "Jun-01-23.snd"
-               (strftime "%b-%d" (localtime (current-time))) file-ctr)))))
-</pre>
-<div class="spacer"></div>
-
-
-
-<!-- peak-env-hook -->
-<pre class="indented">
-<em class=def id="peakenvhook">peak-env-hook</em> (snd chn)
-</pre>
-
-<p>This hook is called upon completion of a new peak envelope.
-</p>
-<div class="spacer"></div>
-
-
-
 <!-- play-hook -->
 <pre class="indented">
 <em class=def id="playhook">play-hook</em> (size)
@@ -3167,31 +3119,6 @@ reported it via the hook).
     (hook-remove <em class=red>snd-warning-hook</em> no-warning)))
 </pre>
 <div class="spacer"></div>
-
-
-
-<!-- start-hook -->
-<pre class="indented">
-<em class=def id="starthook">start-hook</em> (name)
-</pre>
-
-<p>This hook is called when Snd starts.
-If its function returns #t, Snd exits immediately.
-Say we are so annoyed with Snd's really very fine file browser that we want
-Snd to exit back to the shell if its file argument is not
-found (this code has to be in the ~/.snd_s7 init file):
-</p>
-
-<pre class="indented">
-(hook-push <em class=red>start-hook</em>
-  (lambda (hook)
-    (if (not (file-exists? (hook 'name)))
-	(begin
-	  (format *stderr* "~S does not exist~%" (hook 'name))
-	  (set! (hook 'result) #t)))))
-</pre>
-<div class="spacer"></div>
-
 
 
 <!-- start-playing-hook -->

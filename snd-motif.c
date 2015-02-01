@@ -30707,13 +30707,13 @@ void snd_doit(int argc, char **argv)
     XVisualInfo *vi = NULL;
     Colormap cmap;
     GLXContext cx;
-    int snglBuf[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, None};
     int dblBuf[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None};
     vi = glXChooseVisual(dpy, DefaultScreen(dpy), dblBuf);
     if (vi) 
       ss->gl_has_double_buffer = true;
     else
       {
+	int snglBuf[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, None};
 	ss->gl_has_double_buffer = false;
 	vi = glXChooseVisual(dpy, DefaultScreen(dpy), snglBuf);
       }
