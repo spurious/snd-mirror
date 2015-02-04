@@ -39,7 +39,7 @@ snd_info *get_sp(Xen snd)
 }
 
 
-snd_info *snd_new_file(const char *newname, int header_type, int sample_type, int srate, int chans, const char *new_comment, mus_long_t samples)
+snd_info *snd_new_file(const char *newname, int chans, int srate, int sample_type, int header_type, const char *new_comment, mus_long_t samples)
 {
   /* caller checks newname != null, and runs overwrite hook */
   if (mus_header_writable(header_type, sample_type))

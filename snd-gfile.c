@@ -2927,7 +2927,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 
 	      ss->local_errno = 0;
 	      redirect_snd_error_to(redirect_post_file_dialog_error, (void *)ndat);
-	      sp = snd_new_file(newer_name, header_type, sample_type, srate, chans, comment, initial_samples);
+	      sp = snd_new_file(newer_name, chans, srate, sample_type, header_type, comment, initial_samples);
 	      redirect_snd_error_to(NULL, NULL);
 	      if (!sp)
 		{

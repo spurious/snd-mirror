@@ -12465,7 +12465,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 
 	      ss->local_errno = 0;
 	      redirect_snd_error_to(redirect_post_file_dialog_error, (void *)ndat);
-	      sp = snd_new_file(new_file_filename, header_type, sample_type, srate, chans, comment, initial_samples);
+	      sp = snd_new_file(new_file_filename, chans, srate, sample_type, header_type, comment, initial_samples);
 	      redirect_snd_error_to(NULL, NULL);
 	      if (!sp)
 		{

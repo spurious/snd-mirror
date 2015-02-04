@@ -9221,7 +9221,7 @@ EDITS: 2
 	  (set! (v3 0) 1.0)
 	  (if (fneq (v3 0) 1.0) (snd-display #__line__ ";set! float-vector-ref: ~A" (v3 0))))
 	(set! (vlst 1) .1)
-	(if (not (feql (vector->list vlst) (list 0.0 0.1 0.0))) (snd-display #__line__ ";vector->list: ~A?" (vector->list vlst)))
+	(if (not (feql (map values vlst) (list 0.0 0.1 0.0))) (snd-display #__line__ ";vector->list: ~A?" (map values vlst)))
 	(let ((v2 (make-float-vector 4)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i 4))

@@ -58,7 +58,6 @@
     h))
 
 
-
 (define (without-dollar-sign str)
   (if (char=? (string-ref str 0) #\$)
       (substring str 1)

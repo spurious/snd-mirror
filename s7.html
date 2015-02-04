@@ -3827,9 +3827,6 @@ a modern GUI leaves formatting decisions to a text or table widget.
 
 <div class="header" id="hooks"><h4>hooks</h4></div>
 
-<p>(This section is semi-obsolete.  I think I'll change hooks to be environments, not functions.
-</p>
-
 <pre class="indented">
 (<em class=def id="makehook">make-hook</em> . fields)           ; make a new hook
 (<em class=def id="hookfunctions">hook-functions</em> hook)          ; the hook's list of 'body' functions
@@ -3844,24 +3841,20 @@ make-hook is:
 
 <pre class="indented">
 (define (make-hook . args)
-  (let ((init ())
-	(body ())
-	(end ()))
+  (let ((body ()))
     (apply lambda* args
       '(let ((result #&lt;unspecified&gt;))
          (let ((e (curlet)))
-           (dynamic-wind 
-	     (lambda () (for-each (lambda (f) (f e)) init))
-	     (lambda () (for-each (lambda (f) (f e)) body) result)
-	     (lambda () (for-each (lambda (f) (f e)) end)))))
+	   (for-each (lambda (f) (f e)) body) 
+           result))
        ())))
 </pre>
 
 <p>So the result of calling make-hook is a function (the lambda* that is applied to args above) that
-contains three lists of functions, init, body, and end.  Most of the time, you only need to use the "body"
-function list.  These internal functions each take one argument, the current (internal) environment.
-Each time the hook is called, each of the init functions is called, then each body function, then each end function.
-The result returned is the variable "result".  That variable, and each of the hook's arguments are accessible to the hook's internal
+contains a list of functions, 'body.  
+Each function in that list takes one argument, the hook.
+Each time the hook itself is called, each of the body functions is called, and the value of 'result is returned.
+That variable, and each of the hook's arguments are accessible to the hook's internal
 functions by going through the environment passed to the internal functions.  This is a bit circuitous; 
 here's a sketch:
 </p>
@@ -3904,43 +3897,6 @@ result = s7_call(s7, hook, s7_list(s7, 2, s7_make_integer(s7, 1), s7_make_intege
 </pre>
 </div>
 
-<p>Hooks are split into three list of functions to reflect the roles that
-hook functions play.
-Some are "watchers" that simply want notification
-that some event has occurred (the 'init' list).
-Others want to deal with the
-event in some way, possibly returning a result, and possibly interacting
-with any other similar hook functions' results (the 'body' list).
-Still others are only interested in the decision reached by the main functions.
-We need the dynamic-wind to be sure that all the before and after functions are called no matter what
-happens during the handling of the main functions.
-See the <a href="#evalstring">eval</a> section for a more elaborate example.
-Hooks are not very convenient within Scheme code, but are intended for use via the FFI where
-some callback mechanism is needed.
-</p>
-
-<div class="indented">
-<p>One annoying aspect of the hook function lists is that all you see is a bunch of anonymous lambdas.
-When callback order matters, one not-too-kludgey way to tell these functions apart is to use the
-function's closure to store whatever information is needed:
-</p>
-
-<pre class="indented">
-(set! (hook-functions h)
-      (list (let ((*info* "first hook!"))
-	      (lambda (hook)
-		(set! (hook 'result) "first")))
-	    (let ((*info* "second hook"))
-	      (lambda (hook)
-		(set! (hook 'result) (string-append (hook 'result) ", second"))))))
-
-(map (lambda (h)
-       ((funclet h) '*info*))
-     (hook-functions h))
-
-'("first hook!" "second hook")
-</pre>
-</div>
 
 
 
@@ -5733,9 +5689,10 @@ Better ideas are always welcome!
 <li>omits list-&gt;string, list-&gt;vector, string-&gt;list, vector-&gt;list, let-&gt;list
 <li>omits string-length, vector-length, hash-table-size
 <li>omits cond-expand, multiple-values-bind|set!, call-with-values, defmacro(*)
-<li>omits d/f/s/l exponents
 <li>omits unquote (the name), and quasiquoted vector constants
+<li>omits d/f/s/l exponents
 <li>omits make-polar, angle, magnitude, and renames make-rectangular to make-complex
+<li>omits exact?, inexact?, exact-&gt;inexact, inexact-&gt;exact, #i and #e
 <li>omits set-current-output-port and set-current-input-port
 </ul>
 

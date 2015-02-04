@@ -1392,8 +1392,7 @@ void dac_set_reverb_lowpass(snd_info *sp, mus_float_t newval);
 
 bool is_graph_style(int grf);
 chan_info *get_cp(Xen snd_n, Xen chn_n, const char *caller);
-snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t with_arrows, 
-				      graph_style_t grf_style, widget_t container, bool with_events);
+snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t with_arrows, graph_style_t grf_style, widget_t container, bool with_events);
 axis_info *lisp_info_axis(chan_info *cp);
 void free_lisp_info(chan_info *cp);
 void zx_incremented(chan_info *cp, double amount);
@@ -1561,7 +1560,7 @@ void amp_env_env(chan_info *cp, mus_float_t *brkpts, int npts, int pos, mus_floa
 peak_env_info *copy_peak_env_info(peak_env_info *old_ep, bool reversed);
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, mus_long_t beg, mus_long_t num, int pos);
 void peak_env_insert_zeros(chan_info *cp, mus_long_t beg, mus_long_t num, int pos);
-snd_info *snd_new_file(const char *newname, int header_type, int sample_type, int srate, int chans, const char *new_comment, mus_long_t samples);
+snd_info *snd_new_file(const char *newname, int chans, int srate, int sample_type, int header_type, const char *new_comment, mus_long_t samples);
 #if XEN_HAVE_RATIOS
   void snd_rationalize(mus_float_t a, int *num, int *den);
 #endif
@@ -1627,7 +1626,7 @@ void set_fallback_chans(int ch);
 void set_fallback_format(int fr);
 void set_with_tooltips(bool val);
 void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, bool from_save_as_dialog);
-bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int type, int format, const char *comment);
+bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int smp_type, int hd_type, const char *comment);
 void during_open(int fd, const char *file, open_reason_t reason);
 void after_open(snd_info *sp);
 char *output_name(const char *current_name);

@@ -337,15 +337,6 @@ s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, s7_pointer key);
                                                                             /* (hash-table-ref table key) */
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7_pointer value);  
                                                                             /* (hash-table-set! table key value) */
-  /* a hash-table is a vector of alists '((symbol value)), so to iterate over a hash-table
-   *   use for-each which calls its function with each of these alists.  An entry defaults to nil.
-   */
-  /* hash-tables are applicable:
-      (let ((hash (make-hash-table)))
-        (set! (hash 'hi) 32)
-        (hash 'hi))
-      -> 32
-  */
 
 s7_pointer s7_hook_functions(s7_scheme *sc, s7_pointer hook);                              /* (hook-functions hook) */
 s7_pointer s7_hook_set_functions(s7_scheme *sc, s7_pointer hook, s7_pointer functions);    /* (set! (hook-functions hook) ...) */
@@ -797,7 +788,7 @@ const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc);
  *        s7 changes
  *
  * 29-Jan:    changed args to s7_new_type_x (added s7_scheme arg, fill! takes s7_function).
- * 14-Jan:    make-let-iterator, let-iterator?
+ * 14-Jan:    make-iterator, iterator?
  * --------
  * 26-Dec:    s7_arity replaces s7_procedure_arity.  s7_define_integer_function. deprecate s7_procedure_name.
  * 5-Nov:     s7_shadow_rootlet and s7_set_shadow_rootlet.
