@@ -1062,7 +1062,7 @@ bool redo_edit_with_sync(chan_info *cp, int count);
 bool undo_edit(chan_info *cp, int count);
 bool redo_edit(chan_info *cp, int count);
 io_error_t save_channel_edits(chan_info *cp, const char *ofile, int pos);
-io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, int type, int format, int srate, const char *comment, int pos);
+io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, int srate, int samp_type, int hd_type, const char *comment, int pos);
 io_error_t save_edits(snd_info *sp);
 io_error_t save_edits_without_asking(snd_info *sp);
 io_error_t save_edits_and_update_display(snd_info *sp);

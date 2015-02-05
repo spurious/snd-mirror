@@ -1816,7 +1816,7 @@ static io_error_t channel_to_file(chan_info *cp, const char *ofile, int edpos) /
 }
 
 
-io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, int type, int format, int srate, const char *comment, int pos)
+io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, int srate, int samp_type, int hd_type, const char *comment, int pos)
 { 
   file_info *hdr, *ohdr;
   snd_info *sp;
@@ -1824,9 +1824,9 @@ io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, in
   sp = cp->sound;
   ohdr = sp->hdr;
   hdr = copy_header(new_name, ohdr);
-  hdr->format = format;
+  hdr->format = samp_type;
   hdr->srate = srate;
-  hdr->type = type;
+  hdr->type = hd_type;
   if (comment) 
     hdr->comment = mus_strdup(comment); 
   else hdr->comment = NULL;

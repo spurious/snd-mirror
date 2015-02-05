@@ -4239,7 +4239,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   if (!(run_before_save_as_hook(sp, fname, false, sr, df, ht, outcom)))
     {
       if (chan >= 0)
-	io_err = channel_to_file_with_settings(sp->chans[chan], fname, ht, df, sr, outcom, edit_position);
+	io_err = channel_to_file_with_settings(sp->chans[chan], fname, sr, df, ht, outcom, edit_position);
       else io_err = save_edits_without_display(sp, fname, ht, df, sr, outcom, edit_position);
     }
 

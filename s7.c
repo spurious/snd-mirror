@@ -4613,7 +4613,8 @@ static void resize_op_stack(s7_scheme *sc)
       Sc->stack_end += 4; \
   } while (0)
 
-/* next is used in reader, envir is needed */
+#if DEBUGGING
+/* next is used in reader, envir is needed?? */
 #define push_stack_no_code(Sc, Op, Args) \
   do { \
       Sc->stack_end[1] = Sc->envir; \
@@ -4621,6 +4622,14 @@ static void resize_op_stack(s7_scheme *sc)
       Sc->stack_end[3] = (s7_pointer)Op; \
       Sc->stack_end += 4; \
   } while (0)
+#else
+#define push_stack_no_code(Sc, Op, Args) \
+  do { \
+      Sc->stack_end[2] = Args; \
+      Sc->stack_end[3] = (s7_pointer)Op; \
+      Sc->stack_end += 4; \
+  } while (0)
+#endif
 
 #define push_stack_no_args(Sc, Op, Code) \
   do { \
@@ -24357,12 +24366,36 @@ static s7_pointer bytevector_iterate(s7_scheme *sc, s7_pointer obj)
   return(sc->ITERATOR_END);
 }
 
+static s7_pointer float_vector_iterate(s7_scheme *sc, s7_pointer obj)
+{
+  if (iterator_position(obj) < iterator_length(obj))
+    {
+      s7_pointer result;
+      result = make_real(sc, float_vector_element(iterator_sequence(obj), iterator_position(obj)));
+      iterator_position(obj)++;
+      return(result);
+    }
+  return(sc->ITERATOR_END);
+}
+
+static s7_pointer int_vector_iterate(s7_scheme *sc, s7_pointer obj)
+{
+  if (iterator_position(obj) < iterator_length(obj))
+    {
+      s7_pointer result;
+      result = make_integer(sc, int_vector_element(iterator_sequence(obj), iterator_position(obj)));
+      iterator_position(obj)++;
+      return(result);
+    }
+  return(sc->ITERATOR_END);
+}
+
 static s7_pointer vector_iterate(s7_scheme *sc, s7_pointer obj)
 {
   if (iterator_position(obj) < iterator_length(obj))
     {
       s7_pointer result;
-      result = vector_getter(iterator_sequence(obj))(sc, iterator_sequence(obj), iterator_position(obj));
+      result = vector_element(iterator_sequence(obj), iterator_position(obj));
       iterator_position(obj)++;
       return(result);
     }
@@ -24466,10 +24499,18 @@ static s7_pointer make_iterator(s7_scheme *sc, s7_pointer e)
       break;
       
     case T_VECTOR:
-    case T_INT_VECTOR:
-    case T_FLOAT_VECTOR:
       iterator_length(iter) = vector_length(e);
       iterator_next(iter) = vector_iterate;
+      break;
+
+    case T_INT_VECTOR:
+      iterator_length(iter) = vector_length(e);
+      iterator_next(iter) = int_vector_iterate;
+      break;
+
+    case T_FLOAT_VECTOR:
+      iterator_length(iter) = vector_length(e);
+      iterator_next(iter) = float_vector_iterate;
       break;
 
     case T_PAIR:
@@ -38218,6 +38259,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 
 /* error reporting info -- save filename and line number */
 
+#define remember_location(Line, File) (((File) << 20) | (Line))
 #define remembered_line_number(Line) (Line & 0xfffff)
 #define remembered_file_name(Line)   (((Line >> 20) <= sc->file_names_top) ? sc->file_names[Line >> 20] : sc->F)
 /* this gives room for 4000 files each of 1000000 lines */
@@ -40965,7 +41007,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	   *   sc->cur_code is GC-protected, so this should be safe.
 	   */
 	  cur_code = cons(sc, sym, sc->NIL);     /* the error will say "(sym)" which is not too misleading */
-	  pair_line_number(cur_code) = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
+	  pair_line_number(cur_code) = remember_location(port_line_number(sc->input_port), port_file_number(sc->input_port));
 	  set_has_line_number(cur_code);
 	}
       sc->ubh_cur_code_loc = s7_gc_protect(sc, cur_code);   /* we need to save this because it has the file/line number of the unbound symbol */
@@ -46494,8 +46536,6 @@ static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
 
 static bool tree_match(s7_scheme *sc, s7_pointer tree)
 {
-  if (is_null(tree))
-    return(false);
   if (is_symbol(tree))
     return(is_matched(tree));
   if (is_pair(tree))
@@ -46558,56 +46598,32 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	case OP_LET:
 	case OP_LET_STAR:
 	  if (is_symbol(cadr(x)))
-	    {
-	      s7_pointer vars, p;
-	      if ((!is_pair(cddr(x))) ||
-		  (!is_pair(cdddr(x)))) /* (let asdf) or possibly (let asdf ()) */
-		return(false);
-	      for (vars = caddr(x); is_pair(vars); vars = cdr(vars))
-		{
-		  if ((caar(vars) == func) ||
-		      (caar(vars) == cadr(x)))
-		    return(false); /* it's shadowed -- all bets are off! */
-		}
-	      
-	      for (p = cdddr(x); is_not_null(p); p = cdr(p)); /* body might be empty: (define (f x) (let asd ())) */
-	      if (is_pair(car(p)))
-		{
-		  /* what is going on here!?!? */
-		  form_is_safe(sc, cadr(x), args, car(p), true, bad_set);
-		  if ((at_end) && (!*bad_set))
-		    form_is_safe(sc, func, args, car(p), true, bad_set);
-		}
-	      return(false);
-	    }
-	  /* fall through */
+	    return(false);
 	  
 	case OP_LETREC:
 	case OP_LETREC_STAR:
-	  {
-	    bool happy = true;
-	    if (is_pair(cadr(x)))
-	      {
-		s7_pointer vars;
-		for (vars = cadr(x); is_pair(vars); vars = cdr(vars))
-		  {
-		    s7_pointer let_var;
-		    let_var = car(vars);
-		    if ((!is_pair(let_var)) ||
-			(!is_pair(cdr(let_var))))
-		      return(false);
-		    
-		    if ((is_pair(cadr(let_var))) &&
-			(!form_is_safe(sc, func, args, cadr(let_var), false, bad_set)))
-		      happy = false;
-		    
-		    if (car(let_var) == func)
-		      return(false); /* it's shadowed */
-		  }
-	      }
-	    if ((!happy) || (!body_is_safe(sc, func, args, cddr(x), at_end, bad_set)))
-	      return(false);
-	  }
+	  if (is_pair(cadr(x)))
+	    {
+	      s7_pointer vars;
+	      for (vars = cadr(x); is_pair(vars); vars = cdr(vars))
+		{
+		  s7_pointer let_var;
+		  
+		  let_var = car(vars);
+		  if ((!is_pair(let_var)) ||
+		      (!is_pair(cdr(let_var))))
+		    return(false);
+		  
+		  if (car(let_var) == func)
+		    return(false); /* it's shadowed */
+		  
+		  if ((is_pair(cadr(let_var))) &&
+		      (!form_is_safe(sc, func, args, cadr(let_var), false, bad_set)))
+		    return(false);
+		}
+	    }
+	  if (!body_is_safe(sc, func, args, cddr(x), at_end, bad_set))
+	    return(false);
 	  break;
 	  
 	case OP_IF:
@@ -46627,7 +46643,6 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	case OP_COND:
 	  {
 	    s7_pointer p;
-	    bool happy = true;
 	    for (p = cdr(x); is_pair(p); p = cdr(p))
 	      {
 		s7_pointer expr;
@@ -46635,12 +46650,12 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 		if (is_pair(expr)) /* ?? */
 		  {
 		    if ((is_pair(car(expr))) && (!form_is_safe(sc, func, args, car(expr), false, bad_set)))
-		      happy = false;
+		      return(false);
 		    if ((is_pair(cdr(expr))) && (!body_is_safe(sc, func, args, cdr(expr), at_end, bad_set)))
-		      happy = false;
+		      return(false);
 		  }
 	      }
-	    if ((!happy) || (is_not_null(p)))
+	    if (is_not_null(p))
 	      return(false);
 	  }
 	  break;
@@ -46648,14 +46663,10 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	case OP_CASE:
 	  {
 	    s7_pointer p;
-	    bool happy = true;
 	    if ((is_pair(cadr(x))) && (!form_is_safe(sc, func, args, cadr(x), false, bad_set))) return(false);
 	    for (p = cddr(x); is_pair(p); p = cdr(p))
-	      {
-		if ((is_pair(car(p))) && (!body_is_safe(sc, func, args, cdar(p), at_end, bad_set)))
-		  happy = false;
-	      }
-	    return(happy);
+	      if ((is_pair(car(p))) && (!body_is_safe(sc, func, args, cdar(p), at_end, bad_set)))
+		return(false);
 	  }
 	  break;
 	  
@@ -46716,7 +46727,6 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	    return(true);
 	  return(false);
 
-
 	case OP_WITH_LET:
 	  if (is_pair(cadr(x)))
 	    return(false);
@@ -46728,7 +46738,6 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	  if (!body_is_safe(sc, sc->F, sc->NIL, cddr(x), at_end, bad_set))
 	    return(false);
 	  break;
-
 
 	  /* op_define and friends are not safe: (define (a) (define b 3)...) tries to put b in the current env,
 	   *   but in a safe func, that's a constant.  See s7test L 1865 for an example.
@@ -46823,27 +46832,14 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 
 static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_pointer body, bool at_end, bool *bad_set)
 {
-  /* called in optimize_lambda */
+  /* called in optimize_lambda and above */
   s7_pointer p;
 
-  sc->cycle_counter++;
-  if (sc->cycle_counter > 5000)
-    return(false);
   for (p = body; is_pair(p); p = cdr(p))
-    {
-      if ((is_pair(car(p))) &&
-	  (!form_is_safe(sc, func, args, car(p), (at_end) && (is_null(cdr(p))), bad_set)))
-	{
-	  if ((at_end) && (is_pair(cdr(p))) && (!*bad_set))
-	    {
-	      /* we checked in check_define that this is not a circular list, but dotted? */
-	      for (p = cdr(p); is_pair(cdr(p)); p = cdr(p));
-	      if ((is_pair(p)) && (is_pair(car(p))))
-		form_is_safe(sc, func, args, car(p), at_end, bad_set);
-	    }
-	  return(false);
-	}
-    }
+    if ((is_pair(car(p))) &&
+	(!form_is_safe(sc, func, args, car(p), (at_end) && (is_null(cdr(p))), bad_set)))
+      return(false);
+
   return(is_null(p));
 }
 
@@ -62048,13 +62044,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     POP_READ_LIST:
       /* push-stack OP_READ_LIST is always no_code and sc->op is always OP_READ_LIST (and not used) */
       sc->stack_end -= 4;
-      sc->envir = sc->stack_end[1];
+      /* sc->envir = sc->stack_end[1]; */
+#if DEBUGGING
+      if (sc->envir != sc->stack_end[1]) fprintf(stderr, "pop_read_list envir: %s %s\n", DISPLAY(sc->envir), DISPLAY(sc->stack_end[1]));
+#endif
       sc->args = sc->stack_end[2];
 
     READ_LIST:
-    case OP_READ_LIST: 
-      /* sc->args is sc->NIL at first */
-      /*    was: sc->args = cons(sc, sc->value, sc->args); */ 
+    case OP_READ_LIST:        /* sc->args is sc->NIL at first */
       {
 	s7_pointer x;
 	NEW_CELL(sc, x, T_PAIR);
@@ -62063,8 +62060,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->args = x;
       }
       
-    case OP_READ_NEXT:
-      /* this is 75% of the token calls, so expanding it saves lots of time */
+    case OP_READ_NEXT:       /* this is 75% of the token calls, so expanding it saves lots of time */
       {
 	int c;
 	s7_pointer pt;
@@ -62072,6 +62068,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	pt = sc->input_port;
 	c = port_read_white_space(pt)(sc, pt);
 	
+      READ_C:
 	switch (c) 
 	  {
 	  case '(':
@@ -62088,22 +62085,35 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      case ',':  sc->tok = read_comma(sc, pt);              break;
 	      case '#':  sc->tok = read_sharp(sc, pt);              break;
 	      case '\0': case EOF: sc->tok = TOKEN_EOF;             break;
+
 	      default:
-		sc->strbuf[0] = c;
-		push_stack_no_code(sc, OP_READ_LIST, sc->args);
-		check_stack_size(sc);
-		sc->value = port_read_name(pt)(sc, pt);
-		sc->args = sc->NIL;
-		goto READ_LIST;
+		{
+		  s7_pointer x;
+		  sc->strbuf[0] = c;
+		  push_stack_no_code(sc, OP_READ_LIST, sc->args);
+		  check_stack_size(sc);
+		  sc->value = port_read_name(pt)(sc, pt);
+		  NEW_CELL(sc, x, T_PAIR);
+		  car(x) = sc->value;
+		  cdr(x) = sc->NIL;
+		  sc->args = x;
+		  c = port_read_white_space(pt)(sc, pt);
+		  goto READ_C;
+		}
 	      }
 
 	    if (sc->tok == TOKEN_ATOM)
 	      {
+		s7_pointer x;
 		push_stack_no_code(sc, OP_READ_LIST, sc->args);
 		check_stack_size(sc);
 		sc->value = port_read_name(pt)(sc, pt);
-		sc->args = sc->NIL;
-		goto READ_LIST;
+		NEW_CELL(sc, x, T_PAIR);
+		car(x) = sc->value;
+		cdr(x) = sc->NIL;
+		sc->args = x;
+		c = port_read_white_space(pt)(sc, pt);
+		goto READ_C;
 	      }
 
 	    if (sc->tok == TOKEN_RIGHT_PAREN)
@@ -62140,7 +62150,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->tok = TOKEN_QUOTE;
 	    push_stack_no_code(sc, OP_READ_LIST, sc->args);
 	    sc->value = read_expression(sc);
-	    goto START;  /* mostly read_quote */
+	    goto START;
 	    
 	  case ';':
 	    sc->tok = port_read_semicolon(pt)(sc, pt);
@@ -62209,7 +62219,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = safe_reverse_in_place(sc, sc->args);
 	  if (is_symbol(car(sc->value)))
 	    {
-	      pair_line_number(sc->value) = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
+	      pair_line_number(sc->value) = remember_location(port_line_number(sc->input_port), port_file_number(sc->input_port));
 	      set_has_line_number(sc->value);	      /* sc->input_port above can't be nil(?) -- it falls back on stdin now */
 
 	      if (is_expansion(car(sc->value)))
@@ -62236,7 +62246,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  set_overlay(cdr(sc->value));
 		}
 	    }
-	  /* I think it's too soon to scan every list at this point for symbols and pairs */
 	  break;
 
 	case TOKEN_EOF:
@@ -62312,7 +62321,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       sc->value = reverse_in_place(sc, sc->value, sc->args);
       if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
-      goto START; /* read-quote */
+      goto START;
       
       
     case OP_READ_QUOTE:
@@ -62343,7 +62352,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	sc->value = g_vector(sc, sc->value);
       else sc->value = g_multivector(sc, s7_integer(sc->args), sc->value);
       if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
-      goto START; /* read-quote */
+      goto START;
 
       
     case OP_READ_BYTEVECTOR:
@@ -62357,16 +62366,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #if WITH_QUASIQUOTE_VECTOR
     case OP_READ_QUASIQUOTE_VECTOR:
       /* this works only if the quasiquoted list elements can be evaluated in the read-time environment.
-       *
        *    `#(1 ,@(list 1 2) 4) -> (apply vector ({list} 1 ({apply_values} (list 1 2)) 4)) -> #(1 1 2 4)
        *
        * Originally, I used:
-       *
        *   sc->value = list_3(sc, sc->Apply, sc->Vector, g_quasiquote_1(sc, sc->value));
        *   goto START;
-       *
        * which means that #(...) makes a vector at read time, but `#(...) is just like (vector ...).
-       *
        *   :(let ((f1 (lambda () (let ((x 32)) #(x 0))))
        *          (f2 (lambda () (let ((x 32)) `#(,x 0)))))
        *      (eq? (f1) (f1)))
@@ -62375,7 +62380,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *          (f2 (lambda () (let ((x 32)) `#(,x 0)))))
        *      (eq? (f2) (f2)))
        *   #f
-       *
        * The tricky part in s7 is that we might have quasiquoted multidimensional vectors
        */
       if (sc->args == small_int(1))
@@ -62391,7 +62395,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (is_symbol(sc->value)))
 	sc->value = list_2(sc, sc->UNQUOTE, sc->value);
       if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
-      goto START; /* read-quote mostly */
+      goto START;
       
       
     case OP_READ_APPLY_VALUES:
@@ -68945,15 +68949,15 @@ int main(int argc, char **argv)
 /* --------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4
- * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1139
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1146
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1147
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3025
- * lg             |      |      | 6547 6497 6494 6235 6268
- * t137           |      |      | 11.0           5031 5027
- * t455|6     265 |   89 |  9   |       8.4 8045 7482 7425
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3024
+ * lg             |      |      | 6547 6497 6494 6235 6262
+ * t137           |      |      | 11.0           5031 5001
+ * t455|6     265 |   89 |  9   |       8.4 8045 7482 7433
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8
- * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 23.7
- * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 34.7
+ * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 23.5
+ * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 34.6
  *
  * --------------------------------------------------
  *
