@@ -98,7 +98,6 @@ static bool mus_simple_outa_to_file(mus_long_t samp, mus_float_t val, mus_any *I
 #if HAVE_SCHEME
 void setup_gen_list(s7_scheme *sc, s7_pointer tree);
 void clear_gen_list(void);
-static void gen_list_walk(s7_scheme *sc, s7_pointer tree);
 
 typedef struct gf {
   void *g1, *g2, *g3, *g4, *g5; /* gf's -- freed */

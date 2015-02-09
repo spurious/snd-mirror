@@ -1765,7 +1765,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11340] = {
+static const char *snd_names[11336] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -3516,8 +3516,6 @@ static const char *snd_names[11340] = {
     "add-envelopes", "env.scm",
     "add-notes", "examp.scm",
     "add-predicate", "stuff.scm",
-    "add-to-all-hook-ends", "hooks.scm",
-    "add-to-all-hook-inits", "hooks.scm",
     "addenv", "jcvoi.scm",
     "addrinfo.ai_canonname", "libc.scm",
     "addrinfo.ai_family", "libc.scm",
@@ -3542,7 +3540,6 @@ static const char *snd_names[11340] = {
     "adsat", "dsp.scm",
     "alarm", "libc.scm",
     "all-chans", "examp.scm",
-    "all-chans", "extensions.scm",
     "all-methods", "stuff.scm",
     "am", "examp.scm",
     "amargosa-toad", "animals.scm",
@@ -7275,6 +7272,7 @@ static const char *snd_names[11340] = {
     "tgamma", "libm.scm",
     "third", "stuff.scm",
     "third", "dlocsig.scm",
+    "time", "libc.scm",
     "time.make", "libc.scm",
     "times->samples", "ws.scm",
     "timespec.make", "libc.scm",
@@ -7440,7 +7438,7 @@ static const char *snd_names[11340] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5670);
+  s7_autoload_set_names(sc, snd_names, 5668);
 }
 #endif
 

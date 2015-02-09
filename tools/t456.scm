@@ -33,7 +33,7 @@
 
 ;(openlet (inlet 'i 0 'list-set! (lambda (l . args) (apply #_list-set! l ((car args) 'i) (cdr args))))))
 
-(define constants (list #f #t () #\a (/ most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i
+(define constants (vector #f #t () #\a (/ most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i
 			"hi455" :key hi: 'hi (list 1) (list 1 2) (cons 1 2) (list (list 1 2)) (list (list 1)) (list ()) #() 
 			1/0+i 0+0/0i 0+1/0i 1+0/0i 0/0+0i 0/0+0/0i 1+1/0i 0/0+i cons ''2 
 			1+i 1+1e10i 1e15+1e15i 0+1e18i 1e18 (integer->char 255) (string (integer->char 255)) 1e308 
@@ -65,6 +65,8 @@
 			(mock-vector 1 2 3 4)
 			(mock-hash-table* 'b 2)
 			))
+(define car-constants (constants 0))
+(define cdr-constants (make-shared-vector constants (list (- (length constants) 1)) 1))
 
 (define low 0)
 (define special-cases (list map for-each))
@@ -98,7 +100,7 @@
 	 (if (= args-left 1)
 	     (call-with-exit
 	      (lambda (quit)
-		(set-car! p (car constants))
+		(set-car! p car-constants)
 		(catch #t
 		  (lambda ()
 		    (cond ((apply func c-args) => 
@@ -124,7 +126,7 @@
 				    (format data-file "(~S~{ ~S~}) -> ~S~%" func c-args val))))))
 		     (lambda any 
 		       'error)))
-		 (cdr constants))))
+		 cdr-constants)))
 	   
 	     (for-each
 	      (lambda (c)
