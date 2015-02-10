@@ -673,22 +673,16 @@ superimposed on each other.",
 
 /* ---------------- Debug ---------------- */
 
-static const char *debug_xrefs[8] = {
+static const char *debug_xrefs[5] = {
   "C debugging: {gdb}",
-  "Scheme/Ruby/Forth debugging: {snd-debug}",
   "CLM Instrument debugging: {variable-display}",
-  "Notelist debugging: {ws-backtrace}",
-  "Break and trace points: {snd-break}",
   "Error handling",
   "Print statement: {" S_snd_print "}",
   NULL};
 
-static const char *debug_urls[8] = {
+static const char *debug_urls[5] = {
   "extsnd.html#cdebugging",
-  "sndscm.html#debugdoc",
   "sndscm.html#variabledisplay",
-  "sndscm.html#wsdebug",
-  "sndscm.html#debugdoc",
   "extsnd.html#snderrors",
   "extsnd.html#sndprint",
   NULL};
@@ -1254,8 +1248,8 @@ and amplitude envelope applied to the mix. \
 /* ---------------- Headers etc ---------------- */
 
 static const char *header_and_data_xrefs[10] = {
-  "data format discussion: {" S_sample_type "}",
-  "data format constants: {" S_mus_sample_type_name "}",
+  "sample type discussion: {" S_sample_type "}",
+  "sample type constants: {" S_mus_sample_type_name "}",
   "header type discussion: {" S_header_type "}",
   "header type constants: {" S_mus_header_type_name "}",
   "MPEG support: mpg in examp." Xen_file_extension,
@@ -1266,10 +1260,10 @@ static const char *header_and_data_xrefs[10] = {
   NULL};
 
 static const char *header_and_data_urls[10] = {
-  "extsnd.html#snddataformat",
-  "extsnd.html#soundformatname",
-  "extsnd.html#sndheadertype",
-  "extsnd.html#soundtypename",
+  "extsnd.html#sampletype",
+  "extsnd.html#defaultoutputsampletype",
+  "extsnd.html#headertype",
+  "extsnd.html#defaultoutputheadertype",
   "sndscm.html#exmpg",
   "sndscm.html#exmpg",
   "sndscm.html#exmpg",
@@ -1282,7 +1276,7 @@ void sound_files_help(void)
   snd_help_with_xrefs("Headers and Data", 
 "Snd can handle the following file and data types: \
 \n\n\
-  read/write (many data formats):\n\
+  read/write (many sample types):\n\
     NeXT/Sun/DEC/AFsp\n\
     AIFF/AIFC\n\
     RIFF (Microsoft wave)\n\
@@ -1292,7 +1286,7 @@ void sound_files_help(void)
     CAFF\n\
     no header ('raw')\n\
 \n\n\
-  read-only (in selected data formats):\n\
+  read-only (in selected sample types):\n\
     8SVX (IFF), EBICSF, INRS, ESPS, SPPACK, ADC (OGI), AVR, VOC, PVF,\n\
     Sound Tools, Turtle Beach SMP, SoundFont 2.0, Sound Designer I, PSION, MAUD, Kurzweil 2000,\n\
     Gravis Ultrasound, ASF, PAF, CSL, Comdisco SPW, Goldwave sample, omf, quicktime, sox,\n\
@@ -1300,7 +1294,7 @@ void sound_files_help(void)
     Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85, SY99, and TX16, Covox v8, AVI, \n\
     Impulse tracker, Korg, Akai, Turtle Beach, Matlab-5\n\
 \n\n\
-  automatically translated to a readable format:\n\
+  automatically translated to a readable sample and header type:\n\
     IEEE text, Mus10, SAM 16-bit (modes 1 and 4), AVI, \n\
     NIST shortpack, HCOM, Intel, IBM, and Oki (Dialogic) ADPCM, \n\
     G721, G723_24, G723_40, MIDI sample dump, Ogg, Speex, \n\
@@ -1308,11 +1302,11 @@ void sound_files_help(void)
 \n\n\
 The files can have any number of channels. Data can be either big or little endian. \
 The file types listed above as 'automatically translated' are \
-decoded upon being opened, translated to some format Snd can read and write, \
+decoded upon being opened, translated to some type that Snd can read and write, \
 and rewritten as a new file with an added (possibly redundant) extension .snd, \
 and that file is the one the editor sees from then on.\
 \n\n\
-" S_sample_type " returns the current sound's data format, and " S_header_type " returns \
+" S_sample_type " returns the current sound's sample type, and " S_header_type " returns \
 its header type.",
 
 		      WITH_WORD_WRAP,
@@ -1919,7 +1913,7 @@ The main region-related functions are:\n\
     mix in region 'reg' at sample 'samp' (defaults to the cursor sample)\n\
 \n\
   " S_save_region " (reg :file :header-type :sample-type :comment)\n\
-    save region 'reg' in 'file' in data format (default is mus-bshort),\n\
+    save region 'reg' in 'file' in sample-type (default is mus-bshort),\n\
     header type (default is mus-next), and comment. Return the output\n\
     filename.\n\
 \n\
@@ -2320,15 +2314,15 @@ static const char *raw_xrefs[7] = {
   "specialize handing of raw sounds: {" S_open_raw_sound_hook "}",
   "open a headerless sound: {" S_open_raw_sound "}",
   "header type constants: {" S_mus_header_type_name "}",
-  "data format constants: {" S_mus_sample_type_name "}",
-  "what are these data formats?",
+  "sample type constants: {" S_mus_sample_type_name "}",
+  "what are these sample types?",
   "what are these headers?",
   NULL};
 
 static const char *raw_urls[7] = {
   NULL, NULL, NULL, NULL, 
-  "extsnd.html#describedataformats",
-  "extsnd.html#describeheadertypes",
+  "extsnd.html#sampletype",
+  "extsnd.html#headertype",
   NULL
 };
 
@@ -2366,10 +2360,10 @@ void save_as_dialog_help(void)
   snd_help_with_xrefs("Save As",
 
 "You can save the current state of a file with File:Save As, or the current selection with Edit:Save as. \
-The output header type, data format, sampling rate, and comment can also be set.  If the 'src' button \
+The output header type, sample type, sampling rate, and comment can also be set.  If the 'src' button \
 is not set, setting the srate does not affect the data -- it is just a number placed in the sound file header. \
 Otherwise, if the output sampling rate differs from the current one, the data is converted to the new rate automatically. \
-The notation \"(be)\" in the data format lists stands for big endian; similarly, \"(le)\" is little endian.\
+The notation \"(be)\" in the sample type lists stands for big endian; similarly, \"(le)\" is little endian.\
 If a file by the chosen name already exists \
 it is overwritten, unless that file is already open in Snd and has edits.  In that case,  \
 you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
@@ -2530,7 +2524,7 @@ static const char *new_file_xrefs[5] = {
   "open a new sound: {" S_new_sound "}",
   "specialize making a new sound: {" S_new_sound_hook "}",
   "header type constants: {" S_mus_header_type_name "}",
-  "data format constants: {" S_mus_sample_type_name "}",
+  "sample type constants: {" S_mus_sample_type_name "}",
   NULL};
 
 void new_file_dialog_help(void)
@@ -2538,15 +2532,15 @@ void new_file_dialog_help(void)
   snd_help_with_xrefs("New File",
 
 #if HAVE_EXTENSION_LANGUAGE
-"This dialog sets the new file's output header type, data format, srate, chans, and comment. \
+"This dialog sets the new file's output header type, sample type, srate, chans, and comment. \
 The 'srate:' and 'channels:' labels are actually drop-down menus providing quick access to common choices. \
 The default values for the fields can be set by clicking 'Reset'.  These values \
 are " S_default_output_chans ", " S_default_output_sample_type ", " S_default_output_srate ", and " S_default_output_header_type ".  \
-The notation \"(be)\" in the data format lists stands for big endian; similarly, \"(le)\" is little endian.\
+The notation \"(be)\" in the sample type lists stands for big endian; similarly, \"(le)\" is little endian.\
 Click 'Ok' to open the new sound. The actual new file representing the new sound is not written \
 until you save the new sound.",
 #else
-"This dialog sets the new file's output header type, data format, srate, chans, and comment. \
+"This dialog sets the new file's output header type, sample type, srate, chans, and comment. \
 The 'srate:' and 'channels:' labels are actually drop-down menus providing quick access to common choices. \
 The default values for the fields can be set by clicking 'Reset'. Click 'Ok' to open the new sound. \
 The actual new file representing the new sound is not written \
@@ -2562,22 +2556,22 @@ until you save the new sound.",
 
 static const char *edit_header_xrefs[11] = {
   "change srate: {" S_src_channel "}",
-  "convert data to a new format: {" S_save_sound_as "}",
-  "interpret current data in new data format: {" S_sample_type "}",
+  "convert data to a new sample type: {" S_save_sound_as "}",
+  "interpret current data in new sample type: {" S_sample_type "}",
   "convert header to a new type: {" S_save_sound_as "}",
   "interpret current header differently: {" S_header_type "}",
   "extract or combine chans: {mono->stereo}",
   "change data location: {" S_data_location "}",
   "change number of samples: {framples}",
-  "what are these data formats?",
+  "what are these sample types?",
   "what are these headers?",
   NULL
 };
 
 static const char *edit_header_urls[11] = {
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  "extsnd.html#describedataformats",
-  "extsnd.html#describeheadertypes",
+  "extsnd.html#sampletype",
+  "extsnd.html#headertype",
   NULL
 };
 
@@ -2587,7 +2581,7 @@ void edit_header_dialog_help(void)
   snd_help_with_xrefs("Edit Header",
 
 "This dialog edits the header of a sound file; no change is made to the actual sound data. \
-The notation \"(be)\" in the data format lists stands for big endian; similarly, \"(le)\" is little endian.\
+The notation \"(be)\" in the sample type lists stands for big endian; similarly, \"(le)\" is little endian.\
 If you specify 'raw' as the type, any existing header is removed.  This dialog is aimed at adding or removing an entire header,  \
 or editing the header comments; anything else is obviously dangerous.",
 

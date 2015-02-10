@@ -139,7 +139,7 @@ MUS_EXPORT mus_float_t mus_interpolate(mus_interp_t type, mus_float_t x, mus_flo
 MUS_EXPORT bool mus_is_interp_type(int val);
 MUS_EXPORT bool mus_is_fft_window(int val);
 
-MUS_EXPORT int mus_sample_type_zero(int format);
+MUS_EXPORT int mus_sample_type_zero(int samp_type);
 MUS_EXPORT mus_float_t (*mus_run_function(mus_any *g))(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
 
 
@@ -460,8 +460,8 @@ MUS_EXPORT mus_float_t *mus_frample_to_frample(mus_float_t *matrix, int mx_chans
 
 MUS_EXPORT bool mus_is_frample_to_file(mus_any *ptr);
 MUS_EXPORT mus_float_t *mus_frample_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *data);
-MUS_EXPORT mus_any *mus_make_frample_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment);
-#define mus_make_frample_to_file(Filename, Chans, OutFormat, OutType) mus_make_frample_to_file_with_comment(Filename, Chans, OutFormat, OutType, NULL)
+MUS_EXPORT mus_any *mus_make_frample_to_file_with_comment(const char *filename, int chans, int samp_type, int head_type, const char *comment);
+#define mus_make_frample_to_file(Filename, Chans, SampType, HeadType) mus_make_frample_to_file_with_comment(Filename, Chans, SampType, HeadType, NULL)
 MUS_EXPORT mus_any *mus_continue_frample_to_file(const char *filename);
 
 MUS_EXPORT void mus_file_mix_with_reader_and_writer(mus_any *outf, mus_any *inf,
@@ -472,8 +472,8 @@ MUS_EXPORT void mus_file_mix(const char *outfile, const char *infile,
 			     mus_float_t *mx, int mx_chans, mus_any ***envs);
 
 MUS_EXPORT bool mus_is_sample_to_file(mus_any *ptr);
-MUS_EXPORT mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chans, int out_format, int out_type, const char *comment);
-#define mus_make_sample_to_file(Filename, Chans, OutFormat, OutType) mus_make_sample_to_file_with_comment(Filename, Chans, OutFormat, OutType, NULL)
+MUS_EXPORT mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chans, int samp_type, int head_type, const char *comment);
+#define mus_make_sample_to_file(Filename, Chans, SampType, HeadType) mus_make_sample_to_file_with_comment(Filename, Chans, SampType, HeadType, NULL)
 MUS_EXPORT mus_float_t mus_sample_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_float_t val);
 MUS_EXPORT mus_any *mus_continue_sample_to_file(const char *filename);
 MUS_EXPORT int mus_close_file(mus_any *ptr);

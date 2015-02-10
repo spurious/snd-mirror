@@ -9639,7 +9639,7 @@ static mus_float_t run_env(mus_any *ptr, mus_float_t unused1, mus_float_t unused
 }
 
 
-static void dmagify_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur, mus_float_t scaler)
+static void canonicalize_env(seg *e, const mus_float_t *data, int pts, mus_long_t dur, mus_float_t scaler)
 { 
   int i, j, pts2;
   mus_float_t xscl, cur_loc, x1, y1, xdur;
@@ -10077,7 +10077,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, mus_float_t scaler, mus_flo
       else e->env_func = mus_env_linear;
       e->power = 0.0;
       e->init_power = 0.0;
-      dmagify_env(e, brkpts, npts, dur_in_samples, scaler);
+      canonicalize_env(e, brkpts, npts, dur_in_samples, scaler);
       e->rates[npts - 1] = 0.0;
     }
   else
@@ -10088,7 +10088,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, mus_float_t scaler, mus_flo
 	  e->env_func = mus_env_step;
 	  e->power = 0.0;
 	  e->init_power = 0.0;
-	  dmagify_env(e, brkpts, npts, dur_in_samples, scaler);
+	  canonicalize_env(e, brkpts, npts, dur_in_samples, scaler);
 	  e->rates[npts - 1] = e->offset + (scaler * brkpts[npts * 2 - 1]); /* stick at last value, which in this case is the value (not an increment) */
 	}
       else
@@ -10101,7 +10101,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, mus_float_t scaler, mus_flo
 	      free(e);
 	      return(NULL);
 	    }
-	  dmagify_env(e, edata, npts, dur_in_samples, 1.0);
+	  canonicalize_env(e, edata, npts, dur_in_samples, 1.0);
 	  e->rates[npts - 1] = 1.0;
 	  e->power = exp(edata[1]);
 	  e->init_power = e->power;
@@ -11102,9 +11102,9 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
 
 static int *sample_type_zero = NULL;
 
-int mus_sample_type_zero(int format)
+int mus_sample_type_zero(int samp_type)
 {
-  return(sample_type_zero[format]);
+  return(sample_type_zero[samp_type]);
 }
 
 
@@ -11238,12 +11238,12 @@ static void flush_buffers(rdout *gen)
            *    of  the  data  in the gap return bytes of zeros (until data is actually
            *    written into the gap)."
 	   *
-           * but 0 bytes in a file are not interpreted as sound samples of 0 in several data formats.
+           * but 0 bytes in a file are not interpreted as sound samples of 0 in several sample types.
 	   *  for example, mus-mulaw 0 => -.98, whereas sound sample 0 is a byte of 255.
 	   *  see the table at the end of this file (sample_type_zero) for the other cases.
 	   *
 	   * So, we need to write explicit sample-type 0 values in those cases where machine 0's
-	   *  won't be data format 0.  sample_type_zero[format] != 0 signals we have such a
+	   *  won't be sample type 0.  sample_type_zero[type] != 0 signals we have such a
 	   *  case, and returns the nominal zero value.  For unsigned shorts, we also need to
 	   *  take endianess into account.
 	   */
@@ -11521,7 +11521,7 @@ bool mus_is_sample_to_file(mus_any *ptr)
 }
 
 
-static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int out_chans, int out_format, int out_type, const char *comment, bool reopen)
+static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int out_chans, int samp_type, int head_type, const char *comment, bool reopen)
 {
   if (filename == NULL)
     mus_error(MUS_NO_FILE_NAME_PROVIDED, S_make_sample_to_file " requires a file name");
@@ -11531,8 +11531,8 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
       if (out_chans <= 0)
 	return(NULL);
       if (reopen)
-	fd = mus_sound_reopen_output(filename, out_chans, out_format, out_type, mus_sound_data_location(filename));
-      else fd = mus_sound_open_output(filename, (int)sampling_rate, out_chans, out_format, out_type, comment);
+	fd = mus_sound_reopen_output(filename, out_chans, samp_type, head_type, mus_sound_data_location(filename));
+      else fd = mus_sound_open_output(filename, (int)sampling_rate, out_chans, samp_type, head_type, comment);
       if (fd == -1)
 	mus_error(MUS_CANT_OPEN_FILE, 
 		  S_make_sample_to_file ": open(%s) -> %s", 
@@ -11550,8 +11550,8 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
 	  gen->data_end = clm_file_buffer_size - 1;
 	  gen->out_end = 0;
 	  gen->chans = out_chans;
-	  gen->output_sample_type = out_format;
-	  gen->output_header_type = out_type;
+	  gen->output_sample_type = samp_type;
+	  gen->output_header_type = head_type;
 	  gen->obufs = (mus_float_t **)malloc(gen->chans * sizeof(mus_float_t *));
 	  for (i = 0; i < gen->chans; i++) 
 	    gen->obufs[i] = (mus_float_t *)calloc(clm_file_buffer_size, sizeof(mus_float_t));
@@ -11584,9 +11584,9 @@ mus_any *mus_continue_sample_to_file(const char *filename)
 }
 
 
-mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chans, int out_format, int out_type, const char *comment)
+mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chans, int samp_type, int head_type, const char *comment)
 {
-  return(mus_make_sample_to_file_with_comment_1(filename, out_chans, out_format, out_type, comment, false));
+  return(mus_make_sample_to_file_with_comment_1(filename, out_chans, samp_type, head_type, comment, false));
 }
 
 
@@ -11743,10 +11743,10 @@ static mus_any_class FRAMPLE_TO_FILE_CLASS = {
 };
 
 
-mus_any *mus_make_frample_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment)
+mus_any *mus_make_frample_to_file_with_comment(const char *filename, int chans, int samp_type, int head_type, const char *comment)
 {
   rdout *gen = NULL;
-  gen = (rdout *)mus_make_sample_to_file_with_comment(filename, chans, out_format, out_type, comment);
+  gen = (rdout *)mus_make_sample_to_file_with_comment(filename, chans, samp_type, head_type, comment);
   if (gen) gen->core = &FRAMPLE_TO_FILE_CLASS;
   return((mus_any *)gen);
 }
