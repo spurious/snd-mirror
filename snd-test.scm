@@ -3448,7 +3448,7 @@
 			  "no such fft window" "unsupported sample type" "header read failed"
 			  "unsupported header type" "file descriptors not initialized" "not a sound file" "file closed" "write error"
 			  "header write failed" "can't open temp file" "interrupted" "bad envelope"
-			  "audio channels not available" "audio srate not available" "audio format not available"
+			  "audio channels not available" "audio srate not available" "audio sample type not available"
 			  "no audio input available" "audio configuration not available" 
 			  "audio write error" "audio size not available" "audio device not available"
 			  "can't close audio" "can't open audio" "audio read error"
@@ -7256,6 +7256,16 @@ EDITS: 5
 	    
 	    (close-sound ind))
 	  (close-sound ind1))
+
+	(let ((ind (open-sound "1a.snd"))) ; from Anders Vinjar
+	  (set! (with-tracking-cursor) :track-and-return) 
+	  (set! (cursor) 2000) 
+	  (let ((here (cursor))) 
+	    (play :start (cursor)) 
+	    (if (or (not (= here 2000))
+		    (not (= (cursor) 2000)))
+		(snd-display #__line__ ";with-tracking-cursor set to :track-and-return: start: ~A, end: ~A" here (cursor))))
+	  (close-sound ind))
 	
 	(let* ((ind (open-sound "oboe.snd"))
 	       (mx (maxamp ind 0))

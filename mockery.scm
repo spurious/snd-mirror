@@ -160,8 +160,13 @@
 		   'hash-table-size    (lambda (obj)          (#_length (obj 'mock-hash-table-table)))
 		   'hash-table-entries (lambda (obj)          (#_hash-table-entries (obj 'mock-hash-table-table)))
 		   'make-iterator      (lambda (obj)          (#_make-iterator (obj 'mock-hash-table-table)))
-		   'let-ref-fallback   (lambda (obj key)      (#_hash-table-ref (obj 'mock-hash-table-table) key))
-		   'let-set!-fallback  (lambda (obj key val)  (#_hash-table-set! (obj 'mock-hash-table-table) key val))
+
+		   'let-ref-fallback   (lambda (obj key)
+					 (if (defined? 'mock-hash-table-table obj)
+					     (#_hash-table-ref (obj 'mock-hash-table-table) key)))
+		   'let-set!-fallback  (lambda (obj key val)  
+					 (if (defined? 'mock-hash-table-table obj)
+					     (#_hash-table-set! (obj 'mock-hash-table-table) key val)))
 		   
 		   ;; the fallbacks are needed because hash-tables and lets use exactly the same syntax in implicit indexing:
 		   ;;   (x 'y) but s7 can't tell that in this one case, we actually want the 'y to be a key not a field.
@@ -174,7 +179,6 @@
 		   'fill!              (lambda (obj val)      (#_fill! (obj 'mock-hash-table-table) val))
 		   'reverse            (lambda (obj)          (#_reverse (obj 'mock-hash-table-table)))
 		   'object->string     (lambda* (obj (w #t))  "#<mock-hash-table-class>")
-		   'make-iterator      (lambda (obj)          (#_make-iterator (obj 'mock-hash-table-table)))
 		   'arity              (lambda (obj)          (#_arity (obj 'mock-hash-table-table)))
 		   'copy               (lambda* (source dest . args)
 					 (if (mock-hash-table? source)

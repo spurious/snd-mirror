@@ -1046,17 +1046,6 @@ set
 #(32 2 3)
 </pre>
 
-<p>To avoid the subsequent evaluation (to treat the macro as a, gasp!, f*xpr),
-either return a constant or quote the result.
-</p>
-
-<pre class="indented">
-&gt; (define-macro (fx x) `'(+ 1 ,x))
-fx
-&gt; (let ((a 3)) (fx a))
-(+ 1 a)
-</pre>
-
 <p>To expand all the macros in a piece of code:
 </p>
 <pre class="indented">
@@ -5461,7 +5450,7 @@ that method is invoked.
 <p>
 <b>define-expansion</b> defines a reader macro.
 It has the same syntax as
-define-macro, and the same result except that the macro
+define-macro, and (in normal use) the same result except that the macro
 expands at read time.  Since the reader knows almost nothing
 about the code it is reading, 
 you need to make sure the expansion name is unique!
@@ -5479,7 +5468,31 @@ The reader does know about global variables, so:
 </pre>
 
 <p>Now the assertion code is only present in the function body (or wherever)
-if *debugging* is #t; otherwise assert expands into nothing.
+if *debugging* is #t; otherwise assert expands into nothing.  Leaving aside
+read-time evaluation, the real difference between define-macro and define-expansion
+is that the expansion's result is not evaluated.
+I'm no historian, but I believe that means that define-expansion creates
+a (gasp!) f*xpr.  You can do something similar with a normal macro:
+</p>
+
+<pre class="indented">
+&gt; (define-macro (fx x) `'(+ 1 ,x)) ; quote result to avoid evaluation
+#&lt;macro&gt;
+&gt; (let ((a 3)) (fx a))
+(+ 1 a)
+&gt; (define-expansion (ex x) `(+ 1 ,x))
+#&lt;macro&gt;
+&gt; (let ((x ex) (a 3)) (x a))       ; avoid read-time splicing
+(+ 1 a)
+&gt; (let ((a 3)) (ex a))             ; spliced in at read-time
+4
+</pre>
+
+<p>As this example shows, the reader knows nothing about the program context,
+so if it does not see a list whose first element is a expansion name, it does
+not do anything special.  So in the <code>(x a)</code> case above, the
+expansion happens when the code is evaluated, so the expansion result
+is simply returned, unevaluated.
 </p>
 
 

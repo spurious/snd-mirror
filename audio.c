@@ -486,7 +486,7 @@ static int linux_audio_close(int fd)
   return(MUS_NO_ERROR);
 }
 
-static int to_oss_format(int snd_format)
+static int to_oss_sample_type(int snd_format)
 {
   switch (snd_format)
     {
@@ -510,15 +510,15 @@ static bool fragment_set_failed = false;
 
 static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int samp_type, int size)
 {
-  int oss_format, buffer_info, audio_out = -1, sys, dev;
+  int oss_sample_type, buffer_info, audio_out = -1, sys, dev;
   char *dev_name;
 #ifndef NEW_OSS
   int stereo;
 #endif
   sys = MUS_AUDIO_SYSTEM(ur_dev);
   dev = MUS_AUDIO_DEVICE(ur_dev);
-  oss_format = to_oss_format(samp_type); 
-  if (oss_format == MUS_ERROR) 
+  oss_sample_type = to_oss_sample_type(samp_type); 
+  if (oss_sample_type == MUS_ERROR) 
     return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("sample type %d (%s) not available",
 				 samp_type, 
@@ -560,8 +560,8 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int samp_
 	    }
         }
     }
-  if ((ioctl(audio_out, MUS_OSS_SET_FORMAT, &oss_format) == -1) || 
-      (oss_format != to_oss_format(samp_type)))
+  if ((ioctl(audio_out, MUS_OSS_SET_FORMAT, &oss_sample_type) == -1) || 
+      (oss_sample_type != to_oss_sample_type(samp_type)))
     return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_out,
 		      mus_format("sample type %d (%s) not available on %s",
 				 samp_type, 
@@ -647,15 +647,15 @@ static char *oss_unsrc(int srcbit)
 static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int requested_size)
 {
   /* dev can be MUS_AUDIO_DEFAULT or MUS_AUDIO_DUPLEX_DEFAULT as well as the obvious others */
-  int audio_fd = -1, oss_format, buffer_info, sys, dev, srcbit, cursrc, err;
+  int audio_fd = -1, oss_sample_type, buffer_info, sys, dev, srcbit, cursrc, err;
   char *dev_name;
 #ifndef NEW_OSS
   int stereo;
 #endif
   sys = MUS_AUDIO_SYSTEM(ur_dev);
   dev = MUS_AUDIO_DEVICE(ur_dev);
-  oss_format = to_oss_format(samp_type);
-  if (oss_format == MUS_ERROR)
+  oss_sample_type = to_oss_sample_type(samp_type);
+  if (oss_sample_type == MUS_ERROR)
     return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("sample type %d (%s) not available",
 				 samp_type, 
@@ -716,8 +716,8 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int samp_t
       buffer_info = (FRAGMENTS << 16) | (FRAGMENT_SIZE);
       ioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &buffer_info);
     }
-  if ((ioctl(audio_fd, MUS_OSS_SET_FORMAT, &oss_format) == -1) ||
-      (oss_format != to_oss_format(samp_type)))
+  if ((ioctl(audio_fd, MUS_OSS_SET_FORMAT, &oss_sample_type) == -1) ||
+      (oss_sample_type != to_oss_sample_type(samp_type)))
     return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
 		      mus_format("can't set %s sample type to %d (%s)",
 				 dev_name, samp_type, 
@@ -744,7 +744,7 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int samp_t
 
 
 #if (!HAVE_ALSA)
-static int oss_formats(int ur_dev, int *val)
+static int oss_sample_types(int ur_dev, int *val)
 {
   int fd, formats = 0, sys, ind;
 
@@ -763,14 +763,14 @@ static int oss_formats(int ur_dev, int *val)
   
   ioctl(fd, MUS_OSS_GET_FORMATS, &formats);
   ind = 1;
-  if (formats & (to_oss_format(MUS_BSHORT)))  val[ind++] = MUS_BSHORT;
-  if (formats & (to_oss_format(MUS_LSHORT)))  val[ind++] = MUS_LSHORT;
-  if (formats & (to_oss_format(MUS_MULAW)))   val[ind++] = MUS_MULAW;
-  if (formats & (to_oss_format(MUS_ALAW)))    val[ind++] = MUS_ALAW;
-  if (formats & (to_oss_format(MUS_BYTE)))    val[ind++] = MUS_BYTE;
-  if (formats & (to_oss_format(MUS_UBYTE)))   val[ind++] = MUS_UBYTE;
-  if (formats & (to_oss_format(MUS_UBSHORT))) val[ind++] = MUS_UBSHORT;
-  if (formats & (to_oss_format(MUS_ULSHORT))) val[ind++] = MUS_ULSHORT;
+  if (formats & (to_oss_sample_type(MUS_BSHORT)))  val[ind++] = MUS_BSHORT;
+  if (formats & (to_oss_sample_type(MUS_LSHORT)))  val[ind++] = MUS_LSHORT;
+  if (formats & (to_oss_sample_type(MUS_MULAW)))   val[ind++] = MUS_MULAW;
+  if (formats & (to_oss_sample_type(MUS_ALAW)))    val[ind++] = MUS_ALAW;
+  if (formats & (to_oss_sample_type(MUS_BYTE)))    val[ind++] = MUS_BYTE;
+  if (formats & (to_oss_sample_type(MUS_UBYTE)))   val[ind++] = MUS_UBYTE;
+  if (formats & (to_oss_sample_type(MUS_UBSHORT))) val[ind++] = MUS_UBSHORT;
+  if (formats & (to_oss_sample_type(MUS_ULSHORT))) val[ind++] = MUS_ULSHORT;
   val[0] = ind - 1;
   return(MUS_NO_ERROR);
 }
@@ -1026,7 +1026,7 @@ static int probe_api(void)
 #endif
 }
 
-/* convert a sndlib sample format to an alsa sample format */
+/* convert a sndlib sample type to an alsa sample type */
 
 static snd_pcm_format_t to_alsa_format(int snd_format)
 {
@@ -1059,7 +1059,7 @@ static snd_pcm_format_t to_alsa_format(int snd_format)
  * using... 
  */
 
-static int to_mus_format(int alsa_format) 
+static int to_mus_sample_type(int alsa_format) 
 {
   /* alsa format definitions from asoundlib.h (0.9 cvs 6/27/2001) */
   switch (alsa_format)
@@ -2212,8 +2212,8 @@ static int alsa_formats(int ur_dev, int chan, int *val)
 	if (err > 0) 
 	  {
 	    if ((f < chan) && 
-		(to_mus_format(format) != MUS_ERROR))
-	      val[f++] = to_mus_format(format);
+		(to_mus_sample_type(format) != MUS_ERROR))
+	      val[f++] = to_mus_sample_type(format);
 	  }
       }
     val[0] = f - 1;
@@ -2309,7 +2309,7 @@ char *mus_audio_moniker(void)
   return(version_name);
 }
 
-static int to_sun_format(int samp_type)
+static int to_sun_sample_type(int samp_type)
 {
   switch (samp_type)
     {
@@ -2341,7 +2341,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int samp_type, int s
   int encode, bits, dev;
   int audio_fd, err;
   dev = MUS_AUDIO_DEVICE(ur_dev);
-  encode = to_sun_format(samp_type);
+  encode = to_sun_sample_type(samp_type);
   if (encode == MUS_ERROR) 
     return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
 		      mus_format("sample type %d (%s) not available",
@@ -2455,7 +2455,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int si
   int indev, encode, bits, dev, audio_fd, err;
   char *dev_name;
   dev = MUS_AUDIO_DEVICE(ur_dev);
-  encode = to_sun_format(samp_type);
+  encode = to_sun_sample_type(samp_type);
   bits = 8 * mus_bytes_per_sample(samp_type);
   if (encode == -1) 
     return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
@@ -2552,7 +2552,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int si
 #if 0
 /* pause can be implemented with play.pause and record.pause */
 
-static const char *sun_format_name(int samp_type)
+static const char *sun_sample_type_name(int samp_type)
 {
   switch (samp_type)
     {
@@ -5494,7 +5494,7 @@ int mus_audio_device_format(int dev) /* snd-dac */
 
 #if HAVE_OSS
   if (api == MUS_OSS_API) 
-    oss_formats(dev, mixer_vals);
+    oss_sample_types(dev, mixer_vals);
 #endif
 
 #if HAVE_ALSA

@@ -1331,7 +1331,7 @@ void mus_sndlib_xen_initialize(void)
   Init_Hook();
 #endif
 
-  Xen_define_constant(S_mus_out_format,           MUS_OUT_FORMAT,           "sample format for fastest IO");
+  Xen_define_constant(S_mus_out_format,           MUS_OUT_FORMAT,           "sample type for fastest IO");
   Xen_define_constant(S_mus_unsupported,          MUS_UNSUPPORTED,          "unsupported header id");
   Xen_define_constant(S_mus_next,                 MUS_NEXT,                 "NeXT (Sun) sound header id");
   Xen_define_constant(S_mus_aifc,                 MUS_AIFC,                 "AIFC sound header id");

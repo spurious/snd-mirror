@@ -1267,8 +1267,6 @@ static void init_types(void)
  */
 
 #define T_EXPANSION                   (1 << (TYPE_BITS + 6))
-#define EXPANSION_TYPE                (unsigned short)(T_EXPANSION | T_SYMBOL)
-/* #define is_expansion(p)               (typesflag(p) == EXPANSION_TYPE) */
 #define is_expansion(p)               ((typesflag(p) & T_EXPANSION) != 0)
 /* this marks the symbol associated with a run-time macro and distinguishes the value from an ordinary macro
  */
@@ -6605,7 +6603,7 @@ static s7_pointer make_macro(s7_scheme *sc)
   sc->capture_env_counter++;
   sc->code = caar(sc->code);
   if (sc->op == OP_DEFINE_EXPANSION)
-    set_type(sc->code, EXPANSION_TYPE);
+    set_type(sc->code, T_EXPANSION | T_SYMBOL);
 
   /* symbol? macro name has already been checked */
   /* find name in environment, and define it */
@@ -57521,8 +57519,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	  
 	case T_MACRO:
-	  if (!is_expansion(sc->code))
-	    push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
+	  if (is_expansion(sc->code))
+	    push_stack(sc, OP_EXPANSION, sc->NIL, sc->NIL);
+	  else push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
 	  NEW_FRAME(sc, closure_let(sc->code), sc->envir);
 	  goto BACRO;
 	  
@@ -57846,14 +57845,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
 
 	    sc->op = (opcode_t)syntax_opcode(sc->code);         /* (apply begin '((define x 3) (+ x 2))) */
-	    if (sc->op != OP_QUOTE)
-	      {
-		s7_pointer p;
-		for (p = sc->args; is_pair(p); p = cdr(p))
-		  if ((is_pair(car(p))) &&
-		      (s7_list_length(sc, car(p)) == 0))
-		    return(eval_error(sc, "attempt to evaluate a circular list: ~A", car(p)));
-	      }
+	    /* I used to have elaborate checks here for embedded circular lists, but now i think that is the caller's problem */
 	    sc->code = sc->args;
 	    goto START_WITHOUT_POP_STACK;
 	  }
@@ -61926,7 +61918,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * and those are only the problems I noticed!
 	   *
 	   * The hardest of these problems involve shadowing, so Rick asked for "define-expansion"
-	   *   which is just like define-macro, but the programmer guarantees that the macro
+	   *   which is like define-macro, but the programmer guarantees that the macro
 	   *   name will not be shadowed. 
 	   */
 	  sc->value = safe_reverse_in_place(sc, sc->args);
@@ -61947,7 +61939,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      (caller != sc->MACROEXPAND) &&    /* (macroexpand (hi 1)) */
 		      (caller != sc->DEFINE_EXPANSION)) /* (define-expansion ...) being reloaded */
 		    {
-		      push_stack(sc, OP_EXPANSION, sc->NIL, sc->NIL);
 		      /* we're playing fast and loose with sc->envir in the reader, so here we need a disaster check */
 #if DEBUGGING
 		      if (unchecked_type(sc->envir) != T_ENVIRONMENT) sc->envir = sc->NIL;
@@ -68689,6 +68680,4 @@ int main(int argc, char **argv)
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  * how to catch the stack overflow op_cz case?
  * perhaps current-error-port -> *error-port*
- * try to catch recursive let-ref-fallback (as in mock-hash-table)
- * why is expansion broken now in makexg? (happened upon old macro fixup), 57524 is the difference
  */

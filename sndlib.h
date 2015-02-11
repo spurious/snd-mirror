@@ -428,4 +428,16 @@ unsigned int mus_char_to_ulint(const unsigned char *inp);
 }
 #endif
 
+
+#define mus_header_sample_type               mus_header_format
+#define mus_header_original_sample_type      mus_header_original_format
+#define mus_header_original_sample_type_name mus_header_original_format_name
+#define mus_header_change_sample_type        mus_header_change_format
+#define mus_sound_original_sample_type_name  mus_sound_original_format
+#define MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE     MUS_AUDIO_COMPATIBLE_FORMAT
+#define MUS_OUT_SAMPLE_TYPE                  MUS_OUT_FORMAT
+#define MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE  MUS_AUDIO_FORMAT_NOT_AVAILABLE
+#define mus_audio_compatible_sample_type     mus_audio_compatible_format
+#define mus_audio_device_sample_type         mus_audio_device_format
+
 #endif

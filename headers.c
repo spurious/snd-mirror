@@ -3605,7 +3605,7 @@ static int read_adc_header(const char *filename, int fd)
  *   4: sample name (null padded ASCII)
  *  12: chans (short) (0 = mono, -1 = stereo)
  *  14: sample size (8 or 16 bit) (short) (value is 8, 12, or 16)
- *  16: sample format (signed or unsigned) (short) (0 = unsigned, -1 = signed)
+ *  16: sample type (signed or unsigned) (short) (0 = unsigned, -1 = signed)
  *  18: loop (on/off), 20: midi (-1 = no MIDI)
  *  22: srate 
  *      avr.txt has:
@@ -4913,7 +4913,7 @@ static int read_ultratracker_header(const char *filename, int fd)
  *  0: packing (0 = pcm)
  *  1: midi channel
  *  2 + 256*[3]: sample number
- *  4: sample format (15: 16 bit unsigned(?), 8: 8bit unsigned(?)
+ *  4: sample type (15: 16 bit unsigned(?), 8: 8bit unsigned(?)
  *  5: sample rate (big int?)
  *  9: sample length
  * 13: loop start
