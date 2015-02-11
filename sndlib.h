@@ -199,15 +199,15 @@ MUS_EXPORT int mus_sound_set_samples(const char *arg, mus_long_t val);
 
 MUS_EXPORT const char *mus_header_type_name(int type);
 MUS_EXPORT const char *mus_header_type_to_string(int type);
-MUS_EXPORT const char *mus_sample_type_name(int format);
-MUS_EXPORT const char *mus_sample_type_to_string(int format);
-MUS_EXPORT const char *mus_sample_type_short_name(int format);
+MUS_EXPORT const char *mus_sample_type_name(int samp_type);
+MUS_EXPORT const char *mus_sample_type_to_string(int samp_type);
+MUS_EXPORT const char *mus_sample_type_short_name(int samp_type);
 
 MUS_EXPORT char *mus_sound_comment(const char *name);
-MUS_EXPORT int mus_bytes_per_sample(int format);
+MUS_EXPORT int mus_bytes_per_sample(int samp_type);
 MUS_EXPORT float mus_sound_duration(const char *arg);
 MUS_EXPORT int mus_sound_initialize(void);
-MUS_EXPORT int mus_sound_override_header(const char *arg, int srate, int chans, int format, int type, mus_long_t location, mus_long_t size);
+MUS_EXPORT int mus_sound_override_header(const char *arg, int srate, int chans, int samp_type, int type, mus_long_t location, mus_long_t size);
 MUS_EXPORT int mus_sound_forget(const char *name);
 MUS_EXPORT int mus_sound_prune(void);
 MUS_EXPORT void mus_sound_report_cache(FILE *fp);
@@ -217,7 +217,7 @@ MUS_EXPORT int mus_sound_mark_info(const char *arg, int **mark_ids, int **mark_p
 
 MUS_EXPORT int mus_sound_open_input(const char *arg);
 MUS_EXPORT int mus_sound_open_output(const char *arg, int srate, int chans, int sample_type, int header_type, const char *comment);
-MUS_EXPORT int mus_sound_reopen_output(const char *arg, int chans, int format, int type, mus_long_t data_loc);
+MUS_EXPORT int mus_sound_reopen_output(const char *arg, int chans, int samp_type, int type, mus_long_t data_loc);
 MUS_EXPORT int mus_sound_close_input(int fd);
 MUS_EXPORT int mus_sound_close_output(int fd, mus_long_t bytes_of_data);
 #define mus_sound_read(Fd, Beg, End, Chans, Bufs) mus_file_read(Fd, Beg, End, Chans, Bufs)
@@ -243,8 +243,8 @@ MUS_EXPORT void mus_file_save_data(int tfd, mus_long_t framples, mus_float_t **d
 
 /* -------- audio.c -------- */
 
-MUS_EXPORT int mus_audio_open_output(int dev, int srate, int chans, int format, int size);
-MUS_EXPORT int mus_audio_open_input(int dev, int srate, int chans, int format, int size);
+MUS_EXPORT int mus_audio_open_output(int dev, int srate, int chans, int samp_type, int size);
+MUS_EXPORT int mus_audio_open_input(int dev, int srate, int chans, int samp_type, int size);
 MUS_EXPORT int mus_audio_write(int line, char *buf, int bytes);
 MUS_EXPORT int mus_audio_close(int line);
 MUS_EXPORT int mus_audio_read(int line, char *buf, int bytes);
@@ -321,7 +321,7 @@ MUS_EXPORT void mus_reset_io_c(void);
 MUS_EXPORT void mus_reset_headers_c(void);
 MUS_EXPORT void mus_reset_audio_c(void);
 
-MUS_EXPORT int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int format, mus_float_t *min_samp, mus_float_t *max_samp);
+MUS_EXPORT int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int samp_type, mus_float_t *min_samp, mus_float_t *max_samp);
 
 MUS_EXPORT mus_long_t mus_max_malloc(void);
 MUS_EXPORT mus_long_t mus_set_max_malloc(mus_long_t new_max);
@@ -363,15 +363,15 @@ MUS_EXPORT void mus_header_set_raw_defaults(int sr, int chn, int frm);
 MUS_EXPORT void mus_header_raw_defaults(int *sr, int *chn, int *frm);
 MUS_EXPORT mus_long_t mus_header_true_length(void);
 MUS_EXPORT int mus_header_original_format(void);
-MUS_EXPORT mus_long_t mus_samples_to_bytes(int format, mus_long_t size);
-MUS_EXPORT mus_long_t mus_bytes_to_samples(int format, mus_long_t size);
+MUS_EXPORT mus_long_t mus_samples_to_bytes(int samp_type, mus_long_t size);
+MUS_EXPORT mus_long_t mus_bytes_to_samples(int samp_type, mus_long_t size);
 MUS_EXPORT int mus_header_read(const char *name);
-MUS_EXPORT int mus_header_write(const char *name, int type, int srate, int chans, mus_long_t loc, mus_long_t size_in_samples, int format, const char *comment, int len);
-MUS_EXPORT int mus_write_header(const char *name, int type, int in_srate, int in_chans, mus_long_t size_in_samples, int format, const char *comment);
+MUS_EXPORT int mus_header_write(const char *name, int type, int srate, int chans, mus_long_t loc, mus_long_t size_in_samples, int samp_type, const char *comment, int len);
+MUS_EXPORT int mus_write_header(const char *name, int type, int in_srate, int in_chans, mus_long_t size_in_samples, int samp_type, const char *comment);
 MUS_EXPORT mus_long_t mus_header_aux_comment_start(int n);
 MUS_EXPORT mus_long_t mus_header_aux_comment_end(int n);
 MUS_EXPORT int mus_header_initialize(void);
-MUS_EXPORT bool mus_header_writable(int type, int format);
+MUS_EXPORT bool mus_header_writable(int type, int samp_type);
 MUS_EXPORT void mus_header_set_aiff_loop_info(int *data);
 MUS_EXPORT int mus_header_sf2_entries(void);
 MUS_EXPORT char *mus_header_sf2_name(int n);
@@ -379,7 +379,7 @@ MUS_EXPORT int mus_header_sf2_start(int n);
 MUS_EXPORT int mus_header_sf2_end(int n);
 MUS_EXPORT int mus_header_sf2_loop_start(int n);
 MUS_EXPORT int mus_header_sf2_loop_end(int n);
-MUS_EXPORT const char *mus_header_original_format_name(int format, int type);
+MUS_EXPORT const char *mus_header_original_format_name(int samp_type, int type);
 MUS_EXPORT bool mus_header_no_header(const char *name);
 
 MUS_EXPORT char *mus_header_riff_aux_comment(const char *name, mus_long_t *starts, mus_long_t *ends);

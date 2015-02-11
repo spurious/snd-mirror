@@ -1618,7 +1618,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
   free(hdr);
   if (err == MUS_CANT_TRANSLATE)
     return(mus_error(MUS_CANT_TRANSLATE,
-		     "can't translate %s\n  (%s header: %s (0x%x) data format)\n",
+		     "can't translate %s\n  (%s header: %s (0x%x) sample type)\n",
 		     oldname,
 		     mus_header_type_name(type),
 		     any_format_name(oldname),

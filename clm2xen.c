@@ -7226,7 +7226,7 @@ should be sndlib identifiers:\n  " make_sample_to_file_example
 
   Xen_check_type(Xen_is_string(name), name, 1, S_make_sample_to_file, "a string");
   Xen_check_type(Xen_is_integer_or_unbound(chans), chans, 2, S_make_sample_to_file, "an integer");
-  Xen_check_type(Xen_is_integer_or_unbound(out_format), out_format, 3, S_make_sample_to_file, "an integer (data format id)");
+  Xen_check_type(Xen_is_integer_or_unbound(out_format), out_format, 3, S_make_sample_to_file, "an integer (sample type id)");
   Xen_check_type(Xen_is_integer_or_unbound(out_type), out_type, 4, S_make_sample_to_file, "an integer (header type id)");
 
   if (Xen_is_integer(out_format)) df = Xen_integer_to_C_int(out_format);
@@ -7250,7 +7250,7 @@ should be sndlib identifiers:\n  " make_sample_to_file_example
 	}
       else Xen_out_of_range_error(S_make_sample_to_file, 4, out_type, "invalid header type");
     }
-  else Xen_out_of_range_error(S_make_sample_to_file, 3, out_format, "invalid data format");
+  else Xen_out_of_range_error(S_make_sample_to_file, 3, out_format, "invalid sample type");
   return(Xen_false);
 }
 
@@ -7368,7 +7368,7 @@ should be sndlib identifiers:\n  " make_frample_to_file_example
 
   Xen_check_type(Xen_is_string(name), name, 1, S_make_frample_to_file, "a string");
   Xen_check_type(Xen_is_integer_or_unbound(chans), chans, 2, S_make_frample_to_file, "an integer");
-  Xen_check_type(Xen_is_integer_or_unbound(out_format), out_format, 3, S_make_frample_to_file, "an integer (data format id)");
+  Xen_check_type(Xen_is_integer_or_unbound(out_format), out_format, 3, S_make_frample_to_file, "an integer (sample type id)");
   Xen_check_type(Xen_is_integer_or_unbound(out_type), out_type, 4, S_make_frample_to_file, "an integer (header-type id)");
 
   fgen = mus_make_frample_to_file_with_comment(Xen_string_to_C_string(name),

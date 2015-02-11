@@ -566,7 +566,7 @@ typedef struct {
   int framples;               /* samples per channel per output block */
   int devices;              /* output devices active */
   int *chans_per_device;    /* channels sent to each active device */
-  int out_format;           /* output data format */
+  int out_format;           /* output sample type */
   int slice;                /* background process state (i.e. starting, running, quitting) */
   mus_long_t reverb_ring_framples; /* how long the reverb rings after the end (if reverb, of course) */
 
@@ -2802,7 +2802,7 @@ static Xen play_file(const char *play_name, mus_long_t start, mus_long_t end, in
 
   if (!(mus_is_sample_type(mus_sound_sample_type(play_name))))
     Xen_error(Xen_make_error_type("bad-format"),
-	      Xen_list_3(C_string_to_Xen_string(S_play ": ~S has unknown data format: ~A"),
+	      Xen_list_3(C_string_to_Xen_string(S_play ": ~S has unknown sample type: ~A"),
 			 C_string_to_Xen_string(play_name),
 			 C_string_to_Xen_string(mus_header_original_format_name(mus_sound_original_format(play_name),
 									 mus_sound_header_type(play_name)))));

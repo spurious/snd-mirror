@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 
   if (!(mus_is_sample_type(mus_sound_sample_type(name))))
     {
-      fprintf(stderr, "can't play %s (data format: %s (%s)?)\n",
+      fprintf(stderr, "can't play %s (sample type: %s (%s)?)\n",
 	      name,
 	      mus_sample_type_name(mus_sound_sample_type(name)),
 	      mus_header_original_format_name(mus_sound_original_format(name), 

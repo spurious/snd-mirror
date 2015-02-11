@@ -2,7 +2,7 @@
 
 (define xg-file (open-output-file "xg.c"))
 
-(define-expansion (hey . args)
+(define-macro (hey . args)
   `(format xg-file ,@args))
 
 (define (heyc arg)

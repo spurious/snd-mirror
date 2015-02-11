@@ -75,7 +75,7 @@ snd_info *snd_new_file(const char *newname, int chans, int srate, int sample_typ
 	}
     }
   else 
-    snd_error("%s: can't write %s header with %s data format",
+    snd_error("%s: can't write %s header with %s sample type",
 	      newname,
 	      mus_header_type_name(header_type),
 	      mus_sample_type_name(sample_type));
@@ -2843,7 +2843,7 @@ static Xen sound_set(Xen snd, Xen val, sp_field_t fld, const char *caller)
 		}
 	      snd_update_within_xen(sp, caller);
 	    }
-	  else Xen_out_of_range_error(S_setB S_sample_type, 1, val, "unknown data format");
+	  else Xen_out_of_range_error(S_setB S_sample_type, 1, val, "unknown sample type");
 	}
       break;
 
@@ -3338,7 +3338,7 @@ static Xen g_set_data_size(Xen snd, Xen val)
 
 static Xen g_sample_type(Xen snd) 
 {
-  #define H_sample_type "(" S_sample_type " :optional snd): snd's data format (e.g. " S_mus_bshort ")"
+  #define H_sample_type "(" S_sample_type " :optional snd): snd's sample type (e.g. " S_mus_bshort ")"
   return(sound_get(snd, SP_SAMPLE_TYPE, S_sample_type));
 }
 
@@ -4332,7 +4332,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
     Xen_out_of_range_error(S_new_sound, orig_arg[4], keys[4], "invalid header type");
 
   if (!(mus_is_sample_type(df)))
-    Xen_out_of_range_error(S_new_sound, orig_arg[3], keys[3], "invalid data format");
+    Xen_out_of_range_error(S_new_sound, orig_arg[3], keys[3], "invalid sample type");
 
   if (!(mus_header_writable(ht, df)))
     Xen_error(BAD_HEADER,
@@ -5200,7 +5200,7 @@ typedef enum {PEAK_ENV_NO_ERROR, PEAK_ENV_BAD_HEADER, PEAK_ENV_BAD_FORMAT, PEAK_
 static const char *peak_env_error[6] = {
   "no error", 
   "peak-env file has a bad header!", 
-  "peak-env file is in the wrong data format; will re-make it.", 
+  "peak-env file is in the wrong sample type; will re-make it.", 
   "peak-env file size is messed up!", 
   "peak-env file has vanished!", 
   "peak-env file is empty!"};

@@ -187,7 +187,7 @@ Xen g_mus_sound_framples(Xen filename)
 
 static Xen g_mus_sound_datum_size(Xen filename) 
 {
-  #define H_mus_sound_datum_size "(" S_mus_sound_datum_size " filename): bytes per sample used by the data in sound file (data format dependent)"
+  #define H_mus_sound_datum_size "(" S_mus_sound_datum_size " filename): bytes per sample used by the data in sound file (sample type dependent)"
   return(gmus_sound(S_mus_sound_datum_size, mus_sound_datum_size, filename));
 }
 
@@ -246,7 +246,7 @@ static Xen g_mus_sound_set_header_type(Xen filename, Xen val)
 
 static Xen g_mus_sound_sample_type(Xen filename) 
 {
-  #define H_mus_sound_sample_type "(" S_mus_sound_sample_type " filename): data format (e.g. " S_mus_bshort ") of data in sound file"
+  #define H_mus_sound_sample_type "(" S_mus_sound_sample_type " filename): sample type (e.g. " S_mus_bshort ") of data in sound file"
   return(gmus_sound(S_mus_sound_sample_type, mus_sound_sample_type, filename));
 }
 
@@ -318,9 +318,9 @@ static Xen g_mus_sound_write_date(Xen filename)
 
 static Xen g_mus_header_writable(Xen head, Xen data)
 {
-  #define H_mus_header_writable "(" S_mus_header_writable " header-type sample-type) returns " PROC_TRUE " if the header can handle the data format"
+  #define H_mus_header_writable "(" S_mus_header_writable " header-type sample-type) returns " PROC_TRUE " if the header can handle the sample type"
   Xen_check_type(Xen_is_integer(head), head, 1, S_mus_header_writable, "a header type");
-  Xen_check_type(Xen_is_integer(data), data, 2, S_mus_header_writable, "a data format");
+  Xen_check_type(Xen_is_integer(data), data, 2, S_mus_header_writable, "a sample type");
   return(C_bool_to_Xen_boolean(mus_header_writable(Xen_integer_to_C_int(head), Xen_integer_to_C_int(data))));
 }
 
@@ -366,7 +366,7 @@ static Xen g_mus_header_type_to_string(Xen type)
 
 static Xen g_mus_sample_type_name(Xen format) 
 {
-  #define H_mus_sample_type_name "(" S_mus_sample_type_name " format): data format (e.g. " S_mus_bshort ") as a string"
+  #define H_mus_sample_type_name "(" S_mus_sample_type_name " format): sample type (e.g. " S_mus_bshort ") as a string"
   Xen_check_type(Xen_is_integer(format), format, 1, S_mus_sample_type_name, "an integer (sample-type id)"); 
   return(C_string_to_Xen_string(mus_sample_type_name(Xen_integer_to_C_int(format))));
 }
@@ -374,7 +374,7 @@ static Xen g_mus_sample_type_name(Xen format)
 
 static Xen g_mus_sample_type_to_string(Xen format) 
 {
-  #define H_mus_sample_type_to_string "(" S_mus_sample_type_to_string " format): data format (e.g. " S_mus_bshort ") as a string"
+  #define H_mus_sample_type_to_string "(" S_mus_sample_type_to_string " format): sample type (e.g. " S_mus_bshort ") as a string"
   Xen_check_type(Xen_is_integer(format), format, 1, S_mus_sample_type_to_string, "an integer (sample-type id)"); 
   return(C_string_to_Xen_string(mus_sample_type_to_string(Xen_integer_to_C_int(format))));
 }
@@ -774,7 +774,7 @@ return the audio line number:\n  " audio_open_example
   isize = Xen_integer_to_C_int(size);
 
   if (!(mus_is_sample_type(ifmt)))
-    Xen_out_of_range_error(S_mus_audio_open_output, 4, format, "invalid data format");
+    Xen_out_of_range_error(S_mus_audio_open_output, 4, format, "invalid sample type");
   if (isize < 0)
     Xen_out_of_range_error(S_mus_audio_open_output, 5, size, "size < 0?");
   if (israte <= 0)
@@ -808,7 +808,7 @@ open the audio device ready for input with the indicated attributes; return the 
   isize = Xen_integer_to_C_int(size);
 
   if (!(mus_is_sample_type(ifmt)))
-    Xen_out_of_range_error(S_mus_audio_open_input, 4, format, "invalid data format");
+    Xen_out_of_range_error(S_mus_audio_open_input, 4, format, "invalid sample type");
   if (isize < 0)
     Xen_out_of_range_error(S_mus_audio_open_input, 5, size, "size < 0?");
   if (israte <= 0)
@@ -1347,29 +1347,29 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_constant(S_mus_soundfont,            MUS_SOUNDFONT,            "soundfont header id");
   Xen_define_constant(S_mus_caff,                 MUS_CAFF,                 "Apple Core Audio File Format header id");
 
-  Xen_define_constant(S_mus_unknown,              MUS_UNKNOWN,              "unknown data format");
-  Xen_define_constant(S_mus_bshort,               MUS_BSHORT,               "big-endian short data format id");
-  Xen_define_constant(S_mus_lshort,               MUS_LSHORT,               "little-endian short data format id");
-  Xen_define_constant(S_mus_mulaw,                MUS_MULAW,                "mulaw (8-bit) data format id");
-  Xen_define_constant(S_mus_alaw,                 MUS_ALAW,                 "alaw (8-bit) data format id");
-  Xen_define_constant(S_mus_byte,                 MUS_BYTE,                 "signed byte data format id");
-  Xen_define_constant(S_mus_ubyte,                MUS_UBYTE,                "unsigned byte data format id");
-  Xen_define_constant(S_mus_bfloat,               MUS_BFLOAT,               "big-endian float data format id");
-  Xen_define_constant(S_mus_lfloat,               MUS_LFLOAT,               "little-endian float data format id");
-  Xen_define_constant(S_mus_bint,                 MUS_BINT,                 "big-endian int data format id");
-  Xen_define_constant(S_mus_lint,                 MUS_LINT,                 "little-endian int data format id");
-  Xen_define_constant(S_mus_bintn,                MUS_BINTN,                "normalized big-endian int data format id");
-  Xen_define_constant(S_mus_lintn,                MUS_LINTN,                "normalized little-endian int data format id");
-  Xen_define_constant(S_mus_b24int,               MUS_B24INT,               "big-endian 24-bit data format id");
-  Xen_define_constant(S_mus_l24int,               MUS_L24INT,               "little-endian 24-bit data format id");
-  Xen_define_constant(S_mus_bdouble,              MUS_BDOUBLE,              "big-endian double data format id");
-  Xen_define_constant(S_mus_ldouble,              MUS_LDOUBLE,              "little-endian double data format id");
-  Xen_define_constant(S_mus_ubshort,              MUS_UBSHORT,              "unsigned big-endian short data format id");
-  Xen_define_constant(S_mus_ulshort,              MUS_ULSHORT,              "unsigned little-endian short data format id");
-  Xen_define_constant(S_mus_bdouble_unscaled,     MUS_BDOUBLE_UNSCALED,     "unscaled big-endian double data format id");
-  Xen_define_constant(S_mus_ldouble_unscaled,     MUS_LDOUBLE_UNSCALED,     "unscaled little-endian double data format id");
-  Xen_define_constant(S_mus_bfloat_unscaled,      MUS_BFLOAT_UNSCALED,      "unscaled big-endian float data format id");
-  Xen_define_constant(S_mus_lfloat_unscaled,      MUS_LFLOAT_UNSCALED,      "unscaled little-endian float data format id");
+  Xen_define_constant(S_mus_unknown,              MUS_UNKNOWN,              "unknown sample type");
+  Xen_define_constant(S_mus_bshort,               MUS_BSHORT,               "big-endian short sample type id");
+  Xen_define_constant(S_mus_lshort,               MUS_LSHORT,               "little-endian short sample type id");
+  Xen_define_constant(S_mus_mulaw,                MUS_MULAW,                "mulaw (8-bit) sample type id");
+  Xen_define_constant(S_mus_alaw,                 MUS_ALAW,                 "alaw (8-bit) sample type id");
+  Xen_define_constant(S_mus_byte,                 MUS_BYTE,                 "signed byte sample type id");
+  Xen_define_constant(S_mus_ubyte,                MUS_UBYTE,                "unsigned byte sample type id");
+  Xen_define_constant(S_mus_bfloat,               MUS_BFLOAT,               "big-endian float sample type id");
+  Xen_define_constant(S_mus_lfloat,               MUS_LFLOAT,               "little-endian float sample type id");
+  Xen_define_constant(S_mus_bint,                 MUS_BINT,                 "big-endian int sample type id");
+  Xen_define_constant(S_mus_lint,                 MUS_LINT,                 "little-endian int sample type id");
+  Xen_define_constant(S_mus_bintn,                MUS_BINTN,                "normalized big-endian int sample type id");
+  Xen_define_constant(S_mus_lintn,                MUS_LINTN,                "normalized little-endian int sample type id");
+  Xen_define_constant(S_mus_b24int,               MUS_B24INT,               "big-endian 24-bit sample type id");
+  Xen_define_constant(S_mus_l24int,               MUS_L24INT,               "little-endian 24-bit sample type id");
+  Xen_define_constant(S_mus_bdouble,              MUS_BDOUBLE,              "big-endian double sample type id");
+  Xen_define_constant(S_mus_ldouble,              MUS_LDOUBLE,              "little-endian double sample type id");
+  Xen_define_constant(S_mus_ubshort,              MUS_UBSHORT,              "unsigned big-endian short sample type id");
+  Xen_define_constant(S_mus_ulshort,              MUS_ULSHORT,              "unsigned little-endian short sample type id");
+  Xen_define_constant(S_mus_bdouble_unscaled,     MUS_BDOUBLE_UNSCALED,     "unscaled big-endian double sample type id");
+  Xen_define_constant(S_mus_ldouble_unscaled,     MUS_LDOUBLE_UNSCALED,     "unscaled little-endian double sample type id");
+  Xen_define_constant(S_mus_bfloat_unscaled,      MUS_BFLOAT_UNSCALED,      "unscaled big-endian float sample type id");
+  Xen_define_constant(S_mus_lfloat_unscaled,      MUS_LFLOAT_UNSCALED,      "unscaled little-endian float sample type id");
 
   Xen_define_constant(S_mus_audio_default,        MUS_AUDIO_DEFAULT,        "default audio device");
 

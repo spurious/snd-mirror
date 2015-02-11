@@ -2744,7 +2744,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ntype: %s", mus_header_type_name(hdr->type));
   reason_str = mus_strcat(reason_str, tmp_str, &len);
 
-  /* data format */
+  /* sample type */
   if (!(mus_is_sample_type(original_format)))
     {
       char *format_info;
@@ -3491,8 +3491,8 @@ static Xen g_default_output_sample_type(void) {return(C_int_to_Xen_integer(defau
 static Xen g_set_default_output_sample_type(Xen val) 
 {
   int format;
-  #define H_default_output_sample_type "(" S_default_output_sample_type "): default data format when a new or temporary file is created, \
-normally " S_mus_ldouble "; -1 here means try to use the current sound's data format; many other formats \
+  #define H_default_output_sample_type "(" S_default_output_sample_type "): default sample type when a new or temporary file is created, \
+normally " S_mus_ldouble "; -1 here means try to use the current sound's sample type; many other formats \
 are available, but not all are compatible with all header types"
 
   Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_default_output_sample_type, "an integer"); 
@@ -3500,7 +3500,7 @@ are available, but not all are compatible with all header types"
   format = Xen_integer_to_C_int(val);
   if (mus_is_sample_type(format))
     {set_default_output_sample_type(format);}
-  else Xen_out_of_range_error(S_setB S_default_output_sample_type, 1, val, "unknown data format");
+  else Xen_out_of_range_error(S_setB S_default_output_sample_type, 1, val, "unknown sample type");
   return(C_int_to_Xen_integer(default_output_sample_type(ss)));
 }
 
@@ -3510,7 +3510,7 @@ static Xen g_clipping(void) {return(C_bool_to_Xen_boolean(clipping(ss)));}
 static Xen g_set_clipping(Xen val) 
 {
   #define H_clipping "(" S_clipping "): " PROC_TRUE " if Snd should clip output values to the current \
-output data format's maximum. The default (" PROC_FALSE ") allows them to wrap-around which makes a very loud click"
+output sample type's maximum. The default (" PROC_FALSE ") allows them to wrap-around which makes a very loud click"
   Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_clipping, "a boolean");
   set_clipping(Xen_boolean_to_C_bool(val));
   return(C_bool_to_Xen_boolean(clipping(ss)));

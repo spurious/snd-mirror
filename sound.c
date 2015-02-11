@@ -136,11 +136,11 @@ static const char *mus_initial_error_names[MUS_INITIAL_ERROR_TAG] = {
   "memory allocation failed", 
   "can't open file", "no sample input", "no sample output",
   "no such channel", "no file name provided", "no location method", "no channel method",
-  "no such fft window", "unsupported data format", "header read failed",
+  "no such fft window", "unsupported sample type", "header read failed",
   "unsupported header type", "file descriptors not initialized", "not a sound file", "file closed", "write error",
   "header write failed", "can't open temp file", "interrupted", "bad envelope",
 
-  "audio channels not available", "audio srate not available", "audio format not available",
+  "audio channels not available", "audio srate not available", "audio sample type not available",
   "no audio input available", "audio configuration not available", 
   "audio write error", "audio size not available", "audio device not available",
   "can't close audio", "can't open audio", "audio read error",
@@ -1078,13 +1078,13 @@ int mus_sound_open_output(const char *arg, int srate, int chans, int sample_type
 }
 
 
-int mus_sound_reopen_output(const char *arg, int chans, int format, int type, mus_long_t data_loc)
+int mus_sound_reopen_output(const char *arg, int chans, int samp_type, int type, mus_long_t data_loc)
 {
   int fd;
   mus_sound_initialize();
   fd = mus_file_reopen_write(arg);
   if (fd != -1)
-    mus_file_open_descriptors(fd, arg, format, mus_bytes_per_sample(format), data_loc, chans, type);
+    mus_file_open_descriptors(fd, arg, samp_type, mus_bytes_per_sample(samp_type), data_loc, chans, type);
   return(fd);
 }
 
@@ -1116,7 +1116,7 @@ int mus_sound_close_output(int fd, mus_long_t bytes_of_data)
 }
 
 
-typedef enum {SF_CHANS, SF_SRATE, SF_TYPE, SF_FORMAT, SF_LOCATION, SF_SIZE} sf_field_t;
+typedef enum {SF_CHANS, SF_SRATE, SF_TYPE, SF_SAMP_TYPE, SF_LOCATION, SF_SIZE} sf_field_t;
 
 static int mus_sound_set_field(const char *arg, sf_field_t field, int val)
 {
@@ -1140,7 +1140,7 @@ static int mus_sound_set_field(const char *arg, sf_field_t field, int val)
 	  sf->header_type = val; 
 	  break;
 
-	case SF_FORMAT:   
+	case SF_SAMP_TYPE:   
 	  sf->sample_type = val; 
 	  sf->datum_size = mus_bytes_per_sample(val); 
 	  break;
@@ -1187,12 +1187,12 @@ static int mus_sound_set_mus_long_t_field(const char *arg, sf_field_t field, mus
 int mus_sound_set_chans(const char *arg, int val)                {return(mus_sound_set_field(arg,            SF_CHANS,    val));}
 int mus_sound_set_srate(const char *arg, int val)                {return(mus_sound_set_field(arg,            SF_SRATE,    val));}
 int mus_sound_set_header_type(const char *arg, int val)          {return(mus_sound_set_field(arg,            SF_TYPE,     val));}
-int mus_sound_set_sample_type(const char *arg, int val)          {return(mus_sound_set_field(arg,            SF_FORMAT,   val));}
+int mus_sound_set_sample_type(const char *arg, int val)          {return(mus_sound_set_field(arg,            SF_SAMP_TYPE,   val));}
 int mus_sound_set_data_location(const char *arg, mus_long_t val) {return(mus_sound_set_mus_long_t_field(arg, SF_LOCATION, val));}
 int mus_sound_set_samples(const char *arg, mus_long_t val)       {return(mus_sound_set_mus_long_t_field(arg, SF_SIZE,     val));}
 
 
-int mus_sound_override_header(const char *arg, int srate, int chans, int format, int type, mus_long_t location, mus_long_t size)
+int mus_sound_override_header(const char *arg, int srate, int chans, int samp_type, int type, mus_long_t location, mus_long_t size)
 {
   sound_file *sf; 
   int result = MUS_NO_ERROR;
@@ -1203,10 +1203,10 @@ int mus_sound_override_header(const char *arg, int srate, int chans, int format,
     {
       if (location != -1) sf->data_location = location;
       if (size != -1) sf->samples = size;
-      if (format != -1) 
+      if (samp_type != -1) 
 	{
-	  sf->sample_type = format;
-	  sf->datum_size = mus_bytes_per_sample(format);
+	  sf->sample_type = samp_type;
+	  sf->datum_size = mus_bytes_per_sample(samp_type);
 	}
       if (srate != -1) sf->srate = srate;
       if (chans != -1) sf->chans = chans;

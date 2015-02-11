@@ -1583,7 +1583,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
       slist_select(fdat->header_list, fdat->header_pos);
     }
 
-  /* data format */ 
+  /* sample type */ 
 #if HAVE_GTK_3
   fdat->format_list = slist_new_with_title("    sample type    ", form, (const char **)formats, nformats, BOX_PACK);
 #else

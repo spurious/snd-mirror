@@ -83,7 +83,7 @@ typedef struct {
   mus_long_t data_location;    /* bytes */
   int srate;
   int chans;
-  int format;             /* data format (mus_bshort etc) */
+  int format;             /* sample type (mus_bshort etc) */
   int type;               /* header type (mus_aifc etc) */
   char *comment;          /* output case, not input */
   int *loops;

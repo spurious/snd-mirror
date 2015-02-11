@@ -724,7 +724,7 @@ static void ensure_list_row_visible(widget_t list, int pos)
 		    XmNitemCount, &num_rows,
 		    NULL);
       if (pos <= top)
-	XmListSetPos(list, pos); /* was pos+1?? (new file dialog data format list off by 1 in that case) */
+	XmListSetPos(list, pos); /* was pos+1?? (new file dialog sample type list off by 1 in that case) */
       else
 	{
 	  if (pos >= (top + visible))
@@ -13421,7 +13421,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
 
 void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, read_only_t read_only, bool selected)
 {
-  /* put up dialog for srate, chans, data format */
+  /* put up dialog for srate, chans, sample type */
   raw_info *rp;
   rp = new_raw_dialog();
   rp->read_only = read_only;

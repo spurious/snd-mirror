@@ -9110,11 +9110,26 @@
 ;(CFNC-3.16 "GActionGroup* gtk_widget_get_action_group GtkWidget* widget gchar* prefix" 'const)
 ;(CNFC-3.16 "gchar** gtk_widget_list_action_prefixes GtkWidget* widget" 'const)
 
-;;; 3.15,4:
+;;; 3.15.4:
 
 (CFNC-3.16 "gchar* gdk_device_get_vendor_id GdkDevice* device" 'const-return)
 (CFNC-3.16 "gchar* gdk_device_get_product_id GdkDevice* device" 'const-return)
 
 (CINT-3.16 "GTK_TEXT_EXTEND_SELECTION_WORD" "GtkTextExtendSelection")
 (CINT-3.16 "GTK_TEXT_EXTEND_SELECTION_LINE" "GtkTextExtendSelection")
+
+;;; 3.15.5:
+
+(CFNC-3.16 "GdkGLContext* gdk_gl_context_get_shared_context GdkGLContext* context")
+(CFNC-3.16 "void gdk_gl_context_set_required_version GdkGLContext* context int major int minor")
+(CFNC-3.16 "void gdk_gl_context_get_required_version GdkGLContext* context int* [major] int* [minor]")
+(CFNC-3.16 "void gdk_gl_context_set_debug_enabled GdkGLContext* context gboolean enabled")
+(CFNC-3.16 "gboolean gdk_gl_context_get_debug_enabled GdkGLContext* context")
+(CFNC-3.16 "void gdk_gl_context_set_forward_compatible GdkGLContext* context gboolean compatible")
+(CFNC-3.16 "gboolean gdk_gl_context_get_forward_compatible GdkGLContext* context")
+(CFNC-3.16 "gboolean gdk_gl_context_realize GdkGLContext* context GError** [error]")
+
+(CFNC-3.16 "GtkClipboard* gtk_clipboard_get_default GdkDisplay* display")
+(CFNC-3.16 "void gtk_drag_cancel GdkDragContext* context")
+(CFNC-3.16 "gboolean gtk_search_entry_handle_event GtkSearchEntry* entry GdkEvent* event")
 

@@ -1080,7 +1080,7 @@ io_error_t save_selection(const char *ofile, int srate, int samp_type, int head_
 
   if (head_type == -1)
     {
-      if ((sp) && (mus_header_writable(sp->hdr->type, -2))) /* -2 = ignore data format for the moment */
+      if ((sp) && (mus_header_writable(sp->hdr->type, -2))) /* -2 = ignore sample type for the moment */
 	head_type = sp->hdr->type;
       else head_type = MUS_NEXT;
     }

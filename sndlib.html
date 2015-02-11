@@ -168,7 +168,7 @@ name of the sound file.
   int mus_sound_srate (const char *arg)            /* sampling rate */
 
   int mus_sound_header_type (const char *arg)      /* header type (aiff etc) */
-  int mus_sound_data_format (const char *arg)      /* sample type (alaw etc) */
+  int mus_sound_sample_type (const char *arg)      /* sample type (alaw etc) */
   int mus_sound_original_format (const char *arg)  /* unmodified sample type specifier */
   int mus_sound_type_specifier (const char *arg)   /* original header type identifier */
 
@@ -186,10 +186,10 @@ name of the sound file.
 of the header type and the sample type:</p>
 <pre>
   char *mus_header_type_name(int type)             /* "AIFF" etc */
-  char *mus_data_format_name(int format)           /* "16-bit big endian linear" etc */
+  char *mus_sample_type_name(int samp_type)        /* "16-bit big endian linear" etc */
   char *mus_header_type_to_string(int type)
-  char *mus_data_format_to_string(int format)
-  const char *mus_data_format_short_name(int format)
+  char *mus_sample_type_to_string(int samp_type)
+  const char *mus_sample_type_short_name(int samp_type)
 </pre>
 
 <p>In all cases if an error occurs, -1 (MUS_ERROR) is returned, and some sort of error message
@@ -220,7 +220,7 @@ components that have been found can be read via functions such as
 sound file data:</p>
 <pre>
   int mus_sound_open_input (const char *arg) 
-  int mus_sound_open_output (const char *arg, int srate, int chans, int data_format, int header_type, const char *comment)
+  int mus_sound_open_output (const char *arg, int srate, int chans, int sample_type, int header_type, const char *comment)
   int mus_sound_reopen_output (const char *arg, int type, int format, mus_long_t data_loc)
   int mus_sound_close_input (int fd) 
   int mus_sound_close_output (int fd, mus_long_t bytes_of_data) 
@@ -244,7 +244,7 @@ the integer returned by mus_sound_open_input.</p>
 
 <p>mus_sound_open_output opens (creates) the file arg, setting its sampling rate
 to be srate, number of channels to chans, sample type
-to data_format (see sndlib.h for these types: MUS_BSHORT,
+to sample_type (see sndlib.h for these types: MUS_BSHORT,
 means 16-bit 2's complement big endian fractions),
 header type to header_type (AIFF for example; the available
 writable header types are MUS_AIFC (or AIFF), MUS_RIFF ('wave'), MUS_RF64,
@@ -470,7 +470,7 @@ int main(int argc, char *argv[])
 	      argv[1], srate, chans, length);
       fprintf(stdout, "  type: %s\n  format: %s\n  written: %s\n  comment: %s\n", 
 	      mus_header_type_name(mus_sound_header_type(argv[1])), 
-	      mus_data_format_name(mus_sound_data_format(argv[1])), 
+	      mus_sample_type_name(mus_sound_sample_type(argv[1])), 
 	      timestr, comment);
     }
   else
@@ -745,7 +745,7 @@ void src_file(const char *file, double ratio)
   mus_any **rds, **srcs;
   char *temp_out;
   const char *comment;
-  int k, chan, chans, width = 32, out_fd, data_format, header_type, buffer_size;
+  int k, chan, chans, width = 32, out_fd, sample_type, header_type, buffer_size;
   mus_long_t samp, old_samps, new_samps;
   mus_float_t old_srate, new_srate;
   mus_float_t **obufs;
@@ -755,7 +755,7 @@ void src_file(const char *file, double ratio)
   mus_set_srate(new_srate);
 
   chans = mus_sound_chans(file);
-  data_format = mus_sound_data_format(file);
+  sample_type = mus_sound_sample_type(file);
   header_type = mus_sound_header_type(file);
   comment = mus_sound_comment(file);
   buffer_size = mus_file_buffer_size();
@@ -763,7 +763,7 @@ void src_file(const char *file, double ratio)
   new_samps = old_samps / ratio;  /* old-srate/new-srate in-coming */
 
   temp_out = snd_tempnam();
-  out_fd = mus_sound_open_output(temp_out, new_srate, chans, data_format, header_type, comment);
+  out_fd = mus_sound_open_output(temp_out, new_srate, chans, sample_type, header_type, comment);
 
   srcs = (mus_any **)malloc(chans * sizeof(mus_any *));
   rds = (mus_any **)malloc(chans * sizeof(mus_any *));
@@ -790,7 +790,7 @@ void src_file(const char *file, double ratio)
   if (k > 0) 
     mus_sound_write(out_fd, 0, k - 1, chans, obufs);
 
-  mus_sound_close_output(out_fd, new_samps * chans * mus_bytes_per_sample(data_format));
+  mus_sound_close_output(out_fd, new_samps * chans * mus_bytes_per_sample(sample_type));
   mus_sound_forget(file);
 
   for (chan = 0; chan < chans; chan++)

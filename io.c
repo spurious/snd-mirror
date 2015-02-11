@@ -564,7 +564,7 @@ static io_fd **io_fds = NULL;
 #define IO_FD_ALLOC_SIZE 8
 
 
-int mus_file_open_descriptors(int tfd, const char *name, int format, int size /* datum size */, mus_long_t location, int chans, int type)
+int mus_file_open_descriptors(int tfd, const char *name, int samp_type, int size /* datum size */, mus_long_t location, int chans, int type)
 {
   int err = MUS_NO_ERROR;
   if (io_fd_size == 0)
@@ -592,7 +592,7 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
 	  io_fd *fd;
 	  fd = io_fds[tfd];
 	  fd->framples = 0;
-	  fd->sample_type = format;
+	  fd->sample_type = samp_type;
 	  fd->bytes_per_sample = size;
 	  fd->data_location = location;
 	  fd->clipping = clipping_default;
@@ -826,7 +826,7 @@ mus_long_t mus_file_seek_frample(int tfd, mus_long_t frample)
 
   fd = io_fds[tfd];
   if (fd->sample_type == MUS_UNKNOWN) 
-    return(mus_error(MUS_NOT_A_SOUND_FILE, "mus_file_seek_frample: invalid data format for %s", fd->name));
+    return(mus_error(MUS_NOT_A_SOUND_FILE, "mus_file_seek_frample: invalid sample type for %s", fd->name));
 
   return(lseek(tfd, fd->data_location + (fd->chans * frample * fd->bytes_per_sample), SEEK_SET));
 }
@@ -1041,7 +1041,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 
       fd = io_fds[tfd];
       if (fd->sample_type == MUS_UNKNOWN) 
-	return(mus_error(MUS_FILE_CLOSED, "mus_read: invalid data format for %s", fd->name));
+	return(mus_error(MUS_FILE_CLOSED, "mus_read: invalid sample type for %s", fd->name));
 
       format = fd->sample_type;
       siz = fd->bytes_per_sample;
@@ -1798,7 +1798,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 
       fd = io_fds[tfd];
       if (fd->sample_type == MUS_UNKNOWN) 
-	return(mus_error(MUS_FILE_CLOSED, "mus_write: invalid data format for %s", fd->name));
+	return(mus_error(MUS_FILE_CLOSED, "mus_write: invalid sample type for %s", fd->name));
 
       siz = fd->bytes_per_sample;
       sample_type = fd->sample_type;
@@ -1816,7 +1816,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
   else
     {
       siz = mus_bytes_per_sample(tfd);
-      sample_type = tfd; /* in this case, tfd is the data format (see mus_file_write_buffer below) -- this should be changed! */
+      sample_type = tfd; /* in this case, tfd is the sample type (see mus_file_write_buffer below) -- this should be changed! */
       clipping = clipped;
     }
 
@@ -1904,7 +1904,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 	  if ((sample_type == MUS_OUT_FORMAT) && 
 	      (chans == 1) && 
 	      (beg == 0) &&
-	      (!inbuf)) /* "tfd" can be data format */
+	      (!inbuf)) /* "tfd" can be sample type */
 	    {
 	      bytes = (end + 1) * siz;
 	      return(checked_write(tfd, (char *)(bufs[0]), bytes));
@@ -3113,9 +3113,9 @@ static void min_max_ubytes(unsigned char *data, int bytes, int chan, int chans, 
 }
 
 
-int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int format, mus_float_t *min_samp, mus_float_t *max_samp)
+int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int samp_type, mus_float_t *min_samp, mus_float_t *max_samp)
 {
-  switch (format)
+  switch (samp_type)
     {
     case MUS_MULAW:
       min_max_mulaw(data, bytes, chan, chans, min_samp, max_samp);
@@ -3161,32 +3161,32 @@ int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int 
 
     case MUS_LINT:
     case MUS_LINTN:
-      min_max_ints(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LINT);
+      min_max_ints(data, bytes, chan, chans, min_samp, max_samp, samp_type == MUS_LINT);
       break;
 
     case MUS_BINT:
     case MUS_BINTN:
-      min_max_switch_ints(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BINT);
+      min_max_switch_ints(data, bytes, chan, chans, min_samp, max_samp, samp_type == MUS_BINT);
       break;
 
     case MUS_LFLOAT:
     case MUS_LFLOAT_UNSCALED:
-      min_max_floats(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LFLOAT_UNSCALED);
+      min_max_floats(data, bytes, chan, chans, min_samp, max_samp, samp_type == MUS_LFLOAT_UNSCALED);
       break;
 
     case MUS_BFLOAT:
     case MUS_BFLOAT_UNSCALED:
-      min_max_switch_floats(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BFLOAT_UNSCALED);
+      min_max_switch_floats(data, bytes, chan, chans, min_samp, max_samp, samp_type == MUS_BFLOAT_UNSCALED);
       break;
 
     case MUS_LDOUBLE:
     case MUS_LDOUBLE_UNSCALED:
-      min_max_doubles(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LDOUBLE_UNSCALED);
+      min_max_doubles(data, bytes, chan, chans, min_samp, max_samp, samp_type == MUS_LDOUBLE_UNSCALED);
       break;
 
     case MUS_BDOUBLE:
     case MUS_BDOUBLE_UNSCALED:
-      min_max_switch_doubles(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BDOUBLE_UNSCALED);
+      min_max_switch_doubles(data, bytes, chan, chans, min_samp, max_samp, samp_type == MUS_BDOUBLE_UNSCALED);
       break;
 
 #else /* big endian */
@@ -3208,32 +3208,32 @@ int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int 
 
     case MUS_LINT:
     case MUS_LINTN:
-      min_max_switch_ints(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LINT);
+      min_max_switch_ints(data, bytes, chan, chans, min_samp, max_samp, samp_type == MUS_LINT);
       break;
 
     case MUS_BINT:
     case MUS_BINTN:
-      min_max_ints(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BINT);
+      min_max_ints(data, bytes, chan, chans, min_samp, max_samp, samp_type == MUS_BINT);
       break;
 
     case MUS_LFLOAT:
     case MUS_LFLOAT_UNSCALED:
-      min_max_switch_floats(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LFLOAT_UNSCALED);
+      min_max_switch_floats(data, bytes, chan, chans, min_samp, max_samp, samp_type == MUS_LFLOAT_UNSCALED);
       break;
 
     case MUS_BFLOAT:
     case MUS_BFLOAT_UNSCALED:
-      min_max_floats(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BFLOAT_UNSCALED);
+      min_max_floats(data, bytes, chan, chans, min_samp, max_samp, samp_type == MUS_BFLOAT_UNSCALED);
       break;
 
     case MUS_LDOUBLE:
     case MUS_LDOUBLE_UNSCALED:
-      min_max_switch_doubles(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LDOUBLE_UNSCALED);
+      min_max_switch_doubles(data, bytes, chan, chans, min_samp, max_samp, samp_type == MUS_LDOUBLE_UNSCALED);
       break;
 
     case MUS_BDOUBLE:
     case MUS_BDOUBLE_UNSCALED:
-      min_max_doubles(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BDOUBLE_UNSCALED);
+      min_max_doubles(data, bytes, chan, chans, min_samp, max_samp, samp_type == MUS_BDOUBLE_UNSCALED);
       break;
 
 #endif

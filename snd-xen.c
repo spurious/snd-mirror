@@ -20,7 +20,7 @@
 
 static const char *io_error_names[IO_ERROR_NUM] = {"no error", "save-hook cancellation", "bad channel",
 						   "can't reopen file", "too many open files", "unknown sndlib error", 
-						   "no memory", "can't open", "no filename", "bad data format", "bad header type", "sndlib uninitialized", 
+						   "no memory", "can't open", "no filename", "bad sample type", "bad header type", "sndlib uninitialized", 
 						   "not a sound file", "file closed", "write error", "interrupted", "can't close", 
 						   "bad header", "disk full", "write protected", "can't read selection file",
 						   "need write confirmation", "no changes", "io edit-hook cancellation", "can't create file"

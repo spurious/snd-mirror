@@ -25,8 +25,8 @@
  */
 
 /*
- * int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
- * int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
+ * int mus_audio_open_output(int dev, int srate, int chans, int samp_type, int size)
+ * int mus_audio_open_input(int dev, int srate, int chans, int samp_type, int size)
  * int mus_audio_write(int line, char *buf, int bytes)
  * int mus_audio_close(int line)
  * int mus_audio_read(int line, char *buf, int bytes)
@@ -508,7 +508,7 @@ static int to_oss_format(int snd_format)
 
 static bool fragment_set_failed = false;
 
-static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
+static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int samp_type, int size)
 {
   int oss_format, buffer_info, audio_out = -1, sys, dev;
   char *dev_name;
@@ -517,12 +517,12 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 #endif
   sys = MUS_AUDIO_SYSTEM(ur_dev);
   dev = MUS_AUDIO_DEVICE(ur_dev);
-  oss_format = to_oss_format(format); 
+  oss_format = to_oss_format(samp_type); 
   if (oss_format == MUS_ERROR) 
     return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
-		      mus_format("format %d (%s) not available",
-				 format, 
-				 mus_sample_type_name(format)));
+		      mus_format("sample type %d (%s) not available",
+				 samp_type, 
+				 mus_sample_type_name(samp_type)));
 
   if (dev == MUS_AUDIO_DEFAULT)
     audio_out = linux_audio_open_with_error(dev_name = dac_name(sys, 0), 
@@ -561,11 +561,11 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
         }
     }
   if ((ioctl(audio_out, MUS_OSS_SET_FORMAT, &oss_format) == -1) || 
-      (oss_format != to_oss_format(format)))
+      (oss_format != to_oss_format(samp_type)))
     return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_out,
-		      mus_format("data format %d (%s) not available on %s",
-				 format, 
-				 mus_sample_type_name(format), 
+		      mus_format("sample type %d (%s) not available on %s",
+				 samp_type, 
+				 mus_sample_type_name(samp_type), 
 				 dev_name));
 #ifdef NEW_OSS
   if (ioctl(audio_out, MUS_OSS_WRITE_CHANNELS, &chans) == -1) 
@@ -644,7 +644,7 @@ static char *oss_unsrc(int srcbit)
 }
 
 
-static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size)
+static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int requested_size)
 {
   /* dev can be MUS_AUDIO_DEFAULT or MUS_AUDIO_DUPLEX_DEFAULT as well as the obvious others */
   int audio_fd = -1, oss_format, buffer_info, sys, dev, srcbit, cursrc, err;
@@ -654,12 +654,12 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
 #endif
   sys = MUS_AUDIO_SYSTEM(ur_dev);
   dev = MUS_AUDIO_DEVICE(ur_dev);
-  oss_format = to_oss_format(format);
+  oss_format = to_oss_format(samp_type);
   if (oss_format == MUS_ERROR)
     return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
-		      mus_format("format %d (%s) not available",
-				 format, 
-				 mus_sample_type_name(format)));
+		      mus_format("sample type %d (%s) not available",
+				 samp_type, 
+				 mus_sample_type_name(samp_type)));
 
   if (((dev == MUS_AUDIO_DEFAULT) || (dev == MUS_AUDIO_DUPLEX_DEFAULT)) && (sys == 0))
     audio_fd = linux_audio_open(dev_name = dac_name(sys, 0), 
@@ -717,11 +717,11 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
       ioctl(audio_fd, SNDCTL_DSP_SETFRAGMENT, &buffer_info);
     }
   if ((ioctl(audio_fd, MUS_OSS_SET_FORMAT, &oss_format) == -1) ||
-      (oss_format != to_oss_format(format)))
+      (oss_format != to_oss_format(samp_type)))
     return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
-		      mus_format("can't set %s format to %d (%s)",
-				 dev_name, format, 
-				 mus_sample_type_name(format)));
+		      mus_format("can't set %s sample type to %d (%s)",
+				 dev_name, samp_type, 
+				 mus_sample_type_name(samp_type)));
 #ifdef NEW_OSS
   if (ioctl(audio_fd, MUS_OSS_WRITE_CHANNELS, &chans) == -1) 
     return_error_exit(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
@@ -798,8 +798,8 @@ static int (*vect_mus_audio_initialize)(void);
 /* vectors for the rest of the sndlib api */
 static void  (*vect_mus_oss_set_buffers)(int num, int size);
 static char* (*vect_mus_audio_moniker)(void);
-static int   (*vect_mus_audio_open_output)(int ur_dev, int srate, int chans, int format, int size);
-static int   (*vect_mus_audio_open_input)(int ur_dev, int srate, int chans, int format, int requested_size);
+static int   (*vect_mus_audio_open_output)(int ur_dev, int srate, int chans, int samp_type, int size);
+static int   (*vect_mus_audio_open_input)(int ur_dev, int srate, int chans, int samp_type, int requested_size);
 static int   (*vect_mus_audio_write)(int id, char *buf, int bytes);
 static int   (*vect_mus_audio_read)(int id, char *buf, int bytes);
 static int   (*vect_mus_audio_close)(int id);
@@ -834,14 +834,14 @@ char* mus_audio_moniker(void)
 #endif
 }
 
-int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size) 
+int mus_audio_open_output(int ur_dev, int srate, int chans, int samp_type, int size) 
 {
-  return(vect_mus_audio_open_output(ur_dev, srate, chans, format, size));
+  return(vect_mus_audio_open_output(ur_dev, srate, chans, samp_type, size));
 }
 
-int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size) 
+int mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int requested_size) 
 {
-  return(vect_mus_audio_open_input(ur_dev, srate, chans, format, requested_size));
+  return(vect_mus_audio_open_input(ur_dev, srate, chans, samp_type, requested_size));
 }
 
 int mus_audio_write(int id, char *buf, int bytes) 
@@ -975,8 +975,8 @@ static int probe_api(void)
 /* prototypes for the alsa sndlib functions */
 static int   alsa_mus_audio_initialize(void);
 static void  alsa_mus_oss_set_buffers(int num, int size);
-static int   alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size);
-static int   alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size);
+static int   alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int samp_type, int size);
+static int   alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int requested_size);
 static int   alsa_mus_audio_write(int id, char *buf, int bytes);
 static int   alsa_mus_audio_read(int id, char *buf, int bytes);
 static int   alsa_mus_audio_close(int id);
@@ -1823,7 +1823,7 @@ static int alsa_mus_audio_initialize(void)
 
 /* open an input or output stream */
 
-static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int size)
+static int alsa_audio_open(int ur_dev, int srate, int chans, int samp_type, int size)
 {
   int device, alsa_device;
   snd_pcm_format_t alsa_format;
@@ -1842,8 +1842,8 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
   
   if (alsa_trace) 
     mus_print("%s: %x rate=%d, chans=%d, format=%d:%s, size=%d", 
-	      __func__, ur_dev, srate, chans, format, 
-	      mus_sample_type_to_string(format), size);
+	      __func__, ur_dev, srate, chans, samp_type, 
+	      mus_sample_type_to_string(samp_type), size);
 
   /* card = MUS_AUDIO_SYSTEM(ur_dev); */
   device = MUS_AUDIO_DEVICE(ur_dev);
@@ -1854,11 +1854,11 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
 			    mus_format("%s: cannot translate device %d to alsa",
 				       snd_strerror(err), device)));
     }
-  if ((alsa_format = to_alsa_format(format)) == (snd_pcm_format_t)MUS_ERROR) 
+  if ((alsa_format = to_alsa_format(samp_type)) == (snd_pcm_format_t)MUS_ERROR) 
     {
       return(alsa_mus_error(MUS_AUDIO_FORMAT_NOT_AVAILABLE, 
 			    mus_format("could not change %s<%d> to alsa format", 
-				       mus_sample_type_to_string(format), format)));
+				       mus_sample_type_to_string(samp_type), samp_type)));
     }
 
   alsa_name = (alsa_stream == SND_PCM_STREAM_PLAYBACK) ? alsa_playback_device_name : alsa_capture_device_name;
@@ -1911,7 +1911,7 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
 				       snd_strerror(err), alsa_name, periods, (int)minp, (int)maxp)));
     }
 
-  frames = size / chans / mus_bytes_per_sample(format);
+  frames = size / chans / mus_bytes_per_sample(samp_type);
 
   err = snd_pcm_hw_params_set_buffer_size(handle, hw_params, frames * periods);
   if (err < 0) 
@@ -1992,16 +1992,16 @@ total requested buffer size is %d frames, minimum allowed is %d, maximum is %d",
 
 /* sndlib support for opening output devices */
 
-static int alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
+static int alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int samp_type, int size)
 {
-  return(alsa_audio_open(ur_dev, srate, chans, format, size));
+  return(alsa_audio_open(ur_dev, srate, chans, samp_type, size));
 }
 
 /* sndlib support for opening input devices */
 
-static int alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
+static int alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int size)
 {
-  return(alsa_audio_open(ur_dev, srate, chans, format, size));
+  return(alsa_audio_open(ur_dev, srate, chans, samp_type, size));
 }
 
 /* sndlib support for closing a device */
@@ -2309,9 +2309,9 @@ char *mus_audio_moniker(void)
   return(version_name);
 }
 
-static int to_sun_format(int format)
+static int to_sun_format(int samp_type)
 {
-  switch (format)
+  switch (samp_type)
     {
 #if MUS_LITTLE_ENDIAN
     case MUS_LSHORT: /* Solaris on Intel? */
@@ -2334,19 +2334,19 @@ static int to_sun_format(int format)
   return(MUS_ERROR);
 }
 
-int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
+int mus_audio_open_output(int ur_dev, int srate, int chans, int samp_type, int size)
 {
   struct audio_info info;
   char *dev_name;
   int encode, bits, dev;
   int audio_fd, err;
   dev = MUS_AUDIO_DEVICE(ur_dev);
-  encode = to_sun_format(format);
+  encode = to_sun_format(samp_type);
   if (encode == MUS_ERROR) 
     return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
-		      mus_format("format %d (%s) not available",
-				 format, 
-				 mus_sample_type_name(format)));
+		      mus_format("sample type %d (%s) not available",
+				 samp_type, 
+				 mus_sample_type_name(samp_type)));
   if (getenv(AUDIODEV_ENV) != NULL) 
     dev_name = getenv(AUDIODEV_ENV); 
   else dev_name = (char *)DAC_NAME;
@@ -2370,7 +2370,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
     }
   info.play.sample_rate = srate; 
   info.play.channels = chans;
-  bits = 8 * mus_bytes_per_sample(format);
+  bits = 8 * mus_bytes_per_sample(samp_type);
   info.play.precision = bits;
   info.play.encoding = encode;
   err = ioctl(audio_fd, AUDIO_SETINFO, &info); 
@@ -2386,10 +2386,10 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
       if (((int)info.play.precision != bits) || 
 	  ((int)info.play.encoding != encode)) 
 	return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
-			  mus_format("can't set output %s format to %d bits, %d encode (%s)",
+			  mus_format("can't set output %s sample type to %d bits, %d encode (%s)",
 				     dev_name,
 				     bits, encode, 
-				     mus_sample_type_name(format)));
+				     mus_sample_type_name(samp_type)));
       
       if ((int)info.play.sample_rate != srate) 
 	return_error_exit(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
@@ -2449,19 +2449,19 @@ int mus_audio_read(int line, char *buf, int bytes)
   return(MUS_NO_ERROR);
 }
 
-int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
+int mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int size)
 {
   struct audio_info info;
   int indev, encode, bits, dev, audio_fd, err;
   char *dev_name;
   dev = MUS_AUDIO_DEVICE(ur_dev);
-  encode = to_sun_format(format);
-  bits = 8 * mus_bytes_per_sample(format);
+  encode = to_sun_format(samp_type);
+  bits = 8 * mus_bytes_per_sample(samp_type);
   if (encode == -1) 
     return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
-		      mus_format("format %d bits, %d encode (%s) not available",
+		      mus_format("sample type %d bits, %d encode (%s) not available",
 				 bits, encode, 
-				 mus_sample_type_name(format)));
+				 mus_sample_type_name(samp_type)));
   if (getenv(AUDIODEV_ENV) != NULL) 
     dev_name = getenv(AUDIODEV_ENV); 
   else dev_name = (char *)DAC_NAME;
@@ -2497,8 +2497,8 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   err = ioctl(audio_fd, AUDIO_SETINFO, &info); 
   if (err == -1) 
     return_error_exit(MUS_AUDIO_CANT_OPEN, audio_fd,
-		      mus_format("can't set bits %d, encode %d (format %s) for input %s",
-				 bits, encode, mus_sample_type_name(format),
+		      mus_format("can't set bits %d, encode %d (sample type %s) for input %s",
+				 bits, encode, mus_sample_type_name(samp_type),
 				 dev_name));
   ioctl(audio_fd, AUDIO_GETINFO, &info);
 
@@ -2552,9 +2552,9 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 #if 0
 /* pause can be implemented with play.pause and record.pause */
 
-static const char *sun_format_name(int format)
+static const char *sun_format_name(int samp_type)
 {
-  switch (format)
+  switch (samp_type)
     {
 #ifdef AUDIO_ENCODING_ALAW
     case AUDIO_ENCODING_ALAW: return("alaw"); break;
@@ -2714,7 +2714,7 @@ DWORD CALLBACK next_buffer(HWAVEOUT w, UINT msg, DWORD user_data, DWORD p1, DWOR
   return(0);
 }
 
-int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size) 
+int mus_audio_open_output(int ur_dev, int srate, int chans, int samp_type, int size) 
 {
   WAVEFORMATEX wf;
   int dev;
@@ -2724,7 +2724,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   current_chans = chans;
   wf.wFormatTag = WAVE_FORMAT_PCM;
   wf.cbSize = 0;
-  if (format == MUS_UBYTE) 
+  if (samp_type == MUS_UBYTE) 
     {
       wf.wBitsPerSample = 8;
       current_datum_size = 1;
@@ -3007,7 +3007,7 @@ DWORD CALLBACK next_input_buffer(HWAVEIN w, UINT msg, DWORD user_data, DWORD p1,
   return(0);
 }
 
-int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size) 
+int mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int size) 
 {
   WAVEFORMATEX wf;
   int dev;
@@ -3018,7 +3018,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 
   wf.wFormatTag = WAVE_FORMAT_PCM;
   wf.cbSize = 0;
-  if (format == MUS_UBYTE) 
+  if (samp_type == MUS_UBYTE) 
     {
       wf.wBitsPerSample = 8;
       current_record_datum_size = 1;
@@ -3103,7 +3103,7 @@ static const char* osx_error(OSStatus err)
     case kAudioHardwareBadDeviceError:        return("bad device");                       break;
     case kAudioHardwareBadStreamError:        return("bad stream");                       break;
     case kAudioHardwareIllegalOperationError: return("illegal operation");                break;
-    case kAudioDeviceUnsupportedFormatError:  return("unsupported format");               break;
+    case kAudioDeviceUnsupportedFormatError:  return("unsupported sample type");          break;
     case kAudioDevicePermissionsError:        return("device permissions error");         break;
     }
   return("unknown error");
@@ -3250,7 +3250,7 @@ bool mus_audio_output_properties_mutable(bool mut)
  *   for non-integer srate conversion anyway, and the rest is trivial.
  */
 
-int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
+int mus_audio_open_output(int dev, int srate, int chans, int samp_type, int size) 
 {
   OSStatus err = noErr;
   UInt32 sizeof_device, sizeof_format, sizeof_bufsize;
@@ -3633,7 +3633,7 @@ int mus_audio_write(int line, char *buf, int bytes)
   return(MUS_NO_ERROR);
 }
 
-int mus_audio_open_input(int dev, int srate, int chans, int format, int size) 
+int mus_audio_open_input(int dev, int srate, int chans, int samp_type, int size) 
 {
   OSStatus err = noErr;
   UInt32 sizeof_device;
@@ -4240,21 +4240,21 @@ static int sndjack_read_dev;
 static int   jack_mus_audio_initialize(void);
 static void  jack_mus_oss_set_buffers(int num, int size);
 static char* jack_mus_audio_moniker(void);
-static int   jack_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size);
-static int   jack_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size);
+static int   jack_mus_audio_open_output(int ur_dev, int srate, int chans, int samp_type, int size);
+static int   jack_mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int requested_size);
 static int   jack_mus_audio_write(int id, char *buf, int bytes);
 static int   jack_mus_audio_read(int id, char *buf, int bytes);
 static int   jack_mus_audio_close(int id);
 
 #if (!HAVE_JACK_IN_LINUX) // Ie. Not using Linux.
-int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size) 
+int mus_audio_open_output(int ur_dev, int srate, int chans, int samp_type, int size) 
 {
-  return(jack_mus_audio_open_output(ur_dev, srate, chans, format, size));
+  return(jack_mus_audio_open_output(ur_dev, srate, chans, samp_type, size));
 }
 
-int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size) 
+int mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int requested_size) 
 {
-  return(jack_mus_audio_open_input(ur_dev, srate, chans, format, requested_size));
+  return(jack_mus_audio_open_input(ur_dev, srate, chans, samp_type, requested_size));
 }
 
 int mus_audio_write(int id, char *buf, int bytes) 
@@ -4432,7 +4432,7 @@ static void jack_mus_audio_set_non_realtime(void){
 #endif
 }
 
-int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int size){
+int jack_mus_audio_open_output(int dev, int srate, int chans, int samp_type, int size){
   if (sndjack_client==NULL){
     if (jack_mus_audio_initialize()==MUS_ERROR)
       return MUS_ERROR;
@@ -4443,8 +4443,8 @@ int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int si
     return MUS_ERROR;
   }
 
-  if (format!=MUS_BYTE && format!=MUS_COMP_SHORT && format!=MUS_COMP_FLOAT){
-    printf("Error, unable to handle format %s.\n",mus_sample_type_to_string(format));
+  if (samp_type!=MUS_BYTE && samp_type!=MUS_COMP_SHORT && samp_type!=MUS_COMP_FLOAT){
+    printf("Error, unable to handle sample type %s.\n",mus_sample_type_to_string(samp_type));
     return MUS_ERROR;
   }
 
@@ -4466,7 +4466,7 @@ int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int si
     sndjack_srcratio=1.0;
   }
 
-  sndjack_format=format;
+  sndjack_format=samp_type;
   sndjack_num_channels_inuse=chans;
   sndjack_dev=dev;
 
@@ -4581,7 +4581,7 @@ int jack_mus_audio_close(int line)
   return MUS_NO_ERROR;
  }
 
-int jack_mus_audio_open_input(int dev, int srate, int chans, int format, int size){
+int jack_mus_audio_open_input(int dev, int srate, int chans, int samp_type, int size){
   if (sndjack_client==NULL){
     if (jack_mus_audio_initialize()==MUS_ERROR)
       return MUS_ERROR;
@@ -4593,8 +4593,8 @@ int jack_mus_audio_open_input(int dev, int srate, int chans, int format, int siz
   }
 
   printf("dev: %d\n" ,dev);
-  if (format!=MUS_BYTE && format!=MUS_COMP_SHORT && format!=MUS_COMP_FLOAT){
-    printf("Error, unable to handle format %s.\n",mus_sample_type_to_string(format));
+  if (samp_type!=MUS_BYTE && samp_type!=MUS_COMP_SHORT && samp_type!=MUS_COMP_FLOAT){
+    printf("Error, unable to handle format %s.\n",mus_sample_type_to_string(samp_type));
     return MUS_ERROR;
   }
 
@@ -4602,7 +4602,7 @@ int jack_mus_audio_open_input(int dev, int srate, int chans, int format, int siz
     printf("Warning, jacks samplerate is %d (and not %d), and the recording will use this samplerate too.\n",jack_get_sample_rate(sndjack_client),srate);
   }
 
-  sndjack_read_format=format;
+  sndjack_read_format=samp_type;
   sndjack_num_read_channels_inuse=chans;
   sndjack_read_dev=dev;
 
@@ -4653,7 +4653,7 @@ char *mus_audio_moniker(void)
 }
 
 
-int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
+int mus_audio_open_output(int ur_dev, int srate, int chans, int samp_type, int size)
 {
   int fd, i, dev;
   struct audio_describe desc;
@@ -4673,20 +4673,20 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
       ioctl(fd, AUDIO_SET_OUTPUT, AUDIO_OUT_LINE);
     else ioctl(fd, AUDIO_SET_OUTPUT, AUDIO_OUT_HEADPHONE);
 
-  if (format == MUS_BSHORT)
+  if (samp_type == MUS_BSHORT)
     ioctl(fd, AUDIO_SET_SAMPLE_TYPE, AUDIO_FORMAT_LINEAR16BIT);
   else
     {
-      if (format == MUS_MULAW)
+      if (samp_type == MUS_MULAW)
 	ioctl(fd, AUDIO_SET_SAMPLE_TYPE, AUDIO_FORMAT_ULAW);
       else 
 	{
-	  if (format == MUS_ALAW)
+	  if (samp_type == MUS_ALAW)
 	    ioctl(fd, AUDIO_SET_SAMPLE_TYPE, AUDIO_FORMAT_ALAW);
 	  else 
 	    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
-			      mus_format("can't set output format to %d (%s) for %d",
-					 format, mus_sample_type_to_string(format),
+			      mus_format("can't set output sample type to %d (%s) for %d",
+					 samp_type, mus_sample_type_to_string(samp_type),
 					 dev));
 	}
     }
@@ -4731,7 +4731,7 @@ int mus_audio_initialize(void)
  * not_busy = (status_b.transmit_status == AUDIO_DONE);
 */
 
-int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size) 
+int mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int size) 
 {
   int fd, i, dev;
   struct audio_describe desc;
@@ -4748,20 +4748,20 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
     ioctl(fd, AUDIO_SET_INPUT, AUDIO_IN_MIKE);
   else ioctl(fd, AUDIO_SET_INPUT, AUDIO_IN_LINE);
 
-  if (format == MUS_BSHORT)
+  if (samp_type == MUS_BSHORT)
     ioctl(fd, AUDIO_SET_SAMPLE_TYPE, AUDIO_FORMAT_LINEAR16BIT);
   else
     {
-      if (format == MUS_MULAW)
+      if (samp_type == MUS_MULAW)
 	ioctl(fd, AUDIO_SET_SAMPLE_TYPE, AUDIO_FORMAT_ULAW);
       else 
 	{
-	  if (format == MUS_ALAW)
+	  if (samp_type == MUS_ALAW)
 	    ioctl(fd, AUDIO_SET_SAMPLE_TYPE, AUDIO_FORMAT_ALAW);
 	  else 
 	    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
-			      mus_format("can't set input format to %d (%s) on %d",
-					 format, mus_sample_type_to_string(format),
+			      mus_format("can't set input sample type to %d (%s) on %d",
+					 samp_type, mus_sample_type_to_string(samp_type),
 					 dev));
 	}
     }
@@ -4903,7 +4903,7 @@ int mus_audio_close(int line)
 
 static int netbsd_default_outputs = (AUDIO_HEADPHONE | AUDIO_LINE_OUT | AUDIO_SPEAKER); 
 
-int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
+int mus_audio_open_output(int dev, int srate, int chans, int samp_type, int size) 
 {
   int line, encode;
   audio_info_t a_info;
@@ -4918,16 +4918,16 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   AUDIO_INITINFO(&a_info);
 
   /* a_info.blocksize = size; */
-  encode = sndlib_format_to_bsd(format);
+  encode = sndlib_format_to_bsd(samp_type);
   if (encode == AUDIO_ENCODING_NONE)
     return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
-		      mus_format("format %d (%s) not available",
-				 format, 
-				 mus_sample_type_name(format)));
+		      mus_format("sample type %d (%s) not available",
+				 samp_type, 
+				 mus_sample_type_name(samp_type)));
 
   a_info.play.encoding = encode;
   a_info.mode = AUMODE_PLAY | AUMODE_PLAY_ALL;
-  a_info.play.precision = mus_bytes_per_sample(format) * 8;
+  a_info.play.precision = mus_bytes_per_sample(samp_type) * 8;
   a_info.play.sample_rate = srate;
 
   if (dev == MUS_AUDIO_LINE_OUT)
@@ -4947,8 +4947,8 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 
   if ((int)(a_info.play.sample_rate) != srate)
     mus_print("srate: %d -> %d\n", srate, a_info.play.sample_rate);
-  if ((int)(a_info.play.encoding) != sndlib_format_to_bsd(format))
-    mus_print("encoding: %d -> %d\n", sndlib_format_to_bsd(format), a_info.play.encoding);
+  if ((int)(a_info.play.encoding) != sndlib_format_to_bsd(samp_type))
+    mus_print("encoding: %d -> %d\n", sndlib_format_to_bsd(samp_type), a_info.play.encoding);
   if ((int)(a_info.play.channels) != chans)
     mus_print("chans: %d -> %d\n", chans, a_info.play.channels);
 
@@ -4999,18 +4999,18 @@ static int netbsd_formats(int ur_dev, int *val)
 
 
 
-int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size) 
+int mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int size) 
 {
   audio_info_t info;
   int encode, bits, dev, audio_fd, err;
 
   dev = MUS_AUDIO_DEVICE(ur_dev);
-  encode = sndlib_format_to_bsd(format);
-  bits = 8 * mus_bytes_per_sample(format);
+  encode = sndlib_format_to_bsd(samp_type);
+  bits = 8 * mus_bytes_per_sample(samp_type);
   if (encode == AUDIO_ENCODING_NONE) 
     return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
-		      mus_format("format %s not available for recording",
-				 mus_sample_type_name(format)));
+		      mus_format("sample type %s not available for recording",
+				 mus_sample_type_name(samp_type)));
 
   if (dev != MUS_AUDIO_DUPLEX_DEFAULT)
     audio_fd = open("/dev/sound", O_RDONLY, 0);
@@ -5054,9 +5054,9 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 #include <pulse/gccmacro.h>
 
 
-static int sndlib_to_pa_format(int format)
+static int sndlib_to_pa_format(int samp_type)
 {
-  switch (format)
+  switch (samp_type)
     {
     case MUS_BYTE:   return(PA_SAMPLE_U8);
     case MUS_LSHORT: return(PA_SAMPLE_S16LE);
@@ -5069,7 +5069,7 @@ static int sndlib_to_pa_format(int format)
     case MUS_MULAW:  return(PA_SAMPLE_ULAW);
 
     default: 
-      fprintf(stderr, "unsupported data format: %d\n", format);
+      fprintf(stderr, "unsupported sample type: %d\n", samp_type);
       return(0);
       break;
     }
@@ -5078,13 +5078,13 @@ static int sndlib_to_pa_format(int format)
 
 static pa_simple *pa_out = NULL, *pa_in = NULL;
 
-int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
+int mus_audio_open_output(int dev, int srate, int chans, int samp_type, int size) 
 {
   pa_sample_spec *spec;
   int error;
 
   spec = (pa_sample_spec *)malloc(sizeof(pa_sample_spec));
-  spec->format = sndlib_to_pa_format(format);
+  spec->format = sndlib_to_pa_format(samp_type);
   spec->rate = srate;
   spec->channels = chans;
 
@@ -5099,7 +5099,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 }
 
 
-int mus_audio_open_input(int dev, int srate, int chans, int format, int size) 
+int mus_audio_open_input(int dev, int srate, int chans, int samp_type, int size) 
 {
   return(MUS_ERROR);
 }
@@ -5153,9 +5153,9 @@ char *mus_audio_moniker(void)
 #define PA_OUT_STREAM 0
 #define PA_IN_STREAM 1
 
-static unsigned long sndlib_to_portaudio_format(int format)
+static unsigned long sndlib_to_portaudio_format(int samp_type)
 {
-  switch (format)
+  switch (samp_type)
     {
     case MUS_BYTE:   return(paInt8);
     case MUS_LSHORT: return(paInt16);
@@ -5170,14 +5170,14 @@ static unsigned long sndlib_to_portaudio_format(int format)
 
 static PaStream *out_stream = NULL;
 
-int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
+int mus_audio_open_output(int dev, int srate, int chans, int samp_type, int size) 
 {
   PaStreamParameters output_pars;
   PaError err;
 
   output_pars.device = Pa_GetDefaultOutputDevice();
   output_pars.channelCount = chans;
-  output_pars.sampleFormat = sndlib_to_portaudio_format(format);
+  output_pars.sampleFormat = sndlib_to_portaudio_format(samp_type);
   output_pars.suggestedLatency = Pa_GetDeviceInfo(output_pars.device)->defaultHighOutputLatency;
   output_pars.hostApiSpecificStreamInfo = NULL;
 
@@ -5196,14 +5196,14 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 
 static PaStream *in_stream = NULL;
 
-int mus_audio_open_input(int dev, int srate, int chans, int format, int size) 
+int mus_audio_open_input(int dev, int srate, int chans, int samp_type, int size) 
 {
   PaStreamParameters input_pars;
   PaError err;
 
   input_pars.device = Pa_GetDefaultInputDevice();
   input_pars.channelCount = chans;
-  input_pars.sampleFormat = sndlib_to_portaudio_format(format);
+  input_pars.sampleFormat = sndlib_to_portaudio_format(samp_type);
   input_pars.suggestedLatency = Pa_GetDeviceInfo(input_pars.device)->defaultHighInputLatency;
   input_pars.hostApiSpecificStreamInfo = NULL;
 
@@ -5295,8 +5295,8 @@ char *mus_audio_moniker(void)
 /* ------------------------------- STUBS ----------------------------------------- */
 
 #ifndef AUDIO_OK
-int mus_audio_open_output(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
-int mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
+int mus_audio_open_output(int dev, int srate, int chans, int samp_type, int size) {return(MUS_ERROR);}
+int mus_audio_open_input(int dev, int srate, int chans, int samp_type, int size) {return(MUS_ERROR);}
 int mus_audio_write(int line, char *buf, int bytes) {return(MUS_ERROR);}
 int mus_audio_close(int line) {return(MUS_ERROR);}
 int mus_audio_read(int line, char *buf, int bytes) {return(MUS_ERROR);}
@@ -5469,13 +5469,13 @@ int mus_audio_compatible_format(int dev) /* snd-dac and sndplay */
 }
 
 
-static int look_for_format (int *mixer_vals, int format)
+static int look_for_format (int *mixer_vals, int samp_type)
 {
   int i, lim;
   lim = mixer_vals[0];
   for (i = 1; i <= lim; i++)
-    if (mixer_vals[i] == format)
-      return(format);
+    if (mixer_vals[i] == samp_type)
+      return(samp_type);
   return(-1);
 }
 
@@ -5557,8 +5557,8 @@ int mus_audio_device_format(int dev) /* snd-dac */
 #else
 /* not WITH_AUDIO */
 
-int mus_audio_open_output(int dev, int srate, int chans, int format, int size) {return(-1);}
-int mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(-1);}
+int mus_audio_open_output(int dev, int srate, int chans, int samp_type, int size) {return(-1);}
+int mus_audio_open_input(int dev, int srate, int chans, int samp_type, int size) {return(-1);}
 int mus_audio_write(int line, char *buf, int bytes) {return(-1);}
 int mus_audio_close(int line) {return(-1);}
 int mus_audio_read(int line, char *buf, int bytes) {return(-1);}

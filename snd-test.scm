@@ -3059,11 +3059,11 @@
 	    (set! (sample-type ab) mus-lshort)
 	    (if (not (equal? ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd"))) ; these set!'s can change the index via update-sound
 	    (if (not (= (sample-type ab) mus-lshort)) (snd-display #__line__ ";set sample-type: ~A?" (mus-sample-type-name (sample-type ab))))
-	    (if (not (equal? (y-bounds ab 0) (list -3.0 3.0))) (snd-display #__line__ ";set data format y-bounds: ~A?" (y-bounds ab 0)))
+	    (if (not (equal? (y-bounds ab 0) (list -3.0 3.0))) (snd-display #__line__ ";set sample type y-bounds: ~A?" (y-bounds ab 0)))
 	    (set! (y-bounds ab 0) (list 2.0))
-	    (if (not (equal? (y-bounds ab 0) (list -2.0 2.0))) (snd-display #__line__ ";set data format y-bounds 1: ~A?" (y-bounds ab 0)))
+	    (if (not (equal? (y-bounds ab 0) (list -2.0 2.0))) (snd-display #__line__ ";set sample type y-bounds 1: ~A?" (y-bounds ab 0)))
 	    (set! (y-bounds ab 0) (list -2.0))
-	    (if (not (equal? (y-bounds ab 0) (list -2.0 2.0))) (snd-display #__line__ ";set data format y-bounds -2: ~A?" (y-bounds ab 0)))
+	    (if (not (equal? (y-bounds ab 0) (list -2.0 2.0))) (snd-display #__line__ ";set sample type y-bounds -2: ~A?" (y-bounds ab 0)))
 	    (set! (header-type ab) mus-aifc)
 	    (if (not (equal? ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd")))
 	    (if (not (= (header-type ab) mus-aifc)) (snd-display #__line__ ";set header-type: ~A?" (mus-header-type-name (header-type ab))))
@@ -3445,7 +3445,7 @@
 			  "memory allocation failed" 
 			  "can't open file" "no sample input" "no sample output"
 			  "no such channel" "no file name provided" "no location method" "no channel method"
-			  "no such fft window" "unsupported data format" "header read failed"
+			  "no such fft window" "unsupported sample type" "header read failed"
 			  "unsupported header type" "file descriptors not initialized" "not a sound file" "file closed" "write error"
 			  "header write failed" "can't open temp file" "interrupted" "bad envelope"
 			  "audio channels not available" "audio srate not available" "audio format not available"
