@@ -5448,10 +5448,10 @@ that method is invoked.
 <div class="separator"></div>
 
 <p>
-<b>define-expansion</b> defines a reader macro.
+<b>define-expansion</b> defines a macro that expands at read-time.
 It has the same syntax as
-define-macro, and (in normal use) the same result except that the macro
-expands at read time.  Since the reader knows almost nothing
+define-macro, and (in normal use) the same result, but it is much faster because it expands only once.
+Since the reader knows almost nothing
 about the code it is reading, 
 you need to make sure the expansion name is unique!
 The reader does know about global variables, so:
@@ -5652,7 +5652,7 @@ loading code that calls gcd.
 same kind of name (or +pi+ to show it is a constant?).  
 Perhaps object-&gt;string should be -&gt;string.
 get-output-string should be current-output-string. write-char behaves like display, not write.
-define-expansion should be define-reader-macro.  provided? should be feature? or *features* should be *provisions*.
+provided? should be feature? or *features* should be *provisions*.
 </p>
 
 <p>

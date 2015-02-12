@@ -1072,7 +1072,7 @@ static void start_dac(int srate, int channels, play_process_t background, mus_fl
       snd_dacp = (dac_state *)calloc(1, sizeof(dac_state));
       snd_dacp->slice = 0;
       snd_dacp->srate = srate;
-      snd_dacp->out_format = MUS_AUDIO_COMPATIBLE_FORMAT;
+      snd_dacp->out_format = MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE;
       if (snd_dacp->srate <= 0) snd_dacp->srate = 44100;
       snd_dacp->channels = channels;
       if (dac_size(ss) > 0)
@@ -2148,7 +2148,7 @@ static bool start_audio_output_1(void)
 	      for (d = 0; d < alsa_devices_available; d++) 
 		{
 		  int this_format;
-		  this_format = mus_audio_compatible_format(alsa_devices[d]);
+		  this_format = mus_audio_compatible_sample_type(alsa_devices[d]);
 		  if (prev_format == -1) 
 		    {
 		      prev_format = this_format;
@@ -2183,7 +2183,7 @@ static bool start_audio_output_1(void)
 	  out_dev[alloc_devs++] = 0;
 	  alloc_chans += alsa_available_chans[0];
 	}
-      snd_dacp->out_format = mus_audio_compatible_format(alsa_devices[out_dev[0]]);
+      snd_dacp->out_format = mus_audio_compatible_sample_type(alsa_devices[out_dev[0]]);
       if (alloc_devs < 2) 
 	{
 	  /* see if we have a minimum sized frample to fill 
@@ -2268,7 +2268,7 @@ static bool start_audio_output_1(void)
 	oss_available_chans = mus_audio_device_channels(audio_output_device(ss));
       for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;
       /* see if we can play 16 bit output */
-      snd_dacp->out_format = mus_audio_compatible_format(audio_output_device(ss));
+      snd_dacp->out_format = mus_audio_compatible_sample_type(audio_output_device(ss));
 
       /* removed PPC stuff here 30-Apr-12 */
 
@@ -2326,7 +2326,7 @@ static bool start_audio_output_1(void)
     }
 
   for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;
-  snd_dacp->out_format = mus_audio_device_format(audio_output_device(ss));
+  snd_dacp->out_format = mus_audio_device_sample_type(audio_output_device(ss));
 
   set_dac_print();
   if (dev_fd[0] == MUS_ERROR)
@@ -2486,7 +2486,7 @@ void initialize_apply(snd_info *sp, int chans, mus_long_t beg, mus_long_t dur)
   snd_dacp = (dac_state *)calloc(1, sizeof(dac_state));
   snd_dacp->slice = 0;
   snd_dacp->srate = snd_srate(sp);
-  snd_dacp->out_format = MUS_AUDIO_COMPATIBLE_FORMAT;
+  snd_dacp->out_format = MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE;
   if (snd_dacp->srate <= 0) snd_dacp->srate = 44100;
   snd_dacp->channels = chans;
   snd_dacp->framples = 8192;
@@ -2804,8 +2804,7 @@ static Xen play_file(const char *play_name, mus_long_t start, mus_long_t end, in
     Xen_error(Xen_make_error_type("bad-format"),
 	      Xen_list_3(C_string_to_Xen_string(S_play ": ~S has unknown sample type: ~A"),
 			 C_string_to_Xen_string(play_name),
-			 C_string_to_Xen_string(mus_header_original_format_name(mus_sound_original_format(play_name),
-									 mus_sound_header_type(play_name)))));
+			 C_string_to_Xen_string(mus_header_original_sample_type_name(mus_sound_original_sample_type(play_name), mus_sound_header_type(play_name)))));
   sp = make_sound_readable(play_name, false);
   sp->short_filename = filename_without_directory(play_name);
   sp->filename = NULL;

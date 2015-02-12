@@ -333,7 +333,7 @@ static char *convolve_with_or_error(char *filename, mus_float_t amp, chan_info *
 		  hdr = sp->hdr;
 		  snd_file_open_descriptors(scfd,
 					    saved_chan_file,
-					    hdr->format,
+					    hdr->sample_type,
 					    hdr->data_location,
 					    1, hdr->type); /* ??? */
 		  fltfd = mus_file_open_read(filename);
@@ -497,7 +497,7 @@ bool scale_to(snd_info *sp, chan_info *cp, mus_float_t *ur_scalers, int len, boo
     }
   else si = sync_to_chan(cp);
 
-  datum_size = mus_bytes_per_sample((sp->hdr)->format);
+  datum_size = mus_bytes_per_sample((sp->hdr)->sample_type);
   chans = si->chans;
   scalers = (mus_float_t *)calloc(chans, sizeof(mus_float_t));
   if (chans < len)
@@ -645,7 +645,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, mus_long_t beg, mus_lo
 		    snd_open_strerror());
 	  return;
 	}
-      datumb = mus_bytes_per_sample(hdr0->format);
+      datumb = mus_bytes_per_sample(hdr0->sample_type);
       ofile1 = snd_tempnam();
       hdr1 = make_temp_header(ofile1, snd_srate(sp0), 1, dur, (char *)S_swap_channels);
       ofd1 = open_temp_file(ofile1, 1, hdr1, &io_err);
@@ -796,7 +796,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
 	  if (ofile) free(ofile);
 	  return(str);
 	}
-      datumb = mus_bytes_per_sample(hdr->format);
+      datumb = mus_bytes_per_sample(hdr->sample_type);
     }
   else 
     {
@@ -1132,7 +1132,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
     }
 
   data = (mus_float_t **)malloc(sizeof(mus_float_t *));
-  datumb = mus_bytes_per_sample(hdr->format);
+  datumb = mus_bytes_per_sample(hdr->sample_type);
 
   j = 0;
   ss->stopped_explicitly = false;
@@ -1713,7 +1713,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
 			    S_clm_channel, ofile, 
 			    snd_open_strerror()));
 	}
-      datumb = mus_bytes_per_sample(hdr->format);
+      datumb = mus_bytes_per_sample(hdr->sample_type);
     }
   else 
     {
@@ -1819,12 +1819,12 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 
 #if MUS_LITTLE_ENDIAN
   if (sizeof(mus_float_t) == 4)
-    hdr->format = MUS_LFLOAT;
-  else hdr->format = MUS_LDOUBLE;
+    hdr->sample_type = MUS_LFLOAT;
+  else hdr->sample_type = MUS_LDOUBLE;
 #else
   if (sizeof(mus_float_t) == 4)
-    hdr->format = MUS_BFLOAT;
-  else hdr->format = MUS_BDOUBLE;
+    hdr->sample_type = MUS_BFLOAT;
+  else hdr->sample_type = MUS_BDOUBLE;
 #endif
 
   ofd = open_temp_file(ofile, 1, hdr, &io_err);
@@ -2013,7 +2013,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 			    origin, ofile, 
 			    snd_open_strerror()));
 	}
-      datumb = mus_bytes_per_sample(hdr->format);
+      datumb = mus_bytes_per_sample(hdr->sample_type);
     }
   else temp_file = false;
 
@@ -2581,7 +2581,7 @@ void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_
 	      free(ofile);
 	      return;
 	    }
-	  datumb = mus_bytes_per_sample(hdr->format);
+	  datumb = mus_bytes_per_sample(hdr->sample_type);
 	}
       else 
 	{
@@ -3189,7 +3189,7 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 
   /* now we have readers set up for all chans of all sounds about to be mixed/scaled/enveloped/resampled... */
 
-  datumb = mus_bytes_per_sample(hdr->format);
+  datumb = mus_bytes_per_sample(hdr->sample_type);
   data = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
   for (i = 0; i < chans; i++)
     data[i] = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t)); 
@@ -3314,7 +3314,7 @@ static Xen map_channel_to_temp_file(chan_info *cp, snd_fd *sf, Xen proc, mus_lon
   
   filename = snd_tempnam();
   hdr = make_temp_header(filename, snd_srate(cp->sound), 1, 0, S_map_channel);
-  datumb = mus_bytes_per_sample(hdr->format);
+  datumb = mus_bytes_per_sample(hdr->sample_type);
 
   ofd = open_temp_file(filename, 1, hdr, &io_err);
   if (ofd == -1)

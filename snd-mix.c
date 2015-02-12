@@ -62,7 +62,7 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
       return(false);
     }
 
-  if ((disk_has_space(num * mus_bytes_per_sample(ohdr->format), ofile)) != DISK_SPACE_OK)
+  if ((disk_has_space(num * mus_bytes_per_sample(ohdr->sample_type), ofile)) != DISK_SPACE_OK)
     return(false);
 
   sf = init_sample_read(beg, cp, READ_FORWARD);
@@ -82,7 +82,7 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
   in_chans = ihdr->chans;
 
   snd_file_open_descriptors(ifd, filename,
-			    ihdr->format,
+			    ihdr->sample_type,
 			    ihdr->data_location,
 			    ihdr->chans,
 			    ihdr->type);
@@ -111,7 +111,7 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
     }
   if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
   
-  close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->format));
+  close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->sample_type));
   mus_file_close(ifd);
   sf = free_snd_fd(sf);
   free(data[in_chan]);
@@ -1267,14 +1267,14 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
 	    }
 	}
       if (j > 0) mus_file_write(fd, 0, j - 1, 1, data);
-      close_temp_file(temp_file, fd, hdr->type, len * mus_bytes_per_sample(hdr->format));
+      close_temp_file(temp_file, fd, hdr->type, len * mus_bytes_per_sample(hdr->sample_type));
       free_file_info(hdr);
       
       hdr = make_file_info(temp_file, FILE_READ_ONLY, FILE_NOT_SELECTED);
       fd = snd_open_read(temp_file);
       snd_file_open_descriptors(fd,
 				temp_file,
-				hdr->format,
+				hdr->sample_type,
 				hdr->data_location,
 				hdr->chans,
 				hdr->type);
@@ -3766,7 +3766,7 @@ int copy_mix(int id)
   if (!md) return(-1);
 
   filename = snd_tempnam();
-  save_mix(id, filename, MUS_NEXT, MUS_OUT_FORMAT);
+  save_mix(id, filename, MUS_NEXT, MUS_OUT_SAMPLE_TYPE);
 
   pos = mix_position_from_id(id);
   origin = tagged_mix_to_string(filename, pos, 0, true); /* true = file should be auto-deleted, I think */
@@ -3792,7 +3792,7 @@ static Xen g_save_mix(Xen m, Xen file)
   Xen_check_type(xen_is_mix(m), m, 1, S_save_mix, "a mix");
   Xen_check_type(Xen_is_string(file), file, 2, S_save_mix, "a filename");
 
-  save_mix(Xen_mix_to_C_int(m), Xen_string_to_C_string(file), MUS_NEXT, MUS_OUT_FORMAT);
+  save_mix(Xen_mix_to_C_int(m), Xen_string_to_C_string(file), MUS_NEXT, MUS_OUT_SAMPLE_TYPE);
   return(m);
 }
 

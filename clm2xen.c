@@ -7222,7 +7222,7 @@ return an output generator writing the sound file 'filename' which is set up to 
 'chans' channels of 'sample-type' samples with a header of 'header-type'.  The latter \
 should be sndlib identifiers:\n  " make_sample_to_file_example
 
-  int df = (int)MUS_OUT_FORMAT;
+  int df = (int)MUS_OUT_SAMPLE_TYPE;
 
   Xen_check_type(Xen_is_string(name), name, 1, S_make_sample_to_file, "a string");
   Xen_check_type(Xen_is_integer_or_unbound(chans), chans, 2, S_make_sample_to_file, "an integer");
@@ -7373,7 +7373,7 @@ should be sndlib identifiers:\n  " make_frample_to_file_example
 
   fgen = mus_make_frample_to_file_with_comment(Xen_string_to_C_string(name),
 					     (Xen_is_integer(chans)) ? Xen_integer_to_C_int(chans) : 1,
-					     (Xen_is_integer(out_format)) ? Xen_integer_to_C_int(out_format) : (int)MUS_OUT_FORMAT,
+					     (Xen_is_integer(out_format)) ? Xen_integer_to_C_int(out_format) : (int)MUS_OUT_SAMPLE_TYPE,
 					     (Xen_is_integer(out_type)) ? Xen_integer_to_C_int(out_type) : (int)MUS_NEXT,
 					     (Xen_is_string(comment)) ? Xen_string_to_C_string(comment) : NULL);
   if (fgen) return(mus_xen_to_object(mus_any_to_mus_xen(fgen)));

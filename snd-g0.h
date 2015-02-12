@@ -268,7 +268,6 @@ typedef struct {
 #define DEFAULT_PEAKS_FONT "Times Medium 10"
 #define DEFAULT_BOLD_PEAKS_FONT "Times Bold 10"
 #define DEFAULT_AXIS_NUMBERS_FONT "Sans 10"
-/* changed 31-May-08 for Gtk+-2.13.1 -- apparently Fixed 10 is no longer defined -- perhaps use Monospace here? */
 #define DEFAULT_AXIS_LABEL_FONT "Times Medium 14"
 #define DEFAULT_LISTENER_FONT "Monospace 11"
 
@@ -291,9 +290,7 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #define PEAKS_FONT(a) (a)->peaks_fnt
 #define BOLD_PEAKS_FONT(a) (a)->bold_peaks_fnt
 #define KEY_TO_NAME(key) gdk_keyval_name(key)
-
 #define DEFAULT_GRAPH_CURSOR GDK_CROSSHAIR
-/* #define GUI_CURRENT_TIME(ss) GDK_CURRENT_TIME */
 
 #define snd_ShiftMask GDK_SHIFT_MASK
 #define snd_ControlMask GDK_CONTROL_MASK

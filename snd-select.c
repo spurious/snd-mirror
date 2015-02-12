@@ -372,7 +372,7 @@ static int mix_selection(chan_info *cp, sync_info *si_out, mus_long_t beg, io_er
   io_error_t io_err = IO_NO_ERROR;
 
   tempfile = snd_tempnam();
-  io_err = save_selection(tempfile, snd_srate(cp->sound), MUS_OUT_FORMAT, MUS_NEXT, NULL, SAVE_ALL_CHANS);
+  io_err = save_selection(tempfile, snd_srate(cp->sound), MUS_OUT_SAMPLE_TYPE, MUS_NEXT, NULL, SAVE_ALL_CHANS);
   if (io_err == IO_NO_ERROR)
     {
       char *origin = NULL;
@@ -428,11 +428,11 @@ void add_selection_or_region(int reg, chan_info *cp)
 static io_error_t insert_selection(chan_info *cp, sync_info *si_out, mus_long_t beg)
 {
   char *tempfile = NULL;
-  int out_format = MUS_OUT_FORMAT;
+  int out_format = MUS_OUT_SAMPLE_TYPE;
   io_error_t io_err = IO_NO_ERROR;
 
-  if (mus_header_writable(MUS_NEXT, cp->sound->hdr->format))
-    out_format = cp->sound->hdr->format;
+  if (mus_header_writable(MUS_NEXT, cp->sound->hdr->sample_type))
+    out_format = cp->sound->hdr->sample_type;
   tempfile = snd_tempnam();
 
   io_err = save_selection(tempfile, snd_srate(cp->sound), out_format, MUS_NEXT, NULL, SAVE_ALL_CHANS);
@@ -980,7 +980,7 @@ static Xen s7_xen_selection_copy(s7_scheme *sc, Xen args)
       snd_info *sp;
       char *name;
       name = snd_tempnam();
-      save_selection(name, selection_srate(), MUS_OUT_FORMAT, MUS_NEXT, NULL, SAVE_ALL_CHANS);
+      save_selection(name, selection_srate(), MUS_OUT_SAMPLE_TYPE, MUS_NEXT, NULL, SAVE_ALL_CHANS);
       sp = snd_open_file(name, FILE_READ_WRITE);
       free(name);
       return(new_xen_sound(sp->index));
@@ -1086,14 +1086,14 @@ io_error_t save_selection(const char *ofile, int srate, int samp_type, int head_
     }
   if (samp_type == -1)
     {
-      if ((sp) && (mus_header_writable(head_type, sp->hdr->format)))
-	samp_type = sp->hdr->format;
-      else samp_type = MUS_OUT_FORMAT;
+      if ((sp) && (mus_header_writable(head_type, sp->hdr->sample_type)))
+	samp_type = sp->hdr->sample_type;
+      else samp_type = MUS_OUT_SAMPLE_TYPE;
     }
   if (!mus_header_writable(head_type, samp_type))
     {
       head_type = MUS_NEXT;
-      samp_type = MUS_OUT_FORMAT;
+      samp_type = MUS_OUT_SAMPLE_TYPE;
     }
   if (srate == -1)
     srate = selection_srate();
@@ -1131,7 +1131,7 @@ io_error_t save_selection(const char *ofile, int srate, int samp_type, int head_
 	  return(IO_DISK_FULL);
 	}
 
-      copy_ok = ((samp_type == sp->hdr->format) && 
+      copy_ok = ((samp_type == sp->hdr->sample_type) && 
 		 (chans == sp->nchans) &&
 		 (chan == SAVE_ALL_CHANS));
       if (copy_ok)
@@ -1396,7 +1396,7 @@ static Xen g_selection_to_mix(void)
       cp = si_out->cps[0];
 
       tempfile = snd_tempnam();
-      io_err = save_selection(tempfile, snd_srate(cp->sound), MUS_OUT_FORMAT, MUS_NEXT, NULL, SAVE_ALL_CHANS);
+      io_err = save_selection(tempfile, snd_srate(cp->sound), MUS_OUT_SAMPLE_TYPE, MUS_NEXT, NULL, SAVE_ALL_CHANS);
       if (is_serious_io_error(io_err))
 	{
 	  if (tempfile) free(tempfile);

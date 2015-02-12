@@ -77,11 +77,11 @@ time_t file_write_date(const char *filename)
 }
 
 
-const char *short_sample_type_name(int sndlib_format, const char *filename)
+const char *short_sample_type_name(int sndlib_sample_type, const char *filename)
 {
-  if (mus_is_sample_type(sndlib_format))
-    return(mus_sample_type_short_name(sndlib_format));
-  else return(mus_header_original_format_name(mus_sound_original_format(filename),
+  if (mus_is_sample_type(sndlib_sample_type))
+    return(mus_sample_type_short_name(sndlib_sample_type));
+  else return(mus_header_original_sample_type_name(mus_sound_original_sample_type(filename),
 					      mus_sound_header_type(filename)));
 }
 
@@ -681,12 +681,12 @@ void reflect_file_change_in_title(void)
 
 /* -------------------------------- open sound file -------------------------------- */
 
-static int fallback_srate = 0, fallback_chans = 0, fallback_format = MUS_UNKNOWN;
-static int original_srate = 0, original_chans = 0, original_format = MUS_UNKNOWN;
+static int fallback_srate = 0, fallback_chans = 0, fallback_sample_type = MUS_UNKNOWN;
+static int original_srate = 0, original_chans = 0, original_sample_type = MUS_UNKNOWN;
 
 void set_fallback_srate(int sr) {fallback_srate = sr;}
 void set_fallback_chans(int ch) {fallback_chans = ch;}
-void set_fallback_format(int fr) {fallback_format = fr;}
+void set_fallback_sample_type(int fr) {fallback_sample_type = fr;}
 
 
 static file_info *make_file_info_1(const char *fullname)
@@ -696,17 +696,17 @@ static file_info *make_file_info_1(const char *fullname)
   hdr->name = mus_strdup(fullname);
   hdr->type = mus_sound_header_type(fullname);
   if (hdr->type == MUS_RAW)
-    mus_header_raw_defaults(&(hdr->srate), &(hdr->chans), &(hdr->format));
+    mus_header_raw_defaults(&(hdr->srate), &(hdr->chans), &(hdr->sample_type));
   else
     {
       hdr->srate = mus_sound_srate(fullname);
       original_srate = hdr->srate;
       hdr->chans = mus_sound_chans(fullname);
       original_chans = hdr->chans;
-      hdr->format = mus_sound_sample_type(fullname);
-      original_format = hdr->format;
+      hdr->sample_type = mus_sound_sample_type(fullname);
+      original_sample_type = hdr->sample_type;
     }
-  if (!(mus_is_sample_type(hdr->format))) hdr->format = fallback_format;
+  if (!(mus_is_sample_type(hdr->sample_type))) hdr->sample_type = fallback_sample_type;
   if (hdr->srate <= 0) {if (fallback_srate > 0) hdr->srate = fallback_srate; else hdr->srate = 1;}
   if (hdr->chans <= 0) {if (fallback_chans > 0) hdr->chans = fallback_chans; else hdr->chans = 1;}
   hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
@@ -735,7 +735,7 @@ file_info *copy_header(const char *fullname, file_info *ohdr)
       hdr->data_location = ohdr->data_location;
       hdr->srate = ohdr->srate;
       hdr->chans = ohdr->chans;
-      hdr->format = ohdr->format;
+      hdr->sample_type = ohdr->sample_type;
       hdr->type = ohdr->type;
       if (ohdr->loops)
 	{
@@ -873,7 +873,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
       hdr->type = MUS_RAW;
       hdr->srate = mus_sound_srate(fullname);
       hdr->chans = mus_sound_chans(fullname);
-      hdr->format = mus_sound_sample_type(fullname);
+      hdr->sample_type = mus_sound_sample_type(fullname);
       hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
       if ((hdr->samples == 0) &&
 	  (hdr->chans > 8))
@@ -1007,9 +1007,9 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
 	    return(open_raw_sound(fullname, read_only, selected));
 	  else
 	    {
-	      int format;
-	      format = mus_sound_sample_type(fullname);
-	      if (mus_is_sample_type(format))
+	      int sample_type;
+	      sample_type = mus_sound_sample_type(fullname);
+	      if (mus_is_sample_type(sample_type))
 		return(make_file_info_1(fullname));
 	      return(translate_file(fullname, type));
 	    }
@@ -1030,7 +1030,7 @@ file_info *make_temp_header(const char *fullname, int srate, int chans, mus_long
   hdr->data_location = 28;
   hdr->srate = srate;
   hdr->chans = chans;
-  hdr->format = MUS_OUT_FORMAT;
+  hdr->sample_type = MUS_OUT_SAMPLE_TYPE;
   hdr->type = MUS_NEXT;
   /* want direct read/writes for temp files */
   hdr->comment = mus_strdup(caller);
@@ -1747,7 +1747,7 @@ static Xen update_hook;
 snd_info *snd_update(snd_info *sp)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
-  int i, old_srate, old_chans, old_format, sp_chans, old_index, gc_loc = NOT_A_GC_LOC, old_selected_channel = NO_SELECTION;
+  int i, old_srate, old_chans, old_sample_type, sp_chans, old_index, gc_loc = NOT_A_GC_LOC, old_selected_channel = NO_SELECTION;
   channel_style_t old_channel_style;
   read_only_t read_only;
   bool old_raw;
@@ -1812,8 +1812,8 @@ snd_info *snd_update(snd_info *sp)
   old_raw = (sp->hdr->type == MUS_RAW);
   if (old_raw)
     {
-      mus_header_raw_defaults(&old_srate, &old_chans, &old_format);
-      mus_header_set_raw_defaults(sp->hdr->srate, sp->hdr->chans, sp->hdr->format);
+      mus_header_raw_defaults(&old_srate, &old_chans, &old_sample_type);
+      mus_header_set_raw_defaults(sp->hdr->srate, sp->hdr->chans, sp->hdr->sample_type);
     }
 
   if (sp == selected_sound())
@@ -1877,7 +1877,7 @@ snd_info *snd_update(snd_info *sp)
 
   ss->reloading_updated_file = 0;
   if (old_raw)
-    mus_header_set_raw_defaults(old_srate, old_chans, old_format);
+    mus_header_set_raw_defaults(old_srate, old_chans, old_sample_type);
   if (nsp)
     {
       /* if header is bad, nsp can be null awaiting raw data dialog's return */
@@ -2056,9 +2056,9 @@ static int h_type_to_pos[MUS_NUM_HEADER_TYPES];
 static int h_type_to_h[MUS_NUM_HEADER_TYPES];
 
 
-static const char *sample_type_name(int format)
+static const char *sample_type_name(int sample_type)
 {
-  switch (format)
+  switch (sample_type)
     {
     case MUS_BSHORT:           return("16-bit int (be)");      break;
     case MUS_MULAW:            return("mulaw");                break;
@@ -2290,19 +2290,19 @@ const char **short_readable_headers(int *len)
 }
 
 
-int position_to_type(int position)
+int position_to_header_type(int position)
 {
   return(h_pos_to_type[position]);
 }
 
 
-int position_to_format(int header, int position)
+int position_to_sample_type(int header, int position)
 {
   return(h_dfs[h_type_to_pos[header]][position]);
 }
 
 
-static int h_to_format_pos(int h, int frm)
+static int h_to_sample_type_pos(int h, int frm)
 {
   int i;
   for (i = 0; i < h_num_formats[h]; i++)
@@ -2312,24 +2312,24 @@ static int h_to_format_pos(int h, int frm)
 }
 
 
-const char **type_and_format_to_position(file_data *fdat, int type, int format)
+const char **header_type_and_sample_type_to_position(file_data *fdat, int type, int sample_type)
 {
   int h;
   h = h_type_to_h[type];
   fdat->formats = h_num_formats[h];
   fdat->header_pos = h_type_to_pos[type];
-  fdat->format_pos = h_to_format_pos(h, format);
+  fdat->format_pos = h_to_sample_type_pos(h, sample_type);
   return(h_df_names[h]);
 }
 
 
-void position_to_type_and_format(file_data *fdat, int pos)
+void position_to_header_type_and_sample_type(file_data *fdat, int pos)
 {
   int h;
   h = h_type_to_h[h_pos_to_type[pos]];
   fdat->header_pos = pos;
   fdat->current_type = h_pos_to_type[pos];
-  fdat->format_pos = h_to_format_pos(h, fdat->current_format);
+  fdat->format_pos = h_to_sample_type_pos(h, fdat->current_format);
   fdat->current_format = h_dfs[h][fdat->format_pos];
 }
 
@@ -2586,7 +2586,7 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
   mus_long_t loc, samples;
   char *comment, *original_comment = NULL;
   file_info *hdr;
-  int chans, srate, type, format;
+  int chans, srate, header_type, sample_type;
   if ((sp->user_read_only == FILE_READ_ONLY) || 
       (sp->file_read_only == FILE_READ_ONLY))
     {
@@ -2605,7 +2605,7 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
 
   /* find out which fields changed -- if possible don't touch the sound data */
   redirect_snd_error_to(inner_handler, (void *)edit_header_data);
-  comment = get_file_dialog_sound_attributes(edit_header_data, &srate, &chans, &type, &format, &loc, &samples, 1);
+  comment = get_file_dialog_sound_attributes(edit_header_data, &srate, &chans, &header_type, &sample_type, &loc, &samples, 1);
   redirect_snd_error_to(outer_handler, (void *)edit_header_data);
   if (edit_header_data->error_widget != NOT_A_SCANF_WIDGET) /* bad field value, perhaps */
     return(false);
@@ -2618,28 +2618,28 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
 	mus_header_set_aiff_loop_info(mus_sound_loop_info(sp->filename));
     }
   mus_sound_forget(sp->filename);
-  if (hdr->type != type)
+  if (hdr->type != header_type)
     {
       sp->writing = true;
-      mus_header_change_type(sp->filename, type, format);
+      mus_header_change_type(sp->filename, header_type, sample_type);
       sp->writing = false;
     }
   else
     {
-      if (hdr->format != format)
-	mus_header_change_format(sp->filename, type, format);
+      if (hdr->sample_type != sample_type)
+	mus_header_change_sample_type(sp->filename, header_type, sample_type);
     }
   if (hdr->chans != chans)
-    mus_header_change_chans(sp->filename, type, chans);
+    mus_header_change_chans(sp->filename, header_type, chans);
   if (hdr->srate != srate)
-    mus_header_change_srate(sp->filename, type, srate);
+    mus_header_change_srate(sp->filename, header_type, srate);
   if (hdr->samples != samples)
-    mus_header_change_data_size(sp->filename, type, mus_samples_to_bytes(format, samples));
-  if ((type == MUS_NEXT) &&
+    mus_header_change_data_size(sp->filename, header_type, mus_samples_to_bytes(sample_type, samples));
+  if ((header_type == MUS_NEXT) &&
       (hdr->data_location != loc))
     mus_header_change_location(sp->filename, MUS_NEXT, loc);
   if (!(mus_strcmp(comment, original_comment)))
-    mus_header_change_comment(sp->filename, type, comment);
+    mus_header_change_comment(sp->filename, header_type, comment);
   if (comment) free(comment);
   if (original_comment) free(original_comment);
   snd_update(sp);
@@ -2745,16 +2745,15 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   reason_str = mus_strcat(reason_str, tmp_str, &len);
 
   /* sample type */
-  if (!(mus_is_sample_type(original_format)))
+  if (!(mus_is_sample_type(original_sample_type)))
     {
       char *format_info;
-      if (original_format != MUS_UNKNOWN)
-	format_info = (char *)mus_sample_type_name(original_format);
-      else format_info = (char *)mus_header_original_format_name(mus_sound_original_format(filename), 
-								 hdr->type);
+      if (original_sample_type != MUS_UNKNOWN)
+	format_info = (char *)mus_sample_type_name(original_sample_type);
+      else format_info = (char *)mus_header_original_sample_type_name(mus_sound_original_sample_type(filename), hdr->type);
       snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat looks bogus: %s", format_info);
     }
-  else snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s", (char *)mus_sample_type_name(original_format));
+  else snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s", (char *)mus_sample_type_name(original_sample_type));
   reason_str = mus_strcat(reason_str, tmp_str, &len);
 
   /* samples */
@@ -2921,7 +2920,7 @@ void display_info(snd_info *sp)
 
       snprintf(buffer, INFO_BUFFER_SIZE, "\n    type: %s\n    format: %s\n    written: %s\n",
 		   mus_header_type_name(hdr->type),
-		   mus_sample_type_name(hdr->format),
+		   mus_sample_type_name(hdr->sample_type),
 		   snd_strftime(STRFTIME_FORMAT, sp->write_date));
       post_it_append(buffer);
 
@@ -3190,7 +3189,7 @@ static Xen g_set_sound_loop_info(Xen snd, Xen vals)
   {
     io_error_t err;
     err = save_edits_without_display(sp, tmp_file, type, 
-				     hdr->format, 
+				     hdr->sample_type, 
 				     hdr->srate, 
 				     hdr->comment,
 				     AT_CURRENT_EDIT_POSITION);
@@ -3490,16 +3489,16 @@ static Xen g_default_output_sample_type(void) {return(C_int_to_Xen_integer(defau
 
 static Xen g_set_default_output_sample_type(Xen val) 
 {
-  int format;
+  int sample_type;
   #define H_default_output_sample_type "(" S_default_output_sample_type "): default sample type when a new or temporary file is created, \
-normally " S_mus_ldouble "; -1 here means try to use the current sound's sample type; many other formats \
+normally " S_mus_ldouble "; -1 here means try to use the current sound's sample type; many other sample_types \
 are available, but not all are compatible with all header types"
 
   Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_default_output_sample_type, "an integer"); 
 
-  format = Xen_integer_to_C_int(val);
-  if (mus_is_sample_type(format))
-    {set_default_output_sample_type(format);}
+  sample_type = Xen_integer_to_C_int(val);
+  if (mus_is_sample_type(sample_type))
+    {set_default_output_sample_type(sample_type);}
   else Xen_out_of_range_error(S_setB S_default_output_sample_type, 1, val, "unknown sample type");
   return(C_int_to_Xen_integer(default_output_sample_type(ss)));
 }

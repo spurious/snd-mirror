@@ -244,7 +244,7 @@ static void reposition_file_buffers(snd_data *sd, mus_long_t index)
       /* these need to flush active data before hidden close and fixup the io indices */
       snd_file_open_descriptors(fd,
 				sd->filename,
-				hdr->format,
+				hdr->sample_type,
 				hdr->data_location,
 				hdr->chans,
 				hdr->type);
@@ -623,7 +623,7 @@ snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_
   sd->inuse = false;
   sd->copy = false;
   sd->chan = temp_chan;
-  sd->data_bytes = (hdr->samples) * (mus_bytes_per_sample(hdr->format)) + hdr->data_location;
+  sd->data_bytes = (hdr->samples) * (mus_bytes_per_sample(hdr->sample_type)) + hdr->data_location;
   sd->free_me = false;
   return(sd);
 }
@@ -641,7 +641,7 @@ snd_data *copy_snd_data(snd_data *sd, mus_long_t beg, int bufsize)
     return(NULL);
   snd_file_open_descriptors(fd,
 			    sd->filename,
-			    hdr->format,
+			    hdr->sample_type,
 			    hdr->data_location,
 			    hdr->chans,
 			    hdr->type);
@@ -765,19 +765,19 @@ int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err
 {
   /* returns io fd */
   int ofd, sl_err = MUS_NO_ERROR;
-  if (!(mus_header_writable(hdr->type, hdr->format)))
+  if (!(mus_header_writable(hdr->type, hdr->sample_type)))
     {
       hdr->type = default_output_header_type(ss);
       if (mus_header_writable(hdr->type, default_output_sample_type(ss)))
-	hdr->format = default_output_sample_type(ss);
+	hdr->sample_type = default_output_sample_type(ss);
       else
 	{
 	  /* was default_output_* here, but that's for the user's output, not ours */
 	  hdr->type = MUS_NEXT;
-	  hdr->format = MUS_OUT_FORMAT;
+	  hdr->sample_type = MUS_OUT_SAMPLE_TYPE;
 	}
     }
-  (*err) = snd_write_header(ofile, hdr->type, hdr->srate, chans, 0, hdr->format, hdr->comment, hdr->loops);
+  (*err) = snd_write_header(ofile, hdr->type, hdr->srate, chans, 0, hdr->sample_type, hdr->comment, hdr->loops);
   if ((*err) != IO_NO_ERROR)
     {
       /* -1 as fd */
@@ -792,7 +792,7 @@ int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err
   hdr->data_location = mus_header_data_location(); /* header might have changed size (aiff extras) */
   sl_err = snd_file_open_descriptors(ofd,
 				     ofile,
-				     hdr->format,
+				     hdr->sample_type,
 				     hdr->data_location,
 				     chans,
 				     hdr->type);
@@ -826,7 +826,7 @@ void set_up_snd_io(chan_info *cp, int i, int fd, const char *filename, file_info
   snd_io *io;
   snd_file_open_descriptors(fd,
 			    filename,
-			    hdr->format,
+			    hdr->sample_type,
 			    hdr->data_location,
 			    hdr->chans,
 			    hdr->type);

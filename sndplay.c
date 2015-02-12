@@ -129,8 +129,7 @@ int main(int argc, char *argv[])
       fprintf(stderr, "can't play %s (sample type: %s (%s)?)\n",
 	      name,
 	      mus_sample_type_name(mus_sound_sample_type(name)),
-	      mus_header_original_format_name(mus_sound_original_format(name), 
-					      mus_sound_header_type(name)));
+	      mus_header_original_sample_type_name(mus_sound_original_sample_type(name), mus_sound_header_type(name)));
       exit(0);
     }
 
@@ -152,7 +151,7 @@ int main(int argc, char *argv[])
       out_chans = chans;
       srate = mus_sound_srate(name);
       framples = mus_sound_framples(name);
-      sample_size = mus_bytes_per_sample(MUS_AUDIO_COMPATIBLE_FORMAT);
+      sample_size = mus_bytes_per_sample(MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE);
       start = (mus_long_t)(begin_time * srate);
       if (start > 0)
 	mus_file_seek_frample(fd, start);
@@ -206,7 +205,7 @@ int main(int argc, char *argv[])
 #endif
 	  if (afd == -1)
 	    {
-	      afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, out_chans, MUS_AUDIO_COMPATIBLE_FORMAT, outbytes);
+	      afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, out_chans, MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE, outbytes);
 	      if (afd == -1) break;
 	    }
 	  outbytes = curframples * out_chans * sample_size;

@@ -7062,6 +7062,7 @@ EDITS: 5
 		      (not (vequal v1 v3)))
 		  (snd-display #__line__ ";swap-channels 1: ~A ~A ~A ~A" v0 v2 v1 v3)))
 	    ;; as long as we're here...
+	    (set! (sync ind1) 0)
 	    (set! (cursor ind1 0) 100)
 	    (set! (cursor ind1 1) 200)
 	    (if (or (not (= (cursor ind1 0) 100)) 
@@ -7265,6 +7266,18 @@ EDITS: 5
 	    (if (or (not (= here 2000))
 		    (not (= (cursor) 2000)))
 		(snd-display #__line__ ";with-tracking-cursor set to :track-and-return: start: ~A, end: ~A" here (cursor))))
+
+	  (set! (zoom-focus-style) zoom-focus-middle) 
+	  (set! (x-zoom-slider) .5)
+	  (if (fneq (x-position-slider) 0.25) (snd-display #__line__ ";zoom focus middle .5: ~A" (x-position-slider)))
+	  (set! (x-zoom-slider) .1)
+	  (if (fneq (x-position-slider) 0.45) (snd-display #__line__ ";zoom focus middle .1: ~A" (x-position-slider)))
+	  (set! (x-zoom-slider) .9)
+	  (if (fneq (x-position-slider) 0.05) (snd-display #__line__ ";zoom focus middle .9: ~A" (x-position-slider)))
+	  (set! (zoom-focus-style) zoom-focus-left) 
+	  (set! (x-zoom-slider) .1)
+	  (if (fneq (x-position-slider) 0.05) (snd-display #__line__ ";zoom focus left .1: ~A" (x-position-slider)))
+
 	  (close-sound ind))
 	
 	(let* ((ind (open-sound "oboe.snd"))

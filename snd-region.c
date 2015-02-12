@@ -432,7 +432,7 @@ static void make_region_readable(region *r)
 	  fd = snd_open_read(r->filename);
 	  snd_file_open_descriptors(fd,
 				    r->filename,
-				    hdr->format,
+				    hdr->sample_type,
 				    hdr->data_location,
 				    hdr->chans,
 				    hdr->type);
@@ -826,7 +826,7 @@ static void deferred_region_to_temp_file(region *r)
   r->filename = snd_tempnam();
   sp0 = drp->cps[0]->sound;
 
-  copy_ok = ((mus_header_writable(MUS_NEXT, sp0->hdr->format)) && 
+  copy_ok = ((mus_header_writable(MUS_NEXT, sp0->hdr->sample_type)) && 
 	     (r->chans == sp0->nchans) &&
 	     (r->peak_envs != NULL) &&
 	     ((drp->len - 1) == r->lens[0]));
@@ -851,8 +851,8 @@ static void deferred_region_to_temp_file(region *r)
        */
       mus_long_t err;
 
-      datumb = mus_bytes_per_sample(sp0->hdr->format);
-      err = mus_write_header(r->filename, MUS_NEXT, r->srate, r->chans, drp->len * r->chans, sp0->hdr->format, "region deferred temp");
+      datumb = mus_bytes_per_sample(sp0->hdr->sample_type);
+      err = mus_write_header(r->filename, MUS_NEXT, r->srate, r->chans, drp->len * r->chans, sp0->hdr->sample_type, "region deferred temp");
 
       if (err != MUS_NO_ERROR)
 	snd_error("can't write region temp file %s: %s", r->filename, snd_io_strerror());
@@ -920,7 +920,7 @@ static void deferred_region_to_temp_file(region *r)
 	{
 	  sfs = (snd_fd **)calloc(r->chans, sizeof(snd_fd *));
 	  data = (mus_float_t **)calloc(r->chans, sizeof(mus_float_t *));
-	  datumb = mus_bytes_per_sample(hdr->format);
+	  datumb = mus_bytes_per_sample(hdr->sample_type);
 	  /* here if peak_envs, maxamp exists */
 
 	  alloc_len = len;
@@ -1929,7 +1929,7 @@ using sample-type (default depends on machine byte order), header-type (" S_mus_
 
   char *name = NULL;
   const char *file = NULL, *com = NULL;
-  int rg, sample_type = MUS_OUT_FORMAT, header_type = MUS_NEXT;
+  int rg, sample_type = MUS_OUT_SAMPLE_TYPE, header_type = MUS_NEXT;
   Xen args[8]; 
   Xen keys[4];
   int orig_arg[4] = {0, 0, 0, 0};

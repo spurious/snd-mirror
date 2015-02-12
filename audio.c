@@ -519,7 +519,7 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int samp_
   dev = MUS_AUDIO_DEVICE(ur_dev);
   oss_sample_type = to_oss_sample_type(samp_type); 
   if (oss_sample_type == MUS_ERROR) 
-    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
+    return_error_exit(MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE, -1,
 		      mus_format("sample type %d (%s) not available",
 				 samp_type, 
 				 mus_sample_type_name(samp_type)));
@@ -562,7 +562,7 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int samp_
     }
   if ((ioctl(audio_out, MUS_OSS_SET_FORMAT, &oss_sample_type) == -1) || 
       (oss_sample_type != to_oss_sample_type(samp_type)))
-    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_out,
+    return_error_exit(MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE, audio_out,
 		      mus_format("sample type %d (%s) not available on %s",
 				 samp_type, 
 				 mus_sample_type_name(samp_type), 
@@ -656,7 +656,7 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int samp_t
   dev = MUS_AUDIO_DEVICE(ur_dev);
   oss_sample_type = to_oss_sample_type(samp_type);
   if (oss_sample_type == MUS_ERROR)
-    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
+    return_error_exit(MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE, -1,
 		      mus_format("sample type %d (%s) not available",
 				 samp_type, 
 				 mus_sample_type_name(samp_type)));
@@ -718,7 +718,7 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int samp_t
     }
   if ((ioctl(audio_fd, MUS_OSS_SET_FORMAT, &oss_sample_type) == -1) ||
       (oss_sample_type != to_oss_sample_type(samp_type)))
-    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
+    return_error_exit(MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE, audio_fd,
 		      mus_format("can't set %s sample type to %d (%s)",
 				 dev_name, samp_type, 
 				 mus_sample_type_name(samp_type)));
@@ -1856,7 +1856,7 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int samp_type, int 
     }
   if ((alsa_format = to_alsa_format(samp_type)) == (snd_pcm_format_t)MUS_ERROR) 
     {
-      return(alsa_mus_error(MUS_AUDIO_FORMAT_NOT_AVAILABLE, 
+      return(alsa_mus_error(MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE, 
 			    mus_format("could not change %s<%d> to alsa format", 
 				       mus_sample_type_to_string(samp_type), samp_type)));
     }
@@ -2343,7 +2343,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int samp_type, int s
   dev = MUS_AUDIO_DEVICE(ur_dev);
   encode = to_sun_sample_type(samp_type);
   if (encode == MUS_ERROR) 
-    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
+    return_error_exit(MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE, -1,
 		      mus_format("sample type %d (%s) not available",
 				 samp_type, 
 				 mus_sample_type_name(samp_type)));
@@ -2385,7 +2385,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int samp_type, int s
       
       if (((int)info.play.precision != bits) || 
 	  ((int)info.play.encoding != encode)) 
-	return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
+	return_error_exit(MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE, audio_fd,
 			  mus_format("can't set output %s sample type to %d bits, %d encode (%s)",
 				     dev_name,
 				     bits, encode, 
@@ -2458,7 +2458,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int si
   encode = to_sun_sample_type(samp_type);
   bits = 8 * mus_bytes_per_sample(samp_type);
   if (encode == -1) 
-    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
+    return_error_exit(MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE, -1,
 		      mus_format("sample type %d bits, %d encode (%s) not available",
 				 bits, encode, 
 				 mus_sample_type_name(samp_type)));
@@ -2532,7 +2532,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int si
 				     dev_name));
       if (((int)info.record.precision != bits) || 
 	  ((int)info.record.encoding != encode)) 
-	return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
+	return_error_exit(MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE, audio_fd,
 			  mus_format("confusion in record.precision|encoding: %d != %d or %d != %d (%s)",
 				     (int)info.record.precision, bits,
 				     (int)info.record.encoding, encode,
@@ -4684,7 +4684,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int samp_type, int s
 	  if (samp_type == MUS_ALAW)
 	    ioctl(fd, AUDIO_SET_SAMPLE_TYPE, AUDIO_FORMAT_ALAW);
 	  else 
-	    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
+	    return_error_exit(MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE, fd,
 			      mus_format("can't set output sample type to %d (%s) for %d",
 					 samp_type, mus_sample_type_to_string(samp_type),
 					 dev));
@@ -4759,7 +4759,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int si
 	  if (samp_type == MUS_ALAW)
 	    ioctl(fd, AUDIO_SET_SAMPLE_TYPE, AUDIO_FORMAT_ALAW);
 	  else 
-	    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
+	    return_error_exit(MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE, fd,
 			      mus_format("can't set input sample type to %d (%s) on %d",
 					 samp_type, mus_sample_type_to_string(samp_type),
 					 dev));
@@ -4920,7 +4920,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int samp_type, int size
   /* a_info.blocksize = size; */
   encode = sndlib_format_to_bsd(samp_type);
   if (encode == AUDIO_ENCODING_NONE)
-    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
+    return_error_exit(MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE, -1,
 		      mus_format("sample type %d (%s) not available",
 				 samp_type, 
 				 mus_sample_type_name(samp_type)));
@@ -5008,7 +5008,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int samp_type, int si
   encode = sndlib_format_to_bsd(samp_type);
   bits = 8 * mus_bytes_per_sample(samp_type);
   if (encode == AUDIO_ENCODING_NONE) 
-    return_error_exit(MUS_AUDIO_FORMAT_NOT_AVAILABLE, -1,
+    return_error_exit(MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE, -1,
 		      mus_format("sample type %s not available for recording",
 				 mus_sample_type_name(samp_type)));
 
@@ -5442,8 +5442,8 @@ int mus_audio_compatible_format(int dev) /* snd-dac and sndplay */
 	{
 	  int i;
 	  for (i = 1; i <= ival[0]; i++)
-	    if (ival[i] == MUS_AUDIO_COMPATIBLE_FORMAT) 
-	      return(MUS_AUDIO_COMPATIBLE_FORMAT);
+	    if (ival[i] == MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE) 
+	      return(MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE);
 
 	  for (i = 1; i <= ival[0]; i++) 
 	    if ((ival[i] == MUS_BINT) || (ival[i] == MUS_LINT) ||
@@ -5465,7 +5465,7 @@ int mus_audio_compatible_format(int dev) /* snd-dac and sndplay */
   if (api == MUS_JACK_API) 
     return(MUS_COMP_FLOAT);
 #endif
-  return(MUS_AUDIO_COMPATIBLE_FORMAT);
+  return(MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE);
 }
 
 
@@ -5489,7 +5489,7 @@ int mus_audio_device_format(int dev) /* snd-dac */
   mixer_vals[0] = 0;
 
 #if (!WITH_AUDIO)
-  return(MUS_AUDIO_COMPATIBLE_FORMAT);
+  return(MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE);
 #endif
 
 #if HAVE_OSS
@@ -5529,7 +5529,7 @@ int mus_audio_device_format(int dev) /* snd-dac */
   netbsd_formats(dev, mixer_vals);
 #endif
 
-  format = look_for_format(mixer_vals, MUS_AUDIO_COMPATIBLE_FORMAT);
+  format = look_for_format(mixer_vals, MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE);
   if (format != -1)
     return(format);
 

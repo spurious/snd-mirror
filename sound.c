@@ -610,14 +610,14 @@ static sound_file *fill_sf_record(const char *name, sound_file *sf)
 
   sf->data_location = mus_header_data_location();
   sf->samples = mus_header_samples();
-  sf->sample_type = mus_header_format();
+  sf->sample_type = mus_header_sample_type();
   sf->srate = mus_header_srate();
   /* if (sf->srate < 0) sf->srate = 0; */
   sf->chans = mus_header_chans();
   /* if (sf->chans < 0) sf->chans = 0; */
   sf->datum_size = mus_bytes_per_sample(sf->sample_type);
   sf->header_type = mus_header_type();
-  sf->original_sound_format = mus_header_original_format();
+  sf->original_sound_format = mus_header_original_sample_type();
   sf->true_file_length = mus_header_true_length();
 
   sf->comment_start = mus_header_comment_start();
@@ -1470,15 +1470,15 @@ const char *mus_array_to_file_with_error(const char *filename, mus_float_t *ddat
   mus_long_t oloc;
   mus_sound_forget(filename);
 
-  err = mus_write_header(filename, MUS_NEXT, srate, channels, len * channels, MUS_OUT_FORMAT, "array->file");
+  err = mus_write_header(filename, MUS_NEXT, srate, channels, len * channels, MUS_OUT_SAMPLE_TYPE, "array->file");
   if (err != MUS_NO_ERROR)
     return("mus_array_to_file can't create output file");
   oloc = mus_header_data_location();
   fd = mus_file_reopen_write(filename);
   lseek(fd, oloc, SEEK_SET);
   err = mus_file_open_descriptors(fd, filename,
-				  MUS_OUT_FORMAT,
-				  mus_bytes_per_sample(MUS_OUT_FORMAT),
+				  MUS_OUT_SAMPLE_TYPE,
+				  mus_bytes_per_sample(MUS_OUT_SAMPLE_TYPE),
 				  oloc, channels, MUS_NEXT);
   if (err != MUS_ERROR)
     {

@@ -10587,7 +10587,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
       res = XmListGetSelectedPos(fdat->header_list, &ns, &n);
       if (res)
 	{
-	  (*type) = position_to_type(ns[0] - 1);
+	  (*type) = position_to_header_type(ns[0] - 1);
 	  fdat->current_type = (*type);
 	  free(ns); 
 	  ns = NULL;
@@ -10599,7 +10599,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
       res = XmListGetSelectedPos(fdat->format_list, &ns, &n);
       if (res)
 	{
-	  (*format) = position_to_format(fdat->current_type, ns[0] - 1);
+	  (*format) = position_to_sample_type(fdat->current_type, ns[0] - 1);
 	  fdat->current_format = (*format);
 	  free(ns); 
 	  ns = NULL;
@@ -10639,7 +10639,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat,
     fdat->current_type = type;
   else fdat->current_type = MUS_RAW;
   fdat->current_format = format;
-  fl = type_and_format_to_position(fdat, fdat->current_type, fdat->current_format);
+  fl = header_type_and_sample_type_to_position(fdat, fdat->current_type, fdat->current_format);
   if (fl == NULL) return;
   
   if ((type != IGNORE_HEADER_TYPE) &&
@@ -10817,9 +10817,9 @@ static void file_data_type_callback(Widget w, XtPointer context, XtPointer info)
 
   XtVaGetValues(w, XmNuserData, &fd, NULL);
   pos = cbs->item_position - 1;
-  if (position_to_type(pos) != fd->current_type)
+  if (position_to_header_type(pos) != fd->current_type)
     {
-      position_to_type_and_format(fd, pos);
+      position_to_header_type_and_sample_type(fd, pos);
       set_file_dialog_sound_attributes(fd,
 				       fd->current_type,
 				       fd->current_format,
@@ -10834,7 +10834,7 @@ static void file_sample_type_callback(Widget w, XtPointer context, XtPointer inf
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   file_data *fd;
   XtVaGetValues(w, XmNuserData, &fd, NULL);
-  fd->current_format = position_to_format(fd->current_type, cbs->item_position - 1);
+  fd->current_format = position_to_sample_type(fd->current_type, cbs->item_position - 1);
 }
 
 
@@ -10896,7 +10896,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
   fdat->saved_comment = NULL;
   fdat->current_type = header_type;
   fdat->current_format = sample_type;
-  formats = type_and_format_to_position(fdat, header_type, sample_type);
+  formats = header_type_and_sample_type_to_position(fdat, header_type, sample_type);
   nformats = fdat->formats;
 
   /* pick up all args from caller -- args here are attachment points */
@@ -12935,7 +12935,7 @@ Widget edit_header(snd_info *sp)
       ep->edat = make_file_data_panel(main_w, "Edit Header", args, n, 
 				      WITH_CHANNELS_FIELD, 
 				      hdr->type, 
-				      hdr->format, 
+				      hdr->sample_type, 
 				      WITH_DATA_LOCATION_FIELD, 
 				      WITH_SAMPLES_FIELD,
 				      WITH_HEADER_TYPE_FIELD, 
@@ -12948,10 +12948,10 @@ Widget edit_header(snd_info *sp)
       if (hdr->type == MUS_RAW)
 	set_file_dialog_sound_attributes(ep->edat, 
 					 default_output_header_type(ss), 
-					 hdr->format, hdr->srate, hdr->chans, 
+					 hdr->sample_type, hdr->srate, hdr->chans, 
 					 hdr->data_location, hdr->samples, hdr->comment);
       else set_file_dialog_sound_attributes(ep->edat, 
-					    hdr->type, hdr->format, hdr->srate, hdr->chans, 
+					    hdr->type, hdr->sample_type, hdr->srate, hdr->chans, 
 					    hdr->data_location, hdr->samples, hdr->comment);
       XtManageChild(ep->edat->error_text);
       XtManageChild(ep->dialog);
@@ -12986,10 +12986,10 @@ Widget edit_header(snd_info *sp)
       if (hdr->type == MUS_RAW)
 	set_file_dialog_sound_attributes(ep->edat, 
 					 default_output_header_type(ss), 
-					 hdr->format, hdr->srate, hdr->chans, 
+					 hdr->sample_type, hdr->srate, hdr->chans, 
 					 hdr->data_location, hdr->samples, hdr->comment);
       else set_file_dialog_sound_attributes(ep->edat, 
-					    hdr->type, hdr->format, hdr->srate, hdr->chans, 
+					    hdr->type, hdr->sample_type, hdr->srate, hdr->chans, 
 					    hdr->data_location, hdr->samples, hdr->comment);
       raise_dialog(ep->dialog);
       clear_dialog_error(ep->edat);
@@ -13274,7 +13274,7 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  hdr->type = MUS_RAW;
 	  hdr->srate = raw_srate;
 	  hdr->chans = raw_chans;
-	  hdr->format = raw_sample_type;
+	  hdr->sample_type = raw_sample_type;
 	  hdr->samples = mus_bytes_to_samples(raw_sample_type, 
 					      mus_sound_length(rp->filename) - rp->location);
 	  hdr->data_location = rp->location;

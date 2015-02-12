@@ -83,7 +83,7 @@ typedef struct {
   mus_long_t data_location;    /* bytes */
   int srate;
   int chans;
-  int format;             /* sample type (mus_bshort etc) */
+  int sample_type;        /* sample type (mus_bshort etc) */
   int type;               /* header type (mus_aifc etc) */
   char *comment;          /* output case, not input */
   int *loops;
@@ -760,9 +760,9 @@ io_error_t move_file(const char *oldfile, const char *newfile);
 
 int snd_open_read(const char *arg);
 int snd_reopen_write(const char *arg);
-io_error_t snd_write_header(const char *name, int type, int srate, int chans, mus_long_t samples, int format, const char *comment, int *loops);
+io_error_t snd_write_header(const char *name, int type, int srate, int chans, mus_long_t samples, int sample_type, const char *comment, int *loops);
 io_error_t sndlib_error_to_snd(int sndlib_err);
-int snd_file_open_descriptors(int tfd, const char *name, int format, mus_long_t location, int chans, int type);
+int snd_file_open_descriptors(int tfd, const char *name, int sample_type, mus_long_t location, int chans, int type);
 snd_io *make_file_state(int fd, file_info *hdr, int chan, mus_long_t beg, int suggested_bufsize);
 void file_buffers_forward(mus_long_t ind0, mus_long_t ind1, mus_long_t indx, snd_fd *sf, snd_data *cur_snd);
 void file_buffers_back(mus_long_t ind0, mus_long_t ind1, mus_long_t indx, snd_fd *sf, snd_data *cur_snd);
@@ -1066,7 +1066,7 @@ io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, in
 io_error_t save_edits(snd_info *sp);
 io_error_t save_edits_without_asking(snd_info *sp);
 io_error_t save_edits_and_update_display(snd_info *sp);
-io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int type, int format, int srate, const char *comment, int pos);
+io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int type, int sample_type, int srate, const char *comment, int pos);
 void revert_edits(chan_info *cp);
 mus_long_t current_location(snd_fd *sf);
 void g_init_edits(void);
@@ -1623,7 +1623,7 @@ snd_info *snd_update_within_xen(snd_info *sp, const char *caller);
 int snd_decode(int type, const char *input_filename, const char *output_filename);
 void set_fallback_srate(int sr);
 void set_fallback_chans(int ch);
-void set_fallback_format(int fr);
+void set_fallback_sample_type(int fr);
 void set_with_tooltips(bool val);
 void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, bool from_save_as_dialog);
 bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int smp_type, int hd_type, const char *comment);

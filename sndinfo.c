@@ -76,8 +76,8 @@ int main(int argc, char *argv[])
 	  else
 	    {
 	      if (format_info == NULL) format_info = (char *)calloc(64, sizeof(char));
-	      format = mus_sound_original_format(argv[ctr]);
-	      format_name = (char *)mus_header_original_format_name(format, type);
+	      format = mus_sound_original_sample_type(argv[ctr]);
+	      format_name = (char *)mus_header_original_sample_type_name(format, type);
 	      if (format_name)
 		snprintf(format_info, 64, "%d (%s)", format, format_name);
 	      else snprintf(format_info, 64, "%d", format);

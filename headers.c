@@ -528,8 +528,7 @@ static const char *any_sample_type_name(int sndlib_samp_type)
 {
   if (mus_is_sample_type(sndlib_samp_type))
     return(mus_sample_type_name(sndlib_samp_type));
-  else return(mus_header_original_format_name(mus_header_original_format(),
-					      mus_header_type()));
+  else return(mus_header_original_sample_type_name(mus_header_original_sample_type(), mus_header_type()));
 }
 
 
@@ -6335,7 +6334,7 @@ int mus_header_change_data_size(const char *filename, int type, mus_long_t size)
 	  size = BIGGEST_4_BYTE_SIGNED_INT;
 	}
       lseek(fd, 0L, SEEK_SET);
-      write_nist_header(fd, mus_header_srate(), mus_header_chans(), size, mus_header_format());
+      write_nist_header(fd, mus_header_srate(), mus_header_chans(), size, mus_header_sample_type());
       break;
 
     case MUS_CAFF:
@@ -6569,7 +6568,7 @@ int mus_header_change_format(const char *filename, int type, int new_format)
   if (err == MUS_ERROR) return(err);
   fd = mus_file_reopen_write(filename);
   if (fd == -1) 
-    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_change_format for %s failed: %s", filename, STRERROR(errno)));
+    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_change_sample_type for %s failed: %s", filename, STRERROR(errno)));
   switch (type)
     {
     case MUS_NEXT:

@@ -730,7 +730,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
       snd_warning("%s %s: %s", S_apply_ladspa, ofile, io_error_name(io_err));
     }
   /* Tidy up header. */
-  datumb = mus_bytes_per_sample(hdr->format);
+  datumb = mus_bytes_per_sample(hdr->sample_type);
 
   if (readers > 0)
     {

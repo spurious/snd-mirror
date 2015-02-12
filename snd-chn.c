@@ -789,7 +789,7 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
 	{
 	  snd_io *io;
 	  snd_file_open_descriptors(fd,
-				    filename, chdr->format,
+				    filename, chdr->sample_type,
 				    chdr->data_location,
 				    chdr->chans,
 				    chdr->type);

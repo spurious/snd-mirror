@@ -1249,7 +1249,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
 	res = fdat->header_pos;
       if (res != NO_SELECTION)
 	{
-	  (*type) = position_to_type(res);
+	  (*type) = position_to_header_type(res);
 	  fdat->current_type = (*type);
 	}
     }
@@ -1261,7 +1261,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
 	res = fdat->format_pos;
       if (res != NO_SELECTION)
 	{
-	  (*format) = position_to_format(fdat->current_type, res);
+	  (*format) = position_to_sample_type(fdat->current_type, res);
 	  fdat->current_format = (*format);
 	}
     }
@@ -1297,7 +1297,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat, int type, int form
     fdat->current_type = type;
   else fdat->current_type = MUS_RAW;
   fdat->current_format = format;
-  fl = type_and_format_to_position(fdat, fdat->current_type, fdat->current_format);
+  fl = header_type_and_sample_type_to_position(fdat, fdat->current_type, fdat->current_format);
   if (fl == NULL) return;
 
   if ((type != IGNORE_HEADER_TYPE) &&
@@ -1500,9 +1500,9 @@ static void update_header_type_list(const char *name, int row, void *data)
 {
   /* needed to reflect type selection in format list */
   file_data *fdat = (file_data *)data;
-  if (position_to_type(row) != fdat->current_type)
+  if (position_to_header_type(row) != fdat->current_type)
     {
-      position_to_type_and_format(fdat, row);
+      position_to_header_type_and_sample_type(fdat, row);
       set_file_dialog_sound_attributes(fdat,
 				       fdat->current_type,
 				       fdat->current_format,
@@ -1515,7 +1515,7 @@ static void update_header_type_list(const char *name, int row, void *data)
 static void update_sample_type_list(const char *name, int row, void *data)
 {
   file_data *fdat = (file_data *)data;
-  fdat->current_format = position_to_format(fdat->current_type, row);
+  fdat->current_format = position_to_sample_type(fdat->current_type, row);
 }
 
 
@@ -1559,7 +1559,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   fdat->saved_comment = NULL;
   fdat->current_type = header_type;
   fdat->current_format = sample_type;
-  formats = type_and_format_to_position(fdat, header_type, sample_type);
+  formats = header_type_and_sample_type_to_position(fdat, header_type, sample_type);
   nformats = fdat->formats;
 
   frame = gtk_frame_new(NULL);
@@ -2638,7 +2638,7 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 	  hdr->type = MUS_RAW;
 	  hdr->srate = raw_srate;
 	  hdr->chans = raw_chans;
-	  hdr->format = raw_sample_type;
+	  hdr->sample_type = raw_sample_type;
 	  hdr->samples = mus_bytes_to_samples(raw_sample_type, 
 					      mus_sound_length(rp->filename) - rp->location);
 	  hdr->data_location = rp->location;
@@ -3408,7 +3408,7 @@ GtkWidget *edit_header(snd_info *sp)
       ep->edat = make_file_data_panel(DIALOG_CONTENT_AREA(ep->dialog), "Edit Header", 
 				      WITH_CHANNELS_FIELD, 
 				      hdr->type, 
-				      hdr->format, 
+				      hdr->sample_type, 
 				      WITH_DATA_LOCATION_FIELD, 
 				      WITH_SAMPLES_FIELD,
 				      WITH_HEADER_TYPE_FIELD, 
@@ -3438,10 +3438,10 @@ GtkWidget *edit_header(snd_info *sp)
   if (hdr->type == MUS_RAW)
     set_file_dialog_sound_attributes(ep->edat, 
 				     default_output_header_type(ss), 
-				     hdr->format, hdr->srate, hdr->chans, 
+				     hdr->sample_type, hdr->srate, hdr->chans, 
 				     hdr->data_location, hdr->samples, hdr->comment);
   else set_file_dialog_sound_attributes(ep->edat, 
-					hdr->type, hdr->format, hdr->srate, hdr->chans, 
+					hdr->type, hdr->sample_type, hdr->srate, hdr->chans, 
 					hdr->data_location, hdr->samples, hdr->comment);
 
   gtk_widget_show(ep->dialog);

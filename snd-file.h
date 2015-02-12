@@ -4,10 +4,10 @@
 
 char *dialog_get_title(widget_t dialog);
 
-const char **type_and_format_to_position(file_data *fdat, int type, int format);
-void position_to_type_and_format(file_data *fdat, int pos);
-int position_to_format(int header, int pos);
-int position_to_type(int pos);
+const char **header_type_and_sample_type_to_position(file_data *fdat, int header_type, int sample_type);
+void position_to_header_type_and_sample_type(file_data *fdat, int pos);
+int position_to_sample_type(int header, int pos);
+int position_to_header_type(int pos);
 const char **short_writable_headers(int *len);
 const char **short_readable_headers(int *len);
 const char **short_builtin_headers(int *len);
@@ -50,7 +50,7 @@ dir_info *find_files_in_dir(const char *name);
 dir_info *find_filtered_files_in_dir(const char *name, int filter_choice);
 dir_info *find_filtered_files_in_dir_with_pattern(const char *name, int filter_choice, const char *pattern);
 
-const char *short_sample_type_name(int sndlib_format, const char *filename);
+const char *short_sample_type_name(int sndlib_sample_type, const char *filename);
 
 #define FILENAME_LIST_SIZE 16
 

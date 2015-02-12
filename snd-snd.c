@@ -359,7 +359,7 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	      es->file_open = true;
 	      lseek(es->fd, cp->sound->hdr->data_location, SEEK_SET);
 
-	      es->format = cp->sound->hdr->format;
+	      es->format = cp->sound->hdr->sample_type;
 	      es->chans = cp->sound->nchans;
 	      es->bytes = ep->samps_per_bin * mus_bytes_per_sample(es->format) * es->chans;
 	      es->direct_data = (unsigned char *)malloc(es->bytes * lm);
@@ -1340,7 +1340,7 @@ char *sp_name_click(snd_info *sp) /* caller should free returned string */
 			       dur,
 			       ((dur == 1.0) ? "" : "s"),
 			       mus_header_type_to_string(hdr->type),
-			       mus_sample_type_to_string(hdr->format),
+			       mus_sample_type_to_string(hdr->sample_type),
 			       snd_strftime("%d-%b-%Y %H:%M", sp->write_date),
 			       (linked) ? ", (link to " : "",
 #ifndef _MSC_VER
@@ -1832,7 +1832,7 @@ static bool apply_controls(apply_state *ap)
 	  close_temp_file(ap->ofile,
 			  ap->ofd,
 			  ap->hdr->type,
-			  apply_dur * (ap->hdr->chans) * mus_bytes_per_sample((ap->hdr)->format));
+			  apply_dur * (ap->hdr->chans) * mus_bytes_per_sample((ap->hdr)->sample_type));
 	  if ((sp->apply_ok) && (apply_dur > 0))
 	    {
 	      switch (ss->apply_choice)
@@ -2242,9 +2242,9 @@ static Xen s7_xen_sound_copy(s7_scheme *sc, Xen args)
       io_error_t err;
       char *name;
       name = snd_tempnam();
-      if (mus_header_writable(sp->hdr->type, sp->hdr->format))
-	err = save_edits_without_display(sp, name, sp->hdr->type, sp->hdr->format, sp->hdr->srate, NULL, AT_CURRENT_EDIT_POSITION);
-      else err = save_edits_without_display(sp, name, MUS_NEXT, MUS_OUT_FORMAT, sp->hdr->srate, NULL, AT_CURRENT_EDIT_POSITION);
+      if (mus_header_writable(sp->hdr->type, sp->hdr->sample_type))
+	err = save_edits_without_display(sp, name, sp->hdr->type, sp->hdr->sample_type, sp->hdr->srate, NULL, AT_CURRENT_EDIT_POSITION);
+      else err = save_edits_without_display(sp, name, MUS_NEXT, MUS_OUT_SAMPLE_TYPE, sp->hdr->srate, NULL, AT_CURRENT_EDIT_POSITION);
       sp = snd_open_file(name, FILE_READ_WRITE);
       free(name);
       if (sp)
@@ -2503,10 +2503,10 @@ static Xen sound_get(Xen snd, sp_field_t fld, const char *caller)
     case SP_FILTER_HZING:        return(C_bool_to_Xen_boolean(sp->filter_control_in_hz));                                break;
     case SP_FILTER_ORDER:        return(C_int_to_Xen_integer(sp->filter_control_order));                                    break;
     case SP_SRATE:               return(C_int_to_Xen_integer(sp->hdr->srate));                                              break;
-    case SP_SAMPLE_TYPE:         return(C_int_to_Xen_integer(sp->hdr->format));                                             break;
+    case SP_SAMPLE_TYPE:         return(C_int_to_Xen_integer(sp->hdr->sample_type));                                             break;
     case SP_HEADER_TYPE:         return(C_int_to_Xen_integer(sp->hdr->type));                                               break;
     case SP_DATA_LOCATION:       return(C_llong_to_Xen_llong(sp->hdr->data_location));                                  break;
-    case SP_DATA_SIZE:           return(C_llong_to_Xen_llong(mus_samples_to_bytes(sp->hdr->format, sp->hdr->samples))); break;
+    case SP_DATA_SIZE:           return(C_llong_to_Xen_llong(mus_samples_to_bytes(sp->hdr->sample_type, sp->hdr->samples))); break;
     case SP_SAVE_CONTROLS:       if (has_widgets(sp)) save_controls(sp);                                            break;
     case SP_RESTORE_CONTROLS:    if (has_widgets(sp)) restore_controls(sp);                                         break;
     case SP_RESET_CONTROLS:      if (has_widgets(sp)) reset_controls(sp);                                           break;
@@ -2825,9 +2825,9 @@ static Xen sound_set(Xen snd, Xen val, sp_field_t fld, const char *caller)
 	  if (mus_is_sample_type(ival))
 	    {
 	      int old_format;
-	      old_format = sp->hdr->format;
+	      old_format = sp->hdr->sample_type;
 	      mus_sound_set_sample_type(sp->filename, ival);
-	      sp->hdr->format = ival;
+	      sp->hdr->sample_type = ival;
 	      if (mus_bytes_per_sample(old_format) != mus_bytes_per_sample(ival))
 		{
 		  sp->hdr->samples = (sp->hdr->samples * mus_bytes_per_sample(old_format)) / mus_bytes_per_sample(ival);
@@ -2881,7 +2881,7 @@ static Xen sound_set(Xen snd, Xen val, sp_field_t fld, const char *caller)
 	  size = Xen_llong_to_C_llong(val);
 	  if (size >= 0)
 	    {
-	      mus_sound_set_samples(sp->filename, mus_bytes_to_samples(sp->hdr->format, size));
+	      mus_sound_set_samples(sp->filename, mus_bytes_to_samples(sp->hdr->sample_type, size));
 	      snd_update_within_xen(sp, caller); 
 	    }
 	  else Xen_out_of_range_error(S_setB S_data_size, 1, val, "data size < 0?");
@@ -4020,7 +4020,7 @@ open file assuming the data matches the attributes indicated unless the file act
       os = mus_optkey_to_int(keys[2], S_open_raw_sound, orig_arg[2], os);
       if (!(Xen_is_keyword(keys[2]))) set_fallback_srate(os);
       ofr = mus_optkey_to_int(keys[3], S_open_raw_sound, orig_arg[3], ofr);
-      if (!(Xen_is_keyword(keys[3]))) set_fallback_format(ofr);
+      if (!(Xen_is_keyword(keys[3]))) set_fallback_sample_type(ofr);
     }
 
   if (file == NULL) 
@@ -4041,7 +4041,7 @@ open file assuming the data matches the attributes indicated unless the file act
 
   set_fallback_chans(0);
   set_fallback_srate(0);
-  set_fallback_format(MUS_UNKNOWN);
+  set_fallback_sample_type(MUS_UNKNOWN);
   ss->reloading_updated_file = 0;
 
   /* snd_open_file -> snd_open_file_1 -> add_sound_window -> make_file_info -> raw_data_dialog_to_file_info */
@@ -4180,9 +4180,9 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   if (df == -1) 
     {
       /* try to find some writable sample_type */
-      df = hdr->format;
+      df = hdr->sample_type;
       if (!mus_header_writable(ht, df)) 
-	df = MUS_OUT_FORMAT;
+	df = MUS_OUT_SAMPLE_TYPE;
       if (!mus_header_writable(ht, df))
 	{
 	  switch (df)

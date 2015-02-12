@@ -1502,8 +1502,7 @@ static const char *any_format_name(const char *name)
   format = mus_sound_sample_type(name);
   if (format != MUS_UNKNOWN)
     return(mus_sample_type_name(format));
-  else return(mus_header_original_format_name(mus_sound_original_format(name),
-					      mus_sound_header_type(name)));
+  else return(mus_header_original_sample_type_name(mus_sound_original_sample_type(name), mus_sound_header_type(name)));
 }
 
 
@@ -1556,7 +1555,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
 
     case MUS_RF64:
     case MUS_RIFF:
-      switch (mus_sound_original_format(oldname))
+      switch (mus_sound_original_sample_type(oldname))
 	{
 	case RIFF_MS_ADPCM: case RIFF_Intel_ADPCM: 
 	  err = read_dvi_adpcm(oldname, newname, hdr, 0); 
@@ -1587,13 +1586,13 @@ int snd_translate(const char *oldname, const char *newname, int type)
       break;
 
     case MUS_NIST:
-      if (mus_sound_original_format(oldname) == MUS_NIST_SHORTPACK) 
+      if (mus_sound_original_sample_type(oldname) == MUS_NIST_SHORTPACK) 
 	err = read_nist_shortpack(oldname, newname, hdr); 
       break;
 
 #if G7XX
     case MUS_NEXT:
-      switch (mus_sound_original_format(oldname))
+      switch (mus_sound_original_sample_type(oldname))
 	{
 	case NeXT_G721:   err = read_g72x_adpcm(oldname, newname, hdr, 0); break;
 	case NeXT_G723:   err = read_g72x_adpcm(oldname, newname, hdr, 1); break;
@@ -1603,7 +1602,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
 #endif
 
     case MUS_AIFC:
-      if (mus_sound_original_format(oldname) == MUS_AIFF_IMA_ADPCM) 
+      if (mus_sound_original_sample_type(oldname) == MUS_AIFF_IMA_ADPCM) 
 	err = read_dvi_adpcm(oldname, newname, hdr, 1); 
       break;
  
@@ -1622,6 +1621,6 @@ int snd_translate(const char *oldname, const char *newname, int type)
 		     oldname,
 		     mus_header_type_name(type),
 		     any_format_name(oldname),
-		     mus_sound_original_format(oldname)));
+		     mus_sound_original_sample_type(oldname)));
   return(err);
 }

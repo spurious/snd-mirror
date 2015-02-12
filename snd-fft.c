@@ -1791,7 +1791,7 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
   int err;
 
   /* need file to hold convolution output */
-  err = mus_write_header(fname, MUS_NEXT, DEFAULT_OUTPUT_SRATE, 1, data_size * mus_bytes_per_sample(MUS_OUT_FORMAT), MUS_OUT_FORMAT, "c_convolve temp");
+  err = mus_write_header(fname, MUS_NEXT, DEFAULT_OUTPUT_SRATE, 1, data_size * mus_bytes_per_sample(MUS_OUT_SAMPLE_TYPE), MUS_OUT_SAMPLE_TYPE, "c_convolve temp");
   if (err != MUS_NO_ERROR)
     snd_error("can't open convolution temp file %s: %s", fname, snd_io_strerror());
   else
@@ -1829,7 +1829,7 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
 	  start_progress_report(gcp);
 
 	  tempfile = snd_reopen_write(fname);
-	  snd_file_open_descriptors(tempfile, fname, MUS_OUT_FORMAT, oloc, 1, MUS_NEXT);
+	  snd_file_open_descriptors(tempfile, fname, MUS_OUT_SAMPLE_TYPE, oloc, 1, MUS_NEXT);
 	  lseek(tempfile, oloc, SEEK_SET);
 
 	  /* read in the "impulse response" */

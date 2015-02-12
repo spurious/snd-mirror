@@ -1656,7 +1656,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 
   mus_file_set_clipping(ofd, need_clipping); /* clipping is very expensive, so try to avoid it */
 
-  datumb = mus_bytes_per_sample(hdr->format);
+  datumb = mus_bytes_per_sample(hdr->sample_type);
   ss->stopped_explicitly = false;
 
   obufs = (mus_float_t **)malloc(chans * sizeof(mus_float_t *));
@@ -1824,7 +1824,7 @@ io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, in
   sp = cp->sound;
   ohdr = sp->hdr;
   hdr = copy_header(new_name, ohdr);
-  hdr->format = samp_type;
+  hdr->sample_type = samp_type;
   hdr->srate = srate;
   hdr->type = hd_type;
   if (comment) 
@@ -3206,7 +3206,7 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, mus_long_t beg, mus_lo
 	      fd = snd_open_read(temp_file_name);
 	      snd_file_open_descriptors(fd,
 					temp_file_name,
-					hdr->format,
+					hdr->sample_type,
 					hdr->data_location,
 					hdr->chans,
 					hdr->type);
@@ -3513,7 +3513,7 @@ bool file_insert_samples(mus_long_t beg, mus_long_t num, const char *inserted_fi
       fd = snd_open_read(inserted_file);
       snd_file_open_descriptors(fd,
 				inserted_file,
-				hdr->format,
+				hdr->sample_type,
 				hdr->data_location,
 				hdr->chans,
 				hdr->type);
@@ -3990,7 +3990,7 @@ bool file_change_samples(mus_long_t beg, mus_long_t num, const char *tempfile, c
       fd = snd_open_read(tempfile);
       snd_file_open_descriptors(fd,
 				tempfile,
-				hdr->format,
+				hdr->sample_type,
 				hdr->data_location,
 				hdr->chans,
 				hdr->type);
@@ -4043,7 +4043,7 @@ bool file_override_samples(mus_long_t num, const char *tempfile, chan_info *cp, 
       fd = snd_open_read(tempfile);
       snd_file_open_descriptors(fd,
 				tempfile,
-				hdr->format,
+				hdr->sample_type,
 				hdr->data_location,
 				hdr->chans,
 				hdr->type);
@@ -5416,7 +5416,7 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   fd = snd_open_read(name);
   snd_file_open_descriptors(fd,
 			    name,
-			    hdr0->format,
+			    hdr0->sample_type,
 			    hdr0->data_location,
 			    hdr0->chans,
 			    hdr0->type);
@@ -5428,7 +5428,7 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   fd = snd_open_read(name);
   snd_file_open_descriptors(fd,
 			    name,
-			    hdr1->format,
+			    hdr1->sample_type,
 			    hdr1->data_location,
 			    hdr1->chans,
 			    hdr1->type);
@@ -5657,9 +5657,9 @@ io_error_t save_edits_and_update_display(snd_info *sp)
 }
 
 
-io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int type, int format, int srate, const char *comment, int pos)
+io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int type, int sample_type, int srate, const char *comment, int pos)
 { 
-  /* assume we've already checked for (over)write permissions, and header-type+data-format writable,
+  /* assume we've already checked for (over)write permissions, and header-type+sample-type writable,
    */
   file_info *hdr;
   snd_fd **sf;
@@ -5676,7 +5676,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int ty
 
   ohdr = sp->hdr;
   hdr = copy_header(new_name, ohdr);
-  hdr->format = format;
+  hdr->sample_type = sample_type;
   hdr->srate = srate;
   hdr->type = type;
   if (comment) 
@@ -6158,7 +6158,7 @@ int mix_file_with_tag(chan_info *cp, const char *filename, int chan, mus_long_t 
   fd = snd_open_read(filename);
   snd_file_open_descriptors(fd,
 			    filename,
-			    hdr->format,
+			    hdr->sample_type,
 			    hdr->data_location,
 			    hdr->chans,
 			    hdr->type);
@@ -7983,7 +7983,7 @@ static Xen g_set_sample(Xen samp_n, Xen val, Xen snd, Xen chn_n, Xen edpos)
 
   fval = Xen_real_to_C_double(val);
   if ((fval == 1.0) && 
-      (mus_bytes_per_sample(((cp->sound)->hdr)->format) == 2))
+      (mus_bytes_per_sample(((cp->sound)->hdr)->sample_type) == 2))
     fval = 32767.0 / 32768.0;
   ival[0] = fval;
 

@@ -1045,7 +1045,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 
       format = fd->sample_type;
       siz = fd->bytes_per_sample;
-      if ((format == MUS_OUT_FORMAT) && 
+      if ((format == MUS_OUT_SAMPLE_TYPE) && 
 	  (chans == 1))
 	/* (beg == 0)) */
 	{
@@ -1804,7 +1804,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
       sample_type = fd->sample_type;
       clipping = fd->clipping;
 
-      if ((sample_type == MUS_OUT_FORMAT) && 
+      if ((sample_type == MUS_OUT_SAMPLE_TYPE) && 
 	  (chans == 1) && 
 	  (!clipping) && 
 	  (beg == 0))
@@ -1901,7 +1901,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 		}
 	    }
 
-	  if ((sample_type == MUS_OUT_FORMAT) && 
+	  if ((sample_type == MUS_OUT_SAMPLE_TYPE) && 
 	      (chans == 1) && 
 	      (beg == 0) &&
 	      (!inbuf)) /* "tfd" can be sample type */

@@ -67438,6 +67438,13 @@ s7_scheme *s7_init(void)
   sc->LET_STAR_ALL_X =        assign_internal_syntax(sc, "let*",        OP_LET_STAR_ALL_X,        small_int(2), max_arity);  
   sc->LET_opCq =              assign_internal_syntax(sc, "let",         OP_LET_opCq,              small_int(2), max_arity);  
   sc->LET_opSSq =             assign_internal_syntax(sc, "let",         OP_LET_opSSq,             small_int(2), max_arity);  
+  sc->LET_R =                 assign_internal_syntax(sc, "let",         OP_LET_R,                 small_int(2), max_arity);  
+  sc->LET_R_P =               assign_internal_syntax(sc, "let",         OP_LET_R_P,               small_int(2), max_arity);  
+  sc->LET_CAR_P =             assign_internal_syntax(sc, "let",         OP_LET_CAR_P,             small_int(2), max_arity);  
+  sc->LET_ONE =               assign_internal_syntax(sc, "let",         OP_LET_ONE,               small_int(2), max_arity);  
+  sc->LET_Z =                 assign_internal_syntax(sc, "let",         OP_LET_Z,                 small_int(2), max_arity);  
+  sc->LET_ALL_R =             assign_internal_syntax(sc, "let",         OP_LET_ALL_R,             small_int(2), max_arity);  
+  sc->LET_C_D =               assign_internal_syntax(sc, "let",         OP_LET_C_D,               small_int(2), max_arity);  
   sc->NAMED_LET_NO_VARS =     assign_internal_syntax(sc, "let",         OP_NAMED_LET_NO_VARS,     small_int(2), max_arity); 
   sc->NAMED_LET =             assign_internal_syntax(sc, "let",         OP_NAMED_LET,             small_int(2), max_arity);  
   sc->NAMED_LET_STAR =        assign_internal_syntax(sc, "let*",        OP_NAMED_LET_STAR,        small_int(2), max_arity);  
@@ -67499,8 +67506,6 @@ s7_scheme *s7_init(void)
   sc->AND_P =                 assign_internal_syntax(sc, "and",         OP_AND_P,                 small_int(0), max_arity);
   sc->OR_UNCHECKED =          assign_internal_syntax(sc, "or",          OP_OR_UNCHECKED,          small_int(0), max_arity);
   sc->OR_P =                  assign_internal_syntax(sc, "or",          OP_OR_P,                  small_int(0), max_arity);
-  sc->WHEN_UNCHECKED =        assign_internal_syntax(sc, "when",        OP_WHEN_UNCHECKED,        small_int(2), max_arity);
-  sc->UNLESS_UNCHECKED =      assign_internal_syntax(sc, "unless",      OP_UNLESS_UNCHECKED,      small_int(2), max_arity);
   sc->IF_UNCHECKED =          assign_internal_syntax(sc, "if",          OP_IF_UNCHECKED,          small_int(2), small_int(3));
   sc->IF_P_P_P =              assign_internal_syntax(sc, "if",          OP_IF_P_P_P,              small_int(2), small_int(3));
   sc->IF_P_P =                assign_internal_syntax(sc, "if",          OP_IF_P_P,                small_int(2), small_int(3));
@@ -67553,13 +67558,8 @@ s7_scheme *s7_init(void)
   sc->SAFE_IF_NOT_S_P =       assign_internal_syntax(sc, "if",          OP_SAFE_IF_NOT_S_P,       small_int(2), small_int(3));  
   sc->WHEN_S =                assign_internal_syntax(sc, "when",        OP_WHEN_S,                small_int(2), max_arity);
   sc->UNLESS_S =              assign_internal_syntax(sc, "unless",      OP_UNLESS_S,              small_int(2), max_arity);
-  sc->LET_R =                 assign_internal_syntax(sc, "let",         OP_LET_R,                 small_int(2), max_arity);  
-  sc->LET_R_P =               assign_internal_syntax(sc, "let",         OP_LET_R_P,               small_int(2), max_arity);  
-  sc->LET_CAR_P =             assign_internal_syntax(sc, "let",         OP_LET_CAR_P,             small_int(2), max_arity);  
-  sc->LET_ONE =               assign_internal_syntax(sc, "let",         OP_LET_ONE,               small_int(2), max_arity);  
-  sc->LET_Z =                 assign_internal_syntax(sc, "let",         OP_LET_Z,                 small_int(2), max_arity);  
-  sc->LET_ALL_R =             assign_internal_syntax(sc, "let",         OP_LET_ALL_R,             small_int(2), max_arity);  
-  sc->LET_C_D =               assign_internal_syntax(sc, "let",         OP_LET_C_D,               small_int(2), max_arity);  
+  sc->WHEN_UNCHECKED =        assign_internal_syntax(sc, "when",        OP_WHEN_UNCHECKED,        small_int(2), max_arity);
+  sc->UNLESS_UNCHECKED =      assign_internal_syntax(sc, "unless",      OP_UNLESS_UNCHECKED,      small_int(2), max_arity);
   sc->DOTIMES_P =             assign_internal_syntax(sc, "do",          OP_DOTIMES_P,             small_int(2), max_arity);
   sc->SIMPLE_DO =             assign_internal_syntax(sc, "do",          OP_SIMPLE_DO,             small_int(2), max_arity);
   sc->SIMPLE_DO_P =           assign_internal_syntax(sc, "do",          OP_SIMPLE_DO_P,           small_int(2), max_arity);
@@ -68644,10 +68644,10 @@ int main(int argc, char **argv)
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1144
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3026
  * lg             |      |      | 6547 6497 6494 6235 6259
- * t137           |      |      | 11.0           5031 4863
+ * t137           |      |      | 11.0           5031 4861
  * t455|6     265 |   89 |  9   |       8.4 8045 7482 7482
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8
- * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 23.5
+ * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 23.1
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 34.6
  *
  * ----------------------------------------------------------
@@ -68680,4 +68680,7 @@ int main(int argc, char **argv)
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  * how to catch the stack overflow op_cz case?
  * perhaps current-error-port -> *error-port*
+ * needs rewrite: let|set|if optimizers, all of gmp section
+ * checkpt via cell: recast s7_pointer as hnum?(+ permanents), (op)stack+current-pos+heap+symbols (presented as continuation?)
+ *   check out mdb -- db as let? then with-let over the db
  */
