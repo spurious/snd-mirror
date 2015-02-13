@@ -48,6 +48,7 @@
   
   
   
+#|
 ;;; -------- display-scanned-synthesis --------
 ;;;
 ;;; open a new main pane below the listener, with two sections
@@ -330,6 +331,8 @@
   (define (close-scanned-synthesis-pane)
     (gtk_widget_hide scanned-synthesis-pane))
   
+|#
+
   
   
   

@@ -479,7 +479,6 @@ typedef struct snd_state {
   graph_style_t Graph_Style, Region_Graph_Style;
   bool Auto_Resize, Auto_Update;
   int Max_Regions, Max_Transform_Peaks;
-  int Audio_Output_Device, Audio_Input_Device;
   bool With_GL, With_Relative_Panes;
   int Print_Length, Dac_Size, View_Files_Sort;
   bool Dac_Combines_Channels, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
@@ -542,7 +541,6 @@ typedef struct snd_state {
     graph_style_symbol, region_graph_style_symbol,
     auto_resize_symbol, auto_update_symbol,
     max_regions_symbol, max_transform_peaks_symbol,
-    audio_output_device_symbol, audio_input_device_symbol,
     with_gl_symbol, with_relative_panes_symbol,
     print_length_symbol, dac_size_symbol, view_files_sort_symbol,
     dac_combines_channels_symbol, show_selection_transform_symbol, with_mix_tags_symbol, selection_creates_region_symbol,
@@ -1635,7 +1633,7 @@ void set_with_toolbar_and_display(bool val);
   void display_info(snd_info *sp);
 #endif
 void g_init_file(void);
-void initialize_format_lists(void);
+void initialize_sample_type_lists(void);
 void set_with_menu_icons(bool val);
 Xen g_expand_vector(Xen vector, int new_size);
 

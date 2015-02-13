@@ -55,7 +55,7 @@ typedef struct {
 } graphics_context;
 
 typedef struct {
-  int current_type, current_format, formats, header_pos, format_pos, scanf_widget, error_widget;
+  int current_header_type, current_sample_type, sample_types, header_type_pos, sample_type_pos, scanf_widget, error_widget;
 } file_data;
 
 typedef enum {NOT_A_SCANF_WIDGET} scanf_widget_t;

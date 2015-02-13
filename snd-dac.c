@@ -2266,10 +2266,10 @@ static bool start_audio_output_1(void)
       /* -------------------- OSS not ALSA -------------------- */
       /* api == MUS_OSS_API -- MUS_JACK_API should not intrude here because we're in HAVE_ALSA || HAVE_OSS */
       if (snd_dacp->channels > 2)
-	oss_available_chans = mus_audio_device_channels(audio_output_device(ss));
+	oss_available_chans = mus_audio_device_channels(MUS_AUDIO_DEFAULT);
       for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;
       /* see if we can play 16 bit output */
-      snd_dacp->out_format = mus_audio_compatible_sample_type(audio_output_device(ss));
+      snd_dacp->out_format = mus_audio_compatible_sample_type(MUS_AUDIO_DEFAULT);
 
       /* removed PPC stuff here 30-Apr-12 */
 
@@ -2283,7 +2283,7 @@ static bool start_audio_output_1(void)
 	}
       set_dac_print();
       if (dev_fd[0] == MUS_ERROR)
-	dev_fd[0] = mus_audio_open_output(audio_output_device(ss), 
+	dev_fd[0] = mus_audio_open_output(MUS_AUDIO_DEFAULT,
 					  snd_dacp->srate, snd_dacp->channels, 
 					  snd_dacp->out_format, 
 					  dac_size(ss));
@@ -2310,7 +2310,7 @@ static bool start_audio_output_1(void)
   int available_chans = 2;
 
   if (snd_dacp->channels > 2)
-    available_chans = mus_audio_device_channels(audio_output_device(ss));
+    available_chans = mus_audio_device_channels(MUS_AUDIO_DEFAULT);
 
   if (available_chans <= 0)
     {
@@ -2327,11 +2327,11 @@ static bool start_audio_output_1(void)
     }
 
   for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;
-  snd_dacp->out_format = mus_audio_device_sample_type(audio_output_device(ss));
+  snd_dacp->out_format = mus_audio_device_sample_type(MUS_AUDIO_DEFAULT);
 
   set_dac_print();
   if (dev_fd[0] == MUS_ERROR)
-    dev_fd[0] = mus_audio_open_output(audio_output_device(ss), 
+    dev_fd[0] = mus_audio_open_output(MUS_AUDIO_DEFAULT,
 				      snd_dacp->srate, 
 				      snd_dacp->channels, 
 				      snd_dacp->out_format, 

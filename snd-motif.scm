@@ -448,6 +448,7 @@
   
   
   
+#|
 ;;; -------- create-fmv-dialog --------
   
   (define fmv-dialog #f)
@@ -621,7 +622,7 @@
 						     (vector-set! data 0 k (v)))
 						   (mus-audio-write audio-fd data len)))))))))))))
 	(XtManageChild fmv-dialog))))
-  
+|#  
   
   
 ;;; -------- make-pixmap --------
@@ -706,6 +707,7 @@
   
   
   
+#|
 ;;; -------- display-scanned-synthesis --------
 ;;;
 ;;; open a new main pane below the listener, with two sections
@@ -1000,7 +1002,7 @@
 	 (lambda (n)
 	   (if (string=? (XtName n) "Scanned Synthesis")
 	       (XtUnmanageChild n)))))))
-  
+|#  
   
   
 ;;; -------- add-mark-pane --------
@@ -2746,6 +2748,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
 				  XmNbackPagePlacement XmTOP_RIGHT))))))
   
   
+#|
 ;;; -------- create-ssb-dialog --------
 ;;;
 ;;; this needs auto-pitch detection
@@ -3020,7 +3023,8 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
 						     (vector-set! data 0 k (v)))
 						   (mus-audio-write audio-fd data len)))))))))))))
 	(XtManageChild audit-dialog))))
-  
+|#
+
   
 ;;; -------- equalize-panes
 ;;;

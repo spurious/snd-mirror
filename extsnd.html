@@ -688,26 +688,6 @@ Otherwise Snd just closes the sound, flushing any unsaved edits.
 <div class="spacer"></div>
 
 
-<!-- audio-input-device -->
-<pre class="indented">
-<em class=def id="audioinputdevice">audio-input-device</em> (default: mus-audio-default)
-</pre>
-
-<p>This is the audio input device: <code>(set! (audio-input-device) mus-audio-microphone)</code>.
-</p>
-<div class="spacer"></div>
-
-
-<!-- audio-output-device -->
-<pre class="indented">
-<em class=def id="audiooutputdevice">audio-output-device</em> (default: mus-audio-default)
-</pre>
-
-<p>This is the audio output device for the play button.
-</p>
-<div class="spacer"></div>
-
-
 <!-- auto-resize -->
 <pre class="indented">
 <em class=def id="autoresize">auto-resize</em> (default: #t in Motif, #f in Gtk)
@@ -2845,8 +2825,6 @@ relative to the lisp graph axis (as if the raw mouse pixel position was passed t
 
 <p>This hook is called upon mus-error.
 If it returns #t, Snd ignores the error (it assumes you've handled it via the hook).
-This hook is used in <a href="sndscm.html#playsound">play-sound</a> in play.scm to flush an error message 
-that the Snd ALSA support code generates (or used to generate).
 Both mus_error and mus_print run this hook; in the mus_print case, the 'type' is mus-no-error (0).
 You can redirect mus_print output from stderr (the default) to stdout via:
 </p>
@@ -4146,58 +4124,6 @@ on a good day.
 <div class="spacer"></div>
 
 
-<!-- mus-audio-close -->
-<pre class="indented">
-<em class=def id="musaudioclose">mus-audio-close</em> line ; obsolete
-</pre>
-
-<p>mus-audio-close closes the audio port 'line' ('line' comes from either <a href="#musaudioopeninput">mus-audio-open-input</a>
-or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
-</p>
-<div class="spacer"></div>
-
-
-<!-- mus-audio-open-input -->
-<pre class="indented">
-<em class=def id="musaudioopeninput">mus-audio-open-input</em> device srate chans format bufsize ; obsolete
-</pre>
-
-<p>mus-audio-open-input opens the audio input device.  It returns -1 if the open failed.
-</p>
-<div class="spacer"></div>
-
-
-<!-- mus-audio-open-output -->
-<pre class="indented">
-<em class=def id="musaudioopenoutput">mus-audio-open-output</em> device srate chans format bufsize ; will change a lot soon
-</pre>
-
-<p>mus-audio-open-output opens the audio output (playback) port 'device'.  It returns -1 if the open failed.
-</p>
-<div class="spacer"></div>
-
-
-<!-- mus-audio-read -->
-<pre class="indented">
-<em class=def id="musaudioread">mus-audio-read</em> line sd framples ; obsolete
-</pre>
-
-<p>mus-audio-read reads 'framples' framples of data into the float-vector 'sd' from the audio input port 'line'.  
-</p>
-<div class="spacer"></div>
-
-
-<!-- mus-audio-write -->
-<pre class="indented">
-<em class=def id="musaudiowrite">mus-audio-write</em> line sd framples (start 0) ; obsolete
-</pre>
-
-<p>mus-audio-write writes 'framples' framples of data from the float-vector 'sd' to the audio output port 'line'.
-If 'start' is given, it sets where to start reading in the float-vector buffers.
-</p>
-<div class="spacer"></div>
-
-
 <!-- mus-bytes-per-sample -->
 <pre class="indented">
 <em class=def id="musbytespersample">mus-bytes-per-sample</em> sample-type
@@ -5201,7 +5127,6 @@ play starting from syncd marks: <a href="sndscm.html#playsyncdmarks">play-syncd-
 place marks at selection start and end: <a href="sndscm.html#snapmarks">snap-marks</a><br>
 define selection via marks: <a href="sndscm.html#defineselectionviamarks">define-selection-via-marks</a><br>
 force dragged mark to land on a beat: <a href="sndscm.html#snapmarktobeat">snap-mark-to-beat</a><br>
-loop continuously between the two specified marks: <a href="sndscm.html#loopbetweenmarks">loop-between-marks</a><br>
 split sound into separate files based on mark placement: <a href="sndscm.html#markexplode">mark-explode</a><br>
 mark property lists: <a href="extsnd.html#markproperty">mark-property</a><br>
 save mark properties in saved state file: <a href="sndscm.html#savemarkproperties">save-mark-properties</a><br>
@@ -8489,7 +8414,6 @@ play a region: (play region-object), <a href="snd.html#cxp">C-x p</a>, play butt
 play a mix: (play mix-object), play button in Mix dialog<br>
 play a sequence of mixes: <a href="sndscm.html#playmixes">play-mixes</a><br>
 play from mark: click or drag triangle (control-click for all chans)<br>
-play continuously between two marks: <a href="sndscm.html#loopbetweenmarks">loop-it</a><br>
 stop playing: C-g, C-t, <a href="extsnd.html#stopplaying">stop-playing</a>, set <a href="extsnd.html#playing">playing</a> to #f<br>
 pause or resume playback: space, set <a href="extsnd.html#pausing">pausing</a><br>
 play repeatedly: <a href="sndscm.html#playoften">play-often</a><br>
@@ -8499,8 +8423,7 @@ play a file upon a keystroke: <a href="extsnd.html#extendedpiano">bind-key</a><b
 play using an external program: (system "sndplay wood16.wav")<br>
 play a sine-wave or spectrum: <a href="sndscm.html#playsine">play-sine</a> and <a href="sndscm.html#playsines">play-sines</a><br>
 play arbitrary mixtures of things: <a href="extsnd.html#makeplayer">make-player</a> and related functions, <a href="sndscm.html#playsyncdmarks">play-syncd-marks</a><br>
-play after sending the data through some function: <a href="sndscm.html#playsound">play-sound</a><br>
-play with applied amplitude envelope: <a href="sndscm.html#playwithenvs">play-with-envs</a>, <a href="sndscm.html#playpanned">play-panned</a><br>
+play with applied amplitude envelope: <a href="sndscm.html#playwithenvs">play-with-envs</a><br>
 play an external file: (play "file")<br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -8553,8 +8476,6 @@ as each sound ends: <a class=quiet href="#stopplayinghook">stop-playing-hook</a>
 <p>This returns #t if sound output is currently in progress.  You can also start playing by setting playing to #t (equivalent
 to calling <a href="#startplaying">start-playing</a> with default arguments), and stop by setting it to #f
 (equivalent to <a href="#stopplaying">stop-playing</a>).
-playing only notices Snd-instigated "play" processes;
-<a href="#musaudioopenoutput">mus-audio-open-output</a> is invisible to it.
 </p>
 <div class="separator"></div>
 

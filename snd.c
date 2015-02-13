@@ -175,8 +175,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Default_Output_Srate =        DEFAULT_OUTPUT_SRATE;
   ss->Default_Output_Header_Type =  DEFAULT_OUTPUT_HEADER_TYPE;
   ss->Default_Output_Sample_Type =  DEFAULT_OUTPUT_SAMPLE_TYPE;
-  ss->Audio_Input_Device =          DEFAULT_AUDIO_INPUT_DEVICE;
-  ss->Audio_Output_Device =         DEFAULT_AUDIO_OUTPUT_DEVICE;
   ss->Dac_Size =                    DEFAULT_DAC_SIZE;
   ss->Dac_Combines_Channels =       DEFAULT_DAC_COMBINES_CHANNELS;
   ss->Auto_Resize =                 DEFAULT_AUTO_RESIZE; 
@@ -413,8 +411,6 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->color_cutoff_symbol =          s7_define_variable(s7, "*" S_color_cutoff "*",           s7_make_real(s7, DEFAULT_COLOR_CUTOFF));
   ss->color_inverted_symbol =        s7_define_variable(s7, "*" S_color_inverted "*",         s7_make_boolean(s7, DEFAULT_COLOR_INVERTED));
   ss->auto_resize_symbol =           s7_define_variable(s7, "*" S_auto_resize "*",            s7_make_boolean(s7, DEFAULT_AUTO_RESIZE));
-  ss->audio_output_device_symbol =   s7_define_variable(s7, "*" S_audio_output_device "*",    s7_make_integer(s7, DEFAULT_AUDIO_OUTPUT_DEVICE));
-  ss->audio_input_device_symbol =    s7_define_variable(s7, "*" S_audio_input_device "*",     s7_make_integer(s7, DEFAULT_AUDIO_INPUT_DEVICE));
 #if USE_MOTIF
   #define DEFAULT_LISTENER_FONT "9x15"
 #endif
@@ -577,7 +573,7 @@ int main(int argc, char **argv)
 	}
     }
 
-  initialize_format_lists();
+  initialize_sample_type_lists();
   snd_set_global_defaults(false);
 
   ss->jump_ok = false;

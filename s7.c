@@ -938,9 +938,11 @@ struct s7_scheme {
 
   /* s7 env symbols */
   s7_pointer stack_top_symbol, symbol_table_is_locked_symbol, heap_size_symbol, gc_freed_symbol, gc_protected_objects_symbol;
-  s7_pointer free_heap_size_symbol, file_names_symbol, symbol_table_symbol, hash_tables_symbol, gensyms_symbol, cpu_time_symbol;
-  s7_pointer stack_size_symbol, rootlet_size_symbol, c_types_symbol, safety_symbol, max_stack_size_symbol, gc_stats_symbol;
-  s7_pointer strings_symbol, vectors_symbol, input_ports_symbol, output_ports_symbol, continuations_symbol, c_objects_symbol;
+  s7_pointer free_heap_size_symbol, file_names_symbol, symbol_table_symbol, cpu_time_symbol, c_objects_symbol;
+    s7_pointer stack_size_symbol, rootlet_size_symbol, c_types_symbol, safety_symbol, max_stack_size_symbol, gc_stats_symbol;
+#if DEBUGGING
+  s7_pointer strings_symbol, vectors_symbol, input_ports_symbol, output_ports_symbol, continuations_symbol, hash_tables_symbol, gensyms_symbol;
+#endif
   s7_pointer catches_symbol, exits_symbol, stack_symbol, default_rationalize_error_symbol, max_string_length_symbol, default_random_state_symbol;
   s7_pointer max_list_length_symbol, max_vector_length_symbol, max_vector_dimensions_symbol, default_hash_table_length_symbol;
   s7_pointer hash_table_float_epsilon_symbol, morally_equal_float_epsilon_symbol, initial_string_port_length_symbol;
@@ -66842,6 +66844,7 @@ static void init_s7_env(s7_scheme *sc)
   sc->free_heap_size_symbol =                s7_make_symbol(sc, "free-heap-size");
   sc->gc_freed_symbol =                      s7_make_symbol(sc, "gc-freed");
   sc->gc_protected_objects_symbol =          s7_make_symbol(sc, "gc-protected-objects");
+#if DEBUGGING
   sc->input_ports_symbol =                   s7_make_symbol(sc, "input-ports");
   sc->output_ports_symbol =                  s7_make_symbol(sc, "output-ports");
   sc->strings_symbol =                       s7_make_symbol(sc, "strings");
@@ -66849,6 +66852,7 @@ static void init_s7_env(s7_scheme *sc)
   sc->vectors_symbol =                       s7_make_symbol(sc, "vectors");
   sc->hash_tables_symbol =                   s7_make_symbol(sc, "hash-tables");
   sc->continuations_symbol =                 s7_make_symbol(sc, "continuations");
+#endif
   sc->c_objects_symbol =                     s7_make_symbol(sc, "c-objects");
   sc->file_names_symbol =                    s7_make_symbol(sc, "file-names");
   sc->symbol_table_symbol =                  s7_make_symbol(sc, "symbol-table");
@@ -66945,6 +66949,7 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
   if (sym == sc->initial_string_port_length_symbol)                      /* initial-string-port-length */
     return(s7_make_integer(sc, sc->initial_string_port_length));
 
+#if DEBUGGING
   if (sym == sc->input_ports_symbol)                                     /* input-ports */
     return(make_vector_wrapper(sc, sc->input_ports_loc, sc->input_ports));
   if (sym == sc->output_ports_symbol)                                    /* output-ports */
@@ -66959,6 +66964,7 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
     return(make_vector_wrapper(sc, sc->hash_tables_loc, sc->hash_tables));
   if (sym == sc->continuations_symbol)                                   /* continuations */
     return(make_vector_wrapper(sc, sc->continuations_loc, sc->continuations));
+#endif
   if (sym == sc->c_objects_symbol)                                       /* c-objects */
     return(make_vector_wrapper(sc, sc->c_objects_loc, sc->c_objects));
 
@@ -68260,7 +68266,6 @@ s7_scheme *s7_init(void)
   s7_provide(sc, "make-complex");
 #endif
 
-
 #ifdef __APPLE__
   s7_provide(sc, "osx");
 #endif
@@ -68746,5 +68751,6 @@ int main(int argc, char **argv)
  * perhaps current-error-port -> *error-port*
  * needs rewrite: let|set|if optimizers, all of gmp section
  * checkpt via cell: recast s7_pointer as hnum?(+ permanents), (op)stack+current-pos+heap+symbols (presented as continuation?)
- * put *s7* gc vects onn debug
+ * the old mus-audio-* code needs to use play or something, especially bess*
+ * xg/gl/xm should be like libc.scm in the scheme snd case
  */

@@ -1911,30 +1911,6 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #endif
 #define DEFAULT_ENVED_STYLE ENVELOPE_LINEAR
 
-#define audio_output_device(ss) ss->Audio_Output_Device
-#if HAVE_SCHEME
-  #define set_audio_output_device(a) \
-    do {\
-        ss->Audio_Output_Device = a; \
-        s7_symbol_set_value(s7, ss->audio_output_device_symbol, s7_make_integer(s7, ss->Audio_Output_Device));\
-    } while (0)
-#else
-  #define set_audio_output_device(a) ss->Audio_Output_Device = a
-#endif
-#define DEFAULT_AUDIO_OUTPUT_DEVICE MUS_AUDIO_DEFAULT
-
-#define audio_input_device(ss) ss->Audio_Input_Device
-#if HAVE_SCHEME
-  #define set_audio_input_device(a) \
-    do {\
-        ss->Audio_Input_Device = a; \
-        s7_symbol_set_value(s7, ss->audio_input_device_symbol, s7_make_integer(s7, ss->Audio_Input_Device));\
-    } while (0)
-#else
-  #define set_audio_input_device(a) ss->Audio_Input_Device = a
-#endif
-#define DEFAULT_AUDIO_INPUT_DEVICE MUS_AUDIO_DEFAULT
-
 #define in_graph_cursor(ss) ss->Graph_Cursor
 
 #define clipping(ss) ss->Clipping

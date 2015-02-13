@@ -1,3 +1,5 @@
+;;; this is obsolete -- it needs some replacement for the mus-audio* functions
+
 (if (provided? 'snd-motif)
     (with-let (sublet *motif*)
       ;; set up our user-interface

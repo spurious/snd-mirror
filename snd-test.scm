@@ -725,8 +725,6 @@
 	(snd-display #__line__ ";initial-dur set default: ~A" *initial-dur*))
     (if (not (equal? *ask-before-overwrite* #f)) 
 	(snd-display #__line__ ";ask-before-overwrite set default: ~A" *ask-before-overwrite*))
-    (if (not (equal? *audio-output-device*  0)) 
-	(snd-display #__line__ ";audio-output-device set default: ~A" *audio-output-device*))
     (if (not (equal? *auto-resize*  #t )) 
 	(snd-display #__line__ ";auto-resize set default: ~A" *auto-resize*))
     (if (not (equal? *auto-update*  #f)) 
@@ -969,8 +967,6 @@
 	(snd-display #__line__ ";mark-tag-width set default: ~A" *mark-tag-width*))
     (if (not (equal? *mark-tag-height*  4)) 
 	(snd-display #__line__ ";mark-tag-height set default: ~A" *mark-tag-height*))
-    (if (not (equal? *audio-output-device*  0 )) 
-	(snd-display #__line__ ";audio-output-device set default: ~A" *audio-output-device*))
 
     (if (not (equal? *region-graph-style* graph-lines))
 	(snd-display #__line__ ";* region-graph-style set default: ~A" *region-graph-style*))
@@ -984,8 +980,6 @@
 	(snd-display #__line__ ";* initial-dur set default: ~A" *initial-dur*))
     (if (not (equal? *ask-before-overwrite* #f)) 
 	(snd-display #__line__ ";* ask-before-overwrite set default: ~A" *ask-before-overwrite*))
-    (if (not (equal? *audio-output-device*  0)) 
-	(snd-display #__line__ ";* audio-output-device set default: ~A" *audio-output-device*))
     (if (not (equal? *auto-resize*  #t )) 
 	(snd-display #__line__ ";* auto-resize set default: ~A" *auto-resize*))
     (if (not (equal? *auto-update*  #f)) 
@@ -1183,8 +1177,6 @@
 	(snd-display #__line__ ";* mark-tag-width set default: ~A" *mark-tag-width*))
     (if (not (equal? *mark-tag-height*  4)) 
 	(snd-display #__line__ ";* mark-tag-height set default: ~A" *mark-tag-height*))
-    (if (not (equal? *audio-output-device*  0 )) 
-	(snd-display #__line__ ";* audio-output-device set default: ~A" *audio-output-device*))
 
     (if (and with-motif
 	     (not (= (view-files-sort) 0)))
@@ -1266,8 +1258,6 @@
       'amp-control-bounds (cadr (amp-control-bounds)) 8.0
       'ask-about-unsaved-edits *ask-about-unsaved-edits* #f 
       'ask-before-overwrite *ask-before-overwrite* #f 
-      'audio-output-device *audio-output-device* 0
-      'audio-output-device *audio-output-device* 0 
       'auto-resize *auto-resize* #t 
       'auto-update *auto-update* #f
       'auto-update-interval *auto-update-interval* 60.0 
@@ -1464,8 +1454,6 @@
        (list
 	(list 'ask-about-unsaved-edits ask-about-unsaved-edits #f #t '*ask-about-unsaved-edits*)
 	(list 'ask-before-overwrite ask-before-overwrite #f #t '*ask-before-overwrite*)
-	(list 'audio-input-device audio-input-device 0 1 '*audio-input-device*)
-	(list 'audio-output-device audio-output-device 0 1 '*audio-output-device*)
 	(list 'auto-resize auto-resize #t #f '*auto-resize*)
 	(list 'auto-update auto-update #f #t '*auto-update*)
 	(list 'channel-style channel-style 0 1 '*channel-style*)
@@ -1968,8 +1956,6 @@
 	(list 'amp-control-bounds amp-control-bounds (list 0.0 8.0) (list 1.0 5.0))
 	(list 'ask-about-unsaved-edits ask-about-unsaved-edits #f #t)
 	(list 'ask-before-overwrite ask-before-overwrite #f #t)
-	(list 'audio-input-device audio-input-device 0 1)
-	(list 'audio-output-device audio-output-device 0 1)
 	(list 'auto-resize auto-resize #t #f)
 	(list 'auto-update auto-update #f #t)
 	(list 'channel-style channel-style 0 1)
@@ -2231,7 +2217,7 @@
 		       'after-open-hook 'after-save-as-hook 'after-save-state-hook 'after-transform-hook 'all-pass
 		       'all-pass? 'amp-control 'amp-control-bounds 'amplitude-modulate
 		       'apply-controls 'array->file 'array-interp 'as-one-edit 'ask-about-unsaved-edits
-		       'ask-before-overwrite 'asymmetric-fm 'asymmetric-fm? 'audio-input-device 'audio-output-device
+		       'ask-before-overwrite 'asymmetric-fm 'asymmetric-fm? 
 		       'auto-resize 'auto-update 'auto-update-interval 'autocorrelate 'autocorrelation
 		       'axis-color 'axis-info 'axis-label-font 'axis-numbers-font
 		       'bad-header-hook 'bartlett-window 'bartlett-hann-window 'basic-color 'beats-per-measure 'beats-per-minute
@@ -25264,7 +25250,6 @@ EDITS: 2
 	     (out-block (make-float-vector block-size))
 	     (out-sd (make-shared-vector out-block (list 1 block-size)))
 	     (len (framples))
-	     (audio-port (mus-audio-open-output 0 (srate) 1 mus-lshort (* block-size 2)))
 	     (ra (ladspa-run-adding descriptor handle block-size)))
 	(if ra (snd-display #__line__ ";ladspa-run-adding: ~A" ra))
 	(ladspa-set-run-adding-gain descriptor handle block-size)
@@ -25290,11 +25275,11 @@ EDITS: 2
 			   ((>= i len))
 			 (set! in-block (channel->float-vector i block-size))
 			 (ladspa-run descriptor handle block-size)
-			 (mus-audio-write audio-port out-sd block-size)))
+			 ;; here do something with the data
+			 ))
 		     (lambda args (snd-display #__line__ ";ladspa-it: ~A" args))))
 	    (lambda ()
 	      (ladspa-deactivate descriptor handle)
-	      (mus-audio-close audio-port)
 	      (ladspa-cleanup descriptor handle))))))
 
 
@@ -45382,7 +45367,7 @@ EDITS: 1
 	     (procs (list 
 		     add-mark add-sound-file-extension add-source-file-extension sound-file-extensions sound-file? 
 		     add-to-main-menu add-to-menu add-transform amp-control ask-about-unsaved-edits
-		     as-one-edit ask-before-overwrite audio-input-device audio-output-device ; add-player
+		     as-one-edit ask-before-overwrite 
 		     auto-resize auto-update autocorrelate axis-color axis-info axis-label-font axis-numbers-font
 		     basic-color bind-key apply-controls change-samples-with-origin channel-style
 		     channel-widgets channels chans peaks-font bold-peaks-font close-sound combined-data-color
@@ -45521,7 +45506,7 @@ EDITS: 1
 		     ))
 	     
 	     (set-procs (list 
-			 amp-control ask-about-unsaved-edits ask-before-overwrite audio-input-device audio-output-device auto-resize
+			 amp-control ask-about-unsaved-edits ask-before-overwrite auto-resize
 			 auto-update axis-color axis-label-font axis-numbers-font ;basic-color
 			 channel-style peaks-font bold-peaks-font sound-file-extensions show-full-duration show-full-range initial-beg initial-dur
 			 color-cutoff color-inverted color-scale contrast-control contrast-control-amp combined-data-color

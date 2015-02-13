@@ -222,7 +222,7 @@ typedef struct file_dialog_info {
   save_dialog_t type;
   void *file_watcher;
   gulong filename_watcher_id;
-  int header_type, format_type;
+  int header_type, sample_type;
 #if WITH_SKETCH
   point_t *p0, *p1;
   int pts;
@@ -1194,7 +1194,7 @@ void set_open_file_play_button(bool val)
 
 /* ---------------- file data panel ---------------- */
 
-char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, mus_long_t *location, mus_long_t *samples, int min_chan)
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *header_type, int *sample_type, mus_long_t *location, mus_long_t *samples, int min_chan)
 {
   char *str;
   int res;
@@ -1242,27 +1242,27 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
     }
   fdat->scanf_widget = SAMPLES_WIDGET;
 
-  if (fdat->header_list)
+  if (fdat->header_type_list)
     {
-      res = fdat->header_list->selected_item;
+      res = fdat->header_type_list->selected_item;
       if (res == SLIST_NO_ITEM_SELECTED)
-	res = fdat->header_pos;
+	res = fdat->header_type_pos;
       if (res != NO_SELECTION)
 	{
-	  (*type) = position_to_header_type(res);
-	  fdat->current_type = (*type);
+	  (*header_type) = position_to_header_type(res);
+	  fdat->current_header_type = (*header_type);
 	}
     }
 
-  if (fdat->format_list)
+  if (fdat->sample_type_list)
     {
-      res = fdat->format_list->selected_item;
+      res = fdat->sample_type_list->selected_item;
       if (res == SLIST_NO_ITEM_SELECTED) /* can this happen? */
-	res = fdat->format_pos;
+	res = fdat->sample_type_pos;
       if (res != NO_SELECTION)
 	{
-	  (*format) = position_to_sample_type(fdat->current_type, res);
-	  fdat->current_format = (*format);
+	  (*sample_type) = position_to_sample_type(fdat->current_header_type, res);
+	  fdat->current_sample_type = (*sample_type);
 	}
     }
 
@@ -1286,33 +1286,34 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
 #define IGNORE_SRATE -1
 #define IGNORE_HEADER_TYPE -1
 
-static void set_file_dialog_sound_attributes(file_data *fdat, int type, int format, int srate, int chans, mus_long_t location, mus_long_t samples, char *comment)
+static void set_file_dialog_sound_attributes(file_data *fdat, int header_type, int sample_type, 
+					     int srate, int chans, mus_long_t location, mus_long_t samples, char *comment)
 {
 
   int i;
   const char **fl = NULL;
-  if (!(fdat->format_list)) return;
+  if (!(fdat->sample_type_list)) return;
 
-  if (type != IGNORE_HEADER_TYPE)
-    fdat->current_type = type;
-  else fdat->current_type = MUS_RAW;
-  fdat->current_format = format;
-  fl = header_type_and_sample_type_to_position(fdat, fdat->current_type, fdat->current_format);
+  if (header_type != IGNORE_HEADER_TYPE)
+    fdat->current_header_type = header_type;
+  else fdat->current_header_type = MUS_RAW;
+  fdat->current_sample_type = sample_type;
+  fl = header_type_and_sample_type_to_position(fdat, fdat->current_header_type, fdat->current_sample_type);
   if (fl == NULL) return;
 
-  if ((type != IGNORE_HEADER_TYPE) &&
-      (fdat->header_list))
+  if ((header_type != IGNORE_HEADER_TYPE) &&
+      (fdat->header_type_list))
     {
-      slist_select(fdat->header_list, fdat->header_pos);
-      slist_moveto(fdat->header_list, fdat->header_pos);
+      slist_select(fdat->header_type_list, fdat->header_type_pos);
+      slist_moveto(fdat->header_type_list, fdat->header_type_pos);
     }
 
-  slist_clear(fdat->format_list);
-  for (i = 0; i < fdat->formats; i++) 
-    slist_append(fdat->format_list, (const char *)fl[i]);
+  slist_clear(fdat->sample_type_list);
+  for (i = 0; i < fdat->sample_types; i++) 
+    slist_append(fdat->sample_type_list, (const char *)fl[i]);
 
-  slist_select(fdat->format_list, fdat->format_pos);
-  slist_moveto(fdat->format_list, fdat->format_pos);
+  slist_select(fdat->sample_type_list, fdat->sample_type_pos);
+  slist_moveto(fdat->sample_type_list, fdat->sample_type_pos);
 
   if ((srate != IGNORE_SRATE) && 
       (fdat->srate_text))
@@ -1498,14 +1499,14 @@ static void redirect_post_file_panel_error(const char *error_msg, void *ufd)
 
 static void update_header_type_list(const char *name, int row, void *data)
 {
-  /* needed to reflect type selection in format list */
+  /* needed to reflect type selection in sample_type list */
   file_data *fdat = (file_data *)data;
-  if (position_to_header_type(row) != fdat->current_type)
+  if (position_to_header_type(row) != fdat->current_header_type)
     {
       position_to_header_type_and_sample_type(fdat, row);
       set_file_dialog_sound_attributes(fdat,
-				       fdat->current_type,
-				       fdat->current_format,
+				       fdat->current_header_type,
+				       fdat->current_sample_type,
 				       IGNORE_SRATE, IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
 				       NULL);
     }
@@ -1515,7 +1516,7 @@ static void update_header_type_list(const char *name, int row, void *data)
 static void update_sample_type_list(const char *name, int row, void *data)
 {
   file_data *fdat = (file_data *)data;
-  fdat->current_format = position_to_sample_type(fdat->current_type, row);
+  fdat->current_sample_type = position_to_sample_type(fdat->current_header_type, row);
 }
 
 
@@ -1543,8 +1544,8 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 {
   GtkWidget *form, *scbox, *frame_box, *frame;
   file_data *fdat;
-  int nformats = 0, nheaders = 0;
-  const char **formats = NULL, **headers = NULL;
+  int nsample_types = 0, nheaders = 0;
+  const char **sample_types = NULL, **headers = NULL;
 
   switch (header_choice)
     {
@@ -1557,10 +1558,10 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   fdat->src = save_as_dialog_src(ss);
   fdat->auto_comment = save_as_dialog_auto_comment(ss);
   fdat->saved_comment = NULL;
-  fdat->current_type = header_type;
-  fdat->current_format = sample_type;
-  formats = header_type_and_sample_type_to_position(fdat, header_type, sample_type);
-  nformats = fdat->formats;
+  fdat->current_header_type = header_type;
+  fdat->current_sample_type = sample_type;
+  sample_types = header_type_and_sample_type_to_position(fdat, header_type, sample_type);
+  nsample_types = fdat->sample_types;
 
   frame = gtk_frame_new(NULL);
   gtk_box_pack_start(GTK_BOX(parent), frame, false, true, 8);
@@ -1577,21 +1578,21 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   /* header type */
   if (with_header_type == WITH_HEADER_TYPE_FIELD)
     {
-      fdat->header_list = slist_new_with_title("header type", form, (const char **)headers, nheaders, BOX_PACK); /* BOX_PACK widget_add_t (snd-g0.h) */
-      fdat->header_list->select_callback = update_header_type_list;
-      fdat->header_list->select_callback_data = (void *)fdat;
-      slist_select(fdat->header_list, fdat->header_pos);
+      fdat->header_type_list = slist_new_with_title("header type", form, (const char **)headers, nheaders, BOX_PACK); /* BOX_PACK widget_add_t (snd-g0.h) */
+      fdat->header_type_list->select_callback = update_header_type_list;
+      fdat->header_type_list->select_callback_data = (void *)fdat;
+      slist_select(fdat->header_type_list, fdat->header_type_pos);
     }
 
   /* sample type */ 
 #if HAVE_GTK_3
-  fdat->format_list = slist_new_with_title("    sample type    ", form, (const char **)formats, nformats, BOX_PACK);
+  fdat->sample_type_list = slist_new_with_title("    sample type    ", form, (const char **)sample_types, nsample_types, BOX_PACK);
 #else
-  fdat->format_list = slist_new_with_title("sample type", form, (const char **)formats, nformats, BOX_PACK);
+  fdat->sample_type_list = slist_new_with_title("sample type", form, (const char **)sample_types, nsample_types, BOX_PACK);
 #endif
-  fdat->format_list->select_callback = update_sample_type_list;
-  fdat->format_list->select_callback_data = (void *)fdat;
-  slist_select(fdat->format_list, fdat->format_pos);
+  fdat->sample_type_list->select_callback = update_sample_type_list;
+  fdat->sample_type_list->select_callback_data = (void *)fdat;
+  slist_select(fdat->sample_type_list, fdat->sample_type_pos);
 
   scbox = gtk_vbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(form), scbox, false, false, 4);
@@ -1985,7 +1986,7 @@ static void save_or_extract(file_dialog_info *fd, bool saving)
 {
   char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
   snd_info *sp = NULL;
-  int type = MUS_NEXT, format = DEFAULT_OUTPUT_SAMPLE_TYPE, srate = DEFAULT_OUTPUT_SRATE, chans = DEFAULT_OUTPUT_CHANS;
+  int header_type = MUS_NEXT, sample_type = DEFAULT_OUTPUT_SAMPLE_TYPE, srate = DEFAULT_OUTPUT_SRATE, chans = DEFAULT_OUTPUT_CHANS;
   int output_type, chan = 0, extractable_chans = 0;
   bool file_exists = false;
   mus_long_t location = 28, samples = 0;
@@ -2040,9 +2041,9 @@ static void save_or_extract(file_dialog_info *fd, bool saving)
   /* get output file attributes */
   redirect_snd_error_to(redirect_post_file_panel_error, (void *)(fd->panel_data));
   if (saving)
-    comment = get_file_dialog_sound_attributes(fd->panel_data, &srate, &chans, &type, &format, &location, &samples, 0);
-  else comment = get_file_dialog_sound_attributes(fd->panel_data, &srate, &chan, &type, &format, &location, &samples, 0);
-  output_type = type;
+    comment = get_file_dialog_sound_attributes(fd->panel_data, &srate, &chans, &header_type, &sample_type, &location, &samples, 0);
+  else comment = get_file_dialog_sound_attributes(fd->panel_data, &srate, &chan, &header_type, &sample_type, &location, &samples, 0);
+  output_type = header_type;
   redirect_snd_error_to(NULL, NULL);
   if (fd->panel_data->error_widget != NOT_A_SCANF_WIDGET)
     {
@@ -2090,7 +2091,7 @@ static void save_or_extract(file_dialog_info *fd, bool saving)
     }
 
   fullname = mus_expand_filename(str);
-  if (run_before_save_as_hook(sp, fullname, fd->type != SOUND_SAVE_AS, srate, format, type, comment))
+  if (run_before_save_as_hook(sp, fullname, fd->type != SOUND_SAVE_AS, srate, sample_type, header_type, comment))
     {
       msg = mus_format("%s cancelled by %s", (saving) ? "save" : "extract", S_before_save_as_hook);
       post_file_dialog_error((const char *)msg, fd->panel_data);
@@ -2160,11 +2161,11 @@ static void save_or_extract(file_dialog_info *fd, bool saving)
     save_as_undoit(fd);
   ss->local_errno = 0;
 
-  if (header_is_encoded(type))
+  if (header_is_encoded(header_type))
     {
-      output_type = type;
-      format = MUS_LSHORT;
-      type = MUS_RIFF;
+      output_type = header_type;
+      sample_type = MUS_LSHORT;
+      header_type = MUS_RIFF;
       tmpfile = snd_tempnam();
     }
   else
@@ -2177,7 +2178,7 @@ static void save_or_extract(file_dialog_info *fd, bool saving)
     {
     case SOUND_SAVE_AS:
       if (saving)
-	io_err = save_edits_without_display(sp, tmpfile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
+	io_err = save_edits_without_display(sp, tmpfile, header_type, sample_type, srate, comment, AT_CURRENT_EDIT_POSITION);
       else io_err = save_channel_edits(sp->chans[chan], tmpfile, AT_CURRENT_EDIT_POSITION); /* protects if same name */
       break;
 
@@ -2187,7 +2188,7 @@ static void save_or_extract(file_dialog_info *fd, bool saving)
 	if (file_exists) /* file won't exist if we're encoding, so this isn't as wasteful as it looks */
 	  ofile = snd_tempnam();
 	else ofile = mus_strdup(tmpfile);
-	io_err = save_selection(ofile, srate, format, type, comment, (saving) ? SAVE_ALL_CHANS : chan);
+	io_err = save_selection(ofile, srate, sample_type, header_type, comment, (saving) ? SAVE_ALL_CHANS : chan);
 	if (io_err == IO_NO_ERROR)
 	  io_err = move_file(ofile, fullname);
 	free(ofile);
@@ -2202,7 +2203,7 @@ static void save_or_extract(file_dialog_info *fd, bool saving)
 	    if (file_exists)
 	      ofile = snd_tempnam();
 	    else ofile = mus_strdup(tmpfile);
-	    io_err = save_region(region_dialog_region(), ofile, format, type, comment);
+	    io_err = save_region(region_dialog_region(), ofile, sample_type, header_type, comment);
 	    if (io_err == IO_NO_ERROR)
 	      io_err = move_file(ofile, fullname);
 	    free(ofile);
@@ -2292,7 +2293,7 @@ static gint save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer cont
 }
 
 
-static file_dialog_info *make_save_as_dialog(const char *file_string, int header_type, int format_type, int dialog_type)
+static file_dialog_info *make_save_as_dialog(const char *file_string, int header_type, int sample_type, int dialog_type)
 {
   file_dialog_info *fd;
   GtkWidget *vbox;
@@ -2300,12 +2301,12 @@ static file_dialog_info *make_save_as_dialog(const char *file_string, int header
   fd = make_fsb(file_string, "save as:", "Save as", ICON_SAVE_AS, (dialog_type != REGION_SAVE_AS), true);
   fd->type = (save_dialog_t)dialog_type;
   fd->header_type = header_type;
-  fd->format_type = format_type;
+  fd->sample_type = sample_type;
 
   vbox = DIALOG_CONTENT_AREA(fd->dialog);
   fd->panel_data = make_file_data_panel(vbox, "data-form", 
 					(fd->type == REGION_SAVE_AS) ? WITHOUT_CHANNELS_FIELD : WITH_EXTRACT_CHANNELS_FIELD, 
-					fd->header_type, fd->format_type, 
+					fd->header_type, fd->sample_type, 
 					WITHOUT_DATA_LOCATION_FIELD, 
 					WITHOUT_SAMPLES_FIELD,
 					WITH_HEADER_TYPE_FIELD, 
@@ -2372,8 +2373,8 @@ static file_dialog_info *make_sound_save_as_dialog_1(bool managed, int chan)
 
   fd = save_sound_as;
   set_file_dialog_sound_attributes(fd->panel_data,
-				   fd->panel_data->current_type,
-				   fd->panel_data->current_format,
+				   fd->panel_data->current_header_type,
+				   fd->panel_data->current_sample_type,
 				   (hdr) ? hdr->srate : selection_srate(), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES,
 				   com = output_comment(hdr));
@@ -2416,8 +2417,8 @@ widget_t make_selection_save_as_dialog(bool managed)
 
   fd = save_selection_as;
   set_file_dialog_sound_attributes(fd->panel_data,
-				   fd->panel_data->current_type,
-				   fd->panel_data->current_format,
+				   fd->panel_data->current_header_type,
+				   fd->panel_data->current_sample_type,
 				   selection_srate(), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
 				   NULL);
@@ -2439,8 +2440,8 @@ widget_t make_region_save_as_dialog(bool managed)
   fd = save_region_as;
   comment = region_description(region_dialog_region());
   set_file_dialog_sound_attributes(fd->panel_data,
-				   fd->panel_data->current_type,
-				   fd->panel_data->current_format,
+				   fd->panel_data->current_header_type,
+				   fd->panel_data->current_sample_type,
 				   region_srate(region_dialog_region()), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
 				   comment);

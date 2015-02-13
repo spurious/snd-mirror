@@ -2721,16 +2721,16 @@ static int output_chans[NUM_OUTPUT_CHAN_CHOICES] = {1, 2, 4, 8};
 static const char *output_srate_choices[NUM_OUTPUT_SRATE_CHOICES] = {"8000 ", "22050 ", "44100 ", "48000"};
 static int output_srates[NUM_OUTPUT_SRATE_CHOICES] = {8000, 22050, 44100, 48000};
 
-#define NUM_OUTPUT_TYPE_CHOICES 7
-static const char *output_type_choices[NUM_OUTPUT_TYPE_CHOICES] = {"aifc ", "wave ", "au ", "rf64 ", "nist ", "aiff ", "caff"};
-static int output_types[NUM_OUTPUT_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_RF64, MUS_NIST, MUS_AIFF, MUS_CAFF};
+#define NUM_OUTPUT_HEADER_TYPE_CHOICES 7
+static const char *output_header_type_choices[NUM_OUTPUT_HEADER_TYPE_CHOICES] = {"aifc ", "wave ", "au ", "rf64 ", "nist ", "aiff ", "caff"};
+static int output_header_types[NUM_OUTPUT_HEADER_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_RF64, MUS_NIST, MUS_AIFF, MUS_CAFF};
 
-#define NUM_OUTPUT_FORMAT_CHOICES 4
-static const char *output_format_choices[NUM_OUTPUT_FORMAT_CHOICES] = {"short ", "int ", "float ", "double"};
-static int output_formats[NUM_OUTPUT_FORMAT_CHOICES] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
+#define NUM_OUTPUT_SAMPLE_TYPE_CHOICES 4
+static const char *output_sample_type_choices[NUM_OUTPUT_SAMPLE_TYPE_CHOICES] = {"short ", "int ", "float ", "double"};
+static int output_sample_types[NUM_OUTPUT_SAMPLE_TYPE_CHOICES] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
 
 
-static int header_to_data(int ht, int frm)
+static int header_to_sample_type(int ht, int frm)
 {
   /* nist -> short or int (lb)
      aiff -> short or int (b)
@@ -2881,8 +2881,8 @@ static void default_output_header_type_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->radio_button))
     {
-      set_default_output_header_type(output_types[which_radio_button(prf)]);
-      set_default_output_sample_type(header_to_data(default_output_header_type(ss), default_output_sample_type(ss)));
+      set_default_output_header_type(output_header_types[which_radio_button(prf)]);
+      set_default_output_sample_type(header_to_sample_type(default_output_header_type(ss), default_output_sample_type(ss)));
       reflect_default_output_sample_type(output_sample_type_prf);
     }
 }
@@ -2905,7 +2905,7 @@ static void default_output_sample_type_choice(prefs_info *prf)
     {
       int which;
       which = which_radio_button(prf);
-      set_default_output_sample_type(output_formats[which]);
+      set_default_output_sample_type(output_sample_types[which]);
 
       switch (default_output_sample_type(ss))
 	{

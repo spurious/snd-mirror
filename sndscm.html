@@ -3718,10 +3718,6 @@ then
     (<a class=quiet href="extsnd.html#graph">graph</a> x0 "string" 0 1.0 -10.0 10.0)))
 </pre>
 
-<p>There's also a dialog to experiment with this:
-<a href="#displayscannedsynthesis">display-scanned-synthesis</a> in snd-motif.scm.
-</p>
-
 
 
 
@@ -4063,18 +4059,15 @@ see also: &nbsp; <a href="sndclm.html#envdoc">make-env</a> &nbsp; <a href="extsn
 <em class=emdef>stop-enveloping</em> 
 <em class=def id="channelenvelope">channel-envelope</em> snd chn
 <em class=def id="playwithenvs">play-with-envs</em> snd
-<em class=def id="playpanned">play-panned</em> snd
 </pre>
 
 <p>
 (start-enveloping) opens an envelope editor for each subsequently opened sound.
 (stop-enveloping) turns this off.
 Each envelope can be read or written via (channel-envelope snd chn).
-There are also two examples that use these envelopes: play-with-envs and
-play-panned.  The former sets the channel's amplitude from its envelope
-during playback (it should be obvious how to apply the envelope to any of the
-control panel fields); the latter pans a mono sound into stereo following
-the envelope. 
+An example use is play-with-envs which
+sets the channel's amplitude from its envelope
+during playback 
 </p>
 
 <img class="indented" src="pix/envs.png" alt="channel enveds">
@@ -4778,7 +4771,6 @@ the split depends on the panning envelope (0 = all in chan 0, etc).
 <blockquote><small>
 Place sound: <a href="#placesound">place-sound</a> above.<br>
 Place mix: <a href="#musfilemix">mus-file-mix</a><br>
-Play sound with panning: <a href="#playpanned">play-panned</a><br>
 CLM placement generator: <a href="sndclm.html#locsig">locsig</a><br>
 CLM moving sound generator: <a href="#dlocsigdoc">dlocsig</a><br>
 Move sound via flanging: see flanging effect in new-effects.scm<br>
@@ -9235,32 +9227,6 @@ see also: &nbsp; <a href="#stereoflute">flute</a> &nbsp; <a href="#maracadoc">ma
 </p>
 
 
-<!-- loop-between-marks -->
-<pre class="indented">
-<em class=def id="loopbetweenmarks">loop-between-marks</em> mark1 mark2 buffer-size
-</pre>
-
-<p>loop-between-marks loops continuously between the two specified marks.
-The marks can be moved as the sound is played; C-g stops loop-between-marks.
-(loop-between-marks 0 1 512)
-</p>
-<div class="spacer"></div>
-
-
-<!-- open-play-output -->
-<pre class="indented">
-<em class=def id="openplayoutput">open-play-output</em> chans srate format buffer-size
-</pre>
-
-<p>open-play-output opens an output audio port.  It
-takes the desired number of channels, sampling rate, sample type, and DAC buffer size (in samples),
-and returns a list containing the audio port (-1 on failure), the opened output channels,
-and the actual DAC buffer size (these can differ from the requested amounts in various hardware
-situations).
-</p>
-<div class="spacer"></div>
-
-
 <!-- play-with-amps -->
 <pre class="indented">
 <em class=emdef>play-with-amps</em> snd :rest amps
@@ -9314,21 +9280,6 @@ play-sines produces a spectrum given a list of lists of frequency and amplitude:
 
 <pre class="indented">
 (play-sines '((425 .05) (450 .01) (470 .01) (546 .02) (667 .01) (789 .034) (910 .032)))
-</pre>
-
-<div class="spacer"></div>
-
-
-<!-- play-sound -->
-<pre class="indented">
-<em class=def id="playsound">play-sound</em> func
-</pre>
-<p>play-sound plays the current sound, calling (func data) on each buffer.
-The following doubles each sample in channel 0 during playback:
-</p>
-
-<pre class="indented">
-(<em class=red>play-sound</em> (lambda (data) (float-vector-scale! data 2.0) data))
 </pre>
 
 <div class="spacer"></div>
@@ -9987,45 +9938,6 @@ set the variable with-tooltips to #f to turn it off.
 <div class="spacer"></div>
 
 
-<!-- create-audit-dialog -->
-<pre class="indented">
-<em class=emdef>create-audit-dialog</em>
-</pre>
-
-<p>create-audit-dialog sets up a frequency and an amplitude
-slider, the frequency running up to 20 KHz. Be careful with this thing!  If you push the
-amplitude way up trying to hear some high frequency, you'll end up with a very unpleasant
-after-effect in your ears, a sort of deaf feeling (which thankfully does wear off).
-</p>
-<div class="spacer"></div>
-
-
-<!-- create-fmv-dialog -->
-<pre class="indented">
-<em class=def id="createfmvdialog">create-fmv-dialog</em> 
-</pre>
-
-<p>create-fmv-dialog sets up a very simple dialog with amplitude, frequency, and fm-index controls on
-the fm-violin (fmv.scm) running (interpreted!) in "real-time".
-</p>
-<div class="spacer"></div>
-
-
-<!-- create-ssb-dialog -->
-<pre class="indented">
-<em class=def id="createssbdialog">create-ssb-dialog</em>
-</pre>
-
-<p>create-ssb-dialog sets up an <a href="sndclm.html#ssb-am">ssb-am</a> + bandpass filter bank (like <a href="#ssbbank">ssb-bank</a> in dsp.scm) that can
-change the pitch of a (well-behaved) sound without changing its duration.
-It is important to get the "old freq" setting as close as possible to the
-actual original frequency.  If this were slightly faster and smarter, I'd
-replace the control panel expand option (which currently uses granular synthesis) with
-this idea.
-</p>
-<div class="spacer"></div>
-
-
 <!-- disable-control-panel -->
 <pre class="indented">
 <em class=def id="disablecontrolpanel">disable-control-panel</em> snd
@@ -10035,29 +9947,6 @@ this idea.
 </p>
 <div class="spacer"></div>
 
-
-<!-- display-scanned-synthesis -->
-<pre class="indented">
-<em class=def id="displayscannedsynthesis">display-scanned-synthesis</em> 
-</pre>
-
-<p>display-scanned-synthesis opens a pane for experimenting with
-scanned synthesis developed by Bill Verplank and Max Mathews.
-It is not impossible that you can close this pane via close-scanned-synthesis-pane.
-The synthesis code is also in <a href="#dspdocscanned">dsp.scm</a>.
-</p>
-
-<img class="indented" src="pix/scanned.png" alt="scanned synthesis dialog">
-
-<pre class="indented">
-top slider = mass,
-second slider = spring,
-third slider = damping,
-lower two are frequency and amplitude
-see <A HREF="http://www.billverplank.com/ScannedSynthesis.PDF">Bill Verplank's paper</A>
-</pre>
-
-<div class="spacer"></div>
 
 
 <!-- display-widget-tree -->
@@ -10772,7 +10661,6 @@ you don't know in advance how long a note will be; in this case, the envelope
 generating functions should have attack and decay ramps, triggered by note-on and
 note-off; once the ramp has reached its end point, the end value should be held;
 the note itself should be called until it has had time to ramp off.
-Another example is <a href="#createfmvdialog">create-fmv-dialog</a> in snd-motif.
 </p>
 
 <p>

@@ -10519,7 +10519,7 @@ void reflect_just_sounds(void)
 #define NUM_VISIBLE_HEADERS 5
 
 char *get_file_dialog_sound_attributes(file_data *fdat, 
-				       int *srate, int *chans, int *type, int *format, mus_long_t *location, mus_long_t *samples, 
+				       int *srate, int *chans, int *header_type, int *sample_type, mus_long_t *location, mus_long_t *samples, 
 				       int min_chan)
 {
   char *str;
@@ -10582,25 +10582,25 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
     }
   fdat->scanf_widget = SAMPLES_WIDGET;
 
-  if ((type) && (fdat->header_list))
+  if ((header_type) && (fdat->header_type_list))
     {
-      res = XmListGetSelectedPos(fdat->header_list, &ns, &n);
+      res = XmListGetSelectedPos(fdat->header_type_list, &ns, &n);
       if (res)
 	{
-	  (*type) = position_to_header_type(ns[0] - 1);
-	  fdat->current_type = (*type);
+	  (*header_type) = position_to_header_type(ns[0] - 1);
+	  fdat->current_header_type = (*header_type);
 	  free(ns); 
 	  ns = NULL;
 	}
     }
 
-  if ((format) && (fdat->format_list))
+  if ((sample_type) && (fdat->sample_type_list))
     {
-      res = XmListGetSelectedPos(fdat->format_list, &ns, &n);
+      res = XmListGetSelectedPos(fdat->sample_type_list, &ns, &n);
       if (res)
 	{
-	  (*format) = position_to_sample_type(fdat->current_type, ns[0] - 1);
-	  fdat->current_format = (*format);
+	  (*sample_type) = position_to_sample_type(fdat->current_header_type, ns[0] - 1);
+	  fdat->current_sample_type = (*sample_type);
 	  free(ns); 
 	  ns = NULL;
 	}
@@ -10629,38 +10629,38 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
 #define IGNORE_HEADER_TYPE -1
 
 static void set_file_dialog_sound_attributes(file_data *fdat, 
-					     int type, int format, int srate, int chans, mus_long_t location, mus_long_t samples, char *comment)
+					     int header_type, int sample_type, int srate, int chans, mus_long_t location, mus_long_t samples, char *comment)
 {
   int i;
   const char **fl = NULL;
   XmString *strs;
 
-  if (type != IGNORE_HEADER_TYPE)
-    fdat->current_type = type;
-  else fdat->current_type = MUS_RAW;
-  fdat->current_format = format;
-  fl = header_type_and_sample_type_to_position(fdat, fdat->current_type, fdat->current_format);
+  if (header_type != IGNORE_HEADER_TYPE)
+    fdat->current_header_type = header_type;
+  else fdat->current_header_type = MUS_RAW;
+  fdat->current_sample_type = sample_type;
+  fl = header_type_and_sample_type_to_position(fdat, fdat->current_header_type, fdat->current_sample_type);
   if (fl == NULL) return;
   
-  if ((type != IGNORE_HEADER_TYPE) &&
-      (fdat->header_list))
+  if ((header_type != IGNORE_HEADER_TYPE) &&
+      (fdat->header_type_list))
     {
-      XmListSelectPos(fdat->header_list, fdat->header_pos + 1, false);
-      ensure_list_row_visible(fdat->header_list, fdat->header_pos + 1);
+      XmListSelectPos(fdat->header_type_list, fdat->header_type_pos + 1, false);
+      ensure_list_row_visible(fdat->header_type_list, fdat->header_type_pos + 1);
     }
 
-  strs = (XmString *)malloc(fdat->formats * sizeof(XmString)); 
-  for (i = 0; i < fdat->formats; i++) 
+  strs = (XmString *)malloc(fdat->sample_types * sizeof(XmString)); 
+  for (i = 0; i < fdat->sample_types; i++) 
     strs[i] = XmStringCreateLocalized((char *)fl[i]);
-  XtVaSetValues(fdat->format_list, 
+  XtVaSetValues(fdat->sample_type_list, 
 		XmNitems, strs, 
-		XmNitemCount, fdat->formats, 
+		XmNitemCount, fdat->sample_types, 
 		NULL);
-  for (i = 0; i < fdat->formats; i++)
+  for (i = 0; i < fdat->sample_types; i++)
     XmStringFree(strs[i]);
   free(strs); 
-  XmListSelectPos(fdat->format_list, fdat->format_pos + 1, false);
-  ensure_list_row_visible(fdat->format_list, fdat->format_pos + 1);
+  XmListSelectPos(fdat->sample_type_list, fdat->sample_type_pos + 1, false);
+  ensure_list_row_visible(fdat->sample_type_list, fdat->sample_type_pos + 1);
 
   if ((srate != IGNORE_SRATE) && 
       (fdat->srate_text))
@@ -10817,12 +10817,12 @@ static void file_data_type_callback(Widget w, XtPointer context, XtPointer info)
 
   XtVaGetValues(w, XmNuserData, &fd, NULL);
   pos = cbs->item_position - 1;
-  if (position_to_header_type(pos) != fd->current_type)
+  if (position_to_header_type(pos) != fd->current_header_type)
     {
       position_to_header_type_and_sample_type(fd, pos);
       set_file_dialog_sound_attributes(fd,
-				       fd->current_type,
-				       fd->current_format,
+				       fd->current_header_type,
+				       fd->current_sample_type,
 				       IGNORE_SRATE, IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
 				       NULL);
     }
@@ -10834,7 +10834,7 @@ static void file_sample_type_callback(Widget w, XtPointer context, XtPointer inf
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   file_data *fd;
   XtVaGetValues(w, XmNuserData, &fd, NULL);
-  fd->current_format = position_to_sample_type(fd->current_type, cbs->item_position - 1);
+  fd->current_sample_type = position_to_sample_type(fd->current_header_type, cbs->item_position - 1);
 }
 
 
@@ -10880,24 +10880,24 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
   Arg args[32];
   int i, n;
   XmString *strs;
-  int nformats = 0, nheaders = 0;
-  const char **formats = NULL, **headers = NULL;
+  int nsample_types = 0, nheaders = 0;
+  const char **sample_types = NULL, **header_types = NULL;
 
   switch (header_choice)
     {
-    case WITH_READABLE_HEADERS: headers = short_readable_headers(&nheaders); break;
-    case WITH_WRITABLE_HEADERS: headers = short_writable_headers(&nheaders); break;
-    case WITH_BUILTIN_HEADERS:  headers = short_builtin_headers(&nheaders);  break;
+    case WITH_READABLE_HEADERS: header_types = short_readable_headers(&nheaders); break;
+    case WITH_WRITABLE_HEADERS: header_types = short_writable_headers(&nheaders); break;
+    case WITH_BUILTIN_HEADERS:  header_types = short_builtin_headers(&nheaders);  break;
     }
 
   fdat = (file_data *)calloc(1, sizeof(file_data));
   fdat->src = save_as_dialog_src(ss);
   fdat->auto_comment = save_as_dialog_auto_comment(ss);
   fdat->saved_comment = NULL;
-  fdat->current_type = header_type;
-  fdat->current_format = sample_type;
-  formats = header_type_and_sample_type_to_position(fdat, header_type, sample_type);
-  nformats = fdat->formats;
+  fdat->current_header_type = header_type;
+  fdat->current_sample_type = sample_type;
+  sample_types = header_type_and_sample_type_to_position(fdat, header_type, sample_type);
+  nsample_types = fdat->sample_types;
 
   /* pick up all args from caller -- args here are attachment points */
   form = XtCreateManagedWidget(name, xmFormWidgetClass, parent, in_args, in_n);
@@ -10926,7 +10926,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       /* what is selected depends on current type */
       strs = (XmString *)calloc(nheaders, sizeof(XmString)); 
       for (i = 0; i < nheaders; i++) 
-	strs[i] = XmStringCreateLocalized((char *)headers[i]);
+	strs[i] = XmStringCreateLocalized((char *)header_types[i]);
 
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -10940,20 +10940,20 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNitems, strs); n++;
       XtSetArg(args[n], XmNitemCount, nheaders); n++;
       XtSetArg(args[n], XmNvisibleItemCount, NUM_VISIBLE_HEADERS); n++;
-      fdat->header_list = XmCreateScrolledList(form, (char *)"header-type", args, n);
-      XtManageChild(fdat->header_list);
+      fdat->header_type_list = XmCreateScrolledList(form, (char *)"header-type", args, n);
+      XtManageChild(fdat->header_type_list);
 
       for (i = 0; i < nheaders; i++) 
 	XmStringFree(strs[i]);
       free(strs);
-      XmListSelectPos(fdat->header_list, fdat->header_pos + 1, false);
-      XtAddCallback(fdat->header_list, XmNbrowseSelectionCallback, file_data_type_callback, NULL);
+      XmListSelectPos(fdat->header_type_list, fdat->header_type_pos + 1, false);
+      XtAddCallback(fdat->header_type_list, XmNbrowseSelectionCallback, file_data_type_callback, NULL);
       
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, fdat->header_list); n++;
+      XtSetArg(args[n], XmNleftWidget, fdat->header_type_list); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
       XtSetArg(args[n], XmNwidth, 15); n++;
@@ -10992,28 +10992,28 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
     }
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNuserData, (XtPointer)fdat); n++;
-  fdat->format_list = XmCreateScrolledList(form, (char *)"sample-type", args, n);
+  fdat->sample_type_list = XmCreateScrolledList(form, (char *)"sample-type", args, n);
 
-  strs = (XmString *)calloc(nformats, sizeof(XmString)); 
-  for (i = 0; i < nformats; i++) 
-    strs[i] = XmStringCreateLocalized((char *)formats[i]);
-  XtVaSetValues(fdat->format_list, 
+  strs = (XmString *)calloc(nsample_types, sizeof(XmString)); 
+  for (i = 0; i < nsample_types; i++) 
+    strs[i] = XmStringCreateLocalized((char *)sample_types[i]);
+  XtVaSetValues(fdat->sample_type_list, 
 		XmNitems, strs, 
-		XmNitemCount, nformats, 
+		XmNitemCount, nsample_types, 
 		NULL);
-  for (i = 0; i < nformats; i++) 
+  for (i = 0; i < nsample_types; i++) 
     XmStringFree(strs[i]);
   free(strs);
 
-  XmListSelectPos(fdat->format_list, fdat->format_pos + 1, false);
-  XtManageChild(fdat->format_list);
-  XtAddCallback(fdat->format_list, XmNbrowseSelectionCallback, file_sample_type_callback, NULL);
+  XmListSelectPos(fdat->sample_type_list, fdat->sample_type_pos + 1, false);
+  XtManageChild(fdat->sample_type_list);
+  XtAddCallback(fdat->sample_type_list, XmNbrowseSelectionCallback, file_sample_type_callback, NULL);
 
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, fdat->format_list); n++;
+  XtSetArg(args[n], XmNleftWidget, fdat->sample_type_list); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
   XtSetArg(args[n], XmNwidth, 15); n++;
@@ -11234,10 +11234,10 @@ static void reflect_file_data_panel_change(file_data *fd, void *data, void (*cha
     XtAddCallback(fd->location_text, XmNvalueChangedCallback, change_action, (XtPointer)data);
   if (fd->comment_text)
     XtAddCallback(fd->comment_text, XmNvalueChangedCallback, change_action, (XtPointer)data);
-  if (fd->format_list)
-    XtAddCallback(fd->format_list, XmNbrowseSelectionCallback, change_action, (XtPointer)data);
-  if (fd->header_list)
-    XtAddCallback(fd->header_list, XmNbrowseSelectionCallback, change_action, (XtPointer)data);
+  if (fd->sample_type_list)
+    XtAddCallback(fd->sample_type_list, XmNbrowseSelectionCallback, change_action, (XtPointer)data);
+  if (fd->header_type_list)
+    XtAddCallback(fd->header_type_list, XmNbrowseSelectionCallback, change_action, (XtPointer)data);
 }
 
 
@@ -11253,10 +11253,10 @@ static void unreflect_file_data_panel_change(file_data *fd, void *data, void (*c
     XtRemoveCallback(fd->location_text, XmNvalueChangedCallback, change_action, (XtPointer)data);
   if (fd->comment_text)
     XtRemoveCallback(fd->comment_text, XmNvalueChangedCallback, change_action, (XtPointer)data);
-  if (fd->format_list)
-    XtRemoveCallback(fd->format_list, XmNbrowseSelectionCallback, change_action, (XtPointer)data);
-  if (fd->header_list)
-    XtRemoveCallback(fd->header_list, XmNbrowseSelectionCallback, change_action, (XtPointer)data);
+  if (fd->sample_type_list)
+    XtRemoveCallback(fd->sample_type_list, XmNbrowseSelectionCallback, change_action, (XtPointer)data);
+  if (fd->header_type_list)
+    XtRemoveCallback(fd->header_type_list, XmNbrowseSelectionCallback, change_action, (XtPointer)data);
 }
 
 
@@ -11534,7 +11534,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 {
   char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
   snd_info *sp = NULL;
-  int type = MUS_NEXT, format = DEFAULT_OUTPUT_SAMPLE_TYPE, srate = DEFAULT_OUTPUT_SRATE;
+  int header_type = MUS_NEXT, sample_type = DEFAULT_OUTPUT_SAMPLE_TYPE, srate = DEFAULT_OUTPUT_SRATE;
   int output_type, chan = 0, extractable_chans = 0;
   bool file_exists = false;
   io_error_t io_err = IO_NO_ERROR;
@@ -11588,10 +11588,10 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
     mus_long_t location = 28, samples = 0;
     int chans = 1;
     if (saving)
-      comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chans, &type, &format, &location, &samples, 0);
-    else comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chan, &type, &format, &location, &samples, 0);
+      comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chans, &header_type, &sample_type, &location, &samples, 0);
+    else comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chan, &header_type, &sample_type, &location, &samples, 0);
   }
-  output_type = type;
+  output_type = header_type;
   redirect_snd_error_to(NULL, NULL);
 
   if (sd->panel_data->error_widget != NOT_A_SCANF_WIDGET)
@@ -11642,7 +11642,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
     }
 
   fullname = mus_expand_filename(str);
-  if (run_before_save_as_hook(sp, fullname, sd->type != SOUND_SAVE_AS, srate, format, type, comment))
+  if (run_before_save_as_hook(sp, fullname, sd->type != SOUND_SAVE_AS, srate, sample_type, header_type, comment))
     {
       msg = mus_format("%s cancelled by %s", (saving) ? "save" : "extract", S_before_save_as_hook);
       post_file_dialog_error((const char *)msg, sd->panel_data);
@@ -11709,11 +11709,11 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
     save_as_undoit(sd);
   ss->local_errno = 0;
 
-  if (header_is_encoded(type))
+  if (header_is_encoded(header_type))
     {
-      output_type = type;
-      format = MUS_LSHORT;
-      type = MUS_RIFF;
+      output_type = header_type;
+      sample_type = MUS_LSHORT;
+      header_type = MUS_RIFF;
       tmpfile = snd_tempnam();
     }
   else
@@ -11726,7 +11726,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
     {
     case SOUND_SAVE_AS:
       if (saving)
-	io_err = save_edits_without_display(sp, tmpfile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
+	io_err = save_edits_without_display(sp, tmpfile, header_type, sample_type, srate, comment, AT_CURRENT_EDIT_POSITION);
       else io_err = save_channel_edits(sp->chans[chan], tmpfile, AT_CURRENT_EDIT_POSITION); /* protects if same name */
       break;
 
@@ -11736,7 +11736,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	if (file_exists) /* file won't exist if we're encoding, so this isn't as wasteful as it looks */
 	  ofile = snd_tempnam();
 	else ofile = mus_strdup(tmpfile);
-	io_err = save_selection(ofile, srate, format, type, comment, (saving) ? SAVE_ALL_CHANS : chan);
+	io_err = save_selection(ofile, srate, sample_type, header_type, comment, (saving) ? SAVE_ALL_CHANS : chan);
 	if (io_err == IO_NO_ERROR)
 	  io_err = move_file(ofile, fullname);
 	free(ofile);
@@ -11751,7 +11751,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	    if (file_exists)
 	      ofile = snd_tempnam();
 	    else ofile = mus_strdup(tmpfile);
-	    io_err = save_region(region_dialog_region(), ofile, format, type, comment);
+	    io_err = save_region(region_dialog_region(), ofile, sample_type, header_type, comment);
 	    if (io_err == IO_NO_ERROR)
 	      io_err = move_file(ofile, fullname);
 	    free(ofile);
@@ -11974,7 +11974,7 @@ static void save_as_filter_text_activate_callback(Widget w, XtPointer context, X
 }
 
 
-static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int header_type, int format_type)
+static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int header_type, int sample_type)
 {
   char *file_string;
 
@@ -12063,7 +12063,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       sd->panel_data = make_file_data_panel(mainform, "data-form", args, n, 
 					    (sd->type == REGION_SAVE_AS) ? WITHOUT_CHANNELS_FIELD : WITH_EXTRACT_CHANNELS_FIELD, 
-					    header_type, format_type, 
+					    header_type, sample_type, 
 					    WITHOUT_DATA_LOCATION_FIELD, 
 					    WITHOUT_SAMPLES_FIELD,
 					    WITH_HEADER_TYPE_FIELD, 
@@ -12076,8 +12076,8 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 
       color_file_selection_box(sd->dialog);
 
-      XtVaSetValues(sd->panel_data->format_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
-      XtVaSetValues(sd->panel_data->header_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
+      XtVaSetValues(sd->panel_data->sample_type_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
+      XtVaSetValues(sd->panel_data->header_type_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
       XtVaSetValues(sd->fp->just_sounds_button, XmNselectColor, ss->selection_color, NULL);
 #if WITH_AUDIO
       XtVaSetValues(sd->dp->play_button, XmNselectColor, ss->selection_color, NULL);
@@ -12187,8 +12187,8 @@ static save_as_dialog_info *make_sound_save_as_dialog_1(bool managed, int chan)
 		      default_output_sample_type(ss));
 
   set_file_dialog_sound_attributes(sd->panel_data,
-				   sd->panel_data->current_type,
-				   sd->panel_data->current_format,
+				   sd->panel_data->current_header_type,
+				   sd->panel_data->current_sample_type,
 				   (hdr) ? hdr->srate : selection_srate(), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES,
 				   com = output_comment(hdr));
@@ -12244,8 +12244,8 @@ widget_t make_selection_save_as_dialog(bool managed)
 		      default_output_header_type(ss),
 		      default_output_sample_type(ss));
   set_file_dialog_sound_attributes(sd->panel_data,
-				   sd->panel_data->current_type,
-				   sd->panel_data->current_format,
+				   sd->panel_data->current_header_type,
+				   sd->panel_data->current_sample_type,
 				   selection_srate(), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
 				   NULL);
@@ -12275,8 +12275,8 @@ widget_t make_region_save_as_dialog(bool managed)
 		      default_output_sample_type(ss));
   comment = region_description(region_dialog_region());
   set_file_dialog_sound_attributes(sd->panel_data,
-				   sd->panel_data->current_type,
-				   sd->panel_data->current_format,
+				   sd->panel_data->current_header_type,
+				   sd->panel_data->current_sample_type,
 				   region_srate(region_dialog_region()), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
 				   comment);
@@ -12646,8 +12646,8 @@ widget_t make_new_file_dialog(bool managed)
       XtManageChild(new_file_dialog);
 
       map_over_children(new_file_dialog, set_main_color_of_widget);
-      XtVaSetValues(ndat->format_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
-      XtVaSetValues(ndat->header_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
+      XtVaSetValues(ndat->sample_type_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
+      XtVaSetValues(ndat->header_type_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
 
       XtVaSetValues(MSG_BOX(new_file_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->selection_color, NULL);
       XtVaSetValues(MSG_BOX(new_file_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->selection_color, NULL);
@@ -12963,8 +12963,8 @@ Widget edit_header(snd_info *sp)
       XtVaSetValues(MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->highlight_color,   NULL);
       XtVaSetValues(MSG_BOX(ep->dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->highlight_color,   NULL);
       XtVaSetValues(MSG_BOX(ep->dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->highlight_color,   NULL);
-      XtVaSetValues(ep->edat->header_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
-      XtVaSetValues(ep->edat->format_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
+      XtVaSetValues(ep->edat->header_type_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
+      XtVaSetValues(ep->edat->sample_type_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
 
       XtVaSetValues(MSG_BOX(ep->dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->basic_color, NULL);
 
@@ -13406,7 +13406,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
   XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->highlight_color,   NULL);
   XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->highlight_color,   NULL);
   XtVaSetValues(reset_button, XmNselectColor, ss->selection_color, NULL);
-  XtVaSetValues(rp->rdat->format_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
+  XtVaSetValues(rp->rdat->sample_type_list, XmNbackground, ss->white, XmNforeground, ss->black, NULL);
   /*
    * this line makes the dialog take up all vertical space on the screen
    * XtManageChild(rp->rdat->error_text);
@@ -19674,7 +19674,7 @@ widget_t make_preferences_dialog(void)
 
     rts_default_output_header_type = default_output_header_type(ss);
     prf = prefs_row_with_radio_box("header type", S_default_output_header_type,
-				   output_type_choices, NUM_OUTPUT_TYPE_CHOICES, -1,
+				   output_header_type_choices, NUM_OUTPUT_HEADER_TYPE_CHOICES, -1,
 				   dpy_box, prf->label,
 				   default_output_header_type_choice);
     output_header_type_prf = prf;
@@ -19682,7 +19682,7 @@ widget_t make_preferences_dialog(void)
 
     rts_default_output_sample_type = default_output_sample_type(ss);
     prf = prefs_row_with_radio_box("sample type", S_default_output_sample_type,
-				   output_format_choices, NUM_OUTPUT_FORMAT_CHOICES, -1,
+				   output_sample_type_choices, NUM_OUTPUT_SAMPLE_TYPE_CHOICES, -1,
 				   dpy_box, prf->label,
 				   default_output_sample_type_choice);
     output_sample_type_prf = prf;
@@ -19692,11 +19692,11 @@ widget_t make_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     {
-      int i, srate = 0, chans = 0, format = 0;
-      mus_header_raw_defaults(&srate, &chans, &format);
+      int i, srate = 0, chans = 0, sample_type = 0;
+      mus_header_raw_defaults(&srate, &chans, &sample_type);
       rts_raw_chans = chans;
       rts_raw_srate = srate;
-      rts_raw_sample_type = format;
+      rts_raw_sample_type = sample_type;
       str = mus_format("%d", chans);
       str1 = mus_format("%d", srate);
       raw_sample_type_choices = (char **)calloc(MUS_NUM_SAMPLE_TYPES - 1, sizeof(char *));
@@ -19712,7 +19712,7 @@ widget_t make_preferences_dialog(void)
 				raw_srate_choice);
       remember_pref(prf, reflect_raw_srate, save_raw_srate, help_raw_srate, NULL, revert_raw_srate);
 
-      prf = prefs_row_with_list("sample type", S_mus_header_raw_defaults, raw_sample_type_choices[format - 1],
+      prf = prefs_row_with_list("sample type", S_mus_header_raw_defaults, raw_sample_type_choices[sample_type - 1],
 				(const char **)raw_sample_type_choices, MUS_NUM_SAMPLE_TYPES - 1,
 				dpy_box, prf->label,
 				raw_sample_type_from_text,

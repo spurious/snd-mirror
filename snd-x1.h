@@ -350,7 +350,7 @@ int view_files_dialog_list_length(void);
 char **view_files_dialog_titles(void);
 void view_files_start_dialog_with_title(const char *title);
 
-char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, mus_long_t *location, mus_long_t *samples, int min_chan);
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *header_type, int *sample_type, mus_long_t *location, mus_long_t *samples, int min_chan);
 void alert_new_file(void);
 widget_t make_open_file_dialog(read_only_t read_only, bool managed);
 widget_t make_sound_save_as_dialog(bool managed);

@@ -256,11 +256,11 @@ typedef enum {NOT_A_SCANF_WIDGET, SRATE_WIDGET, CHANS_WIDGET, DATA_LOCATION_WIDG
 typedef struct {
   GtkWidget *srate_text, *chans_text, *comment_text, *location_text, *samples_text, *error_text;
   GtkWidget *dialog, *src_button, *auto_comment_button;
-  int current_type, current_format, formats, header_pos, format_pos;
+  int current_header_type, current_sample_type, sample_types, header_type_pos, sample_type_pos;
   scanf_widget_t scanf_widget, error_widget;
   bool src, auto_comment;
   gulong *reflection_ids;
-  slist *header_list, *format_list;
+  slist *header_type_list, *sample_type_list;
   char *saved_comment;
 } file_data;
 

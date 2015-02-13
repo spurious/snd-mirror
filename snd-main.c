@@ -528,8 +528,6 @@ static void save_options(FILE *fd)
   if ((listener_prompt(ss)) && (!(mus_strcmp(listener_prompt(ss), DEFAULT_LISTENER_PROMPT)))) pss_sq(fd, S_listener_prompt, listener_prompt(ss));
   if ((html_program(ss)) && (!(mus_strcmp(html_program(ss), DEFAULT_HTML_PROGRAM)))) pss_sq(fd, S_html_program, html_program(ss));
   if (html_dir(ss)) pss_sq(fd, S_html_dir, html_dir(ss));
-  if (audio_input_device(ss) != DEFAULT_AUDIO_INPUT_DEVICE) pss_sd(fd, S_audio_input_device, audio_input_device(ss));
-  if (audio_output_device(ss) != DEFAULT_AUDIO_OUTPUT_DEVICE) pss_sd(fd, S_audio_output_device, audio_output_device(ss));
 
   if (fneq(fft_window_alpha(ss), DEFAULT_FFT_WINDOW_ALPHA)) pss_sf(fd, S_fft_window_alpha, fft_window_alpha(ss));
   if (fneq(fft_window_beta(ss), DEFAULT_FFT_WINDOW_BETA)) pss_sf(fd, S_fft_window_beta, fft_window_beta(ss));
@@ -2025,28 +2023,6 @@ static Xen g_set_peaks_font(Xen val)
 }
 
 
-static Xen g_audio_output_device(void) {return(C_int_to_Xen_integer(audio_output_device(ss)));}
-
-static Xen g_set_audio_output_device(Xen val) 
-{
-  #define H_audio_output_device "(" S_audio_output_device "): the current sndlib default output device (" S_mus_audio_default ")"
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_audio_output_device, "an integer"); 
-  set_audio_output_device(Xen_integer_to_C_int(val)); 
-  return(C_int_to_Xen_integer(audio_output_device(ss)));
-}
-
-
-static Xen g_audio_input_device(void) {return(C_int_to_Xen_integer(audio_input_device(ss)));}
-
-static Xen g_set_audio_input_device(Xen val) 
-{
-  #define H_audio_input_device "(" S_audio_input_device "): the current sndlib default input device (" S_mus_audio_default ")"
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_audio_input_device, "an integer"); 
-  set_audio_input_device(Xen_integer_to_C_int(val)); 
-  return(C_int_to_Xen_integer(audio_input_device(ss)));
-}
-
-
 static Xen g_auto_resize(void) {return(C_bool_to_Xen_boolean(auto_resize(ss)));}
 
 static Xen g_set_auto_resize(Xen val) 
@@ -2286,10 +2262,6 @@ Xen_wrap_no_args(g_with_smpte_label_w, g_with_smpte_label)
 Xen_wrap_1_arg(g_set_with_smpte_label_w, g_set_with_smpte_label)
 Xen_wrap_no_args(g_with_pointer_focus_w, g_with_pointer_focus)
 Xen_wrap_1_arg(g_set_with_pointer_focus_w, g_set_with_pointer_focus)
-Xen_wrap_no_args(g_audio_output_device_w, g_audio_output_device)
-Xen_wrap_1_arg(g_set_audio_output_device_w, g_set_audio_output_device)
-Xen_wrap_no_args(g_audio_input_device_w, g_audio_input_device)
-Xen_wrap_1_arg(g_set_audio_input_device_w, g_set_audio_input_device)
 Xen_wrap_no_args(g_auto_resize_w, g_auto_resize)
 Xen_wrap_1_arg(g_set_auto_resize_w, g_set_auto_resize)
 Xen_wrap_no_args(g_color_cutoff_w, g_color_cutoff)
@@ -2351,8 +2323,6 @@ static s7_pointer acc_color_scale(s7_scheme *sc, s7_pointer args) {return(g_set_
 static s7_pointer acc_color_cutoff(s7_scheme *sc, s7_pointer args) {return(g_set_color_cutoff(s7_cadr(args)));}
 static s7_pointer acc_color_inverted(s7_scheme *sc, s7_pointer args) {return(g_set_color_inverted(s7_cadr(args)));}
 static s7_pointer acc_auto_resize(s7_scheme *sc, s7_pointer args) {return(g_set_auto_resize(s7_cadr(args)));}
-static s7_pointer acc_audio_output_device(s7_scheme *sc, s7_pointer args) {return(g_set_audio_output_device(s7_cadr(args)));}
-static s7_pointer acc_audio_input_device(s7_scheme *sc, s7_pointer args) {return(g_set_audio_input_device(s7_cadr(args)));}
 static s7_pointer acc_print_length(s7_scheme *sc, s7_pointer args) {return(g_set_print_length(s7_cadr(args)));}
 static s7_pointer acc_selection_creates_region(s7_scheme *sc, s7_pointer args) {return(g_set_selection_creates_region(s7_cadr(args)));}
 static s7_pointer acc_save_state_file(s7_scheme *sc, s7_pointer args) {return(g_set_save_state_file(s7_cadr(args)));}
@@ -2415,12 +2385,6 @@ the hook functions return " PROC_TRUE ", the save state process opens the file '
   Xen_define_dilambda(S_window_width, g_window_width_w, H_window_width, S_setB S_window_width, g_set_window_width_w,  0, 0, 1, 0);  
   Xen_define_dilambda(S_window_height, g_window_height_w, H_window_height, S_setB S_window_height, g_set_window_height_w,  0, 0, 1, 0);
 
-  Xen_define_dilambda(S_audio_output_device, g_audio_output_device_w, H_audio_output_device,
-				   S_setB S_audio_output_device, g_set_audio_output_device_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_audio_input_device, g_audio_input_device_w, H_audio_input_device,
-				   S_setB S_audio_input_device, g_set_audio_input_device_w,  0, 0, 1, 0);
-
   Xen_define_dilambda(S_auto_resize, g_auto_resize_w, H_auto_resize, S_setB S_auto_resize, g_set_auto_resize_w,  0, 0, 1, 0);
   Xen_define_dilambda(S_color_cutoff, g_color_cutoff_w, H_color_cutoff, S_setB S_color_cutoff, g_set_color_cutoff_w,  0, 0, 1, 0);
   Xen_define_dilambda(S_color_inverted, g_color_inverted_w, H_color_inverted, S_setB S_color_inverted, g_set_color_inverted_w,  0, 0, 1, 0);
@@ -2481,8 +2445,6 @@ the hook functions return " PROC_TRUE ", the save state process opens the file '
   s7_symbol_set_documentation(s7, ss->color_cutoff_symbol, "*color-cutoff*: color map cutoff point (default .003).");
   s7_symbol_set_documentation(s7, ss->color_inverted_symbol, "*color-inverted*: whether the colormap in operation should be inverted");
   s7_symbol_set_documentation(s7, ss->auto_resize_symbol, "*auto-resize*: #t if Snd can change its main window size as it pleases");
-  s7_symbol_set_documentation(s7, ss->audio_output_device_symbol, "*audio-output-device*: the current sndlib default output device (mus-audio-default)");
-  s7_symbol_set_documentation(s7, ss->audio_input_device_symbol, "*audio-input-device*: the current sndlib default input device (mus-audio-default)");
   s7_symbol_set_documentation(s7, ss->print_length_symbol, "*print-length*: number of vector elements to print in the listener (12)");
   s7_symbol_set_documentation(s7, ss->selection_creates_region_symbol, "*selection-creates-region*: #t if a region should be created each time a selection is made.");
   s7_symbol_set_documentation(s7, ss->save_state_file_symbol, "*save-state-file*: the name of the saved state file (\"saved-snd.scm\")");
@@ -2512,8 +2474,6 @@ the hook functions return " PROC_TRUE ", the save state process opens the file '
   s7_symbol_set_access(s7, ss->color_cutoff_symbol, s7_make_function(s7, "[acc-" S_color_cutoff, acc_color_cutoff, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->color_inverted_symbol, s7_make_function(s7, "[acc-" S_color_inverted, acc_color_inverted, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->auto_resize_symbol, s7_make_function(s7, "[acc-" S_auto_resize, acc_auto_resize, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->audio_output_device_symbol, s7_make_function(s7, "[acc-" S_audio_output_device, acc_audio_output_device, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->audio_input_device_symbol, s7_make_function(s7, "[acc-" S_audio_input_device, acc_audio_input_device, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->print_length_symbol, s7_make_function(s7, "[acc-" S_print_length, acc_print_length, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->selection_creates_region_symbol, s7_make_function(s7, "[acc-" S_selection_creates_region, acc_selection_creates_region, 2, 0, false, "accessor"));
   s7_symbol_set_access(s7, ss->save_state_file_symbol, s7_make_function(s7, "[acc-" S_save_state_file, acc_save_state_file, 2, 0, false, "accessor"));

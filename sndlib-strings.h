@@ -12,12 +12,14 @@
 #define S_mus_alsa_device               "mus-alsa-device"
 #define S_mus_alsa_playback_device      "mus-alsa-playback-device"
 #define S_mus_alsa_squelch_warning      "mus-alsa-squelch-warning"
-#define S_mus_audio_close               "mus-audio-close"
+#if (!DISABLE_DEPRECATED)
 #define S_mus_audio_default             "mus-audio-default"
+#define S_mus_audio_close               "mus-audio-close"
 #define S_mus_audio_open_input          "mus-audio-open-input"
 #define S_mus_audio_open_output         "mus-audio-open-output"
 #define S_mus_audio_read                "mus-audio-read"
 #define S_mus_audio_write               "mus-audio-write"
+#endif
 #define S_mus_b24int                    "mus-b24int"
 #define S_mus_bdouble                   "mus-bdouble"
 #define S_mus_bdouble_unscaled          "mus-bdouble-unscaled"

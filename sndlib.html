@@ -876,8 +876,6 @@ or, at run time, use s7's loader and s7_init_sndlib:
   mus-sound-write-date (filename)          sound write date
   sample-type-bytes-per-sample (format)    bytes per sample
 
-  mus-audio-reinitialize                   force re-check of available audio devices
-
   mus-sound-open-input (filename)          open filename (a sound file) returning an integer ("fd" below)
   mus-sound-open-output (filename srate chans sample-type header-type comment)
                                            create a new sound file with the indicated attributes, return "fd"
@@ -891,14 +889,6 @@ or, at run time, use s7's loader and s7_init_sndlib:
   mus-sound-seek-frample (fd frample)          move to frample in sound file fd
   mus-file-clipping (fd)                   whether output is clipped in file 'fd'
   mus-clipping ()                          global clipping choice
-
-  mus-audio-open-output (device srate chans format bufsize)
-                                           open audio port device ready for output with the indicated attributes
-  mus-audio-open-input (device srate chans format bufsize)
-                                           open audio port device ready for input with the indicated attributes
-  mus-audio-write (line sdata framples)      write framples of data from float-vector sdata to port line
-  mus-audio-read (line sdata framples)       read framples of data into float-vector sdata from port line
-  mus-audio-close (line)                   close audio port line
 
   mus-oss-set-buffers (num size)           in Linux (OSS) sets the number and size of the OSS "fragments"
 

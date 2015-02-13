@@ -2020,7 +2020,7 @@ enum {H_NEXT, H_AIFC, H_RIFF, H_RF64, H_RAW, H_AIFF, H_IRCAM, H_NIST, H_CAFF, /*
       H_MPEG, H_MIDI,                                                         /* readable via external programs */
       H_SIZE};
 
-static int h_num_formats[H_SIZE] = {12 /* next */, 13 /* aifc */,  8 /* riff */, 8 /* rf64 */, 18 /* raw */, 4 /* aiff */, 5  /* ircam */, 7 /* nist */, 13 /* caff */,
+static int h_num_sample_types[H_SIZE] = {12 /* next */, 13 /* aifc */,  8 /* riff */, 8 /* rf64 */, 18 /* raw */, 4 /* aiff */, 5  /* ircam */, 7 /* nist */, 13 /* caff */,
 				    1 /* ogg */,  1  /* flac */,  1 /* speex */, 1 /* tta */, 1 /*wavpack */,
 				    1 /* mpeg */, 1  /* midi */};
 #define H_DFS_MAX 18
@@ -2086,12 +2086,12 @@ static const char *sample_type_name(int sample_type)
     }
 }
 
-void initialize_format_lists(void)
+void initialize_sample_type_lists(void)
 {
   int i, h;
 
   for (h = 0; h < H_SIZE; h++)
-    for (i = 0; i < h_num_formats[h]; i++)
+    for (i = 0; i < h_num_sample_types[h]; i++)
       h_df_names[h][i] = sample_type_name(h_dfs[h][i]);
   
   for (i = 0; i < MUS_NUM_HEADER_TYPES; i++)
@@ -2239,7 +2239,7 @@ const char **short_readable_headers(int *len)
 	 oggdec infile.ogg -b 16 -o translatedfile.wav
 	 defaults for rest are signed little endian wav
 	 
-	 so formats (for output temp) here are not relevant -- no one will want 1 byte
+	 so sample_types (for output temp) here are not relevant -- no one will want 1 byte
       */
       readable_headers[i++] = h_names[H_OGG];
 #endif
@@ -2305,7 +2305,7 @@ int position_to_sample_type(int header, int position)
 static int h_to_sample_type_pos(int h, int frm)
 {
   int i;
-  for (i = 0; i < h_num_formats[h]; i++)
+  for (i = 0; i < h_num_sample_types[h]; i++)
     if (h_dfs[h][i] == frm)
       return(i);
   return(0);
@@ -2316,9 +2316,9 @@ const char **header_type_and_sample_type_to_position(file_data *fdat, int type, 
 {
   int h;
   h = h_type_to_h[type];
-  fdat->formats = h_num_formats[h];
-  fdat->header_pos = h_type_to_pos[type];
-  fdat->format_pos = h_to_sample_type_pos(h, sample_type);
+  fdat->sample_types = h_num_sample_types[h];
+  fdat->header_type_pos = h_type_to_pos[type];
+  fdat->sample_type_pos = h_to_sample_type_pos(h, sample_type);
   return(h_df_names[h]);
 }
 
@@ -2327,10 +2327,10 @@ void position_to_header_type_and_sample_type(file_data *fdat, int pos)
 {
   int h;
   h = h_type_to_h[h_pos_to_type[pos]];
-  fdat->header_pos = pos;
-  fdat->current_type = h_pos_to_type[pos];
-  fdat->format_pos = h_to_sample_type_pos(h, fdat->current_format);
-  fdat->current_format = h_dfs[h][fdat->format_pos];
+  fdat->header_type_pos = pos;
+  fdat->current_header_type = h_pos_to_type[pos];
+  fdat->sample_type_pos = h_to_sample_type_pos(h, fdat->current_sample_type);
+  fdat->current_sample_type = h_dfs[h][fdat->sample_type_pos];
 }
 
 

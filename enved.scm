@@ -204,6 +204,7 @@
 				   (set! (amp-control player) (env e))))))
 	(start-playing chans (srate sound))))))
 
+#|
 (define play-panned 
   (let ((documentation "(play-panned snd) pans a mono sound following its enved envelope into a stereo sound"))
     (lambda (sound)
@@ -229,5 +230,4 @@
 		      (res)))
 		(lambda args (format #t ";play-panned error: ~A" args)))
 	      (mus-audio-close audio-fd)))))))
-
-
+|#

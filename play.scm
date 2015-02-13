@@ -15,6 +15,7 @@
 
 (provide 'snd-play.scm)
 
+#|
 (define* (open-play-output out-chans out-srate out-format out-bufsize)
   ;; returns (list audio-fd chans frames)
   (let* ((outchans (or out-chans 1))
@@ -62,6 +63,7 @@
 
 ;; this could also be done with a function argument to the play function -- get a
 ;;   sampler for the sound, call it on each invocation of the argument function etc
+|#
 
 
 ;;; -------- play sound n times -- (play-often 3) for example.
@@ -106,6 +108,7 @@
 					;(bind-key #\p 0 (lambda (n) "play region forever" (play-region-forever ((regions) (max 0 n)))))
 
 
+#|
 ;;; -------- play while looping continuously between two movable marks
 
 (define loop-between-marks 
@@ -137,7 +140,7 @@ x typed in the graph, or C-g in the listener exits the loop."))
 
 ;; m1 and m2 are marks
 ;; (loop-between-marks (caaar (marks)) (cadaar (marks)) 512)
-
+|#
 
 
 ;;; -------- hold DAC open and play sounds via keyboard
