@@ -1428,7 +1428,7 @@ Here's the scale-dialog in xg/gtk:
   (define current-scaler 1.0)
 
   (define (create-scale-dialog parent)
-    (when (not scale-dialog)
+    (unless scale-dialog
 	(set! scale-dialog (gtk_dialog_new))
 	(g_signal_connect scale-dialog "delete-event"
 			     (lambda (w ev info)

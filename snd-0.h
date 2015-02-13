@@ -426,7 +426,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define in_show_controls(ss) ss->Show_Controls
 #if HAVE_SCHEME
-  #define in_set_show_controls(ss, val) {ss->Show_Controls = val; s7_symbol_set_value(s7, ss->show_controls_symbol, s7_make_boolean(s7, val));}
+  #define in_set_show_controls(ss, val) \
+    do {\
+        ss->Show_Controls = val; \
+        s7_symbol_set_value(s7, ss->show_controls_symbol, s7_make_boolean(s7, ss->Show_Controls));\
+    } while (0)
 #else
   #define in_set_show_controls(ss, val) ss->Show_Controls = val
 #endif
@@ -434,7 +438,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_tracking_cursor(ss) ss->With_Tracking_Cursor
 #if HAVE_SCHEME
-#define set_with_tracking_cursor(ss, val) {ss->With_Tracking_Cursor = val; s7_symbol_set_value(s7, ss->with_tracking_cursor_symbol, s7_make_integer(s7, (int)val));}
+#define set_with_tracking_cursor(ss, val) \
+  do {\
+      ss->With_Tracking_Cursor = val; \
+      s7_symbol_set_value(s7, ss->with_tracking_cursor_symbol, s7_make_integer(s7, (int)(ss->With_Tracking_Cursor))); \
+     } while (0)
 #else
   #define set_with_tracking_cursor(ss, val) ss->With_Tracking_Cursor = val
 #endif
@@ -442,7 +450,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define just_sounds(ss) ss->Just_Sounds
 #if HAVE_SCHEME
-  #define set_just_sounds(val) {ss->Just_Sounds = val; s7_symbol_set_value(s7, ss->just_sounds_symbol, s7_make_boolean(s7, val));}
+  #define set_just_sounds(val) \
+    do {\
+        ss->Just_Sounds = val; \
+        s7_symbol_set_value(s7, ss->just_sounds_symbol, s7_make_boolean(s7, ss->Just_Sounds));\
+    } while (0)
 #else
   #define set_just_sounds(val) ss->Just_Sounds = val
 #endif
@@ -456,35 +468,55 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define default_output_header_type(ss) ss->Default_Output_Header_Type
 #if HAVE_SCHEME
-  #define set_default_output_header_type(a) {ss->Default_Output_Header_Type = a; s7_symbol_set_value(s7, ss->default_output_header_type_symbol, s7_make_integer(s7, a));}
+  #define set_default_output_header_type(a) \
+    do {\
+        ss->Default_Output_Header_Type = a; \
+        s7_symbol_set_value(s7, ss->default_output_header_type_symbol, s7_make_integer(s7, ss->Default_Output_Header_Type));\
+    } while (0)
 #else
   #define set_default_output_header_type(a) ss->Default_Output_Header_Type = a
 #endif
 
 #define default_output_chans(ss) ss->Default_Output_Chans
 #if HAVE_SCHEME
-  #define set_default_output_chans(a) {ss->Default_Output_Chans = a; s7_symbol_set_value(s7, ss->default_output_chans_symbol, s7_make_integer(s7, a));}
+  #define set_default_output_chans(a) \
+    do {\
+        ss->Default_Output_Chans = a; \
+        s7_symbol_set_value(s7, ss->default_output_chans_symbol, s7_make_integer(s7, ss->Default_Output_Chans));\
+    } while (0)
 #else
   #define set_default_output_chans(a) ss->Default_Output_Chans = a
 #endif
 
 #define default_output_srate(ss) ss->Default_Output_Srate
 #if HAVE_SCHEME
-  #define set_default_output_srate(a) {ss->Default_Output_Srate = a; s7_symbol_set_value(s7, ss->default_output_srate_symbol, s7_make_integer(s7, a));}
+  #define set_default_output_srate(a) \
+    do {\
+        ss->Default_Output_Srate = a; \
+        s7_symbol_set_value(s7, ss->default_output_srate_symbol, s7_make_integer(s7, ss->Default_Output_Srate));\
+    } while (0)
 #else
   #define set_default_output_srate(a) ss->Default_Output_Srate = a
 #endif
 
 #define default_output_sample_type(ss) ss->Default_Output_Sample_Type
 #if HAVE_SCHEME
-  #define set_default_output_sample_type(a) {ss->Default_Output_Sample_Type = a; s7_symbol_set_value(s7, ss->default_output_sample_type_symbol, s7_make_integer(s7, a));}
+  #define set_default_output_sample_type(a) \
+    do {\
+        ss->Default_Output_Sample_Type = a; \
+        s7_symbol_set_value(s7, ss->default_output_sample_type_symbol, s7_make_integer(s7, ss->Default_Output_Sample_Type));\
+       } while (0)
 #else
   #define set_default_output_sample_type(a) ss->Default_Output_Sample_Type = a
 #endif
 
 #define dac_size(ss) ss->Dac_Size
 #if HAVE_SCHEME
-  #define set_dac_size(a) {ss->Dac_Size = a; s7_symbol_set_value(s7, ss->dac_size_symbol, s7_make_integer(s7, a));}
+  #define set_dac_size(a) \
+    do {\
+        ss->Dac_Size = a; \
+        s7_symbol_set_value(s7, ss->dac_size_symbol, s7_make_integer(s7, ss->Dac_Size));\
+    } while (0)
 #else
   #define set_dac_size(a) ss->Dac_Size = a
 #endif
@@ -500,7 +532,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define dac_combines_channels(ss) ss->Dac_Combines_Channels
 #if HAVE_SCHEME
-  #define set_dac_combines_channels(a) {ss->Dac_Combines_Channels = a; s7_symbol_set_value(s7, ss->dac_combines_channels_symbol, s7_make_boolean(s7, a));}
+  #define set_dac_combines_channels(a) \
+    do {\
+        ss->Dac_Combines_Channels = a; \
+        s7_symbol_set_value(s7, ss->dac_combines_channels_symbol, s7_make_boolean(s7, ss->Dac_Combines_Channels));\
+    } while (0)
 #else
   #define set_dac_combines_channels(a) ss->Dac_Combines_Channels = a
 #endif
@@ -508,7 +544,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define max_regions(ss) ss->Max_Regions
 #if HAVE_SCHEME
-  #define in_set_max_regions(a) {ss->Max_Regions = a; s7_symbol_set_value(s7, ss->max_regions_symbol, s7_make_integer(s7, a));}
+  #define in_set_max_regions(a) \
+    do {\
+        ss->Max_Regions = a; \
+        s7_symbol_set_value(s7, ss->max_regions_symbol, s7_make_integer(s7, ss->Max_Regions));\
+       } while (0)
 #else
   #define in_set_max_regions(a) ss->Max_Regions = a
 #endif
@@ -516,7 +556,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define max_transform_peaks(ss) ss->Max_Transform_Peaks
 #if HAVE_SCHEME
-  #define in_set_max_transform_peaks(a) {ss->Max_Transform_Peaks = a; s7_symbol_set_value(s7, ss->max_transform_peaks_symbol, s7_make_integer(s7, a));}
+  #define in_set_max_transform_peaks(a) \
+    do {\
+        ss->Max_Transform_Peaks = a; \
+        s7_symbol_set_value(s7, ss->max_transform_peaks_symbol, s7_make_integer(s7, ss->Max_Transform_Peaks));\
+    } while (0)
 #else
   #define in_set_max_transform_peaks(a) ss->Max_Transform_Peaks = a
 #endif
@@ -524,7 +568,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define auto_resize(ss) ss->Auto_Resize
 #if HAVE_SCHEME
-  #define set_auto_resize(a) {ss->Auto_Resize = a; s7_symbol_set_value(s7, ss->auto_resize_symbol, s7_make_boolean(s7, a));}
+  #define set_auto_resize(a) \
+    do {\
+        ss->Auto_Resize = a; \
+        s7_symbol_set_value(s7, ss->auto_resize_symbol, s7_make_boolean(s7, ss->Auto_Resize));\
+    } while (0)
 #else
   #define set_auto_resize(a) ss->Auto_Resize = a
 #endif
@@ -536,7 +584,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define auto_update(ss) ss->Auto_Update
 #if HAVE_SCHEME
-  #define set_auto_update(a) {ss->Auto_Update = a; s7_symbol_set_value(s7, ss->auto_update_symbol, s7_make_boolean(s7, a));}
+  #define set_auto_update(a) \
+    do {\
+        ss->Auto_Update = a; \
+        s7_symbol_set_value(s7, ss->auto_update_symbol, s7_make_boolean(s7, ss->Auto_Update));\
+    } while (0)
 #else
   #define set_auto_update(a) ss->Auto_Update = a
 #endif
@@ -544,7 +596,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define auto_update_interval(ss) ss->Auto_Update_Interval
 #if HAVE_SCHEME
-  #define set_auto_update_interval(a) {ss->Auto_Update_Interval = a; s7_symbol_set_value(s7, ss->auto_update_interval_symbol, s7_make_real(s7, a));}
+  #define set_auto_update_interval(a) \
+    do {\
+        ss->Auto_Update_Interval = a; \
+        s7_symbol_set_value(s7, ss->auto_update_interval_symbol, s7_make_real(s7, ss->Auto_Update_Interval));\
+    } while (0)
 #else
   #define set_auto_update_interval(a) ss->Auto_Update_Interval = a
 #endif
@@ -552,7 +608,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define cursor_update_interval(ss) ss->Cursor_Update_Interval
 #if HAVE_SCHEME
-  #define set_cursor_update_interval(a) {ss->Cursor_Update_Interval = a; s7_symbol_set_value(s7, ss->cursor_update_interval_symbol, s7_make_real(s7, a));}
+  #define set_cursor_update_interval(a) \
+    do {\
+        ss->Cursor_Update_Interval = a; \
+        s7_symbol_set_value(s7, ss->cursor_update_interval_symbol, s7_make_real(s7, ss->Cursor_Update_Interval));\
+    } while (0)
 #else
   #define set_cursor_update_interval(a) ss->Cursor_Update_Interval = a
 #endif
@@ -560,7 +620,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define cursor_location_offset(ss) ss->Cursor_Location_Offset
 #if HAVE_SCHEME
-  #define set_cursor_location_offset(a) {ss->Cursor_Location_Offset = a; s7_symbol_set_value(s7, ss->cursor_location_offset_symbol, s7_make_integer(s7, a));}
+  #define set_cursor_location_offset(a) \
+    do {\
+        ss->Cursor_Location_Offset = a; \
+        s7_symbol_set_value(s7, ss->cursor_location_offset_symbol, s7_make_integer(s7, ss->Cursor_Location_Offset));\
+    } while (0)
 #else
   #define set_cursor_location_offset(a) ss->Cursor_Location_Offset = a
 #endif
@@ -568,7 +632,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define color_cutoff(ss) ss->Color_Cutoff
 #if HAVE_SCHEME
-  #define in_set_color_cutoff(a) {ss->Color_Cutoff = a; s7_symbol_set_value(s7, ss->color_cutoff_symbol, s7_make_real(s7, a));}
+  #define in_set_color_cutoff(a) \
+    do {\
+        ss->Color_Cutoff = a; \
+        s7_symbol_set_value(s7, ss->color_cutoff_symbol, s7_make_real(s7, ss->Color_Cutoff));\
+    } while (0)
 #else
   #define in_set_color_cutoff(a) ss->Color_Cutoff = a
 #endif
@@ -576,7 +644,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define color_inverted(ss) ss->Color_Inverted
 #if HAVE_SCHEME
-  #define in_set_color_inverted(a) {ss->Color_Inverted = a; s7_symbol_set_value(s7, ss->color_inverted_symbol, s7_make_boolean(s7, a));}
+  #define in_set_color_inverted(a) \
+    do {\
+        ss->Color_Inverted = a; \
+        s7_symbol_set_value(s7, ss->color_inverted_symbol, s7_make_boolean(s7, ss->Color_Inverted));\
+    } while (0)
 #else
   #define in_set_color_inverted(a) ss->Color_Inverted = a
 #endif
@@ -584,7 +656,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define color_scale(ss) ss->Color_Scale
 #if HAVE_SCHEME
-  #define in_set_color_scale(a) {ss->Color_Scale = a; s7_symbol_set_value(s7, ss->color_scale_symbol, s7_make_real(s7, a));}
+  #define in_set_color_scale(a) \
+    do {\
+        ss->Color_Scale = a; \
+        s7_symbol_set_value(s7, ss->color_scale_symbol, s7_make_real(s7, ss->Color_Scale));\
+    } while (0)
 #else
   #define in_set_color_scale(a) ss->Color_Scale = a
 #endif
@@ -592,7 +668,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define fft_window_alpha(ss) ss->Fft_Window_Alpha
 #if HAVE_SCHEME
-  #define in_set_fft_window_alpha(a) {ss->Fft_Window_Alpha = a; s7_symbol_set_value(s7, ss->fft_window_alpha_symbol, s7_make_real(s7, a));}
+  #define in_set_fft_window_alpha(a) \
+    do {\
+        ss->Fft_Window_Alpha = a; \
+        s7_symbol_set_value(s7, ss->fft_window_alpha_symbol, s7_make_real(s7, ss->Fft_Window_Alpha));\
+    } while (0)
 #else
   #define in_set_fft_window_alpha(a) ss->Fft_Window_Alpha = a
 #endif
@@ -600,7 +680,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define fft_window_beta(ss) ss->Fft_Window_Beta
 #if HAVE_SCHEME
-  #define in_set_fft_window_beta(a) {ss->Fft_Window_Beta = a; s7_symbol_set_value(s7, ss->fft_window_beta_symbol, s7_make_real(s7, a));}
+  #define in_set_fft_window_beta(a) \
+    do {\
+        ss->Fft_Window_Beta = a; \
+        s7_symbol_set_value(s7, ss->fft_window_beta_symbol, s7_make_real(s7, ss->Fft_Window_Beta));\
+    } while (0)
 #else
   #define in_set_fft_window_beta(a) ss->Fft_Window_Beta = a
 #endif
@@ -608,7 +692,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define transform_size(ss) ss->Transform_Size
 #if HAVE_SCHEME
-  #define in_set_transform_size(a) {ss->Transform_Size = a; s7_symbol_set_value(s7, ss->transform_size_symbol, s7_make_integer(s7, a));}
+  #define in_set_transform_size(a) \
+    do {\
+        ss->Transform_Size = a; \
+        s7_symbol_set_value(s7, ss->transform_size_symbol, s7_make_integer(s7, ss->Transform_Size));\
+    } while (0)
 #else
   #define in_set_transform_size(a) ss->Transform_Size = a
 #endif
@@ -616,7 +704,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define transform_graph_type(ss) ss->Transform_Graph_Type
 #if HAVE_SCHEME
-  #define in_set_transform_graph_type_1(a) {ss->Transform_Graph_Type = a; s7_symbol_set_value(s7, ss->transform_graph_type_symbol, s7_make_integer(s7, a));}
+  #define in_set_transform_graph_type_1(a) \
+    do {\
+        ss->Transform_Graph_Type = a; \
+        s7_symbol_set_value(s7, ss->transform_graph_type_symbol, s7_make_integer(s7, ss->Transform_Graph_Type));\
+    } while (0)
 #else
   #define in_set_transform_graph_type_1(a) ss->Transform_Graph_Type = a
 #endif
@@ -624,7 +716,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define time_graph_type(ss) ss->Time_Graph_Type
 #if HAVE_SCHEME
-  #define in_set_time_graph_type(a) {ss->Time_Graph_Type = a; s7_symbol_set_value(s7, ss->time_graph_type_symbol, s7_make_integer(s7, a));}
+  #define in_set_time_graph_type(a) \
+    do {\
+        ss->Time_Graph_Type = a; \
+        s7_symbol_set_value(s7, ss->time_graph_type_symbol, s7_make_integer(s7, ss->Time_Graph_Type));\
+    } while (0)
 #else
   #define in_set_time_graph_type(a) ss->Time_Graph_Type = a
 #endif
@@ -632,7 +728,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define fft_window(ss) ss->Fft_Window
 #if HAVE_SCHEME
-  #define in_set_fft_window_1(a) {ss->Fft_Window = a; s7_symbol_set_value(s7, ss->fft_window_symbol, s7_make_integer(s7, a));}
+  #define in_set_fft_window_1(a) \
+    do {\
+        ss->Fft_Window = a; \
+        s7_symbol_set_value(s7, ss->fft_window_symbol, s7_make_integer(s7, ss->Fft_Window));\
+    } while (0)
 #else
   #define in_set_fft_window_1(a) ss->Fft_Window = a
 #endif
@@ -640,7 +740,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define log_freq_start(ss) ss->Log_Freq_Start
 #if HAVE_SCHEME
-  #define in_set_log_freq_start(a) {ss->Log_Freq_Start = a; s7_symbol_set_value(s7, ss->log_freq_start_symbol, s7_make_real(s7, a));}
+  #define in_set_log_freq_start(a) \
+    do {\
+        ss->Log_Freq_Start = a; \
+        s7_symbol_set_value(s7, ss->log_freq_start_symbol, s7_make_real(s7, ss->Log_Freq_Start));\
+    } while (0)
 #else
   #define in_set_log_freq_start(a) ss->Log_Freq_Start = a
 #endif
@@ -648,7 +752,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define dot_size(ss) ss->Dot_Size
 #if HAVE_SCHEME
-  #define in_set_dot_size(a) {ss->Dot_Size = a; s7_symbol_set_value(s7, ss->dot_size_symbol, s7_make_integer(s7, a));}
+  #define in_set_dot_size(a) \
+    do {\
+        ss->Dot_Size = a; \
+        s7_symbol_set_value(s7, ss->dot_size_symbol, s7_make_integer(s7, ss->Dot_Size));\
+    } while (0)
 #else
   #define in_set_dot_size(a) ss->Dot_Size = a
 #endif
@@ -658,7 +766,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define grid_density(ss) ss->Grid_Density
 #if HAVE_SCHEME
-  #define in_set_grid_density(a) {ss->Grid_Density = a; s7_symbol_set_value(s7, ss->grid_density_symbol, s7_make_real(s7, a));}
+  #define in_set_grid_density(a) \
+    do {\
+        ss->Grid_Density = a; \
+        s7_symbol_set_value(s7, ss->grid_density_symbol, s7_make_real(s7, ss->Grid_Density));\
+    } while (0)
 #else
   #define in_set_grid_density(a) ss->Grid_Density = a
 #endif
@@ -666,7 +778,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define transform_normalization(ss) ss->Transform_Normalization
 #if HAVE_SCHEME
-  #define in_set_transform_normalization(a) {ss->Transform_Normalization = a; s7_symbol_set_value(s7, ss->transform_normalization_symbol, s7_make_integer(s7, a));}
+  #define in_set_transform_normalization(a) \
+    do {\
+        ss->Transform_Normalization = a; \
+        s7_symbol_set_value(s7, ss->transform_normalization_symbol, s7_make_integer(s7, ss->Transform_Normalization));\
+    } while (0)
 #else
   #define in_set_transform_normalization(a) ss->Transform_Normalization = a
 #endif
@@ -674,7 +790,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define ask_before_overwrite(ss) ss->Ask_Before_Overwrite
 #if HAVE_SCHEME
-  #define set_ask_before_overwrite(a) {ss->Ask_Before_Overwrite = a; s7_symbol_set_value(s7, ss->ask_before_overwrite_symbol, s7_make_boolean(s7, a));}
+  #define set_ask_before_overwrite(a) \
+    do {\
+        ss->Ask_Before_Overwrite = a; \
+        s7_symbol_set_value(s7, ss->ask_before_overwrite_symbol, s7_make_boolean(s7, ss->Ask_Before_Overwrite));\
+    } while (0)
 #else
   #define set_ask_before_overwrite(a) ss->Ask_Before_Overwrite = a
 #endif
@@ -682,7 +802,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_toolbar(ss) ss->With_Toolbar
 #if HAVE_SCHEME
-  #define set_with_toolbar(a) {ss->With_Toolbar = a; s7_symbol_set_value(s7, ss->with_toolbar_symbol, s7_make_boolean(s7, a));}
+  #define set_with_toolbar(a) \
+    do {\
+        ss->With_Toolbar = a; \
+        s7_symbol_set_value(s7, ss->with_toolbar_symbol, s7_make_boolean(s7, ss->With_Toolbar));\
+    } while (0)
 #else
   #define set_with_toolbar(a) ss->With_Toolbar = a
 #endif
@@ -694,7 +818,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_tooltips(ss) ss->With_Tooltips
 #if HAVE_SCHEME
-  #define in_set_with_tooltips(a) {ss->With_Tooltips = a; s7_symbol_set_value(s7, ss->with_tooltips_symbol, s7_make_boolean(s7, a));}
+  #define in_set_with_tooltips(a) \
+    do {\
+        ss->With_Tooltips = a; \
+        s7_symbol_set_value(s7, ss->with_tooltips_symbol, s7_make_boolean(s7, ss->With_Tooltips));\
+    } while (0)
 #else
   #define in_set_with_tooltips(a) ss->With_Tooltips = a
 #endif
@@ -702,7 +830,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_menu_icons(ss) ss->With_Menu_Icons
 #if HAVE_SCHEME
-  #define in_set_with_menu_icons(a) {ss->With_Menu_Icons = a; s7_symbol_set_value(s7, ss->with_menu_icons_symbol, s7_make_boolean(s7, a));}
+  #define in_set_with_menu_icons(a) \
+    do {\
+        ss->With_Menu_Icons = a; \
+        s7_symbol_set_value(s7, ss->with_menu_icons_symbol, s7_make_boolean(s7, ss->With_Menu_Icons));\
+    } while (0)
 #else
   #define in_set_with_menu_icons(a) ss->With_Menu_Icons = a
 #endif
@@ -710,7 +842,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define save_as_dialog_src(ss) ss->Save_As_Dialog_Src
 #if HAVE_SCHEME
-  #define in_set_save_as_dialog_src(a) {ss->Save_As_Dialog_Src = a; s7_symbol_set_value(s7, ss->save_as_dialog_src_symbol, s7_make_boolean(s7, a));}
+  #define in_set_save_as_dialog_src(a) \
+    do {\
+        ss->Save_As_Dialog_Src = a; \
+        s7_symbol_set_value(s7, ss->save_as_dialog_src_symbol, s7_make_boolean(s7, ss->Save_As_Dialog_Src));\
+    } while (0)
 #else
   #define in_set_save_as_dialog_src(a) ss->Save_As_Dialog_Src = a
 #endif
@@ -718,7 +854,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define save_as_dialog_auto_comment(ss) ss->Save_As_Dialog_Auto_Comment
 #if HAVE_SCHEME
-  #define in_set_save_as_dialog_auto_comment(a) {ss->Save_As_Dialog_Auto_Comment = a; s7_symbol_set_value(s7, ss->save_as_dialog_auto_comment_symbol, s7_make_boolean(s7, a));}
+  #define in_set_save_as_dialog_auto_comment(a) \
+    do {\
+        ss->Save_As_Dialog_Auto_Comment = a; \
+        s7_symbol_set_value(s7, ss->save_as_dialog_auto_comment_symbol, s7_make_boolean(s7, ss->Save_As_Dialog_Auto_Comment));\
+    } while (0)
 #else
   #define in_set_save_as_dialog_auto_comment(a) ss->Save_As_Dialog_Auto_Comment = a
 #endif
@@ -726,7 +866,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define remember_sound_state(ss) ss->Remember_Sound_State
 #if HAVE_SCHEME
-  #define set_remember_sound_state(a) {ss->Remember_Sound_State = a; s7_symbol_set_value(s7, ss->remember_sound_state_symbol, s7_make_boolean(s7, a));}
+  #define set_remember_sound_state(a) \
+    do {\
+        ss->Remember_Sound_State = a; \
+        s7_symbol_set_value(s7, ss->remember_sound_state_symbol, s7_make_boolean(s7, ss->Remember_Sound_State));\
+    } while (0)
 #else
   #define set_remember_sound_state(a) ss->Remember_Sound_State = a
 #endif
@@ -734,7 +878,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define ask_about_unsaved_edits(ss) ss->Ask_About_Unsaved_Edits
 #if HAVE_SCHEME
-  #define set_ask_about_unsaved_edits(a) {ss->Ask_About_Unsaved_Edits = a; s7_symbol_set_value(s7, ss->ask_about_unsaved_edits_symbol, s7_make_boolean(s7, a));}
+  #define set_ask_about_unsaved_edits(a) \
+    do {\
+        ss->Ask_About_Unsaved_Edits = a; \
+        s7_symbol_set_value(s7, ss->ask_about_unsaved_edits_symbol, s7_make_boolean(s7, ss->Ask_About_Unsaved_Edits));\
+    } while (0)
 #else
   #define set_ask_about_unsaved_edits(a) ss->Ask_About_Unsaved_Edits = a
 #endif
@@ -742,7 +890,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define show_full_duration(ss) ss->Show_Full_Duration
 #if HAVE_SCHEME
-  #define set_show_full_duration(a) {ss->Show_Full_Duration = a; s7_symbol_set_value(s7, ss->show_full_duration_symbol, s7_make_boolean(s7, a));}
+  #define set_show_full_duration(a) \
+    do {\
+        ss->Show_Full_Duration = a; \
+        s7_symbol_set_value(s7, ss->show_full_duration_symbol, s7_make_boolean(s7, ss->Show_Full_Duration));\
+    } while (0)
 #else
   #define set_show_full_duration(a) ss->Show_Full_Duration = a
 #endif
@@ -750,7 +902,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define initial_beg(ss) ss->Initial_Beg
 #if HAVE_SCHEME
-  #define set_initial_beg(a) {ss->Initial_Beg = a; s7_symbol_set_value(s7, ss->initial_beg_symbol, s7_make_real(s7, a));}
+  #define set_initial_beg(a) \
+    do {\
+        ss->Initial_Beg = a; \
+        s7_symbol_set_value(s7, ss->initial_beg_symbol, s7_make_real(s7, ss->Initial_Beg));\
+    } while (0)
 #else
   #define set_initial_beg(a) ss->Initial_Beg = a
 #endif
@@ -758,7 +914,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define initial_dur(ss) ss->Initial_Dur
 #if HAVE_SCHEME
-  #define set_initial_dur(a) {ss->Initial_Dur = a; s7_symbol_set_value(s7, ss->initial_dur_symbol, s7_make_real(s7, a));}
+  #define set_initial_dur(a) \
+    do {\
+        ss->Initial_Dur = a; \
+        s7_symbol_set_value(s7, ss->initial_dur_symbol, s7_make_real(s7, ss->Initial_Dur));\
+    } while (0)
 #else
   #define set_initial_dur(a) ss->Initial_Dur = a
 #endif
@@ -766,7 +926,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define show_full_range(ss) ss->Show_Full_Range
 #if HAVE_SCHEME
-  #define set_show_full_range(a) {ss->Show_Full_Range = a; s7_symbol_set_value(s7, ss->show_full_range_symbol, s7_make_boolean(s7, a));}
+  #define set_show_full_range(a) \
+    do {\
+        ss->Show_Full_Range = a; \
+        s7_symbol_set_value(s7, ss->show_full_range_symbol, s7_make_boolean(s7, ss->Show_Full_Range));\
+    } while (0)
 #else
   #define set_show_full_range(a) ss->Show_Full_Range = a
 #endif
@@ -774,7 +938,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define spectrum_end(ss) ss->Spectrum_End
 #if HAVE_SCHEME
-  #define in_set_spectrum_end(a) {ss->Spectrum_End = a; s7_symbol_set_value(s7, ss->spectrum_end_symbol, s7_make_real(s7, a));}
+  #define in_set_spectrum_end(a) \
+    do {\
+        ss->Spectrum_End = a; \
+        s7_symbol_set_value(s7, ss->spectrum_end_symbol, s7_make_real(s7, ss->Spectrum_End));\
+    } while (0)
 #else
   #define in_set_spectrum_end(a) ss->Spectrum_End = a
 #endif
@@ -782,7 +950,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define spectrum_start(ss) ss->Spectrum_Start
 #if HAVE_SCHEME
-  #define in_set_spectrum_start(a) {ss->Spectrum_Start = a; s7_symbol_set_value(s7, ss->spectrum_start_symbol, s7_make_real(s7, a));}
+  #define in_set_spectrum_start(a) \
+    do {\
+        ss->Spectrum_Start = a; \
+        s7_symbol_set_value(s7, ss->spectrum_start_symbol, s7_make_real(s7, ss->Spectrum_Start));\
+    } while (0)
 #else
   #define in_set_spectrum_start(a) ss->Spectrum_Start = a
 #endif
@@ -790,7 +962,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define spectro_x_angle(ss) ss->Spectro_X_Angle
 #if HAVE_SCHEME
-  #define in_set_spectro_x_angle(a) {ss->Spectro_X_Angle = a; s7_symbol_set_value(s7, ss->spectro_x_angle_symbol, s7_make_real(s7, a));}
+  #define in_set_spectro_x_angle(a) \
+    do {\
+        ss->Spectro_X_Angle = a; \
+        s7_symbol_set_value(s7, ss->spectro_x_angle_symbol, s7_make_real(s7, ss->Spectro_X_Angle));\
+    } while (0)
 #else
   #define in_set_spectro_x_angle(a) ss->Spectro_X_Angle = a
 #endif
@@ -802,7 +978,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define spectro_y_angle(ss) ss->Spectro_Y_Angle
 #if HAVE_SCHEME
-  #define in_set_spectro_y_angle(a) {ss->Spectro_Y_Angle = a; s7_symbol_set_value(s7, ss->spectro_y_angle_symbol, s7_make_real(s7, a));}
+  #define in_set_spectro_y_angle(a) \
+    do {\
+        ss->Spectro_Y_Angle = a; \
+        s7_symbol_set_value(s7, ss->spectro_y_angle_symbol, s7_make_real(s7, ss->Spectro_Y_Angle));\
+    } while (0)
 #else
   #define in_set_spectro_y_angle(a) ss->Spectro_Y_Angle = a
 #endif
@@ -814,7 +994,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define spectro_z_angle(ss) ss->Spectro_Z_Angle
 #if HAVE_SCHEME
-  #define in_set_spectro_z_angle(a) {ss->Spectro_Z_Angle = a; s7_symbol_set_value(s7, ss->spectro_z_angle_symbol, s7_make_real(s7, a));}
+  #define in_set_spectro_z_angle(a) \
+    do {\
+        ss->Spectro_Z_Angle = a; \
+        s7_symbol_set_value(s7, ss->spectro_z_angle_symbol, s7_make_real(s7, ss->Spectro_Z_Angle));\
+    } while (0)
 #else
   #define in_set_spectro_z_angle(a) ss->Spectro_Z_Angle = a
 #endif
@@ -826,7 +1010,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define spectro_x_scale(ss) ss->Spectro_X_Scale
 #if HAVE_SCHEME
-  #define in_set_spectro_x_scale(a) {ss->Spectro_X_Scale = a; s7_symbol_set_value(s7, ss->spectro_x_scale_symbol, s7_make_real(s7, a));}
+  #define in_set_spectro_x_scale(a) \
+    do {\
+        ss->Spectro_X_Scale = a; \
+        s7_symbol_set_value(s7, ss->spectro_x_scale_symbol, s7_make_real(s7, ss->Spectro_X_Scale));\
+    } while (0)
 #else
   #define in_set_spectro_x_scale(a) ss->Spectro_X_Scale = a
 #endif
@@ -840,7 +1028,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define spectro_y_scale(ss) ss->Spectro_Y_Scale
 #if HAVE_SCHEME
-  #define in_set_spectro_y_scale(a) {ss->Spectro_Y_Scale = a; s7_symbol_set_value(s7, ss->spectro_y_scale_symbol, s7_make_real(s7, a));}
+  #define in_set_spectro_y_scale(a) \
+    do {\
+        ss->Spectro_Y_Scale = a; \
+        s7_symbol_set_value(s7, ss->spectro_y_scale_symbol, s7_make_real(s7, ss->Spectro_Y_Scale));\
+    } while (0)
 #else
   #define in_set_spectro_y_scale(a) ss->Spectro_Y_Scale = a
 #endif
@@ -854,7 +1046,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define spectro_z_scale(ss) ss->Spectro_Z_Scale
 #if HAVE_SCHEME
-  #define in_set_spectro_z_scale(a) {ss->Spectro_Z_Scale = a; s7_symbol_set_value(s7, ss->spectro_z_scale_symbol, s7_make_real(s7, a));}
+  #define in_set_spectro_z_scale(a) \
+    do {\
+        ss->Spectro_Z_Scale = a; \
+        s7_symbol_set_value(s7, ss->spectro_z_scale_symbol, s7_make_real(s7, ss->Spectro_Z_Scale));\
+    } while (0)
 #else
   #define in_set_spectro_z_scale(a) ss->Spectro_Z_Scale = a
 #endif
@@ -868,7 +1064,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define spectro_hop(ss) ss->Spectro_Hop
 #if HAVE_SCHEME
-  #define in_set_spectro_hop(a) {ss->Spectro_Hop = a; s7_symbol_set_value(s7, ss->spectro_hop_symbol, s7_make_integer(s7, a));}
+  #define in_set_spectro_hop(a) \
+    do {\
+        ss->Spectro_Hop = a; \
+        s7_symbol_set_value(s7, ss->spectro_hop_symbol, s7_make_integer(s7, ss->Spectro_Hop));\
+    } while (0)
 #else
   #define in_set_spectro_hop(a) ss->Spectro_Hop = a
 #endif
@@ -876,7 +1076,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define color_map(ss) ss->Color_Map
 #if HAVE_SCHEME
-  #define in_set_color_map(a) {ss->Color_Map = a; s7_symbol_set_value(s7, ss->color_map_symbol, s7_make_integer(s7, a));}
+  #define in_set_color_map(a) \
+    do {\
+        ss->Color_Map = a; \
+        s7_symbol_set_value(s7, ss->color_map_symbol, s7_make_integer(s7, ss->Color_Map));\
+    } while (0)
 #else
   #define in_set_color_map(a) ss->Color_Map = a
 #endif
@@ -884,7 +1088,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define color_map_size(ss) ss->Color_Map_Size
 #if HAVE_SCHEME
-  #define set_color_map_size(a) {ss->Color_Map_Size = a; s7_symbol_set_value(s7, ss->color_map_size_symbol, s7_make_integer(s7, a));}
+  #define set_color_map_size(a) \
+    do {\
+        ss->Color_Map_Size = a; \
+        s7_symbol_set_value(s7, ss->color_map_size_symbol, s7_make_integer(s7, ss->Color_Map_Size));\
+    } while (0)
 #else
   #define set_color_map_size(a) ss->Color_Map_Size = a
 #endif
@@ -892,7 +1100,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define graph_style(ss) ss->Graph_Style
 #if HAVE_SCHEME
-  #define in_set_graph_style(a) {ss->Graph_Style = a; s7_symbol_set_value(s7, ss->graph_style_symbol, s7_make_integer(s7, a));}
+  #define in_set_graph_style(a) \
+    do {\
+        ss->Graph_Style = a; \
+        s7_symbol_set_value(s7, ss->graph_style_symbol, s7_make_integer(s7, ss->Graph_Style));\
+    } while (0)
 #else
   #define in_set_graph_style(a) ss->Graph_Style = a
 #endif
@@ -900,14 +1112,22 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define region_graph_style(ss) ss->Region_Graph_Style
 #if HAVE_SCHEME
-  #define set_region_graph_style(a) {ss->Region_Graph_Style = a; s7_symbol_set_value(s7, ss->region_graph_style_symbol, s7_make_integer(s7, a));}
+  #define set_region_graph_style(a) \
+    do {\
+        ss->Region_Graph_Style = a; \
+        s7_symbol_set_value(s7, ss->region_graph_style_symbol, s7_make_integer(s7, ss->Region_Graph_Style));\
+    } while (0)
 #else
   #define set_region_graph_style(a) ss->Region_Graph_Style = a
 #endif
 
 #define sinc_width(ss) ss->Sinc_Width
 #if HAVE_SCHEME
-  #define set_sinc_width(a) {ss->Sinc_Width = a; s7_symbol_set_value(s7, ss->sinc_width_symbol, s7_make_integer(s7, a));}
+  #define set_sinc_width(a) \
+    do {\
+        ss->Sinc_Width = a; \
+        s7_symbol_set_value(s7, ss->sinc_width_symbol, s7_make_integer(s7, ss->Sinc_Width));\
+    } while (0)
 #else
   #define set_sinc_width(a) ss->Sinc_Width = a
 #endif
@@ -915,7 +1135,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_verbose_cursor(ss) ss->With_Verbose_Cursor
 #if HAVE_SCHEME
-  #define in_set_with_verbose_cursor(a) {ss->With_Verbose_Cursor = a; s7_symbol_set_value(s7, ss->with_verbose_cursor_symbol, s7_make_boolean(s7, a));}
+  #define in_set_with_verbose_cursor(a) \
+    do {\
+        ss->With_Verbose_Cursor = a; \
+        s7_symbol_set_value(s7, ss->with_verbose_cursor_symbol, s7_make_boolean(s7, ss->With_Verbose_Cursor));\
+    } while (0)
 #else
   #define in_set_with_verbose_cursor(a) ss->With_Verbose_Cursor = a
 #endif
@@ -923,7 +1147,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_inset_graph(ss) ss->With_Inset_Graph
 #if HAVE_SCHEME
-  #define set_with_inset_graph(a) {ss->With_Inset_Graph = a; s7_symbol_set_value(s7, ss->with_inset_graph_symbol, s7_make_boolean(s7, a));}
+  #define set_with_inset_graph(a) \
+    do {\
+        ss->With_Inset_Graph = a; \
+        s7_symbol_set_value(s7, ss->with_inset_graph_symbol, s7_make_boolean(s7, ss->With_Inset_Graph));\
+    } while (0)
 #else
   #define set_with_inset_graph(a) ss->With_Inset_Graph = a
 #endif
@@ -931,7 +1159,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_interrupts(ss) ss->With_Interrupts
 #if HAVE_SCHEME
-  #define set_with_interrupts(a) {ss->With_Interrupts = a; s7_symbol_set_value(s7, ss->with_interrupts_symbol, s7_make_boolean(s7, a));}
+  #define set_with_interrupts(a) \
+    do {\
+        ss->With_Interrupts = a; \
+        s7_symbol_set_value(s7, ss->with_interrupts_symbol, s7_make_boolean(s7, ss->With_Interrupts));\
+    } while (0)
 #else
   #define set_with_interrupts(a) ss->With_Interrupts = a
 #endif
@@ -939,7 +1171,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_smpte_label(ss) ss->With_Smpte_Label
 #if HAVE_SCHEME
-  #define set_with_smpte_label(a) {ss->With_Smpte_Label = a; s7_symbol_set_value(s7, ss->with_smpte_label_symbol, s7_make_boolean(s7, a));}
+  #define set_with_smpte_label(a) \
+    do {\
+        ss->With_Smpte_Label = a; \
+        s7_symbol_set_value(s7, ss->with_smpte_label_symbol, s7_make_boolean(s7, ss->With_Smpte_Label));\
+    } while (0)
 #else
   #define set_with_smpte_label(a) ss->With_Smpte_Label = a
 #endif
@@ -947,7 +1183,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_pointer_focus(ss) ss->With_Pointer_Focus
 #if HAVE_SCHEME
-  #define set_with_pointer_focus(a) {ss->With_Pointer_Focus = a; s7_symbol_set_value(s7, ss->with_pointer_focus_symbol, s7_make_boolean(s7, a));}
+  #define set_with_pointer_focus(a) \
+    do {\
+        ss->With_Pointer_Focus = a; \
+        s7_symbol_set_value(s7, ss->with_pointer_focus_symbol, s7_make_boolean(s7, ss->With_Pointer_Focus));\
+    } while (0)
 #else
   #define set_with_pointer_focus(a) ss->With_Pointer_Focus = a
 #endif
@@ -955,7 +1195,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define selection_creates_region(ss) ss->Selection_Creates_Region
 #if HAVE_SCHEME
-  #define set_selection_creates_region(a) {ss->Selection_Creates_Region = a; s7_symbol_set_value(s7, ss->selection_creates_region_symbol, s7_make_boolean(s7, a));}
+  #define set_selection_creates_region(a) \
+    do {\
+        ss->Selection_Creates_Region = a; \
+        s7_symbol_set_value(s7, ss->selection_creates_region_symbol, s7_make_boolean(s7, ss->Selection_Creates_Region));\
+    } while (0)
 #else
   #define set_selection_creates_region(a) ss->Selection_Creates_Region = a
 #endif
@@ -963,7 +1207,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define zoom_focus_style(ss) ss->Zoom_Focus_Style
 #if HAVE_SCHEME
-  #define set_zoom_focus_style(a) {ss->Zoom_Focus_Style = a; s7_symbol_set_value(s7, ss->zoom_focus_style_symbol, s7_make_integer(s7, a));}
+  #define set_zoom_focus_style(a) \
+    do {\
+        ss->Zoom_Focus_Style = a; \
+        s7_symbol_set_value(s7, ss->zoom_focus_style_symbol, s7_make_integer(s7, ss->Zoom_Focus_Style));\
+    } while (0)
 #else
   #define set_zoom_focus_style(a) ss->Zoom_Focus_Style = a
 #endif
@@ -971,7 +1219,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define eps_file(ss) ss->Eps_File
 #if HAVE_SCHEME
-  #define set_eps_file(a) {ss->Eps_File = a; s7_symbol_set_value(s7, ss->eps_file_symbol, s7_make_string(s7, a));}
+  #define set_eps_file(a) \
+    do {\
+        ss->Eps_File = a; \
+        s7_symbol_set_value(s7, ss->eps_file_symbol, s7_make_string(s7, ss->Eps_File));\
+    } while (0)
 #else
   #define set_eps_file(a) ss->Eps_File = a
 #endif
@@ -979,7 +1231,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define eps_left_margin(ss) ss->Eps_Left_Margin
 #if HAVE_SCHEME
-  #define set_eps_left_margin(a) {ss->Eps_Left_Margin = a; s7_symbol_set_value(s7, ss->eps_left_margin_symbol, s7_make_real(s7, a));}
+  #define set_eps_left_margin(a) \
+    do {\
+        ss->Eps_Left_Margin = a; \
+        s7_symbol_set_value(s7, ss->eps_left_margin_symbol, s7_make_real(s7, ss->Eps_Left_Margin));\
+    } while (0)
 #else
   #define set_eps_left_margin(a) ss->Eps_Left_Margin = a
 #endif
@@ -987,7 +1243,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define eps_bottom_margin(ss) ss->Eps_Bottom_Margin
 #if HAVE_SCHEME
-  #define set_eps_bottom_margin(a) {ss->Eps_Bottom_Margin = a; s7_symbol_set_value(s7, ss->eps_bottom_margin_symbol, s7_make_real(s7, a));}
+  #define set_eps_bottom_margin(a) \
+    do {\
+        ss->Eps_Bottom_Margin = a; \
+        s7_symbol_set_value(s7, ss->eps_bottom_margin_symbol, s7_make_real(s7, ss->Eps_Bottom_Margin));\
+    } while (0)
 #else
   #define set_eps_bottom_margin(a) ss->Eps_Bottom_Margin = a
 #endif
@@ -995,7 +1255,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define eps_size(ss) ss->Eps_Size
 #if HAVE_SCHEME
-  #define set_eps_size(a) {ss->Eps_Size = a; s7_symbol_set_value(s7, ss->eps_size_symbol, s7_make_real(s7, a));}
+  #define set_eps_size(a) \
+    do {\
+        ss->Eps_Size = a; \
+        s7_symbol_set_value(s7, ss->eps_size_symbol, s7_make_real(s7, ss->Eps_Size));\
+    } while (0)
 #else
   #define set_eps_size(a) ss->Eps_Size = a
 #endif
@@ -1003,49 +1267,77 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define tiny_font(ss) ss->Tiny_Font
 #if HAVE_SCHEME
-  #define in_set_tiny_font(a) {ss->Tiny_Font = a; s7_symbol_set_value(s7, ss->tiny_font_symbol, s7_make_string(s7, a));}
+  #define in_set_tiny_font(a) \
+    do {\
+        ss->Tiny_Font = a; \
+        s7_symbol_set_value(s7, ss->tiny_font_symbol, s7_make_string(s7, ss->Tiny_Font));\
+    } while (0)
 #else
   #define in_set_tiny_font(a) ss->Tiny_Font = a
 #endif
 
 #define peaks_font(ss) ss->Peaks_Font
 #if HAVE_SCHEME
-  #define in_set_peaks_font(a) {ss->Peaks_Font = a; s7_symbol_set_value(s7, ss->peaks_font_symbol, s7_make_string(s7, a));}
+  #define in_set_peaks_font(a) \
+    do {\
+        ss->Peaks_Font = a; \
+        s7_symbol_set_value(s7, ss->peaks_font_symbol, s7_make_string(s7, ss->Peaks_Font));\
+    } while (0)
 #else
   #define in_set_peaks_font(a) ss->Peaks_Font = a
 #endif
 
 #define bold_peaks_font(ss) ss->Bold_Peaks_Font
 #if HAVE_SCHEME
-  #define in_set_bold_peaks_font(a) {ss->Bold_Peaks_Font = a; s7_symbol_set_value(s7, ss->bold_peaks_font_symbol, s7_make_string(s7, a));}
+  #define in_set_bold_peaks_font(a) \
+    do {\
+        ss->Bold_Peaks_Font = a; \
+        s7_symbol_set_value(s7, ss->bold_peaks_font_symbol, s7_make_string(s7, ss->Bold_Peaks_Font));\
+    } while (0)
 #else
   #define in_set_bold_peaks_font(a) ss->Bold_Peaks_Font = a
 #endif
 
 #define axis_label_font(ss) ss->Axis_Label_Font
 #if HAVE_SCHEME
-  #define in_set_axis_label_font(a) {ss->Axis_Label_Font = a; s7_symbol_set_value(s7, ss->axis_label_font_symbol, s7_make_string(s7, a));}
+  #define in_set_axis_label_font(a) \
+    do {\
+        ss->Axis_Label_Font = a; \
+        s7_symbol_set_value(s7, ss->axis_label_font_symbol, s7_make_string(s7, ss->Axis_Label_Font));\
+    } while (0)
 #else
   #define in_set_axis_label_font(a) ss->Axis_Label_Font = a
 #endif
 
 #define axis_numbers_font(ss) ss->Axis_Numbers_Font
 #if HAVE_SCHEME
-  #define in_set_axis_numbers_font(a) {ss->Axis_Numbers_Font = a; s7_symbol_set_value(s7, ss->axis_numbers_font_symbol, s7_make_string(s7, a));}
+  #define in_set_axis_numbers_font(a) \
+    do {\
+        ss->Axis_Numbers_Font = a; \
+        s7_symbol_set_value(s7, ss->axis_numbers_font_symbol, s7_make_string(s7, ss->Axis_Numbers_Font));\
+    } while (0)
 #else
   #define in_set_axis_numbers_font(a) ss->Axis_Numbers_Font = a
 #endif
 
 #define listener_font(ss) ss->Listener_Font
 #if HAVE_SCHEME
-  #define in_set_listener_font(a) {ss->Listener_Font = a; s7_symbol_set_value(s7, ss->listener_font_symbol, s7_make_string(s7, a));}
+  #define in_set_listener_font(a) \
+    do {\
+        ss->Listener_Font = a; \
+        s7_symbol_set_value(s7, ss->listener_font_symbol, s7_make_string(s7, ss->Listener_Font));\
+    } while (0)
 #else
   #define in_set_listener_font(a) ss->Listener_Font = a
 #endif
 
 #define save_state_file(ss) ss->Save_State_File
 #if HAVE_SCHEME
-  #define in_set_save_state_file(a) {ss->Save_State_File = a; s7_symbol_set_value(s7, ss->save_state_file_symbol, s7_make_string(s7, a));}
+  #define in_set_save_state_file(a) \
+    do {\
+        ss->Save_State_File = a; \
+        s7_symbol_set_value(s7, ss->save_state_file_symbol, s7_make_string(s7, ss->Save_State_File));\
+    } while (0)
 #else
   #define in_set_save_state_file(a) ss->Save_State_File = a
 #endif
@@ -1053,7 +1345,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define temp_dir(ss) ss->Temp_Dir
 #if HAVE_SCHEME
-  #define set_temp_dir(a) {ss->Temp_Dir = a; s7_symbol_set_value(s7, ss->temp_dir_symbol, s7_make_string(s7, a));}
+  #define set_temp_dir(a) \
+    do {\
+        ss->Temp_Dir = a; \
+        s7_symbol_set_value(s7, ss->temp_dir_symbol, s7_make_string(s7, ss->Temp_Dir));\
+    } while (0)
 #else
   #define set_temp_dir(a) ss->Temp_Dir = a
 #endif
@@ -1063,7 +1359,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define save_dir(ss) ss->Save_Dir
 #if HAVE_SCHEME
-  #define set_save_dir(a) {ss->Save_Dir = a; s7_symbol_set_value(s7, ss->save_dir_symbol, s7_make_string(s7, a));}
+  #define set_save_dir(a) \
+    do {\
+        ss->Save_Dir = a; \
+        s7_symbol_set_value(s7, ss->save_dir_symbol, s7_make_string(s7, ss->Save_Dir));\
+    } while (0)
 #else
   #define set_save_dir(a) ss->Save_Dir = a
 #endif
@@ -1073,7 +1373,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define ladspa_dir(ss) ss->Ladspa_Dir
 #if HAVE_SCHEME
-  #define set_ladspa_dir(a) {ss->Ladspa_Dir = a; s7_symbol_set_value(s7, ss->ladspa_dir_symbol, s7_make_string(s7, a));}
+  #define set_ladspa_dir(a) \
+    do {\
+        ss->Ladspa_Dir = a; \
+        s7_symbol_set_value(s7, ss->ladspa_dir_symbol, s7_make_string(s7, ss->Ladspa_Dir));\
+    } while (0)
 #else
   #define set_ladspa_dir(a) ss->Ladspa_Dir = a
 #endif
@@ -1083,7 +1387,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define peak_env_dir(ss) ss->Peak_Env_Dir
 #if HAVE_SCHEME
-  #define set_peak_env_dir(a) {ss->Peak_Env_Dir = a; s7_symbol_set_value(s7, ss->peak_env_dir_symbol, s7_make_string(s7, a));}
+  #define set_peak_env_dir(a) \
+    do {\
+        ss->Peak_Env_Dir = a; \
+        s7_symbol_set_value(s7, ss->peak_env_dir_symbol, s7_make_string(s7, ss->Peak_Env_Dir));\
+    } while (0)
 #else
   #define set_peak_env_dir(a) ss->Peak_Env_Dir = a
 #endif
@@ -1093,14 +1401,22 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define open_file_dialog_directory(ss) ss->Open_File_Dialog_Directory
 #if HAVE_SCHEME
-  #define set_open_file_dialog_directory(a) {ss->Open_File_Dialog_Directory = a; s7_symbol_set_value(s7, ss->open_file_dialog_directory_symbol, s7_make_string(s7, a));}
+  #define set_open_file_dialog_directory(a) \
+    do {\
+        ss->Open_File_Dialog_Directory = a; \
+        s7_symbol_set_value(s7, ss->open_file_dialog_directory_symbol, s7_make_string(s7, ss->Open_File_Dialog_Directory));\
+    } while (0)
 #else
   #define set_open_file_dialog_directory(a) ss->Open_File_Dialog_Directory = a
 #endif
 
 #define wavelet_type(ss) ss->Wavelet_Type
 #if HAVE_SCHEME
-  #define in_set_wavelet_type(a) {ss->Wavelet_Type = a; s7_symbol_set_value(s7, ss->wavelet_type_symbol, s7_make_integer(s7, a));}
+  #define in_set_wavelet_type(a) \
+    do {\
+        ss->Wavelet_Type = a; \
+        s7_symbol_set_value(s7, ss->wavelet_type_symbol, s7_make_integer(s7, ss->Wavelet_Type));\
+    } while (0)
 #else
   #define in_set_wavelet_type(a) ss->Wavelet_Type = a
 #endif
@@ -1108,7 +1424,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define transform_type(ss) ss->Transform_Type
 #if HAVE_SCHEME
-  #define in_set_transform_type(a) {ss->Transform_Type = a; s7_symbol_set_value(s7, ss->transform_type_symbol, s7_make_integer(s7, a));}
+  #define in_set_transform_type(a) \
+    do {\
+        ss->Transform_Type = a; \
+        s7_symbol_set_value(s7, ss->transform_type_symbol, s7_make_integer(s7, ss->Transform_Type));\
+    } while (0)
 #else
   #define in_set_transform_type(a) ss->Transform_Type = a
 #endif
@@ -1116,7 +1436,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define show_selection_transform(ss) ss->Show_Selection_Transform
 #if HAVE_SCHEME
-  #define in_set_show_selection_transform(a) {ss->Show_Selection_Transform = a; s7_symbol_set_value(s7, ss->show_selection_transform_symbol, s7_make_boolean(s7, a));}
+  #define in_set_show_selection_transform(a) \
+    do {\
+        ss->Show_Selection_Transform = a; \
+        s7_symbol_set_value(s7, ss->show_selection_transform_symbol, s7_make_boolean(s7, ss->Show_Selection_Transform));\
+    } while (0)
 #else
   #define in_set_show_selection_transform(a) ss->Show_Selection_Transform = a
 #endif
@@ -1124,7 +1448,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_mix_tags(ss) ss->With_Mix_Tags
 #if HAVE_SCHEME
-  #define set_with_mix_tags(a) {ss->With_Mix_Tags = a; s7_symbol_set_value(s7, ss->with_mix_tags_symbol, s7_make_boolean(s7, a));}
+  #define set_with_mix_tags(a) \
+    do {\
+        ss->With_Mix_Tags = a; \
+        s7_symbol_set_value(s7, ss->with_mix_tags_symbol, s7_make_boolean(s7, ss->With_Mix_Tags));\
+    } while (0)
 #else
   #define set_with_mix_tags(a) ss->With_Mix_Tags = a
 #endif
@@ -1136,7 +1464,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_relative_panes(ss) ss->With_Relative_Panes
 #if HAVE_SCHEME
-  #define set_with_relative_panes(a) {ss->With_Relative_Panes = a; s7_symbol_set_value(s7, ss->with_relative_panes_symbol, s7_make_boolean(s7, a));}
+  #define set_with_relative_panes(a) \
+    do {\
+        ss->With_Relative_Panes = a; \
+        s7_symbol_set_value(s7, ss->with_relative_panes_symbol, s7_make_boolean(s7, ss->With_Relative_Panes));\
+    } while (0)
 #else
   #define set_with_relative_panes(a) ss->With_Relative_Panes = a
 #endif
@@ -1144,7 +1476,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_gl(ss) ss->With_GL
 #if HAVE_SCHEME
-  #define in_set_with_gl(a) {ss->With_GL = a; s7_symbol_set_value(s7, ss->with_gl_symbol, s7_make_boolean(s7, a));}
+  #define in_set_with_gl(a) \
+    do {\
+        ss->With_GL = a; \
+        s7_symbol_set_value(s7, ss->with_gl_symbol, s7_make_boolean(s7, ss->With_GL));\
+    } while (0)
 #else
   #define in_set_with_gl(a) ss->With_GL = a
 #endif
@@ -1156,7 +1492,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_background_processes(ss) ss->With_Background_Processes
 #if HAVE_SCHEME
-  #define set_with_background_processes(a) {ss->With_Background_Processes = a; s7_symbol_set_value(s7, ss->with_background_processes_symbol, s7_make_boolean(s7, a));}
+  #define set_with_background_processes(a) \
+    do {\
+        ss->With_Background_Processes = a; \
+        s7_symbol_set_value(s7, ss->with_background_processes_symbol, s7_make_boolean(s7, ss->With_Background_Processes));\
+    } while (0)
 #else
   #define set_with_background_processes(a) ss->With_Background_Processes = a
 #endif
@@ -1164,7 +1504,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define with_file_monitor(ss) ss->With_File_Monitor
 #if HAVE_SCHEME
-  #define set_with_file_monitor(a) {ss->With_File_Monitor = a; s7_symbol_set_value(s7, ss->with_file_monitor_symbol, s7_make_boolean(s7, a));}
+  #define set_with_file_monitor(a) \
+    do {\
+        ss->With_File_Monitor = a; \
+        s7_symbol_set_value(s7, ss->with_file_monitor_symbol, s7_make_boolean(s7, ss->With_File_Monitor));\
+    } while (0)
 #else
   #define set_with_file_monitor(a) ss->With_File_Monitor = a
 #endif
@@ -1172,7 +1516,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define wavo_hop(ss) ss->Wavo_Hop
 #if HAVE_SCHEME
-  #define in_set_wavo_hop(a) {ss->Wavo_Hop = a; s7_symbol_set_value(s7, ss->wavo_hop_symbol, s7_make_integer(s7, a));}
+  #define in_set_wavo_hop(a) \
+    do {\
+        ss->Wavo_Hop = a; \
+        s7_symbol_set_value(s7, ss->wavo_hop_symbol, s7_make_integer(s7, ss->Wavo_Hop));\
+    } while (0)
 #else
   #define in_set_wavo_hop(a) ss->Wavo_Hop = a
 #endif
@@ -1180,7 +1528,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define wavo_trace(ss) ss->Wavo_Trace
 #if HAVE_SCHEME
-  #define in_set_wavo_trace(a) {ss->Wavo_Trace = a; s7_symbol_set_value(s7, ss->wavo_trace_symbol, s7_make_integer(s7, a));}
+  #define in_set_wavo_trace(a) \
+    do {\
+        ss->Wavo_Trace = a; \
+        s7_symbol_set_value(s7, ss->wavo_trace_symbol, s7_make_integer(s7, ss->Wavo_Trace));\
+    } while (0)
 #else
   #define in_set_wavo_trace(a) ss->Wavo_Trace = a
 #endif
@@ -1188,7 +1540,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define x_axis_style(ss) ss->X_Axis_Style
 #if HAVE_SCHEME
-  #define in_set_x_axis_style(a) {ss->X_Axis_Style = a; s7_symbol_set_value(s7, ss->x_axis_style_symbol, s7_make_integer(s7, a));}
+  #define in_set_x_axis_style(a) \
+    do {\
+        ss->X_Axis_Style = a; \
+        s7_symbol_set_value(s7, ss->x_axis_style_symbol, s7_make_integer(s7, ss->X_Axis_Style));\
+    } while (0)
 #else
   #define in_set_x_axis_style(a) ss->X_Axis_Style = a
 #endif
@@ -1196,7 +1552,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define beats_per_minute(ss) ss->Beats_Per_Minute
 #if HAVE_SCHEME
-  #define in_set_beats_per_minute(a) {ss->Beats_Per_Minute = a; s7_symbol_set_value(s7, ss->beats_per_minute_symbol, s7_make_real(s7, a));}
+  #define in_set_beats_per_minute(a) \
+    do {\
+        ss->Beats_Per_Minute = a; \
+        s7_symbol_set_value(s7, ss->beats_per_minute_symbol, s7_make_real(s7, ss->Beats_Per_Minute));\
+    } while (0)
 #else
   #define in_set_beats_per_minute(a) ss->Beats_Per_Minute = a
 #endif
@@ -1204,7 +1564,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define beats_per_measure(ss) ss->Beats_Per_Measure
 #if HAVE_SCHEME
-  #define in_set_beats_per_measure(a) {ss->Beats_Per_Measure = a; s7_symbol_set_value(s7, ss->beats_per_measure_symbol, s7_make_integer(s7, a));}
+  #define in_set_beats_per_measure(a) \
+    do {\
+        ss->Beats_Per_Measure = a; \
+        s7_symbol_set_value(s7, ss->beats_per_measure_symbol, s7_make_integer(s7, ss->Beats_Per_Measure));\
+    } while (0)
 #else
   #define in_set_beats_per_measure(a) ss->Beats_Per_Measure = a
 #endif
@@ -1212,7 +1576,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define zero_pad(ss) ss->Zero_Pad
 #if HAVE_SCHEME
-  #define in_set_zero_pad(a) {ss->Zero_Pad = a; s7_symbol_set_value(s7, ss->zero_pad_symbol, s7_make_integer(s7, a));}
+  #define in_set_zero_pad(a) \
+    do {\
+        ss->Zero_Pad = a; \
+        s7_symbol_set_value(s7, ss->zero_pad_symbol, s7_make_integer(s7, ss->Zero_Pad));\
+    } while (0)
 #else
   #define in_set_zero_pad(a) ss->Zero_Pad = a
 #endif
@@ -1221,7 +1589,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define show_transform_peaks(ss) ss->Show_Transform_Peaks
 #if HAVE_SCHEME
-  #define in_set_show_transform_peaks(a) {ss->Show_Transform_Peaks = a; s7_symbol_set_value(s7, ss->show_transform_peaks_symbol, s7_make_boolean(s7, a));}
+  #define in_set_show_transform_peaks(a) \
+    do {\
+        ss->Show_Transform_Peaks = a; \
+        s7_symbol_set_value(s7, ss->show_transform_peaks_symbol, s7_make_boolean(s7, ss->Show_Transform_Peaks));\
+    } while (0)
 #else
   #define in_set_show_transform_peaks(a) ss->Show_Transform_Peaks = a
 #endif
@@ -1229,7 +1601,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define show_indices(ss) ss->Show_Indices
 #if HAVE_SCHEME
-  #define set_show_indices(a) {ss->Show_Indices = a; s7_symbol_set_value(s7, ss->show_indices_symbol, s7_make_boolean(s7, a));}
+  #define set_show_indices(a) \
+    do {\
+        ss->Show_Indices = a; \
+        s7_symbol_set_value(s7, ss->show_indices_symbol, s7_make_boolean(s7, ss->Show_Indices));\
+    } while (0)
 #else
   #define set_show_indices(a) ss->Show_Indices = a
 #endif
@@ -1237,7 +1613,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define show_y_zero(ss) ss->Show_Y_Zero
 #if HAVE_SCHEME
-  #define in_set_show_y_zero(a) {ss->Show_Y_Zero = a; s7_symbol_set_value(s7, ss->show_y_zero_symbol, s7_make_boolean(s7, a));}
+  #define in_set_show_y_zero(a) \
+    do {\
+        ss->Show_Y_Zero = a; \
+        s7_symbol_set_value(s7, ss->show_y_zero_symbol, s7_make_boolean(s7, ss->Show_Y_Zero));\
+    } while (0)
 #else
   #define in_set_show_y_zero(a) ss->Show_Y_Zero = a
 #endif
@@ -1245,7 +1625,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define show_grid(ss) ss->Show_Grid
 #if HAVE_SCHEME
-  #define in_set_show_grid(a) {ss->Show_Grid = a; s7_symbol_set_value(s7, ss->show_grid_symbol, s7_make_boolean(s7, a));}
+  #define in_set_show_grid(a) \
+    do {\
+        ss->Show_Grid = a; \
+        s7_symbol_set_value(s7, ss->show_grid_symbol, s7_make_boolean(s7, ss->Show_Grid));\
+    } while (0)
 #else
   #define in_set_show_grid(a) ss->Show_Grid = a
 #endif
@@ -1253,7 +1637,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define show_sonogram_cursor(ss) ss->Show_Sonogram_Cursor
 #if HAVE_SCHEME
-  #define in_set_show_sonogram_cursor(a) {ss->Show_Sonogram_Cursor = a; s7_symbol_set_value(s7, ss->show_sonogram_cursor_symbol, s7_make_boolean(s7, a));}
+  #define in_set_show_sonogram_cursor(a) \
+    do {\
+        ss->Show_Sonogram_Cursor = a; \
+        s7_symbol_set_value(s7, ss->show_sonogram_cursor_symbol, s7_make_boolean(s7, ss->Show_Sonogram_Cursor));\
+    } while (0)
 #else
   #define in_set_show_sonogram_cursor(a) ss->Show_Sonogram_Cursor = a
 #endif
@@ -1261,7 +1649,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define show_axes(ss) ss->Show_Axes
 #if HAVE_SCHEME
-  #define in_set_show_axes(a) {ss->Show_Axes = a; s7_symbol_set_value(s7, ss->show_axes_symbol, s7_make_integer(s7, a));}
+  #define in_set_show_axes(a) \
+    do {\
+        ss->Show_Axes = a; \
+        s7_symbol_set_value(s7, ss->show_axes_symbol, s7_make_integer(s7, ss->Show_Axes));\
+    } while (0)
 #else
   #define in_set_show_axes(a) ss->Show_Axes = a
 #endif
@@ -1269,7 +1661,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define show_mix_waveforms(ss) ss->Show_Mix_Waveforms
 #if HAVE_SCHEME
-  #define in_set_show_mix_waveforms(a) {ss->Show_Mix_Waveforms = a; s7_symbol_set_value(s7, ss->show_mix_waveforms_symbol, s7_make_boolean(s7, a));}
+  #define in_set_show_mix_waveforms(a) \
+    do {\
+        ss->Show_Mix_Waveforms = a; \
+        s7_symbol_set_value(s7, ss->show_mix_waveforms_symbol, s7_make_boolean(s7, ss->Show_Mix_Waveforms));\
+    } while (0)
 #else
   #define in_set_show_mix_waveforms(a) ss->Show_Mix_Waveforms = a
 #endif
@@ -1277,7 +1673,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define mix_waveform_height(ss) ss->Mix_Waveform_Height
 #if HAVE_SCHEME
-  #define in_set_mix_waveform_height(a) {ss->Mix_Waveform_Height = a; s7_symbol_set_value(s7, ss->mix_waveform_height_symbol, s7_make_integer(s7, a));}
+  #define in_set_mix_waveform_height(a) \
+    do {\
+        ss->Mix_Waveform_Height = a; \
+        s7_symbol_set_value(s7, ss->mix_waveform_height_symbol, s7_make_integer(s7, ss->Mix_Waveform_Height));\
+    } while (0)
 #else
   #define in_set_mix_waveform_height(a) ss->Mix_Waveform_Height = a
 #endif
@@ -1285,7 +1685,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define show_marks(ss) ss->Show_Marks
 #if HAVE_SCHEME
-  #define in_set_show_marks(a) {ss->Show_Marks = a; s7_symbol_set_value(s7, ss->show_marks_symbol, s7_make_boolean(s7, a));}
+  #define in_set_show_marks(a) \
+    do {\
+        ss->Show_Marks = a; \
+        s7_symbol_set_value(s7, ss->show_marks_symbol, s7_make_boolean(s7, ss->Show_Marks));\
+    } while (0)
 #else
   #define in_set_show_marks(a) ss->Show_Marks = a
 #endif
@@ -1293,7 +1697,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define fft_log_magnitude(ss) ss->Fft_Log_Magnitude
 #if HAVE_SCHEME
-  #define in_set_fft_log_magnitude(a) {ss->Fft_Log_Magnitude = a; s7_symbol_set_value(s7, ss->fft_log_magnitude_symbol, s7_make_boolean(s7, a));}
+  #define in_set_fft_log_magnitude(a) \
+    do {\
+        ss->Fft_Log_Magnitude = a; \
+        s7_symbol_set_value(s7, ss->fft_log_magnitude_symbol, s7_make_boolean(s7, ss->Fft_Log_Magnitude));\
+    } while (0)
 #else
   #define in_set_fft_log_magnitude(a) ss->Fft_Log_Magnitude = a
 #endif
@@ -1301,7 +1709,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define fft_log_frequency(ss) ss->Fft_Log_Frequency
 #if HAVE_SCHEME
-  #define in_set_fft_log_frequency(a) {ss->Fft_Log_Frequency = a; s7_symbol_set_value(s7, ss->fft_log_frequency_symbol, s7_make_boolean(s7, a));}
+  #define in_set_fft_log_frequency(a) \
+    do {\
+        ss->Fft_Log_Frequency = a; \
+        s7_symbol_set_value(s7, ss->fft_log_frequency_symbol, s7_make_boolean(s7, ss->Fft_Log_Frequency));\
+    } while (0)
 #else
   #define in_set_fft_log_frequency(a) ss->Fft_Log_Frequency = a
 #endif
@@ -1309,7 +1721,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define fft_with_phases(ss) ss->Fft_With_Phases
 #if HAVE_SCHEME
-  #define in_set_fft_with_phases(a) {ss->Fft_With_Phases = a; s7_symbol_set_value(s7, ss->fft_with_phases_symbol, s7_make_boolean(s7, a));}
+  #define in_set_fft_with_phases(a) \
+    do {\
+        ss->Fft_With_Phases = a; \
+        s7_symbol_set_value(s7, ss->fft_with_phases_symbol, s7_make_boolean(s7, ss->Fft_With_Phases));\
+    } while (0)
 #else
   #define in_set_fft_with_phases(a) ss->Fft_With_Phases = a
 #endif
@@ -1317,7 +1733,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define cursor_style(ss) ss->Cursor_Style
 #if HAVE_SCHEME
-  #define in_set_cursor_style(a) {ss->Cursor_Style = a; s7_symbol_set_value(s7, ss->cursor_style_symbol, s7_make_integer(s7, a));}
+  #define in_set_cursor_style(a) \
+    do {\
+        ss->Cursor_Style = a; \
+        s7_symbol_set_value(s7, ss->cursor_style_symbol, s7_make_integer(s7, ss->Cursor_Style));\
+    } while (0)
 #else
   #define in_set_cursor_style(a) ss->Cursor_Style = a
 #endif
@@ -1325,7 +1745,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define tracking_cursor_style(ss) ss->Tracking_Cursor_Style
 #if HAVE_SCHEME
-  #define in_set_tracking_cursor_style(a) {ss->Tracking_Cursor_Style = a; s7_symbol_set_value(s7, ss->tracking_cursor_style_symbol, s7_make_integer(s7, a));}
+  #define in_set_tracking_cursor_style(a) \
+    do {\
+        ss->Tracking_Cursor_Style = a; \
+        s7_symbol_set_value(s7, ss->tracking_cursor_style_symbol, s7_make_integer(s7, ss->Tracking_Cursor_Style));\
+    } while (0)
 #else
   #define in_set_tracking_cursor_style(a) ss->Tracking_Cursor_Style = a
 #endif
@@ -1333,7 +1757,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define cursor_size(ss) ss->Cursor_Size
 #if HAVE_SCHEME
-  #define in_set_cursor_size(a) {ss->Cursor_Size = a; s7_symbol_set_value(s7, ss->cursor_size_symbol, s7_make_integer(s7, a));}
+  #define in_set_cursor_size(a) \
+    do {\
+        ss->Cursor_Size = a; \
+        s7_symbol_set_value(s7, ss->cursor_size_symbol, s7_make_integer(s7, ss->Cursor_Size));\
+    } while (0)
 #else
   #define in_set_cursor_size(a) ss->Cursor_Size = a
 #endif
@@ -1341,7 +1769,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define channel_style(ss) ss->Channel_Style
 #if HAVE_SCHEME
-  #define in_set_channel_style(a) {ss->Channel_Style = a; s7_symbol_set_value(s7, ss->channel_style_symbol, s7_make_integer(s7, a));}
+  #define in_set_channel_style(a) \
+    do {\
+        ss->Channel_Style = a; \
+        s7_symbol_set_value(s7, ss->channel_style_symbol, s7_make_integer(s7, ss->Channel_Style));\
+    } while (0)
 #else
   #define in_set_channel_style(a) ss->Channel_Style = a
 #endif
@@ -1349,7 +1781,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define sync_style(ss) ss->Sync_Style
 #if HAVE_SCHEME
-  #define set_sync_style(a) {ss->Sync_Style = a; s7_symbol_set_value(s7, ss->sync_style_symbol, s7_make_integer(s7, a));}
+  #define set_sync_style(a) \
+    do {\
+        ss->Sync_Style = a; \
+        s7_symbol_set_value(s7, ss->sync_style_symbol, s7_make_integer(s7, ss->Sync_Style));\
+    } while (0)
 #else
   #define set_sync_style(a) ss->Sync_Style = a
 #endif
@@ -1361,7 +1797,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define listener_prompt(ss) ss->Listener_Prompt
 #if HAVE_SCHEME
-  #define in_set_listener_prompt(a) {ss->Listener_Prompt = a; s7_symbol_set_value(s7, ss->listener_prompt_symbol, s7_make_string(s7, a));}
+  #define in_set_listener_prompt(a) \
+    do {\
+        ss->Listener_Prompt = a; \
+        s7_symbol_set_value(s7, ss->listener_prompt_symbol, s7_make_string(s7, ss->Listener_Prompt));\
+    } while (0)
 #else
   #define in_set_listener_prompt(a) ss->Listener_Prompt = a
 #endif
@@ -1369,7 +1809,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define print_length(ss) ss->Print_Length
 #if HAVE_SCHEME
-  #define set_print_length(a) {ss->Print_Length = a; s7_symbol_set_value(s7, ss->print_length_symbol, s7_make_integer(s7, a));}
+  #define set_print_length(a) \
+    do {\
+        ss->Print_Length = a; \
+        s7_symbol_set_value(s7, ss->print_length_symbol, s7_make_integer(s7, ss->Print_Length));\
+    } while (0)
 #else
   #define set_print_length(a) ss->Print_Length = a
 #endif
@@ -1377,7 +1821,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define view_files_sort(ss) ss->View_Files_Sort
 #if HAVE_SCHEME
-  #define set_view_files_sort(a) {ss->View_Files_Sort = a; s7_symbol_set_value(s7, ss->view_files_sort_symbol, s7_make_integer(s7, a));}
+  #define set_view_files_sort(a) \
+    do {\
+        ss->View_Files_Sort = a; \
+        s7_symbol_set_value(s7, ss->view_files_sort_symbol, s7_make_integer(s7, ss->View_Files_Sort));\
+    } while (0)
 #else
   #define set_view_files_sort(a) ss->View_Files_Sort = a
 #endif
@@ -1389,7 +1837,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define enved_with_wave(ss) ss->Enved_With_Wave
 #if HAVE_SCHEME
-  #define in_set_enved_with_wave(a) {ss->Enved_With_Wave = a; s7_symbol_set_value(s7, ss->enved_with_wave_symbol, s7_make_boolean(s7, a));}
+  #define in_set_enved_with_wave(a) \
+    do {\
+        ss->Enved_With_Wave = a; \
+        s7_symbol_set_value(s7, ss->enved_with_wave_symbol, s7_make_boolean(s7, ss->Enved_With_Wave));\
+    } while (0)
 #else
   #define in_set_enved_with_wave(a) ss->Enved_With_Wave = a
 #endif
@@ -1397,7 +1849,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define enved_filter_order(ss) ss->Enved_Filter_Order
 #if HAVE_SCHEME
-  #define in_set_enved_filter_order(a) {ss->Enved_Filter_Order = a; s7_symbol_set_value(s7, ss->enved_filter_order_symbol, s7_make_integer(s7, a));}
+  #define in_set_enved_filter_order(a) \
+    do {\
+        ss->Enved_Filter_Order = a; \
+        s7_symbol_set_value(s7, ss->enved_filter_order_symbol, s7_make_integer(s7, ss->Enved_Filter_Order));\
+    } while (0)
 #else
   #define in_set_enved_filter_order(a) ss->Enved_Filter_Order = a
 #endif
@@ -1409,7 +1865,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define enved_target(ss) ss->Enved_Target
 #if HAVE_SCHEME
-  #define in_set_enved_target(a) {ss->Enved_Target = a; s7_symbol_set_value(s7, ss->enved_target_symbol, s7_make_integer(s7, a));}
+  #define in_set_enved_target(a) \
+    do {\
+        ss->Enved_Target = a; \
+        s7_symbol_set_value(s7, ss->enved_target_symbol, s7_make_integer(s7, ss->Enved_Target));\
+    } while (0)
 #else
   #define in_set_enved_target(a) ss->Enved_Target = a
 #endif
@@ -1417,7 +1877,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define enved_base(ss) ss->Enved_Base
 #if HAVE_SCHEME
-  #define in_set_enved_base(a) {ss->Enved_Base = a; s7_symbol_set_value(s7, ss->enved_base_symbol, s7_make_real(s7, a));}
+  #define in_set_enved_base(a) \
+    do {\
+        ss->Enved_Base = a; \
+        s7_symbol_set_value(s7, ss->enved_base_symbol, s7_make_real(s7, ss->Enved_Base));\
+    } while (0)
 #else
   #define in_set_enved_base(a) ss->Enved_Base = a
 #endif
@@ -1425,7 +1889,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define enved_power(ss) ss->Enved_Power
 #if HAVE_SCHEME
-  #define set_enved_power(a) {ss->Enved_Power = a; s7_symbol_set_value(s7, ss->enved_power_symbol, s7_make_real(s7, a));}
+  #define set_enved_power(a) \
+    do {\
+        ss->Enved_Power = a; \
+        s7_symbol_set_value(s7, ss->enved_power_symbol, s7_make_real(s7, ss->Enved_Power));\
+    } while (0)
 #else
   #define set_enved_power(a) ss->Enved_Power = a
 #endif
@@ -1433,7 +1901,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define enved_style(ss) ss->Enved_Style
 #if HAVE_SCHEME
-  #define set_enved_style(a) {ss->Enved_Style = a; s7_symbol_set_value(s7, ss->enved_style_symbol, s7_make_integer(s7, a));}
+  #define set_enved_style(a) \
+    do {\
+        ss->Enved_Style = a; \
+        s7_symbol_set_value(s7, ss->enved_style_symbol, s7_make_integer(s7, ss->Enved_Style));\
+    } while (0)
 #else
   #define set_enved_style(a) ss->Enved_Style = a
 #endif
@@ -1441,7 +1913,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define audio_output_device(ss) ss->Audio_Output_Device
 #if HAVE_SCHEME
-  #define set_audio_output_device(a) {ss->Audio_Output_Device = a; s7_symbol_set_value(s7, ss->audio_output_device_symbol, s7_make_integer(s7, a));}
+  #define set_audio_output_device(a) \
+    do {\
+        ss->Audio_Output_Device = a; \
+        s7_symbol_set_value(s7, ss->audio_output_device_symbol, s7_make_integer(s7, ss->Audio_Output_Device));\
+    } while (0)
 #else
   #define set_audio_output_device(a) ss->Audio_Output_Device = a
 #endif
@@ -1449,7 +1925,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define audio_input_device(ss) ss->Audio_Input_Device
 #if HAVE_SCHEME
-  #define set_audio_input_device(a) {ss->Audio_Input_Device = a; s7_symbol_set_value(s7, ss->audio_input_device_symbol, s7_make_integer(s7, a));}
+  #define set_audio_input_device(a) \
+    do {\
+        ss->Audio_Input_Device = a; \
+        s7_symbol_set_value(s7, ss->audio_input_device_symbol, s7_make_integer(s7, ss->Audio_Input_Device));\
+    } while (0)
 #else
   #define set_audio_input_device(a) ss->Audio_Input_Device = a
 #endif
@@ -1459,7 +1939,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define clipping(ss) ss->Clipping
 #if HAVE_SCHEME
-  #define set_clipping(a) {ss->Clipping = a; s7_symbol_set_value(s7, ss->clipping_symbol, s7_make_boolean(s7, a));}
+  #define set_clipping(a) \
+    do {\
+        ss->Clipping = a; \
+        s7_symbol_set_value(s7, ss->clipping_symbol, s7_make_boolean(s7, ss->Clipping));\
+    } while (0)
 #else
   #define set_clipping(a) ss->Clipping = a
 #endif
@@ -1467,7 +1951,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define html_dir(ss) ss->HTML_Dir
 #if HAVE_SCHEME
-  #define set_html_dir_1(a) {ss->HTML_Dir = a; s7_symbol_set_value(s7, ss->html_dir_symbol, s7_make_string(s7, a));}
+  #define set_html_dir_1(a) \
+    do {\
+        ss->HTML_Dir = a; \
+        s7_symbol_set_value(s7, ss->html_dir_symbol, s7_make_string(s7, ss->HTML_Dir));\
+    } while (0)
 #else
   #define set_html_dir_1(a) ss->HTML_Dir = a
 #endif
@@ -1475,7 +1963,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define html_program(ss) ss->HTML_Program
 #if HAVE_SCHEME
-  #define set_html_program(a) {ss->HTML_Program = a; s7_symbol_set_value(s7, ss->html_program_symbol, s7_make_string(s7, a));}
+  #define set_html_program(a) \
+    do {\
+        ss->HTML_Program = a; \
+        s7_symbol_set_value(s7, ss->html_program_symbol, s7_make_string(s7, ss->HTML_Program));\
+    } while (0)
 #else
   #define set_html_program(a) ss->HTML_Program = a
 #endif
@@ -1483,7 +1975,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define graphs_horizontal(ss) ss->Graphs_Horizontal
 #if HAVE_SCHEME
-  #define in_set_graphs_horizontal(a) {ss->Graphs_Horizontal = a; s7_symbol_set_value(s7, ss->graphs_horizontal_symbol, s7_make_boolean(s7, a));}
+  #define in_set_graphs_horizontal(a) \
+    do {\
+        ss->Graphs_Horizontal = a; \
+        s7_symbol_set_value(s7, ss->graphs_horizontal_symbol, s7_make_boolean(s7, ss->Graphs_Horizontal));\
+    } while (0)
 #else
   #define in_set_graphs_horizontal(a) ss->Graphs_Horizontal = a
 #endif
@@ -1491,7 +1987,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define mix_tag_width(ss) ss->Mix_Tag_Width
 #if HAVE_SCHEME
-  #define set_mix_tag_width(a) {ss->Mix_Tag_Width = a; s7_symbol_set_value(s7, ss->mix_tag_width_symbol, s7_make_integer(s7, a));}
+  #define set_mix_tag_width(a) \
+    do {\
+        ss->Mix_Tag_Width = a; \
+        s7_symbol_set_value(s7, ss->mix_tag_width_symbol, s7_make_integer(s7, ss->Mix_Tag_Width));\
+    } while (0)
 #else
   #define set_mix_tag_width(a) ss->Mix_Tag_Width = a
 #endif
@@ -1499,7 +1999,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define mix_tag_height(ss) ss->Mix_Tag_Height
 #if HAVE_SCHEME
-  #define set_mix_tag_height(a) {ss->Mix_Tag_Height = a; s7_symbol_set_value(s7, ss->mix_tag_height_symbol, s7_make_integer(s7, a));}
+  #define set_mix_tag_height(a) \
+    do {\
+        ss->Mix_Tag_Height = a; \
+        s7_symbol_set_value(s7, ss->mix_tag_height_symbol, s7_make_integer(s7, ss->Mix_Tag_Height));\
+    } while (0)
 #else
   #define set_mix_tag_height(a) ss->Mix_Tag_Height = a
 #endif
@@ -1507,7 +2011,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define mark_tag_width(ss) ss->Mark_Tag_Width
 #if HAVE_SCHEME
-  #define set_mark_tag_width(a) {ss->Mark_Tag_Width = a; s7_symbol_set_value(s7, ss->mark_tag_width_symbol, s7_make_integer(s7, a));}
+  #define set_mark_tag_width(a) \
+    do {\
+        ss->Mark_Tag_Width = a; \
+        s7_symbol_set_value(s7, ss->mark_tag_width_symbol, s7_make_integer(s7, ss->Mark_Tag_Width));\
+    } while (0)
 #else
   #define set_mark_tag_width(a) ss->Mark_Tag_Width = a
 #endif
@@ -1515,7 +2023,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define mark_tag_height(ss) ss->Mark_Tag_Height
 #if HAVE_SCHEME
-  #define set_mark_tag_height(a) {ss->Mark_Tag_Height = a; s7_symbol_set_value(s7, ss->mark_tag_height_symbol, s7_make_integer(s7, a));}
+  #define set_mark_tag_height(a) \
+    do {\
+        ss->Mark_Tag_Height = a; \
+        s7_symbol_set_value(s7, ss->mark_tag_height_symbol, s7_make_integer(s7, ss->Mark_Tag_Height));\
+    } while (0)
 #else
   #define set_mark_tag_height(a) ss->Mark_Tag_Height = a
 #endif
@@ -1523,7 +2035,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define min_dB(ss) ss->Min_dB
 #if HAVE_SCHEME
-  #define set_min_dB(a) {ss->Min_dB = a; s7_symbol_set_value(s7, ss->min_db_symbol, s7_make_real(s7, a));}
+  #define set_min_dB(a) \
+    do {\
+        ss->Min_dB = a; \
+        s7_symbol_set_value(s7, ss->min_db_symbol, s7_make_real(s7, ss->Min_dB));\
+    } while (0)
 #else
   #define set_min_dB(a) ss->Min_dB = a
 #endif
@@ -1531,7 +2047,11 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define play_arrow_size(ss) ss->Play_Arrow_Size
 #if HAVE_SCHEME
-  #define set_play_arrow_size(a) {ss->Play_Arrow_Size = a; s7_symbol_set_value(s7, ss->play_arrow_size_symbol, s7_make_integer(s7, a));}
+  #define set_play_arrow_size(a) \
+    do {\
+        ss->Play_Arrow_Size = a; \
+        s7_symbol_set_value(s7, ss->play_arrow_size_symbol, s7_make_integer(s7, ss->Play_Arrow_Size));\
+    } while (0)
 #else
   #define set_play_arrow_size(a) ss->Play_Arrow_Size = a
 #endif
@@ -1541,6 +2061,5 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define HAVE_GTK use USE_GTK not HAVE!
 #define HAVE_MOTIF use USE_MOTIF not HAVE!
 /* I keep using these HAVE_* forms by mistake */
-
 
 #endif

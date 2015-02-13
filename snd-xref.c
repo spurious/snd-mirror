@@ -1496,7 +1496,7 @@ static const char *Saving_xrefs[] = {
   "save a sound under a different name: {save-sound-as}",
   "extract one channel from a sound: {extract-channel}",
   "extract a set of channels from a sound: {extract-channels}",
-  "save a sound in a different format or header: {save-sound-as}",
+  "save a sound in a different sample type or header: {save-sound-as}",
   "backup edits automatically: {autosave}",
   "check first for unsaved edits: {ask-about-unsaved-edits}",
   "save Snd's complete state (unsaved edits and all): {save-state}, {save-dir}, {save-state-hook}, {save-state-file}",

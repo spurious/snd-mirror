@@ -1138,7 +1138,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, mus_long_
       if (sp) 
 	{
 	  sp->playing++;
-	  if ((ss->tracking) && 
+	  if ((with_tracking_cursor(ss) != DONT_TRACK) &&     /* ss->tracking is set by start_dac, so it's not useful here */
 	      (!(is_player_sound(sp))))
 	    {
 	      cp->original_cursor = cursor_sample(cp);
@@ -1879,7 +1879,6 @@ static int fill_dac_buffers(int write_ok)
 
   if (snd_dacp)
     {
-      int bytes;
 #if (HAVE_OSS || HAVE_ALSA)
       if (write_ok == WRITE_TO_DAC) 
 	{
@@ -1898,6 +1897,7 @@ static int fill_dac_buffers(int write_ok)
 	  for (i = 0; i < snd_dacp->devices; i++)
 	    if (dev_fd[i] != -1)
 	      {
+		int bytes;
 		bytes = snd_dacp->chans_per_device[i] * framples * mus_bytes_per_sample(snd_dacp->out_format);
 		mus_audio_write(dev_fd[i], (char *)(audio_bytes[i]), bytes);
 	      }
@@ -1905,6 +1905,7 @@ static int fill_dac_buffers(int write_ok)
 #else
       if (write_ok == WRITE_TO_DAC) 
 	{
+	  int bytes;
 	  mus_file_write_buffer(snd_dacp->out_format, 0, framples - 1, snd_dacp->channels, dac_buffers, (char *)(audio_bytes[0]), clipping(ss));
 	  bytes = snd_dacp->channels * framples * mus_bytes_per_sample(snd_dacp->out_format);
 	  mus_audio_write(dev_fd[0], (char *)(audio_bytes[0]), bytes);
@@ -2929,9 +2930,9 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
 #if USE_NO_GUI
   background = NOT_IN_BACKGROUND;
 #else
-  if (wait) background = IN_BACKGROUND; else background = NOT_IN_BACKGROUND;
+  if (wait) background = NOT_IN_BACKGROUND; else background = IN_BACKGROUND;
+  /* confusing! wait=#f means don't wait for the play to complete => IN_BACKGROUND */
 #endif
-
   /* unspecified object means the current sound, all chans, all samps, with sync, without wait, current edpos */
   if (!Xen_is_bound(object))
     {
@@ -3382,7 +3383,7 @@ static Xen g_set_with_tracking_cursor(Xen on)
 {
   if (Xen_is_boolean(on)) /* for backwards compatibility */
     {
-      {set_with_tracking_cursor(ss, (Xen_boolean_to_C_bool(on)) ? TRACK_AND_RETURN : DONT_TRACK);}
+      set_with_tracking_cursor(ss, (Xen_boolean_to_C_bool(on)) ? TRACK_AND_RETURN : DONT_TRACK);
       return(on);
     }
 
@@ -3391,8 +3392,8 @@ static Xen g_set_with_tracking_cursor(Xen on)
       int val;
       val = Xen_integer_to_C_int(on);
       if (val == 2) 
-	{set_with_tracking_cursor(ss, TRACK_AND_STAY);}
-      else {set_with_tracking_cursor(ss, ((val == 1) ? TRACK_AND_RETURN : DONT_TRACK));}
+	set_with_tracking_cursor(ss, TRACK_AND_STAY);
+      else set_with_tracking_cursor(ss, ((val == 1) ? TRACK_AND_RETURN : DONT_TRACK));
       return(C_int_to_Xen_integer((int)with_tracking_cursor(ss)));
     }
 
@@ -3400,17 +3401,22 @@ static Xen g_set_with_tracking_cursor(Xen on)
     {
       if (Xen_keyword_is_eq(on, Xen_make_keyword("track-and-return")))
 	{
-	  {set_with_tracking_cursor(ss, TRACK_AND_RETURN);}
+	  set_with_tracking_cursor(ss, TRACK_AND_RETURN);
 	  return(on);
 	}
       if (Xen_keyword_is_eq(on, Xen_make_keyword("track-and-stay")))
 	{
-	  {set_with_tracking_cursor(ss, TRACK_AND_STAY);}
+	  set_with_tracking_cursor(ss, TRACK_AND_STAY);
+	  return(on);
+	}
+      if (Xen_keyword_is_eq(on, Xen_make_keyword("dont-track")))
+	{
+	  set_with_tracking_cursor(ss, DONT_TRACK);
 	  return(on);
 	}
     }
 
-  Xen_check_type(false, on, 1, S_setB S_with_tracking_cursor, "a boolean, :track-and-return, or :track-and-stay");
+  Xen_check_type(false, on, 1, S_setB S_with_tracking_cursor, ":dont-track, :track-and-return, or :track-and-stay");
   return(on);
 }
 

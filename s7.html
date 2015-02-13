@@ -875,7 +875,7 @@ wants an expression:
 
 <pre class="indented">
 &gt; (define-macro (add-1 arg) `(+ 1 ,arg))
-add-1
+#&lt;macro (arg)&gt;
 &gt; (macroexpand (add-1 32)) ; (macroexpand add-1) will complain about "car argument, add-1"
 (+ 1 32)
 </pre>
@@ -897,7 +897,7 @@ giving the new symbol name's prefix.  gensym? returns #t if its argument is a sy
 
 <pre class="indented">
 &gt; (define-macro* (add-2 a (b 2)) `(+ ,a ,b))
-add-2
+#&lt;macro* (a b)&gt;
 &gt; (add-2 1 3)
 4
 &gt; (add-2 1)
@@ -1019,7 +1019,7 @@ and assign it to a variable.  You can even set its procedure-setter!
 
 <pre class="indented">
 &gt; (define-macro (hi a) `(+ ,a 1))
-hi
+#&lt;macro (a)gt;
 &gt; (apply hi '(4))
 5
 &gt; (define (fmac mac) (apply mac '(4)))
@@ -1037,11 +1037,11 @@ make-mac
     (x 2))
 3
 &gt; (define-macro (ref v i) `(vector-ref ,v ,i))
-ref
+#&lt;macro (v i)&gt;
 &gt; (define-macro (set v i x) `(vector-set! ,v ,i ,x))
-set
+#&lt;macro (v i ...)&gt;
 &gt; (set! (procedure-setter ref) set)
-#&lt;macro&gt;
+#&lt;macro (v i ...)&gt;
 &gt; (let ((v (vector 1 2 3))) (set! (ref v 0) 32) v)
 #(32 2 3)
 </pre>
@@ -1077,12 +1077,12 @@ It's almost as easy to write the actual macro body as the backquoted version of 
 
 <pre class="indented">
 &gt; (define-macro (hi a) `(+ 1 ,a))
-hi
+#&lt;macro (a)&gt;
 &gt; (procedure-source hi)
 (lambda (a) <em class=red>({list} '+ 1 a)</em>)
 
 &gt; (define-macro (hi a) `(+ 1 ,@a))
-hi
+#&lt;macro (a)&gt;
 &gt; (procedure-source hi)
 (lambda (a) <em class=red>({list} '+ 1 ({apply_values} a))</em>)
 </pre>
@@ -1125,7 +1125,7 @@ other hand, seem unnecessary.
 &gt; (define-macro (mac b) 
     `(let ((a 12)) 
        (+ a ,b)))
-mac
+#&lt;macro (b)&gt;
 &gt; (let ((a 1) (+ *)) (mac a))
 144
 </pre>
@@ -1141,7 +1141,7 @@ as long as the redefinition of '+' is local (that is, it happens after the macro
 &gt; (define-macro (mac b) 
     `(let ((a 12)) 
        (,+ a ,b))) ; ,+ picks up the definition-time +
-mac
+#&lt;macro (b)&gt;
 &gt; (let ((a 1) (+ *)) (mac a))
 24                 ; (+ a a) where a is 12
 </pre>
@@ -1197,7 +1197,7 @@ or #_&lt;name&gt;.  That is, #_+ is a reader macro for <code>(with-let (unlet) +
 &gt; (define-macro (mac b) 
     `(<em class=red>#_let</em> ((a 12)) 
        (<em class=red>#_+</em> a ,b))) ; #_+ and #_let are start-up values
-mac
+#&lt;macro (b)&gt;
 &gt; (let ((a 1) (+ *)) (mac a))
 24                 ; (+ a a) where a is 12 and + is the start-up +
 
@@ -1243,7 +1243,7 @@ mac
 ;; or use lambda:
 &gt; (define-macro (mac b) 
   `((lambda (b) (let ((a 12)) (#_+ a b))) ,b))
-mac
+#&lt;macro (b)&gt;
 &gt; (let ((a 1) (+ *)) (mac a))
 13
 </pre>
@@ -1276,9 +1276,9 @@ with the macro arguments getting their values from the call-time environment:
                          (list (list 'funclet ,name)) 
                          (list ,@get-args))
                  ',@new-body)))))
-
+#&lt;macro (name-and-args . body)&gt;
 &gt; (define-immaculo (mac c d) `(let ((a 12) (b 3)) (+ a b ,c ,d)))
-mac
+#&lt;macro (c d)&gt;
 &gt; (let ((a 21) (b 10) (+ *)) (mac a b))
 46     ; (+ 12 3 21 10) with the definition-time value of +
 &gt; (let ((a 21) (b 10) (+ *)) (mac a (+ b 10)))
@@ -1305,7 +1305,7 @@ Better would be to use a gensym rather than "e" for the curlet.
 
 &gt; (define-immaculo (mac b) 
     `(let ((a 1)) (+ a ,b)))
-mac
+#&lt;macro (b)&gt;
 &gt; (let ((a 32)) (mac a))
 33
 &gt; (procedure-source mac) ; I've edited the results to try to make the transformation clearer
@@ -1419,7 +1419,7 @@ that returns its argument in a list statement.
 
 <pre class="indented">
 &gt; (define-macro (hang arg) `(define ,arg `(list (cdr ,,arg)))) ; obvious, no?
-hang
+#&lt;macro (arg)&gt;
 &gt; (macroexpand (hang (f a)))
 (define #1=(f a) ({list} 'list ({list} 'cdr #1#)))
 &gt; (hang (f a))
@@ -1436,7 +1436,7 @@ Here's one way out:
 
 <pre class="indented">
 &gt; (define-macro (hang arg) `(define ,arg `(list ,,@(cdr arg))))
-hang
+#&lt;macro (arg)&gt;
 &gt; (macroexpand (hang (f a)))
 (define (f a) ({list} 'list a))
 &gt; (hang (f a))
@@ -1530,7 +1530,7 @@ value passed to set!:
 	    `(if ,on
 	         (set! ,var (logior ,var (ash 1 ,index)))
 	         (set! ,var (logand ,var (lognot (ash 1 ,index)))))))
-#&lt;macro&gt;
+#&lt;macro (var index ...)&gt;
 &gt; (define (mingle a b)
     (let ((r 0))
       (do ((i 0 (+ i 1)))
@@ -3235,7 +3235,7 @@ mostly useful in reader-cond.
 
 <pre class="indented">
 &gt; (define-expansion (comment str) (values))
-#&lt;macro&gt;
+#&lt;expansion (str)&gt;
 &gt; (+ 1 (comment "one") 2 (comment "two"))
 3
 </pre>
@@ -4721,7 +4721,7 @@ returns the value that is actually set.  For example, the function can ensure th
 		         v)))
 	      vars)
        ,@body))
-#&lt;macro&gt;
+#&lt;macro (vars . body)&gt;
 
 &gt; (reflective-let ((a 1)) (set! a 2))
 2     ; prints "a -&gt; 2"
@@ -5477,11 +5477,11 @@ a (gasp!) f*xpr.  You can do something similar with a normal macro:
 
 <pre class="indented">
 &gt; (define-macro (fx x) `'(+ 1 ,x)) ; quote result to avoid evaluation
-#&lt;macro&gt;
+#&lt;macro (x)&gt;
 &gt; (let ((a 3)) (fx a))
 (+ 1 a)
 &gt; (define-expansion (ex x) `(+ 1 ,x))
-#&lt;macro&gt;
+#&lt;expansion (x)&gt;
 &gt; (let ((x ex) (a 3)) (x a))       ; avoid read-time splicing
 (+ 1 a)
 &gt; (let ((a 3)) (ex a))             ; spliced in at read-time
@@ -5491,7 +5491,7 @@ a (gasp!) f*xpr.  You can do something similar with a normal macro:
 <p>As this example shows, the reader knows nothing about the program context,
 so if it does not see a list whose first element is a expansion name, it does
 not do anything special.  So in the <code>(x a)</code> case above, the
-expansion happens when the code is evaluated, so the expansion result
+expansion happens when the code is evaluated, and the expansion result
 is simply returned, unevaluated.
 </p>
 
@@ -5540,10 +5540,6 @@ free-heap-size                the number of currently unused cells
 gc-freed                      number of cells freed by the last GC pass
 gc-protected-objects          vector of the objects permanently protected from the GC
 gc-stats                      #f (#t turns on printout of the GC activity)
-
-the next 8 are vectors (mainly for GC debugging):
-    gensyms, input-ports, output-ports, strings, vectors, 
-    hash-tables, continuations, c-objects
 </pre>
 
 <p>
@@ -6099,7 +6095,7 @@ These symbols are not just an optimization of string comparison:
 (define-macro (hi a) 
   (let ((funny-name (string-&gt;symbol (string #\;))))
     `(let ((,funny-name ,a)) (+ 1 ,funny-name))))
-
+#&lt;macro (a)&gt;
 &gt; (hi 2)
 3
 &gt; (macroexpand (hi 2))
@@ -6185,7 +6181,7 @@ These symbols are not just an optimization of string comparison:
 <pre class="indented">
 &gt; (define-macro (enum . args)
     `(for-each define ',args (iota (length ',args))))
-enum
+#&lt;macro args&gt;
 &gt; (enum a b c) 
 #&lt;unspecified&gt;
 &gt; b
@@ -6215,7 +6211,7 @@ enum
 &gt; (define-macro (glambda args) ; returns an anonymous macro that will return a function given a body
     `(define-macro (,(gensym) . body) 
          `(lambda ,',args ,@body)))
-glambda
+#&lt;macro (args)&gt;
 &gt; (let ((gf (glambda (a b))))  ; gf is now ready for any body that involves arguments 'a and 'b
     ((gf (+ a b)) 1 2))        ; apply (lambda (a b) (+ a b)) to '(1 2)
 3
@@ -7091,7 +7087,7 @@ static s7_pointer make_dax(s7_scheme *sc, s7_pointer args)
   o = (dax *)malloc(sizeof(dax));
   o-&gt;x = s7_real(s7_car(args));
   if (s7_cdr(args) != s7_nil(sc))
-    o-&gt;data = s7_car(s7_cdr(args));
+    o-&gt;data = s7_cadr(args);
   else o-&gt;data = s7_nil(sc);
   return(<em class=red>s7_make_object</em>(sc, dax_type_tag, (void *)o));
 }
@@ -7114,8 +7110,8 @@ static s7_pointer set_dax_x(s7_scheme *sc, s7_pointer args)
 {
   dax *o;
   o = (dax *)s7_object_value(s7_car(args));
-  o-&gt;x = s7_real(s7_car(s7_cdr(args)));
-  return(s7_car(s7_cdr(args)));
+  o-&gt;x = s7_real(s7_cadr(args));
+  return(s7_cadr(args));
 }
 
 static s7_pointer dax_data(s7_scheme *sc, s7_pointer args)
@@ -7129,7 +7125,7 @@ static s7_pointer set_dax_data(s7_scheme *sc, s7_pointer args)
 {
   dax *o;
   o = (dax *)s7_object_value(s7_car(args));
-  o-&gt;data = s7_car(s7_cdr(args));
+  o-&gt;data = s7_cadr(args);
   return(o-&gt;data);
 }
 
@@ -7393,7 +7389,7 @@ int main(int argc, char **argv)
 static s7_pointer plus(s7_scheme *sc, s7_pointer args)
 {
   /* (define* (plus (red 32) blue) (+ (* 2 red) blue)) */
-  return(s7_make_integer(sc, 2 * s7_integer(s7_car(args)) + s7_integer(s7_car(s7_cdr(args)))));
+  return(s7_make_integer(sc, 2 * s7_integer(s7_car(args)) + s7_integer(s7_cadr(args))));
 }
 
 int main(int argc, char **argv)
@@ -7452,7 +7448,7 @@ static s7_pointer plus(s7_scheme *sc, s7_pointer args)
   /* (define-macro (plus a b) `(+ ,a ,b)) */
   s7_pointer a, b;
   a = s7_car(args);
-  b = s7_car(s7_cdr(args));
+  b = s7_cadr(args);
   return(s7_list(sc, 3, s7_make_symbol(sc, "+"),  a, b));
 }
 
@@ -7733,8 +7729,8 @@ static s7_pointer scheme_set_notification(s7_scheme *sc, s7_pointer args)
   /* this function is called when the Scheme variable is set! */
   fprintf(stderr, "%s set to %s\n",
 	  s7_object_to_c_string(sc, s7_car(args)),
-	  s7_object_to_c_string(sc, s7_car(s7_cdr(args))));
-  return(s7_car(s7_cdr(args)));
+	  s7_object_to_c_string(sc, s7_cadr(args)));
+  return(s7_cadr(args));
 }
 
 int main(int argc, char **argv)
@@ -8132,7 +8128,7 @@ static s7_pointer cload(s7_scheme *sc, s7_pointer args)
     {
       /* call our init func to define add-1 in s7 */
       void *init_func;
-      init_func = <em class=red>dlsym</em>(library, s7_string(s7_car(s7_cdr(args))));
+      init_func = <em class=red>dlsym</em>(library, s7_string(s7_cadr(args)));
       if (init_func)
 	{
 	  typedef void *(*dl_func)(s7_scheme *sc);

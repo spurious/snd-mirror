@@ -2140,6 +2140,7 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
 static s7_pointer make_string_wrapper_with_length(s7_scheme *sc, const char *str, int len);
 static s7_pointer make_string_wrapper(s7_scheme *sc, const char *str);
 static s7_pointer make_permanent_string_with_length_and_hash(const char *str, unsigned int len, unsigned int hash);
+static void check_for_substring_temp(s7_scheme *sc, s7_pointer expr);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static void pop_input_port(s7_scheme *sc);
 static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
@@ -19714,7 +19715,7 @@ static s7_pointer make_permanent_string_with_length_and_hash(const char *str, un
 }
 
 
-static s7_pointer make_temporary_string(s7_scheme *sc, const char *str, int len) 
+static void prepare_temporary_string(s7_scheme *sc, int len)
 {
   if (!sc->tmp_str)
     {
@@ -19734,8 +19735,12 @@ static s7_pointer make_temporary_string(s7_scheme *sc, const char *str, int len)
       else sc->tmp_str_chars = (char *)realloc(sc->tmp_str_chars, sc->tmp_str_size * sizeof(char));
       string_value(sc->tmp_str) = sc->tmp_str_chars;
     }
-
   string_length(sc->tmp_str) = len;
+}
+
+static s7_pointer make_temporary_string(s7_scheme *sc, const char *str, int len) 
+{
+  prepare_temporary_string(sc, len);
   if (len > 0)
     memmove((void *)sc->tmp_str_chars, (void *)str, len); /* not memcpy because str might be a temp string (i.e. sc->tmp_str_chars -> itself) */
   sc->tmp_str_chars[len] = 0;
@@ -19988,7 +19993,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_string_append(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, bool use_temp)
 {
   #define H_string_append "(string-append str1 ...) appends all its string arguments into one string"
   int len = 0;
@@ -20026,15 +20031,37 @@ static s7_pointer g_string_append(s7_scheme *sc, s7_pointer args)
 	}
       len += string_length(p);
     }
-  
-  /* store the contents of the argument strings into the new string */
-  newstr = make_empty_string(sc, len + 1, 0); 
-  string_length(newstr) = len;
+
+  if (use_temp)
+    {
+      prepare_temporary_string(sc, len);
+      sc->tmp_str_chars[len] = 0;
+      newstr = sc->tmp_str;
+    }
+  else
+    {
+      /* store the contents of the argument strings into the new string */
+      newstr = make_empty_string(sc, len + 1, 0); 
+      string_length(newstr) = len;
+    }
   for (pos = string_value(newstr), x = args; is_not_null(x); pos += string_length(car(x)), x = cdr(x)) 
     memcpy(pos, string_value(car(x)), string_length(car(x)));
   
   return(newstr);
 }
+
+static s7_pointer g_string_append(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_append "(string-append str1 ...) appends all its string arguments into one string"
+  return(g_string_append_1(sc, args, false));
+}
+
+static s7_pointer string_append_to_temp;
+static s7_pointer g_string_append_to_temp(s7_scheme *sc, s7_pointer args)
+{
+  return(g_string_append_1(sc, args, true));
+}
+
 
 #if (!WITH_PURE_S7)
 static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
@@ -21867,7 +21894,6 @@ static void string_write_string(s7_scheme *sc, const char *str, int len, s7_poin
 }
 
 
-static void check_for_substring_temp(s7_scheme *sc, s7_pointer expr);
 static s7_pointer write_string_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   check_for_substring_temp(sc, expr);
@@ -23793,6 +23819,12 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
   return(sc->F);
 }
 
+static s7_pointer eval_string_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  check_for_substring_temp(sc, expr);
+  return(f);
+}
+
 
 static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
 {
@@ -24046,6 +24078,7 @@ static s7_pointer find_closure(s7_scheme *sc, s7_pointer closure, s7_pointer cur
 static const char *c_closure_name(s7_scheme *sc, s7_pointer closure, int *nlen)
 {
   s7_pointer x;
+  const char *base_name = NULL;
   x = find_closure(sc, closure, closure_let(closure));
 
   /* this can be confusing!  In some cases, the function is in its environment, and in other very similar-looking cases it isn't:
@@ -24056,36 +24089,39 @@ static const char *c_closure_name(s7_scheme *sc, s7_pointer closure, int *nlen)
    * (let () (define (a) 1) a)
    * a
    */
-
   if (is_symbol(x))
     {
       (*nlen) = symbol_name_length(x);
       return(symbol_name(x));
     }
 
-  /* names like #<closure> and #<macro> are useless -- try to be a bit more informative
-   *   #<lambda|* args> #<m|bacro|* args> (args truncated if long)
-   * despite the name "c_closure..." this function refers to T_CLOSURE and T_CLOSURE_STAR objects only
-   */
+  /* names like #<closure> and #<macro> are useless -- try to be a bit more informative */
+  switch (type(closure))
+    {
+    case T_CLOSURE:      base_name = "lambda";  break;
+    case T_CLOSURE_STAR: base_name = "lambda*"; break;
+    case T_MACRO:        if (is_expansion(closure)) base_name = "expansion"; else base_name = "macro"; break;
+    case T_MACRO_STAR:   base_name = "macro*";  break;
+    case T_BACRO:        base_name = "bacro";   break;
+    case T_BACRO_STAR:   base_name = "bacro*";  break;
+    }
   if (is_null(closure_args(closure)))
-    (*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<lambda%s ()>", (type(closure) == T_CLOSURE) ? "" : "*");
+    (*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<%s ()>", base_name);
   else
     {
       if (is_symbol(closure_args(closure)))
-	(*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<lambda%s %s>", (type(closure) == T_CLOSURE) ? "" : "*", symbol_name(closure_args(closure)));
+	(*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<%s %s>", base_name, symbol_name(closure_args(closure)));
       else
 	{
 	  x = closure_args(closure);
 	  if (is_null(cdr(x)))
-	    (*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<lambda%s (%s)>", 
-			       (type(closure) == T_CLOSURE) ? "" : "*", 
+	    (*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<%s (%s)>", base_name,
 			       (is_pair(car(x))) ? symbol_name(caar(x)) : symbol_name(car(x)));
-	  else (*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<lambda%s (%s %s%s%s>", 
-				  (type(closure) == T_CLOSURE) ? "" : "*", 
+	  else (*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<%s (%s %s%s%s)>", base_name,
 				  (is_pair(car(x))) ? symbol_name(caar(x)) : symbol_name(car(x)),
 				  (is_pair(cdr(x))) ? "" : ". ",
 				  (is_pair(cdr(x))) ? ((is_pair(cadr(x))) ? symbol_name(caadr(x)) : symbol_name(cadr(x))) : symbol_name(cdr(x)),
-				  ((is_pair(cdr(x))) && (!is_null(cddr(x)))) ? " ..." : ")");
+				  ((is_pair(cdr(x))) && (!is_null(cddr(x)))) ? " ..." : "");
 	}
     }
   return(sc->strbuf);
@@ -26040,20 +26076,6 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       else port_write_string(port)(sc, character_name(obj), character_name_length(obj), port);
       break;
 
-    case T_MACRO:
-    case T_MACRO_STAR:
-      if (use_write == USE_READABLE_WRITE)
-	write_macro_readably(sc, obj, port);
-      else port_write_string(port)(sc, "#<macro>", 8, port);
-      break;
-
-    case T_BACRO:
-    case T_BACRO_STAR:
-      if (use_write == USE_READABLE_WRITE)
-	write_macro_readably(sc, obj, port);
-      else port_write_string(port)(sc, "#<bacro>", 8, port);
-      break;
-
     case T_CLOSURE:
     case T_CLOSURE_STAR:
       if (has_methods(obj))
@@ -26083,6 +26105,21 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	}
       break;
   
+    case T_MACRO:
+    case T_MACRO_STAR:
+    case T_BACRO:
+    case T_BACRO_STAR:
+      if (use_write == USE_READABLE_WRITE)
+	write_macro_readably(sc, obj, port);
+      else 
+	{
+	  const char *p;
+	  p = c_closure_name(sc, obj, &nlen);
+	  if (nlen > 0)
+	    port_write_string(port)(sc, p, nlen, port);
+	}
+      break;
+
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
@@ -38479,20 +38516,20 @@ static void init_catchers(void)
 {
   int i;
   for (i = 0; i <= OP_MAX_DEFINED; i++) catchers[i] = NULL;
-  catchers[OP_CATCH_ALL] = catch_all_function;
-  catchers[OP_CATCH_2] = catch_2_function;
-  catchers[OP_CATCH_1] = catch_1_function;
-  catchers[OP_CATCH] = catch_1_function;
-  catchers[OP_DYNAMIC_WIND] = catch_dw_function;
+  catchers[OP_CATCH_ALL] =           catch_all_function;
+  catchers[OP_CATCH_2] =             catch_2_function;
+  catchers[OP_CATCH_1] =             catch_1_function;
+  catchers[OP_CATCH] =               catch_1_function;
+  catchers[OP_DYNAMIC_WIND] =        catch_dw_function;
   catchers[OP_GET_OUTPUT_STRING_1] = catch_out_function;
-  catchers[OP_UNWIND_OUTPUT] = catch_out_function;
-  catchers[OP_UNWIND_INPUT] = catch_in_function;
-  catchers[OP_READ_DONE] = catch_read_function;      /* perhaps an error during (read) */
-  catchers[OP_EVAL_STRING_1] = catch_eval_function;  /* perhaps an error happened before we could push the OP_EVAL_STRING_2 */
-  catchers[OP_EVAL_STRING_2] = catch_eval_function;
-  catchers[OP_BARRIER] = catch_barrier_function;
-  catchers[OP_DEACTIVATE_GOTO] = catch_goto_function;
-  catchers[OP_ERROR_HOOK_QUIT] = catch_hook_function;
+  catchers[OP_UNWIND_OUTPUT] =       catch_out_function;
+  catchers[OP_UNWIND_INPUT] =        catch_in_function;
+  catchers[OP_READ_DONE] =           catch_read_function;      /* perhaps an error during (read) */
+  catchers[OP_EVAL_STRING_1] =       catch_eval_function;      /* perhaps an error happened before we could push the OP_EVAL_STRING_2 */
+  catchers[OP_EVAL_STRING_2] =       catch_eval_function;
+  catchers[OP_BARRIER] =             catch_barrier_function;
+  catchers[OP_DEACTIVATE_GOTO] =     catch_goto_function;
+  catchers[OP_ERROR_HOOK_QUIT] =     catch_hook_function;
 }
 
 static s7_pointer g_throw(s7_scheme *sc, s7_pointer args)
@@ -42660,12 +42697,11 @@ static s7_pointer char_ci_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
 
 static void check_for_substring_temp(s7_scheme *sc, s7_pointer expr)
 {
-  s7_pointer p, np = NULL;
+  s7_pointer p, np = NULL, ap = NULL, arg;
   int pairs = 0;
   /* a bit tricky -- accept temp only if there's just one inner expression and it calls substring */
   for (p = cdr(expr); is_pair(p); p = cdr(p))
     {
-      s7_pointer arg;
       arg = car(p);
       if (is_pair(arg))
 	{
@@ -42675,18 +42711,48 @@ static void check_for_substring_temp(s7_scheme *sc, s7_pointer expr)
 	    {
 	      if (c_call(arg) == g_substring)
 		np = arg;
-
-	      if (c_call(arg) == g_symbol_to_string)
-		set_c_function(arg, symbol_to_string_uncopied);
-
-	      if ((c_call(arg) == g_read_line) &&
-		  (is_pair(cdr(arg))))
-		set_c_function(arg, read_line_uncopied);
+	      else
+		{
+		  if (c_call(arg) == g_string_append)
+		    ap = arg;
+		  else
+		    {
+		      if (c_call(arg) == g_symbol_to_string)
+			set_c_function(arg, symbol_to_string_uncopied);
+		      else
+			{
+			  if ((c_call(arg) == g_read_line) &&
+			      (is_pair(cdr(arg))))
+			    set_c_function(arg, read_line_uncopied);
+			}}}}}}
+  if (pairs == 1)
+    {
+      if (np)
+	set_c_function(np, substring_to_temp);
+      else
+	{
+	  if (ap)
+	    {
+	      for (p = ap; is_pair(p); p = cdr(p))
+		{
+		  /* make sure there are no embedded uses of the temp string */
+		  arg = car(p);
+		  if ((is_pair(arg)) &&
+		      (is_safely_optimized(arg)))
+		    {
+		      if (c_call(arg) == g_substring_to_temp)
+			set_c_function(arg, slot_value(global_slot(sc->SUBSTRING)));
+		      else
+			{
+			  if (c_call(arg) == g_string_append_to_temp)
+			    set_c_function(arg, slot_value(global_slot(sc->STRING_APPEND)));
+			}
+		    }
+		}
+	      set_c_function(ap, string_append_to_temp);
 	    }
 	}
     }
-  if ((pairs == 1) && (np)) 
-    set_c_function(np, substring_to_temp);
 }
 
 static s7_pointer char_position_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -43370,7 +43436,8 @@ static void init_choosers(s7_scheme *sc)
   set_function_chooser(sc, sc->STRING_SET, string_set_chooser);
 
   /* string-append */
-  set_function_chooser(sc, sc->STRING_APPEND, string_append_chooser);
+  f = set_function_chooser(sc, sc->STRING_APPEND, string_append_chooser);
+  string_append_to_temp = make_function_with_class(sc, f, "string-append", g_string_append_to_temp, 0, 0, true, "string-append opt");
 
   /* symbol->string */
   f = slot_value(global_slot(sc->SYMBOL_TO_STRING));
@@ -43501,6 +43568,9 @@ static void init_choosers(s7_scheme *sc)
 
   /* write-string */
   f = set_function_chooser(sc, sc->WRITE_STRING, write_string_chooser);
+
+  /* eval-string */
+  f = set_function_chooser(sc, sc->EVAL_STRING, eval_string_chooser);
 
   /* or and if simple cases */
   or_direct = s7_make_function(sc, "or", g_or_direct, 0, 0, true, "or opt");
@@ -58485,12 +58555,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    else eval_error(sc, "no generalized set for ~A", obj); 
 	    break;
 	    
-	  case T_MACRO:
-	  case T_BACRO:
-	  case T_MACRO_STAR:
-	  case T_BACRO_STAR:
-	  case T_CLOSURE:
-	  case T_CLOSURE_STAR:
+	  case T_MACRO:   case T_MACRO_STAR:
+	  case T_BACRO:   case T_BACRO_STAR:
+	  case T_CLOSURE: case T_CLOSURE_STAR:
 	    if (is_procedure_or_macro(closure_setter(obj)))
 	      {
 		if (is_c_function(closure_setter(obj)))
@@ -59315,12 +59382,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      break;
 	      
-	    case T_MACRO:
-	    case T_BACRO:
-	    case T_MACRO_STAR:
-	    case T_BACRO_STAR:
-	    case T_CLOSURE:
-	    case T_CLOSURE_STAR:
+	    case T_MACRO:   case T_MACRO_STAR:
+	    case T_BACRO:   case T_BACRO_STAR:
+	    case T_CLOSURE: case T_CLOSURE_STAR:
 	      if (is_procedure(closure_setter(cx))) /* appears to be caar_code */
 		{
 		  /* (set! (o g) ...), here cx = o, sc->code = ((o g) ...) */
@@ -68641,13 +68705,13 @@ int main(int argc, char **argv)
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1134
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1144
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1146
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3026
  * lg             |      |      | 6547 6497 6494 6235 6259
  * t137           |      |      | 11.0           5031 4861
- * t455|6     265 |   89 |  9   |       8.4 8045 7482 7482
+ * t455|6     265 |   89 |  9   |       8.4 8045 7482 7470
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8
- * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 23.1
+ * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.9
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 34.6
  *
  * ----------------------------------------------------------
@@ -68682,5 +68746,5 @@ int main(int argc, char **argv)
  * perhaps current-error-port -> *error-port*
  * needs rewrite: let|set|if optimizers, all of gmp section
  * checkpt via cell: recast s7_pointer as hnum?(+ permanents), (op)stack+current-pos+heap+symbols (presented as continuation?)
- *   check out mdb -- db as let? then with-let over the db
+ * put *s7* gc vects onn debug
  */

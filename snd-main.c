@@ -1689,8 +1689,8 @@ static Xen g_set_ladspa_dir(Xen val)
   Xen_check_type(Xen_is_string(val) || Xen_is_false(val), val, 1, S_setB S_ladspa_dir, "a string or " PROC_FALSE "=default (null)"); 
   if (ladspa_dir(ss)) free(ladspa_dir(ss));
   if (Xen_is_false(val))
-    {set_ladspa_dir(mus_strdup(DEFAULT_LADSPA_DIR));}
-  else {set_ladspa_dir(mus_strdup(Xen_string_to_C_string(val)));}
+    set_ladspa_dir(mus_strdup(DEFAULT_LADSPA_DIR));
+  else set_ladspa_dir(mus_strdup(Xen_string_to_C_string(val)));
   return(C_string_to_Xen_string(ladspa_dir(ss)));
 }
 
@@ -1889,7 +1889,7 @@ static Xen g_set_play_arrow_size(Xen size)
 
   arrow_size = Xen_integer_to_C_int(size);
   if (arrow_size >= 0)
-    {set_play_arrow_size(arrow_size);}
+    set_play_arrow_size(arrow_size);
   else Xen_out_of_range_error(S_setB S_play_arrow_size, 1, size, "must be >= 0");
 
   for_each_chan(update_graph);
