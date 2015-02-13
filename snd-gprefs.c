@@ -1925,7 +1925,7 @@ widget_t make_preferences_dialog(void)
 
     rts_default_output_header_type = default_output_header_type(ss);
     prf = prefs_row_with_radio_box("header type", S_default_output_header_type,
-				   output_type_choices, NUM_OUTPUT_TYPE_CHOICES, -1,
+				   output_header_type_choices, NUM_OUTPUT_HEADER_TYPE_CHOICES, -1,
 				   dpy_box,
 				   default_output_header_type_choice);
     output_header_type_prf = prf;
@@ -1933,7 +1933,7 @@ widget_t make_preferences_dialog(void)
 
     rts_default_output_sample_type = default_output_sample_type(ss);
     prf = prefs_row_with_radio_box("sample type", S_default_output_sample_type,
-				   output_format_choices, NUM_OUTPUT_FORMAT_CHOICES, -1,
+				   output_sample_type_choices, NUM_OUTPUT_SAMPLE_TYPE_CHOICES, -1,
 				   dpy_box,
 				   default_output_sample_type_choice);
     output_sample_type_prf = prf;
