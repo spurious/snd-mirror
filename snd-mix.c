@@ -3678,7 +3678,7 @@ Xen g_free_mix_sampler(Xen obj)
 }
 
 
-static io_error_t save_mix(int id, const char *name, int type, int format)
+static io_error_t save_mix(int id, const char *name, int head_type, int samp_type)
 {
   mix_info *md;
   chan_info *cp;
@@ -3693,7 +3693,7 @@ static io_error_t save_mix(int id, const char *name, int type, int format)
   ms = current_mix_state(md);
   framples = ms->len;
 
-  io_err = snd_write_header(name, type, snd_srate(sp), 1, framples, format, NULL, NULL);
+  io_err = snd_write_header(name, head_type, snd_srate(sp), 1, framples, samp_type, NULL, NULL);
 
   if (io_err == IO_NO_ERROR)
     {
@@ -3708,7 +3708,7 @@ static io_error_t save_mix(int id, const char *name, int type, int format)
 	  mus_long_t i;
 	  mix_fd *mf = NULL;
 
-	  snd_file_open_descriptors(ofd, name, format, oloc, 1, type);
+	  snd_file_open_descriptors(ofd, name, samp_type, oloc, 1, head_type);
 	  mus_file_set_clipping(ofd, clipping(ss));
 	  lseek(ofd, oloc, SEEK_SET);
 

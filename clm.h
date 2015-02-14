@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 8
-#define MUS_DATE "31-Jan-15"
+#define MUS_REVISION 9
+#define MUS_DATE "16-Feb-15"
 
 /* isn't mus_env_interp backwards? */
 
@@ -160,7 +160,9 @@ MUS_EXPORT mus_long_t mus_order(mus_any *gen);
 MUS_EXPORT mus_float_t *mus_data(mus_any *gen);
 MUS_EXPORT mus_float_t *mus_set_data(mus_any *gen, mus_float_t *data);
 MUS_EXPORT const char *mus_name(mus_any *ptr);
+#if (!DISABLE_DEPRECATED)
 MUS_EXPORT const char *mus_set_name(mus_any *ptr, const char *new_name);
+#endif
 MUS_EXPORT mus_float_t mus_scaler(mus_any *gen);
 MUS_EXPORT mus_float_t mus_set_scaler(mus_any *gen, mus_float_t val);
 MUS_EXPORT mus_float_t mus_offset(mus_any *gen);
@@ -603,7 +605,8 @@ MUS_EXPORT mus_any *mus_bank_generator(mus_any *g, int i);
 
 /* Change log.
  *
- * 31-Jan:     removed mus_multiply_arrays.
+ * 15-Feb:     removed mus_set_name.
+ * 31-Jan-15:  removed mus_multiply_arrays.
  * --------
  * 8-Nov:      mus_copy, mus_bank_generator.
  * 24-Oct:     mus_generator_set_feeders.

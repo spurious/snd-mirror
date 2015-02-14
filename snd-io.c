@@ -454,11 +454,11 @@ io_error_t sndlib_error_to_snd(int sndlib_err)
 }
 
 
-int snd_file_open_descriptors(int fd, const char *name, int format, mus_long_t location, int chans, int type)
+int snd_file_open_descriptors(int fd, const char *name, int samp_type, mus_long_t location, int chans, int type)
 {
   int sl_err;
 
-  sl_err = mus_file_open_descriptors(fd, name, format, mus_bytes_per_sample(format), location, chans, type);
+  sl_err = mus_file_open_descriptors(fd, name, samp_type, mus_bytes_per_sample(samp_type), location, chans, type);
   if (sl_err != MUS_NO_ERROR)
     snd_warning("%s: open file descriptors: %s", name, mus_error_type_to_string(sl_err));
 
@@ -469,8 +469,8 @@ int snd_file_open_descriptors(int fd, const char *name, int format, mus_long_t l
 }
 
 
-io_error_t snd_write_header(const char *name, int type, int srate, int chans,
-			    mus_long_t samples, int format, const char *comment,
+io_error_t snd_write_header(const char *name, int head_type, int srate, int chans,
+			    mus_long_t samples, int samp_type, const char *comment,
 			    int *loops)
 {
   int err; /* sndlib-style error */
@@ -481,7 +481,7 @@ io_error_t snd_write_header(const char *name, int type, int srate, int chans,
   mus_sound_forget(name);
   mus_header_set_aiff_loop_info(loops);
 
-  err = mus_write_header(name, type, srate, chans, samples, format, comment);
+  err = mus_write_header(name, head_type, srate, chans, samples, samp_type, comment);
   /* err here is a mus error */
   if (err != MUS_NO_ERROR)
     {
@@ -489,7 +489,7 @@ io_error_t snd_write_header(const char *name, int type, int srate, int chans,
 	{
 	  err = too_many_files_cleanup();
 	  if (err != -1) 
-	    mus_write_header(name, type, srate, chans, samples, format, comment);
+	    mus_write_header(name, head_type, srate, chans, samples, samp_type, comment);
 	  else 
 	    {
 	      mus_error_set_handler(old_error_handler);

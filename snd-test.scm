@@ -41427,29 +41427,6 @@ EDITS: 1
     (if (not happy)
 	(snd-display #__line__ ";run-with-fm-and-pm unhappy")))
   
-  (set! *clm-srate* 44100)
-  (let ((gen (make-oscil 123.0)))
-    (set! (mus-name gen) "oscil123")
-    (if (not (string=? (mus-name gen) "oscil123")) (snd-display #__line__ ";set mus-name oscil123: ~A" (mus-name gen)))
-    (set! (mus-name gen) "another-name")
-    (if (not (string=? (mus-name gen) "another-name")) (snd-display #__line__ ";set mus-name again: ~A" (mus-name gen)))
-    (let ((descr (mus-describe gen)))
-      (if (not (string=? descr "another-name freq: 123.000Hz, phase: 0.000"))
-	  (snd-display #__line__ ";set mus-name describe: ~A" descr))))
-  
-  (let ((gen (make-oscil 123.0))
-	(gen1 (make-oscil 440.0)))
-    (set! (mus-name gen) "oscil123")
-    (set! (mus-name gen1) "440")
-    (if (not (string=? (mus-name gen) "oscil123")) (snd-display #__line__ ";set mus-name oscil123 1: ~A" (mus-name gen)))
-    (if (not (string=? (mus-name gen1) "440")) (snd-display #__line__ ";set mus-name oscil 440 1: ~A" (mus-name gen)))
-    (set! (mus-name gen1) "another-name")
-    (if (not (string=? (mus-name gen1) "another-name")) (snd-display #__line__ ";set mus-name again 1: ~A" (mus-name gen)))
-    (if (not (string=? (mus-name gen) "oscil123")) (snd-display #__line__ ";set mus-name oscil123 2: ~A" (mus-name gen)))
-    (let ((descr (mus-describe gen1)))
-      (if (not (string=? descr "another-name freq: 440.000Hz, phase: 0.000"))
-	  (snd-display #__line__ ";set mus-name describe 1: ~A" descr))))
-  
   (if (pair? (sounds)) (for-each close-sound (sounds)))
   
   (test-documentation-instruments) ; clm23.scm
@@ -46368,7 +46345,7 @@ EDITS: 1
 		  (check-error-tag 'out-of-range (lambda () (snd-spectrum (make-float-vector 8) 0 -123)))
 		  (check-error-tag 'out-of-range (lambda () (snd-spectrum (make-float-vector 8) 0 0)))
 		  (check-error-tag 'no-such-file (lambda () (play "/baddy/hiho")))
-		  (check-error-tag 'bad-format (lambda () (play (string-append sf-dir "nist-shortpack.wav"))))
+		  (check-error-tag 'bad-sample-type (lambda () (play (string-append sf-dir "nist-shortpack.wav"))))
 					;		  (check-error-tag 'no-such-channel (lambda () (play ind 0 :channel 123)))
 		  (check-error-tag 'no-such-channel (lambda () (make-player ind 123)))
 		  (check-error-tag 'no-such-file (lambda () (mix "/baddy/hiho")))

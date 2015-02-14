@@ -5510,39 +5510,39 @@ void mus_header_raw_defaults(int *sr, int *chn, int *frm)
 
 static int mus_header_read_1(const char *filename, int fd)
 {
-  const unsigned char I_HCOM[4] = {'H','C','O','M'};
-  const unsigned char I_FSSD[4] = {'F','S','S','D'};
-  const unsigned char I_8SVX[4] = {'8','S','V','X'};
-  const unsigned char I_16SV[4] = {'1','6','S','V'};
-  const unsigned char I_VOC1[4] = {'t','i','v','e'};
-  const unsigned char I_Soun[4] = {'S','o','u','n'}; 
-  const unsigned char I_MAUD[4] = {'M','A','U','D'}; 
-  const unsigned char I_mdat[4] = {'m','d','a','t'};  /* quicktime */
-  const unsigned char I_sfbk[4] = {'s','f','b','k'};  /* SoundFont 2.0 */
-  const unsigned char I_ATCH[4] = {'A','T','C','H'}; 
-  const unsigned char I_NAL_[4] = {'N','A','L','_'};
-  const unsigned char I__WAV[4] = {' ','S','A','M'};
-  const unsigned char I_ondW[4] = {'o','n','d','W'};
-  const unsigned char I_SDXc[4] = {'S','D','X',':'};  /* Sample dump exchange format */
-  const unsigned char I_AVI_[4] = {'A','V','I',' '};  /* RIFF AVI */
-  const unsigned char I_ones[4] = {(unsigned char)'\377',(unsigned char)'\377',(unsigned char)'\377',(unsigned char)'\377'};
-  const unsigned char I_zeros[4] = {'\0','\0','\0','\0'};
-  const unsigned char I_asf0[4] = {(unsigned char)'\321','\051',(unsigned char)'\342',(unsigned char)'\326'};
-  const unsigned char I_asf1[4] = {(unsigned char)'\332','\065',(unsigned char)'\321','\021'};
-  const unsigned char I_asf2[4] = {(unsigned char)'\220','\064','\000',(unsigned char)'\240'};
-  const unsigned char I_asf3[4] = {(unsigned char)'\311','\003','\111',(unsigned char)'\276'};
-  const unsigned char I_DS16[4] = {'D','S','1','6'};  /* CSL */
-  const unsigned char I__sam[4] = {'=','s','a','m'};  
-  const unsigned char I_OggS[4] = {'O','g','g','S'};  /* Ogg-related files, apparently -- ogg123 has "vorbis" instead of "Speex" */
-  const unsigned char I_fLaC[4] = {'f','L','a','C'};  /* FLAC */
-  const unsigned char I_TTA1[4] = {'T','T','A','1'};  /* ttaenc */
-  const unsigned char I_wvpk[4] = {'w','v','p','k'};  /* wavpack */
-  const unsigned char I_MATL[4] = {'M','A','T','L'};  /* matlab 5.0 */
-  const unsigned char I_AB_5[4] = {'A','B',' ','5'};  
+  static const unsigned char I_HCOM[4] = {'H','C','O','M'};
+  static const unsigned char I_FSSD[4] = {'F','S','S','D'};
+  static const unsigned char I_8SVX[4] = {'8','S','V','X'};
+  static const unsigned char I_16SV[4] = {'1','6','S','V'};
+  static const unsigned char I_VOC1[4] = {'t','i','v','e'};
+  static const unsigned char I_Soun[4] = {'S','o','u','n'}; 
+  static const unsigned char I_MAUD[4] = {'M','A','U','D'}; 
+  static const unsigned char I_mdat[4] = {'m','d','a','t'};  /* quicktime */
+  static const unsigned char I_sfbk[4] = {'s','f','b','k'};  /* SoundFont 2.0 */
+  static const unsigned char I_ATCH[4] = {'A','T','C','H'}; 
+  static const unsigned char I_NAL_[4] = {'N','A','L','_'};
+  static const unsigned char I__WAV[4] = {' ','S','A','M'};
+  static const unsigned char I_ondW[4] = {'o','n','d','W'};
+  static const unsigned char I_SDXc[4] = {'S','D','X',':'};  /* Sample dump exchange format */
+  static const unsigned char I_AVI_[4] = {'A','V','I',' '};  /* RIFF AVI */
+  static const unsigned char I_ones[4] = {(unsigned char)'\377',(unsigned char)'\377',(unsigned char)'\377',(unsigned char)'\377'};
+  static const unsigned char I_zeros[4] = {'\0','\0','\0','\0'};
+  static const unsigned char I_asf0[4] = {(unsigned char)'\321','\051',(unsigned char)'\342',(unsigned char)'\326'};
+  static const unsigned char I_asf1[4] = {(unsigned char)'\332','\065',(unsigned char)'\321','\021'};
+  static const unsigned char I_asf2[4] = {(unsigned char)'\220','\064','\000',(unsigned char)'\240'};
+  static const unsigned char I_asf3[4] = {(unsigned char)'\311','\003','\111',(unsigned char)'\276'};
+  static const unsigned char I_DS16[4] = {'D','S','1','6'};  /* CSL */
+  static const unsigned char I__sam[4] = {'=','s','a','m'};  
+  static const unsigned char I_OggS[4] = {'O','g','g','S'};  /* Ogg-related files, apparently -- ogg123 has "vorbis" instead of "Speex" */
+  static const unsigned char I_fLaC[4] = {'f','L','a','C'};  /* FLAC */
+  static const unsigned char I_TTA1[4] = {'T','T','A','1'};  /* ttaenc */
+  static const unsigned char I_wvpk[4] = {'w','v','p','k'};  /* wavpack */
+  static const unsigned char I_MATL[4] = {'M','A','T','L'};  /* matlab 5.0 */
+  static const unsigned char I_AB_5[4] = {'A','B',' ','5'};  
 
   #define NINRS	7
-  const unsigned int I_INRS[NINRS] = {0xcb460020, 0xd0465555, 0xfa460000, 0x1c470040, 0x3b470080, 0x7a470000, 0x9c470040};
-  int inrs_srates[NINRS] = {6500, 6667, 8000, 10000, 12000, 16000, 20000};
+  static const unsigned int I_INRS[NINRS] = {0xcb460020, 0xd0465555, 0xfa460000, 0x1c470040, 0x3b470080, 0x7a470000, 0x9c470040};
+  static int inrs_srates[NINRS] = {6500, 6667, 8000, 10000, 12000, 16000, 20000};
 
   /* returns 0 on success (at least to the extent that we can report the header type), -1 for error */
   int i, loc = 0;

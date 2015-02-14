@@ -2103,7 +2103,7 @@ static Xen g_mus_name(Xen gen)
   return(gen);
 }
 
-
+#if (!DISABLE_DEPRECATED)
 static Xen g_mus_set_name(Xen gen, Xen name) 
 {
   mus_xen *ms;
@@ -2125,7 +2125,7 @@ static Xen g_mus_set_name(Xen gen, Xen name)
   Xen_check_type(false, gen, 1, S_setB S_mus_name, "a generator");
   return(name);
 }
-
+#endif
 
 Xen g_mus_file_name(Xen gen) 
 {
@@ -10437,34 +10437,41 @@ static s7_pointer vct_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
   if (args == 3)
     {
 #if (!WITH_GMP)
-      s7_pointer arg1, arg2, arg3;
+      s7_pointer arg1;
       arg1 = cadr(expr);
-      arg2 = caddr(expr);
-      arg3 = cadddr(expr);
 
-      if ((s7_is_symbol(arg1)) &&
-	  (s7_is_symbol(arg3)) &&
-	  (s7_is_pair(arg2)) &&
-	  (s7_is_symbol(car(arg2))) &&
-	  (car(arg2) == vector_ref_symbol) &&
-	  (s7_is_symbol(cadr(arg2))) &&
-	  (s7_is_symbol(caddr(arg2))))
+      if (s7_is_symbol(arg1))
 	{
-	  s7_function_choice_set_direct(sc, expr);
-	  return(vct_set_vector_ref);
-	}
-      
-      if ((s7_is_symbol(arg1)) &&
-	  (s7_is_symbol(arg2)))
-	{
-	  /* fprintf(stderr, "%s %d\n", DISPLAY(arg3), s7_function_choice_is_direct(sc, arg3)); */
-	  if ((s7_is_pair(arg3)) &&
-	      (s7_function_choice_is_direct(sc, arg3)))
+	  s7_pointer arg2, arg3;
+	  arg2 = caddr(expr);
+
+	  if (s7_is_pair(arg2))
 	    {
-	      s7_function_choice_set_direct(sc, expr);
-	      if (s7_function_returns_temp(sc, arg3))
-		return(vct_set_temp);
-	      return(vct_set_direct);
+	      arg3 = cadddr(expr);
+	      if ((s7_is_symbol(arg3)) &&
+		  (s7_is_symbol(car(arg2))) &&
+		  (car(arg2) == vector_ref_symbol) &&
+		  (s7_is_symbol(cadr(arg2))) &&
+		  (s7_is_symbol(caddr(arg2))))
+		{
+		  s7_function_choice_set_direct(sc, expr);
+		  return(vct_set_vector_ref);
+		}
+	    }
+	  else
+	    {
+	      if (s7_is_symbol(arg2))
+		{
+		  arg3 = cadddr(expr);
+		  if ((s7_is_pair(arg3)) &&
+		      (s7_function_choice_is_direct(sc, arg3)))
+		    {
+		      s7_function_choice_set_direct(sc, expr);
+		      if (s7_function_returns_temp(sc, arg3))
+			return(vct_set_temp);
+		      return(vct_set_direct);
+		    }
+		}
 	    }
 	}
 #endif
@@ -17542,12 +17549,12 @@ static s7_pointer clm_add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 
       if (s7_is_pair(arg1))
 	{
-	  if ((cddr(arg1) == s7_nil(sc)) &&
-	      (car(arg1) == triangle_wave_symbol) &&
-	      (s7_is_symbol(cadr(arg1))) &&
+	  if ((car(arg1) == triangle_wave_symbol) &&
 	      (s7_is_pair(arg2)) &&
-	      (cddr(arg2) == s7_nil(sc)) &&
 	      (car(arg2) == rand_interp_symbol) &&
+	      (cddr(arg1) == s7_nil(sc)) &&
+	      (cddr(arg2) == s7_nil(sc)) &&
+	      (s7_is_symbol(cadr(arg1))) &&
 	      (s7_is_symbol(cadr(arg2))))
 	    {
 	      s7_function_choice_set_direct(sc, expr);
@@ -17923,8 +17930,6 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
 	    }
 	}
     }
-  /* fprintf(stderr, "%s\n", DISPLAY(expr)); */
-
   return((*initial_multiply_chooser)(sc, f, args, expr));
 }
 
@@ -20874,7 +20879,9 @@ Xen_wrap_3_optional_args(g_array_interp_w, g_array_interp)
 Xen_wrap_5_optional_args(g_mus_interpolate_w, g_mus_interpolate)
 Xen_wrap_1_arg(g_mus_describe_w, g_mus_describe)
 Xen_wrap_1_arg(g_mus_name_w, g_mus_name)
+#if (!DISABLE_DEPRECATED)
 Xen_wrap_2_args(g_mus_set_name_w, g_mus_set_name)
+#endif
 Xen_wrap_3_optional_args(g_mus_run_w, g_mus_run)
 Xen_wrap_1_arg(g_mus_phase_w, g_mus_phase)
 Xen_wrap_2_args(g_mus_set_phase_w, g_mus_set_phase)
@@ -21390,7 +21397,11 @@ static void mus_xen_init(void)
   Xen_define_safe_procedure(S_mus_copy,             g_mus_copy_w,      1, 0, 0,  H_mus_copy);
   Xen_define_procedure(S_mus_run,                   g_mus_run_w,       1, 2, 0,  H_mus_run);
 
+#if (!DISABLE_DEPRECATED)
   Xen_define_dilambda(S_mus_name,      g_mus_name_w,      H_mus_name,      S_setB S_mus_name,      g_mus_set_name_w,       1, 0, 2, 0);
+#else
+  Xen_define_safe_procedure(S_mus_name, g_mus_name_w, 1, 0, 0,  H_mus_name);
+#endif
   Xen_define_dilambda(S_mus_phase,     g_mus_phase_w,     H_mus_phase,     S_setB S_mus_phase,     g_mus_set_phase_w,      1, 0, 2, 0);
   Xen_define_dilambda(S_mus_scaler,    g_mus_scaler_w,    H_mus_scaler,    S_setB S_mus_scaler,    g_mus_set_scaler_w,     1, 0, 2, 0);
   Xen_define_dilambda(S_mus_width,     g_mus_width_w,     H_mus_width,     S_setB S_mus_width,     g_mus_set_width_w,      1, 0, 2, 0);

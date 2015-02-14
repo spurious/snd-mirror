@@ -1023,7 +1023,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
    * is now
    *   mus_read_any_1(f, frample, ...)
    */
-  int format, siz, siz_chans;
+  int samp_type, siz, siz_chans;
   mus_long_t bytes, lim, leftover, total_read, k, loc, buflim;
   unsigned char *jchar;
   static char *ur_charbuf = NULL;
@@ -1043,9 +1043,9 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
       if (fd->sample_type == MUS_UNKNOWN) 
 	return(mus_error(MUS_FILE_CLOSED, "mus_read: invalid sample type for %s", fd->name));
 
-      format = fd->sample_type;
+      samp_type = fd->sample_type;
       siz = fd->bytes_per_sample;
-      if ((format == MUS_OUT_SAMPLE_TYPE) && 
+      if ((samp_type == MUS_OUT_SAMPLE_TYPE) && 
 	  (chans == 1))
 	/* (beg == 0)) */
 	{
@@ -1113,7 +1113,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
     {
       charbuf = inbuf;
       siz = mus_bytes_per_sample(tfd);
-      format = tfd;
+      samp_type = tfd;
     }
 
   siz_chans = siz * chans;
@@ -1126,10 +1126,10 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
   loc = 0;
 
 #if MUS_LITTLE_ENDIAN
-  if ((format == MUS_BSHORT) && (!swapped_shorts))
+  if ((samp_type == MUS_BSHORT) && (!swapped_shorts))
     initialize_swapped_shorts();
 #else
-  if ((format == MUS_LSHORT) && (!swapped_shorts))
+  if ((samp_type == MUS_LSHORT) && (!swapped_shorts))
     initialize_swapped_shorts();
 #endif
 
@@ -1187,7 +1187,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	      bufend4 = (mus_float_t *)(bufend - 4);
 
 	      jchar = (unsigned char *)charbuf;
-	      switch (format)
+	      switch (samp_type)
 		{
 		case MUS_BSHORT:      
 #if MUS_LITTLE_ENDIAN
@@ -1484,7 +1484,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		      
 		      jchar = (unsigned char *)charbuf;
 		      jchar += (k * siz);
-		      switch (format)
+		      switch (samp_type)
 			{
 			case MUS_BSHORT:      
 #if MUS_LITTLE_ENDIAN

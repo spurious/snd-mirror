@@ -41,13 +41,13 @@ static char *display_maxamps(const char *filename, int chans)
 
 int main(int argc, char *argv[])
 {
-  int chans, srate, format, type, ctr;
+  int chans, srate, samp_type, type, ctr;
   mus_long_t samples;
   float length = 0.0;
   time_t date;
   int *loops = NULL;
   char *comment, *header_name;
-  char *format_info = NULL, *format_name, *ampstr = NULL;
+  char *samp_type_info = NULL, *samp_type_name, *ampstr = NULL;
   char timestr[64];
   if (argc == 1) {printf("usage: sndinfo file\n"); exit(0);}
   mus_sound_initialize();
@@ -70,17 +70,17 @@ int main(int argc, char *argv[])
 	  loops = mus_sound_loop_info(argv[ctr]);
 	  type = mus_sound_header_type(argv[ctr]);
 	  header_name = (char *)mus_header_type_name(type);
-	  format = mus_sound_sample_type(argv[ctr]);
-	  if (format != MUS_UNKNOWN)
-	    format_info = (char *)mus_sample_type_name(format);
+	  samp_type = mus_sound_sample_type(argv[ctr]);
+	  if (samp_type != MUS_UNKNOWN)
+	    samp_type_info = (char *)mus_sample_type_name(samp_type);
 	  else
 	    {
-	      if (format_info == NULL) format_info = (char *)calloc(64, sizeof(char));
-	      format = mus_sound_original_sample_type(argv[ctr]);
-	      format_name = (char *)mus_header_original_sample_type_name(format, type);
-	      if (format_name)
-		snprintf(format_info, 64, "%d (%s)", format, format_name);
-	      else snprintf(format_info, 64, "%d", format);
+	      if (samp_type_info == NULL) samp_type_info = (char *)calloc(64, sizeof(char));
+	      samp_type = mus_sound_original_sample_type(argv[ctr]);
+	      samp_type_name = (char *)mus_header_original_sample_type_name(samp_type, type);
+	      if (samp_type_name)
+		snprintf(samp_type_info, 64, "%d (%s)", samp_type, samp_type_name);
+	      else snprintf(samp_type_info, 64, "%d", samp_type);
 	    }
 	  fprintf(stdout, "%s:\n  srate: %d\n  chans: %d\n  length: %f",
 		  argv[ctr], srate, chans, length);
@@ -91,9 +91,9 @@ int main(int argc, char *argv[])
 	      fprintf(stdout, " (%d sample%s)", samps, (samps != 1) ? "s" : "");
 	    }
 	  fprintf(stdout, "\n");
-	  fprintf(stdout, "  type: %s\n  format: %s\n  ",
+	  fprintf(stdout, "  header type: %s\n  sample type: %s\n  ",
 		  header_name,
-		  format_info);
+		  samp_type_info);
 
 	  strftime(timestr, 64, "%a %d-%b-%Y %H:%M %Z", localtime(&date));
 	  fprintf(stdout, "written: %s", timestr);

@@ -2972,25 +2972,25 @@ static int rts_raw_sample_type = DEFAULT_OUTPUT_SAMPLE_TYPE;
 
 static void revert_raw_chans(prefs_info *prf)
 {
-  int srate = 0, chans = 0, format = 0;
-  mus_header_raw_defaults(&srate, &chans, &format);
+  int srate = 0, chans = 0, samp_type = 0;
+  mus_header_raw_defaults(&srate, &chans, &samp_type);
   chans = rts_raw_chans;
-  mus_header_set_raw_defaults(srate, chans, format);
+  mus_header_set_raw_defaults(srate, chans, samp_type);
 }
 
 
 static void save_raw_chans(prefs_info *prf, FILE *ignore)
 {
-  int srate = 0, chans = 0, format = 0;
-  mus_header_raw_defaults(&srate, &chans, &format);
+  int srate = 0, chans = 0, samp_type = 0;
+  mus_header_raw_defaults(&srate, &chans, &samp_type);
   rts_raw_chans = chans;
 }
 
 
 static void reflect_raw_chans(prefs_info *prf)
 {
-  int srate = 0, chans = 0, format = 0;
-  mus_header_raw_defaults(&srate, &chans, &format);
+  int srate = 0, chans = 0, samp_type = 0;
+  mus_header_raw_defaults(&srate, &chans, &samp_type);
   int_to_textfield(prf->text, chans);
 }
 
@@ -3001,13 +3001,13 @@ static void raw_chans_choice(prefs_info *prf)
   str = GET_TEXT(prf->text);
   if (str)
     {
-      int srate = 0, chans = 0, format = 0;
-      mus_header_raw_defaults(&srate, &chans, &format);
+      int srate = 0, chans = 0, samp_type = 0;
+      mus_header_raw_defaults(&srate, &chans, &samp_type);
       redirect_errors_to(any_error_to_text, (void *)prf);
       chans = string_to_int(str, 1, "raw chans");
       redirect_errors_to(NULL, NULL);
       if (!(prf->got_error))
-	mus_header_set_raw_defaults(srate, chans, format);
+	mus_header_set_raw_defaults(srate, chans, samp_type);
       free_TEXT(str);
     }
 }
@@ -3015,25 +3015,25 @@ static void raw_chans_choice(prefs_info *prf)
 
 static void revert_raw_srate(prefs_info *prf)
 {
-  int srate = 0, chans = 0, format = 0;
-  mus_header_raw_defaults(&srate, &chans, &format);
+  int srate = 0, chans = 0, samp_type = 0;
+  mus_header_raw_defaults(&srate, &chans, &samp_type);
   srate = rts_raw_srate;
-  mus_header_set_raw_defaults(srate, chans, format);
+  mus_header_set_raw_defaults(srate, chans, samp_type);
 }
 
 
 static void save_raw_srate(prefs_info *prf, FILE *ignore)
 {
-  int srate = 0, chans = 0, format = 0;
-  mus_header_raw_defaults(&srate, &chans, &format);
+  int srate = 0, chans = 0, samp_type = 0;
+  mus_header_raw_defaults(&srate, &chans, &samp_type);
   rts_raw_srate = srate;
 }
 
 
 static void reflect_raw_srate(prefs_info *prf)
 {
-  int srate = 0, chans = 0, format = 0;
-  mus_header_raw_defaults(&srate, &chans, &format);
+  int srate = 0, chans = 0, samp_type = 0;
+  mus_header_raw_defaults(&srate, &chans, &samp_type);
   int_to_textfield(prf->text, srate);
 }
 
@@ -3044,23 +3044,23 @@ static void raw_srate_choice(prefs_info *prf)
   str = GET_TEXT(prf->text);
   if (str)
     {
-      int srate = 0, chans = 0, format = 0;
-      mus_header_raw_defaults(&srate, &chans, &format);
+      int srate = 0, chans = 0, samp_type = 0;
+      mus_header_raw_defaults(&srate, &chans, &samp_type);
       redirect_errors_to(any_error_to_text, (void *)prf);
       srate = string_to_int(str, 1, "raw srate");
       redirect_errors_to(NULL, NULL);
       if (!(prf->got_error))
-	mus_header_set_raw_defaults(srate, chans, format);
+	mus_header_set_raw_defaults(srate, chans, samp_type);
       free_TEXT(str);
     }
 }
 
 
-static char *raw_sample_type_to_string(int format)
+static char *raw_sample_type_to_string(int samp_type)
 {
   /* the "mus-" prefix carries no information in this context, so strip it off */
   const char *name;
-  name = mus_sample_type_to_string(format);
+  name = mus_sample_type_to_string(samp_type);
   if (name)
     {
       char *rtn;
@@ -3084,27 +3084,27 @@ static char *raw_sample_type_to_string(int format)
 
 static void revert_raw_sample_type(prefs_info *prf)
 {
-  int srate = 0, chans = 0, format = 0;
-  mus_header_raw_defaults(&srate, &chans, &format);
-  format = rts_raw_sample_type;
-  mus_header_set_raw_defaults(srate, chans, format);
+  int srate = 0, chans = 0, samp_type = 0;
+  mus_header_raw_defaults(&srate, &chans, &samp_type);
+  samp_type = rts_raw_sample_type;
+  mus_header_set_raw_defaults(srate, chans, samp_type);
 }
 
 
 static void save_raw_sample_type(prefs_info *prf, FILE *ignore)
 {
-  int srate = 0, chans = 0, format = 0;
-  mus_header_raw_defaults(&srate, &chans, &format);
-  rts_raw_sample_type = format;
+  int srate = 0, chans = 0, samp_type = 0;
+  mus_header_raw_defaults(&srate, &chans, &samp_type);
+  rts_raw_sample_type = samp_type;
 }
 
 
 static void reflect_raw_sample_type(prefs_info *prf)
 {
-  int srate = 0, chans = 0, format = 0;
+  int srate = 0, chans = 0, samp_type = 0;
   char *str;
-  mus_header_raw_defaults(&srate, &chans, &format);
-  str = raw_sample_type_to_string(format);
+  mus_header_raw_defaults(&srate, &chans, &samp_type);
+  str = raw_sample_type_to_string(samp_type);
   SET_TEXT(prf->text, str);
   free(str);
 }
@@ -3118,8 +3118,8 @@ static void raw_sample_type_from_text(prefs_info *prf)
   str = GET_TEXT(prf->text);
   if (str)
     {
-      int i, srate = 0, chans = 0, format = 0;
-      mus_header_raw_defaults(&srate, &chans, &format);
+      int i, srate = 0, chans = 0, samp_type = 0;
+      mus_header_raw_defaults(&srate, &chans, &samp_type);
       for (i = 0; i < MUS_NUM_SAMPLE_TYPES - 1; i++)
 	if (STRCMP(raw_sample_type_choices[i], str) == 0)
 	  {
@@ -3135,8 +3135,8 @@ static void raw_sample_type_from_text(prefs_info *prf)
 #if USE_MOTIF
 static void raw_sample_type_from_menu(prefs_info *prf, char *value)
 {
-  int i, srate = 0, chans = 0, format = 0;
-  mus_header_raw_defaults(&srate, &chans, &format);
+  int i, srate = 0, chans = 0, samp_type = 0;
+  mus_header_raw_defaults(&srate, &chans, &samp_type);
   for (i = 0; i < MUS_NUM_SAMPLE_TYPES - 1; i++)
     if (STRCMP(raw_sample_type_choices[i], value) == 0)
       {

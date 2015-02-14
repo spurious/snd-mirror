@@ -92,7 +92,7 @@ struct mus_any_class {
   mus_float_t (*set_ycoeff)(mus_any *ptr, int index, mus_float_t val);
   mus_float_t *(*xcoeffs)(mus_any *ptr);
   mus_float_t *(*ycoeffs)(mus_any *ptr);
-  void *original_class; /* class chain perhaps */
+  void *original_class; /* class chain perhaps -- not used if DISABLE_DEPRECATED */
   void (*reset)(mus_any *ptr);
   void *(*set_closure)(mus_any *gen, void *e);
   mus_any *(*copy)(mus_any *ptr);
@@ -123,42 +123,6 @@ void mus_generator_set_set_location(mus_any_class *p, mus_long_t (*set_location)
 void mus_generator_set_read_sample(mus_any_class *p, mus_float_t (*read_sample)(mus_any *ptr, mus_long_t samp, int chan)) {p->read_sample = read_sample;}
 void mus_generator_set_channel(mus_any_class *p, int (*channel)(mus_any *ptr)) {p->channel = channel;}
 void mus_generator_set_file_name(mus_any_class *p, char *(*file_name)(mus_any *ptr)) {p->file_name = file_name;}
-
-#if 0
-void mus_generator_set_release(mus_any_class *p, int (*release)(mus_any *ptr)) {p->release = release;}
-void mus_generator_set_describe(mus_any_class *p, char *(*describe)(mus_any *ptr)) {p->describe = describe;}
-void mus_generator_set_equalp(mus_any_class *p, bool (*equalp)(mus_any *gen1, mus_any *gen2)) {p->equalp = equalp;}
-void mus_generator_set_data(mus_any_class *p, mus_float_t *(*data)(mus_any *ptr)) {p->data = data;}
-void mus_generator_set_set_data(mus_any_class *p, mus_float_t *(*set_data)(mus_any *ptr, mus_float_t *new_data)) {p->set_data = set_data;}
-void mus_generator_set_set_length(mus_any_class *p, mus_long_t (*set_length)(mus_any *ptr, mus_long_t new_length)) {p->set_length = set_length;}
-void mus_generator_set_frequency(mus_any_class *p, mus_float_t (*frequency)(mus_any *ptr)) {p->frequency = frequency;}
-void mus_generator_set_set_frequency(mus_any_class *p, mus_float_t (*set_frequency)(mus_any *ptr, mus_float_t new_freq)) {p->set_frequency = set_frequency;}
-void mus_generator_set_phase(mus_any_class *p, mus_float_t (*phase)(mus_any *ptr)) {p->phase = phase;} 
-void mus_generator_set_set_phase(mus_any_class *p, mus_float_t (*set_phase)(mus_any *ptr, mus_float_t new_phase)) {p->set_phase = set_phase;}
-void mus_generator_set_set_scaler(mus_any_class *p, mus_float_t (*set_scaler)(mus_any *ptr, mus_float_t val)) {p->set_scaler = set_scaler;}
-void mus_generator_set_increment(mus_any_class *p, mus_float_t (*increment)(mus_any *ptr)) {p->increment = increment;}
-void mus_generator_set_set_increment(mus_any_class *p, mus_float_t (*set_increment)(mus_any *ptr, mus_float_t val)) {p->set_increment = set_increment;}
-void mus_generator_set_run(mus_any_class *p, mus_float_t (*run)(mus_any *gen, mus_float_t arg1, mus_float_t arg2)) {p->run = run;}
-void mus_generator_set_closure(mus_any_class *p, void *(*closure)(mus_any *gen)) {p->closure = closure;}
-void mus_generator_set_offset(mus_any_class *p, mus_float_t (*offset)(mus_any *ptr)) {p->offset = offset;}
-void mus_generator_set_set_offset(mus_any_class *p, mus_float_t (*set_offset)(mus_any *ptr, mus_float_t val)) {p->set_offset = set_offset;}
-void mus_generator_set_width(mus_any_class *p, mus_float_t (*width)(mus_any *ptr)) {p->width = width;}
-void mus_generator_set_set_width(mus_any_class *p, mus_float_t (*set_width)(mus_any *ptr, mus_float_t val)) {p->set_width = set_width;}
-void mus_generator_set_xcoeff(mus_any_class *p, mus_float_t (*xcoeff)(mus_any *ptr, int index)) {p->xcoeff = xcoeff;}
-void mus_generator_set_set_xcoeff(mus_any_class *p, mus_float_t (*set_xcoeff)(mus_any *ptr, int index, mus_float_t val)) {p->set_xcoeff = set_xcoeff;}
-void mus_generator_set_hop(mus_any_class *p, mus_long_t (*hop)(mus_any *ptr)) {p->hop = hop;}
-void mus_generator_set_set_hop(mus_any_class *p, mus_long_t (*set_hop)(mus_any *ptr, mus_long_t new_length)) {p->set_hop = set_hop;}
-void mus_generator_set_ramp(mus_any_class *p, mus_long_t (*ramp)(mus_any *ptr)) {p->ramp = ramp;}
-void mus_generator_set_set_ramp(mus_any_class *p, mus_long_t (*set_ramp)(mus_any *ptr, mus_long_t new_length)) {p->set_ramp = set_ramp;}
-void mus_generator_set_write_sample(mus_any_class *p, mus_float_t (*write_sample)(mus_any *ptr, mus_long_t samp, int chan, mus_float_t data)) {p->write_sample = write_sample;}
-void mus_generator_set_end(mus_any_class *p, int (*end)(mus_any *ptr)) {p->end = end;}
-void mus_generator_set_ycoeff(mus_any_class *p, mus_float_t (*ycoeff)(mus_any *ptr, int index)) {p->ycoeff = ycoeff;}
-void mus_generator_set_set_ycoeff(mus_any_class *p, mus_float_t (*set_ycoeff)(mus_any *ptr, int index, mus_float_t val)) {p->set_ycoeff = set_ycoeff;}
-void mus_generator_set_xcoeffs(mus_any_class *p, mus_float_t *(*xcoeffs)(mus_any *ptr)) {p->xcoeffs = xcoeffs;}
-void mus_generator_set_ycoeffs(mus_any_class *p, mus_float_t *(*ycoeffs)(mus_any *ptr)) {p->ycoeffs = ycoeffs;}
-void mus_generator_set_reset(mus_any_class *p, void (*reset)(mus_any *ptr)) {p->reset = reset;}
-void mus_generator_set_set_closure(mus_any_class *p, void *(*set_closure)(mus_any *gen, void *e)) {p->set_closure = set_closure;}
-#endif
 
 mus_any_class *mus_make_generator(int type, char *name, 
 				  int (*release)(mus_any *ptr), 
@@ -410,23 +374,11 @@ static char *int_array_to_string(int *arr, int num_ints, const char *name)
 
 /* ---------------- generic functions ---------------- */
 
-static bool check_gen(mus_any *ptr, const char *name)
-{
-  if (!ptr)
-    {
-      mus_error(MUS_NO_GEN, "null generator passed to %s", name);
-      return(false);
-    }
-  return(true);
-}
-
+#define check_gen(Ptr, Name) ((Ptr) ? true : (!mus_error(MUS_NO_GEN, "null generator passed to %s", Name)))
 
 int mus_type(mus_any *ptr)
 {
-  if ((check_gen(ptr, S_mus_type)) &&
-      (ptr->core))
-    return(ptr->core->type);
-  return(-1);
+  return(((check_gen(ptr, S_mus_type)) && (ptr->core)) ? ptr->core->type : -1);
 }
 
 #if 0
@@ -443,12 +395,10 @@ mus_any_class *mus_make_type(const char *name)
 
 const char *mus_name(mus_any *ptr) 
 {
-  if (ptr == NULL)
-    return("null");
-  return(ptr->core->name);
+  return((ptr == NULL) ? "null" : ptr->core->name);
 }
 
-
+#if (!DISABLE_DEPRECATED)
 const char *mus_set_name(mus_any *ptr, const char *new_name)
 {
   /* an experiment -- to change the name, we need to make a local copy of the mus_any_class struct */
@@ -482,21 +432,24 @@ const char *mus_set_name(mus_any *ptr, const char *new_name)
  *               to refer to (hidden) gen fields, we'd need a way to tell it to use the original_class ptr's funcs
  *               call-next-method?  this would need the current ptr, the current class ptr etc
  */
+#endif
 
 
 int mus_free(mus_any *gen)
 {
   if (gen)
     {
+#if (!DISABLE_DEPRECATED)
       if (gen->core->original_class)
 	{
 	  int release_result;
-	  mus_any_class *local_class = NULL;
+	  mus_any_class *local_class;
 	  local_class = (mus_any_class *)(gen->core);
 	  release_result = ((*(gen->core->release))(gen));
 	  free(local_class);
 	  return(release_result);
 	}
+#endif
       return((*(gen->core->release))(gen));
     }
   return(0);
@@ -9487,7 +9440,6 @@ bool mus_is_one_pole_all_pass(mus_any *ptr)
 	 (ptr->core->type == MUS_ONE_POLE_ALL_PASS));
 }
   
-
 
 
 /* ---------------- env ---------------- */

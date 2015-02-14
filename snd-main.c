@@ -592,29 +592,29 @@ static void save_options(FILE *fd)
   if (fneq(clm_default_frequency_c(), MUS_CLM_DEFAULT_FREQUENCY)) pss_sf(fd, S_clm_default_frequency, clm_default_frequency_c());
 
   {
-    int srate = 0, chans = 0, format = 0;
-    mus_header_raw_defaults(&srate, &chans, &format);
+    int srate = 0, chans = 0, samp_type = 0;
+    mus_header_raw_defaults(&srate, &chans, &samp_type);
     if ((chans != 2) ||
 	(srate != 44100) ||
-	(format != MUS_BSHORT))
+	(samp_type != MUS_BSHORT))
       {
 #if HAVE_SCHEME
 	fprintf(fd, "(set! (mus-header-raw-defaults) (list %d %d %s))\n",
 		srate,
 		chans,
-		mus_sample_type_to_string(format));
+		mus_sample_type_to_string(samp_type));
 #endif
 #if HAVE_RUBY
 	fprintf(fd, "set_mus_header_raw_defaults([%d, %d, %s])\n",
 		srate,
 		chans,
-		mus_sample_type_to_string(format));
+		mus_sample_type_to_string(samp_type));
 #endif
 #if HAVE_FORTH
 	fprintf(fd, "'( %d %d %s ) set-mus-header-raw-defaults drop\n",
 		srate,
 		chans,
-		mus_sample_type_to_string(format));
+		mus_sample_type_to_string(samp_type));
 #endif
       }
   }

@@ -1943,13 +1943,13 @@ widget_t make_preferences_dialog(void)
 
     make_inter_variable_separator(dpy_box);
     {
-      int i, srate = 0, chans = 0, format = 0;
-      mus_header_raw_defaults(&srate, &chans, &format);
+      int i, srate = 0, chans = 0, samp_type = 0;
+      mus_header_raw_defaults(&srate, &chans, &samp_type);
       str = mus_format("%d", chans);
       str1 = mus_format("%d", srate);
       rts_raw_chans = chans;
       rts_raw_srate = srate;
-      rts_raw_sample_type = format;
+      rts_raw_sample_type = samp_type;
       raw_sample_type_choices = (char **)calloc(MUS_NUM_SAMPLE_TYPES - 1, sizeof(char *));
       for (i = 1; i < MUS_NUM_SAMPLE_TYPES; i++)
 	raw_sample_type_choices[i - 1] = raw_sample_type_to_string(i); /* skip MUS_UNKNOWN */
@@ -1966,7 +1966,7 @@ widget_t make_preferences_dialog(void)
       free(str1);
 
 
-      prf = prefs_row_with_list("sample type", S_mus_header_raw_defaults, raw_sample_type_choices[format - 1],
+      prf = prefs_row_with_list("sample type", S_mus_header_raw_defaults, raw_sample_type_choices[samp_type - 1],
 				(const char **)raw_sample_type_choices, MUS_NUM_SAMPLE_TYPES - 1,
 				dpy_box, 
 				raw_sample_type_from_text,
