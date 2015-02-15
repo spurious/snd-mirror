@@ -5472,15 +5472,15 @@ static int read_matlab_5_header(const char *filename, int fd)
 
 /* ------------------------------------ no header ------------------------------------- */
 
-static int header_raw_srate = 44100;
-static int header_raw_chans = 2;
-static int header_raw_format = MUS_BSHORT;
+static int raw_header_srate = 44100;
+static int raw_header_chans = 2;
+static int raw_header_sample_type = MUS_BSHORT;
 
 static int read_no_header(int fd)
 {
-  srate = header_raw_srate;
-  chans = header_raw_chans;
-  sample_type = header_raw_format;
+  srate = raw_header_srate;
+  chans = raw_header_chans;
+  sample_type = raw_header_sample_type;
   data_location = 0;
   data_size = SEEK_FILE_LENGTH(fd);
   true_file_length = data_size;
@@ -5491,17 +5491,17 @@ static int read_no_header(int fd)
 
 void mus_header_set_raw_defaults(int sr, int chn, int frm)
 {
-  if (sr > 0) header_raw_srate = sr;
-  if (chn > 0) header_raw_chans = chn;
-  if (mus_is_sample_type(frm)) header_raw_format = frm;
+  if (sr > 0) raw_header_srate = sr;
+  if (chn > 0) raw_header_chans = chn;
+  if (mus_is_sample_type(frm)) raw_header_sample_type = frm;
 }
 
 
 void mus_header_raw_defaults(int *sr, int *chn, int *frm)
 {
-  (*sr) = header_raw_srate;
-  (*chn) = header_raw_chans;
-  (*frm) = header_raw_format;
+  (*sr) = raw_header_srate;
+  (*chn) = raw_header_chans;
+  (*frm) = raw_header_sample_type;
 }
 
 
@@ -5569,9 +5569,9 @@ static int mus_header_read_1(const char *filename, int fd)
   if (bytes == 0) 
     {
       header_type = MUS_RAW;
-      srate = header_raw_srate;
-      chans = header_raw_chans;
-      sample_type = header_raw_format;
+      srate = raw_header_srate;
+      chans = raw_header_chans;
+      sample_type = raw_header_sample_type;
       data_location = 0;
       true_file_length = 0;
       return(MUS_NO_ERROR);

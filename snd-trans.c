@@ -1496,12 +1496,12 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
 
 static int MUS_CANT_TRANSLATE = 0;
 
-static const char *any_format_name(const char *name)
+static const char *any_samp_type_name(const char *name)
 {
-  int format;
-  format = mus_sound_sample_type(name);
-  if (format != MUS_UNKNOWN)
-    return(mus_sample_type_name(format));
+  int samp_type;
+  samp_type = mus_sound_sample_type(name);
+  if (samp_type != MUS_UNKNOWN)
+    return(mus_sample_type_name(samp_type));
   else return(mus_header_original_sample_type_name(mus_sound_original_sample_type(name), mus_sound_header_type(name)));
 }
 
@@ -1620,7 +1620,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
 		     "can't translate %s\n  (%s header: %s (0x%x) sample type)\n",
 		     oldname,
 		     mus_header_type_name(type),
-		     any_format_name(oldname),
+		     any_samp_type_name(oldname),
 		     mus_sound_original_sample_type(oldname)));
   return(err);
 }

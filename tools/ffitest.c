@@ -161,7 +161,7 @@ static s7_pointer mac_plus(s7_scheme *sc, s7_pointer args)
   /* (define-macro (plus a b) `(+ ,a ,b)) */
   s7_pointer a, b;
   a = s7_car(args);
-  b = s7_car(s7_cdr(args));
+  b = s7_cadr(args);
   return(s7_list(sc, 3, s7_make_symbol(sc, "+"),  a, b));
 }
 
@@ -1022,7 +1022,7 @@ int main(int argc, char **argv)
     {fprintf(stderr, "%d: %s is not 5?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
   p1 = s7_apply_function(sc, 
 	s7_name_to_value(sc, "mac-plus"),
-	s7_list(sc, 1, s7_list(sc, 3, s7_make_symbol(sc, "mac-plus"), s7_make_integer(sc, 3), s7_make_integer(sc, 4))));
+	s7_list(sc, 2, s7_make_integer(sc, 3), s7_make_integer(sc, 4)));
   p = s7_eval_form(sc, p1, s7_rootlet(sc));
   if ((!s7_is_integer(p)) ||
       (s7_integer(p) != 7))

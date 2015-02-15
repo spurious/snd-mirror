@@ -746,7 +746,7 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int samp_t
 #if (!HAVE_ALSA)
 static int oss_sample_types(int ur_dev, int *val)
 {
-  int fd, formats = 0, sys, ind;
+  int fd, samp_types = 0, sys, ind;
 
   sys = MUS_AUDIO_SYSTEM(ur_dev);
   /* dev = MUS_AUDIO_DEVICE(ur_dev); */
@@ -761,16 +761,16 @@ static int oss_sample_types(int ur_dev, int *val)
       return(MUS_ERROR);
     }
   
-  ioctl(fd, MUS_OSS_GET_FORMATS, &formats);
+  ioctl(fd, MUS_OSS_GET_FORMATS, &samp_types);
   ind = 1;
-  if (formats & (to_oss_sample_type(MUS_BSHORT)))  val[ind++] = MUS_BSHORT;
-  if (formats & (to_oss_sample_type(MUS_LSHORT)))  val[ind++] = MUS_LSHORT;
-  if (formats & (to_oss_sample_type(MUS_MULAW)))   val[ind++] = MUS_MULAW;
-  if (formats & (to_oss_sample_type(MUS_ALAW)))    val[ind++] = MUS_ALAW;
-  if (formats & (to_oss_sample_type(MUS_BYTE)))    val[ind++] = MUS_BYTE;
-  if (formats & (to_oss_sample_type(MUS_UBYTE)))   val[ind++] = MUS_UBYTE;
-  if (formats & (to_oss_sample_type(MUS_UBSHORT))) val[ind++] = MUS_UBSHORT;
-  if (formats & (to_oss_sample_type(MUS_ULSHORT))) val[ind++] = MUS_ULSHORT;
+  if (samp_types & (to_oss_sample_type(MUS_BSHORT)))  val[ind++] = MUS_BSHORT;
+  if (samp_types & (to_oss_sample_type(MUS_LSHORT)))  val[ind++] = MUS_LSHORT;
+  if (samp_types & (to_oss_sample_type(MUS_MULAW)))   val[ind++] = MUS_MULAW;
+  if (samp_types & (to_oss_sample_type(MUS_ALAW)))    val[ind++] = MUS_ALAW;
+  if (samp_types & (to_oss_sample_type(MUS_BYTE)))    val[ind++] = MUS_BYTE;
+  if (samp_types & (to_oss_sample_type(MUS_UBYTE)))   val[ind++] = MUS_UBYTE;
+  if (samp_types & (to_oss_sample_type(MUS_UBSHORT))) val[ind++] = MUS_UBSHORT;
+  if (samp_types & (to_oss_sample_type(MUS_ULSHORT))) val[ind++] = MUS_ULSHORT;
   val[0] = ind - 1;
   return(MUS_NO_ERROR);
 }
@@ -2180,7 +2180,7 @@ static int alsa_chans(int ur_dev, int *info)
 }
 
 
-static int alsa_formats(int ur_dev, int chan, int *val)
+static int alsa_sample_types(int ur_dev, int chan, int *val)
 {
   int card;
   int device;
@@ -4966,7 +4966,7 @@ int mus_audio_read(int line, char *buf, int bytes)
 }
 
 
-static int netbsd_formats(int ur_dev, int *val)
+static int netbsd_sample_types(int ur_dev, int *val)
 {
   int i, audio_fd, err, dev;
   audio_info_t info;
@@ -5437,7 +5437,7 @@ int mus_audio_compatible_format(int dev) /* snd-dac and sndplay */
     {
       int err;
       int ival[32];
-      err = alsa_formats(dev, 32, ival);
+      err = alsa_sample_types(dev, 32, ival);
       if (err != MUS_ERROR)
 	{
 	  int i;
@@ -5485,7 +5485,7 @@ int mus_audio_device_format(int dev) /* snd-dac */
   int mixer_vals[16];
   int format;
 
-  /* we return the new format, so mixer_vals is just a local collector of possible formats */
+  /* we return the new format, so mixer_vals is just a local collector of possible sample types */
   mixer_vals[0] = 0;
 
 #if (!WITH_AUDIO)
@@ -5499,7 +5499,7 @@ int mus_audio_device_format(int dev) /* snd-dac */
 
 #if HAVE_ALSA
   if (api == MUS_ALSA_API) 
-    alsa_formats(dev, 16, mixer_vals);
+    alsa_sample_types(dev, 16, mixer_vals);
 #endif
 
 #if MUS_JACK
@@ -5526,7 +5526,7 @@ int mus_audio_device_format(int dev) /* snd-dac */
 #endif
 
 #if __NetBSD__ || __OpenBSD__
-  netbsd_formats(dev, mixer_vals);
+  netbsd_sample_types(dev, mixer_vals);
 #endif
 
   format = look_for_format(mixer_vals, MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE);

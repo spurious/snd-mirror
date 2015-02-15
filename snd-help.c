@@ -2334,7 +2334,7 @@ void raw_data_dialog_help(const char *info)
       snd_help_with_xrefs("Raw Data",
 "This file seems to have an invalid header.  I'll append what sense I can make of it. \
 To display and edit sound data, Snd needs to know how the data's sampling rate, number \
-of channels, and numerical format.\n\n",
+of channels, and sample type.\n\n",
 			  WITH_WORD_WRAP,
 			  raw_xrefs,
 			  raw_urls);
@@ -2344,7 +2344,7 @@ of channels, and numerical format.\n\n",
     {
       snd_help_with_xrefs("Raw Data",
 "To display and edit sound data, Snd needs to know how the data's sampling rate, number \
-of channels, and numerical format.  This dialog gives you a chance to set those fields. \
+of channels, and sample type.  This dialog gives you a chance to set those fields. \
 To use the defaults, click the 'Reset' button.",
 			  WITH_WORD_WRAP,
 			  raw_xrefs,

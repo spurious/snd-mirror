@@ -947,11 +947,11 @@ static Xen g_mus_set_sound_path(Xen val)
 {
   Xen_check_type(Xen_is_list(val), val, 1, S_setB S_mus_sound_path, "a list");
 #if HAVE_SCHEME
-  s7_symbol_set_value(s7, mus_sound_path_symbol, val);
   if (sound_path_loc != -1)
     s7_gc_unprotect_at(s7, sound_path_loc);
   sound_path = val;
   sound_path_loc = s7_gc_protect(s7, sound_path);
+  s7_symbol_set_value(s7, mus_sound_path_symbol, val);
 #else
   if (sound_path != Xen_empty_list)
     Xen_GC_unprotect(sound_path);

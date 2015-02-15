@@ -236,7 +236,7 @@ typedef struct {
   int *marker_ids, *marker_positions;
   mus_long_t samples, true_file_length;
   mus_long_t data_location;
-  int srate, chans, header_type, sample_type, original_sound_format, datum_size; 
+  int srate, chans, header_type, sample_type, original_sound_samp_type, datum_size; 
   mus_long_t comment_start, comment_end;
   int type_specifier, bits_per_sample, block_align, fact_samples;
   time_t write_date;
@@ -617,7 +617,7 @@ static sound_file *fill_sf_record(const char *name, sound_file *sf)
   /* if (sf->chans < 0) sf->chans = 0; */
   sf->datum_size = mus_bytes_per_sample(sf->sample_type);
   sf->header_type = mus_header_type();
-  sf->original_sound_format = mus_header_original_sample_type();
+  sf->original_sound_samp_type = mus_header_original_sample_type();
   sf->true_file_length = mus_header_true_length();
 
   sf->comment_start = mus_header_comment_start();
@@ -773,7 +773,7 @@ int mus_sound_original_format(const char *arg)
 {
   sound_file *sf;
   sf = get_sf(arg);
-  return((sf) ? sf->original_sound_format : MUS_ERROR);
+  return((sf) ? sf->original_sound_samp_type : MUS_ERROR);
 }
 
 
