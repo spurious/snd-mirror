@@ -876,7 +876,7 @@ wants an expression:
 <pre class="indented">
 &gt; (define-macro (add-1 arg) `(+ 1 ,arg))
 #&lt;macro (arg)&gt;
-&gt; (macroexpand (add-1 32)) ; (macroexpand add-1) will complain about "car argument, add-1"
+&gt; (macroexpand (add-1 32))
 (+ 1 32)
 </pre>
 
@@ -930,17 +930,6 @@ keep track of which environment you want things to happen in.  Use with-let
 and gensym liberally.  
 stuff.scm has bacro-shaker which can find inadvertent name collisions,
 but it is flighty and easily confused.
-Since a bacro's expansion can depend on the run-time environment,
-macroexpand does not always show its actual expansion.  I use:
-</p>
-<pre class="indented">
-(define-bacro ...        ; the bacro's name and parameters here
-  (let ((expansion ...)) ; the bacro code here
-    (pretty-print expansion)
-    expansion))
-</pre>
-
-<p>
 See s7test.scm for many examples of macros including such perennial favorites as
 loop, dotimes, do*, enum, pushnew, and defstruct.
 </p>
@@ -1418,14 +1407,14 @@ that returns its argument in a list statement.
 </p>
 
 <pre class="indented">
-&gt; (define-macro (hang arg) `(define ,arg `(list (cdr ,,arg)))) ; obvious, no?
+&gt; (define-macro (hang arg) `(define ,arg `(list (cdr ,,arg))))
 #&lt;macro (arg)&gt;
 &gt; (macroexpand (hang (f a)))
 (define #1=(f a) ({list} 'list ({list} 'cdr #1#)))
 &gt; (hang (f a))
 f
 &gt; (procedure-source f)
-(lambda #1=(a) ({list} 'list ({list} 'cdr (f . #1#))))
+(lambda #1=(a) ({list} 'list ({list} 'cdr #1#)))
 &gt;(f 1)
 </pre>
 
@@ -2432,6 +2421,20 @@ ignoring the outer (enclosing) environment. Or better,
 <pre class="indented">
 (define-macro (with-environs e . body) 
   `(apply let (map (lambda (a) (list (car a) (cdr a))) ,e) '(,@body)))
+</pre>
+<p>Or turning it around,</p>
+<pre>
+(define-macro (Let vars . body)
+  `(with-let (sublet (curlet) 
+	       ,@(map (lambda (var)
+			(values (symbol-&gt;keyword (car var)) (cadr var)))
+		      vars))
+     ,@body))
+
+(Let ((c 4))
+  (Let ((a 2)
+        (b (+ c 2)))
+  (+ a b c)))
 </pre>
 
 <p>
@@ -5492,7 +5495,7 @@ a (gasp!) f*xpr.  You can do something similar with a normal macro:
 so if it does not see a list whose first element is a expansion name, it does
 not do anything special.  So in the <code>(x a)</code> case above, the
 expansion happens when the code is evaluated, and the expansion result
-is simply returned, unevaluated.
+is simply returned, unevaluated.  
 </p>
 
 

@@ -2223,7 +2223,7 @@ static s7_pointer NO_COMPLEX_NUMBERS;
 enum {OP_NO_OP, 
       OP_READ_INTERNAL, OP_EVAL, 
       OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_EVAL_ARGS2, OP_EVAL_ARGS3, OP_EVAL_ARGS4, OP_EVAL_ARGS5,
-      OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, 
+      OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, OP_MACROEXPAND,
       OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN_UNCHECKED, OP_BEGIN1,
       OP_IF, OP_IF1, OP_WHEN, OP_WHEN1, OP_UNLESS, OP_UNLESS1, OP_SET, OP_SET1, OP_SET2,
       OP_LET, OP_LET1, OP_LET_STAR, OP_LET_STAR1, OP_LET_STAR2,
@@ -2291,7 +2291,7 @@ enum {OP_NO_OP,
       OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_2, OP_SAFE_C_PP_3, OP_SAFE_C_PP_4, OP_SAFE_C_PP_5, OP_SAFE_C_PP_6, 
       OP_EVAL_ARGS_P_1, OP_EVAL_ARGS_P_1_MV, OP_EVAL_ARGS_P_2, OP_EVAL_ARGS_P_2_MV, 
       OP_EVAL_ARGS_P_3, OP_EVAL_ARGS_P_4, OP_EVAL_ARGS_P_3_MV, OP_EVAL_ARGS_P_4_MV, 
-      OP_EVAL_ARGS_SSP_1, OP_EVAL_ARGS_SSP_MV, OP_EVAL_MACRO_MV,
+      OP_EVAL_ARGS_SSP_1, OP_EVAL_ARGS_SSP_MV, OP_EVAL_MACRO_MV, OP_MACROEXPAND_1,
 
       OP_SAFE_C_ZZ_1, OP_SAFE_C_ZZ_2, OP_SAFE_C_ZC_1, OP_SAFE_C_SZ_1, OP_SAFE_C_ZA_1, OP_INCREMENT_SZ_1, OP_SAFE_C_SZ_SZ,
       OP_SAFE_C_ZAA_1, OP_SAFE_C_AZA_1, OP_SAFE_C_AAZ_1, OP_SAFE_C_SSZ_1, 
@@ -2420,7 +2420,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "no_op", 
       "read_internal", "eval", 
       "eval_args", "eval_args1", "eval_args2", "eval_args3", "eval_args4", "eval_args5",
-      "apply", "eval_macro", "lambda", "quote", 
+      "apply", "eval_macro", "lambda", "quote", "macroexpand",
       "define", "define1", "begin", "begin_unchecked", "begin1",
       "if", "if1", "when", "when1", "unless", "unless1", "set", "set1", "set2",
       "let", "let1", "let_star", "let_star1", "let_star2",
@@ -2488,7 +2488,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "safe_c_p_1", "safe_c_pp_1", "safe_c_pp_2", "safe_c_pp_3", "safe_c_pp_4", "safe_c_pp_5", "safe_c_pp_6", 
       "eval_args_p_1", "eval_args_p_1_mv", "eval_args_p_2", "eval_args_p_2_mv", 
       "eval_args_p_3", "eval_args_p_4", "eval_args_p_3_mv", "eval_args_p_4_mv", 
-      "eval_args_ssp_1", "eval_args_ssp_mv", "eval_macro_mv",
+      "eval_args_ssp_1", "eval_args_ssp_mv", "eval_macro_mv", "macroexpand_1",
 
       "safe_c_zz_1", "safe_c_zz_2", "safe_c_zc_1", "safe_c_sz_1", "safe_c_za_1", "increment_sz_1", "safe_c_sz_sz",
       "safe_c_zaa_1", "safe_c_aza_1", "safe_c_aaz_1", "safe_c_ssz_1", 
@@ -34540,6 +34540,9 @@ const char *s7_help(s7_scheme *sc, s7_pointer obj)
 	{
 	case OP_QUOTE:
 	  return("(quote obj) returns obj unevaluated.  'obj is an abbreviation for (quote obj).");
+
+	case OP_MACROEXPAND:
+	  return("(macroexpand macro-call) returns the result of the expansion phase of evaluating the macro call.");
 	  
 	case OP_IF:
 	  return("(if expr true-stuff optional-false-stuff) evaluates expr, then \
@@ -45866,6 +45869,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
   switch (op)
     {
     case OP_QUOTE:
+    case OP_MACROEXPAND:
       return(false);
 
     case OP_LET:
@@ -46503,6 +46507,9 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_poi
 	    return(false);
 	  break;
 	  
+	case OP_MACROEXPAND:
+	  return(false);
+
 	case OP_QUOTE:
 	  break;
 	  
@@ -48539,6 +48546,9 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		  op = (opcode_t)syntax_opcode(func);
 		  switch (op)
 		    {
+		    case OP_MACROEXPAND:
+		      return(false);
+
 		    case OP_QUOTE:
 		      break;
 
@@ -57647,14 +57657,67 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  return(apply_error(sc, sc->code, sc->args));
 	}
 
-      /* ---------------- OP_APPLY ---------------- */
+
     case OP_APPLY:      /* apply 'code' to 'args' */
       if (needs_copied_args(sc->code))
 	sc->args = copy_list(sc, sc->args);
       goto APPLY;
       /* (let ((lst '((1 2)))) (define (identity x) x) (cons (apply identity lst) lst)) */
       
+
+    case OP_MACROEXPAND_1:
+      sc->args = cdar(sc->code);
+      sc->code = sc->value;
+      goto MACROEXPAND;
+
+    case OP_MACROEXPAND:
+      /* mimic APPLY above, but don't push OP_EVAL_MACRO or OP_EXPANSION 
+       *   (define-macro (mac a) `(+ ,a 1)) (macroexpand (mac 3)), sc->code: ((mac 3))
+       */
+      if ((!is_pair(sc->code)) ||
+	  (!is_pair(car(sc->code))))
+	return(eval_error(sc, "macroexpand argument is not a macro call: ~A", sc->code));
+      if (!is_null(cdr(sc->code)))
+	return(eval_error(sc, "macroexpand: too many arguments: ~A", sc->code));
+
+      if (is_pair(caar(sc->code)))                            /* (macroexpand ((symbol->value 'mac) (+ 1 2))) */
+	{
+	  push_stack(sc, OP_MACROEXPAND_1, sc->NIL, sc->code);
+	  sc->code = caar(sc->code);
+	  goto EVAL;
+	}
+
+      sc->args = cdar(sc->code);
+      if (!is_symbol(caar(sc->code)))
+	return(eval_error(sc, "macroexpand argument is not a macro call: ~A", sc->code));
+      sc->code = find_symbol_checked(sc, caar(sc->code));
+
+    MACROEXPAND:
+      switch (type(sc->code))
+	{
+	case T_MACRO:
+	  NEW_FRAME(sc, closure_let(sc->code), sc->envir);
+	  goto BACRO;
+	  
+	case T_BACRO:
+	  NEW_FRAME(sc, sc->envir, sc->envir);
+	  goto BACRO;
+	  
+	case T_MACRO_STAR:
+	  NEW_FRAME(sc, closure_let(sc->code), sc->envir);
+	  goto MACRO_STAR;
+	  
+	case T_BACRO_STAR:  
+	  NEW_FRAME(sc, sc->envir, sc->envir); 
+	  goto MACRO_STAR;
+
+      	case T_C_MACRO: 
+	  sc->value = c_macro_call(sc->code)(sc, sc->args);
+	  goto START;
+	}
+      return(eval_error(sc, "macroexpand argument is not a macro call: ~A", sc->args));
       
+
     case OP_LAMBDA_STAR_DEFAULT:
       /* sc->args is the current closure arg list position, sc->value is the default expression's value */
       slot_set_value(sc->args, sc->value);
@@ -66720,6 +66783,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "define-bacro",      OP_DEFINE_BACRO,      small_int(2), max_arity);
   assign_syntax(sc, "define-bacro*",     OP_DEFINE_BACRO_STAR, small_int(2), max_arity);
   assign_syntax(sc, "with-baffle",       OP_WITH_BAFFLE,       small_int(1), max_arity);
+  assign_syntax(sc, "macroexpand",       OP_MACROEXPAND,       small_int(1), small_int(1));
 
 #if (!DISABLE_DEPRECATED)
   set_immutable(assign_syntax(sc, "with-environment", OP_WITH_LET, small_int(1), max_arity));
@@ -67631,17 +67695,8 @@ s7_scheme *s7_init(void)
 
   init_choosers(sc);
 
-  /* macroexpand 
-   *   needs to be a bacro so locally defined macros are expanded:
-   *     (let () (define-macro (hi a) `(+ ,a 1)) (macroexpand (hi 2)))
-   *   we could use a gensym in place of __mac__
-   */
-  s7_eval_c_string(sc, "(define-bacro (macroexpand __mac__) `(,(procedure-source (car __mac__)) ',@(cdr __mac__)))");
-  
-  /* quasiquote */
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, H_quasiquote);
 
-  /* ---------------- dilambda ---------------- */
   s7_eval_c_string(sc, "(define (dilambda g s)                                                                \n\
                           (if (or (not (procedure? g)) (not (procedure? s)))                                  \n\
                               (error 'wrong-type-arg \"dilambda takes 2 procedures: ~A ~A\" g s)              \n\
@@ -67699,7 +67754,6 @@ s7_scheme *s7_init(void)
                               (values))))");
 
 
-  /* ---------------- hooks ---------------- */
   s7_eval_c_string(sc, "(define (make-hook . args)                                                            \n\
                           (let ((body ()))                                                                    \n\
                             (apply lambda* args                                                               \n\

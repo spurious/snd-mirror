@@ -9004,11 +9004,9 @@
 (CINT-3.16 "GDK_GL_ERROR_UNSUPPORTED_PROFIL" "GdkGLError")
 
 (CCAST-3.16 "GTK_GL_AREA(object)" "GtkGLArea*")
-(CCAST-3.16 "GTK_SIDEBAR(object)" "GtkSidebar*")
 (CCAST-3.16 "GDK_GL_CONTEXT(object)" "GdkGLContext")
 
 (CCHK-3.16 "GTK_IS_GL_AREA(object)" "GtkGLArea*")
-(CCHK-3.16 "GTK_IS_SIDEBAR(object)" "GtkSidebar*")
 (CCHK-3.16 "GDK_IS_GL_CONTEXT(object)" "GdkGLContext*")
 
 (CFNC-3.16 "void gdk_cairo_draw_from_gl cairo_t* cr GdkWindow* window int source int source_type int buffer_scale int x int y int width int height")
@@ -9049,9 +9047,6 @@
 (CFNC-3.16 "void gtk_render_activity GtkStyleContext* context cairo_t* cr gdouble x gdouble y gdouble width gdouble height")
 (CFNC-3.16 "void gtk_render_icon GtkStyleContext* context cairo_t* cr GdkPixbuf* pixbuf gdouble x gdouble y")
 (CFNC-3.16 "void gtk_render_icon_surface GtkStyleContext* context cairo_t* cr cairo_surface_t* surface gdouble x gdouble y")
-(CFNC-3.16 "GtkWidget* gtk_sidebar_new void")
-(CFNC-3.16 "void gtk_sidebar_set_stack GtkSidebar* sidebar GtkStack* stack")
-(CFNC-3.16 "GtkStack* gtk_sidebar_get_stack GtkSidebar* sidebar")
 ;;; 3.15.2 (CFNC-3.16 "GdkVisual* gdk_gl_context_get_visual GdkGLContext* context")
 (CFNC-3.16 "GdkWindow* gdk_gl_context_get_window GdkGLContext* context")
 (CFNC-3.16 "void gdk_gl_context_make_current GdkGLContext* context")
@@ -9133,3 +9128,16 @@
 (CFNC-3.16 "void gtk_drag_cancel GdkDragContext* context")
 (CFNC-3.16 "gboolean gtk_search_entry_handle_event GtkSearchEntry* entry GdkEvent* event")
 
+;;; 3.15.7:
+
+(CFNC-3.16 "void gdk_gl_context_get_version GdkGLContext* context int* [major] int* [minor]")
+(CFNC-3.16 "void gtk_gl_area_set_required_version GtkGLArea* area int major int minor")
+(CFNC-3.16 "void gtk_gl_area_get_required_version GtkGLArea* area int* [major] int* [minor]")
+;(CFNC-3.16 "void gtk_list_box_bind_model GtkListBox* box GListModel* model GtkListBoxCreateWidgetFunc create_widget_func gpointer user_data GDestroyNotify user_data_free_func")
+(CFNC-3.16 "void gtk_notebook_detach_tab GtkNotebook* notebook GtkWidget* child")
+
+(CCAST-3.16 "GTK_STACK_SIDEBAR(object)" "GtkStackSidebar*")
+(CCHK-3.16 "GTK_IS_STACK_SIDEBAR(object)" "GtkStackSidebar*")
+(CFNC-3.16 "GtkWidget* gtk_stack_sidebar_new void")
+(CFNC-3.16 "void gtk_stack_sidebar_set_stack GtkStackSidebar* sidebar GtkStack* stack")
+(CFNC-3.16 "GtkStack* gtk_stack_sidebar_get_stack GtkStackSidebar* sidebar")
