@@ -1267,6 +1267,7 @@ static void init_types(void)
 
 #define T_EXPANSION                   (1 << (TYPE_BITS + 6))
 #define is_expansion(p)               ((typesflag(p) & T_EXPANSION) != 0)
+#define clear_expansion(p)            typesflag(p) &= (~T_EXPANSION)
 /* this marks the symbol associated with a run-time macro and distinguishes the value from an ordinary macro
  */
 
@@ -6634,19 +6635,7 @@ static s7_pointer make_macro(s7_scheme *sc)
   sc->capture_env_counter++;
   sc->code = caar(sc->code);
   if (sc->op == OP_DEFINE_EXPANSION)
-    set_type(sc->code, T_EXPANSION | T_SYMBOL);
-
-  /* this can lead to confusion because the expansion name is now globally identified as an expansion.
-   *    (let () (define-expansion (ex1 a) `(+ ,a 1)) (display (ex1 3)))
-   *    (define (ex1 b) (* b 2)) (display (ex1 3))
-   * since this happens at the top level, the first line is evaluated, ex1 becomes an expansion.
-   * but the reader has no idea about lets and whatnot, so in the second line, ex1 is still an expansion
-   * to the reader, so ir sees (define (+ b 1) ...) -- error!  To support tail-calls, there's no
-   * way in eval to see the let close, so we can't clear the expansion flag when the let is done.
-   * So, define-expansion is like define-constant -- we'd set the T_IMMUTABLE flag so the error message 
-   * is less obscure, but that gets in lint's way.  Maybe a special exception for reader-cond?
-   * Or accept the redef if it is still a macro?
-   */
+    set_type(sc->code, T_EXPANSION | T_SYMBOL); /* see comment under READ_TOK */
 
   /* symbol? macro name has already been checked, find name in environment, and define it */
   cx = find_local_symbol(sc, sc->code, sc->envir); 
@@ -40875,6 +40864,11 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 {
   /* this always occurs in a context where we're trying to find anything, so I'll move a couple of those checks here
    */
+  if (has_ref_fallback(sc->envir)) /* an experiment */
+    {
+      check_method(sc, sc->envir, sc->LET_REF_FALLBACK, sc->w = list_2(sc, sc->envir, sym));
+    }
+
   if (sym == sc->UNQUOTE)
     return(eval_error(sc, "unquote (',') occurred outside quasiquote: ~S", sc->cur_code));
 
@@ -61303,24 +61297,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	case TOKEN_RIGHT_PAREN:
 	  /* sc->args can't be null here */
-	  /* read-time macro expansion:
-	   *   (define-macro (hi a) (format #t "hi...") `(+ ,a 1))
-	   *   (define (ho b) (+ 1 (hi b)))
-	   * here sc->value is: (ho b), (hi b), (+ 1 (hi b)), (define (ho b) (+ 1 (hi b)))
-	   * but... first we can't tell for sure at this point that "hi" really is a macro
-	   *   (letrec ((hi ... (hi...))) will be confused about the second hi,
-	   *   or (call/cc (lambda (hi) (hi 1))) etc.
-	   * second, figuring out that we're quoted is not easy -- we have to march all the
-	   * way to the bottom of the stack looking for op_read_quote or op_read_vector
-	   *    #(((hi)) 2) or '(((hi)))
-	   * or op_read_list with args not equal (quote) or (macroexapand)
-	   *    '(hi 3) or (macroexpand (hi 3) or (quote (hi 3))
-	   * and those are only the problems I noticed!
-	   *
-	   * The hardest of these problems involve shadowing, so Rick asked for "define-expansion"
-	   *   which is like define-macro, but the programmer guarantees that the macro
-	   *   name will not be shadowed. 
-	   */
 	  sc->value = safe_reverse_in_place(sc, sc->args);
 	  if (is_symbol(car(sc->value)))
 	    {
@@ -61331,23 +61307,76 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  int loc;
 		  s7_pointer caller;
+
+		  /* read-time macro expansion:
+		   *   (define-macro (hi a) (format #t "hi...") `(+ ,a 1))
+		   *   (define (ho b) (+ 1 (hi b)))
+		   * here sc->value is: (ho b), (hi b), (+ 1 (hi b)), (define (ho b) (+ 1 (hi b)))
+		   * but... first we can't tell for sure at this point that "hi" really is a macro
+		   *   (letrec ((hi ... (hi...))) will be confused about the second hi,
+		   *   or (call/cc (lambda (hi) (hi 1))) etc.
+		   * second, figuring out that we're quoted is not easy -- we have to march all the
+		   * way to the bottom of the stack looking for op_read_quote or op_read_vector
+		   *    #(((hi)) 2) or '(((hi)))
+		   * or op_read_list with args not equal (quote) or (macroexapand)
+		   *    '(hi 3) or (macroexpand (hi 3) or (quote (hi 3))
+		   * and those are only the problems I noticed!
+		   *
+		   * The hardest of these problems involve shadowing, so Rick asked for "define-expansion"
+		   *   which is like define-macro, but the programmer guarantees that the macro
+		   *   name will not be shadowed. 
+		   *
+		   * to make expansion recognition fast here, define-expansion sets the T_EXPANSION
+		   *   bit in the symbol as well as the value:
+		   *   set_type(sc->code, T_EXPANSION | T_SYMBOL) 
+		   * but this can lead to confusion because the expansion name is now globally identified as an expansion.
+		   *    (let () (define-expansion (ex1 a) `(+ ,a 1)) (display (ex1 3)))
+		   *    (define (ex1 b) (* b 2)) (display (ex1 3))
+		   * since this happens at the top level, the first line is evaluated, ex1 becomes an expansion.
+		   * but the reader has no idea about lets and whatnot, so in the second line, ex1 is still an expansion
+		   * to the reader, so ir sees (define (+ b 1) ...) -- error!  To support tail-calls, there's no
+		   * way in eval to see the let close, so we can't clear the expansion flag when the let is done.
+		   * But we don't want define-expansion to mimic define-constant (via T_IMMUTABLE) because programs
+		   * like lint need to cancel reader-cond (for example).  So, we allow an expansion to be redefined,
+		   * and check here that the expander symbol still refers to an expansion.
+		   *
+		   * but in (define (ex1 b) b), the reader doesn't know we're in a define call (or it would be 
+		   *   a bother to notice), so to redefine an expansion, first (set! ex1 #f) or (define ex1 #f),
+		   *   then (define (ex1 b) b).
+		   *
+		   * This is a mess!  Maybe we should insist that expansions are always global.
+		   */
+
 		  loc = s7_stack_top(sc) - 1;
 		  caller = car(stack_args(sc->stack, loc));
 		  if ((loc >= 3) &&
 		      (stack_op(sc->stack, loc) != OP_READ_QUOTE) &&             /* '(hi 1) for example */
 		      (caller != sc->QUOTE) &&          /* (quote (hi 1)) */
 		      (caller != sc->MACROEXPAND) &&    /* (macroexpand (hi 1)) */
-		      (caller != sc->DEFINE_EXPANSION)) /* (define-expansion ...) being reloaded */
+		      (caller != sc->DEFINE_EXPANSION)) /* (define-expansion ...) being reloaded/redefined */
 		    {
+		      s7_pointer symbol, slot;
 		      /* we're playing fast and loose with sc->envir in the reader, so here we need a disaster check */
 #if DEBUGGING
 		      if (unchecked_type(sc->envir) != T_ENVIRONMENT) sc->envir = sc->NIL;
 #else
 		      if (!is_let(sc->envir)) sc->envir = sc->NIL;
 #endif
-		      sc->code = slot_value(find_symbol(sc, car(sc->value)));
-		      sc->args = copy_list(sc, cdr(sc->value));
-		      goto APPLY;
+		      symbol = car(sc->value);
+		      if ((symbol_id(symbol) == 0) ||
+			  (sc->envir == sc->NIL))
+			slot = global_slot(symbol);
+		      else slot = find_symbol(sc, symbol);
+		      if (is_slot(slot))
+			sc->code = slot_value(slot);
+		      else sc->code = sc->UNDEFINED;
+		      if (!is_expansion(sc->code))
+			clear_expansion(symbol);
+		      else
+			{
+			  sc->args = copy_list(sc, cdr(sc->value));
+			  goto APPLY;
+			}
 		    }
 		}
 	      if (is_pair(cdr(sc->value)))
@@ -68064,5 +68093,7 @@ int main(int argc, char **argv)
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * the sndlib enums should be typedefs, and the types used throughout (mus_header_t, mus_sample_t, mus_error_t)
  *    clm.h does this, so it must be ok by CL?
- * to try: define typedef s7_Int [or unsigned...?] opcode_t, then use the ops direct
+ * mdb/gdb -> let + s7 threads (need full example of this in s7.html)
+ *    for let-ref, actually need fallback before checking outlet
+ *    add s7.html code to s7test
  */

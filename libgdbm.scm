@@ -38,15 +38,41 @@
 		    ;(int gdbm_import ((GDBM_FILE c_pointer) char* int))
 
 		    (in-C "
+static void *make_datum(datum key) {datum *p; p = (datum *)malloc(sizeof(datum)); p->dptr = key.dptr; p->dsize = key.dsize; return((void *)p);}
 static s7_pointer g_gdbm_firstkey(s7_scheme *sc, s7_pointer args)
 {
   if (s7_is_c_pointer(s7_car(args)))
     {
       datum key;
       key = gdbm_firstkey((GDBM_FILE)s7_c_pointer(s7_car(args)));
-      return(s7_make_string_with_length(sc, key.dptr, key.dsize));
+      if (key.dptr)
+         return(s7_cons(sc, s7_make_string_with_length(sc, key.dptr, key.dsize), s7_make_c_pointer(sc, make_datum(key))));
+      return(s7_eof_object(sc));
     }
   return(s7_wrong_type_arg_error(sc, \"gdbm_firstkey\", 0, s7_car(args), \"a gdbm file\"));
+}
+
+static s7_pointer g_gdbm_nextkey(s7_scheme *sc, s7_pointer args)
+{
+  if (s7_is_c_pointer(s7_car(args)))
+    {
+      if (s7_is_c_pointer(s7_cadr(args)))
+        {
+	  datum *p;
+          datum key, rtn;
+          p = (datum *)s7_c_pointer(s7_cadr(args));
+	  key.dptr = p->dptr;
+	  key.dsize = p->dsize;
+          rtn = gdbm_nextkey((GDBM_FILE)s7_c_pointer(s7_car(args)), key);
+          free(key.dptr);
+	  free(p);
+          if (rtn.dptr)
+	     return(s7_cons(sc, s7_make_string_with_length(sc, rtn.dptr, rtn.dsize), s7_make_c_pointer(sc, make_datum(rtn))));
+          return(s7_eof_object(sc));
+	}
+      return(s7_wrong_type_arg_error(sc, \"gdbm_nextkey\", 2, s7_cadr(args), \"a string\"));
+    }
+  return(s7_wrong_type_arg_error(sc, \"gdbm_nextkey\", 1, s7_car(args), \"a gdbm file\"));
 }
 
 static s7_pointer g_gdbm_exists(s7_scheme *sc, s7_pointer args)
@@ -80,23 +106,6 @@ static s7_pointer g_gdbm_delete(s7_scheme *sc, s7_pointer args)
   return(s7_wrong_type_arg_error(sc, \"gdbm_delete\", 1, s7_car(args), \"a gdbm file\"));
 }
 
-static s7_pointer g_gdbm_nextkey(s7_scheme *sc, s7_pointer args)
-{
-  if (s7_is_c_pointer(s7_car(args)))
-    {
-      if (s7_is_string(s7_cadr(args)))
-        {
-          datum key, rtn;
-          key.dptr = (char *)s7_string(s7_cadr(args));
-          key.dsize = (int)s7_string_length(s7_cadr(args));
-          rtn = gdbm_nextkey((GDBM_FILE)s7_c_pointer(s7_car(args)), key);
-          return(s7_make_string_with_length(sc, rtn.dptr, rtn.dsize));
-	}
-      return(s7_wrong_type_arg_error(sc, \"gdbm_nextkey\", 2, s7_cadr(args), \"a string\"));
-    }
-  return(s7_wrong_type_arg_error(sc, \"gdbm_nextkey\", 1, s7_car(args), \"a gdbm file\"));
-}
-
 static s7_pointer g_gdbm_fetch(s7_scheme *sc, s7_pointer args)
 {
   if (s7_is_c_pointer(s7_car(args)))
@@ -107,7 +116,14 @@ static s7_pointer g_gdbm_fetch(s7_scheme *sc, s7_pointer args)
           key.dptr = (char *)s7_string(s7_cadr(args));
           key.dsize = (int)s7_string_length(s7_cadr(args));
           rtn = gdbm_fetch((GDBM_FILE)s7_c_pointer(s7_car(args)), key);
-          return(s7_make_string_with_length(sc, rtn.dptr, rtn.dsize));
+          if (rtn.dptr)
+            {
+  	      s7_pointer result;
+              result = s7_make_string_with_length(sc, rtn.dptr, rtn.dsize - 1);
+              free(rtn.dptr);
+              return(result);
+	    }
+          else return(s7_make_string_with_length(sc, \"#<undefined>\", 12));
 	}
       return(s7_wrong_type_arg_error(sc, \"gdbm_fetch\", 2, s7_cadr(args), \"a string\"));
     }
@@ -128,7 +144,7 @@ static s7_pointer g_gdbm_store(s7_scheme *sc, s7_pointer args)
                   key.dptr = (char *)s7_string(s7_cadr(args));
                   key.dsize = (int)s7_string_length(s7_cadr(args));
                   val.dptr = (char *)s7_string(s7_caddr(args));
-                  val.dsize = (int)s7_string_length(s7_caddr(args));
+                  val.dsize = (int)s7_string_length(s7_caddr(args)) + 1;
                   return(s7_make_integer(sc, gdbm_store((GDBM_FILE)s7_c_pointer(s7_car(args)), key, val, (int)s7_integer(s7_cadddr(args)))));
                 }
               return(s7_wrong_type_arg_error(sc, \"gdbm_fetch\", 4, s7_cadddr(args), \"an integer (flag)\"));
