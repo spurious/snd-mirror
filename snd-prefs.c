@@ -2730,7 +2730,7 @@ static const char *output_sample_type_choices[NUM_OUTPUT_SAMPLE_TYPE_CHOICES] = 
 static int output_sample_types[NUM_OUTPUT_SAMPLE_TYPE_CHOICES] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
 
 
-static int header_to_sample_type(int ht, int frm)
+static int header_to_sample_type(int ht, int samp_type)
 {
   /* nist -> short or int (lb)
      aiff -> short or int (b)
@@ -2742,26 +2742,26 @@ static int header_to_sample_type(int ht, int frm)
   switch (ht)
     {
     case MUS_NEXT: case MUS_AIFC:
-      switch (frm)
+      switch (samp_type)
 	{
-	case MUS_LSHORT: return(MUS_BSHORT); break;
-	case MUS_LINT: return(MUS_BINT); break;
-	case MUS_LFLOAT: return(MUS_BFLOAT); break;
+	case MUS_LSHORT:  return(MUS_BSHORT); break;
+	case MUS_LINT:    return(MUS_BINT); break;
+	case MUS_LFLOAT:  return(MUS_BFLOAT); break;
 	case MUS_LDOUBLE: return(MUS_BDOUBLE); break;
 	}
       break;
 
     case MUS_AIFF:
-      switch (frm)
+      switch (samp_type)
 	{
 	case MUS_LSHORT: return(MUS_BSHORT); break;
-	case MUS_LINT: return(MUS_BINT); break;
+	case MUS_LINT:   return(MUS_BINT); break;
 	case MUS_LFLOAT: case MUS_LDOUBLE: case MUS_BFLOAT: case MUS_BDOUBLE: return(MUS_BINT); break;
 	}
       break;
 
     case MUS_NIST:
-      switch (frm)
+      switch (samp_type)
 	{
 	case MUS_LFLOAT: case MUS_LDOUBLE: return(MUS_LINT); break;
 	case MUS_BFLOAT: case MUS_BDOUBLE: return(MUS_BINT); break;
@@ -2770,23 +2770,23 @@ static int header_to_sample_type(int ht, int frm)
 
     case MUS_RF64:
     case MUS_RIFF:
-      switch (frm)
+      switch (samp_type)
 	{
-	case MUS_BSHORT: return(MUS_LSHORT); break;
-	case MUS_BINT: return(MUS_LINT); break;
-	case MUS_BFLOAT: return(MUS_LFLOAT); break;
+	case MUS_BSHORT:  return(MUS_LSHORT); break;
+	case MUS_BINT:    return(MUS_LINT); break;
+	case MUS_BFLOAT:  return(MUS_LFLOAT); break;
 	case MUS_BDOUBLE: return(MUS_LDOUBLE); break;
 	}
       break;
 
     case MUS_CAFF:
-      if (frm == MUS_LINT)
+      if (samp_type == MUS_LINT)
 	return(MUS_LINTN);
-      if (frm == MUS_BINT)
+      if (samp_type == MUS_BINT)
 	return(MUS_BINTN);
       break;
     }
-  return(frm);
+  return(samp_type);
 }
 
 

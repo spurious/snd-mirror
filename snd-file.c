@@ -2302,11 +2302,11 @@ int position_to_sample_type(int header, int position)
 }
 
 
-static int h_to_sample_type_pos(int h, int frm)
+static int h_to_sample_type_pos(int h, int samp_type)
 {
   int i;
   for (i = 0; i < h_num_sample_types[h]; i++)
-    if (h_dfs[h][i] == frm)
+    if (h_dfs[h][i] == samp_type)
       return(i);
   return(0);
 }

@@ -3949,6 +3949,7 @@ static int gc(s7_scheme *sc)
 #endif
 #ifndef _MSC_VER
       /* this is apparently deprecated in favor of clock_gettime -- what compile-time switch to use here?
+       *   _POSIX_TIMERS, or perhaps use CLOCK_REALTIME, but clock_gettime requires -lrt -- no thanks.
        */
       gettimeofday(&start_time, &z0);
 #endif
@@ -5315,13 +5316,36 @@ static s7_pointer find_let(s7_scheme *sc, s7_pointer obj)
 
 static s7_pointer find_method(s7_scheme *sc, s7_pointer env, s7_pointer symbol) 
 { 
+
+#if 0
   s7_pointer x, y;
 
   for (x = env; is_let(x); x = outlet(x))
     for (y = let_slots(x); is_slot(y); y = next_slot(y))
       if (slot_symbol(y) == symbol)
 	return(slot_value(y));
+#endif
 
+  s7_pointer x;
+  if (symbol_id(symbol) == 0) /* an experiment -- this means the symbol has never been used locally, so how can it be a method? */
+    return(sc->UNDEFINED);
+
+  /* and another experiment -- I think the symbol_id is in sync with let_id, so the standard search should work */
+  if (let_id(env) == symbol_id(symbol))
+    return(slot_value(local_slot(symbol)));	
+
+  for (x = env; symbol_id(symbol) < let_id(x); x = outlet(x));
+
+  if (let_id(x) == symbol_id(symbol))
+    return(slot_value(local_slot(symbol)));	
+
+  for (; is_let(x); x = outlet(x))
+    {
+      s7_pointer y; 
+      for (y = let_slots(x); is_slot(y); y = next_slot(y))	
+	if (slot_symbol(y) == symbol)
+	  return(slot_value(y)); 
+    }
   return(sc->UNDEFINED);
 } 
 
@@ -6379,7 +6403,7 @@ s7_pointer s7_is_local_variable(s7_scheme *sc, s7_pointer symbol, s7_pointer e)
 }
 
 
-s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just the rootlet? */
+s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym)
 {
   s7_pointer x;
 
@@ -6612,8 +6636,19 @@ static s7_pointer make_macro(s7_scheme *sc)
   if (sc->op == OP_DEFINE_EXPANSION)
     set_type(sc->code, T_EXPANSION | T_SYMBOL);
 
-  /* symbol? macro name has already been checked */
-  /* find name in environment, and define it */
+  /* this can lead to confusion because the expansion name is now globally identified as an expansion.
+   *    (let () (define-expansion (ex1 a) `(+ ,a 1)) (display (ex1 3)))
+   *    (define (ex1 b) (* b 2)) (display (ex1 3))
+   * since this happens at the top level, the first line is evaluated, ex1 becomes an expansion.
+   * but the reader has no idea about lets and whatnot, so in the second line, ex1 is still an expansion
+   * to the reader, so ir sees (define (+ b 1) ...) -- error!  To support tail-calls, there's no
+   * way in eval to see the let close, so we can't clear the expansion flag when the let is done.
+   * So, define-expansion is like define-constant -- we'd set the T_IMMUTABLE flag so the error message 
+   * is less obscure, but that gets in lint's way.  Maybe a special exception for reader-cond?
+   * Or accept the redef if it is still a macro?
+   */
+
+  /* symbol? macro name has already been checked, find name in environment, and define it */
   cx = find_local_symbol(sc, sc->code, sc->envir); 
   if (is_slot(cx))
     slot_set_value(cx, mac); 
@@ -57814,12 +57849,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       {
 	s7_pointer lx;
-	lx = find_symbol(sc, car(sc->code));
+	sc->code = car(sc->code);
+	if (is_pair(sc->code)) sc->code = car(sc->code); /* (define-constant (ex3 a)...) */
+	lx = find_symbol(sc, sc->code);	
 	if (is_slot(lx))
 	  set_immutable(slot_symbol(lx));
 	goto START;
       }
-
       
     case OP_DEFINE_CONSTANT:
       push_stack(sc, OP_DEFINE_CONSTANT1, sc->NIL, sc->code);
@@ -67988,7 +68024,7 @@ int main(int argc, char **argv)
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3020
  * lg             |      |      | 6547 6497 6494 6235 6229
  * t137           |      |      | 11.0           5031 4861
- * t455|6     265 |   89 |  9   |       8.4 8045 7482 7473
+ * t455|6     265 |   89 |  9   |       8.4 8045 7482 7241
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.7
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9
@@ -68026,4 +68062,7 @@ int main(int argc, char **argv)
  * checkpt via cell: recast s7_pointer as hnum?(+ permanents), (op)stack+current-pos+heap+symbols (presented as continuation?)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
+ * the sndlib enums should be typedefs, and the types used throughout (mus_header_t, mus_sample_t, mus_error_t)
+ *    clm.h does this, so it must be ok by CL?
+ * to try: define typedef s7_Int [or unsigned...?] opcode_t, then use the ops direct
  */

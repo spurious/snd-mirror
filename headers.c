@@ -5489,19 +5489,19 @@ static int read_no_header(int fd)
 }
 
 
-void mus_header_set_raw_defaults(int sr, int chn, int frm)
+void mus_header_set_raw_defaults(int sr, int chn, int samp_type)
 {
   if (sr > 0) raw_header_srate = sr;
   if (chn > 0) raw_header_chans = chn;
-  if (mus_is_sample_type(frm)) raw_header_sample_type = frm;
+  if (mus_is_sample_type(samp_type)) raw_header_sample_type = samp_type;
 }
 
 
-void mus_header_raw_defaults(int *sr, int *chn, int *frm)
+void mus_header_raw_defaults(int *sr, int *chn, int *samp_type)
 {
   (*sr) = raw_header_srate;
   (*chn) = raw_header_chans;
-  (*frm) = raw_header_sample_type;
+  (*samp_type) = raw_header_sample_type;
 }
 
 
