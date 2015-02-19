@@ -1528,7 +1528,8 @@ void src_file(const char *file, double ratio)
   mus_any **rds, **srcs;
   char *temp_out;
   const char *comment;
-  int k, chan, chans, width, out_fd, sample_type, header_type, buffer_size;
+  int k, chan, chans, width, out_fd, sample_type, buffer_size;
+  mus_header_t header_type;
   mus_long_t samp, old_samps, new_samps;
   mus_float_t old_srate, new_srate;
   mus_float_t **obufs;

@@ -913,7 +913,7 @@ giving the new symbol name's prefix.  gensym? returns #t if its argument is a sy
 </pre>
 
 <p>A bacro is a macro that expands its body and evaluates
-the result in the calling environment.
+the result in the calling environment. 
 </p>
 
 <pre class="indented">
@@ -938,7 +938,24 @@ stuff.scm has bacro-shaker which can find inadvertent name collisions,
 but it is flighty and easily confused.
 See s7test.scm for many examples of macros including such perennial favorites as
 loop, dotimes, do*, enum, pushnew, and defstruct.
+The calling environment itself is (outlet (curlet)) from within a bacro, so
 </p>
+
+<pre class="indented">
+(define-bacro (holler)
+  `(format *stderr* "(~S~{ ~S ~S~^~})~%" 
+	   (let ((f __func__))
+	     (if (pair? f) (car f) f))
+	   (map (lambda (slot)
+		  (values (symbol-&gt;keyword (car slot)) (cdr slot)))		  
+		(reverse (map values ,(outlet (curlet)))))))
+
+(define (f1 a b)
+  (holler)
+  (+ a b))
+
+(f1 2 3) ; prints out "(f1 :a 2 :b 3)" and returns 5
+</pre>
 
 
 <blockquote>
@@ -1366,7 +1383,10 @@ with-let from the start, writing an immaculo directly:
        (+ a b))))
 </pre>
 
-<p>If you want the macro's expanded result
+<p>I think this could be automated by redefining quasiquote to handle the with-let wrapper,
+but my first stab at it convinced me that I need the bacro equivalent of define-expansion.
+Then I got stuck on what to call it.
+If you want the macro's expanded result
 to be evaluated in its definition environment:
 </p>
 <pre>
@@ -4182,8 +4202,6 @@ is similar, but its argument is a string.
 
 
 
-
-
 <div class="header" id="IO"><h4>IO and other OS functions</h4></div>
 
 
@@ -5478,7 +5496,7 @@ The reader does know about global variables, so:
 
 <p>Now the assertion code is only present in the function body (or wherever)
 if *debugging* is #t; otherwise assert expands into nothing.  Leaving aside
-read-time evaluation, the real difference between define-macro and define-expansion
+read-time expansion and splicing, the real difference between define-macro and define-expansion
 is that the expansion's result is not evaluated.
 I'm no historian, but I believe that means that define-expansion creates
 a (gasp!) f*xpr.  In fact:

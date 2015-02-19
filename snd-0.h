@@ -470,8 +470,8 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #if HAVE_SCHEME
   #define set_default_output_header_type(a) \
     do {\
-        ss->Default_Output_Header_Type = a; \
-        s7_symbol_set_value(s7, ss->default_output_header_type_symbol, s7_make_integer(s7, ss->Default_Output_Header_Type));\
+      ss->Default_Output_Header_Type = (mus_header_t)a;			\
+        s7_symbol_set_value(s7, ss->default_output_header_type_symbol, s7_make_integer(s7, (s7_Int)(ss->Default_Output_Header_Type))); \
     } while (0)
 #else
   #define set_default_output_header_type(a) ss->Default_Output_Header_Type = a

@@ -530,7 +530,8 @@ bool mus_set_clipping(bool new_value) {clipping_default = new_value; return(new_
 
 typedef struct {
   char *name;
-  int sample_type, bytes_per_sample, chans, header_type;
+  int sample_type, bytes_per_sample, chans;
+  mus_header_t header_type;
   bool clipping;
   mus_long_t data_location;
   bool saved;
@@ -564,7 +565,7 @@ static io_fd **io_fds = NULL;
 #define IO_FD_ALLOC_SIZE 8
 
 
-int mus_file_open_descriptors(int tfd, const char *name, int samp_type, int size /* datum size */, mus_long_t location, int chans, int type)
+int mus_file_open_descriptors(int tfd, const char *name, int samp_type, int size /* datum size */, mus_long_t location, int chans, mus_header_t type)
 {
   int err = MUS_NO_ERROR;
   if (io_fd_size == 0)
@@ -659,7 +660,7 @@ int mus_file_set_clipping(int tfd, bool clipped)
 }
 
 
-int mus_file_set_header_type(int tfd, int type)
+int mus_file_set_header_type(int tfd, mus_header_t type)
 {
   io_fd *fd;
   if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
@@ -669,10 +670,10 @@ int mus_file_set_header_type(int tfd, int type)
 }
 
 
-int mus_file_header_type(int tfd)
+mus_header_t mus_file_header_type(int tfd)
 {
   io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
+  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_UNSUPPORTED);
   fd = io_fds[tfd];
   return(fd->header_type);
 }

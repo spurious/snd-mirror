@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 9
-#define MUS_DATE "16-Feb-15"
+#define MUS_REVISION 10
+#define MUS_DATE "19-Feb-15"
 
 /* isn't mus_env_interp backwards? */
 
@@ -65,7 +65,7 @@ typedef struct {
   mus_long_t data_start, data_end;
   mus_long_t out_end;
   int output_sample_type;
-  int output_header_type;
+  mus_header_t output_header_type;
 } rdout;
 /* end internal stuff */
 
@@ -462,7 +462,7 @@ MUS_EXPORT mus_float_t *mus_frample_to_frample(mus_float_t *matrix, int mx_chans
 
 MUS_EXPORT bool mus_is_frample_to_file(mus_any *ptr);
 MUS_EXPORT mus_float_t *mus_frample_to_file(mus_any *ptr, mus_long_t samp, mus_float_t *data);
-MUS_EXPORT mus_any *mus_make_frample_to_file_with_comment(const char *filename, int chans, int samp_type, int head_type, const char *comment);
+MUS_EXPORT mus_any *mus_make_frample_to_file_with_comment(const char *filename, int chans, int samp_type, mus_header_t head_type, const char *comment);
 #define mus_make_frample_to_file(Filename, Chans, SampType, HeadType) mus_make_frample_to_file_with_comment(Filename, Chans, SampType, HeadType, NULL)
 MUS_EXPORT mus_any *mus_continue_frample_to_file(const char *filename);
 
@@ -474,7 +474,7 @@ MUS_EXPORT void mus_file_mix(const char *outfile, const char *infile,
 			     mus_float_t *mx, int mx_chans, mus_any ***envs);
 
 MUS_EXPORT bool mus_is_sample_to_file(mus_any *ptr);
-MUS_EXPORT mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chans, int samp_type, int head_type, const char *comment);
+MUS_EXPORT mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chans, int samp_type, mus_header_t head_type, const char *comment);
 #define mus_make_sample_to_file(Filename, Chans, SampType, HeadType) mus_make_sample_to_file_with_comment(Filename, Chans, SampType, HeadType, NULL)
 MUS_EXPORT mus_float_t mus_sample_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_float_t val);
 MUS_EXPORT mus_any *mus_continue_sample_to_file(const char *filename);

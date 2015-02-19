@@ -7232,8 +7232,8 @@ should be sndlib identifiers:\n  " make_sample_to_file_example
   if (Xen_is_integer(out_format)) df = Xen_integer_to_C_int(out_format);
   if (mus_is_sample_type(df))
     {
-      int ht = (int)MUS_NEXT;
-      if (Xen_is_integer(out_type)) ht = Xen_integer_to_C_int(out_type);
+      mus_header_t ht = MUS_NEXT;
+      if (Xen_is_integer(out_type)) ht = (mus_header_t)Xen_integer_to_C_int(out_type);
       if (mus_is_header_type(ht))
 	{
 	  int chns = 1;
@@ -7374,7 +7374,7 @@ should be sndlib identifiers:\n  " make_frample_to_file_example
   fgen = mus_make_frample_to_file_with_comment(Xen_string_to_C_string(name),
 					     (Xen_is_integer(chans)) ? Xen_integer_to_C_int(chans) : 1,
 					     (Xen_is_integer(out_format)) ? Xen_integer_to_C_int(out_format) : (int)MUS_OUT_SAMPLE_TYPE,
-					     (Xen_is_integer(out_type)) ? Xen_integer_to_C_int(out_type) : (int)MUS_NEXT,
+					     (Xen_is_integer(out_type)) ? (mus_header_t)Xen_integer_to_C_int(out_type) : MUS_NEXT,
 					     (Xen_is_string(comment)) ? Xen_string_to_C_string(comment) : NULL);
   if (fgen) return(mus_xen_to_object(mus_any_to_mus_xen(fgen)));
   return(Xen_false);

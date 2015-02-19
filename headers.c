@@ -188,7 +188,8 @@ int mus_header_initialize(void)
 #define I_IRCAM_NEXT  0x0004a364
 
 static mus_long_t data_location = 0;
-static int srate = 0, chans = 0, header_type = MUS_UNSUPPORTED, sample_type = MUS_UNKNOWN, original_sample_type = 0;
+static int srate = 0, chans = 0, sample_type = MUS_UNKNOWN, original_sample_type = 0;
+static mus_header_t header_type = MUS_UNSUPPORTED;
 static int type_specifier = 0, bits_per_sample = 0, block_align = 0, fact_samples = 0;
 static mus_long_t comment_start = 0, comment_end = 0;
 static mus_long_t true_file_length = 0, data_size = 0;
@@ -199,7 +200,7 @@ mus_long_t mus_header_samples(void)            {return(data_size);}
 mus_long_t mus_header_data_location(void)      {return(data_location);}
 int mus_header_chans(void)                     {return(chans);}
 int mus_header_srate(void)                     {return(srate);}
-int mus_header_type(void)                      {return(header_type);}
+mus_header_t mus_header_type(void)             {return(header_type);}
 int mus_header_format(void)                    {return(sample_type);}
 mus_long_t mus_header_comment_start(void)      {return(comment_start);}
 mus_long_t mus_header_comment_end(void)        {return(comment_end);}
@@ -321,7 +322,7 @@ static void write_four_chars(unsigned char *head, const unsigned char *match)
 }
 
 
-const char *mus_header_type_name(int type)
+const char *mus_header_type_name(mus_header_t type)
 {
   switch (type)
     {
@@ -471,7 +472,7 @@ const char *mus_sample_type_short_name(int samp_type)
 #endif
 
 
-const char *mus_header_type_to_string(int type)
+const char *mus_header_type_to_string(mus_header_t type)
 {
   switch (type)
     {
@@ -488,6 +489,7 @@ const char *mus_header_type_to_string(int type)
     case MUS_SOUNDFONT: return(TO_LANG(S_mus_soundfont));
     case MUS_RF64:      return(TO_LANG(S_mus_rf64));
     case MUS_CAFF:      return(TO_LANG(S_mus_caff));
+    default: break;
     }
   return(NULL);
 }
@@ -6141,7 +6143,8 @@ mus_header_write_hook_t *mus_header_write_set_hook(mus_header_write_hook_t *new_
 }
 
 
-int mus_header_write(const char *name, int type, int in_srate, int in_chans, mus_long_t loc, mus_long_t size_in_samples, int samp_type, const char *comment, int len)
+int mus_header_write(const char *name, mus_header_t type, int in_srate, int in_chans, mus_long_t loc, 
+		     mus_long_t size_in_samples, int samp_type, const char *comment, int len)
 {
   /* the "loc" arg is a mistake -- just always set it to 0 */
 
@@ -6213,7 +6216,7 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, mus
 }
 
 
-int mus_write_header(const char *name, int type, int in_srate, int in_chans, mus_long_t size_in_samples, int samp_type, const char *comment)
+int mus_write_header(const char *name, mus_header_t type, int in_srate, int in_chans, mus_long_t size_in_samples, int samp_type, const char *comment)
 {
   int len = 0;
   if (comment)
@@ -6222,7 +6225,7 @@ int mus_write_header(const char *name, int type, int in_srate, int in_chans, mus
 }
 
 
-int mus_header_change_data_size(const char *filename, int type, mus_long_t size) /* in bytes */
+int mus_header_change_data_size(const char *filename, mus_header_t type, mus_long_t size) /* in bytes */
 {
   /* the read header at sample update (sound-close) time could be avoided if the
    *   ssnd_location (etc) were saved and passed in -- perhaps an added optimized
@@ -6355,7 +6358,7 @@ int mus_header_change_data_size(const char *filename, int type, mus_long_t size)
 }
 
 
-int mus_header_change_chans(const char *filename, int type, int new_chans)
+int mus_header_change_chans(const char *filename, mus_header_t type, int new_chans)
 {
   int err = MUS_NO_ERROR, fd;
   mus_long_t new_framples;
@@ -6420,13 +6423,15 @@ int mus_header_change_chans(const char *filename, int type, int new_chans)
       header_write(fd, hdrbuf, 4);
       /* we should probably also change bytes_per_packet at 36, but... */
       break;
+
+    default: break;
     }
   CLOSE(fd, filename);
   return(err);
 }
 
 
-int mus_header_change_srate(const char *filename, int type, int new_srate)
+int mus_header_change_srate(const char *filename, mus_header_t type, int new_srate)
 {
   int err = MUS_NO_ERROR, fd;
   switch (type)
@@ -6487,13 +6492,15 @@ int mus_header_change_srate(const char *filename, int type, int new_srate)
       mus_bdouble_to_char((unsigned char *)hdrbuf, (double)new_srate);      
       header_write(fd, hdrbuf, 8);
       break;
+
+    default: break;
     }
   CLOSE(fd, filename);
   return(err);
 }
 
 
-int mus_header_change_type(const char *filename, int new_type, int new_format)
+int mus_header_change_type(const char *filename, mus_header_t new_type, int new_format)
 {
   int err = MUS_NO_ERROR;
   /* open temp, write header, copy data, replace original with temp */
@@ -6549,7 +6556,7 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 }
 
 
-int mus_header_change_format(const char *filename, int type, int new_format)
+int mus_header_change_format(const char *filename, mus_header_t type, int new_format)
 {
   int err = MUS_NO_ERROR, fd;
   mus_long_t old_bytes;
@@ -6642,13 +6649,15 @@ int mus_header_change_format(const char *filename, int type, int new_format)
       else mus_bshort_to_char((unsigned char *)hdrbuf, new_format);
       header_write(fd, hdrbuf, 2);
       break;
+      
+    default: break;
     }
   CLOSE(fd, filename);
   return(err);
 }
 
 
-int mus_header_change_location(const char *filename, int type, mus_long_t new_location)
+int mus_header_change_location(const char *filename, mus_header_t type, mus_long_t new_location)
 {
   /* only Next/Sun changeable in this regard */
   int err = MUS_NO_ERROR, fd;
@@ -6666,7 +6675,7 @@ int mus_header_change_location(const char *filename, int type, mus_long_t new_lo
 }
 
 
-int mus_header_change_comment(const char *filename, int type, const char *new_comment)
+int mus_header_change_comment(const char *filename, mus_header_t type, const char *new_comment)
 {
   int err = MUS_NO_ERROR;
   err = mus_header_read(filename);
@@ -6732,7 +6741,7 @@ int mus_header_change_comment(const char *filename, int type, const char *new_co
 }
 
 
-bool mus_header_writable(int type, int samp_type) /* -2 to ignore sample type for this call */
+bool mus_header_writable(mus_header_t type, int samp_type) /* -2 to ignore sample type for this call */
 {
   switch (type)
     {
@@ -6840,7 +6849,7 @@ bool mus_header_writable(int type, int samp_type) /* -2 to ignore sample type fo
 static char aifc_format[5];
 
 /* try to give some info on sample types that aren't supported by sndlib */
-const char *mus_header_original_format_name(int samp_type, int type)
+const char *mus_header_original_format_name(int samp_type, mus_header_t type)
 {
   switch (type)
     {
@@ -6914,6 +6923,8 @@ const char *mus_header_original_format_name(int samp_type, int type)
 	case 0x1500: return("Soundspace musicompression"); break; case 0x2000: return("DVM"); break; 
 	}
       break;
+
+    default: break;
     }
   return("unknown"); /* NULL here isn't safe -- Sun segfaults */
 }

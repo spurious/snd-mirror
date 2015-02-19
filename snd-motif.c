@@ -10519,7 +10519,7 @@ void reflect_just_sounds(void)
 #define NUM_VISIBLE_HEADERS 5
 
 char *get_file_dialog_sound_attributes(file_data *fdat, 
-				       int *srate, int *chans, int *header_type, int *sample_type, mus_long_t *location, mus_long_t *samples, 
+				       int *srate, int *chans, mus_header_t *header_type, int *sample_type, mus_long_t *location, mus_long_t *samples, 
 				       int min_chan)
 {
   char *str;
@@ -10626,10 +10626,10 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
 #define IGNORE_SAMPLES -1
 #define IGNORE_CHANS -1
 #define IGNORE_SRATE -1
-#define IGNORE_HEADER_TYPE -1
+#define IGNORE_HEADER_TYPE MUS_UNSUPPORTED
 
 static void set_file_dialog_sound_attributes(file_data *fdat, 
-					     int header_type, int sample_type, int srate, int chans, mus_long_t location, mus_long_t samples, char *comment)
+					     mus_header_t header_type, int sample_type, int srate, int chans, mus_long_t location, mus_long_t samples, char *comment)
 {
   int i;
   const char **fl = NULL;
@@ -10866,7 +10866,7 @@ static void file_data_auto_comment_callback(Widget w, XtPointer context, XtPoint
 
 static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, int in_n, 
 				       dialog_channels_t with_chan, 
-				       int header_type, int sample_type,
+				       mus_header_t header_type, int sample_type,
 				       dialog_data_location_t with_loc, 
 				       dialog_samples_t with_samples,
 				       dialog_header_type_t with_header_type,
@@ -11534,8 +11534,9 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 {
   char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
   snd_info *sp = NULL;
-  int header_type = MUS_NEXT, sample_type = DEFAULT_OUTPUT_SAMPLE_TYPE, srate = DEFAULT_OUTPUT_SRATE;
-  int output_type, chan = 0, extractable_chans = 0;
+  mus_header_t header_type = MUS_NEXT, output_type;
+  int sample_type = DEFAULT_OUTPUT_SAMPLE_TYPE, srate = DEFAULT_OUTPUT_SRATE;
+  int chan = 0, extractable_chans = 0;
   bool file_exists = false;
   io_error_t io_err = IO_NO_ERROR;
 
@@ -11974,7 +11975,7 @@ static void save_as_filter_text_activate_callback(Widget w, XtPointer context, X
 }
 
 
-static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int header_type, int sample_type)
+static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, mus_header_t header_type, int sample_type)
 {
   char *file_string;
 
@@ -12418,7 +12419,8 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 {
   mus_long_t loc;
   char *newer_name = NULL, *msg;
-  int header_type, sample_type, srate, chans;
+  mus_header_t header_type;
+  int sample_type, srate, chans;
   newer_name = XmTextGetString(new_file_text);
   if ((!newer_name) || (!(*newer_name)))
     {
@@ -12483,7 +12485,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static char *new_file_dialog_filename(int header_type)
+static char *new_file_dialog_filename(mus_header_t header_type)
 {
   static int new_file_dialog_file_ctr = 1;
   char *filename = NULL;
@@ -12506,7 +12508,8 @@ static char *new_file_dialog_filename(int header_type)
 static void load_new_file_defaults(char *newname)
 {
   char *filename = NULL, *new_comment = NULL;
-  int header_type, sample_type, chans, srate;
+  mus_header_t header_type;
+  int sample_type, chans, srate;
 
   header_type = default_output_header_type(ss);
   chans =       default_output_chans(ss);

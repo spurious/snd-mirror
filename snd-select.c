@@ -1061,7 +1061,7 @@ static void init_xen_selection(void)
 
 
 
-io_error_t save_selection(const char *ofile, int srate, int samp_type, int head_type, const char *comment, int chan)
+io_error_t save_selection(const char *ofile, int srate, int samp_type, mus_header_t head_type, const char *comment, int chan)
 {
   /* type and format have already been checked */
   int ofd;
@@ -1078,7 +1078,7 @@ io_error_t save_selection(const char *ofile, int srate, int samp_type, int head_
   si = selection_sync();
   if ((si) && (si->cps) && (si->cps[0])) sp = si->cps[0]->sound;
 
-  if (head_type == -1)
+  if (head_type == MUS_UNSUPPORTED)
     {
       if ((sp) && (mus_header_writable(sp->hdr->type, -2))) /* -2 = ignore sample type for the moment */
 	head_type = sp->hdr->type;
@@ -1657,7 +1657,8 @@ static Xen g_save_selection(Xen arglist)
   #define H_save_selection "(" S_save_selection " file srate sample-type header-type comment channel): \
 save the current selection in file using the indicated file attributes.  If channel is given, save only that channel."
 
-  int head_type = -1, samp_type = -1, sr = -1, chn = 0;
+  mus_header_t head_type = MUS_UNSUPPORTED;
+  int samp_type = -1, sr = -1, chn = 0;
   io_error_t io_err = IO_NO_ERROR;
   const char *com = NULL, *file = NULL;
   char *fname = NULL;
@@ -1690,7 +1691,7 @@ save the current selection in file using the indicated file attributes.  If chan
       file = mus_optkey_to_string(keys[0], S_save_selection, orig_arg[0], NULL);
       sr = mus_optkey_to_int(keys[1], S_save_selection, orig_arg[1], selection_srate());
       samp_type = mus_optkey_to_int(keys[2], S_save_selection, orig_arg[2], samp_type);
-      head_type = mus_optkey_to_int(keys[3], S_save_selection, orig_arg[3], head_type);
+      head_type = (mus_header_t)mus_optkey_to_int(keys[3], S_save_selection, orig_arg[3], (int)head_type);
       com = mus_optkey_to_string(keys[4], S_save_selection, orig_arg[4], NULL);
       chn = mus_optkey_to_int(keys[5], S_save_selection, orig_arg[5], SAVE_ALL_CHANS);
     }
@@ -1699,12 +1700,12 @@ save the current selection in file using the indicated file attributes.  If chan
     Xen_error(Xen_make_error_type("IO-error"),
 	      Xen_list_1(C_string_to_Xen_string(S_save_selection ": no output file?")));
 
-  if ((head_type != -1) && (!(mus_header_writable(head_type, -2))))
+  if ((head_type != MUS_UNSUPPORTED) && (!(mus_header_writable(head_type, -2))))
     Xen_error(CANNOT_SAVE,
 	      Xen_list_2(C_string_to_Xen_string(S_save_selection ": can't write a ~A header"),
 			 C_string_to_Xen_string(mus_header_type_name(head_type))));
 
-  if ((head_type != -1) && (samp_type != -1) && (!(mus_header_writable(head_type, samp_type))))
+  if ((head_type != MUS_UNSUPPORTED) && (samp_type != -1) && (!(mus_header_writable(head_type, samp_type))))
     Xen_error(CANNOT_SAVE,
 	      Xen_list_3(C_string_to_Xen_string(S_save_selection ": can't write ~A data to a ~A header"),
 			 C_string_to_Xen_string(mus_sample_type_name(samp_type)),

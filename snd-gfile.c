@@ -222,7 +222,8 @@ typedef struct file_dialog_info {
   save_dialog_t type;
   void *file_watcher;
   gulong filename_watcher_id;
-  int header_type, sample_type;
+  mus_header_t header_type;
+  int sample_type;
 #if WITH_SKETCH
   point_t *p0, *p1;
   int pts;
@@ -1194,7 +1195,8 @@ void set_open_file_play_button(bool val)
 
 /* ---------------- file data panel ---------------- */
 
-char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *header_type, int *sample_type, mus_long_t *location, mus_long_t *samples, int min_chan)
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, mus_header_t *header_type, 
+				       int *sample_type, mus_long_t *location, mus_long_t *samples, int min_chan)
 {
   char *str;
   int res;
@@ -1284,9 +1286,9 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
 #define IGNORE_SAMPLES -1
 #define IGNORE_CHANS -1
 #define IGNORE_SRATE -1
-#define IGNORE_HEADER_TYPE -1
+#define IGNORE_HEADER_TYPE MUS_UNSUPPORTED
 
-static void set_file_dialog_sound_attributes(file_data *fdat, int header_type, int sample_type, 
+static void set_file_dialog_sound_attributes(file_data *fdat, mus_header_t header_type, int sample_type, 
 					     int srate, int chans, mus_long_t location, mus_long_t samples, char *comment)
 {
 
@@ -1533,7 +1535,7 @@ static void file_data_src_callback(GtkWidget *w, gpointer context)
 
 static file_data *make_file_data_panel(GtkWidget *parent, const char *name, 
 				       dialog_channels_t with_chan, 
-				       int header_type, int sample_type,
+				       mus_header_t header_type, int sample_type,
 				       dialog_data_location_t with_loc, 
 				       dialog_samples_t with_samples,
 				       dialog_header_type_t with_header_type,
@@ -1986,8 +1988,9 @@ static void save_or_extract(file_dialog_info *fd, bool saving)
 {
   char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
   snd_info *sp = NULL;
-  int header_type = MUS_NEXT, sample_type = DEFAULT_OUTPUT_SAMPLE_TYPE, srate = DEFAULT_OUTPUT_SRATE, chans = DEFAULT_OUTPUT_CHANS;
-  int output_type, chan = 0, extractable_chans = 0;
+  mus_header_t header_type = MUS_NEXT, output_type;
+  int sample_type = DEFAULT_OUTPUT_SAMPLE_TYPE, srate = DEFAULT_OUTPUT_SRATE, chans = DEFAULT_OUTPUT_CHANS;
+  int chan = 0, extractable_chans = 0;
   bool file_exists = false;
   mus_long_t location = 28, samples = 0;
   io_error_t io_err = IO_NO_ERROR;
@@ -2293,7 +2296,7 @@ static gint save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer cont
 }
 
 
-static file_dialog_info *make_save_as_dialog(const char *file_string, int header_type, int sample_type, int dialog_type)
+static file_dialog_info *make_save_as_dialog(const char *file_string, mus_header_t header_type, int sample_type, int dialog_type)
 {
   file_dialog_info *fd;
   GtkWidget *vbox;
@@ -2875,7 +2878,8 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 {
   mus_long_t loc;
   char *newer_name = NULL, *msg;
-  int header_type, sample_type, srate, chans;
+  mus_header_t header_type;
+  int sample_type, srate, chans;
   newer_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_text));
   if ((!newer_name) || (!(*newer_name)))
     {
@@ -2985,7 +2989,8 @@ static char *new_file_dialog_filename(int header_type)
 static void load_new_file_defaults(char *newname)
 {
   char *filename = NULL, *new_comment = NULL;
-  int header_type, sample_type, chans, srate;
+  mus_header_t header_type;
+  int sample_type, chans, srate;
 
   header_type = default_output_header_type(ss);
   chans =       default_output_chans(ss);

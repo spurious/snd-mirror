@@ -1506,14 +1506,18 @@ static const char *any_samp_type_name(const char *name)
 }
 
 
-int snd_translate(const char *oldname, const char *newname, int type)
+int snd_translate(const char *oldname, const char *newname, mus_header_t type)
 {
   /* read oldname, translate to newname as 16-bit linear NeXT file */
   /* called from snd-file.c */
   int err;
   char *hdr = NULL;
 
+#if (!DISABLE_DEPRECATED)
   if (MUS_CANT_TRANSLATE == 0) MUS_CANT_TRANSLATE = mus_make_error((char *)"can't translate");
+#else
+  MUS_CANT_TRANSLATE = MUS_UNSUPPORTED_SAMPLE_TYPE; /* need to add this to mus_error I guess */
+#endif
   err = MUS_CANT_TRANSLATE;
 
   hdr = (char *)calloc(TRANS_BUF_SIZE, sizeof(char));

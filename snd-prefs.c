@@ -2846,6 +2846,7 @@ static void reflect_default_output_header_type(prefs_info *prf)
     case MUS_NEXT: which = 2; break;
     case MUS_NIST: which = 4; break;
     case MUS_CAFF: which = 6; break;
+    default: break;
     }
   set_radio_button(prf, which);
 }
@@ -2915,6 +2916,7 @@ static void default_output_sample_type_choice(prefs_info *prf)
 	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
 	      set_default_output_sample_type(MUS_BSHORT); 
 	      break;
+	    default: break;
 	    }
 	  break;
 	  
@@ -2924,6 +2926,7 @@ static void default_output_sample_type_choice(prefs_info *prf)
 	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
 	      set_default_output_sample_type(MUS_BINT); 
 	      break;
+	    default: break;
 	    }
 	  break;
 
@@ -2940,6 +2943,7 @@ static void default_output_sample_type_choice(prefs_info *prf)
 	    case MUS_NIST: 
 	      set_default_output_header_type(MUS_RIFF); 
 	      break;
+	    default: break;
 	    }
 	  break;
 
@@ -2956,6 +2960,7 @@ static void default_output_sample_type_choice(prefs_info *prf)
 	    case MUS_NIST: 
 	      set_default_output_header_type(MUS_RIFF); 
 	      break;
+	    default: break;
 	    }
 	  break;
 	}

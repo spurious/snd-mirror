@@ -84,7 +84,7 @@ typedef struct {
   int srate;
   int chans;
   int sample_type;        /* sample type (mus_bshort etc) */
-  int type;               /* header type (mus_aifc etc) */
+  mus_header_t type;      /* header type (mus_aifc etc) */
   char *comment;          /* output case, not input */
   int *loops;
 } file_info;
@@ -459,7 +459,8 @@ typedef struct snd_state {
   mus_float_t Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size, Log_Freq_Start;
   mus_float_t Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle;
   mus_float_t Spectrum_End, Spectrum_Start;
-  int Default_Output_Header_Type, Default_Output_Sample_Type, Default_Output_Chans, Default_Output_Srate;
+  mus_header_t Default_Output_Header_Type;
+  int Default_Output_Sample_Type, Default_Output_Chans, Default_Output_Srate;
   int Spectro_Hop, Color_Map, Color_Map_Size, Wavelet_Type, Transform_Type;
   int Dot_Size;
   int Zero_Pad, Wavo_Hop, Wavo_Trace;
@@ -758,9 +759,9 @@ io_error_t move_file(const char *oldfile, const char *newfile);
 
 int snd_open_read(const char *arg);
 int snd_reopen_write(const char *arg);
-io_error_t snd_write_header(const char *name, int type, int srate, int chans, mus_long_t samples, int sample_type, const char *comment, int *loops);
+io_error_t snd_write_header(const char *name, mus_header_t type, int srate, int chans, mus_long_t samples, int sample_type, const char *comment, int *loops);
 io_error_t sndlib_error_to_snd(int sndlib_err);
-int snd_file_open_descriptors(int tfd, const char *name, int sample_type, mus_long_t location, int chans, int type);
+int snd_file_open_descriptors(int tfd, const char *name, int sample_type, mus_long_t location, int chans, mus_header_t type);
 snd_io *make_file_state(int fd, file_info *hdr, int chan, mus_long_t beg, int suggested_bufsize);
 void file_buffers_forward(mus_long_t ind0, mus_long_t ind1, mus_long_t indx, snd_fd *sf, snd_data *cur_snd);
 void file_buffers_back(mus_long_t ind0, mus_long_t ind1, mus_long_t indx, snd_fd *sf, snd_data *cur_snd);
@@ -775,7 +776,7 @@ snd_data *free_snd_data(snd_data *sf);
 snd_data *make_snd_data_buffer(mus_float_t *data, int len, int ctr);
 snd_data *make_snd_data_buffer_for_simple_channel(int len);
 int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err);
-io_error_t close_temp_file(const char *filename, int ofd, int type, mus_long_t bytes);
+io_error_t close_temp_file(const char *filename, int ofd, mus_header_t type, mus_long_t bytes);
 
 void set_up_snd_io(chan_info *cp, int i, int fd, const char *filename, file_info *hdr, bool post_close);
 mus_long_t io_beg(snd_io *io);
@@ -1060,11 +1061,11 @@ bool redo_edit_with_sync(chan_info *cp, int count);
 bool undo_edit(chan_info *cp, int count);
 bool redo_edit(chan_info *cp, int count);
 io_error_t save_channel_edits(chan_info *cp, const char *ofile, int pos);
-io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, int srate, int samp_type, int hd_type, const char *comment, int pos);
+io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, int srate, int samp_type, mus_header_t hd_type, const char *comment, int pos);
 io_error_t save_edits(snd_info *sp);
 io_error_t save_edits_without_asking(snd_info *sp);
 io_error_t save_edits_and_update_display(snd_info *sp);
-io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int type, int sample_type, int srate, const char *comment, int pos);
+io_error_t save_edits_without_display(snd_info *sp, const char *new_name, mus_header_t type, int sample_type, int srate, const char *comment, int pos);
 void revert_edits(chan_info *cp);
 mus_long_t current_location(snd_fd *sf);
 void g_init_edits(void);
@@ -1234,7 +1235,7 @@ bool delete_selection(cut_selection_regraph_t regraph);
 void move_selection(chan_info *cp, int x);
 void finish_selection_creation(void);
 int select_all(chan_info *cp);
-io_error_t save_selection(const char *ofile, int srate, int samp_type, int head_type, const char *comment, int chan);
+io_error_t save_selection(const char *ofile, int srate, int samp_type, mus_header_t head_type, const char *comment, int chan);
 bool selection_creation_in_progress(void);
 void add_selection_or_region(int reg, chan_info *cp);
 void insert_selection_from_menu(void);
@@ -1271,7 +1272,7 @@ snd_fd *init_region_read(mus_long_t beg, int n, int chan, read_direction_t direc
 void cleanup_region_temp_files(void);
 int snd_regions(void);
 void save_regions(FILE *fd);
-io_error_t save_region(int rg, const char *name, int samp_type, int head_type, const char *comment);
+io_error_t save_region(int rg, const char *name, int samp_type, mus_header_t head_type, const char *comment);
 void region_edit(int reg);
 void clear_region_backpointer(snd_info *sp);
 void save_region_backpointer(snd_info *sp);
@@ -1558,7 +1559,7 @@ void amp_env_env(chan_info *cp, mus_float_t *brkpts, int npts, int pos, mus_floa
 peak_env_info *copy_peak_env_info(peak_env_info *old_ep, bool reversed);
 void amp_env_env_selection_by(chan_info *cp, mus_any *e, mus_long_t beg, mus_long_t num, int pos);
 void peak_env_insert_zeros(chan_info *cp, mus_long_t beg, mus_long_t num, int pos);
-snd_info *snd_new_file(const char *newname, int chans, int srate, int sample_type, int header_type, const char *new_comment, mus_long_t samples);
+snd_info *snd_new_file(const char *newname, int chans, int srate, int sample_type, mus_header_t header_type, const char *new_comment, mus_long_t samples);
 #if XEN_HAVE_RATIOS
   void snd_rationalize(mus_float_t a, int *num, int *den);
 #endif
@@ -1618,13 +1619,13 @@ void snd_close_file(snd_info *sp);
 snd_info *make_sound_readable(const char *filename, bool post_close);
 snd_info *snd_update(snd_info *sp);
 snd_info *snd_update_within_xen(snd_info *sp, const char *caller);
-int snd_decode(int type, const char *input_filename, const char *output_filename);
+int snd_decode(mus_header_t type, const char *input_filename, const char *output_filename);
 void set_fallback_srate(int sr);
 void set_fallback_chans(int ch);
 void set_fallback_sample_type(int fr);
 void set_with_tooltips(bool val);
 void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, bool from_save_as_dialog);
-bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int smp_type, int hd_type, const char *comment);
+bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int smp_type, mus_header_t hd_type, const char *comment);
 void during_open(int fd, const char *file, open_reason_t reason);
 void after_open(snd_info *sp);
 char *output_name(const char *current_name);
@@ -1803,7 +1804,7 @@ void g_init_find(void);
 
 /* -------- snd-trans.c -------- */
 
-int snd_translate(const char *oldname, const char *newname, int type);
+int snd_translate(const char *oldname, const char *newname, mus_header_t type);
 
 
 /* -------- snd.c -------- */

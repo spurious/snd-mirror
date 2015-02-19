@@ -4,15 +4,15 @@
 
 char *dialog_get_title(widget_t dialog);
 
-const char **header_type_and_sample_type_to_position(file_data *fdat, int header_type, int sample_type);
+const char **header_type_and_sample_type_to_position(file_data *fdat, mus_header_t header_type, int sample_type);
 void position_to_header_type_and_sample_type(file_data *fdat, int pos);
 int position_to_sample_type(int header, int pos);
-int position_to_header_type(int pos);
+mus_header_t position_to_header_type(int pos);
 const char **short_writable_headers(int *len);
 const char **short_readable_headers(int *len);
 const char **short_builtin_headers(int *len);
-bool header_is_encoded(int header_type);
-void snd_encode(int type, const char *input_filename, const char *output_filename);
+bool header_is_encoded(mus_header_t header_type);
+void snd_encode(mus_header_t type, const char *input_filename, const char *output_filename);
 snd_info *file_is_open_elsewhere_and_has_unsaved_edits(snd_info *sp, const char *fullname);
 snd_info *finish_opening_sound(snd_info *sp, bool selected);
 

@@ -234,13 +234,29 @@ static Xen g_mus_sound_set_srate(Xen filename, Xen val)
 static Xen g_mus_sound_header_type(Xen filename) 
 {
   #define H_mus_sound_header_type "(" S_mus_sound_header_type " filename): header type (e.g. " S_mus_aifc ") of sound file"
-  return(gmus_sound(S_mus_sound_header_type, mus_sound_header_type, filename));
+
+  char *str = NULL;
+  Xen result;
+
+  Xen_check_type(Xen_is_string(filename), filename, 1, S_mus_sound_header_type, "a string"); 
+  str = mus_expand_filename(Xen_string_to_C_string(filename));
+  result = C_int_to_Xen_integer((int)mus_sound_header_type(str));
+  if (str) free(str);
+  return(result);
 }
 
 
 static Xen g_mus_sound_set_header_type(Xen filename, Xen val) 
 {
-  return(gmus_sound_set(S_setB S_mus_sound_header_type, mus_sound_set_header_type, filename, val));
+  char *str = NULL;
+  Xen result;
+
+  Xen_check_type(Xen_is_string(filename), filename, 1, S_setB S_mus_sound_header_type, "a string"); 
+  Xen_check_type(Xen_is_integer(val), val, 2, S_setB S_mus_sound_header_type, "an integer");
+  str = mus_expand_filename(Xen_string_to_C_string(filename));
+  result = C_int_to_Xen_integer((int)mus_sound_set_header_type(str, (mus_header_t)Xen_integer_to_C_int(val)));
+  if (str) free(str);
+  return(result);
 }
 
 
@@ -321,7 +337,7 @@ static Xen g_mus_header_writable(Xen head, Xen data)
   #define H_mus_header_writable "(" S_mus_header_writable " header-type sample-type) returns " PROC_TRUE " if the header can handle the sample type"
   Xen_check_type(Xen_is_integer(head), head, 1, S_mus_header_writable, "a header type");
   Xen_check_type(Xen_is_integer(data), data, 2, S_mus_header_writable, "a sample type");
-  return(C_bool_to_Xen_boolean(mus_header_writable(Xen_integer_to_C_int(head), Xen_integer_to_C_int(data))));
+  return(C_bool_to_Xen_boolean(mus_header_writable((mus_header_t)Xen_integer_to_C_int(head), Xen_integer_to_C_int(data))));
 }
 
 static Xen g_mus_header_raw_defaults(void)
@@ -352,7 +368,7 @@ static Xen g_mus_header_type_name(Xen type)
 {
   #define H_mus_header_type_name "(" S_mus_header_type_name " type): header type (e.g. " S_mus_aiff ") as a string"
   Xen_check_type(Xen_is_integer(type), type, 1, S_mus_header_type_name, "an integer (header-type id)"); 
-  return(C_string_to_Xen_string(mus_header_type_name(Xen_integer_to_C_int(type))));
+  return(C_string_to_Xen_string(mus_header_type_name((mus_header_t)Xen_integer_to_C_int(type))));
 }
 
 
@@ -360,7 +376,7 @@ static Xen g_mus_header_type_to_string(Xen type)
 {
   #define H_mus_header_type_to_string "(" S_mus_header_type_to_string " type): header type (e.g. " S_mus_aiff ") as a string"
   Xen_check_type(Xen_is_integer(type), type, 1, S_mus_header_type_to_string, "an integer (header-type id)"); 
-  return(C_string_to_Xen_string(mus_header_type_to_string(Xen_integer_to_C_int(type))));
+  return(C_string_to_Xen_string(mus_header_type_to_string((mus_header_t)Xen_integer_to_C_int(type))));
 }
 
 

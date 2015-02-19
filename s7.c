@@ -40033,8 +40033,8 @@ static bool is_simple_code(s7_scheme *sc, s7_pointer form)
 static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 {
   #define H_quasiquote "(quasiquote arg) is the same as `arg.  If arg is a list, it can contain \
-comma (\"unquote\") and comma-atsign (\"unquote-splicing\") to pre-evaluate portions of the list. \
-unquoted expressions are evaluated and plugged into the list, unquote-splicing evaluates the expression \
+comma (\"unquote\") and comma-atsign (\"apply values\") to pre-evaluate portions of the list. \
+unquoted expressions are evaluated and plugged into the list, apply-values evaluates the expression \
 and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -> (1 2 3 4)."
 
   if (!is_pair(form))
@@ -40042,9 +40042,6 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
       if (!is_symbol(form))
 	{
 	  /* things that evaluate to themselves don't need to be quoted. 
-	   *    but this means `() -> () whereas below `(1) -> '(1) -- should nil here return ()?
-	   *    (this also affects vector constants since they call g_quasiquote at run time in OP_READ_QUASIQUOTE_VECTOR)
-	   *
 	   * format ~<~> innards are ignored by quasiquote expansion -- it sees a string constant
 	   */
 	  return(form);
@@ -68021,6 +68018,7 @@ int main(int argc, char **argv)
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * lmdb/gdbm -> let + s7 threads (need full example of this in s7.html)
  *    for let-ref, actually need fallback before checking outlet (currently it follows)
- * the sndlib enums should be typedefs, and the types used throughout (mus_header_t, mus_sample_t, mus_error_t)
+ * the sndlib enums should be typedefs, and the types used throughout ([mus_header_t] mus_sample_t mus_error_t)
  *    clm.h does this, so it must be ok by CL?
+ *    mus_error_t -- mus_make_error would need to go away (it's currently used only in snd-trans)
  */
