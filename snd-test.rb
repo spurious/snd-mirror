@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 05/02/18 10:18:34
-# Changed: 15/01/30 02:10:52
+# Changed: 15/02/19 06:52:10
 
 # Tags: FIXME - something is wrong
 #       XXX   - info marker
@@ -1466,7 +1466,6 @@ def test_00
    [:initial_beg, 0.0],
    [:initial_dur, 0.1],
    [:ask_before_overwrite, false],
-   [:audio_output_device, 0],
    [:auto_resize, true],
    [:auto_update, false],
    [:channel_style, 1],
@@ -1640,7 +1639,6 @@ def test_01
    ["amp_control_bounds", amp_control_bounds()[1], 8.0],
    ["ask_about_unsaved_edits", ask_about_unsaved_edits(), false],
    ["ask_before_overwrite", ask_before_overwrite(), false],
-   ["audio_output_device", audio_output_device(), 0],
    ["auto_resize", auto_resize(), true],
    ["auto_update", auto_update(), false],
    ["auto_update_interval", auto_update_interval(), 60.0],
@@ -2219,8 +2217,6 @@ def test_03
          [:amp_control_bounds, [0.0, 8.0], [1.0, 5.0]],
          [:ask_about_unsaved_edits, false, true],
          [:ask_before_overwrite, false, true],
-         [:audio_input_device, 0, 1],
-         [:audio_output_device, 0, 1],
          [:auto_resize, true, false],
          [:auto_update, false, true],
          [:channel_style, 0, 1],
@@ -2471,9 +2467,8 @@ def test_03
    :amp_control_bounds, :amplitude_modulate, :analyse_ladspa, :apply_controls,
    :apply_ladspa, :array2file, :array_interp, :as_one_edit,
    :ask_about_unsaved_edits, :ask_before_overwrite, :asymmetric_fm,
-   :asymmetric_fm?, :audio_input_device, :audio_output_device, :auto_resize,
-   :auto_update, :auto_update_interval, :autocorrelate, :autocorrelation,
-   :axis_color, :axis_info,
+   :asymmetric_fm?, :auto_resize, :auto_update, :auto_update_interval,
+   :autocorrelate, :autocorrelation, :axis_color, :axis_info,
    :axis_label_font, :axis_numbers_font, :bad_header_hook, :bartlett_window,
    :bartlett_hann_window, :basic_color, :beats_per_measure, :beats_per_minute,
    :before_close_hook, :before_exit_hook, :before_save_as_hook,
@@ -2596,7 +2591,7 @@ def test_03
    :mouse_enter_text_hook, :mouse_leave_graph_hook, :mouse_leave_label_hook,
    :mouse_leave_listener_hook, :mouse_leave_text_hook, :mouse_press_hook,
    :move_locsig, :move_sound, :move_sound?, :moving_average, :moving_average?,
-   :moving_max, :moving_max?, :multiply_arrays, :mus_aifc,
+   :moving_max, :moving_max?, :mus_aifc,
    :mus_aiff, :mus_alaw, :mus_alsa_buffer_size, :mus_alsa_buffers,
    :mus_alsa_capture_device, :mus_alsa_device, :mus_alsa_playback_device,
    :mus_alsa_squelch_warning, :mus_apply, :mus_array_print_length,
@@ -3501,7 +3496,7 @@ def test_04_03
   save_sound_as("test.snd", ind,
                 :header_type, Mus_next, :sample_type, Mus_bfloat)
   ind1 = open_sound("test.snd")
-  unless res = scan_channel(lambda do |y| y < 0.0 end)
+  if res = scan_channel(lambda do |y| y < 0.0 end)
     snd_display("clipping 2: %s?", res)
   end
   close_sound(ind1)
@@ -3649,7 +3644,7 @@ def test_04_04
    "no location method",
    "no channel method",
    "no such fft window",
-   "unsupported data format",
+   "unsupported sample type",
    "header read failed",
    "unsupported header type",
    "file descriptors not initialized",
@@ -3662,7 +3657,7 @@ def test_04_04
    "bad envelope",
    "audio channels not available",
    "audio srate not available",
-   "audio format not available",
+   "audio sample type not available",
    "no audio input available",
    "audio configuration not available",
    "audio write error",
@@ -12376,19 +12371,9 @@ def test_08_00
   v0 = make_vct(10)
   v1 = make_vct(10)
   vct_fill!(v0, 1.0)
-  multiply_arrays(v0, v1, 1)
-  unless vequal(v0, vct(0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
-    snd_display("multiply_arrays[0]: %s?", v0)
-  end
-  multiply_arrays(v0, v1, 100)
-  if fneq(vct_peak(v0), 0.0)
-    snd_display("multiply_arrays[100]: %s?", v0)
-  end
-  vct_fill!(v0, 1.0)
   vct_fill!(v1, 0.5)
-  multiply_arrays(v0, v1)
-  if fneq(v0[0], 0.5)
-    snd_display("multiply_arrays: %s?", v0[0])
+  v0.map_with_index! do |x, i|
+    x * v1[i]
   end
   if fneq(res = dot_product(v0, v1), 2.5)
     snd_display("dot_product: %s?", res)
@@ -34089,8 +34074,8 @@ Procs = [
   :add_mark, :add_sound_file_extension, :add_source_file_extension,
   :sound_file_extensions, :sound_file?, :add_to_main_menu,
   :add_to_menu, :add_transform, :amp_control, :ask_about_unsaved_edits,
-  :as_one_edit, :ask_before_overwrite, :audio_input_device,
-  :audio_output_device, :auto_resize, :auto_update, :autocorrelate,
+  :as_one_edit, :ask_before_overwrite,
+  :auto_resize, :auto_update, :autocorrelate,
   :axis_color, :axis_info, :axis_label_font, :axis_numbers_font,
   :basic_color, :bind_key, :apply_controls,
   :change_samples_with_origin, :channel_style, :channel_widgets,
@@ -34252,8 +34237,7 @@ Procs = [
   :make_square_wave, :make_src, :make_ssb_am,
   :make_table_lookup, :make_triangle_wave, :make_two_pole,
   :make_two_zero, :make_wave_train, :move_sound,
-  :make_move_sound, :move_sound?,
-  :mus_float_equal_fudge_factor, :multiply_arrays,
+  :make_move_sound, :move_sound?, :mus_float_equal_fudge_factor,
   :mus_array_print_length, :mus_channel, :mus_channels,
   :make_polyshape, :polyshape, :polyshape?, :mus_close,
   :mus_data, :mus_feedback, :mus_feedforward, :mus_fft,
@@ -34299,8 +34283,7 @@ Procs = [
   :redo_edit, :undo_edit, :widget_position, :widget_size, :focus_widget]
 
 Set_procs = [
-  :amp_control, :ask_before_overwrite, :audio_input_device,
-  :audio_output_device, :auto_resize, :sound_file_extensions,
+  :amp_control, :ask_before_overwrite, :auto_resize, :sound_file_extensions,
   :auto_update, :axis_color, :axis_label_font, :axis_numbers_font,
   :channel_style, :peaks_font, :bold_peaks_font, :show_full_duration,
   :show_full_range, :initial_beg, :initial_dur, :color_cutoff,
@@ -34702,7 +34685,7 @@ def test_28_00
    :make_rand_interp, :make_readin, :make_sawtooth_wave, :make_moving_average,
    :make_nrxysin, :make_nrxycos, :make_square_wave, :make_src,
    :make_ncos, :make_nsin, :make_table_lookup, :make_triangle_wave,
-   :make_two_pole, :make_two_zero, :make_wave_train, :multiply_arrays,
+   :make_two_pole, :make_two_zero, :make_wave_train,
    :notch, :one_pole, :one_zero, :oscil, :partials2polynomial,
    :partials2wave, :make_polyshape, :make_polywave,
    :phase_partials2wave, :phase_vocoder, :polynomial, :pulse_train,
@@ -35228,7 +35211,7 @@ def test_28_02
   check_error_tag(:out_of_range) do snd_spectrum(Vct.new(8), 0, -123) end
   check_error_tag(:out_of_range) do snd_spectrum(Vct.new(8), 0, 0) end
   check_error_tag(:no_such_file) do play("/baddy/hiho") end
-  check_error_tag(:bad_format) do play($sf_dir + "nist-shortpack.wav") end
+  check_error_tag(:bad_sample_type) do play($sf_dir + "nist-shortpack.wav") end
   check_error_tag(:no_such_sound) do play(123, 0) end
   check_error_tag(:no_such_channel) do make_player(ind, 123) end
   check_error_tag(:no_such_file) do mix("/baddy/hiho") end
@@ -35417,9 +35400,6 @@ def test_28_02
   check_error_tag(:out_of_range) do set_mus_srate(0.0) end
   check_error_tag(:out_of_range) do set_mus_srate(-1000) end
   check_error_tag(:out_of_range) do dot_product(Vct.new(3), Vct.new(3), -1) end
-  check_error_tag(:out_of_range) do
-    multiply_arrays(Vct.new(3), Vct.new(3), -1)
-  end
   check_error_tag(:out_of_range) do
     make_delay(3, :initial_element, 0.0, :initial_contents, vct(0.1, 0.2, 0.3))
   end

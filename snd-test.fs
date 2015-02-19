@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 06/08/05 00:09:28
-\ Changed: 15/01/30 02:12:47
+\ Changed: 15/02/19 06:52:41
 
 \ Tags:  FIXME - something is wrong
 \        XXX   - info marker
@@ -974,7 +974,6 @@ SIGINT lambda: { sig -- }
      #( <'> initial-beg 0.0 )
      #( <'> initial-dur 0.1 )
      #( <'> ask-before-overwrite #f )
-     #( <'> audio-output-device 0 )
      #( <'> auto-resize #t )
      #( <'> auto-update #f )
      #( <'> channel-style 1 )
@@ -1151,7 +1150,6 @@ black-and-white-colormap constant *better-colormap*
   #f set-temp-dir drop
   #( #( <'> ask-about-unsaved-edits #f )
      #( <'> ask-before-overwrite #f )
-     #( <'> audio-output-device 0 )
      #( <'> auto-resize #t )
      #( <'> auto-update #f )
      #( <'> auto-update-interval 60.0 )
@@ -1878,8 +1876,6 @@ black-and-white-colormap constant *better-colormap*
      #( <'> amp-control-bounds '( 0.0 8.0 ) '( 1.0 5.0 ) )
      #( <'> ask-about-unsaved-edits #f #t )
      #( <'> ask-before-overwrite #f #t )
-     #( <'> audio-input-device 0 1 )
-     #( <'> audio-output-device 0 1 )
      #( <'> auto-resize #t #f )
      #( <'> auto-update #f #t )
      #( <'> channel-style 0 1 )
@@ -2145,7 +2141,7 @@ black-and-white-colormap constant *better-colormap*
      'all-pass 'all-pass? 'amp-control 'amp-control-bounds 'amplitude-modulate
      'analyse-ladspa 'apply-controls 'apply-ladspa 'array->file 'array-interp
      'as-one-edit 'ask-about-unsaved-edits 'ask-before-overwrite
-     'asymmetric-fm 'asymmetric-fm? 'audio-input-device 'audio-output-device
+     'asymmetric-fm 'asymmetric-fm?
      'auto-resize 'auto-update 'auto-update-interval 'autocorrelate 
      'autocorrelation 'axis-color
      'axis-info 'axis-label-font 'axis-numbers-font 'bad-header-hook 
@@ -2270,7 +2266,7 @@ black-and-white-colormap constant *better-colormap*
      'mouse-leave-listener-hook 'mouse-leave-text-hook 
      'mouse-press-hook 'move-locsig 'move-sound 'move-sound?
      'moving-average 'moving-average? 'moving-max 'moving-max?
-     'multiply-arrays 'mus-aifc 'mus-aiff 'mus-alaw 'mus-alsa-buffer-size
+     'mus-aifc 'mus-aiff 'mus-alaw 'mus-alsa-buffer-size
      'mus-alsa-buffers 'mus-alsa-capture-device 'mus-alsa-device
      'mus-alsa-playback-device 'mus-alsa-squelch-warning 'mus-apply
      'mus-array-print-length 'mus-float-equal-fudge-factor 'mus-b24int
@@ -3320,7 +3316,7 @@ black-and-white-colormap constant *better-colormap*
      "no location method"
      "no channel method"
      "no such fft window"
-     "unsupported data format"
+     "unsupported sample type"
      "header read failed"
      "unsupported header type"
      "file descriptors not initialized"
@@ -3333,7 +3329,7 @@ black-and-white-colormap constant *better-colormap*
      "bad envelope"
      "audio channels not available"
      "audio srate not available"
-     "audio format not available"
+     "audio sample type not available"
      "no audio input available"
      "audio configuration not available" 
      "audio write error"
@@ -6306,7 +6302,7 @@ lambda: <{ a b c -- r }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> sound-file-extensions <'> sound-file? <'> add-to-main-menu
    <'> add-to-menu <'> add-transform <'> amp-control
    <'> ask-about-unsaved-edits <'> as-one-edit <'> ask-before-overwrite
-   <'> audio-input-device <'> audio-output-device <'> auto-resize
+   <'> auto-resize
    <'> auto-update <'> autocorrelate <'> axis-info <'> apply-controls
    <'> change-samples-with-origin <'> channel-style <'> channels
    <'> chans <'> close-sound <'> combined-data-color <'> comment
@@ -6453,7 +6449,7 @@ lambda: <{ a b c -- r }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> make-src <'> make-ssb-am <'> make-table-lookup <'> make-triangle-wave
    <'> make-two-pole <'> make-two-zero <'> make-wave-train <'> move-sound
    <'> make-move-sound <'> move-sound? <'> mus-float-equal-fudge-factor
-   <'> multiply-arrays <'> mus-array-print-length <'> mus-channel
+   <'> mus-array-print-length <'> mus-channel
    <'> mus-channels <'> make-polyshape <'> polyshape?  <'> mus-close 
    <'> mus-data <'> mus-feedback <'> mus-feedforward <'> mus-fft
    <'> mus-frequency <'> mus-hop <'> mus-increment <'> mus-input?
@@ -6502,8 +6498,7 @@ lambda: <{ a b c -- r }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> mus-run <'> phase-vocoder <'> player-home <'> redo-edit
    <'> undo-edit ) constant procs
 
-#( <'> amp-control <'> ask-before-overwrite <'> audio-input-device 
-   <'> audio-output-device <'> auto-update <'> channel-style
+#( <'> amp-control <'> ask-before-overwrite <'> auto-update <'> channel-style
    <'> sound-file-extensions <'> show-full-duration <'> show-full-range
    <'> initial-beg <'> initial-dur <'> contrast-control
    <'> contrast-control-amp <'> combined-data-color <'> amp-control-bounds
@@ -7491,7 +7486,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   8 0.0 make-vct 0 -123 <'> snd-spectrum 'out-of-range check-error-tag
   8 0.0 make-vct 0 0 <'> snd-spectrum 'out-of-range check-error-tag
   "/baddy/hiho" <'> play 'no-such-file check-error-tag
-  sf-dir "nist-shortpack.wav" $+ <'> play 'bad-format check-error-tag
+  sf-dir "nist-shortpack.wav" $+ <'> play 'bad-sample-type check-error-tag
   ind 123 <'> make-player 'no-such-channel check-error-tag
   "/baddy/hiho" <'> mix 'no-such-file check-error-tag
   "oboe.snd" 0 2 <'> mix 'no-such-channel check-error-tag
@@ -7649,8 +7644,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   0.0 <'> set-mus-srate 'out-of-range check-error-tag
   -1000 <'> set-mus-srate 'out-of-range check-error-tag
   3 0 make-vct 3 0 make-vct -1 <'> dot-product 'out-of-range check-error-tag
-  3 0 make-vct 3 0 make-vct -1 <'> multiply-arrays 'out-of-range 
-    check-error-tag
   3 :initial-element 0.0 :initial-contents vct( 0.1 0.2 0.3 ) <'> make-delay
     'out-of-range check-error-tag
   3 :max-size 100 :initial-contents vct( 0.1 0.2 0.3 ) <'> make-delay

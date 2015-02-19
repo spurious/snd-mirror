@@ -214,15 +214,8 @@
   #define DEBUGGING 0
 #endif
 
-#define BOLD_TEXT "\033[1m"
-#define UNBOLD_TEXT "\033[22m"
-#define RED_TEXT "\033[31m"
-#define NORMAL_TEXT "\033[0m"
-
-
-/* -------------------------------------------------------------------------------- */
-
-/* s7.c is organized as follows:
+/* --------------------------------------------------------------------------------
+ * s7.c is organized as follows:
  *
  *    structs and type flags
  *    constants
@@ -254,6 +247,7 @@
  *
  * naming conventions: s7_* usually are C accessible (s7.h), g_* are scheme accessible (FFI), H_* are documentation strings,
  *   *_1 are auxilliary functions, big_* refer to gmp and friends, scheme "?" corresponds to C "_is_", scheme "->" to C "_to_".
+ * --------------------------------------------------------------------------------
  */
 
 /* in case mus-config.h forgets these */
@@ -593,7 +587,7 @@ typedef struct s7_cell {
     struct {                       /* syntax */
       s7_pointer symbol;
       int op;
-      s7_pointer min_args, max_args;
+      s7_pointer min_args, max_args, doc;
     } syn;
 
     struct {                       /* slots (bindings) */
@@ -602,7 +596,7 @@ typedef struct s7_cell {
 
     struct {                       /* environments (frames) */
       s7_pointer slots, nxt;
-      long long int id;          /* id of rootlet is -1 */
+      long long int id;            /* id of rootlet is -1 */
       union {
 	struct {
 	  s7_pointer function;     /* __func__ (code) if this is a funclet */
@@ -1697,6 +1691,7 @@ static void set_optimize_data(s7_pointer p, unsigned short op) {p->object.cons.d
 #define syntax_opcode(p)              (p)->object.syn.op
 #define syntax_min_args(p)            (p)->object.syn.min_args
 #define syntax_max_args(p)            (p)->object.syn.max_args
+#define syntax_documentation(p)       (p)->object.syn.doc
 
 #define pair_syntax_op(P)             (P)->object.cons.dat.op
 #define pair_syntax_symbol(P)         car(ecdr(P))
@@ -25730,19 +25725,31 @@ static bool slot_memq(s7_pointer symbol, s7_pointer symbols)
   return(false);
 }
 
+static bool arg_memq(s7_pointer symbol, s7_pointer args)
+{
+  s7_pointer x;
+  for (x = args; is_pair(x); x = cdr(x))
+    if ((car(x) == symbol) ||
+	((is_pair(car(x))) &&
+	 (caar(x) == symbol)))
+      return(x);
+  return(false);
+}
 
-static void collect_locals(s7_scheme *sc, s7_pointer body, s7_pointer e, int gc_loc)
+
+static void collect_locals(s7_scheme *sc, s7_pointer body, s7_pointer e, s7_pointer args, int gc_loc)
 {
   if (is_pair(body))
     {
-      collect_locals(sc, car(body), e, gc_loc);
-      collect_locals(sc, cdr(body), e, gc_loc);
+      collect_locals(sc, car(body), e, args, gc_loc);
+      collect_locals(sc, cdr(body), e, args, gc_loc);
     }
   else
     {
       if (is_symbol(body))
 	{
-	  if (!slot_memq(body, gc_protected_at(sc, gc_loc)))
+	  if ((!arg_memq(body, args)) &&
+	      (!slot_memq(body, gc_protected_at(sc, gc_loc))))
 	    {
 	      s7_pointer slot;
 	      slot = match_symbol(sc, body, e);
@@ -25763,7 +25770,7 @@ static void write_closure_readably(s7_scheme *sc, s7_pointer obj, s7_pointer por
   arglist = closure_args(obj);
   pe = closure_let(obj);
   gc_loc = s7_gc_protect(sc, sc->NIL);
-  collect_locals(sc, body, pe, gc_loc);
+  collect_locals(sc, body, pe, arglist, gc_loc);   /* collect locals used only here */
   local_slots = gc_protected_at(sc, gc_loc);
 
   if (!is_null(local_slots))
@@ -25800,6 +25807,7 @@ static void write_closure_readably(s7_scheme *sc, s7_pointer obj, s7_pointer por
     port_write_character(port)(sc, ')', port);
   s7_gc_unprotect_at(sc, gc_loc);
 }
+
 
 #if DEBUGGING
 static void print_gc_info(s7_pointer obj, int line)
@@ -34559,106 +34567,7 @@ static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 const char *s7_help(s7_scheme *sc, s7_pointer obj)
 {
   if (is_syntax(obj))
-    {
-      switch (syntax_opcode(obj))
-	{
-	case OP_QUOTE:
-	  return("(quote obj) returns obj unevaluated.  'obj is an abbreviation for (quote obj).");
-
-	case OP_MACROEXPAND:
-	  return("(macroexpand macro-call) returns the result of the expansion phase of evaluating the macro call.");
-	  
-	case OP_IF:
-	  return("(if expr true-stuff optional-false-stuff) evaluates expr, then \
-if it is true, evaluates true-stuff; otherwise, if optional-false-stuff exists, it is evaluated.");
-	  
-	case OP_WHEN:
-	  return("(when expr ...) evaluates expr, and if it is true, evaluates each form in its body, returning the value of the last");
-	  
-	case OP_UNLESS:
-	  return("(unless expr ...) evaluates expr, and if it is false, evaluates each form in its body, returning the value of the last");
-	  
-	case OP_BEGIN:
-	  return("(begin ...) evaluates each form in its body, returning the value of the last one");
-
-	case OP_SET:
-	  return("(set! variable value) sets the value of variable to value.");
-
-	case OP_LET:
-	  return("(let ((var val)...) ...) binds each variable to its initial value, then evaluates its body,\
-returning the value of the last form.  The let variables are local to it, and in the case of let (as opposed to let* for example), \
-the variables are not available for use until all have been initialized.");
-
-	case OP_LET_STAR:
-	  return("(let* ((var val)...) ...) binds each variable to its initial value, then evaluates its body,\
-returning the value of the last form.  The let* variables are local to it, and are available immediately (unlike let, for example).");
-
-	case OP_LETREC:
-	  return("(letrec ((var (lambda ...)))...) is like let, but var can refer to itself in \
-its value (i.e. you can define local recursive functions)");
-
-	case OP_LETREC_STAR:
-	  return("(letrec* ((var val))...) is like letrec, but successive bindings are handled as in let*");
-
-	case OP_COND:
-	  return("(cond (expr clause...)...) is like if..then.  Each expr is evaluated in \
-order, and if one is not #f, the associated clauses are evaluated, whereupon cond returns.");
-
-	case OP_AND:
-	  return("(and expr expr ...) evaluates each of its arguments in order, quitting (and returning #f) as soon \
-as one of them returns #f.  If all are non-#f, it returns the last value.");
-
-	case OP_OR:
-	  return("(or expr expr ...) evaluates each of its argments in order, quitting as soon as \
-one of them is not #f.  If all are #f, or returns #f.");
-
-	case OP_CASE:
-	  return("(case val ((key...) clause...)...) looks for val in the various lists of keys, \
-and if a match is found (via eqv?), the associated clauses are evaluated, and case returns.");
-
-	case OP_DO:
-	  return("(do (vars...) (loop control and return value) ...) is a do-loop.");
-
-	case OP_WITH_LET:
-	  return("(with-let env ...) evaluates its body in the environment env.");
-
-	case OP_WITH_BAFFLE:
-	  return("(with-baffle ...) evaluates its body in a context that is safe from outside interference.");
-
-	case OP_LAMBDA:
-	  return("(lambda args ...) returns a function.");
-
-	case OP_LAMBDA_STAR:
-	  return("(lambda* args ...) returns a function; the args list can have default values, \
-the parameters themselves can be accessed via keywords.");
-
-	case OP_DEFINE:
-	  return("(define var val) assigns val to the variable (symbol) var.  (define (func args) ...) is \
-shorthand for (define func (lambda args ...))");
-
-	case OP_DEFINE_STAR:
-	  return("(define* (func args) ...) defines a function with optional/keyword arguments.");
-
-	case OP_DEFINE_CONSTANT:
-	  return("(define-constant var val) defines var to be a constant (it can't be set or bound), with the value val.");
-
-	case OP_DEFINE_MACRO:
-	  return("(define-macro (mac args) ...) defines mac to be a macro.");
-
-	case OP_DEFINE_MACRO_STAR:
-	  return("(define-macro* (mac args) ...) defines mac to be a macro with optional/keyword arguments.");
-
-	case OP_DEFINE_EXPANSION:
-	  return("(define-expansion (mac args) ...) defines mac to be a read-time macro.");
-
-	case OP_DEFINE_BACRO:
-	  return("(define-bacro (mac args) ...) defines mac to be a bacro.");
-
-	case OP_DEFINE_BACRO_STAR:
-	  return("(define-bacro* (mac args) ...) defines mac to be a bacro with optional/keyword arguments.");
-	}
-      return(NULL);
-    }
+    return(string_value(syntax_documentation(obj)));
 
   if (is_symbol(obj))
     {
@@ -35590,7 +35499,8 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
   return(func); 
 }
 
-/* a bug: (let () (define xxx 23) (define (hix) (set! xxx 24)) (hix) (set! (symbol-access 'xxx) (lambda (sym val) (format *stderr* "val: ~A~%" val) val)) (hix))
+/* (let () (define xxx 23) (define (hix) (set! xxx 24)) (hix) (set! (symbol-access 'xxx) (lambda (sym val) (format *stderr* "val: ~A~%" val) val)) (hix))
+ *    so set symbol-access before use!
  */
 
 static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
@@ -38130,14 +38040,6 @@ each a function of no arguments, guaranteeing that finish is called even if body
   return(sc->F);
 }
 
-/* C-side dynamic-wind would need at least void* context pointer passed to each function,
- *   and to fit with the scheme-side stuff above, the functions need to be s7 functions,
- *   so I wonder if it could be s7_dynamic_wind(s7_scheme *sc, s7_pointer init, s7_pointer body, s7_pointer finish)
- *   and the caller would use the C-closure idea (s7.html) to package up C-side data.
- *   Then, the caller would probably assume a return value, requiring s7_call?
- *   -> g_dynamic_wind(sc, list_3(sc, init, body, finish)) but with eval(sc, OP_APPLY) at end?
- */
-
 
 static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 {
@@ -38169,10 +38071,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
       NEW_FRAME(sc, closure_let(proc), sc->envir);
       push_stack(sc, OP_BEGIN_UNCHECKED, sc->args, sc->code);
     }
-  else 
-    {
-      push_stack(sc, OP_APPLY, sc->NIL, proc);
-    }
+  else push_stack(sc, OP_APPLY, sc->NIL, proc);
   return(sc->F);
 }
 
@@ -40005,9 +39904,7 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
    *   so perhaps call/cc should also return #<unspecified> -- I don't know what is best.
    *
    * a note in the scheme bboard:
-   *
    *  This would work in s7:
-   *
    *  (define (print-concat . args) 
    *    (if (or (null? args)               ; (print-concat)
    *            (eq? (car args) (values))) ; (print-concat arg1 ...)
@@ -40015,18 +39912,11 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
    *      (begin 
    *        (display (car args)) 
    *        (print-concat (apply values (cdr args))))))
-   *  
    *  but it's a bit ugly.  I think (values) should be the same as
    *  (apply values ()). It's currently #<unspecified>, mainly for
    *  historical reasons (a lot of the code s7 is used with
    *  assumes that behavior).  If (values) simply vanished,
    *  then code like (abs -1 (values)) is not an error.
-   *  If it returned nil, you get inconsistencies elsewhere:
-   *  (values) now is the same as (values ()) which is
-   *  (apply values '(())).  This also affects quasiquote 
-   *  (s7 uses (apply values ...) for unquote-splicing).
-   *
-   * But that makes me think that (eval) should return #<unspecified>. What about (eval-string)?
    */
   
   if (is_null(cdr(args)))
@@ -41040,7 +40930,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 }
 
 
-static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op, s7_pointer min_args, s7_pointer max_args) 
+static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op, s7_pointer min_args, s7_pointer max_args, const char *doc) 
 {
   s7_pointer x, syn;
   unsigned int hash, loc;
@@ -41055,6 +40945,7 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op, s7
   syntax_symbol(syn) = x; 
   syntax_min_args(syn) = min_args;
   syntax_max_args(syn) = max_args;
+  syntax_documentation(syn) = s7_make_permanent_string(doc);
 
   global_slot(x) = permanent_slot(x, syn);
   initial_slot(x) = permanent_slot(x, syn);
@@ -41064,27 +40955,30 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op, s7
   return(x);
 }
 
-
-static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode_t op, s7_pointer min_args, s7_pointer max_args) 
+static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode_t op) 
 {
   s7_pointer x, str, syn; 
+  s7_pointer symbol, old_syn;
 
+  symbol = s7_make_symbol(sc, name);
+  old_syn = slot_value(global_slot(symbol));
   str = s7_make_permanent_string(name);
 
   x = alloc_pointer();
   heap_location(x) = NOT_IN_HEAP;
   symbol_name_cell(x) = str;
   set_type(x, T_SYMBOL);
-  symbol_hash(x) = (raw_string_hash((const unsigned char *)name, safe_strlen(name)) % SYMBOL_TABLE_SIZE);
+  symbol_hash(x) = symbol_hash(symbol);
   symbol_set_local(x, 0LL, sc->NIL);
   symbol_syntax_op(x) = op;
 
   syn = alloc_pointer();
   set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS); 
   syntax_opcode(syn) = op;
-  syntax_symbol(syn) = s7_make_symbol(sc, name);
-  syntax_min_args(syn) = min_args;
-  syntax_max_args(syn) = max_args;
+  syntax_symbol(syn) = symbol;
+  syntax_min_args(syn) = syntax_min_args(old_syn);
+  syntax_max_args(syn) = syntax_max_args(old_syn);
+  syntax_documentation(syn) = syntax_documentation(old_syn);
 
   global_slot(x) = permanent_slot(x, syn);
   initial_slot(x) = permanent_slot(x, syn);
@@ -66819,178 +66713,218 @@ s7_scheme *s7_init(void)
 #if WITH_COUNTS
   init_hashes(sc); 
 #endif
-
   make_standard_ports(sc);
 
-  assign_syntax(sc, "quote",             OP_QUOTE,             small_int(1), small_int(1));
-  assign_syntax(sc, "if",                OP_IF,                small_int(2), small_int(3));
-  assign_syntax(sc, "when",              OP_WHEN,              small_int(2), max_arity);
-  assign_syntax(sc, "unless",            OP_UNLESS,            small_int(2), max_arity);
-  assign_syntax(sc, "begin",             OP_BEGIN,             small_int(0), max_arity);
-  assign_syntax(sc, "set!",              OP_SET,               small_int(2), small_int(2));
-  assign_syntax(sc, "let",               OP_LET,               small_int(2), max_arity);
-  assign_syntax(sc, "let*",              OP_LET_STAR,          small_int(2), max_arity);
-  assign_syntax(sc, "letrec",            OP_LETREC,            small_int(2), max_arity);
-  assign_syntax(sc, "letrec*",           OP_LETREC_STAR,       small_int(2), max_arity);
-  assign_syntax(sc, "cond",              OP_COND,              small_int(1), max_arity);
-  assign_syntax(sc, "and",               OP_AND,               small_int(0), max_arity);
-  assign_syntax(sc, "or",                OP_OR,                small_int(0), max_arity);
-  assign_syntax(sc, "case",              OP_CASE,              small_int(2), max_arity);
-  assign_syntax(sc, "do",                OP_DO,                small_int(2), max_arity); /* 2 because body can be null: (do () (#t)) */
-  assign_syntax(sc, "lambda",            OP_LAMBDA,            small_int(2), max_arity);
-  assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR,       small_int(2), max_arity);
-  assign_syntax(sc, "define",            OP_DEFINE,            small_int(2), max_arity);
-  assign_syntax(sc, "define*",           OP_DEFINE_STAR,       small_int(2), max_arity);
-  assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT,   small_int(2), max_arity);
-  assign_syntax(sc, "define-macro",      OP_DEFINE_MACRO,      small_int(2), max_arity);
-  assign_syntax(sc, "define-macro*",     OP_DEFINE_MACRO_STAR, small_int(2), max_arity);
-  assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION,  small_int(2), max_arity);
-  assign_syntax(sc, "define-bacro",      OP_DEFINE_BACRO,      small_int(2), max_arity);
-  assign_syntax(sc, "define-bacro*",     OP_DEFINE_BACRO_STAR, small_int(2), max_arity);
-  assign_syntax(sc, "with-baffle",       OP_WITH_BAFFLE,       small_int(1), max_arity);
-  assign_syntax(sc, "macroexpand",       OP_MACROEXPAND,       small_int(1), small_int(1));
+  #define QUOTE_HELP              "(quote obj) returns obj unevaluated.  'obj is an abbreviation for (quote obj)."
+  #define IF_HELP                 "(if expr true-stuff optional-false-stuff) evaluates expr, then if it is true, evaluates true-stuff; otherwise, \
+                                      if optional-false-stuff exists, it is evaluated."
+  #define WHEN_HELP               "(when expr ...) evaluates expr, and if it is true, evaluates each form in its body, returning the value of the last"
+  #define UNLESS_HELP             "(unless expr ...) evaluates expr, and if it is false, evaluates each form in its body, returning the value of the last"
+  #define BEGIN_HELP              "(begin ...) evaluates each form in its body, returning the value of the last one"
+  #define SET_HELP                "(set! variable value) sets the value of variable to value."
+  #define LET_HELP                "(let ((var val)...) ...) binds each variable to its initial value, then evaluates its body,\
+                                      returning the value of the last form.  The let variables are local to it, and \
+                                      are not available for use until all have been initialized."
+  #define LET_STAR_HELP           "(let* ((var val)...) ...) binds each variable to its initial value, then evaluates its body, \
+                                      returning the value of the last form.  The let* variables are local to it, and are available immediately."
+  #define LETREC_HELP            "(letrec ((var (lambda ...)))...) is like let, but var can refer to itself in its value \
+                                      (i.e. you can define local recursive functions)"
+  #define LETREC_STAR_HELP       "(letrec* ((var val))...) is like letrec, but successive bindings are handled as in let*"
+  #define COND_HELP              "(cond (expr clause...)...) is like if..then.  Each expr is evaluated in order, and if one is not #f, \
+                                      the associated clauses are evaluated, whereupon cond returns."
+  #define AND_HELP               "(and expr expr ...) evaluates each of its arguments in order, quitting (and returning #f) \
+                                      as soon as one of them returns #f.  If all are non-#f, it returns the last value."
+  #define OR_HELP                "(or expr expr ...) evaluates each of its argments in order, quitting as soon as one of them is not #f.  \
+                                     If all are #f, or returns #f."
+  #define CASE_HELP              "(case val ((key...) clause...)...) looks for val in the various lists of keys, and if a \
+                                     match is found (via eqv?), the associated clauses are evaluated, and case returns."
+  #define DO_HELP                "(do (vars...) (loop control and return value) ...) is a do-loop."
+  #define LAMBDA_HELP            "(lambda args ...) returns a function."
+  #define LAMBDA_STAR_HELP       "(lambda* args ...) returns a function; the args list can have default values, \
+                                     the parameters themselves can be accessed via keywords."
+  #define DEFINE_HELP            "(define var val) assigns val to the variable (symbol) var.  (define (func args) ...) is \
+                                     shorthand for (define func (lambda args ...))"
+  #define DEFINE_STAR_HELP       "(define* (func args) ...) defines a function with optional/keyword arguments."
+  #define DEFINE_CONSTANT_HELP   "(define-constant var val) defines var to be a constant (it can't be set or bound), with the value val."
+  #define DEFINE_MACRO_HELP      "(define-macro (mac args) ...) defines mac to be a macro."
+  #define DEFINE_MACRO_STAR_HELP "(define-macro* (mac args) ...) defines mac to be a macro with optional/keyword arguments."
+  #define DEFINE_EXPANSION_HELP  "(define-expansion (mac args) ...) defines mac to be a read-time macro."
+  #define DEFINE_BACRO_HELP      "(define-bacro (mac args) ...) defines mac to be a bacro."
+  #define DEFINE_BACRO_STAR_HELP "(define-bacro* (mac args) ...) defines mac to be a bacro with optional/keyword arguments."
+  #define WITH_BAFFLE_HELP       "(with-baffle ...) evaluates its body in a context that is safe from outside interference."
+  #define MACROEXPAND_HELP       "(macroexpand macro-call) returns the result of the expansion phase of evaluating the macro call."
+  #define WITH_LET_HELP          "(with-let env ...) evaluates its body in the environment env."
+
+  assign_syntax(sc, "quote",             OP_QUOTE,             small_int(1), small_int(1), QUOTE_HELP);
+  assign_syntax(sc, "if",                OP_IF,                small_int(2), small_int(3), IF_HELP);
+  assign_syntax(sc, "when",              OP_WHEN,              small_int(2), max_arity,	   WHEN_HELP);
+  assign_syntax(sc, "unless",            OP_UNLESS,            small_int(2), max_arity,	   UNLESS_HELP);
+  assign_syntax(sc, "begin",             OP_BEGIN,             small_int(0), max_arity,	   BEGIN_HELP);
+  assign_syntax(sc, "set!",              OP_SET,               small_int(2), small_int(2), SET_HELP);
+  assign_syntax(sc, "let",               OP_LET,               small_int(2), max_arity,    LET_HELP);
+  assign_syntax(sc, "let*",              OP_LET_STAR,          small_int(2), max_arity,    LET_STAR_HELP);
+  assign_syntax(sc, "letrec",            OP_LETREC,            small_int(2), max_arity,    LETREC_HELP);
+  assign_syntax(sc, "letrec*",           OP_LETREC_STAR,       small_int(2), max_arity,    LETREC_STAR_HELP);
+  assign_syntax(sc, "cond",              OP_COND,              small_int(1), max_arity,    COND_HELP);
+  assign_syntax(sc, "and",               OP_AND,               small_int(0), max_arity,    AND_HELP);
+  assign_syntax(sc, "or",                OP_OR,                small_int(0), max_arity,    OR_HELP);
+  assign_syntax(sc, "case",              OP_CASE,              small_int(2), max_arity,    CASE_HELP);
+  assign_syntax(sc, "do",                OP_DO,                small_int(2), max_arity,    DO_HELP);     /* 2 because body can be null: (do () (#t)) */
+  assign_syntax(sc, "lambda",            OP_LAMBDA,            small_int(2), max_arity,    LAMBDA_HELP);
+  assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR,       small_int(2), max_arity,    LAMBDA_STAR_HELP);
+  assign_syntax(sc, "define",            OP_DEFINE,            small_int(2), max_arity,    DEFINE_HELP);
+  assign_syntax(sc, "define*",           OP_DEFINE_STAR,       small_int(2), max_arity,    DEFINE_STAR_HELP);
+  assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT,   small_int(2), max_arity,    DEFINE_CONSTANT_HELP);
+  assign_syntax(sc, "define-macro",      OP_DEFINE_MACRO,      small_int(2), max_arity,    DEFINE_MACRO_HELP);
+  assign_syntax(sc, "define-macro*",     OP_DEFINE_MACRO_STAR, small_int(2), max_arity,    DEFINE_MACRO_STAR_HELP);
+  assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION,  small_int(2), max_arity,    DEFINE_EXPANSION_HELP);
+  assign_syntax(sc, "define-bacro",      OP_DEFINE_BACRO,      small_int(2), max_arity,    DEFINE_BACRO_HELP);
+  assign_syntax(sc, "define-bacro*",     OP_DEFINE_BACRO_STAR, small_int(2), max_arity,    DEFINE_BACRO_STAR_HELP);
+  assign_syntax(sc, "with-baffle",       OP_WITH_BAFFLE,       small_int(1), max_arity,    WITH_BAFFLE_HELP);
+  assign_syntax(sc, "macroexpand",       OP_MACROEXPAND,       small_int(1), small_int(1), MACROEXPAND_HELP);
 
 #if (!DISABLE_DEPRECATED)
-  set_immutable(assign_syntax(sc, "with-environment", OP_WITH_LET, small_int(1), max_arity));
+  set_immutable(assign_syntax(sc, "with-environment", OP_WITH_LET, small_int(1), max_arity,WITH_LET_HELP));
+			      
 #endif
-  set_immutable(assign_syntax(sc, "with-let", OP_WITH_LET,     small_int(1), max_arity));
+  set_immutable(assign_syntax(sc, "with-let", OP_WITH_LET,     small_int(1), max_arity,    WITH_LET_HELP));
 
-  sc->QUOTE_UNCHECKED =       assign_internal_syntax(sc, "quote",       OP_QUOTE_UNCHECKED,       small_int(1), small_int(1));  
-  sc->BEGIN_UNCHECKED =       assign_internal_syntax(sc, "begin",       OP_BEGIN_UNCHECKED,       small_int(0), max_arity);  
-  sc->WITH_BAFFLE_UNCHECKED = assign_internal_syntax(sc, "with-baffle", OP_WITH_BAFFLE_UNCHECKED, small_int(1), max_arity);  
-  sc->LET_UNCHECKED =         assign_internal_syntax(sc, "let",         OP_LET_UNCHECKED,         small_int(2), max_arity);  
-  sc->LET_STAR_UNCHECKED =    assign_internal_syntax(sc, "let*",        OP_LET_STAR_UNCHECKED,    small_int(2), max_arity);  
-  sc->LETREC_UNCHECKED =      assign_internal_syntax(sc, "letrec",      OP_LETREC_UNCHECKED,      small_int(2), max_arity);  
-  sc->LETREC_STAR_UNCHECKED = assign_internal_syntax(sc, "letrec*",     OP_LETREC_STAR_UNCHECKED, small_int(2), max_arity);  
-  sc->LET_NO_VARS =           assign_internal_syntax(sc, "let",         OP_LET_NO_VARS,           small_int(2), max_arity);  
-  sc->LET_C =                 assign_internal_syntax(sc, "let",         OP_LET_C,                 small_int(2), max_arity);  
-  sc->LET_S =                 assign_internal_syntax(sc, "let",         OP_LET_S,                 small_int(2), max_arity);  
-  sc->LET_ALL_C =             assign_internal_syntax(sc, "let",         OP_LET_ALL_C,             small_int(2), max_arity);  
-  sc->LET_ALL_S =             assign_internal_syntax(sc, "let",         OP_LET_ALL_S,             small_int(2), max_arity);  
-  sc->LET_ALL_X =             assign_internal_syntax(sc, "let",         OP_LET_ALL_X,             small_int(2), max_arity);  
-  sc->LET_STAR_ALL_X =        assign_internal_syntax(sc, "let*",        OP_LET_STAR_ALL_X,        small_int(2), max_arity);  
-  sc->LET_opCq =              assign_internal_syntax(sc, "let",         OP_LET_opCq,              small_int(2), max_arity);  
-  sc->LET_opSSq =             assign_internal_syntax(sc, "let",         OP_LET_opSSq,             small_int(2), max_arity);  
-  sc->LET_opSq =              assign_internal_syntax(sc, "let",         OP_LET_opSq,              small_int(2), max_arity);  
-  sc->LET_opSq_P =            assign_internal_syntax(sc, "let",         OP_LET_opSq_P,            small_int(2), max_arity);  
-  sc->LET_ONE =               assign_internal_syntax(sc, "let",         OP_LET_ONE,               small_int(2), max_arity);  
-  sc->LET_Z =                 assign_internal_syntax(sc, "let",         OP_LET_Z,                 small_int(2), max_arity);  
-  sc->LET_ALL_opSq =          assign_internal_syntax(sc, "let",         OP_LET_ALL_opSq,          small_int(2), max_arity);  
-  sc->NAMED_LET_NO_VARS =     assign_internal_syntax(sc, "let",         OP_NAMED_LET_NO_VARS,     small_int(2), max_arity); 
-  sc->NAMED_LET =             assign_internal_syntax(sc, "let",         OP_NAMED_LET,             small_int(2), max_arity);  
-  sc->NAMED_LET_STAR =        assign_internal_syntax(sc, "let*",        OP_NAMED_LET_STAR,        small_int(2), max_arity);  
-  sc->LET_STAR2 =             assign_internal_syntax(sc, "let*",        OP_LET_STAR2,             small_int(2), max_arity);  
-  sc->WITH_LET_UNCHECKED =    assign_internal_syntax(sc, "with-let",    OP_WITH_LET_UNCHECKED,    small_int(2), max_arity);   
-  sc->WITH_LET_S =            assign_internal_syntax(sc, "with-let",    OP_WITH_LET_S,            small_int(2), max_arity);   
-  sc->CASE_UNCHECKED =        assign_internal_syntax(sc, "case",        OP_CASE_UNCHECKED,        small_int(2), max_arity);  
-  sc->CASE_SIMPLE =           assign_internal_syntax(sc, "case",        OP_CASE_SIMPLE,           small_int(2), max_arity);  
-  sc->CASE_SIMPLER =          assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER,          small_int(2), max_arity);  
-  sc->CASE_SIMPLER_1 =        assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER_1,        small_int(2), max_arity);  
-  sc->CASE_SIMPLER_SS =       assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER_SS,       small_int(2), max_arity);  
-  sc->CASE_SIMPLEST =         assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST,         small_int(2), max_arity);  
-  sc->CASE_SIMPLEST_SS =      assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST_SS,      small_int(2), max_arity);  
-  sc->CASE_SIMPLEST_ELSE =    assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST_ELSE,    small_int(2), max_arity);  
-  sc->CASE_SIMPLEST_ELSE_C =  assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST_ELSE_C,  small_int(2), max_arity);  
-  sc->COND_UNCHECKED =        assign_internal_syntax(sc, "cond",        OP_COND_UNCHECKED,        small_int(1), max_arity);  
-  sc->COND_SIMPLE =           assign_internal_syntax(sc, "cond",        OP_COND_SIMPLE,           small_int(1), max_arity);  
-  sc->DO_UNCHECKED =          assign_internal_syntax(sc, "do",          OP_DO_UNCHECKED,          small_int(2), max_arity);  
-  sc->LAMBDA_UNCHECKED =      assign_internal_syntax(sc, "lambda",      OP_LAMBDA_UNCHECKED,      small_int(2), max_arity);  
-  sc->LAMBDA_STAR_UNCHECKED = assign_internal_syntax(sc, "lambda*",     OP_LAMBDA_STAR_UNCHECKED, small_int(2), max_arity);  
-  sc->DEFINE_UNCHECKED =      assign_internal_syntax(sc, "define",      OP_DEFINE_UNCHECKED,      small_int(2), max_arity);  
-  sc->DEFINE_FUNCHECKED =     assign_internal_syntax(sc, "define",      OP_DEFINE_FUNCHECKED,     small_int(2), max_arity);  
-  sc->DEFINE_STAR_UNCHECKED = assign_internal_syntax(sc, "define*",     OP_DEFINE_STAR_UNCHECKED, small_int(2), max_arity);  
-  sc->SET_UNCHECKED =         assign_internal_syntax(sc, "set!",        OP_SET_UNCHECKED,         small_int(2), max_arity);  
-  sc->SET_SYMBOL_C =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_C,          small_int(2), small_int(2));  
-  sc->SET_SYMBOL_S =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_S,          small_int(2), small_int(2));  
-  sc->SET_SYMBOL_Q =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_Q,          small_int(2), small_int(2));  
-  sc->SET_SYMBOL_SAFE_S =     assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_SAFE_S,     small_int(2), small_int(2));  
-  sc->SET_SYMBOL_SAFE_SS =    assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_SAFE_SS,    small_int(2), small_int(2));  
-  sc->SET_SYMBOL_SAFE_SSS =   assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_SAFE_SSS,   small_int(2), small_int(2));  
-  sc->SET_SYMBOL_SAFE_C =     assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_SAFE_C,     small_int(2), small_int(2));  
-  sc->SET_SYMBOL_P =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_P,          small_int(2), small_int(2));  
-  sc->SET_SYMBOL_Z =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_Z,          small_int(2), small_int(2));  
-  sc->SET_SYMBOL_UNKNOWN_G =  assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_UNKNOWN_G,  small_int(2), small_int(2));  
-  sc->SET_SYMBOL_A =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_A,          small_int(2), small_int(2));  
-  sc->SET_FV_SCALED =         assign_internal_syntax(sc, "set!",        OP_SET_FV_SCALED,         small_int(2), small_int(2));  
-  sc->SET_NORMAL =            assign_internal_syntax(sc, "set!",        OP_SET_NORMAL,            small_int(2), small_int(2));
-  sc->SET_PWS =               assign_internal_syntax(sc, "set!",        OP_SET_PWS,               small_int(2), small_int(2));
-  sc->SET_PAIR =              assign_internal_syntax(sc, "set!",        OP_SET_PAIR,              small_int(2), small_int(2));
-  sc->SET_PAIR_P =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_P,            small_int(2), small_int(2));
-  sc->SET_PAIR_Z =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_Z,            small_int(2), small_int(2));
-  sc->SET_PAIR_UNKNOWN_G =    assign_internal_syntax(sc, "set!",        OP_SET_PAIR_UNKNOWN_G,    small_int(2), small_int(2));
-  sc->SET_PAIR_A =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_A,            small_int(2), small_int(2));
-  sc->SET_PAIR_ZA =           assign_internal_syntax(sc, "set!",        OP_SET_PAIR_ZA,           small_int(2), small_int(2));
-  sc->SET_ENV_S =             assign_internal_syntax(sc, "set!",        OP_SET_ENV_S,             small_int(2), small_int(2));
-  sc->SET_ENV_ALL_X =         assign_internal_syntax(sc, "set!",        OP_SET_ENV_ALL_X,         small_int(2), small_int(2));
-  sc->SET_PAIR_C =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_C,            small_int(2), small_int(2));
-  sc->SET_PAIR_C_P =          assign_internal_syntax(sc, "set!",        OP_SET_PAIR_C_P,          small_int(2), small_int(2));
-  sc->INCREMENT_1 =           assign_internal_syntax(sc, "set!",        OP_INCREMENT_1,           small_int(2), small_int(2));  
-  sc->INCREMENT_SS =          assign_internal_syntax(sc, "set!",        OP_INCREMENT_SS,          small_int(2), small_int(2));  
-  sc->INCREMENT_SSS =         assign_internal_syntax(sc, "set!",        OP_INCREMENT_SSS,         small_int(2), small_int(2));  
-  sc->INCREMENT_SZ =          assign_internal_syntax(sc, "set!",        OP_INCREMENT_SZ,          small_int(2), small_int(2));  
-  sc->INCREMENT_SA =          assign_internal_syntax(sc, "set!",        OP_INCREMENT_SA,          small_int(2), small_int(2));  
-  sc->INCREMENT_SAA =         assign_internal_syntax(sc, "set!",        OP_INCREMENT_SAA,         small_int(2), small_int(2));  
-  sc->INCREMENT_C_TEMP =      assign_internal_syntax(sc, "set!",        OP_INCREMENT_C_TEMP,      small_int(2), small_int(2));  
-  sc->DECREMENT_1 =           assign_internal_syntax(sc, "set!",        OP_DECREMENT_1,           small_int(2), small_int(2));  
-  sc->SET_CONS =              assign_internal_syntax(sc, "set!",        OP_SET_CONS,              small_int(2), small_int(2));
-  sc->AND_UNCHECKED =         assign_internal_syntax(sc, "and",         OP_AND_UNCHECKED,         small_int(0), max_arity);
-  sc->AND_P =                 assign_internal_syntax(sc, "and",         OP_AND_P,                 small_int(0), max_arity);
-  sc->OR_UNCHECKED =          assign_internal_syntax(sc, "or",          OP_OR_UNCHECKED,          small_int(0), max_arity);
-  sc->OR_P =                  assign_internal_syntax(sc, "or",          OP_OR_P,                  small_int(0), max_arity);
-  sc->IF_UNCHECKED =          assign_internal_syntax(sc, "if",          OP_IF_UNCHECKED,          small_int(2), small_int(3));
+  sc->QUOTE_UNCHECKED =       assign_internal_syntax(sc, "quote",       OP_QUOTE_UNCHECKED);
+  sc->BEGIN_UNCHECKED =       assign_internal_syntax(sc, "begin",       OP_BEGIN_UNCHECKED);
+  sc->WITH_BAFFLE_UNCHECKED = assign_internal_syntax(sc, "with-baffle", OP_WITH_BAFFLE_UNCHECKED);
+  sc->LET_UNCHECKED =         assign_internal_syntax(sc, "let",         OP_LET_UNCHECKED);
+  sc->LET_STAR_UNCHECKED =    assign_internal_syntax(sc, "let*",        OP_LET_STAR_UNCHECKED);
+  sc->LETREC_UNCHECKED =      assign_internal_syntax(sc, "letrec",      OP_LETREC_UNCHECKED);
+  sc->LETREC_STAR_UNCHECKED = assign_internal_syntax(sc, "letrec*",     OP_LETREC_STAR_UNCHECKED);
+  sc->LET_NO_VARS =           assign_internal_syntax(sc, "let",         OP_LET_NO_VARS);
+  sc->LET_C =                 assign_internal_syntax(sc, "let",         OP_LET_C);
+  sc->LET_S =                 assign_internal_syntax(sc, "let",         OP_LET_S);
+  sc->LET_ALL_C =             assign_internal_syntax(sc, "let",         OP_LET_ALL_C);
+  sc->LET_ALL_S =             assign_internal_syntax(sc, "let",         OP_LET_ALL_S);
+  sc->LET_ALL_X =             assign_internal_syntax(sc, "let",         OP_LET_ALL_X);
+  sc->LET_STAR_ALL_X =        assign_internal_syntax(sc, "let*",        OP_LET_STAR_ALL_X);
+  sc->LET_opCq =              assign_internal_syntax(sc, "let",         OP_LET_opCq);
+  sc->LET_opSSq =             assign_internal_syntax(sc, "let",         OP_LET_opSSq);
+  sc->LET_opSq =              assign_internal_syntax(sc, "let",         OP_LET_opSq);
+  sc->LET_opSq_P =            assign_internal_syntax(sc, "let",         OP_LET_opSq_P);
+  sc->LET_ONE =               assign_internal_syntax(sc, "let",         OP_LET_ONE);
+  sc->LET_Z =                 assign_internal_syntax(sc, "let",         OP_LET_Z);
+  sc->LET_ALL_opSq =          assign_internal_syntax(sc, "let",         OP_LET_ALL_opSq);
+  sc->NAMED_LET_NO_VARS =     assign_internal_syntax(sc, "let",         OP_NAMED_LET_NO_VARS);
+  sc->NAMED_LET =             assign_internal_syntax(sc, "let",         OP_NAMED_LET);
+  sc->NAMED_LET_STAR =        assign_internal_syntax(sc, "let*",        OP_NAMED_LET_STAR);
+  sc->LET_STAR2 =             assign_internal_syntax(sc, "let*",        OP_LET_STAR2);
+  sc->WITH_LET_UNCHECKED =    assign_internal_syntax(sc, "with-let",    OP_WITH_LET_UNCHECKED);
+  sc->WITH_LET_S =            assign_internal_syntax(sc, "with-let",    OP_WITH_LET_S);
+  sc->CASE_UNCHECKED =        assign_internal_syntax(sc, "case",        OP_CASE_UNCHECKED);
+  sc->CASE_SIMPLE =           assign_internal_syntax(sc, "case",        OP_CASE_SIMPLE);
+  sc->CASE_SIMPLER =          assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER);
+  sc->CASE_SIMPLER_1 =        assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER_1);
+  sc->CASE_SIMPLER_SS =       assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER_SS);
+  sc->CASE_SIMPLEST =         assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST);
+  sc->CASE_SIMPLEST_SS =      assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST_SS);
+  sc->CASE_SIMPLEST_ELSE =    assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST_ELSE);
+  sc->CASE_SIMPLEST_ELSE_C =  assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST_ELSE_C);
+  sc->COND_UNCHECKED =        assign_internal_syntax(sc, "cond",        OP_COND_UNCHECKED);
+  sc->COND_SIMPLE =           assign_internal_syntax(sc, "cond",        OP_COND_SIMPLE);
+  sc->DO_UNCHECKED =          assign_internal_syntax(sc, "do",          OP_DO_UNCHECKED);
+  sc->LAMBDA_UNCHECKED =      assign_internal_syntax(sc, "lambda",      OP_LAMBDA_UNCHECKED);
+  sc->LAMBDA_STAR_UNCHECKED = assign_internal_syntax(sc, "lambda*",     OP_LAMBDA_STAR_UNCHECKED);
+  sc->DEFINE_UNCHECKED =      assign_internal_syntax(sc, "define",      OP_DEFINE_UNCHECKED);
+  sc->DEFINE_FUNCHECKED =     assign_internal_syntax(sc, "define",      OP_DEFINE_FUNCHECKED);
+  sc->DEFINE_STAR_UNCHECKED = assign_internal_syntax(sc, "define*",     OP_DEFINE_STAR_UNCHECKED);
+  sc->SET_UNCHECKED =         assign_internal_syntax(sc, "set!",        OP_SET_UNCHECKED);
+  sc->SET_SYMBOL_C =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_C);
+  sc->SET_SYMBOL_S =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_S);
+  sc->SET_SYMBOL_Q =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_Q);
+  sc->SET_SYMBOL_SAFE_S =     assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_SAFE_S);
+  sc->SET_SYMBOL_SAFE_SS =    assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_SAFE_SS);
+  sc->SET_SYMBOL_SAFE_SSS =   assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_SAFE_SSS);
+  sc->SET_SYMBOL_SAFE_C =     assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_SAFE_C);
+  sc->SET_SYMBOL_P =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_P);
+  sc->SET_SYMBOL_Z =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_Z);
+  sc->SET_SYMBOL_UNKNOWN_G =  assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_UNKNOWN_G);
+  sc->SET_SYMBOL_A =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_A);
+  sc->SET_FV_SCALED =         assign_internal_syntax(sc, "set!",        OP_SET_FV_SCALED);
+  sc->SET_NORMAL =            assign_internal_syntax(sc, "set!",        OP_SET_NORMAL);
+  sc->SET_PWS =               assign_internal_syntax(sc, "set!",        OP_SET_PWS);
+  sc->SET_PAIR =              assign_internal_syntax(sc, "set!",        OP_SET_PAIR);
+  sc->SET_PAIR_P =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_P);
+  sc->SET_PAIR_Z =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_Z);
+  sc->SET_PAIR_UNKNOWN_G =    assign_internal_syntax(sc, "set!",        OP_SET_PAIR_UNKNOWN_G);
+  sc->SET_PAIR_A =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_A);
+  sc->SET_PAIR_ZA =           assign_internal_syntax(sc, "set!",        OP_SET_PAIR_ZA);
+  sc->SET_ENV_S =             assign_internal_syntax(sc, "set!",        OP_SET_ENV_S);
+  sc->SET_ENV_ALL_X =         assign_internal_syntax(sc, "set!",        OP_SET_ENV_ALL_X);
+  sc->SET_PAIR_C =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_C);
+  sc->SET_PAIR_C_P =          assign_internal_syntax(sc, "set!",        OP_SET_PAIR_C_P);
+  sc->INCREMENT_1 =           assign_internal_syntax(sc, "set!",        OP_INCREMENT_1);
+  sc->INCREMENT_SS =          assign_internal_syntax(sc, "set!",        OP_INCREMENT_SS);
+  sc->INCREMENT_SSS =         assign_internal_syntax(sc, "set!",        OP_INCREMENT_SSS);
+  sc->INCREMENT_SZ =          assign_internal_syntax(sc, "set!",        OP_INCREMENT_SZ);
+  sc->INCREMENT_SA =          assign_internal_syntax(sc, "set!",        OP_INCREMENT_SA);
+  sc->INCREMENT_SAA =         assign_internal_syntax(sc, "set!",        OP_INCREMENT_SAA);
+  sc->INCREMENT_C_TEMP =      assign_internal_syntax(sc, "set!",        OP_INCREMENT_C_TEMP);
+  sc->DECREMENT_1 =           assign_internal_syntax(sc, "set!",        OP_DECREMENT_1);
+  sc->SET_CONS =              assign_internal_syntax(sc, "set!",        OP_SET_CONS);
+  sc->AND_UNCHECKED =         assign_internal_syntax(sc, "and",         OP_AND_UNCHECKED);
+  sc->AND_P =                 assign_internal_syntax(sc, "and",         OP_AND_P);
+  sc->OR_UNCHECKED =          assign_internal_syntax(sc, "or",          OP_OR_UNCHECKED);
+  sc->OR_P =                  assign_internal_syntax(sc, "or",          OP_OR_P);
+  sc->IF_UNCHECKED =          assign_internal_syntax(sc, "if",          OP_IF_UNCHECKED);
 
-  sc->IF_P_P =                assign_internal_syntax(sc, "if",          OP_IF_P_P,                small_int(2), small_int(3));
-  sc->IF_P_P_P =              assign_internal_syntax(sc, "if",          OP_IF_P_P_P,              small_int(2), small_int(3));
-  sc->IF_ANDP_P =             assign_internal_syntax(sc, "if",          OP_IF_ANDP_P,             small_int(2), small_int(3));
-  sc->IF_ANDP_P_P =           assign_internal_syntax(sc, "if",          OP_IF_ANDP_P_P,           small_int(2), small_int(3));
-  sc->IF_ORP_P =              assign_internal_syntax(sc, "if",          OP_IF_ORP_P,              small_int(2), small_int(3));
-  sc->IF_ORP_P_P =            assign_internal_syntax(sc, "if",          OP_IF_ORP_P_P,            small_int(2), small_int(3));
-  sc->IF_S_P =                assign_internal_syntax(sc, "if",          OP_IF_S_P,                small_int(2), small_int(3));
-  sc->IF_S_P_P =              assign_internal_syntax(sc, "if",          OP_IF_S_P_P,              small_int(2), max_arity);
-  sc->IF_P_FEED =             assign_internal_syntax(sc, "cond",        OP_IF_P_FEED,             small_int(2), small_int(3));
-  sc->COND_ALL_X =            assign_internal_syntax(sc, "cond",        OP_COND_ALL_X,            small_int(1), max_arity);  
-  sc->COND_ALL_X_2 =          assign_internal_syntax(sc, "cond",        OP_COND_ALL_X_2,          small_int(1), max_arity);  
-  sc->COND_S =                assign_internal_syntax(sc, "cond",        OP_COND_S,                small_int(1), max_arity);  
-  sc->IF_Z_P =                assign_internal_syntax(sc, "if",          OP_IF_Z_P,                small_int(2), small_int(3));
-  sc->IF_Z_P_P =              assign_internal_syntax(sc, "if",          OP_IF_Z_P_P,              small_int(2), small_int(3));
-  sc->IF_A_P =                assign_internal_syntax(sc, "if",          OP_IF_A_P,                small_int(2), small_int(3));
-  sc->IF_A_P_P =              assign_internal_syntax(sc, "if",          OP_IF_A_P_P,              small_int(2), small_int(3));
-  sc->IF_CC_P =               assign_internal_syntax(sc, "if",          OP_IF_CC_P,               small_int(2), small_int(3));  
-  sc->IF_CC_P_P =             assign_internal_syntax(sc, "if",          OP_IF_CC_P_P,             small_int(2), small_int(3));  
-  sc->IF_CS_P =               assign_internal_syntax(sc, "if",          OP_IF_CS_P,               small_int(2), small_int(3));  
-  sc->IF_CS_P_P =             assign_internal_syntax(sc, "if",          OP_IF_CS_P_P,             small_int(2), small_int(3));  
-  sc->IF_CSQ_P =              assign_internal_syntax(sc, "if",          OP_IF_CSQ_P,              small_int(2), small_int(3));    
-  sc->IF_CSQ_P_P =            assign_internal_syntax(sc, "if",          OP_IF_CSQ_P_P,            small_int(2), small_int(3));    
-  sc->IF_CSS_P =              assign_internal_syntax(sc, "if",          OP_IF_CSS_P,              small_int(2), small_int(3));    
-  sc->IF_CSS_P_P =            assign_internal_syntax(sc, "if",          OP_IF_CSS_P_P,            small_int(2), small_int(3));    
-  sc->IF_CSC_P =              assign_internal_syntax(sc, "if",          OP_IF_CSC_P,              small_int(2), small_int(3));    
-  sc->IF_CSC_P_P =            assign_internal_syntax(sc, "if",          OP_IF_CSC_P_P,            small_int(2), small_int(3));    
-  sc->IF_opSSq_P =            assign_internal_syntax(sc, "if",          OP_IF_opSSq_P,            small_int(2), small_int(3));    
-  sc->IF_opSSq_P_P =          assign_internal_syntax(sc, "if",          OP_IF_opSSq_P_P,          small_int(2), small_int(3));    
-  sc->IF_IS_PAIR_P =          assign_internal_syntax(sc, "if",          OP_IF_IS_PAIR_P,          small_int(2), small_int(3));  
-  sc->IF_IS_PAIR_P_P =        assign_internal_syntax(sc, "if",          OP_IF_IS_PAIR_P_P,        small_int(2), small_int(3));  
-  sc->IF_IS_SYMBOL_P =        assign_internal_syntax(sc, "if",          OP_IF_IS_SYMBOL_P,        small_int(2), small_int(3));  
-  sc->IF_IS_SYMBOL_P_P =      assign_internal_syntax(sc, "if",          OP_IF_IS_SYMBOL_P_P,      small_int(2), small_int(3));  
-  sc->IF_NOT_S_P =            assign_internal_syntax(sc, "if",          OP_IF_NOT_S_P,            small_int(2), small_int(3));  
-  sc->IF_NOT_S_P_P =          assign_internal_syntax(sc, "if",          OP_IF_NOT_S_P_P,          small_int(2), small_int(3));  
-  sc->IF_AND2_P =             assign_internal_syntax(sc, "if",          OP_IF_AND2_P,             small_int(2), small_int(3));  
-  sc->IF_AND2_P_P =           assign_internal_syntax(sc, "if",          OP_IF_AND2_P_P,           small_int(2), small_int(3));  
-  sc->WHEN_S =                assign_internal_syntax(sc, "when",        OP_WHEN_S,                small_int(2), max_arity);
-  sc->UNLESS_S =              assign_internal_syntax(sc, "unless",      OP_UNLESS_S,              small_int(2), max_arity);
-  sc->WHEN_UNCHECKED =        assign_internal_syntax(sc, "when",        OP_WHEN_UNCHECKED,        small_int(2), max_arity);
-  sc->UNLESS_UNCHECKED =      assign_internal_syntax(sc, "unless",      OP_UNLESS_UNCHECKED,      small_int(2), max_arity);
-  sc->DOTIMES_P =             assign_internal_syntax(sc, "do",          OP_DOTIMES_P,             small_int(2), max_arity);
-  sc->SIMPLE_DO =             assign_internal_syntax(sc, "do",          OP_SIMPLE_DO,             small_int(2), max_arity);
-  sc->SIMPLE_DO_P =           assign_internal_syntax(sc, "do",          OP_SIMPLE_DO_P,           small_int(2), max_arity);
-  sc->SIMPLE_DO_A =           assign_internal_syntax(sc, "do",          OP_SIMPLE_DO_A,           small_int(2), max_arity);
-  sc->SIMPLE_DO_FOREVER =     assign_internal_syntax(sc, "do",          OP_SIMPLE_DO_FOREVER,     small_int(2), max_arity);
-  sc->SAFE_DOTIMES =          assign_internal_syntax(sc, "do",          OP_SAFE_DOTIMES,          small_int(2), max_arity);
-  sc->SAFE_DOTIMES_C_C =      assign_internal_syntax(sc, "do",          OP_SAFE_DOTIMES_C_C,      small_int(2), max_arity);
-  sc->SAFE_DOTIMES_C_A =      assign_internal_syntax(sc, "do",          OP_SAFE_DOTIMES_C_A,      small_int(2), max_arity);
-  sc->SIMPLE_SAFE_DOTIMES =   assign_internal_syntax(sc, "do",          OP_SIMPLE_SAFE_DOTIMES,   small_int(2), max_arity);
-  sc->SAFE_DO =               assign_internal_syntax(sc, "do",          OP_SAFE_DO,               small_int(2), max_arity);
-  sc->DOX =                   assign_internal_syntax(sc, "do",          OP_DOX,                   small_int(2), max_arity);
-  sc->DO_ALL_X =              assign_internal_syntax(sc, "do",          OP_DO_ALL_X,              small_int(2), max_arity);
+  sc->IF_P_P =                assign_internal_syntax(sc, "if",          OP_IF_P_P);
+  sc->IF_P_P_P =              assign_internal_syntax(sc, "if",          OP_IF_P_P_P);
+  sc->IF_ANDP_P =             assign_internal_syntax(sc, "if",          OP_IF_ANDP_P);
+  sc->IF_ANDP_P_P =           assign_internal_syntax(sc, "if",          OP_IF_ANDP_P_P);
+  sc->IF_ORP_P =              assign_internal_syntax(sc, "if",          OP_IF_ORP_P);
+  sc->IF_ORP_P_P =            assign_internal_syntax(sc, "if",          OP_IF_ORP_P_P);
+  sc->IF_S_P =                assign_internal_syntax(sc, "if",          OP_IF_S_P);
+  sc->IF_S_P_P =              assign_internal_syntax(sc, "if",          OP_IF_S_P_P);
+  sc->IF_P_FEED =             assign_internal_syntax(sc, "cond",        OP_IF_P_FEED);
+  sc->COND_ALL_X =            assign_internal_syntax(sc, "cond",        OP_COND_ALL_X);
+  sc->COND_ALL_X_2 =          assign_internal_syntax(sc, "cond",        OP_COND_ALL_X_2);
+  sc->COND_S =                assign_internal_syntax(sc, "cond",        OP_COND_S);
+  sc->IF_Z_P =                assign_internal_syntax(sc, "if",          OP_IF_Z_P);
+  sc->IF_Z_P_P =              assign_internal_syntax(sc, "if",          OP_IF_Z_P_P);
+  sc->IF_A_P =                assign_internal_syntax(sc, "if",          OP_IF_A_P);
+  sc->IF_A_P_P =              assign_internal_syntax(sc, "if",          OP_IF_A_P_P);
+  sc->IF_CC_P =               assign_internal_syntax(sc, "if",          OP_IF_CC_P);
+  sc->IF_CC_P_P =             assign_internal_syntax(sc, "if",          OP_IF_CC_P_P);
+  sc->IF_CS_P =               assign_internal_syntax(sc, "if",          OP_IF_CS_P);
+  sc->IF_CS_P_P =             assign_internal_syntax(sc, "if",          OP_IF_CS_P_P);
+  sc->IF_CSQ_P =              assign_internal_syntax(sc, "if",          OP_IF_CSQ_P);
+  sc->IF_CSQ_P_P =            assign_internal_syntax(sc, "if",          OP_IF_CSQ_P_P);
+  sc->IF_CSS_P =              assign_internal_syntax(sc, "if",          OP_IF_CSS_P);
+  sc->IF_CSS_P_P =            assign_internal_syntax(sc, "if",          OP_IF_CSS_P_P);
+  sc->IF_CSC_P =              assign_internal_syntax(sc, "if",          OP_IF_CSC_P);
+  sc->IF_CSC_P_P =            assign_internal_syntax(sc, "if",          OP_IF_CSC_P_P);
+  sc->IF_opSSq_P =            assign_internal_syntax(sc, "if",          OP_IF_opSSq_P);
+  sc->IF_opSSq_P_P =          assign_internal_syntax(sc, "if",          OP_IF_opSSq_P_P);
+  sc->IF_IS_PAIR_P =          assign_internal_syntax(sc, "if",          OP_IF_IS_PAIR_P);
+  sc->IF_IS_PAIR_P_P =        assign_internal_syntax(sc, "if",          OP_IF_IS_PAIR_P_P);
+  sc->IF_IS_SYMBOL_P =        assign_internal_syntax(sc, "if",          OP_IF_IS_SYMBOL_P);
+  sc->IF_IS_SYMBOL_P_P =      assign_internal_syntax(sc, "if",          OP_IF_IS_SYMBOL_P_P);
+  sc->IF_NOT_S_P =            assign_internal_syntax(sc, "if",          OP_IF_NOT_S_P);
+  sc->IF_NOT_S_P_P =          assign_internal_syntax(sc, "if",          OP_IF_NOT_S_P_P);
+  sc->IF_AND2_P =             assign_internal_syntax(sc, "if",          OP_IF_AND2_P);
+  sc->IF_AND2_P_P =           assign_internal_syntax(sc, "if",          OP_IF_AND2_P_P);
+  sc->WHEN_S =                assign_internal_syntax(sc, "when",        OP_WHEN_S);
+  sc->UNLESS_S =              assign_internal_syntax(sc, "unless",      OP_UNLESS_S);
+  sc->WHEN_UNCHECKED =        assign_internal_syntax(sc, "when",        OP_WHEN_UNCHECKED);
+  sc->UNLESS_UNCHECKED =      assign_internal_syntax(sc, "unless",      OP_UNLESS_UNCHECKED);
+  sc->DOTIMES_P =             assign_internal_syntax(sc, "do",          OP_DOTIMES_P);
+  sc->SIMPLE_DO =             assign_internal_syntax(sc, "do",          OP_SIMPLE_DO);
+  sc->SIMPLE_DO_P =           assign_internal_syntax(sc, "do",          OP_SIMPLE_DO_P);
+  sc->SIMPLE_DO_A =           assign_internal_syntax(sc, "do",          OP_SIMPLE_DO_A);
+  sc->SIMPLE_DO_FOREVER =     assign_internal_syntax(sc, "do",          OP_SIMPLE_DO_FOREVER);
+  sc->SAFE_DOTIMES =          assign_internal_syntax(sc, "do",          OP_SAFE_DOTIMES);
+  sc->SAFE_DOTIMES_C_C =      assign_internal_syntax(sc, "do",          OP_SAFE_DOTIMES_C_C);
+  sc->SAFE_DOTIMES_C_A =      assign_internal_syntax(sc, "do",          OP_SAFE_DOTIMES_C_A);
+  sc->SIMPLE_SAFE_DOTIMES =   assign_internal_syntax(sc, "do",          OP_SIMPLE_SAFE_DOTIMES);
+  sc->SAFE_DO =               assign_internal_syntax(sc, "do",          OP_SAFE_DO);
+  sc->DOX =                   assign_internal_syntax(sc, "do",          OP_DOX);
+  sc->DO_ALL_X =              assign_internal_syntax(sc, "do",          OP_DO_ALL_X);
 
   sc->LAMBDA =                make_symbol(sc, "lambda");
   sc->LAMBDA_STAR =           make_symbol(sc, "lambda*");
@@ -67156,10 +67090,6 @@ s7_scheme *s7_init(void)
   sc->IS_INPUT_PORT =         s7_define_safe_function(sc, "input-port?",             g_is_input_port,          1, 0, false, H_is_input_port);
   sc->IS_OUTPUT_PORT =        s7_define_safe_function(sc, "output-port?",            g_is_output_port,         1, 0, false, H_is_output_port);
   sc->IS_PORT_CLOSED =        s7_define_safe_function(sc, "port-closed?",            g_is_port_closed,         1, 0, false, H_is_port_closed);
-#if (!WITH_PURE_S7)
-  sc->IS_CHAR_READY =         s7_define_safe_function(sc, "char-ready?",             g_is_char_ready,          0, 1, false, H_is_char_ready);
-#endif
-
   sc->IS_EOF_OBJECT =         s7_define_safe_function(sc, "eof-object?",             g_is_eof_object,          1, 0, false, H_is_eof_object);
 
                               s7_define_safe_function(sc, "current-input-port",      g_current_input_port,     0, 0, false, H_current_input_port);
@@ -67169,6 +67099,7 @@ s7_scheme *s7_init(void)
 #if (!WITH_PURE_S7)
                               s7_define_safe_function(sc, "set-current-input-port",  g_set_current_input_port, 1, 0, false, H_set_current_input_port);
                               s7_define_safe_function(sc, "set-current-output-port", g_set_current_output_port,1, 0, false, H_set_current_output_port);
+  sc->IS_CHAR_READY =         s7_define_safe_function(sc, "char-ready?",             g_is_char_ready,          0, 1, false, H_is_char_ready);
 #endif
 
   sc->CLOSE_INPUT_PORT =      s7_define_safe_function(sc, "close-input-port",        g_close_input_port,       1, 0, false, H_close_input_port);
@@ -67773,11 +67704,8 @@ s7_scheme *s7_init(void)
   s7_eval_c_string(sc, "(define-macro (defmacro name args . body) `(define-macro ,(cons name args) ,@body))");
   s7_eval_c_string(sc, "(define-macro (defmacro* name args . body) `(define-macro* ,(cons name args) ,@body))");
 
-  /* call-with-values is almost a no-op; r7rs's fault.
-   *   this really should check that the producer and consumer make sense (not a circular list for example).
-   */
+  /* call-with-values is almost a no-op, (call-with-values (lambda () (values 1 2 3)) +) */
   s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) `(,consumer (,producer)))"); 
-  /* (call-with-values (lambda () (values 1 2 3)) +) */
 
   s7_eval_c_string(sc, "(define-macro (multiple-value-bind vars expression . body)                            \n\
                            (if (or (symbol? vars) (negative? (length vars)))                                  \n\
@@ -67792,7 +67720,6 @@ s7_scheme *s7_init(void)
                                 ,@body)                                                                       \n\
                               ,expr)))");
 
-  /* cond-expand (uses *features*) */
   s7_eval_c_string(sc, "(define-macro (cond-expand . clauses)                                                 \n\
                           (letrec ((traverse (lambda (tree)                                                   \n\
 		                               (if (pair? tree)                                               \n\
@@ -68049,7 +67976,7 @@ int main(int argc, char **argv)
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1139
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3020
  * lg             |      |      | 6547 6497 6494 6235 6229
  * t137           |      |      | 11.0           5031 4861
@@ -68089,11 +68016,11 @@ int main(int argc, char **argv)
  * how to catch the stack overflow op_cz case?
  * perhaps current-error-port -> *error-port*
  * checkpt via cell: recast s7_pointer as hnum?(+ permanents), (op)stack+current-pos+heap+symbols (presented as continuation?)
+ *    certainly gdbm needs something faster than eval-string and object->string!
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
+ * lmdb/gdbm -> let + s7 threads (need full example of this in s7.html)
+ *    for let-ref, actually need fallback before checking outlet (currently it follows)
  * the sndlib enums should be typedefs, and the types used throughout (mus_header_t, mus_sample_t, mus_error_t)
  *    clm.h does this, so it must be ok by CL?
- * mdb/gdb -> let + s7 threads (need full example of this in s7.html)
- *    for let-ref, actually need fallback before checking outlet
- *    add s7.html code to s7test
  */

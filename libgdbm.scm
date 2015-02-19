@@ -227,7 +227,6 @@ static s7_pointer g_gdbm_open(s7_scheme *sc, s7_pointer args)
 ;;; this is a huge mess
 
 #|
-;; use with-let!
 (define gfile ((*libgdbm* 'gdbm_open) "test.gdbm" 1024 (*libgdbm* 'GDBM_NEWDB) #o664 (lambda (str) (format *stderr* "str: ~S~%" str))))
 ((*libgdbm* 'gdbm_store) gfile "1" "1234" (*libgdbm* 'GDBM_REPLACE))
 ((*libgdbm* 'gdbm_fetch) gfile "1")

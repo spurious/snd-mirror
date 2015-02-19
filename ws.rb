@@ -1,6 +1,6 @@
 # ws.rb -- with_sound and friends for Snd/Ruby
 
-# Copyright (c) 2003-2014 Michael Scholz <mi-scholz@users.sourceforge.net>
+# Copyright (c) 2003-2015 Michael Scholz <mi-scholz@users.sourceforge.net>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 # SUCH DAMAGE.
 #
 # Created: 03/04/08 17:05:03
-# Changed: 14/11/23 06:18:17
+# Changed: 15/02/18 15:05:06
 
 # module WS
 #   ws_getlogin
@@ -440,7 +440,7 @@ end
 
 with_silence do
   # warning: undefined variable
-  $clm_version            = "ruby 2014/11/23"
+  $clm_version            = "ruby 2015/02/18"
   $output                 ||= false
   $reverb                 ||= false
   $clm_array_print_length ||= 8
@@ -464,20 +464,19 @@ with_silence do
   $clm_default_frequency  ||= 0.0
   $clm_locsig_type        ||= locsig_type
   $clm_search_list        ||= (ENV["CLM_SEARCH_PATH"] or ".").split(/:/)
+  $clm_output_device      ||= Mus_audio_default
 
   if provided? :snd
     $clm_channels      ||= default_output_chans
     $clm_srate         ||= default_output_srate
     $clm_header_type   ||= default_output_header_type
     $clm_sample_type   ||= default_output_sample_type
-    $clm_output_device ||= audio_output_device
     $clm_dac_size      ||= dac_size
   else
     $clm_channels      ||= 1
     $clm_srate         ||= 44100
     $clm_header_type   ||= Mus_next
     $clm_sample_type   ||= Mus_lfloat
-    $clm_output_device ||= Mus_audio_default
     $clm_dac_size      ||= 1024
   end
 end
@@ -1754,7 +1753,8 @@ Example: clm_mix(\"tmp\")")
       unless @continue
         remove_file(@output)
       end
-      snd = new_sound(@output, @channels, sr, @sample_type, @header_type, @comment)
+      snd = new_sound(@output, @channels, sr,
+                      @sample_type, @header_type, @comment)
     end
     if @reverb
       if sound?(rsnd = find_sound(@revfile)) and (not @continue)
@@ -1771,7 +1771,8 @@ Example: clm_mix(\"tmp\")")
         unless @continue
           remove_file(@revfile)
         end
-        rsnd = new_sound(@revfile, @reverb_channels, sr, @sample_type, @header_type)
+        rsnd = new_sound(@revfile, @reverb_channels, sr,
+                         @sample_type, @header_type)
       end
     end
     $output = @ws_output = @out_snd = snd

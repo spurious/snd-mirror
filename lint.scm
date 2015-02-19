@@ -67,6 +67,8 @@
 (define *top-level-objects* (make-hash-table))
 (define *lint-output-port* *stderr*)
 
+(format *stderr* "loading lint.scm~%")
+(set! reader-cond #f)
 (define-macro (reader-cond . clauses) `(values))          ; clobber reader-cond to avoid dumb unbound-variable errors
 
 

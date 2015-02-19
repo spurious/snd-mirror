@@ -2,9 +2,9 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 04/03/15 19:25:58
-\ Changed: 14/11/12 16:45:42
+\ Changed: 15/02/18 14:52:16
 \
-\ @(#)clm.fs	1.118 11/12/14
+\ @(#)clm.fs	1.120 2/18/15
 
 \ clm-print		( fmt :optional args -- )
 \ clm-message		( fmt :optional args -- )
@@ -261,11 +261,9 @@ previous
 
 hide
 : notelength ( scale "name" --; self -- r )
-	rhythm->seconds { secs }
-	create
-	secs ,
+	create ,
   does> ( self -- r )
-	@
+	@ ( scale ) rhythm->seconds ( secs )
 ;
 set-current
 
@@ -283,7 +281,7 @@ set-current
 previous
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-"fth 2014/11/12"  value *clm-version*
+"fth 2015/02/18"  value *clm-version*
 #f 	      	  value *locsig*
 mus-lshort    	  value *clm-audio-format*
 #f            	  value *clm-comment*
@@ -314,7 +312,6 @@ Instruments using RUN or RUN-INSTRUMENT add entries to the list." help-set!
 	44100      constant default-output-srate
 	mus-next   constant default-output-header-type
 	mus-lfloat constant default-output-sample-type
-	mus-audio-default constant audio-output-device
 	1024       constant dac-size
 [then]
 
@@ -323,8 +320,8 @@ default-output-srate       value *clm-srate*
 locsig-type                value *clm-locsig-type*
 default-output-header-type value *clm-header-type*
 default-output-sample-type value *clm-sample-type*
-audio-output-device        value *clm-output-device*
 dac-size                   value *clm-rt-bufsize*
+mus-audio-default          value *clm-output-device*
 mus-file-buffer-size       value *clm-file-buffer-size*
 mus-clipping               value *clm-clipped*
 mus-array-print-length     value *clm-array-print-length*

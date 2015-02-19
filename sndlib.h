@@ -44,13 +44,7 @@ typedef long long int mus_long_t;
   #define MUS_EXPORT
 #endif
 
-/*
-#include "xen.h"
-#include "vct.h"
-*/
 
-
-/* these used to be in configure.ac,  but the 2.62 change to AC_C_BIGENDIAN ruins that */
 #ifndef MUS_LITTLE_ENDIAN
   #if WORDS_BIGENDIAN
     #define MUS_LITTLE_ENDIAN 0

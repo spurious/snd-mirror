@@ -231,10 +231,11 @@ indented and on a sort of brownish background.
   <li><a href="#miscellanea">miscellaneous:</a> 
 
   <ul>
-    <li><a href="#loadpath">*load-path*</a>, <a href="#featureslist">*features*</a>, <a href="#sharpreaders">*#readers*</a>, <a href="#s7env">*s7*</a>,
+    <li><a href="#loadpath">*load-path*</a>, <a href="#featureslist">*features*</a>, <a href="#sharpreaders">*#readers*</a>,
     <li><a href="#makelist">make-list</a>, <a href="#charposition">char-position</a>, <a href="#keywords">keywords</a>
     <li><a href="#symboltable">symbol-table</a>, <a href="#s7help">help</a>, <a href="#s7gc">gc</a>, <a href="#morallyequalp">morally-equal?</a>
-    <li><a href="#s7vsr5rs">r5rs</a>, <a href="#r7rs">r7rs</a>, <a href="#circle">circular lists</a>, <a href="#legolambda">legolambda</a>, etc...
+    <li><a href="#expansion">define-expansion</a>, <a href="s7env">*s7*</a>, <a href="#s7vsr5rs">r5rs</a>, <a href="#r7rs">r7rs</a>, 
+    <li><a href="#circle">circular lists</a>, <a href="#legolambda">legolambda</a>, etc...
     </ul>
 
   <li class="li_header"><a href="#FFIexamples">FFI examples</a>
@@ -266,6 +267,11 @@ indented and on a sort of brownish background.
   <ul>
       <li><a href="#lint">lint.scm</a>
       <li><a href="#cload">cload.scm</a>
+      <ul>
+           <li><a href="#libc">libc</a>
+           <li><a href="#libgsl">libgsl</a>
+           <li><a href="#libgdbm">libgdbm</a>
+      </ul>
   </ul>
 </ul>
 
@@ -425,7 +431,7 @@ Other math-related differences between s7 and r5rs:
 #t
 </pre>
 
-<p>See <a href="#libgslscm">cload and libgsl.scm</a> for easy access to GSL,
+<p>See <a href="#libgsl">cload and libgsl.scm</a> for easy access to GSL,
 and similarly libm.scm for the C math library.
 </p>
 
@@ -5451,7 +5457,7 @@ that method is invoked.
 <div class="separator"></div>
 
 <p>
-<b>define-expansion</b> defines a macro that expands at read-time.
+<em class=def id="expansion">define-expansion</em> defines a macro that expands at read-time.
 It has the same syntax as
 define-macro, and (in normal use) the same result, but it is much faster because it expands only once.
 Since the reader knows almost nothing
@@ -5481,7 +5487,8 @@ a (gasp!) f*xpr.  In fact:
 <pre>
 (define-macro (define-f*xpr name-and-args . body)
   `(define ,(car name-and-args)
-     (apply define-expansion `((,(gensym) ,@',(cdr name-and-args)) ,@',body))))
+     (apply define-expansion 
+       (append (list (append (list (gensym)) ',(cdr name-and-args))) ',body))))
 
 &gt; (define-f*xpr (mac a) `(+ ,a 1))
 #&lt;expansion (a)&gt;
@@ -8822,7 +8829,7 @@ c-define-1
 <p>See also r7rs.scm, libc.scm, libgsl.scm, libm.scm, libdl.scm, and libgdbm.scm.
 </p>
 
-<div class="indented">
+<div class="indented" id="libc">
 <pre>
 (require libc.scm)
 
@@ -8864,7 +8871,7 @@ c-define-1
 </div>
 
 
-<div class="indented" id="libgslscm">
+<div class="indented" id="libgsl">
 <pre>
 (require libgsl.scm)
 
@@ -8894,53 +8901,51 @@ c-define-1
 
 <p>We can use gdbm (or better yet, mdb), the :readable argument to object-&gt;string, and
 the fallback methods in the environments to create name-spaces (lets) with billions of 
-thread-safe local variables, saved and communicated between s7 runs:
+thread-safe local variables, which can be saved and communicated between s7 runs:
 </p>
-<div class="indented">
+<div class="indented" id="libgdbm">
 <pre>
 (require libgdbm.scm)
 
-(define *db* 
-  (openlet 
-   (inlet :file (gdbm_open "test.gdbm" 1024 GDBM_NEWDB #o664 
-		   (lambda (str) (format *stderr* "gdbm error: ~S~%" str)))
+(with-let *libgdbm*
 
-	  :let-ref-fallback (lambda (obj sym)
-			      (with-input-from-string
-				  (gdbm_fetch (obj 'file) (symbol-&gt;string sym))
-				(lambda () (eval (read)))))
+  (define *db* 
+    (openlet 
+     (inlet :file (gdbm_open "test.gdbm" 1024 GDBM_NEWDB #o664 
+		    (lambda (str) (format *stderr* "gdbm error: ~S~%" str)))
 
-	  :let-set!-fallback (lambda (obj sym val)
-			       (gdbm_store (obj 'file)
-					   (symbol-&gt;string sym)
-					   (object-&gt;string val :readable)
-					   GDBM_REPLACE)
-			       val)
+	    :let-ref-fallback (lambda (obj sym)
+				(eval-string (gdbm_fetch (obj 'file) (symbol-&gt;string sym))))
+	    
+	    :let-set!-fallback (lambda (obj sym val)
+				 (gdbm_store (obj 'file)
+					     (symbol-&gt;string sym)
+					     (object-&gt;string val :readable)
+					     GDBM_REPLACE)
+				 val)
+	    
+	    :make-iterator (lambda (obj)
+			     (let ((key #f)
+				   (length (lambda (obj) (expt 2 20))))
+			       (#_make-iterator
+				(openlet 
+				 (lambda (pos)
+				   (if key
+				       (set! key (gdbm_nextkey (obj 'file) (cdr key)))
+				       (set! key (gdbm_firstkey (obj 'file))))
+				   (if (pair? key)
+				       (cons (string-&gt;symbol (car key))
+					     (eval-string (gdbm_fetch (obj 'file) (car key))))
+				       key)))))))))
 
-	  :make-iterator (lambda (obj)
-			   (let ((key #f)
-				 (length (lambda (obj) (expt 2 20))))
-			     (#_make-iterator
-			      (openlet 
-			       (lambda (pos)
-				 (if key
-				     (set! key (gdbm_nextkey (obj 'file) (cdr key)))
-				     (set! key (gdbm_firstkey (obj 'file))))
-				 (if (pair? key)
-				     (cons (string-&gt;symbol (car key))
-					   (with-input-from-string
-					       (gdbm_fetch (obj 'file) (car key))
-					     (lambda () (eval (read)))))
-				     key)))))))))
+  (set! (*db* 'str) "123") ; add a variable named 'str with the value "123"
+  (set! (*db* 'int) 432)
 
-(set! (*db* 'str) "123") ; add a variable named 'str with the value "123"
-(set! (*db* 'int) 432)
+  (with-let *db* 
+    (+ int (length str)))    ; -&gt; 435
+  (map values *db*)          ; -&gt; '((str . "123") (int . 432))
 
-(with-let *db* 
-  (+ int (length str)))    ; -&gt; 435
-(map values *db*)          ; -&gt; '((str . "123") (int . 432))
-
-(gdbm_close (*db* 'file))
+  (gdbm_close (*db* 'file)))
 </pre>
 
 </div>
