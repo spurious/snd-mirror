@@ -65,7 +65,7 @@ static void prepare_env_edit(env *new_env)
 {
   prepare_enved_edit(new_env);
   if (new_env->base == 1.0)
-    {set_enved_style(ENVELOPE_LINEAR);}
+    set_enved_style(ENVELOPE_LINEAR);
   else
     {
       set_enved_style(ENVELOPE_EXPONENTIAL);
@@ -760,8 +760,8 @@ static void make_base_label(mus_float_t bval)
 
       active_env->base = enved_base(ss);
       if (active_env->base == 1.0)
-	{set_enved_style(ENVELOPE_LINEAR);}
-      else {set_enved_style(ENVELOPE_EXPONENTIAL);}
+	set_enved_style(ENVELOPE_LINEAR);
+      else set_enved_style(ENVELOPE_EXPONENTIAL);
 
       env_redisplay();
     }

@@ -6,12 +6,8 @@
 #define SNDLIB_DATE "10-Aug-14"
 
 #include <stdio.h>
-/* need FILE */
-
 #include <time.h>
-/* time_t used by mus_sound_write_date */
 #include <sys/types.h>
-
 
 /* not sure how to handle this one cleanly: */
 #ifndef __cplusplus
@@ -95,7 +91,7 @@ enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_AL
       MUS_BINTN, MUS_LINTN, MUS_BFLOAT_UNSCALED, MUS_LFLOAT_UNSCALED, MUS_BDOUBLE_UNSCALED, MUS_LDOUBLE_UNSCALED,
       MUS_NUM_SAMPLE_TYPES};
 
-/* MUS_LINTN and MUS_BINTN refer to 32 bit ints with 31 bits of "fraction" -- the data is "left justified" */
+/* MUS_LINTN and MUS_BINTN refer to 32 bit ints with 31 bits of fraction -- the data is left justified */
 /* "unscaled" means the float value is used directly (i.e. not as -1.0 to 1.0, but (probably) -32768.0 to 32768.0) */
 
 

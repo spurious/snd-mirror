@@ -47712,12 +47712,12 @@ static s7_pointer check_if(s7_scheme *sc)
 	      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_P_P : sc->IF_P_P_P);
 	      if (is_syntactic(car(test)))
 		{
-		  opcode_t new_op;
 		  pair_syntax_op(test) = symbol_syntax_op(car(test));
 		  
 		  if ((symbol_syntax_op(car(test)) == OP_AND) ||
 		      (symbol_syntax_op(car(test)) == OP_OR))
 		    {
+		      opcode_t new_op;
 		      s7_pointer old_code;
 		      old_code = sc->code;
 		      sc->code = cdr(test);
@@ -47941,7 +47941,7 @@ static s7_pointer check_define_macro(s7_scheme *sc, opcode_t op)
   
   for ( ; is_pair(y); y = cdr(y))
     if ((!is_symbol(car(y))) &&
-	((sc->op == OP_DEFINE_MACRO) || (sc->op == OP_DEFINE_BACRO)))
+	((sc->op == OP_DEFINE_MACRO) || (sc->op == OP_DEFINE_BACRO) || (sc->op == OP_DEFINE_EXPANSION)))
       return(s7_error(sc, sc->SYNTAX_ERROR,                                    /* (define-macro (mac 1) ...) */
 		      list_3(sc, make_string_wrapper(sc, "define-macro ~A argument name is not a symbol: ~S"), x, y)));
 
@@ -47949,9 +47949,6 @@ static s7_pointer check_define_macro(s7_scheme *sc, opcode_t op)
     check_lambda_star_args(sc, cdar(sc->code), NULL);
   else check_lambda_args(sc, cdar(sc->code), NULL);
 
-  /* optimize_lambda(sc, (sc->op != OP_DEFINE_MACRO_STAR) && (sc->op != OP_DEFINE_BACRO_STAR), x, cdar(sc->code), cdr(sc->code));
-   * I think this happens in make_macro 
-   */
   return(sc->code);
 }
 
@@ -48983,7 +48980,6 @@ static dox_function step_dox_eval(s7_scheme *sc, s7_pointer code, s7_pointer var
 
 	  /* (+ i c) (- i c)?
 	   * (+ 1 i) -> cs
-	   * 
 	   * if (fcdr(code) == (s7_pointer)g_add_sf) return(dox_add_tf);
 	   */
 	}
@@ -67976,7 +67972,7 @@ int main(int argc, char **argv)
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3020
  * lg             |      |      | 6547 6497 6494 6235 6229
- * t137           |      |      | 11.0           5031 4861
+ * t137           |      |      | 11.0           5031 4813
  * t455|6     265 |   89 |  9   |       8.4 8045 7482 7241
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.7
@@ -68019,6 +68015,5 @@ int main(int argc, char **argv)
  * lmdb/gdbm -> let + s7 threads (need full example of this in s7.html)
  *    for let-ref, actually need fallback before checking outlet (currently it follows)
  * the sndlib enums should be typedefs, and the types used throughout ([mus_header_t] mus_sample_t mus_error_t)
- *    clm.h does this, so it must be ok by CL?
  *    mus_error_t -- mus_make_error would need to go away (it's currently used only in snd-trans)
  */

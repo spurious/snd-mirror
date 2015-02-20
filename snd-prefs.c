@@ -2709,7 +2709,7 @@ static void save_speed_control(prefs_info *prf, FILE *ignore)
 static int rts_default_output_chans = DEFAULT_OUTPUT_CHANS;
 static int rts_default_output_srate = DEFAULT_OUTPUT_SRATE;
 static int rts_default_output_sample_type = DEFAULT_OUTPUT_SAMPLE_TYPE;
-static int rts_default_output_header_type = DEFAULT_OUTPUT_HEADER_TYPE;
+static mus_header_t rts_default_output_header_type = DEFAULT_OUTPUT_HEADER_TYPE;
 
 static prefs_info *output_sample_type_prf = NULL, *output_header_type_prf = NULL;
 
@@ -2723,7 +2723,7 @@ static int output_srates[NUM_OUTPUT_SRATE_CHOICES] = {8000, 22050, 44100, 48000}
 
 #define NUM_OUTPUT_HEADER_TYPE_CHOICES 7
 static const char *output_header_type_choices[NUM_OUTPUT_HEADER_TYPE_CHOICES] = {"aifc ", "wave ", "au ", "rf64 ", "nist ", "aiff ", "caff"};
-static int output_header_types[NUM_OUTPUT_HEADER_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_RF64, MUS_NIST, MUS_AIFF, MUS_CAFF};
+static mus_header_t output_header_types[NUM_OUTPUT_HEADER_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_RF64, MUS_NIST, MUS_AIFF, MUS_CAFF};
 
 #define NUM_OUTPUT_SAMPLE_TYPE_CHOICES 4
 static const char *output_sample_type_choices[NUM_OUTPUT_SAMPLE_TYPE_CHOICES] = {"short ", "int ", "float ", "double"};
