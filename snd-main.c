@@ -592,7 +592,8 @@ static void save_options(FILE *fd)
   if (fneq(clm_default_frequency_c(), MUS_CLM_DEFAULT_FREQUENCY)) pss_sf(fd, S_clm_default_frequency, clm_default_frequency_c());
 
   {
-    int srate = 0, chans = 0, samp_type = 0;
+    int srate = 0, chans = 0;
+    mus_sample_t samp_type = MUS_UNKNOWN_SAMPLE;
     mus_header_raw_defaults(&srate, &chans, &samp_type);
     if ((chans != 2) ||
 	(srate != 44100) ||

@@ -1494,13 +1494,11 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
 #define NeXT_G723_5 26
 #endif
 
-static int MUS_CANT_TRANSLATE = 0;
-
 static const char *any_samp_type_name(const char *name)
 {
-  int samp_type;
+  mus_sample_t samp_type;
   samp_type = mus_sound_sample_type(name);
-  if (samp_type != MUS_UNKNOWN)
+  if (samp_type != MUS_UNKNOWN_SAMPLE)
     return(mus_sample_type_name(samp_type));
   else return(mus_header_original_sample_type_name(mus_sound_original_sample_type(name), mus_sound_header_type(name)));
 }
@@ -1513,9 +1511,7 @@ int snd_translate(const char *oldname, const char *newname, mus_header_t type)
   int err;
   char *hdr = NULL;
 
-  MUS_CANT_TRANSLATE = MUS_UNSUPPORTED_SAMPLE_TYPE; /* need to add this to mus_error I guess */
   err = MUS_CANT_TRANSLATE;
-
   hdr = (char *)calloc(TRANS_BUF_SIZE, sizeof(char));
   /* set up default output header */
   mus_bint_to_char((unsigned char *)hdr, 0x2e736e64);   /* .snd */

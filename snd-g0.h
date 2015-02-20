@@ -257,7 +257,8 @@ typedef struct {
   GtkWidget *srate_text, *chans_text, *comment_text, *location_text, *samples_text, *error_text;
   GtkWidget *dialog, *src_button, *auto_comment_button;
   mus_header_t current_header_type;
-  int current_sample_type, sample_types, header_type_pos, sample_type_pos;
+  mus_sample_t current_sample_type;
+  int sample_types, header_type_pos, sample_type_pos;
   scanf_widget_t scanf_widget, error_widget;
   bool src, auto_comment;
   gulong *reflection_ids;

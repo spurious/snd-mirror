@@ -41,7 +41,8 @@ static char *display_maxamps(const char *filename, int chans)
 
 int main(int argc, char *argv[])
 {
-  int chans, srate, samp_type, ctr;
+  int chans, srate, ctr;
+  mus_sample_t samp_type;
   mus_header_t type;
   mus_long_t samples;
   float length = 0.0;
@@ -72,16 +73,17 @@ int main(int argc, char *argv[])
 	  type = mus_sound_header_type(argv[ctr]);
 	  header_name = (char *)mus_header_type_name(type);
 	  samp_type = mus_sound_sample_type(argv[ctr]);
-	  if (samp_type != MUS_UNKNOWN)
+	  if (samp_type != MUS_UNKNOWN_SAMPLE)
 	    samp_type_info = (char *)mus_sample_type_name(samp_type);
 	  else
 	    {
+	      int orig_type;
 	      if (samp_type_info == NULL) samp_type_info = (char *)calloc(64, sizeof(char));
-	      samp_type = mus_sound_original_sample_type(argv[ctr]);
-	      samp_type_name = (char *)mus_header_original_sample_type_name(samp_type, type);
+	      orig_type = mus_sound_original_sample_type(argv[ctr]);
+	      samp_type_name = (char *)mus_header_original_sample_type_name(orig_type, type);
 	      if (samp_type_name)
-		snprintf(samp_type_info, 64, "%d (%s)", samp_type, samp_type_name);
-	      else snprintf(samp_type_info, 64, "%d", samp_type);
+		snprintf(samp_type_info, 64, "%d (%s)", orig_type, samp_type_name);
+	      else snprintf(samp_type_info, 64, "%d", orig_type);
 	    }
 	  fprintf(stdout, "%s:\n  srate: %d\n  chans: %d\n  length: %f",
 		  argv[ctr], srate, chans, length);

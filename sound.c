@@ -130,14 +130,14 @@ void mus_print(const char *format, ...)
 }
 
 
-static const char *mus_initial_error_names[MUS_INITIAL_ERROR_TAG] = {
+static const char *mus_error_names[MUS_NUM_ERRORS] = {
   "no error", "no frequency method", "no phase method", "null gen arg to method", "no length method",
   "no describe method", "no data method", "no scaler method",
   "memory allocation failed", 
   "can't open file", "no sample input", "no sample output",
   "no such channel", "no file name provided", "no location method", "no channel method",
-  "no such fft window", "unsupported sample type", "header read failed",
-  "unsupported header type", "file descriptors not initialized", "not a sound file", "file closed", "write error",
+  "no such fft window", "unknown sample type", "header read failed",
+  "unknown header type", "file descriptors not initialized", "not a sound file", "file closed", "write error",
   "header write failed", "can't open temp file", "interrupted", "bad envelope",
 
   "audio channels not available", "audio srate not available", "audio sample type not available",
@@ -152,58 +152,15 @@ static const char *mus_initial_error_names[MUS_INITIAL_ERROR_TAG] = {
   "no xcoeff method", "no ycoeff method", "no xcoeffs method", "no ycoeffs method", "no reset", "bad size", "can't convert",
   "read error",
   "no feedforward method", "no feedback method", "no interp-type method", "no position method", "no order method", "no copy method",
+  "can't translate"
 };
 
-static char **mus_error_names = NULL;
-static int mus_error_names_size = 0;
-
-#if (!DISABLE_DEPRECATED)
-static int mus_error_tag = MUS_INITIAL_ERROR_TAG;
-int mus_make_error(const char *error_name) 
-{
-  int new_error, err;
-  new_error = mus_error_tag++;
-  err = new_error - MUS_INITIAL_ERROR_TAG;
-  if (error_name)
-    {
-      int len;
-      if (err >= mus_error_names_size)
-	{
-	  if (mus_error_names_size == 0)
-	    {
-	      mus_error_names_size = 8;
-	      mus_error_names = (char **)calloc(mus_error_names_size, sizeof(char *));
-	    }
-	  else
-	    {
-	      int i;
-	      len = mus_error_names_size;
-	      mus_error_names_size += 8;
-	      mus_error_names = (char **)realloc(mus_error_names, mus_error_names_size * sizeof(char *));
-	      for (i = len; i < mus_error_names_size; i++) mus_error_names[i] = NULL;
-	    }
-	}
-      len = strlen(error_name);
-      mus_error_names[err] = (char *)calloc(len + 1, sizeof(char));
-      strcpy(mus_error_names[err], error_name);
-    }
-  return(new_error);
-}
-#endif
 
 const char *mus_error_type_to_string(int err)
 {
-  if (err >= 0)
-    {
-      if (err < MUS_INITIAL_ERROR_TAG)
-	return(mus_initial_error_names[err]);
-      else
-	{
-	  err -= MUS_INITIAL_ERROR_TAG;
-	  if ((mus_error_names) && (err < mus_error_names_size))
-	    return(mus_error_names[err]);
-	}
-    }
+  if ((err >= 0) &&
+      (err < MUS_NUM_ERRORS))
+    return(mus_error_names[err]);
   return("unknown mus error");
 }
 
@@ -237,8 +194,9 @@ typedef struct {
   int *marker_ids, *marker_positions;
   mus_long_t samples, true_file_length;
   mus_long_t data_location;
-  int srate, chans, sample_type, original_sound_samp_type, datum_size; 
+  int srate, chans, original_sound_samp_type, datum_size; 
   mus_header_t header_type;
+  mus_sample_t sample_type;
   mus_long_t comment_start, comment_end;
   int type_specifier, bits_per_sample, block_align, fact_samples;
   time_t write_date;
@@ -759,15 +717,15 @@ mus_header_t mus_sound_header_type(const char *arg)
 {
   sound_file *sf;
   sf = get_sf(arg);
-  return((sf) ? sf->header_type : MUS_UNSUPPORTED);
+  return((sf) ? sf->header_type : MUS_UNKNOWN_HEADER);
 }
 
 
-int mus_sound_sample_type(const char *arg)     
+mus_sample_t mus_sound_sample_type(const char *arg)     
 {
   sound_file *sf;
   sf = get_sf(arg);
-  return((sf) ? sf->sample_type : MUS_ERROR);
+  return((sf) ? sf->sample_type : MUS_UNKNOWN_SAMPLE);
 }
 
 
@@ -1058,7 +1016,7 @@ int mus_sound_open_input(const char *arg)
 }
 
 
-int mus_sound_open_output(const char *arg, int srate, int chans, int sample_type, mus_header_t header_type, const char *comment)
+int mus_sound_open_output(const char *arg, int srate, int chans, mus_sample_t sample_type, mus_header_t header_type, const char *comment)
 {
   int fd = MUS_ERROR, err;
   mus_sound_initialize();
@@ -1080,7 +1038,7 @@ int mus_sound_open_output(const char *arg, int srate, int chans, int sample_type
 }
 
 
-int mus_sound_reopen_output(const char *arg, int chans, int samp_type, mus_header_t type, mus_long_t data_loc)
+int mus_sound_reopen_output(const char *arg, int chans, mus_sample_t samp_type, mus_header_t type, mus_long_t data_loc)
 {
   int fd;
   mus_sound_initialize();
@@ -1144,8 +1102,8 @@ static int mus_sound_set_field(const char *arg, sf_field_t field, int val)
 	  break;
 
 	case SF_SAMP_TYPE:   
-	  sf->sample_type = val; 
-	  sf->datum_size = mus_bytes_per_sample(val); 
+	  sf->sample_type = (mus_sample_t)val; 
+	  sf->datum_size = mus_bytes_per_sample(sf->sample_type); 
 	  break;
 
 	default: 
@@ -1189,13 +1147,13 @@ static int mus_sound_set_mus_long_t_field(const char *arg, sf_field_t field, mus
 
 int mus_sound_set_chans(const char *arg, int val)                {return(mus_sound_set_field(arg,            SF_CHANS,    val));}
 int mus_sound_set_srate(const char *arg, int val)                {return(mus_sound_set_field(arg,            SF_SRATE,    val));}
-mus_header_t mus_sound_set_header_type(const char *arg, mus_header_t val) {return((mus_header_t)mus_sound_set_field(arg,   SF_TYPE,     val));}
-int mus_sound_set_sample_type(const char *arg, int val)          {return(mus_sound_set_field(arg,            SF_SAMP_TYPE,   val));}
+mus_header_t mus_sound_set_header_type(const char *arg, mus_header_t val) {return((mus_header_t)mus_sound_set_field(arg, SF_TYPE, val));}
+mus_sample_t mus_sound_set_sample_type(const char *arg, mus_sample_t val) {return((mus_sample_t)mus_sound_set_field(arg, SF_SAMP_TYPE, val));}
 int mus_sound_set_data_location(const char *arg, mus_long_t val) {return(mus_sound_set_mus_long_t_field(arg, SF_LOCATION, val));}
 int mus_sound_set_samples(const char *arg, mus_long_t val)       {return(mus_sound_set_mus_long_t_field(arg, SF_SIZE,     val));}
 
 
-int mus_sound_override_header(const char *arg, int srate, int chans, int samp_type, mus_header_t type, mus_long_t location, mus_long_t size)
+int mus_sound_override_header(const char *arg, int srate, int chans, mus_sample_t samp_type, mus_header_t type, mus_long_t location, mus_long_t size)
 {
   sound_file *sf; 
   int result = MUS_NO_ERROR;
@@ -1206,14 +1164,14 @@ int mus_sound_override_header(const char *arg, int srate, int chans, int samp_ty
     {
       if (location != -1) sf->data_location = location;
       if (size != -1) sf->samples = size;
-      if (samp_type != -1) 
+      if (samp_type != MUS_UNKNOWN_SAMPLE) 
 	{
 	  sf->sample_type = samp_type;
 	  sf->datum_size = mus_bytes_per_sample(samp_type);
 	}
       if (srate != -1) sf->srate = srate;
       if (chans != -1) sf->chans = chans;
-      if (type != MUS_UNSUPPORTED) sf->header_type = (mus_header_t)type;
+      if (type != MUS_UNKNOWN_HEADER) sf->header_type = (mus_header_t)type;
     }
   else result = MUS_ERROR;
 

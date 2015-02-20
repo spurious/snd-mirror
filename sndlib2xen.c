@@ -263,13 +263,28 @@ static Xen g_mus_sound_set_header_type(Xen filename, Xen val)
 static Xen g_mus_sound_sample_type(Xen filename) 
 {
   #define H_mus_sound_sample_type "(" S_mus_sound_sample_type " filename): sample type (e.g. " S_mus_bshort ") of data in sound file"
-  return(gmus_sound(S_mus_sound_sample_type, mus_sound_sample_type, filename));
+  char *str = NULL;
+  Xen result;
+
+  Xen_check_type(Xen_is_string(filename), filename, 1, S_mus_sound_sample_type, "a string"); 
+  str = mus_expand_filename(Xen_string_to_C_string(filename));
+  result = C_int_to_Xen_integer((int)mus_sound_sample_type(str));
+  if (str) free(str);
+  return(result);
 }
 
 
 static Xen g_mus_sound_set_sample_type(Xen filename, Xen val) 
 {
-  return(gmus_sound_set(S_setB S_mus_sound_sample_type, mus_sound_set_sample_type, filename, val));
+  char *str = NULL;
+  Xen result;
+
+  Xen_check_type(Xen_is_string(filename), filename, 1, S_setB S_mus_sound_sample_type, "a string"); 
+  Xen_check_type(Xen_is_integer(val), val, 2, S_setB S_mus_sound_sample_type, "an integer");
+  str = mus_expand_filename(Xen_string_to_C_string(filename));
+  result = C_int_to_Xen_integer((int)mus_sound_set_sample_type(str, (mus_sample_t)Xen_integer_to_C_int(val)));
+  if (str) free(str);
+  return(result);
 }
 
 
@@ -337,17 +352,18 @@ static Xen g_mus_header_writable(Xen head, Xen data)
   #define H_mus_header_writable "(" S_mus_header_writable " header-type sample-type) returns " PROC_TRUE " if the header can handle the sample type"
   Xen_check_type(Xen_is_integer(head), head, 1, S_mus_header_writable, "a header type");
   Xen_check_type(Xen_is_integer(data), data, 2, S_mus_header_writable, "a sample type");
-  return(C_bool_to_Xen_boolean(mus_header_writable((mus_header_t)Xen_integer_to_C_int(head), Xen_integer_to_C_int(data))));
+  return(C_bool_to_Xen_boolean(mus_header_writable((mus_header_t)Xen_integer_to_C_int(head), (mus_sample_t)Xen_integer_to_C_int(data))));
 }
 
 static Xen g_mus_header_raw_defaults(void)
 {
   #define H_mus_header_raw_defaults "(" S_mus_header_raw_defaults "): returns list '(srate chans sample-type) of current raw sound default attributes"
-  int srate, chans, sample_type;
+  int srate, chans;
+  mus_sample_t sample_type;
   mus_header_raw_defaults(&srate, &chans, &sample_type);
   return(Xen_list_3(C_int_to_Xen_integer(srate),
 		    C_int_to_Xen_integer(chans),
-		    C_int_to_Xen_integer(sample_type)));
+		    C_int_to_Xen_integer((int)sample_type)));
 }
 
 
@@ -359,7 +375,7 @@ static Xen g_mus_header_set_raw_defaults(Xen lst)
   Xen_check_type(Xen_is_integer(Xen_caddr(lst)), Xen_caddr(lst), 3, S_mus_header_raw_defaults, "an integer = sample-type");
   mus_header_set_raw_defaults(Xen_integer_to_C_int(Xen_car(lst)),
 			      Xen_integer_to_C_int(Xen_cadr(lst)),
-			      Xen_integer_to_C_int(Xen_caddr(lst)));
+			      (mus_sample_t)Xen_integer_to_C_int(Xen_caddr(lst)));
   return(lst);
 }
 
@@ -384,7 +400,7 @@ static Xen g_mus_sample_type_name(Xen samp_type)
 {
   #define H_mus_sample_type_name "(" S_mus_sample_type_name " samp_type): sample type (e.g. " S_mus_bshort ") as a string"
   Xen_check_type(Xen_is_integer(samp_type), samp_type, 1, S_mus_sample_type_name, "an integer (sample-type id)"); 
-  return(C_string_to_Xen_string(mus_sample_type_name(Xen_integer_to_C_int(samp_type))));
+  return(C_string_to_Xen_string(mus_sample_type_name((mus_sample_t)Xen_integer_to_C_int(samp_type))));
 }
 
 
@@ -392,7 +408,7 @@ static Xen g_mus_sample_type_to_string(Xen samp_type)
 {
   #define H_mus_sample_type_to_string "(" S_mus_sample_type_to_string " samp_type): sample type (e.g. " S_mus_bshort ") as a string"
   Xen_check_type(Xen_is_integer(samp_type), samp_type, 1, S_mus_sample_type_to_string, "an integer (sample-type id)"); 
-  return(C_string_to_Xen_string(mus_sample_type_to_string(Xen_integer_to_C_int(samp_type))));
+  return(C_string_to_Xen_string(mus_sample_type_to_string((mus_sample_t)Xen_integer_to_C_int(samp_type))));
 }
 
 
@@ -401,7 +417,7 @@ static Xen g_mus_bytes_per_sample(Xen samp_type)
   #define H_mus_bytes_per_sample "(" S_mus_bytes_per_sample " sample-type): number of bytes per sample in \
 sample-type (e.g. " S_mus_bshort " = 2)"
   Xen_check_type(Xen_is_integer(samp_type), samp_type, 1, S_mus_bytes_per_sample, "an integer (sample-type id)"); 
-  return(C_int_to_Xen_integer(mus_bytes_per_sample(Xen_integer_to_C_int(samp_type))));
+  return(C_int_to_Xen_integer(mus_bytes_per_sample((mus_sample_t)Xen_integer_to_C_int(samp_type))));
 }
 
 
@@ -1135,8 +1151,13 @@ void mus_sndlib_xen_initialize(void)
   Init_Hook();
 #endif
 
+#if (!DISABLE_DEPRECATED)
+  Xen_define_constant("mus-unsupported", MUS_UNKNOWN_HEADER, "unknown header type");
+  Xen_define_constant("mus-unknown",     MUS_UNKNOWN_SAMPLE, "unknown sample type");
+#endif
+
   Xen_define_constant(S_mus_out_format,           MUS_OUT_SAMPLE_TYPE,      "sample type for fastest IO");
-  Xen_define_constant(S_mus_unsupported,          MUS_UNSUPPORTED,          "unsupported header id");
+  Xen_define_constant(S_mus_unknown_header,       MUS_UNKNOWN_HEADER,       "unknown header type");
   Xen_define_constant(S_mus_next,                 MUS_NEXT,                 "NeXT (Sun) sound header id");
   Xen_define_constant(S_mus_aifc,                 MUS_AIFC,                 "AIFC sound header id");
   Xen_define_constant(S_mus_rf64,                 MUS_RF64,                 "RF64 sound header id");
@@ -1151,7 +1172,7 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_constant(S_mus_soundfont,            MUS_SOUNDFONT,            "soundfont header id");
   Xen_define_constant(S_mus_caff,                 MUS_CAFF,                 "Apple Core Audio File Format header id");
 
-  Xen_define_constant(S_mus_unknown,              MUS_UNKNOWN,              "unknown sample type");
+  Xen_define_constant(S_mus_unknown_sample,       MUS_UNKNOWN_SAMPLE,       "unknown sample type");
   Xen_define_constant(S_mus_bshort,               MUS_BSHORT,               "big-endian short sample type id");
   Xen_define_constant(S_mus_lshort,               MUS_LSHORT,               "little-endian short sample type id");
   Xen_define_constant(S_mus_mulaw,                MUS_MULAW,                "mulaw (8-bit) sample type id");

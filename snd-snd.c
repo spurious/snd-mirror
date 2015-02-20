@@ -39,7 +39,8 @@ snd_info *get_sp(Xen snd)
 }
 
 
-snd_info *snd_new_file(const char *newname, int chans, int srate, int sample_type, mus_header_t header_type, const char *new_comment, mus_long_t samples)
+snd_info *snd_new_file(const char *newname, int chans, int srate, mus_sample_t sample_type, 
+		       mus_header_t header_type, const char *new_comment, mus_long_t samples)
 {
   /* caller checks newname != null, and runs overwrite hook */
   if (mus_header_writable(header_type, sample_type))
@@ -92,7 +93,8 @@ typedef struct env_state {
   snd_fd *sf;
 
   unsigned char *direct_data;
-  int format, chans, bytes, fd;
+  mus_sample_t format;
+  int chans, bytes, fd;
   bool file_open;
 } env_state;
 
@@ -2821,10 +2823,11 @@ static Xen sound_set(Xen snd, Xen val, sp_field_t fld, const char *caller)
     case SP_SAMPLE_TYPE:
       if (!(is_player_sound(sp))) 
 	{
-	  ival = Xen_integer_to_C_int(val);
+	  mus_sample_t ival;
+	  ival = (mus_sample_t)Xen_integer_to_C_int(val);
 	  if (mus_is_sample_type(ival))
 	    {
-	      int old_format;
+	      mus_sample_t old_format;
 	      old_format = sp->hdr->sample_type;
 	      mus_sound_set_sample_type(sp->filename, ival);
 	      sp->hdr->sample_type = ival;
@@ -3991,7 +3994,8 @@ open file assuming the data matches the attributes indicated unless the file act
   char *fullname;
   snd_info *sp;
   bool file_exists;
-  int os = 1, oc = 1, ofr = MUS_BSHORT;
+  int os = 1, oc = 1;
+  mus_sample_t ofr = MUS_BSHORT;
   Xen args[8]; 
   Xen keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
@@ -4020,7 +4024,7 @@ open file assuming the data matches the attributes indicated unless the file act
       if (!(Xen_is_keyword(keys[1]))) set_fallback_chans(oc);
       os = mus_optkey_to_int(keys[2], S_open_raw_sound, orig_arg[2], os);
       if (!(Xen_is_keyword(keys[2]))) set_fallback_srate(os);
-      ofr = mus_optkey_to_int(keys[3], S_open_raw_sound, orig_arg[3], ofr);
+      ofr = (mus_sample_t)mus_optkey_to_int(keys[3], S_open_raw_sound, orig_arg[3], (int)ofr);
       if (!(Xen_is_keyword(keys[3]))) set_fallback_sample_type(ofr);
     }
 
@@ -4042,7 +4046,7 @@ open file assuming the data matches the attributes indicated unless the file act
 
   set_fallback_chans(0);
   set_fallback_srate(0);
-  set_fallback_sample_type(MUS_UNKNOWN);
+  set_fallback_sample_type(MUS_UNKNOWN_SAMPLE);
   ss->reloading_updated_file = 0;
 
   /* snd_open_file -> snd_open_file_1 -> add_sound_window -> make_file_info -> raw_data_dialog_to_file_info */
@@ -4109,8 +4113,9 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   
   snd_info *sp;
   file_info *hdr;
-  mus_header_t ht = MUS_UNSUPPORTED;
-  int df = -1, sr = -1, chan = -1, edit_position = AT_CURRENT_EDIT_POSITION;
+  mus_header_t ht = MUS_UNKNOWN_HEADER;
+  mus_sample_t df = MUS_UNKNOWN_SAMPLE;
+  int sr = -1, chan = -1, edit_position = AT_CURRENT_EDIT_POSITION;
   io_error_t io_err = IO_NO_ERROR;
   char *fname = NULL;
   const char *file = NULL, *outcom = NULL;
@@ -4140,7 +4145,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
       file = mus_optkey_to_string(keys[0], S_save_sound_as, orig_arg[0], NULL);
       if (!(Xen_is_keyword(keys[1]))) index = keys[1];
       ht = (mus_header_t)mus_optkey_to_int(keys[4], S_save_sound_as, orig_arg[4], (int)ht);
-      df = mus_optkey_to_int(keys[3], S_save_sound_as, orig_arg[3], df);
+      df = (mus_sample_t)mus_optkey_to_int(keys[3], S_save_sound_as, orig_arg[3], (int)df);
       sr = mus_optkey_to_int(keys[2], S_save_sound_as, orig_arg[2], sr);
 
       if ((sr <= 0) && (!Xen_is_keyword(keys[2])))
@@ -4170,8 +4175,8 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
     return(snd_no_such_sound_error(S_save_sound_as, index));
   hdr = sp->hdr;
 
-  if (ht == MUS_UNSUPPORTED) ht = hdr->type;
-  if (!(mus_header_writable(ht, -2)))
+  if (ht == MUS_UNKNOWN_HEADER) ht = hdr->type;
+  if (!(mus_header_writable(ht, MUS_IGNORE_SAMPLE)))
     Xen_error(CANNOT_SAVE,
 	      Xen_list_2(C_string_to_Xen_string(S_save_sound_as ": can't write ~A headers"),
 			 C_string_to_Xen_string(mus_header_type_name(ht))));
@@ -4179,7 +4184,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   if (sr == -1) 
     sr = hdr->srate;
 
-  if (df == -1) 
+  if (df == MUS_UNKNOWN_SAMPLE) 
     {
       /* try to find some writable sample_type */
       df = hdr->sample_type;
@@ -4195,13 +4200,14 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 	    case MUS_LFLOAT:  df = MUS_BFLOAT;  break;
 	    case MUS_LDOUBLE: df = MUS_BDOUBLE; break;
 	    case MUS_LINT:    df = MUS_BINT;    break;
+	    default: break;
 	    }
 	  if (!mus_header_writable(ht, df))
 	    {
 	      int i;
-	      for (i = 1; i < MUS_NUM_SAMPLE_TYPES; i++) /* MUS_UNSUPPORTED is 0 */
+	      for (i = 1; i < MUS_NUM_SAMPLES; i++) /* MUS_UNKNOWN_SAMPLE is 0 */
 		{
-		  df = i;
+		  df = (mus_sample_t)i;
 		  if (mus_header_writable(ht, df))
 		    break;
 		}
@@ -4290,8 +4296,8 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
 
   snd_info *sp = NULL; 
   mus_header_t ht;
-  int df, sr, ch;
-  int chan;
+  mus_sample_t df;
+  int sr, ch, chan;
   mus_long_t size, len = 1;
   char *str = NULL;
   const char *com = NULL, *file = NULL;
@@ -4324,7 +4330,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
       file = mus_optkey_to_string(keys[0], S_new_sound, orig_arg[0], NULL);
       /* this can be null if :file is not passed as an arg (use temp name below) */
       ht = (mus_header_t)mus_optkey_to_int(keys[4], S_new_sound, orig_arg[4], (int)ht);
-      df = mus_optkey_to_int(keys[3], S_new_sound, orig_arg[3], df);
+      df = (mus_sample_t)mus_optkey_to_int(keys[3], S_new_sound, orig_arg[3], (int)df);
       sr = mus_optkey_to_int(keys[2], S_new_sound, orig_arg[2], sr);
       ch = mus_optkey_to_int(keys[1], S_new_sound, orig_arg[1], ch);
       com = mus_optkey_to_string(keys[5], S_new_sound, orig_arg[5], NULL);

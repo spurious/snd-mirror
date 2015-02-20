@@ -10518,9 +10518,8 @@ void reflect_just_sounds(void)
 
 #define NUM_VISIBLE_HEADERS 5
 
-char *get_file_dialog_sound_attributes(file_data *fdat, 
-				       int *srate, int *chans, mus_header_t *header_type, int *sample_type, mus_long_t *location, mus_long_t *samples, 
-				       int min_chan)
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, mus_header_t *header_type, 
+				       mus_sample_t *sample_type, mus_long_t *location, mus_long_t *samples, int min_chan)
 {
   char *str;
   int n;
@@ -10623,13 +10622,13 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
 
 
 #define IGNORE_DATA_LOCATION -1
-#define IGNORE_SAMPLES -1
+#define IGNORE_SAMPLES MUS_UNKNOWN_SAMPLE
 #define IGNORE_CHANS -1
 #define IGNORE_SRATE -1
-#define IGNORE_HEADER_TYPE MUS_UNSUPPORTED
+#define IGNORE_HEADER_TYPE MUS_UNKNOWN_HEADER
 
-static void set_file_dialog_sound_attributes(file_data *fdat, 
-					     mus_header_t header_type, int sample_type, int srate, int chans, mus_long_t location, mus_long_t samples, char *comment)
+static void set_file_dialog_sound_attributes(file_data *fdat, mus_header_t header_type, mus_sample_t sample_type, 
+					     int srate, int chans, mus_long_t location, mus_long_t samples, char *comment)
 {
   int i;
   const char **fl = NULL;
@@ -10866,7 +10865,8 @@ static void file_data_auto_comment_callback(Widget w, XtPointer context, XtPoint
 
 static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, int in_n, 
 				       dialog_channels_t with_chan, 
-				       mus_header_t header_type, int sample_type,
+				       mus_header_t header_type, 
+				       mus_sample_t sample_type,
 				       dialog_data_location_t with_loc, 
 				       dialog_samples_t with_samples,
 				       dialog_header_type_t with_header_type,
@@ -11535,7 +11535,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
   snd_info *sp = NULL;
   mus_header_t header_type = MUS_NEXT, output_type;
-  int sample_type = DEFAULT_OUTPUT_SAMPLE_TYPE, srate = DEFAULT_OUTPUT_SRATE;
+  mus_sample_t sample_type = DEFAULT_OUTPUT_SAMPLE_TYPE;
+  int srate = DEFAULT_OUTPUT_SRATE;
   int chan = 0, extractable_chans = 0;
   bool file_exists = false;
   io_error_t io_err = IO_NO_ERROR;
@@ -11975,7 +11976,7 @@ static void save_as_filter_text_activate_callback(Widget w, XtPointer context, X
 }
 
 
-static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, mus_header_t header_type, int sample_type)
+static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, mus_header_t header_type, mus_sample_t sample_type)
 {
   char *file_string;
 
@@ -12420,7 +12421,8 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
   mus_long_t loc;
   char *newer_name = NULL, *msg;
   mus_header_t header_type;
-  int sample_type, srate, chans;
+  mus_sample_t sample_type;
+  int srate, chans;
   newer_name = XmTextGetString(new_file_text);
   if ((!newer_name) || (!(*newer_name)))
     {
@@ -12509,7 +12511,8 @@ static void load_new_file_defaults(char *newname)
 {
   char *filename = NULL, *new_comment = NULL;
   mus_header_t header_type;
-  int sample_type, chans, srate;
+  mus_sample_t sample_type;
+  int chans, srate;
 
   header_type = default_output_header_type(ss);
   chans =       default_output_chans(ss);
@@ -13202,7 +13205,8 @@ static raw_info *new_raw_dialog(void)
 static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
   raw_info *rp = (raw_info *)context;
-  int raw_srate = 0, raw_chans = 0, raw_sample_type = 0;
+  int raw_srate = 0, raw_chans = 0;
+  mus_sample_t raw_sample_type = MUS_UNKNOWN_SAMPLE;
 
   redirect_snd_error_to(post_file_panel_error, (void *)(rp->rdat));
   get_file_dialog_sound_attributes(rp->rdat, &raw_srate, &raw_chans, NULL, &raw_sample_type, &(rp->location), NULL, 1);
@@ -13308,7 +13312,8 @@ static void raw_data_cancel_callback(Widget w, XtPointer context, XtPointer info
 static void raw_data_reset_callback(Widget w, XtPointer context, XtPointer info) 
 {
   raw_info *rp = (raw_info *)context;
-  int raw_srate, raw_chans, raw_sample_type;
+  int raw_srate, raw_chans;
+  mus_sample_t raw_sample_type;
   rp->location = 0;
   mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_sample_type); /* pick up defaults */  
   set_file_dialog_sound_attributes(rp->rdat, 
@@ -13331,7 +13336,8 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
 {
   XmString go_away, xhelp, xok, xtitle, titlestr;
   int n;
-  int raw_srate, raw_chans, raw_sample_type;
+  int raw_srate, raw_chans;
+  mus_sample_t raw_sample_type;
   Arg args[20];
   Widget reset_button, main_w;
 
@@ -19695,16 +19701,17 @@ widget_t make_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     {
-      int i, srate = 0, chans = 0, sample_type = 0;
+      int i, srate = 0, chans = 0;
+      mus_sample_t sample_type = MUS_UNKNOWN_SAMPLE;
       mus_header_raw_defaults(&srate, &chans, &sample_type);
       rts_raw_chans = chans;
       rts_raw_srate = srate;
       rts_raw_sample_type = sample_type;
       str = mus_format("%d", chans);
       str1 = mus_format("%d", srate);
-      raw_sample_type_choices = (char **)calloc(MUS_NUM_SAMPLE_TYPES - 1, sizeof(char *));
-      for (i = 1; i < MUS_NUM_SAMPLE_TYPES; i++)
-	raw_sample_type_choices[i - 1] = raw_sample_type_to_string(i); /* skip MUS_UNKNOWN */
+      raw_sample_type_choices = (char **)calloc(MUS_NUM_SAMPLES - 1, sizeof(char *));
+      for (i = 1; i < MUS_NUM_SAMPLES; i++)
+	raw_sample_type_choices[i - 1] = raw_sample_type_to_string((mus_sample_t)i); /* skip MUS_UNKNOWN_SAMPLE = 0 */
       prf = prefs_row_with_text("default raw sound attributes: chans", S_mus_header_raw_defaults, str,
 				dpy_box, current_sep,
 				raw_chans_choice);
@@ -19716,7 +19723,7 @@ widget_t make_preferences_dialog(void)
       remember_pref(prf, reflect_raw_srate, save_raw_srate, help_raw_srate, NULL, revert_raw_srate);
 
       prf = prefs_row_with_list("sample type", S_mus_header_raw_defaults, raw_sample_type_choices[sample_type - 1],
-				(const char **)raw_sample_type_choices, MUS_NUM_SAMPLE_TYPES - 1,
+				(const char **)raw_sample_type_choices, MUS_NUM_SAMPLES - 1,
 				dpy_box, prf->label,
 				raw_sample_type_from_text,
 				NULL, NULL,

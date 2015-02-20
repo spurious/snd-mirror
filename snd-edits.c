@@ -1816,7 +1816,8 @@ static io_error_t channel_to_file(chan_info *cp, const char *ofile, int edpos) /
 }
 
 
-io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, int srate, int samp_type, mus_header_t hd_type, const char *comment, int pos)
+io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, int srate, 
+					 mus_sample_t samp_type, mus_header_t hd_type, const char *comment, int pos)
 { 
   file_info *hdr, *ohdr;
   snd_info *sp;
@@ -5657,7 +5658,8 @@ io_error_t save_edits_and_update_display(snd_info *sp)
 }
 
 
-io_error_t save_edits_without_display(snd_info *sp, const char *new_name, mus_header_t type, int sample_type, int srate, const char *comment, int pos)
+io_error_t save_edits_without_display(snd_info *sp, const char *new_name, mus_header_t type, 
+				      mus_sample_t sample_type, int srate, const char *comment, int pos)
 { 
   /* assume we've already checked for (over)write permissions, and header-type+sample-type writable,
    */

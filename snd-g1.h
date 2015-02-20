@@ -457,7 +457,8 @@ void cleanup_file_monitor(void);
 void *unmonitor_file(void *watcher);
 void monitor_sound(snd_info *sp);
 
-char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, mus_header_t *header_type, int *sample_type, mus_long_t *location, mus_long_t *samples, int min_chan);
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, mus_header_t *header_type, 
+				       mus_sample_t *sample_type, mus_long_t *location, mus_long_t *samples, int min_chan);
 widget_t make_open_file_dialog(read_only_t read_only, bool managed);
 widget_t make_sound_save_as_dialog(bool managed);
 void make_channel_extract_dialog(int chan);

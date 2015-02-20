@@ -3678,7 +3678,7 @@ Xen g_free_mix_sampler(Xen obj)
 }
 
 
-static io_error_t save_mix(int id, const char *name, mus_header_t head_type, int samp_type)
+static io_error_t save_mix(int id, const char *name, mus_header_t head_type, mus_sample_t samp_type)
 {
   mix_info *md;
   chan_info *cp;

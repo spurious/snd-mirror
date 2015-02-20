@@ -454,7 +454,7 @@ io_error_t sndlib_error_to_snd(int sndlib_err)
 }
 
 
-int snd_file_open_descriptors(int fd, const char *name, int samp_type, mus_long_t location, int chans, mus_header_t type)
+int snd_file_open_descriptors(int fd, const char *name, mus_sample_t samp_type, mus_long_t location, int chans, mus_header_t type)
 {
   int sl_err;
 
@@ -470,7 +470,7 @@ int snd_file_open_descriptors(int fd, const char *name, int samp_type, mus_long_
 
 
 io_error_t snd_write_header(const char *name, mus_header_t head_type, int srate, int chans,
-			    mus_long_t samples, int samp_type, const char *comment,
+			    mus_long_t samples, mus_sample_t samp_type, const char *comment,
 			    int *loops)
 {
   int err; /* sndlib-style error */

@@ -1943,16 +1943,17 @@ widget_t make_preferences_dialog(void)
 
     make_inter_variable_separator(dpy_box);
     {
-      int i, srate = 0, chans = 0, samp_type = 0;
+      int i, srate = 0, chans = 0;
+      mus_sample_t samp_type = MUS_UNKNOWN_SAMPLE;
       mus_header_raw_defaults(&srate, &chans, &samp_type);
       str = mus_format("%d", chans);
       str1 = mus_format("%d", srate);
       rts_raw_chans = chans;
       rts_raw_srate = srate;
       rts_raw_sample_type = samp_type;
-      raw_sample_type_choices = (char **)calloc(MUS_NUM_SAMPLE_TYPES - 1, sizeof(char *));
-      for (i = 1; i < MUS_NUM_SAMPLE_TYPES; i++)
-	raw_sample_type_choices[i - 1] = raw_sample_type_to_string(i); /* skip MUS_UNKNOWN */
+      raw_sample_type_choices = (char **)calloc(MUS_NUM_SAMPLES - 1, sizeof(char *));
+      for (i = 1; i < MUS_NUM_SAMPLES; i++)
+	raw_sample_type_choices[i - 1] = raw_sample_type_to_string((mus_sample_t)i); /* skip MUS_UNKNOWN_SAMPLE = 0 */
       prf = prefs_row_with_text("default raw sound attributes: chans", S_mus_header_raw_defaults, str,
 				dpy_box, 
 				raw_chans_choice);
@@ -1967,7 +1968,7 @@ widget_t make_preferences_dialog(void)
 
 
       prf = prefs_row_with_list("sample type", S_mus_header_raw_defaults, raw_sample_type_choices[samp_type - 1],
-				(const char **)raw_sample_type_choices, MUS_NUM_SAMPLE_TYPES - 1,
+				(const char **)raw_sample_type_choices, MUS_NUM_SAMPLES - 1,
 				dpy_box, 
 				raw_sample_type_from_text,
 				NULL, NULL);

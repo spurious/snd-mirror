@@ -332,7 +332,7 @@
 
 (define (within-.01? a b) (< (abs (- a b)) .01))
 
-(define (string-=? a b)
+(define (string-=? a b) ;(format *stderr* "str: ~A ~A~%" a b)
   (or (string=? a b)
       (and (or (char-position #\- a) 
 	       (char-position #\- b))
@@ -660,7 +660,7 @@
       'show-bare-x-axis show-bare-x-axis 5
       
       ;; sndlib constants
-      'mus-unsupported mus-unsupported 0
+      'mus-unknown-header mus-unknown-header 0
       'mus-next mus-next 1
       'mus-aifc mus-aifc 2
       'mus-riff mus-riff 3
@@ -686,7 +686,7 @@
       'mus-chebyshev-first-kind mus-chebyshev-first-kind 1
       'mus-chebyshev-second-kind mus-chebyshev-second-kind 2
       
-      'mus-unknown mus-unknown 0
+      'mus-unknown-sample mus-unknown-sample 0
       'mus-bshort mus-bshort 1
       'mus-lshort mus-lshort 10
       'mus-mulaw mus-mulaw 2
@@ -1598,7 +1598,7 @@
 						 (testf 0)
 						 (mus-sound-duration file) 
 						 (testf 3)))
-				(if (and (not (= (mus-sound-sample-type file) mus-unknown))
+				(if (and (not (= (mus-sound-sample-type file) mus-unknown-sample))
 					 (not (= (mus-sound-header-type file) 27)) ; bogus header on test case (comdisco)
 					 (< (+ (mus-sound-length file) 1)
 					    (* (mus-sound-datum-size file) (mus-sound-duration file)
@@ -2349,7 +2349,7 @@
 		       'mus-sound-prune 'mus-sound-report-cache 'mus-sound-samples
 		       'mus-sound-srate 'mus-sound-type-specifier 'mus-sound-write-date
 		       'mus-soundfont 'mus-srate 'mus-svx 'mus-ubshort
-		       'mus-ubyte 'mus-ulshort 'mus-unknown 'mus-unsupported 'mus-voc
+		       'mus-ubyte 'mus-ulshort 'mus-unknown-sample 'mus-unknown-header 'mus-voc
 		       'mus-width 'mus-xcoeff 'mus-xcoeffs 'mus-ycoeff 'mus-ycoeffs
 		       'name-click-hook 'new-sound 'new-sound-dialog 'new-sound-hook 'new-widget-hook
 		       'next-sample 'normalize-by-channel 'normalize-by-sound 'normalize-channel 'normalize-globally
@@ -2777,7 +2777,7 @@
 ;	(mus-sound-forget "oboe.snd")
 	
 	(let ((lasth (do ((i 1 (+ i 1)))
-			 ((string-=? (mus-header-type-name i) "unsupported") i))))
+			 ((string-=? (mus-header-type-name i) "unknown") i))))
 	  (if (< lasth 50) (snd-display #__line__ ";header-type[~A] = ~A" lasth (mus-header-type-name lasth))))
 	(let ((lasth (do ((i 1 (+ i 1)))
 			 ((string-=? (mus-sample-type-name i) "unknown") i))))
@@ -3431,8 +3431,8 @@
 			  "memory allocation failed" 
 			  "can't open file" "no sample input" "no sample output"
 			  "no such channel" "no file name provided" "no location method" "no channel method"
-			  "no such fft window" "unsupported sample type" "header read failed"
-			  "unsupported header type" "file descriptors not initialized" "not a sound file" "file closed" "write error"
+			  "no such fft window" "unknown sample type" "header read failed"
+			  "unknown header type" "file descriptors not initialized" "not a sound file" "file closed" "write error"
 			  "header write failed" "can't open temp file" "interrupted" "bad envelope"
 			  "audio channels not available" "audio srate not available" "audio sample type not available"
 			  "no audio input available" "audio configuration not available" 
@@ -25022,8 +25022,8 @@ EDITS: 2
 			   (ht (catch #t (lambda () (mus-sound-header-type name)) (lambda args 0)))
 			   (df (catch #t (lambda () (mus-sound-sample-type name)) (lambda args 0)))
 			   (fd (if (or (= ht mus-raw)
-				       (= ht mus-unsupported)
-				       (= df mus-unknown))
+				       (= ht mus-unknown-header)
+				       (= df mus-unknown-sample))
 				   -1 
 				   (or (catch #t
 					 (lambda () (view-sound name))

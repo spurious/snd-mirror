@@ -530,8 +530,9 @@ bool mus_set_clipping(bool new_value) {clipping_default = new_value; return(new_
 
 typedef struct {
   char *name;
-  int sample_type, bytes_per_sample, chans;
+  mus_sample_t sample_type;
   mus_header_t header_type;
+  int bytes_per_sample, chans;
   bool clipping;
   mus_long_t data_location;
   bool saved;
@@ -565,7 +566,7 @@ static io_fd **io_fds = NULL;
 #define IO_FD_ALLOC_SIZE 8
 
 
-int mus_file_open_descriptors(int tfd, const char *name, int samp_type, int size /* datum size */, mus_long_t location, int chans, mus_header_t type)
+int mus_file_open_descriptors(int tfd, const char *name, mus_sample_t samp_type, int size /* datum size */, mus_long_t location, int chans, mus_header_t type)
 {
   int err = MUS_NO_ERROR;
   if (io_fd_size == 0)
@@ -673,7 +674,7 @@ int mus_file_set_header_type(int tfd, mus_header_t type)
 mus_header_t mus_file_header_type(int tfd)
 {
   io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_UNSUPPORTED);
+  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_UNKNOWN_HEADER);
   fd = io_fds[tfd];
   return(fd->header_type);
 }
@@ -826,7 +827,7 @@ mus_long_t mus_file_seek_frample(int tfd, mus_long_t frample)
     return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frample: file descriptor = %d?", tfd));
 
   fd = io_fds[tfd];
-  if (fd->sample_type == MUS_UNKNOWN) 
+  if (fd->sample_type == MUS_UNKNOWN_SAMPLE) 
     return(mus_error(MUS_NOT_A_SOUND_FILE, "mus_file_seek_frample: invalid sample type for %s", fd->name));
 
   return(lseek(tfd, fd->data_location + (fd->chans * frample * fd->bytes_per_sample), SEEK_SET));
@@ -1024,7 +1025,8 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
    * is now
    *   mus_read_any_1(f, frample, ...)
    */
-  int samp_type, siz, siz_chans;
+  mus_sample_t samp_type;
+  int siz, siz_chans;
   mus_long_t bytes, lim, leftover, total_read, k, loc, buflim;
   unsigned char *jchar;
   static char *ur_charbuf = NULL;
@@ -1041,7 +1043,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_read: no file descriptors!"));
 
       fd = io_fds[tfd];
-      if (fd->sample_type == MUS_UNKNOWN) 
+      if (fd->sample_type == MUS_UNKNOWN_SAMPLE) 
 	return(mus_error(MUS_FILE_CLOSED, "mus_read: invalid sample type for %s", fd->name));
 
       samp_type = fd->sample_type;
@@ -1113,8 +1115,8 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
   else
     {
       charbuf = inbuf;
-      siz = mus_bytes_per_sample(tfd);
-      samp_type = tfd;
+      siz = mus_bytes_per_sample((mus_sample_t)tfd);
+      samp_type = (mus_sample_t)tfd;
     }
 
   siz_chans = siz * chans;
@@ -1464,6 +1466,8 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		  for (; bufnow <= bufend; jchar += 3) 
 		    (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[2] << 24) | (jchar[1] << 16) | (jchar[0] << 8)) >> 8));
 		  break;
+
+		default: break;
 		}
 	      loc = loclim;
 	    }
@@ -1650,6 +1654,8 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			  for (; bufnow <= bufend; jchar += siz_chans) 
 			    (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[2] << 24) | (jchar[1] << 16) | (jchar[0] << 8)) >> 8));
 			  break;
+
+			default: break;
 			}
 		      loc = loclim;
 		    }
@@ -1741,7 +1747,7 @@ static int checked_write(int tfd, char *buf, mus_long_t chars)
       if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
 	return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_write: no file descriptors!"));
       fd = io_fds[tfd];
-      if (fd->sample_type == MUS_UNKNOWN) 
+      if (fd->sample_type == MUS_UNKNOWN_SAMPLE) 
 	return(mus_error(MUS_FILE_CLOSED,
 			 "attempt to write closed file %s",
 			 fd->name));
@@ -1778,7 +1784,8 @@ mus_clip_handler_t *mus_clip_set_handler_and_checker(mus_clip_handler_t *new_cli
 
 static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_float_t **bufs, char *inbuf, bool clipped)
 {
-  int err, siz, siz_chans, sample_type, val;
+  int err, siz, siz_chans, val;
+  mus_sample_t sample_type;
   mus_long_t bytes, k, lim, leftover, loc, buflim;
   bool clipping = false;
   unsigned char *jchar;
@@ -1798,7 +1805,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 	return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_write: no file descriptors!"));
 
       fd = io_fds[tfd];
-      if (fd->sample_type == MUS_UNKNOWN) 
+      if (fd->sample_type == MUS_UNKNOWN_SAMPLE) 
 	return(mus_error(MUS_FILE_CLOSED, "mus_write: invalid sample type for %s", fd->name));
 
       siz = fd->bytes_per_sample;
@@ -1816,8 +1823,8 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
     }
   else
     {
-      siz = mus_bytes_per_sample(tfd);
-      sample_type = tfd; /* in this case, tfd is the sample type (see mus_file_write_buffer below) -- this should be changed! */
+      siz = mus_bytes_per_sample((mus_sample_t)tfd);
+      sample_type = (mus_sample_t)tfd; /* in this case, tfd is the sample type (see mus_file_write_buffer below) -- this should be changed! */
       clipping = clipped;
     }
 
@@ -2095,6 +2102,8 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 		  }
 	      }
 	      break;
+
+	    default: break;
 	    }
 	  loc = loclim;
 	}
@@ -3114,7 +3123,7 @@ static void min_max_ubytes(unsigned char *data, int bytes, int chan, int chans, 
 }
 
 
-int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int samp_type, mus_float_t *min_samp, mus_float_t *max_samp)
+int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, mus_sample_t samp_type, mus_float_t *min_samp, mus_float_t *max_samp)
 {
   switch (samp_type)
     {

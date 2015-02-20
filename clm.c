@@ -11093,7 +11093,8 @@ static void flush_buffers(rdout *gen)
     {
       /* get existing samples, add new output, write back to output */
       mus_float_t **addbufs = NULL;
-      int i, sample_type;
+      int i;
+      mus_sample_t sample_type;
       mus_long_t current_file_framples, framples_to_add;
       
       sample_type = mus_sound_sample_type(gen->file_name);
@@ -11473,7 +11474,8 @@ bool mus_is_sample_to_file(mus_any *ptr)
 }
 
 
-static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int out_chans, int samp_type, mus_header_t head_type, const char *comment, bool reopen)
+static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int out_chans, 
+						       mus_sample_t samp_type, mus_header_t head_type, const char *comment, bool reopen)
 {
   if (filename == NULL)
     mus_error(MUS_NO_FILE_NAME_PROVIDED, S_make_sample_to_file " requires a file name");
@@ -11536,7 +11538,7 @@ mus_any *mus_continue_sample_to_file(const char *filename)
 }
 
 
-mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chans, int samp_type, mus_header_t head_type, const char *comment)
+mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chans, mus_sample_t samp_type, mus_header_t head_type, const char *comment)
 {
   return(mus_make_sample_to_file_with_comment_1(filename, out_chans, samp_type, head_type, comment, false));
 }
@@ -11695,7 +11697,7 @@ static mus_any_class FRAMPLE_TO_FILE_CLASS = {
 };
 
 
-mus_any *mus_make_frample_to_file_with_comment(const char *filename, int chans, int samp_type, mus_header_t head_type, const char *comment)
+mus_any *mus_make_frample_to_file_with_comment(const char *filename, int chans, mus_sample_t samp_type, mus_header_t head_type, const char *comment)
 {
   rdout *gen = NULL;
   gen = (rdout *)mus_make_sample_to_file_with_comment(filename, chans, samp_type, head_type, comment);
@@ -16877,7 +16879,7 @@ void mus_initialize(void)
   sincs = 0;
   locsig_warned = NULL;
 
-  sample_type_zero = (int *)calloc(MUS_NUM_SAMPLE_TYPES, sizeof(int));
+  sample_type_zero = (int *)calloc(MUS_NUM_SAMPLES, sizeof(int));
   sample_type_zero[MUS_MULAW] = MULAW_ZERO;
   sample_type_zero[MUS_ALAW] = ALAW_ZERO;
   sample_type_zero[MUS_UBYTE] = UBYTE_ZERO;

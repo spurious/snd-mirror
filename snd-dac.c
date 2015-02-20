@@ -561,13 +561,13 @@ void dac_set_reverb_lowpass(snd_info *sp, mus_float_t newval) {dac_set_field(sp,
 /* -------------------------------- stop playing (remove from play-list) -------------------------------- */
 
 typedef struct {
-  int srate;                /* output srate */
-  int channels;             /* total output channels currently active */
-  int framples;               /* samples per channel per output block */
-  int devices;              /* output devices active */
-  int *chans_per_device;    /* channels sent to each active device */
-  int out_samp_type;           /* output sample type */
-  int slice;                /* background process state (i.e. starting, running, quitting) */
+  int srate;                   /* output srate */
+  int channels;                /* total output channels currently active */
+  int framples;                /* samples per channel per output block */
+  int devices;                 /* output devices active */
+  int *chans_per_device;       /* channels sent to each active device */
+  mus_sample_t out_samp_type;  /* output sample type */
+  int slice;                   /* background process state (i.e. starting, running, quitting) */
   mus_long_t reverb_ring_framples; /* how long the reverb rings after the end (if reverb, of course) */
 
 } dac_state;

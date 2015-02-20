@@ -56,7 +56,8 @@ typedef struct {
 
 typedef struct {
   mus_header_t current_header_type;
-  int current_sample_type, sample_types, header_type_pos, sample_type_pos, scanf_widget, error_widget;
+  mus_sample_t current_sample_type;
+  int sample_types, header_type_pos, sample_type_pos, scanf_widget, error_widget;
 } file_data;
 
 typedef enum {NOT_A_SCANF_WIDGET} scanf_widget_t;

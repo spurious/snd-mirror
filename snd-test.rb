@@ -2973,7 +2973,7 @@ def test_04_00
     "15-Oct-2006 04:34", "file_write_date oboe.snd")
   #
   lasth = 1
-  until mus_header_type_name(lasth) == "unsupported"
+  until mus_header_type_name(lasth) == "unknown"
     lasth += 1
   end
   if lasth < 50
@@ -3644,9 +3644,9 @@ def test_04_04
    "no location method",
    "no channel method",
    "no such fft window",
-   "unsupported sample type",
+   "unknown sample type",
    "header read failed",
-   "unsupported header type",
+   "unknown header type",
    "file descriptors not initialized",
    "not a sound file",
    "file closed",

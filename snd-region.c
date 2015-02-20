@@ -1269,7 +1269,7 @@ void save_region_backpointer(snd_info *sp)
 }
 
 
-io_error_t save_region(int rg, const char *name, int samp_type, mus_header_t head_type, const char *comment)
+io_error_t save_region(int rg, const char *name, mus_sample_t samp_type, mus_header_t head_type, const char *comment)
 {
   region *r;
   io_error_t io_err = IO_NO_ERROR;
@@ -1929,7 +1929,8 @@ using sample-type (default depends on machine byte order), header-type (" S_mus_
 
   char *name = NULL;
   const char *file = NULL, *com = NULL;
-  int rg, sample_type = MUS_OUT_SAMPLE_TYPE;
+  int rg;
+  mus_sample_t sample_type = MUS_OUT_SAMPLE_TYPE;
   mus_header_t header_type = MUS_NEXT;
   Xen args[8]; 
   Xen keys[4];
@@ -1952,8 +1953,8 @@ using sample-type (default depends on machine byte order), header-type (" S_mus_
   if (vals > 0)
     {
       file = mus_optkey_to_string(keys[0], S_save_region, orig_arg[0], NULL);
-      sample_type = mus_optkey_to_int(keys[1], S_save_region, orig_arg[1], sample_type);
-      header_type = (mus_header_t)mus_optkey_to_int(keys[2], S_save_region, orig_arg[2], header_type);
+      sample_type = (mus_sample_t)mus_optkey_to_int(keys[1], S_save_region, orig_arg[1], (int)sample_type);
+      header_type = (mus_header_t)mus_optkey_to_int(keys[2], S_save_region, orig_arg[2], (int)header_type);
       com = mus_optkey_to_string(keys[3], S_save_region, orig_arg[3], NULL);
     }
 

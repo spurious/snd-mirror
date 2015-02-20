@@ -77,12 +77,12 @@ time_t file_write_date(const char *filename)
 }
 
 
-const char *short_sample_type_name(int sndlib_sample_type, const char *filename)
+const char *short_sample_type_name(mus_sample_t sndlib_sample_type, const char *filename)
 {
   if (mus_is_sample_type(sndlib_sample_type))
     return(mus_sample_type_short_name(sndlib_sample_type));
   else return(mus_header_original_sample_type_name(mus_sound_original_sample_type(filename),
-					      mus_sound_header_type(filename)));
+						   mus_sound_header_type(filename)));
 }
 
 
@@ -681,12 +681,14 @@ void reflect_file_change_in_title(void)
 
 /* -------------------------------- open sound file -------------------------------- */
 
-static int fallback_srate = 0, fallback_chans = 0, fallback_sample_type = MUS_UNKNOWN;
-static int original_srate = 0, original_chans = 0, original_sample_type = MUS_UNKNOWN;
+static int fallback_srate = 0, fallback_chans = 0;
+static mus_sample_t fallback_sample_type = MUS_UNKNOWN_SAMPLE;
+static int original_srate = 0, original_chans = 0;
+static mus_sample_t original_sample_type = MUS_UNKNOWN_SAMPLE;
 
 void set_fallback_srate(int sr) {fallback_srate = sr;}
 void set_fallback_chans(int ch) {fallback_chans = ch;}
-void set_fallback_sample_type(int fr) {fallback_sample_type = fr;}
+void set_fallback_sample_type(mus_sample_t fr) {fallback_sample_type = fr;}
 
 
 static file_info *make_file_info_1(const char *fullname)
@@ -814,7 +816,8 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 {
   Xen res = Xen_false;
   int res_loc = NOT_A_GC_LOC;
-  int srate, chans, sample_type;
+  int srate, chans;
+  mus_sample_t sample_type;
 
   if (ss->reloading_updated_file != 0)
     {
@@ -856,7 +859,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 	{
 	  Xen df;
 	  df = Xen_list_ref(res, 2);
-	  sample_type = Xen_integer_to_C_int(df);
+	  sample_type = (mus_sample_t)Xen_integer_to_C_int(df);
 	}
       if (len > 3) data_location = Xen_llong_to_C_llong(Xen_list_ref(res, 3)); else data_location = 0;
       if (len > 4) bytes = Xen_llong_to_C_llong(Xen_list_ref(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
@@ -970,15 +973,15 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
   file_info *hdr = NULL;
   if (mus_file_probe(fullname))
     {
-      mus_header_t type = MUS_UNSUPPORTED;
+      mus_header_t type = MUS_UNKNOWN_HEADER;
 
       /* open-raw-sound will force it to viewed as a raw sound */
       if (ss->open_requestor == FROM_OPEN_RAW_SOUND)
 	return(make_file_info_1(fullname));
 
       type = mus_sound_header_type(fullname);
-      if (type == MUS_UNSUPPORTED)        /* if something went wrong */
-	type = mus_header_type();   /*    try to read it anyway... */
+      if (type == MUS_UNKNOWN_HEADER)        /* if something went wrong */
+	type = mus_header_type();            /*    try to read it anyway... */
 
       /* handle some files directly through the translator (headers here are not readable) */
       if ((type == MUS_MIDI_SAMPLE_DUMP) ||
@@ -1007,7 +1010,7 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
 	    return(open_raw_sound(fullname, read_only, selected));
 	  else
 	    {
-	      int sample_type;
+	      mus_sample_t sample_type;
 	      sample_type = mus_sound_sample_type(fullname);
 	      if (mus_is_sample_type(sample_type))
 		return(make_file_info_1(fullname));
@@ -1747,7 +1750,8 @@ static Xen update_hook;
 snd_info *snd_update(snd_info *sp)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
-  int i, old_srate, old_chans, old_sample_type, sp_chans, old_index, gc_loc = NOT_A_GC_LOC, old_selected_channel = NO_SELECTION;
+  int i, old_srate, old_chans, sp_chans, old_index, gc_loc = NOT_A_GC_LOC, old_selected_channel = NO_SELECTION;
+  mus_sample_t old_sample_type;
   channel_style_t old_channel_style;
   read_only_t read_only;
   bool old_raw;
@@ -1989,7 +1993,8 @@ void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, boo
 static Xen before_save_as_hook;
 static bool before_save_as_hook_active = false;
 
-bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int smp_type, mus_header_t hd_type, const char *comment)
+bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, 
+			     mus_sample_t smp_type, mus_header_t hd_type, const char *comment)
 {
   /* might be save-selection, as well as save-sound-as */
   if (before_save_as_hook_active) return(false);
@@ -2002,7 +2007,7 @@ bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool se
 					 C_string_to_Xen_string(save_as_filename),
 					 C_bool_to_Xen_boolean(selection),
 					 C_int_to_Xen_integer(srate),
-					 C_int_to_Xen_integer(smp_type),
+					 C_int_to_Xen_integer((int)smp_type),
 					 C_int_to_Xen_integer((int)hd_type),
 					 (comment) ? C_string_to_Xen_string(comment) : Xen_false),
 			      S_before_save_as_hook);
@@ -2025,7 +2030,7 @@ static int h_num_sample_types[H_SIZE] = {12 /* next */, 13 /* aifc */,  8 /* rif
 				    1 /* mpeg */, 1  /* midi */};
 #define H_DFS_MAX 18
 
-static int h_dfs[H_SIZE][H_DFS_MAX] = { /* next */  {MUS_BFLOAT, MUS_BSHORT, MUS_LSHORT, MUS_LFLOAT, 
+static mus_sample_t h_dfs[H_SIZE][H_DFS_MAX] = { /* next */  {MUS_BFLOAT, MUS_BSHORT, MUS_LSHORT, MUS_LFLOAT, 
 						     MUS_MULAW, MUS_BYTE, MUS_BINT, MUS_ALAW, MUS_B24INT, MUS_BDOUBLE, MUS_LINT, MUS_LDOUBLE},
 					/* aifc */  {MUS_BFLOAT, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BINT, MUS_ALAW, MUS_B24INT,
 						     MUS_BDOUBLE, MUS_UBYTE, MUS_LSHORT, MUS_LINT, MUS_L24INT, MUS_UBSHORT},
@@ -2044,7 +2049,7 @@ static int h_dfs[H_SIZE][H_DFS_MAX] = { /* next */  {MUS_BFLOAT, MUS_BSHORT, MUS
 					/* speex */ {MUS_LSHORT},
 					/* tta */   {MUS_LSHORT},
 					/* wavpack */ {MUS_LSHORT},
-					/* readonly */  {-1}, {-1}
+					/* readonly */  {MUS_UNKNOWN_SAMPLE}, {MUS_UNKNOWN_SAMPLE}
 };
 static const char *h_df_names[H_SIZE][H_DFS_MAX];
 
@@ -2052,13 +2057,13 @@ static const char *h_names[H_SIZE] = {"au/next  ", "aifc   ", "wave   ", "rf64  
 				      "ogg   ", "flac  ", "speex ", "tta   ", "wavpack",
 				      "mpeg  ", "midi  "};
 static mus_header_t h_pos_to_type[H_SIZE] = {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RF64, MUS_RAW, MUS_AIFF, MUS_IRCAM, MUS_NIST, MUS_CAFF, 
-					     MUS_UNSUPPORTED, MUS_UNSUPPORTED, MUS_UNSUPPORTED, MUS_UNSUPPORTED, 
-					     MUS_UNSUPPORTED, MUS_UNSUPPORTED, MUS_UNSUPPORTED};
-static int h_type_to_pos[MUS_NUM_HEADER_TYPES];
-static int h_type_to_h[MUS_NUM_HEADER_TYPES];
+					     MUS_UNKNOWN_HEADER, MUS_UNKNOWN_HEADER, MUS_UNKNOWN_HEADER, MUS_UNKNOWN_HEADER, 
+					     MUS_UNKNOWN_HEADER, MUS_UNKNOWN_HEADER, MUS_UNKNOWN_HEADER};
+static int h_type_to_pos[MUS_NUM_HEADERS];
+static int h_type_to_h[MUS_NUM_HEADERS];
 
 
-static const char *sample_type_name(int sample_type)
+static const char *sample_type_name(mus_sample_t sample_type)
 {
   switch (sample_type)
     {
@@ -2096,7 +2101,7 @@ void initialize_sample_type_lists(void)
     for (i = 0; i < h_num_sample_types[h]; i++)
       h_df_names[h][i] = sample_type_name(h_dfs[h][i]);
   
-  for (i = 0; i < MUS_NUM_HEADER_TYPES; i++)
+  for (i = 0; i < MUS_NUM_HEADERS; i++)
     {
       h_type_to_pos[i] = -1;
       h_type_to_h[i] = -1;
@@ -2298,13 +2303,13 @@ mus_header_t position_to_header_type(int position)
 }
 
 
-int position_to_sample_type(int header, int position)
+mus_sample_t position_to_sample_type(mus_header_t header, int position)
 {
   return(h_dfs[h_type_to_pos[header]][position]);
 }
 
 
-static int h_to_sample_type_pos(int h, int samp_type)
+static int h_to_sample_type_pos(int h, mus_sample_t samp_type)
 {
   int i;
   for (i = 0; i < h_num_sample_types[h]; i++)
@@ -2314,7 +2319,7 @@ static int h_to_sample_type_pos(int h, int samp_type)
 }
 
 
-const char **header_type_and_sample_type_to_position(file_data *fdat, mus_header_t type, int sample_type)
+const char **header_type_and_sample_type_to_position(file_data *fdat, mus_header_t type, mus_sample_t sample_type)
 {
   int h;
   h = h_type_to_h[type];
@@ -2588,7 +2593,8 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
   mus_long_t loc, samples;
   char *comment, *original_comment = NULL;
   file_info *hdr;
-  int chans, srate, sample_type;
+  int chans, srate;
+  mus_sample_t sample_type;
   mus_header_t header_type;
 
   if ((sp->user_read_only == FILE_READ_ONLY) || 
@@ -2752,7 +2758,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   if (!(mus_is_sample_type(original_sample_type)))
     {
       char *format_info;
-      if (original_sample_type != MUS_UNKNOWN)
+      if (original_sample_type != MUS_UNKNOWN_SAMPLE)
 	format_info = (char *)mus_sample_type_name(original_sample_type);
       else format_info = (char *)mus_header_original_sample_type_name(mus_sound_original_sample_type(filename), hdr->type);
       snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat looks bogus: %s", format_info);
@@ -3483,7 +3489,7 @@ Other writable headers include " S_mus_aiff ", " S_mus_riff ", " S_mus_ircam ", 
   Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_default_output_header_type, "an integer"); 
 
   typ = (mus_header_t)Xen_integer_to_C_int(val);
-  if (mus_header_writable(typ, -2))
+  if (mus_header_writable(typ, MUS_IGNORE_SAMPLE))
     set_default_output_header_type(typ);
   else Xen_out_of_range_error(S_setB S_default_output_header_type, 1, val, "unwritable header type");
   return(C_int_to_Xen_integer((int)default_output_header_type(ss)));
@@ -3494,18 +3500,18 @@ static Xen g_default_output_sample_type(void) {return(C_int_to_Xen_integer(defau
 
 static Xen g_set_default_output_sample_type(Xen val) 
 {
-  int sample_type;
+  mus_sample_t samp_type;
   #define H_default_output_sample_type "(" S_default_output_sample_type "): default sample type when a new or temporary file is created, \
-normally " S_mus_ldouble "; -1 here means try to use the current sound's sample type; many other sample_types \
+normally " S_mus_ldouble "; mus-unknown-sample here means try to use the current sound's sample type; many other sample types \
 are available, but not all are compatible with all header types"
 
   Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_default_output_sample_type, "an integer"); 
 
-  sample_type = Xen_integer_to_C_int(val);
-  if (mus_is_sample_type(sample_type))
-    set_default_output_sample_type(sample_type);
+  samp_type = (mus_sample_t)Xen_integer_to_C_int(val);
+  if (mus_is_sample_type(samp_type))
+    set_default_output_sample_type(samp_type);
   else Xen_out_of_range_error(S_setB S_default_output_sample_type, 1, val, "unknown sample type");
-  return(C_int_to_Xen_integer(default_output_sample_type(ss)));
+  return(C_int_to_Xen_integer((int)default_output_sample_type(ss)));
 }
 
 
