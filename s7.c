@@ -67972,7 +67972,7 @@ int main(int argc, char **argv)
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3020
  * lg             |      |      | 6547 6497 6494 6235 6229
- * t137           |      |      | 11.0           5031 4813
+ * t137           |      |      | 11.0           5031 4790
  * t455|6     265 |   89 |  9   |       8.4 8045 7482 7241
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.7
@@ -68014,6 +68014,5 @@ int main(int argc, char **argv)
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * lmdb/gdbm -> let + s7 threads (need full example of this in s7.html)
  *    for let-ref, actually need fallback before checking outlet (currently it follows)
- * the sndlib enums should be typedefs, and the types used throughout ([mus_header_t] mus_sample_t mus_error_t)
- *    mus_error_t -- mus_make_error would need to go away (it's currently used only in snd-trans)
+ * all_x_incr_1, if_all_x2_c or unless?
  */

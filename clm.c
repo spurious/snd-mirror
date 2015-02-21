@@ -11054,7 +11054,7 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
 
 static int *sample_type_zero = NULL;
 
-int mus_sample_type_zero(int samp_type)
+int mus_sample_type_zero(mus_sample_t samp_type)
 {
   return(sample_type_zero[samp_type]);
 }

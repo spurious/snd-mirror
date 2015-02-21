@@ -2332,6 +2332,8 @@ static int to_sun_sample_type(mus_sample_t samp_type)
     case MUS_MULAW: return(AUDIO_ENCODING_ULAW); break;
     case MUS_ALAW:  return(AUDIO_ENCODING_ALAW); break;
       /* there's also AUDIO_ENCODING_DVI */
+
+    default: break;
     }
   return(MUS_ERROR);
 }
@@ -4848,6 +4850,7 @@ static int sndlib_format_to_bsd(int encoding)
     case MUS_ULSHORT: return(AUDIO_ENCODING_ULINEAR_LE); break;
     case MUS_UBSHORT: return(AUDIO_ENCODING_ULINEAR_BE); break;
     case MUS_UBYTE:   return(AUDIO_ENCODING_ULINEAR);    break;
+    default: break;
     }
   return(AUDIO_ENCODING_NONE);
 }
@@ -5166,6 +5169,7 @@ static unsigned long sndlib_to_portaudio_format(mus_sample_t samp_type)
     case MUS_BINT:   return(paInt32);
     case MUS_LFLOAT: return(paFloat32);
     case MUS_BFLOAT: return(paFloat32);
+    default: break;
     }
   return(paInt16);
 }

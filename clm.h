@@ -139,7 +139,7 @@ MUS_EXPORT mus_float_t mus_interpolate(mus_interp_t type, mus_float_t x, mus_flo
 MUS_EXPORT bool mus_is_interp_type(int val);
 MUS_EXPORT bool mus_is_fft_window(int val);
 
-MUS_EXPORT int mus_sample_type_zero(int samp_type);
+MUS_EXPORT int mus_sample_type_zero(mus_sample_t samp_type);
 MUS_EXPORT mus_float_t (*mus_run_function(mus_any *g))(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
 
 
