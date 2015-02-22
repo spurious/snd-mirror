@@ -42961,6 +42961,27 @@ static s7_pointer g_if_all_x2(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer if_all_not_x1;
+static s7_pointer g_if_all_not_x1(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer p;
+  if (is_false(sc, ((s7_function)fcdr(args))(sc, cadar(args))))
+    p = cdr(args);
+  else return(sc->UNSPECIFIED);
+  return(((s7_function)fcdr(p))(sc, car(p)));
+}
+
+static s7_pointer if_all_not_x2;
+static s7_pointer g_if_all_not_x2(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer p;
+  if (is_false(sc, ((s7_function)fcdr(args))(sc, cadar(args))))
+    p = cdr(args);
+  else p = cddr(args);
+  return(((s7_function)fcdr(p))(sc, car(p)));
+}
+
+
 static s7_pointer if_all_x_qq;
 static s7_pointer g_if_all_x_qq(s7_scheme *sc, s7_pointer args)
 {
@@ -43512,6 +43533,8 @@ static void init_choosers(s7_scheme *sc)
   and_all_x_2 = s7_make_function(sc, "and", g_and_all_x_2, 2, 0, false, "and opt");
   if_all_x1 = s7_make_function(sc, "if", g_if_all_x1, 2, 0, false, "if opt");
   if_all_x2 = s7_make_function(sc, "if", g_if_all_x2, 3, 0, false, "if opt");
+  if_all_not_x1 = s7_make_function(sc, "if", g_if_all_not_x1, 2, 0, false, "if opt");
+  if_all_not_x2 = s7_make_function(sc, "if", g_if_all_not_x2, 3, 0, false, "if opt");
   if_all_x_qq = s7_make_function(sc, "if", g_if_all_x_qq, 3, 0, false, "if opt");
   if_all_x_qa = s7_make_function(sc, "if", g_if_all_x_qa, 3, 0, false, "if opt");
 
@@ -45957,18 +45980,33 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
 		    }
 		  else 
 		    {
-		      if ((fcdr(cddr(expr)) == (s7_pointer)all_x_q) &&
-			  (is_pair(cdddr(expr))))
+		      s7_pointer test, b1, b2;
+		      test = cdr(expr);
+		      b1 = cdr(test);
+		      b2 = cdr(b1);
+		      if ((fcdr(b1) == (s7_pointer)all_x_q) &&
+			  (is_pair(b2)))
 			{
-			  if (fcdr(cdddr(expr)) == (s7_pointer)all_x_q)
+			  if (fcdr(b2) == (s7_pointer)all_x_q)
 			    set_c_function(expr, if_all_x_qq);
 			  else set_c_function(expr, if_all_x_qa);
 			}
 		      else 
 			{
-			  if (is_null(cdddr(expr)))
-			    set_c_function(expr, if_all_x1);
-			  else set_c_function(expr, if_all_x2);
+			  if ((is_pair(car(test))) &&
+			      (caar(test) == sc->NOT))
+			    {
+			      set_fcdr(test, (s7_pointer)all_x_eval(sc, cadar(test)));
+			      if (is_null(b2))
+				set_c_function(expr, if_all_not_x1);
+			      else set_c_function(expr, if_all_not_x2);
+			    }
+			  else
+			    {
+			      if (is_null(b2))
+				set_c_function(expr, if_all_x1);
+			      else set_c_function(expr, if_all_x2);
+			    }
 			}
 		    }
 		}
@@ -47596,11 +47634,11 @@ static s7_pointer check_if(s7_scheme *sc)
 {
   s7_pointer cdr_code;
 
-  if (!is_pair(sc->code))                               /* (if) or (if . 1) */
+  if (!is_pair(sc->code))                                /* (if) or (if . 1) */
     return(eval_error(sc, "(if): if needs at least 2 expressions: ~A", sc->code));
   
   cdr_code = cdr(sc->code);
-  if (!is_pair(cdr_code))                          /* (if 1) */
+  if (!is_pair(cdr_code))                                /* (if 1) */
     return(eval_error(sc, "(if ~A): if needs another clause", car(sc->code)));
   
   if (is_pair(cdr(cdr_code)))
@@ -52207,9 +52245,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto BEGIN1;
       }
 
+    DO_ALL_X_STEP:
     case OP_DO_ALL_X_STEP:
       {
-	s7_pointer slot;
+	s7_pointer end, slot;
 	/* not like DOX case because we can't assume vars are independent */
 
 	for (slot = let_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
@@ -52220,13 +52259,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_pair(slot_expression(slot)))
 	    slot_set_value(slot, slot_pending_value(slot));
 
-	if (is_true(sc, ((s7_function)fcdr(cadr(sc->code)))(sc, caadr(sc->code))))
+	end = cadr(sc->code);
+	if (is_true(sc, ((s7_function)fcdr(end))(sc, car(end))))
 	  {
 	    sc->code = cdadr(sc->code);
 	    goto DO_END_CLAUSES;
 	  }
+	end = cddr(sc->code);
+	if (is_null(end)) goto DO_ALL_X_STEP;
 	push_stack_no_args(sc, OP_DO_ALL_X_STEP, sc->code);
-	sc->code = cddr(sc->code);
+	sc->code = end;
 	goto BEGIN1;
       }
       
@@ -57574,6 +57616,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
 
+    case OP_LAMBDA_STAR_DEFAULT:
+      /* sc->args is the current closure arg list position, sc->value is the default expression's value */
+      slot_set_value(sc->args, sc->value);
+      sc->args = slot_pending_value(sc->args);
+      goto LAMBDA_STAR_DEFAULT;
+      
+      
     case OP_APPLY:      /* apply 'code' to 'args' */
       if (needs_copied_args(sc->code))
 	sc->args = copy_list(sc, sc->args);
@@ -57634,13 +57683,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       return(eval_error(sc, "macroexpand argument is not a macro call: ~A", sc->args));
       
 
-    case OP_LAMBDA_STAR_DEFAULT:
-      /* sc->args is the current closure arg list position, sc->value is the default expression's value */
-      slot_set_value(sc->args, sc->value);
-      sc->args = slot_pending_value(sc->args);
-      goto LAMBDA_STAR_DEFAULT;
-      
-      
     case OP_QUOTE:
     case OP_QUOTE_UNCHECKED:
       /* I think a quoted list in another list can be applied to a function, come here and
@@ -58321,67 +58363,80 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_INCREMENT_1:
       {
 	/* ([set!] ctr (+ ctr 1)) */
-	s7_pointer y;
+	s7_pointer val, y;
 
 	y = find_symbol(sc, car(sc->code));
-	if (is_slot(y))
+	if (!is_slot(y))
+	  eval_type_error(sc, "set! ~A: unbound variable", car(sc->code));
+
+	val = slot_value(y);
+	switch (type(val))
 	  {
-	    s7_pointer val;	    
-	    val = slot_value(y);
-	    switch (type(val))
-	      {
-	      case T_INTEGER:
-		slot_set_value(y, make_integer(sc, integer(val) + 1));
-		/* this can't be optimized to treat y's value as a mutable integer 
-		 * also, we have to set sc->value, since s7.html says set! returns the value.
-		 */
-		sc->value = slot_value(y); 
-		goto START;
-		
-	      case T_REAL:
-		sc->value = make_real(sc, real(val) + 1.0);
-		slot_set_value(y, sc->value);
-		goto START;
-		
-	      default:
-		break;
-	      }
+	  case T_INTEGER:
+	    sc->value = make_integer(sc, integer(val) + 1);  /* this can't be optimized to treat y's value as a mutable integer */
+	    break;
+	    
+	  case T_RATIO:
+	    NEW_CELL(sc, sc->value, T_RATIO);
+	    numerator(sc->value) = numerator(val) + denominator(val);
+	    denominator(sc->value) = denominator(val);
+	    break;
+	    
+	  case T_REAL:
+	    sc->value = make_real(sc, real(val) + 1.0);
+	    break;
+	    
+	  case T_COMPLEX:
+	    NEW_CELL(sc, sc->value, T_COMPLEX);
+	    real_part(sc->value) = real_part(val) + 1.0;
+	    imag_part(sc->value) = imag_part(val);
+	    break;
+	    
+	  default:
+	    sc->value = g_add(sc, list_2(sc, val, small_int(1)));
+	    break;
 	  }
-	/* else use standard set */
-	push_stack_no_args(sc, OP_SET_SAFE, car(sc->code));
-	sc->code = cadr(sc->code);
-	goto EVAL; 
+	slot_set_value(y, sc->value);
+	goto START;
       }
 
       
     case OP_DECREMENT_1:
       {
 	/* ([set!] ctr (- ctr 1)) */
-	s7_pointer y;
+	s7_pointer val, y;
 	y = find_symbol(sc, car(sc->code));
-	if (is_slot(y))
+	if (!is_slot(y))
+	  eval_type_error(sc, "set! ~A: unbound variable", car(sc->code));
+	val = slot_value(y);
+	switch (type(val))
 	  {
-	    s7_pointer val;	    
-	    val = slot_value(y);
-	    switch (type(val))
-	      {
-	      case T_INTEGER:
-		sc->value = make_integer(sc, integer(val) - 1);
-		slot_set_value(y, sc->value);
-		goto START;
-		
-	      case T_REAL:
-		sc->value = make_real(sc, real(val) - 1.0);
-		slot_set_value(y, sc->value);
-		goto START;
-		
-	      default:
-		break;
-	      }
+	  case T_INTEGER:
+	    sc->value = make_integer(sc, integer(val) - 1);
+	    break;
+
+	  case T_RATIO:
+	    NEW_CELL(sc, sc->value, T_RATIO);
+	    numerator(sc->value) = numerator(val) - denominator(val);
+	    denominator(sc->value) = denominator(val);
+	    break;
+
+	  case T_REAL:
+	    sc->value = make_real(sc, real(val) - 1.0);
+	    break;
+
+	  case T_COMPLEX:
+	    NEW_CELL(sc, sc->value, T_COMPLEX);
+	    real_part(sc->value) = real_part(val) - 1.0;
+	    imag_part(sc->value) = imag_part(val);
+	    break;
+	    
+	  default:
+	    sc->value = g_subtract(sc, list_2(sc, val, small_int(1)));
+	    break;
 	  }
-	push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
-	sc->code = cadr(sc->code);
-	goto EVAL; 
+	slot_set_value(y, sc->value);
+	goto START;
       }
 
       
@@ -58483,7 +58538,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SET_SAFE:  
       {
 	s7_pointer lx;
-	lx = find_symbol(sc, sc->code);
+	lx = find_symbol(sc, sc->code); /* SET_CASE above looks for car(sc->code) */
 	if (!is_slot(lx)) eval_type_error(sc, "set! ~A: unbound variable", sc->code);
 	slot_set_value(lx, sc->value); 
 	sc->value = slot_value(lx); 
@@ -58495,9 +58550,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack_no_args(sc, OP_SET_SAFE, car(sc->code)); 
       sc->code = cadr(sc->code);
       goto EVAL; 
-      /* possible optimization: if types match, and "P" part is direct, we could
-       *   just set the current slot, and free the direct value.
-       */
 
 
     case OP_SET_SYMBOL_UNKNOWN_G:
@@ -67972,8 +68024,8 @@ int main(int argc, char **argv)
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3020
  * lg             |      |      | 6547 6497 6494 6235 6229
- * t137           |      |      | 11.0           5031 4790
- * t455|6     265 |   89 |  9   |       8.4 8045 7482 7241
+ * t137           |      |      | 11.0           5031 4769
+ * t455|6     265 |   89 |  9   |       8.4 8045 7482 7265
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.7
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9
@@ -68006,13 +68058,10 @@ int main(int argc, char **argv)
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)
  *   also cload: libc libgsl etc arg types/return types [real string ?]
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
- * how to catch the stack overflow op_cz case?
- * perhaps current-error-port -> *error-port*
  * checkpt via cell: recast s7_pointer as hnum?(+ permanents), (op)stack+current-pos+heap+symbols (presented as continuation?)
  *    certainly gdbm needs something faster than eval-string and object->string!
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * lmdb/gdbm -> let + s7 threads (need full example of this in s7.html)
  *    for let-ref, actually need fallback before checking outlet (currently it follows)
- * all_x_incr_1, if_all_x2_c or unless?
  */

@@ -1368,24 +1368,7 @@ with-let from the start, writing an immaculo directly:
 13
 </pre>
 
-<p>If the syntax strikes you as baroque, perhaps:
-</p>
-<pre>
-(define-macro (glet bindings . body)
-  `(with-let (inlet ,@(map (lambda (b) 
-                           `(cons ',(car b) ,(cadr b))) 
-                          bindings))
-     ,@body))
-
-(define-macro (mac b)
-  `(glet ((b ,b))
-     (let ((a 12))
-       (+ a b))))
-</pre>
-
-<p>I think this could be automated by redefining quasiquote to handle the with-let wrapper,
-but my first stab at it convinced me that I need the bacro equivalent of define-expansion.
-Then I got stuck on what to call it.
+<p>
 If you want the macro's expanded result
 to be evaluated in its definition environment:
 </p>
@@ -1421,6 +1404,33 @@ to be evaluated in its definition environment:
 </div>
 </details>
 
+<!--
+(define (tree-quote tree args)
+  (if (pair? tree)
+      (if (eq? (car tree) 'quote)
+	  tree
+	  (cons (tree-quote (car tree) args)
+		(tree-quote (cdr tree) args)))
+      (if (memq tree args)
+	  (list 'quote tree)
+	  tree)))
+
+(define-macro (define-hacro name-and-args . body)
+  (let ((name (car name-and-args))
+	(args (cdr name-and-args)))
+    `(define-macro ,name-and-args
+       (list 'with-let 
+	     (list 'inlet ,@(map (lambda (arg)
+				   (values (symbol->keyword arg) arg))
+				 args))
+	     ,@(tree-quote body args)))))
+
+; (define-hacro (mac a b) `(+ ,a ,b))
+; (macroexpand (mac 2 3))
+; (with-let (inlet :a 2 :b 3) (+ a b))
+; (procedure-source mac)
+; (lambda (a b) (list 'with-let (list 'inlet :a a :b b) ({list} '+ 'a 'b)))
+-->
 
 
 <details>
