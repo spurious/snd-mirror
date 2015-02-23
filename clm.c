@@ -445,9 +445,8 @@ void mus_free(mus_any *gen)
 	  int release_result;
 	  mus_any_class *local_class;
 	  local_class = (mus_any_class *)(gen->core);
-	  release_result = ((*(gen->core->release))(gen));
+	  (*(gen->core->release))(gen);
 	  free(local_class);
-	  return(release_result);
 	}
 #endif
       (*(gen->core->release))(gen);

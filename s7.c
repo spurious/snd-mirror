@@ -4606,86 +4606,43 @@ static void increase_stack_size(s7_scheme *sc)
 
 /* -------------------------------- symbols -------------------------------- */
 
-#define HASH_MULT 4
+#define HMLT 4
 
-static int rhash_0(const unsigned char *key) {return(0);}
-static int rhash_1(const unsigned char *key) {return(key[0]);}
-static int rhash_2(const unsigned char *key) {return(key[0] * HASH_MULT + key[1]);}
-static int rhash_3(const unsigned char *key) {return((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]);}
-static int rhash_4(const unsigned char *key) {return(((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]);}
-static int rhash_5(const unsigned char *key) {return((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT + key[4]);}
+static int rhash_0(const unsigned char *s) {return(0);}
+static int rhash_1(const unsigned char *s) {return(s[0]);}
+static int rhash_2(const unsigned char *s) {return(s[0] * HMLT + s[1]);}
+static int rhash_3(const unsigned char *s) {return((s[0] * HMLT + s[1]) * HMLT + s[2]);}
+static int rhash_4(const unsigned char *s) {return(((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]);}
+static int rhash_5(const unsigned char *s) {return((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]);}
+static int rhash_6(const unsigned char *s) {return(((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]) * HMLT + s[5]);}
+static int rhash_7(const unsigned char *s) {return((((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]) * HMLT + s[5]) * HMLT + s[6]);}
+static int rhash_8(const unsigned char *s) {return(((((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]) * HMLT + s[5]) * HMLT + s[6]) * HMLT + s[7]);}
 
-static int rhash_6(const unsigned char *key)
+static int rhash_9(const unsigned char *s)
 {
-  return(((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT + key[4]) * HASH_MULT + key[5]);
+  return((((((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]) * HMLT + s[5]) * HMLT + s[6]) * HMLT + s[7]) * HMLT + s[8]);
 }
 
-static int rhash_7(const unsigned char *key)
+static int rhash_10(const unsigned char *s)
 {
-  return((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]);
+  return(((((((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]) * HMLT + s[5]) * HMLT + s[6]) * HMLT + s[7]) * HMLT + s[8]) * HMLT + s[9]);
 }
 
-static int rhash_8(const unsigned char *key)
+static int rhash_11(const unsigned char *s)
 {
-  return(((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
-	    + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]);
+  return((((((((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]) * HMLT + s[5]) * HMLT + s[6]) * HMLT + s[7]) * HMLT + s[8]) * HMLT + s[9]) * HMLT + s[10]);
 }
 
-static int rhash_9(const unsigned char *key)
-{
-  return((((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
-	     + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]) * HASH_MULT + key[8]);
-}
+static int rhash_12(const unsigned char *s) {unsigned int i, hashed; hashed = s[4]; for (i = 5; i < 12; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
+static int rhash_13(const unsigned char *s) {unsigned int i, hashed; hashed = s[4]; for (i = 5; i < 13; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
+static int rhash_14(const unsigned char *s) {unsigned int i, hashed; hashed = s[4]; for (i = 5; i < 14; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
+static int rhash_15(const unsigned char *s) {unsigned int i, hashed; hashed = s[4]; for (i = 5; i < 15; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
 
-static int rhash_10(const unsigned char *key)
+static int rhash_any(const unsigned char *s, unsigned int len) 
 {
-  return(((((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
-	      + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]) * HASH_MULT + key[8]) * HASH_MULT + key[9]);
-}
-
-static int rhash_11(const unsigned char *key)
-{
-  return((((((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
-	       + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]) * HASH_MULT + key[8]) * HASH_MULT + key[9]) * HASH_MULT + key[10]);
-}
-
-static int rhash_12(const unsigned char *key)
-{
-  unsigned int i, hashed;
-  hashed = key[4];
-  for (i = 5; i < 12; i++) hashed = key[i] + hashed * HASH_MULT;
-  return(hashed);
-}
-
-static int rhash_13(const unsigned char *key)
-{
-  unsigned int i, hashed;
-  hashed = key[4];
-  for (i = 5; i < 13; i++) hashed = key[i] + hashed * HASH_MULT;
-  return(hashed);
-}
-
-static int rhash_14(const unsigned char *key)
-{
-  unsigned int i, hashed;
-  hashed = key[4];
-  for (i = 5; i < 14; i++) hashed = key[i] + hashed * HASH_MULT;
-  return(hashed);
-}
-
-static int rhash_15(const unsigned char *key)
-{
-  unsigned int i, hashed;
-  hashed = key[4];
-  for (i = 5; i < 15; i++) hashed = key[i] + hashed * HASH_MULT;
-  return(hashed);
-}
-
-static int rhash_any(const unsigned char *key, unsigned int len)
-{
-  unsigned int i, hashed;
-  hashed = key[8];
-  for (i = 9; i < len; i++) hashed = key[i] + hashed * HASH_MULT;
+  unsigned int i, hashed; 
+  hashed = s[8]; 
+  for (i = 9; i < len; i++) hashed = s[i] + hashed * HMLT; 
   return(hashed);
 }
 
@@ -17448,6 +17405,12 @@ static s7_pointer g_greater_2(s7_scheme *sc, s7_pointer args)
   return(sc->T);
 }
 
+static s7_pointer greater_2_f;
+static s7_pointer g_greater_2_f(s7_scheme *sc, s7_pointer args)
+{
+  return(make_boolean(sc, real(car(args)) > real(cadr(args))));
+}
+
 
 static s7_pointer geq_2;
 static s7_pointer g_geq_2(s7_scheme *sc, s7_pointer args)
@@ -23435,25 +23398,32 @@ defaults to the rootlet.  To load into the current environment instead, pass (cu
    */
   {
     int fname_len;
+
     fname_len = safe_strlen(fname);
     if ((fname_len > 3) &&
 	(is_pair(cdr(args))) &&
 	(strcmp((const char *)(fname + (fname_len - 3)), ".so") == 0))
       {
 	s7_pointer init;
+
 	init = let_ref_1(sc, sc->envir, s7_make_symbol(sc, "init_func"));
 	if (is_symbol(init))
 	  {
 	    void *library;
-	    const char *init_name = NULL;
 	    char *pwd_name = NULL;
-	    if (fname[0] != '/')
-	      pwd_name = full_filename(fname);
-	    init_name = symbol_name(init);
-	    library = dlopen((pwd_name) ? pwd_name : fname, RTLD_NOW);
+
+	    library = dlopen(fname, RTLD_NOW); /* try the library name direct */
+	    if (!library)
+	      {
+		if (fname[0] != '/')
+		  pwd_name = full_filename(fname);
+		library = dlopen((pwd_name) ? pwd_name : fname, RTLD_NOW);
+	      }
 	    if (library)
 	      {
+		const char *init_name = NULL;
 		void *init_func;
+		init_name = symbol_name(init);
 		init_func = dlsym(library, init_name);
 		if (init_func)
 		  {
@@ -42453,12 +42423,21 @@ static s7_pointer greater_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 {
   if (args == 2)
     {
-      s7_pointer arg2;
+      s7_pointer arg1, arg2;
+      arg1 = cadr(expr);
       arg2 = caddr(expr);
+
+      if ((is_optimized(arg1)) &&
+	  (is_optimized(arg2)) &&
+	  (s7_function_returns_temp(sc, arg1)) &&
+	  (s7_function_returns_temp(sc, arg2)))
+	return(greater_2_f);
+
       if ((is_integer(arg2)) &&
 	  (integer(arg2) < S7_LONG_MAX) &&
 	  (integer(arg2) > S7_LONG_MIN))
 	return(greater_s_ic);
+
       if ((type(arg2) == T_REAL) &&
 	  (real(arg2) < S7_LONG_MAX) &&
 	  (real(arg2) > S7_LONG_MIN))
@@ -43242,6 +43221,7 @@ static void init_choosers(s7_scheme *sc)
   greater_s_ic = make_function_with_class(sc, f, ">", g_greater_s_ic, 2, 0, false, "> opt");
   greater_s_fc = make_function_with_class(sc, f, ">", g_greater_s_fc, 2, 0, false, "> opt");
   greater_2 = make_function_with_class(sc, f, ">", g_greater_2, 2, 0, false, "> opt");
+  greater_2_f = make_function_with_class(sc, f, ">", g_greater_2_f, 2, 0, false, "> opt");
 
   /* <= */
   f = set_function_chooser(sc, sc->LEQ, leq_chooser);
@@ -68066,7 +68046,6 @@ int main(int argc, char **argv)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers? (useful in object->string too)
  * cyclic-seq in rest of full-*
- * why not snd-g* -> snd-gtk?
  *
  * need to check new openGL for API changes (GL_VERSION?)
  *   test/Mesa-10.3.1/include/GL/glext.h|gl.h (current version appears to be 7.6)
@@ -68083,9 +68062,9 @@ int main(int argc, char **argv)
  *   need color-dialog use-gl button in gtk callbacks for labels
  * snd-genv needs a lot of gtk3 work
  *
- * g_load of .so file should try "./fname" and others unchanged?
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)
  *   also cload: libc libgsl etc arg types/return types [real string ?]
+ *   but what to return? and how to handle is-compatible-with questions
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  * checkpt via cell: recast s7_pointer as hnum?(+ permanents), (op)stack+current-pos+heap+symbols (presented as continuation?)
  *    certainly gdbm needs something faster than eval-string and object->string!
@@ -68093,5 +68072,4 @@ int main(int argc, char **argv)
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * lmdb/gdbm -> let + s7 threads (need full example of this in s7.html)
  *    for let-ref, actually need fallback before checking outlet (currently it follows)
- * add leak check to tests?
  */

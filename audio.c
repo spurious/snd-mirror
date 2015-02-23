@@ -4816,7 +4816,7 @@ int mus_audio_read(int line, char *buf, int bytes)
   } while (false)
 
 
-static int bsd_format_to_sndlib(int encoding)
+static mus_sample_t bsd_format_to_sndlib(int encoding)
 {
   switch (encoding)
     {
@@ -4832,13 +4832,13 @@ static int bsd_format_to_sndlib(int encoding)
     case AUDIO_ENCODING_ULINEAR:    return(MUS_UBYTE);   break;
     case AUDIO_ENCODING_NONE:
     case AUDIO_ENCODING_ADPCM: 
-    default:                        return(MUS_UNKNOWN); break;
+    default:                        return(MUS_UNKNOWN_SAMPLE); break;
     }
-  return(MUS_UNKNOWN);
+  return(MUS_UNKNOWN_SAMPLE);
 }
 
 
-static int sndlib_format_to_bsd(int encoding)
+static int sndlib_format_to_bsd(mus_sample_t encoding)
 {
   switch (encoding)
     {
