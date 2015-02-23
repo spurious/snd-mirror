@@ -9910,7 +9910,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, mus_float_t scaler, mus_flo
       e->current_value = offset + scaler * brkpts[1];
       e->env_func = mus_env_line;
       e->original_data = brkpts;
-      fe_release = ferest;
+      e->free_env = ferest;
       return((mus_any *)e);
 
     case 2:
