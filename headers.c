@@ -962,8 +962,8 @@ static void read_aif_aux_comment(unsigned char *buf, mus_long_t offset, int chun
 
 static void read_aif_appl_chunk(unsigned char *buf, mus_long_t offset, int chunksize)
 {
-  const unsigned char I_SU7M[4] = {'S','U','7','M'};  
-  const unsigned char I_SU7R[4] = {'S','U','7','R'};  
+  static const unsigned char I_SU7M[4] = {'S','U','7','M'};  
+  static const unsigned char I_SU7R[4] = {'S','U','7','R'};  
 
   if (match_four_chars((unsigned char *)(buf + 8), I_MUS_))
     {
@@ -1065,14 +1065,14 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 	  /* if AIFC, compression type over-rides (possibly bogus) original_sample_type */
 	  if (type_specifier == mus_char_to_uninterpreted_int((unsigned const char *)I_AIFC))
 	    {
-	      const unsigned char I_twos[4] = {'t','w','o','s'};  /* AIFC big endian? */
+	      static const unsigned char I_twos[4] = {'t','w','o','s'};  /* AIFC big endian? */
 	      /* some aifc files assume the compression field is a new and very weird chunk!! -- surely a bug? */
 	      /* AIFF spec says COMM size is always 18, but this is amended in the newer AIFC spec */
 	      if (chunksize == 18) chunksize += (5 + ((int)hdrbuf[30]));             /* 5 = chunk header length in this case */
 	      if ((!(match_four_chars((unsigned char *)(hdrbuf + 26), I_NONE))) &&
 		  (!(match_four_chars((unsigned char *)(hdrbuf + 26), I_twos))))
 		{
-		  const unsigned char I_ALAW[4] = {'A','L','A','W'};
+		  static const unsigned char I_ALAW[4] = {'A','L','A','W'};
 		  original_sample_type = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 26));
 		  if ((match_four_chars((unsigned char *)(hdrbuf + 26), I_ALAW)) || 
 		      (match_four_chars((unsigned char *)(hdrbuf + 26), I_alaw)))
@@ -1084,7 +1084,7 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 			sample_type = MUS_MULAW;
 		      else 
 			{
-			  const unsigned char I_ni23[4] = {'n','i','2','3'};
+			  static const unsigned char I_ni23[4] = {'n','i','2','3'};
 			  if ((match_four_chars((unsigned char *)(hdrbuf + 26), I_sowt)) ||
 			      (match_four_chars((unsigned char *)(hdrbuf + 26), I_ni23)))
 			    {
@@ -1112,7 +1112,7 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 					sample_type = MUS_BDOUBLE;
 				      else
 					{
-					  const unsigned char I_ima4[4] = {'i','m','a','4'};  /* AIFC IMA adpcm apparently */
+					  static const unsigned char I_ima4[4] = {'i','m','a','4'};  /* AIFC IMA adpcm apparently */
 					  if (match_four_chars((unsigned char *)(hdrbuf + 26), I_ima4))
 					    {
 					      block_align = 34;
@@ -1120,12 +1120,12 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 					    }
 					  else
 					    {
-					      const unsigned char I_in32[4] = {'i','n','3','2'};
+					      static const unsigned char I_in32[4] = {'i','n','3','2'};
 					      if (match_four_chars((unsigned char *)(hdrbuf + 26), I_in32))
 						sample_type = MUS_BINT;
 					      else
 						{
-						  const unsigned char I_in24[4] = {'i','n','2','4'};
+						  static const unsigned char I_in24[4] = {'i','n','2','4'};
 						  if (match_four_chars((unsigned char *)(hdrbuf + 26), I_in24))
 						    sample_type = MUS_B24INT;
 						  else
@@ -1179,7 +1179,7 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 	    }
 	  else
 	    {
-	      const unsigned char I_AUTH[4] = {'A','U','T','H'};
+	      static const unsigned char I_AUTH[4] = {'A','U','T','H'};
 	      if ((match_four_chars((unsigned char *)hdrbuf, I_ANNO)) || 
 		  (match_four_chars((unsigned char *)hdrbuf, I_COMT)) ||
 		  (match_four_chars((unsigned char *)hdrbuf, I_NAME)) ||
@@ -1999,7 +1999,7 @@ static int read_riff_header(const char *filename, int fd)
 		}
 	      else
 		{
-		  const unsigned char I_inst[4] = {'i','n','s','t'};  /* RIFF wants lower case, just to be different */
+		  static const unsigned char I_inst[4] = {'i','n','s','t'};  /* RIFF wants lower case, just to be different */
 		  if (match_four_chars((unsigned char *)hdrbuf, I_inst))
 		    {
 		      base_note = hdrbuf[8];
@@ -2469,8 +2469,8 @@ static int mus_header_convert_riff_to_rf64(const char *filename, mus_long_t size
 
 static int read_avi_header(const char *filename, int fd)
 {
-  const unsigned char I_strf[4] = {'s','t','r','f'};  
-  const unsigned char I_movi[4] = {'m','o','v','i'};  
+  static const unsigned char I_strf[4] = {'s','t','r','f'};  
+  static const unsigned char I_movi[4] = {'m','o','v','i'};  
 
   /* we know we have checked for RIFF xxxx AVI  when we arrive here */
   int chunkloc, cksize, bits;
@@ -2638,9 +2638,9 @@ int mus_header_sf2_loop_end(int n) {return(soundfont_loop_ends[n]);}
 
 static int read_soundfont_header(const char *filename, int fd)
 {
-  const unsigned char I_sdta[4] = {'s','d','t','a'};
-  const unsigned char I_shdr[4] = {'s','h','d','r'};
-  const unsigned char I_pdta[4] = {'p','d','t','a'};
+  static const unsigned char I_sdta[4] = {'s','d','t','a'};
+  static const unsigned char I_shdr[4] = {'s','h','d','r'};
+  static const unsigned char I_pdta[4] = {'p','d','t','a'};
 
   /* we know we have checked for RIFF xxxx sfbk when we arrive here */
   int chunkloc, type, cksize, i, this_end, last_end;
@@ -3223,9 +3223,9 @@ static int write_ircam_header(int fd, int wsrate, int wchans, mus_sample_t samp_
 
 static int read_8svx_header(const char *filename, int fd, bool bytewise)
 {
-  const unsigned char I_BODY[4] = {'B','O','D','Y'};
-  const unsigned char I_CHAN[4] = {'C','H','A','N'};
-  const unsigned char I_VHDR[4] = {'V','H','D','R'};
+  static const unsigned char I_BODY[4] = {'B','O','D','Y'};
+  static const unsigned char I_CHAN[4] = {'C','H','A','N'};
+  static const unsigned char I_VHDR[4] = {'V','H','D','R'};
   int offset, chunkloc;
   bool happy = true;
 
@@ -3526,7 +3526,7 @@ static int read_sdif_header(const char *filename, int fd)
 
 static int read_nvf_header(const char *filename, int fd)
 {
-  const unsigned char I_VFMT[4] = {'V','F','M','T'};  /* Nomad II Creative NVF */
+  static const unsigned char I_VFMT[4] = {'V','F','M','T'};  /* Nomad II Creative NVF */
 
   /* info from nvftools by Tom Mander: */
   /*
@@ -4019,8 +4019,8 @@ static int read_inrs_header(const char *filename, int fd, int loc)
 
 static int read_maud_header(const char *filename, int fd)
 {
-  const unsigned char I_MHDR[4] = {'M','H','D','R'};
-  const unsigned char I_MDAT[4] = {'M','D','A','T'};
+  static const unsigned char I_MHDR[4] = {'M','H','D','R'};
+  static const unsigned char I_MDAT[4] = {'M','D','A','T'};
 
   int offset, chunkloc;
   bool happy = true;
@@ -4118,12 +4118,12 @@ static int read_maud_header(const char *filename, int fd)
 
 static int read_csl_header(const char *filename, int fd)
 {
-  const unsigned char I_HEDR[4] = {'H','E','D','R'};  
-  const unsigned char I_HDR8[4] = {'H','D','R','8'};  
-  const unsigned char I_SDA_[4] = {'S','D','A','_'};  
-  const unsigned char I_SDAB[4] = {'S','D','A','B'};  
-  const unsigned char I_SD_B[4] = {'S','D','_','B'};  
-  const unsigned char I_NOTE[4] = {'N','O','T','E'};  
+  static const unsigned char I_HEDR[4] = {'H','E','D','R'};  
+  static const unsigned char I_HDR8[4] = {'H','D','R','8'};  
+  static const unsigned char I_SDA_[4] = {'S','D','A','_'};  
+  static const unsigned char I_SDAB[4] = {'S','D','A','B'};  
+  static const unsigned char I_SD_B[4] = {'S','D','_','B'};  
+  static const unsigned char I_NOTE[4] = {'N','O','T','E'};  
 
   int offset, chunkloc;
   bool happy = true;
@@ -4486,9 +4486,9 @@ static int read_qt_header(const char *filename, int fd)
 
 static int read_sbstudio_header(const char *filename, int fd)
 {
-  const unsigned char I_SNIN[4] = {'S','N','I','N'};
-  const unsigned char I_SNNA[4] = {'S','N','N','A'};
-  const unsigned char I_SNDT[4] = {'S','N','D','T'};
+  static const unsigned char I_SNIN[4] = {'S','N','I','N'};
+  static const unsigned char I_SNNA[4] = {'S','N','N','A'};
+  static const unsigned char I_SNDT[4] = {'S','N','D','T'};
 
   int i, tmp;
   bool happy = true;
@@ -5718,8 +5718,8 @@ static int mus_header_read_1(const char *filename, int fd)
 
   if (match_four_chars((unsigned char *)hdrbuf, I_SOUN))
     {
-      const unsigned char I_D_SA[4] = {'D',' ','S','A'};
-      const unsigned char I_MPLE[4] = {'M','P','L','E'};
+      static const unsigned char I_D_SA[4] = {'D',' ','S','A'};
+      static const unsigned char I_MPLE[4] = {'M','P','L','E'};
       if ((match_four_chars((unsigned char *)(hdrbuf + 4), I_D_SA)) && 
 	  (match_four_chars((unsigned char *)(hdrbuf + 8), I_MPLE)))
 	{

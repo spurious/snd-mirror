@@ -890,8 +890,8 @@ struct s7_scheme {
   s7_pointer QUOTE_UNCHECKED, BEGIN_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_LET_UNCHECKED, WITH_LET_S;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, LETREC_STAR_UNCHECKED, COND_UNCHECKED, COND_SIMPLE, WITH_BAFFLE_UNCHECKED;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_A;
-  s7_pointer SET_SYMBOL_SAFE_S, SET_SYMBOL_SAFE_SS, SET_SYMBOL_SAFE_SSS, SET_SYMBOL_UNKNOWN_G;
-  s7_pointer SET_SYMBOL_SAFE_C, SET_PAIR_UNKNOWN_G, SET_FV_SCALED;
+  s7_pointer SET_SYMBOL_opSq, SET_SYMBOL_opSSq, SET_SYMBOL_opSSSq, SET_SYMBOL_UNKNOWN_G;
+  s7_pointer SET_SYMBOL_opCq, SET_PAIR_UNKNOWN_G, SET_FV_SCALED;
   s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_A, SET_PAIR_ZA, SET_PAIR_P, SET_PWS, SET_ENV_S, SET_ENV_ALL_X, SET_PAIR_C, SET_PAIR_C_P;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED;
   s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLER_1, CASE_SIMPLER_SS;
@@ -2248,7 +2248,7 @@ enum {OP_NO_OP,
       OP_QUOTE_UNCHECKED, OP_LAMBDA_UNCHECKED, OP_LET_UNCHECKED, OP_CASE_UNCHECKED, OP_WHEN_UNCHECKED, OP_UNLESS_UNCHECKED,
 
       OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_Z, OP_SET_SYMBOL_A,
-      OP_SET_SYMBOL_SAFE_S, OP_SET_SYMBOL_SAFE_C, OP_SET_SYMBOL_SAFE_SS, OP_SET_SYMBOL_SAFE_SSS, OP_SET_SYMBOL_UNKNOWN_G,
+      OP_SET_SYMBOL_opSq, OP_SET_SYMBOL_opCq, OP_SET_SYMBOL_opSSq, OP_SET_SYMBOL_opSSSq, OP_SET_SYMBOL_UNKNOWN_G,
       OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_A, OP_SET_PAIR_P, OP_SET_PAIR_ZA, OP_SET_PAIR_UNKNOWN_G,
       OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_ENV_S, OP_SET_ENV_ALL_X,
       OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE, OP_SET_FV_SCALED,
@@ -2445,7 +2445,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "quote_unchecked", "lambda_unchecked", "let_unchecked", "case_unchecked", "when_unchecked", "unless_unchecked",
 
       "set_unchecked", "set_symbol_c", "set_symbol_s", "set_symbol_q", "set_symbol_p", "set_symbol_z", "set_symbol_a",
-      "set_symbol_safe_s", "set_symbol_safe_c", "set_symbol_safe_ss", "set_symbol_safe_sss", "set_symbol_unknown_g",
+      "set_symbol_opsq", "set_symbol_opcq", "set_symbol_opssq", "set_symbol_opsssq", "set_symbol_unknown_g",
       "set_normal", "set_pair", "set_pair_z", "set_pair_a", "set_pair_p", "set_pair_za", "set_pair_unknown_g",
       "set_pair_p_1", "set_with_accessor", "set_pws", "set_env_s", "set_env_all_x",
       "set_pair_c", "set_pair_c_p", "set_pair_c_p_1", "set_safe", "set_fv_scaled",
@@ -4608,70 +4608,102 @@ static void increase_stack_size(s7_scheme *sc)
 
 #define HASH_MULT 4
 
+static int rhash_0(const unsigned char *key) {return(0);}
+static int rhash_1(const unsigned char *key) {return(key[0]);}
+static int rhash_2(const unsigned char *key) {return(key[0] * HASH_MULT + key[1]);}
+static int rhash_3(const unsigned char *key) {return((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]);}
+static int rhash_4(const unsigned char *key) {return(((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]);}
+static int rhash_5(const unsigned char *key) {return((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT + key[4]);}
+
+static int rhash_6(const unsigned char *key)
+{
+  return(((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT + key[4]) * HASH_MULT + key[5]);
+}
+
+static int rhash_7(const unsigned char *key)
+{
+  return((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]);
+}
+
+static int rhash_8(const unsigned char *key)
+{
+  return(((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
+	    + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]);
+}
+
+static int rhash_9(const unsigned char *key)
+{
+  return((((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
+	     + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]) * HASH_MULT + key[8]);
+}
+
+static int rhash_10(const unsigned char *key)
+{
+  return(((((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
+	      + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]) * HASH_MULT + key[8]) * HASH_MULT + key[9]);
+}
+
+static int rhash_11(const unsigned char *key)
+{
+  return((((((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
+	       + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]) * HASH_MULT + key[8]) * HASH_MULT + key[9]) * HASH_MULT + key[10]);
+}
+
+static int rhash_12(const unsigned char *key)
+{
+  unsigned int i, hashed;
+  hashed = key[4];
+  for (i = 5; i < 12; i++) hashed = key[i] + hashed * HASH_MULT;
+  return(hashed);
+}
+
+static int rhash_13(const unsigned char *key)
+{
+  unsigned int i, hashed;
+  hashed = key[4];
+  for (i = 5; i < 13; i++) hashed = key[i] + hashed * HASH_MULT;
+  return(hashed);
+}
+
+static int rhash_14(const unsigned char *key)
+{
+  unsigned int i, hashed;
+  hashed = key[4];
+  for (i = 5; i < 14; i++) hashed = key[i] + hashed * HASH_MULT;
+  return(hashed);
+}
+
+static int rhash_15(const unsigned char *key)
+{
+  unsigned int i, hashed;
+  hashed = key[4];
+  for (i = 5; i < 15; i++) hashed = key[i] + hashed * HASH_MULT;
+  return(hashed);
+}
+
+static int rhash_any(const unsigned char *key, unsigned int len)
+{
+  unsigned int i, hashed;
+  hashed = key[8];
+  for (i = 9; i < len; i++) hashed = key[i] + hashed * HASH_MULT;
+  return(hashed);
+}
+
+static int (*rhash_function[16])(const unsigned char *key) = {
+  rhash_0, rhash_1, rhash_2, rhash_3, rhash_4, rhash_5, rhash_6, rhash_7, rhash_8, rhash_9, rhash_10, rhash_11, rhash_12, rhash_13, rhash_14, rhash_15};
+
 static unsigned int raw_string_hash(const unsigned char *key, unsigned int len)
 { 
-  switch (len)
-    {
-    case 0: return(0);
-    case 1: return(key[0]);
-    case 2: return(key[0] * HASH_MULT + key[1]);
-    case 3: return((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]);
-    case 4: return(((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]);
-    case 5: return((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT + key[4]);
-    case 6: return(((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT + key[4]) * HASH_MULT + key[5]);
-
-    case 7: 
-      return((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
-	       + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]);
-
-    case 8: 
-      return(((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
-		+ key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]);
-
-    case 9: 
-      return((((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
-		 + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]) * HASH_MULT + key[8]);
-
-    case 10: 
-      return(((((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
-		  + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]) * HASH_MULT 
-	      + key[8]) * HASH_MULT + key[9]);
-
-    case 11: 
-      return((((((((((key[0] * HASH_MULT + key[1]) * HASH_MULT + key[2]) * HASH_MULT + key[3]) * HASH_MULT 
-		   + key[4]) * HASH_MULT + key[5]) * HASH_MULT + key[6]) * HASH_MULT + key[7]) * HASH_MULT 
-	       + key[8]) * HASH_MULT + key[9]) * HASH_MULT + key[10]);
-
-    case 12: case 13: case 14: case 15:
-      {
-	unsigned int i, hashed;
-	hashed = key[4];
-	for (i = 5; i < len; i++)
-	  hashed = key[i] + hashed * HASH_MULT;
-	return(hashed);
-      }
-
-    default:
-      {
-	unsigned int i, hashed;
-	hashed = key[8];
-	for (i = 9; i < len; i++)
-	  hashed = key[i] + hashed * HASH_MULT;
-	return(hashed);
-      }
-    }
   /* hash_mult 4 just adding new: snd-test: H: 1136155, s: 786385, f: 572859
    *           4 add, add0 at end:          H: 2208589, s:1936257, f: 572814, z: 27708
    *           13:                          H: 1123916, s: 612287, f: 572909, z: 27631 [0 5652 1 6454 2 4148 top 8]!
    *           37:                          H: 1076203, s: 573052, f: 572851, z: 27708![0 5152 1 6818 2 4536 top 9]!
    * so 37 wins at hashing, we save 9 in strcmp, we lose 7 here to multiply by 37 -- we win 2 (callgrind says 5)
    * But 37 loses big in other cases -- not sure what to do!
-   *
-   * the switch statement costs about 50 here but saves about 110 in extreme cases
-   * the simple form of this function (just a for loop) is about 40% slower
-   * using a function array indexed by len is about the same (slightly slower)
    */
+  return((len < 16) ? ((*rhash_function[len])(key)) : (rhash_any(key, len)));
 }
+
 
 static s7_pointer make_symbol(s7_scheme *sc, const char *name);
 static s7_pointer make_symbol_with_length(s7_scheme *sc, const char *name, unsigned int len);
@@ -47107,14 +47139,14 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
     {
       if (is_h_optimized(cadr(binding)))
 	{
-	  if (is_null(cddr(sc->code)))   /* one statement body */
+	  if (is_null(cddr(sc->code)))                /* one statement body */
 	    {
 	      set_fcdr(cdr(sc->code), car(binding));
 	      set_fcdr(sc->code, cadr(binding));
 	      pair_set_syntax_symbol(sc->code, sc->LET_Z);
 	      
 	      if ((is_h_safe_c_s(cadr(binding))) &&
-		  (is_pair(cadr(sc->code)))) /* one body expr is a pair */
+		  (is_pair(cadr(sc->code))))          /* one body expr is a pair */
 		{
 		  pair_set_syntax_symbol(sc->code, sc->LET_opSq_P);
 		  set_fcdr(sc->code, cadr(cadr(binding)));
@@ -47300,7 +47332,7 @@ static s7_pointer check_let(s7_scheme *sc)
 	      if (vars < GC_TRIGGER_SIZE)
 		{
 		  s7_pointer p, x, op;
-		  /* pair_set_syntax_symbol(sc->code, sc->LET_UNCHECKED); */
+
 		  op = sc->NIL;
 		  for (p = start; is_pair(p); p = cdr(p))
 		    {
@@ -47975,7 +48007,7 @@ static s7_pointer check_define_macro(s7_scheme *sc, opcode_t op)
   if ((!s7_is_list(sc, y)) &&
       (!is_symbol(y)))
     return(s7_error(sc, sc->SYNTAX_ERROR,                                      /* (define-macro (mac . 1) ...) */
-		    list_3(sc, make_string_wrapper(sc, "define-macro ~A argument list is ~S?"), x, y)));
+		    list_3(sc, make_string_wrapper(sc, "macro ~A argument list is ~S?"), x, y)));
   
   for ( ; is_pair(y); y = cdr(y))
     if ((!is_symbol(car(y))) &&
@@ -48292,7 +48324,7 @@ static s7_pointer check_set(s7_scheme *sc)
 			  pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_P);
 			  if (is_h_safe_c_s(value))
 			    {
-			      pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_SAFE_S);
+			      pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_opSq);
 			      set_fcdr(sc->code, cadr(value));
 			    }
 			  else
@@ -48317,7 +48349,7 @@ static s7_pointer check_set(s7_scheme *sc)
 					}
 				      else
 					{
-					  pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_SAFE_C);
+					  pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_opCq);
 					  /* ecdr here points back? */
 					  set_fcdr(sc->code, cdr(value));
 					}
@@ -48329,7 +48361,7 @@ static s7_pointer check_set(s7_scheme *sc)
 					{
 					  if (settee == cadr(value))
 					    pair_set_syntax_symbol(sc->code, sc->INCREMENT_SS);
-					  else pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_SAFE_SS);
+					  else pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_opSSq);
 					  set_fcdr(sc->code, cdr(value));
 					}
 				      else
@@ -48339,7 +48371,7 @@ static s7_pointer check_set(s7_scheme *sc)
 					      if ((settee == cadr(value)) &&
 						  (car(value) == sc->ADD))
 						pair_set_syntax_symbol(sc->code, sc->INCREMENT_SSS);
-					      else pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_SAFE_SSS);
+					      else pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_opSSSq);
 					      set_fcdr(sc->code, cdr(value));
 					    }
 					  else
@@ -51649,8 +51681,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->z = sc->NIL;
 	    /* else fall into the ordinary loop */
 	  }
-	
-	/* this was mistakenly evaluating fcdr(body) but that means any inner it is unevaluated! */
 	func = (s7_function)fcdr(body);
 	while (true) {func(sc, car(body));}
       }
@@ -58359,7 +58389,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto START;
       }
       
-      
+
     case OP_INCREMENT_1:
       {
 	/* ([set!] ctr (+ ctr 1)) */
@@ -58461,23 +58491,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       SET_CASE(OP_SET_CONS, slot_set_value(lx, cons(sc, find_symbol_checked(sc, fcdr(sc->code)), slot_value(lx))))  /* ([set!] bindings (cons v bindings)) */
 
-      SET_CASE(OP_SET_SYMBOL_SAFE_C, slot_set_value(lx, c_call(cadr(sc->code))(sc, fcdr(sc->code))))
+      SET_CASE(OP_SET_SYMBOL_opCq, slot_set_value(lx, c_call(cadr(sc->code))(sc, fcdr(sc->code))))
 
 	/* here we know the symbols do not have accessors, at least at optimization time */
-      SET_CASE(OP_SET_SYMBOL_SAFE_S, 
+      SET_CASE(OP_SET_SYMBOL_opSq, 
 	       do {					 \
 		   car(sc->T1_1) = find_symbol_checked(sc, fcdr(sc->code)); \
 		   slot_set_value(lx, c_call(cadr(sc->code))(sc, sc->T1_1));\
 	       } while (0))
 
-      SET_CASE(OP_SET_SYMBOL_SAFE_SS, 
+      SET_CASE(OP_SET_SYMBOL_opSSq, 
 	       do {							\
 		   car(sc->T2_1) = find_symbol_checked(sc, car(fcdr(sc->code))); \
 		   car(sc->T2_2) = find_symbol_checked(sc, cadr(fcdr(sc->code))); \
 		   slot_set_value(lx, c_call(cadr(sc->code))(sc, sc->T2_1)); \
 	       } while (0))
 
-      SET_CASE(OP_SET_SYMBOL_SAFE_SSS, 
+      SET_CASE(OP_SET_SYMBOL_opSSSq, 
 	       do {							\
 		   car(sc->T3_1) = find_symbol_checked(sc, car(fcdr(sc->code))); \
 		   car(sc->T3_2) = find_symbol_checked(sc, ecdr(fcdr(sc->code))); \
@@ -66882,10 +66912,10 @@ s7_scheme *s7_init(void)
   sc->SET_SYMBOL_C =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_C);
   sc->SET_SYMBOL_S =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_S);
   sc->SET_SYMBOL_Q =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_Q);
-  sc->SET_SYMBOL_SAFE_S =     assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_SAFE_S);
-  sc->SET_SYMBOL_SAFE_SS =    assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_SAFE_SS);
-  sc->SET_SYMBOL_SAFE_SSS =   assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_SAFE_SSS);
-  sc->SET_SYMBOL_SAFE_C =     assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_SAFE_C);
+  sc->SET_SYMBOL_opSq =       assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opSq);
+  sc->SET_SYMBOL_opSSq =      assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opSSq);
+  sc->SET_SYMBOL_opSSSq =     assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opSSSq);
+  sc->SET_SYMBOL_opCq =       assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opCq);
   sc->SET_SYMBOL_P =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_P);
   sc->SET_SYMBOL_Z =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_Z);
   sc->SET_SYMBOL_UNKNOWN_G =  assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_UNKNOWN_G);
@@ -68036,6 +68066,7 @@ int main(int argc, char **argv)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers? (useful in object->string too)
  * cyclic-seq in rest of full-*
+ * why not snd-g* -> snd-gtk?
  *
  * need to check new openGL for API changes (GL_VERSION?)
  *   test/Mesa-10.3.1/include/GL/glext.h|gl.h (current version appears to be 7.6)
@@ -68052,9 +68083,7 @@ int main(int argc, char **argv)
  *   need color-dialog use-gl button in gtk callbacks for labels
  * snd-genv needs a lot of gtk3 work
  *
- * why not snd-g* -> snd-gtk?
  * g_load of .so file should try "./fname" and others unchanged?
- * C-G in Snd listener can cause a segfault!  Need a repeatable test case.
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)
  *   also cload: libc libgsl etc arg types/return types [real string ?]
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
@@ -68064,4 +68093,5 @@ int main(int argc, char **argv)
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * lmdb/gdbm -> let + s7 threads (need full example of this in s7.html)
  *    for let-ref, actually need fallback before checking outlet (currently it follows)
+ * add leak check to tests?
  */

@@ -31844,6 +31844,23 @@ static Xen gxg_gtk_stack_sidebar_get_stack(Xen sidebar)
   return(C_to_Xen_GtkStack_(gtk_stack_sidebar_get_stack(Xen_to_C_GtkStackSidebar_(sidebar))));
 }
 
+static Xen gxg_gtk_popover_set_transitions_enabled(Xen popover, Xen transitions_enabled)
+{
+  #define H_gtk_popover_set_transitions_enabled "void gtk_popover_set_transitions_enabled(GtkPopover* popover, \
+gboolean transitions_enabled)"
+  Xen_check_type(Xen_is_GtkPopover_(popover), popover, 1, "gtk_popover_set_transitions_enabled", "GtkPopover*");
+  Xen_check_type(Xen_is_gboolean(transitions_enabled), transitions_enabled, 2, "gtk_popover_set_transitions_enabled", "gboolean");
+  gtk_popover_set_transitions_enabled(Xen_to_C_GtkPopover_(popover), Xen_to_C_gboolean(transitions_enabled));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_popover_get_transitions_enabled(Xen popover)
+{
+  #define H_gtk_popover_get_transitions_enabled "gboolean gtk_popover_get_transitions_enabled(GtkPopover* popover)"
+  Xen_check_type(Xen_is_GtkPopover_(popover), popover, 1, "gtk_popover_get_transitions_enabled", "GtkPopover*");
+  return(C_to_Xen_gboolean(gtk_popover_get_transitions_enabled(Xen_to_C_GtkPopover_(popover))));
+}
+
 #endif
 
 static Xen gxg_cairo_create(Xen target)
@@ -38444,6 +38461,8 @@ Xen_wrap_2_args(gxg_gtk_notebook_detach_tab_w, gxg_gtk_notebook_detach_tab)
 Xen_wrap_no_args(gxg_gtk_stack_sidebar_new_w, gxg_gtk_stack_sidebar_new)
 Xen_wrap_2_args(gxg_gtk_stack_sidebar_set_stack_w, gxg_gtk_stack_sidebar_set_stack)
 Xen_wrap_1_arg(gxg_gtk_stack_sidebar_get_stack_w, gxg_gtk_stack_sidebar_get_stack)
+Xen_wrap_2_args(gxg_gtk_popover_set_transitions_enabled_w, gxg_gtk_popover_set_transitions_enabled)
+Xen_wrap_1_arg(gxg_gtk_popover_get_transitions_enabled_w, gxg_gtk_popover_get_transitions_enabled)
 #endif
 
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
@@ -42520,6 +42539,8 @@ static void define_functions(void)
   Xg_define_procedure(gtk_stack_sidebar_new, gxg_gtk_stack_sidebar_new_w, 0, 0, 0, H_gtk_stack_sidebar_new);
   Xg_define_procedure(gtk_stack_sidebar_set_stack, gxg_gtk_stack_sidebar_set_stack_w, 2, 0, 0, H_gtk_stack_sidebar_set_stack);
   Xg_define_procedure(gtk_stack_sidebar_get_stack, gxg_gtk_stack_sidebar_get_stack_w, 1, 0, 0, H_gtk_stack_sidebar_get_stack);
+  Xg_define_procedure(gtk_popover_set_transitions_enabled, gxg_gtk_popover_set_transitions_enabled_w, 2, 0, 0, H_gtk_popover_set_transitions_enabled);
+  Xg_define_procedure(gtk_popover_get_transitions_enabled, gxg_gtk_popover_get_transitions_enabled_w, 1, 0, 0, H_gtk_popover_get_transitions_enabled);
 #endif
 
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
@@ -45183,7 +45204,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("16-Feb-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("22-Feb-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

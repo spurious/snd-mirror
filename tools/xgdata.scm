@@ -9141,3 +9141,11 @@
 (CFNC-3.16 "GtkWidget* gtk_stack_sidebar_new void")
 (CFNC-3.16 "void gtk_stack_sidebar_set_stack GtkStackSidebar* sidebar GtkStack* stack")
 (CFNC-3.16 "GtkStack* gtk_stack_sidebar_get_stack GtkStackSidebar* sidebar")
+
+;;; 3.15.8:
+
+(CFNC-3.16 "void gtk_popover_set_transitions_enabled GtkPopover* popover gboolean transitions_enabled")
+(CFNC-3.16 "gboolean gtk_popover_get_transitions_enabled GtkPopover* popover")
+
+
+

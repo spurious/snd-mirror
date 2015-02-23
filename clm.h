@@ -80,7 +80,7 @@ MUS_EXPORT int mus_make_generator_type(void);
 
 MUS_EXPORT mus_any_class *mus_generator_class(mus_any *ptr);
 MUS_EXPORT mus_any_class *mus_make_generator(int type, char *name, 
-					     int (*release)(mus_any *ptr), 
+					     void (*release)(mus_any *ptr), 
 					     char *(*describe)(mus_any *ptr), 
 					     bool (*equalp)(mus_any *gen1, mus_any *gen2));
 
@@ -146,7 +146,7 @@ MUS_EXPORT mus_float_t (*mus_run_function(mus_any *g))(mus_any *gen, mus_float_t
 /* -------- generic functions -------- */
 
 MUS_EXPORT int mus_type(mus_any *ptr);
-MUS_EXPORT int mus_free(mus_any *ptr);
+MUS_EXPORT void mus_free(mus_any *ptr);
 MUS_EXPORT char *mus_describe(mus_any *gen);
 MUS_EXPORT bool mus_equalp(mus_any *g1, mus_any *g2);
 MUS_EXPORT mus_float_t mus_phase(mus_any *gen);
@@ -605,7 +605,7 @@ MUS_EXPORT mus_any *mus_bank_generator(mus_any *g, int i);
 
 /* Change log.
  *
- * 15-Feb:     removed mus_set_name.
+ * 15-Feb:     removed mus_set_name, changed mus_free to void.
  * 31-Jan-15:  removed mus_multiply_arrays.
  * --------
  * 8-Nov:      mus_copy, mus_bank_generator.

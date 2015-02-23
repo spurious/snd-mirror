@@ -8889,27 +8889,23 @@ static char *snd_to_sample_file_name(mus_any *ptr) {return(((snd_to_sample *)ptr
 
 static mus_long_t snd_to_sample_length(mus_any *ptr) {return(current_samples(((snd_to_sample *)ptr)->sp->chans[0]));}
 
-static int snd_to_sample_free(mus_any *ptr)
+static void snd_to_sample_free(mus_any *ptr)
 {
   snd_to_sample *spl = (snd_to_sample *)ptr;
-  if (spl)
+  if (spl->sfs)
     {
-      if (spl->sfs)
-	{
-	  int i;
-	  for (i = 0; i < spl->chans; i++)
-	    spl->sfs[i] = free_snd_fd(spl->sfs[i]);
-	  free(spl->sfs);
-	  spl->sfs = NULL;
-	}
-      if (spl->samps)
-	{
-	  free(spl->samps);
-	  spl->samps = NULL;
-	}
-      free(spl);
+      int i;
+      for (i = 0; i < spl->chans; i++)
+	spl->sfs[i] = free_snd_fd(spl->sfs[i]);
+      free(spl->sfs);
+      spl->sfs = NULL;
     }
-  return(0);
+  if (spl->samps)
+    {
+      free(spl->samps);
+      spl->samps = NULL;
+    }
+  free(spl);
 }
 
 
