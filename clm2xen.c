@@ -17724,166 +17724,166 @@ static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7
       arg1 = cadr(expr);
       arg2 = caddr(expr);
 
-      if ((s7_is_pair(arg1)) &&
-	  (car(arg1) == env_symbol) &&
-	  (s7_is_symbol(cadr(arg1))) &&
-	  (s7_is_pair(arg2)))
-	{
-	  if (s7_function_choice(sc, arg2) == g_fm_violin_with_modulation)
-	    {
-	      s7_function_choice_set_direct(sc, expr);
-	      return(fm_violin_1);
-	    }
-	  if (s7_function_choice(sc, arg2) == g_fm_violin_with_rats)
-	    {
-	      s7_function_choice_set_direct(sc, expr);
-	      return(fm_violin_3);
-	    }
-	  
-	  if ((car(arg2) == polywave_symbol) &&
-	      (s7_is_pair(cdr(arg2))) &&
-	      (s7_is_symbol(cadr(arg2))) &&
-	      (s7_is_pair(cddr(arg2))))
-	    {
-	      if (s7_is_symbol(caddr(arg2)))
-		{
-		  s7_function_choice_set_direct(sc, expr);
-		  return(env_polywave);
-		}
-	      if ((s7_is_pair(caddr(arg2))) &&
-		  (car(caddr(arg2)) == env_symbol) &&
-		  (s7_is_symbol(cadr(caddr(arg2)))))
-		{
-		  s7_function_choice_set_direct(sc, expr);
-		  return(env_polywave_env);
-		}
-	      if ((s7_is_pair(caddr(arg2))) &&
-		  (s7_function_choice(sc, caddr(arg2)) == g_add_env_direct_2) &&
-		  (s7_function_choice(sc, caddr(caddr(arg2))) == g_rand_interp_1))
-		{
-		  s7_function_choice_set_direct(sc, expr);
-		  return(env_polywave_env_ri);
-		}
-	      /* (* (env ampf) (polywave gen1 (+ (env frqf) (rand-interp noise)))) */
-	    }
-
-	  if ((car(arg2) == oscil_symbol) &&
-	      (s7_list_length(sc, arg2) == 3) && /* not oscil_3! */
-	      (s7_is_pair(cdr(arg2))) &&
-	      (s7_is_symbol(cadr(arg2))) &&
-	      (s7_is_pair(cddr(arg2))))
-	    {
-	      if ((s7_is_pair(caddr(arg2))) &&
-		  (car(caddr(arg2)) == env_symbol) &&
-		  (s7_is_symbol(cadr(caddr(arg2)))))
-		{
-		  s7_function_choice_set_direct(sc, expr);
-		  return(env_oscil_env);
-		}
-	    }
-	}
-      /* nearly always add_direct_2 is (+ (env s) ...)
-       *  (* (env ampf) (oscil gen1 (+ (env frqf) (rand-interp rnd))))
-       * outa chooser then adds the outs part
-       */
-	 
-      /* args == 2 here */
       if (s7_is_pair(arg2))
 	{
-	  if (s7_is_real(arg1))
+	  if (s7_is_pair(arg1))
 	    {
-	      /* (* num (gen...))
-	       */
-	      gen_choices *choices;
-	      choices = (gen_choices *)s7_function_chooser_data(sc, arg2);
-	      if (choices)
+	      if (car(arg1) == env_symbol)
 		{
-		  if (choices->mul_c_gen)
+		  gen_choices *choices;
+		  if (s7_is_symbol(cadr(arg1)))
 		    {
-		      s7_function_choice_set_direct(sc, expr);
-		      /* fprintf(stderr, "mul_c_gen\n"); */
-		      return(choices->mul_c_gen);
+		      if (s7_function_choice(sc, arg2) == g_fm_violin_with_modulation)
+			{
+			  s7_function_choice_set_direct(sc, expr);
+			  return(fm_violin_1);
+			}
+		      if (s7_function_choice(sc, arg2) == g_fm_violin_with_rats)
+			{
+			  s7_function_choice_set_direct(sc, expr);
+			  return(fm_violin_3);
+			}
+		      
+		      if ((car(arg2) == polywave_symbol) &&
+			  (s7_is_pair(cdr(arg2))) &&
+			  (s7_is_symbol(cadr(arg2))) &&
+			  (s7_is_pair(cddr(arg2))))
+			{
+			  s7_pointer caddr_arg2 = caddr(arg2);
+			  if (s7_is_symbol(caddr_arg2))
+			    {
+			      s7_function_choice_set_direct(sc, expr);
+			      return(env_polywave);
+			    }
+			  else
+			    {
+			      if (s7_is_pair(caddr_arg2))
+				{
+				  if ((car(caddr_arg2) == env_symbol) &&
+				      (s7_is_symbol(cadr(caddr_arg2))))
+				    {
+				      s7_function_choice_set_direct(sc, expr);
+				      return(env_polywave_env);
+				    }
+				  if ((s7_function_choice(sc, caddr_arg2) == g_add_env_direct_2) &&
+				      (s7_function_choice(sc, caddr(caddr_arg2)) == g_rand_interp_1))
+				    {
+				      s7_function_choice_set_direct(sc, expr);
+				      return(env_polywave_env_ri);
+				    }
+				}
+			    }
+			  /* (* (env ampf) (polywave gen1 (+ (env frqf) (rand-interp noise)))) */
+			}
+		      
+		      if ((car(arg2) == oscil_symbol) &&
+			  (s7_list_length(sc, arg2) == 3) && /* not oscil_3! */
+			  (s7_is_pair(cdr(arg2))) &&
+			  (s7_is_symbol(cadr(arg2))) &&
+			  (s7_is_pair(cddr(arg2))))
+			{
+			  if ((s7_is_pair(caddr(arg2))) &&
+			      (car(caddr(arg2)) == env_symbol) &&
+			      (s7_is_symbol(cadr(caddr(arg2)))))
+			    {
+			      s7_function_choice_set_direct(sc, expr);
+			      return(env_oscil_env);
+			    }
+			}
 		    }
 		  
-		  if (choices->mul_c_gen_1)
+		  choices = (gen_choices *)s7_function_chooser_data(sc, arg2);
+		  if (choices)
 		    {
-		      s7_function_choice_set_direct(sc, expr);
-		      /* fprintf(stderr, "mul_c_gen_1\n"); */
-		      return(choices->mul_c_gen_1);
+		      if (choices->env_gen)
+			{
+			  /* fprintf(stderr, "env_gen\n"); */
+			  s7_function_choice_set_direct(sc, expr);
+			  return(choices->env_gen);
+			}
+		      if (choices->env_gen_1)
+			{
+			  /* fprintf(stderr, "env_gen_1\n"); */
+			  s7_function_choice_set_direct(sc, expr);
+			  return(choices->env_gen_1);
+			}
 		    }
-
 		  if (s7_function_choice_is_direct_to_real(sc, arg2))
 		    {
-		      /* often (* 0.1 (oscil gen6 (* 6.0 ind)))
-		       */
+		      /* fprintf(stderr, "mul_env_direct\n"); */
 		      s7_function_choice_set_direct(sc, expr);
-		      if (s7_function_choice(sc, arg2) == g_oscil_mul_c_s)
-			return(mul_c_oscil_mul_c_s);
-		      /* fprintf(stderr, "%s\n", DISPLAY(expr)); */
-		      return(mul_c_direct);
+		      return(mul_env_direct);
 		    }
 		}
-	    }
-	  
-	  if ((s7_is_symbol(arg1)) &&
-	      (s7_is_pair(cddr(expr))))          /* (* + '(vector?)) -- this is the optimizer's fault */
-	    {
-	      gen_choices *choices;
-	      choices = (gen_choices *)s7_function_chooser_data(sc, arg2);
-	      if (choices)
+	      
+	      if ((s7_function_choice_is_direct_to_real(sc, arg1)) &&
+		  (s7_function_choice_is_direct_to_real(sc, arg2)))
 		{
-		  if (choices->mul_s_gen)
-		    {
-		      s7_function_choice_set_direct(sc, expr);
-		      /* fprintf(stderr, "mul_s_gen\n"); */
-		      return(choices->mul_s_gen);
-		    }
-		  if (choices->mul_s_gen_1)
-		    {
-		      s7_function_choice_set_direct(sc, expr);
-		      /* fprintf(stderr, "mul_s_gen_1\n"); */
-		      return(choices->mul_s_gen_1);
-		    }
-		}
-	    }
-	}
-	  
-      if (s7_is_pair(arg1))
-	{
-	  if (caadr(expr) == env_symbol)
-	    {
-	      gen_choices *choices;
-	      choices = (gen_choices *)s7_function_chooser_data(sc, arg2);
-	      if (choices)
-		{
-		  if (choices->env_gen)
-		    {
-		      /* fprintf(stderr, "env_gen\n"); */
-		      s7_function_choice_set_direct(sc, expr);
-		      return(choices->env_gen);
-		    }
-		  if (choices->env_gen_1)
-		    {
-		      /* fprintf(stderr, "env_gen_1\n"); */
-		      s7_function_choice_set_direct(sc, expr);
-		      return(choices->env_gen_1);
-		    }
-		}
-	      if (s7_function_choice_is_direct_to_real(sc, arg2))
-		{
-		  /* fprintf(stderr, "mul_env_direct\n"); */
 		  s7_function_choice_set_direct(sc, expr);
-		  return(mul_env_direct);
+		  /* fprintf(stderr, "mul_direct_2\n"); */
+		  return(mul_direct_2);
 		}
 	    }
-	  
-	  if ((s7_is_pair(arg2)) &&
-	      (s7_function_choice_is_direct_to_real(sc, arg1)) &&
-	      (s7_function_choice_is_direct_to_real(sc, arg2)))
+	  else
 	    {
-	      s7_function_choice_set_direct(sc, expr);
-	      /* fprintf(stderr, "mul_direct_2\n"); */
-	      return(mul_direct_2);
+	      if (s7_is_real(arg1))
+		{
+		  /* (* num (gen...))
+		   */
+		  gen_choices *choices;
+		  choices = (gen_choices *)s7_function_chooser_data(sc, arg2);
+		  if (choices)
+		    {
+		      if (choices->mul_c_gen)
+			{
+			  s7_function_choice_set_direct(sc, expr);
+			  /* fprintf(stderr, "mul_c_gen\n"); */
+			  return(choices->mul_c_gen);
+			}
+		      
+		      if (choices->mul_c_gen_1)
+			{
+			  s7_function_choice_set_direct(sc, expr);
+			  /* fprintf(stderr, "mul_c_gen_1\n"); */
+			  return(choices->mul_c_gen_1);
+			}
+		      
+		      if (s7_function_choice_is_direct_to_real(sc, arg2))
+			{
+			  /* often (* 0.1 (oscil gen6 (* 6.0 ind)))
+			   */
+			  s7_function_choice_set_direct(sc, expr);
+			  if (s7_function_choice(sc, arg2) == g_oscil_mul_c_s)
+			    return(mul_c_oscil_mul_c_s);
+			  /* fprintf(stderr, "%s\n", DISPLAY(expr)); */
+			  return(mul_c_direct);
+			}
+		    }
+		}
+	      else
+		{
+		  if ((s7_is_symbol(arg1)) &&
+		      (s7_is_pair(cddr(expr))))          /* (* + '(vector?)) -- this is the optimizer's fault */
+		    {
+		      gen_choices *choices;
+		      choices = (gen_choices *)s7_function_chooser_data(sc, arg2);
+		      if (choices)
+			{
+			  if (choices->mul_s_gen)
+			    {
+			      s7_function_choice_set_direct(sc, expr);
+			      /* fprintf(stderr, "mul_s_gen\n"); */
+			      return(choices->mul_s_gen);
+			    }
+			  if (choices->mul_s_gen_1)
+			    {
+			      s7_function_choice_set_direct(sc, expr);
+			      /* fprintf(stderr, "mul_s_gen_1\n"); */
+			      return(choices->mul_s_gen_1);
+			    }
+			}
+		    }
+		}
 	    }
 	}
     }

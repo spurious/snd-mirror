@@ -5548,6 +5548,42 @@ expansion happens when the code is evaluated, and the expansion result
 is simply returned, unevaluated.
 </p>
 
+<p>You can also use macroexpand to cancel the evaluation of a macro's expansion:
+</p>
+<pre>
+(define-macro (rmac . args)
+  (if (null? args)
+      ()
+      (if (null? (cdr args))
+	  `(display ',(car args))
+	  (append (list 'begin `(display ',(car args)))
+		  (append (list (apply macroexpand (list (append '(rmac) (cdr args))))))))))
+
+&gt; (macroexpand (rmac a b c))
+(begin (display 'a) (begin (display 'b) (display 'c)))
+&gt; (begin (rmac a b c d) (newline))
+abcd
+</pre>
+
+<!-- from kanren
+(define-syntax conj*
+  (syntax-rules ()
+    ((conj*) succeed)
+    ((conj* g) g)
+    ((conj* g gs ...)
+      (conj g (lambda (s) ((conj* gs ...) s))))))
+
+is the same (in that context) as:
+
+(define-macro (conj* . args)
+  (if (null? args)
+      succeed
+      (if (null? (cdr args))
+	  (car args)
+	  `(conj ,(car args)
+		 (lambda (s) ((conj* ,@(cdr args)) s))))))
+-->
+
 
 <div class="separator"></div>
 <p id="s7env"><b>*s7*</b> is an environment that gives access to some of s7's internal

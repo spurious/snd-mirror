@@ -23412,17 +23412,14 @@ defaults to the rootlet.  To load into the current environment instead, pass (cu
 	    void *library;
 	    char *pwd_name = NULL;
 
-	    library = dlopen(fname, RTLD_NOW); /* try the library name direct */
-	    if (!library)
-	      {
-		if (fname[0] != '/')
-		  pwd_name = full_filename(fname);
-		library = dlopen((pwd_name) ? pwd_name : fname, RTLD_NOW);
-	      }
+	    if (fname[0] != '/')
+	      pwd_name = full_filename(fname); /* this is necessary, at least in Linux -- we can't blithely dlopen whatever is passed to us */
+	    library = dlopen((pwd_name) ? pwd_name : fname, RTLD_NOW);
 	    if (library)
 	      {
 		const char *init_name = NULL;
 		void *init_func;
+
 		init_name = symbol_name(init);
 		init_func = dlsym(library, init_name);
 		if (init_func)
@@ -42013,39 +42010,39 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       arg1 = cadr(expr);
       arg2 = caddr(expr);
 
-      if ((is_symbol(arg1)) &&
-	  (s7_is_integer(arg2)) &&
-	  (integer_length(integer(arg2)) < 31))
+      if (is_symbol(arg1))
 	{
-	  set_optimize_data(expr, HOP_SAFE_C_C);
-	  return(multiply_si);
+	  if ((s7_is_integer(arg2)) &&
+	      (integer_length(integer(arg2)) < 31))
+	    {
+	      set_optimize_data(expr, HOP_SAFE_C_C);
+	      return(multiply_si);
+	    }
+	  if (arg1 == arg2)
+	    {
+	      set_optimize_data(expr, HOP_SAFE_C_C);
+	      return(sqr_ss);
+	    }
+	  if (type(arg2) == T_REAL)
+	    {
+	      set_optimize_data(expr, HOP_SAFE_C_C);
+	      return(multiply_sf);
+	    }
 	}
 
-      if ((is_symbol(arg2)) &&
-	  (s7_is_integer(arg1)) &&
-	  (integer_length(integer(arg1)) < 31))
+      if (is_symbol(arg2))
 	{
-	  set_optimize_data(expr, HOP_SAFE_C_C);
-	  return(multiply_is);
-	}
-
-      if ((type(arg1) == T_REAL) &&
-	  (is_symbol(arg2)))
-	{
-	  set_optimize_data(expr, HOP_SAFE_C_C);
-	  return(multiply_fs);
-	}
-      if ((type(arg2) == T_REAL) &&
-	  (is_symbol(arg1)))
-	{
-	  set_optimize_data(expr, HOP_SAFE_C_C);
-	  return(multiply_sf);
-	}
-      if ((is_symbol(arg1)) &&
-	  (arg1 == arg2))
-	{
-	  set_optimize_data(expr, HOP_SAFE_C_C);
-	  return(sqr_ss);
+	  if ((s7_is_integer(arg1)) &&
+	      (integer_length(integer(arg1)) < 31))
+	    {
+	      set_optimize_data(expr, HOP_SAFE_C_C);
+	      return(multiply_is);
+	    }
+	  if (type(arg1) == T_REAL)
+	    {
+	      set_optimize_data(expr, HOP_SAFE_C_C);
+	      return(multiply_fs);
+	    }
 	}
 
       /* (* direct ...) here saved a little, but I think not worth the extra code */
@@ -68065,9 +68062,13 @@ int main(int argc, char **argv)
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)
  *   also cload: libc libgsl etc arg types/return types [real string ?]
  *   but what to return? and how to handle is-compatible-with questions
+ *   currently define_integer_function stores sc->IS_INTEGER which is a symbol, but for T_REAL:
+ *   (lambda (x) (and (real? x) (not rational? x))) -- i.e. want it to remain anonymous
+ *   but for lint, we'd want the intersection of arg-types and func-types (logand a b) or (logand (lognot a) b)
+ *
  * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  * checkpt via cell: recast s7_pointer as hnum?(+ permanents), (op)stack+current-pos+heap+symbols (presented as continuation?)
- *    certainly gdbm needs something faster than eval-string and object->string!
+ *    gdbm needs something faster than eval-string and object->string!
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * lmdb/gdbm -> let + s7 threads (need full example of this in s7.html)
