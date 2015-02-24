@@ -442,11 +442,11 @@ void mus_free(mus_any *gen)
 #if (!DISABLE_DEPRECATED)
       if (gen->core->original_class)
 	{
-	  int release_result;
 	  mus_any_class *local_class;
 	  local_class = (mus_any_class *)(gen->core);
 	  (*(gen->core->release))(gen);
 	  free(local_class);
+	  return;
 	}
 #endif
       (*(gen->core->release))(gen);
