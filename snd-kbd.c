@@ -339,10 +339,21 @@ static void call_keymap(int hashedsym, int count)
 
   if (Xen_is_bound(keymap[hashedsym].func))
     {
-      /* not _NO_CATCH here because the code is not protected at any higher level */
+      /* not _NO_CATCH here because the code is not protected at any higher level
+       * if key-bind function returns some impossible cursor-action, return keyboard-no-action
+       */
+      Xen result;
       if (keymap[hashedsym].args == 0)
-	res = (kbd_cursor_t)Xen_integer_to_C_int(Xen_call_with_no_args(keymap[hashedsym].func, keymap[hashedsym].origin));
-      else res = (kbd_cursor_t)Xen_integer_to_C_int(Xen_call_with_1_arg(keymap[hashedsym].func, C_int_to_Xen_integer(count), keymap[hashedsym].origin));
+	result = Xen_call_with_no_args(keymap[hashedsym].func, keymap[hashedsym].origin);
+      else result = Xen_call_with_1_arg(keymap[hashedsym].func, C_int_to_Xen_integer(count), keymap[hashedsym].origin);
+      if (Xen_is_integer(result))
+	{
+	  int r;
+	  r = (int)Xen_integer_to_C_int(result);
+	  if ((r <= KEYBOARD_NO_ACTION) &&
+	      (r >= CURSOR_IN_VIEW))
+	    res = (kbd_cursor_t)r;
+	}
     }
   handle_cursor(selected_channel(), res);
 }

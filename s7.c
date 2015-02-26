@@ -4133,7 +4133,11 @@ static int gc(s7_scheme *sc)
       double secs;
       gettimeofday(&t0, &z0);
       secs = (t0.tv_sec - start_time.tv_sec) +  0.000001 * (t0.tv_usec - start_time.tv_usec);
+#if (PRINT_NAME_PADDING == 8)
+      fprintf(stdout, "freed %d/%u (free: %d), time: %f\n", sc->gc_freed, sc->heap_size, sc->free_heap_top - sc->free_heap, secs);
+#else
       fprintf(stdout, "freed %d/%u (free: %ld), time: %f\n", sc->gc_freed, sc->heap_size, sc->free_heap_top - sc->free_heap, secs);
+#endif
 #else
       fprintf(stdout, "freed %d/%u\n", sc->gc_freed, sc->heap_size);
 #endif
@@ -5593,13 +5597,6 @@ bool s7_is_openlet(s7_pointer e)
 {
   return(has_methods(e));
 }
-
-#if (!DISABLE_DEPRECATED)
-s7_pointer s7_search_openlet(s7_scheme *sc, s7_pointer symbol, s7_pointer e)
-{
-  return(find_method(sc, find_let(sc, e), symbol));
-}
-#endif
 
 
 static void append_let(s7_scheme *sc, s7_pointer new_e, s7_pointer old_e)
@@ -9708,13 +9705,11 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
       while (true)
 	{
 	  dig = digits[(unsigned char)(*tmp++)];
-	  if (dig < 10)
-	    lval = dig + (lval * 10);
-	  else break;
+	  if (dig > 9) break;
+	  lval = dig + (lval * 10);
 	  dig = digits[(unsigned char)(*tmp++)];
-	  if (dig < 10)
-	    lval = dig + (lval * 10);
-	  else break;
+	  if (dig > 9) break;
+	  lval = dig + (lval * 10);
 	}
     }
   else
@@ -9722,13 +9717,11 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
       while (true)
 	{
 	  dig = digits[(unsigned char)(*tmp++)];
-	  if (dig < radix)
-	    lval = dig + (lval * radix);
-	  else break;
+	  if (dig >= radix) break;
+	  lval = dig + (lval * radix);
 	  dig = digits[(unsigned char)(*tmp++)];
-	  if (dig < radix)
-	    lval = dig + (lval * radix);
-	  else break;
+	  if (dig >= radix) break;
+	  lval = dig + (lval * radix);
 	}
     }
 
@@ -10284,7 +10277,6 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
 	      default:
 		break;
 	      }
-
 	    return((want_symbol) ? make_symbol(sc, q) : sc->F);
 	  }
       }
@@ -34185,6 +34177,30 @@ static void s7_function_set_setter(s7_scheme *sc, const char *getter, const char
 }
 
 
+s7_pointer s7_closure_body(s7_scheme *sc, s7_pointer p)
+{
+  if (is_any_closure(p) || is_macro(p) || is_bacro(p))
+    return(closure_body(p));
+  return(sc->NIL);
+}
+
+
+s7_pointer s7_closure_let(s7_scheme *sc, s7_pointer p)
+{
+  if (is_any_closure(p) || is_macro(p) || is_bacro(p))
+    return(closure_let(p));
+  return(sc->NIL);
+}
+
+
+s7_pointer s7_closure_args(s7_scheme *sc, s7_pointer p)
+{
+  if (is_any_closure(p) || is_macro(p) || is_bacro(p))
+    return(closure_args(p));
+  return(sc->NIL);
+}
+
+
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 {
   /* in this context, there's no way to distinguish between:
@@ -34731,16 +34747,14 @@ int s7_new_type_x(s7_scheme *sc,
 		  s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
 		  s7_pointer (*length)(s7_scheme *sc, s7_pointer obj),
 		  s7_pointer (*copy)(s7_scheme *sc, s7_pointer args),
-		  s7_pointer (*reverse)(s7_scheme *sc, s7_pointer obj),
+		  s7_pointer (*reverse)(s7_scheme *sc, s7_pointer args),
 		  s7_pointer (*fill)(s7_scheme *sc, s7_pointer args))
 {
   int tag;
   tag = s7_new_type(name, print, free, equal, gc_mark, apply, set);
-
   if (length)
     object_types[tag]->length = length;
   else object_types[tag]->length = fallback_length;
-
   object_types[tag]->copy = copy;
   object_types[tag]->reverse = reverse;
   object_types[tag]->fill = fill;
@@ -34843,8 +34857,6 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
   return(x);
 }
 
-/* make_permanent_object (for Snd) -- permanent_alloc, and don't add_c_object -- very little gained */
-
 
 s7_pointer s7_object_let(s7_pointer obj)
 {
@@ -34884,18 +34896,13 @@ static s7_pointer object_copy(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer obj;
   obj = car(args);
+  check_method(sc, obj, sc->COPY, args);
   if (c_object_copy(obj))
     return((*(c_object_copy(obj)))(sc, args));
   return(eval_error(sc, "attempt to copy ~S?", obj));
 }
 
 
-static s7_pointer object_reverse(s7_scheme *sc, s7_pointer obj)
-{
-  if (c_object_reverse(obj))
-    return((*(c_object_reverse(obj)))(sc, obj));
-  return(eval_error(sc, "attempt to reverse ~S?", obj));
-}
 
 
 /* -------- dilambda -------- */
@@ -35054,92 +35061,9 @@ void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function
   s7_dilambda(sc, name, get_fnc, req_args, opt_args, set_fnc, req_args + 1, opt_args, doc);
 }
 
-#if (!DISABLE_DEPRECATED)
-const char *s7_procedure_name(s7_scheme *sc, s7_pointer proc)
-{
-  int nlen = 0;
-  switch (type(proc))
-    {
-    case T_CLOSURE: case T_CLOSURE_STAR:
-      return(c_closure_name(sc, proc, &nlen));
-  
-    case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_FUNCTION: case T_C_FUNCTION_STAR:
-      return(c_function_name(proc));
-
-    case T_C_MACRO:
-      return(c_macro_name(proc));
-    }
-  return(NULL);
-}
-#endif
-
 
 
 /* -------------------------------- arity -------------------------------- */
-
-#if (!DISABLE_DEPRECATED)
-s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
-{
-  if (is_any_c_function(x))
-    return(list_3(sc, 
-		  make_integer(sc, c_function_required_args(x)),
-		  make_integer(sc, c_function_optional_args(x)),
-		  make_boolean(sc, c_function_has_rest_arg(x))));
-  /* this was optimized to be a permanent immutable list, but makes a mess of all the setters,
-   *   and then there are cases like: (fill! (append (list 1) (procedure-arity abs)) 0)
-   */
-
-  if (is_any_closure(x))
-    {
-      int len;
-      
-      if (is_pair(x))
-	len = s7_list_length(sc, closure_args(x));
-      else 
-	{
-	  if (is_symbol(closure_args(x)))
-	    return(list_3(sc, small_int(0), small_int(0), sc->T));
-	  len = s7_list_length(sc, closure_args(x));
-	}
-
-      if (is_closure_star(x))
-	{
-	  s7_pointer tmp;        /* make sure we aren't counting :optional and friends as arguments */
-	  int opts = 0;
-
-	  if (is_pair(x))
-	    tmp = car(x);
-	  else tmp = closure_args(x);
-
-	  for (; is_pair(tmp); tmp = cdr(tmp))
-	    {
-	      if (car(tmp) == sc->KEY_ALLOW_OTHER_KEYS)
-		opts++;
-	      else
-		{
-		  if (car(tmp) == sc->KEY_REST)
-		    {
-		      opts += 2;     /* both :rest and the arg name are not counted as optional args */
-		      if (len > 0) len = -len;
-		    }
-		}
-	    }
-	  return(list_3(sc, small_int(0), make_integer(sc, abs(len) - opts), make_boolean(sc, len < 0)));
-	}
-      return(list_3(sc, make_integer(sc, abs(len)), small_int(0), make_boolean(sc, len < 0)));
-    }
-
-  if (is_c_object(x))
-    return(list_3(sc, small_int(0), small_int(0), sc->T));
-  
-  if ((is_continuation(x)) ||
-      (is_goto(x)))
-    return(list_3(sc, small_int(0), small_int(0), sc->T));
-
-  return(sc->NIL);
-}
-#endif
-
 
 static s7_pointer closure_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_pointer x_args)
 {
@@ -36605,7 +36529,6 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
       }
 
     case T_C_OBJECT:
-      check_method(sc, obj, sc->COPY, list_1(sc, obj));
       return(object_copy(sc, list_1(sc, obj)));
 
     case T_HASH_TABLE:              /* this has to copy nearly everything */
@@ -37002,7 +36925,9 @@ also accepts a string or vector argument."
 
     case T_C_OBJECT:
       check_method(sc, p, sc->REVERSE, args);
-      return(object_reverse(sc, p));
+      if (c_object_reverse(p))
+	return((*(c_object_reverse(p)))(sc, args));
+      return(eval_error(sc, "attempt to reverse ~S?", p));
 
     default:
       check_method(sc, p, sc->REVERSE, args);
@@ -43555,7 +43480,7 @@ static void init_choosers(s7_scheme *sc)
 
 static s7_pointer collect_collisions(s7_scheme *sc, s7_pointer lst, s7_pointer e)
 {
-  /* collect local variable names from let/do/lambda arglists/etc */
+  /* collect local variable names from let/do/lambda arglists/etc (pre-error-check) */
   s7_pointer p;
   sc->w = e;
   for (p = lst; is_pair(p); p = cdr(p))
@@ -67984,7 +67909,7 @@ int main(int argc, char **argv)
 
 /* ----------------------------------------------------------
  *
- *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4
+ *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3019
@@ -67992,7 +67917,7 @@ int main(int argc, char **argv)
  * t137           |      |      | 11.0           5031 4769
  * t455|6     265 |   89 |  9   |       8.4 8045 7482 7265
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8
- * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.6
+ * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9
  *
  * ----------------------------------------------------------
@@ -68031,10 +67956,25 @@ int main(int argc, char **argv)
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * lmdb/gdbm -> let + s7 threads (need full example of this in s7.html)
  *    for let-ref, actually need fallback before checking outlet (currently it follows)
+ * doc/ffitest s7_closure_* -- is s7_procedure_source ever the right thing?
  *
  * it's wasteful to wrap vcts that aren't ever accessed -- perhaps a mus_core func to get data_wrapper? or do the access direct?
  *    so mus_data would wrap, but (mus_data i) would simply access via some class func -- mus_data itself! who needs a wrapper?
  *    same for x|y-coeffs -- we only need to mark vct if it was passed to make-*, so the vcts array is only needed for GC protection of args
  *    get a list of these by gen, undo reliance on intermediate vector, undo internal wrappers, add mus-data-ref|set
  *    wrapper needs length -- x|ycoeffs?
+ *
+ * clm.h MUS_VERSION is 6, so *features* shows 'clm6, but clm5 is the CL version?
+ *
+ * instead of t_c_object, why not pass a pointer to the s7_cell memory, and let
+ *    the user decide everything about those 5 fields = 40 bytes.  Can this be
+ *    retrofitted into the current form?  Currently need the tag -> table of funcs.
+ *    Then say, first 4 bytes are the tag, rest is open.  So, remove e (let), and value
+ *    fields, s7_make_object(sc, type) -- leaving rest to caller, s7_object_let(obj)?
+ *    copy/reverse/fill/length?? ignored -- use let -- return to original s7_new_type
+ *    except we need the method list, and funcs like equal/free/mark get the original cell, not c_object_value(cell)
+ *    why doesn't fallback_print use the object_types[tag]->name?
+ *    need method fallbacks in current cases like reverse, and ideally make-iterator (not pos)
+ *    all the funcs (length/etc) should be s7_functions
+ *    if not s7_object_let, perhaps s7_method taking obj arg? like find_method here
  */

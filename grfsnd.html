@@ -824,6 +824,7 @@ Language choices:
     --with-forth             use Forth as the extension language
     --with-ruby              use Ruby as the extension language; version 1.6.4 or later
     --with-s7                use s7 as the extension language (default = yes)
+    --without-extension-language 
 
 
 Library choices:
@@ -856,7 +857,7 @@ Here at CCRMA, we normally use:
 </p>
 
 <pre class="indented">
-./configure --with-alsa --with-temp-dir=/zap --with-gl
+./configure --with-alsa --with-temp-dir=/zap
 </pre>
 </div>
 
@@ -870,11 +871,11 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 <pre class="indented">
 clm            clm module (always included &mdash; once upon a time it was optional)
 gl             OpenGL callable from Scheme/Ruby/Forth (--with-gl switch)
-snd-ladspa     LADSPA loaded (--with-ladspa, but also the default in Linux if ladspa.h can be found)
+snd-ladspa     LADSPA loaded (--with-ladspa)
 sndlib         sndlib module (always included)
-<em class="noem" id="sndmotiffeature">snd-motif</em>      Motif used as GUI toolkit (--with-motif, usually the default if Motif can be found)
-snd-gtk        Gtk+ used as GUI toolkit (--with-gtk)
-snd-nogui      No GUI built-in (--without-gui, or neither Motif nor Gtk+ found)
+<em class="noem" id="sndmotiffeature">snd-motif</em>      Motif used as GUI toolkit (--with-motif)
+snd-gtk        Gtk+ used as GUI toolkit (--with-gtk, now the default)
+snd-nogui      No GUI built-in (--without-gui)
 snd-forth      Forth as extension language (--with-forth)
 snd-ruby       Ruby as extension language (--with-ruby)
 snd-s7         s7 as extension language (--with-s7)

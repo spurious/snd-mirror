@@ -173,12 +173,11 @@ void set_listener_prompt(const char *new_prompt)
    *   by the old prompt.
    */
 #if (!USE_GTK)
-  listener_append_and_prompt(NULL); /* this checks first that the listener exists */
+  listener_append_and_prompt(NULL);                        /* this checks first that the listener exists */
 #else
-  glistener_set_prompt(ss->listener, listener_prompt(ss));
+  glistener_set_prompt(ss->listener, listener_prompt(ss)); /* this also checks */
 #endif  
 #endif
-  
 }
 
 

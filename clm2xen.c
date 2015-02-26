@@ -8297,13 +8297,13 @@ static void set_as_needed_input_choices(mus_any *gen, Xen obj, mus_xen *gn)
 #if HAVE_SCHEME
   if (Xen_is_procedure(obj))
     {
-      s7_pointer source, body, res;
-      source = s7_procedure_source(s7, obj);
-      if (s7_is_pair(source))
+      s7_pointer body;
+      body = s7_closure_body(s7, obj);
+      if (s7_is_pair(body))
 	{
-	  body = s7_cddar(source);
 	  if (s7_is_null(s7, s7_cdr(body)))
 	    {
+	      s7_pointer res;
 	      res = s7_car(body);
 	      if (s7_is_real(res))
 		{
@@ -8314,12 +8314,12 @@ static void set_as_needed_input_choices(mus_any *gen, Xen obj, mus_xen *gn)
 	      if (s7_is_pair(res))
 		{
 		  s7_pointer arg;
-		  arg = s7_caadar(source);
+		  arg = s7_car(s7_closure_args(s7, obj));
 #if USE_SND
 		  if ((arg == s7_caddr(res)) &&
 		      (s7_car(res) == s7_make_symbol(s7, "read-sample-with-direction")))
 		    {
-		      gn->vcts[MUS_INPUT_DATA] = (Xen)xen_to_sampler(s7_symbol_local_value(s7, s7_cadr(res), s7_cdr(source)));
+		      gn->vcts[MUS_INPUT_DATA] = (Xen)xen_to_sampler(s7_symbol_local_value(s7, s7_cadr(res), s7_closure_let(s7, obj)));
 		      mus_generator_set_feeders(gen, as_needed_input_sampler_with_direction, as_needed_block_input_sampler_with_direction);
 		      return;
 		    }
@@ -8329,7 +8329,7 @@ static void set_as_needed_input_choices(mus_any *gen, Xen obj, mus_xen *gn)
 		      gf *g;
 		      /* here we need to make sure the function's environment is set up correctly */
 		      s7_pointer old_e;
-		      old_e = s7_set_curlet(s7, s7_cdr(source));
+		      old_e = s7_set_curlet(s7, s7_closure_let(s7, obj));
 		      setup_gen_list(s7, res);
 		      g = find_gf(s7, res);
 		      s7_set_curlet(s7, old_e);

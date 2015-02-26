@@ -9880,10 +9880,9 @@ static mus_any_class ENV_CLASS = {
 };
 
 
-mus_any *mus_make_env(mus_float_t *brkpts, int npts, mus_float_t scaler, mus_float_t offset, mus_float_t base, mus_float_t duration, mus_long_t end, mus_float_t *odata)
+mus_any *mus_make_env(mus_float_t *brkpts, int npts, mus_float_t scaler, mus_float_t offset, mus_float_t base, mus_float_t duration, mus_long_t end, mus_float_t *ignored)
 {
-  /* odata is ignored, brkpts are not freed by the new env gen when it is freed, but should be protected during its existence
-   */
+  /* brkpts are not freed by the new env gen when it is freed, but should be protected during its existence */
   int i;
   mus_long_t dur_in_samples;
   mus_float_t *edata;

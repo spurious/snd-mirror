@@ -457,3 +457,29 @@
 (hook-push output-comment-hook (lambda (hook) (set! (hook 'result) (marks->string (selected-sound)))))
 (hook-push after-open-hook (lambda (hook) (set! (hook 'result) (eval-header (hook 'snd)))))
 |#
+
+#|
+;; from snd11?
+(define (delete-between-marks)
+  (let ((mx (marks 0 0)))
+    (if (and (pair? mx)
+	     (pair? (cdr mx))) ; there are at least 2 marks
+	(let ((pos (cursor 0 0))
+	      (deb #f)
+	      (fin #f))
+	  (for-each
+	   (lambda (m)
+	     (if (<= (mark-sample m) pos)
+		 (set! deb (mark-sample m)))
+	     (if (and (not fin)
+		      (> (mark-sample m) pos))
+		 (set! fin (mark-sample m))))
+	   (sort! mx (lambda (a b) 
+		       (< (mark-sample a) (mark-sample b)))))
+	  (when (and deb fin)
+	    (let ((dur (- fin deb)))
+	      (apply for-each
+		     (lambda (s c)
+		       (delete-samples deb dur s c))
+		     (all-chans))))))))
+|#

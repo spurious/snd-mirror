@@ -3477,7 +3477,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
   mus_float_t *in_data;
   int gc_loc, proc_loc;
   bool use_apply;
-  s7_pointer arg_list, source, body, e, slot;
+  s7_pointer arg_list, body, e, slot;
   s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
 
   arg_list = xen_nil;
@@ -3486,12 +3486,10 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
   slot = xen_nil;
   eval = NULL;
 
-  source = s7_procedure_source(s7, proc);
-  if (s7_is_pair(source))
+  body = s7_closure_body(s7, proc);
+  if (s7_is_pair(body))
     {
       s7_pointer arg;
-      body = s7_cddar(source);
-
       if (s7_is_null(s7, s7_cdr(body)))
 	{
 	  s7_pointer old_e;
@@ -3501,7 +3499,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	  s7_Double *ry;
 #endif
 	  res = s7_car(body);
-	  arg = s7_caadar(source);
+	  arg = s7_car(s7_closure_args(s7, proc));
 
 	  if ((s7_is_boolean(res)) ||
 	      (res == arg))
@@ -3518,7 +3516,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      s7_Double x;
 	      if (s7_is_symbol(res))
 		{
-		  e = s7_sublet(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
+		  e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7)); 
 		  old_e = s7_set_curlet(s7, e);                  /* new env for map lambda */
 		  res = s7_value(s7, res);
 		  s7_set_curlet(s7, old_e);
@@ -3546,7 +3544,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      if (s7_cadr(res) == arg) fx = s7_caddr(res); else fx = s7_cadr(res);
 	      if (s7_is_symbol(fx))
 		{
-		  e = s7_sublet(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
+		  e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7)); 
 		  old_e = s7_set_curlet(s7, e);                  /* new env for map lambda */
 		  fx = s7_value(s7, fx);
 		  s7_set_curlet(s7, old_e);
@@ -3571,7 +3569,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	    s7_ex *(*fallback)(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
 	    fallback = s7_ex_fallback(s7);
 
-	    e = s7_sublet(s7, s7_cdr(source), s7_nil(s7)); /* cdr(source) is the environment */
+	    e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7));
 	    old_e = s7_set_curlet(s7, e);                  /* new env for map lambda */
 	    /* we need to connect to the lambda's closure so subsequent symbol lookups work right */
 
@@ -3610,8 +3608,8 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	}
       /* (let ((rd (make-sampler 0))) (map-channel (lambda (y) (+ (next-sample rd) y)))) */
 
-      arg = s7_caadar(source);
-      e = s7_sublet(s7, s7_cdr(source), s7_nil(s7));
+      arg = s7_car(s7_closure_args(s7, proc));
+      e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7));
       gc_loc = s7_gc_protect(s7, e);
       slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
       use_apply = false;
@@ -3632,8 +3630,6 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
   proc_loc = s7_gc_protect(s7, proc);
 #endif
 
-  /* fprintf(stderr, "%lld %s\n", num, DISPLAY(s7_cddar(s7_procedure_source(s7, proc)))); */
-  
   data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
 #if HAVE_SCHEME
   in_data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
@@ -3890,7 +3886,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   s7_pointer arg_list;
   int gc_loc;
   bool use_apply;
-  s7_pointer source, arg, body, e, slot;
+  s7_pointer arg, body, e, slot;
   s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
 
   arg_list = xen_nil;
@@ -3899,11 +3895,10 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   slot = xen_nil;
   eval = NULL;
 
-  source = s7_procedure_source(s7, proc);
-  if (s7_is_pair(source))
+  body = s7_closure_body(s7, proc);
+  if (s7_is_pair(body))
     {
-      body = s7_cddar(source);
-      arg = s7_caadar(source);
+      arg = s7_car(s7_closure_args(s7, proc));
 #if (!WITH_GMP)
       /* (let () (define (hi) (scan-channel (lambda (y) (or (< y -0.001) (> y 0.001))))) (open-sound "1a.snd") (let ((val (hi))) (close-sound) val))
        */
@@ -3935,7 +3930,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 		{
 		  s7_pointer olde;
 
-		  e = s7_sublet(s7, s7_cdr(source), s7_nil(s7));
+		  e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7));
 		  olde = s7_set_curlet(s7, e);
 		  y = s7_make_mutable_real(s7, 1.5);
 		  slot = s7_make_slot(s7, e, arg, y);
@@ -3998,7 +3993,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 			       *  -- the search needs the closure's env
 			       */
 			      s7_pointer old_e;
-			      old_e = s7_set_curlet(s7, s7_cdr(source));
+			      old_e = s7_set_curlet(s7, s7_closure_let(s7, proc));
 			      z = s7_symbol_value(s7, z);
 			      s7_set_curlet(s7, old_e);
 			    }
@@ -4068,7 +4063,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
       /* (fneq y 1.0)?
        * 400000: (or (> n3 0.1) (not|begin (set! samp (+ samp 1))[ #f]))
        */
-      e = s7_sublet(s7, s7_cdr(source), s7_nil(s7));
+      e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7));
       gc_loc = s7_gc_protect(s7, e);
       slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
       use_apply = false;
