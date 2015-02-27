@@ -1326,9 +1326,19 @@ int main(int argc, char **argv)
   if (!s7_is_procedure(p))
     {fprintf(stderr, "%d: %s is not a procedure?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
-  s1 = TO_STR(s7_car(s7_procedure_source(sc, p)));
-  if (strcmp(s1, "(lambda (a b . c) (+ a b (apply * c)))") != 0)
-    {fprintf(stderr, "%d: procedure-source is %s?\n", __LINE__, s1);}
+  s1 = TO_STR(s7_closure_body(sc, p));
+  if (strcmp(s1, "((+ a b (apply * c)))") != 0)
+    {fprintf(stderr, "%d: s7_closure_body is %s?\n", __LINE__, s1);}
+  free(s1);
+  
+  s1 = TO_STR(s7_closure_args(sc, p));
+  if (strcmp(s1, "(a b . c)") != 0)
+    {fprintf(stderr, "%d: s7_closure_args is %s?\n", __LINE__, s1);}
+  free(s1);
+  
+  s1 = TO_STR(s7_closure_let(sc, p));
+  if (strcmp(s1, "()") != 0)
+    {fprintf(stderr, "%d: s7_closure_let is %s?\n", __LINE__, s1);}
   free(s1);
   
   if (!s7_is_aritable(sc, p, 2))

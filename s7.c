@@ -1274,12 +1274,12 @@ static void init_types(void)
  *    on only for a very short time.
  */
 
+#if 0
 #define T_MATCHED                     T_MULTIPLE_VALUE
 #define is_matched(p)                 ((typesflag(p) & T_MATCHED) != 0)
 #define set_matched(p)                typesflag(p) |= T_MATCHED
 #define clear_matched(p)              typesflag(p) &= (~T_MATCHED)
-/* similar transient bit for tree walker 
- */
+#endif
 
 #define T_GLOBAL                      (1 << (TYPE_BITS + 8))
 #define is_global(p)                  ((typeflag(p) & T_GLOBAL) != 0)
@@ -34200,7 +34200,7 @@ s7_pointer s7_closure_args(s7_scheme *sc, s7_pointer p)
   return(sc->NIL);
 }
 
-
+#if (!DISABLE_DEPRECATED)
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 {
   /* in this context, there's no way to distinguish between:
@@ -34220,6 +34220,7 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
     }
   return(sc->NIL);
 }
+#endif
 
 
 static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
@@ -67912,7 +67913,7 @@ int main(int argc, char **argv)
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3019
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002
  * lg             |      |      | 6547 6497 6494 6235 6229
  * t137           |      |      | 11.0           5031 4769
  * t455|6     265 |   89 |  9   |       8.4 8045 7482 7265
@@ -67949,22 +67950,21 @@ int main(int argc, char **argv)
  *   (lambda (x) (and (real? x) (not rational? x))) -- i.e. want it to remain anonymous
  *   but for lint, we'd want the intersection of arg-types and func-types (logand a b) or (logand (lognot a) b)
  *
- * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  * checkpt via cell: recast s7_pointer as hnum?(+ permanents), (op)stack+current-pos+heap+symbols (presented as continuation?)
- *    gdbm needs something faster than eval-string and object->string!
+ *   gdbm needs something faster than eval-string and object->string!
+ *   lmdb/gdbm -> let + s7 threads (need full example of this in s7.html)
+ *   for let-ref, actually need fallback before checking outlet (currently it follows)
+ *
+ * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
- * lmdb/gdbm -> let + s7 threads (need full example of this in s7.html)
- *    for let-ref, actually need fallback before checking outlet (currently it follows)
- * doc/ffitest s7_closure_* -- is s7_procedure_source ever the right thing?
+ * clm.h MUS_VERSION is 6, so *features* shows 'clm6, but clm5 is the CL version?
  *
  * it's wasteful to wrap vcts that aren't ever accessed -- perhaps a mus_core func to get data_wrapper? or do the access direct?
  *    so mus_data would wrap, but (mus_data i) would simply access via some class func -- mus_data itself! who needs a wrapper?
  *    same for x|y-coeffs -- we only need to mark vct if it was passed to make-*, so the vcts array is only needed for GC protection of args
  *    get a list of these by gen, undo reliance on intermediate vector, undo internal wrappers, add mus-data-ref|set
  *    wrapper needs length -- x|ycoeffs?
- *
- * clm.h MUS_VERSION is 6, so *features* shows 'clm6, but clm5 is the CL version?
  *
  * instead of t_c_object, why not pass a pointer to the s7_cell memory, and let
  *    the user decide everything about those 5 fields = 40 bytes.  Can this be
@@ -67973,8 +67973,16 @@ int main(int argc, char **argv)
  *    fields, s7_make_object(sc, type) -- leaving rest to caller, s7_object_let(obj)?
  *    copy/reverse/fill/length?? ignored -- use let -- return to original s7_new_type
  *    except we need the method list, and funcs like equal/free/mark get the original cell, not c_object_value(cell)
- *    why doesn't fallback_print use the object_types[tag]->name?
  *    need method fallbacks in current cases like reverse, and ideally make-iterator (not pos)
  *    all the funcs (length/etc) should be s7_functions
  *    if not s7_object_let, perhaps s7_method taking obj arg? like find_method here
+ *    T_C_CELL|OBJECT: make current T_C_OBJECT a derivative of it (and example) so all current c_object cases are secondary
+ *      needs to be a different s7 type else we collide? or use current without the apply/set funcs
+ *    affects:
+ *      s7_new_type[_x] s7_object_type s7_object_value s7_object_value_checked s7_vector_ref_object_value_checked s7_make_object
+ *      s7_mark_object s7_object_let s7_object_set_let s7_set_object_print_readably
+ *    add (bool)s7_is_cell? (int)s7_cell_type is ambiguous
+ *        (s7_pointer)s7_make_cell and (int)s7_new_cell_type
+ *        (void *)s7_cell_block? rtns null if not t_c_cell?
+ *        
  */

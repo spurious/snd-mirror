@@ -1,30 +1,16 @@
-Snd 15.3
+Snd 15.4
 
-procedure-documentation no longer refers to an optional string that happens
-  to be the first thing in a procedure body, but to the value of a variable
-  named 'documentation' in the procedure's environment.
+before-save-as-hook arg order changed, also new-sound, save-region, save-selection, save-sound-as
 
-procedure-arity is deprecated, s7_procedure_arity replaced by s7_arity.
-  procedure-name is deprecated. data-format removed (see snd15.scm).
+deprecated output-name-hook, info-popup-hook, peak-env-hook, start-hook
 
-format has another control directive: ~N or ~n which gets a numeric argument
-  from the argument list: (format #f "~nD" 20 123)
+changed s7_new_type_x args
 
-with-sound argument order changed slightly. It is now: output channels srate.
-  Ideally, other Snd functions like new-sound would follow the same argument
-  order -- let me know if this change would cause you problems.
+mus-audio* deprecated (these haven't worked at all for a long time)
+mus_set_name (and mus-set-name) deprecated
 
-float-vector-equal? -- relative difference of two float-vectors.
+in CLM, Juan Reyes added sbcl support for gnuplot in dlocsig.lisp
 
-make-iterator, iterate, iterator? -- replace make-hash-table-iterator and 
-  hash-table-iterator? These are generic functions to traverse sequences.
+checked: sbcl 1.2.8, gtk 3.15.5|7|8|9
 
-if (*s7* 'safety) > 1, optimization is turned off
-(*s7* 'maximum-stack-size) is now (*s7* 'max-stack-size)
-(*s7* 'print-length) replaces *vector-print-length*
-(*s7* 'bignum-precision) replaces *bignum-precision*
-(*s7* 'stacktrace-defaults) replaces *stacktrace*
-
-checked: sbcl 1.2.7, gtk 3.15.4
-
-
+Thanks!: Mike Scholz, Juan Reyes, Anders Vinjar, Michel Dutat

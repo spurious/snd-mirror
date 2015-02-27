@@ -5511,19 +5511,19 @@ mus_sample_t mus_audio_device_format(int dev) /* snd-dac */
 #if MUS_JACK
   if (api == MUS_JACK_API) 
     {
-      mixer_vals[0] = 1;
+      mixer_vals[0] = (mus_sample_t)1;
       mixer_vals[1] = MUS_COMP_FLOAT;
     }
 #endif
 
 #if HAVE_SUN
-  mixer_vals[0] = 2;
+  mixer_vals[0] = (mus_sample_t)2;
   mixer_vals[1] = MUS_LSHORT;
   mixer_vals[2] = MUS_MULAW;
 #endif
 
 #if __APPLE__
-  mixer_vals[0] = 1;
+  mixer_vals[0] = (mus_sample_t)1;
 #if MUS_LITTLE_ENDIAN
   mixer_vals[1] = MUS_LFLOAT;
 #else

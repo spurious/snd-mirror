@@ -383,7 +383,6 @@ const char *s7_format(s7_scheme *sc, s7_pointer args);                      /* (
 
 bool s7_is_procedure(s7_pointer x);                                         /* (procedure? x) */
 bool s7_is_macro(s7_scheme *sc, s7_pointer x);                              /* (macro? x) */
-s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);                /* (procedure-source x) if it can be found */
 s7_pointer s7_closure_body(s7_scheme *sc, s7_pointer p);
 s7_pointer s7_closure_let(s7_scheme *sc, s7_pointer p);
 s7_pointer s7_closure_args(s7_scheme *sc, s7_pointer p);
@@ -778,6 +777,8 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 #define s7_is_open_environment s7_is_openlet
 #define s7_object_environment s7_object_let
 #define s7_object_set_environment s7_object_set_let
+
+s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);
 #endif
 
 
@@ -786,7 +787,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
- * 25-Feb:    s7_closure_* funcs to replace clumsy s7_procedure_source.
+ * 25-Feb:    s7_closure_* funcs to replace clumsy (deprecated) s7_procedure_source.
  * 29-Jan:    changed args to s7_new_type_x (added s7_scheme arg, fill! takes s7_function).
  * 14-Jan-15: make-iterator, iterator?
  * --------
