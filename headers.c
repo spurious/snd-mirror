@@ -34,7 +34,7 @@
  * test cases (sample files): ccrma-ftp.stanford.edu:/pub/Lisp/sf.tar.gz
  */
 
-#include <mus-config.h>
+#include "mus-config.h"
 
 #if USE_SND
   #include "snd.h"

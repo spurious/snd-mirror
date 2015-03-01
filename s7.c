@@ -48,7 +48,7 @@
  * ---------------- compile time switches ---------------- 
  */
 
-#include <mus-config.h>
+#include "mus-config.h"
 
 /* 
  * Your config file goes here, or just replace that #include line with the defines you need.
@@ -874,9 +874,6 @@ struct s7_scheme {
   s7_pointer Vector_Set, String_Set, List_Set, Hash_Table_Set, Let_Set; /* Cons (see the setter stuff at the end) */
 
   s7_pointer LAMBDA, LAMBDA_STAR, LET, QUOTE, UNQUOTE, MACROEXPAND, DEFINE_EXPANSION, BAFFLE, WITH_LET, DOCUMENTATION;
-#if (!DISABLE_DEPRECATED)
-  s7_pointer WITH_ENVIRONMENT;
-#endif
   s7_pointer SET, QQ_List, QQ_Apply_Values, QQ_Append, Multivector;
   s7_pointer Apply, Vector;
   s7_pointer WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO, WTA1, WTA2, WTA3, WTA4, WTA5;
@@ -1896,10 +1893,7 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 
 static c_object_t **object_types = NULL;
 static int object_types_size = 0;
-static int num_types = 0;
-/* ideally these would be specific to the current s7, but I did not pass the s7_scheme pointer
- *   to s7_new_type and friends.
- */
+static int num_object_types = 0;
 
 #define c_object_info(p)              object_types[c_object_type(p)]
 #define c_object_ref(p)               c_object_info(p)->ref
@@ -2117,7 +2111,6 @@ static bool is_all_x_safe(s7_scheme *sc, s7_pointer p);
 static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg);
 static void annotate_args(s7_scheme *sc, s7_pointer args);
 static void annotate_arg(s7_scheme *sc, s7_pointer arg);
-static void mark_embedded_objects(s7_pointer a); /* called by gc, calls c_obj's mark func */
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op);
 static s7_pointer division_by_zero_error(s7_scheme *sc, s7_pointer caller, s7_pointer arg);
 static s7_pointer file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name);
@@ -3759,7 +3752,7 @@ static void mark_int_or_float_vector(s7_pointer p)
 static void mark_c_object(s7_pointer p)
 {
   set_mark(p);
-  mark_embedded_objects(p);
+  (*(c_object_mark(p)))(c_object_value(p));
 }
 
 static void mark_catch(s7_pointer p)
@@ -5305,21 +5298,11 @@ static s7_pointer find_let(s7_scheme *sc, s7_pointer obj)
 
 static s7_pointer find_method(s7_scheme *sc, s7_pointer env, s7_pointer symbol) 
 { 
-
-#if 0
-  s7_pointer x, y;
-
-  for (x = env; is_let(x); x = outlet(x))
-    for (y = let_slots(x); is_slot(y); y = next_slot(y))
-      if (slot_symbol(y) == symbol)
-	return(slot_value(y));
-#endif
-
   s7_pointer x;
-  if (symbol_id(symbol) == 0) /* an experiment -- this means the symbol has never been used locally, so how can it be a method? */
+  if (symbol_id(symbol) == 0) /* this means the symbol has never been used locally, so how can it be a method? */
     return(sc->UNDEFINED);
 
-  /* and another experiment -- I think the symbol_id is in sync with let_id, so the standard search should work */
+  /* I think the symbol_id is in sync with let_id, so the standard search should work */
   if (let_id(env) == symbol_id(symbol))
     return(slot_value(local_slot(symbol)));	
 
@@ -24305,62 +24288,32 @@ static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator)
 
 static s7_pointer string_iterate(s7_scheme *sc, s7_pointer obj)
 {
-  if (iterator_position(obj) < iterator_length(obj))
-    {
-      s7_pointer result;
-      result = s7_make_character(sc, (unsigned char)(string_value(iterator_sequence(obj))[iterator_position(obj)]));
-      iterator_position(obj)++;
-      return(result);
-    }
-  return(sc->ITERATOR_END);
+  return((iterator_position(obj) < iterator_length(obj)) ? 
+	 s7_make_character(sc, (unsigned char)(string_value(iterator_sequence(obj))[iterator_position(obj)++])) : sc->ITERATOR_END);
 }
 
 static s7_pointer bytevector_iterate(s7_scheme *sc, s7_pointer obj)
 {
-  if (iterator_position(obj) < iterator_length(obj))
-    {
-      s7_pointer result;
-      result = small_int((unsigned char)(string_value(iterator_sequence(obj))[iterator_position(obj)]));
-      iterator_position(obj)++;
-      return(result);
-    }
-  return(sc->ITERATOR_END);
+  return((iterator_position(obj) < iterator_length(obj)) ? 
+	 small_int((unsigned char)(string_value(iterator_sequence(obj))[iterator_position(obj)++])) : sc->ITERATOR_END);
 }
 
 static s7_pointer float_vector_iterate(s7_scheme *sc, s7_pointer obj)
 {
-  if (iterator_position(obj) < iterator_length(obj))
-    {
-      s7_pointer result;
-      result = make_real(sc, float_vector_element(iterator_sequence(obj), iterator_position(obj)));
-      iterator_position(obj)++;
-      return(result);
-    }
-  return(sc->ITERATOR_END);
+  return((iterator_position(obj) < iterator_length(obj)) ? 
+	 make_real(sc, float_vector_element(iterator_sequence(obj), iterator_position(obj)++)) : sc->ITERATOR_END);
 }
 
 static s7_pointer int_vector_iterate(s7_scheme *sc, s7_pointer obj)
 {
-  if (iterator_position(obj) < iterator_length(obj))
-    {
-      s7_pointer result;
-      result = make_integer(sc, int_vector_element(iterator_sequence(obj), iterator_position(obj)));
-      iterator_position(obj)++;
-      return(result);
-    }
-  return(sc->ITERATOR_END);
+  return((iterator_position(obj) < iterator_length(obj)) ? 
+	 make_integer(sc, int_vector_element(iterator_sequence(obj), iterator_position(obj)++)) : sc->ITERATOR_END);
 }
 
 static s7_pointer vector_iterate(s7_scheme *sc, s7_pointer obj)
 {
-  if (iterator_position(obj) < iterator_length(obj))
-    {
-      s7_pointer result;
-      result = vector_element(iterator_sequence(obj), iterator_position(obj));
-      iterator_position(obj)++;
-      return(result);
-    }
-  return(sc->ITERATOR_END);
+  return((iterator_position(obj) < iterator_length(obj)) ? 
+	 vector_element(iterator_sequence(obj), iterator_position(obj)++) : sc->ITERATOR_END);
 }
 
 #define SAVE_X_Z(X, Z)	     \
@@ -30736,45 +30689,30 @@ s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *da
 }
 
 
-s7_Int s7_vector_length(s7_pointer vec)
+s7_Int s7_vector_length(s7_pointer vec) 
 {
   return(vector_length(vec));
 }
 
-
-s7_Int s7_vector_print_length(s7_scheme *sc)
-{
-  return(sc->print_length);
-}
-
-
+#if (!DISABLE_DEPRECATED)
+s7_Int s7_vector_print_length(s7_scheme *sc) {return(sc->print_length);}
 s7_Int s7_set_vector_print_length(s7_scheme *sc, s7_Int new_len)
 {
   s7_Int old_len;
   old_len = sc->print_length;
   sc->print_length = new_len;
-#if (!DISABLE_DEPRECATED)
-  s7_symbol_set_value(sc, s7_make_symbol(sc, "*vector-print-length*"), make_integer(sc, new_len));
+ return(old_len);
+}
 #endif
+s7_Int s7_print_length(s7_scheme *sc) {return(sc->print_length);}
+s7_Int s7_set_print_length(s7_scheme *sc, s7_Int new_len)
+{
+  s7_Int old_len;
+  old_len = sc->print_length;
+  sc->print_length = new_len;
  return(old_len);
 }
 
-#if (!DISABLE_DEPRECATED)
-static s7_pointer g_vector_print_length_set(s7_scheme *sc, s7_pointer args)
-{
-  if (s7_is_integer(cadr(args)))
-    {
-      s7_Int len;
-      len = s7_integer(cadr(args));
-      if (len >= 0)
-	{
-	  sc->print_length = len;
-	  return(cadr(args));
-	}
-    }
-  return(sc->ERROR);
-}
-#endif
 
 #if (!WITH_GMP)
 void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
@@ -34635,6 +34573,9 @@ static s7_pointer closure_name(s7_scheme *sc, s7_pointer closure)
 
 /* -------------------------------- new types -------------------------------- */
 
+static void fallback_free(void *value) {}
+static void fallback_mark(void *value) {}
+
 static char *fallback_print(s7_scheme *sc, void *val)
 {
   return(copy_string("#<unprintable object>"));
@@ -34645,8 +34586,6 @@ static char *fallback_print_readably(s7_scheme *sc, void *val)
   eval_error(sc, "can't print this object readably", sc->F);
   return(NULL);
 }
-
-static void fallback_free(void *value) {}
 
 static bool fallback_equal(void *val1, void *val2)
 {
@@ -34677,14 +34616,14 @@ static s7_pointer g_internal_object_set(s7_scheme *sc, s7_pointer args)
 
 int s7_new_type(const char *name, 
 		char *(*print)(s7_scheme *sc, void *value), 
-		void (*free)(void *value), 
+		void (*gc_free)(void *value), 
 		bool (*equal)(void *val1, void *val2),
 		void (*gc_mark)(void *val),
-                s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
+                s7_pointer (*ref)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
                 s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args))
 {
   int tag;
-  tag = num_types++;
+  tag = num_object_types++;
   if (tag >= object_types_size)
     {
       if (object_types_size == 0)
@@ -34703,30 +34642,16 @@ int s7_new_type(const char *name,
   object_types[tag]->name = copy_string(name);
   object_types[tag]->scheme_name = s7_make_permanent_string(name);
 
-  if (free)
-    object_types[tag]->free = free;
-  else object_types[tag]->free = fallback_free;
+  object_types[tag]->free = (gc_free) ? gc_free : fallback_free;
+  object_types[tag]->print = (print) ? print : fallback_print;
+  object_types[tag]->equal = (equal) ? equal : fallback_equal;
+  object_types[tag]->gc_mark = (gc_mark) ? gc_mark : fallback_mark;
+  object_types[tag]->ref = (ref) ? ref : fallback_ref;
+  object_types[tag]->set = (set) ? set : fallback_set;
 
-  if (print)
-    object_types[tag]->print = print;
-  else object_types[tag]->print = fallback_print;
-
-  if (equal)
-    object_types[tag]->equal = equal;
-  else object_types[tag]->equal = fallback_equal;
-
-  object_types[tag]->gc_mark = gc_mark;
-
-  if (apply)
-    object_types[tag]->ref = apply;
-  else object_types[tag]->ref = fallback_ref; /* ref set only here */
   if (object_types[tag]->ref != fallback_ref)
     object_types[tag]->outer_type = (T_C_OBJECT | T_PROCEDURE | T_SAFE_PROCEDURE);
   else object_types[tag]->outer_type = T_C_OBJECT;
-
-  if (set)
-    object_types[tag]->set = set;
-  else object_types[tag]->set = fallback_set;
 
   object_types[tag]->length = fallback_length;
   object_types[tag]->copy = NULL;
@@ -34771,20 +34696,8 @@ static void free_object(s7_pointer a)
 
 static bool objects_are_equal(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
-  if (c_object_type(a) == c_object_type(b))
-    {
-      if (c_object_equal(a))
-	return((*(c_object_equal(a)))(c_object_value(a), c_object_value(b)));
-      return(a == b);
-    }
-  return(false);
-}
-
-
-static void mark_embedded_objects(s7_pointer a) /* called by gc, calls c_obj's mark func */
-{
-  if (c_object_mark(a))
-    (*(c_object_mark(a)))(c_object_value(a));
+  return((c_object_type(a) == c_object_type(b)) &&
+	 ((*(c_object_equal(a)))(c_object_value(a), c_object_value(b))));
 }
 
 
@@ -66168,7 +66081,7 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
       s7_pointer res;
       int i;
       sc->w = sc->NIL;
-      for (i = 0; i < num_types; i++)
+      for (i = 0; i < num_object_types; i++)
 	sc->w = cons(sc, make_string_wrapper(sc, object_types[i]->name), sc->w);
       res = sc->w;
       sc->w = sc->NIL;
@@ -66196,9 +66109,6 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 	  if (integer(val) < 0)
 	    return(simple_out_of_range(sc, sc->LET_SET, val, make_string_wrapper(sc, "should be a positive integer")));
 	  sc->print_length = integer(val);
-#if (!DISABLE_DEPRECATED)
-	  s7_symbol_set_value(sc, s7_make_symbol(sc, "*vector-print-length*"), val);
-#endif
 	  return(val);
 	}
       return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
@@ -66718,11 +66628,6 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "define-bacro*",     OP_DEFINE_BACRO_STAR, small_int(2), max_arity,    DEFINE_BACRO_STAR_HELP);
   assign_syntax(sc, "with-baffle",       OP_WITH_BAFFLE,       small_int(1), max_arity,    WITH_BAFFLE_HELP);
   assign_syntax(sc, "macroexpand",       OP_MACROEXPAND,       small_int(1), small_int(1), MACROEXPAND_HELP);
-
-#if (!DISABLE_DEPRECATED)
-  set_immutable(assign_syntax(sc, "with-environment", OP_WITH_LET, small_int(1), max_arity,WITH_LET_HELP));
-			      
-#endif
   set_immutable(assign_syntax(sc, "with-let", OP_WITH_LET,     small_int(1), max_arity,    WITH_LET_HELP));
 
   sc->QUOTE_UNCHECKED =       assign_internal_syntax(sc, "quote",       OP_QUOTE_UNCHECKED);
@@ -66867,9 +66772,6 @@ s7_scheme *s7_init(void)
   sc->LET =                   make_symbol(sc, "let");
   sc->DOCUMENTATION =         make_symbol(sc, "documentation");
   sc->QUOTE =                 make_symbol(sc, "quote");
-#if (!DISABLE_DEPRECATED)
-  sc->WITH_ENVIRONMENT =      make_symbol(sc, "with-environment");
-#endif
   sc->WITH_LET =              make_symbol(sc, "with-let");
 
 #if WITH_IMMUTABLE_UNQUOTE
@@ -67403,12 +67305,6 @@ s7_scheme *s7_init(void)
   sc->S7_FEATURES = s7_define_variable(sc, "*features*", sc->NIL);
   s7_symbol_set_access(sc, sc->S7_FEATURES, s7_make_function(sc, "(set *features*)", g_features_set, 2, 0, false, "*features* accessor"));
 
-#if (!DISABLE_DEPRECATED)
-  /* -------- *vector-print-length* -------- */
-  sym = s7_define_variable(sc, "*vector-print-length*", small_int(sc->print_length));
-  s7_symbol_set_access(sc, sym, s7_make_function(sc, "(set *vector-print-length*)", g_vector_print_length_set, 2, 0, false, "*vector-print-length* accessor"));
-#endif
-
   /* -------- *load-path* -------- */
   sc->LOAD_PATH = s7_define_variable_with_documentation(sc, "*load-path*", sc->NIL, "*load-path* is a list of directories (strings) that the load function searches if it is passed an incomplete file name");
   s7_symbol_set_access(sc, sc->LOAD_PATH, s7_make_function(sc, "(set *load-path*)", g_load_path_set, 2, 0, false, "*load-path* accessor"));
@@ -67753,6 +67649,7 @@ s7_scheme *s7_init(void)
                         (define environment-set!             let-set!) \n\
                         (define environment                  inlet)    \n\
                         (define environment*                 inlet)    \n\
+                        (define with-environment             with-let) \n\
                         (define make-procedure-with-setter   dilambda) \n\
                         (define procedure-with-setter?       dilambda?)\n\
                         (define (procedure-arity obj) (let ((c (arity obj))) (list (car c) (- (cdr c) (car c)) (> (cdr c) 100000))))");
@@ -67911,15 +67808,15 @@ int main(int argc, char **argv)
 /* ----------------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5
- * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002
- * lg             |      |      | 6547 6497 6494 6235 6229
- * t137           |      |      | 11.0           5031 4769
- * t455|6     265 |   89 |  9   |       8.4 8045 7482 7265
- * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8
- * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5
- * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1142
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3002
+ * lg             |      |      | 6547 6497 6494 6235 6229 6246
+ * t137           |      |      | 11.0           5031 4769 4785
+ * t455|6     265 |   89 |  9   |       8.4 8045 7482 7265 7265
+ * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
+ * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.9
+ * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9
  *
  * ----------------------------------------------------------
  *
@@ -67960,29 +67857,5 @@ int main(int argc, char **argv)
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * clm.h MUS_VERSION is 6, so *features* shows 'clm6, but clm5 is the CL version?
  *
- * it's wasteful to wrap vcts that aren't ever accessed -- perhaps a mus_core func to get data_wrapper? or do the access direct?
- *    so mus_data would wrap, but (mus_data i) would simply access via some class func -- mus_data itself! who needs a wrapper?
- *    same for x|y-coeffs -- we only need to mark vct if it was passed to make-*, so the vcts array is only needed for GC protection of args
- *    get a list of these by gen, undo reliance on intermediate vector, undo internal wrappers, add mus-data-ref|set
- *    wrapper needs length -- x|ycoeffs?
- *
- * instead of t_c_object, why not pass a pointer to the s7_cell memory, and let
- *    the user decide everything about those 5 fields = 40 bytes.  Can this be
- *    retrofitted into the current form?  Currently need the tag -> table of funcs.
- *    Then say, first 4 bytes are the tag, rest is open.  So, remove e (let), and value
- *    fields, s7_make_object(sc, type) -- leaving rest to caller, s7_object_let(obj)?
- *    copy/reverse/fill/length?? ignored -- use let -- return to original s7_new_type
- *    except we need the method list, and funcs like equal/free/mark get the original cell, not c_object_value(cell)
- *    need method fallbacks in current cases like reverse, and ideally make-iterator (not pos)
- *    all the funcs (length/etc) should be s7_functions
- *    if not s7_object_let, perhaps s7_method taking obj arg? like find_method here
- *    T_C_CELL|OBJECT: make current T_C_OBJECT a derivative of it (and example) so all current c_object cases are secondary
- *      needs to be a different s7 type else we collide? or use current without the apply/set funcs
- *    affects:
- *      s7_new_type[_x] s7_object_type s7_object_value s7_object_value_checked s7_vector_ref_object_value_checked s7_make_object
- *      s7_mark_object s7_object_let s7_object_set_let s7_set_object_print_readably
- *    add (bool)s7_is_cell? (int)s7_cell_type is ambiguous
- *        (s7_pointer)s7_make_cell and (int)s7_new_cell_type
- *        (void *)s7_cell_block? rtns null if not t_c_cell?
- *        
+ * finish smpflt free_list and add sw, other biggies: flt, [osc, pw, cosp, rxyk?]
  */

@@ -3,7 +3,7 @@
  *   for tests and examples see snd-motif.scm, bess.scm|rb, and snd-test.scm
  */
 
-#include <mus-config.h>
+#include "mus-config.h"
 #include <stdlib.h>
 
 
@@ -400,7 +400,7 @@ static void define_xm_obj(void)
  */
 
 #define wrap_for_Xen(Name, Value) Xen_list_2(C_string_to_Xen_symbol(Name), Xen_wrap_C_pointer(Value))
-#define wrap_for_Xen_OBJ(Name, Value) Xen_list_3(C_string_to_Xen_symbol(Name), Xen_wrap_C_pointer(Value), make_xm_obj(Value))
+#define wrap_for_Xen_obj(Name, Value) Xen_list_3(C_string_to_Xen_symbol(Name), Xen_wrap_C_pointer(Value), make_xm_obj(Value))
 #define is_wrapped(Name, Value) (Xen_is_list(Value) && \
                             (Xen_list_length(Value) >= 2) && \
                             (Xen_is_symbol(Xen_car(Value))) && \
@@ -449,7 +449,7 @@ static void define_xm_obj(void)
   static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));}
 
 #define Xm_type_ptr_obj(Name, XType) \
-  static Xen C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen_OBJ(#Name, val)); return(Xen_false);} \
+  static Xen C_to_Xen_ ## Name (XType val) {if (val) return(wrap_for_Xen_obj(#Name, val)); return(Xen_false);} \
   static XType Xen_to_C_ ## Name (Xen val) {if (Xen_is_false(val)) return(NULL); return((XType)Xen_unwrap_C_pointer(Xen_cadr(val)));} \
   static bool Xen_is_ ## Name (Xen val) {return(is_wrapped(#Name, val));} \
   static Xen g_is_ ## Name (Xen val) {return(C_bool_to_Xen_boolean(is_wrapped(#Name, val)));}
@@ -691,11 +691,11 @@ static Xen gxm_XGCValues(void)
 {
   XGCValues *e;
   e = (XGCValues *)calloc(1, sizeof(XGCValues));
-  return(wrap_for_Xen_OBJ("XGCValues", e));
+  return(wrap_for_Xen_obj("XGCValues", e));
 }
 
 #define XM_Make(Name) \
-  static Xen gxm_ ## Name (void) {Name *e; e = (Name *)calloc(1, sizeof(Name)); return(wrap_for_Xen_OBJ(#Name, e));} \
+  static Xen gxm_ ## Name (void) {Name *e; e = (Name *)calloc(1, sizeof(Name)); return(wrap_for_Xen_obj(#Name, e));} \
   Xen_wrap_no_args(gxm_ ## Name ## _w, gxm_ ## Name)
 #define XM_Declare(Name) \
   Xen_define_safe_procedure(XM_PREFIX #Name XM_POSTFIX, gxm_ ## Name ## _w, 0, 0, 0, "Make an " #Name " struct")
@@ -743,7 +743,7 @@ static Xen gxm_XmTextBlock(void)
 {
   XmTextBlockRec *e; 
   e = (XmTextBlockRec *)calloc(1, sizeof(XmTextBlockRec)); 
-  return(wrap_for_Xen_OBJ("XmTextBlock", e));
+  return(wrap_for_Xen_obj("XmTextBlock", e));
 }
 
 Xen_wrap_no_args(gxm_XmTextBlock_w, gxm_XmTextBlock)
@@ -9121,7 +9121,7 @@ static Xen gxm_XQueryTextExtents(Xen arg1, Xen arg2, Xen arg3)
 		    C_int_to_Xen_integer(dr),
 		    C_int_to_Xen_integer(fa),
 		    C_int_to_Xen_integer(fd),
-		    wrap_for_Xen_OBJ("XCharStruct", c)));
+		    wrap_for_Xen_obj("XCharStruct", c)));
 }
 
 static Xen gxm_XQueryPointer(Xen arg1, Xen arg2)
@@ -16585,7 +16585,7 @@ static Xen gxm_XpmCreateXpmImageFromPixmap(Xen arg1, Xen arg2, Xen arg3, Xen arg
 				    image,
 				    (Xen_is_false(arg5)) ? NULL : Xen_to_C_XpmAttributes(arg5));
   if (val == XpmSuccess)
-    return(wrap_for_Xen_OBJ("XpmImage", image));
+    return(wrap_for_Xen_obj("XpmImage", image));
   free(image);
   return(C_int_to_Xen_integer(val));
 }
@@ -16638,7 +16638,7 @@ static Xen gxm_XpmReadFileToXpmImage(Xen arg1)
   image = (XpmImage *)calloc(1, sizeof(XpmImage));
   val = XpmReadFileToXpmImage((char *)Xen_string_to_C_string(arg1), image, NULL);
   if (val == XpmSuccess)
-    return(wrap_for_Xen_OBJ("XpmImage", image));
+    return(wrap_for_Xen_obj("XpmImage", image));
   free(image);
   return(C_int_to_Xen_integer(val));
 }
@@ -16722,7 +16722,7 @@ static Xen gxm_XpmColorSymbol(Xen name, Xen value, Xen pixel)
   r->name = (char *)Xen_string_to_C_string(name);
   r->value = (Xen_is_false(value)) ? NULL : (char *)Xen_string_to_C_string(value);
   r->pixel = Xen_to_C_Pixel(pixel);
-  return(wrap_for_Xen_OBJ("XpmColorSymbol",r));
+  return(wrap_for_Xen_obj("XpmColorSymbol",r));
 }
 
 static Xen gxm_XpmImage(Xen width, Xen height, Xen cpp, Xen ncolors, Xen data)
@@ -16740,13 +16740,13 @@ static Xen gxm_XpmImage(Xen width, Xen height, Xen cpp, Xen ncolors, Xen data)
   r->cpp = Xen_ulong_to_C_ulong(cpp);
   r->ncolors = Xen_ulong_to_C_ulong(ncolors);
   r->data = (unsigned int *)Xen_ulong_to_C_ulong(data);
-  return(wrap_for_Xen_OBJ("XpmImage", r));
+  return(wrap_for_Xen_obj("XpmImage", r));
 }
 
 static Xen gxm_XpmAttributes(void)
 {
   #define H_XpmAttributes "(XpmAttributes): new XpmAttributes struct"
-  return(wrap_for_Xen_OBJ("XpmAttributes", 
+  return(wrap_for_Xen_obj("XpmAttributes", 
 			  (XpmAttributes *)calloc(1, sizeof(XpmAttributes))));
 }
 
@@ -19361,7 +19361,7 @@ static Xen gxm_XTextItem(Xen chars, Xen nchars, Xen delta, Xen font)
   r->nchars = Xen_integer_to_C_int(nchars);
   r->delta = Xen_integer_to_C_int(delta);
   r->font = Xen_to_C_Font(font);
-  return(wrap_for_Xen_OBJ("XTextItem", (XTextItem *)r));
+  return(wrap_for_Xen_obj("XTextItem", (XTextItem *)r));
 }
 
 static Xen gxm_chars(Xen ptr)

@@ -92,7 +92,7 @@
  *     11-Feb-02: initial version.
  */
 
-#include <mus-config.h>
+#include "mus-config.h"
 
 #define HAVE_GTK_3 (GTK_MAJOR_VERSION == 3)
 #define HAVE_CAIRO_1_8    ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 8))
@@ -45204,7 +45204,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("22-Feb-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("28-Feb-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

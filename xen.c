@@ -1,6 +1,6 @@
 /* xen support procedures */
 
-#include <mus-config.h>
+#include "mus-config.h"
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>

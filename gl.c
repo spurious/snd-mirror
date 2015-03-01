@@ -29,7 +29,7 @@
  *     20-May-02: initial version.
  */
 
-#include <mus-config.h>
+#include "mus-config.h"
 
 #if HAVE_EXTENSION_LANGUAGE
 #include <GL/gl.h>
@@ -5652,7 +5652,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       Xen_provide_feature("gl");
-      Xen_define("gl-version", C_string_to_Xen_string("29-Dec-14"));
+      Xen_define("gl-version", C_string_to_Xen_string("28-Feb-15"));
       gl_already_inited = true;
     }
 }

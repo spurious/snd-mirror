@@ -1,4 +1,4 @@
-#include <mus-config.h>
+#include "mus-config.h"
 
 #if (defined(__GNUC__)) && (!(defined(__cplusplus)))
   #define _GNU_SOURCE

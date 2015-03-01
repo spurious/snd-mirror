@@ -11628,7 +11628,13 @@ EDITS: 2
       (if (equal? g0 g1)
 	  (snd-display #__line__ ";run ~A equal?~%    ~A~%    ~A" (mus-name g0) g0 g1))
       (if (equal? g0 g2)
-	  (snd-display #__line__ ";run ~A equal?~%    ~A~%    ~A" (mus-name g0) g0 g2))))
+	  (snd-display #__line__ ";run ~A equal?~%    ~A~%    ~A" (mus-name g0) g0 g2))
+      (let ((data (catch #t (lambda () (mus-data g0)) (lambda args #f))))
+	(when (float-vector? data)
+	  (let ((g4 (copy g0)))
+	    (let ((data4 (catch #t (lambda () (mus-data g4)) (lambda args #f))))
+	      (if (not (float-vector? data4)) 
+		  (snd-display #__line__ ";~A copy -> mus-data ~A?" (mus-name g0) data4))))))))
   
   ;; ----------------
   (define (fm-test gen)

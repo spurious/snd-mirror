@@ -6,7 +6,7 @@
  * (env env) is accepted by the optimizer in error
  */
 
-#include <mus-config.h>
+#include "mus-config.h"
 
 #if USE_SND
   #include "snd.h"
@@ -130,12 +130,11 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 #endif
 
 struct mus_xen {
-  mus_any *gen;
   int nvcts;
+  mus_any *gen;
   Xen *vcts; /* one for each accessible mus_float_t array (wrapped up here in a vct) */
   struct mus_xen *next;
 #if HAVE_SCHEME
-  int type; /* currently only oscil/formant type checks */
   gf *g;
 #endif
 };
@@ -157,11 +156,12 @@ static mus_xen *mx_alloc(int vcts)
 #endif
       return(p);
     }
-  p = (mus_xen *)calloc(1, sizeof(mus_xen));
+  p = (mus_xen *)malloc(sizeof(mus_xen));
   p->nvcts = vcts;
   if (vcts > 0)
     p->vcts = (Xen *)malloc(vcts * sizeof(Xen));
   else p->vcts = NULL;
+  /* p->next = NULL; */
 #if HAVE_SCHEME
   p->g = NULL;
 #endif
@@ -175,8 +175,6 @@ static void mx_free(mus_xen *p)
   mx_free_lists[p->nvcts] = p;
 }
 
-
-#define FORMANT_TAG 1
 
 mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #define mus_xen_to_mus_any(Gn) (((mus_xen *)Gn)->gen)
@@ -1416,18 +1414,12 @@ enum {G_FILTER_STATE, G_FILTER_XCOEFFS, G_FILTER_YCOEFFS};
 /* G_FILTER_STATE must = MUS_DATA_WRAPPER = 0 */
 enum {G_LOCSIG_DATA, G_LOCSIG_REVDATA, G_LOCSIG_OUT, G_LOCSIG_REVOUT};
 
-static void set_as_needed_input_choices(mus_any *gen, Xen obj, mus_xen *gn);
-
 static Xen mus_xen_copy(mus_xen *ms)
 {
   /* return an object -> copied mus_xen -> copied mus_any gen */
   mus_xen *np;
 
   np = mx_alloc(ms->nvcts);
-#if HAVE_SCHEME
-  np->type = ms->type; /* np->g is set to NULL by mx_alloc */
-#endif
-
   np->gen = mus_copy(ms->gen);
   if (ms->nvcts > 0)
     {
@@ -1436,22 +1428,13 @@ static Xen mus_xen_copy(mus_xen *ms)
 	  if ((mus_is_comb_bank(np->gen)) ||
 	      (mus_is_all_pass_bank(np->gen)) ||
 	      (mus_is_filtered_comb_bank(np->gen)))
-	    {
-	      /* set up objects for new gens so that they will eventually be GC'd */
-	      Xen v;
-	      int i, len;
-	      len = Xen_vector_length(ms->vcts[MUS_DATA_WRAPPER]);
-	      v = Xen_make_vector(len, Xen_false);
-	      np->vcts[MUS_DATA_WRAPPER] = v;
-	      for (i = 0; i < len; i++)
-		Xen_vector_set(v, i, mus_xen_to_object(mus_any_to_mus_xen(mus_bank_generator(np->gen, i))));
-	    }
+	    np->vcts[MUS_DATA_WRAPPER] = Xen_false;
 	  else
 	    {
-	      if ((mus_is_formant_bank(np->gen)) ||
-		  (mus_is_env(np->gen)))
+	      if ((mus_is_env(np->gen)) ||
+		  (mus_is_formant_bank(np->gen)))
 		np->vcts[MUS_DATA_WRAPPER] = ms->vcts[MUS_DATA_WRAPPER];
-	      else np->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen));
+	      else np->vcts[MUS_DATA_WRAPPER] = Xen_integer_zero; /* xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen)); */
 	    }
 	}
       else
@@ -1468,7 +1451,7 @@ static Xen mus_xen_copy(mus_xen *ms)
 		{
 		  if (mus_is_filtered_comb(np->gen))
 		    {
-		      np->vcts[0] = xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen));
+		      np->vcts[0] = Xen_integer_zero; /* xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen)); */
 		      np->vcts[1] = Xen_false; /* filt gen but it's not wrapped */
 		    }
 		  else
@@ -1485,12 +1468,12 @@ static Xen mus_xen_copy(mus_xen *ms)
 		  if (mus_is_oscil_bank(np->gen))
 		    {
 		      np->vcts[0] = ms->vcts[0];
-		      np->vcts[1] = xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen));
+		      np->vcts[1] = Xen_false; /*xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen)); */ /* original phases array (GC protection?) */
 		      np->vcts[2] = ms->vcts[2];
 		    }
 		  else
 		    {
-		      np->vcts[G_FILTER_STATE] = xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen));
+		      np->vcts[G_FILTER_STATE] = Xen_integer_zero; /* xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen)); */
 		      np->vcts[G_FILTER_XCOEFFS] = ms->vcts[G_FILTER_XCOEFFS];
 		      np->vcts[G_FILTER_YCOEFFS] = ms->vcts[G_FILTER_YCOEFFS];
 		    }
@@ -1512,7 +1495,7 @@ static Xen mus_xen_copy(mus_xen *ms)
 		      Xen c_obj;
 		      c_obj = mus_xen_to_object(np);
 		      np->vcts[MUS_SELF_WRAPPER] = c_obj;
-		      set_as_needed_input_choices(np->gen, np->vcts[MUS_INPUT_FUNCTION], np);
+		      mus_generator_copy_feeders(np->gen, ms->gen);
 		      return(c_obj);
 		    }
 		}
@@ -2155,7 +2138,11 @@ Xen g_mus_data(Xen gen)
   if (ms) 
     {
       if (ms->vcts)
-	return(ms->vcts[MUS_DATA_WRAPPER]); 
+	{
+	  if (ms->vcts[MUS_DATA_WRAPPER] == Xen_integer_zero)
+	    ms->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_length(ms->gen), mus_data(ms->gen)); 
+	  return(ms->vcts[MUS_DATA_WRAPPER]); 
+	}
       else return(Xen_false);
     }
 #if HAVE_SCHEME
@@ -2215,6 +2202,9 @@ static Xen g_mus_xcoeffs(Xen gen)
       g = ms->gen;
       if (ms->vcts)
 	{
+	  if (ms->vcts[0] == Xen_integer_zero)
+	    ms->vcts[0] = xen_make_vct_wrapper(mus_length(ms->gen), mus_data(ms->gen)); 
+
 	  if (mus_is_polywave(g))
 	    return(ms->vcts[0]);
 	  if (ms->nvcts > G_FILTER_XCOEFFS)
@@ -4733,9 +4723,6 @@ static Xen g_make_frm(bool formant_case, const char *caller, Xen arg1, Xen arg2,
 	{
 	  mus_xen *gn;
 	  gn = mus_any_to_mus_xen(ge);
-#if HAVE_SCHEME
-	  gn->type = FORMANT_TAG;
-#endif
 	  return(mus_xen_to_object(gn));
 	}
     }
@@ -10869,7 +10856,7 @@ static s7_pointer g_formant_two(s7_scheme *sc, s7_pointer args)
   mus_xen *gn;
   gn = (mus_xen *)imported_s7_object_value_checked(car(args), mus_xen_tag);
   if ((gn) &&
-      (gn->type == FORMANT_TAG))
+      (mus_is_formant(gn->gen)))
     return(s7_make_real(sc, mus_formant(gn->gen, s7_number_to_real_with_caller(sc, cadr(args), S_formant))));
   Xen_check_type(false, car(args), 1, S_formant, "a " S_formant " generator");
   return(s7_f(sc));

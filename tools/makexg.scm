@@ -1478,7 +1478,7 @@
 (hey " *     11-Feb-02: initial version.~%")
 (hey " */~%~%")
 
-(hey "#include <mus-config.h>~%~%")
+(hey "#include \"mus-config.h\"~%~%")
 
 (hey "#define HAVE_GTK_3 (GTK_MAJOR_VERSION == 3)~%")
 (hey "#define HAVE_CAIRO_1_8    ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 8))~%")

@@ -96,6 +96,7 @@ MUS_EXPORT void mus_generator_set_read_sample(mus_any_class *p, mus_float_t (*re
 MUS_EXPORT void mus_generator_set_feeders(mus_any *g, 
 					  mus_float_t (*feed)(void *arg, int direction),
 					  mus_float_t (*block_feed)(void *arg, int direction, mus_float_t *block, mus_long_t start, mus_long_t end));
+MUS_EXPORT void mus_generator_copy_feeders(mus_any *dest, mus_any *source);
 
 MUS_EXPORT mus_float_t mus_radians_to_hz(mus_float_t radians);
 MUS_EXPORT mus_float_t mus_hz_to_radians(mus_float_t hz);

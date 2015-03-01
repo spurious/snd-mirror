@@ -34,7 +34,7 @@
  * char *mus_audio_moniker(void) returns some brief description of the overall audio setup (don't free return string).
  */
 
-#include <mus-config.h>
+#include "mus-config.h"
 
 #if USE_SND && __APPLE__ && USE_MOTIF
   #undef USE_MOTIF

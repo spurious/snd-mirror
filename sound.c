@@ -1,4 +1,4 @@
-#include <mus-config.h>
+#include "mus-config.h"
 
 #if USE_SND
   #include "snd.h"
@@ -185,7 +185,7 @@ static time_t local_file_write_date(const char *filename)
 
 /* -------- sound file table -------- */
 
-typedef struct {
+typedef struct sound_file {
   char *file_name;  /* full path -- everything is keyed to this name */
   int table_pos, file_name_length, table_index;
   mus_long_t *aux_comment_start, *aux_comment_end;
@@ -204,6 +204,7 @@ typedef struct {
   mus_long_t *maxtimes;
   int maxamps_size; /* we can't depend on sf->chans here because the user could set chans to some bogus value */
   mus_float_t **saved_data;
+  struct sound_file *next;
 } sound_file;
 
 static int *sound_table_sizes = NULL;
@@ -226,6 +227,9 @@ static int sound_file_hash_index(const char *name, int len)
 
 
 void scan_io_fds_for_saved_data(mus_float_t **data);
+
+static sound_file *sf_free_list = NULL;
+
 static void free_sound_file(sound_file *sf)
 {
   if (sf)
@@ -252,7 +256,9 @@ static void free_sound_file(sound_file *sf)
 	  free(sf->saved_data);
 	  sf->saved_data = NULL;
 	}
-      free(sf);
+      /* free(sf); */
+      sf->next = sf_free_list;
+      sf_free_list = sf;
     }
 }
 
@@ -292,8 +298,14 @@ static sound_file *add_to_sound_table(const char *name)
       sound_table_sizes[index] = sound_table_size;
     }
 
-  sound_table[pos] = (sound_file *)calloc(1, sizeof(sound_file));
-  sf = sound_table[pos];
+  if (sf_free_list)
+    {
+      sf = sf_free_list;
+      sf_free_list = sf->next;
+      memset((void *)sf, 0, sizeof(sound_file));
+    }
+  else sf = (sound_file *)calloc(1, sizeof(sound_file));
+  sound_table[pos] = sf;
   sf->table_pos = pos;
   sf->table_index = index;
   sf->file_name = (char *)malloc((len + 1) * sizeof(char));

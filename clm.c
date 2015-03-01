@@ -1,6 +1,6 @@
 /* CLM (Music V) implementation */
 
-#include <mus-config.h>
+#include "mus-config.h"
 
 #if USE_SND
   #include "snd.h"
@@ -4360,7 +4360,7 @@ bool mus_is_wave_train(mus_any *ptr)
 
 /* ---------------- delay, comb, notch, all-pass, moving-average, filtered-comb ---------------- */
 
-typedef struct {
+typedef struct dly {
   mus_any_class *core;
   unsigned int loc, size;
   bool zdly, line_allocated, filt_allocated;
@@ -4369,6 +4369,7 @@ typedef struct {
   mus_float_t xscl, yscl, yn1, y1, norm;
   mus_interp_t type;
   mus_any *filt;
+  struct dly *next;
   mus_float_t (*runf)(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
   mus_float_t (*del)(mus_any *ptr, mus_float_t input);                 /* zdelay or normal tap */
   mus_float_t (*delt)(mus_any *ptr, mus_float_t input);                /*   just tick */
@@ -4487,13 +4488,16 @@ mus_float_t mus_delay_unmodulated_noz(mus_any *ptr, mus_float_t input)
   return(result);
 }
 
+static dly *dly_free_list = NULL;
 
 static void free_delay(mus_any *gen) 
 {
   dly *ptr = (dly *)gen;
   if ((ptr->line) && (ptr->line_allocated)) free(ptr->line);
   if ((ptr->filt) && (ptr->filt_allocated)) mus_free(ptr->filt);
-  free(ptr);
+  /* free(ptr); */
+  ptr->next = dly_free_list;
+  dly_free_list = ptr;
 }
 
 static mus_any *dly_copy(mus_any *ptr)
@@ -4501,7 +4505,12 @@ static mus_any *dly_copy(mus_any *ptr)
   dly *g, *p;
   mus_long_t bytes;
   p = (dly *)ptr;
-  g = (dly *)malloc(sizeof(dly));
+  if (dly_free_list)
+    {
+      g = dly_free_list;
+      dly_free_list = g->next;
+    }
+  else g = (dly *)malloc(sizeof(dly));
   memcpy((void *)g, (void *)ptr, sizeof(dly));
 
   bytes = g->size * sizeof(mus_float_t);
@@ -4659,7 +4668,12 @@ mus_any *mus_make_delay(int size, mus_float_t *preloaded_line, int line_size, mu
    *    in clm2xen.c, if size=0 and max-size unset, max-size=1 (line_size here)
    */
   dly *gen;
-  gen = (dly *)malloc(sizeof(dly));
+  if (dly_free_list)
+    {
+      gen = dly_free_list;
+      dly_free_list = gen->next;
+    }
+  else gen = (dly *)malloc(sizeof(dly));
   gen->core = &DELAY_CLASS;
   gen->loc = 0;
   gen->size = size;
@@ -4833,6 +4847,7 @@ bool mus_is_comb(mus_any *ptr)
 typedef struct {
   mus_any_class *core;
   int size;
+  bool need_free;
   mus_any **gens;
   mus_float_t (*cmbf)(mus_any *ptr, mus_float_t input);
 } cmb_bank;
@@ -4841,6 +4856,12 @@ typedef struct {
 static void free_comb_bank(mus_any *ptr) 
 {
   cmb_bank *f = (cmb_bank *)ptr;
+  if (f->need_free)
+    {
+      int i;
+      for (i = 0; i < f->size; i++)
+	mus_free(f->gens[i]);
+    }
   if (f->gens) {free(f->gens); f->gens = NULL;}
   free(ptr); 
 }
@@ -4857,7 +4878,7 @@ static mus_any *cmb_bank_copy(mus_any *ptr)
   g->gens = (mus_any **)malloc(p->size * sizeof(mus_any *));
   for (i = 0; i < p->size; i++)
     g->gens[i] = mus_copy(p->gens[i]);
-
+  g->need_free = true;
   return((mus_any *)g);
 }
 
@@ -4981,6 +5002,7 @@ mus_any *mus_make_comb_bank(int size, mus_any **combs)
   gen = (cmb_bank *)malloc(sizeof(cmb_bank));
   gen->core = &COMB_BANK_CLASS;
   gen->size = size;
+  gen->need_free = false;
 
   gen->gens = (mus_any **)malloc(size * sizeof(mus_any *));
   for (i = 0; i < size; i++)
@@ -5235,6 +5257,7 @@ mus_any *mus_make_all_pass(mus_float_t backward, mus_float_t forward, int size, 
 typedef struct {
   mus_any_class *core;
   int size;
+  bool need_free;
   mus_any **gens;
   mus_float_t (*apf)(mus_any *ptr, mus_float_t input);
 } allp_bank;
@@ -5243,6 +5266,12 @@ typedef struct {
 static void free_all_pass_bank(mus_any *ptr) 
 {
   allp_bank *f = (allp_bank *)ptr;
+  if (f->need_free)
+    {
+      int i;
+      for (i = 0; i < f->size; i++)
+	mus_free(f->gens[i]);
+    }
   if (f->gens) {free(f->gens); f->gens = NULL;}
   free(ptr); 
 }
@@ -5259,7 +5288,7 @@ static mus_any *allp_bank_copy(mus_any *ptr)
   g->gens = (mus_any **)malloc(p->size * sizeof(mus_any *));
   for (i = 0; i < p->size; i++)
     g->gens[i] = mus_copy(p->gens[i]);
-
+  g->need_free = true;
   return((mus_any *)g);
 }
 
@@ -5374,6 +5403,7 @@ mus_any *mus_make_all_pass_bank(int size, mus_any **all_passs)
   gen = (allp_bank *)malloc(sizeof(allp_bank));
   gen->core = &ALL_PASS_BANK_CLASS;
   gen->size = size;
+  gen->need_free = false;
 
   gen->gens = (mus_any **)malloc(size * sizeof(mus_any *));
   for (i = 0; i < size; i++)
@@ -5840,6 +5870,7 @@ mus_any *mus_make_filtered_comb(mus_float_t scaler, int size, mus_float_t *line,
 typedef struct {
   mus_any_class *core;
   int size;
+  bool need_free;
   mus_any **gens;
   mus_float_t (*cmbf)(mus_any *ptr, mus_float_t input);
 } fltcmb_bank;
@@ -5848,6 +5879,12 @@ typedef struct {
 static void free_filtered_comb_bank(mus_any *ptr) 
 {
   fltcmb_bank *f = (fltcmb_bank *)ptr;
+  if (f->need_free)
+    {
+      int i;
+      for (i = 0; i < f->size; i++)
+	mus_free(f->gens[i]);
+    }
   if (f->gens) {free(f->gens); f->gens = NULL;}
   free(ptr); 
 }
@@ -5864,7 +5901,7 @@ static mus_any *fltcmb_bank_copy(mus_any *ptr)
   g->gens = (mus_any **)malloc(p->size * sizeof(mus_any *));
   for (i = 0; i < p->size; i++)
     g->gens[i] = mus_copy(p->gens[i]);
-
+  g->need_free = true;
   return((mus_any *)g);
 }
 
@@ -5993,6 +6030,7 @@ mus_any *mus_make_filtered_comb_bank(int size, mus_any **filtered_combs)
   gen = (fltcmb_bank *)malloc(sizeof(fltcmb_bank));
   gen->core = &FILTERED_COMB_BANK_CLASS;
   gen->size = size;
+  gen->need_free = false;
 
   gen->gens = (mus_any **)malloc(size * sizeof(mus_any *));
   for (i = 0; i < size; i++)
@@ -6883,15 +6921,19 @@ mus_any *mus_make_rand_interp_with_distribution(mus_float_t freq, mus_float_t ba
 
 /* ---------------- simple filters ---------------- */
 
-typedef struct {
+typedef struct smpflt {
   mus_any_class *core;
   mus_float_t xs[3];
   mus_float_t ys[3];
   mus_float_t x1, x2, y1, y2;
+  struct smpflt *next;
 } smpflt;
 
 
-static void free_smpflt(mus_any *ptr) {free(ptr);}
+static void free_smpflt(mus_any *ptr) 
+{
+  free(ptr);
+}
 
 static mus_any *smpflt_copy(mus_any *ptr)
 {
@@ -16039,6 +16081,39 @@ void mus_generator_set_feeders(mus_any *g,
 		{
 		  ((conv *)g)->feeder = feed;
 		  ((conv *)g)->block_feeder = block_feed;
+		}
+	    }
+	}
+    }
+}
+
+void mus_generator_copy_feeders(mus_any *dest, mus_any *source)
+{
+  if (mus_is_src(dest))
+    {
+      ((sr *)dest)->feeder = ((sr *)source)->feeder;
+      ((sr *)dest)->block_feeder = ((sr *)source)->block_feeder;
+    }
+  else
+    {
+      if (mus_is_granulate(dest))
+	{
+	  ((grn_info *)dest)->rd = ((grn_info *)source)->rd;
+	  ((grn_info *)dest)->block_rd = ((grn_info *)source)->block_rd;
+	}
+      else
+	{
+	  if (mus_is_phase_vocoder(dest))
+	    {
+	      ((pv_info *)dest)->input = ((pv_info *)source)->input;
+	      ((pv_info *)dest)->block_input = ((pv_info *)source)->block_input;
+	    }
+	  else
+	    {
+	      if (mus_is_convolve(dest))
+		{
+		  ((conv *)dest)->feeder = ((conv *)source)->feeder;
+		  ((conv *)dest)->block_feeder = ((conv *)source)->block_feeder;
 		}
 	    }
 	}

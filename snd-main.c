@@ -709,7 +709,7 @@ static void save_property_list(FILE *fd, Xen property_list, int chan, int edpos)
   int old_print_length, old_vct_print_length;
   int old_s7_print_length;
 
-  old_s7_print_length = s7_vector_print_length(s7);
+  old_s7_print_length = s7_print_length(s7);
   old_vct_print_length = mus_vct_print_length();
   old_print_length = print_length(ss);
 
@@ -763,7 +763,7 @@ static void save_property_list(FILE *fd, Xen property_list, int chan, int edpos)
   /* restore the various print lengths */
   set_print_length(old_print_length);
   mus_vct_set_print_length(old_vct_print_length);
-  s7_set_vector_print_length(s7, old_s7_print_length);
+  s7_set_print_length(s7, old_s7_print_length);
 }
 #endif
 
@@ -2099,7 +2099,7 @@ static void set_print_lengths(int len)
   set_print_length(len);
   mus_vct_set_print_length(len);
 #if HAVE_SCHEME
-  s7_set_vector_print_length(s7, len);
+  s7_set_print_length(s7, len);
 #endif
 }
 

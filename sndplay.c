@@ -1,6 +1,6 @@
 /* sndplay plays sounds */
 
-#include <mus-config.h>
+#include "mus-config.h"
 
 #include <math.h>
 #include <stdio.h>
