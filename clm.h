@@ -128,9 +128,6 @@ MUS_EXPORT mus_float_t mus_dot_product(mus_float_t *data1, mus_float_t *data2, m
 
 MUS_EXPORT bool mus_arrays_are_equal(mus_float_t *arr1, mus_float_t *arr2, mus_float_t fudge, mus_long_t len);
 MUS_EXPORT mus_float_t mus_polynomial(mus_float_t *coeffs, mus_float_t x, int ncoeffs);
-#if (!DISABLE_DEPRECATED)
-MUS_EXPORT void mus_clear_array(mus_float_t *arr, mus_long_t size);
-#endif
 MUS_EXPORT void mus_rectangular_to_polar(mus_float_t *rl, mus_float_t *im, mus_long_t size);
 MUS_EXPORT void mus_rectangular_to_magnitudes(mus_float_t *rl, mus_float_t *im, mus_long_t size);
 MUS_EXPORT void mus_polar_to_rectangular(mus_float_t *rl, mus_float_t *im, mus_long_t size);

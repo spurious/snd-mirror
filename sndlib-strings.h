@@ -87,10 +87,6 @@
 #define S_mus_ubshort                   "mus-ubshort"
 #define S_mus_ubyte                     "mus-ubyte"
 #define S_mus_ulshort                   "mus-ulshort"
-#if (!DISABLE_DEPRECATED)
-#define S_mus_unknown                   "mus-unknown"
-#define S_mus_unsupported               "mus-unsupported"
-#endif
 #define S_mus_unknown_header            "mus-unknown-header"
 #define S_mus_unknown_sample            "mus-unknown-sample"
 #define S_mus_voc                       "mus-voc"

@@ -973,7 +973,7 @@
 	((= i 100))
       (set! (arr i) (* amp (+ -.5 (* i .01)))))
     (array->file "testx.data" arr 100 22050 1)
-    (clear-array arr)
+    (fill! arr 0.0)
     (file->array "testx.data" 0 0 100 arr)
     (do ((i start (+ i 1))) ((= i end))
       (outa i (* (arr ctr) (oscil os)))
@@ -1149,7 +1149,7 @@
 				    :overlap 4
 				    :analyze (lambda (pv input)
 					       (let ((buf (modulo filptr size)))
-						 (clear-array freqs)
+						 (fill! freqs 0.0)
 						 (if (= filptr 0)
 						     (do ((k 0 (+ k 1)))
 							 ((= k size))

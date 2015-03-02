@@ -1785,7 +1785,7 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 	    (float-vector-set! fdr j (readin rd)))
 	  (if (>= (linear->db (sqrt (/ (dot-product fdr fdr) fftsize))) db-floor)
 	      (begin
-		(clear-array fdi)
+		(fill! fdi 0.0)
 		(mus-fft fdr fdi fftsize)
 		(rectangular->magnitudes fdr fdi)
 		(set! (results loc) (/ (dot-product scl fdr fft2) 

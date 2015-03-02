@@ -8341,8 +8341,8 @@ minimum, maximum, and average peaks.  The graph is logarithmic (that is we show
 		 (if (eq? choice :odd) 1
 		     (if (eq? choice :even) 2 3)))))
 
-    (clear-array fft-rl)
-    (clear-array fft-im)
+    (fill! fft-rl 0.0)
+    (fill! fft-im 0.0)
 		 
     (do ((m 0 (+ m 1)))
 	((= m n))

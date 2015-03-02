@@ -2227,7 +2227,7 @@
 		       'bohman-window 'bold-peaks-font 'cauchy-window 'mlt-sine-window
 		       'cepstrum 'change-samples-with-origin 'channel->float-vector 'channel-amp-envs 
 		       'channel-properties 'channel-property 'channel-style 'channel-widgets 'channels 'channels-combined
-		       'channels-separate 'channels-superimposed 'chans 'clear-array 'clear-listener
+		       'channels-separate 'channels-superimposed 'chans 'clear-listener
 		       'clip-hook 'clipping 'clm-channel 
 		       'clm-table-size 'clm-default-frequency 'close-hook 'close-sound 'color->list
 		       'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted 'color-scale
@@ -12346,8 +12346,8 @@ EDITS: 2
 	(if (fneq sum 2.5) (snd-display #__line__ ";dot-product (10): ~F?" sum)))
       (let ((sum (dot-product v0 v1 3)))
 	(if (fneq sum 0.75) (snd-display #__line__ ";dot-product (3): ~F?" sum)))
-      (clear-array v0)
-      (if (fneq (v0 3) 0.0) (snd-display #__line__ ";clear-array: ~A?" v0))
+      (fill! v0 0.0)
+      (if (fneq (v0 3) 0.0) (snd-display #__line__ ";fill!: ~A?" v0))
       (fill! v0 1.0)
       (fill! v1 0.5)
       (let ((v2 (rectangular->polar v0 v1)))
@@ -45435,7 +45435,7 @@ EDITS: 1
 		     make-moving-norm moving-norm moving-norm? mus-expand-filename 
 		     all-pass all-pass? amplitude-modulate
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm?
-		     clear-array comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
+		     comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
 		     delay delay? dot-product env env-interp env? file->array file->frample file->frample?  file->sample
 		     even-multiple even-weight odd-multiple odd-weight
 		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant-bank? formant? firmant firmant?
@@ -45820,7 +45820,7 @@ EDITS: 1
 					   (lambda args (car args)))))
 				    (if (not (memq tag '(wrong-type-arg no-data no-such-method bad-type error arg-error)))
 					(snd-display #__line__ ";clm ~A: tag: ~A arg: ~A" n tag arg))))
-				(list all-pass asymmetric-fm clear-array comb filtered-comb convolve db->linear moving-average moving-max moving-norm
+				(list all-pass asymmetric-fm comb filtered-comb convolve db->linear moving-average moving-max moving-norm
 				      degrees->radians delay env formant firmant granulate hz->radians linear->db even-weight odd-weight
 				      make-all-pass make-asymmetric-fm make-comb make-filtered-comb make-convolve make-delay make-env
 				      make-file->frample make-file->sample make-filter make-fir-filter make-formant make-firmant 

@@ -25,7 +25,6 @@
 #define S_blackman10_window          "blackman10-window"
 #define S_bohman_window              "bohman-window"
 #define S_cauchy_window              "cauchy-window"
-#define S_clear_array                "clear-array"
 #define S_clear_sincs                "clear-sincs"
 #define S_clm_default_frequency      "clm-default-frequency"
 #define S_clm_table_size             "clm-table-size"

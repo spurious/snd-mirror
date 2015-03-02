@@ -1214,18 +1214,6 @@ of " S_vct "s v1 with v2, using fft of size len (a power of 2), result in v1"
 }
 
 
-static Xen g_clear_array(Xen arr)
-{
-  #define H_clear_array "(" S_clear_array " v): clear " S_vct " v: v[i] = 0.0"
-  vct *v;
-  Xen_check_type(mus_is_vct(arr), arr, 1, S_clear_array, "a " S_vct);
-  v = Xen_to_vct(arr);
-  if (mus_vct_length(v) > 0)
-    memset((void *)(mus_vct_data(v)), 0, mus_vct_length(v) * sizeof(mus_float_t));
-  return(arr);
-}
-
-
 static Xen g_polynomial(Xen arr, Xen x)
 {
   #define H_polynomial "(" S_polynomial " coeffs x): evaluate a polynomial at x.  coeffs are in order \
@@ -1468,7 +1456,7 @@ static Xen mus_xen_copy(mus_xen *ms)
 		  if (mus_is_oscil_bank(np->gen))
 		    {
 		      np->vcts[0] = ms->vcts[0];
-		      np->vcts[1] = Xen_false; /*xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen)); */ /* original phases array (GC protection?) */
+		      np->vcts[1] = Xen_false; /* xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen)); */ /* original phases array (GC protection?) */
 		      np->vcts[2] = ms->vcts[2];
 		    }
 		  else
@@ -1485,7 +1473,7 @@ static Xen mus_xen_copy(mus_xen *ms)
 		    np->vcts[i] = ms->vcts[i];
 		  
 		  if (mus_is_granulate(np->gen))
-		    np->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_granulate_grain_max_length(np->gen), mus_data(np->gen));
+		    np->vcts[MUS_DATA_WRAPPER] = Xen_integer_zero; /* xen_make_vct_wrapper(mus_granulate_grain_max_length(np->gen), mus_data(np->gen)); */
 		  
 		  if ((mus_is_convolve(np->gen)) ||
 		      (mus_is_src(np->gen)) ||
@@ -2086,29 +2074,6 @@ static Xen g_mus_name(Xen gen)
   return(gen);
 }
 
-#if (!DISABLE_DEPRECATED)
-static Xen g_mus_set_name(Xen gen, Xen name) 
-{
-  mus_xen *ms;
-  ms = (mus_xen *)Xen_object_ref_checked(gen, mus_xen_tag);
-  if (ms)
-    {
-      Xen_check_type(Xen_is_string(name), name, 2, S_setB S_mus_name, "a string");
-      mus_set_name(mus_xen_to_mus_any(ms), (const char *)(Xen_string_to_C_string(name)));
-      return(name);
-    }
-#if HAVE_SCHEME
-  {
-    s7_pointer func; 
-    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-name"));
-    if ((func != Xen_undefined) && (s7_procedure_setter(s7, func)))		      
-      return(s7_apply_function(s7, s7_procedure_setter(s7, func), s7_list(s7, 2, gen, name)));
-  }
-#endif
-  Xen_check_type(false, gen, 1, S_setB S_mus_name, "a generator");
-  return(name);
-}
-#endif
 
 Xen g_mus_file_name(Xen gen) 
 {
@@ -2139,8 +2104,12 @@ Xen g_mus_data(Xen gen)
     {
       if (ms->vcts)
 	{
-	  if (ms->vcts[MUS_DATA_WRAPPER] == Xen_integer_zero)
-	    ms->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_length(ms->gen), mus_data(ms->gen)); 
+	  if (Xen_is_eq(ms->vcts[MUS_DATA_WRAPPER], Xen_integer_zero))
+	    {
+	      if (mus_is_granulate(ms->gen))
+		ms->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_granulate_grain_max_length(ms->gen), mus_data(ms->gen));
+	      else ms->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_length(ms->gen), mus_data(ms->gen)); 
+	    }
 	  return(ms->vcts[MUS_DATA_WRAPPER]); 
 	}
       else return(Xen_false);
@@ -2202,7 +2171,7 @@ static Xen g_mus_xcoeffs(Xen gen)
       g = ms->gen;
       if (ms->vcts)
 	{
-	  if (ms->vcts[0] == Xen_integer_zero)
+	  if (Xen_is_eq(ms->vcts[0], Xen_integer_zero))
 	    ms->vcts[0] = xen_make_vct_wrapper(mus_length(ms->gen), mus_data(ms->gen)); 
 
 	  if (mus_is_polywave(g))
@@ -2451,7 +2420,9 @@ static Xen g_mus_set_length(Xen gen, Xen val)
       ptr = ms->gen;
       if ((!mus_is_env(ptr)) && (!mus_is_src(ptr))) /* set length doesn't refer to data vct here */
 	{
-	  if ((ms->vcts) && (!(Xen_is_eq(ms->vcts[MUS_DATA_WRAPPER], Xen_undefined))))
+	  if ((ms->vcts) && 
+	      (!(Xen_is_eq(ms->vcts[MUS_DATA_WRAPPER], Xen_undefined))) &&
+	      (!(Xen_is_eq(ms->vcts[MUS_DATA_WRAPPER], Xen_integer_zero))))
 	    {
 	      vct *v;
 	      v = Xen_to_vct(ms->vcts[MUS_DATA_WRAPPER]);
@@ -2818,7 +2789,8 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
       line = (mus_float_t *)malloc(max_size * sizeof(mus_float_t));
       if (line == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line", caller));
-      orig_v = xen_make_vct(max_size, line);
+      /* orig_v = xen_make_vct(max_size, line); */
+      orig_v = Xen_integer_zero;
       if (initial_element != 0.0)
 	{
 	  for (i = 0; i < max_size; i++) 
@@ -2882,7 +2854,8 @@ initial-contents can be either a list or a " S_vct "."
       if (size == 0) max_size = 1; else max_size = size;
 
       line = (mus_float_t *)calloc(max_size, sizeof(mus_float_t));
-      v = xen_make_vct(max_size, line); /* we need this for mus-data */
+      /* v = xen_make_vct(max_size, line); *//* we need this for mus-data */
+      v = Xen_integer_zero;
 
       old_error_handler = mus_error_set_handler(local_mus_error);
       ge = mus_make_delay(size, line, max_size, MUS_INTERP_NONE);
@@ -3045,7 +3018,8 @@ static Xen g_make_moving_any(xclm_moving_t choice, const char *caller, Xen argli
       line = (mus_float_t *)malloc(size * sizeof(mus_float_t));
       if (line == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line", caller));
-      orig_v = xen_make_vct(size, line);
+      /* orig_v = xen_make_vct(size, line); */
+      orig_v = Xen_integer_zero;
       if (initial_element != 0.0)
 	{
 	  for (i = 0; i < size; i++) 
@@ -3789,7 +3763,8 @@ static Xen g_make_noi(bool rand_case, const char *caller, Xen arglist)
 	  if (!(Xen_is_keyword(keys[3])))
 	    clm_error(caller, ":envelope and :distribution in same call?", keys[3]);
 	  distribution = inverse_integrate(keys[2], distribution_size);
-	  orig_v = xen_make_vct(distribution_size, distribution);
+	  /* orig_v = xen_make_vct(distribution_size, distribution); */
+	  orig_v = Xen_integer_zero;
 	}
       else
 	{
@@ -4188,7 +4163,8 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
       table = (mus_float_t *)calloc(table_size, sizeof(mus_float_t));
       if (table == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate table-lookup table", S_make_table_lookup));
-      orig_v = xen_make_vct(table_size, table);
+      /* orig_v = xen_make_vct(table_size, table); */
+      orig_v = Xen_integer_zero;
     }
   ge = mus_make_table_lookup(freq, phase, table, table_size, (mus_interp_t)interp_type);
   return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
@@ -5073,7 +5049,8 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
       wave = (mus_float_t *)calloc(wsize, sizeof(mus_float_t));
       if (wave == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave-train table", S_make_wave_train));
-      orig_v = xen_make_vct(wsize, wave);
+      /* orig_v = xen_make_vct(wsize, wave); */
+      orig_v = Xen_integer_zero;
     }
   ge = mus_make_wave_train(freq, phase, wave, wsize, (mus_interp_t)interp_type);
   return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
@@ -5630,7 +5607,8 @@ is the same in effect as " S_make_oscil
     }
 
   if (Xen_is_false(orig_v))
-    orig_v = xen_make_vct(csize, coeffs);
+    orig_v = Xen_integer_zero;
+    /* orig_v = xen_make_vct(csize, coeffs); */
 
   ge = mus_make_polyshape(freq, phase, coeffs, csize, kind);
   if (ge) 
@@ -5733,7 +5711,8 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 
 	  xcoeffs = partials;
 	  n = npartials;
-	  orig_x = xen_make_vct(n, xcoeffs);
+	  /* orig_x = xen_make_vct(n, xcoeffs); */
+	  orig_x = Xen_integer_zero;
 	  /* xcoeffs = partials here, so don't delete */ 
 	}
 
@@ -5769,7 +5748,8 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
       data[1] = 1.0;
       xcoeffs = data;
       n = 2; 
-      orig_x = xen_make_vct(n, xcoeffs);
+      /* orig_x = xen_make_vct(n, xcoeffs); */
+      orig_x = Xen_integer_zero;
     }
 
   if (ycoeffs)
@@ -6214,7 +6194,7 @@ static Xen g_make_filter_1(xclm_fir_t choice, Xen arg1, Xen arg2, Xen arg3, Xen 
       mus_xen *gn = NULL;
       gn = mx_alloc(3);
       gn->gen = fgen;                                    /* delay gn allocation since make_filter can throw an error */
-      gn->vcts[G_FILTER_STATE] = xen_make_vct_wrapper(order, mus_data(fgen));
+      gn->vcts[G_FILTER_STATE] = Xen_integer_zero; /* xen_make_vct_wrapper(order, mus_data(fgen)); */
       gn->vcts[G_FILTER_XCOEFFS] = xwave;
       gn->vcts[G_FILTER_YCOEFFS] = ywave;
       return(mus_xen_to_object(gn));
@@ -8616,7 +8596,7 @@ The edit function, if any, should return the length in samples of the grain, or 
 
   if (ge)
     {
-      gn->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_granulate_grain_max_length(ge), mus_data(ge));
+      gn->vcts[MUS_DATA_WRAPPER] = Xen_integer_zero; /* xen_make_vct_wrapper(mus_granulate_grain_max_length(ge), mus_data(ge)); */
       gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
       gn->vcts[MUS_EDIT_FUNCTION] = edit_obj;
       gn->gen = ge;
@@ -20851,7 +20831,6 @@ Xen_wrap_3_optional_args(g_dot_product_w, g_dot_product)
 #if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS && (!HAVE_RUBY)
 Xen_wrap_2_args(g_edot_product_w, g_edot_product)
 #endif
-Xen_wrap_1_arg(g_clear_array_w, g_clear_array)
 Xen_wrap_2_args(g_polynomial_w, g_polynomial)
 Xen_wrap_4_optional_args(g_make_fft_window_w, g_make_fft_window)
 Xen_wrap_4_optional_args(g_mus_fft_w, g_mus_fft)
@@ -20866,9 +20845,6 @@ Xen_wrap_3_optional_args(g_array_interp_w, g_array_interp)
 Xen_wrap_5_optional_args(g_mus_interpolate_w, g_mus_interpolate)
 Xen_wrap_1_arg(g_mus_describe_w, g_mus_describe)
 Xen_wrap_1_arg(g_mus_name_w, g_mus_name)
-#if (!DISABLE_DEPRECATED)
-Xen_wrap_2_args(g_mus_set_name_w, g_mus_set_name)
-#endif
 Xen_wrap_3_optional_args(g_mus_run_w, g_mus_run)
 Xen_wrap_1_arg(g_mus_phase_w, g_mus_phase)
 Xen_wrap_2_args(g_mus_set_phase_w, g_mus_set_phase)
@@ -21312,7 +21288,6 @@ static void mus_xen_init(void)
 #if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS && (!HAVE_RUBY)
   Xen_define_safe_procedure(S_edot_product,         g_edot_product_w,         2, 0, 0, H_edot_product);
 #endif
-  Xen_define_safe_procedure(S_clear_array,          g_clear_array_w,          1, 0, 0, H_clear_array);
   Xen_define_real_procedure(S_polynomial,           g_polynomial_w,           2, 0, 0, H_polynomial);
   Xen_define_safe_procedure(S_make_fft_window,      g_make_fft_window_w,      2, 2, 0, H_make_fft_window);
   Xen_define_safe_procedure(S_mus_fft,              g_mus_fft_w,              2, 2, 0, H_mus_fft);
@@ -21384,11 +21359,7 @@ static void mus_xen_init(void)
   Xen_define_safe_procedure(S_mus_copy,             g_mus_copy_w,      1, 0, 0,  H_mus_copy);
   Xen_define_procedure(S_mus_run,                   g_mus_run_w,       1, 2, 0,  H_mus_run);
 
-#if (!DISABLE_DEPRECATED)
-  Xen_define_dilambda(S_mus_name,      g_mus_name_w,      H_mus_name,      S_setB S_mus_name,      g_mus_set_name_w,       1, 0, 2, 0);
-#else
   Xen_define_safe_procedure(S_mus_name, g_mus_name_w, 1, 0, 0,  H_mus_name);
-#endif
   Xen_define_dilambda(S_mus_phase,     g_mus_phase_w,     H_mus_phase,     S_setB S_mus_phase,     g_mus_set_phase_w,      1, 0, 2, 0);
   Xen_define_dilambda(S_mus_scaler,    g_mus_scaler_w,    H_mus_scaler,    S_setB S_mus_scaler,    g_mus_set_scaler_w,     1, 0, 2, 0);
   Xen_define_dilambda(S_mus_width,     g_mus_width_w,     H_mus_width,     S_setB S_mus_width,     g_mus_set_width_w,      1, 0, 2, 0);

@@ -6443,7 +6443,7 @@ The magnitudes are available as mus-xcoeffs, the phases as mus-ycoeffs, and the 
 		       (fft2 (/ n 2))
 		       (numsum 0.0)
 		       (densum 0.0))
-		  (clear-array im)
+		  (fill! im 0.0)
 		  (float-vector-subseq data 0 (- n 1) rl)
 		  (mus-fft rl im n 1)          ; we can use the delay line contents un-reordered because phases are ignored here
 		  (rectangular->magnitudes rl im)
@@ -6529,7 +6529,7 @@ input from the readin generator 'reader'.  The output data is available via mus-
 			(float-vector-set! data i (readin input)))))
 		(set! outctr 0)
 		(set! new-data #t)
-		(clear-array im)
+		(fill! im 0.0)
 		(float-vector-subseq data 0 (- n 1) rl)
 		(autocorrelate rl)))
 	  (set! outctr (+ outctr 1))
