@@ -3796,7 +3796,7 @@ static Xen g_make_noi(bool rand_case, const char *caller, Xen arglist)
     }
   if (ge)
     {
-      if (mus_is_vct(orig_v))
+      if (distribution)
 	return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
       return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
     }

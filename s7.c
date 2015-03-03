@@ -8986,7 +8986,6 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
       p = (char *)malloc((128 + width) * sizeof(char));
       *nlen = s7_Int_to_string(p, s7_integer(obj), radix, width);
       return(p);
-      break;
       
     case T_RATIO:
       {
@@ -9402,7 +9401,6 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	return(sc->EOF_OBJECT);
 
       return(sc->NIL);
-      break;
       
 
       /* -------- #o #d #x #b -------- */
@@ -9502,7 +9500,6 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	return(big_exact_to_inexact(sc, list_1(sc, x)));
 #endif
       return(exact_to_inexact(sc, x));
-      break;
   
 
       /* -------- #e -------- */
@@ -9548,7 +9545,6 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
       return(big_inexact_to_exact(sc, list_1(sc, x)));
 #endif
       return(inexact_to_exact(sc, x, with_error));
-      break;
 #endif /* !WITH_PURE_S7 */
 
       /* -------- #_... -------- */
@@ -11653,7 +11649,6 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 	}
       sqx = (s7_Double)integer(n); /* we're trying to protect against (sqrt -9223372036854775808) where we can't negate the integer argument */
       return(s7_make_complex(sc, 0.0, sqrt((s7_Double)(-sqx))));
-      break;
 
     case T_RATIO:
       sqx = fraction(n);
@@ -11669,7 +11664,6 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 	  return(make_real(sc, sqrt(sqx)));
 	}
       return(s7_make_complex(sc, 0.0, sqrt(-sqx)));
-      break;
 
     case T_REAL:
       if (is_NaN(real(n)))
@@ -11677,12 +11671,10 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
       if (real(n) >= 0.0)
 	return(make_real(sc, sqrt(real(n))));
       return(s7_make_complex(sc, 0.0, sqrt(-real(n))));
-      break;
 
     case T_COMPLEX:
 #if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, csqrt(as_c_complex(n))));
-      break;
 #else
       return(out_of_range(sc, sc->SQRT, small_int(1), n, NO_COMPLEX_NUMBERS));
 #endif
@@ -15895,7 +15887,6 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	    case T_RATIO:   
 	    case T_COMPLEX: 
 	      goto NOT_EQUAL;                          
-	      break;
 	      
 	    case T_REAL:    
 	      if (num_a != real(x)) goto NOT_EQUAL;    
@@ -15922,7 +15913,6 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	    case T_INTEGER: 
 	    case T_COMPLEX: 
 	      goto NOT_EQUAL;
-	      break;
 
 	    case T_RATIO:   
 	      if ((num_a != numerator(x)) || (den_a != denominator(x)))	goto NOT_EQUAL;
@@ -15964,7 +15954,6 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 
 	    case T_COMPLEX: 
 	      goto NOT_EQUAL;                          
-	      break;
 
 	    default:
 	      check_method(sc, x, sc->EQ, cons(sc, make_real(sc, rl_a), cons(sc, x, p)));
@@ -16029,20 +16018,10 @@ static s7_pointer g_equal_s_ic(s7_scheme *sc, s7_pointer args)
 
   switch (type(val))
     {
-    case T_INTEGER:
-      return(make_boolean(sc, integer(val) == y));
-      break;
-      
-    case T_RATIO:  
-      return(sc->F);
-      
-    case T_REAL:    
-      return(make_boolean(sc, real(val) == y));
-      break;
-
-    case T_COMPLEX:
-      return(sc->F);
-
+    case T_INTEGER: return(make_boolean(sc, integer(val) == y));
+    case T_RATIO:   return(sc->F);
+    case T_REAL:    return(make_boolean(sc, real(val) == y));
+    case T_COMPLEX: return(sc->F);
     default:
       check_method(sc, val, sc->EQ, list_2(sc, val, cadr(args)));
       return(wrong_type_argument_with_type(sc, sc->EQ, small_int(1), val, A_NUMBER));
@@ -16993,7 +16972,6 @@ static s7_pointer g_less_s_ic(s7_scheme *sc, s7_pointer args)
     {
     case T_INTEGER:
       return(make_boolean(sc, integer(x) < y));
-      break;
       
     case T_RATIO:  
       if ((y >= 0) && (numerator(x) < 0))
@@ -17003,11 +16981,9 @@ static s7_pointer g_less_s_ic(s7_scheme *sc, s7_pointer args)
       if (denominator(x) < S7_LONG_MAX)
 	return(make_boolean(sc, (numerator(x) < (y * denominator(x)))));
       return(make_boolean(sc, fraction(x) < y));
-      break;
       
     case T_REAL:    
       return(make_boolean(sc, real(x) < y));
-      break;
 
     case T_COMPLEX:
     default:
@@ -17091,16 +17067,13 @@ static s7_pointer g_less_2(s7_scheme *sc, s7_pointer args)
 	{
 	case T_INTEGER:
 	  return(make_boolean(sc, integer(x) < integer(y)));
-	  break;
 	  
 	case T_RATIO: 
 	  return(g_less(sc, args));
-	  break;
 	  
 	case T_REAL:
 	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, integer(x) < real(y)));
-	  break;
 
 	default:
 	  check_method(sc, y, sc->LT, args);
@@ -17110,7 +17083,6 @@ static s7_pointer g_less_2(s7_scheme *sc, s7_pointer args)
       
     case T_RATIO:
       return(g_less(sc, args));
-      break;
       
     case T_REAL:
       switch (type(y))
@@ -17118,18 +17090,15 @@ static s7_pointer g_less_2(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER: 
 	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) < integer(y)));
-	  break;
 	  
 	case T_RATIO:
 	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) < fraction(y)));
-	  break;
 	  
 	case T_REAL:
 	  if (is_NaN(real(x))) return(sc->F);
 	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, real(x) < real(y)));
-	  break;
 
 	default:
 	  check_method(sc, y, sc->LT, args);
@@ -17157,7 +17126,6 @@ static s7_pointer g_leq_s_ic(s7_scheme *sc, s7_pointer args)
     {
     case T_INTEGER:
       return(make_boolean(sc, integer(x) <= y));
-      break;
       
     case T_RATIO:  
       if ((y >= 0) && (numerator(x) <= 0))
@@ -17167,11 +17135,9 @@ static s7_pointer g_leq_s_ic(s7_scheme *sc, s7_pointer args)
       if (denominator(x) < S7_LONG_MAX)
 	return(make_boolean(sc, (numerator(x) <= (y * denominator(x)))));
       return(make_boolean(sc, fraction(x) <= y));
-      break;
       
     case T_REAL:    
       return(make_boolean(sc, real(x) <= y));
-      break;
 
     default:
       check_method(sc, x, sc->LEQ, args);
@@ -17195,16 +17161,13 @@ static s7_pointer g_leq_2(s7_scheme *sc, s7_pointer args)
 	{
 	case T_INTEGER:
 	  return(make_boolean(sc, integer(x) <= integer(y)));
-	  break;
 	  
 	case T_RATIO: 
 	  return(g_less_or_equal(sc, args));
-	  break;
 	  
 	case T_REAL:
 	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, integer(x) <= real(y)));
-	  break;
 
 	default:
 	  check_method(sc, y, sc->LEQ, args);
@@ -17214,7 +17177,6 @@ static s7_pointer g_leq_2(s7_scheme *sc, s7_pointer args)
       
     case T_RATIO:
       return(g_less_or_equal(sc, args));
-      break;
       
     case T_REAL:
       switch (type(y))
@@ -17222,18 +17184,15 @@ static s7_pointer g_leq_2(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER: 
 	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) <= integer(y)));
-	  break;
 	  
 	case T_RATIO:
 	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) <= fraction(y)));
-	  break;
 	  
 	case T_REAL:
 	  if (is_NaN(real(x))) return(sc->F);
 	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, real(x) <= real(y)));
-	  break;
 
 	default:
 	  check_method(sc, y, sc->LEQ, args);
@@ -17260,17 +17219,14 @@ static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
     {
     case T_INTEGER:
       return(make_boolean(sc, integer(x) > y));
-      break;
       
     case T_RATIO:  
       if (denominator(x) < S7_LONG_MAX) /* y has already been checked for range */
 	return(make_boolean(sc, (numerator(x) > (y * denominator(x)))));
       return(make_boolean(sc, fraction(x) > y));
-      break;
       
     case T_REAL:    
       return(make_boolean(sc, real(x) > y));
-      break;
 
     default:
       check_method(sc, x, sc->GT, args);
@@ -17294,18 +17250,15 @@ static s7_pointer g_greater_s_fc(s7_scheme *sc, s7_pointer args)
     {
     case T_INTEGER:
       return(make_boolean(sc, integer(x) > y));
-      break;
       
     case T_RATIO:  
       /* (> 9223372036854775807/9223372036854775806 1.0) */
       if (denominator(x) < S7_LONG_MAX) /* y range check was handled in greater_chooser */
 	return(make_boolean(sc, (numerator(x) > (y * denominator(x)))));
       return(make_boolean(sc, fraction(x) > y));
-      break;
       
     case T_REAL:    
       return(make_boolean(sc, real(x) > y));
-      break;
 
     default:
       check_method(sc, x, sc->GT, args);
@@ -17336,7 +17289,6 @@ static s7_pointer g_greater_2(s7_scheme *sc, s7_pointer args)
 	case T_REAL:
 	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, integer(x) > real(y)));
-	  break;
 
 	default:       
 	  check_method(sc, y, sc->GT, args);
@@ -17346,7 +17298,6 @@ static s7_pointer g_greater_2(s7_scheme *sc, s7_pointer args)
       
     case T_RATIO:
       return(g_greater(sc, args));
-      break;
       
     case T_REAL:
       switch (type(y))
@@ -17354,18 +17305,15 @@ static s7_pointer g_greater_2(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER: 
 	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) > integer(y)));
-	  break;
 	  
 	case T_RATIO:
 	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) > fraction(y)));
-	  break;
 	  
 	case T_REAL:
 	  if (is_NaN(real(x))) return(sc->F);
 	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, real(x) > real(y)));
-	  break;
 
 	default:
 	  check_method(sc, y, sc->GT, args);
@@ -17416,16 +17364,13 @@ static s7_pointer g_geq_2(s7_scheme *sc, s7_pointer args)
 	{
 	case T_INTEGER:
 	  return(make_boolean(sc, integer(x) >= integer(y)));
-	  break;
 	  
 	case T_RATIO: 
 	  return(g_greater_or_equal(sc, args));
-	  break;
 	  
 	case T_REAL:
 	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, integer(x) >= real(y)));
-	  break;
 
 	default:
 	  check_method(sc, y, sc->GEQ, args);
@@ -17435,7 +17380,6 @@ static s7_pointer g_geq_2(s7_scheme *sc, s7_pointer args)
       
     case T_RATIO:
       return(g_greater_or_equal(sc, args));
-      break;
       
     case T_REAL:
       switch (type(y))
@@ -17443,18 +17387,15 @@ static s7_pointer g_geq_2(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER: 
 	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) >= integer(y)));
-	  break;
 	  
 	case T_RATIO:
 	  if (is_NaN(real(x))) return(sc->F);
 	  return(make_boolean(sc, real(x) >= fraction(y)));
-	  break;
 	  
 	case T_REAL:
 	  if (is_NaN(real(x))) return(sc->F);
 	  if (is_NaN(real(y))) return(sc->F);
 	  return(make_boolean(sc, real(x) >= real(y)));
-	  break;
 
 	default:
 	  check_method(sc, y, sc->GEQ, args);
@@ -17504,7 +17445,6 @@ static s7_pointer g_geq_s_ic(s7_scheme *sc, s7_pointer args)
     {
     case T_INTEGER:
       return(make_boolean(sc, integer(x) >= y));
-      break;
       
     case T_RATIO:  
       if ((y >= 0) && (numerator(x) < 0))
@@ -17516,11 +17456,9 @@ static s7_pointer g_geq_s_ic(s7_scheme *sc, s7_pointer args)
 	  (denominator(x) < S7_LONG_MAX))
 	return(make_boolean(sc, (numerator(x) >= (y * denominator(x)))));
       return(make_boolean(sc, fraction(x) >= y));
-      break;
       
     case T_REAL:    
       return(make_boolean(sc, real(x) >= y));
-      break;
 
     default:
       check_method(sc, x, sc->GEQ, args);
@@ -24331,9 +24269,9 @@ static s7_pointer vector_iterate(s7_scheme *sc, s7_pointer obj)
 
 static s7_pointer other_iterate(s7_scheme *sc, s7_pointer obj)
 {
-  s7_pointer result;
   if (iterator_position(obj) < iterator_length(obj))
     {
+      s7_pointer result;
       int save_x = -1, save_z = -1;
       s7_pointer p;
       p = iterator_sequence(obj);
@@ -32687,15 +32625,6 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	}
     }
 
-  /* to generalize (i.e. get rid of the eval heapsort code):
-   *   need to put current compare_func/args in e|fcdr of expr?          (easy)
-   *   if unsafe also need new env on each call,                         (easy)
-   *   goto is deactivated somewhere, probably in the inner eval call    (moderately hard)
-   *   safety check for infinite loop fails, original returned by qsort? (can live with this, but...:)
-   *   segfault: (call/cc (lambda (return) (sort! '(1 2 3) (lambda (a b) (return "oops"))))) 
-   *      [in closure_compare, next_slot(let_slots(sc->envir)) is null! -- is this c stack trouble due to the recursive eval call?]
-   */
-
 #if (!WITH_GMP)
   if (compare_func == g_less)
     compare_func = g_less_2;
@@ -35798,10 +35727,6 @@ static bool pair_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *c
   int i;
   s7_pointer px, py;
   shared_info *nci = ci;
-#if DEBUGGING
-  if (!sc) abort();
-  if (!y) abort();
-#endif
 
   if (x == y)
     return(true);
@@ -35824,12 +35749,6 @@ static bool pair_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *c
     }
   else nci = new_shared_info(sc);
 
-  /* not gmp or morally, orig checks car types here?? */
-  
-#if 0
-  return((s7_is_equal_1(sc, car(x), car(y), nci, morally)) &&
-	 (s7_is_equal_1(sc, cdr(x), cdr(y), nci, morally)));
-#else
   if (!s7_is_equal_1(sc, car(x), car(y), nci, morally)) return(false);
   for (px = cdr(x), py = cdr(y); (is_pair(px)) && (is_pair(py)); px = cdr(px), py = cdr(py))
     {
@@ -35839,7 +35758,6 @@ static bool pair_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *c
       if (i == 1) return(true);
     }
   return(s7_is_equal_1(sc, px, py, nci, morally));
-#endif
 }
 
 static bool vector_rank_match(s7_scheme *sc, s7_pointer x, s7_pointer y)
@@ -35902,7 +35820,7 @@ static bool vector_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info 
        * (morally-equal? (make-vector 0 1.0 #t) (vector)) -> #t
        */
       for (i = 0; i < len; i++)
-	if (!s7_is_equal_1(sc, vector_getter(x)(sc, x, i), vector_getter(y)(sc, y, i), NULL, true))
+	if (!s7_is_equal_1(sc, vector_getter(x)(sc, x, i), vector_getter(y)(sc, y, i), NULL, true)) /* this could be greatly optimized */
 	  return(false);
       return(true);
     }
@@ -36629,8 +36547,6 @@ also accepts a string or vector argument."
 
     case T_PAIR:
       return(s7_reverse(sc, p));
-      /* if (is_null(np)) return(simple_wrong_type_argument_with_type(sc, sc->REVERSE, p, A_PROPER_LIST)); */
-      break;
 
     case T_STRING:
       {
@@ -36870,7 +36786,7 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
       return(cadr(args));        /* this parallels the empty vector case */
 
     case T_HASH_TABLE:
-      if (is_not_null(cadr(args)))
+      if (is_not_null(cadr(args))) /* only () as fill arg accepted here normally */
 	{
 	  check_method(sc, cadr(args), sc->FILL, args);
 	  return(wrong_type_argument(sc, sc->FILL, small_int(2), cadr(args), T_NIL));
@@ -41386,10 +41302,10 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 	      set_optimize_data(expr, HOP_SAFE_C_C);
 	      switch (integer(arg2))
 		{
-		case 0: return(vector_ref_ic_0); break;
-		case 1: return(vector_ref_ic_1); break;
-		case 2: return(vector_ref_ic_2); break;
-		case 3: return(vector_ref_ic_3); break;
+		case 0: return(vector_ref_ic_0);
+		case 1: return(vector_ref_ic_1);
+		case 2: return(vector_ref_ic_2);
+		case 3: return(vector_ref_ic_3);
 		default: return(vector_ref_ic);
 		}
 	    }
@@ -43844,9 +43760,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_AAA:
 	  return(OP_SAFE_C_opAAAq);
 	}
-      
       return(OP_SAFE_C_Z); /* this splits out to A in optimize_func_one_arg */
-      break;
       
     case E_C_SP:
       switch (op2)
@@ -43898,9 +43812,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_AAA:
 	  return(OP_SAFE_C_S_opAAAq);
 	}
-
       return(OP_SAFE_C_SZ);
-      break;
 
     case E_C_PS:
       switch (op2)
@@ -43921,7 +43833,6 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	  return(OP_SAFE_C_opSSq_S);
 	}
       return(OP_SAFE_C_ZS);
-      break;
 
     case E_C_PC:
       switch (op2)
@@ -43944,9 +43855,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_opSSq:
 	  return(OP_SAFE_C_op_opSSq_q_C);
 	}
-
       return(OP_SAFE_C_ZC);
-      break;
 
     case E_C_CP:
       switch (op2)
@@ -43976,10 +43885,8 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 
 	case OP_SAFE_C_S_opCq:
 	  return(OP_SAFE_C_C_op_S_opCqq);
-
 	}
       return(OP_SAFE_C_CZ);
-      break;
 
     case E_C_PP:
       switch (op2)
@@ -44020,16 +43927,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	  break;
 	}
       return(OP_SAFE_C_ZZ);
-      break;
       
-      /* currently ignored:
-       * OP_SAFE_C_QS OP_SAFE_C_QQ OP_SAFE_C_CQ OP_SAFE_C_QC op_c_opqq[not used much]
-       * [OP_SAFE_C_SSS] [OP_SAFE_C_SCS] [OP_SAFE_C_SSC]
-       * [OP_SAFE_C_CSS] 
-       * OP_SAFE_C_ALL_S OP_SAFE_C_ALL_X OP_SAFE_C_A OP_SAFE_C_AAAA (OP_SAFE_C_AZ) (OP_SAFE_C_ZA)
-       * OP_SAFE_C_SQS
-       */
-
     default:
       break;
     }
@@ -48216,7 +48114,6 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 
 		    default:
 		      return(false);
-		      break;
 		    }
 		}
 	      else
@@ -60983,7 +60880,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case TOKEN_ATOM:
 	  sc->value = port_read_name(sc->input_port)(sc, sc->input_port);
 	  goto READ_LIST;
-	  break;
 
 	case TOKEN_SHARP_CONST:
 	  sc->value = port_read_sharp(sc->input_port)(sc, sc->input_port);
@@ -60999,7 +60895,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto READ_TOK;
 	    }
 	  goto READ_LIST;
-	  break;
 
 	case TOKEN_DOUBLE_QUOTE:
 	  sc->value = read_string_constant(sc, sc->input_port);
@@ -61008,7 +60903,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (sc->value == sc->T)
 	    return(read_error(sc, "unknown backslash usage -- perhaps you meant two backslashes?"));
 	  goto READ_LIST;
-	  break;
 
 	case TOKEN_DOT:
 	  push_stack_no_code(sc, OP_READ_DOT, sc->args);
@@ -62218,7 +62112,6 @@ static s7_pointer promote_number_1(s7_scheme *sc, int type, s7_pointer x, bool c
 	  return(x);                       /* can only be T_BIG_INTEGER here */
 	}
       return(s7_Int_to_big_integer(sc, s7_integer(x))); /* can only be integer here */
-      break;
 
     case T_BIG_RATIO:
       if (is_big_number(x))
@@ -62234,7 +62127,6 @@ static s7_pointer promote_number_1(s7_scheme *sc, int type, s7_pointer x, bool c
       if (type(x) == T_INTEGER)
 	return(s7_ratio_to_big_ratio(sc, integer(x), 1));
       return(s7_ratio_to_big_ratio(sc, numerator(x), denominator(x)));
-      break;
 
     case T_BIG_REAL:
       if (is_big_number(x))
@@ -62250,7 +62142,6 @@ static s7_pointer promote_number_1(s7_scheme *sc, int type, s7_pointer x, bool c
 	  return(mpz_to_big_real(sc, big_integer(x)));
 	}
       return(s7_number_to_big_real(sc, x));
-      break;
 
     default:
       if (is_big_number(x))
@@ -62268,7 +62159,6 @@ static s7_pointer promote_number_1(s7_scheme *sc, int type, s7_pointer x, bool c
 	  return(mpz_to_big_complex(sc, big_integer(x)));
 	}
       return(s7_number_to_big_complex(sc, x));
-      break;
     }
   return(sc->NIL);
 }
@@ -62908,7 +62798,6 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
     case T_BIG_RATIO:
       mpq_div(big_ratio(result), big_ratio(result), big_ratio(divisor));
       return(make_big_integer_or_ratio(sc, result));
-      break;
       
     case T_BIG_REAL:
       mpfr_div(big_real(result), big_real(result), big_real(divisor), GMP_RNDN);
@@ -62917,7 +62806,6 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
     case T_BIG_COMPLEX:
       mpc_div(big_complex(result), big_complex(result), big_complex(divisor), MPC_RNDNN);
       return(make_big_real_or_complex(sc, result));
-      break;
     }
   return(result);
 }
@@ -64264,7 +64152,6 @@ static s7_pointer big_bits(s7_scheme *sc, s7_pointer args, s7_pointer sym, int s
 	      mpz_clear(n);
 	      check_method(sc, i, sym, lst);
 	      return(wrong_type_argument_n(sc, sym, position_of(x, args), i, T_INTEGER));  
-	      break;
 	    }
 	}
       x = mpz_to_big_integer(sc, n);
@@ -67652,7 +67539,7 @@ int main(int argc, char **argv)
 #endif
 
 
-/* ----------------------------------------------------------
+/* ------------------------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1142
@@ -67665,7 +67552,7 @@ int main(int argc, char **argv)
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9
  *
- * ----------------------------------------------------------
+ * ------------------------------------------------------------------
  *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
@@ -67703,6 +67590,6 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * clm.h MUS_VERSION is 6, so *features* shows 'clm6, but clm5 is the CL version?
- *
- * find other recursion cases, clean up new equals etc
+ * perhaps func tables for copy and other generics
+ *   fill in particular, and (fill! v 0) or (fill! v 0.0) are the main uses
  */
