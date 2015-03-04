@@ -250,7 +250,22 @@ static char *glx_version(void)
   if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
   return(version);
 #else
+#if USE_GTK && (0)
+  #define VERSION_SIZE 128
+  char *version = NULL;
+  int major, minor;
+
+  if ((ss->dialogs == NULL) || (MAIN_DISPLAY(ss) == NULL)) /* TODO: MAIN_DISPLAY needs to be the gl context here */
+    return(mus_strdup(" "));
+
+  version = (char *)calloc(VERSION_SIZE, sizeof(char));
+  gdk_gl_context_get_version(MAIN_DISPLAY(ss), &major, &minor);
+  snprintf(version, VERSION_SIZE, " %d.%d", major, minor);
+  if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
+  return(version);
+#else
   return(mus_strdup(" "));
+#endif
 #endif
 }
 #endif

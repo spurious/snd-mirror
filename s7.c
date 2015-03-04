@@ -2138,10 +2138,10 @@ static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y);
 static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym);
 static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol);
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym);
-static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool at_end, bool *bad_set);
+static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool at_end);
 static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer x, s7_pointer args, s7_pointer body);
 static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e);
-static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e);
+static void optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e);
 static double next_random(s7_rng_t *r);
 #if DEBUGGING
 static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port, int nlen);
@@ -45045,7 +45045,7 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
 		}
 	      choose_c_function(sc, expr, func, 3);
 	      return(true);
-	    } 
+	    }
 	  
 	  if (bad_pairs == 0)
 	    {
@@ -45964,30 +45964,21 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poin
 }
 
 
-static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
+static void optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
 {
   s7_pointer x;
-  bool happy = true;
-  if (sc->safety > 1) return(false);
+  if (sc->safety > 1) return;
 
   /* fprintf(stderr, "optimize %s %d %s\n", DISPLAY_80(code), hop, DISPLAY_80(e)); */
-
   for (x = code; is_pair(x) && (!is_checked(x)); x = cdr(x))
     {
       set_checked(x);
       if (is_pair(car(x)))
-	{
-	  if (!optimize_expression(sc, car(x), hop, e))
-	    happy = false;
-	}
+	optimize_expression(sc, car(x), hop, e);
     }
   if ((!is_null(x)) &&
       (!is_pair(x)))
-    {
-      eval_error(sc, "stray dot in function body: ~S", code);
-      return(false);
-    }
-  return(happy);
+    eval_error(sc, "stray dot in function body: ~S", code);
 }
 
 
@@ -46000,7 +45991,7 @@ static bool optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
 #endif
 
 
-static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_end, bool *bad_set)
+static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_end)
 {
   /* called only from body_is_safe and itself */
   s7_pointer expr;
@@ -46019,7 +46010,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	case OP_AND:
 	case OP_BEGIN:
 	case OP_WITH_BAFFLE:
-	  if (!body_is_safe(sc, func, cdr(x), at_end, bad_set))
+	  if (!body_is_safe(sc, func, cdr(x), at_end))
 	    return(false);
 	  break;
 	  
@@ -46053,26 +46044,26 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		    return(false); /* it's shadowed */
 		  
 		  if ((is_pair(cadr(let_var))) &&
-		      (!form_is_safe(sc, func, cadr(let_var), false, bad_set)))
+		      (!form_is_safe(sc, func, cadr(let_var), false)))
 		    return(false);
 		}
 	    }
-	  if (!body_is_safe(sc, func, cddr(x), at_end, bad_set))
+	  if (!body_is_safe(sc, func, cddr(x), at_end))
 	    return(false);
 	  break;
 	  
 	case OP_IF:
 	  if (!is_pair(cdr(x))) return(false); /* (if) ! */
-	  if (!((!is_pair(cadr(x))) || (form_is_safe(sc, func, cadr(x), false, bad_set)))) return(false);
-	  if (!((!is_pair(caddr(x))) || (form_is_safe(sc, func, caddr(x), at_end, bad_set)))) return(false);
-	  if (!((!is_pair(cdddr(x))) || (!is_pair(cadddr(x))) || (form_is_safe(sc, func, cadddr(x), at_end, bad_set)))) return(false);
+	  if (!((!is_pair(cadr(x))) || (form_is_safe(sc, func, cadr(x), false)))) return(false);
+	  if (!((!is_pair(caddr(x))) || (form_is_safe(sc, func, caddr(x), at_end)))) return(false);
+	  if (!((!is_pair(cdddr(x))) || (!is_pair(cadddr(x))) || (form_is_safe(sc, func, cadddr(x), at_end)))) return(false);
 	  break;
 
 	case OP_WHEN:
 	case OP_UNLESS:
 	  if (!is_pair(cdr(x))) return(false); /* (when) */
-	  if (!((!is_pair(cadr(x))) || (form_is_safe(sc, func, cadr(x), false, bad_set)))) return(false);
-	  if (!body_is_safe(sc, func, cddr(x), at_end, bad_set)) return(false);
+	  if (!((!is_pair(cadr(x))) || (form_is_safe(sc, func, cadr(x), false)))) return(false);
+	  if (!body_is_safe(sc, func, cddr(x), at_end)) return(false);
 	  break;
 
 	case OP_COND:
@@ -46084,9 +46075,9 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		expr = car(p);
 		if (is_pair(expr)) /* ?? */
 		  {
-		    if ((is_pair(car(expr))) && (!form_is_safe(sc, func, car(expr), false, bad_set)))
+		    if ((is_pair(car(expr))) && (!form_is_safe(sc, func, car(expr), false)))
 		      return(false);
-		    if ((is_pair(cdr(expr))) && (!body_is_safe(sc, func, cdr(expr), at_end, bad_set)))
+		    if ((is_pair(cdr(expr))) && (!body_is_safe(sc, func, cdr(expr), at_end)))
 		      return(false);
 		  }
 	      }
@@ -46098,9 +46089,9 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	case OP_CASE:
 	  {
 	    s7_pointer p;
-	    if ((is_pair(cadr(x))) && (!form_is_safe(sc, func, cadr(x), false, bad_set))) return(false);
+	    if ((is_pair(cadr(x))) && (!form_is_safe(sc, func, cadr(x), false))) return(false);
 	    for (p = cddr(x); is_pair(p); p = cdr(p))
-	      if ((is_pair(car(p))) && (!body_is_safe(sc, func, cdar(p), at_end, bad_set)))
+	      if ((is_pair(car(p))) && (!body_is_safe(sc, func, cdar(p), at_end)))
 		return(false);
 	  }
 	  break;
@@ -46109,7 +46100,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	  /* (do (...) (...) ...) */
 	  if (!is_pair(cddr(x)))
 	    return(false);
-	  if (!body_is_safe(sc, func, cdddr(x), false, bad_set))
+	  if (!body_is_safe(sc, func, cdddr(x), false))
 	    return(false);
 	  if (is_pair(cadr(x)))
 	    {
@@ -46126,17 +46117,17 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		    return(false);
 		  
 		  if ((is_pair(cadr(do_var))) &&
-		      (!form_is_safe(sc, func, cadr(do_var), false, bad_set)))
+		      (!form_is_safe(sc, func, cadr(do_var), false)))
 		    return(false);
 
 		  if ((is_pair(cddr(do_var))) &&
 		      (is_pair(caddr(do_var))) &&
-		      (!form_is_safe(sc, func, caddr(do_var), false, bad_set)))
+		      (!form_is_safe(sc, func, caddr(do_var), false)))
 		    return(false);
 		}
 	    }
 	  if ((is_pair(caddr(x))) &&
-	      (!body_is_safe(sc, func, caddr(x), at_end, bad_set)))
+	      (!body_is_safe(sc, func, caddr(x), at_end)))
 	    return(false);
 	  break;
 	  
@@ -46146,15 +46137,15 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	   */
 	  if (!is_pair(cdr(x))) return(false); /* (set!) ! */
 	  if (cadr(x) == func)
-	    (*bad_set) = true;
+	    return(false);
 	  
 	  /* car(x) is set!, cadr(x) is settee or obj, caddr(x) is val */
 	  if (is_symbol(caddr(x)))
 	    return(false);          /* ?? because it might be a local function that has captured local state? */
 
-	  if (((!is_pair(caddr(x))) || (form_is_safe(sc, func, caddr(x), false, bad_set))) &&
+	  if (((!is_pair(caddr(x))) || (form_is_safe(sc, func, caddr(x), false))) &&
 	      ((is_symbol(cadr(x))) ||
-	       ((is_pair(cadr(x))) && (form_is_safe(sc, func, cadr(x), false, bad_set)))))
+	       ((is_pair(cadr(x))) && (form_is_safe(sc, func, cadr(x), false)))))
 	    return(true);
 	  return(false);
 
@@ -46162,7 +46153,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	  if (is_pair(cadr(x)))
 	    return(false);
 
-	  if (!body_is_safe(sc, sc->F, cddr(x), at_end, bad_set))
+	  if (!body_is_safe(sc, sc->F, cddr(x), at_end))
 	    return(false);
 	  break;
 
@@ -46174,10 +46165,6 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	   * (let () (define (hi1 a) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1))
 	   * (let () (define (hi1 a) (define (ho1 b) b) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1))
 	   */
-	  if ((is_pair(cdr(x))) &&
-	      ((cadr(x) == func) ||
-	       ((is_pair(cadr(x))) && (caadr(x) == func))))
-	    (*bad_set) = true;
 	  return(false);
 	}
     }
@@ -46198,11 +46185,8 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		     (caar(p) == func)))  /* ?? not sure about this */
 		  return(false);
 
-	      if ((at_end) && (is_null(p) && (!*bad_set)))
-		{
-		  /* set_tail_call(x); */
-		  return(true);
-		}
+	      if ((at_end) && (is_null(p))) /* tail call, so safe */
+		return(true);
 	      return(false);
 	    }
 	  
@@ -46240,13 +46224,10 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		  if (is_slot(f))
 		    {
 		      if ((is_syntax(slot_value(f))) || (is_any_macro(slot_value(f))))
-			(*bad_set) = true;
-		      else
-			{
-			  if ((is_closure(slot_value(f))) &&
-			      (is_safe_closure(slot_value(f))))
-			    return(true);
-			}
+			return(false);
+		      if ((is_closure(slot_value(f))) &&
+			  (is_safe_closure(slot_value(f))))
+			return(true);
 		    }
 		}
 	    }
@@ -46257,14 +46238,14 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 }
 
 
-static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool at_end, bool *bad_set)
+static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool at_end)
 {
   /* called in optimize_lambda and above */
   s7_pointer p;
 
   for (p = body; is_pair(p); p = cdr(p))
     if ((is_pair(car(p))) &&
-	(!form_is_safe(sc, func, car(p), (at_end) && (is_null(cdr(p))), bad_set)))
+	(!form_is_safe(sc, func, car(p), (at_end) && (is_null(cdr(p))))))
       return(false);
 
   return(is_null(p));
@@ -47344,8 +47325,6 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 
   if (len > 0)  /* i.e. not circular */
     {
-      bool bad_set = false;
-
       clear_syms_in_list(sc);
       optimize(sc, body, 1, collect_collisions(sc, args, list_1(sc, add_sym_to_list(sc, x))));
 
@@ -47383,7 +47362,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 	   *
 	   * (added later: this comment may be out-of-date -- cycles are easy to detect)
 	   */
-	  if (body_is_safe(sc, x, body, true, &bad_set))
+	  if (body_is_safe(sc, x, body, true))
 	    {
 	      /* (define (hi a) (+ a 1) (hi (- a 1))) */
 	      /* there is one problem with closure* here -- we can't trust anything that
@@ -65113,21 +65092,10 @@ static s7_pointer big_equal(s7_scheme *sc, s7_pointer args)
       arg = promote_number(sc, result_type, car(y));
       switch (result_type)
 	{
-	case T_BIG_INTEGER:
-	  if (mpz_cmp(big_integer(result), big_integer(arg)) != 0) return(sc->F);
-	  break;
-	  
-	case T_BIG_RATIO:
-	  if (mpq_cmp(big_ratio(result), big_ratio(arg)) != 0) return(sc->F);
-	  break;
-	  
-	case T_BIG_REAL:
-	  if (mpfr_cmp(big_real(result), big_real(arg)) != 0) return(sc->F);
-	  break;
-	  
-	case T_BIG_COMPLEX:
-	  if (mpc_cmp(big_complex(result), big_complex(arg)) != 0) return(sc->F);
-	  break;
+	case T_BIG_INTEGER: if (mpz_cmp(big_integer(result), big_integer(arg)) != 0) return(sc->F);  break;
+	case T_BIG_RATIO:   if (mpq_cmp(big_ratio(result),   big_ratio(arg)) != 0)   return(sc->F);  break;
+	case T_BIG_REAL:    if (mpfr_cmp(big_real(result),   big_real(arg)) != 0)    return(sc->F);  break;
+	case T_BIG_COMPLEX: if (mpc_cmp(big_complex(result), big_complex(arg)) != 0) return(sc->F);  break;
 	}
     }
   return(sc->T);
@@ -65490,21 +65458,10 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	{
 	  switch (type(num))
 	    {
-	    case T_INTEGER:
-	      num = promote_number(sc, T_BIG_INTEGER, num);
-	      break;
-
-	    case T_RATIO:
-	      num = promote_number(sc, T_BIG_RATIO, num);
-	      break;
-
-	    case T_REAL:
-	      num = promote_number(sc, T_BIG_REAL, num);
-	      break;
-
-	    default:
-	      num = promote_number(sc, T_BIG_COMPLEX, num);
-	      break;
+	    case T_INTEGER: num = promote_number(sc, T_BIG_INTEGER, num);  break;
+	    case T_RATIO:   num = promote_number(sc, T_BIG_RATIO, num);    break;
+	    case T_REAL:    num = promote_number(sc, T_BIG_REAL, num);     break;
+	    default:        num = promote_number(sc, T_BIG_COMPLEX, num);  break;
 	    }
 	}
       /* finally both the state and the number are big */
@@ -67549,7 +67506,7 @@ int main(int argc, char **argv)
  * t137           |      |      | 11.0           5031 4769 4709
  * t455|6     265 |   89 |  9   |       8.4 8045 7482 7265 7264
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
- * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8
+ * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 21.0
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9
  *
  * ------------------------------------------------------------------
@@ -67566,12 +67523,11 @@ int main(int argc, char **argv)
  *     also gldata has GLU ints
  *   GL: snd-[0]|1|x0.h=#includes with glx.h, 
  *       [snd-axis], [snd], snd-chn, [snd-draw], [snd-data], snd-motif, [snd-print], [snd-xen, snd-help]
- *     [snd-xen|help GLXContext and version -- motif-specific?] (also snd-1.h)
+ *     [snd-help glx_version -- needs the gdkglcontext pointer to get the version number] (also snd-1.h)
  *   check out the GL support in gtk 3.16 -- this looks straightforward, snd-chn.c
  *     gtk+-3.15.1/gtk/gtkglarea.c, gtk-demo/glarea.c, tests/gtkgears.c + testglarea.c, docs/reference/gtk/html/GtkGLArea.html
  *     GdkGLContext -- needs expoxy/gl.h?
- *     snd-axis: gdk_gl_font_use_pango... -- this is not in the gtk/cl code (it's ancient gtkglext stuff)
- *   need color-dialog use-gl button in gtk callbacks for labels
+ *     snd-axis[405]: gdk_gl_font_use_pango... -- this is not in the gtk/cl code (it's ancient gtkglext stuff)
  * snd-genv needs a lot of gtk3 work
  *
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)
@@ -67590,6 +67546,5 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * clm.h MUS_VERSION is 6, so *features* shows 'clm6, but clm5 is the CL version?
- * perhaps func tables for copy and other generics
- *   fill in particular, and (fill! v 0) or (fill! v 0.0) are the main uses
+ * need condensed gc-stats+permanent-pointers_stack-size etc
  */
