@@ -433,6 +433,12 @@ typedef struct c_object_t {
 } c_object_t;
 
 
+typedef struct hash_entry_t {
+  s7_pointer key, value;
+  struct hash_entry_t *next;
+} hash_entry_t;
+
+
 /* cell structure */
 typedef struct s7_cell {
   union {
@@ -515,14 +521,18 @@ typedef struct s7_cell {
 
     struct {
       s7_Int length;
-      s7_pointer *elements;
+      hash_entry_t **elements;
       unsigned int entries;          
-      s7_pointer (*hash_func)(s7_scheme *sc, s7_pointer table, s7_pointer key); 
+      hash_entry_t *(*hash_func)(s7_scheme *sc, s7_pointer table, s7_pointer key); 
       s7_pointer eq_func;
     } hasher;
 
     struct {
-      s7_pointer obj, cur;
+      s7_pointer obj;
+      union {
+	s7_pointer cur;
+	hash_entry_t *hcur;
+      } hc;
       s7_Int loc;
       union {
 	s7_Int len;
@@ -753,7 +763,8 @@ struct s7_scheme {
   s7_pointer error_hook;              /* *error-hook* hook object */
   s7_pointer direct_str;
 
-  bool gc_off, gc_stats;              /* gc_off: if true, the GC won't run, gc_stats: if true, print stats during GC */
+  bool gc_off;              /* gc_off: if true, the GC won't run */
+  unsigned int gc_stats;
   unsigned int gensym_counter, cycle_counter, f_class, add_class, equal_class;
   int format_column;
   int capture_env_counter;
@@ -1750,7 +1761,8 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {pair_sy
 #define iterator_position(p)          (p)->object.iter.loc
 #define iterator_length(p)            (p)->object.iter.lw.len
 #define iterator_slow(p)              (p)->object.iter.lw.slow
-#define iterator_current(p)           (p)->object.iter.cur
+#define iterator_current(p)           (p)->object.iter.hc.cur
+#define iterator_hash_current(p)      (p)->object.iter.hc.hcur
 #define iterator_next(p)              (p)->object.iter.next
 
 #define temp_stack_top(p)             (p)->object.stk.top
@@ -2143,6 +2155,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e);
 static void optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e);
 static double next_random(s7_rng_t *r);
+static void free_hash_table(s7_pointer table);
 #if DEBUGGING
 static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port, int nlen);
 static void print_gc_info(s7_pointer obj, int line);
@@ -2807,10 +2820,9 @@ static void report_counts(s7_scheme *sc)
 
   for (i = 0; i < len; i++)
     {
-      int k;
-      s7_pointer x;
-      for (k = 0, x = elements[i]; is_pair(x); x = cdr(x), k++)
-	data[loc++] = new_datum(s7_integer(cdar(x)), caar(x));
+      hash_entry_t *x;
+      for (x = elements[i]; x; x = x->next)
+	data[loc++] = new_datum(s7_integer(x->value), x->key);
     }
 
   qsort((void *)data, loc, sizeof(datum *), sort_data);
@@ -3242,7 +3254,7 @@ static void sweep(s7_scheme *sc)
 	  if (is_free_and_clear(sc->hash_tables[i]))
 	    {
 	      if (hash_table_length(sc->hash_tables[i]) > 0)
-		free(hash_table_elements(sc->hash_tables[i]));
+		free_hash_table(sc->hash_tables[i]);
 	    }
 	  else sc->hash_tables[j++] = sc->hash_tables[i];
 	}
@@ -3775,14 +3787,17 @@ static void mark_hash_table(s7_pointer p)
   set_mark(p);
   if (hash_table_entries(p) > 0)
     {
-      s7_pointer *tp, *tend;
-      tp = (s7_pointer *)(hash_table_elements(p));
-      tend = (s7_pointer *)(tp + hash_table_length(p));
-      while (tp < tend)
+      int i;
+      hash_entry_t **entries;
+      entries = hash_table_elements(p);
+      for (i = 0; i < hash_table_length(p); i++)
 	{
-	  if (is_pair(*tp))
-	    mark_pair(*tp);
-	  tp++;
+	  hash_entry_t *p;
+	  for (p = entries[i]; p; p = p->next)
+	    {
+	      S7_MARK(p->key);
+	      S7_MARK(p->value);
+	    }
 	}
     }
 }
@@ -3909,6 +3924,15 @@ static int last_gc_line = 0;
 static const char *last_gc_func = NULL;
 #endif
 
+#define GC_STATS 1
+#define HEAP_STATS 2
+#define STACK_STATS 4
+
+#define show_gc_stats(Sc) ((Sc->gc_stats & GC_STATS) != 0)
+#define show_stack_stats(Sc) ((Sc->gc_stats & STACK_STATS) != 0)
+#define show_heap_stats(Sc) ((Sc->gc_stats & HEAP_STATS) != 0)
+
+
 static int gc(s7_scheme *sc)
 {
   s7_cell **old_free_heap_top;
@@ -3930,7 +3954,7 @@ static int gc(s7_scheme *sc)
   #define GC_CALL(P, Tp) p = (*tp++); if (is_marked(p)) clear_mark(p); else {if (!is_free_and_clear(p)) {clear_type(p); (*fp++) = p;}}
 #endif
 
-  if (sc->gc_stats)
+  if (show_gc_stats(sc))
     {
       fprintf(stdout, "gc ");
 #if DEBUGGING
@@ -4119,7 +4143,7 @@ static int gc(s7_scheme *sc)
   }
 #endif
 
-  if (sc->gc_stats)
+  if (show_gc_stats(sc))
     {
 #ifndef _MSC_VER
       struct timeval t0;
@@ -4143,7 +4167,7 @@ static int gc(s7_scheme *sc)
 
 void s7_gc_stats(s7_scheme *sc, bool on)
 {
-  sc->gc_stats = on;
+  sc->gc_stats = (on) ? GC_STATS : 0;
 }
 
 unsigned int s7_heap_size(s7_scheme *sc)
@@ -4250,6 +4274,9 @@ static void expand_heap(s7_scheme *sc)
       heap_location(sc->heap[k]) = k;
     }
   sc->previous_free_heap_top = sc->free_heap_top;
+
+  if (show_heap_stats(sc))
+    fprintf(stderr, "heap grows to %d\n", sc->heap_size);
 }
 
 static void try_to_call_gc(s7_scheme *sc)
@@ -4590,6 +4617,9 @@ static void increase_stack_size(s7_scheme *sc)
   sc->stack_start = vector_elements(sc->stack);
   sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
   sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
+
+  if (show_stack_stats(sc))
+    fprintf(stderr, "stack grows to %d\n", new_size);
 } 
 
 #define check_stack_size(Sc) \
@@ -7938,10 +7968,7 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
 	    (*numer) = (s7_Int)floor(x1);
 	  else (*numer) = 0;
 	}
-      else
-	{
-	  (*numer) = i;
-	}
+      else (*numer) = i;
       (*denom) = 1;
       return(true);
     }
@@ -8491,17 +8518,10 @@ static s7_pointer s7_negate(s7_scheme *sc, s7_pointer p)     /* can't use "negat
 {
   switch (type(p))
     {
-    case T_INTEGER: 
-      return(make_integer(sc, -integer(p)));
-      
-    case T_RATIO:
-      return(s7_make_ratio(sc, -numerator(p), denominator(p)));
-      
-    case T_REAL:
-      return(make_real(sc, -real(p)));
-      
-    default:
-      return(s7_make_complex(sc, -real_part(p), -imag_part(p)));
+    case T_INTEGER: return(make_integer(sc, -integer(p)));
+    case T_RATIO:   return(s7_make_ratio(sc, -numerator(p), denominator(p)));
+    case T_REAL:    return(make_real(sc, -real(p)));
+    default:        return(s7_make_complex(sc, -real_part(p), -imag_part(p)));
     }
 }
 #endif
@@ -8644,18 +8664,9 @@ static bool s7_is_zero(s7_pointer x)
 
 
 static bool s7_is_one(s7_pointer x)
-  {
-  switch (type(x))
-    {
-    case T_INTEGER: 
-      return(integer(x) == 1);
-
-    case T_REAL:    
-      return(real(x) == 1.0);
-
-    default:        
-      return(false);
-    }
+{
+    return(((is_integer(x)) && (integer(x) == 1)) ||
+	   ((type(x) == T_REAL) && (real(x) == 1.0)));
 }
 
 
@@ -24195,15 +24206,16 @@ static s7_pointer let_iterate(s7_scheme *sc, s7_pointer iterator)
 
 static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator)
 {
-  s7_pointer lst, table;
+  s7_pointer table;
   int loc, len;
-  s7_pointer *elements;
+  hash_entry_t **elements;
+  hash_entry_t *lst;
 
-  lst = iterator_current(iterator);
-  if (is_pair(lst))
+  lst = iterator_hash_current(iterator);
+  if (lst)
     {
-      iterator_current(iterator) = cdr(lst);
-      return(car(lst));
+      iterator_hash_current(iterator) = lst->next;
+      return(cons(sc, lst->key, lst->value));
     }
 
   table = iterator_sequence(iterator);
@@ -24212,13 +24224,13 @@ static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator)
 
   for (loc = iterator_position(iterator) + 1; loc < len;  loc++)
     {
-      s7_pointer x;
+      hash_entry_t *x;
       x = elements[loc];
-      if (is_not_null(x))
+      if (x)
 	{
 	  iterator_position(iterator) = loc;
-	  iterator_current(iterator) = cdr(x);
-	  return(car(x));
+	  iterator_hash_current(iterator) = x->next;
+	  return(cons(sc, x->key, x->value));
 	}
     }
   return(sc->ITERATOR_END);
@@ -24340,7 +24352,7 @@ static s7_pointer make_iterator(s7_scheme *sc, s7_pointer e)
       break;
 
     case T_HASH_TABLE:
-      iterator_current(iter) = sc->NIL;
+      iterator_hash_current(iter) = NULL;
       iterator_position(iter) = -1;
       iterator_next(iter) = hash_table_iterate;
       break;
@@ -24530,8 +24542,8 @@ static void add_shared_ref(shared_info *ci, s7_pointer x, int ref_x)
 }
 
 static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top, bool stop_at_print_length);
-static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key);
-static s7_pointer hash_eq_func(s7_scheme *sc, s7_pointer table, s7_pointer key);
+static hash_entry_t *hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key);
+static hash_entry_t *hash_eq_func(s7_scheme *sc, s7_pointer table, s7_pointer key);
 
 static void collect_vector_info(s7_scheme *sc, shared_info *ci, s7_pointer top, bool stop_at_print_length)
 {
@@ -24604,28 +24616,26 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 	case T_HASH_TABLE:
 	  if (hash_table_entries(top) > 0)
 	    {
-	      s7_pointer iterator;
-	      int gc_iter;
+	      int i;
+	      hash_entry_t **entries;
 	      bool keys_safe;
-	      
+
 	      keys_safe = ((hash_table_function(top) != hash_equal) &&
 			   (hash_table_function(top) != hash_eq_func));
-	      iterator = make_iterator(sc, top);
-	      gc_iter = s7_gc_protect(sc, iterator);
-	      
-	      while (true)
+	      entries = hash_table_elements(top);
+
+	      for (i = 0; i < hash_table_length(top); i++)
 		{
-		  s7_pointer x;
-		  x = iterate(sc, iterator);
-		  if (x == sc->ITERATOR_END) break;
-		  /* x is a cons, if hash_table_function(top) != hash_equal, we know car is ok */
-		  if ((!keys_safe) &&
-		      (has_structure(car(x))))
-		    collect_shared_info(sc, ci, car(x), stop_at_print_length);
-		  if (has_structure(cdr(x)))
-		    collect_shared_info(sc, ci, cdr(x), stop_at_print_length);
+		  hash_entry_t *p;
+		  for (p = entries[i]; p; p = p->next)
+		    {
+		      if ((!keys_safe) &&
+			  (has_structure(p->key)))
+			collect_shared_info(sc, ci, p->key, stop_at_print_length);
+		      if (has_structure(p->value))
+			collect_shared_info(sc, ci, p->value, stop_at_print_length);
+		    }
 		}
-	      s7_gc_unprotect_at(sc, gc_iter);
 	    }
 	  break;
 
@@ -32871,17 +32881,59 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 
 /* -------- hash tables -------- */
 
+static hash_entry_t *hash_free_list = NULL;
+
+static void free_hash_table(s7_pointer table)
+{
+  int i;
+  hash_entry_t **entries;
+  entries = hash_table_elements(table);
+  for (i = 0; i < hash_table_length(table); i++)
+    {
+      hash_entry_t *p, *n;
+      for (p = entries[i]; p; p = n)
+	{
+	  n = p->next;
+	  /* free(p) */
+	  p->next = hash_free_list;
+	  hash_free_list = p;
+	}
+    }
+  free(entries);
+}
+
+static hash_entry_t *make_hash_entry(s7_pointer key, s7_pointer value)
+{
+  hash_entry_t *p;
+  if (hash_free_list)
+    {
+      p = hash_free_list;
+      hash_free_list = p->next;
+    }
+  else p = malloc(sizeof(hash_entry_t));
+  p->key = key;
+  p->value = value;
+  return(p);
+}
+
+static void add_hash_entry(s7_pointer table, int loc, hash_entry_t *p)
+{
+  p->next = hash_table_element(table, loc);
+  hash_table_element(table, loc) = p;
+}
+
+
 bool s7_is_hash_table(s7_pointer p)
 {
   return(is_hash_table(p));
 }
-
 
 static s7_pointer g_is_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_hash_table "(hash-table? obj) returns #t if obj is a hash-table"
   check_boolean_method(sc, is_hash_table, sc->IS_HASH_TABLE, args);
 }
+
 
 #if (!WITH_PURE_S7)
 static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
@@ -32895,6 +32947,7 @@ static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
   return(make_integer(sc, hash_table_length(car(args))));
 }
 #endif
+
 
 static s7_pointer g_hash_table_entries(s7_scheme *sc, s7_pointer args)
 {
@@ -32940,9 +32993,7 @@ static unsigned int hash_loc(s7_scheme *sc, s7_pointer key)
       return(loc);
 
     case T_INTEGER:
-      if (integer(key) < 0)
-	return((unsigned int)(-integer(key)));
-      return((unsigned int)integer(key)); /* overflow possible! */
+      return((unsigned int)(s7_Int_abs(integer(key))));
 
     case T_REAL:
       return(hash_float_location(real(key)));
@@ -32972,10 +33023,35 @@ static unsigned int hash_loc(s7_scheme *sc, s7_pointer key)
       return(character(key));
 
     case T_HASH_TABLE:
+      return(hash_table_length(key));
+
     case T_INT_VECTOR:
+      if (vector_length(key) == 0)
+	return(0);
+      if (vector_length(key) == 1)
+	return((unsigned int)(s7_Int_abs(int_vector_element(key, 0))));
+      return((unsigned int)(vector_length(key) + s7_Int_abs(int_vector_element(key, 0)) + s7_Int_abs(int_vector_element(key, 1))));
+
     case T_FLOAT_VECTOR:
+      if (vector_length(key) == 0)
+	return(0);
+      if (vector_length(key) == 1)
+	return(hash_float_location(float_vector_element(key, 0)));
+      return((unsigned int)(vector_length(key) + hash_float_location(float_vector_element(key, 0)) + hash_float_location(float_vector_element(key, 1))));
+      
     case T_VECTOR:
-      return(vector_length(key));
+      if (vector_length(key) == 0)
+	return(0);
+      if (vector_length(key) == 1)
+	return(hash_loc(sc, vector_element(key, 0)));
+      return(vector_length(key) + hash_loc(sc, vector_element(key, 0)) + hash_loc(sc, vector_element(key, 1)));
+
+    case T_ENVIRONMENT:
+      if ((key == sc->rootlet) || (!is_slot(let_slots(key))))
+	return(0);
+      if (!is_slot(next_slot(let_slots(key))))
+	return(hash_loc(sc, slot_value(let_slots(key))));
+      return(hash_loc(sc, slot_value(let_slots(key))) + hash_loc(sc, slot_value(next_slot(let_slots(key)))));
 
     case T_PAIR:
       /* len+loc(car) is not horrible, but it means (for example) every list '(set! a b) is hashed to the same location,
@@ -33030,18 +33106,18 @@ static s7_pointer g_hash_table_index(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer hash_empty(s7_scheme *sc, s7_pointer table, s7_pointer key)
+static hash_entry_t *hash_empty(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
-  return(sc->NIL);
+  return(NULL);
 }
 
 
-static s7_pointer hash_int(s7_scheme *sc, s7_pointer table, s7_pointer key)
+static hash_entry_t *hash_int(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   if (s7_is_integer(key))
     {
       s7_Int keyval;
-      s7_pointer x;
+      hash_entry_t *x;
       unsigned int loc;
       unsigned long long int hash_len;
 
@@ -33051,21 +33127,21 @@ static s7_pointer hash_int(s7_scheme *sc, s7_pointer table, s7_pointer key)
 	loc = (unsigned int)((-keyval) & hash_len);
       else loc = (unsigned int)(keyval & hash_len);
 
-      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-	if (integer(fcdr(x)) == keyval)
-	  return(car(x));
+      for (x = hash_table_element(table, loc); x; x = x->next)
+	if (integer(x->key) == keyval)
+	  return(x);
     }
-  return(sc->NIL);
+  return(NULL);
 }
 
 
-static s7_pointer hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key)
+static hash_entry_t *hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   /* cityhash and spookyhash are the top-of-the-line, but do we need that much power? 
    */
   if (is_string(key))
     {
-      s7_pointer x;
+      hash_entry_t *x;
       unsigned int hash_len, loc, orig;
 
       hash_len = (unsigned int)hash_table_length(table) - 1;
@@ -33077,63 +33153,61 @@ static s7_pointer hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key)
 	}
       orig = loc;
       loc &= hash_len;
-      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-	if ((orig == string_hash(fcdr(x))) &&
-	    (strings_are_equal(string_value(fcdr(x)), string_value(key))))
-	  return(car(x));
+      for (x = hash_table_element(table, loc); x; x = x->next)
+	if ((orig == string_hash(x->key)) &&
+	    (strings_are_equal(string_value(x->key), string_value(key))))
+	  return(x);
     }
-  return(sc->NIL);
+  return(NULL);
 }
 
 
-static s7_pointer hash_char(s7_scheme *sc, s7_pointer table, s7_pointer key)
+static hash_entry_t *hash_char(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   if (s7_is_character(key))
     {
-      s7_pointer x;
+      hash_entry_t *x;
       int hash_len, loc;
       hash_len = (int)hash_table_length(table) - 1;
       loc = character(key) & hash_len;
-      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-	if (fcdr(x) == key)
-	  return(car(x));
+      for (x = hash_table_element(table, loc); x; x = x->next)
+	if (x->key == key)
+	  return(x);
     }
-  return(sc->NIL);
+  return(NULL);
 }
 
 
-static s7_pointer hash_float_1(s7_scheme *sc, s7_pointer table, int loc, s7_Double keyval)
+static hash_entry_t *hash_float_1(s7_scheme *sc, s7_pointer table, int loc, s7_Double keyval)
 {
-  s7_pointer x;
+  hash_entry_t *x;
   bool look_for_nan;
   look_for_nan = is_NaN(keyval);
   
-  for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
+  for (x = hash_table_element(table, loc); x; x = x->next)
     {
-      s7_pointer y;
-      y = fcdr(x);
-      if (type(y) == T_REAL) /* we're possibly called from hash_equal, so keys might not be T_REAL */
+      if (type(x->key) == T_REAL) /* we're possibly called from hash_equal, so keys might not be T_REAL */
 	{
 	  s7_Double val;
-	  val = real(y);
+	  val = real(x->key);
 	  if (look_for_nan)
 	    {
 	      if (is_NaN(val))
-		return(car(x));
+		return(x);
 	    }
 	  else
 	    {
 	      if ((val == keyval) ||   /* inf case */
 		  (fabs(val - keyval) < sc->hash_table_float_epsilon))
-		return(car(x));
+		return(x);
 	    }
 	}
     }
-  return(sc->NIL);
+  return(NULL);
 }
 
 
-static s7_pointer hash_float(s7_scheme *sc, s7_pointer table, s7_pointer key)
+static hash_entry_t *hash_float(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   /* give the equality check some room.  We only get here if key is T_REAL.
    *   also inf == inf and nan == nan
@@ -33149,22 +33223,20 @@ static s7_pointer hash_float(s7_scheme *sc, s7_pointer table, s7_pointer key)
 }
 
 
-static s7_pointer hash_complex_1(s7_scheme *sc, s7_pointer table, int loc, s7_pointer key)
+static hash_entry_t *hash_complex_1(s7_scheme *sc, s7_pointer table, int loc, s7_pointer key)
 {
-  s7_pointer x;
-  for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
+  hash_entry_t *x;
+  for (x = hash_table_element(table, loc); x; x = x->next)
     {
-      s7_pointer y;
-      y = fcdr(x);
-      if ((type(y) == T_COMPLEX) &&
-	  (s7_is_morally_equal(sc, y, key)))
-	return(car(x));
+      if ((type(x->key) == T_COMPLEX) &&
+	  (s7_is_morally_equal(sc, x->key, key)))
+	return(x);
     }
-  return(sc->NIL);
+  return(NULL);
 }
 
 
-static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
+static hash_entry_t *hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   /* there is a problem here if we hash mixed numeric types and floats are compared using float-epsilon.
    *   to remain consistent even in mixed cases, we need to trap the floats here before s7_is_equal.
@@ -33178,7 +33250,7 @@ static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
    *
    * yet another problem: hashing a closure can't work.  A closure is not necessarily equal to itself.
    */
-  s7_pointer x;
+  hash_entry_t *x;
   unsigned int hash_len, loc;
 
   hash_len = (int)hash_table_length(table) - 1;
@@ -33193,18 +33265,18 @@ static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
       return(hash_complex_1(sc, table, loc, key));
 
     case T_SYNTAX:
-      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-	if ((is_syntax(fcdr(x))) && 
-	    (syntax_symbol(fcdr(x))) == syntax_symbol(key)) /* the opcodes might differ, but the symbols should not */
-	  return(car(x));
+      for (x = hash_table_element(table, loc); x; x = x->next)
+	if ((is_syntax(x->key)) &&
+	    (syntax_symbol(x->key) == syntax_symbol(key))) /* the opcodes might differ, but the symbols should not */
+	  return(x);
       break;
 
     case T_HASH_TABLE:
     case T_SYMBOL:
     case T_CHARACTER:
-      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-	if (fcdr(x) == key)
-	  return(car(x));
+      for (x = hash_table_element(table, loc); x; x = x->next)
+	if (x->key == key)
+	  return(x);
       break;
       
     default:
@@ -33212,21 +33284,21 @@ static s7_pointer hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
        *    and key is one of them, so I changed the equality check above to use eq? -- not sure this is right.
        */
       /* hope for an easy case... */
-      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-	if (fcdr(x) == key)
-	  return(car(x));
+      for (x = hash_table_element(table, loc); x; x = x->next)
+	if (x->key == key)
+	  return(x);
 
-      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-	if (s7_is_equal(sc, fcdr(x), key))
-	  return(car(x));
+      for (x = hash_table_element(table, loc); x; x = x->next)
+	if (s7_is_equal(sc, x->key, key))
+	  return(x);
     }
-  return(sc->NIL);
+  return(NULL);
 }
 
 
-static s7_pointer hash_eq_func(s7_scheme *sc, s7_pointer table, s7_pointer key)
+static hash_entry_t *hash_eq_func(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
-  s7_pointer x;
+  hash_entry_t *x;
   unsigned int hash_len, loc;
   s7_function f;
 
@@ -33235,29 +33307,29 @@ static s7_pointer hash_eq_func(s7_scheme *sc, s7_pointer table, s7_pointer key)
   loc = hash_loc(sc, key) & hash_len;
 
   car(sc->T2_1) = key;
-  for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
+  for (x = hash_table_element(table, loc); x; x = x->next)
     {
-      car(sc->T2_2) = fcdr(x);
+      car(sc->T2_2) = x->key;
       if (is_true(sc, (*f)(sc, sc->T2_1)))
-	return(car(x));
+	return(x);
     }
-  return(sc->NIL);
+  return(NULL);
 }
 
 
-static s7_pointer hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)
+static hash_entry_t *hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   if (is_symbol(key))
     {
-      s7_pointer x;
+      hash_entry_t *x;
       int hash_len, loc;
       hash_len = (int)hash_table_length(table) - 1;
       loc = symbol_hash(key) & hash_len;
-      for (x = hash_table_elements(table)[loc]; is_pair(x); x = cdr(x))
-	if (fcdr(x) == key)
-	  return(car(x));
+      for (x = hash_table_element(table, loc); x; x = x->next)
+	if (x->key == key)
+	  return(x);
     }
-  return(sc->NIL);
+  return(NULL);
 }
 
 
@@ -33274,8 +33346,7 @@ static s7_pointer hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)
 s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 {
   s7_pointer table;
-  s7_pointer *els;
-  int i;
+  hash_entry_t **els;
   /* size is rounded up to the next power of 2 */
 
   if ((size & (size + 1)) != 0)      /* already 2^n - 1 ? */
@@ -33291,14 +33362,12 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
     }
   size++;
 
-  els = (s7_pointer *)malloc(size * sizeof(s7_pointer));
+  els = (hash_entry_t **)calloc(size, sizeof(hash_entry_t *)); /* PERHAPS: from free_list */
   if (!els) return(s7_error(sc, make_symbol(sc, "out-of-memory"), list_1(sc, make_string_wrapper(sc, "make-hash-table allocation failed!"))));
 
   NEW_CELL(sc, table, T_HASH_TABLE | T_SAFE_PROCEDURE);
   hash_table_length(table) = size;
-  for (i = 0; i < size; i++) els[i] = sc->NIL;
   hash_table_elements(table) = els;
-  /* or use the vector fill stuff here, but that now just unrolls the loop */
   hash_table_function(table) = hash_empty;
   hash_table_eq_function(table) = NULL;
   hash_table_entries(table) = 0;
@@ -33365,28 +33434,27 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
-  s7_pointer x;
+  hash_entry_t *x;
   x = (*hash_table_function(table))(sc, table, key);
-
-  if (is_not_null(x))
-    return(cdr(x));
+  if (x) return(x->value);
   return(sc->F);
 }
 
 
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7_pointer value)
 {
-  s7_pointer x;
+  hash_entry_t *x;
   x = (*hash_table_function(table))(sc, table, key);
 
-  if (is_not_null(x))
-    cdr(x) = value;
+  if (x)
+    x->value = value;
   else
     {
       unsigned int hash_len, loc;
 
       hash_len = hash_table_length(table) - 1;
       loc = hash_loc(sc, key) & hash_len;
+      add_hash_entry(table, loc, make_hash_entry(key,value));
       hash_table_entries(table)++;
 
       if (hash_table_function(table) != hash_eq_func)
@@ -33481,10 +33549,6 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
 		}
 	    }
 	}
-
-      x = cons_unchecked(sc, cons(sc, key, value), hash_table_elements(table)[loc]);
-      hash_table_elements(table)[loc] = x;
-      set_fcdr(x, key);
     }
   return(value);
 }
@@ -33496,7 +33560,6 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
   s7_pointer table;
 
   table = car(args);
-  
   if (!is_hash_table(table))
     {
       check_method(sc, table, sc->HASH_TABLE_REF, args);
@@ -33517,7 +33580,8 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 static s7_pointer hash_table_ref_2;
 static s7_pointer g_hash_table_ref_2(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer x, table;
+  s7_pointer table;
+  hash_entry_t *x;
   table = car(args);
   
   if (!is_hash_table(table))
@@ -33529,15 +33593,15 @@ static s7_pointer g_hash_table_ref_2(s7_scheme *sc, s7_pointer args)
     return(sc->F);
 
   x = (*hash_table_function(table))(sc, table, cadr(args));
-  if (is_not_null(x))
-    return(cdr(x));
+  if (x) return(x->value);
   return(sc->F);
 }
 
 static s7_pointer hash_table_ref_ss;
 static s7_pointer g_hash_table_ref_ss(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer x, table;
+  s7_pointer table;
+  hash_entry_t *x;
   table = find_symbol_checked(sc, car(args));
   
   if (!is_hash_table(table))
@@ -33549,15 +33613,15 @@ static s7_pointer g_hash_table_ref_ss(s7_scheme *sc, s7_pointer args)
     return(sc->F);
 
   x = (*hash_table_function(table))(sc, table, find_symbol_checked(sc, cadr(args)));
-  if (is_not_null(x))
-    return(cdr(x));
+  if (x) return(x->value);
   return(sc->F);
 }
 
 static s7_pointer hash_table_ref_car;
 static s7_pointer g_hash_table_ref_car(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer x, y, table;
+  s7_pointer y, table;
+  hash_entry_t *x;
   table = find_symbol_checked(sc, car(args));
   
   if (!is_hash_table(table))
@@ -33573,8 +33637,7 @@ static s7_pointer g_hash_table_ref_car(s7_scheme *sc, s7_pointer args)
     return(simple_wrong_type_argument(sc, sc->CAR, y, T_PAIR));
 
   x = (*hash_table_function(table))(sc, table, car(y));
-  if (is_not_null(x))
-    return(cdr(x));
+  if (x) return(x->value);
   return(sc->F);
 }
 
@@ -33585,7 +33648,6 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
   s7_pointer table;
 
   table = car(args);
-  
   if (!is_hash_table(table))
     {
       check_method(sc, table, sc->HASH_TABLE_SET, args);
@@ -33658,25 +33720,12 @@ That is, (hash-table* 'a 1 'b 2) returns a new hash-table with the two key/value
 }
 
 
-static s7_pointer hash_list_copy(s7_scheme *sc, s7_pointer obj)
-{
-  if (is_pair(obj))
-    {
-      s7_pointer p;
-      p = cons(sc, s7_copy(sc, car(obj)), hash_list_copy(sc, cdr(obj)));
-      set_fcdr(p, caar(p));
-      return(p);
-    }
-  return(obj);
-}
-
-
 static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash)
 {
   /* this has to copy not only the lists but the cons's in the lists! */
   int i, len;
   s7_pointer new_hash;
-  s7_pointer *old_lists, *new_lists;
+  hash_entry_t **old_lists, **new_lists;
   int gc_loc;
 
   len = hash_table_length(old_hash);
@@ -33687,8 +33736,17 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash)
   new_lists = hash_table_elements(new_hash);
 
   for (i = 0; i < len; i++)
-    if (is_not_null(old_lists[i]))
-      new_lists[i] = hash_list_copy(sc, old_lists[i]);
+    {
+      hash_entry_t *x, *y;
+      for (x = old_lists[i], y = NULL; x; x = x->next)
+	{
+	  hash_entry_t *p;
+	  p = make_hash_entry(x->key, x->value);
+	  p->next = y;
+	  y = p;
+	}
+      new_lists[i] = y;
+    }
 
   hash_table_entries(new_hash) = hash_table_entries(old_hash);
   hash_table_function(new_hash) = hash_table_function(old_hash);
@@ -33703,7 +33761,7 @@ static s7_pointer hash_table_reverse(s7_scheme *sc, s7_pointer old_hash)
 {
   int i, len;
   s7_pointer new_hash;
-  s7_pointer *old_lists;
+  hash_entry_t **old_lists;
   int gc_loc;
 
   len = hash_table_length(old_hash);
@@ -33715,9 +33773,9 @@ static s7_pointer hash_table_reverse(s7_scheme *sc, s7_pointer old_hash)
 
   for (i = 0; i < len; i++)
     {
-      s7_pointer x;
-      for (x = old_lists[i]; is_not_null(x); x = cdr(x))
-	s7_hash_table_set(sc, new_hash, cdar(x), caar(x));
+      hash_entry_t *x;
+      for (x = old_lists[i]; x; x = x->next)
+	s7_hash_table_set(sc, new_hash, x->value, x->key);
     }
 
   if (hash_table_function(old_hash) == hash_eq_func)
@@ -33733,14 +33791,11 @@ static s7_pointer hash_table_reverse(s7_scheme *sc, s7_pointer old_hash)
 
 static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
 {
-  int i, len;
-
-  len = hash_table_length(table);
-  for (i = 0; i < len; i++)
-    hash_table_element(table, i) = sc->NIL;
+  free_hash_table(table);
   hash_table_entries(table) = 0;
   if (hash_table_function(table) != hash_eq_func)
     hash_table_function(table) = hash_empty;
+  hash_table_elements(table) = (hash_entry_t **)calloc(hash_table_length(table), sizeof(hash_entry_t *));
   return(table);
 }
 
@@ -35561,7 +35616,7 @@ static int equal_ref(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 
 static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
 {
-  s7_pointer *lists;
+  hash_entry_t **lists;
   int i, len;
   shared_info *nci = ci;
 
@@ -35603,18 +35658,14 @@ static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_i
 
   for (i = 0; i < len; i++)
     {
-      s7_pointer p;
-      for (p = lists[i]; is_not_null(p); p = cdr(p))
+      hash_entry_t *p;
+      for (p = lists[i]; p; p = p->next)
 	{
-	  s7_pointer key, x_val, y_val;
+	  hash_entry_t *y_val;
+	  y_val = (*hash_table_function(y))(sc, y, p->key);
 
-	  key = caar(p);
-	  x_val = cdar(p);
-	  y_val = (*hash_table_function(y))(sc, y, key);
-
-	  if (is_null(y_val))
-	    return(false);
-	  if (!s7_is_equal_1(sc, x_val, cdr(y_val), nci, morally))
+	  if ((!y_val) ||
+	      (!s7_is_equal_1(sc, p->value, y_val->value, nci, morally)))
 	    return(false);
 	}
     }
@@ -36323,17 +36374,17 @@ static s7_pointer env_setter(s7_scheme *sc, s7_pointer e, s7_Int loc, s7_pointer
 static s7_pointer hash_table_getter(s7_scheme *sc, s7_pointer e, s7_Int loc) 
 {
   int i, count, len;
-  s7_pointer p;
-  s7_pointer *elements;
+  hash_entry_t *p;
+  hash_entry_t **elements;
 
   len = hash_table_length(e);
   elements = hash_table_elements(e);
 
   for (i = 0, count = 0; i < len; i++)
-    for (p = elements[i]; is_pair(p); p = cdr(p))
+    for (p = elements[i]; p; p = p->next)
       {
 	if (count == loc)
-	  return(car(p));
+	  return(cons(sc, p->key, p->value));
 	count++;
       }
   return(sc->NIL);
@@ -65721,7 +65772,7 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
   if (sym == sc->gc_protected_objects_symbol)                            /* gc-protected-objects */
     return(sc->protected_objects);
   if (sym == sc->gc_stats_symbol)                                        /* gc-stats */
-    return(make_boolean(sc, sc->gc_stats));
+    return(make_integer(sc, sc->gc_stats));
 
   if (sym == sc->default_rationalize_error_symbol)                       /* default-rationalize-error */
     return(make_real(sc, sc->default_rationalize_error));
@@ -65806,7 +65857,8 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 
   if (sym == sc->gc_stats_symbol)
     {
-      if (s7_is_boolean(val)) {sc->gc_stats = (val == sc->T); return(val);}
+      if (s7_is_boolean(val)) {sc->gc_stats = ((val == sc->T) ? GC_STATS : 0); return(val);}
+      if (s7_is_integer(val)) {sc->gc_stats = s7_integer(val); return(val);}
       return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_BOOLEAN));
     }
 
@@ -65960,7 +66012,7 @@ s7_scheme *s7_init(void)
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
   
   sc->gc_off = true;                         /* sc->args and so on are not set yet, so a gc during init -> segfault */
-  sc->gc_stats = false;
+  sc->gc_stats = 0;
   init_gc_caches(sc);
 
   sc->longjmp_ok = false;
@@ -67507,6 +67559,7 @@ int main(int argc, char **argv)
  * t455|6     265 |   89 |  9   |       8.4 8045 7482 7265 7264
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 21.0
+ * t171           |      |      |                          27.1
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9
  *
  * ------------------------------------------------------------------
@@ -67546,5 +67599,10 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * clm.h MUS_VERSION is 6, so *features* shows 'clm6, but clm5 is the CL version?
- * need condensed gc-stats+permanent-pointers_stack-size etc
+ *
+ * hash-table perhaps: blocks of entries (locality)
+ * can envs use the same system (an array of hash_entry_t: sym/value) -- no slot/list in heap
+ *   or array of let_entry_t -- slots have a bunch of fields
+ *   need free_let/add_let_entry
+ * object_to_list? -- used only in format
  */
