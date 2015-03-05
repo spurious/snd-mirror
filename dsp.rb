@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 05/03/07 13:50:44
-# Changed: 14/11/14 18:51:07
+# Changed: 15/03/04 17:18:38
 
 # comments are taken mostly from dsp.scm
 #
@@ -2113,7 +2113,9 @@ DB_FLOOR is the level below which data will be ignored.")
       if linear2db(sqrt(sum_of_squares / fftsize.to_f)) >= db_floor
         numsum = 0.0
         densum = 0.0
-        clear_array(fdi)
+        fdi.map! do |x|
+          0.0
+        end
         mus_fft(fdr, fdi, fftsize)
         rectangular2polar(fdr, fdi)
         fft2.times do |j|

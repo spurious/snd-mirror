@@ -25,7 +25,7 @@
 # SUCH DAMAGE.
 #
 # Created: 03/04/08 17:05:03
-# Changed: 15/02/18 15:05:06
+# Changed: 15/03/04 16:38:12
 
 # module WS
 #   ws_getlogin
@@ -440,7 +440,7 @@ end
 
 with_silence do
   # warning: undefined variable
-  $clm_version            = "ruby 2015/02/18"
+  $clm_version            = "ruby 2015/03/04"
   $output                 ||= false
   $reverb                 ||= false
   $clm_array_print_length ||= 8
@@ -464,7 +464,6 @@ with_silence do
   $clm_default_frequency  ||= 0.0
   $clm_locsig_type        ||= locsig_type
   $clm_search_list        ||= (ENV["CLM_SEARCH_PATH"] or ".").split(/:/)
-  $clm_output_device      ||= Mus_audio_default
 
   if provided? :snd
     $clm_channels      ||= default_output_chans

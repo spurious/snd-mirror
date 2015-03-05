@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 05/02/18 10:18:34
-# Changed: 15/02/19 06:52:10
+# Changed: 15/03/05 13:28:53
 
 # Tags: FIXME - something is wrong
 #       XXX   - info marker
@@ -1398,7 +1398,7 @@ def test_00
    [:Show_x_axis_unlabelled, 4],
    [:Show_bare_x_axis, 5],
    # sndlib constants
-   [:Mus_unsupported, 0],
+   [:Mus_unknown_header, 0],
    [:Mus_next, 1],
    [:Mus_aifc, 2],
    [:Mus_riff, 3],
@@ -1424,7 +1424,7 @@ def test_00
    [:Mus_chebyshev_first_kind, 1],
    [:Mus_chebyshev_second_kind, 2],
    #
-   [:Mus_unknown, 0],
+   [:Mus_unknown_sample, 0],
    [:Mus_bshort, 1],
    [:Mus_lshort, 10],
    [:Mus_mulaw, 2],
@@ -1851,7 +1851,7 @@ def test_headers(name, chns, sr, dur, typ, frm,
     ftyp = mus_sound_header_type(file)
     req = mus_sound_length(file)
     res = mus_sound_datum_size(file) * fdur * fsr * fchns
-    if (ffrm != Mus_unknown) and
+    if (ffrm != Mus_unknown_sample) and
         (ftyp != 27) and
         (req + 1) < res
       snd_display_prev_caller(snd_format_neq(res, req, "%s length", name))
@@ -2140,9 +2140,7 @@ def test_03
   #
   $snd_error_hook.reset_hook! 
   $mus_error_hook.reset_hook! 
-  [$output_name_hook,
-   $output_comment_hook,
-   $peak_env_hook,
+  [$output_comment_hook,
    $help_hook,
    $mark_drag_hook,
    $mix_drag_hook,
@@ -2480,7 +2478,7 @@ def test_03
    :channel2vct, :channel_amp_envs, :channel_data, :channel_properties,
    :channel_property, :channel_style, :channel_widgets, :channels,
    :channels_combined, :channels_separate, :channels_superimposed,
-   :chans, :clear_array, :clear_listener, :clip_hook,
+   :chans, :clear_listener, :clip_hook,
    :clipping, :clm_channel, :clm_table_size,
    :clm_default_frequency, :close_hook, :close_sound,
    :color_cutoff, :color_orientation_dialog, :color_hook, :color_inverted,
@@ -2544,7 +2542,7 @@ def test_03
    :grid_density, :haar_transform, :hamming_window, :hann_poisson_window,
    :hann_window, :header_type, :help_dialog, :help_hook, :hide_widget,
    :highlight_color, :html_dir, :html_program, :hz2radians, :iir_filter,
-   :iir_filter?, :in_any, :ina, :inb, :info_dialog, :info_popup_hook,
+   :iir_filter?, :in_any, :ina, :inb, :info_dialog,
    :init_ladspa, :initial_graph_hook, :insert_file_dialog, :insert_region,
    :insert_sample, :insert_samples, :insert_samples_with_origin,
    :insert_selection, :insert_silence, :insert_sound, :just_sounds,
@@ -2624,19 +2622,20 @@ def test_03
    :mus_sound_maxamp_exists?, :mus_sound_prune, :mus_sound_report_cache,
    :mus_sound_samples, :mus_sound_srate, :mus_sound_type_specifier,
    :mus_sound_write_date, :mus_soundfont, :mus_srate, :mus_svx,
-   :mus_ubshort, :mus_ubyte, :mus_ulshort, :mus_unknown, :mus_unsupported,
-   :mus_voc, :mus_width, :mus_xcoeff, :mus_xcoeffs, :mus_ycoeff,
-   :mus_ycoeffs, :name_click_hook, :new_sound, :new_sound_dialog,
-   :new_sound_hook, :new_widget_hook, :next_sample, :normalize_by_channel,
-   :normalize_by_sound, :normalize_channel, :normalize_globally,
-   :notch, :notch?, :one_pole, :one_pole?, :one_pole_all_pass,
-   :one_pole_all_pass?, :one_zero, :one_zero?,
+   :mus_ubshort, :mus_ubyte, :mus_ulshort, :mus_unknown_sample,
+   :mus_unknown_header, :mus_voc, :mus_width, :mus_xcoeff,
+   :mus_xcoeffs, :mus_ycoeff, :mus_ycoeffs, :name_click_hook,
+   :new_sound, :new_sound_dialog, :new_sound_hook, :new_widget_hook,
+   :next_sample, :normalize_by_channel, :normalize_by_sound,
+   :normalize_channel, :normalize_globally, :notch, :notch?,
+   :one_pole, :one_pole?, :one_pole_all_pass, :one_pole_all_pass?,
+   :one_zero, :one_zero?,
    :open_file_dialog, :open_file_dialog_directory, :open_hook,
    :open_raw_sound, :open_raw_sound_hook, :open_sound, :orientation_hook,
    :oscil, :oscil?, :out_any, :outa, :outb, :outc, :outd,
-   :output_comment_hook, :output_name_hook, :override_samples_with_origin,
+   :output_comment_hook, :override_samples_with_origin,
    :pad_channel, :partials2polynomial, :partials2wave, :parzen_window,
-   :pausing, :peak_env_hook, :peaks, :peaks_font, :phase_partials2wave,
+   :pausing, :peaks, :peaks_font, :phase_partials2wave,
    :phase_vocoder, :phase_vocoder_amp_increments, :phase_vocoder_amps,
    :phase_vocoder_freqs, :phase_vocoder_phase_increments,
    :phase_vocoder_phases, :phase_vocoder?, :play, :play_arrow_size,
@@ -2697,7 +2696,7 @@ def test_03
    :speed_control_bounds, :speed_control_style, :speed_control_tones,
    :square_wave, :square_wave?, :squelch_update, :srate, :src,
    :src_channel, :src_selection, :src_sound, :src?, :ssb_am, :ssb_am?,
-   :start_hook, :start_playing, :start_playing_hook,
+   :start_playing, :start_playing_hook,
    :start_playing_selection_hook, :start_progress_report,
    :status_report, :stop_player, :stop_playing,
    :stop_playing_hook, :stop_playing_selection_hook, :ncos, :ncos?,
@@ -12384,9 +12383,11 @@ def test_08_00
   if fneq(res = dot_product(v0, v1, 3), 0.75)
     snd_display("dot_product (3): %s?", res)
   end
-  clear_array(v0)
+  v0.map! do |x|
+    0.0
+  end
   if fneq(v0[3], 0.0)
-    snd_display("clear_array: %s?", v0)
+    snd_display("clear v0: %s?", v0)
   end
   vct_fill!(v0, 1.0)
   vct_fill!(v1, 0.5)
@@ -21825,7 +21826,9 @@ def test_12
         name = sf_dir_files[random(sf_dir_files.length).floor]
         ht = Snd.catch(:all, 0) do mus_sound_header_type(name) end.first
         df = Snd.catch(:all, 0) do mus_sound_sample_type(name) end.first
-        fd = if ht == Mus_raw or ht == Mus_unsupported or df == Mus_unknown
+        fd = if ht == Mus_raw or
+                ht == Mus_unknown_header or
+                df == Mus_unknown_sample
                -1
              else
                Snd.catch(:all, -1) do view_sound(name) end.first or -1
@@ -34215,7 +34218,7 @@ Procs = [
   :mus_expand_filename, :all_pass, :all_pass?,
   :amplitude_modulate, :array2file, :array_interp,
   :mus_interpolate, :asymmetric_fm, :asymmetric_fm?,
-  :clear_array, :comb, :comb?, :filtered_comb, :filtered_comb?,
+  :comb, :comb?, :filtered_comb, :filtered_comb?,
   :contrast_enhancement, :convolution, :convolve, :convolve?,
   :db2linear, :degrees2radians, :delay, :delay?, :dot_product,
   :env, :env_interp, :env?, :file2array, :file2frample,
@@ -34350,7 +34353,7 @@ Set_procs = [
   :y_position_slider, :y_zoom_slider,
   :mus_array_print_length, :mus_float_equal_fudge_factor,
   :mus_feedback, :mus_feedforward, :mus_frequency, :mus_hop,
-  :mus_increment, :mus_length, :mus_location, :mus_name, :mus_phase, :mus_ramp,
+  :mus_increment, :mus_length, :mus_location, :mus_phase, :mus_ramp,
   :mus_scaler, :x_axis_label, :locsig_type, :mus_file_buffer_size,
   :mus_rand_seed, :mus_width, :clm_table_size, :mus_offset, :html_dir,
   :html_program, :widget_position, :widget_size,
@@ -34623,7 +34626,7 @@ def test_28_00
     end
   end
   [make_vector(1), $color_95, [1.0]].each do |arg|
-    [:all_pass, :asymmetric_fm, :clear_array, :comb, :filtered_comb,
+    [:all_pass, :asymmetric_fm, :comb, :filtered_comb,
      :convolve, :db2linear, :moving_average, :degrees2radians, :delay,
      :env, :formant, :granulate, :hz2radians, :linear2db,
      :make_all_pass, :make_asymmetric_fm, :make_comb,
@@ -34983,21 +34986,22 @@ def test_28_01
     :mix_release_hook, :save_hook, :before_save_as_hook, :after_save_as_hook,
     :save_state_hook, :new_sound_hook, :mus_error_hook, :mouse_enter_graph_hook,
     :mouse_leave_graph_hook, :open_raw_sound_hook, :select_channel_hook,
-    :output_name_hook, :peak_env_hook, :after_open_hook, :close_hook, :draw_mark_hook,
+    :after_open_hook, :close_hook, :draw_mark_hook,
     :draw_mix_hook, :mark_click_hook, :listener_click_hook, :mix_click_hook,
-    :after_save_state_hook, :before_save_state_hook, :mark_hook, :mark_drag_hook,
-    :mix_drag_hook, :name_click_hook, :after_apply_controls_hook,
-    :open_hook, :output_comment_hook, :help_hook, :play_hook,
-    :new_widget_hook, :read_hook, :bad_header_hook, :snd_error_hook,
-    :snd_warning_hook, :start_hook, :start_playing_hook, :stop_playing_hook,
-    :mouse_enter_listener_hook, :mouse_leave_listener_hook,
-    :select_sound_hook,
-    :during_open_hook, :after_transform_hook, :mouse_enter_label_hook,
-    :mouse_leave_label_hook, :initial_graph_hook, :graph_hook, :key_press_hook,
-    :mouse_drag_hook, :mouse_press_hook, :mouse_click_hook, :enved_hook].each_with_index do |n, i|
+    :after_save_state_hook, :before_save_state_hook, :mark_hook,
+    :mark_drag_hook, :mix_drag_hook, :name_click_hook,
+    :after_apply_controls_hook, :open_hook, :output_comment_hook,
+    :help_hook, :play_hook, :new_widget_hook, :read_hook, :bad_header_hook,
+    :snd_error_hook, :snd_warning_hook, :start_playing_hook,
+    :stop_playing_hook, :mouse_enter_listener_hook, :mouse_leave_listener_hook,
+    :select_sound_hook, :during_open_hook, :after_transform_hook,
+    :mouse_enter_label_hook, :mouse_leave_label_hook, :initial_graph_hook,
+    :graph_hook, :key_press_hook, :mouse_drag_hook, :mouse_press_hook,
+    :mouse_click_hook, :enved_hook].each_with_index do |n, i|
     hook = eval("$#{n}")
     fnc = lambda do || 1 + 2 end
-    if (tag = Snd.catch do hook.add_hook!("test28-1", &fnc) end).first != :wrong_type_arg
+    tag = Snd.catch do hook.add_hook!("test28-1", &fnc) end
+    if tag.first != :wrong_type_arg
       snd_display("%s: hooks (1) %s: %s", i, n, tag)
     end
   end
@@ -35005,7 +35009,8 @@ def test_28_01
    :orientation_hook, :start_playing_selection_hook].each_with_index do |n, i|
     hook = eval("$#{n}")
     fnc = lambda do |a, b, c| a + b + c end
-    if (tag = Snd.catch do hook.add_hook!("test28-2", &fnc) end).first != :wrong_type_arg
+    tag = Snd.catch do hook.add_hook!("test28-2", &fnc) end
+    if tag.first != :wrong_type_arg
       snd_display("%s: hooks (2) %s: %s", i, n, tag)
     end
   end

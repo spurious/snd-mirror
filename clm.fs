@@ -2,9 +2,9 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 04/03/15 19:25:58
-\ Changed: 15/02/18 14:52:16
+\ Changed: 15/02/25 16:05:57
 \
-\ @(#)clm.fs	1.120 2/18/15
+\ @(#)clm.fs	1.121 2/25/15
 
 \ clm-print		( fmt :optional args -- )
 \ clm-message		( fmt :optional args -- )
@@ -281,7 +281,7 @@ set-current
 previous
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-"fth 2015/02/18"  value *clm-version*
+"fth 2015/02/25"  value *clm-version*
 #f 	      	  value *locsig*
 mus-lshort    	  value *clm-audio-format*
 #f            	  value *clm-comment*
@@ -321,7 +321,6 @@ locsig-type                value *clm-locsig-type*
 default-output-header-type value *clm-header-type*
 default-output-sample-type value *clm-sample-type*
 dac-size                   value *clm-rt-bufsize*
-mus-audio-default          value *clm-output-device*
 mus-file-buffer-size       value *clm-file-buffer-size*
 mus-clipping               value *clm-clipped*
 mus-array-print-length     value *clm-array-print-length*

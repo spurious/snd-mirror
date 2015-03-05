@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 03/12/21 13:48:01
-# Changed: 14/11/13 04:59:21
+# Changed: 15/02/27 23:12:08
 
 # If class Hook isn't compiled in, here is the corresponding Ruby
 # class and the initialization of all global hooks.
@@ -192,8 +192,6 @@ need a String or Symbol, not %p"
   $open_raw_sound_hook          = Hook.new("$open_raw_sound_hook", 2)
   $orientation_hook             = Hook.new("$orientation_hook", 0)
   $output_comment_hook          = Hook.new("$output_comment_hook", 1)
-  $output_name_hook             = Hook.new("$output_name_hook", 1)
-  $peak_env_hook                = Hook.new("$peak_env_hook", 2)
   $play_hook                    = Hook.new("$play_hook", 1)
   $read_hook                    = Hook.new("$read_hook", 1)
   $save_hook                    = Hook.new("$save_hook", 2)
@@ -202,7 +200,6 @@ need a String or Symbol, not %p"
   $select_sound_hook            = Hook.new("$select_sound_hook", 1)
   $snd_error_hook               = Hook.new("$snd_error_hook", 1)
   $snd_warning_hook             = Hook.new("$snd_warning_hook", 1)
-  $start_hook                   = Hook.new("$start_hook", 1)
   $start_playing_hook           = Hook.new("$start_playing_hook", 1)
   $start_playing_selection_hook = Hook.new("$start_playing_selection_hook", 0)
   $stop_dac_hook                = Hook.new("$stop_dac_hook", 0)
@@ -325,8 +322,6 @@ if defined? $after_graph_hook
                $open_raw_sound_hook,
                $orientation_hook,
                $output_comment_hook,
-               $output_name_hook,
-               $peak_env_hook,
                $play_hook,
                $read_hook,
                $save_hook,
@@ -335,7 +330,6 @@ if defined? $after_graph_hook
                $select_sound_hook,
                $snd_error_hook,
                $snd_warning_hook,
-               $start_hook,
                $start_playing_hook,
                $start_playing_selection_hook,
                $stop_playing_hook,

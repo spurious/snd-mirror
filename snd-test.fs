@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 06/08/05 00:09:28
-\ Changed: 15/02/19 06:52:41
+\ Changed: 15/03/05 13:28:40
 
 \ Tags:  FIXME - something is wrong
 \        XXX   - info marker
@@ -910,7 +910,7 @@ SIGINT lambda: { sig -- }
      #( <'> show-x-axis-unlabelled 4 )
      #( <'> show-bare-x-axis 5 )
      \ sndlib constants
-     #( <'> mus-unsupported 0 )
+     #( <'> mus-unknown-header 0 )
      #( <'> mus-next 1 )
      #( <'> mus-aifc 2 )
      #( <'> mus-riff 3 )
@@ -936,7 +936,7 @@ SIGINT lambda: { sig -- }
      #( <'> mus-chebyshev-first-kind 1 )
      #( <'> mus-chebyshev-second-kind 2 )
      \ 
-     #( <'> mus-unknown 0 )
+     #( <'> mus-unknown-sample 0 )
      #( <'> mus-bshort 1 )
      #( <'> mus-lshort 10 )
      #( <'> mus-mulaw 2 )
@@ -1356,8 +1356,8 @@ black-and-white-colormap constant *better-colormap*
     fsr   sr   lno name "srate"    test-header-check
     fdur  dur  lno name "duration" test-header-check
     file mus-sound-datum-size fdur f* fsr f* fchns f* floor f>s { fsize }
-    ffrm mus-unknown <>
-    ftyp 27 <> && if
+    ffrm mus-unknown-sample <>
+                    ftyp 27 <> && if
       flen 1+ fsize < if
         flen 1+ fsize lno name "length" test-header-check
       then
@@ -1798,9 +1798,7 @@ black-and-white-colormap constant *better-colormap*
   then
   1000 sample 0.0328 "sample 1000" #() snd-test-neq
   \ 
-  #( output-name-hook
-     output-comment-hook
-     peak-env-hook
+  #( output-comment-hook
      help-hook
      mark-drag-hook
      mix-drag-hook
@@ -2155,7 +2153,7 @@ black-and-white-colormap constant *better-colormap*
      'channel->vct 'channel-amp-envs 'channel-data 'channel-properties 
      'channel-property 'channel-style 'channel-widgets 'channels
      'channels-combined 'channels-separate 'channels-superimposed 
-     'chans 'clear-array 'clear-listener 'clip-hook
+     'chans 'clear-listener 'clip-hook
      'clipping 'clm-channel 'clm-table-size 
      'clm-default-frequency 'close-hook 'close-sound 'color->list
      'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted
@@ -2217,7 +2215,7 @@ black-and-white-colormap constant *better-colormap*
      'grid-density 'haar-transform 'hamming-window 'hann-poisson-window
      'hann-window 'header-type 'help-dialog 'help-hook 'hide-widget
      'highlight-color 'html-dir 'html-program 'hz->radians 'iir-filter
-     'iir-filter? 'in 'in-any 'ina 'inb 'info-dialog 'info-popup-hook
+     'iir-filter? 'in 'in-any 'ina 'inb 'info-dialog
      'init-ladspa 'initial-graph-hook 'insert-file-dialog 'insert-region
      'insert-sample 'insert-samples 'insert-samples-with-origin
      'insert-selection 'insert-silence 'insert-sound 'just-sounds 
@@ -2301,8 +2299,8 @@ black-and-white-colormap constant *better-colormap*
      'mus-sound-prune
      'mus-sound-report-cache 'mus-sound-samples
      'mus-sound-srate 'mus-sound-type-specifier
-     'mus-sound-write-date 'mus-soundfont 'mus-srate 'mus-svx
-     'mus-ubshort 'mus-ubyte 'mus-ulshort 'mus-unknown 'mus-unsupported 
+     'mus-sound-write-date 'mus-soundfont 'mus-srate 'mus-svx 'mus-ubshort
+     'mus-ubyte 'mus-ulshort 'mus-unknown-sample 'mus-unknown-header
      'mus-voc 'mus-width 'mus-xcoeff 'mus-xcoeffs 'mus-ycoeff
      'mus-ycoeffs 'name-click-hook 'new-sound 'new-sound-dialog 'new-sound-hook
      'new-widget-hook 'next-sample 'normalize-by-channel 'normalize-by-sound
@@ -2312,9 +2310,9 @@ black-and-white-colormap constant *better-colormap*
      'open-file-dialog-directory 'open-hook 'open-raw-sound 
      'open-raw-sound-hook 'open-sound 'orientation-hook 'oscil
      'oscil? 'out-any 'outa 'outb 'outc 'outd 'output-comment-hook
-     'output-name-hook 'override-samples-with-origin 'pad-channel
+     'override-samples-with-origin 'pad-channel
      'partials->polynomial 'partials->wave 'parzen-window 'pausing
-     'peak-env-hook 'peaks 'peaks-font 'phase-partials->wave
+     'peaks 'peaks-font 'phase-partials->wave
      'phase-vocoder 'phase-vocoder-amp-increments 'phase-vocoder-amps
      'phase-vocoder-freqs 'phase-vocoder-phase-increments 
      'phase-vocoder-phases 'phase-vocoder? 'play 'play-arrow-size
@@ -2373,7 +2371,7 @@ black-and-white-colormap constant *better-colormap*
      'speed-control-as-ratio 'speed-control-as-semitone 'speed-control-bounds
      'speed-control-style 'speed-control-tones 'square-wave 'square-wave?
      'squelch-update 'srate 'src 'src-channel 'src-selection 'src-sound
-     'src? 'ssb-am 'ssb-am? 'start-hook 'start-playing 'start-playing-hook
+     'src? 'ssb-am 'ssb-am? 'start-playing 'start-playing-hook
      'start-playing-selection-hook 'start-progress-report 'status-report
      'stop-player 'stop-playing 'stop-playing-hook 
      'stop-playing-selection-hook 'ncos 'ncos? 'nsin 'nsin?  'swap-channels
@@ -2725,7 +2723,7 @@ black-and-white-colormap constant *better-colormap*
   0 { lasth }
   begin
     lasth 1+ to lasth
-    lasth mus-header-type-name "unsupported" string=
+    lasth mus-header-type-name "unknown" string=
   until
   lasth 50 < if
     "header-type[%d] = %s?" #( lasth dup mus-header-type-name ) snd-display
@@ -3316,9 +3314,9 @@ black-and-white-colormap constant *better-colormap*
      "no location method"
      "no channel method"
      "no such fft window"
-     "unsupported sample type"
+     "unknown sample type"
      "header read failed"
-     "unsupported header type"
+     "unknown header type"
      "file descriptors not initialized"
      "not a sound file"
      "file closed"
@@ -6426,7 +6424,7 @@ lambda: <{ a b c -- r }> 1.0 ; value 08-clm-lambda-a-b-c-1.0
    <'> moving-average? <'> make-moving-average <'> mus-expand-filename
    <'> all-pass <'> all-pass? <'> amplitude-modulate
    <'> array->file <'> array-interp <'> mus-interpolate <'> asymmetric-fm
-   <'> asymmetric-fm?  <'> clear-array <'> comb
+   <'> asymmetric-fm?  <'> comb
    <'> comb?  <'> filtered-comb <'> filtered-comb? <'> contrast-enhancement
    <'> convolution <'> convolve <'> convolve? <'> db->linear 
    <'> degrees->radians <'> delay <'> delay? <'> dot-product <'> env 
@@ -6874,7 +6872,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       then
     then
   end-each
-  #( <'> all-pass <'> asymmetric-fm <'> clear-array <'> comb
+  #( <'> all-pass <'> asymmetric-fm <'> comb
      <'> filtered-comb <'> convolve <'> db->linear <'> moving-average 
      <'> degrees->radians <'> delay <'> env <'> formant <'> firmant
      <'> granulate <'> hz->radians <'> linear->db 
