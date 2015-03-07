@@ -778,10 +778,14 @@ struct s7_scheme {
 
   char *typnam;
   int typnam_len;
-  s7_pointer tmp_str;
-  int tmp_str_size;
-  char *tmp_str_chars;
   char *help_arglist;
+  int print_width;
+  s7_pointer *singletons;
+
+  #define NUM_TMP_STRS 2
+  s7_pointer tmp_str[NUM_TMP_STRS];
+  int tmp_str_size[NUM_TMP_STRS];
+  char *tmp_str_chars[NUM_TMP_STRS];
 
   #define INITIAL_FILE_NAMES_SIZE 8
   s7_pointer *file_names;
@@ -790,8 +794,6 @@ struct s7_scheme {
   #define INITIAL_STRBUF_SIZE 1024
   unsigned int strbuf_size;
   char *strbuf;
-  int print_width;
-  s7_pointer *singletons;
   
   char *read_line_buf;
   unsigned int read_line_buf_size;
@@ -1627,6 +1629,8 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 
 #define pair_line_number(p)           (p)->object.cons.line
 #define pair_raw_hash(p)              (p)->object.cons.line
+#define pair_raw_len(p)               (p)->object.cons.dat.op
+#define pair_raw_name(p)              (p)->object.cons.fcdr
 
 #define is_string(p)                  (type(p) == T_STRING)
 #define string_value(p)               (p)->object.string.svalue
@@ -2088,32 +2092,54 @@ static char *copy_string(const char *str)
 }
 
 
-#define strings_are_equal(Str1, Str2) (strcmp(Str1, Str2) == 0)
-#define strings_are_equal_with_length(Str1, Str2, Len) (strncmp(Str1, Str2, Len) == 0)
-
-/* newlib code here was slower -- this should only be used for internal strings -- scheme
- *   strings can have embedded nulls.
- */
-
-static int safe_strcmp(const char *s1, const char *s2)
+static bool local_strcmp(const char *s1, const char *s2)
 {
-  int val;
-  if (s1 == NULL)
+  unsigned char c1, c2;
+  while (true)
     {
-      if (s2 == NULL)
-	return(0);
-      return(-1);
+      c1 = (unsigned char) *s1++;
+      c2 = (unsigned char) *s2++;
+      if (c1 != c2) return(false);
+      if (c1 == '\0') break;
     }
+  return(true);
+}
+
+#define strings_are_equal(Str1, Str2) (local_strcmp(Str1, Str2))
+
+static bool local_strncmp(const char *s1, const char *s2, int n)
+{
+  if (n >= 4)
+    {
+      int n4 = n >> 2;
+      do
+	{
+	  if (*s1++ != *s2++) return(false);
+	  if (*s1++ != *s2++) return(false);
+	  if (*s1++ != *s2++) return(false);
+	  if (*s1++ != *s2++) return(false);
+	} while (--n4 > 0);
+      n &= 3;
+    }
+  while (n > 0)
+    {
+      if (*s1++ != *s2++) return(false);
+      n--;
+    }
+  return(true);
+}
+
+#define strings_are_equal_with_length(Str1, Str2, Len) (local_strncmp(Str1, Str2, Len))
+/* this should only be used for internal strings -- scheme strings can have embedded nulls. */
+
+static bool safe_strcmp(const char *s1, const char *s2)
+{
+  if (s1 == NULL)
+    return(s2 == NULL);
   if (s2 == NULL)
-    return(1);
+    return(false);
 
-  val = strcmp(s1, s2); /* strcmp can return stuff like -97, but we want -1, 0, or 1 */
-
-  if (val <= -1)
-    return(-1);
-  if (val >= 1)
-    return(1);
-  return(val);
+  return(local_strcmp(s1, s2));
 }
 
 
@@ -2143,6 +2169,7 @@ static s7_pointer make_string_wrapper_with_length(s7_scheme *sc, const char *str
 static s7_pointer make_string_wrapper(s7_scheme *sc, const char *str);
 static s7_pointer make_permanent_string_with_length_and_hash(const char *str, unsigned int len, unsigned int hash);
 static void check_for_substring_temp(s7_scheme *sc, s7_pointer expr);
+static void prepare_temporary_string(s7_scheme *sc, int len, int which);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static void pop_input_port(s7_scheme *sc);
 static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
@@ -3787,6 +3814,8 @@ static void mark_dynamic_wind(s7_pointer p)
 static void mark_hash_table(s7_pointer p)
 {
   set_mark(p);
+  if (hash_table_eq_function(p))
+    S7_MARK(hash_table_eq_function(p));
   if (hash_table_entries(p) > 0)
     {
       int i;
@@ -4676,7 +4705,7 @@ static int rhash_15(const unsigned char *s) {unsigned int i, hashed; hashed = s[
 static int rhash_any(const unsigned char *s, unsigned int len) 
 {
   unsigned int i, hashed; 
-  hashed = s[5]; 
+  hashed = s[5];
   for (i = 6; i < len; i++) hashed = s[i] + hashed * HMLT; 
   return(hashed);
 }
@@ -4691,7 +4720,7 @@ static unsigned int raw_string_hash(const unsigned char *key, unsigned int len)
    *           13:                          H: 1123916, s: 612287, f: 572909, z: 27631 [0 5652 1 6454 2 4148 top 8]!
    *           37:                          H: 1076203, s: 573052, f: 572851, z: 27708![0 5152 1 6818 2 4536 top 9]!
    * so 37 wins at hashing, we save 9 in strcmp, we lose 7 here to multiply by 37 -- we win 2 (callgrind says 5)
-   * But 37 loses big in other cases -- not sure what to do!
+   * But 37 loses big in hash_string(??) -- not sure what to do!
    */
   return((len < 16) ? ((*rhash_function[len])(key)) : (rhash_any(key, len)));
 }
@@ -4699,17 +4728,6 @@ static unsigned int raw_string_hash(const unsigned char *key, unsigned int len)
 
 static s7_pointer make_symbol(s7_scheme *sc, const char *name);
 static s7_pointer make_symbol_with_length(s7_scheme *sc, const char *name, unsigned int len);
-
-/* symbol_entry_t: s7_pointer symbol, unsigned int raw_hash, unsigned int next
- * then table is n indices into a block of these structs
- * add = get loc, set cur-struct->next to loc, set table[loc] to cur_struct loc
- * if no space, alloc the next block of symbols (like heap expand)
- * or use a pointer -- saves 24 bytes/symbol or 32
- * but: harder to access (no shadow vector as in *s7*)
- * maybe store 3 symbols to a cell?
- * car=sym1, cdr=sym2, ecdr=sym3, line=raw1, op=raw2, fcdr, then gcdr for raw3
- *   but this is also confusing for outer access -- car|cdr|??
- */
 
 static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, unsigned int hash, unsigned int location) 
 { 
@@ -4759,6 +4777,8 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
   p = permanent_cons(x, vector_element(sc->symbol_table, location), T_PAIR | T_IMMUTABLE);
   vector_element(sc->symbol_table, location) = p;
   pair_raw_hash(p) = hash;
+  pair_raw_len(p) = len;
+  pair_raw_name(p) = (s7_pointer)string_value(str);
   return(x); 
 } 
 
@@ -4768,7 +4788,7 @@ static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, uns
   s7_pointer x; 
   for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x)) 
     if ((hash == pair_raw_hash(x)) &&
-	(strings_are_equal(name, symbol_name(car(x)))))
+	(strings_are_equal(name, (const char *)(pair_raw_name(x)))))
       return(car(x));
   return(sc->NIL); 
 } 
@@ -4848,7 +4868,8 @@ static s7_pointer make_symbol_with_length(s7_scheme *sc, const char *name, unsig
 
   for (x = vector_element(sc->symbol_table, location); is_pair(x); x = cdr(x)) 
     if ((hash == pair_raw_hash(x)) &&
-	(strings_are_equal_with_length(name, symbol_name(car(x)), len))) /* length here because (I think) name might not be null-terminated */
+	(len == pair_raw_len(x)) && 
+	(strings_are_equal_with_length(name, (const char *)(pair_raw_name(x)), len))) /* length here because (I think) name might not be null-terminated */
       return(car(x));
 
   return(new_symbol(sc, name, len, hash, location)); 
@@ -4990,6 +5011,8 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   cdr(stc) = vector_element(sc->symbol_table, location);
   vector_element(sc->symbol_table, location) = stc;
   pair_raw_hash(stc) = hash;
+  pair_raw_len(stc) = string_length(str);
+  pair_raw_name(stc) = (s7_pointer)string_value(str);
 
   add_gensym(sc, x);
   return(x); 
@@ -8832,7 +8855,7 @@ static char *integer_to_string_base_10_no_width(s7_pointer obj, int *nlen) /* do
   if (num == S7_LLONG_MIN)
     {
       (*nlen) = 20;
-      return("-9223372036854775808");
+      return((char *)"-9223372036854775808");
     }
   p = (char *)(int_to_str + INT_TO_STR_SIZE - 1);
   op = p;
@@ -9143,7 +9166,7 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
 }
 
 
-static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_number_to_string_1(s7_scheme *sc, s7_pointer args, bool temporary)
 {
   #define H_number_to_string "(number->string num (radix 10)) converts the number num into a string."
   s7_Int radix = 10;
@@ -9212,7 +9235,27 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
       return(make_string_uncopied_with_length(sc, res, nlen));
     }
   res = number_to_string_base_10(x, 0, size, 'g', &nlen, USE_WRITE);
+  if (temporary)
+    {
+      if (nlen >= sc->tmp_str_size[1])
+	prepare_temporary_string(sc, nlen, 1);
+      string_length(sc->tmp_str[1]) = nlen;
+      memcpy((void *)(sc->tmp_str_chars[1]), (void *)res, nlen);
+      sc->tmp_str_chars[1][nlen] = 0;
+      return(sc->tmp_str[1]);
+    }
   return(s7_make_string_with_length(sc, res, nlen));
+}
+
+static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
+{
+  return(g_number_to_string_1(sc, args, false));
+}
+
+static s7_pointer number_to_string_temp;
+static s7_pointer g_number_to_string_temp(s7_scheme *sc, s7_pointer args)
+{
+  return(g_number_to_string_1(sc, args, true));
 }
 
 
@@ -10552,22 +10595,22 @@ the 'radix' it is ignored: (string->number \"#x11\" 2) -> 17 not 3."
   switch (str[0])
     {
     case 'n':
-      if (safe_strcmp(str, "nan.0") == 0)
+      if (safe_strcmp(str, "nan.0"))
 	return(real_NaN);
       break;
 
     case 'i':
-      if (safe_strcmp(str, "inf.0") == 0)
+      if (safe_strcmp(str, "inf.0"))
 	return(real_infinity);
       break;
 
     case '-':
-      if ((str[1] == 'i') && (safe_strcmp((const char *)(str + 1), "inf.0") == 0))
+      if ((str[1] == 'i') && (safe_strcmp((const char *)(str + 1), "inf.0")))
 	return(real_minus_infinity);
       break;
 
     case '+':
-      if ((str[1] == 'i') && (safe_strcmp((const char *)(str + 1), "inf.0") == 0))
+      if ((str[1] == 'i') && (safe_strcmp((const char *)(str + 1), "inf.0")))
 	return(real_infinity);
       break;
     }
@@ -19705,36 +19748,26 @@ static s7_pointer make_permanent_string_with_length_and_hash(const char *str, un
 }
 
 
-static void prepare_temporary_string(s7_scheme *sc, int len)
+static void prepare_temporary_string(s7_scheme *sc, int len, int which)
 {
-  if (!sc->tmp_str)
-    {
-      sc->tmp_str = alloc_pointer();
-      heap_location(sc->tmp_str) = NOT_IN_HEAP;
-      set_type(sc->tmp_str, T_STRING | T_SAFE_PROCEDURE);
-      string_hash(sc->tmp_str) = 0;
-      string_needs_free(sc->tmp_str) = false;
-    }
-  if (len >= sc->tmp_str_size)
-    {
-      if (len == 0)
-	sc->tmp_str_size = 8;
-      else sc->tmp_str_size = 2 * len;
-      if (!sc->tmp_str_chars)
-	sc->tmp_str_chars = (char *)malloc(sc->tmp_str_size * sizeof(char));
-      else sc->tmp_str_chars = (char *)realloc(sc->tmp_str_chars, sc->tmp_str_size * sizeof(char));
-      string_value(sc->tmp_str) = sc->tmp_str_chars;
-    }
-  string_length(sc->tmp_str) = len;
+  if (len == 0)
+    sc->tmp_str_size[which] = 8;
+  else sc->tmp_str_size[which] = 2 * len;
+  if (!sc->tmp_str_chars[which])
+    sc->tmp_str_chars[which] = (char *)malloc(sc->tmp_str_size[which] * sizeof(char));
+  else sc->tmp_str_chars[which] = (char *)realloc(sc->tmp_str_chars[which], sc->tmp_str_size[which] * sizeof(char));
+  string_value(sc->tmp_str[which]) = sc->tmp_str_chars[which];
 }
 
 static s7_pointer make_temporary_string(s7_scheme *sc, const char *str, int len) 
 {
-  prepare_temporary_string(sc, len);
+  if (len >= sc->tmp_str_size[0])
+    prepare_temporary_string(sc, len, 0);
+  string_length(sc->tmp_str[0]) = len;
   if (len > 0)
-    memmove((void *)sc->tmp_str_chars, (void *)str, len); /* not memcpy because str might be a temp string (i.e. sc->tmp_str_chars -> itself) */
-  sc->tmp_str_chars[len] = 0;
-  return(sc->tmp_str);
+    memmove((void *)sc->tmp_str_chars[0], (void *)str, len); /* not memcpy because str might be a temp string (i.e. sc->tmp_str_chars -> itself) */
+  sc->tmp_str_chars[0][len] = 0;
+  return(sc->tmp_str[0]);
 }
 
 
@@ -20024,9 +20057,11 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, bool use_tem
 
   if (use_temp)
     {
-      prepare_temporary_string(sc, len);
-      sc->tmp_str_chars[len] = 0;
-      newstr = sc->tmp_str;
+      if (len >= sc->tmp_str_size[0])
+	prepare_temporary_string(sc, len, 0);
+      string_length(sc->tmp_str[0]) = len;
+      sc->tmp_str_chars[0][len] = 0;
+      newstr = sc->tmp_str[0];
     }
   else
     {
@@ -32955,7 +32990,7 @@ static hash_entry_t *make_hash_entry(s7_pointer key, s7_pointer value)
       p = hash_free_list;
       hash_free_list = p->next;
     }
-  else p = malloc(sizeof(hash_entry_t));
+  else p = (hash_entry_t *)malloc(sizeof(hash_entry_t));
   p->key = key;
   p->value = value;
   return(p);
@@ -33021,133 +33056,128 @@ static int hash_float_location(s7_Double x)
 }
 
 
-static unsigned int hash_loc(s7_scheme *sc, s7_pointer key)
+static unsigned int (*hashers[NUM_TYPES])(s7_scheme *sc, s7_pointer key);
+
+#define hash_loc(Sc, Key) (*(hashers[type(Key)]))(sc, Key)
+
+static unsigned int hasher_nil(s7_scheme *sc, s7_pointer key) {return(type(key));}
+static unsigned int hasher_int(s7_scheme *sc, s7_pointer key) {return((unsigned int)(s7_Int_abs(integer(key))));}
+static unsigned int hasher_char(s7_scheme *sc, s7_pointer key) {return(character(key));}
+static unsigned int hasher_ratio(s7_scheme *sc, s7_pointer key) {return((unsigned int)denominator(key));} /* overflow possible */
+static unsigned int hasher_complex(s7_scheme *sc, s7_pointer key) {return(hash_float_location(real_part(key)));}
+static unsigned int hasher_symbol(s7_scheme *sc, s7_pointer key) {return(symbol_hash(key));}
+static unsigned int hasher_syntax(s7_scheme *sc, s7_pointer key) {return(symbol_hash(syntax_symbol(key)));}
+
+static unsigned int hasher_string(s7_scheme *sc, s7_pointer key)
 {
+  unsigned int loc;
+  if (string_hash(key) != 0)
+    return(string_hash(key));
+  loc = raw_string_hash((const unsigned char *)string_value(key), string_length(key));
+  string_hash(key) = loc;
+  return(loc);
+}
+
+static unsigned int hasher_real(s7_scheme *sc, s7_pointer key)
+{
+  return(hash_float_location(real(key)));
+  /* currently 1e300 goes to most-negative-fixnum! -> 0 after logand size, I hope 
+   *
+   * we need round, not floor for the location calculation in the real/complex cases else
+   *    1-eps doesn't match 1.0, but 1+eps does.  And what if round(val) is too big for int?
+   *    lrint is complex and requires special compiler flags to get any speed (-fno-math-errno).
+   *    all we need is (int)(val+0.5) -- all the other stuff is pointless in this context
+   */
+}
+
+static unsigned int hasher_hash_table(s7_scheme *sc, s7_pointer key)
+{
+  int i;
+  hash_entry_t **entries;
+  if (hash_table_entries(key) == 0)
+    return(0);
+  entries = hash_table_elements(key);
+  for (i = 0; i < hash_table_length(key); i++)
+    if ((entries[i]) &&
+	(!is_sequence(entries[i]->value)))
+      return(hash_table_length(key) + hash_loc(sc, entries[i]->value));
+  return(0);
+}
+
+static unsigned int hasher_int_vector(s7_scheme *sc, s7_pointer key)
+{
+  if (vector_length(key) == 0)
+    return(0);
+  if (vector_length(key) == 1)
+    return((unsigned int)(s7_Int_abs(int_vector_element(key, 0))));
+  return((unsigned int)(vector_length(key) + s7_Int_abs(int_vector_element(key, 0)) + s7_Int_abs(int_vector_element(key, 1))));
+}
+
+static unsigned int hasher_float_vector(s7_scheme *sc, s7_pointer key)
+{
+  if (vector_length(key) == 0)
+    return(0);
+  if (vector_length(key) == 1)
+    return(hash_float_location(float_vector_element(key, 0)));
+  return((unsigned int)(vector_length(key) + hash_float_location(float_vector_element(key, 0)) + hash_float_location(float_vector_element(key, 1))));
+}
+
+static unsigned int hasher_vector(s7_scheme *sc, s7_pointer key)
+{
+  if ((vector_length(key) == 0) ||
+      (is_sequence(vector_element(key, 0))))
+    return(vector_length(key));
+  if ((vector_length(key) == 1) ||
+      (is_sequence(vector_element(key, 1))))
+    return(hash_loc(sc, vector_element(key, 0)));
+  return(vector_length(key) + hash_loc(sc, vector_element(key, 0)) + hash_loc(sc, vector_element(key, 1)));
+}
+
+static unsigned int hasher_let(s7_scheme *sc, s7_pointer key)
+{
+  if ((key == sc->rootlet) || 
+      (!is_slot(let_slots(key))) ||
+      (is_sequence(slot_value(let_slots(key)))))
+    return(0);
+  if ((!is_slot(next_slot(let_slots(key)))) ||
+      (is_sequence(slot_value(next_slot(let_slots(key))))))
+    return(hash_loc(sc, slot_value(let_slots(key))));
+  return(hash_loc(sc, slot_value(let_slots(key))) + hash_loc(sc, slot_value(next_slot(let_slots(key)))));
+}
+
+static unsigned int hasher_pair(s7_scheme *sc, s7_pointer key)
+{
+  /* len+loc(car) is not horrible, but it means (for example) every list '(set! a b) is hashed to the same location,
+   *   so at least we need to take cadr into account if possible.  Better would combine the list_length(max 5 == safe_strlen5?) call
+   *   with stats like symbols/pairs/constants at top level, then use those to spread it out over all the locs.
+   */
+  s7_pointer p1;
   unsigned int loc = 0;
 
-  switch (type(key))
+  if (car(key) != key)
+    loc = hash_loc(sc, car(key)) + 1;
+  p1 = cdr(key);
+  if (is_pair(p1))
     {
-    case T_STRING:
-      if (string_hash(key) != 0)
-	return(string_hash(key));
-      loc = raw_string_hash((const unsigned char *)string_value(key), string_length(key));
-      string_hash(key) = loc;
-      return(loc);
-
-    case T_INTEGER:
-      return((unsigned int)(s7_Int_abs(integer(key))));
-
-    case T_REAL:
-      return(hash_float_location(real(key)));
-      /* currently 1e300 goes to most-negative-fixnum! -> 0 after logand size, I hope 
-       *
-       * we need round, not floor for the location calculation in the real/complex cases else
-       *    1-eps doesn't match 1.0, but 1+eps does.  And what if round(val) is too big for int?
-       *    lrint is complex and requires special compiler flags to get any speed (-fno-math-errno).
-       *    all we need is (int)(val+0.5) -- all the other stuff is pointless in this context
-       */
-
-    case T_RATIO:
-      loc = (unsigned int)denominator(key); /* overflow possible */
-      /* if (loc < 0) return(-loc); */
-      return(loc);
-
-    case T_COMPLEX:
-      return(hash_float_location(real_part(key)));
-
-    case T_SYMBOL:
-      return(symbol_hash(key));
-
-    case T_SYNTAX:
-      return(symbol_hash(syntax_symbol(key)));
-
-    case T_CHARACTER:
-      return(character(key));
-
-    case T_HASH_TABLE:
-      {
-	int i;
-	hash_entry_t **entries;
-	if (hash_table_entries(key) == 0)
-	  return(0);
-	entries = hash_table_elements(key);
-	for (i = 0; i < hash_table_length(key); i++)
-	  if ((entries[i]) &&
-	      (!is_sequence(entries[i]->value)))
-	    return(hash_table_length(key) + hash_loc(sc, entries[i]->value));
-	return(0);
-      }
-
-    case T_INT_VECTOR:
-      if (vector_length(key) == 0)
-	return(0);
-      if (vector_length(key) == 1)
-	return((unsigned int)(s7_Int_abs(int_vector_element(key, 0))));
-      return((unsigned int)(vector_length(key) + s7_Int_abs(int_vector_element(key, 0)) + s7_Int_abs(int_vector_element(key, 1))));
-
-    case T_FLOAT_VECTOR:
-      if (vector_length(key) == 0)
-	return(0);
-      if (vector_length(key) == 1)
-	return(hash_float_location(float_vector_element(key, 0)));
-      return((unsigned int)(vector_length(key) + hash_float_location(float_vector_element(key, 0)) + hash_float_location(float_vector_element(key, 1))));
-      
-    case T_VECTOR:
-      if ((vector_length(key) == 0) ||
-	  (is_sequence(vector_element(key, 0))))
-	return(vector_length(key));
-      if ((vector_length(key) == 1) ||
-	  (is_sequence(vector_element(key, 1))))
-	return(hash_loc(sc, vector_element(key, 0)));
-      return(vector_length(key) + hash_loc(sc, vector_element(key, 0)) + hash_loc(sc, vector_element(key, 1)));
-
-    case T_ENVIRONMENT:
-      if ((key == sc->rootlet) || 
-	  (!is_slot(let_slots(key))) ||
-	  (is_sequence(slot_value(let_slots(key)))))
-	return(0);
-      if ((!is_slot(next_slot(let_slots(key)))) ||
-	  (is_sequence(slot_value(next_slot(let_slots(key))))))
-	return(hash_loc(sc, slot_value(let_slots(key))));
-      return(hash_loc(sc, slot_value(let_slots(key))) + hash_loc(sc, slot_value(next_slot(let_slots(key)))));
-
-    case T_PAIR:
-      /* len+loc(car) is not horrible, but it means (for example) every list '(set! a b) is hashed to the same location,
-       *   so at least we need to take cadr into account if possible.  Better would combine the list_length(max 5 == safe_strlen5?) call
-       *   with stats like symbols/pairs/constants at top level, then use those to spread it out over all the locs.
-       */
-      {
-	s7_pointer p1;
-	if (car(key) != key)
-	  loc = hash_loc(sc, car(key)) + 1;
-	p1 = cdr(key);
-	if (is_pair(p1))
-	  {
-	    s7_pointer p2;
-	    if ((car(p1) != key) && (car(p1) != p1))
-	      {
-		if (is_pair(car(p1)))
-		  loc = hash_loc(sc, caar(p1)) + 1 + loc * 2 + s7_list_length(sc, car(p1));
-		else loc = hash_loc(sc, car(p1)) + 1 + loc * 2;
-	      }
-	    p2 = cdr(p1);
-	    if (is_pair(p2))
-	      {
-		if ((car(p2) != key) && (car(p2) != p1) && (car(p2) != p2))
-		  {
-		    if (is_pair(car(p2)))
-		      loc = hash_loc(sc, caar(p2)) + 1 + loc * 2 + s7_list_length(sc, car(p2));
-		    else loc = hash_loc(sc, car(p2)) + 1 + loc * 2;
-		  }
-	      }
-	  }
-	return(loc);
-      }
-
-    default:
-      break;
+      s7_pointer p2;
+      if ((car(p1) != key) && (car(p1) != p1))
+	{
+	  if (is_pair(car(p1)))
+	    loc = hash_loc(sc, caar(p1)) + 1 + loc * 2 + s7_list_length(sc, car(p1));
+	  else loc = hash_loc(sc, car(p1)) + 1 + loc * 2;
+	}
+      p2 = cdr(p1);
+      if (is_pair(p2))
+	{
+	  if ((car(p2) != key) && (car(p2) != p1) && (car(p2) != p2))
+	    {
+	      if (is_pair(car(p2)))
+		loc = hash_loc(sc, caar(p2)) + 1 + loc * 2 + s7_list_length(sc, car(p2));
+	      else loc = hash_loc(sc, car(p2)) + 1 + loc * 2;
+	    }
+	}
     }
-  return(type(key));
+  return(loc);
 }
 
 
@@ -33287,6 +33317,89 @@ static hash_entry_t *hash_complex_1(s7_scheme *sc, s7_pointer table, int loc, s7
 }
 
 
+static hash_entry_t *hash_equal_real(s7_scheme *sc, s7_pointer table, s7_pointer key)
+{
+  return(hash_float_1(sc, table, hash_loc(sc, key) & ((int)hash_table_length(table) - 1), real(key)));
+}
+
+static hash_entry_t *hash_equal_complex(s7_scheme *sc, s7_pointer table, s7_pointer key)
+{
+  return(hash_complex_1(sc, table, hash_loc(sc, key) & ((int)hash_table_length(table) - 1), key));
+}
+
+static hash_entry_t *hash_equal_syntax(s7_scheme *sc, s7_pointer table, s7_pointer key)
+{
+  hash_entry_t *x;
+  unsigned int loc;
+  loc = hash_loc(sc, key) & ((int)hash_table_length(table) - 1);
+  for (x = hash_table_element(table, loc); x; x = x->next)
+    if ((is_syntax(x->key)) &&
+	(syntax_symbol(x->key) == syntax_symbol(key))) /* the opcodes might differ, but the symbols should not */
+      return(x);
+  return(NULL);
+}
+
+static hash_entry_t *hash_equal_eq(s7_scheme *sc, s7_pointer table, s7_pointer key)
+{
+  hash_entry_t *x;
+  unsigned int loc;
+  loc = hash_loc(sc, key) & ((int)hash_table_length(table) - 1);
+  for (x = hash_table_element(table, loc); x; x = x->next)
+    if (x->key == key)
+      return(x);
+  return(NULL);
+}
+
+static hash_entry_t *hash_equal_any(s7_scheme *sc, s7_pointer table, s7_pointer key)
+{
+  hash_entry_t *x;
+  unsigned int loc;
+  loc = hash_loc(sc, key) & ((int)hash_table_length(table) - 1);
+
+  /* we can get into an infinite loop here, but it requires 2 hash tables that are members of each other
+   *    and key is one of them, so I changed the equality check above to use eq? -- not sure this is right.
+   */
+  /* hope for an easy case... */
+
+  for (x = hash_table_element(table, loc); x; x = x->next)
+    if (x->key == key)
+      return(x);
+  
+  for (x = hash_table_element(table, loc); x; x = x->next)
+    if (s7_is_equal(sc, x->key, key))
+      return(x);
+  return(NULL);
+}
+
+static hash_entry_t *(*hash_equals[NUM_TYPES])(s7_scheme *sc, s7_pointer table, s7_pointer key);
+
+void init_hashers(void)
+{
+  int i;
+  for (i = 0; i < NUM_TYPES; i++) hashers[i] = hasher_nil;
+  hashers[T_INTEGER] = hasher_int;
+  hashers[T_RATIO] = hasher_ratio;
+  hashers[T_REAL] = hasher_real;
+  hashers[T_COMPLEX] = hasher_complex;
+  hashers[T_CHARACTER] = hasher_char;
+  hashers[T_SYMBOL] = hasher_symbol;
+  hashers[T_SYNTAX] = hasher_syntax;
+  hashers[T_STRING] = hasher_string;
+  hashers[T_HASH_TABLE] = hasher_hash_table;
+  hashers[T_VECTOR] = hasher_vector;
+  hashers[T_INT_VECTOR] = hasher_int_vector;
+  hashers[T_FLOAT_VECTOR] = hasher_float_vector;
+  hashers[T_ENVIRONMENT] = hasher_let;
+  hashers[T_PAIR] = hasher_pair;
+
+  for (i = 0; i < NUM_TYPES; i++) hash_equals[i] = hash_equal_any;
+  hash_equals[T_REAL] = hash_equal_real;
+  hash_equals[T_COMPLEX] = hash_equal_complex;
+  hash_equals[T_SYNTAX] = hash_equal_syntax;
+  hash_equals[T_SYMBOL] = hash_equal_eq;
+  hash_equals[T_CHARACTER] = hash_equal_eq;
+}
+
 static hash_entry_t *hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   /* there is a problem here if we hash mixed numeric types and floats are compared using float-epsilon.
@@ -33301,48 +33414,7 @@ static hash_entry_t *hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
    *
    * yet another problem: hashing a closure can't work.  A closure is not necessarily equal to itself.
    */
-  hash_entry_t *x;
-  unsigned int hash_len, loc;
-
-  hash_len = (int)hash_table_length(table) - 1;
-  loc = hash_loc(sc, key) & hash_len;
-
-  switch (type(key))
-    {
-    case T_REAL:
-      return(hash_float_1(sc, table, loc, real(key)));
-
-    case T_COMPLEX:
-      return(hash_complex_1(sc, table, loc, key));
-
-    case T_SYNTAX:
-      for (x = hash_table_element(table, loc); x; x = x->next)
-	if ((is_syntax(x->key)) &&
-	    (syntax_symbol(x->key) == syntax_symbol(key))) /* the opcodes might differ, but the symbols should not */
-	  return(x);
-      break;
-
-    case T_SYMBOL:
-    case T_CHARACTER:
-      for (x = hash_table_element(table, loc); x; x = x->next)
-	if (x->key == key)
-	  return(x);
-      break;
-      
-    default:
-      /* we can get into an infinite loop here, but it requires 2 hash tables that are members of each other
-       *    and key is one of them, so I changed the equality check above to use eq? -- not sure this is right.
-       */
-      /* hope for an easy case... */
-      for (x = hash_table_element(table, loc); x; x = x->next)
-	if (x->key == key)
-	  return(x);
-
-      for (x = hash_table_element(table, loc); x; x = x->next)
-	if (s7_is_equal(sc, x->key, key))
-	  return(x);
-    }
-  return(NULL);
+  return((*(hash_equals[type(key)]))(sc, table, key));
 }
 
 
@@ -33388,12 +33460,13 @@ static hash_entry_t *hash_eq_closure(s7_scheme *sc, s7_pointer table, s7_pointer
 {
   hash_entry_t *x;
   unsigned int hash_len, loc;
-  s7_pointer f, args, body;
+  s7_pointer f, args, body, old_e;
 
-  /* the eq_func needs GC protection */
   f = hash_table_eq_function(table);
   hash_len = (unsigned int)hash_table_length(table) - 1;
   loc = hash_loc(sc, key) & hash_len;
+
+  old_e = sc->envir;
 
   args = closure_args(f);
   body = closure_body(f);
@@ -33408,8 +33481,12 @@ static hash_entry_t *hash_eq_closure(s7_scheme *sc, s7_pointer table, s7_pointer
       sc->code = car(body);
       eval(sc, OP_EVAL);      
       if (is_true(sc, sc->value))
-	return(x);
+	{
+	  sc->envir = old_e;
+	  return(x);
+	}
     }
+  sc->envir = old_e;
   return(NULL);
 }
 
@@ -37854,7 +37931,7 @@ static int remember_file_name(s7_scheme *sc, const char *file)
   int i;
 
   for (i = 0; i <= sc->file_names_top; i++)
-    if (safe_strcmp(file, string_value(sc->file_names[i])) == 0)
+    if (safe_strcmp(file, string_value(sc->file_names[i])))
       return(i);
 
   sc->file_names_top++;
@@ -38570,8 +38647,8 @@ static s7_pointer read_error_1(s7_scheme *sc, const char *errmsg, bool string_er
   char *msg;
   int len;
   s7_pointer pt;
-  pt = sc->input_port;
 
+  pt = sc->input_port;
   if (!string_error)
     {
       /* make an heroic effort to find where we slid off the tracks */
@@ -40538,7 +40615,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       return(sc->UNDEFINED);
     }
   
-  if (safe_strcmp(symbol_name(sym), "|#") == 0)
+  if (safe_strcmp(symbol_name(sym), "|#"))
     return(read_error(sc, "unmatched |#"));
 
   /* check *autoload*, autoload_names, then *unbound-variable-hook* 
@@ -42400,7 +42477,7 @@ static s7_pointer char_ci_leq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
 
 static void check_for_substring_temp(s7_scheme *sc, s7_pointer expr)
 {
-  s7_pointer p, np = NULL, ap = NULL, arg;
+  s7_pointer p, np = NULL, ap = NULL, sp = NULL, arg;
   int pairs = 0;
   /* a bit tricky -- accept temp only if there's just one inner expression and it calls substring */
   for (p = cdr(expr); is_pair(p); p = cdr(p))
@@ -42416,43 +42493,52 @@ static void check_for_substring_temp(s7_scheme *sc, s7_pointer expr)
 		np = arg;
 	      else
 		{
-		  if (c_call(arg) == g_string_append)
-		    ap = arg;
+		  if (c_call(arg) == g_number_to_string)
+		    sp = arg;
 		  else
 		    {
-		      if (c_call(arg) == g_symbol_to_string)
-			set_c_function(arg, symbol_to_string_uncopied);
+		      if (c_call(arg) == g_string_append)
+			ap = arg;
 		      else
 			{
-			  if ((c_call(arg) == g_read_line) &&
-			      (is_pair(cdr(arg))))
-			    set_c_function(arg, read_line_uncopied);
-			}}}}}}
+			  if (c_call(arg) == g_symbol_to_string)
+			    set_c_function(arg, symbol_to_string_uncopied);
+			  else
+			    {
+			      if ((c_call(arg) == g_read_line) &&
+				  (is_pair(cdr(arg))))
+				set_c_function(arg, read_line_uncopied);
+			    }}}}}}}
   if (pairs == 1)
     {
       if (np)
 	set_c_function(np, substring_to_temp);
       else
 	{
-	  if (ap)
+	  if (sp)
+	    set_c_function(sp, number_to_string_temp);
+	  else
 	    {
-	      for (p = ap; is_pair(p); p = cdr(p))
+	      if (ap)
 		{
-		  /* make sure there are no embedded uses of the temp string */
-		  arg = car(p);
-		  if ((is_pair(arg)) &&
-		      (is_safely_optimized(arg)))
+		  for (p = ap; is_pair(p); p = cdr(p))
 		    {
-		      if (c_call(arg) == g_substring_to_temp)
-			set_c_function(arg, slot_value(global_slot(sc->SUBSTRING)));
-		      else
+		      /* make sure there are no embedded uses of the temp string */
+		      arg = car(p);
+		      if ((is_pair(arg)) &&
+			  (is_safely_optimized(arg)))
 			{
-			  if (c_call(arg) == g_string_append_to_temp)
-			    set_c_function(arg, slot_value(global_slot(sc->STRING_APPEND)));
+			  if (c_call(arg) == g_substring_to_temp)
+			    set_c_function(arg, slot_value(global_slot(sc->SUBSTRING)));
+			  else
+			    {
+			      if (c_call(arg) == g_string_append_to_temp)
+				set_c_function(arg, slot_value(global_slot(sc->STRING_APPEND)));
+			    }
 			}
 		    }
+		  set_c_function(ap, string_append_to_temp);
 		}
-	      set_c_function(ap, string_append_to_temp);
 	    }
 	}
     }
@@ -43097,6 +43183,10 @@ static void init_choosers(s7_scheme *sc)
   /* substring */
   substring_to_temp = s7_make_function(sc, "substring", g_substring_to_temp, 2, 1, false, "substring opt");
   s7_function_set_class(substring_to_temp, slot_value(global_slot(sc->SUBSTRING)));
+
+  /* number->string */
+  number_to_string_temp = s7_make_function(sc, "number->string", g_number_to_string_temp, 1, 1, false, "number->string opt");
+  s7_function_set_class(number_to_string_temp, slot_value(global_slot(sc->NUMBER_TO_STRING)));
 
   /* string>? */
   f = set_function_chooser(sc, sc->STRING_GT, string_greater_chooser);
@@ -46847,7 +46937,7 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 		  set_gcdr(sc->code, car(binding));
 		  pair_set_syntax_symbol(sc->code, sc->LET_opCq);
 		}
-	      /* let_all_x here is only marginally faster than fallback let_z */
+	      /* let_all_x here is slightly slower than fallback let_z */
 	    }
 	}
     }
@@ -66106,6 +66196,7 @@ s7_scheme *s7_init(void)
       init_ctables();
       init_mark_functions();
       init_equals();
+      init_hashers();
       init_pows();
 #if (!WITH_PURE_S7)
       init_uppers();
@@ -66282,11 +66373,18 @@ s7_scheme *s7_init(void)
   s7_vector_fill(sc, sc->symbol_table, sc->NIL);
   heap_location(sc->symbol_table) = NOT_IN_HEAP;
   
+  for (i = 0; i < NUM_TMP_STRS; i++)
+    {
+      sc->tmp_str[i] = alloc_pointer();
+      heap_location(sc->tmp_str[i]) = NOT_IN_HEAP;
+      set_type(sc->tmp_str[i], T_STRING | T_SAFE_PROCEDURE);
+      string_hash(sc->tmp_str[i]) = 0;
+      string_needs_free(sc->tmp_str[i]) = false;
+      sc->tmp_str_size[i] = 0;
+      sc->tmp_str_chars[i] = NULL;
+    }
   sc->typnam = NULL;
   sc->typnam_len = 0;
-  sc->tmp_str = NULL;
-  sc->tmp_str_size = -1;
-  sc->tmp_str_chars = NULL;
   sc->help_arglist = NULL;
   sc->default_rationalize_error = 1.0e-12;
   sc->hash_table_float_epsilon = 1.0e-12;
@@ -67663,13 +67761,13 @@ int main(int argc, char **argv)
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1142
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1143
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3001
- * lg             |      |      | 6547 6497 6494 6235 6229 6231
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 2999
+ * lg             |      |      | 6547 6497 6494 6235 6229 6219
  * t137           |      |      | 11.0           5031 4769 4709
- * t455|6     265 |   89 |  9   |       8.4 8045 7482 7265 7264
+ * t455|6     265 |   89 |  9   |       8.4 8045 7482 7265 7249
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
- * t171           |      |      |                          20.6
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 21.0
+ * t171           |      |      |                          24.3
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9
  *
  * ------------------------------------------------------------------
@@ -67709,10 +67807,5 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * clm.h MUS_VERSION is 6, so *features* shows 'clm6, but clm5 is the CL version?
- *
- * hash-table perhaps: blocks of entries (locality)
- * symbol_table_entry? -- can the strncmp in make_symbol_with-length be confused? I believe so but I can't find a case
- * can envs use the same system (an array of let_entry_t: sym/value) -- no slot/list in heap
- *   or array of let_entry_t -- slots have a bunch of fields
- *   need free_let/add_let_entry
+ * checkout local memset/memcpy
  */
