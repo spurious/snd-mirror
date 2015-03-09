@@ -1418,31 +1418,31 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
   argname = auto_open_file_names[auto_open_ctr];
   if (argname)
     { /* wanted to use "-d" and "-i" but they're in use */
-      if ((strcmp("-h", argname) == 0) || 
-	  (strcmp("-horizontal", argname) == 0) ||
-	  (strcmp("--horizontal", argname) == 0) ||
-	  (strcmp("-v", argname) == 0) || 
-	  (strcmp("-vertical", argname) == 0) ||
-	  (strcmp("--vertical", argname) == 0) ||
-	  (strcmp("-notebook", argname) == 0) ||
-	  (strcmp("--notebook", argname) == 0) ||
-	  (strcmp("-separate", argname) == 0) ||
-	  (strcmp("--separate", argname) == 0) ||
-	  (strcmp("-nostdin", argname) == 0) ||
-	  (strcmp("-noglob", argname) == 0) ||
-	  (strcmp("-noinit", argname) == 0) ||
-	  (strcmp("--noinit", argname) == 0))
+      if ((mus_strcmp("-h", argname)) || 
+	  (mus_strcmp("-horizontal", argname)) ||
+	  (mus_strcmp("--horizontal", argname)) ||
+	  (mus_strcmp("-v", argname)) || 
+	  (mus_strcmp("-vertical", argname)) ||
+	  (mus_strcmp("--vertical", argname)) ||
+	  (mus_strcmp("-notebook", argname)) ||
+	  (mus_strcmp("--notebook", argname)) ||
+	  (mus_strcmp("-separate", argname)) ||
+	  (mus_strcmp("--separate", argname)) ||
+	  (mus_strcmp("-nostdin", argname)) ||
+	  (mus_strcmp("-noglob", argname)) ||
+	  (mus_strcmp("-noinit", argname)) ||
+	  (mus_strcmp("--noinit", argname)))
 	return(auto_open_ctr + 1);
       else
 	{
-	  if (strcmp("-init", argname) == 0)
+	  if (mus_strcmp("-init", argname))
 	    return(auto_open_ctr + 2);
 	  else
 	    {
 #if (!USE_NO_GUI)
-	      if ((strcmp("-p", argname) == 0) ||
-		  (strcmp("-preload", argname) == 0) ||
-		  (strcmp("--preload", argname) == 0))
+	      if ((mus_strcmp("-p", argname)) ||
+		  (mus_strcmp("-preload", argname)) ||
+		  (mus_strcmp("--preload", argname)))
 		{
 		  /* preload sound files in dir (can be ., should be unquoted) */
 		  auto_open_ctr++;
@@ -1454,20 +1454,20 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 	      else
 #endif
 		{
-		  if ((strcmp("-l", argname) == 0) ||
-		      (strcmp("-load", argname) == 0) ||
-		      (strcmp("--load", argname) == 0) ||
-		      (strcmp("-b", argname) == 0) ||
-		      (strcmp("-batch", argname) == 0) ||
-		      (strcmp("--batch", argname) == 0) ||
+		  if ((mus_strcmp("-l", argname)) ||
+		      (mus_strcmp("-load", argname)) ||
+		      (mus_strcmp("--load", argname)) ||
+		      (mus_strcmp("-b", argname)) ||
+		      (mus_strcmp("-batch", argname)) ||
+		      (mus_strcmp("--batch", argname)) ||
 		      (is_source_file(argname)))
 		    {
-		      if ((strcmp("-l", argname) == 0) || 
-			  (strcmp("-load", argname) == 0) ||
-			  (strcmp("--load", argname) == 0) ||
-			  (strcmp("-b", argname) == 0) || 
-			  (strcmp("-batch", argname) == 0) ||
-			  (strcmp("--batch", argname) == 0))
+		      if ((mus_strcmp("-l", argname)) || 
+			  (mus_strcmp("-load", argname)) ||
+			  (mus_strcmp("--load", argname)) ||
+			  (mus_strcmp("-b", argname)) || 
+			  (mus_strcmp("-batch", argname)) ||
+			  (mus_strcmp("--batch", argname)))
 			auto_open_ctr++;
 		      if ((auto_open_ctr >= args) ||
 			  (auto_open_file_names[auto_open_ctr] == NULL))
@@ -1486,9 +1486,9 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		    }
 		  else
 		    {
-		      if ((strcmp("-e", argname) == 0) ||
-			  (strcmp("-eval", argname) == 0) ||
-			  (strcmp("--eval", argname) == 0))
+		      if ((mus_strcmp("-e", argname)) ||
+			  (mus_strcmp("-eval", argname)) ||
+			  (mus_strcmp("--eval", argname)))
 			{
 			  /* evaluate expression */
 			  auto_open_ctr++;
@@ -1507,7 +1507,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		      else
 			{
 			  if ((with_title) && 
-			      (strcmp("-title", argname) == 0))
+			      (mus_strcmp("-title", argname)))
 			    {
 			      auto_open_ctr++;
 			      if ((auto_open_ctr >= args) ||
@@ -1517,7 +1517,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 			    }
 			  else
 			    {
-			      if (strcmp("-I", argname) == 0)
+			      if (mus_strcmp("-I", argname))
 				{
 				  /* added 24-Oct-02: add to load path in either extension language */
 				  auto_open_ctr++;

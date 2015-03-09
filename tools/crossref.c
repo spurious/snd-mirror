@@ -10,6 +10,19 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+static bool local_strcmp(const char *s1, const char *s2)
+{
+  unsigned char c1, c2;
+  while (true)
+    {
+      c1 = (unsigned char) *s1++;
+      c2 = (unsigned char) *s2++;
+      if (c1 != c2) return(false);
+      if (c1 == '\0') break;
+    }
+  return(true);
+}
+
 char **names;
 char **hnames;
 char **nnames;
@@ -59,11 +72,11 @@ int add_name(char *name, char *hdr)
   */
   if (name[0] == '_') return(-1);
 
-  if ((strcmp(hdr, "snd-nogui0.h") == 0) ||
-      (strcmp(hdr, "snd-nogui1.h") == 0))
+  if ((local_strcmp(hdr, "snd-nogui0.h")) ||
+      (local_strcmp(hdr, "snd-nogui1.h")))
     nnames[nname_ctr++] = name;
   for (i = 0; i < names_ctr; i++) 
-    if (strcmp(names[i], name) == 0) return(-1);
+    if (local_strcmp(names[i], name)) return(-1);
   hnames[names_ctr] = hdr;
   names[names_ctr++] = name;
   if (names_ctr == names_size) fprintf(stderr,"oops names");
@@ -74,15 +87,15 @@ int in_nogui_h(char *name)
 {
   int i;
   for (i = 0; i < nname_ctr; i++)
-    if (strcmp(name, nnames[i]) == 0)
+    if (local_strcmp(name, nnames[i]))
       return(1);
   return(0);
 }
 
 void add_file(char *name)
 {
-  if (strcmp(name,"snd-xen.c") == 0) snd_xen_c = files_ctr;
-  if (strcmp(name,"snd-nogui.c") == 0) snd_nogui_c = files_ctr;
+  if (local_strcmp(name,"snd-xen.c")) snd_xen_c = files_ctr;
+  if (local_strcmp(name,"snd-nogui.c")) snd_nogui_c = files_ctr;
   files[files_ctr++] = mus_strdup(name);
   if (files_ctr == files_size) fprintf(stderr,"oops files");
 }
@@ -91,7 +104,7 @@ static int add_count(char *name, int curfile)
 {
   int i;
   for (i = 0; i < names_ctr; i++)
-    if (strcmp(names[i], name) == 0)
+    if (local_strcmp(names[i], name))
       {
 	if (counts[i] == NULL) counts[i] = (int *)calloc(files_size, sizeof(int));
 	counts[i][curfile] += 1;
@@ -104,7 +117,7 @@ static void add_def(char *name, int curfile)
 {
   int i;
   for (i = 0; i < names_ctr; i++)
-    if (strcmp(names[i], name) == 0)
+    if (local_strcmp(names[i], name))
       {
 	if (!(defs[i]))
 	  defs[i] = strdup(files[curfile]);
@@ -490,8 +503,8 @@ int main(int argc, char **argv)
 	      bool got_macro = false;
 	      in_define = 0;
 	      
-	      if ((strcmp(files[i], "sndlib2clm.lisp") == 0) ||
-		  (strcmp(files[i], "ffi.lisp") == 0))
+	      if ((local_strcmp(files[i], "sndlib2clm.lisp")) ||
+		  (local_strcmp(files[i], "ffi.lisp")))
 		curly_ctr = 1;
 	      
 	      do 
@@ -577,7 +590,7 @@ int main(int argc, char **argv)
 					}
 				      
 				      for (m = 0; m < all_names_top; m++)
-					if (strcmp(curname, all_names[m]) == 0)
+					if (local_strcmp(curname, all_names[m]))
 					  {
 					    happy = true;
 					    all_names_counts[m]++;
@@ -585,8 +598,8 @@ int main(int argc, char **argv)
 				      
 				      if (((!got_macro) && 
 					   (in_define == 1) && 
-					   (strcmp(curname, "define") != 0) &&
-					   (strcmp(curname, "undef") != 0)) ||
+					   (!local_strcmp(curname, "define")) &&
+					   (!local_strcmp(curname, "undef"))) ||
 					  (in_enum))
 					{
 					  got_macro = true;
@@ -732,8 +745,8 @@ int main(int argc, char **argv)
 	  int nfiles;
 	  nfiles = 0;
 	  /* try to get rid of a bunch of annoying false positives */
-	  if ((strcmp(qs[i]->hname, "xen.h") == 0) || 
-	      (strcmp(qs[i]->hname, "mus-config.h.in") == 0) ||
+	  if ((local_strcmp(qs[i]->hname, "xen.h")) || 
+	      (local_strcmp(qs[i]->hname, "mus-config.h.in")) ||
 	      (qs[i]->name[0] == '_') ||
 	      ((qs[i]->name[strlen(qs[i]->name) - 2] == '_') &&
 	       ((qs[i]->name[strlen(qs[i]->name) - 1] == 't') || 
@@ -774,8 +787,8 @@ int main(int argc, char **argv)
 		    }
 		}
 		  
-	      menu_case = (strcmp(qs[i]->hname, "snd-menu.h") != 0);
-	      file_case = (strcmp(qs[i]->hname, "snd-file.h") != 0);
+	      menu_case = (!local_strcmp(qs[i]->hname, "snd-menu.h"));
+	      file_case = (!local_strcmp(qs[i]->hname, "snd-file.h"));
 	      static_case = ((qs[i]->def != NULL) && (qs[i]->calls > 0));
 	      ffitest_case = ((qs[i]->def != NULL) && (qs[i]->calls > 0));
 
@@ -789,9 +802,9 @@ int main(int argc, char **argv)
 		  /* fprintf(stderr, "%s...", qs[i]->name); */
 		  for (j = 0; j < files_ctr; j++)
 		    if ((counts[qs[i]->i][j] > 0) &&
-			((strcmp(files[j], "snd-xen.c") == 0) ||
-			 ((strcmp(files[j], "snd-nogui.c") != 0) &&
-			  (strcmp(files[j], "snd-motif.c") != 0) &&
+			((local_strcmp(files[j], "snd-xen.c")) ||
+			 ((!local_strcmp(files[j], "snd-nogui.c")) &&
+			  (!local_strcmp(files[j], "snd-motif.c")) &&
 			  (strncmp(files[j], "snd-g", 5) != 0))))
 		      {
 			/* fprintf(stderr,"in %s\n", files[j]); */
@@ -806,16 +819,16 @@ int main(int argc, char **argv)
 		  if ((counts[qs[i]->i]) && (counts[qs[i]->i][j] > 0))
 		    {
 		      if ((ffitest_case) &&
-			  (strcmp(files[j], "ffitest.c") != 0))
+			  (!local_strcmp(files[j], "ffitest.c")))
 			ffitest_case = false;
 
 		      if (menu_case)
 			{
-			  if ((strcmp(files[j], "snd-menu.c") != 0) &&
-			      (strcmp(files[j], "snd-motif.c") != 0) &&
-			      (strcmp(files[j], "snd-gmenu.c") != 0))
+			  if ((!local_strcmp(files[j], "snd-menu.c")) &&
+			      (!local_strcmp(files[j], "snd-motif.c")) &&
+			      (!local_strcmp(files[j], "snd-gmenu.c")))
 			    {
-			      if (strcmp(files[j], "snd-nogui.c") != 0)
+			      if (!local_strcmp(files[j], "snd-nogui.c"))
 				menu_case = false;
 			    }
 			  else menu_count++;
@@ -823,34 +836,34 @@ int main(int argc, char **argv)
 		      
 		      if (x_case)
 			{
-			  if (((strcmp(files[j], "snd-motif.c") != 0) &&
+			  if (((!local_strcmp(files[j], "snd-motif.c")) &&
 			       (strncmp(files[j], "snd-g", 5) != 0)) ||
-			      (strcmp(files[j], "snd-xen.c") == 0))
+			      (local_strcmp(files[j], "snd-xen.c")))
 			    x_case = false;
 			  else x_count++;
 			}
 
 		      if (file_case)
 			{
-			  if ((strcmp(files[j], "snd-file.c") != 0) &&
-			      (strcmp(files[j], "snd-motif.c") != 0) &&
-			      (strcmp(files[j], "snd-gfile.c") != 0))
+			  if ((!local_strcmp(files[j], "snd-file.c")) &&
+			      (!local_strcmp(files[j], "snd-motif.c")) &&
+			      (!local_strcmp(files[j], "snd-gfile.c")))
 			    {
-			      if (strcmp(files[j], "snd-nogui.c") != 0)
+			      if (!local_strcmp(files[j], "snd-nogui.c"))
 				file_case = false;
 			    }
 			  else file_count++;
 			}
 
 		      if ((static_case) &&
-			  (strcmp(files[j], qs[i]->def) != 0) &&
-			  (strcmp(files[j], "snd-nogui.c") != 0))
+			  (!local_strcmp(files[j], qs[i]->def)) &&
+			  (!local_strcmp(files[j], "snd-nogui.c")))
 			{
-			  if (((strcmp(files[j], "snd-motif.c") == 0) || 
+			  if (((local_strcmp(files[j], "snd-motif.c")) || 
 			       (strncmp(files[j], "snd-g", 5) == 0)) &&
-			      ((strcmp(qs[i]->def, "snd-motif.c") == 0) || 
+			      ((local_strcmp(qs[i]->def, "snd-motif.c")) || 
 			       (strncmp(qs[i]->def, "snd-g", 5) == 0)) &&
-			      (strcmp((const char *)(files[j] + 5), (const char *)(qs[i]->def + 5)) == 0))
+			      (local_strcmp((const char *)(files[j] + 5), (const char *)(qs[i]->def + 5))))
 			    {
 			    }
 			  else static_case = false;
@@ -874,25 +887,25 @@ int main(int argc, char **argv)
 	      if ((menu_case) && 
 		  (menu_count > 0) &&
 		  ((!(qs[i]->def)) ||
-		   (strcmp(qs[i]->def, "snd-menu.c") == 0) ||
-		   (strcmp(qs[i]->def, "snd-motif.c") == 0) ||
-		   (strcmp(qs[i]->def, "snd-gmenu.c") == 0)))
+		   (local_strcmp(qs[i]->def, "snd-menu.c")) ||
+		   (local_strcmp(qs[i]->def, "snd-motif.c")) ||
+		   (local_strcmp(qs[i]->def, "snd-gmenu.c"))))
 		fprintf(FD, "\n->SND-MENU.H\n");
 
 	      if ((file_case) && 
 		  (file_count > 0) &&
 		  ((!(qs[i]->def)) ||
-		   (strcmp(qs[i]->def, "snd-file.c") == 0) ||
-		   (strcmp(qs[i]->def, "snd-motif.c") == 0) ||
-		   (strcmp(qs[i]->def, "snd-gfile.c") == 0)))
+		   (local_strcmp(qs[i]->def, "snd-file.c")) ||
+		   (local_strcmp(qs[i]->def, "snd-motif.c")) ||
+		   (local_strcmp(qs[i]->def, "snd-gfile.c"))))
 		fprintf(FD, "\n->SND-FILE.H\n");
 
 	      if ((x_case) &&
 		  (x_count > 0) &&
 		  (qs[i]->def) &&
-		  (strcmp(qs[i]->hname, "snd-1.h") == 0) &&
-		  (strcmp(qs[i]->def, "snd-xen.c") != 0) &&
-		  ((strcmp(qs[i]->def, "snd-motif.c") == 0) || 
+		  (local_strcmp(qs[i]->hname, "snd-1.h")) &&
+		  (!local_strcmp(qs[i]->def, "snd-xen.c")) &&
+		  ((local_strcmp(qs[i]->def, "snd-motif.c")) || 
 		   (strncmp(qs[i]->def, "snd-g", 5) == 0)))
 		fprintf(FD, "\n    (all within gui)\n");
 

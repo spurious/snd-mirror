@@ -428,39 +428,39 @@ void snd_doit(int argc, char **argv)
   ss->startup_title = mus_strdup("snd");
   set_sound_style(SOUNDS_VERTICAL);
   for (i = 1; i < argc; i++)
-    if ((strcmp(argv[i], "-h") == 0) || 
-	(strcmp(argv[i], "-horizontal") == 0) ||
-	(strcmp(argv[i], "--horizontal") == 0))
+    if ((mus_strcmp(argv[i], "-h")) || 
+	(mus_strcmp(argv[i], "-horizontal")) ||
+	(mus_strcmp(argv[i], "--horizontal")))
       set_sound_style(SOUNDS_HORIZONTAL);
     else
-      if ((strcmp(argv[i], "-v") == 0) || 
-	  (strcmp(argv[i], "-vertical") == 0) ||
-	  (strcmp(argv[i], "--vertical") == 0))
+      if ((mus_strcmp(argv[i], "-v")) || 
+	  (mus_strcmp(argv[i], "-vertical")) ||
+	  (mus_strcmp(argv[i], "--vertical")))
 	set_sound_style(SOUNDS_VERTICAL);
       else
-	if ((strcmp(argv[i], "-notebook") == 0) ||
-	    (strcmp(argv[i], "--notebook") == 0))
+	if ((mus_strcmp(argv[i], "-notebook")) ||
+	    (mus_strcmp(argv[i], "--notebook")))
 	  set_sound_style(SOUNDS_IN_NOTEBOOK);
 	else
-	  if ((strcmp(argv[i], "-separate") == 0) ||
-	      (strcmp(argv[i], "--separate") == 0))
+	  if ((mus_strcmp(argv[i], "-separate")) ||
+	      (mus_strcmp(argv[i], "--separate")))
 	    set_sound_style(SOUNDS_IN_SEPARATE_WINDOWS);
 	  else
-	    if (strcmp(argv[i], "-noglob") == 0)
+	    if (mus_strcmp(argv[i], "-noglob"))
 	      noglob = true;
 	    else
-	      if (strcmp(argv[i], "-noinit") == 0)
+	      if (mus_strcmp(argv[i], "-noinit"))
 		noinit = true;
 	      else
-		if (strcmp(argv[i], "-nostdin") == 0)
+		if (mus_strcmp(argv[i], "-nostdin"))
 		  nostdin = true;
 		else
-		  if ((strcmp(argv[i], "-b") == 0) || 
-		      (strcmp(argv[i], "-batch") == 0) ||
-		      (strcmp(argv[i], "--batch") == 0))
+		  if ((mus_strcmp(argv[i], "-b")) || 
+		      (mus_strcmp(argv[i], "-batch")) ||
+		      (mus_strcmp(argv[i], "--batch")))
 		    batch = true;
 		  else
-		    if (strcmp(argv[i], "--features") == 0) /* testing (compsnd) */
+		    if (mus_strcmp(argv[i], "--features")) /* testing (compsnd) */
 		      check_features_list(argv[i + 1]);
 
   ss->batch_mode = batch;

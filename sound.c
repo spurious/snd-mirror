@@ -382,7 +382,7 @@ int mus_sound_forget(const char *name)
     if ((sound_table[i]) &&
 	(sound_table[i]->file_name_length == len) &&
 	(sound_table[i]->file_name[len2] == c) &&
-	(strcmp(name, sound_table[i]->file_name) == 0))
+	(mus_strcmp(name, sound_table[i]->file_name)))
       {
 	free_sound_file(sound_table[i]);
 	sound_table[i] = NULL;
@@ -403,7 +403,7 @@ int mus_sound_forget(const char *name)
 	if ((sound_table[i]) &&
 	    (sound_table[i]->file_name_length == short_len) &&
 	    (sound_table[i]->file_name[len2] == c) &&
-	    (strcmp(short_name, sound_table[i]->file_name) == 0))
+	    (mus_strcmp(short_name, sound_table[i]->file_name)))
 	  {
 	    free_sound_file(sound_table[i]);
 	    sound_table[i] = NULL;

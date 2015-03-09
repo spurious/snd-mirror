@@ -189,7 +189,7 @@ static bool file_filter_ok(Xen name, Xen proc, const char *caller)
   char *errmsg;
   Xen_check_type(Xen_is_string(name), name, 1, caller, "a string");   
   Xen_check_type(Xen_is_procedure(proc), proc, 2, caller, "a procedure of 1 arg (filename)");
-  errmsg = procedure_ok(proc, 1, caller, "function", 2);
+  errmsg = procedure_ok(proc, 1, caller, "file filter", 2);
   if (errmsg)
     {
       Xen errstr;

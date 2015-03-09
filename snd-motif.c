@@ -8799,7 +8799,7 @@ void dirpos_update(dirpos_list *dl, const char *dir, position_t pos)
   for (i = 0; i < dl->top; i++)
     {
       if ((dl->dirs[i]) && 
-	  (strcmp(dir, dl->dirs[i]->directory_name) == 0))
+	  (mus_strcmp(dir, dl->dirs[i]->directory_name)))
 	{
 	  dirpos_info *dp;
 	  dp = dl->dirs[i];
@@ -8825,7 +8825,7 @@ position_t dirpos_list_top(dirpos_list *dl, const char *dirname)
   if (dl)
     for (i = 0; i < dl->top; i++)
       if ((dl->dirs[i]) && 
-	  (strcmp(dirname, dl->dirs[i]->directory_name) == 0))
+	  (mus_strcmp(dirname, dl->dirs[i]->directory_name)))
 	return(dl->dirs[i]->list_top);
   return(POSITION_UNKNOWN);
 }
@@ -9505,7 +9505,7 @@ static void snd_directory_reader(Widget dialog, XmFileSelectionBoxCallbackStruct
   our_dir = (char *)XmStringUnparse(info->dir,     NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
 
   /* get current directory contents, given filter and pattern */
-  if (strcmp(pattern, "*") == 0)
+  if (mus_strcmp(pattern, "*"))
     {
       if (fp->filter_choice == NO_FILE_FILTER)
 	cur_dir = find_files_in_dir(our_dir);
@@ -9532,7 +9532,7 @@ static void snd_directory_reader(Widget dialog, XmFileSelectionBoxCallbackStruct
   }
 
   if ((fp->last_dir == NULL) ||
-      (strcmp(our_dir, fp->last_dir) != 0))
+      (!mus_strcmp(our_dir, fp->last_dir)))
     {
       if (fp->directory_watcher)
 	unmonitor_file(fp->directory_watcher);
@@ -14212,7 +14212,7 @@ static void vf_fixup_selected_files(view_files_info *vdat, char **saved_selected
       int j;
       for (j = 0; j <= vdat->end; j++)
 	if ((vdat->full_names[j]) &&
-	    (strcmp(vdat->full_names[j], saved_selected_files[i]) == 0))
+	    (mus_strcmp(vdat->full_names[j], saved_selected_files[i])))
 	  {
 	    vf_row *old_r, *new_r;
 	    /* fprintf(stderr,"old %d at %d -> %d at %d\n", vdat->selected_files[i], i, j, newly_selected); */
@@ -14237,12 +14237,12 @@ static int view_files_find_row(view_files_info *vdat, const char *name)
   if (vdat->names)
     for (i = 0; i <= vdat->end; i++)
       if ((vdat->names[i]) && 
-	  (strcmp(vdat->names[i], name) == 0))
+	  (mus_strcmp(vdat->names[i], name)))
   	return(i);
   if (vdat->full_names)
     for (i = 0; i <= vdat->end; i++)
       if ((vdat->full_names[i]) && 
-	  (strcmp(vdat->full_names[i], name) == 0))
+	  (mus_strcmp(vdat->full_names[i], name)))
 	return(i);
   return(-1);
 }
@@ -14298,7 +14298,7 @@ static bool view_files_play(view_files_info *vdat, int pos, bool play)
 	{
 	  if (play_sp->playing) return(true); /* can't play two of these at once */
 	  if ((vdat->names[pos] == NULL) || 
-	      (strcmp(play_sp->short_filename, vdat->names[pos]) != 0))
+	      (!mus_strcmp(play_sp->short_filename, vdat->names[pos])))
 	    {
 	      completely_free_snd_info(play_sp);
 	      play_sp = NULL;
@@ -17191,7 +17191,7 @@ static bool file_sorter_ok(Xen name, Xen proc, const char *caller)
   char *errmsg;
   Xen_check_type(Xen_is_string(name), name, 1, caller, "a string");   
   Xen_check_type(Xen_is_procedure(proc), proc, 2, caller, "a procedure of 2 args (file1 and file2)");
-  errmsg = procedure_ok(proc, 2, caller, "function", 2);
+  errmsg = procedure_ok(proc, 2, caller, "file sort", 2);
   if (errmsg)
     {
       Xen errstr;
@@ -22715,7 +22715,7 @@ static void remember_listener_string(const char *str)
 
   /* if str matches current history top entry, ignore it (as in tcsh) */
   if ((listener_strings[0]) &&
-      (strcmp(str, listener_strings[0]) == 0))
+      (mus_strcmp(str, listener_strings[0])))
     return;
 
   top = listener_strings_size - 1;
@@ -30661,42 +30661,42 @@ void snd_doit(int argc, char **argv)
   else ss->startup_title = mus_strdup("snd");
 
   for (i = 1; i < argc; i++)
-    if ((strcmp(argv[i], "-h") == 0) || 
-	(strcmp(argv[i], "-horizontal") == 0) ||
-	(strcmp(argv[i], "--horizontal") == 0))
+    if ((mus_strcmp(argv[i], "-h")) || 
+	(mus_strcmp(argv[i], "-horizontal")) ||
+	(mus_strcmp(argv[i], "--horizontal")))
       set_sound_style(SOUNDS_HORIZONTAL);
     else
-      if ((strcmp(argv[i], "-v") == 0) || 
-	  (strcmp(argv[i], "-vertical") == 0) ||
-	  (strcmp(argv[i], "--vertical") == 0))
+      if ((mus_strcmp(argv[i], "-v")) || 
+	  (mus_strcmp(argv[i], "-vertical")) ||
+	  (mus_strcmp(argv[i], "--vertical")))
 	set_sound_style(SOUNDS_VERTICAL);
       else
-	if ((strcmp(argv[i], "-notebook") == 0) ||
-	    (strcmp(argv[i], "--notebook") == 0))
+	if ((mus_strcmp(argv[i], "-notebook")) ||
+	    (mus_strcmp(argv[i], "--notebook")))
 	  {
 	    set_sound_style(SOUNDS_IN_NOTEBOOK);
 	    set_auto_resize(false);
 	  }
 	else
-	  if ((strcmp(argv[i], "-separate") == 0) ||
-	      (strcmp(argv[i], "--separate") == 0))
+	  if ((mus_strcmp(argv[i], "-separate")) ||
+	      (mus_strcmp(argv[i], "--separate")))
 	    set_sound_style(SOUNDS_IN_SEPARATE_WINDOWS);
 	  else
-	    if (strcmp(argv[i], "-noglob") == 0)
+	    if (mus_strcmp(argv[i], "-noglob"))
 	      noglob = true;
 	    else
-	      if (strcmp(argv[i], "-noinit") == 0)
+	      if (mus_strcmp(argv[i], "-noinit"))
 		noinit = true;
 	      else
-		if (strcmp(argv[i], "-nostdin") == 0)
+		if (mus_strcmp(argv[i], "-nostdin"))
 		  nostdin = true;
 		else
-		  if ((strcmp(argv[i], "-b") == 0) || 
-		      (strcmp(argv[i], "-batch") == 0) ||
-		      (strcmp(argv[i], "--batch") == 0))
+		  if ((mus_strcmp(argv[i], "-b")) || 
+		      (mus_strcmp(argv[i], "-batch")) ||
+		      (mus_strcmp(argv[i], "--batch")))
 		    batch = true;
 		  else
-		    if (strcmp(argv[i], "--features") == 0) /* testing (compsnd) */
+		    if (mus_strcmp(argv[i], "--features")) /* testing (compsnd) */
 		      check_features_list(argv[i + 1]);
 
   ss->batch_mode = batch;

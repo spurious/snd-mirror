@@ -335,52 +335,52 @@ static const char *icon_to_label(const char *label)
     case 'a': return("Exit");
 
     case 'd':
-      if (strcmp(label, "document-new") == 0) return("New"); else
-	if (strcmp(label, "document-open") == 0) return("Open"); else
-	  if (strcmp(label, "document-print") == 0) return("Print"); else
-	    if (strcmp(label, "document-revert") == 0) return("Revert"); else
-	      if (strcmp(label, "document-save") == 0) return("Save"); else
-		if (strcmp(label, "document-save-as") == 0) return("Save as");
+      if (mus_strcmp(label, "document-new")) return("New"); else
+	if (mus_strcmp(label, "document-open")) return("Open"); else
+	  if (mus_strcmp(label, "document-print")) return("Print"); else
+	    if (mus_strcmp(label, "document-revert")) return("Revert"); else
+	      if (mus_strcmp(label, "document-save")) return("Save"); else
+		if (mus_strcmp(label, "document-save-as")) return("Save as");
       break;
 
     case 'e':
-      if (strcmp(label, "edit-clear") == 0) return("Clear"); else
-	if (strcmp(label, "edit-copy") == 0) return("Copy"); else
-	  if (strcmp(label, "edit-cut") == 0) return("Cut"); else
-	    if (strcmp(label, "edit-find") == 0) return("Find"); else
-	      if (strcmp(label, "edit-paste") == 0) return("Paste"); else
-		if (strcmp(label, "edit-redo") == 0) return("Redo"); else
-		  if (strcmp(label, "edit-select-all") == 0) return("Select all"); else
-		    if (strcmp(label, "edit-undo") == 0) return("Undo"); 
+      if (mus_strcmp(label, "edit-clear")) return("Clear"); else
+	if (mus_strcmp(label, "edit-copy")) return("Copy"); else
+	  if (mus_strcmp(label, "edit-cut")) return("Cut"); else
+	    if (mus_strcmp(label, "edit-find")) return("Find"); else
+	      if (mus_strcmp(label, "edit-paste")) return("Paste"); else
+		if (mus_strcmp(label, "edit-redo")) return("Redo"); else
+		  if (mus_strcmp(label, "edit-select-all")) return("Select all"); else
+		    if (mus_strcmp(label, "edit-undo")) return("Undo"); 
       break;
 
     case 'g':
-      if (strcmp(label, "go-first") == 0) return("Go to start"); else
-	if (strcmp(label, "go-last") == 0) return("Go to end"); else
-	  if (strcmp(label, "go-next") == 0) return("Next"); else
-	    if (strcmp(label, "go-previous") == 0) return("Previous"); 
+      if (mus_strcmp(label, "go-first")) return("Go to start"); else
+	if (mus_strcmp(label, "go-last")) return("Go to end"); else
+	  if (mus_strcmp(label, "go-next")) return("Next"); else
+	    if (mus_strcmp(label, "go-previous")) return("Previous"); 
       break;
 
     case 'h': return("Help");
 
     case 'm':
-      if (strcmp(label, "media-playback-start") == 0) return("Play"); else
-	if (strcmp(label, "media-playback-stop") == 0) return("Stop playing"); else
-	  if (strcmp(label, "media-playback-forward") == 0) return("Play from cursor");
+      if (mus_strcmp(label, "media-playback-start")) return("Play"); else
+	if (mus_strcmp(label, "media-playback-stop")) return("Stop playing"); else
+	  if (mus_strcmp(label, "media-playback-forward")) return("Play from cursor");
       break;
 
     case 'p': return("Stop");
 
     case 'v':
-      if (strcmp(label, "view-fullscreen") == 0) return("Show all"); else
-	if (strcmp(label, "view-refresh") == 0) return("Show again");
+      if (mus_strcmp(label, "view-fullscreen")) return("Show all"); else
+	if (mus_strcmp(label, "view-refresh")) return("Show again");
       break;
 
     case 'w': return("Close");
 
     case 'z':
-      if (strcmp(label, "zoom-in") == 0) return("Zoom in"); else
-	if (strcmp(label, "zoom-out") == 0) return("Zoom out");
+      if (mus_strcmp(label, "zoom-in")) return("Zoom in"); else
+	if (mus_strcmp(label, "zoom-out")) return("Zoom out");
       break;
     }
   return(label);

@@ -245,11 +245,11 @@ static Xen g_search_procedure(void)
 static Xen g_set_search_procedure(Xen proc)
 {
   char *error = NULL;
-  /* (set! (search-procedure) (lambda (y) #t)) -> #<procedure #f ((n) #t)> as "proc" */
+  /* (set! (search-procedure) (lambda (y) #t)) -> #<procedure #f ((n) #t)> */
   
   Xen_check_type(Xen_is_procedure(proc) || Xen_is_false(proc), proc, 1, S_setB S_search_procedure, "a procedure or " PROC_FALSE);
 
-  error = procedure_ok(proc, 1, S_setB S_search_procedure, "proc", 1);
+  error = procedure_ok(proc, 1, S_search_procedure, "search", 1);
   if (!error)
     {
       clear_search_state();

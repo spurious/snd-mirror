@@ -659,19 +659,19 @@ void snd_doit(int argc, char **argv)
 
   for (i = 1; i < argc; i++)
     {
-      if (strcmp(argv[i], "-noglob") == 0)
+      if (mus_strcmp(argv[i], "-noglob"))
 	noglob = true;
       else
-	if (strcmp(argv[i], "-noinit") == 0)
+	if (mus_strcmp(argv[i], "-noinit"))
 	  noinit = true;
 	else
-	  if (strcmp(argv[i], "-nostdin") == 0)
+	  if (mus_strcmp(argv[i], "-nostdin"))
 	    nostdin = true;
 	  else
-	    if ((strcmp(argv[i], "-b") == 0) || (strcmp(argv[i], "-batch") == 0))
+	    if ((mus_strcmp(argv[i], "-b")) || (mus_strcmp(argv[i], "-batch")))
 	      ss->batch_mode = true;
 	    else
-	      if (strcmp(argv[i], "--features") == 0) /* testing (compsnd) */
+	      if (mus_strcmp(argv[i], "--features")) /* testing (compsnd) */
 		check_features_list(argv[i + 1]);
     }
   snd_load_init_file(noglob, noinit);

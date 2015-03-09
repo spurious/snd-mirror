@@ -6839,7 +6839,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
       if (Xen_is_procedure(on))
 	{
 	  char *error = NULL;
-	  error = procedure_ok(on, 3, S_setB S_cursor_style, "", 1);
+	  error = procedure_ok(on, 3, S_cursor_style, "", 1);
 	  if (error == NULL)
 	    {
 	      if ((cp->cursor_style == CURSOR_PROC) &&
@@ -7354,7 +7354,7 @@ static Xen g_set_cursor_style(Xen on, Xen snd, Xen chn_n)
       if (Xen_is_procedure(on))
 	{
 	  char *error;
-	  error = procedure_ok(on, 3, S_setB S_cursor_style, "", 1);
+	  error = procedure_ok(on, 3, S_cursor_style, "", 1);
 	  if (error == NULL)
 	    {	  
 	      if ((cursor_style(ss) == CURSOR_PROC) && (Xen_is_procedure(ss->cursor_proc)))

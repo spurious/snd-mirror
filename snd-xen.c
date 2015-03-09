@@ -650,9 +650,7 @@ char *procedure_ok(Xen proc, int args, const char *caller, const char *arg_name,
       if (!Xen_is_false(proc)) /* #f as explicit arg to clear */
 	{
 	  char *temp = NULL, *str;
-	  str = mus_format("%s: %s (%s arg %d) is not a procedure!", 
-			   temp = (char *)Xen_object_to_C_string(proc),
-			   arg_name, caller, argn);
+	  str = mus_format(" %s is not a procedure!", (arg_name) ? arg_name : caller);
 #if HAVE_SCHEME
 	  if (temp) free(temp);
 #endif
@@ -667,8 +665,7 @@ char *procedure_ok(Xen proc, int args, const char *caller, const char *arg_name,
 #if HAVE_RUBY
       rargs = Xen_integer_to_C_int(arity);
       if (!xen_rb_arity_ok(rargs, args))
- 	return(mus_format("%s function (%s arg %d) should take %d args, not %d",
- 			  arg_name, caller, argn, args, (rargs < 0) ? (-rargs) : rargs));
+ 	return(mus_format("  %s function should take %d args, not %d", (arg_name) ? arg_name : caller, args, (rargs < 0) ? (-rargs) : rargs));
 #endif
 
 #if HAVE_SCHEME
@@ -681,25 +678,23 @@ char *procedure_ok(Xen proc, int args, const char *caller, const char *arg_name,
 	snd_unprotect_at(loc);
 
 	if (rargs > args)
-	  return(mus_format("%s function (%s arg %d) should take %d argument%s, but instead requires %d",
-			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
+	  return(mus_format(" %s function should take %d argument%s, but instead requires %d",
+			    (arg_name) ? arg_name : caller, args, (args != 1) ? "s" : "", rargs));
 
 	if ((rargs + oargs) < args)
-	  return(mus_format("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d",
-			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
+	  return(mus_format(" %s function should accept at least %d argument%s, but instead accepts only %d",
+			    (arg_name) ? arg_name : caller, args, (args != 1) ? "s" : "", rargs + oargs));
 
 	if ((args == 0) &&
 	    ((rargs != 0) || (oargs != 0)))
-	  return(mus_format("%s function (%s arg %d) should take no args, not %d", 
-			    arg_name, caller, argn, rargs + oargs));
+	  return(mus_format(" %s function should take no args, not %d", (arg_name) ? arg_name : caller, rargs + oargs));
       }
 #endif
 
 #if HAVE_FORTH
       rargs = Xen_integer_to_C_int(arity);
       if (rargs != args)
-	return(mus_format("%s function (%s arg %d) should take %d args, not %d",
-			  arg_name, caller, argn, args, rargs));
+	return(mus_format(" %s function should take %d args, not %d", (arg_name) ? arg_name : caller, args, rargs));
 #endif
     }
   return(NULL);
