@@ -113,7 +113,7 @@
  *
  * To get multiprecision arithmetic, set WITH_GMP to 1.
  *   You'll also need libgmp, libmpfr, and libmpc (version 0.8.0 or later)
- *   In highly numerical contexts, the gmp version of s7 is about 10 times slower than the non-gmp version.
+ *   In highly numerical contexts, the gmp version of s7 is about 50(!) times slower than the non-gmp version.
  *
  * if WITH_SYSTEM_EXTRAS is 1 (default is 1 unless _MSC_VER), various OS and file related functions are included.
  *
@@ -168,8 +168,6 @@
  *    might be vulnerable to the GC. 
  */
 
-#define WITH_GCC (defined(__GNUC__) || defined(__clang__))
-
 
 /* ---------------- scheme choices ---------------- */
 
@@ -219,14 +217,6 @@
    */
 #endif
 
-#ifndef WITH_C_LOADER
-  #define WITH_C_LOADER WITH_GCC
-  /* (load file.so [e]) looks for (e 'init_func) and if found, calls it
-   *   as the shared object init function.  If WITH_SYSTEM_EXTRAS is 0, the caller
-   *   needs to supply system and delete-file so that cload.scm works.
-   */
-#endif
-
 #ifndef WITH_IMMUTABLE_UNQUOTE
   #define WITH_IMMUTABLE_UNQUOTE 0
   /* this removes the name "unquote" */
@@ -242,8 +232,14 @@
   /* this removes magnitude (use abs for all numbers), make-polar, and make-rectangular, renaming the latter make-complex */
 #endif
 
-#ifndef DEBUGGING
-  #define DEBUGGING 0
+#define WITH_GCC (defined(__GNUC__) || defined(__clang__))
+
+#ifndef WITH_C_LOADER
+  #define WITH_C_LOADER WITH_GCC
+  /* (load file.so [e]) looks for (e 'init_func) and if found, calls it
+   *   as the shared object init function.  If WITH_SYSTEM_EXTRAS is 0, the caller
+   *   needs to supply system and delete-file so that cload.scm works.
+   */
 #endif
 
 /* in case mus-config.h forgets these */
@@ -261,6 +257,11 @@
 #endif
 
 /* -------------------------------------------------------------------------------- */
+
+
+#ifndef DEBUGGING
+  #define DEBUGGING 0
+#endif
 
 #ifndef _MSC_VER
   #include <unistd.h>
@@ -474,6 +475,11 @@ typedef struct s7_cell {
       mpq_t big_ratio;
       mpfr_t big_real;
       mpc_t big_complex;
+      /* using free_lists here was not faster, and avoiding the extra init/clear too tricky.  These make up
+       *   no more than ca. 5% of the gmp computation -- it is totally dominated by stuff like __gmpz_mul,
+       *   so I can't see much point in optimizing the background noise.  In a very numerical context,
+       *   gmp slows us down by a factor of 50.
+       */
 #endif
     } number;
 
@@ -1174,7 +1180,7 @@ static void init_types(void)
 
 #if DEBUGGING
   #define unchecked_type(p)           ((p)->tf.type_field)
-  #define type(p) ({unsigned char _t_; _t_ = (p)->tf.type_field; if (_t_ == T_FREE) print_gc_info(p, __LINE__); _t_;})
+  #define type(p) ({unsigned char _t_; _t_ = (p)->tf.type_field; if ((_t_ == T_FREE) || (_t_ >= NUM_TYPES)) print_gc_info(p, __LINE__); _t_;})
   #define set_type(p, f) \
   do { \
       p->previous_alloc_line = p->current_alloc_line; \
@@ -1184,7 +1190,7 @@ static void init_types(void)
       p->current_alloc_func = __func__; \
       p->current_alloc_type = f; \
       p->uses++; p->clear_line = 0;					\
-      if (((f) & 0xff) == T_FREE) fprintf(stderr, "%d: set free %p type to %x\n", __LINE__, p, f); \
+      if ((((f) & 0xff) == T_FREE) || (((f) & 0xff) >= NUM_TYPES)) fprintf(stderr, "%d: set free %p type to %x\n", __LINE__, p, f); \
       else if ((is_immutable(p)) && ((typeflag(p) != (f)))) fprintf(stderr, "%d: set immutable %p type %x to %x\n", __LINE__, p, unchecked_type(p), f); \
       typeflag(p) = f; \
     } while (0)
@@ -2094,31 +2100,35 @@ static char *copy_string(const char *str)
 
 static bool local_strcmp(const char *s1, const char *s2)
 {
-  unsigned char c1, c2;
   while (true)
     {
-      c1 = (unsigned char) *s1++;
-      c2 = (unsigned char) *s2++;
-      if (c1 != c2) return(false);
-      if (c1 == '\0') break;
+      if (*s1 != *s2++) return(false);
+      if (*s1++ == 0) return(true);
     }
   return(true);
 }
 
 #define strings_are_equal(Str1, Str2) (local_strcmp(Str1, Str2))
+/* this should only be used for internal strings -- scheme strings can have embedded nulls. */
+
+static bool safe_strcmp(const char *s1, const char *s2)
+{
+  if ((!s1) || (!s2)) return(s1 == s2);
+  return(local_strcmp(s1, s2));
+}
+
 
 static bool local_strncmp(const char *s1, const char *s2, int n)
 {
   if (n >= 4)
     {
+      int *is1, *is2;
       int n4 = n >> 2;
-      do
-	{
-	  if (*s1++ != *s2++) return(false);
-	  if (*s1++ != *s2++) return(false);
-	  if (*s1++ != *s2++) return(false);
-	  if (*s1++ != *s2++) return(false);
-	} while (--n4 > 0);
+      is1 = (int *)s1;
+      is2 = (int *)s2;
+      do {if (*is1++ != *is2++) return(false);} while (--n4 > 0);
+      s1 = (const char *)is1;
+      s2 = (const char *)is2;
       n &= 3;
     }
   while (n > 0)
@@ -2129,15 +2139,7 @@ static bool local_strncmp(const char *s1, const char *s2, int n)
   return(true);
 }
 
-
 #define strings_are_equal_with_length(Str1, Str2, Len) (local_strncmp(Str1, Str2, Len))
-/* this should only be used for internal strings -- scheme strings can have embedded nulls. */
-
-static bool safe_strcmp(const char *s1, const char *s2)
-{
-  if ((!s1) || (!s2)) return(s1 == s2);
-  return(local_strcmp(s1, s2));
-}
 
 
 static void memclr(void *s, size_t n)
@@ -17401,6 +17403,7 @@ static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
 	s7_pointer x;
        
 	NEW_CELL(sc, x, T_BIG_REAL);
+	add_bigreal(x);
 	mpfr_init(big_real(x));
 	mpc_real(big_real(x), big_complex(p), GMP_RNDN);
 	
@@ -17445,8 +17448,8 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
     case T_BIG_COMPLEX:
       {
 	s7_pointer x;
-       
 	NEW_CELL(sc, x, T_BIG_REAL);
+	add_bigreal(x);
 	mpfr_init(big_real(x));
 	mpc_imag(big_real(x), big_complex(p), GMP_RNDN);
 	
@@ -33260,9 +33263,11 @@ static hash_entry_t *hash_eq_closure(s7_scheme *sc, s7_pointer table, s7_pointer
   loc = hash_loc(sc, key) & hash_len;
 
   old_e = sc->envir;
-  args = closure_args(f);
+  args = closure_args(f);    /* in lambda* case, car/cadr(args) can be lists */
   body = closure_body(f);
-  NEW_FRAME_WITH_TWO_SLOTS(sc, closure_let(f), sc->envir, car(args), key, cadr(args), sc->F);
+  NEW_FRAME_WITH_TWO_SLOTS(sc, closure_let(f), sc->envir, 
+			   (is_symbol(car(args))) ? car(args) : caar(args), key, 
+			   (is_symbol(cadr(args))) ? cadr(args) : caadr(args), sc->F);
 
   for (x = hash_table_element(table, loc); x; x = x->next)
     {
@@ -33363,7 +33368,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 	  typ = type(p2);
 	  /* true procedure needed here else (make-hash-table ()) will work
 	   */
-	  if ((typ < T_C_FUNCTION) && (typ != T_CLOSURE) && (typ != T_CLOSURE_STAR)) 
+	  if ((typ < T_C_FUNCTION) && ((!is_any_closure(p2)) && (!is_any_macro(p2))))
 	    {
 	      check_method(sc, p2, sc->MAKE_HASH_TABLE, list_2(sc, p, p2));
 	      return(simple_wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, p2, A_PROCEDURE));
@@ -67467,12 +67472,12 @@ int main(int argc, char **argv)
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1142
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1142
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 2999
- * lg             |      |      | 6547 6497 6494 6235 6229 6213
+ * lg             |      |      | 6547 6497 6494 6235 6229 6226
  * t137           |      |      | 11.0           5031 4769 4709
  * t456       265 |   89 |  9   |       8.4 8045 7482 7265 7249
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 21.0
- * t171           |      |      |                          22.8
+ * t171           |      |      |                          21.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9
  *
  * ------------------------------------------------------------------
@@ -67508,9 +67513,9 @@ int main(int argc, char **argv)
  *   lmdb/gdbm -> let + s7 threads (need full example of this in s7.html)
  *   for let-ref, actually need fallback before checking outlet (currently it follows)
  *
- * gmp: use pointer to bignum, not the thing if possible, then they can easily be moved to a free list
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
- * clm.h MUS_VERSION is 6, so *features* shows 'clm6, but clm5 is the CL version?
- * hash-table eq-func lambda* doesn't work (envir trouble), and probably not macros either
+ * add t176 to s7test
+ * gdbm scm code gets valgrind complaints about firstkey/nextkey -> string
+ * timings (and exhaustive tests) of multiple values: t456 with both cases?
  */

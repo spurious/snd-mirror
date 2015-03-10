@@ -32,6 +32,8 @@
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
+;(set! (*s7* 'gc-stats) 6)
+
 (when (provided? 'make-complex)
   (define magnitude abs)
   (define make-rectangular make-complex)
@@ -46874,6 +46876,7 @@ EDITS: 1
 ;; 24-Feb-14: #(1 1 2 1 22  74 2 1 162 2  9 1 3  8  9 2  54 2    70 33  24 2  791     0 0 1 82)  ;  14
 ;; 15-Mar-14: #(1 2 3 2 25  71 3 2 129 1  8 1 2  8 14 2  45 2    74 32  25 1  781     0 0 2 81)  ;  13
 ;; 1-Oct-14:  #(1 2 2 2 22  68 2 2 114 2  9 1 3  8 50 1  45 2    70 32  26 2  749     0 0 2 113) ;  13
+;; 9-Mar-15:  #(1 1 3 2 86  69 3 3 131 1  8 2 2  8  8 3  43 2    71 30  33 2  697     0 0 3 130) ;  13
 
 ;;; -------- cleanup temp files
 
