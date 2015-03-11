@@ -5944,7 +5944,6 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
     for (y = let_slots(x); is_slot(y); y = next_slot(y))
       if (slot_symbol(y) == symbol)
 	{
-
 	  if (slot_has_accessor(y))
 	    slot_set_value(y, call_accessor(sc, y, value));
 	  else slot_set_value(y, value);
@@ -6005,21 +6004,13 @@ static s7_pointer reverse_slots(s7_scheme *sc, s7_pointer list)
   return(result);
 }
 
-static void add_slot_in_reverse(s7_scheme *sc, s7_pointer e, s7_pointer x)
-{
-  /* used only in let_copy */
-  if (is_slot(x))
-    {
-      add_slot_in_reverse(sc, e, next_slot(x));
-      ADD_SLOT(e, slot_symbol(x), slot_value(x));
-    }
-}
 
 static s7_pointer let_copy(s7_scheme *sc, s7_pointer env)
 {
   if (is_let(env))
     {
       s7_pointer new_e;
+      s7_Int id;
 
       if (env == sc->rootlet)   /* (copy (rootlet)) or (copy (funclet abs)) etc */
 	return(sc->rootlet);
@@ -6031,8 +6022,26 @@ static s7_pointer let_copy(s7_scheme *sc, s7_pointer env)
       new_e = new_frame_in_env(sc, outlet(env));
       set_all_methods(new_e, env);
       sc->temp3 = new_e;
-      add_slot_in_reverse(sc, new_e, let_slots(env));
-      /* We can't do a loop here then reverse the slots later because the symbol's local_slot has to
+      if (is_slot(let_slots(env)))
+	{
+	  s7_pointer x, y = NULL;
+	  id = let_id(new_e);
+	  for (x = let_slots(env); is_slot(x); x = next_slot(x))
+	    {
+	      s7_pointer z;
+	      NEW_CELL(sc, z, T_SLOT | T_IMMUTABLE);
+	      slot_symbol(z) = slot_symbol(x);
+	      slot_set_value(z, slot_value(x));
+	      if (symbol_id(slot_symbol(z)) != id) /* keep shadowing intact */
+		symbol_set_local(slot_symbol(x), id, z);
+	      if (is_slot(let_slots(new_e)))
+		next_slot(y) = z;
+	      else let_slots(new_e) = z;
+	      next_slot(z) = sc->NIL;              /* in case GC runs during this loop */
+	      y = z;
+	    }
+	}
+      /* We can't do a (normal) loop here then reverse the slots later because the symbol's local_slot has to
        *    match the unshadowed slot, not the last in the list:
        *    (let ((e1 (inlet 'a 1 'a 2))) (let ((e2 (copy e1))) (list (equal? e1 e2) (equal? (e1 'a) (e2 'a))))) 
        */
@@ -7225,23 +7234,16 @@ static bool call_with_current_continuation(s7_scheme *sc)
   s7_pointer c;
   c = sc->code;
 
-  /* check for (baffle ...) blocking the current attempt to continue
-   */
-  if (continuation_key(c) >= 0)
-    {
-      if (!(find_baffle(sc, continuation_key(c))))
-	{
-	  /* should this raise an error? */
-	  return(false);
-	}
-    }
+  /* check for (baffle ...) blocking the current attempt to continue */
+  if ((continuation_key(c) >= 0) &&
+      (!(find_baffle(sc, continuation_key(c))))) /* should this raise an error? */
+    return(false);
 
-  if (!check_for_dynamic_winds(sc, c)) /* if OP_BARRIER on stack deeper than continuation top(?), but when does this happen? */
+  if (!check_for_dynamic_winds(sc, c)) /* if OP_BARRIER on stack deeper than continuation top(?), but can this happen? (it doesn't in s7test) */
     return(true);
 
   /* we push_stack sc->code before calling an embedded eval above, so sc->code should still be c here, etc
    */
-
   sc->stack = copy_stack(sc, continuation_stack(c), continuation_stack_top(c));
   sc->stack_size = continuation_stack_size(c);
   sc->stack_start = vector_elements(sc->stack);
@@ -19393,22 +19395,6 @@ static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len) 
 {
   s7_pointer x;
-  NEW_CELL(sc, x, T_STRING | T_SAFE_PROCEDURE); /* should this follow the malloc? */
-  string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
-  if (len != 0)                                             /* memcpy can segfault if string_value(x) is NULL */
-    memcpy((void *)string_value(x), (void *)str, len + 1);
-  else string_value(x)[0] = 0;
-  string_length(x) = len;
-  string_hash(x) = 0;
-  string_needs_free(x) = true;
-  add_string(sc, x);
-  return(x);
-}
-
-
-static s7_pointer s7_make_terminated_string_with_length(s7_scheme *sc, const char *str, int len) 
-{
-  s7_pointer x;
   NEW_CELL(sc, x, T_STRING | T_SAFE_PROCEDURE); 
   string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
   if (len != 0)                                             /* memcpy can segfault if string_value(x) is NULL */
@@ -19887,7 +19873,7 @@ static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
       check_method(sc, p, sc->STRING_COPY, args);
       return(wrong_type_argument(sc, sc->STRING_COPY, small_int(1), p, T_STRING));
     }
-  return(s7_make_terminated_string_with_length(sc, string_value(p), string_length(p)));
+  return(s7_make_string_with_length(sc, string_value(p), string_length(p)));
 }
 #endif
 
@@ -21532,13 +21518,13 @@ static s7_pointer file_read_line(s7_scheme *sc, s7_pointer port, bool with_eol, 
       if (rtn)
 	{
 	  port_line_number(port)++;
-	  return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, (with_eol) ? (previous_size + rtn - p + 1) : (previous_size + rtn - p)));
+	  return(s7_make_string_with_length(sc, sc->read_line_buf, (with_eol) ? (previous_size + rtn - p + 1) : (previous_size + rtn - p)));
 	}
       /* if no newline, then either at eof or need bigger buffer */
       len = strlen(sc->read_line_buf);
 
       if ((len + 1) < sc->read_line_buf_size)
-	return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, len));
+	return(s7_make_string_with_length(sc, sc->read_line_buf, len));
       
       previous_size = sc->read_line_buf_size;
       sc->read_line_buf_size *= 2;
@@ -21567,7 +21553,7 @@ static s7_pointer string_read_line(s7_scheme *sc, s7_pointer port, bool with_eol
 	i = cur - port_str;
 	port_position(port) = i + 1;
 	if (copied)
-	  return(s7_make_terminated_string_with_length(sc, (const char *)start, ((with_eol) ? i + 1 : i) - port_start));
+	  return(s7_make_string_with_length(sc, (const char *)start, ((with_eol) ? i + 1 : i) - port_start));
 	return(make_string_wrapper_with_length(sc, (char *)start, ((with_eol) ? i + 1 : i) - port_start));
       }
   i = port_data_size(port);
@@ -21576,7 +21562,7 @@ static s7_pointer string_read_line(s7_scheme *sc, s7_pointer port, bool with_eol
     return(sc->EOF_OBJECT);
 
   if (copied)
-    return(s7_make_terminated_string_with_length(sc, (const char *)start, i - port_start));
+    return(s7_make_string_with_length(sc, (const char *)start, i - port_start));
   return(make_string_wrapper_with_length(sc, (char *)start, i - port_start));
 }
 
@@ -24263,6 +24249,7 @@ static s7_pointer make_iterator(s7_scheme *sc, s7_pointer e)
       break;
 
     case T_C_OBJECT:
+      /* need built-in make-iterator here */
       iterator_next(iter) = other_iterate;
       iterator_length(iter) = object_length_to_int(sc, e);
       break;
@@ -32991,7 +32978,7 @@ static hash_entry_t *hash_empty(s7_scheme *sc, s7_pointer table, s7_pointer key)
 
 static hash_entry_t *hash_int(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
-  if (s7_is_integer(key))
+  if (is_integer(key))
     {
       s7_Int keyval;
       hash_entry_t *x;
@@ -33690,39 +33677,26 @@ That is, (hash-table* 'a 1 'b 2) returns a new hash-table with the two key/value
 }
 
 
-static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash)
+static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer new_hash, int start, int end)
 {
-  /* this has to copy not only the lists but the cons's in the lists! */
-  int i, len;
-  s7_pointer new_hash;
-  hash_entry_t **old_lists, **new_lists;
-  int gc_loc;
+  int i, len, count = 0;
+  hash_entry_t **old_lists;
 
   len = hash_table_length(old_hash);
-  new_hash = s7_make_hash_table(sc, len);
-  gc_loc = s7_gc_protect(sc, new_hash);
-
   old_lists = hash_table_elements(old_hash);
-  new_lists = hash_table_elements(new_hash);
 
   for (i = 0; i < len; i++)
     {
-      hash_entry_t *x, *y;
-      for (x = old_lists[i], y = NULL; x; x = x->next)
+      hash_entry_t *x;
+      for (x = old_lists[i]; x; x = x->next)
 	{
-	  hash_entry_t *p;
-	  p = make_hash_entry(x->key, x->value);
-	  p->next = y;
-	  y = p;
+	  if (count >= end)
+	    return(new_hash);
+	  if (count >= start)
+	    s7_hash_table_set(sc, new_hash, x->key, x->value);
+	  count++;
 	}
-      new_lists[i] = y;
     }
-
-  hash_table_entries(new_hash) = hash_table_entries(old_hash);
-  hash_table_function(new_hash) = hash_table_function(old_hash);
-  hash_table_eq_function(new_hash) = hash_table_eq_function(old_hash);
-
-  s7_gc_unprotect_at(sc, gc_loc);
   return(new_hash);
 }
 
@@ -36215,6 +36189,9 @@ list has infinite length.  Length of anything else returns #f."
  */
 
 
+/* -------------------------------- copy -------------------------------- */
+/* this section is being revised ... */
+
 s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
 {
   switch (type(obj))
@@ -36232,7 +36209,18 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
       return(object_copy(sc, list_1(sc, obj)));
 
     case T_HASH_TABLE:              /* this has to copy nearly everything */
-      return(hash_table_copy(sc, obj));
+      {
+	int gc_loc;
+	s7_pointer new_hash;
+	new_hash = s7_make_hash_table(sc, hash_table_length(obj));
+	gc_loc = s7_gc_protect(sc, new_hash);
+	hash_table_function(new_hash) = hash_table_function(obj);
+	hash_table_eq_function(new_hash) = hash_table_eq_function(obj);
+	hash_table_function_locked(new_hash) = hash_table_function_locked(obj);
+	hash_table_copy(sc, obj, new_hash, 0, hash_table_entries(obj));
+	s7_gc_unprotect_at(sc, gc_loc);
+	return(new_hash);
+      }
 
     case T_ITERATOR:
       return(iterator_copy(sc, obj));
@@ -36291,23 +36279,6 @@ static s7_pointer string_getter(s7_scheme *sc, s7_pointer str, s7_Int loc)
   return(s7_make_character(sc, (unsigned char)(string_value(str)[loc]))); /* cast needed else (copy (string (integer->char 255))...) is trouble */
 }
 
-static s7_pointer list_setter(s7_scheme *sc, s7_pointer lst, s7_Int loc, s7_pointer val)
-{
-  int i;
-  s7_pointer p;
-  for (p = lst, i = 0; i < loc; i++, p = cdr(p));
-  car(p) = val;
-  return(val);
-}
-
-static s7_pointer list_getter(s7_scheme *sc, s7_pointer lst, s7_Int loc) 
-{
-  int i;
-  s7_pointer p;
-  for (p = lst, i = 0; i < loc; i++, p = cdr(p));
-  return(car(p));
-}
-
 static s7_pointer c_object_setter(s7_scheme *sc, s7_pointer obj, s7_Int loc, s7_pointer val)
 {
   car(sc->T2_1) = make_integer(sc, loc);
@@ -36321,44 +36292,20 @@ static s7_pointer c_object_getter(s7_scheme *sc, s7_pointer obj, s7_Int loc)
   return((*(c_object_ref(obj)))(sc, obj, sc->T1_1));
 }
 
-static s7_pointer env_getter(s7_scheme *sc, s7_pointer e, s7_Int loc) 
-{
-  int i;
-  s7_pointer p;
-  for (p = let_slots(e), i = 0; i < loc; i++, p = next_slot(p));
-  return(s7_cons(sc, slot_symbol(p), slot_value(p)));
-}
-
 static s7_pointer env_setter(s7_scheme *sc, s7_pointer e, s7_Int loc, s7_pointer val)
 {
   /* loc is irrelevant here
    * val has to be of the form (cons symbol value)
    * if symbol is already in e, its value is changed, otherwise a new slot is added to e
    */
+  s7_pointer sym;
   if (!is_pair(val))
     return(wrong_type_argument_with_type(sc, sc->COPY, small_int(3), e, make_string_wrapper(sc, "(cons symbol value)"))); 
-  if (s7_let_set(sc, e, car(val), cdr(val)) != cdr(val))
-    s7_make_slot(sc, e, car(val), cdr(val));
+  sym = car(val);
+  if ((symbol_id(sym) < let_id(e)) ||
+      (s7_let_set(sc, e, sym, cdr(val)) != cdr(val)))
+    s7_make_slot(sc, e, sym, cdr(val));
   return(val);
-}
-
-static s7_pointer hash_table_getter(s7_scheme *sc, s7_pointer e, s7_Int loc) 
-{
-  int i, count, len;
-  hash_entry_t *p;
-  hash_entry_t **elements;
-
-  len = hash_table_length(e);
-  elements = hash_table_elements(e);
-
-  for (i = 0, count = 0; i < len; i++)
-    for (p = elements[i]; p; p = p->next)
-      {
-	if (count == loc)
-	  return(cons(sc, p->key, p->value));
-	count++;
-      }
-  return(sc->NIL);
 }
 
 static s7_pointer hash_table_setter(s7_scheme *sc, s7_pointer e, s7_Int loc, s7_pointer val)
@@ -36377,7 +36324,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 {
   #define H_copy "(copy obj) returns a copy of obj, (copy src dest) copies src into dest, (copy src dest start end) copies src from start to end."
   #define COPY_CIRCLE_LEN 2147483641
-  s7_pointer source, dest;
+  s7_pointer source, dest, source_iter;
   s7_Int i, j, dest_len, start, end, source_len;
   s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_Int loc, s7_pointer val);
   s7_pointer (*get)(s7_scheme *sc, s7_pointer obj, s7_Int loc) = NULL;
@@ -36394,7 +36341,6 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
   switch (type(source))
     {
     case T_PAIR:     
-      get = list_getter;     
       end = s7_list_length(sc, source); 
       if (end == 0) end = COPY_CIRCLE_LEN; /* end == 0 -> circular */
       if (end < 0) end = -end; 
@@ -36402,9 +36348,19 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 
     case T_INT_VECTOR:   
     case T_FLOAT_VECTOR: 
-    case T_VECTOR:       get = vector_getter(source); end = vector_length(source);            break;
-    case T_STRING:       get = string_getter;         end = string_length(source);            break;
-    case T_HASH_TABLE:   get = hash_table_getter;     end = hash_table_entries(source);       break;
+    case T_VECTOR:       
+      get = vector_getter(source); 
+      end = vector_length(source);            
+      break;
+
+    case T_STRING:       
+      get = string_getter;         
+      end = string_length(source);            
+      break;
+
+    case T_HASH_TABLE:
+      end = hash_table_entries(source);       
+      break;
 
     case T_C_OBJECT:     
       check_method(sc, source, sc->COPY, args);
@@ -36416,7 +36372,6 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
       check_method(sc, source, sc->COPY, args);
       if (source == sc->rootlet)
 	return(wrong_type_argument_with_type(sc, sc->COPY, small_int(1), source, make_string_wrapper(sc, "a sequence other than the rootlet")));
-      get = env_getter;            
       end = let_length(sc, source);   
       break;
 
@@ -36444,7 +36399,6 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
   switch (type(dest))
     {
     case T_PAIR:     
-      set = list_setter;     
       dest_len = s7_list_length(sc, dest); 
       if (dest_len == 0) dest_len = circular_list_entries(dest);
       if (dest_len < 0) dest_len = -dest_len;
@@ -36452,10 +36406,25 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 
     case T_INT_VECTOR:   
     case T_FLOAT_VECTOR: 
-    case T_VECTOR:       set = vector_setter(dest); dest_len = vector_length(dest);            break;
-    case T_STRING:       set = string_setter;       dest_len = string_length(dest);            break;
-    case T_HASH_TABLE:   set = hash_table_setter;   dest_len = source_len;                     break;
-    case T_C_OBJECT:     set = c_object_setter;     dest_len = object_length_to_int(sc, dest); break;
+    case T_VECTOR:       
+      set = vector_setter(dest); 
+      dest_len = vector_length(dest);            
+      break;
+
+    case T_STRING:
+      set = string_setter;       
+      dest_len = string_length(dest);            
+      break;
+
+    case T_HASH_TABLE:
+      set = hash_table_setter;
+      dest_len = source_len;                     
+      break;
+
+    case T_C_OBJECT:
+      set = c_object_setter;     
+      dest_len = object_length_to_int(sc, dest); 
+      break;
 
     case T_ENVIRONMENT: 
       if (source == sc->rootlet)
@@ -36532,8 +36501,13 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 	  return(dest);
 	  
 	case T_C_OBJECT:
+	  /* object_copy? */
+
 	case T_ENVIRONMENT:
+	  break;
+
 	case T_HASH_TABLE:
+	  return(hash_table_copy(sc, source, dest, start, end));
 	  break;
 
 	default:
@@ -36541,11 +36515,73 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 	}
     }
 
+  if (type(source) == T_HASH_TABLE)
+    {
+      source_iter = make_iterator(sc, source);
+      sc->temp3 = source_iter;
+      if (start > 0)
+	for (i = 0; i < start; i++)
+	  hash_table_iterate(sc, source_iter);
+      if (type(dest) == T_PAIR)
+	{
+	  s7_pointer p;
+	  for (i = start, p = dest; i < end; i++, p = cdr(p))
+	    car(p) = hash_table_iterate(sc, source_iter);
+	}
+      else
+	{
+	  for (i = start, j = 0; i < end; i++, j++)
+	    set(sc, dest, j, hash_table_iterate(sc, source_iter));
+	}
+      return(dest);
+    }
   /* if source == dest here, we're moving data backwards, so this is safe in either case */
+  
+  if (type(source) == T_PAIR)
+    {
+      s7_pointer p;
+      p = source;
+      if (start > 0)
+	for (i = 0; i < start; i++)
+	  p = cdr(p);
+      /* dest won't be a pair here -- the pair->pair case was caught above */
+      for (i = start, j = 0; i < end; i++, j++, p = cdr(p))
+	set(sc, dest, j, car(p));
+      return(dest);
+    }
 
-  for (i = start, j = 0; i < end; i++, j++)
-    set(sc, dest, j, get(sc, source, i));
+  if (type(source) == T_ENVIRONMENT)
+    {
+      source_iter = make_iterator(sc, source);
+      sc->temp3 = source_iter;
+      if (start > 0)
+	for (i = 0; i < start; i++)
+	  let_iterate(sc, source_iter);
+      if (type(dest) == T_PAIR)
+	{
+	  s7_pointer p;
+	  for (i = start, p = dest; i < end; i++, p = cdr(p))
+	    car(p) = let_iterate(sc, source_iter);
+	}
+      else
+	{
+	  for (i = start, j = 0; i < end; i++, j++)
+	    set(sc, dest, j, let_iterate(sc, source_iter));
+	}
+      return(dest);
+    }
 
+  if (type(dest) == T_PAIR)
+    {
+      s7_pointer p;
+      for (i = start, p = dest; i < end; i++, p = cdr(p))
+	car(p) = get(sc, source, i);
+    }
+  else
+    {
+      for (i = start, j = 0; i < end; i++, j++)
+	set(sc, dest, j, get(sc, source, i));
+    }
   /* some choices probably should raise an error, but don't:
    *   (copy (make-hash-table) "1") ; nothing to copy (empty hash table), so no error
    */
@@ -40183,7 +40219,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 	  int len;
 	  len = s - start;
 	  port_position(pt) += (len + 1);
-	  return(s7_make_terminated_string_with_length(sc, start, len));
+	  return(s7_make_string_with_length(sc, start, len));
 	}
       
       for (; s < end; s++)
@@ -40193,7 +40229,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 	      int len;
 	      len = s - start;
 	      port_position(pt) += (len + 1);
-	      return(s7_make_terminated_string_with_length(sc, start, len));
+	      return(s7_make_string_with_length(sc, start, len));
 	    }
 	  else
 	    {
@@ -40240,7 +40276,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 	  return(sc->F);
 
 	case '"':
-	  return(s7_make_terminated_string_with_length(sc, sc->strbuf, i));
+	  return(s7_make_string_with_length(sc, sc->strbuf, i));
 
 	case '\\':
 	  c = inchar(pt);
@@ -67472,8 +67508,9 @@ int main(int argc, char **argv)
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1142
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1142
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 2999
- * lg             |      |      | 6547 6497 6494 6235 6229 6226
  * t137           |      |      | 11.0           5031 4769 4709
+ * t177           |      |      |                     13.1 4886
+ * lg             |      |      | 6547 6497 6494 6235 6229 6226
  * t456       265 |   89 |  9   |       8.4 8045 7482 7265 7249
  * t502        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
  * t816           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 21.0
@@ -67515,7 +67552,5 @@ int main(int argc, char **argv)
  *
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
- * add t176 to s7test
- * gdbm scm code gets valgrind complaints about firstkey/nextkey -> string
  * timings (and exhaustive tests) of multiple values: t456 with both cases?
  */
