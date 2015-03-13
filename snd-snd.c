@@ -4010,6 +4010,8 @@ open file assuming the data matches the attributes indicated unless the file act
 
   for (i = 0; i < 8; i++) args[i] = Xen_undefined;
   arglist_len = Xen_list_length(arglist);
+  if (arglist_len > 8)
+    Xen_out_of_range_error(S_open_raw_sound, 0, arglist, "too many arguments");
 
   for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
   vals = mus_optkey_unscramble(S_open_raw_sound, 4, keys, args, orig_arg);
@@ -4137,6 +4139,9 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 
   for (i = 0; i < 16; i++) args[i] = Xen_undefined;
   arglist_len = Xen_list_length(arglist);
+  if (arglist_len > 16)
+    Xen_out_of_range_error(S_save_sound_as, 0, arglist, "too many arguments");
+
   for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
   vals = mus_optkey_unscramble(S_save_sound_as, 8, keys, args, orig_arg);
 
@@ -4317,6 +4322,9 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
 
   for (i = 0; i < 14; i++) args[i] = Xen_undefined;
   arglist_len = Xen_list_length(arglist);
+  if (arglist_len > 14)
+    Xen_out_of_range_error(S_open_raw_sound, 0, arglist, "too many arguments");
+
   for (i = 0; i < arglist_len; i++) args[i] = Xen_list_ref(arglist, i);
   vals = mus_optkey_unscramble(S_new_sound, 7, keys, args, orig_arg);
 

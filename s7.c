@@ -4100,7 +4100,7 @@ static void expand_heap(s7_scheme *sc)
   sc->previous_free_heap_top = sc->free_heap_top;
 
   if (show_heap_stats(sc))
-    fprintf(stderr, "heap grows to %d\n", sc->heap_size);
+    fprintf(stderr, "heap grows to %u\n", sc->heap_size);
 }
 
 static void try_to_call_gc(s7_scheme *sc)
@@ -4443,7 +4443,7 @@ static void increase_stack_size(s7_scheme *sc)
   sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
 
   if (show_stack_stats(sc))
-    fprintf(stderr, "stack grows to %d\n", new_size);
+    fprintf(stderr, "stack grows to %u\n", new_size);
 }
 
 #define check_stack_size(Sc) \
@@ -4499,7 +4499,7 @@ static int rhash_any(const unsigned char *s, unsigned int len)
 {
   unsigned int i, hashed;
   hashed = s[5];
-  for (i = 6; i < len; i++) hashed = s[i] + hashed * HMLT;
+  for (i = 6; i < 16; i++) hashed = s[i] + hashed * HMLT;
   return(hashed);
 }
 
@@ -6002,7 +6002,6 @@ static s7_pointer let_copy(s7_scheme *sc, s7_pointer env)
   if (is_let(env))
     {
       s7_pointer new_e;
-      s7_Int id;
 
       if (env == sc->rootlet)   /* (copy (rootlet)) or (copy (funclet abs)) etc */
 	return(sc->rootlet);
@@ -6016,7 +6015,9 @@ static s7_pointer let_copy(s7_scheme *sc, s7_pointer env)
       sc->temp3 = new_e;
       if (is_slot(let_slots(env)))
 	{
+	  s7_Int id;
 	  s7_pointer x, y = NULL;
+
 	  id = let_id(new_e);
 	  for (x = let_slots(env); is_slot(x); x = next_slot(x))
 	    {
@@ -6858,7 +6859,6 @@ static s7_pointer g_is_continuation(s7_scheme *sc, s7_pointer args)
   check_boolean_method(sc, is_continuation, sc->IS_CONTINUATION, args);
   /* is this the right thing?  It returns #f for call-with-exit ("goto") because
    *   that form of continuation can't continue (via a jump back to its context).
-   *
    * how to recognize the call-with-exit function?  "goto" is an internal name.
    */
 }
@@ -6908,7 +6908,13 @@ static s7_pointer protected_list_copy(s7_scheme *sc, s7_pointer a)
 	    set_match(f1);
 	  for (p2 = sc->w, f2 = a; cdr(f1) != f2; f2 = cdr(f2), p2 = cdr(p2))
 	    clear_match(f2);
-	  clear_match(f2);
+	  for (f1 = f2; is_pair(f1); f1 = cdr(f1), f2 = cdr(f2))
+	    {
+	      clear_match(f1);
+	      f1 = cdr(f1);
+	      clear_match(f1);
+	      if (f1 == f2) break;
+	    }
 	  if (is_null(p1))
 	    cdr(p2) = p2;
 	  else cdr(p1) = p2;
@@ -20691,7 +20697,7 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_fill "(string-fill! str chr start end) fills the string str with the character chr"
   s7_pointer x, chr;
-  s7_Int start = 0, end;
+  s7_Int start = 0, end, byte = 0;
   x = car(args);
 
   if (!is_string(x))
@@ -20701,10 +20707,24 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
     }
 
   chr = cadr(args);
-  if (!s7_is_character(chr))
+  if (!is_bytevector(x))
     {
-      check_two_methods(sc, chr, sc->STRING_FILL, sc->FILL, args);
-      return(wrong_type_argument(sc, sc->STRING_FILL, small_int(2), chr, T_CHARACTER));
+      if (!s7_is_character(chr))
+	{
+	  check_two_methods(sc, chr, sc->STRING_FILL, sc->FILL, args);
+	  return(wrong_type_argument(sc, sc->STRING_FILL, small_int(2), chr, T_CHARACTER));
+	}
+    }
+  else
+    {
+      if (!is_integer(chr))
+	{
+	  check_two_methods(sc, chr, sc->STRING_FILL, sc->FILL, args);
+	  return(wrong_type_argument(sc, sc->FILL, small_int(2), chr, T_INTEGER));
+	}
+      byte = integer(chr);
+      if ((byte < 0) || (byte > 255))
+	return(simple_wrong_type_argument_with_type(sc, sc->STRING_FILL, chr, AN_UNSIGNED_BYTE));
     }
 
   end = string_length(x);
@@ -20717,7 +20737,11 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
       if (p != sc->GC_NIL) return(p);
       if (start == end) return(chr);
     }
-  memset((void *)(string_value(x) + start), (int)character(chr), end - start);
+
+  if (!is_bytevector(x))
+    memset((void *)(string_value(x) + start), (int)character(chr), end - start);
+  else memset((void *)(string_value(x) + start), (int)byte, end - start);
+
   return(chr);
 }
 
@@ -23941,7 +23965,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   is_global(obj) ?             ((is_pair(obj)) ? " unsafe-do" : " global") : "",
 	   has_line_number(obj) ?       ((is_symbol(obj)) ? " optimized-let" : ((is_input_port(obj)) ? " loader-port" : " line-number")) : "",
 	   is_expansion(obj) ?          " expansion" : "",
-	   is_multiple_value(obj) ?     " values" : "",
+	   is_multiple_value(obj) ?     " values" : "",         /* also matched, but how to distinguish? */
 	   is_keyword(obj) ?            " keyword" : "",
 	   dont_eval_args(obj) ?        " dont-eval-args" : "",
 	   is_syntactic(obj) ?          " syntactic" : "",
@@ -36273,12 +36297,31 @@ static s7_pointer string_setter(s7_scheme *sc, s7_pointer str, s7_Int loc, s7_po
       string_value(str)[loc] = s7_character(val);
       return(val);
     }
-  return(wrong_type_argument(sc, sc->STRING_SET, small_int(3), val, T_CHARACTER));
+  return(wrong_type_argument(sc, sc->COPY, small_int(3), val, T_CHARACTER));
+}
+
+static s7_pointer bytevector_setter(s7_scheme *sc, s7_pointer str, s7_Int loc, s7_pointer val)
+{
+  if (s7_is_integer(val))
+    {
+      s7_Int byte;
+      byte = s7_integer(val);
+      if ((byte >= 0) && (byte < 256))
+	string_value(str)[loc] = (unsigned char)byte;
+      else return(simple_wrong_type_argument_with_type(sc, sc->COPY, val, AN_UNSIGNED_BYTE));
+      return(val);
+    }
+  return(wrong_type_argument(sc, sc->COPY, small_int(3), val, T_INTEGER));
 }
 
 static s7_pointer string_getter(s7_scheme *sc, s7_pointer str, s7_Int loc)
 {
   return(s7_make_character(sc, (unsigned char)(string_value(str)[loc]))); /* cast needed else (copy (string (integer->char 255))...) is trouble */
+}
+
+static s7_pointer bytevector_getter(s7_scheme *sc, s7_pointer str, s7_Int loc)
+{
+  return(make_integer(sc, (unsigned char)(string_value(str)[loc])));
 }
 
 static s7_pointer c_object_setter(s7_scheme *sc, s7_pointer obj, s7_Int loc, s7_pointer val)
@@ -36356,7 +36399,9 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_STRING:
-      get = string_getter;
+      if (is_bytevector(source))
+	get = bytevector_getter;
+      else get = string_getter;
       end = string_length(source);
       break;
 
@@ -36414,7 +36459,9 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_STRING:
-      set = string_setter;
+      if (is_bytevector(dest))
+	set = bytevector_setter;
+      else set = string_setter;
       dest_len = string_length(dest);
       break;
 
@@ -36493,7 +36540,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 	  memcpy((void *)(float_vector_elements(dest)), (void *)((float_vector_elements(source)) + start), (end - start) * sizeof(s7_Double));
 	  return(dest);
 
-	case T_STRING:
+	case T_STRING: /* this is 4 cases (string/bytevector) */
 	  memcpy((void *)string_value(dest), (void *)((string_value(source)) + start), (end - start) * sizeof(char));
 	  return(dest);
 
@@ -36553,7 +36600,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
       if (start > 0)
 	for (i = 0; i < start; i++)
 	  iterator_next(source_iter)(sc, source_iter);
-      if (type(dest) == T_PAIR)
+      if (is_pair(dest))
 	{
 	  s7_pointer p;
 	  for (i = start, p = dest; i < end; i++, p = cdr(p))
@@ -36567,7 +36614,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
       return(dest);
 
     case T_FLOAT_VECTOR:
-      if (type(dest) == T_INT_VECTOR)
+      if (is_int_vector(dest))
 	{
 	  for (i = start, j = 0; i < end; i++, j++)
 	    int_vector_element(dest, j) = (s7_Int)(float_vector_element(source, i));
@@ -36575,15 +36622,24 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 	}
 
     case T_INT_VECTOR:
-      if (type(dest) == T_FLOAT_VECTOR)
+      if (is_float_vector(dest))
 	{
 	  for (i = start, j = 0; i < end; i++, j++)
 	    float_vector_element(dest, j) = (s7_Double)(int_vector_element(source, i));
 	  return(dest);
 	}
+
+    case T_STRING:
+      if ((is_bytevector(source)) &&
+	  (is_int_vector(dest)))
+	{
+	  for (i = start, j = 0; i < end; i++, j++)
+	    int_vector_element(dest, j) = (s7_Int)((unsigned char)(string_value(source)[i]));
+	  return(dest);
+	}
     }
 
-  if (type(dest) == T_PAIR)
+  if (is_pair(dest))
     {
       s7_pointer p;
       for (i = start, p = dest; i < end; i++, p = cdr(p))
@@ -67484,7 +67540,7 @@ int main(int argc, char **argv)
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1142
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 2999
  * tmap           |      |      | 11.0           5031 4769 4702
- * tcopy          |      |      | 13.4                13.4 4822
+ * tcopy          |      |      | 13.6                13.6 5018
  * lg             |      |      | 6547 6497 6494 6235 6229 6225
  * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7196
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
@@ -67527,4 +67583,6 @@ int main(int argc, char **argv)
  *
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
+ * I think cload needs to be smarter about its output shared object location
+ *   also need to explain the load/stdin business in s7.html
  */
