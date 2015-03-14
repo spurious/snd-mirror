@@ -22683,6 +22683,24 @@ void s7_write_char(s7_scheme *sc, int c, s7_pointer pt)
 }
 
 
+static s7_pointer input_port_if_not_loading(s7_scheme *sc)
+{
+  s7_pointer port;
+  port = sc->input_port;
+  if (is_loader_port(port)) /* this flag is turned off by the reader macros, so we aren't in that context */
+    {
+      int c;
+      c = port_read_white_space(port)(sc, port);
+      if (c > 0)            /* we can get either EOF or NULL at the end */
+	{
+	  backchar(c, port);
+	  return(NULL);
+	}
+      return(sc->standard_input);
+    }
+  return(port);
+}
+
 static s7_pointer g_read_char(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_char "(read-char (port (current-input-port))) returns the next character in the input port"
@@ -22693,9 +22711,8 @@ static s7_pointer g_read_char(s7_scheme *sc, s7_pointer args)
     port = car(args);
   else
     {
-      port = sc->input_port;
-      if (is_loader_port(port))
-	return(sc->EOF_OBJECT);
+      port = input_port_if_not_loading(sc);
+      if (!port) return(sc->EOF_OBJECT);
     }
   if (!is_input_port(port))
     {
@@ -22827,11 +22844,9 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
     port = car(args);
   else
     {
-      port = sc->input_port;
-      if (is_loader_port(port))
-	return(sc->EOF_OBJECT);
+      port = input_port_if_not_loading(sc);
+      if (!port) return(sc->EOF_OBJECT);
     }
-
   if (!is_input_port(port))
     {
       check_method(sc, port, sc->READ_BYTE, args);
@@ -22895,9 +22910,8 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
     }
   else
     {
-      port = sc->input_port;
-      if (is_loader_port(port))
-	return(sc->EOF_OBJECT);
+      port = input_port_if_not_loading(sc);
+      if (!port) return(sc->EOF_OBJECT);
     }
   return(port_read_line(port)(sc, port, with_eol, true));
 }
@@ -22948,9 +22962,8 @@ static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
     }
   else
     {
-      port = sc->input_port;
-      if (is_loader_port(port))
-	return(sc->EOF_OBJECT);
+      port = input_port_if_not_loading(sc);
+      if (!port) return(sc->EOF_OBJECT);
     }
 
   str = make_empty_string(sc, chars, 0);
@@ -23027,12 +23040,11 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
     port = car(args);
   else
     {
-      port = sc->input_port;
-      if (is_loader_port(port))
-	return(sc->EOF_OBJECT);
+      port = input_port_if_not_loading(sc);
+      if (!port) return(sc->EOF_OBJECT);
     }
 
-  if (!is_input_port(port)) /* was also not stdin */
+  if (!is_input_port(port))
     {
       check_method(sc, port, sc->READ, args);
       return(simple_wrong_type_argument_with_type(sc, sc->READ, port, AN_INPUT_PORT));
@@ -46395,10 +46407,9 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 
 	      for (p = cdr(x); is_pair(p); p = cdr(p))
 		if ((is_pair(car(p))) &&
-		    (((!is_optimized(car(p))) &&
-		      (caar(p) != sc->QUOTE)) ||
+		    (((!is_optimized(car(p))) && (caar(p) != sc->QUOTE)) ||
 		     (is_unsafe(car(p))) ||
-		     (caar(p) == func)))  /* ?? not sure about this */
+		     (caar(p) == func)))    /* func called as arg, so not tail call */
 		  return(false);
 
 	      if ((at_end) && (is_null(p))) /* tail call, so safe */
@@ -46443,7 +46454,15 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 			return(false);
 		      if ((is_closure(slot_value(f))) &&
 			  (is_safe_closure(slot_value(f))))
-			return(true);
+			{
+			  s7_pointer p;
+			  /* the calling function is safe, but what about its arguments? */
+			  for (p = cdr(x); is_pair(p); p = cdr(p))
+			    if ((is_pair(car(p))) &&
+				(caar(p) == func)) /* this would be a recursive call on func that is not in tail-call position */
+			      return(false);
+			  return(true);
+			}
 		    }
 		}
 	    }
@@ -46458,12 +46477,10 @@ static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool a
 {
   /* called in optimize_lambda and above */
   s7_pointer p;
-
   for (p = body; is_pair(p); p = cdr(p))
     if ((is_pair(car(p))) &&
 	(!form_is_safe(sc, func, car(p), (at_end) && (is_null(cdr(p))))))
       return(false);
-
   return(is_null(p));
 }
 
@@ -67537,14 +67554,14 @@ int main(int argc, char **argv)
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1142
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1142
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 2999
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1145
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3402
  * tmap           |      |      | 11.0           5031 4769 4702
  * tcopy          |      |      | 13.6                13.6 5018
- * lg             |      |      | 6547 6497 6494 6235 6229 6225
+ * lg             |      |      | 6547 6497 6494 6235 6229 6222
  * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7196
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
- * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 21.0
+ * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8
  * thash          |      |      |                          21.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9
  *
@@ -67584,5 +67601,5 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * I think cload needs to be smarter about its output shared object location
- *   also need to explain the load/stdin business in s7.html
+ *   (chdir ... ; gcc ...?)
  */
