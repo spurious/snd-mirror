@@ -925,7 +925,7 @@ struct s7_scheme {
   s7_pointer LET_opSq, LET_ALL_opSq, LET_opSq_P, LET_ONE, LET_Z;
   s7_pointer SIMPLE_DO, SAFE_DOTIMES, SIMPLE_SAFE_DOTIMES, SAFE_DOTIMES_C_C, SAFE_DOTIMES_C_A, SAFE_DO;
   s7_pointer SIMPLE_DO_P, DOTIMES_P, SIMPLE_DO_FOREVER, SIMPLE_DO_A;
-  s7_pointer DOX, DO_ALL_X;
+  s7_pointer DOX, DO_ALL_X, dox_slot_symbol;
 
   s7_pointer *safe_lists; /* prebuilt evaluator arg lists */
 
@@ -29381,11 +29381,13 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
     {
       s7_pointer eq_func;
       /* check third arg before second (trailing arg error check) */
-
       eq_func = caddr(args);
-      if (!is_procedure(eq_func))
-	return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(3), eq_func, A_FUNCTION));
 
+      if ((type(eq_func) < T_C_FUNCTION) && ((!is_any_closure(eq_func)) && (!is_any_macro(eq_func))))
+	{
+	  check_method(sc, eq_func, sc->ASSOC, args);
+	  return(simple_wrong_type_argument_with_type(sc, sc->ASSOC, eq_func, A_PROCEDURE));
+	}
       if (!s7_is_aritable(sc, eq_func, 2))
 	return(wrong_type_argument_with_type(sc, sc->ASSOC, small_int(3), eq_func, AN_EQ_FUNC));
 
@@ -29854,14 +29856,15 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
     {
       s7_pointer eq_func;
       /* check third arg before second (trailing arg error check) */
-
       eq_func = caddr(args);
-      if ((!is_procedure(eq_func)) ||
-	  (!s7_is_aritable(sc, eq_func, 2)))
+
+      if ((type(eq_func) < T_C_FUNCTION) && ((!is_any_closure(eq_func)) && (!is_any_macro(eq_func))))
 	{
 	  check_method(sc, eq_func, sc->MEMBER, args);
-	  return(wrong_type_argument_with_type(sc, sc->MEMBER, small_int(3), eq_func, AN_EQ_FUNC));
+	  return(simple_wrong_type_argument_with_type(sc, sc->MEMBER, eq_func, A_PROCEDURE));
 	}
+      if (!s7_is_aritable(sc, eq_func, 2))
+	return(wrong_type_argument_with_type(sc, sc->MEMBER, small_int(3), eq_func, AN_EQ_FUNC));
 
       /* now maybe there's a simple case */
       if (s7_list_length(sc, x) > 0)
@@ -32426,25 +32429,28 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
       /* (apply sort! () #f) should be an error I think
        */
       lessp = cadr(args);
-      if ((!is_procedure(lessp)) ||
-	  (!s7_is_aritable(sc, lessp, 2)))
+      if ((type(lessp) < T_C_FUNCTION) && ((!is_any_closure(lessp)) && (!is_any_macro(lessp))))
 	{
 	  check_method(sc, lessp, sc->SORT, args);
-	  return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, AN_EQ_FUNC));
+	  return(simple_wrong_type_argument_with_type(sc, sc->SORT, lessp, A_PROCEDURE));
 	}
+      if (!s7_is_aritable(sc, lessp, 2))
+	return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, AN_EQ_FUNC));
+
       return(sc->NIL);
     }
 
   lessp = cadr(args);
-  if (!is_procedure(lessp))
-    {
-      check_method(sc, lessp, sc->SORT, args);
-      return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, A_FUNCTION));
-    }
+      if ((type(lessp) < T_C_FUNCTION) && ((!is_any_closure(lessp)) && (!is_any_macro(lessp))))
+	{
+	  check_method(sc, lessp, sc->SORT, args);
+	  return(simple_wrong_type_argument_with_type(sc, sc->SORT, lessp, A_PROCEDURE));
+	}
+      if (!s7_is_aritable(sc, lessp, 2))
+	return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, AN_EQ_FUNC));
+
   if ((is_continuation(lessp)) || is_goto(lessp))
     return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, make_string_wrapper(sc, "a normal procedure (not a continuation)")));
-  if (!s7_is_aritable(sc, lessp, 2))
-    return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, AN_EQ_FUNC));
 
   sort_func = vector_compare;
   compare_func = NULL;
@@ -33389,27 +33395,29 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 
       if (is_not_null(cdr(args)))
 	{
-	  s7_pointer ht, p2;
-	  int typ;
-	  p2 = cadr(args);
-	  typ = type(p2);
+	  s7_pointer ht, proc;
+	  proc = cadr(args);
 	  /* true procedure needed here else (make-hash-table ()) will work
 	   */
-	  if ((typ < T_C_FUNCTION) && ((!is_any_closure(p2)) && (!is_any_macro(p2))))
+	  if ((type(proc) < T_C_FUNCTION) && ((!is_any_closure(proc)) && (!is_any_macro(proc))))
 	    {
-	      check_method(sc, p2, sc->MAKE_HASH_TABLE, list_2(sc, p, p2));
-	      return(simple_wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, p2, A_PROCEDURE));
+	      check_method(sc, proc, sc->MAKE_HASH_TABLE, args);
+	      return(simple_wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, proc, A_PROCEDURE));
 	    }
+	  if ((!s7_is_aritable(sc, proc, 2)) ||
+	      ((!is_c_function(proc)) &&
+	       ((!is_pair(closure_args(proc))) || (!is_pair(cdr(closure_args(proc)))))))
+	    return(wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, small_int(3), proc, AN_EQ_FUNC));
 
-	  if (is_c_function(p2)) /* we need to restrict this function so that hash-table-ref|set! remain safe functions */
+	  if (is_c_function(proc)) /* we need to restrict this function so that hash-table-ref|set! remain safe functions */
 	    {
 	      ht = s7_make_hash_table(sc, size);
-	      if (c_function_call(p2) == g_is_eq)
+	      if (c_function_call(proc) == g_is_eq)
 		hash_table_function(ht) = hash_eq_eq; /* (let ((ht (make-hash-table 511 eq?))) (set! (ht 'a) 1) (ht 'a)) */
 	      else
 		{
 		  hash_table_function(ht) = hash_eq_c_function;
-		  hash_table_eq_function(ht) = p2;
+		  hash_table_eq_function(ht) = proc;
 		}
 	      hash_table_function_locked(ht) = true;
 	      return(ht);
@@ -33420,7 +33428,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 	   */
 	  ht = s7_make_hash_table(sc, size);
 	  hash_table_function(ht) = hash_eq_closure;
-	  hash_table_eq_function(ht) = p2;
+	  hash_table_eq_function(ht) = proc;
 	  hash_table_function_locked(ht) = true;
 	  return(ht);
 	}
@@ -48297,6 +48305,8 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		      break;
 
 		    case OP_SET:
+		      if (!is_symbol(cadr(expr)))             /* (set! (...) ...) which is tricky */
+			return(false);
 		      if (!direct_memq(cadr(expr), var_list)) /* is some non-local variable being set? */
 			(*has_set) = true;
 		      if (!do_is_safe(sc, cddr(expr), steppers, var_list, has_set))
@@ -51119,12 +51129,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    s7_pointer slot;
 	    NEW_CELL_NO_CHECK(sc, slot, T_SLOT | T_IMMUTABLE);
-	    slot_symbol(slot) = end;
+	    slot_symbol(slot) = sc->dox_slot_symbol;
 	    slot_set_value(slot, end);
 	    sc->args = slot;
 	  }
 	dox_slot2(sc->envir) = sc->args;
-
 	car(sc->T2_1) = slot_value(dox_slot1(sc->envir));
 	car(sc->T2_2) = slot_value(dox_slot2(sc->envir));
 	if (is_true(sc, c_call(caadr(code))(sc, sc->T2_1)))
@@ -57036,7 +57045,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sym = car(x);
 		val = car(z);
 		args = cdr(z);
-
 		slot_symbol(z) = sym;
 		symbol_set_local(sym, id, z);
 		slot_set_value(z, val);
@@ -58839,7 +58847,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    {
 		      if (is_null(cdar(sc->code)))
 			sc->args = copy_list(sc, cdr(sc->code));
-		      else sc->args = s7_append(sc, cdar(sc->code), cdr(sc->code));
+		      else sc->args = s7_append(sc, cdar(sc->code), copy_list(sc, cdr(sc->code)));
+		      /* append copies except for its last arg, but for macros, we have to copy everything, hence the extra copy_list */
 		      sc->code = c_function_setter(cx);
 		      goto APPLY;
 		    }
@@ -58874,7 +58883,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    {
 		      if (is_null(cdar(sc->code)))
 			sc->args = copy_list(sc, cdr(sc->code));
-		      else sc->args = s7_append(sc, cdar(sc->code), cdr(sc->code));
+		      else sc->args = s7_append(sc, cdar(sc->code), copy_list(sc, cdr(sc->code)));
 		      sc->code = closure_setter(cx);
 		      goto APPLY;
 		    }
@@ -59079,8 +59088,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_IF_P_FEED:
-      /* actually cond right now: (cond (expr => p)) where p is (lambda (s) ...) -- see check_cond -- this could be extended a lot
-       */
+      /* actually cond right now: (cond (expr => p)) where p is (lambda (s) ...) -- see check_cond */
       push_stack_no_args(sc, OP_IF_P_FEED_1, sc->code);
       sc->code = caar(sc->code);
       goto EVAL;
@@ -59515,7 +59523,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		push_stack(sc, OP_LET1, sc->args, cdr(sc->code));
 		sc->code = x;
-		if (is_optimized(x))
+ 		if (is_optimized(x))
 		  goto OPT_EVAL;
 		goto EVAL;
 		/* this push_stack/goto can't be optimized away via a local optimize_data case statement
@@ -66226,6 +66234,7 @@ s7_scheme *s7_init(void)
   sc->direct_str = s7_make_permanent_string(NULL);
   sc->undefined_identifier_warnings = false;
   sc->wrap_only = make_wrap_only(sc);
+  sc->dox_slot_symbol = s7_make_symbol(sc, "(dox_slot)");
 
   sc->rootlet = s7_make_vector(sc, 512);
   set_type(sc->rootlet, T_ENVIRONMENT);
@@ -67287,7 +67296,7 @@ s7_scheme *s7_init(void)
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, H_quasiquote);
 
   s7_eval_c_string(sc, "(define (dilambda g s)                                                                \n\
-                          (if (or (not (procedure? g)) (not (procedure? s)))                                  \n\
+                          (if (or (not (arity g)) (not (arity s)))                                            \n\
                               (error 'wrong-type-arg \"dilambda takes 2 procedures: ~A ~A\" g s)              \n\
                               (set! (procedure-setter g) s))                                                  \n\
                           g)");
@@ -67559,7 +67568,7 @@ int main(int argc, char **argv)
  * tmap           |      |      | 11.0           5031 4769 4702
  * tcopy          |      |      | 13.6                13.6 5018
  * lg             |      |      | 6547 6497 6494 6235 6229 6222
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7196
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7190
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8
  * thash          |      |      |                          21.8
@@ -67600,6 +67609,5 @@ int main(int argc, char **argv)
  *
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
- * I think cload needs to be smarter about its output shared object location
- *   (chdir ... ; gcc ...?)
+ * I think cload needs to be smarter about its output shared object location (chdir ... ; gcc ...?)
  */

@@ -213,6 +213,14 @@
 
 ;; libraries
 (apply define (symbol (object->string '(scheme base))) (inlet) ()) ; ignore (scheme base)
+(apply define (symbol (object->string '(scheme read))) (inlet) ()) ; and so on... what a pile of baloney
+(apply define (symbol (object->string '(scheme write))) (inlet) ()) 
+(apply define (symbol (object->string '(scheme time))) (inlet) ()) 
+(apply define (symbol (object->string '(scheme file))) (inlet) ()) 
+(apply define (symbol (object->string '(scheme cxr))) (inlet) ()) 
+(apply define (symbol (object->string '(scheme inexact))) (inlet) ()) 
+(apply define (symbol (object->string '(scheme char))) (inlet) ()) 
+(apply define (symbol (object->string '(scheme complex))) (inlet) ()) 
 
 (define-macro (define-library libname . body) ; |(lib name)| -> environment
   `(define ,(symbol (object->string libname))

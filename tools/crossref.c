@@ -10,6 +10,8 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+#if 1
+/* this is almost four times faster */
 static bool local_strcmp(const char *s1, const char *s2)
 {
   unsigned char c1, c2;
@@ -22,6 +24,9 @@ static bool local_strcmp(const char *s1, const char *s2)
     }
   return(true);
 }
+#else
+#define local_strcmp(S1, S2) (strcmp(S1, S2) == 0)
+#endif
 
 char **names;
 char **hnames;
