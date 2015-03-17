@@ -3255,7 +3255,7 @@ exactly like a normal macro,
 so you can use <code>(values '(define a 1) '(define b 2))</code> to
 splice multiple definitions at the macro invocation point.  
 If an expansion returns (values), nothing is spliced in.  This is
-mostly useful in reader-cond.
+mostly useful in <a href="#readercond">reader-cond</a>.
 </p>
 
 <pre class="indented">
@@ -5551,6 +5551,19 @@ is simply returned, unevaluated.
 abcd
 </pre>
 
+<p>The main built-in expansion is <em class=def id="readercond">reader-cond</em>.  The syntax is based on cond:
+the car of each clause is evaluated (in the read-time context), and if it is not false,
+the remainder of that clause is spliced into the code as if you had typed it from the start.
+</p>
+
+<pre class="indented">
+&gt; '(1 2 (reader-cond ((> 1 0) 3) (else 4)) 5 6)
+(1 2 3 5 6)
+&gt; ((reader-cond ((> 1 0) list 1 2) (else cons)) 5 6)
+(1 2 5 6)
+</pre>
+
+
 <!-- from kanren
 (define-syntax conj*
   (syntax-rules ()
@@ -5730,10 +5743,11 @@ provided? should be feature? or *features* should be *provisions*.
 The name "cond-expand" is bad &mdash; we're not expanding anything, and the macro's point is to make it easy to
 operate with the *features* list; perhaps "cond-provided"?  Not only is cond-expand poorly named, but the whole
 idea is clumsy.  Take libgsl.scm; different versions of the GSL library have different functions.  We need to know
-when we're building the FFI what version we're dealing with.  It would be nuts to start pushing and checking dozens
-of library version symbols when all we actually want is <code>(&gt; version 23.19)</code>.
-So, s7 uses reader-cond instead.
-In this case, the read-time decision involves normal evaluation, not something specific to *features*.
+when we're building the FFI what GSL version we're dealing with.  It would be nuts to start pushing and checking dozens
+of library version symbols when all we actually want is <code>(&gt; version 23.19)</code>. (We are also politely
+trying to ignore the ridiculous little language built into cond-expand; are we not running Scheme?).
+In place of cond-expand, s7 uses <a href="#readercond">reader-cond</a>,
+so the read-time decision involves normal evaluation.
 </p>
 
 <p>

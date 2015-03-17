@@ -150,8 +150,9 @@
 	   (C-function ("open" g_c_open "" 2 1))
 	   (int creat (char* (mode_t int)))
 	   (int lockf (int int int))
-	   (reader-cond ((provided? 'linux) (int posix_fadvise (int int int int))))
-	   (reader-cond ((provided? 'linux) (int posix_fallocate (int int int))))
+	   (reader-cond ((provided? 'linux) 
+			 (int posix_fadvise (int int int int))
+			 (int posix_fallocate (int int int))))
 	   
 	   
 	   ;; -------- fenv.h --------
@@ -211,8 +212,9 @@
 	   (int remove (char*))
 	   (int rename (char* char*))
 	   (FILE* tmpfile (void))
-	   (reader-cond ((not (provided? 'osx)) (char* tmpnam (char*))))
-	   (reader-cond ((not (provided? 'osx)) (char* tempnam (char* char*))))
+	   (reader-cond ((not (provided? 'osx)) 
+			 (char* tmpnam (char*))
+			 (char* tempnam (char* char*))))
 	   (int fclose (FILE*))
 	   (int fflush (FILE*))
 	   ;;		    (reader-cond ((provided? 'linux) (int fcloseall (void))))
@@ -945,10 +947,9 @@
 	   ;; -------- wordexp.h --------
 	   (reader-cond ((not (provided? 'openbsd))
 			 (int (WRDE_DOOFFS WRDE_APPEND WRDE_NOCMD WRDE_REUSE WRDE_SHOWERR WRDE_UNDEF 
-					   WRDE_NOSPACE WRDE_BADCHAR WRDE_BADVAL WRDE_CMDSUB WRDE_SYNTAX))))
-	   (reader-cond ((not (provided? 'openbsd)) (int wordexp (char* wordexp_t* int))))
-	   (reader-cond ((not (provided? 'openbsd)) (void wordfree (wordexp_t*))))
-	   (reader-cond ((not (provided? 'openbsd))
+					   WRDE_NOSPACE WRDE_BADCHAR WRDE_BADVAL WRDE_CMDSUB WRDE_SYNTAX))
+			 (int wordexp (char* wordexp_t* int))
+			 (void wordfree (wordexp_t*))
 			 (in-C "static s7_pointer g_wordexp_make(s7_scheme *sc, s7_pointer args)
                            {return(s7_make_c_pointer(sc, (void *)calloc(1, sizeof(wordexp_t))));}
                            static s7_pointer g_wordexp_we_wordc(s7_scheme *sc, s7_pointer args)
@@ -963,10 +964,10 @@
                              for (i = 0; i < g->we_wordc; i++)
                                p = s7_cons(sc, s7_make_string(sc, g->we_wordv[i]), p);
                              return(p);
-                           }")))
-	   (reader-cond ((not (provided? 'openbsd)) (C-function ("wordexp.make" g_wordexp_make "" 0))))
-	   (reader-cond ((not (provided? 'openbsd)) (C-function ("wordexp.we_wordc" g_wordexp_we_wordc "" 1))))
-	   (reader-cond ((not (provided? 'openbsd)) (C-function ("wordexp.we_wordv" g_wordexp_we_wordv "" 1))))
+                           }")
+			 (C-function ("wordexp.make" g_wordexp_make "" 0))
+			 (C-function ("wordexp.we_wordc" g_wordexp_we_wordc "" 1))
+			 (C-function ("wordexp.we_wordv" g_wordexp_we_wordv "" 1))))
 	   ;; (with-let (sublet *libc*) (let ((w (wordexp.make))) (wordexp "~/cl/snd-gdraw" w 0) (wordexp.we_wordv w))) -> ("/home/bil/cl/snd-gdraw")
 	   
 	   
@@ -1263,23 +1264,24 @@
 	   (C-function ("rusage.ru_utime" g_rusage_ru_utime "" 1))
 	   (C-function ("rusage.ru_stime" g_rusage_ru_stime "" 1))
 	   
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.make" g_siginfo_make "" 0))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_signo" g_siginfo_si_signo "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_errno" g_siginfo_si_errno "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_code" g_siginfo_si_code "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_pid" g_siginfo_si_pid "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_uid" g_siginfo_si_uid "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_status" g_siginfo_si_status "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_utime" g_siginfo_si_utime "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_stime" g_siginfo_si_stime "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_value" g_siginfo_si_value "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_int" g_siginfo_si_int "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_overrun" g_siginfo_si_overrun "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_timerid" g_siginfo_si_timerid "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_band" g_siginfo_si_band "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_fd" g_siginfo_si_fd "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_ptr" g_siginfo_si_ptr "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("siginfo.si_addr" g_siginfo_si_addr "" 1))))
+	   (reader-cond ((provided? 'linux) 
+			 (C-function ("siginfo.make" g_siginfo_make "" 0))
+			 (C-function ("siginfo.si_signo" g_siginfo_si_signo "" 1))
+			 (C-function ("siginfo.si_errno" g_siginfo_si_errno "" 1))
+			 (C-function ("siginfo.si_code" g_siginfo_si_code "" 1))
+			 (C-function ("siginfo.si_pid" g_siginfo_si_pid "" 1))
+			 (C-function ("siginfo.si_uid" g_siginfo_si_uid "" 1))
+			 (C-function ("siginfo.si_status" g_siginfo_si_status "" 1))
+			 (C-function ("siginfo.si_utime" g_siginfo_si_utime "" 1))
+			 (C-function ("siginfo.si_stime" g_siginfo_si_stime "" 1))
+			 (C-function ("siginfo.si_value" g_siginfo_si_value "" 1))
+			 (C-function ("siginfo.si_int" g_siginfo_si_int "" 1))
+			 (C-function ("siginfo.si_overrun" g_siginfo_si_overrun "" 1))
+			 (C-function ("siginfo.si_timerid" g_siginfo_si_timerid "" 1))
+			 (C-function ("siginfo.si_band" g_siginfo_si_band "" 1))
+			 (C-function ("siginfo.si_fd" g_siginfo_si_fd "" 1))
+			 (C-function ("siginfo.si_ptr" g_siginfo_si_ptr "" 1))
+			 (C-function ("siginfo.si_addr" g_siginfo_si_addr "" 1))))
 	   
 	   (C-function ("timespec.make" g_timespec_make "" 0))
 	   (C-function ("timespec.tv_sec" g_timespec_tv_sec "" 1))
@@ -1299,12 +1301,13 @@
 	   ;; ((*libc* 'sigaction) (*libc* 'SIGINT) sa (*libc* 'NULL))
 	   ;; now type C-C to snd and it prints "i: 2"!!
 	   
-	   (reader-cond ((provided? 'linux) (C-function ("WEXITSTATUS" g_WEXITSTATUS "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("WTERMSIG" g_WTERMSIG "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("WSTOPSIG" g_WSTOPSIG "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("WIFEXITED" g_WIFEXITED "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("WIFSIGNALED" g_WIFSIGNALED "" 1))))
-	   (reader-cond ((provided? 'linux) (C-function ("WIFSTOPPED" g_WIFSTOPPED "" 1))))
+	   (reader-cond ((provided? 'linux) 
+			 (C-function ("WEXITSTATUS" g_WEXITSTATUS "" 1))
+			 (C-function ("WTERMSIG" g_WTERMSIG "" 1))
+			 (C-function ("WSTOPSIG" g_WSTOPSIG "" 1))
+			 (C-function ("WIFEXITED" g_WIFEXITED "" 1))
+			 (C-function ("WIFSIGNALED" g_WIFSIGNALED "" 1))
+			 (C-function ("WIFSTOPPED" g_WIFSTOPPED "" 1))))
 	   
 	   (C-function ("wait" g_wait "" 0))
 	   (C-function ("waitpid" g_waitpid "" 2))
@@ -1319,8 +1322,9 @@
 	   (int getrlimit (int void*))
 	   (int setrlimit (int void*))
 	   (int getrusage (int void*))
-	   (reader-cond ((provided? 'linux) (int sigwaitinfo (sigset_t* siginfo_t*))))
-	   (reader-cond ((provided? 'linux) (int waitid (int int siginfo_t* int))))
+	   (reader-cond ((provided? 'linux) 
+			 (int sigwaitinfo (sigset_t* siginfo_t*))
+			 (int waitid (int int siginfo_t* int))))
 	   (c-pointer (SIG_ERR SIG_DFL SIG_IGN))
 	   
 	   
@@ -1664,8 +1668,7 @@
 	       "utime.h" "termios.h" "grp.h" "pwd.h" "fnmatch.h" "glob.h" "signal.h" "sys/wait.h" "netdb.h" 
 	       "sys/resource.h"
 	       (reader-cond ((not (provided? 'openbsd)) "wordexp.h"))
-	       (reader-cond ((provided? 'freebsd) "sys/socket.h"))
-	       (reader-cond ((provided? 'freebsd) "netinet/in.h"))
+	       (reader-cond ((provided? 'freebsd) "sys/socket.h" "netinet/in.h"))
 	       )
 	 "" 
 	 (if (provided? 'linux) "-lrt" 

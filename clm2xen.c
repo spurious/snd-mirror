@@ -6542,7 +6542,7 @@ static Xen g_envelope_interp(Xen ux, Xen e, Xen ubase)
 	Xen_check_type(false, e, 2, S_envelope_interp, "a list of breakpoint values");
       ey = Xen_cadr(e);
       if ((x <= x0) ||
-	  (Xen_is_null(Xen_cddr(e))))
+	  (!Xen_is_pair(Xen_cddr(e))))
 	return(ey);
       x1 = Xen_real_to_C_double(Xen_caddr(e));
       if (x < x1)

@@ -904,7 +904,7 @@ struct s7_scheme {
   s7_pointer QUOTE_UNCHECKED, BEGIN_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_LET_UNCHECKED, WITH_LET_S;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, LETREC_STAR_UNCHECKED, COND_UNCHECKED, COND_SIMPLE, WITH_BAFFLE_UNCHECKED;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_A;
-  s7_pointer SET_SYMBOL_opSq, SET_SYMBOL_opSSq, SET_SYMBOL_opSSSq, SET_SYMBOL_UNKNOWN_G;
+  s7_pointer SET_SYMBOL_opSq, SET_SYMBOL_opSSq, SET_SYMBOL_opSSSq;
   s7_pointer SET_SYMBOL_opCq, SET_PAIR_UNKNOWN_G, SET_FV_SCALED;
   s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_A, SET_PAIR_ZA, SET_PAIR_P, SET_PWS, SET_ENV_S, SET_ENV_ALL_X, SET_PAIR_C, SET_PAIR_C_P;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED;
@@ -2309,7 +2309,7 @@ enum {OP_NO_OP,
       OP_QUOTE_UNCHECKED, OP_LAMBDA_UNCHECKED, OP_LET_UNCHECKED, OP_CASE_UNCHECKED, OP_WHEN_UNCHECKED, OP_UNLESS_UNCHECKED,
 
       OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_Z, OP_SET_SYMBOL_A,
-      OP_SET_SYMBOL_opSq, OP_SET_SYMBOL_opCq, OP_SET_SYMBOL_opSSq, OP_SET_SYMBOL_opSSSq, OP_SET_SYMBOL_UNKNOWN_G,
+      OP_SET_SYMBOL_opSq, OP_SET_SYMBOL_opCq, OP_SET_SYMBOL_opSSq, OP_SET_SYMBOL_opSSSq, 
       OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_A, OP_SET_PAIR_P, OP_SET_PAIR_ZA, OP_SET_PAIR_UNKNOWN_G,
       OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_ENV_S, OP_SET_ENV_ALL_X,
       OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE, OP_SET_FV_SCALED,
@@ -2506,7 +2506,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "quote_unchecked", "lambda_unchecked", "let_unchecked", "case_unchecked", "when_unchecked", "unless_unchecked",
 
       "set_unchecked", "set_symbol_c", "set_symbol_s", "set_symbol_q", "set_symbol_p", "set_symbol_z", "set_symbol_a",
-      "set_symbol_opsq", "set_symbol_opcq", "set_symbol_opssq", "set_symbol_opsssq", "set_symbol_unknown_g",
+      "set_symbol_opsq", "set_symbol_opcq", "set_symbol_opssq", "set_symbol_opsssq", 
       "set_normal", "set_pair", "set_pair_z", "set_pair_a", "set_pair_p", "set_pair_za", "set_pair_unknown_g",
       "set_pair_p_1", "set_with_accessor", "set_pws", "set_env_s", "set_env_all_x",
       "set_pair_c", "set_pair_c_p", "set_pair_c_p_1", "set_safe", "set_fv_scaled",
@@ -33362,7 +33362,7 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
     }
   size++;
 
-  els = (hash_entry_t **)calloc(size, sizeof(hash_entry_t *)); /* PERHAPS: from free_list */
+  els = (hash_entry_t **)calloc(size, sizeof(hash_entry_t *));
   if (!els) return(s7_error(sc, make_symbol(sc, "out-of-memory"), list_1(sc, make_string_wrapper(sc, "make-hash-table allocation failed!"))));
 
   NEW_CELL(sc, table, T_HASH_TABLE | T_SAFE_PROCEDURE);
@@ -39694,6 +39694,17 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	  pop_stack(sc);
 	  return(splice_in_values(sc, args));
 
+	case OP_EXPANSION:
+	  /* we get here if a reader-macro (define-expansion) returned multiple values.
+	   *    these need to be read in order into the current reader lists (we'll assume OP_READ_LIST is next in the stack.
+	   *    and that it will be expecting the next arg entry in sc->value).
+	   */
+	  pop_stack(sc);
+	  top -= 4;
+	  for (x = args; is_not_null(cdr(x)); x = cdr(x))
+	    stack_args(sc->stack, top) = cons(sc, car(x), stack_args(sc->stack, top));
+	  return(car(x));              /* sc->value from OP_READ_LIST point of view */
+
 	default:
 	  break;
 	}
@@ -41338,20 +41349,20 @@ static s7_pointer not_is_pair, not_is_symbol, not_is_null, not_is_list, not_is_n
 static s7_pointer not_is_boolean, not_is_char, not_is_string, not_is_eof, not_is_zero;
 static s7_pointer not_is_eq_sq, not_is_eq_ss;
 
-static s7_pointer g_not_is_pair(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_pair, sc->IS_PAIR, args);}
-static s7_pointer g_not_is_null(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_null, sc->IS_NULL, args);}
-static s7_pointer g_not_is_symbol(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_symbol, sc->IS_SYMBOL, args);}
-static s7_pointer g_not_is_number(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_number, sc->IS_NUMBER, args);}
-static s7_pointer g_not_is_real(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_real, sc->IS_REAL, args);}
-static s7_pointer g_not_is_integer(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_integer, sc->IS_INTEGER, args);}
-static s7_pointer g_not_is_rational(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_rational, sc->IS_RATIONAL, args);}
-static s7_pointer g_not_is_boolean(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_boolean, sc->IS_BOOLEAN, args);}
-static s7_pointer g_not_is_char(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_character, sc->IS_CHAR, args);}
-static s7_pointer g_not_is_string(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_string, sc->IS_STRING, args);}
-static s7_pointer g_not_is_eof(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_eof, sc->IS_EOF_OBJECT, args);}
-static s7_pointer g_not_is_zero(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_zero, sc->IS_ZERO, args);}
+static s7_pointer g_not_is_pair(s7_scheme *sc, s7_pointer args)     {check_boolean_not_method(sc, is_pair,         sc->IS_PAIR, args);}
+static s7_pointer g_not_is_null(s7_scheme *sc, s7_pointer args)     {check_boolean_not_method(sc, is_null,         sc->IS_NULL, args);}
+static s7_pointer g_not_is_symbol(s7_scheme *sc, s7_pointer args)   {check_boolean_not_method(sc, is_symbol,       sc->IS_SYMBOL, args);}
+static s7_pointer g_not_is_number(s7_scheme *sc, s7_pointer args)   {check_boolean_not_method(sc, s7_is_number,    sc->IS_NUMBER, args);}
+static s7_pointer g_not_is_real(s7_scheme *sc, s7_pointer args)     {check_boolean_not_method(sc, s7_is_real,      sc->IS_REAL, args);}
+static s7_pointer g_not_is_integer(s7_scheme *sc, s7_pointer args)  {check_boolean_not_method(sc, s7_is_integer,   sc->IS_INTEGER, args);}
+static s7_pointer g_not_is_rational(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, s7_is_rational,  sc->IS_RATIONAL, args);}
+static s7_pointer g_not_is_boolean(s7_scheme *sc, s7_pointer args)  {check_boolean_not_method(sc, s7_is_boolean,   sc->IS_BOOLEAN, args);}
+static s7_pointer g_not_is_char(s7_scheme *sc, s7_pointer args)     {check_boolean_not_method(sc, s7_is_character, sc->IS_CHAR, args);}
+static s7_pointer g_not_is_string(s7_scheme *sc, s7_pointer args)   {check_boolean_not_method(sc, is_string,       sc->IS_STRING, args);}
+static s7_pointer g_not_is_eof(s7_scheme *sc, s7_pointer args)      {check_boolean_not_method(sc, is_eof,          sc->IS_EOF_OBJECT, args);}
+static s7_pointer g_not_is_zero(s7_scheme *sc, s7_pointer args)     {check_boolean_not_method(sc, s7_is_zero,      sc->IS_ZERO, args);}
 #define is_normal_list(p) is_proper_list(sc, p)
-static s7_pointer g_not_is_list(s7_scheme *sc, s7_pointer args) {check_boolean_not_method(sc, is_normal_list, sc->IS_LIST, args);}
+static s7_pointer g_not_is_list(s7_scheme *sc, s7_pointer args)     {check_boolean_not_method(sc, is_normal_list,  sc->IS_LIST, args);}
 
 /* eq? does not check for methods */
 static s7_pointer g_not_is_eq_sq(s7_scheme *sc, s7_pointer args)
@@ -48079,11 +48090,6 @@ static s7_pointer check_set(s7_scheme *sc)
 			      if (is_h_optimized(value))
 				{
 				  pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_Z);
-				  if (optimize_data(value) == HOP_UNKNOWN_G)
-				    {
-				      /* fprintf(stderr, "ung: %s\n", DISPLAY(sc->code)); */
-				    pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_UNKNOWN_G);
-				    }
 				  if (optimize_data(value) == HOP_SAFE_C_C)
 				    {
 				      if ((settee == cadr(value)) &&
@@ -48320,20 +48326,18 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		      break;
 
 		    case OP_SET:
-		      if (!is_symbol(cadr(expr)))             /* (set! (...) ...) which is tricky due to setter procedures */
+		      if (!is_symbol(cadr(expr)))             /* (set! (...) ...) which is tricky due to setter functions/macros */
 			{
 			  s7_pointer settee;
 			  if ((!is_pair(cadr(expr))) ||
 			      (!is_symbol(caadr(expr))))
 			    return(false);
 			  settee = find_symbol_unchecked(sc, caadr(expr));
-			  if ((!settee) ||
-			      (!is_sequence(settee)))
-			    {
-			      /* PERHAPS: or (is_c_function(settee)) && (is_safe_procedure(c_function_setter(settee))) */
-			      /* TODO: get rid of set_symbol_unknown_g or try (set! x (fv i)) */
-			      return(false);
-			    }
+			  if (!((settee) &&
+				((is_sequence(settee)) ||
+				 ((is_c_function(settee)) && 
+				  (is_safe_procedure(c_function_setter(settee)))))))
+			    return(false);
 			  (*has_set) = true;
 			}
 		      else
@@ -51710,20 +51714,39 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      endf = (s7_function)fcdr(cdr(sc->code));
 	      endp = fcdr(sc->code);
 	      slots = let_slots(sc->envir);
-	      while (true)
+	      if ((is_null(next_slot(slots))) &&
+		  (is_pair(slot_expression(slots))))
 		{
-		  s7_pointer slot;
-		  for (slot = slots; is_slot(slot); slot = next_slot(slot))
-		    if (is_pair(slot_expression(slot)))
-		      slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
-		  if (is_true(sc, endf(sc, endp)))
+		  dox_function f;
+		  s7_pointer a;
+		  f = (dox_function)fcdr(slot_expression(slots));
+		  a = car(slot_expression(slots));
+		  while (true)
 		    {
-		      sc->code = cdadr(sc->code);
-		      goto DO_END_CLAUSES;
+		      slot_set_value(slots, f(sc, a, slots));
+		      if (is_true(sc, endf(sc, endp)))
+			{
+			  sc->code = cdadr(sc->code);
+			  goto DO_END_CLAUSES;
+			}
+		    }
+		}
+	      else
+		{
+		  while (true)
+		    {
+		      s7_pointer slot;
+		      for (slot = slots; is_slot(slot); slot = next_slot(slot))
+			if (is_pair(slot_expression(slot)))
+			  slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
+		      if (is_true(sc, endf(sc, endp)))
+			{
+			  sc->code = cdadr(sc->code);
+			  goto DO_END_CLAUSES;
+			}
 		    }
 		}
 	    }
-
 	  if ((is_null(cdr(code))) &&
 	      (is_pair(car(code))))
 	    {
@@ -58300,46 +58323,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack_no_args(sc, OP_SET_SAFE, car(sc->code));
       sc->code = cadr(sc->code);
       goto EVAL;
-
-
-    case OP_SET_SYMBOL_UNKNOWN_G:
-      {
-	s7_pointer f, value;
-	/* (set! x (v1 i)) */
-	value = cadr(sc->code);
-	f = find_symbol_checked(sc, car(value));
-	if ((type(f) == T_FLOAT_VECTOR) &&
-	    (vector_rank(f) == 1))
-	  {
-	    s7_pointer ind;
-	    s7_Int index;
-
-	    ind = cadr(value);
-	    if (is_symbol(ind))
-	      ind = find_symbol_checked(sc, ind);
-	    if (type(ind) == T_INTEGER)
-	      {
-		index = s7_integer(ind);
-		if ((index < vector_length(f)) &&
-		    (index >= 0))
-		  {
-		    s7_pointer lx;
-		    lx = find_symbol(sc, car(sc->code));
-		    if (is_slot(lx))
-		      {
-			slot_set_value(lx, sc->value = float_vector_getter(sc, f, index));
-			goto START;
-		      }
-		    eval_type_error(sc, "set! ~A: unbound variable", car(sc->code));
-		  }
-		else out_of_range(sc, sc->VECTOR_REF, small_int(1), cadr(value), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
-	      }
-	  }
-	pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_P);
-	push_stack_no_args(sc, OP_SET_SAFE, car(sc->code));
-	sc->code = cadr(sc->code);
-	goto EVAL;
-      }
 
 
     case OP_SET_SYMBOL_Z:
@@ -66486,7 +66469,6 @@ s7_scheme *s7_init(void)
   sc->SET_SYMBOL_opCq =       assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opCq);
   sc->SET_SYMBOL_P =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_P);
   sc->SET_SYMBOL_Z =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_Z);
-  sc->SET_SYMBOL_UNKNOWN_G =  assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_UNKNOWN_G);
   sc->SET_SYMBOL_A =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_A);
   sc->SET_FV_SCALED =         assign_internal_syntax(sc, "set!",        OP_SET_FV_SCALED);
   sc->SET_NORMAL =            assign_internal_syntax(sc, "set!",        OP_SET_NORMAL);
@@ -67375,7 +67357,7 @@ s7_scheme *s7_init(void)
 	                          (if (eval (car clause))                                                     \n\
 	                              (if (null? (cddr clause))                                               \n\
                                           (return (cadr clause))                                              \n\
-                                          (return `(values ,@(cdr clause))))))                                \n\
+                                          (return (apply values (map quote (cdr clause)))))))                 \n\
                                 clauses)                                                                      \n\
                               (values))))");
 
@@ -67642,7 +67624,5 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * I think cload needs to be smarter about its output shared object location (chdir ... ; gcc ...?)
- * when does copy return an un-printable object?
- * ung sym out
- * script for all timings
  */
+ 

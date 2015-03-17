@@ -6291,6 +6291,7 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 #endif
 
 	      data = make_graph_data(cp, cp->edit_ctr, 0, framples);
+	      if (Xen_is_false(data)) return;
 #if HAVE_SCHEME
 	      gc_loc = s7_gc_protect(s7, data);
 #endif

@@ -473,6 +473,7 @@ vct *mus_vct_wrap(mus_long_t len, mus_float_t *data)
 static Xen g_vct_copy(Xen obj)
 {
   #define H_vct_copy "(" S_vct_copy " v): returns a copy of " S_vct " v"
+  Xen_check_type(mus_is_vct(obj), obj, 1, S_vct_copy, A_VCT);
   return(s7_vector_copy(s7, obj));
 }
 #endif
