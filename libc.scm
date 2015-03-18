@@ -2,8 +2,21 @@
 ;;;
 ;;; tie the C library into the *libc* environment
 
-(require cload.scm)
+;(require cload.scm)
 (provide 'libc.scm)
+
+;; if loading from a different directory, pass that info to C
+(let ((current-file (file-name (current-input-port))))
+  (let ((directory (and (or (char=? (current-file 0) #\/)
+			    (char=? (current-file 0) #\~))
+			(substring current-file 0 (- (length current-file) 9)))))
+    (when (and directory (not (member directory *load-path*)))
+      (set! *load-path* (cons directory *load-path*)))
+    (with-let (rootlet)
+      (require cload.scm))
+    (when (and directory (not (string-position directory *cload-cflags*)))
+      (set! *cload-cflags* (string-append "-I" directory " " *cload-cflags*)))))
+
 
 (if (not (defined? '*libc*))
     (define *libc*

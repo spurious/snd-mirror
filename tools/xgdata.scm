@@ -9131,8 +9131,8 @@
 ;;; 3.15.7:
 
 (CFNC-3.16 "void gdk_gl_context_get_version GdkGLContext* context int* [major] int* [minor]")
-(CFNC-3.16 "void gtk_gl_area_set_required_version GtkGLArea* area int major int minor")
-(CFNC-3.16 "void gtk_gl_area_get_required_version GtkGLArea* area int* [major] int* [minor]")
+(CFNC-3.16 "void gtk_gl_area_set_required_version GtkGLArea* area gint major gint minor")
+(CFNC-3.16 "void gtk_gl_area_get_required_version GtkGLArea* area gint* [major] gint* [minor]")
 ;(CFNC-3.16 "void gtk_list_box_bind_model GtkListBox* box GListModel* model GtkListBoxCreateWidgetFunc create_widget_func gpointer user_data GDestroyNotify user_data_free_func")
 (CFNC-3.16 "void gtk_notebook_detach_tab GtkNotebook* notebook GtkWidget* child")
 

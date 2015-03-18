@@ -5471,7 +5471,7 @@ that method is invoked.
 <div class="separator"></div>
 
 <p>
-<em class=def id="expansion">define-expansion</em> defines a macro that expands at read-time.
+<b><em class=def id="expansion">define-expansion</em></b> defines a macro that expands at read-time.
 It has the same syntax as
 define-macro, and (in normal use) the same result, but it is much faster because it expands only once.
 Since the reader knows almost nothing
@@ -5551,7 +5551,7 @@ is simply returned, unevaluated.
 abcd
 </pre>
 
-<p>The main built-in expansion is <em class=def id="readercond">reader-cond</em>.  The syntax is based on cond:
+<p>The main built-in expansion is <b><em class=def id="readercond">reader-cond</em></b>.  The syntax is based on cond:
 the car of each clause is evaluated (in the read-time context), and if it is not false,
 the remainder of that clause is spliced into the code as if you had typed it from the start.
 </p>

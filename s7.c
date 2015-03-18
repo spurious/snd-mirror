@@ -954,12 +954,7 @@ struct s7_scheme {
   s7_pointer max_list_length_symbol, max_vector_length_symbol, max_vector_dimensions_symbol, default_hash_table_length_symbol;
   s7_pointer hash_table_float_epsilon_symbol, morally_equal_float_epsilon_symbol, initial_string_port_length_symbol;
   s7_pointer undefined_identifier_warnings_symbol, print_length_symbol, bignum_precision_symbol, stacktrace_defaults_symbol;
-
   bool undefined_identifier_warnings;
-
-  /* unbound-variable hook context */
-  int ubh_cur_code_loc, ubh_value_loc, ubh_args_loc, ubh_code_loc, ubh_hook_loc;
-  int ubh_x, ubh_z;
 };
 
 typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_write_t;
@@ -3693,7 +3688,7 @@ static void init_mark_functions(void)
   mark_function[T_C_MACRO]             = just_mark;
   mark_function[T_C_POINTER]           = just_mark;
   mark_function[T_C_FUNCTION]          = just_mark;
-  mark_function[T_C_FUNCTION_STAR]     = just_mark;  /* change to mark_c_proc_star if defaults involve an expression */
+  mark_function[T_C_FUNCTION_STAR]     = just_mark;  /* changes to mark_c_proc_star if defaults involve an expression */
   mark_function[T_C_ANY_ARGS_FUNCTION] = just_mark;
   mark_function[T_C_OPT_ARGS_FUNCTION] = just_mark;
   mark_function[T_C_RST_ARGS_FUNCTION] = just_mark;
@@ -24134,32 +24129,20 @@ static s7_pointer vector_iterate(s7_scheme *sc, s7_pointer obj)
 	 vector_element(iterator_sequence(obj), iterator_position(obj)++) : sc->ITERATOR_END);
 }
 
-#define SAVE_X_Z(X, Z)	     \
-  do {                               \
-    X = ((is_null(sc->x)) ? -1 : s7_gc_protect(sc, sc->x));	\
-    Z = ((is_null(sc->z)) ? -1 : s7_gc_protect(sc, sc->z));	\
-  } while (0)
-
-#define RESTORE_X_Z(X, Z)                \
-  do {                                        \
-    if (X == -1) sc->x = sc->NIL; else {sc->x = s7_gc_protected_at(sc, X); s7_gc_unprotect_at(sc, X);} \
-    if (Z == -1) sc->z = sc->NIL; else {sc->z = s7_gc_protected_at(sc, Z); s7_gc_unprotect_at(sc, Z);} \
-    } while (0)
-
 
 static s7_pointer other_iterate(s7_scheme *sc, s7_pointer obj)
 {
   if (iterator_position(obj) < iterator_length(obj))
     {
-      s7_pointer result;
-      int save_x = -1, save_z = -1;
-      s7_pointer p;
+      s7_pointer result, p;
       p = iterator_sequence(obj);
-      SAVE_X_Z(save_x, save_z);
+      car(sc->Z2_1) = sc->x;
+      car(sc->Z2_2) = sc->z; /* is this actually necessary? */
       if (is_c_object(p))
 	result = (*(c_object_ref(p)))(sc, p, list_1(sc, make_integer(sc, iterator_position(obj))));
       else result = s7_apply_function(sc, p, list_1(sc, make_integer(sc, iterator_position(obj))));
-      RESTORE_X_Z(save_x, save_z);
+      sc->x = car(sc->Z2_1);
+      sc->z = car(sc->Z2_2);
       iterator_position(obj)++;
       return(result);
     }
@@ -36990,7 +36973,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
       {
 	long int i, len; /* the "long" matters on 64-bit machines */
 	s7_pointer x, z, result;
-	int save_x = -1, save_z = -1, gc_res = -1, gc_z = -1;
+	int gc_res = -1, gc_z = -1;
 
 	x = object_length(sc, obj);
 	if (s7_is_integer(x))
@@ -37007,14 +36990,15 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 	z = list_1(sc, sc->F);
 	gc_z = s7_gc_protect(sc, z);
 
-	SAVE_X_Z(save_x, save_z);
+	car(sc->Z2_1) = sc->x;
+	car(sc->Z2_2) = sc->z;
 	for (i = 0, x = result; i < len; i++, x = cdr(x))
 	  {
 	    car(z) = make_integer(sc, i);
 	    car(x) = (*(c_object_ref(obj)))(sc, obj, z);
 	  }
-	RESTORE_X_Z(save_x, save_z);
-
+	sc->x = car(sc->Z2_1);
+	sc->z = car(sc->Z2_2);
 	s7_gc_unprotect_at(sc, gc_z);
 	s7_gc_unprotect_at(sc, gc_res);
 	return(result);
@@ -40585,16 +40569,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       (is_hash_table(sc->autoload_table)) ||
       (is_not_null(s7_hook_functions(sc, sc->unbound_variable_hook))))
     {
-      s7_pointer result, cur_code, value, code, args, cur_env;
-
-      if (sc->ubh_cur_code_loc != -1) s7_gc_unprotect_at(sc, sc->ubh_cur_code_loc);
-      if (sc->ubh_value_loc != -1) s7_gc_unprotect_at(sc, sc->ubh_value_loc);
-      if (sc->ubh_args_loc != -1) s7_gc_unprotect_at(sc, sc->ubh_args_loc);
-      if (sc->ubh_code_loc != -1) s7_gc_unprotect_at(sc, sc->ubh_code_loc);
-      if (sc->ubh_hook_loc != -1) s7_gc_unprotect_at(sc, sc->ubh_hook_loc);
-      if (sc->ubh_x != -1) s7_gc_unprotect_at(sc, sc->ubh_x);
-      if (sc->ubh_z != -1) s7_gc_unprotect_at(sc, sc->ubh_z);
-
+      s7_pointer result, cur_code, value, code, args, cur_env, x, z;
       /* sc->args and sc->code are pushed on the stack by s7_call, then
        *   restored by eval, so they are normally protected, but sc->value and sc->cur_code are
        *   not protected (yet).  We need sc->cur_code so that the possible eventual error
@@ -40605,14 +40580,14 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
        */
 
       args = sc->args;
-      sc->ubh_args_loc = s7_gc_protect(sc, args);
       code = sc->code;
-      sc->ubh_code_loc = s7_gc_protect(sc, code);
       value = sc->value;
-      sc->ubh_value_loc = s7_gc_protect(sc, value);
       cur_code = sc->cur_code;
       cur_env = sc->envir;
       result = sc->UNDEFINED;
+      x = sc->x;
+      z = sc->z;
+      sc->temp6 = s7_list(sc, 6, code, args, value, cur_code, x, z);
 
       if (!is_pair(cur_code))
 	{
@@ -40623,9 +40598,6 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	  pair_line_number(cur_code) = remember_location(port_line_number(sc->input_port), port_file_number(sc->input_port));
 	  set_has_line_number(cur_code);
 	}
-      sc->ubh_cur_code_loc = s7_gc_protect(sc, cur_code);   /* we need to save this because it has the file/line number of the unbound symbol */
-
-      SAVE_X_Z(sc->ubh_x, sc->ubh_z); /* this is needed to protect entire expression context */
 
       /* check sc->autoload_names */
       if (sc->autoload_names)
@@ -40652,9 +40624,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 		  /* I think to be consistent we should add '(sym . result) to the global env
 		   */
 		  if (result != sc->UNDEFINED)
-		    {
-		      s7_define(sc, sc->NIL, sym, result);
-		    }
+		    s7_define(sc, sc->NIL, sym, result);
 		}
 	    }
 	}
@@ -40694,33 +40664,21 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	      s7_pointer old_hook;
 
 	      old_hook = sc->unbound_variable_hook;
-	      sc->ubh_hook_loc = s7_gc_protect(sc, old_hook);
+	      car(sc->Z2_1) = old_hook;
 	      sc->unbound_variable_hook = sc->error_hook;      /* avoid the infinite loop mentioned above */
 	      result = s7_call(sc, old_hook, list_1(sc, sym)); /* not s7_apply_function */
-	      sc->temp6 = result;
 	      sc->unbound_variable_hook = old_hook;
-	      s7_gc_unprotect_at(sc, sc->ubh_hook_loc);
-	      sc->ubh_hook_loc = -1;
 	    }
 	}
 
-      RESTORE_X_Z(sc->ubh_x, sc->ubh_z);
-      sc->ubh_x = -1;
-      sc->ubh_z = -1;
-
       sc->value = value;
-      s7_gc_unprotect_at(sc, sc->ubh_value_loc);
-      sc->ubh_value_loc = -1;
       sc->cur_code = cur_code;
-      s7_gc_unprotect_at(sc, sc->ubh_cur_code_loc);
-      sc->ubh_cur_code_loc = -1;
       sc->args = args;
-      s7_gc_unprotect_at(sc, sc->ubh_args_loc);
-      sc->ubh_args_loc = -1;
       sc->code = code;
       sc->envir = cur_env;
-      s7_gc_unprotect_at(sc, sc->ubh_code_loc);
-      sc->ubh_code_loc = -1;
+      sc->x = x;
+      sc->z = z;
+      sc->temp6 = sc->NIL;
 
       if ((result != sc->UNDEFINED) &&
 	  (result != sc->UNSPECIFIED))
@@ -67292,12 +67250,11 @@ s7_scheme *s7_init(void)
                           g)");
 
 #if (!WITH_PURE_S7)
-  /* CL-style macros */
   s7_eval_c_string(sc, "(define-macro (defmacro name args . body) `(define-macro ,(cons name args) ,@body))");
   s7_eval_c_string(sc, "(define-macro (defmacro* name args . body) `(define-macro* ,(cons name args) ,@body))");
 
-  /* call-with-values is almost a no-op, (call-with-values (lambda () (values 1 2 3)) +) */
-  s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) `(,consumer (,producer)))");
+  s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) `(,consumer (,producer)))");   
+  /* (call-with-values (lambda () (values 1 2 3)) +) */
 
   s7_eval_c_string(sc, "(define-macro (multiple-value-bind vars expression . body)                            \n\
                            (if (or (symbol? vars) (negative? (length vars)))                                  \n\
@@ -67364,14 +67321,6 @@ s7_scheme *s7_init(void)
   /* -------- *unbound-variable-hook* -------- */
   sc->unbound_variable_hook = s7_eval_c_string(sc, "(make-hook 'variable)");
   s7_define_constant_with_documentation(sc, "*unbound-variable-hook*", sc->unbound_variable_hook, "*unbound-variable-hook* functions are called when an unbound variable is encountered, passed (hook 'variable).");
-  sc->ubh_cur_code_loc = -1; /* this is the saved context in the unbound variable hook caller */
-  sc->ubh_value_loc = -1;
-  sc->ubh_args_loc = -1;
-  sc->ubh_code_loc = -1;
-  sc->ubh_hook_loc = -1;
-  sc->ubh_x = -1;
-  sc->ubh_z = -1;
-
 
   /* -------- *load-hook* -------- */
   sc->load_hook = s7_eval_c_string(sc, "(make-hook 'name)");
@@ -67555,7 +67504,7 @@ int main(int argc, char **argv)
  * tmap           |      |      | 11.0           5031 4769 4702
  * tcopy          |      |      |                          5080
  * lg             |      |      | 6547 6497 6494 6235 6229 6222
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7346
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7352
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
  * thash          |      |      |                          19.4
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.9
@@ -67596,6 +67545,5 @@ int main(int argc, char **argv)
  *
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
- * I think cload needs to be smarter about its output shared object location (chdir ... ; gcc ...?)
- */
+  */
  

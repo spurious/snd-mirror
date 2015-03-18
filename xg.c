@@ -31794,23 +31794,23 @@ int* [minor])"
 static Xen gxg_gtk_gl_area_set_required_version(Xen area, Xen major, Xen minor)
 {
   #define H_gtk_gl_area_set_required_version "void gtk_gl_area_set_required_version(GtkGLArea* area, \
-int major, int minor)"
+gint major, gint minor)"
   Xen_check_type(Xen_is_GtkGLArea_(area), area, 1, "gtk_gl_area_set_required_version", "GtkGLArea*");
-  Xen_check_type(Xen_is_int(major), major, 2, "gtk_gl_area_set_required_version", "int");
-  Xen_check_type(Xen_is_int(minor), minor, 3, "gtk_gl_area_set_required_version", "int");
-  gtk_gl_area_set_required_version(Xen_to_C_GtkGLArea_(area), Xen_to_C_int(major), Xen_to_C_int(minor));
+  Xen_check_type(Xen_is_gint(major), major, 2, "gtk_gl_area_set_required_version", "gint");
+  Xen_check_type(Xen_is_gint(minor), minor, 3, "gtk_gl_area_set_required_version", "gint");
+  gtk_gl_area_set_required_version(Xen_to_C_GtkGLArea_(area), Xen_to_C_gint(major), Xen_to_C_gint(minor));
   return(Xen_false);
 }
 
 static Xen gxg_gtk_gl_area_get_required_version(Xen area, Xen ignore_major, Xen ignore_minor)
 {
   #define H_gtk_gl_area_get_required_version "void gtk_gl_area_get_required_version(GtkGLArea* area, \
-int* [major], int* [minor])"
-  int ref_major;
-  int ref_minor;
+gint* [major], gint* [minor])"
+  gint ref_major;
+  gint ref_minor;
   Xen_check_type(Xen_is_GtkGLArea_(area), area, 1, "gtk_gl_area_get_required_version", "GtkGLArea*");
   gtk_gl_area_get_required_version(Xen_to_C_GtkGLArea_(area), &ref_major, &ref_minor);
-  return(Xen_list_2(C_to_Xen_int(ref_major), C_to_Xen_int(ref_minor)));
+  return(Xen_list_2(C_to_Xen_gint(ref_major), C_to_Xen_gint(ref_minor)));
 }
 
 static Xen gxg_gtk_notebook_detach_tab(Xen notebook, Xen child)
@@ -45204,7 +45204,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("28-Feb-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("18-Mar-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

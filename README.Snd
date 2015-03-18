@@ -11,6 +11,9 @@ To build Snd, get the sources from
   cd snd-15
   ./configure
   make
+
+and if you like, su root, then
+
   make install
 
 
