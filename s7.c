@@ -147,9 +147,11 @@
  */
 #endif
 
+#ifndef SYMBOL_TABLE_SIZE
 #define SYMBOL_TABLE_SIZE 13567
 /* names are hashed into the symbol table (a vector) and collisions are chained as lists.
  */
+#endif
 
 #define INITIAL_STACK_SIZE 512
 /* the stack grows as needed, each frame takes 4 entries, this is its initial size.
@@ -175,7 +177,7 @@
   #define WITH_GMP 0
   /* this includes multiprecision arithmetic for all numeric types and functions, using gmp, mpfr, and mpc
    * WITH_GMP adds the following functions: bignum, bignum?, bignum-precision
-   * using gmp with precision=128 is about 3 times slower than using C doubles and long long ints.
+   * using gmp with precision=128 is about 50 times slower than using C doubles and long long ints.
    */
 #endif
 
@@ -2206,7 +2208,7 @@ static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym);
 static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol);
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym);
 static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool at_end);
-static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer x, s7_pointer args, s7_pointer body);
+static void optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer func, s7_pointer args, s7_pointer body);
 static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e);
 static void optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e);
 static double next_random(s7_rng_t *r);
@@ -2528,10 +2530,10 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "if_unchecked", "and_unchecked", "and_p", "and_p1", "or_unchecked", "or_p", "or_p1",
       "if_p_feed", "if_p_feed_1", "when_s", "unless_s",
 
-      "if_s_p", "if_s_p_p", "if_not_s_p", "if_not_s_p_p", "safe_if_cc_p", "safe_if_cc_p_p",
-      "safe_if_cs_p", "safe_if_cs_p_p", "safe_if_csq_p", "safe_if_csq_p_p", "safe_if_css_p", "safe_if_css_p_p",
-      "safe_if_csc_p", "safe_if_csc_p_p", "safe_if_is_pair_p", "safe_if_is_pair_p_p", "safe_if_opssq_p", "safe_if_opssq_p_p",
-      "safe_if_is_symbol_p", "safe_if_is_symbol_p_p", "if_a_p", "if_a_p_p", "if_and2_p", "if_and2_p_p",
+      "if_s_p", "if_s_p_p", "if_not_s_p", "if_not_s_p_p", "if_cc_p", "if_cc_p_p",
+      "if_cs_p", "if_cs_p_p", "if_csq_p", "if_csq_p_p", "if_css_p", "if_css_p_p",
+      "if_csc_p", "if_csc_p_p", "if_is_pair_p", "if_is_pair_p_p", "if_opssq_p", "if_opssq_p_p",
+      "if_is_symbol_p", "if_is_symbol_p_p", "if_a_p", "if_a_p_p", "if_and2_p", "if_and2_p_p",
       "if_z_p", "if_z_p_p", "if_p_p_p", "if_p_p", "if_andp_p", "if_andp_p_p", "if_orp_p", "if_orp_p_p",
       "if_ppp", "if_pp",
 
@@ -4466,63 +4468,31 @@ static void increase_stack_size(s7_scheme *sc)
 
 #define HMLT 4
 
-static int rhash_0(const unsigned char *s) {return(0);}
-static int rhash_1(const unsigned char *s) {return(s[0]);}
-static int rhash_2(const unsigned char *s) {return(s[0] * HMLT + s[1]);}
-static int rhash_3(const unsigned char *s) {return((s[0] * HMLT + s[1]) * HMLT + s[2]);}
-static int rhash_4(const unsigned char *s) {return(((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]);}
-static int rhash_5(const unsigned char *s) {return((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]);}
-static int rhash_6(const unsigned char *s) {return(((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]) * HMLT + s[5]);}
-static int rhash_7(const unsigned char *s) {return((((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]) * HMLT + s[5]) * HMLT + s[6]);}
 
-static int rhash_8(const unsigned char *s)
-{
-  return(((((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]) * HMLT + s[5]) * HMLT + s[6]) * HMLT + s[7]);
-}
+static unsigned int rhash_0(const unsigned char *s) {return(0);}
+static unsigned int rhash_1(const unsigned char *s) {return(s[0]);}
+static unsigned int rhash_2(const unsigned char *s) {return(s[0] * HMLT + s[1]);}
+static unsigned int rhash_3(const unsigned char *s) {return((s[0] * HMLT + s[1]) * HMLT + s[2]);}
+static unsigned int rhash_4(const unsigned char *s) {return(((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]);}
+static unsigned int rhash_5(const unsigned char *s) {return((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]);}
+static unsigned int rhash_6(const unsigned char *s) {return(((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]) * HMLT + s[5]);}
+static unsigned int rhash_7(const unsigned char *s) {return((((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]) * HMLT + s[5]) * HMLT + s[6]);}
+static unsigned int rhash_8(const unsigned char *s) {unsigned int i, hashed; hashed = s[0]; for (i = 1; i < 8; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
+static unsigned int rhash_9(const unsigned char *s) {unsigned int i, hashed; hashed = s[0]; for (i = 1; i < 9; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
+static unsigned int rhash_10(const unsigned char *s) {unsigned int i, hashed; hashed = s[0]; for (i = 1; i < 10; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
+static unsigned int rhash_11(const unsigned char *s) {unsigned int i, hashed; hashed = s[0]; for (i = 1; i < 11; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
+static unsigned int rhash_12(const unsigned char *s) {unsigned int i, hashed; hashed = s[0]; for (i = 1; i < 12; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
+static unsigned int rhash_13(const unsigned char *s) {unsigned int i, hashed; hashed = s[1]; for (i = 2; i < 13; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
+static unsigned int rhash_14(const unsigned char *s) {unsigned int i, hashed; hashed = s[2]; for (i = 3; i < 14; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
+static unsigned int rhash_15(const unsigned char *s) {unsigned int i, hashed; hashed = s[3]; for (i = 4; i < 15; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
+static unsigned int rhash_n(const unsigned char *s) {unsigned int i, hashed; hashed = s[4]; for (i = 5; i < 16; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
 
-static int rhash_9(const unsigned char *s)
-{
-  return((((((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]) * HMLT + s[5]) * HMLT + s[6]) * HMLT + s[7]) * HMLT + s[8]);
-}
-
-static int rhash_10(const unsigned char *s)
-{
-  return(((((((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]) * HMLT + s[5]) * HMLT + s[6]) * HMLT + s[7]) * HMLT + s[8]) * HMLT + s[9]);
-}
-
-static int rhash_11(const unsigned char *s)
-{
-  return((((((((((s[0] * HMLT + s[1]) * HMLT + s[2]) * HMLT + s[3]) * HMLT + s[4]) * HMLT + s[5])
-	     * HMLT + s[6]) * HMLT + s[7]) * HMLT + s[8]) * HMLT + s[9]) * HMLT + s[10]);
-}
-
-/* 8 bit char shifted 2 11 times = 30, so 12 chars is always within 32 bits */
-static int rhash_12(const unsigned char *s) {unsigned int i, hashed; hashed = s[0]; for (i = 1; i < 12; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
-static int rhash_13(const unsigned char *s) {unsigned int i, hashed; hashed = s[1]; for (i = 2; i < 13; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
-static int rhash_14(const unsigned char *s) {unsigned int i, hashed; hashed = s[2]; for (i = 3; i < 14; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
-static int rhash_15(const unsigned char *s) {unsigned int i, hashed; hashed = s[3]; for (i = 4; i < 15; i++) hashed = s[i] + hashed * HMLT; return(hashed);}
-
-static int rhash_any(const unsigned char *s, unsigned int len)
-{
-  unsigned int i, hashed;
-  hashed = s[5];
-  for (i = 6; i < 16; i++) hashed = s[i] + hashed * HMLT;
-  return(hashed);
-}
-
-static int (*rhash_function[16])(const unsigned char *key) = {
+static unsigned int (*rhash_function[16])(const unsigned char *key) = {
   rhash_0, rhash_1, rhash_2, rhash_3, rhash_4, rhash_5, rhash_6, rhash_7, rhash_8, rhash_9, rhash_10, rhash_11, rhash_12, rhash_13, rhash_14, rhash_15};
 
 static unsigned int raw_string_hash(const unsigned char *key, unsigned int len)
 {
-  /* hash_mult 4 just adding new: snd-test: H: 1136155, s: 786385, f: 572859
-   *           4 add, add0 at end:          H: 2208589, s:1936257, f: 572814, z: 27708
-   *           13:                          H: 1123916, s: 612287, f: 572909, z: 27631 [0 5652 1 6454 2 4148 top 8]!
-   *           37:                          H: 1076203, s: 573052, f: 572851, z: 27708![0 5152 1 6818 2 4536 top 9]!
-   * so 37 wins at hashing, we save 9 in strcmp, we lose 7 here to multiply by 37 -- we win 2 (callgrind says 5)
-   * But 37 loses big in hash_string(??) -- not sure what to do!
-   */
-  return((len < 16) ? ((*rhash_function[len])(key)) : (rhash_any(key, len)));
+  return((len < 16) ? ((*rhash_function[len])(key)) : (rhash_n(key)));
 }
 
 
@@ -36578,18 +36548,24 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 	  {
 	    s7_pointer mi, mj;
 	    int gc_loc1, gc_loc2;
+	    s7_pointer (*ref)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
+	    s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
+
 	    mi = make_mutable_integer(sc, start);
 	    mj = make_mutable_integer(sc, end);
 	    gc_loc1 = s7_gc_protect(sc, mi);
 	    gc_loc2 = s7_gc_protect(sc, mj);
+	    ref = c_object_ref(source);
+	    set = c_object_set(dest);
+
 	    for (i = start, j = 0; i < end; i++, j++)
 	      {
 		integer(mi) = i;
 		integer(mj) = j;
 		car(sc->T1_1) = mi;
-		car(sc->T2_2) = (*(c_object_ref(source)))(sc, source, sc->T1_1);
+		car(sc->T2_2) = ref(sc, source, sc->T1_1);
 		car(sc->T2_1) = mj;
-		(*(c_object_set(dest)))(sc, dest, sc->T2_1);
+		set(sc, dest, sc->T2_1);
 	      }
 	    s7_gc_unprotect_at(sc, gc_loc1);
 	    s7_gc_unprotect_at(sc, gc_loc2);
@@ -47575,19 +47551,19 @@ static s7_pointer check_if(s7_scheme *sc)
 }
 
 
-static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer x, s7_pointer args, s7_pointer body)
+static void optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer func, s7_pointer args, s7_pointer body)
 {
   int len;
   /* fprintf(stderr, "opt %s %s\n", DISPLAY(args), DISPLAY(body)); */
 
   len = s7_list_length(sc, body);
   if (len < 0)                                                               /* (define (hi) 1 . 2) */
-    return(eval_error_with_name(sc, "~A: function body messed up, ~A", sc->code));
+    eval_error_with_name(sc, "~A: function body messed up, ~A", sc->code);
 
   if (len > 0)  /* i.e. not circular */
     {
       clear_syms_in_list(sc);
-      optimize(sc, body, 1, collect_collisions(sc, args, list_1(sc, add_sym_to_list(sc, x))));
+      optimize(sc, body, 1, collect_collisions(sc, args, list_1(sc, add_sym_to_list(sc, func))));
 
       /* if the body is safe, we can optimize the calling sequence */
       if ((is_proper_list(sc, args)) &&
@@ -47623,7 +47599,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 	   *
 	   * (added later: this comment may be out-of-date -- cycles are easy to detect)
 	   */
-	  if (body_is_safe(sc, x, body, true))
+	  if (body_is_safe(sc, func, body, true))
 	    {
 	      /* (define (hi a) (+ a 1) (hi (- a 1))) */
 	      /* there is one problem with closure* here -- we can't trust anything that
@@ -47639,23 +47615,22 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 	    }
 	}
     }
-  return(x);
 }
 
 
 static s7_pointer check_define(s7_scheme *sc)
 {
-  s7_pointer x;
+  s7_pointer func;
   int arity = CLOSURE_ARITY_NOT_SET;
 
   if (!is_pair(sc->code))
-    return(eval_error_with_name(sc, "~A: nothing to define? ~A", sc->code));   /* (define) */
+    return(eval_error_with_name(sc, "~A: nothing to define? ~A", sc->code));     /* (define) */
 
   if (!is_pair(cdr(sc->code)))
     {
       if (is_null(cdr(sc->code)))
-	return(eval_error_with_name(sc, "~A: no value? ~A", sc->code));        /* (define var) */
-      return(eval_error_with_name(sc, "~A: bad form? ~A", sc->code));          /* (define var . 1) */
+	return(eval_error_with_name(sc, "~A: no value? ~A", sc->code));          /* (define var) */
+      return(eval_error_with_name(sc, "~A: bad form? ~A", sc->code));            /* (define var . 1) */
     }
   if (!is_pair(car(sc->code)))
     {
@@ -47664,16 +47639,16 @@ static s7_pointer check_define(s7_scheme *sc)
       if (sc->op == OP_DEFINE_STAR)
 	return(eval_error(sc, "define* is restricted to functions: (define* ~{~S~^ ~})", sc->code));
 
-      x = car(sc->code);
-      if (!is_symbol(x))                                                        /* (define 3 a) */
-	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", x));
-      if (is_keyword(x))                                                        /* (define :hi 1) */
-	return(eval_error_with_name(sc, "~A ~A: keywords are constants", x));
-      if (is_syntactic(x))                                                      /* (define and a) */
+      func = car(sc->code);
+      if (!is_symbol(func))                                                      /* (define 3 a) */
+	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", func));
+      if (is_keyword(func))                                                      /* (define :hi 1) */
+	return(eval_error_with_name(sc, "~A ~A: keywords are constants", func));
+      if (is_syntactic(func))                                                    /* (define and a) */
 	{
 	  if (sc->safety > 0)
-	    s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
-	  set_local(x);
+	    s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(func));
+	  set_local(func);
 	}
 
       if ((is_pair(cadr(sc->code))) &&               /* look for (define sym (lambda ...)) and treat it like (define (sym ...)...) */
@@ -47681,23 +47656,23 @@ static s7_pointer check_define(s7_scheme *sc)
 	   (caadr(sc->code) == sc->LAMBDA_STAR)) &&
 	  (symbol_id(caadr(sc->code)) == 0))
 	/* not is_global here because that bit might not be set for initial symbols (why not? -- redef as method etc) */
-	optimize_lambda(sc, caadr(sc->code) == sc->LAMBDA, x, cadr(cadr(sc->code)), cddr(cadr(sc->code)));
+	optimize_lambda(sc, caadr(sc->code) == sc->LAMBDA, func, cadr(cadr(sc->code)), cddr(cadr(sc->code)));
     }
   else
     {
-      x = caar(sc->code);
-      if (!is_symbol(x))                                                        /* (define (3 a) a) */
-	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", x));
-      if (is_syntactic(x))                                                      /* (define (and a) a) */
+      func = caar(sc->code);
+      if (!is_symbol(func))                                                      /* (define (3 a) a) */
+	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", func));
+      if (is_syntactic(func))                                                    /* (define (and a) a) */
 	{
 	  if (sc->safety > 0)
-	    s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(x));
-	  set_local(x);
+	    s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(func));
+	  set_local(func);
 	}
       if (sc->op == OP_DEFINE_STAR)
 	cdar(sc->code) = check_lambda_star_args(sc, cdar(sc->code), &arity);
       else check_lambda_args(sc, cdar(sc->code), &arity);
-      optimize_lambda(sc, sc->op == OP_DEFINE, x, cdar(sc->code), cdr(sc->code));
+      optimize_lambda(sc, sc->op == OP_DEFINE, func, cdar(sc->code), cdr(sc->code));
     }
 
   if ((is_overlaid(sc->code)) &&
@@ -47711,8 +47686,8 @@ static s7_pointer check_define(s7_scheme *sc)
       if (sc->op == OP_DEFINE)
 	{
 	  if ((is_pair(car(sc->code))) &&
-	      (!symbol_has_accessor(x)) &&
-	      (!is_immutable(x)))
+	      (!symbol_has_accessor(func)) &&
+	      (!is_immutable(func)))
 	    pair_set_syntax_symbol(sc->code, sc->DEFINE_FUNCHECKED);
 	  else pair_set_syntax_symbol(sc->code, sc->DEFINE_UNCHECKED);
 	}
@@ -59679,7 +59654,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET_STAR:
       check_let_star(sc);
 
-
     case OP_LET_STAR_UNCHECKED:
       if (is_symbol(car(sc->code)))
 	{
@@ -60305,8 +60279,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if ((sc->safety != 0) ||
 	    (main_stack_op(sc) != OP_DEFINE1))
 	  optimize(sc, body, 0, sc->NIL);
-	else optimize_lambda(sc, true, sc->LAMBDA, car(code), body);
+	else optimize_lambda(sc, true, sc->GC_NIL, car(code), body); /* why was lambda the func? */
 
+	/* there is a problem here...
+	 * (define f1 (lambda (x) (if (= x 0) 0 (+ x (f1 (- x 1))))))
+	 * (f1 3) -> 6! -- in Guile also
+	 * so in traversing the body we actually won't see a recursive call, which if a tail call
+	 * should not make this function unsafe, but it will currently.
+	 */
 	if ((is_overlaid(code)) &&
 	    (cdr(ecdr(code)) == code))
 	  pair_set_syntax_symbol(code, sc->LAMBDA_UNCHECKED);
@@ -60328,7 +60308,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((sc->safety != 0) ||
 	  (main_stack_op(sc) != OP_DEFINE1))
 	optimize(sc, cdr(sc->code), 0, sc->NIL);
-      else optimize_lambda(sc, false, sc->LAMBDA_STAR, car(sc->code), cdr(sc->code));
+      else optimize_lambda(sc, false, sc->GC_NIL, car(sc->code), cdr(sc->code));
 
       if ((is_overlaid(sc->code)) &&
 	  (cdr(ecdr(sc->code)) == sc->code))
@@ -60344,7 +60324,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_CASE:      /* case, car(sc->code) is the selector */
       check_case(sc);
-
 
     case OP_CASE_UNCHECKED:
       {
@@ -60744,7 +60723,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_WITH_LET:
       check_with_let(sc);
-
 
     case OP_WITH_LET_UNCHECKED:
       sc->value = car(sc->code);
@@ -66974,9 +66952,9 @@ s7_scheme *s7_init(void)
 
   sc->LENGTH =                s7_define_safe_function(sc, "length",                  g_length,                 1, 0, false, H_length);
   sc->COPY =                  s7_define_safe_function(sc, "copy",                    g_copy,                   1, 3, false, H_copy);
-  sc->FILL =                  s7_define_safe_function(sc, "fill!",                   g_fill,                   2, 2, false, H_fill);  /* was unsafe until 12-Feb-14 */
+  sc->FILL =                  s7_define_safe_function(sc, "fill!",                   g_fill,                   2, 2, false, H_fill); 
   sc->REVERSE =               s7_define_safe_function(sc, "reverse",                 g_reverse,                1, 0, false, H_reverse);
-  sc->REVERSEB =              s7_define_safe_function(sc, "reverse!",                g_reverse_in_place,       1, 0, false, H_reverse_in_place); /* same 8-9-14 */
+  sc->REVERSEB =              s7_define_safe_function(sc, "reverse!",                g_reverse_in_place,       1, 0, false, H_reverse_in_place);
   sc->SORT =                  s7_define_function(sc,      "sort!",                   g_sort,                   2, 0, false, H_sort);
 
   sc->IS_VECTOR =             s7_define_safe_function(sc, "vector?",                 g_is_vector,              1, 0, false, H_is_vector);
@@ -66996,8 +66974,8 @@ s7_scheme *s7_init(void)
   sc->MAKE_VECTOR =           s7_define_safe_function(sc, "make-vector",             g_make_vector,            1, 2, false, H_make_vector);
   sc->MAKE_SHARED_VECTOR =    s7_define_safe_function(sc, "make-shared-vector",      g_make_shared_vector,     2, 1, false, H_make_shared_vector);
   sc->VECTOR =                s7_define_safe_function(sc, "vector",                  g_vector,                 0, 0, true,  H_vector);
-  set_setter(sc->VECTOR); /* ?? */
-  sc->Vector = s7_symbol_value(sc, sc->VECTOR);
+  set_setter(sc->VECTOR); /* like cons, I guess */
+  sc->Vector = slot_value(global_slot(sc->VECTOR));
   set_setter(sc->Vector);
 
   sc->IS_FLOAT_VECTOR =       s7_define_safe_function(sc, "float-vector?",           g_is_float_vector,        1, 0, false, H_is_float_vector);
@@ -67005,7 +66983,7 @@ s7_scheme *s7_init(void)
   sc->MAKE_FLOAT_VECTOR =     s7_define_safe_function(sc, "make-float-vector",       g_make_float_vector,      1, 1, false, H_make_float_vector);
   sc->FLOAT_VECTOR_SET =      s7_define_safe_function(sc, "float-vector-set!",       g_float_vector_set,       3, 0, true,  H_float_vector_set);
   sc->FLOAT_VECTOR_REF =      s7_define_safe_function(sc, "float-vector-ref",        g_float_vector_ref,       2, 0, true,  H_float_vector_ref);
-  set_returns_temp(s7_symbol_value(sc, sc->FLOAT_VECTOR_REF));
+  set_returns_temp(slot_value(global_slot(sc->FLOAT_VECTOR_REF)));
 
   sc->IS_BYTEVECTOR =         s7_define_safe_function(sc, "bytevector?",             g_is_bytevector,          1, 0, false, H_is_bytevector);
   sc->TO_BYTEVECTOR =         s7_define_safe_function(sc, "->bytevector",            g_to_bytevector,          1, 0, false, H_to_bytevector);
@@ -67035,7 +67013,7 @@ s7_scheme *s7_init(void)
   sc->EVAL =                  s7_define_function(sc,      "eval",                    g_eval,                   1, 1, false, H_eval);
   sc->EVAL_STRING =           s7_define_function(sc,      "eval-string",             g_eval_string,            1, 1, false, H_eval_string);
   sc->APPLY =                 s7_define_function(sc,      "apply",                   g_apply,                  1, 0, true,  H_apply);
-  sc->Apply = s7_symbol_value(sc, sc->APPLY);
+  sc->Apply = slot_value(global_slot(sc->APPLY));
   set_type(sc->Apply, type(sc->Apply) | T_COPY_ARGS);
   /* (let ((x '((1 2) 3 4))) (catch #t (lambda () (apply apply apply x)) (lambda args 'error)) x) should not mess up x! */
 
@@ -67082,7 +67060,7 @@ s7_scheme *s7_init(void)
 #endif
 
   sym = s7_define_function(sc, "(c-object set)", g_internal_object_set, 1, 0, true, "internal object setter redirection");
-  sc->Object_Set = s7_symbol_value(sc, sym);
+  sc->Object_Set = slot_value(global_slot(sym));
 
 
   /* -------- *features* -------- */
@@ -67197,33 +67175,33 @@ s7_scheme *s7_init(void)
 #endif
 
 
-  sc->Vector_Set = s7_symbol_value(sc, sc->VECTOR_SET);
+  sc->Vector_Set = slot_value(global_slot(sc->VECTOR_SET));
   set_setter(sc->Vector_Set);
   set_setter(sc->VECTOR_SET);
   /* not float-vector-set! here */
 
-  sc->List_Set = s7_symbol_value(sc, sc->LIST_SET);
+  sc->List_Set = slot_value(global_slot(sc->LIST_SET));
   set_setter(sc->List_Set);
   set_setter(sc->LIST_SET);
 
-  sc->Hash_Table_Set = s7_symbol_value(sc, sc->HASH_TABLE_SET);
+  sc->Hash_Table_Set = slot_value(global_slot(sc->HASH_TABLE_SET));
   set_setter(sc->Hash_Table_Set);
   set_setter(sc->HASH_TABLE_SET);
 
-  sc->Let_Set = s7_symbol_value(sc, sc->LET_SET);
+  sc->Let_Set = slot_value(global_slot(sc->LET_SET));
   set_setter(sc->Let_Set);
   set_setter(sc->LET_SET);
 
   set_setter(sc->CONS); /* (this blocks an over-eager do loop optimization -- see do-test-15 in s7test) */
 
-  sc->String_Set = s7_symbol_value(sc, sc->STRING_SET);
+  sc->String_Set = slot_value(global_slot(sc->STRING_SET));
   set_setter(sc->String_Set);
   set_setter(sc->STRING_SET);
 
   set_setter(sc->SET_CAR);
-  set_setter(s7_symbol_value(sc, sc->SET_CAR));
+  set_setter(slot_value(global_slot(sc->SET_CAR)));
   set_setter(sc->SET_CDR);
-  set_setter(s7_symbol_value(sc, sc->SET_CDR));
+  set_setter(slot_value(global_slot(sc->SET_CDR)));
 
 #if (!WITH_PURE_S7)
   set_setter(s7_make_symbol(sc, "set-current-input-port"));
@@ -67248,7 +67226,7 @@ s7_scheme *s7_init(void)
   s7_function_set_setter(sc, "float-vector-ref",    "float-vector-set!");
   s7_function_set_setter(sc, "list-ref",            "list-set!");
   s7_function_set_setter(sc, "string-ref",          "string-set!");
-  c_function_setter(s7_symbol_value(sc, sc->OUTLET)) = s7_make_function(sc, "(set! outlet)", g_set_outlet, 2, 0, false, "outlet setter");
+  c_function_setter(slot_value(global_slot(sc->OUTLET))) = s7_make_function(sc, "(set! outlet)", g_set_outlet, 2, 0, false, "outlet setter");
 
   {
     int i, top;
@@ -67288,8 +67266,6 @@ s7_scheme *s7_init(void)
     sc->default_rng = (s7_rng_t *)malloc(sizeof(s7_rng_t));
     sc->default_rng->ran_seed = (unsigned int)time(NULL);
     sc->default_rng->ran_carry = 1675393560;
-
-    /* for s7_Double, float gives about 9 digits, double 18, long Double about 22 */
 
     for (i = 0; i < 10; i++) sc->singletons[(unsigned char)'0' + i] = small_int(i);
     sc->singletons[(unsigned char)'+'] = sc->ADD;
@@ -67384,9 +67360,6 @@ s7_scheme *s7_init(void)
                                                            lst))))                                            \n\
                                   (set! ((funclet hook) 'body) lst)                                           \n\
                                   (error 'wrong-type-arg \"hook-functions must be a list of functions, each accepting one argument: ~S\" lst)))))");
-
-  /* if the error checks are removed, s7test will be very unhappy
-   */
 
   /* -------- *unbound-variable-hook* -------- */
   sc->unbound_variable_hook = s7_eval_c_string(sc, "(make-hook 'variable)");
@@ -67578,14 +67551,14 @@ int main(int argc, char **argv)
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1142
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1145
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3402
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3372
  * tmap           |      |      | 11.0           5031 4769 4702
- * tcopy          |      |      | 13.6                13.6 5018
+ * tcopy          |      |      |                          5080
  * lg             |      |      | 6547 6497 6494 6235 6229 6222
  * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7346
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
- * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8
- * thash          |      |      |                          21.8
+ * thash          |      |      |                          19.4
+ * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.9
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9
  *
  * ------------------------------------------------------------------

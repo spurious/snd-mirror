@@ -755,33 +755,10 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 
 
 #if (!DISABLE_DEPRECATED)
-/* cm uses these two: */
-#define s7_NIL(Sc)         s7_nil(Sc)
+/* cm uses this: */
 #define s7_UNSPECIFIED(Sc) s7_unspecified(Sc)
-
-#define s7_F(Sc)           s7_f(Sc)
-#define s7_T(Sc)           s7_t(Sc)
-#define s7_UNDEFINED(Sc)   s7_undefined(Sc)
-#define s7_EOF_OBJECT(Sc)  s7_eof_object(Sc)
-
 #define s7_is_procedure_with_setter s7_is_dilambda
 #define s7_make_procedure_with_setter s7_dilambda
-
-#define s7_procedure_environment s7_funclet
-#define s7_environment_ref s7_let_ref
-#define s7_environment_set s7_let_set
-#define s7_augment_environment_ref s7_sublet
-#define s7_outer_environment_ref s7_outlet
-#define s7_global_environment_ref s7_rootlet
-#define s7_current_environment_ref s7_curlet
-#define s7_set_current_environment_ref s7_set_curlet
-#define s7_environment_to_list s7_let_to_list
-#define s7_is_environment s7_is_let
-#define s7_open_environment s7_openlet
-#define s7_is_open_environment s7_is_openlet
-#define s7_object_environment s7_object_let
-#define s7_object_set_environment s7_object_set_let
-
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);
 #endif
 
