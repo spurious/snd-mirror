@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.20"
-#define S7_DATE "28-Feb-15"
+#define S7_VERSION "3.21"
+#define S7_DATE "19-Mar-15"
 
 
 typedef long long int s7_Int;
@@ -768,6 +768,7 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);
  * 
  *        s7 changes
  *
+ * 19-Mar:    repl.scm.
  * 28-Feb:    s7_vector_print_length -> s7_print_length, set case also.
  * 25-Feb:    s7_closure_* funcs to replace clumsy (deprecated) s7_procedure_source.
  * 29-Jan:    changed args to s7_new_type_x (added s7_scheme arg, fill! takes s7_function).

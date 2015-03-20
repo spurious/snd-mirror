@@ -28,8 +28,6 @@
 
 	A {text-decoration:none}
 	A:hover {text-decoration:underline}
-	A.quiet {color:black; text-decoration:none}
-	A.quiet:hover {text-decoration:underline}
 
 	A.def {font-weight: bold; 
 	       font-style: normal; 
@@ -51,13 +49,6 @@
 		      -webkit-border-radius: 20px;
 		      }
 
-	DIV.obsolete {background-color: #F2F2F2; 
-		      border: 1px solid black;
-	              padding-left: 0.5cm; 
-	              padding-right: 0.5cm; 
-		      padding-top: 0.5cm; 
-		      padding-bottom: 0.5cm;
-		      }
         DIV.header {margin-top: 60px;
 	            margin-bottom: 30px;
 	            border: 4px solid #00ff00; /* green */
@@ -6662,15 +6653,13 @@ int main(int argc, char **argv)
 </blockquote>
 </details>
 
-<p>A repl that uses readline instead is built into s7.  Include the compiler flag -DWITH_MAIN:
+<p>A repl (based on repl.scm) is built into s7.  Include the compiler flag -DWITH_MAIN:
 </p>
 
 <pre class="indented">
-in Linux: gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -lrt -ldl -lm -Wl,-export-dynamic
-in *BSD:  gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -lm -Wl,-export-dynamic
-in OSX:   gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lreadline -lncurses -lm
-
-You might also need to include -ltinfo.
+in Linux: gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -ldl -lm -Wl,-export-dynamic
+in *BSD:  gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lm -Wl,-export-dynamic
+in OSX:   gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -lm
 </pre>
 
 
@@ -8678,6 +8667,7 @@ mockery.scm has mock data libraries,
 cload.scm is a wrapper for the FFI stuff described above, and 
 stuff.scm is just some arbitrary stuff.  
 gdbinit has some gdb commands for s7. 
+repl.scm is a repl.
 </p>
 
 

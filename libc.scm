@@ -6,7 +6,7 @@
 (provide 'libc.scm)
 
 ;; if loading from a different directory, pass that info to C
-(let ((current-file (file-name (current-input-port))))
+(let ((current-file (port-filename (current-input-port))))
   (let ((directory (and (or (char=? (current-file 0) #\/)
 			    (char=? (current-file 0) #\~))
 			(substring current-file 0 (- (length current-file) 9)))))
@@ -1246,17 +1246,20 @@
                 static s7_pointer g_signal(s7_scheme *sc, s7_pointer args)
                 {
                   int sig;
-                    if (!sighandlers)
-                      {
-                        sighandlers_s7 = sc;
-                        sighandlers = s7_make_and_fill_vector(sc, SIGUNUSED + 1, s7_f(sc));
-                        s7_gc_protect(sc, sighandlers);
-                      }
+                  if (!sighandlers)
+                    {
+                      sighandlers_s7 = sc;
+                      sighandlers = s7_make_and_fill_vector(sc, SIGUNUSED + 1, s7_f(sc));
+                      s7_gc_protect(sc, sighandlers);
+                    }
                   sig = s7_integer(s7_car(args));
-                  if (s7_c_pointer(s7_cadr(args)) == (void *)SIG_DFL)
-                     return(s7_make_c_pointer(sc, signal(sig, SIG_DFL)));
-                  if (s7_c_pointer(s7_cadr(args)) == (void *)SIG_IGN)
-                     return(s7_make_c_pointer(sc, signal(sig, SIG_IGN)));
+                  if (s7_is_c_pointer(s7_cadr(args)))
+                    {
+                      if (s7_c_pointer(s7_cadr(args)) == (void *)SIG_DFL)
+                         return(s7_make_c_pointer(sc, signal(sig, SIG_DFL)));
+                      if (s7_c_pointer(s7_cadr(args)) == (void *)SIG_IGN)
+                         return(s7_make_c_pointer(sc, signal(sig, SIG_IGN)));
+                     }
                   s7_vector_set(sc, sighandlers, sig, s7_cadr(args));
                   return(s7_make_c_pointer(sc, signal(sig, s7_signal_handler)));
                 }

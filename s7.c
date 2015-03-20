@@ -127,8 +127,7 @@
  *
  * in openBSD I think you need to include -ftrampolines in CFLAGS.
  *
- * if you want this file to compile into a stand-alone interpreter, define WITH_MAIN (this assumes access to readline)
- *   then load it with -lreadline -ldl -lm, (and perhaps -ltinfo) etc.
+ * if you want this file to compile into a stand-alone interpreter, define WITH_MAIN
  *
  * -O3 is sometimes slower, sometimes faster
  * -march=native -fomit-frame-pointer -m64 -funroll-loops gains about .1%
@@ -804,7 +803,7 @@ struct s7_scheme {
   unsigned int read_line_buf_size;
 
   s7_pointer v, w, x, y, z;         /* evaluator local vars */
-  s7_pointer temp1, temp2, temp3, temp4, temp5, temp6;
+  s7_pointer temp1, temp2, temp3, temp4, temp5, temp6, temp7;
   s7_pointer temp_cell, temp_cell_1, temp_cell_2;
   s7_pointer T1_1, T2_1, T2_2, T3_1, T3_2, T3_3, Z2_1, Z2_2;
   s7_pointer A1_1, A2_1, A2_2, A3_1, A3_2, A3_3, A4_1, A4_2, A4_3, A4_4;
@@ -3815,6 +3814,7 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->temp4);
   S7_MARK(sc->temp5);
   S7_MARK(sc->temp6);
+  S7_MARK(sc->temp7);
 
   set_mark(sc->input_port);
   S7_MARK(sc->input_port_stack);
@@ -5362,7 +5362,7 @@ static s7_pointer g_is_openlet(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_openlet(s7_scheme *sc, s7_pointer args)
 {
-  #define H_openlet "(openlet e) marks the environment 'e for special handling by generic functions and so on."
+  #define H_openlet "(openlet e) tells the built-in generic functions that the environment 'e might have an over-riding method."
   s7_pointer e;
 
   e = car(args);
@@ -8210,18 +8210,11 @@ s7_Int s7_numerator(s7_pointer x)
 {
   switch (type(x))
     {
-    case T_INTEGER:
-      return(integer(x));
-
-    case T_RATIO:
-      return(numerator(x));
-
+    case T_INTEGER:     return(integer(x));
+    case T_RATIO:       return(numerator(x));
 #if WITH_GMP
-    case T_BIG_INTEGER:
-      return(big_integer_to_s7_Int(big_integer(x)));
-
-    case T_BIG_RATIO:
-      return(big_integer_to_s7_Int(mpq_numref(big_ratio(x))));
+    case T_BIG_INTEGER: return(big_integer_to_s7_Int(big_integer(x)));
+    case T_BIG_RATIO:   return(big_integer_to_s7_Int(mpq_numref(big_ratio(x))));
 #endif
     }
   return(0);
@@ -8232,12 +8225,9 @@ s7_Int s7_denominator(s7_pointer x)
 {
   switch (type(x))
     {
-    case T_RATIO:
-      return(denominator(x));
-
+    case T_RATIO:     return(denominator(x));
 #if WITH_GMP
-    case T_BIG_RATIO:
-      return(big_integer_to_s7_Int(mpq_denref(big_ratio(x))));
+    case T_BIG_RATIO: return(big_integer_to_s7_Int(mpq_denref(big_ratio(x))));
 #endif
     }
   return(1);
@@ -8400,25 +8390,14 @@ static bool s7_is_negative(s7_pointer obj)
 {
   switch (type(obj))
     {
-    case T_INTEGER:
-      return(integer(obj) < 0);
-
-    case T_RATIO:
-      return(numerator(obj) < 0);
-
+    case T_INTEGER:     return(integer(obj) < 0);
+    case T_RATIO:       return(numerator(obj) < 0);
 #if WITH_GMP
-    case T_BIG_INTEGER:
-      return(mpz_cmp_ui(big_integer(obj), 0) < 0);
-
-    case T_BIG_RATIO:
-      return(mpq_cmp_ui(big_ratio(obj), 0, 1) < 0);
-
-    case T_BIG_REAL:
-      return(mpfr_cmp_ui(big_real(obj), 0) < 0);
+    case T_BIG_INTEGER: return(mpz_cmp_ui(big_integer(obj), 0) < 0);
+    case T_BIG_RATIO:   return(mpq_cmp_ui(big_ratio(obj), 0, 1) < 0);
+    case T_BIG_REAL:    return(mpfr_cmp_ui(big_real(obj), 0) < 0);
 #endif
-
-    default:
-      return(real(obj) < 0);
+    default:            return(real(obj) < 0);
     }
 }
 
@@ -8427,25 +8406,14 @@ static bool s7_is_positive(s7_pointer x)
 {
   switch (type(x))
     {
-    case T_INTEGER:
-      return(integer(x) > 0);
-
-    case T_RATIO:
-      return(numerator(x) > 0);
-
+    case T_INTEGER:     return(integer(x) > 0);
+    case T_RATIO:       return(numerator(x) > 0);
 #if WITH_GMP
-    case T_BIG_INTEGER:
-      return(mpz_cmp_ui(big_integer(x), 0) > 0);
-
-    case T_BIG_RATIO:
-      return(mpq_cmp_ui(big_ratio(x), 0, 1) > 0);
-
-    case T_BIG_REAL:
-      return(mpfr_cmp_ui(big_real(x), 0) > 0);
+    case T_BIG_INTEGER: return(mpz_cmp_ui(big_integer(x), 0) > 0);
+    case T_BIG_RATIO:   return(mpq_cmp_ui(big_ratio(x), 0, 1) > 0);
+    case T_BIG_REAL:    return(mpfr_cmp_ui(big_real(x), 0) > 0);
 #endif
-
-    default:
-      return(real(x) > 0.0);
+    default:            return(real(x) > 0.0);
     }
 }
 
@@ -8454,22 +8422,13 @@ static bool s7_is_zero(s7_pointer x)
 {
   switch (type(x))
     {
-    case T_INTEGER:
-      return(integer(x) == 0);
-
-    case T_REAL:
-      return(real(x) == 0.0);
-
+    case T_INTEGER:     return(integer(x) == 0);
+    case T_REAL:        return(real(x) == 0.0);
 #if WITH_GMP
-    case T_BIG_INTEGER:
-      return(mpz_cmp_ui(big_integer(x), 0) == 0);
-
-    case T_BIG_REAL:
-      return(mpfr_zero_p(big_real(x)));
+    case T_BIG_INTEGER: return(mpz_cmp_ui(big_integer(x), 0) == 0);
+    case T_BIG_REAL:    return(mpfr_zero_p(big_real(x)));
 #endif
-
-    default:
-      return(false); /* ratios and complex numbers here are already collapsed into integers and reals */
+    default:            return(false); /* ratios and complex numbers here are already collapsed into integers and reals */
     }
 }
 
@@ -17380,7 +17339,7 @@ static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
 	s7_pointer x;
 
 	NEW_CELL(sc, x, T_BIG_REAL);
-	add_bigreal(x);
+	add_bigreal(sc, x);
 	mpfr_init(big_real(x));
 	mpc_real(big_real(x), big_complex(p), GMP_RNDN);
 
@@ -17426,7 +17385,7 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
       {
 	s7_pointer x;
 	NEW_CELL(sc, x, T_BIG_REAL);
-	add_bigreal(x);
+	add_bigreal(sc, x);
 	mpfr_init(big_real(x));
 	mpc_imag(big_real(x), big_complex(p), GMP_RNDN);
 
@@ -37576,14 +37535,9 @@ static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
 
   switch (type(x))
     {
-    case T_C_OBJECT:
-      return(object_types[c_object_type(x)]->scheme_name);
-
-    case T_INPUT_PORT:
-      return((is_file_port(x)) ? AN_INPUT_FILE_PORT : ((is_string_port(x)) ? AN_INPUT_STRING_PORT : AN_INPUT_PORT));
-
-    case T_OUTPUT_PORT:
-      return((is_file_port(x)) ? AN_OUTPUT_FILE_PORT : ((is_string_port(x)) ? AN_OUTPUT_STRING_PORT : AN_OUTPUT_PORT));
+    case T_C_OBJECT:     return(object_types[c_object_type(x)]->scheme_name);
+    case T_INPUT_PORT:   return((is_file_port(x)) ? AN_INPUT_FILE_PORT : ((is_string_port(x)) ? AN_INPUT_STRING_PORT : AN_INPUT_PORT));
+    case T_OUTPUT_PORT:  return((is_file_port(x)) ? AN_OUTPUT_FILE_PORT : ((is_string_port(x)) ? AN_OUTPUT_STRING_PORT : AN_OUTPUT_PORT));
     }
   return(make_string_wrapper(sc, "unknown type!"));
 }
@@ -40587,7 +40541,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       result = sc->UNDEFINED;
       x = sc->x;
       z = sc->z;
-      sc->temp6 = s7_list(sc, 6, code, args, value, cur_code, x, z);
+      sc->temp7 = s7_list(sc, 6, code, args, value, cur_code, x, z);
 
       if (!is_pair(cur_code))
 	{
@@ -40678,7 +40632,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       sc->envir = cur_env;
       sc->x = x;
       sc->z = z;
-      sc->temp6 = sc->NIL;
+      sc->temp7 = sc->NIL;
 
       if ((result != sc->UNDEFINED) &&
 	  (result != sc->UNSPECIFIED))
@@ -45957,20 +45911,11 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poin
 		{
 		  switch (args)
 		    {
-		    case 0:
-		      return(optimize_thunk(sc, expr, func, hop));
-
-		    case 1:
-		      return(optimize_func_one_arg(sc, expr, func, hop, pairs, symbols, quotes, bad_pairs));
-
-		    case 2:
-		      return(optimize_func_two_args(sc, expr, func, hop, pairs, symbols, quotes, bad_pairs));
-
-		    case 3:
-		      return(optimize_func_three_args(sc, expr, func, hop, pairs, symbols, quotes, bad_pairs));
-
-		    default:
-		      return(optimize_func_many_args(sc, expr, func, hop, args, pairs, symbols, quotes, bad_pairs));
+		    case 0:  return(optimize_thunk(sc, expr, func, hop));
+		    case 1:  return(optimize_func_one_arg(sc, expr, func, hop, pairs, symbols, quotes, bad_pairs));
+		    case 2:  return(optimize_func_two_args(sc, expr, func, hop, pairs, symbols, quotes, bad_pairs));
+		    case 3:  return(optimize_func_three_args(sc, expr, func, hop, pairs, symbols, quotes, bad_pairs));
+		    default: return(optimize_func_many_args(sc, expr, func, hop, args, pairs, symbols, quotes, bad_pairs));
 		    }
 		}
 	      return(false);
@@ -66080,6 +66025,7 @@ s7_scheme *s7_init(void)
   sc->temp4 = sc->NIL;
   sc->temp5 = sc->NIL;
   sc->temp6 = sc->NIL;
+  sc->temp7 = sc->NIL;
 
   sc->begin_hook = NULL;
   sc->default_rng = NULL;
@@ -67364,132 +67310,17 @@ s7_scheme *s7_init(void)
 }
 
 
-/* -------------------------------- repl -------------------------------- */
+/* -------------------------------- repl (in progress...) -------------------------------- */
 
 #if WITH_MAIN
-/* this code extracted from xen.c in sndlib
- */
-#include <readline/readline.h>
-#include <curses.h>
-
-static s7_scheme *s7;
-
-typedef struct {int loc, size, len; const char *text; const char **matches;} completions;
-
-static bool find_match(const char *symbol_name, void *udata)
-{
-  completions *data = (completions *)udata;
-  if (strncmp(data->text, symbol_name, data->len) == 0)
-    {
-      if (data->matches == NULL)
-	{
-	  data->matches = (const char **)calloc(8, sizeof(char *));
-	  data->size = 8;
-	  data->loc = 0;
-	}
-      else
-	{
-	  if (data->loc >= data->size)
-	    {
-	      int i;
-	      data->size *= 2;
-	      data->matches = (const char **)realloc(data->matches, data->size * sizeof(char *));
-	      for (i = data->loc; i < data->size; i++) data->matches[i] = NULL;
-	    }
-	}
-      data->matches[data->loc] = symbol_name;
-      data->loc++;
-    }
-  return(false);
-}
-
-static int complete_loc = 0;
-static completions *complete_data = NULL;
-static char *copy_match(const char *text, int state)
-{
-  if (complete_loc < complete_data->loc)
-    {
-      char *result;
-      int len;
-      len = strlen(complete_data->matches[complete_loc]);
-      result = calloc(len + 1, sizeof(char));
-      memcpy((void *)result, (void *)complete_data->matches[complete_loc], len);
-      complete_loc++;
-      return(result);
-    }
-  return(NULL);
-}
-
-static char **completion(const char *text, int start, int end)
-{
-  completions *data;
-  char **matches = NULL;
-  /* start and end are indices into the original line buffer, we just want text here */
-
-  if (!text) return(NULL);
-
-  data = (completions *)calloc(1, sizeof(completions));
-  data->len = strlen(text);
-  data->text = text;
-
-  s7_for_each_symbol_name(s7, find_match, (void *)data);
-
-  /* now to make readline happy, we apparently have to give it copies of everything! */
-  if (data->matches)
-    {
-      complete_data = data;
-      complete_loc = 0;
-      matches = rl_completion_matches(text, copy_match);
-      free(data->matches);
-    }
-
-  free(data);
-  complete_data = NULL;
-  return(matches);
-}
-
-
 int main(int argc, char **argv)
 {
-  s7 = s7_init();
-
-  rl_readline_name = "s7";
-  rl_attempted_completion_function = completion;
-  /* rl_initialize(); */
-
-  if (argc == 2)
-    {
-      fprintf(stderr, "load %s\n", argv[1]);
-      s7_load(s7, argv[1]);
-    }
-  else
-    {
-      while (true)
-	{
-	  char *line_read = NULL;
-	  line_read = readline("s7> ");
-	  if (line_read)
-	    {
-	      char *str;
-	      str = line_read;
-	      while (isspace((int)str[0])) str++;
-	      if (*str)
-		{
-		  s7_pointer result;
-		  add_history(str);
-		  result = s7_eval_c_string(s7, str);
-		  s7_write(s7, result, s7_current_output_port(s7));   /* use write, not display so that strings are in double quotes */
-		  s7_newline(s7, s7_current_output_port(s7));
-		}
-	      free(line_read);
-	    }
-	}
-    }
+  s7_load(s7_init(), "repl.scm");
 }
 
-/* in Linux:    gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lreadline -lncurses -lrt -ldl -lm -Wl,-export-dynamic
- * in *BSD:     gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lreadline -lncurses -lm -Wl,-export-dynamic
- * in OSX:      gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lreadline -lncurses -lm
+/* in Linux:    gcc s7.c -o repl -DWITH_MAIN -I. -g3 -ldl -lm -Wl,-export-dynamic
+ * in *BSD:     gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lm -Wl,-export-dynamic
+ * in OSX:      gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lm
  *   (clang also needs LDFLAGS="-Wl,-export-dynamic" in Linux)
  */
 #endif
@@ -67500,11 +67331,11 @@ int main(int argc, char **argv)
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1142
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1145
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3372
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3345
  * tmap           |      |      | 11.0           5031 4769 4702
  * tcopy          |      |      |                          5080
  * lg             |      |      | 6547 6497 6494 6235 6229 6222
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7352
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7184
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
  * thash          |      |      |                          19.4
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.9
@@ -67545,5 +67376,7 @@ int main(int argc, char **argv)
  *
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
-  */
+ * OP_STRING_p1? add_cs1
+ * glistener.c might mess up if > 80 cols upon TAB
+ */
  

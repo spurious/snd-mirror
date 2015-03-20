@@ -105,9 +105,6 @@ static int completions(const char *text)
 		  }
 	    }
 	}
-#if HAVE_SCHEME
-      if (sym) free(sym);
-#endif
     }
   return(matches);
 }

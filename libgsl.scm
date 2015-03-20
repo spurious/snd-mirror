@@ -6,7 +6,7 @@
 (provide 'libgsl.scm)
 
 ;; if loading from a different directory, pass that info to C
-(let ((current-file (file-name (current-input-port))))
+(let ((current-file (port-filename (current-input-port))))
   (let ((directory (and (or (char=? (current-file 0) #\/)
 			    (char=? (current-file 0) #\~))
 			(substring current-file 0 (- (length current-file) 9)))))

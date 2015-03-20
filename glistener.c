@@ -5,7 +5,7 @@
  * see s7.html#glistener and glistener.h for examples and documentation.
  */
 
-#define strcopy(Dest, Src, Len) snprintf(Dest, Len, "%s", Src)
+#define strcopy(Dest, Src, Len) memcpy((void *)(Dest), (void *)(Src), Len)
 
 struct glistener {
   GtkWidget *text, *scroller, *status;
@@ -2832,6 +2832,7 @@ glistener *glistener_new(GtkWidget *parent, void (*initializations)(glistener *g
 }
 
 /* changes:
+ * 19-Mar-15: changed strcopy macro.
  * 7-June:    added keyer function.
  * 4-June:    added colorizer function.
  * 28-May:    added checker function.
