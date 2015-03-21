@@ -23012,14 +23012,9 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
       new_dir = string_value(s7_list_ref(sc, lst, i));
       if (new_dir)
 	{
-	  int size;
-	  char *new_name;
 	  FILE *fp;
-	  size = name_len + safe_strlen(new_dir) + 2;
-	  new_name = (char *)malloc(size * sizeof(char));
-	  snprintf(new_name, size, "%s/%s", new_dir, name);
-	  fp = fopen(new_name, "r");
-	  free(new_name);
+	  snprintf(sc->strbuf, sc->strbuf_size, "%s/%s", new_dir, name);
+	  fp = fopen(sc->strbuf, "r");
 	  if (fp) return(fp);
 	}
     }
@@ -23031,18 +23026,24 @@ static s7_pointer s7_load_1(s7_scheme *sc, const char *filename, s7_pointer e)
 {
   s7_pointer port;
   FILE *fp;
+  char *new_filename = NULL;
 
   fp = fopen(filename, "r");
   if (!fp)
-    fp = search_load_path(sc, filename);
+    {
+      fp = search_load_path(sc, filename);
+      if (fp) 
+	new_filename = copy_string(sc->strbuf); /* (require libc.scm) for example needs the directory for cload in some cases */
+    }
   if (!fp)
     return(file_error(sc, "load", "can't open", filename));
 
   if (is_pair(s7_hook_functions(sc, sc->load_hook)))
     s7_call(sc, sc->load_hook, list_1(sc, sc->temp4 = s7_make_string(sc, filename)));
 
-  port = read_file(sc, fp, filename, -1, "load");   /* -1 means always read its contents into a local string */
+  port = read_file(sc, fp, (new_filename) ? (const char *)new_filename : filename, -1, "load");   /* -1 means always read its contents into a local string */
   port_file_number(port) = remember_file_name(sc, filename);
+  if (new_filename) free(new_filename);
   set_loader_port(port);
   push_input_port(sc, port);
 
@@ -25506,12 +25507,18 @@ static void write_closure_readably(s7_scheme *sc, s7_pointer obj, s7_pointer por
   port_write_character(port)(sc, ' ', port);
   write_or_display(sc, arglist, port, USE_WRITE); /* here we just want the straight output (a b) not (list 'a 'b) */
 
-  for (p = body; is_pair(p); p = cdr(p))
-    {
-      port_write_character(port)(sc, ' ', port);
-      write_or_display(sc, car(p), port, USE_WRITE);
-    }
-  port_write_character(port)(sc, ')', port);
+  {
+    s7_Int old_print_length;
+    old_print_length = sc->print_length;
+    sc->print_length = 1048576;
+    for (p = body; is_pair(p); p = cdr(p))
+      {
+	port_write_character(port)(sc, ' ', port);
+	write_or_display(sc, car(p), port, USE_WRITE);
+      }
+    port_write_character(port)(sc, ')', port);
+    sc->print_length = old_print_length;
+  }
 
   if (!is_null(local_slots))
     port_write_character(port)(sc, ')', port);
@@ -67313,11 +67320,17 @@ s7_scheme *s7_init(void)
 
 /* -------------------------------- repl (in progress...) -------------------------------- */
 
-#if WITH_MAIN
+#if (WITH_MAIN && (!USE_SND))
 
 int main(int argc, char **argv)
 {
-  s7_load(s7_init(), "repl.scm");
+  s7_scheme *sc;
+
+  sc = s7_init();
+  s7_load(sc, "repl.scm");
+  s7_eval_c_string(sc, "((*repl* 'run))");
+  
+  return(0);
 }
 
 /* in Linux:    gcc s7.c -o repl -DWITH_MAIN -I. -g3 -ldl -lm -Wl,-export-dynamic
@@ -67379,7 +67392,6 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * OP_STRING_p1? add_cs1
- * glistener.c might mess up if > 80 cols upon TAB
- * obj->str readable print-length if func (curently get ...)
+ * also obj->str vectors (and other sequences) should be prettier if no cycles
  */
  

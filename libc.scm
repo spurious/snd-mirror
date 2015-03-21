@@ -16,7 +16,6 @@
     (when (and directory (not (string-position directory *cload-cflags*)))
       (set! *cload-cflags* (string-append "-I" directory " " *cload-cflags*)))))
 
-
 (if (not (defined? '*libc*))
     (define *libc*
       (with-let (unlet)

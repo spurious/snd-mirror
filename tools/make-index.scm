@@ -497,7 +497,7 @@
 (load "cload.scm")
 (load "stuff.scm")
 (load "mockery.scm")
-
+;(load "repl.scm")
 
 (let ((names (make-hash-table)))
   
@@ -549,6 +549,7 @@
     (list '*libdl* "libdl.scm")
     (list '*libc* "libc.scm")
     (list '*libgsl* "libgsl.scm")
+    (list '*repl* "repl.scm")
 
     (list 'with-sound "ws.scm")
     (list 'with-mixed-sound "ws.scm")

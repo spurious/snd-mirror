@@ -698,16 +698,15 @@ void snd_doit(int argc, char **argv)
     }
 #endif
 
+#if (HAVE_SCHEME && WITH_MAIN)
+  if (!nostdin)
+    {
+      s7_load(s7, "repl.scm");
+      s7_eval_c_string(s7, "(set! ((*repl* 'prompt)) *listener-prompt*)");
+      s7_eval_c_string(s7, "((*repl* 'run))");
+    }
+#else
   if (!nostdin)
     xen_repl(1, argv);
-
-  /* one way to make this less tedious is to use libtecla's enhance:
-   *
-   *    enhance snd
-   *
-   * Even better would be to use libtecla internally so we can get reasonable completions
-   * but that means we need a .pc file for it.  (tecla is confusing in this context because
-   * it sees something like open-sound "/home/bil/cl/obo<TAB> and complains about a missing 
-   * directory).
-   */
+#endif
 }

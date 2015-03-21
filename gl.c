@@ -5652,7 +5652,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       Xen_provide_feature("gl");
-      Xen_define("gl-version", C_string_to_Xen_string("28-Feb-15"));
+      Xen_define("gl-version", C_string_to_Xen_string("21-Mar-15"));
       gl_already_inited = true;
     }
 }

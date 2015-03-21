@@ -2396,9 +2396,6 @@ static void glistener_completion(glistener *g, int pos)
     {
       /* here we're indenting.  This code assumes we're using a true fixed width font -- "nimbus mono 10" is not one.
        */
-      static const char indent_spaces[] = "                                                                                ";
-      #define INDENT_SPACES 80
-      
       int pos, bpos, epos, bline, cline, linepos, linecol;
       GtkTextIter cursor, curline, start_limit, end_limit;
       
@@ -2432,21 +2429,30 @@ static void glistener_completion(glistener *g, int pos)
 	      if (oparen_col > linecol)
 		{
 		  int cols;
-		  cols = INDENT_SPACES - oparen_col + linecol;
-		  
+		  char *spaces;
+
+		  cols = oparen_col - linecol + 2;
+		  spaces = (char *)malloc((cols + 1) * sizeof(char));
+		  memset((void *)spaces, 32, cols);
+		  spaces[cols] = '\0';
+
 		  /* now see what follows the unmatched ( */
 		  gtk_text_iter_forward_char(&paren);
 		  
 		  if (gtk_text_iter_get_char(&paren) == '(')
-		    glistener_insert_text(g, (const char *)(indent_spaces + cols - 1));
+		    {
+		      glistener_insert_text(g, (const char *)(spaces + 1));
+		      free(spaces);
+		    }
 		  else
 		    {
 		      GtkTextIter s1, e1;
 		      int start = 0, end = 0;
 		      char *text;
 		      
-		      glistener_insert_text(g, (const char *)(indent_spaces + cols - 2)); /* default indentation */
-		      
+		      glistener_insert_text(g, (const char *)spaces); /* default indentation */
+		      free(spaces);
+
 		      gtk_text_buffer_get_iter_at_offset(g->buffer, &start_limit, oparen_pos);
 		      gtk_text_buffer_get_iter_at_offset(g->buffer, &end_limit, epos);
 		      find_surrounding_word(g, oparen_pos + 1, is_delimiter, &start, &end, &start_limit, &end_limit);
@@ -2471,9 +2477,6 @@ static void glistener_completion(glistener *g, int pos)
 					{
 					  if (cline - bline == 1)
 					    glistener_insert_text(g, "  ");
-					}
-				      else
-					{
 					}
 				    }
 				}
