@@ -2,7 +2,6 @@
 ;;;
 ;;; tie the C library into the *libc* environment
 
-;(require cload.scm)
 (provide 'libc.scm)
 
 ;; if loading from a different directory, pass that info to C

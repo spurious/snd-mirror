@@ -38837,6 +38837,7 @@ static bool call_begin_hook(s7_scheme *sc)
    */
   opcode_t op;
   op = sc->op;
+
   push_stack(sc, OP_BARRIER, sc->args, sc->code);
   sc->begin_hook(sc, &result);
   if (result)
@@ -67313,6 +67314,7 @@ s7_scheme *s7_init(void)
 /* -------------------------------- repl (in progress...) -------------------------------- */
 
 #if WITH_MAIN
+
 int main(int argc, char **argv)
 {
   s7_load(s7_init(), "repl.scm");
@@ -67378,5 +67380,6 @@ int main(int argc, char **argv)
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * OP_STRING_p1? add_cs1
  * glistener.c might mess up if > 80 cols upon TAB
+ * obj->str readable print-length if func (curently get ...)
  */
  

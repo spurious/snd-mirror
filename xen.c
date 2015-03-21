@@ -1327,84 +1327,6 @@ void xen_s7_set_repl_prompt(const char *new_prompt)
 }
 
 
-#if WITH_READLINE
-typedef struct {int loc, size, len; const char *text; const char **matches;} completions;
-
-static bool find_match(const char *symbol_name, void *udata)
-{
-  completions *data = (completions *)udata;
-  if (strncmp(data->text, symbol_name, data->len) == 0)
-    {
-      if (data->matches == NULL)
-	{
-	  data->matches = (const char **)calloc(8, sizeof(char *));
-	  data->size = 8;
-	  data->loc = 0;
-	}
-      else
-	{
-	  if (data->loc >= data->size)
-	    {
-	      int i;
-	      data->size *= 2;
-	      data->matches = (const char **)realloc(data->matches, data->size * sizeof(char *));
-	      for (i = data->loc; i < data->size; i++) data->matches[i] = NULL;
-	    }
-	}
-      data->matches[data->loc] = symbol_name;
-      data->loc++;
-    }
-  return(false);
-}
-
-static int complete_loc = 0;
-static completions *complete_data = NULL;
-static char *copy_match(const char *text, int state)
-{
-  if (complete_loc < complete_data->loc)
-    {
-      char *result;
-      int len;
-      len = strlen(complete_data->matches[complete_loc]);
-      result = (char *)calloc(len + 1, sizeof(char));
-      memcpy((void *)result, (void *)complete_data->matches[complete_loc], len);
-      complete_loc++;
-      return(result);
-    }
-  return(NULL);
-}
-
-static char **xen_completion(const char *text, int start, int end)
-{
-  completions *data; 
-  char **matches = NULL;
-  /* start and end are indices into the original line buffer, we just want text here */
-
-  if (!text) return(NULL);
-
-  data = (completions *)calloc(1, sizeof(completions));
-  data->len = strlen(text);
-  data->text = text;
-		
-  s7_for_each_symbol_name(s7, find_match, (void *)data);
-  
-  /* now to make readline happy, we apparently have to give it copies of everything! */
-  if (data->matches)
-    {
-      complete_data = data;
-      complete_loc = 0;
-      matches = rl_completion_matches(text, copy_match);
-      free(data->matches);
-    }
-
-  free(data);
-  complete_data = NULL;
-  return(matches);
-}
-
-#include <curses.h>
-#endif
-
 #if USE_SND
 char *stdin_check_for_full_expression(const char *newstr);
 void stdin_free_str(void);
@@ -1412,39 +1334,13 @@ void stdin_free_str(void);
 
 void xen_repl(int argc, char **argv)
 {
-#if (WITH_READLINE)
-  rl_readline_name = (char *)"xen";
-  rl_attempted_completion_function = xen_completion;
-  /* rl_initialize(); */
-#else
   int size = 512;
   bool expr_ok = true;
   char *buffer = NULL;
   buffer = (char *)calloc(size, sizeof(char));
-#endif
 
   while (true)
     {
-#if WITH_READLINE
-      char *line_read = NULL;
-
-      line_read = readline(xen_s7_repl_prompt);
-      if (line_read)
-	{
-	  char *str;
-	  str = line_read;
-	  while ((str) && (isspace((int)(str[0])))) str++;
-	  if (*str)
-	    {
-	      s7_pointer result;
-	      add_history(str);
-	      result = Xen_eval_C_string(str);
-	      s7_write(s7, result, s7_current_output_port(s7));   /* use write, not display so that strings are in double quotes */
-	      s7_newline(s7, s7_current_output_port(s7));
-	    }
-	  free(line_read);
-	}
-#else
       if (expr_ok)
 	{
 	  fprintf(stdout, "\n%s", xen_s7_repl_prompt);
@@ -1488,11 +1384,8 @@ void xen_repl(int argc, char **argv)
 #endif
 	    }
 	}
-#endif
     }
-#if (!WITH_READLINE)
   free(buffer);
-#endif
 }
 
 

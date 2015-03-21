@@ -32,9 +32,9 @@
 	    (error 'wrong-type-arg "let->list argument should be an environment: ~A" str)))
       ))
 
-(if (not (defined? 'let?))
+(if (not (defined? 'environment?))
     (begin
-      (define let? let?)
+      (define environment? let?)
       (define global-environment rootlet)
       (define-constant initial-environment unlet)
       (define outer-environment outlet)
@@ -292,6 +292,7 @@
 			   'gcd +number+
 			   'gensym +symbol+
 			   'gensym? +boolean+
+			   'get-output-string +string+
 			   'hash-table +hash-table+
 			   'hash-table* +hash-table+
 			   'hash-table-entries +integer+
@@ -355,6 +356,10 @@
 			   'numerator +integer+
 			   'object->string +string+
 			   'odd? +boolean+
+			   'open-input-file +input-port+
+			   'open-output-file +output-port+
+			   'open-input-string +input-port+
+			   'open-output-string +output-port+
 			   'openlet +let+
 			   'openlet? +boolean+
 			   'outlet +let+
@@ -533,6 +538,7 @@
 			  'gc boolean?
 			  'gcd (list real? real?)
 			  'gensym string?
+			  'get-output-string output-port?
 			  'hash-table-entries hash-table?
 			  'hash-table-ref (list hash-table?)
 			  'hash-table-set! (list hash-table?)

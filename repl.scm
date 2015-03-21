@@ -4,26 +4,26 @@
 (require libc.scm)
 
 (when (not (defined? '*repl*))
-  (define *repl*         ; environment that holds the REPL functions
-    (let ((*prompt* #f)  ; function to get/set prompt
-	  (*keymap* #f)  ; function to get/set keymap entries
-	  (*history* #f) ; function to get/set history buffer entries
-	  (*run* #f)     ; function that fires up a REPL
-	  (*keymap-let*  ; environment for keymap functions to access all the REPL innards (cursor-position etc)
+  (define *repl*                 ; environment that holds the REPL functions
+    (let ((*prompt* #f)          ; function to get/set prompt
+	  (*keymap* #f)          ; function to get/set keymap entries
+	  (*history* #f)         ; function to get/set history buffer entries
+	  (*save-history* #f)    ; function to save the current history buffer entries in a file
+	  (*restore-history* #f) ; function to restore history buffer entries from previous *save-history*
+	  (*run* #f)             ; function that fires up a REPL
+	  (*keymap-let*          ; environment for keymap functions to access all the REPL innards (cursor-position etc)
       
       (with-let (sublet *libc*)
 	
-	(define cursor-home (format #f "~C[H" #\escape))
 	(define cursor-right (format #f "~C[C" #\escape))
 	(define cursor-left (format #f "~C[D" #\escape))
 	(define erase-line (format #f "~C[2K" #\escape))
 	(define erase-to-eol (format #f "~C[0K" #\escape))
 	
-	(define (bold text) (format #f "~C[1m~A~C[21m" #\escape text #\escape)) ; or is it 22??
-	(define (underline text) (format #f "~C[4m~A~C[24m" #\escape text #\escape))
-	(define (blink text) (format #f "~C[5m~A~C[25m" #\escape text #\escape))
+	;(define (bold text) (format #f "~C[1m~A~C[21m" #\escape text #\escape)) ; or is it 22??
+	;(define (underline text) (format #f "~C[4m~A~C[24m" #\escape text #\escape))
 	(define (red text) (format #f "~C[31m~A~C[0m" #\escape text #\escape)) ; black=30, green=32, yellow=33, blue=34
-	(define (foreground text color) (format *stderr* "~C[38;5;~Dm~A~C[0m" #\escape color text #\escape)) ; color 0..255
+	;(define (foreground text color) (format *stderr* "~C[38;5;~Dm~A~C[0m" #\escape color text #\escape)) ; color 0..255 if TERM=xterm-256color
 	
 	(define (cursor-forward n) (format #f "~C[~DC" #\escape n))
 	(define (cursor-backward n) (format #f "~C[~DD" #\escape n))
@@ -76,7 +76,7 @@
 			  (car files)
 			  (cadr files)))))))
 	
-	(let ((history-buffer (make-vector 10 #f))
+	(let ((history-buffer (make-vector 100 #f))
 	      (current-history-size 100)
 	      (history-position 0)
 	      (history-index 0))
@@ -107,7 +107,10 @@
 	      (lambda (port)
 		(format port "(set! history-position ~D)~%" history-position)
 		(format port "(set! current-history-size ~D)~%" current-history-size)
-		(format port "(set! history-buffer ~A)~%" (object->string history-buffer :readable)))))
+		(let ((pl (*s7* 'print-length)))
+		  (set! (*s7* 'print-length) 1024)
+		  (format port "(set! history-buffer ~A)~%" (object->string history-buffer))
+		  (set! (*s7* 'print-length) pl)))))
 	  
 	  (define* (restore-history (file "repl-history.scm"))
 	    (load file (curlet)))
@@ -136,31 +139,42 @@
 			    (lambda (c f)
 			      (set! (*keymap (char->integer c)) f))))
 	    
-	    (define C-a 1) ; #\x01 etc
+	    (define C-a 1)     ; #\x01 etc
 	    (define C-b 2)
 	    (define C-d 4)
 	    (define C-e 5)
 	    (define C-f 6)
 	    (define C-h 8)
 	    (define C-k 11)
-	    (define C-m 13) ; #\return
+	    (define C-m 13)    ; #\return
 	    (define C-n 14)
 	    (define C-p 16)
 	    (define C-r 18)
 	    (define C-t 20)
 	    (define C-_ 31)
 	    (define Tab 9)
-	    (define Enter 10) ; #\linefeed
+	    (define Enter 10)  ; #\linefeed
 	    (define Backspace 127)
-	    (define Escape (char->integer #\escape))
+	    (define Escape 27) ; #\escape
 	    
 	    (let ((main-keyfunc (lambda (c)
-				  ;; (format *stderr* "~D" (char->integer c))
-				  (set! current-line (string-append current-line (string c)))
+				  (if (= cursor-position (length current-line))
+				      (set! current-line (string-append current-line (string c)))
+				      (if (= cursor-position 0)
+					  (set! current-line (string-append (string c) current-line))
+					  (set! current-line (string-append 
+							      (substring current-line 0 cursor-position) 
+							      (string c) 
+							      (substring current-line cursor-position)))))
 				  (set! cursor-position (+ cursor-position 1))
 				  (set! history-index 0)
-				  (format *stderr* "~C" c))))
+				  (format *stderr* "~C~A~A~A" #\return erase-to-eol prompt-string current-line)
+				  (format *stderr* "~C~A" #\return (cursor-forward (+ prompt-length cursor-position)))))
+		  (no-op-keyfunc (lambda (c) #f)))
 	      (do ((i 0 (+ i 1)))
+		  ((= i 32))
+		(set! (keymap-functions i) no-op-keyfunc))
+	      (do ((i 32 (+ i 1)))
 		  ((= i 256))
 		(set! (keymap-functions i) main-keyfunc)))
 	    
@@ -229,6 +243,7 @@
 					       (lambda ()
 						 (format *stderr* "~%~S~%" (eval-string current-line keymap-let)))
 					       (lambda (type info)
+						 (format *stderr* "~%~A: " (red "error"))
 						 (apply format *stderr* info)
 						 (newline *stderr*)))
 					     (set! current-line "")
@@ -252,7 +267,8 @@
 	    (set! (keymap-functions Backspace) (keymap-functions C-h))
 	    
 	    (set! (keymap-functions C-p) (lambda (c)
-					   (when (and (zero? history-index) (> (length current-line) 0))
+					   (when (and (zero? history-index) 
+						      (> (length current-line) 0))
 					     (set! (history) current-line)
 					     (set! history-index -1))
 					   (set! history-index (max (- history-index 1) (- current-history-size)))
@@ -274,16 +290,16 @@
 					      (when (char=? (c 0) #\[)
 						(read fn cc 1)
 						(case (c 0)
-						  ((#\A) (format *stderr* "up arrow")) ; esc n A?
-						  ((#\B) (format *stderr* "down arrow")) ; esc n B?
+						  ;((#\A) (format *stderr* "up arrow")) ; esc n A?
+						  ;((#\B) (format *stderr* "down arrow")) ; esc n B?
 						  
 						  ((#\C) ((keymap-functions C-f) C-f))
 						  ((#\D) ((keymap-functions C-b) C-b))
 						  
-						  ((#\1) 
-						   (read fn cc 1) ; random -- good up to F5 anyway?
-						   (format *stderr* "F~D?" (- (char->integer (c 0)) (char->integer #\0)))
-						   (read fn cc 1)) ; tilde (126)
+						  ;((#\1) 
+						  ; (read fn cc 1) ; random -- good up to F5 anyway?
+						  ; (format *stderr* "F~D?" (- (char->integer (c 0)) (char->integer #\0)))
+						  ; (read fn cc 1)) ; tilde (126)
 						  (else (format *stderr* "got ~C" (c 0)))
 						  ))))
 	    
@@ -313,21 +329,44 @@
 	      (tcsetattr fn TCSAFLUSH saved)
 	      (#_exit))
 		
-	    (define (exit)
+	    (define (exit)       ; when user types "(exit)" we'll try to clean up first
 	      (newline *stderr*)
 	      (tty-reset 0))
 		
 	    (set! keymap-let (curlet))
 
 	    (define (run)
+	      ;; check for dumb terminal
+	      (let ((terminal (getenv "TERM")))
+		(if (string=? terminal "dumb")  ; just read direct -- emacs shell for example
+		    (let ((buf (c-pointer->string (calloc 512 1) 512)))
+		      (define exit #_exit)      ; don't mess with tty-reset in this case
+		      (format *stderr* "> ")
+		      (do ((b (fgets buf 512 stdin) (fgets buf 512 stdin)))
+			  ((zero? (length b))
+			   (exit))
+			(let ((len (strlen buf)))
+			  (when (positive? len)
+			    (do ((i 0 (+ i 1)))
+				((or (not (char-whitespace? (buf i)))
+				     (= i len))
+				 (when (< i len)
+				   (catch #t
+				     (lambda ()
+				       (format *stderr* "~S~%" (eval-string (substring buf 0 (- (strlen buf) 1)))))
+				     (lambda (type info)
+				       (format *stderr* "~error: ")
+				       (apply format *stderr* info)
+				       (newline *stderr*)))
+				   (format *stderr* "> "))))))))))
+
+	      ;; not a dumb terminal -- hopefully all others accept vt100 codes
 	      (set! saved (termios.make))
-		
 	      (if (or (equal? (signal SIGINT tty-reset) SIG_ERR)
 		      (equal? (signal SIGQUIT tty-reset) SIG_ERR)
 		      (equal? (signal SIGTERM tty-reset) SIG_ERR)
 		      (negative? (tcgetattr fn saved)))
 		  (exit))
-	      
 	      (let ((buf (termios.make)))
 		(tcgetattr fn buf)
 		(termios.set_c_lflag buf (logand (termios.c_lflag buf) (lognot (logior ECHO ICANON))))
@@ -350,17 +389,14 @@
 
       (set! *keymap* (*keymap-let* 'keymap))
       (set! *history* (*keymap-let* 'history))
+      (set! *save-history* (*keymap-let* 'save-history))
+      (set! *restore-history* (*keymap-let* 'restore-history))
       (set! *prompt* (*keymap-let* 'prompt))
       (set! *run* (*keymap-let* 'run))
 
       (curlet))))
   
 ((*repl* '*run*))
-
-;; need prompt handling (multi), paren matches, multiline edits
-;; function/arrow keys I guess etc
-;; doc repl.scm
-;; obj->str readable print-length if func, readable should look for cycles, and print more cleanly if none
 
 #|
 to add/change keymap entry:
@@ -371,3 +407,8 @@ to add/change keymap entry:
 	  ;; access here to all internal repl vars and funcs
 	  )))
 |#
+
+;; need paren matches, multiline edits
+;;   back scan: not #\(, watch for "", )->++ count, (-> --count, count==0 we're there, count starts as 1 I guess
+;; test small term cases like word-wrap 
+;; test the circle in history
