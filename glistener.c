@@ -1820,8 +1820,6 @@ static void eval_text(glistener *g, GtkTextIter *start, GtkTextIter *end)
   char *text;
 
   text = gtk_text_buffer_get_text(g->buffer, start, end, false);
-  /* fprintf(stderr, "text: %s\n", text); */
-
   if (text)
     {
       GtkTextIter s, e, cursor_iter;

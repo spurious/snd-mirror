@@ -31,6 +31,28 @@
 	(define (cursor-backward n) (format #f "~C[~DD" #\escape n))
 	(define (word-wrap on) (format *stderr* "~C[7~A" #\escape (if on "h" "l")) on)
 
+	;; not sure this is useful -- maybe in multiline case
+	(define (cursor-coords)
+	  (let* ((c (string #\null #\null))
+		 (cc (string->c-pointer c))
+		 (fn (fileno stdin)))
+	    (format *stderr* "~C[6n" #\escape)
+	    (do ((b (read fn cc 1) (read fn cc 1)))
+		((char=? (c 0) #\escape)))
+	    (read fn cc 1) 
+	    (and (char=? (c 0) #\[)
+		 (let ((y 0)
+		       (x 0))
+		   (do ((b (read fn cc 1) (read fn cc 1)))
+		       ((not (char-numeric? (c 0))))
+		     (set! y (+ (* 10 y) (- (char->integer (c 0)) (char->integer #\0)))))
+		   (and (char=? (c 0) #\;)
+			(do ((b (read fn cc 1) (read fn cc 1)))
+			    ((not (char-numeric? (c 0)))
+			     (and (char=? (c 0) #\R)
+				  (cons x y)))
+			  (set! x (+ (* 10 x) (- (char->integer (c 0)) (char->integer #\0))))))))))
+
 	(define (symbol-completion text)
 	  (let ((st (symbol-table))
 		(len (length text))
@@ -128,6 +150,23 @@
 		 (cc (string->c-pointer c))
 		 (fn (fileno stdin))
 		 (saved #f))
+
+	    (define-macro (with-repl-let expr)
+	      ;; this is tricky.  We want the user's actions in the repl to appear to take place
+	      ;;   in the rootlet, but we also want local repl functions and variables to be accessible
+	      ;;   without the verbose ((*repl* 'repl-let) 'cursor-position) business.  So, the eval-string
+	      ;;   of user-type-in uses (rootlet) and binds for that call *unbound-variable-hook* to 
+	      ;;   check repl-let.  Maybe this is a bad idea -- since repl-let is chained to libc,
+	      ;;   we might get confusing shadowing.  Here (not in the repl) for example, read is
+	      ;;   libc's read, not s7's.
+	      `(let ((old-hook (hook-functions *unbound-variable-hook*)))
+		 (set! (hook-functions *unbound-variable-hook*)
+		       (cons (lambda (h)
+			       (set! (h 'result) ((*repl* 'repl-let) (h 'variable))))
+			     old-hook))
+		 (let ((result ,expr))
+		   (set! (hook-functions *unbound-variable-hook*) old-hook)
+		   result)))
 	    
 	    (define prompt (dilambda
 			    (lambda ()
@@ -269,7 +308,7 @@
 					     (set! red-par-pos #f)
 					     (catch #t
 					       (lambda ()
-						 (format *stderr* "~%~S~%" (eval-string current-line (curlet))))
+						 (format *stderr* "~%~S~%" (with-repl-let (eval-string current-line (rootlet)))))
 					       (lambda (type info)
 						 (format *stderr* "~%~A: " (red "error"))
 						 (apply format *stderr* info)
@@ -411,7 +450,10 @@
 				    (zero? oparens))
 			       (set! new-red-pos i)))
 			  ((#\") 
-			   (set! dquotes (modulo (+ dquotes 1) 2)))
+			   (when (or (= i 0)
+				     (= dquotes 0)
+				     (not (char=? (current-line (- i 1)) #\\)))
+			     (set! dquotes (modulo (+ dquotes 1) 2))))
 			  ((#\;) 
 			   (if (zero? dquotes)
 			       (set! new-red-pos #t))))))
@@ -428,24 +470,25 @@
 			(set! red-par-pos #f)
 			(display-line)))))
 
+	    ;; we're in libc here, so exit is libc's exit!
 	    (define (tty-reset no)
 	      (tcsetattr fn TCSAFLUSH saved)
 	      (#_exit))
 		
-	    (define (exit)       ; when user types "(exit)" we'll try to clean up first
-	      (newline *stderr*)
-	      (tty-reset 0))
+	    (set! ((rootlet) 'exit) ; we'd like this to happen when user types "(exit)"
+		  (lambda ()
+		    (newline *stderr*)
+		    (tty-reset 0)))
 
 	    (define (run)
 	      ;; check for dumb terminal
 	      (let ((terminal (getenv "TERM")))
 		(if (string=? terminal "dumb")  ; just read direct -- emacs shell for example
 		    (let ((buf (c-pointer->string (calloc 512 1) 512)))
-		      (define exit #_exit)      ; don't mess with tty-reset in this case
 		      (format *stderr* "> ")
 		      (do ((b (fgets buf 512 stdin) (fgets buf 512 stdin)))
 			  ((zero? (length b))
-			   (exit))
+			   (#_exit))
 			(let ((len (strlen buf)))
 			  (when (positive? len)
 			    (do ((i 0 (+ i 1)))
@@ -454,7 +497,7 @@
 				 (when (< i len)
 				   (catch #t
 				     (lambda ()
-				       (format *stderr* "~S~%" (eval-string (substring buf 0 (- (strlen buf) 1)) (curlet))))
+				       (format *stderr* "~S~%" (with-repl-let (eval-string (substring buf 0 (- (strlen buf) 1)) (rootlet)))))
 				     (lambda (type info)
 				       (format *stderr* "error: ")
 				       (apply format *stderr* info)
@@ -467,7 +510,7 @@
 		      (equal? (signal SIGQUIT tty-reset) SIG_ERR)
 		      (equal? (signal SIGTERM tty-reset) SIG_ERR)
 		      (negative? (tcgetattr fn saved)))
-		  (exit))
+		  (#_exit))
 	      (let ((buf (termios.make)))
 		(tcgetattr fn buf)
 		(termios.set_c_lflag buf (logand (termios.c_lflag buf) (lognot (logior ECHO ICANON))))
@@ -512,3 +555,5 @@ to add/change keymap entry:
 ;; need multiline edits
 ;; if cursor back not a complete expr, put cr[prompt-spaces] in string and edit 
 ;;   need a way to move between lines, and keep cursor tracked by last newline
+;; M-u M-l maybe M-d and M-b or whatever
+;; need some sort of auto-test
