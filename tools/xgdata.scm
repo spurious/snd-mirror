@@ -9147,5 +9147,4 @@
 (CFNC-3.16 "void gtk_popover_set_transitions_enabled GtkPopover* popover gboolean transitions_enabled")
 (CFNC-3.16 "gboolean gtk_popover_get_transitions_enabled GtkPopover* popover")
 
-
-
+;;; 3.16.0

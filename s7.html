@@ -3840,7 +3840,9 @@ a modern GUI leaves formatting decisions to a text or table widget.
 <p>A hook is a function created by make-hook, and called (normally from C) when something interesting happens.
 In GUI toolkits hooks are called callback-lists, in CL conditions,
 in other contexts watchpoints or signals.  s7 itself has several
-hooks: <a href="#errorhook">*error-hook*</a>, <a href="#unboundvariablehook">*unbound-variable-hook*</a>, and <a href="#loadhook">*load-hook*</a>.
+hooks: <a href="#errorhook">*error-hook*</a>, 
+<a href="#unboundvariablehook">*unbound-variable-hook*</a>, *missing-close-paren-hook*,
+and <a href="#loadhook">*load-hook*</a>.
 make-hook is:
 </p>
 
@@ -5763,7 +5765,7 @@ Better ideas are always welcome!
 <li>*s7*
 <li>nan.0 -nan.0 inf.0 -inf.0 (what crappy names! nan.0 is an inexact integer that is not a number?)
 <li>most-positive-fixnum most-negative-fixnum
-<li>*unbound-variable-hook* *load-hook* *error-hook*
+<li>*unbound-variable-hook* *missing-close-paren-hook* *load-hook* *error-hook*
 </ul>
 
 <p>__func__ is the name (or name and location) of the function currently being called, as in C.

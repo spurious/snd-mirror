@@ -765,6 +765,7 @@ struct s7_scheme {
   s7_pointer sharp_readers;           /* the binding pair for the global *#readers* list */
   s7_pointer load_hook;               /* *load-hook* hook object */
   s7_pointer unbound_variable_hook;   /* *unbound-variable-hook* hook object */
+  s7_pointer missing_close_paren_hook;
   s7_pointer error_hook;              /* *error-hook* hook object */
   s7_pointer direct_str;
 
@@ -797,7 +798,8 @@ struct s7_scheme {
 
   #define INITIAL_STRBUF_SIZE 1024
   unsigned int strbuf_size;
-  char *strbuf;
+  #define TMPBUF_SIZE 1024
+  char *strbuf, *tmpbuf;
 
   char *read_line_buf;
   unsigned int read_line_buf_size;
@@ -1634,6 +1636,10 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define string_length(p)              (p)->object.string.length
 #define string_hash(p)                (p)->object.string.hash
 #define string_needs_free(p)          (p)->object.string.str_ext.needs_free
+
+#define tmpbuf_malloc(P, Len)         do {if ((Len) < TMPBUF_SIZE) P = sc->tmpbuf; else P = (char *)malloc((Len) * sizeof(char));} while (0)
+#define tmpbuf_calloc(P, Len)         do {if ((Len) < TMPBUF_SIZE) {P = sc->tmpbuf; memset((void *)P, 0, Len);} else P = (char *)calloc((Len) * sizeof(char));} while (0)
+#define tmpbuf_free(P, Len)           do {if ((Len) >= TMPBUF_SIZE) free(P);} while (0)
 
 #define character(p)                  (p)->object.chr.c
 #define upper_character(p)            (p)->object.chr.up_c
@@ -4529,13 +4535,13 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
 	      char *kstr;
 	      unsigned int klen;
 	      klen = symbol_name_length(x) - 1;
-	      kstr = (char *)malloc(symbol_name_length(x) * sizeof(char));
-	      kstr[klen] = 0;
+	      tmpbuf_malloc(kstr, klen + 1);
 	      memcpy((void *)kstr, (void *)name, klen);
+	      kstr[klen] = 0;
 	      typeflag(x) |= (T_IMMUTABLE | T_KEYWORD);
 	      keyword_symbol(x) = make_symbol_with_length(sc, kstr, klen);
 	      global_slot(x) = s7_make_slot(sc, sc->NIL, x, x);
-	      free(kstr);
+	      tmpbuf_free(kstr, klen + 1);
 	    }
 	}
     }
@@ -4704,13 +4710,13 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   s7_pointer x;
 
   len = safe_strlen(prefix) + 32;
-  name = (char *)malloc(len * sizeof(char));
+  tmpbuf_malloc(name, len);
   /* there's no point in heroic efforts here to avoid name collisions -- the user can screw up no matter what we do */
   len = snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++);
   hash = raw_string_hash((const unsigned char *)name, len);
   location = hash % SYMBOL_TABLE_SIZE;
   x = new_symbol(sc, name, len, hash, location);  /* not T_GENSYM -- might be called from outside */
-  free(name);
+  tmpbuf_free(name, len);
   return(x);
 }
 
@@ -6723,12 +6729,12 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   char *name;
   unsigned int slen;
   slen = safe_strlen(key);
-  name = (char *)malloc((slen + 2) * sizeof(char));
+  tmpbuf_malloc(name, slen + 2);
   name[0] = ':';                                     /* prepend ":" */
   name[1] = '\0';
   name = strcat(name, key);
   sym = make_symbol_with_length(sc, name, slen + 1); /* keyword slot etc taken care of here (in new_symbol actually) */
-  free(name);
+  tmpbuf_free(name, slen + 2);
   return(sym);
 }
 
@@ -22999,13 +23005,11 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
 
 static FILE *search_load_path(s7_scheme *sc, const char *name)
 {
-  int i, len, name_len;
+  int i, len;
   s7_pointer lst;
 
   lst = s7_load_path(sc);
   len = s7_list_length(sc, lst);
-  name_len = safe_strlen(name);
-
   for (i = 0; i < len; i++)
     {
       const char *new_dir;
@@ -23013,8 +23017,8 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
       if (new_dir)
 	{
 	  FILE *fp;
-	  snprintf(sc->strbuf, sc->strbuf_size, "%s/%s", new_dir, name);
-	  fp = fopen(sc->strbuf, "r");
+	  snprintf(sc->tmpbuf, TMPBUF_SIZE, "%s/%s", new_dir, name);
+	  fp = fopen(sc->tmpbuf, "r");
 	  if (fp) return(fp);
 	}
     }
@@ -23033,7 +23037,7 @@ static s7_pointer s7_load_1(s7_scheme *sc, const char *filename, s7_pointer e)
     {
       fp = search_load_path(sc, filename);
       if (fp) 
-	new_filename = copy_string(sc->strbuf); /* (require libc.scm) for example needs the directory for cload in some cases */
+	new_filename = copy_string(sc->tmpbuf); /* (require libc.scm) for example needs the directory for cload in some cases */
     }
   if (!fp)
     return(file_error(sc, "load", "can't open", filename));
@@ -23869,25 +23873,25 @@ static const char *c_closure_name(s7_scheme *sc, s7_pointer closure, int *nlen)
     case T_BACRO_STAR:   base_name = "bacro*";  break;
     }
   if (is_null(closure_args(closure)))
-    (*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<%s ()>", base_name);
+    (*nlen) = snprintf(sc->tmpbuf, TMPBUF_SIZE, "#<%s ()>", base_name);
   else
     {
       if (is_symbol(closure_args(closure)))
-	(*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<%s %s>", base_name, symbol_name(closure_args(closure)));
+	(*nlen) = snprintf(sc->tmpbuf, TMPBUF_SIZE, "#<%s %s>", base_name, symbol_name(closure_args(closure)));
       else
 	{
 	  x = closure_args(closure);
 	  if (is_null(cdr(x)))
-	    (*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<%s (%s)>", base_name,
+	    (*nlen) = snprintf(sc->tmpbuf, TMPBUF_SIZE, "#<%s (%s)>", base_name,
 			       (is_pair(car(x))) ? symbol_name(caar(x)) : symbol_name(car(x)));
-	  else (*nlen) = snprintf(sc->strbuf, sc->strbuf_size, "#<%s (%s %s%s%s)>", base_name,
+	  else (*nlen) = snprintf(sc->tmpbuf, TMPBUF_SIZE, "#<%s (%s %s%s%s)>", base_name,
 				  (is_pair(car(x))) ? symbol_name(caar(x)) : symbol_name(car(x)),
 				  (is_pair(cdr(x))) ? "" : ". ",
 				  (is_pair(cdr(x))) ? ((is_pair(cadr(x))) ? symbol_name(caadr(x)) : symbol_name(cadr(x))) : symbol_name(cdr(x)),
 				  ((is_pair(cdr(x))) && (!is_null(cddr(x)))) ? " ..." : "");
 	}
     }
-  return(sc->strbuf);
+  return(sc->tmpbuf);
 }
 
 
@@ -38753,6 +38757,16 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
   int len;
   char *msg, *syntax_msg = NULL;
   s7_pointer pt;
+
+  /* check *missing-close-paren-hook* */
+  if (!is_null(sc->missing_close_paren_hook))
+    {
+      s7_pointer result;
+      result = s7_call(sc, sc->missing_close_paren_hook, sc->NIL);
+      if (result != sc->UNSPECIFIED)
+	return(g_throw(sc, list_1(sc, result)));
+    }
+
   pt = sc->input_port;
 
   /* it's hard to give a good idea here of where the missing paren is because we've already
@@ -65944,6 +65958,7 @@ s7_scheme *s7_init(void)
 
   sc->strbuf_size = INITIAL_STRBUF_SIZE;
   sc->strbuf = (char *)calloc(sc->strbuf_size, sizeof(char));
+  sc->tmpbuf = (char *)malloc(TMPBUF_SIZE * sizeof(char));
   sc->print_width = MAX_STRING_LENGTH;
 
   sc->initial_string_port_length = 128;
@@ -67274,15 +67289,23 @@ s7_scheme *s7_init(void)
 
   /* -------- *unbound-variable-hook* -------- */
   sc->unbound_variable_hook = s7_eval_c_string(sc, "(make-hook 'variable)");
-  s7_define_constant_with_documentation(sc, "*unbound-variable-hook*", sc->unbound_variable_hook, "*unbound-variable-hook* functions are called when an unbound variable is encountered, passed (hook 'variable).");
+  s7_define_constant_with_documentation(sc, "*unbound-variable-hook*", sc->unbound_variable_hook, 
+					"*unbound-variable-hook* functions are called when an unbound variable is encountered, passed (hook 'variable).");
+
+  /* -------- *missing-close-paren-hook* -------- */
+  sc->missing_close_paren_hook = s7_eval_c_string(sc, "(make-hook)");
+  s7_define_constant_with_documentation(sc, "*missing-close-paren-hook*", sc->missing_close_paren_hook, 
+					"*missing-close-paren-hook* functions are called when the reader thinks a close paren is missing");
 
   /* -------- *load-hook* -------- */
   sc->load_hook = s7_eval_c_string(sc, "(make-hook 'name)");
-  s7_define_constant_with_documentation(sc, "*load-hook*", sc->load_hook, "*load-hook* functions are invoked by load, passing the to-be-loaded filename as (hook 'name)");
+  s7_define_constant_with_documentation(sc, "*load-hook*", sc->load_hook, 
+					"*load-hook* functions are invoked by load, passing the to-be-loaded filename as (hook 'name)");
 
   /* -------- *error-hook* -------- */
   sc->error_hook = s7_eval_c_string(sc, "(make-hook 'type 'data)");
-  s7_define_constant_with_documentation(sc, "*error-hook*", sc->error_hook, "*error-hook* functions are called in the error handler, passed (hook 'type) and (hook 'data).");
+  s7_define_constant_with_documentation(sc, "*error-hook*", sc->error_hook, 
+					"*error-hook* functions are called in the error handler, passed (hook 'type) and (hook 'data).");
 
   s7_define_constant(sc, "*s7*",
     s7_openlet(s7_inlet(sc,
@@ -67393,5 +67416,6 @@ int main(int argc, char **argv)
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * OP_STRING_p1? add_cs1
  * also obj->str vectors (and other sequences) should be prettier if no cycles
+ * use tmpbuf more
  */
  
