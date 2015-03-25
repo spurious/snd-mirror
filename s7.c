@@ -25308,7 +25308,7 @@ static void e_to_p(s7_scheme *sc, s7_pointer x, s7_pointer port, use_write_t use
     }
 }
 
-static void environment_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
+static void let_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
   /* if outer env points to (say) method list, the object needs to specialize object->string itself
    */
@@ -25618,7 +25618,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_ENVIRONMENT:
-      environment_to_port(sc, obj, port, use_write, to_file, ci);
+      let_to_port(sc, obj, port, use_write, to_file, ci);
       break;
 
     case T_BOOLEAN:
