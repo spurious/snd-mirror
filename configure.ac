@@ -52,7 +52,6 @@ VERSION=15.5
 #   --without-fftw        omit FFTW even if it exists
 #   --with-pulseaudio     use PulseAudio
 #   --with-portaudio      use portaudio
-#   --with-readline       use readline in the repl if --without-gui
 
 
 AC_ARG_WITH(gtk,         [  --with-gtk		  use Gtk+ to build Snd])
@@ -78,7 +77,6 @@ AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
 AC_ARG_WITH(fftw,        [  --with-fftw		  use fftw, default=yes])
 AC_ARG_WITH(gmp,         [  --with-gmp		  include multiprecision arithmetic via gmp, mpfr, and mpc, default=no])
 AC_ARG_WITH(audio,       [  --without-audio         don't include any audio functionality])
-AC_ARG_WITH(readline,    [  --with-readline         use readline in the repl if no gui])
 
 AC_ARG_WITH(temp-dir,    [  --with-temp-dir	  directory to use for temp files], AC_DEFINE_UNQUOTED(MUS_DEFAULT_TEMP_DIR, "${withval}"))
 AC_ARG_WITH(save-dir,    [  --with-save-dir	  directory to use for saved-state files], AC_DEFINE_UNQUOTED(MUS_DEFAULT_SAVE_DIR, "${withval}"))
@@ -737,18 +735,6 @@ case "$host" in
       LDFLAGS="$LDFLAGS -Wl,-export-dynamic"
     fi
 esac
-
-
-
-#--------------------------------------------------------------------------------
-# readline
-#--------------------------------------------------------------------------------
-
-if test "$with_readline" = yes ; then
-  LIBS="$LIBS -lreadline -lncurses"  
-  AC_DEFINE(WITH_READLINE)
-  OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES readline ncurses"
-fi
 
 
 

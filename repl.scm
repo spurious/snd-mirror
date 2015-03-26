@@ -101,7 +101,7 @@
 
 	  
 	  ;; -------- evaluation ---------
-	  (define (badexpr h)  ; *missing-close-paren-hook* function for Enter command
+	  (define (badexpr h)               ; *missing-close-paren-hook* function for Enter command
 	    (set! (h 'result) 'incomplete-expr))
 	  
 	  (define-macro (with-repl-let expr)
@@ -119,8 +119,7 @@
 	  (let ((prompt-string "> ")
 		(prompt-length 2)
 		(current-line "")          ; current expression might be a better name
-		(previous-line #f)         ; for undo via C-_
-		(previous-cursor #f)
+		(previous-line ())         ; for undo via C-_
 		(selection #f)             ; for C-y
 		(cursor-position 0)        ; cursor-position is the logical position (index into current-line)
 		(current-row 0)            ; catch window scrolling
@@ -129,7 +128,8 @@
 		(prompt-col 0)
 		(last-row 0)               ; these hold the window bounds when we start
 		(last-col 0)
-		(input-fd (fileno stdin))) ; either tty input or file input
+		(input-fd (fileno stdin))  ; either tty input or file input
+		(next-char #f))
 
 		 
 	    ;; -------- match parens --------
@@ -178,7 +178,7 @@
 	      (let ((old-red red-par-pos)
 		    (old-line (copy current-line))
 		    (old-cursor cursor-position))
-		(set! current-line (string-append (substring current-line 0 cursor-position) (string #\))))
+		(set! current-line (string-append (substring current-line 0 cursor-position) ")"))
 		(set! cursor-position (length current-line))
 		(check-parens)
 		(set! current-line old-line)
@@ -268,6 +268,7 @@
 	      (set! current-line "")
 	      (set! cursor-position 0)
 	      (set! current-row 0)
+	      (set! previous-line ())
 	      (display-prompt)
 	      (cursor-bounds))
 	    
@@ -328,6 +329,7 @@
 	    (define C-f 6)
 	    (define C-h 8)
 	    (define C-k 11)
+	    (define C-l 12)
 					;(define C-m 13)    ; #\return -- Enter handles this case (crlf?)
 	    (define C-n 14)
 	    (define C-p 16)
@@ -383,10 +385,10 @@
 		      (loop (+ i 1))))))
 
 	    (define (save-line)
-	      (set! previous-line (copy current-line))
-	      (set! previous-cursor cursor-position))
+	      (set! previous-line (cons (cons cursor-position (copy current-line)) previous-line)))
 	    
 	    (let ((main-keyfunc (lambda (c)
+				  (save-line)
 				  (if (= cursor-position (length current-line))
 				      (set! current-line (string-append current-line (string c)))
 				      (if (= cursor-position 0)
@@ -482,11 +484,15 @@
 						   (set! cursor-position (+ cur 1))))))))
 	    
 	    (set! (keymap-functions C-_) (lambda (c)
-					   (when previous-line
-					     (set! current-line previous-line)
-					     (set! previous-line #f)
-					     (set! cursor-position previous-cursor)
+					   (when (pair? previous-line)
+					     (set! current-line (cdar previous-line))
+					     (set! cursor-position (caar previous-line))
+					     (set! previous-line (cdr previous-line))
 					     #f)))
+
+	    (set! (keymap-functions C-l) (lambda (c)
+					   (format *stderr* "~C[H~C[J" #\escape #\escape)
+					   (new-prompt)))
 	    
 	    (set! (keymap-functions Enter) (lambda (c)
 					     
@@ -560,28 +566,23 @@
 						   (set! cursor-position (min (+ next-start 1 line-pos) next-end)))))))
 
 	    (set! (keymap-functions Escape) (lambda (esc)
-					      (let* ((c (string #\null #\null))
-						     (cc (string->c-pointer c)))
+
+					      (let ((chr (next-char)))
 						;; arrow-keys etc
-						(read input-fd cc 1)
 						
 						;; do we collide with UTF-8 if we treat this as a meta bit?
 						;;  that is, if (c 0) is #\c, did user type M-c?
 						
-						(case (c 0)
+						(case chr
 						  ((#\[)
-						   (read input-fd cc 1)
-						   (case (c 0)
+						   (set! chr (next-char))
+						   (case chr
 						     ((#\A) ((keymap-functions C-p) C-p))
 						     ((#\B) ((keymap-functions C-n) C-n))
 						     ((#\C) ((keymap-functions C-f) C-f))
 						     ((#\D) ((keymap-functions C-b) C-b))
 						     
-						     ;;((#\1) 
-						     ;; (read input-fd cc 1) ; random -- good up to F5 anyway?
-						     ;; (format *stderr* "F~D?" (- (char->integer (c 0)) (char->integer #\0)))
-						     ;; (read input-fd cc 1)) ; tilde (126)
-						     ;; (else (format *stderr* "got ~C" (c 0)))
+						     ;;((#\1) ; random -- good up to F5 anyway?
 						     ))
 						  
 						  ((#\<) (set! cursor-position 0))
@@ -599,6 +600,7 @@
 								 (set! (current-line i) (char-upcase (current-line i)))
 								 (set! cursor-position (word-break i)))
 							       (loop (+ i 1)))))))
+
 						  ((#\p)
 						   (let ((old-index history-index))
 						     (when (and (zero? history-index) 
@@ -677,6 +679,7 @@
 							       (set! completion (symbol-completion (substring current-line (+ loc 1))))))
 						       (when (and completion
 								  (> (length completion) (- end loc 1)))
+							 (save-line)
 							 (if (= end (length current-line))
 							     (set! current-line (string-append (substring current-line 0 (+ loc 1)) completion))
 							     (set! current-line (string-append (substring current-line 0 (+ loc 1)) 
@@ -702,11 +705,14 @@
 		      (row (floor (/ last-row 2))))
 		  (format *stderr* "~C[~D;~DH" #\escape row col)
 		  (format *stderr* "+~NC" (- col 2) #\-)
+
 		  (do ((i 1 (+ i 1))
 		       (lst (*repl* 'helpers) (cdr lst)))
 		      ((null? lst))
-		    (format *stderr* "~C[~D;~DH" #\escape (+ row i) col)
-		    (format *stderr* "~C[K| ~A"  #\escape ((car lst) c)))
+		    (let ((str ((car lst) c)))
+		      (format *stderr* "~C[~D;~DH" #\escape (+ row i) col)
+		      (format *stderr* "~C[K| ~A"  #\escape (if (> (length str) col) (substring str 0 (- col 1)) str))))
+
 		  (format *stderr* "~C[~D;~DH" #\escape (+ row 1 (length (*repl* 'helpers))) col)
 		  (format *stderr* "+~NC" (- col 2) #\-)
 		  (format *stderr* "~C[~D;~DH"   #\escape (cdr coords) (car coords)))))
@@ -719,11 +725,10 @@
 			       cursor-position 
 			       (one-line current-line)))
 		     (lambda (c)
-		       (format #f "len: ~D, selection: ~S, previous: ~S ~S" 
+		       (format #f "len: ~D, selection: ~S, previous: ~S" 
 			       (length current-line) 
 			       (one-line selection) 
-			       previous-cursor 
-			       (one-line previous-line)))
+			       (if (pair? previous-line) (one-line (cdar previous-line)) ())))
 		     (lambda (c)
 		       (format #f "current-row: ~A, prompt-row: ~A" 
 			       current-row 
@@ -786,9 +791,24 @@
 		;;	   (negative? (tcgetattr terminal-fd saved)))
 		;;      (#_exit))
 		
-		(let* ((buf (termios.make))
-		       (c (string #\null #\null))
-		       (cc (string->c-pointer c)))
+		(let ((buf (termios.make))
+		      (max-read-size 1024))
+
+		  (set! next-char                                     ; this indirection is needed if user pastes the selection into the repl
+			(let* ((c (make-string max-read-size #\null)) ; max-read-size sets the limit on the selection size, I think
+			       (cc (string->c-pointer c))
+			       (chars 0)
+			       (ctr 0))
+			  (lambda ()
+			    (when (>= ctr chars)
+			      (set! ctr 0)
+			      (set! chars (read input-fd cc max-read-size))
+			      (if (= chars 0)
+				  (tty-reset terminal-fd)))
+			    (let ((result (c ctr)))
+			      (set! ctr (+ ctr 1))
+			      result))))
+
 		  (set! input-fd (if (not file) 
 				terminal-fd
 				(open file O_RDONLY 0)))
@@ -805,19 +825,16 @@
 		  ;; -------- the repl --------
 		  (display-prompt)
 		  (cursor-bounds)
+		  (if (string=? (getenv "HOME") "/home/bil") (debug-help))
 
-		  ;(debug-help)
-		  
-		  (do ((i (read input-fd cc 1) (read input-fd cc 1)))
-		      ((not (= i 1))
-		       (tty-reset terminal-fd))
-
+		  (do () ()
 		    (catch #t
 		      (lambda ()
-			((keymap-functions (char->integer (c 0))) (c 0))
-			(check-parens)
-			(display-lines)
-			(help (c 0)))
+			(let ((chr (next-char)))
+			  ((keymap-functions (char->integer chr)) chr)
+			  (check-parens)
+			  (display-lines)
+			  (help chr)))
 		      
 		      (lambda (type info)
 			(format *stderr* "internal error: ")
@@ -841,16 +858,22 @@
 
 #|
 to add/change keymap entry:
-(set! (*keymap* loc)
-      (with-let (*repl* 'repl-let)
-	(lambda (c)
-	  ;; access here to all internal repl vars and funcs
-	  )))
+(set! ((*repl* 'keymap) (integer->char 12)) ; C-l will expand to "(lambda "
+      (lambda (c)
+	(with-let (*repl* 'repl-let)
+	   (if (zero? cursor-position)
+	       (set! current-line (string-append "(lambda " current-line))
+	       (if (>= cursor-position (length current-line))
+		   (set! current-line (string-append current-line "(lambda "))
+		   (set! current-line (string-append (substring current-line 0 cursor-position)
+						     "(lambda "
+						     (substring current-line cursor-position)))))
+	   (set! cursor-position (+ cursor-position (length "(lambda "))))))
 
 red lambda prompt: 
-  (with-let (*repl* 'repl-let)
-    (set! prompt-string (bold (red (string #\xce #\xbb #\> #\space))))
-    (set! prompt-length 3)) ; until we get unicode length calc
+(with-let (*repl* 'repl-let)
+  (set! prompt-string (bold (red (string #\xce #\xbb #\> #\space))))
+  (set! prompt-length 3)) ; until we get unicode length calc
 
 to post a help string (kinda tedious, but the helper list is aimed more at posting variable values):
 (set! (*repl* 'helpers)
@@ -877,7 +900,7 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 
 
 
-;; need some sort of auto-test 
-;; with_main->repl as default not special case
-;; possibly add standard scheme-mode extras via function: move by expr (C-M-f and C-M-b, C-M-k C-M-t)
-;; access to M-table
+;; need some sort of auto-test: repl.input
+;; access to M-table: meta-keymaps but accessed through keymap dilambda -- but this requires a string arg, not char
+;; unicode
+;; C-t might be uncanonical

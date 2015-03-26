@@ -1156,7 +1156,7 @@ Snd change log
   11-Nov:    insert-silence.
   10-Nov:    snd 4.8.
   8-Nov:     filter text field also has history (M-p) now.
-  7-Nov:     shell (readline) style M-p and M-n in minibuffer with variable minibuffer-history-length (8).
+  7-Nov:     shell style M-p and M-n in minibuffer with variable minibuffer-history-length (8).
   6-Nov:     various cosmetic changes for the new g++ (Redhat 7.0).
              insert-sound arguments changed (to match mix-sound more closely).
              TODO.Snd.

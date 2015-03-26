@@ -15,11 +15,6 @@
   #pragma warning(disable: 4244)
 #endif
 
-#if WITH_READLINE
-  #include <readline/readline.h>
-  #include <readline/history.h>
-#endif
-
 #include "xen.h"
 
 #define S_gc_off "gc-off"
@@ -447,19 +442,6 @@ static Xen xen_rb_rep(Xen ig)
 {
   Xen val;
   char *str;
-#if WITH_READLINE
-  char *line_read = NULL;
-  line_read = readline(rb_prompt);
-  if ((line_read) && (*line_read))
-    {
-      add_history(line_read);
-      val = xen_rb_eval_string_with_error(line_read);
-      str = Xen_object_to_C_string(val);
-      fprintf(stdout, "%s\n", (str) ? str : "nil");
-      free(line_read);
-      line_read = NULL;
-    }
-#else
   size_t size = 512;
   char **buffer = NULL;
   buffer = (char **)calloc(1, sizeof(char *));
@@ -471,7 +453,6 @@ static Xen xen_rb_rep(Xen ig)
   fprintf(stdout, "%s\n", (str) ? str : "nil");
   free(buffer[0]);
   free(buffer);
-#endif
   return(ig);
 }
 

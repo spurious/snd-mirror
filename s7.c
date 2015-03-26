@@ -67350,9 +67350,16 @@ int main(int argc, char **argv)
   s7_scheme *sc;
 
   sc = s7_init();
-  s7_load(sc, "repl.scm");
-  s7_eval_c_string(sc, "((*repl* 'run))");
-  
+  if (argc == 2)
+    {
+      fprintf(stderr, "load %s\n", argv[1]);
+      s7_load(sc, argv[1]);
+    }
+  else 
+    {
+      s7_load(sc, "repl.scm");
+      s7_eval_c_string(sc, "((*repl* 'run))");
+    }
   return(0);
 }
 
@@ -67373,7 +67380,7 @@ int main(int argc, char **argv)
  * tmap           |      |      | 11.0           5031 4769 4702
  * tcopy          |      |      |                          5080
  * lg             |      |      | 6547 6497 6494 6235 6229 6222
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7184
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7011
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
  * thash          |      |      |                          19.4
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.9
@@ -67418,4 +67425,4 @@ int main(int argc, char **argv)
  * also obj->str vectors (and other sequences) should be prettier if no cycles
  * use tmpbuf more
  */
- 
+

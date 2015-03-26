@@ -53,7 +53,7 @@ cp tools/ffitest.c .
 gcc -o ffitest ffitest.c -g3 -Wall s7.o -lm -I. -ldl
 ffitest
 
-gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -lreadline -lncurses -ldl -lm
+gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -Wl,-export-dynamic -ldl -lm
 
 make clmclean
 make sndinfo
@@ -125,9 +125,9 @@ rm -f config.cache
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --without-gui --with-readline                         ----  '
+echo ' -----                --without-gui '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --without-gui --with-readline
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DWITH_MAIN" --without-gui
 make
 echo ' '
 echo ' '
@@ -203,9 +203,9 @@ rm -f config.cache
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 -without-gui --with-ladspa --without-readline      ----  '
+echo ' ----                 -without-gui --with-ladspa ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -I/usr/local/include" --without-gui --with-ladspa --without-readline
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -I/usr/local/include" --without-gui --with-ladspa
 make
 echo ' '
 echo ' '
@@ -548,9 +548,9 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-ruby --without-gui --with-readline              ---- '
+echo ' -----                --with-ruby --without-gui                             ----- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DDEBUGGING" --with-ruby --without-gui --with-readline
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DDEBUGGING" --with-ruby --without-gui
 make
 echo ' '
 echo ' '
@@ -589,7 +589,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                g++ --with-gtk                                          ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-readline CC=g++ --with-gtk CFLAGS="-Wall"
+./configure --quiet CC=g++ --with-gtk CFLAGS="-Wall"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gtk"

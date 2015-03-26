@@ -698,7 +698,7 @@ void snd_doit(int argc, char **argv)
     }
 #endif
 
-#if (HAVE_SCHEME && WITH_MAIN)
+#if HAVE_SCHEME
   if (!nostdin)
     {
       s7_load(s7, "repl.scm");

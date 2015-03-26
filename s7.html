@@ -263,6 +263,7 @@ indented and on a sort of brownish background.
            <li><a href="#libgsl">libgsl</a>
            <li><a href="#libgdbm">libgdbm</a>
       </ul>
+      <li><a href="#schemerepl">repl.scm</a>
   </ul>
 </ul>
 
@@ -9005,6 +9006,70 @@ thread-safe local variables, which can be saved and communicated between s7 runs
 </pre>
 
 </div>
+
+
+
+<div class="header" id="schemerepl"><h4>repl.scm</h4></div>
+
+<p>repl.scm implements a REPL using vt100 codes and libc.scm.  It includes
+symbol and filename completion, a history buffer, paren matching,
+indentation, multi-line edits, and a debugger window.  You can 
+change the keymap or the prompt, and so on.  All the repl functions are
+exported via the *repl* environment.  One field is 'repl-let which
+gives you access to all the repl's internal variables and functions.
+</p>
+
+<pre class="indented">
+(with-let (*repl* 'repl-let)  ; red lambda prompt
+  (set! prompt-string (bold (red (string #\xce #\xbb #\&gt; #\space))))
+  (set! prompt-length 3))
+
+;; the more normal method: (set! ((*repl* 'prompt)) "scheme&gt; ")
+</pre>
+
+<p>To move around in the history buffer, use M-p and M-n (C-p and C-n are
+used to move the cursor in the current expression).  To add help as in
+the Snd repl:
+</p>
+
+<pre class="indented">
+(set! (*repl* 'helpers)
+      (list (lambda (c)
+	      (let ((sym (with-let (*repl* 'repl-let) ; in repl-let we can access current repl vars
+			   (let ((len (length current-line)))
+			     (let loop ((i (min (- len 1) cursor-position)))
+			       (and (not (negative? i))
+				    (if (char=? (current-line i) #\()
+					(let loop1 ((k (+ i 1)))
+					  (and (&lt; k len)
+					       (if (not (char-alphabetic? (current-line k)))
+						   (and (&gt; k (+ i 1))
+							(string-&gt;symbol (substring current-line (+ i 1) k)))
+						   (loop1 (+ k 1)))))
+					(loop (- i 1)))))))))
+		(if sym  ; now outside of repl-let (to avoid confusion due to shadowing), get help
+		    (let ((str (help sym)))
+		      (if str (substring (help sym) 0 (min (length str) 40)) ""))
+		    "")))))
+</pre>
+
+<p>Here's an example of adding to the keymap:
+</p>
+<pre class="indented">
+(set! ((*repl* 'keymap) (integer->char 12)) ; C-l will expand to "(lambda "
+      (lambda (c)
+	(with-let (*repl* 'repl-let)
+	   (if (zero? cursor-position)
+	       (set! current-line (string-append "(lambda " current-line))
+	       (if (&gt;= cursor-position (length current-line))
+		   (set! current-line (string-append current-line "(lambda "))
+		   (set! current-line (string-append (substring current-line 0 cursor-position)
+						     "(lambda "
+						     (substring current-line cursor-position)))))
+	   (set! cursor-position (+ cursor-position (length "(lambda "))))))
+</pre>
+</div>
+
 
 
 <!-- ================================================================================ -->

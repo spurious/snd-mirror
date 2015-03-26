@@ -74,8 +74,6 @@ The configure script has a bunch of arguments:
 
      --with-gmp        use gmp, mpfr, and mpc to implement multiprecision arithmetic
 
-     --with-readline   use readline in the repl if no gui (Ruby only)
-
      --with-ladspa     include LADSPA plugin support (default: yes in Linux)
   
      --with-temp-dir   directory to use for temp files (default: ".")
