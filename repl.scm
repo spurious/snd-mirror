@@ -129,7 +129,8 @@
 		(last-row 0)               ; these hold the window bounds when we start
 		(last-col 0)
 		(input-fd (fileno stdin))  ; either tty input or file input
-		(next-char #f))
+		(next-char #f)
+		(chars 0))                 ; (sigh) a kludge to try to distinguish tab-as-space from tab-as-completion/indentation
 
 		 
 	    ;; -------- match parens --------
@@ -139,38 +140,47 @@
 		   (char=? (current-line (- pos 2)) #\#)))
 	    
 	    (define (check-parens)
+	      (let ((endpos (- cursor-position 1)))
 	      (if (and (> cursor-position 1)
-		       (char=? (current-line (- cursor-position 1)) #\)) ; ")" on left of cursor
-		       (not (char-constant? (- cursor-position 1))))     ; it's not "#\)"
-		  (let ((oparens 1)
-			(dquotes 0)
+		       (char=? (current-line endpos) #\))              ; ")" on left of cursor
+		       (not (char-constant? endpos)))                  ; it's not "#\)"
+		  (let ((oparens ())
 			(new-red-pos #f))
-		    (do ((i (- cursor-position 2) (- i 1)))
-			((or new-red-pos (< i 0)))
-		      (unless (char-constant? i)
-			(case (current-line i)
-			  ((#\)) 
-			   (if (zero? dquotes)
-			       (set! oparens (+ oparens 1))))
-			  ((#\()
-			   (set! oparens (- oparens 1))
-			   (if (and (zero? dquotes)
-				    (zero? oparens))
-			       (set! new-red-pos i)))
-			  ((#\") 
-			   (when (or (= i 0)
-				     (zero? dquotes)
-				     (not (char=? (current-line (- i 1)) #\\)))
-			     (set! dquotes (modulo (+ dquotes 1) 2))))
-			  ((#\;) 
-			   (if (zero? dquotes)
-			       (set! new-red-pos #t))))))
+		    (do ((i 0 (+ i 1)))
+			((>= i (- cursor-position 1)))
+		      (case (current-line i)
+			((#\()
+			 (set! oparens (cons i oparens)))
+			((#\))
+			 (if (pair? oparens)
+			     (set! oparens (cdr oparens))))
+			((#\;)
+			 (do ((k (+ i 1) (+ k 1)))
+			     ((or (>= k endpos)
+				  (char=? (current-line k) #\newline))
+			      (set! i k))))
+			((#\")
+			 (do ((k (+ i 1) (+ k 1)))
+			     ((or (>= k endpos)
+				  (and (char=? (current-line k) #\")
+				       (not (char=? (current-line (- k 1)) #\\))))
+			      (set! i k))))
+			((#\#)
+			 (if (char=? (current-line (+ i 1)) #\|)
+			     (do ((k (+ i 1) (+ k 1)))
+				 ((or (>= k endpos)
+				      (and (char=? (current-line k) #\|)
+					   (char=? (current-line (+ k 1)) #\#)))
+				  (set! i (+ k 1))))))))
+		    
+		    (if (pair? oparens)
+			(set! new-red-pos (car oparens)))
 		    (unless (equal? new-red-pos red-par-pos)
 		      (if (number? new-red-pos)
 			  (set! red-par-pos new-red-pos)
 			  (set! red-par-pos #f))))
 		  (if (number? red-par-pos)
-		      (set! red-par-pos #f))))
+		      (set! red-par-pos #f)))))
 	    
 	    
 	    ;; -------- indentation --------
@@ -249,8 +259,6 @@
 				      (cons x y)))
 			      (set! x (+ (* 10 x) (- (char->integer (c 0)) (char->integer #\0))))))))))
 
-
-	    ;; -------- display --------
 	    (define (cursor-bounds)
 	      (let ((coords (cursor-coords)))
 		(set! prompt-col (car coords))
@@ -261,6 +269,8 @@
 		  (set! last-col (car bounds))
 		  (set! last-row (cdr bounds)))))
 	    
+
+	    ;; -------- display --------
 	    (define (display-prompt)
 	      (format *stderr* "~A" prompt-string))
 	    
@@ -314,380 +324,6 @@
 		      (set! start (+ i 1)))))))
 	    
 	    
-	    ;; -------- keymap --------
-	    (define keymap-functions (make-vector 256 #f))
-	    (define keymap (dilambda
-			    (lambda (c)
-			      (keymap-functions (char->integer c)))
-			    (lambda (c f)
-			      (set! (keymap-functions (char->integer c)) f))))
-	    
-	    (define C-a 1)     ; #\x01 etc
-	    (define C-b 2)
-	    (define C-d 4)
-	    (define C-e 5)
-	    (define C-f 6)
-	    (define C-h 8)
-	    (define C-k 11)
-	    (define C-l 12)
-					;(define C-m 13)    ; #\return -- Enter handles this case (crlf?)
-	    (define C-n 14)
-	    (define C-p 16)
-					;(define C-r 18)
-	    (define C-t 20)
-	    (define C-y 25)
-	    (define C-_ 31)
-	    (define Tab 9)
-	    (define Enter 10)           ; #\linefeed
-	    (define Backspace 127)
-	    (define Escape 27) ; #\escape
-	    
-	    (define (end-of-line pos)             ; prompt or #\newline mark the line boundary
-	      (let ((len (length current-line)))
-		(do ((i (min pos len) (+ i 1)))
-		    ((or (>= i len)
-			 (char=? (current-line i) #\newline))
-		     (if (>= i len) len (- i 1))))))
-	    
-	    (define (start-of-line pos)
-	      (if (<= pos 0)
-		  0
-		  (do ((i (min pos (- (length current-line) 1)) (- i 1)))
-		      ((or (zero? i)
-			   (char=? (current-line i) #\newline))
-		       (if (zero? i)
-			   0
-			   (+ i 1))))))
-	    
-	    (define (count-newlines line)
-	      (let ((len (length line))
-		    (newlines 0))
-		(do ((i 0 (+ i 1)))
-		    ((= i len) newlines)
-		  (if (char=? (current-line i) #\newline)
-		      (set! newlines (+ newlines 1))))))
-	    
-	    (define (append-newline)
-	      (set! current-line (string-append current-line (string #\space #\newline)))
-	      (set! cursor-position (length current-line))
-	      (when (= last-row (+ prompt-row current-row))
-		(format *stderr* "~%")
-		(set! prompt-row (- prompt-row 1)))
-	      (set! current-row (+ current-row 1)))
-	    
-	    (define (word-break pos) ; assume we're at the start of a word
-	      (let ((len (length current-line)))
-		(let loop ((i pos))
-		  (if (or (>= i len)
-			  (not (or (char-alphabetic? (current-line i))
-				   (char-numeric? (current-line i)))))
-		      i
-		      (loop (+ i 1))))))
-
-	    (define (save-line)
-	      (set! previous-line (cons (cons cursor-position (copy current-line)) previous-line)))
-	    
-	    (let ((main-keyfunc (lambda (c)
-				  (save-line)
-				  (if (= cursor-position (length current-line))
-				      (set! current-line (string-append current-line (string c)))
-				      (if (= cursor-position 0)
-					  (set! current-line (string-append (string c) current-line))
-					  (set! current-line (string-append 
-							      (substring current-line 0 cursor-position) 
-							      (string c) 
-							      (substring current-line cursor-position)))))
-				  (set! cursor-position (+ cursor-position 1))
-				  (set! history-index 0)))
-		  (no-op-keyfunc (lambda (c) #t)))
-	      (do ((i 0 (+ i 1)))
-		  ((= i 32))
-		(set! (keymap-functions i) no-op-keyfunc))
-	      (do ((i 32 (+ i 1)))
-		  ((= i 256))
-		(set! (keymap-functions i) main-keyfunc)))
-	    
-	    (set! (keymap-functions C-a) (lambda (c)
-					   (set! cursor-position (start-of-line cursor-position))))
-	    
-	    (set! (keymap-functions C-e) (lambda (c)
-					   (set! cursor-position (end-of-line cursor-position))))
-	    
-	    (set! (keymap-functions C-b) (lambda (c)
-					   (when (> cursor-position 0)
-					     (set! cursor-position (- cursor-position 1))
-					     (if (char=? (current-line cursor-position) #\newline)
-						 (set! cursor-position (- cursor-position 1))))))
-	    
-	    (set! (keymap-functions C-f) (lambda (c)
-					   (let ((len (length current-line)))
-					     (when (< cursor-position len)
-					       (set! cursor-position (+ cursor-position 1))
-					       (if (and (< cursor-position len)
-							(char=? (current-line cursor-position) #\newline))
-						   (set! cursor-position (+ cursor-position 1)))))))
-	    
-	    (set! (keymap-functions C-d) (lambda (c)
-					   (let ((len (length current-line)))
-					     (when (< cursor-position len)
-					       (save-line)
-					       (do ((i cursor-position (+ i 1)))
-						   ((>= i (- len 1)))
-						 (set! (current-line i) (current-line (+ i 1))))
-					       (set! current-line (substring current-line 0 (- len 1)))))))
-	    
-	    (set! (keymap-functions C-k) (lambda (c)
-					   (let ((len (length current-line)))
-					     (when (< cursor-position len)
-					       (save-line)
-					       (let ((end (end-of-line cursor-position)))
-						 (if (= end len)
-						     (begin
-						       (set! selection (substring current-line cursor-position))
-						       (set! current-line (substring current-line 0 cursor-position)))
-						     (if (= cursor-position end) ; delete next newline
-							 (set! current-line (string-append (substring current-line 0 (+ end 1))
-											   (substring current-line (+ end 2))))
-							 (begin
-							   (set! selection (substring current-line cursor-position (+ end 1)))
-							   (set! current-line (string-append (substring current-line 0 cursor-position)
-											     (substring current-line (+ end 1))))
-							   (set! cursor-position (- cursor-position 1))
-							   ))))))))
-	    
-	    (set! (keymap-functions C-y) (lambda (c)
-					   (when selection
-					     (save-line)
-					     (if (zero? cursor-position)
-						 (set! current-line (string-append selection current-line))
-						 (if (>= cursor-position (length current-line))
-						     (set! current-line (string-append current-line selection))
-						     (set! current-line (string-append (substring current-line 0 cursor-position)
-										       selection
-										       (substring current-line cursor-position)))))
-					     (set! cursor-position (+ cursor-position (length selection))))))
-	    
-	    (set! (keymap-functions C-t) (lambda (c)
-					   (let ((start (start-of-line cursor-position))
-						 (end (end-of-line cursor-position))
-						 (len (length current-line)))
-					     (when (and (> end start)
-							(> cursor-position start))
-					       (save-line)
-					       (let ((cur (if (or (= cursor-position end)
-								  (< end len))
-							      (- cursor-position 1)
-							      cursor-position)))
-						 (let ((tmp-c (current-line (- cur 1))))
-						   (set! (current-line (- cur 1)) (current-line cur))
-						   (set! (current-line cur) tmp-c)
-						   (set! cursor-position (+ cur 1))))))))
-	    
-	    (set! (keymap-functions C-_) (lambda (c)
-					   (when (pair? previous-line)
-					     (set! current-line (cdar previous-line))
-					     (set! cursor-position (caar previous-line))
-					     (set! previous-line (cdr previous-line))
-					     #f)))
-
-	    (set! (keymap-functions C-l) (lambda (c)
-					   (format *stderr* "~C[H~C[J" #\escape #\escape)
-					   (new-prompt)))
-	    
-	    (set! (keymap-functions Enter) (lambda (c)
-					     
-					     (call-with-exit
-					      (lambda (return)
-						(let ((len (length current-line)))
-						  
-						  (do ((i 0 (+ i 1))) ; check for just whitespace
-						      ((or (= i len)
-							   (not (char-whitespace? (current-line i))))
-						       (when (= i len)
-							 (append-newline)
-							 (return))))
-						  
-						  (set! red-par-pos #f)
-						  (display-lines)
-						  
-						  (with-repl-let
-						   (catch #t
-						     (lambda ()
-						       
-						       ;; we want to add current-line (copied) to the history buffer
-						       ;;   unless it is an on-going edit (missing close paren)
-						       (catch 'incomplete-expr
-							 (lambda ()
-							   (set! cursor-position len)
-							   (display-lines)
-							   (set! (history) (copy current-line))
-							   (format *stderr* "~%~S~%" (eval-string current-line (rootlet))))
-							 (lambda args
-							   (pop-history)   ; remove last history entry
-							   (append-newline)
-							   (return))))
-						     
-						     (lambda (type info)
-						       (format *stderr* "~%~A: " (red "error"))
-						       (apply format *stderr* info)
-						       (newline *stderr*))))
-						  
-						  (new-prompt))))))
-	    
-	    (set! (keymap-functions C-h) (lambda (c)
-					   (when (positive? cursor-position)
-					     (save-line)
-					     (let ((len (length current-line)))
-					       (set! cursor-position (- cursor-position 1))
-					       (do ((i cursor-position (+ i 1)))
-						   ((>= i (- len 1)))
-						 (set! (current-line i) (current-line (+ i 1))))
-					       (set! current-line (substring current-line 0 (- len 1)))))))
-	    
-	    (set! (keymap-functions Backspace) (keymap-functions C-h))
-	    
-	    (set! (keymap-functions C-p) (lambda (c)
-					   ;; try to find corresponding column in previous line
-					   (let ((start (start-of-line cursor-position)))
-					     (when (positive? start)
-					       (let ((upstart (start-of-line (- start 2)))
-						     (upend (end-of-line (- start 2)))
-						     (line-pos (- cursor-position start)))
-						 (set! cursor-position (min (+ upstart line-pos) upend)))))))
-	    
-	    (set! (keymap-functions C-n) (lambda (c)
-					   ;; try to find corresponding column in next line
-					   (let ((start (start-of-line cursor-position))
-						 (len (length current-line))
-						 (next-start (+ (end-of-line cursor-position) 1)))      ; should be at #\newline (if any)
-					     (if (> len next-start)                                     ; not already at last line
-						 (let ((next-end (end-of-line (+ next-start 1)))
-						       (line-pos (- cursor-position start)))
-						   (set! cursor-position (min (+ next-start 1 line-pos) next-end)))))))
-
-	    (set! (keymap-functions Escape) (lambda (esc)
-
-					      (let ((chr (next-char)))
-						;; arrow-keys etc
-						
-						;; do we collide with UTF-8 if we treat this as a meta bit?
-						;;  that is, if (c 0) is #\c, did user type M-c?
-						
-						(case chr
-						  ((#\[)
-						   (set! chr (next-char))
-						   (case chr
-						     ((#\A) ((keymap-functions C-p) C-p))
-						     ((#\B) ((keymap-functions C-n) C-n))
-						     ((#\C) ((keymap-functions C-f) C-f))
-						     ((#\D) ((keymap-functions C-b) C-b))
-						     
-						     ;;((#\1) ; random -- good up to F5 anyway?
-						     ))
-						  
-						  ((#\<) (set! cursor-position 0))
-						  ((#\>) (set! cursor-position (length current-line)))
-
-						  ;((#\x02) ; C-M-b
-						  
-						  ((#\c) ; M-c
-						   (let ((len (length current-line)))
-						     (let loop ((i cursor-position))
-						       (if (< i len)
-							   (if (char-alphabetic? (current-line i))
-							       (begin
-								 (save-line)
-								 (set! (current-line i) (char-upcase (current-line i)))
-								 (set! cursor-position (word-break i)))
-							       (loop (+ i 1)))))))
-
-						  ((#\p)
-						   (let ((old-index history-index))
-						     (when (and (zero? history-index) 
-								(> (length current-line) 0))
-						       (set! (history) current-line)
-						       (set! history-index -1))
-						     (set! history-index (max (- history-index 1) (- current-history-size)))
-						     (if (history history-index)
-							 (begin
-							   (set! current-line (history history-index))
-							   (set! cursor-position (length current-line))
-							   (let ((newlines (count-newlines current-line)))
-							     (when (< last-row (+ prompt-row newlines))
-							       (format *stderr* "~NC" (- (+ prompt-row newlines) last-row) #\newline)
-							       (set! prompt-row (- prompt-row newlines)))
-							     (set! current-row newlines))
-							   #f)
-							 (set! history-index old-index))))
-						  
-						  ((#\n)
-						   (set! history-index (min 0 (+ history-index 1)))
-						   (when (history history-index)
-						     (set! current-line (history history-index))
-						     (set! cursor-position (length current-line))
-						     (let ((newlines (count-newlines current-line)))
-						       (when (< last-row (+ prompt-row newlines))
-							 (format *stderr* "~NC" (- (+ prompt-row newlines) last-row) #\newline)
-							 (set! prompt-row (- prompt-row newlines)))
-						       (set! current-row newlines)))
-						   #f)
-
-						  ((#\u)
-						   (let ((len (length current-line)))
-						     (do ((i cursor-position (+ i 1)))
-							 ((or (= i len)
-							      (char-alphabetic? (current-line i)))
-							  (when (< i len)
-							    (save-line)
-							    (do ((k i (+ k 1)))
-								((or (= k len)
-								     (not (char-alphabetic? (current-line k))))
-								 (set! cursor-position k))
-							      (set! (current-line k) (char-upcase (current-line k)))))))))
-						  
-						  ((#\l)
-						   (let ((len (length current-line)))
-						     (do ((i cursor-position (+ i 1)))
-							 ((or (= i len)
-							      (char-alphabetic? (current-line i)))
-							  (when (< i len)
-							    (save-line)
-							    (do ((k i (+ k 1)))
-								((or (= k len)
-								     (not (char-alphabetic? (current-line k))))
-								 (set! cursor-position k))
-							      (set! (current-line k) (char-downcase (current-line k)))))))))
-						  ))))
-	    
-	    (set! (keymap-functions Tab) (lambda (c)
-					   (let ((start (start-of-line cursor-position))
-						 (end (end-of-line cursor-position))
-						 (completion #f))
-					     (if (and (positive? start)
-						      (= end start))
-						 (indent start)
-						 (if (= cursor-position end)
-						     (let ((loc (do ((i (- end 1) (- i 1)))
-								    ((or (< i 0)
-									 (char-whitespace? (current-line i))
-									 (memv (current-line i) '(#\( #\' #\" #\))))
-								     i))))
-						       (if (< loc 0)
-							   (set! completion (symbol-completion current-line))
-							   (if (char=? (current-line loc) #\")
-							       (set! completion (filename-completion (substring current-line (+ loc 1))))
-							       (set! completion (symbol-completion (substring current-line (+ loc 1))))))
-						       (when (and completion
-								  (> (length completion) (- end loc 1)))
-							 (save-line)
-							 (if (= end (length current-line))
-							     (set! current-line (string-append (substring current-line 0 (+ loc 1)) completion))
-							     (set! current-line (string-append (substring current-line 0 (+ loc 1)) 
-											       completion
-											       (substring current-line (+ end 1)))))
-							 (set! cursor-position (end-of-line cursor-position)))))))))
-	    
-
 	    ;; -------- help/debugging --------
 	    (define (one-line text)
 	      (if (string? text)
@@ -741,6 +377,441 @@
 			       (end-of-line cursor-position))))))
 		 
 	    
+	    ;; -------- keymap(s) --------
+	    (define meta-keymap-functions (make-vector 256))
+	    (define keymap-functions (make-vector 256 #f))
+
+	    (define keymap (dilambda
+			    (lambda (c)
+			      (cond ((char? c) (keymap-functions (char->integer c)))
+				    ((integer? c) (keymap-functions c))
+				    ((string? c)
+				     (if (= (length c) 1)
+					 (keymap-functions (char->integer (c 0)))
+					 (if (and (= (length c) 2)
+						  (char=? (c 0) #\escape))
+					     (meta-keymap-functions (char->integer (c 1)))
+					     (lambda (c) #t))))
+				    (else (error 'wrong-type-arg "keymap takes a character or string argument"))))
+			    (lambda (c f)
+			      (cond ((char? c) (set! (keymap-functions (char->integer c)) f))
+				    ((integer? c) (set! (keymap-functions c) f))
+				    ((string? c)
+				     (if (= (length c) 1)
+					 (set! (keymap-functions (char->integer (c 0))) f)
+					 (if (and (= (length c) 2)
+						  (char=? (c 0) #\escape))
+					     (set! (meta-keymap-functions (char->integer (c 1))) f))))
+				    (else (error 'wrong-type-arg "set! keymap takes a character or string first argument"))))))
+	    
+	    (define C-a 1)     ; #\x01 etc
+	    (define C-b 2)
+	    (define C-d 4)
+	    (define C-e 5)
+	    (define C-f 6)
+	    (define C-h 8)
+	    (define C-k 11)
+	    (define C-l 12)
+					;(define C-m 13)    ; #\return -- Enter handles this case (crlf?)
+	    (define C-n 14)
+	    (define C-p 16)
+					;(define C-r 18)
+	    (define C-t 20)
+	    (define C-y 25)
+	    (define C-_ 31)
+	    (define Tab 9)
+	    (define Enter 10)           ; #\linefeed
+	    (define Backspace 127)
+	    (define Escape 27)          ; #\escape
+	    
+	    (define (end-of-line pos)             ; prompt or #\newline mark the line boundary
+	      (let ((len (length current-line)))
+		(do ((i (max 0 (min pos len)) (+ i 1)))
+		    ((or (>= i len)
+			 (char=? (current-line i) #\newline))
+		     (if (>= i len) len (max 0 (- i 1)))))))
+	    
+	    (define (start-of-line pos)
+	      (if (<= pos 0)
+		  0
+		  (do ((i (min pos (- (length current-line) 1)) (- i 1)))
+		      ((or (zero? i)
+			   (char=? (current-line i) #\newline))
+		       (if (zero? i) 0 (+ i 1))))))
+	    
+	    (define (count-newlines line)
+	      (let ((len (length line))
+		    (newlines 0))
+		(do ((i 0 (+ i 1)))
+		    ((= i len) newlines)
+		  (if (char=? (current-line i) #\newline)
+		      (set! newlines (+ newlines 1))))))
+	    
+	    (define (append-newline)
+	      (set! current-line (string-append current-line (string #\space #\newline)))
+	      (set! cursor-position (length current-line))
+	      (when (= last-row (+ prompt-row current-row))
+		(format *stderr* "~%")
+		(set! prompt-row (- prompt-row 1)))
+	      (set! current-row (+ current-row 1)))
+	    
+	    (define (word-break pos) ; assume we're at the start of a word
+	      (let ((len (length current-line)))
+		(let loop ((i pos))
+		  (if (or (>= i len)
+			  (not (or (char-alphabetic? (current-line i))
+				   (char-numeric? (current-line i)))))
+		      i
+		      (loop (+ i 1))))))
+
+	    (define (save-line)
+	      (set! previous-line (cons (cons cursor-position (copy current-line)) previous-line)))
+	    
+	    (let ((main-keyfunc (lambda (c)
+				  (if (<= chars 1) (save-line))
+				  (if (= cursor-position (length current-line))
+				      (set! current-line (string-append current-line (string c)))
+				      (if (= cursor-position 0)
+					  (set! current-line (string-append (string c) current-line))
+					  (set! current-line (string-append 
+							      (substring current-line 0 cursor-position) 
+							      (string c) 
+							      (substring current-line cursor-position)))))
+				  (set! cursor-position (+ cursor-position 1))
+				  (set! history-index 0)))
+		  (no-op-keyfunc (lambda (c) #t)))
+
+	      (do ((i 0 (+ i 1)))
+		  ((= i 32))
+		(set! (keymap-functions i) no-op-keyfunc))
+
+	      (do ((i 32 (+ i 1)))
+		  ((= i 256))
+		(set! (keymap-functions i) main-keyfunc))
+
+	      (do ((i 0 (+ i 1)))
+		  ((= i 256))
+		(set! (meta-keymap-functions i) no-op-keyfunc)))
+
+
+	    ;; -------- cursor movement 
+	    (set! (keymap-functions C-a) 
+		  (lambda (c)
+		    (set! cursor-position (start-of-line cursor-position))))
+	    
+	    (set! (keymap-functions C-e) 
+		  (lambda (c)
+		    (set! cursor-position (end-of-line cursor-position))))
+	    
+	    (set! (keymap-functions C-b) 
+		  (lambda (c)
+		    (when (> cursor-position 0)
+		      (set! cursor-position (- cursor-position 1))
+		      (if (char=? (current-line cursor-position) #\newline)
+			  (set! cursor-position (- cursor-position 1))))))
+	    
+	    (set! (keymap-functions C-f) 
+		  (lambda (c)
+		    (let ((len (length current-line)))
+		      (when (< cursor-position len)
+			(set! cursor-position (+ cursor-position 1))
+			(if (and (< cursor-position len)
+				 (char=? (current-line cursor-position) #\newline))
+			    (set! cursor-position (+ cursor-position 1)))))))
+	    
+	    (set! (keymap-functions C-p) 
+		  (lambda (c)
+		    ;; try to find corresponding column in previous line
+		    (let ((start (start-of-line cursor-position)))
+		      (when (positive? start)
+			(let ((upstart (start-of-line (- start 2)))
+			      (upend (end-of-line (- start 2)))
+			      (line-pos (- cursor-position start)))
+			  (set! cursor-position (min (+ upstart line-pos) upend)))))))
+	    
+	    (set! (keymap-functions C-n) 
+		  (lambda (c)
+		    ;; try to find corresponding column in next line
+		    (let ((start (start-of-line cursor-position))
+			  (len (length current-line))
+			  (next-start (+ (end-of-line cursor-position) 1)))      ; should be at #\newline (if any)
+		      (if (> len next-start)                                     ; not already at last line
+			  (let ((next-end (end-of-line (+ next-start 1)))
+				(line-pos (- cursor-position start)))
+			    (set! cursor-position (min (+ next-start 1 line-pos) next-end)))))))
+	    
+	    (set! (keymap-functions C-l) 
+		  (lambda (c)
+		    (format *stderr* "~C[H~C[J" #\escape #\escape)
+		    (new-prompt)))
+
+	    ;; -------- deletion
+	    (set! (keymap-functions C-d) 
+		  (lambda (c)
+		    (let ((len (length current-line)))
+		      (when (< cursor-position len)
+			(save-line)
+			(do ((i cursor-position (+ i 1)))
+			    ((>= i (- len 1)))
+			  (set! (current-line i) (current-line (+ i 1))))
+			(set! current-line (substring current-line 0 (- len 1)))))))
+	    
+	    (set! (keymap-functions C-h) 
+		  (lambda (c)
+		    (when (positive? cursor-position)
+		      (save-line)
+		      (let ((len (length current-line)))
+			(set! cursor-position (- cursor-position 1))
+			(do ((i cursor-position (+ i 1)))
+			    ((>= i (- len 1)))
+			  (set! (current-line i) (current-line (+ i 1))))
+			(set! current-line (substring current-line 0 (- len 1)))))))
+	    
+	    (set! (keymap-functions Backspace) 
+		  (keymap-functions C-h))
+	    
+	    (set! (keymap-functions C-k) 
+		  (lambda (c)
+		    (let ((len (length current-line)))
+		      (when (< cursor-position len)
+			(save-line)
+			(let ((end (end-of-line cursor-position)))
+			  (if (= end len)
+			      (begin
+				(set! selection (substring current-line cursor-position))
+				(set! current-line (substring current-line 0 cursor-position)))
+			      (if (= cursor-position end) ; delete next newline
+				  (set! current-line (string-append (substring current-line 0 (+ end 1))
+								    (substring current-line (+ end 2))))
+				  (begin
+				    (set! selection (substring current-line cursor-position (+ end 1)))
+				    (set! current-line (string-append (substring current-line 0 cursor-position)
+								      (substring current-line (+ end 1))))
+				    (if (positive? cursor-position)
+					(set! cursor-position (- cursor-position 1)))
+				    ))))))))
+
+	    ;; -------- undo/selection
+	    (set! (keymap-functions C-y) 
+		  (lambda (c)
+		    (when selection
+		      (save-line)
+		      (if (zero? cursor-position)
+			  (set! current-line (string-append selection current-line))
+			  (if (>= cursor-position (length current-line))
+			      (set! current-line (string-append current-line selection))
+			      (set! current-line (string-append (substring current-line 0 cursor-position)
+								selection
+								(substring current-line cursor-position)))))
+		      (set! cursor-position (+ cursor-position (length selection))))))
+	    
+	    (set! (keymap-functions C-_) 
+		  (lambda (c)
+		    (when (pair? previous-line)
+		      (set! current-line (cdar previous-line))
+		      (set! cursor-position (caar previous-line))
+		      (set! previous-line (cdr previous-line))
+		      #f)))
+	    
+	    ;; -------- transpose
+	    (set! (keymap-functions C-t) 
+		  (lambda (c)
+		    (let ((start (start-of-line cursor-position))
+			  (end (end-of-line cursor-position))
+			  (len (length current-line)))
+		      (when (and (> end start)
+				 (> cursor-position start))
+			(save-line)
+			(let ((cur (if (or (= cursor-position end)
+					   (< end len))
+				       (- cursor-position 1)
+				       cursor-position)))
+			  (let ((tmp-c (current-line (- cur 1))))
+			    (set! (current-line (- cur 1)) (current-line cur))
+			    (set! (current-line cur) tmp-c)
+			    (set! cursor-position (+ cur 1))))))))
+	    
+	    ;; -------- indentation/completion
+	    (set! (keymap-functions Tab) 
+		  (lambda (c)
+		    ;; if user pastes in a selection, it may have embedded tabs which are just spacing, 
+		    ;;   not requests for filename completion!  We'll try to catch this case by assuming
+		    ;;   that a selection will not be the single character #\tab
+		    (if (> chars 1)
+			(begin
+			  (set! current-line (string-append current-line "    "))
+			  (set! cursor-position (+ cursor-position 4)))
+			(let ((start (start-of-line cursor-position))
+			      (end (end-of-line cursor-position))
+			      (completion #f))
+			  (if (and (positive? start)
+				   (= end start))
+			      (indent start)
+			      (if (= cursor-position end)
+				  (let ((loc (do ((i (- end 1) (- i 1)))
+						 ((or (< i 0)
+						      (char-whitespace? (current-line i))
+						      (memv (current-line i) '(#\( #\' #\" #\))))
+						  i))))
+				    (if (< loc 0)
+					(set! completion (symbol-completion current-line))
+					(if (char=? (current-line loc) #\")
+					    (set! completion (filename-completion (substring current-line (+ loc 1))))
+					    (set! completion (symbol-completion (substring current-line (+ loc 1))))))
+				    (when (and completion
+					       (> (length completion) (- end loc 1)))
+				      (save-line)
+				      (if (= end (length current-line))
+					  (set! current-line (string-append (substring current-line 0 (+ loc 1)) completion))
+					  (set! current-line (string-append (substring current-line 0 (+ loc 1)) 
+									    completion
+									    (substring current-line (+ end 1)))))
+				      (set! cursor-position (end-of-line cursor-position))))))))))
+	    
+	    ;; -------- evaluation/multiline
+	    (set! (keymap-functions Enter) 
+		  (lambda (c)
+		    
+		    (call-with-exit
+		     (lambda (return)
+		       (let ((len (length current-line)))
+			 
+			 (do ((i 0 (+ i 1))) ; check for just whitespace
+			     ((or (= i len)
+				  (not (char-whitespace? (current-line i))))
+			      (when (= i len)
+				(append-newline)
+				(return))))
+			 
+			 (set! red-par-pos #f)
+			 (display-lines)
+			 
+			 (with-repl-let
+			  (catch #t
+			    (lambda ()
+			      
+			      ;; we want to add current-line (copied) to the history buffer
+			      ;;   unless it is an on-going edit (missing close paren)
+			      (catch 'incomplete-expr
+				(lambda ()
+				  (set! cursor-position len)
+				  (display-lines)
+				  (set! (history) (copy current-line))
+				  ;(append-newline) ; need newline now if evaluation prints something
+				  (format *stderr* "~%~S~%" (eval-string current-line (rootlet))))
+				(lambda args
+				  (pop-history)    ; remove last history entry
+				  (append-newline)
+				  (return))))
+			    
+			    (lambda (type info)
+			      (format *stderr* "~A: " (red "error"))
+			      (apply format *stderr* info)
+			      (newline *stderr*))))
+			 
+			 (new-prompt))))))
+	    
+	    ;; -------- escaped (Meta/Alt/arrow) keys
+	    (set! (keymap-functions Escape) 
+		  (lambda (esc)
+		    (let ((chr (next-char)))
+		      ((meta-keymap-functions (char->integer chr)) chr))))
+		    
+	    (set! (meta-keymap-functions (char->integer #\[))
+		  (lambda (c)
+		    ;; arrow-keys etc
+		    (let ((chr (next-char)))
+		      (case chr
+			((#\A) ((keymap-functions C-p) C-p))
+			((#\B) ((keymap-functions C-n) C-n))
+			((#\C) ((keymap-functions C-f) C-f))
+			((#\D) ((keymap-functions C-b) C-b))))))
+	    ;; (#\1) here might be F1?
+			
+	    (set! (meta-keymap-functions (char->integer #\<))
+		  (lambda (c) 
+		    (set! cursor-position 0)))
+
+	    (set! (meta-keymap-functions (char->integer #\>))
+		  (lambda (c) 
+		    (set! cursor-position (length current-line))))
+			
+	    ;; ((#\x02) ; C-M-b
+			
+	    (set! (meta-keymap-functions (char->integer #\c))
+		  (lambda (c) 
+		    (let ((len (length current-line)))
+		      (let loop ((i cursor-position))
+			(if (< i len)
+			    (if (char-alphabetic? (current-line i))
+				(begin
+				  (save-line)
+				  (set! (current-line i) (char-upcase (current-line i)))
+				  (set! cursor-position (word-break i)))
+				(loop (+ i 1))))))))
+
+	    (set! (meta-keymap-functions (char->integer #\p))
+		  (lambda (c) 
+		    (let ((old-index history-index))
+		      (when (and (zero? history-index) 
+				 (> (length current-line) 0))
+			(set! (history) current-line)
+			(set! history-index -1))
+		      (set! history-index (max (- history-index 1) (- current-history-size)))
+		      (if (history history-index)
+			  (begin
+			    (set! current-line (history history-index))
+			    (set! cursor-position (length current-line))
+			    (let ((newlines (count-newlines current-line)))
+			      (when (< last-row (+ prompt-row newlines))
+				(format *stderr* "~NC" (- (+ prompt-row newlines) last-row) #\newline)
+				(set! prompt-row (- prompt-row newlines)))
+			      (set! current-row newlines))
+			    #f)
+			  (set! history-index old-index)))))
+			
+	    (set! (meta-keymap-functions (char->integer #\n))
+		  (lambda (c) 
+		    (set! history-index (min 0 (+ history-index 1)))
+		    (when (history history-index)
+		      (set! current-line (history history-index))
+		      (set! cursor-position (length current-line))
+		      (let ((newlines (count-newlines current-line)))
+			(when (< last-row (+ prompt-row newlines))
+			  (format *stderr* "~NC" (- (+ prompt-row newlines) last-row) #\newline)
+			  (set! prompt-row (- prompt-row newlines)))
+			(set! current-row newlines)))
+		    #f))
+		  
+	    (set! (meta-keymap-functions (char->integer #\u))
+		  (lambda (c) 
+		    (let ((len (length current-line)))
+		      (do ((i cursor-position (+ i 1)))
+			  ((or (= i len)
+			       (char-alphabetic? (current-line i)))
+			   (when (< i len)
+			     (save-line)
+			     (do ((k i (+ k 1)))
+				 ((or (= k len)
+				      (not (char-alphabetic? (current-line k))))
+				  (set! cursor-position k))
+			       (set! (current-line k) (char-upcase (current-line k))))))))))
+			
+	    (set! (meta-keymap-functions (char->integer #\l))
+		  (lambda (c) 
+		    (let ((len (length current-line)))
+		      (do ((i cursor-position (+ i 1)))
+			  ((or (= i len)
+			       (char-alphabetic? (current-line i)))
+			   (when (< i len)
+			     (save-line)
+			     (do ((k i (+ k 1)))
+				 ((or (= k len)
+				      (not (char-alphabetic? (current-line k))))
+				  (set! cursor-position k))
+			       (set! (current-line k) (char-downcase (current-line k))))))))))
+	    
+	    
 	    ;; -------- terminal setup --------
 	    (let ((saved #f)
 		  (terminal-fd (fileno stdin))
@@ -792,19 +863,49 @@
 		;;      (#_exit))
 		
 		(let ((buf (termios.make))
-		      (max-read-size 1024))
+		      (read-size 128))
 
 		  (set! next-char                                     ; this indirection is needed if user pastes the selection into the repl
-			(let* ((c (make-string max-read-size #\null)) ; max-read-size sets the limit on the selection size, I think
+			(let* ((c (make-string read-size #\null)) 
 			       (cc (string->c-pointer c))
-			       (chars 0)
+			       (csize read-size)
 			       (ctr 0))
 			  (lambda ()
 			    (when (>= ctr chars)
 			      (set! ctr 0)
-			      (set! chars (read input-fd cc max-read-size))
+			      (set! chars (read input-fd cc read-size))
 			      (if (= chars 0)
-				  (tty-reset terminal-fd)))
+				  (tty-reset terminal-fd))
+
+			      (when (= chars read-size)
+				;; concatenate buffers until we get the entire selection
+				(let ((str (substring c 0 read-size)))
+				  (let reading ((num (read input-fd cc read-size)))
+				    (set! str (string-append str (substring c 0 num)))
+				    (set! chars (+ chars num))
+				    (if (= num read-size)
+					(reading (read input-fd cc read-size))))
+
+				  ;; avoid time-consuming redisplays
+				  (catch #t
+				    (lambda ()
+				      (do ((i 0 (+ i 1)))
+					  ((= i (- chars 1)))
+					((keymap-functions (char->integer (str i))) (str i))))
+				    (lambda (type info)
+				      (format *stderr* "~C[~D;~DH" #\escape prompt-row prompt-col)
+				      (format *stderr* "internal error: ")
+				      (apply format *stderr* info)
+				      (newline *stderr*)
+				      (format *stderr* "line ~A: ~A~%" ((owlet) 'error-line) ((owlet) 'error-code))
+				      (new-prompt)
+				      (set! (str (- chars 1)) #\null)))
+
+				  ;; handle last char normally
+				  (set! (c 0) (str (- chars 1)))
+				  (set! chars 1)
+				  (set! ctr 0))))
+
 			    (let ((result (c ctr)))
 			      (set! ctr (+ ctr 1))
 			      result))))
@@ -837,6 +938,7 @@
 			  (help chr)))
 		      
 		      (lambda (type info)
+			(format *stderr* "~C[~D;~DH" #\escape prompt-row prompt-col)
 			(format *stderr* "internal error: ")
 			(apply format *stderr* info)
 			(newline *stderr*)
@@ -856,9 +958,10 @@
 
 ;; ((*repl* 'run))
 
+
 #|
 to add/change keymap entry:
-(set! ((*repl* 'keymap) (integer->char 12)) ; C-l will expand to "(lambda "
+(set! ((*repl* 'keymap) (integer->char 12)) ; C-l will expand to "(lambda " at the cursor
       (lambda (c)
 	(with-let (*repl* 'repl-let)
 	   (if (zero? cursor-position)
@@ -869,6 +972,9 @@ to add/change keymap entry:
 						     "(lambda "
 						     (substring current-line cursor-position)))))
 	   (set! cursor-position (+ cursor-position (length "(lambda "))))))
+
+change the prompt:
+(set! ((*repl* 'prompt)) "scheme> ")
 
 red lambda prompt: 
 (with-let (*repl* 'repl-let)
@@ -896,11 +1002,58 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 			  (substring (help sym) 0 (min (length str) 40))
 			  ""))
 		    "")))))
+
+;; "function keys":
+(set! ((*repl* 'keymap) (string #\escape #\[))
+      (lambda (c)
+	(with-let (*repl* 'repl-let)
+	  (let ((next (next-char)))
+	    (case next
+	      ((#\A) ((keymap-functions C-p) C-p))
+	      ((#\B) ((keymap-functions C-n) C-n))
+	      ((#\C) ((keymap-functions C-f) C-f))
+	      ((#\D) ((keymap-functions C-b) C-b))
+	      ((#\1) ; on my system F1 is esc [ 1 1 ~, F2 esc [ 1 2 ~, etc (but they skip F6?)
+	       (let ((n (- (char->integer (next-char)) (char->integer #\0))))
+		 (next-char) ; throw away the tilde
+		 (set! current-line (string-append current-line (format #f "--F~D!--" n))))))))))
+
+;; this actually works but doesn't echo the filename correctly and the cursor is off during the filename processing
+(set! ((*repl* 'keymap) (integer->char 24)) ; C-x
+      (lambda (c)
+	(with-let (*repl* 'repl-let)
+	  (let ((next (next-char)))
+	    (when (char=? next (integer->char 6)) ; C-f
+	      (format *stderr* "~%load: ")
+	      ;; now recursive call: prompt="load: "
+	      (let ((old-prompt-string prompt-string)
+		    (old-prompt-length prompt-length)
+		    (old-current-line current-line)
+		    (old-cursor-position cursor-position)
+		    (old-enter-func (keymap-functions 10))
+		    (filename #f))
+		(set! prompt-string "load: ")
+		(set! prompt-length 6)
+		(set! current-line "")
+		(set! cursor-position 0)
+		(set! (keymap-functions 10) (lambda (c)
+					      (set! filename current-line)
+					      (set! prompt-string old-prompt-string)
+					      (set! prompt-length old-prompt-length)
+					      (set! current-line old-current-line)
+					      (set! cursor-position old-cursor-position)
+					      (set! (keymap-functions 10) old-enter-func)))
+		(do ((c (next-char) (next-char)))
+		    ((string? filename))
+		  ((keymap-functions (char->integer c)) c)
+		  (display-lines))
+		(load filename)))))))
 |#
 
 
 
 ;; need some sort of auto-test: repl.input
-;; access to M-table: meta-keymaps but accessed through keymap dilambda -- but this requires a string arg, not char
-;; unicode
-;; C-t might be uncanonical
+;; possibly notice bad input?
+;; unicode someday
+;; C-t might be uncanonical, C-k is messed up
+
