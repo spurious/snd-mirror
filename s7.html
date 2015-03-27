@@ -9013,22 +9013,54 @@ thread-safe local variables, which can be saved and communicated between s7 runs
 
 <p>repl.scm implements a REPL using vt100 codes and libc.scm.  It includes
 symbol and filename completion, a history buffer, paren matching,
-indentation, multi-line edits, and a debugger window.  You can 
+indentation, multi-line edits, and a debugger window.  
+To move around in the history buffer, use M-p and M-n (C-p and C-n are used to move the cursor in the current expression).  
+You can 
 change the keymap or the prompt, and so on.  All the repl functions are
 exported via the *repl* environment.  One field is 'repl-let which
 gives you access to all the repl's internal variables and functions.
+</p>
+
+<p>To run the repl, either build s7 with the compiler flag -DWITH_MAIN,
+or conjure up a wrapper:
+</p>
+
+<pre class="indented">
+#include "s7.h"
+
+int main(int argc, char **argv)
+{
+  s7_scheme *sc;
+  sc = s7_init();
+  s7_load(sc, "repl.scm");
+  s7_eval_c_string(sc, "((*repl* 'run))");
+  return(0);
+}
+
+/* gcc -o r r.c s7.o -Wl,-export-dynamic -lm -I. -ldl
+ */
+</pre>
+
+<p>The prompt is set by (*repl* 'prompt), a dilambda, so
+the simplest way to change the prompt is:
+</p>
+
+<pre class="indented">
+(set! ((*repl* 'prompt)) "scheme&gt; ")
+</pre>
+
+<p>But repl-let gives you low-level access to the repl code, so
+you can also:
 </p>
 
 <pre class="indented">
 (with-let (*repl* 'repl-let)  ; red lambda prompt
   (set! prompt-string (bold (red (string #\xce #\xbb #\&gt; #\space))))
   (set! prompt-length 3))
-
-;; the more normal method: (set! ((*repl* 'prompt)) "scheme&gt; ")
 </pre>
 
-<p>To move around in the history buffer, use M-p and M-n (C-p and C-n are
-used to move the cursor in the current expression).  To add help as in
+<p>
+To add help as in
 the Snd repl:
 </p>
 
@@ -9071,8 +9103,9 @@ the Snd repl:
 
 <p>To access the meta keys, use a string:
 <code>((*repl* 'keymap) (string #\escape #\p))</code>; this is Meta-p which normally accesses
-the history buffer.  If you paste a large selection into the repl, you'll probably need to
-type return afterwards to convince the repl it's there.
+the history buffer.  If you paste a large selection into the repl, remember to include 
+a trailing newline; otherwise you'll probably need to
+type it by hand to get a response from the repl.
 </p>
 
 </div>

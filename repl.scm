@@ -130,7 +130,8 @@
 		(last-col 0)
 		(input-fd (fileno stdin))  ; either tty input or file input
 		(next-char #f)
-		(chars 0))                 ; (sigh) a kludge to try to distinguish tab-as-space from tab-as-completion/indentation
+		(chars 0)                  ; (sigh) a kludge to try to distinguish tab-as-space from tab-as-completion/indentation
+		(** #f))
 
 		 
 	    ;; -------- match parens --------
@@ -699,7 +700,7 @@
 				  ;; an experiment to get the newline out if the expression is not missing a close paren
 				  (let ((form (with-input-from-string current-line #_read))) ; not libc's read
 				    (newline *stderr*)
-				    (format *stderr* "~S~%" (eval form (rootlet)))))
+				    (format *stderr* "~S~%" (set! ** (eval form (rootlet))))))
 				(lambda args
 				  (pop-history)    ; remove last history entry
 				  (append-newline)
@@ -869,44 +870,47 @@
 			       (cc (string->c-pointer c))
 			       (ctr 0))
 			  (lambda ()
-			    (when (>= ctr chars)
-			      (set! ctr 0)
-			      (set! chars (read input-fd cc read-size))
-			      (if (= chars 0)
-				  (tty-reset terminal-fd))
-
-			      (when (= chars read-size)
-				;; concatenate buffers until we get the entire selection
-				(let ((str (substring c 0 read-size)))
-				  (let reading ((num (read input-fd cc read-size)))
-				    (set! str (string-append str (substring c 0 num)))
-				    (set! chars (+ chars num))
-				    (if (= num read-size)
-					(reading (read input-fd cc read-size))))
-
-				  ;; avoid time-consuming redisplays
-				  (catch #t
-				    (lambda ()
-				      (do ((i 0 (+ i 1)))
-					  ((= i (- chars 1)))
-					((keymap-functions (char->integer (str i))) (str i))))
-				    (lambda (type info)
-				      (format *stderr* "~C[~D;~DH" #\escape prompt-row prompt-col)
-				      (format *stderr* "internal error: ")
-				      (apply format *stderr* info)
-				      (newline *stderr*)
-				      (format *stderr* "line ~A: ~A~%" ((owlet) 'error-line) ((owlet) 'error-code))
-				      (new-prompt)
-				      (set! (str (- chars 1)) #\null)))
-
-				  ;; handle last char normally
-				  (set! (c 0) (str (- chars 1)))
-				  (set! chars 1)
-				  (set! ctr 0))))
-
-			    (let ((result (c ctr)))
-			      (set! ctr (+ ctr 1))
-			      result))))
+			    (call-with-exit
+			     (lambda (return)
+			       (when (>= ctr chars)
+				 (set! ctr 0)
+				 (set! chars (read input-fd cc read-size))
+				 (if (= chars 0)
+				     (tty-reset terminal-fd))
+				 
+				 (when (= chars read-size)
+				   ;; concatenate buffers until we get the entire selection
+				   (let ((str (substring c 0 read-size)))
+				     (let reading ((num (read input-fd cc read-size)))
+				       (set! str (string-append str (substring c 0 num)))
+				       (set! chars (+ chars num))
+				       (if (= num read-size)
+					   (reading (read input-fd cc read-size))))
+				     (set! c str)
+				     (set! cc (string->c-pointer c))
+				     
+				     ;; avoid time-consuming redisplays.  We need to use a recursive call on next-char here
+				     ;;   since we might have multi-char commands (embedded #\escape -> meta, etc)
+				     (catch #t
+				       (lambda ()
+					 (do ((ch (next-char) (next-char)))
+					     ((= ctr (- chars 1)) 
+					      (return ch))
+					   ((keymap-functions (char->integer ch)) ch)))
+				       
+				       (lambda (type info)
+					 (set! chars 0)
+					 (format *stderr* "~C[~D;~DH" #\escape prompt-row prompt-col)
+					 (format *stderr* "internal error: ")
+					 (apply format *stderr* info)
+					 (newline *stderr*)
+					 (format *stderr* "line ~A: ~A~%" ((owlet) 'error-line) ((owlet) 'error-code))
+					 (new-prompt)
+					 (return #\null))))))
+			       
+			       (let ((result (c ctr)))
+				 (set! ctr (+ ctr 1))
+				 result))))))
 
 		  (set! input-fd (if (not file) 
 				terminal-fd
@@ -924,7 +928,7 @@
 		  ;; -------- the repl --------
 		  (display-prompt)
 		  (cursor-bounds)
-		  (if (string=? (getenv "HOME") "/home/bil") (debug-help))
+		  ;(debug-help))
 
 		  (do () ()
 		    (catch #t
@@ -958,6 +962,8 @@
 
 
 ;;; --------------------------------------------------------------------------------
+
+(autoload 'lint "lint.scm")
 
 (define (getcwd) 
   ((*libc* 'getcwd) (make-string 128 #\null) 128))
@@ -1132,7 +1138,6 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 
 
 
-;; need some sort of auto-test: repl.input
 ;; unicode someday
 ;; autoload if possible (apropos in stuff.scm)
 ;; clm/sndlib load example

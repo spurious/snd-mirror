@@ -1246,9 +1246,16 @@ void save_region_backpointer(snd_info *sp)
 
   for (i = 0; i < sp->nchans; i++)
     {
+      chan_info *cp;
       mus_float_t val;
       val = channel_maxamp(sp->chans[i], AT_CURRENT_EDIT_POSITION);
       if (val > r->maxamp) r->maxamp = val;
+
+      cp = sp->chans[i];
+      if (r->peak_envs[i])
+	free_peak_env_info(r->peak_envs[i]);
+      /* if region file was edited, the peak_envs probably changed */
+      r->peak_envs[i] = copy_peak_env_info(cp->edits[0]->peak_env, false);
     }
 
   /* make new region temp file */
