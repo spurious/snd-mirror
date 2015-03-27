@@ -337,19 +337,18 @@
 	    (define (help c)
 	      (when (pair? (*repl* 'helpers))
 		(let ((coords (cursor-coords))
-		      (col (floor (/ last-col 2)))
-		      (row (floor (/ last-row 2))))
-		  (format *stderr* "~C[~D;~DH" #\escape row col)
+		      (col (floor (/ last-col 2))))
+		  (format *stderr* "~C[~D;~DH" #\escape 1 col)
 		  (format *stderr* "+~NC" (- col 2) #\-)
 
-		  (do ((i 1 (+ i 1))
+		  (do ((i 2 (+ i 1)) ; put box in top right corner so we don't get trailing output as we scroll
 		       (lst (*repl* 'helpers) (cdr lst)))
 		      ((null? lst))
 		    (let ((str ((car lst) c)))
-		      (format *stderr* "~C[~D;~DH" #\escape (+ row i) col)
+		      (format *stderr* "~C[~D;~DH" #\escape i col)
 		      (format *stderr* "~C[K| ~A"  #\escape (if (> (length str) col) (substring str 0 (- col 1)) str))))
 
-		  (format *stderr* "~C[~D;~DH" #\escape (+ row 1 (length (*repl* 'helpers))) col)
+		  (format *stderr* "~C[~D;~DH" #\escape (+ 2 (length (*repl* 'helpers))) col)
 		  (format *stderr* "+~NC" (- col 2) #\-)
 		  (format *stderr* "~C[~D;~DH"   #\escape (cdr coords) (car coords)))))
 		  
@@ -383,8 +382,10 @@
 
 	    (define keymap (dilambda
 			    (lambda (c)
-			      (cond ((char? c) (keymap-functions (char->integer c)))
-				    ((integer? c) (keymap-functions c))
+			      (cond ((char? c) 
+				     (keymap-functions (char->integer c)))
+				    ((integer? c) 
+				     (keymap-functions c))
 				    ((string? c)
 				     (if (= (length c) 1)
 					 (keymap-functions (char->integer (c 0)))
@@ -393,9 +394,12 @@
 					     (meta-keymap-functions (char->integer (c 1)))
 					     (lambda (c) #t))))
 				    (else (error 'wrong-type-arg "keymap takes a character or string argument"))))
+
 			    (lambda (c f)
-			      (cond ((char? c) (set! (keymap-functions (char->integer c)) f))
-				    ((integer? c) (set! (keymap-functions c) f))
+			      (cond ((char? c) 
+				     (set! (keymap-functions (char->integer c)) f))
+				    ((integer? c) 
+				     (set! (keymap-functions c) f))
 				    ((string? c)
 				     (if (= (length c) 1)
 					 (set! (keymap-functions (char->integer (c 0))) f)
@@ -580,15 +584,14 @@
 			      (begin
 				(set! selection (substring current-line cursor-position))
 				(set! current-line (substring current-line 0 cursor-position)))
-			      (if (= cursor-position end) ; delete next newline
-				  (set! current-line (string-append (substring current-line 0 (+ end 1))
-								    (substring current-line (+ end 2))))
+			      (if (or (= cursor-position end) ; delete following newline
+				      (char=? (current-line cursor-position) #\newline))
+				  (set! current-line (string-append (substring current-line 0 cursor-position)
+								    (substring current-line (+ cursor-position 1))))
 				  (begin
 				    (set! selection (substring current-line cursor-position (+ end 1)))
 				    (set! current-line (string-append (substring current-line 0 cursor-position)
 								      (substring current-line (+ end 1))))
-				    (if (positive? cursor-position)
-					(set! cursor-position (- cursor-position 1)))
 				    ))))))))
 
 	    ;; -------- undo/selection
@@ -616,20 +619,16 @@
 	    ;; -------- transpose
 	    (set! (keymap-functions C-t) 
 		  (lambda (c)
-		    (let ((start (start-of-line cursor-position))
-			  (end (end-of-line cursor-position))
-			  (len (length current-line)))
-		      (when (and (> end start)
-				 (> cursor-position start))
-			(save-line)
-			(let ((cur (if (or (= cursor-position end)
-					   (< end len))
-				       (- cursor-position 1)
-				       cursor-position)))
-			  (let ((tmp-c (current-line (- cur 1))))
-			    (set! (current-line (- cur 1)) (current-line cur))
-			    (set! (current-line cur) tmp-c)
-			    (set! cursor-position (+ cur 1))))))))
+		    (let ((end (end-of-line cursor-position)))
+		      (save-line)
+		      (let ((cur (if (>= cursor-position end)
+				     (- cursor-position 1)
+				     cursor-position)))
+			(if (positive? cur)
+			    (let ((tmp-c (current-line (- cur 1))))
+			      (set! (current-line (- cur 1)) (current-line cur))
+			      (set! (current-line cur) tmp-c)
+			      (set! cursor-position (+ cur 1))))))))
 	    
 	    ;; -------- indentation/completion
 	    (set! (keymap-functions Tab) 
@@ -697,8 +696,10 @@
 				  (set! cursor-position len)
 				  (display-lines)
 				  (set! (history) (copy current-line))
-				  ;(append-newline) ; need newline now if evaluation prints something
-				  (format *stderr* "~%~S~%" (eval-string current-line (rootlet))))
+				  ;; an experiment to get the newline out if the expression is not missing a close paren
+				  (let ((form (with-input-from-string current-line #_read))) ; not libc's read
+				    (newline *stderr*)
+				    (format *stderr* "~S~%" (eval form (rootlet)))))
 				(lambda args
 				  (pop-history)    ; remove last history entry
 				  (append-newline)
@@ -719,14 +720,12 @@
 		    
 	    (set! (meta-keymap-functions (char->integer #\[))
 		  (lambda (c)
-		    ;; arrow-keys etc
 		    (let ((chr (next-char)))
 		      (case chr
-			((#\A) ((keymap-functions C-p) C-p))
+			((#\A) ((keymap-functions C-p) C-p))  ; arrow keys
 			((#\B) ((keymap-functions C-n) C-n))
 			((#\C) ((keymap-functions C-f) C-f))
 			((#\D) ((keymap-functions C-b) C-b))))))
-	    ;; (#\1) here might be F1?
 			
 	    (set! (meta-keymap-functions (char->integer #\<))
 		  (lambda (c) 
@@ -868,7 +867,6 @@
 		  (set! next-char                                     ; this indirection is needed if user pastes the selection into the repl
 			(let* ((c (make-string read-size #\null)) 
 			       (cc (string->c-pointer c))
-			       (csize read-size)
 			       (ctr 0))
 			  (lambda ()
 			    (when (>= ctr chars)
@@ -959,6 +957,88 @@
 ;; ((*repl* 'run))
 
 
+;;; --------------------------------------------------------------------------------
+
+(define (getcwd) 
+  ((*libc* 'getcwd) (make-string 128 #\null) 128))
+
+(define (chdir dir) 
+  ((*libc* 'chdir) dir))
+
+(define-macro (time expr)
+  (let ((start (gensym)))
+    `(let ((,start ((*libc* 'gettimeofday))))
+       ,expr
+       (let ((end ((*libc* 'gettimeofday))))
+	 (+ (- (car end) (car ,start)) ; seconds
+	    (* 0.000001 (- (cadr end) (cadr ,start))))))))
+
+
+(define* (apropos name (e (rootlet)))
+  
+  (define (levenshtein s1 s2)
+    (let ((l1 (length s1))
+	  (l2 (length s2)))
+      (cond ((zero? l1) l2)
+	    ((zero? l2) l1)
+	    (else (let ((distance (make-vector (list (+ l2 1) (+ l1 1)) 0)))
+		    (do ((i 0 (+ i 1)))
+			((> i l1))
+		      (set! (distance 0 i) i))
+		    (do ((i 0 (+ i 1)))
+			((> i l2))
+		      (set! (distance i 0) i))
+		    (do ((i 1 (+ i 1)))
+			((> i l2))
+		      (do ((j 1 (+ j 1)))
+			  ((> j l1))
+			(let ((c1 (+ (distance i (- j 1)) 1))
+			      (c2 (+ (distance (- i 1) j) 1))
+			      (c3 (+ (distance (- i 1) (- j 1)) (if (char=? (s2 (- i 1)) (s1 (- j 1))) 0 1))))
+			  (set! (distance i j) (min c1 c2 c3)))))
+		    (distance l2 l1))))))
+  
+  (let ((ap-name (if (string? name) name 
+		     (if (symbol? name) (symbol->string name)
+			 (error 'wrong-type-arg "apropos argument 1 should be a string or a symbol"))))
+	(ap-env (if (let? e) e 
+		    (error 'wrong-type-arg "apropos argument 2 should be an environment"))))
+    (let ((strs ())
+	  (min2 (floor (log (length ap-name) 2)))
+	  (have-orange (string=? ((*libc* 'getenv) "TERM") "xterm-256color")))
+      (for-each
+       (lambda (binding)
+	 (if (pair? binding)
+	     (let ((symbol-name (symbol->string (car binding))))
+	       (if (string-position ap-name symbol-name)
+		   (set! strs (cons (cons binding 0) strs))
+		   (let ((distance (levenshtein ap-name symbol-name)))
+		     (if (< distance min2)
+			 (set! strs (cons (cons binding distance) strs))))))))
+       ap-env)
+
+      (if (pair? strs)
+	  (begin
+	    (for-each (lambda (b)
+			(format *stderr*
+				(if (zero? (cdr b)) "~C[1m~A~C[0m: ~S~%"                           ; black if exact match somewhere
+				    (if (or (< (cdr b) 2) (not have-orange)) "~C[31m~A~C[0m: ~S~%" ; red for near miss
+					"~C[38;5;208m~A~C[0m: ~S~%"))                              ; orange for less likely choices
+				#\escape (caar b) #\escape
+				(if (procedure? (cdar b))
+				    (let ((doc (procedure-documentation (cdar b))))
+				      (if (and (string? doc)
+					       (positive? (length doc)))
+					  doc
+					  'procedure))
+				    (cdar b))))
+		      (sort! strs (lambda (a b)
+				    (string<? (symbol->string (caar a)) (symbol->string (caar b))))))
+	    (symbol " ")) ; don't print #<unspecified> at the end
+	  'no-match))))
+
+
+;;; --------------------------------------------------------------------------------
 #|
 to add/change keymap entry:
 (set! ((*repl* 'keymap) (integer->char 12)) ; C-l will expand to "(lambda " at the cursor
@@ -1003,7 +1083,7 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 			  ""))
 		    "")))))
 
-;; "function keys":
+;; function keys:
 (set! ((*repl* 'keymap) (string #\escape #\[))
       (lambda (c)
 	(with-let (*repl* 'repl-let)
@@ -1053,7 +1133,8 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 
 
 ;; need some sort of auto-test: repl.input
-;; possibly notice bad input?
 ;; unicode someday
-;; C-t might be uncanonical, C-k is messed up
+;; autoload if possible (apropos in stuff.scm)
+;; clm/sndlib load example
 
+*repl*

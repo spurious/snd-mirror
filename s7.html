@@ -9068,6 +9068,13 @@ the Snd repl:
 						     (substring current-line cursor-position)))))
 	   (set! cursor-position (+ cursor-position (length "(lambda "))))))
 </pre>
+
+<p>To access the meta keys, use a string:
+<code>((*repl* 'keymap) (string #\escape #\p))</code>; this is Meta-p which normally accesses
+the history buffer.  If you paste a large selection into the repl, you'll probably need to
+type return afterwards to convince the repl it's there.
+</p>
+
 </div>
 
 
