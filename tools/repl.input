@@ -1,0 +1,85 @@
+;;; repl.scm tests
+(define (ck val) 
+  (with-let (sublet (*repl* 'repl-let) :val val) 
+    (if (not (equal? (history -2) val)) 
+        (error 'oops (history -2)))))
+(define (ck** val)
+  (with-let (sublet (*repl* 'repl-let) :val val) 
+    (if (not (equal? ** val)) 
+        (error 'oops (object->string **)))))
+1
+(ck "1")
+12
+(ck "2")
+(+ 1 2) 3
+(ck "(+ 1 3 2)")
+12
+(ck "21")
+3
+2
+pp5
+(ck "35")
+1234
+(ck "234")
+1234
+(ck "234")
+(+ 1
+234)
+(ck** 25)
+(+ 1
+234)<*
+(ck** 234)
+1234
+(ck** 124)
+1234
+(ck** 1234)
+1234[D[D
+(ck "124")
+1234[C[C
+(ck "124")
+(+ 12
+34
+56)
+(ck** 102)
+(+ 12
+34
+56)
+(ck** 71)
+pp[A[A-
+(ck** -47)
+(+ 12
+34
+56314)
+(ck** 1028)
+(+ 12
+34
+56)<>
+(ck** 39)
+1234
+(ck "12")
+1234
+(ck "12")
+1234
+(ck "34")
+1234
+(ck "12")
+(+ 12
+34))
+(ck** 15)
+(+ 12
+34)
+(ck** 55)
+1234
+(ck "1234")
+15
+(ck "12345")
+'(a as asd asdf)cccc
+(ck "'(A As Asd Asdf)")
+'(a as asd asdf)uuu
+(ck "'(A AS ASD asdf)")
+'(A AS ASD ASDF)lll
+(ck "'(a as asd ASDF)")
+((*repl* 'save-history))
+((*repl* 'restore-history))
+((*repl* 'prompt))
+

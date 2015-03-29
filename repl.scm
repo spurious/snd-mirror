@@ -14,6 +14,7 @@
 	  (restore-history #f) ; function to restore history buffer entries from a file
 	  (helpers ())         ; list of functions displaying help strings 
 	  (run #f)             ; function that fires up a REPL
+	  (top-level-let (rootlet))   ; environment in which evaluation takes place
 	  (repl-let            ; environment for keymap functions to access all the REPL innards (cursor-position etc)
       
       (with-let (sublet *libc*)
@@ -128,7 +129,9 @@
 		(prompt-col 0)
 		(last-row 0)               ; these hold the window bounds when we start
 		(last-col 0)
-		(input-fd (fileno stdin))  ; either tty input or file input
+		(input-fd (fileno stdin))  ; source of chars, either tty input or file input
+		(terminal-fd (fileno stdin))
+		(tab-as-space (make-string 6 #\space))
 		(next-char #f)
 		(chars 0)                  ; (sigh) a kludge to try to distinguish tab-as-space from tab-as-completion/indentation
 		(** #f))
@@ -284,6 +287,12 @@
 	      (cursor-bounds))
 	    
 	    (define (display-line start end)
+	      
+	      ;; if a line wraps, it will confuse the redisplay/cursor positioning code. so truncate the display
+	      (let ((line-len (+ (- end start) 1 prompt-length)))
+		(if (>= line-len last-col)
+		    (set! end (- end (- line-len last-col)))))
+			
 	      (if (and red-par-pos
 		       (<= start red-par-pos)
 		       (< red-par-pos end))
@@ -303,6 +312,18 @@
 		      (format #f "~A~A" prompt-string (substring current-line 0 end))
 		      (format #f "~NC~A" prompt-length #\space (substring current-line start end)))))
 	    
+	    (define (display-cursor)
+	      (let ((row 0)
+		    (start 0)
+		    (len (length current-line)))
+		(do ((i 0 (+ i 1)))
+		    ((or (= i len)
+			 (= i cursor-position))
+		     (format *stderr* "~C[~D;~DH" #\escape (+ prompt-row row) (+ prompt-col (- cursor-position start))))
+		  (when (char=? (current-line i) #\newline)
+		    (set! row (+ row 1))
+		    (set! start (+ i 1))))))
+
 	    (define (display-lines)
 	      (format *stderr* "~C[~D;0H~C[J" #\escape prompt-row #\escape) ; set cursor back to prompt, erase down from there
 	      
@@ -314,15 +335,7 @@
 		    (set! line-end (end-of-line i))
 		    (set! new-line (string-append new-line (display-line i (min (+ line-end 2) len))))))
 		(format *stderr* "~A" new-line)
-		(let ((row 0)
-		      (start 0))
-		  (do ((i 0 (+ i 1)))
-		      ((or (= i len)
-			   (= i cursor-position))
-		       (format *stderr* "~C[~D;~DH" #\escape (+ prompt-row row) (+ prompt-col (- cursor-position start))))
-		    (when (char=? (current-line i) #\newline)
-		      (set! row (+ row 1))
-		      (set! start (+ i 1)))))))
+		(display-cursor)))
 	    
 	    
 	    ;; -------- help/debugging --------
@@ -357,8 +370,11 @@
 	      (set! (*repl* 'helpers)
 		    (list
 		     (lambda (c) 
-		       (format #f "cursor: ~A, line: ~S"
-			       cursor-position 
+		       (format #f "cursor: ~A, ~C, line: ~S"
+			       cursor-position
+			       (if (> (length current-line) 0)
+				   (current-line (max 0 (min cursor-position (- (length current-line) 1))))
+				   #\space)
 			       (one-line current-line)))
 		     (lambda (c)
 		       (format #f "len: ~D, selection: ~S, previous: ~S" 
@@ -502,18 +518,21 @@
 	    ;; -------- cursor movement 
 	    (set! (keymap-functions C-a) 
 		  (lambda (c)
-		    (set! cursor-position (start-of-line cursor-position))))
+		    (set! cursor-position (start-of-line cursor-position))
+		    'just-cursor))
 	    
 	    (set! (keymap-functions C-e) 
 		  (lambda (c)
-		    (set! cursor-position (end-of-line cursor-position))))
+		    (set! cursor-position (end-of-line cursor-position))
+		    'just-cursor))
 	    
 	    (set! (keymap-functions C-b) 
 		  (lambda (c)
 		    (when (> cursor-position 0)
 		      (set! cursor-position (- cursor-position 1))
 		      (if (char=? (current-line cursor-position) #\newline)
-			  (set! cursor-position (- cursor-position 1))))))
+			  (set! cursor-position (- cursor-position 1))))
+		    'just-cursor))
 	    
 	    (set! (keymap-functions C-f) 
 		  (lambda (c)
@@ -522,7 +541,8 @@
 			(set! cursor-position (+ cursor-position 1))
 			(if (and (< cursor-position len)
 				 (char=? (current-line cursor-position) #\newline))
-			    (set! cursor-position (+ cursor-position 1)))))))
+			    (set! cursor-position (+ cursor-position 1)))))
+		    'just-cursor))
 	    
 	    (set! (keymap-functions C-p) 
 		  (lambda (c)
@@ -532,7 +552,8 @@
 			(let ((upstart (start-of-line (- start 2)))
 			      (upend (end-of-line (- start 2)))
 			      (line-pos (- cursor-position start)))
-			  (set! cursor-position (min (+ upstart line-pos) upend)))))))
+			  (set! cursor-position (min (+ upstart line-pos) upend)))))
+		    'just-cursor))
 	    
 	    (set! (keymap-functions C-n) 
 		  (lambda (c)
@@ -543,7 +564,8 @@
 		      (if (> len next-start)                                     ; not already at last line
 			  (let ((next-end (end-of-line (+ next-start 1)))
 				(line-pos (- cursor-position start)))
-			    (set! cursor-position (min (+ next-start 1 line-pos) next-end)))))))
+			    (set! cursor-position (min (+ next-start 1 line-pos) next-end)))))
+		    'just-cursor))
 	    
 	    (set! (keymap-functions C-l) 
 		  (lambda (c)
@@ -614,8 +636,7 @@
 		    (when (pair? previous-line)
 		      (set! current-line (cdar previous-line))
 		      (set! cursor-position (caar previous-line))
-		      (set! previous-line (cdr previous-line))
-		      #f)))
+		      (set! previous-line (cdr previous-line)))))
 	    
 	    ;; -------- transpose
 	    (set! (keymap-functions C-t) 
@@ -684,7 +705,9 @@
 				(return))))
 			 
 			 (set! red-par-pos #f)
-			 (display-lines)
+			 (if (or (= chars 1) 
+				 (not (= input-fd terminal-fd)))
+			     (display-lines))
 			 
 			 (with-repl-let
 			  (catch #t
@@ -695,12 +718,14 @@
 			      (catch 'incomplete-expr
 				(lambda ()
 				  (set! cursor-position len)
-				  (display-lines)
+				  (if (or (= chars 1)
+					  (not (= input-fd terminal-fd)))
+				      (display-lines))
 				  (set! (history) (copy current-line))
 				  ;; an experiment to get the newline out if the expression is not missing a close paren
 				  (let ((form (with-input-from-string current-line #_read))) ; not libc's read
 				    (newline *stderr*)
-				    (format *stderr* "~S~%" (set! ** (eval form (rootlet))))))
+				    (format *stderr* "~S~%" (set! ** (eval form (*repl* 'top-level-let))))))
 				(lambda args
 				  (pop-history)    ; remove last history entry
 				  (append-newline)
@@ -730,11 +755,13 @@
 			
 	    (set! (meta-keymap-functions (char->integer #\<))
 		  (lambda (c) 
-		    (set! cursor-position 0)))
+		    (set! cursor-position 0)
+		    'just-cursor))
 
 	    (set! (meta-keymap-functions (char->integer #\>))
 		  (lambda (c) 
-		    (set! cursor-position (length current-line))))
+		    (set! cursor-position (length current-line))
+		    'just-cursor))
 			
 	    ;; ((#\x02) ; C-M-b
 			
@@ -766,8 +793,7 @@
 			      (when (< last-row (+ prompt-row newlines))
 				(format *stderr* "~NC" (- (+ prompt-row newlines) last-row) #\newline)
 				(set! prompt-row (- prompt-row newlines)))
-			      (set! current-row newlines))
-			    #f)
+			      (set! current-row newlines)))
 			  (set! history-index old-index)))))
 			
 	    (set! (meta-keymap-functions (char->integer #\n))
@@ -780,8 +806,7 @@
 			(when (< last-row (+ prompt-row newlines))
 			  (format *stderr* "~NC" (- (+ prompt-row newlines) last-row) #\newline)
 			  (set! prompt-row (- prompt-row newlines)))
-			(set! current-row newlines)))
-		    #f))
+			(set! current-row newlines)))))
 		  
 	    (set! (meta-keymap-functions (char->integer #\u))
 		  (lambda (c) 
@@ -813,22 +838,21 @@
 	    
 	    
 	    ;; -------- terminal setup --------
-	    (let ((saved #f)
-		  (terminal-fd (fileno stdin))
-		  (tty #t))
+	    (define* (run file)
+	      (let ((saved #f)
+		    (tty #t))
 	      
-	      ;; we're in libc here, so exit is libc's exit!
-	      (define (tty-reset no)
-		(if tty (tcsetattr terminal-fd TCSAFLUSH saved))
-		(if (not (equal? input-fd terminal-fd)) (close input-fd))
-		(#_exit))
-	      
-	      (set! ((rootlet) 'exit) ; we'd like this to happen when user types "(exit)"
-		    (lambda ()
-		      (newline *stderr*)
-		      (tty-reset 0)))
-	      
-	      (define* (run file)
+		;; we're in libc here, so exit is libc's exit!
+		(define (tty-reset no)
+		  (if tty (tcsetattr terminal-fd TCSAFLUSH saved))
+		  (if (not (equal? input-fd terminal-fd)) (close input-fd))
+		  (#_exit))
+		
+		(set! ((rootlet) 'exit) ; we'd like this to happen when user types "(exit)"
+		      (lambda ()
+			(newline *stderr*)
+			(tty-reset 0)))
+		
 		;; check for dumb terminal
 		(if (or (zero? (isatty terminal-fd))        ; not a terminal -- input from pipe probably
 			(string=? (getenv "TERM") "dumb"))  ; no vt100 codes -- emacs shell for example
@@ -847,7 +871,7 @@
 				   (with-repl-let
 				    (catch #t
 				      (lambda ()
-					(format *stderr* "~S~%" (eval-string (substring buf 0 (- (strlen buf) 1)) (rootlet))))
+					(format *stderr* "~S~%" (eval-string (substring buf 0 (- (strlen buf) 1)) (*repl* 'top-level-let))))
 				      (lambda (type info)
 					(format *stderr* "error: ")
 					(apply format *stderr* info)
@@ -877,7 +901,7 @@
 				 (set! chars (read input-fd cc read-size))
 				 (if (= chars 0)
 				     (tty-reset terminal-fd))
-				 
+
 				 (when (= chars read-size)
 				   ;; concatenate buffers until we get the entire selection
 				   (let ((str (substring c 0 read-size)))
@@ -886,15 +910,49 @@
 				       (set! chars (+ chars num))
 				       (if (= num read-size)
 					   (reading (read input-fd cc read-size))))
+
+				     ;; look for simple cut/paste -- no control chars etc
+				     (when (= input-fd terminal-fd)
+				       (let ((bcksp (integer->char 127))
+					     (ok-chars (list #\newline #\linefeed #\return #\tab)))
+					 (do ((i 0 (+ i 1)))
+					     ((or (= i chars)
+						  (char>=? (str i) bcksp)
+						  (and (char<? (str i) #\space)
+						       (not (memq (str i) ok-chars))))
+					      (when (= i chars)
+						(let ((search-chars (string #\tab #\return #\newline))
+						      (old-pos 0))
+						  (do ((pos (char-position search-chars str 0) (char-position search-chars str (+ pos 1))))
+						      ((not pos))
+						    (set! current-line (string-append current-line 
+										      (substring str old-pos pos)
+										      (if (char=? (str pos) #\tab) 
+											  tab-as-space 
+											  (string #\space #\newline))))
+						    (set! old-pos (+ pos 1)))
+						  (if (< (+ old-pos 1) (length str))
+						      (set! current-line (string-append current-line (substring str (+ old-pos 1)))))
+						  (set! cursor-position (length current-line))
+						  (set! chars 0)
+						  (set! ctr 1)
+						  (display-lines)
+						  (return #\newline)))))))
+
 				     (set! c str)
 				     (set! cc (string->c-pointer c))
-				     
 				     ;; avoid time-consuming redisplays.  We need to use a recursive call on next-char here
 				     ;;   since we might have multi-char commands (embedded #\escape -> meta, etc)
+				     ;; actually, the time is not the repl's fault -- xterm seems to be waiting
+				     ;;   for the window manager or someone to poke it -- if I move the mouse,
+				     ;;   I get immediate output.  I also get immediate output in any case in OSX.
+				     ;;   valgrind and ps say we're not computing, we're just sitting there.
 				     (catch #t
 				       (lambda ()
 					 (do ((ch (next-char) (next-char)))
 					     ((= ctr (- chars 1)) 
+					      (set! chars 0)
+					      (display-lines)
 					      (return ch))
 					   ((keymap-functions (char->integer ch)) ch)))
 				       
@@ -905,6 +963,8 @@
 					 (apply format *stderr* info)
 					 (newline *stderr*)
 					 (format *stderr* "line ~A: ~A~%" ((owlet) 'error-line) ((owlet) 'error-code))
+					 (set! chars 0)
+					 (set! ctr 0)
 					 (new-prompt)
 					 (return #\null))))))
 			       
@@ -928,15 +988,19 @@
 		  ;; -------- the repl --------
 		  (display-prompt)
 		  (cursor-bounds)
-		  ;(debug-help))
+		  ;(debug-help)
 
 		  (do () ()
 		    (catch #t
 		      (lambda ()
 			(let ((chr (next-char)))
-			  ((keymap-functions (char->integer chr)) chr)
-			  (check-parens)
-			  (display-lines)
+			  (let ((res ((keymap-functions (char->integer chr)) chr))
+				(last-pos red-par-pos))
+			    (check-parens)
+			    (if (or last-pos red-par-pos 
+				    (not (eq? res 'just-cursor)))
+				(display-lines)
+				(display-cursor)))
 			  (help chr)))
 		      
 		      (lambda (type info)
@@ -945,9 +1009,10 @@
 			(apply format *stderr* info)
 			(newline *stderr*)
 			(format *stderr* "line ~A: ~A~%" ((owlet) 'error-line) ((owlet) 'error-code))
-			(new-prompt))))))
+			(set! chars 0)
+			(new-prompt)))))))
 	      
-	      (curlet)))))))
+	    (curlet))))))
       
       (set! keymap (repl-let 'keymap))
       (set! history (repl-let 'history))
@@ -980,7 +1045,7 @@
 	    (* 0.000001 (- (cadr end) (cadr ,start))))))))
 
 
-(define* (apropos name (e (rootlet)))
+(define* (apropos name (e (*repl* 'top-level-let)))
   
   (define (levenshtein s1 s2)
     (let ((l1 (length s1))
@@ -1000,7 +1065,8 @@
 			  ((> j l1))
 			(let ((c1 (+ (distance i (- j 1)) 1))
 			      (c2 (+ (distance (- i 1) j) 1))
-			      (c3 (+ (distance (- i 1) (- j 1)) (if (char=? (s2 (- i 1)) (s1 (- j 1))) 0 1))))
+			      (c3 (+ (distance (- i 1) (- j 1)) 
+				     (if (char=? (s2 (- i 1)) (s1 (- j 1))) 0 1))))
 			  (set! (distance i j) (min c1 c2 c3)))))
 		    (distance l2 l1))))))
   
@@ -1046,6 +1112,11 @@
 
 ;;; --------------------------------------------------------------------------------
 #|
+to work in a particular environment:
+(set! (*repl* 'top-level-let) (sublet (rootlet))) ; or any other like *libc*
+now (define g 43) puts g in the new top-level-let, so ((rootlet) 'g) -> #<undefined>, and ((*repl* 'top-level-let) 'g) -> 43 (= g in repl of course)
+to start with a fresh top-level, just set top-level-let to (sublet (rootlet)) again
+
 to add/change keymap entry:
 (set! ((*repl* 'keymap) (integer->char 12)) ; C-l will expand to "(lambda " at the cursor
       (lambda (c)
@@ -1137,9 +1208,12 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 |#
 
 
-
-;; unicode someday
-;; autoload if possible (apropos in stuff.scm)
-;; clm/sndlib load example
+;; unicode someday: I think all we need is unicode_string_length and index into unicode string (set/ref)
+;; more autoload? clm.scm [see sl.c which implements most of this]
+;; history search? a way to save the latest definition or all of them (rather than save-history which rotates out)
+;;   or M-. to get back the last definition text: <func-name>M-. or uses autoload tables to get it?
+;;   could top-level-let save each definition as text+value?
+;;   look at ** value? or a let-set-watcher like symbol-access?
+;;   maybe (save|restore-top-level): run through let, for each write def?
 
 *repl*

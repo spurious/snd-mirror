@@ -103,18 +103,15 @@ related documentation: &nbsp;
 
 <div class="header" id="introduction">Introduction</div>
 
-<p>sndlib is a collection of sound file and audio hardware
-handlers written in C and running currently in various Unices
+<p>sndlib is a collection of sound file and sound synthesis
+function written in C and running currently in various Unices
 via OSS or ALSA, Mac OSX, and on old Windows systems.  
-It provides relatively straightforward access to many sound file headers and data
-types, and most of the features of the audio hardware. </p>
-
 <p>To build sndlib (sndlib.so if possible, and sndlib.a):</p>
 <pre>
   ./configure
   make
 </pre>
-<p>To install it, 'make install' &mdash; I've tested this process in Linux and on a Mac.
+<p>To install it, 'make install' &mdash; I've tested this process in Linux.
 </p>
 
 <p>The following files make up sndlib:</p>
@@ -133,15 +130,14 @@ types, and most of the features of the audio hardware. </p>
 <p>
 The naming scheme is more as less as follows:
 the sndlib prefix is "mus" so
-function names start with "mus_" and constants start with "MUS_".  Audio hardware constants start with "MUS_AUDIO_",
-functions involving sound files referenced through the file name
+function names start with "mus_" and constants start with "MUS_".
+Functions involving sound files referenced through the file name
 start with "mus_sound_", functions involving files at a lower level
 with "mus_file_", functions involving header access with "mus_header_",
 functions involving audio hardware access with "mus_audio_",
 and various
 others just with "mus_" (number translations, etc).  Conversions use
-the word "to" as in "mus_samples_to_bytes".  Booleans use "_p" (an ancient
-Common Lisp convention meaning "predicate" I think).
+the word "to" as in "mus_samples_to_bytes".  
 </p>
 
 
@@ -167,8 +163,8 @@ name of the sound file.
   int mus_sound_chans (const char *arg)            /* number of channels (samples are interleaved) */
   int mus_sound_srate (const char *arg)            /* sampling rate */
 
-  int mus_sound_header_type (const char *arg)      /* header type (aiff etc) */
-  int mus_sound_sample_type (const char *arg)      /* sample type (alaw etc) */
+  mus_header_t mus_sound_header_type (const char *arg)      /* header type (aiff etc) */
+  mus_sample_t mus_sound_sample_type (const char *arg)      /* sample type (alaw etc) */
   int mus_sound_original_format (const char *arg)  /* unmodified sample type specifier */
   int mus_sound_type_specifier (const char *arg)   /* original header type identifier */
 
@@ -178,18 +174,17 @@ name of the sound file.
   int *mus_sound_loop_info(const char *arg)        /* 8 loop vals (mode,start,end) then base-detune and base-note  (empty list if no loop info found) */
 
   int mus_sound_write_date (const char *arg)       /* bare (uninterpreted) file write date */
-
   int mus_sound_initialize(void)                   /* initialize everything */
 </pre>
 
 <p>The following can be used to provide user-understandable descriptions
 of the header type and the sample type:</p>
 <pre>
-  char *mus_header_type_name(int type)             /* "AIFF" etc */
-  char *mus_sample_type_name(int samp_type)        /* "16-bit big endian linear" etc */
-  char *mus_header_type_to_string(int type)
-  char *mus_sample_type_to_string(int samp_type)
-  const char *mus_sample_type_short_name(int samp_type)
+  char *mus_header_type_name(mus_header_t type)             /* "AIFF" etc */
+  char *mus_sample_type_name(mus_sample_t samp_type)        /* "16-bit big endian linear" etc */
+  char *mus_header_type_to_string(mus_header_t type)
+  char *mus_sample_type_to_string(mus_sample_t samp_type)
+  const char *mus_sample_type_short_name(mus_sample_t samp_type)
 </pre>
 
 <p>In all cases if an error occurs, -1 (MUS_ERROR) is returned, and some sort of error message
@@ -220,19 +215,16 @@ components that have been found can be read via functions such as
 sound file data:</p>
 <pre>
   int mus_sound_open_input (const char *arg) 
-  int mus_sound_open_output (const char *arg, int srate, int chans, int sample_type, int header_type, const char *comment)
-  int mus_sound_reopen_output (const char *arg, int type, int format, mus_long_t data_loc)
+  int mus_sound_open_output (const char *arg, int srate, int chans, mus_sample_t sample_type, mus_header_t header_type, const char *comment)
+  int mus_sound_reopen_output (const char *arg, mus_header_t type, mus_sample_t format, mus_long_t data_loc)
   int mus_sound_close_input (int fd) 
   int mus_sound_close_output (int fd, mus_long_t bytes_of_data) 
   int mus_sound_read (int fd, int beg, int end, int chans, mus_float_t **bufs) 
   int mus_sound_write (int fd, int beg, int end, int chans, mus_float_t **bufs) 
   mus_long_t mus_sound_seek_frample (int fd, mus_long_t frample)
 </pre>
-<p>mus_float_t defaults to float, but can also be int.  It is set when
+<p>mus_float_t defaults to double.  It is set when
 sndlib is built, and refers to Sndlib's internal representation of sample values.  
-There are corresponding macros to convert from the
-sample type to C types (MUS_SAMPLE_TO_FLOAT, etc), and the reverse
-(MUS_FLOAT_TO_SAMPLE, etc).
 </p>
 
 <p>mus_sound_open_input opens arg for reading.  Most standard
@@ -275,15 +267,14 @@ file indicated by fd to the desired frample.
 </p>
 
 
-
 <div class="header" id="hardware">Hardware</div>
 
 <p>The following functions provide access to audio harware.  If an
 error occurs, they return -1 (MUS_ERROR). </p>
 <pre>
   int mus_audio_initialize(void)
-  int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
-  int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
+  int mus_audio_open_output(int dev, int srate, int chans, mus_sample_t format, int size)
+  int mus_audio_open_input(int dev, int srate, int chans, mus_sample_t format, int size)
   int mus_audio_write(int line, char *buf, int bytes)
   int mus_audio_close(int line)
   int mus_audio_read(int line, char *buf, int bytes)
@@ -324,7 +315,7 @@ requested by mus_audio_open_output with channels interleaved.</p>
 music V implementation, and clm2xen.c ties these into the languages supported by the
 xen package (currently s7, Ruby, and Forth).  The
 primary clm documentation (which describes both the Scheme and Common Lisp implementations)
-is clm.html found in clm-4.tar.gz or sndclm.html in snd-15.tar.gz alongside sndlib at ccrma-ftp.
+is clm.html found in clm-5.tar.gz or sndclm.html in snd-15.tar.gz alongside sndlib at ccrma-ftp.
 The simplest way to try these out is to load them into Snd; see extsnd.html,
 <a href="sndscm.html#exampdoc">examp.scm</a>, and <a href="sndscm.html#sndtestdoc">snd-test.scm</a> in snd-15.tar.gz for more details.
 The following briefly describes the C calls (see clm.h).
@@ -468,7 +459,7 @@ int main(int argc, char *argv[])
       strftime(timestr, 64, "%a %d-%b-%y %H:%M %Z", localtime(&amp;date));
       fprintf(stdout, "%s:\n  srate: %d\n  chans: %d\n  length: %f\n", 
 	      argv[1], srate, chans, length);
-      fprintf(stdout, "  type: %s\n  format: %s\n  written: %s\n  comment: %s\n", 
+      fprintf(stdout, "  header: %s\n  sample type: %s\n  written: %s\n  comment: %s\n", 
 	      mus_header_type_name(mus_sound_header_type(argv[1])), 
 	      mus_sample_type_name(mus_sound_sample_type(argv[1])), 
 	      timestr, comment);
@@ -897,13 +888,67 @@ or, at run time, use s7's loader and s7_init_sndlib:
   (lambda (file)
     (string-append
      file
-     ": chans: " (number-&gt;string (<a class=quiet href="extsnd.html#mussoundchans">mus-sound-chans</a> file))
-     ", srate: " (number-&gt;string (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> file))
-     ", " (<a class=quiet href="extsnd.html#musheadertypename">mus-header-type-name</a> (<a class=quiet href="extsnd.html#mussoundheadertype">mus-sound-header-type</a> file))
-     ", " (<a class=quiet href="extsnd.html#mussampletypename">mus-sample-type-name</a> (<a class=quiet href="extsnd.html#mussoundsampletype">mus-sound-sample-type</a> file))
+     ": chans: " (number-&gt;string (mus-sound-chans file))
+     ", srate: " (number-&gt;string (mus-sound-srate file))
+     ", " (mus-header-type-name (mus-sound-header-type file))
+     ", " (mus-sample-type-name (mus-sound-sample-type file))
      ", len: " (number-&gt;string
-                (/ (<a class=quiet href="extsnd.html#mussoundsamples">mus-sound-samples</a> file)
-                   (* (<a class=quiet href="extsnd.html#mussoundchans">mus-sound-chans</a> file) (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> file)))))))
+                (/ (mus-sound-samples file)
+                   (* (mus-sound-chans file) (mus-sound-srate file)))))))
+</pre>
+
+
+<div class="innerheader" id="s7clm">s7 repl and sndlib</div>
+
+<pre>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;unistd.h&gt;
+
+#include "mus-config.h"
+#include "s7.h"
+#include "xen.h"
+#include "clm.h"
+#include "clm2xen.h"
+
+static void mus_error_to_s7(int type, char *msg)
+{
+  s7_error(s7,                               /* s7 is declared in xen.h, defined in xen.c */
+	   s7_make_symbol(s7, "mus-error"),
+	   s7_cons(s7, s7_make_string(s7, msg), s7_nil(s7)));
+}
+
+int main(int argc, char **argv)
+{
+  s7 = s7_init();
+
+  s7_xen_initialize(s7);
+  Init_sndlib();
+  mus_error_set_handler(mus_error_to_s7); /* catch low-level errors and pass them to s7-error */
+
+  if (argc == 2)
+    {
+      fprintf(stderr, "load %s\n", argv[1]);
+      s7_load(s7, argv[1]);
+    }
+  else 
+    {
+      s7_load(s7, "repl.scm");
+      s7_eval_c_string(s7, "((*repl* 'run))");
+    }
+
+  return(0);
+}
+
+/* gcc -o sl sl.c /home/bil/test/sndlib/libsndlib.a -Wl,-export-dynamic -lasound -lm -I. -ldl -lgsl -lgslcblas -lfftw3
+ *
+ * (load "sndlib-ws.scm")
+ *
+ * but to play (normal double float output is not recognized by programs like aplay):
+ *   (set! *clm-player* (lambda (file) (system (format #f "aplay ~A" file))))
+ *   (with-sound (:sample-type mus-bshort :play #t) (fm-violin 0 1 330 .1))
+ */
 </pre>
 
 

@@ -9015,10 +9015,11 @@ thread-safe local variables, which can be saved and communicated between s7 runs
 symbol and filename completion, a history buffer, paren matching,
 indentation, multi-line edits, and a debugger window.  
 To move around in the history buffer, use M-p and M-n (C-p and C-n are used to move the cursor in the current expression).  
-You can 
-change the keymap or the prompt, and so on.  All the repl functions are
+You can change the keymap or the prompt, and so on.  All the repl functions are
 exported via the *repl* environment.  One field is 'repl-let which
 gives you access to all the repl's internal variables and functions.
+Another is 'top-level-let, normally (rootlet), which is the environment in
+which the repl's evaluation takes place.
 </p>
 
 <p>To run the repl, either build s7 with the compiler flag -DWITH_MAIN,
@@ -9088,7 +9089,7 @@ the Snd repl:
 <p>Here's an example of adding to the keymap:
 </p>
 <pre class="indented">
-(set! ((*repl* 'keymap) (integer->char 12)) ; C-l will expand to "(lambda "
+(set! ((*repl* 'keymap) (integer-&gt;char 12)) ; C-l will expand to "(lambda "
       (lambda (c)
 	(with-let (*repl* 'repl-let)
 	   (if (zero? cursor-position)
@@ -9108,7 +9109,6 @@ a trailing newline; otherwise you'll probably need to
 type it by hand to get a response from the repl.
 </p>
 
-</div>
 
 
 

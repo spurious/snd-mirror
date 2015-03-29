@@ -1638,7 +1638,7 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define string_needs_free(p)          (p)->object.string.str_ext.needs_free
 
 #define tmpbuf_malloc(P, Len)         do {if ((Len) < TMPBUF_SIZE) P = sc->tmpbuf; else P = (char *)malloc((Len) * sizeof(char));} while (0)
-#define tmpbuf_calloc(P, Len)         do {if ((Len) < TMPBUF_SIZE) {P = sc->tmpbuf; memset((void *)P, 0, Len);} else P = (char *)calloc((Len) * sizeof(char));} while (0)
+#define tmpbuf_calloc(P, Len)         do {if ((Len) < TMPBUF_SIZE) {P = sc->tmpbuf; memset((void *)P, 0, Len);} else P = (char *)calloc(Len, sizeof(char));} while (0)
 #define tmpbuf_free(P, Len)           do {if ((Len) >= TMPBUF_SIZE) free(P);} while (0)
 
 #define character(p)                  (p)->object.chr.c
@@ -22174,10 +22174,10 @@ static s7_pointer open_input_file_1(s7_scheme *sc, const char *name, const char 
 	      char *filename;
 	      int len;
 	      len = safe_strlen(name) + safe_strlen(home) + 1;
-	      filename = (char *)malloc(len * sizeof(char));
+	      tmpbuf_malloc(filename, len);
 	      snprintf(filename, len, "%s%s", home, (char *)(name + 1));
 	      fp = fopen(filename, "r");
-	      free(filename);
+	      tmpbuf_free(filename, len);
 	      if (fp)
 		return(make_input_file(sc, name, fp));
 	    }
@@ -23208,10 +23208,10 @@ defaults to the rootlet.  To load into the current environment instead, pass (cu
 	      char *filename;
 	      int len;
 	      len = safe_strlen(fname) + safe_strlen(home) + 1;
-	      filename = (char *)malloc(len * sizeof(char));
+	      tmpbuf_malloc(filename, len);
 	      snprintf(filename, len, "%s%s", home, (char *)(fname + 1));
 	      fp = fopen(filename, "r");
-	      free(filename);
+	      tmpbuf_free(filename, len);
 	    }
 	}
     }
@@ -24772,10 +24772,10 @@ static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
 		  char *indices;
 		  /* need to translate flat_ref into a set of indices
 		   */
-		  indices = (char *)calloc(128, sizeof(char));
+		  tmpbuf_calloc(indices, 128);
 		  plen = snprintf(buf, 128, "(set! ({v}%s) ", multivector_indices_to_string(sc, flat_ref, vec, indices, dimension));
 		  port_write_string(port)(sc, buf, plen, port);
-		  free(indices);
+		  tmpbuf_free(indices, 128);
 		}
 
 	      if (is_int_vector(vec))
@@ -25564,7 +25564,7 @@ static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port
   len = safe_strlen(excl_name) +
     safe_strlen(current_bits) + safe_strlen(allocated_bits) + safe_strlen(previous_bits) +
     safe_strlen(obj->previous_alloc_func) + safe_strlen(obj->current_alloc_func) + 512;
-  str = (char *)malloc(len * sizeof(char));
+  tmpbuf_malloc(str, len);
 
   nlen = snprintf(str, len,
 		  "\n<%s %s,\n  current: %s[%d] %s,\n  previous: %s[%d] %s\n  hloc: %d (%d uses), free: %s[%d], clear: %d, alloc: %s[%d]>",
@@ -25580,7 +25580,7 @@ static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port
   if (is_null(port))
     fprintf(stderr, "%p: %s\n", obj, str);
   else port_write_string(port)(sc, str, nlen, port);
-  free(str);
+  tmpbuf_free(str, len);
 }
 #endif
 
@@ -25776,10 +25776,10 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	  char *symstr;
 	  str = slashify_string(sc, symbol_name(obj), symbol_name_length(obj), NOT_IN_QUOTES, &nlen);
 	  nlen += 16;
-	  symstr = (char *)malloc(nlen * sizeof(char));
+	  tmpbuf_malloc(symstr, nlen);
 	  nlen = snprintf(symstr, nlen, "(symbol \"%s\")", str);
 	  port_write_string(port)(sc, symstr, nlen, port);
-	  free(symstr);
+	  tmpbuf_free(symstr, nlen);
 	}
       else
 	{
@@ -25959,13 +25959,13 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	int len;
 	tmp = describe_type_bits(sc, obj);
 	len = 32 + safe_strlen(tmp);
-	str = (char *)malloc(len * sizeof(char));
+	tmpbuf_malloc(str, len);
 	if (is_free(obj))
 	  nlen = snprintf(str, len, "<free cell! %s>", tmp);
 	else nlen = snprintf(str, len, "<unknown object! %s>", tmp);
 	free(tmp);
 	port_write_string(port)(sc, str, nlen, port);
-	free(str);
+	tmpbuf_free(str, len);
       }
 #endif
       break;
@@ -34236,11 +34236,11 @@ static void define_function_star_1(s7_scheme *sc, const char *name, s7_function 
   s7_pointer *names, *defaults;
 
   len = safe_strlen(arglist) + 8;
-  internal_arglist = (char *)malloc(len * sizeof(char));
+  tmpbuf_malloc(internal_arglist, len);
   snprintf(internal_arglist, len, "'(%s)", arglist);
   local_args = s7_eval_c_string(sc, internal_arglist);
   gc_loc = s7_gc_protect(sc, local_args);
-  free(internal_arglist);
+  tmpbuf_free(internal_arglist, len);
   n_args = safe_list_length(sc, local_args);  /* currently rest arg not supported, and we don't notice :key :allow-other-keys etc */
 
   func = s7_make_function(sc, name, fnc, 0, n_args, false, doc);
@@ -38313,10 +38313,10 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	      char *errstr;
 	      int str_len;
 	      len += 8;
-	      errstr = (char *)malloc(len * sizeof(char));
+	      tmpbuf_malloc(errstr, len);
 	      str_len = snprintf(errstr, len, "\n;%s", string_value(car(info)));
 	      format_to_port(sc, sc->error_port, errstr, cdr(info), NULL, false, str_len);
-	      free(errstr);
+	      tmpbuf_free(errstr, len);
 	    }
 	  else format_to_port(sc, sc->error_port, "\n;~S ~S", list_2(sc, type, info), NULL, false, 7);
 	}
@@ -67421,8 +67421,7 @@ int main(int argc, char **argv)
  *
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
- * OP_STRING_p1? add_cs1
  * also obj->str vectors (and other sequences) should be prettier if no cycles
- * use tmpbuf more
+ *   esp functions, lets
+ * sndlib.html sl.c section use sndplay not aplay
  */
-
