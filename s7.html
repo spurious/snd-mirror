@@ -9086,9 +9086,13 @@ the Snd repl:
 		    "")))))
 </pre>
 
-<p>Here's an example of adding to the keymap:
+<p>Here are a couple examples of adding to the keymap:
 </p>
 <pre class="indented">
+(set! ((*repl* 'keymap) (integer-&gt;char 17)) ; C-q to quit and return to caller
+      (lambda (c)
+	(set! ((*repl* 'repl-let) 'all-done) #t)))
+
 (set! ((*repl* 'keymap) (integer-&gt;char 12)) ; C-l will expand to "(lambda "
       (lambda (c)
 	(with-let (*repl* 'repl-let)
@@ -9104,11 +9108,64 @@ the Snd repl:
 
 <p>To access the meta keys, use a string:
 <code>((*repl* 'keymap) (string #\escape #\p))</code>; this is Meta-p which normally accesses
-the history buffer.  If you paste a large selection into the repl, remember to include 
-a trailing newline; otherwise you'll probably need to
-type it by hand to get a response from the repl.
+the history buffer.  If you paste a large selection into the repl, 
+you may need to type return or move the mouse(!) to get a response from the repl.
 </p>
 
+<p>You can call the repl from other code, poke around in the current environment (or whatever),
+then return to the caller:
+</p>
+
+<pre class="indented">
+(load "repl.scm")
+
+(define (drop-into-repl e)
+  (let ((C-q (integer-&gt;char 17)))              ; we'll use the C-q example above to get out
+    (let ((old-C-q ((*repl* 'keymap) C-q))
+	  (old-top-level (*repl* 'top-level-let)))
+      (dynamic-wind
+	  (lambda ()
+	    (set! (*repl* 'top-level-let) e)
+	    (set! ((*repl* 'keymap) C-q)       
+		  (lambda (c)
+		    (set! ((*repl* 'repl-let) 'all-done) #t))))
+	  (lambda ()
+	    ((<em class=red>*repl* 'run</em>)))                   ; run the repl
+	  (lambda ()
+	    (set! (*repl* 'top-level-let) old-top-level)
+	    (set! ((*repl* 'keymap) C-q) old-C-q))))))
+
+(let ((x 32))
+  (format *stderr* "x: ~A~%" x)
+  (<em class=red>drop-into-repl</em> (curlet))
+  (format *stderr* "now x: ~A~%" x))
+
+(exit)
+</pre>
+
+<p>Now load that code and:
+</p>
+
+<pre class="indented">
+x: 32
+&gt; x
+32
+&gt; (set! x 91)
+91
+&gt; x
+91
+&gt; now x: 91  ; here I typed C-q at the prompt
+</pre>
+
+<p>Another possibility:
+</p>
+<pre class="indented">
+(set! (hook-functions *error-hook*) 
+      (list (lambda (hook) 
+              (apply format *stderr* (hook 'data)) 
+              (newline *stderr*)
+	      (drop-into-repl (owlet)))))
+</pre>
 
 
 

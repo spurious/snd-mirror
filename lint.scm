@@ -3866,8 +3866,6 @@
 ;;; what about cond expr that can't be true given previous exprs? -- like or (1508)  and test (cond (#f ...)...)?
 ;;;  also (set! x 32) (set! x 123) etc [list-set!...]
 ;;;  also (set! x 32) (list-ref x 1)...
-;;;
-;;; (with-let *libc* ...) or the equivalent should turn off error checks for libc shadowers like read, write, exit
 
 
 

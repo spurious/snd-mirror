@@ -4124,12 +4124,13 @@ static void try_to_call_gc(s7_scheme *sc)
   else
     {
       unsigned int freed_heap;
-      freed_heap = gc(sc);
 #if (!DEBUGGING)
+      freed_heap = gc(sc);
       if ((freed_heap < sc->heap_size / 2) &&
 	  (freed_heap < 1000000)) /* if huge heap */
 	expand_heap(sc);
 #else
+      gc(sc);
       if (sc->free_heap_top - sc->free_heap < sc->heap_size / 2)
 	expand_heap(sc);
 #endif
@@ -24045,7 +24046,7 @@ static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator)
       return(cons(sc, lst->key, lst->value));
     }
 
-  table = iterator_sequence(iterator);
+  table = iterator_sequence(iterator); /* using iterator_length and hash_table_entries here was slightly slower */
   len = hash_table_length(table);
   elements = hash_table_elements(table);
 
@@ -67380,6 +67381,7 @@ int main(int argc, char **argv)
  * tmap           |      |      | 11.0           5031 4769 4702
  * tcopy          |      |      |                          5080
  * lg             |      |      | 6547 6497 6494 6235 6229 6222
+ * teq            |      |      | 6612                     6544
  * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7011
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
  * thash          |      |      |                          19.4
@@ -67421,7 +67423,9 @@ int main(int argc, char **argv)
  *
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
- * also obj->str vectors (and other sequences) should be prettier if no cycles
- *   esp functions, lets
- * sndlib.html sl.c section use sndplay not aplay
+ * also obj->str vectors (and other sequences) should be prettier if no cycles esp functions, lets
+ *   keep two lists in ci: cycles and shared, then cyclic could return both vectors
+ *   and equal would know when to avoid either, and print could avoid shared
+ *   and if cycle-lengths also saved, we should fix the t190 problem?
+ *   why are diff length cycles equal now? 
  */

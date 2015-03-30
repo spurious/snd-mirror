@@ -944,10 +944,9 @@ int main(int argc, char **argv)
 /* gcc -o sl sl.c /home/bil/test/sndlib/libsndlib.a -Wl,-export-dynamic -lasound -lm -I. -ldl -lgsl -lgslcblas -lfftw3
  *
  * (load "sndlib-ws.scm")
- *
- * but to play (normal double float output is not recognized by programs like aplay):
- *   (set! *clm-player* (lambda (file) (system (format #f "aplay ~A" file))))
- *   (with-sound (:sample-type mus-bshort :play #t) (fm-violin 0 1 330 .1))
+ * (load "v.scm")
+ * (set! *clm-player* (lambda (file) (system (format #f "sndplay ~A" file))))
+ * (with-sound (:play #t) (fm-violin 0 1 330 .1))
  */
 </pre>
 

@@ -2214,7 +2214,7 @@ static int alsa_sample_types(int ur_dev, int chan, mus_sample_t *val)
 	if (err > 0) 
 	  {
 	    if ((f < chan) && 
-		(to_mus_sample_type(format) != MUS_ERROR))
+		(to_mus_sample_type(format) != MUS_UNKNOWN_SAMPLE))
 	      val[f++] = to_mus_sample_type(format);
 	  }
       }

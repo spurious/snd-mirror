@@ -134,7 +134,8 @@
 		(tab-as-space (make-string 6 #\space))
 		(next-char #f)
 		(chars 0)                  ; (sigh) a kludge to try to distinguish tab-as-space from tab-as-completion/indentation
-		(** #f))
+		(** #f)
+		(all-done #f))             ; if #t, repl returns to its caller, if any
 
 		 
 	    ;; -------- match parens --------
@@ -836,19 +837,19 @@
 				  (set! cursor-position k))
 			       (set! (current-line k) (char-downcase (current-line k))))))))))
 	    
-	    
+	      
 	    ;; -------- terminal setup --------
 	    (define* (run file)
 	      (let ((saved #f)
 		    (tty #t))
-	      
+
 		;; we're in libc here, so exit is libc's exit!
 		(define (tty-reset no)
 		  (if tty (tcsetattr terminal-fd TCSAFLUSH saved))
 		  (if (not (equal? input-fd terminal-fd)) (close input-fd))
 		  (#_exit))
 		
-		(set! ((rootlet) 'exit) ; we'd like this to happen when user types "(exit)"
+		(set! ((rootlet) 'exit)         ; we'd like this to happen when user types "(exit)"
 		      (lambda ()
 			(newline *stderr*)
 			(tty-reset 0)))
@@ -990,7 +991,9 @@
 		  (cursor-bounds)
 		  ;(debug-help)
 
-		  (do () ()
+		  (do () 
+		      (all-done
+		       (set! all-done #f)) ; clear for next call
 		    (catch #t
 		      (lambda ()
 			(let ((chr (next-char)))
@@ -1118,6 +1121,10 @@ now (define g 43) puts g in the new top-level-let, so ((rootlet) 'g) -> #<undefi
 to start with a fresh top-level, just set top-level-let to (sublet (rootlet)) again
 
 to add/change keymap entry:
+(set! ((*repl* 'keymap) (integer->char 17)) ; C-q to quit and return to caller
+      (lambda (c)
+	(set! ((*repl* 'repl-let) 'all-done) #t)))
+
 (set! ((*repl* 'keymap) (integer->char 12)) ; C-l will expand to "(lambda " at the cursor
       (lambda (c)
 	(with-let (*repl* 'repl-let)
@@ -1209,7 +1216,7 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 
 
 ;; unicode someday: I think all we need is unicode_string_length and index into unicode string (set/ref)
-;; more autoload? clm.scm [see sl.c which implements most of this]
+;; more autoload? 
 ;; history search? a way to save the latest definition or all of them (rather than save-history which rotates out)
 ;;   or M-. to get back the last definition text: <func-name>M-. or uses autoload tables to get it?
 ;;   could top-level-let save each definition as text+value?
