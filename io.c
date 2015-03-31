@@ -3277,11 +3277,11 @@ int mus_strlen(const char *str)
 
 bool mus_strcmp(const char *s1, const char *s2)
 {
-  unsigned char c1, c2;
   if ((!s1) || (!s2)) return(s1 == s2);
 
   while (true)
     {
+      unsigned char c1, c2;
       c1 = (unsigned char) *s1++;
       c2 = (unsigned char) *s2++;
       if (c1 != c2) return(false);

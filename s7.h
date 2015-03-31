@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.21"
-#define S7_DATE "19-Mar-15"
+#define S7_VERSION "3.22"
+#define S7_DATE "30-Mar-15"
 
 
 typedef long long int s7_Int;
@@ -80,6 +80,7 @@ s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr);
   /* these are for passing uninterpreted C pointers through Scheme */
 
 s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str);         /* (eval-string str) */
+s7_pointer s7_eval_c_string_with_environment(s7_scheme *sc, const char *str, s7_pointer e);
 s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer arg, bool use_write);       
                                                                      /* (object->string obj) */
 char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj);          /* same as object->string but returns a C char* directly */
@@ -768,6 +769,7 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);
  * 
  *        s7 changes
  *
+ * 30-Mar:    s7_eval_c_string_with_environment (repl experiment).
  * 19-Mar:    repl.scm.
  * 28-Feb:    s7_vector_print_length -> s7_print_length, set case also.
  * 25-Feb:    s7_closure_* funcs to replace clumsy (deprecated) s7_procedure_source.

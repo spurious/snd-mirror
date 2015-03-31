@@ -6,16 +6,16 @@
 (require libc.scm)
 
 (unless (defined? '*repl*)
-  (define *repl*               ; environment that holds the REPL functions
-    (let ((prompt #f)          ; function to get/set prompt
-	  (keymap #f)          ; function to get/set keymap entries
-	  (history #f)         ; function to get/set history buffer entries
-	  (save-history #f)    ; function to save the current history buffer entries in a file
-	  (restore-history #f) ; function to restore history buffer entries from a file
-	  (helpers ())         ; list of functions displaying help strings 
-	  (run #f)             ; function that fires up a REPL
-	  (top-level-let (rootlet))   ; environment in which evaluation takes place
-	  (repl-let            ; environment for keymap functions to access all the REPL innards (cursor-position etc)
+  (define *repl*                    ; environment that holds the REPL functions
+    (let ((prompt #f)               ; function to get/set prompt
+	  (keymap #f)               ; function to get/set keymap entries
+	  (history #f)              ; function to get/set history buffer entries
+	  (save-history #f)         ; function to save the current history buffer entries in a file
+	  (restore-history #f)      ; function to restore history buffer entries from a file
+	  (helpers ())              ; list of functions displaying help strings 
+	  (run #f)                  ; function that fires up a REPL
+	  (top-level-let (rootlet)) ; environment in which evaluation takes place
+	  (repl-let                 ; environment for keymap functions to access all the REPL innards (cursor-position etc)
       
       (with-let (sublet *libc*)
 
@@ -921,9 +921,12 @@
 						  (char>=? (str i) bcksp)
 						  (and (char<? (str i) #\space)
 						       (not (memq (str i) ok-chars))))
+
 					      (when (= i chars)
 						(let ((search-chars (string #\tab #\return #\newline))
-						      (old-pos 0))
+						      (old-pos 0)
+						      (start 0)
+						      (max-cols 0))
 						  (do ((pos (char-position search-chars str 0) (char-position search-chars str (+ pos 1))))
 						      ((not pos))
 						    (set! current-line (string-append current-line 
@@ -931,9 +934,22 @@
 										      (if (char=? (str pos) #\tab) 
 											  tab-as-space 
 											  (string #\space #\newline))))
-						    (set! old-pos (+ pos 1)))
+						    (set! old-pos (+ pos 1))
+						    (unless (char=? (str pos) #\tab)
+						      (set! max-cols (max max-cols (- pos start)))
+						      (set! start pos)))
 						  (if (< (+ old-pos 1) (length str))
 						      (set! current-line (string-append current-line (substring str (+ old-pos 1)))))
+
+						  ;; if the line is too long, the cursor gets confused, so try to reformat over-long strings
+						  (when (> max-cols (- last-col prompt-length))
+						    (let ((old-len ((funclet pretty-print) '*pretty-print-length*)))
+						      (set! ((funclet pretty-print) '*pretty-print-length*) (- last-col prompt-length 2))
+						      (set! current-line (with-output-to-string
+									   (lambda ()
+									     (pretty-print (with-input-from-string current-line #_read)))))
+						      (set! ((funclet pretty-print) '*pretty-print-length*) old-len)))
+
 						  (set! cursor-position (length current-line))
 						  (set! chars 0)
 						  (set! ctr 1)
@@ -1032,6 +1048,7 @@
 ;;; --------------------------------------------------------------------------------
 
 (autoload 'lint "lint.scm")
+(autoload 'pretty-print "write.scm")
 
 (define (getcwd) 
   ((*libc* 'getcwd) (make-string 128 #\null) 128))

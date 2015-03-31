@@ -344,6 +344,19 @@ static void completer(glistener *g, bool (*symbol_func)(const char *symbol_name,
 }
 
 
+static s7_pointer top_level_let = NULL;
+static s7_pointer g_top_level_let(s7_scheme *sc, s7_pointer args)
+{
+  return(top_level_let);
+}
+
+static s7_pointer g_set_top_level_let(s7_scheme *sc, s7_pointer args)
+{
+  top_level_let = s7_car(args);
+  return(top_level_let);
+}
+
+
 static void evaluator(glistener *g, const char *text)
 {
   int gc_loc;
@@ -358,7 +371,7 @@ static void evaluator(glistener *g, const char *text)
   if (with_interrupts(ss))
     s7_set_begin_hook(s7, listener_begin_hook);
   
-  result = s7_eval_c_string(s7, text);
+  result = s7_eval_c_string_with_environment(s7, text, top_level_let);
   
   s7_set_begin_hook(s7, NULL);
   errmsg = mus_strdup(s7_get_output_string(s7, s7_current_error_port(s7)));
@@ -799,6 +812,10 @@ leaves the lisp listener pane"
   listener_click_hook = Xen_define_hook(S_listener_click_hook, "(make-hook 'position)", 1,   H_listener_click_hook); 
 
 #if HAVE_SCHEME
+  top_level_let = s7_nil(s7);
+  s7_define_variable(s7, "top-level-let", 
+                     s7_dilambda(s7, "top-level-let", g_top_level_let, 0, 0, g_set_top_level_let, 1, 0, "listener environment"));
+
   s7_define_function(s7, "colorizer-colors", g_colorizer_colors, 0, 0, true, H_colorizer_colors);
   s7_hook_set_functions(s7, s7_name_to_value(s7, "*load-hook*"),
     s7_cons(s7, 

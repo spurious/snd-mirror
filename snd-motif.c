@@ -23228,6 +23228,20 @@ static void backup_listener_to_previous_expression(void)
     }
 }
 
+#if HAVE_SCHEME
+static s7_pointer top_level_let = NULL;
+static s7_pointer g_top_level_let(s7_scheme *sc, s7_pointer args)
+{
+  return(top_level_let);
+}
+
+static s7_pointer g_set_top_level_let(s7_scheme *sc, s7_pointer args)
+{
+  top_level_let = s7_car(args);
+  return(top_level_let);
+}
+#endif
+
 static void listener_return(widget_t w, int last_prompt)
 {
 #if (!USE_NO_GUI)
@@ -23477,7 +23491,7 @@ static void listener_return(widget_t w, int last_prompt)
 		
 		if (have_read_hook()) 
 		  form = run_read_hook(str);
-		else form = Xen_eval_C_string(str);
+		else form = s7_eval_c_string_with_environment(s7, str, top_level_let);
 		
 		s7_set_begin_hook(s7, NULL);
 		if (ss->C_g_typed)
@@ -25052,6 +25066,10 @@ Xen_wrap_no_args(g_goto_listener_end_w, g_goto_listener_end)
 void g_init_gxlistener(void)
 {
 #if HAVE_SCHEME
+  top_level_let = s7_nil(s7);
+  s7_define_variable(s7, "top-level-let", 
+                     s7_dilambda(s7, "top-level-let", g_top_level_let, 0, 0, g_set_top_level_let, 1, 0, "listener environment"));
+
   #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (widget): called when the mouse \
 enters the lisp listener pane:\n\
   (hook-push " S_mouse_enter_listener_hook "\n\

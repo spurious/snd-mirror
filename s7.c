@@ -436,6 +436,7 @@ typedef struct c_object_t {
 typedef struct hash_entry_t {
   s7_pointer key, value;
   struct hash_entry_t *next;
+  unsigned int raw_hash;
 } hash_entry_t;
 
 
@@ -1332,6 +1333,12 @@ static void init_types(void)
 /* to block random load-time reads from screwing up the load process, this bit marks a port used by the loader
  */
 
+#define T_HAS_ACCESSOR                T_LINE_NUMBER
+#define has_accessor(p)               ((typeflag(p) & T_HAS_ACCESSOR) != 0)
+#define set_has_accessor(p)           typeflag(p) |= T_HAS_ACCESSOR
+/* marks a slot or symbol that has a setter -- T_PRINT_NAME might be better here
+ */
+
 #define T_CYCLIC                      (1 << (TYPE_BITS + 11))
 #define set_cyclic(p)                 typeflag(p) |= T_CYCLIC
 #define is_cyclic(p)                  ((typeflag(p) & T_CYCLIC) != 0)
@@ -1396,11 +1403,25 @@ static void init_types(void)
 /* marks a string that the caller considers a bytevector
 */
 
+#define T_HAS_REF_FALLBACK            T_MUTABLE
+#define T_HAS_SET_FALLBACK            T_PRINT_NAME
+#define has_ref_fallback(p)           ((typeflag(p) & T_HAS_REF_FALLBACK) != 0)
+#define has_set_fallback(p)           ((typeflag(p) & T_HAS_SET_FALLBACK) != 0)
+#define set_has_ref_fallback(p)       typeflag(p) |= T_HAS_REF_FALLBACK
+#define set_has_set_fallback(p)       typeflag(p) |= T_HAS_SET_FALLBACK
+#define set_all_methods(p, e)         typeflag(p) |= (typeflag(e) & (T_HAS_METHODS | T_HAS_REF_FALLBACK | T_HAS_SET_FALLBACK))
+
 #define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
 #define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
 #define set_has_print_name(p)         typeflag(p) |= T_PRINT_NAME
 /* marks numbers that have a saved version of their string representation
  */
+
+#define T_SHARED                      T_PRINT_NAME
+#define is_shared(p)                  ((typeflag(p) & T_SHARED) != 0)
+#define set_shared(p)                 typeflag(p) |= T_SHARED
+#define clear_shared(p)               typeflag(p) &= (~T_SHARED)
+#define clear_collected_and_shared(p) typeflag(p) &= (~(T_COLLECTED | T_SHARED))
 
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define needs_copied_args(p)          ((typeflag(p) & T_COPY_ARGS) != 0)
@@ -1442,20 +1463,6 @@ static void init_types(void)
 #define clear_has_methods(p)          typeflag(p) &= (~T_HAS_METHODS)
 /* this marks an environment or closure that is "opened" up to generic functions etc
  * don't reuse this bit if possible
- */
-
-#define T_HAS_REF_FALLBACK            T_MUTABLE
-#define T_HAS_SET_FALLBACK            T_PRINT_NAME
-#define has_ref_fallback(p)           ((typeflag(p) & T_HAS_REF_FALLBACK) != 0)
-#define has_set_fallback(p)           ((typeflag(p) & T_HAS_SET_FALLBACK) != 0)
-#define set_has_ref_fallback(p)       typeflag(p) |= T_HAS_REF_FALLBACK
-#define set_has_set_fallback(p)       typeflag(p) |= T_HAS_SET_FALLBACK
-#define set_all_methods(p, e)         typeflag(p) |= (typeflag(e) & (T_HAS_METHODS | T_HAS_REF_FALLBACK | T_HAS_SET_FALLBACK))
-
-#define T_HAS_ACCESSOR                T_LINE_NUMBER
-#define has_accessor(p)               ((typeflag(p) & T_HAS_ACCESSOR) != 0)
-#define set_has_accessor(p)           typeflag(p) |= T_HAS_ACCESSOR
-/* marks a slot or symbol that has a setter -- T_PRINT_NAME might be better here
  */
 
 #define T_GC_MARK                     (1 << (TYPE_BITS + 23))
@@ -4536,13 +4543,14 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
 	      char *kstr;
 	      unsigned int klen;
 	      klen = symbol_name_length(x) - 1;
-	      tmpbuf_malloc(kstr, klen + 1);
+	      /* can't used tmpbuf_* here (or not safely I think) because name is already using tmpbuf */
+	      kstr = (char *)malloc((klen + 1) * sizeof(char));
 	      memcpy((void *)kstr, (void *)name, klen);
 	      kstr[klen] = 0;
 	      typeflag(x) |= (T_IMMUTABLE | T_KEYWORD);
 	      keyword_symbol(x) = make_symbol_with_length(sc, kstr, klen);
 	      global_slot(x) = s7_make_slot(sc, sc->NIL, x, x);
-	      tmpbuf_free(kstr, klen + 1);
+	      free(kstr);
 	    }
 	}
     }
@@ -23515,7 +23523,7 @@ static s7_pointer eval_string_1(s7_scheme *sc, const char *str)
 }
 
 
-s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
+s7_pointer s7_eval_c_string_with_environment(s7_scheme *sc, const char *str, s7_pointer e)
 {
   bool old_longjmp;
   s7_pointer port, old_envir;
@@ -23523,7 +23531,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 
   sc->v = sc->envir;          /* old envir needs GC protection even given the push_stack below */
   old_envir = sc->envir;
-  sc->envir = sc->NIL;
+  sc->envir = e;
   if (sc->longjmp_ok)
     {
       s7_pointer result;
@@ -23552,6 +23560,12 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   s7_close_input_port(sc, port);
   sc->envir = old_envir;
   return(sc->value);
+}
+
+
+s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
+{
+  return(s7_eval_c_string_with_environment(sc, str, sc->NIL));
 }
 
 
@@ -24361,10 +24375,10 @@ static void add_shared_ref(shared_info *ci, s7_pointer x, int ref_x)
   ci->refs[ci->top++] = ref_x;
 }
 
-static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top, bool stop_at_print_length);
+static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top, bool stop_at_print_length, bool *cyclic);
 static hash_entry_t *hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key);
 
-static void collect_vector_info(s7_scheme *sc, shared_info *ci, s7_pointer top, bool stop_at_print_length)
+static void collect_vector_info(s7_scheme *sc, shared_info *ci, s7_pointer top, bool stop_at_print_length, bool *cyclic)
 {
   s7_Int i, plen;
 
@@ -24378,11 +24392,11 @@ static void collect_vector_info(s7_scheme *sc, shared_info *ci, s7_pointer top, 
 
   for (i = 0; i < plen; i++)
     if (has_structure(vector_element(top, i)))
-      collect_shared_info(sc, ci, vector_element(top, i), stop_at_print_length);
+      collect_shared_info(sc, ci, vector_element(top, i), stop_at_print_length, cyclic);
 }
 
 
-static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top, bool stop_at_print_length)
+static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top, bool stop_at_print_length, bool *cyclic)
 {
   /* look for top in current list.
    *
@@ -24390,10 +24404,14 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
    *   encounter an object with that bit on, we've seen it before so we have a possible cycle.
    *   Once the collection pass is done, we run through our list, and clear all these bits.
    */
+  if (is_shared(top))
+    return(ci);
+
   if (is_collected(top))
     {
       s7_pointer *p, *objs_end;
       int i;
+      *cyclic = true;
       objs_end = (s7_pointer *)(ci->objs + ci->top);
 
       for (p = ci->objs; p < objs_end; p++)
@@ -24411,7 +24429,7 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
   else
     {
       /* top not seen before -- add it to the list */
-
+      bool top_cyclic = false;
       set_collected(top);
 
       if (ci->top == ci->size)
@@ -24423,13 +24441,15 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 	{
 	case T_PAIR:
 	  if (has_structure(car(top)))
-	    collect_shared_info(sc, ci, car(top), stop_at_print_length);
+	    collect_shared_info(sc, ci, car(top), stop_at_print_length, &top_cyclic);
 	  if (has_structure(cdr(top)))
-	    collect_shared_info(sc, ci, cdr(top), stop_at_print_length);
+	    collect_shared_info(sc, ci, cdr(top), stop_at_print_length, &top_cyclic);
+	  
+	  /* (let ((lst (list 1))) (set! (cdr lst) lst) lst) */
 	  break;
 
 	case T_VECTOR:
-	  collect_vector_info(sc, ci, top, stop_at_print_length);
+	  collect_vector_info(sc, ci, top, stop_at_print_length, &top_cyclic);
 	  break;
 
 	case T_HASH_TABLE:
@@ -24450,9 +24470,9 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 		    {
 		      if ((!keys_safe) &&
 			  (has_structure(p->key)))
-			collect_shared_info(sc, ci, p->key, stop_at_print_length);
+			collect_shared_info(sc, ci, p->key, stop_at_print_length, &top_cyclic);
 		      if (has_structure(p->value))
-			collect_shared_info(sc, ci, p->value, stop_at_print_length);
+			collect_shared_info(sc, ci, p->value, stop_at_print_length, &top_cyclic);
 		    }
 		}
 	    }
@@ -24460,21 +24480,24 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 
 	case T_SLOT:
 	  if (has_structure(slot_value(top)))
-	    collect_shared_info(sc, ci, slot_value(top), stop_at_print_length);
+	    collect_shared_info(sc, ci, slot_value(top), stop_at_print_length, &top_cyclic);
 	  break;
 
 	case T_ENVIRONMENT:
 	  if (top == sc->rootlet)
-	    collect_vector_info(sc, ci, top, stop_at_print_length);
+	    collect_vector_info(sc, ci, top, stop_at_print_length, &top_cyclic);
 	  else
 	    {
 	      s7_pointer p;
 	      for (p = let_slots(top); is_slot(p); p = next_slot(p))
 		if (has_structure(slot_value(p)))
-		  collect_shared_info(sc, ci, slot_value(p), stop_at_print_length);
+		  collect_shared_info(sc, ci, slot_value(p), stop_at_print_length, &top_cyclic);
 	    }
 	  break;
 	}
+      if (!top_cyclic)
+	set_shared(top);
+      else *cyclic = true;
     }
   return(ci);
 }
@@ -24501,7 +24524,7 @@ static shared_info *new_shared_info(s7_scheme *sc)
 	{
 	  s7_pointer p;
 	  p = ci->objs[i];
-	  clear_collected(p);
+	  clear_collected_and_shared(p);
 	}
     }
   ci->top = 0;
@@ -24518,7 +24541,7 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top, bool stop_at
   int i, refs;
   s7_pointer *ci_objs;
   int *ci_refs;
-  bool no_problem = true;
+  bool no_problem = true, cyclic = false;
 
   /* check for simple cases first */
   if (is_pair(top))
@@ -24565,14 +24588,16 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top, bool stop_at
   ci = new_shared_info(sc);
 
   /* collect all pointers associated with top */
-  collect_shared_info(sc, ci, top, stop_at_print_length);
+  collect_shared_info(sc, ci, top, stop_at_print_length, &cyclic);
 
   for (i = 0; i < ci->top; i++)
     {
       s7_pointer p;
       p = ci->objs[i];
-      clear_collected(p);
+      clear_collected_and_shared(p);
     }
+  if (!cyclic)
+    return(NULL);
 
   if (!(ci->has_hits))
     return(NULL);
@@ -24610,93 +24635,18 @@ static s7_pointer cyclic_sequences(s7_scheme *sc, s7_pointer obj, bool return_li
       ci = make_shared_info(sc, obj, false); /* false=don't stop at print length (vectors etc) */
       if (ci)
 	{
-	  int i, num;
-	  s7_pointer *objects;
-	  s7_pointer **obj_cis;
-	  int *obj_top;
-
-	  /* save list of current shared pointers, set cyclic bit in each
-	   *   for each one, get its shared pointers
-	   *     if none, clear cyclic bit, and look back clearing if possible
-	   *   if all cleared, no cycles, else return list of those with cyclic bit still set
-	   *
-	   * ci->objs are the objects, ci->top is end pointer of list
-	   */
-
-	  num = ci->top;
-	  objects = (s7_pointer *)malloc(num * sizeof(s7_pointer));
-	  memcpy((void *)objects, (void *)(ci->objs), num * sizeof(s7_pointer));
-	  obj_cis = (s7_pointer **)calloc(num, sizeof(s7_pointer *));
-	  obj_top = (int *)calloc(num, sizeof(int));
-
-	  for (i = 0; i < num; i++)
-	    set_cyclic(objects[i]);
-
-	  for (i = 0; i < num; i++)
-	    {
-	      ci = make_shared_info(sc, objects[i], false);
-	      if (!ci)
-		clear_cyclic(objects[i]);
-	      else
-		{
-		  obj_top[i] = ci->top;
-		  obj_cis[i] = (s7_pointer *)malloc(obj_top[i] * sizeof(s7_pointer));
-		  memcpy((void *)(obj_cis[i]), (void *)(ci->objs), obj_top[i] * sizeof(s7_pointer));
-		}
-	    }
-
-	  while (true)
-	    {
-	      bool cleared_one = false;
-	      for (i = 0; i < num; i++)
-		{
-		  if (is_cyclic(objects[i]))
-		    {
-		      int k;
-		      bool empty = true;
-		      for (k = 0; k < obj_top[i]; k++)
-			if (is_cyclic(obj_cis[i][k]))
-			  {
-			    empty = false;
-			    break;
-			  }
-		      if (empty)
-			{
-			  cleared_one = true;
-			  clear_cyclic(objects[i]);
-			}
-		    }
-		}
-	      if (!cleared_one) break;
-	    }
-
-	  for (i = 0; i < num; i++)
-	    if (obj_cis[i]) free(obj_cis[i]);
-	  free(obj_cis);
-	  free(obj_top);
-
 	  if (return_list)
 	    {
+	      int i;
 	      s7_pointer lst;
 	      sc->w = sc->NIL;
-	      for (i = 0; i < num; i++)
-		if (is_cyclic(objects[i]))
-		  sc->w = cons(sc, objects[i], sc->w);
+	      for (i = 0; i < ci->top; i++)
+		sc->w = cons(sc, ci->objs[i], sc->w);
 	      lst = sc->w;
 	      sc->w = sc->NIL;
-	      free(objects);
 	      return(lst);
 	    }
-	  else
-	    {
-	      for (i = 0; i < num; i++)
-		if (is_cyclic(objects[i]))
-		  {
-		    free(objects);
-		    return(sc->T);
-		  }
-	      free(objects);
-	    }
+	  else return(sc->T);
 	}
     }
   return(sc->NIL);
@@ -25479,7 +25429,7 @@ static void collect_locals(s7_scheme *sc, s7_pointer body, s7_pointer e, s7_poin
 
 static void write_closure_readably(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 {
-  s7_pointer body, arglist, pe, local_slots, p;
+  s7_pointer body, arglist, pe, local_slots;
   int gc_loc;
 
   body = closure_body(obj);
@@ -25514,6 +25464,7 @@ static void write_closure_readably(s7_scheme *sc, s7_pointer obj, s7_pointer por
 
   {
     s7_Int old_print_length;
+    s7_pointer p;
     old_print_length = sc->print_length;
     sc->print_length = 1048576;
     for (p = body; is_pair(p); p = cdr(p))
@@ -32740,7 +32691,7 @@ static void free_hash_table(s7_pointer table)
   free(entries);
 }
 
-static hash_entry_t *make_hash_entry(s7_pointer key, s7_pointer value)
+static hash_entry_t *make_hash_entry(s7_pointer key, s7_pointer value, unsigned int raw_hash)
 {
   hash_entry_t *p;
   if (hash_free_list)
@@ -32751,13 +32702,8 @@ static hash_entry_t *make_hash_entry(s7_pointer key, s7_pointer value)
   else p = (hash_entry_t *)malloc(sizeof(hash_entry_t));
   p->key = key;
   p->value = value;
+  p->raw_hash = raw_hash;
   return(p);
-}
-
-static void add_hash_entry(s7_pointer table, int loc, hash_entry_t *p)
-{
-  p->next = hash_table_element(table, loc);
-  hash_table_element(table, loc) = p;
 }
 
 
@@ -33257,16 +33203,6 @@ static hash_entry_t *hash_eq_closure(s7_scheme *sc, s7_pointer table, s7_pointer
 }
 
 
-/* default size (511) may be too big -- smaller is faster in lint (even 31), but not in make-index.
- *   another approach: bi-level tables where we index twice, and thereby skip over (sqrt n) (or whatever) at a time.
- *   does this happen often? would it matter in the gc enough to warrant the code?
- * or perhaps combine the back-and-forth indexing to a hash-table, so we'd only have the sections we need
- *
- * also what about a simplified hash_table with just the keys => a set, similar to the memq/assq difference
- *   we could add T_SET just like T_BYTEVECTOR and specialize where necessary.
- *   vector->set->hash-table->environment->library
- */
-
 s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 {
   s7_pointer table;
@@ -33382,6 +33318,98 @@ s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, s7_pointer key)
 }
 
 
+static void hash_table_set_function(s7_pointer table, int typ)
+{
+  if (hash_table_function(table) == hash_empty)
+    {
+      switch (typ)
+	{
+	case T_STRING:
+	  hash_table_function(table) = hash_string;
+	  break;
+	  
+	case T_INTEGER:
+	  hash_table_function(table) = hash_int;
+	  break;
+	  
+	case T_REAL:
+	  hash_table_function(table) = hash_float;
+	  break;
+	  
+	case T_RATIO:
+	case T_COMPLEX:
+	  hash_table_function(table) = hash_equal;
+	  break;
+	  
+	case T_SYMBOL:
+	  hash_table_function(table) = hash_symbol;
+	  break;
+	  
+	case T_CHARACTER:
+	  hash_table_function(table) = hash_char;
+	  break;
+	  
+	default:
+	  hash_table_function(table) = hash_equal;
+	  /* if every key structure is simple, we'd like to use a simple equal checker (no circles),
+	   *    but circles can sneak in!  lists (etc) are dangerous keys:
+	   *
+	   (let ((ht (make-hash-table))
+	   (lst1 (list 1 2))
+	   (lst2 (list 1 2)))
+	   (set! (ht lst1) 32)
+	   (let ((start (ht lst2)))
+	   (set! (lst1 0) 3)
+	   (list start (ht lst2))))
+	   (32 #f)
+	   *
+	   * but this applies to all such variables, even strings.  Do other schemes copy the key?
+	   */
+	  break;
+	}
+    }
+  else
+    {
+      switch (typ)
+	{
+	case T_STRING:
+	  if (hash_table_function(table) != hash_string)
+	    hash_table_function(table) = hash_equal;
+	  break;
+	  
+	case T_INTEGER:
+	  if (hash_table_function(table) != hash_int)
+	    hash_table_function(table) = hash_equal;
+	  break;
+	  
+	case T_REAL:
+	  if (hash_table_function(table) != hash_float)
+	    hash_table_function(table) = hash_equal;
+	  break;
+	  
+	case T_RATIO:
+	case T_COMPLEX:
+	  hash_table_function(table) = hash_equal;
+	  break;
+	  
+	case T_CHARACTER:
+	  if (hash_table_function(table) != hash_char)
+	    hash_table_function(table) = hash_equal;
+	  break;
+	  
+	case T_SYMBOL:
+	  if (hash_table_function(table) != hash_symbol)
+	    hash_table_function(table) = hash_equal;
+	  break;
+	  
+	default:
+	  hash_table_function(table) = hash_equal;
+	  break;
+	}
+    }
+}
+
+
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7_pointer value)
 {
   hash_entry_t *x;
@@ -33391,105 +33419,47 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
     x->value = value;
   else
     {
-      unsigned int hash_len, loc;
+      unsigned int hash_len, raw_hash, loc;
+      hash_entry_t *p;
 
       hash_len = hash_table_length(table) - 1;
-      loc = hash_loc(sc, key) & hash_len;
-      add_hash_entry(table, loc, make_hash_entry(key,value));
+      if (hash_table_entries(table) > hash_len)
+	{
+	  /* resize the table */
+	  int i, old_size, new_size;
+	  hash_entry_t **new_els, **old_els;
+
+	  old_size = hash_table_length(table);
+	  new_size = old_size * 4;
+	  hash_len = new_size - 1;
+	  new_els = (hash_entry_t **)calloc(new_size, sizeof(hash_entry_t *));
+	  old_els = hash_table_elements(table);
+	  
+	  for (i = 0; i < old_size; i++)
+	    {
+	      hash_entry_t *x, *n;
+	      for (x = old_els[i]; x; x = n)
+		{
+		  n = x->next;
+		  loc = x->raw_hash & hash_len;
+		  x->next = new_els[loc];
+		  new_els[loc] = x;
+		}
+	    }
+	  hash_table_elements(table) = new_els;
+	  free(old_els);
+	  hash_table_length(table) = new_size;
+	}
+
+      raw_hash = hash_loc(sc, key);
+      p = make_hash_entry(key, value, raw_hash);
+      loc = raw_hash & hash_len;
+      p->next = hash_table_element(table, loc);
+      hash_table_element(table, loc) = p;
       hash_table_entries(table)++;
 
       if (!hash_table_function_locked(table))
-	{
-	  int typ;
-	  typ = type(key);
-	  if (hash_table_function(table) == hash_empty)
-	    {
-	      switch (typ)
-		{
-		case T_STRING:
-		  hash_table_function(table) = hash_string;
-		  break;
-
-		case T_INTEGER:
-		  hash_table_function(table) = hash_int;
-		  break;
-
-		case T_REAL:
-		  hash_table_function(table) = hash_float;
-		  break;
-
-		case T_RATIO:
-		case T_COMPLEX:
-		  hash_table_function(table) = hash_equal;
-		  break;
-
-		case T_SYMBOL:
-		  hash_table_function(table) = hash_symbol;
-		  break;
-
-		case T_CHARACTER:
-		  hash_table_function(table) = hash_char;
-		  break;
-
-		default:
-		  hash_table_function(table) = hash_equal;
-		  /* if every key structure is simple, we'd like to use a simple equal checker (no circles),
-		   *    but circles can sneak in!  lists (etc) are dangerous keys:
-		   *
-		   (let ((ht (make-hash-table))
-		         (lst1 (list 1 2))
-		         (lst2 (list 1 2)))
-		     (set! (ht lst1) 32)
-		     (let ((start (ht lst2)))
-		       (set! (lst1 0) 3)
-		       (list start (ht lst2))))
-		   (32 #f)
-		   *
-		   * but this applies to all such variables, even strings.  Do other schemes copy the key?
-		   */
-		  break;
-		}
-	    }
-	  else
-	    {
-	      switch (typ)
-		{
-		case T_STRING:
-		  if (hash_table_function(table) != hash_string)
-		    hash_table_function(table) = hash_equal;
-		  break;
-
-		case T_INTEGER:
-		  if (hash_table_function(table) != hash_int)
-		    hash_table_function(table) = hash_equal;
-		  break;
-
-		case T_REAL:
-		  if (hash_table_function(table) != hash_float)
-		    hash_table_function(table) = hash_equal;
-		  break;
-
-		case T_RATIO:
-		case T_COMPLEX:
-		  hash_table_function(table) = hash_equal;
-		  break;
-
-		case T_CHARACTER:
-		  if (hash_table_function(table) != hash_char)
-		    hash_table_function(table) = hash_equal;
-		  break;
-
-		case T_SYMBOL:
-		  if (hash_table_function(table) != hash_symbol)
-		    hash_table_function(table) = hash_equal;
-		  break;
-
-		default:
-		  hash_table_function(table) = hash_equal;
-		  break;
-		}
-	    }
-	}
+	hash_table_set_function(table, type(key));
     }
   return(value);
 }
@@ -33616,7 +33586,7 @@ That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with 
 	(!is_null(car(x))))
       return(wrong_type_argument(sc, sc->HASH_TABLE, make_integer(sc, position_of(x, args)), car(x), T_PAIR));
 
-  ht = s7_make_hash_table(sc, (len > 512) ? 4095 : 511);
+  ht = s7_make_hash_table(sc, ((len > sc->default_hash_table_length) && (sc->default_hash_table_length == 511)) ? 4095 : sc->default_hash_table_length);
   if (len > 0)
     {
       int ht_loc;
@@ -33645,7 +33615,7 @@ That is, (hash-table* 'a 1 'b 2) returns a new hash-table with the two key/value
     return(s7_error(sc, sc->WRONG_TYPE_ARG, list_2(sc, make_string_wrapper(sc, "hash-table* got an odd number of arguments: ~S"), args)));
   len /= 2;
 
-  ht = s7_make_hash_table(sc, (len > 512) ? 4095 : 511);
+  ht = s7_make_hash_table(sc, ((len > sc->default_hash_table_length) && (sc->default_hash_table_length == 511)) ? 4095 : sc->default_hash_table_length);
   if (len > 0)
     {
       int ht_loc;
@@ -33663,24 +33633,61 @@ That is, (hash-table* 'a 1 'b 2) returns a new hash-table with the two key/value
 
 static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer new_hash, int start, int end)
 {
-  int i, len, count = 0;
-  hash_entry_t **old_lists;
+  unsigned int i, old_len, new_len, count = 0;
+  hash_entry_t **old_lists, **new_lists;
+  hash_entry_t *x, *p;
 
-  len = hash_table_length(old_hash);
+  old_len = hash_table_length(old_hash);
+  new_len = hash_table_length(new_hash);
   old_lists = hash_table_elements(old_hash);
+  new_lists = hash_table_elements(new_hash);
 
-  for (i = 0; i < len; i++)
+  if (old_len == new_len)
     {
-      hash_entry_t *x;
-      for (x = old_lists[i]; x; x = x->next)
+      for (i = 0; i < old_len; i++)
 	{
-	  if (count >= end)
-	    return(new_hash);
-	  if (count >= start)
-	    s7_hash_table_set(sc, new_hash, x->key, x->value);
-	  count++;
+	  for (x = old_lists[i]; x; x = x->next)
+	    {
+	      if (count >= end)
+		{
+		  hash_table_entries(new_hash) += end - start;
+		  return(new_hash);
+		}
+	      if (count >= start)
+		{
+		  p = make_hash_entry(x->key, x->value, x->raw_hash);
+		  p->next = new_lists[i];
+		  new_lists[i] = p;
+		}
+	      count++;
+	    }
 	}
     }
+  else
+    {
+      new_len--;
+      for (i = 0; i < old_len; i++)
+	{
+	  for (x = old_lists[i]; x; x = x->next)
+	    {
+	      if (count >= end)
+		{
+		  hash_table_entries(new_hash) += end - start;
+		  return(new_hash);
+		}
+	      if (count >= start)
+		{
+		  unsigned int loc;
+		  loc = x->raw_hash & new_len;
+		  p = make_hash_entry(x->key, x->value, x->raw_hash);
+		  p->next = new_lists[loc];
+		  new_lists[loc] = p;
+		}
+	      count++;
+	    }
+	}
+    }
+  hash_table_entries(new_hash) += count;
   return(new_hash);
 }
 
@@ -36530,7 +36537,18 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 	  break;
 
 	case T_HASH_TABLE:
-	  return(hash_table_copy(sc, source, dest, start, end));
+	  {
+	    s7_pointer p;
+	    p = hash_table_copy(sc, source, dest, start, end);
+	    if ((hash_table_function(source) != hash_table_function(dest)) &&
+		(!hash_table_function_locked(dest)))
+	      {
+		if (hash_table_function(dest) == hash_empty)
+		  hash_table_function(dest) = hash_table_function(source);
+		else hash_table_function(dest) = hash_equal;
+	      }
+	    return(p);
+	  }
 	  break;
 
 	default:
@@ -66129,7 +66147,7 @@ s7_scheme *s7_init(void)
   sc->default_rationalize_error = 1.0e-12;
   sc->hash_table_float_epsilon = 1.0e-12;
   sc->morally_equal_float_epsilon = 1.0e-15;
-  sc->default_hash_table_length = 511;
+  sc->default_hash_table_length = 8;
   sc->gensym_counter = 0;
   sc->capture_env_counter = 0;
   sc->f_class = 0;
@@ -67375,17 +67393,17 @@ int main(int argc, char **argv)
 /* ------------------------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5
- * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1142
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1145
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3345
- * tmap           |      |      | 11.0           5031 4769 4702
- * tcopy          |      |      |                          5080
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342
+ * tmap           |      |      | 11.0           5031 4769 4702 
+ * tcopy          |      |      |                          4975
  * lg             |      |      | 6547 6497 6494 6235 6229 6222
- * teq            |      |      | 6612                     6544
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7011
+ * teq            |      |      | 6612                     4654
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 6518 
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
  * thash          |      |      |                          19.4
- * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.9
+ * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9
  *
  * ------------------------------------------------------------------
@@ -67423,9 +67441,4 @@ int main(int argc, char **argv)
  *
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
- * also obj->str vectors (and other sequences) should be prettier if no cycles esp functions, lets
- *   keep two lists in ci: cycles and shared, then cyclic could return both vectors
- *   and equal would know when to avoid either, and print could avoid shared
- *   and if cycle-lengths also saved, we should fix the t190 problem?
- *   why are diff length cycles equal now? 
  */

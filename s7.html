@@ -2248,7 +2248,7 @@ but a function grabs all remaining indices.  Trickier than I expected!
 
 
 <ul>
-<li>(<em class=def id="makehashtable">make-hash-table</em> (size 512) eq-func)
+<li>(<em class=def id="makehashtable">make-hash-table</em> (size 8) eq-func)
 <li>(<em class=def id="hashtable">hash-table</em> ...)
 <li>(<em class=def id="hashtablestar">hash-table*</em> ...)
 <li>(<em class=def id="hashtableref">hash-table-ref</em> ht key)
@@ -2264,6 +2264,7 @@ Each hash-table keeps track of the keys it contains, optimizing the search where
 If you know what equality function you want, you can override this optimization by passing that function
 as the third argument to make-hash-table (see also r7rs.scm for a version with a different argument order).
 If you pass a table size that is not a power of 2, make-hash-table rounds it up to the next power of 2.
+The table grows as needed.
 </p>
 
 <pre class="indented">
@@ -5588,7 +5589,7 @@ max-string-length             max size arg to make-string and read-string
 max-list-length               max size arg to make-list
 max-vector-length             max size arg to make-vector and make-hash-table
 max-vector-dimensions         make-vector dimensions limit
-default-hash-table-length     default size for make-hash-table (511, settable)
+default-hash-table-length     default size for make-hash-table (8, tables resize as needed)
 initial-string-port-length    128, initial size of a string port's buffer
 
 default-rationalize-error     1e-12 (settable)
