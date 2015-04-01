@@ -198,6 +198,8 @@
 	(openlet 
 	 (sublet mock-hash-table-class 
 	   'mock-hash-table-table (#_make-hash-table len)
+
+	   ;; object->string here is a problem -- don't set any value to the object itself!
 	   'object->string (lambda (obj . args) ; can't use mock->string because the value is not in the 'value field
 			     (dynamic-wind
 				 (lambda () (coverlet obj))
@@ -351,7 +353,7 @@
       (define* (make-mock-string len (init #\null))
 	(openlet (sublet mock-string-class 
 		   'value (#_make-string len init)
-		   'object->string (lambda* (obj (w #t)) (#_object->string (obj 'value) w)))))
+		   'object->string mock->string)))
       
       (define (mock-string . args)
 	(let ((v (make-mock-string 0)))

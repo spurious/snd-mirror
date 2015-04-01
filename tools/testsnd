@@ -24,7 +24,7 @@ echo ' -------------------------------- that was valgrind without-gui (also s7te
 echo ' '
 echo ' '
 
-gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -Wl,-export-dynamic -ldl -lm 
+gcc s7.c -o repl -DWITH_MAIN -DUSE_SND=0 -I. -O2 -g -Wl,-export-dynamic -ldl -lm 
 ./repl tools/t456.scm
 
 echo ' '

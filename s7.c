@@ -1379,6 +1379,14 @@ static void init_types(void)
 #define is_step_safe(p)               ((typeflag(p) & T_STEP_SAFE) != 0)
 #define set_step_safe(p)              typeflag(p) |= T_STEP_SAFE
 
+#define T_SHARED                      T_UNSAFE
+#define is_shared(p)                  ((typeflag(p) & T_SHARED) != 0)
+#define set_shared(p)                 typeflag(p) |= T_SHARED
+#define clear_shared(p)               typeflag(p) &= (~T_SHARED)
+#define clear_collected_and_shared(p) typeflag(p) &= (~(T_COLLECTED | T_SHARED))
+/* I've run out of type bits!
+ */
+
 #define T_KEYWORD                     (1 << (TYPE_BITS + 16))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
 /* this bit distinguishes a symbol from a symbol that is also a keyword
@@ -1403,6 +1411,12 @@ static void init_types(void)
 /* marks a string that the caller considers a bytevector
 */
 
+#define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
+#define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
+#define set_has_print_name(p)         typeflag(p) |= T_PRINT_NAME
+/* marks numbers that have a saved version of their string representation
+ */
+
 #define T_HAS_REF_FALLBACK            T_MUTABLE
 #define T_HAS_SET_FALLBACK            T_PRINT_NAME
 #define has_ref_fallback(p)           ((typeflag(p) & T_HAS_REF_FALLBACK) != 0)
@@ -1410,18 +1424,6 @@ static void init_types(void)
 #define set_has_ref_fallback(p)       typeflag(p) |= T_HAS_REF_FALLBACK
 #define set_has_set_fallback(p)       typeflag(p) |= T_HAS_SET_FALLBACK
 #define set_all_methods(p, e)         typeflag(p) |= (typeflag(e) & (T_HAS_METHODS | T_HAS_REF_FALLBACK | T_HAS_SET_FALLBACK))
-
-#define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
-#define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
-#define set_has_print_name(p)         typeflag(p) |= T_PRINT_NAME
-/* marks numbers that have a saved version of their string representation
- */
-
-#define T_SHARED                      T_PRINT_NAME
-#define is_shared(p)                  ((typeflag(p) & T_SHARED) != 0)
-#define set_shared(p)                 typeflag(p) |= T_SHARED
-#define clear_shared(p)               typeflag(p) &= (~T_SHARED)
-#define clear_collected_and_shared(p) typeflag(p) &= (~(T_COLLECTED | T_SHARED))
 
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define needs_copied_args(p)          ((typeflag(p) & T_COPY_ARGS) != 0)
@@ -4130,15 +4132,15 @@ static void try_to_call_gc(s7_scheme *sc)
     }
   else
     {
-      unsigned int freed_heap;
 #if (!DEBUGGING)
+      unsigned int freed_heap;
       freed_heap = gc(sc);
       if ((freed_heap < sc->heap_size / 2) &&
 	  (freed_heap < 1000000)) /* if huge heap */
 	expand_heap(sc);
 #else
       gc(sc);
-      if (sc->free_heap_top - sc->free_heap < sc->heap_size / 2)
+      if ((unsigned int)(sc->free_heap_top - sc->free_heap) < sc->heap_size / 2)
 	expand_heap(sc);
 #endif
     }
@@ -6415,7 +6417,7 @@ static s7_pointer g_symbol_to_dynamic_value(s7_scheme *sc, s7_pointer args)
 static s7_pointer make_macro(s7_scheme *sc)
 {
   s7_pointer cx, mac;
-  int typ;
+  unsigned int typ;
 
   if (sc->op == OP_DEFINE_MACRO)
     typ = T_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS;
@@ -15738,7 +15740,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      goto NOT_EQUAL;
 
 	    case T_RATIO:
-	      if ((num_a != numerator(x)) || (den_a != denominator(x)))	goto NOT_EQUAL;
+	      if ((num_a != numerator(x)) || (den_a != denominator(x)))	goto NOT_EQUAL; /* hidden cast here */
 	      break;
 
 	    case T_REAL:
@@ -15768,7 +15770,11 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      break;
 
 	    case T_RATIO:
-	      if (rl_a != fraction(x)) goto NOT_EQUAL;
+	      if (rl_a != (double)fraction(x)) goto NOT_EQUAL;
+	      /* the cast to double is needed because rl_a is s7_Double and we want (= ratio real) to be the same as (= real ratio):
+	       *   (= 1.0 9223372036854775807/9223372036854775806)
+	       *   (= 9223372036854775807/9223372036854775806 1.0)
+	       */
 	      break;
 
 	    case T_REAL:
@@ -23394,7 +23400,7 @@ s7_pointer s7_autoload(s7_scheme *sc, s7_pointer symbol, s7_pointer file_or_func
 {
   /* add '(symbol . file) to s7's autoload table */
   if (is_null(sc->autoload_table))
-    sc->autoload_table = s7_make_hash_table(sc, 511);
+    sc->autoload_table = s7_make_hash_table(sc, sc->default_hash_table_length);
   s7_hash_table_set(sc, sc->autoload_table, symbol, file_or_function);
   return(file_or_function);
 }
@@ -29187,15 +29193,6 @@ s7_pointer s7_assq(s7_scheme *sc, s7_pointer obj, s7_pointer x)
 static s7_pointer g_assq(s7_scheme *sc, s7_pointer args)
 {
   #define H_assq "(assq obj alist) returns the key-value pair associated (via eq?) with the key obj in the association list alist"
-  /* this version accepts any kind of list
-   *   my little essay: the scheme standard should not unnecessarily restrict the kinds of arguments
-   *                    a function can take (such as saying memq only accepts proper lists).  It is
-   *                    trivial for the programmer to add such a check to a built-in function, but
-   *                    not trivial to re-invent the built-in function with that restriction removed.
-   *                    If some structure exists as a normal scheme object (a dotted or circular list),
-   *                    every built-in function should be able to deal with it, if it makes sense at all.
-   */
-
   s7_pointer x;
 
   x = cadr(args);
@@ -29205,6 +29202,10 @@ static s7_pointer g_assq(s7_scheme *sc, s7_pointer args)
       check_method(sc, x, sc->ASSQ, args);
       return(wrong_type_argument_with_type(sc, sc->ASSQ, small_int(2), x, AN_ASSOCIATION_LIST));
     }
+  /* we don't check for (pair? (car x)) here (or in assv) so we get some inconsistency with assoc:
+   *  (assq #f '(#f 2 . 3)) -> #f
+   *  (assoc #f '(#f 2 . 3)) -> 'error 
+   */
   return(s7_assq(sc, car(args), x));
 }
 
@@ -33586,7 +33587,7 @@ That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with 
 	(!is_null(car(x))))
       return(wrong_type_argument(sc, sc->HASH_TABLE, make_integer(sc, position_of(x, args)), car(x), T_PAIR));
 
-  ht = s7_make_hash_table(sc, ((len > sc->default_hash_table_length) && (sc->default_hash_table_length == 511)) ? 4095 : sc->default_hash_table_length);
+  ht = s7_make_hash_table(sc, (len > sc->default_hash_table_length) ? len : sc->default_hash_table_length);
   if (len > 0)
     {
       int ht_loc;
@@ -33615,7 +33616,7 @@ That is, (hash-table* 'a 1 'b 2) returns a new hash-table with the two key/value
     return(s7_error(sc, sc->WRONG_TYPE_ARG, list_2(sc, make_string_wrapper(sc, "hash-table* got an odd number of arguments: ~S"), args)));
   len /= 2;
 
-  ht = s7_make_hash_table(sc, ((len > sc->default_hash_table_length) && (sc->default_hash_table_length == 511)) ? 4095 : sc->default_hash_table_length);
+  ht = s7_make_hash_table(sc, (len > sc->default_hash_table_length) ? len : sc->default_hash_table_length);
   if (len > 0)
     {
       int ht_loc;
@@ -33631,7 +33632,7 @@ That is, (hash-table* 'a 1 'b 2) returns a new hash-table with the two key/value
 }
 
 
-static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer new_hash, int start, int end)
+static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer new_hash, unsigned int start, unsigned int end)
 {
   unsigned int i, old_len, new_len, count = 0;
   hash_entry_t **old_lists, **new_lists;
@@ -33642,7 +33643,8 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer
   old_lists = hash_table_elements(old_hash);
   new_lists = hash_table_elements(new_hash);
 
-  if (old_len == new_len)
+  if ((old_len == new_len) &&
+      (hash_table_entries(new_hash) == 0)) /* PERHAPS: or the hash_table_functions are incompatible, so no keys can match */
     {
       for (i = 0; i < old_len; i++)
 	{
@@ -33662,33 +33664,58 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer
 	      count++;
 	    }
 	}
+      hash_table_entries(new_hash) += count;
     }
   else
     {
+      /* this can't be optimized much because we have to look for key matches */
       new_len--;
       for (i = 0; i < old_len; i++)
 	{
 	  for (x = old_lists[i]; x; x = x->next)
 	    {
 	      if (count >= end)
-		{
-		  hash_table_entries(new_hash) += end - start;
-		  return(new_hash);
-		}
+		return(new_hash);
 	      if (count >= start)
 		{
-		  unsigned int loc;
-		  loc = x->raw_hash & new_len;
-		  p = make_hash_entry(x->key, x->value, x->raw_hash);
-		  p->next = new_lists[loc];
-		  new_lists[loc] = p;
+		  hash_entry_t *y;
+		  y = (*hash_table_function(new_hash))(sc, new_hash, x->key);
+		  if (y)
+		    y->value = x->value;
+		  else
+		    {
+		      unsigned int loc;
+		      loc = x->raw_hash & new_len;
+		      p = make_hash_entry(x->key, x->value, x->raw_hash);
+		      p->next = new_lists[loc];
+		      new_lists[loc] = p;
+		      hash_table_entries(new_hash)++;
+		    }
 		}
 	      count++;
 	    }
 	}
     }
-  hash_table_entries(new_hash) += count;
   return(new_hash);
+}
+
+s7_pointer hash_table_fill(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer val, table;
+  table = car(args);
+  val = cadr(args);
+  if (hash_table_entries(table) > 0)
+    {
+      int i;
+      hash_entry_t ** els;
+      hash_entry_t *x;
+      els = hash_table_elements(table);
+      for (i = 0; i < hash_table_length(table); i++)
+	for (x = els[i]; x; x = x->next)
+	  x->value = val;
+    }
+  /* keys haven't changed, so no need to mess with hash_table_function */
+  return(val);
 }
 
 
@@ -33722,17 +33749,6 @@ static s7_pointer hash_table_reverse(s7_scheme *sc, s7_pointer old_hash)
 
   s7_gc_unprotect_at(sc, gc_loc);
   return(new_hash);
-}
-
-
-static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
-{
-  free_hash_table(table);
-  hash_table_entries(table) = 0;
-  if (!hash_table_function_locked(table))
-    hash_table_function(table) = hash_empty;
-  hash_table_elements(table) = (hash_entry_t **)calloc(hash_table_length(table), sizeof(hash_entry_t *));
-  return(table);
 }
 
 
@@ -36893,12 +36909,7 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
       return(cadr(args));        /* this parallels the empty vector case */
 
     case T_HASH_TABLE:
-      if (is_not_null(cadr(args))) /* only () as fill arg accepted here normally */
-	{
-	  check_method(sc, cadr(args), sc->FILL, args);
-	  return(wrong_type_argument(sc, sc->FILL, small_int(2), cadr(args), T_NIL));
-	}
-      return(hash_table_clear(sc, p));
+      return(hash_table_fill(sc, args));
 
     case T_C_OBJECT:
       check_method(sc, p, sc->FILL, args);
@@ -47507,7 +47518,9 @@ static void optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer fun
   if (len > 0)  /* i.e. not circular */
     {
       clear_syms_in_list(sc);
-      optimize(sc, body, 1, collect_collisions(sc, args, list_1(sc, add_sym_to_list(sc, func))));
+      if (is_symbol(func))
+	optimize(sc, body, 1, collect_collisions(sc, args, list_1(sc, add_sym_to_list(sc, func))));
+      else optimize(sc, body, 1, collect_collisions(sc, args, sc->NIL));
 
       /* if the body is safe, we can optimize the calling sequence */
       if ((is_proper_list(sc, args)) &&
@@ -57422,14 +57435,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	closure_args(new_func) = cdar(code);
 	closure_body(new_func) = cdr(code);
 	closure_setter(new_func) = sc->F;
-
-	/* fcdr can be nil if we have a function, call it (so check_define+opt), then
-	 *   walk the procedure source while redefining the function, then call it again.
-	 *   To be safe, we should actually call check_define, but how to force that?
-	 *
-	 * later: I think this is fixed now -- we're using fcdr as an int below!
-	 */
-	closure_arity(new_func) = integer(fcdr(code));
+	closure_arity(new_func) = CLOSURE_ARITY_NOT_SET;
 	sc->capture_env_counter++;
 
 	if (is_safe_closure(cdr(code)))
@@ -57503,12 +57509,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* a closure.  If we called this same code earlier (a local define), the only thing
 	   *   that is new here is the environment -- we can't blithely save the closure object
 	   *   in fcdr somewhere, and pick it up the next time around (since call/cc might take
-	   *   us back to the previous case).
+	   *   us back to the previous case).  We also can't re-use fcdr(sc->code) because fcdr
+	   *   is not cleared in the gc.
 	   */
-
 	  make_closure_with_let(sc, x, cdar(sc->code), cdr(sc->code), sc->envir);
-	  if (is_integer(fcdr(sc->code)))
-	    closure_arity(x) = integer(fcdr(sc->code));
 	  sc->value = x;
 	  sc->code = caar(sc->code);
 	  /* fall through */
@@ -66583,6 +66587,11 @@ s7_scheme *s7_init(void)
   s7_dilambda(sc, "symbol-access", g_symbol_access, 1, 1, g_symbol_set_access, 2, 1, H_symbol_access);
   sc->SYMBOL_ACCESS = make_symbol(sc, "symbol-access");
 
+  sc->IS_KEYWORD =            s7_define_safe_function(sc, "keyword?",                g_is_keyword,             1, 0, false, H_is_keyword);
+  sc->MAKE_KEYWORD =          s7_define_symbol_function(sc, "make-keyword",          g_make_keyword,           1, 0, false, H_make_keyword);
+  sc->SYMBOL_TO_KEYWORD =     s7_define_safe_function(sc, "symbol->keyword",         g_symbol_to_keyword,      1, 0, false, H_symbol_to_keyword);
+  sc->KEYWORD_TO_SYMBOL =     s7_define_symbol_function(sc, "keyword->symbol",       g_keyword_to_symbol,      1, 0, false, H_keyword_to_symbol);
+
   sc->OUTLET =                s7_define_safe_function(sc, "outlet",                  g_outlet,                 1, 0, false, H_outlet);
                               s7_define_safe_function(sc, "rootlet",                 g_rootlet,                0, 0, false, H_rootlet);
                               s7_define_safe_function(sc, "curlet",                  g_curlet,                 0, 0, false, H_curlet);
@@ -66620,11 +66629,6 @@ s7_scheme *s7_init(void)
   sc->IS_DEFINED =            s7_define_safe_function(sc, "defined?",                g_is_defined,             1, 2, false, H_is_defined);
   sc->IS_CONSTANT =           s7_define_safe_function(sc, "constant?",               g_is_constant,            1, 0, false, H_is_constant);
   sc->IS_MACRO =              s7_define_safe_function(sc, "macro?",                  g_is_macro,               1, 0, false, H_is_macro);
-
-  sc->IS_KEYWORD =            s7_define_safe_function(sc, "keyword?",                g_is_keyword,             1, 0, false, H_is_keyword);
-  sc->MAKE_KEYWORD =          s7_define_symbol_function(sc, "make-keyword",          g_make_keyword,           1, 0, false, H_make_keyword);
-  sc->SYMBOL_TO_KEYWORD =     s7_define_safe_function(sc, "symbol->keyword",         g_symbol_to_keyword,      1, 0, false, H_symbol_to_keyword);
-  sc->KEYWORD_TO_SYMBOL =     s7_define_symbol_function(sc, "keyword->symbol",       g_keyword_to_symbol,      1, 0, false, H_keyword_to_symbol);
 
   sc->IS_C_POINTER =          s7_define_safe_function(sc, "c-pointer?",              g_is_c_pointer,           1, 0, false, H_is_c_pointer);
   sc->C_POINTER =             s7_define_safe_function(sc, "c-pointer",               g_c_pointer,              1, 0, false, H_c_pointer);
@@ -66759,10 +66763,6 @@ s7_scheme *s7_init(void)
   sc->GT =                    s7_define_safe_function(sc, ">",                       g_greater,                2, 0, true,  H_greater);
   sc->LEQ =                   s7_define_safe_function(sc, "<=",                      g_less_or_equal,          2, 0, true,  H_less_or_equal);
   sc->GEQ =                   s7_define_safe_function(sc, ">=",                      g_greater_or_equal,       2, 0, true,  H_greater_or_equal);
-#if (!WITH_PURE_S7)
-  sc->INEXACT_TO_EXACT =      s7_define_safe_function(sc, "inexact->exact",          g_inexact_to_exact,       1, 0, false, H_inexact_to_exact);
-  sc->EXACT_TO_INEXACT =      s7_define_safe_function(sc, "exact->inexact",          g_exact_to_inexact,       1, 0, false, H_exact_to_inexact);
-#endif
   sc->INTEGER_LENGTH =        s7_define_integer_function(sc, "integer-length",       g_integer_length,         1, 0, false, H_integer_length);
   sc->LOGIOR =                s7_define_integer_function(sc, "logior",               g_logior,                 0, 0, true,  H_logior);
   sc->LOGXOR =                s7_define_integer_function(sc, "logxor",               g_logxor,                 0, 0, true,  H_logxor);
@@ -66773,6 +66773,8 @@ s7_scheme *s7_init(void)
   sc->LOGBIT =                s7_define_safe_function(sc, "logbit?",                 g_logbit,                 2, 0, false, H_logbit);
   sc->INTEGER_DECODE_FLOAT =  s7_define_safe_function(sc, "integer-decode-float",    g_integer_decode_float,   1, 0, false, H_integer_decode_float);
 #if (!WITH_PURE_S7)
+  sc->INEXACT_TO_EXACT =      s7_define_safe_function(sc, "inexact->exact",          g_inexact_to_exact,       1, 0, false, H_inexact_to_exact);
+  sc->EXACT_TO_INEXACT =      s7_define_safe_function(sc, "exact->inexact",          g_exact_to_inexact,       1, 0, false, H_exact_to_inexact);
   sc->IS_EXACT =              s7_define_safe_function(sc, "exact?",                  g_is_exact,               1, 0, false, H_is_exact);
   sc->IS_INEXACT =            s7_define_safe_function(sc, "inexact?",                g_is_inexact,             1, 0, false, H_is_inexact);
 #endif
@@ -67441,4 +67443,5 @@ int main(int argc, char **argv)
  *
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
+ * t193 bugs
  */

@@ -2432,7 +2432,9 @@
 			(and (pair? (cadr form))
 			     (or (eq? (caadr form) 'copy)
 				 (eq? (caadr form) 'string-copy)))))
-	       (lint-format "~A could be ~A" name form (cadr form))))
+	       (lint-format "~A could be ~A" name form (cadr form))
+	       (if (and (pair? (cdr form)) (equal? (cadr form) '(owlet)))
+		   (lint-format "~A could be (owlet): owlet is copied internally" name form))))
 	  
 	  ((string-copy)
 	   (if (and (pair? (cdr form))

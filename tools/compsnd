@@ -53,7 +53,7 @@ cp tools/ffitest.c .
 gcc -o ffitest ffitest.c -g3 -Wall s7.o -lm -I. -ldl
 ffitest
 
-gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g3 -Wl,-export-dynamic -ldl -lm
+gcc s7.c -o repl -DWITH_MAIN -DUSE_SND=0 -I. -O2 -g3 -Wl,-export-dynamic -ldl -lm
 
 make clmclean
 make sndinfo
