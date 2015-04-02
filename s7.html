@@ -1882,6 +1882,7 @@ function passed as its second argument:
 (<em class=def id="iteratorp">iterator?</em> obj)
 (<em class=def id="iterate">iterate</em> iterator)
 (<em class=def id="iteratorsequence">iterator-sequence</em> iterator)
+(<em class=def id="iteratoratend">iterator-at-end?</em> iterator)
 </pre>
 
 <p><b>make-iterator</b> takes a sequence argument and returns an iterator object that traverses
@@ -1905,6 +1906,10 @@ arcane consequence for method writers: specialize make-iterator, not map or for-
 	((or (eof-object? x) (f x))
 	 (and (not (eof-object? x)) x)))))
 </pre>
+
+<p>But of course a sequence might contain #&lt;eof&gt;! So to be really safe, use iterator-at-end? 
+instead of eof-object?.
+</p>
 
 
 
@@ -2312,7 +2317,7 @@ an entry, <code>'(key . value)</code>, in whatever order the entries are encount
 (define (hash-table-&gt;alist table)
   (map values table))
 
-(define (merge-hash-tables . tables)
+(define (merge-hash-tables . tables) ; copy also merges
   (apply hash-table 
     (apply append 
       (map hash-table-&gt;alist tables))))

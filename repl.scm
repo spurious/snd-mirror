@@ -880,13 +880,6 @@
 				   (format *stderr* "> ")))))))))
 	      
 		;; not a pipe or a dumb terminal -- hopefully all others accept vt100 codes
-
-		;; (if (or (equal? (signal SIGINT tty-reset) SIG_ERR)  ; are these needed? as far as I can see, no.
-		;; 	   (equal? (signal SIGQUIT tty-reset) SIG_ERR)
-		;;	   (equal? (signal SIGTERM tty-reset) SIG_ERR)
-		;;	   (negative? (tcgetattr terminal-fd saved)))
-		;;      (#_exit))
-		
 		(let ((buf (termios.make))
 		      (read-size 128))
 

@@ -856,7 +856,7 @@ struct s7_scheme {
   s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, IS_GENSYM, GET_OUTPUT_STRING, HASH_TABLE, HASH_TABLE_STAR;
   s7_pointer IS_HASH_TABLE, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_ENTRIES, HELP, IMAG_PART, IS_INEXACT, INEXACT_TO_EXACT;
   s7_pointer IS_INFINITE, IS_INPUT_PORT, IS_INTEGER, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, IS_KEYWORD, KEYWORD_TO_SYMBOL;
-  s7_pointer LCM, LENGTH, IS_ITERATOR, MAKE_ITERATOR, ITERATE, ITERATOR_SEQUENCE;
+  s7_pointer LCM, LENGTH, IS_ITERATOR, MAKE_ITERATOR, ITERATE, ITERATOR_SEQUENCE, ITERATOR_IS_AT_END;
   s7_pointer LIST, IS_LIST, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBIT, LOGIOR, LOGNOT, LOGXOR;
   s7_pointer IS_MACRO, MAKE_BYTEVECTOR, MAKE_FLOAT_VECTOR, MAKE_HASH_TABLE, MAKE_KEYWORD, MAKE_LIST, MAKE_RANDOM_STATE;
   s7_pointer MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, IS_MORALLY_EQUAL, IS_NAN, IS_NEGATIVE, NEWLINE;
@@ -1314,7 +1314,7 @@ static void init_types(void)
 #define T_COLLECTED                   T_RETURNS_TEMP
 #define is_collected(p)               ((typeflag(p) & T_COLLECTED) != 0)
 #define set_collected(p)              typeflag(p) |= T_COLLECTED
-#define clear_collected(p)            typeflag(p) &= (~T_COLLECTED)
+/* #define clear_collected(p)            typeflag(p) &= (~T_COLLECTED) */
 /* this is a transient flag used by the printer to catch cycles.  It affects only objects
  *   that have structure, whereas T_RETURNS_TEMP only affects functions.  We can't use a
  *   low bit (bit 7 for example), because collect_shared_info inspects the object's type.
@@ -1339,11 +1339,11 @@ static void init_types(void)
 /* marks a slot or symbol that has a setter -- T_PRINT_NAME might be better here
  */
 
-#define T_CYCLIC                      (1 << (TYPE_BITS + 11))
-#define set_cyclic(p)                 typeflag(p) |= T_CYCLIC
-#define is_cyclic(p)                  ((typeflag(p) & T_CYCLIC) != 0)
-#define clear_cyclic(p)               typeflag(p) &= (~T_CYCLIC)
-/* used by cyclic-sequences to mark objects already traversed */
+#define T_SHARED                      (1 << (TYPE_BITS + 11))
+#define is_shared(p)                  ((typeflag(p) & T_SHARED) != 0)
+#define set_shared(p)                 typeflag(p) |= T_SHARED
+#define clear_shared(p)               typeflag(p) &= (~T_SHARED)
+#define clear_collected_and_shared(p) typeflag(p) &= (~(T_COLLECTED | T_SHARED))
 
 #define T_OVERLAY                     (1 << (TYPE_BITS + 12))
 #define set_overlay(p)                typeflag(p) |= T_OVERLAY
@@ -1378,14 +1378,6 @@ static void init_types(void)
 #define T_STEP_SAFE                   T_UNSAFE
 #define is_step_safe(p)               ((typeflag(p) & T_STEP_SAFE) != 0)
 #define set_step_safe(p)              typeflag(p) |= T_STEP_SAFE
-
-#define T_SHARED                      T_UNSAFE
-#define is_shared(p)                  ((typeflag(p) & T_SHARED) != 0)
-#define set_shared(p)                 typeflag(p) |= T_SHARED
-#define clear_shared(p)               typeflag(p) &= (~T_SHARED)
-#define clear_collected_and_shared(p) typeflag(p) &= (~(T_COLLECTED | T_SHARED))
-/* I've run out of type bits!
- */
 
 #define T_KEYWORD                     (1 << (TYPE_BITS + 16))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
@@ -1789,6 +1781,10 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define iterator_current(p)           (p)->object.iter.hc.cur
 #define iterator_hash_current(p)      (p)->object.iter.hc.hcur
 #define iterator_next(p)              (p)->object.iter.next
+#define iterator_is_at_end(p)         (iterator_next(p) == iterator_finished)
+
+#define ITERATOR_END EOF_OBJECT
+#define ITERATOR_END_NAME "#<eof>"
 
 #define temp_stack_top(p)             (p)->object.stk.top
 
@@ -1944,7 +1940,7 @@ static int num_object_types = 0;
 #define c_object_free(p)              c_object_info(p)->free
 #define c_object_mark(p)              c_object_info(p)->gc_mark
 #define c_object_reverse(p)           c_object_info(p)->reverse
-#define c_object_outer_type(p)        c_object_info(p)->outer_type
+/* #define c_object_outer_type(p)     c_object_info(p)->outer_type */
 
 #define raw_pointer(p)                (p)->object.c_pointer
 
@@ -2184,6 +2180,7 @@ static void memclr(void *s, size_t n)
 
 static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen, use_write_t choice);
 static bool is_proper_list(s7_scheme *sc, s7_pointer lst);
+static s7_pointer iterator_finished(s7_scheme *sc, s7_pointer iterator);
 static bool is_all_x_safe(s7_scheme *sc, s7_pointer p);
 static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg);
 static void annotate_args(s7_scheme *sc, s7_pointer args);
@@ -4873,6 +4870,10 @@ static s7_pointer g_string_to_symbol_1(s7_scheme *sc, s7_pointer args, s7_pointe
     }
   /* currently if the string has an embedded null, it marks the end of the new symbol name.
    *   I wonder if this is a bug...
+   * also a null string generates a weird symbol that confuses the keyword funcs:
+   *   (symbol? (string->symbol "")) is #t, but
+   *   (keyword? (symbol->keyword (string->symbol "")) is #f (it is ': apparently)
+   *   should we complain about a null string arg here?
    */
   return(make_symbol_with_length(sc, string_value(str), string_length(str)));
 }
@@ -5771,7 +5772,7 @@ s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env)
 	  while (true)
 	    {
 	      x = iterate(sc, iter);
-	      if (x == sc->EOF_OBJECT) break;
+	      if (iterator_is_at_end(iter)) break;
 	      sc->w = cons(sc, x, sc->w);
 	    }
 	  sc->w = safe_reverse_in_place(sc, sc->w);
@@ -11498,6 +11499,7 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
       return(s7_make_complex(sc, 0.0, sqrt(-real(n))));
 
     case T_COMPLEX:
+      /* (* inf.0 (sqrt -1)) -> -nan+infi, but (sqrt -inf.0) -> 0+infi */
 #if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, csqrt(as_c_complex(n))));
 #else
@@ -23999,9 +24001,6 @@ bool s7_is_valid(s7_scheme *sc, s7_pointer arg)
 
 /* -------------------------------- iterators -------------------------------- */
 
-#define ITERATOR_END EOF_OBJECT
-#define ITERATOR_END_NAME "#<eof>"
-
 static s7_pointer iterator_copy(s7_scheme *sc, s7_pointer p)
 {
   s7_pointer iter;
@@ -24023,6 +24022,11 @@ static bool iterators_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 }
 
 
+static s7_pointer iterator_finished(s7_scheme *sc, s7_pointer iterator)
+{
+  return(sc->ITERATOR_END);
+}
+
 static s7_pointer let_iterate(s7_scheme *sc, s7_pointer iterator)
 {
   s7_pointer slot;
@@ -24032,6 +24036,7 @@ static s7_pointer let_iterate(s7_scheme *sc, s7_pointer iterator)
       iterator_current(iterator) = next_slot(slot);
       return(cons(sc, slot_symbol(slot), slot_value(slot)));
     }
+  iterator_next(iterator) = iterator_finished;
   return(sc->ITERATOR_END);
 }
 
@@ -24049,6 +24054,7 @@ static s7_pointer rootlet_iterate(s7_scheme *sc, s7_pointer iterator)
       else iterator_current(iterator) = sc->NIL;
       return(cons(sc, slot_symbol(slot), slot_value(slot)));
     }
+  iterator_next(iterator) = iterator_finished;
   return(sc->ITERATOR_END);
 }
 
@@ -24081,37 +24087,48 @@ static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator)
 	  return(cons(sc, x->key, x->value));
 	}
     }
+  iterator_next(iterator) = iterator_finished;
   return(sc->ITERATOR_END);
 }
 
 static s7_pointer string_iterate(s7_scheme *sc, s7_pointer obj)
 {
-  return((iterator_position(obj) < iterator_length(obj)) ?
-	 s7_make_character(sc, (unsigned char)(string_value(iterator_sequence(obj))[iterator_position(obj)++])) : sc->ITERATOR_END);
+  if (iterator_position(obj) < iterator_length(obj))
+    return(s7_make_character(sc, (unsigned char)(string_value(iterator_sequence(obj))[iterator_position(obj)++])));
+  iterator_next(obj) = iterator_finished;
+  return(sc->ITERATOR_END);
 }
 
 static s7_pointer bytevector_iterate(s7_scheme *sc, s7_pointer obj)
 {
-  return((iterator_position(obj) < iterator_length(obj)) ?
-	 small_int((unsigned char)(string_value(iterator_sequence(obj))[iterator_position(obj)++])) : sc->ITERATOR_END);
+  if (iterator_position(obj) < iterator_length(obj))
+    return(small_int((unsigned char)(string_value(iterator_sequence(obj))[iterator_position(obj)++])));
+  iterator_next(obj) = iterator_finished;
+  return(sc->ITERATOR_END);
 }
 
 static s7_pointer float_vector_iterate(s7_scheme *sc, s7_pointer obj)
 {
-  return((iterator_position(obj) < iterator_length(obj)) ?
-	 make_real(sc, float_vector_element(iterator_sequence(obj), iterator_position(obj)++)) : sc->ITERATOR_END);
+  if (iterator_position(obj) < iterator_length(obj))
+    return(make_real(sc, float_vector_element(iterator_sequence(obj), iterator_position(obj)++)));
+  iterator_next(obj) = iterator_finished;
+  return(sc->ITERATOR_END);
 }
 
 static s7_pointer int_vector_iterate(s7_scheme *sc, s7_pointer obj)
 {
-  return((iterator_position(obj) < iterator_length(obj)) ?
-	 make_integer(sc, int_vector_element(iterator_sequence(obj), iterator_position(obj)++)) : sc->ITERATOR_END);
+  if (iterator_position(obj) < iterator_length(obj))
+    return(make_integer(sc, int_vector_element(iterator_sequence(obj), iterator_position(obj)++)));
+  iterator_next(obj) = iterator_finished;
+  return(sc->ITERATOR_END);
 }
 
 static s7_pointer vector_iterate(s7_scheme *sc, s7_pointer obj)
 {
-  return((iterator_position(obj) < iterator_length(obj)) ?
-	 vector_element(iterator_sequence(obj), iterator_position(obj)++) : sc->ITERATOR_END);
+  if (iterator_position(obj) < iterator_length(obj))
+    return(vector_element(iterator_sequence(obj), iterator_position(obj)++));
+  iterator_next(obj) = iterator_finished;
+  return(sc->ITERATOR_END);
 }
 
 
@@ -24129,8 +24146,11 @@ static s7_pointer other_iterate(s7_scheme *sc, s7_pointer obj)
       sc->x = car(sc->Z2_1);
       sc->z = car(sc->Z2_2);
       iterator_position(obj)++;
+      if (result == sc->ITERATOR_END)
+	iterator_next(obj) = iterator_finished;
       return(result);
     }
+  iterator_next(obj) = iterator_finished;
   return(sc->ITERATOR_END);
 }
 
@@ -24145,6 +24165,7 @@ static s7_pointer pair_iterate(s7_scheme *sc, s7_pointer obj)
       iterator_next(obj) = pair_iterate_1;
       return(result);
     }
+  iterator_next(obj) = iterator_finished;
   return(sc->ITERATOR_END);
 }
 
@@ -24156,11 +24177,15 @@ static s7_pointer pair_iterate_1(s7_scheme *sc, s7_pointer obj)
       result = car(iterator_current(obj));
       iterator_current(obj) = cdr(iterator_current(obj));
       if (iterator_current(obj) == iterator_slow(obj))
-	return(sc->ITERATOR_END);
+	{
+	  iterator_next(obj) = iterator_finished;
+	  return(sc->ITERATOR_END);
+	}
       iterator_slow(obj) = cdr(iterator_slow(obj));
       iterator_next(obj) = pair_iterate;
       return(result);
     }
+  iterator_next(obj) = iterator_finished;
   return(sc->ITERATOR_END);
 }
 
@@ -24288,7 +24313,19 @@ static s7_pointer g_iterator_sequence(s7_scheme *sc, s7_pointer args)
   iter = car(args);
   if (!is_iterator(iter))
     return(simple_wrong_type_argument(sc, sc->ITERATOR_SEQUENCE, iter, T_ITERATOR));
-  return(iterator_sequence(car(args)));
+  return(iterator_sequence(iter));
+}
+
+
+static s7_pointer g_iterator_is_at_end(s7_scheme *sc, s7_pointer args)
+{
+  #define H_iterator_is_at_end "(iterator-at-end? iter) returns #t if the iterator has reached the end of its sequence."
+  s7_pointer iter;
+
+  iter = car(args);
+  if (!is_iterator(iter))
+    return(simple_wrong_type_argument(sc, sc->ITERATOR_IS_AT_END, iter, T_ITERATOR));
+  return(make_boolean(sc, iterator_is_at_end(iter)));
 }
 
 
@@ -36035,16 +36072,17 @@ static bool complex_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info
 
   if (is_real(y))
     {
-      if ((is_NaN(real_part(x))) ||
-	  (is_NaN(imag_part(x))) ||
-	  (is_NaN(real(y))))
+      if (is_NaN(imag_part(x)))
 	return(false);
+      if (is_NaN(real(y)))
+	return((is_NaN(real_part(x))) &&
+	       (fabs(imag_part(x)) <= sc->morally_equal_float_epsilon));
       return(((real_part(x) == real(y)) ||
 	      (fabs(real_part(x) - real(y)) <= sc->morally_equal_float_epsilon)) &&
 	     (fabs(imag_part(x)) <= sc->morally_equal_float_epsilon));
     }
 
-  /* should (morally-equal? nan.0 (make-rectangular nan.0 nan.0)) be #t? */
+  /* should (morally-equal? nan.0 (make-rectangular nan.0 nan.0)) be #t (it's #f above)? */
   if (is_NaN(real_part(x)))
     return((is_NaN(real_part(y))) &&
 	   (((is_NaN(imag_part(x))) && (is_NaN(imag_part(y)))) ||
@@ -36926,7 +36964,7 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 {
-  /* used only in format_to_port_1 */
+  /* used only in format_to_port_1 and maybe (map values ...) */
   switch (type(obj))
     {
     case T_INT_VECTOR:
@@ -36952,7 +36990,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 	  while (true)
 	    {
 	      x = iterate(sc, iterator);
-	      if (x == sc->ITERATOR_END) break;
+	      if (iterator_is_at_end(iterator)) break;
 	      sc->w = cons(sc, x, sc->w);
 	    }
 	  x = sc->w;
@@ -39326,7 +39364,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	  while (true)
 	    {
 	      car(y) = iterate(sc, x);
-	      if (car(y) == sc->ITERATOR_END)
+	      if (iterator_is_at_end(x))
 		{
 		  pop_stack(sc);
 		  return(sc->UNSPECIFIED);
@@ -39340,7 +39378,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	  for (x = car(sc->args), y = cdr(sc->args); is_pair(x); x = cdr(x), y = cdr(y))
 	    {
 	      car(y) = iterate(sc, car(x));
-	      if (car(y) == sc->ITERATOR_END)
+	      if (iterator_is_at_end(car(x)))
 		{
 		  pop_stack(sc);
 		  return(sc->UNSPECIFIED);
@@ -39449,6 +39487,15 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
   if (got_nil) return(sc->NIL);
 
+  if ((sc->code == slot_value(global_slot(sc->VALUES))) &&
+      (is_null(cddr(args))) &&
+      (!has_methods(cadr(args))))
+    {
+      p = object_to_list(sc, cadr(args));
+      if (p != cadr(args))
+	return(p);
+    }
+
   sc->temp3 = args;
   sc->z = sc->NIL;                                    /* don't use sc->args here -- it needs GC protection until we get the iterators */
   for (p = cdr(args); is_not_null(p); p = cdr(p))
@@ -39476,7 +39523,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  for (x = car(sc->args), y = cdr(sc->args); is_pair(x); x = cdr(x), y = cdr(y))
 	    {
 	      car(y) = iterate(sc, car(x));
-	      if (car(y) == sc->ITERATOR_END)
+	      if (iterator_is_at_end(car(x)))
 		{
 		  pop_stack(sc);
 		  return(safe_reverse_in_place(sc, car(sc->code)));
@@ -50085,11 +50132,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_MAP_1:
       {
-	s7_pointer x, args, code;
-	args = sc->args;
+	s7_pointer x, args, code, p;
 	code = sc->code;
-	x = iterate(sc, counter_list(args));
-	if (x == sc->ITERATOR_END)
+	args = sc->args;
+	p = counter_list(args);
+	x = iterate(sc, p);
+	if (iterator_is_at_end(p))
 	  {
 	    sc->value = safe_reverse_in_place(sc, counter_result(args));
 	    goto START;
@@ -50125,7 +50173,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    s7_pointer x;
 	    x = iterate(sc, car(y));
-	    if (x == sc->ITERATOR_END)
+	    if (iterator_is_at_end(car(y)))
 	      {
 		sc->value = safe_reverse_in_place(sc, counter_result(sc->args));
 		/* here and below it is not safe to pre-release sc->args (the counter) */
@@ -50153,7 +50201,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	for (x = saved_args, y = iterators; is_pair(x); x = cdr(x), y = cdr(y))
 	  {
 	    car(x) = iterate(sc, car(y));
-	    if (car(x) == sc->ITERATOR_END)
+	    if (iterator_is_at_end(car(y)))
 	      {
 		sc->value = sc->UNSPECIFIED;
 		goto START;
@@ -50178,10 +50226,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     FOR_EACH_1:
     case OP_FOR_EACH_1:
       {
-	s7_pointer code, arg, counter;
+	s7_pointer code, arg, counter, p;
 	counter = sc->args;
-	arg = iterate(sc, counter_list(counter));
-	if (arg == sc->ITERATOR_END)
+	p = counter_list(counter);
+	arg = iterate(sc, p);
+	if (iterator_is_at_end(p))
 	  {
 	    sc->value = sc->UNSPECIFIED;
 	    goto START;
@@ -50213,10 +50262,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_FOR_EACH_CATCH:
       {
 	s7_pointer arg, counter, code, p;
-	counter = sc->args;
 	code = sc->code;
-	arg = iterate(sc, counter_list(counter));
-	if (arg == sc->ITERATOR_END)
+	counter = sc->args;
+	p = counter_list(counter);
+	arg = iterate(sc, p);
+	if (iterator_is_at_end(p))
 	  {
 	    sc->value = sc->UNSPECIFIED;
 	    goto START;
@@ -65994,7 +66044,7 @@ s7_scheme *s7_init(void)
   sc->read_line_buf_size = 0;
 
   sc->NIL =         make_unique_object("()",             T_NIL);
-  sc->GC_NIL =      make_unique_object("gc-nil",         T_UNIQUE);
+  sc->GC_NIL =      make_unique_object("#<nil>",         T_UNIQUE);
   sc->T =           make_unique_object("#t",             T_BOOLEAN);
   sc->F =           make_unique_object("#f",             T_BOOLEAN);
   sc->EOF_OBJECT =  make_unique_object("#<eof>",         T_UNIQUE);
@@ -66623,6 +66673,7 @@ s7_scheme *s7_init(void)
   sc->IS_ITERATOR =           s7_define_safe_function(sc, "iterator?",               g_is_iterator,            1, 0, false, H_is_iterator);
   sc->ITERATE =               s7_define_safe_function(sc, "iterate",                 g_iterate,                1, 0, false, H_iterate);
   sc->ITERATOR_SEQUENCE =     s7_define_safe_function(sc, "iterator-sequence",       g_iterator_sequence,      1, 0, false, H_iterator_sequence);
+  sc->ITERATOR_IS_AT_END =    s7_define_safe_function(sc, "iterator-at-end?",        g_iterator_is_at_end,     1, 0, false, H_iterator_is_at_end);
 
   sc->IS_PROVIDED =           s7_define_safe_function(sc, "provided?",               g_is_provided,            1, 0, false, H_is_provided);
   sc->PROVIDE =               s7_define_safe_function(sc, "provide",                 g_provide,                1, 0, false, H_provide);
@@ -67398,11 +67449,11 @@ int main(int argc, char **argv)
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1145
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342
- * tmap           |      |      | 11.0           5031 4769 4702 
+ * tmap           |      |      | 11.0           5031 4769 4700
  * tcopy          |      |      |                          4975
  * lg             |      |      | 6547 6497 6494 6235 6229 6222
  * teq            |      |      | 6612                     4654
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 6518 
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7131
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
  * thash          |      |      |                          19.4
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8
@@ -67443,5 +67494,4 @@ int main(int argc, char **argv)
  *
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
- * t193 bugs
  */
