@@ -4738,13 +4738,27 @@ static s7_pointer g_is_gensym(s7_scheme *sc, s7_pointer args)
 }
 
 
+static char *pos_int_to_str(s7_Int num, unsigned int *len)
+{
+  #define INT_TO_STR_SIZE 24
+  static char itos[INT_TO_STR_SIZE];
+  char *p, *op;
+
+  p = (char *)(itos + INT_TO_STR_SIZE - 1);
+  op = p;
+  *p-- = '\0';
+  do {*p-- = "0123456789"[num % 10]; num /= 10;} while (num);
+  (*len) = op - p;           /* this includes the trailing #\null */
+  return((char *)(p + 1));
+}
+
 static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
 {
   #define H_gensym "(gensym (prefix \"gensym\")) returns a new, unused symbol"
 
   const char *prefix;
-  char *name;
-  unsigned int len, nlen, hash, location;
+  char *name, *p;
+  unsigned int len, plen, nlen, hash, location;
   s7_pointer x, str, stc;
 
   /* get symbol name */
@@ -4758,9 +4772,18 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
       prefix = string_value(car(args));
     }
   else prefix = "gensym";
-  len = safe_strlen(prefix) + 32;
+  plen = safe_strlen(prefix);
+  len = plen + 32;
   name = (char *)malloc(len * sizeof(char));
-  nlen = snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++);
+  name[0] = '{';
+  if (plen > 0) memcpy((void *)(name + 1), prefix, plen);
+  name[plen + 1] = '}';
+  name[plen + 2] = '-';
+
+  p = pos_int_to_str(sc->gensym_counter++, &len);
+  memcpy((void *)(name + plen + 3), (void *)p, len);
+  nlen = len + plen + 2;
+
   hash = raw_string_hash((const unsigned char *)name, nlen);
   location = hash % SYMBOL_TABLE_SIZE;
 
@@ -4768,14 +4791,14 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   str = (s7_cell *)calloc(1, sizeof(s7_cell));
   heap_location(str) = NOT_IN_HEAP;
   set_type(str, T_STRING | T_IMMUTABLE);
-  string_length(str) = safe_strlen(name);
+  string_length(str) = nlen;
   string_value(str) = name;
   string_needs_free(str) = false;
 
   /* allocate the symbol in the heap so GC'd when inaccessible */
   NEW_CELL(sc, x, T_SYMBOL | T_GENSYM);
   symbol_name_cell(x) = str;
-  global_slot(x) = sc->UNDEFINED; /* was sc->NIL */
+  global_slot(x) = sc->UNDEFINED;
   initial_slot(x) = sc->UNDEFINED;
   symbol_set_local(x, 0LL, sc->NIL);
   symbol_hash(x) = location;
@@ -8565,8 +8588,6 @@ static char *integer_to_string_base_10_no_width(s7_pointer obj, int *nlen) /* do
   long long int num;
   char *p, *op;
   bool sign;
-
-  #define INT_TO_STR_SIZE 24
   static char int_to_str[INT_TO_STR_SIZE];
 
   if (has_print_name(obj))
@@ -25177,21 +25198,39 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
     }
   else
     {
-      for (x = lst, i = 0; (is_pair(x)) && (i < len) && ((!ci) || (i == 0) || (peek_shared_ref(ci, x) == 0)); i++, x = cdr(x))
+      if (ci)
 	{
-	  object_to_port_with_circle_check(sc, car(x), port, DONT_USE_DISPLAY(use_write), to_file, ci);
-	  if (i < (len - 1))
-	    port_write_character(port)(sc, ' ', port);
+	  for (x = lst, i = 0; (is_pair(x)) && (i < len) && ((!ci) || (i == 0) || (peek_shared_ref(ci, x) == 0)); i++, x = cdr(x))
+	    {
+	      object_to_port_with_circle_check(sc, car(x), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	      if (i < (len - 1))
+		port_write_character(port)(sc, ' ', port);
+	    }
+	  if (is_not_null(x))
+	    {
+	      if ((true_len == 0) &&
+		  (i == len))
+		port_write_string(port)(sc, " . ", 3, port);
+	      else port_write_string(port)(sc, ". ", 2, port);
+	      object_to_port_with_circle_check(sc, x, port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	    }
+	  port_write_character(port)(sc, ')', port);
 	}
-      if (is_not_null(x))
+      else
 	{
-	  if ((true_len == 0) &&
-	      (i == len))
-	    port_write_string(port)(sc, " . ", 3, port);
-	  else port_write_string(port)(sc, ". ", 2, port);
-	  object_to_port_with_circle_check(sc, x, port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	  for (x = lst, i = 0; (is_pair(x)) && (i < len); i++, x = cdr(x))
+	    {
+	      object_to_port(sc, car(x), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	      if (i < (len - 1))
+		port_write_character(port)(sc, ' ', port);
+	    }
+	  if (is_not_null(x))
+	    {
+	      port_write_string(port)(sc, ". ", 2, port);
+	      object_to_port(sc, x, port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	    }
+	  port_write_character(port)(sc, ')', port);
 	}
-      port_write_character(port)(sc, ')', port);
     }
 }
 
@@ -25990,17 +26029,31 @@ static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_po
 		}
 	      else
 		{
-		  nlen = snprintf(buf, 32, "#%d=", ref);
-		  port_write_string(port)(sc, buf, nlen, port);
+		  char *p;
+		  unsigned int len;
+		  port_write_character(port)(sc, '#', port);
+		  p = pos_int_to_str((s7_Int)ref, &len);
+		  port_write_string(port)(sc, p, len - 1, port);
+		  port_write_character(port)(sc, '=', port);
 		  object_to_port(sc, vr, port, DONT_USE_DISPLAY(use_write), WITH_ELLIPSES, ci);
 		}
 	    }
 	  else
 	    {
 	      if (use_write == USE_READABLE_WRITE)
-		nlen = snprintf(buf, 32, "{%d}", -ref);
-	      else nlen = snprintf(buf, 32, "#%d#", -ref);
-	      port_write_string(port)(sc, buf, nlen, port);
+		{
+		  nlen = snprintf(buf, 32, "{%d}", -ref);
+		  port_write_string(port)(sc, buf, nlen, port);
+		}
+	      else 
+		{
+		  char *p;
+		  unsigned int len;
+		  port_write_character(port)(sc, '#', port);
+		  p = pos_int_to_str((s7_Int)(-ref), &len);
+		  port_write_string(port)(sc, p, len - 1, port);
+		  port_write_character(port)(sc, '#', port);
+		}
 	    }
 	  return;
 	}
@@ -33681,7 +33734,12 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer
   new_lists = hash_table_elements(new_hash);
 
   if ((old_len == new_len) &&
-      (hash_table_entries(new_hash) == 0)) /* PERHAPS: or the hash_table_functions are incompatible, so no keys can match */
+      (hash_table_entries(new_hash) == 0)) 
+    /* PERHAPS: or the hash_table_functions are incompatible, so no keys can match:
+     *   each from [hash_symbol|char|string|int|float] and not equal to each other?
+     *   unsafe are hash_equal and function_locked cases like eq_eq, eq_c_function, eq_closure
+     *   so ((htf(1|2) != hash_equal) && (!htf(1|2)_locked) && (hft1 != htf2)) ?
+     */
     {
       for (i = 0; i < old_len; i++)
 	{
@@ -35706,14 +35764,12 @@ static bool environment_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_
       if (i == 0) return(false);
       if (i == 1) return(true);
     }
-  else nci = new_shared_info(sc);
 
   for (ex = x, ey = y; is_let(ex) && is_let(ey); ex = outlet(ex), ey = outlet(ey))
     {
       s7_pointer px, py;
 
-      if (ex == ey)
-	return(true);
+      if (ex == ey) break;
       if ((ex == sc->rootlet) ||
 	  (ey == sc->rootlet))
 	return(false);
@@ -35731,6 +35787,14 @@ static bool environment_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_
       for (px = let_slots(ex); is_slot(px); px = next_slot(px))
 	if (symbol_tag(slot_symbol(px)) != 0)
 	  return(false);
+    }
+
+  if (!nci) nci = new_shared_info(sc);
+  for (ex = x, ey = y; is_let(ex) && is_let(ey); ex = outlet(ex), ey = outlet(ey))
+    {
+      s7_pointer px, py;
+      if (ex == ey)
+	return(true);
 
       for (px = let_slots(ex); is_slot(px); px = next_slot(px))
 	{
@@ -49385,8 +49449,7 @@ static s7_pointer check_do(s7_scheme *sc)
 				}
 			    }
 			}
-		      /* else fprintf(stderr, "not safe: %s\n", DISPLAY(body)); */
-		      return(sc->NIL); /* tell OP_DO that this is a special case */
+		      return(sc->NIL); 
 		    }
 		}
 	    }
@@ -51996,12 +52059,41 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->code = cdadr(sc->code);
 	    goto DO_END_CLAUSES;
 	  }
+	end = cddr(sc->code);
+	if (is_null(end))
+	  {
+	    s7_function fend;
+	    end = cadr(sc->code);
+	    fend = (s7_function)fcdr(end);
+	    end = car(end);
+	    if ((is_slot(let_slots(sc->envir))) &&
+		(!is_slot(next_slot(let_slots(sc->envir)))) &&
+		(is_pair(slot_expression(let_slots(sc->envir)))))
+	      {
+		s7_pointer expr;
+		s7_function f;
+		slot = let_slots(sc->envir);
+		expr = slot_expression(slot);
+		f = (s7_function)fcdr(expr);
+		expr = car(expr);
+		while (true)
+		  {
+		    slot_set_value(slot, f(sc, expr));
+		    if (is_true(sc, fend(sc, end)))
+		      {
+			sc->code = cdadr(sc->code);
+			goto DO_END_CLAUSES;
+		      }
+		  }
+	      }
+	    end = cddr(sc->code);
+	    /* the multi-var null body case never happens */
+	  }
 	push_stack_no_args(sc, OP_DO_ALL_X_STEP, sc->code);
-	sc->code = cddr(sc->code);
+	sc->code = end;
 	goto BEGIN1;
       }
 
-    DO_ALL_X_STEP:
     case OP_DO_ALL_X_STEP:
       {
 	s7_pointer end, slot;
@@ -52021,13 +52113,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->code = cdadr(sc->code);
 	    goto DO_END_CLAUSES;
 	  }
-	end = cddr(sc->code);
-	if (is_null(end)) goto DO_ALL_X_STEP;
 	push_stack_no_args(sc, OP_DO_ALL_X_STEP, sc->code);
-	sc->code = end;
+	sc->code = cddr(sc->code);
 	goto BEGIN1;
       }
-
 
 	/* we could use slot_pending_value, slot_expression, not this extra list, but the list seems simpler.
 	 */
@@ -67447,13 +67536,14 @@ int main(int argc, char **argv)
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1145
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342
- * tmap           |      |      | 11.0           5031 4769 4700
- * tcopy          |      |      |                          4975
- * lg             |      |      | 6547 6497 6494 6235 6229 6222
- * teq            |      |      | 6612                     4654
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7131
+ * teq            |      |      | 6612                     3887
+ * tmap           |      |      | 11.0           5031 4769 4685
+ * tcopy          |      |      |                          4970
+ * lg             |      |      | 6547 6497 6494 6235 6229 6239
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104
+ * titer          |      |      |                           8.0
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
  * thash          |      |      |                          19.4
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8

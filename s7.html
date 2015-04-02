@@ -4116,6 +4116,13 @@ is similar, but its argument is a string.
 3
 </pre>
 
+<p>Leaving aside a few special cases, eval-string could be defined:
+</p>
+<pre class="indented">
+(define-macro* (eval-string x e)
+  `(eval (with-input-from-string ,x read) (or ,e (curlet))))
+</pre>
+
 
 <blockquote>
 

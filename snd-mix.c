@@ -3788,12 +3788,18 @@ int copy_mix(int id)
 static Xen g_save_mix(Xen m, Xen file)
 {
   #define H_save_mix "(" S_save_mix " mix filename) saves mix's samples in the file 'filename'"
+  int id;
 
   Xen_check_type(xen_is_mix(m), m, 1, S_save_mix, "a mix");
-  Xen_check_type(Xen_is_string(file), file, 2, S_save_mix, "a filename");
+  id = Xen_mix_to_C_int(m);
 
-  save_mix(Xen_mix_to_C_int(m), Xen_string_to_C_string(file), MUS_NEXT, MUS_OUT_SAMPLE_TYPE);
-  return(m);
+  if (mix_is_active(id)) 
+    {
+      Xen_check_type(Xen_is_string(file), file, 2, S_save_mix, "a filename");
+      save_mix(id, Xen_string_to_C_string(file), MUS_NEXT, MUS_OUT_SAMPLE_TYPE);
+      return(m);
+    }
+  return(snd_no_such_mix_error(S_save_mix, m));
 }
 
 
