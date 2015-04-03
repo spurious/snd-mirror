@@ -66903,6 +66903,10 @@ s7_scheme *s7_init(void)
   sc->GT =                    s7_define_safe_function(sc, ">",                       g_greater,                2, 0, true,  H_greater);
   sc->LEQ =                   s7_define_safe_function(sc, "<=",                      g_less_or_equal,          2, 0, true,  H_less_or_equal);
   sc->GEQ =                   s7_define_safe_function(sc, ">=",                      g_greater_or_equal,       2, 0, true,  H_greater_or_equal);
+#if (!WITH_PURE_S7)
+  sc->INEXACT_TO_EXACT =      s7_define_safe_function(sc, "inexact->exact",          g_inexact_to_exact,       1, 0, false, H_inexact_to_exact);
+  sc->EXACT_TO_INEXACT =      s7_define_safe_function(sc, "exact->inexact",          g_exact_to_inexact,       1, 0, false, H_exact_to_inexact);
+#endif
   sc->INTEGER_LENGTH =        s7_define_integer_function(sc, "integer-length",       g_integer_length,         1, 0, false, H_integer_length);
   sc->LOGIOR =                s7_define_integer_function(sc, "logior",               g_logior,                 0, 0, true,  H_logior);
   sc->LOGXOR =                s7_define_integer_function(sc, "logxor",               g_logxor,                 0, 0, true,  H_logxor);
@@ -66913,8 +66917,6 @@ s7_scheme *s7_init(void)
   sc->LOGBIT =                s7_define_safe_function(sc, "logbit?",                 g_logbit,                 2, 0, false, H_logbit);
   sc->INTEGER_DECODE_FLOAT =  s7_define_safe_function(sc, "integer-decode-float",    g_integer_decode_float,   1, 0, false, H_integer_decode_float);
 #if (!WITH_PURE_S7)
-  sc->INEXACT_TO_EXACT =      s7_define_safe_function(sc, "inexact->exact",          g_inexact_to_exact,       1, 0, false, H_inexact_to_exact);
-  sc->EXACT_TO_INEXACT =      s7_define_safe_function(sc, "exact->inexact",          g_exact_to_inexact,       1, 0, false, H_exact_to_inexact);
   sc->IS_EXACT =              s7_define_safe_function(sc, "exact?",                  g_is_exact,               1, 0, false, H_is_exact);
   sc->IS_INEXACT =            s7_define_safe_function(sc, "inexact?",                g_is_inexact,             1, 0, false, H_is_inexact);
 #endif
@@ -67585,3 +67587,4 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
  */
+

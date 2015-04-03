@@ -22859,6 +22859,14 @@ EDITS: 2
 		(if (not (= (framples ind1) (mix-length mix1))) (snd-display #__line__ ";save-mix framples: ~A ~A" (mix-length mix1) (framples ind1)))
 		(if (not (vequal (channel->float-vector 0 10) (mix->float-vector mix1)))
 		    (snd-display #__line__ ";save-mix data: ~A ~A" (mix->float-vector mix1) (channel->float-vector 0 10 ind1)))
+
+		(define mix7 (integer->mix 71231))
+		(if (mix? mix7) (snd-display #__line__ ";mix? ~A~%" mix7))
+		(catch #t 
+		  (lambda () 
+		    (save-mix mix7 "test.snd")
+		    (snd-display #__line__ ";save-mix of a bad mix??"))
+		  (lambda args #f))
 		(close-sound ind1)
 		(if (file-exists? "test1.snd") (delete-file "test1.snd"))))
 	    (close-sound ind))

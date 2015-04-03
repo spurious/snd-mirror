@@ -2523,7 +2523,7 @@
 (hey "{~%")
 (hey " GdkEventKey *e;~%")
 (hey " e = Xen_to_C_GdkEventKey_(event);~%")
-(hey " return(C_int_to_Xen_integer((int)(e->keyval)));~%")
+(hey " if (e) return(C_int_to_Xen_integer((int)(e->keyval))); return(XEN_ZERO);~%")
 (hey "}~%~%")
 
 (hey "static Xen xen_list_to_c_array(Xen val, Xen type)~%")

@@ -34969,7 +34969,7 @@ static Xen xg_gtk_event_keyval(Xen event)
 {
  GdkEventKey *e;
  e = Xen_to_C_GdkEventKey_(event);
- return(C_int_to_Xen_integer((int)(e->keyval)));
+ if (e) return(C_int_to_Xen_integer((int)(e->keyval))); return(XEN_ZERO);
 }
 
 static Xen xen_list_to_c_array(Xen val, Xen type)
@@ -45204,7 +45204,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("21-Mar-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("02-Apr-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND
