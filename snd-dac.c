@@ -611,6 +611,16 @@ void cleanup_dac(void)
 }
 
 
+static bool something_is_playing(void)
+{
+  int i;
+  if (play_list)
+    for (i = 0; i < dac_max_sounds; i++)
+      if (play_list[i]) return(true);
+  return(false);
+}
+
+
 static void reflect_play_stop(snd_info *sp) 
 {
 #if (!USE_NO_GUI)
@@ -620,7 +630,8 @@ static void reflect_play_stop(snd_info *sp)
 #if (!USE_NO_GUI)
   view_files_unplay();
 #endif
-  ss->tracking = false;
+  if (!something_is_playing())
+    ss->tracking = false;
 }
 
 
@@ -899,16 +910,6 @@ void stop_playing_region(int n, play_stop_t reason)
 	    stop_playing(dp, WITHOUT_HOOK, reason);
 	  }
     }
-}
-
-
-static bool something_is_playing(void)
-{
-  int i;
-  if (play_list)
-    for (i = 0; i < dac_max_sounds; i++)
-      if (play_list[i]) return(true);
-  return(false);
 }
 
 

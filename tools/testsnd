@@ -25,7 +25,7 @@ echo ' '
 echo ' '
 
 gcc s7.c -o repl -DWITH_MAIN -DUSE_SND=0 -I. -O2 -g -Wl,-export-dynamic -ldl -lm 
-./repl tools/t456.scm
+./repl tools/tauto.scm
 
 echo ' '
 echo ' '
