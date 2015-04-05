@@ -20268,6 +20268,8 @@ EDITS: 2
       ;; someday this should be expanded
       (if (pair? (sounds))
 	  (for-each close-sound (sounds)))
+
+      (catch #t (lambda () (mus-file-mix-with-envs rd 0 1000 (float-vector))) (lambda args 'error))
       
       (with-sound ("flat.snd") 
 	(do ((i 0 (+ i 1)))

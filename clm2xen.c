@@ -9338,6 +9338,10 @@ output, dur is the number of samples to write. mx is a matrix, revmx is either #
   Xen ve, arg, file, beg, dur, mx, revmx, envs, srcs, srcenv, outstream, revstream;
   mus_float_t *mix = NULL, *rev_mix = NULL;
 
+  i = Xen_list_length(args);
+  if ((i < 8) || (i > 10)) /* no wrong-number-of-args error in xen.h, so I'll use out-of-range */
+    Xen_out_of_range_error(S_mus_file_mix_with_envs, 0, args, "wrong number of args");
+    
   arg = args;
   file = Xen_car(arg);
   Xen_check_type(Xen_is_vector(file), file, 1, S_mus_file_mix_with_envs, "a vector of readin generators");
@@ -21698,7 +21702,7 @@ static void mus_xen_init(void)
   Xen_define_safe_procedure(S_make_asymmetric_fm,  g_make_asymmetric_fm_w,  0, 8, 0, H_make_asymmetric_fm);
 
   Xen_define_safe_procedure(S_mus_file_mix,         g_mus_file_mix_w,          0, 0, 1, H_mus_file_mix);
-  Xen_define_safe_procedure(S_mus_file_mix_with_envs, g_mus_file_mix_with_envs_w, 0, 0, 1, H_mus_file_mix_with_envs);
+  Xen_define_safe_procedure(S_mus_file_mix_with_envs, g_mus_file_mix_with_envs_w, 0, 0, 1, H_mus_file_mix_with_envs); /* actually 8 2 0 I think */
   Xen_define_safe_procedure(S_frample_to_frample,   g_frample_to_frample_w,    5, 0, 0, H_frample_to_frample);
 
 #if HAVE_SCHEME

@@ -4788,7 +4788,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   location = hash % SYMBOL_TABLE_SIZE;
 
   /* make-string for symbol name */
-  str = (s7_cell *)calloc(1, sizeof(s7_cell));
+  str = (s7_cell *)malloc(sizeof(s7_cell));  /* was calloc? */
   heap_location(str) = NOT_IN_HEAP;
   set_type(str, T_STRING | T_IMMUTABLE);
   string_length(str) = nlen;
@@ -4804,7 +4804,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   symbol_hash(x) = location;
 
   /* place new symbol in symbol-table, but using calloc so we can easily free it (remove it from the table) in GC sweep */
-  stc = (s7_cell *)calloc(1, sizeof(s7_cell));
+  stc = (s7_cell *)malloc(sizeof(s7_cell)); /* was calloc? */
   heap_location(stc) = NOT_IN_HEAP;
   car(stc) = x;
   set_type(stc, T_PAIR | T_IMMUTABLE);
@@ -21306,10 +21306,6 @@ static s7_pointer g_close_input_port(s7_scheme *sc, s7_pointer args)
 
 void s7_flush_output_port(s7_scheme *sc, s7_pointer p)
 {
-  /* what does it mean to "flush" a string port? Surely
-   *    (with-output-to-string (lambda () (display "123") (flush-output-port)))
-   * should return "123" not ""?
-   */
   if ((!is_output_port(p)) ||
       (!is_file_port(p)) ||
       (port_is_closed(p)) ||
@@ -21322,8 +21318,8 @@ void s7_flush_output_port(s7_scheme *sc, s7_pointer p)
 	{
 	  if (fwrite((void *)(port_data(p)), 1, port_position(p), port_file(p)) != port_position(p))
 	    s7_warn(sc, 64, "fwrite trouble in flush-output-port\n");
+	  port_position(p) = 0;
 	}
-      port_position(p) = 0;
       fflush(port_file(p));
     }
 }
@@ -21371,8 +21367,8 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
 	    {
 	      if (fwrite((void *)(port_data(p)), 1, port_position(p), port_file(p)) != port_position(p))
 		s7_warn(sc, 64, "fwrite trouble in close-output-port\n");
+	      port_position(p) = 0;
 	    }
-	  port_position(p) = 0;
 	  free(port_data(p));
 	  fflush(port_file(p));
 	  fclose(port_file(p));
@@ -22511,14 +22507,15 @@ static s7_pointer g_open_output_string(s7_scheme *sc, s7_pointer args)
 const char *s7_get_output_string(s7_scheme *sc, s7_pointer p)
 {
   return((const char *)port_data(p));
-  /* apparently in r7rs, this also clears the port string! */
 }
 
 
 static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
 {
-  #define H_get_output_string "(get-output-string port) returns the output accumulated in port"
-  s7_pointer p = car(args);
+  #define H_get_output_string "(get-output-string port clear-port) returns the output accumulated in port.  \
+If the optional 'clear-port' is #t, the current string is flushed."
+  s7_pointer p, result;
+  p = car(args);
 
   if ((!is_output_port(p)) ||
       (!is_string_port(p)))
@@ -22530,7 +22527,11 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
   if (port_is_closed(p))
     return(simple_wrong_type_argument_with_type(sc, sc->GET_OUTPUT_STRING, p, make_string_wrapper(sc, "an active (open) string port")));
 
-  return(s7_make_string_with_length(sc, (const char *)port_data(p), port_position(p)));
+  result = s7_make_string_with_length(sc, (const char *)port_data(p), port_position(p));
+  if ((is_pair(cdr(args))) &&
+      (cadr(args) == sc->T))
+    port_position(p) = 0;
+  return(result);
 }
 
 
@@ -31985,6 +31986,8 @@ static s7_pointer g_multivector(s7_scheme *sc, s7_Int dims, s7_pointer data)
 
   if (dims <= 0)      /* #0d(...) #2147483649D() [if dims is int this is negative] */
     return(s7_out_of_range_error(sc, "#nD(...) dimensions", 1, make_integer(sc, dims), "must be 1 or more"));
+  if (dims > MAX_VECTOR_DIMENSIONS)
+    return(s7_out_of_range_error(sc, "#nD(...) dimensions", 1, make_integer(sc, dims), "must be < 512")); /* MAX_VECTOR_DIMENSIONS=512 currently */
 
   sc->w = sc->NIL;
   if (is_null(data))  /* dims are already 0 (calloc above) */
@@ -66799,7 +66802,7 @@ s7_scheme *s7_init(void)
   sc->OPEN_OUTPUT_FILE =      s7_define_safe_function(sc, "open-output-file",        g_open_output_file,       1, 1, false, H_open_output_file);
   sc->OPEN_INPUT_STRING =     s7_define_safe_function(sc, "open-input-string",       g_open_input_string,      1, 0, false, H_open_input_string);
                               s7_define_safe_function(sc, "open-output-string",      g_open_output_string,     0, 0, false, H_open_output_string);
-  sc->GET_OUTPUT_STRING =     s7_define_safe_function(sc, "get-output-string",       g_get_output_string,      1, 0, false, H_get_output_string);
+  sc->GET_OUTPUT_STRING =     s7_define_safe_function(sc, "get-output-string",       g_get_output_string,      1, 1, false, H_get_output_string);
 
   sc->NEWLINE =               s7_define_safe_function(sc, "newline",                 g_newline,                0, 1, false, H_newline);
   sc->WRITE =                 s7_define_safe_function(sc, "write",                   g_write,                  1, 1, false, H_write);
@@ -67536,26 +67539,25 @@ int main(int argc, char **argv)
 
 /* ------------------------------------------------------------------
  *
- *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5
- * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342
- * teq            |      |      | 6612                     3887
- * tmap           |      |      | 11.0           5031 4769 4685
- * tcopy          |      |      |                          4970
- * lg             |      |      | 6547 6497 6494 6235 6229 6239
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104
- * titer          |      |      |                           8.0
- * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8
- * thash          |      |      |                          19.4
- * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8
- * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9
+ *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5 15.6
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1127
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1144
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3344
+ * teq            |      |      | 6612                     3887 3781
+ * tmap           |      |      | 11.0           5031 4769 4685 4685
+ * tcopy          |      |      |                          4970 4970
+ * lg             |      |      | 6547 6497 6494 6235 6229 6239 6239
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 7111
+ * titer          |      |      |                           8.0  7.9
+ * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
+ * thash          |      |      |                          19.4 19.3
+ * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8
+ * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1
  *
  * ------------------------------------------------------------------
  *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
- *   perhaps an optional trailing arg = cyclic|shared-sequences + numbers? (useful in object->string too)
  * cyclic-seq in rest of full-*
  *
  * need to check new openGL for API changes (GL_VERSION?)

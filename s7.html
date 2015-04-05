@@ -4217,7 +4217,7 @@ are:
 (call-with-output-string proc)        ; open a string port, apply proc to it, return string
 (call-with-input-string string proc)  ; open string as current-input-port, apply proc to it
 (open-output-string)                  ; open a string output port
-(get-output-string port)              ; return output accumulated in the string output port
+(get-output-string port clear)        ; return output accumulated in the string output port
 (open-input-string string)            ; open a string input port reading string
 </pre>
 
@@ -4231,7 +4231,8 @@ are:
 "this is a test 3"
 </pre>
 
-<p>Other functions:
+<p>In get-output-string, if the optional 'clear' argument is #t, the port is cleared (the default in r7rs I think).
+Other functions:
 </p>
 
 <ul>
