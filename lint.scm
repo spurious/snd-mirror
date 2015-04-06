@@ -538,7 +538,7 @@
 			  'gc boolean?
 			  'gcd (list real? real?)
 			  'gensym string?
-			  'get-output-string output-port?
+			  'get-output-string (list output-port? boolean?)
 			  'hash-table-entries hash-table?
 			  'hash-table-ref (list hash-table?)
 			  'hash-table-set! (list hash-table?)

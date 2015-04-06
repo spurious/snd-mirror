@@ -142,7 +142,7 @@ define s7cell
          printf "string:         "
       end
       printf "length: %d, hash: %d, needs_free: %d, tag: %d, initial_slot: %p", \
-         $cell.object.string.length, $cell.object.string.hash, $cell.object.string.str_ext.needs_free, $cell.object.string.tag2, $cell.object.string.initial_slot
+         $cell.object.string.length, $cell.object.string.hash, $cell.object.string.str_ext.needs_free, $cell.object.string.shash, $cell.object.string.initial_slot
       if ($type == T_STRING)
          printf "svalue: %s, documentation: %s", $cell.object.string.svalue, $cell.object.string.doc.documentation
       end

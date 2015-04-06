@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.22"
-#define S7_DATE "30-Mar-15"
+#define S7_VERSION "3.23"
+#define S7_DATE "6-Apr-15"
 
 
 typedef long long int s7_Int;
@@ -319,10 +319,6 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj);             
 s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect);
 s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect);                         /* (vector->list vec) */
 
-#if (!DISABLE_DEPRECATED)
-s7_Int s7_vector_print_length(s7_scheme *sc);                                         /* value of *vector-print-length* */
-s7_Int s7_set_vector_print_length(s7_scheme *sc, s7_Int new_len);
-#endif
 s7_Int s7_print_length(s7_scheme *sc);                                                /* value of (*s7* 'print-length) */
 s7_Int s7_set_print_length(s7_scheme *sc, s7_Int new_len);
 
@@ -760,7 +756,6 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 #define s7_UNSPECIFIED(Sc) s7_unspecified(Sc)
 #define s7_is_procedure_with_setter s7_is_dilambda
 #define s7_make_procedure_with_setter s7_dilambda
-s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);
 #endif
 
 

@@ -1342,7 +1342,7 @@ static void init_types(void)
 #define T_SHARED                      (1 << (TYPE_BITS + 11))
 #define is_shared(p)                  ((typeflag(p) & T_SHARED) != 0)
 #define set_shared(p)                 typeflag(p) |= T_SHARED
-#define clear_shared(p)               typeflag(p) &= (~T_SHARED)
+/* #define clear_shared(p)               typeflag(p) &= (~T_SHARED) */
 #define clear_collected_and_shared(p) typeflag(p) &= (~(T_COLLECTED | T_SHARED))
 
 #define T_OVERLAY                     (1 << (TYPE_BITS + 12))
@@ -30506,16 +30506,7 @@ s7_Int s7_vector_length(s7_pointer vec)
   return(vector_length(vec));
 }
 
-#if (!DISABLE_DEPRECATED)
-s7_Int s7_vector_print_length(s7_scheme *sc) {return(sc->print_length);}
-s7_Int s7_set_vector_print_length(s7_scheme *sc, s7_Int new_len)
-{
-  s7_Int old_len;
-  old_len = sc->print_length;
-  sc->print_length = new_len;
- return(old_len);
-}
-#endif
+
 s7_Int s7_print_length(s7_scheme *sc) {return(sc->print_length);}
 s7_Int s7_set_print_length(s7_scheme *sc, s7_Int new_len)
 {
@@ -32861,7 +32852,7 @@ static unsigned int (*hashers[NUM_TYPES])(s7_scheme *sc, s7_pointer key);
 static unsigned int hasher_nil(s7_scheme *sc, s7_pointer key)     {return(type(key));}
 static unsigned int hasher_int(s7_scheme *sc, s7_pointer key)     {return((unsigned int)(s7_Int_abs(integer(key))));}
 static unsigned int hasher_char(s7_scheme *sc, s7_pointer key)    {return(character(key));}
-static unsigned int hasher_ratio(s7_scheme *sc, s7_pointer key)   {return((unsigned int)denominator(key));} /* overflow possible */
+static unsigned int hasher_ratio(s7_scheme *sc, s7_pointer key)   {return((unsigned int)denominator(key));} /* overflow possible as elsewhere */
 static unsigned int hasher_complex(s7_scheme *sc, s7_pointer key) {return(hash_float_location(real_part(key)));}
 static unsigned int hasher_symbol(s7_scheme *sc, s7_pointer key)  {return(symbol_raw_hash(key));}
 static unsigned int hasher_syntax(s7_scheme *sc, s7_pointer key)  {return(symbol_raw_hash(syntax_symbol(key)));}
@@ -33011,7 +33002,8 @@ static hash_entry_t *hash_int(s7_scheme *sc, s7_pointer table, s7_pointer key)
       keyval = integer(key);
       if (keyval < 0)
 	loc = (unsigned int)((-keyval) & hash_len);
-      else loc = (unsigned int)(keyval & hash_len);
+      else loc = (unsigned int)(keyval & hash_len); 
+      /* I think this assumes hasher_int is using s7_Int_abs (and high order bits are ignored) */
 
       for (x = hash_table_element(table, loc); x; x = x->next)
 	if (integer(x->key) == keyval)
@@ -33036,7 +33028,7 @@ static hash_entry_t *hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key
 	  string_hash(key) = hash;
 	}
       for (x = hash_table_element(table, hash & hash_len); x; x = x->next)
-	if ((hash == string_hash(x->key)) &&
+	if (/* (hash == string_hash(x->key)) && */ /* this seems to slow us down? */
 	    (strings_are_equal(string_value(x->key), string_value(key))))
 	  return(x);
     }
@@ -34157,28 +34149,6 @@ s7_pointer s7_closure_args(s7_scheme *sc, s7_pointer p)
     return(closure_args(p));
   return(sc->NIL);
 }
-
-#if (!DISABLE_DEPRECATED)
-s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
-{
-  /* in this context, there's no way to distinguish between:
-   *    (procedure-source (let ((b 1)) (lambda (a) (+ a b))))
-   * and
-   *    (let ((b 1)) (procedure-source (lambda (a) (+ a b))))
-   * both become:
-   * ((a) (+ a b)) (((b . 1)) #(() () () () () ((make-filtered-comb . make-filtered-comb)) () () ...))
-   */
-
-  if (is_any_closure(p) || is_macro(p) || is_bacro(p))
-    {
-      return(cons(sc,
-		  append_in_place(sc, list_2(sc, (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, closure_args(p)),
-				  closure_body(p)),
-		  closure_let(p)));
-    }
-  return(sc->NIL);
-}
-#endif
 
 
 static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
@@ -35724,19 +35694,26 @@ static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_i
   return(true);
 }
 
+
+static bool slots_match(s7_scheme *sc, s7_pointer px, s7_pointer y, bool morally, shared_info *nci)
+{
+  s7_pointer ey, py;
+  for (ey = y; (is_let(ey)) && (ey != sc->rootlet); ey = outlet(ey))
+    for (py = let_slots(ey); is_slot(py); py = next_slot(py))
+      if (slot_symbol(px) == slot_symbol(py)) /* we know something will match */
+	return(s7_is_equal_1(sc, slot_value(px), slot_value(py), nci, morally));
+  return(false);
+}
+
 static bool environment_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
 {
-  /* x == y if all unshadowed vars match
-   *   envs can contain envs, even themselves
-   *   (equal? (inlet 'a (inlet 'b 1)) (inlet 'a (inlet 'b 1)))
-   *
-   * order does not matter, but shadowing does, and shadowed slots are ignored
-   *   it is possible to get shadowing within an environment:
-   *   (inlet 'a 1 'a 2) -> #<let 'a 2 'a 1>
+  /* x == y if all unshadowed vars match, leaving aside the rootlet, so that for any local variable,
+   *   we get the same value in either x or y.
    */
 
-  s7_pointer ex, ey;
+  s7_pointer ex, ey, px, py;
   shared_info *nci = ci;
+  int x_len, y_len;
 
   if (x == y)
     return(true);
@@ -35759,6 +35736,8 @@ static bool environment_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_
     }
   if (!is_let(y))
     return(false);
+  if ((x == sc->rootlet) || (y == sc->rootlet))
+    return(false);
 
   if (ci)
     {
@@ -35768,63 +35747,42 @@ static bool environment_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_
       if (i == 1) return(true);
     }
 
-  for (ex = x, ey = y; is_let(ex) && is_let(ey); ex = outlet(ex), ey = outlet(ey))
-    {
-      s7_pointer px, py;
+  clear_syms_in_list(sc);
+  for (x_len = 0, ex = x; (is_let(ex)) && (ex != sc->rootlet); ex = outlet(ex))
+    for (px = let_slots(ex); is_slot(px); px = next_slot(px))
+      if (symbol_tag(slot_symbol(px)) != sc->syms_tag)
+	{
+	  add_sym_to_list(sc, slot_symbol(px));
+	  x_len++;
+	}
 
-      if (ex == ey) break;
-      if ((ex == sc->rootlet) ||
-	  (ey == sc->rootlet))
+  for (ey = y; (is_let(ey)) && (ey != sc->rootlet); ey = outlet(ey))
+    for (py = let_slots(ey); is_slot(py); py = next_slot(py))
+      if (symbol_tag(slot_symbol(py)) != sc->syms_tag)       /* symbol in y, not in x */
 	return(false);
 
-      /* first check that we have the same symbols -- this requires two checks! */
-      clear_syms_in_list(sc);
-      for (px = let_slots(ex); is_slot(px); px = next_slot(px))
-	add_sym_to_list(sc, slot_symbol(px));
-      for (py = let_slots(ey); is_slot(py); py = next_slot(py))
-	if (symbol_tag(slot_symbol(py)) != sc->syms_tag)
-	  return(false);
-
-      for (py = let_slots(ey); is_slot(py); py = next_slot(py))
-	symbol_tag(slot_symbol(py)) = 0;
-      for (px = let_slots(ex); is_slot(px); px = next_slot(px))
-	if (symbol_tag(slot_symbol(px)) != 0)
-	  return(false);
-    }
+  for (y_len = 0, ey = y; (is_let(ey)) && (ey != sc->rootlet); ey = outlet(ey))
+    for (py = let_slots(ey); is_slot(py); py = next_slot(py))
+      if (symbol_tag(slot_symbol(py)) != 0)
+	{
+	  y_len ++;
+	  symbol_tag(slot_symbol(py)) = 0;
+	}
+  
+  if (x_len != y_len)                                        /* symbol in x, not in y */
+    return(false);
 
   if (!nci) nci = new_shared_info(sc);
-  for (ex = x, ey = y; is_let(ex) && is_let(ey); ex = outlet(ex), ey = outlet(ey))
+  for (ex = x; (is_let(ex)) && (ex != sc->rootlet); ex = outlet(ex))
     {
-      s7_pointer px, py;
-      if (ex == ey)
-	return(true);
-
       for (px = let_slots(ex); is_slot(px); px = next_slot(px))
-	{
-	  for (py = let_slots(ey); is_slot(py); py = next_slot(py))
-	    {
-	      if (slot_symbol(px) == slot_symbol(py)) /* we know something will match */
-		{
-		  if (!(s7_is_equal_1(sc, slot_value(px), slot_value(py), nci, morally)))
-		    {
-		      s7_pointer ppx;
-		      /* check for shadowing */
-		      for (ppx = let_slots(ex); is_slot(ppx); ppx = next_slot(ppx))
-			if (slot_symbol(ppx) == slot_symbol(px))
-			  {
-			    if (ppx == px)
-			      return(false);
-			    break;
-			  }
-		    }
-		  break; /* we found one, so ignore possible shadows */
-		}
-	    }
-	}
+	if (symbol_tag(slot_symbol(px)) == 0)                /* unshadowed */
+	  {
+	    symbol_tag(slot_symbol(px)) = sc->syms_tag;      /* values don't match */
+	    if (!slots_match(sc, px, y, morally, nci))
+	      return(false);
+	  }
     }
-  if ((is_let(ex)) ||
-      (is_let(ey)))
-    return(false);
   return(true);
 }
 
@@ -60164,7 +60122,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     AND_P:
     case OP_AND_P:
-      if (fcdr(sc->code))
+      if (fcdr(sc->code)) /* all fcdrs are set via all_x_eval which can return nil */
 	{
 	  sc->value = ((s7_function)fcdr(sc->code))(sc, car(sc->code));
 	  if (is_false(sc, sc->value))
@@ -67486,9 +67444,6 @@ s7_scheme *s7_init(void)
                         (define make-procedure-with-setter   dilambda) \n\
                         (define procedure-with-setter?       dilambda?)\n\
                         (define (procedure-arity obj) (let ((c (arity obj))) (list (car c) (- (cdr c) (car c)) (> (cdr c) 100000))))");
-
-  s7_eval_c_string(sc, "(define make-hash-table-iterator make-iterator)\n\
-                        (define (hash-table-iterator? obj) (and (iterator? obj) (hash-table? (iterator-sequence obj))))");
 #endif
 
   /* fprintf(stderr, "size: %d, max op: %d, opt: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED, OPT_MAX_DEFINED); */
@@ -67543,14 +67498,14 @@ int main(int argc, char **argv)
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1127
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1144
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3344
- * teq            |      |      | 6612                     3887 3781
+ * teq            |      |      | 6612                     3887 3238
  * tmap           |      |      | 11.0           5031 4769 4685 4685
- * tcopy          |      |      |                          4970 4970
+ * tcopy          |      |      |                          4970 4959
  * lg             |      |      | 6547 6497 6494 6235 6229 6239 6239
  * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 7111
  * titer          |      |      |                           8.0  7.9
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
- * thash          |      |      |                          19.4 19.3
+ * thash          |      |      |                          19.4 18.1
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1
  *
@@ -67588,5 +67543,6 @@ int main(int argc, char **argv)
  *
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
+ * can reuse of string port via get-output-string drop the final 0?
  */
 

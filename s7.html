@@ -2441,7 +2441,9 @@ Environments are first class (and applicable) objects in s7.
 </blockquote>
 <br>
 
-<p>As the names suggest, in s7 an environment is viewed as a disembodied let.
+<p>As the names suggest, in s7 an environment is viewed as a disembodied let.  Environments are equal if they
+contain the same symbols with the same values leaving aside shadowing, and taking into account the environment
+chain up to the rootlet.  That is, two environments are equal if any local variable of either has the same value in both.
 </p>
 
 <p>with-let evaluates its body in the given environment, so
