@@ -4790,6 +4790,9 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   /* make-string for symbol name */
   str = (s7_cell *)malloc(sizeof(s7_cell));  /* was calloc? */
   heap_location(str) = NOT_IN_HEAP;
+#if DEBUGGING
+  typeflag(str) = 0;
+#endif
   set_type(str, T_STRING | T_IMMUTABLE);
   string_length(str) = nlen;
   string_value(str) = name;
@@ -4805,6 +4808,9 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
 
   /* place new symbol in symbol-table, but using calloc so we can easily free it (remove it from the table) in GC sweep */
   stc = (s7_cell *)malloc(sizeof(s7_cell)); /* was calloc? */
+#if DEBUGGING
+  typeflag(stc) = 0;
+#endif
   heap_location(stc) = NOT_IN_HEAP;
   car(stc) = x;
   set_type(stc, T_PAIR | T_IMMUTABLE);
@@ -25332,11 +25338,11 @@ static void write_readably_error(s7_scheme *sc, const char *type)
 }
 
 
-static void e_to_p(s7_scheme *sc, s7_pointer x, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
+static void let_to_port_1(s7_scheme *sc, s7_pointer x, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
   if (is_slot(x))
     {
-      e_to_p(sc, next_slot(x), port, use_write, to_file, ci);
+      let_to_port_1(sc, next_slot(x), port, use_write, to_file, ci);
       port_write_character(port)(sc, ' ', port);
       object_to_port_with_circle_check(sc, x, port, use_write, to_file, ci);
     }
@@ -25408,7 +25414,7 @@ static void let_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_writ
       else
 	{
 	  port_write_string(port)(sc, "#<let", 5, port);
-	  e_to_p(sc, let_slots(obj), port, use_write, to_file, ci);
+	  let_to_port_1(sc, let_slots(obj), port, use_write, to_file, ci);
 	  port_write_character(port)(sc, '>', port);
 	}
     }
@@ -32413,13 +32419,13 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
     }
 
   lessp = cadr(args);
-      if ((type(lessp) < T_C_FUNCTION) && ((!is_any_closure(lessp)) && (!is_any_macro(lessp))))
-	{
-	  check_method(sc, lessp, sc->SORT, args);
-	  return(simple_wrong_type_argument_with_type(sc, sc->SORT, lessp, A_PROCEDURE));
-	}
-      if (!s7_is_aritable(sc, lessp, 2))
-	return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, AN_EQ_FUNC));
+  if ((type(lessp) < T_C_FUNCTION) && ((!is_any_closure(lessp)) && (!is_any_macro(lessp))))
+    {
+      check_method(sc, lessp, sc->SORT, args);
+      return(simple_wrong_type_argument_with_type(sc, sc->SORT, lessp, A_PROCEDURE));
+    }
+  if (!s7_is_aritable(sc, lessp, 2))
+    return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, AN_EQ_FUNC));
 
   if ((is_continuation(lessp)) || is_goto(lessp))
     return(wrong_type_argument_with_type(sc, sc->SORT, small_int(2), lessp, make_string_wrapper(sc, "a normal procedure (not a continuation)")));
@@ -40659,6 +40665,10 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 
       args = sc->args;
       code = sc->code;
+#if DEBUGGING
+      if (!s7_is_valid(sc, sc->value))
+	sc->value = sc->F;
+#endif
       value = sc->value;
       cur_code = sc->cur_code;
       cur_env = sc->envir;
@@ -43665,6 +43675,16 @@ static s7_pointer all_x_c_opsq(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T1_1));
 }
 
+static s7_pointer all_x_c_not_opsq(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = cadr(arg);
+  car(sc->T1_1) = find_symbol_checked(sc, cadr(largs));
+  if (c_call(largs)(sc, sc->T1_1) == sc->F)
+    return(sc->T);
+  return(sc->F);
+}
+
 static s7_pointer all_x_c_opssq(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer largs;
@@ -43906,6 +43926,7 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
     {
       if (is_optimized(arg))
 	{
+	  s7_function f;
 	  if (optimize_data(arg) == HOP_SAFE_C_S)
 	    {
 	      if (car(arg) == sc->CDR) return(all_x_cdr_s);
@@ -43913,7 +43934,11 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg)
 	      if (car(arg) == sc->IS_NULL) return(all_x_null_s);
 	      return(all_x_c_s);
 	    }
-	  return(all_x_function[optimize_data(arg)]);
+	  f = all_x_function[optimize_data(arg)];
+	  if ((f == all_x_c_opsq) &&
+	      (car(arg) == sc->NOT))
+	    return(all_x_c_not_opsq);
+	  return(f);
 	}
       if (car(arg) == sc->QUOTE)
 	return(all_x_q);
@@ -48429,6 +48454,7 @@ static bool is_dox_safe(int op)
 	 (op == HOP_SAFE_C_SS) ||
 	 (op == HOP_SAFE_C_SSC) ||
 	 (op == HOP_SAFE_C_QS) ||
+	 (op == HOP_SAFE_C_opSq) ||
 	 (op == HOP_SAFE_C_S_opCq));
 }
 
@@ -48523,6 +48549,20 @@ static s7_pointer step_dox_read_char_s(s7_scheme *sc, s7_pointer code, s7_pointe
 
   car(sc->T1_1) = port;
   return(g_read_char_1(sc, sc->T1_1));
+}
+
+static s7_pointer step_dox_c_opsq(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+{
+  car(sc->T1_1) = find_symbol_checked(sc, cadr(cadr(code)));
+  car(sc->T1_1) = c_call(cadr(code))(sc, sc->T1_1);
+  return(c_call(code)(sc, sc->T1_1));
+}
+
+static s7_pointer step_dox_c_opsq_indirect(s7_scheme *sc, s7_pointer code, s7_pointer slot)
+{
+  car(sc->T1_1) = slot_value(slot_pending_value(slot));
+  car(sc->T1_1) = c_call(cadr(code))(sc, sc->T1_1);
+  return(c_call(code)(sc, sc->T1_1));
 }
 
 static s7_pointer step_dox_c_sc(s7_scheme *sc, s7_pointer code, s7_pointer slot)
@@ -48868,6 +48908,12 @@ static dox_function step_dox_eval(s7_scheme *sc, s7_pointer code, s7_pointer var
 	}
       return(step_dox_c_ss);
 
+    case HOP_SAFE_C_opSq:
+      if ((!var) ||
+	  (var == cadr(cadr(code))))
+	return(step_dox_c_opsq);
+      return(step_dox_c_opsq_indirect);
+
     case HOP_SAFE_C_SC:      return((var == cadr(code)) ? step_dox_c_sc_direct : step_dox_c_sc);
     case HOP_SAFE_C_CS:      return((var == caddr(code)) ? step_dox_c_cs_direct : step_dox_c_cs);
     case HOP_SAFE_C_QS:      return((var == caddr(code)) ? step_dox_c_qs_direct : step_dox_c_qs);
@@ -49158,7 +49204,7 @@ static bool tree_match(s7_scheme *sc, s7_pointer tree)
 }
 
 
-enum {DOX_STEP_DEFAULT, DOX_STEP_SS, DOX_STEP_S, DOX_STEP_ADD, DOX_STEP_SUBTRACT};
+enum {DOX_STEP_DEFAULT, DOX_STEP_SS, DOX_STEP_S, DOX_STEP_opSq, DOX_STEP_ADD, DOX_STEP_SUBTRACT};
 
 static s7_pointer check_do(s7_scheme *sc)
 {
@@ -49552,7 +49598,12 @@ static s7_pointer check_do(s7_scheme *sc)
 				  (f == step_dox_c_subtract_i) ||
 				  (f == step_dox_c_subtract_f))
 				pair_syntax_op(cddr(var)) = DOX_STEP_SUBTRACT;
-			      else pair_syntax_op(cddr(var)) = DOX_STEP_DEFAULT;
+			      else 
+				{
+				  if (f == step_dox_c_opsq_indirect)
+				    pair_syntax_op(cddr(var)) = DOX_STEP_opSq;
+				  else pair_syntax_op(cddr(var)) = DOX_STEP_DEFAULT;
+				}
 			    }
 			}
 #endif
@@ -51658,6 +51709,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      case DOX_STEP_S:
 		slot_pending_value(slot) = find_symbol(sc, cadar(slot_expression(slot)));
+		break;
+
+	      case DOX_STEP_opSq:
+		slot_pending_value(slot) = find_symbol(sc, cadr(cadar(slot_expression(slot))));
 		break;
 
 	      case DOX_STEP_ADD:
@@ -67135,6 +67190,7 @@ s7_scheme *s7_init(void)
   s7_autoload(sc, make_symbol(sc, "stuff.scm"),    s7_make_permanent_string("stuff.scm"));
   s7_autoload(sc, make_symbol(sc, "mockery.scm"),  s7_make_permanent_string("mockery.scm"));
   s7_autoload(sc, make_symbol(sc, "write.scm"),    s7_make_permanent_string("write.scm"));
+  s7_autoload(sc, make_symbol(sc, "repl.scm"),     s7_make_permanent_string("repl.scm"));
   s7_autoload(sc, make_symbol(sc, "r7rs.scm"),     s7_make_permanent_string("r7rs.scm"));
 
   s7_autoload(sc, make_symbol(sc, "libc.scm"),     s7_make_permanent_string("libc.scm"));
@@ -67503,7 +67559,7 @@ int main(int argc, char **argv)
  * tcopy          |      |      |                          4970 4959
  * lg             |      |      | 6547 6497 6494 6235 6229 6239 6239
  * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 7111
- * titer          |      |      |                           8.0  7.9
+ * titer          |      |      |                          7976 7613
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
  * thash          |      |      |                          19.4 18.1
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8
