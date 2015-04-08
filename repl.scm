@@ -1128,16 +1128,16 @@
 to work in a particular environment:
 (set! (*repl* 'top-level-let) (sublet (rootlet))) ; or any other like *libc*
 now (define g 43) puts g in the new top-level-let, so ((rootlet) 'g) -> #<undefined>, and ((*repl* 'top-level-let) 'g) -> 43 (= g in repl of course)
-to start with a fresh top-level, just set top-level-let to (sublet (rootlet)) again
+to start with a fresh top-level, just set top-level-let to (sublet (rootlet)) again.
 
-to add/change keymap entry:
+to add/change keymap entry (using sublet here to protect against inadvertent changes to the repl).
 (set! ((*repl* 'keymap) (integer->char 17)) ; C-q to quit and return to caller
       (lambda (c)
 	(set! ((*repl* 'repl-let) 'all-done) #t)))
 
 (set! ((*repl* 'keymap) (integer->char 12)) ; C-l will expand to "(lambda " at the cursor
       (lambda (c)
-	(with-let (*repl* 'repl-let)
+	(with-let (sublet (*repl* 'repl-let))
 	   (if (zero? cursor-position)
 	       (set! current-line (string-append "(lambda " current-line))
 	       (if (>= cursor-position (length current-line))
@@ -1151,14 +1151,14 @@ change the prompt:
 (set! ((*repl* 'prompt)) "scheme> ")
 
 red lambda prompt: 
-(with-let (*repl* 'repl-let)
+(with-let (sublet (*repl* 'repl-let))
   (set! prompt-string (bold (red (string #\xce #\xbb #\> #\space))))
   (set! prompt-length 3)) ; until we get unicode length calc
 
 to post a help string (kinda tedious, but the helper list is aimed more at posting variable values):
 (set! (*repl* 'helpers)
       (list (lambda (c)
-	      (let ((sym (with-let (*repl* 'repl-let)
+	      (let ((sym (with-let (sublet (*repl* 'repl-let))
 			   (let ((len (length current-line)))
 			     (let loop ((i (min (- len 1) cursor-position)))
 			       (and (not (negative? i))
@@ -1180,7 +1180,7 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 ;; function keys:
 (set! ((*repl* 'keymap) (string #\escape #\[))
       (lambda (c)
-	(with-let (*repl* 'repl-let)
+	(with-let (sublet (*repl* 'repl-let))
 	  (let ((next (next-char)))
 	    (case next
 	      ((#\A) ((keymap-functions C-p) C-p))
@@ -1195,7 +1195,7 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 ;; this actually works but doesn't echo the filename correctly and the cursor is off during the filename processing
 (set! ((*repl* 'keymap) (integer->char 24)) ; C-x
       (lambda (c)
-	(with-let (*repl* 'repl-let)
+	(with-let (sublet (*repl* 'repl-let))
 	  (let ((next (next-char)))
 	    (when (char=? next (integer->char 6)) ; C-f
 	      (format *stderr* "~%load: ")
@@ -1232,5 +1232,7 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 ;;   could top-level-let save each definition as text+value?
 ;;   look at ** value? or a let-set-watcher like symbol-access?
 ;;   maybe (save|restore-top-level): run through let, for each write def?
+;;   restore-history seems pointless if that's all it does -- save|restore-repl?
+;; a way to show the available completions when more than one
 
 *repl*

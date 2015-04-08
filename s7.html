@@ -4703,7 +4703,8 @@ become constants:
 </pre>
 
 <p>So, obviously, choose unique names for your constants, or don't use define-constant.
-A function can also be a constant. 
+A function can also be a constant.  In some cases, the optimizer can take advantage
+of this information to speed up function calls.
 </p>
 
 <p>Constants are very similar to things such as keywords (no set, always return itself as its value),
@@ -9069,12 +9070,14 @@ you can also:
 </p>
 
 <pre class="indented">
-(with-let (*repl* 'repl-let)  ; red lambda prompt
+(with-let (sublet (*repl* 'repl-let))  ; red lambda prompt
   (set! prompt-string (bold (red (string #\xce #\xbb #\&gt; #\space))))
   (set! prompt-length 3))
 </pre>
 
-<p>
+<p>The sublet wrapped around repl-let is not needed here, but in more complex
+cases it protects against inadvertent changes to the repl (our local definitions
+go to the inner let, not repl-let).
 To add help as in
 the Snd repl:
 </p>
@@ -9082,7 +9085,7 @@ the Snd repl:
 <pre class="indented">
 (set! (*repl* 'helpers)
       (list (lambda (c)
-	      (let ((sym (with-let (*repl* 'repl-let) ; in repl-let we can access current repl vars
+	      (let ((sym (sublet (with-let (*repl* 'repl-let)) ; in repl-let we can access current repl vars
 			   (let ((len (length current-line)))
 			     (let loop ((i (min (- len 1) cursor-position)))
 			       (and (not (negative? i))
@@ -9109,7 +9112,7 @@ the Snd repl:
 
 (set! ((*repl* 'keymap) (integer-&gt;char 12)) ; C-l will expand to "(lambda "
       (lambda (c)
-	(with-let (*repl* 'repl-let)
+	(with-let (sublet (*repl* 'repl-let))
 	   (if (zero? cursor-position)
 	       (set! current-line (string-append "(lambda " current-line))
 	       (if (&gt;= cursor-position (length current-line))

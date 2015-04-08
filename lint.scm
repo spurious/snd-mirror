@@ -32,28 +32,6 @@
 	    (error 'wrong-type-arg "let->list argument should be an environment: ~A" str)))
       ))
 
-(if (not (defined? 'environment?))
-    (begin
-      (define environment? let?)
-      (define global-environment rootlet)
-      (define-constant initial-environment unlet)
-      (define outer-environment outlet)
-      (define augment-environment sublet)
-      (define augment-environment! varlet)
-      (define current-environment curlet)
-      (define error-environment owlet)
-      (define procedure-environment funclet)
-      (define environment->list let->list)
-      (define open-environment openlet)
-      (define open-let? openlet?)
-      (define close-environment coverlet)
-      (define environment-ref let-ref)
-      (define environment-set! let-set!)
-      (define environment inlet)
-      (define environment* inlet)
-      (define make-procedure-with-setter dilambda)
-      (define procedure-with-setter? dilambda?)))
-
 (define *report-unused-parameters* #f)
 (define *report-unused-top-level-functions* #f)
 (define *report-multiply-defined-top-level-functions* #f) ; same name defined at top level in more than one file
@@ -70,6 +48,7 @@
 (format *stderr* "loading lint.scm~%")
 (set! reader-cond #f)
 (define-macro (reader-cond . clauses) `(values))          ; clobber reader-cond to avoid dumb unbound-variable errors
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -768,21 +747,25 @@
 	  (line-number -1))
 
 
-      ;; list versions
-      (define var-name car)
-      (define var-ref cadr)
-      (define var-set caddr)
-      (define var-func-info cadddr)
-      (set! (procedure-setter cadr) (lambda (v val) (list-set! v 1 val)))
-      (set! (procedure-setter caddr) (lambda (v val) (list-set! v 2 val)))
-      (set! (procedure-setter cadddr) (lambda (v val) (list-set! v 3 val)))
+      ;; list version
+      (define-constant var-name car)
+      (define-constant var-ref cadr)
+      (define-constant var-set caddr)
+      (define-constant var-func-info cadddr)
+      (define-constant (set-cadr! v val) (list-set! v 1 val))
+      (define-constant (set-caddr! v val) (list-set! v 2 val))
+      (define-constant (set-cadddr! v val) (list-set! v 3 val))
+      (set! (procedure-setter cadr) set-cadr!)
+      (set! (procedure-setter caddr) set-caddr!)
+      (set! (procedure-setter cadddr) set-cadddr!)
       (define var-type (dilambda (lambda (v) (list-ref v 4)) (lambda (v x) (list-set! v 4 x))))
       (define var-value (dilambda (lambda (v) (list-ref v 5)) (lambda (v x) (list-set! v 5 x))))
       (define* (make-var name ref set fnc typ val :allow-other-keys)
 	;(reflective-probe)
 	(list name ref set fnc typ val))
-      (define var? pair?)
-      (define var-member assq)
+      (define-constant var? pair?)
+      (define-constant var-member assq)
+
 #|      
       ;; vector version
       (define var-name (dilambda (lambda (v) (v 0)) (lambda (v x) (set! (v 0) x))))
@@ -810,6 +793,7 @@
       (define (mf a b) (eq? a (b 'name)))
       (define (var-member v q) (let ((lst (member v q mf))) (and lst (car lst))))
 |#
+
 
       (define (->type c)
 	(cond ((pair? c)

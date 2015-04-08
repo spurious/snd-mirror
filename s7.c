@@ -1749,6 +1749,7 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define int_vector_elements(p)        (p)->object.vector.elements.ints
 #define float_vector_element(p, i)    ((p)->object.vector.elements.floats[i])
 #define float_vector_elements(p)      (p)->object.vector.elements.floats
+#define is_normal_vector(p)           (type(p) == T_VECTOR)
 #define is_int_vector(p)              (type(p) == T_INT_VECTOR)
 #define is_float_vector(p)            (type(p) == T_FLOAT_VECTOR)
 
@@ -30296,7 +30297,7 @@ bool s7_is_vector(s7_pointer p)
 
 bool s7_is_sundry_vector(s7_pointer p)
 {
-  return(type(p) == T_VECTOR);
+  return(is_normal_vector(p));
 }
 
 
@@ -30672,7 +30673,7 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
   else
     {
       s7_Int i;
-      if (type(x) == T_VECTOR)
+      if (is_normal_vector(x))
 	{
 	  for (i = start; i < end; i++)
 	    vector_element(x, i) = fill;
@@ -31412,7 +31413,7 @@ static s7_pointer g_vector_ref_ic_2(s7_scheme *sc, s7_pointer args) {return(g_ve
 static s7_pointer vector_ref_ic_3;
 static s7_pointer g_vector_ref_ic_3(s7_scheme *sc, s7_pointer args) {return(g_vector_ref_ic_n(sc, args, 3));}
 
-static s7_pointer vector_ref_gs;
+static s7_pointer vector_ref_gs, direct_vector_ref_gs;
 static s7_pointer g_vector_ref_gs(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, vec;
@@ -31441,6 +31442,21 @@ static s7_pointer g_vector_ref_gs(s7_scheme *sc, s7_pointer args)
     return(make_shared_vector(sc, vec, 1, index));
 
   return(vector_getter(vec)(sc, vec, index));
+}
+
+static s7_pointer g_direct_vector_ref_gs(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer x, vec;
+  s7_Int index;
+  vec = ecdr(args);
+  x = find_symbol_checked(sc, cadr(args));
+  if (!s7_is_integer(x))
+    return(g_vector_ref_gs(sc, args));
+  index = s7_integer(x);
+  if ((index < 0) ||
+      (index >= vector_length(vec)))
+    return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+  return(vector_element(vec, index));
 }
 
 static s7_pointer vector_ref_add1;
@@ -41541,9 +41557,10 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 {
   if (args == 2)
     {
-      s7_pointer arg2;
+      s7_pointer arg1, arg2;
+      arg1 = cadr(expr);
       arg2 = caddr(expr);
-      if (is_symbol(cadr(expr)))
+      if (is_symbol(arg1))
 	{
 	  if ((s7_is_integer(arg2)) &&
 	      (s7_integer(arg2) >= 0))
@@ -41559,11 +41576,22 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 		}
 	    }
 
-	  if (is_global(cadr(expr)))
+	  if (is_global(arg1))
 	    {
 	      if (is_symbol(arg2))
 		{
 		  set_optimize_data(expr, HOP_SAFE_C_C);
+		  if (is_immutable(arg1))
+		    {
+		      s7_pointer vect;
+		      vect = slot_value(global_slot(arg1));
+		      if ((is_normal_vector(vect)) &&
+			  (vector_rank(vect) == 1))
+			{
+			  set_ecdr(cdr(expr), vect);
+			  return(direct_vector_ref_gs);
+			}
+		    }
 		  return(vector_ref_gs);
 		}
 	    }
@@ -43297,6 +43325,7 @@ static void init_choosers(s7_scheme *sc)
   vector_ref_add1 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_add1, 2, 0, false, "vector-ref opt");
   vector_ref_2 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_2, 2, 0, false, "vector-ref opt");
   vector_ref_gs = make_function_with_class(sc, f, "vector-ref", g_vector_ref_gs, 2, 0, false, "vector-ref opt");
+  direct_vector_ref_gs = make_function_with_class(sc, f, "vector-ref", g_direct_vector_ref_gs, 2, 0, false, "vector-ref opt");
 
   /* vector-set! */
   f = set_function_chooser(sc, sc->VECTOR_SET, vector_set_chooser);
@@ -43966,12 +43995,14 @@ static s7_function cond_all_x_eval(s7_scheme *sc, s7_pointer arg)
 
 static bool optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop)
 {
+  if (is_immutable(car(expr)))
+    hop = 1;
   if (is_closure(func))
     {
       if (is_null(closure_args(func)))                 /* no rest arg funny business */
 	{
 	  set_unsafely_optimized(expr);
-	  set_optimize_data(expr, ((is_safe_closure(func)) ? OP_SAFE_THUNK : OP_THUNK));
+	  set_optimize_data(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_THUNK : OP_THUNK));
 	  set_ecdr(expr, func);
 	}
       return(false);                                    /* false because currently the C_PP stuff assumes safe procedure calls */
@@ -44000,7 +44031,7 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int 
 	  (has_simple_args(closure_body(func))))
 	{
 	  set_unsafely_optimized(expr);
-	  set_optimize_data(expr, ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR : OP_CLOSURE_STAR));
+	  set_optimize_data(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR : OP_CLOSURE_STAR));
 	  set_ecdr(expr, func);
 	}
     }
@@ -44271,7 +44302,11 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 {
   s7_pointer arg1;
   /* very often, expr is already optimized */
+
   arg1 = cadr(expr);
+  if ((pairs == 0) &&
+      (is_immutable(car(expr))))
+    hop = 1;
 
   if (((is_c_function(func)) &&
        (c_function_required_args(func) <= 1) &&
@@ -44596,8 +44631,12 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 static bool optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop, int pairs, int symbols, int quotes, int bad_pairs)
 {
   s7_pointer arg1, arg2;
+
   arg1 = cadr(expr);
   arg2 = caddr(expr);
+  if ((pairs == 0) &&
+      (is_immutable(car(expr))))
+    hop = 1;
 
   if ((is_c_function(func) &&
        (c_function_required_args(func) <= 2) &&
@@ -45222,6 +45261,9 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
   arg1 = cadr(expr);
   arg2 = caddr(expr);
   arg3 = cadddr(expr);
+  if ((pairs == 0) &&
+      (is_immutable(car(expr))))
+    hop = 1;
 
   if ((is_c_function(func) &&
        (c_function_required_args(func) <= 3) &&
@@ -45558,6 +45600,9 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
   bool func_is_closure;
 
   if (bad_pairs > quotes) return(false);
+  if ((pairs == 0) &&
+      (is_immutable(car(expr))))
+    hop = 1;
 
   if ((is_c_function(func)) &&
       (c_function_required_args(func) <= (unsigned int)args) &&
@@ -49653,7 +49698,7 @@ static bool closure_is_ok(s7_scheme *sc, s7_pointer code, unsigned short type, i
 #endif
 
 #define closure_star_is_ok(Sc, Code, Type, Args) \
-  ({ s7_pointer _val_; _val_ = find_symbol_unchecked(Sc, car(Code));			\
+  ({ s7_pointer _val_; _val_ = find_symbol_unchecked(Sc, car(Code)); \
      ((_val_ == ecdr(Code)) || \
       ((_val_) && (typesflag(_val_) == (unsigned short)Type) &&		\
        ((closure_arity(_val_) >= Args) || (closure_star_arity_to_int(Sc, _val_) >= Args)) && \
@@ -55393,6 +55438,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_UNKNOWN:
 	      {
 		s7_pointer f;
+		int hop;
+		hop = (is_immutable(car(code))) ? 1 : 0;
 		f = find_symbol_checked(sc, car(code));
 		switch (type(f))
 		  {
@@ -55407,7 +55454,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  case T_CLOSURE:
 		    if (has_methods(f)) break;
 		    if (is_null(closure_args(f)))
-		      set_opt_and_goto_opt_eval(code, f, (is_safe_closure(f)) ? OP_SAFE_THUNK : OP_THUNK);
+		      set_opt_and_goto_opt_eval(code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_THUNK : OP_THUNK));
 		    /* we can't ignore the recheck here (i.e. set the hop bit) because the closure, even if a global can be set later:
 		     *   (begin (define *x* #f) (define (test) (display (*x*))) (define (setx n) (set! *x* (lambda () n))) (setx 1) (test) (setx 2) (test))
 		     * this is a case where the name matters (we need a pristine global), so it's easily missed.
@@ -55417,7 +55464,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  case T_CLOSURE_STAR:
 		    if (has_methods(f)) break;
 		    if (has_simple_args(closure_body(f)))
-		      set_opt_and_goto_opt_eval(code, f, ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR : OP_CLOSURE_STAR));
+		      set_opt_and_goto_opt_eval(code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR : OP_CLOSURE_STAR));
 		    break;
 
 		  default:
@@ -55433,6 +55480,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer f;
 		bool sym_case;
+		int hop;
+		hop = (is_immutable(car(code))) ? 1 : 0;
+
 		f = find_symbol_checked(sc, car(code));
 		sym_case = is_symbol(cadr(code));
 
@@ -55467,10 +55517,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if (sym_case)
 			  {
 			    if (is_safe_closure(f))
-			      set_optimize_data(code, (is_global(car(code))) ? OP_SAFE_GLOSURE_S : OP_SAFE_CLOSURE_S);
-			    else set_optimize_data(code, (is_global(car(code))) ? OP_GLOSURE_S : OP_CLOSURE_S);
+			      set_optimize_data(code, hop + ((is_global(car(code))) ? OP_SAFE_GLOSURE_S : OP_SAFE_CLOSURE_S));
+			    else set_optimize_data(code, hop + ((is_global(car(code))) ? OP_GLOSURE_S : OP_CLOSURE_S));
 			  }
-			else set_optimize_data(code, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_C : OP_CLOSURE_C);
+			else set_optimize_data(code, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_C : OP_CLOSURE_C));
 			set_ecdr(code, f);
 			goto OPT_EVAL;
 		      }
@@ -55484,7 +55534,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    (!is_null(closure_args(f))))
 			  {
 			    set_fcdr(code, cadr(code));
-			    set_opt_and_goto_opt_eval(code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_S : OP_CLOSURE_STAR_S);
+			    set_opt_and_goto_opt_eval(code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_S : OP_CLOSURE_STAR_S));
 			  }
 		      }
 		    break;
@@ -55530,6 +55580,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer f;
 		bool s1, s2;
+		int hop;
+		hop = (is_immutable(car(code))) ? 1 : 0;
 
 		f = find_symbol_checked(sc, car(code));
 		s1 = is_symbol(cadr(code));
@@ -55546,18 +55598,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    if (s1)
 			      {
 				if (is_safe_closure(f))
-				  set_optimize_data(code, (s2) ? OP_SAFE_CLOSURE_SS : OP_SAFE_CLOSURE_SC);
+				  set_optimize_data(code, hop + ((s2) ? OP_SAFE_CLOSURE_SS : OP_SAFE_CLOSURE_SC));
 				else
 				  {
-				    set_optimize_data(code, (s2) ? OP_CLOSURE_SS : OP_CLOSURE_SC);
+				    set_optimize_data(code, hop + ((s2) ? OP_CLOSURE_SS : OP_CLOSURE_SC));
 				    if ((s2) && (!arglist_has_rest(sc, closure_args(f))))
-				      set_optimize_data(code, OP_CLOSURE_SSb);
+				      set_optimize_data(code, hop + OP_CLOSURE_SSb);
 				  }
 			      }
 			    else
 			      {
 				if (!s2) break;
-				set_optimize_data(code, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_CS : OP_CLOSURE_CS);
+				set_optimize_data(code, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_CS : OP_CLOSURE_CS));
 			      }
 			    set_ecdr(code, f);
 			    set_fcdr(code, caddr(code));
@@ -55579,7 +55631,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				    (closure_star_arity_to_int(sc, f) >= 2))
 				  {
 				    set_fcdr(code, caddr(code));
-				    set_opt_and_goto_opt_eval(code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SX);
+				    set_opt_and_goto_opt_eval(code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SX));
 				  }
 			      }
 			    else
@@ -55587,7 +55639,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				if ((!is_keyword(cadr(code))) &&
 				    (has_simple_args(closure_body(f))) &&
 				    (closure_star_arity_to_int(sc, f) >= 2))
-				  set_opt_and_goto_opt_eval(code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_SC : OP_CLOSURE_STAR_SX);
+				  set_opt_and_goto_opt_eval(code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_SC : OP_CLOSURE_STAR_SX));
 			      }
 			  }
 			break;
@@ -55644,6 +55696,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer f;
 		int num_args;
+		int hop;
+		hop = (is_immutable(car(code))) ? 1 : 0;
 		f = find_symbol_checked(sc, car(code));
 
 		num_args = integer(arglist_length(code));
@@ -55657,7 +55711,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    (!arglist_has_rest(sc, closure_args(f))))
 			  {
 			    annotate_args(sc, cdr(code));
-			    set_opt_and_goto_opt_eval(code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_ALL_X : OP_CLOSURE_ALL_S);
+			    set_opt_and_goto_opt_eval(code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_ALL_X : OP_CLOSURE_ALL_S));
 			  }
 			break;
 
@@ -57620,20 +57674,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_DEFINE_CONSTANT1:
-      /* define-constant -> OP_DEFINE_CONSTANT -> OP_DEFINE..1, then back to here
-       *   sc->value is the value of the symbol that we want to be immutable, sc->code is the original pair
-       */
-      {
-	s7_pointer lx;
-	sc->code = car(sc->code);
-	if (is_pair(sc->code)) sc->code = car(sc->code); /* (define-constant (ex3 a)...) */
-	lx = find_symbol(sc, sc->code);
-	if (is_slot(lx))
-	  set_immutable(slot_symbol(lx));
-	goto START;
-      }
+      sc->code = car(sc->code);
+      if (is_pair(sc->code)) sc->code = car(sc->code); /* (define-constant (ex3 a)...) */
+      if (is_symbol(sc->code))
+	set_immutable(sc->code);
+      goto START;
 
     case OP_DEFINE_CONSTANT:
+      if ((is_symbol(car(sc->code))) &&                /* (define-constant abs abs): "abs will not be touched" */
+	  (car(sc->code) == cadr(sc->code)) &&
+	  (is_null(cddr(sc->code))))
+	{
+	  set_immutable(car(sc->code));
+	  sc->value = find_symbol_checked(sc, car(sc->code));
+	  goto START;
+	}
       push_stack(sc, OP_DEFINE_CONSTANT1, sc->NIL, sc->code);
 
 
@@ -62451,7 +62506,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
   /* if the same bignum object is assigned to each element, different vector elements
    *    are actually the same -- we need to make a copy of obj for each one
    */
-  if ((type(vec) == T_VECTOR) && (is_big_number(obj)))
+  if ((is_normal_vector(vec)) && (is_big_number(obj)))
     {
       int gc_loc;
       s7_Int i, len;
@@ -67552,16 +67607,16 @@ int main(int argc, char **argv)
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5 15.6
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1127
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1144
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3344
- * teq            |      |      | 6612                     3887 3238
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1134
+ * teq            |      |      | 6612                     3887 3053
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3329
  * tmap           |      |      | 11.0           5031 4769 4685 4685
  * tcopy          |      |      |                          4970 4959
- * lg             |      |      | 6547 6497 6494 6235 6229 6239 6239
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 7111
- * titer          |      |      |                          7976 7613
+ * lg             |      |      | 6547 6497 6494 6235 6229 6239 6120
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6842
+ * titer          |      |      |                          7976 7414
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
- * thash          |      |      |                          19.4 18.1
+ * thash          |      |      |                          19.4 17.4
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1
  *
@@ -67600,5 +67655,12 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * can reuse of string port via get-output-string drop the final 0?
+ * define-constant func gives a way to avoid closure_is_ok in all cases, so maybe move the
+ *   arg checks into the main op?  also (define-constant abs abs) -- can this do the same in op_safe_c cases?
+ * need s7test for direct_vector_ref_gs
+ * gcc5 jit to replace clm2xen?
+ * (define-constant name simple-value) -> define-expansion? (pi replaced by reader)
+ *   exported s7_define_expansion, but define-expansion assumes it's dealing in macros
+ *   reader could see T_IMMUTABLE?
  */
 

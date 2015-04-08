@@ -76,13 +76,13 @@
 (define* (make-ind name sortby topic file general indexed char)
   (vector name sortby topic file general indexed char))
 
-(define (ind-name obj)    (vector-ref obj 0))
-(define (ind-sortby obj)  (vector-ref obj 1))
-(define (ind-topic obj)   (vector-ref obj 2))
-(define (ind-file obj)    (vector-ref obj 3))
-(define (ind-general obj) (vector-ref obj 4))
-(define ind-indexed       (dilambda (lambda (obj) (vector-ref obj 5)) (lambda (obj val) (vector-set! obj 5 val))))
-(define (ind-char obj)    (vector-ref obj 6))
+(define-expansion (ind-name obj)    `(vector-ref ,obj 0))
+(define-expansion (ind-sortby obj)  `(vector-ref ,obj 1))
+(define-expansion (ind-topic obj)   `(vector-ref ,obj 2))
+(define-expansion (ind-file obj)    `(vector-ref ,obj 3))
+(define-expansion (ind-general obj) `(vector-ref ,obj 4))
+(define-expansion (ind-char obj)    `(vector-ref ,obj 6))
+(define ind-indexed (dilambda (lambda (obj) (vector-ref obj 5)) (lambda (obj val) (vector-set! obj 5 val))))
 
 
 (define (html-length str)
