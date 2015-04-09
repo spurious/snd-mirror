@@ -1946,7 +1946,7 @@ static int prepare_mix_waveform(mix_info *md, mix_state *ms, axis_info *ap, mus_
     {
       (*two_sided) = true;
       if (mix_input_peak_env_usable(md, samples_per_pixel))
-	pts = prepare_mix_peak_env(md, scl, yoff, newbeg, newend, (double)cur_srate, ap);
+        pts = prepare_mix_peak_env(md, ms->scaler * scl, yoff, newbeg, newend, (double)cur_srate, ap);
       else
 	{
 	  int xi, j;
