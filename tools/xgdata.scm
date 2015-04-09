@@ -9148,3 +9148,4 @@
 (CFNC-3.16 "gboolean gtk_popover_get_transitions_enabled GtkPopover* popover")
 
 ;;; 3.16.0
+;;; 3.16.1

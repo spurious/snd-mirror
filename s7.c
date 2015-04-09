@@ -852,13 +852,14 @@ struct s7_scheme {
   s7_pointer IS_CHAR_WHITESPACE, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, IS_COMPLEX, CONS, IS_CONSTANT, IS_CONTINUATION, COPY, COS, COSH, C_POINTER, IS_C_POINTER;
   s7_pointer IS_DEFINED, DENOMINATOR, DISPLAY, DYNAMIC_WIND, IS_LET, INLET, LET_REF, LET_REF_FALLBACK, LET_SET, LET_SET_FALLBACK;
   s7_pointer IS_EOF_OBJECT, IS_EQ, IS_EQUAL, IS_EQV, ERROR, EVAL, EVAL_STRING, IS_EVEN, IS_EXACT;
-  s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, FLOAT_VECTOR, IS_FLOAT_VECTOR, FLOAT_VECTOR_REF, FLOAT_VECTOR_SET;
+  s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL;
+  s7_pointer MAKE_FLOAT_VECTOR, FLOAT_VECTOR, IS_FLOAT_VECTOR, FLOAT_VECTOR_REF, FLOAT_VECTOR_SET, MAKE_INT_VECTOR, INT_VECTOR, IS_INT_VECTOR;
   s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, IS_GENSYM, GET_OUTPUT_STRING, HASH_TABLE, HASH_TABLE_STAR;
   s7_pointer IS_HASH_TABLE, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_ENTRIES, HELP, IMAG_PART, IS_INEXACT, INEXACT_TO_EXACT;
   s7_pointer IS_INFINITE, IS_INPUT_PORT, IS_INTEGER, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, IS_KEYWORD, KEYWORD_TO_SYMBOL;
   s7_pointer LCM, LENGTH, IS_ITERATOR, MAKE_ITERATOR, ITERATE, ITERATOR_SEQUENCE, ITERATOR_IS_AT_END;
   s7_pointer LIST, IS_LIST, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBIT, LOGIOR, LOGNOT, LOGXOR;
-  s7_pointer IS_MACRO, MAKE_BYTEVECTOR, MAKE_FLOAT_VECTOR, MAKE_HASH_TABLE, MAKE_KEYWORD, MAKE_LIST, MAKE_RANDOM_STATE;
+  s7_pointer IS_MACRO, MAKE_BYTEVECTOR, MAKE_HASH_TABLE, MAKE_KEYWORD, MAKE_LIST, MAKE_RANDOM_STATE;
   s7_pointer MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, IS_MORALLY_EQUAL, IS_NAN, IS_NEGATIVE, NEWLINE;
   s7_pointer NOT, IS_NULL, IS_NUMBER, NUMBER_TO_STRING, NUMERATOR, OBJECT_TO_STRING, IS_ODD, OPENLET, IS_OPENLET, OPEN_INPUT_FILE;
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTLET, IS_OUTPUT_PORT, IS_PAIR, PAIR_LINE_NUMBER, PEEK_CHAR;
@@ -5362,6 +5363,8 @@ static s7_pointer g_unlet(s7_scheme *sc, s7_pointer args)
    * this is because unlet sets up a local environment of unshadowed symbols,
    *   and s7_let_ref below only looks at the local env chain (that is, if env is not
    *   the global env, then the global env is not searched).
+   *
+   * Also (define hi 3) #_hi => 3, (set! hi 4), #_hi -> 3 but (with-let (unlet) hi) -> 4!
    */
   int i;
   s7_pointer *inits;
@@ -24800,22 +24803,7 @@ static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
 		  port_write_string(port)(sc, buf, plen, port);
 		  tmpbuf_free(indices, 128);
 		}
-
-	      if (is_int_vector(vec))
-		{
-		  plen = snprintf(buf, 128, "%lld", int_vector_element(vec, flat_ref));
-		  port_write_string(port)(sc, buf, plen, port);
-		}
-	      else
-		{
-		  if (is_float_vector(vec))
-		    {
-		      plen = snprintf(buf, 128, float_format_g, WRITE_REAL_PRECISION, float_vector_element(vec, flat_ref));
-		      floatify(buf, &plen);
-		      port_write_string(port)(sc, buf, plen, port);
-		    }
-		  else object_to_port_with_circle_check(sc, vector_element(vec, flat_ref), port, DONT_USE_DISPLAY(use_write), to_file, ci);
-		}
+	      object_to_port_with_circle_check(sc, vector_element(vec, flat_ref), port, DONT_USE_DISPLAY(use_write), to_file, ci);
 
 	      if (use_write == USE_READABLE_WRITE)
 		port_write_string(port)(sc, ") ", 2, port);
@@ -24870,14 +24858,9 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
   if ((use_write != USE_READABLE_WRITE) &&
       ((!to_file) || (port == sc->standard_output) || (port == sc->standard_error)))
     {
-      /* if to_file we ignore *vector-print-length* so a subsequent read will be ok
-       *
-       * (with-output-to-file "test.test"
-       *   (lambda ()
-       *     (let ((vect (make-vector (+ *vector-print-length* 2) 1.0)))
-       *       (write vect))))
+      /* if to_file we ignore (*s7* 'print-length) so a subsequent read will be ok
+       * (with-output-to-file "test.test" (lambda () (let ((vect (make-vector (+ (*s7* 'print-length) 2) 1.0))) (write vect))))
        */
-
       plen = sc->print_length;
       if (plen <= 0)
 	{
@@ -24899,78 +24882,75 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 
   if (use_write == USE_READABLE_WRITE)
     {
-      port_write_string(port)(sc, "(let (({v} (make-vector ", 24, port);
-      if (vector_rank(vect) > 1)
-	{
-	  unsigned int dim;
-	  port_write_string(port)(sc, "'(", 2, port);
-	  for (dim = 0; dim < vector_ndims(vect); dim++)
-	    {
-	      plen = snprintf(buf, 128, "%lld ", vector_dimension(vect, dim));
-	      port_write_string(port)(sc, buf, plen, port);
-	    }
-	  if (is_int_vector(vect))
-	    port_write_string(port)(sc, ") 0 #t))) ", 10, port);
-	  else
-	    {
-	      if (is_float_vector(vect))
-		port_write_string(port)(sc, ") 0.0 #t))) ", 12, port);
-	      else port_write_string(port)(sc, ")))) ", 5, port);
-	    }
-	}
-      else
-	{
-	  if (is_int_vector(vect))
-	    plen = snprintf(buf, 128, "%lld 0 #t))) ", vector_length(vect));
-	  else
-	    {
-	      if (is_float_vector(vect))
-		plen = snprintf(buf, 128, "%lld 0.0 #t))) ", vector_length(vect));
-	      else plen = snprintf(buf, 128, "%lld))) ", vector_length(vect));
-	    }
-	  port_write_string(port)(sc, buf, plen, port);
-	}
-
       if ((ci) &&
-	  (shared_ref(ci, vect) < 0))
+	  (peek_shared_ref(ci, vect) != 0))
 	{
-	  plen = snprintf(buf, 128, "(set! {%d} {v}) ", -shared_ref(ci, vect));
-	  port_write_string(port)(sc, buf, plen, port);
-	}
-
-      if (vector_rank(vect) > 1)
-	{
-	  bool last = false;
-	  multivector_to_port(sc, vect, port, len, 0, 0, vector_ndims(vect), &last, use_write, to_file, ci);
-	}
-      else
-	{
-	  for (i = 0; i < len; i++)
+	  port_write_string(port)(sc, "(let (({v} (make-vector ", 24, port);
+	  if (vector_rank(vect) > 1)
 	    {
-	      port_write_string(port)(sc, "(set! ({v} ", 11, port);
-	      plen = snprintf(buf, 128, "%lld) ", i);
-	      port_write_string(port)(sc, buf, plen, port);
-
-	      if (is_int_vector(vect))
+	      unsigned int dim;
+	      port_write_string(port)(sc, "'(", 2, port);
+	      for (dim = 0; dim < vector_ndims(vect); dim++)
 		{
-		  plen = snprintf(buf, 128, "%lld", int_vector_element(vect, i));
+		  plen = snprintf(buf, 128, "%lld ", vector_dimension(vect, dim));
 		  port_write_string(port)(sc, buf, plen, port);
 		}
-	      else
-		{
-		  if (is_float_vector(vect))
-		    {
-		      plen = snprintf(buf, 128, float_format_g, WRITE_REAL_PRECISION, float_vector_element(vect, i));
-		      floatify(buf, &plen);
-		      port_write_string(port)(sc, buf, plen, port);
-		    }
-		  else object_to_port_with_circle_check(sc, vector_element(vect, i), port, use_write, to_file, ci);
-		}
+	      port_write_string(port)(sc, ")))) ", 5, port);
+	    }
+	  else plen = snprintf(buf, 128, "%lld))) ", vector_length(vect));
+	  port_write_string(port)(sc, buf, plen, port);
 
-	      port_write_string(port)(sc, ") ", 2, port);
+	  if (shared_ref(ci, vect) < 0)
+	    {
+	      plen = snprintf(buf, 128, "(set! {%d} {v}) ", -shared_ref(ci, vect));
+	      port_write_string(port)(sc, buf, plen, port);
+	    }
+	  
+	  if (vector_rank(vect) > 1)
+	    {
+	      bool last = false;
+	      multivector_to_port(sc, vect, port, len, 0, 0, vector_ndims(vect), &last, use_write, to_file, ci);
+	    }
+	  else
+	    {
+	      for (i = 0; i < len; i++)
+		{
+		  port_write_string(port)(sc, "(set! ({v} ", 11, port);
+		  plen = snprintf(buf, 128, "%lld) ", i);
+		  port_write_string(port)(sc, buf, plen, port);
+		  object_to_port_with_circle_check(sc, vector_element(vect, i), port, use_write, to_file, ci);
+		  port_write_string(port)(sc, ") ", 2, port);
+		}
+	    }
+	  port_write_string(port)(sc, "{v})", 4, port);
+	}
+      else /* simple readable case */
+	{
+	  if (vector_rank(vect) > 1)
+	    port_write_string(port)(sc, "(make-shared-vector (vector", 27, port);
+	  else port_write_string(port)(sc, "(vector", 7, port);
+
+	  for (i = 0; i < len; i++)
+	    {
+	      port_write_character(port)(sc, ' ', port);
+	      object_to_port_with_circle_check(sc, vector_element(vect, i), port, use_write, to_file, ci);
+	    }
+	  port_write_character(port)(sc, ')', port);
+
+	  if (vector_rank(vect) > 1)
+	    {
+	      unsigned int dim;
+	      port_write_string(port)(sc, " '(", 3, port);
+	      for (dim = 0; dim < vector_ndims(vect) - 1; dim++)
+		{
+		  plen = snprintf(buf, 128, "%lld ", vector_dimension(vect, dim));
+		  port_write_string(port)(sc, buf, plen, port);
+		}
+	      plen = snprintf(buf, 128, "%lld", vector_dimension(vect, dim));
+	      port_write_string(port)(sc, buf, plen, port);
+	      port_write_string(port)(sc, "))", 2, port);
 	    }
 	}
-      port_write_string(port)(sc, "{v})", 4, port);
     }
   else
     {
@@ -24987,44 +24967,13 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	}
       else
 	{
-	  if (is_float_vector(vect))
-	    port_write_string(port)(sc, "(float-vector ", 14, port);
-	  else port_write_string(port)(sc, "#(", 2, port);
-	  if (is_int_vector(vect))
+	  port_write_string(port)(sc, "#(", 2, port);
+	  for (i = 0; i < len - 1; i++)
 	    {
-	      for (i = 0; i < len - 1; i++)
-		{
-		  plen = snprintf(buf, 128, "%lld ", int_vector_element(vect, i));
-		  port_write_string(port)(sc, buf, plen, port);
-		}
-	      plen = snprintf(buf, 128, "%lld", int_vector_element(vect, i));
-	      port_write_string(port)(sc, buf, plen, port);
+	      object_to_port_with_circle_check(sc, vector_element(vect, i), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	      port_write_character(port)(sc, ' ', port);
 	    }
-	  else
-	    {
-	      if (is_float_vector(vect))
-		{
-		  plen = snprintf(buf, 128, float_format_g, WRITE_REAL_PRECISION, float_vector_element(vect, 0));
-		  floatify(buf, &plen);
-		  port_write_string(port)(sc, buf, plen, port);
-		  for (i = 1; i < len; i++)
-		    {
-		      port_write_character(port)(sc, ' ', port);
-		      plen = snprintf(buf, 128, float_format_g, WRITE_REAL_PRECISION, float_vector_element(vect, i));
-		      floatify(buf, &plen);
-		      port_write_string(port)(sc, buf, plen, port);
-		    }
-		}
-	      else
-		{
-		  for (i = 0; i < len - 1; i++)
-		    {
-		      object_to_port_with_circle_check(sc, vector_element(vect, i), port, DONT_USE_DISPLAY(use_write), to_file, ci);
-		      port_write_character(port)(sc, ' ', port);
-		    }
-		  object_to_port_with_circle_check(sc, vector_element(vect, i), port, DONT_USE_DISPLAY(use_write), to_file, ci);
-		}
-	    }
+	  object_to_port_with_circle_check(sc, vector_element(vect, i), port, DONT_USE_DISPLAY(use_write), to_file, ci);
 
 	  if (too_long)
 	    port_write_string(port)(sc, " ...)", 5, port);
@@ -25053,10 +25002,8 @@ static void bytevector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, 
 	port_write_string(port)(sc, "#u8(...)", 8, port);
       else
 	{
-	  int nlen;
-          #define BYTE_TO_STR_SIZE 8
-	  char byte_to_str[BYTE_TO_STR_SIZE];
-
+	  unsigned int nlen;
+	  char *p;
 	  if (len > plen)
 	    {
 	      too_long = true;
@@ -25065,16 +25012,90 @@ static void bytevector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, 
 	  port_write_string(port)(sc, "#u8(", 4, port);
 	  for (i = 0; i < len - 1; i++)
 	    {
-	      nlen = snprintf(byte_to_str, BYTE_TO_STR_SIZE, "%d", (unsigned int)((unsigned char)string_value(vect)[i])); /* casts are not redundant */
-	      port_write_string(port)(sc, byte_to_str, nlen, port);
+	      p = pos_int_to_str((int)((unsigned char)string_value(vect)[i]), &nlen);
+	      port_write_string(port)(sc, p, nlen - 1, port);
 	      port_write_character(port)(sc, ' ', port);
 	    }
-	  nlen = snprintf(byte_to_str, BYTE_TO_STR_SIZE, "%d", (unsigned int)((unsigned char)string_value(vect)[i]));
-	  port_write_string(port)(sc, byte_to_str, nlen, port);
+	  p = pos_int_to_str((int)((unsigned char)string_value(vect)[i]), &nlen);
+	  port_write_string(port)(sc, p, nlen - 1, port);
 
 	  if (too_long)
 	    port_write_string(port)(sc, " ...)", 5, port);
 	  else port_write_character(port)(sc, ')', port);
+	}
+    }
+}
+
+
+static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write, bool to_file)
+{
+  s7_Int i, len;
+  int plen;
+  bool too_long = false;
+
+  len = vector_length(vect);
+  if (use_write == USE_READABLE_WRITE)
+    plen = len;
+  else plen = sc->print_length;
+
+  if (len == 0)
+    port_write_string(port)(sc, "#()", 3, port);
+  else
+    {
+      if (plen <= 0)
+	port_write_string(port)(sc, "#(...)", 6, port);
+      else
+	{
+	  char buf[128];
+	  if (len > plen)
+	    {
+	      too_long = true;
+	      len = plen;
+	    }
+	  if (is_int_vector(vect))
+	    {
+	      if (vector_rank(vect) > 1)
+		port_write_string(port)(sc, "(make-shared-vector (int-vector", 31, port);
+	      else port_write_string(port)(sc, "(int-vector", 11, port);
+
+	      for (i = 0; i < len; i++)
+		{
+		  plen = snprintf(buf, 128, " %lld", int_vector_element(vect, i));
+		  port_write_string(port)(sc, buf, plen, port);
+		}
+	    }
+	  else
+	    {
+	      if (vector_rank(vect) > 1)
+		port_write_string(port)(sc, "(make-shared-vector (float-vector", 33, port);
+	      else port_write_string(port)(sc, "(float-vector", 13, port);
+
+	      for (i = 0; i < len; i++)
+		{
+		  port_write_character(port)(sc, ' ', port);
+		  plen = snprintf(buf, 128, float_format_g, WRITE_REAL_PRECISION, float_vector_element(vect, i));
+		  floatify(buf, &plen);
+		  port_write_string(port)(sc, buf, plen, port);
+		}
+	    }
+
+	  if (too_long)
+	    port_write_string(port)(sc, " ...)", 5, port);
+	  else port_write_character(port)(sc, ')', port);
+
+	  if (vector_rank(vect) > 1)
+	    {
+	      unsigned int dim;
+	      port_write_string(port)(sc, " '(", 3, port);
+	      for (dim = 0; dim < vector_ndims(vect) - 1; dim++)
+		{
+		  plen = snprintf(buf, 128, "%lld ", vector_dimension(vect, dim));
+		  port_write_string(port)(sc, buf, plen, port);
+		}
+	      plen = snprintf(buf, 128, "%lld", vector_dimension(vect, dim));
+	      port_write_string(port)(sc, buf, plen, port);
+	      port_write_string(port)(sc, "))", 2, port);
+	    }
 	}
     }
 }
@@ -25142,7 +25163,8 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 
   if (use_write == USE_READABLE_WRITE)
     {
-      if (ci)
+      if ((ci) &&
+	  (peek_shared_ref(ci, lst) != 0))
 	{
 	  int plen;
 	  char buf[128];
@@ -25258,9 +25280,7 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
   len = hash_table_entries(hash);
   if (len == 0)
     {
-      if (use_write == USE_READABLE_WRITE)
-	port_write_string(port)(sc, "(hash-table)", 12, port);
-      else port_write_string(port)(sc, "#<hash-table>", 13, port);
+      port_write_string(port)(sc, "(hash-table)", 12, port);
       return;
     }
 
@@ -25271,7 +25291,7 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
       plen = sc->print_length;
       if (plen <= 0)
 	{
-	  port_write_string(port)(sc, "#<hash-table ...>", 17, port);
+	  port_write_string(port)(sc, "(hash-table ...)", 16, port);
 	  return;
 	}
       if (len > plen)
@@ -25284,11 +25304,12 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
   iterator = make_iterator(sc, hash);
   gc_iter = s7_gc_protect(sc, iterator);
 
-  if (use_write == USE_READABLE_WRITE)
+  if ((use_write == USE_READABLE_WRITE) &&
+      (ci) &&
+      (peek_shared_ref(ci, hash) != 0))
     {
       port_write_string(port)(sc, "(let (({ht} (make-hash-table)))", 31, port);
-      if ((ci) &&
-	  (shared_ref(ci, hash) < 0))
+      if (shared_ref(ci, hash) < 0)
 	{
 	  int plen;
 	  char buf[64];
@@ -25317,16 +25338,18 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
     }
   else
     {
-      port_write_string(port)(sc, "#<hash-table ", 13, port);
-      for (i = 0; i < len - 1; i++)
+      port_write_string(port)(sc, "(hash-table", 11, port);
+      for (i = 0; i < len; i++)
 	{
+	  if (use_write == USE_READABLE_WRITE)
+	    port_write_character(port)(sc, ' ', port);
+	  else port_write_string(port)(sc, " '", 2, port);
 	  object_to_port_with_circle_check(sc, iterate(sc, iterator), port, DONT_USE_DISPLAY(use_write), to_file, ci);
-	  port_write_character(port)(sc, ' ', port);
 	}
-      object_to_port_with_circle_check(sc, iterate(sc, iterator), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+
       if (too_long)
-	port_write_string(port)(sc, " ...>", 5, port);
-      else port_write_character(port)(sc, '>', port);
+	port_write_string(port)(sc, " ...)", 5, port);
+      else port_write_character(port)(sc, ')', port);
     }
 
   s7_gc_unprotect_at(sc, gc_iter);
@@ -25339,11 +25362,11 @@ static void write_readably_error(s7_scheme *sc, const char *type)
 }
 
 
-static void let_to_port_1(s7_scheme *sc, s7_pointer x, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
+static void slot_to_port_1(s7_scheme *sc, s7_pointer x, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
   if (is_slot(x))
     {
-      let_to_port_1(sc, next_slot(x), port, use_write, to_file, ci);
+      slot_to_port_1(sc, next_slot(x), port, use_write, to_file, ci);
       port_write_character(port)(sc, ' ', port);
       object_to_port_with_circle_check(sc, x, port, use_write, to_file, ci);
     }
@@ -25375,11 +25398,7 @@ static void let_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_writ
 	}
     }
   if (obj == sc->rootlet)
-    {
-      if (use_write == USE_READABLE_WRITE)
-	port_write_string(port)(sc, "(rootlet)", 9, port);
-      else port_write_string(port)(sc, "#<rootlet>", 10, port);
-    }
+    port_write_string(port)(sc, "(rootlet)", 9, port);
   else
     {
       /* circles can happen here:
@@ -25388,7 +25407,9 @@ static void let_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_writ
        * or (let ((b #f)) (set! b (curlet)) (curlet))
        *    #1=#<let 'b #1#>
        */
-      if (use_write == USE_READABLE_WRITE)
+      if ((use_write == USE_READABLE_WRITE) &&
+	  (ci) &&
+	  (peek_shared_ref(ci, obj) != 0))
 	{
 	  s7_pointer x;
 	  port_write_string(port)(sc, "(let (({e} (inlet))) ", 21, port);
@@ -25414,9 +25435,9 @@ static void let_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_writ
 	}
       else
 	{
-	  port_write_string(port)(sc, "#<let", 5, port);
-	  let_to_port_1(sc, let_slots(obj), port, use_write, to_file, ci);
-	  port_write_character(port)(sc, '>', port);
+	  port_write_string(port)(sc, "(inlet", 6, port);
+	  slot_to_port_1(sc, let_slots(obj), port, use_write, to_file, ci);
+	  port_write_character(port)(sc, ')', port);
 	}
     }
 }
@@ -25635,8 +25656,11 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 
   switch (type(obj))
     {
-    case T_INT_VECTOR:
     case T_FLOAT_VECTOR:
+    case T_INT_VECTOR:
+      int_or_float_vector_to_port(sc, obj, port, use_write, to_file);
+      break;
+
     case T_VECTOR:
       vector_to_port(sc, obj, port, use_write, to_file, ci);
       break;
@@ -25983,11 +26007,9 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_SLOT:
-      if (use_write == USE_READABLE_WRITE)
-	write_readably_error(sc, "an internal slot");
-
-      port_write_character(port)(sc, '\'', port);
-      port_write_string(port)(sc, symbol_name(slot_symbol(obj)), symbol_name_length(slot_symbol(obj)), port);
+      if (use_write != USE_READABLE_WRITE)
+	port_write_character(port)(sc, '\'', port);
+      object_to_port(sc, slot_symbol(obj), port, use_write, to_file, ci);
       port_write_character(port)(sc, ' ', port);
       object_to_port_with_circle_check(sc, slot_value(obj), port, use_write, to_file, ci);
       break;
@@ -31113,6 +31135,34 @@ static s7_pointer g_float_vector(s7_scheme *sc, s7_pointer args)
   return(vec);
 }
 
+
+static s7_pointer g_is_int_vector(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_int_vector "(int-vector? obj) returns #t if obj is an homogenous int vector"
+  check_boolean_method(sc, is_int_vector, sc->IS_INT_VECTOR, args);
+}
+
+static s7_pointer g_int_vector(s7_scheme *sc, s7_pointer args)
+{
+  #define H_int_vector "(int-vector ...) returns an homogenous int vector whose elements are the arguments"
+  s7_Int i, len;
+  s7_pointer vec, x;
+
+  len = s7_list_length(sc, args);
+  if (len == 0)
+    return(make_vector_1(sc, 0, NOT_FILLED, T_VECTOR));
+
+  vec = make_vector_1(sc, len, NOT_FILLED, T_INT_VECTOR);
+  for (x = args, i = 0; is_pair(x); x = cdr(x), i++)
+    {
+      if (is_integer(car(x)))
+	int_vector_element(vec, i) = integer(car(x));
+      else return(simple_wrong_type_argument(sc, sc->INT_VECTOR, car(x), T_INTEGER));
+    }
+  return(vec);
+}
+
+
 #if (!WITH_PURE_S7)
 static s7_pointer g_list_to_vector(s7_scheme *sc, s7_pointer args)
 {
@@ -31873,7 +31923,22 @@ static s7_pointer g_make_float_vector(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if ((is_pair(cdr(args))) ||
       (!is_integer(p)))
-    return(g_make_vector(sc, list_3(sc, p, (is_null(cdr(args))) ? real_zero : cadr(args), sc->T)));
+    {
+      s7_pointer init;
+      if (is_pair(cdr(args)))
+	{
+	  init = cadr(args);
+	  if (!is_real(init))
+	    {
+	      check_method(sc, init, sc->MAKE_FLOAT_VECTOR, args);
+	      return(wrong_type_argument(sc, sc->MAKE_FLOAT_VECTOR, small_int(2), init, T_REAL));
+	    }
+	  if (is_rational(init))
+	    return(g_make_vector(sc, list_3(sc, p, make_real(sc, rational_to_double(sc, init)), sc->T)));
+	}
+      else init = real_zero;
+      return(g_make_vector(sc, list_3(sc, p, init, sc->T)));
+    }
 
   len = s7_integer(p);
   if (len < 0)
@@ -31891,6 +31956,53 @@ static s7_pointer g_make_float_vector(s7_scheme *sc, s7_pointer args)
   vector_dimension_info(x) = NULL;
   vector_getter(x) = float_vector_getter;
   vector_setter(x) = float_vector_setter;
+
+  add_vector(sc, x);
+  return(x);
+}
+
+
+static s7_pointer g_make_int_vector(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_int_vector "(make-int-vector len (init 0.0)) returns an int-vector."
+  s7_Int len;
+  s7_pointer x, p;
+  s7_Int *arr;
+
+  p = car(args);
+  if ((is_pair(cdr(args))) ||
+      (!is_integer(p)))
+    {
+      s7_pointer init;
+      if (is_pair(cdr(args)))
+	{
+	  init = cadr(args);
+	  if (!is_integer(init))
+	    {
+	      check_method(sc, init, sc->MAKE_INT_VECTOR, args);
+	      return(wrong_type_argument(sc, sc->MAKE_INT_VECTOR, small_int(2), init, T_INTEGER));
+	    }
+	}
+      else init = small_int(0);
+      return(g_make_vector(sc, list_3(sc, p, init, sc->T)));
+    }
+
+  len = s7_integer(p);
+  if (len < 0)
+    return(wrong_type_argument_with_type(sc, sc->MAKE_INT_VECTOR, small_int(1), p, A_NON_NEGATIVE_INTEGER));
+  if (len > MAX_VECTOR_LENGTH)
+    return(out_of_range(sc, sc->MAKE_INT_VECTOR, small_int(1), p, ITS_TOO_LARGE));
+
+  if (len > 0)
+    arr = (s7_Int *)calloc(len, sizeof(s7_Int));
+  else arr = NULL;
+
+  NEW_CELL(sc, x, T_INT_VECTOR | T_SAFE_PROCEDURE);
+  vector_length(x) = len;
+  int_vector_elements(x) = arr;
+  vector_dimension_info(x) = NULL;
+  vector_getter(x) = int_vector_getter;
+  vector_setter(x) = int_vector_setter;
 
   add_vector(sc, x);
   return(x);
@@ -65851,7 +65963,7 @@ static void s7_gmp_init(s7_scheme *sc)
 
 /* -------------------------------- *s7* environment -------------------------------- */
 
-static void init_s7_env(s7_scheme *sc)
+static void init_s7_let(s7_scheme *sc)
 {
   sc->stack_top_symbol =                     s7_make_symbol(sc, "stack-top");
   sc->stack_size_symbol =                    s7_make_symbol(sc, "stack-size");
@@ -67146,6 +67258,10 @@ s7_scheme *s7_init(void)
   sc->FLOAT_VECTOR_REF =      s7_define_safe_function(sc, "float-vector-ref",        g_float_vector_ref,       2, 0, true,  H_float_vector_ref);
   set_returns_temp(slot_value(global_slot(sc->FLOAT_VECTOR_REF)));
 
+  sc->IS_INT_VECTOR =         s7_define_safe_function(sc, "int-vector?",             g_is_int_vector,          1, 0, false, H_is_int_vector);
+  sc->INT_VECTOR =            s7_define_safe_function(sc, "int-vector",              g_int_vector,             0, 0, true,  H_int_vector);
+  sc->MAKE_INT_VECTOR =       s7_define_safe_function(sc, "make-int-vector",         g_make_int_vector,        1, 1, false, H_make_int_vector);
+
   sc->IS_BYTEVECTOR =         s7_define_safe_function(sc, "bytevector?",             g_is_bytevector,          1, 0, false, H_is_bytevector);
   sc->TO_BYTEVECTOR =         s7_define_safe_function(sc, "->bytevector",            g_to_bytevector,          1, 0, false, H_to_bytevector);
   sc->BYTEVECTOR =            s7_define_safe_function(sc, "bytevector",              g_bytevector,             0, 0, true,  H_bytevector);
@@ -67567,13 +67683,13 @@ s7_scheme *s7_init(void)
 #if WITH_COUNTS
   clear_counts();
 #endif
-  init_s7_env(sc);          /* set up *s7* */
+  init_s7_let(sc);          /* set up *s7* */
   already_inited = true;
   return(sc);
 }
 
 
-/* -------------------------------- repl (in progress...) -------------------------------- */
+/* -------------------------------- repl -------------------------------- */
 
 #if (WITH_MAIN && (!USE_SND))
 
@@ -67608,12 +67724,12 @@ int main(int argc, char **argv)
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5 15.6
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1127
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1134
- * teq            |      |      | 6612                     3887 3053
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3329
- * tmap           |      |      | 11.0           5031 4769 4685 4685
+ * teq            |      |      | 6612                     3887 3091
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328
+ * tmap           |      |      | 11.0           5031 4769 4685 4683
  * tcopy          |      |      |                          4970 4959
- * lg             |      |      | 6547 6497 6494 6235 6229 6239 6120
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6842
+ * lg             |      |      | 6547 6497 6494 6235 6229 6239 6227
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6863
  * titer          |      |      |                          7976 7414
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
  * thash          |      |      |                          19.4 17.4
@@ -67662,5 +67778,18 @@ int main(int argc, char **argv)
  * (define-constant name simple-value) -> define-expansion? (pi replaced by reader)
  *   exported s7_define_expansion, but define-expansion assumes it's dealing in macros
  *   reader could see T_IMMUTABLE?
+ * maybe remove the homogenous arg to make-vector? or enforce it?
+ *
+ * env readable obj->str tests, then example for repl top-level-let
+ * so (define (save-repl) (call-with-output-file "save.repl" (lambda (p) (format p "~W" (*repl* 'top-level-let)))))
+ *    (define (restore-repl) (set! (*repl* 'top-level-let) (load "save.repl")))
+ *   but here we need a way to get changes to rootlet, not the whole thing
+ * objstr of lambda leaves out the enclosing let -- can we handle (define x (let ...)) specially?
+ * does *s7* have default float print settings? no: float_format_g and WRITE_REAL_PRECISION
+ *    *pretty-print-float-format* in write: "~,4f" etc [but internal defaults here seem to be "~,16g"?]
+ * why unlet table? Can't we scan the symbol-table for initial_slot != global|local_slot ?
+ *   also this table restricts (unlet) to s7's built-ins
+ * maybe arg to unlet to say -- include anything in rootlet that has been added or changed?
+ *   but added since when? probably better to copy rootlet and compare later
+ *   but let_copy et al either simply return rootlet or complain about it
  */
-

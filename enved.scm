@@ -209,7 +209,7 @@
   (let ((documentation "(play-panned snd) pans a mono sound following its enved envelope into a stereo sound"))
     (lambda (sound)
       (let* ((bufsize 256)
-	     (data (make-vector (list 2 bufsize) 0.0 #t))
+	     (data (make-float-vector (list 2 bufsize) 0.0))
 	     (bytes (* bufsize 4))
 	     (audio-fd (mus-audio-open-output mus-audio-default (srate sound) 2 mus-lshort bytes))
 	     (samp 0)

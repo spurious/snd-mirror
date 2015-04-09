@@ -1750,7 +1750,7 @@ based on some previously chosen loop positions:
         (let* ((loop-start (car loop-data))
                (loop-end (cadr loop-data))
                (loop-length (+ 1 (- loop-end loop-start)))
-               (sound-section (<a class=quiet href="#filetoarray">file-&gt;array</a> sound 0 loop-start loop-length (make-vector loop-length 0.0 #t)))
+               (sound-section (<a class=quiet href="#filetoarray">file-&gt;array</a> sound 0 loop-start loop-length (make-float-vector loop-length 0.0)))
                (original-loop-duration (/ loop-length (srate sound)))
                (tbl (<em class=red>make-table-lookup</em> :frequency (/ freq original-loop-duration) :wave sound-section)))
                ;; "freq" here is how fast we read (transpose) the sound &mdash; 1.0 returns the original
@@ -1771,7 +1771,7 @@ modulation deviation in samples:
          (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
          (table-length (<a class=quiet href="extsnd.html#mussoundframples">mus-sound-framples</a> file))
          (tab (<em class=red>make-table-lookup</em> :frequency (/ read-speed (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> file)) 
-                                 :wave (<a class=quiet href="#filetoarray">file-&gt;array</a> file 0 0 table-length (make-vector table-length 0.0 #t))))
+                                 :wave (<a class=quiet href="#filetoarray">file-&gt;array</a> file 0 0 table-length (make-float-vector table-length 0.0))))
          (osc (<a class=quiet href="#make-oscil">make-oscil</a> modulator-freq))
          (index (/ (* (<a class=quiet href="#hztoradians">hz-&gt;radians</a> modulator-freq) 2 pi index-in-samples) table-length)))
    (do ((i beg (+ i 1)))
@@ -1800,7 +1800,7 @@ the table-relative phase, returning a squared-off sine-wave:
 
 <!--
 (with-sound (:srate 1000000 :channels 2) 
-  (let ((gen1 (make-table-lookup 100.0 :wave (partials->wave '(1 1) (make-vector 100 0.0 #t)) :type mus-interp-none))
+  (let ((gen1 (make-table-lookup 100.0 :wave (partials->wave '(1 1) (make-float-vector 100 0.0)) :type mus-interp-none))
         (sine (make-oscil 100.0)))
        (do ((i 0 (+ i 1))) 
            ((= i 1000000))
@@ -1840,7 +1840,7 @@ reduces the original problem by a factor of n * L:
 
 <!--
 (with-sound (:srate 1000000 :channels 2) 
-  (let ((gen1 (make-table-lookup 100.0 :wave (partials->wave '(1 1) (make-vector 100 0.0 #t)) :type mus-interp-linear))
+  (let ((gen1 (make-table-lookup 100.0 :wave (partials->wave '(1 1) (make-float-vector 100 0.0)) :type mus-interp-linear))
 	(sine (make-oscil 100.0)))
        (do ((i 0 (+ i 1))) 
 	   ((= i 1000000))
@@ -1892,10 +1892,10 @@ If you're trying to produce a sum of sinusoids, use polywave &mdash; it makes a 
 (with-sound (:channels 4 :clipped #f :statistics #t)
   (let* ((pitch 1000.0)
 	 (size 64)
-	 (tbl1 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vector size 0.0 #t)) size mus-interp-none))
-	 (tbl2 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vector size 0.0 #t)) size mus-interp-linear))
-	 (tbl3 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vector size 0.0 #t)) size mus-interp-lagrange))
-	 (tbl4 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vector size 0.0 #t)) size mus-interp-hermite)))
+	 (tbl1 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-float-vector size 0.0)) size mus-interp-none))
+	 (tbl2 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-float-vector size 0.0)) size mus-interp-linear))
+	 (tbl3 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-float-vector size 0.0)) size mus-interp-lagrange))
+	 (tbl4 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-float-vector size 0.0)) size mus-interp-hermite)))
        (do ((i 0 (+ i 1)))
 	   ((= i 100000))
 	 (outa i (table-lookup tbl1))
@@ -1906,7 +1906,7 @@ If you're trying to produce a sum of sinusoids, use polywave &mdash; it makes a 
 (with-sound (:channels 5 :clipped #f :statistics #t)
   (let* ((pitch 2.0)
 	 (size 64)
-	 (wave (let ((v (make-vector size 0.0 0.0 #t)))
+	 (wave (let ((v (make-float-vector size 0.0 0.0)))
 		 (set! (v (/ size 2)) 1.0)
 		 v))
 	 (tbl1 (make-table-lookup pitch 0.0 wave size mus-interp-none))
@@ -2184,7 +2184,7 @@ in phase and amplitude at run-time by setting a float-vector value.
 
 <pre class="indented">
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:clipped #f :statistics #t :play #t :scaled-to .5)
-  (let ((gen (<em class=red>make-polywave</em> 200 (let ((harms (make-vector (* 5 2) 0.0 #t))) ; 5 harmonics, 2 numbers for each
+  (let ((gen (<em class=red>make-polywave</em> 200 (let ((harms (make-float-vector (* 5 2) 0.0))) ; 5 harmonics, 2 numbers for each
 				   (do ((k 1 (+ k 3))
 					(i 0 (+ i 2)))
 				       ((= i (* 5 2)))
@@ -3035,10 +3035,10 @@ we can truncate its spectrum at the desired number of harmonics:
       (or (and (&lt; n 128)
 	       (not B)
 	       (previous-results n))
-	  (let* ((coeffs (make-vector (* 2 n) 0.0 #t))
+	  (let* ((coeffs (make-float-vector (* 2 n) 0.0))
 		 (size (expt 2 12))
-		 (rl (make-vector size 0.0 #t))
-		 (im (make-vector size 0.0 #t))
+		 (rl (make-float-vector size 0.0))
+		 (im (make-float-vector size 0.0))
 		 (incr (/ (* 2 pi) size))
 		 (index (or B (max 1 (floor (/ n 2))))))
 	    (do ((i 0 (+ i 1))
@@ -4540,7 +4540,7 @@ make-wave-train-with-env (defined in generators.scm) returns a new wave-train ge
 <pre class="indented">
 (with-sound (:play #t)
   (let ((gen (make-wave-train 440.0
-               :wave (let ((v (make-vector 64 0.0 #t)) 
+               :wave (let ((v (make-float-vector 64 0.0)) 
                            (g (make-ncos 400 10)))
                        (set! (mus-phase g) (* -0.5 pi))
                        (do ((i 0 (+ i 1))) 
@@ -4598,7 +4598,7 @@ lambda: ( -- )
 
 <!--
 (with-sound (:clipped #f :statistics #t :scaled-to .5 :play #t)
-  (let ((gen (make-wave-train 300.0 :wave (let ((v (make-vector 64 0.0 #t)) 
+  (let ((gen (make-wave-train 300.0 :wave (let ((v (make-float-vector 64 0.0)) 
                                                 (g (make-sum-of-cosines 10 400 (* -0.5 pi)))) 
                                             (do ((i 0 (+ i 1))) 
                                                 ((= i 64)) 
@@ -4629,7 +4629,7 @@ Here is a FOF instrument based loosely on fof.c of Perry Cook and the article
          (vibr (<a class=quiet href="#make-oscil">make-oscil</a> 6))
          (vibenv (<a class=quiet href="#make-env">make-env</a> (or ve (list 0 1 100 1)) :scaler vib :duration dur))
          (win-freq (/ (* 2 pi) foflen))
-         (foftab (make-vector foflen 0.0 #t))
+         (foftab (make-float-vector foflen 0.0))
          (wt0 (<em class=red>make-wave-train</em> :wave foftab :frequency frq)))
     (do ((i 0 (+ i 1)))
         ((= i foflen))
@@ -5737,7 +5737,7 @@ The Hilbert transform can be implemented with an fir-filter:
 <pre class="indented">
 (define* (make-hilbert-transform (len 30))
   (let* ((arrlen (+ 1 (* 2 len)))
-         (arr (make-vector arrlen 0.0 #t))
+         (arr (make-float-vector arrlen 0.0))
          (lim (if (even? len) len (+ 1 len))))
     (do ((i (- len) (+ i 1)))
         ((= i lim))
@@ -7524,7 +7524,7 @@ object.
   ;; swap channels of stereo file
   (let ((input (make-file-&gt;frample "stereo.snd"))
 	(len (mus-sound-framples "stereo.snd"))
-	(frample (make-vector 2 0.0 #t)))
+	(frample (make-float-vector 2 0.0)))
     (do ((i 0 (+ i 1)))
 	((= i len))
       (file-&gt;frample input i frample)
@@ -7803,7 +7803,7 @@ use its :output argument:
 </p>
 
 <pre class="indented">
-(with-sound (<em class=red>:output</em> (make-vector 44100 0.0 #t)) ; this sets *output*, the default output location
+(with-sound (<em class=red>:output</em> (make-float-vector 44100 0.0)) ; this sets *output*, the default output location
    (<a class=quiet href="sndscm.html#vdoc">fm-violin</a> 0 1 440 .1))
 </pre>
 
@@ -7831,7 +7831,7 @@ use its :output argument:
 
 <pre class="indented">
 (let ((input (<a class=quiet href="#make-readin">make-readin</a> "oboe.snd" :start 1000)))
-  (with-sound ((make-vector 10 0.0 #t))
+  (with-sound ((make-float-vector 10 0.0))
     (do ((i 0 (+ i 1)))
 	((= i 10))
       (<em class=red>outa</em> i (<em class=red>ina</em> i (lambda (loc chn)
@@ -7839,13 +7839,13 @@ use its :output argument:
 </pre>
 
 <pre class="indented">
-(let ((outv (make-vector 10 0.0 #t)))
+(let ((outv (make-float-vector 10 0.0)))
   (with-sound ()
      (do ((i 0 (+ i 1)))
          ((= i 10))
       (outa i (* i .1) (lambda (loc val chan)
 	 	         (set! (outv loc) val)))))
-  outv) ; this is equivalent to using :output (make-vector 10 0.0 #t) as a with-sound argument
+  outv) ; this is equivalent to using :output (make-float-vector 10 0.0) as a with-sound argument
 </pre>
 
 
@@ -8279,7 +8279,7 @@ of <a href="#ncosdoc">ncos and nsin</a>.
 noid's phase argument can be a float-vector, <code>'min-peak</code>, <code>'max-peak</code>, or omitted (#f).
 If omitted, the phases are set to random numbers between 0 and 2 pi; if
 a float-vector, the float-vector's values are used as the phases; if 'max-peak, all phases are set
-to pi/2 (ncos essentially &mdash; use <code>(make-vector n 0.0 #t)</code> to get nsin);
+to pi/2 (ncos essentially &mdash; use <code>(make-float-vector n 0.0)</code> to get nsin);
 and if 'min-peak, the minimum peak amplitude phases in <a href="sndscm.html#peakphasesdoc">peak-phases.scm</a> are used.
 In the 'min-peak and 'max-peak cases, noid's output is normalized to fall between -1.0 and 1.0.
 polyoid-env is an extension of polyoid that takes envelopes to control the amplitude and phase of each
@@ -8295,7 +8295,7 @@ harmonic.
     (with-sound (:clipped #f :output (string-append "test-noid-" (number->string i) ".snd"))
       (let ((samps 44100)
             (gen (make-noid 100.0 32 (if (= i 0) 'max-peak
-                                         (if (= i 1) (make-vector 32 0.0 #t)
+                                         (if (= i 1) (make-float-vector 32 0.0)
                                 	     (if (= i 2) #f
 						 'min-peak))))))
 	(do ((i 0 (+ i 1)))
@@ -9623,7 +9623,7 @@ We could mimic the fft display window in the "lisp graph" via:
 <pre class="indented">
 (let* ((rd (make-readin "oboe.snd"))
        (ft (<em class=red>make-moving-fft</em> rd))
-       (data (make-vector 256 0.0 #t)))
+       (data (make-float-vector 256 0.0)))
   (set! (lisp-graph?) #t)
   (do ((i 0 (+ i 1)))
       ((= i 10000))
@@ -10077,7 +10077,7 @@ We could define our own FIR filter using dot-product:
 
 <pre class="indented">
 (define (make-fr-filter coeffs)
-  (list coeffs (make-vector (length coeffs) 0.0 #t)))
+  (list coeffs (make-float-vector (length coeffs) 0.0)))
 
 (define (fr-filter flt x)
   (let* ((coeffs (car flt))
@@ -10263,8 +10263,8 @@ only difference is that mus-fft includes the fft length as an argument, whereas
 <pre class="indented">
 (let* ((len (mus-sound-framples "oboe.snd"))
        (fsize (expt 2 (ceiling (log len 2))))
-       (rdata (make-vector fsize 0.0 #t))
-       (idata (make-vector fsize 0.0 #t))
+       (rdata (make-float-vector fsize 0.0))
+       (idata (make-float-vector fsize 0.0))
        (cutoff (round (/ fsize 10)))
        (fsize2 (/ fsize 2)))
   (file-&gt;array "oboe.snd" 0 0 len rdata)

@@ -14,7 +14,7 @@
 	(make-complex (* mag (cos ang)) (* mag (sin ang)))
 	(error 'wrong-type-arg "make-polar args should be real"))))
 
-(define (vector->float-vector v) (copy v (make-vector (length v) 0.0 #t)))
+(define (vector->float-vector v) (copy v (make-float-vector (length v) 0.0)))
 (define (float-vector->vector v) (copy v (make-vector (length v) 0.0)))
 
 
@@ -208,7 +208,7 @@
 (define (submatrix mx row col)
   (let* ((old-n (car (vector-dimensions mx)))
 	 (new-n (- old-n 1))
-	 (nmx (make-vector (list new-n new-n) 0.0 #t)))
+	 (nmx (make-float-vector (list new-n new-n) 0.0)))
     (do ((i 0 (+ i 1))
 	 (ni 0))
 	((= i old-n))
@@ -257,7 +257,7 @@
       (let* ((m (length p1))
 	     (n (length p2))
 	     (d (+ n m -2))
-	     (mat (make-vector (list d d) 0.0 #t)))
+	     (mat (make-float-vector (list d d) 0.0)))
 	;; load matrix with n-1 rows of m's coeffs then m-1 rows of n's coeffs (reversed in sense), return determinant
 	(do ((i 0 (+ i 1)))
 	    ((= i (- n 1)))

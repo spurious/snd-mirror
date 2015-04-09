@@ -174,7 +174,7 @@
 	  (ctr 0)
 	  (inputs (make-float-vector freq-inc 0.0))
 	  (ramps (make-vector freq-inc -1))
-	  (in2s (make-vector freq-inc 0 #t))
+	  (in2s (make-int-vector freq-inc 0))
 	  ;(in2s (make-vector freq-inc #f))
 	  (in2-ctr 0)
 	  (ramp-ctr 0))

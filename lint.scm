@@ -284,6 +284,8 @@
 			   'inlet +let+
 			   'inlet +let+
 			   'input-port? +boolean+
+			   'int-vector +vector+
+			   'int-vector? +boolean+
 			   'integer->char +character+
 			   'integer-decode-float +list+
 			   'integer-length +integer+
@@ -309,6 +311,7 @@
 			   'macro? +boolean+
 			   'magnitude +number+
 			   'make-float-vector +vector+
+			   'make-int-vector +vector+
 			   'make-hash-table +hash-table+
 			   'make-keyword +symbol+
 			   'make-list +list+
@@ -527,6 +530,7 @@
 			  'inexact? number?
 			  'infinite? number?
 			  'input-port? port?
+			  'int-vector integer?
 			  'integer->char integer-between-0-and-255?
 			  'integer-decode-float real-but-not-rational?
 			  'integer-length integer?

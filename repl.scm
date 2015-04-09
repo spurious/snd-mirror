@@ -1222,6 +1222,14 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 		  ((keymap-functions (char->integer c)) c)
 		  (display-lines))
 		(load filename)))))))
+
+;; save current repl state for later restart ("checkpoint"):
+(define (save-repl) 
+  (call-with-output-file "save.repl" 
+    (lambda (p) 
+      (format p "~W" (*repl* 'top-level-let)))))
+;; (it's assuming top-level-let is not rootlet)
+
 |#
 
 

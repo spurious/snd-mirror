@@ -965,7 +965,7 @@ these declarations in ~/.snd:
 
 <pre class="indented">
 (define data-size 1024)
-(define data (make-vector data-size 0.0 #t))
+(define data (make-float-vector data-size 0.0))
 
 (define (run-gen func)        ; func is a function of no arguments (a "thunk")
   (do ((i 0 (+ i 1))) 

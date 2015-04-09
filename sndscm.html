@@ -2946,7 +2946,7 @@ lambda: &lt;{ x }&gt; pi random ; #f #f rotate-phase \ randomizes phases
 </p>
 
 <pre class="indented">
-&gt; (define d0 (make-vector 8 0.0 #t))
+&gt; (define d0 (make-float-vector 8 0.0))
 d0
 ;; and similarly for d1 and d2 ...
 &gt; (set! (d0 2) 1.0)
@@ -3705,9 +3705,9 @@ then
 
 <pre class="indented">
 (let* ((size 128)
-       (x0 (make-vector size 0.0 #t))	   
-       (x1 (make-vector size 0.0 #t))	   
-       (x2 (make-vector size 0.0 #t)))
+       (x0 (make-float-vector size 0.0))	   
+       (x1 (make-float-vector size 0.0))	   
+       (x2 (make-float-vector size 0.0)))
   (do ((i 0 (+ i 1)))
       ((= i 12))
     (let ((val (sin (/ (* 2 pi i) 12.0))))
@@ -7026,7 +7026,7 @@ To sync all the panned mixes together:
   (for-each
     (lambda (id)
      (set! (<a class=quiet href="extsnd.html#mixsync">mix-sync</a> id) new-sync))
-   (<em class=red>pan-mix-float-vector</em> (make-vector 10 0.5 #t) 100 '(0 0 1 1))))
+   (<em class=red>pan-mix-float-vector</em> (make-float-vector 10 0.5) 100 '(0 0 1 1))))
 </pre>
 
 <div class="spacer"></div>
@@ -8229,7 +8229,7 @@ to a good candidate, but that seems like asking for trouble.
 	(close-sound old)))
   
 (let ((ns (new-sound "test.snd" :channels 5))
-      (data (make-vector dur 0.0 #t)))
+      (data (make-float-vector dur 0.0)))
 
   (let ((phases (make-vector 8 0.0))
 	(correct 6.1442))
@@ -8241,8 +8241,8 @@ to a good candidate, but that seems like asking for trouble.
 	((> n 512))
 
       (let* ((size (expt 2 (ceiling (/ (log (* 8 n)) (log 2)))))
-	     (fft-rl (make-vector size 0.0 #t))
-	     (fft-im (make-vector size 0.0 #t))
+	     (fft-rl (make-float-vector size 0.0))
+	     (fft-im (make-float-vector size 0.0))
 	     (pi2 (/ pi 2)))
 	
 	(do ((m 0 (+ m 1)))
@@ -8335,8 +8335,8 @@ minimum, maximum, and average peaks.  The graph is logarithmic (that is we show
 (define (get-peak choice n cur-phases)
   (let* ((fft-mult 128)
 	 (size (get-fft-size choice n fft-mult))
-	 (fft-rl (make-vector size 0.0 #t))
-	 (fft-im (make-vector size 0.0 #t))
+	 (fft-rl (make-float-vector size 0.0))
+	 (fft-im (make-float-vector size 0.0))
 	 (nc (if (eq? choice :all) 0
 		 (if (eq? choice :odd) 1
 		     (if (eq? choice :even) 2 3)))))
@@ -11656,7 +11656,7 @@ The "output" argument can be a vector as well as a filename:
 </p>
 
 <pre class="indented">
-(with-sound (:output (make-vector 44100 0.0 #t)) (fm-violin 0 1 440 .1))
+(with-sound (:output (make-float-vector 44100 0.0)) (fm-violin 0 1 440 .1))
 </pre>
 
 
@@ -11971,7 +11971,7 @@ an upward ramp and a downward ramp, then zips them together:
 
 <pre class="indented">
 (define (ramp-test)
-  (let ((data (make-vector 10000 0.0 #t)))
+  (let ((data (make-float-vector 10000 0.0)))
     (<a class=quiet href="extsnd.html#newsound">new-sound</a> "new-0.snd")
     (do ((i 0 (+ i 1))) ((= i 10000)) 
       (set! (data i) (* i .0001)))

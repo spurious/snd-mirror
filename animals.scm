@@ -1445,7 +1445,7 @@
   ;; rocky 31 1
   ;;  (an experiment with wave-train in place of pulsed env)
   (let* ((wave-len 256)
-	 (pulse (let ((v (make-vector wave-len 0.0 #t))
+	 (pulse (let ((v (make-float-vector wave-len 0.0))
 		      (pulse-ampf (make-env '(0.000 0.000 0.063 0.312 0.277 0.937 0.405 1.000 0.617 0.696 0.929 0.146 2.000 0.000) :length wave-len)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i wave-len))
@@ -1860,7 +1860,7 @@
 	  (pulse-samps (seconds->samples pulse-dur))
 	  (pulse-sep (seconds->samples pulse-dur))
 	  (pulses 0)
-	  (obank (make-oscil-bank freqs (make-vector 7 0.0 #t) amps)))
+	  (obank (make-oscil-bank freqs (make-float-vector 7 0.0) amps)))
       (do ((i start (+ i pulse-sep)))
 	  ((>= i stop))
 	(let ((pulse-stop (+ i pulse-samps)))
@@ -3636,7 +3636,7 @@
 	  (initial-ampf (make-env '(0 0 1 1 10 1 11 0) :duration initial-dur :scaler (* amp initial-amp)))
 	  (initial-gen (make-oscil initial-pitch))
 	  
-	  (buzz-frq-table (let ((v (make-vector buzz-size 0.0 #t))
+	  (buzz-frq-table (let ((v (make-float-vector buzz-size 0.0))
 				(bfrqf (make-env (if gliss-up 
 						     (list 0 buzz-low .5 buzz-mid 1 buzz-high)
 						     (list 0 buzz-high .5 buzz-mid 1 buzz-low))
@@ -3646,7 +3646,7 @@
 				((= i buzz-size))
 			      (float-vector-set! v i (env bfrqf)))
 			    v))
-	  (buzz-amp-table (let ((v (make-vector buzz-size 0.0 #t))
+	  (buzz-amp-table (let ((v (make-float-vector buzz-size 0.0))
 				(bampf (make-env (if gliss-up
 						     '(0 0 1 1 2.5 .7 3 0 3.5 0)
 						     '(0 0 .5 1 2 1 3 0 3.5 0))
@@ -4137,7 +4137,7 @@
 				  0.794 0.510 0.831 0.510 0.909 0.494 1.000 0.499)
 			  :duration bump-dur :offset -0.5)))
 
-      (let ((bump-wave (make-vector bump-samps 0.0 #t)))
+      (let ((bump-wave (make-float-vector bump-samps 0.0)))
 	(do ((i 0 (+ i 1)))
 	    ((= i bump-samps))
 	  (float-vector-set! bump-wave i (env bump)))
@@ -4303,7 +4303,7 @@
   (if (and (positive? n)
 	   (< n 8192))
       (let ((lst ())
-	    (total (polynomial (make-vector n 1.0 #t) r)))
+	    (total (polynomial (make-float-vector n 1.0) r)))
 	(set! scl (/ scl total))
 	(do ((i 0 (+ i 1)))
 	    ((= i n) (reverse lst))
@@ -7300,9 +7300,9 @@
       (set! (ampfs 4) (make-env '(0.000 0.000 0.159 0.995 0.314 0.997 0.598 0.000 1.000 0.000)
 				:duration dur :scaler .01))
       
-      (let ((frqs (make-vector 5 0.0 #t))
-	    (amps (make-vector 5 0.0 #t)))
-	(let ((obank (make-oscil-bank frqs (make-vector 5 0.0 #t) amps)))
+      (let ((frqs (make-float-vector 5 0.0))
+	    (amps (make-float-vector 5 0.0)))
+	(let ((obank (make-oscil-bank frqs (make-float-vector 5 0.0) amps)))
 	  (do ((i start (+ i 1)))
 	      ((= i stop))
 	    (let ((frq (env frqf)))

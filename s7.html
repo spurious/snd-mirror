@@ -1961,8 +1961,8 @@ vector-dimensions returns a list of the dimensions.
 <p>make-vector also takes an optional fourth argument.  If it is #t, and the initial-value
 is either an integer or a real, make-vector produces a homogenous vector, a vector that
 can only hold elements of the same type as the initial value (either s7_Int or s7_Double
-internally).  Homogenous vectors are mostly useful in conjunction with C code.  Five
-homogenous float vector functions are currently built-in:
+internally).  Homogenous vectors are mostly useful in conjunction with C code.  Eight
+homogenous vector functions are currently built-in:
 </p>
 
 <pre class="indented">
@@ -1971,6 +1971,10 @@ homogenous float vector functions are currently built-in:
 (<em class=def>make-float-vector</em> len (init 0.0))
 (<em class=def>float-vector-ref</em> obj . indices)
 (<em class=def>float-vector-set!</em> obj indices[...] value)
+
+(<em class=def id="intvectorp">int-vector?</em> obj)
+(<em class=def id="intvector">int-vector</em> . args)
+(<em class=def id="makeintvector">make-int-vector</em> len (init 0))
 </pre>
 
 <p>To access a vector's elements with different dimensions than the original had, use 
