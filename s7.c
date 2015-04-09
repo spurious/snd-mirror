@@ -557,7 +557,11 @@ typedef struct s7_cell {
     } fnc;
 
     struct {                           /* pairs */
-      s7_pointer car, cdr, ecdr, fcdr;
+      s7_pointer car, cdr, ecdr;
+      union {
+	s7_pointer fcdr;               /* this is to make MS C++ happy */
+	const char *fstr;
+      } fc;
       unsigned int line;
       union {
 	struct {
@@ -1508,8 +1512,8 @@ static void init_types(void)
 #if (!DEBUGGING)
   #define ecdr(p)                     ((p)->object.cons.ecdr)
   #define set_ecdr(p, x)              (p)->object.cons.ecdr = x
-  #define fcdr(p)                     ((p)->object.cons.fcdr)
-  #define set_fcdr(p, x)              (p)->object.cons.fcdr = x
+  #define fcdr(p)                     ((p)->object.cons.fc.fcdr)
+  #define set_fcdr(p, x)              (p)->object.cons.fc.fcdr = x
   #define gcdr(p)                     ((p)->object.ext_cons.gcdr)
   #define set_gcdr(p, x)              do {(p)->object.ext_cons.gcdr = x; typeflag(p) &= ~(T_OPTIMIZED | T_LINE_NUMBER);} while (0)
 #else
@@ -1543,13 +1547,13 @@ static s7_pointer set_ecdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const ch
 static s7_pointer fcdr_1(s7_scheme *sc, s7_pointer p, const char *func, int line)
 {
   if (!fcdr_is_set(p))
-    fprintf(stderr, "ref unset fcdr %s[%d]: %p fcdr: %p\n", func, line, p, p->object.cons.fcdr);
-  return(p->object.cons.fcdr);
+    fprintf(stderr, "ref unset fcdr %s[%d]: %p fcdr: %p\n", func, line, p, p->object.cons.fc.fcdr);
+  return(p->object.cons.fc.fcdr);
 }
 
 static void set_fcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *func, int line)
 {
-  p->object.cons.fcdr = x;
+  p->object.cons.fc.fcdr = x;
   set_fcdr_is_set(p);
 }
 
@@ -1631,7 +1635,7 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define pair_line_number(p)           (p)->object.cons.line
 #define pair_raw_hash(p)              (p)->object.cons.line
 #define pair_raw_len(p)               (p)->object.cons.dat.op
-#define pair_raw_name(p)              (p)->object.cons.fcdr
+#define pair_raw_name(p)              (p)->object.cons.fc.fstr
 
 #define is_string(p)                  (type(p) == T_STRING)
 #define string_value(p)               (p)->object.string.svalue
@@ -2015,9 +2019,9 @@ static void set_print_name(s7_pointer p, const char *name, int len)
 #define make_real(Sc, X)                s7_make_real(Sc, X)
 #define remake_real(Sc, R, X)           s7_remake_real(Sc, R, X)
 #define make_complex(Sc, R, I)          s7_make_complex(Sc, R, I)
-#define real_to_double(Sc, X, Caller)   s7_number_to_real_with_caller(Sc, X)
+#define real_to_double(Sc, X, Caller)   s7_number_to_real_with_caller(Sc, X, Caller)
 #define rational_to_double(Sc, X)       s7_number_to_real(Sc, X)
-#define number_to_double(Sc, X, Caller) s7_number_to_real_with_caller(Sc, X)
+#define number_to_double(Sc, X, Caller) s7_number_to_real_with_caller(Sc, X, Caller)
 #endif
 
 
@@ -2134,7 +2138,7 @@ static bool safe_strcmp(const char *s1, const char *s2)
 }
 
 
-static bool local_strncmp(const char *s1, const char *s2, int n)
+static bool local_strncmp(const char *s1, const char *s2, unsigned int n)
 {
   if (n >= 4)
     {
@@ -4559,7 +4563,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
   vector_element(sc->symbol_table, location) = p;
   pair_raw_hash(p) = hash;
   pair_raw_len(p) = len;
-  pair_raw_name(p) = (s7_pointer)string_value(str);
+  pair_raw_name(p) = string_value(str);
   return(x);
 }
 
@@ -4569,7 +4573,7 @@ static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, uns
   s7_pointer x;
   for (x = vector_element(sc->symbol_table, location); is_not_null(x); x = cdr(x))
     if ((hash == pair_raw_hash(x)) &&
-	(strings_are_equal(name, (const char *)(pair_raw_name(x)))))
+	(strings_are_equal(name, pair_raw_name(x))))
       return(car(x));
   return(sc->NIL);
 }
@@ -4650,7 +4654,7 @@ static s7_pointer make_symbol_with_length(s7_scheme *sc, const char *name, unsig
   for (x = vector_element(sc->symbol_table, location); is_pair(x); x = cdr(x))
     if ((hash == pair_raw_hash(x)) &&
 	(len == pair_raw_len(x)) &&
-	(strings_are_equal_with_length(name, (const char *)(pair_raw_name(x)), len))) /* length here because name might not be null-terminated */
+	(strings_are_equal_with_length(name, pair_raw_name(x), len))) /* length here because name might not be null-terminated */
       return(car(x));
 
   return(new_symbol(sc, name, len, hash, location));
@@ -4820,7 +4824,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   vector_element(sc->symbol_table, location) = stc;
   pair_raw_hash(stc) = hash;
   pair_raw_len(stc) = string_length(str);
-  pair_raw_name(stc) = (s7_pointer)string_value(str);
+  pair_raw_name(stc) = string_value(str);
 
   add_gensym(sc, x);
   return(x);
@@ -24897,9 +24901,11 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 		}
 	      port_write_string(port)(sc, ")))) ", 5, port);
 	    }
-	  else plen = snprintf(buf, 128, "%lld))) ", vector_length(vect));
-	  port_write_string(port)(sc, buf, plen, port);
-
+	  else 
+	    {
+	      plen = snprintf(buf, 128, "%lld))) ", vector_length(vect));
+	      port_write_string(port)(sc, buf, plen, port);
+	    }
 	  if (shared_ref(ci, vect) < 0)
 	    {
 	      plen = snprintf(buf, 128, "(set! {%d} {v}) ", -shared_ref(ci, vect));
@@ -25498,7 +25504,7 @@ static bool slot_memq(s7_pointer symbol, s7_pointer symbols)
   s7_pointer x;
   for (x = symbols; is_pair(x); x = cdr(x))
     if (slot_symbol(x) == symbol)
-      return(x);
+      return(true);
   return(false);
 }
 
@@ -25509,7 +25515,7 @@ static bool arg_memq(s7_pointer symbol, s7_pointer args)
     if ((car(x) == symbol) ||
 	((is_pair(car(x))) &&
 	 (caar(x) == symbol)))
-      return(x);
+      return(true);
   return(false);
 }
 
@@ -26660,7 +26666,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 
   for (i = 0; i < str_len; i++)
     {
-      if (str[i] == '~')
+      if ((unsigned char)(str[i]) == (unsigned char)'~') /* was does MS C want? */
 	{
 	  if (i == str_len - 1)
 	    return(format_error(sc, "control string ends in tilde", str, args, fdat));
@@ -34516,12 +34522,12 @@ static void define_function_star_1(s7_scheme *sc, const char *name, s7_function 
 
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc)
 {
-  return(define_function_star_1(sc, name, fnc, arglist, doc, false));
+  define_function_star_1(sc, name, fnc, arglist, doc, false);
 }
 
 void s7_define_safe_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc)
 {
-  return(define_function_star_1(sc, name, fnc, arglist, doc, true));
+  define_function_star_1(sc, name, fnc, arglist, doc, true);
 }
 
 
@@ -67691,6 +67697,10 @@ s7_scheme *s7_init(void)
 
 /* -------------------------------- repl -------------------------------- */
 
+#ifndef USE_SND
+  #define USE_SND 0
+#endif
+
 #if (WITH_MAIN && (!USE_SND))
 
 int main(int argc, char **argv)
@@ -67740,10 +67750,10 @@ int main(int argc, char **argv)
  *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
- * cyclic-seq in rest of full-*
+ * cyclic-seq in stuff.scm
  *
  * need to check new openGL for API changes (GL_VERSION?)
- *   test/Mesa-10.3.1/include/GL/glext.h|gl.h (current version appears to be 7.6)
+ *   test/Mesa-10.3/include/GL/glext.h|gl.h (current version appears to be 7.6)
  *   how much of glext.h is needed?  None, I think.  No gl.h diffs that matter.
  *   GLU primarily for unproject (HAVE_GLU snd-chn) -- where is this in the new GL? -- in a separate package libglu
  *     also gldata has GLU ints
@@ -67751,7 +67761,7 @@ int main(int argc, char **argv)
  *       [snd-axis], [snd], snd-chn, [snd-draw], [snd-data], snd-motif, [snd-print], [snd-xen, snd-help]
  *     [snd-help glx_version -- needs the gdkglcontext pointer to get the version number] (also snd-1.h)
  *   check out the GL support in gtk 3.16 -- this looks straightforward, snd-chn.c
- *     gtk+-3.15.1/gtk/gtkglarea.c, gtk-demo/glarea.c, tests/gtkgears.c + testglarea.c, docs/reference/gtk/html/GtkGLArea.html
+ *     gtk+-3.15/gtk/gtkglarea.c, gtk-demo/glarea.c, tests/gtkgears.c + testglarea.c, docs/reference/gtk/html/GtkGLArea.html
  *     GdkGLContext -- needs expoxy/gl.h?
  *     snd-axis[405]: gdk_gl_font_use_pango... -- this is not in the gtk/cl code (it's ancient gtkglext stuff)
  * snd-genv needs a lot of gtk3 work
@@ -67793,3 +67803,4 @@ int main(int argc, char **argv)
  *   but added since when? probably better to copy rootlet and compare later
  *   but let_copy et al either simply return rootlet or complain about it
  */
+ 
