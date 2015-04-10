@@ -25026,12 +25026,13 @@ static Xen g_reset_listener_cursor(void)
 
 void clear_listener(void)
 {
-  if ((listener_text) && /* this can be called even when there is no listener */
-      (XmTextGetCursorPosition(listener_text) > 1))
+  if (listener_text)  /* this can be called even when there is no listener */
     {
       dont_check_motion = true;
-      XmTextSetSelection(listener_text, 1, XmTextGetCursorPosition(listener_text), CurrentTime);
+      XmTextSetSelection(listener_text, 0, XmTextGetCursorPosition(listener_text), CurrentTime);
       XmTextRemove(listener_text);
+      XmTextInsert(listener_text, 0, listener_prompt(ss));
+      XmTextShowPosition(listener_text, ss->listener_prompt_length);
       dont_check_motion = false;
     }
 }

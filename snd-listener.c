@@ -185,12 +185,19 @@ static Xen g_listener_prompt(void) {return(C_string_to_Xen_string(listener_promp
 
 static Xen g_set_listener_prompt(Xen val) 
 {
+  char *new_prompt;
   #define H_listener_prompt "(" S_listener_prompt "): the current lisp listener prompt character ('>') "
   Xen_check_type(Xen_is_string(val), val, 1, S_setB S_listener_prompt, "a string"); 
 
   if (listener_prompt(ss)) free(listener_prompt(ss));
-  set_listener_prompt(mus_strdup(Xen_string_to_C_string(val)));
-
+  new_prompt = mus_strdup(Xen_string_to_C_string(val));
+  if (new_prompt == NULL)   /* without this fixup, (set! (listener-prompt) "") can cause a segfault, at least in Motif */
+    {
+      new_prompt = (char *)malloc(sizeof(char));
+      new_prompt[0] = 0;
+    }
+  set_listener_prompt(new_prompt);
+ 
   return(val);
 }
 

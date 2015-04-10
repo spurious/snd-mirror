@@ -67724,7 +67724,6 @@ s7_scheme *s7_init(void)
 
 /* -------------------------------- repl -------------------------------- */
 
-/* idiotic: for MS C */
 #ifndef USE_SND
   #define USE_SND 0
 #endif
@@ -67746,8 +67745,25 @@ int main(int argc, char **argv)
     }
   else 
     {
+#ifndef _MSC_VER
+      /* this is libc dependent */
       s7_load(sc, "repl.scm");
       s7_eval_c_string(sc, "((*repl* 'run))");
+#else
+      /* a minimal repl -- taken from s7.html */
+      while (1)
+	{
+	  char buffer[512];
+	  char response[1024];
+	  fprintf(stdout, "\n> ");
+	  fgets(buffer, 512, stdin);
+	  if ((buffer[0] != '\n') || (strlen(buffer) > 1))
+	    { 
+	      sprintf(response, "(write %s)", buffer);
+	      s7_eval_c_string(sc, response); 
+	    }
+	}
+#endif
     }
   return(0);
 }
