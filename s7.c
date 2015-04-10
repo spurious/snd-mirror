@@ -1501,6 +1501,7 @@ static void init_types(void)
   #define make_boolean(sc, Val)       (((Val) & 0xff) ? sc->T : sc->F)
   #endif
 #else
+  #define MS_WINDOWS 0
   #define make_boolean(sc, Val)       ((Val) ? sc->T : sc->F)
 #endif
 
@@ -5267,6 +5268,14 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
 	  s7_remove_from_heap(sc, closure_body(value));
 	}
 
+      /* first look for existing slot -- this is not always checked before calling s7_make_slot */
+      if (is_slot(global_slot(symbol)))
+	{
+	  slot = global_slot(symbol);
+	  slot_set_value(slot, value);
+	  return(slot);
+	}
+
       ge = sc->rootlet;
       slot = permanent_slot(symbol, value);
       vector_element(ge, sc->rootlet_entries++) = slot;
@@ -5278,8 +5287,8 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
 	  for (i = sc->rootlet_entries; i < vector_length(ge); i++)
 	    vector_element(ge, i) = sc->NIL;
 	}
-
       global_slot(symbol) = slot;
+      
       if (symbol_id(symbol) == 0) /* never defined locally? */
 	{
 	  if (initial_slot(symbol) == sc->UNDEFINED)
@@ -24312,7 +24321,7 @@ static s7_pointer make_iterator(s7_scheme *sc, s7_pointer e)
 static s7_pointer g_make_iterator(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_iterator "(make-iterator sequence) returns an iterator object that \
-returns the next value in the sequence each time it is called.  When there are no more pairs, it returns " ITERATOR_END_NAME "."
+returns the next value in the sequence each time it is called.  When it reaches the end, it returns " ITERATOR_END_NAME "."
 
   return(make_iterator(sc, car(args)));
 }
@@ -25966,7 +25975,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
     case T_C_POINTER:
       if (use_write == USE_READABLE_WRITE)
 	{
-#if (SIZEOF_VOID_P == 4)
+#if ((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4))
 	  if ((long)raw_pointer(obj) < 2) /* 0 = NULL is the main case, -1 is used in some libraries */
 	    nlen = snprintf(buf, 64, "(c-pointer %ld)", (long)raw_pointer(obj));
 #else
@@ -30375,7 +30384,7 @@ static s7_pointer float_vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc)
 }
 
 
-#if (SIZEOF_VOID_P == 4)
+#if ((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4))
   #define MAX_VECTOR_LENGTH (1LL << 30)
 #else
   #define MAX_VECTOR_LENGTH (1LL << 40)
@@ -52265,8 +52274,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      }
 		  }
 	      }
-	    end = cddr(sc->code);
-	    /* the multi-var null body case never happens */
+	    /* the multi-var null body case never happens? -- well, maybe I should support it after all */
+	    else
+	      {
+		while (true)
+		  {
+		    for (slot = let_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
+		      if (is_pair(slot_expression(slot)))
+			slot_pending_value(slot) = ((s7_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)));
+		    for (slot = let_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
+		      if (is_pair(slot_expression(slot)))
+			slot_set_value(slot, slot_pending_value(slot));
+		    /* no body */
+		    if (is_true(sc, fend(sc, end)))
+		      {
+			sc->code = cdadr(sc->code);
+			goto DO_END_CLAUSES;
+		      }
+		  }
+	      }
+	    /* end = cddr(sc->code); */
 	  }
 	push_stack_no_args(sc, OP_DO_ALL_X_STEP, sc->code);
 	sc->code = end;
@@ -57948,7 +57975,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      set_local(sc->code);
 	      /* so funchecked is always local already -- perhaps reset below? */
 	    }
-	  else s7_make_slot(sc, sc->envir, sc->code, new_func);
+	  else s7_make_slot(sc, sc->envir, sc->code, new_func); 
 	  sc->value = new_func; /* 25-Jul-14 so define returns the value not the name */
 	}
       else
@@ -67697,8 +67724,12 @@ s7_scheme *s7_init(void)
 
 /* -------------------------------- repl -------------------------------- */
 
+/* idiotic: for MS C */
 #ifndef USE_SND
   #define USE_SND 0
+#endif
+#ifndef WITH_MAIN
+  #define WITH_MAIN 0
 #endif
 
 #if (WITH_MAIN && (!USE_SND))
@@ -67750,7 +67781,7 @@ int main(int argc, char **argv)
  *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
- * cyclic-seq in stuff.scm
+ * cyclic-seq in stuff.scm, but current code is really clumsy
  *
  * need to check new openGL for API changes (GL_VERSION?)
  *   test/Mesa-10.3/include/GL/glext.h|gl.h (current version appears to be 7.6)
@@ -67788,19 +67819,30 @@ int main(int argc, char **argv)
  * (define-constant name simple-value) -> define-expansion? (pi replaced by reader)
  *   exported s7_define_expansion, but define-expansion assumes it's dealing in macros
  *   reader could see T_IMMUTABLE?
- * maybe remove the homogenous arg to make-vector? or enforce it?
- *
- * env readable obj->str tests, then example for repl top-level-let
- * so (define (save-repl) (call-with-output-file "save.repl" (lambda (p) (format p "~W" (*repl* 'top-level-let)))))
- *    (define (restore-repl) (set! (*repl* 'top-level-let) (load "save.repl")))
- *   but here we need a way to get changes to rootlet, not the whole thing
  * objstr of lambda leaves out the enclosing let -- can we handle (define x (let ...)) specially?
- * does *s7* have default float print settings? no: float_format_g and WRITE_REAL_PRECISION
- *    *pretty-print-float-format* in write: "~,4f" etc [but internal defaults here seem to be "~,16g"?]
- * why unlet table? Can't we scan the symbol-table for initial_slot != global|local_slot ?
- *   also this table restricts (unlet) to s7's built-ins
- * maybe arg to unlet to say -- include anything in rootlet that has been added or changed?
- *   but added since when? probably better to copy rootlet and compare later
- *   but let_copy et al either simply return rootlet or complain about it
+ 
+  (define (save-repl) 
+    (call-with-output-file "save.repl" 
+      (lambda (p) 
+        (format p "~W" (*repl* 'top-level-let)))))
+  (define (restore-repl) 
+    (set! (*repl* 'top-level-let) (load "save.repl")))  
+  but  we need a way to get changes to rootlet, not the whole thing
+
+ (define (rootlet-changes start) ; set start to (length (rootlet)) whenever you're ready to go, then later
+  (let ((iter (make-iterator (rootlet))))
+    (do ((i 0 (+ i 1)))
+	((= i start))
+      (iterate iter)) ; we need a start position for these iterators! (make-iterator obj start)? -- too ugly
+    (do ((data (iterate iter) (iterate iter)))
+	((not (pair? data)))
+      (if (not (equal? (cdr data) (eval-string (format #f "#_~A" (car data)))))
+	  (format *stderr* "~A from ~A to ~A~%"
+		  (car data)
+		  (eval-string (format #f "#_~A" (car data))) ; also need functional read access to #_ -> initial_slot (symbol->value sym :initial)?
+		  (cdr data))                                 ; or fix unlet so that (with-let (unlet) symbol) does the right thing
+	  (format *stderr* "~A: ~A~%" 
+		  (car data)
+		  (cdr data))))))
  */
  

@@ -55,23 +55,27 @@
     (read-line))
   ;; read about 500 lines and store in a hash table as (func . timing)
   (let ((h (make-hash-table)))
-    (do ((i 0 (+ i 1)))
-	((= i 500))
-      (let ((line (read-line)))
-	(let ((len (length line)))
-	  (do ((k 0 (+ k 1)))
-	      ((or (= k len)
-		   (not (char-whitespace? (line k))))
-	       (if (< k len)
-		   (let ((end (char-position #\space line k)))
-		     (if end
-			 (let ((num (string->number-ignoring-commas (substring line k end))))
-			   (let ((func-end (char-position #\space line (+ end 2))))
-			     (if func-end
-				 (let ((func (string->symbol (substring line (+ end 1) func-end))))
-				   (hash-table-set! h func num)))))))))))))
+    (call-with-exit
+     (lambda (quit)
+       (do ((i 0 (+ i 1)))
+	   ((= i 500))
+	 (let ((line (read-line)))
+	   (if (eof-object? line)
+	       (quit))
+	   (let ((len (length line)))
+	     (do ((k 0 (+ k 1)))
+		 ((or (= k len)
+		      (not (char-whitespace? (line k))))
+		  (if (< k len)
+		      (let ((end (char-position #\space line k)))
+			(if end
+			    (let ((num (string->number-ignoring-commas (substring line k end))))
+			      (let ((func-end (char-position #\space line (+ end 2))))
+				(if func-end
+				    (let ((func (string->symbol (substring line (+ end 1) func-end))))
+				      (hash-table-set! h func num)))))))))))))))
     h))
-
+    
 
 (define (get-overheads file)
   (with-input-from-file file

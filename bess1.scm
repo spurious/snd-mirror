@@ -51,7 +51,7 @@
 	(do ((i 0 (+ i 1)))
 	    ((= i *clm-rt-bufsize*))
 	  (set! (data i) (func)))
-	(mus-audio-write *output* (copy data (make-vector (list 1 *clm-rt-bufsize*) 0.0 #t)) *clm-rt-bufsize*)
+	(mus-audio-write *output* (copy data (make-float-vector (list 1 *clm-rt-bufsize*) 0.0)) *clm-rt-bufsize*)
 	#f)
       (begin
 	(mus-audio-close *output*)

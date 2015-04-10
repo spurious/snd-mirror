@@ -2378,11 +2378,6 @@ memo-fib
 </pre>
 <p>But of course, in real code no-one would ever use recursion to get the Fibonacci numbers!
 </p>
-<pre class="indented">
-(define (glib-fib n)
-  (let ((phi (/ (+ 1 (sqrt 5)) 2)))
-    (floor (real-part (/ (- (expt phi n) (expt (- 1 phi) n)) (sqrt 5))))))
-</pre>
 </div>
 
 </blockquote>
