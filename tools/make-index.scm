@@ -841,12 +841,14 @@
     (list 'snd-gtk-effects-utils.scm "gtk-effects-utils.scm")
     (list 'snd-snd-gl.scm "snd-gl.scm")
     (list 'snd-snd-gtk.scm "snd-gtk.scm")
-    (list 'snd-sndlib-ws.scm "sndlib-ws.scm")
     (list 'snd-snd-motif.scm "snd-motif.scm")
     (list 'snd-special-menu.scm "special-menu.scm")
     (list 'snd-marks-menu.scm "marks-menu.scm")
     (list 'snd-misc.scm "misc.scm")
     (list 'snd-xm-enved.scm "xm-enved.scm")
+
+    (list 'snd-sndlib-ws.scm "sndlib-ws.scm")
+    (list 'sndlib-ws.scm "sndlib-ws.scm") ; this is what all the Snd files use
 
     ))
 

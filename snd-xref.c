@@ -1754,7 +1754,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11330] = {
+static const char *snd_names[11320] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -4227,7 +4227,6 @@ static const char *snd_names[11330] = {
     "formant-filter", "examp.scm",
     "formants", "examp.scm",
     "four-spotted-tree-cricket", "animals.scm",
-    "fourth", "dlocsig.scm",
     "fourth", "stuff.scm",
     "fox-sparrow", "animals.scm",
     "fp", "examp.scm",
@@ -6288,7 +6287,6 @@ static const char *snd_names[11330] = {
     "make-bezier-1", "musglyphs.scm",
     "make-bezier-path", "dlocsig.scm",
     "make-biquad", "strad.scm",
-    "make-biquad", "dsp.scm",
     "make-birds", "bird.scm",
     "make-blackman", "generators.scm",
     "make-bowtable", "prc95.scm",
@@ -6526,7 +6524,6 @@ static const char *snd_names[11330] = {
     "multiply-envelopes", "env.scm",
     "music-font", "musglyphs.scm",
     "mvmfilt", "maxf.scm",
-    "n-choose-k", "numerics.scm",
     "n-choose-k", "stuff.scm",
     "n1cos", "generators.scm",
     "n1cos?", "generators.scm",
@@ -6587,7 +6584,6 @@ static const char *snd_names[11330] = {
     "nrcos-set-scaler", "generators.scm",
     "nrcos?", "generators.scm",
     "nrev", "clm-ins.scm",
-    "nrev", "nrev.scm",
     "nrsin?", "generators.scm",
     "nrssb", "generators.scm",
     "nrssb-interp", "generators.scm",
@@ -6822,7 +6818,6 @@ static const char *snd_names[11330] = {
     "region-rms", "examp.scm",
     "remove", "libc.scm",
     "remove-clicks", "examp.scm",
-    "remove-if", "extensions.scm",
     "remove-if", "stuff.scm",
     "remove-pops", "clean.scm",
     "remove-single-sample-clicks", "clean.scm",
@@ -7108,6 +7103,7 @@ static const char *snd_names[11330] = {
     "snddiff", "snddiff.scm",
     "snddiff-1", "snddiff.scm",
     "snddiff-2", "snddiff.scm",
+    "sndlib-ws.scm", "sndlib-ws.scm",
     "sndwarp", "sndwarp.scm",
     "snowy-tree-cricket", "animals.scm",
     "socket", "libc.scm",
@@ -7256,7 +7252,6 @@ static const char *snd_names[11330] = {
     "texas-toad", "animals.scm",
     "textual-port?", "r7rs.scm",
     "tgamma", "libm.scm",
-    "third", "dlocsig.scm",
     "third", "stuff.scm",
     "time", "libc.scm",
     "time.make", "libc.scm",
@@ -7424,7 +7419,7 @@ static const char *snd_names[11330] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5665);
+  s7_autoload_set_names(sc, snd_names, 5660);
 }
 #endif
 

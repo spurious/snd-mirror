@@ -1110,17 +1110,13 @@ as expected, but there will not be any "unquote" or "unquote-splicing" in the re
 &gt; (let (' 1) quote)
 1
 </pre>
-<p>but that translation is so ingrained in lisp (it even works in Clisp) 
+<p>but that translation is so ingrained in lisp
 that I'm reluctant to change it.  The two unquote names, on the
 other hand, seem unnecessary.
 </p>
 </div>
 </details>
 
-
-<details>
-<summary class="indented">miraculous immaculos</summary>
-<div class="indented">
 
 <p>s7 macros are not hygienic.  For example,
 </p>
@@ -1227,7 +1223,6 @@ or #_&lt;name&gt;.  That is, #_+ is a reader macro for <code>(with-let (unlet) +
 	*#readers*))
 </pre>
 
-<br>
 <p>
 So, now we have only the variable capture problem ('a' has been captured in the preceding examples).
 This is the only thing that the gigantic "hygienic macro" systems actually deal with:
@@ -1252,12 +1247,47 @@ mac
 13
 </pre>
 
-<p>If gensym worries you because it's creating a symbol on each macro invocation,
-use a closure as in the bacro example above.
-gensym can make the macro code
-unreadable in more complex cases.  It is possible to
-write a macro to do the gensymification for us, but in s7 it is easier to
-use the environment functions.
+<p>But in s7, the simplest approach uses environments.  You have complete
+control over the environment at any point:
+</p>
+
+<pre>
+(define-macro (mac b)
+  `(with-let (inlet 'b ,b)
+     (let ((a 12))
+       (+ a b))))
+
+&gt; (let ((a 1) (+ *)) (mac a))
+13
+</pre>
+
+<p>
+If you want the macro's expanded result
+to be evaluated in its definition environment:
+</p>
+<pre>
+(let ((a 3))
+  (define-macro (mac b)
+    `(with-let (inlet (cons 'b ,b) (funclet mac))
+       (+ a b)))       ; definition-time "a", call-time "b"
+  (define-macro (mac-1 b)
+    `(+ a ,b))         ; call-time "a" and "b"
+  (let ((a 32))
+    (list (mac 1) 
+	  (mac-1 1))))
+</pre>
+
+<p>So s7 does not have syntax-rules because it is not needed.
+</p>
+
+
+
+<details>
+<summary class="indented">miraculous immaculos</summary>
+<div class="indented">
+
+<p>
+It is possible to write a macro that creates hygienic macros.
 The funclet of a macro is the environment at its definition time, just like a function.
 By wrapping the macro body in with-let, we make sure anything in that body reflects 
 the definition environment, not the calling environment.  We then augment that environment
@@ -1342,38 +1372,6 @@ use a trailing null instead (mimicking apply* in some ancient lisps):
 <pre>
 &gt; (apply let '((a 2) (b 3)) '(list + a b) ())
 (+ 2 3)
-</pre>
-
-<br><br>
-
-<p>But why insist on writing macros the old way?
-We can use
-with-let from the start, writing an immaculo directly:
-</p>
-<pre>
-(define-macro (mac b)
-  `(with-let (inlet 'b ,b)
-     (let ((a 12))
-       (+ a b))))
-
-&gt; (let ((a 1) (+ *)) (mac a))
-13
-</pre>
-
-<p>
-If you want the macro's expanded result
-to be evaluated in its definition environment:
-</p>
-<pre>
-(let ((a 3))
-  (define-macro (mac b)
-    `(with-let (inlet (cons 'b ,b) (funclet mac))
-       (+ a b)))       ; definition-time "a", call-time "b"
-  (define-macro (mac-1 b)
-    `(+ a ,b))         ; call-time "a" and "b"
-  (let ((a 32))
-    (list (mac 1) 
-	  (mac-1 1))))
 </pre>
 
 <p>Here's define-immaculo in the new form:
@@ -1467,7 +1465,7 @@ f
 
 <div class="indented">
 
-<p>But we should end on a happy note.  Here is Peter Seibel's wonderful once-only macro:
+<p>Here is Peter Seibel's wonderful once-only macro:
 </p>
 
 <pre class="indented">
@@ -7108,7 +7106,57 @@ int main(int argc, char **argv)
  *
  * you might also need -lgsl -lgslcblas -lfftw3
  */
-</pre></div>
+</pre>
+</div>
+
+<p>If you built libsndlib.so, it is possible to use it directly in the s7 repl:
+</p>
+<pre>
+repl          ; this is a bare s7 running repl.scm via -DWITH_MAIN=1
+loading libc_s7.so
+&gt; (load "/home/bil/test/sndlib/libsndlib.so" (inlet (cons 'init_func 's7_init_sndlib)))
+#t            ; s7_init_sndlib ties all the sndlib functions and variables into s7
+&gt; (load "sndlib-ws.scm")
+tmpnam
+&gt; (load "v.scm")
+fm-violin
+&gt; (with-sound () (fm-violin 0 1 440 .1))
+"test.snd"
+</pre>
+
+<p>You can use autoload to load libsndlib when needed:
+</p>
+
+<pre class="indented">
+(define (find-library name)
+  (if (or (file-exists? name)
+	  (char=? (name 0) #\/))
+      name
+      (call-with-exit
+       (lambda (return)
+	 (for-each
+	  (lambda (path)
+	    (let ((new-name (string-append path "/" name)))
+	      (if (file-exists? new-name)
+		  (return new-name))))
+	  *load-path*)
+	 (let ((libs (getenv "LD_LIBRARY_PATH")) ; colon separated directory names
+	       (start 0))
+	   (do ((colon (char-position #\: libs) (char-position #\: libs start)))
+	       ((or (not colon)
+		    (let ((new-name (string-append (substring libs start colon) "/" name)))
+		      (and (file-exists? new-name)
+			   (return new-name)))))
+	     (set! start (+ colon 1))))
+	 name))))
+
+(<em class=red>autoload</em> 'clm 
+  (lambda (e)
+    (load (find-library "libsndlib.so") (inlet '(init_func . s7_init_sndlib)))
+    (set! *features* (cons 'clm *features*))
+    (with-let (rootlet) (define clm #t))))
+</pre>
+
 
 
 

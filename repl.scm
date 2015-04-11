@@ -103,7 +103,7 @@
 	  
 	  ;; -------- evaluation ---------
 	  (define (badexpr h)               ; *missing-close-paren-hook* function for Enter command
-	    (set! (h 'result) 'incomplete-expr))
+	    (set! (h 'result) 'read-error))
 	  
 	  (define-macro (with-repl-let expr)
 	    ;; for multiline edits, we will use *missing-close-paren-hook* rather than try to parse the input ourselves.
@@ -716,19 +716,23 @@
 			      
 			      ;; we want to add current-line (copied) to the history buffer
 			      ;;   unless it is an on-going edit (missing close paren)
-			      (catch 'incomplete-expr
+			      (catch 'read-error
+
 				(lambda ()
 				  (set! cursor-position len)
 				  (if (or (= chars 1)
 					  (not (= input-fd terminal-fd)))
 				      (display-lines))
 				  (set! (history) (copy current-line))
+				  (set! history-index 0)
+
 				  ;; an experiment to get the newline out if the expression is not missing a close paren
 				  (let ((form (with-input-from-string current-line #_read))) ; not libc's read
 				    (newline *stderr*)
 				    (format *stderr* "~S~%" (set! ** (eval form (*repl* 'top-level-let))))))
+
 				(lambda args
-				  (pop-history)    ; remove last history entry
+				  (pop-history)               ; remove last history entry
 				  (append-newline)
 				  (return))))
 			    
@@ -853,7 +857,7 @@
 		      (lambda ()
 			(newline *stderr*)
 			(tty-reset 0)))
-		
+
 		;; check for dumb terminal
 		(if (or (zero? (isatty terminal-fd))        ; not a terminal -- input from pipe probably
 			(string=? (getenv "TERM") "dumb"))  ; no vt100 codes -- emacs shell for example
@@ -1242,5 +1246,7 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 ;;   maybe (save|restore-top-level): run through let, for each write def?
 ;;   restore-history seems pointless if that's all it does -- save|restore-repl?
 ;; a way to show the available completions when more than one
+;; a way to force newline (to add line to existing multiline expr)
+;; also tcsh I think removes previous matching history entries
 
 *repl*

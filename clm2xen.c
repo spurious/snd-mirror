@@ -21773,6 +21773,7 @@ void Init_sndlib(void)
 #if HAVE_SCHEME
 void s7_init_sndlib(s7_scheme *sc)
 {
+  s7_xen_initialize(sc);
   Init_sndlib();
 }
 #endif

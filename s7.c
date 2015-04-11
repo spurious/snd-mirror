@@ -847,7 +847,7 @@ struct s7_scheme {
    */
   s7_pointer MINUS, MULTIPLY, ADD, DIVIDE, LT, LEQ, EQ, GT, GEQ, ABS, ACOS, ACOSH;
   s7_pointer ANGLE, APPEND, APPLY, IS_ARITABLE, ARITY, ASH, ASIN, ASINH, ASSOC, ASSQ, ASSV, ATAN, ATANH;
-  s7_pointer SUBLET, VARLET, CUTLET, AUTOLOAD, AUTOLOADER, IS_BOOLEAN, BYTEVECTOR, IS_BYTEVECTOR, CAAAAR, CAAADR, CAAAR, CAADAR, CAADDR;
+  s7_pointer SUBLET, VARLET, UNLET, CUTLET, AUTOLOAD, AUTOLOADER, IS_BOOLEAN, BYTEVECTOR, IS_BYTEVECTOR, CAAAAR, CAAADR, CAAAR, CAADAR, CAADDR;
   s7_pointer CAADR, CAAR, CADAAR, CADADR, CADAR, CADDAR, CADDDR, CADDR, CADR, CALL_CC, CALL_WITH_CURRENT_CONTINUATION, CALL_WITH_EXIT, COVERLET;
   s7_pointer CALL_WITH_INPUT_FILE, CALL_WITH_INPUT_STRING, CALL_WITH_OUTPUT_FILE, CALL_WITH_OUTPUT_STRING, CAR, CATCH, CDAAAR;
   s7_pointer CDAADR, CDAAR, CDADAR, CDADDR, CDADR, CDAR, CDDAAR, CDDADR, CDDAR, CDDDAR, CDDDDR, CDDDR, CDDR, CDR, CEILING;
@@ -6359,7 +6359,11 @@ symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
   if (is_not_null(cdr(args)))
     {
       s7_pointer local_env;
+
       local_env = cadr(args);
+      if (local_env == sc->UNLET)
+	return((is_slot(initial_slot(sym))) ? slot_value(initial_slot(sym)) : sc->UNDEFINED);
+
       if (!is_let(local_env))
 	{
 	  check_method(sc, local_env, sc->SYMBOL_TO_VALUE, args);
@@ -23531,7 +23535,7 @@ The symbols refer to the argument to \"provide\"."
 	      else
 		{
 		  sc->temp5 = sc->NIL;
-		  return(s7_error(sc, sc->READ_ERROR, list_2(sc, make_string_wrapper(sc, "require: no autoload info for ~S"), car(p)))); /* read-error?? */
+		  return(s7_error(sc, make_symbol(sc, "autoload-error"), list_2(sc, make_string_wrapper(sc, "require: no autoload info for ~S"), car(p))));
 		}
 	    }
 	}
@@ -31513,6 +31517,7 @@ static s7_pointer g_direct_vector_ref_gs(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, vec;
   s7_Int index;
+
   vec = ecdr(args);
   x = find_symbol_checked(sc, cadr(args));
   if (!s7_is_integer(x))
@@ -66040,6 +66045,7 @@ static void init_s7_let(s7_scheme *sc)
   sc->hash_table_float_epsilon_symbol =      s7_make_symbol(sc, "hash-table-float-epsilon");
   sc->print_length_symbol =                  s7_make_symbol(sc, "print-length");
   sc->bignum_precision_symbol =              s7_make_symbol(sc, "bignum-precision");
+  /* default_float_format is tricky (%.*[L][g], sc not passed to make_permanent_real, number_to_string_base_10, etc), and doesn't seem very useful */
 }
 
 static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
@@ -66950,7 +66956,7 @@ s7_scheme *s7_init(void)
   sc->OUTLET =                s7_define_safe_function(sc, "outlet",                  g_outlet,                 1, 0, false, H_outlet);
                               s7_define_safe_function(sc, "rootlet",                 g_rootlet,                0, 0, false, H_rootlet);
                               s7_define_safe_function(sc, "curlet",                  g_curlet,                 0, 0, false, H_curlet);
-                              s7_define_constant_function(sc, "unlet",               g_unlet,                  0, 0, false, H_unlet);
+  sc->UNLET =                 s7_define_constant_function(sc, "unlet",               g_unlet,                  0, 0, false, H_unlet);
   sc->SUBLET =                s7_define_safe_function(sc, "sublet",                  g_sublet,                 1, 0, true,  H_sublet);
   sc->VARLET =                s7_define_function(sc,      "varlet",                  g_varlet,                 1, 0, true,  H_varlet);
   sc->CUTLET =                s7_define_function(sc,      "cutlet",                  g_cutlet,                 1, 0, true,  H_cutlet);
@@ -67820,22 +67826,20 @@ int main(int argc, char **argv)
  *   (lambda (x) (and (real? x) (not rational? x))) -- i.e. want it to remain anonymous
  *   but for lint, we'd want the intersection of arg-types and func-types (logand a b) or (logand (lognot a) b)
  *
- * checkpt via cell: recast s7_pointer as hnum?(+ permanents), (op)stack+current-pos+heap+symbols (presented as continuation?)
- *   gdbm needs something faster than eval-string and object->string!
- *   lmdb/gdbm -> let + s7 threads (need full example of this in s7.html)
- *   for let-ref, actually need fallback before checking outlet (currently it follows)
- *
  * the old mus-audio-* code needs to use play or something, especially bess*
  * xg/gl/xm should be like libc.scm in the scheme snd case
  * can reuse of string port via get-output-string drop the final 0?
  * define-constant func gives a way to avoid closure_is_ok in all cases, so maybe move the
  *   arg checks into the main op?  also (define-constant abs abs) -- can this do the same in op_safe_c cases?
- * need s7test for direct_vector_ref_gs
  * gcc5 jit to replace clm2xen?
  * (define-constant name simple-value) -> define-expansion? (pi replaced by reader)
  *   exported s7_define_expansion, but define-expansion assumes it's dealing in macros
  *   reader could see T_IMMUTABLE?
- * objstr of lambda leaves out the enclosing let -- can we handle (define x (let ...)) specially?
+ *
+ * objstr of lambda leaves out the enclosing let 
+ *   for each procedure, follow outlet(funclet) until you get back to curlet,
+ *   output the entire chain as the func's closure (see below).  Also need to load files
+ *   to match *features*, get possible top-level-let and rootlet-changes, see ~/old/checkpt.scm
  
   (define (save-repl) 
     (call-with-output-file "save.repl" 
@@ -67852,13 +67856,45 @@ int main(int argc, char **argv)
       (iterate iter)) ; we need a start position for these iterators! (make-iterator obj start)? -- too ugly
     (do ((data (iterate iter) (iterate iter)))
 	((not (pair? data)))
-      (if (not (equal? (cdr data) (eval-string (format #f "#_~A" (car data)))))
+      (if (not (equal? (cdr data) (symbol->value (car data) 'unlet)))
 	  (format *stderr* "~A from ~A to ~A~%"
 		  (car data)
-		  (eval-string (format #f "#_~A" (car data))) ; also need functional read access to #_ -> initial_slot (symbol->value sym :initial)?
-		  (cdr data))                                 ; or fix unlet so that (with-let (unlet) symbol) does the right thing
-	  (format *stderr* "~A: ~A~%" 
-		  (car data)
+		  (symbol->value (car data) 'unlet)
+		  (cdr data))                                
+	  (format *stderr* "~A: ~A~%"                        
+		  (car data)                                 
 		  (cdr data))))))
+
+(define (display-let e)
+  (format *stderr* "(inlet")
+  (let ((iter (make-iterator e)))
+    (do ((var (iterate iter) (iterate iter)))
+	((iterator-at-end? iter)
+	 (format *stderr* ")"))
+      (let ((sym (car var))
+	    (val (cdr var)))
+	(if (or (not (procedure? val))
+		(eq? (funclet val) (rootlet)))
+	    (format *stderr* " '~A ~W" sym val)
+	    (let ((fe (outlet (funclet val)))) ; need the whole chain here
+	      (format *stderr* " '~A " sym)
+	      (if (eq? e fe)
+		  (format *stderr* "~W" (procedure-source val))
+		  (begin
+		    (format *stderr* "(let (")
+		    (for-each
+		     (lambda (lv)
+		       (format *stderr* "(~A ~W)" (car lv) (cdr lv)))
+		     (map values fe))
+		    (format *stderr* ") ~S))" (procedure-source val))))))))))
+
+   (let ((a 1)) 
+     (define f2 (let ((b 2)) (lambda (c) (+ a b c)))) 
+     (display-let (curlet)))
+   (inlet 'f2 (let ((b 2)) (lambda (c) (+ a b c)))) 'a 1)
+
+   ;; save old *features*, at restore get diff, is it require or autoload?
+   ;; *features* missing (e.g.) cload.scm, (*autoload* 'cload.scm): "cload.scm"
+   ;; also dac/play in repl/sndlib should call sndplay/aplay? with file name or whatever it can find
  */
  
