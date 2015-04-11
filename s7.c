@@ -67849,7 +67849,7 @@ int main(int argc, char **argv)
     (set! (*repl* 'top-level-let) (load "save.repl")))  
   but  we need a way to get changes to rootlet, not the whole thing
 
- (define (rootlet-changes start) ; set start to (length (rootlet)) whenever you're ready to go, then later
+ (define (rootlet-changes start) ; set start to (length (rootlet)) whenever you're ready to go, then later: (*s7* 'unlet-entries)?
   (let ((iter (make-iterator (rootlet))))
     (do ((i 0 (+ i 1)))
 	((= i start))
@@ -67876,7 +67876,9 @@ int main(int argc, char **argv)
 	(if (or (not (procedure? val))
 		(eq? (funclet val) (rootlet)))
 	    (format *stderr* " '~A ~W" sym val)
-	    (let ((fe (outlet (funclet val)))) ; need the whole chain here
+	    (let ((fe (outlet (funclet val)))) 
+            ;; need the whole chain here -- why not build this into :readable let/closure output?
+            ;; look for env that defines this func? [outer funclet if anonymous]
 	      (format *stderr* " '~A " sym)
 	      (if (eq? e fe)
 		  (format *stderr* "~W" (procedure-source val))

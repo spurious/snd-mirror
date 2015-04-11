@@ -654,7 +654,8 @@ static void make_sonogram_axes(chan_info *cp)
 	}
       else 
 	{
-	  if (cp->transform_type == AUTOCORRELATION)
+          if ((cp->transform_type == AUTOCORRELATION) ||
+              (cp->transform_type == CEPSTRUM))
 	    {
 	      max_freq = fp->current_size * cp->spectrum_end / 2;
 	      min_freq = fp->current_size * cp->spectrum_start / 2;
@@ -1520,10 +1521,11 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
 
   /* if fewer samps than pixels, draw rectangles */
   if ((cp->transform_type == FOURIER) || 
-      (cp->transform_type == AUTOCORRELATION))
-    sg->spectrum_size = (cp->transform_size) / 2;
-  else sg->spectrum_size = cp->transform_size;
-  if (sg->spectrum_size <= 0) return(SONO_QUIT);
+      (cp->transform_type == AUTOCORRELATION) ||
+      (cp->transform_type == CEPSTRUM))
+    sg->spectrum_size = sg->fs->size / 2;
+  else sg->spectrum_size = sg->fs->size;
+   if (sg->spectrum_size <= 0) return(SONO_QUIT);
 
   sg->edit_ctr = cp->edit_ctr;
   si = cp->sonogram_data;
@@ -1583,7 +1585,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
       lsg = (sonogram_state *)(cp->last_sonogram);
       if ((lsg->done) &&                                 /* it completed all ffts */
 	  (lsg->outlim == sg->outlim) &&                 /* the number of ffts is the same */
-	  (lsg->spectrum_size == sg->spectrum_size) &&   /* ditto fft sizes [cp->transform_size] */
+	  (lsg->spectrum_size == sg->spectrum_size) &&   /* ditto fft sizes [fs->size] */
 	  (lsg->losamp == sg->losamp) &&                 /* begins are same */
 	  (lsg->hisamp == sg->hisamp) &&                 /* ends are same */
 	  (lsg->window == sg->window) &&                 /* data windows are same [fs->wintype, cp->fft_window] */

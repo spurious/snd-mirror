@@ -726,7 +726,7 @@
 				  (set! (history) (copy current-line))
 				  (set! history-index 0)
 
-				  ;; an experiment to get the newline out if the expression is not missing a close paren
+				  ;; get the newline out if the expression does not involve a read error
 				  (let ((form (with-input-from-string current-line #_read))) ; not libc's read
 				    (newline *stderr*)
 				    (format *stderr* "~S~%" (set! ** (eval form (*repl* 'top-level-let))))))
