@@ -112,6 +112,8 @@
 	"GtkFlowBox*" "GtkActionBar*" "GtkPopover*"
 	"GtkGestureDrag*" "GtkGesturePan*" "GtkGestureMultiPress*" "GtkGestureRotate*" "GtkGestureSingle*"
 	"GtkGestureSwipe*" "GtkGestureZoom*" "GtkGestureController*" "GtkEventController*"
+
+	"GtkGLArea*" "GtkStyleContext*" "GtkPopoverMenu*" "GtkSearchEntry*" "GtkStackSidebar*" 
 	))
 
 (define no-xen-p 

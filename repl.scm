@@ -374,7 +374,8 @@
 		       (format #f "cursor: ~A, ~C, line: ~S"
 			       cursor-position
 			       (if (> (length current-line) 0)
-				   (current-line (max 0 (min cursor-position (- (length current-line) 1))))
+				   (let ((c (current-line (max 0 (min cursor-position (- (length current-line) 1))))))
+				     (if (char=? c #\newline) #\| c))
 				   #\space)
 			       (one-line current-line)))
 		     (lambda (c)
@@ -436,6 +437,7 @@
 	    (define C-l 12)
 					;(define C-m 13)    ; #\return -- Enter handles this case (crlf?)
 	    (define C-n 14)
+	    (define C-o 15)
 	    (define C-p 16)
 					;(define C-r 18)
 	    (define C-t 20)
@@ -638,6 +640,22 @@
 		      (set! current-line (cdar previous-line))
 		      (set! cursor-position (caar previous-line))
 		      (set! previous-line (cdr previous-line)))))
+
+	    ;; -------- add newline
+	    (set! (keymap-functions C-o)
+		  (lambda (c)
+		    (if (= cursor-position 0)
+			(set! current-line (string-append (string #\space #\newline) current-line))
+			(if (>= cursor-position (length current-line))
+			    (set! current-line (string-append current-line (string #\space #\newline)))
+			    (set! current-line (string-append (substring current-line 0 cursor-position)
+							      (if (char=? (current-line (+ cursor-position 1)) #\newline)
+								  (string #\space #\newline #\space)
+								  (string #\space #\newline))
+							      (substring current-line (+ cursor-position 1))))))
+		    (when (= last-row (+ prompt-row current-row))
+		      (set! prompt-row (- prompt-row 1))
+		      (display-lines))))
 	    
 	    ;; -------- transpose
 	    (set! (keymap-functions C-t) 
@@ -1245,8 +1263,5 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 ;;   look at ** value? or a let-set-watcher like symbol-access?
 ;;   maybe (save|restore-top-level): run through let, for each write def?
 ;;   restore-history seems pointless if that's all it does -- save|restore-repl?
-;; a way to show the available completions when more than one
-;; a way to force newline (to add line to existing multiline expr)
-;; also tcsh I think removes previous matching history entries
 
 *repl*

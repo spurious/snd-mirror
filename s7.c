@@ -778,7 +778,7 @@ struct s7_scheme {
   unsigned int gc_stats;
   unsigned int gensym_counter, cycle_counter, f_class, add_class, equal_class;
   int format_column;
-  int capture_env_counter;
+  int capture_let_counter;
   bool symbol_table_is_locked;
   unsigned long long int let_number;
   double default_rationalize_error, morally_equal_float_epsilon, hash_table_float_epsilon;
@@ -915,7 +915,7 @@ struct s7_scheme {
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_A;
   s7_pointer SET_SYMBOL_opSq, SET_SYMBOL_opSSq, SET_SYMBOL_opSSSq;
   s7_pointer SET_SYMBOL_opCq, SET_PAIR_UNKNOWN_G, SET_FV_SCALED;
-  s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_A, SET_PAIR_ZA, SET_PAIR_P, SET_PWS, SET_ENV_S, SET_ENV_ALL_X, SET_PAIR_C, SET_PAIR_C_P;
+  s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_A, SET_PAIR_ZA, SET_PAIR_P, SET_PWS, SET_LET_S, SET_LET_ALL_X, SET_PAIR_C, SET_PAIR_C_P;
   s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED;
   s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLER_1, CASE_SIMPLER_SS;
   s7_pointer CASE_SIMPLEST, CASE_SIMPLEST_SS, CASE_SIMPLEST_ELSE, CASE_SIMPLEST_ELSE_C;
@@ -932,7 +932,7 @@ struct s7_scheme {
   s7_pointer COND_ALL_X, COND_ALL_X_2, COND_S;
   s7_pointer INCREMENT_1, DECREMENT_1, SET_CONS, INCREMENT_SS, INCREMENT_SSS, INCREMENT_SZ, INCREMENT_C_TEMP, INCREMENT_SA, INCREMENT_SAA;
   s7_pointer LET_opSq, LET_ALL_opSq, LET_opSq_P, LET_ONE, LET_Z;
-  s7_pointer SIMPLE_DO, SAFE_DOTIMES, SIMPLE_SAFE_DOTIMES, SAFE_DOTIMES_C_C, SAFE_DOTIMES_C_A, SAFE_DO;
+  s7_pointer SIMPLE_DO, SAFE_DOTIMES, SIMPLE_SAFE_DOTIMES, SAFE_DOTIMES_C_C, SAFE_DOTIMES_C_A, SAFE_DO, SAFE_DO_ALL_X;
   s7_pointer SIMPLE_DO_P, DOTIMES_P, SIMPLE_DO_FOREVER, SIMPLE_DO_A;
   s7_pointer DOX, DO_ALL_X, dox_slot_symbol;
 
@@ -2326,7 +2326,7 @@ enum {OP_NO_OP,
       OP_SET_UNCHECKED, OP_SET_SYMBOL_C, OP_SET_SYMBOL_S, OP_SET_SYMBOL_Q, OP_SET_SYMBOL_P, OP_SET_SYMBOL_Z, OP_SET_SYMBOL_A,
       OP_SET_SYMBOL_opSq, OP_SET_SYMBOL_opCq, OP_SET_SYMBOL_opSSq, OP_SET_SYMBOL_opSSSq, 
       OP_SET_NORMAL, OP_SET_PAIR, OP_SET_PAIR_Z, OP_SET_PAIR_A, OP_SET_PAIR_P, OP_SET_PAIR_ZA, OP_SET_PAIR_UNKNOWN_G,
-      OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_ENV_S, OP_SET_ENV_ALL_X,
+      OP_SET_PAIR_P_1, OP_SET_WITH_ACCESSOR, OP_SET_PWS, OP_SET_LET_S, OP_SET_LET_ALL_X,
       OP_SET_PAIR_C, OP_SET_PAIR_C_P, OP_SET_PAIR_C_P_1, OP_SET_SAFE, OP_SET_FV_SCALED,
       OP_INCREMENT_1, OP_DECREMENT_1, OP_SET_CONS,
       OP_INCREMENT_SS, OP_INCREMENT_SSS, OP_INCREMENT_SZ, OP_INCREMENT_C_TEMP, OP_INCREMENT_SA, OP_INCREMENT_SAA,
@@ -2357,7 +2357,7 @@ enum {OP_NO_OP,
       OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_SAFE_DOTIMES, OP_SAFE_DOTIMES_STEP, OP_SAFE_DOTIMES_STEP_P, OP_SAFE_DOTIMES_STEP_O, OP_SAFE_DOTIMES_STEP_A,
       OP_SIMPLE_SAFE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_SAFE_DO_STEP_1, OP_SAFE_DOTIMES_C_C,
       OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_DOX, OP_DOX_STEP, OP_DOX_STEP_P, OP_SIMPLE_DO_FOREVER,
-      OP_DOTIMES_P, OP_DOTIMES_STEP_P, OP_SAFE_DOTIMES_C_A,
+      OP_DOTIMES_P, OP_DOTIMES_STEP_P, OP_SAFE_DOTIMES_C_A, OP_SAFE_DO_ALL_X,
       OP_SIMPLE_DO_A, OP_SIMPLE_DO_STEP_A, OP_DO_ALL_X, OP_DO_ALL_X_STEP,
 
       OP_SAFE_C_P_1, OP_SAFE_C_PP_1, OP_SAFE_C_PP_2, OP_SAFE_C_PP_3, OP_SAFE_C_PP_4, OP_SAFE_C_PP_5, OP_SAFE_C_PP_6,
@@ -2523,7 +2523,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "set_unchecked", "set_symbol_c", "set_symbol_s", "set_symbol_q", "set_symbol_p", "set_symbol_z", "set_symbol_a",
       "set_symbol_opsq", "set_symbol_opcq", "set_symbol_opssq", "set_symbol_opsssq", 
       "set_normal", "set_pair", "set_pair_z", "set_pair_a", "set_pair_p", "set_pair_za", "set_pair_unknown_g",
-      "set_pair_p_1", "set_with_accessor", "set_pws", "set_env_s", "set_env_all_x",
+      "set_pair_p_1", "set_with_accessor", "set_pws", "set_let_s", "set_let_all_x",
       "set_pair_c", "set_pair_c_p", "set_pair_c_p_1", "set_safe", "set_fv_scaled",
       "increment_1", "decrement_1", "set_cons",
       "increment_ss", "increment_sss", "increment_sz", "increment_c_temp", "increment_sa", "increment_saa",
@@ -2554,7 +2554,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "simple_do", "simple_do_step", "safe_dotimes", "safe_dotimes_step", "safe_dotimes_step_p", "safe_dotimes_step_o", "safe_dotimes_step_a",
       "simple_safe_dotimes", "safe_do", "safe_do_step", "safe_do_step_1", "safe_dotimes_c_c",
       "simple_do_p", "simple_do_step_p", "dox", "dox_step", "dox_step_p", "simple_do_forever",
-      "dotimes_p", "dotimes_step_p", "safe_dotimes_c_a",
+      "dotimes_p", "dotimes_step_p", "safe_dotimes_c_a", "safe_do_all_x",
       "simple_do_a", "simple_do_step_a", "do_all_x", "do_all_x_step",
 
       "safe_c_p_1", "safe_c_pp_1", "safe_c_pp_2", "safe_c_pp_3", "safe_c_pp_4", "safe_c_pp_5", "safe_c_pp_6",
@@ -6113,7 +6113,7 @@ static s7_pointer g_curlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_curlet "(curlet) returns the current definitions (symbol bindings)"
 
-  sc->capture_env_counter++;
+  sc->capture_let_counter++;
   if (is_let(sc->envir))
     return(sc->envir);
   return(sc->rootlet);
@@ -6122,7 +6122,7 @@ static s7_pointer g_curlet(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_curlet(s7_scheme *sc)
 {
-  sc->capture_env_counter++;
+  sc->capture_let_counter++;
   return(sc->envir);
 }
 
@@ -6502,7 +6502,7 @@ static s7_pointer make_macro(s7_scheme *sc)
   closure_let(mac) = sc->envir;
   closure_arity(mac) = CLOSURE_ARITY_NOT_SET;
 
-  sc->capture_env_counter++;
+  sc->capture_let_counter++;
   sc->code = caar(sc->code);
   if (sc->op == OP_DEFINE_EXPANSION)
     set_type(sc->code, T_EXPANSION | T_SYMBOL); /* see comment under READ_TOK */
@@ -6547,7 +6547,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
     closure_arity(x) = 0;
   else closure_arity(x) = CLOSURE_ARITY_NOT_SET;
   closure_let(x) = sc->envir;
-  sc->capture_env_counter++;
+  sc->capture_let_counter++;
   return(x);
 }
 
@@ -6564,7 +6564,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
     closure_setter(X) = sc->F;						\
     if (is_null(Args)) closure_arity(X) = 0; else closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
     closure_let(X) = Env;						\
-    sc->capture_env_counter++;						\
+    sc->capture_let_counter++;						\
   } while (0)
 
 
@@ -26011,7 +26011,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_DYNAMIC_WIND:
-      /* this can happen (or could while *stack* was tied in) because *stack* can involve dynamic-wind markers */
+      /* this can happen because (*s7* 'stack) can involve dynamic-wind markers */
       if (use_write == USE_READABLE_WRITE)
 	write_readably_error(sc, "an internal dynamic-wind descriptor");
       port_write_string(port)(sc, "#<dynamic-wind>", 15, port);
@@ -36533,7 +36533,7 @@ static s7_pointer c_object_getter(s7_scheme *sc, s7_pointer obj, s7_Int loc)
   return((*(c_object_ref(obj)))(sc, obj, sc->T1_1));
 }
 
-static s7_pointer env_setter(s7_scheme *sc, s7_pointer e, s7_Int loc, s7_pointer val)
+static s7_pointer let_setter(s7_scheme *sc, s7_pointer e, s7_Int loc, s7_pointer val)
 {
   /* loc is irrelevant here
    * val has to be of the form (cons symbol value)
@@ -36684,7 +36684,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
     case T_ENVIRONMENT:
       if (dest == sc->rootlet)
 	return(wrong_type_argument_with_type(sc, sc->COPY, small_int(2), dest, make_string_wrapper(sc, "a sequence other than the rootlet")));
-      set = env_setter;
+      set = let_setter;
       dest_len = source_len;                     /* grows via set, so dest_len isn't relevant */
       break;
 
@@ -39474,7 +39474,7 @@ static s7_pointer make_counter(s7_scheme *sc, s7_pointer iter)
   NEW_CELL(sc, x, T_COUNTER);
   counter_result(x) = sc->NIL;
   counter_list(x) = iter;        /* iterator */
-  counter_capture(x) = 0;        /* will be capture_env_counter */
+  counter_capture(x) = 0;        /* will be capture_let_counter */
   counter_let(x) = sc->NIL;      /* will be the saved env */
   return(x);
 }
@@ -46312,7 +46312,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poin
 		    if (car_expr != sc->QUOTE) /* !! quote can be redefined locally, unsetting the T_SYNTACTIC flag -- can this happen elsewhere? */
 		      {
 			set_unsafely_optimized(expr);
-			set_optimize_data(expr, hop + OP_UNKNOWN_G);
+			set_optimize_data(expr, OP_UNKNOWN_G);
 			/* hooboy -- we get here in let bindings...
 			 * to save access to the caller, we'd need to pass it as an arg to optimize_expression
 			 */
@@ -48223,10 +48223,10 @@ static s7_pointer check_set(s7_scheme *sc)
 			      ((is_symbol(value)) || (is_all_x_safe(sc, value))))
 			    {
 			      if (is_symbol(value))
-				pair_set_syntax_symbol(sc->code, sc->SET_ENV_S);
+				pair_set_syntax_symbol(sc->code, sc->SET_LET_S);
 			      else
 				{
-				  pair_set_syntax_symbol(sc->code, sc->SET_ENV_ALL_X);
+				  pair_set_syntax_symbol(sc->code, sc->SET_LET_ALL_X);
 				  set_fcdr(cdr(sc->code), (s7_pointer)all_x_eval(sc, value));
 				}
 			    }
@@ -49566,6 +49566,15 @@ static s7_pointer check_do(s7_scheme *sc)
 			       *   the final integer check has to wait until run time (symbol value dependent)
 			       */
 			      pair_set_syntax_symbol(sc->code, sc->SAFE_DO);
+
+			      {
+				s7_pointer p;
+				for (p = body; is_pair(p); p = cdr(p))
+				  if (!all_x_eval(sc, car(p))) break;
+				if (is_null(p))
+				  pair_set_syntax_symbol(sc->code, sc->SAFE_DO_ALL_X);
+			      }
+
 			      if ((!has_set) &&
 				  (c_function_class(ecdr(end)) == sc->equal_class))
 				{
@@ -50395,11 +50404,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto START;
 	  }
 	push_stack(sc, OP_MAP_GATHER_1, args, code);
-	if (counter_capture(args) != sc->capture_env_counter)
+	if (counter_capture(args) != sc->capture_let_counter)
 	  {
 	    NEW_FRAME_WITH_SLOT(sc, closure_let(code), sc->envir, car(closure_args(code)), x);
 	    counter_let(args) = sc->envir;
-	    counter_capture(args) = sc->capture_env_counter;
+	    counter_capture(args) = sc->capture_let_counter;
 	  }
 	else sc->envir = old_frame_with_slot(sc, counter_let(args), x);
 	sc->code = closure_body(code);
@@ -50472,7 +50481,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   and that can only happen through make-closure in various guises and curlet.
        *   owlet captures, but it would require a deliberate error to use it in this context.
        *   c_objects call object_set_let but that requires a prior curlet or sublet.  So we have
-       *   sc->capture_env_counter that is incremented every time an environment is captured, then
+       *   sc->capture_let_counter that is incremented every time an environment is captured, then
        *   here we save that ctr, call body, on rerun check ctr, if it has not changed we are safe and can reuse frame.
        */
     FOR_EACH_1:
@@ -50488,11 +50497,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto START;
 	  }
 	code = sc->code;
-	if (counter_capture(counter) != sc->capture_env_counter)
+	if (counter_capture(counter) != sc->capture_let_counter)
 	  {
 	    NEW_FRAME_WITH_SLOT(sc, closure_let(code), sc->envir, car(closure_args(code)), arg);
 	    counter_let(counter) = sc->envir;
-	    counter_capture(counter) = sc->capture_env_counter;
+	    counter_capture(counter) = sc->capture_let_counter;
 	  }
 	else sc->envir = old_frame_with_slot(sc, counter_let(counter), arg);
 	push_stack(sc, OP_FOR_EACH_1, counter, code);
@@ -50523,11 +50532,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->value = sc->UNSPECIFIED;
 	    goto START;
 	  }
-	if (counter_capture(counter) != sc->capture_env_counter)
+	if (counter_capture(counter) != sc->capture_let_counter)
 	  {
 	    NEW_FRAME_WITH_SLOT(sc, closure_let(code), sc->envir, car(closure_args(code)), arg);  /* set function arg value */
 	    counter_let(counter) = sc->envir;
-	    counter_capture(counter) = sc->capture_env_counter;
+	    counter_capture(counter) = sc->capture_let_counter;
 	  }
 	else sc->envir = old_frame_with_slot(sc, counter_let(counter), arg);
 	push_stack(sc, OP_FOR_EACH_CATCH, counter, code);
@@ -51180,6 +51189,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
 
+    SAFE_DO_ALL_X:
+    case OP_SAFE_DO_ALL_X:
+      sc->op = OP_SAFE_DO_ALL_X;
+
     SAFE_DO:
     case OP_SAFE_DO:
       {
@@ -51227,6 +51240,34 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	dox_slot2(sc->envir) = sc->args;
 
 	sc->code = cddr(code);
+	if (sc->op == OP_SAFE_DO_ALL_X)
+	  {
+	    s7_pointer step_slot, end_slot, p;
+	    s7_Int step, end;
+	    bool use_geq = false;
+	    step_slot = dox_slot1(sc->envir);
+	    end_slot = dox_slot2(sc->envir);
+#if (!WITH_GMP)
+	    use_geq = ((is_optimized(caadr(code))) && (ecdr(caadr(code)) == geq_2));
+#endif
+	    for (p = sc->code; is_pair(p); p = cdr(p))
+	      set_fcdr(p, (s7_pointer)all_x_eval(sc, car(p)));
+	    while (true)
+	      {
+		for (p = sc->code; is_pair(p); p = cdr(p))
+		  ((s7_function)fcdr(p))(sc, car(p));
+		step = s7_integer(slot_value(step_slot)) + 1;
+		slot_set_value(step_slot, make_integer(sc, step));
+		end = s7_integer(slot_value(end_slot));
+		if ((step == end) ||
+		    ((use_geq) && (step > end)))
+		  {
+		    sc->code = cdar(code);
+		    goto DO_END_CLAUSES;
+		  }
+	      }
+	  }
+
 	if (is_unsafe_do(sc->code))              /* we've seen this loop before and it's not optimizable */
 	  {
 	    set_fcdr(code, sc->code);
@@ -51266,7 +51307,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto SAFE_DO_END_CLAUSES;
 		  }
 	      }
-
 	    set_unsafe_do(sc->code);
 	    set_fcdr(code, sc->code);
 	    push_stack(sc, OP_SAFE_DO_STEP_1, sc->args, code);
@@ -52253,7 +52293,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto DO_END_CLAUSES;
 	  }
 	end = cddr(sc->code);
-	if (is_null(end))
+	if (is_null(end)) /* no body */
 	  {
 	    s7_function fend;
 	    end = cadr(sc->code);
@@ -52397,7 +52437,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   In the "direct" case, (let ((v #(0 0 0))) (do ((i 0 (+ i 1))) ((= i 3) v) (set! (v i) i))
 	   *   would return #(3 3 3).
 	   *
-	   * if sc->capture_env_counter changes, would it be sufficient to simply make a new slot?
+	   * if sc->capture_let_counter changes, would it be sufficient to simply make a new slot?
 	   *   I think not; the closure retains the current env chain, not the slots, so we need a new env.
 	   */
 
@@ -52437,6 +52477,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (op == sc->DOX)	             goto DOX;
 	  if (op == sc->DO_ALL_X)	     goto DO_ALL_X;
 	  if (op == sc->SIMPLE_DO_FOREVER)   goto SIMPLE_DO_FOREVER;
+	  if (op == sc->SAFE_DO_ALL_X)	     goto SAFE_DO_ALL_X;
 	  goto SAFE_DOTIMES;
 	}
 
@@ -55643,7 +55684,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			if (sym_case)
 			  {
-			    set_optimize_data(code, (is_safe_procedure(f)) ? OP_SAFE_C_S : OP_C_S);
+			    set_optimize_data(code, hop + ((is_safe_procedure(f)) ? OP_SAFE_C_S : OP_C_S));
 			    set_c_function(code, f);
 			    goto OPT_EVAL;
 			  }
@@ -55651,7 +55692,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  {
 			    if (is_safe_procedure(f))
 			      {
-				set_optimize_data(code, OP_SAFE_C_C);
+				set_optimize_data(code, hop + OP_SAFE_C_C);
 				set_c_function(code, f);
 				goto OPT_EVAL;
 			      }
@@ -55799,16 +55840,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  {
 			    if (s1)
 			      {
-				set_optimize_data(code, (s2) ? OP_SAFE_C_SS : OP_SAFE_C_SC);
+				set_optimize_data(code, hop + ((s2) ? OP_SAFE_C_SS : OP_SAFE_C_SC));
 			      }
 			    else
 			      {
-				set_optimize_data(code, (s2) ? OP_SAFE_C_CS : OP_SAFE_C_C);
+				set_optimize_data(code, hop + ((s2) ? OP_SAFE_C_CS : OP_SAFE_C_C));
 			      }
 			  }
 			else
 			  {
-			    set_optimize_data(code, OP_C_ALL_X);
+			    set_optimize_data(code, hop + OP_C_ALL_X);
 			    annotate_args(sc, cdr(code));
 			  }
  			set_arglist_length(code, small_int(2));
@@ -55867,10 +55908,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		      case T_C_FUNCTION: case T_C_FUNCTION_STAR: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
 			if (is_safe_procedure(f))
-			  set_optimize_data(code, OP_SAFE_C_ALL_S);
+			  set_optimize_data(code, hop + OP_SAFE_C_ALL_S);
 			else
 			  {
-			    set_optimize_data(code, OP_C_ALL_X);
+			    set_optimize_data(code, hop + OP_C_ALL_X);
 			    annotate_args(sc, cdr(code));
 			  }
 			set_c_function(code, f);
@@ -57777,7 +57818,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  closure_arity(x) = integer(fcdr(sc->code));
 	else closure_arity(x) = CLOSURE_ARITY_NOT_SET;
 	closure_setter(x) = sc->F;
-	sc->capture_env_counter++;
+	sc->capture_let_counter++;
 	sc->value = x;
 	sc->code = caar(sc->code);
 	goto DEFINE1;
@@ -57795,7 +57836,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	closure_body(new_func) = cdr(code);
 	closure_setter(new_func) = sc->F;
 	closure_arity(new_func) = CLOSURE_ARITY_NOT_SET;
-	sc->capture_env_counter++;
+	sc->capture_let_counter++;
 
 	if (is_safe_closure(cdr(code)))
 	  {
@@ -58147,7 +58188,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto SET_PAIR_P_3;
 
 
-      case OP_SET_ENV_S:
+      case OP_SET_LET_S:
 	value = find_symbol_checked(sc, cadr(sc->code));
 	obj = find_symbol(sc, caar(sc->code));
 	if (is_slot(obj))
@@ -58162,7 +58203,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto SET_PAIR_P_3;
 
 
-      case OP_SET_ENV_ALL_X:
+      case OP_SET_LET_ALL_X:
 	value = ((s7_function)fcdr(cdr(sc->code)))(sc, cadr(sc->code));
 	obj = find_symbol(sc, caar(sc->code));
 	if (is_slot(obj))
@@ -66514,7 +66555,7 @@ s7_scheme *s7_init(void)
   sc->morally_equal_float_epsilon = 1.0e-15;
   sc->default_hash_table_length = 8;
   sc->gensym_counter = 0;
-  sc->capture_env_counter = 0;
+  sc->capture_let_counter = 0;
   sc->f_class = 0;
   sc->add_class = 0;
   sc->equal_class = 0;
@@ -66768,8 +66809,8 @@ s7_scheme *s7_init(void)
   sc->SET_PAIR_UNKNOWN_G =    assign_internal_syntax(sc, "set!",        OP_SET_PAIR_UNKNOWN_G);
   sc->SET_PAIR_A =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_A);
   sc->SET_PAIR_ZA =           assign_internal_syntax(sc, "set!",        OP_SET_PAIR_ZA);
-  sc->SET_ENV_S =             assign_internal_syntax(sc, "set!",        OP_SET_ENV_S);
-  sc->SET_ENV_ALL_X =         assign_internal_syntax(sc, "set!",        OP_SET_ENV_ALL_X);
+  sc->SET_LET_S =             assign_internal_syntax(sc, "set!",        OP_SET_LET_S);
+  sc->SET_LET_ALL_X =         assign_internal_syntax(sc, "set!",        OP_SET_LET_ALL_X);
   sc->SET_PAIR_C =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_C);
   sc->SET_PAIR_C_P =          assign_internal_syntax(sc, "set!",        OP_SET_PAIR_C_P);
   sc->INCREMENT_1 =           assign_internal_syntax(sc, "set!",        OP_INCREMENT_1);
@@ -66837,6 +66878,7 @@ s7_scheme *s7_init(void)
   sc->SAFE_DOTIMES_C_A =      assign_internal_syntax(sc, "do",          OP_SAFE_DOTIMES_C_A);
   sc->SIMPLE_SAFE_DOTIMES =   assign_internal_syntax(sc, "do",          OP_SIMPLE_SAFE_DOTIMES);
   sc->SAFE_DO =               assign_internal_syntax(sc, "do",          OP_SAFE_DO);
+  sc->SAFE_DO_ALL_X =         assign_internal_syntax(sc, "do",          OP_SAFE_DO_ALL_X);
   sc->DOX =                   assign_internal_syntax(sc, "do",          OP_DOX);
   sc->DO_ALL_X =              assign_internal_syntax(sc, "do",          OP_DO_ALL_X);
 
@@ -66956,7 +66998,8 @@ s7_scheme *s7_init(void)
   sc->OUTLET =                s7_define_safe_function(sc, "outlet",                  g_outlet,                 1, 0, false, H_outlet);
                               s7_define_safe_function(sc, "rootlet",                 g_rootlet,                0, 0, false, H_rootlet);
                               s7_define_safe_function(sc, "curlet",                  g_curlet,                 0, 0, false, H_curlet);
-  sc->UNLET =                 s7_define_constant_function(sc, "unlet",               g_unlet,                  0, 0, false, H_unlet);
+                              s7_define_constant_function(sc, "unlet",               g_unlet,                  0, 0, false, H_unlet); /* returns value */
+  sc->UNLET = make_symbol(sc, "unlet");
   sc->SUBLET =                s7_define_safe_function(sc, "sublet",                  g_sublet,                 1, 0, true,  H_sublet);
   sc->VARLET =                s7_define_function(sc,      "varlet",                  g_varlet,                 1, 0, true,  H_varlet);
   sc->CUTLET =                s7_define_function(sc,      "cutlet",                  g_cutlet,                 1, 0, true,  H_cutlet);
@@ -67827,76 +67870,11 @@ int main(int argc, char **argv)
  *   but for lint, we'd want the intersection of arg-types and func-types (logand a b) or (logand (lognot a) b)
  *
  * the old mus-audio-* code needs to use play or something, especially bess*
- * xg/gl/xm should be like libc.scm in the scheme snd case
- * can reuse of string port via get-output-string drop the final 0?
- * define-constant func gives a way to avoid closure_is_ok in all cases, so maybe move the
- *   arg checks into the main op?  also (define-constant abs abs) -- can this do the same in op_safe_c cases?
+ * define-constant func gives a way to avoid closure_is_ok in all cases, so maybe move the arg checks into the main op?
  * gcc5 jit to replace clm2xen?
- * (define-constant name simple-value) -> define-expansion? (pi replaced by reader)
- *   exported s7_define_expansion, but define-expansion assumes it's dealing in macros
- *   reader could see T_IMMUTABLE?
- *
- * objstr of lambda leaves out the enclosing let 
- *   for each procedure, follow outlet(funclet) until you get back to curlet,
- *   output the entire chain as the func's closure (see below).  Also need to load files
- *   to match *features*, get possible top-level-let and rootlet-changes, see ~/old/checkpt.scm
- 
-  (define (save-repl) 
-    (call-with-output-file "save.repl" 
-      (lambda (p) 
-        (format p "~W" (*repl* 'top-level-let)))))
-  (define (restore-repl) 
-    (set! (*repl* 'top-level-let) (load "save.repl")))  
-  but  we need a way to get changes to rootlet, not the whole thing
-
- (define (rootlet-changes start) ; set start to (length (rootlet)) whenever you're ready to go, then later: (*s7* 'unlet-entries)?
-  (let ((iter (make-iterator (rootlet))))
-    (do ((i 0 (+ i 1)))
-	((= i start))
-      (iterate iter)) ; we need a start position for these iterators! (make-iterator obj start)? -- too ugly
-    (do ((data (iterate iter) (iterate iter)))
-	((not (pair? data)))
-      (if (not (equal? (cdr data) (symbol->value (car data) 'unlet)))
-	  (format *stderr* "~A from ~A to ~A~%"
-		  (car data)
-		  (symbol->value (car data) 'unlet)
-		  (cdr data))                                
-	  (format *stderr* "~A: ~A~%"                        
-		  (car data)                                 
-		  (cdr data))))))
-
-(define (display-let e)
-  (format *stderr* "(inlet")
-  (let ((iter (make-iterator e)))
-    (do ((var (iterate iter) (iterate iter)))
-	((iterator-at-end? iter)
-	 (format *stderr* ")"))
-      (let ((sym (car var))
-	    (val (cdr var)))
-	(if (or (not (procedure? val))
-		(eq? (funclet val) (rootlet)))
-	    (format *stderr* " '~A ~W" sym val)
-	    (let ((fe (outlet (funclet val)))) 
-            ;; need the whole chain here -- why not build this into :readable let/closure output?
-            ;; look for env that defines this func? [outer funclet if anonymous]
-	      (format *stderr* " '~A " sym)
-	      (if (eq? e fe)
-		  (format *stderr* "~W" (procedure-source val))
-		  (begin
-		    (format *stderr* "(let (")
-		    (for-each
-		     (lambda (lv)
-		       (format *stderr* "(~A ~W)" (car lv) (cdr lv)))
-		     (map values fe))
-		    (format *stderr* ") ~S))" (procedure-source val))))))))))
-
-   (let ((a 1)) 
-     (define f2 (let ((b 2)) (lambda (c) (+ a b c)))) 
-     (display-let (curlet)))
-   (inlet 'f2 (let ((b 2)) (lambda (c) (+ a b c)))) 'a 1)
-
-   ;; save old *features*, at restore get diff, is it require or autoload?
-   ;; *features* missing (e.g.) cload.scm, (*autoload* 'cload.scm): "cload.scm"
-   ;; also dac/play in repl/sndlib should call sndplay/aplay? with file name or whatever it can find
+ * should this be fixed? (symbol->value 'gc-stats *s7*) -> #<undefined>
+ *   to make *s7* a completely normal let would require symbol accessors etc
+ *   sym->val might check let_ref_fallback for all computed cases
+ * maybe sub* (substring etc) should just return nil ("" etc) if the indices are impossible
+ * checkpoint (see write.scm)
  */
- 

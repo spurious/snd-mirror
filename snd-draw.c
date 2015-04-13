@@ -805,7 +805,10 @@ void set_dialog_widget(snd_dialog_t which, widget_t wid)
   check_dialog_widget_table();
 
 #if USE_GTK && HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 16, 0)
+#else
   gtk_widget_override_background_color(wid, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)(ss->basic_color)); /* was GTK_STATE_NORMAL which can't be right */
+#endif
 #endif
 
   if (Xen_is_false(Xen_vector_ref(dialog_widgets, (int)which)))
@@ -1663,14 +1666,19 @@ static Xen g_basic_color(void)
 #if USE_GTK
 
 #if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 16, 0)
+#else
 static bool is_dark(color_info *color)
 {
   return(color->red + color->green + color->blue < 0.75);
 }
 #endif
+#endif
 
 static void recolor_everything_1(widget_t w, gpointer color)
 {
+#if GTK_CHECK_VERSION(3, 16, 0)
+#else
   if ((GTK_IS_WIDGET(w)) &&
       (w != ss->listener_pane))
     {
@@ -1695,6 +1703,7 @@ static void recolor_everything_1(widget_t w, gpointer color)
 	gtk_container_foreach(GTK_CONTAINER(w), recolor_everything_1, color);
 #endif
     }
+#endif
 }
 
 

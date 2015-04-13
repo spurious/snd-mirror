@@ -370,7 +370,7 @@
 	      (if (eq? old-port #t)
 		  (display str))
 	      str)
-	    (values))))))
+	      (values))))))
 
 (define (pp obj)
   (call-with-output-string
@@ -390,7 +390,6 @@
 		   (format *stderr* "~<sym~> ~<val~>:~%~<(pp source)~>~%~%"))))))
      st)))
 |#
-
 
 (define-macro (fully-macroexpand form)
   (define (expand form)
@@ -417,4 +416,99 @@
 	     (apply string-append (append (reverse! strs) (list "...")))
 	     (apply string-append (reverse! strs))))
       (set! strs (cons (format #f "~S " entry) strs)))))
+|#
+
+
+#|
+;;; --------------------------------------------------------------------------------
+;;;
+;;; checkpoint
+
+(define* (checkpoint (file "chkpt.scm") e)
+
+  (define (display-let e)
+    (format *stderr* "(inlet")
+    (let ((iter (make-iterator e)))
+      (do ((var (iterate iter) (iterate iter)))
+	  ((iterator-at-end? iter)
+	   (format *stderr* ")"))
+	(let ((sym (car var))
+	      (val (cdr var)))
+	  (if (or (not (procedure? val))
+		  (eq? (funclet val) (rootlet)))
+	      (format *stderr* " '~A ~W" sym val)
+	      (let ((fe (outlet (funclet val)))) 
+		;; need the whole chain here -- why not build this into :readable let/closure output?
+		;; look for env that defines this func? [outer funclet if anonymous]
+		(format *stderr* " '~A " sym)
+		(if (eq? e fe)
+		    (format *stderr* "~W" (procedure-source val))
+		    (begin
+		      (format *stderr* "(let (")
+		      (for-each
+		       (lambda (lv)
+			 (format *stderr* "(~A ~W)" (car lv) (cdr lv)))
+		       (map values fe))
+		      (format *stderr* ") ~S))" (procedure-source val))))))))))
+  
+  (let ((reqs ()))
+    (call-with-output-file file
+      (lambda (p)
+	(format p ";;; s7 checkpoint output~%")
+	(format p "(for-each~%~NC(lambda (f)~%~NC(if (not (provided? f))~%~NC~
+                      (let ((autofile (*autoload* f)))~%~NC(if (and autofile (file-exists? autofile))~%~NC(load autofile)))))~%~NC'~A)~%" 
+		2 #\space 4 #\space 8 #\space 10 #\space 14 #\space 2 #\space
+		(pp *features*))
+
+	(for-each
+	 (lambda (data)
+	   (let ((sym (car data))
+		 (val (cdr data)))
+	     (when (not (memq sym '(*libraries* *features* pp checkpoint)))
+	       (let ((autosym (*autoload* sym)))
+		 (if (and autosym
+			  (not (memq autosym reqs))
+			  (not (memq autosym *features*)))
+		     (begin
+		       (format p "(require ~A)~%" autosym)
+		       (set! reqs (cons autosym reqs)))
+		     (let ((str (catch #t 
+				  (lambda () 
+				    (object->string val :readable)) 
+				  (lambda args 
+				    'error))))
+		       (when (and (string? str)
+				  (not (string=? str (symbol->string sym))))
+			 (format p "(set! ~A ~A)~%" sym str))))))))
+	 (rootlet))
+	
+	(when (and (let? e)
+		   (not (eq? e (rootlet))))
+	  (display-let e))
+	
+	))))
+|#       
+  
+#|
+
+;; first load files to match *features*, get possible top-level-let and rootlet-changes, see ~/old/checkpt.scm
+;; save old *features*, at restore get diff, is it require or autoload?
+;; *features* missing (e.g.) cload.scm, (*autoload* 'cload.scm): "cload.scm"
+;; *s7*
+
+  (define (save-repl) 
+    (call-with-output-file "save.repl" 
+      (lambda (p) 
+        (format p "~W" (*repl* 'top-level-let)))))
+
+  (define (restore-repl) 
+    (set! (*repl* 'top-level-let) (load "save.repl")))  
+  but  we need a way to get changes to rootlet, not the whole thing
+
+   (let ((a 1)) 
+     (define f2 (let ((b 2)) (lambda (c) (+ a b c)))) 
+     (display-let (curlet)))
+   (inlet 'f2 (let ((b 2)) (lambda (c) (+ a b c)))) 'a 1)
+
+   ;; also dac/play in repl/sndlib should call sndplay/aplay? with file name or whatever it can find
 |#

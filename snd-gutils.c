@@ -570,7 +570,10 @@ void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color)
 #if (!HAVE_GTK_3)
   gtk_widget_modify_bg(w, type, rgb_to_gdk_color(color));
 #else
+#if GTK_CHECK_VERSION(3, 16, 0)
+#else
   gtk_widget_override_background_color(w, GTK_STATE_FLAG_NORMAL, (GdkRGBA *)color);
+#endif
 #endif
 }
 
@@ -580,7 +583,10 @@ void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color)
 #if (!HAVE_GTK_3)
   gtk_widget_modify_fg(w, type, rgb_to_gdk_color(color));
 #else
+#if GTK_CHECK_VERSION(3, 16, 0)
+#else
   gtk_widget_override_color(w, GTK_STATE_FLAG_NORMAL, (GdkRGBA *)color);
+#endif
 #endif
 }
 
@@ -590,7 +596,10 @@ void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color)
 #if (!HAVE_GTK_3)
   gtk_widget_modify_base(w, type, rgb_to_gdk_color(color));
 #else
+#if GTK_CHECK_VERSION(3, 16, 0)
+#else
   gtk_widget_override_background_color(w, GTK_STATE_FLAG_NORMAL, (GdkRGBA *)color);
+#endif
 #endif
 }
 
