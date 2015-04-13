@@ -5514,7 +5514,7 @@ void mus_header_raw_defaults(int *sr, int *chn, mus_sample_t *samp_type)
 
 /* ------------------------------------ all together now ------------------------------------ */
 
-static unsigned int mus_header_read_1(const char *filename, int fd)
+static int mus_header_read_1(const char *filename, int fd)
 {
   static const unsigned char I_HCOM[4] = {'H','C','O','M'};
   static const unsigned char I_FSSD[4] = {'F','S','S','D'};

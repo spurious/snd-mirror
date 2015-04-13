@@ -243,8 +243,7 @@ static color_t not_so_black;
 
 static void alpha_beta_alpha(mus_fft_window_t val)
 {
-#if (GTK_CHECK_VERSION(3, 16, 0))
-#else
+#if (!GTK_CHECK_VERSION(3, 16, 0))
   if (fft_window_beta_in_use(val))
     gtk_widget_override_color(beta_label, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)(ss->black));
   else gtk_widget_override_color(beta_label, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)not_so_black);

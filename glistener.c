@@ -193,8 +193,7 @@ void glistener_set_font(glistener *g, PangoFontDescription *font)
 #if (HAVE_GTK_2)
   gtk_widget_modify_font(GTK_WIDGET(g->text), font);
 #else
-#if GTK_CHECK_VERSION(3, 16, 0)
-#else
+#if (!GTK_CHECK_VERSION(3, 16, 0))
   gtk_widget_override_font(GTK_WIDGET(g->text), font);
 #endif
 #endif
@@ -233,8 +232,7 @@ void glistener_set_text_color(glistener *g, GdkRGBA *p)
 {
   if ((g) && (g->text))
     {
-#if (GTK_CHECK_VERSION(3, 16, 0))
-#else
+#if (!GTK_CHECK_VERSION(3, 16, 0))
       gtk_widget_override_color(g->text, GTK_STATE_FLAG_NORMAL, p);
 #endif
       default_text_color = NULL;
@@ -246,8 +244,7 @@ void glistener_set_background_color(glistener *g, GdkRGBA *p)
 {
   if ((g) && (g->text))
     {
-#if (GTK_CHECK_VERSION(3, 16, 0))
-#else
+#if (!GTK_CHECK_VERSION(3, 16, 0))
       gtk_widget_override_background_color(g->text, GTK_STATE_FLAG_NORMAL, p);
 #endif
       default_background_color = NULL;

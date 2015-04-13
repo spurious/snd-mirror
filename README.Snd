@@ -164,21 +164,22 @@ Authors:
 Bill Schottstaedt
 Michael Scholz
 
-Rick Taube and Andrew Burnson:      C++ and Windows wizardry.
-Kjetil S. Matheussen                the Jack support and many other improvements.
-Dave Phillips:                      the tutorial, new-effects.scm, and many other files.
-Fernando Lopez-Lezcano:             the current ALSA support.
-Richard W.E. Furse:                 the original LADSPA support.
-Nick Bailey:                        the ESD support.
-Volker Kuhlmann and Seppo Ingalsuo: the Solaris port.
-Seppo Ingalsuo:                     the HPUX port.
-Juan Reyes:                         the DEC Alpha port.
-Guenter Geiger and Stefan Schwandter: the Linux Alpha port.
-Paul Davis:                         the original ALSA support.
-Steven Schultz and Mike Scholz:     the *BSD ports.
-Ludger Brummer and Charles Nichols: the Mac-OSX port.
-Thomas Klausner and Mike Scholz:    the NetBSD port.
-Steve Beet:                         minGW
+Rick Taube, Andrew Burnson, Donny Ward: C++ and Windows wizardry.
+Kjetil S. Matheussen                    the Jack support and many other improvements.
+Dave Phillips:                          the tutorial, new-effects.scm, and many other files.
+Fernando Lopez-Lezcano:                 the current ALSA support.
+Tito Latini:                            many bugfixes.
+Richard W.E. Furse:                     the original LADSPA support.
+Nick Bailey:                            the ESD support.
+Volker Kuhlmann and Seppo Ingalsuo:     the Solaris port.
+Seppo Ingalsuo:                         the HPUX port.
+Juan Reyes:                             the DEC Alpha port.
+Guenter Geiger and Stefan Schwandter    : the Linux Alpha port.
+Paul Davis:                             the original ALSA support.
+Steven Schultz and Mike Scholz:         the *BSD ports.
+Ludger Brummer and Charles Nichols:     the Mac-OSX port.
+Thomas Klausner and Mike Scholz:        the NetBSD port.
+Steve Beet:                             minGW
 
 Plus many other contributions from
   Fernando Lopez-Lezcano, 
@@ -571,3 +572,10 @@ Snd-related packages by hand:
   libgsl0-dev
   libasound2-dev
   libgl1-mesa-dev
+
+
+and for Fedora Core 22:
+  yum install gcc tcsh rxvt emacs fftw3 fftw3-devel gtk3 gtk3-devel alsa-lib alsa-lib-devel gsl gsl-devel
+     gmp gmp-devel mpfr mpfr-devel mpc mpc-devel ruby ruby-devel motif motif-devel clang
+  yum groupinstall "LXDE"
+  reboot to get LXDE listed in the login settings

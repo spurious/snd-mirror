@@ -1666,8 +1666,7 @@ static Xen g_basic_color(void)
 #if USE_GTK
 
 #if HAVE_GTK_3
-#if GTK_CHECK_VERSION(3, 16, 0)
-#else
+#if (!GTK_CHECK_VERSION(3, 16, 0))
 static bool is_dark(color_info *color)
 {
   return(color->red + color->green + color->blue < 0.75);
@@ -1677,8 +1676,7 @@ static bool is_dark(color_info *color)
 
 static void recolor_everything_1(widget_t w, gpointer color)
 {
-#if GTK_CHECK_VERSION(3, 16, 0)
-#else
+#if (!GTK_CHECK_VERSION(3, 16, 0))
   if ((GTK_IS_WIDGET(w)) &&
       (w != ss->listener_pane))
     {

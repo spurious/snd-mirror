@@ -32,7 +32,7 @@
  * s7, Bill Schottstaedt, Aug-08
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
- * Rick Taube and Andrew Burnson provided the MS Visual C++ support
+ * Rick Taube, Andrew Burnson, and Donny Ward provided the MS Visual C++ support
  *
  * Documentation is in s7.h and s7.html.
  * s7test.scm is a regression test.
@@ -7540,62 +7540,40 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   static double s7_fabsl(long double x) {if (x < 0.0) return(-x);  return(x);}
 #endif
 
+
 static bool is_NaN(s7_Double x) {return(x != x);}
 /* callgrind says this is faster than isnan, I think (very confusing data...) */
 
-/* in c++11 I think we'll have to #define is_inf(x) std::isinf(x) or some such subterfuge
- *   does std::isinf work in all earlier versions?
- *   Another possibility: (x * 0) != 0
- */
-#if __cplusplus
-  #define is_inf(x) std::isinf(x)
-#else
-  #define is_inf(x) isinf(x)
-#endif
-
-#if MS_WINDOWS
-/* need to provide inverse hyperbolic trig funcs and cbrt */
-
-double asinh(double x);
-double asinh(double x)
-{
-  return(log(x + sqrt(1.0 + x * x)));
-}
-
-
-double acosh(double x);
-double acosh(double x)
-{
-  return(log(x + sqrt(x * x - 1.0)));
-  /* perhaps less prone to numerical troubles (untested):
-   *   2.0 * log(sqrt(0.5 * (x + 1.0)) + sqrt(0.5 * (x - 1.0)))
-   */
-}
-
-
-double atanh(double x);
-double atanh(double x)
-{
-  return(log((1.0 + x) / (1.0 - x)) / 2.0);
-}
-
-
-double cbrt(double x);
-double cbrt(double x)
-{
-  if (x >= 0.0)
-    return(pow(x, 1.0 / 3.0));
-  return(-pow(-x, 1.0 / 3.0));
-}
-
-static bool is_inf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}
-
-#endif
-
 
 #if defined(__sun) && defined(__SVR4)
-  static bool is_inf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}
-#endif
+  static bool is_inf(s7_Double x) {return((x == x) && (is_NaN(x - x)));} /* there's no isinf in Solaris */
+#else
+#if (!MS_WINDOWS)
+
+  #if __cplusplus
+    #define is_inf(x) std::isinf(x)
+  #else
+    #define is_inf(x) isinf(x)
+  #endif
+
+#else
+static bool is_inf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}  /* Another possibility: (x * 0) != 0 */
+
+/* in MS C, we need to provide inverse hyperbolic trig funcs and cbrt */
+double asinh(double x);
+double asinh(double x) {return(log(x + sqrt(1.0 + x * x)));}
+
+double acosh(double x);
+double acosh(double x) {return(log(x + sqrt(x * x - 1.0)));}
+/* perhaps less prone to numerical troubles (untested): 2.0 * log(sqrt(0.5 * (x + 1.0)) + sqrt(0.5 * (x - 1.0))) */
+
+double atanh(double x);
+double atanh(double x) {return(log((1.0 + x) / (1.0 - x)) / 2.0);}
+
+double cbrt(double x);
+double cbrt(double x) {if (x >= 0.0) return(pow(x, 1.0 / 3.0)); return(-pow(-x, 1.0 / 3.0));}
+#endif /* windows */
+#endif /* sun */
 
 
 #if HAVE_COMPLEX_NUMBERS
