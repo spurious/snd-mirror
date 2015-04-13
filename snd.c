@@ -546,8 +546,8 @@ int main(int argc, char **argv)
   ss = (snd_state *)calloc(1, sizeof(snd_state)); /* not calloc! */
   ss->startup_errors = NULL;
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-#if !GLIB_CHECK_VERSION(2,35,0)
+#if USE_GTK
+#if GTK_CHECK_VERSION(3, 0, 0) && (!GLIB_CHECK_VERSION(2,35,0))
   g_type_init();
 #endif
 #endif
