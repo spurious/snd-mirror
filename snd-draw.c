@@ -804,13 +804,6 @@ void set_dialog_widget(snd_dialog_t which, widget_t wid)
   ss->dialogs[ss->num_dialogs++] = wid;
   check_dialog_widget_table();
 
-#if USE_GTK
-#if GTK_CHECK_VERSION(3, 16, 0)
-#else
-  gtk_widget_override_background_color(wid, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)(ss->basic_color)); /* was GTK_STATE_NORMAL which can't be right */
-#endif
-#endif
-
   if (Xen_is_false(Xen_vector_ref(dialog_widgets, (int)which)))
     Xen_vector_set(dialog_widgets, (int)which, 
 		   Xen_wrap_widget(wid));
