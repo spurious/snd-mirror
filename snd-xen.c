@@ -2694,7 +2694,7 @@ static char *legalize_path(const char *in_str)
 static Xen g_snd_gl_context(void)
 {
 #if USE_GTK
-  return(Xen_list_2(C_string_to_Xen_symbol("GLContext"), Xen_wrap_C_pointer(ss->cx)));
+  /* return(Xen_list_2(C_string_to_Xen_symbol("GLContext"), Xen_wrap_C_pointer(ss->cx))); */
 #else
 #if USE_MOTIF
   return(Xen_list_2(C_string_to_Xen_symbol("GLXContext"), Xen_wrap_C_pointer(ss->cx)));
@@ -3101,7 +3101,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
 
 #if USE_GTK
   Xen_provide_feature("snd-gtk");
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   Xen_provide_feature("gtk3");
 #else
   Xen_provide_feature("gtk2");

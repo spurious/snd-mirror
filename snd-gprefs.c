@@ -81,7 +81,7 @@ static void post_prefs_error(const char *msg, prefs_info *data);
 
 static GtkWidget *make_basic_row(GtkWidget *box)
 {
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   GtkWidget *row, *r;
   r = gtk_event_box_new(); /* not button! */
   gtk_widget_set_hexpand(GTK_WIDGET(r), true);
@@ -193,7 +193,7 @@ static GtkWidget *make_row_label(prefs_info *prf, const char *label, GtkWidget *
   GtkWidget *w;
 
   w = gtk_label_new(label);
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.0);
 #else
 #if GTK_CHECK_VERSION(3, 14, 0)
@@ -1055,7 +1055,7 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
 
   make_row_middle_separator(hb);  
   
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   prf->text = gtk_combo_box_text_new_with_entry();
   for (i = 0; i < num_values; i++)
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(prf->text), (values[i]) ? values[i] : " ");
@@ -1088,7 +1088,7 @@ static void pixel_to_rgb(color_t pix, float *r, float *g, float *b)
 }
 
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
 static void display_color(GtkWidget *w, color_t pixel)
 {
   cairo_t *cr;
@@ -1111,7 +1111,7 @@ static void scale_set_color(prefs_info *prf, color_t pixel)
   ADJUSTMENT_SET_VALUE(prf->gadj, g);
   float_to_textfield(prf->btxt, b);
   ADJUSTMENT_SET_VALUE(prf->badj, b);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   display_color(prf->color, pixel);
 #else
   widget_modify_bg(prf->color, GTK_STATE_NORMAL, pixel);
@@ -1129,7 +1129,7 @@ static void reflect_color(prefs_info *prf)
   b = ADJUSTMENT_VALUE(prf->badj);
 
   current_color = rgb_to_color(r, g, b);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   display_color(prf->color, current_color);
 #else
   widget_modify_bg(prf->color, GTK_STATE_NORMAL, current_color); 
@@ -1231,7 +1231,7 @@ static void prefs_call_color_func_callback(GtkWidget *w, gpointer context)
 }
 
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
 static gboolean drawer_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   prefs_info *prf = (prefs_info *)data;
@@ -1284,7 +1284,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
     prf->color = gtk_drawing_area_new();
     gtk_container_add(GTK_CONTAINER(frame), prf->color);
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
     SG_SIGNAL_CONNECT(prf->color, DRAW_SIGNAL, drawer_expose, prf);
     gtk_widget_set_hexpand(GTK_WIDGET(prf->color), true);
     gtk_widget_set_vexpand(GTK_WIDGET(prf->color), true);
@@ -1321,7 +1321,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->rscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->radj));
   gtk_widget_set_name(prf->rscl, "prefs_color_scale");
   gtk_box_pack_start(GTK_BOX(row2), prf->rscl, true, true, 4);
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   widget_modify_bg(prf->rscl, GTK_STATE_NORMAL, rscl_color);   /* this is the slider except when clicked */
   widget_modify_bg(prf->rscl, GTK_STATE_PRELIGHT, rscl_color); /* this is the slider when clicked */
 #else
@@ -1335,7 +1335,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->gscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->gadj));
   gtk_widget_set_name(prf->gscl, "prefs_color_scale");
   gtk_box_pack_start(GTK_BOX(row2), prf->gscl, true, true, 4);
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   widget_modify_bg(prf->gscl, GTK_STATE_NORMAL, gscl_color);
   widget_modify_bg(prf->gscl, GTK_STATE_PRELIGHT, gscl_color);
 #else
@@ -1349,7 +1349,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->bscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->badj));
   gtk_widget_set_name(prf->bscl, "prefs_color_scale");
   gtk_box_pack_start(GTK_BOX(row2), prf->bscl, true, true, 4);
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   widget_modify_bg(prf->bscl, GTK_STATE_NORMAL, bscl_color);
   widget_modify_bg(prf->bscl, GTK_STATE_PRELIGHT, bscl_color);
 #else
@@ -1421,7 +1421,7 @@ static void make_top_level_label(const char *label, GtkWidget *parent)
 
   str = mus_format("<b>%s</b>", label);
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   w2 = gtk_label_new(label);
   gtk_label_set_markup(GTK_LABEL(w2), str);
   gtk_label_set_use_markup(GTK_LABEL(w2), true);
@@ -1477,7 +1477,7 @@ static void make_inner_label(const char *label, GtkWidget *parent)
 
   str = mus_format("<b>%s</b>", label);
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   w = gtk_label_new(label);
   gtk_label_set_markup(GTK_LABEL(w), str);
   gtk_label_set_use_markup(GTK_LABEL(w), true);
@@ -1655,7 +1655,7 @@ widget_t make_preferences_dialog(void)
   gtk_widget_set_name(clear_button, "dialog_button");
   gtk_widget_set_name(dismiss_button, "dialog_button");
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   add_highlight_button_style(dismiss_button);
   add_highlight_button_style(revert_button);
   add_highlight_button_style(clear_button);

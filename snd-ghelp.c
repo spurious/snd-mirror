@@ -222,7 +222,7 @@ static void create_help_monolog(void)
   ok_button = gtk_dialog_add_button(GTK_DIALOG(help_dialog), "Go Away", GTK_RESPONSE_NONE);
   gtk_widget_set_name(ok_button, "dialog_button");
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_help_dialog, NULL);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   add_highlight_button_style(ok_button);
 #endif
   gtk_widget_show(ok_button);

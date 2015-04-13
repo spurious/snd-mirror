@@ -5112,7 +5112,6 @@ GL_FILES=""
 GL_FLAGS=""
 
 if test "$with_gl" = yes ; then
-  if test "$with_motif" = yes ; then
     if test x$PKG_CONFIG != xno ; then
       if $PKG_CONFIG gl --exists ; then
 
@@ -5138,7 +5137,6 @@ if test "$with_gl" = yes ; then
         fi
       fi
     fi
-  fi
 fi
 
 

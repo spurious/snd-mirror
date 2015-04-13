@@ -1605,7 +1605,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       /* -------- NAME FIELDS -------- */
 
       CLOSE_BUTTON(sp) = gtk_button_new();
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       add_highlight_button_style(CLOSE_BUTTON(sp));
 #endif
       add_tooltip(CLOSE_BUTTON(sp), "close current sound");
@@ -1618,7 +1618,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
 
       NAME_EVENT_BOX(sp) = gtk_event_box_new();
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       add_highlight_button_style(NAME_EVENT_BOX(sp));
 #endif
       add_tooltip(NAME_EVENT_BOX(sp), "name of current sound"); /* just a placeholder */
@@ -1672,7 +1672,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       }
 
       STATUS_AREA(sp) = gtk_label_new(NULL);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       gtk_widget_set_halign(STATUS_AREA(sp), GTK_ALIGN_FILL);
       gtk_widget_set_hexpand(STATUS_AREA(sp), true);
 #endif
@@ -1979,7 +1979,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_show(CONTROL_PANEL(sp));
       gtk_widget_show(SND_PANE(sp));
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       set_basic_color(ss->basic_color);
 #endif
     } /* new sound ss */
@@ -2045,7 +2045,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
     }
   if (free_filename) free(filename);
   
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   if (listener_exists())
     gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), 50);
   /* actually we haven't reached full size here at start-up */
@@ -2108,7 +2108,7 @@ void show_controls(snd_info *sp)
 
 void hide_controls(snd_info *sp)
 {
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_widget_hide(CONTROL_PANEL(sp));
 #else
   gtk_widget_hide_all(CONTROL_PANEL(sp));
@@ -2387,7 +2387,7 @@ void make_controls_dialog(void)
       gtk_widget_set_name(dismiss_button, "dialog_button");
       gtk_widget_set_name(reset_button, "dialog_button");
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   add_highlight_button_style(dismiss_button);
   add_highlight_button_style(reset_button);
   add_highlight_button_style(help_button);
@@ -2530,7 +2530,7 @@ GtkWidget *snd_entry_new(GtkWidget *container, GtkWidget *prev, snd_entry_bg_t w
     }
   gtk_widget_show(text);
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   if (with_white_background == WITH_WHITE_BACKGROUND) 
     {
       widget_modify_bg(text, GTK_STATE_NORMAL, ss->white);
@@ -2564,7 +2564,7 @@ GtkWidget *snd_entry_new_with_size(GtkWidget *container, int size)
     }
   gtk_widget_show(text);
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   widget_modify_bg(text, GTK_STATE_NORMAL, ss->white);
   widget_modify_base(text, GTK_STATE_SELECTED, ss->white); 
 #endif

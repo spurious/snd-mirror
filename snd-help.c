@@ -251,11 +251,13 @@ static char *glx_version(void)
   return(version);
 #else
 #if USE_GTK && (0)
+  /* TODO: need to gdk_gl_context_make_current then gdk_gl_context_get_version or better gtk_gl_area_make_current
+   */
   #define VERSION_SIZE 128
   char *version = NULL;
   int major, minor;
 
-  if ((ss->dialogs == NULL) || (MAIN_DISPLAY(ss) == NULL)) /* TODO: MAIN_DISPLAY needs to be the gl context here */
+  if ((ss->dialogs == NULL) || (MAIN_DISPLAY(ss) == NULL)) /* TODO: MAIN_DISPLAY needs to be the gl context here (it's not otherwise used in gtk snd) */
     return(mus_strdup(" "));
 
   version = (char *)calloc(VERSION_SIZE, sizeof(char));

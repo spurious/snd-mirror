@@ -196,7 +196,7 @@ void draw_rotated_axis_label(chan_info *cp, graphics_context *ax, const char *te
   rotate_text(ax, AXIS_LABEL_FONT(ss), text, 90, x0, y0);
 }
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   #define IS_DRAWABLE(Widget) GDK_IS_WINDOW(Widget)
 #else
   #define IS_DRAWABLE(Widget) GDK_IS_DRAWABLE(Widget)
@@ -899,7 +899,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       GtkWidget *orient_label, *orientbox;
       GtkWidget *sep1, *sep2, *sep3, *sep5;
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
       GtkWidget *orient_frame, *color_frame;
 #endif
 
@@ -939,7 +939,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       gtk_container_add(GTK_CONTAINER(DIALOG_CONTENT_AREA(ccd_dialog)), mainbox);
       gtk_widget_show(mainbox);
       
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
       color_frame = gtk_frame_new(NULL);
       gtk_box_pack_start(GTK_BOX(mainbox), color_frame, false, false, 10);
       gtk_frame_set_shadow_type(GTK_FRAME(color_frame), GTK_SHADOW_ETCHED_IN);
@@ -948,7 +948,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 #endif
 
       colorbox = gtk_vbox_new(false, 2);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       gtk_box_pack_start(GTK_BOX(mainbox), colorbox, false, false, 10);
 #else
       gtk_container_add(GTK_CONTAINER(color_frame), colorbox);
@@ -975,12 +975,12 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 
       {
 	char **names;
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
 	GtkWidget *frame;
 #endif
 	int i, size;
 	
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
 	frame = gtk_frame_new(NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(frame), 0);
 	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
@@ -994,7 +994,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 	size = num_colormaps();
 	names = (char **)calloc(size, sizeof(char *));
 	for (i = 0; i < size; i++) names[i] = colormap_name(i);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
 	ccd_list = slist_new_with_title(S_colormap, map_box, (const char**)names, size, BOX_PACK);
 #else
 	ccd_list = slist_new_with_title(S_colormap, frame, (const char**)names, size, CONTAINER_ADD);
@@ -1003,7 +1003,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 	widget_set_vexpand(ccd_list->box, true);
 	free(names);
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
 	gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(ccd_list->scroller), 140); 
 #endif
       }
@@ -1059,7 +1059,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       cutoff_box = gtk_hbox_new(false, 0);
       widget_set_margin_left(cutoff_box, 8);
       widget_set_margin_right(cutoff_box, 8);
-      gtk_box_pack_end(GTK_BOX(colorbox), cutoff_box, false, false, 8);
+      gtk_box_pack_start(GTK_BOX(colorbox), cutoff_box, false, false, 8);
       gtk_widget_show(cutoff_box);
 
       cutoff_label = gtk_label_new("data cutoff:");
@@ -1081,7 +1081,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 #if HAVE_GL
       gl_button = gtk_check_button_new_with_label("use GL");
       SG_SIGNAL_CONNECT(gl_button, "toggled", with_gl_callback, NULL);
-      gtk_box_pack_start(GTK_BOX(colorbox), gl_button, false, false, 12);
+      gtk_box_pack_end(GTK_BOX(colorbox), gl_button, false, false, 12);
       gtk_widget_show(gl_button);
       set_toggle_button(gl_button, with_gl(ss), false, NULL);
 #endif      
@@ -1092,7 +1092,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 
       /* orientation section */
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
       orient_frame = gtk_frame_new(NULL);
       gtk_box_pack_start(GTK_BOX(mainbox), orient_frame, false, false, 0);
       gtk_frame_set_shadow_type(GTK_FRAME(orient_frame), GTK_SHADOW_ETCHED_IN);
@@ -1107,7 +1107,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 #endif
 
       orientbox = gtk_vbox_new(false, 2);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       /* gtk_widget_set_vexpand(orientbox, true); */
       widget_set_margin_left(orientbox, 8);
       widget_set_margin_right(orientbox, 8);
@@ -1128,7 +1128,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
       gtk_widget_show(sep3);
 
       
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       #define PADDING 4
 #else
       #define PADDING 2

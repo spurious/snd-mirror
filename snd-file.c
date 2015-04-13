@@ -3583,7 +3583,9 @@ void set_with_menu_icons(bool val)
 {
   in_set_with_menu_icons(val);
 #if USE_GTK
-  g_object_set(gtk_settings_get_default(), "gtk-menu-images", with_menu_icons(ss), NULL);
+  #if (!GTK_CHECK_VERSION(3, 16, 0))
+    g_object_set(gtk_settings_get_default(), "gtk-menu-images", with_menu_icons(ss), NULL);
+  #endif
   g_object_set(gtk_settings_get_default(), "gtk-button-images", with_menu_icons(ss), NULL);
 #endif
   /* in Scheme: (g_object_set (GPOINTER (gtk_settings_get_default)) "gtk-menu-images" #t) 

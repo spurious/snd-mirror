@@ -279,7 +279,7 @@ void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color);
 void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color);
 color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b);
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   GdkColor *rgb_to_gdk_color(color_t col);
 #endif
 void add_highlight_button_style(GtkWidget *w);
@@ -299,7 +299,7 @@ void add_entry_style(GtkWidget *w);
 void recolor_graph(chan_info *cp, bool selected);
 void set_sensitive(GtkWidget *wid, bool val);
 void set_toggle_button(GtkWidget *wid, bool val, bool passed, void *data);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
 int widget_height(GtkWidget *w);
 int widget_width(GtkWidget *w);
 #else
@@ -343,7 +343,7 @@ void slist_append(slist *lst, const char *name);
 void slist_moveto(slist *lst, int row);
 void slist_select(slist *lst, int row);
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
 cairo_t *make_cairo(GdkWindow *win);
 #else
 cairo_t *make_cairo(GdkDrawable *win);

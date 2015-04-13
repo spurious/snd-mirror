@@ -30434,8 +30434,6 @@ static void startup_funcs(void)
 }
 
 
-#include <X11/xpm.h>
-
 static void SetupIcon(Widget shell)
 {
   Display *dpy;

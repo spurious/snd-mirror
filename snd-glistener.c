@@ -627,7 +627,7 @@ void color_listener(color_info *pix)
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, ss->listener_color_symbol, Xen_wrap_pixel(pix));
 #endif
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   glistener_set_background_color(ss->listener, rgb_to_gdk_color(ss->listener_color));
 #else
   glistener_set_background_color(ss->listener, (GdkRGBA *)(ss->listener_color));
@@ -641,7 +641,7 @@ void color_listener_text(color_info *pix)
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, ss->listener_text_color_symbol, Xen_wrap_pixel(pix));
 #endif
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   glistener_set_text_color(ss->listener, rgb_to_gdk_color(ss->listener_text_color));
 #else
   glistener_set_text_color(ss->listener, (GdkRGBA *)(ss->listener_text_color));

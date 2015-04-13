@@ -94,7 +94,6 @@
 
 #include "mus-config.h"
 
-#define HAVE_GTK_3 (GTK_MAJOR_VERSION == 3)
 #define HAVE_CAIRO_1_8    ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 8))
 #define HAVE_CAIRO_1_9_12 ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 9) && (CAIRO_VERSION_MICRO >= 12))
 
@@ -109,10 +108,10 @@
 
 #include <glib.h>
 #include <gdk/gdk.h>
-#if (!HAVE_GTK_3)
+#include <gtk/gtk.h>
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   #include <gdk/gdkkeysyms.h>
 #endif
-#include <gtk/gtk.h>
 #include <glib-object.h>
 #include <pango/pango.h>
 #include <cairo/cairo.h>
@@ -45121,12 +45120,12 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       Xen_provide_feature("xg");
-      #if HAVE_GTK_3
+      #if GTK_CHECK_VERSION(3, 0, 0)
         Xen_provide_feature("gtk3");
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("12-Apr-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("13-Apr-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

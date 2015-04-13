@@ -1482,7 +1482,6 @@
 
 (hey "#include \"mus-config.h\"~%~%")
 
-(hey "#define HAVE_GTK_3 (GTK_MAJOR_VERSION == 3)~%")
 (hey "#define HAVE_CAIRO_1_8    ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 8))~%")
 (hey "#define HAVE_CAIRO_1_9_12 ((CAIRO_VERSION_MAJOR >= 1) && (CAIRO_VERSION_MINOR >= 9) && (CAIRO_VERSION_MICRO >= 12))~%~%")
 
@@ -1499,10 +1498,10 @@
 
 (hey "#include <glib.h>~%")
 (hey "#include <gdk/gdk.h>~%")
-(hey "#if (!HAVE_GTK_3)~%")
+(hey "#include <gtk/gtk.h>~%")
+(hey "#if (!GTK_CHECK_VERSION(3, 0, 0))~%")
 (hey "  #include <gdk/gdkkeysyms.h>~%")
 (hey "#endif~%")
-(hey "#include <gtk/gtk.h>~%")
 (hey "#include <glib-object.h>~%")
 (hey "#include <pango/pango.h>~%")
 (with-cairo hey (lambda () (hey "#include <cairo/cairo.h>~%")))
@@ -3021,7 +3020,7 @@
 (hey "      define_atoms();~%")
 (hey "      define_strings();~%")
 (hey "      Xen_provide_feature(\"xg\");~%")
-(hey "      #if HAVE_GTK_3~%")
+(hey "      #if GTK_CHECK_VERSION(3, 0, 0)~%")
 (hey "        Xen_provide_feature(\"gtk3\");~%")
 (hey "      #else~%")
 (hey "        Xen_provide_feature(\"gtk2\");~%")

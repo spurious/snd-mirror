@@ -799,7 +799,7 @@ GtkWidget *add_menu(void)
   ml[h_menu] = I_HELP;
   gtk_menu_shell_append(GTK_MENU_SHELL(main_menu), help_menu);
   add_menu_style(help_menu);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   /* gtk_widget_set_halign(GTK_WIDGET(help_menu), GTK_ALIGN_END);
    * gtk_widget_set_hexpand(GTK_WIDGET(help_menu), true);
    * 
@@ -1335,7 +1335,7 @@ void post_lisp_popup_menu(void *e) {}
 
 void add_tooltip(GtkWidget *w, const char *tip)
 {
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   gtk_widget_set_tooltip_text(w, tip);
 #else
   char *str;
@@ -1857,7 +1857,7 @@ void show_toolbar(void)
       GtkWidget *w;
 
       toolbar = gtk_toolbar_new();
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       add_toolbar_style(toolbar);
       gtk_toolbar_set_icon_size(GTK_TOOLBAR(toolbar), GTK_ICON_SIZE_SMALL_TOOLBAR);
 #endif

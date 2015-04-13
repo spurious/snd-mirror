@@ -316,27 +316,25 @@ GL_FILES=""
 GL_FLAGS=""
 
 if test "$with_gl" = yes ; then
-  if test "$with_motif" = yes ; then
-    if test x$PKG_CONFIG != xno ; then
-      if $PKG_CONFIG gl --exists ; then
+  if test x$PKG_CONFIG != xno ; then
+    if $PKG_CONFIG gl --exists ; then
 
-        GL_CFLAGS="`$PKG_CONFIG gl --cflags`"
-        GL_LIBS="`$PKG_CONFIG gl --libs`"
-        GL_FILES="gl.o"
-        AC_DEFINE(HAVE_GL)	    
-        OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES openGL"
+      GL_CFLAGS="`$PKG_CONFIG gl --cflags`"
+      GL_LIBS="`$PKG_CONFIG gl --libs`"
+      GL_FILES="gl.o"
+      AC_DEFINE(HAVE_GL)	    
+      OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES openGL"
 
-        if $PKG_CONFIG glu --exists ; then
-            AC_DEFINE(HAVE_GLU)
-            GL_CFLAGS="$GL_CFLAGS `$PKG_CONFIG glu --cflags`"
-            GL_LIBS="$GL_LIBS `$PKG_CONFIG glu --libs`"
-        fi
+      if $PKG_CONFIG glu --exists ; then
+          AC_DEFINE(HAVE_GLU)
+          GL_CFLAGS="$GL_CFLAGS `$PKG_CONFIG glu --cflags`"
+          GL_LIBS="$GL_LIBS `$PKG_CONFIG glu --libs`"
+      fi
 
-        if test "$with_gl2ps" = yes ; then
-          AC_DEFINE(WITH_GL2PS)
-          RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
-          GL_FILES="$GL_FILES gl2ps.o"
-        fi
+      if test "$with_gl2ps" = yes ; then
+        AC_DEFINE(WITH_GL2PS)
+        RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
+        GL_FILES="$GL_FILES gl2ps.o"
       fi
     fi
   fi

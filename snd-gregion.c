@@ -2,7 +2,7 @@
 
 static void sg_left_justify_button(GtkWidget *button)
 {
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   gtk_widget_set_halign(GTK_WIDGET(button), GTK_ALIGN_START);
 #else
   gfloat x, y;
@@ -12,7 +12,7 @@ static void sg_left_justify_button(GtkWidget *button)
 }
 
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
 static void sg_left_justify_label(GtkWidget *label)
 {
   /* the label justify function in Gtk refers to the text of the lines after the first! */
@@ -139,25 +139,25 @@ static void make_region_labels(file_info *hdr)
   if (hdr == NULL) return;
   str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   snprintf(str, PRINT_BUFFER_SIZE, "srate: %d", hdr->srate);
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   set_label(srate_text, str);
 #else
   set_button_label(srate_text, str);
 #endif
   snprintf(str, PRINT_BUFFER_SIZE, "chans: %d", hdr->chans);
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   set_label(chans_text, str);
 #else
   set_button_label(chans_text, str);
 #endif
   snprintf(str, PRINT_BUFFER_SIZE, "length: %.3f", (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)));
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   set_label(length_text, str);
 #else
   set_button_label(length_text, str);
 #endif
   snprintf(str, PRINT_BUFFER_SIZE, "maxamp: %.3f", region_maxamp(region_list_position_to_id(current_region)));
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   set_label(maxamp_text, str);
 #else
   set_button_label(maxamp_text, str);
@@ -590,7 +590,7 @@ static void make_region_dialog(void)
   gtk_widget_set_name(mix_button, "dialog_button");
   gtk_widget_set_name(save_as_button, "dialog_button");
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   add_highlight_button_style(help_button);
   add_highlight_button_style(dismiss_button);
   add_highlight_button_style(insert_button);
@@ -640,7 +640,7 @@ static void make_region_dialog(void)
   gtk_widget_show(tophbox);
 
 #if WITH_AUDIO
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   plw = gtk_label_new("play"); 
 #else
   plw = gtk_button_new_with_label("play"); 
@@ -707,7 +707,7 @@ static void make_region_dialog(void)
   gtk_widget_show(labbox);
   widget_modify_bg(labbox, GTK_STATE_NORMAL, ss->highlight_color);
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   srate_text = gtk_label_new("srate:");
   sg_left_justify_label(srate_text);
 #else
@@ -718,7 +718,7 @@ static void make_region_dialog(void)
   gtk_box_pack_start(GTK_BOX(labbox), srate_text, false, false, 2);
   gtk_widget_show(srate_text);
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   chans_text = gtk_label_new("chans:");
   sg_left_justify_label(chans_text);
 #else
@@ -729,7 +729,7 @@ static void make_region_dialog(void)
   gtk_box_pack_start(GTK_BOX(labbox), chans_text, false, false, 2);
   gtk_widget_show(chans_text);
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   length_text = gtk_label_new("length:");
   sg_left_justify_label(length_text);
 #else
@@ -740,7 +740,7 @@ static void make_region_dialog(void)
   gtk_box_pack_start(GTK_BOX(labbox), length_text, false, false, 2);
   gtk_widget_show(length_text);
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   maxamp_text = gtk_label_new("maxamp:");
   sg_left_justify_label(maxamp_text);
 #else
@@ -1073,7 +1073,7 @@ void view_files_callback(GtkWidget *w, gpointer info)
       gtk_widget_set_name(help_button, "dialog_button");
       gtk_widget_set_name(dismiss_button, "dialog_button");
       
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       add_highlight_button_style(help_button);
       add_highlight_button_style(dismiss_button);
 #endif
@@ -1097,7 +1097,7 @@ void view_files_callback(GtkWidget *w, gpointer info)
       gtk_widget_show(tophbox);
       
 #if WITH_AUDIO
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
       plw = gtk_label_new("play"); 
 #else
       plw = gtk_button_new_with_label("play"); 

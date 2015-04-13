@@ -413,7 +413,7 @@ void snd_doit(int argc, char **argv)
 
   gtk_init(&argc, &argv);
 
-#if (!HAVE_GTK_3) && (!__APPLE__)
+#if (!GTK_CHECK_VERSION(3, 0, 0)) && (!__APPLE__)
   gdk_set_locale();
 #endif
 
@@ -574,13 +574,13 @@ void snd_doit(int argc, char **argv)
   ss->orig_listener_font = mus_strdup(listener_font(ss));
   ss->orig_tiny_font = mus_strdup(tiny_font(ss));
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   init_gtk();
 #endif
 
   MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */
 
-#if (HAVE_GTK_3)
+#if (GTK_CHECK_VERSION(3, 0, 0))
   init_gtk();
 #endif
   
@@ -610,7 +610,7 @@ void snd_doit(int argc, char **argv)
 	  if (sound_style(ss) == SOUNDS_HORIZONTAL)
 	    SOUND_PANE_BOX(ss) = gtk_hbox_new(false, 0);
 	  else SOUND_PANE_BOX(ss) = gtk_vbox_new(false, 0);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
 	  gtk_widget_set_hexpand(GTK_WIDGET(SOUND_PANE_BOX(ss)), true);
 	  gtk_widget_set_vexpand(GTK_WIDGET(SOUND_PANE_BOX(ss)), true);
 #endif
@@ -649,7 +649,7 @@ void snd_doit(int argc, char **argv)
       ss->startup_errors = NULL;
     }
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   set_basic_color(ss->basic_color);
   color_listener(ss->listener_color);
 

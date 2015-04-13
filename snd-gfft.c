@@ -237,7 +237,7 @@ void set_wavelet_type(int val)
 
 /* ---------------- window choice ---------------- */
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
 /* this won't work in gtk2 because it requires the alpha field (GdkRGBA not defined) */
 static color_t not_so_black;
 
@@ -264,7 +264,7 @@ static void window_browse_callback(const char *name, int row, void *data)
     gtk_label_set_text(GTK_LABEL(fft_window_label), mus_fft_window_name(fft_window(ss)));
   get_fft_window_data();
   graph_redisplay();
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   alpha_beta_alpha(fft_window(ss));
 #endif
 }
@@ -282,7 +282,7 @@ void set_fft_window(mus_fft_window_t val)
 	gtk_label_set_text(GTK_LABEL(fft_window_label), mus_fft_window_name(val));
       get_fft_window_data();
       graph_redisplay();
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       alpha_beta_alpha(val);
 #endif
     }
@@ -873,7 +873,7 @@ GtkWidget *make_transform_dialog(bool managed)
       GtkWidget *se_box, *se_frame, *se_label;
       GtkWidget *end_box, *end_label, *start_box, *start_label;
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       not_so_black = rgb_to_color(0.0, 0.0, 0.0);
       not_so_black->alpha = 0.5;
 #endif
@@ -898,7 +898,7 @@ GtkWidget *make_transform_dialog(bool managed)
       gtk_widget_set_name(dismiss_button, "dialog_button");
       gtk_widget_set_name(color_button, "dialog_button");
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       add_highlight_button_style(dismiss_button);
       add_highlight_button_style(color_button);
       add_highlight_button_style(help_button);
@@ -1270,7 +1270,7 @@ GtkWidget *make_transform_dialog(bool managed)
       if (fft_window_alpha(ss) != 0.0) ADJUSTMENT_SET_VALUE(alpha_adj, fft_window_alpha(ss));
       if (fft_window_beta(ss) != 0.0) ADJUSTMENT_SET_VALUE(beta_adj, fft_window_beta(ss));
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       alpha_beta_alpha(fft_window(ss));
 #endif
       need_callback = true;

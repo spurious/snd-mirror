@@ -128,7 +128,7 @@ static void make_edit_find_dialog(bool managed, chan_info *cp)
       gtk_widget_set_name(find_previous_button, "dialog_button");
       gtk_widget_set_name(find_next_button, "dialog_button");
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       add_highlight_button_style(find_cancel_button);
       add_highlight_button_style(help_button);
       add_highlight_button_style(find_previous_button);

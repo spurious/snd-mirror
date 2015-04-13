@@ -17,9 +17,7 @@
 
 #include <gtk/gtk.h>
 
-#define HAVE_GTK_2 (GTK_MAJOR_VERSION == 2)
-
-#if (!HAVE_GTK_2)
+#if (GTK_CHECK_VERSION(3, 0, 0))
   #include <gdk/gdk.h>
 #else
   #include <gdk/gdkkeysyms.h>
@@ -61,7 +59,7 @@ bool glistener_write               (glistener *g, FILE *fp);
 
 void glistener_set_highlight_tag   (glistener *g, GtkTextTag *m);
 void glistener_set_font            (glistener *g, PangoFontDescription *font);
-#if (HAVE_GTK_2)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
 void glistener_set_text_color      (glistener *g, GdkColor *p);
 void glistener_set_background_color(glistener *g, GdkColor *p);
 #else

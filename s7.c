@@ -7557,21 +7557,14 @@ static bool is_NaN(s7_Double x) {return(x != x);}
   #endif
 
 #else
-static bool is_inf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}  /* Another possibility: (x * 0) != 0 */
+  static bool is_inf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}  /* Another possibility: (x * 0) != 0 */
 
-/* in MS C, we need to provide inverse hyperbolic trig funcs and cbrt */
-double asinh(double x);
-double asinh(double x) {return(log(x + sqrt(1.0 + x * x)));}
-
-double acosh(double x);
-double acosh(double x) {return(log(x + sqrt(x * x - 1.0)));}
-/* perhaps less prone to numerical troubles (untested): 2.0 * log(sqrt(0.5 * (x + 1.0)) + sqrt(0.5 * (x - 1.0))) */
-
-double atanh(double x);
-double atanh(double x) {return(log((1.0 + x) / (1.0 - x)) / 2.0);}
-
-double cbrt(double x);
-double cbrt(double x) {if (x >= 0.0) return(pow(x, 1.0 / 3.0)); return(-pow(-x, 1.0 / 3.0));}
+  /* in MS C, we need to provide inverse hyperbolic trig funcs and cbrt */
+  static double asinh(double x) {return(log(x + sqrt(1.0 + x * x)));}
+  static double acosh(double x) {return(log(x + sqrt(x * x - 1.0)));}
+  /* perhaps less prone to numerical troubles (untested): 2.0 * log(sqrt(0.5 * (x + 1.0)) + sqrt(0.5 * (x - 1.0))) */
+  static double atanh(double x) {return(log((1.0 + x) / (1.0 - x)) / 2.0);}
+  static double cbrt(double x) {if (x >= 0.0) return(pow(x, 1.0 / 3.0)); return(-pow(-x, 1.0 / 3.0));}
 #endif /* windows */
 #endif /* sun */
 
@@ -67827,17 +67820,11 @@ int main(int argc, char **argv)
  * cyclic-seq in stuff.scm, but current code is really clumsy
  *
  * need to check new openGL for API changes (GL_VERSION?)
- *   test/Mesa-10.3/include/GL/glext.h|gl.h (current version appears to be 7.6)
- *   how much of glext.h is needed?  None, I think.  No gl.h diffs that matter.
- *   GLU primarily for unproject (HAVE_GLU snd-chn) -- where is this in the new GL? -- in a separate package libglu
- *     also gldata has GLU ints
  *   GL: snd-[0]|1|x0.h=#includes with glx.h,
  *       [snd-axis], [snd], snd-chn, [snd-draw], [snd-data], snd-motif, [snd-print], [snd-xen, snd-help]
  *     [snd-help glx_version -- needs the gdkglcontext pointer to get the version number] (also snd-1.h)
- *   check out the GL support in gtk 3.16 -- this looks straightforward, snd-chn.c
  *     gtk+-3.15/gtk/gtkglarea.c, gtk-demo/glarea.c, tests/gtkgears.c + testglarea.c, docs/reference/gtk/html/GtkGLArea.html
- *     GdkGLContext -- needs expoxy/gl.h?
- *     snd-axis[405]: gdk_gl_font_use_pango... -- this is not in the gtk/cl code (it's ancient gtkglext stuff)
+ *   I can't see how to switch gl in and out as in the motif version -- I guess I need gl_area and gtk_drawing_area
  * snd-genv needs a lot of gtk3 work
  *
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)

@@ -687,7 +687,7 @@ GtkWidget *make_mix_dialog(void)
       help_button = gtk_dialog_add_button(GTK_DIALOG(mix_dialog), "Help", GTK_RESPONSE_NONE);
       gtk_widget_set_name(help_button, "dialog_button");
       SG_SIGNAL_CONNECT(help_button, "clicked", mix_dialog_help_callback, NULL);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       add_highlight_button_style(help_button);
 #endif
       gtk_widget_show(help_button);
@@ -695,7 +695,7 @@ GtkWidget *make_mix_dialog(void)
       copy_button = gtk_dialog_add_button(GTK_DIALOG(mix_dialog), "Copy mix", GTK_RESPONSE_NONE);
       gtk_widget_set_name(copy_button, "dialog_button");
       SG_SIGNAL_CONNECT(copy_button, "clicked", copy_mix_callback, NULL);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       add_highlight_button_style(copy_button);
 #endif
       gtk_widget_show(copy_button);
@@ -703,7 +703,7 @@ GtkWidget *make_mix_dialog(void)
       dismiss_button = gtk_dialog_add_button(GTK_DIALOG(mix_dialog), I_GO_AWAY, GTK_RESPONSE_NONE);
       gtk_widget_set_name(dismiss_button, "dialog_button");
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_mix_dialog, NULL);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       add_highlight_button_style(dismiss_button);
 #endif
       gtk_widget_show(dismiss_button);
@@ -711,7 +711,7 @@ GtkWidget *make_mix_dialog(void)
       mix_apply_button = gtk_dialog_add_button(GTK_DIALOG(mix_dialog), "Apply env", GTK_RESPONSE_NONE);
       gtk_widget_set_name(mix_apply_button, "dialog_button");
       SG_SIGNAL_CONNECT(mix_apply_button, "clicked", apply_env_callback, NULL);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       add_highlight_button_style(mix_apply_button);
 #endif
       gtk_widget_show(mix_apply_button);
@@ -770,7 +770,7 @@ GtkWidget *make_mix_dialog(void)
       mix_next_button = button_new_with_icon(ICON_GO_FORWARD);
       gtk_widget_set_name(mix_next_button, "dialog_button");
       gtk_box_pack_end(GTK_BOX(rc), mix_next_button, false, true, 6);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       add_highlight_button_style(mix_next_button);
 #endif
       SG_SIGNAL_CONNECT(mix_next_button, "clicked", mix_next_callback, NULL);
@@ -780,7 +780,7 @@ GtkWidget *make_mix_dialog(void)
       mix_previous_button = button_new_with_icon(ICON_GO_BACK);
       gtk_widget_set_name(mix_previous_button, "dialog_button");
       gtk_box_pack_end(GTK_BOX(rc), mix_previous_button, false, true, 6);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       add_highlight_button_style(mix_previous_button);
 #endif
       SG_SIGNAL_CONNECT(mix_previous_button, "clicked", mix_previous_callback, NULL);
@@ -797,7 +797,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(w_speed_event);
       SG_SIGNAL_CONNECT(w_speed_event, "button_press_event", mix_speed_click_callback, NULL);
       
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
       w_speed_label = gtk_label_new("speed:");
 #else
       w_speed_label = gtk_button_new_with_label("speed:");
@@ -842,7 +842,7 @@ GtkWidget *make_mix_dialog(void)
       SG_SIGNAL_CONNECT(w_amp_event, "button_press_event", mix_amp_click_callback, NULL);
       
       snprintf(amplab, LABEL_BUFFER_SIZE, "%s", "amp:");
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
       w_amp_label = gtk_label_new(amplab);
 #else
       w_amp_label = gtk_button_new_with_label("amp:");

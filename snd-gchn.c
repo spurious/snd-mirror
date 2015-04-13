@@ -31,7 +31,7 @@ GtkWidget *channel_down_arrow(chan_info *cp) {return(cp->chan_widgets[W_down_ev]
 
 
 #define EDIT_HISTORY_LIST(Cp) (Cp)->edhist_list
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   #define EDIT_HISTORY_CLOSED 2
 #else
   #define EDIT_HISTORY_CLOSED 1
@@ -406,7 +406,7 @@ static gboolean channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpoint
   cp = (chan_info *)data;
   if ((cp == NULL) || (cp->active < CHANNEL_HAS_AXES) || (cp->sound == NULL)) return(false);
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   if ((EVENT_AREA_HEIGHT(ev) < MIN_REGRAPH_Y) || 
       (EVENT_AREA_WIDTH(ev) < MIN_REGRAPH_X)) 
     return(false);
@@ -643,7 +643,7 @@ static gboolean real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer dat
    */
 
   keysym = EVENT_KEYVAL(ev);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   key_press_callback(cp, 0, 0, EVENT_STATE(ev), keysym);
 #else
   {
@@ -665,7 +665,7 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   int keysym;
 
   keysym = EVENT_KEYVAL(ev);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   key_press_callback(cp, 0, 0, EVENT_STATE(ev), keysym);
 #else
   {
@@ -794,7 +794,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  gtk_container_set_border_width(GTK_CONTAINER(cw[W_main_window]), 2);
 	  gtk_box_pack_start(GTK_BOX(w_snd_pane_box(sp)), cw[W_main_window], true, true, 0);
 	  cp->edhist_list = slist_new(cw[W_main_window], NULL, 0, PANED_ADD1);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
 	  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cp->edhist_list->scroller), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 #else
 	  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cp->edhist_list->scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -1307,7 +1307,7 @@ void color_unselected_graphs(color_t color)
 
 void color_chan_components(color_t color, slider_choice_t which_component)
 {
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   int i;
   for (i = 0; i < ss->max_sounds; i++)
     {

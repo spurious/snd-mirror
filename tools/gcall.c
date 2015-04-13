@@ -203,7 +203,7 @@ int main(int argc, char **argv)
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   g_signal_connect(G_OBJECT(shell), "delete_event", G_CALLBACK(quit_repl), NULL);
 
-#if (HAVE_GTK_2)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   vb = gtk_vbox_new(false, 0);
 #else
   vb = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);

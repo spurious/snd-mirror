@@ -13,7 +13,7 @@
 */
 
 #define HAVE_G_FILE_MONITOR_DIRECTORY 1 /* (GLIB_CHECK_VERSION(2, 18, 1) but it might be much older */
-#define WITH_SKETCH 1                   /* (!HAVE_GTK_3) see below */
+#define WITH_SKETCH 1                   /* (!GTK_CHECK_VERSION(3, 0, 0)) see below */
 
 /* if thumbnail graph display is too slow: save the points? split the idler? g_source_remove if overlap?
  *
@@ -636,13 +636,13 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
   if (!save_as)
     {
       gtk_widget_set_name(fd->play_button, "dialog_button");
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       add_highlight_button_style(fd->play_button);
 #endif
     }
 #endif
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   add_highlight_button_style(fd->ok_button);
   add_highlight_button_style(fd->cancel_button);
   add_highlight_button_style(fd->help_button);
@@ -887,7 +887,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
       redirect_snd_error_to(NULL, NULL);
       if (sp) 
 	{
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
 	  gpointer hide_me;
 	  hide_me = g_object_get_data(G_OBJECT(fd->dialog), "hide-me"); /* see snd-gtk.scm where this is set */
 	  if (hide_me == 0)
@@ -957,7 +957,7 @@ static void file_activated_callback(GtkFileChooser *w, gpointer data)
 
       if (sp) 
 	{
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
 	  gpointer hide_me;
 	  hide_me = g_object_get_data(G_OBJECT(fd->dialog), "hide-me"); /* see snd-gtk.scm where this is set */
 	  if (hide_me == 0)
@@ -998,7 +998,7 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
 	  gtk_window_set_title(GTK_WINDOW(odat->dialog), (char *)((read_only == FILE_READ_ONLY) ? "View" : "Open"));
 	  odat->file_dialog_read_only = read_only;
 	}
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       /* this doesn't work!! and nothing else does either */
       /* if (odat->filename) gtk_file_chooser_select_filename(GTK_FILE_CHOOSER(odat->chooser), odat->filename); */
 #endif
@@ -1588,7 +1588,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
     }
 
   /* sample type */ 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   fdat->sample_type_list = slist_new_with_title("    sample type    ", form, (const char **)sample_types, nsample_types, BOX_PACK);
 #else
   fdat->sample_type_list = slist_new_with_title("sample type", form, (const char **)sample_types, nsample_types, BOX_PACK);
@@ -2734,7 +2734,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
   gtk_widget_set_name(reset_button, "dialog_button");
   gtk_widget_set_name(ok_button, "dialog_button");
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   add_highlight_button_style(cancel_button);
   add_highlight_button_style(help_button);
   add_highlight_button_style(reset_button);
@@ -3074,7 +3074,7 @@ widget_t make_new_file_dialog(bool managed)
       gtk_widget_set_name(new_file_ok_button, "dialog_button");
       gtk_widget_set_name(reset_button, "dialog_button");
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       add_highlight_button_style(help_button);
       add_highlight_button_style(cancel_button);
       add_highlight_button_style(reset_button);
@@ -3412,7 +3412,7 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_widget_set_name(cancel_button, "dialog_button");
       gtk_widget_set_name(ep->save_button, "dialog_button");
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
       add_highlight_button_style(help_button);
       add_highlight_button_style(cancel_button);
       add_highlight_button_style(ep->save_button);
@@ -3539,7 +3539,7 @@ static void create_post_it_monolog(void)
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_post_it, NULL);
   gtk_widget_show(ok_button);
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   add_highlight_button_style(ok_button);
 #endif
 

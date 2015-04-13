@@ -1,7 +1,7 @@
 #include "snd.h"
 
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
 cairo_t *make_cairo(GdkWindow *win)
 #else
 cairo_t *make_cairo(GdkDrawable *win)
@@ -548,7 +548,7 @@ color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b)
 }
 
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
 GdkColor *rgb_to_gdk_color(color_t col)
 {
   GdkColor gcolor;
@@ -567,7 +567,7 @@ void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color)
 {
   /* the color has to stick around??? */
   /* another stop-gap: allocate a color each time... */
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   gtk_widget_modify_bg(w, type, rgb_to_gdk_color(color));
 #else
 #if (!GTK_CHECK_VERSION(3, 16, 0))
@@ -579,7 +579,7 @@ void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color)
 
 void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color)
 {
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   gtk_widget_modify_fg(w, type, rgb_to_gdk_color(color));
 #else
 #if (!GTK_CHECK_VERSION(3, 16, 0))
@@ -591,7 +591,7 @@ void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color)
 
 void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color)
 {
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   gtk_widget_modify_base(w, type, rgb_to_gdk_color(color));
 #else
 #if (!GTK_CHECK_VERSION(3, 16, 0))
@@ -631,7 +631,7 @@ bool cursor_set_blinks(GtkWidget *w, bool blinks)
 }
 
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
 
 int widget_height(GtkWidget *w)
 {
@@ -912,7 +912,7 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
   gdouble maximum, size, new_value, minimum;
 
   parent = gtk_widget_get_parent(list);
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   v = gtk_scrollable_get_vadjustment(GTK_SCROLLABLE(parent));
 #else
   v = gtk_viewport_get_vadjustment(GTK_VIEWPORT(parent));
@@ -961,7 +961,7 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
 }
 
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
 static GtkCssProvider *wb_provider, *listener_provider, *dialog_provider, *hl_provider, *tb_provider, *mu_provider;
 static GtkCssProvider *rsc_provider, *gsc_provider, *bsc_provider, *pd_provider, *cb_provider, *entry_provider;
 static GtkCssProvider *cl_provider;
@@ -1324,7 +1324,7 @@ void slist_select(slist *lst, int row)
 }
 
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
 
 void init_gtk(void)
 {

@@ -804,7 +804,7 @@ void set_dialog_widget(snd_dialog_t which, widget_t wid)
   ss->dialogs[ss->num_dialogs++] = wid;
   check_dialog_widget_table();
 
-#if USE_GTK && HAVE_GTK_3
+#if USE_GTK && GTK_CHECK_VERSION(3, 0, 0)
 #if GTK_CHECK_VERSION(3, 16, 0)
 #else
   gtk_widget_override_background_color(wid, GTK_STATE_FLAG_ACTIVE, (GdkRGBA *)(ss->basic_color)); /* was GTK_STATE_NORMAL which can't be right */
@@ -1177,7 +1177,7 @@ static Xen g_make_cairo(Xen drawer)
 
   Xen_check_type(Xen_is_widget(drawer), drawer, 1, S_make_cairo, "a widget");
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   cr = make_cairo(GDK_DRAWABLE(gtk_widget_get_window(Xen_unwrap_widget(drawer))));
 #else
   cr = make_cairo(GDK_WINDOW(gtk_widget_get_window(Xen_unwrap_widget(drawer))));
@@ -1665,7 +1665,7 @@ static Xen g_basic_color(void)
 
 #if USE_GTK
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
 #if (!GTK_CHECK_VERSION(3, 16, 0))
 static bool is_dark(color_info *color)
 {
@@ -1680,7 +1680,7 @@ static void recolor_everything_1(widget_t w, gpointer color)
   if ((GTK_IS_WIDGET(w)) &&
       (w != ss->listener_pane))
     {
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
       /* this is a gigantic memory leak */
 #if 0
       gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (GdkColor *)color);
@@ -1707,7 +1707,7 @@ static void recolor_everything_1(widget_t w, gpointer color)
 
 void recolor_everything(widget_t w, gpointer color)
 {
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
   GdkColor *nc;
   nc = rgb_to_gdk_color((color_t)color);
 #else

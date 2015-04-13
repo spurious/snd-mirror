@@ -3,12 +3,19 @@
 
 #include <gtk/gtk.h>
 
-#define HAVE_GTK_3 (GTK_MAJOR_VERSION == 3)
-
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   #include <gdk/gdk.h>
 #else
   #include <gdk/gdkkeysyms.h>
+#endif
+
+#if HAVE_GL
+#if GTK_CHECK_VERSION(3, 16, 0)
+  #include <GL/gl.h>
+#else
+#undef HAVE_GL
+#define HAVE_GL 0
+#endif
 #endif
 
 #include "glistener.h"
@@ -56,7 +63,7 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define EVENT_KEYVAL(Ev)      (Ev)->keyval
 #define EVENT_IS_HINT(Ev)     (Ev)->is_hint
 
-#if (!HAVE_GTK_3)
+#if (!GTK_CHECK_VERSION(3, 0, 0))
 #define EVENT_AREA_WIDTH(Ev)  (Ev)->area.width
 #define EVENT_AREA_HEIGHT(Ev) (Ev)->area.height
 #define widget_set_margin_left(W, M) 
@@ -71,7 +78,7 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #endif
 #endif
 
-#if (HAVE_GTK_3) && defined(__GNUC__) && (!(defined(__cplusplus)))
+#if (GTK_CHECK_VERSION(3, 0, 0)) && defined(__GNUC__) && (!(defined(__cplusplus)))
   #define EVENT_STATE(Ev) ({ GdkModifierType Type;  gdk_event_get_state((GdkEvent *)Ev, &Type); Type; })
   #define EVENT_TIME(Ev) gdk_event_get_time((GdkEvent *)Ev)
   #define EVENT_X(Ev) ({ gdouble x, y; gdk_event_get_coords((GdkEvent *)Ev, &x, &y); x; })
@@ -180,7 +187,7 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define TOGGLE_BUTTON_ACTIVE(Button) gtk_toggle_button_get_active((GTK_TOGGLE_BUTTON(Button)))
 #define BIN_CHILD(Bin) gtk_bin_get_child(GTK_BIN(Bin))
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   #define DRAW_SIGNAL "draw"
 #else
   #define DRAW_SIGNAL "expose_event"
@@ -220,7 +227,7 @@ typedef struct {
 
 #define picture_t cairo_surface_t
 
-#if HAVE_GTK_3
+#if GTK_CHECK_VERSION(3, 0, 0)
   typedef GdkWindow Drawable;
   #define DRAWABLE(Widget) GDK_WINDOW(Widget)
   /* as far as I can see, UPDATE_CONTINUOUS is now built-in */

@@ -2966,9 +2966,11 @@ static void gl_display(chan_info *cp)
 #else
 static void set_up_for_gl(chan_info *cp)
 {
+  /* probably gdk_gl_context_make_current */
 }
 static void gl_display(chan_info *cp)
 {
+  glFlush();
 }
 #endif
 
@@ -3092,10 +3094,12 @@ static bool make_gl_spectrogram(chan_info *cp)
   bool need_relist = false;
   rgb_t br = RGB_MAX, bg = RGB_MAX, bb = RGB_MAX;
 
+#if USE_MOTIF
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
-
+#endif
+  
   si = cp->sonogram_data;
   sp = cp->sound;
 
@@ -3132,6 +3136,7 @@ static bool make_gl_spectrogram(chan_info *cp)
   glShadeModel(GL_SMOOTH);
   glClearDepth(1.0);
 
+#if USE_MOTIF
   /* get the background color */
   dpy = XtDisplay(MAIN_SHELL(ss));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
@@ -3148,7 +3153,8 @@ static bool make_gl_spectrogram(chan_info *cp)
 	       rgb_to_float(tmp_color.blue),
 	       0.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+#endif
+  
   if (need_relist)
     gl_spectrogram(si, cp->gl_fft_list, cp->spectrum_end, cp->fft_log_magnitude, cp->min_dB, br, bg, bb);
 
@@ -3192,8 +3198,10 @@ static bool make_gl_spectrogram(chan_info *cp)
     display_channel_time_data(cp); 
   if (cp->graph_lisp_on)
     display_channel_lisp_data(cp); 
-  
+
+#if USE_MOTIF
   return(XtAppPending(MAIN_APP(ss)) == 0); /* return true if there are no pending events to force current buffer to be displayed */
+#endif
 }
 #endif
 /* HAVE_GL */
