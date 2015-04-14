@@ -7746,7 +7746,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	    Xen_out_of_range_error(S_make_locsig, orig_arg[5], keys[5], "too many chans");
 	}
 
-      type = (mus_interp_t)Xen_optkey_to_int(kw_type, keys[6], S_make_locsig, orig_arg[6], type);
+      type = (mus_interp_t)Xen_optkey_to_int(kw_type, keys[6], S_make_locsig, orig_arg[6], (int)type);
       if ((type != MUS_INTERP_LINEAR) && (type != MUS_INTERP_SINUSOIDAL))
 	Xen_out_of_range_error(S_make_locsig, orig_arg[6], keys[6], "type must be " S_mus_interp_linear " or " S_mus_interp_sinusoidal ".");
     }

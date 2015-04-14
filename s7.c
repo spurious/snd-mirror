@@ -2675,10 +2675,9 @@ static const char* opt_names[OPT_MAX_DEFINED] =
 };
 #endif
 
-#define is_safe_c_op(op) ((op < OP_THUNK) && (op >= OP_SAFE_C_C)) /* used only in safe_stepper */
-                                                                  /* for an unsigned int op, op is always >= OP_SAFE_C_C (0) */
+#define is_safe_c_op(op) (op < OP_THUNK)                                    /* used only in safe_stepper */
 #define is_unknown_op(op) ((op >= OP_UNKNOWN) && (op < OP_SAFE_C_P))
-#define is_callable_c_op(op) (((op < OP_THUNK) && (op >= OP_SAFE_C_C)) || (op >= OP_SAFE_C_opVSq_S)) /* used only in check_set */
+#define is_callable_c_op(op) ((op < OP_THUNK) || (op >= OP_SAFE_C_opVSq_S)) /* used only in check_set */
 
 static bool is_h_optimized(s7_pointer p)
 {
@@ -67819,12 +67818,7 @@ int main(int argc, char **argv)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  * cyclic-seq in stuff.scm, but current code is really clumsy
  *
- * need to check new openGL for API changes (GL_VERSION?)
- *   GL: snd-[0]|1|x0.h=#includes with glx.h,
- *       [snd-axis], [snd], snd-chn, [snd-draw], [snd-data], snd-motif, [snd-print], [snd-xen, snd-help]
- *     [snd-help glx_version -- needs the gdkglcontext pointer to get the version number] (also snd-1.h)
- *     gtk+-3.15/gtk/gtkglarea.c, gtk-demo/glarea.c, tests/gtkgears.c + testglarea.c, docs/reference/gtk/html/GtkGLArea.html
- *   I can't see how to switch gl in and out as in the motif version -- I guess I need gl_area and gtk_drawing_area
+ * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and gtk_drawing_area
  * snd-genv needs a lot of gtk3 work
  *
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)

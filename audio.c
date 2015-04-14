@@ -5441,7 +5441,7 @@ mus_sample_t mus_audio_compatible_format(int dev) /* snd-dac and sndplay */
 #if HAVE_ALSA
   if (api == MUS_ALSA_API) 
     {
-      int err;
+      unsigned int err;
       mus_sample_t ival[32];
       err = alsa_sample_types(dev, 32, ival);
       if (err != MUS_ERROR)
