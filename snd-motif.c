@@ -23649,12 +23649,25 @@ static int alphabetize(const void *a, const void *b)
 
 static int find_prompt(Widget w, XmTextPosition start)
 {
-  Boolean found_prompt;
+  Boolean found_prompt = false, found_newline;
   XmTextPosition loc = 0;
 
   if (start == 0) /* try to avoid strlen null in motif */
     return(0);
-  found_prompt = XmTextFindString(w, start, listener_prompt(ss), XmTEXT_BACKWARD, &loc);
+
+  /* the prompt defaults to ">", so a naive backwards search for the prompt is easily confused.
+   *   (bugfix thanks to Tito Latini).
+   */
+  while (!found_prompt)
+    {
+      found_newline = XmTextFindString(w, start, "\n", XmTEXT_BACKWARD, &loc);
+      start = found_newline ? loc : 0;
+      found_prompt = XmTextFindString(w, start, listener_prompt(ss), XmTEXT_FORWARD, &loc);
+      if ((found_prompt && loc <= (start + 1)) || (start == 0))
+        break;
+      start--;
+    }
+
   if (!found_prompt) 
     return(0);
   else return((int)loc + mus_strlen(listener_prompt(ss)));

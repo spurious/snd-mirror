@@ -141,6 +141,10 @@
       (or (pair? obj)
 	  (null? obj)))
 
+    (define (code-constant? x)
+      (and (not (pair? x))
+	   (not (symbol? x))))
+
     (define (t? obj) #t)
 
     (let ((no-side-effect-functions 
@@ -166,9 +170,9 @@
 		  if imag-part inexact->exact inexact? infinite? unlet input-port? integer->char integer-decode-float 
 		  integer-length integer? 
 		  keyword->symbol keyword? 
-		  lambda lcm length let let* letrec letrec* list list->string list->vector list-ref list-tail 
+		  lcm length let let* letrec letrec* list list->string list->vector list-ref list-tail 
 		  list? log logand logbit? logior lognot logxor 
-		  macro? magnitude make-hash-table make-iterator make-hook make-keyword make-list make-polar dilambda
+		  macro? magnitude make-hash-table make-iterator make-hook make-keyword make-list make-polar
 		  make-random-state make-rectangular make-string make-vector map max member memq memv min modulo morally-equal?
 		  nan? negative? not null? number->string number? numerator 
 		  object->string odd? openlet? or outlet output-port? 
@@ -762,11 +766,11 @@
       (set! (procedure-setter cadr) set-cadr!)
       (set! (procedure-setter caddr) set-caddr!)
       (set! (procedure-setter cadddr) set-cadddr!)
-      (define var-type (dilambda (lambda (v) (list-ref v 4)) (lambda (v x) (list-set! v 4 x))))
-      (define var-value (dilambda (lambda (v) (list-ref v 5)) (lambda (v x) (list-set! v 5 x))))
-      (define* (make-var name ref set fnc typ val :allow-other-keys)
+      (define-constant var-type (dilambda (lambda (v) (list-ref v 4)) (lambda (v x) (list-set! v 4 x))))
+      (define-constant var-value (dilambda (lambda (v) (list-ref v 5)) (lambda (v x) (list-set! v 5 x))))
+      (define-constant make-var (lambda* (name ref set fnc typ val :allow-other-keys)
 	;(reflective-probe)
-	(list name ref set fnc typ val))
+	(list name ref set fnc typ val)))
       (define-constant var? pair?)
       (define-constant var-member assq)
 
@@ -893,9 +897,8 @@
 	    (and (symbol? form)
 		 (not (hash-table-ref no-side-effect-functions form))
 		 (let ((e (or (var-member form env) (hash-table-ref globals form))))
-		   (or (not e)
-		       (and (var? e)
-			    (pair? (var-func-info e)))))))) ; it is a local function
+		   (and (var? e)
+			(pair? (var-func-info e))))))) ; it is a local function
 
       (define (just-constants? form env)
 	;; can we probably evaluate form given just built-in stuff?
@@ -1452,8 +1455,7 @@
 				       (classify arg))))
 			 (if (boolean? val)
 			     (not val)
-			     (if (or (and (not (symbol? arg))
-					  (not (pair? arg)))
+			     (if (or (code-constant? arg)
 				     (and (pair? arg)
 					  (symbol? (car arg))
 					  (not (hash-table-ref globals (car arg)))
@@ -1517,7 +1519,9 @@
 		   (if (= len 1)
 		       #f
 		       (if (= len 2)
-			   (classify (cadr form))
+			   (if (code-constant? (cadr form))
+			       (cadr form)
+			       (classify (cadr form)))
 			   (if (true? (cadr form)) ; no need to check anything else
 			       #t                  ; side-effect? here is a nightmare
 			       (let ((new-form ()))
@@ -1537,8 +1541,7 @@
 				     
 				     (if val                                ; #f in or is ignored
 					 (if (or (eq? val #t)               ; #t or any non-#f constant in or ends the expression
-						 (and (not (pair? val))
-						      (not (symbol? val))))
+						 (code-constant? val))
 					     (begin
 					       (if (null? new-form)         ; (or x1 123) -> value of x1 first
 						   (set! new-form (list val))           ;was `(,val))
@@ -1571,9 +1574,15 @@
 					 ((null? exprs) 
 					  (if (null? new-form)
 					      #t
-					      (if (null? (cdr new-form))
-						  (car new-form)
-						  `(and ,@(reverse new-form)))))
+					      (let* ((nform (reverse new-form))
+						     (newer-form (map (lambda (x cdr-x)
+									(if (and x (code-constant? x))
+									    (values)
+									    x))
+								     nform (cdr nform))))
+						(if (null? newer-form)
+						    (car new-form)
+						    `(and ,@newer-form ,(car new-form))))))
 				       
 				       (let* ((e (car exprs))
 					      (val (classify e)))
@@ -1612,8 +1621,7 @@
 								   (> (length e) 2)
 								   (let ((last (list-ref e (- (length e) 1))))
 								     (and last ; (or ... #f)
-									  (not (pair? last))
-									  (not (symbol? last))))))
+									  (code-constant? last)))))
 							 (begin                 ; else add it to our new expression with value #t
 							   (store e val 'and)
 							   (if (or (not (pair? new-form))
@@ -2483,6 +2491,13 @@
 		    (not (cadr (cadr form))))
 	       (lint-format "~A could be ~A" name form `(format #t ,@(cddr (cadr form))))))
 
+	  ((make-vector)
+	   (if (and (= (length form) 4)
+		    (code-constant? (caddr form))
+		    (not (real? (caddr form)))
+		    (eq? (cadddr form) #t))
+	       (lint-format "~A won't create an homogenous vector" name form)))
+
 	  ((reverse list->vector vector->list list->string string->list symbol->string string->symbol number->string)
 	   (let ((inverses '((reverse . reverse) 
 			     (list->vector . vector->list)
@@ -3218,6 +3233,8 @@
 		       (if (negative? len)
 			   (lint-format "cond is messed up:~A" name (truncated-list->string form))
 			   (let ((exprs ())
+				 (result :unset)
+				 (has-else #f)
 				 (falses ()))
 			     (for-each
 			      (lambda (clause)
@@ -3225,7 +3242,9 @@
 				(if (not (pair? clause))
 				    (lint-format "cond clause is messed up: ~A" name (truncated-list->string clause))
 				    (let ((expr (simplify-boolean (car clause) () falses env)))
-
+				      (if (or (eq? (car clause) 'else)
+					      (eq? (car clause) #t))
+					  (set! has-else #t))
 				      (if (never-false expr)
 					  (if (not (= ctr len))
 					      (lint-format "cond test is never false: ~A" name form)
@@ -3247,6 +3266,10 @@
 					      (if (not (= ctr len))
 						  (lint-format "cond else clause is not the last: ~A" name (truncated-list->string form)))
 					      (lint-walk name (car clause) env)))
+				      (if (eq? result :unset)
+					  (set! result (cdr clause))
+					  (if (not (equal? result (cdr clause)))
+					      (set! result :unequal)))
 				      (if (pair? (cdr clause))
 					  (if (eq? (cadr clause) '=>)
 					      (if (not (pair? (cddr clause)))
@@ -3256,8 +3279,13 @@
 					  (if (not (null? (cdr clause)))  ; (not (null?...)) here is correct -- we're looking for stray dots (lint is confused)
 					      (lint-format "cond clause is messed up: ~A" name (truncated-list->string clause))))
 				      (if (not (side-effect? expr env))
-					  (set! falses (cons expr falses))))))
+					  (set! falses (cons expr falses))
+					  (set! result :unequal)))))
 			      (cdr form))
+			     (if (and has-else (pair? result))
+				 (if (null? (cdr result))
+				     (lint-format "possible simplification: ~A" name (lists->string form (car result)))
+				     (lint-format "possible simplification: ~A" name (lists->string form `(begin ,@result)))))
 
 			     (if (and (= len 2)
 				      *report-minor-stuff*)
@@ -3296,6 +3324,8 @@
 				     (lint-format "case selector may not work with eqv: ~A" name (truncated-list->string selector)))))
 			   (let ((all-keys ())
 				 (ctr 0)
+				 (result :unset)
+				 (has-else #f)
 				 (len (length (cddr form))))
 			     (for-each
 			      (lambda (clause)
@@ -3304,6 +3334,10 @@
 				    (lint-format "case clause should be a list: ~A" name (truncated-list->string clause))
 				    (let ((keys (car clause))
 					  (exprs (cdr clause)))
+				      (if (eq? result :unset)
+					  (set! result (cdr clause))
+					  (if (not (equal? result (cdr clause)))
+					      (set! result :unequal)))
 				      (if (pair? keys)
 					  (if (not (list? keys))
 					      (lint-format "stray dot in case case key list: ~A" name (truncated-list->string clause))
@@ -3321,17 +3355,23 @@
 					       keys))
 					  (if (not (eq? keys 'else))
 					      (lint-format "bad case key ~S in ~S" name keys clause)
-					      (if (not (= ctr len))
-						  (lint-format "case else clause is not the last:~A"
-							       name 
-							       (truncated-list->string (cddr form))))))
+					      (begin
+						(set! has-else #t)
+						(if (not (= ctr len))
+						    (lint-format "case else clause is not the last:~A"
+								 name 
+								 (truncated-list->string (cddr form)))))))
 				      (set! all-keys (append (if (and (list? keys)
 								      (pair? keys))
 								 keys 
 								 (list keys))
 							     all-keys))
 				      (lint-walk-body name head exprs env))))
-			      (cddr form)))))
+			      (cddr form))
+			     (if (and has-else (pair? result))
+				 (if (null? (cdr result))
+				     (lint-format "possible simplification: ~A" name (lists->string form (car result)))
+				     (lint-format "possible simplification: ~A" name (lists->string form `(begin ,@result))))))))
 		     env)
 		    
 		    ;; ---------------- do ----------------		  
@@ -3378,6 +3418,32 @@
 		     (if (< (length form) 3)
 			 (lint-format "let is messed up: ~A" name (truncated-list->string form))
 			 (let ((named-let (and (symbol? (cadr form)) (cadr form))))
+
+			   (unless named-let
+			     ;; this could be extended to other such cases
+			     (let ((happy (call-with-exit
+					   (lambda (return)
+					     (for-each
+					      (lambda (var)
+						(if (or (not (pair? var))
+							(not (pair? (cdr var)))
+							(not (code-constant? (cadr var))))
+						    (return #f)))
+					      (cadr form))
+					     (for-each
+					      (lambda (expr)
+						(if (side-effect? expr env)
+						    (return #f)))
+					      (cddr form))
+					     #t))))
+			       (when happy
+				 (catch #t
+				   (lambda ()
+				     (let ((val (eval form (rootlet))))
+				       (lint-format "possible simplification:~A" name (lists->string form val))))
+				   (lambda args
+				     'error)))))
+
 			   (let ((vars (if named-let 
 					   (list (make-var named-let 
 							   :fnc (and (pair? (cddr form)) ; trying to protect against badly formed let's here

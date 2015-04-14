@@ -916,7 +916,7 @@ struct s7_scheme {
   s7_pointer SET_SYMBOL_opSq, SET_SYMBOL_opSSq, SET_SYMBOL_opSSSq;
   s7_pointer SET_SYMBOL_opCq, SET_PAIR_UNKNOWN_G, SET_FV_SCALED;
   s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_A, SET_PAIR_ZA, SET_PAIR_P, SET_PWS, SET_LET_S, SET_LET_ALL_X, SET_PAIR_C, SET_PAIR_C_P;
-  s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED;
+  s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED, DEFINE_CONSTANT_UNCHECKED;
   s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLER_1, CASE_SIMPLER_SS;
   s7_pointer CASE_SIMPLEST, CASE_SIMPLEST_SS, CASE_SIMPLEST_ELSE, CASE_SIMPLEST_ELSE_C;
   s7_pointer LET_C, LET_S, LET_ALL_C, LET_ALL_S, LET_ALL_X;
@@ -2332,7 +2332,7 @@ enum {OP_NO_OP,
       OP_INCREMENT_SS, OP_INCREMENT_SSS, OP_INCREMENT_SZ, OP_INCREMENT_C_TEMP, OP_INCREMENT_SA, OP_INCREMENT_SAA,
 
       OP_LET_STAR_UNCHECKED, OP_LETREC_UNCHECKED, OP_LETREC_STAR_UNCHECKED, OP_COND_UNCHECKED,
-      OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, OP_DEFINE_FUNCHECKED,
+      OP_LAMBDA_STAR_UNCHECKED, OP_DO_UNCHECKED, OP_DEFINE_UNCHECKED, OP_DEFINE_STAR_UNCHECKED, OP_DEFINE_FUNCHECKED, OP_DEFINE_CONSTANT_UNCHECKED,
       OP_DEFINE_WITH_ACCESSOR, OP_DEFINE_MACRO_WITH_ACCESSOR,
 
       OP_LET_NO_VARS, OP_NAMED_LET, OP_NAMED_LET_NO_VARS, OP_NAMED_LET_STAR,
@@ -2529,7 +2529,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "increment_ss", "increment_sss", "increment_sz", "increment_c_temp", "increment_sa", "increment_saa",
 
       "let_star_unchecked", "letrec_unchecked", "letrec_star_unchecked", "cond_unchecked",
-      "lambda_star_unchecked", "do_unchecked", "define_unchecked", "define_star_unchecked", "define_funchecked",
+      "lambda_star_unchecked", "do_unchecked", "define_unchecked", "define_star_unchecked", "define_funchecked", "define_constant_unchecked",
       "define_with_accessor", "define_macro_with_accessor",
 
       "let_no_vars", "named_let", "named_let_no_vars", "named_let_star",
@@ -35712,29 +35712,6 @@ static bool port_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *c
 	 (port_is_closed(y)));
 }
 
-
-static bool s7_is_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally);
-
-static bool closure_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
-{
-  if (x == y)
-    return(true);
-  if (type(x) != type(y))
-    return(false);
-  if ((has_methods(x)) &&
-      (has_methods(y)))
-    {
-      s7_pointer equal_func;
-      equal_func = find_method(sc, closure_let(x), (morally) ? sc->IS_MORALLY_EQUAL : sc->IS_EQUAL);
-      if (equal_func != sc->UNDEFINED)
-	return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, x, y))));
-    }
-  return((morally) &&
-	 (closure_let(x) == closure_let(y)) &&
-	 (s7_is_equal_1(sc, closure_args(x), closure_args(y), ci, morally)) &&
-	 (s7_is_equal_1(sc, closure_body(x), closure_body(y), ci, morally)));
-}
-
 static int equal_ref(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   /* here we know x and y are pointers to the same type of structure */
@@ -35756,6 +35733,8 @@ static int equal_ref(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
     }
   return(-1);
 }
+
+static bool s7_is_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally);
 
 static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
 {
@@ -35908,6 +35887,28 @@ static bool environment_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_
 	  }
     }
   return(true);
+}
+
+static bool closure_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+{
+  if (x == y)
+    return(true);
+  if (type(x) != type(y))
+    return(false);
+  if ((has_methods(x)) &&
+      (has_methods(y)))
+    {
+      s7_pointer equal_func;
+      equal_func = find_method(sc, closure_let(x), (morally) ? sc->IS_MORALLY_EQUAL : sc->IS_EQUAL);
+      if (equal_func != sc->UNDEFINED)
+	return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, x, y))));
+    }
+  /* not sure about this -- we can't simply check environment_equal(closure_let(x), closure_let(y))
+   *   because locally defined constant functions on the second pass find the outer let.
+   */
+  return((morally) &&
+	 (s7_is_equal_1(sc, closure_args(x), closure_args(y), ci, morally)) &&
+	 (s7_is_equal_1(sc, closure_body(x), closure_body(y), ci, morally)));
 }
 
 static bool pair_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
@@ -47892,7 +47893,19 @@ static s7_pointer check_define(s7_scheme *sc)
 	    pair_set_syntax_symbol(sc->code, sc->DEFINE_FUNCHECKED);
 	  else pair_set_syntax_symbol(sc->code, sc->DEFINE_UNCHECKED);
 	}
-      else pair_set_syntax_symbol(sc->code, sc->DEFINE_STAR_UNCHECKED);
+      else 
+	{
+	  if (sc->op == OP_DEFINE_STAR)
+	    pair_set_syntax_symbol(sc->code, sc->DEFINE_STAR_UNCHECKED);
+	  else 
+	    {
+#if DEBUGGING
+	      is (sc->op != sc->DEFINE_CONSTANT)
+		fprintf(stderr, "%s[%f]: op is %s\n", __func__, __LINE__, op_names[sc->op]);
+#endif
+	      pair_set_syntax_symbol(sc->code, sc->DEFINE_CONSTANT_UNCHECKED);
+	    }
+	}
     }
   else set_fcdr(sc->code, sc->F);
   return(sc->code);
@@ -57833,12 +57846,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto START;
       }
 
-
+      
     case OP_DEFINE_CONSTANT1:
       sc->code = car(sc->code);
       if (is_pair(sc->code)) sc->code = car(sc->code); /* (define-constant (ex3 a)...) */
       if (is_symbol(sc->code))
-	set_immutable(sc->code);
+	{
+	  set_immutable(sc->code);
+	  if (!is_slot(global_slot(sc->code)))
+	    global_slot(sc->code) = permanent_slot(sc->code, sc->value);
+	  else slot_value(global_slot(sc->code)) = sc->value;
+	}
       goto START;
 
     case OP_DEFINE_CONSTANT:
@@ -57856,6 +57874,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DEFINE:
       check_define(sc);
 
+    case OP_DEFINE_CONSTANT_UNCHECKED:
     case OP_DEFINE_UNCHECKED:
       if (!is_pair(car(sc->code)))
 	{
@@ -57922,7 +57941,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *    but in this case, (define aaa 2) is also an error -- inconsistent in a sense.
 	   */
 	  if ((!is_slot(x)) ||
-	      (!s7_is_morally_equal(sc, sc->value, slot_value(x))))/* if value is unchanged, just ignore this (re)definition */
+	      (!s7_is_morally_equal(sc, sc->value, slot_value(x))))      /* if value is unchanged, just ignore this (re)definition */
 	    eval_error_with_name(sc, "~A: ~S is immutable", sc->code);   /*   can't use s7_is_equal because value might be NaN, etc */
 	}
       if (symbol_has_accessor(sc->code))
@@ -66759,6 +66778,7 @@ s7_scheme *s7_init(void)
   sc->DEFINE_UNCHECKED =      assign_internal_syntax(sc, "define",      OP_DEFINE_UNCHECKED);
   sc->DEFINE_FUNCHECKED =     assign_internal_syntax(sc, "define",      OP_DEFINE_FUNCHECKED);
   sc->DEFINE_STAR_UNCHECKED = assign_internal_syntax(sc, "define*",     OP_DEFINE_STAR_UNCHECKED);
+  sc->DEFINE_CONSTANT_UNCHECKED = assign_internal_syntax(sc, "define-constant", OP_DEFINE_CONSTANT_UNCHECKED);
   sc->SET_UNCHECKED =         assign_internal_syntax(sc, "set!",        OP_SET_UNCHECKED);
   sc->SET_SYMBOL_C =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_C);
   sc->SET_SYMBOL_S =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_S);
@@ -67804,7 +67824,7 @@ int main(int argc, char **argv)
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328
  * tmap           |      |      | 11.0           5031 4769 4685 4683
  * tcopy          |      |      |                          4970 4959
- * lg             |      |      | 6547 6497 6494 6235 6229 6239 6227
+ * lg             |      |      | 6547 6497 6494 6235 6229 6239 6338
  * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6863
  * titer          |      |      |                          7976 7414
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
@@ -67837,3 +67857,4 @@ int main(int argc, char **argv)
  * maybe sub* (substring etc) should just return nil ("" etc) if the indices are impossible
  * checkpoint (see write.scm)
  */
+ 
