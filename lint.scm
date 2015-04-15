@@ -3421,28 +3421,29 @@
 
 			   (unless named-let
 			     ;; this could be extended to other such cases
-			     (let ((happy (call-with-exit
-					   (lambda (return)
-					     (for-each
-					      (lambda (var)
-						(if (or (not (pair? var))
-							(not (pair? (cdr var)))
-							(not (code-constant? (cadr var))))
-						    (return #f)))
-					      (cadr form))
-					     (for-each
-					      (lambda (expr)
-						(if (side-effect? expr env)
-						    (return #f)))
-					      (cddr form))
-					     #t))))
-			       (when happy
-				 (catch #t
-				   (lambda ()
-				     (let ((val (eval form (rootlet))))
-				       (lint-format "possible simplification:~A" name (lists->string form val))))
-				   (lambda args
-				     'error)))))
+			     (call-with-exit
+			      (lambda (return)
+				;; check var values
+				(for-each
+				 (lambda (var)
+				   (if (or (not (pair? var))
+					   (not (pair? (cdr var)))
+					   (not (code-constant? (cadr var))))
+				       (return)))
+				 (cadr form))
+				;; check the body
+				(for-each
+				 (lambda (expr)
+				   (if (side-effect? expr env)
+				       (return)))
+				 (cddr form))
+				;; try to eval it
+				(catch #t
+				  (lambda ()
+				    (let ((val (eval form (rootlet))))
+				      (lint-format "possible simplification:~A" name (lists->string form val))))
+				  (lambda args
+				    'error)))))
 
 			   (let ((vars (if named-let 
 					   (list (make-var named-let 

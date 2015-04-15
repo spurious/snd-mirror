@@ -23914,17 +23914,18 @@ static void Begin_of_line(Widget w, XEvent *ev, char **ustr, Cardinal *num)
   Boolean found;
   curpos = XmTextGetCursorPosition(w) - 1;
   found = XmTextFindString(w, curpos, (char *)"\n", XmTEXT_BACKWARD, &loc);
-  if (found) 
+  if (curpos >= ss->listener_prompt_length - 1)
     {
       char *str = NULL;
       str = (char *)calloc(ss->listener_prompt_length + 3, sizeof(char));
-      XmTextGetSubstring(w, loc + 1, ss->listener_prompt_length, ss->listener_prompt_length + 2, str);
+      loc = found ? loc + 1 : 0;
+      XmTextGetSubstring(w, loc, ss->listener_prompt_length, ss->listener_prompt_length + 2, str);
       if (strncmp(listener_prompt(ss), str, ss->listener_prompt_length) == 0)
-	XmTextSetCursorPosition(w, loc + ss->listener_prompt_length + 1);
-      else XmTextSetCursorPosition(w, loc + 1);
+	XmTextSetCursorPosition(w, loc + ss->listener_prompt_length);
+      else XmTextSetCursorPosition(w, loc);
       free(str);
     }
-  else XmTextSetCursorPosition(w, 1);
+  else XmTextSetCursorPosition(w, 0);
 }
 
 

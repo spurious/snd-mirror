@@ -3061,7 +3061,7 @@ static void sweep(s7_scheme *sc)
 	      s7_pointer a;
 	      a = sc->vectors[i];
 
-	      /* a multidimensional empty vector can have dimension info */
+	      /* a multidimensional empty vector can have dimension info, wrapped vectors always have dimension info */
 	      if (vector_dimension_info(a))
 		{
 		  if (vector_dimensions_allocated(a))
@@ -30510,9 +30510,17 @@ s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *da
   vector_getter(x) = float_vector_getter;
   vector_setter(x) = float_vector_setter;
   vector_length(x) = len;
-  if (dim_info)
-    vector_dimension_info(x) = make_vdims(sc, free_data, dims, dim_info);
-  else vector_dimension_info(x) = NULL;
+  if (!dim_info)
+    {
+      if (!free_data)    /* here we need the dim info to tell the GC to leave the data alone */
+	{
+	  s7_Int di[1];
+	  di[0] = len;
+	  vector_dimension_info(x) = make_vdims(sc, free_data, 1, di);
+	}
+      else vector_dimension_info(x) = NULL;
+    }
+  else vector_dimension_info(x) = make_vdims(sc, free_data, dims, dim_info);
   add_vector(sc, x);
 
   return(x);
@@ -36386,77 +36394,6 @@ list has infinite length.  Length of anything else returns #f."
 
 /* -------------------------------- copy -------------------------------- */
 
-s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
-{
-  switch (type(obj))
-    {
-    case T_STRING:
-      {
-	s7_pointer ns;
-	ns = s7_make_string_with_length(sc, string_value(obj), string_length(obj));
-	if (is_bytevector(obj))
-	  set_bytevector(ns);
-	return(ns);
-      }
-
-    case T_C_OBJECT:
-      return(object_copy(sc, list_1(sc, obj)));
-
-    case T_HASH_TABLE:              /* this has to copy nearly everything */
-      {
-	int gc_loc;
-	s7_pointer new_hash;
-	new_hash = s7_make_hash_table(sc, hash_table_length(obj));
-	gc_loc = s7_gc_protect(sc, new_hash);
-	hash_table_function(new_hash) = hash_table_function(obj);
-	hash_table_eq_function(new_hash) = hash_table_eq_function(obj);
-	hash_table_function_locked(new_hash) = hash_table_function_locked(obj);
-	hash_table_copy(sc, obj, new_hash, 0, hash_table_entries(obj));
-	s7_gc_unprotect_at(sc, gc_loc);
-	return(new_hash);
-      }
-
-    case T_ITERATOR:
-      return(iterator_copy(sc, obj));
-
-    case T_ENVIRONMENT:
-      check_method(sc, obj, sc->COPY, list_1(sc, obj)); /* the cons happens only if we have a copy method, but it's still wasteful */
-      return(let_copy(sc, obj));   /* this copies only the local env and points to outer envs */
-
-    case T_CLOSURE:
-    case T_CLOSURE_STAR:
-      check_method(sc, obj, sc->COPY, list_1(sc, obj));
-      return(obj);
-
-    case T_INT_VECTOR:
-    case T_FLOAT_VECTOR:
-    case T_VECTOR:
-      return(s7_vector_copy(sc, obj)); /* "shallow" copy */
-
-    case T_PAIR:                    /* top level only, as in the other cases, last arg checks for circles */
-      return(protected_list_copy(sc, obj));
-
-#if WITH_GMP
-    case T_BIG_INTEGER:
-      return(mpz_to_big_integer(sc, big_integer(obj)));
-
-    case T_BIG_RATIO:
-      return(mpq_to_big_ratio(sc, big_ratio(obj)));
-
-    case T_BIG_REAL:
-      return(mpfr_to_big_real(sc, big_real(obj)));
-
-    case T_BIG_COMPLEX:
-      return(mpc_to_big_complex(sc, big_complex(obj)));
-#endif
-
-    case T_C_POINTER:
-      return(s7_make_c_pointer(sc, s7_c_pointer(obj)));
-    }
-  return(obj);
-}
-
-
 static s7_pointer string_setter(s7_scheme *sc, s7_pointer str, s7_Int loc, s7_pointer val)
 {
   if (s7_is_character(val))
@@ -36534,7 +36471,7 @@ static s7_pointer hash_table_setter(s7_scheme *sc, s7_pointer e, s7_Int loc, s7_
 }
 
 
-static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
+s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 {
   #define H_copy "(copy obj) returns a copy of obj, (copy src dest) copies src into dest, (copy src dest start end) copies src from start to end."
   s7_pointer source, dest, source_iter;
@@ -36543,11 +36480,78 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
   s7_pointer (*get)(s7_scheme *sc, s7_pointer obj, s7_Int loc) = NULL;
   bool have_indices;
 
-  if (is_null(cdr(args)))                /* (copy obj) -- this works for environments, hash-tables and bignums */
-    return(s7_copy(sc, car(args)));
+  source = car(args);
+  if (is_null(cdr(args)))                  /* (copy obj) */
+    {
+      switch (type(source))
+	{
+	case T_STRING:
+	  {
+	    s7_pointer ns;
+	    ns = s7_make_string_with_length(sc, string_value(source), string_length(source));
+	    if (is_bytevector(source))
+	      set_bytevector(ns);
+	    return(ns);
+	  }
+	  
+	case T_C_OBJECT:
+	  return(object_copy(sc, args));
+	  
+	case T_HASH_TABLE:              /* this has to copy nearly everything */
+	  {
+	    int gc_loc;
+	    s7_pointer new_hash;
+	    new_hash = s7_make_hash_table(sc, hash_table_length(source));
+	    gc_loc = s7_gc_protect(sc, new_hash);
+	    hash_table_function(new_hash) = hash_table_function(source);
+	    hash_table_eq_function(new_hash) = hash_table_eq_function(source);
+	    hash_table_function_locked(new_hash) = hash_table_function_locked(source);
+	    hash_table_copy(sc, source, new_hash, 0, hash_table_entries(source));
+	    s7_gc_unprotect_at(sc, gc_loc);
+	    return(new_hash);
+	  }
+	  
+	case T_ITERATOR:
+	  return(iterator_copy(sc, source));
+	  
+	case T_ENVIRONMENT:
+	  check_method(sc, source, sc->COPY, args);
+	  return(let_copy(sc, source));   /* this copies only the local env and points to outer envs */
+	  
+	case T_CLOSURE:
+	case T_CLOSURE_STAR:
+	  check_method(sc, source, sc->COPY, args);
+	  return(source);
+	  
+	case T_INT_VECTOR:
+	case T_FLOAT_VECTOR:
+	case T_VECTOR:
+	  return(s7_vector_copy(sc, source)); /* "shallow" copy */
+	  
+	case T_PAIR:                    /* top level only, as in the other cases, last arg checks for circles */
+	  return(protected_list_copy(sc, source));
+	  
+#if WITH_GMP
+	case T_BIG_INTEGER:
+	  return(mpz_to_big_integer(sc, big_integer(source)));
+	  
+	case T_BIG_RATIO:
+	  return(mpq_to_big_ratio(sc, big_ratio(source)));
+	  
+	case T_BIG_REAL:
+	  return(mpfr_to_big_real(sc, big_real(source)));
+	  
+	case T_BIG_COMPLEX:
+	  return(mpc_to_big_complex(sc, big_complex(source)));
+#endif
+	  
+	case T_C_POINTER:
+	  return(s7_make_c_pointer(sc, s7_c_pointer(source)));
+	}
+      return(source);
+    }
 
   have_indices = (is_pair(cddr(args)));
-  source = car(args);
   dest = cadr(args);
   if ((source == dest) && (!have_indices))
     return(dest);
@@ -36584,6 +36588,13 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 
     case T_C_OBJECT:
       check_method(sc, source, sc->COPY, args);
+      {
+	s7_pointer x;
+	x = object_copy(sc, args);
+	if (x == dest)
+	  return(dest);
+	/* if object_copy can't handle args for some reason, it should return #f (not dest), and we'll soldier on... */
+      }
       get = c_object_getter;
       end = object_length_to_int(sc, source);
       break;
@@ -36839,6 +36850,9 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
   return(dest);
 }
 
+#define g_copy s7_copy
+
+
 
 /* -------------------------------- reverse -------------------------------- */
  
@@ -37074,7 +37088,7 @@ static s7_pointer list_fill(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
+s7_pointer s7_fill(s7_scheme *sc, s7_pointer args)
 {
   #define H_fill "(fill! obj val (start 0) end) fills obj with val"
   s7_pointer p;
@@ -37110,6 +37124,8 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
     }
   return(wrong_type_argument_with_type(sc, sc->FILL, small_int(1), p, A_SEQUENCE)); /* (fill! 1 0) */
 }
+
+#define g_fill s7_fill
 
 
 static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
@@ -67823,7 +67839,7 @@ int main(int argc, char **argv)
  * teq            |      |      | 6612                     3887 3091
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328
  * tmap           |      |      | 11.0           5031 4769 4685 4683
- * tcopy          |      |      |                          4970 4959
+ * tcopy          |      |      |                          4970 4343
  * lg             |      |      | 6547 6497 6494 6235 6229 6239 6338
  * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6863
  * titer          |      |      |                          7976 7414
@@ -67856,5 +67872,7 @@ int main(int argc, char **argv)
  *   sym->val might check let_ref_fallback for all computed cases
  * maybe sub* (substring etc) should just return nil ("" etc) if the indices are impossible
  * checkpoint (see write.scm)
+ *
+ * and reverse_in_place should be able to handle c_objects 37017 without a method
  */
  

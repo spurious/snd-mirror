@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.23"
-#define S7_DATE "6-Apr-15"
+#define S7_VERSION "3.24"
+#define S7_DATE "16-Apr-15"
 
 
 typedef long long int s7_Int;
@@ -641,7 +641,8 @@ void s7_set_object_print_readably(int type, char *(*printer)(s7_scheme *sc, void
 
 void s7_autoload_set_names(s7_scheme *sc, const char **names, int size);
 
-s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
+s7_pointer s7_copy(s7_scheme *sc, s7_pointer args);
+s7_pointer s7_fill(s7_scheme *sc, s7_pointer args);
 
 
   /* these are aimed at the CLM optimizer */
@@ -764,6 +765,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 16-Apr:    added s7_fill, changed arg interpretation of s7_copy.
  * 30-Mar:    s7_eval_c_string_with_environment (repl experiment).
  * 19-Mar:    repl.scm.
  * 28-Feb:    s7_vector_print_length -> s7_print_length, set case also.

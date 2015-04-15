@@ -1710,7 +1710,7 @@ static Xen g_mus_copy(Xen gen)
     s7_pointer func; 
     func = s7_method(s7, gen, mus_copy_symbol);
     if (func == copy_function)
-      return(s7_copy(s7, gen));
+      return(s7_copy(s7, s7_list(s7, 1, gen)));
     if (func != Xen_undefined) 
       return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
   }
