@@ -101,22 +101,6 @@
 	    (load file (curlet)))
 
 	  
-	  ;; -------- evaluation ---------
-	  (define (badexpr h)               ; *missing-close-paren-hook* function for Enter command
-	    (set! (h 'result) 'read-error))
-	  
-	  (define-macro (with-repl-let expr)
-	    ;; for multiline edits, we will use *missing-close-paren-hook* rather than try to parse the input ourselves.
-	    `(let ((old-badexpr-hook (hook-functions *missing-close-paren-hook*)))
-	       (dynamic-wind
-		   (lambda ()
-		     (set! (hook-functions *missing-close-paren-hook*) (cons badexpr old-badexpr-hook)))
-		   (lambda ()
-		     ,expr)
-		   (lambda ()
-		     (set! (hook-functions *missing-close-paren-hook*) old-badexpr-hook)))))
-
-	  
 	  (let ((prompt-string "> ")
 		(prompt-length 2)
 		(current-line "")          ; current expression might be a better name
@@ -138,6 +122,36 @@
 		(all-done #f))             ; if #t, repl returns to its caller, if any
 
 		 
+	    ;; -------- evaluation ---------
+	    (define (badexpr h)               ; *missing-close-paren-hook* function for Enter command
+	      (set! (h 'result) 'read-error))
+
+	    (define (shell? h)
+	      ;; examine current-line -- only call system if the unbound variable matches the first non-whitespace 
+	      ;;   portion of current-line
+	      (do ((i 0 (+ i 1)))
+		  ((or (= i (length current-line))
+		       (not (char-whitespace? (current-line i))))
+		   (let ((var-name (symbol->string (h 'variable))))
+		     (when (string=? var-name (substring current-line i (+ i (length var-name))))
+		       (system current-line)
+		       (set! (h 'result) (symbol " ")))))))
+	  
+	  (define-macro (with-repl-let expr)
+	    ;; for multiline edits, we will use *missing-close-paren-hook* rather than try to parse the input ourselves.
+	    `(let ((old-badexpr-hook (hook-functions *missing-close-paren-hook*))
+		   (old-unbound-var-hook (hook-functions *unbound-variable-hook*)))
+	       (dynamic-wind
+		   (lambda ()
+		     (set! (hook-functions *missing-close-paren-hook*) (cons badexpr old-badexpr-hook))
+		     (set! (hook-functions *unbound-variable-hook*) (cons shell? old-unbound-var-hook)))
+		   (lambda ()
+		     ,expr)
+		   (lambda ()
+		     (set! (hook-functions *missing-close-paren-hook*) old-badexpr-hook)
+		     (set! (hook-functions *unbound-variable-hook*) old-unbound-var-hook)))))
+
+	  
 	    ;; -------- match parens --------
 	    (define (char-constant? pos)
 	      (and (> pos 2)
@@ -1075,45 +1089,54 @@
 (autoload 'lint "lint.scm")
 (autoload 'pretty-print "write.scm")
 
+#|
 (define pwd
   (let ((pd (lambda args
 	      ((*libc* 'getcwd) 
 	       (make-string 256 #\null) 256))))
     (openlet (inlet 'object->string pd          ; pwd (repl calls object->string)
 		    'let-ref-fallback pd))))    ; (pwd) (repl calls let-ref-fallback method)
-
 ;; > pwd
 ;; /home/bil/cl
-;; this is based on time-string in mockery.scm, which can give us the date command:
 
-(define date           ; does not take args (yet?)
-  (openlet (inlet 'object->string 
-		  (lambda args
-		    (with-let (sublet *libc*)
-		      (let ((timestr (make-string 128))) 
-			(let ((len (strftime timestr 128 "%a %d-%b-%Y %H:%M:%S %Z"
-					     (localtime 
-					      (time.make (time (c-pointer 0)))))))
-			  (substring timestr 0 len))))))))
+(define date
+  (let ((pd (lambda args
+	      (with-let (sublet *libc*)
+		(let ((timestr (make-string 128))) 
+		  (let ((len (strftime timestr 128 "%a %d-%b-%Y %H:%M:%S %Z"
+				       (localtime 
+					(time.make (time (c-pointer 0)))))))
+		    (substring timestr 0 len)))))))
+    (openlet (inlet 'object->string pd 'let-ref-fallback pd))))
+|#
 
-;; and we can get the command args from current-line:
+;; cd needs to be implemented
 (define cd
-  (openlet 
-   (inlet 'object->string 
-	  (lambda args
-	    ((*libc* 'chdir) (substring ((*repl* 'repl-let) 'current-line) 3))
-	    ((*libc* 'getcwd) (make-string 256 #\null) 256)))))
+  (openlet (inlet 'object->string (lambda args
+				    (let ((line ((*repl* 'repl-let) 'current-line)))
+				      ((*libc* 'chdir)
+				       (do ((i 3 (+ i 1)))
+					   ((or (not (char-whitespace? (line i)))
+						(= i (length line)))
+					    (substring ((*repl* 'repl-let) 'current-line) i))))
+				      ((*libc* 'getcwd) (make-string 256 #\null) 256)))
+		  'let-ref-fallback (lambda (obj str)  ; let-ref-fallback's first arg will be cd: (cd "..")
+				      ((*libc* 'chdir) str)
+				      ((*libc* 'getcwd) (make-string 256 #\null) 256)))))
 ;; > cd ..
 ;; /home/bil
 ;; > cd cl
 ;; /home/bil/cl
 
-;; now what else to add?  ls, fgrep, locate, emacs, cp, mv, rm, exit, kill, set, echo, setenv, time, chown, chmod
-;; show how to run an arbitrary script/program with args (as in cd above)
-;; could these be auto-wrapped by the repl via (*libc* 'execvp)?  (i.e. don't expect user to redefine everything in the repl as a let)
-;; -> see unbound var, no parens, pass line to execlp, return result (int or string?) into repl -- need to make sure
-;; the printout is not erased by the repl. so pwd -> (system "pwd") etc
-;; maybe this is too dangerous: reboot or rm etc -- ,name is ugly -- ??
+#|
+(define-macro (make-command name)
+  `(define ,name
+     (openlet 
+      (inlet 'object->string (lambda args
+			       (system ((*repl* 'repl-let) 'current-line) #t))))))
+;; (make-command ls)
+|#
+
 
 (define-macro (time expr)
   (let ((start (gensym)))

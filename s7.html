@@ -5838,8 +5838,8 @@ to keep it from being evaluated, but
 -->
 
 <p>These examples bring up another odd corner of scheme: else.  In <code>(cond (else 1))</code>
-the 'else is evaluated (like any cond test), so it's value might be #f; in <code>(case 0 (else 1))</code>
-it is not evaluated (like any case key), so it's special as a symbol.  
+the 'else is evaluated (like any cond test), so its value might be #f; in <code>(case 0 (else 1))</code>
+it is not evaluated (like any case key), so it's just a symbol.  
 Since symbol accessors are local in s7, 
 someone can <code>(let ((else #f)) (cond (else 1)))</code> even if we protect the rootlet 'else.
 Of course, in scheme this kind of trouble is pervasive, so rather than make 'else a constant
@@ -9116,31 +9116,21 @@ int main(int argc, char **argv)
 </pre>
 
 <p>Besides evaluating s7 expressions, like any repl,
-the repl also has an ever-growing set of standard shell commands, typable just as in a shell:
+you can also type shell commands just as in a shell:
 </p>
 
 <pre class="indented">
-&gt; pwd                 ; (pwd) also works
+&gt; pwd
 /home/bil/cl
-&gt; cd ..               ; also (cd "..")
+&gt; cd ..
 /home/bil
 &gt; date
 Wed 15-Apr-2015 17:32:24 PDT
 </pre>
 
-<p>These are s7 environments underneath (that is, pwd is a let), and access to
-the command arguments is through (*repl* 'repl-let).  Everything is scheme!
-For example, cd is:
+<p>In most cases, these are handled through *unbound-variable-hook*, passing
+the command to the underlying shell via the system function.
 </p>
-
-<pre class="indented">
-(define cd
-  (openlet 
-   (inlet 'object-&gt;string
-	  (lambda args
-	    ((*libc* 'chdir) (substring ((*repl* 'repl-let) 'current-line) 3))
-	    ((*libc* 'getcwd) (make-string 256 #\null) 256)))))
-</pre>
 
 <p>The prompt is set by (*repl* 'prompt), a dilambda, so
 the simplest way to change the prompt is:
