@@ -4944,7 +4944,6 @@ static s7_pointer add_sym_to_list(s7_scheme *sc, s7_pointer sym)
 
 
 
-
 /* -------------------------------- environments -------------------------------- */
 
 #define NEW_FRAME(Sc, Old_Env, New_Env)		      \
@@ -5878,9 +5877,8 @@ static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
    *   get into infinite recursion.  So, 'let-ref-fallback...
    */
   if (has_ref_fallback(env))
-    {
-      check_method(sc, env, sc->LET_REF_FALLBACK, sc->w = list_2(sc, env, symbol));
-    }
+    check_method(sc, env, sc->LET_REF_FALLBACK, sc->w = list_2(sc, env, symbol));
+
   return(sc->UNDEFINED);
 }
 
@@ -5890,6 +5888,8 @@ s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
   if (!is_symbol(symbol))
     {
       check_method(sc, env, sc->LET_REF, sc->w = list_2(sc, env, symbol));
+      if (has_ref_fallback(env))
+	check_method(sc, env, sc->LET_REF_FALLBACK, sc->w = list_2(sc, env, symbol));
       return(wrong_type_argument_with_type(sc, sc->LET_REF, small_int(2), symbol, A_SYMBOL));
     }
   return(let_ref_1(sc, env, symbol));
@@ -5912,6 +5912,8 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
   if (!is_symbol(s))
     {
       check_method(sc, e, sc->LET_REF, args);
+      if (has_ref_fallback(e))
+	check_method(sc, e, sc->LET_REF_FALLBACK, args);
       return(wrong_type_argument_with_type(sc, sc->LET_REF, small_int(2), s, A_SYMBOL));
     }
   return(let_ref_1(sc, e, s));
@@ -5980,9 +5982,7 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
 	}
 
   if (has_set_fallback(env))
-    {
-      check_method(sc, env, sc->LET_SET_FALLBACK, sc->w = list_3(sc, env, symbol, value));
-    }
+    check_method(sc, env, sc->LET_SET_FALLBACK, sc->w = list_3(sc, env, symbol, value));
   return(sc->UNDEFINED);
 }
 
@@ -5992,6 +5992,8 @@ s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_point
   if (!is_symbol(symbol))
     {
       check_method(sc, env, sc->LET_SET, sc->w = list_3(sc, env, symbol, value));
+      if (has_set_fallback(env))
+	check_method(sc, env, sc->LET_SET_FALLBACK, sc->w = list_3(sc, env, symbol, value));
       return(wrong_type_argument_with_type(sc, sc->LET_SET, small_int(2), symbol, A_SYMBOL));
     }
   return(let_set_1(sc, env, symbol, value));
@@ -6012,6 +6014,8 @@ static s7_pointer g_let_set(s7_scheme *sc, s7_pointer args)
   if (!is_symbol(s))
     {
       check_method(sc, e, sc->LET_SET, args);
+      if (has_set_fallback(e))
+	check_method(sc, e, sc->LET_SET_FALLBACK, args);
       return(wrong_type_argument_with_type(sc, sc->LET_SET, small_int(2), s, A_SYMBOL));
     }
   return(let_set_1(sc, e, s, caddr(args)));
@@ -37969,6 +37973,56 @@ each a function of no arguments, guaranteeing that finish is called even if body
 }
 
 
+s7_pointer s7_dynamic_wind(s7_scheme *sc, s7_pointer init, s7_pointer body, s7_pointer finish)
+{
+  /* this is essentially s7_call with a dynamic-wind wrapper around "body" */
+  s7_pointer p;
+  bool old_longjmp;
+  jmp_buf old_goto_start;
+
+  sc->temp1 = init;
+  sc->temp2 = body;
+  old_longjmp = sc->longjmp_ok;
+  memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
+  sc->longjmp_ok = true;
+
+  if (setjmp(sc->goto_start) != 0) /* returning from s7_error catch handler */
+    {
+      sc->longjmp_ok = old_longjmp;
+      memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
+      if ((sc->op == OP_ERROR_QUIT) &&
+	  (sc->longjmp_ok))
+	longjmp(sc->goto_start, 1);
+      eval(sc, sc->op);
+      return(sc->value);
+    }
+
+  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
+  sc->args = sc->NIL;
+
+  NEW_CELL(sc, p, T_DYNAMIC_WIND);
+  dynamic_wind_in(p) = init;
+  dynamic_wind_body(p) = body;
+  dynamic_wind_out(p) = finish;
+  push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, p);
+  if (init != sc->F)
+    {
+      dynamic_wind_state(p) = DWIND_INIT;
+      sc->code = init;
+    }
+  else
+    {
+      dynamic_wind_state(p) = DWIND_BODY;
+      sc->code = body;
+    }
+
+  eval(sc, OP_APPLY);
+  sc->longjmp_ok = old_longjmp;
+  memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
+  return(sc->value);
+}
+
+
 static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 {
   #define H_catch "(catch tag thunk handler) evaluates thunk; if an error occurs that matches the tag (#t matches all), the handler is called"
@@ -46975,6 +47029,7 @@ static s7_pointer check_case(s7_scheme *sc)
 	   *    (case '2 ((2) 3) (else 1)) -> 3
 	   *    (case '2 (('2) 3) (else 1)) -> 1
 	   * another approach: make else a value, not a symbol, like #<unspecified>, evaluates to itself
+	   * or set it to be immutable, but I guess I'll say "use #_else" for now.
 	   */
 	  if (!is_simple(car(y)))
 	    keys_simple = false;
@@ -66932,7 +66987,6 @@ s7_scheme *s7_init(void)
 
   sc->__FUNC__ = make_symbol(sc, "__func__");
   s7_make_slot(sc, sc->NIL, sc->else_symbol = make_symbol(sc, "else"), sc->ELSE);
-
   sc->owlet = init_owlet(sc);
 
   sc->WRONG_TYPE_ARG_INFO = sc->NIL;
@@ -67872,5 +67926,6 @@ int main(int argc, char **argv)
  *   to make *s7* a completely normal let would require symbol accessors etc
  *   sym->val might check let_ref_fallback for all computed cases
  * checkpoint (see write.scm)
+ * let-ref|set-fallback args test, check whitespace to chdir etc
  */
  

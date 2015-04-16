@@ -564,6 +564,8 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
    *
    * s7_call_with_location passes some information to the error handler.  
    */
+s7_pointer s7_dynamic_wind(s7_scheme *sc, s7_pointer init, s7_pointer body, s7_pointer finish);
+
 
 bool s7_is_dilambda(s7_pointer obj);
 s7_pointer s7_dilambda(s7_scheme *sc, 
@@ -765,7 +767,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
- * 16-Apr:    added s7_fill, changed arg interpretation of s7_copy.
+ * 16-Apr:    added s7_fill, changed arg interpretation of s7_copy, s7_dynamic_wind.
  * 30-Mar:    s7_eval_c_string_with_environment (repl experiment).
  * 19-Mar:    repl.scm.
  * 28-Feb:    s7_vector_print_length -> s7_print_length, set case also.

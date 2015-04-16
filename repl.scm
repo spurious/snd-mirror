@@ -1030,7 +1030,7 @@
 		  ;; -------- the repl --------
 		  (display-prompt)
 		  (cursor-bounds)
-		  (debug-help)
+		  ;(debug-help)
 
 		  (do () 
 		      (all-done
@@ -1076,10 +1076,12 @@
 (autoload 'pretty-print "write.scm")
 
 (define pwd
-  (openlet (inlet 'object->string 
-		  (lambda args
-		    ((*libc* 'getcwd) 
-		     (make-string 256 #\null) 256)))))
+  (let ((pd (lambda args
+	      ((*libc* 'getcwd) 
+	       (make-string 256 #\null) 256))))
+    (openlet (inlet 'object->string pd          ; pwd (repl calls object->string)
+		    'let-ref-fallback pd))))    ; (pwd) (repl calls let-ref-fallback method)
+
 ;; > pwd
 ;; /home/bil/cl
 ;; this is based on time-string in mockery.scm, which can give us the date command:

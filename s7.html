@@ -5836,6 +5836,17 @@ to keep it from being evaluated, but
 
 <!-- there's another sense in which '() is a constant: you can't apply it to anything. ('() 0) -> error
 -->
+
+<p>These examples bring up another odd corner of scheme: else.  In <code>(cond (else 1))</code>
+the 'else is evaluated (like any cond test), so it's value might be #f; in <code>(case 0 (else 1))</code>
+it is not evaluated (like any case key), so it's special as a symbol.  
+Since symbol accessors are local in s7, 
+someone can <code>(let ((else #f)) (cond (else 1)))</code> even if we protect the rootlet 'else.
+Of course, in scheme this kind of trouble is pervasive, so rather than make 'else a constant
+I think the best path is to use unlet:
+<code>(let ((else #f)) (cond (#_else 1)))</code>.  This is 1 (not ()) because the initial value of 'else
+can't be changed.
+</p>
 </div>
 </details>
 
@@ -9109,9 +9120,9 @@ the repl also has an ever-growing set of standard shell commands, typable just a
 </p>
 
 <pre class="indented">
-&gt; pwd
+&gt; pwd                 ; (pwd) also works
 /home/bil/cl
-&gt; cd ..
+&gt; cd ..               ; also (cd "..")
 /home/bil
 &gt; date
 Wed 15-Apr-2015 17:32:24 PDT
@@ -9125,7 +9136,7 @@ For example, cd is:
 <pre class="indented">
 (define cd
   (openlet 
-   (inlet 'object->string
+   (inlet 'object-&gt;string
 	  (lambda args
 	    ((*libc* 'chdir) (substring ((*repl* 'repl-let) 'current-line) 3))
 	    ((*libc* 'getcwd) (make-string 256 #\null) 256)))))
@@ -9152,49 +9163,12 @@ you can also:
 <p>The sublet wrapped around repl-let is not needed here, but in more complex
 cases it protects against inadvertent changes to the repl (our local definitions
 go to the inner let, not repl-let).
-To add help as in
-the Snd repl:
-</p>
-
-<pre class="indented">
-(set! (*repl* 'helpers)
-      (list (lambda (c)
-	      (let ((sym (sublet (with-let (*repl* 'repl-let)) ; in repl-let we can access current repl vars
-			   (let ((len (length current-line)))
-			     (let loop ((i (min (- len 1) cursor-position)))
-			       (and (not (negative? i))
-				    (if (char=? (current-line i) #\()
-					(let loop1 ((k (+ i 1)))
-					  (and (&lt; k len)
-					       (if (not (char-alphabetic? (current-line k)))
-						   (and (&gt; k (+ i 1))
-							(string-&gt;symbol (substring current-line (+ i 1) k)))
-						   (loop1 (+ k 1)))))
-					(loop (- i 1)))))))))
-		(if sym  ; now outside of repl-let (to avoid confusion due to shadowing), get help
-		    (let ((str (help sym)))
-		      (if str (substring (help sym) 0 (min (length str) 40)) ""))
-		    "")))))
-</pre>
-
-<p>Here are a couple examples of adding to the keymap:
+Here is an example of adding to the keymap:
 </p>
 <pre class="indented">
 (set! ((*repl* 'keymap) (integer-&gt;char 17)) ; C-q to quit and return to caller
       (lambda (c)
 	(set! ((*repl* 'repl-let) 'all-done) #t)))
-
-(set! ((*repl* 'keymap) (integer-&gt;char 12)) ; C-l will expand to "(lambda "
-      (lambda (c)
-	(with-let (sublet (*repl* 'repl-let))
-	   (if (zero? cursor-position)
-	       (set! current-line (string-append "(lambda " current-line))
-	       (if (&gt;= cursor-position (length current-line))
-		   (set! current-line (string-append current-line "(lambda "))
-		   (set! current-line (string-append (substring current-line 0 cursor-position)
-						     "(lambda "
-						     (substring current-line cursor-position)))))
-	   (set! cursor-position (+ cursor-position (length "(lambda "))))))
 </pre>
 
 <p>To access the meta keys, use a string:
@@ -9255,6 +9229,9 @@ x: 32
               (newline *stderr*)
 	      (drop-into-repl (owlet)))))
 </pre>
+
+<p>See the end of repl.scm for more examples.
+</p>
 
 
 

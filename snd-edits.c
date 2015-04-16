@@ -7509,15 +7509,20 @@ static void finish_as_one_edit(chan_info *cp)
     }
 }
 
+#if HAVE_SCHEME
+static s7_pointer edit_finish;
+static s7_pointer g_edit_finish(s7_scheme *sc, s7_pointer args)
+{
+  for_each_normal_chan(finish_as_one_edit);
+  return(args);
+}
+#endif
 
 static Xen g_as_one_edit(Xen proc, Xen origin)
 {
   #define H_as_one_edit "(" S_as_one_edit " thunk :optional origin): evaluate thunk, collecting all edits into one from the edit history's point of view"
   Xen result = Xen_false;
   char *errmsg, *as_one_edit_origin = NULL;
-#if HAVE_SCHEME
-  int loc = -1;
-#endif
 
   Xen_check_type((Xen_is_procedure(proc)), proc, 1, S_as_one_edit, "a procedure");
   Xen_check_type(Xen_is_string_or_unbound(origin), origin, 2, S_as_one_edit, "a string");
@@ -7531,28 +7536,23 @@ static Xen g_as_one_edit(Xen proc, Xen origin)
     }
 
   if (Xen_is_string(origin))
-	as_one_edit_origin = mus_strdup(Xen_string_to_C_string(origin));
-      else as_one_edit_origin = NULL;
+    as_one_edit_origin = mus_strdup(Xen_string_to_C_string(origin));
+  else as_one_edit_origin = NULL;
 
   for_each_normal_chan(init_as_one_edit);
+
+#if HAVE_SCHEME 
+  result = s7_dynamic_wind(s7, xen_false, proc, edit_finish);
+#else
   result = Xen_unprotected_call_with_no_args(proc);
-#if HAVE_SCHEME
-  loc = s7_gc_protect(s7, result);
-  /* finish_as_one_edit can call update_graph which can call any number of hooks,
-   *   so this result has to be GC protected by hand.
-   */
-#endif
   for_each_normal_chan(finish_as_one_edit);
+#endif
 
   if (as_one_edit_origin)
     {
       for_each_normal_chan_with_void(as_one_edit_set_origin, (void *)as_one_edit_origin);
       free(as_one_edit_origin);
     }
-
-#if HAVE_SCHEME
-  s7_gc_unprotect_at(s7, loc);
-#endif
   return(result);
 }
 
@@ -9298,6 +9298,8 @@ keep track of which files are in a given saved state batch, and a way to rename 
 #if HAVE_SCHEME
   {
     s7_pointer f;
+
+    edit_finish = s7_make_function(s7, "(finish-as-one-edit)", g_edit_finish, 0, 0, false, "");
 
     /* next-sample */
     f = s7_name_to_value(s7, "next-sample");
