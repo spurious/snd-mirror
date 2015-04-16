@@ -5112,31 +5112,31 @@ GL_FILES=""
 GL_FLAGS=""
 
 if test "$with_gl" = yes ; then
-    if test x$PKG_CONFIG != xno ; then
-      if $PKG_CONFIG gl --exists ; then
+  if test x$PKG_CONFIG != xno ; then
+    if $PKG_CONFIG gl --exists ; then
 
-        GL_CFLAGS="`$PKG_CONFIG gl --cflags`"
-        GL_LIBS="`$PKG_CONFIG gl --libs`"
-        GL_FILES="gl.o"
-        $as_echo "#define HAVE_GL 1" >>confdefs.h
+      GL_CFLAGS="`$PKG_CONFIG gl --cflags`"
+      GL_LIBS="`$PKG_CONFIG gl --libs`"
+      GL_FILES="gl.o"
+      $as_echo "#define HAVE_GL 1" >>confdefs.h
 
-        OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES openGL"
+      OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES openGL"
 
-        if $PKG_CONFIG glu --exists ; then
-            $as_echo "#define HAVE_GLU 1" >>confdefs.h
+      if $PKG_CONFIG glu --exists ; then
+          $as_echo "#define HAVE_GLU 1" >>confdefs.h
 
-            GL_CFLAGS="$GL_CFLAGS `$PKG_CONFIG glu --cflags`"
-            GL_LIBS="$GL_LIBS `$PKG_CONFIG glu --libs`"
-        fi
+          GL_CFLAGS="$GL_CFLAGS `$PKG_CONFIG glu --cflags`"
+          GL_LIBS="$GL_LIBS `$PKG_CONFIG glu --libs`"
+      fi
 
-        if test "$with_gl2ps" = yes ; then
-          $as_echo "#define WITH_GL2PS 1" >>confdefs.h
+      if test "$with_gl2ps" = yes ; then
+        $as_echo "#define WITH_GL2PS 1" >>confdefs.h
 
-          RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
-          GL_FILES="$GL_FILES gl2ps.o"
-        fi
+        RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
+        GL_FILES="$GL_FILES gl2ps.o"
       fi
     fi
+  fi
 fi
 
 
@@ -5170,6 +5170,18 @@ fi
 
 if test "$with_ruby" = yes ; then
   if test x$PKG_CONFIG != xno ; then
+
+      if test "$ac_snd_extension_language" = none ; then
+        if $PKG_CONFIG ruby-2.2 --exists ; then
+          $as_echo "#define HAVE_RUBY 1" >>confdefs.h
+
+          XEN_CFLAGS="`$PKG_CONFIG ruby-2.2 --cflags`"
+          # this depends on building ruby itself with the --enable-shared flag
+          XEN_LIBS="`$PKG_CONFIG ruby-2.2 --libs`"
+          LOCAL_LANGUAGE="Ruby"
+          ac_snd_extension_language=Ruby
+        fi
+      fi
 
       if test "$ac_snd_extension_language" = none ; then
         if $PKG_CONFIG ruby-2.1 --exists ; then

@@ -934,7 +934,7 @@ struct s7_scheme {
   s7_pointer LET_opSq, LET_ALL_opSq, LET_opSq_P, LET_ONE, LET_Z;
   s7_pointer SIMPLE_DO, SAFE_DOTIMES, SIMPLE_SAFE_DOTIMES, SAFE_DOTIMES_C_C, SAFE_DOTIMES_C_A, SAFE_DO, SAFE_DO_ALL_X;
   s7_pointer SIMPLE_DO_P, DOTIMES_P, SIMPLE_DO_FOREVER, SIMPLE_DO_A;
-  s7_pointer DOX, DO_ALL_X, dox_slot_symbol;
+  s7_pointer DOX, DO_ALL_X, dox_slot_symbol, else_symbol;
 
   s7_pointer *safe_lists; /* prebuilt evaluator arg lists */
 
@@ -1397,7 +1397,7 @@ static void init_types(void)
 
 #define T_MUTABLE                     (1 << (TYPE_BITS + 18))
 #define is_mutable(p)                 ((typeflag(p) & T_MUTABLE) != 0)
-/* #define set_mutable(p)             typeflag(p) |= T_MUTABLE */
+#define set_mutable(p)                typeflag(p) |= T_MUTABLE
 #define clear_mutable(p)              typeflag(p) &= (~T_MUTABLE)
 /* used for mutable numbers in clm2xen
  */
@@ -3650,6 +3650,8 @@ static void mark_iterator(s7_pointer p)
 {
   set_mark(p);
   S7_MARK(iterator_sequence(p));
+  if (is_mutable(p))
+    S7_MARK(iterator_current(p));
 }
 
 static void mark_input_port(s7_pointer p)
@@ -24155,13 +24157,15 @@ static s7_pointer other_iterate(s7_scheme *sc, s7_pointer obj)
 {
   if (iterator_position(obj) < iterator_length(obj))
     {
-      s7_pointer result, p;
+      s7_pointer result, p, cur;
       p = iterator_sequence(obj);
+      cur = iterator_current(obj);
       car(sc->Z2_1) = sc->x;
       car(sc->Z2_2) = sc->z; /* is this actually necessary? */
+      integer(car(cur)) = iterator_position(obj);
       if (is_c_object(p))
-	result = (*(c_object_ref(p)))(sc, p, list_1(sc, make_integer(sc, iterator_position(obj))));
-      else result = s7_apply_function(sc, p, list_1(sc, make_integer(sc, iterator_position(obj))));
+	result = (*(c_object_ref(p)))(sc, p, cur);
+      else result = s7_apply_function(sc, p, cur);
       sc->x = car(sc->Z2_1);
       sc->z = car(sc->Z2_2);
       iterator_position(obj)++;
@@ -24270,6 +24274,8 @@ static s7_pointer make_iterator(s7_scheme *sc, s7_pointer e)
 
     case T_CLOSURE:
     case T_CLOSURE_STAR:
+      iterator_current(iter) = cons(sc, make_mutable_integer(sc, 0), sc->NIL);
+      set_mutable(iter);
       iterator_next(iter) = other_iterate;
       if (has_methods(e))
 	iterator_length(iter) = closure_length(sc, e);
@@ -24277,7 +24283,11 @@ static s7_pointer make_iterator(s7_scheme *sc, s7_pointer e)
       break;
 
     case T_C_OBJECT:
-      /* need built-in make-iterator here */
+      /* other_iterate needs a cons for its "arglist" and a mutable integer for the ref index, 
+       *   iterator_current is GC marked if iter is mutable
+       */
+      iterator_current(iter) = cons(sc, make_mutable_integer(sc, 0), sc->NIL);
+      set_mutable(iter);
       iterator_next(iter) = other_iterate;
       iterator_length(iter) = object_length_to_int(sc, e);
       break;
@@ -39305,15 +39315,12 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */
   sc->args = args;
   sc->code = func;
-
-  /* besides a closure, "func" can also be an object (T_C_OBJECT) -- in Snd, a generator for example
-   */
+  /* besides a closure, "func" can also be an object (T_C_OBJECT) -- in Snd, a generator for example  */
 
   eval(sc, OP_APPLY);
 
   sc->longjmp_ok = old_longjmp;
   memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
-
   return(sc->value);
 }
 
@@ -40844,8 +40851,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 		  (is_let(e)))
 		{
 		  result = s7_let_ref(sc, e, sym);
-		  /* I think to be consistent we should add '(sym . result) to the global env
-		   */
+		  /* I think to be consistent we should add '(sym . result) to the global env */
 		  if (result != sc->UNDEFINED)
 		    s7_define(sc, sc->NIL, sym, result);
 		}
@@ -40862,18 +40868,12 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	       *   autoload sym -> x.scm, loads x.scm, missing paren...
 	       */
 	      val = s7_hash_table_ref(sc, sc->autoload_table, sym);
-	      if (is_string(val))
-		{
-		  /* val should be a filename. *load-path* is searched if necessary. */
-		  s7_load(sc, string_value(val));
-		}
+	      if (is_string(val))                /* val should be a filename. *load-path* is searched if necessary. */
+		s7_load(sc, string_value(val));
 	      else
 		{
-		  if (is_closure(val))
-		    {
-		      /* val should be a function of one argument, the current (calling) environment. */
-		      s7_call(sc, val, s7_cons(sc, sc->envir, sc->NIL));
-		    }
+		  if (is_closure(val))           /* val should be a function of one argument, the current (calling) environment */
+		    s7_call(sc, val, s7_cons(sc, sc->envir, sc->NIL));
 		}
 	      result = s7_symbol_value(sc, sym); /* calls find_symbol, does not trigger unbound_variable search */
 	    }
@@ -40882,8 +40882,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	  if ((result == sc->UNDEFINED) &&
 	      (is_not_null(sc->unbound_variable_hook)))
 	    {
-	      /* (let () (set! (hook-functions *unbound-variable-hook*) (list (lambda (v) _asdf_))) _asdf_)
-	       */
+	      /* (let () (set! (hook-functions *unbound-variable-hook*) (list (lambda (v) _asdf_))) _asdf_) */
 	      s7_pointer old_hook;
 
 	      old_hook = sc->unbound_variable_hook;
@@ -46945,7 +46944,7 @@ static s7_pointer check_case(s7_scheme *sc)
 		bodies_simplest = false;
 	      else
 		{
-		  if ((caar(x) != sc->ELSE) &&
+		  if ((caar(x) != sc->ELSE) && (caar(x) != sc->else_symbol) &&
 		      ((!is_symbol(caar(x))) ||
 		       (s7_symbol_value(sc, caar(x)) != sc->ELSE)))
 		    bodies_simplest = false;
@@ -46955,7 +46954,7 @@ static s7_pointer check_case(s7_scheme *sc)
       y = caar(x);
       if (!is_pair(y))
 	{
-	  if ((y != sc->ELSE) &&                                  /* (case 1 (2 1)) */
+	  if ((y != sc->ELSE) && (y != sc->else_symbol) &&        /* (case 1 (2 1)) */
 	      ((!is_symbol(y)) ||
 	       (s7_symbol_value(sc, y) != sc->ELSE)))             /* "proper list" below because: (case 1 (() 2) ... */
 	    return(eval_error(sc, "case clause key list ~A is not a proper list or 'else'", y));
@@ -46968,11 +46967,14 @@ static s7_pointer check_case(s7_scheme *sc)
 	  /* what about (case 1 ((1) #t) ((1) #f)) [this is ok by guile]
 	   *            (case 1 ((1) #t) ())
 	   *            (case 1 ((2 2 2) 1)): guile says #<unspecified>
-	   */
-
-	  /* the selector (sc->value) is evaluated, but the search key is not
+	   * but we do support: (let ((otherwise else)) (case 0 ((1) 2) (otherwise 3))) -> 3!
+	   *   is that consistent? 
+	   *   (let ((else #f)) (case 0 ((1) 2) (else 3))) -> 3
+	   *   (case 0 ((1) 2) (else (let ((else 3)) else))) -> 3
+	   * the selector (sc->value) is evaluated, but the search key is not
 	   *    (case '2 ((2) 3) (else 1)) -> 3
 	   *    (case '2 (('2) 3) (else 1)) -> 1
+	   * another approach: make else a value, not a symbol, like #<unspecified>, evaluates to itself
 	   */
 	  if (!is_simple(car(y)))
 	    keys_simple = false;
@@ -56125,7 +56127,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      break;
 
 	      /* -------------------------------------------------------------------------------- */
-
 
 	    case OP_SAFE_C_opVSq_S:
 	      if (!c_function_is_ok(sc, code)) break;
@@ -66930,7 +66931,7 @@ s7_scheme *s7_init(void)
   sc->KEY_READABLE =         s7_make_keyword(sc, "readable");
 
   sc->__FUNC__ = make_symbol(sc, "__func__");
-  s7_make_slot(sc, sc->NIL, make_symbol(sc, "else"), sc->ELSE);
+  s7_make_slot(sc, sc->NIL, sc->else_symbol = make_symbol(sc, "else"), sc->ELSE);
 
   sc->owlet = init_owlet(sc);
 
@@ -67823,9 +67824,9 @@ int main(int argc, char **argv)
   return(0);
 }
 
-/* in Linux:    gcc s7.c -o repl -DWITH_MAIN -I. -g3 -ldl -lm -Wl,-export-dynamic
- * in *BSD:     gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lm -Wl,-export-dynamic
- * in OSX:      gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lm
+/* in Linux:  gcc s7.c -o repl -DWITH_MAIN -I. -g3 -ldl -lm -Wl,-export-dynamic
+ * in *BSD:   gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lm -Wl,-export-dynamic
+ * in OSX:    gcc s7.c -o repl -DWITH_MAIN -I. -g3 -lm
  *   (clang also needs LDFLAGS="-Wl,-export-dynamic" in Linux)
  */
 #endif
@@ -67835,14 +67836,14 @@ int main(int argc, char **argv)
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5 15.6
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1127
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1134
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1133
  * teq            |      |      | 6612                     3887 3091
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328
- * tmap           |      |      | 11.0           5031 4769 4685 4683
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3326
  * tcopy          |      |      |                          4970 4343
+ * tmap           |      |      | 11.0           5031 4769 4685 4682
  * lg             |      |      | 6547 6497 6494 6235 6229 6239 6338
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6863
- * titer          |      |      |                          7976 7414
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6865
+ * titer          |      |      |                          7976 7413
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
  * thash          |      |      |                          19.4 17.4
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8
@@ -67854,7 +67855,7 @@ int main(int argc, char **argv)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  * cyclic-seq in stuff.scm, but current code is really clumsy
  *
- * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and gtk_drawing_area
+ * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
  * snd-genv needs a lot of gtk3 work
  *
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)
@@ -67870,9 +67871,6 @@ int main(int argc, char **argv)
  * should this be fixed? (symbol->value 'gc-stats *s7*) -> #<undefined>
  *   to make *s7* a completely normal let would require symbol accessors etc
  *   sym->val might check let_ref_fallback for all computed cases
- * maybe sub* (substring etc) should just return nil ("" etc) if the indices are impossible
  * checkpoint (see write.scm)
- *
- * and reverse_in_place should be able to handle c_objects 37017 without a method
  */
  

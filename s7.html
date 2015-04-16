@@ -9073,7 +9073,7 @@ thread-safe local variables, which can be saved and communicated between s7 runs
 
 <div class="header" id="schemerepl"><h4>repl.scm</h4></div>
 
-<p>repl.scm implements a REPL using vt100 codes and libc.scm.  It includes
+<p>repl.scm implements a repl using vt100 codes and libc.scm.  It includes
 symbol and filename completion, a history buffer, paren matching,
 indentation, multi-line edits, and a debugger window.  
 To move around in the history buffer, use M-p and M-n (C-p and C-n are used to move the cursor in the current expression).  
@@ -9102,6 +9102,33 @@ int main(int argc, char **argv)
 
 /* gcc -o r r.c s7.o -Wl,-export-dynamic -lm -I. -ldl
  */
+</pre>
+
+<p>Besides evaluating s7 expressions, like any repl,
+the repl also has an ever-growing set of standard shell commands, typable just as in a shell:
+</p>
+
+<pre class="indented">
+&gt; pwd
+/home/bil/cl
+&gt; cd ..
+/home/bil
+&gt; date
+Wed 15-Apr-2015 17:32:24 PDT
+</pre>
+
+<p>These are s7 environments underneath (that is, pwd is a let), and access to
+the command arguments is through (*repl* 'repl-let).  Everything is scheme!
+For example, cd is:
+</p>
+
+<pre class="indented">
+(define cd
+  (openlet 
+   (inlet 'object->string
+	  (lambda args
+	    ((*libc* 'chdir) (substring ((*repl* 'repl-let) 'current-line) 3))
+	    ((*libc* 'getcwd) (make-string 256 #\null) 256)))))
 </pre>
 
 <p>The prompt is set by (*repl* 'prompt), a dilambda, so

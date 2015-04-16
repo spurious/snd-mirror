@@ -662,25 +662,8 @@
 			  'write-string (list string?)
 			  'zero? number?))
 
-	  (deprecated-ops '((environment? . let?)
-			    (global-environment . rootlet)
-			    (initial-environment . unlet)
-			    (with-environment . with-let)
-			    (outer-environment . outlet)
-			    (augment-environment . sublet)
-			    (augment-environment! . varlet)
+	  (deprecated-ops '((global-environment . rootlet)
 			    (current-environment . curlet)
-			    (error-environment . owlet)
-			    (procedure-environment . funclet)
-			    (environment->list . let->list)
-			    (open-environment . openlet)
-			    (open-let? . openlet?)
-			    (close-environment . coverlet)
-			    (environment-ref . let-ref)
-			    (environment-set! . let-set!)
-			    (environment . inlet)
-			    (environment* . inlet)
-
 			    (make-procedure-with-setter . dilambda)
 			    (procedure-with-setter? . dilambda?)
 
@@ -3923,7 +3906,8 @@
 ;;; what about cond expr that can't be true given previous exprs? -- like or (1508)  and test (cond (#f ...)...)?
 ;;;  also (set! x 32) (set! x 123) etc [list-set!...]
 ;;;  also (set! x 32) (list-ref x 1)...
-
+;;;
+;;; if case selector is a (code-)constant, the whole thing collapses, but that never happens
 
 
 ;;; --------------------------------------------------------------------------------

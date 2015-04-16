@@ -1030,7 +1030,7 @@
 		  ;; -------- the repl --------
 		  (display-prompt)
 		  (cursor-bounds)
-		  ;(debug-help)
+		  (debug-help)
 
 		  (do () 
 		      (all-done
@@ -1075,11 +1075,43 @@
 (autoload 'lint "lint.scm")
 (autoload 'pretty-print "write.scm")
 
-(define (getcwd) 
-  ((*libc* 'getcwd) (make-string 128 #\null) 128))
+(define pwd
+  (openlet (inlet 'object->string 
+		  (lambda args
+		    ((*libc* 'getcwd) 
+		     (make-string 256 #\null) 256)))))
+;; > pwd
+;; /home/bil/cl
+;; this is based on time-string in mockery.scm, which can give us the date command:
 
-(define (chdir dir) 
-  ((*libc* 'chdir) dir))
+(define date           ; does not take args (yet?)
+  (openlet (inlet 'object->string 
+		  (lambda args
+		    (with-let (sublet *libc*)
+		      (let ((timestr (make-string 128))) 
+			(let ((len (strftime timestr 128 "%a %d-%b-%Y %H:%M:%S %Z"
+					     (localtime 
+					      (time.make (time (c-pointer 0)))))))
+			  (substring timestr 0 len))))))))
+
+;; and we can get the command args from current-line:
+(define cd
+  (openlet 
+   (inlet 'object->string 
+	  (lambda args
+	    ((*libc* 'chdir) (substring ((*repl* 'repl-let) 'current-line) 3))
+	    ((*libc* 'getcwd) (make-string 256 #\null) 256)))))
+;; > cd ..
+;; /home/bil
+;; > cd cl
+;; /home/bil/cl
+
+;; now what else to add?  ls, fgrep, locate, emacs, cp, mv, rm, exit, kill, set, echo, setenv, time, chown, chmod
+;; show how to run an arbitrary script/program with args (as in cd above)
+;; could these be auto-wrapped by the repl via (*libc* 'execvp)?  (i.e. don't expect user to redefine everything in the repl as a let)
+;; -> see unbound var, no parens, pass line to execlp, return result (int or string?) into repl -- need to make sure
+;; the printout is not erased by the repl. so pwd -> (system "pwd") etc
+;; maybe this is too dangerous: reboot or rm etc -- ,name is ugly -- ??
 
 (define-macro (time expr)
   (let ((start (gensym)))

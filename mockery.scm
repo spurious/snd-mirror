@@ -382,7 +382,7 @@
 					     (time.make (time (c-pointer 0)))))))
 			 (substring timestr 0 len)))))))
     (openlet
-     (sublet (*mock-string* 'mock-string-class)
+     (sublet (*mock-string* 'mock-string-class) ; the mock-string isn't really needed here
        'let-ref-fallback daytime
        'object->string daytime))))
 
