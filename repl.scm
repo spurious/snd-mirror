@@ -14,7 +14,7 @@
 	  (restore-history #f)      ; function to restore history buffer entries from a file
 	  (helpers ())              ; list of functions displaying help strings 
 	  (run #f)                  ; function that fires up a REPL
-	  (top-level-let (rootlet)) ; environment in which evaluation takes place
+	  (top-level-let (sublet (rootlet))) ; environment in which evaluation takes place
 	  (repl-let                 ; environment for keymap functions to access all the REPL innards (cursor-position etc)
       
       (with-let (sublet *libc*)
@@ -119,35 +119,44 @@
 		(next-char #f)
 		(chars 0)                  ; (sigh) a kludge to try to distinguish tab-as-space from tab-as-completion/indentation
 		(** #f)
+		(unbound-case #f)
 		(all-done #f))             ; if #t, repl returns to its caller, if any
 
 		 
 	    ;; -------- evaluation ---------
-	    (define (badexpr h)               ; *missing-close-paren-hook* function for Enter command
+	    (define (badexpr h)            ; *missing-close-paren-hook* function for Enter command
 	      (set! (h 'result) 'read-error))
 
-	    (define (shell? h)
-	      ;; examine current-line -- only call system if the unbound variable matches the first non-whitespace 
-	      ;;   portion of current-line
-	      (do ((i 0 (+ i 1)))
-		  ((or (= i (length current-line))
-		       (not (char-whitespace? (current-line i))))
-		   (let ((var-name (symbol->string (h 'variable))))
-		     (when (string=? var-name (substring current-line i (+ i (length var-name))))
-		       (system current-line)
-		       (set! (h 'result) (symbol " ")))))))
+	    (define (shell? h)             ; *unbound-variable-hook* function, also for Enter
+	      ;; examine current-line -- only call system if the unbound variable matches the first non-whitespace chars
+	      ;;   of current-line, and command -v name returns 0 (indicating the shell thinks it is an executable command)
+	      (if (eq? (h 'variable) '**)  ; I always forget to mention repl-let
+		  (set! (h 'result) **)
+		  (do ((i 0 (+ i 1)))
+		      ((or (= i (length current-line))
+			   (not (char-whitespace? (current-line i))))
+		       (let ((var-name (symbol->string (h 'variable))))
+			 (when (and (string=? var-name (substring current-line i (+ i (length var-name))))
+				    (zero? (system (string-append "command -v " var-name " >/dev/null"))))
+			   (set! unbound-case #t)
+			   (if (procedure? ((rootlet) 'system))
+			       (begin
+				 (set! ** (((rootlet) 'system) current-line #t))
+				 (display ** *stderr*))
+			       (set! ** (system current-line)))
+			   (set! (h 'result) (symbol " "))))))))
 	  
-	  (define-macro (with-repl-let expr)
+	  (define (with-repl-let body)
 	    ;; for multiline edits, we will use *missing-close-paren-hook* rather than try to parse the input ourselves.
-	    `(let ((old-badexpr-hook (hook-functions *missing-close-paren-hook*))
+	    (let ((old-badexpr-hook (hook-functions *missing-close-paren-hook*))
 		   (old-unbound-var-hook (hook-functions *unbound-variable-hook*)))
 	       (dynamic-wind
 		   (lambda ()
 		     (set! (hook-functions *missing-close-paren-hook*) (cons badexpr old-badexpr-hook))
 		     (set! (hook-functions *unbound-variable-hook*) (cons shell? old-unbound-var-hook)))
+		   body
 		   (lambda ()
-		     ,expr)
-		   (lambda ()
+		     (set! unbound-case #f)
 		     (set! (hook-functions *missing-close-paren-hook*) old-badexpr-hook)
 		     (set! (hook-functions *unbound-variable-hook*) old-unbound-var-hook)))))
 
@@ -752,36 +761,43 @@
 				 (not (= input-fd terminal-fd)))
 			     (display-lines))
 			 
-			 (with-repl-let
-			  (catch #t
-			    (lambda ()
-			      
-			      ;; we want to add current-line (copied) to the history buffer
-			      ;;   unless it is an on-going edit (missing close paren)
-			      (catch 'read-error
 
-				(lambda ()
-				  (set! cursor-position len)
-				  (if (or (= chars 1)
-					  (not (= input-fd terminal-fd)))
-				      (display-lines))
-				  (set! (history) (copy current-line))
-				  (set! history-index 0)
-
-				  ;; get the newline out if the expression does not involve a read error
-				  (let ((form (with-input-from-string current-line #_read))) ; not libc's read
-				    (newline *stderr*)
-				    (format *stderr* "~S~%" (set! ** (eval form (*repl* 'top-level-let))))))
-
-				(lambda args
-				  (pop-history)               ; remove last history entry
-				  (append-newline)
-				  (return))))
-			    
-			    (lambda (type info)
-			      (format *stderr* "~A: " (red "error"))
-			      (apply format *stderr* info)
-			      (newline *stderr*))))
+			 (catch #t
+			   (lambda ()
+			     
+			     ;; we want to add current-line (copied) to the history buffer
+			     ;;   unless it is an on-going edit (missing close paren)
+			     (catch 'read-error
+			       
+			       (lambda ()
+				 (set! cursor-position len)
+				 (if (or (= chars 1)
+					 (not (= input-fd terminal-fd)))
+				     (display-lines))
+				 (set! (history) (copy current-line))
+				 (set! history-index 0)
+				 
+				 (with-repl-let
+				  (lambda ()
+				    ;; get the newline out if the expression does not involve a read error
+				    (let ((form (with-input-from-string current-line #_read))) ; not libc's read
+				      (newline *stderr*)
+				      (let ((val (eval form (*repl* 'top-level-let))))
+					(if unbound-case
+					    (set! unbound-case #f)
+					    (begin
+					      (format *stderr* "~S~%" val)
+					      (set! ** val))))))))
+			       
+			       (lambda args
+				 (pop-history)               ; remove last history entry
+				 (append-newline)
+				 (return))))
+			   
+			   (lambda (type info)
+			     (format *stderr* "~A: " (red "error"))
+			     (apply format *stderr* info)
+			     (newline *stderr*)))
 			 
 			 (new-prompt))))))
 	    
@@ -916,14 +932,15 @@
 				     (= i len))
 				 (when (< i len)
 				   (with-repl-let
-				    (catch #t
-				      (lambda ()
-					(format *stderr* "~S~%" (eval-string (substring buf 0 (- (strlen buf) 1)) (*repl* 'top-level-let))))
-				      (lambda (type info)
-					(format *stderr* "error: ")
-					(apply format *stderr* info)
-					(newline *stderr*))))
-				   (format *stderr* "> ")))))))))
+				    (lambda ()
+				      (catch #t
+					(lambda ()
+					  (format *stderr* "~S~%" (eval-string (substring buf 0 (- (strlen buf) 1)) (*repl* 'top-level-let))))
+					(lambda (type info)
+					  (format *stderr* "error: ")
+					  (apply format *stderr* info)
+					  (newline *stderr*))))
+				    (format *stderr* "> "))))))))))
 	      
 		;; not a pipe or a dumb terminal -- hopefully all others accept vt100 codes
 		(let ((buf (termios.make))

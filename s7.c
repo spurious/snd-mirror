@@ -37980,7 +37980,7 @@ s7_pointer s7_dynamic_wind(s7_scheme *sc, s7_pointer init, s7_pointer body, s7_p
   bool old_longjmp;
   jmp_buf old_goto_start;
 
-  sc->temp1 = init;
+  sc->temp1 = ((init == sc->F) ? finish : init);
   sc->temp2 = body;
   old_longjmp = sc->longjmp_ok;
   memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
@@ -40818,10 +40818,9 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 {
   /* this always occurs in a context where we're trying to find anything, so I'll move a couple of those checks here
    */
-  if (has_ref_fallback(sc->envir)) /* an experiment */
-    {
-      check_method(sc, sc->envir, sc->LET_REF_FALLBACK, sc->w = list_2(sc, sc->envir, sym));
-    }
+
+  if (has_ref_fallback(sc->envir)) /* an experiment -- see s7test (with-let *db* (+ int (length str))) */
+    check_method(sc, sc->envir, sc->LET_REF_FALLBACK, sc->w = list_2(sc, sc->envir, sym));
 
   if (sym == sc->UNQUOTE)
     return(eval_error(sc, "unquote (',') occurred outside quasiquote: ~S", sc->cur_code));
@@ -67926,6 +67925,5 @@ int main(int argc, char **argv)
  *   to make *s7* a completely normal let would require symbol accessors etc
  *   sym->val might check let_ref_fallback for all computed cases
  * checkpoint (see write.scm)
- * let-ref|set-fallback args test, check whitespace to chdir etc
  */
- 
+

@@ -9091,8 +9091,10 @@ To move around in the history buffer, use M-p and M-n (C-p and C-n are used to m
 You can change the keymap or the prompt, and so on.  All the repl functions are
 exported via the *repl* environment.  One field is 'repl-let which
 gives you access to all the repl's internal variables and functions.
-Another is 'top-level-let, normally (rootlet), which is the environment in
-which the repl's evaluation takes place.
+Another is 'top-level-let, normally (sublet (rootlet)), which is the environment in
+which the repl's evaluation takes place.  You can reset the repl back to its
+starting point with: <code>(set! (*repl* 'top-level-let) (sublet (rootlet)))</code>.
+The special symbol '** holds the last value.
 </p>
 
 <p>To run the repl, either build s7 with the compiler flag -DWITH_MAIN,
@@ -9126,10 +9128,14 @@ you can also type shell commands just as in a shell:
 /home/bil
 &gt; date
 Wed 15-Apr-2015 17:32:24 PDT
+&gt; **
+"Wed 15-Apr-2015 17:32:24 PDT
+"
 </pre>
 
-<p>In most cases, these are handled through *unbound-variable-hook*, passing
-the command to the underlying shell via the system function.
+<p>In most cases, these are handled through *unbound-variable-hook*, checked using "command -v", then passed
+to the underlying shell via the system function.  If s7's (as opposed to libc's) system command
+is accessible, the '** variable holds whatever the command printed.
 </p>
 
 <p>The prompt is set by (*repl* 'prompt), a dilambda, so

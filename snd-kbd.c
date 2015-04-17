@@ -703,6 +703,9 @@ void control_g(snd_info *sp)
       if (sp->applying) stop_applying(sp);
       for_each_sound_chan(sp, stop_fft_in_progress);
     }
+
+  if (selection_creation_in_progress())
+    deactivate_selection();
 }
 
 #ifndef SND_KEYMASK
@@ -749,7 +752,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   if (defining_macro) continue_macro(keysym, state);
   if (!m) count = 1; else m = false;
   
-  if ((selection_creation_in_progress()) &&
+  if ((selection_creation_in_progress()) && (!counting) &&
       ((extended_mode) || (stop_selecting(keysym, state))))
     finish_selection_creation();
 

@@ -1282,6 +1282,41 @@ int main(int argc, char **argv)
     s7_call_with_location(sc, test_hook, s7_list(sc, 2, TO_S7_INT(1), TO_S7_INT(2)), "ffitest", "ffitest.c", __LINE__);
   }
 
+  {
+    s7_pointer x, y, funcs;
+    funcs = s7_eval_c_string(sc, "(let ((x 0)) (list (lambda () (set! x 1)) (lambda () (set! x (+ x 1))) (lambda () (set! x (+ x 1))) (lambda () x)))");
+    gc_loc = s7_gc_protect(sc, funcs);
+    y = s7_dynamic_wind(sc, s7_car(funcs), s7_cadr(funcs), s7_caddr(funcs));
+    x = s7_call(sc, s7_cadddr(funcs), s7_nil(sc));
+    if ((!s7_is_integer(x)) ||
+	(!s7_is_integer(y)) ||
+	(s7_integer(x) != 3) ||
+	(s7_integer(y) != 2))
+      fprintf(stderr, "s7_dynamic_wind: x: %s, y: %s\n", s7_object_to_c_string(sc, x), s7_object_to_c_string(sc, y));
+    y = s7_dynamic_wind(sc, s7_f(sc), s7_car(funcs), s7_cadr(funcs));
+    x = s7_call(sc, s7_cadddr(funcs), s7_nil(sc));
+    if ((!s7_is_integer(x)) ||
+	(!s7_is_integer(y)) ||
+	(s7_integer(x) != 2) ||
+	(s7_integer(y) != 1))
+      fprintf(stderr, "s7_dynamic_wind (init #f): x: %s, y: %s\n", s7_object_to_c_string(sc, x), s7_object_to_c_string(sc, y));
+    y = s7_dynamic_wind(sc, s7_f(sc), s7_cadr(funcs), s7_f(sc));
+    x = s7_call(sc, s7_cadddr(funcs), s7_nil(sc));
+    if ((!s7_is_integer(x)) ||
+	(!s7_is_integer(y)) ||
+	(s7_integer(x) != 3) ||
+	(s7_integer(y) != 3))
+      fprintf(stderr, "s7_dynamic_wind (init #f, finish #f): x: %s, y: %s\n", s7_object_to_c_string(sc, x), s7_object_to_c_string(sc, y));
+    y = s7_dynamic_wind(sc, s7_cadr(funcs), s7_cadr(funcs), s7_f(sc));
+    x = s7_call(sc, s7_cadddr(funcs), s7_nil(sc));
+    if ((!s7_is_integer(x)) ||
+	(!s7_is_integer(y)) ||
+	(s7_integer(x) != 5) ||
+	(s7_integer(y) != 5))
+      fprintf(stderr, "s7_dynamic_wind (finish #f): x: %s, y: %s\n", s7_object_to_c_string(sc, x), s7_object_to_c_string(sc, y));
+    s7_gc_unprotect_at(sc, gc_loc);
+  }
+
   if (s7_begin_hook(sc) != NULL)
     {fprintf(stderr, "%d: begin_hook is not null?\n", __LINE__);}
   tested_begin_hook = false;
