@@ -3,7 +3,7 @@
 (provide 'snd-gtk-effects.scm)
 (require snd-gtk snd-gtk-effects-utils.scm snd-xm-enved.scm snd-moog.scm snd-rubber.scm snd-dsp.scm)
 
-(with-let *gtk*
+(with-let (sublet *gtk*)
   
   (define (plausible-mark-samples)
     ;; find two marks in the current channel (in or nearest to current window)

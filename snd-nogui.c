@@ -681,14 +681,6 @@ void snd_doit(int argc, char **argv)
   signal(SIGTTOU, SIG_IGN);
 #endif
 
-  auto_open_files = argc - 1;
-  if (argc > 1) auto_open_file_names = (char **)(argv + 1);
-  while (auto_open_ctr < auto_open_files)
-    auto_open_ctr = handle_next_startup_arg(auto_open_ctr, auto_open_file_names, false, auto_open_files);
-
-  if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse == SOUND_NORMAL))
-    select_channel(ss->sounds[0], 0);
-
 #ifndef _MSC_VER
   if (setjmp(top_level_jump))
     {
@@ -696,7 +688,21 @@ void snd_doit(int argc, char **argv)
 	snd_error_without_format("Caught top level error (will try to continue):\n");
       else ss->jump_ok = false;
     }
+  else
+    {
 #endif
+
+  auto_open_files = argc - 1;
+  if (argc > 1) auto_open_file_names = (char **)(argv + 1);
+  while (auto_open_ctr < auto_open_files)
+    auto_open_ctr = handle_next_startup_arg(auto_open_ctr, auto_open_file_names, false, auto_open_files);
+
+#ifndef _MSC_VER
+    }
+#endif
+
+  if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse == SOUND_NORMAL))
+    select_channel(ss->sounds[0], 0);
 
 #if HAVE_SCHEME
   if (!nostdin)

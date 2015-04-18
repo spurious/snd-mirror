@@ -31035,7 +31035,9 @@ void snd_doit(int argc, char **argv)
 	snd_error_without_format("Caught top level error (will try to continue):\n");
       else ss->jump_ok = false;
     }
+  else
 #endif
+    startup_funcs(); /* snd /tmp -> segfault if this happens before the setjmp(top_level_jump)  */
 
   if (ss->startup_errors)
     {

@@ -4,7 +4,7 @@
 (provide 'snd-new-effects.scm)
 (require snd-effects-utils.scm snd-xm-enved.scm snd-moog.scm snd-rubber.scm snd-dsp.scm)
 
-(with-let *motif*
+(with-let (sublet *motif*)
   
   (define effects-list ()) ; menu labels are updated to show current settings
   

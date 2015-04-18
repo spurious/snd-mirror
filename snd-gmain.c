@@ -631,7 +631,6 @@ void snd_doit(int argc, char **argv)
   setup_gcs();
   if (batch) gtk_widget_hide(MAIN_SHELL(ss));
   else gdk_window_resize(WIDGET_TO_WINDOW(MAIN_SHELL(ss)), INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT);
-  startup_funcs();
   
 #ifndef _MSC_VER
   if (setjmp(top_level_jump))
@@ -640,7 +639,9 @@ void snd_doit(int argc, char **argv)
 	snd_error_without_format("Caught top level error (will try to continue):\n");
       else ss->jump_ok = false;
     }
+  else
 #endif
+    startup_funcs(); /* snd /tmp -> segfault if this happens before the setjmp(top_level_jump)  */
   
   if (ss->startup_errors)
     {

@@ -760,7 +760,6 @@
 			 (if (or (= chars 1) 
 				 (not (= input-fd terminal-fd)))
 			     (display-lines))
-			 
 
 			 (catch #t
 			   (lambda ()
