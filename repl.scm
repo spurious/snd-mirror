@@ -87,15 +87,17 @@
 	    (if (negative? history-position)
 		(set! history-position (- current-history-size 1))))
 
+	  (define* (write-history port (spaces 0))
+	    (format port "~NC(set! history-position ~D)~%" spaces #\space history-position)
+	    (format port "~NC(set! current-history-size ~D)~%" spaces #\space current-history-size)
+	    (let ((pl (*s7* 'print-length)))
+	      (set! (*s7* 'print-length) (* 2 current-history-size))
+	      (format port "~NC(set! history-buffer ~A)" spaces #\space (object->string history-buffer))
+	      (set! (*s7* 'print-length) pl)))
+	    
 	  (define* (save-history (file "repl-history.scm"))
 	    (call-with-output-file file
-	      (lambda (port)
-		(format port "(set! history-position ~D)~%" history-position)
-		(format port "(set! current-history-size ~D)~%" current-history-size)
-		(let ((pl (*s7* 'print-length)))
-		  (set! (*s7* 'print-length) 1024)
-		  (format port "(set! history-buffer ~A)~%" (object->string history-buffer))
-		  (set! (*s7* 'print-length) pl)))))
+	      write-history))
 	  
 	  (define* (restore-history (file "repl-history.scm"))
 	    (load file (curlet)))
@@ -938,8 +940,8 @@
 					(lambda (type info)
 					  (format *stderr* "error: ")
 					  (apply format *stderr* info)
-					  (newline *stderr*))))
-				    (format *stderr* "> "))))))))))
+					  (newline *stderr*)))))
+				    (format *stderr* "> ")))))))))
 	      
 		;; not a pipe or a dumb terminal -- hopefully all others accept vt100 codes
 		(let ((buf (termios.make))
@@ -1088,6 +1090,26 @@
 	      
 	    (curlet))))))
       
+      (define (save-repl) 
+	(call-with-output-file "save.repl" 
+	  (lambda (p) 
+	    (format p "(for-each~%~NC~
+                         (lambda (f)~%~NC~
+                           (if (not (provided? f))~%~NC~
+                               (let ((autofile (*autoload* f)))~%~NC~
+                                 (if (and autofile (file-exists? autofile))~%~NC(load autofile)))))~%~NC~W)~%~%" 
+		    2 #\space 4 #\space 8 #\space 10 #\space 14 #\space 2 #\space
+		    *features*)
+	    (format p "(with-let (*repl* 'repl-let)~%")
+	    (((*repl* 'repl-let) 'write-history) p 2)
+	    (format p ")~%~%")
+	    (format p "~W" (*repl* 'top-level-let)))))
+      
+      (define (restore-repl) 
+	(set! (*repl* 'top-level-let) (load "save.repl")))  
+      ;; I think this could be a merge rather than a reset by using (inlet top-level-let (load ...))
+
+      
       (set! keymap (repl-let 'keymap))
       (set! history (repl-let 'history))
       (set! save-history (repl-let 'save-history))
@@ -1231,14 +1253,14 @@
 ;;; --------------------------------------------------------------------------------
 #|
 to work in a particular environment:
-(set! (*repl* 'top-level-let) (sublet (rootlet))) ; or any other like *libc*
+    (set! (*repl* 'top-level-let) (sublet (rootlet))) ; or any other like *libc*
 now (define g 43) puts g in the new top-level-let, so ((rootlet) 'g) -> #<undefined>, and ((*repl* 'top-level-let) 'g) -> 43 (= g in repl of course)
 to start with a fresh top-level, just set top-level-let to (sublet (rootlet)) again.
 
 to add/change keymap entry (using sublet here to protect against inadvertent changes to the repl).
-(set! ((*repl* 'keymap) (integer->char 17)) ; C-q to quit and return to caller
-      (lambda (c)
-	(set! ((*repl* 'repl-let) 'all-done) #t)))
+    (set! ((*repl* 'keymap) (integer->char 17)) ; C-q to quit and return to caller
+          (lambda (c)
+	    (set! ((*repl* 'repl-let) 'all-done) #t)))
 
 (set! ((*repl* 'keymap) (integer->char 12)) ; C-l will expand to "(lambda " at the cursor
       (lambda (c)
@@ -1253,12 +1275,12 @@ to add/change keymap entry (using sublet here to protect against inadvertent cha
 	   (set! cursor-position (+ cursor-position (length "(lambda "))))))
 
 change the prompt:
-(set! ((*repl* 'prompt)) "scheme> ")
+    (set! ((*repl* 'prompt)) "scheme> ")
 
 red lambda prompt: 
-(with-let (sublet (*repl* 'repl-let))
-  (set! prompt-string (bold (red (string #\xce #\xbb #\> #\space))))
-  (set! prompt-length 3)) ; until we get unicode length calc
+    (with-let (sublet (*repl* 'repl-let))
+      (set! prompt-string (bold (red (string #\xce #\xbb #\> #\space))))
+      (set! prompt-length 3)) ; until we get unicode length calc
 
 to post a help string (kinda tedious, but the helper list is aimed more at posting variable values):
 (set! (*repl* 'helpers)
@@ -1328,15 +1350,8 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 		  (display-lines))
 		(load filename)))))))
 
-;; save current repl state for later restart ("checkpoint"):
-(define (save-repl) 
-  (call-with-output-file "save.repl" 
-    (lambda (p) 
-      (format p "~W" (*repl* 'top-level-let)))))
-;; (it's assuming top-level-let is not rootlet)
 
 |#
-
 
 ;; unicode someday: I think all we need is unicode_string_length and index into unicode string (set/ref)
 ;; more autoload? 
@@ -1344,7 +1359,6 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 ;;   or M-. to get back the last definition text: <func-name>M-. or uses autoload tables to get it?
 ;;   could top-level-let save each definition as text+value?
 ;;   look at ** value? or a let-set-watcher like symbol-access?
-;;   maybe (save|restore-top-level): run through let, for each write def?
-;;   restore-history seems pointless if that's all it does -- save|restore-repl?
+;; also dac/play in repl/sndlib should call sndplay/aplay? with file name or whatever it can find
 
 *repl*

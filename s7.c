@@ -8742,7 +8742,11 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 		    ip = ibuf;
 		  }
 	      }
+#if WITH_MAKE_COMPLEX
+	    len = snprintf(num_to_str, num_to_str_size, "(make-complex %s %s)", rp, ip);
+#else
 	    len = snprintf(num_to_str, num_to_str_size, "(make-rectangular %s %s)", rp, ip);
+#endif
 	  }
 	else
 	  {
@@ -25504,7 +25508,7 @@ static bool slot_memq(s7_pointer symbol, s7_pointer symbols)
 {
   s7_pointer x;
   for (x = symbols; is_pair(x); x = cdr(x))
-    if (slot_symbol(x) == symbol)
+    if (slot_symbol(car(x)) == symbol)
       return(true);
   return(false);
 }
@@ -25677,6 +25681,17 @@ static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port
 #endif
 
 
+static s7_pointer value_to_symbol(s7_scheme *sc, s7_pointer value, s7_pointer e)
+{
+  s7_pointer x, y;
+  for (x = e; is_let(x); x = outlet(x))
+    for (y = let_slots(x); is_slot(y); y = next_slot(y))
+      if (s7_is_equal(sc, slot_value(y), value))
+	return(slot_symbol(y));
+  return(sc->F);
+}
+
+
 static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
   int nlen = 0;
@@ -25738,36 +25753,41 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 		    write_readably_error(sc, "a function input port");
 		  else
 		    {
+		      char *str;
+		      int nlen = 0;
 		      if (port_read_character(port) == file_read_char)
-			write_readably_error(sc, "a very large file input port");
+			{
+			  str = (char *)malloc(256 * sizeof(char));
+			  nlen = snprintf(str, 256, "(open-input-file %s)", port_filename(obj));
+			  port_write_string(port)(sc, str, nlen, port);
+			  free(str);
+			}
 		      else
 			{
-			  if (port_position(obj) != 0)
-			    port_write_string(port)(sc, "(let ((p ", 9, port);
 			  if (port_filename(obj) != NULL)
 			    {
+			      if (port_position(obj) != 0)
+				port_write_string(port)(sc, "(let ((p ", 9, port);
 			      /* try to avoid storing enormous in-core strings */
 			      port_write_string(port)(sc, "(open-input-file \"", 18, port);
 			      port_write_string(port)(sc, port_filename(obj), port_filename_length(obj), port);
 			      port_write_string(port)(sc, "\")", 2, port);
+			      if (port_position(obj) != 0)
+				{
+				  char buf[64];
+				  int plen;
+				  port_write_string(port)(sc, ")) (do ((i 0 (+ i 1))) ((= i ", 29, port);
+				  plen = snprintf(buf, 64, "%u) p) (read-char p)))", port_position(obj));
+				  port_write_string(port)(sc, buf, plen, port);
+				}
 			    }
 			  else
 			    {
-			      char *str;
-			      int nlen = 0;
 			      port_write_string(port)(sc, "(open-input-string ", 19, port);
 			      /* not port_write_string here because there might be embedded double-quotes */
-			      str = slashify_string(sc, (const char *)port_data(obj), port_data_size(obj), IN_QUOTES, &nlen);
+			      str = slashify_string(sc, (const char *)(port_data(obj) + port_position(obj)), port_data_size(obj) - port_position(obj), IN_QUOTES, &nlen);
 			      port_write_string(port)(sc, str, nlen, port);
 			      port_write_character(port)(sc, ')', port);
-			    }
-			  if (port_position(obj) != 0)
-			    {
-			      char buf[64];
-			      int plen;
-			      port_write_string(port)(sc, ")) (do ((i 0 (+ i 1))) ((= i ", 29, port);
-			      plen = snprintf(buf, 64, "%u) p) (read-char p)))", port_position(obj));
-			      port_write_string(port)(sc, buf, plen, port);
 			    }
 			}
 		    }
@@ -25793,8 +25813,30 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	    {
 	      if (port_is_closed(obj))
 		port_write_string(port)(sc, "(let ((p (open-output-string))) (close-output-port p) p)", 56, port);
-	      else write_readably_error(sc, "an output port");
-	      /* there's nothing safe or even modestly foolproof that we can do here */
+	      else 
+		{
+		  char *str;
+		  int nlen;
+		  if (is_string_port(obj))
+		    {
+		      port_write_string(port)(sc, "(let ((p (open-output-string)))", 31, port);
+		      if (port_position(obj) > 0)
+			{
+			  port_write_string(port)(sc, " (display ", 10, port);
+			  str = slashify_string(sc, (const char *)port_data(obj), port_position(obj), IN_QUOTES, &nlen);
+			  port_write_string(port)(sc, str, nlen, port);
+			  port_write_string(port)(sc, " p)", 3, port);
+			}
+		      port_write_string(port)(sc, " p)", 3, port);
+		    }
+		  else 
+		    {
+		      str = (char *)malloc(256 * sizeof(char));
+		      nlen = snprintf(str, 256, "(open-output-file %s \"a\")", port_filename(obj));
+		      port_write_string(port)(sc, str, nlen, port);
+		      free(str);
+		    }
+		}
 	    }
 	  else
 	    {
@@ -61717,7 +61759,11 @@ static char *mpc_to_string(mpc_t val, int radix, use_write_t use_write)
   tmp = (char *)malloc(len * sizeof(char));
 
   if (use_write == USE_READABLE_WRITE)
+#if WITH_MAKE_COMPLEX
+    snprintf(tmp, len, "(make-complex %s %s)", rl, im);
+#else
     snprintf(tmp, len, "(make-rectangular %s %s)", rl, im);
+#endif
   else snprintf(tmp, len, "%s%s%si", rl, (im[0] == '-') ? "" : "+", im);
 
   free(rl);
@@ -67865,7 +67911,10 @@ int main(int argc, char **argv)
  * should this be fixed? (symbol->value 'gc-stats *s7*) -> #<undefined>
  *   to make *s7* a completely normal let would require symbol accessors etc
  *   sym->val might check let_ref_fallback for all computed cases
- * checkpoint (see write.scm)
  * example of repl+sndlib+window showing begin time
+ *
+ * iterators are ~W printable in most cases (using subsequences ideally), also string ports in/out.
+ *   file ports might work if we have a filename
+ *   goto/call/cc need to be done by the original name -- accessible?
  */
 

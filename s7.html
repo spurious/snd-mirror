@@ -9094,6 +9094,9 @@ gives you access to all the repl's internal variables and functions.
 Another is 'top-level-let, normally (sublet (rootlet)), which is the environment in
 which the repl's evaluation takes place.  You can reset the repl back to its
 starting point with: <code>(set! (*repl* 'top-level-let) (sublet (rootlet)))</code>.
+You can save the current repl state via <code>((*repl* 'save-repl))</code>, and
+restore it later via <code>((*repl* 'restore-repl))</code>.  The repl's saved state
+is in the file save.repl, or the filename can be passed as an argument to save-repl and restore-repl.
 The special symbol '** holds the last value.
 </p>
 
