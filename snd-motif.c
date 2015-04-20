@@ -31026,7 +31026,6 @@ void snd_doit(int argc, char **argv)
   make_icons_transparent(BASIC_COLOR);
 
   if (with_toolbar(ss)) show_toolbar();
-  startup_funcs();
 
 #ifndef _MSC_VER
   if (setjmp(top_level_jump))

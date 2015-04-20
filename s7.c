@@ -9043,9 +9043,7 @@ static void init_ctables(void)
   char_ok_in_a_name[(unsigned char)'\r'] = false;
   char_ok_in_a_name[(unsigned char)' '] = false;
   char_ok_in_a_name[(unsigned char)'"'] = false;
-  /* double-quote is recent, but I want '(1 ."hi") to be parsed as '(1 . "hi")
-   * what about stuff like vertical tab?  or comma?
-   */
+  /* what about stuff like vertical tab?  or comma? */
 
   for (i = 0; i < CTABLE_SIZE; i++)
     white_space[i] = false;
@@ -23770,7 +23768,7 @@ static s7_pointer g_with_input_from_file(s7_scheme *sc, s7_pointer args)
 }
 
 
-static bool needs_slashification(const char *str, int len)
+static bool string_needs_slashification(const char *str, int len)
 {
   /* we have to go by len (str len) not *s==0 because s7 strings can have embedded nulls */
   unsigned char *p, *pend;
@@ -23780,7 +23778,6 @@ static bool needs_slashification(const char *str, int len)
       return(true);
   return(false);
 }
-
 
 #define IN_QUOTES true
 #define NOT_IN_QUOTES false
@@ -24993,6 +24990,171 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
     }
 }
 
+static void output_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file)
+{
+  if ((obj == sc->standard_output) ||
+      (obj == sc->standard_error))
+    port_write_string(port)(sc, port_filename(obj), port_filename_length(obj), port);
+  else
+    {
+      int nlen;
+      char buf[64];
+
+      if (use_write == USE_READABLE_WRITE)
+	{
+	  if (port_is_closed(obj))
+	    port_write_string(port)(sc, "(let ((p (open-output-string))) (close-output-port p) p)", 56, port);
+	  else 
+	    {
+	      char *str;
+	      if (is_string_port(obj))
+		{
+		  port_write_string(port)(sc, "(let ((p (open-output-string)))", 31, port);
+		  if (port_position(obj) > 0)
+		    {
+		      port_write_string(port)(sc, " (display ", 10, port);
+		      str = slashify_string(sc, (const char *)port_data(obj), port_position(obj), IN_QUOTES, &nlen);
+		      port_write_string(port)(sc, str, nlen, port);
+		      port_write_string(port)(sc, " p)", 3, port);
+		    }
+		  port_write_string(port)(sc, " p)", 3, port);
+		}
+	      else 
+		{
+		  str = (char *)malloc(256 * sizeof(char));
+		  nlen = snprintf(str, 256, "(open-output-file \"%s\" \"a\")", port_filename(obj));
+		  port_write_string(port)(sc, str, nlen, port);
+		  free(str);
+		}
+	    }
+	}
+      else
+	{
+	  nlen = snprintf(buf, 64, "<output-%s-port%s>",
+			  (is_file_port(obj)) ? "file" : ((is_string_port(obj)) ? "string" : "function"),
+			  (port_is_closed(obj)) ? " (closed)" : "");
+	  port_write_string(port)(sc, buf, nlen, port);
+	}
+    }
+}
+
+static void input_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file)
+{
+  if (obj == sc->standard_input)
+    port_write_string(port)(sc, port_filename(obj), port_filename_length(obj), port);
+  else
+    {
+      int nlen = 0;
+      char buf[64];
+
+      if (use_write == USE_READABLE_WRITE)
+	{
+	  if (port_is_closed(obj))
+	    port_write_string(port)(sc, "(call-with-input-string \"\" (lambda (p) p))", 42, port);
+	  else
+	    {
+	      if (is_function_port(obj))
+		port_write_string(port)(sc, "#<function input port>", 22, port);
+	      else
+		{
+		  char *str;
+		  if (is_file_port(obj))
+		    {
+		      str = (char *)malloc(256 * sizeof(char));
+		      nlen = snprintf(str, 256, "(open-input-file \"%s\")", port_filename(obj));
+		      port_write_string(port)(sc, str, nlen, port);
+		      free(str);
+		    }
+		  else
+		    {
+		      port_write_string(port)(sc, "(open-input-string ", 19, port);
+		      /* not port_write_string here because there might be embedded double-quotes */
+		      str = slashify_string(sc, (const char *)(port_data(obj) + port_position(obj)), port_data_size(obj) - port_position(obj), IN_QUOTES, &nlen);
+		      port_write_string(port)(sc, str, nlen, port);
+		      port_write_character(port)(sc, ')', port);
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  nlen = snprintf(buf, 64, "<input-%s-port%s>",
+			  (is_file_port(obj)) ? "file" : ((is_string_port(obj)) ? "string" : "function"),
+			  (port_is_closed(obj)) ? " (closed)" : "");
+	  port_write_string(port)(sc, buf, nlen, port);
+	}
+    }
+}
+
+static bool symbol_needs_slashification(const char *str, int len)
+{
+  unsigned char *p, *pend;
+  pend = (unsigned char *)(str + len);
+  for (p = (unsigned char *)str; p < pend; p++)
+    if ((!char_ok_in_a_name[*p]) ||
+	(slashify_table[*p]))
+      return(true);
+  return(false);
+}
+
+static void symbol_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file)
+{
+  /* I think this is the only place we print a symbol's name
+   *   but in the readable case, what about (symbol "1;3")? it actually seems ok!
+   */
+  if ((symbol_name(obj)[0] == '#') ||                 /* otherwise the reader thinks there's a #-reader problem */
+      (symbol_needs_slashification(symbol_name(obj), symbol_name_length(obj))))
+    {
+      int nlen = 0;
+      char *str, *symstr;
+      str = slashify_string(sc, symbol_name(obj), symbol_name_length(obj), NOT_IN_QUOTES, &nlen);
+      nlen += 16;
+      tmpbuf_malloc(symstr, nlen);
+      nlen = snprintf(symstr, nlen, "(symbol \"%s\")", str);
+      port_write_string(port)(sc, symstr, nlen, port);
+      tmpbuf_free(symstr, nlen);
+    }
+  else
+    {
+      if ((use_write == USE_READABLE_WRITE) &&
+	  (!is_keyword(obj)))
+	port_write_character(port)(sc, '\'', port);
+      port_write_string(port)(sc, symbol_name(obj), symbol_name_length(obj), port);
+    }
+}
+
+static void string_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file)
+{
+  if (string_length(obj) > 0)
+    {
+      /* this used to check for length > 1<<24 -- is that still necessary?
+       * since string_length is a scheme length, not C, this write can embed nulls from C's point of view
+       */
+      if (use_write == USE_DISPLAY)
+	port_write_string(port)(sc, string_value(obj), string_length(obj), port);
+      else
+	{
+	  if (!string_needs_slashification(string_value(obj), string_length(obj)))
+	    {
+	      port_write_character(port)(sc, '"', port);
+	      port_write_string(port)(sc, string_value(obj), string_length(obj), port);
+	      port_write_character(port)(sc, '"', port);
+	    }
+	  else
+	    {
+	      char *str;
+	      int nlen = 0;
+	      str = slashify_string(sc, string_value(obj), string_length(obj), IN_QUOTES, &nlen);
+	      port_write_string(port)(sc, str, nlen, port);
+	    }
+	}
+    }
+  else
+    {
+      if (use_write != USE_DISPLAY)
+	port_write_string(port)(sc, "\"\"", 2, port);
+    }
+}
 
 static void bytevector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write, bool to_file)
 {
@@ -25143,26 +25305,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
       /* len == 1 is important, otherwise (list 'quote 1 2) -> '1 2 which looks weird
        *   or (object->string (apply . `''1)) -> "'quote 1"
        * so (quote x) = 'x but (quote x y z) should be left alone (if evaluated, it's an error)
-       *
-       * in CL:
-       *    [2]> (list 'quote 1 2)
-       *    (QUOTE 1 2)
-       *    [3]> (list 'quote 1)
-       *    '1
-       *    [4]> (cons 'quote 1)
-       *    (QUOTE . 1)
-       *
-       * in s7:
-       *    :(list 'quote 1 2)
-       *    (quote 1 2)
-       *    :(list 'quote 1)
-       *    '1
-       *    :(cons 'quote 1)
-       *    (quote . 1)
-       *    (write (list 'quote 1))
-       *    -> '1
        */
-
       port_write_character(port)(sc, '\'', port);
       object_to_port_with_circle_check(sc, cadr(lst), port, DONT_USE_DISPLAY(use_write), to_file, ci);
       return;
@@ -25364,12 +25507,6 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
     }
 
   s7_gc_unprotect_at(sc, gc_iter);
-}
-
-
-static void write_readably_error(s7_scheme *sc, const char *type)
-{
-  s7_error(sc, sc->IO_ERROR, list_2(sc, make_string_wrapper(sc, "can't write ~A readably"), make_string_wrapper(sc, type)));
 }
 
 
@@ -25681,17 +25818,6 @@ static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port
 #endif
 
 
-static s7_pointer value_to_symbol(s7_scheme *sc, s7_pointer value, s7_pointer e)
-{
-  s7_pointer x, y;
-  for (x = e; is_let(x); x = outlet(x))
-    for (y = let_slots(x); is_slot(y); y = next_slot(y))
-      if (s7_is_equal(sc, slot_value(y), value))
-	return(slot_symbol(y));
-  return(sc->F);
-}
-
-
 static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
   int nlen = 0;
@@ -25719,7 +25845,39 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 
     case T_ITERATOR:
       if (use_write == USE_READABLE_WRITE)
-	write_readably_error(sc, "an iterator");
+	{
+	  if (iterator_is_at_end(obj))
+	    port_write_string(port)(sc, "#<eof>", 6, port);
+	  else
+	    {
+	      s7_pointer seq;
+	      seq = iterator_sequence(obj);
+	      switch (type(seq))
+		{
+		case T_STRING:
+		  port_write_string(port)(sc, "(make-iterator \"", 16, port);
+		  port_write_string(port)(sc, (char *)(string_value(seq) + iterator_position(obj)), string_length(seq) - iterator_position(obj), port);
+		  port_write_string(port)(sc, "\")", 2, port);
+		  break;
+		  
+		default:
+		  if (iterator_position(obj) > 0)
+		    port_write_string(port)(sc, "(let ((iter (make-iterator ", 27, port);
+		  else port_write_string(port)(sc, "(make-iterator ", 15, port);
+		  object_to_port_with_circle_check(sc, iterator_sequence(obj), port, use_write, to_file, ci);
+		  if (iterator_position(obj) > 0)
+		    {
+		      char *str;
+		      int nlen;
+		      str = malloc(128 * sizeof(char));
+		      nlen = snprintf(str, 128, "))) (do ((i 0 (+ i 1))) ((= i %lld) iter) (iterate iter)))", iterator_position(obj));
+		      port_write_string(port)(sc, str, nlen, port);
+		      free(str);
+		    }
+		  else port_write_character(port)(sc, ')', port);
+		}
+	    }
+	}
       else
 	{
 	  nlen = snprintf(buf, 64, "#<iterator: %s>", type_name(sc, iterator_sequence(obj), NO_ARTICLE));
@@ -25739,124 +25897,18 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_INPUT_PORT:
-      if (obj == sc->standard_input)
-	port_write_string(port)(sc, port_filename(obj), port_filename_length(obj), port);
-      else
-	{
-	  if (use_write == USE_READABLE_WRITE)
-	    {
-	      if (port_is_closed(obj))
-		port_write_string(port)(sc, "(call-with-input-string \"\" (lambda (p) p))", 42, port);
-	      else
-		{
-		  if (is_function_port(obj))
-		    write_readably_error(sc, "a function input port");
-		  else
-		    {
-		      char *str;
-		      int nlen = 0;
-		      if (port_read_character(port) == file_read_char)
-			{
-			  str = (char *)malloc(256 * sizeof(char));
-			  nlen = snprintf(str, 256, "(open-input-file %s)", port_filename(obj));
-			  port_write_string(port)(sc, str, nlen, port);
-			  free(str);
-			}
-		      else
-			{
-			  if (port_filename(obj) != NULL)
-			    {
-			      if (port_position(obj) != 0)
-				port_write_string(port)(sc, "(let ((p ", 9, port);
-			      /* try to avoid storing enormous in-core strings */
-			      port_write_string(port)(sc, "(open-input-file \"", 18, port);
-			      port_write_string(port)(sc, port_filename(obj), port_filename_length(obj), port);
-			      port_write_string(port)(sc, "\")", 2, port);
-			      if (port_position(obj) != 0)
-				{
-				  char buf[64];
-				  int plen;
-				  port_write_string(port)(sc, ")) (do ((i 0 (+ i 1))) ((= i ", 29, port);
-				  plen = snprintf(buf, 64, "%u) p) (read-char p)))", port_position(obj));
-				  port_write_string(port)(sc, buf, plen, port);
-				}
-			    }
-			  else
-			    {
-			      port_write_string(port)(sc, "(open-input-string ", 19, port);
-			      /* not port_write_string here because there might be embedded double-quotes */
-			      str = slashify_string(sc, (const char *)(port_data(obj) + port_position(obj)), port_data_size(obj) - port_position(obj), IN_QUOTES, &nlen);
-			      port_write_string(port)(sc, str, nlen, port);
-			      port_write_character(port)(sc, ')', port);
-			    }
-			}
-		    }
-		}
-	    }
-	  else
-	    {
-	      nlen = snprintf(buf, 64, "<input-%s-port%s>",
-			      (is_file_port(obj)) ? "file" : ((is_string_port(obj)) ? "string" : "function"),
-			      (port_is_closed(obj)) ? " (closed)" : "");
-	    }
-	  port_write_string(port)(sc, buf, nlen, port);
-	}
+      input_port_to_port(sc, obj, port, use_write, to_file);
       break;
 
     case T_OUTPUT_PORT:
-      if ((obj == sc->standard_output) ||
-	  (obj == sc->standard_error))
-	port_write_string(port)(sc, port_filename(obj), port_filename_length(obj), port);
-      else
-	{
-	  if (use_write == USE_READABLE_WRITE)
-	    {
-	      if (port_is_closed(obj))
-		port_write_string(port)(sc, "(let ((p (open-output-string))) (close-output-port p) p)", 56, port);
-	      else 
-		{
-		  char *str;
-		  int nlen;
-		  if (is_string_port(obj))
-		    {
-		      port_write_string(port)(sc, "(let ((p (open-output-string)))", 31, port);
-		      if (port_position(obj) > 0)
-			{
-			  port_write_string(port)(sc, " (display ", 10, port);
-			  str = slashify_string(sc, (const char *)port_data(obj), port_position(obj), IN_QUOTES, &nlen);
-			  port_write_string(port)(sc, str, nlen, port);
-			  port_write_string(port)(sc, " p)", 3, port);
-			}
-		      port_write_string(port)(sc, " p)", 3, port);
-		    }
-		  else 
-		    {
-		      str = (char *)malloc(256 * sizeof(char));
-		      nlen = snprintf(str, 256, "(open-output-file %s \"a\")", port_filename(obj));
-		      port_write_string(port)(sc, str, nlen, port);
-		      free(str);
-		    }
-		}
-	    }
-	  else
-	    {
-	      nlen = snprintf(buf, 64, "<output-%s-port%s>",
-			      (is_file_port(obj)) ? "file" : ((is_string_port(obj)) ? "string" : "function"),
-			      (port_is_closed(obj)) ? " (closed)" : "");
-	      port_write_string(port)(sc, buf, nlen, port);
-	    }
-	}
+      output_port_to_port(sc, obj, port, use_write, to_file);
       break;
 
     case T_COUNTER:
-      if (use_write == USE_READABLE_WRITE)
-	write_readably_error(sc, "an internal for-each descriptor");
       port_write_string(port)(sc, "#<counter>", 10, port);
       break;
 
     case T_BAFFLE:
-      if (use_write == USE_READABLE_WRITE)
-	write_readably_error(sc, "an internal with-baffle descriptor");
       nlen = snprintf(buf, 64, "#<baffle: %d>", baffle_key(obj));
       port_write_string(port)(sc, buf, nlen, port);
       break;
@@ -25904,27 +25956,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 #endif
 
     case T_SYMBOL:
-      /* I think this is the only place we print a symbol's name
-       *   but in the readable case, what about (symbol "1;3")? it actually seems ok!
-       */
-      if ((symbol_name(obj)[0] == '#') ||                 /* otherwise the reader thinks there's a #-reader problem */
-	  (needs_slashification(symbol_name(obj), symbol_name_length(obj))))
-	{
-	  char *symstr;
-	  str = slashify_string(sc, symbol_name(obj), symbol_name_length(obj), NOT_IN_QUOTES, &nlen);
-	  nlen += 16;
-	  tmpbuf_malloc(symstr, nlen);
-	  nlen = snprintf(symstr, nlen, "(symbol \"%s\")", str);
-	  port_write_string(port)(sc, symstr, nlen, port);
-	  tmpbuf_free(symstr, nlen);
-	}
-      else
-	{
-	  if ((use_write == USE_READABLE_WRITE) &&
-	      (!is_keyword(obj)))
-	    port_write_character(port)(sc, '\'', port);
-	  port_write_string(port)(sc, symbol_name(obj), symbol_name_length(obj), port);
-	}
+      symbol_to_port(sc, obj, port, use_write, to_file);
       break;
 
     case T_SYNTAX:
@@ -25934,36 +25966,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
     case T_STRING:
       if (is_bytevector(obj))
 	bytevector_to_port(sc, obj, port, use_write, to_file);
-      else
-	{
-	  if (string_length(obj) > 0)
-	    {
-	      /* this used to check for length > 1<<24 -- is that still necessary?
-	       * since string_length is a scheme length, not C, this write can embed nulls from C's point of view
-	       */
-	      if (use_write == USE_DISPLAY)
-		port_write_string(port)(sc, string_value(obj), string_length(obj), port);
-	      else
-		{
-		  if (!needs_slashification(string_value(obj), string_length(obj)))
-		    {
-		      port_write_character(port)(sc, '"', port);
-		      port_write_string(port)(sc, string_value(obj), string_length(obj), port);
-		      port_write_character(port)(sc, '"', port);
-		    }
-		  else
-		    {
-		      str = slashify_string(sc, string_value(obj), string_length(obj), IN_QUOTES, &nlen);
-		      port_write_string(port)(sc, str, nlen, port);
-		    }
-		}
-	    }
-	  else
-	    {
-	      if (use_write != USE_DISPLAY)
-		port_write_string(port)(sc, "\"\"", 2, port);
-	    }
-	}
+      else string_to_port(sc, obj, port, use_write, to_file);
       break;
 
     case T_CHARACTER:
@@ -26032,40 +26035,29 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       if (use_write == USE_READABLE_WRITE)
 	{
 #if ((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4))
-	  if ((long)raw_pointer(obj) < 2) /* 0 = NULL is the main case, -1 is used in some libraries */
-	    nlen = snprintf(buf, 64, "(c-pointer %ld)", (long)raw_pointer(obj));
+	  nlen = snprintf(buf, 64, "(c-pointer %ld)", (long)raw_pointer(obj));
 #else
-	  if ((long long int)raw_pointer(obj) < 2) /* 0 = NULL is the main case, -1 is used in some libraries */
-	    nlen = snprintf(buf, 64, "(c-pointer %lld)", (long long int)raw_pointer(obj));
+	  nlen = snprintf(buf, 64, "(c-pointer %lld)", (long long int)raw_pointer(obj));
 #endif
-	  else write_readably_error(sc, "raw c pointer");
 	}
       else nlen = snprintf(buf, 64, "#<c_pointer %p>", raw_pointer(obj));
       port_write_string(port)(sc, buf, nlen, port);
       break;
 
     case T_CONTINUATION:
-      if (use_write == USE_READABLE_WRITE)
-	write_readably_error(sc, "a continuation");
       port_write_string(port)(sc, "#<continuation>", 15, port);
       break;
 
     case T_GOTO:
-      if (use_write == USE_READABLE_WRITE)
-	write_readably_error(sc, "a call-with-exit goto");
       port_write_string(port)(sc, "#<goto>", 7, port);
       break;
 
     case T_CATCH:
-      if (use_write == USE_READABLE_WRITE)
-	write_readably_error(sc, "an internal catch descriptor");
       port_write_string(port)(sc, "#<catch>", 8, port);
       break;
 
     case T_DYNAMIC_WIND:
       /* this can happen because (*s7* 'stack) can involve dynamic-wind markers */
-      if (use_write == USE_READABLE_WRITE)
-	write_readably_error(sc, "an internal dynamic-wind descriptor");
       port_write_string(port)(sc, "#<dynamic-wind>", 15, port);
       break;
 
@@ -54567,8 +54559,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_CALL_WITH_EXIT:
 	      {
 		s7_pointer go, args;
-		go = make_goto(sc);
 		args = fcdr(code);
+		go = make_goto(sc);
 		push_stack(sc, OP_DEACTIVATE_GOTO, go, code); /* code arg is ignored, but perhaps this is safer in GC? */
 		NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caar(args), go);
 		sc->code = cdr(args);
@@ -67911,10 +67903,5 @@ int main(int argc, char **argv)
  * should this be fixed? (symbol->value 'gc-stats *s7*) -> #<undefined>
  *   to make *s7* a completely normal let would require symbol accessors etc
  *   sym->val might check let_ref_fallback for all computed cases
- * example of repl+sndlib+window showing begin time
- *
- * iterators are ~W printable in most cases (using subsequences ideally), also string ports in/out.
- *   file ports might work if we have a filename
- *   goto/call/cc need to be done by the original name -- accessible?
+ * see t204 for readable obj->str bugs
  */
-
