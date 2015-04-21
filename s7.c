@@ -24797,10 +24797,10 @@ static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
 	{
 	  if (flat_ref < out_len)
 	    {
-	      int plen;
-	      char buf[128];
 	      if (use_write == USE_READABLE_WRITE)
 		{
+		  int plen;
+		  char buf[128];
 		  char *indices;
 		  /* need to translate flat_ref into a set of indices
 		   */
@@ -24998,8 +24998,6 @@ static void output_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
   else
     {
       int nlen;
-      char buf[64];
-
       if (use_write == USE_READABLE_WRITE)
 	{
 	  if (port_is_closed(obj))
@@ -25030,6 +25028,7 @@ static void output_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
 	}
       else
 	{
+	  char buf[64];
 	  nlen = snprintf(buf, 64, "<output-%s-port%s>",
 			  (is_file_port(obj)) ? "file" : ((is_string_port(obj)) ? "string" : "function"),
 			  (port_is_closed(obj)) ? " (closed)" : "");
@@ -25045,8 +25044,6 @@ static void input_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, u
   else
     {
       int nlen = 0;
-      char buf[64];
-
       if (use_write == USE_READABLE_WRITE)
 	{
 	  if (port_is_closed(obj))
@@ -25078,6 +25075,7 @@ static void input_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, u
 	}
       else
 	{
+	  char buf[64];
 	  nlen = snprintf(buf, 64, "<input-%s-port%s>",
 			  (is_file_port(obj)) ? "file" : ((is_string_port(obj)) ? "string" : "function"),
 			  (port_is_closed(obj)) ? " (closed)" : "");
@@ -25307,7 +25305,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
        * so (quote x) = 'x but (quote x y z) should be left alone (if evaluated, it's an error)
        */
       port_write_character(port)(sc, '\'', port);
-      object_to_port_with_circle_check(sc, cadr(lst), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+      object_to_port_with_circle_check(sc, cadr(lst), port, USE_WRITE, to_file, ci);
       return;
     }
   else port_write_character(port)(sc, '(', port);
@@ -25671,16 +25669,14 @@ static void collect_locals(s7_scheme *sc, s7_pointer body, s7_pointer e, s7_poin
     }
   else
     {
-      if (is_symbol(body))
+      if ((is_symbol(body)) &&
+	  (!arg_memq(body, args)) &&
+	  (!slot_memq(body, gc_protected_at(sc, gc_loc))))
 	{
-	  if ((!arg_memq(body, args)) &&
-	      (!slot_memq(body, gc_protected_at(sc, gc_loc))))
-	    {
-	      s7_pointer slot;
-	      slot = match_symbol(sc, body, e);
-	      if (slot)
-		gc_protected_at(sc, gc_loc) = cons(sc, slot, gc_protected_at(sc, gc_loc));
-	    }
+	  s7_pointer slot;
+	  slot = match_symbol(sc, body, e);
+	  if (slot)
+	    gc_protected_at(sc, gc_loc) = cons(sc, slot, gc_protected_at(sc, gc_loc));
 	}
     }
 }
@@ -25690,10 +25686,9 @@ static void write_closure_readably_1(s7_scheme *sc, s7_pointer obj, s7_pointer a
   s7_Int old_print_length;
   s7_pointer p;
 
-  port_write_string(port)(sc, "(lambda", 7, port);
-  if (type(obj) == T_CLOSURE_STAR)
-    port_write_character(port)(sc, '*', port);
-  port_write_character(port)(sc, ' ', port);
+  if (type(obj) == T_CLOSURE_STAR)  
+    port_write_string(port)(sc, "(lambda* ", 9, port);
+  else port_write_string(port)(sc, "(lambda ", 8, port);
   write_or_display(sc, arglist, port, USE_WRITE); /* here we just want the straight output (a b) not (list 'a 'b) */
 
   old_print_length = sc->print_length;
@@ -25714,7 +25709,8 @@ static void write_closure_readably(s7_scheme *sc, s7_pointer obj, s7_pointer por
   
   body = closure_body(obj);
   arglist = closure_args(obj);
-  pe = closure_let(obj);
+  pe = closure_let(obj);               /* perhaps check for documentation? */
+
   gc_loc = s7_gc_protect(sc, sc->NIL);
   collect_locals(sc, body, pe, arglist, gc_loc);   /* collect locals used only here */
   if (s7_is_dilambda(obj))
@@ -25740,7 +25736,9 @@ static void write_closure_readably(s7_scheme *sc, s7_pointer obj, s7_pointer por
 	  port_write_string(port)(sc, symbol_name(slot_symbol(slot)), symbol_name_length(slot_symbol(slot)), port);
 	  port_write_character(port)(sc, ' ', port);
 	  write_or_display(sc, slot_value(slot), port, USE_WRITE);
-	  port_write_character(port)(sc, ')', port);
+	  if (is_null(cdr(x)))
+	    port_write_character(port)(sc, ')', port);
+	  else port_write_string(port)(sc, ") ", 2, port);
 	}
       port_write_string(port)(sc, ") ", 2, port);
     }
@@ -33935,7 +33933,7 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer
 
   if ((old_len == new_len) &&
       (hash_table_entries(new_hash) == 0)) 
-    /* PERHAPS: or the hash_table_functions are incompatible, so no keys can match:
+    /* or the hash_table_functions are incompatible, so no keys can match:
      *   each from [hash_symbol|char|string|int|float] and not equal to each other?
      *   unsafe are hash_equal and function_locked cases like eq_eq, eq_c_function, eq_closure
      *   so ((htf(1|2) != hash_equal) && (!htf(1|2)_locked) && (hft1 != htf2)) ?
@@ -39533,7 +39531,6 @@ void s7_quit(s7_scheme *sc)
 {
   sc->longjmp_ok = false;
   pop_input_port(sc);
-
   stack_reset(sc);
   push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->NIL);
 }
@@ -41121,11 +41118,8 @@ static s7_pointer lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, 
 	/* x is our binding (symbol . value) */
 	if (is_not_checked(x))
 	  set_checked(x); /* this is a special use of this bit, I think */
-	else
-	  {
-	    return(s7_error(sc, sc->WRONG_TYPE_ARG,
-			    list_4(sc, make_string_wrapper(sc, "~A: parameter set twice, ~S in ~S"), closure_name(sc, sc->code), sym, sc->args)));
-	  }
+	else return(s7_error(sc, sc->WRONG_TYPE_ARG,
+			     list_4(sc, make_string_wrapper(sc, "~A: parameter set twice, ~S in ~S"), closure_name(sc, sc->code), sym, sc->args)));
 	slot_set_value(x, val);
 	return(val);
       }
@@ -57395,7 +57389,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    len = safe_list_length(sc, sc->args);
 	    if (c_function_all_args(sc->code) < len)
 	      return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
-
 	    sc->value = c_function_call(sc->code)(sc, sc->args);
 	    goto START;
 	  }
@@ -60271,7 +60264,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_COND1:
-      if (is_true(sc, sc->value))     /* got a hit (is_true -> not false, so else is true even though it has no value) */
+      if (is_true(sc, sc->value))
 	{
 	  sc->code = cdar(sc->code);
 	  if (is_null(sc->code))
@@ -67886,9 +67879,7 @@ int main(int argc, char **argv)
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  * cyclic-seq in stuff.scm, but current code is really clumsy
- *
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
- * snd-genv needs a lot of gtk3 work
  *
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)
  *   also cload: libc libgsl etc arg types/return types [real string ?]
@@ -67903,5 +67894,8 @@ int main(int argc, char **argv)
  * should this be fixed? (symbol->value 'gc-stats *s7*) -> #<undefined>
  *   to make *s7* a completely normal let would require symbol accessors etc
  *   sym->val might check let_ref_fallback for all computed cases
- * see t204 for readable obj->str bugs
+ * load-hook that first calls lint? (lint: do end test that is always true as in (+ i 10))
+ *   debugger example with changed prompt/indentation?
+ *   help ex of monitored reactive var? or time? compute-time? (why not with no-gui snd?)
+ *   vt100 snd?
  */

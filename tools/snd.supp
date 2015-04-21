@@ -1822,6 +1822,40 @@
 }
 
 {
+   s71abcde1
+   Memcheck:Leak
+   fun:calloc
+   fun:init_ctables
+   fun:*
+}
+
+{
+   s71abcde1
+   Memcheck:Leak
+   fun:malloc
+   fun:copy_string_with_length
+   fun:copy_string
+   fun:s7_define_constant_with_documentation
+   fun:*
+}
+
+{
+   s71abcde2
+   Memcheck:Leak
+   fun:malloc
+   fun:make_permanent_string_with_length
+   fun:*
+}
+
+{
+   s71abcde3
+   Memcheck:Leak
+   fun:malloc
+   fun:make_permanent_string_with_length_and_hash
+   fun:*
+}
+
+{
    s71abcdef
    Memcheck:Leak
    fun:calloc

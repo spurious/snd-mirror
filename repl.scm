@@ -683,11 +683,15 @@
 			(set! current-line (string-append (string #\space #\newline) current-line))
 			(if (>= cursor-position (length current-line))
 			    (set! current-line (string-append current-line (string #\space #\newline)))
-			    (set! current-line (string-append (substring current-line 0 cursor-position)
-							      (if (char=? (current-line (+ cursor-position 1)) #\newline)
-								  (string #\space #\newline #\space)
-								  (string #\space #\newline))
-							      (substring current-line (+ cursor-position 1))))))
+			    (if (char=? (current-line (- cursor-position 1)) #\newline)
+				(set! current-line (string-append (substring current-line 0 cursor-position)
+								  (string #\space #\newline)
+								  (substring current-line cursor-position)))
+				(set! current-line (string-append (substring current-line 0 cursor-position)
+								  (if (char=? (current-line (+ cursor-position 1)) #\newline)
+								      (string #\space #\newline #\space)
+								      (string #\space #\newline))
+								  (substring current-line (+ cursor-position 1)))))))
 		    (when (= last-row (+ prompt-row current-row))
 		      (set! prompt-row (- prompt-row 1))
 		      (display-lines))))
@@ -1359,6 +1363,5 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 ;;   or M-. to get back the last definition text: <func-name>M-. or uses autoload tables to get it?
 ;;   could top-level-let save each definition as text+value?
 ;;   look at ** value? or a let-set-watcher like symbol-access?
-;; also dac/play in repl/sndlib should call sndplay/aplay? with file name or whatever it can find
 
 *repl*

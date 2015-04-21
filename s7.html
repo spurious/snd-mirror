@@ -7129,9 +7129,10 @@ loading libc_s7.so
 #t            ; s7_init_sndlib ties all the sndlib functions and variables into s7
 &gt; (load "sndlib-ws.scm")
 tmpnam
+&gt; (set! *clm-player* (lambda (file) (system (format #f "sndplay ~A" file))))
 &gt; (load "v.scm")
 fm-violin
-&gt; (with-sound () (fm-violin 0 1 440 .1))
+&gt; (with-sound (:play #t) (fm-violin 0 1 440 .1))
 "test.snd"
 </pre>
 
@@ -7165,7 +7166,9 @@ fm-violin
   (lambda (e)
     (load (find-library "libsndlib.so") (inlet '(init_func . s7_init_sndlib)))
     (set! *features* (cons 'clm *features*))
-    (with-let (rootlet) (define clm #t))))
+    (with-let (rootlet) (define clm #t))
+    (load "sndlib-ws.scm")
+    (set! *clm-player* (lambda (file) (system (format #f "sndplay ~A" file))))))
 </pre>
 
 

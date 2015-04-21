@@ -739,23 +739,23 @@
 
 
       ;; list version
-      (define-constant var-name car)
-      (define-constant var-ref cadr)
-      (define-constant var-set caddr)
-      (define-constant var-func-info cadddr)
-      (define-constant (set-cadr! v val) (list-set! v 1 val))
-      (define-constant (set-caddr! v val) (list-set! v 2 val))
-      (define-constant (set-cadddr! v val) (list-set! v 3 val))
+      (define var-name car)
+      (define var-ref cadr)
+      (define var-set caddr)
+      (define var-func-info cadddr)
+      (define (set-cadr! v val) (list-set! v 1 val))
+      (define (set-caddr! v val) (list-set! v 2 val))
+      (define (set-cadddr! v val) (list-set! v 3 val))
       (set! (procedure-setter cadr) set-cadr!)
       (set! (procedure-setter caddr) set-caddr!)
       (set! (procedure-setter cadddr) set-cadddr!)
-      (define-constant var-type (dilambda (lambda (v) (list-ref v 4)) (lambda (v x) (list-set! v 4 x))))
-      (define-constant var-value (dilambda (lambda (v) (list-ref v 5)) (lambda (v x) (list-set! v 5 x))))
-      (define-constant make-var (lambda* (name ref set fnc typ val :allow-other-keys)
+      (define var-type (dilambda (lambda (v) (list-ref v 4)) (lambda (v x) (list-set! v 4 x))))
+      (define var-value (dilambda (lambda (v) (list-ref v 5)) (lambda (v x) (list-set! v 5 x))))
+      (define make-var (lambda* (name ref set fnc typ val :allow-other-keys)
 	;(reflective-probe)
 	(list name ref set fnc typ val)))
-      (define-constant var? pair?)
-      (define-constant var-member assq)
+      (define var? pair?)
+      (define var-member assq)
 
 #|      
       ;; vector version
@@ -3385,6 +3385,34 @@
 				   (lint-walk name (caddar bindings) (append vars env))))
 			     
 			     ;; walk the body and end stuff (it's too tricky to find infinite do loops)
+#|
+			     (if (pair? (cddr form))
+				 ;; this also needs to make sure the end-test is limited to step-var refs
+				 (let ((end+result (caddr form)))
+				   (lint-walk-body name head (cddr form) (append vars env))
+				   (when (and (pair? end+result)
+					      (pair? (car end+result)))
+				     (let ((end (car end+result))
+					   (result (cdr end+result)))
+				       (if (and (not (side-effect? end env))
+						(every? code-constant? (map cadr step-vars)))
+					   (let ((tst (catch #t
+							(lambda ()
+							  (eval `(let (,@(map (lambda (b)
+										(list (car b) (cadr b)))
+									      step-vars))
+								   ,end) (rootlet)))
+							(lambda args #f))))
+					     (if tst
+						 (lint-format "~A could be ~A" name 
+							      (truncated-list->string form)
+							      (if (pair? result)
+								  (if (pair? (cdr result))
+								      (truncated-list->string `(begin ,@result))
+								      (car result))
+								  ())))))))))
+|#
+
 			     (if (pair? (caddr form))
 				 (lint-walk-body name head (cddr form) (append vars env))
 				 (lint-walk-body name head (cdddr form) (append vars env)))

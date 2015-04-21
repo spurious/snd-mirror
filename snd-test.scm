@@ -160,7 +160,7 @@
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
 (define test-number -1)
 
-(define (snd-display line . args)
+(define-constant (snd-display line . args)
   (let ((str (if (null? (cdr args))
 		 (car args)
 		 (if (or (string? (car args))
@@ -292,21 +292,21 @@
 (define (cneq a b)
   (> (magnitude (- a b)) .001))
 
-(define (feql a b)
+(define-constant (feql a b)
   (let ((old-eps (*s7* 'morally-equal-float-epsilon)))
     (set! (*s7* 'morally-equal-float-epsilon) .001)
     (let ((res (morally-equal? a b)))
       (set! (*s7* 'morally-equal-float-epsilon) old-eps)
       res)))
 
-(define (ffeql a b)
+(define-constant (ffeql a b)
   (let ((old-eps (*s7* 'morally-equal-float-epsilon)))
     (set! (*s7* 'morally-equal-float-epsilon) .1)
     (let ((res (morally-equal? a b)))
       (set! (*s7* 'morally-equal-float-epsilon) old-eps)
       res)))
 
-(define (fveql a b i)
+(define-constant (fveql a b i)
   (if (null? b)
       #t
       (if (fneq (car b) (a i))
@@ -320,8 +320,8 @@
       (set! (*s7* 'morally-equal-float-epsilon) old-eps)
       res)))
 
-(define sd-equal mus-arrays-equal?)
-(define vequal mus-arrays-equal?)
+(define-constant sd-equal mus-arrays-equal?)
+(define-constant vequal mus-arrays-equal?)
 
 (define (vequal1 v0 v1)
   (mus-arrays-equal? v0 v1 .01))
@@ -334,7 +334,7 @@
 
 (define (within-.01? a b) (< (abs (- a b)) .01))
 
-(define (string-=? a b) ;(format *stderr* "str: ~A ~A~%" a b)
+(define-constant (string-=? a b) ;(format *stderr* "str: ~A ~A~%" a b)
   (or (string=? a b)
       (and (or (char-position #\- a) 
 	       (char-position #\- b))
@@ -12250,7 +12250,7 @@ EDITS: 2
       ;; G&R 8.943 p 984 uses n+1 where we use n in Un? (our numbering keeps harmonics aligned between Tn and Un)
       
       (do ((i 0 (+ i 1)))
-	  ((+ i 10))
+	  ((= i 10))
 	(let ((val (mus-random 1.0)))
 	  (if (fneq (polynomial lv7 val) (cosh (* 7 (acosh val)))) 
 	      (snd-display #__line__ ";ccosh cheb 7 ~A: ~A ~A" val (polynomial lv7 val) (cosh (* 7 (acosh val)))))
