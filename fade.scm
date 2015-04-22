@@ -201,7 +201,7 @@
 		   (lambda (bbreak)
 		     (do ((j next (+ j 1))
 			  (k next (- k 1)))
-			 (#t)
+			 ()
 		       (if (and (< j freq-inc) 
 				(not (spectr j)))
 			   (begin 

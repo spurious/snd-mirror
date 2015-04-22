@@ -3385,38 +3385,21 @@
 				   (lint-walk name (caddar bindings) (append vars env))))
 			     
 			     ;; walk the body and end stuff (it's too tricky to find infinite do loops)
-#|
-			     (if (pair? (cddr form))
-				 ;; this also needs to make sure the end-test is limited to step-var refs
+			     (if (pair? (caddr form))
 				 (let ((end+result (caddr form)))
 				   (lint-walk-body name head (cddr form) (append vars env))
-				   (when (and (pair? end+result)
-					      (pair? (car end+result)))
-				     (let ((end (car end+result))
-					   (result (cdr end+result)))
-				       (if (and (not (side-effect? end env))
-						(every? code-constant? (map cadr step-vars)))
-					   (let ((tst (catch #t
-							(lambda ()
-							  (eval `(let (,@(map (lambda (b)
-										(list (car b) (cadr b)))
-									      step-vars))
-								   ,end) (rootlet)))
-							(lambda args #f))))
-					     (if tst
-						 (lint-format "~A could be ~A" name 
-							      (truncated-list->string form)
-							      (if (pair? result)
-								  (if (pair? (cdr result))
-								      (truncated-list->string `(begin ,@result))
-								      (car result))
-								  ())))))))))
-|#
-
-			     (if (pair? (caddr form))
-				 (lint-walk-body name head (cddr form) (append vars env))
+				   (if (pair? end+result)
+				       (if (never-false (car end+result))
+					   (lint-format "end test is never false: ~A" name (car end+result))
+					   (if (car end+result) ; not #f
+					       (if (never-true (car end+result))
+						   (lint-format "end test is never true: ~A" name (car end+result)))
+					       (if (pair? (cdr end+result))
+						   (lint-format "result is unreachable: ~A" name end+result))))))
 				 (lint-walk-body name head (cdddr form) (append vars env)))
 			     (report-usage name 'variable head vars)))
+
+		       ;; if end=#f, result can't be reached?
 
 		       ;; if while walking the do loop body we see an expression involving
 		       ;;    no-side-effect-function[but not random] + args-not-local-or-step-vars

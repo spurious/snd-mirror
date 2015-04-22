@@ -21251,6 +21251,10 @@ static void closed_port_display(s7_scheme *sc, const char *s, s7_pointer port);
 
 void s7_close_input_port(s7_scheme *sc, s7_pointer p)
 {
+#if DEBUGGING
+  if (!is_input_port(p))
+    fprintf(stderr, "s7_close_input_port: %s\n", DISPLAY(p));
+#endif
   if ((is_immutable(p)) ||
       ((is_input_port(p)) && (port_is_closed(p))))
     return;
@@ -23121,7 +23125,8 @@ static s7_pointer s7_load_1(s7_scheme *sc, const char *filename, s7_pointer e)
   else eval(sc, OP_READ_INTERNAL);
 
   pop_input_port(sc);
-  s7_close_input_port(sc, port);
+  if (is_input_port(port))
+    s7_close_input_port(sc, port);
   return(sc->value);
 }
 
@@ -30285,18 +30290,8 @@ s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
 
   sc->w = sc->NIL;
   va_start(ap, num_values);
-#if DEBUGGING
-  for (i = 0; i < num_values; i++)
-    {
-      p = (s7_pointer)va_arg(ap, s7_pointer);
-      if (!s7_is_valid(sc, p))
-	fprintf(stderr, "s7_list at %d, %p is not a valid s7_pointer!\n", i, p);
-      sc->w = cons(sc, p, sc->w);
-    }
-#else
   for (i = 0; i < num_values; i++)
     sc->w = cons(sc, va_arg(ap, s7_pointer), sc->w);
-#endif
   va_end(ap);
 
   p = sc->w;
@@ -35828,7 +35823,7 @@ static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_i
       if ((morally) && (has_methods(y)))
 	{
 	  s7_pointer equal_func;
-	  equal_func = find_method(sc, y, sc->IS_MORALLY_EQUAL);
+	  equal_func = find_method(sc, find_let(sc, y), sc->IS_MORALLY_EQUAL);
 	  if (equal_func != sc->UNDEFINED)
 	    return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, y, x))));
 	}
@@ -35905,13 +35900,13 @@ static bool environment_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_
       s7_pointer equal_func;
       if (has_methods(x))
 	{
-	  equal_func = find_method(sc, x, sc->IS_MORALLY_EQUAL);
+	  equal_func = find_method(sc, find_let(sc, x), sc->IS_MORALLY_EQUAL);
 	  if (equal_func != sc->UNDEFINED)
 	    return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, x, y))));
 	}
       if (has_methods(y))
 	{
-	  equal_func = find_method(sc, y, sc->IS_MORALLY_EQUAL);
+	  equal_func = find_method(sc, find_let(sc, y), sc->IS_MORALLY_EQUAL);
 	  if (equal_func != sc->UNDEFINED)
 	    return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, y, x))));
 	}
@@ -36003,7 +35998,7 @@ static bool pair_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *c
       if ((morally) && (has_methods(y)))
 	{
 	  s7_pointer equal_func;
-	  equal_func = find_method(sc, y, sc->IS_MORALLY_EQUAL);
+	  equal_func = find_method(sc, find_let(sc, y), sc->IS_MORALLY_EQUAL);
 	  if (equal_func != sc->UNDEFINED)
 	    return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, y, x))));
 	}
@@ -36062,7 +36057,7 @@ static bool vector_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info 
       if ((morally) && (has_methods(y)))
 	{
 	  s7_pointer equal_func;
-	  equal_func = find_method(sc, y, sc->IS_MORALLY_EQUAL);
+	  equal_func = find_method(sc, find_let(sc, y), sc->IS_MORALLY_EQUAL);
 	  if (equal_func != sc->UNDEFINED)
 	    return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, y, x))));
 	}
@@ -38114,6 +38109,8 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   return(sc->F);
 }
 
+/* s7_catch(sc, tag, body, error): return(g_catch(sc, list(sc, 3, tag, body, error))) */
+
 
 /* error reporting info -- save filename and line number */
 
@@ -38542,6 +38539,8 @@ static void s7_warn(s7_scheme *sc, int len, const char *ctrl, ...)
   len = vsnprintf(str, len, ctrl, ap);
   va_end(ap);
 
+  if (port_is_closed(sc->error_port))
+    sc->error_port = sc->standard_error;
   s7_display(sc, make_string_uncopied_with_length(sc, str, len), sc->error_port);
 }
 
@@ -38639,6 +38638,8 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
     }
   else
     {
+      if (port_is_closed(sc->error_port))
+	sc->error_port = sc->standard_error;
       /* if info is not a list, send object->string to current error port,
        *   else assume car(info) is a format control string, and cdr(info) are its args
        *
@@ -40916,10 +40917,6 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 
       args = sc->args;
       code = sc->code;
-#if DEBUGGING
-      if (!s7_is_valid(sc, sc->value))
-	sc->value = sc->F;
-#endif
       value = sc->value;
       cur_code = sc->cur_code;
       cur_env = sc->envir;
@@ -47969,8 +47966,8 @@ static s7_pointer check_define(s7_scheme *sc)
 	  else 
 	    {
 #if DEBUGGING
-	      is (sc->op != sc->DEFINE_CONSTANT)
-		fprintf(stderr, "%s[%f]: op is %s\n", __func__, __LINE__, op_names[sc->op]);
+	      if (sc->op != OP_DEFINE_CONSTANT)
+		fprintf(stderr, "%s[%d]: op is %s\n", __func__, __LINE__, op_names[sc->op]);
 #endif
 	      pair_set_syntax_symbol(sc->code, sc->DEFINE_CONSTANT_UNCHECKED);
 	    }
@@ -67867,8 +67864,8 @@ int main(int argc, char **argv)
  * tcopy          |      |      |                          4970 4343
  * tmap           |      |      | 11.0           5031 4769 4685 4682
  * lg             |      |      | 6547 6497 6494 6235 6229 6239 6338
+ * titer          |      |      |                          7976 6812
  * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6865
- * titer          |      |      |                          7976 7413
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
  * thash          |      |      |                          19.4 17.4
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8
@@ -67894,8 +67891,5 @@ int main(int argc, char **argv)
  * should this be fixed? (symbol->value 'gc-stats *s7*) -> #<undefined>
  *   to make *s7* a completely normal let would require symbol accessors etc
  *   sym->val might check let_ref_fallback for all computed cases
- * load-hook that first calls lint? (lint: do end test that is always true as in (+ i 10))
- *   debugger example with changed prompt/indentation?
- *   help ex of monitored reactive var? or time? compute-time? (why not with no-gui snd?)
- *   vt100 snd?
+ * use of any sndlib-ism in the repl could autoload sndlib -- requires help from make-index
  */

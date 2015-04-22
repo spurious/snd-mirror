@@ -47,7 +47,12 @@
 			      0)
 			  GLOB_MARK)
 		  g)
-	    (let ((files (glob.gl_pathv g)))
+	    (let ((files (map (lambda (f) ; get rid of emacs' *~ files
+				(if (and (> (length f) 1)
+					 (char=? #\~ (f (- (length f) 1))))
+				    (values)
+				    f))
+			      (glob.gl_pathv g))))
 	      (globfree g) 
 	      (if (or (null? files)
 		      (not (null? (cdr files))))

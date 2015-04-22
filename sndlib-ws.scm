@@ -1,6 +1,6 @@
 ;;; with-sound for a sndlib-only context (no Snd editor)
 
-(provide 'sndlib-ws.scm)
+(provide 'sndlib-ws.scm) 
 
 (set! *clm-srate* 44100)
 

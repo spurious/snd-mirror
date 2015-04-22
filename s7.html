@@ -7171,6 +7171,26 @@ fm-violin
     (set! *clm-player* (lambda (file) (system (format #f "sndplay ~A" file))))))
 </pre>
 
+<p>and use the repl's vt100 stuff to (for example) post the current begin time
+as a note list computes:
+</p>
+
+<pre class="indented">
+(define (clm-notehook . args)
+  ;; assume second arg is begin time (first is instrument name)
+  (when (and (pair? args) 
+	     (pair? (cdr args)) 
+	     (number? (cadr args)))
+    (with-let (sublet (*repl* 'repl-let) :begin-time (cadr args))
+      (let ((coords (cursor-coords))
+	    (col (floor (/ last-col 2))))
+	(let ((str (number-&gt;string begin-time)))
+	  (format *stderr* "~C[~D;~DH" #\escape prompt-row col)
+	  (format *stderr* "~C[K~A"  #\escape (if (&gt; (length str) col) (substring str 0 (- col 1)) str)))
+	(format *stderr* "~C[~D;~DH"   #\escape (cdr coords) (car coords))))))
+
+(set! *clm-notehook* clm-notehook)
+</pre>
 
 
 

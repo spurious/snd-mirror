@@ -847,8 +847,8 @@
     (list 'snd-misc.scm "misc.scm")
     (list 'snd-xm-enved.scm "xm-enved.scm")
 
-    (list 'snd-sndlib-ws.scm "sndlib-ws.scm")
-    (list 'sndlib-ws.scm "sndlib-ws.scm") ; this is what all the Snd files use
+    (list 'snd-ws.scm "ws.scm")
+    (list 'sndlib-ws.scm "sndlib-ws.scm")
 
     ))
 
