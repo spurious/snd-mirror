@@ -6199,7 +6199,7 @@ These symbols are not just an optimization of string comparison:
 
 <pre class="indented">
 (define-macro (hi a) 
-  (let ((funny-name (string-&gt;symbol (string #\;))))
+  (let ((funny-name (string-&gt;symbol ";")))
     `(let ((,funny-name ,a)) (+ 1 ,funny-name))))
 #&lt;macro (a)&gt;
 &gt; (hi 2)

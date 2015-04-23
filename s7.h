@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.24"
-#define S7_DATE "16-Apr-15"
+#define S7_VERSION "3.25"
+#define S7_DATE "22-Apr-15"
 
 
 typedef long long int s7_Int;
@@ -137,10 +137,10 @@ s7_pointer s7_stacktrace(s7_scheme *sc);
    *  normally printing the error arguments to current-error-port.
    */
 
-int s7_gc_protect(s7_scheme *sc, s7_pointer x);
+unsigned int s7_gc_protect(s7_scheme *sc, s7_pointer x);
 void s7_gc_unprotect(s7_scheme *sc, s7_pointer x);
-void s7_gc_unprotect_at(s7_scheme *sc, int loc);
-s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc);
+void s7_gc_unprotect_at(s7_scheme *sc, unsigned int loc);
+s7_pointer s7_gc_protected_at(s7_scheme *sc, unsigned int loc);
 s7_pointer s7_gc_on(s7_scheme *sc, bool on);
 void s7_gc_stats(s7_scheme *sc, bool on);
 unsigned int s7_heap_size(s7_scheme *sc);

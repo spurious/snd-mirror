@@ -600,8 +600,7 @@ typedef struct s7_cell {
     struct {                       /* symbols */
       s7_pointer name, global_slot, local_slot;
       long long int id;
-      int op;
-      unsigned int tag;
+      unsigned int op, tag;
     } sym;
 
     struct {                       /* syntax */
@@ -827,8 +826,8 @@ struct s7_scheme {
   int num_fdats;
 
   s7_pointer *strings, *vectors, *input_ports, *output_ports, *continuations, *c_objects, *hash_tables, *gensyms, *setters;
-  int strings_size, vectors_size, input_ports_size, output_ports_size, continuations_size, c_objects_size, hash_tables_size, gensyms_size, setters_size;
-  int strings_loc, vectors_loc, input_ports_loc, output_ports_loc, continuations_loc, c_objects_loc, hash_tables_loc, gensyms_loc, setters_loc;
+  unsigned int strings_size, vectors_size, input_ports_size, output_ports_size, continuations_size, c_objects_size, hash_tables_size, gensyms_size, setters_size;
+  unsigned int strings_loc, vectors_loc, input_ports_loc, output_ports_loc, continuations_loc, c_objects_loc, hash_tables_loc, gensyms_loc, setters_loc;
 
   unsigned int syms_tag;
   int ht_iter_tag, rng_tag, baffle_ctr, bignum_precision;
@@ -1464,7 +1463,7 @@ static void init_types(void)
  * don't reuse this bit if possible
  */
 
-#define T_GC_MARK                     (1 << (TYPE_BITS + 23))
+#define T_GC_MARK                     (unsigned int)(1 << (TYPE_BITS + 23))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
 #define set_mark(p)                   typeflag(p) |= T_GC_MARK
 #define clear_mark(p)                 typeflag(p) &= (~T_GC_MARK)
@@ -2878,7 +2877,7 @@ static s7_pointer g_is_constant(s7_scheme *sc, s7_pointer args)
 
 #define is_gc_nil(p) ((p) == sc->GC_NIL)
 
-int s7_gc_protect(s7_scheme *sc, s7_pointer x)
+unsigned int s7_gc_protect(s7_scheme *sc, s7_pointer x)
 {
   unsigned int i, loc, size, new_size;
 
@@ -2930,10 +2929,9 @@ void s7_gc_unprotect(s7_scheme *sc, s7_pointer x)
 }
 
 
-void s7_gc_unprotect_at(s7_scheme *sc, int loc)
+void s7_gc_unprotect_at(s7_scheme *sc, unsigned int loc)
 {
-  if ((loc >= 0) &&
-      (loc < (int)sc->protected_objects_size))
+  if (loc < (int)sc->protected_objects_size)
     {
 #if DEBUGGING
       if (vector_element(sc->protected_objects, loc) == sc->GC_NIL)
@@ -2945,13 +2943,12 @@ void s7_gc_unprotect_at(s7_scheme *sc, int loc)
 }
 
 
-s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc)
+s7_pointer s7_gc_protected_at(s7_scheme *sc, unsigned int loc)
 {
   s7_pointer obj;
 
   obj = sc->UNSPECIFIED;
-  if ((loc >= 0) &&
-      (loc < (int)sc->protected_objects_size))
+  if (loc < (int)sc->protected_objects_size)
     obj = vector_element(sc->protected_objects, loc);
 
   if (obj == sc->GC_NIL)
@@ -3003,7 +3000,7 @@ static void free_port(s7_scheme *sc, port_t *p)
 
 static void sweep(s7_scheme *sc)
 {
-  int i, j;
+  unsigned int i, j;
   if (sc->strings_loc > 0)
     {
       /* unrolling this loop is not an improvement */
@@ -4488,7 +4485,6 @@ static void increase_stack_size(s7_scheme *sc)
 
 #define HMLT 4
 
-
 static unsigned int rhash_0(const unsigned char *s) {return(0);}
 static unsigned int rhash_1(const unsigned char *s) {return(s[0]);}
 static unsigned int rhash_2(const unsigned char *s) {return(s[0] * HMLT + s[1]);}
@@ -5357,6 +5353,7 @@ static void save_unlet(s7_scheme *sc)
 	    val = slot_value(initial_slot(sym));
 	    if ((is_procedure(val)) || (is_syntax(val)))
 	      inits[k++] = initial_slot(sym);
+
 	    /* (let ((begin +)) (with-let (unlet) (begin 1 2))) */
 #if DEBUGGING
 	    if (k >= UNLET_ENTRIES)
@@ -9823,7 +9820,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
   else
     {
       int len, flen;
-      long long int fpart = 0;
+      long long int frpart = 0;
 
       /* 98765432101234567890987654321.0e-20    987654321.012346
        * 98765432101234567890987654321.0e-29    0.98765432101235
@@ -9840,11 +9837,11 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	flen = max_len;
 
       for (i = 0; i < flen; i++)
-	fpart = digits[(int)(*str++)] + (fpart * radix);
+	frpart = digits[(int)(*str++)] + (frpart * radix);
 
       if (len <= 0)
-	dval = int_part + fpart * ipow(radix, len - flen);
-      else dval = int_part + fpart * ipow(radix, -flen);
+	dval = int_part + frpart * ipow(radix, len - flen);
+      else dval = int_part + frpart * ipow(radix, -flen);
     }
 
   if (frac_len > 0)
@@ -10701,7 +10698,7 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 	  if (is_NaN(ang)) return(y);
 	  if (is_inf(ang)) return(real_NaN);
 	  if ((ang == M_PI) || (ang == -M_PI)) return(s7_make_ratio(sc, -numerator(x), denominator(x)));
-	  mag = fraction(x);
+	  mag = (s7_Double)fraction(x);
 	  break;
 
 	default:
@@ -11507,7 +11504,7 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
       return(s7_make_complex(sc, 0.0, sqrt((s7_Double)(-sqx))));
 
     case T_RATIO:
-      sqx = fraction(n);
+      sqx = (s7_Double)fraction(n);
       if (sqx > 0.0) /* else it's complex, so it can't be a ratio */
 	{
 	  s7_Int nm = 0, dn = 1;
@@ -12170,7 +12167,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	      return(division_by_zero_error(sc, sc->REMAINDER, args));
 	    if ((is_inf(real(y))) || (is_NaN(real(y))))
 	      return(wrong_type_argument_with_type(sc, sc->REMAINDER, small_int(2), y, A_NORMAL_REAL));
-	    frac = fraction(x);
+	    frac = (s7_Double)fraction(x);
 	    pre_quo = frac / real(y);
 	    if ((pre_quo > S7_LLONG_MAX) || (pre_quo < S7_LLONG_MIN))
 	      return(simple_out_of_range(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
@@ -12204,7 +12201,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	     *   would long double help?
 	     */
 	    s7_Double frac;
-	    frac = fraction(y);
+	    frac = (s7_Double)fraction(y);
 	    pre_quo = real(x) / frac;
 	    if ((pre_quo > S7_LLONG_MAX) || (pre_quo < S7_LLONG_MIN))
 	      return(simple_out_of_range(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
@@ -27535,14 +27532,14 @@ system captures the output as a string and returns it."
       #define BUF_SIZE 256
       char buf[BUF_SIZE];
       char *str = NULL;
-      int cur_len = 0;
+      int cur_len = 0, full_len = 0;
       FILE *fd;
       s7_pointer res;
 
       fd = popen(string_value(name), "r");
       while (fgets(buf, BUF_SIZE, fd))
 	{
-	  int buf_len, full_len = 0;
+	  int buf_len;
 	  buf_len = strlen(buf);
 	  if (cur_len + buf_len > full_len)
 	    {
@@ -34770,8 +34767,7 @@ static char *fallback_print(s7_scheme *sc, void *val)
 
 static char *fallback_print_readably(s7_scheme *sc, void *val)
 {
-  eval_error(sc, "can't print this object readably", sc->F);
-  return(NULL);
+  return(copy_string("#<unprint-readable object>"));
 }
 
 static bool fallback_equal(void *val1, void *val2)
@@ -67863,7 +67859,7 @@ int main(int argc, char **argv)
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3326
  * tcopy          |      |      |                          4970 4343
  * tmap           |      |      | 11.0           5031 4769 4685 4682
- * lg             |      |      | 6547 6497 6494 6235 6229 6239 6338
+ * lg             |      |      | 6547 6497 6494 6235 6229 6239 6621
  * titer          |      |      |                          7976 6812
  * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6865
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
@@ -67891,5 +67887,4 @@ int main(int argc, char **argv)
  * should this be fixed? (symbol->value 'gc-stats *s7*) -> #<undefined>
  *   to make *s7* a completely normal let would require symbol accessors etc
  *   sym->val might check let_ref_fallback for all computed cases
- * use of any sndlib-ism in the repl could autoload sndlib -- requires help from make-index
  */

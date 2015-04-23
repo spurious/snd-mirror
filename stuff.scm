@@ -1107,7 +1107,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
       (let ((code `(let ((_ (,(if (any? (lambda (a) 
 					  (tree-member '_ a)) 
 					args)
-				  '((funclet 'reactive-vector) 'make-mock-vector)
+				  '((funclet reactive-vector) 'make-mock-vector)
 				  'make-vector)
 			     ,(length args)))))))
 	(let ((ctr 0))
@@ -1119,7 +1119,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	(append code `(_))))
     
     (define-bacro (reactive-vector . args)
-      (apply ((funclet 'reactive-vector) 'reactive-vector-1) (outlet (curlet)) args))))
+      (apply ((funclet reactive-vector) 'reactive-vector-1) (outlet (curlet)) args))))
 
 
 #|

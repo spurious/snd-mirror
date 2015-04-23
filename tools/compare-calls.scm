@@ -33,7 +33,10 @@
        (lambda (entry)
 	 (format *stderr* "~A~,3F~12T(~,3F~24T~,3F)~40T~A~%" 
 		 (if (negative? (list-ref entry 0)) "" " ")
-		 (* scl (list-ref entry 0)) (* scl (list-ref entry 2)) (* scl (list-ref entry 3)) (list-ref entry 1)))
+		 (* scl (list-ref entry 0)) 
+		 (* scl (list-ref entry 2)) 
+		 (* scl (list-ref entry 3)) 
+		 (list-ref entry 1)))
        vals)))
   (exit))
 
@@ -72,7 +75,7 @@
 			    (let ((num (string->number-ignoring-commas (substring line k end))))
 			      (let ((func-end (char-position #\space line (+ end 2))))
 				(if func-end
-				    (let ((func (string->symbol (substring line (+ end 1) func-end))))
+				    (let ((func (string->symbol (substring line (+ end 2) func-end))))
 				      (hash-table-set! h func num)))))))))))))))
     h))
     

@@ -20796,10 +20796,13 @@ static void init_choosers(s7_scheme *sc)
 
 static char *mus_generator_to_readable_string(s7_scheme *sc, void *obj)
 {
-  /* return(mus_describe(((mus_xen *)obj)->gen)); */
+  char *str;
+  str = (char *)malloc(64 * sizeof(char));
+  snprintf(str, 64, "#<%s>", mus_name(((mus_xen *)obj)->gen));
+  return(str);
   /* we need a new function to fill this role */
-  s7_error(sc, s7_make_symbol(sc, "io-error"), s7_list(sc, 1, s7_make_string(sc, "can't write a clm generator readably")));
-  return(NULL);
+  /* s7_error(sc, s7_make_symbol(sc, "io-error"), s7_list(sc, 1, s7_make_string(sc, "can't write a clm generator readably"))); */
+  /* return(NULL); */
 }
 #endif
 
