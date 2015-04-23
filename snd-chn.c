@@ -4648,6 +4648,8 @@ void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
 #if USE_MOTIF
 	      draw_graph_cursor(cp);
 	      draw_sonogram_cursor(cp);
+              if (!(sp->playing))
+                update_graph(cp);
 #endif
 #if USE_GTK
 	      update_graph(cp);
@@ -5131,9 +5133,19 @@ void check_cursor_shape(chan_info *cp, int x, int y)
     case CLICK_SELECTION_PLAY:
     case CLICK_CURSOR_PLAY:
     case CLICK_MARK_PLAY:
-      if (cp->current_cursor != ss->play_cursor)
-	{
-	  ncp->original_cursor = cursor_sample(ncp);
+      if (!(cp->sound->playing) && (cp->current_cursor != ss->play_cursor))
+        {
+          snd_info *sp;
+          sp = cp->sound;
+          if (sp->sync != 0)
+            {
+              int i;
+              sync_info *si;
+              si = snd_sync(sp->sync);
+              for (i = 0; i < si->chans; i++)
+                si->cps[i]->original_cursor = cursor_sample(ncp);
+            }
+          else ncp->original_cursor = cursor_sample(ncp);
 	  cp->current_cursor = ss->play_cursor;
 	  GUI_SET_CURSOR(channel_graph(cp), ss->play_cursor);
 	}
@@ -5760,6 +5772,19 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    if (str) free(str);
 	  }
 	  break;
+
+#if USE_MOTIF
+        case CLICK_MARK_PLAY:
+          if (sp->sync != 0)
+            {
+              int i;
+              sync_info *si;
+              si = snd_sync(sp->sync);
+              for (i = 0; i < si->chans; i++)
+                update_graph(si->cps[i]);
+            }
+          else update_graph(cp);
+#endif
 	  
 	default:
 	  break;

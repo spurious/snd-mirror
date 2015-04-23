@@ -1139,8 +1139,8 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, mus_long_
       if (sp) 
 	{
 	  sp->playing++;
-	  if ((with_tracking_cursor(ss) != DONT_TRACK) &&     /* ss->tracking is set by start_dac, so it's not useful here */
-	      (!(is_player_sound(sp))))
+	  if (((with_tracking_cursor(ss) != DONT_TRACK) || (ss->tracking)) &&
+              (!(is_player_sound(sp))))
 	    {
 	      cp->original_cursor = cursor_sample(cp);
 	      if (cp->axis)
@@ -1150,6 +1150,9 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, mus_long_
 		}
 	      cp->cursor_on = true;
 	      cursor_moveto_without_verbosity(cp, start);
+#if USE_MOTIF
+              update_graph(cp);
+#endif
 	    }
 	}
       return(make_dac_info(slot, cp, sp, sf, end, out_chan, DAC_CHANNEL, Xen_false));

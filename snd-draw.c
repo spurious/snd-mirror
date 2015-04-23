@@ -157,7 +157,7 @@ void draw_cursor(chan_info *cp)
   ax = cursor_context(cp);
 #endif
 
-  if (ss->tracking)
+  if ((ss->tracking) && (cp->sound->playing))
     cur = cp->tracking_cursor_style;
   else cur = cp->cursor_style;
 

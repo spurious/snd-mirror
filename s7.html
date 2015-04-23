@@ -4910,6 +4910,10 @@ where you are in the file.
 (set! (hook-functions *load-hook*)
        (list (lambda (hook) 
                (format #t "loading ~S...~%" (hook 'name)))))
+
+(begin 
+  (load "lint.scm") 
+  (set! (hook-functions *load-hook*) (list (lambda (hook) (lint (hook 'name))))))
 </pre>
 
 <p>Here's a *load-hook* function that adds the loaded file's directory

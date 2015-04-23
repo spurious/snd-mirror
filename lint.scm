@@ -82,6 +82,11 @@
     (define +hash-table+ (hash-table))
     (define +output-port+ *stdout*)
     (define +input-port+ *stdin*)
+    (define +c-pointer+ (c-pointer 0))
+    (define +iterator+ (make-iterator "123"))
+    (define +rng+ (make-random-state 123))
+    (define +function+ (lambda args args))
+    (define +macro+ (define-macro (_m_ . args) args))
 
     (define (integer-between-2-and-16? radix) 
       (and (integer? radix) 
@@ -184,7 +189,8 @@
 		  procedure-documentation funclet
 		  procedure-setter procedure-source dilambda? procedure? provided? 
 		  quasiquote quote quotient 
-		  random random-state? rational? rationalize real-part real? remainder reverse round 
+		  ;random 
+		  random-state? rational? rationalize real-part real? remainder reverse round 
 		  s7-version sin sinh sqrt string string->list string->number string->symbol string-append string-ci<=? string-ci<? 
 		  string-ci=? string-ci>=? string-ci>? string-length string-position string-ref string<=? string<? string=? string>=? 
 		  string>? string? string-downcase string-upcase substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol? symbol=?
@@ -220,6 +226,7 @@
 			   'boolean=? +boolean+
 			   'boolean? +boolean+
 			   'bytevector? +boolean+
+			   'c-pointer +c-pointer+
 			   'ceiling +integer+
 			   'char->integer +integer+
 			   'char-alphabetic? +boolean+
@@ -255,6 +262,10 @@
 			   'current-input-port +input-port+
 			   'current-output-port +output-port+
 			   'cyclic-sequences +list+
+			   'define-bacro +macro+
+			   'define-bacro* +macro+
+			   'define-macro +macro+
+			   'define-macro* +macro+
 			   'defined? +boolean+
 			   'denominator +integer+
 			   'dilambda? +boolean+
@@ -301,6 +312,8 @@
 			   'iterator? +boolean+
 			   'keyword->symbol +symbol+
 			   'keyword? +boolean+
+			   'lambda +function+
+			   'lambda* +function+
 			   'lcm +number+
 			   'length +integer+   ; actually integer or #f
 			   'let->list +list+
@@ -319,11 +332,13 @@
 			   'macro? +boolean+
 			   'magnitude +number+
 			   'make-float-vector +vector+
-			   'make-int-vector +vector+
 			   'make-hash-table +hash-table+
+			   'make-int-vector +vector+
+			   'make-iterator +iterator+
 			   'make-keyword +symbol+
 			   'make-list +list+
 			   'make-polar +number+
+			   'make-random-state +rng+
 			   'make-rectangular +number+
 			   'make-shared-vector +vector+
 			   'make-string +string+
@@ -545,6 +560,7 @@
 			  'integer->char byte?
 			  'integer-decode-float real-but-not-rational?
 			  'integer-length integer?
+			  'iterate iterator?
 			  'keyword->symbol keyword?
 			  'lcm (list real? real?)
 			  'length sequence?
@@ -644,7 +660,7 @@
 			  'string=? string?
 			  'string>=? string?
 			  'string>? string?
-			  'substring (list string? integer? integer?)
+			  'substring (list string? non-negative-integer? non-negative-integer?)
 			  'symbol->dynamic-value symbol?
 			  'symbol->keyword symbol?
 			  'symbol->string symbol?
@@ -1032,7 +1048,7 @@
 		      (if (and (symbol? arg)
 			       (not (keyword? arg)))
 			  ;; if we're in a loop of some sort and the set! follows the ref,
-			  ;;   this can be fooled.
+			  ;;   this can be fooled, especially by with-let
 			  (let ((var-data (or (var-member arg env) (hash-table-ref globals arg))))
 			    (if (and (var? var-data)
 				     (not (var-ref var-data)) ; a stop-gap -- refd?
@@ -2444,7 +2460,7 @@
 	  ((string)
 	   (if (every? (lambda (x) (and (char? x) (not (member x '(#\null #\newline #\escape #\linefeed))))) (cdr form))
 	       (lint-format "~A could be ~S" name form (apply string (cdr form)))))
-	  
+
 	  ((string-append)
 	   ;; also (string-append . constants)? and (string-append)->""
 	   (if (not (= line-number last-simplify-boolean-line-number))
@@ -2681,8 +2697,20 @@
 		    (memq (caddr form) '(= <= >= eq? eqv? equal?
 					   string=? string<=? string>=? char=? char<=? char>=?
 					   string-ci=? string-ci<=? string-ci>=? char-ci=? char-ci<=? char-ci>=?)))
-	       (lint-format "sort! with ~A may hang:~A" name (caddr form) (truncated-list->string form))))))
-      
+	       (lint-format "sort! with ~A may hang:~A" name (caddr form) (truncated-list->string form))))
+
+	  ((substring) ; and others?
+	   (if (every? code-constant? (cdr form))
+	       (catch #t
+		 (lambda ()
+		   (let ((val (eval form)))
+		     (lint-format "possible simplification:~S" name val)))
+		 (lambda (type info)
+		   (lint-format "~A -> ~A~%" name form (apply format #f info))))))
+
+;	  (else (format *stderr* "special: ~A~%" head))
+	  ))
+
       
       (define (check-call name head form env)
 	(let ((fdata (or (var-member head env) (hash-table-ref globals head))))

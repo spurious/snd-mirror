@@ -2931,7 +2931,7 @@ void s7_gc_unprotect(s7_scheme *sc, s7_pointer x)
 
 void s7_gc_unprotect_at(s7_scheme *sc, unsigned int loc)
 {
-  if (loc < (int)sc->protected_objects_size)
+  if (loc < sc->protected_objects_size)
     {
 #if DEBUGGING
       if (vector_element(sc->protected_objects, loc) == sc->GC_NIL)
@@ -2948,7 +2948,7 @@ s7_pointer s7_gc_protected_at(s7_scheme *sc, unsigned int loc)
   s7_pointer obj;
 
   obj = sc->UNSPECIFIED;
-  if (loc < (int)sc->protected_objects_size)
+  if (loc < sc->protected_objects_size)
     obj = vector_element(sc->protected_objects, loc);
 
   if (obj == sc->GC_NIL)
@@ -8866,7 +8866,7 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 	for (i = 0, base = radix; (i < precision) && (frac_part > min_frac); i++, base *= radix)
 	  {
 	    s7_Int ipart;
-	    ipart = (int)(frac_part * base);
+	    ipart = (s7_Int)(frac_part * base);
 	    if (ipart >= radix)         /* rounding confusion */
 	      ipart = radix - 1;
 	    frac_part -= (ipart / base);
