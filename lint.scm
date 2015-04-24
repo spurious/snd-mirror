@@ -2699,7 +2699,7 @@
 					   string-ci=? string-ci<=? string-ci>=? char-ci=? char-ci<=? char-ci>=?)))
 	       (lint-format "sort! with ~A may hang:~A" name (caddr form) (truncated-list->string form))))
 
-	  ((substring) ; and others?
+	  ((substring) ; and others? -- but this sort of thing never happens in real code
 	   (if (every? code-constant? (cdr form))
 	       (catch #t
 		 (lambda ()
@@ -2707,8 +2707,6 @@
 		     (lint-format "possible simplification:~S" name val)))
 		 (lambda (type info)
 		   (lint-format "~A -> ~A~%" name form (apply format #f info))))))
-
-;	  (else (format *stderr* "special: ~A~%" head))
 	  ))
 
       

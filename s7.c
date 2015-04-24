@@ -535,15 +535,12 @@ typedef struct s7_cell {
     } hasher;
 
     struct {
-      s7_pointer obj;
-      union {
-	s7_pointer cur;
-	hash_entry_t *hcur;
-      } hc;
+      s7_pointer obj, cur;
       s7_Int loc;
       union {
 	s7_Int len;
 	s7_pointer slow;
+	hash_entry_t *hcur;
       } lw;
       s7_pointer (*next)(s7_scheme *sc, s7_pointer iterator);
     } iter;
@@ -1031,7 +1028,7 @@ typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_w
 #define T_CATCH               23
 #define T_DYNAMIC_WIND        24
 #define T_HASH_TABLE          25
-#define T_ENVIRONMENT         26
+#define T_LET         26
 #define T_ITERATOR            27
 #define T_STACK               28
 #define T_COUNTER             29
@@ -1109,7 +1106,7 @@ static void init_types(void)
   t_structure_p[T_VECTOR] = true;
   t_structure_p[T_HASH_TABLE] = true;
   t_structure_p[T_SLOT] = true;
-  t_structure_p[T_ENVIRONMENT] = true;
+  t_structure_p[T_LET] = true;
 
   t_sequence_p[T_NIL] = true;
   t_sequence_p[T_PAIR] = true;
@@ -1118,7 +1115,7 @@ static void init_types(void)
   t_sequence_p[T_INT_VECTOR] = true;
   t_sequence_p[T_FLOAT_VECTOR] = true;
   t_sequence_p[T_HASH_TABLE] = true;
-  t_sequence_p[T_ENVIRONMENT] = true;
+  t_sequence_p[T_LET] = true;
   t_sequence_p[T_C_OBJECT] = true;
 
   t_vector_p[T_VECTOR] = true;
@@ -1132,7 +1129,7 @@ static void init_types(void)
   t_applicable_p[T_FLOAT_VECTOR] = true;
   t_applicable_p[T_HASH_TABLE] = true;
   t_applicable_p[T_ITERATOR] = true;
-  t_applicable_p[T_ENVIRONMENT] = true;
+  t_applicable_p[T_LET] = true;
   t_applicable_p[T_C_OBJECT] = true;
   t_applicable_p[T_C_MACRO] = true;
   t_applicable_p[T_MACRO] = true;
@@ -1172,7 +1169,7 @@ static void init_types(void)
   t_simple_p[T_C_OPT_ARGS_FUNCTION] = true;
   t_simple_p[T_C_RST_ARGS_FUNCTION] = true;
   /* not completely sure about the next ones */
-  t_simple_p[T_ENVIRONMENT] = true;
+  t_simple_p[T_LET] = true;
   t_simple_p[T_INPUT_PORT] = true;
   t_simple_p[T_OUTPUT_PORT] = true;
 }
@@ -1726,7 +1723,7 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {pair_sy
 
 #define ROOTLET_SIZE 512
 #define let_id(p)                     (p)->object.envr.id
-#define is_let(p)                     (type(p) == T_ENVIRONMENT)
+#define is_let(p)                     (type(p) == T_LET)
 #if DEBUGGING
 static s7_pointer let_slots(s7_pointer p) {if (p->object.vector.length == ROOTLET_SIZE) {fprintf(stderr, "rootlet accessed as let\n"); abort();} return(p->object.envr.slots);}
 static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.vector.length == ROOTLET_SIZE) {fprintf(stderr, "rootlet clobbered\n"); abort();} p->object.envr.slots = slot; return(slot);}
@@ -1784,8 +1781,8 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define iterator_position(p)          (p)->object.iter.loc
 #define iterator_length(p)            (p)->object.iter.lw.len
 #define iterator_slow(p)              (p)->object.iter.lw.slow
-#define iterator_current(p)           (p)->object.iter.hc.cur
-#define iterator_hash_current(p)      (p)->object.iter.hc.hcur
+#define iterator_hash_current(p)      (p)->object.iter.lw.hcur
+#define iterator_current(p)           (p)->object.iter.cur
 #define iterator_next(p)              (p)->object.iter.next
 #define iterator_is_at_end(p)         (iterator_next(p) == iterator_finished)
 
@@ -2219,7 +2216,6 @@ static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y);
 static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym);
 static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol);
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym);
-static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool at_end);
 static void optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer func, s7_pointer args, s7_pointer body);
 static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e);
 static void optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e);
@@ -2279,7 +2275,7 @@ static s7_pointer CAR_A_LIST, CDR_A_LIST;
 static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
 static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
 static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, AN_OPEN_PORT, A_NORMAL_REAL, A_RATIONAL, A_FUNCTION, A_BOOLEAN;
-static s7_pointer A_NUMBER, AN_ENVIRONMENT, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL, A_NON_NEGATIVE_INTEGER;
+static s7_pointer A_NUMBER, A_LET, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL, A_NON_NEGATIVE_INTEGER;
 static s7_pointer CONSTANT_ARG_ERROR, BAD_BINDING, A_FORMAT_PORT, AN_UNSIGNED_BYTE, A_BINDING, A_NON_CONSTANT_SYMBOL, AN_EQ_FUNC, A_SEQUENCE;
 static s7_pointer ITS_TOO_LARGE, ITS_NEGATIVE, RESULT_IS_TOO_LARGE, ITS_NAN, ITS_INFINITE, TOO_MANY_INDICES, A_VALID_RADIX;
 static s7_pointer AN_INPUT_STRING_PORT, AN_INPUT_FILE_PORT, AN_OUTPUT_STRING_PORT, AN_OUTPUT_FILE_PORT;
@@ -3413,7 +3409,7 @@ static void add_setter(s7_scheme *sc, s7_pointer p, s7_pointer setter)
   /* procedure-setters GC-protected. The c_function_setter field can't be used because the built-in functions
    *   are often removed from the heap and never thereafter marked.
    */
-  int i;
+  unsigned int i;
   for (i = 0; i < sc->setters_loc; i++)
     {
       s7_pointer x;
@@ -3700,7 +3696,7 @@ static void init_mark_functions(void)
   mark_function[T_HASH_TABLE]          = mark_hash_table;
   mark_function[T_ITERATOR]            = mark_iterator;
   mark_function[T_SYNTAX]              = mark_noop;
-  mark_function[T_ENVIRONMENT]         = mark_let;
+  mark_function[T_LET]         = mark_let;
   mark_function[T_STACK]               = mark_stack;
   mark_function[T_COUNTER]             = mark_counter;
   mark_function[T_SLOT]                = mark_slot;
@@ -3858,7 +3854,7 @@ static int gc(s7_scheme *sc)
   S7_MARK(car(sc->A4_3));
   S7_MARK(car(sc->A4_4));
   {
-    int i;
+    unsigned int i;
     s7_pointer p;
     for (i = 1; i < NUM_SAFE_LISTS; i++)
       if (list_is_in_use(sc->safe_lists[i]))
@@ -4279,14 +4275,14 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       return;
 
     case T_HASH_TABLE:
-    case T_ENVIRONMENT:
+    case T_LET:
     case T_SYNTAX:
       return;
 
     case T_SYMBOL:
       if (is_gensym(x))
 	{
-	  int i;
+	  unsigned int i;
 	  sc->heap[loc] = alloc_pointer();
 	  clear_type(sc->heap[loc]);
 	  (*sc->free_heap_top++) = sc->heap[loc];
@@ -4296,7 +4292,7 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 	  for (i = 0; i < sc->gensyms_loc; i++)
 	    if (sc->gensyms[i] == x)
 	      {
-		int j;
+		unsigned int j;
 		for (j = i + 1; i < sc->gensyms_loc; i++, j++)
 		  sc->gensyms[i] = sc->gensyms[j];
 		sc->gensyms_loc--;
@@ -4949,7 +4945,7 @@ static s7_pointer add_sym_to_list(s7_scheme *sc, s7_pointer sym)
 #define NEW_FRAME(Sc, Old_Env, New_Env)		      \
   do {						      \
     s7_pointer _x_;				      \
-      NEW_CELL(Sc, _x_, T_ENVIRONMENT | T_IMMUTABLE); \
+      NEW_CELL(Sc, _x_, T_LET | T_IMMUTABLE); \
       let_id(_x_) = ++sc->let_number;		      \
       set_let_slots(_x_, Sc->NIL);	              \
       outlet(_x_) = Old_Env;			      \
@@ -4961,7 +4957,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 {
   /* return(cons(sc, sc->NIL, old_env)); */
   s7_pointer x;
-  NEW_CELL(sc, x, T_ENVIRONMENT | T_IMMUTABLE);
+  NEW_CELL(sc, x, T_LET | T_IMMUTABLE);
   let_id(x) = ++sc->let_number;
   set_let_slots(x, sc->NIL);
   outlet(x) = old_env;
@@ -4972,7 +4968,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 static s7_pointer make_simple_let(s7_scheme *sc)
 {
   s7_pointer frame;
-  NEW_CELL(sc, frame, T_ENVIRONMENT | T_IMMUTABLE);
+  NEW_CELL(sc, frame, T_LET | T_IMMUTABLE);
   let_id(frame) = sc->let_number + 1;
   set_let_slots(frame, sc->NIL);
   outlet(frame) = sc->envir;
@@ -5014,7 +5010,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
   do {								 \
     s7_pointer _x_, _slot_, _sym_, _val_;			\
     _sym_ = Symbol; _val_ = Value;				\
-    NEW_CELL(Sc, _x_, T_ENVIRONMENT | T_IMMUTABLE);		\
+    NEW_CELL(Sc, _x_, T_LET | T_IMMUTABLE);		\
     let_id(_x_) = ++sc->let_number;				\
     outlet(_x_) = Old_Env;					\
     New_Env = _x_;						\
@@ -5032,7 +5028,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
     s7_pointer _x_, _slot_, _sym1_, _val1_, _sym2_, _val2_;	\
     _sym1_ = Symbol1; _val1_ = Value1;					\
     _sym2_ = Symbol2; _val2_ = Value2;					\
-    NEW_CELL(Sc, _x_, T_ENVIRONMENT | T_IMMUTABLE);			\
+    NEW_CELL(Sc, _x_, T_LET | T_IMMUTABLE);			\
     let_id(_x_) = ++sc->let_number;					\
     outlet(_x_) = Old_Env;						\
     New_Env = _x_;							\
@@ -5054,7 +5050,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
   do {                                   \
     s7_pointer _x_, _slot_, _sym_, _val_;	 \
     _sym_ = Symbol; _val_ = Value;		      \
-    NEW_CELL(Sc, _x_, T_ENVIRONMENT | T_IMMUTABLE);   \
+    NEW_CELL(Sc, _x_, T_LET | T_IMMUTABLE);   \
     let_id(_x_) = ++sc->let_number;		      \
     outlet(_x_) = Old_Env;			      \
     New_Env = _x_;							\
@@ -5071,7 +5067,7 @@ static s7_pointer old_frame_in_env(s7_scheme *sc, s7_pointer frame, s7_pointer n
 {
   set_let_slots(frame, sc->NIL);
   outlet(frame) = next_frame;
-  set_type(frame, T_ENVIRONMENT | T_IMMUTABLE);
+  set_type(frame, T_LET | T_IMMUTABLE);
   let_id(frame) = ++sc->let_number;
   return(frame);
 }
@@ -5160,7 +5156,7 @@ bool s7_is_let(s7_pointer e)
 
 static s7_pointer g_is_let(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_let "(let? obj) returns #t if obj is an environment."
+  #define H_is_let "(let? obj) returns #t if obj is a let (an environment)."
   check_boolean_method(sc, is_let, sc->IS_LET, args);
 }
 
@@ -5170,7 +5166,7 @@ static s7_pointer find_let(s7_scheme *sc, s7_pointer obj)
   if (is_let(obj)) return(obj);
   switch (type(obj))
     {
-    case T_ENVIRONMENT:
+    case T_LET:
       return(obj);
 
     case T_MACRO:   case T_MACRO_STAR:
@@ -5235,7 +5231,7 @@ static int let_length(s7_scheme *sc, s7_pointer e)
 
 static s7_pointer make_slot_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
 {
-  /* env is not rootlet and is an environment */
+  /* env is not rootlet and is a let */
   s7_pointer slot;
   NEW_CELL(sc, slot, T_SLOT | T_IMMUTABLE);
   slot_symbol(slot) = symbol;
@@ -5439,7 +5435,7 @@ static s7_pointer g_openlet(s7_scheme *sc, s7_pointer args)
       set_has_methods(e);
       return(e);
     }
-  return(simple_wrong_type_argument_with_type(sc, sc->OPENLET, e, AN_ENVIRONMENT));
+  return(simple_wrong_type_argument_with_type(sc, sc->OPENLET, e, A_LET));
 }
 
 
@@ -5457,7 +5453,7 @@ static s7_pointer g_coverlet(s7_scheme *sc, s7_pointer args)
       clear_has_methods(e);
       return(e);
     }
-  return(simple_wrong_type_argument_with_type(sc, sc->COVERLET, e, AN_ENVIRONMENT));
+  return(simple_wrong_type_argument_with_type(sc, sc->COVERLET, e, A_LET));
 }
 
 
@@ -5506,7 +5502,7 @@ static s7_pointer check_c_obj_env(s7_scheme *sc, s7_pointer old_e, s7_pointer ca
   if (is_c_object(old_e))
     old_e = c_object_let(old_e);
   if (!is_let(old_e))
-    return(simple_wrong_type_argument_with_type(sc, caller, old_e, AN_ENVIRONMENT));
+    return(simple_wrong_type_argument_with_type(sc, caller, old_e, A_LET));
   return(old_e);
 }
 
@@ -5526,7 +5522,7 @@ directly to the environment env, and returns the environment."
     {
       check_method(sc, e, sc->VARLET, args);
       if (!is_let(e))
-	return(wrong_type_argument_with_type(sc, sc->VARLET, small_int(1), e, AN_ENVIRONMENT));
+	return(wrong_type_argument_with_type(sc, sc->VARLET, small_int(1), e, A_LET));
     }
 
   for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x))
@@ -5550,7 +5546,7 @@ directly to the environment env, and returns the environment."
 	  val = cdr(p);
 	  break;
 
-	case T_ENVIRONMENT:
+	case T_LET:
 	  append_let(sc, e, check_c_obj_env(sc, p, sc->VARLET));
 	  continue;
 
@@ -5617,7 +5613,7 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
     {
       check_method(sc, e, sc->CUTLET, args);
       if (!is_let(e))
-	return(wrong_type_argument_with_type(sc, sc->CUTLET, small_int(1), e, AN_ENVIRONMENT));
+	return(wrong_type_argument_with_type(sc, sc->CUTLET, small_int(1), e, A_LET));
     }
   /* besides removing the slot we have to make sure the symbol_id does not match else
    *   let-ref and others will use the old slot!  What's the un-id?  I'll try -1.  0 means global.
@@ -5706,7 +5702,7 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 	      val = cdr(p);
 	      break;
 
-	    case T_ENVIRONMENT:
+	    case T_LET:
 	      append_let(sc, new_e, check_c_obj_env(sc, p, caller));
 	      continue;
 
@@ -5758,7 +5754,7 @@ new environment."
     {
       check_method(sc, e, sc->SUBLET, args);
       if (!is_let(e))
-	return(wrong_type_argument_with_type(sc, sc->SUBLET, small_int(1), e, AN_ENVIRONMENT));
+	return(wrong_type_argument_with_type(sc, sc->SUBLET, small_int(1), e, A_LET));
     }
   return(sublet_1(sc, e, cdr(args), sc->SUBLET));
 }
@@ -5843,7 +5839,7 @@ static s7_pointer g_let_to_list(s7_scheme *sc, s7_pointer args)
       if (is_c_object(env))
 	env = c_object_let(env);
       if (!is_let(env))
-        return(simple_wrong_type_argument_with_type(sc, sc->LET_TO_LIST, env, AN_ENVIRONMENT));
+        return(simple_wrong_type_argument_with_type(sc, sc->LET_TO_LIST, env, A_LET));
     }
   return(s7_let_to_list(sc, env));
 }
@@ -5904,7 +5900,7 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
 
   e = car(args);
   if (!is_let(e))
-    return(wrong_type_argument_with_type(sc, sc->LET_REF, small_int(1), e, AN_ENVIRONMENT));
+    return(wrong_type_argument_with_type(sc, sc->LET_REF, small_int(1), e, A_LET));
 
   if (is_pair(cdr(args)))
     s = cadr(args);
@@ -6009,7 +6005,7 @@ static s7_pointer g_let_set(s7_scheme *sc, s7_pointer args)
 
   e = car(args);
   if (!is_let(e))
-    return(wrong_type_argument_with_type(sc, sc->LET_SET, small_int(1), e, AN_ENVIRONMENT));
+    return(wrong_type_argument_with_type(sc, sc->LET_SET, small_int(1), e, A_LET));
 
   s = cadr(args);
   if (!is_symbol(s))
@@ -6157,7 +6153,7 @@ static s7_pointer g_outlet(s7_scheme *sc, s7_pointer args)
   if (!is_let(env))
     {
       check_method(sc, env, sc->OUTLET, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->OUTLET, env, AN_ENVIRONMENT));
+      return(simple_wrong_type_argument_with_type(sc, sc->OUTLET, env, A_LET));
     }
   if ((env == sc->rootlet) ||
       (is_null(outlet(env))))
@@ -6175,12 +6171,12 @@ static s7_pointer g_set_outlet(s7_scheme *sc, s7_pointer args)
   if (!is_let(env))
     {
       check_method(sc, env, sc->OUTLET, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->OUTLET, env, AN_ENVIRONMENT));
+      return(simple_wrong_type_argument_with_type(sc, sc->OUTLET, env, A_LET));
     }
 
   new_outer = cadr(args);
   if (!is_let(new_outer))
-    return(wrong_type_argument_with_type(sc, sc->OUTLET, small_int(2), new_outer, AN_ENVIRONMENT));
+    return(wrong_type_argument_with_type(sc, sc->OUTLET, small_int(2), new_outer, A_LET));
   /*
   if (new_outer == env)
     return(s7_error(sc, sc->WRONG_TYPE_ARG, list_1(sc, make_string_wrapper(sc, "can't set the outlet of env to env!"))));
@@ -6373,7 +6369,7 @@ symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
       if (!is_let(local_env))
 	{
 	  check_method(sc, local_env, sc->SYMBOL_TO_VALUE, args);
-	  return(wrong_type_argument_with_type(sc, sc->SYMBOL_TO_VALUE, small_int(2), local_env, AN_ENVIRONMENT));
+	  return(wrong_type_argument_with_type(sc, sc->SYMBOL_TO_VALUE, small_int(2), local_env, A_LET));
 	}
       if (local_env == sc->rootlet)
 	{
@@ -6626,7 +6622,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
       s7_pointer e, b, x;
       e = cadr(args);
       if (!is_let(e))
-	return(wrong_type_argument_with_type(sc, sc->IS_DEFINED, small_int(2), e, AN_ENVIRONMENT));
+	return(wrong_type_argument_with_type(sc, sc->IS_DEFINED, small_int(2), e, A_LET));
 
       if (is_pair(cddr(args)))
 	{
@@ -15920,7 +15916,7 @@ static s7_pointer g_equal_length_ic(s7_scheme *sc, s7_pointer args)
     case T_C_OBJECT:
       return(make_boolean(sc, object_length_to_int(sc, val) == ilen));
 
-    case T_ENVIRONMENT:
+    case T_LET:
       return(make_boolean(sc, let_length(sc, val) == ilen));
 
     case T_CLOSURE:
@@ -16882,7 +16878,7 @@ static s7_pointer g_less_length_ic(s7_scheme *sc, s7_pointer args)
     case T_C_OBJECT:
       return(make_boolean(sc, object_length_to_int(sc, val) < ilen));
 
-    case T_ENVIRONMENT:
+    case T_LET:
       /* this works because let_length handles the length method itself! */
       return(make_boolean(sc, let_length(sc, val) < ilen));
 
@@ -17778,7 +17774,7 @@ static s7_pointer g_is_negative_length(s7_scheme *sc, s7_pointer args)
     case T_HASH_TABLE:
       return(sc->F);
 
-    case T_ENVIRONMENT:
+    case T_LET:
     case T_CLOSURE:
     case T_CLOSURE_STAR:
       if (has_methods(val)) /* this is a special case */
@@ -23175,7 +23171,7 @@ defaults to the rootlet.  To load into the current environment instead, pass (cu
       s7_pointer e;
       e = cadr(args);
       if (!is_let(e))
-	return(wrong_type_argument_with_type(sc, sc->LOAD, small_int(2), e, AN_ENVIRONMENT));
+	return(wrong_type_argument_with_type(sc, sc->LOAD, small_int(2), e, A_LET));
       if (e == sc->rootlet)
 	sc->envir = sc->NIL;
       else sc->envir = e;
@@ -23626,7 +23622,7 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
       s7_pointer e;
       e = cadr(args);
       if (!is_let(e))
- 	return(wrong_type_argument_with_type(sc, sc->EVAL_STRING, small_int(2), e, AN_ENVIRONMENT));
+ 	return(wrong_type_argument_with_type(sc, sc->EVAL_STRING, small_int(2), e, A_LET));
       if (e == sc->rootlet)
 	sc->envir = sc->NIL;
       else sc->envir = e;
@@ -24233,7 +24229,7 @@ static s7_pointer make_iterator(s7_scheme *sc, s7_pointer e)
 
   switch (type(e))
     {
-    case T_ENVIRONMENT:
+    case T_LET:
       if (e == sc->rootlet)
 	{
 	  iterator_current(iter) = vector_element(e, 0);
@@ -24566,7 +24562,7 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 	    collect_shared_info(sc, ci, slot_value(top), stop_at_print_length, &top_cyclic);
 	  break;
 
-	case T_ENVIRONMENT:
+	case T_LET:
 	  if (top == sc->rootlet)
 	    collect_vector_info(sc, ci, top, stop_at_print_length, &top_cyclic);
 	  else
@@ -25885,7 +25881,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	}
       break;
 
-    case T_ENVIRONMENT:
+    case T_LET:
       let_to_port(sc, obj, port, use_write, to_file, ci);
       break;
 
@@ -28827,7 +28823,7 @@ static void init_car_a_list(void)
   A_RATIONAL =             s7_make_permanent_string("an integer or a ratio");
   A_NUMBER =               s7_make_permanent_string("a number");
   A_PROCEDURE =            s7_make_permanent_string("a procedure");
-  AN_ENVIRONMENT =         s7_make_permanent_string("an environment");
+  A_LET =                  s7_make_permanent_string("a let (environment)");
   A_PROPER_LIST =          s7_make_permanent_string("a proper list");
   A_FUNCTION =             s7_make_permanent_string("a function");
   A_BOOLEAN =              s7_make_permanent_string("a boolean");
@@ -33361,7 +33357,7 @@ void init_hashers(void)
   hashers[T_VECTOR] =       hasher_vector;
   hashers[T_INT_VECTOR] =   hasher_int_vector;
   hashers[T_FLOAT_VECTOR] = hasher_float_vector;
-  hashers[T_ENVIRONMENT] =  hasher_let;
+  hashers[T_LET] =  hasher_let;
   hashers[T_PAIR] =         hasher_pair;
 #if WITH_GMP
   hashers[T_BIG_INTEGER] = hasher_big_int;
@@ -35080,7 +35076,7 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
     case T_CONTINUATION:
       return(sc->F);
 
-    case T_ENVIRONMENT:
+    case T_LET:
     case T_C_OBJECT:
       check_method(sc, p, s7_make_symbol(sc, "procedure-setter"), args);
       break;
@@ -35288,7 +35284,7 @@ s7_pointer s7_arity(s7_scheme *sc, s7_pointer x)
       if (string_length(x) == 0)
 	return(sc->F);
 
-    case T_ENVIRONMENT:
+    case T_LET:
       /* check_method(sc, x, sc->ARITY, args); */
       return(s7_cons(sc, small_int(1), small_int(1)));
 
@@ -35430,7 +35426,7 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
 	     (vector_length(x) > 0) &&   /* (#() 0) -> error */
 	     ((unsigned int)args <= vector_rank(x)));
 
-    case T_ENVIRONMENT:
+    case T_LET:
       /* check_method(sc, x, sc->IS_ARITABLE, list_2(sc, x, s7_make_integer(sc, args))); */
       /* this slows us down a lot */
     case T_HASH_TABLE:
@@ -35539,7 +35535,7 @@ static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
     {
       e = cadr(args);
       if (!is_let(e))
-	return(wrong_type_argument(sc, sc->SYMBOL_ACCESS, small_int(2), e, T_ENVIRONMENT));
+	return(wrong_type_argument(sc, sc->SYMBOL_ACCESS, small_int(2), e, T_LET));
     }
   else e = sc->envir;
 
@@ -35589,7 +35585,7 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
     {
       e = cadr(args);
       if (!is_let(e))
-	return(s7_wrong_type_arg_error(sc, "set! symbol-access", 2, e, "an environment"));
+	return(s7_wrong_type_arg_error(sc, "set! symbol-access", 2, e, "a let"));
       func = caddr(args);
     }
   else
@@ -36346,7 +36342,7 @@ static void init_equals(void)
   equals[T_CLOSURE] =      closure_equal;
   equals[T_CLOSURE_STAR] = closure_equal;
   equals[T_HASH_TABLE] =   hash_table_equal;
-  equals[T_ENVIRONMENT] =  environment_equal;
+  equals[T_LET] =          environment_equal;
   equals[T_PAIR] =         pair_equal;
   equals[T_VECTOR] =       vector_equal;
   equals[T_INT_VECTOR] =   vector_equal;
@@ -36433,7 +36429,7 @@ list has infinite length.  Length of anything else returns #f."
       check_method(sc, lst, sc->LENGTH, args);
       return(object_length(sc, lst));
 
-    case T_ENVIRONMENT:
+    case T_LET:
       check_method(sc, lst, sc->LENGTH, args);
       return(make_integer(sc, let_length(sc, lst)));
 
@@ -36576,7 +36572,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	case T_ITERATOR:
 	  return(iterator_copy(sc, source));
 	  
-	case T_ENVIRONMENT:
+	case T_LET:
 	  check_method(sc, source, sc->COPY, args);
 	  return(let_copy(sc, source));   /* this copies only the local env and points to outer envs */
 	  
@@ -36661,7 +36657,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
       end = object_length_to_int(sc, source);
       break;
 
-    case T_ENVIRONMENT:
+    case T_LET:
       check_method(sc, source, sc->COPY, args);
       if (source == sc->rootlet)
 	return(wrong_type_argument_with_type(sc, sc->COPY, small_int(1), source, make_string_wrapper(sc, "a sequence other than the rootlet")));
@@ -36725,7 +36721,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
       dest_len = object_length_to_int(sc, dest);
       break;
 
-    case T_ENVIRONMENT:
+    case T_LET:
       if (dest == sc->rootlet)
 	return(wrong_type_argument_with_type(sc, sc->COPY, small_int(2), dest, make_string_wrapper(sc, "a sequence other than the rootlet")));
       set = let_setter;
@@ -36810,7 +36806,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	    return(dest);
 	  }
 
-	case T_ENVIRONMENT:
+	case T_LET:
 	  break;
 
 	case T_HASH_TABLE:
@@ -36849,7 +36845,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
       }
 
     case T_HASH_TABLE:
-    case T_ENVIRONMENT:
+    case T_LET:
       source_iter = make_iterator(sc, source);
       sc->temp3 = source_iter;
       if (start > 0)
@@ -37229,7 +37225,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 	}
       return(sc->NIL);
 
-    case T_ENVIRONMENT:
+    case T_LET:
 #if (!WITH_PURE_S7)
       check_method(sc, obj, sc->LET_TO_LIST, list_1(sc, obj));
 #endif
@@ -37776,7 +37772,7 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
     case T_DYNAMIC_WIND:    return(dynamic_winds[article]);
     case T_HASH_TABLE:      return(hash_tables[article]);
     case T_ITERATOR:        return(iterators[article]);
-    case T_ENVIRONMENT:     return(environments[article]);
+    case T_LET:             return(environments[article]);
     case T_COUNTER:         return(counters[article]);
     case T_BAFFLE:          return(baffles[article]);
     case T_SLOT:            return(slots[article]);
@@ -37806,7 +37802,7 @@ static const char *type_name(s7_scheme *sc, s7_pointer arg, int article)
     case T_OUTPUT_PORT:
       return(make_type_name(sc, (is_file_port(arg)) ? "output file port" : ((is_string_port(arg)) ? "output string port" : "output port"), article));
 
-    case T_ENVIRONMENT:
+    case T_LET:
       if (has_methods(arg))
 	{
 	  s7_pointer class_name;
@@ -39365,7 +39361,7 @@ pass (rootlet):\n\
       s7_pointer e;
       e = cadr(args);
       if (!is_let(e))
-	return(wrong_type_argument_with_type(sc, sc->EVAL, small_int(2), e, AN_ENVIRONMENT));
+	return(wrong_type_argument_with_type(sc, sc->EVAL, small_int(2), e, A_LET));
       if (e == sc->rootlet)
 	sc->envir = sc->NIL;
       else sc->envir = e;
@@ -39501,7 +39497,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
     case T_C_OBJECT:
       return((*(c_object_ref(obj)))(sc, obj, indices));
 
-    case T_ENVIRONMENT:
+    case T_LET:
       obj = s7_let_ref(sc, obj, car(indices));
       if (is_pair(cdr(indices)))
 	return(implicit_index(sc, obj, cdr(indices)));
@@ -46486,6 +46482,7 @@ static void optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
   #define indirect_cq_function_is_ok(Sc, X) ((!is_optimized(X)) || ((optimize_data(X) & 0x1) != 0) || (c_function_is_ok(Sc, X)))
 #endif
 
+static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool at_end);
 
 static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_end)
 {
@@ -55784,7 +55781,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      set_opt_and_goto_opt_eval(code, f, (sym_case) ? OP_C_OBJECT_S : OP_C_OBJECT_C);
 		    break;
 
-		  case T_ENVIRONMENT:
+		  case T_LET:
 		    set_opt_and_goto_opt_eval(code, f, (sym_case) ? OP_ENVIRONMENT_S : OP_ENVIRONMENT_C);
 
 		  case T_HASH_TABLE:
@@ -56036,7 +56033,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      case T_C_OBJECT:
 			set_opt_and_goto_opt_eval(code, f, OP_C_OBJECT_A);
 
-		      case T_ENVIRONMENT:
+		      case T_LET:
 			set_opt_and_goto_opt_eval(code, f, ((is_pair(cadr(code))) && (caadr(code) == sc->QUOTE)) ? OP_ENVIRONMENT_Q : OP_ENVIRONMENT_A);
 
 		      case T_HASH_TABLE:
@@ -57715,7 +57712,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 
-	case T_ENVIRONMENT:                       /* -------- environment as applicable object -------- */
+	case T_LET:                               /* -------- environment as applicable object -------- */
 	  if (is_null(sc->args))
 	    sc->value = s7_let_ref(sc, sc->code, sc->F); /* why #f and not ()? both are ok in s7test */
 	  else sc->value = s7_let_ref(sc, sc->code, car(sc->args));
@@ -57876,7 +57873,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer arg;
 	    set_safe_closure(new_func);
 
-	    NEW_CELL_NO_CHECK(sc, new_env, T_ENVIRONMENT | T_IMMUTABLE | T_FUNCTION_ENV);
+	    NEW_CELL_NO_CHECK(sc, new_env, T_LET | T_IMMUTABLE | T_FUNCTION_ENV);
 	    let_id(new_env) = ++sc->let_number;
 	    set_let_slots(new_env, sc->NIL);
 	    outlet(new_env) = sc->envir;
@@ -58019,7 +58016,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   cases (via sc->envir == sc->NIL).
 	   */
 
-	  NEW_CELL_NO_CHECK(sc, new_env, T_ENVIRONMENT | T_IMMUTABLE | T_FUNCTION_ENV);
+	  NEW_CELL_NO_CHECK(sc, new_env, T_LET | T_IMMUTABLE | T_FUNCTION_ENV);
 	  let_id(new_env) = ++sc->let_number;
 	  outlet(new_env) = closure_let(new_func);
 	  closure_let(new_func) = new_env;
@@ -58406,7 +58403,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->value = g_hash_table_set(sc, sc->T3_1);
 	    break;
 
-	  case T_ENVIRONMENT:
+	  case T_LET:
 	    /* (set! (env sym) val) */
 	    sc->value = s7_let_set(sc, obj, arg, value);
 	    break;
@@ -59116,7 +59113,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      break;
 
 
-	    case T_ENVIRONMENT:
+	    case T_LET:
 	      /* sc->code = cons(sc, sc->Let_Set, s7_append(sc, car(sc->code), cdr(sc->code))); */
 	      {
 		s7_pointer settee, key, val;
@@ -61395,7 +61392,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      s7_pointer symbol, slot;
 		      /* we're playing fast and loose with sc->envir in the reader, so here we need a disaster check */
 #if DEBUGGING
-		      if (unchecked_type(sc->envir) != T_ENVIRONMENT) sc->envir = sc->NIL;
+		      if (unchecked_type(sc->envir) != T_LET) sc->envir = sc->NIL;
 #else
 		      if (!is_let(sc->envir)) sc->envir = sc->NIL;
 #endif
@@ -66607,7 +66604,7 @@ s7_scheme *s7_init(void)
   sc->dox_slot_symbol = s7_make_symbol(sc, "(dox_slot)");
 
   sc->rootlet = s7_make_vector(sc, ROOTLET_SIZE);
-  set_type(sc->rootlet, T_ENVIRONMENT);
+  set_type(sc->rootlet, T_LET);
   sc->rootlet_entries = 0;
   for (i = 0; i < ROOTLET_SIZE; i++)
     vector_element(sc->rootlet, i) = sc->NIL;
@@ -67386,7 +67383,7 @@ s7_scheme *s7_init(void)
   sc->HASH_TABLE_ENTRIES =    s7_define_integer_function(sc, "hash-table-entries",   g_hash_table_entries,     1, 0, false, H_hash_table_entries);
                               s7_define_safe_function(sc, "hash-table-index",        g_hash_table_index,       1, 0, false, "an experiment");
 
-                              s7_define_function(sc,      "cyclic-sequences",        g_cyclic_sequences,       1, 0, false, H_cyclic_sequences);
+                              s7_define_safe_function(sc, "cyclic-sequences",        g_cyclic_sequences,       1, 0, false, H_cyclic_sequences);
   sc->CALL_CC =               s7_define_function(sc,      "call/cc",                 g_call_cc,                1, 0, false, H_call_cc);
   sc->CALL_WITH_CURRENT_CONTINUATION = s7_define_function(sc, "call-with-current-continuation", g_call_cc,     1, 0, false, H_call_cc);
   sc->IS_CONTINUATION =       s7_define_safe_function(sc, "continuation?",           g_is_continuation,        1, 0, false, H_is_continuation);

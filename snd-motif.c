@@ -17713,7 +17713,7 @@ static char *prefs_saved_filename = NULL;
 static char *include_load_path = NULL;
 
 #define MID_POSITION 50
-#define COLOR_POSITION 62
+#define PREFS_COLOR_POSITION 62  /* COLOR_POSITION is slider_choice_t in snd-0.h */
 #define FIRST_COLOR_POSITION 6
 #define SECOND_COLOR_POSITION 30
 #define THIRD_COLOR_POSITION 55
@@ -19035,7 +19035,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, sep); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, COLOR_POSITION); n++;
+  XtSetArg(args[n], XmNrightPosition, PREFS_COLOR_POSITION); n++;
   XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
   frame = XtCreateManagedWidget("frame", xmFrameWidgetClass, box, args, n);
 

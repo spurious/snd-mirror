@@ -41,12 +41,9 @@ The configure script has a bunch of arguments:
      --with-motif      use Motif.  If it's in some odd location, you can provide that info:
                          ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --with-motif
 
-                         in FC19, install the motif, motif-devel, and libXpm-devel packages.
-                         in FreeBSD, go to /usr/ports/x11-toolkits/open-motif, and make install clean
-                         in OpenBSD, it's the same process but /usr/ports/x11/openmotif.
+                         in FC, install the motif, motif-devel, and libXpm-devel packages.
+                         in *BSD, pkg install open-motif, or perhaps use pkgin?
                          in Debian, apt-get install libmotif4, libmotif-dev, libxt-dev, libxpm-dev
-                           you may have to add "non-free" after "main" in /etc/apt/sources_list,
-                           then run apt-get update.  Motif is free.
 
      --with-gtk        use Gtk+
   
