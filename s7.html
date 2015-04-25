@@ -822,6 +822,8 @@ such as:
 <pre class="indented">
 &gt; ((lambda* ((a 3) . b c) (list a b c)) 1 2 3 4 5)
 stray dot?
+&gt; ((lambda* (a . (b 1)) b) 1 2) ; the reader turns the arglist into (a b 1)
+lambda* parameter '1 is a constant
 </pre>
 
 <p>Yet another nit: the :rest argument is not considered a keyword argument, so

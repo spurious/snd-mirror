@@ -114,7 +114,7 @@ define s7cell
          $cell.object.slt.sym, $cell.object.slt.val, $cell.object.slt.nxt, $cell.object.slt.pending_value, $cell.object.slt.expr
   end
 
-  if ($type == T_ENVIRONMENT)
+  if ($type == T_LET)
       printf "envr:           slots: %p, nxt: %p, id: %lld\n", $cell.object.envr.slots,  $cell.object.envr.nxt,  $cell.object.envr.id
   end
 
@@ -158,8 +158,9 @@ define s7cell
   end
 
   if (($type == T_CONTINUATION) || ($is_bad_type))
-      printf "continuation:   continuation: %p, stack: %p, start_start: %p, stack_end: %p, op_stack: %p\n", \
-         $cell.object.cwcc.continuation, $cell.object.cwcc.stack, $cell.object.cwcc.stack_start, $cell.object.cwcc.stack_end, $cell.object.cwcc.op_stack
+      printf "continuation:   continuation: %p, stack: %p, start_start: %p, stack_end: %p, op_stack: %p, key: %d\n", \
+         $cell.object.cwcc.continuation, $cell.object.cwcc.stack, $cell.object.cwcc.stack_start, $cell.object.cwcc.stack_end, $cell.object.cwcc.op_stack, \
+         $cell.object.cwcc.continuation->local_key
   end
 
   if (($type == T_VECTOR) || ($is_bad_type) || ($type == T_INT_VECTOR) || ($type == T_FLOAT_VECTOR))

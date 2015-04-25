@@ -1028,7 +1028,7 @@ typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_w
 #define T_CATCH               23
 #define T_DYNAMIC_WIND        24
 #define T_HASH_TABLE          25
-#define T_LET         26
+#define T_LET                 26
 #define T_ITERATOR            27
 #define T_STACK               28
 #define T_COUNTER             29
@@ -2000,6 +2000,13 @@ static void set_print_name(s7_pointer p, const char *name, int len)
 #define make_real(Sc, X) \
   ({ s7_Double _N_ = X; ((_N_ == 0.0) ? real_zero : ({ s7_pointer _X_; NEW_CELL(Sc, _X_, T_REAL); real(_X_) = _N_; _X_;}) ); })
                      /* the x == 0.0 check saves more than it costs */
+
+static void free_cell(s7_scheme *sc, s7_pointer p)
+{
+  clear_type(p);
+  (*(sc->free_heap_top++)) = p;
+}
+
 
 #define remake_real(Sc, R, X) ({ s7_Double _x_; _x_ = X; ((is_simple_real(R)) ? ({real(R) = _x_; R;}) : make_real(Sc, _x_)); })
 
@@ -3696,7 +3703,7 @@ static void init_mark_functions(void)
   mark_function[T_HASH_TABLE]          = mark_hash_table;
   mark_function[T_ITERATOR]            = mark_iterator;
   mark_function[T_SYNTAX]              = mark_noop;
-  mark_function[T_LET]         = mark_let;
+  mark_function[T_LET]                 = mark_let;
   mark_function[T_STACK]               = mark_stack;
   mark_function[T_COUNTER]             = mark_counter;
   mark_function[T_SLOT]                = mark_slot;
@@ -4284,8 +4291,7 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 	{
 	  unsigned int i;
 	  sc->heap[loc] = alloc_pointer();
-	  clear_type(sc->heap[loc]);
-	  (*sc->free_heap_top++) = sc->heap[loc];
+	  free_cell(sc, sc->heap[loc]);
 	  heap_location(sc->heap[loc]) = loc;
 
 	  heap_location(x) = NOT_IN_HEAP;
@@ -4307,9 +4313,8 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_BACRO:   case T_BACRO_STAR:
       heap_location(x) = NOT_IN_HEAP;
       p = alloc_pointer();
-      clear_type(p);
+      free_cell(sc, p);
       sc->heap[loc] = p;
-      (*sc->free_heap_top++) = p;
       heap_location(p) = loc;
 
       s7_remove_from_heap(sc, closure_args(x));
@@ -4322,9 +4327,8 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 
   heap_location(x) = NOT_IN_HEAP;
   p = alloc_pointer();
-  clear_type(p);
+  free_cell(sc, p);
   sc->heap[loc] = p;
-  (*sc->free_heap_top++) = p;
   heap_location(p) = loc;
 }
 
@@ -7257,6 +7261,10 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	  x = stack_code(continuation_stack(c), i);
 	  if (dynamic_wind_in(x) != sc->F)
 	    {
+	      /* this can cause an infinite loop if the call/cc is trying to jump back into
+	       *   a dynamic-wind init function -- it's even possible to trick with-baffle!
+	       *   I can't find any fool-proof way to catch this problem.
+	       */
 	      push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
 	      sc->args = sc->NIL;
 	      sc->code = dynamic_wind_in(x);
@@ -21804,7 +21812,7 @@ static s7_pointer g_write_string(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* -------- skip to semicolon readers -------- */
+/* -------- skip to newline readers -------- */
 
 static token_t file_read_semicolon(s7_scheme *sc, s7_pointer pt)
 {
@@ -22597,9 +22605,7 @@ static void pop_input_port(s7_scheme *sc)
       sc->input_port = car(sc->input_port_stack);
 
       /* is this safe? */
-      clear_type(sc->input_port_stack);
-      (*(sc->free_heap_top++)) = sc->input_port_stack;
-
+      free_cell(sc, sc->input_port_stack);
       sc->input_port_stack = cdr(sc->input_port_stack);
     }
   else sc->input_port = sc->standard_input;
@@ -23996,10 +24002,7 @@ static void segv(int ignored) {if (can_jump) siglongjmp(senv, 1);}
 bool s7_is_valid(s7_scheme *sc, s7_pointer arg)
 {
   bool result;
-  /* new name because the function above might be in use
-   */
   if (!arg) return(false);
-  /* we might also check that (arg & 0x7) == 0, but see unaligned access above */
 
 #if TRAP_SEGFAULT
   if (sigsetjmp(senv, 1) == 0)
@@ -25473,6 +25476,7 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
 	  key_val = iterate(sc, iterator);
 	  key = car(key_val);
 	  val = cdr(key_val);
+	  free_cell(sc, key_val);
 
 	  port_write_string(port)(sc, " (set! ({ht} ", 13, port);
 	  if (key == hash)
@@ -27720,94 +27724,60 @@ s7_pointer s7_apply_2(s7_scheme *sc, s7_pointer args, s7_pointer (*f2)(s7_pointe
 s7_pointer s7_apply_3(s7_scheme *sc, s7_pointer args, s7_pointer (*f3)(s7_pointer a1, s7_pointer a2, s7_pointer a3))
 {
   s7_pointer a1;
-  a1 = car(args);
-  args = cdr(args);
+  a1 = car(args);  args = cdr(args);
   return(f3(a1, car(args), cadr(args)));
 }
 
 s7_pointer s7_apply_4(s7_scheme *sc, s7_pointer args, s7_pointer (*f4)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4))
 {
   s7_pointer a1, a2;
-  a1 = car(args);
-  a2 = cadr(args);
-  args = cddr(args);
+  a1 = car(args);  a2 = cadr(args);  args = cddr(args);
   return(f4(a1, a2, car(args), cadr(args)));
 }
 
 s7_pointer s7_apply_5(s7_scheme *sc, s7_pointer args, s7_pointer (*f5)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5))
 {
   s7_pointer a1, a2, a3, a4;
-  a1 = car(args);
-  a2 = cadr(args);
-  args = cddr(args);
-  a3 = car(args);
-  a4 = cadr(args);
-  args = cddr(args);
+  a1 = car(args);  a2 = cadr(args);  args = cddr(args);
+  a3 = car(args);  a4 = cadr(args);  args = cddr(args);
   return(f5(a1, a2, a3, a4, car(args)));
 }
 
-s7_pointer s7_apply_6(s7_scheme *sc, s7_pointer args,
-		      s7_pointer (*f6)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4,
-				       s7_pointer a5, s7_pointer a6))
+s7_pointer s7_apply_6(s7_scheme *sc, s7_pointer args, s7_pointer (*f6)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5, s7_pointer a6))
 {
   s7_pointer a1, a2, a3, a4;
-  a1 = car(args);
-  a2 = cadr(args);
-  args = cddr(args);
-  a3 = car(args);
-  a4 = cadr(args);
-  args = cddr(args);
+  a1 = car(args);  a2 = cadr(args);  args = cddr(args);
+  a3 = car(args);  a4 = cadr(args);  args = cddr(args);
   return(f6(a1, a2, a3, a4, car(args), cadr(args)));
 }
 
 s7_pointer s7_apply_7(s7_scheme *sc, s7_pointer args,
-		      s7_pointer (*f7)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4,
-				       s7_pointer a5, s7_pointer a6, s7_pointer a7))
+		      s7_pointer (*f7)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5, s7_pointer a6, s7_pointer a7))
 {
   s7_pointer a1, a2, a3, a4, a5, a6;
-  a1 = car(args);
-  a2 = cadr(args);
-  args = cddr(args);
-  a3 = car(args);
-  a4 = cadr(args);
-  args = cddr(args);
-  a5 = car(args);
-  a6 = cadr(args);
-  args = cddr(args);
+  a1 = car(args);  a2 = cadr(args);  args = cddr(args);
+  a3 = car(args);  a4 = cadr(args);  args = cddr(args);
+  a5 = car(args);  a6 = cadr(args);  args = cddr(args);
   return(f7(a1, a2, a3, a4, a5, a6, car(args)));
 }
 
 s7_pointer s7_apply_8(s7_scheme *sc, s7_pointer args,
-		      s7_pointer (*f8)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4,
-				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8))
+		      s7_pointer (*f8)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4, s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8))
 {
   s7_pointer a1, a2, a3, a4, a5, a6;
-  a1 = car(args);
-  a2 = cadr(args);
-  args = cddr(args);
-  a3 = car(args);
-  a4 = cadr(args);
-  args = cddr(args);
-  a5 = car(args);
-  a6 = cadr(args);
-  args = cddr(args);
+  a1 = car(args);  a2 = cadr(args);  args = cddr(args);
+  a3 = car(args);  a4 = cadr(args);  args = cddr(args);
+  a5 = car(args);  a6 = cadr(args);  args = cddr(args);
   return(f8(a1, a2, a3, a4, a5, a6, car(args), cadr(args)));
 }
 
-s7_pointer s7_apply_9(s7_scheme *sc, s7_pointer args,
-		      s7_pointer (*f9)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4,
-				       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8, s7_pointer a9))
+s7_pointer s7_apply_9(s7_scheme *sc, s7_pointer args, s7_pointer (*f9)(s7_pointer a1, s7_pointer a2, s7_pointer a3, s7_pointer a4,
+								       s7_pointer a5, s7_pointer a6, s7_pointer a7, s7_pointer a8, s7_pointer a9))
 {
   s7_pointer a1, a2, a3, a4, a5, a6;
-  a1 = car(args);
-  a2 = cadr(args);
-  args = cddr(args);
-  a3 = car(args);
-  a4 = cadr(args);
-  args = cddr(args);
-  a5 = car(args);
-  a6 = cadr(args);
-  args = cddr(args);
+  a1 = car(args);  a2 = cadr(args);  args = cddr(args);
+  a3 = car(args);  a4 = cadr(args);  args = cddr(args);
+  a5 = car(args);  a6 = cadr(args);  args = cddr(args);
   return(f9(a1, a2, a3, a4, a5, a6, car(args), cadr(args), caddr(args)));
 }
 
@@ -27834,8 +27804,7 @@ s7_pointer s7_apply_n_3(s7_scheme *sc, s7_pointer args, s7_pointer (*f3)(s7_poin
   if (is_pair(args))
     {
       s7_pointer a1;
-      a1 = car(args);
-      args = cdr(args);
+      a1 = car(args); args = cdr(args);
       if (is_pair(args))
 	{
 	  s7_pointer a2;
@@ -27854,13 +27823,11 @@ s7_pointer s7_apply_n_4(s7_scheme *sc, s7_pointer args, s7_pointer (*f4)(s7_poin
   if (is_pair(args))
     {
       s7_pointer a1;
-      a1 = car(args);
-      args = cdr(args);
+      a1 = car(args); args = cdr(args);
       if (is_pair(args))
 	{
 	  s7_pointer a2;
-	  a2 = car(args);
-	  args = cdr(args);
+	  a2 = car(args); args = cdr(args);
 	  if (is_pair(args))
 	    {
 	      s7_pointer a3;
@@ -27882,18 +27849,15 @@ s7_pointer s7_apply_n_5(s7_scheme *sc, s7_pointer args,
   if (is_pair(args))
     {
       s7_pointer a1;
-      a1 = car(args);
-      args = cdr(args);
+      a1 = car(args); args = cdr(args);
       if (is_pair(args))
 	{
 	  s7_pointer a2;
-	  a2 = car(args);
-	  args = cdr(args);
+	  a2 = car(args); args = cdr(args);
 	  if (is_pair(args))
 	    {
 	      s7_pointer a3;
-	      a3 = car(args);
-	      args = cdr(args);
+	      a3 = car(args); args = cdr(args);
 	      if (is_pair(args))
 		{
 		  s7_pointer a4;
@@ -27918,20 +27882,16 @@ s7_pointer s7_apply_n_6(s7_scheme *sc, s7_pointer args,
   a1 = sc->UNDEFINED; a2 = sc->UNDEFINED; a3 = sc->UNDEFINED; a4 = sc->UNDEFINED; a5 = sc->UNDEFINED; a6 = sc->UNDEFINED;
   if (is_pair(args))
     {
-      a1 = car(args);
-      args = cdr(args);
+      a1 = car(args); args = cdr(args);
       if (is_pair(args))
 	{
-	  a2 = car(args);
-	  args = cdr(args);
+	  a2 = car(args); args = cdr(args);
 	  if (is_pair(args))
 	    {
-	      a3 = car(args);
-	      args = cdr(args);
+	      a3 = car(args); args = cdr(args);
 	      if (is_pair(args))
 		{
-		  a4 = car(args);
-		  args = cdr(args);
+		  a4 = car(args); args = cdr(args);
 		  if (is_pair(args))
 		    {
 		      a5 = car(args);
@@ -27949,24 +27909,19 @@ s7_pointer s7_apply_n_7(s7_scheme *sc, s7_pointer args,
   a6 = sc->UNDEFINED, a7 = sc->UNDEFINED;
   if (is_pair(args))
     {
-      a1 = car(args);
-      args = cdr(args);
+      a1 = car(args); args = cdr(args);
       if (is_pair(args))
 	{
-	  a2 = car(args);
-	  args = cdr(args);
+	  a2 = car(args); args = cdr(args);
 	  if (is_pair(args))
 	    {
-	      a3 = car(args);
-	      args = cdr(args);
+	      a3 = car(args); args = cdr(args);
 	      if (is_pair(args))
 		{
-		  a4 = car(args);
-		  args = cdr(args);
+		  a4 = car(args); args = cdr(args);
 		  if (is_pair(args))
 		    {
-		      a5 = car(args);
-		      args = cdr(args);
+		      a5 = car(args); args = cdr(args);
 		      if (is_pair(args))
 			{
 			  a6 = car(args);
@@ -27984,28 +27939,22 @@ s7_pointer s7_apply_n_8(s7_scheme *sc, s7_pointer args,
   a6 = sc->UNDEFINED, a7 = sc->UNDEFINED; a8 = sc->UNDEFINED;
   if (is_pair(args))
     {
-      a1 = car(args);
-      args = cdr(args);
+      a1 = car(args); args = cdr(args);
       if (is_pair(args))
 	{
-	  a2 = car(args);
-	  args = cdr(args);
+	  a2 = car(args); args = cdr(args);
 	  if (is_pair(args))
 	    {
-	      a3 = car(args);
-	      args = cdr(args);
+	      a3 = car(args); args = cdr(args);
 	      if (is_pair(args))
 		{
-		  a4 = car(args);
-		  args = cdr(args);
+		  a4 = car(args); args = cdr(args);
 		  if (is_pair(args))
 		    {
-		      a5 = car(args);
-		      args = cdr(args);
+		      a5 = car(args); args = cdr(args);
 		      if (is_pair(args))
 			{
-			  a6 = car(args);
-			  args = cdr(args);
+			  a6 = car(args); args = cdr(args);
 			  if (is_pair(args))
 			    {
 			      a7 = car(args);
@@ -28024,32 +27973,25 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
   a6 = sc->UNDEFINED, a7 = sc->UNDEFINED; a8 = sc->UNDEFINED; a9 = sc->UNDEFINED;
   if (is_pair(args))
     {
-      a1 = car(args);
-      args = cdr(args);
+      a1 = car(args); args = cdr(args);
       if (is_pair(args))
 	{
-	  a2 = car(args);
-	  args = cdr(args);
+	  a2 = car(args); args = cdr(args);
 	  if (is_pair(args))
 	    {
-	      a3 = car(args);
-	      args = cdr(args);
+	      a3 = car(args); args = cdr(args);
 	      if (is_pair(args))
 		{
-		  a4 = car(args);
-		  args = cdr(args);
+		  a4 = car(args); args = cdr(args);
 		  if (is_pair(args))
 		    {
-		      a5 = car(args);
-		      args = cdr(args);
+		      a5 = car(args); args = cdr(args);
 		      if (is_pair(args))
 			{
-			  a6 = car(args);
-			  args = cdr(args);
+			  a6 = car(args); args = cdr(args);
 			  if (is_pair(args))
 			    {
-			      a7 = car(args);
-			      args = cdr(args);
+			      a7 = car(args); args = cdr(args);
 			      if (is_pair(args))
 				{
 				  a8 = car(args);
@@ -33357,7 +33299,7 @@ void init_hashers(void)
   hashers[T_VECTOR] =       hasher_vector;
   hashers[T_INT_VECTOR] =   hasher_int_vector;
   hashers[T_FLOAT_VECTOR] = hasher_float_vector;
-  hashers[T_LET] =  hasher_let;
+  hashers[T_LET] =          hasher_let;
   hashers[T_PAIR] =         hasher_pair;
 #if WITH_GMP
   hashers[T_BIG_INTEGER] = hasher_big_int;
@@ -34202,10 +34144,7 @@ s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr)
 #endif
 
   if (is_simple_real(temp)) /* i.e. not immutable, not integer or something else unexpected */
-    {
-      clear_type(temp);
-      (*(sc->free_heap_top++)) = temp;
-    }
+    free_cell(sc, temp);
   return(val);
 }
 
@@ -35874,7 +35813,7 @@ static bool slots_match(s7_scheme *sc, s7_pointer px, s7_pointer y, bool morally
   return(false);
 }
 
-static bool environment_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+static bool let_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
 {
   /* x == y if all unshadowed vars match, leaving aside the rootlet, so that for any local variable,
    *   we get the same value in either x or y.
@@ -35969,7 +35908,7 @@ static bool closure_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info
       if (equal_func != sc->UNDEFINED)
 	return(s7_boolean(sc, s7_apply_function(sc, equal_func, list_2(sc, x, y))));
     }
-  /* not sure about this -- we can't simply check environment_equal(closure_let(x), closure_let(y))
+  /* not sure about this -- we can't simply check let_equal(closure_let(x), closure_let(y))
    *   because locally defined constant functions on the second pass find the outer let.
    */
   return((morally) &&
@@ -36342,7 +36281,7 @@ static void init_equals(void)
   equals[T_CLOSURE] =      closure_equal;
   equals[T_CLOSURE_STAR] = closure_equal;
   equals[T_HASH_TABLE] =   hash_table_equal;
-  equals[T_LET] =          environment_equal;
+  equals[T_LET] =          let_equal;
   equals[T_PAIR] =         pair_equal;
   equals[T_VECTOR] =       vector_equal;
   equals[T_INT_VECTOR] =   vector_equal;
@@ -36532,7 +36471,7 @@ static s7_pointer hash_table_setter(s7_scheme *sc, s7_pointer e, s7_Int loc, s7_
 s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 {
   #define H_copy "(copy obj) returns a copy of obj, (copy src dest) copies src into dest, (copy src dest start end) copies src from start to end."
-  s7_pointer source, dest, source_iter;
+  s7_pointer source, dest, source_iter, p;
   s7_Int i, j, dest_len, start, end, source_len;
   s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_Int loc, s7_pointer val) = NULL;
   s7_pointer (*get)(s7_scheme *sc, s7_pointer obj, s7_Int loc) = NULL;
@@ -36850,7 +36789,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
       sc->temp3 = source_iter;
       if (start > 0)
 	for (i = 0; i < start; i++)
-	  iterator_next(source_iter)(sc, source_iter);
+	  free_cell(sc, iterator_next(source_iter)(sc, source_iter));
       if (is_pair(dest))
 	{
 	  s7_pointer p;
@@ -36859,8 +36798,19 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	}
       else
 	{
-	  for (i = start, j = 0; i < end; i++, j++)
-	    set(sc, dest, j, iterator_next(source_iter)(sc, source_iter));
+	  if ((is_let(dest)) || (is_hash_table(dest)))
+	    {
+	      for (i = start, j = 0; i < end; i++, j++)
+		{
+		  set(sc, dest, j, p = iterator_next(source_iter)(sc, source_iter));
+		  free_cell(sc, p);
+		}
+	    }
+	  else
+	    {
+	      for (i = start, j = 0; i < end; i++, j++)
+		set(sc, dest, j, p = iterator_next(source_iter)(sc, source_iter));
+	    }
 	}
       return(dest);
 
@@ -36871,6 +36821,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	    int_vector_element(dest, j) = (s7_Int)(float_vector_element(source, i));
 	  return(dest);
 	}
+      break;
 
     case T_INT_VECTOR:
       if (is_float_vector(dest))
@@ -36879,6 +36830,13 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	    float_vector_element(dest, j) = (s7_Double)(int_vector_element(source, i));
 	  return(dest);
 	}
+      if (is_bytevector(dest))
+	{
+	  for (i = start, j = 0; i < end; i++, j++)
+	    string_value(dest)[j] = (unsigned char)int_vector_element(source, i);
+	  return(dest);
+	}
+      break;
 
     case T_STRING:
       if ((is_bytevector(source)) &&
@@ -36898,6 +36856,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
     }
   else
     {
+      /* fprintf(stderr, "%s -> %s\n", type_name(sc, source, NO_ARTICLE), type_name(sc, dest, NO_ARTICLE)); */
       /* if source == dest here, we're moving data backwards, so this is safe in either case */
       for (i = start, j = 0; i < end; i++, j++)
 	set(sc, dest, j, get(sc, source, i));
@@ -38737,8 +38696,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	  s7_newline(sc, sc->error_port);
 	}
 
-      /* look for __func__ in the error environment etc
-       */
+      /* look for __func__ in the error environment etc */
       if (sc->error_port != sc->F)
 	{
 	  char *errstr;
@@ -49980,12 +49938,8 @@ static s7_pointer free_let(s7_scheme *sc, s7_pointer e)
 {
   s7_pointer p;
   for (p = let_slots(e); is_slot(p); p = next_slot(p))
-    {
-      clear_type(p);
-      (*(sc->free_heap_top++)) = p;
-    }
-  clear_type(e);
-  (*(sc->free_heap_top++)) = e;
+    free_cell(sc, p);
+  free_cell(sc, e);
   return(sc->NIL);
 }
 
@@ -52649,11 +52603,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   if there isn't an end test, there also isn't a result (they're in the same list)
 	   */
 	  sc->code = cddr(sc->args);                /* result expr (a list -- implicit begin) */
-
-	  clear_type(sc->args);
-	  (*(sc->free_heap_top++)) = sc->args;
+	  free_cell(sc, sc->args);
 	  sc->args = sc->NIL;
-
 	  if (is_null(sc->code))
 	    {
 	      sc->value = sc->NIL;
@@ -67854,7 +67805,7 @@ int main(int argc, char **argv)
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1133
  * teq            |      |      | 6612                     3887 3091
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3326
- * tcopy          |      |      |                          4970 4343
+ * tcopy          |      |      |                          4970 4286
  * tmap           |      |      | 11.0           5031 4769 4685 4682
  * lg             |      |      | 6547 6497 6494 6235 6229 6239 6621
  * titer          |      |      |                          7976 6812
@@ -67884,4 +67835,6 @@ int main(int argc, char **argv)
  * should this be fixed? (symbol->value 'gc-stats *s7*) -> #<undefined>
  *   to make *s7* a completely normal let would require symbol accessors etc
  *   sym->val might check let_ref_fallback for all computed cases
+ * perhaps remove call/cc from pure-s7?  :optional and :key?
  */
+ 

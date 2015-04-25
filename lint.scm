@@ -2222,9 +2222,10 @@
 				     ;; if (max c1 (min c2 . args1) . args2) where (>= c1 c2) -> (max c1 . args2)
 				     ;; if (min c1 (max c2 . args1) . args2) where (<= c1 c2) -> (min c1 . args2)
 			       
-			       ;; there are more such cases: (max x (min x 3)) -> x ?
-				       
-			       `(,(car form) ,@args)))))
+			       ;; there are more such cases: (max x (min x 3)) -> x and (min x (max x c)) -> x
+			       (if (null? (cdr args)) ; (max (min x 3) (min x 3)) -> (max (min x 3)) -> (min x 3)
+				   (car args)
+				   `(,(car form) ,@args))))))
 		   form))
 	      
 	      (else `(,(car form) ,@args))))))
@@ -3986,6 +3987,7 @@
 ;;;  also (set! x 32) (list-ref x 1)...
 ;;;
 ;;; if case selector is a (code-)constant, the whole thing collapses, but that never happens
+;;; if with-let, lint should try to be smarter about local names
 
 
 ;;; --------------------------------------------------------------------------------
