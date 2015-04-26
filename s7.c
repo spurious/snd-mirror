@@ -778,7 +778,7 @@ struct s7_scheme {
   bool symbol_table_is_locked;
   unsigned long long int let_number;
   double default_rationalize_error, morally_equal_float_epsilon, hash_table_float_epsilon;
-  s7_Int default_hash_table_length, initial_string_port_length, print_length;
+  s7_Int default_hash_table_length, initial_string_port_length, print_length, max_vector_length, max_string_length, max_list_length, max_vector_dimensions;
   s7_pointer stacktrace_defaults;
   vdims_t *wrap_only;
 
@@ -8632,14 +8632,16 @@ static char *integer_to_string_base_10_no_width(s7_pointer obj, int *nlen) /* do
 
 
 #define BASE_10 10
-static int num_to_str_size = 0;
+static int num_to_str_size = -1;
 static char *num_to_str = NULL;
+static const char *float_format_g = NULL;
 
-static char *floatify(char *str, int *nlen)
+static char *floatify(char *str, int *nlen, int str_len)
 {
   if ((strchr(str, 'e') == NULL) &&
       (strchr(str, '.') == NULL))
     {
+      /* this assumes there is room in str for 2 more chars */
       int len;
       len = *nlen;
       str[len]='.';
@@ -8650,19 +8652,23 @@ static char *floatify(char *str, int *nlen)
   return(str);
 }
 
-static const char *float_format_g = NULL;
-
 static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen, use_write_t choice) /* don't free result */
 {
-  /* the rest of s7 assumes nlen is set to the correct length */
+  /* the rest of s7 assumes nlen is set to the correct length 
+   *   a tricky case: (format #f "~f" 1e308) -- tries to print 308 digits! so 256 as default len is too small.
+   *   but then even worse: (format #f "~F" 1e308+1e308i)!
+   */
   int len;
-  len = 256 + width;
+  len = 1024;
+
   if (len > num_to_str_size)
     {
-      if (num_to_str) free(num_to_str);
+      if (!num_to_str)
+	num_to_str = (char *)malloc(len * sizeof(char));
+      else num_to_str = (char *)realloc(num_to_str, len * sizeof(char));
       num_to_str_size = len;
-      num_to_str = (char *)malloc(len);
     }
+
   /* bignums can't happen here */
   switch (type(obj))
     {
@@ -8700,7 +8706,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 
 	len = snprintf(num_to_str, num_to_str_size, frmt, width, precision, s7_real(obj));
 	(*nlen) = len;
-	floatify(num_to_str, nlen);
+	floatify(num_to_str, nlen, num_to_str_size);
       }
       break;
 
@@ -19552,8 +19558,6 @@ static s7_pointer g_is_string(s7_scheme *sc, s7_pointer args)
 }
 
 
-#define MAX_STRING_LENGTH 1073741824
-
 static s7_pointer g_make_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_string "(make-string len (val #\\space)) makes a string of length len filled with the character val (default: space)"
@@ -19571,7 +19575,7 @@ static s7_pointer g_make_string(s7_scheme *sc, s7_pointer args)
   len = s7_integer(n);
   if (len < 0)
     return(out_of_range(sc, sc->MAKE_STRING, small_int(1), n, ITS_NEGATIVE));
-  if (len > MAX_STRING_LENGTH)
+  if (len > sc->max_string_length)
     return(out_of_range(sc, sc->MAKE_STRING, small_int(1), n, ITS_TOO_LARGE));
 
   if (is_not_null(cdr(args)))
@@ -22932,7 +22936,7 @@ static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
   chars = s7_integer(k);
   if (chars < 0)
     return(wrong_type_argument_with_type(sc, sc->READ_STRING, small_int(1), k, A_NON_NEGATIVE_INTEGER));
-  if (chars > MAX_STRING_LENGTH)
+  if (chars > sc->max_string_length)
     return(out_of_range(sc, sc->READ_STRING, small_int(1), k, ITS_TOO_LARGE));
 
   if (chars == 0)
@@ -25246,7 +25250,7 @@ static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_point
 		{
 		  port_write_character(port)(sc, ' ', port);
 		  plen = snprintf(buf, 128, float_format_g, WRITE_REAL_PRECISION, float_vector_element(vect, i));
-		  floatify(buf, &plen);
+		  floatify(buf, &plen, 128);
 		  port_write_string(port)(sc, buf, plen, port);
 		}
 	    }
@@ -27108,6 +27112,8 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 			  {
 			    pad = str[i + 1];
 			    i += 2;
+			    if (i >= str_len)            /* (format #f "~,'") */
+			      return(format_error(sc, "incomplete numeric argument", str, args, fdat));
 			  }
 			/* is (let ((str "~12,'xD")) (set! (str 5) #\null) (format #f str 1)) an error? */
 		      }
@@ -28421,8 +28427,6 @@ static s7_pointer make_list(s7_scheme *sc, int len, s7_pointer init)
 }
 
 
-#define MAX_LIST_LENGTH 1073741824
-
 static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_list "(make-list length (initial-element #f)) returns a list of 'length' elements whose value is 'initial-element'."
@@ -28439,7 +28443,7 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
   if (len < 0)
     return(out_of_range(sc, sc->MAKE_LIST, small_int(1), car(args), ITS_NEGATIVE));
   if (len == 0) return(sc->NIL);          /* what about (make-list 0 123)? */
-  if (len > MAX_LIST_LENGTH)
+  if (len > sc->max_list_length)
     return(out_of_range(sc, sc->MAKE_LIST, small_int(1), car(args), ITS_TOO_LARGE));
 
   if (is_pair(cdr(args)))
@@ -28493,7 +28497,7 @@ static s7_pointer list_ref_1(s7_scheme *sc, s7_pointer lst, s7_pointer ind)
   if (index < 0)
     return(out_of_range(sc, sc->LIST_REF, small_int(2), ind, ITS_NEGATIVE));
 
-  if (index > MAX_LIST_LENGTH)
+  if (index > sc->max_list_length)
     return(out_of_range(sc, sc->LIST_REF, small_int(2), ind, ITS_TOO_LARGE));
 
   for (i = 0, p = lst; (i < index) && is_pair(p); i++, p = cdr(p)) {}
@@ -28569,7 +28573,7 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
   if (index < 0)
     return(out_of_range(sc, sc->LIST_SET, small_int(arg_num), ind, ITS_NEGATIVE));
 
-  if (index > MAX_LIST_LENGTH)
+  if (index > sc->max_list_length)
     return(out_of_range(sc, sc->LIST_SET, small_int(arg_num), ind, ITS_TOO_LARGE));
 
   for (i = 0, p = lst; (i < index) && is_pair(p); i++, p = cdr(p)) {}
@@ -28649,7 +28653,7 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
   index = s7_integer(p);
   if (index < 0)
     return(out_of_range(sc, sc->LIST_TAIL, small_int(2), p, ITS_NEGATIVE));
-  if (index > MAX_LIST_LENGTH)
+  if (index > sc->max_list_length)
     return(out_of_range(sc, sc->LIST_TAIL, small_int(2), p, ITS_TOO_LARGE));
 
   for (i = 0, p = car(args); (i < index) && (is_pair(p)); i++, p = cdr(p)) {}
@@ -30359,12 +30363,6 @@ static s7_pointer float_vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc)
 }
 
 
-#if ((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4))
-  #define MAX_VECTOR_LENGTH (1LL << 30)
-#else
-  #define MAX_VECTOR_LENGTH (1LL << 40)
-#endif
-
 #define FILLED true
 #define NOT_FILLED false
 
@@ -30373,7 +30371,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, unsigned
   s7_pointer x;
   if (len < 0)
     return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), A_NON_NEGATIVE_INTEGER));
-  if (len > MAX_VECTOR_LENGTH)
+  if (len > sc->max_vector_length)
     return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), ITS_TOO_LARGE));
 
   /* if (len == 0) typ = T_VECTOR; *//* all empty vectors are the same type */
@@ -30393,6 +30391,8 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, unsigned
       if (typ == T_VECTOR)
 	{
 	  vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
+	  if (!vector_elements(x))
+	    return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), ITS_TOO_LARGE));
 	  vector_getter(x) = default_vector_getter;
 	  vector_setter(x) = default_vector_setter;
 	  /* make_hash_table assumes nil as the default value */
@@ -30405,6 +30405,8 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, unsigned
 	      if (filled)
 		float_vector_elements(x) = (s7_Double *)calloc(len, sizeof(s7_Double));
 	      else float_vector_elements(x) = (s7_Double *)malloc(len * sizeof(s7_Double));
+	      if (!float_vector_elements(x))
+		return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), ITS_TOO_LARGE));
 	      vector_getter(x) = float_vector_getter;
 	      vector_setter(x) = float_vector_setter;
 	    }
@@ -30413,6 +30415,8 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, unsigned
 	      if (filled)
 		int_vector_elements(x) = (s7_Int *)calloc(len, sizeof(s7_Int));
 	      else int_vector_elements(x) = (s7_Int *)malloc(len * sizeof(s7_Int));
+	      if (!int_vector_elements(x))
+		return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), ITS_TOO_LARGE));
 	      vector_getter(x) = int_vector_getter;
 	      vector_setter(x) = int_vector_setter;
 	    }
@@ -31789,8 +31793,6 @@ static s7_pointer g_vector_set_3(s7_scheme *sc, s7_pointer args)
 }
 
 
-#define MAX_VECTOR_DIMENSIONS 512
-
 static s7_pointer g_make_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_vector "(make-vector len (value #f) (homogenous #f)) returns a vector of len elements initialized to value. \
@@ -31832,7 +31834,7 @@ or a real, the vector can only hold numbers of that type (s7_Int or s7_Double)."
 	  dims = s7_list_length(sc, x);
 	  if (dims <= 0)                /* 0 if circular, negative if dotted */
 	    return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, small_int(1), x, A_PROPER_LIST));
-	  if (dims > MAX_VECTOR_DIMENSIONS)
+	  if (dims > sc->max_vector_dimensions)
 	    return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), x, ITS_TOO_LARGE));
 
 	  for (len = 1, y = x; is_not_null(y); y = cdr(y))
@@ -31942,7 +31944,7 @@ static s7_pointer g_make_float_vector(s7_scheme *sc, s7_pointer args)
   len = s7_integer(p);
   if (len < 0)
     return(wrong_type_argument_with_type(sc, sc->MAKE_FLOAT_VECTOR, small_int(1), p, A_NON_NEGATIVE_INTEGER));
-  if (len > MAX_VECTOR_LENGTH)
+  if (len > sc->max_vector_length)
     return(out_of_range(sc, sc->MAKE_FLOAT_VECTOR, small_int(1), p, ITS_TOO_LARGE));
 
   if (len > 0)
@@ -31989,7 +31991,7 @@ static s7_pointer g_make_int_vector(s7_scheme *sc, s7_pointer args)
   len = s7_integer(p);
   if (len < 0)
     return(wrong_type_argument_with_type(sc, sc->MAKE_INT_VECTOR, small_int(1), p, A_NON_NEGATIVE_INTEGER));
-  if (len > MAX_VECTOR_LENGTH)
+  if (len > sc->max_vector_length)
     return(out_of_range(sc, sc->MAKE_INT_VECTOR, small_int(1), p, ITS_TOO_LARGE));
 
   if (len > 0)
@@ -32110,8 +32112,8 @@ static s7_pointer g_multivector(s7_scheme *sc, s7_Int dims, s7_pointer data)
 
   if (dims <= 0)      /* #0d(...) #2147483649D() [if dims is int this is negative] */
     return(s7_out_of_range_error(sc, "#nD(...) dimensions", 1, make_integer(sc, dims), "must be 1 or more"));
-  if (dims > MAX_VECTOR_DIMENSIONS)
-    return(s7_out_of_range_error(sc, "#nD(...) dimensions", 1, make_integer(sc, dims), "must be < 512")); /* MAX_VECTOR_DIMENSIONS=512 currently */
+  if (dims > sc->max_vector_dimensions)
+    return(s7_out_of_range_error(sc, "#nD(...) dimensions", 1, make_integer(sc, dims), "must be < 512")); /* sc->max_vector_dimensions=512 currently */
 
   sc->w = sc->NIL;
   if (is_null(data))  /* dims are already 0 (calloc above) */
@@ -33481,7 +33483,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
       size = s7_integer(p);
       if (size <= 0)                      /* we need s7_Int here to catch (make-hash-table most-negative-fixnum) etc */
 	return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, p, make_string_wrapper(sc, "should be a positive integer")));
-      if (size > MAX_VECTOR_LENGTH)
+      if (size > sc->max_vector_length)
 	return(simple_out_of_range(sc, sc->MAKE_HASH_TABLE, p, ITS_TOO_LARGE));
 
       if (is_not_null(cdr(args)))
@@ -36809,7 +36811,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	  else
 	    {
 	      for (i = start, j = 0; i < end; i++, j++)
-		set(sc, dest, j, p = iterator_next(source_iter)(sc, source_iter));
+		set(sc, dest, j,  iterator_next(source_iter)(sc, source_iter));
 	    }
 	}
       return(dest);
@@ -39005,19 +39007,21 @@ static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
     {
       if (is_pair(car(p)))
 	{
-	  if (is_symbol(caar(p)))
+	  s7_pointer sym;
+	  sym = caar(p);
+	  if (is_symbol(sym))
 	    {
 	      int len;
 
 	      len = s7_list_length(sc, car(p));
-	      if (((caar(p) == make_symbol_with_length(sc, "if", 2)) &&
+	      if (((sym == make_symbol_with_length(sc, "if", 2)) &&
 		   (len > 4)) ||
 		  /* some care is needed -- we can't risk autoloading the very same file we're complaining about!
 		   */
-		  ((s7_is_defined(sc, symbol_name(caar(p)))) &&
-		   (s7_is_procedure(find_global_symbol_checked(sc, caar(p)))) &&
-		   (!s7_is_aritable(sc, find_global_symbol_checked(sc, caar(p)), len))) ||
-		  ((caar(p) == make_symbol_with_length(sc, "define", 6)) &&
+		  ((is_slot(global_slot(sym))) &&
+		   (s7_is_procedure(slot_value(global_slot(sym)))) &&
+		   (!s7_is_aritable(sc, slot_value(global_slot(sym)), len))) ||
+		  ((sym == make_symbol_with_length(sc, "define", 6)) &&
 		   (is_pair(cdr(p))) &&
 		   (is_symbol(cadr(p))) &&
 		   (len > 3)))
@@ -39079,6 +39083,7 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
    *   popped off all the stacked info, following ')' until eof.
    * but the current incoming program code is in sc->args, reversed at its top level,
    *   so it's worth looking for some problem involving too many clauses (if) or arguments, etc.
+   * another gotcha: since we're in the reader, we can't depend on sc->envir!
    * this can be a hard bug to track down in a large program, so s7 really has to make an effort to help.
    */
 
@@ -41821,7 +41826,7 @@ static s7_pointer list_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
   if ((args == 3) &&
       (s7_is_integer(caddr(expr))) &&
       (s7_integer(caddr(expr)) >= 0) &&
-      (s7_integer(caddr(expr)) < MAX_LIST_LENGTH))
+      (s7_integer(caddr(expr)) < sc->max_list_length))
     return(list_set_ic);
   return(f);
 }
@@ -41832,7 +41837,7 @@ static s7_pointer list_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
   if ((args == 2) &&
       (s7_is_integer(caddr(expr))) &&
       (s7_integer(caddr(expr)) >= 0) &&
-      (s7_integer(caddr(expr)) < MAX_LIST_LENGTH))
+      (s7_integer(caddr(expr)) < sc->max_list_length))
     return(list_ref_ic);
   return(f);
 }
@@ -47361,9 +47366,9 @@ static s7_pointer check_let_star(s7_scheme *sc)
 
   if (named_let)
     {
-      if (!s7_is_list(sc, cadr(sc->code)))      /* (let* hi #t) */
+      if (!s7_is_list(sc, cadr(sc->code)))          /* (let* hi #t) */
 	return(eval_error(sc, "let* variable list is messed up: ~A", sc->code));
-      if (is_null(cddr(sc->code)))              /* (let* hi () ) */
+      if (is_null(cddr(sc->code)))                  /* (let* hi () ) */
 	return(eval_error(sc, "named let* has no body: ~A", sc->code));
       if (is_immutable(car(sc->code)))
 	return(s7_error(sc, sc->WRONG_TYPE_ARG,	list_2(sc, make_string_wrapper(sc, "can't bind an immutable object: ~S"), sc->code)));
@@ -47377,8 +47382,8 @@ static s7_pointer check_let_star(s7_scheme *sc)
   else
     {
       if ((!is_null(car(sc->code))) &&
-	  ((!is_pair(car(sc->code))) ||            /* (let* x ... ) */
-	   (!is_pair(caar(sc->code))) ||           /* (let* (x) ...) */
+	  ((!is_pair(car(sc->code))) ||             /* (let* x ... ) */
+	   (!is_pair(caar(sc->code))) ||            /* (let* (x) ...) */
 	   (!is_pair(cdaar(sc->code)))))            /* (let* ((x . 1)) ...) */
 	return(eval_error(sc, "let* variable declaration value is missing: ~A", sc->code));
     }
@@ -47387,34 +47392,34 @@ static s7_pointer check_let_star(s7_scheme *sc)
     {
       s7_pointer x, z;
       x = car(y);
-      if (!(is_symbol(car(x))))     /* (let* ((3 1)) 1) */
+      if (!(is_symbol(car(x))))                     /* (let* ((3 1)) 1) */
 	return(eval_error(sc, "bad variable ~S in let*", x));
 
       z = car(x);
       if (is_immutable(z))
 	return(s7_error(sc, sc->WRONG_TYPE_ARG,	list_2(sc, make_string_wrapper(sc, "can't bind an immutable object: ~S"), x)));
 
-      if (!is_pair(x))                 /* (let* ((x)) ...) */
+      if (!is_pair(x))                              /* (let* ((x)) ...) */
 	return(eval_error(sc, "let* variable declaration, but no value?: ~A", x));
 
-      if (!(is_pair(cdr(x))))          /* (let* ((x . 1))...) */
+      if (!(is_pair(cdr(x))))                       /* (let* ((x . 1))...) */
 	return(eval_error(sc, "let* variable declaration is not a proper list?: ~A", x));
 
-      if (is_not_null(cddr(x)))        /* (let* ((x 1 2 3)) ...) */
+      if (is_not_null(cddr(x)))                     /* (let* ((x 1 2 3)) ...) */
 	return(eval_error(sc, "let* variable declaration has more than one value?: ~A", x));
 
       x = cdr(y);
       if (is_pair(x))
 	{
-	  if (!is_pair(car(x)))             /* (let* ((x -1) 2) 3) */
+	  if (!is_pair(car(x)))                     /* (let* ((x -1) 2) 3) */
 	    return(eval_error(sc, "let* variable/binding is ~S?", car(x)));
 
-	  if (!is_pair(cdar(x)))            /* (let* ((a 1) (b . 2)) ...) */
+	  if (!is_pair(cdar(x)))                    /* (let* ((a 1) (b . 2)) ...) */
 	    return(eval_error(sc, "let* variable list is messed up? ~A", x));
 	}
       else
 	{
-	  if (is_not_null(x))               /* (let* ((a 1) . b) a) */
+	  if (is_not_null(x))                       /* (let* ((a 1) . b) a) */
 	    return(eval_error(sc, "let* var list improper?: ~A", x));
 	}
 
@@ -61333,9 +61338,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   */
 
 		  loc = s7_stack_top(sc) - 1;
-		  caller = car(stack_args(sc->stack, loc));
+		  caller = car(stack_args(sc->stack, loc)); /* this can be garbage */
 		  if ((loc >= 3) &&
 		      (stack_op(sc->stack, loc) != OP_READ_QUOTE) &&             /* '(hi 1) for example */
+		      (stack_op(sc->stack, loc) != OP_READ_VECTOR) &&            /* #(reader-cond) for example */
 		      (caller != sc->QUOTE) &&          /* (quote (hi 1)) */
 		      (caller != sc->MACROEXPAND) &&    /* (macroexpand (hi 1)) */
 		      (caller != sc->DEFINE_EXPANSION)) /* (define-expansion ...) being reloaded/redefined */
@@ -61536,6 +61542,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     default:
       fprintf(stderr, "unknown operator: %d in %s\n", (int)(sc->op), DISPLAY(sc->cur_code));
+#if DEBUGGING
+      abort();
+#endif
       return(sc->F);
     }
   return(sc->F);
@@ -66115,13 +66124,13 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
     return(s7_make_random_state(sc, s7_random_state_to_list(sc, sc->NIL)));
 
   if (sym == sc->max_list_length_symbol)                                 /* max-list-length (as arg to make-list) */
-    return(s7_make_integer(sc, MAX_LIST_LENGTH));
+    return(s7_make_integer(sc, sc->max_list_length));
   if (sym == sc->max_vector_length_symbol)                               /* max-vector-length (as arg to make-vector and make-hash-table) */
-    return(s7_make_integer(sc, MAX_VECTOR_LENGTH));
+    return(s7_make_integer(sc, sc->max_vector_length));
   if (sym == sc->max_vector_dimensions_symbol)                           /* max-vector-dimensions (make-vector) */
-    return(s7_make_integer(sc, MAX_VECTOR_DIMENSIONS));
+    return(s7_make_integer(sc, sc->max_vector_dimensions));
   if (sym == sc->max_string_length_symbol)                               /* max-string-length (as arg to make-string and read-string) */
-    return(s7_make_integer(sc, MAX_STRING_LENGTH));
+    return(s7_make_integer(sc, sc->max_string_length));
   if (sym == sc->default_hash_table_length_symbol)                       /* default size for make-hash-table */
     return(s7_make_integer(sc, sc->default_hash_table_length));
   if (sym == sc->morally_equal_float_epsilon_symbol)                     /* morally-equal-float-epsilon */
@@ -66178,13 +66187,34 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
   sym = cadr(args);
   val = caddr(args);
 
-  if (sym == sc->print_length_symbol)
+  if ((sym == sc->print_length_symbol) ||
+      (sym == sc->max_vector_length_symbol) ||
+      (sym == sc->max_vector_dimensions_symbol) ||
+      (sym == sc->max_list_length_symbol) ||
+      (sym == sc->max_string_length_symbol))
     {
       if (s7_is_integer(val))
 	{
 	  if (integer(val) < 0)
 	    return(simple_out_of_range(sc, sc->LET_SET, val, make_string_wrapper(sc, "should be a positive integer")));
-	  sc->print_length = integer(val);
+	  if (sym == sc->print_length_symbol)
+	    sc->print_length = integer(val);
+	  else
+	    {
+	      if (sym == sc->max_vector_length_symbol)
+		sc->max_vector_length = integer(val);
+	      else
+		{
+		  if (sym == sc->max_vector_dimensions_symbol)
+		    sc->max_vector_dimensions = integer(val);
+		  else
+		    {
+		      if (sym == sc->max_list_length_symbol)
+			sc->max_list_length = integer(val);
+		      else sc->max_string_length = integer(val);
+		    }
+		}
+	    }
 	  return(val);
 	}
       return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
@@ -66354,10 +66384,19 @@ s7_scheme *s7_init(void)
   sc->longjmp_ok = false;
   sc->symbol_table_is_locked = false;
 
+#if ((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4))
+  sc->max_vector_length = (1LL << 24);
+#else
+  sc->max_vector_length = (1LL << 32);
+#endif
+  sc->max_string_length = 1073741824;
+  sc->max_list_length = 1073741824;
+  sc->max_vector_dimensions = 512;
+
   sc->strbuf_size = INITIAL_STRBUF_SIZE;
   sc->strbuf = (char *)calloc(sc->strbuf_size, sizeof(char));
   sc->tmpbuf = (char *)malloc(TMPBUF_SIZE * sizeof(char));
-  sc->print_width = MAX_STRING_LENGTH;
+  sc->print_width = sc->max_string_length;
 
   sc->initial_string_port_length = 128;
   sc->format_depth = -1;
@@ -67835,6 +67874,5 @@ int main(int argc, char **argv)
  * should this be fixed? (symbol->value 'gc-stats *s7*) -> #<undefined>
  *   to make *s7* a completely normal let would require symbol accessors etc
  *   sym->val might check let_ref_fallback for all computed cases
- * perhaps remove call/cc from pure-s7?  :optional and :key?
+ * perhaps remove call/cc from pure-s7?  :optional and :key? #: support?
  */
- 
