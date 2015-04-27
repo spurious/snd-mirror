@@ -1953,6 +1953,7 @@ static int num_object_types = 0;
 #define counter_capture(p)            (p)->object.ctr.cap
 #define counter_let(p)                (p)->object.ctr.env
 
+#define is_baffle(p)                  (type(p) == T_BAFFLE)
 #define baffle_key(p)                 (p)->object.baffle_key
 
 #if __cplusplus && HAVE_COMPLEX_NUMBERS
@@ -7142,6 +7143,11 @@ static bool find_baffle(s7_scheme *sc, int key)
       if ((slot_symbol(y) == sc->BAFFLE) &&
 	  (baffle_key(slot_value(y)) == key))
 	return(true);
+
+  if ((is_slot(global_slot(sc->BAFFLE))) &&
+      (is_baffle(slot_value(global_slot(sc->BAFFLE)))))
+    return(baffle_key(slot_value(global_slot(sc->BAFFLE))) == key);
+
   return(false);
 }
 
@@ -7157,6 +7163,10 @@ static int find_any_baffle(s7_scheme *sc)
 	for (y = let_slots(x); is_slot(y); y = next_slot(y))
 	  if (slot_symbol(y) == sc->BAFFLE)
 	    return(baffle_key(slot_value(y)));
+
+      if ((is_slot(global_slot(sc->BAFFLE))) &&
+	  (is_baffle(slot_value(global_slot(sc->BAFFLE)))))
+	return(baffle_key(slot_value(global_slot(sc->BAFFLE))));
     }
   return(-1);
 }
@@ -8173,33 +8183,17 @@ s7_Double s7_number_to_real_with_caller(s7_scheme *sc, s7_pointer x, const char 
 
   switch (type(x))
     {
-    case T_INTEGER:
-      return((s7_Double)integer(x));
-
-    case T_RATIO:
-      return((s7_Double)numerator(x) / (s7_Double)denominator(x));
-
-    case T_REAL:
-      return(real(x));
-
-    case T_COMPLEX:
-      return(real_part(x));
-
+    case T_INTEGER:     return((s7_Double)integer(x));
+    case T_RATIO:       return((s7_Double)numerator(x) / (s7_Double)denominator(x));
+    case T_REAL:        return(real(x));
+    case T_COMPLEX:     return(real_part(x));
 #if WITH_GMP
-    case T_BIG_INTEGER:
-      return((s7_Double)big_integer_to_s7_Int(big_integer(x)));
-
-    case T_BIG_RATIO:
-      return((s7_Double)((long double)big_integer_to_s7_Int(mpq_numref(big_ratio(x))) / (long double)big_integer_to_s7_Int(mpq_denref(big_ratio(x)))));
-
-    case T_BIG_REAL:
-      return((s7_Double)mpfr_get_d(big_real(x), GMP_RNDN));
-
-    case T_BIG_COMPLEX:
-      return((s7_Double)mpfr_get_d(mpc_realref(big_complex(x)), GMP_RNDN));
+    case T_BIG_INTEGER: return((s7_Double)big_integer_to_s7_Int(big_integer(x)));
+    case T_BIG_RATIO:   return((s7_Double)((long double)big_integer_to_s7_Int(mpq_numref(big_ratio(x))) / (long double)big_integer_to_s7_Int(mpq_denref(big_ratio(x)))));
+    case T_BIG_REAL:    return((s7_Double)mpfr_get_d(big_real(x), GMP_RNDN));
+    case T_BIG_COMPLEX: return((s7_Double)mpfr_get_d(mpc_realref(big_complex(x)), GMP_RNDN));
 #endif
     }
-
   s7_wrong_type_arg_error(sc, caller, 0, x, "a real number");
   return(0.0);
 }
@@ -8219,30 +8213,15 @@ s7_Int s7_number_to_integer_with_caller(s7_scheme *sc, s7_pointer x, const char 
 
   switch (type(x))
     {
-    case T_INTEGER:
-      return(integer(x));
-
-    case T_RATIO:
-      return((s7_Int)numerator(x) / (s7_Double)denominator(x));
-
-    case T_REAL:
-      return((s7_Int)real(x));
-
-    case T_COMPLEX:
-      return((s7_Int)real_part(x));
-
+    case T_INTEGER:     return(integer(x));
+    case T_RATIO:       return((s7_Int)numerator(x) / (s7_Double)denominator(x));
+    case T_REAL:        return((s7_Int)real(x));
+    case T_COMPLEX:     return((s7_Int)real_part(x));
 #if WITH_GMP
-    case T_BIG_INTEGER:
-      return(big_integer_to_s7_Int(big_integer(x)));
-
-    case T_BIG_RATIO:
-      return((s7_Int)((double)big_integer_to_s7_Int(mpq_numref(big_ratio(x))) / (double)big_integer_to_s7_Int(mpq_denref(big_ratio(x)))));
-
-    case T_BIG_REAL:
-      return((s7_Int)mpfr_get_d(big_real(x), GMP_RNDN));
-
-    case T_BIG_COMPLEX:
-      return((s7_Int)mpfr_get_d(mpc_realref(big_complex(x)), GMP_RNDN));
+    case T_BIG_INTEGER: return(big_integer_to_s7_Int(big_integer(x)));
+    case T_BIG_RATIO:   return((s7_Int)((double)big_integer_to_s7_Int(mpq_numref(big_ratio(x))) / (double)big_integer_to_s7_Int(mpq_denref(big_ratio(x)))));
+    case T_BIG_REAL:    return((s7_Int)mpfr_get_d(big_real(x), GMP_RNDN));
+    case T_BIG_COMPLEX: return((s7_Int)mpfr_get_d(mpc_realref(big_complex(x)), GMP_RNDN));
 #endif
     }
   s7_wrong_type_arg_error(sc, caller, 0, x, "an integer");
@@ -8636,7 +8615,7 @@ static int num_to_str_size = -1;
 static char *num_to_str = NULL;
 static const char *float_format_g = NULL;
 
-static char *floatify(char *str, int *nlen, int str_len)
+static char *floatify(char *str, int *nlen)
 {
   if ((strchr(str, 'e') == NULL) &&
       (strchr(str, '.') == NULL))
@@ -8660,7 +8639,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
    */
   int len;
   len = 1024;
-
+  if (width > len) len = 2 * width;
   if (len > num_to_str_size)
     {
       if (!num_to_str)
@@ -8706,7 +8685,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 
 	len = snprintf(num_to_str, num_to_str_size, frmt, width, precision, s7_real(obj));
 	(*nlen) = len;
-	floatify(num_to_str, nlen, num_to_str_size);
+	floatify(num_to_str, nlen);
       }
       break;
 
@@ -8799,7 +8778,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radix, int width, int precision, char float_choice, int *nlen)
 {
   /* the rest of s7 assumes nlen is set to the correct length */
-  char *p, *n, *d;
+  char *p;
   int len, str_len;
 
 #if WITH_GMP
@@ -8868,10 +8847,28 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 	    x = -x;
 	  }
 
+	if (x > 9.22e18) /* i.e. greater than most-positive-fixnum, so the code below can't work, (format #f "~X" 1e19) */
+	  {
+	    int ep;
+	    char *p1;
+	    s7_pointer r;
+
+	    len = 0;
+	    ep = (int)floor(log(x) / log((double)radix));
+	    r = make_real(sc, x / pow((double)radix, (double)ep)); /* divide it down to one digit, then the fractional part */
+	    p1 = number_to_string_with_radix(sc, r, radix, width, precision, float_choice, &len);
+	    p = (char *)malloc((len + 8) * sizeof(char));
+	    (*nlen) = snprintf(p, len + 8, "%s%se%d", (sign) ? "-" : "", p1, ep);
+	    free(p1);
+	    return(p);
+	  }
+
 	int_part = (s7_Int)floor(x);
 	frac_part = x - int_part;
 	s7_Int_to_string(n, int_part, radix, 0);
 	min_frac = (s7_Double)ipow(radix, -precision);
+
+	/* doesn't this assume precision < 128/256 and that we can fit in 256 digits (1e308)? */
 
 	for (i = 0, base = radix; (i < precision) && (frac_part > min_frac); i++, base *= radix)
 	  {
@@ -8894,13 +8891,16 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
       break;
 
     default:
-      p = (char *)malloc(512 * sizeof(char));
-      n = number_to_string_with_radix(sc, make_real(sc, real_part(obj)), radix, 0, precision, float_choice, &len);
-      d = number_to_string_with_radix(sc, make_real(sc, imag_part(obj)), radix, 0, precision, float_choice, &len);
-      len = snprintf(p, 512, "%s%s%si", n, (imag_part(obj) < 0.0) ? "" : "+", d);
-      str_len = 512;
-      free(n);
-      free(d);
+      {
+	char *n, *d;
+	p = (char *)malloc(512 * sizeof(char));
+	n = number_to_string_with_radix(sc, make_real(sc, real_part(obj)), radix, 0, precision, float_choice, &len);
+	d = number_to_string_with_radix(sc, make_real(sc, imag_part(obj)), radix, 0, precision, float_choice, &len);
+	len = snprintf(p, 512, "%s%s%si", n, (imag_part(obj) < 0.0) ? "" : "+", d);
+	str_len = 512;
+	free(n);
+	free(d);
+      }
       break;
     }
 
@@ -25250,7 +25250,7 @@ static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_point
 		{
 		  port_write_character(port)(sc, ' ', port);
 		  plen = snprintf(buf, 128, float_format_g, WRITE_REAL_PRECISION, float_vector_element(vect, i));
-		  floatify(buf, &plen, 128);
+		  floatify(buf, &plen);
 		  port_write_string(port)(sc, buf, plen, port);
 		}
 	    }
@@ -30392,7 +30392,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, unsigned
 	{
 	  vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
 	  if (!vector_elements(x))
-	    return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), ITS_TOO_LARGE));
+	    return(s7_error(sc, make_symbol(sc, "out-of-memory"), list_1(sc, make_string_wrapper(sc, "make-vector allocation failed!"))));
 	  vector_getter(x) = default_vector_getter;
 	  vector_setter(x) = default_vector_setter;
 	  /* make_hash_table assumes nil as the default value */
@@ -30406,7 +30406,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, unsigned
 		float_vector_elements(x) = (s7_Double *)calloc(len, sizeof(s7_Double));
 	      else float_vector_elements(x) = (s7_Double *)malloc(len * sizeof(s7_Double));
 	      if (!float_vector_elements(x))
-		return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), ITS_TOO_LARGE));
+		return(s7_error(sc, make_symbol(sc, "out-of-memory"), list_1(sc, make_string_wrapper(sc, "make-float-vector allocation failed!"))));
 	      vector_getter(x) = float_vector_getter;
 	      vector_setter(x) = float_vector_setter;
 	    }
@@ -30416,7 +30416,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, unsigned
 		int_vector_elements(x) = (s7_Int *)calloc(len, sizeof(s7_Int));
 	      else int_vector_elements(x) = (s7_Int *)malloc(len * sizeof(s7_Int));
 	      if (!int_vector_elements(x))
-		return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), ITS_TOO_LARGE));
+		return(s7_error(sc, make_symbol(sc, "out-of-memory"), list_1(sc, make_string_wrapper(sc, "make-int-vector allocation failed!"))));
 	      vector_getter(x) = int_vector_getter;
 	      vector_setter(x) = int_vector_setter;
 	    }
@@ -67874,5 +67874,5 @@ int main(int argc, char **argv)
  * should this be fixed? (symbol->value 'gc-stats *s7*) -> #<undefined>
  *   to make *s7* a completely normal let would require symbol accessors etc
  *   sym->val might check let_ref_fallback for all computed cases
- * perhaps remove call/cc from pure-s7?  :optional and :key? #: support?
  */
+ 

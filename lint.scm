@@ -2200,11 +2200,11 @@
 			 (car args)
 			 (if (just-reals? args)
 			     (apply (symbol->value (car form)) args)
-			     (let ((nums (collect-if list number? args)))
+			     (let ((nums (collect-if list number? args))
+				   (other (if (eq? (car form) 'min) 'max 'min)))
 			       (if (and (pair? nums)
 					(just-reals? nums)) ; non-real case checked elsewhere (later)
-				   (let ((other (if (eq? (car form) 'min) 'max 'min))
-					 (relop (if (eq? (car form) 'min) >= <=)))
+				   (let ((relop (if (eq? (car form) 'min) >= <=)))
 				     (if (> (length nums) 1)
 					 (set! nums (list (apply (symbol->value (car form)) nums))))
 				     (let ((new-args (append nums (collect-if list (lambda (x) (not (number? x))) args))))
@@ -2223,9 +2223,20 @@
 				     ;; if (min c1 (max c2 . args1) . args2) where (<= c1 c2) -> (min c1 . args2)
 			       
 			       ;; there are more such cases: (max x (min x 3)) -> x and (min x (max x c)) -> x
+			       ;; (max a b) is (- (min (- a) (- b))), but that doesn't help here -- the "-" gets in our way
 			       (if (null? (cdr args)) ; (max (min x 3) (min x 3)) -> (max (min x 3)) -> (min x 3)
 				   (car args)
-				   `(,(car form) ,@args))))))
+				   (if (and (null? (cddr args))   ; (max|min x (min|max x ...) -> x
+					    (or (and (pair? (car args))
+						     (eq? (caar args) other)
+						     (symbol? (cadr args))   ; actually this is probably not needed, but I want to avoid (random ...)
+						     (member (cadr args) (car args)))
+						(and (pair? (cadr args))
+						     (eq? (caadr args) other)
+						     (symbol? (car args))
+						     (member (car args) (cadr args)))))
+				       ((if (pair? (car args)) cadr car) args)
+				       `(,(car form) ,@args)))))))
 		   form))
 	      
 	      (else `(,(car form) ,@args))))))
@@ -3988,6 +3999,7 @@
 ;;;
 ;;; if case selector is a (code-)constant, the whole thing collapses, but that never happens
 ;;; if with-let, lint should try to be smarter about local names
+
 
 
 ;;; --------------------------------------------------------------------------------
