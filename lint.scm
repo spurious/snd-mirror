@@ -2230,6 +2230,7 @@
 					    (or (and (pair? (car args))
 						     (eq? (caar args) other)
 						     (symbol? (cadr args))   ; actually this is probably not needed, but I want to avoid (random ...)
+						     ;; perhaps instead use not min/max 
 						     (member (cadr args) (car args)))
 						(and (pair? (cadr args))
 						     (eq? (caadr args) other)

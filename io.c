@@ -43,6 +43,8 @@
 #define MUS_SAMPLE_TO_INT24(n) ((int)((n) * (1 << 23)))
 #define MUS_SAMPLE_TO_SHORT(n) ((short)((n) * (1 << 15)))
 #define MUS_SAMPLE_TO_BYTE(n) ((char)((n) * (1 << 7)))
+#define BINT24_TO_SAMPLE(n) ((mus_float_t)(big_endian_int(jchar) >> 8) / (mus_float_t)(1 << 23))
+#define INT24_TO_SAMPLE(n) ((mus_float_t)(little_endian_int(jchar) >> 8) / (mus_float_t)(1 << 23))
 
 
 static mus_long_t mus_maximum_malloc = MUS_MAX_MALLOC_DEFAULT;
@@ -1430,7 +1432,6 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		  break;
 		  
 		case MUS_B24INT:
-                  #define BINT24_TO_SAMPLE(n) ((mus_float_t)(big_endian_int(jchar) >> 8) / (mus_float_t)(1 << 23))
 		  while (bufnow <= bufend4)
 		    {
 		      (*bufnow++) = BINT24_TO_SAMPLE(jchar);
@@ -1443,14 +1444,18 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		      jchar += 3;
 		    }
 		  for (; bufnow <= bufend; jchar += 3) 
-		    (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[0] << 24) | (jchar[1] << 16) | (jchar[2] << 8)) >> 8));
+		    (*bufnow++) = BINT24_TO_SAMPLE(jchar);
 		  break;
 		  
-		case MUS_L24INT:  
-                  #define INT24_TO_SAMPLE(n) ((mus_float_t)(little_endian_int(jchar) >> 8) / (mus_float_t)(1 << 23))
-		  (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[2] << 24) | (jchar[1] << 16) | (jchar[0] << 8)) >> 8));
-		  jchar += 2;
-		  while (bufnow < bufend4)
+		case MUS_L24INT: 
+		  {
+		    int val;
+		    val = (jchar[2] << 16) + (jchar[1] << 8) + jchar[0];
+		    if (val >= (1 << 23)) val -= (1 << 24);
+		    (*bufnow++) = MUS_INT24_TO_SAMPLE(val);
+		    jchar += 2;
+		  }
+		  while (bufnow <= bufend4)
 		    {
 		      (*bufnow++) = INT24_TO_SAMPLE(jchar);
 		      jchar += 3;
@@ -1461,10 +1466,8 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		      (*bufnow++) = INT24_TO_SAMPLE(jchar);
 		      jchar += 3;
 		    }
-		  jchar++;
-
 		  for (; bufnow <= bufend; jchar += 3) 
-		    (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[2] << 24) | (jchar[1] << 16) | (jchar[0] << 8)) >> 8));
+		    (*bufnow++) = INT24_TO_SAMPLE(jchar);
 		  break;
 
 		default: break;
@@ -1647,12 +1650,12 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			  
 			case MUS_B24INT:
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[0] << 24) | (jchar[1] << 16) | (jchar[2] << 8)) >> 8));
+			    (*bufnow++) = BINT24_TO_SAMPLE(jchar);
 			  break;
 			  
 			case MUS_L24INT:   
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[2] << 24) | (jchar[1] << 16) | (jchar[0] << 8)) >> 8));
+			    (*bufnow++) = INT24_TO_SAMPLE(jchar);
 			  break;
 
 			default: break;
@@ -2920,8 +2923,21 @@ static void min_max_switch_doubles(unsigned char *data, int bytes, int chan, int
 
 #define THREE_BYTES 3
 
-#define BIG_THREE(Data, Loc)    ((int)(((Data[Loc + 0] << 24) + (Data[Loc + 1] << 16) + (Data[Loc + 2] << 8)) >> 8))
-#define LITTLE_THREE(Data, Loc) ((int)(((Data[Loc + 2] << 24) + (Data[Loc + 1] << 16) + (Data[Loc + 0] << 8)) >> 8))
+static int big_three(unsigned char *data, int loc)
+{
+  int val;
+  val = (data[loc + 0] << 16) + (data[loc + 1] << 8) + data[loc + 2];
+  if (val >= (1 << 23)) val -= (1 << 24);
+  return(val);
+}
+
+static int little_three(unsigned char *data, int loc)
+{
+  int val;
+  val = (data[loc + 2] << 16) + (data[loc + 1] << 8) + data[loc + 0];
+  if (val >= (1 << 23)) val -= (1 << 24);
+  return(val);
+}
 
 static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp, bool big_endian)
 {
@@ -2937,7 +2953,7 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
 
   if (big_endian)
     {
-      cur_min = BIG_THREE(data, k);
+      cur_min = big_three(data, k);
       cur_max = cur_min;
       i = 0;
       /* k += bytes_per_frample; */
@@ -2945,11 +2961,11 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
       while (i <= len2)
 	{
 	  int val;
-	  val = BIG_THREE(data, k);
+	  val = big_three(data, k);
 	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
 	  i++;
 	  k += bytes_per_frample;
-	  val = BIG_THREE(data, k);
+	  val = big_three(data, k);
 	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
 	  i++;
 	  k += bytes_per_frample;
@@ -2957,7 +2973,7 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
       while (i < len)
 	{
 	  int val;
-	  val = BIG_THREE(data, k);
+	  val = big_three(data, k);
 	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
 	  i++;
 	  k += bytes_per_frample;
@@ -2965,7 +2981,7 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
     }
   else
     {
-      cur_min = LITTLE_THREE(data, k);
+      cur_min = little_three(data, k);
       cur_max = cur_min;
       i = 0;
       /* k += bytes_per_frample; */
@@ -2973,11 +2989,11 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
       while (i <= len2)
 	{
 	  int val;
-	  val = LITTLE_THREE(data, k);
+	  val = little_three(data, k);
 	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
 	  i++;
 	  k += bytes_per_frample;
-	  val = LITTLE_THREE(data, k);
+	  val = little_three(data, k);
 	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
 	  i++;
 	  k += bytes_per_frample;
@@ -2985,7 +3001,7 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus
       while (i < len)
 	{
 	  int val;
-	  val = LITTLE_THREE(data, k);
+	  val = little_three(data, k);
 	  if (val < cur_min) cur_min = val; else if (val > cur_max) cur_max = val;
 	  i++;
 	  k += bytes_per_frample;

@@ -586,7 +586,7 @@ static int read_next_header(const char *filename, int fd)
     data_size = (true_file_length - data_location);
   else
     {
-      if (true_file_length > (mus_long_t)(1 << 31))
+      if (true_file_length > (mus_long_t)0x80000000) /* (1 << 31)) */
 	data_size = true_file_length - data_location; /* assume size field overflowed 32 bits */
     }
 

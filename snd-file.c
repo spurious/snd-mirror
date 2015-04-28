@@ -71,6 +71,7 @@ time_t file_write_date(const char *filename)
 {
   struct stat statbuf;
   int err;
+  if (!filename) return((time_t)0);
   err = stat(filename, &statbuf);
   if (err < 0) return((time_t)err);
   return((time_t)(statbuf.st_mtime));
@@ -3566,7 +3567,9 @@ void set_with_tooltips(bool val)
 {
   in_set_with_tooltips(val);
 #if USE_GTK
+#if (!GTK_CHECK_VERSION(3, 16, 0))   /* this can't be combined in the line above */
   g_object_set(gtk_settings_get_default(), "gtk-enable-tooltips", val, NULL);
+#endif
 #endif
 }
 
@@ -3583,18 +3586,11 @@ void set_with_menu_icons(bool val)
 {
   in_set_with_menu_icons(val);
 #if USE_GTK
-  #if (!GTK_CHECK_VERSION(3, 16, 0))
-    g_object_set(gtk_settings_get_default(), "gtk-menu-images", with_menu_icons(ss), NULL);
-  #endif
+#if (!GTK_CHECK_VERSION(3, 16, 0))
+  g_object_set(gtk_settings_get_default(), "gtk-menu-images", with_menu_icons(ss), NULL);
   g_object_set(gtk_settings_get_default(), "gtk-button-images", with_menu_icons(ss), NULL);
 #endif
-  /* in Scheme: (g_object_set (GPOINTER (gtk_settings_get_default)) "gtk-menu-images" #t) 
-   *   the list of these properties is in GtkSettings.html
-   *   others of possible interest: 
-   *     gtk-cursor-blink-time, gtk-cursor-blink (set in glistener)
-   *     gtk-double-click-time, gtk-enable-tooltips (see set_with_tooltips above)
-   *     gtk-menu-bar-accel
-   */
+#endif
 }
 
 

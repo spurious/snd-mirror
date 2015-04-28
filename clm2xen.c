@@ -4863,6 +4863,8 @@ static Xen g_make_one_pole_all_pass(Xen arg1, Xen arg2)
 #endif
 
   size = Xen_integer_to_C_int(arg1);
+  if (size < 0)
+    Xen_out_of_range_error(S_make_one_pole_all_pass, 1, arg1, "size < 0?");
   if (size == 0) return(Xen_false);
   coeff = Xen_real_to_C_double(arg2);
 

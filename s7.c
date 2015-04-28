@@ -1460,7 +1460,7 @@ static void init_types(void)
  * don't reuse this bit if possible
  */
 
-#define T_GC_MARK                     (unsigned int)(1 << (TYPE_BITS + 23))
+#define T_GC_MARK                     0x80000000            /* (1 << (TYPE_BITS + 23)) but that makes gcc unhappy */
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
 #define set_mark(p)                   typeflag(p) |= T_GC_MARK
 #define clear_mark(p)                 typeflag(p) &= (~T_GC_MARK)
@@ -2145,6 +2145,7 @@ static bool safe_strcmp(const char *s1, const char *s2)
 
 static bool local_strncmp(const char *s1, const char *s2, unsigned int n)
 {
+#if 0
   if (n >= 4)
     {
       int *is1, *is2;
@@ -2156,6 +2157,7 @@ static bool local_strncmp(const char *s1, const char *s2, unsigned int n)
       s2 = (const char *)is2;
       n &= 3;
     }
+#endif
   while (n > 0)
     {
       if (*s1++ != *s2++) return(false);
@@ -2170,6 +2172,7 @@ static bool local_strncmp(const char *s1, const char *s2, unsigned int n)
 static void memclr(void *s, size_t n)
 {
   unsigned char *s2;
+#if 0
   if (n >= 4)
     {
       int *s1 = (int *)s;
@@ -2179,6 +2182,8 @@ static void memclr(void *s, size_t n)
       s2 = (unsigned char *)s1;
     }
   else s2 = (unsigned char *)s;
+#endif
+  s2 = (unsigned char *)s;
   while (n > 0)
     {
       *s2++ = 0;
@@ -8847,7 +8852,7 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 	    x = -x;
 	  }
 
-	if (x > 9.22e18) /* i.e. greater than most-positive-fixnum, so the code below can't work, (format #f "~X" 1e19) */
+	if (x > 1.0e18) /* i.e. close to or greater than most-positive-fixnum (9.22e18), so the code below is unlikely to work, (format #f "~X" 1e19) */
 	  {
 	    int ep;
 	    char *p1;
@@ -9548,10 +9553,15 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
 	{
 	  dig = digits[(unsigned char)(*tmp++)];
 	  if (dig > 9) break;
+#if defined(__GNUC__) && (__GNUC__ >= 5)
+	  if (__builtin_mul_overflow(lval, 10, &lval)) break;
+	  if (__builtin_add_overflow(lval, dig, &lval)) break;
+#else
 	  lval = dig + (lval * 10);
 	  dig = digits[(unsigned char)(*tmp++)];
 	  if (dig > 9) break;
 	  lval = dig + (lval * 10);
+#endif
 	}
     }
   else
@@ -9560,10 +9570,15 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
 	{
 	  dig = digits[(unsigned char)(*tmp++)];
 	  if (dig >= radix) break;
+#if defined(__GNUC__) && (__GNUC__ >= 5)
+	  if (__builtin_mul_overflow(lval, radix, &lval)) break;
+	  if (__builtin_add_overflow(lval, dig, &lval)) break;
+#else
 	  lval = dig + (lval * radix);
 	  dig = digits[(unsigned char)(*tmp++)];
 	  if (dig >= radix) break;
 	  lval = dig + (lval * radix);
+#endif
 	}
     }
 
@@ -9665,10 +9680,22 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	    }
 	}
       while ((dig = digits[(int)(*str++)]) < 10) /* exponent itself is always base 10 */
-	exponent = dig + (exponent * 10);
-
+	{
+#if defined(__GNUC__) && (__GNUC__ >= 5)
+	  if ((__builtin_mul_overflow(exponent, 10, &exponent)) ||
+	      (__builtin_add_overflow(exponent, dig, &exponent)))
+	    {
+	      exponent = 1000000; /* see below */
+	      break;
+	    }
+#else
+	  exponent = dig + (exponent * 10);
+#endif
+	}
+#if (!defined(__GNUC__)) || (__GNUC__ < 5)
       if (exponent < 0)         /* we overflowed, so make sure we notice it below (need to check for 0.0e... first) (Brian Damgaard) */
 	exponent = 1000000;     /*   see below for examples -- this number needs to be very big but not too big for add */
+#endif
       if (exp_negative)
 	exponent = -exponent;
 
@@ -9684,7 +9711,6 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 
 #if WITH_GMP
   /* 9007199254740995.0 */
-
   if (int_len + frac_len >= max_len)
     {
       (*overflow) = true;
@@ -11367,7 +11393,7 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
   switch (type(x))
     {
     case T_INTEGER:
-      if (integer(x) == 0) return(small_int(0));                   /* (tanh 0) -> 0 */
+      if (integer(x) == 0) return(small_int(0));  /* (tanh 0) -> 0 */
 
     case T_REAL:
     case T_RATIO:
@@ -11376,9 +11402,9 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
     case T_COMPLEX:
 #if HAVE_COMPLEX_NUMBERS
       if (real_part(x) > 350.0)
-	return(real_one);               /* closer than 0.0 which is what ctanh is about to return! */
+	return(real_one);                         /* closer than 0.0 which is what ctanh is about to return! */
       if (real_part(x) < -350.0)
-	return(make_real(sc, -1.0));              /* closer than -0.0 which is what ctanh is about to return! */
+	return(make_real(sc, -1.0));              /* closer than ctanh's -0.0 */
       return(s7_from_c_complex(sc, ctanh(as_c_complex(x))));
 #else
       return(out_of_range(sc, sc->TANH, small_int(1), x, NO_COMPLEX_NUMBERS));
@@ -12734,7 +12760,7 @@ static int reduce_fraction(s7_Int *numer, s7_Int *denom)
     }
   if (*denom < 0)
     {
-      *denom = -*denom;
+      *denom = -*denom; /* if either is S7_LLONG_MIN, this overflows, but fixing that is ugly */
       *numer = -*numer;
     }
   divisor = c_gcd(*numer, *denom);
@@ -12756,7 +12782,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 {
   #define H_add "(+ ...) adds its arguments"
   s7_pointer x, p;
-  s7_Int num_a, den_a;
+  s7_Int num_a, den_a, dn;
   s7_Double rl_a, im_a;
 
 #if (!WITH_GMP)
@@ -12793,6 +12819,14 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
       switch (type(x))
 	{
 	case T_INTEGER:
+#if defined(__GNUC__) && (__GNUC__ >= 5)
+	  if (__builtin_add_overflow(num_a, integer(x), &den_a))
+	    {
+	      rl_a = (s7_Double)num_a + (s7_Double)integer(x);
+	      if (is_null(p)) return(make_real(sc, rl_a));
+	      goto ADD_REALS;
+	    }
+#else	    
 	  den_a = num_a + integer(x);
 	  if (den_a < 0)
 	    {
@@ -12817,6 +12851,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 		  goto ADD_REALS;
 		}
 	    }
+#endif
 	  if (is_null(p)) return(make_integer(sc, den_a));
 	  num_a = den_a;
 	  /* (+ 4611686018427387904 4611686018427387904) -> -9223372036854775808
@@ -12828,7 +12863,14 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 
 	case T_RATIO:
 	  den_a = denominator(x);
-	  if ((integer_length(num_a) + integer_length(den_a) + integer_length(numerator(x))) >= s7_int_bits)
+#if defined(__GNUC__) && (__GNUC__ >= 5)
+	  if ((__builtin_mul_overflow(den_a, num_a, &dn)) || 
+	      (__builtin_add_overflow(dn, numerator(x), &dn)))
+#else
+	  if ((integer_length(num_a) + integer_length(den_a) + integer_length(numerator(x))) < s7_int_bits)
+	    dn = numerator(x) + (num_a * den_a);
+	  else
+#endif
 	    {
 	      if (is_null(p))
 		{
@@ -12839,8 +12881,8 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	      rl_a = (s7_Double)num_a + fraction(x);
 	      goto ADD_REALS;
 	    }
-	  if (is_null(p)) return(s7_make_ratio(sc, numerator(x) + (num_a * den_a), den_a));
-	  num_a = numerator(x) + (num_a * den_a);
+	  if (is_null(p)) return(s7_make_ratio(sc, dn, den_a));
+	  num_a = dn;
 
 	  /* overflow examples:
 	   *   (+ 100000 1/142857142857140) -> -832205957599110323/28571428571428
@@ -12882,7 +12924,14 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
       switch (type(x))
 	{
 	case T_INTEGER:
-	  if ((integer_length(integer(x)) + integer_length(den_a) + integer_length(num_a)) >= s7_int_bits)
+#if defined(__GNUC__) && (__GNUC__ >= 5)
+	  if ((__builtin_mul_overflow(den_a, integer(x), &dn)) || 
+	      (__builtin_add_overflow(dn, num_a, &dn)))
+#else
+	  if ((integer_length(integer(x)) + integer_length(den_a) + integer_length(num_a)) < s7_int_bits)
+	    dn = num_a + (integer(x) * den_a);
+	  else
+#endif
 	    {
 	      /* (+ 3/4 4611686018427387904) -> 3/4
 	       * (+ 1/17179869184 1073741824) -> 1/17179869184
@@ -12893,8 +12942,8 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	      rl_a = (s7_Double)integer(x) + ((long double)num_a / (long double)den_a);
 	      goto ADD_REALS;
 	    }
-	  if (is_null(p)) return(s7_make_ratio(sc, num_a + (den_a * integer(x)), den_a));
-	  num_a += (den_a * integer(x));
+	  if (is_null(p)) return(s7_make_ratio(sc, dn, den_a));
+	  num_a = dn;
 	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
 	    goto ADD_INTEGERS;
 	  goto ADD_RATIOS;
@@ -12915,6 +12964,26 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	    else
 	      {
 #if (!WITH_GMP)
+#if defined(__GNUC__) && (__GNUC__ >= 5)
+		s7_Int d1d2, n1d2, n2d1;
+		if ((__builtin_mul_overflow(d1, d2, &d1d2)) ||
+		    (__builtin_mul_overflow(n1, d2, &n1d2)) ||
+		    (__builtin_mul_overflow(n2, d1, &n2d1)) ||
+		    (__builtin_add_overflow(n1d2, n2d1, &dn)))
+		  {
+		    if (is_null(p))
+		      return(make_real(sc, ((long double)n1 / (long double)d1) + ((long double)n2 / (long double)d2)));
+		    rl_a = ((long double)n1 / (long double)d1) + ((long double)n2 / (long double)d2);
+		    goto ADD_REALS;
+		  }
+		if (is_null(p))
+		  return(s7_make_ratio(sc, dn, d1d2));
+		num_a = dn;
+		den_a = d1d2;
+		if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+		  goto ADD_INTEGERS;
+		goto ADD_RATIOS;
+#else
 		if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
 		    (n1 > s7_int_max) || (n2 > s7_int_max) ||
 		    (n1 < s7_int_min) || (n2 < s7_int_min))
@@ -12935,6 +13004,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 			goto ADD_REALS;
 		      }
 		  }
+#endif
 #endif
 		if (is_null(p))
 		  return(s7_make_ratio(sc, n1 * d2 + n2 * d1, d1 * d2));
@@ -20387,7 +20457,7 @@ static int scheme_strcasecmp(s7_pointer s1, s7_pointer s2)
   /* same as scheme_strcmp -- watch out for unwanted sign! and lack of trailing null (length sets string end).
    */
   int i, len, len1, len2;
-  char *str1, *str2;
+  unsigned char *str1, *str2;
 
   len1 = string_length(s1);
   len2 = string_length(s2);
@@ -20395,8 +20465,8 @@ static int scheme_strcasecmp(s7_pointer s1, s7_pointer s2)
     len = len2;
   else len = len1;
 
-  str1 = string_value(s1);
-  str2 = string_value(s2);
+  str1 = (unsigned char *)string_value(s1);
+  str2 = (unsigned char *)string_value(s2);
 
   for (i = 0; i < len; i++)
     if (uppers[(int)str1[i]] < uppers[(int)str2[i]])
@@ -20419,15 +20489,15 @@ static bool scheme_strequal_ci(s7_pointer s1, s7_pointer s2)
 {
   /* same as scheme_strcmp -- watch out for unwanted sign! */
   int i, len, len2;
-  char *str1, *str2;
+  unsigned char *str1, *str2;
 
   len = string_length(s1);
   len2 = string_length(s2);
   if (len != len2)
     return(false);
 
-  str1 = string_value(s1);
-  str2 = string_value(s2);
+  str1 = (unsigned char *)string_value(s1);
+  str2 = (unsigned char *)string_value(s2);
 
   for (i = 0; i < len; i++)
     if (uppers[(int)str1[i]] != uppers[(int)str2[i]])
@@ -25873,7 +25943,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 		    {
 		      char *str;
 		      int nlen;
-		      str = malloc(128 * sizeof(char));
+		      str = (char *)malloc(128 * sizeof(char));
 		      nlen = snprintf(str, 128, "))) (do ((i 0 (+ i 1))) ((= i %lld) iter) (iterate iter)))", iterator_position(obj));
 		      port_write_string(port)(sc, str, nlen, port);
 		      free(str);
@@ -26525,7 +26595,15 @@ static int format_read_integer(s7_scheme *sc, int *cur_i, int str_len, const cha
       int dig;
       dig = digits[(unsigned char)str[i]];
       if (dig < 10)
-	lval = dig + (lval * 10);
+	{
+#if defined(__GNUC__) && (__GNUC__ >= 5)
+	  if ((__builtin_mul_overflow(lval, 10, &lval)) ||
+	      (__builtin_add_overflow(lval, dig, &lval)))
+	    break;
+#else        
+	  lval = dig + (lval * 10);
+#endif
+	}
       else break;
     }
 
@@ -27547,7 +27625,7 @@ system captures the output as a string and returns it."
 	{
 	  int buf_len;
 	  buf_len = strlen(buf);
-	  if (cur_len + buf_len > full_len)
+	  if (cur_len + buf_len >= full_len)
 	    {
 	      full_len += BUF_SIZE * 2;
 	      if (str)
@@ -30421,8 +30499,6 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, unsigned
 	      vector_setter(x) = int_vector_setter;
 	    }
 	}
-      if (!(vector_elements(x)))
-	return(s7_error(sc, make_symbol(sc, "out-of-memory"), list_1(sc, make_string_wrapper(sc, "make-vector allocation failed!"))));
     }
 
   add_vector(sc, x);
@@ -32168,7 +32244,8 @@ s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
       if (vector_rank(old_vect) > 1)
 	new_vect = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, old_vect)), real_zero, sc->T));
       else new_vect = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR);
-      memcpy((void *)(float_vector_elements(new_vect)), (void *)(float_vector_elements(old_vect)), len * sizeof(s7_Double));
+      if (len > 0) 
+	memcpy((void *)(float_vector_elements(new_vect)), (void *)(float_vector_elements(old_vect)), len * sizeof(s7_Double));
     }
   else
     {
@@ -32177,7 +32254,8 @@ s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
 	  if (vector_rank(old_vect) > 1)
 	    new_vect = g_make_vector(sc, list_3(sc, g_vector_dimensions(sc, list_1(sc, old_vect)), small_int(0), sc->T));
 	  else new_vect = make_vector_1(sc, len, NOT_FILLED, T_INT_VECTOR);
-	  memcpy((void *)(int_vector_elements(new_vect)), (void *)(int_vector_elements(old_vect)), len * sizeof(s7_Int));
+	  if (len > 0) 
+	    memcpy((void *)(int_vector_elements(new_vect)), (void *)(int_vector_elements(old_vect)), len * sizeof(s7_Int));
 	}
       else
 	{
@@ -32186,7 +32264,8 @@ s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
 	  else new_vect = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
 
 	  /* here and in vector-fill! we have a problem with bignums -- should new bignums be allocated? (copy_list also) */
-	  memcpy((void *)(vector_elements(new_vect)), (void *)(vector_elements(old_vect)), len * sizeof(s7_pointer));
+	  if (len > 0) 
+	    memcpy((void *)(vector_elements(new_vect)), (void *)(vector_elements(old_vect)), len * sizeof(s7_pointer));
 	}
     }
   return(new_vect);
@@ -38919,12 +38998,15 @@ and applies it to the rest of the arguments."
 
 static char *truncate_string(char *form, int len, use_write_t use_write, int *form_len)
 {
+  unsigned char *f;
+  f = (unsigned char *)form;
+
   if (use_write != USE_DISPLAY)
     {
       /* I guess we need to protect the outer double quotes in this case */
       int i;
-      for (i = len - 4; i >= (len / 2); i--)
-	if (is_white_space((int)form[i]))
+      for (i = len - 5; i >= (len / 2); i--)
+	if (is_white_space((int)f[i]))
 	  {
 	    form[i] = '.';
 	    form[i + 1] = '.';
@@ -38934,7 +39016,7 @@ static char *truncate_string(char *form, int len, use_write_t use_write, int *fo
 	    (*form_len) = i + 4;
 	    return(form);
 	  }
-      i = len - 4;
+      i = len - 5;
       if (i > 0)
 	{
 	  form[i] = '.';
@@ -38955,8 +39037,8 @@ static char *truncate_string(char *form, int len, use_write_t use_write, int *fo
   else
     {
       int i;
-      for (i = len - 3; i >= (len / 2); i--)
-	if (is_white_space((int)form[i]))
+      for (i = len - 4; i >= (len / 2); i--)
+	if (is_white_space((int)f[i]))
 	  {
 	    form[i] = '.';
 	    form[i + 1] = '.';
@@ -38965,7 +39047,7 @@ static char *truncate_string(char *form, int len, use_write_t use_write, int *fo
 	    (*form_len) = i + 3;
 	    return(form);
 	  }
-      i = len - 3;
+      i = len - 4;
       if (i >= 0)
 	{
 	  form[i] = '.';
@@ -67874,5 +67956,61 @@ int main(int argc, char **argv)
  * should this be fixed? (symbol->value 'gc-stats *s7*) -> #<undefined>
  *   to make *s7* a completely normal let would require symbol accessors etc
  *   sym->val might check let_ref_fallback for all computed cases
+ * the signed char default is a pain, but can't be changed at this level.
+ *   find each blasted bad case...
+ * multi-dim vect iterator that returns all at given index
+ * --------------------------------------------------------------------------------
+ *
+ * this could perhaps replace configure?
+#ifdef __has_include
+#  if __has_include(<optional>)
+#    include <optional>
+#    define have_optional 1
+#  elif __has_include(<experimental/optional>)
+#    include <experimental/optional>
+#    define have_optional 1
+#    define experimental_optional
+#  else
+#    define have_optional 0
+#  endif
+#endif
+*
+*
+A new set of built-in functions for arithmetics with overflow checking has been added: __builtin_add_overflow, __builtin_sub_overflow and __builtin_mul_overflow and for compatibility with clang also other variants. These builtins have two integral arguments (which don't need to have the same type), the arguments are extended to infinite precision signed type, +, - or * is performed on those, and the result is stored in an integer variable pointed to by the last argument. If the stored value is equal to the infinite precision result, the built-in functions return false, otherwise true. The type of the integer variable that will hold the result can be different from the types of the first two arguments. The following snippet demonstrates how this can be used in computing the size for the calloc function:
+void *
+calloc (size_t x, size_t y)
+{
+  size_t sz;
+  if (__builtin_mul_overflow (x, y, &sz))
+    return NULL;
+  void *ret = malloc (sz);
+  if (ret) memset (res, 0, sz);
+  return ret;
+}
+* use defined(__GNUC__) && (__GNUC__ >= 5)
+ *
+ *   int overflow: (s7test)
+s7.c:9556:9: runtime error: signed integer overflow: 8 + 9223372036854775800 cannot be represented in type 'long long int'
+s7.c:9595:11: runtime error: negation of -9223372036854775808 cannot be represented in type 'long long int'; cast to an unsigned type to negate this value to itself
+s7.c:9559:23: runtime error: signed integer overflow: 4611686018427387903 * 10 cannot be represented in type 'long long int'
+s7.c:9559:9: runtime error: signed integer overflow: 4 + 9223372036854775804 cannot be represented in type 'long long int'
+s7.c:11565:7: runtime error: signed integer overflow: 4294967296 * 4294967296 cannot be represented in type 'long long int'
+s7.c:9556:23: runtime error: signed integer overflow: -6640827866535438582 * 10 cannot be represented in type 'long long int'
+s7.c:26533:21: runtime error: signed integer overflow: 1234567891 * 10 cannot be represented in type 'int [2]'
+s7.c:10469:9: runtime error: negation of -9223372036854775808 cannot be represented in type 'long long int'; cast to an unsigned type to negate this value to itself
+s7.c:10506:9: runtime error: negation of -9223372036854775808 cannot be represented in type 'long long int'; cast to an unsigned type to negate this value to itself
+s7.c:18219:12: runtime error: left shift of negative value -9223372036854775808
+s7.c:9571:23: runtime error: signed integer overflow: 16 * 768614336404564650 cannot be represented in type 'long long int'
+s7.c:11529:9: runtime error: signed integer overflow: 274870351366 * 274870351366 cannot be represented in type 'long long int'
+s7.c:12801:18: runtime error: signed integer overflow: -9223372036854775808 + -1 cannot be represented in type 'long long int [63]'
+s7.c:13549:18: runtime error: signed integer overflow: -9223372036854775808 - 9223372036854775807 cannot be represented in type 'long long int [63]'
+s7.c:13795:14: runtime error: negation of -9223372036854775808 cannot be represented in type 'long long int [63]'; cast to an unsigned type to negate this value to itself
+s7.c:12742:16: runtime error: negation of -9223372036854775808 cannot be represented in type 'long long int [63]'; cast to an unsigned type to negate this value to itself
+s7.c:12743:16: runtime error: negation of -9223372036854775808 cannot be represented in type 'long long int [63]'; cast to an unsigned type to negate this value to itself
+s7.c:7768:12: runtime error: signed integer overflow: 4611686018427387904 * 2 cannot be represented in type 'long long int'
+s7.c:10474:9: runtime error: negation of -9223372036854775808 cannot be represented in type 'long long int'; cast to an unsigned type to negate this value to itself
+s7.c:9673:29: runtime error: signed integer overflow: 1000000000 * 10 cannot be represented in type 'int [17]'
+s7.c:9568:23: runtime error: signed integer overflow: 16 * 8601736444851329906 cannot be represented in type 'long long int'
+* --------------------------------------------------------------------------------
  */
  
