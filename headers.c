@@ -3457,7 +3457,7 @@ static int read_twinvq_header(const char *filename, int fd)
   if (srate == 11) srate = 11025; else
     if (srate == 22) srate = 22050; else
       if (srate == 44) srate = 44100; else
-	srate *= 1000;
+	srate = 48000;
   true_file_length = SEEK_FILE_LENGTH(fd);
   data_size = (true_file_length - data_location);
   if (data_size < 0) return(mus_error(MUS_HEADER_READ_FAILED, "%s: data_size = %lld?", filename, data_size));

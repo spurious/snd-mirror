@@ -7555,6 +7555,27 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   static s7_Int big_integer_to_s7_Int(mpz_t n);
 #endif
 
+#define HAVE_OVERFLOW_CHECKS ((defined(__clang__) && ((__clang_major__ > 3) || (__clang_major__ == 3 && __clang_minor__ >= 4))) || \
+                              (defined(__GNUC__) && __GNUC__ >= 5))
+
+#if (defined(__clang__) && ((__clang_major__ > 3) || (__clang_major__ == 3 && __clang_minor__ >= 4))) 
+  #define subtract_overflow(A, B, C)     __builtin_ssubll_overflow(A, B, C)
+  #define add_overflow(A, B, C)          __builtin_saddll_overflow(A, B, C)
+  #define multiply_overflow(A, B, C)     __builtin_smulll_overflow(A, B, C)
+  #define int_subtract_overflow(A, B, C) __builtin_ssub_overflow(A, B, C)
+  #define int_add_overflow(A, B, C)      __builtin_sadd_overflow(A, B, C)
+  #define int_multiply_overflow(A, B, C) __builtin_smul_overflow(A, B, C)
+#else
+#if (defined(__GNUC__) && __GNUC__ >= 5)
+  #define subtract_overflow(A, B, C)     __builtin_sub_overflow(A, B, C)
+  #define add_overflow(A, B, C)          __builtin_add_overflow(A, B, C)
+  #define multiply_overflow(A, B, C)     __builtin_mul_overflow(A, B, C)
+  #define int_subtract_overflow(A, B, C) __builtin_sub_overflow(A, B, C)
+  #define int_add_overflow(A, B, C)      __builtin_add_overflow(A, B, C)
+  #define int_multiply_overflow(A, B, C) __builtin_mul_overflow(A, B, C)
+#endif
+#endif
+
 
 #define s7_Int_abs(x) ((x) >= 0 ? (x) : -(x))
 /* can't use abs even in gcc -- it doesn't work with long long ints! */
@@ -7761,6 +7782,7 @@ static s7_Int c_gcd(s7_Int u, s7_Int v)
     {
       /* can't take abs of these (below) so do it by hand */
       s7_Int divisor = 1;
+      if (u == v) return(u);
       while (((u & 1) == 0) && ((v & 1) == 0))
 	{
 	  u /= 2;
@@ -8401,6 +8423,17 @@ static s7_pointer subtract_ratios(s7_scheme *sc, s7_pointer x, s7_pointer y)
     return(s7_make_ratio(sc, n1 - n2, d1));
 
 #if (!WITH_GMP)
+#if HAVE_OVERFLOW_CHECKS
+  {
+    s7_Int n1d2, n2d1, d1d2, dn;
+    if ((multiply_overflow(d1, d2, &d1d2)) ||
+	(multiply_overflow(n1, d2, &n1d2)) ||
+	(multiply_overflow(n2, d1, &n2d1)) ||
+	(subtract_overflow(n1d2, n2d1, &dn)))
+      return(make_real(sc, ((long double)n1 / (long double)d1) - ((long double)n2 / (long double)d2)));
+    return(s7_make_ratio(sc, dn, d1d2));
+  }
+#else
   if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
       (n1 > s7_int_max) || (n2 > s7_int_max) ||
       (n1 < s7_int_min) || (n2 < s7_int_min))
@@ -8414,6 +8447,7 @@ static s7_pointer subtract_ratios(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	return(make_real(sc, ((long double)n1 / (long double)d1) - ((long double)n2 / (long double)d2)));
       return(s7_make_ratio(sc, n1 * d2 - n2 * d1, d1 * d2));
     }
+#endif
 #endif
   return(s7_make_ratio(sc, n1 * d2 - n2 * d1, d1 * d2));
 }
@@ -9553,9 +9587,9 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
 	{
 	  dig = digits[(unsigned char)(*tmp++)];
 	  if (dig > 9) break;
-#if defined(__GNUC__) && (__GNUC__ >= 5)
-	  if (__builtin_mul_overflow(lval, 10, &lval)) break;
-	  if (__builtin_add_overflow(lval, dig, &lval)) break;
+#if HAVE_OVERFLOW_CHECKS
+	  if (multiply_overflow(lval, (s7_Int)10, &lval)) break;
+	  if (add_overflow(lval, (s7_Int)dig, &lval)) break;
 #else
 	  lval = dig + (lval * 10);
 	  dig = digits[(unsigned char)(*tmp++)];
@@ -9570,9 +9604,9 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
 	{
 	  dig = digits[(unsigned char)(*tmp++)];
 	  if (dig >= radix) break;
-#if defined(__GNUC__) && (__GNUC__ >= 5)
-	  if (__builtin_mul_overflow(lval, radix, &lval)) break;
-	  if (__builtin_add_overflow(lval, dig, &lval)) break;
+#if HAVE_OVERFLOW_CHECKS
+	  if (multiply_overflow(lval, (s7_Int)radix, &lval)) break;
+	  if (add_overflow(lval, (s7_Int)dig, &lval)) break;
 #else
 	  lval = dig + (lval * radix);
 	  dig = digits[(unsigned char)(*tmp++)];
@@ -9681,9 +9715,9 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	}
       while ((dig = digits[(int)(*str++)]) < 10) /* exponent itself is always base 10 */
 	{
-#if defined(__GNUC__) && (__GNUC__ >= 5)
-	  if ((__builtin_mul_overflow(exponent, 10, &exponent)) ||
-	      (__builtin_add_overflow(exponent, dig, &exponent)))
+#if HAVE_OVERFLOW_CHECKS
+	  if ((int_multiply_overflow(exponent, 10, &exponent)) ||
+	      (int_add_overflow(exponent, dig, &exponent)))
 	    {
 	      exponent = 1000000; /* see below */
 	      break;
@@ -10487,12 +10521,20 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
     {
     case T_INTEGER:
       if (integer(x) < 0)
-	return(make_integer(sc, -integer(x)));
+	{
+	  if (integer(x) == S7_LLONG_MIN)
+	    return(make_integer(sc, S7_LLONG_MAX));
+	  return(make_integer(sc, -integer(x)));
+	}
       return(x);
 
     case T_RATIO:
       if (numerator(x) < 0)
-	return(s7_make_ratio(sc, -numerator(x), denominator(x)));
+	{
+	  if (numerator(x) == S7_LLONG_MIN)
+	    return(s7_make_ratio(sc, S7_LLONG_MAX, denominator(x)));
+	  return(s7_make_ratio(sc, -numerator(x), denominator(x)));
+	}
       return(x);
 
     case T_REAL:
@@ -10523,11 +10565,13 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
   switch (type(x))
     {
     case T_INTEGER:
-      if (integer(x) < 0)
-	return(make_integer(sc, -integer(x)));
-      /* but what to do here: (magnitude -9223372036854775808) -> -9223372036854775808?
+      if (integer(x) == S7_LLONG_MIN)
+	return(make_integer(sc, S7_LLONG_MAX));
+      /* (magnitude -9223372036854775808) -> -9223372036854775808
        *   same thing happens in abs, lcm and gcd: (gcd -9223372036854775808) -> -9223372036854775808
        */
+      if (integer(x) < 0)
+        return(make_integer(sc, -integer(x)));
       return(x);
 
     case T_RATIO:
@@ -11546,9 +11590,19 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 	  s7_Int nm = 0, dn = 1;
 	  if (c_rationalize(sqx, 1.0e-16, &nm, &dn)) /* 1e-16 so that (sqrt 1/1099511627776) returns 1/1048576 */
 	    {
+#if HAVE_OVERFLOW_CHECKS
+	      s7_Int nm2, dn2;
+	      if ((multiply_overflow(nm, nm, &nm2)) ||
+		  (multiply_overflow(dn, dn, &dn2)))
+		return(make_real(sc, sqrt(sqx)));
+	      if ((nm2 == numerator(n)) &&
+		  (dn2 == denominator(n)))
+		return(s7_make_ratio(sc, nm, dn));
+#else
 	      if ((nm * nm == numerator(n)) &&
 		  (dn * dn == denominator(n)))
 		return(s7_make_ratio(sc, nm, dn));
+#endif
 	    }
 	  return(make_real(sc, sqrt(sqx)));
 	}
@@ -11583,7 +11637,12 @@ static s7_Int int_to_int(s7_Int x, s7_Int n)
   do {
     if (n & 1) value *= x;
     n >>= 1;
+#if HAVE_OVERFLOW_CHECKS
+    if (multiply_overflow(x, x, &x))
+      break;
+#else
     x *= x;
+#endif
   } while (n);
   return(value);
 }
@@ -12026,6 +12085,10 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 	  n2 = integer(y);
 	  d2 = 1;
 	  goto RATIO_QUO_RATIO;
+	  /* this can lose:
+	   *   (quotient 1 2305843009213693952/4611686018427387903) -> 2, not 1
+	   *   (quotient 21053343141/6701487259 3587785776203/1142027682075) -> 1, not 0
+	   */
 
 	case T_RATIO:
 	  n1 = numerator(x);
@@ -12037,15 +12100,20 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 	    return(make_integer(sc, n1 / n2));              /* (quotient 3/9223372036854775807 1/9223372036854775807) */
 	  if (n1 == n2)
 	    return(make_integer(sc, d2 / d1));              /* (quotient 9223372036854775807/2 9223372036854775807/8) */
-
+#if HAVE_OVERFLOW_CHECKS
+	  {
+	    s7_Int n1d2, n2d1;
+	    if ((multiply_overflow(n1, d2, &n1d2)) ||
+		(multiply_overflow(n2, d1, &n2d1)))
+	      return(s7_truncate(sc, sc->QUOTIENT, ((long double)n1 / (long double)n2) * ((long double)d2 / (long double)d1)));
+	    return(make_integer(sc, n1d2 / n2d1));
+	  }
+#else
 	  if ((integer_length(n1) + integer_length(d2) >= s7_int_bits) ||
 	      (integer_length(n2) + integer_length(d1) >= s7_int_bits))
 	    return(s7_truncate(sc, sc->QUOTIENT, ((long double)n1 / (long double)n2) * ((long double)d2 / (long double)d1)));
-	  /* this can lose:
-	   *   (quotient 1 2305843009213693952/4611686018427387903) -> 2, not 1
-	   *   (quotient 21053343141/6701487259 3587785776203/1142027682075) -> 1, not 0
-	   */
-	  return(make_integer(sc, (n1 * d2) / (n2 * d1)));  /* (quotient 922337203685477580 1/3) */
+	  return(make_integer(sc, (n1 * d2) / (n2 * d1)));
+#endif
 
 	case T_REAL:
 	  if (real(y) == 0.0)
@@ -12172,6 +12240,18 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 		quo = (s7_Int)(d2 / d1);
 	      else
 		{
+#if HAVE_OVERFLOW_CHECKS
+		  s7_Int n1d2, n2d1;
+		  if ((multiply_overflow(n1, d2, &n1d2)) ||
+		      (multiply_overflow(n2, d1, &n2d1)))
+		    {
+		      pre_quo = ((long double)n1 / (long double)n2) * ((long double)d2 / (long double)d1);
+		      if ((pre_quo > S7_LLONG_MAX) || (pre_quo < S7_LLONG_MIN))
+			return(simple_out_of_range(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
+		      if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
+		    }
+		  else quo = n1d2 / n2d1;
+#else
 		  if ((integer_length(n1) + integer_length(d2) >= s7_int_bits) ||
 		      (integer_length(n2) + integer_length(d1) >= s7_int_bits))
 		    {
@@ -12181,11 +12261,29 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 		      if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
 		    }
 		  else quo = (n1 * d2) / (n2 * d1);
+#endif
 		}
 	    }
 	  if (quo == 0)
 	    return(x);
 
+#if HAVE_OVERFLOW_CHECKS
+	  {
+	    s7_Int dn, nq;
+	    if (!multiply_overflow(n2, quo, &nq))
+	      {
+		if ((d1 == d2) &&
+		    (!subtract_overflow(n1, nq, &dn)))
+		  return(s7_make_ratio(sc, dn, d1));
+
+		if ((!multiply_overflow(n1, d2, &dn)) &&
+		    (!multiply_overflow(nq, d1, &nq)) &&
+		    (!subtract_overflow(dn, nq, &nq)) &&
+		    (!multiply_overflow(d1, d2, &d1)))
+		  return(s7_make_ratio(sc, nq, d1));
+	      }
+	  }
+#else
 	  if ((d1 == d2) &&
 	      ((integer_length(n2) + integer_length(quo)) < s7_int_bits))
 	    return(s7_make_ratio(sc, n1 - n2 * quo, d1));
@@ -12194,6 +12292,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	      (integer_length(d1) + integer_length(d2) < s7_int_bits) &&
 	      (integer_length(n2) + integer_length(d1) + integer_length(quo) < s7_int_bits))
 	    return(s7_make_ratio(sc, n1 * d2 - n2 * d1 * quo, d1 * d2));
+#endif
 	  return(simple_out_of_range(sc, sc->REMAINDER, args, make_string_wrapper(sc, "intermediate (a/b) is too large")));
 
 	case T_REAL:
@@ -12596,7 +12695,34 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	  if ((n1 == n2) &&
 	      (d1 > d2))
 	    return(x);                 /* signs match so this should be ok */
+#if HAVE_OVERFLOW_CHECKS
+	  {
+	    s7_Int n2d1, n1d2, d1d2, fl;
+	    if (!multiply_overflow(n2, d1, &n2d1))
+	      {
+		if (n2d1 == 1)
+		  return(small_int(0));
+		
+		if (!multiply_overflow(n1, d2, &n1d2))
+		  {
 
+		    /* can't use "floor" here (int->float ruins everything) */
+		    fl = (s7_Int)(n1d2 / n2d1);
+		    if (((n1 < 0) && (n2 > 0)) ||
+			((n1 > 0) && (n2 < 0)))
+		      fl -= 1;
+
+		    if (fl == 0)
+		      return(x);
+
+		    if ((!multiply_overflow(d1, d2, &d1d2)) &&
+			(!multiply_overflow(fl, n2d1, &fl)) &&
+			(!subtract_overflow(n1d2, fl, &fl)))
+		      return(s7_make_ratio(sc, fl, d1d2));
+		  }
+	      }
+	  }
+#else
 	  if ((integer_length(n1) + integer_length(d2) < s7_int_bits) &&
 	      (integer_length(n2) + integer_length(d1) < s7_int_bits) &&
 	      (integer_length(d1) + integer_length(d2) < s7_int_bits))
@@ -12620,6 +12746,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	      if (integer_length(n2d1) + integer_length(fl) < s7_int_bits)
 		return(s7_make_ratio(sc, n1d2 - (n2d1 * fl), d1 * d2));
 	    }
+#endif
 
 	  /* there are cases here we might want to catch:
 	   *    (modulo 9223372036 1/9223372036) -> error, not 0?
@@ -12760,7 +12887,30 @@ static int reduce_fraction(s7_Int *numer, s7_Int *denom)
     }
   if (*denom < 0)
     {
-      *denom = -*denom; /* if either is S7_LLONG_MIN, this overflows, but fixing that is ugly */
+      if (*denom == *numer)
+	{
+	  *denom = 1;
+	  *numer = 1;
+	  return(T_INTEGER);
+	}
+      if (*denom == S7_LLONG_MIN)
+	{
+	  if (*numer & 1)
+	    return(T_RATIO);
+	  *denom /= 2;
+	  *numer /= 2;
+	}
+      else
+	{
+	  if (*numer == S7_LLONG_MIN)
+	    {
+	      if (*denom & 1)
+		return(T_RATIO);
+	      *denom /= 2;
+	      *numer /= 2;
+	    }
+	}
+      *denom = -*denom; 
       *numer = -*numer;
     }
   divisor = c_gcd(*numer, *denom);
@@ -12819,8 +12969,8 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
       switch (type(x))
 	{
 	case T_INTEGER:
-#if defined(__GNUC__) && (__GNUC__ >= 5)
-	  if (__builtin_add_overflow(num_a, integer(x), &den_a))
+#if HAVE_OVERFLOW_CHECKS
+	  if (add_overflow(num_a, integer(x), &den_a))
 	    {
 	      rl_a = (s7_Double)num_a + (s7_Double)integer(x);
 	      if (is_null(p)) return(make_real(sc, rl_a));
@@ -12863,9 +13013,9 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 
 	case T_RATIO:
 	  den_a = denominator(x);
-#if defined(__GNUC__) && (__GNUC__ >= 5)
-	  if ((__builtin_mul_overflow(den_a, num_a, &dn)) || 
-	      (__builtin_add_overflow(dn, numerator(x), &dn)))
+#if HAVE_OVERFLOW_CHECKS
+	  if ((multiply_overflow(den_a, num_a, &dn)) || 
+	      (add_overflow(dn, numerator(x), &dn)))
 #else
 	  if ((integer_length(num_a) + integer_length(den_a) + integer_length(numerator(x))) < s7_int_bits)
 	    dn = numerator(x) + (num_a * den_a);
@@ -12924,9 +13074,9 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
       switch (type(x))
 	{
 	case T_INTEGER:
-#if defined(__GNUC__) && (__GNUC__ >= 5)
-	  if ((__builtin_mul_overflow(den_a, integer(x), &dn)) || 
-	      (__builtin_add_overflow(dn, num_a, &dn)))
+#if HAVE_OVERFLOW_CHECKS
+	  if ((multiply_overflow(den_a, integer(x), &dn)) || 
+	      (add_overflow(dn, num_a, &dn)))
 #else
 	  if ((integer_length(integer(x)) + integer_length(den_a) + integer_length(num_a)) < s7_int_bits)
 	    dn = num_a + (integer(x) * den_a);
@@ -12964,25 +13114,18 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	    else
 	      {
 #if (!WITH_GMP)
-#if defined(__GNUC__) && (__GNUC__ >= 5)
-		s7_Int d1d2, n1d2, n2d1;
-		if ((__builtin_mul_overflow(d1, d2, &d1d2)) ||
-		    (__builtin_mul_overflow(n1, d2, &n1d2)) ||
-		    (__builtin_mul_overflow(n2, d1, &n2d1)) ||
-		    (__builtin_add_overflow(n1d2, n2d1, &dn)))
+#if HAVE_OVERFLOW_CHECKS
+		s7_Int n1d2, n2d1;
+		if ((multiply_overflow(d1, d2, &den_a)) ||
+		    (multiply_overflow(n1, d2, &n1d2)) ||
+		    (multiply_overflow(n2, d1, &n2d1)) ||
+		    (add_overflow(n1d2, n2d1, &num_a)))
 		  {
 		    if (is_null(p))
 		      return(make_real(sc, ((long double)n1 / (long double)d1) + ((long double)n2 / (long double)d2)));
 		    rl_a = ((long double)n1 / (long double)d1) + ((long double)n2 / (long double)d2);
 		    goto ADD_REALS;
 		  }
-		if (is_null(p))
-		  return(s7_make_ratio(sc, dn, d1d2));
-		num_a = dn;
-		den_a = d1d2;
-		if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
-		  goto ADD_INTEGERS;
-		goto ADD_RATIOS;
 #else
 		if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
 		    (n1 > s7_int_max) || (n2 > s7_int_max) ||
@@ -13004,12 +13147,12 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 			goto ADD_REALS;
 		      }
 		  }
+		num_a = n1 * d2 + n2 * d1;
+		den_a = d1 * d2;
 #endif
 #endif
 		if (is_null(p))
-		  return(s7_make_ratio(sc, n1 * d2 + n2 * d1, d1 * d2));
-		num_a = n1 * d2 + n2 * d1;
-		den_a = d1 * d2;
+		  return(s7_make_ratio(sc, num_a, den_a));
 	      }
 	    /* (+ 1/100 99/100 (- most-positive-fixnum 2)) should not be converted to real
 	     */
@@ -13130,6 +13273,17 @@ static s7_pointer add_ratios(s7_scheme *sc, s7_pointer x, s7_pointer y)
   if (d1 == d2)                                     /* the easy case -- if overflow here, it matches the int case */
     return(s7_make_ratio(sc, n1 + n2, d1));
 
+#if HAVE_OVERFLOW_CHECKS
+  {
+    s7_Int n1d2, n2d1, d1d2, dn;
+    if ((multiply_overflow(d1, d2, &d1d2)) ||
+	(multiply_overflow(n1, d2, &n1d2)) ||
+	(multiply_overflow(n2, d1, &n2d1)) ||
+	(add_overflow(n1d2, n2d1, &dn)))
+      return(make_real(sc, ((long double)n1 / (long double)d1) + ((long double)n2 / (long double)d2)));
+    return(s7_make_ratio(sc, dn, d1d2));
+  }
+#else
   if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
       (n1 > s7_int_max) || (n2 > s7_int_max) ||
       (n1 < s7_int_min) || (n2 < s7_int_min))
@@ -13143,6 +13297,7 @@ static s7_pointer add_ratios(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	return(make_real(sc, ((long double)n1 / (long double)d1) + ((long double)n2 / (long double)d2)));
     }
   return(s7_make_ratio(sc, n1 * d2 + n2 * d1, d1 * d2));
+#endif
 }
 
 
@@ -13611,6 +13766,14 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
       switch (type(x))
 	{
 	case T_INTEGER:
+#if HAVE_OVERFLOW_CHECKS
+	  if (subtract_overflow(num_a, integer(x), &den_a))
+	    {
+	      rl_a = (s7_Double)num_a - (s7_Double)integer(x);
+	      if (is_null(p)) return(make_real(sc, rl_a));
+	      goto SUBTRACT_REALS;
+	    }
+#else
 	  den_a = num_a - integer(x);
 	  if (den_a < 0)
 	    {
@@ -13634,25 +13797,38 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 	      /* (- most-negative-fixnum most-positive-fixnum) -> 1 (-1.8446744073709551615E19)
 	       */
 	    }
+#endif
 	  if (is_null(p)) return(make_integer(sc, den_a));
 	  num_a = den_a;
 	  goto SUBTRACT_INTEGERS;
 
 	case T_RATIO:
-	  den_a = denominator(x);
-	  if ((integer_length(num_a) + integer_length(den_a) + integer_length(numerator(x))) > s7_int_bits)
-	    {
-	      if (is_null(p))
-		return(make_real(sc, num_a - fraction(x)));
-	      rl_a = (s7_Double)num_a - fraction(x);
-	      goto SUBTRACT_REALS;
-	    }
-	  if (is_null(p)) return(s7_make_ratio(sc, (num_a * denominator(x)) - numerator(x), denominator(x)));
-	  den_a = denominator(x);
-	  num_a = (num_a * denominator(x)) - numerator(x);
-	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
-	    goto SUBTRACT_INTEGERS;
-	  goto SUBTRACT_RATIOS;
+	  {
+	    s7_Int dn;
+	    den_a = denominator(x);
+#if HAVE_OVERFLOW_CHECKS
+	    if ((multiply_overflow(num_a, den_a, &dn)) ||
+		(subtract_overflow(dn, numerator(x), &dn)))
+	      {
+		if (is_null(p)) return(make_real(sc, num_a - fraction(x)));
+		rl_a = (s7_Double)num_a - fraction(x);
+		goto SUBTRACT_REALS;
+	      }
+#else
+	    if ((integer_length(num_a) + integer_length(den_a) + integer_length(numerator(x))) > s7_int_bits)
+	      {
+		if (is_null(p)) return(make_real(sc, num_a - fraction(x)));
+		rl_a = (s7_Double)num_a - fraction(x);
+		goto SUBTRACT_REALS;
+	      }
+	    dn = (num_a * den_a) - numerator(x);
+#endif
+	    if (is_null(p)) return(s7_make_ratio(sc, dn, den_a));
+	    num_a = dn;
+	    if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	      goto SUBTRACT_INTEGERS;
+	    goto SUBTRACT_RATIOS;
+	  }
 
 	case T_REAL:
 	  if (is_null(p)) return(make_real(sc, num_a - real(x)));
@@ -13687,16 +13863,29 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
       switch (type(x))
 	{
 	case T_INTEGER:
+#if HAVE_OVERFLOW_CHECKS
+	  {
+	    s7_Int di;
+	    if ((multiply_overflow(den_a, integer(x), &di)) ||
+		(subtract_overflow(num_a, di, &di)))
+	      {
+		if (is_null(p)) return(make_real(sc, ((long double)num_a / (long double)den_a) - integer(x)));
+		rl_a = ((long double)num_a / (long double)den_a) - integer(x);
+		goto SUBTRACT_REALS;
+	      }
+	    if (is_null(p)) return(s7_make_ratio(sc, di, den_a));
+	    num_a = di;
+	  }
+#else
 	  if ((integer_length(integer(x)) + integer_length(num_a) + integer_length(den_a)) > s7_int_bits)
 	    {
-	      if (is_null(p))
-		return(make_real(sc, ((long double)num_a / (long double)den_a) - integer(x)));
+	      if (is_null(p)) return(make_real(sc, ((long double)num_a / (long double)den_a) - integer(x)));
 	      rl_a = ((long double)num_a / (long double)den_a) - integer(x);
 	      goto SUBTRACT_REALS;
 	    }
-
 	  if (is_null(p)) return(s7_make_ratio(sc, num_a - (den_a * integer(x)), den_a));
 	  num_a -= (den_a * integer(x));
+#endif
 	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
 	    goto SUBTRACT_INTEGERS;
 	  goto SUBTRACT_RATIOS;
@@ -13717,6 +13906,19 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 	    else
 	      {
 #if (!WITH_GMP)
+#if HAVE_OVERFLOW_CHECKS
+		s7_Int n1d2, n2d1;
+		if ((multiply_overflow(d1, d2, &den_a)) ||
+		    (multiply_overflow(n1, d2, &n1d2)) ||
+		    (multiply_overflow(n2, d1, &n2d1)) ||
+		    (subtract_overflow(n1d2, n2d1, &num_a)))
+		  {
+		    if (is_null(p))
+		      return(make_real(sc, ((long double)n1 / (long double)d1) - ((long double)n2 / (long double)d2)));
+		    rl_a = ((long double)n1 / (long double)d1) - ((long double)n2 / (long double)d2);
+		    goto SUBTRACT_REALS;
+		  }
+#else
 		if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
 		    (n1 > s7_int_max) || (n2 > s7_int_max) ||
 		    (n1 < s7_int_min) || (n2 < s7_int_min))
@@ -13734,11 +13936,12 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 			goto SUBTRACT_REALS;
 		      }
 		  }
-#endif
-		if (is_null(p))
-		  return(s7_make_ratio(sc, n1 * d2 - n2 * d1, d1 * d2));
 		num_a = n1 * d2 - n2 * d1;
 		den_a = d1 * d2;
+#endif
+#endif
+		if (is_null(p))
+		  return(s7_make_ratio(sc, num_a, den_a));
 	      }
 	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
 	    goto SUBTRACT_INTEGERS;
@@ -13853,9 +14056,11 @@ static s7_pointer g_subtract_1(s7_scheme *sc, s7_pointer args)
   switch (type(p))
     {
     case T_INTEGER:
-#if WITH_GMP
       if (integer(p) == S7_LLONG_MIN)
+#if WITH_GMP
 	return(big_negate(sc, list_1(sc, promote_number(sc, T_BIG_INTEGER, p))));
+#else
+        return(make_integer(sc, S7_LLONG_MAX));
 #endif
       return(make_integer(sc, -integer(p)));
 
@@ -14222,22 +14427,47 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	    return(big_multiply(sc, cons(sc, s7_Int_to_big_integer(sc, num_a), cons(sc, x, p))));
 #endif
 
+#if HAVE_OVERFLOW_CHECKS
+	  {
+	    s7_Int dn;
+	    if (multiply_overflow(num_a, integer(x), &dn))
+	      {
+		if (is_null(p)) return(make_real(sc, (s7_Double)num_a * (s7_Double)integer(x)));
+		rl_a = (s7_Double)num_a * (s7_Double)integer(x);
+		goto MULTIPLY_REALS;
+	      }
+	    num_a = dn;
+	  }
+#else
 	  /* perhaps put all the math-safety stuff on the 'safety switch?
 	   *    (* 256 17179869184 4194304) -> 0 which is annoying
 	   *    (* 134217728 137438953472) -> 0
 	   */
 	  if ((integer_length(num_a) + integer_length(integer(x))) >= s7_int_bits)
 	    {
-	      if (is_null(p))
-		return(make_real(sc, (s7_Double)num_a * (s7_Double)integer(x)));
+	      if (is_null(p)) return(make_real(sc, (s7_Double)num_a * (s7_Double)integer(x)));
 	      rl_a = (s7_Double)num_a * (s7_Double)integer(x);
 	      goto MULTIPLY_REALS;
 	    }
-	  if (is_null(p)) return(make_integer(sc, num_a * integer(x)));
 	  num_a *= integer(x);
+#endif
+	  if (is_null(p)) return(make_integer(sc, num_a));
 	  goto MULTIPLY_INTEGERS;
 
 	case T_RATIO:
+#if HAVE_OVERFLOW_CHECKS
+	  {
+	    s7_Int dn;
+	    if (multiply_overflow(numerator(x), num_a, &dn))
+	      {
+		if (is_null(p))
+		  return(make_real(sc, (s7_Double)num_a * fraction(x)));
+		rl_a = (s7_Double)num_a * fraction(x);
+		goto MULTIPLY_REALS;
+	      }
+	    num_a = dn;
+	  }
+#else
 	  if ((integer_length(num_a) + integer_length(numerator(x))) >= s7_int_bits)
 	    {
 	      if (is_null(p))
@@ -14245,9 +14475,10 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	      rl_a = (s7_Double)num_a * fraction(x);
 	      goto MULTIPLY_REALS;
 	    }
-	  if (is_null(p)) return(s7_make_ratio(sc, numerator(x) * num_a, denominator(x)));
-	  den_a = denominator(x);
 	  num_a *= numerator(x);
+#endif
+	  den_a = denominator(x);
+	  if (is_null(p)) return(s7_make_ratio(sc, num_a, den_a));
 	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
 	    goto MULTIPLY_INTEGERS;
 	  goto MULTIPLY_RATIOS;
@@ -14292,6 +14523,19 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	   *   (* -1 9223372036854775806 8) -> 16
 	   *   (* -9223372036854775808 8 1e+308) -> 0.0
 	   */
+#if HAVE_OVERFLOW_CHECKS
+	  {
+	    s7_Int dn;
+	    if (multiply_overflow(integer(x), num_a, &dn))
+	      {
+		if (is_null(p))
+		  return(make_real(sc, ((s7_Double)integer(x) / (s7_Double)den_a) * (s7_Double)num_a));
+		rl_a = ((s7_Double)integer(x) / (s7_Double)den_a) * (s7_Double)num_a;
+		goto MULTIPLY_REALS;
+	      }
+	    num_a = dn;
+	  }
+#else
 	  if ((integer_length(num_a) + integer_length(integer(x))) >= s7_int_bits)
 	    {
 	      if (is_null(p))
@@ -14299,8 +14543,9 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	      rl_a = ((s7_Double)integer(x) / (s7_Double)den_a) * (s7_Double)num_a;
 	      goto MULTIPLY_REALS;
 	    }
-	  if (is_null(p)) return(s7_make_ratio(sc, num_a * integer(x), den_a));
 	  num_a *= integer(x);
+#endif
+	  if (is_null(p)) return(s7_make_ratio(sc, num_a, den_a));
 	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
 	    goto MULTIPLY_INTEGERS;
 	  goto MULTIPLY_RATIOS;
@@ -14313,6 +14558,16 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	    d2 = denominator(x);
 	    n2 = numerator(x);
 #if (!WITH_GMP)
+#if HAVE_OVERFLOW_CHECKS
+	    if ((multiply_overflow(n1, n2, &num_a)) ||
+		(multiply_overflow(d1, d2, &den_a)))
+	      {
+		if (is_null(p))
+		  return(make_real(sc, ((long double)n1 / (long double)d1) * ((long double)n2 / (long double)d2)));
+		rl_a = ((long double)n1 / (long double)d1) * ((long double)n2 / (long double)d2);
+		goto MULTIPLY_REALS;
+	      }
+#else
 	    if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
 		(n1 > s7_int_max) || (n2 > s7_int_max) ||     /*    (* 1/524288 1/19073486328125) for example */
 		(n1 < s7_int_min) || (n2 < s7_int_min))
@@ -14326,10 +14581,11 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 		    goto MULTIPLY_REALS;
 		  }
 	      }
-#endif
-	    if (is_null(p)) return(s7_make_ratio(sc, n1 * n2, d1 * d2));
 	    num_a *= n2;
 	    den_a *= d2;
+#endif
+#endif
+	    if (is_null(p)) return(s7_make_ratio(sc, num_a, den_a));
 	    if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
 	      goto MULTIPLY_INTEGERS;
 	    goto MULTIPLY_RATIOS;
@@ -14969,16 +15225,28 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 
 	case T_RATIO:
 	  den_a = denominator(x);
+#if HAVE_OVERFLOW_CHECKS
+	  {
+	    s7_Int dn;
+	    if (multiply_overflow(num_a, den_a, &dn))
+	      {
+		if (is_null(p)) return(make_real(sc, num_a * inverted_fraction(x)));
+		rl_a = (s7_Double)num_a * inverted_fraction(x);
+		goto DIVIDE_REALS;
+	      }
+	    num_a = dn;
+	  }
+#else
 	  if ((integer_length(num_a) + integer_length(den_a)) > s7_int_bits)
 	    {
-	      if (is_null(p))
-		return(make_real(sc, num_a * inverted_fraction(x)));
+	      if (is_null(p)) return(make_real(sc, num_a * inverted_fraction(x)));
 	      rl_a = (s7_Double)num_a * inverted_fraction(x);
 	      goto DIVIDE_REALS;
 	    }
-	  if (is_null(p)) return(s7_make_ratio(sc, num_a * denominator(x), numerator(x)));
+	  num_a *= den_a;
+#endif
 	  den_a = numerator(x);
-	  num_a *= denominator(x);
+	  if (is_null(p)) return(s7_make_ratio(sc, num_a, den_a));
 	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
 	    goto DIVIDE_INTEGERS;
 	  goto DIVIDE_RATIOS;
@@ -15033,16 +15301,27 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	case T_INTEGER:
 	  if (integer(x) == 0)
 	    return(division_by_zero_error(sc, sc->DIVIDE, args));
-
+#if HAVE_OVERFLOW_CHECKS
+	  {
+	    s7_Int dn;
+	    if (multiply_overflow(den_a, integer(x), &dn))
+	      {
+		if (is_null(p)) return(make_real(sc, (long double)num_a / ((long double)den_a * (s7_Double)integer(x))));
+		rl_a = (long double)num_a / ((long double)den_a * (s7_Double)integer(x));
+		goto DIVIDE_REALS;
+	      }
+	    den_a = dn;
+	  }
+#else
 	  if ((integer_length(integer(x)) + integer_length(den_a)) > s7_int_bits)
 	    {
-	      if (is_null(p))
-		return(make_real(sc, (long double)num_a / ((long double)den_a * (s7_Double)integer(x))));
+	      if (is_null(p)) return(make_real(sc, (long double)num_a / ((long double)den_a * (s7_Double)integer(x))));
 	      rl_a = (long double)num_a / ((long double)den_a * (s7_Double)integer(x));
 	      goto DIVIDE_REALS;
 	    }
-	  if (is_null(p)) return(s7_make_ratio(sc, num_a, den_a * integer(x)));
 	  den_a *= integer(x);
+#endif
+	  if (is_null(p)) return(s7_make_ratio(sc, num_a, den_a));
 	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
 	    goto DIVIDE_INTEGERS;
 	  goto DIVIDE_RATIOS;
@@ -15063,6 +15342,20 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	    else
 	      {
 #if (!WITH_GMP)
+#if HAVE_OVERFLOW_CHECKS
+		if ((multiply_overflow(n1, d2, &n1)) ||
+		    (multiply_overflow(n2, d1, &d1)))
+		  {
+		    s7_Double r1, r2;
+		    r1 = ((long double)num_a / (long double)den_a);
+		    r2 = inverted_fraction(x);
+		    if (is_null(p)) return(make_real(sc, r1 * r2));
+		    rl_a = r1 * r2;
+		    goto DIVIDE_REALS;
+		  }
+		num_a = n1;
+		den_a = d1;
+#else
 		if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
 		    (n1 > s7_int_max) || (n2 > s7_int_max) ||
 		    (n1 < s7_int_min) || (n2 < s7_int_min))
@@ -15073,17 +15366,17 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 			s7_Double r1, r2;
 			r1 = ((long double)num_a / (long double)den_a);
 			r2 = inverted_fraction(x);
-			if (is_null(p))
-			  return(make_real(sc, r1 * r2));
+			if (is_null(p)) return(make_real(sc, r1 * r2));
 			rl_a = r1 * r2;
 			goto DIVIDE_REALS;
 		      }
 		  }
-#endif
-		if (is_null(p))
-		  return(s7_make_ratio(sc, n1 * d2, d1 * n2));
 		num_a *= d2;
 		den_a *= n2;
+#endif
+#endif
+		if (is_null(p))
+		  return(s7_make_ratio(sc, num_a, den_a));
 	      }
 	    if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
 	      goto DIVIDE_INTEGERS;
@@ -16210,6 +16503,17 @@ static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 	      }
 	    else
 	      {
+#if HAVE_OVERFLOW_CHECKS
+		if ((multiply_overflow(n1, d2, &n1)) ||
+		    (multiply_overflow(n2, d1, &n2)))
+		  {
+		    if (fraction(x) >= fraction(y)) goto NOT_LESS;
+		  }
+		else
+		  {
+		    if (n1 >= n2) goto NOT_LESS;
+		  }
+#else
 		if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
 		    (n1 > s7_int_max) || (n2 > s7_int_max) ||
 		    (n1 < s7_int_min) || (n2 < s7_int_min))
@@ -16243,6 +16547,7 @@ static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 		  {
 		    if ((n1 * d2) >=  (n2 * d1)) goto NOT_LESS;
 		  }
+#endif
 	      }
 	  }
 	  if (is_null(p)) return(sc->T);
@@ -16408,6 +16713,17 @@ static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
 	      }
 	    else
 	      {
+#if HAVE_OVERFLOW_CHECKS
+		if ((multiply_overflow(n1, d2, &n1)) ||
+		    (multiply_overflow(n2, d1, &n2)))
+		  {
+		    if (fraction(x) > fraction(y)) goto NOT_LEQ;
+		  }
+		else
+		  {
+		    if (n1 > n2) goto NOT_LEQ;
+		  }
+#else
 		if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
 		    (n1 > s7_int_max) || (n2 > s7_int_max) ||
 		    (n1 < s7_int_min) || (n2 < s7_int_min))
@@ -16430,6 +16746,7 @@ static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
 		  {
 		    if ((n1 * d2) >  (n2 * d1)) goto NOT_LEQ;
 		  }
+#endif
 	      }
 	  }
 	  if (is_null(p)) return(sc->T);
@@ -16595,6 +16912,17 @@ static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
 	      }
 	    else
 	      {
+#if HAVE_OVERFLOW_CHECKS
+		if ((multiply_overflow(n1, d2, &n1)) ||
+		    (multiply_overflow(n2, d1, &n2)))
+		  {
+		    if (fraction(x) <= fraction(y)) goto NOT_GREATER;
+		  }
+		else
+		  {
+		    if (n1 <= n2) goto NOT_GREATER;
+		  }
+#else
 		if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
 		    (n1 > s7_int_max) || (n2 > s7_int_max) ||
 		    (n1 < s7_int_min) || (n2 < s7_int_min))
@@ -16628,6 +16956,7 @@ static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
 		  {
 		    if ((n1 * d2) <=  (n2 * d1)) goto NOT_GREATER;
 		  }
+#endif
 	      }
 	  }
 	  if (is_null(p)) return(sc->T);
@@ -16795,6 +17124,17 @@ static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
 	      }
 	    else
 	      {
+#if HAVE_OVERFLOW_CHECKS
+		if ((multiply_overflow(n1, d2, &n1)) ||
+		    (multiply_overflow(n2, d1, &n2)))
+		  {
+		    if (fraction(x) < fraction(y)) goto NOT_GEQ;
+		  }
+		else
+		  {
+		    if (n1 < n2) goto NOT_GEQ;
+		  }
+#else
 		if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
 		    (n1 > s7_int_max) || (n2 > s7_int_max) ||
 		    (n1 < s7_int_min) || (n2 < s7_int_min))
@@ -16817,6 +17157,7 @@ static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
 		  {
 		    if ((n1 * d2) <  (n2 * d1)) goto NOT_GEQ;
 		  }
+#endif
 	      }
 	  }
 	  if (is_null(p)) return(sc->T);
@@ -18281,7 +18622,15 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
    * but anyone using ash must know something about bits...
    */
   if (arg2 >= 0)
-    return(make_integer(sc, arg1 << arg2));
+    {
+      if (arg1 < 0)
+	{
+	  unsigned long long int z;
+	  z = (unsigned long long int)arg1;
+	  return(make_integer(sc, (s7_Int)(z << arg2)));
+	}
+      return(make_integer(sc, arg1 << arg2));
+    }
   return(make_integer(sc, arg1 >> -arg2));
 }
 
@@ -26596,9 +26945,9 @@ static int format_read_integer(s7_scheme *sc, int *cur_i, int str_len, const cha
       dig = digits[(unsigned char)str[i]];
       if (dig < 10)
 	{
-#if defined(__GNUC__) && (__GNUC__ >= 5)
-	  if ((__builtin_mul_overflow(lval, 10, &lval)) ||
-	      (__builtin_add_overflow(lval, dig, &lval)))
+#if HAVE_OVERFLOW_CHECKS
+	  if ((int_multiply_overflow(lval, 10, &lval)) ||
+	      (int_add_overflow(lval, dig, &lval)))
 	    break;
 #else        
 	  lval = dig + (lval * 10);
@@ -32005,11 +32354,15 @@ static s7_pointer g_make_float_vector(s7_scheme *sc, s7_pointer args)
       if (is_pair(cdr(args)))
 	{
 	  init = cadr(args);
-	  if (!is_real(init))
+	  if (!s7_is_real(init))
 	    {
 	      check_method(sc, init, sc->MAKE_FLOAT_VECTOR, args);
 	      return(wrong_type_argument(sc, sc->MAKE_FLOAT_VECTOR, small_int(2), init, T_REAL));
 	    }
+#if WITH_GMP
+	  if (s7_is_bignum(init))
+	    return(g_make_vector(sc, list_3(sc, p, make_real(sc, number_to_double(sc, init, "make-float-vector")), sc->T)));
+#endif
 	  if (is_rational(init))
 	    return(g_make_vector(sc, list_3(sc, p, make_real(sc, rational_to_double(sc, init)), sc->T)));
 	}
@@ -33047,7 +33400,9 @@ static s7_pointer g_hash_table_entries(s7_scheme *sc, s7_pointer args)
 static int hash_float_location(s7_Double x)
 {
   int loc;
-  /* if ((is_inf(x)) || (is_NaN(x))) return(0); */
+#if defined(__clang__)
+  if ((is_inf(x)) || (is_NaN(x))) return(0);
+#endif
   x = fabs(x);
   if (x < 100.0)
     loc = 1000.0 * x;     /* this means hash_table_float_epsilon only works if it is less than about .001 */
@@ -67959,58 +68314,5 @@ int main(int argc, char **argv)
  * the signed char default is a pain, but can't be changed at this level.
  *   find each blasted bad case...
  * multi-dim vect iterator that returns all at given index
- * --------------------------------------------------------------------------------
- *
- * this could perhaps replace configure?
-#ifdef __has_include
-#  if __has_include(<optional>)
-#    include <optional>
-#    define have_optional 1
-#  elif __has_include(<experimental/optional>)
-#    include <experimental/optional>
-#    define have_optional 1
-#    define experimental_optional
-#  else
-#    define have_optional 0
-#  endif
-#endif
-*
-*
-A new set of built-in functions for arithmetics with overflow checking has been added: __builtin_add_overflow, __builtin_sub_overflow and __builtin_mul_overflow and for compatibility with clang also other variants. These builtins have two integral arguments (which don't need to have the same type), the arguments are extended to infinite precision signed type, +, - or * is performed on those, and the result is stored in an integer variable pointed to by the last argument. If the stored value is equal to the infinite precision result, the built-in functions return false, otherwise true. The type of the integer variable that will hold the result can be different from the types of the first two arguments. The following snippet demonstrates how this can be used in computing the size for the calloc function:
-void *
-calloc (size_t x, size_t y)
-{
-  size_t sz;
-  if (__builtin_mul_overflow (x, y, &sz))
-    return NULL;
-  void *ret = malloc (sz);
-  if (ret) memset (res, 0, sz);
-  return ret;
-}
-* use defined(__GNUC__) && (__GNUC__ >= 5)
- *
- *   int overflow: (s7test)
-s7.c:9556:9: runtime error: signed integer overflow: 8 + 9223372036854775800 cannot be represented in type 'long long int'
-s7.c:9595:11: runtime error: negation of -9223372036854775808 cannot be represented in type 'long long int'; cast to an unsigned type to negate this value to itself
-s7.c:9559:23: runtime error: signed integer overflow: 4611686018427387903 * 10 cannot be represented in type 'long long int'
-s7.c:9559:9: runtime error: signed integer overflow: 4 + 9223372036854775804 cannot be represented in type 'long long int'
-s7.c:11565:7: runtime error: signed integer overflow: 4294967296 * 4294967296 cannot be represented in type 'long long int'
-s7.c:9556:23: runtime error: signed integer overflow: -6640827866535438582 * 10 cannot be represented in type 'long long int'
-s7.c:26533:21: runtime error: signed integer overflow: 1234567891 * 10 cannot be represented in type 'int [2]'
-s7.c:10469:9: runtime error: negation of -9223372036854775808 cannot be represented in type 'long long int'; cast to an unsigned type to negate this value to itself
-s7.c:10506:9: runtime error: negation of -9223372036854775808 cannot be represented in type 'long long int'; cast to an unsigned type to negate this value to itself
-s7.c:18219:12: runtime error: left shift of negative value -9223372036854775808
-s7.c:9571:23: runtime error: signed integer overflow: 16 * 768614336404564650 cannot be represented in type 'long long int'
-s7.c:11529:9: runtime error: signed integer overflow: 274870351366 * 274870351366 cannot be represented in type 'long long int'
-s7.c:12801:18: runtime error: signed integer overflow: -9223372036854775808 + -1 cannot be represented in type 'long long int [63]'
-s7.c:13549:18: runtime error: signed integer overflow: -9223372036854775808 - 9223372036854775807 cannot be represented in type 'long long int [63]'
-s7.c:13795:14: runtime error: negation of -9223372036854775808 cannot be represented in type 'long long int [63]'; cast to an unsigned type to negate this value to itself
-s7.c:12742:16: runtime error: negation of -9223372036854775808 cannot be represented in type 'long long int [63]'; cast to an unsigned type to negate this value to itself
-s7.c:12743:16: runtime error: negation of -9223372036854775808 cannot be represented in type 'long long int [63]'; cast to an unsigned type to negate this value to itself
-s7.c:7768:12: runtime error: signed integer overflow: 4611686018427387904 * 2 cannot be represented in type 'long long int'
-s7.c:10474:9: runtime error: negation of -9223372036854775808 cannot be represented in type 'long long int'; cast to an unsigned type to negate this value to itself
-s7.c:9673:29: runtime error: signed integer overflow: 1000000000 * 10 cannot be represented in type 'int [17]'
-s7.c:9568:23: runtime error: signed integer overflow: 16 * 8601736444851329906 cannot be represented in type 'long long int'
-* --------------------------------------------------------------------------------
  */
  
