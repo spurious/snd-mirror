@@ -24645,6 +24645,7 @@ static s7_pointer pair_iterate_1(s7_scheme *sc, s7_pointer obj)
   return(sc->ITERATOR_END);
 }
 
+
 static s7_pointer make_iterator(s7_scheme *sc, s7_pointer e)
 {
   s7_pointer iter;
@@ -24663,8 +24664,17 @@ static s7_pointer make_iterator(s7_scheme *sc, s7_pointer e)
 	}
       else
 	{
+	  s7_pointer func;
 	  sc->temp6 = iter;
-	  check_method(sc, e, sc->MAKE_ITERATOR, list_1(sc, e));
+	  if ((has_methods(e)) && ((func = find_method(sc, find_let(sc, e), sc->MAKE_ITERATOR)) != sc->UNDEFINED))
+	    {
+	      s7_pointer it;
+	      it = s7_apply_function(sc, func, list_1(sc, e));
+	      if (!is_iterator(it))
+		return(s7_error(sc, sc->ERROR, list_2(sc, make_string_wrapper(sc, "make-iterator method must return an interator: ~S"), it)));
+	      sc->temp6 = sc->NIL;
+	      return(it);
+	    }
 	  sc->temp6 = sc->NIL;
 	  iterator_current(iter) = let_slots(e);
 	  iterator_next(iter) = let_iterate;
@@ -24751,7 +24761,10 @@ static s7_pointer g_iterate(s7_scheme *sc, s7_pointer args)
 
   iter = car(args);
   if (!is_iterator(iter))
-    return(simple_wrong_type_argument(sc, sc->ITERATE, iter, T_ITERATOR));
+    {
+      check_method(sc, iter, sc->ITERATE, args);
+      return(simple_wrong_type_argument(sc, sc->ITERATE, iter, T_ITERATOR));
+    }
   return((iterator_next(iter))(sc, iter));
 }
 
@@ -26240,6 +26253,49 @@ static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port
 }
 #endif
 
+static void iterator_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
+{
+  int nlen;
+  if (use_write == USE_READABLE_WRITE)
+    {
+      if (iterator_is_at_end(obj))
+	port_write_string(port)(sc, "#<eof>", 6, port);
+      else
+	{
+	  s7_pointer seq;
+	  seq = iterator_sequence(obj);
+	  switch (type(seq))
+	    {
+	    case T_STRING:
+	      port_write_string(port)(sc, "(make-iterator \"", 16, port);
+	      port_write_string(port)(sc, (char *)(string_value(seq) + iterator_position(obj)), string_length(seq) - iterator_position(obj), port);
+	      port_write_string(port)(sc, "\")", 2, port);
+	      break;
+	      
+	    default:
+	      if (iterator_position(obj) > 0)
+		port_write_string(port)(sc, "(let ((iter (make-iterator ", 27, port);
+	      else port_write_string(port)(sc, "(make-iterator ", 15, port);
+	      object_to_port_with_circle_check(sc, iterator_sequence(obj), port, use_write, to_file, ci);
+	      if (iterator_position(obj) > 0)
+		{
+		  char *str;
+		  str = (char *)malloc(128 * sizeof(char));
+		  nlen = snprintf(str, 128, "))) (do ((i 0 (+ i 1))) ((= i %lld) iter) (iterate iter)))", iterator_position(obj));
+		  port_write_string(port)(sc, str, nlen, port);
+		  free(str);
+		}
+	      else port_write_character(port)(sc, ')', port);
+	    }
+	}
+    }
+  else
+    {
+      char buf[64];
+      nlen = snprintf(buf, 64, "#<iterator: %s>", type_name(sc, iterator_sequence(obj), NO_ARTICLE));
+      port_write_string(port)(sc, buf, nlen, port);
+    }
+}
 
 static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
 {
@@ -26267,45 +26323,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_ITERATOR:
-      if (use_write == USE_READABLE_WRITE)
-	{
-	  if (iterator_is_at_end(obj))
-	    port_write_string(port)(sc, "#<eof>", 6, port);
-	  else
-	    {
-	      s7_pointer seq;
-	      seq = iterator_sequence(obj);
-	      switch (type(seq))
-		{
-		case T_STRING:
-		  port_write_string(port)(sc, "(make-iterator \"", 16, port);
-		  port_write_string(port)(sc, (char *)(string_value(seq) + iterator_position(obj)), string_length(seq) - iterator_position(obj), port);
-		  port_write_string(port)(sc, "\")", 2, port);
-		  break;
-		  
-		default:
-		  if (iterator_position(obj) > 0)
-		    port_write_string(port)(sc, "(let ((iter (make-iterator ", 27, port);
-		  else port_write_string(port)(sc, "(make-iterator ", 15, port);
-		  object_to_port_with_circle_check(sc, iterator_sequence(obj), port, use_write, to_file, ci);
-		  if (iterator_position(obj) > 0)
-		    {
-		      char *str;
-		      int nlen;
-		      str = (char *)malloc(128 * sizeof(char));
-		      nlen = snprintf(str, 128, "))) (do ((i 0 (+ i 1))) ((= i %lld) iter) (iterate iter)))", iterator_position(obj));
-		      port_write_string(port)(sc, str, nlen, port);
-		      free(str);
-		    }
-		  else port_write_character(port)(sc, ')', port);
-		}
-	    }
-	}
-      else
-	{
-	  nlen = snprintf(buf, 64, "#<iterator: %s>", type_name(sc, iterator_sequence(obj), NO_ARTICLE));
-	  port_write_string(port)(sc, buf, nlen, port);
-	}
+      iterator_to_port(sc, obj, port, use_write, to_file, ci);
       break;
 
     case T_LET:
@@ -39995,7 +40013,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 
   for (len = 0, p = cdr(args); is_not_null(p); p = cdr(p), len++)
     {
-      if (!is_sequence(car(p)))
+      if ((!is_sequence(car(p))) && (!is_iterator(car(p))))
 	return(simple_wrong_type_argument_with_type(sc, sc->FOR_EACH, car(p), A_SEQUENCE));
       if (is_null(car(p)))
 	got_nil = true;
@@ -40016,7 +40034,9 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
   for (p = cdr(args); is_not_null(p); p = cdr(p))
     {
       s7_pointer iter;
-      iter = make_iterator(sc, car(p));
+      iter = car(p);
+      if (!is_iterator(car(p)))
+	iter = make_iterator(sc, iter);
       sc->z = cons(sc, iter, sc->z);
     }
 
@@ -40146,7 +40166,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
   for (len = 0, p = cdr(args); is_not_null(p); p = cdr(p), len++)
     {
-      if (!is_sequence(car(p)))
+      if ((!is_sequence(car(p))) && (!is_iterator(car(p))))
 	return(simple_wrong_type_argument_with_type(sc, sc->MAP, car(p), A_SEQUENCE));
       if (is_null(car(p)))
 	got_nil = true;
@@ -40177,7 +40197,9 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   for (p = cdr(args); is_not_null(p); p = cdr(p))
     {
       s7_pointer iter;
-      iter = make_iterator(sc, car(p));
+      iter = car(p);
+      if (!is_iterator(car(p)))
+	iter = make_iterator(sc, iter);
       sc->z = cons(sc, iter, sc->z);
     }
 
@@ -54969,7 +54991,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->value = sc->UNSPECIFIED;
 		    goto START;
 		  }
-		sc->temp3 = make_iterator(sc, z);
+		if (is_iterator(z))
+		  sc->temp3 = z;
+		else sc->temp3 = make_iterator(sc, z);
 
 		sc->code = sc->x;
 		sc->x = sc->NIL;
@@ -68277,18 +68301,18 @@ int main(int argc, char **argv)
 /* ------------------------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5 15.6
- * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1127
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1133
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1144
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1128
  * teq            |      |      | 6612                     3887 3091
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3326
- * tcopy          |      |      |                          4970 4286
- * tmap           |      |      | 11.0           5031 4769 4685 4682
- * lg             |      |      | 6547 6497 6494 6235 6229 6239 6621
- * titer          |      |      |                          7976 6812
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6865
+ * tcopy          |      |      |                          4970 4276
+ * tmap           |      |      | 11.0           5031 4769 4685 4687
+ * lg             |      |      | 6547 6497 6494 6235 6229 6239 6596
+ * titer          |      |      |                          7976 6851
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6849
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
- * thash          |      |      |                          19.4 17.4
- * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8
+ * thash          |      |      |                          19.4 18.1
+ * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.9
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1
  *
  * ------------------------------------------------------------------
@@ -68311,8 +68335,9 @@ int main(int argc, char **argv)
  * should this be fixed? (symbol->value 'gc-stats *s7*) -> #<undefined>
  *   to make *s7* a completely normal let would require symbol accessors etc
  *   sym->val might check let_ref_fallback for all computed cases
- * the signed char default is a pain, but can't be changed at this level.
- *   find each blasted bad case...
- * multi-dim vect iterator that returns all at given index
+ * test iterator args to for-each/map (t215) -- what about format ~{~}? 
+ * time strncmp again [hash11->12] (local is slightly faster): unrolled is minor gain -- maybe use even though unaligned?  How to force alignment? (int* at malloc?)
+ *   is there a flag for unaligned-ok?
+ * sanitizer args in testsnd, recheck overflow code
  */
  
