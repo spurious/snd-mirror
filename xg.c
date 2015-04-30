@@ -31808,6 +31808,26 @@ static Xen gxg_gtk_popover_get_transitions_enabled(Xen popover)
 
 #endif
 
+#if GTK_CHECK_VERSION(3, 18, 0)
+static Xen gxg_gdk_keymap_get_scroll_lock_state(Xen keymap)
+{
+  #define H_gdk_keymap_get_scroll_lock_state "gboolean gdk_keymap_get_scroll_lock_state(GdkKeymap* keymap)"
+  Xen_check_type(Xen_is_GdkKeymap_(keymap), keymap, 1, "gdk_keymap_get_scroll_lock_state", "GdkKeymap*");
+  return(C_to_Xen_gboolean(gdk_keymap_get_scroll_lock_state(Xen_to_C_GdkKeymap_(keymap))));
+}
+
+static Xen gxg_gtk_radio_menu_item_join_group(Xen radio_menu_item, Xen group_source)
+{
+  #define H_gtk_radio_menu_item_join_group "void gtk_radio_menu_item_join_group(GtkRadioMenuItem* radio_menu_item, \
+GtkRadioMenuItem* group_source)"
+  Xen_check_type(Xen_is_GtkRadioMenuItem_(radio_menu_item), radio_menu_item, 1, "gtk_radio_menu_item_join_group", "GtkRadioMenuItem*");
+  Xen_check_type(Xen_is_GtkRadioMenuItem_(group_source), group_source, 2, "gtk_radio_menu_item_join_group", "GtkRadioMenuItem*");
+  gtk_radio_menu_item_join_group(Xen_to_C_GtkRadioMenuItem_(radio_menu_item), Xen_to_C_GtkRadioMenuItem_(group_source));
+  return(Xen_false);
+}
+
+#endif
+
 static Xen gxg_cairo_create(Xen target)
 {
   #define H_cairo_create "cairo_t* cairo_create(cairo_surface_t* target)"
@@ -38405,6 +38425,11 @@ Xen_wrap_2_args(gxg_gtk_popover_set_transitions_enabled_w, gxg_gtk_popover_set_t
 Xen_wrap_1_arg(gxg_gtk_popover_get_transitions_enabled_w, gxg_gtk_popover_get_transitions_enabled)
 #endif
 
+#if GTK_CHECK_VERSION(3, 18, 0)
+Xen_wrap_1_arg(gxg_gdk_keymap_get_scroll_lock_state_w, gxg_gdk_keymap_get_scroll_lock_state)
+Xen_wrap_2_args(gxg_gtk_radio_menu_item_join_group_w, gxg_gtk_radio_menu_item_join_group)
+#endif
+
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
 Xen_wrap_no_args(gxg_cairo_version_w, gxg_cairo_version)
 Xen_wrap_no_args(gxg_cairo_version_string_w, gxg_cairo_version_string)
@@ -42478,6 +42503,11 @@ static void define_functions(void)
   Xg_define_procedure(gtk_popover_get_transitions_enabled, gxg_gtk_popover_get_transitions_enabled_w, 1, 0, 0, H_gtk_popover_get_transitions_enabled);
 #endif
 
+#if GTK_CHECK_VERSION(3, 18, 0)
+  Xg_define_procedure(gdk_keymap_get_scroll_lock_state, gxg_gdk_keymap_get_scroll_lock_state_w, 1, 0, 0, H_gdk_keymap_get_scroll_lock_state);
+  Xg_define_procedure(gtk_radio_menu_item_join_group, gxg_gtk_radio_menu_item_join_group_w, 2, 0, 0, H_gtk_radio_menu_item_join_group);
+#endif
+
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
   Xg_define_integer_procedure(cairo_version, gxg_cairo_version_w, 0, 0, 0, H_cairo_version);
   Xg_define_procedure(cairo_version_string, gxg_cairo_version_string_w, 0, 0, 0, H_cairo_version_string);
@@ -45125,7 +45155,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("13-Apr-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("29-Apr-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

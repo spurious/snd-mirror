@@ -5716,7 +5716,7 @@ loading code that calls gcd.
 
 <ul>
 <li>remove the exact/inexact distinction including #i and #e
-<li>remove `#(...) support (quasiquoted vector constants)
+<li>remove `#(...) quasiquoted vector constants &mdash; use reader-cond instead
 <li>remove call-with-values and its friends
 <li>remove char-ready?
 <li>change eof-object? to eof? or just omit it (you can use eq? #&lt;eof&gt;)
@@ -5740,7 +5740,6 @@ loading code that calls gcd.
 <li>change string-&gt;symbol to symbol (what to do with symbol-&gt;string in that case?)
 <li>change with-output-to-* and with-input-from-* to omit the pointless lambda.
 <li>remove the with-* IO functions (e.g. with-input-from-string), keeping the call-with-* versions (call-with-input-string).
-<li>replace the #n# notation with one that distinguishes between shared and cyclic structures.
 </ul>
 
 <p>There are several less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,

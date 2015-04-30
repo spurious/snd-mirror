@@ -9150,3 +9150,10 @@
 ;;; 3.16.0
 ;;; 3.16.1
 ;;; 3.16.2:
+
+;;; 3.17.1
+
+(CFNC-3.18 "gboolean gdk_keymap_get_scroll_lock_state GdkKeymap* keymap")
+(CFNC-3.18 "void gtk_radio_menu_item_join_group GtkRadioMenuItem* radio_menu_item GtkRadioMenuItem* group_source")
+
+

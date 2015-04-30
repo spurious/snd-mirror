@@ -806,7 +806,7 @@ struct s7_scheme {
   unsigned int read_line_buf_size;
 
   s7_pointer v, w, x, y, z;         /* evaluator local vars */
-  s7_pointer temp1, temp2, temp3, temp4, temp5, temp6, temp7;
+  s7_pointer temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8;
   s7_pointer temp_cell, temp_cell_1, temp_cell_2;
   s7_pointer T1_1, T2_1, T2_2, T3_1, T3_2, T3_3, Z2_1, Z2_2;
   s7_pointer A1_1, A2_1, A2_2, A3_1, A3_2, A3_3, A4_1, A4_2, A4_3, A4_4;
@@ -1179,8 +1179,9 @@ static void init_types(void)
 #define typesflag(p)                  ((p)->tf.sflag)
 
 #if DEBUGGING
+  static bool check_types = true;
   #define unchecked_type(p)           ((p)->tf.type_field)
-  #define type(p) ({unsigned char _t_; _t_ = (p)->tf.type_field; if ((_t_ == T_FREE) || (_t_ >= NUM_TYPES)) print_gc_info(p, __LINE__); _t_;})
+  #define type(p) ({unsigned char _t_; _t_ = (p)->tf.type_field; if (((check_types) && (_t_ == T_FREE)) || (_t_ >= NUM_TYPES)) print_gc_info(p, __LINE__); _t_;})
   #define set_type(p, f) \
   do { \
       p->previous_alloc_line = p->current_alloc_line; \
@@ -2145,7 +2146,7 @@ static bool safe_strcmp(const char *s1, const char *s2)
 
 static bool local_strncmp(const char *s1, const char *s2, unsigned int n)
 {
-#if 0
+#if defined(__x86_64__) || defined(__i386__) /* unaligned accesses are safe on i386 hardware, sez everyone */
   if (n >= 4)
     {
       int *is1, *is2;
@@ -2172,7 +2173,7 @@ static bool local_strncmp(const char *s1, const char *s2, unsigned int n)
 static void memclr(void *s, size_t n)
 {
   unsigned char *s2;
-#if 0
+#if defined(__x86_64__) || defined(__i386__)
   if (n >= 4)
     {
       int *s1 = (int *)s;
@@ -2235,7 +2236,6 @@ static void optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e);
 static double next_random(s7_rng_t *r);
 static void free_hash_table(s7_pointer table);
 #if DEBUGGING
-static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port, int nlen);
 static void print_gc_info(s7_pointer obj, int line);
 #endif
 
@@ -3827,7 +3827,13 @@ static int gc(s7_scheme *sc)
   mark_rootlet(sc);
   S7_MARK(sc->args);
   mark_let(sc->envir);
+#if DEBUGGING
+  check_types = false;
+#endif
   mark_let(sc->owlet);
+#if DEBUGGING
+  check_types = true;
+#endif
   S7_MARK(sc->code);
   S7_MARK(sc->cur_code);
   mark_stack_1(sc->stack, s7_stack_top(sc));
@@ -3845,6 +3851,7 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->temp5);
   S7_MARK(sc->temp6);
   S7_MARK(sc->temp7);
+  S7_MARK(sc->temp8);
 
   set_mark(sc->input_port);
   S7_MARK(sc->input_port_stack);
@@ -4343,8 +4350,27 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 /* -------------------------------- stacks -------------------------------- */
 
 #define OP_STACK_INITIAL_SIZE 128
+#if DEBUGGING
+static void push_op_stack(s7_scheme *sc, s7_pointer op)
+{
+  *(sc->op_stack_now) = op;
+  sc->op_stack_now++;
+  if (sc->op_stack_now > sc->op_stack_end)
+    fprintf(stderr, "push ran off end of op_stack\n");
+  if (sc->op_stack_now == sc->op_stack_end)
+    fprintf(stderr, "push at end of op_stack\n");
+}
+static s7_pointer pop_op_stack(s7_scheme *sc)
+{
+  if (sc->op_stack_now <= sc->op_stack)
+    fprintf(stderr, "pop off start of op stack\n");
+  sc->op_stack_now--;
+  return(*(sc->op_stack_now));
+}
+#else
 #define push_op_stack(Sc, Op) (*Sc->op_stack_now++) = Op
 #define pop_op_stack(Sc)      (*(--(Sc->op_stack_now)))
+#endif
 
 static void initialize_op_stack(s7_scheme *sc)
 {
@@ -12705,7 +12731,6 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 		
 		if (!multiply_overflow(n1, d2, &n1d2))
 		  {
-
 		    /* can't use "floor" here (int->float ruins everything) */
 		    fl = (s7_Int)(n1d2 / n2d1);
 		    if (((n1 < 0) && (n2 > 0)) ||
@@ -26210,12 +26235,12 @@ static void print_gc_info(s7_pointer obj, int line)
   abort();
 }
 
-static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port, int nlen)
+static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 {
   /* show current state, current allocated state, and previous allocated state.
    */
   char *current_bits, *allocated_bits, *previous_bits, *str;
-  int save_typeflag, len;
+  int save_typeflag, len, nlen;
   const char *excl_name;
 
   if (is_free(obj))
@@ -26297,11 +26322,35 @@ static void iterator_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use
     }
 }
 
-static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
+static void baffle_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 {
   int nlen = 0;
-  char *str;
   char buf[64];
+  nlen = snprintf(buf, 64, "#<baffle: %d>", baffle_key(obj));
+  port_write_string(port)(sc, buf, nlen, port);
+}
+
+static void c_pointer_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write)
+{
+  int nlen = 0;
+  char buf[64];
+
+  if (use_write == USE_READABLE_WRITE)
+    {
+#if ((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4))
+      nlen = snprintf(buf, 64, "(c-pointer %ld)", (long)raw_pointer(obj));
+#else
+      nlen = snprintf(buf, 64, "(c-pointer %lld)", (long long int)raw_pointer(obj));
+#endif
+    }
+  else nlen = snprintf(buf, 64, "#<c_pointer %p>", raw_pointer(obj));
+  port_write_string(port)(sc, buf, nlen, port);
+}
+
+static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
+{
+  int nlen;
+  char *str;
 
   switch (type(obj))
     {
@@ -26350,8 +26399,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_BAFFLE:
-      nlen = snprintf(buf, 64, "#<baffle: %d>", baffle_key(obj));
-      port_write_string(port)(sc, buf, nlen, port);
+      baffle_to_port(sc, obj, port);
       break;
 
     case T_INTEGER:
@@ -26439,6 +26487,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       else
 	{
 	  const char *p;
+	  nlen = 0;
 	  p = c_closure_name(sc, obj, &nlen);
 	  if (nlen > 0)
 	    port_write_string(port)(sc, p, nlen, port);
@@ -26454,6 +26503,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       else
 	{
 	  const char *p;
+	  nlen = 0;
 	  p = c_closure_name(sc, obj, &nlen);
 	  if (nlen > 0)
 	    port_write_string(port)(sc, p, nlen, port);
@@ -26473,16 +26523,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_C_POINTER:
-      if (use_write == USE_READABLE_WRITE)
-	{
-#if ((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4))
-	  nlen = snprintf(buf, 64, "(c-pointer %ld)", (long)raw_pointer(obj));
-#else
-	  nlen = snprintf(buf, 64, "(c-pointer %lld)", (long long int)raw_pointer(obj));
-#endif
-	}
-      else nlen = snprintf(buf, 64, "#<c_pointer %p>", raw_pointer(obj));
-      port_write_string(port)(sc, buf, nlen, port);
+      c_pointer_to_port(sc, obj, port, use_write);
       break;
 
     case T_CONTINUATION:
@@ -26520,7 +26561,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 
     default:
 #if DEBUGGING
-      print_debugging_state(sc, obj, port, nlen);
+      print_debugging_state(sc, obj, port);
 #else
       {
 	char *str, *tmp;
@@ -31313,12 +31354,11 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
   if (result_type == T_VECTOR)
     {
       s7_pointer *dest;
-      int gc_loc = 0;
       s7_Int i = 0;
 
       /* here the gc might be called since float_vector_getter makes a new real */
       v = make_vector_1(sc, len, parlous_gc, result_type);
-      if (parlous_gc) gc_loc = s7_gc_protect(sc, v);
+      if (parlous_gc) sc->temp8 = v;
       dest = vector_elements(v);
       for (p = args; is_pair(p); p = cdr(p))
 	{
@@ -31329,7 +31369,7 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 	    for (j = 0; j < source_len; j++, i++)
 	      dest[i] = vector_getter(x)(sc, x, j);
 	}
-      if (parlous_gc) s7_gc_unprotect_at(sc, gc_loc);
+      if (parlous_gc) sc->temp8 = sc->NIL;
     }
   else
     {
@@ -37597,6 +37637,9 @@ s7_pointer s7_fill(s7_scheme *sc, s7_pointer args)
 }
 
 #define g_fill s7_fill
+/* perhaps (fill iterator obj) could fill the underlying sequence (if any) -- not let/closure
+ *   similarly for length, reverse etc
+ */
 
 
 static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
@@ -37618,11 +37661,8 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
       if (hash_table_entries(obj) > 0)
 	{
 	  s7_pointer x, iterator;
-	  int gc_iter;
-
 	  iterator = make_iterator(sc, obj);
-	  gc_iter = s7_gc_protect(sc, iterator);
-
+	  sc->temp8 = iterator;
 	  sc->w = sc->NIL;
 	  while (true)
 	    {
@@ -37632,8 +37672,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 	    }
 	  x = sc->w;
 	  sc->w = sc->NIL;
-
-	  s7_gc_unprotect_at(sc, gc_iter);
+	  sc->temp8 = sc->NIL;
 	  return(x);
 	}
       return(sc->NIL);
@@ -37644,11 +37683,39 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 #endif
       return(s7_let_to_list(sc, obj));
 
+    case T_ITERATOR:
+      {
+	s7_pointer result, p;
+	result = sc->NIL;
+	while (true)
+	  {
+	    s7_pointer val;
+	    val = iterate(sc, obj);
+	    if ((val == sc->ITERATOR_END) &&
+		(iterator_is_at_end(obj)))
+	      {
+		sc->temp8 = sc->NIL;
+		return(result);
+	      }
+	    if (is_null(result))
+	      {
+		result = cons(sc, val, result);
+		sc->temp8 = result;
+		p = result;
+	      }
+	    else
+	      {
+		cdr(p) = cons(sc, val, sc->NIL);
+		p = cdr(p);
+	      }
+	  }
+      }
+
     case T_C_OBJECT:
       {
 	long int i, len; /* the "long" matters on 64-bit machines */
 	s7_pointer x, z, result;
-	int gc_res = -1, gc_z = -1;
+	int gc_z = -1;
 
 	x = object_length(sc, obj);
 	if (s7_is_integer(x))
@@ -37661,7 +37728,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 	  return(sc->NIL);
 
 	result = make_list(sc, len, sc->NIL);
-	gc_res = s7_gc_protect(sc, result);
+	sc->temp8 = result;
 	z = list_1(sc, sc->F);
 	gc_z = s7_gc_protect(sc, z);
 
@@ -37675,7 +37742,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 	sc->x = car(sc->Z2_1);
 	sc->z = car(sc->Z2_2);
 	s7_gc_unprotect_at(sc, gc_z);
-	s7_gc_unprotect_at(sc, gc_res);
+	sc->temp8 = sc->NIL;
 	return(result);
       }
     }
@@ -66947,6 +67014,7 @@ s7_scheme *s7_init(void)
   sc->temp5 = sc->NIL;
   sc->temp6 = sc->NIL;
   sc->temp7 = sc->NIL;
+  sc->temp8 = sc->NIL;
 
   sc->begin_hook = NULL;
   sc->default_rng = NULL;
@@ -68162,10 +68230,11 @@ s7_scheme *s7_init(void)
                             (lambda (return)                                                                  \n\
                               (for-each                                                                       \n\
                                 (lambda (clause)                                                              \n\
-	                          (if (eval (car clause))                                                     \n\
-	                              (if (null? (cddr clause))                                               \n\
-                                          (return (cadr clause))                                              \n\
-                                          (return (apply values (map quote (cdr clause)))))))                 \n\
+	                          (let ((val (eval (car clause))))                                            \n\
+                                    (if val                                                                   \n\
+                                        (if (null? (cdr clause)) (return val)                                 \n\
+	                                    (if (null? (cddr clause)) (return (cadr clause))                  \n\
+                                                (return (apply values (map quote (cdr clause)))))))))         \n\
                                 clauses)                                                                      \n\
                               (values))))");
 
@@ -68311,7 +68380,7 @@ int main(int argc, char **argv)
  * titer          |      |      |                          7976 6851
  * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6849
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
- * thash          |      |      |                          19.4 18.1
+ * thash          |      |      |                          19.4 17.4
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.9
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1
  *
@@ -68321,6 +68390,9 @@ int main(int argc, char **argv)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  * cyclic-seq in stuff.scm, but current code is really clumsy
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
+ * should this be fixed? (symbol->value 'gc-stats *s7*) -> #<undefined>
+ *   to make *s7* a completely normal let would require symbol accessors etc
+ *   sym->val might check let_ref_fallback for all computed cases
  *
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)
  *   also cload: libc libgsl etc arg types/return types [real string ?]
@@ -68332,12 +68404,4 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * define-constant func gives a way to avoid closure_is_ok in all cases, so maybe move the arg checks into the main op?
  * gcc5 jit to replace clm2xen?
- * should this be fixed? (symbol->value 'gc-stats *s7*) -> #<undefined>
- *   to make *s7* a completely normal let would require symbol accessors etc
- *   sym->val might check let_ref_fallback for all computed cases
- * test iterator args to for-each/map (t215) -- what about format ~{~}? 
- * time strncmp again [hash11->12] (local is slightly faster): unrolled is minor gain -- maybe use even though unaligned?  How to force alignment? (int* at malloc?)
- *   is there a flag for unaligned-ok?
- * sanitizer args in testsnd, recheck overflow code
  */
- 
