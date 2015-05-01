@@ -246,7 +246,7 @@ snd_info *make_basic_snd_info(int chans)
   sp->properties = Xen_false; /* will be a vector of 1 element if it's ever used */
   sp->properties_loc = NOT_A_GC_LOC;
 #if USE_NO_GUI
-  sp->snd_widgets = false;
+  sp->snd_widgets = NULL;
 #endif
   return(sp);
 }

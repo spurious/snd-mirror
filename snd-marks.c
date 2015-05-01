@@ -2064,13 +2064,14 @@ static Xen s7_xen_mark_copy(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer obj;
   int id;
-  mark *m, *new_m;
+  mark *m;
   chan_info *cps[1] = {NULL};
   obj = s7_car(args);
   id = xen_mark_to_int(obj);
   m = find_mark_from_id(id, cps, AT_CURRENT_EDIT_POSITION);
   if (m)
     {
+      mark *new_m;
       new_m = add_mark(m->samp, m->name, cps[0]);
       new_m->sync = m->sync;
       return(new_xen_mark(new_m->id));

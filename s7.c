@@ -194,7 +194,7 @@
   #define WITH_QUASIQUOTE_VECTOR 0
   #define WITH_MAKE_COMPLEX 1
   /* also omitted: *-ci* functions, char-ready?, cond-expand, multiple-values-bind|set!, call-with-values, defmacro(*)
-   *   and a lot more (inexact/exact, etc) -- see s7.html.
+   *   and a lot more (inexact/exact, integer-length,  etc) -- see s7.html.
    */
 #endif
 
@@ -13171,6 +13171,9 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 		num_a = n1 * d2 + n2 * d1;
 		den_a = d1 * d2;
 #endif
+#else
+		num_a = n1 * d2 + n2 * d1;
+		den_a = d1 * d2;
 #endif
 		if (is_null(p))
 		  return(s7_make_ratio(sc, num_a, den_a));
@@ -13960,6 +13963,9 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 		num_a = n1 * d2 - n2 * d1;
 		den_a = d1 * d2;
 #endif
+#else
+		num_a = n1 * d2 - n2 * d1;
+		den_a = d1 * d2;
 #endif
 		if (is_null(p))
 		  return(s7_make_ratio(sc, num_a, den_a));
@@ -14605,6 +14611,9 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	    num_a *= n2;
 	    den_a *= d2;
 #endif
+#else
+	    num_a *= n2;
+	    den_a *= d2;
 #endif
 	    if (is_null(p)) return(s7_make_ratio(sc, num_a, den_a));
 	    if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
@@ -15395,6 +15404,9 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 		num_a *= d2;
 		den_a *= n2;
 #endif
+#else
+		num_a *= d2;
+		den_a *= n2;
 #endif
 		if (is_null(p))
 		  return(s7_make_ratio(sc, num_a, den_a));
@@ -26857,7 +26869,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj);
 
 static s7_pointer format_error(s7_scheme *sc, const char *msg, const char *str, s7_pointer args, format_data *fdat)
 {
-  s7_pointer x;
+  s7_pointer x = NULL;
 
   /* the control string can't easily be handled here (as opposed to passing it as an argument below)
    *   because it becomes simply incorporated in the error's control string, so we'd have to scan
@@ -43988,10 +44000,10 @@ static void init_choosers(s7_scheme *sc)
   s7_function_set_class(read_line_uncopied, slot_value(global_slot(sc->READ_LINE)));
 
   /* write-string */
-  f = set_function_chooser(sc, sc->WRITE_STRING, write_string_chooser);
+  set_function_chooser(sc, sc->WRITE_STRING, write_string_chooser);
 
   /* eval-string */
-  f = set_function_chooser(sc, sc->EVAL_STRING, eval_string_chooser);
+  set_function_chooser(sc, sc->EVAL_STRING, eval_string_chooser);
 
   /* or and if simple cases */
   or_direct = s7_make_function(sc, "or", g_or_direct, 0, 0, true, "or opt");
@@ -54905,7 +54917,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case HOP_C_FOR_EACH_1:
 	      {
 		/* for_each_1: (let () (define (f b) b) (define (hi) (let ((lst '(1 2 3))) (for-each (lambda (a) 123 (f a)) lst))) (hi)) */
-		s7_pointer y, z;
+		s7_pointer y, z = NULL;
 
 		y = cdadr(code);
 		make_closure_without_capture(sc, sc->x, car(y), cdr(y), sc->envir);

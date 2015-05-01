@@ -3282,7 +3282,7 @@ char *word_wrap(const char *text, int widget_len)
 	      }
 	    else
 	      {
-		if ((text[i] == '#') && (i < old_len))
+		if ((i < old_len) && (text[i] == '#'))
 		  {
 		    if (text[i + 1] == 'f')
 		      {

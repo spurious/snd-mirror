@@ -5590,11 +5590,11 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
   if ((sp) &&
       (chn < sp->nchans))
     {
-      env_state *es;
-      Xen peak = Xen_false;
       cp = sp->chans[chn];
       if (cp)
 	{
+	  Xen peak = Xen_false;
+	  env_state *es;
 	  es = make_env_state(cp, cp->edits[0]->samples);
 	  if (es)
 	    {

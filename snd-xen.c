@@ -953,7 +953,7 @@ static int check_balance(const char *expr, int start, int end, bool in_listener)
 	  /* skip till newline. */
 	  do {
 	    i++;
-	  } while ((expr[i] != '\n') && (i < end));
+	  } while ((i < end) && (expr[i] != '\n'));
 	  break;
 
 	case ' ':

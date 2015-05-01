@@ -2829,7 +2829,7 @@ static void wait_for_empty_buffer(int buf)
 
 int mus_audio_write(int line, char *buf, int bytes) 
 {
-  int lim, leftover, start;
+  int leftover, start;
   start_win_print();
   if (line != OUTPUT_LINE) 
     return_error_exit(MUS_AUDIO_CANT_WRITE,
@@ -2845,6 +2845,7 @@ int mus_audio_write(int line, char *buf, int bytes)
     }
   while (leftover > 0)
     {
+      int lim;
       lim = leftover;
       if (lim > buffer_size) lim = buffer_size;
       leftover -= lim;
@@ -2936,7 +2937,6 @@ int mus_audio_initialize(void)
 
 int mus_audio_close(int line) 
 {
-  int i;
   win_out_err = 0; 
   win_in_err = 0;
   if (line == OUTPUT_LINE)
@@ -2944,6 +2944,7 @@ int mus_audio_close(int line)
       /* fill with a few zeros, wait for empty flag */
       if (sound_state != SOUND_UNREADY)
         {
+	  int i;
           wait_for_empty_buffer(current_buf);
           for (i = 0; i < 128; i++) wh[current_buf].lpData[i] = 0;
           wait_for_empty_buffer(current_buf);
