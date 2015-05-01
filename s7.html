@@ -5801,7 +5801,7 @@ Better ideas are always welcome!
 <li>omits unquote (the name), and quasiquoted vector constants
 <li>omits d/f/s/l exponents
 <li>omits make-polar, angle, magnitude, and renames make-rectangular to make-complex
-<li>omits exact?, inexact?, exact-&gt;inexact, inexact-&gt;exact, #i and #e
+<li>omits integer-length, exact?, inexact?, exact-&gt;inexact, inexact-&gt;exact, #i and #e
 <li>omits set-current-output-port and set-current-input-port
 </ul>
 
@@ -6402,7 +6402,7 @@ mainly because s7 threads shared the heap and therefore had to coordinate
 all cell allocations.  It was faster and simpler to use multiple
 processes each running a separate s7 interpreter, rather than one s7
 running multiple s7 threads.  In CLM, there was also contention for access
-to the output stream.  In GUI-related situations, as discussed at length below,
+to the output stream.  In GUI-related situations,
 threads were not useful mainly because the GUI toolkits are not thread safe.
 Last but not least, the effort to make the non-threaded
 s7 faster messed up parts of the threaded version.  Rather than

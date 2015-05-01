@@ -856,7 +856,7 @@ struct s7_scheme {
   s7_pointer MAKE_FLOAT_VECTOR, FLOAT_VECTOR, IS_FLOAT_VECTOR, FLOAT_VECTOR_REF, FLOAT_VECTOR_SET, MAKE_INT_VECTOR, INT_VECTOR, IS_INT_VECTOR;
   s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, IS_GENSYM, GET_OUTPUT_STRING, HASH_TABLE, HASH_TABLE_STAR;
   s7_pointer IS_HASH_TABLE, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_ENTRIES, HELP, IMAG_PART, IS_INEXACT, INEXACT_TO_EXACT;
-  s7_pointer IS_INFINITE, IS_INPUT_PORT, IS_INTEGER, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, INTEGER_LENGTH, IS_KEYWORD, KEYWORD_TO_SYMBOL;
+  s7_pointer IS_INFINITE, IS_INPUT_PORT, IS_INTEGER, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, IS_KEYWORD, KEYWORD_TO_SYMBOL;
   s7_pointer LCM, LENGTH, IS_ITERATOR, MAKE_ITERATOR, ITERATE, ITERATOR_SEQUENCE, ITERATOR_IS_AT_END;
   s7_pointer LIST, IS_LIST, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBIT, LOGIOR, LOGNOT, LOGXOR;
   s7_pointer IS_MACRO, MAKE_BYTEVECTOR, MAKE_HASH_TABLE, MAKE_KEYWORD, MAKE_LIST, MAKE_RANDOM_STATE;
@@ -880,7 +880,7 @@ struct s7_scheme {
   s7_pointer MAGNITUDE, MAKE_POLAR; /* MAKE_RECTANGULAR stands in for MAKE_COMPLEX if pure-s7 */
 #endif
 #if (!WITH_PURE_S7)
-  s7_pointer IS_CHAR_READY, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ, CHAR_CI_GEQ, CHAR_CI_GT, LET_TO_LIST;
+  s7_pointer IS_CHAR_READY, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ, CHAR_CI_GEQ, CHAR_CI_GT, LET_TO_LIST, INTEGER_LENGTH;
   s7_pointer STRING_CI_LEQ, STRING_CI_LT, STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_TO_LIST, VECTOR_TO_LIST;
   s7_pointer STRING_LENGTH, STRING_COPY, LIST_TO_STRING, LIST_TO_VECTOR, VECTOR_LENGTH, HASH_TABLE_SIZE;
 #endif
@@ -10269,13 +10269,17 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
 		s7_Int num, den;
 		num = string_to_integer(q, radix, &overflow);
 		den = string_to_integer(slash1, radix, &overflow);
-
-		if ((num == 0) && (den != 0))
+		if (den == 0)
+		  rl = NAN;
+		else
 		  {
-		    rl = 0.0;
-		    overflow = false;
+		    if (num == 0)
+		      {
+			rl = 0.0;
+			overflow = false;
+		      }
+		    else rl = (s7_Double)num / (s7_Double)den;
 		  }
-		else rl = (s7_Double)num / (s7_Double)den;
 	      }
 	    else rl = (s7_Double)string_to_integer(q, radix, &overflow);
 	    if (overflow) return(real_NaN);
@@ -10294,12 +10298,17 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
 		s7_Int num, den;
 		num = string_to_integer(plus, radix, &overflow);
 		den = string_to_integer(slash2, radix, &overflow);
-		if ((num == 0) && (den != 0))
+		if (den == 0)
+		  im = NAN;
+		else
 		  {
-		    im = 0.0;
-		    overflow = false;
+		    if (num == 0)
+		      {
+			im = 0.0;
+			overflow = false;
+		      }
+		    else im = (s7_Double)num / (s7_Double)den;
 		  }
-		else im = (s7_Double)num / (s7_Double)den;
 	      }
 	    else im = (s7_Double)string_to_integer(plus, radix, &overflow);
 	    if (overflow) return(real_NaN);
@@ -10893,15 +10902,9 @@ static s7_pointer g_make_rectangular(s7_scheme *sc, s7_pointer args)
     case T_RATIO:
       switch (type(x))
 	{
-	case T_INTEGER:
-	  return(s7_make_complex(sc, (s7_Double)integer(x), (s7_Double)fraction(y)));
-
-	case T_RATIO:
-	  return(s7_make_complex(sc, (s7_Double)fraction(x), (s7_Double)fraction(y)));
-
-	case T_REAL:
-	  return(s7_make_complex(sc, real(x), (s7_Double)fraction(y)));
-
+	case T_INTEGER: return(s7_make_complex(sc, (s7_Double)integer(x), (s7_Double)fraction(y)));
+	case T_RATIO:   return(s7_make_complex(sc, (s7_Double)fraction(x), (s7_Double)fraction(y)));
+	case T_REAL:    return(s7_make_complex(sc, real(x), (s7_Double)fraction(y)));
 	default:
 	  check_method(sc, x, sc->MAKE_RECTANGULAR, args);
 	  return(wrong_type_argument(sc, sc->MAKE_RECTANGULAR, small_int(1), x, T_REAL));
@@ -11167,20 +11170,13 @@ s7_pointer s7_cos(s7_scheme *sc, s7_pointer x)
 {
   switch (type(x))
     {
-    case T_REAL:
-      return(make_real(sc, cos(real(x))));
-
-    case T_INTEGER:
-      return(make_real(sc, cos((s7_Double)integer(x))));
-
-    case T_RATIO:
-      return(make_real(sc, cos((s7_Double)(fraction(x)))));
-
+    case T_REAL:    return(make_real(sc, cos(real(x))));
+    case T_INTEGER: return(make_real(sc, cos((s7_Double)integer(x))));
+    case T_RATIO:   return(make_real(sc, cos((s7_Double)(fraction(x)))));
     case T_COMPLEX:
 #if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, ccos(as_c_complex(x))));
 #endif
-
     default:
       return(simple_wrong_type_argument_with_type(sc, sc->COS, x, A_NUMBER));
     }
@@ -16298,37 +16294,20 @@ static s7_pointer g_equal_length_ic(s7_scheme *sc, s7_pointer args)
 
   switch (type(val))
     {
-    case T_PAIR:
-      return(make_boolean(sc, s7_list_length(sc, val) == ilen));
-
-    case T_NIL:
-      return(make_boolean(sc, ilen == 0));
-
+    case T_PAIR:         return(make_boolean(sc, s7_list_length(sc, val) == ilen));
+    case T_NIL:          return(make_boolean(sc, ilen == 0));
+    case T_STRING:       return(make_boolean(sc, string_length(val) == ilen));
+    case T_HASH_TABLE:   return(make_boolean(sc, hash_table_length(val) == ilen));
+    case T_ITERATOR:     return(make_boolean(sc, iterator_length(val) == ilen));
+    case T_C_OBJECT:     return(make_boolean(sc, object_length_to_int(sc, val) == ilen));
+    case T_LET:          return(make_boolean(sc, let_length(sc, val) == ilen));
     case T_INT_VECTOR:
     case T_FLOAT_VECTOR:
-    case T_VECTOR:
-      return(make_boolean(sc, vector_length(val) == ilen));
-
-    case T_STRING:
-      return(make_boolean(sc, string_length(val) == ilen));
-
-    case T_HASH_TABLE:
-      return(make_boolean(sc, hash_table_length(val) == ilen));
-
-    case T_C_OBJECT:
-      return(make_boolean(sc, object_length_to_int(sc, val) == ilen));
-
-    case T_LET:
-      return(make_boolean(sc, let_length(sc, val) == ilen));
-
+    case T_VECTOR:       return(make_boolean(sc, vector_length(val) == ilen));
     case T_CLOSURE:
-    case T_CLOSURE_STAR:
-      if (has_methods(val))
-	return(make_boolean(sc, closure_length(sc, val) == ilen));
-
-    default:
-      /* here we've already lost because we've checked for the length above */
-      return(simple_wrong_type_argument_with_type(sc, sc->LENGTH, val, A_SEQUENCE));
+    case T_CLOSURE_STAR: if (has_methods(val)) return(make_boolean(sc, closure_length(sc, val) == ilen));
+    default:             return(simple_wrong_type_argument_with_type(sc, sc->LENGTH, val, A_SEQUENCE));
+      /* here we already lost because we checked for the length above */
     }
   return(sc->F);
 }
@@ -17308,38 +17287,19 @@ static s7_pointer g_less_length_ic(s7_scheme *sc, s7_pointer args)
 
   switch (type(val))
     {
-    case T_PAIR:
-      return(make_boolean(sc, s7_list_length(sc, val) < ilen));
-
-    case T_NIL:
-      return(make_boolean(sc, ilen > 0));
-
+    case T_PAIR:         return(make_boolean(sc, s7_list_length(sc, val) < ilen));
+    case T_NIL:          return(make_boolean(sc, ilen > 0));
+    case T_STRING:       return(make_boolean(sc, string_length(val) < ilen));
+    case T_HASH_TABLE:   return(make_boolean(sc, hash_table_length(val) < ilen));
+    case T_ITERATOR:     return(make_boolean(sc, iterator_length(val) < ilen));
+    case T_C_OBJECT:     return(make_boolean(sc, object_length_to_int(sc, val) < ilen));
+    case T_LET:          return(make_boolean(sc, let_length(sc, val) < ilen));  /* this works because let_length handles the length method itself! */
     case T_INT_VECTOR:
     case T_FLOAT_VECTOR:
-    case T_VECTOR:
-      return(make_boolean(sc, vector_length(val) < ilen));
-
-    case T_STRING:
-      return(make_boolean(sc, string_length(val) < ilen));
-
-    case T_HASH_TABLE:
-      return(make_boolean(sc, hash_table_length(val) < ilen));
-
-    case T_C_OBJECT:
-      return(make_boolean(sc, object_length_to_int(sc, val) < ilen));
-
-    case T_LET:
-      /* this works because let_length handles the length method itself! */
-      return(make_boolean(sc, let_length(sc, val) < ilen));
-
+    case T_VECTOR:       return(make_boolean(sc, vector_length(val) < ilen));
     case T_CLOSURE:
-    case T_CLOSURE_STAR:
-      if (has_methods(val))
-	return(make_boolean(sc, closure_length(sc, val) < ilen));
-
-    default:
-      /* no check method here because we checked above */
-      return(simple_wrong_type_argument_with_type(sc, sc->LENGTH, val, A_SEQUENCE));
+    case T_CLOSURE_STAR: if (has_methods(val)) return(make_boolean(sc, closure_length(sc, val) < ilen));
+    default:             return(simple_wrong_type_argument_with_type(sc, sc->LENGTH, val, A_SEQUENCE)); /* no check method here because we checked above */
     }
   return(sc->F);
 }
@@ -18138,29 +18098,16 @@ static s7_pointer g_is_zero(s7_scheme *sc, s7_pointer args)
   x = car(args);
   switch (type(x))
     {
-    case T_INTEGER:
-      return(make_boolean(sc, integer(x) == 0));
-
-    case T_REAL:
-      return(make_boolean(sc, real(x) == 0.0));
-
+    case T_INTEGER:     return(make_boolean(sc, integer(x) == 0));
+    case T_REAL:        return(make_boolean(sc, real(x) == 0.0));
     case T_RATIO:
-    case T_COMPLEX:
-      /* ratios and complex numbers are already collapsed into integers and reals */
-      return(sc->F);
-
+    case T_COMPLEX:     return(sc->F);      /* ratios and complex numbers are already collapsed into integers and reals */
 #if WITH_GMP
-    case T_BIG_INTEGER:
-      return(make_boolean(sc, mpz_cmp_ui(big_integer(x), 0) == 0));
-
-    case T_BIG_REAL:
-      return(make_boolean(sc, mpfr_zero_p(big_real(x))));
-
+    case T_BIG_INTEGER: return(make_boolean(sc, mpz_cmp_ui(big_integer(x), 0) == 0));
+    case T_BIG_REAL:    return(make_boolean(sc, mpfr_zero_p(big_real(x))));
     case T_BIG_RATIO:
-    case T_BIG_COMPLEX:
-      return(sc->F);
+    case T_BIG_COMPLEX: return(sc->F);
 #endif
-
     default:
       check_method(sc, x, sc->IS_ZERO, args);
       return(simple_wrong_type_argument_with_type(sc, sc->IS_ZERO, x, A_NUMBER));
@@ -18176,27 +18123,14 @@ static s7_pointer g_is_positive(s7_scheme *sc, s7_pointer args)
   x = car(args);
   switch (type(x))
     {
-    case T_INTEGER:
-      return(make_boolean(sc, integer(x) > 0));
-
-    case T_RATIO:
-      return(make_boolean(sc, numerator(x) > 0));
-
-    case T_REAL:
-      /* what about (positive? nan.0)? */
-      return(make_boolean(sc, real(x) > 0.0));
-
+    case T_INTEGER:     return(make_boolean(sc, integer(x) > 0));
+    case T_RATIO:       return(make_boolean(sc, numerator(x) > 0));
+    case T_REAL:        return(make_boolean(sc, real(x) > 0.0));
 #if WITH_GMP
-    case T_BIG_INTEGER:
-      return(make_boolean(sc, (mpz_cmp_ui(big_integer(x), 0) > 0)));
-
-    case T_BIG_RATIO:
-      return(make_boolean(sc, (mpq_cmp_ui(big_ratio(x), 0, 1) > 0)));
-
-    case T_BIG_REAL:
-      return(make_boolean(sc, (mpfr_cmp_ui(big_real(x), 0) > 0)));
+    case T_BIG_INTEGER: return(make_boolean(sc, (mpz_cmp_ui(big_integer(x), 0) > 0)));
+    case T_BIG_RATIO:   return(make_boolean(sc, (mpq_cmp_ui(big_ratio(x), 0, 1) > 0)));
+    case T_BIG_REAL:    return(make_boolean(sc, (mpfr_cmp_ui(big_real(x), 0) > 0)));
 #endif
-
     default:
       check_method(sc, x, sc->IS_POSITIVE, args);
       return(simple_wrong_type_argument(sc, sc->IS_POSITIVE, x, T_REAL));
@@ -18222,6 +18156,7 @@ static s7_pointer g_is_negative_length(s7_scheme *sc, s7_pointer args)
     case T_NIL:
     case T_STRING:
     case T_HASH_TABLE:
+    case T_ITERATOR:
       return(sc->F);
 
     case T_LET:
@@ -18255,27 +18190,14 @@ static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
   x = car(args);
   switch (type(x))
     {
-    case T_INTEGER:
-      return(make_boolean(sc, integer(x) < 0));
-
-    case T_RATIO:
-      return(make_boolean(sc, numerator(x) < 0));
-
-    case T_REAL:
-      /* what about (negative? -nan.0)? */
-      return(make_boolean(sc, real(x) < 0.0));
-
+    case T_INTEGER:     return(make_boolean(sc, integer(x) < 0));
+    case T_RATIO:       return(make_boolean(sc, numerator(x) < 0));
+    case T_REAL:        return(make_boolean(sc, real(x) < 0.0));
 #if WITH_GMP
-    case T_BIG_INTEGER:
-      return(make_boolean(sc, (mpz_cmp_ui(big_integer(x), 0) < 0)));
-
-    case T_BIG_RATIO:
-      return(make_boolean(sc, (mpq_cmp_ui(big_ratio(x), 0, 1) < 0)));
-
-    case T_BIG_REAL:
-      return(make_boolean(sc, (mpfr_cmp_ui(big_real(x), 0) < 0)));
+    case T_BIG_INTEGER: return(make_boolean(sc, (mpz_cmp_ui(big_integer(x), 0) < 0)));
+    case T_BIG_RATIO:   return(make_boolean(sc, (mpq_cmp_ui(big_ratio(x), 0, 1) < 0)));
+    case T_BIG_REAL:    return(make_boolean(sc, (mpfr_cmp_ui(big_real(x), 0) < 0)));
 #endif
-
     default:
       check_method(sc, x, sc->IS_NEGATIVE, args);
       return(simple_wrong_type_argument(sc, sc->IS_NEGATIVE, x, T_REAL));
@@ -18414,6 +18336,7 @@ s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n)
 
 /* ---------------------------------------- integer-length, integer-decode-float ---------------------------------------- */
 
+#if (!WITH_PURE_S7)
 static s7_pointer g_integer_length(s7_scheme *sc, s7_pointer args)
 {
   #define H_integer_length "(integer-length arg) returns the number of bits required to represent the integer 'arg': (ceiling (log (abs arg) 2))"
@@ -18432,6 +18355,7 @@ static s7_pointer g_integer_length(s7_scheme *sc, s7_pointer args)
     return(make_integer(sc, integer_length(-(x + 1))));
   return(make_integer(sc, integer_length(x)));
 }
+#endif
 
 
 static s7_pointer g_integer_decode_float(s7_scheme *sc, s7_pointer args)
@@ -26757,7 +26681,6 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
     }
   /* hmmm: shouldn't (newline #t) be the same as (format #t "~%")? but (display #\newline #t) is an error.
    */
-
   s7_newline(sc, port);
   return(sc->UNSPECIFIED);
 }
@@ -26784,7 +26707,6 @@ static s7_pointer g_write(s7_scheme *sc, s7_pointer args)
       check_method(sc, port, sc->WRITE, args);
       return(wrong_type_argument_with_type(sc, sc->WRITE, small_int(2), port, AN_OUTPUT_PORT));
     }
-
   write_or_display(sc, car(args), port, USE_WRITE);
   return(sc->UNSPECIFIED);
 }
@@ -27286,7 +27208,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	      if ((str[i] != 'P') && (str[i] != 'p'))
 		return(format_error(sc, "unknown '@' directive", str, args, fdat));
 	      if (!s7_is_real(car(fdat->args)))        /* CL accepts non numbers here */
-		return(format_error(sc, "'@P' directive it is not a real number", str, args, fdat));
+		return(format_error(sc, "'@P' directive argument is not a real number", str, args, fdat));
 
 	      if (!s7_is_one_or_big_one(car(fdat->args)))
 		format_append_string(sc, fdat, "ies", 3, port);
@@ -27834,7 +27756,7 @@ static bool is_columnizing(const char *str)
   char *p;
 
   for (p = (char *)str; (*p);)
-    if (*p++ == '~')
+    if (*p++ == '~') /* this is faster than strchr */
       {
 	char c;
 	c = *p++;
@@ -36855,6 +36777,9 @@ list has infinite length.  Length of anything else returns #f."
     case T_STRING:
       return(make_integer(sc, string_length(lst)));
 
+    case T_ITERATOR:
+      return(make_integer(sc, iterator_length(lst))); /* in several cases, this is incorrect */
+
     case T_HASH_TABLE:
       return(make_integer(sc, hash_table_length(lst)));
 
@@ -37685,7 +37610,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 
     case T_ITERATOR:
       {
-	s7_pointer result, p;
+	s7_pointer result, p = NULL;
 	result = sc->NIL;
 	while (true)
 	  {
@@ -38318,9 +38243,9 @@ static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
 
   switch (type(x))
     {
-    case T_C_OBJECT:     return(object_types[c_object_type(x)]->scheme_name);
-    case T_INPUT_PORT:   return((is_file_port(x)) ? AN_INPUT_FILE_PORT : ((is_string_port(x)) ? AN_INPUT_STRING_PORT : AN_INPUT_PORT));
-    case T_OUTPUT_PORT:  return((is_file_port(x)) ? AN_OUTPUT_FILE_PORT : ((is_string_port(x)) ? AN_OUTPUT_STRING_PORT : AN_OUTPUT_PORT));
+    case T_C_OBJECT:    return(object_types[c_object_type(x)]->scheme_name);
+    case T_INPUT_PORT:  return((is_file_port(x)) ? AN_INPUT_FILE_PORT : ((is_string_port(x)) ? AN_INPUT_STRING_PORT : AN_INPUT_PORT));
+    case T_OUTPUT_PORT: return((is_file_port(x)) ? AN_OUTPUT_FILE_PORT : ((is_string_port(x)) ? AN_OUTPUT_STRING_PORT : AN_OUTPUT_PORT));
     }
   return(make_string_wrapper(sc, "unknown type!"));
 }
@@ -41009,37 +40934,17 @@ static token_t token(s7_scheme *sc)
   c = port_read_white_space(sc->input_port)(sc, sc->input_port);
   switch (c)
     {
-    case '(':
-      return(TOKEN_LEFT_PAREN);
-
-    case ')':
-      return(TOKEN_RIGHT_PAREN);
-
-    case '.':
-      return(read_dot(sc, sc->input_port));
-
-    case '\'':
-      return(TOKEN_QUOTE);
-
-    case ';':
-      return(port_read_semicolon(sc->input_port)(sc, sc->input_port));
-
-    case '"':
-      return(TOKEN_DOUBLE_QUOTE);
-
-    case '`':
-      return(TOKEN_BACK_QUOTE);
-
-    case ',':
-      return(read_comma(sc, sc->input_port));
-
-    case '#':
-      return(read_sharp(sc, sc->input_port));
-
+    case '(':  return(TOKEN_LEFT_PAREN);
+    case ')':  return(TOKEN_RIGHT_PAREN);
+    case '.':  return(read_dot(sc, sc->input_port));
+    case '\'': return(TOKEN_QUOTE);
+    case ';':  return(port_read_semicolon(sc->input_port)(sc, sc->input_port));
+    case '"':  return(TOKEN_DOUBLE_QUOTE);
+    case '`':  return(TOKEN_BACK_QUOTE);
+    case ',':  return(read_comma(sc, sc->input_port));
+    case '#':  return(read_sharp(sc, sc->input_port));
     case '\0':
-    case EOF:
-      return(TOKEN_EOF);
-
+    case EOF:  return(TOKEN_EOF);
     default:
       sc->strbuf[0] = c; /* every TOKEN_ATOM return goes to port_read_name, so we save a backchar/inchar shuffle by starting the read here */
       return(TOKEN_ATOM);
@@ -44700,38 +44605,17 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
     case E_C_P:
       switch (op2)
 	{
-	case OP_SAFE_C_C:
-	  return(OP_SAFE_C_opCq); /* this includes the multi-arg C_C cases */
-
-	case OP_SAFE_C_S:
-	  return(OP_SAFE_C_opSq);
-
-	case OP_SAFE_C_SS:
-	  return(OP_SAFE_C_opSSq);
-
-	case OP_SAFE_C_SQ:
-	  return(OP_SAFE_C_opSQq);
-
-	case OP_SAFE_C_SC:
-	  return(OP_SAFE_C_opSCq);
-
-	case OP_SAFE_C_CS:
-	  return(OP_SAFE_C_opCSq);
-
-	case OP_SAFE_C_opSq:
-	  return(OP_SAFE_C_op_opSq_q);
-
-	case OP_SAFE_C_S_opSq:
-	  return(OP_SAFE_C_op_S_opSq_q);
-
-	case OP_SAFE_C_A:
-	  return(OP_SAFE_C_opAq);
-
-	case OP_SAFE_C_AA:
-	  return(OP_SAFE_C_opAAq);
-
-	case OP_SAFE_C_AAA:
-	  return(OP_SAFE_C_opAAAq);
+	case OP_SAFE_C_C:      return(OP_SAFE_C_opCq); /* this includes the multi-arg C_C cases */
+	case OP_SAFE_C_S:      return(OP_SAFE_C_opSq);
+	case OP_SAFE_C_SS:     return(OP_SAFE_C_opSSq);
+	case OP_SAFE_C_SQ:     return(OP_SAFE_C_opSQq);
+	case OP_SAFE_C_SC:     return(OP_SAFE_C_opSCq);
+	case OP_SAFE_C_CS:     return(OP_SAFE_C_opCSq);
+	case OP_SAFE_C_opSq:   return(OP_SAFE_C_op_opSq_q);
+	case OP_SAFE_C_S_opSq: return(OP_SAFE_C_op_S_opSq_q);
+	case OP_SAFE_C_A:      return(OP_SAFE_C_opAq);
+	case OP_SAFE_C_AA:     return(OP_SAFE_C_opAAq);
+	case OP_SAFE_C_AAA:    return(OP_SAFE_C_opAAAq);
 	}
       return(OP_SAFE_C_Z); /* this splits out to A in optimize_func_one_arg */
 
@@ -44790,43 +44674,23 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
     case E_C_PS:
       switch (op2)
 	{
-	case OP_SAFE_C_C:
-	  return(OP_SAFE_C_opCq_S);
-
-	case OP_SAFE_C_S:
-	  return(OP_SAFE_C_opSq_S);
-
-	case OP_SAFE_C_CS:
-	  return(OP_SAFE_C_opCSq_S);
-
-	case OP_SAFE_C_SC:
-	  return(OP_SAFE_C_opSCq_S);
-
-	case OP_SAFE_C_SS:
-	  return(OP_SAFE_C_opSSq_S);
+	case OP_SAFE_C_C:  return(OP_SAFE_C_opCq_S);
+	case OP_SAFE_C_S:  return(OP_SAFE_C_opSq_S);
+	case OP_SAFE_C_CS: return(OP_SAFE_C_opCSq_S);
+	case OP_SAFE_C_SC: return(OP_SAFE_C_opSCq_S);
+	case OP_SAFE_C_SS: return(OP_SAFE_C_opSSq_S);
 	}
       return(OP_SAFE_C_ZS);
 
     case E_C_PC:
       switch (op2)
 	{
-	case OP_SAFE_C_C:
-	  return(OP_SAFE_C_opCq_C);
-
-	case OP_SAFE_C_S:
-	  return(OP_SAFE_C_opSq_C);
-
-	case OP_SAFE_C_CS:
-	  return(OP_SAFE_C_opCSq_C);
-
-	case OP_SAFE_C_SS:
-	  return(OP_SAFE_C_opSSq_C);
-
-	case OP_SAFE_C_SC:
-	  return(OP_SAFE_C_opSCq_C);
-
-	case OP_SAFE_C_opSSq:
-	  return(OP_SAFE_C_op_opSSq_q_C);
+	case OP_SAFE_C_C:     return(OP_SAFE_C_opCq_C);
+	case OP_SAFE_C_S:     return(OP_SAFE_C_opSq_C);
+	case OP_SAFE_C_CS:    return(OP_SAFE_C_opCSq_C);
+	case OP_SAFE_C_SS:    return(OP_SAFE_C_opSSq_C);
+	case OP_SAFE_C_SC:    return(OP_SAFE_C_opSCq_C);
+	case OP_SAFE_C_opSSq: return(OP_SAFE_C_op_opSSq_q_C);
 	}
       return(OP_SAFE_C_ZC);
 
@@ -48431,7 +48295,7 @@ static s7_pointer check_define(s7_scheme *sc)
       if ((arity >= 0) &&
 	  (arity < NUM_SMALL_INTS))
 	set_fcdr(sc->code, small_int(arity));
-      else set_fcdr(sc->code, (arity == CLOSURE_ARITY_NOT_SET) ? arity_not_set : make_permanent_integer(arity));
+      else set_fcdr(sc->code, (arity == CLOSURE_ARITY_NOT_SET) ? arity_not_set : ((arity == MAX_ARITY) ? max_arity : make_permanent_integer(arity)));
 
       if (sc->op == OP_DEFINE)
 	{
@@ -64552,7 +64416,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	      return(p);
 	    }
 
-	  if (s7_is_ratio(x)) /* (here y is an integer */
+	  if (s7_is_ratio(x)) /* here y is an integer */
 	    {
 	      mpz_t n, d;
 	      mpq_t r;
@@ -64960,6 +64824,7 @@ static s7_pointer big_lognot(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if (!WITH_PURE_S7)
 static s7_pointer big_integer_length(s7_scheme *sc, s7_pointer args)
 {
   if (type(car(args)) == T_BIG_INTEGER)
@@ -64977,6 +64842,7 @@ static s7_pointer big_integer_length(s7_scheme *sc, s7_pointer args)
     }
   return(g_integer_length(sc, args));
 }
+#endif
 
 
 static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
@@ -66478,6 +66344,7 @@ static void s7_gmp_init(s7_scheme *sc)
 #if (!WITH_PURE_S7)
   sc->EXACT_TO_INEXACT = s7_define_function(sc, "exact->inexact",      big_exact_to_inexact, 1, 0, false, H_exact_to_inexact);
   sc->INEXACT_TO_EXACT = s7_define_function(sc, "inexact->exact",      big_inexact_to_exact, 1, 0, false, H_inexact_to_exact);
+  sc->INTEGER_LENGTH =   s7_define_function(sc, "integer-length",      big_integer_length,   1, 0, false, H_integer_length);
 #endif
   sc->FLOOR =            s7_define_function(sc, "floor",               big_floor,            1, 0, false, H_floor);
   sc->CEILING =          s7_define_function(sc, "ceiling",             big_ceiling,          1, 0, false, H_ceiling);
@@ -66504,7 +66371,6 @@ static void s7_gmp_init(s7_scheme *sc)
   sc->LOGXOR =           s7_define_function(sc, "logxor",              big_logxor,           0, 0, true,  H_logxor);
   sc->LOGAND =           s7_define_function(sc, "logand",              big_logand,           0, 0, true,  H_logand);
   sc->ASH =              s7_define_function(sc, "ash",                 big_ash,              2, 0, false, H_ash);
-  sc->INTEGER_LENGTH =   s7_define_function(sc, "integer-length",      big_integer_length,   1, 0, false, H_integer_length);
 
   sc->EXP =              s7_define_function(sc, "exp",                 big_exp,              1, 0, false, H_exp);
   sc->EXPT =             s7_define_function(sc, "expt",                big_expt,             2, 0, false, H_expt);
@@ -67712,8 +67578,8 @@ s7_scheme *s7_init(void)
 #if (!WITH_PURE_S7)
   sc->INEXACT_TO_EXACT =      s7_define_safe_function(sc, "inexact->exact",          g_inexact_to_exact,       1, 0, false, H_inexact_to_exact);
   sc->EXACT_TO_INEXACT =      s7_define_safe_function(sc, "exact->inexact",          g_exact_to_inexact,       1, 0, false, H_exact_to_inexact);
-#endif
   sc->INTEGER_LENGTH =        s7_define_integer_function(sc, "integer-length",       g_integer_length,         1, 0, false, H_integer_length);
+#endif
   sc->LOGIOR =                s7_define_integer_function(sc, "logior",               g_logior,                 0, 0, true,  H_logior);
   sc->LOGXOR =                s7_define_integer_function(sc, "logxor",               g_logxor,                 0, 0, true,  H_logxor);
   sc->LOGAND =                s7_define_integer_function(sc, "logand",               g_logand,                 0, 0, true,  H_logand);
@@ -68370,15 +68236,16 @@ int main(int argc, char **argv)
 /* ------------------------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5 15.6
- * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1144
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1128
- * teq            |      |      | 6612                     3887 3091
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1144
+ * teq            |      |      | 6612                     3887 3095
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3326
- * tcopy          |      |      |                          4970 4276
- * tmap           |      |      | 11.0           5031 4769 4685 4687
- * lg             |      |      | 6547 6497 6494 6235 6229 6239 6596
+ * tcopy          |      |      |                          4970 4288
+ * tmap           |      |      | 11.0           5031 4769 4685 4681
+ * lg             |      |      | 6547 6497 6494 6235 6229 6239 6592
+ * tform          |      |      |                               6816
  * titer          |      |      |                          7976 6851
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6849
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6854
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
  * thash          |      |      |                          19.4 17.4
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.9
@@ -68390,9 +68257,6 @@ int main(int argc, char **argv)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  * cyclic-seq in stuff.scm, but current code is really clumsy
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
- * should this be fixed? (symbol->value 'gc-stats *s7*) -> #<undefined>
- *   to make *s7* a completely normal let would require symbol accessors etc
- *   sym->val might check let_ref_fallback for all computed cases
  *
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)
  *   also cload: libc libgsl etc arg types/return types [real string ?]

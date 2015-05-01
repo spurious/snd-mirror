@@ -2049,7 +2049,9 @@ int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided)
 static void erase_mix_tag_and_waveform(mix_state *ms, chan_info *cp, axis_info *ap, graphics_context *ax, int x, int y)
 {
   int wave_width, wave_height, old_x;
-  wave_width = (int)(ms->len * ((double)(ap->x_axis_x1 - ap->x_axis_x0) / (double)(ap->hisamp - ap->losamp)));
+  if (ap->hisamp > ap->losamp)
+    wave_width = (int)(ms->len * ((double)(ap->x_axis_x1 - ap->x_axis_x0) / (double)(ap->hisamp - ap->losamp)));
+  else wave_width = 0;
   wave_height = mix_waveform_height(ss);
   old_x = x + mix_tag_width(ss) - 2;
   if ((old_x + wave_width) > ap->x_axis_x1)
