@@ -2956,7 +2956,7 @@ static int write_nist_header(int fd, int wsrate, int wchans, mus_long_t size, mu
   int datum;
   datum = mus_bytes_per_sample(samp_type);
   header = (char *)calloc(1024, sizeof(char));
-  sprintf(header, "NIST_1A\n   1024\nchannel_count -i %d\nsample_rate -i %d\nsample_n_bytes -i %d\nsample_byte_format -s2 %s\nsample_sig_bits -i %d\nsample_count -i %lld\nend_head\n",
+  snprintf(header, 1024, "NIST_1A\n   1024\nchannel_count -i %d\nsample_rate -i %d\nsample_n_bytes -i %d\nsample_byte_format -s2 %s\nsample_sig_bits -i %d\nsample_count -i %lld\nend_head\n",
 	  wchans, wsrate, datum,
 	  ((samp_type == MUS_BSHORT) || (samp_type == MUS_B24INT) || (samp_type == MUS_BINT)) ? "10" : "01",
 	  datum * 8, 
@@ -6513,7 +6513,7 @@ int mus_header_change_type(const char *filename, mus_header_t new_type, mus_samp
     {
       if (header_type != new_type)
 	{
-	  int ofd, ifd;
+	  int ofd, ifd, len;
 	  long long int nbytes;
 	  mus_long_t loc;
 	  unsigned char *buf = NULL;
@@ -6523,8 +6523,9 @@ int mus_header_change_type(const char *filename, mus_header_t new_type, mus_samp
 	      (new_type == MUS_RF64))
 	    return(mus_header_convert_riff_to_rf64(filename, data_size));
 
-	  new_file = (char *)calloc(strlen(filename) + 5, sizeof(char));
-	  sprintf(new_file, "%s.tmp", filename);
+	  len = strlen(filename) + 5;
+	  new_file = (char *)malloc(len * sizeof(char));
+	  snprintf(new_file, len, "%s.tmp", filename);
 	  loc = mus_header_data_location();
 	  if (new_type != MUS_RAW)
 	    {
@@ -6724,12 +6725,13 @@ int mus_header_change_comment(const char *filename, mus_header_t type, const cha
 	{
 	  /* open temp, write header, copy data, replace original with temp */
 	  char *new_file;
-	  int ofd, ifd;
+	  int ofd, ifd, len;
 	  mus_long_t loc;
 	  long long int nbytes;
 	  unsigned char *buf = NULL;
-	  new_file = (char *)calloc(strlen(filename) + 5, sizeof(char));
-	  sprintf(new_file, "%s.tmp", filename);
+	  len = strlen(filename) + 5;
+	  new_file = (char *)malloc(len * sizeof(char));
+	  snprintf(new_file, len, "%s.tmp", filename);
 	  loc = mus_header_data_location();
 	  mus_write_header(new_file, header_type, srate, chans, data_size, sample_type, new_comment);
 	  ifd = mus_file_open_read(filename);
@@ -6878,9 +6880,9 @@ const char *mus_header_original_format_name(int samp_type, mus_header_t type)
     case MUS_CAFF:
       aifc_format[4] = 0;
 #if MUS_LITTLE_ENDIAN
-      sprintf(aifc_format, "%c%c%c%c", samp_type & 0xff, (samp_type >> 8) & 0xff, (samp_type >> 16) & 0xff, (samp_type >> 24) & 0xff);
+      snprintf(aifc_format, 5, "%c%c%c%c", samp_type & 0xff, (samp_type >> 8) & 0xff, (samp_type >> 16) & 0xff, (samp_type >> 24) & 0xff);
 #else
-      sprintf(aifc_format, "%c%c%c%c", (samp_type >> 24) & 0xff, (samp_type >> 16) & 0xff, (samp_type >> 8) & 0xff, samp_type & 0xff);
+      snprintf(aifc_format, 5, "%c%c%c%c", (samp_type >> 24) & 0xff, (samp_type >> 16) & 0xff, (samp_type >> 8) & 0xff, samp_type & 0xff);
 #endif	
       return(aifc_format);
       break;

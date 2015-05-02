@@ -4135,7 +4135,7 @@ static int sndjack_init(void){
 
   for (ch=0;ch<numch;ch++){
     char temp[500];
-    sprintf(temp, "out_%d",ch+1);
+    snprintf(temp, 500, "out_%d",ch+1);
     if ((sndjack_channels[ch].port=jack_port_register(
 						     sndjack_client,
 						     mus_strdup(temp),
@@ -4151,7 +4151,7 @@ static int sndjack_init(void){
 
   for (ch=0;ch<sndjack_num_read_channels_allocated;ch++){
     char temp[500];
-    sprintf(temp, "in_%d",ch+1);
+    snprintf(temp, 500, "in_%d",ch+1);
     if ((sndjack_read_channels[ch].port=jack_port_register(
 							  sndjack_client,
 							  mus_strdup(temp),

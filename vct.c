@@ -204,7 +204,7 @@ Xen_wrap_free(vct, free_vct, vct_free)
 
 static char *mus_vct_to_string(vct *v)
 {
-  int len;
+  int len, size;
   char *buf;
   char flt[VCT_PRINT_BUFFER_SIZE];
   mus_float_t *d;
@@ -213,8 +213,9 @@ static char *mus_vct_to_string(vct *v)
   len = vct_print_length;
   if (len > mus_vct_length(v)) len = mus_vct_length(v);
   d = mus_vct_data(v);
-  buf = (char *)calloc((len + 1) * VCT_PRINT_BUFFER_SIZE, sizeof(char));
-  sprintf(buf, "#<vct[len=%lld" "]", mus_vct_length(v));
+  size = (len + 1) * VCT_PRINT_BUFFER_SIZE;
+  buf = (char *)calloc(size, sizeof(char));
+  snprintf(buf, size, "#<vct[len=%lld" "]", mus_vct_length(v));
 
   if ((len > 0) && (d != NULL))
     {
@@ -236,21 +237,22 @@ static char *mus_vct_to_string(vct *v)
 
 char *mus_vct_to_readable_string(vct *v)
 {
-  int i, len;
+  int i, len, size;
   char *buf;
   char flt[VCT_PRINT_BUFFER_SIZE];
   mus_float_t *d;
 
   if (v == NULL) return(NULL);
   len = (int)(mus_vct_length(v));
-  buf = (char *)calloc((len + 1) * VCT_PRINT_BUFFER_SIZE, sizeof(char));
+  size = (len + 1) * VCT_PRINT_BUFFER_SIZE;
+  buf = (char *)calloc(size, sizeof(char));
   d = mus_vct_data(v);
 
 #if HAVE_SCHEME
-  sprintf(buf, "(float-vector");
+  snprintf(buf, size, "(float-vector");
 #endif
 #if HAVE_RUBY || HAVE_FORTH
-  sprintf(buf, "vct(");
+  snprintf(buf, size, "vct(");
 #endif
 
   for (i = 0; i < len; i++)

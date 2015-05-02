@@ -852,11 +852,11 @@ static char *gl_print(Xen result)
   savelen = 128;
 
 #if HAVE_FORTH
-  sprintf(newbuf, "#("); 
+  snprintf(newbuf, 128, "#("); 
 #endif
 
 #if HAVE_RUBY
-  sprintf(newbuf, "[");
+  snprintf(newbuf, 128, "[");
 #endif
 
   for (i = 0; i < ilen; i++)

@@ -406,15 +406,30 @@
       (if (provided? 'osx)
 	  (begin
 	    ;; I assume the caller is also compiled with these flags?
-	    (system (format #f "gcc -c ~A ~A" c-file-name (string-append *cload-cflags* " " cflags)))
-	    (system (format #f "gcc ~A -o ~A -dynamic -bundle -undefined suppress -flat_namespace ~A" o-file-name so-file-name (string-append *cload-ldflags* " " ldflags))))
+	    (system (format #f "gcc -c ~A ~A" 
+			    c-file-name (string-append *cload-cflags* " " cflags)))
+	    (system (format #f "gcc ~A -o ~A -dynamic -bundle -undefined suppress -flat_namespace ~A" 
+			    o-file-name so-file-name (string-append *cload-ldflags* " " ldflags))))
+
 	  (if (provided? 'freebsd)
 	      (begin
-		(system (format #f "cc -fPIC -c ~A ~A" c-file-name (string-append *cload-cflags* " " cflags)))
-		(system (format #f "cc ~A -shared -o ~A ~A" o-file-name so-file-name (string-append *cload-ldflags* " " ldflags))))
-	      (begin
-		(system (format #f "gcc -fPIC -c ~A ~A" c-file-name (string-append *cload-cflags* " " cflags)))
-		(system (format #f "gcc ~A -shared -o ~A ~A" o-file-name so-file-name (string-append *cload-ldflags* " " ldflags)))))))
+		(system (format #f "cc -fPIC -c ~A ~A" 
+				c-file-name (string-append *cload-cflags* " " cflags)))
+		(system (format #f "cc ~A -shared -o ~A ~A" 
+				o-file-name so-file-name (string-append *cload-ldflags* " " ldflags))))
+
+	      (if (provided? 'openbsd)
+		  (begin
+		    (system (format #f "cc -fPIC -ftrampolines -c ~A ~A" 
+				    c-file-name (string-append *cload-cflags* " " cflags)))
+		    (system (format #f "cc ~A -shared -o ~A ~A" 
+				    o-file-name so-file-name (string-append *cload-ldflags* " " ldflags))))
+
+		  (begin
+		    (system (format #f "gcc -fPIC -c ~A ~A" 
+				    c-file-name (string-append *cload-cflags* " " cflags)))
+		    (system (format #f "gcc ~A -shared -o ~A ~A" 
+				    o-file-name so-file-name (string-append *cload-ldflags* " " ldflags))))))))
 
 
     (define (handle-declaration func)

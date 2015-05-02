@@ -261,7 +261,7 @@ static char *float_array_to_string(mus_float_t *arr, int len, int loc)
   if (len > 0)
     {
       int k;
-      sprintf(base, "[");
+      snprintf(base, size, "[");
       lim = len;
       if (lim > array_print_length) lim = array_print_length;
       k = loc;
@@ -282,7 +282,7 @@ static char *float_array_to_string(mus_float_t *arr, int len, int loc)
       snprintf(str, STR_SIZE, "%.3g%s", arr[k], (len > lim) ? "..." : "]");
       strcat(base, str);
     }
-  else sprintf(base, "[]");
+  else snprintf(base, size, "[]");
   if (len > lim)
     {
       /* print ranges */

@@ -1990,7 +1990,11 @@ static void set_print_name(s7_pointer p, const char *name, int len)
     {
       set_has_print_name(p);
       print_name_length(p) = (unsigned char)(len & 0xff);
+#ifdef __OpenBSD__
+      strlcpy(print_name(p), name, PRINT_NAME_SIZE);
+#else
       strcpy(print_name(p), name);
+#endif
     }
 }
 
@@ -6832,7 +6836,11 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   tmpbuf_malloc(name, slen + 2);
   name[0] = ':';                                     /* prepend ":" */
   name[1] = '\0';
+#ifdef __OpenBSD__
+  strlcat(name, key, slen + 2);
+#else
   name = strcat(name, key);
+#endif
   sym = make_symbol_with_length(sc, name, slen + 1); /* keyword slot etc taken care of here (in new_symbol actually) */
   tmpbuf_free(name, slen + 2);
   return(sym);
@@ -25163,14 +25171,19 @@ static char *multivector_indices_to_string(s7_scheme *sc, s7_Int index, s7_point
 {
   s7_Int size, ind;
   char buf[64];
+  size_t len;
 
   size = vector_dimension(vect, cur_dim);
   ind = index % size;
   if (cur_dim > 0)
     multivector_indices_to_string(sc, (index - ind) / size, vect, str, cur_dim - 1);
 
-  snprintf(buf, 64, " %lld", ind);
+  len = snprintf(buf, 64, " %lld", ind);
+#ifdef __OpenBSD__
+  strlcat(str, buf, 128);
+#else
   strcat(str, buf);
+#endif
   return(str);
 }
 
@@ -27976,7 +27989,11 @@ system captures the output as a string and returns it."
 	    }
 	  str[cur_len] = '\0';
 	  cur_len += buf_len;
+#ifdef __OpenBSD__
+	  strlcat(str, buf, full_len);
+#else
 	  strcat(str, buf);
+#endif
 	}
       pclose(fd);
 
@@ -37893,8 +37910,13 @@ static char *stacktrace_add_func(s7_scheme *sc, s7_pointer f, s7_pointer code, c
 	  for (i = len; i < code_max - 1; i++)
 	    str[i] = ' ';
 	  str[i] = '\0';
+#ifdef __OpenBSD__
+	  strlcat(str, notes, newlen);
+	  strlcat(str, "\n", newlen);
+#else
 	  strcat(str, notes);
 	  strcat(str, "\n");
+#endif
 	}
     }
   free(newstr);
@@ -68280,4 +68302,6 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * define-constant func gives a way to avoid closure_is_ok in all cases, so maybe move the arg checks into the main op?
  * gcc5 jit to replace clm2xen?
+ *
+ * does cload in openbsd need -ftrampolines?
  */
