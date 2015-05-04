@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.25"
-#define S7_DATE "22-Apr-15"
+#define S7_VERSION "3.26"
+#define S7_DATE "5-May-15"
 
 
 typedef long long int s7_Int;
@@ -576,6 +576,11 @@ s7_pointer s7_dilambda(s7_scheme *sc,
 		       int set_req_args, int set_opt_args,
 		       const char *documentation);
 s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj);
+s7_pointer s7_values(s7_scheme *sc, s7_pointer args);
+s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e);
+bool s7_is_iterator(s7_pointer obj);
+bool s7_iterator_is_at_end(s7_pointer obj);
+s7_pointer s7_iterate(s7_scheme *sc, s7_pointer iter);
 
 
 int s7_new_type(const char *name, 
@@ -767,6 +772,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 5-May:     s7_make_iterator and friends.
  * 16-Apr:    added s7_fill, changed arg interpretation of s7_copy, s7_dynamic_wind.
  * 30-Mar:    s7_eval_c_string_with_environment (repl experiment).
  * 19-Mar:    repl.scm.
