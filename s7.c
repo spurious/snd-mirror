@@ -691,7 +691,7 @@ typedef struct {
   int loc, curly_len, ctr;
   char *curly_str;
   s7_pointer args;
-  s7_pointer port;
+  s7_pointer port, strport;
 } format_data;
 
 
@@ -24538,7 +24538,6 @@ static s7_pointer vector_iterate(s7_scheme *sc, s7_pointer obj)
   return(sc->ITERATOR_END);
 }
 
-
 static s7_pointer other_iterate(s7_scheme *sc, s7_pointer obj)
 {
   if (iterator_position(obj) < iterator_length(obj))
@@ -24675,7 +24674,7 @@ static s7_pointer make_iterator(s7_scheme *sc, s7_pointer e)
       iterator_next(iter) = other_iterate;
       if (has_methods(e))
 	iterator_length(iter) = closure_length(sc, e);
-      else return(simple_wrong_type_argument_with_type(sc, sc->MAKE_ITERATOR, e, A_SEQUENCE));
+      else iterator_length(iter) = s7_Int_max;
       break;
 
     case T_C_OBJECT:
@@ -27162,8 +27161,11 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
     {
       if (fdat->port)
 	close_format_port(sc, fdat->port);
+      if (fdat->strport)
+	close_format_port(sc, fdat->strport);
     }
   fdat->port = NULL;
+  fdat->strport = NULL;
   fdat->loc = 0;
   fdat->args = args;
 
@@ -27493,7 +27495,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	    OBJSTR:
 	      /* object->string */
 	      {
-		s7_pointer obj;
+		s7_pointer obj, strport;
 		if (is_null(fdat->args))
 		  return(format_error(sc, "missing argument", str, args, fdat));
 
@@ -27501,33 +27503,38 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		obj = car(fdat->args);
 		/* for the column check, we need to know the length of the object->string output
 		 */
-		if (!columnized)
+		if (columnized)
 		  {
-		    if ((has_structure(obj)) &&
-			(obj != sc->rootlet))
+		    strport = open_format_port(sc);
+		    fdat->strport = strport;
+		  }
+		else strport = port;
+
+		if ((has_structure(obj)) &&
+		    (obj != sc->rootlet))
+		  {
+		    shared_info *ci = NULL;
+		    ci = make_shared_info(sc, obj, choice != USE_READABLE_WRITE);
+		    if ((ci) &&
+			(choice == USE_READABLE_WRITE))
 		      {
-			shared_info *ci = NULL;
-			ci = make_shared_info(sc, obj, choice != USE_READABLE_WRITE);
-			if ((ci) &&
-			    (choice == USE_READABLE_WRITE))
-			  {
-			    setup_shared_reads(sc, port, ci);
-			    object_to_port_with_circle_check(sc, obj, port, choice, is_file_port(port), ci);
-			    finish_shared_reads(sc, port, ci);
-			  }
-			else object_to_port_with_circle_check(sc, obj, port, choice, is_file_port(port), ci);
+			setup_shared_reads(sc, strport, ci);
+			object_to_port_with_circle_check(sc, obj, strport, choice, is_file_port(port), ci);
+			finish_shared_reads(sc, strport, ci);
 		      }
-		    else object_to_port(sc, obj, port, choice, is_file_port(port), NULL);
+		    else object_to_port_with_circle_check(sc, obj, strport, choice, is_file_port(port), ci);
 		  }
-		else
+		else object_to_port(sc, obj, strport, choice, is_file_port(port), NULL);
+		    
+		if (columnized)
 		  {
-		    char *s;
-		    int nlen = 0;
-		    s = s7_object_to_c_string_1(sc, obj, choice, &nlen);
-		    if (nlen > 0)
-		      format_append_string(sc, fdat, s, nlen, port);
-		    free(s);
+		    port_data(strport)[port_position(strport)] = '\0';		    
+		    if (port_position(strport) > 0)
+		      format_append_string(sc, fdat, (const char *)port_data(strport), port_position(strport), port);
+		    close_format_port(sc, strport);
+		    fdat->strport = NULL;
 		  }
+
 		fdat->args = cdr(fdat->args);
 		fdat->ctr++;
 	      }
@@ -27824,7 +27831,8 @@ static bool is_columnizing(const char *str)
 
 static s7_pointer format_to_port(s7_scheme *sc, s7_pointer port, const char *str, s7_pointer args, s7_pointer *next_arg, bool with_result, int len)
 {
-  return(format_to_port_1(sc, port, str, args, next_arg, with_result, is_columnizing(str), len));
+  return(format_to_port_1(sc, port, str, args, next_arg, with_result, true /* is_columnizing(str) */, len));
+  /* is_columnizing on every call is much slower than ignoring the issue */
 }
 
 
@@ -39056,7 +39064,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	    (catcher(sc, i, type, info, &reset_error_hook)))
 	  {
 	    if (sc->longjmp_ok) longjmp(sc->goto_start, 1);
-	    return(type);
+	    return(type); /* throw returns sc->value here? */
 	  }
       }
   }
@@ -40255,6 +40263,8 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
     {
       s7_function func;
       s7_pointer val;
+      /* perhaps: if the function is values, and one arg, use object->list? and (map values list) -> list or maybe (copy list) 
+       */
       sc->args = cons(sc, sc->args, make_list(sc, len, sc->NIL));
       func = c_function_call(sc->code);
       push_stack(sc, OP_NO_OP, sc->args, val = cons(sc, sc->NIL, sc->code)); /* temporary GC protection */
@@ -51625,7 +51635,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_Int step, end;
 	    bool use_geq = false;
 	    step_slot = dox_slot1(sc->envir);
-	    slot_value(step_slot) = make_mutable_integer(sc, integer(slot_value(step_slot)));
 	    end_slot = dox_slot2(sc->envir);
 #if (!WITH_GMP)
 	    use_geq = ((is_optimized(caadr(code))) && (ecdr(caadr(code)) == geq_2));
@@ -51637,12 +51646,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		for (p = sc->code; is_pair(p); p = cdr(p))
 		  ((s7_function)fcdr(p))(sc, car(p));
 		step = s7_integer(slot_value(step_slot)) + 1;
-		integer(slot_value(step_slot)) = step; /* since this is all_x throughout, mutable stepper should be safe */
+		slot_set_value(step_slot, make_integer(sc, step)); /* can't be mutable: (do ((i 0 (+ i 1))) ((= i 3) v) (vector-set! v i (abs i))) */
 		end = s7_integer(slot_value(end_slot));
 		if ((step == end) ||
 		    ((use_geq) && (step > end)))
 		  {
-		    sc->code = cdar(code);
+		    sc->code = cdr(cadr(code));
 		    goto DO_END_CLAUSES;
 		  }
 	      }
@@ -53098,10 +53107,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	OPT_EVAL:
 	  code = sc->code;
 	  sc->cur_code = code;
-#if DEBUGGING
-	  if (!is_optimized(code))
-	    {fprintf(stderr, "opt_eval: unopt %s\n", DISPLAY(code)); abort();}
-#endif
 
 	  switch (optimize_op(code))
 	    {
@@ -67781,6 +67786,7 @@ s7_scheme *s7_init(void)
   sc->CATCH =                 s7_define_function(sc,      "catch",                   g_catch,                  3, 0, false, H_catch);
   sc->THROW =                 s7_define_function(sc,      "throw",                   g_throw,                  1, 0, true,  H_throw);
   sc->ERROR =                 s7_define_function(sc,      "error",                   g_error,                  0, 0, true,  H_error);
+  /* it's faster to leave error/throw unsafe than to set needs_copied_args and use s7_define_safe_function because copy_list overwhelms any other savings */
   sc->STACKTRACE =            s7_define_safe_function(sc, "stacktrace",              g_stacktrace,             0, 5, false, H_stacktrace);
 
   /* these are internal for quasiquote's use -- they are values, not symbols */
@@ -68233,10 +68239,10 @@ int main(int argc, char **argv)
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3326
  * tcopy          |      |      |                          4970 4288
  * tmap           |      |      | 11.0           5031 4769 4685 4681
- * tform          |      |      |                          6816 5653
- * lg             |      |      | 6547 6497 6494 6235 6229 6239 6592
+ * tform          |      |      |                          6816 5481
+ * lg             |      |      | 6547 6497 6494 6235 6229 6239 6586
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6753
  * titer          |      |      |                          7976 6832
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6758
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
  * thash          |      |      |                          19.4 17.4
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.9
@@ -68259,6 +68265,7 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * define-constant func gives a way to avoid closure_is_ok in all cases, so maybe move the arg checks into the main op?
  * gcc5 jit to replace clm2xen?
- *
- * does cload in openbsd need -ftrampolines?
+ * curlet in let bindings=outlet, but in letrec=current?
+ * make-reversed-iterator? multiv iter that returns each row as a (shared) vector? tree-iterator (rewrite stuff.scm)
+ * snd namespaces from <mark> etc
  */
