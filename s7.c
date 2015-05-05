@@ -24562,6 +24562,7 @@ static s7_pointer other_iterate(s7_scheme *sc, s7_pointer obj)
   return(sc->ITERATOR_END);
 }
 
+
 static s7_pointer pair_iterate_1(s7_scheme *sc, s7_pointer obj);
 static s7_pointer pair_iterate(s7_scheme *sc, s7_pointer obj)
 {
@@ -24570,6 +24571,11 @@ static s7_pointer pair_iterate(s7_scheme *sc, s7_pointer obj)
       s7_pointer result;
       result = car(iterator_current(obj));
       iterator_current(obj) = cdr(iterator_current(obj));
+      if (iterator_current(obj) == iterator_slow(obj))
+	{
+	  iterator_next(obj) = iterator_finished;
+	  return(result);
+	}
       iterator_next(obj) = pair_iterate_1;
       return(result);
     }
@@ -24587,7 +24593,7 @@ static s7_pointer pair_iterate_1(s7_scheme *sc, s7_pointer obj)
       if (iterator_current(obj) == iterator_slow(obj))
 	{
 	  iterator_next(obj) = iterator_finished;
-	  return(sc->ITERATOR_END);
+	  return(result);
 	}
       iterator_slow(obj) = cdr(iterator_slow(obj));
       iterator_next(obj) = pair_iterate;
@@ -68302,12 +68308,14 @@ int main(int argc, char **argv)
  * define-constant func gives a way to avoid closure_is_ok in all cases, so maybe move the arg checks into the main op?
  * gcc5 jit to replace clm2xen?
  *
- * make-reversed-iterator? tree-iterator (rewrite stuff.scm/docs)
+ * tree-iterator (rewrite stuff.scm/docs -- no need for call-with-exit) -- t218 make-complete-iterator: needs more tests
  * equal? using iterators
- * snd namespaces from <mark> etc
- * s7.h: iterator funcs test/doc, does it make sense for an iter to return mvs? -- should map check args?
  * c-env 'make-iterator method? 
  * would a bacro iterator give access to runtime env?
+ *
  * canonicalize peak-phases
  * (* 3037000500 3037000500) fails if optimized -- should all these cases be overflow protected?
+ *
+ * snd namespaces from <mark> etc
+ * utf8 validation for snd gtk listener in fc22? (try -noinit first)
  */

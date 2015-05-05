@@ -1383,6 +1383,27 @@ int main(int argc, char **argv)
 
   s7_gc_unprotect_at(sc, gc_loc);
 
+  {
+    /* iterators */
+    s7_pointer iter, x;
+    iter = s7_make_iterator(sc, s7_list(sc, 3, TO_S7_INT(1), TO_S7_INT(2), TO_S7_INT(3)));
+    if (!s7_is_iterator(iter))
+      fprintf(stderr, "%d: %s is not an interator\n", __LINE__, TO_STR(iter));
+    if (s7_iterator_is_at_end(iter))
+      fprintf(stderr, "%d: %s is prematurely done\n", __LINE__, TO_STR(iter));
+    x = s7_iterate(sc, iter);
+    if ((!s7_is_integer(x)) || (s7_integer(x) != 1))
+      fprintf(stderr, "%d: %s should be 1\n", __LINE__, TO_STR(x));
+    x = s7_iterate(sc, iter);
+    if ((!s7_is_integer(x)) || (s7_integer(x) != 2))
+      fprintf(stderr, "%d: %s should be 2\n", __LINE__, TO_STR(x));
+    x = s7_iterate(sc, iter);
+    if ((!s7_is_integer(x)) || (s7_integer(x) != 3))
+      fprintf(stderr, "%d: %s should be 3\n", __LINE__, TO_STR(x));
+    x = s7_iterate(sc, iter);
+    if ((x != s7_eof_object(sc)) || (!s7_iterator_is_at_end(iter)))
+      fprintf(stderr, "%d: %s should be #<eof> and iter should be done\n", __LINE__, TO_STR(x));
+  }
 
   g_block_type = s7_new_type_x(sc, "#<block>", 
 			       g_block_display, g_block_free, 
