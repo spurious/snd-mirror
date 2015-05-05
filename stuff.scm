@@ -433,38 +433,82 @@ If func approves of one, index-if returns the index that gives that element's po
 	   (full-index-if-1 f sequence ())
 	   #f))))))
 
+
+(define (make-complete-iterator obj)
+  (make-iterator
+   (let ((iters ())
+	 (cycles (cyclic-sequences obj))
+	 (seen-cycles ()))
+
+     (define (iter-memq p q)
+       (and (pair? q)
+	    (or (eq? p (iterator-sequence (car q)))
+		(iter-memq p (cdr q)))))
+
+     (define (make-careful-iterator p)
+       (if (not (pair? p))
+	   (make-iterator p)
+	   (let ((len (length p)))
+	     (if (infinite? len)      ; circular list
+		 (make-iterator
+		  (let ((cur p))
+		    (lambda (pos)
+		      (if (memq cur seen-cycles)
+			  #<eof>
+			  (let ((result (car cur)))
+			    (if (memq cur cycles) 
+				(set! seen-cycles (cons cur seen-cycles)))
+			    (set! cur (cdr cur))
+			    result)))))
+		 (if (positive? len)  ; normal list
+		     (make-iterator p)
+		     (make-iterator   ; dotted list
+		      (let ((cur p))
+			(lambda (pos)
+			  (if (pair? cur)
+			      (let ((result (car cur)))
+				(set! cur (cdr cur))
+				result)
+			      (let ((result cur))
+				(set! cur #<eof>)
+				result))))))))))
+
+     (let ((iter (make-careful-iterator obj)))
+       (define (iterloop)
+	 (let ((result (iter)))
+	   (if (length result)
+	       (if (or (memq result seen-cycles) ; we've dealt with it already, so skip it
+		       (eq? result (iterator-sequence iter))
+		       (iter-memq result iters)) ; we're dealing with it the right now
+		   (iterloop) ; this means the outermost sequence is ignored if encountered during the traversal
+		   (begin
+		     (set! iters (cons iter iters))
+		     (set! iter (make-careful-iterator result))
+		     result))
+	       (if (eq? result #<eof>)
+		   (if (null? iters)
+		       #<eof>
+		       (begin
+			 (set! seen-cycles (cons (iterator-sequence iter) seen-cycles))
+			 (set! iter (car iters))
+			 (set! iters (cdr iters))
+			 (iterloop)))
+		   result))))
+       (lambda (pos) 
+	 (iterloop))))))
+
+
 (define safe-find-if 
   (let ((documentation "(safe-find-if func sequence) searches sequence, and recursively any sequences it contains, for an element that satisfies func.\
 Unlike full-find-if, safe-find-if can handle any circularity in the sequences."))
-    (lambda (f sequence) ; can handle almost any kind of cycle
-      (let ((unseen-cycles (cyclic-sequences sequence))
-	    (cycles-traversed ()))
-	(call-with-exit
-	 (lambda (return)
-	   (letrec* ((check (lambda (obj)
-			      (if (f obj)
-				  (return obj))
-			      (if (sequence? obj)
-				  (safe-find-if-1 obj))))
-		     (safe-find-if-1 
-		      (lambda (seq)
-			(unless (memq seq cycles-traversed)
-			  (if (memq seq unseen-cycles)
-			      (begin
-				(set! cycles-traversed (cons seq cycles-traversed))
-				(set! unseen-cycles (remove-if list (lambda (x) (eq? x seq)) unseen-cycles))
-				(if (pair? seq)
-				    (begin
-				      (check (car seq))
-				      (do ((p (cdr seq) (cdr p)))
-					  ((or (not (pair? p))
-					       (memq p cycles-traversed)
-					       (memq p unseen-cycles)))
-					(check (car p))))
-				    (for-each check seq)))
-			      (for-each check seq))))))
-	     (safe-find-if-1 sequence))
-	   #f))))))
+    (lambda (f sequence)
+      (let ((iter (make-complete-iterator sequence)))
+	(let loop ((x (iter)))
+	  (if (f x) x
+	      (if (and (eq? x #<eof>)
+		       (iterator-at-end? iter))
+		  #f
+		  (loop (iter)))))))))
 
 (define (safe-count-if f sequence)
   (let ((count 0))

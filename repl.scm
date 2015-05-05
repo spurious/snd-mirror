@@ -143,7 +143,8 @@
 		      ((or (= i (length current-line))
 			   (not (char-whitespace? (current-line i))))
 		       (let ((var-name (symbol->string (h 'variable))))
-			 (when (and (string=? var-name (substring current-line i (+ i (length var-name))))
+			 (when (and (>= (- (length current-line) i) (length var-name)) ; var-name might be unrelated to current-line
+				    (string=? var-name (substring current-line i (+ i (length var-name))))
 				    (zero? (system (string-append "command -v " var-name " >/dev/null"))))
 			   (set! unbound-case #t)
 			   (if (procedure? ((rootlet) 'system))
@@ -434,7 +435,7 @@
 			       (start-of-line cursor-position)	
 			       (end-of-line cursor-position))))))
 		 
-	    
+
 	    ;; -------- keymap(s) --------
 	    (define meta-keymap-functions (make-vector 256))
 	    (define keymap-functions (make-vector 256 #f))
@@ -799,9 +800,18 @@
 					      (format *stderr* "~S~%" val)
 					      (set! ** val))))))))
 			       
-			       (lambda args
+			       (lambda (type info)
 				 (pop-history)               ; remove last history entry
 				 (append-newline)
+
+				 (if (pair? info)            ; if read-error is not missing-close-paren, post some feedback
+				     (let ((old-helpers (*repl* 'helpers)))
+				       (set! (*repl* 'helpers)
+					     (list (lambda (c)
+						     (apply format #f info))))
+				       (help #\space)
+				       (set! (*repl* 'helpers) old-helpers)))
+
 				 (return))))
 			   
 			   (lambda (type info)
@@ -1363,10 +1373,5 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 |#
 
 ;; unicode someday: I think all we need is unicode_string_length and index into unicode string (set/ref)
-;; more autoload? 
-;; history search? a way to save the latest definition or all of them (rather than save-history which rotates out)
-;;   or M-. to get back the last definition text: <func-name>M-. or uses autoload tables to get it?
-;;   could top-level-let save each definition as text+value?
-;;   look at ** value? or a let-set-watcher like symbol-access?
 
 *repl*

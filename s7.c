@@ -22870,6 +22870,7 @@ static s7_pointer open_output_string(s7_scheme *sc, int len)
   port_is_closed(x) = false;
   port_data_size(x) = len;
   port_data(x) = (unsigned char *)malloc((len + 8) * sizeof(unsigned char));
+  port_data(x)[0] = '\0';   /* in case s7_get_output_string before any output */
   port_position(x) = 0;
   port_needs_free(x) = true;
   port_read_character(x) = output_read_char;
@@ -22920,7 +22921,10 @@ If the optional 'clear-port' is #t, the current string is flushed."
   result = s7_make_string_with_length(sc, (const char *)port_data(p), port_position(p));
   if ((is_pair(cdr(args))) &&
       (cadr(args) == sc->T))
-    port_position(p) = 0;
+    {
+      port_position(p) = 0;
+      port_data(p)[0] = '\0';
+    }
   return(result);
 }
 
@@ -26890,6 +26894,7 @@ static s7_pointer open_format_port(s7_scheme *sc)
       x = format_ports;
       format_ports = (s7_pointer)(port_port(x)->next);
       port_position(x) = 0;
+      port_data(x)[0] = '\0';
       return(x);
     }
 
@@ -26901,6 +26906,7 @@ static s7_pointer open_format_port(s7_scheme *sc)
   port_is_closed(x) = false;
   port_data_size(x) = len;
   port_data(x) = (unsigned char *)malloc((len + 8) * sizeof(unsigned char));
+  port_data(x)[0] = '\0';
   port_position(x) = 0;
   port_needs_free(x) = false;
   port_read_character(x) = output_read_char;
@@ -68308,14 +68314,13 @@ int main(int argc, char **argv)
  * define-constant func gives a way to avoid closure_is_ok in all cases, so maybe move the arg checks into the main op?
  * gcc5 jit to replace clm2xen?
  *
- * tree-iterator (rewrite stuff.scm/docs -- no need for call-with-exit) -- t218 make-complete-iterator: needs more tests
- * equal? using iterators
+ * equal? using iterators: just 2 complete-iters running in parallel until not equal or both done (but ignore sequences except type equal)
  * c-env 'make-iterator method? 
  * would a bacro iterator give access to runtime env?
+ * setter proc? (set! (iterate iter) 32) -- seems misleading, maybe (set! (iter) 32)
  *
  * canonicalize peak-phases
  * (* 3037000500 3037000500) fails if optimized -- should all these cases be overflow protected?
  *
  * snd namespaces from <mark> etc
- * utf8 validation for snd gtk listener in fc22? (try -noinit first)
  */
