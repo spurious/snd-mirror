@@ -875,7 +875,7 @@ wants an expression:
 
 <pre class="indented">
 &gt; (define-macro (add-1 arg) `(+ 1 ,arg))
-#&lt;macro (arg)&gt;
+add-1
 &gt; (macroexpand (add-1 32))
 (+ 1 32)
 </pre>
@@ -897,7 +897,7 @@ giving the new symbol name's prefix.  gensym? returns #t if its argument is a sy
 
 <pre class="indented">
 &gt; (define-macro* (add-2 a (b 2)) `(+ ,a ,b))
-#&lt;macro* (a b)&gt;
+add-2
 &gt; (add-2 1 3)
 4
 &gt; (add-2 1)
@@ -1025,7 +1025,7 @@ and assign it to a variable.  You can even set its procedure-setter!
 
 <pre class="indented">
 &gt; (define-macro (hi a) `(+ ,a 1))
-#&lt;macro (a)gt;
+hi
 &gt; (apply hi '(4))
 5
 &gt; (define (fmac mac) (apply mac '(4)))
@@ -1043,11 +1043,11 @@ make-mac
     (x 2))
 3
 &gt; (define-macro (ref v i) `(vector-ref ,v ,i))
-#&lt;macro (v i)&gt;
+ref
 &gt; (define-macro (set v i x) `(vector-set! ,v ,i ,x))
-#&lt;macro (v i ...)&gt;
+set
 &gt; (set! (procedure-setter ref) set)
-#&lt;macro (v i ...)&gt;
+set
 &gt; (let ((v (vector 1 2 3))) (set! (ref v 0) 32) v)
 #(32 2 3)
 </pre>
@@ -1083,12 +1083,12 @@ It's almost as easy to write the actual macro body as the backquoted version of 
 
 <pre class="indented">
 &gt; (define-macro (hi a) `(+ 1 ,a))
-#&lt;macro (a)&gt;
+hi
 &gt; (procedure-source hi)
 (lambda (a) <em class=red>({list} '+ 1 a)</em>)
 
 &gt; (define-macro (hi a) `(+ 1 ,@a))
-#&lt;macro (a)&gt;
+hi
 &gt; (procedure-source hi)
 (lambda (a) <em class=red>({list} '+ 1 ({apply_values} a))</em>)
 </pre>
@@ -1127,7 +1127,7 @@ other hand, seem unnecessary.
 &gt; (define-macro (mac b) 
     `(let ((a 12)) 
        (+ a ,b)))
-#&lt;macro (b)&gt;
+mac
 &gt; (let ((a 1) (+ *)) (mac a))
 144
 </pre>
@@ -1143,7 +1143,7 @@ as long as the redefinition of '+' is local (that is, it happens after the macro
 &gt; (define-macro (mac b) 
     `(let ((a 12)) 
        (,+ a ,b))) ; ,+ picks up the definition-time +
-#&lt;macro (b)&gt;
+mac
 &gt; (let ((a 1) (+ *)) (mac a))
 24                 ; (+ a a) where a is 12
 </pre>
@@ -1199,7 +1199,7 @@ or #_&lt;name&gt;.  That is, #_+ is a reader macro for <code>(with-let (unlet) +
 &gt; (define-macro (mac b) 
     `(<em class=red>#_let</em> ((a 12)) 
        (<em class=red>#_+</em> a ,b))) ; #_+ and #_let are start-up values
-#&lt;macro (b)&gt;
+mac
 &gt; (let ((a 1) (+ *)) (mac a))
 24                 ; (+ a a) where a is 12 and + is the start-up +
 
@@ -1244,7 +1244,7 @@ mac
 ;; or use lambda:
 &gt; (define-macro (mac b) 
   `((lambda (b) (let ((a 12)) (#_+ a b))) ,b))
-#&lt;macro (b)&gt;
+mac
 &gt; (let ((a 1) (+ *)) (mac a))
 13
 </pre>
@@ -1312,9 +1312,9 @@ with the macro arguments getting their values from the call-time environment:
                          (list (list 'funclet ,name)) 
                          (list ,@get-args))
                  ',@new-body)))))
-#&lt;macro (name-and-args . body)&gt;
+define-immaculo
 &gt; (define-immaculo (mac c d) `(let ((a 12) (b 3)) (+ a b ,c ,d)))
-#&lt;macro (c d)&gt;
+mac
 &gt; (let ((a 21) (b 10) (+ *)) (mac a b))
 46     ; (+ 12 3 21 10) with the definition-time value of +
 &gt; (let ((a 21) (b 10) (+ *)) (mac a (+ b 10)))
@@ -1341,7 +1341,7 @@ Better would be to use a gensym rather than "e" for the curlet.
 
 &gt; (define-immaculo (mac b) 
     `(let ((a 1)) (+ a ,b)))
-#&lt;macro (b)&gt;
+mac
 &gt; (let ((a 32)) (mac a))
 33
 &gt; (procedure-source mac) ; I've edited the results to try to make the transformation clearer
@@ -1436,7 +1436,7 @@ that returns its argument in a list statement.
 
 <pre class="indented">
 &gt; (define-macro (hang arg) `(define ,arg `(list (cdr ,,arg))))
-#&lt;macro (arg)&gt;
+hang
 &gt; (macroexpand (hang (f a)))
 (define #1=(f a) ({list} 'list ({list} 'cdr #1#)))
 &gt; (hang (f a))
@@ -1453,7 +1453,7 @@ Here's one way out:
 
 <pre class="indented">
 &gt; (define-macro (hang arg) `(define ,arg `(list ,,@(cdr arg))))
-#&lt;macro (arg)&gt;
+hang
 &gt; (macroexpand (hang (f a)))
 (define (f a) ({list} 'list a))
 &gt; (hang (f a))
@@ -1547,7 +1547,7 @@ value passed to set!:
 	    `(if ,on
 	         (set! ,var (logior ,var (ash 1 ,index)))
 	         (set! ,var (logand ,var (lognot (ash 1 ,index)))))))
-#&lt;macro (var index ...)&gt;
+m
 &gt; (define (mingle a b)
     (let ((r 0))
       (do ((i 0 (+ i 1)))
@@ -2367,14 +2367,14 @@ memo-fib
 3.200e-05
 
 &gt; (let-&gt;list (outlet (funclet memo-fib)))
-(({memo}-18 . #&lt;hash-table 
-    (0 . 0) (1 . 1) (2 . 1) (3 . 2) (4 . 3) (5 . 5) 
-    (6 . 8) (7 . 13) (8 . 21) (9 . 34) (10 . 55) (11 . 89) 
-    (12 . 144) (13 . 233) (14 . 377) (15 . 610) (16 . 987) 
-    (17 . 1597) (18 . 2584) (19 . 4181) (20 . 6765) (21 . 10946) 
-    (22 . 17711) (23 . 28657) (24 . 46368) (25 . 75025) (26 . 121393) 
-    (27 . 196418) (28 . 317811) (29 . 514229) (30 . 832040) (31 . 1346269) 
-    (32 . 2178309) (33 . 3524578) (34 . 5702887)&gt;))
+(({memo}-18 . (hash-table 
+    '(0 . 0) '(1 . 1) '(2 . 1) '(3 . 2) '(4 . 3) '(5 . 5) 
+    '(6 . 8) '(7 . 13) '(8 . 21) '(9 . 34) '(10 . 55) '(11 . 89) 
+    '(12 . 144) '(13 . 233) '(14 . 377) '(15 . 610) '(16 . 987) 
+    '(17 . 1597) '(18 . 2584) '(19 . 4181) '(20 . 6765) '(21 . 10946) 
+    '(22 . 17711) '(23 . 28657) '(24 . 46368) '(25 . 75025) '(26 . 121393) 
+    '(27 . 196418) '(28 . 317811) '(29 . 514229) '(30 . 832040) '(31 . 1346269) 
+    '(32 . 2178309) '(33 . 3524578) '(34 . 5702887)))
 </pre>
 <p>But of course, in real code no-one would ever use recursion to get the Fibonacci numbers!
 </p>
@@ -2423,19 +2423,19 @@ Environments are first class (and applicable) objects in s7.
 <blockquote>
 <pre class="indented">
 &gt; (inlet 'a 1 'b 2)
-#&lt;let 'a 1 'b 2&gt;
+(inlet 'a 1 'b 2)
 &gt; (let ((a 1) (b 2)) (curlet))
-#&lt;let 'a 1 'b 2&gt;
+(inlet 'a 1 'b 2)
 &gt; (let ((x (inlet :a 1 :b 2))) (x 'a))
 1
 &gt; (with-let (inlet 'a 1 'b 2) (+ a b))
 3
 &gt; (let ((x (inlet :a 1 :b 2))) (set! (x 'a) 4) x)
-#&lt;let 'a 4 'b 2&gt;
+(inlet 'a 4 'b 2)
 &gt; (let ((x (inlet))) (varlet x 'a 1) x)
-#&lt;let 'a 1&gt;
+(inlet 'a 1)
 &gt; (let ((a 1)) (let ((b 2)) (outlet (curlet))))
-#&lt;let 'a 1&gt;
+(inlet 'a 1)
 </pre>
 </blockquote>
 <br>
@@ -3257,7 +3257,7 @@ mostly useful in <a href="#readercond">reader-cond</a>.
 
 <pre class="indented">
 &gt; (define-expansion (comment str) (values))
-#&lt;expansion (str)&gt;
+comment
 &gt; (+ 1 (comment "one") 2 (comment "two"))
 3
 </pre>
@@ -4735,13 +4735,13 @@ returns the value that is actually set.  For example, the function can ensure th
     (curlet)))
 
 &gt; e
-#&lt;let 'x 3 'y 3 'z 3.3&gt;
+(inlet 'x 3 'y 3 'z 3.3)
 
 &gt;(begin (set! (e 'x) 123) (set! (e 'y) #()) (set! (e 'z) #f))
 ;; prints "z 3.3 -&gt; #f"
 
 &gt; e
-#&lt;let 'x 123 'y 3 'z #f&gt;
+(inlet 'x 123 'y 3 'z #f)
 
 &gt; (define-macro (reflective-let vars . body)
     `(let ,vars
@@ -4752,7 +4752,7 @@ returns the value that is actually set.  For example, the function can ensure th
 		         v)))
 	      vars)
        ,@body))
-#&lt;macro (vars . body)&gt;
+reflective-let
 
 &gt; (reflective-let ((a 1)) (set! a 2))
 2     ; prints "a -&gt; 2"
@@ -5517,7 +5517,7 @@ a (gasp!) f*xpr.  In fact:
        (append (list (append (list (gensym)) ',(cdr name-and-args))) ',body))))
 
 &gt; (define-f*xpr (mac a) `(+ ,a 1))
-#&lt;expansion (a)&gt;
+mac
 &gt; (mac (* 2 3))
 (+ (* 2 3) 1)
 </pre>
@@ -5528,11 +5528,11 @@ You can do something similar with a normal macro, or make the indirection explic
 
 <pre class="indented">
 &gt; (define-macro (fx x) `'(+ 1 ,x)) ; quote result to avoid evaluation
-#&lt;macro (x)&gt;
+fx
 &gt; (let ((a 3)) (fx a))
 (+ 1 a)
 &gt; (define-expansion (ex x) `(+ 1 ,x))
-#&lt;expansion (x)&gt;
+ex
 &gt; (let ((x ex) (a 3)) (x a))       ; avoid read-time splicing
 (+ 1 a)
 &gt; (let ((a 3)) (ex a))             ; spliced in at read-time
@@ -6206,7 +6206,7 @@ These symbols are not just an optimization of string comparison:
 (define-macro (hi a) 
   (let ((funny-name (string-&gt;symbol ";")))
     `(let ((,funny-name ,a)) (+ 1 ,funny-name))))
-#&lt;macro (a)&gt;
+hi
 &gt; (hi 2)
 3
 &gt; (macroexpand (hi 2))
@@ -6292,7 +6292,7 @@ These symbols are not just an optimization of string comparison:
 <pre class="indented">
 &gt; (define-macro (enum . args)
     `(for-each define ',args (iota (length ',args))))
-#&lt;macro args&gt;
+enum
 &gt; (enum a b c) 
 #&lt;unspecified&gt;
 &gt; b
@@ -6322,7 +6322,7 @@ These symbols are not just an optimization of string comparison:
 &gt; (define-macro (glambda args) ; returns an anonymous macro that will return a function given a body
     `(define-macro (,(gensym) . body) 
          `(lambda ,',args ,@body)))
-#&lt;macro (args)&gt;
+glambda
 &gt; (let ((gf (glambda (a b))))  ; gf is now ready for any body that involves arguments 'a and 'b
     ((gf (+ a b)) 1 2))        ; apply (lambda (a b) (+ a b)) to '(1 2)
 3

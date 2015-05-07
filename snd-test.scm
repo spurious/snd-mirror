@@ -1,34 +1,34 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [538]
+;;;  test 0: constants                          [546]
 ;;;  test 1: defaults                           [1218]
-;;;  test 2: headers                            [1582]
-;;;  test 3: variables                          [1897]
-;;;  test 4: sndlib                             [2463]
-;;;  test 5: simple overall checks              [4465]
-;;;  test 6: float-vectors                      [9197]
-;;;  test 7: colors                             [9459]
-;;;  test 8: clm                                [9978]
-;;;  test 9: mix                                [22007]
-;;;  test 10: marks                             [23778]
-;;;  test 11: dialogs                           [24722]
-;;;  test 12: extensions                        [24895]
-;;;  test 13: menus, edit lists, hooks, etc     [25160]
-;;;  test 14: all together now                  [26486]
-;;;  test 15: chan-local vars                   [27357]
-;;;  test 16: regularized funcs                 [29093]
-;;;  test 17: dialogs and graphics              [32860]
-;;;  test 18: save and restore                  [32972]
-;;;  test 19: transforms                        [34624]
-;;;  test 20: new stuff                         [36732]
-;;;  test 21: optimizer                         [37928]
-;;;  test 22: with-sound                        [38452]
-;;;  test 23: X/Xt/Xm                           [41409]
-;;;  test 24: GL                                [45085]
-;;;  test 25: errors                            [45208]
-;;;  test 26: s7                                [46725]
-;;;  test all done                              [46790]
-;;;  test the end                               [46970]
+;;;  test 2: headers                            [1578]
+;;;  test 3: variables                          [1893]
+;;;  test 4: sndlib                             [2457]
+;;;  test 5: simple overall checks              [4460]
+;;;  test 6: float-vectors                      [9205]
+;;;  test 7: colors                             [9477]
+;;;  test 8: clm                                [9996]
+;;;  test 9: mix                                [22057]
+;;;  test 10: marks                             [23836]
+;;;  test 11: dialogs                           [24780]
+;;;  test 12: extensions                        [24953]
+;;;  test 13: menus, edit lists, hooks, etc     [25219]
+;;;  test 14: all together now                  [26545]
+;;;  test 15: chan-local vars                   [27421]
+;;;  test 16: regularized funcs                 [29157]
+;;;  test 17: dialogs and graphics              [32925]
+;;;  test 18: save and restore                  [33037]
+;;;  test 19: transforms                        [34690]
+;;;  test 20: new stuff                         [36797]
+;;;  test 21: optimizer                         [37994]
+;;;  test 22: with-sound                        [38518]
+;;;  test 23: X/Xt/Xm                           [41499]
+;;;  test 24: GL                                [45173]
+;;;  test 25: errors                            [45296]
+;;;  test 26: s7                                [46814]
+;;;  test all done                              [46887]
+;;;  test the end                               [47068]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
@@ -41380,46 +41380,91 @@ EDITS: 1
   (calling-all-animals)
   (calling-all-generators)
   
-  (for-each
-   (lambda (name maker isit)
-     (let ((gen (maker)))
-       (if (not (isit gen))
-	   (snd-display #__line__ ";~A is not a ~A?" gen name))))
-   
-   (list 'nssb 'nxysin 'nxycos 'nxy1cos 'nxy1sin 'noddsin 'noddcos 'noddssb 'ncos2 'npcos
-	 nrsin 'nrcos 'nrssb 'nkssb 'nsincos 'rcos 'rssb 'rxysin 'rxycos
-	 rxyk!sin 'rxyk!cos 'ercos 'erssb 'eoddcos 'rkcos 'rksin 'rkssb
-	 rk!cos 'rk!ssb 'r2k!cos 'k2sin 'k2cos 'k2ssb 'dblsum 'rkoddssb 'krksin
-	 abcos 'absin 'r2k2cos 'bess 'jjcos 'j0evencos 'j2cos 'jpcos 'jncos
-	 j0j1cos 'jycos 'blackman 'fmssb 'k3sin 'izcos 'nchoosekcos 'n1cos
-	 adjustable-square-wave 'adjustable-triangle-wave 'adjustable-sawtooth-wave 'adjustable-oscil
-	 round-interp 'sinc-train 'pink-noise 'green-noise 'brown-noise 'green-noise-interp
-	 moving-max 'moving-norm 'moving-sum 'moving-rms 'moving-length 'weighted-moving-average 'exponentially-weighted-moving-average
-	 tanhsin 'moving-fft 'moving-scentroid 'moving-autocorrelation 'moving-pitch)
-   
-   (list make-nssb make-nxysin make-nxycos make-nxy1cos make-nxy1sin make-noddsin make-noddcos make-noddssb make-ncos2 make-npcos
-	 make-nrsin make-nrcos make-nrssb make-nkssb make-nsincos make-rcos make-rssb make-rxysin make-rxycos
-	 make-rxyk!sin make-rxyk!cos make-ercos make-erssb make-eoddcos make-rkcos make-rksin make-rkssb
-	 make-rk!cos make-rk!ssb make-r2k!cos make-k2sin make-k2cos make-k2ssb make-dblsum make-rkoddssb make-krksin
-	 make-abcos make-absin make-r2k2cos make-bess make-jjcos make-j0evencos make-j2cos make-jpcos make-jncos
-	 make-j0j1cos make-jycos make-blackman make-fmssb make-k3sin make-izcos make-nchoosekcos make-n1cos
-	 make-adjustable-square-wave make-adjustable-triangle-wave make-adjustable-sawtooth-wave make-adjustable-oscil
-	 make-round-interp make-sinc-train make-pink-noise make-green-noise make-brown-noise make-green-noise-interp
-	 make-moving-max make-moving-norm make-moving-sum make-moving-rms make-moving-length make-weighted-moving-average make-exponentially-weighted-moving-average 
-	 make-tanhsin make-moving-fft make-moving-scentroid make-moving-autocorrelation make-moving-pitch)
-   
-   (list nssb? nxysin? nxycos? nxy1cos? nxy1sin? noddsin? noddcos? noddssb? ncos2? npcos? 
-	 nrsin? nrcos? nrssb? nkssb? nsincos? rcos? rssb? rxysin? rxycos? 
-	 rxyk!sin? rxyk!cos? ercos? erssb? eoddcos? rkcos? rksin? rkssb? 
-	 rk!cos? rk!ssb? r2k!cos? k2sin? k2cos? k2ssb? dblsum? rkoddssb? krksin? 
-	 abcos? absin? r2k2cos? bess? jjcos? j0evencos? j2cos? jpcos? jncos? 
-	 j0j1cos? jycos? blackman? fmssb? k3sin? izcos? nchoosekcos? n1cos? 
-	 adjustable-square-wave? adjustable-triangle-wave? adjustable-sawtooth-wave? adjustable-oscil? 
-	 round-interp? sinc-train? pink-noise? green-noise? brown-noise? green-noise-interp? 
-	 moving-max? moving-norm? moving-sum? moving-rms? moving-length? weighted-moving-average? exponentially-weighted-moving-average? 
-	 tanhsin? moving-fft? moving-scentroid? moving-autocorrelation? moving-pitch? )
-   )
-  
+  (let ()
+    (define gen-list (list make-nssb make-nxysin make-nxycos make-nxy1cos make-nxy1sin make-noddsin make-noddcos make-noddssb make-ncos2 make-npcos
+			   make-nrsin make-nrcos make-nrssb make-nkssb make-nsincos make-rcos make-rssb make-rxysin make-rxycos
+			   make-rxyk!sin make-rxyk!cos make-ercos make-erssb make-eoddcos make-rkcos make-rksin make-rkssb
+			   make-rk!cos make-rk!ssb make-r2k!cos make-k2sin make-k2cos make-k2ssb make-dblsum make-rkoddssb make-krksin
+			   make-abcos make-absin make-r2k2cos make-bess make-jjcos make-j0evencos make-j2cos make-jpcos make-jncos
+			   make-j0j1cos make-jycos make-blackman make-fmssb make-k3sin make-izcos make-nchoosekcos make-n1cos
+			   make-adjustable-square-wave make-adjustable-triangle-wave make-adjustable-sawtooth-wave make-adjustable-oscil
+			   make-round-interp make-sinc-train make-pink-noise make-green-noise make-brown-noise make-green-noise-interp
+			   make-moving-max make-moving-norm make-moving-sum make-moving-rms make-moving-length 
+			   make-weighted-moving-average make-exponentially-weighted-moving-average 
+			   make-tanhsin 
+			   (lambda args
+			     (make-moving-fft (make-readin "oboe.snd")))
+			   make-moving-scentroid 
+			   (lambda args
+			     (make-moving-autocorrelation (make-readin "oboe.snd")))
+			   (lambda args
+			     (make-moving-pitch (make-readin "oboe.snd")))))
+    
+    (define gens (apply vector (map (lambda (maker) (maker)) gen-list)))
+    
+    (for-each
+     (lambda (name maker isit run)
+       (let ((gen (maker)))
+	 (if (not (isit gen))
+	     (format *stderr* ";~A is not a ~A?" gen name))
+	 
+	 (run gen)
+	 (apply run (list gen))
+	 (for-each 
+	  (lambda (g)
+	    (catch #t
+	      (lambda ()
+		(run g))
+	      (lambda (type info)
+					;(format *stderr* "~A: ~A ~A~%" name type (apply format #f info))
+		'error)))
+	  gens)
+	 ))
+     
+     (list 'nssb 'nxysin 'nxycos 'nxy1cos 'nxy1sin 'noddsin 'noddcos 'noddssb 'ncos2 'npcos
+	   nrsin 'nrcos 'nrssb 'nkssb 'nsincos 'rcos 'rssb 'rxysin 'rxycos
+	   rxyk!sin 'rxyk!cos 'ercos 'erssb 'eoddcos 'rkcos 'rksin 'rkssb
+	   rk!cos 'rk!ssb 'r2k!cos 'k2sin 'k2cos 'k2ssb 'dblsum 'rkoddssb 'krksin
+	   abcos 'absin 'r2k2cos 'bess 'jjcos 'j0evencos 'j2cos 'jpcos 'jncos
+	   j0j1cos 'jycos 'blackman 'fmssb 'k3sin 'izcos 'nchoosekcos 'n1cos
+	   adjustable-square-wave 'adjustable-triangle-wave 'adjustable-sawtooth-wave 'adjustable-oscil
+	   round-interp 'sinc-train 'pink-noise 'green-noise 'brown-noise 'green-noise-interp
+	   moving-max 'moving-norm 'moving-sum 'moving-rms 'moving-length 'weighted-moving-average 'exponentially-weighted-moving-average
+	   tanhsin 'moving-fft 'moving-scentroid 'moving-autocorrelation 'moving-pitch
+	   )
+     gen-list
+     
+     (list nssb? nxysin? nxycos? nxy1cos? nxy1sin? noddsin? noddcos? noddssb? ncos2? npcos? 
+	   nrsin? nrcos? nrssb? nkssb? nsincos? rcos? rssb? rxysin? rxycos? 
+	   rxyk!sin? rxyk!cos? ercos? erssb? eoddcos? rkcos? rksin? rkssb? 
+	   rk!cos? rk!ssb? r2k!cos? k2sin? k2cos? k2ssb? dblsum? rkoddssb? krksin? 
+	   abcos? absin? r2k2cos? bess? jjcos? j0evencos? j2cos? jpcos? jncos? 
+	   j0j1cos? jycos? blackman? fmssb? k3sin? izcos? nchoosekcos? n1cos? 
+	   adjustable-square-wave? adjustable-triangle-wave? adjustable-sawtooth-wave? adjustable-oscil? 
+	   round-interp? sinc-train? pink-noise? green-noise? brown-noise? green-noise-interp? 
+	   moving-max? moving-norm? moving-sum? moving-rms? moving-length? weighted-moving-average? exponentially-weighted-moving-average? 
+	   tanhsin? moving-fft? moving-scentroid? moving-autocorrelation? moving-pitch? )
+     
+     (list nssb nxysin nxycos nxy1cos nxy1sin noddsin noddcos noddssb ncos2 npcos
+	   nrsin nrcos nrssb nkssb nsincos rcos rssb rxysin rxycos
+	   rxyk!sin rxyk!cos ercos erssb eoddcos rkcos rksin rkssb
+	   rk!cos rk!ssb r2k!cos k2sin k2cos k2ssb dblsum rkoddssb krksin
+	   abcos absin r2k2cos bess jjcos j0evencos j2cos jpcos jncos
+	   j0j1cos jycos blackman fmssb k3sin izcos nchoosekcos n1cos
+	   adjustable-square-wave adjustable-triangle-wave adjustable-sawtooth-wave adjustable-oscil
+	   round-interp sinc-train pink-noise green-noise brown-noise green-noise-interp
+	   moving-max moving-norm 
+	   (lambda (g) 
+	     (moving-sum g 0.0)) 
+	   (lambda (g)
+	     (moving-rms g 0.0))
+	   (lambda (g)
+	     (moving-length g 0.0))
+	   (lambda (g)
+	     (weighted-moving-average g 0.0))
+	   exponentially-weighted-moving-average
+	   tanhsin moving-fft moving-scentroid moving-autocorrelation moving-pitch
+	   )))
   
   (let ((gen1 (make-oscil 440.0))
 	(gen2 (make-oscil 440.0)))

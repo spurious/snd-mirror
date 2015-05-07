@@ -511,6 +511,9 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		  (loop (iter)))))))))
 
 (define (safe-count-if f sequence)
+  ;; currently the complete-iterator above skips repetitions, including the outer sequence,
+  ;;   so this count will be off if there are shared sequences or repeated cycles.
+  ;; Perhaps make an iterator that returns everything.
   (let ((count 0))
     (safe-find-if (lambda (x) (if (f x) (set! count (+ count 1))) #f) sequence)
     count))

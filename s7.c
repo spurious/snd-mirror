@@ -560,13 +560,7 @@ typedef struct s7_cell {
 	const char *fstr;
       } fc;
       unsigned int line;
-      union {
-	struct {
-	  unsigned short data;
-	  unsigned short data_index;
-	} d;
-	unsigned int op;
-      } dat;
+      unsigned int op;
     } cons;
 
     struct {
@@ -1634,7 +1628,7 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 
 #define pair_line_number(p)           (p)->object.cons.line
 #define pair_raw_hash(p)              (p)->object.cons.line
-#define pair_raw_len(p)               (p)->object.cons.dat.op
+#define pair_raw_len(p)               (p)->object.cons.op
 #define pair_raw_name(p)              (p)->object.cons.fc.fstr
 
 #define is_string(p)                  (type(p) == T_STRING)
@@ -1658,15 +1652,13 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define character_name(p)             (p)->object.chr.c_name
 #define character_name_length(p)      (p)->object.chr.length
 
-#define optimize_data(p)              (p)->object.cons.dat.d.data
+#define optimize_data(p)              (p)->object.cons.op
+#define set_optimize_data(P, Op)      optimize_data(P) = Op
 #define optimize_data_match(P, Q)     ((is_optimized(P)) && ((optimize_data(P) & 0xfffe) == Q))
-#define optimize_data_index(p)        (p)->object.cons.dat.d.data_index
 #define op_no_hop(P)                  (optimize_data(P) & 0xfffe)
 #define clear_hop(P)                  set_optimize_data(P, op_no_hop(P))
-static void set_optimize_data(s7_pointer p, unsigned short op) {p->object.cons.dat.d.data = op; optimize_data_index(p) = op;}
 #define clear_optimize_data(P)        set_optimize_data(P, 0)
-#define optimize_op(p)                optimize_data_index(p)
-#define set_safe_optimize_data(P, Q) do {set_optimized(P); set_optimize_data(P, Q);} while (0)
+#define set_safe_optimize_data(P, Q)  do {set_optimized(P); set_optimize_data(P, Q);} while (0)
 #define set_unsafe_optimize_data(P, Q) do {set_unsafely_optimized(P); set_optimize_data(P, Q);} while (0)
 
 #define is_symbol(p)                  (type(p) == T_SYMBOL)
@@ -1717,7 +1709,7 @@ static void set_optimize_data(s7_pointer p, unsigned short op) {p->object.cons.d
 #define syntax_max_args(p)            (p)->object.syn.max_args
 #define syntax_documentation(p)       (p)->object.syn.doc
 
-#define pair_syntax_op(P)             (P)->object.cons.dat.op
+#define pair_syntax_op(P)             (P)->object.cons.op
 #define pair_syntax_symbol(P)         car(ecdr(P))
 #if (!DEBUGGING)
 static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_symbol(p) = op; pair_syntax_op(ecdr(p)) = symbol_syntax_op(op);}
@@ -14748,7 +14740,17 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 	{
 	  switch (type(x))
 	    {
+#if HAVE_OVERFLOW_CHECKS /* just an experiment... */
+	    case T_INTEGER:
+	      {
+		s7_Int n;
+		if (multiply_overflow(integer(x), integer(y), &n))
+		  return(make_real(sc, ((s7_Double)integer(x)) * ((s7_Double)integer(y))));
+		return(make_integer(sc, n));
+	      }
+#else
 	    case T_INTEGER: return(make_integer(sc, integer(x) * integer(y)));
+#endif
 	    case T_RATIO:   return(g_multiply(sc, args));
 	    case T_REAL:    return(make_real(sc, real(x) * real(y)));
 	    case T_COMPLEX:
@@ -24607,6 +24609,20 @@ static s7_pointer pair_iterate_1(s7_scheme *sc, s7_pointer obj)
   return(sc->ITERATOR_END);
 }
 
+static s7_pointer iterator_method(s7_scheme *sc, s7_pointer e)
+{
+  s7_pointer func;
+  if ((has_methods(e)) && 
+      ((func = find_method(sc, find_let(sc, e), sc->MAKE_ITERATOR)) != sc->UNDEFINED))
+    {
+      s7_pointer it;
+      it = s7_apply_function(sc, func, list_1(sc, e));
+      if (!is_iterator(it))
+	return(s7_error(sc, sc->ERROR, list_2(sc, make_string_wrapper(sc, "make-iterator method must return an interator: ~S"), it)));
+      return(it);
+    }
+  return(NULL);
+}
 
 s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e)
 {
@@ -24626,18 +24642,11 @@ s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e)
 	}
       else
 	{
-	  s7_pointer func;
+	  s7_pointer f;
 	  sc->temp6 = iter;
-	  if ((has_methods(e)) && ((func = find_method(sc, find_let(sc, e), sc->MAKE_ITERATOR)) != sc->UNDEFINED))
-	    {
-	      s7_pointer it;
-	      it = s7_apply_function(sc, func, list_1(sc, e));
-	      if (!is_iterator(it))
-		return(s7_error(sc, sc->ERROR, list_2(sc, make_string_wrapper(sc, "make-iterator method must return an interator: ~S"), it)));
-	      sc->temp6 = sc->NIL;
-	      return(it);
-	    }
+	  f = iterator_method(sc, e);
 	  sc->temp6 = sc->NIL;
+	  if (f) {free_cell(sc, iter); return(f);}
 	  iterator_current(iter) = let_slots(e);
 	  iterator_next(iter) = let_iterate;
 	}
@@ -24689,13 +24698,17 @@ s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e)
       break;
 
     case T_C_OBJECT:
-      /* other_iterate needs a cons for its "arglist" and a mutable integer for the ref index, 
-       *   iterator_current is GC marked if iter is mutable
-       */
-      iterator_current(iter) = cons(sc, make_mutable_integer(sc, 0), sc->NIL);
-      set_mutable(iter);
-      iterator_next(iter) = other_iterate;
-      iterator_length(iter) = object_length_to_int(sc, e);
+      {
+	s7_pointer f;
+	sc->temp6 = iter;
+	f = iterator_method(sc, e);
+	sc->temp6 = sc->NIL;
+	if (f) {free_cell(sc, iter); return(f);}
+	iterator_current(iter) = cons(sc, small_int(0), sc->NIL);
+	set_mutable(iter);
+	iterator_next(iter) = other_iterate;
+	iterator_length(iter) = object_length_to_int(sc, e);
+      }
       break;
 
     default:
@@ -32864,8 +32877,6 @@ static bool arglist_has_keyword(s7_pointer args)
 
 
 static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code);
-static s7_pointer end_dox_or_not_ic(s7_scheme *sc, s7_pointer code);
-static s7_pointer end_dox_or_not_ss(s7_scheme *sc, s7_pointer code);
 
 static void initialize_dox_end_vars(s7_scheme *sc, s7_pointer end)
 {
@@ -34920,9 +34931,6 @@ s7_pointer s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc,
   s7_define(sc, sc->NIL, sym, func);
   return(sym);
 }
-
-/* would define_bacro be useful in C?
- */
 
 
 bool s7_is_macro(s7_scheme *sc, s7_pointer x)
@@ -38688,6 +38696,7 @@ static s7_pointer active_catches(s7_scheme *sc)
   for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
     switch (stack_op(sc->stack, i))
       {
+      case OP_FOR_EACH_CATCH:
       case OP_CATCH_ALL:
 	lst = cons(sc, sc->T, lst);
 	break;
@@ -38988,6 +38997,7 @@ static void init_catchers(void)
 {
   int i;
   for (i = 0; i <= OP_MAX_DEFINED; i++) catchers[i] = NULL;
+  catchers[OP_FOR_EACH_CATCH] =      catch_all_function;
   catchers[OP_CATCH_ALL] =           catch_all_function;
   catchers[OP_CATCH_2] =             catch_2_function;
   catchers[OP_CATCH_1] =             catch_1_function;
@@ -41363,7 +41373,6 @@ static s7_pointer loaded_library(s7_scheme *sc, const char *file)
       return(cdar(p));
   return(sc->NIL);
 }
-
 
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 {
@@ -44898,20 +44907,23 @@ static void opt_generator(s7_scheme *sc, s7_pointer func, s7_pointer expr, int h
   /* this is an optimization aimed at generators.  So we might as well go all out... */
   s7_pointer body;
 
-  body = closure_body(func);
-  if ((s7_list_length(sc, body) == 2) &&
-      (caar(body) == sc->LET_SET) &&
-      (is_optimized(car(body))) &&
-      (optimize_data(car(body)) == HOP_SAFE_C_SQS) &&
-      (caadr(body) == sc->WITH_LET) &&
-      (is_symbol(cadr(cadr(body)))) &&
-      (cadr(cadr(body)) == car(closure_args(func))) &&
-      (cadddr(car(body)) == caadr(closure_args(func))))
+  if (is_global(car(expr))) /* not a function argument for example */
     {
-      if (is_global(car(expr)))	hop = 1; /* it's my party... */
-      set_optimize_data(expr, hop + OP_SAFE_CLOSURE_STAR_S0);
-      set_ecdr(cdr(expr), cadr(caddar(body)));
-      set_fcdr(cdr(expr), cddadr(body));
+      body = closure_body(func);
+      if ((s7_list_length(sc, body) == 2) &&
+	  (caar(body) == sc->LET_SET) &&
+	  (is_optimized(car(body))) &&
+	  (optimize_data(car(body)) == HOP_SAFE_C_SQS) &&
+	  (caadr(body) == sc->WITH_LET) &&
+	  (is_symbol(cadr(cadr(body)))) &&
+	  (cadr(cadr(body)) == car(closure_args(func))) &&
+	  (cadddr(car(body)) == caadr(closure_args(func))))
+	{
+	  if (is_global(car(expr))) hop = 1; /* it's my party... */
+	  set_optimize_data(expr, hop + OP_SAFE_CLOSURE_STAR_S0);
+	  set_ecdr(cdr(expr), cadr(caddar(body)));
+	  set_fcdr(cdr(expr), cddadr(body));
+	}
     }
 }
 
@@ -47565,7 +47577,7 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 		       *   (define (hi) (let ((e #f)) (let ((val (not e))) (if (boolean? val) val e)))) (hi)
 		       * where the "(if...)" part is optimized as safe_c_s before we get here.  If we simply
 		       * set pair_syntax_op(cadr(sc->code)) as below, the optimization bit is on, but the
-		       * apparent optimize_op is now safe_c_qq! So eval ejects it and it is handled by the
+		       * apparent optimize_data (op) is now safe_c_qq! So eval ejects it and it is handled by the
 		       * explicit ("trailers") code.
 		       */
 		      pair_syntax_op(cadr(sc->code)) = symbol_syntax_op(caadr(sc->code));
@@ -49673,6 +49685,16 @@ static s7_pointer end_dox_equal_s_ic(s7_scheme *sc, s7_pointer code)
   return(sc->F);
 }
 
+static s7_pointer end_dox_or_cs2(s7_scheme *sc, s7_pointer code)
+{
+  s7_pointer p;
+  car(sc->T1_1) = slot_value(dox_slot1(sc->envir));
+  p = c_call(cadr(code))(sc, sc->T1_1);
+  if (p != sc->F) return(p);
+  car(sc->T1_1) = slot_value(dox_slot2(sc->envir));
+  return(c_call(caddr(code))(sc, sc->T1_1));
+}
+
 static s7_pointer end_dox_or_not_ic(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer x;
@@ -49740,6 +49762,20 @@ static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code)
 		      return(end_dox_or_not_ss);
 		    }
 		}
+	    }
+	}
+      if (fcdr(code) == (s7_pointer)g_or_all_x_2)
+	{
+	  s7_pointer arg1, arg2;
+	  arg1 = cadr(code);
+	  arg2 = caddr(code);
+	  if ((is_pair(arg1)) &&
+	      (is_pair(arg2)) &&
+	      (fcdr(cdr(code)) == (s7_pointer)all_x_c_s) &&
+	      (fcdr(cddr(code)) == (s7_pointer)all_x_c_s))
+	    {
+	      set_optimize_data(code, HOP_SAFE_C_opSq_opSq);
+	      return(end_dox_or_cs2);
 	    }
 	}
       return(end_dox_c_c);
@@ -50914,7 +50950,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	push_stack(sc, OP_FOR_EACH, sc->args, sc->code);
 	sc->args = saved_args;
-
 	if (needs_copied_args(sc->code))
 	  sc->args = copy_list(sc, sc->args);
 	goto APPLY;
@@ -50983,16 +51018,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    counter_capture(counter) = sc->capture_let_counter;
 	  }
 	else sc->envir = old_frame_with_slot(sc, counter_let(counter), arg);
-	push_stack(sc, OP_FOR_EACH_CATCH, counter, code);
-	code = car(closure_body(code));
 
 	p = counter_result(counter);
 	set_let_slots(p, sc->NIL);
 	let_id(p) = ++sc->let_number;
 	outlet(p) = sc->envir;
 	sc->envir = p;
-	push_stack_no_args(sc, OP_CATCH_ALL, code);
-	sc->code = ecdr(cdr(code));                   /* the body of the first lambda */
+
+	push_stack(sc, OP_FOR_EACH_CATCH, counter, code);
+	sc->code = ecdr(cdar(closure_body(code)));    /* the body of the first lambda */
 	goto BEGIN1;
       }
 
@@ -53156,7 +53190,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  code = sc->code;
 	  sc->cur_code = code;
 
-	  switch (optimize_op(code))
+	  switch (optimize_data(code))
 	    {
 	      /* -------------------------------------------------------------------------------- */
 	    case OP_SAFE_C_C:
@@ -68281,19 +68315,19 @@ int main(int argc, char **argv)
 /* ------------------------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5 15.6
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1128
- * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1144
- * teq            |      |      | 6612                     3887 3017
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3326
- * tcopy          |      |      |                          4970 4288
- * tmap           |      |      | 11.0           5031 4769 4685 4681
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150
+ * teq            |      |      | 6612                     3887 3020
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328
+ * tcopy          |      |      |                          4970 4287
+ * tmap           |      |      | 11.0           5031 4769 4685 4685
  * tform          |      |      |                          6816 5481
- * lg             |      |      | 6547 6497 6494 6235 6229 6239 6586
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6753
- * titer          |      |      |                          7976 6832
+ * titer          |      |      |                          7976 6528
+ * lg             |      |      | 6547 6497 6494 6235 6229 6239 6611
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
  * thash          |      |      |                          19.4 17.4
- * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.9
+ * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1
  *
  * ------------------------------------------------------------------
@@ -68313,14 +68347,12 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * define-constant func gives a way to avoid closure_is_ok in all cases, so maybe move the arg checks into the main op?
  * gcc5 jit to replace clm2xen?
- *
- * equal? using iterators: just 2 complete-iters running in parallel until not equal or both done (but ignore sequences except type equal)
- * c-env 'make-iterator method? 
- * would a bacro iterator give access to runtime env?
- * setter proc? (set! (iterate iter) 32) -- seems misleading, maybe (set! (iter) 32)
- *
- * canonicalize peak-phases
- * (* 3037000500 3037000500) fails if optimized -- should all these cases be overflow protected?
- *
- * snd namespaces from <mark> etc
+ * should all the optimized cases be overflow protected?
+ * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
+ *   with name/sync/sample settable
+ * in all_x_eval choices, if c_s/opsq/ss etc -- if the s is in the traversal env (func arg etc)
+ *   and we're not in with-let, the ubvar can be omitted, esp if no internal lets. (Also sym not __func__ etc)
+ *   these no-ubvar versions could also be used in do loops etc: assoc/member
+ *   in do, if slot, use that in all_x* or make a new case
+ *   dox1/2 could be lists of slots -- only the list needs gc protection
  */
