@@ -15,6 +15,7 @@
         EM.error {color:chocolate; font-style:normal}
 	EM.emdef {font-weight: bold; font-style: normal}
 	EM.green {color:green; font-style:normal}
+	EM.gray {color:#505050; font-style:normal}
 	EM.big {font-size: 20px;
 	        font-style: normal;
 		}
@@ -286,13 +287,13 @@ pi automatically reflects the current (*s7* 'bignum-precision):
 
 <pre class="indented">
 &gt; pi
-3.141592653589793238462643383279502884195E0
+<em class="gray">3.141592653589793238462643383279502884195E0</em>
 &gt; (*s7* 'bignum-precision)
-128
+<em class="gray">128</em>
 &gt; (set! (*s7* 'bignum-precision) 256)
-256
+<em class="gray">256</em>
 &gt; pi
-3.141592653589793238462643383279502884197169399375105820974944592307816406286198E0
+<em class="gray">3.141592653589793238462643383279502884197169399375105820974944592307816406286198E0</em>
 </pre>
 
 <p>
@@ -304,9 +305,9 @@ Its argument is a string representing the desired number:
 
 <pre class="indented">
 &gt; (bignum "123456789123456789")
-123456789123456789
+<em class="gray">123456789123456789</em>
 &gt; (bignum "1.123123123123123123123123123")
-1.12312312312312312312312312300000000009E0
+<em class="gray">1.12312312312312312312312312300000000009E0</em>
 </pre>
 
 
@@ -320,9 +321,9 @@ So in the default case (precision = 128), using gmp:
 
 <pre class="indented">
 &gt; (= 1.0 (+ 1.0 (expt 2.0 -128)))
-#t
+<em class="gray">#t</em>
 &gt; (= 1.0 (+ 1.0 (expt 2.0 -127)))
-#f
+<em class="gray">#f</em>
 </pre>
 
 <p>and in the non-gmp case:
@@ -330,9 +331,9 @@ So in the default case (precision = 128), using gmp:
 
 <pre class="indented">
 &gt; (= 1.0 (+ 1.0 (expt 2 -53)))
-#t
+<em class="gray">#t</em>
 &gt; (= 1.0 (+ 1.0 (expt 2 -52)))
-#f
+<em class="gray">#f</em>
 </pre>
 
 <p>In the gmp case, integers and ratios are limited only by the size of memory,
@@ -341,11 +342,11 @@ but reals are limited by (*s7* 'bignum-precision).  This means, for example, tha
 
 <pre class="indented">
 &gt; (floor 1e56) ; (*s7* 'bignum-precision) is 128
-99999999999999999999999999999999999999927942405962072064
+<em class="gray">99999999999999999999999999999999999999927942405962072064</em>
 &gt; (set! (*s7* 'bignum-precision) 256)
-256
+<em class="gray">256</em>
 &gt; (floor 1e56)
-100000000000000000000000000000000000000000000000000000000
+<em class="gray">100000000000000000000000000000000000000000000000000000000</em>
 </pre>
 
 <p>The non-gmp case is similar, but it's easy to find the edge cases:
@@ -353,7 +354,7 @@ but reals are limited by (*s7* 'bignum-precision).  This means, for example, tha
 
 <pre class="indented">
 &gt; (floor (+ 0.9999999995 (expt 2.0 23)))
-8388609
+<em class="gray">8388609</em>
 </pre>
 </div> 
 </blockquote>
@@ -398,29 +399,29 @@ Other math-related differences between s7 and r5rs:
 
 <pre class="indented">
 &gt; (exact? 1.0)
-#f
+<em class="gray">#f</em>
 &gt; (rational? 1.5)
-#f
+<em class="gray">#f</em>
 &gt; (floor 1.4)
-1
+<em class="gray">1</em>
 &gt; (remainder 2.4 1)
-0.4
+<em class="gray">0.4</em>
 &gt; (modulo 1.4 1.0)
-0.4
+<em class="gray">0.4</em>
 &gt; (lcm 3/4 1/6)
-3/2
+<em class="gray">3/2</em>
 &gt; (log 8 2)
-3
+<em class="gray">3</em>
 &gt; (number-&gt;string 0.5 2)
-"0.1"
+<em class="gray">"0.1"</em>
 &gt; (string-&gt;number "0.1" 2)
-0.5
+<em class="gray">0.5</em>
 &gt; (rationalize 1.5)
-3/2
+<em class="gray">3/2</em>
 &gt; (make-rectangular 1/2 0)
-1/2
+<em class="gray">1/2</em>
 &gt; (logbit? 6 1) ; argument order, (logbit? int index), follows gmp, not CL
-#t
+<em class="gray">#t</em>
 </pre>
 
 <p>See <a href="#libgsl">cload and libgsl.scm</a> for easy access to GSL,
@@ -438,13 +439,13 @@ In s7, "@" is an exponent marker.
 
 <pre class="indented">
 &gt; (string-&gt;number "1e9" 2)  ; (expt 2 9)
-512.0
+<em class="gray">512.0</em>
 &gt; (string-&gt;number "1e1" 12) ; "e" is not a digit in base 12
-#f
+<em class="gray">#f</em>
 &gt; (string-&gt;number "1e1" 16) ; (+ (* 1 16 16) (* 14 16) 1)
-481
+<em class="gray">481</em>
 &gt; (string-&gt;number "1.2e1" 3); (* 3 (+ 1 2/3))
-5.0
+<em class="gray">5.0</em>
 </pre>
 </div>
 
@@ -465,13 +466,13 @@ and so on &mdash; what a mess!  This mess was made a lot worse than it needs to 
 
 <pre class="indented">
 scheme@(guile-user)&gt; (= -0.0 0.0)
-#t
+<em class="gray">#t</em>
 scheme@(guile-user)&gt; (negative? -0.0)
-#f
+<em class="gray">#f</em>
 scheme@(guile-user)&gt; (= (/ 1.0 0.0) (/ 1.0 -0.0))
-#f
+<em class="gray">#f</em>
 scheme@(guile-user)&gt;  (&lt; (/ 1.0 -0.0) -1e100 1e100 (/ 1.0 0.0))
-#t
+<em class="gray">#t</em>
 </pre>
 
 <p>
@@ -495,27 +496,27 @@ random uses some default state initialized from the current time.  <em class=def
 
 <pre class="indented">
 &gt; (random 0)
-0
+<em class="gray">0</em>
 &gt; (random 1.0)
-0.86331198514245
+<em class="gray">0.86331198514245</em>
 &gt; (random 3/4)
-654/1129
+<em class="gray">654/1129</em>
 &gt; (random 1+i)
-0.86300308872748+0.83601002730848i
+<em class="gray">0.86300308872748+0.83601002730848i</em>
 &gt; (random -1.0)
--0.037691127513267
+<em class="gray">-0.037691127513267</em>
 &gt; (define r0 (make-random-state 1234))
-r0
+<em class="gray">r0</em>
 &gt; (random 100 r0)
-94
+<em class="gray">94</em>
 &gt; (random 100 r0)
-19
+<em class="gray">19</em>
 &gt; (define r1 (make-random-state 1234))
-r1
+<em class="gray">r1</em>
 &gt; (random 100 r1)
-94
+<em class="gray">94</em>
 &gt; (random 100 r1)
-19
+<em class="gray">19</em>
 </pre>
 
 <p>copy the random-state to save a spot in a random number sequence, or save the random-state as a list via
@@ -537,7 +538,7 @@ otherwise "rational?" is the same as "real?":
 
 <pre class="indented">
 (not-s7)&gt; (rational? (sqrt 2))
-#t
+<em class="gray">#t</em>
 </pre>
 
 <p>That 1.0 is represented at the IEEE-float level as a sort of
@@ -556,7 +557,7 @@ And then there's:
 
 <pre class="indented">
 (not-s7)&gt; (integer? 9007199254740993.1)
-#t
+<em class="gray">#t</em>
 </pre>
 
 <p>
@@ -567,7 +568,7 @@ In one Scheme:
 
 <pre class="indented">
 (not-s7)&gt; (vector-ref #(0) (floor 0.1))
-ERROR: Wrong type (expecting exact integer): 0.0   ; [why?  "it's probably a programmer mistake"!]
+<em class="gray">ERROR: Wrong type (expecting exact integer): 0.0   </em>; [why?  "it's probably a programmer mistake"!]
 </pre>
 
 <p>Not to worry, I'll use inexact-&gt;exact:
@@ -575,7 +576,7 @@ ERROR: Wrong type (expecting exact integer): 0.0   ; [why?  "it's probably a pro
 
 <pre class="indented">
 (not-s7)&gt; (inexact-&gt;exact 0.1)
-3602879701896397/36028797018963968                  ; [why? "floats are ratios"!]
+<em class="gray">3602879701896397/36028797018963968                  </em>; [why? "floats are ratios"!]
 </pre>
 
 <p>So I end up using the verbose <code>(floor (inexact-&gt;exact ...))</code> everywhere, and even
@@ -601,11 +602,11 @@ have any number after, for example, #b:
 
 <pre class="indented">
 &gt; #b1.1
-1.5
+<em class="gray">1.5</em>
 &gt; #b1e2
-4.0
+<em class="gray">4.0</em>
 &gt; #o17.5+i
-15.625+1i
+<em class="gray">15.625+1i</em>
 </pre>
 
 <p>Speaking of #b and friends, what should <code>(string-&gt;number "#xffff" 2)</code> return?
@@ -686,11 +687,11 @@ above as an example:
 
 <pre class="indented">
 &gt; (hi 1) 
-(1 32 "hi")
+<em class="gray">(1 32 "hi")</em>
 &gt; (hi :b 2 :a 3) 
-(3 2 "hi")
+<em class="gray">(3 2 "hi")</em>
 &gt; (hi 3 2 1) 
-(3 2 1)
+<em class="gray">(3 2 1)</em>
 </pre>
 
 <p>See s7test.scm for many examples.
@@ -721,11 +722,11 @@ Why not treat the initial values as default values?
 <pre class="indented">
 &gt; (let* func ((i 1) (j 2)) 
     (+ i j (if (&gt; i 0) (func (- i 1)) 0)))
-5
+<em class="gray">5</em>
 &gt; (letrec ((func (lambda* ((i 1) (j 2)) 
                    (+ i j (if (&gt; i 0) (func (- i 1)) 0)))))
     (func))
-5
+<em class="gray">5</em>
 </pre>
 
 <p>This is consistent with the lambda* arguments because their defaults are
@@ -740,9 +741,9 @@ have been evaluated (as in named let).
 
 <pre class="indented">
 &gt; (defun foo (&amp;key (a 0) (b (+ a 4)) (c (+ a 7))) (list a b c)) 
-FOO 
+<em class="gray">FOO </em>
 &gt; (foo :b 2 :a 60) 
-(60 2 67) 
+<em class="gray">(60 2 67) </em>
 </pre>
 
 <p>In s7, we'd use:
@@ -798,7 +799,7 @@ you can have more than one :rest parameter:
 
 <pre class="indented">
 &gt; ((lambda* (:rest a :rest b) (map + a b)) 1 2 3 4 5) 
-'(3 5 7 9)
+<em class="gray">'(3 5 7 9)</em>
 </pre>
 
 <p>and second, the rest parameter, if any, takes up an argument slot just like any other
@@ -807,10 +808,9 @@ argument:
 
 <pre class="indented">
 &gt; ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 32)
-(32 1 ())
-
+<em class="gray">(32 1 ())</em>
 &gt; ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 1 2 3 4 5)
-(1 3 (2 3 4 5))
+<em class="gray">(1 3 (2 3 4 5))</em>
 </pre>
 
 <p>CL would agree with the first case if we used &amp;key for 'c', but would give an error in the second.
@@ -821,9 +821,9 @@ such as:
 
 <pre class="indented">
 &gt; ((lambda* ((a 3) . b c) (list a b c)) 1 2 3 4 5)
-stray dot?
+<em class="red">error: </em><em class="gray">stray dot?</em>
 &gt; ((lambda* (a . (b 1)) b) 1 2) ; the reader turns the arglist into (a b 1)
-lambda* parameter '1 is a constant
+<em class="red">error: </em><em class="gray">lambda* parameter '1 is a constant</em>
 </pre>
 
 <p>Yet another nit: the :rest argument is not considered a keyword argument, so
@@ -831,9 +831,9 @@ lambda* parameter '1 is a constant
 
 <pre class="indented">
 &gt; (define* (f :rest a) a)
-f
+<em class="gray">f</em>
 &gt; (f :a 1)
-(:a 1)
+<em class="gray">(:a 1)</em>
 </pre>
 </div>
 </details>
@@ -862,11 +862,12 @@ implement the standard old-time macros.
            (let ((val (apply ,,f args))) 
              (format #t "~A~%" val) 
              val)))))
+<em class="gray">trace</em>
 &gt; (trace abs)
-abs
+<em class="gray">abs</em>
 &gt; (abs -1.5)
-(abs -1.5) -&gt; 1.5
-1.5
+<em class="gray">(abs -1.5) -&gt; 1.5</em>
+<em class="gray">1.5</em>
 </pre>
 
 <p>macroexpand can help debug a macro.  I always forget that it
@@ -875,9 +876,9 @@ wants an expression:
 
 <pre class="indented">
 &gt; (define-macro (add-1 arg) `(+ 1 ,arg))
-add-1
+<em class="gray">add-1</em>
 &gt; (macroexpand (add-1 32))
-(+ 1 32)
+<em class="gray">(+ 1 32)</em>
 </pre>
 
 <p>gensym returns a symbol that is guaranteed to be unused.  It takes an optional string argument
@@ -897,13 +898,13 @@ giving the new symbol name's prefix.  gensym? returns #t if its argument is a sy
 
 <pre class="indented">
 &gt; (define-macro* (add-2 a (b 2)) `(+ ,a ,b))
-add-2
+<em class="gray">add-2</em>
 &gt; (add-2 1 3)
-4
+<em class="gray">4</em>
 &gt; (add-2 1)
-3
+<em class="gray">3</em>
 &gt; (add-2 :b 3 :a 1)
-4
+<em class="gray">4</em>
 </pre>
 
 <p>A bacro is a macro that expands its body and evaluates
@@ -966,7 +967,7 @@ Since a bacro (normally) sheds its define-time environment:
     (define-bacro (m a) `(+ ,a ,<em class=red>x</em>))))
 
 &gt; (call-bac 1) 
-x: unbound variable
+<em class="red">error: </em><em class="gray">x: unbound variable</em>
 </pre>
 <p>
 A macro here returns 3.  But don't be hasty!  The bacro can get its define-time environment (its closure)
@@ -1025,31 +1026,31 @@ and assign it to a variable.  You can even set its procedure-setter!
 
 <pre class="indented">
 &gt; (define-macro (hi a) `(+ ,a 1))
-hi
+<em class="gray">hi</em>
 &gt; (apply hi '(4))
-5
+<em class="gray">5</em>
 &gt; (define (fmac mac) (apply mac '(4)))
-fmac
+<em class="gray">fmac</em>
 &gt; (fmac hi)
-5
+<em class="gray">5</em>
 &gt; (define (fmac mac) (mac 4))
-fmac
+<em class="gray">fmac</em>
 &gt; (fmac hi)
-5
+<em class="gray">5</em>
 &gt; (define (make-mac)
     (define-macro (hi a) `(+ ,a 1)))
-make-mac
+<em class="gray">make-mac</em>
 &gt; (let ((x (make-mac)))
     (x 2))
-3
+<em class="gray">3</em>
 &gt; (define-macro (ref v i) `(vector-ref ,v ,i))
-ref
+<em class="gray">ref</em>
 &gt; (define-macro (set v i x) `(vector-set! ,v ,i ,x))
-set
+<em class="gray">set</em>
 &gt; (set! (procedure-setter ref) set)
-set
+<em class="gray">set</em>
 &gt; (let ((v (vector 1 2 3))) (set! (ref v 0) 32) v)
-#(32 2 3)
+<em class="gray">#(32 2 3)</em>
 </pre>
 
 <p>To expand all the macros in a piece of code:
@@ -1083,14 +1084,14 @@ It's almost as easy to write the actual macro body as the backquoted version of 
 
 <pre class="indented">
 &gt; (define-macro (hi a) `(+ 1 ,a))
-hi
+<em class="gray">hi</em>
 &gt; (procedure-source hi)
-(lambda (a) <em class=red>({list} '+ 1 a)</em>)
+<em class="gray">(lambda (a) ({list} '+ 1 a))</em>
 
 &gt; (define-macro (hi a) `(+ 1 ,@a))
-hi
+<em class="gray">hi</em>
 &gt; (procedure-source hi)
-(lambda (a) <em class=red>({list} '+ 1 ({apply_values} a))</em>)
+<em class="gray">(lambda (a) ({list} '+ 1 ({apply_values} a)))</em>
 </pre>
 
 <p>{list} is a special version of list to avoid name collisions
@@ -1101,16 +1102,16 @@ either.  In Scheme the reader turns ,x into (unquote x), so:
 
 <pre>
 &gt; (let (,'a) unquote)
-a
+<em class="gray">a</em>
 &gt; (let (, (lambda (x) (+ x 1))) ,,,,'3)
-7
+<em class="gray">7</em>
 </pre>
 <p>comma becomes a sort of symbol macro! I think I'll remove unquote; ,x and ,@x will still work
 as expected, but there will not be any "unquote" or "unquote-splicing" in the resultant source code.  Just to make life difficult:
 </p>
 <pre>
 &gt; (let (' 1) quote)
-1
+<em class="gray">1</em>
 </pre>
 <p>but that translation is so ingrained in lisp
 that I'm reluctant to change it.  The two unquote names, on the
@@ -1127,9 +1128,9 @@ other hand, seem unnecessary.
 &gt; (define-macro (mac b) 
     `(let ((a 12)) 
        (+ a ,b)))
-mac
+<em class="gray">mac</em>
 &gt; (let ((a 1) (+ *)) (mac a))
-144
+<em class="gray">144</em>
 </pre>
 
 <p>This returns 144 because '+' has turned into '*', and 'a' is the internal 'a',
@@ -1143,9 +1144,9 @@ as long as the redefinition of '+' is local (that is, it happens after the macro
 &gt; (define-macro (mac b) 
     `(let ((a 12)) 
        (,+ a ,b))) ; ,+ picks up the definition-time +
-mac
+<em class="gray">mac</em>
 &gt; (let ((a 1) (+ *)) (mac a))
-24                 ; (+ a a) where a is 12
+<em class="gray">24                 ; (+ a a) where a is 12</em>
 </pre>
 
 <p>But the unquote trick won't work if we have previously loaded some file that redefined '+'
@@ -1156,19 +1157,19 @@ because Scheme has no reserved words and only one name space.
 
 <pre class="indented">
 &gt; (define + *)
-+
+<em class="gray">+</em>
 &gt; (define (add a b) (+ a b))
-add
+<em class="gray">add</em>
 &gt; (add 2 3)
-6
+<em class="gray">6</em>
 &gt; (define (divide a b) (/ a b))
-divide
+<em class="gray">divide</em>
 &gt; (divide 2 3)
-2/3
+<em class="gray">2/3</em>
 &gt; (set! / -) ; a bad idea &mdash; this turns off s7's optimizer
--
+<em class="gray">-</em>
 &gt; (divide 2 3)
--1
+<em class="gray">-1</em>
 </pre>
 
 <p>Obviously macros are not the problem here.  Since 
@@ -1181,11 +1182,11 @@ One long-winded way in s7 uses <a href="#unlet">unlet</a>:
 
 <pre class="indented">
 &gt; (define + *)
-+
+<em class="gray">+</em>
 &gt; (define (add a b) (with-let (unlet) (+ a b)))
-add
+<em class="gray">add</em>
 &gt; (add 2 3)
-5
+<em class="gray">5</em>
 </pre>
 
 <p>But this is hard to read, and it's not inconceivable that we might want all three
@@ -1199,19 +1200,19 @@ or #_&lt;name&gt;.  That is, #_+ is a reader macro for <code>(with-let (unlet) +
 &gt; (define-macro (mac b) 
     `(<em class=red>#_let</em> ((a 12)) 
        (<em class=red>#_+</em> a ,b))) ; #_+ and #_let are start-up values
-mac
+<em class="gray">mac</em>
 &gt; (let ((a 1) (+ *)) (mac a))
-24                 ; (+ a a) where a is 12 and + is the start-up +
+<em class="gray">24                 ; (+ a a) where a is 12 and + is the start-up +</em>
 
 ;;; make + generic (there's a similar C-based example below)
 &gt; (define (+ . args) 
     (if (null? args) 0 
         (apply (if (number? (car args)) <em class=red>#_+ #_string-append</em>) args)))
-+
+<em class="gray">+</em>
 &gt; (+ 1 2)
-3
+<em class="gray">3</em>
 &gt; (+ "hi" "ho")
-"hiho"
+<em class="gray">"hiho"</em>
 </pre>
 
 <p>#_&lt;name&gt; could be implemented via *#readers*:
@@ -1237,16 +1238,16 @@ national debt.  gensym is the standard approach:
     (let ((var (<em class=red>gensym</em>))) 
       `(#_let ((,var 12))
          (#_+ ,var ,b))))
-mac
+<em class="gray">mac</em>
 &gt; (let ((a 1) (+ *)) (mac a))
-13
+<em class="gray">13</em>
 
 ;; or use lambda:
 &gt; (define-macro (mac b) 
   `((lambda (b) (let ((a 12)) (#_+ a b))) ,b))
-mac
+<em class="gray">mac</em>
 &gt; (let ((a 1) (+ *)) (mac a))
-13
+<em class="gray">13</em>
 </pre>
 
 <p>But in s7, the simplest approach uses environments.  You have complete
@@ -1260,7 +1261,7 @@ control over the environment at any point:
        (+ a b))))
 
 &gt; (let ((a 1) (+ *)) (mac a))
-13
+<em class="gray">13</em>
 </pre>
 
 <p>
@@ -1314,11 +1315,11 @@ with the macro arguments getting their values from the call-time environment:
                  ',@new-body)))))
 define-immaculo
 &gt; (define-immaculo (mac c d) `(let ((a 12) (b 3)) (+ a b ,c ,d)))
-mac
+<em class="gray">mac</em>
 &gt; (let ((a 21) (b 10) (+ *)) (mac a b))
-46     ; (+ 12 3 21 10) with the definition-time value of +
+<em class="gray">46</em>     ; (+ 12 3 21 10) with the definition-time value of +
 &gt; (let ((a 21) (b 10) (+ *)) (mac a (+ b 10)))
-136    ; (+ 12 3 21 (* 10 10)), (+ b 10) is treated as (* b 10)
+<em class="gray">136</em>    ; (+ 12 3 21 (* 10 10)), (+ b 10) is treated as (* b 10)
        ;   because (+ b 10) refers to the '+' and 'b' in the calling environment
 </pre>
 
@@ -1341,39 +1342,39 @@ Better would be to use a gensym rather than "e" for the curlet.
 
 &gt; (define-immaculo (mac b) 
     `(let ((a 1)) (+ a ,b)))
-mac
+<em class="gray">mac</em>
 &gt; (let ((a 32)) (mac a))
-33
+<em class="gray">33</em>
 &gt; (procedure-source mac) ; I've edited the results to try to make the transformation clearer
-(define-macro (mac b)
+<em class="gray">(define-macro (mac b)
   `(let ((b ,b))
      (let ((e (curlet)))	      
        (let ((a 1))     ; here is the original macro body
-         (+ a (with-let e b))))))
+         (+ a (with-let e b))))))</em>
 </pre>
 
 <p>Apply let is very similar to eval:
 </p>
 <pre>
 &gt; (apply let '((a 2) (b 3)) '((+ a b)))
-5
+<em class="gray">5</em>
 &gt; (eval '(+ a b) (inlet 'a 2 'b 3))
-5
+<em class="gray">5</em>
 &gt; ((apply lambda '(a b) '((+ a b))) 2 3)
-5
+<em class="gray">5</em>
 </pre>
 <p>But we're using it here as a kind of "replace":
 </p>
 <pre>
 &gt; (apply let '((a 2) (b 3)) '((list + a b))) ; a -&gt; 2, b -&gt; 3
-(+ 2 3)
+<em class="gray">(+ 2 3)</em>
 </pre>
 <p>The redundant-looking double lists are for apply's benefit.  We could
 use a trailing null instead (mimicking apply* in some ancient lisps):
 </p>
 <pre>
 &gt; (apply let '((a 2) (b 3)) '(list + a b) ())
-(+ 2 3)
+<em class="gray">(+ 2 3)</em>
 </pre>
 
 <p>Here's define-immaculo in the new form:
@@ -1436,13 +1437,13 @@ that returns its argument in a list statement.
 
 <pre class="indented">
 &gt; (define-macro (hang arg) `(define ,arg `(list (cdr ,,arg))))
-hang
+<em class="gray">hang</em>
 &gt; (macroexpand (hang (f a)))
-(define #1=(f a) ({list} 'list ({list} 'cdr #1#)))
+<em class="gray">(define #1=(f a) ({list} 'list ({list} 'cdr #1#)))</em>
 &gt; (hang (f a))
-f
+<em class="gray">f</em>
 &gt; (procedure-source f)
-(lambda #1=(a) ({list} 'list ({list} 'cdr #1#)))
+<em class="gray">(lambda #1=(a) ({list} 'list ({list} 'cdr #1#)))</em>
 &gt;(f 1)
 </pre>
 
@@ -1453,13 +1454,13 @@ Here's one way out:
 
 <pre class="indented">
 &gt; (define-macro (hang arg) `(define ,arg `(list ,,@(cdr arg))))
-hang
+<em class="gray">hang</em>
 &gt; (macroexpand (hang (f a)))
-(define (f a) ({list} 'list a))
+<em class="gray">(define (f a) ({list} 'list a))</em>
 &gt; (hang (f a))
-f
+<em class="gray">f</em>
 &gt; (f 1)
-(list 1)
+<em class="gray">(list 1)</em>
 </pre>
 </div>
 </details>
@@ -1526,17 +1527,17 @@ value passed to set!:
 
 <pre class="indented">
 &gt; (procedure-setter cadr)
-#f
+<em class="gray">#f</em>
 &gt; (set! (procedure-setter cadr) 
         (lambda (lst val) 
           (set! (car (cdr lst)) val)))
-#&lt;lambda (lst val)&gt;
+<em class="gray">#&lt;lambda (lst val)&gt;</em>
 &gt; (procedure-source (procedure-setter cadr))
-(lambda (lst val) (set! (car (cdr lst)) val))
+<em class="gray">(lambda (lst val) (set! (car (cdr lst)) val))</em>
 &gt; (let ((lst (list 1 2 3))) 
     (set! (cadr lst) 4) 
     lst)
-(1 4 3)
+<em class="gray">(1 4 3)</em>
 </pre>
 
 <p>In some cases, the setter needs to be a macro:
@@ -1547,16 +1548,16 @@ value passed to set!:
 	    `(if ,on
 	         (set! ,var (logior ,var (ash 1 ,index)))
 	         (set! ,var (logand ,var (lognot (ash 1 ,index)))))))
-m
+<em class="gray">m</em>
 &gt; (define (mingle a b)
     (let ((r 0))
       (do ((i 0 (+ i 1)))
           ((= i 31) r)
         (set! (logbit? r (* 2 i)) (logbit? a i))
         (set! (logbit? r (+ (* 2 i) 1)) (logbit? b i)))))
-mingle
+<em class="gray">mingle</em>
 &gt; (mingle 6 3) ; the INTERCAL mingle operator?
-30
+<em class="gray">30</em>
 </pre>
 
 <blockquote>
@@ -1592,37 +1593,29 @@ mingle
 	(set! ,body val)))))
 
 &gt; ((c?r (a b (X))) '(1 2 (3 4) 5))
-3
-
+<em class="gray">3</em>
 &gt; (let ((lst (list 1 2 (list 3 4) 5))) 
    (set! ((c?r (a b (X))) lst) 32)
    lst)
-(1 2 (32 4) 5)
-
+<em class="gray">(1 2 (32 4) 5)</em>
 &gt; (procedure-source (c?r (a b (X))))
-(lambda (lst) (car (car (cdr (cdr lst)))))
-
+<em class="gray">(lambda (lst) (car (car (cdr (cdr lst)))))</em>
 &gt; ((c?r (a b . X)) '(1 2 (3 4) 5))
-((3 4) 5)
-
+<em class="gray">((3 4) 5)</em>
 &gt; (let ((lst (list 1 2 (list 3 4) 5))) 
    (set! ((c?r (a b . X)) lst) '(32))
    lst)
-(1 2 32)
-
+<em class="gray">(1 2 32)</em>
 &gt; (procedure-source (c?r (a b . X)))
-(lambda (lst) (cdr (cdr lst)))
-
+<em class="gray">(lambda (lst) (cdr (cdr lst)))</em>
 &gt; ((c?r (((((a (b (c (d (e X)))))))))) '(((((1 (2 (3 (4 (5 6)))))))))) 
-6
-
+<em class="gray">6</em>
 &gt; (let ((lst '(((((1 (2 (3 (4 (5 6))))))))))) 
     (set! ((c?r (((((a (b (c (d (e X)))))))))) lst) 32) 
     lst)
-(((((1 (2 (3 (4 (5 32)))))))))
-
+<em class="gray">(((((1 (2 (3 (4 (5 32)))))))))</em>
 &gt; (procedure-source (c?r (((((a (b (c (d (e X)))))))))))
-(lambda (lst) (car (cdr (car (cdr (car (cdr (car (cdr (car (cdr (car (car (car (car lst)))))))))))))))
+<em class="gray">(lambda (lst) (car (cdr (car (cdr (car (cdr (car (cdr (car (cdr (car (car (car (car lst)))))))))))))))</em>
 </pre>	
 </div>
 
@@ -1722,9 +1715,9 @@ length, copy, reverse, fill!, iterate, map and for-each are generic in this sens
 
 <pre class="indented">
 &gt; (map (lambda (a b) (- a b)) (list 1 2) (vector 3 4))
-(5 -3 9)
+<em class="gray">(5 -3 9)</em>
 &gt; (length "hi")
-2
+<em class="gray">2</em>
 </pre>
 
 <p>
@@ -1770,9 +1763,9 @@ Here's a generic FFT:
   data)
 
 &gt; (cfft! (list 0.0 1+i 0.0 0.0))
-(1+1i -1+1i -1-1i 1-1i)
+<em class="gray">(1+1i -1+1i -1-1i 1-1i)</em>
 &gt; (cfft! (vector 0.0 1+i 0.0 0.0))
-#(1+1i -1+1i -1-1i 1-1i)
+<em class="gray">#(1+1i -1+1i -1-1i 1-1i)</em>
 </pre>
 
 <p>And a generic function that copies one sequence's elements into another sequence:
@@ -1798,16 +1791,13 @@ evaluate their first argument, but set! does not (with a quibble; see below):
 
 <pre class="indented">
 &gt; (let ((str "hi")) (string-set! (let () str) 1 #\a) str)
-"ha"
-
+<em class="gray">"ha"</em>
 &gt; (let ((str "hi")) (set! (let () str) 1 #\a) str)
-;((let () str) 1 #\a): too many arguments to set!
-
+<em class="gray">;((let () str) 1 #\a): too many arguments to set!</em>
 &gt; (let ((str "hi")) (set! ((let () str) 1) #\a) str)
-"ha"
-
+<em class="gray">"ha"</em>
 &gt; (let ((str "hi")) (set! (str 1) #\a) str)
-"ha"
+<em class="gray">"ha"</em>
 </pre>
 
 <p>set! looks at its first argument to decide what to set.
@@ -1821,7 +1811,7 @@ And of course:
 &gt; (let ((x (list 1 2))) 
     (set! ((((lambda () (list x))) 0) 0) 3) 
     x) 
-(3 2)
+<em class="gray">(3 2)</em>
 </pre>
 </div>
 
@@ -1871,7 +1861,7 @@ function passed as its second argument:
 
 <pre class="indented">
 &gt; (sort! (list 3 4 8 2 0 1 5 9 7 6) &lt;)
-(0 1 2 3 4 5 6 7 8 9)
+<em class="gray">(0 1 2 3 4 5 6 7 8 9)</em>
 </pre>
 
 <p>Underlying some of these functions are generic iterators, also built-into s7:
@@ -1938,13 +1928,13 @@ vector-dimensions returns a list of the dimensions.
 
 <pre class="indented">
 &gt; (define v (make-vector '(2 3) 1.0))
-#2D((1.0 1.0 1.0) (1.0 1.0 1.0))
+<em class="gray">#2D((1.0 1.0 1.0) (1.0 1.0 1.0))</em>
 &gt; (set! (v 0 1) 2.0)
-#2D((1.0 2.0 1.0) (1.0 1.0 1.0))
+<em class="gray">#2D((1.0 2.0 1.0) (1.0 1.0 1.0))</em>
 &gt; (v 0 1)
-2.0
+<em class="gray">2.0</em>
 &gt; (vector-length v)
-6
+<em class="gray">6</em>
 </pre>
 
 <p>This function initializes each element of a multidimensional vector:
@@ -1955,7 +1945,7 @@ vector-dimensions returns a list of the dimensions.
   (make-shared-vector (apply vector (flatten inits)) dims))
 
 &gt; (make-array '(3 3) '(1 1 1) '(2 2 2) '(3 3 3))
-#2D((1 1 1) (2 2 2) (3 3 3))
+<em class="gray">#2D((1 1 1) (2 2 2) (3 3 3))</em>
 </pre>
 
 <p>make-vector also takes an optional fourth argument.  If it is #t, and the initial-value
@@ -1985,12 +1975,11 @@ homogenous vector functions are currently built-in:
 &gt; (let ((v1 #2d((1 2 3) (4 5 6)))) 
     (let ((v2 (make-shared-vector v1 '(6)))) ; flatten the original
       v2))
-#(1 2 3 4 5 6)
-
+<em class="gray">#(1 2 3 4 5 6)</em>
 &gt; (let ((v1 #(1 2 3 4 5 6))) 
     (let ((v2 (make-shared-vector v1 '(3 2)))) 
       v2))
-#2D((1 2) (3 4) (5 6))
+<em class="gray">#2D((1 2) (3 4) (5 6))</em>
 </pre>
 <blockquote>
 
@@ -2081,9 +2070,9 @@ signals that the lists specify the elements of an 'n' dimensional vector: <code>
 
 <pre class="indented">
 &gt; (vector-ref #2D((1 2 3) (4 5 6)) 1 2)
-6
+<em class="gray">6</em>
 &gt; (matrix-multiply #2d((-1 0) (0 -1)) #2d((2 0) (-2 2)))
-#2D((-2 0) (2 -2))
+<em class="gray">#2D((-2 0) (2 -2))</em>
 </pre>
 
 <p>If any dimension has 0 length, you get an n-dimensional empty vector.  It is not
@@ -2092,9 +2081,9 @@ equal to a 1-dimensional empty vector.
 
 <pre class="indented">
 &gt; (make-vector '(10 0 3))
-#3D()
+<em class="gray">#3D()</em>
 &gt; (equal? #() #3D())
-#f
+<em class="gray">#f</em>
 </pre>
 </div>
 
@@ -2108,12 +2097,11 @@ you can use this same syntax with lists.
 <pre class="indented">
 &gt; (let ((L '((1 2 3) (4 5 6))))
     (L 1 0))              ; same as (list-ref (list-ref L 1) 0) or ((L 1) 0)
-4
-
+<em class="gray">4</em>
 &gt; (let ((L '(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) 
     (set! (L 1 0 2) 32)   ; same as (list-set! (list-ref (list-ref L 1) 0) 2 32) which is unreadable!
     L)
-(((1 2 3) (4 5 6)) ((7 8 32) (10 11 12)))
+<em class="gray">(((1 2 3) (4 5 6)) ((7 8 32) (10 11 12)))</em>
 </pre>
 
 <p>Or with vectors of vectors, of course:
@@ -2122,11 +2110,10 @@ you can use this same syntax with lists.
 <pre class="indented">
 &gt; (let ((V #(#(1 2 3) #(4 5 6)))) 
     (V 1 2))              ; same as (vector-ref (vector-ref V 1) 2) or ((V 1) 2)
-6
-
+<em class="gray">6</em>
 &gt; (let ((V #2d((1 2 3) (4 5 6))))
     (V 0))
-#(1 2 3)
+<em class="gray">#(1 2 3)</em>
 </pre>
 
 <p>There's one difference between a vector-of-vectors and a multidimensional vector:
@@ -2135,10 +2122,9 @@ in the latter case, you can't clobber one of the inner vectors.
 
 <pre class="indented">
 &gt; (let ((V #(#(1 2 3) #(4 5 6)))) (set! (V 1) 32) V)
-#(#(1 2 3) 32)
-
+<em class="gray">#(#(1 2 3) 32)</em>
 &gt; (let ((V #2d((1 2 3) (4 5 6)))) (set! (V 1) 32) V)
-;not enough args for vector-set!: (#2D((1 2 3) (4 5 6)) 1 32)
+<em class="gray">;not enough args for vector-set!: (#2D((1 2 3) (4 5 6)) 1 32)</em>
 </pre>
 </div>
 
@@ -2180,9 +2166,9 @@ one dimensional vector, so the two are not inverses.
 
 <pre class="indented">
 &gt; (vector-&gt;list #2d((1 2) (3 4)))
-(1 2 3 4)             ; should this be '((1 2) (3 4)) or '(#(1 2) #(3 4))?
+<em class="gray">(1 2 3 4)</em>             ; should this be '((1 2) (3 4)) or '(#(1 2) #(3 4))?
 &gt; (list-&gt;vector '(#(1 2) #(3 4))) ; what about '((1 2) (3 4))?
-#(#(1 2) #(3 4))      
+<em class="gray">#(#(1 2) #(3 4))      </em>
 </pre>
 
 <p>
@@ -2191,10 +2177,9 @@ This also affects format and sort!:
 
 <pre class="indented">
 &gt; (format #f "~{~A~^ ~}" #2d((1 2) (3 4)))
-"1 2 3 4"
-
+<em class="gray">"1 2 3 4"</em>
 &gt; (sort! #2d((1 4) (3 2)) &gt;) 
-#2D((4 3) (2 1))
+<em class="gray">#2D((4 3) (2 1))</em>
 </pre>
 
 <p>Perhaps make-shared-vector can help:
@@ -2202,7 +2187,7 @@ This also affects format and sort!:
 
 <pre class="indented">
 &gt;(make-shared-vector (list-&gt;vector '(1 2 3 4)) '(2 2))
-#2D((1 2) (3 4))
+<em class="gray">#2D((1 2) (3 4))</em>
 </pre>
 
 </div>
@@ -2280,7 +2265,7 @@ The table grows as needed.
 &gt; (let ((ht (make-hash-table)))
     (set! (ht "hi") 123)
     (ht "hi"))
-123
+<em class="gray">123</em>
 </pre>
 
 <p>hash-table (the function) parallels (the functions) vector, list, and string.  Its arguments are conses containing key/value pairs.
@@ -2300,13 +2285,12 @@ treat a hash-table as, for example, a sparse array:
 
 <pre class="indented">
 &gt; (define make-sparse-array make-hash-table)
-make-sparse-array
-
+<em class="gray">make-sparse-array</em>
 &gt; (let ((arr (make-sparse-array)))
    (set! (arr 1032) "1032")
    (set! (arr -23) "-23")
    (list (arr 1032) (arr -23)))
-("1032" "-23")
+<em class="gray">("1032" "-23")</em>
 </pre>
 </div>
 
@@ -2356,25 +2340,24 @@ Otherwise, for example, you could use NaN as a key, but then never be able to ac
 
 &gt; (define (fib n) 
   (if (&lt; n 2) n (+ (fib (- n 1)) (fib (- n 2)))))
-fib
+<em class="gray">fib</em>
 &gt; (define-memoized 
    (memo-fib n) 
      (if (&lt; n 2) n (+ (memo-fib (- n 1)) (memo-fib (- n 2)))))
-memo-fib
+<em class="gray">memo-fib</em>
 &gt; (time (fib 34))         ; un-memoized time
-1.168                        ;   0.70 on ccrma's i7-3930 machines
+<em class="gray">1.168</em>                        ;   0.70 on ccrma's i7-3930 machines
 &gt; (time (memo-fib 34))    ; memoized time
-3.200e-05
-
+<em class="gray">3.200e-05</em>
 &gt; (let-&gt;list (outlet (funclet memo-fib)))
-(({memo}-18 . (hash-table 
+<em class="gray">(({memo}-18 . (hash-table 
     '(0 . 0) '(1 . 1) '(2 . 1) '(3 . 2) '(4 . 3) '(5 . 5) 
     '(6 . 8) '(7 . 13) '(8 . 21) '(9 . 34) '(10 . 55) '(11 . 89) 
     '(12 . 144) '(13 . 233) '(14 . 377) '(15 . 610) '(16 . 987) 
     '(17 . 1597) '(18 . 2584) '(19 . 4181) '(20 . 6765) '(21 . 10946) 
     '(22 . 17711) '(23 . 28657) '(24 . 46368) '(25 . 75025) '(26 . 121393) 
     '(27 . 196418) '(28 . 317811) '(29 . 514229) '(30 . 832040) '(31 . 1346269) 
-    '(32 . 2178309) '(33 . 3524578) '(34 . 5702887)))
+    '(32 . 2178309) '(33 . 3524578) '(34 . 5702887)))</em>
 </pre>
 <p>But of course, in real code no-one would ever use recursion to get the Fibonacci numbers!
 </p>
@@ -2423,19 +2406,19 @@ Environments are first class (and applicable) objects in s7.
 <blockquote>
 <pre class="indented">
 &gt; (inlet 'a 1 'b 2)
-(inlet 'a 1 'b 2)
+<em class="gray">(inlet 'a 1 'b 2)</em>
 &gt; (let ((a 1) (b 2)) (curlet))
-(inlet 'a 1 'b 2)
+<em class="gray">(inlet 'a 1 'b 2)</em>
 &gt; (let ((x (inlet :a 1 :b 2))) (x 'a))
-1
+<em class="gray">1</em>
 &gt; (with-let (inlet 'a 1 'b 2) (+ a b))
-3
+<em class="gray">3</em>
 &gt; (let ((x (inlet :a 1 :b 2))) (set! (x 'a) 4) x)
-(inlet 'a 4 'b 2)
+<em class="gray">(inlet 'a 4 'b 2)</em>
 &gt; (let ((x (inlet))) (varlet x 'a 1) x)
-(inlet 'a 1)
+<em class="gray">(inlet 'a 1)</em>
 &gt; (let ((a 1)) (let ((b 2)) (outlet (curlet))))
-(inlet 'a 1)
+<em class="gray">(inlet 'a 1)</em>
 </pre>
 </blockquote>
 <br>
@@ -2498,9 +2481,9 @@ that environment's copy method.
 		   (lambda () local-x)
 		   (lambda (val) (set! local-x (max 0 (min val 100))))))))
 &gt; ((e 'x))
-3
+<em class="gray">3</em>
 &gt; (set! ((e 'x)) 123)
-100
+<em class="gray">100</em>
 </pre>
 
 <blockquote>
@@ -2525,7 +2508,7 @@ wrap it in <code>(with-let (unlet) ...)</code>:
 &gt; (let ((caar 123)) 
     (+ caar (with-let (unlet) 
               (caar '((2) 3)))))
-125
+<em class="gray">125</em>
 </pre>
 
 <p>
@@ -2655,9 +2638,9 @@ such as abs, we need to put it back to its original form:
 ;; say libtest.scm has the line (set! abs odd?)
 
 &gt; (safe-load "libtest.scm")
-"libtest.scm" clobbered abs
+<em class="gray">"libtest.scm" clobbered abs</em>
 &gt; (abs -2)
-2
+<em class="gray">2</em>
 </pre>
 </div>
 
@@ -2673,11 +2656,11 @@ function if it exists.  A bare-bones example:
 
 <pre class="indented">
 &gt; (abs (openlet (inlet 'abs (lambda (x) 47))))
-47
+<em class="gray">47</em>
 &gt; (define* (f1 (a 1)) (if (real? a) (abs a) ((a 'f1) a)))
-f1
+<em class="gray">f1</em>
 &gt; (f1 :a (openlet (inlet 'f1 (lambda (e) 47))))
-47
+<em class="gray">47</em>
 </pre>
 
 <p>In CLOS, we'd declare a class and a method, and call make-instance,
@@ -2892,69 +2875,69 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
        (list (list 'add (lambda (obj) 
                           (with-let obj
                             (+ a b))))))
-class-1
+<em class="gray">class-1</em>
 &gt; (define v (make-class-1 :a 32))
-v 
+<em class="gray">v </em>
 &gt; (v 'a)                         ; to set the 'a slot, (set! (v 'a) 0) 
-32
+<em class="gray">32</em>
 &gt; (object-&gt;string v)             ; built-in functions are all generic
-"#&lt;class-1: (a 32) (b 2)&gt;"       ;   so this uses the method defined in the class definition
+<em class="gray">"#&lt;class-1: (a 32) (b 2)&gt;"</em>       ;   so this uses the method defined in the class definition
 &gt; ((v 'add) v)
-34
+<em class="gray">34</em>
 &gt; (define-generic add)
-add
+<em class="gray">add</em>
 &gt; (add v)                        ; syntactic sugar for ((v 'add) v)
-34
+<em class="gray">34</em>
 &gt; (define-slot-accessor slot-a a) ; more sugar!
-slot-a
+<em class="gray">slot-a</em>
 &gt; (slot-a v)                     ; same as (v 'a), set via (set! (slot-a v) 123)
-32
+<em class="gray">32</em>
 &gt; (map car v)                    ; map and for-each work with environments
-(a b)                               ;   map cdr would return '(32 2) in this case
+<em class="gray">(a b)</em>                               ;   map cdr would return '(32 2) in this case
 &gt; (define-class class-2 (list class-1)
        '((c 3)) 
        (list (list 'multiply (lambda (obj) 
                                (with-let obj 
                                  (* a b c))))))
-class-2
+<em class="gray">class-2</em>
 &gt; (define v2 (make-class-2 :a 32))
-v2
+<em class="gray">v2</em>
 &gt; v2                            ; will use object-&gt;string
-"#&lt;class-2: (c 3) (a 32) (b 2)&gt;"
+<em class="gray">"#&lt;class-2: (c 3) (a 32) (b 2)&gt;"</em>
 &gt; ((v2 'multiply) v2)
-192
+<em class="gray">192</em>
 &gt; (add v2)                      ; inherited from class-1
-34
+<em class="gray">34</em>
 &gt; (define-method (subtract (obj class-1)) (with-let obj (- a b)))
-subtract
+<em class="gray">subtract</em>
 &gt; (subtract v2)  ; class-2 inherits from class-1 so it knows about subtract
-30
+<em class="gray">30</em>
 &gt; (define v1 (make-class-1))
-v1
+<em class="gray">v1</em>
 &gt; (varlet v1      ; change the add method just in this instance
        (cons 'add (lambda (obj) 
                     (with-let obj
                       (+ 1 a (* 2 b))))))
-#&lt;class-1: (a 1) (b 2) (add #&lt;lambda (obj)&gt;)&gt;
+<em class="gray">#&lt;class-1: (a 1) (b 2) (add #&lt;lambda (obj)&gt;)&gt;</em>
 &gt; (add v1)
-6
+<em class="gray">6</em>
 &gt; (add v)                       ; other class-1 instances are not affected
-34
+<em class="gray">34</em>
 &gt; (define-class class-3 (list class-2) () 
     (list (list 'multiply (lambda (obj num) 
 			    (* num 
 			       ((class-2 'multiply) obj) ; method combination 
 			       (add obj))))))
-class-3
+<em class="gray">class-3</em>
 &gt; ((class-3 'multiply) class-3 10)
-180                               ; (* 10 (* 1 2 3) (+ 1 2))
+<em class="gray">180                               ; (* 10 (* 1 2 3) (+ 1 2))</em>
 &gt; (define v3 (make-class-3))
-v3
+<em class="gray">v3</em>
 &gt; (all-methods v3 'multiply)
-(#&lt;lambda (obj num)&gt; #&lt;lambda (obj)&gt;)
+<em class="gray">(#&lt;lambda (obj num)&gt; #&lt;lambda (obj)&gt;)</em>
 &gt; (for-each (lambda (p) (format #t "~A~%" (procedure-source p))) (all-methods v3 'multiply))
-(lambda (obj num) (* num ((class-2 'multiply) obj) (add obj)))
-(lambda (obj) (with-let obj (* a b c)))
+<em class="gray">(lambda (obj num) (* num ((class-2 'multiply) obj) (add obj)))</em>
+<em class="gray">(lambda (obj) (with-let obj (* a b c)))</em>
 </pre>
 
 <p>with-let (used briefly above) provides an even more striking simplification of syntax
@@ -2980,11 +2963,11 @@ current environment chain, it is considered a local environment:
 
 <pre class="indented">
 &gt; ((rootlet) 'abs)
-abs
+<em class="gray">abs</em>
 &gt; (let () ((curlet) 'abs))
-#&lt;undefined&gt;
+<em class="gray">#&lt;undefined&gt;</em>
 &gt; ((unlet) 'abs)
-#&lt;undefined&gt;
+<em class="gray">#&lt;undefined&gt;</em>
 </pre>
 
 </div>
@@ -3008,7 +2991,7 @@ abs
 
 &gt; (let ((a 1) (b "hi")) 
     (value-&gt;symbol "hi"))
-b
+<em class="gray">b</em>
 </pre>
 </div>
 
@@ -3040,15 +3023,15 @@ b
 			  (eq? (p 'type) type))))))
   
 &gt; (define fv (make-fvector 32))
-fv
+<em class="gray">fv</em>
 &gt; fv
-#&lt;fvector&gt;
+<em class="gray">#&lt;fvector&gt;</em>
 &gt; (length fv)
-32
+<em class="gray">32</em>
 &gt; (set! (fv 0) 123)
-123.0
+<em class="gray">123.0</em>
 &gt; (fv 0)
-123.0
+<em class="gray">123.0</em>
 </pre>
 
 </div>
@@ -3097,7 +3080,7 @@ as "complex?"!):
 
 &gt; (let ((q1 (make-quaternion 1.0 1.0 0.0 0.0)))
     (+ 1 q1 2.5+i))
-#&lt;quaternion: (r 4.5) (i 2.0) (j 0.0) (k 0.0)&gt;
+<em class="gray">#&lt;quaternion: (r 4.5) (i 2.0) (j 0.0) (k 0.0)&gt;</em>
 </pre>
 
 </div>
@@ -3150,15 +3133,15 @@ In s7, multiple values are spliced directly into the caller's argument list.
 
 <pre class="indented">
 &gt; (+ (values 1 2 3) 4)
-10
+<em class="gray">10</em>
 &gt; (string-ref ((lambda () (values "abcd" 2))))
-#\c
+<em class="gray">#\c</em>
 &gt; ((lambda (a b) (+ a b)) ((lambda () (values 1 2))))
-3
+<em class="gray">3</em>
 &gt; (+ (call/cc (lambda (ret) (ret 1 2 3))) 4) ; call/cc has an implicit "values"
-10
+<em class="gray">10</em>
 &gt; ((lambda* ((a 1) (b 2)) (list a b)) (values :a 3))
-(3 2)
+<em class="gray">(3 2)</em>
 
 (define-macro (call-with-values producer consumer) 
   `(,consumer (,producer)))
@@ -3189,10 +3172,9 @@ from map's function application:
 
 <pre class="indented">
 &gt; (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3))
-(1 20 3 60)
-
+<em class="gray">(1 20 3 60)</em>
 &gt; (map values (list 1 2 3) (list 4 5 6))
-(1 4 2 5 3 6)
+<em class="gray">(1 4 2 5 3 6)</em>
 
 (define (remove-if func lst) 
   (map (lambda (x) (if (func x) (values) x)) lst))
@@ -3204,7 +3186,7 @@ from map's function application:
   (apply map values args))
 
 &gt; (shuffle '(1 2 3) #(4 5 6) '(7 8 9))
-(1 4 7 2 5 8 3 6 9)
+<em class="gray">(1 4 7 2 5 8 3 6 9)</em>
 
 (define (concatenate . args)
   (apply append (map (lambda (arg) (map values arg)) args)))
@@ -3217,7 +3199,7 @@ of 'or' and 'and'.
 
 <pre class="indented">
 &gt; (let ((x 1)) (and (<em class=red>values</em> #f (let () (set! x 3) #f))) x)
-3
+<em class="gray">3</em>
 </pre>
 
 <p>But 'apply' has the same effect and is easier to read:
@@ -3257,9 +3239,9 @@ mostly useful in <a href="#readercond">reader-cond</a>.
 
 <pre class="indented">
 &gt; (define-expansion (comment str) (values))
-comment
+<em class="gray">comment</em>
 &gt; (+ 1 (comment "one") 2 (comment "two"))
-3
+<em class="gray">3</em>
 </pre>
 
 <p>Finally, in format's ~&lt;~&gt; escape, if the expression evaluates to (values), nothing is printed.
@@ -3268,9 +3250,9 @@ If it returns multiple values, they are printed one after the other.
 
 <pre class="indented">
 &gt; (format #f "~&lt;(values)~&gt;")
-""
+<em class="gray">""</em>
 &gt; (format #f "~&lt;(values 1 2 3)~&gt;") 
-"123"
+<em class="gray">"123"</em>
 </pre>
 
 <p>At the top-level (in the REPL), since there's nothing to splice into, you simply get your values back:
@@ -3278,7 +3260,7 @@ If it returns multiple values, they are printed one after the other.
 
 <pre class="indented">
 &gt; (values 1 (list 1 2) (+ 3 4 5))
-(values 1 (1 2) 12)
+<em class="gray">(values 1 (1 2) 12)</em>
 </pre>
 
 <p>But this printout is just trying to be informative.  There is no multiple-values object
@@ -3335,9 +3317,9 @@ is 15, as anyone would expect.
 
 <pre class="indented">
 (not s7)&gt; (let ((x 1)) (cond ((values #f (set! x 2) #t) 3) (#t x)))
-2
+<em class="gray">2</em>
 (not s7)&gt; (if (values #f #t) 1 2)
-2
+<em class="gray">2</em>
 </pre>
 
 <p>But in s7 we're trying to implement real multiple values (else why have them at all?).
@@ -3349,22 +3331,20 @@ Currently in s7, where a test is in progress, only <code>(values #f)</code> is t
 
 <pre class="indented">
 &gt; (if (values #f #f) 1 2)            ; (values #f #f) is not #f
-1
+<em class="gray">1</em>
 &gt; (cond ((values #f #f) 1) (#t 2))
-1
+<em class="gray">1</em>
 ;;; but if we interpreted this as splicing in the values, we get an inconsistency:
 &gt; (cond (#f #f 1) (#t 2))
-2
-
+<em class="gray">2</em>
 &gt; (if (values #f) 1 2)
-2
+<em class="gray">2</em>
 &gt; (cond ((values #f) 1) (#t 2))
-2
-
+<em class="gray">2</em>
 &gt; (if (values) 1 2)
-1
+<em class="gray">1</em>
 &gt; (cond ((values) 1) (#t 2))
-1
+<em class="gray">1</em>
 ;;; this is consistent with (cond (1) (#t 2))
 </pre>
 
@@ -3379,7 +3359,7 @@ our troubles have only begun.  First, "cond" can omit the expressions that follo
 
 <pre class="indented">
 &gt; (cond (3))
-3
+<em class="gray">3</em>
 </pre>
 
 <p>and even trickier, "cond" can pass the test value to a function:
@@ -3387,7 +3367,7 @@ our troubles have only begun.  First, "cond" can omit the expressions that follo
 
 <pre class="indented">
 &gt; (cond (3 =&gt; +))
-3
+<em class="gray">3</em>
 </pre>
 
 <p>The various standards agree that in the "=&gt;" case, the "fed to" function
@@ -3396,7 +3376,7 @@ receives one argument, so
 
 <pre class="indented">
 (not s7)&gt; (cond ((values 1 2) =&gt; +))
-1
+<em class="gray">1</em>
 </pre>
 
 <p>If we were following the "splice immediately" model, this would be <code>(cond (1 2 =&gt; +))</code>
@@ -3409,9 +3389,9 @@ s7 handles it this way:
 
 <pre class="indented">
 &gt; (+ 1 (cond ((values 2 3))) 4)   ; trailing values are not ignored
-10
+<em class="gray">10</em>
 &gt; (cond ((values 1 2 3) =&gt; +))
-6
+<em class="gray">6</em>
 </pre>
 
 <p>Of course, it is unproblematic that the expression can itself involve multiple values:
@@ -3419,7 +3399,7 @@ s7 handles it this way:
 
 <pre class="indented">
 &gt; (+ (cond (#t (values 1 2))))
-3
+<em class="gray">3</em>
 </pre>
 
 <p>Now, what have I missed?
@@ -3498,9 +3478,9 @@ is cleaner than call/cc, and much faster.
 	    args))))
 
 &gt; (find-if even? #(1 3 5 2))
-2
+<em class="gray">2</em>
 &gt; (* (find-if > #(1 3 5 2) '(2 2 2 3)))
-6
+<em class="gray">6</em>
 </pre>
 
 <p>
@@ -3603,10 +3583,9 @@ original.
 
 <pre class="indented">
 &gt; (object-&gt;string "hiho")
-"\"hiho\""
-
+<em class="gray">"\"hiho\""</em>
 &gt; (format #f "~S" "hiho")
-"\"hiho\""
+<em class="gray">"\"hiho\""</em>
 </pre>
 
 <br>
@@ -3615,7 +3594,7 @@ original.
 
 <pre class="indented">
 &gt; (format #f "~A ~D ~F" 'hi 123 3.14)
-"hi 123 3.140000"
+<em class="gray">"hi 123 3.140000"</em>
 </pre>
 
 
@@ -3652,7 +3631,7 @@ These can also be ~N or ~n in which case the numeric argument is read from the l
 </p>
 <pre class="indented">
 (format #f "~ND" 20 1234) ; =&gt; (format "~20D" 1234)
-"                1234"
+<em class="gray">"                1234"</em>
 </pre>
 
 <p>
@@ -3670,7 +3649,7 @@ also sends it to *stdout*.  To send the string to *stderr* instead, <code>(forma
 
 <pre class="indented">
 &gt; #xf.c
-15.75
+<em class="gray">15.75</em>
 </pre>
 
 <p>This also affects format.  In most Schemes, <code>(format #f "~X" 1.25)</code> is
@@ -3679,7 +3658,7 @@ an error.  In CL, it is equivalent to using ~A which is perverse.  But
 
 <pre class="indented">
 &gt; (number-&gt;string 1.25 16)
-"1.4"
+<em class="gray">"1.4"</em>
 </pre>
 
 <p>and there's no obvious way to get the same effect from format unless we accept
@@ -3688,13 +3667,13 @@ floats in the "~X" case.  So in s7,
 
 <pre class="indented">
 &gt; (format #f "~X" 21)
-"15"
+<em class="gray">"15"</em>
 &gt; (format #f "~X" 1.25)
-"1.4"
+<em class="gray">"1.4"</em>
 &gt; (format #f "~X" 1.25+i)
-"1.4+1.0i"
+<em class="gray">"1.4+1.0i"</em>
 &gt; (format #f "~X" 21/4)
-"15/4"
+<em class="gray">"15/4"</em>
 </pre>
 
 <p>That is, the output choice matches the argument.  A case that came up in the Guile mailing lists is:
@@ -3706,11 +3685,11 @@ floats in the "~X" case.  So in s7,
 
 <pre class="indented">
 &gt; (format #f "~{~C~^ ~}" "hiho")
-"h i h o"
+<em class="gray">"h i h o"</em>
 &gt; (format #f "~{~{~C~^ ~}~^...~}" (list "hiho" "test"))
-"h i h o...t e s t"
+<em class="gray">"h i h o...t e s t"</em>
 &gt; (with-input-from-string (format #f "(~{~C~^ ~})" (format #f "~B" 1367)) read) ; integer-&gt;list
-(1 0 1 0 1 0 1 0 1 1 1)
+<em class="gray">(1 0 1 0 1 0 1 0 1 1 1)</em>
 </pre>
 <br>
 <p>The ~'&lt;...~&gt; directive takes the stuff inside the brackets, and interprets it as s7 code.
@@ -3719,7 +3698,7 @@ the format output string.
 </p>
 <pre class="indented">
 &gt; (let ((counter 32)) (format #f "counter is ~&lt; counter ~&gt;!"))
-"counter is 32!"
+<em class="gray">"counter is 32!"</em>
 </pre>
 
 <p>If the evaluation returns multiple values, each is inserted in turn.  (values) becomes "".
@@ -3727,7 +3706,7 @@ the format output string.
 
 <pre class="indented">
 &gt; (let ((x 3)) (format #f "~&lt; (if (positive? x) (values \"x is \" x \"?\") (values)) ~&gt;"))
-"x is 3?"
+<em class="gray">"x is 3?"</em>
 </pre>
 
 <p>If the default object-&gt;string output is not ideal, you can either call format itself 
@@ -3759,8 +3738,6 @@ if (*s7* 'print-length) is 3.
 </p>
 
 </div>
-
-
 </blockquote>
 
 
@@ -3874,16 +3851,16 @@ here's a sketch:
 
 <pre class="indented">
 &gt; (define h (make-hook '(a 32) 'b))     ; h is a function: (lambda* ((a 32) b) ...)
-h
+<em class="gray">h</em>
 &gt; (set! (hook-functions h)              ; this sets ((funclet h) 'body)
            (list (lambda (hook) 	; each hook internal function takes one argument, the environment
                    (set! (hook 'result) ; this is the "result" variable above 
                          (format #f "a: ~&lt;(hook 'a)~&gt;, b: ~&lt;(hook 'b)~&gt;")))))
-(#&lt;lambda (hook)&gt;)
+<em class="gray">(#&lt;lambda (hook)&gt;)</em>
 &gt; (h 1 2)                               ; this calls the hook's internal functions (just one in this case)
-"a: 1, b: 2"                            ; we set "result" to this string, so it is returned as the hook application result
+<em class="gray">"a: 1, b: 2"                            ; we set "result" to this string, so it is returned as the hook application result</em>
 &gt; (h)
-"a: 32, b: #f"
+<em class="gray">"a: 32, b: #f"</em>
 </pre>
 
 <p>In C, to make a hook:
@@ -3957,16 +3934,13 @@ applied to that many arguments.
 
 <pre class="indented">
 &gt; (define add-2 (let ((documentation "add-2 adds its 2 args")) (lambda* (a (b 32)) (+ a b))))
-add-2
-
+<em class="gray">add-2</em>
 &gt; (procedure-documentation add-2)
-"add-2 adds its 2 args"
-
+<em class="gray">"add-2 adds its 2 args"</em>
 &gt; (procedure-source add-2)
-(lambda* (a (b 32)) (+ a b))
-
+<em class="gray">(lambda* (a (b 32)) (+ a b))</em>
 &gt; (arity add-2)
-(0 . 2)
+<em class="gray">(0 . 2)</em>
 </pre>
 
 
@@ -4030,11 +4004,11 @@ the procedure-source first (using, for example, copy-tree in stuff.scm).
 
 			 
 &gt; (define (hi a) (let ((b 12)) (+ b a)))
-hi
+<em class="gray">hi</em>
 &gt; (procedure-annotate hi)
-#&lt;lambda (a)&gt;
+<em class="gray">#&lt;lambda (a)&gt;</em>
 &gt; (let ((x 32)) (+ 1 (hi x)))
-45
+<em class="gray">45</em>
 ;; printing: 
 (hi (a . 32))
     (let ((b . 12)) ...)
@@ -4112,9 +4086,9 @@ is similar, but its argument is a string.
 
 <pre class="indented">
 &gt; (eval '(+ 1 2))
-3
+<em class="gray">3</em>
 &gt; (eval-string "(+ 1 2)")
-3
+<em class="gray">3</em>
 </pre>
 
 <p>Leaving aside a few special cases, eval-string could be defined:
@@ -4229,7 +4203,7 @@ are:
     (set! result (<em class=red>get-output-string</em> p))
     (close-output-port p)
     result)
-"this is a test 3"
+<em class="gray">"this is a test 3"</em>
 </pre>
 
 <p>In get-output-string, if the optional 'clear' argument is #t, the port is cleared (the default in r7rs I think).
@@ -4265,10 +4239,10 @@ In most REPLs, the input port is set up by the REPL, so you need to use
 
 <pre class="indented">
 &gt; (read-char)
-#&lt;eof&gt;
+<em class="gray">#&lt;eof&gt;</em>
 &gt; (read-char *stdin*)
 a          ; here s7 waited for me to type "a" in the terminal
-#\a        ; this is the REPL reporting what read-char returned
+<em class="gray">#\a</em>        ; this is the REPL reporting what read-char returned
 </pre>
 
 </div>
@@ -4365,12 +4339,11 @@ via the error function, and can be trapped and dealt with via <em class=def id="
       (abs 1 2))
     (lambda args   ; the error handler
       (apply format #t (cadr args))))
-"abs: too many arguments: (1 2)"
-
+<em class="gray">"abs: too many arguments: (1 2)"</em>
 &gt; (<em class=red>catch</em> 'division-by-zero
     (lambda () (/ 1.0 0.0))
     (lambda args (string-&gt;number "inf.0")))
-inf.0
+<em class="gray">inf.0</em>
 
 (define-macro (catch-all . body)
   `(<em class=red>catch</em> #t (lambda () ,@body) (lambda args args)))
@@ -4433,7 +4406,7 @@ do that:
   (map-with-exit (lambda (escape x) (if (func x) (escape) x)) lst))
 
 &gt; (truncate-if even? #(1 3 5 -1 4 6 7 8))
-(1 3 5 -1)
+<em class="gray">(1 3 5 -1)</em>
 </pre>
 
 <p>But this is less useful than map (it can't map over a hash-table for example),
@@ -4681,13 +4654,11 @@ is a constant.  A constant in s7 is really constant: it can't be set or rebound.
 
 <pre class="indented">
 &gt; (define-constant var 32)
-var
-
+<em class="gray">var</em>
 &gt; (set! var 1)
-;set!: can't alter immutable object: var
-
+<em class="gray">;set!: can't alter immutable object: var</em>
 &gt; (let ((var 1)) var)
-;can't bind or set an immutable object: var, line 1
+<em class="gray">;can't bind or set an immutable object: var, line 1</em>
 </pre>
 
 <p>This has the possibly surprising side effect that previous uses of the constant name
@@ -4735,14 +4706,11 @@ returns the value that is actually set.  For example, the function can ensure th
     (curlet)))
 
 &gt; e
-(inlet 'x 3 'y 3 'z 3.3)
-
+<em class="gray">(inlet 'x 3 'y 3 'z 3.3)</em>
 &gt;(begin (set! (e 'x) 123) (set! (e 'y) #()) (set! (e 'z) #f))
 ;; prints "z 3.3 -&gt; #f"
-
 &gt; e
-(inlet 'x 123 'y 3 'z #f)
-
+<em class="gray">(inlet 'x 123 'y 3 'z #f)</em>
 &gt; (define-macro (reflective-let vars . body)
     `(let ,vars
        ,@(map (lambda (vr)
@@ -4752,11 +4720,9 @@ returns the value that is actually set.  For example, the function can ensure th
 		         v)))
 	      vars)
        ,@body))
-reflective-let
-
+<em class="gray">reflective-let</em>
 &gt; (reflective-let ((a 1)) (set! a 2))
-2     ; prints "a -&gt; 2"
-
+<em class="gray">2</em>     ; prints "a -&gt; 2"
 &gt;(let ((a 0))
      (set! (symbol-access 'a)
       (let ((history (make-vector 3 0))
@@ -4769,7 +4735,7 @@ reflective-let
      (set! a 1)
      (set! a 2)
      ((funclet (symbol-access 'a)) 'history))
-#(1 2 0)
+<em class="gray">#(1 2 0)</em>
 </pre>
 
 <p>Or implement reactive programming:
@@ -4799,25 +4765,22 @@ reflective-let
     (<em class=red>reactive-set!</em> -a- (* b 2))
     (set! b 3)
     -a-)
-6
-
+<em class="gray">6</em>
 &gt; (let ((a 1)) 
     (let ((v (<em class=red>reactive-vector</em> a (+ a 1) 2))) 
       (set! a 4) 
       v))
-#(4 5 2)
-
+<em class="gray">#(4 5 2)</em>
 &gt; (let ((a 1)) 
     (<em class=red>reactive-let</em> ((-b- (+ a 1))) ; if 'a changes, '-b- does too
     (set! a 3)                  ;   so '-b- is now 4
     -b-))
-4
-
+<em class="gray">4</em>
 &gt; (let ((a 1))
     (<em class=red>reactive-lambda*</em> (s v)
       (format *stderr* "~S -&gt; ~S~%" s v))
     (set! a 3))
-"a -&gt; 3"
+<em class="gray">"a -&gt; 3"</em>
 </pre>
 
 <p>In the reactive-let example, the macro notices that '-b- depends on 'a, so it sets up a symbol-access on 'a
@@ -4949,10 +4912,10 @@ at startup *features* is:
 
 <pre class="indented">
 &gt; *features*
-(snd-15.9 snd15 snd audio snd-s7 snd-gtk gsl alsa gtk2 xg clm6 clm sndlib linux 
- dlopen complex-numbers system-extras @-exponent dfls-exponents ratio s7-3.12 s7)
+<em class="gray">(snd-15.9 snd15 snd audio snd-s7 snd-gtk gsl alsa gtk2 xg clm6 clm sndlib linux
+ dlopen complex-numbers system-extras @-exponent dfls-exponents ratio s7-3.12 s7) </em>
 &gt; (provided? 'gsl)
-#t
+<em class="gray">#t</em>
 </pre>
 
 <p>The other side of <code>provide</code> is <em class=def id="requires7">require</em>.
@@ -5036,9 +4999,9 @@ rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 (set! *#readers* (cons (cons #\t (lambda (str) (string-&gt;number (substring str 1) 12))) *#readers*))
 
 &gt; #tb
-11
+<em class="gray">11</em>
 &gt; #t11.3
-13.25
+<em class="gray">13.25</em>
 </pre>
 
 <p>Or have #c(real imag) be read as a complex number:
@@ -5048,7 +5011,7 @@ rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 (set! *#readers* (cons (cons #\c (lambda (str) (apply make-rectangular (read)))) *#readers*))
 
 &gt; #c(1 2)
-1+2i
+<em class="gray">1+2i</em>
 </pre>
 
 <div class="indented">
@@ -5080,16 +5043,16 @@ I need to know where something unexpected happened.  So:
 	*#readers*))
 
 &gt; '(1 2 #.(* 3 4) 5)
-(1 2 12 5)
+<em class="gray">(1 2 12 5)</em>
 </pre>
 
 <p>To return no value from a reader, use <code>(values)</code>.
 </p>
 <pre class="indented">
 &gt; (set! *#readers* (cons (cons #\; (lambda (str) (if (string=? str ";") (read)) (values))) *#readers*))
-((#\; . #&lt;lambda (str)&gt;))
+<em class="gray">((#\; . #&lt;lambda (str)&gt;))</em>
 &gt; (+ 1 #;(* 2 3) 4)
-5
+<em class="gray">5</em>
 </pre>
 <p>Here is CL's #+ reader:
 </p>
@@ -5196,14 +5159,14 @@ is considered to be a part of the symbol name.  A keyword is a constant that eva
 returns the value dynamically bound to it.  A variable can access both of its values:
 </p>
 <pre class="indented">
-(let ((x 32))
+&gt; (let ((x 32))
   (define (gx) ; return both bindings of 'x
     (list x (<em class=red>symbol-&gt;value</em> 'x) (<em class=red>symbol-&gt;dynamic-value</em> 'x)))
   (let ((x 100))
     (let ((x 12))
       (values (gx))))) ; this 'values' looks dumb, it is dumb, but see my unconvincing explanantion <a href="#weaselwords">below</a>.
                        ;   briefly: "dynamic binding" in s7 is not "lexically apparent dynamic binding"
-&gt; (32 32 12)
+<em class="gray">(32 32 12)</em>
 </pre>
 
 <p>
@@ -5410,7 +5373,7 @@ macro that returns an anonymous macro that returns an anonymous function that &m
 
 <pre class="indented">
 &gt; (help 'caadar)
-"(caadar lst) returns (car (car (cdr (car lst)))): (caadar '((1 (2 3)))) -&gt; 2"
+<em class="gray">"(caadar lst) returns (car (car (cdr (car lst)))): (caadar '((1 (2 3)))) -&gt; 2"</em>
 </pre>
 
 
@@ -5434,15 +5397,15 @@ involve circular structures.  Will equal? be our friend?
 
 <pre class="indented">
 &gt; (equal? 2 2.0)
-#f
+<em class="gray">#f</em>
 &gt; (let ((x +nan.0)) (equal? x x))
-#f
+<em class="gray">#f</em>
 &gt; (equal? .1 1/10)
-#f    
+<em class="gray">#f    </em>
 &gt; (= .1 1/10)
-#f
+<em class="gray">#f</em>
 &gt; (= 0.0 0+1e-300i)
-#f
+<em class="gray">#f</em>
 </pre>
 
 <p>No! We need an equality check that ignores epsilonic differences in real and
@@ -5459,17 +5422,17 @@ some other thing, they satisfy the function morally-equal?.
 
 <pre class="indented">
 &gt; (morally-equal? 2 2.0)        ; would "equal!?" be a better name?
-#t
+<em class="gray">#t</em>
 &gt; (morally-equal? 1/0 1/0)      ; NaN
-#t
+<em class="gray">#t</em>
 &gt; (morally-equal? .1 1/10)
-#t                              ; floating-point epsilon here is 1.0e-15 or thereabouts
+<em class="gray">#t</em>                              ; floating-point epsilon here is 1.0e-15 or thereabouts
 &gt; (morally-equal? 0.0 1e-300)
-#t
+<em class="gray">#t</em>
 &gt; (morally-equal? 0.0 1e-14)
-#f                              ; its not always #t!
+<em class="gray">#f</em>                              ; its not always #t!
 &gt; (morally-equal? (lambda () #f) (lambda () #f))
-#t
+<em class="gray">#t</em>
 </pre>
 
 <p>The *s7* field morally-equal-float-epsilon sets the floating-point fudge factor.
@@ -5517,9 +5480,9 @@ a (gasp!) f*xpr.  In fact:
        (append (list (append (list (gensym)) ',(cdr name-and-args))) ',body))))
 
 &gt; (define-f*xpr (mac a) `(+ ,a 1))
-mac
+<em class="gray">mac</em>
 &gt; (mac (* 2 3))
-(+ (* 2 3) 1)
+<em class="gray">(+ (* 2 3) 1)</em>
 </pre>
 
 <p>
@@ -5528,15 +5491,15 @@ You can do something similar with a normal macro, or make the indirection explic
 
 <pre class="indented">
 &gt; (define-macro (fx x) `'(+ 1 ,x)) ; quote result to avoid evaluation
-fx
+<em class="gray">fx</em>
 &gt; (let ((a 3)) (fx a))
-(+ 1 a)
+<em class="gray">(+ 1 a)</em>
 &gt; (define-expansion (ex x) `(+ 1 ,x))
-ex
+<em class="gray">ex</em>
 &gt; (let ((x ex) (a 3)) (x a))       ; avoid read-time splicing
-(+ 1 a)
+<em class="gray">(+ 1 a)</em>
 &gt; (let ((a 3)) (ex a))             ; spliced in at read-time
-4
+<em class="gray">4</em>
 </pre>
 
 <p>As this example shows, the reader knows nothing about the program context,
@@ -5558,9 +5521,9 @@ is simply returned, unevaluated.
 		  (append (list (apply macroexpand (list (append '(rmac) (cdr args))))))))))
 
 &gt; (macroexpand (rmac a b c))
-(begin (display 'a) (begin (display 'b) (display 'c)))
+<em class="gray">(begin (display 'a) (begin (display 'b) (display 'c)))</em>
 &gt; (begin (rmac a b c d) (newline))
-abcd
+<em class="gray">abcd</em>
 </pre>
 
 <p>The main built-in expansion is <b><em class=def id="readercond">reader-cond</em></b>.  The syntax is based on cond:
@@ -5570,9 +5533,9 @@ the remainder of that clause is spliced into the code as if you had typed it fro
 
 <pre class="indented">
 &gt; '(1 2 (reader-cond ((> 1 0) 3) (else 4)) 5 6)
-(1 2 3 5 6)
+<em class="gray">(1 2 3 5 6)</em>
 &gt; ((reader-cond ((> 1 0) list 1 2) (else cons)) 5 6)
-(1 2 5 6)
+<em class="gray">(1 2 5 6)</em>
 </pre>
 
 
@@ -5824,14 +5787,14 @@ evaluated but the key is not:
 
 <pre class="indented">
 &gt; (case '() ((()) 2) (else 1))
-2
+<em class="gray">2</em>
 &gt; (case '() (('()) 2) (else 1)) ; (eqv? '() ''()) is #f
-1
+<em class="gray">1</em>
 ;;; which parallels #f (or a number such as 2 etc):
 &gt; (case '#f ((#f) 2) (else 1))
-2
+<em class="gray">2</em>
 &gt; (case '#f (('#f) 2) (else 1)) ; (eqv? '#f ''#f) is #f
-1
+<em class="gray">1</em>
 </pre>
 
 <p>Similarly, vector constants do not have to be quoted.  A list constant is quoted
@@ -5871,13 +5834,11 @@ into a function's body:
 
 <pre class="indented">
 &gt; (let ((x (lambda () '(1 2 3)))) (list-set! (x) 1 32) (x))
-(1 32 3) ; s7, Guile
-
+<em class="gray">(1 32 3)</em> ; s7, Guile
 &gt; (flet ((x () '(1 2 3))) (setf (nth 1 (x)) 32) (x))
-(1 32 3) ; Clisp
-
+<em class="gray">(1 32 3)</em> ; Clisp
 &gt; (let ((x (lambda () (list 1 2 3)))) (list-set! (x) 1 32) (x))
-(1 2 3)
+<em class="gray">(1 2 3)</em>
 </pre>
 
 <p>
@@ -5887,13 +5848,11 @@ closed-over thing is a constant:
 
 <pre class="indented">
 &gt; (flet ((x () '(1 2 3))) (setf (nth 1 (x)) 32) (x))
-(1 32 3)
-
+<em class="gray">(1 32 3)</em>
 &gt; (let ((xx (let ((x '(1 2 3))) (lambda () x)))) (list-set! (xx) 1 32) (xx))
-(1 32 3)
-
+<em class="gray">(1 32 3)</em>
 &gt; (let ((xx (let ((x (list 1 2 3))) (lambda () x)))) (list-set! (xx) 1 32) (xx))
-(1 32 3)
+<em class="gray">(1 32 3)</em>
 </pre>
 
 <p>
@@ -5902,7 +5861,7 @@ And it's possible to reach into a constant list via list-set! (or set-car! of co
 
 <pre class="indented">
 &gt; (let* ((x '(1 2)) (y (list x)) (z (car y))) (list-set! z 1 32) (list x y z))
-((1 32) ((1 32)) (1 32))
+<em class="gray">((1 32) ((1 32)) (1 32))</em>
 </pre>
 
 <p>
@@ -5915,7 +5874,7 @@ the only real problem I can see is symbol-&gt;string.  In CL, this is explicitly
 
 <pre class="indented">
 &gt; (setf (elt (symbol-name 'xyz) 1) #\X)
-*** - Attempt to modify a read-only string: "XYZ"
+<em class="gray">*** - Attempt to modify a read-only string: "XYZ"</em>
 </pre>
 
 <p>And in Guile:
@@ -5923,7 +5882,7 @@ the only real problem I can see is symbol-&gt;string.  In CL, this is explicitly
 
 <pre class="indented">
 &gt; (string-set! (symbol-&gt;string 'symbol-&gt;string) 1 #\X)
-ERROR: string is read-only: "symbol-&gt;string"
+<em class="gray">ERROR: string is read-only: "symbol-&gt;string"</em>
 </pre>
 
 <p>So both have a notion of immutable strings.  
@@ -5936,15 +5895,15 @@ copy can protect some values.  Or combine object-&gt;string and string-&gt;symbo
 
 <pre class="indented">
 &gt; (let ((x (lambda () (copy "hiho")))) (string-set! (x) 1 #\x) (x))
-"hiho"
+<em class="gray">"hiho"</em>
 &gt; (let ((x (string-&gt;symbol "hiho"))) (string-set! (symbol-&gt;string x) 1 #\x) (symbol-&gt;string x))
-"hiho"
+<em class="gray">"hiho"</em>
 &gt; (define (immutable obj) (string-&gt;symbol (object-&gt;string obj :readable)))
-immutable
+<em class="gray">immutable</em>
 &gt; (define (symbol-&gt;object sym) (eval-string (symbol-&gt;string sym)))
-symbol-&gt;object
+<em class="gray">symbol-&gt;object</em>
 &gt; (symbol-&gt;object (immutable (list 1 2 3)))
-(1 2 3)
+<em class="gray">(1 2 3)</em>
 </pre>
 
 <p>s7 normally tries to optimize garbage collection by
@@ -5991,12 +5950,11 @@ The print syntax is borrowed from CL:
 &gt; (let ((lst (list 1 2 3))) 
     (set! (cdr (cdr (cdr lst))) lst) 
     lst)
-#1=(1 2 3 . #1#)
-
+<em class="gray">#1=(1 2 3 . #1#)</em>
 &gt; (let* ((x (cons 1 2)) 
          (y (cons 3 x))) 
     (list x y))
-(#1=(1 . 2) (3 . #1#)) ; shared lists use the same syntax: '((1 . 2) (3 1 . 2)) spelled out
+<em class="gray">(#1=(1 . 2) (3 . #1#))</em>
 </pre>
 
 <p id="circularlistreader">
@@ -6084,9 +6042,9 @@ then it is part of the language, and it doesn't look like the rest of the langua
           *#readers*)))
 <!-- ) -->
 &gt; '#1=(1 2 . #1#)
-#1=(1 2 . #1#)
+<em class="gray">#1=(1 2 . #1#)</em>
 &gt; '#1=(1 #2=(2 . #2#) . #1#)
-#2=(1 #1=(2 . #1#) . #2#)
+<em class="gray">#2=(1 #1=(2 . #1#) . #2#)</em>
 </pre>
 
 <p>And of course, we can treat these as labels:
@@ -6165,9 +6123,9 @@ These weird symbols have to be printed sometimes:
 
 <pre class="indented">
 &gt; (list 1 (string-&gt;symbol (string #\; #\" #\\)) 2)
-(1 ;"\ 2)            <!-- " -->
+<em class="gray">(1 ;"\ 2)</em>            <!-- " -->
 &gt; (list 1 (string-&gt;symbol (string #\.)) 2)
-(1 . 2)
+<em class="gray">(1 . 2)</em>
 </pre>
 
 <p>which is a mess.  Guile prints the first as <code>(1 #{\;\"\\}# 2)</code>.
@@ -6176,9 +6134,9 @@ In CL and some Schemes:
 
 <pre class="indented">
 [1]&gt; (list 1 (intern (coerce (list #\; #\" #\\) 'string)) 2) ; thanks to Rob Warnock
-(1 |;"\\| 2)        <!-- " -->
+<em class="gray">(1 |;"\\| 2)</em>        <!-- " -->
 [2]&gt; (equalp 'A '|A|) ; in CL case matters here
-T
+<em class="gray">T</em>
 </pre>
 
 <p>This is clean, and has the weight of tradition behind it, but 
@@ -6187,7 +6145,7 @@ I think I'll use "symbol" instead:
 
 <pre class="indented">
 &gt; (list 1 (string-&gt;symbol (string #\; #\" #\\)) 2)
-(1 (symbol ";\"\\") 2)       <!-- " -->
+<em class="gray">(1 (symbol ";\"\\") 2)</em>       <!-- " -->
 </pre>
 
 <p>
@@ -6203,28 +6161,28 @@ These symbols are not just an optimization of string comparison:
 </p>
 
 <pre class="indented">
-(define-macro (hi a) 
+&gt; (define-macro (hi a) 
   (let ((funny-name (string-&gt;symbol ";")))
     `(let ((,funny-name ,a)) (+ 1 ,funny-name))))
-hi
+<em class="gray">hi</em>
 &gt; (hi 2)
-3
+<em class="gray">3</em>
 &gt; (macroexpand (hi 2))
-(let ((; 2)) (+ 1 ;))    ; for a good time, try (string #\") 
+<em class="gray">(let ((; 2)) (+ 1 ;))</em>    ; for a good time, try (string #\")
 
-(define-macro (hi a) 
+&gt; (define-macro (hi a) 
   (let ((funny-name (string-&gt;symbol "| e t c |")))
     `(let ((,funny-name ,a)) (+ 1 ,funny-name))))
+<em class="gray">hi</em>
 &gt; (hi 2)
-3
+<em class="gray">3</em>
 &gt; (macroexpand (hi 2))
-(let ((| e t c | 2)) (+ 1 | e t c |))
-
+<em class="gray">(let ((| e t c | 2)) (+ 1 | e t c |))</em>
 &gt; (let ((funny-name (string-&gt;symbol "| e t c |"))) ; now use it as a keyword arg to a function
     (apply define* `((func (,funny-name 32)) (+ ,funny-name 1)))
     ;; (procedure-source func) is (lambda* ((| e t c | 32)) (+ | e t c | 1))
     (apply func (list (symbol-&gt;keyword funny-name) 2)))
-3
+<em class="gray">3</em>
 </pre>
 
 <p>I hope that makes you as happy as it makes me!
@@ -6245,14 +6203,14 @@ hi
       (define x 1) 
       (set! x 3) 
       (+ x 4)))
-7
+<em class="gray">7</em>
 &gt; (let ((function lambda)) 
     ((function (a b) (list a b)) 3 4))
-(3 4)
+<em class="gray">(3 4)</em>
 &gt; (apply begin '((define x 3) (+ x 2)))
-5
+<em class="gray">5</em>
 &gt; ((lambda (n) (apply n '(((x 1)) (+ x 2)))) let)
-3
+<em class="gray">3</em>
 
 (define-macro (symbol-set! var val) ; like CL's set
   `(apply set! ,var ',val ()))      ; trailing nil is just to make apply happy &mdash; apply*?
@@ -6261,7 +6219,7 @@ hi
  `(apply (apply lambda ,vars ',body) ,vals))
 
 &gt; (let ((s '(one two)) (v '(1 2))) (progv s v (+ one two)))
-3
+<em class="gray">3</em>
 </pre>
 
 <p>We can snap together program fragments ("look Ma, no macros!"):
@@ -6292,11 +6250,11 @@ hi
 <pre class="indented">
 &gt; (define-macro (enum . args)
     `(for-each define ',args (iota (length ',args))))
-enum
+<em class="gray">enum</em>
 &gt; (enum a b c) 
-#&lt;unspecified&gt;
+<em class="gray">#&lt;unspecified&gt;</em>
 &gt; b
-1
+<em class="gray">1</em>
 </pre>
 
 
@@ -6305,27 +6263,27 @@ enum
 
 <pre class="indented">
 &gt; ((apply define-macro '((m a) `(+ 1 ,a))) 3)
-4
+<em class="gray">4</em>
 &gt; ((apply define '((hi a) (+ a 1))) 3)
-4
+<em class="gray">4</em>
 </pre>
 
 <p>This gives us a way to make anonymous macros, just as lambda returns an anonymous function:
 </p>
 
 <pre class="indented">
-(define-macro (mu args . body)
+&gt; (define-macro (mu args . body)
   `(apply define-macro '((,(gensym) ,@args) ,@body)))
-
+<em class="gray">mu</em>
 &gt; ((mu (a) `(+ 1 ,a)) 3)
-4
+<em class="gray">4</em>
 &gt; (define-macro (glambda args) ; returns an anonymous macro that will return a function given a body
     `(define-macro (,(gensym) . body) 
          `(lambda ,',args ,@body)))
-glambda
+<em class="gray">glambda</em>
 &gt; (let ((gf (glambda (a b))))  ; gf is now ready for any body that involves arguments 'a and 'b
     ((gf (+ a b)) 1 2))        ; apply (lambda (a b) (+ a b)) to '(1 2)
-3
+<em class="gray">3</em>
 </pre>
 
 <p>catch, dynamic-wind, and many of the other functions that take function
@@ -6587,11 +6545,11 @@ int main(int argc, char **argv)
  *
  *    repl
  *    &gt; (+ 1 2)
- *    3
+ *    <em class="gray">3</em>
  *    &gt; (define (add1 x) (+ 1 x))
- *    add1
+ *    <em class="gray">add1</em>
  *    &gt; (add1 2)
- *    3
+ *    <em class="gray">3</em>
  *    &gt; (exit)
  *
  * for long-term happiness in linux use:
@@ -6970,9 +6928,9 @@ int main(int argc, char **argv)
 
 /*    doc7
  *    &gt; my-pi
- *    3.14159265
+ *    <em class="gray">3.14159265</em>
  *    &gt; (+ 1 (add1 1))
- *    3
+ *    <em class="gray">3</em>
  *    &gt; (exit)
  */
 </pre></div>
@@ -7348,23 +7306,23 @@ int main(int argc, char **argv)
 
 /*
  *    &gt; *listener-prompt*
- *    "&gt;"
+ *    <em class="gray">"&gt;"</em>
  *    &gt; (set! *listener-prompt* ":")
- *    ":"
+ *    <em class="gray">":"</em>
  *    : (define obj (make-dax 1.0 (list 1 2 3)))
- *    obj
+ *    <em class="gray">obj</em>
  *    : obj
- *    #&lt;dax 1.000 (1 2 3)&gt;
+ *    <em class="gray">#&lt;dax 1.000 (1 2 3)&gt;</em>
  *    : (dax-x obj)
- *    1.0
+ *    <em class="gray">1.0</em>
  *    : (dax-data obj)
- *    (1 2 3)
+ *    <em class="gray">(1 2 3)</em>
  *    : (set! (dax-x obj) 123.0)
- *    123.0
+ *    <em class="gray">123.0</em>
  *    : obj
- *    #&lt;dax 123.000 (1 2 3)&gt;
+ *    <em class="gray">#&lt;dax 123.000 (1 2 3)&gt;</em>
  *    : (dax? obj)
- *    #t
+ *    <em class="gray">#t</em>
  *    : (exit)
  */
 </pre></div>
@@ -7420,16 +7378,16 @@ int main(int argc, char **argv)
 
 /* 
  *    &gt; (+ 1 2)
- *    [3]
+ *    <em class="gray">[3]</em>
  *    &gt; (display "hiho")
- *    [h] [i] [h] [o] [#] [&lt;] [u] [n] [s] [p] [e] [c] [i] [f] [i] [e] [d] [&gt;] 
+ *    <em class="gray">[h] [i] [h] [o] [#] [&lt;] [u] [n] [s] [p] [e] [c] [i] [f] [i] [e] [d] [&gt;] </em>
  *    &gt; (define (add1 x) (+ 1 x))
- *    [a] [d] [d] [1] 
+ *    <em class="gray">[a] [d] [d] [1] </em>
  *    &gt; (add1 123)
- *    [1] [2] [4] 
+ *    <em class="gray">[1] [2] [4] </em>
  *    &gt; (read-char io-port)
  *    a                             ; here I typed "a" in the shell
- *    [#] [\] [a] 
+ *    <em class="gray">[#] [\] [a] </em>
  */
 </pre></div>
 
@@ -7493,9 +7451,9 @@ int main(int argc, char **argv)
 }
 
 /*    &gt; (+ 1 2)
- *    3
+ *    <em class="gray">3</em>
  *    &gt; (+ "hi" "ho")
- *    "hiho"
+ *    <em class="gray">"hiho"</em>
  */
 </pre></div>
 
@@ -7549,9 +7507,9 @@ int main(int argc, char **argv)
 }
 
 /*    &gt; (our-abs -1)
- *    1.0
+ *    <em class="gray">1.0</em>
  *    &gt; (our-abs (openlet (inlet 'value -3.0 'abs (lambda (x) (abs (x 'value))))))
- *    3.0
+ *    <em class="gray">3.0</em>
  */
 
 </pre>
@@ -7600,15 +7558,15 @@ int main(int argc, char **argv)
 
 /* 
  *    &gt; (plus 2 3)
- *    7
+ *    <em class="gray">7</em>
  *    &gt; (plus :blue 3)
- *    67
+ *    <em class="gray">67</em>
  *    &gt; (plus :blue 1 :red 4)
- *    9
+ *    <em class="gray">9</em>
  *    &gt; (plus 2 :blue 3)
- *    7
+ *    <em class="gray">7</em>
  *    &gt; (plus :blue 3 :red 1)
- *    5
+ *    <em class="gray">5</em>
  */
 </pre></div>
 
@@ -7660,7 +7618,7 @@ int main(int argc, char **argv)
 
 /* 
  *    &gt; (plus 2 3)
- *    5
+ *    <em class="gray">5</em>
  */
 </pre></div>
 
@@ -7714,12 +7672,12 @@ int main(int argc, char **argv)
 /* gcc -c s7.c -I.
  * gcc -o ex15 ex15.c s7.o -I. -lm -ldl
  *
- * &gt; (plus 1 2)
- * #f
- * (define obj (openlet (inlet 'plus (lambda args (apply + 1 (cdr args))))))
- * obj
- * &gt; (plus obj 2 3)
- * 6
+ *     &gt; (plus 1 2)
+ *     <em class="gray">#f</em>
+ *     &gt; (define obj (openlet (inlet 'plus (lambda args (apply + 1 (cdr args))))))
+ *     <em class="gray">obj</em>
+ *     &gt; (plus obj 2 3)
+ *     <em class="gray">6</em>
  */
 </pre>
 </div>
@@ -7951,10 +7909,10 @@ int main(int argc, char **argv)
 }
 
 /*    &gt; notified-var
- *    0
+ *    <em class="gray">0</em>
  *    &gt; (set! notified-var 32)
- *    notified-var set to 32
- *    32
+ *    <em class="gray">notified-var set to 32</em>
+ *    <em class="gray">32</em>
  */
 </pre></div>
 
@@ -8028,16 +7986,16 @@ int main(int argc, char **argv)
 }
 
 /*     &gt; func1
- *     ;func1: unbound variable, line 1
+ *     <em class="gray">;func1: unbound variable, line 1</em>
  *     &gt; lib-exports
- *     ((var1 . 32) (func1 . func1))
+ *     <em class="gray">((var1 . 32) (func1 . func1))</em>
  *     ;; so lib-exports has the C-defined names and values
  *     ;; we can use these directly:
  *
  *     &gt; (define lib-env (apply <em class=red>sublet</em> (curlet) lib-exports))
- *     lib-env
+ *     <em class="gray">lib-env</em>
  *     &gt; (<em class=red>with-let</em> lib-env (func1 var1))
- *     33
+ *     <em class="gray">33</em>
  *
  *     ;; or rename them to prepend "lib:"
  *     &gt; (define lib-env (apply sublet 
@@ -8047,15 +8005,15 @@ int main(int argc, char **argv)
                                                (string-append "lib:" (symbol-&gt;string (car binding)))) 
                                              (cdr binding))) 
                                      lib-exports)))
- *     lib-env
+ *     <em class="gray">lib-env</em>
  *     &gt; (with-let lib-env (lib:func1 lib:var1))
- *     33
+ *     <em class="gray">33</em>
  *
  *     ;;; now for convenience, place "func1" in the global environment under the name "func2"
  *     &gt; (define func2 (cdadr lib-exports)) 
- *     func2
+ *     <em class="gray">func2</em>
  *     &gt; (func2 1)  
- *     2
+ *     <em class="gray">2</em>
  */
 </pre></div>
 
@@ -8141,10 +8099,10 @@ int main(int argc, char **argv)
  * if with_error_hook is false,
  *
  *   &gt; (+ 1 2)
- *   {3}
+ *   <em class="gray">{3}</em>
  *   &gt; (+ 1 #\c)
- *   {wrong-type-arg}[
- *   ;+ argument 2, #\c, is character but should be a number, line 1
+ *   <em class="gray">{wrong-type-arg}[</em>
+ *   <em class="gray">;+ argument 2, #\c, is character but should be a number, line 1</em>
  *   ]
  *
  * so s7 by default prepends ";" to the error message, and appends "\n",
@@ -8154,10 +8112,10 @@ int main(int argc, char **argv)
  * if with_error_hook is true,
  *
  *   &gt; (+ 1 2)
- *   {3}
+ *   <em class="gray">{3}</em>
  *   &gt; (+ 1 #\c)
- *   error: + argument 2, #\c, is character but should be a number
- *   {our-error}
+ *   <em class="gray">error: + argument 2, #\c, is character but should be a number</em>
+ *   <em class="gray">{our-error}</em>
  *
  * so now the *error-hook* code handles both the error reporting and
  *   the value returned ('our-error in this case).
@@ -8217,14 +8175,12 @@ int main(int argc, char **argv)
 
 /* 
  *    &gt; test-hook
- *    #&lt;lambda (hook)&gt;
- *    
+ *    <em class="gray">#&lt;lambda (hook)&gt;</em>
  *    &gt; (hook-functions test-hook)
- *    (my-hook-function)
- *
+ *    <em class="gray">(my-hook-function)</em>
  *    &gt; (test-hook 1 2)
- *    a is 1
- *    #&lt;unspecified&gt;
+ *    <em class="gray">a is 1</em>
+ *    <em class="gray">#&lt;unspecified&gt;</em>
  */
 </pre></div>
 
@@ -8369,11 +8325,11 @@ int main(int argc, char **argv)
  * and run it:
  *   ex3
  *   &gt; (cload "/home/bil/snd-15/ex3a.so" "init_ex")
- *   #t
+ *   <em class="gray">#t</em>
  *   &gt; (add-1 2)
- *   3
+ *   <em class="gray">3</em>
  *   &gt; (try "a_function" 2.5)
- *   3.5
+ *   <em class="gray">3.5</em>
  */
 </pre></div>
 
@@ -8505,21 +8461,21 @@ int main(int argc, char **argv)
  *
  *   ex2
  *   &gt; (add-1 1)   
- *   2
+ *   <em class="gray">2</em>
  *   &gt; (add-1 2/3)
- *   5/3
+ *   <em class="gray">5/3</em>
  *   &gt; (add-1 1.4) 
- *   2.4
+ *   <em class="gray">2.4</em>
  *   &gt; (add-1 1.5+i)
- *   2.5+1i
+ *   <em class="gray">2.5+1i</em>
  *   &gt; (add-1 (bignum "3"))
- *   4          ; this is the bignum 4
+ *   <em class="gray">4</em>          ; this is the bignum 4
  *   &gt; (add-1 (bignum "3/4"))
- *   7/4
+ *   <em class="gray">7/4</em>
  *   &gt; (add-1 (bignum "1.4"))
- *   2.399999999999999911182158029987476766109E0
+ *   <em class="gray">2.399999999999999911182158029987476766109E0</em>
  *   &gt; (add-1 (bignum "1.5+i"))
- *   2.500E0+1.000E0i
+ *   <em class="gray">2.500E0+1.000E0i</em>
  */
 </pre></div>
 
@@ -8664,9 +8620,9 @@ int main(int argc, char **argv)
 <div class="listener">
 <pre>
 <em class=redb>&lambda;&gt;</em> (define &lambda; lambda)
-&lambda;
+<em class="gray">&lambda;</em>
 <em class=redb>&lambda;&gt;</em> ((&lambda; (a b) (+ a b)) 1 2)
-3
+<em class="gray">3</em>
 <em class=redb>&lambda;&gt;</em> 
 </pre>
 </div>
@@ -8946,7 +8902,7 @@ Here are some examples:
     (strftime str 32 "%a %d-%b-%Y %H:%M %Z" (localtime p))
     (free p) 
     str)
-"Sat 11-Aug-2012 08:55 PDT\x00      "
+<em class="gray">"Sat 11-Aug-2012 08:55 PDT\x00      "</em>
 
 
 ;;; opendir, read_dir, closedir
@@ -8979,11 +8935,11 @@ gcc -c s7.c -I.
 gcc -o ex1 ex1.c s7.o -lm -I. -ldl -Wl,-export-dynamic
 ex1
 &gt; (load "cload.scm")
-c-define-1
+<em class="gray">c-define-1</em>
 &gt; (c-define '(double j0 (double)) "m" "math.h")
-#t
+<em class="gray">#t</em>
 &gt; (m:j0 0.5)
-0.93846980724081
+<em class="gray">0.93846980724081</em>
 </pre>
 
 <p>See also r7rs.scm, libc.scm, libgsl.scm, libm.scm, libdl.scm, and libgdbm.scm.
@@ -9156,14 +9112,14 @@ you can also type shell commands just as in a shell:
 
 <pre class="indented">
 &gt; pwd
-/home/bil/cl
+<em class="gray">/home/bil/cl</em>
 &gt; cd ..
-/home/bil
+<em class="gray">/home/bil</em>
 &gt; date
-Wed 15-Apr-2015 17:32:24 PDT
+<em class="gray">Wed 15-Apr-2015 17:32:24 PDT</em>
 &gt; **
-"Wed 15-Apr-2015 17:32:24 PDT
-"
+<em class="gray">"Wed 15-Apr-2015 17:32:24 PDT
+"</em>
 </pre>
 
 <p>In most cases, these are handled through *unbound-variable-hook*, checked using "command -v", then passed
@@ -9241,11 +9197,11 @@ then return to the caller:
 <pre class="indented">
 x: 32
 &gt; x
-32
+<em class="gray">32</em>
 &gt; (set! x 91)
-91
+<em class="gray">91</em>
 &gt; x
-91
+<em class="gray">91</em>
 &gt; now x: 91  ; here I typed C-q at the prompt
 </pre>
 
