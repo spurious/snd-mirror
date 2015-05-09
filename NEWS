@@ -1,15 +1,10 @@
-Snd 15.5:
+Snd 15.6:
 
-repl.scm to replace use of readline in various cases.  The main one is
-  Snd without a GUI.  In this case, you need to tell Snd where to find
-  repl.scm.  In my ~/.snd_s7 file, I have:
+add int-vector? int-vector make-int-vector
 
-  (set! *load-path* (cons "/home/bil/cl" *load-path*))
+changed s7_copy arg interpretation (it's now a normal s7_function).
 
-  I think you can build this into Snd by using the SCRIPTS_DIR flag
-  in the makefile.
+checked: gtk 3.16.1|2 3.17.1, FC 22 (gcc 5), Ruby 2.2, sbcl 1.2.11
 
-
-checked: sbcl 1.2.9|10, gtk 3.15.10|11|12, 3.16.0
-
-Thanks!: Mike Scholz, Tito Latini
+Thanks!: Tito Latini (found and fixed many bugs), 
+         Donny Ward (MS Visual Studio 2013)

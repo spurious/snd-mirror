@@ -1226,13 +1226,11 @@ static void init_types(void)
 #define NOT_IN_HEAP -1
 #define TYPE_BITS                     8
 
-#define T_IMMUTABLE                   (1 << (TYPE_BITS + 0))
-#define is_immutable(p)               ((typesflag(p) & T_IMMUTABLE) != 0)
-#define set_immutable(p)              typesflag(p) |= T_IMMUTABLE
-/* immutable means the value can't be changed via set! or bind -- this is separate from the symbol access stuff
+#define T_KEYWORD                     (1 << (TYPE_BITS + 0))
+#define is_keyword(p)                 ((typesflag(p) & T_KEYWORD) != 0)
+/* this bit distinguishes a symbol from a symbol that is also a keyword
+ * this should be ok in the 2nd byte because keywords are constants in s7 (never syntax)
  */
-#define dont_copy(p)                  ((!is_pair(p)) || (is_immutable(p)) || (heap_location(p) == NOT_IN_HEAP))
-/* dont_copy means the object is not copied when saved in a continuation */
 
 #define T_SYNTACTIC                   (1 << (TYPE_BITS + 1))
 #define is_syntactic(p)               ((typesflag(p) & T_SYNTACTIC) != 0)
@@ -1382,10 +1380,15 @@ static void init_types(void)
 #define is_step_safe(p)               ((typeflag(p) & T_STEP_SAFE) != 0)
 #define set_step_safe(p)              typeflag(p) |= T_STEP_SAFE
 
-#define T_KEYWORD                     (1 << (TYPE_BITS + 16))
-#define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
-/* this bit distinguishes a symbol from a symbol that is also a keyword
+#define T_IMMUTABLE                   (1 << (TYPE_BITS + 16))
+#define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
+#define set_immutable(p)              typeflag(p) |= T_IMMUTABLE
+/* immutable means the value can't be changed via set! or bind -- this is separate from the symbol access stuff
+ * this bit can't be in the 2nd byte -- with-let, for example, is immutable, but we use SYNTACTIC_TYPE to 
+ * recognize syntax in do loop optimizations.
  */
+#define dont_copy(p)                  ((!is_pair(p)) || (is_immutable(p)) || (heap_location(p) == NOT_IN_HEAP))
+/* dont_copy means the object is not copied when saved in a continuation */
 
 #define T_SETTER                      (1 << (TYPE_BITS + 17))
 #define set_setter(p)                 typeflag(p) |= T_SETTER
@@ -1406,20 +1409,20 @@ static void init_types(void)
 /* marks a string that the caller considers a bytevector
 */
 
-#define T_HAS_REF_FALLBACK            T_MUTABLE
+#define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
+#define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
+#define set_has_print_name(p)         typeflag(p) |= T_PRINT_NAME
+/* marks numbers that have a saved version of their string representation
+ */
+
 #define T_HAS_SET_FALLBACK            T_PRINT_NAME
+#define T_HAS_REF_FALLBACK            T_MUTABLE
 #define has_ref_fallback(p)           ((typeflag(p) & T_HAS_REF_FALLBACK) != 0)
 #define has_set_fallback(p)           ((typeflag(p) & T_HAS_SET_FALLBACK) != 0)
 #define set_has_ref_fallback(p)       typeflag(p) |= T_HAS_REF_FALLBACK
 #define set_has_set_fallback(p)       typeflag(p) |= T_HAS_SET_FALLBACK
 #define set_all_methods(p, e)         typeflag(p) |= (typeflag(e) & (T_HAS_METHODS | T_HAS_REF_FALLBACK | T_HAS_SET_FALLBACK))
 
-
-#define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
-#define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
-#define set_has_print_name(p)         typeflag(p) |= T_PRINT_NAME
-/* marks numbers that have a saved version of their string representation
- */
 
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define needs_copied_args(p)          ((typeflag(p) & T_COPY_ARGS) != 0)
@@ -12436,6 +12439,20 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
    */
 }
 
+static s7_pointer g_divide(s7_scheme *sc, s7_pointer args);
+static s7_pointer floor_div_sc;
+static s7_pointer g_floor_div_sc(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer ds, p;
+  p = cdar(args);
+  ds = find_symbol_checked(sc, car(p));
+  if (is_integer(ds))
+    return(make_integer(sc, integer(ds) / integer(cadr(p))));
+  if (is_real(ds))
+    return(make_integer(sc, (s7_Int)floor(real_to_double(sc, ds, "floor") / integer(cadr(p)))));
+  return(g_floor(sc, list_1(sc, g_divide(sc, list_2(sc, ds, cadr(p))))));
+}
+
 
 static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
 {
@@ -14567,11 +14584,11 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	case T_RATIO:
 	  {
 	    s7_Int d1, d2, n1, n2;
-	    d1 = den_a;
-	    n1 = num_a;
 	    d2 = denominator(x);
 	    n2 = numerator(x);
 #if (!WITH_GMP)
+	    d1 = den_a;
+	    n1 = num_a;
 #if HAVE_OVERFLOW_CHECKS
 	    if ((multiply_overflow(n1, n2, &num_a)) ||
 		(multiply_overflow(d1, d2, &den_a)))
@@ -30418,7 +30435,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 		  (is_all_x_safe(sc, car(body))))
 		{
 		  s7_function func;
-		  func = all_x_eval(sc, car(body), sc->NIL);
+		  func = all_x_eval(sc, car(body), closure_args(eq_func));
 
 		  if (((func == all_x_c_ss) || (func == all_x_c_uu)) &&
 		      (cadar(body) == car(closure_args(eq_func))) &&
@@ -42455,6 +42472,20 @@ static s7_pointer modulo_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
   return(f);
 }
 
+static s7_pointer floor_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args == 1) &&
+      (is_optimized(cadr(expr))) &&
+      (optimize_data(cadr(expr)) == HOP_SAFE_C_SC) &&
+      (c_call(cadr(expr)) == g_divide) &&
+      (is_integer(caddr(cadr(expr)))))
+    {
+      set_optimize_data(expr, HOP_SAFE_C_C);
+      return(floor_div_sc);
+    }
+  return(f);
+}
+
 static s7_pointer abs_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   s7_pointer arg;
@@ -43759,6 +43790,10 @@ static void init_choosers(s7_scheme *sc)
   f = set_function_chooser(sc, sc->MODULO, modulo_chooser);
   mod_si = make_function_with_class(sc, f, "modulo", g_mod_si, 2, 0, false, "modulo opt");
 
+  /* floor */
+  f = set_function_chooser(sc, sc->FLOOR, floor_chooser);
+  floor_div_sc = make_function_with_class(sc, f, "floor", g_floor_div_sc, 1, 0, false, "floor opt");
+
   /* logand */
   f = set_function_chooser(sc, sc->LOGAND, logand_chooser);
   logand_si = make_function_with_class(sc, f, "logand", g_logand_si, 2, 0, false, "logandulo opt");
@@ -44413,6 +44448,25 @@ static s7_pointer all_x_c_not_opsq(s7_scheme *sc, s7_pointer arg)
   return(sc->F);
 }
 
+static s7_pointer all_x_c_opuq(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = cadr(arg);
+  car(sc->T1_1) = find_symbol_unchecked(sc, cadr(largs));
+  car(sc->T1_1) = c_call(largs)(sc, sc->T1_1);
+  return(c_call(arg)(sc, sc->T1_1));
+}
+
+static s7_pointer all_x_c_not_opuq(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = cadr(arg);
+  car(sc->T1_1) = find_symbol_unchecked(sc, cadr(largs));
+  if (c_call(largs)(sc, sc->T1_1) == sc->F)
+    return(sc->T);
+  return(sc->F);
+}
+
 static s7_pointer all_x_c_opssq(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer largs;
@@ -44652,6 +44706,7 @@ static bool symbol_is_safe(s7_scheme *sc, s7_pointer sym, s7_pointer e)
 {
   return((is_slot(global_slot(sym))) ||
 	 ((is_let(e)) &&
+	  (!is_with_let_let(e)) &&
 	  (is_slot(find_local_symbol(sc, sym, e)))) ||
 	 ((is_pair(e)) &&
 	  (direct_memq(sym, e))));
@@ -44681,10 +44736,24 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg, s7_pointer e)
 		return(all_x_c_uu);
 	      return(all_x_c_ss);
 	    }
+#if 0
+	  if (optimize_data(arg) == HOP_SAFE_C_SSA)
+	    fprintf(stderr, "%s\n%s %d %d\n", DISPLAY_80(arg), DISPLAY_80(e),
+		    (symbol_is_safe(sc, cadr(arg), e)), (symbol_is_safe(sc, caddr(arg), e)));
+#endif
+
 	  f = all_x_function[optimize_data(arg)];
-	  if ((f == all_x_c_opsq) &&
-	      (car(arg) == sc->NOT))
-	    return(all_x_c_not_opsq);
+	  if (f == all_x_c_opsq)
+	    {
+	      if (symbol_is_safe(sc, cadr(cadr(arg)), e))
+		{
+		  if (car(arg) == sc->NOT)
+		    return(all_x_c_not_opuq);
+		  return(all_x_c_opuq);
+		}
+	      if (car(arg) == sc->NOT)
+		return(all_x_c_not_opsq);
+	    }
 	  return(f);
 	}
       if (car(arg) == sc->QUOTE)
@@ -47850,7 +47919,7 @@ static s7_pointer check_let(s7_scheme *sc)
 	{
 	  s7_pointer p;
 	  for (p = start; is_pair(p); p = cdr(p))
-	    set_fcdr(cdar(p), (s7_pointer)all_x_eval(sc, cadar(p), sc->NIL));
+	    set_fcdr(cdar(p), (s7_pointer)all_x_eval(sc, cadar(p), sc->envir));
 	}
     }
   return(sc->code);
@@ -47981,7 +48050,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	{
 	  s7_pointer p;
 	  for (p = car(sc->code); is_pair(p); p = cdr(p))
-	    set_fcdr(cdar(p), (s7_pointer)all_x_eval(sc, cadar(p), sc->NIL));
+	    set_fcdr(cdar(p), (s7_pointer)all_x_eval(sc, cadar(p), sc->envir));
 	}
     }
   return(sc->code);
@@ -48083,7 +48152,7 @@ static s7_pointer check_and(s7_scheme *sc)
       if (all_pairs)
 	{
 	  for (p = sc->code; is_pair(p); p = cdr(p))
-	    set_fcdr(p, (s7_pointer)all_x_eval(sc, car(p), (is_with_let_let(sc->envir)) ? sc->NIL : sc->envir));  /* fcdr can be nil! */
+	    set_fcdr(p, (s7_pointer)all_x_eval(sc, car(p), sc->envir));  /* fcdr can be nil! */
 	  pair_set_syntax_symbol(sc->code, sc->AND_P);
 	}
       else pair_set_syntax_symbol(sc->code, sc->AND_UNCHECKED);
@@ -48117,7 +48186,7 @@ static s7_pointer check_or(s7_scheme *sc)
 	{
 	  s7_pointer p;
 	  for (p = sc->code; is_pair(p); p = cdr(p))
-	    set_fcdr(p, (s7_pointer)all_x_eval(sc, car(p), (is_with_let_let(sc->envir)) ? sc->NIL : sc->envir));
+	    set_fcdr(p, (s7_pointer)all_x_eval(sc, car(p), sc->envir));
 	  pair_set_syntax_symbol(sc->code, sc->OR_P);
 	}
       else pair_set_syntax_symbol(sc->code, sc->OR_UNCHECKED);
@@ -48227,7 +48296,7 @@ static s7_pointer check_if(s7_scheme *sc)
 				      if (is_all_x_safe(sc, test))
 					{
 					  pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_A_P : sc->IF_A_P_P);
-					  set_fcdr(sc->code, (s7_pointer)all_x_eval(sc, test, sc->NIL));
+					  set_fcdr(sc->code, (s7_pointer)all_x_eval(sc, test, sc->envir));
 					}
 				      else
 					{
@@ -48612,7 +48681,7 @@ static s7_pointer check_cond(s7_scheme *sc)
 		  int i;
 		  pair_set_syntax_symbol(sc->code, sc->COND_ALL_X);
 		  for (i = 0, p = sc->code; is_pair(p); i++, p = cdr(p))
-		    set_fcdr(car(p), (s7_pointer)cond_all_x_eval(sc, caar(p), sc->NIL)); /* handle 'else' specially here */
+		    set_fcdr(car(p), (s7_pointer)cond_all_x_eval(sc, caar(p), sc->envir)); /* handle 'else' specially here */
 		  if (i == 2)
 		    pair_set_syntax_symbol(sc->code, sc->COND_ALL_X_2);
 		}
@@ -48738,7 +48807,7 @@ static s7_pointer check_set(s7_scheme *sc)
 			      else
 				{
 				  pair_set_syntax_symbol(sc->code, sc->SET_LET_ALL_X);
-				  set_fcdr(cdr(sc->code), (s7_pointer)all_x_eval(sc, value, sc->NIL));
+				  set_fcdr(cdr(sc->code), (s7_pointer)all_x_eval(sc, value, sc->envir));
 				}
 			    }
 			  else
@@ -51612,17 +51681,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				  }
 			      }
 			  }
-
-			if (is_optimized(sc->code))
+			/* (let () (define (f1) (do ((i 0 (+ i 1))) ((= i 3)) (format #f "i: ~A " i))) (f1)) */
+			if (is_optimized(sc->code)) /* think this is not needed -- can we get here otherwise? */
 			  {
 			    set_unsafe_do(sc->code);
 			    push_stack(sc, OP_SAFE_DOTIMES_STEP_O, sc->args, code);
 			    goto OPT_EVAL;
 			  }
 		      }
+		    /* impossible? but make sure in any case we're set up for begin */
+		    sc->code = cddr(code);			
 		  }
 
-		/* here we know the body is not a one-liner, or something ridiculous */
 		set_fcdr(code, sc->code);
 		push_stack(sc, OP_SAFE_DOTIMES_STEP, sc->args, code);
 		goto BEGIN1;
@@ -68399,20 +68469,21 @@ int main(int argc, char **argv)
 
 /* ------------------------------------------------------------------
  *
- *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5 15.6
+ *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129
  * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150
  * teq            |      |      | 6612                     3887 3020
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328
  * tcopy          |      |      |                          4970 4287
- * tmap           |      |      | 11.0           5031 4769 4685 4685
- * tform          |      |      |                          6816 5481
- * titer          |      |      |                          7976 6528
+ * tmap           |      |      | 11.0           5031 4769 4685 4557
+ * tform          |      |      |                          6816 5536
+ * titer          |      |      |                          7976 6368
  * lg             |      |      | 6547 6497 6494 6235 6229 6239 6611
  * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
  * thash          |      |      |                          19.4 17.4
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8
+ * tcirc          |      |      |                          27.1 25.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1
  *
  * ------------------------------------------------------------------
@@ -68439,9 +68510,9 @@ int main(int argc, char **argv)
  * in all_x_eval choices, if c_s/opsq/ss etc -- if the s is in the traversal env (func arg etc)
  *   and we're not in with-let, the ubvar can be omitted, esp if no internal lets. (Also sym not __func__ etc)
  *   these no-ubvar versions could also be used in do loops etc: assoc/member
- *   in do, if slot, use that in all_x* or make a new case [in any case, do doesn't need the check!]
+ *   in do, if slot, use that in all_x* or make a new case [in any case, do doesn't need the check! or only on the first iteration]
  *   dox1/2 could be lists of slots: an env -- only the list needs gc protection
- *   test with_let_let!
- * time t222
+ *   form: c_s_opsq, hash: c_ssa, iter: c_ssc, index: csa s cs
+ * fatty5 segfault tauto, also pure-s7
  */
  

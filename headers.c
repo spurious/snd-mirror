@@ -2609,7 +2609,11 @@ static void soundfont_entry(const char *name, int start, int end, int loop_start
 	}
       else
 	{
-	  soundfont_size += 8;
+	  if (soundfont_size < 123123123)
+	    soundfont_size += 8;
+	  /* believe it or not, without the 123123123 shuffle, gcc complains at mus_header_read_1 [line 5519!]
+	   * that we are making a naughty assumption about overflows.
+	   */
 	  soundfont_starts = (int *)realloc(soundfont_starts, soundfont_size * sizeof(int));
 	  soundfont_ends = (int *)realloc(soundfont_ends, soundfont_size * sizeof(int));
 	  soundfont_loop_starts = (int *)realloc(soundfont_loop_starts, soundfont_size * sizeof(int));
@@ -2646,6 +2650,7 @@ static int read_soundfont_header(const char *filename, int fd)
   int chunkloc, type, cksize, i, this_end, last_end;
   mus_long_t ckoff, offset;
   bool happy = true;
+
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)(hdrbuf + 8));
   chunkloc = 12;
   offset = 0;
@@ -2655,6 +2660,7 @@ static int read_soundfont_header(const char *filename, int fd)
   chans = 1; 
   last_end = 0;
   true_file_length = SEEK_FILE_LENGTH(fd);
+
   while (happy)
     {
       int chunksize;

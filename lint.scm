@@ -3609,7 +3609,10 @@
 		    
 		    ;; ---------------- let ----------------		  
 		    ((let)
-		     (if (< (length form) 3)
+		     (if (or (< (length form) 3)
+			     (and (not (symbol? (cadr form)))
+				  (not (null? (cadr form)))
+				  (not (pair? (cadr form)))))
 			 (lint-format "let is messed up: ~A" name (truncated-list->string form))
 			 (let ((named-let (and (symbol? (cadr form)) (cadr form))))
 

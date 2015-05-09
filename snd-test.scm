@@ -41407,30 +41407,19 @@ EDITS: 1
        (let ((gen (maker)))
 	 (if (not (isit gen))
 	     (format *stderr* ";~A is not a ~A?" gen name))
-	 
 	 (run gen)
-	 (apply run (list gen))
-	 (for-each 
-	  (lambda (g)
-	    (catch #t
-	      (lambda ()
-		(run g))
-	      (lambda (type info)
-					;(format *stderr* "~A: ~A ~A~%" name type (apply format #f info))
-		'error)))
-	  gens)
-	 ))
+	 (apply run (list gen))))
      
      (list 'nssb 'nxysin 'nxycos 'nxy1cos 'nxy1sin 'noddsin 'noddcos 'noddssb 'ncos2 'npcos
-	   nrsin 'nrcos 'nrssb 'nkssb 'nsincos 'rcos 'rssb 'rxysin 'rxycos
-	   rxyk!sin 'rxyk!cos 'ercos 'erssb 'eoddcos 'rkcos 'rksin 'rkssb
-	   rk!cos 'rk!ssb 'r2k!cos 'k2sin 'k2cos 'k2ssb 'dblsum 'rkoddssb 'krksin
-	   abcos 'absin 'r2k2cos 'bess 'jjcos 'j0evencos 'j2cos 'jpcos 'jncos
-	   j0j1cos 'jycos 'blackman 'fmssb 'k3sin 'izcos 'nchoosekcos 'n1cos
-	   adjustable-square-wave 'adjustable-triangle-wave 'adjustable-sawtooth-wave 'adjustable-oscil
-	   round-interp 'sinc-train 'pink-noise 'green-noise 'brown-noise 'green-noise-interp
-	   moving-max 'moving-norm 'moving-sum 'moving-rms 'moving-length 'weighted-moving-average 'exponentially-weighted-moving-average
-	   tanhsin 'moving-fft 'moving-scentroid 'moving-autocorrelation 'moving-pitch
+	   'nrsin 'nrcos 'nrssb 'nkssb 'nsincos 'rcos 'rssb 'rxysin 'rxycos
+	   'rxyk!sin 'rxyk!cos 'ercos 'erssb 'eoddcos 'rkcos 'rksin 'rkssb
+	   'rk!cos 'rk!ssb 'r2k!cos 'k2sin 'k2cos 'k2ssb 'dblsum 'rkoddssb 'krksin
+	   'abcos 'absin 'r2k2cos 'bess 'jjcos 'j0evencos 'j2cos 'jpcos 'jncos
+	   'j0j1cos 'jycos 'blackman 'fmssb 'k3sin 'izcos 'nchoosekcos 'n1cos
+	   'adjustable-square-wave 'adjustable-triangle-wave 'adjustable-sawtooth-wave 'adjustable-oscil
+	   'round-interp 'sinc-train 'pink-noise 'green-noise 'brown-noise 'green-noise-interp
+	   'moving-max 'moving-norm 'moving-sum 'moving-rms 'moving-length 'weighted-moving-average 'exponentially-weighted-moving-average
+	   'tanhsin 'moving-fft 'moving-scentroid 'moving-autocorrelation 'moving-pitch
 	   )
      gen-list
      
