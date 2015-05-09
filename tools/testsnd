@@ -29,7 +29,7 @@ gcc s7.c -o repl -DWITH_MAIN -DUSE_SND=0 -I. -O2 -g -Wl,-export-dynamic -ldl -lm
 
 echo ' '
 echo ' '
-echo ' -------------------------------- that was s7 t456 -------------------------------- '
+echo ' -------------------------------- that was s7 tauto -------------------------------- '
 echo ' '
 echo ' '
 
@@ -128,7 +128,7 @@ echo ' '
 echo ' '
 
 # gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -Wl,-export-dynamic -ldl -lm -lgmp -lmpfr -lmpc
-# ./repl tools/t456.scm
+# ./repl tools/tauto.scm
 
 echo ' -------------------------------- motif -------------------------------- '
 make allclean
@@ -226,8 +226,8 @@ echo ' '
 
 
 cp snd-test.scm orig-snd-test.scm
-./snd tools/sed.scm -e '(sed "snd-test.scm" "tmp" "(define tests 1)" "(define tests 7)")'
-# sed snd-test.scm -e 's/(define tests 1)/(define tests 7)/g' > tmp
+./snd tools/sed.scm -e '(sed "snd-test.scm" "tmp" "(define tests 1)" "(define tests 5)")'
+# sed snd-test.scm -e 's/(define tests 1)/(define tests 5)/g' > tmp
 # sed differs so much between systems that it is useless
 mv tmp snd-test.scm
 
@@ -256,8 +256,8 @@ echo ' '
 
 
 cp orig-snd-test.scm snd-test.scm
-./snd tools/sed.scm -e '(sed "snd-test.scm" "tmp" "(define test-at-random 0)" "(define test-at-random 300)")'
-# sed snd-test.scm -e 's/(define test-at-random 0)/(define test-at-random 300)/g' > tmp
+./snd tools/sed.scm -e '(sed "snd-test.scm" "tmp" "(define test-at-random 0)" "(define test-at-random 100)")'
+# sed snd-test.scm -e 's/(define test-at-random 0)/(define test-at-random 100)/g' > tmp
 mv tmp snd-test.scm
 
 echo ' '

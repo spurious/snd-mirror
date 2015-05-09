@@ -9465,17 +9465,16 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
       return(inexact_to_exact(sc, x, with_error));
 #endif /* !WITH_PURE_S7 */
 
+
       /* -------- #_... -------- */
     case '_':
-      /* now implement the #_<name> -> built-in value of <name> stuff
-       */
       {
-	s7_pointer built_in_value;
-	built_in_value = initial_slot(make_symbol(sc, (char *)(name + 1)));
-	if (built_in_value != sc->UNDEFINED)
-	  return(slot_value(built_in_value));
+	s7_pointer sym;
+	sym = make_symbol(sc, (char *)(name + 1));
+	if (is_slot(initial_slot(sym)))
+	  return(slot_value(initial_slot(sym)));
+	return(sc->UNDEFINED);
       }
-      break;
 
 
       /* -------- #\... -------- */
@@ -14583,7 +14582,10 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 
 	case T_RATIO:
 	  {
-	    s7_Int d1, d2, n1, n2;
+#if (!WITH_GMP)
+	    s7_Int d1, n1;
+#endif
+	    s7_Int d2, n2;
 	    d2 = denominator(x);
 	    n2 = numerator(x);
 #if (!WITH_GMP)
@@ -35554,7 +35556,9 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_ITERATOR:
-      return(closure_setter(iterator_sequence(p)));
+      if (is_any_closure(iterator_sequence(p)))
+	return(closure_setter(iterator_sequence(p)));
+      return(sc->F);
     }
   return(s7_wrong_type_arg_error(sc, "procedure-setter", 0, p, "a procedure or a reasonable facsimile thereof"));
 }
@@ -63403,6 +63407,8 @@ static s7_pointer g_is_bignum(s7_scheme *sc, s7_pointer args)
 static int result_type_via_method(s7_scheme *sc, int result_type, s7_pointer p)
 {
   s7_pointer f;
+  if (!has_methods(p)) return(-1);
+
   f = find_method(sc, find_let(sc, p), sc->IS_INTEGER);
   if ((f != sc->UNDEFINED) &&
       (is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL)))))
@@ -68513,6 +68519,5 @@ int main(int argc, char **argv)
  *   in do, if slot, use that in all_x* or make a new case [in any case, do doesn't need the check! or only on the first iteration]
  *   dox1/2 could be lists of slots: an env -- only the list needs gc protection
  *   form: c_s_opsq, hash: c_ssa, iter: c_ssc, index: csa s cs
- * fatty5 segfault tauto, also pure-s7
  */
  
