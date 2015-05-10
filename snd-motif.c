@@ -23660,7 +23660,7 @@ static int find_prompt(Widget w, XmTextPosition start)
    */
   while (!found_prompt)
     {
-      found_newline = XmTextFindString(w, start, "\n", XmTEXT_BACKWARD, &loc);
+      found_newline = XmTextFindString(w, start, (char *)"\n", XmTEXT_BACKWARD, &loc);
       start = found_newline ? loc : 0;
       found_prompt = XmTextFindString(w, start, listener_prompt(ss), XmTEXT_FORWARD, &loc);
       if ((found_prompt && loc <= (start + 1)) || (start == 0))

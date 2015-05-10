@@ -5447,18 +5447,18 @@ mus_sample_t mus_audio_compatible_format(int dev) /* snd-dac and sndplay */
       err = alsa_sample_types(dev, 32, ival);
       if (err != MUS_ERROR)
 	{
-	  unsigned int i;
-	  for (i = 1; i <= ival[0]; i++)
+	  int i;
+	  for (i = 1; i <= (int)(ival[0]); i++)
 	    if (ival[i] == MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE) 
 	      return(MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE);
 
-	  for (i = 1; i <= ival[0]; i++) 
+	  for (i = 1; i <= (int)(ival[0]); i++) 
 	    if ((ival[i] == MUS_BINT) || (ival[i] == MUS_LINT) ||
 	        (ival[i] == MUS_BFLOAT) || (ival[i] == MUS_LFLOAT) ||
 		(ival[i] == MUS_BSHORT) || (ival[i] == MUS_LSHORT))
 	      return(ival[i]);
 
-	  for (i = 1; i <= ival[0]; i++) 
+	  for (i = 1; i <= (int)(ival[0]); i++) 
 	    if ((ival[i] == MUS_MULAW) || (ival[i] == MUS_ALAW) ||
 	        (ival[i] == MUS_UBYTE) || (ival[i] == MUS_BYTE))
 	      return(ival[i]);
