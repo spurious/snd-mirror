@@ -685,7 +685,7 @@ typedef struct {
 typedef struct {
   int loc, curly_len, ctr;
   char *curly_str;
-  s7_pointer args;
+  s7_pointer args, orig_str;
   s7_pointer port, strport;
 } format_data;
 
@@ -18263,23 +18263,15 @@ static s7_pointer g_is_exact(s7_scheme *sc, s7_pointer args)
   switch (type(x))
     {
     case T_INTEGER:
-    case T_RATIO:
-      return(sc->T);
-
+    case T_RATIO:       return(sc->T);
     case T_REAL:
-    case T_COMPLEX:
-      return(sc->F);
-
+    case T_COMPLEX:     return(sc->F);
 #if WITH_GMP
     case T_BIG_INTEGER:
-    case T_BIG_RATIO:
-      return(sc->T);
-
+    case T_BIG_RATIO:   return(sc->T);
     case T_BIG_REAL:
-    case T_BIG_COMPLEX:
-      return(sc->F);
+    case T_BIG_COMPLEX: return(sc->F);
 #endif
-
     default:
       check_method(sc, x, sc->IS_EXACT, args);
       return(simple_wrong_type_argument_with_type(sc, sc->IS_EXACT, x, A_NUMBER));
@@ -18296,23 +18288,15 @@ static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
   switch (type(x))
     {
     case T_INTEGER:
-    case T_RATIO:
-      return(sc->F);
-
+    case T_RATIO:       return(sc->F);
     case T_REAL:
-    case T_COMPLEX:
-      return(sc->T);
-
+    case T_COMPLEX:     return(sc->T);
 #if WITH_GMP
     case T_BIG_INTEGER:
-    case T_BIG_RATIO:
-      return(sc->F);
-
+    case T_BIG_RATIO:   return(sc->F);
     case T_BIG_REAL:
-    case T_BIG_COMPLEX:
-      return(sc->T);
+    case T_BIG_COMPLEX: return(sc->T);
 #endif
-
     default:
       check_method(sc, x, sc->IS_INEXACT, args);
       return(simple_wrong_type_argument_with_type(sc, sc->IS_INEXACT, x, A_NUMBER));
@@ -26970,7 +26954,10 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj);
 
 static s7_pointer format_error(s7_scheme *sc, const char *msg, const char *str, s7_pointer args, format_data *fdat)
 {
-  s7_pointer x = NULL;
+  s7_pointer x = NULL, ctrl_str;
+  if (fdat->orig_str)
+    ctrl_str = fdat->orig_str;
+  else ctrl_str = make_string_wrapper(sc, str);
 
   /* the control string can't easily be handled here (as opposed to passing it as an argument below)
    *   because it becomes simply incorporated in the error's control string, so we'd have to scan
@@ -26979,14 +26966,14 @@ static s7_pointer format_error(s7_scheme *sc, const char *msg, const char *str, 
   if (fdat->loc == 0)
     {
       if (is_pair(args))
-	x = list_4(sc, FORMAT_1, make_string_wrapper(sc, str), args, make_string_wrapper(sc, msg));
-      else x = list_3(sc, FORMAT_2, make_string_wrapper(sc, str), make_string_wrapper(sc, msg));
+	x = list_4(sc, FORMAT_1, ctrl_str, args, make_string_wrapper(sc, msg));
+      else x = list_3(sc, FORMAT_2, ctrl_str, make_string_wrapper(sc, msg));
     }
   else
     {
       if (is_pair(args))
-	x = cons(sc, FORMAT_3, list_4(sc, make_string_wrapper(sc, str), args, make_integer(sc, fdat->loc + 12), make_string_wrapper(sc, msg)));
-      else x = list_4(sc, FORMAT_4, make_string_wrapper(sc, str), make_integer(sc, fdat->loc + 12), make_string_wrapper(sc, msg));
+	x = cons(sc, FORMAT_3, list_4(sc, ctrl_str, args, make_integer(sc, fdat->loc + 12), make_string_wrapper(sc, msg)));
+      else x = list_4(sc, FORMAT_4, ctrl_str, make_integer(sc, fdat->loc + 12), make_string_wrapper(sc, msg));
     }
   if (fdat->port)
     {
@@ -27174,7 +27161,7 @@ static bool s7_is_one_or_big_one(s7_pointer p);
 
 
 static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *str, s7_pointer args,
-				   s7_pointer *next_arg, bool with_result, bool columnized, int len)
+				   s7_pointer *next_arg, bool with_result, bool columnized, int len, s7_pointer orig_str)
 {
   int i = 0, str_len = 0;
   format_data *fdat = NULL;
@@ -27233,6 +27220,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
   fdat->strport = NULL;
   fdat->loc = 0;
   fdat->args = args;
+  fdat->orig_str = orig_str;
 
   /* choose whether to write to a temporary string port, or simply use the in-coming port
    *   if with_result, returned string is wanted.
@@ -27526,7 +27514,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 			  {
 			    s7_pointer new_arg = sc->NIL;
 
-			    format_to_port_1(sc, port, curly_str, curly_arg, &new_arg, false, columnized, curly_len - 1);
+			    format_to_port_1(sc, port, curly_str, curly_arg, &new_arg, false, columnized, curly_len - 1, NULL);
 			    if (curly_arg == new_arg)
 			      {
 				s7_gc_unprotect_at(sc, curly_gc);
@@ -27896,7 +27884,7 @@ static bool is_columnizing(const char *str)
 
 static s7_pointer format_to_port(s7_scheme *sc, s7_pointer port, const char *str, s7_pointer args, s7_pointer *next_arg, bool with_result, int len)
 {
-  return(format_to_port_1(sc, port, str, args, next_arg, with_result, true /* is_columnizing(str) */, len));
+  return(format_to_port_1(sc, port, str, args, next_arg, with_result, true /* is_columnizing(str) */, len, NULL));
   /* is_columnizing on every call is much slower than ignoring the issue */
 }
 
@@ -27908,7 +27896,7 @@ static s7_pointer g_format_1(s7_scheme *sc, s7_pointer args)
   pt = car(args);
 
   if (is_string(pt))
-    return(format_to_port(sc, sc->F, string_value(pt), cdr(args), NULL, !is_output_port(pt), string_length(pt)));
+    return(format_to_port_1(sc, sc->F, string_value(pt), cdr(args), NULL, true, true, string_length(pt), pt));
 
   if (!((s7_is_boolean(pt)) ||               /* #f or #t */
 	((is_output_port(pt)) &&             /* (current-output-port) or call-with-open-file arg, etc */
@@ -27924,11 +27912,8 @@ static s7_pointer g_format_1(s7_scheme *sc, s7_pointer args)
       check_method(sc, str, sc->FORMAT, args);
       return(wrong_type_argument(sc, sc->FORMAT, small_int(2), str, T_STRING));
     }
-  return(format_to_port(sc,
-			(pt == sc->T) ? sc->output_port : pt,
-			string_value(str),
-			cddr(args), NULL, !is_output_port(pt),
-			string_length(str)));
+  return(format_to_port_1(sc, (pt == sc->T) ? sc->output_port : pt, 
+			  string_value(str), cddr(args), NULL, !is_output_port(pt), true, string_length(str), str));
 }
 
 
@@ -36020,32 +36005,15 @@ static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
 
   if ((e == sc->rootlet) ||
       (e == sc->NIL))
-    {
-      if (is_free(s7_symbol_access(sc, sym)))
-	{
-#if DEBUGGING
-	  fprintf(stderr, "%s (global) accessor is freed\n", symbol_name(sym));
-#endif
-	  return(sc->F);
-	}
-      return(s7_symbol_access(sc, sym));
-    }
+    return(s7_symbol_access(sc, sym));
 
   if (is_null(cdr(args)))
     p = find_symbol(sc, sym);
   else p = find_local_symbol(sc, sym, e);
+
   if ((is_slot(p)) &&
       (slot_has_accessor(p)))
-    {
-      if (is_free(slot_accessor(p)))
-	{
-#if DEBUGGING
-	  fprintf(stderr, "%s (slot) accessor is freed\n", symbol_name(sym));
-#endif
-	  return(sc->F);
-	}
-      return(slot_accessor(p));
-    }
+    return(slot_accessor(p));
   return(sc->F);
 }
 
@@ -42002,7 +41970,7 @@ static s7_pointer g_format_just_newline(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_format_allg_no_column(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer pt;
+  s7_pointer pt, str;
   pt = car(args);
 
   if (!((s7_is_boolean(pt)) ||
@@ -42012,12 +41980,14 @@ static s7_pointer g_format_allg_no_column(s7_scheme *sc, s7_pointer args)
       check_method(sc, pt, sc->FORMAT, args);
       return(wrong_type_argument_with_type(sc, sc->FORMAT, small_int(1), pt, A_FORMAT_PORT));
     }
+  str = cadr(args);
   sc->format_column = 0;
   return(format_to_port_1(sc, (pt == sc->T) ? sc->output_port : pt,
-			  string_value(cadr(args)), cddr(args), NULL,
+			  string_value(str), cddr(args), NULL,
 			  !is_output_port(pt),   /* i.e. is boolean port so we're returning a string */
 			  false,                 /* we checked in advance that it is not columnized */
-			  string_length(cadr(args))));
+			  string_length(str),
+			  str));
 }
 
 
@@ -44564,6 +44534,16 @@ static s7_pointer all_x_c_s_opsq(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->T2_1));
 }
 
+static s7_pointer all_x_c_u_opuq(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = caddr(arg);
+  car(sc->T1_1) = find_symbol_unchecked(sc, cadr(largs));
+  car(sc->T2_2) = c_call(largs)(sc, sc->T1_1);
+  car(sc->T2_1) = find_symbol_unchecked(sc, cadr(arg));
+  return(c_call(arg)(sc, sc->T2_1));
+}
+
 static s7_pointer all_x_c_c_opsq(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer largs;
@@ -44758,6 +44738,12 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg, s7_pointer e)
 	      if (car(arg) == sc->NOT)
 		return(all_x_c_not_opsq);
 	    }
+
+	  if ((f == all_x_c_s_opsq) &&
+	      (symbol_is_safe(sc, cadr(arg), e)) &&
+	      (symbol_is_safe(sc, cadr(caddr(arg)), e)))
+	    return(all_x_c_u_opuq);
+
 	  return(f);
 	}
       if (car(arg) == sc->QUOTE)
@@ -68482,14 +68468,13 @@ int main(int argc, char **argv)
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328
  * tcopy          |      |      |                          4970 4287
  * tmap           |      |      | 11.0           5031 4769 4685 4557
- * tform          |      |      |                          6816 5536
+ * tform          |      |      |                          6816 5536 5273
  * titer          |      |      |                          7976 6368
  * lg             |      |      | 6547 6497 6494 6235 6229 6239 6611
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6688
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
  * thash          |      |      |                          19.4 17.4
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8
- * tcirc          |      |      |                          27.1 25.8
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1
  *
  * ------------------------------------------------------------------
@@ -68513,11 +68498,5 @@ int main(int argc, char **argv)
  *   also floor etc
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
  *   with name/sync/sample settable
- * in all_x_eval choices, if c_s/opsq/ss etc -- if the s is in the traversal env (func arg etc)
- *   and we're not in with-let, the ubvar can be omitted, esp if no internal lets. (Also sym not __func__ etc)
- *   these no-ubvar versions could also be used in do loops etc: assoc/member
- *   in do, if slot, use that in all_x* or make a new case [in any case, do doesn't need the check! or only on the first iteration]
- *   dox1/2 could be lists of slots: an env -- only the list needs gc protection
- *   form: c_s_opsq, hash: c_ssa, iter: c_ssc, index: csa s cs
  */
  
