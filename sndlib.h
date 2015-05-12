@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 24
-#define SNDLIB_REVISION 2
-#define SNDLIB_DATE "20-Feb-15"
+#define SNDLIB_REVISION 3
+#define SNDLIB_DATE "12-May-15"
 
 #include <stdio.h>
 #include <time.h>
@@ -66,27 +66,27 @@ typedef enum {MUS_UNKNOWN_SAMPLE, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, M
 	      MUS_BINTN, MUS_LINTN, MUS_BFLOAT_UNSCALED, MUS_LFLOAT_UNSCALED, MUS_BDOUBLE_UNSCALED, MUS_LDOUBLE_UNSCALED,
 	      MUS_NUM_SAMPLES} mus_sample_t;
 
-#ifndef MUS_AUDIO_COMPATIBLE_FORMAT
+#ifndef MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE
   #if WORDS_BIGENDIAN
     #if __APPLE__
-      #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_BFLOAT
+      #define MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE MUS_BFLOAT
     #else
-      #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_BSHORT
+      #define MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE MUS_BSHORT
     #endif
   #else
     #if __APPLE__
-      #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_LFLOAT
+      #define MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE MUS_LFLOAT
     #else
-      #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_LSHORT
+      #define MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE MUS_LSHORT
     #endif
   #endif
 #endif
 
-#ifndef MUS_OUT_FORMAT
+#ifndef MUS_OUT_SAMPLE_TYPE
   #if WORDS_BIGENDIAN
-    #define MUS_OUT_FORMAT MUS_BDOUBLE
+    #define MUS_OUT_SAMPLE_TYPE MUS_BDOUBLE
   #else
-    #define MUS_OUT_FORMAT MUS_LDOUBLE
+    #define MUS_OUT_SAMPLE_TYPE MUS_LDOUBLE
   #endif
 #endif
 
@@ -116,7 +116,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
       MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, MUS_NOT_A_SOUND_FILE, MUS_FILE_CLOSED, MUS_WRITE_ERROR,
       MUS_HEADER_WRITE_FAILED, MUS_CANT_OPEN_TEMP_FILE, MUS_INTERRUPTED, MUS_BAD_ENVELOPE,
 
-      MUS_AUDIO_CHANNELS_NOT_AVAILABLE, MUS_AUDIO_SRATE_NOT_AVAILABLE, MUS_AUDIO_FORMAT_NOT_AVAILABLE,
+      MUS_AUDIO_CHANNELS_NOT_AVAILABLE, MUS_AUDIO_SRATE_NOT_AVAILABLE, MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE,
       MUS_AUDIO_NO_INPUT_AVAILABLE, MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
       MUS_AUDIO_WRITE_ERROR, MUS_AUDIO_SIZE_NOT_AVAILABLE, MUS_AUDIO_DEVICE_NOT_AVAILABLE,
       MUS_AUDIO_CANT_CLOSE, MUS_AUDIO_CANT_OPEN, MUS_AUDIO_READ_ERROR, 
@@ -132,14 +132,6 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
       MUS_NUM_ERRORS};
 
 /* keep this list in sync with mus_error_names in sound.c and snd-test.scm|rb */
-
-#if (!DISABLE_DEPRECATED)
-  #define MUS_UNSUPPORTED 0
-  #define MUS_UNKNOWN 0
-  #define MUS_INITIAL_ERROR_TAG MUS_NUM_ERRORS
-  #define MUS_NUM_HEADER_TYPES MUS_NUM_HEADERS
-  #define MUS_NUM_SAMPLE_TYPES MUS_NUM_SAMPLES
-#endif
 
 #define MUS_LOOP_INFO_SIZE 8
 
@@ -178,7 +170,7 @@ MUS_EXPORT int mus_sound_chans(const char *arg);
 MUS_EXPORT int mus_sound_srate(const char *arg);
 MUS_EXPORT mus_header_t mus_sound_header_type(const char *arg);
 MUS_EXPORT mus_sample_t mus_sound_sample_type(const char *arg);
-MUS_EXPORT int mus_sound_original_format(const char *arg);
+MUS_EXPORT int mus_sound_original_sample_type(const char *arg);
 MUS_EXPORT mus_long_t mus_sound_comment_start(const char *arg);
 MUS_EXPORT mus_long_t mus_sound_comment_end(const char *arg);
 MUS_EXPORT mus_long_t mus_sound_length(const char *arg);
@@ -251,7 +243,7 @@ MUS_EXPORT int mus_audio_initialize(void);
 MUS_EXPORT int mus_audio_reinitialize(void); /* 29-Aug-01 for CLM/Snd bugfix? */
 MUS_EXPORT char *mus_audio_moniker(void);
 MUS_EXPORT int mus_audio_api(void);
-MUS_EXPORT mus_sample_t mus_audio_compatible_format(int dev);
+MUS_EXPORT mus_sample_t mus_audio_compatible_sample_type(int dev);
 
 #if HAVE_OSS || HAVE_ALSA
 MUS_EXPORT void mus_oss_set_buffers(int num, int size);
@@ -274,7 +266,7 @@ MUS_EXPORT bool mus_alsa_set_squelch_warning(bool val);
 #endif
 
 MUS_EXPORT int mus_audio_device_channels(int dev);
-MUS_EXPORT mus_sample_t mus_audio_device_format(int dev);
+MUS_EXPORT mus_sample_t mus_audio_device_sample_type(int dev);
 
 
 
@@ -343,7 +335,7 @@ MUS_EXPORT mus_long_t mus_header_data_location(void);
 MUS_EXPORT int mus_header_chans(void);
 MUS_EXPORT int mus_header_srate(void);
 MUS_EXPORT mus_header_t mus_header_type(void);
-MUS_EXPORT mus_sample_t mus_header_format(void);
+MUS_EXPORT mus_sample_t mus_header_sample_type(void);
 MUS_EXPORT mus_long_t mus_header_comment_start(void);
 MUS_EXPORT mus_long_t mus_header_comment_end(void);
 MUS_EXPORT int mus_header_type_specifier(void);
@@ -360,7 +352,7 @@ MUS_EXPORT int mus_header_base_detune(void);
 MUS_EXPORT void mus_header_set_raw_defaults(int sr, int chn, mus_sample_t frm);
 MUS_EXPORT void mus_header_raw_defaults(int *sr, int *chn, mus_sample_t *frm);
 MUS_EXPORT mus_long_t mus_header_true_length(void);
-MUS_EXPORT int mus_header_original_format(void);
+MUS_EXPORT int mus_header_original_sample_type(void);
 MUS_EXPORT mus_long_t mus_samples_to_bytes(mus_sample_t samp_type, mus_long_t size);
 MUS_EXPORT mus_long_t mus_bytes_to_samples(mus_sample_t samp_type, mus_long_t size);
 MUS_EXPORT int mus_header_read(const char *name);
@@ -379,7 +371,7 @@ MUS_EXPORT int mus_header_sf2_start(int n);
 MUS_EXPORT int mus_header_sf2_end(int n);
 MUS_EXPORT int mus_header_sf2_loop_start(int n);
 MUS_EXPORT int mus_header_sf2_loop_end(int n);
-MUS_EXPORT const char *mus_header_original_format_name(int samp_type, mus_header_t type);
+MUS_EXPORT const char *mus_header_original_sample_type_name(int samp_type, mus_header_t type);
 MUS_EXPORT bool mus_header_no_header(const char *name);
 
 MUS_EXPORT char *mus_header_riff_aux_comment(const char *name, mus_long_t *starts, mus_long_t *ends);
@@ -387,8 +379,8 @@ MUS_EXPORT char *mus_header_aiff_aux_comment(const char *name, mus_long_t *start
 
 MUS_EXPORT int mus_header_change_chans(const char *filename, mus_header_t type, int new_chans);
 MUS_EXPORT int mus_header_change_srate(const char *filename, mus_header_t type, int new_srate);
-MUS_EXPORT int mus_header_change_type(const char *filename, mus_header_t new_type, mus_sample_t new_format);
-MUS_EXPORT int mus_header_change_format(const char *filename, mus_header_t type, mus_sample_t new_format);
+MUS_EXPORT int mus_header_change_type(const char *filename, mus_header_t new_type, mus_sample_t new_sample_type);
+MUS_EXPORT int mus_header_change_sample_type(const char *filename, mus_header_t type, mus_sample_t new_sample_type);
 MUS_EXPORT int mus_header_change_location(const char *filename, mus_header_t type, mus_long_t new_location);
 MUS_EXPORT int mus_header_change_comment(const char *filename, mus_header_t type, const char *new_comment);
 MUS_EXPORT int mus_header_change_data_size(const char *filename, mus_header_t type, mus_long_t bytes);
@@ -428,16 +420,17 @@ unsigned int mus_char_to_ulint(const unsigned char *inp);
 }
 #endif
 
-
-#define mus_header_sample_type               mus_header_format
-#define mus_header_original_sample_type      mus_header_original_format
-#define mus_header_original_sample_type_name mus_header_original_format_name
-#define mus_header_change_sample_type        mus_header_change_format
-#define mus_sound_original_sample_type       mus_sound_original_format
-#define MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE     MUS_AUDIO_COMPATIBLE_FORMAT
-#define MUS_OUT_SAMPLE_TYPE                  MUS_OUT_FORMAT
-#define MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE  MUS_AUDIO_FORMAT_NOT_AVAILABLE
-#define mus_audio_compatible_sample_type     mus_audio_compatible_format
-#define mus_audio_device_sample_type         mus_audio_device_format
+#if (!DISABLE_DEPRECATED)
+#define mus_header_format                    mus_header_sample_type
+#define mus_header_original_format           mus_header_original_sample_type
+#define mus_header_original_format_name      mus_header_original_sample_type_name
+#define mus_header_change_format             mus_header_change_sample_type
+#define mus_sound_original_format            mus_sound_original_sample_type
+#define MUS_AUDIO_COMPATIBLE_FORMAT          MUS_AUDIO_COMPATIBLE_SAMPLE_TYPE
+#define MUS_OUT_FORMAT                       MUS_OUT_SAMPLE_TYPE
+#define MUS_AUDIO_FORMAT_NOT_AVAILABLE       MUS_AUDIO_SAMPLE_TYPE_NOT_AVAILABLE  
+#define mus_audio_compatible_format          mus_audio_compatible_sample_type     
+#define mus_audio_device_format              mus_audio_device_sample_type         
+#endif
 
 #endif

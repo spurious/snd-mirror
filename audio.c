@@ -5437,7 +5437,7 @@ int mus_audio_device_channels(int dev)
 }
 
 
-mus_sample_t mus_audio_compatible_format(int dev) /* snd-dac and sndplay */
+mus_sample_t mus_audio_compatible_sample_type(int dev) /* snd-dac and sndplay */
 {
 #if HAVE_ALSA
   if (api == MUS_ALSA_API) 
@@ -5487,7 +5487,7 @@ static mus_sample_t look_for_sample_type (mus_sample_t *mixer_vals, mus_sample_t
 }
 
 
-mus_sample_t mus_audio_device_format(int dev) /* snd-dac */
+mus_sample_t mus_audio_device_sample_type(int dev) /* snd-dac */
 {
   mus_sample_t mixer_vals[16];
   mus_sample_t samp_type;
@@ -5574,9 +5574,9 @@ char *mus_audio_moniker(void) {return((char *)"no audio support");}
 
 void mus_reset_audio_c(void) {}
 
-int mus_audio_device_channels(int dev)   {return(0);}
-mus_sample_t mus_audio_compatible_format(int dev) {return(MUS_UNKNOWN_SAMPLE);}
-mus_sample_t mus_audio_device_format(int dev) {return(MUS_UNKNOWN_SAMPLE);}
+int mus_audio_device_channels(int dev) {return(0);}
+mus_sample_t mus_audio_compatible_sample_type(int dev) {return(MUS_UNKNOWN_SAMPLE);}
+mus_sample_t mus_audio_device_sample_type(int dev) {return(MUS_UNKNOWN_SAMPLE);}
 
 #if __APPLE__
 bool mus_audio_output_properties_mutable(bool mut) {return(false);}

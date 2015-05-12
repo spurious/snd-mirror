@@ -202,7 +202,7 @@ mus_long_t mus_header_data_location(void)      {return(data_location);}
 int mus_header_chans(void)                     {return(chans);}
 int mus_header_srate(void)                     {return(srate);}
 mus_header_t mus_header_type(void)             {return(header_type);}
-mus_sample_t mus_header_format(void)           {return(sample_type);}
+mus_sample_t mus_header_sample_type(void)      {return(sample_type);}
 mus_long_t mus_header_comment_start(void)      {return(comment_start);}
 mus_long_t mus_header_comment_end(void)        {return(comment_end);}
 mus_long_t mus_header_aux_comment_start(int n) {if (aux_comment_start) return(aux_comment_start[n]); else return(-1);}
@@ -212,7 +212,7 @@ int mus_header_bits_per_sample(void)           {return(bits_per_sample);}
 int mus_header_fact_samples(void)              {return(fact_samples);}
 int mus_header_block_align(void)               {return(block_align);}
 mus_long_t mus_header_true_length(void)        {return(true_file_length);}
-int mus_header_original_format(void)           {return(original_sample_type);}
+int mus_header_original_sample_type(void)      {return(original_sample_type);}
 int mus_header_loop_mode(int which)            {if (loop_modes) return(loop_modes[which]); else return(-1);}
 int mus_header_loop_start(int which)           {if (loop_starts) return(loop_starts[which]); else return(-1);}
 int mus_header_loop_end(int which)             {if (loop_ends) return(loop_ends[which]); else return(-1);}
@@ -6567,7 +6567,7 @@ int mus_header_change_type(const char *filename, mus_header_t new_type, mus_samp
 }
 
 
-int mus_header_change_format(const char *filename, mus_header_t type, mus_sample_t new_format)
+int mus_header_change_sample_type(const char *filename, mus_header_t type, mus_sample_t new_format)
 {
   int err = MUS_NO_ERROR, fd, fr;
   mus_long_t old_bytes;
@@ -6865,7 +6865,7 @@ bool mus_header_writable(mus_header_t type, mus_sample_t samp_type) /* MUS_IGNOR
 static char aifc_format[5];
 
 /* try to give some info on sample types that aren't supported by sndlib */
-const char *mus_header_original_format_name(int samp_type, mus_header_t type)
+const char *mus_header_original_sample_type_name(int samp_type, mus_header_t type)
 {
   switch (type)
     {

@@ -772,7 +772,7 @@ struct s7_scheme {
   int format_column;
   int capture_let_counter;
   bool symbol_table_is_locked;
-  unsigned long long int let_number;
+  long long int let_number;
   double default_rationalize_error, morally_equal_float_epsilon, hash_table_float_epsilon;
   s7_Int default_hash_table_length, initial_string_port_length, print_length, max_vector_length, max_string_length, max_list_length, max_vector_dimensions;
   s7_pointer stacktrace_defaults;
@@ -2951,10 +2951,6 @@ void s7_gc_unprotect_at(s7_scheme *sc, unsigned int loc)
 {
   if (loc < sc->protected_objects_size)
     {
-#if DEBUGGING
-      if (vector_element(sc->protected_objects, loc) == sc->GC_NIL)
-	fprintf(stderr, "gc unprotect at %d, but it's already unprotected?\n", loc);
-#endif
       vector_element(sc->protected_objects, loc) = sc->GC_NIL;
       sc->protected_objects_loc = loc;
     }
@@ -5533,10 +5529,9 @@ static s7_pointer check_c_obj_env(s7_scheme *sc, s7_pointer old_e, s7_pointer ca
 static s7_pointer g_varlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_varlet "(varlet env ...) adds its arguments (an environment, a cons: symbol . value, or a pair of arguments, the symbol and its value) \
-directly to the environment env, and returns the environment."
+to the environment env, and returns the environment."
 
   s7_pointer x, e, sym, val, p;
-  int i;
 
   e = car(args);
   if (is_null(e))
@@ -5548,7 +5543,7 @@ directly to the environment env, and returns the environment."
 	return(wrong_type_argument_with_type(sc, sc->VARLET, small_int(1), e, A_LET));
     }
 
-  for (i = 2, x = cdr(args); is_not_null(x); i++, x = cdr(x))
+  for (x = cdr(args); is_pair(x); x = cdr(x))
     {
       p = car(x);
       switch (type(p))
@@ -5557,15 +5552,16 @@ directly to the environment env, and returns the environment."
 	  if (is_keyword(p))
 	    sym = keyword_symbol(p);
 	  else sym = p;
-	  i++;
 	  if (!is_pair(cdr(x)))
-	    return(wrong_type_argument_with_type(sc, sc->VARLET, make_integer(sc, i), p, A_BINDING));
+	    return(wrong_type_argument_n_with_type(sc, sc->VARLET, position_of(x, args), p, A_BINDING));
 	  x = cdr(x);
 	  val = car(x);
 	  break;
 
 	case T_PAIR:
 	  sym = car(p);
+	  if (!is_symbol(sym))
+	    return(wrong_type_argument_n_with_type(sc, sc->VARLET, position_of(x, args), p, A_SYMBOL));
 	  val = cdr(p);
 	  break;
 
@@ -5574,22 +5570,18 @@ directly to the environment env, and returns the environment."
 	  continue;
 
 	default:
-	  sym = p;
-	  val = sc->F;
-	  break;
+	  return(wrong_type_argument_n_with_type(sc, sc->VARLET, position_of(x, args), p, A_SYMBOL));
 	}
 
-      if (!is_symbol(sym))
-	return(wrong_type_argument_with_type(sc, sc->VARLET, make_integer(sc, i), p, A_SYMBOL));
       if (is_immutable(sym))
-	return(wrong_type_argument_with_type(sc, sc->VARLET, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
+	return(wrong_type_argument_n_with_type(sc, sc->VARLET, position_of(x, args), sym, A_NON_CONSTANT_SYMBOL));
 
       if (e == sc->rootlet)
 	{
 	  if (is_slot(global_slot(sym)))
 	    {
 	      if (is_syntax(slot_value(global_slot(sym))))
-		return(wrong_type_argument_with_type(sc, sc->VARLET, make_integer(sc, i), p, make_string_wrapper(sc, "a non-syntactic keyword")));
+		return(wrong_type_argument_n_with_type(sc, sc->VARLET, position_of(x, args), p, make_string_wrapper(sc, "a non-syntactic keyword")));
 	      /*  without this check we can end up turning our code into gibberish:
 	       *
 	       * :(set! quote 1)
@@ -5603,20 +5595,7 @@ directly to the environment env, and returns the environment."
 	    }
 	  else s7_make_slot(sc, e, sym, val);
 	}
-      else
-	{
-	  s7_pointer x;
-	  bool found_it = false;
-	  for (x = let_slots(e); is_slot(x); x = next_slot(x))
-	    if (slot_symbol(x) == sym)
-	      {
-		slot_set_value(x, val);
-		found_it = true;
-		break;
-	      }
-	  if (!found_it)
-	    make_slot_1(sc, e, sym, val);
-	}
+      else make_slot_1(sc, e, sym, val);
     }
   return(e);
 }
@@ -5624,7 +5603,7 @@ directly to the environment env, and returns the environment."
 
 static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cutlet "(cutlet e field ...) removes a field or fields from an environment."
+  #define H_cutlet "(cutlet e symbol ...) removes symbols from the environment e."
   s7_pointer e, fields;
   int i;
   #define THE_UN_ID -1
@@ -42325,7 +42304,6 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 }
 
 
-
 static s7_pointer vector_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 3)
@@ -42738,8 +42716,6 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
   return(f);
 }
 
-/* (define (hi a) (- a 1.0)) (hi (string->number "#e1."))
- */
 
 static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
@@ -42876,33 +42852,28 @@ static s7_pointer expt_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 #endif
 
 
+#if (!WITH_GMP)
 static s7_pointer max_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-#if (!WITH_GMP)
   if ((args == 2) &&
       (type(cadr(expr)) == T_REAL) &&
       (!is_NaN(real(cadr(expr)))))
     return(max_f2);
-#endif
   return(f);
 }
 
-
 static s7_pointer min_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-#if (!WITH_GMP)
   if ((args == 2) &&
       (type(cadr(expr)) == T_REAL) &&
       (!is_NaN(real(cadr(expr)))))
     return(min_f2);
-#endif
   return(f);
 }
 
 
 static s7_pointer is_zero_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-#if (!WITH_GMP)
   if ((args == 1) &&
       (is_safely_optimized(cadr(expr))) &&
       (optimize_data(cadr(expr)) == HOP_SAFE_C_C) &&
@@ -42911,14 +42882,12 @@ static s7_pointer is_zero_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       set_optimize_data(expr, HOP_SAFE_C_C);
       return(mod_si_is_zero);
     }
-#endif
   return(f);
 }
 
 
 static s7_pointer equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-#if (!WITH_GMP)
   if (args == 2)
     {
       s7_pointer arg1, arg2;
@@ -42954,12 +42923,9 @@ static s7_pointer equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 	}
       return(equal_2);
     }
-#endif
   return(f);
 }
 
-
-#if (!WITH_GMP)
 static s7_pointer less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 2)
@@ -43757,9 +43723,7 @@ static void init_choosers(s7_scheme *sc)
   divide_1r = make_function_with_class(sc, f, "/", g_divide_1r, 2, 0, false, "/ opt");
   divide_temp_s = make_temp_function_with_class(sc, f, "/", g_divide_temp_s, 2, 0, false, "/ opt");
   divide_s_temp = make_temp_function_with_class(sc, f, "/", g_divide_s_temp, 2, 0, false, "/ opt");
-#endif
 
-#if (!WITH_GMP)
   /* modulo */
   f = set_function_chooser(sc, sc->MODULO, modulo_chooser);
   mod_si = make_function_with_class(sc, f, "modulo", g_mod_si, 2, 0, false, "modulo opt");
@@ -43779,7 +43743,6 @@ static void init_choosers(s7_scheme *sc)
   /* expt */
   f = set_function_chooser(sc, sc->EXPT, expt_chooser);
   expt_temp_s = make_temp_function_with_class(sc, f, "expt", g_expt_temp_s, 2, 0, false, "expt opt");
-#endif
 
   /* max */
   f = set_function_chooser(sc, sc->MAX, max_chooser);
@@ -43799,11 +43762,8 @@ static void init_choosers(s7_scheme *sc)
   equal_s_ic = make_function_with_class(sc, f, "=", g_equal_s_ic, 2, 0, false, "= opt");
   equal_length_ic = make_function_with_class(sc, f, "=", g_equal_length_ic, 2, 0, false, "= opt");
   equal_2 = make_function_with_class(sc, f, "=", g_equal_2, 2, 0, false, "= opt");
-#if (!WITH_GMP)
   mod_si_is_zero = make_function_with_class(sc, f, "=", g_mod_si_is_zero, 2, 0, false, "= opt");
-#endif
 
-#if (!WITH_GMP)
   /* negative? */
   f = set_function_chooser(sc, sc->IS_NEGATIVE, is_negative_chooser);
   is_negative_length = make_function_with_class(sc, f, "negative?", g_is_negative_length, 1, 0, false, "negative? opt");
@@ -61668,7 +61628,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		s7_pointer sym;
 		sym = slot_symbol(p);
-		symbol_set_local(sym, sc->let_number, p);
+		if (symbol_id(sym) != sc->let_number)
+		  symbol_set_local(sym, sc->let_number, p);
 	      }
 	  }
 	sc->code = cdr(sc->code);
@@ -61720,7 +61681,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    let_id(e) = ++sc->let_number;
 	    sc->envir = e;
 	    for (p = let_slots(e); is_slot(p); p = next_slot(p))
-	      symbol_set_local(slot_symbol(p), sc->let_number, p);
+	      {
+		s7_pointer sym;
+		sym = slot_symbol(p);
+		if (symbol_id(sym) != sc->let_number)
+		  symbol_set_local(sym, sc->let_number, p);
+	      }
 	  }
 	goto BEGIN1;
       }
@@ -62226,6 +62192,7 @@ static char *mpfr_to_string(mpfr_t val, int radix)
     }
 
   str1 = mpfr_get_str(NULL, &expptr, radix, 0, val, GMP_RNDN);
+
   /* 0 -> full precision, but it's too hard to make this look like C formatted output.
    *
    *  :(format #f "~,3F" pi)
@@ -62241,52 +62208,20 @@ static char *mpfr_to_string(mpfr_t val, int radix)
   ep = (int)expptr;
   len = safe_strlen(str);
 
-  if (radix <= 10)
-    {
-      /* remove trailing 0's */
-      for (i = len - 1; i > 3; i--)
-	if (str[i] != '0')
-	  break;
-      if (i < len - 1)
-	str[i + 1] = '\0';
+  /* remove trailing 0's */
+  for (i = len - 1; i > 3; i--)
+    if (str[i] != '0')
+      break;
+  if (i < len - 1)
+    str[i + 1] = '\0';
 
-      len += 64;
-      tmp = (char *)malloc(len * sizeof(char));
+  len += 64;
+  tmp = (char *)malloc(len * sizeof(char));
 
-      if (str[0] == '-')
-	snprintf(tmp, len, "-%c.%sE%d", str[1], (char *)(str + 2), ep - 1);
-      else snprintf(tmp, len, "%c.%sE%d", str[0], (char *)(str + 1), ep - 1);
-    }
-  else
-    {
-      /* if radix > 10, we should not be using the 'E' business -- need to move the decimal point */
-      /* (number->string 1234.5678909876543212345 16) "4d2.91614dc3ab1f80e55a563311b8f308"
-       * (number->string -1234.5678909876543212345 16) "-4d2.91614dc3ab1f80e55a563311b8f308"
-       * (number->string 1234.5678909876543212345e8 16) "1cbe991a6a.c3f35c11868cb7e3fb75536"
-       * (number->string 1234.5678909876543212345e-8 16) "0.0000cf204983a27e1eff701c562a870641e50"
-       * (number->string 123456789098765432.12345e-8 16) "499602d2.fcd6e9e1748ba5adccc12c5a8"
-       * (number->string 123456789098765432.1e20 16) "949b0f70beeac8895e74b18b9680000.00"
-       */
-      int loc = 0;
-      tmp = (char *)calloc(len + ep + 64, sizeof(char));
-      if (str[0] == '-')
-	tmp[loc++] = (*str++);
-      if (ep < 0)
-	{
-	  ep = -ep;
-	  tmp[loc++] = '0';
-	  tmp[loc++] = '.';
-	  for (i = 0; i < ep; i++)
-	    tmp[loc++] = '0';
-	}
-      else
-	{
-	  for (i = 0; i < ep; i++)
-	    tmp[loc++] = (*str++);
-	  tmp[loc++] = '.';
-	}
-      while (*str) tmp[loc++] = (*str++);
-    }
+  if (str[0] == '-')
+    snprintf(tmp, len, "-%c.%s%c%d", str[1], (char *)(str + 2), (radix <= 10) ? 'E' : '@', ep - 1);
+  else snprintf(tmp, len, "%c.%s%c%d", str[0], (char *)(str + 1), (radix <= 10) ? 'E' : '@', ep - 1);
+
   mpfr_free_str(str1);
   return(tmp);
 }
@@ -68462,20 +68397,20 @@ int main(int argc, char **argv)
 /* ------------------------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7
- * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129
- * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150
- * teq            |      |      | 6612                     3887 3020
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328
- * tcopy          |      |      |                          4970 4287
- * tmap           |      |      | 11.0           5031 4769 4685 4557
+ * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1126
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1142
+ * teq            |      |      | 6612                     3887 3020 2819
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3325
+ * tcopy          |      |      |                          4970 4287 4158
+ * tmap           |      |      | 11.0           5031 4769 4685 4557 4557
  * tform          |      |      |                          6816 5536 5273
- * titer          |      |      |                          7976 6368
- * lg             |      |      | 6547 6497 6494 6235 6229 6239 6611
+ * titer          |      |      |                          7976 6368 6368
+ * lg             |      |      | 6547 6497 6494 6235 6229 6239 6611 6570
  * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6688
- * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8
- * thash          |      |      |                          19.4 17.4
- * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8
- * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1
+ * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.8
+ * thash          |      |      |                          19.4 17.4 17.4
+ * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 20.9
+ * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1
  *
  * ------------------------------------------------------------------
  *

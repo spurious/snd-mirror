@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 10
-#define MUS_DATE "19-Feb-15"
+#define MUS_REVISION 11
+#define MUS_DATE "12-May-15"
 
 /* isn't mus_env_interp backwards? */
 
@@ -158,9 +158,6 @@ MUS_EXPORT mus_long_t mus_order(mus_any *gen);
 MUS_EXPORT mus_float_t *mus_data(mus_any *gen);
 MUS_EXPORT mus_float_t *mus_set_data(mus_any *gen, mus_float_t *data);
 MUS_EXPORT const char *mus_name(mus_any *ptr);
-#if (!DISABLE_DEPRECATED)
-MUS_EXPORT const char *mus_set_name(mus_any *ptr, const char *new_name);
-#endif
 MUS_EXPORT mus_float_t mus_scaler(mus_any *gen);
 MUS_EXPORT mus_float_t mus_set_scaler(mus_any *gen, mus_float_t val);
 MUS_EXPORT mus_float_t mus_offset(mus_any *gen);

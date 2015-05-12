@@ -1634,7 +1634,6 @@ bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool se
 			     mus_sample_t smp_type, mus_header_t hd_type, const char *comment);
 void during_open(int fd, const char *file, open_reason_t reason);
 void after_open(snd_info *sp);
-char *output_name(const char *current_name);
 void set_with_toolbar_and_display(bool val);
 #if (!USE_NO_GUI)
   void display_info(snd_info *sp);

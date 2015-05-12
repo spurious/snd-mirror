@@ -1136,9 +1136,6 @@ static Xen close_hook;
 static Xen before_close_hook;
 static Xen during_open_hook;
 static Xen after_open_hook;
-#if (!DISABLE_DEPRECATED)
-static Xen output_name_hook;
-#endif
 
 void during_open(int fd, const char *file, open_reason_t reason)
 {
@@ -1189,36 +1186,6 @@ void after_open(snd_info *sp)
 
   if (Xen_hook_has_list(ss->effects_hook))
     run_hook(ss->effects_hook, Xen_empty_list, S_effects_hook);
-}
-
-
-char *output_name(const char *current_name)
-{
-#if (!DISABLE_DEPRECATED)
-  if (Xen_hook_has_list(output_name_hook))
-    {
-#if HAVE_SCHEME
-      Xen result;
-      result = s7_call(s7, output_name_hook, s7_cons(s7, C_string_to_Xen_string(current_name), Xen_empty_list));
-      if (Xen_is_string(result)) 
-	return(mus_strdup(Xen_string_to_C_string(result)));
-#else      
-      Xen result, fname, procs;
-      procs = Xen_hook_list(output_name_hook);
-      fname = C_string_to_Xen_string(current_name);
-      while (!Xen_is_null(procs))
-	{
-	  result = Xen_call_with_1_arg(Xen_car(procs),
-			      fname,
-			      S_output_name_hook);
-	  if (Xen_is_string(result)) 
-	    return(mus_strdup(Xen_string_to_C_string(result)));
-	  procs = Xen_cdr(procs);
-	}
-#endif
-    }
-#endif
-  return(mus_strdup(current_name));
 }
 
 
@@ -2836,10 +2803,6 @@ char *dialog_get_title(widget_t dialog)
 
 /* -------- info popup -------- */
 
-#if (!DISABLE_DEPRECATED)
-static Xen info_popup_hook;
-#endif
-
 #if (!USE_NO_GUI)
 
 static char *display_file_maxamps(const char *filename, int chans)
@@ -2902,29 +2865,6 @@ void display_info(snd_info *sp)
 		   ampstr = display_sound_maxamps(sp));
       post_it(sp->short_filename, buffer);
       if (ampstr) free(ampstr);
-
-#if (!DISABLE_DEPRECATED)
-      /* run info-popup-hook, appending each string */
-      if (Xen_hook_has_list(info_popup_hook))
-	{
-	  Xen result;
-#if HAVE_SCHEME
-	  result = s7_call(s7, info_popup_hook, s7_cons(s7, C_int_to_Xen_sound(sp->index), Xen_empty_list));
-	  if (Xen_is_string(result))
-	    post_it_append(Xen_string_to_C_string(result));
-#else
-	  Xen procs;
-	  procs = Xen_hook_list(info_popup_hook);
-	  while (!Xen_is_null(procs))
-	    {
-	      result = Xen_call_with_1_arg(Xen_car(procs), C_int_to_Xen_sound(sp->index), S_info_popup_hook);
-	      if (Xen_is_string(result))
-		post_it_append(Xen_string_to_C_string(result));
-	      procs = Xen_cdr(procs);
-	    }
-#endif
-	}
-#endif
 
       snprintf(buffer, INFO_BUFFER_SIZE, "\n----------------------------------------\n%s:", sp->filename);
       post_it_append(buffer);
@@ -3923,15 +3863,6 @@ This provides a way to set various sound-specific defaults. \n\
     #f\n\
   then\n\
 ; add-hook!"
-#endif
-
-#if (!DISABLE_DEPRECATED)
-  #define H_output_name_hook S_output_name_hook " (name): called from the File:New dialog.  If it returns a filename, \
-that name is presented in the New File dialog."
-  output_name_hook =    Xen_define_hook(S_output_name_hook,    "(make-hook 'name)",                1, H_output_name_hook);
-
-  #define H_info_popup_hook S_info_popup_hook " (snd): called by the info popup dialog."
-  info_popup_hook = Xen_define_hook(S_info_popup_hook, "(make-hook 'snd)", 1, H_info_popup_hook); 
 #endif
 
   open_hook =           Xen_define_hook(S_open_hook,           "(make-hook 'name)",                1, H_open_hook);

@@ -2994,7 +2994,7 @@ static char *new_file_dialog_filename(int header_type)
 
 static void load_new_file_defaults(char *newname)
 {
-  char *filename = NULL, *new_comment = NULL;
+  char *new_comment = NULL;
   mus_header_t header_type;
   mus_sample_t sample_type;
   int chans, srate;
@@ -3005,17 +3005,13 @@ static void load_new_file_defaults(char *newname)
   srate =       default_output_srate(ss);
   new_comment = output_comment(NULL);
 
-  if ((newname) && (!(*newname))) newname = NULL;
-  filename = output_name(newname); /* calls output-name-hook, always free */
-  if (filename == NULL)
-    filename = new_file_dialog_filename(header_type);
-  gtk_entry_set_text(GTK_ENTRY(new_file_text), filename);  
-  mus_sound_forget(filename);
+  if ((!newname) || (!(*newname)))
+    newname = new_file_dialog_filename(header_type);
+  gtk_entry_set_text(GTK_ENTRY(new_file_text), newname);  
+  mus_sound_forget(newname);
 
   set_file_dialog_sound_attributes(ndat, header_type, sample_type, srate, chans, IGNORE_DATA_LOCATION, initial_samples, new_comment);
-
   if (new_comment) free(new_comment);
-  if (filename) free(filename);
 }
 
 
@@ -3091,10 +3087,7 @@ widget_t make_new_file_dialog(bool managed)
 
       new_file_text = snd_entry_new(hform, NULL, WITH_WHITE_BACKGROUND);
 
-      newname = output_name(NULL); /* fix later */
-      if ((newname) && (*newname))
-	gtk_entry_set_text(GTK_ENTRY(new_file_text), newname); /* output_name?? fix later */
-
+      newname = NULL;
       ndat = make_file_data_panel(DIALOG_CONTENT_AREA(new_file_dialog), "data-form", 
 				  WITH_CHANNELS_FIELD, 
 				  default_output_header_type(ss), 

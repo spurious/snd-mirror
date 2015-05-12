@@ -713,39 +713,6 @@ static Xen g_mus_sound_preload(Xen file)
 }
 
 
-#if (!DISABLE_DEPRECATED)
-static Xen g_mus_audio_open_output(Xen dev, Xen srate, Xen chans, Xen samp_type, Xen size)
-{
-  #define H_mus_audio_open_output "(" S_mus_audio_open_output " device srate chans samp-type bytes): obsolete, no-op."
-  return(Xen_false);
-}
-
-static Xen g_mus_audio_open_input(Xen dev, Xen srate, Xen chans, Xen samp_type, Xen size)
-{
-  #define H_mus_audio_open_input "(" S_mus_audio_open_input " device srate chans samp-type bufsize): obsolete, no-op."
-  return(Xen_false);
-}
-
-static Xen g_mus_audio_close(Xen line)
-{
-  #define H_mus_audio_close "(" S_mus_audio_close " line): obsolete, no-op."
-  return(Xen_false);
-}
-
-static Xen g_mus_audio_write(Xen line, Xen sdata, Xen framples, Xen start)
-{
-  #define H_mus_audio_write "(" S_mus_audio_write " line sdata framples (start 0)): obsolete, no-op."
-  return(Xen_false);
-}
-
-static Xen g_mus_audio_read(Xen line, Xen sdata, Xen framples)
-{
-  #define H_mus_audio_read "(" S_mus_audio_read " line sdata framples): obsolete, no-op."
-  return(Xen_false);
-}
-#endif
-
-
 /* global default clipping values */
 
 static Xen g_mus_clipping(void)
@@ -953,16 +920,6 @@ static void g_new_sound_hook(const char *filename)
 }
 
 
-#if HAVE_OSS && (!DISABLE_DEPRECATED)
-#define S_mus_audio_reinitialize "mus-audio-reinitialize"
-static Xen g_mus_audio_reinitialize(void)
-{
-  #define H_mus_audio_reinitialize "(" S_mus_audio_reinitialize "): force audio device re-initialization"
-  return(C_int_to_Xen_integer(mus_audio_reinitialize()));
-}
-#endif
-
-
 static Xen sound_path;
 Xen g_mus_sound_path(void)
 {
@@ -1084,14 +1041,6 @@ Xen_wrap_2_args(g_mus_sound_set_maxamp_w, g_mus_sound_set_maxamp)
 Xen_wrap_1_arg(g_mus_sound_maxamp_exists_w, g_mus_sound_maxamp_exists)
 Xen_wrap_1_arg(g_mus_sound_preload_w, g_mus_sound_preload)
 
-#if (!DISABLE_DEPRECATED)
-Xen_wrap_1_arg(g_mus_audio_close_w, g_mus_audio_close)
-Xen_wrap_4_optional_args(g_mus_audio_write_w, g_mus_audio_write)
-Xen_wrap_3_args(g_mus_audio_read_w, g_mus_audio_read)
-Xen_wrap_5_args(g_mus_audio_open_output_w, g_mus_audio_open_output)
-Xen_wrap_5_args(g_mus_audio_open_input_w, g_mus_audio_open_input)
-#endif
-
 Xen_wrap_no_args(g_mus_clipping_w, g_mus_clipping)
 Xen_wrap_1_arg(g_mus_set_clipping_w, g_mus_set_clipping)
 Xen_wrap_1_arg(g_mus_file_clipping_w, g_mus_file_clipping)
@@ -1120,10 +1069,6 @@ Xen_wrap_1_arg(g_mus_alsa_set_capture_device_w, g_mus_alsa_set_capture_device)
 Xen_wrap_no_args(g_mus_alsa_squelch_warning_w, g_mus_alsa_squelch_warning)
 Xen_wrap_1_arg(g_mus_alsa_set_squelch_warning_w, g_mus_alsa_set_squelch_warning)
 
-#if HAVE_OSS && (!DISABLE_DEPRECATED)
-  Xen_wrap_no_args(g_mus_audio_reinitialize_w, g_mus_audio_reinitialize)
-#endif
-
 #if __APPLE__
 Xen_wrap_1_arg(g_mus_audio_output_properties_mutable_w, g_mus_audio_output_properties_mutable)
 #endif
@@ -1149,11 +1094,6 @@ void mus_sndlib_xen_initialize(void)
 
 #if HAVE_RUBY
   Init_Hook();
-#endif
-
-#if (!DISABLE_DEPRECATED)
-  Xen_define_constant("mus-unsupported", MUS_UNKNOWN_HEADER, "unknown header type");
-  Xen_define_constant("mus-unknown",     MUS_UNKNOWN_SAMPLE, "unknown sample type");
 #endif
 
   Xen_define_constant(S_mus_out_format,           MUS_OUT_SAMPLE_TYPE,      "sample type for fastest IO");
@@ -1195,9 +1135,7 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_constant(S_mus_ldouble_unscaled,     MUS_LDOUBLE_UNSCALED,     "unscaled little-endian double sample type id");
   Xen_define_constant(S_mus_bfloat_unscaled,      MUS_BFLOAT_UNSCALED,      "unscaled big-endian float sample type id");
   Xen_define_constant(S_mus_lfloat_unscaled,      MUS_LFLOAT_UNSCALED,      "unscaled little-endian float sample type id");
-#if (!DISABLE_DEPRECATED)
-  Xen_define_constant(S_mus_audio_default,        MUS_AUDIO_DEFAULT,        "default audio device");
-#endif
+
   Xen_define_dilambda(S_mus_sound_samples, g_mus_sound_samples_w, H_mus_sound_samples,  S_setB S_mus_sound_samples, g_mus_sound_set_samples_w, 1, 0, 2, 0);
   Xen_define_dilambda(S_mus_sound_data_location, g_mus_sound_data_location_w, H_mus_sound_data_location,
 		      S_setB S_mus_sound_data_location, g_mus_sound_set_data_location_w, 1, 0, 2, 0);
@@ -1234,14 +1172,6 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_safe_procedure(S_mus_sound_maxamp_exists,  g_mus_sound_maxamp_exists_w,    1, 0, 0, H_mus_sound_maxamp_exists);
   Xen_define_safe_procedure(S_mus_sound_forget,         g_mus_sound_forget_w,           1, 0, 0, H_mus_sound_forget);
   Xen_define_safe_procedure(S_mus_sound_prune,          g_mus_sound_prune_w,            0, 0, 0, H_mus_sound_prune);
-
-#if (!DISABLE_DEPRECATED)
-  Xen_define_safe_procedure(S_mus_audio_close,          g_mus_audio_close_w,            1, 0, 0, H_mus_audio_close);
-  Xen_define_safe_procedure(S_mus_audio_write,          g_mus_audio_write_w,            3, 1, 0, H_mus_audio_write);
-  Xen_define_safe_procedure(S_mus_audio_read,           g_mus_audio_read_w,             3, 0, 0, H_mus_audio_read);
-  Xen_define_safe_procedure(S_mus_audio_open_output,    g_mus_audio_open_output_w,      5, 0, 0, H_mus_audio_open_output);
-  Xen_define_safe_procedure(S_mus_audio_open_input,     g_mus_audio_open_input_w,       5, 0, 0, H_mus_audio_open_input);
-#endif
 
   Xen_define_safe_procedure(S_mus_expand_filename,      g_mus_expand_filename_w,        1, 0, 0, H_mus_expand_filename);
   Xen_define_safe_procedure(S_mus_sound_report_cache,   g_mus_sound_report_cache_w,     0, 1, 0, H_mus_sound_report_cache);
@@ -1287,10 +1217,6 @@ void mus_sndlib_xen_initialize(void)
   mus_sound_path_symbol = s7_define_variable(s7, "*" S_mus_sound_path "*", s7_nil(s7));
   s7_symbol_set_documentation(s7, mus_sound_path_symbol, "*" S_mus_sound_path "* is a list of directories to search for sound files");
   s7_symbol_set_access(s7, mus_sound_path_symbol, s7_make_function(s7, "[acc-mus-sound-path]", acc_mus_sound_path, 2, 0, false, "accessor"));
-#endif
-
-#if HAVE_OSS && (!DISABLE_DEPRECATED)
-  Xen_define_procedure(S_mus_audio_reinitialize,   g_mus_audio_reinitialize_w, 0, 0, 0,  H_mus_audio_reinitialize);
 #endif
 
 #if __APPLE__

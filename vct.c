@@ -1638,24 +1638,5 @@ void mus_vct_init(void)
   Xen_define_safe_procedure(S_vct_to_vector,     g_vct_to_vector_w, 1, 0, 0, H_vct_to_vector);
   Xen_define_safe_procedure(S_make_vct,          g_make_vct_w,      1, 1, 0, H_make_vct);
 #else
-#if (!DISABLE_DEPRECATED)
-  s7_eval_c_string(s7, "(define vct-multiply! float-vector-multiply!)");
-  s7_eval_c_string(s7, "(define vct-scale! float-vector-scale!)");
-  s7_eval_c_string(s7, "(define vct-abs! float-vector-abs!)");
-  s7_eval_c_string(s7, "(define vct-add! float-vector-add!)");
-  s7_eval_c_string(s7, "(define vct-subtract! float-vector-subtract!)");
-  s7_eval_c_string(s7, "(define vct-offset! float-vector-offset!)");
-  s7_eval_c_string(s7, "(define vct-peak float-vector-peak)");
-  s7_eval_c_string(s7, "(define vct-peak-and-location float-vector-peak-and-location)");
-  s7_eval_c_string(s7, "(define vct-move! float-vector-move!)");
-  s7_eval_c_string(s7, "(define vct-subseq float-vector-subseq)");
-  s7_eval_c_string(s7, "(define vct->string float-vector->string)");
-  s7_eval_c_string(s7, "(define vct* float-vector*)");
-  s7_eval_c_string(s7, "(define vct+ float-vector+)");
-  s7_eval_c_string(s7, "(define vct-max float-vector-max)");
-  s7_eval_c_string(s7, "(define vct-min float-vector-min)");
-  s7_eval_c_string(s7, "(define vct-ref float-vector-ref)");
-  s7_eval_c_string(s7, "(define vct-set! float-vector-set!)");
-#endif
 #endif
 }

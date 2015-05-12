@@ -12509,7 +12509,7 @@ static char *new_file_dialog_filename(mus_header_t header_type)
 
 static void load_new_file_defaults(char *newname)
 {
-  char *filename = NULL, *new_comment = NULL;
+  char *new_comment = NULL;
   mus_header_t header_type;
   mus_sample_t sample_type;
   int chans, srate;
@@ -12520,17 +12520,12 @@ static void load_new_file_defaults(char *newname)
   srate =       default_output_srate(ss);
   new_comment = output_comment(NULL);
 
-  if ((newname) && (!(*newname))) newname = NULL;
-  filename = output_name(newname); /* calls output-name-hook, always free */
-  if (filename == NULL)
-    filename = new_file_dialog_filename(header_type);
-  XmTextSetString(new_file_text, filename);  
-  mus_sound_forget(filename);
+  if ((!newname) || (!(*newname))) 
+    newname = new_file_dialog_filename(header_type);
+  mus_sound_forget(newname);
 
   set_file_dialog_sound_attributes(ndat, header_type, sample_type, srate, chans, IGNORE_DATA_LOCATION, initial_samples, new_comment);
-
   if (new_comment) free(new_comment);
-  if (filename) free(filename);
 }
 
 
