@@ -132,7 +132,7 @@
 		 
 	    ;; -------- evaluation ---------
 	    (define (badexpr h)            ; *missing-close-paren-hook* function for Enter command
-	      (set! (h 'result) 'read-error))
+	      (set! (h 'result) 'string-read-error))
 
 	    (define (shell? h)             ; *unbound-variable-hook* function, also for Enter
 	      ;; examine current-line -- only call system if the unbound variable matches the first non-whitespace chars
@@ -778,7 +778,7 @@
 			     
 			     ;; we want to add current-line (copied) to the history buffer
 			     ;;   unless it is an on-going edit (missing close paren)
-			     (catch 'read-error
+			     (catch 'string-read-error
 			       
 			       (lambda ()
 				 (set! cursor-position len)
@@ -803,15 +803,6 @@
 			       (lambda (type info)
 				 (pop-history)               ; remove last history entry
 				 (append-newline)
-
-				 (if (pair? info)            ; if read-error is not missing-close-paren, post some feedback
-				     (let ((old-helpers (*repl* 'helpers)))
-				       (set! (*repl* 'helpers)
-					     (list (lambda (c)
-						     (apply format #f info))))
-				       (help #\space)
-				       (set! (*repl* 'helpers) old-helpers)))
-
 				 (return))))
 			   
 			   (lambda (type info)
@@ -931,10 +922,11 @@
 		  (if (not (equal? input-fd terminal-fd)) (close input-fd))
 		  (#_exit))
 		
-		(set! ((rootlet) 'exit)         ; we'd like this to happen when user types "(exit)"
-		      (lambda ()
-			(newline *stderr*)
-			(tty-reset 0)))
+		(varlet (*repl* 'top-level-let) 
+		  :exit (let ((documentation "(exit) resets the repl tty and exits the repl"))
+			  (lambda ()
+			    (newline *stderr*)
+			    (tty-reset 0))))
 
 		;; check for dumb terminal
 		(if (or (zero? (isatty terminal-fd))        ; not a terminal -- input from pipe probably

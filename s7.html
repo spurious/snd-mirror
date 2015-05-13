@@ -3244,17 +3244,6 @@ mostly useful in <a href="#readercond">reader-cond</a>.
 <em class="gray">3</em>
 </pre>
 
-<p>Finally, in format's ~&lt;~&gt; escape, if the expression evaluates to (values), nothing is printed.
-If it returns multiple values, they are printed one after the other.
-</p>
-
-<pre class="indented">
-&gt; (format #f "~&lt;(values)~&gt;")
-<em class="gray">""</em>
-&gt; (format #f "~&lt;(values 1 2 3)~&gt;") 
-<em class="gray">"123"</em>
-</pre>
-
 <p>At the top-level (in the REPL), since there's nothing to splice into, you simply get your values back:
 </p>
 
@@ -3608,8 +3597,6 @@ original.
 ~}        end iteration
 ~^ ~|     jump out of iteration
 ~*        ignore the current argument
-~&lt;        begin escape to s7 (code in ~&lt;...~&gt; is evaluated, result is stringified and inserted)
-~&gt;        end s7 escape
 ~C        print character (numeric argument = how many times to print it)
 ~P        insert 's' if current argument is not 1 or 1.0 (use ~@P for "ies" or "y")
 ~A        object-&gt;string as in display
@@ -3691,43 +3678,6 @@ floats in the "~X" case.  So in s7,
 &gt; (with-input-from-string (format #f "(~{~C~^ ~})" (format #f "~B" 1367)) read) ; integer-&gt;list
 <em class="gray">(1 0 1 0 1 0 1 0 1 1 1)</em>
 </pre>
-<br>
-<p>The ~'&lt;...~&gt; directive takes the stuff inside the brackets, and interprets it as s7 code.
-If the result is not a string, object-&gt;string is called.  The string is then inserted into
-the format output string.
-</p>
-<pre class="indented">
-&gt; (let ((counter 32)) (format #f "counter is ~&lt; counter ~&gt;!"))
-<em class="gray">"counter is 32!"</em>
-</pre>
-
-<p>If the evaluation returns multiple values, each is inserted in turn.  (values) becomes "".
-</p>
-
-<pre class="indented">
-&gt; (let ((x 3)) (format #f "~&lt; (if (positive? x) (values \"x is \" x \"?\") (values)) ~&gt;"))
-<em class="gray">"x is 3?"</em>
-</pre>
-
-<p>If the default object-&gt;string output is not ideal, you can either call format itself 
-in the brackets, or define convenience functions:
-</p>
-
-<pre class="indented">
-(define (fm-cascade-component freq wc wm1 a wm2 b) ; from dsp.scm in the Snd package
-  (define (~,3f x) (format #f "~,3F" x))
-  ;... (much code deleted here since it is not to the point
-  (if (&gt; (magnitude curJJ) 0.001)
-      (format #t ";fm-cascade-component ~&lt;(~,3f curJJ)~&gt; ~
-                                         from J~&lt;k~&gt;(~&lt;a~&gt;) = ~&lt;(~,3f (bes-jn k a))~&gt; ~
-                                          and J~&lt;j~&gt;(~&lt;(* k b)~&gt;) = ~&lt;(~,3f (bes-jn j (* k b)))~&gt;~%"))))
-</pre>
-
-<p>Currently the code in ~&lt;~&gt; is ignored by quasiquote: it sees only a string constant.
-This feature has been shoe-horned into pre-existing code, so it is not yet very robust;
-if the code in the brackets raises an error (even within a catch), you may get an
-incomplete evaluation.  
-</p>
 <br>
 
 <p>Since any sequence can be passed to ~{~}, we need a way to truncate output and represent
@@ -3855,7 +3805,7 @@ here's a sketch:
 &gt; (set! (hook-functions h)              ; this sets ((funclet h) 'body)
            (list (lambda (hook) 	; each hook internal function takes one argument, the environment
                    (set! (hook 'result) ; this is the "result" variable above 
-                         (format #f "a: ~&lt;(hook 'a)~&gt;, b: ~&lt;(hook 'b)~&gt;")))))
+                         (format #f "a: ~S, b: ~S" (hook 'a) (hook 'b))))))
 <em class="gray">(#&lt;lambda (hook)&gt;)</em>
 &gt; (h 1 2)                               ; this calls the hook's internal functions (just one in this case)
 <em class="gray">"a: 1, b: 2"                            ; we set "result" to this string, so it is returned as the hook application result</em>
@@ -5181,7 +5131,7 @@ Here we scan the symbol table looking for any function that doesn't have documen
          (let ((val (<em class=red>symbol-&gt;value</em> sym)))
            (if (and (procedure? val)
                     (string=? "" (procedure-documentation val)))
-               (format *stderr* "~&lt;sym~&gt; ")))))
+               (format *stderr* "~S " sym)))))
   (<em class=red>symbol-table</em>))
 </pre>
 
@@ -5210,9 +5160,9 @@ Here we scan the symbol table looking for any function that doesn't have documen
 	          (let ((max-args (cdr (arity val))))
 	            (if (or (&gt; max-args 4)
 	       	            (memq sym '(exit abort)))
-		        (format #t ";skip ~&lt;sym~&gt; for now~%")
+		        (format #t ";skip ~S for now~%" sym)
 		        (begin
-		          (format #t ";whack on ~&lt;sym~&gt;...~%")
+		          (format #t ";whack on ~S...~%" sym)
 		          (autotest val () max-args))))))))
     (<em class=red>symbol-table</em>)))
 </pre>
@@ -5255,7 +5205,7 @@ The function takes one argument, the environment in which loads and evals should
       (do ((i 0 (+ i 1)))
           ((= i call))
         (if (&gt; (cdr (calls i)) 0)
-	    (format #t "~&lt; (car (calls i)) ~&gt;: ~&lt; (cdr (calls i)) ~&gt;~%"))))))
+	    (format #t "~S: ~S~%" (car (calls i)) (cdr (calls i))))))))
 
 &gt; (profile (lambda (e) 
              (load "lint.scm" e) 

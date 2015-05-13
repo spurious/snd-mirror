@@ -11508,17 +11508,16 @@ EDITS: 2
 		     (lambda ()
 		       (fm-complex-component 1200 1000 100 1.0 4.0 0.0 #f)
 		       (fm-cascade-component 2000 2000 500 1.5 50 1.0)))))
-      (if (not (string=? str 
-		 (format #f ";fm-complex-component add -0.000-0.010i from J-3(1.0) = -0.020 and I5(4.0) = 0.505\n~
-                             ;fm-complex-component add 0.163 from J-2(1.0) = 0.115 and I4(4.0) = 1.416\n~
-                             ;fm-complex-component add -0.000+1.469i from J-1(1.0) = -0.440 and I3(4.0) = 3.337\n~
-                             ;fm-complex-component add -4.914 from J0(1.0) = 0.765 and I2(4.0) = 6.422\n~
-                             ;fm-complex-component add 0.000+4.295i from J1(1.0) = 0.440 and I1(4.0) = 9.759\n~
-                             ;fm-complex-component add 1.299 from J2(1.0) = 0.115 and I0(4.0) = 11.302\n~
-                             ;fm-complex-component add 0.000-0.191i from J3(1.0) = 0.020 and I-1(4.0) = 9.759\n~
-                             ;fm-complex-component add -0.016 from J4(1.0) = 0.002 and I-2(4.0) = 6.422\n~
-                             ;fm-cascade-component add 0.512 from J0(1.5) = 0.512 and J0(0.0) = 1.000\n~
-                             ")))
+      (if (not (string=? str ";fm-complex-component add -0.000-0.010i from J-3(1.0) = -0.020 and I5(4.0) = 0.505
+;fm-complex-component add 0.163 from J-2(1.0) = 0.115 and I4(4.0) = 1.416
+;fm-complex-component add -0.000+1.469i from J-1(1.0) = -0.440 and I3(4.0) = 3.337
+;fm-complex-component add -4.914 from J0(1.0) = 0.765 and I2(4.0) = 6.422
+;fm-complex-component add 0.000+4.295i from J1(1.0) = 0.440 and I1(4.0) = 9.759
+;fm-complex-component add 1.299 from J2(1.0) = 0.115 and I0(4.0) = 11.302
+;fm-complex-component add 0.000-0.191i from J3(1.0) = 0.020 and I-1(4.0) = 9.759
+;fm-complex-component add -0.016 from J4(1.0) = 0.002 and I-2(4.0) = 6.422
+;fm-cascade-component add 0.512 from J0(1.5) = 0.512 and J0(1.0) = 1.000
+"))
 	  (snd-display #__line__ ";fm-components are unexpected:~%~S" str)))))
   
   ;; ----------------

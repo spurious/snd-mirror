@@ -165,6 +165,12 @@ static s7_pointer mac_plus(s7_scheme *sc, s7_pointer args)
   return(s7_list(sc, 3, s7_make_symbol(sc, "+"),  a, b));
 }
 
+static s7_pointer mac_plus_mv(s7_scheme *sc, s7_pointer args)
+{
+  /* (define-macro (plus-mv a b) (values `(define a ,a) `(define b ,b))) */
+  return(s7_values(sc, args));
+}
+
 static s7_pointer open_plus(s7_scheme *sc, s7_pointer args)
 {
   #define plus_help "(plus obj ...) applies obj's plus method to obj and any trailing arguments."
@@ -1028,6 +1034,11 @@ int main(int argc, char **argv)
       (s7_integer(p) != 7))
     {char *s2; fprintf(stderr, "%d: %s -> %s is not 7?\n", __LINE__, s1 = TO_STR(p1), s2 = TO_STR(p)); free(s1); free(s2);}
 
+  s7_define_macro(sc, "mac-plus-mv", mac_plus_mv, 2, 0, false, "macro values test");
+  p = s7_eval_c_string(sc, "(let () (+ (mac-plus-mv 2 3)))");
+  if (s7_integer(p) != 5)
+    {fprintf(stderr, "%d: %s is not 5?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
+  
 
   s7_define_function(sc, "open-plus", open_plus, 1, 0, true, plus_help);
   p = s7_sublet(sc, s7_nil(sc), s7_cons(sc, s7_cons(sc, s7_make_symbol(sc, "plus"), s7_name_to_value(sc, "plus")), s7_nil(sc)));

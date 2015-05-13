@@ -747,7 +747,7 @@
 				 (for-each
 				  (lambda (c)
 				    (vector-set! chars (char->integer c) #t))
-				  '(#\A #\S #\C #\F #\E #\G #\O #\D #\B #\X #\, #\{ #\} #\@ #\P #\* #\< #\>
+				  '(#\A #\S #\C #\F #\E #\G #\O #\D #\B #\X #\, #\{ #\} #\@ #\P #\*
 				    #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p #\N #\n #\W #\w
 				    #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
 				 chars))
@@ -2589,8 +2589,6 @@
 		 
 		 (define (count-directives str name form)
 		   (let ((curlys 0)
-			 (brackets 0)
-			 (bracket-pos 0)
 			 (dirs 0)
 			 (pos (char-position #\~ str)))
 		     (if pos
@@ -2602,8 +2600,7 @@
 			       (if tilde-time
 				   (begin
 				     (if (and (= curlys 0)
-					      (= brackets 0) ; ??
-					      (not (memq c '(#\~ #\T #\t #\& #\% #\^ #\| #\newline #\} #\> #\<))) ; ~* consumes an arg
+					      (not (memq c '(#\~ #\T #\t #\& #\% #\^ #\| #\newline #\}))) ; ~* consumes an arg
 					      (not (call-with-exit
 						    (lambda (return)
 						      (do ((k i (+ k 1)))
@@ -2648,18 +2645,7 @@
 				       ((#\}) (set! curlys (- curlys 1)))
 				       ((#\^ #\|)
 					(if (zero? curlys)
-					    (lint-format "~A has ~C outside ~~{~~}?" name str c)))
-				       ((#\<) 
-					(set! bracket-pos (+ i 1))
-					(set! brackets (+ brackets 1)))
-				       ((#\>) 
-					;; walk the ~< expr ~> code to check for otherwise unused variables etc
-					(catch 'read-error
-					  (lambda ()
-					    (lint-walk 'format (with-input-from-string (substring str bracket-pos (- i 1)) read) env))
-					  (lambda args
-					    (lint-format "bad ~~<~~> code (read-error): ~A" name str)))
-					(set! brackets (- brackets 1)))))
+					    (lint-format "~A has ~C outside ~~{~~}?" name str c)))))
 				   (begin
 				     (set! pos (char-position #\~ str i))
 				     (if pos 
@@ -2677,13 +2663,6 @@
 				      (abs curlys) 
 				      (if (positive? curlys) "{" "}") 
 				      (if (> curlys 1) "s" "") 
-				      (truncated-list->string form)))
-		     (if (not (= brackets 0))
-			 (lint-format "~A has ~D unmatched ~A~A:~A"
-				      name head 
-				      (abs brackets) 
-				      (if (positive? brackets) "<" ">") 
-				      (if (> brackets 1) "s" "") 
 				      (truncated-list->string form)))
 		     dirs))
 		 
@@ -3988,7 +3967,7 @@
 		  (if (and (string? file)
 			   *report-unused-top-level-functions*)
 		      (report-usage file 'top-level-var "" vars))
-		  
+	      
 		  (if (not (input-port? file))
 		      (close-input-port fp))))))))))
 

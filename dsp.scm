@@ -2633,9 +2633,10 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 			    (expt 0.0+1.0i j))))
 	      (set! sum (+ sum curJI))
 	      (if (> (magnitude curJI) 0.001)
-		  (format #t ";fm-complex-component add ~<(~,3f curJI)~> ~
-                                                    from J~<k~>(~<a~>) = ~<(~,3f (bes-jn k a))~> ~
-                                                     and I~<j~>(~<b~>) = ~<(~,3f (bes-in (abs j) b))~>~%"))))))
+		  (format #t ";fm-complex-component add ~,3f from J~D(~A) = ~,3f and I~D(~A) = ~,3f~%"
+			       curJI 
+			       k a (bes-jn k a)
+			       j b (bes-in (abs j) b)))))))
     (list sum
 	  (+ (* (- 1.0 interp) (real-part sum))
 	     (* interp (imag-part sum))))))
@@ -2658,11 +2659,11 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 			    (bes-jn j (* k b)))))
 	      (set! sum (+ sum curJJ))
 	      (if (> (magnitude curJJ) 0.001)
-		  (format #t ";fm-cascade-component add ~<(~,3f curJJ)~> ~
-                                                    from J~<k~>(~<a~>) = ~<(~,3f (bes-jn k a))~> ~
-                                                     and J~<j~>(~<(* k b)~>) = ~<(~,3f (bes-jn j (* k b)))~>~%"))))))
+		  (format #t ";fm-cascade-component add ~,3f from J~D(~A) = ~,3f and J~D(~A) = ~,3f~%"
+			       curJJ 
+			       k a (bes-jn k a)
+			       j b (bes-jn j (* k b))))))))
     sum))
-
 					;(fm-cascade-component 2000 2000 500 1.5 50 1.0)
 
 

@@ -111,23 +111,19 @@
  *   argument -- this will be very confusing for the s7 user because, for example, (sqrt -2)
  *   will return something bogus (it will not signal an error).
  *
+ * so the incoming (non-s7-specific) compile-time switches are
+ *     HAVE_COMPLEX_NUMBERS, HAVE_COMPLEX_TRIG, SIZEOF_VOID_P
+ * if SIZEOF_VOID_P is not defined, we look for __SIZEOF_POINTER__ instead
+ *   the default is to assume that we're running on a 64-bit machine.
  *
  * To get multiprecision arithmetic, set WITH_GMP to 1.
  *   You'll also need libgmp, libmpfr, and libmpc (version 0.8.0 or later)
  *   In highly numerical contexts, the gmp version of s7 is about 50(!) times slower than the non-gmp version.
  *
- * if WITH_SYSTEM_EXTRAS is 1 (default is 1 unless _MSC_VER), various OS and file related functions are included.
- *
- * so the incoming (non-s7-specific) compile-time switches are
- *     HAVE_COMPLEX_NUMBERS, HAVE_COMPLEX_TRIG, SIZEOF_VOID_P
- *
  * and we use these predefined macros: __cplusplus, _MSC_VER, __GNUC__, __clang__, __ANDROID__
  *
- * if SIZEOF_VOID_P is not defined, we look for __SIZEOF_POINTER__ instead
- *   the default is to assume that we're running on a 64-bit machine.
- *
+ * if WITH_SYSTEM_EXTRAS is 1 (default is 1 unless _MSC_VER), various OS and file related functions are included.
  * in openBSD I think you need to include -ftrampolines in CFLAGS.
- *
  * if you want this file to compile into a stand-alone interpreter, define WITH_MAIN
  *
  * -O3 is sometimes slower, sometimes faster
@@ -896,7 +892,7 @@ struct s7_scheme {
   s7_pointer Apply, Vector;
   s7_pointer WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO, WTA1, WTA2, WTA3, WTA4, WTA5;
   s7_pointer SIMPLE_WRONG_TYPE_ARG_INFO, SIMPLE_OUT_OF_RANGE_INFO, DIVISION_BY_ZERO, DIVISION_BY_ZERO_ERROR, NO_CATCH, IO_ERROR, INVALID_ESCAPE_FUNCTION;
-  s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR, TOO_MANY_ARGUMENTS, NOT_ENOUGH_ARGUMENTS;
+  s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, STRING_READ_ERROR, SYNTAX_ERROR, TOO_MANY_ARGUMENTS, NOT_ENOUGH_ARGUMENTS;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, KEY_ALLOW_OTHER_KEYS, KEY_READABLE;
   s7_pointer __FUNC__;
   s7_pointer Object_Set;               /* applicable object set method */
@@ -2179,7 +2175,7 @@ static bool local_strncmp(const char *s1, const char *s2, unsigned int n)
 #define strings_are_equal_with_length(Str1, Str2, Len) (local_strncmp(Str1, Str2, Len))
 
 
-static void memclr(void *s, size_t n)
+ static void memclr(void *s, size_t n)
 {
   unsigned char *s2;
 #if defined(__x86_64__) || defined(__i386__)
@@ -5583,12 +5579,11 @@ to the environment env, and returns the environment."
 	      if (is_syntax(slot_value(global_slot(sym))))
 		return(wrong_type_argument_n_with_type(sc, sc->VARLET, position_of(x, args), p, make_string_wrapper(sc, "a non-syntactic keyword")));
 	      /*  without this check we can end up turning our code into gibberish:
-	       *
-	       * :(set! quote 1)
-	       * ;can't set! quote
-	       * :(varlet (rootlet) '(quote . 1))
-	       * :quote
-	       * 1
+	       *   :(set! quote 1)
+	       *   ;can't set! quote
+	       *   :(varlet (rootlet) '(quote . 1))
+	       *   :quote
+	       *   1
 	       * or worse set quote to a function of one arg that tries to quote something -- infinite loop
 	       */
 	      slot_set_value(global_slot(sym), val);
@@ -5596,6 +5591,10 @@ to the environment env, and returns the environment."
 	  else s7_make_slot(sc, e, sym, val);
 	}
       else make_slot_1(sc, e, sym, val);
+      /* this used to check for sym already defined, and set its value, but that greatly slows down
+       *   the most common use (adding a slot), and makes it hard to shadow explicitly.  Don't use
+       *   varlet as a substitute for set!/let-set!.
+       */
     }
   return(e);
 }
@@ -5604,8 +5603,7 @@ to the environment env, and returns the environment."
 static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_cutlet "(cutlet e symbol ...) removes symbols from the environment e."
-  s7_pointer e, fields;
-  int i;
+  s7_pointer e, syms;
   #define THE_UN_ID -1
 
   e = car(args);
@@ -5620,19 +5618,19 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
   /* besides removing the slot we have to make sure the symbol_id does not match else
    *   let-ref and others will use the old slot!  What's the un-id?  I'll try -1.  0 means global.
    */
-  for (i = 1, fields = cdr(args); is_pair(fields); fields = cdr(fields), i++)
+  for (syms = cdr(args); is_pair(syms); syms = cdr(syms))
     {
-      s7_pointer field, slot;
-      field = car(fields);
-      if (!is_symbol(field))
-	return(wrong_type_argument_with_type(sc, sc->CUTLET, small_int(i), field, A_SYMBOL));
+      s7_pointer sym, slot;
+      sym = car(syms);
+      if (!is_symbol(sym))
+	return(wrong_type_argument_n_with_type(sc, sc->CUTLET, position_of(syms, args), sym, A_SYMBOL));
       if (e == sc->rootlet)
 	{
-	  if (is_slot(global_slot(field)))
+	  if (is_slot(global_slot(sym)))
 	    {
-	      symbol_id(field) = THE_UN_ID;
-	      slot_value(global_slot(field)) = sc->UNDEFINED;
-	      slot_value(local_slot(field)) = sc->UNDEFINED;
+	      symbol_id(sym) = THE_UN_ID;
+	      slot_value(global_slot(sym)) = sc->UNDEFINED;
+	      slot_value(local_slot(sym)) = sc->UNDEFINED;
 	    }
 	}
       else
@@ -5640,10 +5638,10 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 	  slot = let_slots(e);
 	  if (is_slot(slot))
 	    {
-	      if (slot_symbol(slot) == field)
+	      if (slot_symbol(slot) == sym)
 		{
 		  set_let_slots(e, next_slot(let_slots(e)));
-		  symbol_id(field) = THE_UN_ID;
+		  symbol_id(sym) = THE_UN_ID;
 		}
 	      else
 		{
@@ -5651,11 +5649,11 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 		  last_slot = slot;
 		  for (slot = next_slot(let_slots(e)); is_slot(slot); last_slot = slot, slot = next_slot(slot))
 		    {
-		      if (slot_symbol(slot) == field)
+		      if (slot_symbol(slot) == sym)
 			{
-			  symbol_id(field) = THE_UN_ID;
+			  symbol_id(sym) = THE_UN_ID;
 			  next_slot(last_slot) = next_slot(slot);
-			  break; /* or should we remove all fields of a given name? */
+			  break; /* let cutlet act as an unshadower */
 			}
 		    }
 		}
@@ -5677,11 +5675,10 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 
   if (!is_null(bindings))
     {
-      int i;
       s7_pointer x;
       sc->temp3 = new_e;
 
-      for (i = 2, x = bindings; is_not_null(x); i++, x = cdr(x))
+      for (x = bindings; is_not_null(x); x = cdr(x))
 	{
 	  s7_pointer p, sym, val;
 
@@ -5692,15 +5689,16 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 	      if (is_keyword(p))
 		sym = keyword_symbol(p);
 	      else sym = p;
-	      i++;
 	      if (!is_pair(cdr(x)))
-		return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), p, A_BINDING));
+		return(wrong_type_argument_n_with_type(sc, caller, position_of(x, bindings), p, A_BINDING));
 	      x = cdr(x);
 	      val = car(x);
 	      break;
 
 	    case T_PAIR:
 	      sym = car(p);
+	      if (!is_symbol(sym))
+		return(wrong_type_argument_n_with_type(sc, caller, position_of(x, bindings), p, A_SYMBOL));
 	      val = cdr(p);
 	      break;
 
@@ -5709,15 +5707,11 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 	      continue;
 
 	    default:
-	      sym = p;
-	      val = sc->F;
-	      break;
+	      return(wrong_type_argument_n_with_type(sc, caller, position_of(x, bindings), p, A_SYMBOL));
 	    }
 
-	  if (!is_symbol(sym))
-	    return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), p, A_SYMBOL));
 	  if (is_immutable(sym))
-	    return(wrong_type_argument_with_type(sc, caller, make_integer(sc, i), sym, A_NON_CONSTANT_SYMBOL));
+	    return(wrong_type_argument_n_with_type(sc, caller, position_of(x, bindings), sym, A_NON_CONSTANT_SYMBOL));
 
 	  /* here we know new_e is a let and is not rootlet */
 	  make_slot_1(sc, new_e, sym, val);
@@ -6088,7 +6082,6 @@ static s7_pointer g_rootlet(s7_scheme *sc, s7_pointer ignore)
   #define H_rootlet "(rootlet) returns the current top-level definitions (symbol bindings)."
   return(sc->rootlet);
 }
-
 /* as with the symbol-table, this function can lead to disaster -- user could
  *   clobber the environment etc.  But we want it to be editable and augmentable,
  *   so I guess I'll leave it alone.  (See curlet|funclet as well).
@@ -6178,10 +6171,7 @@ static s7_pointer g_set_outlet(s7_scheme *sc, s7_pointer args)
   new_outer = cadr(args);
   if (!is_let(new_outer))
     return(wrong_type_argument_with_type(sc, sc->OUTLET, small_int(2), new_outer, A_LET));
-  /*
-  if (new_outer == env)
-    return(s7_error(sc, sc->WRONG_TYPE_ARG, list_1(sc, make_string_wrapper(sc, "can't set the outlet of env to env!"))));
-  */
+  /* if (new_outer == env) return(s7_error(sc, sc->WRONG_TYPE_ARG, list_1(sc, make_string_wrapper(sc, "can't set the outlet of env to env!")))); */
   if (new_outer == sc->rootlet)
     new_outer = sc->NIL;
 
@@ -27309,139 +27299,6 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	      fdat->args = cdr(fdat->args);
 	      break;
 
-	    case '>':
-	      return(format_error(sc, "unmatched '>'", str, args, fdat));
-
-	    case '<':                          /* -------- escape to s7 -------- */
-	      {
-		int bracket_len;
-		bracket_len = format_nesting(str, '<', '>', i, str_len - 1);
-
-		if (bracket_len == -1)
-		  return(format_error(sc, "'<' directive, but no matching '>'", str, args, fdat));
-		if (bracket_len > 1)
-		  {
-		    s7_pointer result, eport;
-		    char *bracket_str;
-
-		    if (bracket_len > fdat->curly_len)
-		      {
-			if (fdat->curly_str) free (fdat->curly_str);
-			fdat->curly_len = bracket_len;
-			fdat->curly_str = (char *)malloc(bracket_len * sizeof(char));
-		      }
-		    bracket_str = fdat->curly_str;
-		    memcpy((void *)bracket_str, (void *)(str + i + 2), bracket_len - 1);
-		    bracket_str[bracket_len - 1] = '\0';
-
-		    /* if it's just a variable name (most common case by far), or a number, grab it directly */
-		    if ((int)strcspn((const char *)bracket_str, (const char *)"('\"`") == bracket_len - 1)
-		      {
-			int k; /* "i" is the outer index */
-			unsigned char *lstr;
-
-			lstr = (unsigned char *)bracket_str;
-			for (k = 0; (k < bracket_len) && (white_space[*lstr]); k++, lstr++);
-			bracket_str = (char *)lstr;
-			if (k < bracket_len)
-			  {
-			    while (char_ok_in_a_name[*lstr]) {lstr++; k++; if (k >= bracket_len) break;}
-			    if ((char *)lstr == bracket_str)
-			      {
-				i += (bracket_len + 2); /* I guess we want (format #f "~< ~>") to return "" */
-				break;
-			      }
-			    if (k < bracket_len) *lstr = '\0';
-			    result = make_atom(sc, bracket_str, BASE_10, SYMBOL_OK, WITH_OVERFLOW_ERROR);
-			    if (result == sc->NIL)
-			      return(format_error(sc, "read error?", str, args, fdat));
-			    if (is_symbol(result))
-			      {
-				result = s7_symbol_value(sc, result);
-				if (result == sc->UNDEFINED)
-				  return(format_error(sc, "undefined identifier", str, args, fdat));
-			      }
-			  }
-			else
-			  {
-			    i += (bracket_len + 2);
-			    break;
-			  }
-		      }
-		    else
-		      {
-			/* if the called code has a catch and raises an error, or anything else that causes a longjmp,
-			 *   we won't complete this format call -- we end up at an earlier point in the C stack.
-			 *   To fix this will probably require embedding this code in the eval loop somehow.
-			 *   I don't think we can push (say) OP_FORMAT to restore all the current fdat state
-			 *   because the longjmp will also collapse away the current format recursive calls.
-			 *   It does not help to put a setjmp here, nor to call s7_call (saving/restoring the
-			 *   setjmp buffer), nor to use s7_eval_c_string but leave sc->envir alone.
-			 *   If we had a catch/throw mechanism that did not go through s7_error, then only
-			 *   a call from here into scheme into C and back would be problematic.  Can throw simply
-			 *   crawl the stack directly in eval?  No -- catch assumes the jump. ("The stack context
-			 *   [saved by setjmp] will be invalidated if the function which called setjmp returns").
-			 *
-			 * so, to fix this, if ~<~> arg is a pair, replace it with ~{~A~} and put the read(?) code on a new arglist,
-			 *   complete the current format, then push op_apply with g_format and these new args, and return.
-			 *   But we're sending the output as we go in some cases!
-			 *
-			 * even a rewrite at call time can be fooled -- I think for now I'll add a note in s7.html.
-			 */
-			eport = s7_open_input_string(sc, bracket_str);
-			push_input_port(sc, eport);
-			push_stack(sc, OP_BARRIER, eport, sc->code); /* neither of these is superfluous: sc->code if values */
-			push_stack(sc, OP_EVAL_STRING, sc->args, sc->code);
-
-			eval(sc, OP_READ_INTERNAL);
-
-			if (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_BARRIER) pop_stack(sc);
-			pop_input_port(sc);
-			s7_close_input_port(sc, eport);
-			result = sc->value;
-		      }
-
-		    if (is_string(result))
-		      format_append_string(sc, fdat, string_value(result), string_length(result), port);
-		    else
-		      {
-			if (result != sc->NO_VALUE)           /* (format #f "~<(values)~>") -> "" */
-			  {
-			    if (is_multiple_value(result))    /* (format #f "~<(values 1 2 3)~>") -> "123" */
-			      {
-				int gc_loc;
-				s7_pointer p;
-				gc_loc = s7_gc_protect(sc, result);
-				for (p = multiple_value(result); is_pair(p); p = cdr(p))
-				  if (is_string(car(p)))
-				    format_append_string(sc, fdat, string_value(car(p)), string_length(car(p)), port);
-				  else
-				    {
-				      bracket_str = s7_object_to_c_string(sc, car(p));
-				      if (bracket_str)
-					{
-					  format_append_string(sc, fdat, bracket_str, strlen(bracket_str), port);
-					  free(bracket_str);
-					}
-				    }
-				s7_gc_unprotect_at(sc, gc_loc);
-			      }
-			    else
-			      {
-				bracket_str = s7_object_to_c_string(sc, result);
-				if (bracket_str)
-				  {
-				    format_append_string(sc, fdat, bracket_str, strlen(bracket_str), port);
-				    free(bracket_str);
-				  }
-			      }
-			  }
-		      }
-		  }
-		i += (bracket_len + 2); /* jump past the ending '>' too */
-	      }
-	      break;
-
 	    case '{':                           /* -------- iteration -------- */
 	      {
 		int curly_len;
@@ -33663,7 +33520,7 @@ static hash_entry_t *hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key
 	  string_hash(key) = hash;
 	}
       for (x = hash_table_element(table, hash & hash_len); x; x = x->next)
-	if (/* (hash == string_hash(x->key)) && */ /* this seems to slow us down? */
+	if (/* (hash == string_hash(x->key)) && */ /* this seems to slow us down? also len==len + strncmp is slower */
 	    (strings_are_equal(string_value(x->key), string_value(key))))
 	  return(x);
     }
@@ -34010,7 +33867,8 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 	      else
 		{
 		  hash_table_function(ht) = hash_eq_c_function;
-		  hash_table_eq_function(ht) = proc;
+		  hash_table_eq_function(ht) = proc; 
+		  /* here the 2arg case could be substituted, char=? -> g_char_equal_2 etc */
 		}
 	      hash_table_function_locked(ht) = true;
 	      return(ht);
@@ -39428,7 +39286,7 @@ static s7_pointer read_error_1(s7_scheme *sc, const char *errmsg, bool string_er
       return(s7_error(sc, sc->READ_ERROR, list_1(sc, make_string_uncopied_with_length(sc, msg, len))));
     }
 
-  return(s7_error(sc, sc->READ_ERROR, list_1(sc, make_string_wrapper(sc, (char *)errmsg))));
+  return(s7_error(sc, (string_error) ? sc->STRING_READ_ERROR : sc->READ_ERROR, list_1(sc, make_string_wrapper(sc, (char *)errmsg))));
 }
 
 static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
@@ -57916,7 +57774,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
 
 	    sc->code = c_macro_call(sc->code)(sc, sc->args);
-	    if (is_multiple_value(sc->code))
+	    if (is_multiple_value(sc->code)) /* can this happen? s7_values splices before returning, and `(values ...) is handled later */
 	      {
 		push_stack(sc, OP_EVAL_MACRO_MV, sc->NIL, cdr(sc->code));
 		sc->code = car(sc->code);
@@ -67476,6 +67334,7 @@ s7_scheme *s7_init(void)
   sc->BODY =                 make_symbol(sc, "body");
   sc->ERROR =                make_symbol(sc, "error");
   sc->READ_ERROR =           make_symbol(sc, "read-error");
+  sc->STRING_READ_ERROR =    make_symbol(sc, "string-read-error");
   sc->SYNTAX_ERROR =         make_symbol(sc, "syntax-error");
   sc->WRONG_TYPE_ARG =       make_symbol(sc, "wrong-type-arg");
   sc->WRONG_NUMBER_OF_ARGS = make_symbol(sc, "wrong-number-of-args");
@@ -68405,10 +68264,10 @@ int main(int argc, char **argv)
  * tmap           |      |      | 11.0           5031 4769 4685 4557 4557
  * tform          |      |      |                          6816 5536 5273
  * titer          |      |      |                          7976 6368 6368
- * lg             |      |      | 6547 6497 6494 6235 6229 6239 6611 6570
+ * lg             |      |      | 6547 6497 6494 6235 6229 6239 6611 6481
  * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6688
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.8
- * thash          |      |      |                          19.4 17.4 17.4
+ * thash          |      |      |                          19.4 17.4 17.3
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 20.9
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1
  *
