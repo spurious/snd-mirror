@@ -22511,8 +22511,6 @@ Widget menu_widget(int which_menu)
 }
 
 
-#include <X11/IntrinsicP.h>
-
 static bool or_over_children(Widget w, bool (*func)(Widget uw, const char *ustr), const char *str)
 {
   if (w)
@@ -25743,7 +25741,6 @@ static void history_select_callback(Widget w, XtPointer context, XtPointer info)
 
 
 #if WITH_RELATIVE_PANES
-#include <Xm/SashP.h>
 
 /* using undocumented callback here, as in snd-xsnd.c */
 static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
@@ -26793,8 +26790,6 @@ static Xen g_graph_cursor(void)
   return(C_int_to_Xen_integer(in_graph_cursor(ss)));
 }
 
-
-#include <X11/cursorfont.h>
 
 static Xen g_set_graph_cursor(Xen curs)
 {
@@ -27997,8 +27992,6 @@ static void close_button_callback(Widget w, XtPointer context, XtPointer info)
  *
  * so... drop down into the sashes...(using undocumented stuff throughout this code)
  */
-#include <Xm/SashP.h>
-
 
 static void sash_lock_control_panel(snd_info *sp)
 {

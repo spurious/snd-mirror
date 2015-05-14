@@ -730,7 +730,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   static bool m = false;
   int shift = 0;
   int hashloc, i, state;
-  mus_long_t loc;
   static mus_long_t ext_count = 1;
   static bool got_ext_count = false;
   snd_info *sp;
@@ -797,6 +796,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
     {
       if (!extended_mode)
 	{
+	  mus_long_t loc;
 	  /* -------------------------------- C-key -------------------------------- */
 	  switch (keysym)
 	    {
@@ -1601,8 +1601,8 @@ static Xen g_bind_key_1(Xen key, Xen state, Xen code, Xen cx_extended, Xen origi
     set_keymap_entry(k, s, 0, Xen_undefined, e, NULL, NULL);
   else 
     {
-      int args;
       char buf[256];
+      int args;
       const char *comment = NULL, *prefs = NULL;
       args = Xen_required_args(code);
       if (args > 1)
@@ -1615,11 +1615,12 @@ static Xen g_bind_key_1(Xen key, Xen state, Xen code, Xen cx_extended, Xen origi
 	  free(errstr);
 	  return(snd_bad_arity_error(caller, errmsg, code));
 	}
-      if (Xen_is_string(origin)) comment = Xen_string_to_C_string(origin); else comment = make_key_name(buf, 256, k, s, e);
+      if (Xen_is_string(origin))
+	comment = Xen_string_to_C_string(origin); 
+      else comment = make_key_name(buf, 256, k, s, e);
       if (Xen_is_string(prefs_info)) prefs = Xen_string_to_C_string(prefs_info);
       set_keymap_entry(k, s, args, code, e, comment, prefs);
     }
-
   return(code);
 }
 

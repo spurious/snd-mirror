@@ -50,7 +50,6 @@
 (define-macro (reader-cond . clauses) `(values))          ; clobber reader-cond to avoid dumb unbound-variable errors
 
 
-
 ;;; --------------------------------------------------------------------------------
 ;;; for snd-test.scm
 
@@ -2106,7 +2105,7 @@
 		   form))
 	      
 	      ((logior)
-	       (set! args (remove-duplicates (splice-if (lambda (x) (eq? x 'logior)) args)))
+	       (set! args (remove-duplicates (remove-all 0 (splice-if (lambda (x) (eq? x 'logior)) args))))
 	       (if (every? (lambda (x) (or (not (number? x)) (integer? x))) args)
 		   (let ((rats (collect-if list integer? args)))
 		     (if (> (length rats) 1)
@@ -2125,7 +2124,7 @@
 			       `(logior ,@args))))))
 	      
 	      ((logand)
-	       (set! args (remove-duplicates (splice-if (lambda (x) (eq? x 'logand)) args)))
+	       (set! args (remove-duplicates (remove-all -1 (splice-if (lambda (x) (eq? x 'logand)) args))))
 	       (if (every? (lambda (x) (or (not (number? x)) (integer? x))) args)
 		   (let ((rats (collect-if list integer? args)))
 		     (if (> (length rats) 1)
@@ -2142,6 +2141,10 @@
 			   (if (just-integers? args)
 			       (apply logand args)
 			       `(logand ,@args))))))
+	      ;; (logand 1 (logior 2 x)) -> (logand 1 x)? 
+	      ;; (logand 1 (logior 1 x)) -> 1
+	      ;; (logand 3 (logior 1 x))?
+	      ;; similarly for (logior...(logand...))
 
 	      ((logxor)
 	       (set! args (splice-if (lambda (x) (eq? x 'logxor)) args)) ; is this correct??
@@ -4035,7 +4038,7 @@
 	
 	;; look for <pre , gather everything until </pre>
 	;;   decide if it is scheme code (first char is #\()
-	;;   if so, clean out html markup stuff, write to temp file, call lint on that
+	;;   if so, clean out html markup stuff, call lint on that
 	
 	(let ((pos (string-position "<pre" line)))
 	  (if pos
@@ -4077,4 +4080,3 @@
 				      (lambda args
 					(format #t ";~A ~D, error in read: ~A ~A~%" file line-num args
 						(fixup-html (remove-markups code)))))))))))))))))))
-				    

@@ -2572,7 +2572,7 @@
 	  (if (not (string=? str "23-Nov 06:56 PST"))
 	      (snd-display #__line__ ";mus-sound-write-date oboe.snd: ~A?" str)))
 	(let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
-	  (if (not (string-=? str "23-Nov 06:56 PST"))
+	  (if (not (string=? str "23-Nov 06:56 PST"))
 	      (snd-display #__line__ ";mus-sound-write-date pistol.snd: ~A?" str)))
 	
 	(let ((index (open-sound "oboe.snd"))
@@ -2657,7 +2657,7 @@
 	      (begin
 		(set! com (mus-sound-comment fsnd))
 		(if (or (not (string? com)) 
-			(not (string-=? com 
+			(not (string=? com 
 					(string-append "ICRD: 1997-02-22" 
 						       (string #\newline)
 						       "IENG: Paul R. Roger"
@@ -2669,88 +2669,88 @@
 	  (if (file-exists? fsnd)
 	      (begin
 		(set! com (mus-sound-comment fsnd))
-		(if (or (not (string? com)) (not (string-=? com "File created by Sound Exchange  ")))
+		(if (or (not (string? com)) (not (string=? com "File created by Sound Exchange  ")))
 		    (snd-display #__line__ ";mus-sound-comment \"8svx-8.snd\") -> ~A?" com)))))
 	(let ((fsnd (string-append sf-dir "sun-16-afsp.snd")))
 	  (if (file-exists? fsnd)
 	      (begin
 		(set! com (mus-sound-comment fsnd))
-		(if (or (not (string? com)) (not (string-=? com "AFspdate:1981/02/11 23:03:34 UTC")))
+		(if (or (not (string? com)) (not (string=? com "AFspdate:1981/02/11 23:03:34 UTC")))
 		    (snd-display #__line__ ";mus-sound-comment \"sun-16-afsp.snd\") -> ~A?" com)))))
 	(let ((fsnd (string-append sf-dir "smp-16.snd")))
 	  (if (file-exists? fsnd)
 	      (begin
 		(set! com (mus-sound-comment fsnd))
-		(if (or (not (string? com)) (not (string-=? com "Converted using Sox.                                        ")))
+		(if (or (not (string? com)) (not (string=? com "Converted using Sox.                                        ")))
 		    (snd-display #__line__ ";mus-sound-comment \"smp-16.snd\") -> ~A?" com)))))
 	(let ((fsnd (string-append sf-dir "d40130.au")))
 	  (if (file-exists? fsnd)
 	      (begin
 		(set! com (mus-sound-comment fsnd))
-		(if (or (not (string? com)) (not (string-=? com "1994 Jesus Villena")))
+		(if (or (not (string? com)) (not (string=? com "1994 Jesus Villena")))
 		    (snd-display #__line__ ";mus-sound-comment \"d40130.au\") -> ~A?" com)))))
 	(let ((fsnd (string-append sf-dir "wood.maud")))
 	  (if (file-exists? fsnd)
 	      (begin
 		(set! com (mus-sound-comment fsnd))
-		(if (or (not (string? com)) (not (string-=? com "file written by SOX MAUD-export ")))
+		(if (or (not (string? com)) (not (string=? com "file written by SOX MAUD-export ")))
 		    (snd-display #__line__ ";mus-sound-comment \"wood.maud\") -> ~A?" com)))))
 	(let ((fsnd (string-append sf-dir "addf8.sf_mipseb")))
 	  (if (file-exists? fsnd)
 	      (begin
 		(set! com (mus-sound-comment fsnd))
 		(if (or (not (string? com)) 
-			(not (string-=? com "date=\"Feb 11 18:03:34 1981\" info=\"Original recorded at 20 kHz, 15-bit D/A, digitally filtered and resampled\" speaker=\"AMK female\" text=\"Add the sum to the product of these three.\" ")))
+			(not (string=? com "date=\"Feb 11 18:03:34 1981\" info=\"Original recorded at 20 kHz, 15-bit D/A, digitally filtered and resampled\" speaker=\"AMK female\" text=\"Add the sum to the product of these three.\" ")))
 		    (snd-display #__line__ ";mus-sound-comment \"addf8.sf_mipseb\") -> ~A?" com)))))
 	(let ((fsnd (string-append sf-dir "mary-sun4.sig")))
 	  (if (file-exists? fsnd)
 	      (begin
 		(set! com (mus-sound-comment fsnd))
-		(if (or (not (string? com)) (not (string-=? com (string-append "MARY HAD A LITTLE LAMB" (string #\newline)))))
+		(if (or (not (string? com)) (not (string=? com (string-append "MARY HAD A LITTLE LAMB" (string #\newline)))))
 		    (snd-display #__line__ ";mus-sound-comment \"mary-sun4.sig\") -> ~A?" com)))))
 	(let ((fsnd (string-append sf-dir "nasahal.pat")))
 	  (if (file-exists? fsnd)
 	      (begin
 		(set! com (mus-sound-comment fsnd))
-		(if (or (not (string? com)) (not (string-=? com "This patch saved with Sound Forge 3.0.")))
+		(if (or (not (string? com)) (not (string=? com "This patch saved with Sound Forge 3.0.")))
 		    (snd-display #__line__ ";mus-sound-comment \"nasahal.pat\") -> ~A?" com)))))
 	(let ((fsnd (string-append sf-dir "next-16.snd")))
 	  (if (file-exists? fsnd)
 	      (begin
 		(set! com (mus-sound-comment fsnd))
 		(if (or (not (string? com)) 
-			(not (string-=? com ";Written on Mon 1-Jul-91 at 12:10 PDT  at localhost (NeXT) using Allegro CL and clm of 25-June-91")))
+			(not (string=? com ";Written on Mon 1-Jul-91 at 12:10 PDT  at localhost (NeXT) using Allegro CL and clm of 25-June-91")))
 		    (snd-display #__line__ ";mus-sound-comment \"next-16.snd\") -> ~A?" com)))))
 	(let ((fsnd (string-append sf-dir "wood16.nsp")))
 	  (if (file-exists? fsnd)
 	      (begin
 		(set! com (mus-sound-comment fsnd))
-		(if (or (not (string? com)) (not (string-=? com "Created by Snack   ")))
+		(if (or (not (string? com)) (not (string=? com "Created by Snack   ")))
 		    (snd-display #__line__ ";mus-sound-comment \"wood16.nsp\") -> ~A?" com)))))
 	(let ((fsnd (string-append sf-dir "wood.sdx")))
 	  (if (file-exists? fsnd)
 	      (begin
 		(set! com (mus-sound-comment fsnd))
-		(if (or (not (string? com)) (not (string-=? com "1994 Jesus Villena")))
+		(if (or (not (string? com)) (not (string=? com "1994 Jesus Villena")))
 		    (snd-display #__line__ ";mus-sound-comment \"wood.sdx\") -> ~A?" com)))))
 	(let ((fsnd (string-append sf-dir "clmcom.aif")))
 	  (if (file-exists? fsnd)
 	      (begin
 		(set! com (mus-sound-comment fsnd))
-		(if (or (not (string? com)) (not (string-=? com "this is a comment")))
+		(if (or (not (string? com)) (not (string=? com "this is a comment")))
 		    (snd-display #__line__ ";mus-sound-comment \"clmcom.aif\") -> ~A?" com)))))
 	(let ((fsnd (string-append sf-dir "anno.aif")))
 	  (if (file-exists? fsnd)
 	      (begin
 		(set! com (mus-sound-comment fsnd))
-		(if (or (not (string? com)) (not (string-=? com (string-append "1994 Jesus Villena" (string #\newline)))))
+		(if (or (not (string? com)) (not (string=? com (string-append "1994 Jesus Villena" (string #\newline)))))
 		    (snd-display #__line__ ";mus-sound-comment \"anno.aif\") -> ~A?" com)))))
 	(let ((fsnd (string-append sf-dir "telephone.wav")))
 	  (if (file-exists? fsnd)
 	      (begin
 		(set! com (mus-sound-comment fsnd))
 		(if (or (not (string? com)) 
-			(not (string-=? com (string-append "sample_byte_format -s2 01"
+			(not (string=? com (string-append "sample_byte_format -s2 01"
 							   (string #\newline)
 							   "channel_count -i 1"
 							   (string #\newline)
@@ -2774,15 +2774,15 @@
 	(if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 		 (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	    (snd-display #__line__ ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
-	(if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "23-Nov-2012 06:56"))
+	(if (not (string=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "23-Nov-2012 06:56"))
 	    (snd-display #__line__ ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
 ;	(mus-sound-forget "oboe.snd")
 	
 	(let ((lasth (do ((i 1 (+ i 1)))
-			 ((string-=? (mus-header-type-name i) "unknown") i))))
+			 ((string=? (mus-header-type-name i) "unknown") i))))
 	  (if (< lasth 50) (snd-display #__line__ ";header-type[~A] = ~A" lasth (mus-header-type-name lasth))))
 	(let ((lasth (do ((i 1 (+ i 1)))
-			 ((string-=? (mus-sample-type-name i) "unknown") i))))
+			 ((string=? (mus-sample-type-name i) "unknown") i))))
 	  (if (< lasth 10) (snd-display #__line__ ";sample-type[~A] = ~A" lasth (mus-sample-type-name lasth))))
 	
 	(set! *transform-normalization* dont-normalize)
@@ -7462,20 +7462,22 @@ EDITS: 5
 	    (call-with-current-continuation
 	     (lambda (break)
 	       (if (not (continuation? break)) (snd-display #__line__ ";not a continuation: ~A" break))
-	       (do ((i 0 (+ i 1)))
-		   ((= i (- (length mn) 4)))
-		 (if (< (mn i) 0.5) (begin (snd-display #__line__ ";peak min: ~A ~A" (mn i) i) (break #f)))
-		 (if (< (mx i) 0.5) (begin (snd-display #__line__ ";peak max: ~A ~A" (mx i) i) (break #f)))))))
+	       (let ((ln (- (length mn) 4)))
+		 (do ((i 0 (+ i 1)))
+		     ((= i ln))
+		   (if (< (mn i) 0.5) (begin (snd-display #__line__ ";peak min: ~A ~A" (mn i) i) (break #f)))
+		   (if (< (mx i) 0.5) (begin (snd-display #__line__ ";peak max: ~A ~A" (mx i) i) (break #f))))))))
 	  (undo 2)
 	  (map-channel (lambda (y) -1.0) 0 50001)
 	  (ramp-channel 0.5 1.0 1000 4000)
 	  (let* ((peaks (channel-amp-envs ind 0))
 		 (mx (cadr peaks))
 		 (mn (car peaks))
-		 (happy #t))
+		 (happy #t)
+		 (ln (- (length mn) 4)))
 	    (do ((i 0 (+ i 1)))
 		((or (not happy) 
-		     (= i (- (length mn) 4))))
+		     (= i ln)))
 	      (if (> (mn i) -0.5) (begin (snd-display #__line__ ";1 peak min: ~A ~A" (mn i) i) (set! happy #f)))
 	      (if (> (mx i) -0.5) (begin (snd-display #__line__ ";1 peak max: ~A ~A" (mx i) i) (set! happy #f)))))
 	  (close-sound ind))
@@ -11503,7 +11505,8 @@ EDITS: 2
 
   ;; -----------------
   (define (test-fm-components)
-    (if (provided? 'gsl)
+    (if (and (provided? 'gsl)
+	     (not (provided? 'gmp)))
 	(let ((str (with-output-to-string
 		     (lambda ()
 		       (fm-complex-component 1200 1000 100 1.0 4.0 0.0 #f)
@@ -27526,11 +27529,12 @@ EDITS: 2
 	   (- (+ logla logra)
 	      (* 2 logca)))))
     (let* ((data (channel->float-vector beg size ind 0))
-	   (spectr (snd-spectrum data blackman2-window size))
-	   (peak0 0.0)
-	   (pk0loc 0))
+	   (spectr (snd-spectrum data blackman2-window size)))
+      (let ((peak0 0.0)
+	    (pk0loc 0)
+	    (size2 (/ size 2)))
       (do ((i 0 (+ i 1)))
-	  ((= i (/ size 2)) 
+	  ((= i size2) 
 	   (list (/ (* (+ pk0loc
 			  (if (> pk0loc 0)
 			      (interpolated-peak-offset 
@@ -27544,7 +27548,7 @@ EDITS: 2
 	(if (> (spectr i) peak0)
 	    (begin
 	      (set! peak0 (spectr i))
-	      (set! pk0loc i))))))
+	      (set! pk0loc i)))))))
   
   (define (test-selection ind beg len scaler)
     (set! (selection-member? ind 0) #t)

@@ -8192,13 +8192,13 @@ static Xen g_set_samples_any(Xen args)
 void check_saved_temp_file(const char *type, Xen filename, Xen date_and_length)
 {
   const char *file;
-  time_t old_time, new_time;
 
   if (!Xen_is_list(date_and_length)) return; /* can this happen? */
 
   file = Xen_string_to_C_string(filename);
   if (mus_file_probe(file))
     {
+      time_t old_time, new_time;
       mus_long_t old_bytes, new_bytes;
       old_time = (time_t)Xen_ulong_to_C_ulong(Xen_car(date_and_length));
       old_bytes = Xen_llong_to_C_llong(Xen_cadr(date_and_length));
