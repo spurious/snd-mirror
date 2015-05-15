@@ -1383,8 +1383,6 @@ static void init_types(void)
  * this bit can't be in the 2nd byte -- with-let, for example, is immutable, but we use SYNTACTIC_TYPE to 
  * recognize syntax in do loop optimizations.
  */
-#define dont_copy(p)                  ((!is_pair(p)) || (is_immutable(p)) || (heap_location(p) == NOT_IN_HEAP))
-/* dont_copy means the object is not copied when saved in a continuation */
 
 #define T_SETTER                      (1 << (TYPE_BITS + 17))
 #define set_setter(p)                 typeflag(p) |= T_SETTER
@@ -1694,7 +1692,6 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 /* set slot before id in case Slot is an expression that tries to find the current Symbol slot (using its old Id obviously) */
 /* I think symbol_id is set only here */
 
-
 #define is_slot(p)                    (type(p) == T_SLOT)
 #define slot_value(p)                 (p)->object.slt.val
 #define slot_set_value(p, Val)        (p)->object.slt.val = Val
@@ -1705,7 +1702,6 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define slot_accessor(p)              slot_expression(p)
 #define slot_has_accessor(p)          has_accessor(p)
 #define slot_set_has_accessor(p)      set_has_accessor(p)
-
 
 #define is_syntax(p)                  (type(p) == T_SYNTAX)
 #define syntax_symbol(p)              (p)->object.syn.symbol
@@ -1790,8 +1786,6 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 
 #define ITERATOR_END EOF_OBJECT
 #define ITERATOR_END_NAME "#<eof>"
-
-#define temp_stack_top(p)             (p)->object.stk.top
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT)
 #if DEBUGGING
@@ -1883,6 +1877,7 @@ bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_optimized
 #define continuation_op_loc(p)        (p)->object.cwcc.continuation->op_stack_loc
 #define continuation_op_size(p)       (p)->object.cwcc.continuation->op_stack_size
 #define continuation_key(p)           (p)->object.cwcc.continuation->local_key
+#define temp_stack_top(p)             (p)->object.stk.top
 
 #define call_exit_goto_loc(p)         (p)->object.rexit.goto_loc
 #define call_exit_op_loc(p)           (p)->object.rexit.op_stack_loc
@@ -1991,11 +1986,7 @@ static void set_print_name(s7_pointer p, const char *name, int len)
     {
       set_has_print_name(p);
       print_name_length(p) = (unsigned char)(len & 0xff);
-#ifdef __OpenBSD__
-      strlcpy(print_name(p), name, PRINT_NAME_SIZE);
-#else
-      strcpy(print_name(p), name);
-#endif
+      memcpy((void *)print_name(p), (void *)name, len);
     }
 }
 
@@ -2220,6 +2211,7 @@ static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
 static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args);
 static int remember_file_name(s7_scheme *sc, const char *file);
 static const char *type_name(s7_scheme *sc, s7_pointer arg, int article);
+static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, unsigned int typ);
 static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int len);
 static s7_pointer make_string_wrapper_with_length(s7_scheme *sc, const char *str, int len);
 static s7_pointer make_string_wrapper(s7_scheme *sc, const char *str);
@@ -2406,7 +2398,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_C_CSA, HOP_SAFE_C_CSA, OP_SAFE_C_SCA, HOP_SAFE_C_SCA, OP_SAFE_C_CAS, HOP_SAFE_C_CAS,
       OP_SAFE_C_A, HOP_SAFE_C_A, OP_SAFE_C_AA, HOP_SAFE_C_AA, OP_SAFE_C_AAA, HOP_SAFE_C_AAA, OP_SAFE_C_AAAA, HOP_SAFE_C_AAAA,
       OP_SAFE_C_SQS, HOP_SAFE_C_SQS, OP_SAFE_C_opAq, HOP_SAFE_C_opAq, OP_SAFE_C_opAAq, HOP_SAFE_C_opAAq, OP_SAFE_C_opAAAq, HOP_SAFE_C_opAAAq,
-      OP_SAFE_C_S_opAAq, HOP_SAFE_C_S_opAAq, OP_SAFE_C_S_opAAAq, HOP_SAFE_C_S_opAAAq,
+      OP_SAFE_C_S_opAq, HOP_SAFE_C_S_opAq, OP_SAFE_C_S_opAAq, HOP_SAFE_C_S_opAAq, OP_SAFE_C_S_opAAAq, HOP_SAFE_C_S_opAAAq,
 
       OP_SAFE_C_opCq, HOP_SAFE_C_opCq, OP_SAFE_C_opSq, HOP_SAFE_C_opSq,
       OP_SAFE_C_opSSq, HOP_SAFE_C_opSSq, OP_SAFE_C_opSCq, HOP_SAFE_C_opSCq, OP_SAFE_C_opSQq, HOP_SAFE_C_opSQq,
@@ -2596,7 +2588,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "safe_c_csa", "h_safe_c_csa", "safe_c_sca", "h_safe_c_sca", "safe_c_cas", "h_safe_c_cas",
       "safe_c_a", "h_safe_c_a", "safe_c_aa", "h_safe_c_aa", "safe_c_aaa", "h_safe_c_aaa", "safe_c_aaaa", "h_safe_c_aaaa",
       "safe_c_sqs", "h_safe_c_sqs", "safe_c_opaq", "h_safe_c_opaq", "safe_c_opaaq", "h_safe_c_opaaq", "safe_c_opaaaq", "h_safe_c_opaaaq",
-      "safe_c_s_opaaq", "h_safe_c_s_opaaq", "safe_c_s_opaaaq", "h_safe_c_s_opaaaq",
+      "safe_c_s_opaq", "h_safe_c_s_opaq", "safe_c_s_opaaq", "h_safe_c_s_opaaq", "safe_c_s_opaaaq", "h_safe_c_s_opaaaq",
 
       "safe_c_opcq", "h_safe_c_opcq", "safe_c_opsq", "h_safe_c_opsq",
       "safe_c_opssq", "h_safe_c_opssq", "safe_c_opscq", "h_safe_c_opscq", "safe_c_opsqq", "h_safe_c_opsqq",
@@ -4265,11 +4257,9 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_PAIR:
       heap_location(x) = NOT_IN_HEAP;
       p = alloc_pointer();
-      /* clear_type(p); */
       sc->heap[loc] = p;
       (*sc->free_heap_top++) = p;
       heap_location(p) = loc;
-
 #if 0
       /* this code fixes the problem above, but at some cost (gc + mark_pair up by about 2% in the worst case (snd-test.scm)) */
       if ((car(x) == sc->QUOTE) &&
@@ -6958,20 +6948,6 @@ static s7_pointer protected_list_copy(s7_scheme *sc, s7_pointer a)
 }
 
 
-static s7_pointer copy_arg_list(s7_scheme *sc, s7_pointer lst)
-{
-  /* lst can be dotted or circular here.  The circular list only happens in a case like:
-   *    (dynamic-wind
-   *      (lambda () (eq? (let ((lst (cons 1 2))) (set-cdr! lst lst) lst) (call/cc (lambda (k) k))))
-   *      (lambda () #f)
-   *      (lambda () #f))
-   *
-   * on the first call, we know lst is a pair
-   */
-  return(protected_list_copy(sc, lst));
-}
-
-
 static s7_pointer copy_counter(s7_scheme *sc, s7_pointer obj)
 {
   s7_pointer nobj;
@@ -6984,42 +6960,12 @@ static s7_pointer copy_counter(s7_scheme *sc, s7_pointer obj)
 }
 
 
-static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
-{
-  /* called only in copy_stack -- the GC is off */
-  s7_pointer nobj;
-  int nloc;
-
-  /* since the GC is off, NEW_CELL ignores the free_heap trigger, causing it to exhaust the free list sometimes,
-   *   so we check explicitly -- we don't want to call the gc mark/sweep process here.
-   */
-  if (sc->free_heap_top <= sc->free_heap_trigger) expand_heap(sc);
-  nobj = (*(--(sc->free_heap_top)));
-
-  nloc = heap_location(nobj);
-#if DEBUGGING
-  if (nloc == 0) {fprintf(stderr, "free_list trouble\n"); abort();}
-#endif
-  memcpy((void *)nobj, (void *)obj, sizeof(s7_cell));
-  heap_location(nobj) = nloc;
-
-  /* nobj is safe here because the gc is off */
-  if (dont_copy(car(obj)))
-    car(nobj) = car(obj);
-  else car(nobj) = copy_object(sc, car(obj));
-
-  if ((dont_copy(cdr(obj))) ||
-      (is_procedure_or_macro(obj)))
-    cdr(nobj) = cdr(obj); /* closure_let in func cases */
-  else cdr(nobj) = copy_object(sc, cdr(obj));
-
-  return(nobj);
-}
-
+#define FILLED true
+#define NOT_FILLED false
 
 static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
 {
-#define CC_INITIAL_STACK_SIZE 256 /* 128 is too small here */
+  #define CC_INITIAL_STACK_SIZE 256 /* 128 is too small here */
   int i, len;
   s7_pointer new_v;
   s7_pointer *nv, *ov;
@@ -7038,37 +6984,34 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
       if (len < CC_INITIAL_STACK_SIZE)
 	len = CC_INITIAL_STACK_SIZE;
     }
-
-  new_v = s7_make_vector(sc, len);
-  set_type(new_v, T_STACK);
-  temp_stack_top(new_v) = top;
-
-  /* we can't leave the upper stuff simply malloc-garbage because we're sure to call the GC.
-   *   We also can't just copy the vector since that seems to confuse the gc mark process.
+  if ((int)(sc->free_heap_top - sc->free_heap) < (int)(sc->heap_size / 4)) gc(sc);
+  /* this gc call is needed if there are lots of call/cc's -- by pure bad luck
+   *   we can end up hitting the end of the gc free list time after time while
+   *   in successive copy_stack's below, causing s7 to core up until it runs out of memory.
    */
 
+  new_v = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
+  set_type(new_v, T_STACK);
+  temp_stack_top(new_v) = top;
   nv = vector_elements(new_v);
   ov = vector_elements(old_v);
-  s7_gc_on(sc, false);
+  if (len > 0)
+    memcpy((void *)nv, (void *)ov, len * sizeof(s7_pointer));
 
-  for (i = 0; i < top; i += 4)
+  s7_gc_on(sc, false);
+  for (i = 2; i < top; i += 4)
     {
       s7_pointer p;
-      if (dont_copy(ov[i]))
-	nv[i] = ov[i];
-      else nv[i] = copy_object(sc, ov[i]);    /* code */
-
-      nv[i + 1] = ov[i + 1];                  /* environment pointer */
-      nv[i + 3] = ov[i + 3];                  /* op (constant int) */
-
-      p = ov[i + 2];
-      if (is_pair(p))                         /* args need not be a list (it can be a port or #f, etc) */
-	nv[i + 2] = copy_arg_list(sc, p);     /* args (copy is needed -- see s7test.scm) */
+      p = ov[i];                            /* args */
+      if (is_pair(p))                       /* args need not be a list (it can be a port or #f, etc) */
+	nv[i] = protected_list_copy(sc, p); /* args (copy is needed -- see s7test.scm) */
+      /* lst can be dotted or circular here.  The circular list only happens in a case like:
+       *    (dynamic-wind (lambda () (eq? (let ((lst (cons 1 2))) (set-cdr! lst lst) lst) (call/cc (lambda (k) k)))) (lambda () #f) (lambda () #f))
+       */
       else
 	{
-	  if (is_counter(p))                  /* these can only occur in this context */
-	    nv[i + 2] = copy_counter(sc, p);
-	  else nv[i + 2] = p;                 /* is this a safe assumption? */
+	  if (is_counter(p))              /* these can only occur in this context */
+	    nv[i] = copy_counter(sc, p);
 	}
     }
   s7_gc_on(sc, true);
@@ -7161,20 +7104,13 @@ static int find_any_baffle(s7_scheme *sc)
 s7_pointer s7_make_continuation(s7_scheme *sc)
 {
   s7_pointer x, stack;
-  int loc, gc_loc = -1;
-  if ((int)(sc->free_heap_top - sc->free_heap) < (int)(sc->heap_size / 4))
-    gc(sc);
+  int loc;
 
-  /* this gc call is needed if there are lots of call/cc's -- by pure bad luck
-   *   we can end up hitting the end of the gc free list time after time while
-   *   in successive copy_stack's below, causing s7 to core up until it runs out of memory.
-   */
   loc = s7_stack_top(sc);
   stack = copy_stack(sc, sc->stack, loc);
-  gc_loc = s7_gc_protect(sc, stack);
+  sc->temp8 = stack;
 
   NEW_CELL(sc, x, T_CONTINUATION | T_PROCEDURE);
-
   continuation_data(x) = (continuation_t *)malloc(sizeof(continuation_t));
   continuation_stack(x) = stack;
   continuation_stack_size(x) = vector_length(continuation_stack(x));   /* copy_stack can return a smaller stack than the current one */
@@ -7186,7 +7122,6 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   continuation_key(x) = find_any_baffle(sc);
 
   add_continuation(sc, x);
-  s7_gc_unprotect_at(sc, gc_loc);
   return(x);
 }
 
@@ -8133,16 +8068,10 @@ static s7_pointer exact_to_inexact(s7_scheme *sc, s7_pointer x)
    */
   switch (type(x))
     {
-    case T_INTEGER:
-      return(make_real(sc, (s7_Double)(integer(x))));
-
-    case T_RATIO:
-      return(make_real(sc, (s7_Double)(fraction(x))));
-
-    case T_REAL:
-    case T_COMPLEX:              /* apparently (exact->inexact 1+i) is not an error */
-      return(x);
-
+    case T_INTEGER: return(make_real(sc, (s7_Double)(integer(x))));
+    case T_RATIO:   return(make_real(sc, (s7_Double)(fraction(x))));
+    case T_REAL:                  
+    case T_COMPLEX: return(x); /* apparently (exact->inexact 1+i) is not an error */
     default:
       check_method(sc, x, sc->EXACT_TO_INEXACT, list_1(sc, x));
       return(simple_wrong_type_argument_with_type(sc, sc->EXACT_TO_INEXACT, x, A_NUMBER));
@@ -30726,9 +30655,6 @@ static s7_pointer float_vector_getter(s7_scheme *sc, s7_pointer vec, s7_Int loc)
 }
 
 
-#define FILLED true
-#define NOT_FILLED false
-
 static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled, unsigned int typ)
 {
   s7_pointer x;
@@ -44591,6 +44517,9 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg, s7_pointer e)
 	      (symbol_is_safe(sc, cadr(caddr(arg)), e)))
 	    return(all_x_c_u_opuq);
 
+	  /* if ((!f) && ((optimize_data(arg) & 1) != 0)) fprintf(stderr, "%s: %s\n", opt_names[optimize_data(arg)], DISPLAY_80(arg)); */
+	  /* just op_opsq_q in lg -- nearly all remaining cases involve z's */
+
 	  return(f);
 	}
       if (car(arg) == sc->QUOTE)
@@ -44726,6 +44655,9 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_SZ:
 	  return(OP_SAFE_C_S_opSZq);
 
+	case OP_SAFE_C_A:
+	  return(OP_SAFE_C_S_opAq);
+
 	case OP_SAFE_C_AA:
 	  return(OP_SAFE_C_S_opAAq);
 
@@ -44736,6 +44668,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_AAA:
 	  return(OP_SAFE_C_S_opAAAq);
 	}
+      /* fprintf(stderr, "%s: %s\n", opt_names[op2], DISPLAY(e1)); */
       return(OP_SAFE_C_SZ);
 
     case E_C_PS:
@@ -52015,22 +51948,30 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 		if (func)
 		  {
-		    s7_pointer a1 = NULL, a2 = NULL, a3 = NULL;
-		    s7_function f1 = NULL;
-		    if (func == all_x_c_sss)
+		    s7_pointer a1 = NULL, a2 = NULL, a3 = NULL, a4 = NULL;
+		    s7_function f1 = NULL, f2 = NULL;
+		    if ((func == all_x_c_sss) || (func == all_x_c_ssa))
 		      {
 			a1 = find_symbol(sc, cadr(body));
 			a2 = find_symbol(sc, caddr(body));
-			a3 = find_symbol(sc, cadddr(body));
+			if (func == all_x_c_sss)
+			  a3 = find_symbol(sc, cadddr(body));
+			else 
+			  {
+			    f2 = ((s7_function)fcdr(cdddr(body)));
+			    a4 = cadddr(body);
+			  }
 			f1 = c_call(body);
 		      }
 		    while (true)
 		      {
 			if (a1)
 			  {
+			    if (a3)
+			      car(sc->A3_3) = slot_value(a3);
+			    else car(sc->A3_3) = f2(sc, a4);
 			    car(sc->A3_1) = slot_value(a1);
 			    car(sc->A3_2) = slot_value(a2);
-			    car(sc->A3_3) = slot_value(a3);
 			    f1(sc, sc->A3_1);
 			  }
 			else func(sc, body);
@@ -53383,6 +53324,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   */
 		  
 		case HOP_SAFE_C_Z:
+		  check_stack_size(sc);
 		  push_stack(sc, OP_SAFE_C_P_1, sc->NIL, code);
 		  sc->code = cadr(code);
 		  goto OPT_EVAL;
@@ -53392,9 +53334,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		  
 		case HOP_SAFE_C_CZ:
-		  /* it's possible in a case like this to overflow the stack -- s7test has an infinitely deeply
+		  check_stack_size(sc);
+		  /* it's possible in a case like this to overflow the stack -- s7test has a deeply
 		   *   nested expression involving (+ c (+ c (+ ... ))) all opt'd as safe_c_cz -- if we're close
-		   *   to the stack end at the start, it runs off the end.  Not sure how to catch such a weird case.
+		   *   to the stack end at the start, it runs off the end.  Normally the stack increase in
+		   *   the reader protects us, but a call/cc can replace the original stack with a much smaller one.
+		   * How to minimize the cost of this check?
 		   */
 		  push_stack(sc, OP_SAFE_C_SZ_1, cadr(code), code);
 		  sc->code = caddr(code);
@@ -53405,6 +53350,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		  
 		case HOP_SAFE_C_ZC:
+		  check_stack_size(sc);
 		  push_stack(sc, OP_SAFE_C_ZC_1, caddr(code), code); /* need ZC_1 here in case multiple values encountered */
 		  sc->code = cadr(code);
 		  goto OPT_EVAL;
@@ -53414,6 +53360,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		  
 		case HOP_SAFE_C_SZ:
+		  check_stack_size(sc);
 		  push_stack(sc, OP_SAFE_C_SZ_1, find_symbol_checked(sc, cadr(code)), code);
 		  sc->code = caddr(code);
 		  /* splitting out the all_x cases here and elsewhere saves nothing */
@@ -53424,6 +53371,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		  
 		case HOP_SAFE_C_ZS:
+		  check_stack_size(sc);
 		  push_stack(sc, OP_EVAL_ARGS_P_3, sc->NIL, code);
 		  sc->code = cadr(code);
 		  goto OPT_EVAL;
@@ -53470,6 +53418,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(sc->A3_3) = ((s7_function)fcdr(cdddr(arg)))(sc, cadddr(arg));
 		    car(sc->T1_1) = c_call(arg)(sc, sc->A3_1);
 		    sc->value = c_call(code)(sc, sc->T1_1);
+		    goto START;
+		  }
+		  
+		  
+		case OP_SAFE_C_S_opAq:
+		  if (!a_is_ok_caddr(sc, code)) break;
+		  
+		case HOP_SAFE_C_S_opAq:
+		  {
+		    s7_pointer arg;
+		    arg = caddr(code);
+		    car(sc->A1_1) = ((s7_function)fcdr(cdr(arg)))(sc, cadr(arg));
+		    car(sc->T2_2) = c_call(arg)(sc, sc->A1_1);
+		    car(sc->T2_1) = find_symbol_checked(sc, cadr(code));
+		    sc->value = c_call(code)(sc, sc->T2_1);
 		    goto START;
 		  }
 		  
@@ -55996,20 +55959,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		  
 		  
-		UNSAFE_CLOSURE_STAR_TWO:
-		  {
-		    s7_pointer args;
-		    code = ecdr(sc->code);
-		    args = closure_args(code);
-		    
-		    NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_let(code), sc->envir, (is_pair(car(args))) ? caar(args) : car(args), car(sc->T2_1));
-		    ADD_SLOT(sc->envir, (is_pair(cadr(args))) ? caadr(args) : cadr(args), car(sc->T2_2));
-		    
-		    sc->code = closure_body(code);
-		    goto BEGIN1;
-		  }
-		  
-		  
 		case OP_CLOSURE_STAR_SX:
 		  if (!closure_star_is_ok(sc, code, MATCH_UNSAFE_CLOSURE_STAR, 2)) {set_optimize_data(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
 		  
@@ -56025,9 +55974,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			car(sc->T2_1) = val1;
 			car(sc->T2_2) = val2;
-			goto UNSAFE_CLOSURE_STAR_TWO;
+			code = ecdr(sc->code);
+			args = closure_args(code);
+			NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_let(code), sc->envir, (is_pair(car(args))) ? caar(args) : car(args), car(sc->T2_1));
+			ADD_SLOT(sc->envir, (is_pair(cadr(args))) ? caadr(args) : cadr(args), car(sc->T2_2));
+			sc->code = closure_body(code);
+			goto BEGIN1;
 		      }
-		    
 		    sc->args = list_2(sc, val2, val1);
 		    sc->value = args;
 		    goto FILL_CLOSURE_STAR;
@@ -68272,25 +68225,25 @@ int main(int argc, char **argv)
 #endif
 
 
-/* ------------------------------------------------------------------
+/* --------------------------------------------------------------------------
  *
  *           12.x | 13.0 | 14.2 | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7
- * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1119
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1126
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1133
  * teq            |      |      | 6612                     3887 3020 2819
- * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3325
- * tcopy          |      |      |                          4970 4287 4158
+ * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3323
+ * tcopy          |      |      |                          4970 4287 4154
  * tmap           |      |      | 11.0           5031 4769 4685 4557 4523
- * tform          |      |      |                          6816 5536 5273
+ * tform          |      |      |                          6816 5536 5244
  * titer          |      |      |                          7976 6368 6353
- * lg             |      |      | 6547 6497 6494 6235 6229 6239 6611 6481
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6688
+ * lg             |      |      | 6547 6497 6494 6235 6229 6239 6611 6479
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6694
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.8
  * thash          |      |      |                          19.4 17.4 17.3
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 20.9
  * calls      359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1
  *
- * ------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
