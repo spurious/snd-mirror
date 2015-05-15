@@ -48336,6 +48336,77 @@ static void define_funchecked(s7_scheme *sc)
 }
 
 
+static void unsafe_closure_star(s7_scheme *sc)
+{
+  s7_pointer x, z, e;
+  unsigned long long int id;
+  
+  NEW_FRAME(sc, closure_let(sc->code), sc->envir);
+  e = sc->envir;
+  id = let_id(e);
+  
+  for (x = closure_args(sc->code), z = sc->args; is_pair(x); x = cdr(x))
+    {
+      s7_pointer sym, args, val;
+      if (is_pair(car(x)))
+	sym = caar(x);
+      else sym = car(x);
+      val = car(z);
+      args = cdr(z);
+      
+      slot_symbol(z) = sym;
+      symbol_set_local(sym, id, z);
+      slot_set_value(z, val);
+      set_type(z, T_SLOT | T_IMMUTABLE);
+      next_slot(z) = let_slots(e);
+      set_let_slots(e, z);
+      z = args;
+    }
+  sc->code = closure_body(sc->code);
+}
+
+static void fill_closure_star(s7_scheme *sc)
+{
+  s7_pointer p;
+  p = sc->value;
+  for (; is_pair(p); p = cdr(p))
+    {
+      s7_pointer defval;
+      if (is_pair(car(p)))
+	{
+	  defval = cadar(p);
+	  if (is_pair(defval))
+	    sc->args = cons(sc, cadr(defval), sc->args);
+	  else sc->args = cons(sc, defval, sc->args);
+	}
+      else sc->args = cons(sc, sc->F, sc->args);
+    }
+  sc->args = safe_reverse_in_place(sc, sc->args);
+  sc->code = ecdr(sc->code);
+}
+
+static void fill_safe_closure_star(s7_scheme *sc)
+{
+  s7_pointer p, x;
+  x = car(sc->T2_1);
+  p = car(sc->T2_2);
+  for (; is_pair(p); p = cdr(p), x = next_slot(x))
+    {
+      s7_pointer defval;
+      if (is_pair(car(p)))
+	{
+	  defval = cadar(p);
+	  if (is_pair(defval))
+	    slot_set_value(x, cadr(defval));
+	  else slot_set_value(x, defval);
+	}
+      else slot_set_value(x, sc->F);
+      symbol_set_local(slot_symbol(x), let_id(sc->envir), x);
+    }
+  sc->code = closure_body(ecdr(sc->code));
+}
+
+
 static s7_pointer define_macro_name(s7_scheme *sc, opcode_t op)
 {
   switch (op)
@@ -55401,10 +55472,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    
 		    car(sc->T2_1) = next_slot(x);
 		    car(sc->T2_2) = cddr(closure_args(ecdr(code)));
-		    goto FILL_SAFE_CLOSURE_STAR;
+#if DEBUGGING
+		    if (sc->code != code) fprintf(stderr, "%d: need update\n", __LINE__);
+#endif
+		    fill_safe_closure_star(sc);
+		    goto BEGIN1;
 		  }
 		  
-		  
+
 		case OP_SAFE_CLOSURE_STAR_SC:
 		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) {set_optimize_data(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
 		  
@@ -55419,9 +55494,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    
 		    car(sc->T2_1) = next_slot(x);
 		    car(sc->T2_2) = cddr(closure_args(ecdr(code)));
-		    goto FILL_SAFE_CLOSURE_STAR;
+#if DEBUGGING
+		    if (sc->code != code) fprintf(stderr, "%d: need update\n", __LINE__);
+#endif
+		    fill_safe_closure_star(sc);
+		    goto BEGIN1;
 		  }
-		  
+
 		  
 		case OP_SAFE_CLOSURE_STAR_SA:
 		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) break;
@@ -55493,8 +55572,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  let_id(sc->envir) = ++sc->let_number;
 		  car(sc->T2_1) = let_slots(closure_let(ecdr(code)));
 		  car(sc->T2_2) = closure_args(ecdr(code));
-		  goto FILL_SAFE_CLOSURE_STAR;
-		  
+#if DEBUGGING
+		  if (sc->code != code) fprintf(stderr, "%d: need update\n", __LINE__);
+#endif
+		  fill_safe_closure_star(sc);
+		  goto BEGIN1;
+
 		  
 		case OP_SAFE_CLOSURE_STAR_S0:
 		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 1)) {set_optimize_data(code, OP_UNKNOWN_G); goto OPT_EVAL;}
@@ -55545,28 +55628,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* that sets the first arg to the passed symbol value; now set default values, if any */
 		  car(sc->T2_1) = next_slot(let_slots(closure_let(ecdr(code))));
 		  car(sc->T2_2) = cdr(closure_args(ecdr(code)));
-		  /* fall through */
-		  
-		FILL_SAFE_CLOSURE_STAR:
-		  {
-		    s7_pointer p, x;
-		    x = car(sc->T2_1);
-		    p = car(sc->T2_2);
-		    for (; is_pair(p); p = cdr(p), x = next_slot(x))
-		      {
-			s7_pointer defval;
-			if (is_pair(car(p)))
-			  {
-			    defval = cadar(p);
-			    if (is_pair(defval))
-			      slot_set_value(x, cadr(defval));
-			    else slot_set_value(x, defval);
-			  }
-			else slot_set_value(x, sc->F);
-			symbol_set_local(slot_symbol(x), let_id(sc->envir), x);
-		      }
-		  }
-		  sc->code = closure_body(ecdr(code));
+#if DEBUGGING
+		  if (sc->code != code) fprintf(stderr, "%d: need update\n", __LINE__);
+#endif
+		  fill_safe_closure_star(sc);
 		  goto BEGIN1;
 		  
 		  
@@ -55623,24 +55688,35 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->code = ecdr(code);
 		  call_with_exit(sc);
 		  goto START;
-		  
-		  /* for T_CONTINUATION, set sc->args to list_1(sc, ...) as in goto (and code?), the call_with_current_continuation */
+		  /* for T_CONTINUATION, set sc->args to list_1(sc, ...) as in goto (and code?), then call_with_current_continuation */
 		  
 		  
 		case OP_CLOSURE_C:
 		  if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 1)) {set_optimize_data(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_CLOSURE_C:
-		  sc->value = cadr(code);
-		  goto UNSAFE_CLOSURE_ONE;
+		  check_stack_size(sc);
+#if DEBUGGING
+		  if (sc->code != code) fprintf(stderr, "%d: need update\n", __LINE__);
+#endif
+		  code = ecdr(code);
+		  NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_let(code), sc->envir, car(closure_args(code)), cadr(sc->code));
+		  sc->code = closure_body(code);
+		  goto BEGIN1;
 		  
 		  
 		case OP_CLOSURE_Q:
 		  if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 1)) {set_optimize_data(code, OP_UNKNOWN_A); goto OPT_EVAL;}
 		  
 		case HOP_CLOSURE_Q:
-		  sc->value = cadr(cadr(code));
-		  goto UNSAFE_CLOSURE_ONE;
+		  check_stack_size(sc);
+#if DEBUGGING
+		  if (sc->code != code) fprintf(stderr, "%d: need update\n", __LINE__);
+#endif
+		  code = ecdr(code);
+		  NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_let(code), sc->envir, car(closure_args(code)), cadr(cadr(sc->code)));
+		  sc->code = closure_body(code);
+		  goto BEGIN1;
 		  
 		  
 		case OP_CLOSURE_A:
@@ -55649,7 +55725,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case HOP_CLOSURE_A:
 		  sc->value = ((s7_function)fcdr(cdr(code)))(sc, cadr(code));
-		  goto UNSAFE_CLOSURE_ONE;
+		  check_stack_size(sc);
+		  code = ecdr(code);
+		  NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_let(code), sc->envir, car(closure_args(code)), sc->value);
+		  sc->code = closure_body(code);
+		  goto BEGIN1;
 		  
 		  
 		case OP_GLOSURE_A:
@@ -55660,7 +55740,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case HOP_GLOSURE_A:
 		  sc->value = ((s7_function)fcdr(cdr(code)))(sc, cadr(code));
-		  goto UNSAFE_CLOSURE_ONE;
+		  check_stack_size(sc);
+		  code = ecdr(code);
+		  NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_let(code), sc->envir, car(closure_args(code)), sc->value);
+		  sc->code = closure_body(code);
+		  goto BEGIN1;
 		  
 		  
 		case OP_GLOSURE_P:
@@ -55679,7 +55763,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case HOP_GLOSURE_S:
 		  sc->value = find_symbol_checked(sc, fcdr(code));
-		  goto UNSAFE_CLOSURE_ONE;
+		  check_stack_size(sc);
+		  code = ecdr(code);
+		  NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_let(code), sc->envir, car(closure_args(code)), sc->value);
+		  sc->code = closure_body(code);
+		  goto BEGIN1;
 		  
 		  
 		case OP_CLOSURE_S:
@@ -55687,9 +55775,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case HOP_CLOSURE_S:
 		  sc->value = find_symbol_checked(sc, fcdr(code));
-		  /* goto UNSAFE_CLOSURE_ONE; */
-		  
-		UNSAFE_CLOSURE_ONE:
 		  check_stack_size(sc);
 		  code = ecdr(code);
 		  NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_let(code), sc->envir, car(closure_args(code)), sc->value);
@@ -55955,7 +56040,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			else car(new_args) = sc->F;
 		      }
 		    sc->code = ecdr(code);
-		    goto UNSAFE_CLOSURE_STAR;
+		    unsafe_closure_star(sc);
+		    goto BEGIN1;
 		  }
 		  
 		  
@@ -55979,11 +56065,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			NEW_FRAME_WITH_CHECKED_SLOT(sc, closure_let(code), sc->envir, (is_pair(car(args))) ? caar(args) : car(args), car(sc->T2_1));
 			ADD_SLOT(sc->envir, (is_pair(cadr(args))) ? caadr(args) : cadr(args), car(sc->T2_2));
 			sc->code = closure_body(code);
-			goto BEGIN1;
 		      }
-		    sc->args = list_2(sc, val2, val1);
-		    sc->value = args;
-		    goto FILL_CLOSURE_STAR;
+		    else
+		      {
+			sc->args = list_2(sc, val2, val1);
+			sc->value = args;
+#if DEBUGGING
+			if (sc->code != code) fprintf(stderr, "%d: need update\n", __LINE__);
+#endif
+			fill_closure_star(sc);
+			unsafe_closure_star(sc);
+		      }
+		    goto BEGIN1;
 		  }
 		  
 		  
@@ -55994,7 +56087,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* (let () (define* (hi (a 1)) (list a)) (define (ho) (hi)) (ho)) */
 		  sc->value = closure_args(ecdr(code));
 		  sc->args = sc->NIL;
-		  goto FILL_CLOSURE_STAR;
+#if DEBUGGING
+		  if (sc->code != code) fprintf(stderr, "%d: need update\n", __LINE__);
+#endif
+		  fill_closure_star(sc);
+		  unsafe_closure_star(sc);
+		  goto BEGIN1;
 		  
 		  
 		case OP_CLOSURE_STAR_S:
@@ -56003,62 +56101,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_CLOSURE_STAR_S:
 		  sc->value = cdr(closure_args(ecdr(code)));
 		  sc->args = list_1(sc, find_symbol_checked(sc, fcdr(code)));
-		  /* fall through */
-		  
-		  
-		FILL_CLOSURE_STAR:
-		  {
-		    s7_pointer p;
-		    p = sc->value;
-		    for (; is_pair(p); p = cdr(p))
-		      {
-			s7_pointer defval;
-			if (is_pair(car(p)))
-			  {
-			    defval = cadar(p);
-			    if (is_pair(defval))
-			      sc->args = cons(sc, cadr(defval), sc->args);
-			    else sc->args = cons(sc, defval, sc->args);
-			  }
-			else sc->args = cons(sc, sc->F, sc->args);
-		      }
-		    sc->args = safe_reverse_in_place(sc, sc->args);
-		    sc->code = ecdr(code);
-		    /* fall through */
-		  }
-		  
-		UNSAFE_CLOSURE_STAR:
-		  
-		  NEW_FRAME(sc, closure_let(sc->code), sc->envir);
-		  {
-		    s7_pointer x, z, e;
-		    unsigned long long int id;
-		    
-		    e = sc->envir;
-		    id = let_id(e);
-		    
-		    for (x = closure_args(sc->code), z = sc->args; is_pair(x); x = cdr(x))
-		      {
-			s7_pointer sym, args, val;
-			if (is_pair(car(x)))
-			  sym = caar(x);
-			else sym = car(x);
-			val = car(z);
-			args = cdr(z);
-			
-			slot_symbol(z) = sym;
-			symbol_set_local(sym, id, z);
-			slot_set_value(z, val);
-			set_type(z, T_SLOT | T_IMMUTABLE);
-			next_slot(z) = let_slots(e);
-			set_let_slots(e, z);
-			z = args;
-		      }
-		    
-		    sc->code = closure_body(sc->code);
-		    goto BEGIN1;
-		  }
-		  
+#if DEBUGGING
+		  if (sc->code != code) fprintf(stderr, "%d: need update\n", __LINE__);
+#endif
+		  fill_closure_star(sc);
+		  unsafe_closure_star(sc);
+		  goto BEGIN1;
+
 		  
 		  /* -------------------------------------------------------------------------------- */
 		  
@@ -60667,36 +60716,37 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL;
 	  
 	  
-	COND1_SIMPLE:
 	case OP_COND1_SIMPLE:
-	  if (is_true(sc, sc->value))
+	  while (true)
 	    {
-	      sc->code = cdar(sc->code);
+	      if (is_true(sc, sc->value))
+		{
+		  sc->code = cdar(sc->code);
+		  if (is_null(sc->code))
+		    {
+		      if (is_multiple_value(sc->value))
+			sc->value = splice_in_values(sc, multiple_value(sc->value));
+		      goto START;
+		    }
+		  goto BEGIN1;
+		}
+	      
+	      sc->code = cdr(sc->code);
 	      if (is_null(sc->code))
 		{
-		  if (is_multiple_value(sc->value))
-		    sc->value = splice_in_values(sc, multiple_value(sc->value));
+		  sc->value = sc->NIL;
 		  goto START;
 		}
-	      goto BEGIN1;
+	      if (is_pair(caar(sc->code)))
+		{
+		  push_stack_no_args(sc, OP_COND1_SIMPLE, sc->code);
+		  sc->code = caar(sc->code);
+		  goto EVAL;
+		}
+	      sc->value = caar(sc->code);
+	      if (is_symbol(sc->value))
+		sc->value = find_symbol_checked(sc, sc->value);
 	    }
-	  
-	  sc->code = cdr(sc->code);
-	  if (is_null(sc->code))
-	    {
-	      sc->value = sc->NIL;
-	      goto START;
-	    }
-	  if (is_pair(caar(sc->code)))
-	    {
-	      push_stack_no_args(sc, OP_COND1_SIMPLE, sc->code);
-	      sc->code = caar(sc->code);
-	      goto EVAL;
-	    }
-	  sc->value = caar(sc->code);
-	  if (is_symbol(sc->value))
-	    sc->value = find_symbol_checked(sc, sc->value);
-	  goto COND1_SIMPLE;
 	  
 	  
 	case OP_COND_S:

@@ -3930,11 +3930,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 	      snd_srate(sp), 
 	      axes, 
 	      cp->printing,
-	      (((sp->channel_style != CHANNELS_COMBINED) || 
-		(cp->show_axes == SHOW_ALL_AXES) || 
-		(cp->show_axes == SHOW_ALL_AXES_UNLABELLED) || 
-		(cp->show_axes == SHOW_BARE_X_AXIS) || 
-		(cp->chan == (sp->nchans - 1))) ? WITH_X_AXIS : NO_X_AXIS),
+	      cp->show_axes != SHOW_NO_AXES,
 	      grid, 
 	      log_axes,
 	      cp->grid_density);
