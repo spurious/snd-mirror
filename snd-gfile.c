@@ -3048,7 +3048,6 @@ widget_t make_new_file_dialog(bool managed)
 {
   if (!new_file_dialog)
     {
-      char *newname;
       GtkWidget *name_label, *hform, *help_button, *cancel_button, *reset_button;
       new_file_dialog = snd_gtk_dialog_new();
 #if GTK_CHECK_VERSION(3, 14, 0)
@@ -3087,7 +3086,6 @@ widget_t make_new_file_dialog(bool managed)
 
       new_file_text = snd_entry_new(hform, NULL, WITH_WHITE_BACKGROUND);
 
-      newname = NULL;
       ndat = make_file_data_panel(DIALOG_CONTENT_AREA(new_file_dialog), "data-form", 
 				  WITH_CHANNELS_FIELD, 
 				  default_output_header_type(ss), 

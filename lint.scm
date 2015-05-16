@@ -764,23 +764,23 @@
 
 
       ;; list version
-      (define var-name car)
-      (define var-ref cadr)
-      (define var-set caddr)
-      (define var-func-info cadddr)
+      (define-constant var-name car)
+      (define-constant var-ref cadr)
+      (define-constant var-set caddr)
+      (define-constant var-func-info cadddr)
       (define (set-cadr! v val) (list-set! v 1 val))
       (define (set-caddr! v val) (list-set! v 2 val))
       (define (set-cadddr! v val) (list-set! v 3 val))
       (set! (procedure-setter cadr) set-cadr!)
       (set! (procedure-setter caddr) set-caddr!)
       (set! (procedure-setter cadddr) set-cadddr!)
-      (define var-type (dilambda (lambda (v) (list-ref v 4)) (lambda (v x) (list-set! v 4 x))))
-      (define var-value (dilambda (lambda (v) (list-ref v 5)) (lambda (v x) (list-set! v 5 x))))
+      (define-constant var-type (dilambda (lambda (v) (list-ref v 4)) (lambda (v x) (list-set! v 4 x))))
+      (define-constant var-value (dilambda (lambda (v) (list-ref v 5)) (lambda (v x) (list-set! v 5 x))))
       (define make-var (lambda* (name ref set fnc typ val :allow-other-keys)
 	;(reflective-probe)
 	(list name ref set fnc typ val)))
-      (define var? pair?)
-      (define var-member assq)
+      (define-constant var? pair?)
+      (define-constant var-member assq)
 
 #|      
       ;; vector version

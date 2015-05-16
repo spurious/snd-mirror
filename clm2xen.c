@@ -13161,7 +13161,6 @@ static mus_float_t gf_rand_interp_1(void *p)    {return(mus_rand_interp_unmodula
 static mus_float_t gf_polywave_1(void *p)       {return(mus_polywave_unmodulated(((mus_xen *)p)->gen));}
 
 #define PRINTING 0
-mus_float_t gf_2_g1(void *p);
 
 #if (!WITH_GMP)
 mus_float_t wrapped_vct_ref(void *p);
