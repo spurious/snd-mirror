@@ -2349,8 +2349,8 @@ Otherwise, for example, you could use NaN as a key, but then never be able to ac
 <em class="gray">1.168</em>                        ;   0.70 on ccrma's i7-3930 machines
 &gt; (time (memo-fib 34))    ; memoized time
 <em class="gray">3.200e-05</em>
-&gt; (let-&gt;list (outlet (funclet memo-fib)))
-<em class="gray">(({memo}-18 . (hash-table 
+&gt; (outlet (funclet memo-fib))
+<em class="gray">(inlet '{memo}-18 (hash-table 
     '(0 . 0) '(1 . 1) '(2 . 1) '(3 . 2) '(4 . 3) '(5 . 5) 
     '(6 . 8) '(7 . 13) '(8 . 21) '(9 . 34) '(10 . 55) '(11 . 89) 
     '(12 . 144) '(13 . 233) '(14 . 377) '(15 . 610) '(16 . 987) 
@@ -3609,7 +3609,7 @@ original.
 ~F        float to string, (format #f "~F" 100.1) -&gt; "100.100000",   (%f in C)
 ~G        float to string, (format #f "~G" 100.1) -&gt; "100.1",        (%g in C)
 ~T        insert spaces (padding)
-~N        get numeric argument from argument list
+~N        get numeric argument from argument list (similar to V in CL)
 ~W        object-&gt;string with :readable (write readably; s7 is the intended reader)
 </pre>
 
@@ -5653,6 +5653,7 @@ loading code that calls gcd.
 <li>change string-&gt;symbol to symbol (what to do with symbol-&gt;string in that case?)
 <li>change with-output-to-* and with-input-from-* to omit the pointless lambda.
 <li>remove the with-* IO functions (e.g. with-input-from-string), keeping the call-with-* versions (call-with-input-string).
+<li>remove assq, assv, memq, and memv (these are pointless now that assoc and member can be passed eq? and eqv?).
 </ul>
 
 <p>There are several less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,

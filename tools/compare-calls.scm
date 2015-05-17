@@ -85,10 +85,9 @@
     (lambda ()
       (let ((overheads ())
 	    (total 0))
-	(do ((line (read-line) (read-line)))
-	    ((eof-object? line) overheads)
+
+	(define (get-overheads-1 file line)
 	  (let ((len (min 20 (length line))))
-	    ;(format *stderr* "line: ~A~%" line)
 	    (do ((i 0 (+ i 1)))
 		((or (= i len)
 		     (not (char-whitespace? (line i))))
@@ -105,7 +104,13 @@
 				      (and (char-numeric? (next-line j))
 					   (let ((cost (string->number-ignoring-commas (substring next-line j (- nlen 3)))))
 					     (set! total (+ total cost))
-					     (set! overheads (cons (list cost (substring line (+ i 3) (min 80 (length line)))) overheads)))))))))))))))
+					     (set! overheads (cons (list cost (substring line (+ i 3) (min 80 (length line)))) overheads)))))))
+			     (get-overheads-1 file next-line)))))))))
+	
+	(do ((line (read-line) (read-line)))
+	    ((eof-object? line) overheads)
+	  (get-overheads-1 file line))
+			     
 	(set! overheads (sort! overheads (lambda (a b) (< (car a) (car b)))))
 	(format *stderr* "~{~^~A~%~}" (list-tail overheads (max 10 (- (length overheads) 40))))
 	(format *stderr* "total: ~A~%" total)))))

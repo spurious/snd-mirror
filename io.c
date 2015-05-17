@@ -1699,20 +1699,22 @@ mus_long_t mus_file_read_buffer(int charbuf_sample_type, mus_long_t beg, int cha
  */
 mus_long_t mus_file_read(int tfd, mus_long_t beg, mus_long_t num, int chans, mus_float_t **bufs)
 {
-  mus_long_t rtn, k;
+  mus_long_t rtn;
   rtn = mus_read_any_1(tfd, beg, chans, num, bufs, NULL, NULL);
-  /* fprintf(stderr, "mus_file_read %lld for %lld -> %lld\n", beg, num, rtn); */
   if (rtn == MUS_ERROR) return(MUS_ERROR);
   if (rtn < num) 
-    /* this zeroing can be fooled if the file is chunked and has trailing, non-data chunks */
-    for (k = 0; k < chans; k++)
-      {
-	mus_float_t *buffer;
-	buffer = bufs[k];
-	/* this happens routinely in mus_outa + initial write (reads ahead in effect) */
-	/* fprintf(stderr, "clear from %lld for %lld\n", rtn, num-rtn); */
-	memset((void *)(buffer + rtn), 0, (num - rtn) * sizeof(mus_float_t));
-      }
+    {
+      mus_long_t k;
+      /* this zeroing can be fooled if the file is chunked and has trailing, non-data chunks */
+      for (k = 0; k < chans; k++)
+	{
+	  mus_float_t *buffer;
+	  buffer = bufs[k];
+	  /* this happens routinely in mus_outa + initial write (reads ahead in effect) */
+	  /* fprintf(stderr, "clear from %lld for %lld\n", rtn, num-rtn); */
+	  memset((void *)(buffer + rtn), 0, (num - rtn) * sizeof(mus_float_t));
+	}
+    }
   return(num);
 }
 

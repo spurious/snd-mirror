@@ -616,7 +616,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 (define ->predicate
   (let ((predicates (list integer? rational? real? complex? number?
 			  bytevector? string?
-			  float-vector? vector?
+			  float-vector? int-vector? vector?
 			  null? pair? list? 
 			  keyword? gensym? symbol?
 			  char? string?

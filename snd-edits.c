@@ -2382,7 +2382,6 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
   char *function = NULL, *old_function = NULL;
   bool close_mix_let = false, first = true;
   int i, edits;
-  ed_list *ed;
   edits = cp->edit_ctr;
   while ((edits < (cp->edit_size - 1)) && 
 	 (cp->edits[edits + 1])) 
@@ -2405,6 +2404,7 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
   else function = mus_strdup("Proc.new {|snd, chn| ");
   for (i = start_pos; i <= edits; i++)
     {
+      ed_list *ed;
       ed = cp->edits[i];
       if (ed)
 	{
@@ -2512,7 +2512,6 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 #if HAVE_FORTH
   char *function = NULL, *old_function = NULL;
   int i, edits;
-  ed_list *ed;
   edits = cp->edit_ctr;
   while ((edits < (cp->edit_size - 1)) && 
 	 (cp->edits[edits + 1])) 
@@ -2534,6 +2533,7 @@ char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
   else function = mus_strdup("lambda: <{ snd chn -- val }>");
   for (i = start_pos; i <= edits; i++)
     {
+      ed_list *ed;
       ed = cp->edits[i];
       if (ed)
 	{

@@ -173,13 +173,15 @@ int number_width(const char *num, bool use_tiny_font)
 static int sg_font_width(PangoFontDescription *font)
 {
   /* returns size in pixels */
-  int wid = 0;
-  double dpi = 96.0; /* see below */
+  int wid;
+  double dpi;
   PangoContext *ctx;
   PangoFontMetrics *m;
 
 #if HAVE_GTK_LINK_BUTTON_NEW
   dpi = gdk_screen_get_resolution(gdk_display_get_default_screen(gdk_display_get_default())); /* pixels/inch */
+#else
+  dpi = 96.0; /* see below */
 #endif
 
   ctx = gdk_pango_context_get();
@@ -195,8 +197,8 @@ static int sg_font_width(PangoFontDescription *font)
 static int sg_font_height(PangoFontDescription *font)
 {
   /* returns size in pixels */
-  double dpi = 96.0; /* a plausible guess */
-  int hgt = 0;
+  double dpi;
+  int hgt;
   PangoContext *ctx;
   PangoFontMetrics *m;
 
@@ -204,6 +206,8 @@ static int sg_font_height(PangoFontDescription *font)
   /* gtk 2.1: gdk_display_get_default, gdk_display_get_default_screen */
   /* gtk 2.9: gdk_screen_get_resolution */
   dpi = gdk_screen_get_resolution(gdk_display_get_default_screen(gdk_display_get_default()));
+#else
+  dpi = 96.0; /* a plausible guess */
 #endif
 
   ctx = gdk_pango_context_get();

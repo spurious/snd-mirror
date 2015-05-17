@@ -54,35 +54,39 @@ static long g_lLADSPARepositoryCount;
 
 static int lInputCount, lOutputCount;
 
-static void isLADSPAPluginSupported(const LADSPA_Descriptor *psDescriptor) {
+static void isLADSPAPluginSupported(const LADSPA_Descriptor *psDescriptor) 
+{
   unsigned int lIndex;
-  LADSPA_PortDescriptor iPortDescriptor;
   lInputCount = lOutputCount = 0;
-  for (lIndex = 0; lIndex < psDescriptor->PortCount; lIndex++) {
-    iPortDescriptor = psDescriptor->PortDescriptors[lIndex];
-    if (LADSPA_IS_PORT_AUDIO(iPortDescriptor)) {
-      if (LADSPA_IS_PORT_INPUT(iPortDescriptor))
-	lInputCount++;
-      else
-	lOutputCount++;
+  for (lIndex = 0; lIndex < psDescriptor->PortCount; lIndex++) 
+    {
+      LADSPA_PortDescriptor iPortDescriptor;
+      iPortDescriptor = psDescriptor->PortDescriptors[lIndex];
+      if (LADSPA_IS_PORT_AUDIO(iPortDescriptor)) 
+	{
+	  if (LADSPA_IS_PORT_INPUT(iPortDescriptor))
+	    lInputCount++;
+	  else
+	    lOutputCount++;
+	}
     }
-  }
 }
 
 
 /*****************************************************************************/
 
 /* Assumes repository initialised, returns NULL if not found. */
-static const LADSPA_Descriptor *findLADSPADescriptor(const char *pcPackedFilename, const char *pcLabel) {
+static const LADSPA_Descriptor *findLADSPADescriptor(const char *pcPackedFilename, const char *pcLabel) 
+{
   long lIndex;
-  LADSPAPluginInfo *psInfo;
-  for (lIndex = 0; lIndex < g_lLADSPARepositoryCount; lIndex++) {
-    psInfo = g_psLADSPARepository[lIndex];
-    if ((mus_strcmp(pcLabel, psInfo->m_pcLabel)) &&
-	(mus_strcmp(pcPackedFilename, psInfo->m_pcPackedFilename)))
-      return psInfo->m_psDescriptor;
-  }
-
+  for (lIndex = 0; lIndex < g_lLADSPARepositoryCount; lIndex++) 
+    {
+      LADSPAPluginInfo *psInfo;
+      psInfo = g_psLADSPARepository[lIndex];
+      if ((mus_strcmp(pcLabel, psInfo->m_pcLabel)) &&
+	  (mus_strcmp(pcPackedFilename, psInfo->m_pcPackedFilename)))
+	return psInfo->m_psDescriptor;
+    }
   return NULL;
 }
 
@@ -93,7 +97,8 @@ static const LADSPA_Descriptor *findLADSPADescriptor(const char *pcPackedFilenam
 /* Allocate a new string. The string will contain a library filename,
    stripped of path and .so (if present) */
 
-static char *packLADSPAFilename(const char * pcFilename) {
+static char *packLADSPAFilename(const char * pcFilename) 
+{
 
   const char *pcStart, * pcEnd;
   char *pcPackedFilename;
@@ -118,26 +123,27 @@ static char *packLADSPAFilename(const char * pcFilename) {
 /*****************************************************************************/
 
 
-static void unloadLADSPA(void) {
-
+static void unloadLADSPA(void) 
+{
   long lIndex;
   LADSPAPluginInfo *pvPluginHandle = NULL;
-  LADSPAPluginInfo *psInfo = NULL;
   if (g_lLADSPARepositoryCount > 0)
     pvPluginHandle = (LADSPAPluginInfo *)(g_psLADSPARepository[0]->m_pvPluginHandle);
   pvPluginHandle++;
-  for (lIndex = 0; lIndex < g_lLADSPARepositoryCount; lIndex++) {
-    psInfo = g_psLADSPARepository[lIndex];
-    free(psInfo->m_pcPackedFilename);
-    /* Don't free Label or Descriptor - this memory is owned by the
-       relevant plugin library. */
-    if (pvPluginHandle != psInfo->m_pvPluginHandle) {
-      pvPluginHandle = (LADSPAPluginInfo *)(psInfo->m_pvPluginHandle);
-      dlclose(pvPluginHandle);
+  for (lIndex = 0; lIndex < g_lLADSPARepositoryCount; lIndex++) 
+    {
+      LADSPAPluginInfo *psInfo;
+      psInfo = g_psLADSPARepository[lIndex];
+      free(psInfo->m_pcPackedFilename);
+      /* Don't free Label or Descriptor - this memory is owned by the
+	 relevant plugin library. */
+      if (pvPluginHandle != psInfo->m_pvPluginHandle) 
+	{
+	  pvPluginHandle = (LADSPAPluginInfo *)(psInfo->m_pvPluginHandle);
+	  dlclose(pvPluginHandle);
+	}
+      free(psInfo);
     }
-    free(psInfo);
-  }
-
   free(g_psLADSPARepository);
   g_bLADSPAInitialised = 0;
 }
@@ -150,9 +156,9 @@ static void unloadLADSPA(void) {
 
 static void loadLADSPALibrary(void *pvPluginHandle,
 			      char *pcFilename,
-			      LADSPA_Descriptor_Function fDescriptorFunction) {
-
-  LADSPAPluginInfo **psOldRepository, *psInfo;
+			      LADSPA_Descriptor_Function fDescriptorFunction) 
+{
+  LADSPAPluginInfo **psOldRepository;
   long lNewCapacity, lIndex;
   const LADSPA_Descriptor *psDescriptor;
 
@@ -160,17 +166,19 @@ static void loadLADSPALibrary(void *pvPluginHandle,
        (psDescriptor = fDescriptorFunction(lIndex)) != NULL;
        lIndex++)
     {
-      if (g_lLADSPARepositoryCount == g_lLADSPARepositoryCapacity) {
-	psOldRepository = g_psLADSPARepository;
-	lNewCapacity = (g_lLADSPARepositoryCapacity
-			+ LADSPA_REPOSITORY_CAPACITY_STEP);
-	g_psLADSPARepository = (LADSPAPluginInfo **)malloc(lNewCapacity * sizeof(LADSPAPluginInfo *));
-	memcpy(g_psLADSPARepository,
-	       psOldRepository,
-	       sizeof(LADSPAPluginInfo *) * g_lLADSPARepositoryCount);
-	g_lLADSPARepositoryCapacity = lNewCapacity;
-	free(psOldRepository);
-      }
+      LADSPAPluginInfo *psInfo;
+      if (g_lLADSPARepositoryCount == g_lLADSPARepositoryCapacity) 
+	{
+	  psOldRepository = g_psLADSPARepository;
+	  lNewCapacity = (g_lLADSPARepositoryCapacity
+			  + LADSPA_REPOSITORY_CAPACITY_STEP);
+	  g_psLADSPARepository = (LADSPAPluginInfo **)malloc(lNewCapacity * sizeof(LADSPAPluginInfo *));
+	  memcpy(g_psLADSPARepository,
+		 psOldRepository,
+		 sizeof(LADSPAPluginInfo *) * g_lLADSPARepositoryCount);
+	  g_lLADSPARepositoryCapacity = lNewCapacity;
+	  free(psOldRepository);
+	}
       psInfo
 	= g_psLADSPARepository[g_lLADSPARepositoryCount++]
 	= (LADSPAPluginInfo *)malloc(sizeof(LADSPAPluginInfo));
@@ -188,8 +196,8 @@ static void loadLADSPALibrary(void *pvPluginHandle,
 /* Search just the one directory. Called only from within
    loadLADSPA. */
 
-static void loadLADSPADirectory(const char *pcDirectory) {
-
+static void loadLADSPADirectory(const char *pcDirectory) 
+{
   char *pcFilename = NULL;
   DIR *psDirectory;
   LADSPA_Descriptor_Function fDescriptorFunction;
@@ -197,7 +205,7 @@ static void loadLADSPADirectory(const char *pcDirectory) {
   long iNeedSlash;
   struct dirent *psDirectoryEntry;
   void *pvPluginHandle;
-
+  
   lDirLength = strlen(pcDirectory);
   if (!lDirLength)
     return;
@@ -205,46 +213,51 @@ static void loadLADSPADirectory(const char *pcDirectory) {
     iNeedSlash = 0;
   else
     iNeedSlash = 1;
-
+  
   psDirectory = opendir(pcDirectory);
   if (!psDirectory)
     return;
-
-  while (true) {
-
-    psDirectoryEntry = readdir(psDirectory);
-    if (!psDirectoryEntry) {
-      closedir(psDirectory);
-      return;
-    }
-
-    pcFilename = (char *)malloc(lDirLength
-				+ strlen(psDirectoryEntry->d_name)
-				+ 1 + iNeedSlash);
-    strcpy(pcFilename, pcDirectory);
-    if (iNeedSlash)
-      strcat(pcFilename, "/");
-    strcat(pcFilename, psDirectoryEntry->d_name);
-
-    pvPluginHandle = dlopen(pcFilename, RTLD_LAZY);
-    if (pvPluginHandle) {
-      /* This is a file and the file is a shared library! */
-
-      dlerror();
-      fDescriptorFunction
-	= (LADSPA_Descriptor_Function)dlsym(pvPluginHandle,
-					    "ladspa_descriptor");
-      if (dlerror() == NULL && fDescriptorFunction) {
-	loadLADSPALibrary(pvPluginHandle, pcFilename, fDescriptorFunction);
-      }
-      else {
-	/* It was a library, but not a LADSPA one. Unload it. */
-	/* bil: this is not safe! Could be legit already-loaded library. */
-	/* dlclose(pcFilename); */
-      }
-    }
-    if (pcFilename) free(pcFilename);
-    pcFilename = NULL;
+  
+  while (true) 
+    {
+      
+      psDirectoryEntry = readdir(psDirectory);
+      if (!psDirectoryEntry) 
+	{
+	  closedir(psDirectory);
+	  return;
+	}
+      
+      pcFilename = (char *)malloc(lDirLength
+				  + strlen(psDirectoryEntry->d_name)
+				  + 1 + iNeedSlash);
+      strcpy(pcFilename, pcDirectory);
+      if (iNeedSlash)
+	strcat(pcFilename, "/");
+      strcat(pcFilename, psDirectoryEntry->d_name);
+      
+      pvPluginHandle = dlopen(pcFilename, RTLD_LAZY);
+      if (pvPluginHandle) 
+	{
+	  /* This is a file and the file is a shared library! */
+	  
+	  dlerror();
+	  fDescriptorFunction
+	    = (LADSPA_Descriptor_Function)dlsym(pvPluginHandle,
+						"ladspa_descriptor");
+	  if (dlerror() == NULL && fDescriptorFunction) 
+	    {
+	      loadLADSPALibrary(pvPluginHandle, pcFilename, fDescriptorFunction);
+	    }
+	  else 
+	    {
+	      /* It was a library, but not a LADSPA one. Unload it. */
+	      /* bil: this is not safe! Could be legit already-loaded library. */
+	      /* dlclose(pcFilename); */
+	    }
+	}
+      if (pcFilename) free(pcFilename);
+      pcFilename = NULL;
   }
 }
 
@@ -252,8 +265,8 @@ static void loadLADSPADirectory(const char *pcDirectory) {
 /*****************************************************************************/
 
 
-static void loadLADSPA(void) {
-
+static void loadLADSPA(void) 
+{
   char *pcBuffer = NULL;
   const char *pcEnd;
   const char *pcLADSPAPath;
@@ -269,32 +282,34 @@ static void loadLADSPA(void) {
   if (!pcLADSPAPath)
     {
       pcLADSPAPath = getenv("LADSPA_PATH");
-      if (pcLADSPAPath == NULL) {
-	snd_warning("Warning: You have not set " S_ladspa_dir " or the environment variable LADSPA_PATH.\nUsing /usr/lib/ladspa instead."); 
-        pcLADSPAPath = "/usr/lib/ladspa"; 
-      }
+      if (pcLADSPAPath == NULL) 
+	{
+	  snd_warning("Warning: You have not set " S_ladspa_dir " or the environment variable LADSPA_PATH.\nUsing /usr/lib/ladspa instead."); 
+	  pcLADSPAPath = "/usr/lib/ladspa"; 
+	}
     }
-
+  
   pcStart = pcLADSPAPath;
-  while (*pcStart != '\0') {
-    pcEnd = pcStart;
-    while (*pcEnd != ':' && *pcEnd != '\0')
-      pcEnd++;
-
-    pcBuffer = (char *)malloc(1 + pcEnd - pcStart);
-    if (pcEnd > pcStart)
-      strncpy(pcBuffer, pcStart, pcEnd - pcStart);
-    pcBuffer[pcEnd - pcStart] = '\0';
-
-    loadLADSPADirectory(pcBuffer);
-
-    pcStart = pcEnd;
-    if (*pcStart == ':')
-      pcStart++;
-
-    free(pcBuffer);
-    pcBuffer = NULL;
-  }
+  while (*pcStart != '\0') 
+    {
+      pcEnd = pcStart;
+      while (*pcEnd != ':' && *pcEnd != '\0')
+	pcEnd++;
+      
+      pcBuffer = (char *)malloc(1 + pcEnd - pcStart);
+      if (pcEnd > pcStart)
+	strncpy(pcBuffer, pcStart, pcEnd - pcStart);
+      pcBuffer[pcEnd - pcStart] = '\0';
+      
+      loadLADSPADirectory(pcBuffer);
+      
+      pcStart = pcEnd;
+      if (*pcStart == ':')
+	pcStart++;
+      
+      free(pcBuffer);
+      pcBuffer = NULL;
+    }
 }
 
 
@@ -371,8 +386,8 @@ static void ladspa_help_callback(GtkWidget *w, gpointer info)
 
 #define S_init_ladspa "init-ladspa"
 
-static Xen g_init_ladspa(void) {
-
+static Xen g_init_ladspa(void) 
+{
 #define H_init_ladspa "(" S_init_ladspa "): reinitialise LADSPA. This is not \
 normally necessary as LADSPA automatically initialises itself, however \
 it can be useful when the plugins on the system have changed."
@@ -411,8 +426,8 @@ it can be useful when the plugins on the system have changed."
 
 #define S_list_ladspa "list-ladspa"
 
-static Xen g_list_ladspa(void) {
-
+static Xen g_list_ladspa(void) 
+{
 #define H_list_ladspa "(" S_list_ladspa "): return a list of lists containing \
 information of the LADSPA plugins currently available. For each plugin a \
 list containing the plugin-file and plugin-label is included."
@@ -426,14 +441,14 @@ list containing the plugin-file and plugin-label is included."
 
   xenList = Xen_empty_list;
 
-  for (lIndex = g_lLADSPARepositoryCount - 1; lIndex >= 0; lIndex--) {
-    psInfo = g_psLADSPARepository[lIndex];
-    xenPluginList = Xen_cons(C_string_to_Xen_string(psInfo->m_pcPackedFilename),
-			     Xen_cons(C_string_to_Xen_string((char *)psInfo->m_pcLabel),
-				      Xen_empty_list));
-    xenList = Xen_cons(xenPluginList, xenList);
-  }
-
+  for (lIndex = g_lLADSPARepositoryCount - 1; lIndex >= 0; lIndex--) 
+    {
+      psInfo = g_psLADSPARepository[lIndex];
+      xenPluginList = Xen_cons(C_string_to_Xen_string(psInfo->m_pcPackedFilename),
+			       Xen_cons(C_string_to_Xen_string((char *)psInfo->m_pcLabel),
+					Xen_empty_list));
+      xenList = Xen_cons(xenPluginList, xenList);
+    }
   return xenList;
 }
 
@@ -444,8 +459,8 @@ list containing the plugin-file and plugin-label is included."
 #define S_analyse_ladspa "analyse-ladspa"
 
 static Xen g_analyse_ladspa(Xen ladspa_plugin_filename,
-			    Xen ladspa_plugin_label) {
-
+			    Xen ladspa_plugin_label) 
+{
 #define H_analyse_ladspa "(" S_analyse_ladspa " library plugin): return a list of information about \
 a LADSPA plugin. The plugin is identified by library and plugin. \
 The items are: plugin-name, plugin-maker, \
@@ -481,13 +496,14 @@ a user interface edit the parameter in a useful way."
   psDescriptor = findLADSPADescriptor(pcFilename, pcLabel);
   free(pcFilename);
 
-  if (!psDescriptor) {
-    Xen_error(Xen_make_error_type("no-such-plugin"),
-	      Xen_list_3(C_string_to_Xen_string(S_analyse_ladspa ": no such plugin file: ~A, plugin label: ~A"),
-                         ladspa_plugin_filename,
-			 ladspa_plugin_label));
-    return(Xen_false);
-  }
+  if (!psDescriptor) 
+    {
+      Xen_error(Xen_make_error_type("no-such-plugin"),
+		Xen_list_3(C_string_to_Xen_string(S_analyse_ladspa ": no such plugin file: ~A, plugin label: ~A"),
+			   ladspa_plugin_filename,
+			   ladspa_plugin_label));
+      return(Xen_false);
+    }
 
   isLADSPAPluginSupported(psDescriptor);
   inchans = lInputCount;
@@ -496,31 +512,31 @@ a user interface edit the parameter in a useful way."
   xenList = Xen_empty_list;
   for (lIndex = psDescriptor->PortCount - 1; lIndex >= 0; lIndex--)
     if (LADSPA_IS_PORT_CONTROL(psDescriptor->PortDescriptors[lIndex])
-	&& LADSPA_IS_PORT_INPUT(psDescriptor->PortDescriptors[lIndex])) {
-
-      iHint = psDescriptor->PortRangeHints[lIndex].HintDescriptor;
-
-      xenPortData = Xen_empty_list;
-      if (LADSPA_IS_HINT_TOGGLED(iHint))
-	xenPortData = Xen_cons(C_string_to_Xen_string("toggle"), xenPortData);
-      if (LADSPA_IS_HINT_LOGARITHMIC(iHint))
-	xenPortData = Xen_cons(C_string_to_Xen_string("logarithmic"), xenPortData);
-      if (LADSPA_IS_HINT_INTEGER(iHint))
-	xenPortData = Xen_cons(C_string_to_Xen_string("integer"), xenPortData);
-      if (LADSPA_IS_HINT_SAMPLE_RATE(iHint))
-	xenPortData = Xen_cons(C_string_to_Xen_string("sample_rate"), xenPortData);
-      if (LADSPA_IS_HINT_BOUNDED_ABOVE(iHint))
-	xenPortData = Xen_cons(C_string_to_Xen_string("maximum"),
-			       Xen_cons(C_double_to_Xen_real(psDescriptor->PortRangeHints[lIndex].UpperBound),
-					xenPortData));
-      if (LADSPA_IS_HINT_BOUNDED_BELOW(iHint))
-	xenPortData = Xen_cons(C_string_to_Xen_string("minimum"),
-			       Xen_cons(C_double_to_Xen_real(psDescriptor->PortRangeHints[lIndex].LowerBound),
-					xenPortData));
-      xenPortData = Xen_cons(C_string_to_Xen_string((char *)psDescriptor->PortNames[lIndex]),
-			     xenPortData);
-      xenList = Xen_cons(xenPortData, xenList);
-    }
+	&& LADSPA_IS_PORT_INPUT(psDescriptor->PortDescriptors[lIndex])) 
+      {
+	iHint = psDescriptor->PortRangeHints[lIndex].HintDescriptor;
+	
+	xenPortData = Xen_empty_list;
+	if (LADSPA_IS_HINT_TOGGLED(iHint))
+	  xenPortData = Xen_cons(C_string_to_Xen_string("toggle"), xenPortData);
+	if (LADSPA_IS_HINT_LOGARITHMIC(iHint))
+	  xenPortData = Xen_cons(C_string_to_Xen_string("logarithmic"), xenPortData);
+	if (LADSPA_IS_HINT_INTEGER(iHint))
+	  xenPortData = Xen_cons(C_string_to_Xen_string("integer"), xenPortData);
+	if (LADSPA_IS_HINT_SAMPLE_RATE(iHint))
+	  xenPortData = Xen_cons(C_string_to_Xen_string("sample_rate"), xenPortData);
+	if (LADSPA_IS_HINT_BOUNDED_ABOVE(iHint))
+	  xenPortData = Xen_cons(C_string_to_Xen_string("maximum"),
+				 Xen_cons(C_double_to_Xen_real(psDescriptor->PortRangeHints[lIndex].UpperBound),
+					  xenPortData));
+	if (LADSPA_IS_HINT_BOUNDED_BELOW(iHint))
+	  xenPortData = Xen_cons(C_string_to_Xen_string("minimum"),
+				 Xen_cons(C_double_to_Xen_real(psDescriptor->PortRangeHints[lIndex].LowerBound),
+					  xenPortData));
+	xenPortData = Xen_cons(C_string_to_Xen_string((char *)psDescriptor->PortNames[lIndex]),
+			       xenPortData);
+	xenList = Xen_cons(xenPortData, xenList);
+      }
 
   xenList = Xen_cons(C_string_to_Xen_string((char *)psDescriptor->Name),
 	     Xen_cons(C_string_to_Xen_string((char *)psDescriptor->Maker),
@@ -683,18 +699,19 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   xenParameters = Xen_copy_arg(Xen_cdr(Xen_cdr(ladspa_plugin_configuration)));
   for (lPortIndex = 0; lPortIndex < psDescriptor->PortCount; lPortIndex++) 
     {
-    iPortDescriptor = psDescriptor->PortDescriptors[lPortIndex];
-    if (LADSPA_IS_PORT_CONTROL(iPortDescriptor)
-	&& LADSPA_IS_PORT_INPUT(iPortDescriptor)) {
-      Xen_check_type(Xen_is_number(Xen_car(xenParameters)),
-		      ladspa_plugin_configuration,
-		      2,
-		      S_apply_ladspa, "a number");
-      pfControls[lPortIndex] = (LADSPA_Data)Xen_real_to_C_double(Xen_car(xenParameters));
-      xenParameters = Xen_cdr(xenParameters);
+      iPortDescriptor = psDescriptor->PortDescriptors[lPortIndex];
+      if (LADSPA_IS_PORT_CONTROL(iPortDescriptor)
+	  && LADSPA_IS_PORT_INPUT(iPortDescriptor)) 
+	{
+	  Xen_check_type(Xen_is_number(Xen_car(xenParameters)),
+			 ladspa_plugin_configuration,
+			 2,
+			 S_apply_ladspa, "a number");
+	  pfControls[lPortIndex] = (LADSPA_Data)Xen_real_to_C_double(Xen_car(xenParameters));
+	  xenParameters = Xen_cdr(xenParameters);
+	}
     }
-  }
-
+  
   lSampleRate = (unsigned long)(sp->hdr->srate);
   psHandle = (LADSPA_Handle *)psDescriptor->instantiate(psDescriptor, lSampleRate);
   if (!psHandle)
@@ -763,24 +780,26 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   /* Connect input and output control ports. */
   {
     int inc = 0, outc = 0;
-    for (lPortIndex = 0; lPortIndex < psDescriptor->PortCount; lPortIndex++) {
-      if (LADSPA_IS_PORT_CONTROL(psDescriptor->PortDescriptors[lPortIndex])) {
-	psDescriptor->connect_port(psHandle,
-				   lPortIndex,
-				   pfControls + lPortIndex);
-	/* (Output control data is quietly lost.) */
+    for (lPortIndex = 0; lPortIndex < psDescriptor->PortCount; lPortIndex++) 
+      {
+	if (LADSPA_IS_PORT_CONTROL(psDescriptor->PortDescriptors[lPortIndex])) 
+	  {
+	    psDescriptor->connect_port(psHandle,
+				       lPortIndex,
+				       pfControls + lPortIndex);
+	    /* (Output control data is quietly lost.) */
+	  }
+	else /* AUDIO */ {
+	  if (LADSPA_IS_PORT_INPUT(psDescriptor->PortDescriptors[lPortIndex]))
+	    psDescriptor->connect_port(psHandle,
+				       lPortIndex,
+				       pfInputBuffer[inc++]);
+	  else
+	    psDescriptor->connect_port(psHandle,
+				       lPortIndex,
+				       pfOutputBuffer[outc++]);
+	}
       }
-      else /* AUDIO */ {
-	if (LADSPA_IS_PORT_INPUT(psDescriptor->PortDescriptors[lPortIndex]))
-	  psDescriptor->connect_port(psHandle,
-				     lPortIndex,
-				     pfInputBuffer[inc++]);
-	else
-	  psDescriptor->connect_port(psHandle,
-				     lPortIndex,
-				     pfOutputBuffer[outc++]);
-      }
-    }
   }
 
   if (psDescriptor->activate)
@@ -790,7 +809,6 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   ss->stopped_explicitly = false;
   while (lAt < num) 
     {
-
       /* Decide how much audio to process this frame. */
       lBlockSize = num - lAt;
       if (lBlockSize > MAX_BUFFER_SIZE)
