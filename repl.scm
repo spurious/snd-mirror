@@ -1222,6 +1222,23 @@
 				     (if (char=? (s2 (- i 1)) (s1 (- j 1))) 0 1))))
 			  (set! (distance i j) (min c1 c2 c3)))))
 		    (distance l2 l1))))))
+
+  (define* (make-full-let-iterator lt (stop (rootlet))) ; walk the entire let chain
+    (if (eq? stop lt)
+	(make-iterator lt)
+	(letrec ((iterloop 
+		  (let ((iter (make-iterator lt)))
+		    (lambda (pos)
+		      (let ((result (iter)))
+			(if (and (eof-object? result)
+				 (iterator-at-end? iter))
+			    (if (eq? stop (iterator-sequence iter))
+				result
+				(begin 
+				  (set! iter (make-iterator (outlet (iterator-sequence iter))))
+				  (iterloop pos)))
+			    result))))))
+	    (make-iterator iterloop))))
   
   (let ((ap-name (if (string? name) name 
 		     (if (symbol? name) (symbol->string name)
@@ -1240,7 +1257,7 @@
 		   (let ((distance (levenshtein ap-name symbol-name)))
 		     (if (< distance min2)
 			 (set! strs (cons (cons binding distance) strs))))))))
-       ap-env)
+       (make-full-let-iterator ap-env))
 
       (if (pair? strs)
 	  (begin
@@ -1259,7 +1276,7 @@
 				    (cdar b))))
 		      (sort! strs (lambda (a b)
 				    (string<? (symbol->string (caar a)) (symbol->string (caar b))))))
-	    (symbol " ")) ; don't print #<unspecified> at the end
+	    '----)
 	  'no-match))))
 
 

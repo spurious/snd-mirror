@@ -57671,18 +57671,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	  break;
 	  
-	case OP_SET_PAIR_C_P:
-	  /* ([set!] (name (+ i 1)) (if (eq? (car a) 'car) #\a #\d)) */
+	case OP_SET_PAIR_C_P:     /* ([set!] (name (+ i 1)) (if (eq? (car a) 'car) #\a #\d)) */
 	  push_stack_no_args(sc, OP_SET_PAIR_C_P_1, sc->code);
 	  sc->code = cadr(sc->code);
 	  goto EVAL;
 	  
 	    
-	case OP_SET_PAIR_C_P_1:
+	case OP_SET_PAIR_C_P_1:   /* code: ((name (+ i 1)) ...) for example, so cadar is the c_c expr and its args are cdr(cadar) */
 	  {
-	    /* code: ((name (+ i 1)) ...) for example, so cadar is the c_c expr
-	     *   and its args are cdr(cadar)
-	     */
 	    s7_pointer arg;
 	    sc->temp8 = sc->value;
 	    arg = c_call(cadar(sc->code))(sc, cdadar(sc->code));
@@ -57692,9 +57688,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 	    
 	    
-	case OP_SET_PAIR_C:
+	case OP_SET_PAIR_C:        /* ([set!] (name (+ len 1)) #\r) */
 	  {
-	    /* ([set!] (name (+ len 1)) #\r) */
 	    s7_pointer arg, value;
 	    value = cadr(sc->code);
 	    if (is_symbol(value))
@@ -57706,22 +57701,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 	    
 	    
-	case OP_SET_LET_S:
+	case OP_SET_LET_S:       /* (set! (*s7* 'print-length) i) */
 	  sc->temp8 = find_symbol_checked(sc, cadr(sc->code));
 	  if (set_pair_p_3(sc, find_symbol(sc, caar(sc->code)), cadr(cadar(sc->code)), sc->temp8))
 	    goto APPLY;
 	  break;
 	    
 	    
-	case OP_SET_LET_ALL_X:
+	case OP_SET_LET_ALL_X:  /* (set! (hook 'result) 123) or (set! (H 'c) 32) */
 	  sc->temp8 = ((s7_function)fcdr(cdr(sc->code)))(sc, cadr(sc->code));
 	  if (set_pair_p_3(sc, find_symbol(sc, caar(sc->code)), cadr(cadar(sc->code)), sc->temp8))
 	    goto APPLY;
 	  break;
 	    
 	    
-	case OP_SET_PAIR_ZA:
-	  /* unknown setter pair, but value is easy */
+	case OP_SET_PAIR_ZA:    /* unknown setter pair, but value is easy */
 	  sc->value = ((s7_function)fcdr(cdr(sc->code)))(sc, cadr(sc->code));
 	  /* fall through */
 	    
@@ -67072,14 +67066,14 @@ int main(int argc, char **argv)
  *
  *            12  |  13  |  14  | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1126
- * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1133
- * teq            |      |      | 6612                     3887 3020 2819
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1120
+ * teq            |      |      | 6612                     3887 3020 2815
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3323
  * tcopy          |      |      |                          4970 4287 4154
- * tmap           |      |      | 11.0           5031 4769 4685 4557 4516
+ * tmap           |      |      | 11.0           5031 4769 4685 4557 4526
  * tform          |      |      |                          6816 5536 4737
  * lg             |      |      | 6547 6497 6494 6235 6229 6239 6611 6233
- * titer          |      |      |                          7976 6368 6316
+ * titer          |      |      |                          7976 6368 6343
  * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6694
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.8
  * thash          |      |      |                          19.4 17.4 17.3
@@ -67110,5 +67104,5 @@ int main(int argc, char **argv)
  * do ex_f->func (there are 3 or 4 of these)
  * static err=null for other error/string-wrapper cases [use elist throughout]
  * need better error/ubvar/method coverage in s7test
- * > (apropos "close") -> no-match?
+ * set_pair_p_3 overhead is annoying
  */
