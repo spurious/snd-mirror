@@ -1060,7 +1060,9 @@
 		  (set! input-fd (if (not file) 
 				terminal-fd
 				(open file O_RDONLY 0)))
+
 		  (set! saved (termios.make))
+		  (tcgetattr terminal-fd saved) 
 
 		  (tcgetattr terminal-fd buf)
 		  (termios.set_c_lflag buf (logand (termios.c_lflag buf) (lognot (logior ECHO ICANON))))

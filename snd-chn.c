@@ -3930,7 +3930,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 	      snd_srate(sp), 
 	      axes, 
 	      cp->printing,
-	      cp->show_axes != SHOW_NO_AXES,
+	      (cp->show_axes != SHOW_NO_AXES) ? WITH_X_AXIS : NO_X_AXIS, /* C++ wants the with_x_axis_t result */
 	      grid, 
 	      log_axes,
 	      cp->grid_density);
