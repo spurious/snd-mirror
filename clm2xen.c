@@ -9633,6 +9633,8 @@ Xen_wrap_no_args(g_get_internal_real_time_w, g_get_internal_real_time)
 static int xen_s7_slot_value_location;
 #define s7_cell_slot_value(p) (s7_pointer)(*((s7_pointer *)((unsigned char *)(p) + xen_s7_slot_value_location)))
 
+mus_float_t gf_2_g1(void *p);
+
 #if (!WITH_GMP)
 static s7_pointer vct_set_vector_ref;
 static s7_pointer g_vct_set_vector_ref(s7_scheme *sc, s7_pointer args)
@@ -9779,7 +9781,6 @@ static s7_pointer g_vct_set_temp(s7_scheme *sc, s7_pointer args)
 }
 
 
-mus_float_t gf_2_g1(void *p);
 static s7_pointer vct_set_direct_looped;
 static s7_pointer g_vct_set_direct_looped(s7_scheme *sc, s7_pointer args)
 {
