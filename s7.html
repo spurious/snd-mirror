@@ -5609,7 +5609,9 @@ to <code>(#_gcd ...)</code> at s7's whim, if gcd has its original value at the t
 sees the expression using it.  A subsequent <code>(set! gcd +)</code> does not affect this optimized call.
 I think I could wave my hands and mumble about "aggressive lexical scope" or something, but actually the
 choice here is that speed trumps that ol' hobgoblin consistency.  If you want to change gcd to +, do it before
-loading code that calls gcd. 
+loading code that calls gcd.  
+I think most Schemes handle macros this way: the macro call is replaced by its expansion using its current
+definition, and a later redefinition does not affect earlier uses.
 </p>
 
 <!-- another case:  (with-let (inlet '+ -) (+ 2 3)) -> 5 -->

@@ -1384,11 +1384,6 @@ static void init_types(void)
  *   by the given function.  Used only in tall.scm and snd-test.scm, and never hits a false case, so seems unnecessary.
  */
 
-#define T_WEAK                        T_UNSAFE
-#define is_weak(p)                    ((typeflag(p) & T_WEAK) != 0)
-#define set_weak(p)                   typeflag(p) |= T_WEAK
-/* for weak hash tables eventually */
-
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 16))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
 #define set_immutable(p)              typeflag(p) |= T_IMMUTABLE
@@ -2294,9 +2289,9 @@ static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
 static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
 static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, AN_OPEN_PORT, A_NORMAL_REAL, A_RATIONAL, A_FUNCTION, A_BOOLEAN;
 static s7_pointer A_NUMBER, A_LET, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL, A_NON_NEGATIVE_INTEGER;
-static s7_pointer A_FORMAT_PORT, AN_UNSIGNED_BYTE, A_BINDING, A_NON_CONSTANT_SYMBOL, AN_EQ_FUNC, A_SEQUENCE;
+static s7_pointer A_FORMAT_PORT, AN_UNSIGNED_BYTE, A_BINDING, A_NON_CONSTANT_SYMBOL, AN_EQ_FUNC, A_SEQUENCE, ITS_TOO_SMALL, A_NORMAL_PROCEDURE;
 static s7_pointer ITS_TOO_LARGE, ITS_NEGATIVE, RESULT_IS_TOO_LARGE, ITS_NAN, ITS_INFINITE, TOO_MANY_INDICES, A_VALID_RADIX;
-static s7_pointer AN_INPUT_STRING_PORT, AN_INPUT_FILE_PORT, AN_OUTPUT_STRING_PORT, AN_OUTPUT_FILE_PORT;
+static s7_pointer AN_INPUT_STRING_PORT, AN_INPUT_FILE_PORT, AN_OUTPUT_STRING_PORT, AN_OUTPUT_FILE_PORT, A_RANDOM_STATE_OBJECT;
 #if (!HAVE_COMPLEX_NUMBERS)
 static s7_pointer NO_COMPLEX_NUMBERS;
 #endif
@@ -2879,18 +2874,6 @@ static s7_pointer set_wlist_4(s7_scheme *sc, s7_pointer lst, s7_pointer x1, s7_p
   car(p) = x2; p = cdr(p);
   car(p) = x3; p = cdr(p);
   car(p) = x4;
-  return(lst);
-} 
-
-static s7_pointer set_wlist_5(s7_scheme *sc, s7_pointer lst, s7_pointer x1, s7_pointer x2, s7_pointer x3, s7_pointer x4, s7_pointer x5)
-{
-  s7_pointer p;
-  p = lst;
-  car(p) = x1; p = cdr(p);
-  car(p) = x2; p = cdr(p);
-  car(p) = x3; p = cdr(p);
-  car(p) = x4; p = cdr(p);
-  car(p) = x5;
   return(lst);
 } 
 
@@ -18560,7 +18543,7 @@ You can later apply make-random-state to this list to continue a random number s
       obj = car(args);
       if ((!is_c_object(obj)) ||
 	  (c_object_type(obj) != sc->rng_tag))
-	method_or_bust_with_type(sc, obj, sc->RANDOM_STATE_TO_LIST, args, make_string_wrapper(sc, "a random state as returned by make-random-state"), 1);
+	method_or_bust_with_type(sc, obj, sc->RANDOM_STATE_TO_LIST, args, A_RANDOM_STATE_OBJECT, 1);
       r = (s7_rng_t *)s7_object_value(obj);
     }
 
@@ -18602,7 +18585,7 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
       s7_pointer state;
       state = cadr(args);
       if (!is_c_object(state))
-	method_or_bust_with_type(sc, state, sc->RANDOM, args, make_string_wrapper(sc, "a random state as returned by make-random-state"), 2);
+	method_or_bust_with_type(sc, state, sc->RANDOM, args, A_RANDOM_STATE_OBJECT, 2);
       if (c_object_type(state) == sc->rng_tag)
 	r = (s7_rng_t *)s7_object_value(state);
       else
@@ -18611,8 +18594,7 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 	  if (c_object_type(state) == sc->big_rng_tag)
 	    return(big_random(sc, args));
 #endif
-	  return(wrong_type_argument_with_type(sc, sc->RANDOM, 2, state,
-					       make_string_wrapper(sc, "a random state as returned by make-random-state")));
+	  return(wrong_type_argument_with_type(sc, sc->RANDOM, 2, state, A_RANDOM_STATE_OBJECT));
 	}
     }
   else r = sc->default_rng;
@@ -19914,8 +19896,7 @@ static s7_pointer start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer fal
   index = s7_integer(pend);
   if ((index < *start) ||
       (index > *end))
-    return(out_of_range(sc, caller, small_int(position + 1), pend,
-			(index < *start) ? make_string_wrapper(sc, "it is less than the start point") : ITS_TOO_LARGE));
+    return(out_of_range(sc, caller, small_int(position + 1), pend, (index < *start) ? ITS_TOO_SMALL : ITS_TOO_LARGE));
   *end = index;
   return(sc->GC_NIL);
 }
@@ -23486,8 +23467,7 @@ static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_STRING, 2, proc,
 					 make_string_wrapper(sc, "a procedure of one argument (the port)")));
   if ((is_continuation(proc)) || (is_goto(proc)))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_STRING, 2, proc,
-					 make_string_wrapper(sc, "a normal procedure (not a continuation)")));
+    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_STRING, 2, proc, A_NORMAL_PROCEDURE));
 
   return(call_with_input(sc, open_and_protect_input_string(sc, str), args));
 }
@@ -23507,8 +23487,7 @@ static s7_pointer g_call_with_input_file(s7_scheme *sc, s7_pointer args)
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_FILE, 2, proc,
 					 make_string_wrapper(sc, "a procedure of one argument (the port)")));
   if ((is_continuation(proc)) || (is_goto(proc)))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_FILE, 2, proc,
-					 make_string_wrapper(sc, "a normal procedure (not a continuation)")));
+    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_FILE, 2, proc, A_NORMAL_PROCEDURE));
 
   return(call_with_input(sc, open_input_file_1(sc, string_value(str), "r", "call-with-input-file"), args));
 }
@@ -23743,7 +23722,7 @@ static const char *c_closure_name(s7_scheme *sc, s7_pointer closure, int *nlen)
 }
 
 
-enum {NO_ARTICLE, DEFINITE_ARTICLE, INDEFINITE_ARTICLE};
+enum {NO_ARTICLE, INDEFINITE_ARTICLE};
 
 static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 {
@@ -26201,8 +26180,7 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
     method_or_bust_with_type(sc, proc, sc->CALL_WITH_OUTPUT_STRING, args, make_string_wrapper(sc, "a procedure of one argument (the port)"), 1);
 
   if ((is_continuation(proc)) || (is_goto(proc)))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, 1, proc,
-					 make_string_wrapper(sc, "a normal procedure (not a continuation)")));
+    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_STRING, 1, proc, A_NORMAL_PROCEDURE));
 
   port = s7_open_output_string(sc);
   push_stack(sc, OP_GET_OUTPUT_STRING_1, sc->F, port);
@@ -26225,8 +26203,7 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
     method_or_bust_with_type(sc, proc, sc->CALL_WITH_OUTPUT_FILE, args, make_string_wrapper(sc, "a procedure of one argument (the port)"), 2);
 
   if ((is_continuation(proc)) || is_goto(proc))
-    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, 2, proc,
-					 make_string_wrapper(sc, "a normal procedure (not a continuation)")));
+    return(wrong_type_argument_with_type(sc, sc->CALL_WITH_OUTPUT_FILE, 2, proc, A_NORMAL_PROCEDURE));
 
   port = s7_open_output_file(sc, string_value(file), "w");
   push_stack(sc, OP_UNWIND_OUTPUT, sc->F, port);
@@ -26617,13 +26594,10 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
       fdat->port = port;
     }
 
-  for (i = 0; i < str_len; i++)
+  for (i = 0; i < str_len - 1; i++)
     {
       if ((unsigned char)(str[i]) == (unsigned char)'~') /* was does MS C want? */
 	{
-	  if (i == str_len - 1)
-	    format_error(sc, "control string ends in tilde", str, args, fdat);
-
 	  switch (str[i + 1])
 	    {
 	    case '%':                           /* -------- newline -------- */
@@ -27087,7 +27061,11 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	format_error(sc, "too many arguments", str, args, fdat);
     }
   if (i < str_len)
-    format_append_char(sc, fdat, str[i], port);    /* possible trailing ~ is sent out */
+    {
+      if (str[i] == '~')
+	format_error(sc, "control string ends in tilde", str, args, fdat);
+      format_append_char(sc, fdat, str[i], port);
+    }
 
   sc->format_depth--;
 
@@ -28473,6 +28451,7 @@ static void init_car_a_list(void)
   A_RATIONAL =             s7_make_permanent_string("an integer or a ratio");
   A_NUMBER =               s7_make_permanent_string("a number");
   A_PROCEDURE =            s7_make_permanent_string("a procedure");
+  A_NORMAL_PROCEDURE =     s7_make_permanent_string("a normal procedure (not a continuation)");
   A_LET =                  s7_make_permanent_string("a let (environment)");
   A_PROPER_LIST =          s7_make_permanent_string("a proper list");
   A_FUNCTION =             s7_make_permanent_string("a function");
@@ -28489,6 +28468,7 @@ static void init_car_a_list(void)
   A_NON_NEGATIVE_INTEGER = s7_make_permanent_string("a non-negative integer");
   AN_UNSIGNED_BYTE =       s7_make_permanent_string("an unsigned byte");
   SOMETHING_APPLICABLE =   s7_make_permanent_string("a procedure or something applicable");
+  A_RANDOM_STATE_OBJECT =  s7_make_permanent_string("a random-state object");
   A_FORMAT_PORT =          s7_make_permanent_string("#f, #t, or an open output port");
   A_BINDING =              s7_make_permanent_string("a pair whose car is a symbol: '(symbol . value)");
   A_NON_CONSTANT_SYMBOL =  s7_make_permanent_string("a non-constant symbol");
@@ -28496,6 +28476,7 @@ static void init_car_a_list(void)
   A_VALID_RADIX =          s7_make_permanent_string("should be between 2 and 16");
   RESULT_IS_TOO_LARGE =    s7_make_permanent_string("result is too large");
   ITS_TOO_LARGE =          s7_make_permanent_string("it is too large");
+  ITS_TOO_SMALL =          s7_make_permanent_string("it is less than the start position");
   ITS_NEGATIVE =           s7_make_permanent_string("it is negative");
   ITS_NAN =                s7_make_permanent_string("NaN usually indicates a numerical error");
   ITS_INFINITE =           s7_make_permanent_string("it is infinite");
@@ -32046,7 +32027,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
     return(wrong_type_argument_with_type(sc, sc->SORT, 2, lessp, AN_EQ_FUNC));
 
   if ((is_continuation(lessp)) || is_goto(lessp))
-    return(wrong_type_argument_with_type(sc, sc->SORT, 2, lessp, make_string_wrapper(sc, "a normal procedure (not a continuation)")));
+    return(wrong_type_argument_with_type(sc, sc->SORT, 2, lessp, A_NORMAL_PROCEDURE));
 
   sort_func = vector_compare;
   compare_func = NULL;
@@ -34552,7 +34533,7 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
       return(s7_wrong_type_arg_error(sc, "set! procedure-setter", 1, p, "a normal procedure (not a call-with-exit exit procedure)"));
 
     case T_CONTINUATION:
-      return(s7_wrong_type_arg_error(sc, "set! procedure-setter", 1, p, "a normal procedure (not a continuation)"));
+      return(s7_wrong_type_arg_error(sc, "set! procedure-setter", 1, p, "a normal procedure"));
     }
   return(setter);
 }
@@ -36307,7 +36288,6 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
     }
   else
     {
-      /* fprintf(stderr, "%s -> %s\n", type_name(sc, source, NO_ARTICLE), type_name(sc, dest, NO_ARTICLE)); */
       /* if source == dest here, we're moving data backwards, so this is safe in either case */
       for (i = start, j = 0; i < end; i++, j++)
 	set(sc, dest, j, get(sc, source, i));
@@ -37141,15 +37121,7 @@ static const char *make_type_name(s7_scheme *sc, const char *name, int article)
 	sc->typnam[i++] = 'n';
       sc->typnam[i++] = ' ';
     }
-  else
-    {
-      if (article == DEFINITE_ARTICLE)
-	{
-	  sc->typnam[0] = 't'; sc->typnam[1] = 'h'; sc->typnam[2] = 'e'; sc->typnam[3] = ' ';
-	  i = 4;
-	}
-      else i = 0;
-    }
+  else i = 0;
   memcpy((void *)(sc->typnam + i), (void *)name, slen);
   sc->typnam[i + slen] = '\0';
   return(sc->typnam);
@@ -37158,43 +37130,43 @@ static const char *make_type_name(s7_scheme *sc, const char *name, int article)
 
 static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
 {
-  static const char *frees[3] =          {"free cell",          "the free cell",           "a free cell"};
-  static const char *nils[3] =           {"nil",                "the null list",           "nil"};
-  static const char *uniques[3] =        {"untyped",            "the untyped",             "untyped"};
-  static const char *booleans[3] =       {"boolean",            "the boolean",             "boolean"};
-  static const char *strings[3] =        {"string",             "the string",              "a string"};
-  static const char *symbols[3] =        {"symbol",             "the symbol",              "a symbol"};
-  static const char *syntaxes[3] =       {"syntax",             "the syntactic",           "syntactic"};
-  static const char *pairs[3] =          {"pair",               "the pair",                "a pair"};
-  static const char *gotos[3] =          {"goto",               "the call-with-exit goto", "a goto (from call-with-exit)"};
-  static const char *continuations[3] =  {"continuation",       "the continuation",        "a continuation"};
-  static const char *c_functions[3] =    {"c-function",         "the c-function",          "a c-function"};
-  static const char *macros[3] =         {"macro",              "the macro",               "a macro"};
-  static const char *c_macros[3] =       {"c-macro",            "the c-macro",             "a c-macro"};
-  static const char *bacros[3] =         {"bacro",              "the bacro",               "a bacro"};
-  static const char *vectors[3] =        {"vector",             "the vector",              "a vector"};
-  static const char *int_vectors[3] =    {"int-vector",         "the int-vector",          "an int-vector"};
-  static const char *float_vectors[3] =  {"float-vector",       "the float-vector",        "a float-vector"};
-  static const char *c_pointers[3] =     {"C pointer",          "the raw C pointer",       "a raw C pointer"};
-  static const char *counters[3] =       {"internal counter",   "the internal counter",    "an internal counter"};
-  static const char *baffles[3] =        {"baffle",             "the baffle",              "a baffle"};
-  static const char *slots[3] =          {"slot",               "the slot (name binding)", "a slot (variable binding)"};
-  static const char *characters[3] =     {"character",          "the character",           "a character"};
-  static const char *catches[3] =        {"catch",              "the catch",               "a catch"};
-  static const char *dynamic_winds[3] =  {"dynamic-wind",       "the dynamic-wind",        "a dynamic-wind"};
-  static const char *hash_tables[3] =    {"hash-table",         "the hash-table",          "a hash-table"};
-  static const char *iterators[3] =      {"iterator",           "the iterator",            "an iterator"};
-  static const char *environments[3] =   {"environment",        "the environment",         "an environment"};
-  static const char *integers[3] =       {"integer",            "the integer",             "an integer"};
-  static const char *big_integers[3] =   {"big integer",        "the big integer",         "a big integer"};
-  static const char *ratios[3] =         {"ratio",              "the ratio",               "a ratio"};
-  static const char *big_ratios[3] =     {"big ratio",          "the big ratio",           "a big ratio"};
-  static const char *reals[3] =          {"real",               "the real",                "a real"};
-  static const char *big_reals[3] =      {"big real",           "the big real",            "a big real"};
-  static const char *complexes[3] =      {"complex number",     "the complex number",      "a complex number"};
-  static const char *big_complexes[3] =  {"big complex number", "the big complex number",  "a big complex number"};
-  static const char *functions[3] =      {"function",           "the function",            "a function"};
-  static const char *function_stars[3] = {"function*",          "the function*",           "a function*"};
+  static const char *frees[2] =          {"free cell",          "a free cell"};
+  static const char *nils[2] =           {"nil",                "nil"};
+  static const char *uniques[2] =        {"untyped",            "untyped"};
+  static const char *booleans[2] =       {"boolean",            "boolean"};
+  static const char *strings[2] =        {"string",             "a string"};
+  static const char *symbols[2] =        {"symbol",             "a symbol"};
+  static const char *syntaxes[2] =       {"syntax",             "syntactic"};
+  static const char *pairs[2] =          {"pair",               "a pair"};
+  static const char *gotos[2] =          {"goto",               "a goto (from call-with-exit)"};
+  static const char *continuations[2] =  {"continuation",       "a continuation"};
+  static const char *c_functions[2] =    {"c-function",         "a c-function"};
+  static const char *macros[2] =         {"macro",              "a macro"};
+  static const char *c_macros[2] =       {"c-macro",            "a c-macro"};
+  static const char *bacros[2] =         {"bacro",              "a bacro"};
+  static const char *vectors[2] =        {"vector",             "a vector"};
+  static const char *int_vectors[2] =    {"int-vector",         "an int-vector"};
+  static const char *float_vectors[2] =  {"float-vector",       "a float-vector"};
+  static const char *c_pointers[2] =     {"C pointer",          "a raw C pointer"};
+  static const char *counters[2] =       {"internal counter",   "an internal counter"};
+  static const char *baffles[2] =        {"baffle",             "a baffle"};
+  static const char *slots[2] =          {"slot",               "a slot (variable binding)"};
+  static const char *characters[2] =     {"character",          "a character"};
+  static const char *catches[2] =        {"catch",              "a catch"};
+  static const char *dynamic_winds[2] =  {"dynamic-wind",       "a dynamic-wind"};
+  static const char *hash_tables[2] =    {"hash-table",         "a hash-table"};
+  static const char *iterators[2] =      {"iterator",           "an iterator"};
+  static const char *environments[2] =   {"environment",        "an environment"};
+  static const char *integers[2] =       {"integer",            "an integer"};
+  static const char *big_integers[2] =   {"big integer",        "a big integer"};
+  static const char *ratios[2] =         {"ratio",              "a ratio"};
+  static const char *big_ratios[2] =     {"big ratio",          "a big ratio"};
+  static const char *reals[2] =          {"real",               "a real"};
+  static const char *big_reals[2] =      {"big real",           "a big real"};
+  static const char *complexes[2] =      {"complex number",     "a complex number"};
+  static const char *big_complexes[2] =  {"big complex number", "a big complex number"};
+  static const char *functions[2] =      {"function",           "a function"};
+  static const char *function_stars[2] = {"function*",          "a function*"};
 
   switch (typ)
     {
@@ -37303,11 +37275,28 @@ static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
   return(make_string_wrapper(sc, "unknown type!"));
 }
 
+static s7_pointer type_name_string(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer p;
+  if (type(arg) < NUM_TYPES)
+    {
+      p = prepackaged_type_names[type(arg)]; /* these use INDEFINITE_ARTICLE */
+      if (is_string(p)) return(p);
+    }
+  return(make_string_wrapper(sc, type_name(sc, arg, INDEFINITE_ARTICLE)));
+}
+
 
 static s7_pointer wrong_type_arg_error_prepackaged(s7_scheme *sc, s7_pointer caller, s7_pointer arg_n, s7_pointer arg, s7_pointer typnam, s7_pointer descr)
 {
-  /* info list is '(format_string caller arg_n arg type_name descr) */
-  set_wlist_5(sc, cdr(sc->wrong_type_arg_info), caller, arg_n, arg, (typnam == sc->GC_NIL) ? prepackaged_type_name(sc, arg) : typnam, descr);
+  s7_pointer p;
+  p = cdr(sc->wrong_type_arg_info);  /* info list is '(format_string caller arg_n arg type_name descr) */
+  car(p) = caller;  p = cdr(p);
+  car(p) = arg_n;   p = cdr(p);
+  car(p) = arg;     p = cdr(p);
+  car(p) = (typnam == sc->GC_NIL) ? prepackaged_type_name(sc, arg) : typnam;
+  p = cdr(p);
+  car(p) = descr;
   return(s7_error(sc, sc->WRONG_TYPE_ARG, sc->wrong_type_arg_info));
 }
 
@@ -37323,18 +37312,12 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
 {
   /* info list is '(format_string caller arg_n arg type_name descr) */
   if (arg_n < 0) arg_n = 0;
-
   if (arg_n > 0)
-    return(wrong_type_arg_error_prepackaged(sc,
-					    make_string_wrapper(sc, caller),
-					    make_integer(sc, arg_n),
-					    arg,
-					    make_string_wrapper(sc, type_name(sc, arg, INDEFINITE_ARTICLE)),
+    return(wrong_type_arg_error_prepackaged(sc, make_string_wrapper(sc, caller),
+					    make_integer(sc, arg_n), arg, type_name_string(sc, arg),
 					    make_string_wrapper(sc, descr)));
-  return(simple_wrong_type_arg_error_prepackaged(sc,
-						 make_string_wrapper(sc, caller),
-						 arg,
-						 make_string_wrapper(sc, type_name(sc, arg, INDEFINITE_ARTICLE)),
+  return(simple_wrong_type_arg_error_prepackaged(sc, make_string_wrapper(sc, caller),
+						 arg, type_name_string(sc, arg),
 						 make_string_wrapper(sc, descr)));
 }
 
@@ -38040,7 +38023,6 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
   { /* look for a catcher */
     int i;
     /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
-
     for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
       {
 	catch_function catcher;
@@ -38238,8 +38220,7 @@ static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 		    set_elist_2(sc, make_string_wrapper_with_length(sc, "attempt to apply nil to ~S?", 27), args)));
   if (!errstr)
     errstr = s7_make_permanent_string("attempt to apply ~A ~S to ~S?");
-  return(s7_error(sc, sc->SYNTAX_ERROR, 
-		  set_elist_4(sc, errstr, make_string_wrapper(sc, type_name(sc, obj, DEFINITE_ARTICLE)), obj, args)));
+  return(s7_error(sc, sc->SYNTAX_ERROR, set_elist_4(sc, errstr, type_name_string(sc, obj), obj, args)));
 }
 
 
@@ -45596,6 +45577,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poin
 {
   s7_pointer car_expr;
   /* fprintf(stderr, "opt %d %s\n", hop, DISPLAY_80(expr)); */
+  /* if (is_checked(expr)) return(true); */
 
   set_checked(expr);
   car_expr = car(expr);
@@ -45884,12 +45866,13 @@ static s7_pointer optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e
 {
   s7_pointer x;
   if (sc->safety > 1) return(NULL);
-
   /* fprintf(stderr, "optimize %s %d %s\n", DISPLAY_80(code), hop, DISPLAY_80(e)); */
   for (x = code; is_pair(x) && (!is_checked(x)); x = cdr(x))
     {
       set_checked(x);
       if (is_pair(car(x)))
+	/* (!is_checked(car(x)))) */ /* without this line, we can cancel earlier optimizations -- s7test hits such cases, but they are dubious */
+	/* can we instead use an unbound name, then define it later? Otherwise we have inconsistency because elsewhere this bit is checked */
 	optimize_expression(sc, car(x), hop, e);
     }
   if ((!is_null(x)) &&
@@ -60112,7 +60095,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer code, body;
 	    code = sc->code;
 	    body = cdr(code);
-	    
+
 	    if ((!is_pair(code)) ||
 		(!is_pair(body)))                               /* (lambda) or (lambda #f) or (lambda . 1) */
 	      eval_error(sc, "lambda: no args or no body? ~A", code);
@@ -65179,7 +65162,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
       if ((!is_c_object(state)) ||
 	  ((c_object_type(state) != sc->big_rng_tag) &&
 	   (c_object_type(state) != sc->rng_tag)))
-	return(s7_wrong_type_arg_error(sc, "random state", 2, state, "a random-state object"));
+	return(wrong_type_argument_with_type(sc, sc->RANDOM, 2, state, A_RANDOM_STATE_OBJECT));
     }
 
   if (s7_is_zero(num))
@@ -65695,7 +65678,7 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 	  dr->ran_carry = r->ran_carry;
 	  return(val);
 	}
-      return(wrong_type_argument_with_type(sc, sc->LET_SET, 1, val, make_string_wrapper(sc, "a random state object")));
+      return(wrong_type_argument_with_type(sc, sc->LET_SET, 1, val, A_RANDOM_STATE_OBJECT));
     }
 
   if (sym == sc->stacktrace_defaults_symbol)
@@ -67216,15 +67199,15 @@ int main(int argc, char **argv)
  *
  *            12  |  13  |  14  | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7
  * index    44300 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1126
- * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1120
+ * s7test    1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1134
  * teq            |      |      | 6612                     3887 3020 2815
  * bench    42736 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3323
  * tcopy          |      |      |                          4970 4287 4154
  * tmap           |      |      | 11.0           5031 4769 4685 4557 4526
- * tform          |      |      |                          6816 5536 4609
+ * tform          |      |      |                          6816 5536 4555
  * lg             |      |      | 6547 6497 6494 6235 6229 6239 6611 6233
  * titer          |      |      |                          7976 6368 6343
- * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6694
+ * tauto      265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6648
  * tall        90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.8
  * thash          |      |      |                          19.4 17.4 17.3
  * tgen           |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 20.9
@@ -67253,8 +67236,13 @@ int main(int argc, char **argv)
  *
  * do ex_f->func cases
  * set_pair_p_3 overhead is annoying
- * there are ca 20 list_1's in error cases (also error output via format_to_port in s7_error)
- *   about same make-string-wrapper (many "types" -- i.e. unglobalized descriptors)
- *   plist_n for the method calls?
- * if only 1 wlist_n, expand in place
+ * plist_n for the method calls?
+ * any thunk-as-arg with safe body can forego the frame (and jump to eval if one line)
+ * decide about the opt checked bit!  
+ *   currently we are inconsistent: if (lambda () (display ...)) it's checked
+ *   but if (define (...) (display...)) it is not checked so
+ *   (set! display (lambda args (error 'oops "")))
+ *   is caught in the lambda case, not the define case -- can the other case be caught via unsafe_function or unbound|local variable?
+ *   why did I set up the s7tests for this??
+ *   to treat as free, we'd never turn on the hop bit (we're handling them as if macros in other code)
  */
