@@ -581,7 +581,7 @@
 			  'magnitude number?
 			  'make-int-vector (list int-or-pair? integer?)
 			  'make-float-vector (list int-or-pair? real?)
-			  'make-hash-table non-negative-integer?
+			  'make-hash-table (list non-negative-integer? procedure?)
 			  'make-keyword string?
 			  'make-list (list non-negative-integer?)
 			  'make-polar real?

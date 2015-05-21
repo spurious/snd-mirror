@@ -286,7 +286,7 @@ static int read_ieee_text(const char *oldname, const char *newname, char *hdr)
 		    {
 		      for (i = op + 15, j = 0; j < 6; i++, j++) str[j] = buf[i];
 		      str[6] = '\0';
-		      sscanf(str, "%f", &fsrate);
+		      sscanf(str, "%6f", &fsrate);
 		      srate = (int)(fsrate * 1000);
 		    }
 		  else
@@ -295,7 +295,7 @@ static int read_ieee_text(const char *oldname, const char *newname, char *hdr)
 			{
 			  for (i = op + 15, j = 0; j < 6; i++, j++) str[j] = buf[i];
 			  str[6] = '\0';
-			  sscanf(str, "%d", &srate);
+			  sscanf(str, "%6d", &srate);
 			}
 		    }
 		}
@@ -360,7 +360,7 @@ static int read_ieee_text(const char *oldname, const char *newname, char *hdr)
 	  if (buf[inp] == '\n')
 	    {
 	      str[s0] = '\0';
-	      sscanf(str, "%d", &j);
+	      sscanf(str, "%12d", &j);
 	      mus_bshort_to_char((unsigned char *)(hdr + osp), (short)j);
 	      osp += 2;
 	      outp += 2;

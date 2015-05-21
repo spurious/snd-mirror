@@ -576,7 +576,7 @@ static mus_long_t get_count_1(char *number_buffer, int number_ctr, bool dot_seen
   if (dot_seen)
     {
       float f;
-      if (!(sscanf(number_buffer, "%f", &f)))
+      if (!(sscanf(number_buffer, "%12f", &f))) /* 12 is number_buffer size */
 	{
 	  /* this doesn't happen for most bogus cases -- the C spec says "it is not possible to determine
 	   *    directly whether matches of literal character in the control string succeed or fail."
@@ -587,7 +587,7 @@ static mus_long_t get_count_1(char *number_buffer, int number_ctr, bool dot_seen
 	}
       return((mus_long_t)(f * snd_srate(cp->sound)));
     }
-  if (!(sscanf(number_buffer, "%d", &i)))
+  if (!(sscanf(number_buffer, "%12d", &i)))
     {
       snd_error("invalid number: %s", number_buffer);
       return(0);

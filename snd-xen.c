@@ -1459,7 +1459,7 @@ int string_to_int(const char *str, int lo, const char *field_name)
   int res = 0;
   if (str) 
     {
-      if (!(sscanf(str, "%d", &res)))
+      if (!(sscanf(str, "%12d", &res)))
 	snd_error("%s: %s is not a number", field_name, str);
       else
 	{

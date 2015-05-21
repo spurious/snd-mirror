@@ -2819,7 +2819,7 @@ static int decode_nist_value(char *str, int base, int end)
     value[j] = str[i];
   value[j] = 0;
   if (value[0] =='s') return(MUS_NIST_SHORTPACK);
-  sscanf(value, "%d", &i);
+  sscanf(value, "%12d", &i);
   /* what is the correct way to use mus_long_ts here for the sample count? */
   return(i);
 }
@@ -2839,7 +2839,7 @@ static int read_nist_header(const char *filename, int fd)
   for (k = 8; k < 16; k++) 
     str[k - 8] = hdrbuf[k];
 
-  sscanf(str, "%d", &idata_location);       /* always "1024" */
+  sscanf(str, "%12d", &idata_location);       /* always "1024" */
   if (idata_location != 1024)
     return(mus_error(MUS_HEADER_READ_FAILED, "%s NIST data location: %d?", filename, idata_location));
 
@@ -4225,9 +4225,9 @@ static int read_file_samp_header(const char *filename, int fd)
   while (i < 1024)
     {
       if (strncmp((char *)(locbuf + i), "sftot", 5) == 0)
-	sscanf((const char *)(&locbuf[i + 6]), "%d", &srate);
+	sscanf((const char *)(&locbuf[i + 6]), "%12d", &srate);
       if (strncmp((char *)(locbuf + i), "nchans", 6) == 0)
-	sscanf((const char *)(&locbuf[i + 7]), "%d", &chans);
+	sscanf((const char *)(&locbuf[i + 7]), "%12d", &chans);
       if (strncmp((char *)(locbuf + i), "msb", 3) == 0)
 	if (strncmp((char *)(locbuf + i + 4), "first", 5) == 0)
 	  sample_type = MUS_BSHORT;
@@ -4855,7 +4855,7 @@ static int read_pvf_header(const char *filename, int fd)
   if (hdrbuf[4] != '\n') return(mus_error(MUS_HEADER_READ_FAILED, "PVF header messed up"));
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
   buf = (char *)(hdrbuf + 5);
-  sscanf(buf, "%d %d %d", &chans, &srate, &bits);
+  sscanf(buf, "%12d %12d %12d", &chans, &srate, &bits);
   if (chans < 1) chans = 1;
   if (srate < 0) srate = 8000;
   if (bits < 8) bits = 8;
@@ -5259,8 +5259,8 @@ static int read_comdisco_header(const char *filename, int fd)
 	  for (n = 0, m = j + 2; m < len; m++, n++) 
 	    value[n] = line[m];
 	  value[n] ='\0';
-	  if (strcmp(portion, "Sampling") == 0) sscanf(value, "%d", &srate); else
-	  if (strcmp(portion, "Number o") == 0) sscanf(value, "%d", &d_size); else
+	  if (strcmp(portion, "Sampling") == 0) sscanf(value, "%12d", &srate); else
+	  if (strcmp(portion, "Number o") == 0) sscanf(value, "%12d", &d_size); else
 	  if (strcmp(portion, "Signal T") == 0) {if (value[1] == 'o') type = 2; else if (value[1] == 'l') type = 1;} else
 	  if (strcmp(portion, "Fixed Po") == 0) {if (value[1] == '8') type = 3;}
 	}
