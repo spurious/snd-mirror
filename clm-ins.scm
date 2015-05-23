@@ -1950,34 +1950,29 @@ is a physical model of a flute:
 		      ;;   try to go by largest amp first 
 		      (do ((k 0 (+ k 1)))
 			  ((= k peaks))
-			(let ((maxp 0)
-			      (maxpk (peak-amps 0)))
-			  (do ((j 1 (+ j 1)))
-			      ((= j max-peaks-1))
-			    (if (> (peak-amps j) maxpk)
-				(begin
-				  (set! maxp j)
-				  (set! maxpk (peak-amps j)))))
-			  ;; now maxp points to next largest unmatched peak
-			  (if (> maxpk 0.0)
-			      (let ((closestp -1)
-				    (closestamp 10.0)
-				    (current-freq (peak-freqs maxp)))
-				(let ((icf (/ 1.0 current-freq)))
-				  (do ((j 0 (+ j 1)))
-				      ((= j max-peaks-1))
-				    (if (> (last-peak-amps j) 0.0)
-					(let ((closeness (* icf (abs (- (last-peak-freqs j) current-freq)))))
-					  (if (< closeness closestamp)
-					      (begin
-						(set! closestamp closeness)
-						(set! closestp j))))))
-				  (if (< closestamp furthest-away-accepted)
-				      (begin
-					;; peak-amp is transferred to appropriate current-amp and zeroed,
-					(set! (current-peak-amps closestp) (peak-amps maxp))
-					(set! (peak-amps maxp) 0.0)
-					(set! (current-peak-freqs closestp) current-freq))))))))
+			(let ((pl (float-vector-peak-and-location peak-amps)))
+			  (let ((maxpk (car pl))
+				(maxp (cadr pl)))
+			    ;; now maxp points to next largest unmatched peak
+			    (if (> maxpk 0.0)
+				(let ((closestp -1)
+				      (closestamp 10.0)
+				      (current-freq (peak-freqs maxp)))
+				  (let ((icf (/ 1.0 current-freq)))
+				    (do ((j 0 (+ j 1)))
+					((= j max-peaks-1))
+				      (if (> (last-peak-amps j) 0.0)
+					  (let ((closeness (* icf (abs (- (last-peak-freqs j) current-freq)))))
+					    (if (< closeness closestamp)
+						(begin
+						  (set! closestamp closeness)
+						  (set! closestp j))))))
+				    (if (< closestamp furthest-away-accepted)
+					(begin
+					  ;; peak-amp is transferred to appropriate current-amp and zeroed,
+					  (set! (current-peak-amps closestp) (peak-amps maxp))
+					  (set! (peak-amps maxp) 0.0)
+					  (set! (current-peak-freqs closestp) current-freq)))))))))
 		      (do ((k 0 (+ k 1)))
 			  ((= k max-peaks-1))
 			(if (> (peak-amps k) 0.0)
@@ -2004,7 +1999,7 @@ is a physical model of a flute:
 			(set! (sweeps k) (* ihifreq transposition (- (current-peak-freqs k) (last-peak-freqs k)))))
 		      (set! cur-oscils (+ cur-oscils 1))
 		      (set! (mus-length obank) cur-oscils)
-		      
+
 		      (let ((stop (min end (+ i outhop))))
 			(do ((k i (+ k 1)))
 			    ((= k stop))

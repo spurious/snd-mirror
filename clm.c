@@ -1350,25 +1350,14 @@ mus_any *mus_make_oscil(mus_float_t freq, mus_float_t phase)
 typedef struct {
   mus_any_class *core;
   int size, orig_size;
-  mus_float_t *amps, *phases, *freqs;
+  mus_float_t *amps, *phases, *freqs; /* these can change at any time, so sincos is not useful */
   bool free_phases;
-#if HAVE_SINCOS
-  mus_float_t *sn1, *cs1, *sn2, *cs2, *phs;
-  bool use_sc;
-#endif
 } ob;
 
 
 static void free_oscil_bank(mus_any *ptr) 
 {
   ob *g = (ob *)ptr;
-#if HAVE_SINCOS
-  if (g->sn1) {free(g->sn1); g->sn1 = NULL;}
-  if (g->sn2) {free(g->sn2); g->sn2 = NULL;}
-  if (g->cs1) {free(g->cs1); g->cs1 = NULL;}
-  if (g->cs2) {free(g->cs2); g->cs2 = NULL;}
-  if (g->phs) {free(g->phs); g->phs = NULL;}
-#endif
   if ((g->phases) && (g->free_phases)) {free(g->phases); g->phases = NULL;}
   free(ptr);
 }
@@ -1382,19 +1371,6 @@ static mus_any *ob_copy(mus_any *ptr)
   g = (ob *)malloc(sizeof(ob));
   memcpy((void *)g, (void *)ptr, sizeof(ob));
   bytes = g->size * sizeof(mus_float_t);
-
-#if HAVE_SINCOS
-  g->sn1 = (mus_float_t *)malloc(bytes);
-  memcpy((void *)(g->sn1), (void *)(p->sn1), bytes);
-  g->sn2 = (mus_float_t *)malloc(bytes);
-  memcpy((void *)(g->sn2), (void *)(p->sn2), bytes);
-  g->cs1 = (mus_float_t *)malloc(bytes);
-  memcpy((void *)(g->cs1), (void *)(p->cs1), bytes);
-  g->cs2 = (mus_float_t *)malloc(bytes);
-  memcpy((void *)(g->cs2), (void *)(p->cs2), bytes);
-  g->phs = (mus_float_t *)malloc(bytes);
-  memcpy((void *)(g->phs), (void *)(p->phs), bytes);
-#endif
 
   /* we have to make a new phases array -- otherwise the original and copy step on each other */
   g->free_phases = true;
@@ -1502,41 +1478,6 @@ mus_float_t mus_oscil_bank(mus_any *ptr)
   ob *p = (ob *)ptr;
   int i;
   mus_float_t sum = 0.0;
-#if HAVE_SINCOS
-  if (p->use_sc)
-    {
-      for (i = 0; i < p->size; i++)
-	sum += (p->sn1[i] * p->cs2[i] + p->cs1[i] * p->sn2[i]);
-      p->use_sc = false;
-    }
-  else
-    {
-      mus_float_t s, c;
-      if (!p->amps)
-	{
-	  for (i = 0; i < p->size; i++)
-	    {
-	      sincos(p->phases[i], &s, &c);
-	      p->sn2[i] = s;
-	      p->cs2[i] = c;
-	      sum += s;
-	      p->phases[i] += p->phs[i];
-	    }
-	}
-      else
-	{
-	  for (i = 0; i < p->size; i++)
-	    {
-	      sincos(p->phases[i], &s, &c);
-	      p->sn2[i] = s;
-	      p->cs2[i] = c;
-	      sum += p->amps[i] * s;
-	      p->phases[i] += p->phs[i];
-	    }
-	}
-      p->use_sc = true;
-    }
-#else
   if (!p->amps)
     {
       for (i = 0; i < p->size; i++)
@@ -1553,7 +1494,6 @@ mus_float_t mus_oscil_bank(mus_any *ptr)
 	  p->phases[i] += p->freqs[i];
 	}
     }
-#endif
   return(sum);
 }
 
@@ -1570,31 +1510,6 @@ mus_any *mus_make_oscil_bank(int size, mus_float_t *freqs, mus_float_t *phases, 
   gen->freqs = freqs;
   gen->phases = phases;
   gen->free_phases = false;
-
-#if HAVE_SINCOS
-  gen->use_sc = false;
-  gen->sn1 = (mus_float_t *)malloc(size * sizeof(mus_float_t));
-  gen->sn2 = (mus_float_t *)malloc(size * sizeof(mus_float_t));
-  gen->cs1 = (mus_float_t *)malloc(size * sizeof(mus_float_t));
-  gen->cs2 = (mus_float_t *)malloc(size * sizeof(mus_float_t));
-  gen->phs = (mus_float_t *)malloc(size * sizeof(mus_float_t));
-  {
-    int i;
-    mus_float_t s, c;
-    for (i = 0; i < size; i++)
-      {
-	sincos(freqs[i], &s, &c);
-	if (amps)
-	  {
-	    s *= amps[i];
-	    c *= amps[i];
-	  }
-	gen->sn1[i] = s;
-	gen->cs1[i] = c;
-	gen->phs[i] = freqs[i] * 2.0;
-      }
-  }
-#endif
 
   return((mus_any *)gen);
 }
