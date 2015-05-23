@@ -3,7 +3,10 @@
 (provide 'stuff.scm)
 
 (when (provided? 'pure-s7)
-  (define (let->list e) (reverse! (map values e))))
+  (define (let->list e) (reverse! (map values e)))
+  (define (memq a b) (member a b eq?))
+  (define (assq a b) (assoc a b eq?)))
+  
 
 
 ;;; ----------------

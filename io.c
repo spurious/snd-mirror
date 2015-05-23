@@ -1654,6 +1654,14 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			  break;
 			  
 			case MUS_L24INT:   
+			  {
+			    /*align for little_endian_int as above */
+			    int val;
+			    val = (jchar[2] << 16) + (jchar[1] << 8) + jchar[0];
+			    if (val >= (1 << 23)) val -= (1 << 24);
+			    (*bufnow++) = MUS_INT24_TO_SAMPLE(val);
+			    jchar += siz_chans - 1;
+			  }
 			  for (; bufnow <= bufend; jchar += siz_chans) 
 			    (*bufnow++) = INT24_TO_SAMPLE(jchar);
 			  break;

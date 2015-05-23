@@ -14,6 +14,11 @@
 
 (if (provided? 'pure-s7)
     (begin
+      (define (memq a b) (member a b eq?))
+      (define (memv a b) (member a b eqv?))
+      (define (assq a b) (assoc a b eq?))
+      (define (assv a b) (assoc a b eqv?))
+
       (define (char-ci=? . chars) (apply char=? (map char-upcase chars)))
       (define (char-ci<=? . chars) (apply char<=? (map char-upcase chars)))
       (define (char-ci>=? . chars) (apply char>=? (map char-upcase chars)))
