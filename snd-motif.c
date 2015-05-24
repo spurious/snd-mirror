@@ -25176,6 +25176,7 @@ Widget channel_f(chan_info *cp)          {return(cp->chan_widgets[W_f]);}
 bool channel_graph_is_visible(chan_info *cp)
 {
   return((cp) &&
+	 (cp->chan_widgets) &&
 	 (channel_graph(cp)) &&
 	 (XtIsManaged(channel_graph(cp))) &&
 	 (cp->sound) &&

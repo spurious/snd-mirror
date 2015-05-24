@@ -61,6 +61,7 @@ static mus_float_t cube(mus_float_t a) {return(a * a * a);}
 bool channel_graph_is_visible(chan_info *cp)
 {
   return((cp) &&
+	 (cp->chan_widgets) &&
 	 (channel_graph(cp)) &&
 	 (widget_is_active(channel_graph(cp))) &&
 	 (cp->sound) &&

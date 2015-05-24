@@ -2427,8 +2427,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
 
       OP_THUNK, HOP_THUNK,
       OP_CLOSURE_S, HOP_CLOSURE_S, OP_CLOSURE_C, HOP_CLOSURE_C, OP_CLOSURE_Q, HOP_CLOSURE_Q,
-      OP_CLOSURE_SS, HOP_CLOSURE_SS, OP_CLOSURE_SSb, HOP_CLOSURE_SSb,
-      OP_CLOSURE_SC, HOP_CLOSURE_SC, OP_CLOSURE_CS, HOP_CLOSURE_CS,
+      OP_CLOSURE_SS, HOP_CLOSURE_SS, OP_CLOSURE_SC, HOP_CLOSURE_SC, OP_CLOSURE_CS, HOP_CLOSURE_CS,
       OP_CLOSURE_A, HOP_CLOSURE_A, OP_CLOSURE_AA, HOP_CLOSURE_AA,
       OP_CLOSURE_opSq_S, HOP_CLOSURE_opSq_S, OP_CLOSURE_opSq_opSq, HOP_CLOSURE_opSq_opSq,
       OP_CLOSURE_S_opSq, HOP_CLOSURE_S_opSq, OP_CLOSURE_S_opSSq, HOP_CLOSURE_S_opSSq, OP_CLOSURE_opSSq_S, HOP_CLOSURE_opSSq_S,
@@ -2617,8 +2616,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
 
       "thunk", "h_thunk",
       "closure_s", "h_closure_s", "closure_c", "h_closure_c", "closure_q", "h_closure_q",
-      "closure_ss", "h_closure_ss", "closure_ssb", "h_closure_ssb",
-      "closure_sc", "h_closure_sc", "closure_cs", "h_closure_cs",
+      "closure_ss", "h_closure_ss", "closure_sc", "h_closure_sc", "closure_cs", "h_closure_cs",
       "closure_a", "h_closure_a", "closure_aa", "h_closure_aa",
       "closure_opsq_s", "h_closure_opsq_s", "closure_opsq_opsq", "h_closure_opsq_opsq",
       "closure_s_opsq", "h_closure_s_opsq", "closure_s_opssq", "h_closure_s_opssq", "closure_opssq_s", "h_closure_opssq_s",
@@ -33153,6 +33151,54 @@ static void hash_table_set_function(s7_pointer table, int typ)
 }
 
 
+static s7_pointer hash_add(s7_scheme *sc, s7_pointer table, s7_pointer key, s7_pointer value)
+{
+  unsigned int hash_len, raw_hash, loc;
+  hash_entry_t *p;
+  
+  hash_len = hash_table_length(table) - 1;
+
+  if (hash_table_entries(table) > hash_len)
+    {
+      /* resize the table */
+      int i, old_size, new_size;
+      hash_entry_t **new_els, **old_els;
+      
+      old_size = hash_table_length(table);
+      new_size = old_size * 4;
+      hash_len = new_size - 1;
+      new_els = (hash_entry_t **)calloc(new_size, sizeof(hash_entry_t *));
+      old_els = hash_table_elements(table);
+      
+      for (i = 0; i < old_size; i++)
+	{
+	  hash_entry_t *x, *n;
+	  for (x = old_els[i]; x; x = n)
+	    {
+	      n = x->next;
+	      loc = x->raw_hash & hash_len;
+	      x->next = new_els[loc];
+	      new_els[loc] = x;
+	    }
+	}
+      hash_table_elements(table) = new_els;
+      free(old_els);
+      hash_table_length(table) = new_size;
+    }
+  
+  raw_hash = hash_loc(sc, key);
+  p = make_hash_entry(key, value, raw_hash);
+  loc = raw_hash & hash_len;
+  p->next = hash_table_element(table, loc);
+  hash_table_element(table, loc) = p;
+  hash_table_entries(table)++;
+  
+  if (!hash_table_function_locked(table))
+    hash_table_set_function(table, type(key));
+  return(value);
+}
+
+
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7_pointer value)
 {
   hash_entry_t *x;
@@ -33160,50 +33206,8 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
 
   if (x)
     x->value = value;
-  else
-    {
-      unsigned int hash_len, raw_hash, loc;
-      hash_entry_t *p;
+  else hash_add(sc, table, key, value);
 
-      hash_len = hash_table_length(table) - 1;
-      if (hash_table_entries(table) > hash_len)
-	{
-	  /* resize the table */
-	  int i, old_size, new_size;
-	  hash_entry_t **new_els, **old_els;
-
-	  old_size = hash_table_length(table);
-	  new_size = old_size * 4;
-	  hash_len = new_size - 1;
-	  new_els = (hash_entry_t **)calloc(new_size, sizeof(hash_entry_t *));
-	  old_els = hash_table_elements(table);
-	  
-	  for (i = 0; i < old_size; i++)
-	    {
-	      hash_entry_t *x, *n;
-	      for (x = old_els[i]; x; x = n)
-		{
-		  n = x->next;
-		  loc = x->raw_hash & hash_len;
-		  x->next = new_els[loc];
-		  new_els[loc] = x;
-		}
-	    }
-	  hash_table_elements(table) = new_els;
-	  free(old_els);
-	  hash_table_length(table) = new_size;
-	}
-
-      raw_hash = hash_loc(sc, key);
-      p = make_hash_entry(key, value, raw_hash);
-      loc = raw_hash & hash_len;
-      p->next = hash_table_element(table, loc);
-      hash_table_element(table, loc) = p;
-      hash_table_entries(table)++;
-
-      if (!hash_table_function_locked(table))
-	hash_table_set_function(table, type(key));
-    }
   return(value);
 }
 
@@ -35917,7 +35921,7 @@ static s7_pointer hash_table_setter(s7_scheme *sc, s7_pointer e, s7_Int loc, s7_
    */
   if (!is_pair(val))
     return(wrong_type_argument_with_type(sc, sc->COPY, 3, e, A_LIST));
-  return(s7_hash_table_set(sc, e, car(val), cdr(val)));
+  return(hash_add(sc, e, car(val), cdr(val)));
 }
 
 
@@ -36253,11 +36257,19 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	{
 	  if ((is_let(dest)) || (is_hash_table(dest)))
 	    {
+	      long long int old_id = 0; /* we're not updating existing values here, so set let_id to skip the search */
+	      if (is_let(dest))
+		{
+		  old_id = let_id(dest);
+		  let_id(dest) = S7_LLONG_MAX;
+		}
 	      for (i = start, j = 0; i < end; i++, j++)
 		{
 		  set(sc, dest, j, p = iterator_next(source_iter)(sc, source_iter));
 		  free_cell(sc, p);
 		}
+	      if (is_let(dest))
+		let_id(dest) = old_id;
 	    }
 	  else
 	    {
@@ -39103,7 +39115,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	  (optimize_data(expr) == HOP_SAFE_C_C))
 	{
 	  /* h_safe_c_c from (if (not (char=? x #\1)) (display x)) in fe1 
-	   * closure_ssb from (bool-walk e func) in #<lambda (e)>
+	   * closure_ss from (bool-walk e func) in #<lambda (e)>
 	   * safe_c_aza from (vector-set! chars (char->integer c) #t) in #<lambda (c)>
 	   * c_for_each_1 from (for-each (lambda (str) (let ...
 	   * safe_c_ssc from (hash-table-set! ht op #t) in #<lambda (op)>
@@ -44792,18 +44804,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 	{
 	  set_unsafely_optimized(expr);
 	  if (symbols == 2)
-	    {
-	      bool safe_case;
-	      safe_case = is_safe_closure(func);
-	      if (safe_case)
-		set_optimize_data(expr, hop + OP_SAFE_CLOSURE_SS);
-	      else
-		{
-		  if (!arglist_has_rest(sc, closure_args(func)))
-		    set_optimize_data(expr, hop + OP_CLOSURE_SSb);
-		  else set_optimize_data(expr, hop + OP_CLOSURE_SS);
-		}
-	    }
+	    set_optimize_data(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_SS : OP_CLOSURE_SS));
 	  else
 	    {
 	      if (is_symbol(arg1))
@@ -45227,8 +45228,7 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
 	return(false);
 
       if ((symbols == 3) &&
-	  (!is_safe_closure(func)) &&
-	  (!arglist_has_rest(sc, closure_args(func))))
+	  (!is_safe_closure(func)))
 	{
 	  set_unsafely_optimized(expr);
 	  set_ecdr(expr, func);
@@ -45363,8 +45363,7 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	  set_ecdr(expr, func);
 
 	  if ((!safe_case) &&
-	      (symbols == args) &&
-	      (!arglist_has_rest(sc, closure_args(func))))
+	      (symbols == args))
 	    set_optimize_data(expr, hop + OP_CLOSURE_ALL_S);
 	  return(false);
 	}
@@ -51710,13 +51709,7 @@ static int unknown_gg_ex(s7_scheme *sc, s7_pointer f)
 		{
 		  if (is_safe_closure(f))
 		    set_optimize_data(code, hop + ((s2) ? OP_SAFE_CLOSURE_SS : OP_SAFE_CLOSURE_SC));
-		  else
-		    {
-		      set_optimize_data(code, hop + ((s2) ? OP_CLOSURE_SS : OP_CLOSURE_SC));
-		      if ((s2) && 
-			  (!arglist_has_rest(sc, closure_args(f))))
-			set_optimize_data(code, hop + OP_CLOSURE_SSb);
-		    }
+		  else set_optimize_data(code, hop + ((s2) ? OP_CLOSURE_SS : OP_CLOSURE_SC));
 		}
 	      else
 		{
@@ -51809,8 +51802,7 @@ static int unknown_all_s_ex(s7_scheme *sc, s7_pointer f)
 	{
 	case T_CLOSURE:
 	  if ((!has_methods(f)) &&
-	      (closure_arity_to_int(sc, f) == num_args) &&
-	      (!arglist_has_rest(sc, closure_args(f))))
+	      (closure_arity_to_int(sc, f) == num_args))
 	    {
 	      annotate_args(sc, cdr(code));
 	      return(fixup_unknown_op(sc, code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_ALL_X : OP_CLOSURE_ALL_S)));
@@ -51893,8 +51885,7 @@ static int unknown_a_ex(s7_scheme *sc, s7_pointer f)
 	  if ((!has_methods(f)) &&
 	      (has_simple_args(closure_body(f))) &&
 	      (closure_star_arity_to_int(sc, f) >= 1) &&
-	      (!arglist_has_keyword(cdr(code))) &&
-	      (!arglist_has_rest(sc, closure_args(f))))
+	      (!arglist_has_keyword(cdr(code))))
 	    return(fixup_unknown_op(sc, code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X));
 	  break;
 	  
@@ -51937,8 +51928,7 @@ static int unknown_aa_ex(s7_scheme *sc, s7_pointer f)
 	{
 	case T_CLOSURE:
 	  if ((!has_methods(f)) &&
-	      (closure_arity_to_int(sc, f) == 2) &&
-	      (!arglist_has_rest(sc, closure_args(f))))
+	      (closure_arity_to_int(sc, f) == 2))
 	    {
 	      set_optimize_data(code, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_AA : OP_CLOSURE_AA);
 	      set_ecdr(code, f);
@@ -51950,8 +51940,7 @@ static int unknown_aa_ex(s7_scheme *sc, s7_pointer f)
 	  if ((!has_methods(f)) &&
 	      (has_simple_args(closure_body(f))) &&
 	      (closure_star_arity_to_int(sc, f) >= 2) &&
-	      (!arglist_has_keyword(cdr(code))) &&
-	      (!arglist_has_rest(sc, closure_args(f))))
+	      (!arglist_has_keyword(cdr(code))))
 	    return(fixup_unknown_op(sc, code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X));
 	  break;
 	  
@@ -51981,8 +51970,7 @@ static int unknown_all_x_ex(s7_scheme *sc, s7_pointer f)
 	{
 	case T_CLOSURE:
 	  if ((!has_methods(f)) &&
-	      (closure_arity_to_int(sc, f) == num_args) &&
-	      (!arglist_has_rest(sc, closure_args(f))))
+	      (closure_arity_to_int(sc, f) == num_args))
 	    {
 	      annotate_args(sc, cdr(code));
 	      if (is_safe_closure(f))
@@ -52002,8 +51990,7 @@ static int unknown_all_x_ex(s7_scheme *sc, s7_pointer f)
 	  if ((!has_methods(f)) &&
 	      (has_simple_args(closure_body(f))) &&
 	      (closure_star_arity_to_int(sc, f) >= num_args) &&
-	      (!arglist_has_keyword(cdr(code))) &&
-	      (!arglist_has_rest(sc, closure_args(f))))  /* fcdr is already set -- we use it to get num_args above */
+	      (!arglist_has_keyword(cdr(code))))
 	    {
 	      annotate_args(sc, cdr(code));
 	      return(fixup_unknown_op(sc, code, f, (is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_ALL_X : OP_CLOSURE_STAR_ALL_X));
@@ -53568,8 +53555,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->op = (opcode_t)pair_syntax_op(sc->code);
 	      sc->code = cdr(sc->code);
 	      goto START_WITHOUT_POP_STACK;
-	      /* it is only slightly faster to use labels as values (computed gotos) here
-	       */
+	      /* it is only slightly faster to use labels as values (computed gotos) here */
 	    }
 	  
 	  if (is_optimized(sc->code))
@@ -56109,23 +56095,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  NEW_FRAME_WITH_SLOT(sc, closure_let(code), sc->envir, car(closure_args(code)), sc->value);
 		  sc->code = closure_body(code);
 		  goto BEGIN1;
-		  
-		  
-		case OP_CLOSURE_SSb:
-		  if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 2)) {set_optimize_data(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
-		  
-		case HOP_CLOSURE_SSb:
-		  {
-		    s7_pointer p, lx;
-		    check_stack_size(sc);
-		    sc->value = find_symbol_checked(sc, cadr(code));
-		    lx = find_symbol_checked(sc, fcdr(code));
-		    code = ecdr(code);
-		    p = closure_args(code);
-		    NEW_FRAME_WITH_TWO_SLOTS(sc, closure_let(code), sc->envir, car(p), sc->value, cadr(p), lx);
-		    sc->code = closure_body(code);
-		    goto BEGIN1;
-		  }
 		  
 		  
 		case OP_CLOSURE_SS:
@@ -67213,7 +67182,7 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1126
  * teq           |      |      | 6612                     3887 3020 2708
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3310
- * tcopy         |      |      |                          4970 4287 4158
+ * tcopy         |      |      |                          4970 4287 3872
  * tmap          |      |      | 11.0           5031 4769 4685 4557 4224
  * tform         |      |      |                          6816 5536 4516
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6263
@@ -67230,7 +67199,6 @@ int main(int argc, char **argv)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  * cyclic-seq in stuff.scm, but current code is really clumsy
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
- * perhaps remove memq and friends if pure-s7 (need member|assoc_chooser to catch this)
  *
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)
  *   also cload: libc libgsl etc arg types/return types [real string ?]
@@ -67246,9 +67214,9 @@ int main(int argc, char **argv)
  *   with name/sync/sample settable
  *
  * apropos should scan autoload?
- * eval: 2 op_loads, named let setup
+ * eval: 2 op_loads, named let setup, more init do etc
  *   break up the gensets and applies into bool sets[type](sc, obj, args) so set_pair_p_3 and others can go away, and apply itself!
- * arglist int can be negative!  trigger checks are affected and arglist-no-rest seems unnecessary (but takes no time)
  * while loop given safe_c-* and the settings: usable in do/for-each/map
  * pure-s7 repl/cload/snd-test/write/ws have memq et al
+ * cond_all_x_2 -> if_all_x2?
  */

@@ -1151,7 +1151,8 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, mus_long_
 	      cp->cursor_on = true;
 	      cursor_moveto_without_verbosity(cp, start);
 #if USE_MOTIF
-              update_graph(cp);
+	      if (cp->chan_widgets)
+		update_graph(cp);
 #endif
 	    }
 	}
