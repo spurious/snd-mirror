@@ -126,7 +126,7 @@
   (define collides?
     (let ((all-names ()))
       (lambda (name)
-	(if (memq name all-names) 
+	(if (member name all-names eq?) 
 	    (format *stderr* "~A twice?~%" name)
 	    (set! all-names (cons name all-names)))
 	name)))
@@ -146,7 +146,7 @@
 			 ))
 
   (define (find-handler handle choice)
-    (let ((found (assq handle handlers)))
+    (let ((found (assoc handle handlers eq?)))
       (if (pair? found)
 	  (choice found)
 	  #t)))
@@ -272,7 +272,7 @@
 				base-name i
 				nominal-type
 				(s7->C true-type)
-				(if (memq s7-type '(boolean real))
+				(if (member s7-type '(boolean real) eq?)
 				    "sc, " ""))
 			(format p "  else return(s7_wrong_type_arg_error(sc, ~S, ~D, s7_car(arg), ~S));~%"
 				func-name 

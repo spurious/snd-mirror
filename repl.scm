@@ -736,7 +736,7 @@
 				  (let ((loc (do ((i (- end 1) (- i 1)))
 						 ((or (< i 0)
 						      (char-whitespace? (current-line i))
-						      (memv (current-line i) '(#\( #\' #\" #\))))
+						      (member (current-line i) '(#\( #\' #\" #\)) eqv?))
 						  i))))
 				    (if (< loc 0)
 					(set! completion (symbol-completion current-line))
@@ -988,7 +988,7 @@
 					     ((or (= i chars)
 						  (char>=? (str i) bcksp)
 						  (and (char<? (str i) #\space)
-						       (not (memq (str i) ok-chars))))
+						       (not (member (str i) ok-chars eq?))))
 
 					      (when (= i chars)
 						(let ((search-chars (string #\tab #\return #\newline))

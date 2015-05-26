@@ -319,13 +319,11 @@ If func approves of one, index-if returns the index that gives that element's po
 	 (if (or (hash-table? sequence)
 		 (let? sequence))
 	     (for-each (lambda (arg)
-			 (if (f arg)
-			     (return (car arg))))
+			 (if (f arg) (return (car arg))))
 		       sequence)
 	     (let ((position 0))
 	       (for-each (lambda (arg)
-			   (if (f arg)
-			       (return position))
+			   (if (f arg) (return position))
 			   (set! position (+ position 1)))
 			 sequence)))
 	 #f)))))
@@ -346,8 +344,7 @@ If func approves of one, index-if returns the index that gives that element's po
       (call-with-exit
        (lambda (return)
 	 (for-each (lambda (arg)
-		     (if (not (f arg))
-			 (return #f)))
+		     (if (not (f arg)) (return #f)))
 		   sequence)
 	 #t)))))
 
@@ -357,8 +354,7 @@ If func approves of one, index-if returns the index that gives that element's po
       (call-with-exit
        (lambda (return)
 	 (for-each (lambda (arg)
-		     (let ((val (f arg)))
-		       (if val (return val))))
+		     (if (f arg) (return #t)))
 		   sequence)
 	 #f)))))
 

@@ -1687,7 +1687,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
 
   Xen_eval_C_string("(define (hook-push hook func) \n\
                        \"(hook-push hook func) adds func to hook's function list\" \n\
-                       (if (not (memq func (hook-functions hook))) (set! (hook-functions hook) (cons func (hook-functions hook)))))");
+                       (if (not (member func (hook-functions hook) eq?)) (set! (hook-functions hook) (cons func (hook-functions hook)))))");
   Xen_eval_C_string("(define (hook-append hook func) \n\
                        \"(hook-append hook func) adds func to the end of hook's function list\" \n\
                        (set! (hook-functions hook) (append (hook-functions hook) (list func))))");
