@@ -229,7 +229,7 @@
 			   'atanh +not-integer+
 			   'boolean=? +boolean+
 			   'boolean? +boolean+
-			   'bytevector? +boolean+
+			   'byte-vector? +boolean+
 			   'c-pointer +c-pointer+
 			   'ceiling +integer+
 			   'char->integer +integer+
@@ -450,7 +450,7 @@
 			  '* number?
 			  '+ number?
 			  '- number?
-			  '->bytevector string?
+			  '->byte-vector string?
 			  '/ number?
 			  '< real?
 			  '<= real?
@@ -469,7 +469,7 @@
 			  'assv (list t? pair?)
 			  'atan (list number? number?)
 			  'atanh number?
-			  'bytevector byte?
+			  'byte-vector byte?
 			  'c-pointer integer?
 			  'caaaar pair?
 			  'caaadr pair?

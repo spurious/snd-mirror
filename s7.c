@@ -343,7 +343,7 @@
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE,
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST,
-	      TOKEN_VECTOR, TOKEN_BYTEVECTOR} token_t;
+	      TOKEN_VECTOR, TOKEN_BYTE_VECTOR} token_t;
 
 typedef enum {FILE_PORT, STRING_PORT, FUNCTION_PORT} port_type_t;
 
@@ -831,7 +831,7 @@ struct s7_scheme {
    */
   s7_pointer MINUS, MULTIPLY, ADD, DIVIDE, LT, LEQ, EQ, GT, GEQ, ABS, ACOS, ACOSH;
   s7_pointer ANGLE, APPEND, APPLY, IS_ARITABLE, ARITY, ASH, ASIN, ASINH, ASSOC, ASSQ, ASSV, ATAN, ATANH;
-  s7_pointer SUBLET, VARLET, UNLET, CUTLET, AUTOLOAD, AUTOLOADER, IS_BOOLEAN, BYTEVECTOR, IS_BYTEVECTOR, CAAAAR, CAAADR, CAAAR, CAADAR, CAADDR;
+  s7_pointer SUBLET, VARLET, UNLET, CUTLET, AUTOLOAD, AUTOLOADER, IS_BOOLEAN, BYTE_VECTOR, IS_BYTE_VECTOR, CAAAAR, CAAADR, CAAAR, CAADAR, CAADDR;
   s7_pointer CAADR, CAAR, CADAAR, CADADR, CADAR, CADDAR, CADDDR, CADDR, CADR, CALL_CC, CALL_WITH_CURRENT_CONTINUATION, CALL_WITH_EXIT, COVERLET;
   s7_pointer CALL_WITH_INPUT_FILE, CALL_WITH_INPUT_STRING, CALL_WITH_OUTPUT_FILE, CALL_WITH_OUTPUT_STRING, CAR, CATCH, CDAAAR;
   s7_pointer CDAADR, CDAAR, CDADAR, CDADDR, CDADR, CDAR, CDDAAR, CDDADR, CDDAR, CDDDAR, CDDDDR, CDDDR, CDDR, CDR, CEILING;
@@ -843,11 +843,11 @@ struct s7_scheme {
   s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL;
   s7_pointer MAKE_FLOAT_VECTOR, FLOAT_VECTOR, IS_FLOAT_VECTOR, FLOAT_VECTOR_REF, FLOAT_VECTOR_SET, MAKE_INT_VECTOR, INT_VECTOR, IS_INT_VECTOR;
   s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, IS_GENSYM, GET_OUTPUT_STRING, HASH_TABLE, HASH_TABLE_STAR;
-  s7_pointer IS_HASH_TABLE, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_ENTRIES, HELP, IMAG_PART, IS_INEXACT, INEXACT_TO_EXACT;
+  s7_pointer IS_HASH_TABLE, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_ENTRIES, HASH_TABLE_FUNCTION, HELP, IMAG_PART, IS_INEXACT, INEXACT_TO_EXACT;
   s7_pointer IS_INFINITE, IS_INPUT_PORT, IS_INTEGER, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, IS_KEYWORD, KEYWORD_TO_SYMBOL;
   s7_pointer LCM, LENGTH, IS_ITERATOR, MAKE_ITERATOR, ITERATE, ITERATOR_SEQUENCE, ITERATOR_IS_AT_END;
   s7_pointer LIST, IS_LIST, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBIT, LOGIOR, LOGNOT, LOGXOR;
-  s7_pointer IS_MACRO, MAKE_BYTEVECTOR, MAKE_HASH_TABLE, MAKE_KEYWORD, MAKE_LIST, MAKE_RANDOM_STATE;
+  s7_pointer IS_MACRO, MAKE_BYTE_VECTOR, MAKE_HASH_TABLE, MAKE_KEYWORD, MAKE_LIST, MAKE_RANDOM_STATE;
   s7_pointer MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, IS_MORALLY_EQUAL, IS_NAN, IS_NEGATIVE, NEWLINE;
   s7_pointer NOT, IS_NULL, IS_NUMBER, NUMBER_TO_STRING, NUMERATOR, OBJECT_TO_STRING, IS_ODD, OPENLET, IS_OPENLET, OPEN_INPUT_FILE;
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTLET, IS_OUTPUT_PORT, IS_PAIR, PAIR_LINE_NUMBER, PEEK_CHAR;
@@ -860,7 +860,7 @@ struct s7_scheme {
   s7_pointer STRING_GEQ, STRING_GT, IS_STRING, STRING_POSITION, STRING_TO_NUMBER, STRING_TO_SYMBOL, STRING_APPEND;
   s7_pointer STRING_FILL, STRING_REF, STRING_SET, SUBSTRING, SYMBOL;
   s7_pointer SYMBOL_ACCESS, IS_SYMBOL, SYMBOL_TO_KEYWORD, SYMBOL_TO_STRING, SYMBOL_TO_DYNAMIC_VALUE, SYMBOL_TO_VALUE;
-  s7_pointer TAN, TANH, THROW, TO_BYTEVECTOR, TRUNCATE, VALUES, VECTOR, VECTOR_APPEND, VECTOR_FILL;
+  s7_pointer TAN, TANH, THROW, TO_BYTE_VECTOR, TRUNCATE, VALUES, VECTOR, VECTOR_APPEND, VECTOR_FILL;
   s7_pointer IS_VECTOR, VECTOR_DIMENSIONS, VECTOR_REF, VECTOR_SET, WITH_INPUT_FROM_FILE;
   s7_pointer WITH_INPUT_FROM_STRING, WITH_OUTPUT_TO_FILE, WITH_OUTPUT_TO_STRING, WRITE, WRITE_BYTE, WRITE_CHAR, WRITE_STRING, IS_ZERO;
   s7_pointer S7_FEATURES, LOAD_PATH, PI;
@@ -1398,10 +1398,10 @@ static void init_types(void)
 /* used for mutable numbers in clm2xen
  */
 
-#define T_BYTEVECTOR                  T_MUTABLE
-#define is_bytevector(p)              ((typeflag(p) & T_BYTEVECTOR) != 0)
-#define set_bytevector(p)             typeflag(p) |= T_BYTEVECTOR
-/* marks a string that the caller considers a bytevector
+#define T_BYTE_VECTOR                  T_MUTABLE
+#define is_byte_vector(p)              ((typeflag(p) & T_BYTE_VECTOR) != 0)
+#define set_byte_vector(p)             typeflag(p) |= T_BYTE_VECTOR
+/* marks a string that the caller considers a byte_vector
 */
 
 #define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
@@ -2304,7 +2304,7 @@ enum {OP_NO_OP,
       OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
       OP_CASE, OP_CASE1, OP_READ_LIST, OP_READ_NEXT, OP_READ_DOT, OP_READ_QUOTE,
       OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_APPLY_VALUES,
-      OP_READ_VECTOR, OP_READ_BYTEVECTOR, OP_READ_DONE,
+      OP_READ_VECTOR, OP_READ_BYTE_VECTOR, OP_READ_DONE,
       OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_DONE,
       OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1,
       OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
@@ -2498,7 +2498,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "define_macro", "define_macro_star", "define_expansion",
       "case", "case1", "read_list", "read_next", "read_dot", "read_quote",
       "read_quasiquote", "read_quasiquote_vector", "read_unquote", "read_apply_values",
-      "read_vector", "read_bytevector", "read_done",
+      "read_vector", "read_byte_vector", "read_done",
       "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", "eval_done",
       "catch", "dynamic_wind", "define_constant", "define_constant1",
       "do", "do_end", "do_end1", "do_step", "do_step2", "do_init",
@@ -19284,7 +19284,7 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
    *   perhaps check for null at pos+start?  What about a searched-for string that
    *   also has embedded nulls?
    *
-   * The embedded nulls are for bytevector usages, where presumably you're not talking
+   * The embedded nulls are for byte-vector usages, where presumably you're not talking
    *   about chars and strings, so I think I'll ignore these cases.  In unicode, you'd
    *   want to use unicode-aware searchers, so that also is irrelevant.
    */
@@ -19559,7 +19559,7 @@ static s7_pointer g_make_string(s7_scheme *sc, s7_pointer args)
   n = car(args);
   if (!s7_is_integer(n))
     {
-      check_two_methods(sc, n, sc->MAKE_STRING, sc->MAKE_BYTEVECTOR, args);
+      check_two_methods(sc, n, sc->MAKE_STRING, sc->MAKE_BYTE_VECTOR, args);
       return(wrong_type_argument(sc, sc->MAKE_STRING, 1, n, T_INTEGER));
     }
 
@@ -19727,7 +19727,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   c = caddr(args);
   if (!s7_is_character(c))
     {
-      if ((is_bytevector(x)) &&
+      if ((is_byte_vector(x)) &&
 	  (s7_is_integer(c)))
 	{
 	  int ic;
@@ -20491,7 +20491,7 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
     method_or_bust(sc, x, sc->STRING_FILL, args, T_STRING, 1); /* not two methods here */
 
   chr = cadr(args);
-  if (!is_bytevector(x))
+  if (!is_byte_vector(x))
     {
       if (!s7_is_character(chr))
 	{
@@ -20522,7 +20522,7 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
       if (start == end) return(chr);
     }
 
-  if (!is_bytevector(x))
+  if (!is_byte_vector(x))
     memset((void *)(string_value(x) + start), (int)character(chr), end - start);
   else memset((void *)(string_value(x) + start), (int)byte, end - start);
 
@@ -20647,35 +20647,35 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
 #endif
 
 
-/* -------------------------------- bytevectors --------------------------------
+/* -------------------------------- byte_vectors --------------------------------
  *
- * these are just strings with the T_BYTEVECTOR bit set.
+ * these are just strings with the T_BYTE_VECTOR bit set.
  */
 
-static bool s7_is_bytevector(s7_pointer b) {return((is_string(b)) && (is_bytevector(b)));}
+static bool s7_is_byte_vector(s7_pointer b) {return((is_string(b)) && (is_byte_vector(b)));}
 
-static s7_pointer g_is_bytevector(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_is_byte_vector(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_bytevector "(bytevector? obj) returns #t if obj is a bytevector"
-  check_boolean_method(sc, s7_is_bytevector, sc->IS_BYTEVECTOR, args);
+  #define H_is_byte_vector "(byte-vector? obj) returns #t if obj is a byte-vector"
+  check_boolean_method(sc, s7_is_byte_vector, sc->IS_BYTE_VECTOR, args);
 }
 
 
-static s7_pointer g_to_bytevector(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_to_byte_vector(s7_scheme *sc, s7_pointer args)
 {
-  #define H_to_bytevector "(->bytevector obj) turns a string into a bytevector."
+  #define H_to_byte_vector "(->byte-vector obj) turns a string into a byte-vector."
   s7_pointer str;
   str = car(args);
   if (!is_string(str))
-    method_or_bust(sc, str, sc->TO_BYTEVECTOR, args, T_STRING, 1);
-  set_bytevector(str);
+    method_or_bust(sc, str, sc->TO_BYTE_VECTOR, args, T_STRING, 1);
+  set_byte_vector(str);
   return(str);
 }
 
 
-static s7_pointer g_make_bytevector(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_make_byte_vector(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_bytevector "(make-bytevector len (byte 0)) makes a bytevector of length len filled with byte."
+  #define H_make_byte_vector "(make-byte-vector len (byte 0)) makes a byte-vector of length len filled with byte."
   s7_pointer str;
   if (is_null(cdr(args)))
     {
@@ -20689,25 +20689,25 @@ static s7_pointer g_make_bytevector(s7_scheme *sc, s7_pointer args)
       s7_Int b;
       len = car(args);
       if (!is_integer(len))
-	method_or_bust(sc, len, sc->MAKE_BYTEVECTOR, args, T_INTEGER, 1);
+	method_or_bust(sc, len, sc->MAKE_BYTE_VECTOR, args, T_INTEGER, 1);
 
       byte = cadr(args);
       if (!s7_is_integer(byte))
-	method_or_bust(sc, byte, sc->MAKE_BYTEVECTOR, args, T_INTEGER, 2);
+	method_or_bust(sc, byte, sc->MAKE_BYTE_VECTOR, args, T_INTEGER, 2);
 
       b = s7_integer(byte);
       if ((b < 0) || (b > 255))
-	return(simple_wrong_type_argument_with_type(sc, sc->MAKE_BYTEVECTOR, byte, AN_UNSIGNED_BYTE));
+	return(simple_wrong_type_argument_with_type(sc, sc->MAKE_BYTE_VECTOR, byte, AN_UNSIGNED_BYTE));
       str = g_make_string(sc, set_plist_2(sc, len, chars[b]));
     }
-  set_bytevector(str);
+  set_byte_vector(str);
   return(str);
 }
 
 
-static s7_pointer g_bytevector(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_byte_vector(s7_scheme *sc, s7_pointer args)
 {
-  #define H_bytevector "(bytevector ...) returns a bytevector whose elements are the arguments"
+  #define H_byte_vector "(byte-vector ...) returns a byte-vector whose elements are the arguments"
   s7_Int i, len;
   s7_pointer vec, x;
 
@@ -20724,29 +20724,29 @@ static s7_pointer g_bytevector(s7_scheme *sc, s7_pointer args)
 	  if (has_methods(byte))
 	    {
 	      s7_pointer func;
-	      func = find_method(sc, find_let(sc, byte), sc->BYTEVECTOR);
+	      func = find_method(sc, find_let(sc, byte), sc->BYTE_VECTOR);
 	      if (func != sc->UNDEFINED)
 		{
 		  if (i == 0)
 		    return(s7_apply_function(sc, func, args));
 		  string_length(vec) = i;
 		  vec = g_string_append(sc, set_plist_2(sc, vec, s7_apply_function(sc, func, x)));
-		  set_bytevector(vec);
+		  set_byte_vector(vec);
 		  return(vec);
 		}
 	    }
-	  return(wrong_type_argument(sc, sc->BYTEVECTOR, i + 1, byte, T_INTEGER));
+	  return(wrong_type_argument(sc, sc->BYTE_VECTOR, i + 1, byte, T_INTEGER));
 	}
       b = s7_integer(byte);
       if ((b < 0) || (b > 255))
-	return(simple_wrong_type_argument_with_type(sc, sc->BYTEVECTOR, byte, AN_UNSIGNED_BYTE));
+	return(simple_wrong_type_argument_with_type(sc, sc->BYTE_VECTOR, byte, AN_UNSIGNED_BYTE));
       string_value(vec)[i] = (unsigned char)b;
     }
-  set_bytevector(vec);
+  set_byte_vector(vec);
   return(vec);
 }
 
-static s7_pointer bytevector_to_list(s7_scheme *sc, const char *str, int len)
+static s7_pointer byte_vector_to_list(s7_scheme *sc, const char *str, int len)
 {
   int i;
   s7_pointer p;
@@ -23684,7 +23684,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   is_safe_closure(obj) ?       " safe-closure" : "",
 	   is_safe_procedure(obj) ?     " safe-procedure" : "",
 	   is_setter(obj) ?             ((is_pair(obj)) ? " annotated" : " setter") : "",
-	   is_mutable(obj) ?            ((is_string(obj)) ? " bytevector" : ((is_let(obj)) ? " let-ref-fallback" : " mutable")) : "",
+	   is_mutable(obj) ?            ((is_string(obj)) ? " byte-vector" : ((is_let(obj)) ? " let-ref-fallback" : " mutable")) : "",
 	   has_print_name(obj) ?        ((is_let(obj)) ? " let-set!-fallback" : " print-name") : "",
 	   needs_copied_args(obj) ?     " copy-args" : "",
 	   is_gensym(obj) ?             ((is_let(obj)) ? " closure-env" : ((is_unspecified(obj)) ? " no-value" : ((is_pair(obj)) ? " list-in-use" :
@@ -23834,7 +23834,7 @@ static s7_pointer string_iterate(s7_scheme *sc, s7_pointer obj)
   return(sc->ITERATOR_END);
 }
 
-static s7_pointer bytevector_iterate(s7_scheme *sc, s7_pointer obj)
+static s7_pointer byte_vector_iterate(s7_scheme *sc, s7_pointer obj)
 {
   if (iterator_position(obj) < iterator_length(obj))
     return(small_int((unsigned char)(string_value(iterator_sequence(obj))[iterator_position(obj)++])));
@@ -23982,8 +23982,8 @@ s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e)
 
     case T_STRING:
       iterator_length(iter) = string_length(e);
-      if (is_bytevector(e))
-	iterator_next(iter) = bytevector_iterate;
+      if (is_byte_vector(e))
+	iterator_next(iter) = byte_vector_iterate;
       else iterator_next(iter) = string_iterate;
       break;
 
@@ -24900,7 +24900,7 @@ static void string_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
     }
 }
 
-static void bytevector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write, bool to_file)
+static void byte_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write, bool to_file)
 {
   s7_Int i, len;
   int plen;
@@ -25737,8 +25737,8 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_STRING:
-      if (is_bytevector(obj))
-	bytevector_to_port(sc, obj, port, use_write, to_file);
+      if (is_byte_vector(obj))
+	byte_vector_to_port(sc, obj, port, use_write, to_file);
       else string_to_port(sc, obj, port, use_write, to_file);
       break;
 
@@ -32108,7 +32108,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 
     case T_STRING:
       {
-	/* bytevectors here also, so this isn't completely silly */
+	/* byte-vectors here also, so this isn't completely silly */
 	int i;
 	s7_pointer vec;
 	unsigned char *chrs;
@@ -32119,14 +32119,14 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 #if (!WITH_GMP)
 	if (is_c_function(lessp))
 	  {
-	    if (((!is_bytevector(data)) && (compare_func == g_chars_are_less)) ||
-		((is_bytevector(data)) && (compare_func == g_less_2)))
+	    if (((!is_byte_vector(data)) && (compare_func == g_chars_are_less)) ||
+		((is_byte_vector(data)) && (compare_func == g_less_2)))
 	      {
 		qsort((void *)vector_elements(data), len, sizeof(unsigned char), byte_less);
 		return(data);
 	      }
-	    if (((!is_bytevector(data)) && (compare_func == g_chars_are_greater)) ||
-		((is_bytevector(data)) && (compare_func == g_greater_2)))
+	    if (((!is_byte_vector(data)) && (compare_func == g_chars_are_greater)) ||
+		((is_byte_vector(data)) && (compare_func == g_greater_2)))
 	      {
 		qsort((void *)vector_elements(data), len, sizeof(unsigned char), byte_greater);
 		return(data);
@@ -32139,7 +32139,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	elements = s7_vector_elements(vec);
 	chrs = (unsigned char *)string_value(data);
 
-	if (is_bytevector(data))
+	if (is_byte_vector(data))
 	  {
 	    for (i = 0; i < len; i++)
 	      elements[i] = small_int(chrs[i]);
@@ -32155,7 +32155,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	    sc->v = vec;
 	    qsort((void *)elements, len, sizeof(s7_pointer), sort_func);
 
-	    if (is_bytevector(data))
+	    if (is_byte_vector(data))
 	      {
 		for (i = 0; i < len; i++)
 		  chrs[i] = (char)integer(elements[i]);
@@ -32356,7 +32356,7 @@ static s7_pointer vector_into_string(s7_pointer vect, s7_pointer dest)
   len = vector_length(vect);
   str = (unsigned char *)string_value(dest);
   
-  if (is_bytevector(dest))
+  if (is_byte_vector(dest))
     {
       for (i = 0; i < len; i++)
 	str[i] = (unsigned char)integer(elements[i]);
@@ -32439,6 +32439,15 @@ static s7_pointer g_hash_table_entries(s7_scheme *sc, s7_pointer args)
   if (!is_hash_table(car(args)))
     method_or_bust(sc, car(args), sc->HASH_TABLE_ENTRIES, args, T_HASH_TABLE, 0);
   return(make_integer(sc, hash_table_entries(car(args))));
+}
+
+
+static s7_pointer g_hash_table_function(s7_scheme *sc, s7_pointer args)
+{
+  #define H_hash_table_function "(hash-table-function obj) returns the key equality function used by the hash-table obj"
+  if (!is_hash_table(car(args)))
+    method_or_bust(sc, car(args), sc->HASH_TABLE_FUNCTION, args, T_HASH_TABLE, 0);
+  return(sc->F);
 }
 
 
@@ -35857,7 +35866,7 @@ static s7_pointer string_setter(s7_scheme *sc, s7_pointer str, s7_Int loc, s7_po
   return(wrong_type_argument(sc, sc->COPY, 3, val, T_CHARACTER));
 }
 
-static s7_pointer bytevector_setter(s7_scheme *sc, s7_pointer str, s7_Int loc, s7_pointer val)
+static s7_pointer byte_vector_setter(s7_scheme *sc, s7_pointer str, s7_Int loc, s7_pointer val)
 {
   if (s7_is_integer(val))
     {
@@ -35876,7 +35885,7 @@ static s7_pointer string_getter(s7_scheme *sc, s7_pointer str, s7_Int loc)
   return(s7_make_character(sc, (unsigned char)(string_value(str)[loc]))); /* cast needed else (copy (string (integer->char 255))...) is trouble */
 }
 
-static s7_pointer bytevector_getter(s7_scheme *sc, s7_pointer str, s7_Int loc)
+static s7_pointer byte_vector_getter(s7_scheme *sc, s7_pointer str, s7_Int loc)
 {
   return(make_integer(sc, (unsigned char)(string_value(str)[loc])));
 }
@@ -35942,8 +35951,8 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	  {
 	    s7_pointer ns;
 	    ns = s7_make_string_with_length(sc, string_value(source), string_length(source));
-	    if (is_bytevector(source))
-	      set_bytevector(ns);
+	    if (is_byte_vector(source))
+	      set_byte_vector(ns);
 	    return(ns);
 	  }
 	  
@@ -36051,8 +36060,8 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_STRING:
-      if (is_bytevector(source))
-	get = bytevector_getter;
+      if (is_byte_vector(source))
+	get = byte_vector_getter;
       else get = string_getter;
       end = string_length(source);
       break;
@@ -36122,8 +36131,8 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_STRING:
-      if (is_bytevector(dest))
-	set = bytevector_setter;
+      if (is_byte_vector(dest))
+	set = byte_vector_setter;
       else set = string_setter;
       dest_len = string_length(dest);
       break;
@@ -36191,7 +36200,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	  memcpy((void *)(float_vector_elements(dest)), (void *)((float_vector_elements(source)) + start), source_len * sizeof(s7_Double));
 	  return(dest);
 
-	case T_STRING: /* this is 4 cases (string/bytevector) */
+	case T_STRING: /* this is 4 cases (string/byte-vector) */
 	  memcpy((void *)string_value(dest), (void *)((string_value(source)) + start), source_len * sizeof(char));
 	  return(dest);
 
@@ -36316,7 +36325,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	    float_vector_element(dest, j) = (s7_Double)(int_vector_element(source, i));
 	  return(dest);
 	}
-      if (is_string(dest)) /* includes bytevector, as below */
+      if (is_string(dest)) /* includes byte-vector, as below */
 	{
 	  for (i = start, j = 0; i < end; i++, j++)
 	    string_value(dest)[j] = (unsigned char)int_vector_element(source, i);
@@ -36387,8 +36396,8 @@ also accepts a string or vector argument."
 	np = make_empty_string(sc, len, 0);
 	for (i = 0, j = len - 1; i < len; i++, j--)
 	  string_value(np)[i] = string_value(p)[j];  /* this could be optimized by using *dest-- = *source++ as could the vectors below */
-	if (is_bytevector(p))
-	  set_bytevector(np);
+	if (is_byte_vector(p))
+	  set_byte_vector(np);
       }
       break;
 
@@ -36647,8 +36656,8 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
       return(s7_vector_to_list(sc, obj));
 
     case T_STRING:
-      if (is_bytevector(obj))
-	return(bytevector_to_list(sc, string_value(obj), string_length(obj)));
+      if (is_byte_vector(obj))
+	return(byte_vector_to_list(sc, string_value(obj), string_length(obj)));
       return(s7_string_to_list(sc, string_value(obj), string_length(obj)));
 
     case T_HASH_TABLE:
@@ -39793,7 +39802,7 @@ static void back_up_stack(s7_scheme *sc)
       top_op = stack_op(sc->stack, s7_stack_top(sc) - 1);
     }
   if ((top_op == OP_READ_VECTOR) ||
-      (top_op == OP_READ_BYTEVECTOR))
+      (top_op == OP_READ_BYTE_VECTOR))
     {
       pop_stack(sc);
       top_op = stack_op(sc->stack, s7_stack_top(sc) - 1);
@@ -39881,7 +39890,7 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 	    if (d == EOF)
 	      s7_error(sc, sc->READ_ERROR, set_elist_1(sc, make_string_wrapper(sc, "unexpected end of input while reading #u8...")));
 	    if (d == '(')
-	      return(TOKEN_BYTEVECTOR);
+	      return(TOKEN_BYTE_VECTOR);
 	    backchar(d, pt);
 	    backchar('8', pt);
 	  }
@@ -40253,8 +40262,8 @@ static s7_pointer read_expression(s7_scheme *sc)
 	case TOKEN_EOF:
 	  return(sc->EOF_OBJECT);
 
-	case TOKEN_BYTEVECTOR:
-	  push_stack_no_code(sc, OP_READ_BYTEVECTOR, sc->NIL);
+	case TOKEN_BYTE_VECTOR:
+	  push_stack_no_code(sc, OP_READ_BYTE_VECTOR, sc->NIL);
 	  sc->tok = TOKEN_LEFT_PAREN;
 	  break;
 
@@ -40386,7 +40395,10 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       if ((is_let(env)) &&
 	  (is_symbol(funclet_function(env))))
 	{
-	  if (has_line_number(env))
+	  /* for C-defined things like hooks and dilambda, let_file and let_line are 0 */
+	  if ((has_line_number(env)) &&
+	      (let_file(env) > 0) &&
+	      (let_line(env) > 0))
 	    return(list_3(sc, funclet_function(env), sc->file_names[let_file(env)], make_integer(sc, let_line(env))));
 	  return(funclet_function(env));
 	}
@@ -48233,7 +48245,7 @@ static bool set_pair_p_3(s7_scheme *sc, s7_pointer obj, s7_pointer arg, s7_point
 	  }
 	else
 	  {
-	    if ((is_bytevector(obj)) &&
+	    if ((is_byte_vector(obj)) &&
 		(s7_is_integer(value)))
 	      {
 		int ic;
@@ -48585,7 +48597,7 @@ static int set_pair_ex(s7_scheme *sc)
 		  }
 		else
 		  {
-		    if ((is_bytevector(cx)) &&
+		    if ((is_byte_vector(cx)) &&
 			(s7_is_integer(val)))
 		      {
 			int ic;
@@ -56790,7 +56802,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if ((index < string_length(s)) &&
 			(index >= 0))
 		      {
-			if (is_bytevector(s))
+			if (is_byte_vector(s))
 			  sc->value = small_int((unsigned char)string_value(s)[index]);
 			else sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
 			goto START;
@@ -56817,7 +56829,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			if ((index < string_length(s)) &&
 			    (index >= 0))
 			  {
-			    if (is_bytevector(s))
+			    if (is_byte_vector(s))
 			      sc->value = small_int((unsigned char)string_value(s)[index]);
 			    else sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
 			    goto START;
@@ -56844,7 +56856,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if ((index < string_length(s)) &&
 			(index >= 0))
 		      {
-			if (is_bytevector(s))
+			if (is_byte_vector(s))
 			  sc->value = small_int((unsigned char)string_value(s)[index]);
 			else sc->value = s7_make_character(sc, ((unsigned char *)string_value(s))[index]);
 			goto START;
@@ -58012,7 +58024,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      if ((index >= 0) &&
 			  (index < string_length(sc->code)))
 			{
-			  if (is_bytevector(sc->code))
+			  if (is_byte_vector(sc->code))
 			    sc->value = small_int((unsigned char)(string_value(sc->code))[index]);
 			  else sc->value = s7_make_character(sc, ((unsigned char *)string_value(sc->code))[index]);
 			  goto START;
@@ -60938,10 +60950,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 	  
 	  
-	case OP_READ_BYTEVECTOR:
+	case OP_READ_BYTE_VECTOR:
 	  if (!is_proper_list(sc, sc->value))       /* #u8(1 . 2) */
-	    return(read_error(sc, "bytevector constant data is not a proper list"));
-	  sc->value = g_bytevector(sc, sc->value);
+	    return(read_error(sc, "byte-vector constant data is not a proper list"));
+	  sc->value = g_byte_vector(sc, sc->value);
 	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
 	  break;
 	  
@@ -66661,10 +66673,10 @@ s7_scheme *s7_init(void)
   sc->INT_VECTOR =            s7_define_safe_function(sc, "int-vector",              g_int_vector,             0, 0, true,  H_int_vector);
   sc->MAKE_INT_VECTOR =       s7_define_safe_function(sc, "make-int-vector",         g_make_int_vector,        1, 1, false, H_make_int_vector);
 
-  sc->IS_BYTEVECTOR =         s7_define_safe_function(sc, "bytevector?",             g_is_bytevector,          1, 0, false, H_is_bytevector);
-  sc->TO_BYTEVECTOR =         s7_define_safe_function(sc, "->bytevector",            g_to_bytevector,          1, 0, false, H_to_bytevector);
-  sc->BYTEVECTOR =            s7_define_safe_function(sc, "bytevector",              g_bytevector,             0, 0, true,  H_bytevector);
-  sc->MAKE_BYTEVECTOR =       s7_define_safe_function(sc, "make-bytevector",         g_make_bytevector,        1, 1, false, H_make_bytevector);
+  sc->IS_BYTE_VECTOR =        s7_define_safe_function(sc, "byte-vector?",            g_is_byte_vector,         1, 0, false, H_is_byte_vector);
+  sc->TO_BYTE_VECTOR =        s7_define_safe_function(sc, "->byte-vector",           g_to_byte_vector,         1, 0, false, H_to_byte_vector);
+  sc->BYTE_VECTOR =           s7_define_safe_function(sc, "byte-vector",             g_byte_vector,            0, 0, true,  H_byte_vector);
+  sc->MAKE_BYTE_VECTOR =      s7_define_safe_function(sc, "make-byte-vector",        g_make_byte_vector,       1, 1, false, H_make_byte_vector);
 
   sc->HASH_TABLE =            s7_define_safe_function(sc, "hash-table",              g_hash_table,             0, 0, true,  H_hash_table);
   sc->HASH_TABLE_STAR =       s7_define_safe_function(sc, "hash-table*",             g_hash_table_star,        0, 0, true,  H_hash_table_star);
@@ -66676,6 +66688,7 @@ s7_scheme *s7_init(void)
   sc->HASH_TABLE_SIZE =       s7_define_integer_function(sc, "hash-table-size",      g_hash_table_size,        1, 0, false, H_hash_table_size);
 #endif
   sc->HASH_TABLE_ENTRIES =    s7_define_integer_function(sc, "hash-table-entries",   g_hash_table_entries,     1, 0, false, H_hash_table_entries);
+  sc->HASH_TABLE_FUNCTION =   s7_define_safe_function(sc, "hash-table-function",     g_hash_table_function,    1, 0, false, H_hash_table_function);
                               s7_define_safe_function(sc, "hash-table-index",        g_hash_table_index,       1, 0, false, "an experiment");
 
                               s7_define_safe_function(sc, "cyclic-sequences",        g_cyclic_sequences,       1, 0, false, H_cyclic_sequences);
@@ -67183,5 +67196,8 @@ int main(int argc, char **argv)
  * eval: 2 op_loads, named let setup, etc
  *   break up the gensets and applies into bool sets[type](sc, obj, args) so set_pair_p_3 and others can go away, and apply itself!
  * where safe_c_c now -> all_x? (for-each for example -- would allow preloc of arg, not frame?)
- * s7test of hashed str with null
+ * s7test of hashed str with null, and check fill cases (eq func etc), byte-vector as key
+ * hash-table-function
+ * unroll hash loops
+ * tari.scm, tfun? tdyn?
  */

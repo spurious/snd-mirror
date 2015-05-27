@@ -287,7 +287,7 @@
 		   'getenv                 (lambda (obj) (#_getenv (obj 'value)))
 		   'delete-file            (lambda (obj) (#_delete-file (obj 'value)))
 		   'system                 (lambda* (obj cap) (#_system (obj 'value) cap))
-		   '->bytevector           (lambda (obj) (#_->bytevector (obj 'value))) ; this is in-place! 
+		   '->byte-vector           (lambda (obj) (#_->byte-vector (obj 'value))) ; this is in-place! 
 		   'load                   (lambda* (obj (e (curlet))) (#_load (obj 'value) e))
 		   'eval-string            (lambda* (obj (e (curlet))) (#_eval-string (obj 'value) e))
 		   'char-position          (make-method #_char-position (lambda (obj) (obj 'value)))
@@ -462,15 +462,15 @@
       (curlet))))
 
 #|
-;;; eventually I'll conjure up unichars like (define lambda (bytevector #xce #xbb)) via mock-char,
+;;; eventually I'll conjure up unichars like (define lambda (byte-vector #xce #xbb)) via mock-char,
 ;;;   then combine those into unistring via mock-string
 ;;;
 ;;; (string-length obj)->g_utf8_strlen etc 
-;;;   (g_unichar_isalpha (g_utf8_get_char (bytevector #xce #xbb))) -> #t
-;;;   (g_utf8_strlen (bytevector #xce #xbb #xce #xba) 10) -> 2
-;;;   (g_utf8_normalize (bytevector #xce #xbb #xce #xba) 4 G_NORMALIZE_DEFAULT)
-;;;   but the ones that return gunichar (toupper) currently don't return a bytevector or a string
-;;;   maybe gunichar->bytevector?
+;;;   (g_unichar_isalpha (g_utf8_get_char (byte-vector #xce #xbb))) -> #t
+;;;   (g_utf8_strlen (byte-vector #xce #xbb #xce #xba) 10) -> 2
+;;;   (g_utf8_normalize (byte-vector #xce #xbb #xce #xba) 4 G_NORMALIZE_DEFAULT)
+;;;   but the ones that return gunichar (toupper) currently don't return a byte-vector or a string
+;;;   maybe gunichar->byte-vector?
 ;;;   need glib.scm, or unicode.scm to load the stuff
 |#
 
@@ -584,9 +584,9 @@
 		   'make-vector      (make-method #_make-vector (lambda (obj) (obj 'value)))
 		   'make-float-vector(make-method #_make-float-vector (lambda (obj) (obj 'value)))
 		   'make-hash-table  (lambda (ind . args) (apply #_make-hash-table (ind 'value) args))
-		   'make-bytevector  (make-method #_make-bytevector (lambda (obj) (obj 'value)))
+		   'make-byte-vector  (make-method #_make-byte-vector (lambda (obj) (obj 'value)))
 
-		   'bytevector       (make-method #_bytevector (lambda (obj) (obj 'value)))
+		   'byte-vector       (make-method #_byte-vector (lambda (obj) (obj 'value)))
 		   'format           (make-method #_format (lambda (obj) (obj 'value)))
 
 		   'make-string      (lambda (ind . args) 

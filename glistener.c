@@ -396,7 +396,7 @@ void glistener_set_prompt(glistener *g, const char *str)
    *
    * from Snd, to get a prompt of lambda: in Greek font: 
    *   (set! (listener-prompt) (string (integer->char #xce) (integer->char #xbb) #\:))
-   *   (set! (listener-prompt) (bytevector #xce #xbb (char->integer #\:)))
+   *   (set! (listener-prompt) (byte-vector #xce #xbb (char->integer #\:)))
    * currently (see GDK_SUPER_MASK below), to type Greek characters, hold down the windoze-key
    */
   char *old_prompt;

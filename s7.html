@@ -1965,6 +1965,11 @@ homogenous vector functions are currently built-in:
 (<em class=def id="intvectorp">int-vector?</em> obj)
 (<em class=def id="intvector">int-vector</em> . args)
 (<em class=def id="makeintvector">make-int-vector</em> len (init 0))
+
+(<em class=def id="bytevectorp">byte-vector?</em> obj)
+(<em class=def id="bytevector">byte-vector</em> . args)
+(<em class=def id="makebytevector">make-byte-vector</em> len (init 0))
+(<em class=def id="tobytevector">-&gt;byte-vector</em> bv)
 </pre>
 
 <p>To access a vector's elements with different dimensions than the original had, use 
@@ -2250,6 +2255,7 @@ but a function grabs all remaining indices.  Trickier than I expected!
 <li>(<em class=def id="hashtablep">hash-table?</em> obj)
 <li>(<em class=def id="hashtablesize">hash-table-size</em> ht)
 <li>(<em class=def id="hashtableentries">hash-table-entries</em> ht)
+<li>(<em class=def id="hashtablefunction">hash-table-function</em> ht)
 </ul>
 
 <p>
@@ -2258,7 +2264,8 @@ Each hash-table keeps track of the keys it contains, optimizing the search where
 If you know what equality function you want, you can override this optimization by passing that function
 as the third argument to make-hash-table (see also r7rs.scm for a version with a different argument order).
 If you pass a table size that is not a power of 2, make-hash-table rounds it up to the next power of 2.
-The table grows as needed.
+The table grows as needed.  If a key is not in the table, hash-table-ref returns #f.  To remove a key,
+set its value to #f; to remove all keys, <code>(fill! table #f)</code>.
 </p>
 
 <pre class="indented">
@@ -2268,7 +2275,7 @@ The table grows as needed.
 <em class="gray">123</em>
 </pre>
 
-<p>hash-table (the function) parallels (the functions) vector, list, and string.  Its arguments are conses containing key/value pairs.
+<p>hash-table (the function) parallels the functions vector, list, and string.  Its arguments are conses containing key/value pairs.
 The result is a new hash-table with those values preinstalled: <code>(hash-table '("hi" . 32) '("ho" . 1))</code>.
 After much use, I now think it is more convenient here, as in inlet, to use hash-table*; its arguments are
 simply the keys and values, without the consing: <code>(hash-table* 'a 1 'b 2)</code>.
@@ -2312,9 +2319,8 @@ an entry, <code>'(key . value)</code>, in whatever order the entries are encount
 </pre>
 
 <p>reverse of a hash-table returns a new table with the keys and values reversed.
-</p>
-
-<p>Two hash-tables are equal if they have the same keys with the same values.  This is independent
+fill! sets all the values.
+Two hash-tables are equal if they have the same keys with the same values.  This is independent
 of the table sizes, or the order in which the key/value pairs were added.
 </p>
 </div>
@@ -6297,7 +6303,7 @@ the current environment, so defines happen in the enclosing environment.
 
 <p id="r7rs">The r7rs compatibility code is in r7rs.scm. I used to include it here, but
 as r7rs grew, this section got too large.  In general, all the conversion routines in
-r7rs are handled in s7 via generic functions, records are classes, bytevectors are
+r7rs are handled in s7 via generic functions, records are classes, byte-vectors are
 strings, and so on. 
 </p>
 </div>
@@ -8599,7 +8605,7 @@ assuming we have the usual Scheme-to-C linkages (see snd-glistener.c):
 </p>
 
 <pre class="indented">
-(set! (listener-prompt) (bytevector #xce #xbb (char-&gt;integer #\&gt;) (char-&gt;integer #\space)))
+(set! (listener-prompt) (byte-vector #xce #xbb (char-&gt;integer #\&gt;) (char-&gt;integer #\space)))
 (set! (listener-font) "Nimbus mono 10")
 (listener-set-prompt-tag *listener* ; ideally this too would be a setter
   (gtk_text_buffer_create_tag 

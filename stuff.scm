@@ -614,7 +614,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 ;;; ----------------
 (define ->predicate
   (let ((predicates (list integer? rational? real? complex? number?
-			  bytevector? string?
+			  byte-vector? string?
 			  float-vector? int-vector? vector?
 			  null? pair? list? 
 			  keyword? gensym? symbol?
@@ -1499,7 +1499,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	    ((hash-table? val)   
 	     (format #f "(hash-table ~{'~A~| ~})" val))
 	    ((string? val)       
-	     (format #f (if (bytevector? val) "#u8(~{~D~| ~})" "\"~{~A~|~}\"") val))
+	     (format #f (if (byte-vector? val) "#u8(~{~D~| ~})" "\"~{~A~|~}\"") val))
 	    (else                
 	     (format #f "(~{~A~| ~})" val)))))
 
