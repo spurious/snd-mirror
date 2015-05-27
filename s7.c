@@ -7646,15 +7646,15 @@ static s7_Complex cpow(s7_Complex x, s7_Complex y)
 #endif
 
 #if (!defined(__FreeBSD__)) || (__FreeBSD__ < 10)
-  static s7_Complex csin(s7_Complex z) {return(sin(creal(z)) * cosh(cimag(z)) + (cos(creal(z)) * sinh(cimag(z))) * _Complex_I);}
-  static s7_Complex ccos(s7_Complex z) {return(cos(creal(z)) * cosh(cimag(z)) + (-sin(creal(z)) * sinh(cimag(z))) * _Complex_I);}
-  static s7_Complex csinh(s7_Complex z) {return(sinh(creal(z)) * cos(cimag(z)) + (cosh(creal(z)) * sin(cimag(z))) * _Complex_I);}
-  static s7_Complex ccosh(s7_Complex z) {return(cosh(creal(z)) * cos(cimag(z)) + (sinh(creal(z)) * sin(cimag(z))) * _Complex_I);}
-  static s7_Complex ctan(s7_Complex z) {return(csin(z) / ccos(z));}
-  static s7_Complex ctanh(s7_Complex z) {return(csinh(z) / ccosh(z));}
-  static s7_Complex casin(s7_Complex z) {return(-_Complex_I * clog(_Complex_I * z + csqrt(1.0 - z * z)));}
-  static s7_Complex cacos(s7_Complex z) {return(-_Complex_I * clog(z + _Complex_I * csqrt(1.0 - z * z)));}
-  static s7_Complex catan(s7_Complex z) {return(_Complex_I * clog((_Complex_I + z) / (_Complex_I - z)) / 2.0);}
+  static s7_Complex csin(s7_Complex z)   {return(sin(creal(z)) * cosh(cimag(z)) + (cos(creal(z)) * sinh(cimag(z))) * _Complex_I);}
+  static s7_Complex ccos(s7_Complex z)   {return(cos(creal(z)) * cosh(cimag(z)) + (-sin(creal(z)) * sinh(cimag(z))) * _Complex_I);}
+  static s7_Complex csinh(s7_Complex z)  {return(sinh(creal(z)) * cos(cimag(z)) + (cosh(creal(z)) * sin(cimag(z))) * _Complex_I);}
+  static s7_Complex ccosh(s7_Complex z)  {return(cosh(creal(z)) * cos(cimag(z)) + (sinh(creal(z)) * sin(cimag(z))) * _Complex_I);}
+  static s7_Complex ctan(s7_Complex z)   {return(csin(z) / ccos(z));}
+  static s7_Complex ctanh(s7_Complex z)  {return(csinh(z) / ccosh(z));}
+  static s7_Complex casin(s7_Complex z)  {return(-_Complex_I * clog(_Complex_I * z + csqrt(1.0 - z * z)));}
+  static s7_Complex cacos(s7_Complex z)  {return(-_Complex_I * clog(z + _Complex_I * csqrt(1.0 - z * z)));}
+  static s7_Complex catan(s7_Complex z)  {return(_Complex_I * clog((_Complex_I + z) / (_Complex_I - z)) / 2.0);}
   static s7_Complex catanh(s7_Complex z) {return(clog((1.0 + z) / (1.0 - z)) / 2.0);}
   static s7_Complex casinh(s7_Complex z) {return(clog(z + csqrt(1.0 + z * z)));}
   static s7_Complex cacosh(s7_Complex z) {return(clog(z + csqrt(z * z - 1.0)));}
@@ -20073,20 +20073,8 @@ static s7_pointer g_string_cmp_not(s7_scheme *sc, s7_pointer args, int val, s7_p
 
 static bool scheme_strings_are_equal(s7_pointer x, s7_pointer y)
 {
-  char *xstr, *ystr;
-  unsigned int i, len;
-
-  len = string_length(x);
-  if (string_length(y) != len)
-    return(false);
-
-  xstr = string_value(x);
-  ystr = string_value(y);
-
-  for (i = 0; i < len; i++)
-    if (xstr[i] != ystr[i])
-      return(false);
-  return(true);
+  return((string_length(x) == string_length(y)) &&
+	 (strings_are_equal_with_length(string_value(x), string_value(y), string_length(x))));
 }
 
 
@@ -20097,20 +20085,14 @@ static s7_pointer g_strings_are_equal(s7_scheme *sc, s7_pointer args)
   /* C-based check stops at null, but we can have embedded nulls.
    *   (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string=? s1 s2))
    */
-
   s7_pointer x, y;
-  unsigned int len;
   bool happy = true;
-  char *ystr;
 
   y = car(args);
   if (!is_string(y))
     method_or_bust(sc, y, sc->STRING_EQ, args, T_STRING, 1);
 
-  len = string_length(y);
-  ystr = string_value(y);
-
-  for (x = cdr(args); is_not_null(x); x = cdr(x))
+  for (x = cdr(args); is_pair(x); x = cdr(x))
     {
       s7_pointer p;
       p = car(x);
@@ -20119,25 +20101,9 @@ static s7_pointer g_strings_are_equal(s7_scheme *sc, s7_pointer args)
 	  if (!is_string(p))
 	    method_or_bust(sc, p, sc->STRING_EQ, cons(sc, y, x), T_STRING, position_of(x, args));
 	  if (happy)
-	    {
-	      if (string_length(p) != len)
-		happy = false;
-	      else
-		{
-		  unsigned int k;
-		  char *xstr;
-		  xstr = string_value(p);
-		  for (k = 0; k < len; k++)
-		    if (ystr[k] != xstr[k])
-		      {
-			happy = false;
-			break;
-		      }
-		}
-	    }
+	    happy = scheme_strings_are_equal(p, y);
 	}
     }
-
   if (!happy)
     return(sc->F);
   return(sc->T);
@@ -32414,17 +32380,17 @@ static void free_hash_table(s7_pointer table)
   int i;
   hash_entry_t **entries;
   entries = hash_table_elements(table);
-  for (i = 0; i < hash_table_length(table); i++)
-    {
-      hash_entry_t *p, *n;
-      for (p = entries[i]; p; p = n)
-	{
-	  n = p->next;
-	  /* free(p) */
-	  p->next = hash_free_list;
-	  hash_free_list = p;
-	}
-    }
+  if (hash_table_entries(table) > 0)
+    for (i = 0; i < hash_table_length(table); i++)
+      {
+	hash_entry_t *p, *n;
+	for (p = entries[i]; p; p = n)
+	  {
+	    n = p->next;
+	    p->next = hash_free_list;
+	    hash_free_list = p;
+	  }
+      }
   free(entries);
 }
 
@@ -32643,10 +32609,9 @@ static hash_entry_t *hash_int(s7_scheme *sc, s7_pointer table, s7_pointer key)
     {
       s7_Int keyval;
       hash_entry_t *x;
-      unsigned int loc;
-      unsigned long long int hash_len;
+      unsigned int loc, hash_len;
 
-      hash_len = (unsigned long long int)hash_table_length(table) - 1;
+      hash_len = (unsigned int)hash_table_length(table) - 1;
       keyval = integer(key);
       if (keyval < 0)
 	loc = (unsigned int)((-keyval) & hash_len);
@@ -32666,9 +32631,13 @@ static hash_entry_t *hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key
   if (is_string(key))
     {
       hash_entry_t *x;
-      unsigned int hash, hash_len;
+      unsigned int hash, hash_len, key_len;
+      const char *key_str;
 
-      hash_len = (unsigned long long int)hash_table_length(table) - 1;
+      key_len = string_length(key);
+      key_str = string_value(key);
+
+      hash_len = (unsigned int)hash_table_length(table) - 1;
       hash = string_hash(key);
       if (hash == 0)
 	{
@@ -32676,8 +32645,8 @@ static hash_entry_t *hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key
 	  string_hash(key) = hash;
 	}
       for (x = hash_table_element(table, hash & hash_len); x; x = x->next)
-	if (/* (hash == string_hash(x->key)) && */ /* this seems to slow us down? also len==len + strncmp is slower */
-	    (strings_are_equal(string_value(x->key), string_value(key))))
+	if ((key_len == string_length(x->key)) &&        /* these are scheme strings, so we can't assume 0=end of string */
+	    (strings_are_equal_with_length(key_str, string_value(x->key), key_len)))
 	  return(x);
     }
   return(NULL);
@@ -33448,14 +33417,36 @@ s7_pointer hash_table_fill(s7_scheme *sc, s7_pointer args)
   if (hash_table_entries(table) > 0)
     {
       int i;
-      hash_entry_t ** els;
-      hash_entry_t *x;
-      els = hash_table_elements(table);
-      for (i = 0; i < hash_table_length(table); i++)
-	for (x = els[i]; x; x = x->next)
-	  x->value = val;
+      hash_entry_t **entries;
+      entries = hash_table_elements(table);
+
+      /* hash-table-ref returns #f if it can't find a key, so val == #f here means empty the table */
+      if (val == sc->F)
+	{
+	  for (i = 0; i < hash_table_length(table); i++)
+	    {
+	      hash_entry_t *p, *n;
+	      for (p = entries[i]; p; p = n)
+		{
+		  n = p->next;
+		  p->next = hash_free_list;
+		  hash_free_list = p;
+		}
+	      entries[i] = NULL;
+	    }
+	  if (!hash_table_function_locked(table))
+	    hash_table_function(table) = hash_empty;
+	  hash_table_entries(table) = 0;
+	}
+      else
+	{
+	  hash_entry_t *x;
+	  for (i = 0; i < hash_table_length(table); i++)
+	    for (x = entries[i]; x; x = x->next)
+	      x->value = val;
+	  /* keys haven't changed, so no need to mess with hash_table_function */
+	}
     }
-  /* keys haven't changed, so no need to mess with hash_table_function */
   return(val);
 }
 
@@ -35993,6 +35984,28 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	case T_PAIR:                    /* top level only, as in the other cases, last arg checks for circles */
 	  return(protected_list_copy(sc, source));
 	  
+	case T_INTEGER:
+	  NEW_CELL(sc, dest, T_INTEGER);
+	  integer(dest) = integer(source);
+	  return(dest);
+
+	case T_RATIO:
+	  NEW_CELL(sc, dest, T_RATIO);
+	  numerator(dest) = numerator(source);
+	  denominator(dest) = denominator(source);
+	  return(dest);
+
+	case T_REAL:
+	  NEW_CELL(sc, dest, T_REAL);
+	  real(dest) = real(source);
+	  return(dest);
+
+	case T_COMPLEX:
+	  NEW_CELL(sc, dest, T_COMPLEX);
+	  real_part(dest) = real_part(source);
+	  imag_part(dest) = imag_part(source);
+	  return(dest);
+
 #if WITH_GMP
 	case T_BIG_INTEGER:
 	  return(mpz_to_big_integer(sc, big_integer(source)));
@@ -49004,13 +49017,20 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		    {
 		      if (is_setter(car(expr))) /* "setter" includes stuff like cons and vector */
 			{
+			  /* (hash-table-set! ht i 0) -- caddr is being saved, so this is not safe
+			   *   similarly (vector-set! v 0 i) etc
+			   */
 			  if (!direct_memq(cadr(expr), var_list))         /* non-local is being changed */
 			    {
 			      if ((direct_memq(cadr(expr), steppers)) ||  /* stepper is being set? */
 				  (!is_pair(cddr(expr))) ||
 				  (!is_pair(cdddr(expr))) ||
 				  (is_pair(cddddr(expr))) ||
-				  (is_symbol(cadddr(expr))) || /* memq cadddr expr steppers? */
+				  ((car(expr) == sc->HASH_TABLE_SET) &&
+				   (is_symbol(caddr(expr))) && 
+				   (direct_memq(caddr(expr), steppers))) ||
+				  ((is_symbol(cadddr(expr))) && 
+				   (direct_memq(cadddr(expr), steppers))) ||
 				  (is_pair(cadddr(expr))))
 				(*has_set) = true;
 			    }
@@ -50573,7 +50593,25 @@ static int dox_ex(s7_scheme *sc)
 	  endp = fcdr(sc->code);
 	  slots = let_slots(sc->envir);
 	  body = all_x_init(sc, body, code);
+	  if ((!is_slot(next_slot(slots))) &&   /* 1 stepper */
+	      (is_pair(slot_expression(slots)))) /*   incremented */
+	    {
+	      s7_pointer slot_expr;
+	      dox_function df;
+	      df = ((dox_function)fcdr(slot_expression(slots)));
+	      slot_expr = car(slot_expression(slots));
 
+	      while (true)
+		{
+		  body(sc, code);
+		  slot_set_value(slots, df(sc, slot_expr, slots));
+		  if (is_true(sc, endf(sc, endp)))
+		    {
+		      sc->code = cdadr(sc->code);
+		      return(goto_DO_END_CLAUSES);
+		    }
+		}
+	    }
 	  while (true)
 	    {
 	      s7_pointer slot;
@@ -51334,7 +51372,7 @@ static int do_all_x_ex(s7_scheme *sc)
 	  s7_function f;
 	  slot = let_slots(sc->envir);
 	  expr = slot_expression(slot);
-	  f = (s7_function)fcdr(expr);
+	  f = all_x_init(sc, (s7_function)fcdr(expr), expr);
 	  expr = car(expr);
 	  while (true)
 	    {
@@ -51564,7 +51602,7 @@ static int simple_do_forever_ex(s7_scheme *sc)
       sc->z = sc->NIL;
       /* else fall into the ordinary loop */
     }
-  func = (s7_function)fcdr(body);
+  func = all_x_init(sc, (s7_function)fcdr(body), car(body)); /* all_x annotated in check_do */
   while (true) {func(sc, car(body));}
   return(fall_through);
 }
@@ -52238,6 +52276,83 @@ static void read_quasiquote_vector_ex(s7_scheme *sc)
   else sc->code = list_4(sc, sc->Apply, sc->Multivector, sc->args, g_quasiquote_1(sc, sc->value));
 }
 #endif
+
+static void increment_1_ex(s7_scheme *sc)
+{
+  /* ([set!] ctr (+ ctr 1)) */
+  s7_pointer val, y;
+  
+  y = find_symbol(sc, car(sc->code));
+  if (!is_slot(y))
+    eval_error_no_return(sc, sc->WRONG_TYPE_ARG, "set! ~A: unbound variable", car(sc->code));
+  
+  val = slot_value(y);
+  switch (type(val))
+    {
+    case T_INTEGER:
+      sc->value = make_integer(sc, integer(val) + 1);  /* this can't be optimized to treat y's value as a mutable integer */
+      break;
+      
+    case T_RATIO:
+      NEW_CELL(sc, sc->value, T_RATIO);
+      numerator(sc->value) = numerator(val) + denominator(val);
+      denominator(sc->value) = denominator(val);
+      break;
+      
+    case T_REAL:
+      sc->value = make_real(sc, real(val) + 1.0);
+      break;
+      
+    case T_COMPLEX:
+      NEW_CELL(sc, sc->value, T_COMPLEX);
+      real_part(sc->value) = real_part(val) + 1.0;
+      imag_part(sc->value) = imag_part(val);
+      break;
+      
+    default:
+      sc->value = g_add(sc, set_plist_2(sc, val, small_int(1)));
+      break;
+    }
+  slot_set_value(y, sc->value);
+}
+
+static void decrement_1_ex(s7_scheme *sc)
+{
+  /* ([set!] ctr (- ctr 1)) */
+  s7_pointer val, y;
+  y = find_symbol(sc, car(sc->code));
+  if (!is_slot(y))
+    eval_error_no_return(sc, sc->WRONG_TYPE_ARG, "set! ~A: unbound variable", car(sc->code));
+  val = slot_value(y);
+  switch (type(val))
+    {
+    case T_INTEGER:
+      sc->value = make_integer(sc, integer(val) - 1);
+      break;
+      
+    case T_RATIO:
+      NEW_CELL(sc, sc->value, T_RATIO);
+      numerator(sc->value) = numerator(val) - denominator(val);
+      denominator(sc->value) = denominator(val);
+      break;
+      
+    case T_REAL:
+      sc->value = make_real(sc, real(val) - 1.0);
+      break;
+      
+    case T_COMPLEX:
+      NEW_CELL(sc, sc->value, T_COMPLEX);
+      real_part(sc->value) = real_part(val) - 1.0;
+      imag_part(sc->value) = imag_part(val);
+      break;
+      
+    default:
+      sc->value = g_subtract(sc, set_plist_2(sc, val, small_int(1)));
+      break;
+    }
+  slot_set_value(y, sc->value);
+}
+
 
 static void clear_all_optimizations(s7_scheme *sc, s7_pointer p)
 {
@@ -53512,8 +53627,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto DO_STEP1;
 	  
 	  
-	case OP_DO:
-	  /* sc->code is the stuff after "do" */
+	case OP_DO:    /* sc->code is the stuff after "do" */
 	  if (is_null(check_do(sc)))
 	    {
 	      s7_pointer op;
@@ -58420,81 +58534,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 	  
 	case OP_INCREMENT_1:
-	  {
-	    /* ([set!] ctr (+ ctr 1)) */
-	    s7_pointer val, y;
-	    
-	    y = find_symbol(sc, car(sc->code));
-	    if (!is_slot(y))
-	      eval_type_error(sc, "set! ~A: unbound variable", car(sc->code));
-	    
-	    val = slot_value(y);
-	    switch (type(val))
-	      {
-	      case T_INTEGER:
-		sc->value = make_integer(sc, integer(val) + 1);  /* this can't be optimized to treat y's value as a mutable integer */
-		break;
-		
-	      case T_RATIO:
-		NEW_CELL(sc, sc->value, T_RATIO);
-		numerator(sc->value) = numerator(val) + denominator(val);
-		denominator(sc->value) = denominator(val);
-		break;
-		
-	      case T_REAL:
-		sc->value = make_real(sc, real(val) + 1.0);
-		break;
-		
-	      case T_COMPLEX:
-		NEW_CELL(sc, sc->value, T_COMPLEX);
-		real_part(sc->value) = real_part(val) + 1.0;
-		imag_part(sc->value) = imag_part(val);
-		break;
-		
-	      default:
-		sc->value = g_add(sc, set_plist_2(sc, val, small_int(1)));
-		break;
-	      }
-	    slot_set_value(y, sc->value);
-	  }
+	  increment_1_ex(sc);
 	  break;
 	  
 	case OP_DECREMENT_1:
-	  {
-	    /* ([set!] ctr (- ctr 1)) */
-	    s7_pointer val, y;
-	    y = find_symbol(sc, car(sc->code));
-	    if (!is_slot(y))
-	      eval_type_error(sc, "set! ~A: unbound variable", car(sc->code));
-	    val = slot_value(y);
-	    switch (type(val))
-	      {
-	      case T_INTEGER:
-		sc->value = make_integer(sc, integer(val) - 1);
-		break;
-		
-	      case T_RATIO:
-		NEW_CELL(sc, sc->value, T_RATIO);
-		numerator(sc->value) = numerator(val) - denominator(val);
-		denominator(sc->value) = denominator(val);
-		break;
-		
-	      case T_REAL:
-		sc->value = make_real(sc, real(val) - 1.0);
-		break;
-		
-	      case T_COMPLEX:
-		NEW_CELL(sc, sc->value, T_COMPLEX);
-		real_part(sc->value) = real_part(val) - 1.0;
-		imag_part(sc->value) = imag_part(val);
-		break;
-		
-	      default:
-		sc->value = g_subtract(sc, set_plist_2(sc, val, small_int(1)));
-		break;
-	      }
-	    slot_set_value(y, sc->value);
-	  }
+	  decrement_1_ex(sc);
 	  break;
 	  
         #define SET_CASE(Op, Code)						\
@@ -67105,13 +67149,13 @@ int main(int argc, char **argv)
  * teq           |      |      | 6612                     3887 3020 2708
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3294
  * tcopy         |      |      |                          4970 4287 3851
- * tmap          |      |      | 11.0           5031 4769 4685 4557 4224
+ * tmap          |      |      | 11.0           5031 4769 4685 4557 4198
  * tform         |      |      |                          6816 5536 4392
- * titer         |      |      |                          7976 6614 4943
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6263
+ * titer         |      |      |                          7503 6793 6409
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6667
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.8
- * thash         |      |      |                          19.4 17.4 16.6
+ * thash         |      |      |                          19.4 17.4 16.3
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 20.9
  * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.0
  *
@@ -67134,10 +67178,10 @@ int main(int argc, char **argv)
  * define-constant func gives a way to avoid closure_is_ok in all cases, so maybe move the arg checks into the main op?
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
  *   with name/sync/sample settable
- *
  * apropos should scan autoload?
+ *
  * eval: 2 op_loads, named let setup, etc
  *   break up the gensets and applies into bool sets[type](sc, obj, args) so set_pair_p_3 and others can go away, and apply itself!
- * where safe_c_c now -> all_x? (for-each for example -- would allow preloc of arg, not frame?) -- dotimes_c_c_ex can be allx (only in index currently)
- *   do-forever? do_all_x_ex while loop for f? need test cases for all these loops
+ * where safe_c_c now -> all_x? (for-each for example -- would allow preloc of arg, not frame?)
+ * s7test of hashed str with null
  */

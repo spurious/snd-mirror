@@ -4178,22 +4178,6 @@ GtkAccelMapForeach func)"
    }
 }
 
-static Xen gxg_gtk_adjustment_changed(Xen adjustment)
-{
-  #define H_gtk_adjustment_changed "void gtk_adjustment_changed(GtkAdjustment* adjustment)"
-  Xen_check_type(Xen_is_GtkAdjustment_(adjustment), adjustment, 1, "gtk_adjustment_changed", "GtkAdjustment*");
-  gtk_adjustment_changed(Xen_to_C_GtkAdjustment_(adjustment));
-  return(Xen_false);
-}
-
-static Xen gxg_gtk_adjustment_value_changed(Xen adjustment)
-{
-  #define H_gtk_adjustment_value_changed "void gtk_adjustment_value_changed(GtkAdjustment* adjustment)"
-  Xen_check_type(Xen_is_GtkAdjustment_(adjustment), adjustment, 1, "gtk_adjustment_value_changed", "GtkAdjustment*");
-  gtk_adjustment_value_changed(Xen_to_C_GtkAdjustment_(adjustment));
-  return(Xen_false);
-}
-
 static Xen gxg_gtk_adjustment_clamp_page(Xen adjustment, Xen lower, Xen upper)
 {
   #define H_gtk_adjustment_clamp_page "void gtk_adjustment_clamp_page(GtkAdjustment* adjustment, gdouble lower, \
@@ -31826,6 +31810,40 @@ GtkRadioMenuItem* group_source)"
   return(Xen_false);
 }
 
+static Xen gxg_gtk_font_chooser_set_font_map(Xen fontchooser, Xen fontmap)
+{
+  #define H_gtk_font_chooser_set_font_map "void gtk_font_chooser_set_font_map(GtkFontChooser* fontchooser, \
+PangoFontMap* fontmap)"
+  Xen_check_type(Xen_is_GtkFontChooser_(fontchooser), fontchooser, 1, "gtk_font_chooser_set_font_map", "GtkFontChooser*");
+  Xen_check_type(Xen_is_PangoFontMap_(fontmap), fontmap, 2, "gtk_font_chooser_set_font_map", "PangoFontMap*");
+  gtk_font_chooser_set_font_map(Xen_to_C_GtkFontChooser_(fontchooser), Xen_to_C_PangoFontMap_(fontmap));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_font_chooser_get_font_map(Xen fontchooser)
+{
+  #define H_gtk_font_chooser_get_font_map "PangoFontMap* gtk_font_chooser_get_font_map(GtkFontChooser* fontchooser)"
+  Xen_check_type(Xen_is_GtkFontChooser_(fontchooser), fontchooser, 1, "gtk_font_chooser_get_font_map", "GtkFontChooser*");
+  return(C_to_Xen_PangoFontMap_(gtk_font_chooser_get_font_map(Xen_to_C_GtkFontChooser_(fontchooser))));
+}
+
+static Xen gxg_gtk_popover_set_default_widget(Xen popover, Xen widget)
+{
+  #define H_gtk_popover_set_default_widget "void gtk_popover_set_default_widget(GtkPopover* popover, \
+GtkWidget* widget)"
+  Xen_check_type(Xen_is_GtkPopover_(popover), popover, 1, "gtk_popover_set_default_widget", "GtkPopover*");
+  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 2, "gtk_popover_set_default_widget", "GtkWidget*");
+  gtk_popover_set_default_widget(Xen_to_C_GtkPopover_(popover), Xen_to_C_GtkWidget_(widget));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_popover_get_default_widget(Xen popover)
+{
+  #define H_gtk_popover_get_default_widget "GtkWidget* gtk_popover_get_default_widget(GtkPopover* popover)"
+  Xen_check_type(Xen_is_GtkPopover_(popover), popover, 1, "gtk_popover_get_default_widget", "GtkPopover*");
+  return(C_to_Xen_GtkWidget_(gtk_popover_get_default_widget(Xen_to_C_GtkPopover_(popover))));
+}
+
 #endif
 
 static Xen gxg_cairo_create(Xen target)
@@ -35363,8 +35381,6 @@ Xen_wrap_1_arg(gxg_gtk_accel_map_load_fd_w, gxg_gtk_accel_map_load_fd)
 Xen_wrap_1_arg(gxg_gtk_accel_map_save_fd_w, gxg_gtk_accel_map_save_fd)
 Xen_wrap_1_arg(gxg_gtk_accel_map_add_filter_w, gxg_gtk_accel_map_add_filter)
 Xen_wrap_2_args(gxg_gtk_accel_map_foreach_unfiltered_w, gxg_gtk_accel_map_foreach_unfiltered)
-Xen_wrap_1_arg(gxg_gtk_adjustment_changed_w, gxg_gtk_adjustment_changed)
-Xen_wrap_1_arg(gxg_gtk_adjustment_value_changed_w, gxg_gtk_adjustment_value_changed)
 Xen_wrap_3_args(gxg_gtk_adjustment_clamp_page_w, gxg_gtk_adjustment_clamp_page)
 Xen_wrap_1_arg(gxg_gtk_adjustment_get_value_w, gxg_gtk_adjustment_get_value)
 Xen_wrap_2_args(gxg_gtk_adjustment_set_value_w, gxg_gtk_adjustment_set_value)
@@ -38428,6 +38444,10 @@ Xen_wrap_1_arg(gxg_gtk_popover_get_transitions_enabled_w, gxg_gtk_popover_get_tr
 #if GTK_CHECK_VERSION(3, 18, 0)
 Xen_wrap_1_arg(gxg_gdk_keymap_get_scroll_lock_state_w, gxg_gdk_keymap_get_scroll_lock_state)
 Xen_wrap_2_args(gxg_gtk_radio_menu_item_join_group_w, gxg_gtk_radio_menu_item_join_group)
+Xen_wrap_2_args(gxg_gtk_font_chooser_set_font_map_w, gxg_gtk_font_chooser_set_font_map)
+Xen_wrap_1_arg(gxg_gtk_font_chooser_get_font_map_w, gxg_gtk_font_chooser_get_font_map)
+Xen_wrap_2_args(gxg_gtk_popover_set_default_widget_w, gxg_gtk_popover_set_default_widget)
+Xen_wrap_1_arg(gxg_gtk_popover_get_default_widget_w, gxg_gtk_popover_get_default_widget)
 #endif
 
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
@@ -39441,8 +39461,6 @@ static void define_functions(void)
   Xg_define_procedure(gtk_accel_map_save_fd, gxg_gtk_accel_map_save_fd_w, 1, 0, 0, H_gtk_accel_map_save_fd);
   Xg_define_procedure(gtk_accel_map_add_filter, gxg_gtk_accel_map_add_filter_w, 1, 0, 0, H_gtk_accel_map_add_filter);
   Xg_define_procedure(gtk_accel_map_foreach_unfiltered, gxg_gtk_accel_map_foreach_unfiltered_w, 2, 0, 0, H_gtk_accel_map_foreach_unfiltered);
-  Xg_define_procedure(gtk_adjustment_changed, gxg_gtk_adjustment_changed_w, 1, 0, 0, H_gtk_adjustment_changed);
-  Xg_define_procedure(gtk_adjustment_value_changed, gxg_gtk_adjustment_value_changed_w, 1, 0, 0, H_gtk_adjustment_value_changed);
   Xg_define_procedure(gtk_adjustment_clamp_page, gxg_gtk_adjustment_clamp_page_w, 3, 0, 0, H_gtk_adjustment_clamp_page);
   Xg_define_procedure(gtk_adjustment_get_value, gxg_gtk_adjustment_get_value_w, 1, 0, 0, H_gtk_adjustment_get_value);
   Xg_define_procedure(gtk_adjustment_set_value, gxg_gtk_adjustment_set_value_w, 2, 0, 0, H_gtk_adjustment_set_value);
@@ -42506,6 +42524,10 @@ static void define_functions(void)
 #if GTK_CHECK_VERSION(3, 18, 0)
   Xg_define_procedure(gdk_keymap_get_scroll_lock_state, gxg_gdk_keymap_get_scroll_lock_state_w, 1, 0, 0, H_gdk_keymap_get_scroll_lock_state);
   Xg_define_procedure(gtk_radio_menu_item_join_group, gxg_gtk_radio_menu_item_join_group_w, 2, 0, 0, H_gtk_radio_menu_item_join_group);
+  Xg_define_procedure(gtk_font_chooser_set_font_map, gxg_gtk_font_chooser_set_font_map_w, 2, 0, 0, H_gtk_font_chooser_set_font_map);
+  Xg_define_procedure(gtk_font_chooser_get_font_map, gxg_gtk_font_chooser_get_font_map_w, 1, 0, 0, H_gtk_font_chooser_get_font_map);
+  Xg_define_procedure(gtk_popover_set_default_widget, gxg_gtk_popover_set_default_widget_w, 2, 0, 0, H_gtk_popover_set_default_widget);
+  Xg_define_procedure(gtk_popover_get_default_widget, gxg_gtk_popover_get_default_widget_w, 1, 0, 0, H_gtk_popover_get_default_widget);
 #endif
 
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
@@ -45155,7 +45177,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("30-Apr-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("26-May-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

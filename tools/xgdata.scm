@@ -1592,8 +1592,8 @@
 
 ;;; (CFNC-gtk2 "GtkObject* gtk_adjustment_new gdouble value gdouble lower gdouble upper gdouble step_increment gdouble page_increment gdouble page_size")
 
-(CFNC "void gtk_adjustment_changed GtkAdjustment* adjustment")
-(CFNC "void gtk_adjustment_value_changed GtkAdjustment* adjustment")
+;;; 3.18.0 (CFNC "void gtk_adjustment_changed GtkAdjustment* adjustment")
+;;; 3.18.0 (CFNC "void gtk_adjustment_value_changed GtkAdjustment* adjustment")
 (CFNC "void gtk_adjustment_clamp_page GtkAdjustment* adjustment gdouble lower gdouble upper")
 (CFNC "gdouble gtk_adjustment_get_value GtkAdjustment* adjustment")
 (CFNC "void gtk_adjustment_set_value GtkAdjustment* adjustment gdouble value")
@@ -9156,4 +9156,10 @@
 (CFNC-3.18 "gboolean gdk_keymap_get_scroll_lock_state GdkKeymap* keymap")
 (CFNC-3.18 "void gtk_radio_menu_item_join_group GtkRadioMenuItem* radio_menu_item GtkRadioMenuItem* group_source")
 
+;;; 3.17.2:
+
+(CFNC-3.18 "void gtk_font_chooser_set_font_map GtkFontChooser* fontchooser PangoFontMap* fontmap")
+(CFNC-3.18 "PangoFontMap* gtk_font_chooser_get_font_map GtkFontChooser* fontchooser")
+(CFNC-3.18 "void gtk_popover_set_default_widget GtkPopover* popover GtkWidget* widget")
+(CFNC-3.18 "GtkWidget* gtk_popover_get_default_widget GtkPopover* popover")
 

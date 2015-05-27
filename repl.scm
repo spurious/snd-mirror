@@ -1096,8 +1096,7 @@
 			(format *stderr* "~C[~D;~DH" #\escape prompt-row prompt-col)
 			(format *stderr* "internal error: ")
 			(apply format *stderr* info)
-			(newline *stderr*)
-			(format *stderr* "line ~A: ~A~%" ((owlet) 'error-line) ((owlet) 'error-code))
+			(format *stderr* "~%line ~A: ~A~%" ((owlet) 'error-line) ((owlet) 'error-code))
 			(set! chars 0)
 			(new-prompt)))))))
 	      
@@ -1384,5 +1383,6 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 |#
 
 ;; unicode someday: I think all we need is unicode_string_length and index into unicode string (set/ref)
+;; scroll past top line?
 
 *repl*
