@@ -1901,6 +1901,21 @@ arcane consequence for method writers: specialize make-iterator, not map or for-
 instead of eof-object?.
 </p>
 
+<p>The argument to make-iterator can also be a function or macro.  In this case,
+the function should take one argument, the current position (just ignore this argument
+if it doesn't make sense):
+</p>
+<pre class="indented">
+(define (make-circular-iterator obj)
+  (let ((iter (make-iterator obj)))
+    (make-iterator 
+     (lambda (pos)
+       (let ((result (iter)))
+	 (if (eof-object? result)
+	     ((set! iter (make-iterator obj)))
+	     result))))))
+</pre>
+
 
 
 <div class="header" id="multidimensionalvectors"><h4>multidimensional vectors</h4></div>
@@ -1965,12 +1980,18 @@ homogenous vector functions are currently built-in:
 (<em class=def id="intvectorp">int-vector?</em> obj)
 (<em class=def id="intvector">int-vector</em> . args)
 (<em class=def id="makeintvector">make-int-vector</em> len (init 0))
+</pre>
 
+<div class="indented">
+<p>And also, for completeness:</p>
+<pre class="indented">
 (<em class=def id="bytevectorp">byte-vector?</em> obj)
 (<em class=def id="bytevector">byte-vector</em> . args)
 (<em class=def id="makebytevector">make-byte-vector</em> len (init 0))
-(<em class=def id="tobytevector">-&gt;byte-vector</em> bv)
+(<em class=def id="tobytevector">-&gt;byte-vector</em> str)
 </pre>
+<p>but these are really just strings in disguise.</p>
+</div>
 
 <p>To access a vector's elements with different dimensions than the original had, use 
 <code>(make-shared-vector original-vector new-dimensions (offset 0))</code>:

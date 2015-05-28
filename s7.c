@@ -23748,6 +23748,7 @@ static s7_pointer iterator_copy(s7_scheme *sc, s7_pointer p)
   return(iter);
 }
 
+
 static bool iterators_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
   return((iterator_sequence(x) == iterator_sequence(y)) &&
@@ -28926,7 +28927,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 		  if (is_pair(car(x)))
 		    {
 		      car(sc->T2_2) = caar(x);
-		      if (is_true(sc, (*func)(sc, sc->T2_1)))
+		      if (is_true(sc, func(sc, sc->T2_1)))
 			return(car(x));
 		      /* I wonder if the assoc equality function should get the cons, not just caar?
 		       */
@@ -28956,7 +28957,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 		  for (; is_pair(x); x = cdr(x))
 		    {
 		      slot_value(b) = caar(x);
-		      if (is_true(sc, (*func)(sc, car(body))))
+		      if (is_true(sc, func(sc, car(body))))
 			return(car(x));
 		    }
 		  return(sc->F);
@@ -29395,7 +29396,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 	      for (; is_pair(x); x = cdr(x))
 		{
 		  car(sc->T2_2) = car(x);
-		  if (is_true(sc, (*func)(sc, sc->T2_1)))
+		  if (is_true(sc, func(sc, sc->T2_1)))
 		    return(x);
 		}
 	      return(sc->F);
@@ -29435,7 +29436,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 		      for (; is_pair(x); x = cdr(x))
 			{
 			  slot_value(b) = car(x);
-			  if (is_true(sc, (*func)(sc, car(body))))
+			  if (is_true(sc, func(sc, car(body))))
 			    return(x);
 			}
 		    }
@@ -32442,15 +32443,6 @@ static s7_pointer g_hash_table_entries(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_hash_table_function(s7_scheme *sc, s7_pointer args)
-{
-  #define H_hash_table_function "(hash-table-function obj) returns the key equality function used by the hash-table obj"
-  if (!is_hash_table(car(args)))
-    method_or_bust(sc, car(args), sc->HASH_TABLE_FUNCTION, args, T_HASH_TABLE, 0);
-  return(sc->F);
-}
-
-
 static int hash_float_location(s7_Double x)
 {
   int loc;
@@ -32776,39 +32768,6 @@ static hash_entry_t *hash_equal_any(s7_scheme *sc, s7_pointer table, s7_pointer 
 
 static hash_entry_t *(*hash_equals[NUM_TYPES])(s7_scheme *sc, s7_pointer table, s7_pointer key);
 
-void init_hashers(void)
-{
-  int i;
-  for (i = 0; i < NUM_TYPES; i++) hashers[i] = hasher_nil;
-  hashers[T_INTEGER] =      hasher_int;
-  hashers[T_RATIO] =        hasher_ratio;
-  hashers[T_REAL] =         hasher_real;
-  hashers[T_COMPLEX] =      hasher_complex;
-  hashers[T_CHARACTER] =    hasher_char;
-  hashers[T_SYMBOL] =       hasher_symbol;
-  hashers[T_SYNTAX] =       hasher_syntax;
-  hashers[T_STRING] =       hasher_string;
-  hashers[T_HASH_TABLE] =   hasher_hash_table;
-  hashers[T_VECTOR] =       hasher_vector;
-  hashers[T_INT_VECTOR] =   hasher_int_vector;
-  hashers[T_FLOAT_VECTOR] = hasher_float_vector;
-  hashers[T_LET] =          hasher_let;
-  hashers[T_PAIR] =         hasher_pair;
-#if WITH_GMP
-  hashers[T_BIG_INTEGER] = hasher_big_int;
-  hashers[T_BIG_RATIO] =   hasher_big_ratio;
-  hashers[T_BIG_REAL] =    hasher_big_real;
-  hashers[T_BIG_COMPLEX] = hasher_big_complex;
-#endif
-
-  for (i = 0; i < NUM_TYPES; i++) hash_equals[i] = hash_equal_any;
-  hash_equals[T_REAL] =     hash_equal_real;
-  hash_equals[T_COMPLEX] =  hash_equal_complex;
-  hash_equals[T_SYNTAX] =   hash_equal_syntax;
-  hash_equals[T_SYMBOL] =   hash_equal_eq;
-  hash_equals[T_CHARACTER] = hash_equal_eq;
-}
-
 static hash_entry_t *hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   /* there is a problem here if we hash mixed numeric types and floats are compared using float-epsilon.
@@ -33024,95 +32983,109 @@ s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, s7_pointer key)
 }
 
 
+static hash_entry_t *(*hash_funcs[NUM_TYPES])(s7_scheme *sc, s7_pointer table, s7_pointer key);
+
+void init_hashers(void)
+{
+  int i;
+  for (i = 0; i < NUM_TYPES; i++) 
+    {
+      hashers[i] = hasher_nil;
+      hash_equals[i] = hash_equal_any;
+      hash_funcs[i] = hash_equal;
+    }
+  hashers[T_INTEGER] =      hasher_int;
+  hashers[T_RATIO] =        hasher_ratio;
+  hashers[T_REAL] =         hasher_real;
+  hashers[T_COMPLEX] =      hasher_complex;
+  hashers[T_CHARACTER] =    hasher_char;
+  hashers[T_SYMBOL] =       hasher_symbol;
+  hashers[T_SYNTAX] =       hasher_syntax;
+  hashers[T_STRING] =       hasher_string;
+  hashers[T_HASH_TABLE] =   hasher_hash_table;
+  hashers[T_VECTOR] =       hasher_vector;
+  hashers[T_INT_VECTOR] =   hasher_int_vector;
+  hashers[T_FLOAT_VECTOR] = hasher_float_vector;
+  hashers[T_LET] =          hasher_let;
+  hashers[T_PAIR] =         hasher_pair;
+#if WITH_GMP
+  hashers[T_BIG_INTEGER] = hasher_big_int;
+  hashers[T_BIG_RATIO] =   hasher_big_ratio;
+  hashers[T_BIG_REAL] =    hasher_big_real;
+  hashers[T_BIG_COMPLEX] = hasher_big_complex;
+#endif
+
+  hash_equals[T_REAL] =     hash_equal_real;
+  hash_equals[T_COMPLEX] =  hash_equal_complex;
+  hash_equals[T_SYNTAX] =   hash_equal_syntax;
+  hash_equals[T_SYMBOL] =   hash_equal_eq;
+  hash_equals[T_CHARACTER] = hash_equal_eq;
+
+  hash_funcs[T_STRING] = hash_string;
+  hash_funcs[T_INTEGER] = hash_int;
+  hash_funcs[T_REAL] = hash_float;
+  hash_funcs[T_SYMBOL] = hash_symbol;
+  hash_funcs[T_CHARACTER] = hash_char;
+}
+
+
 static void hash_table_set_function(s7_pointer table, int typ)
 {
-  if (hash_table_function(table) == hash_empty)
+  /* if every key structure is simple, we'd like to use a simple equal checker (no circles),
+   *    but circles can sneak in!  lists (etc) are dangerous keys:
+   *
+   (let ((ht (make-hash-table))
+   (lst1 (list 1 2))
+   (lst2 (list 1 2)))
+   (set! (ht lst1) 32)
+   (let ((start (ht lst2)))
+   (set! (lst1 0) 3)
+   (list start (ht lst2))))
+   (32 #f)
+   *
+   * but this applies to all such variables, even strings.  Do other schemes copy the key?
+   */
+
+  if (hash_table_function(table) != hash_equal)
     {
-      switch (typ)
+      if (hash_table_function(table) != hash_funcs[typ])
 	{
-	case T_STRING:
-	  hash_table_function(table) = hash_string;
-	  break;
-	  
-	case T_INTEGER:
-	  hash_table_function(table) = hash_int;
-	  break;
-	  
-	case T_REAL:
-	  hash_table_function(table) = hash_float;
-	  break;
-	  
-	case T_RATIO:
-	case T_COMPLEX:
-	  hash_table_function(table) = hash_equal;
-	  break;
-	  
-	case T_SYMBOL:
-	  hash_table_function(table) = hash_symbol;
-	  break;
-	  
-	case T_CHARACTER:
-	  hash_table_function(table) = hash_char;
-	  break;
-	  
-	default:
-	  hash_table_function(table) = hash_equal;
-	  /* if every key structure is simple, we'd like to use a simple equal checker (no circles),
-	   *    but circles can sneak in!  lists (etc) are dangerous keys:
-	   *
-	   (let ((ht (make-hash-table))
-	   (lst1 (list 1 2))
-	   (lst2 (list 1 2)))
-	   (set! (ht lst1) 32)
-	   (let ((start (ht lst2)))
-	   (set! (lst1 0) 3)
-	   (list start (ht lst2))))
-	   (32 #f)
-	   *
-	   * but this applies to all such variables, even strings.  Do other schemes copy the key?
-	   */
-	  break;
+	  if (hash_table_function(table) == hash_empty)
+	    hash_table_function(table) = hash_funcs[typ];
+	  else hash_table_function(table) = hash_equal;
 	}
     }
-  else
-    {
-      switch (typ)
-	{
-	case T_STRING:
-	  if (hash_table_function(table) != hash_string)
-	    hash_table_function(table) = hash_equal;
-	  break;
-	  
-	case T_INTEGER:
-	  if (hash_table_function(table) != hash_int)
-	    hash_table_function(table) = hash_equal;
-	  break;
-	  
-	case T_REAL:
-	  if (hash_table_function(table) != hash_float)
-	    hash_table_function(table) = hash_equal;
-	  break;
-	  
-	case T_RATIO:
-	case T_COMPLEX:
-	  hash_table_function(table) = hash_equal;
-	  break;
-	  
-	case T_CHARACTER:
-	  if (hash_table_function(table) != hash_char)
-	    hash_table_function(table) = hash_equal;
-	  break;
-	  
-	case T_SYMBOL:
-	  if (hash_table_function(table) != hash_symbol)
-	    hash_table_function(table) = hash_equal;
-	  break;
-	  
-	default:
-	  hash_table_function(table) = hash_equal;
-	  break;
-	}
-    }
+}
+
+
+static s7_pointer g_hash_table_function(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer table;
+  #define H_hash_table_function "(hash-table-function obj) returns the key equality function used by the hash-table obj"
+  
+  table = car(args);
+  if (!is_hash_table(table))
+    method_or_bust(sc, table, sc->HASH_TABLE_FUNCTION, args, T_HASH_TABLE, 0);
+
+  if ((hash_table_function(table) == hash_eq_c_function) ||
+      (hash_table_function(table) == hash_eq_closure))
+    return(hash_table_eq_function(table));
+
+  if (hash_table_function(table) == hash_string) 
+    return(s7_symbol_value(sc, sc->STRING_EQ));
+
+  if ((hash_table_function(table) == hash_int) ||
+      (hash_table_function(table) == hash_float))
+    return(s7_symbol_value(sc, sc->EQ));
+
+  if (hash_table_function(table) == hash_char) 
+    return(s7_symbol_value(sc, sc->CHAR_EQ));
+
+  if ((hash_table_function(table) == hash_symbol) ||
+      (hash_table_function(table) == hash_eq_eq))
+    return(s7_symbol_value(sc, sc->IS_EQ));
+
+  return(s7_symbol_value(sc, sc->IS_EQUAL));
 }
 
 
@@ -33227,7 +33200,6 @@ static s7_pointer g_hash_table_ref_2(s7_scheme *sc, s7_pointer args)
 
   if (!is_hash_table(table))
     method_or_bust(sc, table, sc->HASH_TABLE_REF, args, T_HASH_TABLE, 1);
-  if (hash_table_entries(table) == 0) return(sc->F);
 
   x = (*hash_table_function(table))(sc, table, cadr(args));
   if (x) return(x->value);
@@ -33243,7 +33215,6 @@ static s7_pointer g_hash_table_ref_ss(s7_scheme *sc, s7_pointer args)
 
   if (!is_hash_table(table))
     method_or_bust(sc, table, sc->HASH_TABLE_REF, list_2(sc, table, find_symbol_checked(sc, cadr(args))), T_HASH_TABLE, 1);
-  if (hash_table_entries(table) == 0) return(sc->F);
 
   x = (*hash_table_function(table))(sc, table, find_symbol_checked(sc, cadr(args)));
   if (x) return(x->value);
@@ -33259,7 +33230,6 @@ static s7_pointer g_hash_table_ref_car(s7_scheme *sc, s7_pointer args)
 
   if (!is_hash_table(table))
     method_or_bust(sc, table, sc->HASH_TABLE_REF, list_2(sc, table, car(find_symbol_checked(sc, cadadr(args)))), T_HASH_TABLE, 1);
-  if (hash_table_entries(table) == 0) return(sc->F);
 
   y = find_symbol_checked(sc, cadadr(args));
   if (!is_pair(y))
@@ -36119,7 +36089,8 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	dest_len = circular_list_entries(dest);
       else
 	{
-	  if (dest_len < 0) dest_len = -dest_len;
+	  if (dest_len < 0) 
+	    dest_len = -dest_len;
 	}
       break;
 
@@ -39110,7 +39081,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 		  pop_stack(sc);
 		  return(sc->UNSPECIFIED);
 		}
-	      (*func)(sc, y);
+	      func(sc, y);
 	    }
 	}
       while (true)
@@ -39125,7 +39096,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 		  return(sc->UNSPECIFIED);
 		}
 	    }
-	  (*func)(sc, cdr(sc->args));
+	  func(sc, cdr(sc->args));
 	}
     }
 
@@ -39300,7 +39271,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 		  return(safe_reverse_in_place(sc, car(sc->code)));
 		}
 	    }
-	  z = (*func)(sc, cdr(sc->args)); /* can this contain multiple-values? */
+	  z = func(sc, cdr(sc->args)); /* can this contain multiple-values? */
 	  if (z != sc->NO_VALUE)
 	    car(val) = cons(sc, z, car(val));
 	}
@@ -46489,6 +46460,43 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int *ar
   return(top);
 }
 
+static void check_lambda(s7_scheme *sc)
+{
+  /* code is a lambda form minus the "lambda": ((a b) (+ a b)) */
+  /* this includes unevaluated symbols (direct symbol table refs) in macro arg list */
+  s7_pointer code, body;
+  code = sc->code;
+  body = cdr(code);
+  
+  if ((!is_pair(code)) ||
+      (!is_pair(body)))                               /* (lambda) or (lambda #f) or (lambda . 1) */
+    eval_error_no_return(sc, sc->SYNTAX_ERROR, "lambda: no args or no body? ~A", code);
+  
+  /* in many cases, this is a no-op -- we already checked at define */
+  check_lambda_args(sc, car(code), NULL);
+  clear_syms_in_list(sc);
+  
+  /* look for (define f (let (...) (lambda ...))) and treat as equivalent to (define (f ...)...)
+   *   this allows us to put the docstring (and other such stuff) in the funclet, not the function body
+   *   without losing any optimization.  It's actually safe to ignore main_stack_op, but s7test has
+   *   some dubious tests that this check gets around -- need to decide about these cases!
+   */
+  if ((sc->safety != 0) ||
+      (main_stack_op(sc) != OP_DEFINE1))
+    optimize(sc, body, 0, sc->NIL);
+  else optimize_lambda(sc, true, sc->GC_NIL, car(code), body); /* why was lambda the func? */
+  
+  /* there is a problem here...
+   * (define f1 (lambda (x) (if (= x 0) 0 (+ x (f1 (- x 1))))))
+   * (f1 3) -> 6! -- in Guile also
+   * so in traversing the body we actually won't see a recursive call, which if a tail call
+   * should not make this function unsafe, but it will currently.
+   */
+  if ((is_overlaid(code)) &&
+      (cdr(ecdr(code)) == code))
+    pair_set_syntax_symbol(code, sc->LAMBDA_UNCHECKED);
+}
+
 
 static s7_pointer check_when(s7_scheme *sc)
 {
@@ -52263,6 +52271,58 @@ static int dynamic_wind_ex(s7_scheme *sc)
   return(goto_START);
 }
 
+static int read_s_ex(s7_scheme *sc)
+{
+  /* another lint opt */
+  s7_pointer port, code;
+
+  code = sc->code;
+  port = find_symbol_checked(sc, cadr(code));
+  
+  if (!is_input_port(port)) /* was also not stdin */
+    {
+      sc->value = g_read(sc, list_1(sc, port));
+      return(goto_START);
+    }
+  /* I guess this port_is_closed check is needed because we're going down a level below */
+  if (port_is_closed(port))
+    simple_wrong_type_argument_with_type(sc, sc->READ, port, AN_OPEN_PORT);
+  
+  if (is_function_port(port))
+    sc->value = (*(port_input_function(port)))(sc, S7_READ, port);
+  else
+    {
+      if ((is_string_port(port)) &&
+	  (port_data_size(port) <= port_position(port)))
+	sc->value = sc->EOF_OBJECT;
+      else
+	{
+	  push_input_port(sc, port);
+	  push_stack(sc, OP_READ_DONE, sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
+	  sc->tok = token(sc);
+	  switch (sc->tok)
+	    {
+	    case TOKEN_EOF:
+	      return(goto_START);
+	      
+	    case TOKEN_RIGHT_PAREN:
+	      read_error(sc, "unexpected close paren");
+	      
+	    case TOKEN_COMMA:
+	      read_error(sc, "unexpected comma");
+	      
+	    default:
+	      sc->value = read_expression(sc);
+	      sc->current_line = port_line_number(sc->input_port);  /* this info is used to track down missing close parens */
+	      sc->current_file = port_filename(sc->input_port);
+	    }
+	}
+    }
+  /* equally read-done and read-list here */
+  return(goto_START);
+}
+		  
+
 #if WITH_QUASIQUOTE_VECTOR
 static void read_quasiquote_vector_ex(s7_scheme *sc)
 {
@@ -55449,54 +55509,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		  
 		case HOP_READ_S:
-		  {
-		    /* another lint opt */
-		    s7_pointer port;
-		    port = find_symbol_checked(sc, cadr(code));
-		    
-		    if (!is_input_port(port)) /* was also not stdin */
-		      {
-			sc->value = g_read(sc, list_1(sc, port));
-			goto START;
-		      }
-		    /* I guess this port_is_closed check is needed because we're going down a level below */
-		    if (port_is_closed(port))
-		      simple_wrong_type_argument_with_type(sc, sc->READ, port, AN_OPEN_PORT);
-		    
-		    if (is_function_port(port))
-		      sc->value = (*(port_input_function(port)))(sc, S7_READ, port);
-		    else
-		      {
-			if ((is_string_port(port)) &&
-			    (port_data_size(port) <= port_position(port)))
-			  sc->value = sc->EOF_OBJECT;
-			else
-			  {
-			    push_input_port(sc, port);
-			    push_stack(sc, OP_READ_DONE, sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
-			    sc->tok = token(sc);
-			    switch (sc->tok)
-			      {
-			      case TOKEN_EOF:
-				goto START;
-				
-			      case TOKEN_RIGHT_PAREN:
-				read_error(sc, "unexpected close paren");
-				
-			      case TOKEN_COMMA:
-				read_error(sc, "unexpected comma");
-				
-			      default:
-				sc->value = read_expression(sc);
-				sc->current_line = port_line_number(sc->input_port);  /* this info is used to track down missing close parens */
-				sc->current_file = port_filename(sc->input_port);
-			      }
-			  }
-		      }
-		    /* equally read-done and read-list here */
-		    goto START;
-		  }
-		  
+		  read_s_ex(sc);
+		  goto START;
+
 		  
 		case OP_C_A:
 		  if (!a_is_ok_cadr(sc, code)) break;
@@ -60124,41 +60139,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  
 	case OP_LAMBDA:
-	  /* code is a lambda form minus the "lambda": ((a b) (+ a b)) */
-	  /* this includes unevaluated symbols (direct symbol table refs) in macro arg list */
-	  {
-	    s7_pointer code, body;
-	    code = sc->code;
-	    body = cdr(code);
-
-	    if ((!is_pair(code)) ||
-		(!is_pair(body)))                               /* (lambda) or (lambda #f) or (lambda . 1) */
-	      eval_error(sc, "lambda: no args or no body? ~A", code);
-	    
-	    /* in many cases, this is a no-op -- we already checked at define */
-	    check_lambda_args(sc, car(code), NULL);
-	    clear_syms_in_list(sc);
-	    
-	    /* look for (define f (let (...) (lambda ...))) and treat as equivalent to (define (f ...)...)
-	     *   this allows us to put the docstring (and other such stuff) in the funclet, not the function body
-	     *   without losing any optimization.  It's actually safe to ignore main_stack_op, but s7test has
-	     *   some dubious tests that this check gets around -- need to decide about these cases!
-	     */
-	    if ((sc->safety != 0) ||
-		(main_stack_op(sc) != OP_DEFINE1))
-	      optimize(sc, body, 0, sc->NIL);
-	    else optimize_lambda(sc, true, sc->GC_NIL, car(code), body); /* why was lambda the func? */
-	    
-	    /* there is a problem here...
-	     * (define f1 (lambda (x) (if (= x 0) 0 (+ x (f1 (- x 1))))))
-	     * (f1 3) -> 6! -- in Guile also
-	     * so in traversing the body we actually won't see a recursive call, which if a tail call
-	     * should not make this function unsafe, but it will currently.
-	     */
-	    if ((is_overlaid(code)) &&
-		(cdr(ecdr(code)) == code))
-	      pair_set_syntax_symbol(code, sc->LAMBDA_UNCHECKED);
-	  }
+	  check_lambda(sc);
 	  
 	case OP_LAMBDA_UNCHECKED:
 	  make_closure_with_let(sc, sc->value, car(sc->code), cdr(sc->code), sc->envir);
@@ -67158,17 +67139,17 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7
  * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108
- * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1136
+ * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133
  * teq           |      |      | 6612                     3887 3020 2708
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3294
- * tcopy         |      |      |                          4970 4287 3851
+ * tcopy         |      |      |                          4970 4287 3829
  * tmap          |      |      | 11.0           5031 4769 4685 4557 4198
  * tform         |      |      |                          6816 5536 4392
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6263
- * titer         |      |      |                          7503 6793 6409
+ * titer         |      |      |                          7503 6793 6393
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6667
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.8
- * thash         |      |      |                          19.4 17.4 16.3
+ * thash         |      |      |                          19.4 17.4 16.0
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 20.9
  * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.0
  *
@@ -67196,8 +67177,5 @@ int main(int argc, char **argv)
  * eval: 2 op_loads, named let setup, etc
  *   break up the gensets and applies into bool sets[type](sc, obj, args) so set_pair_p_3 and others can go away, and apply itself!
  * where safe_c_c now -> all_x? (for-each for example -- would allow preloc of arg, not frame?)
- * s7test of hashed str with null, and check fill cases (eq func etc), byte-vector as key
- * hash-table-function
- * unroll hash loops
  * tari.scm, tfun? tdyn?
  */
