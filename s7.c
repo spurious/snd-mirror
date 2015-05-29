@@ -892,7 +892,7 @@ struct s7_scheme {
   s7_pointer WRONG_TYPE_ARG, wrong_type_arg_info, OUT_OF_RANGE, out_of_range_info;
   s7_pointer simple_wrong_type_arg_info, simple_out_of_range_info, DIVISION_BY_ZERO, DIVISION_BY_ZERO_ERROR, NO_CATCH, IO_ERROR, INVALID_ESCAPE_FUNCTION;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, STRING_READ_ERROR, SYNTAX_ERROR, TOO_MANY_ARGUMENTS, NOT_ENOUGH_ARGUMENTS;
-  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, KEY_ALLOW_OTHER_KEYS, KEY_READABLE;
+  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, KEY_ALLOW_OTHER_KEYS, KEY_READABLE, BAFFLED;
   s7_pointer __FUNC__;
   s7_pointer Object_Set;               /* applicable object set method */
   s7_pointer FEED_TO;                  /* => */
@@ -19428,7 +19428,7 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
   NEW_CELL(sc, x, T_STRING);
 
   if (fill == 0)
-    string_value(x) = (char *)calloc((len + 1), sizeof(char));
+    string_value(x) = (char *)malloc((len + 1) * sizeof(char)); /* was calloc */
   else
     {
       string_value(x) = (char *)malloc((len + 1) * sizeof(char));
@@ -19575,7 +19575,10 @@ static s7_pointer g_make_string(s7_scheme *sc, s7_pointer args)
 	method_or_bust(sc, cadr(args), sc->MAKE_STRING, args, T_CHARACTER, 2);
       fill = s7_character(cadr(args));
     }
-  return(make_empty_string(sc, (int)len, fill));
+  n = make_empty_string(sc, (int)len, fill);
+  if (fill == '\0')
+    memset((void *)string_value(n), 0, (int)len);
+  return(n);
 }
 
 #if (!WITH_PURE_S7)
@@ -19602,8 +19605,7 @@ static s7_pointer g_string_downcase(s7_scheme *sc, s7_pointer args)
     method_or_bust(sc, p, sc->STRING_DOWNCASE, args, T_STRING, 0);
 
   len = string_length(p);
-  newstr = make_empty_string(sc, len + 1, 0);
-  string_length(newstr) = len;
+  newstr = make_empty_string(sc, len, 0);
 
   ostr = (unsigned char *)string_value(p);
   nstr = (unsigned char *)string_value(newstr);
@@ -19626,8 +19628,7 @@ static s7_pointer g_string_upcase(s7_scheme *sc, s7_pointer args)
     method_or_bust(sc, p, sc->STRING_UPCASE, args, T_STRING, 0);
 
   len = string_length(p);
-  newstr = make_empty_string(sc, len + 1, 0);
-  string_length(newstr) = len;
+  newstr = make_empty_string(sc, len, 0);
 
   ostr = (unsigned char *)string_value(p);
   nstr = (unsigned char *)string_value(newstr);
@@ -19772,8 +19773,7 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, bool use_tem
 		  s7_pointer y;
 		  if (len == 0)
 		    return(s7_apply_function(sc, func, args));
-		  newstr = make_empty_string(sc, len + 1, 0);
-		  string_length(newstr) = len;
+		  newstr = make_empty_string(sc, len, 0);
 		  for (pos = string_value(newstr), y = args; y != x; pos += string_length(car(y)), y = cdr(y))
 		    memcpy(pos, string_value(car(y)), string_length(car(y)));
 		  return(s7_apply_function(sc, func, cons(sc, newstr, x)));
@@ -19795,8 +19795,7 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, bool use_tem
   else
     {
       /* store the contents of the argument strings into the new string */
-      newstr = make_empty_string(sc, len + 1, 0);
-      string_length(newstr) = len;
+      newstr = make_empty_string(sc, len, 0);
     }
   for (pos = string_value(newstr), x = args; is_not_null(x); pos += string_length(car(x)), x = cdr(x))
     memcpy(pos, string_value(car(x)), string_length(car(x)));
@@ -20534,6 +20533,7 @@ static s7_pointer g_string_1(s7_scheme *sc, s7_pointer args, s7_pointer sym)
 {
   int i, len;
   s7_pointer x, newstr;
+  char *str;
 
   /* get length for new string and check arg types */
   for (len = 0, x = args; is_not_null(x); len++, x = cdr(x))
@@ -20552,8 +20552,9 @@ static s7_pointer g_string_1(s7_scheme *sc, s7_pointer args, s7_pointer sym)
 		  if (len == 0)
 		    return(s7_apply_function(sc, func, args));
 		  newstr = make_empty_string(sc, len, 0);
+		  str = string_value(newstr);
 		  for (i = 0, y = args; y != x; i++, y = cdr(y))
-		    string_value(newstr)[i] = character(car(y));
+		    str[i] = character(car(y));
 		  return(g_string_append(sc, set_plist_2(sc, newstr, s7_apply_function(sc, func, x))));
 		}
 	    }
@@ -20561,8 +20562,9 @@ static s7_pointer g_string_1(s7_scheme *sc, s7_pointer args, s7_pointer sym)
 	}
     }
   newstr = make_empty_string(sc, len, 0);
+  str = string_value(newstr);
   for (i = 0, x = args; is_not_null(x); i++, x = cdr(x))
-    string_value(newstr)[i] = character(car(x));
+    str[i] = character(car(x));
 
   return(newstr);
 }
@@ -20710,9 +20712,11 @@ static s7_pointer g_byte_vector(s7_scheme *sc, s7_pointer args)
   #define H_byte_vector "(byte-vector ...) returns a byte-vector whose elements are the arguments"
   s7_Int i, len;
   s7_pointer vec, x;
+  char *str;
 
   len = s7_list_length(sc, args);
   vec = make_empty_string(sc, len, 0);
+  str = string_value(vec);
 
   for (i = 0, x = args; is_pair(x); i++, x = cdr(x))
     {
@@ -20740,7 +20744,7 @@ static s7_pointer g_byte_vector(s7_scheme *sc, s7_pointer args)
       b = s7_integer(byte);
       if ((b < 0) || (b > 255))
 	return(simple_wrong_type_argument_with_type(sc, sc->BYTE_VECTOR, byte, AN_UNSIGNED_BYTE));
-      string_value(vec)[i] = (unsigned char)b;
+      str[i] = (unsigned char)b;
     }
   set_byte_vector(vec);
   return(vec);
@@ -22652,8 +22656,9 @@ static s7_pointer g_read_line_uncopied(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_string "(read-string k port) reads k characters from port into a new string and returns it."
-  s7_pointer k, port, str;
+  s7_pointer k, port, s;
   s7_Int i, chars;
+  unsigned char *str;
 
   k = car(args);
   if (!s7_is_integer(k))
@@ -22680,7 +22685,8 @@ static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
       if (!port) return(sc->EOF_OBJECT);
     }
 
-  str = make_empty_string(sc, chars, 0);
+  s = make_empty_string(sc, chars, 0);
+  str = (unsigned char *)string_value(s);
   for (i = 0; i < chars; i++)
     {
       int c;
@@ -22689,12 +22695,12 @@ static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
 	{
 	  if (i == 0)
 	    return(sc->EOF_OBJECT);
-	  string_length(str) = i;
-	  return(str);
+	  string_length(s) = i;
+	  return(s);
 	}
-      string_value(str)[i] = (unsigned char)c;
+      str[i] = (unsigned char)c;
     }
-  return(str);
+  return(s);
 }
 
 
@@ -25942,64 +25948,95 @@ static void finish_shared_reads(s7_scheme *sc, s7_pointer port, shared_info *ci)
   port_write_character(port)(sc, ')', port);
 }
 
+static void object_out(s7_scheme *sc, s7_pointer obj, s7_pointer strport, use_write_t choice, bool to_file)
+{
+  if ((has_structure(obj)) &&
+      (obj != sc->rootlet))
+    {
+      shared_info *ci;
+      ci = make_shared_info(sc, obj, choice != USE_READABLE_WRITE);
+      if (ci)
+	{
+	  if (choice == USE_READABLE_WRITE)
+	    {
+	      setup_shared_reads(sc, strport, ci);
+	      object_to_port_with_circle_check(sc, obj, strport, choice, to_file, ci);
+	      finish_shared_reads(sc, strport, ci);
+	    }
+	  else object_to_port_with_circle_check(sc, obj, strport, choice, to_file, ci);
+	  return;
+	}
+    }
+  object_to_port(sc, obj, strport, choice, to_file, NULL);
+}
+  
+
 static s7_pointer write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write)
 {
-  shared_info *ci = NULL;
-
   if (port_is_closed(port))
     return(s7_wrong_type_arg_error(sc, (use_write != USE_DISPLAY) ? "write" : "display", 2, port, "an open input port"));
-
-  if (has_structure(obj))
-    {
-      if (obj != sc->rootlet)
-	ci = make_shared_info(sc, obj, use_write != USE_READABLE_WRITE);
-      if ((ci) &&
-	  (use_write == USE_READABLE_WRITE))
-	{
-	  setup_shared_reads(sc, port, ci);
-	  object_to_port_with_circle_check(sc, obj, port, use_write, is_file_port(port), ci);
-	  finish_shared_reads(sc, port, ci);
-	}
-      else object_to_port_with_circle_check(sc, obj, port, use_write, is_file_port(port), ci);
-    }
-  else object_to_port(sc, obj, port, use_write, is_file_port(port), ci);
+  object_out(sc, obj, port, use_write, is_file_port(port));
   return(obj);
+}
+
+
+static s7_pointer format_ports = NULL;
+
+static s7_pointer open_format_port(s7_scheme *sc)
+{
+  s7_pointer x;
+  int len;
+
+  if (format_ports)
+    {
+      x = format_ports;
+      format_ports = (s7_pointer)(port_port(x)->next);
+      port_position(x) = 0;
+      port_data(x)[0] = '\0';
+      return(x);
+    }
+
+  len = FORMAT_PORT_LENGTH;
+  x = alloc_pointer();
+  set_type(x, T_OUTPUT_PORT);
+  port_port(x) = (port_t *)calloc(1, sizeof(port_t));
+  port_type(x) = STRING_PORT;
+  port_is_closed(x) = false;
+  port_data_size(x) = len;
+  port_data(x) = (unsigned char *)malloc((len + 8) * sizeof(unsigned char));
+  port_data(x)[0] = '\0';
+  port_position(x) = 0;
+  port_needs_free(x) = false;
+  port_read_character(x) = output_read_char;
+  port_read_line(x) = output_read_line;
+  port_display(x) = string_display;
+  port_write_character(x) = string_write_char;
+  port_write_string(x) = string_write_string;
+  return(x);
+}
+
+static void close_format_port(s7_scheme *sc, s7_pointer port)
+{
+  port_port(port)->next = (void *)format_ports;
+  format_ports = port;
 }
 
 
 static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t use_write, int *nlen)
 {
-  shared_info *ci = NULL;
-  unsigned char *str;
+  char *str;
   s7_pointer strport;
-  int gc_loc;
 
-  strport = open_output_string(sc, FORMAT_PORT_LENGTH);
-  gc_loc = s7_gc_protect(sc, strport);
-
-  if (has_structure(obj))
-    {
-      if (obj != sc->rootlet)
-	ci = make_shared_info(sc, obj, use_write != USE_READABLE_WRITE);
-      if ((ci) &&
-	  (use_write == USE_READABLE_WRITE))
-	{
-	  setup_shared_reads(sc, strport, ci);
-	  object_to_port_with_circle_check(sc, obj, strport, use_write, WITH_ELLIPSES, ci);
-	  finish_shared_reads(sc, strport, ci);
-	}
-      else object_to_port_with_circle_check(sc, obj, strport, use_write, WITH_ELLIPSES, ci);
-    }
-  else object_to_port(sc, obj, strport, use_write, WITH_ELLIPSES, ci);
-  str = port_data(strport);
+  strport = open_format_port(sc);
+  object_out(sc, obj, strport, use_write, WITH_ELLIPSES);
   if (nlen) (*nlen) = port_position(strport);
-  str[port_position(strport)] = '\0';
-  port_data(strport) = NULL;
-  port_needs_free(strport) = false;
-  s7_close_output_port(sc, strport);
-  s7_gc_unprotect_at(sc, gc_loc);
 
-  return((char *)str);
+  str = (char *)malloc((port_position(strport) + 1) * sizeof(char));
+  memcpy((void *)str, (void *)port_data(strport), port_position(strport));
+  str[port_position(strport)] = '\0';
+  close_format_port(sc, strport);
+
+  return(str); 
 }
 
 
@@ -26193,48 +26230,6 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 
 
 /* -------------------------------- format -------------------------------- */
-
-static s7_pointer format_ports = NULL;
-
-static s7_pointer open_format_port(s7_scheme *sc)
-{
-  s7_pointer x;
-  int len;
-
-  if (format_ports)
-    {
-      x = format_ports;
-      format_ports = (s7_pointer)(port_port(x)->next);
-      port_position(x) = 0;
-      port_data(x)[0] = '\0';
-      return(x);
-    }
-
-  len = FORMAT_PORT_LENGTH;
-  x = alloc_pointer();
-  set_type(x, T_OUTPUT_PORT);
-  port_port(x) = (port_t *)calloc(1, sizeof(port_t));
-  port_type(x) = STRING_PORT;
-  port_is_closed(x) = false;
-  port_data_size(x) = len;
-  port_data(x) = (unsigned char *)malloc((len + 8) * sizeof(unsigned char));
-  port_data(x)[0] = '\0';
-  port_position(x) = 0;
-  port_needs_free(x) = false;
-  port_read_character(x) = output_read_char;
-  port_read_line(x) = output_read_line;
-  port_display(x) = string_display;
-  port_write_character(x) = string_write_char;
-  port_write_string(x) = string_write_string;
-  return(x);
-}
-
-static void close_format_port(s7_scheme *sc, s7_pointer port)
-{
-  port_port(port)->next = (void *)format_ports;
-  format_ports = port;
-}
-
 
 static s7_pointer format_error_1(s7_scheme *sc, s7_pointer msg, const char *str, s7_pointer args, format_data *fdat)
 {
@@ -26733,23 +26728,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		    fdat->strport = strport;
 		  }
 		else strport = port;
-
-		if ((has_structure(obj)) &&
-		    (obj != sc->rootlet))
-		  {
-		    shared_info *ci = NULL;
-		    ci = make_shared_info(sc, obj, choice != USE_READABLE_WRITE);
-		    if ((ci) &&
-			(choice == USE_READABLE_WRITE))
-		      {
-			setup_shared_reads(sc, strport, ci);
-			object_to_port_with_circle_check(sc, obj, strport, choice, is_file_port(port), ci);
-			finish_shared_reads(sc, strport, ci);
-		      }
-		    else object_to_port_with_circle_check(sc, obj, strport, choice, is_file_port(port), ci);
-		  }
-		else object_to_port(sc, obj, strport, choice, is_file_port(port), NULL);
-		    
+		object_out(sc, obj, strport, choice, is_file_port(port));
 		if (columnized)
 		  {
 		    port_data(strport)[port_position(strport)] = '\0';		    
@@ -36362,11 +36341,16 @@ also accepts a string or vector argument."
 
     case T_STRING:
       {
-	int i, j, len;
+	char *source, *dest, *end;
+	int len;
 	len = string_length(p);
-	np = make_empty_string(sc, len, 0);
-	for (i = 0, j = len - 1; i < len; i++, j--)
-	  string_value(np)[i] = string_value(p)[j];  /* this could be optimized by using *dest-- = *source++ as could the vectors below */
+	source = string_value(p);
+	end = (char *)(source + len);
+	dest = (char *)malloc((len + 1) * sizeof(char));
+	dest[len] = 0;
+	np = make_string_uncopied_with_length(sc, dest, len);
+	dest += len;
+	while (source < end) *(--dest) = *source++;
 	if (is_byte_vector(p))
 	  set_byte_vector(np);
       }
@@ -36374,37 +36358,46 @@ also accepts a string or vector argument."
 
     case T_INT_VECTOR:
       {
-	s7_Int i, j, len;
+	s7_Int *source, *dest, *end;
+	s7_Int len;
 	len = vector_length(p);
 	if (vector_rank(p) > 1)
 	  np = g_make_vector(sc, set_plist_3(sc, g_vector_dimensions(sc, set_plist_1(sc, p)), small_int(0), sc->T));
 	else np = make_vector_1(sc, len, NOT_FILLED, T_INT_VECTOR);
-	for (i = 0, j = len - 1; i < len; i++, j--)
-	  int_vector_element(np, i) = int_vector_element(p, j);
+	source = int_vector_elements(p);
+	end = (s7_Int *)(source + len);
+	dest = (s7_Int *)(int_vector_elements(np) + len);
+	while (source < end) *(--dest) = *source++;
       }
       break;
 
     case T_FLOAT_VECTOR:
       {
-	s7_Int i, j, len;
+	s7_Double *source, *dest, *end;
+	s7_Int len;
 	len = vector_length(p);
 	if (vector_rank(p) > 1)
 	  np = g_make_vector(sc, set_plist_3(sc, g_vector_dimensions(sc, set_plist_1(sc, p)), real_zero, sc->T));
 	else np = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR);
-	for (i = 0, j = len - 1; i < len; i++, j--)
-	  float_vector_element(np, i) = float_vector_element(p, j);
+	source = float_vector_elements(p);
+	end = (s7_Double *)(source + len);
+	dest = (s7_Double *)(float_vector_elements(np) + len);
+	while (source < end) *(--dest) = *source++;
       }
       break;
 
     case T_VECTOR:
       {
-	s7_Int i, j, len;
+	s7_pointer *source, *dest, *end;
+	s7_Int len;
 	len = vector_length(p);
 	if (vector_rank(p) > 1)
 	  np = g_make_vector(sc, set_plist_1(sc, g_vector_dimensions(sc, list_1(sc, p))));
 	else np = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
-	for (i = 0, j = len - 1; i < len; i++, j--)
-	  vector_element(np, i) = vector_element(p, j);
+	source = vector_elements(p);
+	end = (s7_pointer *)(source + len);
+	dest = (s7_pointer *)(vector_elements(np) + len);
+	while (source < end) *(--dest) = *source++;
       }
       break;
 
@@ -36450,69 +36443,49 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 
     case T_STRING:
       {
-	int i, j, len;
-	char *str;
-
+	int len;
+	char *s1, *s2;
 	len = string_length(p);
-	str = string_value(p);
-	for (i = 0, j = len - 1; i < j; i++, j--)
-	  {
-	    char c;
-	    c = str[i];
-	    str[i] = str[j];
-	    str[j] = c;
-	  }
+	if (len < 2) return(p);
+	s1 = string_value(p);
+	s2 = (char *)(s1 + len - 1);
+	while (s1 < s2) {char c; c = *s1; *s1++ = *s2; *s2-- = c;}
       }
       break;
 
     case T_INT_VECTOR:
       {
-	s7_Int i, j, len;
-	s7_Int *d;
-
+	s7_Int len;
+	s7_Int *s1, *s2;
 	len = vector_length(p);
-	d = int_vector_elements(p);
-	for (i = 0, j = len - 1; i < j; i++, j--)
-	  {
-	    s7_Int temp;
-	    temp = d[i];
-	    d[i] = d[j];
-	    d[j] = temp;
-	  }
+	if (len < 2) return(p);
+	s1 = int_vector_elements(p);
+	s2 = (s7_Int *)(s1 + len - 1);
+	while (s1 < s2) {s7_Int c; c = *s1; *s1++ = *s2; *s2-- = c;}
       }
       break;
 
     case T_FLOAT_VECTOR:
       {
-	s7_Int i, j, len;
-	s7_Double *d;
-
+	s7_Int len;
+	s7_Double *s1, *s2;
 	len = vector_length(p);
-	d = float_vector_elements(p);
-	for (i = 0, j = len - 1; i < j; i++, j--)
-	  {
-	    s7_Double temp;
-	    temp = d[i];
-	    d[i] = d[j];
-	    d[j] = temp;
-	  }
+	if (len < 2) return(p);
+	s1 = float_vector_elements(p);
+	s2 = (s7_Double *)(s1 + len - 1);
+	while (s1 < s2) {s7_Double c; c = *s1; *s1++ = *s2; *s2-- = c;}
       }
       break;
 
     case T_VECTOR:
       {
-	s7_Int i, j, len;
-	s7_pointer *d;
-
+	s7_Int len;
+	s7_pointer *s1, *s2;
 	len = vector_length(p);
-	d = vector_elements(p);
-	for (i = 0, j = len - 1; i < j; i++, j--)
-	  {
-	    s7_pointer temp;
-	    temp = d[i];
-	    d[i] = d[j];
-	    d[j] = temp;
-	  }
+	if (len < 2) return(p);
+	s1 = vector_elements(p);
+	s2 = (s7_pointer *)(s1 + len - 1);
+	while (s1 < s2) {s7_pointer c; c = *s1; *s1++ = *s2; *s2-- = c;}
       }
       break;
 
@@ -36548,9 +36521,8 @@ static s7_pointer list_fill(s7_scheme *sc, s7_pointer args)
       s7_Int i;
       s7_pointer p;
       if (end < len) len = end;
-      for (i = 0, p = obj; i < len; p = cdr(p), i++)
-	if (i >= start)
-	  car(p) = val;
+      for (i = 0, p = obj; i < start; p = cdr(p), i++);
+      for (; i < len; p = cdr(p), i++) car(p) = val;
       return(val);
     }
 
@@ -46305,6 +46277,17 @@ static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool a
 
 /* ---------------------------------------- error checks ---------------------------------------- */
 
+#define goto_START 0
+#define goto_BEGIN1 1
+#define fall_through 2
+#define goto_DO_END_CLAUSES 3
+#define goto_SAFE_DO_END_CLAUSES 4
+#define goto_OPT_EVAL 5
+#define goto_START_WITHOUT_POP_STACK 6
+#define goto_EVAL 7
+#define goto_APPLY 8
+#define goto_EVAL_ARGS 9
+
 static s7_pointer check_lambda_args(s7_scheme *sc, s7_pointer args, int *arity)
 {
   s7_pointer x;
@@ -46460,6 +46443,7 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int *ar
   return(top);
 }
 
+
 static void check_lambda(s7_scheme *sc)
 {
   /* code is a lambda form minus the "lambda": ((a b) (+ a b)) */
@@ -46497,6 +46481,24 @@ static void check_lambda(s7_scheme *sc)
     pair_set_syntax_symbol(code, sc->LAMBDA_UNCHECKED);
 }
 
+static void check_lambda_star(s7_scheme *sc)
+{
+  if ((!is_pair(sc->code)) ||
+      (!is_pair(cdr(sc->code))))                                          /* (lambda*) or (lambda* #f) */
+    eval_error_no_return(sc, sc->SYNTAX_ERROR, "lambda*: no args or no body? ~A", sc->code);
+  
+  car(sc->code) = check_lambda_star_args(sc, car(sc->code), NULL);
+  clear_syms_in_list(sc);
+  
+  if ((sc->safety != 0) ||
+      (main_stack_op(sc) != OP_DEFINE1))
+    optimize(sc, cdr(sc->code), 0, sc->NIL);
+  else optimize_lambda(sc, false, sc->GC_NIL, car(sc->code), cdr(sc->code));
+  
+  if ((is_overlaid(sc->code)) &&
+      (cdr(ecdr(sc->code)) == sc->code))
+    pair_set_syntax_symbol(sc->code, sc->LAMBDA_STAR_UNCHECKED);
+}
 
 static s7_pointer check_when(s7_scheme *sc)
 {
@@ -47700,6 +47702,40 @@ static void fill_safe_closure_star(s7_scheme *sc, s7_pointer x, s7_pointer p)
   sc->code = closure_body(ecdr(sc->code));
 }
 
+static int define_constant_ex(s7_scheme *sc)
+{
+  if (!is_pair(car(sc->code)))
+    {
+      s7_pointer x;
+      x = car(sc->code);
+      sc->code = cadr(sc->code);
+      if (is_pair(sc->code))
+	{
+	  push_stack(sc, OP_DEFINE1, sc->NIL, x);
+	  return(goto_EVAL);
+	}
+      
+      if (is_symbol(sc->code))
+	sc->value = find_global_symbol_checked(sc, sc->code);
+      else sc->value = sc->code;
+      sc->code = x;
+    }
+  else
+    {
+      s7_pointer x;
+      /* a closure.  If we called this same code earlier (a local define), the only thing
+       *   that is new here is the environment -- we can't blithely save the closure object
+       *   in fcdr somewhere, and pick it up the next time around (since call/cc might take
+       *   us back to the previous case).  We also can't re-use fcdr(sc->code) because fcdr
+       *   is not cleared in the gc.
+       */
+      make_closure_with_let(sc, x, cdar(sc->code), cdr(sc->code), sc->envir);
+      sc->value = x;
+      sc->code = caar(sc->code);
+    }
+  return(fall_through);
+}
+	  
 
 static s7_pointer check_define_macro(s7_scheme *sc, opcode_t op)
 {
@@ -47754,6 +47790,84 @@ static s7_pointer check_define_macro(s7_scheme *sc, opcode_t op)
   return(sc->code);
 }
 
+static int expansion_ex(s7_scheme *sc)
+{
+  int loc;
+  s7_pointer caller;
+  
+  /* read-time macro expansion:
+   *   (define-macro (hi a) (format #t "hi...") `(+ ,a 1))
+   *   (define (ho b) (+ 1 (hi b)))
+   * here sc->value is: (ho b), (hi b), (+ 1 (hi b)), (define (ho b) (+ 1 (hi b)))
+   * but... first we can't tell for sure at this point that "hi" really is a macro
+   *   (letrec ((hi ... (hi...))) will be confused about the second hi,
+   *   or (call/cc (lambda (hi) (hi 1))) etc.
+   * second, figuring out that we're quoted is not easy -- we have to march all the
+   * way to the bottom of the stack looking for op_read_quote or op_read_vector
+   *    #(((hi)) 2) or '(((hi)))
+   * or op_read_list with args not equal (quote) or (macroexapand)
+   *    '(hi 3) or (macroexpand (hi 3) or (quote (hi 3))
+   * and those are only the problems I noticed!
+   *
+   * The hardest of these problems involve shadowing, so Rick asked for "define-expansion"
+   *   which is like define-macro, but the programmer guarantees that the macro
+   *   name will not be shadowed.
+   *
+   * to make expansion recognition fast here, define-expansion sets the T_EXPANSION
+   *   bit in the symbol as well as the value:
+   *   set_type(sc->code, T_EXPANSION | T_SYMBOL)
+   * but this can lead to confusion because the expansion name is now globally identified as an expansion.
+   *    (let () (define-expansion (ex1 a) `(+ ,a 1)) (display (ex1 3)))
+   *    (define (ex1 b) (* b 2)) (display (ex1 3))
+   * since this happens at the top level, the first line is evaluated, ex1 becomes an expansion.
+   * but the reader has no idea about lets and whatnot, so in the second line, ex1 is still an expansion
+   * to the reader, so ir sees (define (+ b 1) ...) -- error!  To support tail-calls, there's no
+   * way in eval to see the let close, so we can't clear the expansion flag when the let is done.
+   * But we don't want define-expansion to mimic define-constant (via T_IMMUTABLE) because programs
+   * like lint need to cancel reader-cond (for example).  So, we allow an expansion to be redefined,
+   * and check here that the expander symbol still refers to an expansion.
+   *
+   * but in (define (ex1 b) b), the reader doesn't know we're in a define call (or it would be
+   *   a bother to notice), so to redefine an expansion, first (set! ex1 #f) or (define ex1 #f),
+   *   then (define (ex1 b) b).
+   *
+   * This is a mess!  Maybe we should insist that expansions are always global.
+   */
+  
+  loc = s7_stack_top(sc) - 1;
+  caller = car(stack_args(sc->stack, loc)); /* this can be garbage */
+  if ((loc >= 3) &&
+      (stack_op(sc->stack, loc) != OP_READ_QUOTE) &&             /* '(hi 1) for example */
+      (stack_op(sc->stack, loc) != OP_READ_VECTOR) &&            /* #(reader-cond) for example */
+      (caller != sc->QUOTE) &&          /* (quote (hi 1)) */
+      (caller != sc->MACROEXPAND) &&    /* (macroexpand (hi 1)) */
+      (caller != sc->DEFINE_EXPANSION)) /* (define-expansion ...) being reloaded/redefined */
+    {
+      s7_pointer symbol, slot;
+      /* we're playing fast and loose with sc->envir in the reader, so here we need a disaster check */
+#if DEBUGGING
+      if (unchecked_type(sc->envir) != T_LET) sc->envir = sc->NIL;
+#else
+      if (!is_let(sc->envir)) sc->envir = sc->NIL;
+#endif
+      symbol = car(sc->value);
+      if ((symbol_id(symbol) == 0) ||
+	  (sc->envir == sc->NIL))
+	slot = global_slot(symbol);
+      else slot = find_symbol(sc, symbol);
+      if (is_slot(slot))
+	sc->code = slot_value(slot);
+      else sc->code = sc->UNDEFINED;
+      if (!is_expansion(sc->code))
+	clear_expansion(symbol);
+      else
+	{
+	  sc->args = copy_list(sc, cdr(sc->value));
+	  return(goto_APPLY);
+	}
+    }
+  return(fall_through);
+}
 
 static s7_pointer check_with_let(s7_scheme *sc)
 {
@@ -48368,18 +48482,6 @@ static bool safe_stepper(s7_scheme *sc, s7_pointer expr, s7_pointer vars)
     }
   return(true);
 }
-
-
-#define goto_START 0
-#define goto_BEGIN1 1
-#define fall_through 2
-#define goto_DO_END_CLAUSES 3
-#define goto_SAFE_DO_END_CLAUSES 4
-#define goto_OPT_EVAL 5
-#define goto_START_WITHOUT_POP_STACK 6
-#define goto_EVAL 7
-#define goto_APPLY 8
-#define goto_EVAL_ARGS 9
 
 static int set_pair_ex(s7_scheme *sc)
 {
@@ -57991,7 +58093,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case T_CONTINUATION:	                  /* -------- continuation ("call/cc") -------- */
 	      if (!call_with_current_continuation(sc))
-		return(s7_error(sc, make_symbol(sc, "baffled!"), set_elist_1(sc, make_string_wrapper(sc, "continuation can't jump into with-baffle"))));
+		{
+		  static s7_pointer cc_err = NULL; 
+		  if (!cc_err) cc_err = s7_make_permanent_string("continuation can't jump into with-baffle");
+		  s7_error(sc, sc->BAFFLED, set_elist_1(sc, cc_err));
+		}
 	      goto START;
 	      
 	    case T_GOTO:	                          /* -------- goto ("call-with-exit") -------- */
@@ -58246,39 +58352,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case OP_DEFINE_CONSTANT_UNCHECKED:
 	case OP_DEFINE_UNCHECKED:
-	  if (!is_pair(car(sc->code)))
-	    {
-	      s7_pointer x;
-	      x = car(sc->code);
-	      sc->code = cadr(sc->code);
-	      if (is_pair(sc->code))
-		{
-		  push_stack(sc, OP_DEFINE1, sc->NIL, x);
-		  goto EVAL;
-		}
-	      
-	      if (is_symbol(sc->code))
-		sc->value = find_global_symbol_checked(sc, sc->code);
-	      else sc->value = sc->code;
-	      sc->code = x;
-	      /* fall through */
-	    }
-	  else
-	    {
-	      s7_pointer x;
-	      /* a closure.  If we called this same code earlier (a local define), the only thing
-	       *   that is new here is the environment -- we can't blithely save the closure object
-	       *   in fcdr somewhere, and pick it up the next time around (since call/cc might take
-	       *   us back to the previous case).  We also can't re-use fcdr(sc->code) because fcdr
-	       *   is not cleared in the gc.
-	       */
-	      make_closure_with_let(sc, x, cdar(sc->code), cdr(sc->code), sc->envir);
-	      sc->value = x;
-	      sc->code = caar(sc->code);
-	      /* fall through */
-	    }
-	  
-	  
+	  if (define_constant_ex(sc) == goto_EVAL) goto EVAL;
+	  /* else fall through */
+
 	DEFINE1:
 	case OP_DEFINE1:
 	  /* sc->code is the symbol being defined, sc->value is its value
@@ -60147,21 +60223,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  
 	case OP_LAMBDA_STAR:
-	  if ((!is_pair(sc->code)) ||
-	      (!is_pair(cdr(sc->code))))                                          /* (lambda*) or (lambda* #f) */
-	    eval_error(sc, "lambda*: no args or no body? ~A", sc->code);
-	  
-	  car(sc->code) = check_lambda_star_args(sc, car(sc->code), NULL);
-	  clear_syms_in_list(sc);
-	  
-	  if ((sc->safety != 0) ||
-	      (main_stack_op(sc) != OP_DEFINE1))
-	    optimize(sc, cdr(sc->code), 0, sc->NIL);
-	  else optimize_lambda(sc, false, sc->GC_NIL, car(sc->code), cdr(sc->code));
-	  
-	  if ((is_overlaid(sc->code)) &&
-	      (cdr(ecdr(sc->code)) == sc->code))
-	    pair_set_syntax_symbol(sc->code, sc->LAMBDA_STAR_UNCHECKED);
+	  check_lambda_star(sc);
 	  
 	case OP_LAMBDA_STAR_UNCHECKED:
 	  sc->value = make_closure(sc, car(sc->code), cdr(sc->code), T_CLOSURE_STAR);
@@ -60742,83 +60804,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  pair_line_number(sc->value) = remember_location(port_line_number(sc->input_port), port_file_number(sc->input_port));
 		  set_has_line_number(sc->value);	      /* sc->input_port above can't be nil(?) -- it falls back on stdin now */
 		  
-		  if (is_expansion(car(sc->value)))
-		    {
-		      int loc;
-		      s7_pointer caller;
-		      
-		      /* read-time macro expansion:
-		       *   (define-macro (hi a) (format #t "hi...") `(+ ,a 1))
-		       *   (define (ho b) (+ 1 (hi b)))
-		       * here sc->value is: (ho b), (hi b), (+ 1 (hi b)), (define (ho b) (+ 1 (hi b)))
-		       * but... first we can't tell for sure at this point that "hi" really is a macro
-		       *   (letrec ((hi ... (hi...))) will be confused about the second hi,
-		       *   or (call/cc (lambda (hi) (hi 1))) etc.
-		       * second, figuring out that we're quoted is not easy -- we have to march all the
-		       * way to the bottom of the stack looking for op_read_quote or op_read_vector
-		       *    #(((hi)) 2) or '(((hi)))
-		       * or op_read_list with args not equal (quote) or (macroexapand)
-		       *    '(hi 3) or (macroexpand (hi 3) or (quote (hi 3))
-		       * and those are only the problems I noticed!
-		       *
-		       * The hardest of these problems involve shadowing, so Rick asked for "define-expansion"
-		       *   which is like define-macro, but the programmer guarantees that the macro
-		       *   name will not be shadowed.
-		       *
-		       * to make expansion recognition fast here, define-expansion sets the T_EXPANSION
-		       *   bit in the symbol as well as the value:
-		       *   set_type(sc->code, T_EXPANSION | T_SYMBOL)
-		       * but this can lead to confusion because the expansion name is now globally identified as an expansion.
-		       *    (let () (define-expansion (ex1 a) `(+ ,a 1)) (display (ex1 3)))
-		       *    (define (ex1 b) (* b 2)) (display (ex1 3))
-		       * since this happens at the top level, the first line is evaluated, ex1 becomes an expansion.
-		       * but the reader has no idea about lets and whatnot, so in the second line, ex1 is still an expansion
-		       * to the reader, so ir sees (define (+ b 1) ...) -- error!  To support tail-calls, there's no
-		       * way in eval to see the let close, so we can't clear the expansion flag when the let is done.
-		       * But we don't want define-expansion to mimic define-constant (via T_IMMUTABLE) because programs
-		       * like lint need to cancel reader-cond (for example).  So, we allow an expansion to be redefined,
-		       * and check here that the expander symbol still refers to an expansion.
-		       *
-		       * but in (define (ex1 b) b), the reader doesn't know we're in a define call (or it would be
-		       *   a bother to notice), so to redefine an expansion, first (set! ex1 #f) or (define ex1 #f),
-		       *   then (define (ex1 b) b).
-		       *
-		       * This is a mess!  Maybe we should insist that expansions are always global.
-		       */
-		      
-		      loc = s7_stack_top(sc) - 1;
-		      caller = car(stack_args(sc->stack, loc)); /* this can be garbage */
-		      if ((loc >= 3) &&
-			  (stack_op(sc->stack, loc) != OP_READ_QUOTE) &&             /* '(hi 1) for example */
-			  (stack_op(sc->stack, loc) != OP_READ_VECTOR) &&            /* #(reader-cond) for example */
-			  (caller != sc->QUOTE) &&          /* (quote (hi 1)) */
-			  (caller != sc->MACROEXPAND) &&    /* (macroexpand (hi 1)) */
-			  (caller != sc->DEFINE_EXPANSION)) /* (define-expansion ...) being reloaded/redefined */
-			{
-			  s7_pointer symbol, slot;
-			  /* we're playing fast and loose with sc->envir in the reader, so here we need a disaster check */
-#if DEBUGGING
-			  if (unchecked_type(sc->envir) != T_LET) sc->envir = sc->NIL;
-#else
-			  if (!is_let(sc->envir)) sc->envir = sc->NIL;
-#endif
-			  symbol = car(sc->value);
-			  if ((symbol_id(symbol) == 0) ||
-			      (sc->envir == sc->NIL))
-			    slot = global_slot(symbol);
-			  else slot = find_symbol(sc, symbol);
-			  if (is_slot(slot))
-			    sc->code = slot_value(slot);
-			  else sc->code = sc->UNDEFINED;
-			  if (!is_expansion(sc->code))
-			    clear_expansion(symbol);
-			  else
-			    {
-			      sc->args = copy_list(sc, cdr(sc->value));
-			      goto APPLY;
-			    }
-			}
-		    }
+		  if ((is_expansion(car(sc->value))) &&
+		      (expansion_ex(sc) == goto_APPLY))
+		    goto APPLY;
 		  if (is_pair(cdr(sc->value)))
 		    {
 		      set_ecdr(cdr(sc->value), sc->value);
@@ -66243,6 +66231,7 @@ s7_scheme *s7_init(void)
   sc->NO_CATCH =             make_symbol(sc, "no-catch");
   sc->IO_ERROR =             make_symbol(sc, "io-error");
   sc->INVALID_ESCAPE_FUNCTION = make_symbol(sc, "invalid-escape-function");
+  sc->BAFFLED =              make_symbol(sc, "baffled!");
 
   sc->KEY_KEY =              s7_make_keyword(sc, "key");
   sc->KEY_OPTIONAL =         s7_make_keyword(sc, "optional");
@@ -67141,13 +67130,13 @@ int main(int argc, char **argv)
  * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133
  * teq           |      |      | 6612                     3887 3020 2708
- * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3294
- * tcopy         |      |      |                          4970 4287 3829
+ * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3303
+ * tcopy         |      |      |                          4970 4287 3650
  * tmap          |      |      | 11.0           5031 4769 4685 4557 4198
- * tform         |      |      |                          6816 5536 4392
- * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6263
+ * tform         |      |      |                          6816 5536 4345
+ * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6309
  * titer         |      |      |                          7503 6793 6393
- * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6667
+ * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6678
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.8
  * thash         |      |      |                          19.4 17.4 16.0
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 20.9
@@ -67177,5 +67166,11 @@ int main(int argc, char **argv)
  * eval: 2 op_loads, named let setup, etc
  *   break up the gensets and applies into bool sets[type](sc, obj, args) so set_pair_p_3 and others can go away, and apply itself!
  * where safe_c_c now -> all_x? (for-each for example -- would allow preloc of arg, not frame?)
- * tari.scm, tfun? tdyn?
+ * tari.scm, tfun? tdyn? -> t212
+ * do body=closure call(unsafe) is unopt currently -- try safe closure call
+ * can circular-iterator confuse format? yes -- inf loop probably object->list
+#3  0x000000000047f394 in other_iterate (sc=0x76a970, obj=0x2aaaab1b4250) at s7.c:23885
+#4  0x000000000047fe49 in s7_iterate (sc=0x76a970, obj=0x2aaaab1b4250) at s7.c:24075
+#5  0x00000000004b993e in object_to_list (sc=0x76a970, obj=0x2aaaab1b4250) at s7.c:36639
+#6  0x0000000000489a24 in format_to_port_1 (sc=0x76a970, port=0x81e490, str=0x823cf0 "~{~A~% ~}", 
  */
