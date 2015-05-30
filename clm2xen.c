@@ -20266,13 +20266,11 @@ static void init_choosers(s7_scheme *sc)
 
 
   GEN_F1("env", env);
-  store_choices(sc, f, wrapped_env_1, NULL, NULL, wrapped_env_p);
   env_1 = clm_make_temp_function(sc, "env", g_env_1, 1, 0, false, "env opt", f, NULL, NULL, NULL, mul_c_env_1, mul_s_env_1, env_env_1);
   env_vss = clm_make_temp_function_no_choice(sc, "env", g_env_vss, 1, 0, false, "env opt", f);
 
 
   GEN_F1("readin", readin);
-  store_choices(sc, f, wrapped_readin_1, NULL, NULL, wrapped_readin_p);
   readin_1 = clm_make_temp_function(sc, "readin", g_readin_1, 1, 0, false, "readin opt", f,
 			       NULL, NULL, NULL, mul_c_readin_1, mul_s_readin_1, env_readin_1);
 

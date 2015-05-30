@@ -3698,11 +3698,16 @@ static void mark_vector_possibly_shared(s7_pointer p)
    *    parent vector, or it is sc->F, so we need to check for a vector parent if
    *    the current is multidimensional (this will include 1-dim slices).  We need
    *    to keep the parent case separate (i.e. sc->F means the current is the original)
-   *    so that we only free once (or remove_from_heap once).
+   *    so that we only free once (or remove_from_heap once).  
+   *
+   * If we have a shared-vector of a shared-vector, and the middle and original are not otherwise
+   *   in use, we mark the middle one, but (since it itself is not in use anywhere else)
+   *   we don't mark the original!  So we need to follow the share-vector chain marking every one.
    */
   if ((vector_has_dimensional_info(p)) &&
       (s7_is_vector(shared_vector(p))))
-    mark_vector(shared_vector(p));
+    mark_vector_possibly_shared(shared_vector(p));
+
   mark_vector_1(p, vector_length(p));
 }
 
@@ -3715,7 +3720,8 @@ static void mark_int_or_float_vector_possibly_shared(s7_pointer p)
 {
   if ((vector_has_dimensional_info(p)) &&
       (s7_is_vector(shared_vector(p))))
-    mark_int_or_float_vector(shared_vector(p));
+    mark_int_or_float_vector_possibly_shared(shared_vector(p));
+
   set_mark(p);
 }
 
@@ -4928,6 +4934,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   string_length(str) = nlen;
   string_value(str) = name;
   string_needs_free(str) = false;
+  string_hash(str) = hash;
 
   /* allocate the symbol in the heap so GC'd when inaccessible */
   NEW_CELL(sc, x, T_SYMBOL | T_GENSYM);
@@ -8715,7 +8722,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 	  frmt = (float_choice == 'g') ? "%*.*g" : ((float_choice == 'f') ? "%*.*f" : "%*.*e");
 	else frmt = (float_choice == 'g') ? "%*.*Lg" : ((float_choice == 'f') ? "%*.*Lf" : "%*.*Le");
 
-	len = snprintf(num_to_str, num_to_str_size, frmt, width, precision, s7_real(obj));
+	len = snprintf(num_to_str, num_to_str_size - 4, frmt, width, precision, s7_real(obj)); /* -4 for floatify */
 	(*nlen) = len;
 	floatify(num_to_str, nlen);
       }
@@ -9051,7 +9058,7 @@ static s7_pointer g_number_to_string_temp(s7_scheme *sc, s7_pointer args)
 
 
 #define CTABLE_SIZE 256
-static bool *exponent_table, *slashify_table, *char_ok_in_a_name, *white_space, *number_table;
+static bool *exponent_table, *slashify_table, *char_ok_in_a_name, *white_space, *number_table, *symbol_slashify_table;
 static int *digits;
 
 static void init_ctables(void)
@@ -9060,6 +9067,7 @@ static void init_ctables(void)
 
   exponent_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   slashify_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
+  symbol_slashify_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   char_ok_in_a_name = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   white_space = (bool *)calloc(CTABLE_SIZE + 1, sizeof(bool));
   white_space++;      /* leave white_space[-1] false for white_space[EOF] */
@@ -9104,6 +9112,9 @@ static void init_ctables(void)
   slashify_table[(unsigned char)'\\'] = true;
   slashify_table[(unsigned char)'"'] = true;
   slashify_table[(unsigned char)'\n'] = false;
+
+  for (i = 0; i < CTABLE_SIZE; i++)
+    symbol_slashify_table[i] = ((slashify_table[i]) || (!char_ok_in_a_name[i]));
 
   digits = (int *)calloc(CTABLE_SIZE, sizeof(int));
   for (i = 0; i < CTABLE_SIZE; i++)
@@ -21349,16 +21360,19 @@ static s7_pointer string_read_line(s7_scheme *sc, s7_pointer port, bool with_eol
 
 /* -------- write character functions -------- */
 
+static void resize_port_data(s7_pointer pt, int new_size)
+{
+  int loc;
+  loc = port_data_size(pt);
+  port_data_size(pt) = new_size;
+  port_data(pt) = (unsigned char *)realloc(port_data(pt), new_size * sizeof(unsigned char));
+  memclr((void *)(port_data(pt) + loc), new_size - loc);
+}
+
 static void string_write_char(s7_scheme *sc, int c, s7_pointer pt)
 {
   if (port_position(pt) >= port_data_size(pt))
-    {
-      int loc;
-      loc = port_data_size(pt);
-      port_data_size(pt) *= 2;
-      port_data(pt) = (unsigned char *)realloc(port_data(pt), port_data_size(pt) * sizeof(unsigned char));
-      memclr((void *)(port_data(pt) + loc), loc);
-    }
+    resize_port_data(pt, port_data_size(pt) * 2);
   port_data(pt)[port_position(pt)++] = c;
 }
 
@@ -21458,13 +21472,7 @@ static void string_write_string(s7_scheme *sc, const char *str, int len, s7_poin
 
   new_len = port_position(pt) + len;
   if (new_len >= (int)port_data_size(pt))
-    {
-      int loc;
-      loc = port_data_size(pt);
-      port_data_size(pt) = new_len * 2;
-      port_data(pt) = (unsigned char *)realloc(port_data(pt), port_data_size(pt) * sizeof(unsigned char) + 8);
-      memclr((void *)(port_data(pt) + loc), port_data_size(pt) + 8 - loc);
-    }
+    resize_port_data(pt, new_len * 2);
 
   memcpy((void *)(port_data(pt) + port_position(pt)), (void *)str, len);
   /* memcpy is much faster than the equivalent while loop */
@@ -22149,7 +22157,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   port_write_string(x) = file_write_string;
   port_position(x) = 0;
   port_data_size(x) = PORT_DATA_SIZE;
-  port_data(x) = (unsigned char *)malloc(PORT_DATA_SIZE + 8);
+  port_data(x) = (unsigned char *)malloc(PORT_DATA_SIZE); /* was +8? */
   add_output_port(sc, x);
   return(x);
 }
@@ -22249,7 +22257,7 @@ static s7_pointer open_output_string(s7_scheme *sc, int len)
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
   port_data_size(x) = len;
-  port_data(x) = (unsigned char *)malloc((len + 8) * sizeof(unsigned char));
+  port_data(x) = (unsigned char *)malloc(len * sizeof(unsigned char)); /* was +8? */
   port_data(x)[0] = '\0';   /* in case s7_get_output_string before any output */
   port_position(x) = 0;
   port_needs_free(x) = true;
@@ -24842,8 +24850,7 @@ static bool symbol_needs_slashification(const char *str, int len)
   unsigned char *p, *pend;
   pend = (unsigned char *)(str + len);
   for (p = (unsigned char *)str; p < pend; p++)
-    if ((!char_ok_in_a_name[*p]) ||
-	(slashify_table[*p]))
+    if (symbol_slashify_table[*p])
       return(true);
   return(false);
 }
@@ -24997,7 +25004,7 @@ static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_point
 	      for (i = 0; i < len; i++)
 		{
 		  port_write_character(port)(sc, ' ', port);
-		  plen = snprintf(buf, 128, float_format_g, WRITE_REAL_PRECISION, float_vector_element(vect, i));
+		  plen = snprintf(buf, 124, float_format_g, WRITE_REAL_PRECISION, float_vector_element(vect, i)); /* 124 so floatify has room */
 		  floatify(buf, &plen);
 		  port_write_string(port)(sc, buf, plen, port);
 		}
@@ -25225,7 +25232,7 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
 	{
 	  s7_pointer key_val, key, val;
 
-	  key_val = s7_iterate(sc, iterator);
+	  key_val = hash_table_iterate(sc, iterator);
 	  key = car(key_val);
 	  val = cdr(key_val);
 	  free_cell(sc, key_val);
@@ -25247,10 +25254,13 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
       port_write_string(port)(sc, "(hash-table", 11, port);
       for (i = 0; i < len; i++)
 	{
+	  s7_pointer key_val;
 	  if (use_write == USE_READABLE_WRITE)
 	    port_write_character(port)(sc, ' ', port);
 	  else port_write_string(port)(sc, " '", 2, port);
-	  object_to_port_with_circle_check(sc, s7_iterate(sc, iterator), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	  key_val = hash_table_iterate(sc, iterator);
+	  object_to_port_with_circle_check(sc, key_val, port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	  free_cell(sc, key_val);
 	}
 
       if (too_long)
@@ -26003,7 +26013,7 @@ static s7_pointer open_format_port(s7_scheme *sc)
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
   port_data_size(x) = len;
-  port_data(x) = (unsigned char *)malloc((len + 8) * sizeof(unsigned char));
+  port_data(x) = (unsigned char *)malloc(len * sizeof(unsigned char)); /* was +8 */
   port_data(x)[0] = '\0';
   port_position(x) = 0;
   port_needs_free(x) = false;
@@ -26995,8 +27005,10 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 
       if ((is_output_port(deferred_port)) &&
 	  (port_position(port) > 0))
-	port_write_string(deferred_port)(sc, (const char *)port_data(port), port_position(port), deferred_port);
-
+	{
+	  port_data(port)[port_position(port)] = '\0';
+	  port_write_string(deferred_port)(sc, (const char *)port_data(port), port_position(port), deferred_port);
+	}
       result = s7_make_string_with_length(sc, (char *)port_data(port), port_position(port));
       close_format_port(sc, port);
       fdat->port = NULL;
@@ -30803,8 +30815,8 @@ a vector that points to the same elements as the original-vector but with differ
 	float_vector_elements(x) = (s7_Double *)(float_vector_elements(orig) + offset);
       else vector_elements(x) = (s7_pointer *)(vector_elements(orig) + offset);
     }
-  add_vector(sc, x);
 
+  add_vector(sc, x);
   return(x);
 }
 
@@ -52424,6 +52436,56 @@ static int read_s_ex(s7_scheme *sc)
   return(goto_START);
 }
 		  
+static void eval_string_ex(s7_scheme *sc)
+{
+  /* read and evaluate string expression(s?)
+   *    assume caller (C via g_eval_c_string) is dealing with the string port
+   */
+  /* (eval-string (string-append "(list 1 2 3)" (string #\newline) (string #\newline)))
+   *    needs to be sure to get rid of the trailing white space before checking for EOF
+   *    else it tries to eval twice and gets "attempt to apply 1?, line 2"
+   */
+  if ((sc->tok != TOKEN_EOF) &&
+      (port_position(sc->input_port) < port_data_size(sc->input_port))) /* ran past end somehow? */
+    {
+      unsigned char c;
+      while (white_space[c = port_data(sc->input_port)[port_position(sc->input_port)++]])
+	if (c == '\n')
+	  port_line_number(sc->input_port)++;
+      
+      if (c != 0)
+	{
+	  backchar(c, sc->input_port);
+	  push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->value);
+	  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
+	}
+      else push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->value);
+    }
+  else push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->value);
+  sc->code = sc->value;
+}  
+
+static void eval_string_1_ex(s7_scheme *sc)
+{
+  if ((sc->tok != TOKEN_EOF) &&
+      (port_position(sc->input_port) < port_data_size(sc->input_port))) /* ran past end somehow? */
+    {
+      unsigned char c;
+      while (white_space[c = port_data(sc->input_port)[port_position(sc->input_port)++]])
+	if (c == '\n')
+	  port_line_number(sc->input_port)++;
+      
+      if (c != 0)
+	{
+	  backchar(c, sc->input_port);
+	  push_stack(sc, OP_EVAL_STRING_1, sc->NIL, sc->value);
+	  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
+	}
+      else push_stack(sc, OP_EVAL_STRING_2, sc->NIL, sc->NIL);
+    }
+  else push_stack(sc, OP_EVAL_STRING_2, sc->NIL, sc->NIL);
+  sc->code = sc->value;
+}
 
 #if WITH_QUASIQUOTE_VECTOR
 static void read_quasiquote_vector_ex(s7_scheme *sc)
@@ -52728,34 +52790,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 	  
 	  
-	  /* read and evaluate string expression(s?)
-	   *    assume caller (C via g_eval_c_string) is dealing with the string port
-	   */
 	case OP_EVAL_STRING:
-	  /* (eval-string (string-append "(list 1 2 3)" (string #\newline) (string #\newline)))
-	   *    needs to be sure to get rid of the trailing white space before checking for EOF
-	   *    else it tries to eval twice and gets "attempt to apply 1?, line 2"
-	   */
-	  if ((sc->tok != TOKEN_EOF) &&
-	      (port_position(sc->input_port) < port_data_size(sc->input_port))) /* ran past end somehow? */
-	    {
-	      unsigned char c;
-	      while (white_space[c = port_data(sc->input_port)[port_position(sc->input_port)++]])
-		if (c == '\n')
-		  port_line_number(sc->input_port)++;
-	      
-	      if (c != 0)
-		{
-		  backchar(c, sc->input_port);
-		  push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->value);
-		  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
-		}
-	      else push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->value);
-	    }
-	  else push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->value);
-	  sc->code = sc->value;
+	  eval_string_ex(sc);
 	  goto EVAL;
-	  
 	  
 	case OP_EVAL_STRING_2:
 	  s7_close_input_port(sc, sc->input_port);
@@ -52765,26 +52802,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->value = splice_in_values(sc, multiple_value(sc->value));
 	  break;
 	  
-	  
 	case OP_EVAL_STRING_1:
-	  if ((sc->tok != TOKEN_EOF) &&
-	      (port_position(sc->input_port) < port_data_size(sc->input_port))) /* ran past end somehow? */
-	    {
-	      unsigned char c;
-	      while (white_space[c = port_data(sc->input_port)[port_position(sc->input_port)++]])
-		if (c == '\n')
-		  port_line_number(sc->input_port)++;
-	      
-	      if (c != 0)
-		{
-		  backchar(c, sc->input_port);
-		  push_stack(sc, OP_EVAL_STRING_1, sc->NIL, sc->value);
-		  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
-		}
-	      else push_stack(sc, OP_EVAL_STRING_2, sc->NIL, sc->NIL);
-	    }
-	  else push_stack(sc, OP_EVAL_STRING_2, sc->NIL, sc->NIL);
-	  sc->code = sc->value;
+	  eval_string_1_ex(sc);
 	  goto EVAL;
 	  
 	  
@@ -60508,6 +60527,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      (port_is_closed(sc->code)))
 	    simple_wrong_type_argument_with_type(sc, sc->WITH_OUTPUT_TO_STRING, sc->code, make_string_wrapper(sc, "an open string output port"));
 	  
+	  if (port_position(sc->code) >= port_data_size(sc->code))
+	    resize_port_data(sc->code, port_position(sc->code) + 1); /* need room for the trailing #\null */
 	  sc->value = make_string_uncopied_with_length(sc, (char *)port_data(sc->code), port_position(sc->code));
 	  string_value(sc->value)[port_position(sc->code)] = 0;
 	  port_data(sc->code) = NULL;
@@ -67129,17 +67150,17 @@ int main(int argc, char **argv)
  *           12  |  13  |  14  | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7
  * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133
- * teq           |      |      | 6612                     3887 3020 2708
+ * teq           |      |      | 6612                     3887 3020 2616
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3303
  * tcopy         |      |      |                          4970 4287 3650
  * tmap          |      |      | 11.0           5031 4769 4685 4557 4198
- * tform         |      |      |                          6816 5536 4345
+ * tform         |      |      |                          6816 5536 4261
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6309
  * titer         |      |      |                          7503 6793 6393
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6678
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.8
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9
  * thash         |      |      |                          19.4 17.4 16.0
- * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 20.9
+ * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 21.0
  * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.0
  *
  * --------------------------------------------------------------------------
@@ -67167,10 +67188,15 @@ int main(int argc, char **argv)
  *   break up the gensets and applies into bool sets[type](sc, obj, args) so set_pair_p_3 and others can go away, and apply itself!
  * where safe_c_c now -> all_x? (for-each for example -- would allow preloc of arg, not frame?)
  * tari.scm, tfun? tdyn? -> t212
- * do body=closure call(unsafe) is unopt currently -- try safe closure call
+ * do body=closure call(unsafe) is unopt currently -- try safe closure call: tdo
+ *  if safe_g|closure_e(one-line) and its allxable, no need for push/pop
+ *
  * can circular-iterator confuse format? yes -- inf loop probably object->list
 #3  0x000000000047f394 in other_iterate (sc=0x76a970, obj=0x2aaaab1b4250) at s7.c:23885
 #4  0x000000000047fe49 in s7_iterate (sc=0x76a970, obj=0x2aaaab1b4250) at s7.c:24075
 #5  0x00000000004b993e in object_to_list (sc=0x76a970, obj=0x2aaaab1b4250) at s7.c:36639
 #6  0x0000000000489a24 in format_to_port_1 (sc=0x76a970, port=0x81e490, str=0x823cf0 "~{~A~% ~}", 
+ * perhaps a warning if safety>0?
+ *
+ * maybe remove reverse! from pure-s7
  */
