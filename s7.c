@@ -4217,17 +4217,16 @@ static bool for_any_other_reason(s7_scheme *sc, int line)
 #endif
 
 
-static void expand_heap(s7_scheme *sc)
+static void resize_heap(s7_scheme *sc)
 {
   /* alloc more heap */
-  unsigned int old_size, old_free;
-  unsigned int k;
+  unsigned int old_size, old_free, k;
   s7_cell *cells;
   s7_pointer p;
 
   old_size = sc->heap_size;
-
   old_free = sc->free_heap_top - sc->free_heap;
+
   if (sc->heap_size < 512000)
     sc->heap_size *= 2;
   else sc->heap_size += 512000;
@@ -4272,7 +4271,7 @@ static void try_to_call_gc(s7_scheme *sc)
   if (sc->gc_off)
     {
       /* we can't just return here!  Someone needs a new cell, and once the heap free list is exhausted, segfault */
-      expand_heap(sc);
+      resize_heap(sc);
     }
   else
     {
@@ -4281,11 +4280,11 @@ static void try_to_call_gc(s7_scheme *sc)
       freed_heap = gc(sc);
       if ((freed_heap < sc->heap_size / 2) &&
 	  (freed_heap < 1000000)) /* if huge heap */
-	expand_heap(sc);
+	resize_heap(sc);
 #else
       gc(sc);
       if ((unsigned int)(sc->free_heap_top - sc->free_heap) < sc->heap_size / 2)
-	expand_heap(sc);
+	resize_heap(sc);
 #endif
     }
 }
@@ -4571,7 +4570,7 @@ static void stack_reset(s7_scheme *sc)
 }
 
 
-static void increase_stack_size(s7_scheme *sc)
+static void resize_stack(s7_scheme *sc)
 {
   unsigned int i, new_size, loc;  /* long long ints?? sc->stack_size also is an unsigned int */
 
@@ -4606,7 +4605,7 @@ static void increase_stack_size(s7_scheme *sc)
   if (Sc->stack_end >= Sc->stack_resize_trigger) \
     { \
       if ((Sc->begin_hook) && (call_begin_hook(Sc))) return(Sc->F); \
-      increase_stack_size(Sc); \
+      resize_stack(Sc); \
     }
 
 
@@ -20607,13 +20606,13 @@ static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str, int len)
   int i;
   s7_pointer result;
 
-  if (len == 0) return(sc->NIL);
-
+  if (len == 0) 
+    return(sc->NIL);
   if (len >= (sc->free_heap_top - sc->free_heap))
     {
       gc(sc);
       while (len >= (sc->free_heap_top - sc->free_heap))
-	expand_heap(sc);
+	resize_heap(sc);
     }
 
   sc->v = sc->NIL;
@@ -24356,14 +24355,9 @@ static shared_info *new_shared_info(s7_scheme *sc)
     {
       int i;
       ci = sc->circle_info;
-      /* memset((void *)(ci->refs), 0, ci->top * sizeof(int)); */
       memclr((void *)(ci->refs), ci->top * sizeof(int));
       for (i = 0; i < ci->top; i++)
-	{
-	  s7_pointer p;
-	  p = ci->objs[i];
-	  clear_collected_and_shared(p);
-	}
+	clear_collected_and_shared(ci->objs[i]);
     }
   ci->top = 0;
   ci->ref = 0;
@@ -28057,7 +28051,7 @@ static s7_pointer make_list(s7_scheme *sc, int len, s7_pointer init)
 	  {
 	    gc(sc);
 	    while (len >= (sc->free_heap_top - sc->free_heap))
-	      expand_heap(sc);
+	      resize_heap(sc);
 	  }
 
 	sc->v = sc->NIL;
@@ -30522,13 +30516,13 @@ s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
   s7_pointer result;
 
   len = vector_length(vect);
-  if (len == 0) return(sc->NIL);
-
+  if (len == 0) 
+    return(sc->NIL);
   if (len >= (sc->free_heap_top - sc->free_heap))
     {
       gc(sc);
       while (len >= (sc->free_heap_top - sc->free_heap))
-	expand_heap(sc);
+	resize_heap(sc);
     }
 
   sc->v = sc->NIL;
@@ -33314,68 +33308,61 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer
   hash_entry_t *x, *p;
 
   old_len = hash_table_length(old_hash);
-  new_len = hash_table_length(new_hash);
+  new_len = hash_table_length(new_hash) - 1;
   old_lists = hash_table_elements(old_hash);
   new_lists = hash_table_elements(new_hash);
-
-  if ((old_len == new_len) &&
-      (hash_table_entries(new_hash) == 0)) 
-    /* or the hash_table_functions are incompatible, so no keys can match:
-     *   each from [hash_symbol|char|string|int|float] and not equal to each other?
-     *   unsafe are hash_equal and function_locked cases like eq_eq, eq_c_function, eq_closure
-     *   so ((htf(1|2) != hash_equal) && (!htf(1|2)_locked) && (hft1 != htf2)) ?
-     */
+  
+  if (hash_table_entries(new_hash) == 0)
     {
+      hash_table_function(new_hash) = hash_table_function(old_hash);
       for (i = 0; i < old_len; i++)
-	{
-	  for (x = old_lists[i]; x; x = x->next)
-	    {
-	      if (count >= end)
-		{
-		  hash_table_entries(new_hash) += end - start;
-		  return(new_hash);
-		}
-	      if (count >= start)
-		{
-		  p = make_hash_entry(x->key, x->value, x->raw_hash);
-		  p->next = new_lists[i];
-		  new_lists[i] = p;
-		}
-	      count++;
-	    }
-	}
-      hash_table_entries(new_hash) += count;
-    }
-  else
-    {
-      /* this can't be optimized much because we have to look for key matches */
-      new_len--;
-      for (i = 0; i < old_len; i++)
-	{
-	  for (x = old_lists[i]; x; x = x->next)
-	    {
-	      if (count >= end)
+	for (x = old_lists[i]; x; x = x->next)
+	  {
+	    if (count >= end)
+	      {
+		hash_table_entries(new_hash) = end - start;
 		return(new_hash);
-	      if (count >= start)
-		{
-		  hash_entry_t *y;
-		  y = (*hash_table_function(new_hash))(sc, new_hash, x->key);
-		  if (y)
-		    y->value = x->value;
-		  else
-		    {
-		      unsigned int loc;
-		      loc = x->raw_hash & new_len;
-		      p = make_hash_entry(x->key, x->value, x->raw_hash);
-		      p->next = new_lists[loc];
-		      new_lists[loc] = p;
-		      hash_table_entries(new_hash)++;
-		    }
-		}
-	      count++;
-	    }
-	}
+	      }
+	    if (count >= start)
+	      {
+		unsigned int loc;
+		loc = x->raw_hash & new_len;
+		p = make_hash_entry(x->key, x->value, x->raw_hash);
+		p->next = new_lists[loc];
+		new_lists[loc] = p;
+	      }
+	    count++;
+	  }
+      hash_table_entries(new_hash) = count - start;
+      return(new_hash);
     }
+      
+  /* this can't be optimized much because we have to look for key matches */
+  for (i = 0; i < old_len; i++)
+    for (x = old_lists[i]; x; x = x->next)
+      {
+	if (count >= end)
+	  return(new_hash);
+	if (count >= start)
+	  {
+	    hash_entry_t *y;
+	    y = (*hash_table_function(new_hash))(sc, new_hash, x->key);
+	    if (y)
+	      y->value = x->value;
+	    else
+	      {
+		unsigned int loc;
+		loc = x->raw_hash & new_len;
+		p = make_hash_entry(x->key, x->value, x->raw_hash);
+		p->next = new_lists[loc];
+		new_lists[loc] = p;
+		hash_table_entries(new_hash)++;
+		if (!hash_table_function_locked(new_hash))
+		  hash_table_set_function(new_hash, type(x->key));
+	      }
+	  }
+	count++;
+      }
   return(new_hash);
 }
 
@@ -44227,7 +44214,24 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
       /* this is checking for dotted arglists: boolean=? for example.  To optimize these calls, we need op_closure cases that
        *   bind the dotted name to the remaining args as a list.  This does not happen enough to be worth the trouble.
        */
-
+#if 0
+      {
+	s7_pointer body;
+	body = closure_body(func);
+	if ((is_safe_closure(func)) &&
+	    (is_pair(body)) &&
+	    (is_null(cdr(body))) &&
+	    (is_all_x_safe(sc, car(body))))
+	  {
+	    fprintf(stderr, "%s: %s, args: %s, expr: %s\n", 
+		    opt_names[optimize_data(car(body))], 
+		    DISPLAY(car(body)), 
+		    DISPLAY(closure_args(func)),
+		    DISPLAY(expr));
+	    /* either the call in the body can be an expr (not just symbol), or the func call */
+	  }
+      }
+#endif	  
       if (pairs == 0)
 	{
 	  if (is_symbol(arg1))
@@ -44244,18 +44248,16 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 		  if ((is_pair(body)) &&
 		      (is_null(cdr(body))) &&
 		      (is_optimized(car(body))) &&  /* snd-test: (power-env pe) is safe_closure but body is not optimized? and c_call is nil */
-		      (car(closure_args(func)) == cadar(body)))
+		      (car(closure_args(func)) == cadar(body)) &&
+		      (is_safe_c_s(car(body))))
 		    {
-		      if (is_safe_c_s(car(body)))
-			{
-			  /* direct safe_c_s call by moving body pointers out a level -- this currently never happens
-			   *   (let () (define (f1 x) (abs x)) (define (f2 x) (f1 x)) (f2 -1))
-			   */
-			  set_safe_optimize_data(expr, optimize_data(car(body)));
-			  set_ecdr(expr, ecdr(car(body)));
-			  set_fcdr(expr, fcdr(car(body)));
-			  return(true);
-			}
+		      /* direct safe_c_s call by moving body pointers out a level -- this currently (almost) never happens
+		       *   (let () (define (f1 x) (abs x)) (define (f2 x) (f1 x)) (f2 -1))
+		       */
+		      set_safe_optimize_data(expr, optimize_data(car(body))); /* presumably hop+OP_SAFE_C_S */
+		      set_ecdr(expr, ecdr(car(body)));                        /* underlying func for hop==0 c_function_is_ok check */
+		      set_fcdr(expr, fcdr(car(body)));                        /* opt func -- c_call calls fcdr which is c_function_call(ecdr) */
+		      return(true);
 		    }
 
 		  set_optimize_data(expr, hop + ((is_global(car(expr))) ? OP_SAFE_GLOSURE_S : OP_SAFE_CLOSURE_S));
@@ -44848,7 +44850,28 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 	{
 	  set_unsafely_optimized(expr);
 	  if (symbols == 2)
-	    set_optimize_data(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_SS : OP_CLOSURE_SS));
+	    {
+	      set_optimize_data(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_SS : OP_CLOSURE_SS));
+
+	      if (is_safe_closure(func))
+		{
+		  s7_pointer body;
+		  body = closure_body(func);
+		  if ((is_pair(body)) &&
+		      (is_null(cdr(body))) &&
+		      (is_optimized(car(body))) && 
+		      (car(closure_args(func)) == cadar(body)) &&
+		      (cadr(closure_args(func)) == caddar(body)) &&
+		      (op_no_hop(car(body)) == OP_SAFE_C_SS))
+		    {
+		      set_safe_optimize_data(expr, optimize_data(car(body))); /* presumably hop+OP_SAFE_C_SS */
+		      set_ecdr(expr, ecdr(car(body)));                        /* underlying func for hop==0 c_function_is_ok check */
+		      set_fcdr(expr, fcdr(car(body)));                        /* opt func -- c_call calls fcdr which is c_function_call(ecdr) */
+		      return(true);
+		    }
+		}
+
+	    }
 	  else
 	    {
 	      if (is_symbol(arg1))
@@ -47631,7 +47654,7 @@ static void define_funchecked(s7_scheme *sc)
 static void unsafe_closure_2(s7_scheme *sc, s7_pointer arg1, s7_pointer arg2)
 {
   s7_pointer code, args;
-  if (sc->stack_end >= sc->stack_resize_trigger) increase_stack_size(sc); /* not check_stack_size because it tries to return sc->F */
+  if (sc->stack_end >= sc->stack_resize_trigger) resize_stack(sc); /* not check_stack_size because it tries to return sc->F */
   code = ecdr(sc->code);
   args = closure_args(code);
   NEW_FRAME_WITH_TWO_SLOTS(sc, closure_let(code), sc->envir, car(args), arg1, cadr(args), arg2);
@@ -47641,7 +47664,7 @@ static void unsafe_closure_2(s7_scheme *sc, s7_pointer arg1, s7_pointer arg2)
 #define unsafe_closure_2(Sc, Arg1, Arg2) \
 { \
   s7_pointer Code, Args, A1, A2; A1 = Arg1; A2 = Arg2; \
-  if (Sc->stack_end >= Sc->stack_resize_trigger) increase_stack_size(Sc); \
+  if (Sc->stack_end >= Sc->stack_resize_trigger) resize_stack(Sc); \
   Code = ecdr(Sc->code); \
   Args = closure_args(Code); \
   NEW_FRAME_WITH_TWO_SLOTS(Sc, closure_let(Code), Sc->envir, car(Args), A1, cadr(Args), A2); \
@@ -50845,7 +50868,6 @@ static int simple_do_ex(s7_scheme *sc, s7_pointer code)
       while (true)
 	{
 	  func(sc, body);
-	  /* car(sc->T3_1) = sc->NIL; */
 
 	  car(sc->T2_1) = slot_value(ctr);
 	  car(sc->T2_2) = step_var;
@@ -52485,6 +52507,113 @@ static void eval_string_1_ex(s7_scheme *sc)
     }
   else push_stack(sc, OP_EVAL_STRING_2, sc->NIL, sc->NIL);
   sc->code = sc->value;
+}
+
+static int vector_c_ex(s7_scheme *sc)
+{
+  /* this is the implicit indexing case (vector-ref is a normal safe op)
+   *    (define (hi) (let ((v (vector 1 2 3))) (v 0)))
+   *    this starts as unknown_g in optimize_expression -> vector_c
+   *    but it still reports itself as unsafe, so there are higher levels possible
+   */
+  s7_pointer v, code;
+  code = sc->code;
+
+  v = find_symbol_checked(sc, car(code));
+  if ((!s7_is_vector(v)) ||
+      (!s7_is_integer(cadr(code))))  /* (v 4/3) */
+    return(fall_through);
+
+  if (vector_rank(v) == 1)
+    {
+      s7_Int index;
+      index = s7_integer(cadr(code));
+      if ((index < vector_length(v)) &&
+	  (index >= 0))
+	{
+	  sc->value = vector_getter(v)(sc, v, index);
+	  return(goto_START);
+	}
+    }
+  sc->value = vector_ref_1(sc, v, cdr(code));
+  return(goto_START);
+}
+		  
+static int vector_cc_ex(s7_scheme *sc)
+{
+  s7_pointer v, code;
+
+  code = sc->code;
+  v = find_symbol_checked(sc, car(code));
+  if (!s7_is_vector(v))                    /* we've checked that the args are non-negative ints */
+    return(fall_through);  
+
+  if (vector_rank(v) == 2)
+    {
+      s7_Int index;
+      index = s7_integer(cadr(code)) * vector_offset(v, 0) + s7_integer(caddr(code));
+      if (index < vector_length(v))
+	{
+	  sc->value = vector_getter(v)(sc, v, index);
+	  return(goto_START);
+	}
+    }
+  sc->value = vector_ref_1(sc, v, cdr(code));
+  return(goto_START);
+}
+
+static int vector_s_ex(s7_scheme *sc)
+{
+  s7_pointer v, ind, code;
+
+  code = sc->code;
+  v = find_symbol_checked(sc, car(code));
+  ind = find_symbol_checked(sc, cadr(code));
+  if ((!s7_is_vector(v)) ||
+      (!s7_is_integer(ind)))
+    return(fall_through);
+  
+  if (vector_rank(v) == 1)
+    {
+      s7_Int index;
+      index = s7_integer(ind);
+      if ((index < vector_length(v)) &&
+	  (index >= 0))
+	{
+	  sc->value = vector_getter(v)(sc, v, index);
+	  return(goto_START);
+	}
+    }
+  sc->value = vector_ref_1(sc, v, cons(sc, ind, sc->NIL));
+  return(goto_START);
+}
+
+static int vector_a_ex(s7_scheme *sc)
+{
+  s7_pointer v, x, code;
+
+  code = sc->code;
+  v = find_symbol_checked(sc, car(code));
+  if (!s7_is_vector(v))
+    return(fall_through);
+  
+  x = ((s7_function)fcdr(cdr(code)))(sc, cadr(code));
+  if (s7_is_integer(x))
+    {
+      if (vector_rank(v) == 1)
+	{
+	  s7_Int index;
+	  index = s7_integer(x);
+	  if ((index < vector_length(v)) &&
+	      (index >= 0))
+	    {
+	      sc->value = vector_getter(v)(sc, v, index);
+	      return(goto_START);
+	    }
+	}
+    }
+  sc->value = vector_ref_1(sc, v, cons(sc, x, sc->NIL));
+  return(goto_START);
 }
 
 #if WITH_QUASIQUOTE_VECTOR
@@ -56823,106 +56952,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_VECTOR_C:
 		case HOP_VECTOR_C:
-		  {
-		    /* this is the implicit indexing case (vector-ref is a normal safe op)
-		     *    (define (hi) (let ((v (vector 1 2 3))) (v 0)))
-		     *    this starts as unknown_g in optimize_expression -> vector_c
-		     *    but it still reports itself as unsafe, so there are higher levels possible
-		     */
-		    s7_pointer v;
-		    v = find_symbol_checked(sc, car(code));
-		    if ((!s7_is_vector(v)) ||
-			(!s7_is_integer(cadr(code))))  /* (v 4/3) */
-		      break;
-		    if (vector_rank(v) == 1)
-		      {
-			s7_Int index;
-			index = s7_integer(cadr(code));
-			if ((index < vector_length(v)) &&
-			    (index >= 0))
-			  {
-			    sc->value = vector_getter(v)(sc, v, index);
-			    goto START;
-			  }
-		      }
-		    sc->value = vector_ref_1(sc, v, cdr(code));
-		    goto START;
-		  }
-		  
+		  if (vector_c_ex(sc) == goto_START) goto START;
+		  break;
 		  
 		case OP_VECTOR_CC:
 		case HOP_VECTOR_CC:
-		  {
-		    s7_pointer v;
-		    v = find_symbol_checked(sc, car(code));
-		    if (!s7_is_vector(v)) break;  /* we've checked that the args are non-negative ints */
-		    if (vector_rank(v) == 2)
-		      {
-			s7_Int index;
-			index = s7_integer(cadr(code)) * vector_offset(v, 0) + s7_integer(caddr(code));
-			if (index < vector_length(v))
-			  {
-			    sc->value = vector_getter(v)(sc, v, index);
-			    goto START;
-			  }
-		      }
-		    sc->value = vector_ref_1(sc, v, cdr(code));
-		    goto START;
-		  }
-		  
+		  if (vector_cc_ex(sc) == goto_START) goto START;
+		  break;
 		  
 		case OP_VECTOR_A:
 		  if (!indirect_cq_function_is_ok(sc, cadr(code))) break;
 		case HOP_VECTOR_A:
-		  {
-		    s7_pointer v, x;
-		    v = find_symbol_checked(sc, car(code));
-		    if (!s7_is_vector(v))
-		      break;
-		    
-		    x = ((s7_function)fcdr(cdr(code)))(sc, cadr(code));
-		    if (s7_is_integer(x))
-		      {
-			if (vector_rank(v) == 1)
-			  {
-			    s7_Int index;
-			    index = s7_integer(x);
-			    if ((index < vector_length(v)) &&
-				(index >= 0))
-			      {
-				sc->value = vector_getter(v)(sc, v, index);
-				goto START;
-			      }
-			  }
-		      }
-		    sc->value = vector_ref_1(sc, v, cons(sc, x, sc->NIL));
-		    goto START;
-		  }
+		  if (vector_a_ex(sc) == goto_START) goto START;
+		  break;
 
 		case OP_VECTOR_S:
 		case HOP_VECTOR_S:
-		  {
-		    s7_pointer v, ind;
-		    v = find_symbol_checked(sc, car(code));
-		    ind = find_symbol_checked(sc, cadr(code));
-		    if ((!s7_is_vector(v)) ||
-			(!s7_is_integer(ind)))
-		      break;
-		    
-		    if (vector_rank(v) == 1)
-		      {
-			s7_Int index;
-			index = s7_integer(ind);
-			if ((index < vector_length(v)) &&
-			    (index >= 0))
-			  {
-			    sc->value = vector_getter(v)(sc, v, index);
-			    goto START;
-			  }
-		      }
-		    sc->value = vector_ref_1(sc, v, cons(sc, ind, sc->NIL));
-		    goto START;
-		  }
+		  if (vector_s_ex(sc) == goto_START) goto START;
+		  break;
 		  
 		case OP_STRING_C:
 		case HOP_STRING_C:
@@ -57221,7 +57268,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  {
 			    if (cyclic_sequences(sc, carc, false) == sc->T)
 			      eval_error(sc, "attempt to evaluate a circular list: ~A", carc);
-			    increase_stack_size(sc);
+			    resize_stack(sc);
 			  }
 			
 			push_stack(sc, OP_EVAL_ARGS, sc->NIL, cdr(code));
@@ -57826,7 +57873,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  /*
 	   * if (sc->stack_end >= sc->stack_resize_trigger)
-	   *   increase_stack_size(sc);
+	   *   resize_stack(sc);
 	   *
 	   * the two places where the stack reaches it maximum size are in read_expression where TOKEN_LEFT_PAREN
 	   *   pushes OP_READ_LIST, and (the actual max) in OP_EVAL at the push of OP_EVAL_ARGS.  I've moved
@@ -67150,14 +67197,14 @@ int main(int argc, char **argv)
  *           12  |  13  |  14  | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7
  * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133
- * teq           |      |      | 6612                     3887 3020 2616
- * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3303
- * tcopy         |      |      |                          4970 4287 3650
- * tmap          |      |      | 11.0           5031 4769 4685 4557 4198
+ * teq           |      |      | 6612                     3887 3020 2611
+ * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301
+ * tcopy         |      |      |                          4970 4287 3631
+ * tmap          |      |      | 11.0           5031 4769 4685 4557 4195
  * tform         |      |      |                          6816 5536 4261
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6309
- * titer         |      |      |                          7503 6793 6393
- * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6678
+ * titer         |      |      |                          7503 6793 6335
+ * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6675
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9
  * thash         |      |      |                          19.4 17.4 16.0
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 21.0
@@ -67199,4 +67246,6 @@ int main(int argc, char **argv)
  * perhaps a warning if safety>0?
  *
  * maybe remove reverse! from pure-s7
+ * (define (f a) (vector-ref a 1)) -> op_safe_c_s1_to_s1c but where to store the c?  otherwise we're crawling closure_body
+ *   and this is current c_c with 2nd level opt -- so in this case we're ok but can't tell it
  */
