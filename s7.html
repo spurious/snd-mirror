@@ -1262,6 +1262,24 @@ control over the environment at any point:
 
 &gt; (let ((a 1) (+ *)) (mac a))
 <em class="gray">13</em>
+
+(define-macro (swap a b) ; assume a and b are symbols
+  `(with-let (inlet 'e (curlet) 'tmp ,a)
+     (set! (e ',a) (e ',b))
+     (set! (e ',b) tmp)))
+
+&gt; (let ((b 1) (tmp 2)) (swap b tmp) (list b tmp))
+<em class="gray">(2 1)</em>
+
+(define-macro (swap a b) ; here a and b can be any settable expressions
+  `(set! ,b (with-let (inlet 'e (curlet) 'tmp ,a) 
+	      (with-let e (set! ,a ,b))
+	      tmp)))
+
+&gt; (let ((v (vector 1 2))) (swap (v 0) (v 1)) v)
+<em class="gray">#(2 1)</em>
+&gt; (let ((tmp (cons 1 2))) (swap (car tmp) (cdr tmp)) tmp)
+<em class="gray">(2 . 1)</em>
 </pre>
 
 <p>
