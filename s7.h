@@ -762,6 +762,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 #if (!DISABLE_DEPRECATED)
 /* cm uses this: */
 #define s7_UNSPECIFIED(Sc) s7_unspecified(Sc)
+#define s7_NIL(Sc) s7_nil(Sc)
 #define s7_is_procedure_with_setter s7_is_dilambda
 #define s7_make_procedure_with_setter s7_dilambda
 #endif

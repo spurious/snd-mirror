@@ -1116,7 +1116,12 @@
 
       
       (define (keywords lst)
-	(count-if keyword? lst))
+	(let ((count 0))
+	  (do ((p lst (cdr p)))
+	      ((null? p) count)
+	    (if (keyword? (car p))
+		(set! count (+ count 1))))))
+      ;(count-if keyword? lst))
       
       (define (tree-member sym tree)
 	(and (pair? tree)
@@ -3150,7 +3155,7 @@
 		 (eq? head 'define))
 	    (let ((bval (if (and (pair? val)
 				 (string? (car val)))
-			    (cdr val)
+			    (cdr val)         ; strip away the (old-style) documentation string
 			    val)))
 	      (if (and (pair? bval)           ; not (define (hi a) . 1)!
 		       (pair? (car bval))

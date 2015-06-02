@@ -798,36 +798,36 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
      (let ((new-class (openlet
                        (apply sublet                             ; the local slots
 			      (sublet                            ; the global slots
-				  (apply inlet                  ; the methods
+				  (apply inlet                   ; the methods
 					 (reverse new-methods))
-				(cons 'class-name ',class-name)  ; class-name slot
-				(cons 'inherited ,inherited-classes)
-				(cons 'inheritors ()))           ; classes that inherit from this class
+				'class-name ',class-name         ; class-name slot
+				'inherited ,inherited-classes
+				'inheritors ())                  ; classes that inherit from this class
 			      new-slots))))
        
        (varlet outer-env                  
-	 (cons ',class-name new-class)                       ; define the class as class-name in the calling environment
+	 ',class-name new-class                                  ; define the class as class-name in the calling environment
 	 
 	 ;; define class-name? type check
-	 (cons (string->symbol (string-append (symbol->string ',class-name) "?"))
-	       (lambda (obj)
-		 (and (let? obj)
-		      (eq? (obj 'class-name) ',class-name)))))
+	 (string->symbol (string-append (symbol->string ',class-name) "?"))
+	 (lambda (obj)
+	   (and (let? obj)
+		(eq? (obj 'class-name) ',class-name))))
        
        (varlet outer-env
 	 ;; define the make-instance function for this class.  
 	 ;;   Each slot is a keyword argument to the make function.
-	 (cons (string->symbol (string-append "make-" (symbol->string ',class-name)))
-	       (apply lambda* (map (lambda (slot)
-				     (if (pair? slot)
-					 (list (car slot) (cdr slot))
-					 (list slot #f)))
-				   new-slots)
-		      `((let ((new-obj (copy ,,class-name)))
-			  ,@(map (lambda (slot)
-				   `(set! (new-obj ',(car slot)) ,(car slot)))
-				 new-slots)
-			  new-obj)))))
+	 (string->symbol (string-append "make-" (symbol->string ',class-name)))
+	 (apply lambda* (map (lambda (slot)
+			       (if (pair? slot)
+				   (list (car slot) (cdr slot))
+				   (list slot #f)))
+			     new-slots)
+		`((let ((new-obj (copy ,,class-name)))
+		    ,@(map (lambda (slot)
+			     `(set! (new-obj ',(car slot)) ,(car slot)))
+			   new-slots)
+		    new-obj))))
        
        ;; save inheritance info for this class for subsequent define-method
        (letrec ((add-inheritor (lambda (class)
@@ -864,16 +864,14 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
      ;;   s7test.scm has define-method-with-next-method that implements call-next-method here
      ;;   it also has make-instance 
      (varlet outer-env
-       (cons method-name 
-	     (apply lambda* method-args 
-		    `(((,object ',method-name)
-		       ,@(map (lambda (arg)
-				(if (pair? arg) (car arg) arg))
-			      method-args))))))
+       method-name (apply lambda* method-args 
+			  `(((,object ',method-name)
+			     ,@(map (lambda (arg)
+				      (if (pair? arg) (car arg) arg))
+				    method-args)))))
      
      ;; add the method to the class
-     (varlet (outlet (outlet class))
-       (cons method-name method))
+     (varlet (outlet (outlet class)) method-name method)
      
      ;; if there are inheritors, add it to them as well, but not if they have a shadowing version
      (for-each
@@ -881,8 +879,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	(if (not (eq? (inheritor method-name) #<undefined>)) ; defined? goes to the global env
 	    (if (eq? (inheritor method-name) old-method)
 		(set! (inheritor method-name) method))
-	    (varlet (outlet (outlet inheritor))
-	      (cons method-name method))))
+	    (varlet (outlet (outlet inheritor)) method-name method)))
       (class 'inheritors))
      
      method-name))

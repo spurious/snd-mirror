@@ -27860,20 +27860,17 @@ static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list) /* "safe
 
 s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
-  s7_pointer p = b, q;
+  s7_pointer p, tp, np;
+  if (is_null(a)) return(b);
 
-  if (is_not_null(a))
-    {
-      a = s7_reverse(sc, a);
-      while (is_not_null(a))
-	{
-	  q = cdr(a);
-	  cdr(a) = p;
-	  p = a;
-	  a = q;
-	}
-    }
-  return(p);
+  tp = cons(sc, car(a), sc->NIL);
+  sc->y = tp;
+  for (p = cdr(a), np = tp; is_pair(p); p = cdr(p), np = cdr(np))
+    cdr(np) = cons(sc, car(p), sc->NIL);
+  cdr(np) = b;
+  sc->y = sc->NIL;
+
+  return(tp);
 }
 
 
@@ -52714,6 +52711,97 @@ static void decrement_1_ex(s7_scheme *sc)
   slot_set_value(y, sc->value);
 }
 
+static void syntax_ex(s7_scheme *sc)
+{
+  unsigned int len;
+  if (is_pair(sc->args))
+    {
+      len = s7_list_length(sc, sc->args);
+      if (len == 0) eval_error_no_return(sc, sc->SYNTAX_ERROR, "attempt to evaluate a circular list: ~A", sc->args);
+    }
+  else len = 0;
+  
+  if (len < integer(syntax_min_args(sc->code)))
+    s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args));
+  
+  if (integer(syntax_max_args(sc->code)) < len)
+    s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args));
+  
+  sc->op = (opcode_t)syntax_opcode(sc->code);         /* (apply begin '((define x 3) (+ x 2))) */
+  /* I used to have elaborate checks here for embedded circular lists, but now i think that is the caller's problem */
+  sc->code = sc->args;
+}
+
+	  
+static void define2_ex(s7_scheme *sc)
+{
+  if (is_any_closure(sc->value))
+    {
+      s7_pointer new_func, new_env;
+      new_func = sc->value;
+      
+      /* we can get here from let: (define (outer a) (let () (define (inner b) (+ a b)) (inner a)))
+       *   but the port info is not relevant here, so restrict the __func__ list making to top-level
+       *   cases (via sc->envir == sc->NIL).
+       */
+      
+      NEW_CELL_NO_CHECK(sc, new_env, T_LET | T_IMMUTABLE | T_FUNCTION_ENV);
+      let_id(new_env) = ++sc->let_number;
+      outlet(new_env) = closure_let(new_func);
+      closure_let(new_func) = new_env;
+      set_let_slots(new_env, sc->NIL);
+      funclet_function(new_env) = sc->code;
+      
+      if ((!is_let(sc->envir)) &&
+	  (port_filename(sc->input_port)) &&
+	  (port_file(sc->input_port) != stdin))
+	{
+	  /* unbound_variable will be called if __func__ is encountered, and will return this info as if __func__ had some meaning */
+	  typeflag(new_env) |= T_LINE_NUMBER;
+	  let_file(new_env) = port_file_number(sc->input_port);
+	  let_line(new_env) = port_line_number(sc->input_port);
+	}
+      
+      /* this should happen only if the closure* default values do not refer in any way to
+       *   the enclosing environment (else we can accidentally shadow something that happens
+       *   to share an argument name that is being used as a default value -- kinda dumb!).
+       *   I think I'll check this before setting the safe_closure bit.
+       */
+      if (is_safe_closure(new_func))
+	{
+	  int i;
+	  s7_pointer arg;
+	  for (i = 0, arg = closure_args(new_func); is_pair(arg); i++, arg = cdr(arg))
+	    {
+	      if (is_pair(car(arg)))
+		make_slot_1(sc, new_env, caar(arg), sc->NIL);
+	      else make_slot_1(sc, new_env, car(arg), sc->NIL);
+	    }
+	  set_let_slots(new_env, reverse_slots(sc, let_slots(new_env)));
+	}
+      /* add the newly defined thing to the current environment */
+      if (is_let(sc->envir))
+	{
+	  ADD_SLOT(sc->envir, sc->code, new_func);
+	  set_local(sc->code);
+	  /* so funchecked is always local already -- perhaps reset below? */
+	}
+      else s7_make_slot(sc, sc->envir, sc->code, new_func); 
+      sc->value = new_func; /* 25-Jul-14 so define returns the value not the name */
+    }
+  else
+    {
+      s7_pointer lx;
+      /* add the newly defined thing to the current environment */
+      lx = find_local_symbol(sc, sc->code, sc->envir);
+      if (is_slot(lx))
+	slot_set_value(lx, sc->value);
+      else s7_make_slot(sc, sc->envir, sc->code, sc->value);
+    }
+}
+
+
+/* ---------------------------------------- */
 
 static void clear_all_optimizations(s7_scheme *sc, s7_pointer p)
 {
@@ -58207,26 +58295,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	      
 	    case T_SYNTAX:                            /* -------- syntactic keyword as applicable object -------- */
-	      {
-		unsigned int len;
-		if (is_pair(sc->args))
-		  {
-		    len = s7_list_length(sc, sc->args);
-		    if (len == 0) eval_error(sc, "attempt to evaluate a circular list: ~A", sc->args);
-		  }
-		else len = 0;
-		
-		if (len < integer(syntax_min_args(sc->code)))
-		  return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
-		
-		if (integer(syntax_max_args(sc->code)) < len)
-		  return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
-		
-		sc->op = (opcode_t)syntax_opcode(sc->code);         /* (apply begin '((define x 3) (+ x 2))) */
-		/* I used to have elaborate checks here for embedded circular lists, but now i think that is the caller's problem */
-		sc->code = sc->args;
-		goto START_WITHOUT_POP_STACK;
-	      }
+	      syntax_ex(sc);
+	      goto START_WITHOUT_POP_STACK;
 	      
 	    default:
 	      return(apply_error(sc, sc->code, sc->args));
@@ -58407,69 +58477,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  
 	DEFINE2:
-	  if (is_any_closure(sc->value))
-	    {
-	      s7_pointer new_func, new_env;
-	      new_func = sc->value;
-	      
-	      /* we can get here from let: (define (outer a) (let () (define (inner b) (+ a b)) (inner a)))
-	       *   but the port info is not relevant here, so restrict the __func__ list making to top-level
-	       *   cases (via sc->envir == sc->NIL).
-	       */
-	      
-	      NEW_CELL_NO_CHECK(sc, new_env, T_LET | T_IMMUTABLE | T_FUNCTION_ENV);
-	      let_id(new_env) = ++sc->let_number;
-	      outlet(new_env) = closure_let(new_func);
-	      closure_let(new_func) = new_env;
-	      set_let_slots(new_env, sc->NIL);
-	      funclet_function(new_env) = sc->code;
-	      
-	      if ((!is_let(sc->envir)) &&
-		  (port_filename(sc->input_port)) &&
-		  (port_file(sc->input_port) != stdin))
-		{
-		  /* unbound_variable will be called if __func__ is encountered, and will return this info as if __func__ had some meaning */
-		  typeflag(new_env) |= T_LINE_NUMBER;
-		  let_file(new_env) = port_file_number(sc->input_port);
-		  let_line(new_env) = port_line_number(sc->input_port);
-		}
-	      
-	      /* this should happen only if the closure* default values do not refer in any way to
-	       *   the enclosing environment (else we can accidentally shadow something that happens
-	       *   to share an argument name that is being used as a default value -- kinda dumb!).
-	       *   I think I'll check this before setting the safe_closure bit.
-	       */
-	      if (is_safe_closure(new_func))
-		{
-		  int i;
-		  s7_pointer arg;
-		  for (i = 0, arg = closure_args(new_func); is_pair(arg); i++, arg = cdr(arg))
-		    {
-		      if (is_pair(car(arg)))
-			make_slot_1(sc, new_env, caar(arg), sc->NIL);
-		      else make_slot_1(sc, new_env, car(arg), sc->NIL);
-		    }
-		  set_let_slots(new_env, reverse_slots(sc, let_slots(new_env)));
-		}
-	      /* add the newly defined thing to the current environment */
-	      if (is_let(sc->envir))
-		{
-		  ADD_SLOT(sc->envir, sc->code, new_func);
-		  set_local(sc->code);
-		  /* so funchecked is always local already -- perhaps reset below? */
-		}
-	      else s7_make_slot(sc, sc->envir, sc->code, new_func); 
-	      sc->value = new_func; /* 25-Jul-14 so define returns the value not the name */
-	    }
-	  else
-	    {
-	      s7_pointer lx;
-	      /* add the newly defined thing to the current environment */
-	      lx = find_local_symbol(sc, sc->code, sc->envir);
-	      if (is_slot(lx))
-		slot_set_value(lx, sc->value);
-	      else s7_make_slot(sc, sc->envir, sc->code, sc->value);
-	    }
+	  define2_ex(sc);
 	  break;
 	  
 	  
@@ -58477,6 +58485,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (sc->value == sc->ERROR) /* backwards compatibility... */
 	    return(s7_error(sc, sc->ERROR, set_elist_3(sc, make_string_wrapper(sc, "can't define ~S to ~S"), car(sc->args), cadr(sc->args))));
 	  goto DEFINE2;
+	  break;
 	  
 	  
 	  /* -------------------------------- SET! -------------------------------- */
@@ -67138,7 +67147,7 @@ int main(int argc, char **argv)
  * tcopy         |      |      |                          4970 4287 3631
  * tmap          |      |      | 11.0           5031 4769 4685 4557 4200
  * tform         |      |      |                          6816 5536 4261
- * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6309
+ * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6255
  * titer         |      |      |                          7503 6793 6335
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6675
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9
@@ -67169,7 +67178,6 @@ int main(int argc, char **argv)
  *
  * eval: 2 op_loads, named let setup, etc
  *   break up the gensets and applies into bool sets[type](sc, obj, args) so set_pair_p_3 and others can go away, and apply itself!
- * where safe_c_c now -> all_x? (for-each for example -- would allow preloc of arg, not frame?)
  * tari.scm, tfun? tdyn? -> t212
  *
  * can circular-iterator confuse format? yes -- inf loop probably object->list
@@ -67179,7 +67187,9 @@ int main(int argc, char **argv)
 #6  0x0000000000489a24 in format_to_port_1 (sc=0x76a970, port=0x81e490, str=0x823cf0 "~{~A~% ~}", 
  * perhaps a warning if safety>0?
  *
- * maybe remove reverse! from pure-s7
+ * permutation-iterator (iterator-as-continuation?)
  * hash-table* -> hash-table but how to disambiguate
- * op_safe_c_c cases need to be transformed back or at least keep the path somewhere
+ * define-safe-macro fixed. doc/finish define-with-macros.
+ * no setter for expansion? setter support in fully-macroexpand (s7test)
+ * g_append copies all args even the last?
  */

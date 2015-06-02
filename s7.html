@@ -648,9 +648,6 @@ have any number after, for example, #b:
 
 
 
-
-
-
 <div class="header" id="define*"><h4>define*, lambda*</h4></div>
 
 
@@ -1068,7 +1065,7 @@ and assign it to a variable.  You can even set its procedure-setter!
   `(pretty-print ',(expand form)))
 </pre>
 <p>This does not always handle bacros correctly because their expansion can depend on the run-time 
-state, and here we are just looking at the code as a list.
+state, and here we are just looking at the code as a list.  
 </p>
 </div>
 
@@ -1262,7 +1259,13 @@ control over the environment at any point:
 
 &gt; (let ((a 1) (+ *)) (mac a))
 <em class="gray">13</em>
+</pre>
 
+<p>So s7 does not have syntax-rules because it is not needed.
+</p>
+
+<div class="indented">
+<pre>
 (define-macro (swap a b) ; assume a and b are symbols
   `(with-let (inlet 'e (curlet) 'tmp ,a)
      (set! (e ',a) (e ',b))
@@ -1280,7 +1283,24 @@ control over the environment at any point:
 <em class="gray">#(2 1)</em>
 &gt; (let ((tmp (cons 1 2))) (swap (car tmp) (cdr tmp)) tmp)
 <em class="gray">(2 . 1)</em>
+
+(set! (procedure-setter swap) (define-macro (set-swap a b c) `(set! ,b ,c)))
+
+&gt; (let ((a 1) (b 2) (c 3) (d 4)) (swap a (swap b (swap c d))) (list a b c d))
+<em class="gray">(2 3 4 1)</em>
+
+;;; but this is simpler:
+(define-macro (rotate . args)
+  `(set! ,(args (- (length args) 1))
+         (with-let (inlet 'e (curlet) 'tmp ,(car args))
+	   (with-let e 
+	     ,@(map (lambda (a b) `(set! ,a ,b)) args (cdr args)))
+	   tmp)))
+
+&gt; (let ((a 1) (b 2) (c 3)) (rotate a b c) (list a b c))
+<em class="gray">(2 3 1)</em>
 </pre>
+</div>
 
 <p>
 If you want the macro's expanded result
@@ -1289,7 +1309,7 @@ to be evaluated in its definition environment:
 <pre>
 (let ((a 3))
   (define-macro (mac b)
-    `(with-let (inlet (cons 'b ,b) (funclet mac))
+    `(with-let (inlet 'b ,b (funclet mac))
        (+ a b)))       ; definition-time "a", call-time "b"
   (define-macro (mac-1 b)
     `(+ a ,b))         ; call-time "a" and "b"
@@ -1298,122 +1318,6 @@ to be evaluated in its definition environment:
 	  (mac-1 1))))
 </pre>
 
-<p>So s7 does not have syntax-rules because it is not needed.
-</p>
-
-
-
-<details>
-<summary class="indented">miraculous immaculos</summary>
-<div class="indented">
-
-<p>
-It is possible to write a macro that creates hygienic macros.
-The funclet of a macro is the environment at its definition time, just like a function.
-By wrapping the macro body in with-let, we make sure anything in that body reflects 
-the definition environment, not the calling environment.  We then augment that environment
-with the macro arguments getting their values from the call-time environment:
-</p>
-
-<pre class="indented">
-(define-macro (define-immaculo name-and-args . body)
-  (let* ((gensyms (map (lambda (g) (gensym)) (cdr name-and-args)))
-	 (args (cdr (copy name-and-args)))
-	 (name (car name-and-args))
-	 (set-args (map (lambda (a g) `(list ',g ,a)) args gensyms))
-	 (get-args (map (lambda (a g) `(quote (cons ',a ,g))) args gensyms))
-	 (blocked-args (map (lambda (a) `(,a ',a)) args))     
-	 (new-body (list (apply let blocked-args body))))    ; unquote args
-    `(define-macro ,name-and-args
-       `(let ,(list ,@set-args)
-          ,(list 'with-let 
-                 (append (list 'sublet) 
-                         (list (list 'funclet ,name)) 
-                         (list ,@get-args))
-                 ',@new-body)))))
-define-immaculo
-&gt; (define-immaculo (mac c d) `(let ((a 12) (b 3)) (+ a b ,c ,d)))
-<em class="gray">mac</em>
-&gt; (let ((a 21) (b 10) (+ *)) (mac a b))
-<em class="gray">46</em>     ; (+ 12 3 21 10) with the definition-time value of +
-&gt; (let ((a 21) (b 10) (+ *)) (mac a (+ b 10)))
-<em class="gray">136</em>    ; (+ 12 3 21 (* 10 10)), (+ b 10) is treated as (* b 10)
-       ;   because (+ b 10) refers to the '+' and 'b' in the calling environment
-</pre>
-
-<p>Here's a simpler version that does not try to import the definition environment.
-Better would be to use a gensym rather than "e" for the curlet.
-</p>
-<pre>
-(define-macro (define-immaculo name-and-args . body)
-  (let ((new-args (map (lambda (arg) 
-                         `(list (quote ,arg) ,arg)) 
-                       (cdr name-and-args)))
-	(wrapped-args (map (lambda (arg) 
-                             `(,arg (quote (with-let e ,arg)))) 
-                           (cdr name-and-args))))
-    (let ((new-body (apply let wrapped-args body)))
-      `(define-macro ,name-and-args
-	 `(let ,(list ,@new-args)
-	    (let ((e (curlet)))
-	      ,',new-body))))))
-
-&gt; (define-immaculo (mac b) 
-    `(let ((a 1)) (+ a ,b)))
-<em class="gray">mac</em>
-&gt; (let ((a 32)) (mac a))
-<em class="gray">33</em>
-&gt; (procedure-source mac) ; I've edited the results to try to make the transformation clearer
-<em class="gray">(define-macro (mac b)
-  `(let ((b ,b))
-     (let ((e (curlet)))	      
-       (let ((a 1))     ; here is the original macro body
-         (+ a (with-let e b))))))</em>
-</pre>
-
-<p>Apply let is very similar to eval:
-</p>
-<pre>
-&gt; (apply let '((a 2) (b 3)) '((+ a b)))
-<em class="gray">5</em>
-&gt; (eval '(+ a b) (inlet 'a 2 'b 3))
-<em class="gray">5</em>
-&gt; ((apply lambda '(a b) '((+ a b))) 2 3)
-<em class="gray">5</em>
-</pre>
-<p>But we're using it here as a kind of "replace":
-</p>
-<pre>
-&gt; (apply let '((a 2) (b 3)) '((list + a b))) ; a -&gt; 2, b -&gt; 3
-<em class="gray">(+ 2 3)</em>
-</pre>
-<p>The redundant-looking double lists are for apply's benefit.  We could
-use a trailing null instead (mimicking apply* in some ancient lisps):
-</p>
-<pre>
-&gt; (apply let '((a 2) (b 3)) '(list + a b) ())
-<em class="gray">(+ 2 3)</em>
-</pre>
-
-<p>Here's define-immaculo in the new form:
-</p>
-
-<pre>
-(define-macro (define-safe-macro name&amp;args . body)
-  `(define-macro ,name&amp;args
-     (with-let (#_inlet (unlet)
-	  ,@(#_let ((rest (#_if (#_list? name&amp;args) 
-			    #f 
-			    (#_list-tail name&amp;args (#_abs (#_length name&amp;args))))))
-	    (#_append 
-	     (#_map (#_lambda (b) 
-		    `(#_cons ',b ,b))
-		  (#_cdr name&amp;args))
-	     (#_if rest `((#_cons ',rest ,rest)) ()))))
-	,@body)))
-</pre>
-</div>
-</details>
 
 <!--
 (define (tree-quote tree args)
@@ -2596,10 +2500,9 @@ all the other functions are of no interest:
 
 <pre class="indented">
 (varlet (curlet)
-  (cons 'bitwise-not-or 
-    (with-let (unlet)
-      (load "any-library.scm" (curlet))
-      lognor))) ; lognor is presumably defined in "any-library.scm"
+  'bitwise-not-or (with-let (unlet)
+                    (load "any-library.scm" (curlet))
+                    lognor)) ; lognor is presumably defined in "any-library.scm"
 </pre>
 
 <p>Say he wants to make sure the library is cleanly loaded, but all
@@ -2746,24 +2649,24 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
   `(let ((outer-env (outlet (curlet)))
 	 (new-methods ())
 	 (new-slots ()))
-
-    (for-each
-     (lambda (class)
-       ;; each class is a set of nested environments, the innermost (first in the list)
-       ;;   holds the local slots which are copied each time an instance is created,
-       ;;   the next holds the class slots (global to all instances, not copied);
-       ;;   these hold the class name and other such info.  The remaining environments
-       ;;   hold the methods, with the localmost method first.  So in this loop, we
-       ;;   are gathering the local slots and all the methods of the inherited
-       ;;   classes, and will splice them together below as a new class.
-
-       (set! new-slots (append (let-&gt;list class) new-slots))
-       (do ((e (outlet (outlet class)) (outlet e)))
-	   ((or (not (let? e))
-		(eq? e (rootlet))))
-	 (set! new-methods (append (let-&gt;list e) new-methods))))
-     ,inherited-classes)
-
+     
+     (for-each
+      (lambda (class)
+	;; each class is a set of nested environments, the innermost (first in the list)
+	;;   holds the local slots which are copied each time an instance is created,
+	;;   the next holds the class slots (global to all instances, not copied);
+	;;   these hold the class name and other such info.  The remaining environments
+	;;   hold the methods, with the localmost method first.  So in this loop, we
+	;;   are gathering the local slots and all the methods of the inherited
+	;;   classes, and will splice them together below as a new class.
+	
+	(set! new-slots (append (let-&gt;list class) new-slots))
+	(do ((e (outlet (outlet class)) (outlet e)))
+	    ((or (not (let? e))
+		 (eq? e (rootlet))))
+	  (set! new-methods (append (let-&gt;list e) new-methods))))
+      ,inherited-classes)
+     
      (let ((remove-duplicates 
 	    (lambda (lst)         ; if multiple local slots with same name, take the localmost
 	      (letrec ((rem-dup
@@ -2780,73 +2683,72 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 				 (cons slot #f)))
 			   ,slots)                    ; the incoming new slots, #f is the default value
 		      new-slots))))                   ; the inherited slots
-
-    (set! new-methods 
-	  (append (map (lambda (method)
-			 (if (pair? method)
-			     (cons (car method) (cadr method))
-			     (cons method #f)))
-		       ,methods)                     ; the incoming new methods
-
-		  ;; add an object-&gt;string method for this class (this is already a generic function).
-		  (list (cons 'object-&gt;string 
-                              (lambda* (obj (use-write #t))
-				(if (eq? use-write :readable)    ; write readably
-				    (format #f "(make-~A~{ :~A ~W~^~})" 
-					    ',class-name 
-					    (map (lambda (slot)
-						   (values (car slot) (cdr slot)))
-						 obj))
-				    (format #f "#&lt;~A: ~{~A~^ ~}&gt;" 
-				            ',class-name
-					    (map (lambda (slot)
-					           (list (car slot) (cdr slot)))
-					         obj))))))
-		  (reverse! new-methods)))             ; the inherited methods, shadowed automatically
-
-    (let ((new-class (openlet
-                       (apply sublet                   ; the local slots
-		         (sublet                       ; the global slots
-		           (apply inlet               ; the methods
-			     (reverse new-methods))
-		           (cons 'class-name ',class-name)  ; class-name slot
-			   (cons 'inherited ,inherited-classes)
-			   (cons 'inheritors ()))           ; classes that inherit from this class
-		         new-slots))))
-
-      (varlet outer-env                  
-        (cons ',class-name new-class)                       ; define the class as class-name in the calling environment
-
-	;; define class-name? type check
-	(cons (string-&gt;symbol (string-append (symbol-&gt;string ',class-name) "?"))
-	      (lambda (obj)
-		(and (let? obj)
-		     (eq? (obj 'class-name) ',class-name)))))
-
-      (varlet outer-env
-        ;; define the make-instance function for this class.  
-        ;;   Each slot is a keyword argument to the make function.
-        (cons (string-&gt;symbol (string-append "make-" (symbol-&gt;string ',class-name)))
-	      (apply lambda* (map (lambda (slot)
-				    (if (pair? slot)
-					(list (car slot) (cdr slot))
-					(list slot #f)))
-				  new-slots)
-		     `((let ((new-obj (copy ,,class-name)))
-			 ,@(map (lambda (slot)
-				  `(set! (new-obj ',(car slot)) ,(car slot)))
-				new-slots)
-			 new-obj)))))
-
-      ;; save inheritance info for this class for subsequent define-method
-      (letrec ((add-inheritor (lambda (class)
-				(for-each add-inheritor (class 'inherited))
-				(if (not (memq new-class (class 'inheritors)))
-				    (set! (class 'inheritors) (cons new-class (class 'inheritors)))))))
-	(for-each add-inheritor ,inherited-classes))
-    
-      ',class-name)))
-
+     
+     (set! new-methods 
+	   (append (map (lambda (method)
+			  (if (pair? method)
+			      (cons (car method) (cadr method))
+			      (cons method #f)))
+			,methods)                     ; the incoming new methods
+		   
+		   ;; add an object-&gt;string method for this class (this is already a generic function).
+		   (list (cons 'object-&gt;string 
+			       (lambda* (obj (use-write #t))
+				 (if (eq? use-write :readable)    ; write readably
+				     (format #f "(make-~A~{ :~A ~W~^~})" 
+					     ',class-name 
+					     (map (lambda (slot)
+						    (values (car slot) (cdr slot)))
+						  obj))
+				     (format #f "#&lt;~A: ~{~A~^ ~}&gt;" 
+					     ',class-name
+					     (map (lambda (slot)
+						    (list (car slot) (cdr slot)))
+						  obj))))))
+		   (reverse! new-methods)))                      ; the inherited methods, shadowed automatically
+     
+     (let ((new-class (openlet
+                       (apply sublet                             ; the local slots
+			      (sublet                            ; the global slots
+				  (apply inlet                   ; the methods
+					 (reverse new-methods))
+				'class-name ',class-name         ; class-name slot
+				'inherited ,inherited-classes
+				'inheritors ())                  ; classes that inherit from this class
+			      new-slots))))
+       
+       (varlet outer-env                  
+	 ',class-name new-class                                  ; define the class as class-name in the calling environment
+	 
+	 ;; define class-name? type check
+	 (string-&gt;symbol (string-append (symbol-&gt;string ',class-name) "?"))
+	 (lambda (obj)
+	   (and (let? obj)
+		(eq? (obj 'class-name) ',class-name))))
+       
+       (varlet outer-env
+	 ;; define the make-instance function for this class.  
+	 ;;   Each slot is a keyword argument to the make function.
+	 (string-&gt;symbol (string-append "make-" (symbol-&gt;string ',class-name)))
+	 (apply lambda* (map (lambda (slot)
+			       (if (pair? slot)
+				   (list (car slot) (cdr slot))
+				   (list slot #f)))
+			     new-slots)
+		`((let ((new-obj (copy ,,class-name)))
+		    ,@(map (lambda (slot)
+			     `(set! (new-obj ',(car slot)) ,(car slot)))
+			   new-slots)
+		    new-obj))))
+       
+       ;; save inheritance info for this class for subsequent define-method
+       (letrec ((add-inheritor (lambda (class)
+				 (for-each add-inheritor (class 'inherited))
+				 (if (not (memq new-class (class 'inheritors)))
+				     (set! (class 'inheritors) (cons new-class (class 'inheritors)))))))
+	 (for-each add-inheritor ,inherited-classes))
+       
+       ',class-name)))
 
 (define-macro (define-generic name)    ; (define (genfun any) ((any 'genfun) any))
   `(define ,name 
@@ -2856,12 +2758,10 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
              (apply gf args)
 	     (error "attempt to call generic function wrapper recursively"))))))
 
-
 (define-macro (define-slot-accessor name slot)
   `(define ,name (dilambda 
-                   (lambda (obj) (obj ',slot)) 
-		   (lambda (obj val) (set! (obj ',slot) val)))))
-
+		  (lambda (obj) (obj ',slot)) 
+		  (lambda (obj val) (set! (obj ',slot) val)))))
 
 (define-macro (define-method name-and-args . body)
   `(let* ((outer-env (outlet (curlet)))
@@ -2871,34 +2771,30 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 	  (class (symbol-&gt;value (cadar method-args)))
 	  (old-method (class method-name))
 	  (method (apply lambda* method-args ',body)))
-
+     
      ;; define the method as a normal-looking function
      ;;   s7test.scm has define-method-with-next-method that implements call-next-method here
      ;;   it also has make-instance 
      (varlet outer-env
-       (cons method-name 
-	     (apply lambda* method-args 
-		    `(((,object ',method-name)
-		       ,@(map (lambda (arg)
-				(if (pair? arg) (car arg) arg))
-			      method-args))))))
+       method-name (apply lambda* method-args 
+			  `(((,object ',method-name)
+			     ,@(map (lambda (arg)
+				      (if (pair? arg) (car arg) arg))
+				    method-args)))))
      
      ;; add the method to the class
-     (varlet (outlet (outlet class))
-       (cons method-name method))
-
+     (varlet (outlet (outlet class)) method-name method)
+     
      ;; if there are inheritors, add it to them as well, but not if they have a shadowing version
      (for-each
       (lambda (inheritor) 
 	(if (not (eq? (inheritor method-name) #&lt;undefined&gt;)) ; defined? goes to the global env
 	    (if (eq? (inheritor method-name) old-method)
 		(set! (inheritor method-name) method))
-	    (varlet (outlet (outlet inheritor))
-   	      (cons method-name method))))
+	    (varlet (outlet (outlet inheritor)) method-name method)))
       (class 'inheritors))
-
+     
      method-name))
-
 
 (define (all-methods obj method)
   ;; for arbitrary method combinations: this returns a list of all the methods of a given name
@@ -2960,9 +2856,9 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 &gt; (define v1 (make-class-1))
 <em class="gray">v1</em>
 &gt; (varlet v1      ; change the add method just in this instance
-       (cons 'add (lambda (obj) 
-                    (with-let obj
-                      (+ 1 a (* 2 b))))))
+       'add (lambda (obj) 
+              (with-let obj
+                (+ 1 a (* 2 b)))))
 <em class="gray">#&lt;class-1: (a 1) (b 2) (add #&lt;lambda (obj)&gt;)&gt;</em>
 &gt; (add v1)
 <em class="gray">6</em>
@@ -5444,6 +5340,7 @@ that method is invoked.
 <b><em class=def id="expansion">define-expansion</em></b> defines a macro that expands at read-time.
 It has the same syntax as
 define-macro, and (in normal use) the same result, but it is much faster because it expands only once.
+(See define-with-macros in s7test.scm for a way to expand macros in a function body at definition time).
 Since the reader knows almost nothing
 about the code it is reading, 
 you need to make sure the expansion name is unique!
@@ -6289,6 +6186,27 @@ These symbols are not just an optimization of string comparison:
 arguments in standard Scheme, accept macros in s7.
 </p>
 
+<p>Apply let is very similar to eval:
+</p>
+<pre>
+&gt; (apply let '((a 2) (b 3)) '((+ a b)))
+<em class="gray">5</em>
+&gt; (eval '(+ a b) (inlet 'a 2 'b 3))
+<em class="gray">5</em>
+&gt; ((apply lambda '(a b) '((+ a b))) 2 3)
+<em class="gray">5</em>
+&gt; (apply let '((a 2) (b 3)) '((list + a b))) ; a -&gt; 2, b -&gt; 3
+<em class="gray">(+ 2 3)</em>
+</pre>
+<p>The redundant-looking double lists are for apply's benefit.  We could
+use a trailing null instead (mimicking apply* in some ancient lisps):
+</p>
+<pre>
+&gt; (apply let '((a 2) (b 3)) '(list + a b) ())
+<em class="gray">(+ 2 3)</em>
+</pre>
+
+
 <p>
 Currently, you can't set! a built-in syntactic keyword to some new value:
 <code>(set! if 3)</code>.
@@ -7088,7 +7006,7 @@ int main(int argc, char **argv)
 <pre>
 repl          ; this is a bare s7 running repl.scm via -DWITH_MAIN=1
 loading libc_s7.so
-&gt; (load "/home/bil/test/sndlib/libsndlib.so" (inlet (cons 'init_func 's7_init_sndlib)))
+&gt; (load "/home/bil/test/sndlib/libsndlib.so" (inlet 'init_func 's7_init_sndlib))
 #t            ; s7_init_sndlib ties all the sndlib functions and variables into s7
 &gt; (load "sndlib-ws.scm")
 tmpnam
@@ -9217,10 +9135,10 @@ x: 32
 </p>
 
 <!--
-(load "/home/bil/test/sndlib/libsndlib.so" (inlet (cons 'init_func 's7_init_sndlib)))
+(load "/home/bil/test/sndlib/libsndlib.so" (inlet 'init_func 's7_init_sndlib))
 
 not tested:
-(load "/home/bil/test/libxm/libxm.so" (inlet (cons 'init_func 'Init_libxm)))
+(load "/home/bil/test/libxm/libxm.so" (inlet 'init_func 'Init_libxm))
 
 -->
 

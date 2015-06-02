@@ -221,7 +221,7 @@ static int greater_compare(const void *a, const void *b)
 
 int main(int argc, char **argv)
 {
-  int i, j, fd, chars, k, in_comment = 0, in_white = 0, calls = 0, in_parens = 0, in_quotes = 0, in_define = 0, in_curly = 0, in_enum = 0;
+  int i, j, fd, chars, k, in_comment = 0, in_cpp_comment = 0, in_white = 0, calls = 0, in_parens = 0, in_quotes = 0, in_define = 0, in_curly = 0, in_enum = 0;
   int maxc[NAME_SIZE], maxf[NAME_SIZE], maxg[NAME_SIZE], mcalls[NAME_SIZE];
   qdata **qs;
   char input[MAX_CHARS];
@@ -373,6 +373,7 @@ int main(int argc, char **argv)
       in_white = 0;
       in_parens = 0;
       in_comment = 0;
+      in_cpp_comment = 0;
       fd = open(headers[i], O_RDONLY, 0);
       if (fd == -1)
 	fprintf(stderr, "can't find %s\n", headers[i]);
@@ -383,7 +384,7 @@ int main(int argc, char **argv)
 	      chars = read(fd, input, MAX_CHARS);
 	      for (j = 0; j < chars; j++)
 		{
-		  if ((in_comment == 0) && (in_curly == 0))
+		  if ((in_comment == 0) && (in_cpp_comment == 0) && (in_curly == 0))
 		    {
 		      if ((isalpha(input[j])) || (isdigit(input[j])) || (input[j] == '_'))
 			{
@@ -436,22 +437,27 @@ int main(int argc, char **argv)
 			    in_comment = 1;
 			  else 
 			    {
-			      if (input[j] == '#')
-				in_define = 1;
-			      else
+			      if ((input[j] == '/') && (input[j + 1] == '/'))
+				in_cpp_comment = 1;
+			      else 
 				{
-				  if ((input[j] == '{') && 
-				      ((j < 6) || (strncmp((input + (j - 5)), "enum", 4) != 0)))
-				    in_curly = 1;
+				  if (input[j] == '#')
+				    in_define = 1;
 				  else
 				    {
-				      if (input[j] == '(') in_parens++;
-				      if (input[j] == ')') in_parens--;
-				      if (input[j] == '"')
+				      if ((input[j] == '{') && 
+					  ((j < 6) || (strncmp((input + (j - 5)), "enum", 4) != 0)))
+					in_curly = 1;
+				      else
 					{
-					  if (in_quotes == 1)
-					    in_quotes = 0;
-					  else in_quotes = 1;
+					  if (input[j] == '(') in_parens++;
+					  if (input[j] == ')') in_parens--;
+					  if (input[j] == '"')
+					    {
+					      if (in_quotes == 1)
+						in_quotes = 0;
+					      else in_quotes = 1;
+					    }
 					}
 				    }
 				}
@@ -470,6 +476,11 @@ int main(int argc, char **argv)
 			    {
 			      if (input[j] == ';')
 				in_curly = 0;
+			      else
+				{
+				  if (input[j] == '\n')
+				    in_cpp_comment = 0;
+				}
 			    }
 			}
 		    }
@@ -489,6 +500,7 @@ int main(int argc, char **argv)
 
       k = 0;
       in_comment = 0;
+      in_cpp_comment = 0;
       in_white = 0;
       in_define = 0;
       in_enum = 0;
@@ -519,7 +531,7 @@ int main(int argc, char **argv)
 		  
 		  for (j = 0; j < chars; j++)
 		    {
-		      if (in_comment == 0)
+		      if ((in_comment == 0) && (in_cpp_comment == 0))
 			{
 			  if ((isalpha(input[j])) || (isdigit(input[j])) || (input[j] == '_'))
 			    {
@@ -533,37 +545,42 @@ int main(int argc, char **argv)
 				in_comment = 1;
 			      else
 				{
-				  if ((input[j] == '#') && 
-				      (((input[j + 1] == 'd') && (input[j + 2] == 'e')) || 
-				       ((input[j + 1] == 'u') && (input[j + 2] == 'n'))))
-				    {
-				      in_define = 1;
-				      got_macro = false;
-				    }
+				  if ((input[j] == '/') && (input[j + 1] == '/'))
+				    in_cpp_comment = 1;
 				  else
 				    {
-				      if ((in_define == 1) && (input[j] == '\n') && (j > 0) && (input[j - 1] != '\\'))
+				      if ((input[j] == '#') && 
+					  (((input[j + 1] == 'd') && (input[j + 2] == 'e')) || 
+					   ((input[j + 1] == 'u') && (input[j + 2] == 'n'))))
 					{
-					  cancel_define = 1;
+					  in_define = 1;
+					  got_macro = false;
 					}
-				    }
-				  if ((in_define == 0) && 
-				      (j < (chars - 1)) && 
-				      ((input[j - 1] != '\'') || (input[j + 1] != '\'')))
-				    {
-				      if (input[j] == '{') 
+				      else
 					{
-					  curly_ctr++;
-					  if ((j > 4) && 
-					      (strncmp((input + (j - 5)), "enum", 4) == 0))
-					    in_enum = true;
-					}
-				      else 
-					{
-					  if (input[j] == '}') 
+					  if ((in_define == 1) && (input[j] == '\n') && (j > 0) && (input[j - 1] != '\\'))
 					    {
-					      curly_ctr--;
-					      if (in_enum) in_enum = false;
+					      cancel_define = 1;
+					    }
+					}
+				      if ((in_define == 0) && 
+					  (j < (chars - 1)) && 
+					  ((input[j - 1] != '\'') || (input[j + 1] != '\'')))
+					{
+					  if (input[j] == '{') 
+					    {
+					      curly_ctr++;
+					      if ((j > 4) && 
+						  (strncmp((input + (j - 5)), "enum", 4) == 0))
+						in_enum = true;
+					    }
+					  else 
+					    {
+					      if (input[j] == '}') 
+						{
+						  curly_ctr--;
+						  if (in_enum) in_enum = false;
+						}
 					    }
 					}
 				    }
@@ -673,6 +690,11 @@ int main(int argc, char **argv)
 			{
 			  if ((input[j] == '*') && (input[j + 1] == '/'))
 			    in_comment = 0;
+			  else
+			    {
+			      if (input[j] == '\n')
+				in_cpp_comment = 0;
+			    }
 			}
 		    }
 		}
