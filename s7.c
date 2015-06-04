@@ -1226,10 +1226,6 @@ static void init_types(void)
  * this should be ok in the 2nd byte because keywords are constants in s7 (never syntax)
  */
 
-#define T_C_CLOSURE                    T_KEYWORD
-#define is_c_closure(p)                ((typeflag(p) & T_C_CLOSURE) != 0)
-#define set_c_closure(p)               typeflag(p) |= T_C_CLOSURE
-
 #define T_SYNTACTIC                   (1 << (TYPE_BITS + 1))
 #define is_syntactic(p)               ((typesflag(p) & T_SYNTACTIC) != 0)
 #define SYNTACTIC_TYPE                (unsigned short)(T_SYMBOL | T_DONT_EVAL_ARGS | T_SYNTACTIC)
@@ -2422,7 +2418,6 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_C_op_S_opSq_q, HOP_SAFE_C_op_S_opSq_q,
 
       OP_SAFE_C_STAR_CD, HOP_SAFE_C_STAR_CD,
-      OP_SAFE_C_I_TO_I, HOP_SAFE_C_I_TO_I, 
 
       OP_SAFE_C_Z, HOP_SAFE_C_Z, OP_SAFE_C_ZZ, HOP_SAFE_C_ZZ, OP_SAFE_C_SZ, HOP_SAFE_C_SZ, OP_SAFE_C_ZS, HOP_SAFE_C_ZS,
       OP_SAFE_C_CZ, HOP_SAFE_C_CZ, OP_SAFE_C_ZC, HOP_SAFE_C_ZC,
@@ -2610,7 +2605,6 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "safe_c_op_s_opsq_q", "h_safe_c_op_s_opsq_q",
 
       "safe_c_star_cd", "h_safe_c_star_cd",
-      "safe_c_i_to_i", "h_safe_c_i_to_i", 
 
       "safe_c_z", "h_safe_c_z", "safe_c_zz", "h_safe_c_zz", "safe_c_sz", "h_safe_c_sz", "safe_c_zs", "h_safe_c_zs",
       "safe_c_cz", "h_safe_c_cz", "safe_c_zc", "h_safe_c_zc",
@@ -44222,27 +44216,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
       global_case = is_global(car(expr));
       body = closure_body(func);
 
-      if ((is_c_closure(body)) &&
-	  (is_all_x_safe(sc, arg1)))
-	{
-	  if ((optimize_data(car(body)) == HOP_SAFE_C_S) &&
-	      (cadar(body) == car(closure_args(func))))
-	    {
-	      /* fprintf(stderr, "c: %s in %s\n", DISPLAY_80(body), DISPLAY(expr)); */
-	      set_unsafely_optimized(expr);
-	      set_ecdr(expr, func);
-	      annotate_arg(sc, cdr(expr));              /* sets fcdr cdr(expr)) */
-	      set_arglist_length(expr, small_int(1));
-	      set_optimize_data(expr, hop + OP_SAFE_C_I_TO_I);
-	      set_fcdr(expr, car(body));
-	      /* need to set the internal arg all_x_init func 
-	       *   in do, turn on hop, and use slot for stepper? also dotimes_c_a case -- needs all_x?
-	       *   i_to_s etc, also glosure check?
-	       */
-	      return(true);
-	    }
-	}
-
       if (pairs == 0)
 	{
 	  if (is_symbol(arg1))
@@ -47453,9 +47426,6 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 	    {
 	      /* there is one problem with closure* here -- we can't trust anything that has fancy (non-constant) default argument values. */
 	      set_safe_closure(body);
-	      if ((is_null(cdr(body))) &&         /* I think we can assume body is a pair (else not safe) */
-		  (is_all_x_safe(sc, car(body))))
-		set_c_closure(body); 	          /* see define_funchecked -- perhaps pick up this bit */
 	    }
 	}
     }
@@ -52853,7 +52823,50 @@ static void set_pws_ex(s7_scheme *sc)
   else eval_error_no_return(sc, sc->SYNTAX_ERROR, "no generalized set for ~A", obj);
 }
 
-static void apply_c_macro_ex(s7_scheme *sc)
+
+/* -------------------------------- apply functions -------------------------------- */
+
+static void apply_c_function(s7_scheme *sc) 	                    /* -------- C-based function -------- */
+{
+  unsigned int len;
+  len = safe_list_length(sc, sc->args);
+  if (len < c_function_required_args(sc->code))
+    s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args));
+  if (c_function_all_args(sc->code) < len)
+    s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args));
+  sc->value = c_function_call(sc->code)(sc, sc->args);
+}
+
+static void apply_c_opt_args_function(s7_scheme *sc)                /* -------- C-based function that has n optional arguments -------- */
+{
+  unsigned int len;
+  len = safe_list_length(sc, sc->args);
+  if (c_function_all_args(sc->code) < len)
+    s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args));
+  sc->value = c_function_call(sc->code)(sc, sc->args);
+}
+
+static void apply_c_rst_args_function(s7_scheme *sc)                /* -------- C-based function that has n required args, then any others -------- */
+{
+  unsigned int len;
+  len = safe_list_length(sc, sc->args);
+  if (len < c_function_required_args(sc->code))
+    s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args));
+  sc->value = c_function_call(sc->code)(sc, sc->args);
+  /* sc->code here need not match sc->code before the function call (map for example) */
+}
+
+static void apply_c_any_args_function(s7_scheme *sc)                /* -------- C-based function that can take any number of arguments -------- */
+{
+  sc->value = c_function_call(sc->code)(sc, sc->args);
+}
+
+static void apply_c_function_star(s7_scheme *sc)                    /* -------- C-based function with defaults (lambda*) -------- */
+{
+  sc->value = c_function_call(sc->code)(sc, set_c_function_call_args(sc));
+}
+
+static void apply_c_macro(s7_scheme *sc)  	                    /* -------- C-based macro -------- */
 {
   int len;
   len = s7_list_length(sc, sc->args);
@@ -52872,7 +52885,7 @@ static void apply_c_macro_ex(s7_scheme *sc)
     }
 }
 
-static void apply_syntax_ex(s7_scheme *sc)
+static void apply_syntax(s7_scheme *sc)                            /* -------- syntactic keyword as applicable object -------- */
 {
   unsigned int len;
   if (is_pair(sc->args))
@@ -52887,13 +52900,16 @@ static void apply_syntax_ex(s7_scheme *sc)
   
   if (integer(syntax_max_args(sc->code)) < len)
     s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args));
-  
+#if 0  
   sc->op = (opcode_t)syntax_opcode(sc->code);         /* (apply begin '((define x 3) (+ x 2))) */
   /* I used to have elaborate checks here for embedded circular lists, but now i think that is the caller's problem */
   sc->code = sc->args;
+#else
+  push_stack_no_args(sc, (opcode_t)syntax_opcode(sc->code), sc->args);
+#endif
 }
 
-static void apply_vector_ex(s7_scheme *sc)
+static void apply_vector(s7_scheme *sc)                            /* -------- vector as applicable object -------- */
 {
   /* sc->code is the vector, sc->args is the list of indices */
   if (is_null(sc->args))                  /* (#2d((1 2) (3 4))) */
@@ -52913,7 +52929,7 @@ static void apply_vector_ex(s7_scheme *sc)
   else sc->value = vector_ref_1(sc, sc->code, sc->args);
 }
 
-static void apply_string_ex(s7_scheme *sc)
+static void apply_string(s7_scheme *sc)                            /* -------- string as applicable object -------- */
 {
   if (is_null(cdr(sc->args)))
     {
@@ -52937,7 +52953,35 @@ static void apply_string_ex(s7_scheme *sc)
 	   set_elist_3(sc, (is_null(sc->args)) ? sc->NOT_ENOUGH_ARGUMENTS : sc->TOO_MANY_ARGUMENTS, sc->code, sc->args));
 }
 
-static void apply_let_ex(s7_scheme *sc)
+static int apply_pair(s7_scheme *sc)                              /* -------- list as applicable object -------- */
+{
+  if (is_multiple_value(sc->code))                                  /* ((values 1 2 3) 0) */
+    {
+      /* car of values can be anything, so conjure up a new expression, and apply again */
+      sc->x = multiple_value(sc->code);                             /* ((values + 1 2) 3) */
+      sc->code = car(sc->x);
+      sc->args = s7_append(sc, cdr(sc->x), sc->args);
+      sc->x = sc->NIL;
+      return(goto_APPLY);
+    }
+  if (is_null(sc->args))
+    s7_wrong_number_of_args_error(sc, "not enough args for list-ref (via list as applicable object): ~A", sc->args);
+  sc->value = list_ref_1(sc, sc->code, car(sc->args));            /* (L 1) */
+  if (!is_null(cdr(sc->args)))
+    sc->value = implicit_index(sc, sc->value, cdr(sc->args));     /* (L 1 2) */
+  return(goto_START);
+}
+
+static void apply_hash_table(s7_scheme *sc)                        /* -------- hash-table as applicable object -------- */
+{
+  if (is_null(sc->args))
+    s7_wrong_number_of_args_error(sc, "not enough args for hash-table-ref (via hash table as applicable object): ~A", sc->args);
+  sc->value = s7_hash_table_ref(sc, sc->code, car(sc->args));
+  if (!is_null(cdr(sc->args)))
+    sc->value = implicit_index(sc, sc->value, cdr(sc->args));
+}
+
+static void apply_let(s7_scheme *sc)                               /* -------- environment as applicable object -------- */
 {
   if (is_null(sc->args))
     sc->value = s7_let_ref(sc, sc->code, sc->F);         /* why #f and not ()? both are ok in s7test */
@@ -52948,6 +52992,151 @@ static void apply_let_ex(s7_scheme *sc)
    * so (let ((v #(1 2 3))) (let ((e (curlet))) (e 'v 1))) -> 2
    */
 }
+
+static void apply_iterator(s7_scheme *sc)                          /* -------- iterator as applicable object -------- */
+{
+  if (!is_null(sc->args))
+    s7_wrong_number_of_args_error(sc, "too many args for iterator: ~A", sc->args);
+  sc->value = s7_iterate(sc, sc->code);
+}
+
+static void apply_lambda(s7_scheme *sc)                              /* -------- normal function (lambda), or macro -------- */
+{             /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
+	      /* not often safe closure here, and very confusing if so to get identity macro args handled correctly */
+  s7_pointer x, z, e;
+  unsigned long long int id;
+  e = sc->envir;
+  id = let_id(e);
+  
+  for (x = closure_args(sc->code), z = sc->args; is_pair(x); x = cdr(x))
+    {
+      s7_pointer sym, args, val;
+      /* reuse the value cells as the new frame slots */
+      
+      if (is_null(z))
+	s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->NOT_ENOUGH_ARGUMENTS, closure_name(sc, sc->code), sc->cur_code));
+      /* now that args are being reused as slots, the error message can't use sc->args,
+       *  so fallback on sc->cur_code in this section.
+       *  But that can be #f, and closure_name can be confusing in this context, so we need a better error message!
+       */
+      
+      sym = car(x);
+      val = car(z);
+      args = cdr(z);
+      slot_symbol(z) = sym;
+      symbol_set_local(sym, id, z);
+      slot_set_value(z, val);
+      set_type(z, T_SLOT | T_IMMUTABLE);
+      next_slot(z) = let_slots(e);
+      set_let_slots(e, z);
+      z = args;
+    }
+  if (is_null(x))
+    {
+      if (is_not_null(z))
+	s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, closure_name(sc, sc->code), sc->cur_code));
+    }
+  else
+    {
+      sc->temp6 = z; /* the rest arg */
+      add_slot(sc, x, z);
+      sc->temp6 = sc->NIL;
+    }
+  sc->code = closure_body(sc->code);
+}
+
+static int apply_lambda_star(s7_scheme *sc) 	                  /* -------- define* (lambda*) -------- */
+{
+  /* to check for and fixup unset args from defaults, we need to traverse the slots in left-to-right order
+   *   but they are stored backwards in the environment, so use pending_value as a back-pointer.
+   * We have to build the environment before calling lambda_star_set_args because keywords can
+   *   cause any arg to be set at any point in the arg list.
+   *
+   * the frame-making step below could be precalculated, but where to store it?
+   */
+  s7_pointer z, top, nxt;
+  top = NULL;
+  nxt = NULL;
+  for (z = closure_args(sc->code); is_pair(z); z = cdr(z))
+    {
+      s7_pointer car_z;
+      car_z = car(z);
+      if (is_pair(car_z))           /* arg has a default value of some sort */
+	{
+	  s7_pointer val;
+	  val = cadr(car_z);
+	  if ((!is_pair(val)) &&
+	      (!is_symbol(val)))
+	    add_slot(sc, car(car_z), val);
+	  else
+	    {
+	      s7_pointer y;
+	      ADD_SLOT(sc->envir, car(car_z), sc->UNDEFINED);
+	      y = let_slots(sc->envir);
+	      slot_expression(y) = cadr(car_z);
+	      slot_pending_value(y) = sc->NIL;
+	      if (!top)
+		{
+		  top = y;
+		  nxt = top;
+		}
+	      else
+		{
+		  slot_pending_value(nxt) = y;
+		  nxt = y;
+		}
+	    }
+	}
+      else
+	{
+	  if (!is_keyword(car_z))
+	    add_slot(sc, car_z, sc->F);
+	  else
+	    {
+	      if (car_z == sc->KEY_REST)
+		{
+		  add_slot(sc, cadr(z), sc->NIL);
+		  z = cdr(z);
+		}
+	    }
+	}
+    }
+  if (is_symbol(z))
+    add_slot(sc, z, sc->NIL);
+  lambda_star_set_args(sc);                     /* load up current arg vals */
+  
+  if (top)
+    {
+      /* get default values, which may involve evaluation */
+      push_stack(sc, OP_LAMBDA_STAR_DEFAULT, sc->args, sc->code); /* op is just a placeholder (don't use OP_BARRIER here) */
+      sc->args = top;
+      if (lambda_star_default(sc) == goto_EVAL) return(goto_EVAL);
+      pop_stack_no_op(sc);              /* get original args and code back */
+    }
+
+  sc->code = closure_body(sc->code);
+  return(goto_BEGIN1);
+}
+
+static void apply_continuation(s7_scheme *sc)	                  /* -------- continuation ("call/cc") -------- */
+{
+  if (!call_with_current_continuation(sc))
+    {
+      static s7_pointer cc_err = NULL; 
+      if (!cc_err) cc_err = s7_make_permanent_string("continuation can't jump into with-baffle");
+      s7_error(sc, sc->BAFFLED, set_elist_1(sc, cc_err));
+    }
+}
+
+static void apply_c_object(s7_scheme *sc)                          /* -------- applicable (new-type) object -------- */
+{
+  sc->value = (*(c_object_ref(sc->code)))(sc, sc->code, sc->args);
+}
+
+
+
+
+/* -------------------------------------------------------------------------------- */
 
 static int define1_ex(s7_scheme *sc)
 {	  
@@ -54466,7 +54655,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* main part of evaluation
 	   *   at this point, it's sc->code we care about; sc->args is not relevant.
 	   */
-	  /* fprintf(stderr, "    eval: %s\n", DISPLAY_80(sc->code)); */
+	  /* fprintf(stderr, "    eval: %s %d %d\n", DISPLAY_80(sc->code), (typesflag(sc->code) == SYNTACTIC_PAIR), (is_optimized(sc->code))); */
+
 	  if (typesflag(sc->code) == SYNTACTIC_PAIR)  /* xor is not faster here */
 	    {
 	      sc->cur_code = sc->code;                /* in case an error occurs, this helps tell us where we are */
@@ -54479,7 +54669,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_optimized(sc->code))
 	    {
 	      s7_pointer code;
-	      
+	      /* fprintf(stderr, "    %s\n", opt_names[optimize_data(sc->code)]); */
+
 	    OPT_EVAL:
 	      code = sc->code;
 	      sc->cur_code = code;
@@ -56096,18 +56287,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		  
 
-		case OP_SAFE_C_I_TO_I:
-		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1)) {set_optimize_data(code, OP_UNKNOWN_A); goto OPT_EVAL;}
-		  /* if (!indirect_c_function_is_ok(sc, cadr(code))) break; */ /* this only applies to arg-as-pair not symbol */
-		  
-		case HOP_SAFE_C_I_TO_I:
-		  car(sc->T1_1) = ((s7_function)fcdr(cdr(code)))(sc, cadr(code));
-		  /* sc->value = ((s7_function)fcdr(fcdr(code)))(sc, cdr(fcdr(fcdr(code)))); */
-		  sc->value = c_call(fcdr(code))(sc, sc->T1_1);
-		  goto START;
-
-
-		  
 		  /* -------------------------------------------------------------------------------- */
 		case OP_C_S:
 		  if (!c_function_is_ok(sc, code)) break;
@@ -58165,90 +58344,42 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  sc->code = pop_op_stack(sc);
 		  sc->args = safe_reverse_in_place(sc, sc->args);
-		  /* fall through  */
+		  /* we could omit the arg reversal in many cases, but lots of code assumes the args are in order;
+		   *   adding a bit for this in the type field saves some time in s7test (many + and * tests), but costs
+		   *   about the same time in other cases, so it's not a clear win.
+		   */
 		}
 	    }
 	  
-	  /* we could omit the arg reversal in many cases, but lots of code assumes the args are in order;
-	   *   adding a bit for this in the type field saves some time in s7test (many + and * tests), but costs
-	   *   about the same time in other cases, so it's not a clear win.
+	  /* turning this into a call on an array of functions was not a complete disaster, but tauto.scm was ~1.5% slower.
+	   *   the array-index overhead is the same as the current switch statement's, but there was also the boolean+jump overhead,
+	   *   and the function-local overhead currently otherwise 0 (I assume because the compiler can simply plug it in here).
 	   */
-	  
-	  /*
-	   * if (sc->stack_end >= sc->stack_resize_trigger)
-	   *   resize_stack(sc);
-	   *
-	   * the two places where the stack reaches it maximum size are in read_expression where TOKEN_LEFT_PAREN
-	   *   pushes OP_READ_LIST, and (the actual max) in OP_EVAL at the push of OP_EVAL_ARGS.  I've moved
-	   *   the stack size check from here (where it reflects the eval stack size) to read_expression (where
-	   *   it reflects nested list depth), and added it to the T_CLOSURE(*) parts of apply since (for example)
-	   *   extremely deep recursion involving map or for-each can increase the stack size indefinitely:
-	   *
-	   * (define (tfe a b)
-	   *   (format #t "~A ~A -> ~A~%" a b (-s7-stack-size))
-	   *   (for-each
-	   *     (lambda (c)
-	   *       (if (< c b)
-	   *           (tfe (+ c 1) b)))
-	   *     (list a)))
-	   *
-	   * now (tfe 0 1000) triggers the stack increase.
-	   */
-	  
 	APPLY:
 	  /* fprintf(stderr, "apply %s to %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
-	  
 	  switch (type(sc->code))
 	    {
-	    case T_C_FUNCTION: 	                    /* -------- C-based function -------- */
-	      {
-		unsigned int len;
-		len = safe_list_length(sc, sc->args);
-		
-		if (len < c_function_required_args(sc->code))
-		  return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
-		
-		if (c_function_all_args(sc->code) < len)
-		  return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
-	      }
-	      /* drop into ... */
-	      
-	    case T_C_ANY_ARGS_FUNCTION:                 /* -------- C-based function that can take any number of arguments -------- */
-	      sc->value = c_function_call(sc->code)(sc, sc->args);
+	    case T_C_FUNCTION:          apply_c_function(sc);           goto START;
+	    case T_C_ANY_ARGS_FUNCTION: apply_c_any_args_function(sc);  goto START;
+	    case T_C_FUNCTION_STAR:     apply_c_function_star(sc);      goto START;
+	    case T_C_OPT_ARGS_FUNCTION: apply_c_opt_args_function(sc);  goto START;
+	    case T_C_RST_ARGS_FUNCTION: apply_c_rst_args_function(sc);  goto START;
+	    case T_C_MACRO:  	        apply_c_macro(sc);	        goto EVAL;
+	    case T_CONTINUATION:        apply_continuation(sc);         goto START;
+	    case T_GOTO:	        call_with_exit(sc);	        goto START;
+	    case T_C_OBJECT:	        apply_c_object(sc);	        goto START;
+	    case T_INT_VECTOR:
+	    case T_FLOAT_VECTOR:
+	    case T_VECTOR: 	        apply_vector(sc);	        goto START;
+	    case T_STRING:	        apply_string(sc);	        goto START;
+	    case T_HASH_TABLE:	        apply_hash_table(sc);           goto START;
+	    case T_ITERATOR:	        apply_iterator(sc);	        goto START;	      
+	    case T_LET:	                apply_let(sc);	                goto START;
+	    case T_SYNTAX:	        apply_syntax(sc);	        goto START;
+	    case T_PAIR:	        
+	      if (apply_pair(sc) == goto_APPLY) goto APPLY; 
 	      goto START;
-	      
-	      
-	    case T_C_FUNCTION_STAR:                     /* -------- C-based function with defaults (lambda*) -------- */
-	      sc->value = c_function_call(sc->code)(sc, set_c_function_call_args(sc));
-	      goto START;
-	      
-	      
-	    case T_C_OPT_ARGS_FUNCTION:                 /* -------- C-based function that has n optional arguments -------- */
-	      {
-		unsigned int len;
-		len = safe_list_length(sc, sc->args);
-		if (c_function_all_args(sc->code) < len)
-		  return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
-		sc->value = c_function_call(sc->code)(sc, sc->args);
-		goto START;
-	      }
-	      
-	    case T_C_RST_ARGS_FUNCTION:                 /* -------- C-based function that has n required args, then any others -------- */
-	      {
-		unsigned int len;
-		len = safe_list_length(sc, sc->args);
-		if (len < c_function_required_args(sc->code))
-		  return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
-		
-		sc->value = c_function_call(sc->code)(sc, sc->args);
-		/* sc->code here need not match sc->code before the function call (map for example) */
-		goto START;
-	      }
-	      
-	    case T_C_MACRO: 	                    /* -------- C-based macro -------- */
-	      apply_c_macro_ex(sc);
-	      goto EVAL;
-	      
+
 	    case T_MACRO:
 	      if (is_expansion(sc->code))
 		push_stack(sc, OP_EXPANSION, sc->NIL, sc->NIL);
@@ -58261,58 +58392,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      NEW_FRAME(sc, sc->envir, sc->envir);       /* like let* -- we'll be adding macro args, so might as well sequester things here */
 	      goto BACRO;
 	      
-	    case T_CLOSURE:                              /* -------- normal function (lambda), or macro -------- */
-	      /* not often safe closure here, and very confusing if so to get identity macro args handled correctly */
+	    case T_CLOSURE:
 	      check_stack_size(sc);
 	      NEW_FRAME(sc, closure_let(sc->code), sc->envir);
 	      
 	    BACRO:
-	      /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
-	      {
-		s7_pointer x, z, e;
-		unsigned long long int id;
-		e = sc->envir;
-		id = let_id(e);
-		
-		for (x = closure_args(sc->code), z = sc->args; is_pair(x); x = cdr(x))
-		  {
-		    s7_pointer sym, args, val;
-		    /* reuse the value cells as the new frame slots */
-		    
-		    if (is_null(z))
-		      return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
-				      set_elist_3(sc, sc->NOT_ENOUGH_ARGUMENTS, closure_name(sc, sc->code), sc->cur_code)));
-		    /* now that args are being reused as slots, the error message can't use sc->args,
-		     *  so fallback on sc->cur_code in this section.
-		     *  But that can be #f, and closure_name can be confusing in this context, so we need a better error message!
-		     */
-		    
-		    sym = car(x);
-		    val = car(z);
-		    args = cdr(z);
-		    slot_symbol(z) = sym;
-		    symbol_set_local(sym, id, z);
-		    slot_set_value(z, val);
-		    set_type(z, T_SLOT | T_IMMUTABLE);
-		    next_slot(z) = let_slots(e);
-		    set_let_slots(e, z);
-		    z = args;
-		  }
-		if (is_null(x))
-		  {
-		    if (is_not_null(z))
-		      return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, closure_name(sc, sc->code), sc->cur_code)));
-		  }
-		else
-		  {
-		    sc->temp6 = z; /* the rest arg */
-		    add_slot(sc, x, z);
-		    sc->temp6 = sc->NIL;
-		  }
-	      }
-	      sc->code = closure_body(sc->code);
+	      apply_lambda(sc);
 	      goto BEGIN1;
-	      
 	      
 	    case T_MACRO_STAR:
 	      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
@@ -58324,154 +58410,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      NEW_FRAME(sc, sc->envir, sc->envir);
 	      goto MACRO_STAR;
 	      
-	    case T_CLOSURE_STAR:	                  /* -------- define* (lambda*) -------- */
-	      {
-		s7_pointer z, top, nxt;
-		check_stack_size(sc);
-		sc->envir = new_frame_in_env(sc, closure_let(sc->code));
+	    case T_CLOSURE_STAR:
+	      check_stack_size(sc);
+	      sc->envir = new_frame_in_env(sc, closure_let(sc->code));
 		
-	      MACRO_STAR:
-		/* to check for and fixup unset args from defaults, we need to traverse the slots in left-to-right order
-		 *   but they are stored backwards in the environment, so use pending_value as a back-pointer.
-		 * We have to build the environment before calling lambda_star_set_args because keywords can
-		 *   cause any arg to be set at any point in the arg list.
-		 *
-		 * the frame-making step below could be precalculated, but where to store it?
-		 */
-		top = NULL;
-		nxt = NULL;
-		for (z = closure_args(sc->code); is_pair(z); z = cdr(z))
-		  {
-		    s7_pointer car_z;
-		    car_z = car(z);
-		    if (is_pair(car_z))           /* arg has a default value of some sort */
-		      {
-			s7_pointer val;
-			val = cadr(car_z);
-			if ((!is_pair(val)) &&
-			    (!is_symbol(val)))
-			  add_slot(sc, car(car_z), val);
-			else
-			  {
-			    s7_pointer y;
-			    ADD_SLOT(sc->envir, car(car_z), sc->UNDEFINED);
-			    y = let_slots(sc->envir);
-			    slot_expression(y) = cadr(car_z);
-			    slot_pending_value(y) = sc->NIL;
-			    if (!top)
-			      {
-				top = y;
-				nxt = top;
-			      }
-			    else
-			      {
-				slot_pending_value(nxt) = y;
-				nxt = y;
-			      }
-			  }
-		      }
-		    else
-		      {
-			if (!is_keyword(car_z))
-			  add_slot(sc, car_z, sc->F);
-			else
-			  {
-			    if (car_z == sc->KEY_REST)
-			      {
-				add_slot(sc, cadr(z), sc->NIL);
-				z = cdr(z);
-			      }
-			  }
-		      }
-		  }
-		if (is_symbol(z))
-		  add_slot(sc, z, sc->NIL);
-		lambda_star_set_args(sc);                     /* load up current arg vals */
-		
-		if (top)
-		  {
-		    /* get default values, which may involve evaluation */
-		    push_stack(sc, OP_LAMBDA_STAR_DEFAULT, sc->args, sc->code); /* op is just a placeholder (don't use OP_BARRIER here) */
-		    sc->args = top;
-		    if (lambda_star_default(sc) == goto_EVAL) goto EVAL;
-		    pop_stack_no_op(sc);              /* get original args and code back */
-		  }
-		sc->code = closure_body(sc->code);    /* evaluate the function body */
-		goto BEGIN1;
-	      }
-	      
-	    case T_CONTINUATION:	                  /* -------- continuation ("call/cc") -------- */
-	      if (!call_with_current_continuation(sc))
-		{
-		  static s7_pointer cc_err = NULL; 
-		  if (!cc_err) cc_err = s7_make_permanent_string("continuation can't jump into with-baffle");
-		  s7_error(sc, sc->BAFFLED, set_elist_1(sc, cc_err));
-		}
-	      goto START;
-	      
-	    case T_GOTO:	                          /* -------- goto ("call-with-exit") -------- */
-	      call_with_exit(sc);
-	      goto START;
-	      
-	    case T_C_OBJECT:                          /* -------- applicable (new-type) object -------- */
-	      sc->value = (*(c_object_ref(sc->code)))(sc, sc->code, sc->args);
-	      goto START;
-	      
-	    case T_INT_VECTOR:
-	    case T_FLOAT_VECTOR:
-	    case T_VECTOR:                            /* -------- vector as applicable object -------- */
-	      apply_vector_ex(sc);
-	      goto START;
-	      
-	    case T_STRING:                            /* -------- string as applicable object -------- */
-	      apply_string_ex(sc);
-	      goto START;
-	      
-	    case T_PAIR:                              /* -------- list as applicable object -------- */
-	      if (is_multiple_value(sc->code))                                  /* ((values 1 2 3) 0) */
-		{
-		  /* car of values can be anything, so conjure up a new expression, and apply again */
-		  sc->x = multiple_value(sc->code);                             /* ((values + 1 2) 3) */
-		  sc->code = car(sc->x);
-		  sc->args = s7_append(sc, cdr(sc->x), sc->args);
-		  sc->x = sc->NIL;
-		  goto APPLY;
-		}
-	      if (is_null(sc->args))
-		return(s7_wrong_number_of_args_error(sc, "not enough args for list-ref (via list as applicable object): ~A", sc->args));
-	      sc->value = list_ref_1(sc, sc->code, car(sc->args));            /* (L 1) */
-	      if (!is_null(cdr(sc->args)))
-		sc->value = implicit_index(sc, sc->value, cdr(sc->args));     /* (L 1 2) */
-	      goto START;
-	      
-	      
-	    case T_HASH_TABLE:                        /* -------- hash-table as applicable object -------- */
-	      if (is_null(sc->args))
-		return(s7_wrong_number_of_args_error(sc, "not enough args for hash-table-ref (via hash table as applicable object): ~A", sc->args));
-	      sc->value = s7_hash_table_ref(sc, sc->code, car(sc->args));
-	      if (!is_null(cdr(sc->args)))
-		sc->value = implicit_index(sc, sc->value, cdr(sc->args));
-	      goto START;
-	      
-	      
-	    case T_ITERATOR:                          /* -------- iterator as applicable object -------- */
-	      if (!is_null(sc->args))
-		return(s7_wrong_number_of_args_error(sc, "too many args for iterator: ~A", sc->args));
-	      sc->value = s7_iterate(sc, sc->code);
-	      goto START;
-	      
-	      
-	    case T_LET:                               /* -------- environment as applicable object -------- */
-	      apply_let_ex(sc);
-	      goto START;
-	      
-	    case T_SYNTAX:                            /* -------- syntactic keyword as applicable object -------- */
-	      apply_syntax_ex(sc);
-	      goto START_WITHOUT_POP_STACK;
+	    MACRO_STAR:
+	      if (apply_lambda_star(sc) == goto_EVAL) goto EVAL;
+	      goto BEGIN1;
 	      
 	    default:
 	      return(apply_error(sc, sc->code, sc->args));
 	    }
+	  
+	  
+	case OP_APPLY:      /* apply 'code' to 'args' */
+	  if (needs_copied_args(sc->code))
+	    sc->args = copy_list(sc, sc->args);
+	  goto APPLY;
+	  /* (let ((lst '((1 2)))) (define (identity x) x) (cons (apply identity lst) lst)) */
 	  
 	  
 	case OP_LAMBDA_STAR_DEFAULT:
@@ -58482,13 +58438,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack_no_op(sc);
 	  sc->code = closure_body(sc->code); 
 	  goto BEGIN1;
-	  
-	  
-	case OP_APPLY:      /* apply 'code' to 'args' */
-	  if (needs_copied_args(sc->code))
-	    sc->args = copy_list(sc, sc->args);
-	  goto APPLY;
-	  /* (let ((lst '((1 2)))) (define (identity x) x) (cons (apply identity lst) lst)) */
 	  
 	  
 	case OP_MACROEXPAND_1:
@@ -67257,10 +67206,6 @@ int main(int argc, char **argv)
  *   with name/sync/sample settable
  * apropos should scan autoload?
  *
- * eval: 2 op_loads, named let setup, etc
- *   break up the gensets and applies into bool sets[type](sc, obj, args) so set_pair_p_3 and others can go away, and apply itself!
- * tari.scm, tfun? tdyn? -> t212
- *
  * can circular-iterator confuse format? yes -- inf loop probably object->list
 #3  0x000000000047f394 in other_iterate (sc=0x76a970, obj=0x2aaaab1b4250) at s7.c:23885
 #4  0x000000000047fe49 in s7_iterate (sc=0x76a970, obj=0x2aaaab1b4250) at s7.c:24075
@@ -67272,6 +67217,6 @@ int main(int argc, char **argv)
  * hash-table* -> hash-table but how to disambiguate
  * define-safe-macro fixed/tested. doc/finish define-with-macros, add to stuff.
  *   test the setter version of fully-macroexpand then add to stuff (there's one in write? -- it's the non-setter version + pretty-print)
- *   how does this fare with a c_macro? or values?
- * crossref -> s7
+ *   how does this fare with a c_macro? or values? or locally shadowed/defined macros?
+ * why is new tgen not let-looped? -- no annotate-expansion (set_overlay) in quasiquote output and then uncleared opts
  */
