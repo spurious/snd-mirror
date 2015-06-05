@@ -6672,6 +6672,77 @@ static int closure_length(s7_scheme *sc, s7_pointer e)
 }
 
 
+static s7_pointer copy_tree(s7_scheme *sc, s7_pointer tree)
+{
+  if (is_pair(car(tree)))
+    {
+      if (is_pair(cdr(tree)))
+	return(cons_unchecked(sc, copy_tree(sc, car(tree)), copy_tree(sc, cdr(tree))));
+      return(cons_unchecked(sc, copy_tree(sc, car(tree)), cdr(tree)));
+    }
+  else
+    {
+      if (is_pair(cdr(tree)))
+	return(cons_unchecked(sc, car(tree), copy_tree(sc, cdr(tree))));
+      return(cons_unchecked(sc, car(tree), cdr(tree)));
+    }
+  return(tree);
+}
+
+static void annotate_expansion(s7_scheme *sc, s7_pointer p)
+{
+  s7_pointer x;
+  if ((is_symbol(car(p))) &&
+      (is_pair(cdr(p))))
+    {
+      set_ecdr(cdr(p), p);
+      set_overlay(cdr(p));
+    }
+  else
+    {
+      if (is_pair(car(p)))
+	annotate_expansion(sc, car(p));
+    }
+  for (x = cdr(p); is_pair(x); x = cdr(x))
+    if (is_pair(car(x)))
+      annotate_expansion(sc, car(x));
+}
+
+/* static int conses(s7_pointer tree) {if (is_pair(tree)) return(1 + conses(car(tree)) + conses(cdr(tree))); return(0);} */
+
+static s7_pointer copy_closure(s7_scheme *sc, s7_pointer fnc)
+{
+  /* copy the source tree annotating (for eventual optimization), return a thing of the same type as fnc
+   */
+  s7_pointer x, body;
+
+  if (8192 >= (sc->free_heap_top - sc->free_heap))
+    {
+      gc(sc);
+      while (8192 >= (sc->free_heap_top - sc->free_heap))
+	resize_heap(sc);
+    }
+
+  body = closure_body(fnc);
+  if (is_pair(body))
+    {
+      sc->w = copy_tree(sc, body);
+      annotate_expansion(sc, sc->w);
+    }
+  else sc->w = body;
+
+  NEW_CELL(sc, x, typeflag(fnc));
+  closure_args(x) = closure_args(fnc);
+  closure_body(x) = sc->w;
+  sc->w = sc->NIL;
+  closure_setter(x) = closure_setter(fnc);
+  closure_arity(x) = closure_arity(fnc);
+  closure_let(x) = closure_let(fnc);
+
+  return(x);
+}
+
+
 static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_defined "(defined? obj (env (curlet)) ignore-globals) returns #t if obj has a binding (a value) in the environment env"
@@ -21736,7 +21807,7 @@ static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt)
   k = str - orig_str;
   if (*str != 0)
     port_position(pt) += (k - 1);
-  else port_position(pt) += k;
+  else port_position(pt) = port_data_size(pt);
 
   /* this is equivalent to:
    *    str = strpbrk(str, "(); \"\t\r\n");
@@ -21835,7 +21906,7 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt)
   k = str - orig_str;
   if (*str != 0)
     port_position(pt) += (k - 1);
-  else port_position(pt) += k;
+  else port_position(pt) = port_data_size(pt);
 
   if (!number_table[(unsigned char)(*orig_str)])
     return(make_symbol_with_length(sc, orig_str, k));
@@ -30344,12 +30415,17 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 	  len += vector_length(x);
 	  if (type(x) != T_VECTOR)
 	    parlous_gc = true;            /* might create a new object during append, gc possible: new vector needs fill and gc-protect */
-	  if (result_type == -1)
-	    result_type = type(x);
-	  else
+	  if (result_type != T_VECTOR)
 	    {
-	      if (result_type != type(x))
-		result_type = T_VECTOR;
+	      if ((result_type == -1) ||
+		  (type(x) == T_VECTOR))
+		result_type = type(x);
+	      else
+		{
+		  if ((type(x) == T_FLOAT_VECTOR) ||
+		      (result_type != type(x)))
+		    result_type = T_FLOAT_VECTOR;
+		}
 	    }
 	}
     }
@@ -30410,10 +30486,21 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 	      source_len = vector_length(x);
 	      if (source_len > 0)
 		{
-		  s7_Double *source;
-		  source = float_vector_elements(x);
-		  memcpy((void *)(dest + i), (void *)source, source_len * sizeof(s7_Double));
-		  i += source_len;
+		  if (type(x) == T_FLOAT_VECTOR)
+		    {
+		      s7_Double *source;
+		      source = float_vector_elements(x);
+		      memcpy((void *)(dest + i), (void *)source, source_len * sizeof(s7_Double));
+		      i += source_len;
+		    }
+		  else
+		    {
+		      s7_Int *source;
+		      s7_Int j;
+		      source = int_vector_elements(x);
+		      for (j = 0; j < source_len; j++, i++)
+			dest[i] = (s7_Double)source[j];
+		    }
 		}
 	    }
 	}
@@ -35926,10 +36013,11 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	  check_method(sc, source, sc->COPY, args);
 	  return(let_copy(sc, source));   /* this copies only the local env and points to outer envs */
 	  
-	case T_CLOSURE:
-	case T_CLOSURE_STAR:
+	case T_CLOSURE: case T_CLOSURE_STAR:
+	case T_MACRO: case T_MACRO_STAR:
+	case T_BACRO: case T_BACRO_STAR:
 	  check_method(sc, source, sc->COPY, args);
-	  return(source);
+	  return(copy_closure(sc, source));
 	  
 	case T_INT_VECTOR:
 	case T_FLOAT_VECTOR:
@@ -39760,9 +39848,8 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	  (is_all_x_op(optimize_data(expr))))
 	{
 	  s7_function func;
-	  s7_pointer args, slot, iter;
+	  s7_pointer slot, iter;
 	  
-	  args = cdr(expr);
 	  iter = caar(sc->args);
 	  push_stack(sc, OP_NO_OP, sc->args, sc->code); /* temporary GC protection?? */
 	  sc->envir = new_frame_in_env(sc, sc->envir);
@@ -39936,11 +40023,9 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  (is_all_x_op(optimize_data(expr))))
 	{
 	  s7_function func;
-	  s7_pointer args, slot, iter, val, z;
+	  s7_pointer slot, iter, val, z;
 	  
-	  args = cdr(expr);
 	  iter = car(sc->args);
-	  
 	  push_stack(sc, OP_NO_OP, sc->args, val = cons(sc, sc->NIL, sc->code));
 	  sc->envir = new_frame_in_env(sc, sc->envir);
 	  slot = add_slot(sc, car(closure_args(sc->code)), sc->F);
@@ -40739,9 +40824,11 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 
       end = (char *)(port_data(pt) + port_data_size(pt));
       s = strpbrk(start, "\"\n\\");
-      if ((!s) || (s >= end))                                 /* can this read a huge string constant from a file? */
+      if ((!s) || (s >= end))                     /* can this read a huge string constant from a file? */
 	{
-	  memcpy((void *)(sc->strbuf), (void *)start, (end - start > 8) ? 8 : (end - start));
+	  if (start == end)
+	    sc->strbuf[0] = '\0';
+	  else memcpy((void *)(sc->strbuf), (void *)start, (end - start > 8) ? 8 : (end - start));
 	  sc->strbuf[8] = '\0';
 	  return(sc->F);
 	}
@@ -50954,6 +51041,7 @@ static int safe_dotimes_ex(s7_scheme *sc)
 			{
 			  bool happy = true;
 			  s7_pointer p;
+
 			  for (p = cadr(sc->code); is_pair(p); p = cdr(p))
 			    if (!is_optimized(cadar(p)))
 			      {
@@ -51116,7 +51204,7 @@ static int simple_safe_dotimes_ex(s7_scheme *sc)
 	    {
 	      s7_function f;
 	      s7_pointer result;
-	      
+
 	      f = (s7_function)c_function_call(c_function_let_looped(ecdr(func)));
 	      car(sc->T3_1) = stepper;
 	      car(sc->T3_2) = caddr(sc->code);
@@ -51815,34 +51903,6 @@ static bool closure_is_ok(s7_scheme *sc, s7_pointer code, unsigned short type, i
 #define MATCH_SAFE_CLOSURE_STAR   (T_CLOSURE_STAR | T_PROCEDURE | T_SAFE_CLOSURE)
 
 /* since T_HAS_METHODS is on if there might be methods, this can protect us from that case */
-
-
-static void annotate_expansion(s7_scheme *sc, s7_pointer p)
-{
-  s7_pointer x;
-  /* p might not be a pair:
-   *   (define-expansion (whatever->zero . whatever) 0)
-   *   (+ 1 (whatever->zero 2 3) 4)
-   *   5
-   */
-  if (is_pair(p))
-    {
-      if ((is_symbol(car(p))) &&
-	  (is_pair(cdr(p))))
-	{
-	  set_ecdr(cdr(p), p);
-	  set_overlay(cdr(p));
-	}
-      else
-	{
-	  if (is_pair(car(p)))
-	    annotate_expansion(sc, car(p));
-	}
-      for (x = cdr(p); is_pair(x); x = cdr(x))
-	if (is_pair(car(x)))
-	  annotate_expansion(sc, car(x));
-    }
-}
 
 
 /* unknown ops */
@@ -52900,13 +52960,10 @@ static void apply_syntax(s7_scheme *sc)                            /* -------- s
   
   if (integer(syntax_max_args(sc->code)) < len)
     s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args));
-#if 0  
+
   sc->op = (opcode_t)syntax_opcode(sc->code);         /* (apply begin '((define x 3) (+ x 2))) */
   /* I used to have elaborate checks here for embedded circular lists, but now i think that is the caller's problem */
   sc->code = sc->args;
-#else
-  push_stack_no_args(sc, (opcode_t)syntax_opcode(sc->code), sc->args);
-#endif
 }
 
 static void apply_vector(s7_scheme *sc)                            /* -------- vector as applicable object -------- */
@@ -58375,7 +58432,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case T_HASH_TABLE:	        apply_hash_table(sc);           goto START;
 	    case T_ITERATOR:	        apply_iterator(sc);	        goto START;	      
 	    case T_LET:	                apply_let(sc);	                goto START;
-	    case T_SYNTAX:	        apply_syntax(sc);	        goto START;
+	    case T_SYNTAX:	        apply_syntax(sc);	        goto START_WITHOUT_POP_STACK;
 	    case T_PAIR:	        
 	      if (apply_pair(sc) == goto_APPLY) goto APPLY; 
 	      goto START;
@@ -60219,7 +60276,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 	  if (sc->value == sc->NO_VALUE)
 	    sc->stack_end[-1] = (s7_pointer)OP_READ_NEXT;
-	  else annotate_expansion(sc, sc->value);
+	  else 
+	    {
+	      if (is_pair(sc->value))
+		annotate_expansion(sc, sc->value);
+	    }
 	  break;
 	  
 	  
@@ -60717,9 +60778,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		c = port_read_white_space(pt)(sc, pt);  /* sc->tok = token(sc) */
 		switch (c)
 		  {
-		  case '(':	 sc->tok = TOKEN_LEFT_PAREN;                break;
-		  case ')':	 sc->value = sc->NIL; goto READ_LIST;       /* was tok = TOKEN_RIGHT_PAREN */
-		  case '.':	 sc->tok = read_dot(sc, pt);                break;
+		  case '(':  sc->tok = TOKEN_LEFT_PAREN;                break;
+		  case ')':  sc->value = sc->NIL; goto READ_LIST;       /* was tok = TOKEN_RIGHT_PAREN */
+		  case '.':  sc->tok = read_dot(sc, pt);                break;
 		  case '\'': sc->tok = TOKEN_QUOTE;                     break;
 		  case ';':  sc->tok = port_read_semicolon(pt)(sc, pt); break;
 		  case '"':  sc->tok = TOKEN_DOUBLE_QUOTE;              break;
@@ -60739,6 +60800,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      car(x) = sc->value;
 		      cdr(x) = sc->NIL;
 		      sc->args = x;
+		      /*
+		      if (port_position(pt) >= port_data_size(pt))
+			return(missing_close_paren_error(sc));
+		      */
 		      c = port_read_white_space(pt)(sc, pt);
 		      goto READ_C;
 		    }
@@ -60754,6 +60819,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(x) = sc->value;
 		    cdr(x) = sc->NIL;
 		    sc->args = x;
+		    /*
+		    if (port_position(pt) >= port_data_size(pt))
+		      return(missing_close_paren_error(sc));
+		    */
 		    c = port_read_white_space(pt)(sc, pt);
 		    goto READ_C;
 		  }
@@ -60831,6 +60900,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      default:
 		sc->strbuf[0] = c;
 		sc->value = port_read_name(pt)(sc, pt);
+		/*
+		if (port_position(pt) >= port_data_size(pt))
+		  return(missing_close_paren_error(sc));
+		*/
 		goto READ_LIST;
 	      }
 	  }
@@ -60857,12 +60930,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      break;
 	      
-	    case TOKEN_EOF:
-	      /* can't happen, I believe */
+	    case TOKEN_EOF:      /* can't happen, I believe */
 	      return(missing_close_paren_error(sc));
 	      
 	    case TOKEN_ATOM:
 	      sc->value = port_read_name(sc->input_port)(sc, sc->input_port);
+	      /*
+	      if (port_position(sc->input_port) >= port_data_size(sc->input_port)) 
+		return(missing_close_paren_error(sc));
+	      */
 	      goto READ_LIST;
 	      
 	    case TOKEN_SHARP_CONST:
@@ -67173,7 +67249,7 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133
  * teq           |      |      | 6612                     3887 3020 2611
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301
- * tcopy         |      |      |                          4970 4287 3631
+ * tcopy         |      |      | 13.6                     5355 4728 3877
  * tmap          |      |      | 11.0           5031 4769 4685 4557 4200
  * tform         |      |      |                          6816 5536 4242
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6255
@@ -67181,7 +67257,7 @@ int main(int argc, char **argv)
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6675
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9
  * thash         |      |      |                          19.4 17.4 16.0
- * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 21.0
+ * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 18.0
  * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.0
  *
  * calls 54.6 if no clm2xen, tall: 26.9
@@ -67214,9 +67290,8 @@ int main(int argc, char **argv)
  * perhaps a warning if safety>0?
  *
  * permutation-iterator (iterator-as-continuation?)
- * hash-table* -> hash-table but how to disambiguate
+ *
  * define-safe-macro fixed/tested. doc/finish define-with-macros, add to stuff.
  *   test the setter version of fully-macroexpand then add to stuff (there's one in write? -- it's the non-setter version + pretty-print)
- *   how does this fare with a c_macro? or values? or locally shadowed/defined macros?
- * why is new tgen not let-looped? -- no annotate-expansion (set_overlay) in quasiquote output and then uncleared opts
+ *   how does this fare with a c_macro? or values?
  */
