@@ -725,7 +725,7 @@ static void write_next_comment(int fd, const char *comment, int len, int loc)
   if (len > 0)
     {
       unsigned char *combuf;
-      combuf = (unsigned char *)calloc(len, sizeof(char));
+      combuf = (unsigned char *)calloc(len, sizeof(unsigned char));
       header_write(fd, combuf, len);
       free(combuf);
     }
@@ -3194,7 +3194,7 @@ static void write_ircam_comment(int fd, const char *comment, int len)
   if (len > 0)
     {
       unsigned char *combuf;
-      combuf = (unsigned char *)calloc(len, sizeof(char));
+      combuf = (unsigned char *)calloc(len, sizeof(unsigned char));
       header_write(fd, combuf, len);
       free(combuf);
     }

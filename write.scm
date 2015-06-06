@@ -389,11 +389,10 @@
 	       (if (pair? source)
 		   (format *stderr* "~<sym~> ~<val~>:~%~<(pp source)~>~%~%"))))))
      st)))
-|#
 
 (define-macro (fully-macroexpand form)
   (define (expand form)
-    ;; walk form looking for macros, expand any that are found
+    ;; walk form looking for macros, expand any that are found -- see stuff.scm for a newer version
     (if (pair? form)
 	(if (and (symbol? (car form))
 		 (macro? (symbol->value (car form))))
@@ -403,7 +402,6 @@
 	form))
   `(pretty-print ',(expand form)))
 
-#|
 (define* (pp-sequence seq)
   (let ((iter (make-iterator seq))
 	(strs ())

@@ -2181,8 +2181,9 @@ static bool local_strncmp(const char *s1, const char *s2, unsigned int n)
       s2 = (unsigned char *)s1;
     }
   else s2 = (unsigned char *)s;
-#endif
+#else
   s2 = (unsigned char *)s;
+#endif
   while (n > 0)
     {
       *s2++ = 0;
@@ -6689,9 +6690,9 @@ static s7_pointer copy_tree(s7_scheme *sc, s7_pointer tree)
   return(tree);
 }
 
+#if DEBUGGING
 static void annotate_expansion(s7_scheme *sc, s7_pointer p)
 {
-  s7_pointer x;
   if ((is_symbol(car(p))) &&
       (is_pair(cdr(p))))
     {
@@ -6703,10 +6704,29 @@ static void annotate_expansion(s7_scheme *sc, s7_pointer p)
       if (is_pair(car(p)))
 	annotate_expansion(sc, car(p));
     }
-  for (x = cdr(p); is_pair(x); x = cdr(x))
-    if (is_pair(car(x)))
-      annotate_expansion(sc, car(x));
+  for (p = cdr(p); is_pair(p); p = cdr(p))
+    if (is_pair(car(p)))
+      annotate_expansion(sc, car(p));
 }
+#else
+static void annotate_expansion(s7_pointer p)
+{
+  if ((is_symbol(car(p))) &&
+      (is_pair(cdr(p))))
+    {
+      set_ecdr(cdr(p), p);
+      set_overlay(cdr(p));
+    }
+  else
+    {
+      if (is_pair(car(p)))
+	annotate_expansion(car(p));
+    }
+  for (p = cdr(p); is_pair(p); p = cdr(p))
+    if (is_pair(car(p)))
+      annotate_expansion(car(p));
+}
+#endif
 
 /* static int conses(s7_pointer tree) {if (is_pair(tree)) return(1 + conses(car(tree)) + conses(cdr(tree))); return(0);} */
 
@@ -6727,7 +6747,11 @@ static s7_pointer copy_closure(s7_scheme *sc, s7_pointer fnc)
   if (is_pair(body))
     {
       sc->w = copy_tree(sc, body);
+#if DEBUGGING
       annotate_expansion(sc, sc->w);
+#else
+      annotate_expansion(sc->w);
+#endif
     }
   else sc->w = body;
 
@@ -20593,8 +20617,6 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
     }
 
   end = string_length(x);
-  if (end == 0) return(chr);
-
   if (!is_null(cddr(args)))
     {
       s7_pointer p;
@@ -20602,6 +20624,7 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
       if (p != sc->GC_NIL) return(p);
       if (start == end) return(chr);
     }
+  if (end == 0) return(chr);
 
   if (!is_byte_vector(x))
     memset((void *)(string_value(x) + start), (int)character(chr), end - start);
@@ -22366,6 +22389,7 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
 If the optional 'clear-port' is #t, the current string is flushed."
   s7_pointer p, result;
   p = car(args);
+  /* should this check that the third argument is boolean? */
 
   if ((!is_output_port(p)) ||
       (!is_string_port(p)))
@@ -22750,9 +22774,6 @@ static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
   if (chars > sc->max_string_length)
     return(out_of_range(sc, sc->READ_STRING, small_int(1), k, ITS_TOO_LARGE));
 
-  if (chars == 0)
-    return(make_empty_string(sc, 0, 0));
-
   if (!is_null(cdr(args)))
     {
       port = cadr(args);
@@ -22764,6 +22785,9 @@ static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
       port = input_port_if_not_loading(sc);
       if (!port) return(sc->EOF_OBJECT);
     }
+
+  if (chars == 0)
+    return(make_empty_string(sc, 0, 0));
 
   s = make_empty_string(sc, chars, 0);
   str = (unsigned char *)string_value(s);
@@ -30243,7 +30267,6 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
     }
 
   end = vector_length(x);
-  if (end == 0) return(fill);
   if (!is_null(cddr(args)))
     {
       s7_pointer p;
@@ -30251,6 +30274,7 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
       if (p != sc->GC_NIL) return(p);
       if (start == end) return(fill);
     }
+  if (end == 0) return(fill);
 
   if ((start == 0) && (end == vector_length(x)))
     s7_vector_fill(sc, x, fill);
@@ -30846,7 +30870,12 @@ a vector that points to the same elements as the original-vector but with differ
 
   dims = cadr(args);
   if (is_integer(dims))
-    dims = list_1(sc, dims);
+    {
+      if ((s7_integer(dims) < 0) ||
+	  (s7_integer(dims) >= orig_len))
+	return(out_of_range(sc, sc->MAKE_SHARED_VECTOR, small_int(2), dims, (s7_integer(dims) < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+      dims = list_1(sc, dims);
+    }
   else
     {
       if ((is_null(dims)) ||
@@ -33849,10 +33878,8 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, set_elist_2(sc, make_string_wrapper(sc, "procedure-source arg, '~S, is unbound"), car(args))));
     }
 
-  if (is_c_function(p))
+  if ((is_c_function(p)) || (is_c_macro(p)))
     return(sc->NIL);
-  if (is_c_macro(p))
-    return(simple_wrong_type_argument_with_type(sc, sc->PROCEDURE_SOURCE, p, make_string_wrapper(sc, "a scheme macro")));
 
   check_method(sc, p, sc->PROCEDURE_SOURCE, args);
   if ((is_any_closure(p)) || (is_macro(p)) || (is_macro_star(p)) || (is_bacro(p)) || (is_bacro_star(p)))
@@ -37592,7 +37619,12 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   err = caddr(args);
   if (!is_applicable(err))
     return(wrong_type_argument_with_type(sc, sc->CATCH, 3, err, SOMETHING_APPLICABLE));
+
   /* if (is_let(err)) check_method(sc, err, sc->CATCH, args); */ /* causes exit from s7! */
+  /* should we check here for (aritable? err 2)? -- right now:
+   *  (catch #t (lambda () 1) "hiho") -> 1
+   * currently this is checked only if the error handler is called
+   */
 
   NEW_CELL(sc, p, T_CATCH);
   catch_tag(p) = car(args);
@@ -41083,7 +41115,6 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 {
   /* this always occurs in a context where we're trying to find anything, so I'll move a couple of those checks here
    */
-
   if (has_ref_fallback(sc->envir)) /* an experiment -- see s7test (with-let *db* (+ int (length str))) */
     check_method(sc, sc->envir, sc->LET_REF_FALLBACK, sc->w = list_2(sc, sc->envir, sym));
 
@@ -52946,8 +52977,8 @@ static void apply_c_macro(s7_scheme *sc)  	                    /* -------- C-bas
 }
 
 static void apply_syntax(s7_scheme *sc)                            /* -------- syntactic keyword as applicable object -------- */
-{
-  unsigned int len;
+{                                                                  /* current reader-cond macro uses this via (map quote ...) */
+  unsigned int len;                                                /*    ((apply lambda '((x) (+ x 1))) 4) */
   if (is_pair(sc->args))
     {
       len = s7_list_length(sc, sc->args);
@@ -53064,6 +53095,8 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
   unsigned long long int id;
   e = sc->envir;
   id = let_id(e);
+
+  /* fprintf(stderr, "%s\n", DISPLAY(closure_name(sc, sc->code))); */
   
   for (x = closure_args(sc->code), z = sc->args; is_pair(x); x = cdr(x))
     {
@@ -58442,39 +58475,40 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		push_stack(sc, OP_EXPANSION, sc->NIL, sc->NIL);
 	      else push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
 	      NEW_FRAME(sc, closure_let(sc->code), sc->envir);
-	      goto BACRO;
+	      apply_lambda(sc);
+	      goto BEGIN1;
 	      
 	    case T_BACRO:                                /* -------- bacro -------- */
 	      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
 	      NEW_FRAME(sc, sc->envir, sc->envir);       /* like let* -- we'll be adding macro args, so might as well sequester things here */
-	      goto BACRO;
+	      apply_lambda(sc);
+	      goto BEGIN1;
 	      
 	    case T_CLOSURE:
 	      check_stack_size(sc);
 	      NEW_FRAME(sc, closure_let(sc->code), sc->envir);
-	      
-	    BACRO:
 	      apply_lambda(sc);
 	      goto BEGIN1;
+
 	      
 	    case T_MACRO_STAR:
 	      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
 	      NEW_FRAME(sc, closure_let(sc->code), sc->envir);
-	      goto MACRO_STAR;
+	      if (apply_lambda_star(sc) == goto_EVAL) goto EVAL;
+	      goto BEGIN1;
 	      
 	    case T_BACRO_STAR:
 	      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
 	      NEW_FRAME(sc, sc->envir, sc->envir);
-	      goto MACRO_STAR;
+	      if (apply_lambda_star(sc) == goto_EVAL) goto EVAL;
+	      goto BEGIN1;
 	      
 	    case T_CLOSURE_STAR:
 	      check_stack_size(sc);
 	      sc->envir = new_frame_in_env(sc, closure_let(sc->code));
-		
-	    MACRO_STAR:
 	      if (apply_lambda_star(sc) == goto_EVAL) goto EVAL;
 	      goto BEGIN1;
-	      
+
 	    default:
 	      return(apply_error(sc, sc->code, sc->args));
 	    }
@@ -58529,19 +58563,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	    case T_MACRO:
 	      NEW_FRAME(sc, closure_let(sc->code), sc->envir);
-	      goto BACRO;
+	      apply_lambda(sc);
+	      goto BEGIN1;
 	      
 	    case T_BACRO:
 	      NEW_FRAME(sc, sc->envir, sc->envir);
-	      goto BACRO;
+	      apply_lambda(sc);
+	      goto BEGIN1;
 	      
 	    case T_MACRO_STAR:
 	      NEW_FRAME(sc, closure_let(sc->code), sc->envir);
-	      goto MACRO_STAR;
+	      if (apply_lambda_star(sc) == goto_EVAL) goto EVAL;
+	      goto BEGIN1;
 	      
 	    case T_BACRO_STAR:
 	      NEW_FRAME(sc, sc->envir, sc->envir);
-	      goto MACRO_STAR;
+	      if (apply_lambda_star(sc) == goto_EVAL) goto EVAL;
+	      goto BEGIN1;
 	      
 	    case T_C_MACRO:
 	      sc->value = c_macro_call(sc->code)(sc, sc->args);
@@ -59845,12 +59883,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else
 	    {
 	      s7_pointer slot;
-	      slot = let_slots(sc->envir);
 	      for (slot = let_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
-		{
-		  if (is_checked(slot))
-		    slot_set_value(slot, slot_pending_value(slot));
-		}
+		if (is_checked(slot))
+		  slot_set_value(slot, slot_pending_value(slot));
 	      sc->code = cdr(sc->code);
 	      goto BEGIN1;
 	    }
@@ -60279,7 +60314,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else 
 	    {
 	      if (is_pair(sc->value))
+#if DEBUGGING
 		annotate_expansion(sc, sc->value);
+#else
+		annotate_expansion(sc->value);
+#endif
 	    }
 	  break;
 	  
@@ -67165,10 +67204,10 @@ s7_scheme *s7_init(void)
 
 
 #if (!DISABLE_DEPRECATED)
-  s7_eval_c_string(sc, "(define global-environment           rootlet)  \n\
-                        (define current-environment          curlet)   \n\
-                        (define make-procedure-with-setter   dilambda) \n\
-                        (define procedure-with-setter?       dilambda?)\n\
+  s7_eval_c_string(sc, "(define global-environment         rootlet)  \n\
+                        (define current-environment        curlet)   \n\
+                        (define make-procedure-with-setter dilambda) \n\
+                        (define procedure-with-setter?     dilambda?)\n\
                         (define (procedure-arity obj) (let ((c (arity obj))) (list (car c) (- (cdr c) (car c)) (> (cdr c) 100000))))");
 #endif
 
@@ -67247,18 +67286,18 @@ int main(int argc, char **argv)
  *           12  |  13  |  14  | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7
  * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133
- * teq           |      |      | 6612                     3887 3020 2611
+ * teq           |      |      | 6612                     3887 3020 2538
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301
  * tcopy         |      |      | 13.6                     5355 4728 3877
  * tmap          |      |      | 11.0           5031 4769 4685 4557 4200
  * tform         |      |      |                          6816 5536 4242
- * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6255
+ * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6275
  * titer         |      |      |                          7503 6793 6335
- * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6675
+ * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6354
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9
  * thash         |      |      |                          19.4 17.4 16.0
- * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 18.0
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.0
+ * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.8
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1
  *
  * calls 54.6 if no clm2xen, tall: 26.9
  * --------------------------------------------------------------------------
@@ -67290,8 +67329,7 @@ int main(int argc, char **argv)
  * perhaps a warning if safety>0?
  *
  * permutation-iterator (iterator-as-continuation?)
- *
- * define-safe-macro fixed/tested. doc/finish define-with-macros, add to stuff.
- *   test the setter version of fully-macroexpand then add to stuff (there's one in write? -- it's the non-setter version + pretty-print)
- *   how does this fare with a c_macro? or values?
+ * define-safe-macro fixed/tested. doc/finish define-with-macros.
+ * why are some of the tgen funcs unoptimized?
+ * perhaps expand annotate?
  */

@@ -438,7 +438,7 @@ dir_info *find_filtered_files_in_dir_with_pattern(const char *name, int filter_c
     full_dir = find_filtered_files_in_dir(name, filter_choice);
   else full_dir = find_files_in_dir(name);
   pattern_dir = find_files_from_pattern(full_dir, pattern);
-  full_dir = free_dir_info(full_dir);
+  free_dir_info(full_dir);
   return(pattern_dir);
 }
 
@@ -1896,7 +1896,7 @@ snd_info *snd_update(snd_info *sp)
       free(saved_sp->chans);
       free(saved_sp);
     }
-  sa = free_axes_data((axes_data *)sa);
+  free_axes_data((axes_data *)sa);
   free(filename);
 
 #if USE_MOTIF
@@ -3237,7 +3237,7 @@ static Xen g_sound_files_in_directory(Xen dirname)
 	  int i;
 	  for (i = dp->len - 1; i >= 0; i--)
 	    res = Xen_cons(C_string_to_Xen_string(dp->files[i]->filename), res);
-	  dp = free_dir_info(dp);
+	  free_dir_info(dp);
 	}
       free(name);
     }

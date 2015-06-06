@@ -132,6 +132,26 @@
 
 
 ;;; ----------------
+(define-macro (fully-macroexpand form)
+  (define (expand form)
+    (if (pair? form)
+	(if (and (symbol? (car form))
+		 (macro? (symbol->value (car form))))
+	    (expand (apply macroexpand (list form)))
+	    (if (and (eq? (car form) 'set!)  ; look for (set! (mac ...) ...) and use mac's procedure-setter
+		     (pair? (cdr form))
+		     (pair? (cadr form))
+		     (macro? (symbol->value (caadr form))))
+		(expand (apply (eval (procedure-source (procedure-setter (symbol->value (caadr form))))) 
+			       (append (cdadr form) (cddr form))))
+		(cons (expand (car form))
+		      (expand (cdr form)))))
+	form))
+  (list 'quote (expand form)))
+
+(define-macro (define-with-macros name&args . body)
+  `(apply define ',name&args (list (fully-macroexpand `(begin ,,@body)))))
+
 (define setf
   (let ((args (gensym))
 	(name (gensym)))

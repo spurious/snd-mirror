@@ -157,16 +157,49 @@
 	  (define (with-repl-let body)
 	    ;; for multiline edits, we will use *missing-close-paren-hook* rather than try to parse the input ourselves.
 	    (let ((old-badexpr-hook (hook-functions *missing-close-paren-hook*))
-		   (old-unbound-var-hook (hook-functions *unbound-variable-hook*)))
+		  (old-unbound-var-hook (hook-functions *unbound-variable-hook*))
+		  (old-eval #f)
+		  (old-eval-string #f)
+		  (old-load #f))
+
+	      ;; if the repl's top-level-let is not rootlet, and we load some file into rootlet
+	      ;;   that (for example) defines a function at its top level, that function's definition
+	      ;;   env is rootlet.  If we then define something in the repl, it is in the
+	      ;;   repl's top level.  If we now call the function asking is the new thing defined,
+	      ;;   it looks in rootlet, not the repl top-level, and says no.
+	      ;; so, locally redefine these three to use the repl top-level while we're in the repl.
+	      ;; in addition, for each of these, we need to report missing close parens and so on
+
+	      (define (repl-hooks)
+		(set! (hook-functions *missing-close-paren-hook*) (cons badexpr old-badexpr-hook))
+		(set! (hook-functions *unbound-variable-hook*) (cons shell? old-unbound-var-hook)))
+	      
+	      (define (original-hooks)
+		(set! unbound-case #f)
+		(set! (hook-functions *missing-close-paren-hook*) old-badexpr-hook)
+		(set! (hook-functions *unbound-variable-hook*) old-unbound-var-hook))
+	      
+	      (define* (new-load file (e (*repl* 'top-level-let)))
+		(dynamic-wind original-hooks (lambda () (load file e)) repl-hooks))
+
+	      (define* (new-eval form (e (*repl* 'top-level-let))) 
+		(dynamic-wind original-hooks (lambda () (eval form e)) repl-hooks))
+
+	      (define* (new-eval-string str (e (*repl* 'top-level-let)))
+		(dynamic-wind original-hooks (lambda () (eval-string str e)) repl-hooks))
+
 	       (dynamic-wind
 		   (lambda ()
-		     (set! (hook-functions *missing-close-paren-hook*) (cons badexpr old-badexpr-hook))
-		     (set! (hook-functions *unbound-variable-hook*) (cons shell? old-unbound-var-hook)))
+		     (repl-hooks)
+		     (set! eval new-eval)
+		     (set! eval-string new-eval-string)
+		     (set! load new-load))
 		   body
 		   (lambda ()
-		     (set! unbound-case #f)
-		     (set! (hook-functions *missing-close-paren-hook*) old-badexpr-hook)
-		     (set! (hook-functions *unbound-variable-hook*) old-unbound-var-hook)))))
+		     (set! eval old-eval)
+		     (set! eval-string old-eval-string)
+		     (set! load old-load)
+		     (original-hooks)))))
 
 	  
 	    ;; -------- match parens --------

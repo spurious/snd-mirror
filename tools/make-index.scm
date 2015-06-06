@@ -810,7 +810,7 @@
     (list 'reactive-let* "stuff.scm")
     (list 'reactive-lambda* "stuff.scm")
     (list 'pretty-print "write.scm")
-    (list 'fully-macroexpand "write.scm")
+    (list 'fully-macroexpand "stuff.scm")
     (list '*mock-vector* "mockery.scm")
     (list '*mock-port* "mockery.scm")
     (list '*mock-symbol* "mockery.scm")
