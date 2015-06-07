@@ -65647,7 +65647,7 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
       if (s7_is_integer(val))
 	{
 	  if (integer(val) < 0)
-	    return(simple_out_of_range(sc, sc->LET_SET, val, make_string_wrapper(sc, "should be a positive integer")));
+	    return(simple_out_of_range(sc, sym, val, make_string_wrapper(sc, "should be a positive integer")));
 	  if (sym == sc->print_length_symbol)
 	    sc->print_length = integer(val);
 	  else
@@ -65668,14 +65668,14 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 	    }
 	  return(val);
 	}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+      return(simple_wrong_type_argument(sc, sym, val, T_INTEGER));
     }
 
   if (sym == sc->gc_stats_symbol)
     {
       if (s7_is_boolean(val)) {sc->gc_stats = ((val == sc->T) ? GC_STATS : 0); return(val);}
       if (s7_is_integer(val)) {sc->gc_stats = s7_integer(val); return(val);}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_BOOLEAN));
+      return(simple_wrong_type_argument(sc, sym, val, T_BOOLEAN));
     }
 
   if (sym == sc->symbol_table_is_locked_symbol) {sc->symbol_table_is_locked = (val != sc->F); return(val);}
@@ -65691,51 +65691,51 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 	      sc->max_stack_size = (unsigned int)size;
 	      return(val);
 	    }
-	  return(simple_out_of_range(sc, sc->LET_SET, val, make_string_wrapper(sc, "should be greater than the initial stack size (512)")));
+	  return(simple_out_of_range(sc, sym, val, make_string_wrapper(sc, "should be greater than the initial stack size (512)")));
 	}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+      return(simple_wrong_type_argument(sc, sym, val, T_INTEGER));
     }
 
   if (sym == sc->safety_symbol)
     {
       if (s7_is_integer(val)) {sc->safety = s7_integer(val); return(val);}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+      return(simple_wrong_type_argument(sc, sym, val, T_INTEGER));
     }
 
   if (sym == sc->undefined_identifier_warnings_symbol)
     {
       if (s7_is_boolean(val)) {sc->undefined_identifier_warnings = s7_boolean(sc, val); return(val);}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_BOOLEAN));
+      return(simple_wrong_type_argument(sc, sym, val, T_BOOLEAN));
     }
 
   if (sym == sc->default_hash_table_length_symbol)
     {
       if (s7_is_integer(val)) {sc->default_hash_table_length = s7_integer(val); return(val);}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+      return(simple_wrong_type_argument(sc, sym, val, T_INTEGER));
     }
 
   if (sym == sc->initial_string_port_length_symbol)
     {
       if (s7_is_integer(val)) {sc->initial_string_port_length = s7_integer(val); return(val);}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+      return(simple_wrong_type_argument(sc, sym, val, T_INTEGER));
     }
 
   if (sym == sc->morally_equal_float_epsilon_symbol)
     {
       if (s7_is_real(val)) {sc->morally_equal_float_epsilon = s7_real(val); return(val);}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_REAL));
+      return(simple_wrong_type_argument(sc, sym, val, T_REAL));
     }
 
   if (sym == sc->hash_table_float_epsilon_symbol)
     {
       if (s7_is_real(val)) {sc->hash_table_float_epsilon = s7_real(val); return(val);}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_REAL));
+      return(simple_wrong_type_argument(sc, sym, val, T_REAL));
     }
 
   if (sym == sc->default_rationalize_error_symbol)
     {
       if (s7_is_real(val)) {sc->default_rationalize_error = real_to_double(sc, val, "set! default-rationalize-error"); return(val);}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_REAL));
+      return(simple_wrong_type_argument(sc, sym, val, T_REAL));
     }
 
   if (sym == sc->default_random_state_symbol)
@@ -65750,20 +65750,26 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 	  dr->ran_carry = r->ran_carry;
 	  return(val);
 	}
-      return(wrong_type_argument_with_type(sc, sc->LET_SET, 1, val, A_RANDOM_STATE_OBJECT));
+      return(wrong_type_argument_with_type(sc, sym, 1, val, A_RANDOM_STATE_OBJECT));
     }
 
   if (sym == sc->stacktrace_defaults_symbol)
     {
-      if ((is_pair(val)) &&
-	  (s7_list_length(sc, val) == 5) &&
-	  (is_integer(car(val))) &&
-	  (is_integer(cadr(val))) &&
-	  (is_integer(caddr(val))) &&
-	  (is_integer(cadddr(val))) &&
-	  (s7_is_boolean(s7_list_ref(sc,val, 4))))
-	sc->stacktrace_defaults = val;
-      else return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_PAIR));
+      if (!is_pair(val))                
+	return(simple_wrong_type_argument(sc, sym, val, T_PAIR));
+      if (s7_list_length(sc, val) != 5) 
+	return(simple_wrong_type_argument_with_type(sc, sym, val, make_string_wrapper(sc, "a list with 5 entries")));
+      if (!is_integer(car(val)))        
+	return(wrong_type_argument_with_type(sc, sym, 1, car(val), make_string_wrapper(sc, "an integer (stack frames)")));
+      if (!is_integer(cadr(val)))       
+	return(wrong_type_argument_with_type(sc, sym, 2, cadr(val), make_string_wrapper(sc, "an integer (cols-for-data)")));
+      if (!is_integer(caddr(val)))      
+	return(wrong_type_argument_with_type(sc, sym, 3, caddr(val), make_string_wrapper(sc, "an integer (line length)")));
+      if (!is_integer(cadddr(val)))     
+	return(wrong_type_argument_with_type(sc, sym, 4, cadddr(val), make_string_wrapper(sc, "an integer (comment position)")));
+      if (!s7_is_boolean(s7_list_ref(sc,val, 4))) 
+	return(wrong_type_argument_with_type(sc, sym, 5, s7_list_ref(sc, val, 4), make_string_wrapper(sc, "a boolean (treat-data-as-comment)")));
+      sc->stacktrace_defaults = copy_list(sc, val);
       return(val);
     }
 
@@ -65777,7 +65783,7 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 #endif
 	  return(val);
 	}
-      return(simple_wrong_type_argument(sc, sc->LET_SET, val, T_INTEGER));
+      return(simple_wrong_type_argument(sc, sym, val, T_INTEGER));
     }
   return(sc->UNDEFINED);
 }
@@ -67320,7 +67326,13 @@ int main(int argc, char **argv)
  *
  * permutation-iterator (iterator-as-continuation?)
  * define-safe-macro fixed/tested. doc/finish define-with-macros.
- * stacktrace-defaults error is uninformative (and dumb looking if a list) 
+ * 
+ * stacktrace-defaults error is uninformative (and dumb looking if a list) -- also use field symbol, not let-set
  * *s7* display is uninformative (show fields)
+ * once-only et al with with-let
+ * ~W car-cycle in iterator bug
+ * better way to access copy-as-procedure-source
+ * check sym "" fixups
+ * try 4 arg fauto+lint+load
  */
  
