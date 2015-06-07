@@ -96,8 +96,8 @@ define s7cell
   if (($type == T_PAIR) || ($is_bad_type))
       printf "cons:           car: %p, cdr: %p, ecdr: %p, fcdr: %p, gcdr: %p\n", \
          $cell.object.cons.car, $cell.object.cons.cdr, $cell.object.cons.ecdr, $cell.object.cons.fc.fcdr, $cell.object.ext_cons.gcdr
-      printf "                    line: %d, data: %d, data_index: %d, op: %d\n", \
-         $cell.object.cons.line, $cell.object.cons.dat.d.data, $cell.object.cons.dat.d.data_index, $cell.object.cons.dat.op
+      printf "                    line: %d, op: %d\n", \
+         $cell.object.cons.line, $cell.object.cons.op
   end
 
   if (($type == T_CHARACTER) || ($is_bad_type))	 

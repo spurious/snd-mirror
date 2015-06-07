@@ -1014,19 +1014,21 @@ typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_w
 #define T_VECTOR              19
 #define T_INT_VECTOR          20
 #define T_FLOAT_VECTOR        21
-#define T_GOTO                22
-#define T_CATCH               23
-#define T_DYNAMIC_WIND        24
-#define T_HASH_TABLE          25
-#define T_LET                 26
-#define T_ITERATOR            27
-#define T_STACK               28
-#define T_COUNTER             29
-#define T_SLOT                30
-#define T_C_POINTER           31
-#define T_OUTPUT_PORT         32
-#define T_INPUT_PORT          33
-#define T_BAFFLE              34
+
+#define T_CATCH               22
+#define T_DYNAMIC_WIND        23
+#define T_HASH_TABLE          24
+#define T_LET                 25
+#define T_ITERATOR            26
+#define T_STACK               27
+#define T_COUNTER             28
+#define T_SLOT                29
+#define T_C_POINTER           30
+#define T_OUTPUT_PORT         31
+#define T_INPUT_PORT          32
+#define T_BAFFLE              33
+
+#define T_GOTO                34
 #define T_CONTINUATION        35
 #define T_CLOSURE             36
 #define T_CLOSURE_STAR        37
@@ -1097,6 +1099,7 @@ static void init_types(void)
   t_structure_p[T_HASH_TABLE] = true;
   t_structure_p[T_SLOT] = true;
   t_structure_p[T_LET] = true;
+  t_structure_p[T_ITERATOR] = true;
 
   t_sequence_p[T_NIL] = true;
   t_sequence_p[T_PAIR] = true;
@@ -1170,6 +1173,7 @@ static void init_types(void)
 
 #if DEBUGGING
   static bool check_types = true;
+  static s7_scheme *hidden_sc;
   #define unchecked_type(p)           ((p)->tf.type_field)
 #define type(p) ({unsigned char _t_; _t_ = (p)->tf.type_field; if (((check_types) && (_t_ == T_FREE)) || (_t_ >= NUM_TYPES)) print_gc_info(p, __LINE__); _t_;})
   #define set_type(p, f) \
@@ -1520,8 +1524,8 @@ static void init_types(void)
 #define T_ECDR_SET                    1                                        /* T_HAS_METHODS */
 #define ecdr_is_set(p)                (((p)->debugger_bits & T_ECDR_SET) != 0) /* ((typeflag(p) & T_ECDR_SET) != 0) */
 #define set_ecdr_is_set(p)            (p)->debugger_bits |= T_ECDR_SET         /*  typeflag(p) |= T_ECDR_SET */
-#define ecdr(p)                       ecdr_1(sc, p, __func__, __LINE__)
-#define set_ecdr(p, x)                set_ecdr_1(sc, p, x, __func__, __LINE__)
+#define ecdr(p)                       ecdr_1(hidden_sc, p, __func__, __LINE__)
+#define set_ecdr(p, x)                set_ecdr_1(hidden_sc, p, x, __func__, __LINE__)
 
 static s7_pointer ecdr_1(s7_scheme *sc, s7_pointer p, const char *func, int line)
 {
@@ -1540,8 +1544,8 @@ static s7_pointer set_ecdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const ch
 #define T_FCDR_SET                    2                                        /* T_GLOBAL */
 #define fcdr_is_set(p)                (((p)->debugger_bits & T_FCDR_SET) != 0) /* ((typeflag(p) & T_FCDR_SET) != 0) */
 #define set_fcdr_is_set(p)            (p)->debugger_bits |= T_FCDR_SET         /* typeflag(p) |= T_FCDR_SET */
-#define fcdr(p)                       fcdr_1(sc, p, __func__, __LINE__)
-#define set_fcdr(p, x)                set_fcdr_1(sc, p, x, __func__, __LINE__)
+#define fcdr(p)                       fcdr_1(hidden_sc, p, __func__, __LINE__)
+#define set_fcdr(p, x)                set_fcdr_1(hidden_sc, p, x, __func__, __LINE__)
 
 static s7_pointer fcdr_1(s7_scheme *sc, s7_pointer p, const char *func, int line)
 {
@@ -1561,8 +1565,8 @@ static void set_fcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define T_GCDR_SET                    4                                        /* T_COPY_ARGS */
 #define gcdr_is_set(p)                (((p)->debugger_bits & T_GCDR_SET) != 0) /* ((typeflag(p) & T_GCDR_SET) != 0) */
 #define set_gcdr_is_set(p)            (p)->debugger_bits |= T_GCDR_SET         /* typeflag(p) |= T_GCDR_SET */
-#define gcdr(p)                       gcdr_1(sc, p, __func__, __LINE__)
-#define set_gcdr(p, x)                set_gcdr_1(sc, p, x, __func__, __LINE__)
+#define gcdr(p)                       gcdr_1(hidden_sc, p, __func__, __LINE__)
+#define set_gcdr(p, x)                set_gcdr_1(hidden_sc, p, x, __func__, __LINE__)
 
 static s7_pointer gcdr_1(s7_scheme *sc, s7_pointer p, const char *func, int line)
 {
@@ -1904,7 +1908,7 @@ bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_optimized
 #define CLOSURE_ARITY_NOT_SET         0x40000000
 #define MAX_ARITY                     0x20000000
 #define closure_arity_unknown(p)      (closure_arity(p) == CLOSURE_ARITY_NOT_SET)
-#define is_thunk(Sc, Fnc)             (((is_closure(Fnc)) && (!is_pair(closure_args(Fnc)))) || (s7_is_aritable(Sc, Fnc, 0)))
+#define is_thunk(Sc, Fnc)             ((type(Fnc) >= T_GOTO) && (s7_is_aritable(Sc, Fnc, 0)))
 
 #define catch_tag(p)                  (p)->object.rcatch.tag
 #define catch_goto_loc(p)             (p)->object.rcatch.goto_loc
@@ -5027,14 +5031,10 @@ static s7_pointer g_string_to_symbol_1(s7_scheme *sc, s7_pointer args, s7_pointe
 
   if (!is_string(str))
     method_or_bust(sc, str, sym, args, T_STRING, 0);
+  if (string_length(str) == 0)
+    return(simple_wrong_type_argument_with_type(sc, sym, str, make_string_wrapper(sc, "a non-null string")));
 
-  /* currently if the string has an embedded null, it marks the end of the new symbol name.
-   *   I wonder if this is a bug...
-   * also a null string generates a weird symbol that confuses the keyword funcs:
-   *   (symbol? (string->symbol "")) is #t, but
-   *   (keyword? (symbol->keyword (string->symbol "")) is #f (it is ': apparently)
-   *   should we complain about a null string arg here?
-   */
+  /* currently if the string has an embedded null, it marks the end of the new symbol name. */
   return(make_symbol_with_length(sc, string_value(str), string_length(str)));
 }
 
@@ -6672,43 +6672,19 @@ static int closure_length(s7_scheme *sc, s7_pointer e)
   return(-1);
 }
 
+#if WITH_GCC
+#define COPY_TREE(P) ({s7_pointer p; p = P; cons_unchecked(sc, (is_pair(car(p))) ? copy_tree(sc, car(p)) : car(p), (is_pair(cdr(p))) ? copy_tree(sc, cdr(p)) : cdr(p));})
+#else
+#define COPY_TREE(P) copy_tree(sc, p)
+#endif
 
 static s7_pointer copy_tree(s7_scheme *sc, s7_pointer tree)
 {
-  if (is_pair(car(tree)))
-    {
-      if (is_pair(cdr(tree)))
-	return(cons_unchecked(sc, copy_tree(sc, car(tree)), copy_tree(sc, cdr(tree))));
-      return(cons_unchecked(sc, copy_tree(sc, car(tree)), cdr(tree)));
-    }
-  else
-    {
-      if (is_pair(cdr(tree)))
-	return(cons_unchecked(sc, car(tree), copy_tree(sc, cdr(tree))));
-      return(cons_unchecked(sc, car(tree), cdr(tree)));
-    }
-  return(tree);
+  return(cons_unchecked(sc, 
+			(is_pair(car(tree))) ? COPY_TREE(car(tree)) : car(tree),
+			(is_pair(cdr(tree))) ? COPY_TREE(cdr(tree)) : cdr(tree)));
 }
 
-#if DEBUGGING
-static void annotate_expansion(s7_scheme *sc, s7_pointer p)
-{
-  if ((is_symbol(car(p))) &&
-      (is_pair(cdr(p))))
-    {
-      set_ecdr(cdr(p), p);
-      set_overlay(cdr(p));
-    }
-  else
-    {
-      if (is_pair(car(p)))
-	annotate_expansion(sc, car(p));
-    }
-  for (p = cdr(p); is_pair(p); p = cdr(p))
-    if (is_pair(car(p)))
-      annotate_expansion(sc, car(p));
-}
-#else
 static void annotate_expansion(s7_pointer p)
 {
   if ((is_symbol(car(p))) &&
@@ -6726,9 +6702,21 @@ static void annotate_expansion(s7_pointer p)
     if (is_pair(car(p)))
       annotate_expansion(car(p));
 }
-#endif
 
-/* static int conses(s7_pointer tree) {if (is_pair(tree)) return(1 + conses(car(tree)) + conses(cdr(tree))); return(0);} */
+static s7_pointer copy_body(s7_scheme *sc, s7_pointer p)
+{
+  if (8192 >= (sc->free_heap_top - sc->free_heap))
+    {
+      gc(sc);
+      while (8192 >= (sc->free_heap_top - sc->free_heap))
+	resize_heap(sc);
+    }
+  sc->w = copy_tree(sc, p);
+  annotate_expansion(sc->w);
+  p = sc->w;
+  sc->w = sc->NIL;
+  return(p);
+}
 
 static s7_pointer copy_closure(s7_scheme *sc, s7_pointer fnc)
 {
@@ -6736,33 +6724,16 @@ static s7_pointer copy_closure(s7_scheme *sc, s7_pointer fnc)
    */
   s7_pointer x, body;
 
-  if (8192 >= (sc->free_heap_top - sc->free_heap))
-    {
-      gc(sc);
-      while (8192 >= (sc->free_heap_top - sc->free_heap))
-	resize_heap(sc);
-    }
-
   body = closure_body(fnc);
   if (is_pair(body))
-    {
-      sc->w = copy_tree(sc, body);
-#if DEBUGGING
-      annotate_expansion(sc, sc->w);
-#else
-      annotate_expansion(sc->w);
-#endif
-    }
-  else sc->w = body;
+    body = copy_body(sc, body);
 
   NEW_CELL(sc, x, typeflag(fnc));
   closure_args(x) = closure_args(fnc);
-  closure_body(x) = sc->w;
-  sc->w = sc->NIL;
+  closure_body(x) = body;
   closure_setter(x) = closure_setter(fnc);
   closure_arity(x) = closure_arity(fnc);
   closure_let(x) = closure_let(fnc);
-
   return(x);
 }
 
@@ -24386,6 +24357,10 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 	  collect_vector_info(sc, ci, top, stop_at_print_length, &top_cyclic);
 	  break;
 
+	case T_ITERATOR:
+	  collect_shared_info(sc, ci, iterator_sequence(top), stop_at_print_length, &top_cyclic);
+	  break;
+
 	case T_HASH_TABLE:
 	  if (hash_table_entries(top) > 0)
 	    {
@@ -25201,6 +25176,11 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 	}
       else
 	{
+	  if (car(lst) == lst) /* this is a bug */
+	    {
+	      port_write_string(port)(sc, "let ((lst (list 1))) (set-car! lst lst))", 40, port);
+	      return;
+	    }
 	  /* the easier cases: no circles or shared refs to patch up */
 	  if (true_len > 0)
 	    {
@@ -25676,20 +25656,19 @@ static void iterator_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use
   if (use_write == USE_READABLE_WRITE)
     {
       if (iterator_is_at_end(obj))
-	port_write_string(port)(sc, "#<eof>", 6, port);
+	port_write_string(port)(sc, "(make-iterator #())", 19, port);
       else
 	{
 	  s7_pointer seq;
 	  seq = iterator_sequence(obj);
-	  switch (type(seq))
+	  if ((is_string(seq)) && (!is_byte_vector(seq)))
 	    {
-	    case T_STRING:
 	      port_write_string(port)(sc, "(make-iterator \"", 16, port);
 	      port_write_string(port)(sc, (char *)(string_value(seq) + iterator_position(obj)), string_length(seq) - iterator_position(obj), port);
 	      port_write_string(port)(sc, "\")", 2, port);
-	      break;
-	      
-	    default:
+	    }
+	  else
+	    {
 	      if (iterator_position(obj) > 0)
 		port_write_string(port)(sc, "(let ((iter (make-iterator ", 27, port);
 	      else port_write_string(port)(sc, "(make-iterator ", 15, port);
@@ -25771,9 +25750,16 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       let_to_port(sc, obj, port, use_write, to_file, ci);
       break;
 
+    case T_UNIQUE:
+      /* if file has #<eof> it causes read to return #<eof> -> end of read! what is readable version? */
+      if ((use_write == USE_READABLE_WRITE) &&
+	  (obj == sc->EOF_OBJECT))
+	port_write_string(port)(sc, "(begin #<eof>)", 14, port);
+      else port_write_string(port)(sc, unique_name(obj), unique_name_length(obj), port);
+      break;
+
     case T_BOOLEAN:
     case T_NIL:
-    case T_UNIQUE:
     case T_UNSPECIFIED:
       port_write_string(port)(sc, unique_name(obj), unique_name_length(obj), port);
       break;
@@ -25919,11 +25905,15 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_CONTINUATION:
-      port_write_string(port)(sc, "#<continuation>", 15, port);
+      if (use_write == USE_READABLE_WRITE)
+	port_write_string(port)(sc, "continuation", 12, port);
+      else port_write_string(port)(sc, "#<continuation>", 15, port);
       break;
 
     case T_GOTO:
-      port_write_string(port)(sc, "#<goto>", 7, port);
+      if (use_write == USE_READABLE_WRITE)
+	port_write_string(port)(sc, "goto", 4, port);
+      else port_write_string(port)(sc, "#<goto>", 7, port);
       break;
 
     case T_CATCH:
@@ -36100,10 +36090,13 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
   dest = cadr(args);
   if ((source == dest) && (!have_indices))
     return(dest);
-
+  
   switch (type(source))
     {
     case T_PAIR:
+      if (dest == sc->KEY_READABLE)  /* a kludge, but I can't think of anything less stupid */
+	return(copy_body(sc, source));
+
       end = s7_list_length(sc, source);
       if (end == 0) 
 	end = circular_list_entries(source);
@@ -47544,6 +47537,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 	    {
 	      /* there is one problem with closure* here -- we can't trust anything that has fancy (non-constant) default argument values. */
 	      set_safe_closure(body);
+	      /* this bit is set on the function itself in make_closure and friends */
 	    }
 	}
     }
@@ -53096,8 +53090,6 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
   e = sc->envir;
   id = let_id(e);
 
-  /* fprintf(stderr, "%s\n", DISPLAY(closure_name(sc, sc->code))); */
-  
   for (x = closure_args(sc->code), z = sc->args; is_pair(x); x = cdr(x))
     {
       s7_pointer sym, args, val;
@@ -60314,11 +60306,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else 
 	    {
 	      if (is_pair(sc->value))
-#if DEBUGGING
-		annotate_expansion(sc, sc->value);
-#else
 		annotate_expansion(sc->value);
-#endif
 	    }
 	  break;
 	  
@@ -65838,7 +65826,9 @@ s7_scheme *s7_init(void)
     }
 
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
-
+#if DEBUGGING
+  hidden_sc = sc;
+#endif
   sc->gc_off = true;                         /* sc->args and so on are not set yet, so a gc during init -> segfault */
   sc->gc_stats = 0;
   init_gc_caches(sc);
@@ -67296,7 +67286,7 @@ int main(int argc, char **argv)
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6354
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9
  * thash         |      |      |                          19.4 17.4 16.0
- * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.8
+ * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3
  * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1
  *
  * calls 54.6 if no clm2xen, tall: 26.9
@@ -67330,6 +67320,7 @@ int main(int argc, char **argv)
  *
  * permutation-iterator (iterator-as-continuation?)
  * define-safe-macro fixed/tested. doc/finish define-with-macros.
- * why are some of the tgen funcs unoptimized?
- * perhaps expand annotate?
+ * stacktrace-defaults error is uninformative (and dumb looking if a list) 
+ * *s7* display is uninformative (show fields)
  */
+ 
