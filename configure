@@ -5962,7 +5962,11 @@ if test "$with_audio" != no ; then
     $as_echo "#define HAVE_ALSA 1" >>confdefs.h
 
     AUDIO_LIB="-lasound"
-    AUDIO_SYSTEM=ALSA
+    if test "$with_jack" = yes ; then
+      AUDIO_SYSTEM=ALSA+JACK
+    else
+      AUDIO_SYSTEM=ALSA
+    fi
   fi
 
   if test "$with_oss" = yes ; then
