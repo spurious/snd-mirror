@@ -5932,7 +5932,11 @@ if test "$with_audio" != no ; then
   fi
 
   if test "$with_jack" = yes ; then
-    AUDIO_SYSTEM=JACK
+    if test "$with_alsa" = yes ; then
+      AUDIO_SYSTEM=ALSA+JACK
+    else
+      AUDIO_SYSTEM=JACK
+    fi
     $as_echo "#define MUS_JACK 1" >>confdefs.h
 
     if test x$PKG_CONFIG != xno ; then

@@ -1058,14 +1058,20 @@ and assign it to a variable.  You can even set its procedure-setter!
     (if (pair? form)
 	(if (and (symbol? (car form))
 		 (macro? (symbol-&gt;value (car form))))
-	    (expand (apply (eval (procedure-source (symbol-&gt;value (car form)))) (cdr form)))
-	    (cons (expand (car form))
-		  (expand (cdr form))))
+	    (expand (apply macroexpand (list form)))
+	    (if (and (eq? (car form) 'set!)  ; look for (set! (mac ...) ...) and use mac's procedure-setter
+		     (pair? (cdr form))
+		     (pair? (cadr form))
+		     (macro? (symbol-&gt;value (caadr form))))
+		(expand (apply (eval (procedure-source (procedure-setter (symbol-&gt;value (caadr form))))) 
+			       (append (cdadr form) (cddr form))))
+		(cons (expand (car form))
+		      (expand (cdr form)))))
 	form))
-  `(pretty-print ',(expand form)))
+  (list 'quote (expand form)))
 </pre>
 <p>This does not always handle bacros correctly because their expansion can depend on the run-time 
-state, and here we are just looking at the code as a list.  
+state.
 </p>
 </div>
 
@@ -1290,14 +1296,14 @@ control over the environment at any point:
 <em class="gray">(2 3 4 1)</em>
 
 ;;; but this is simpler:
-(define-macro (rotate . args)
+(define-macro (rotate! . args)
   `(set! ,(args (- (length args) 1))
          (with-let (inlet 'e (curlet) 'tmp ,(car args))
 	   (with-let e 
 	     ,@(map (lambda (a b) `(set! ,a ,b)) args (cdr args)))
 	   tmp)))
 
-&gt; (let ((a 1) (b 2) (c 3)) (rotate a b c) (list a b c))
+&gt; (let ((a 1) (b 2) (c 3)) (rotate! a b c) (list a b c))
 <em class="gray">(2 3 1)</em>
 </pre>
 </div>
@@ -1422,6 +1428,8 @@ Here's one way out:
       `(let (,@(map (lambda (name) `(,name ,(eval name))) ,names))
 	 ,@,body)))))
 </pre>
+<p>Sadly, with-let is simpler.
+</p>
 </div>
 
 </blockquote>
@@ -5499,7 +5507,12 @@ gc-stats                      #f (#t turns on printout of the GC activity)
 
 <p>
 Use the standard environment syntax to access these fields:
-<code>(*s7* 'stack-top)</code>.  Set (*s7* 'safety) to 2 or higher
+<code>(*s7* 'stack-top)</code>.  stuff.scm has the function
+*s7*-&gt;list that returns most of these fields in a list.
+</p>
+
+<p>
+Set (*s7* 'safety) to 2 or higher
 to turn off optimization.
 </p>
 

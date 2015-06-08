@@ -531,8 +531,12 @@ if test "$with_audio" != no ; then
     AUDIO_LIB="-lportaudio"
   fi
 
-  if test "$with_jack" = yes ; then 
-    AUDIO_SYSTEM=JACK
+  if test "$with_jack" = yes ; then
+    if test "$with_alsa" = yes ; then 
+      AUDIO_SYSTEM=ALSA+JACK
+    else
+      AUDIO_SYSTEM=JACK
+    fi
     AC_DEFINE(MUS_JACK)
     if test x$PKG_CONFIG != xno ; then
       if $PKG_CONFIG jack --exists ; then    

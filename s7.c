@@ -4620,7 +4620,7 @@ static void resize_stack(s7_scheme *sc)
 
 #define HMLT 4
 
-static unsigned int rhash_0(const unsigned char *s) {return(0);}
+static unsigned int rhash_0(const unsigned char *s) {return(0);} /* I think this can't happen */
 static unsigned int rhash_1(const unsigned char *s) {return(s[0]);}
 static unsigned int rhash_2(const unsigned char *s) {return(s[0] * HMLT + s[1]);}
 static unsigned int rhash_3(const unsigned char *s) {return((s[0] * HMLT + s[1]) * HMLT + s[2]);}
@@ -6673,9 +6673,9 @@ static int closure_length(s7_scheme *sc, s7_pointer e)
 }
 
 #if WITH_GCC
-#define COPY_TREE(P) ({s7_pointer p; p = P; cons_unchecked(sc, (is_pair(car(p))) ? copy_tree(sc, car(p)) : car(p), (is_pair(cdr(p))) ? copy_tree(sc, cdr(p)) : cdr(p));})
+#define COPY_TREE(P) ({s7_pointer _p; _p = P; cons_unchecked(sc, (is_pair(car(_p))) ? copy_tree(sc, car(_p)) : car(_p), (is_pair(cdr(_p))) ? copy_tree(sc, cdr(_p)) : cdr(_p));})
 #else
-#define COPY_TREE(P) copy_tree(sc, p)
+#define COPY_TREE(P) copy_tree(sc, P)
 #endif
 
 static s7_pointer copy_tree(s7_scheme *sc, s7_pointer tree)
@@ -36737,6 +36737,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
     case T_ITERATOR:
       {
 	s7_pointer result, p = NULL;
+	int results = 0;
 	result = sc->NIL;
 	while (true)
 	  {
@@ -36748,7 +36749,15 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 		sc->temp8 = sc->NIL;
 		return(result);
 	      }
-
+	    if (sc->safety > 0)
+	      {
+		results++;
+		if (results > 10000)
+		  {
+		    fprintf(stderr, "iterator in object->list is creating a very long list!\n");
+		    results = S7_LONG_MIN;
+		  }
+	      }
 	    if (val != sc->NO_VALUE)
 	      {
 		if (is_null(result))
@@ -67291,8 +67300,8 @@ int main(int argc, char **argv)
  * titer         |      |      |                          7503 6793 6335
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6354
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9
- * thash         |      |      |                          19.4 17.4 16.0
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3
+ * thash         |      |      |                          50.7 23.8 18.3
  * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1
  *
  * calls 54.6 if no clm2xen, tall: 26.9
@@ -67317,22 +67326,7 @@ int main(int argc, char **argv)
  *   with name/sync/sample settable
  * apropos should scan autoload?
  *
- * can circular-iterator confuse format? yes -- inf loop probably object->list
-#3  0x000000000047f394 in other_iterate (sc=0x76a970, obj=0x2aaaab1b4250) at s7.c:23885
-#4  0x000000000047fe49 in s7_iterate (sc=0x76a970, obj=0x2aaaab1b4250) at s7.c:24075
-#5  0x00000000004b993e in object_to_list (sc=0x76a970, obj=0x2aaaab1b4250) at s7.c:36639
-#6  0x0000000000489a24 in format_to_port_1 (sc=0x76a970, port=0x81e490, str=0x823cf0 "~{~A~% ~}", 
- * perhaps a warning if safety>0?
- *
  * permutation-iterator (iterator-as-continuation?)
  * define-safe-macro fixed/tested. doc/finish define-with-macros.
- * 
- * stacktrace-defaults error is uninformative (and dumb looking if a list) -- also use field symbol, not let-set
- * *s7* display is uninformative (show fields)
- * once-only et al with with-let
  * ~W car-cycle in iterator bug
- * better way to access copy-as-procedure-source
- * check sym "" fixups
- * try 4 arg fauto+lint+load
  */
- 

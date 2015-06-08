@@ -14,9 +14,9 @@
 	  (restore-history #f)      ; function to restore history buffer entries from a file
 	  (helpers ())              ; list of functions displaying help strings 
 	  (run #f)                  ; function that fires up a REPL
-	  (top-level-let (sublet (rootlet))) ; environment in which evaluation takes place
+	  (top-level-let (sublet (rootlet) :** #f)) ; environment in which evaluation takes place
 	  (repl-let                 ; environment for keymap functions to access all the REPL innards (cursor-position etc)
-      
+	   
       (with-let (sublet *libc*)
 
 	;; -------- completion --------
@@ -58,8 +58,8 @@
 		      (not (null? (cdr files))))
 		  text
 		  (car files)))))
-
-
+	
+	
 	;; -------- history --------
 	(let ((history-buffer (make-vector 100 #f))
 	      (current-history-size 100)
@@ -86,12 +86,12 @@
 			     (set! history-position (+ history-position 1))
 			     (if (= history-position current-history-size)
 				 (set! history-position 0)))))
-
+	  
 	  (define (pop-history) ; throw away most recent addition
 	    (set! history-position (- history-position 1))
 	    (if (negative? history-position)
 		(set! history-position (- current-history-size 1))))
-
+	  
 	  (define* (write-history port (spaces 0))
 	    (format port "~NC(set! history-position ~D)~%" spaces #\space history-position)
 	    (format port "~NC(set! current-history-size ~D)~%" spaces #\space current-history-size)
@@ -99,23 +99,23 @@
 	      (set! (*s7* 'print-length) (* 2 current-history-size))
 	      (format port "~NC(set! history-buffer ~A)" spaces #\space (object->string history-buffer))
 	      (set! (*s7* 'print-length) pl)))
-	    
+	  
 	  (define* (save-history (file "repl-history.scm"))
 	    (call-with-output-file file
 	      write-history))
 	  
 	  (define* (restore-history (file "repl-history.scm"))
 	    (load file (curlet)))
-
+	  
 	  
 	  (let ((prompt-string "> ")
 		(prompt-length 2)
-		(current-line "")          ; current expression might be a better name
-		(previous-line ())         ; for undo via C-_
+		(cur-line "")              ; longer name originally, but that makes the code harder to read
+		(prev-line ())             ; for undo via C-_
 		(selection #f)             ; for C-y
-		(cursor-position 0)        ; cursor-position is the logical position (index into current-line)
-		(current-row 0)            ; catch window scrolling
-		(red-par-pos #f)           ; paren match position (index into current-line)
+		(cursor-pos 0)             ; cursor-pos is the logical position (index into cur-line)
+		(cur-row 0)                ; catch window scrolling
+		(red-par-pos #f)           ; paren match position (index into cur-line)
 		(prompt-row 0)             ; need to tie everything to prompt position (it can move in media res if window scrolls)
 		(prompt-col 0)
 		(last-row 0)               ; these hold the window bounds when we start
@@ -125,129 +125,126 @@
 		(tab-as-space (make-string 6 #\space))
 		(next-char #f)
 		(chars 0)                  ; (sigh) a kludge to try to distinguish tab-as-space from tab-as-completion/indentation
-		(** #f)
 		(unbound-case #f)
 		(all-done #f))             ; if #t, repl returns to its caller, if any
-
-		 
+	    
+	    
 	    ;; -------- evaluation ---------
 	    (define (badexpr h)            ; *missing-close-paren-hook* function for Enter command
 	      (set! (h 'result) 'string-read-error))
-
+	    
 	    (define (shell? h)             ; *unbound-variable-hook* function, also for Enter
-	      ;; examine current-line -- only call system if the unbound variable matches the first non-whitespace chars
-	      ;;   of current-line, and command -v name returns 0 (indicating the shell thinks it is an executable command)
-	      (if (eq? (h 'variable) '**)  ; I always forget to mention repl-let
-		  (set! (h 'result) **)
-		  (do ((i 0 (+ i 1)))
-		      ((or (= i (length current-line))
-			   (not (char-whitespace? (current-line i))))
-		       (let ((var-name (symbol->string (h 'variable))))
-			 (when (and (>= (- (length current-line) i) (length var-name)) ; var-name might be unrelated to current-line
-				    (string=? var-name (substring current-line i (+ i (length var-name))))
-				    (zero? (system (string-append "command -v " var-name " >/dev/null"))))
-			   (set! unbound-case #t)
-			   (if (procedure? ((rootlet) 'system))
-			       (begin
-				 (set! ** (((rootlet) 'system) current-line #t))
-				 (display ** *stderr*))
-			       (set! ** (system current-line)))
-			   (set! (h 'result) (symbol " "))))))))
-	  
-	  (define (with-repl-let body)
-	    ;; for multiline edits, we will use *missing-close-paren-hook* rather than try to parse the input ourselves.
-	    (let ((old-badexpr-hook (hook-functions *missing-close-paren-hook*))
-		  (old-unbound-var-hook (hook-functions *unbound-variable-hook*))
-		  (old-eval #f)
-		  (old-eval-string #f)
-		  (old-load #f))
-
-	      ;; if the repl's top-level-let is not rootlet, and we load some file into rootlet
-	      ;;   that (for example) defines a function at its top level, that function's definition
-	      ;;   env is rootlet.  If we then define something in the repl, it is in the
-	      ;;   repl's top level.  If we now call the function asking is the new thing defined,
-	      ;;   it looks in rootlet, not the repl top-level, and says no.
-	      ;; so, locally redefine these three to use the repl top-level while we're in the repl.
-	      ;; in addition, for each of these, we need to report missing close parens and so on
-
-	      (define (repl-hooks)
-		(set! (hook-functions *missing-close-paren-hook*) (cons badexpr old-badexpr-hook))
-		(set! (hook-functions *unbound-variable-hook*) (cons shell? old-unbound-var-hook)))
-	      
-	      (define (original-hooks)
-		(set! unbound-case #f)
-		(set! (hook-functions *missing-close-paren-hook*) old-badexpr-hook)
-		(set! (hook-functions *unbound-variable-hook*) old-unbound-var-hook))
-	      
-	      (define* (new-load file (e (*repl* 'top-level-let)))
-		(dynamic-wind original-hooks (lambda () (load file e)) repl-hooks))
-
-	      (define* (new-eval form (e (*repl* 'top-level-let))) 
-		(dynamic-wind original-hooks (lambda () (eval form e)) repl-hooks))
-
-	      (define* (new-eval-string str (e (*repl* 'top-level-let)))
-		(dynamic-wind original-hooks (lambda () (eval-string str e)) repl-hooks))
-
-	       (dynamic-wind
-		   (lambda ()
-		     (repl-hooks)
-		     (set! eval new-eval)
-		     (set! eval-string new-eval-string)
-		     (set! load new-load))
-		   body
-		   (lambda ()
-		     (set! eval old-eval)
-		     (set! eval-string old-eval-string)
-		     (set! load old-load)
-		     (original-hooks)))))
-
-	  
+	      ;; examine cur-line -- only call system if the unbound variable matches the first non-whitespace chars
+	      ;;   of cur-line, and command -v name returns 0 (indicating the shell thinks it is an executable command)
+	      (do ((i 0 (+ i 1)))
+		  ((or (= i (length cur-line))
+		       (not (char-whitespace? (cur-line i))))
+		   (let ((var-name (symbol->string (h 'variable))))
+		     (when (and (>= (- (length cur-line) i) (length var-name)) ; var-name might be unrelated to cur-line
+				(string=? var-name (substring cur-line i (+ i (length var-name))))
+				(zero? (system (string-append "command -v " var-name " >/dev/null"))))
+		       (set! unbound-case #t)
+		       (if (procedure? ((rootlet) 'system))
+			   (begin
+			     (set! ((*repl* 'top-level-let) '**) (((rootlet) 'system) cur-line #t))
+			     (display ((*repl* 'top-level-let) '**) *stderr*))
+			   (set! ((*repl* 'top-level-let) '**) (system cur-line)))
+		       (set! (h 'result) (symbol " ")))))))
+	    
+	    (define (with-repl-let body)
+	      ;; for multiline edits, we will use *missing-close-paren-hook* rather than try to parse the input ourselves.
+	      (let ((old-badexpr-hook (hook-functions *missing-close-paren-hook*))
+		    (old-unbound-var-hook (hook-functions *unbound-variable-hook*))
+		    (old-eval #f)
+		    (old-eval-string #f)
+		    (old-load #f))
+		
+		;; if the repl's top-level-let is not rootlet, and we load some file into rootlet
+		;;   that (for example) defines a function at its top level, that function's definition
+		;;   env is rootlet.  If we then define something in the repl, it is in the
+		;;   repl's top level.  If we now call the function asking is the new thing defined,
+		;;   it looks in rootlet, not the repl top-level, and says no.
+		;; so, locally redefine these three to use the repl top-level while we're in the repl.
+		;; in addition, for each of these, we need to report missing close parens and so on
+		
+		(define (repl-hooks)
+		  (set! (hook-functions *missing-close-paren-hook*) (cons badexpr old-badexpr-hook))
+		  (set! (hook-functions *unbound-variable-hook*) (cons shell? old-unbound-var-hook)))
+		
+		(define (original-hooks)
+		  (set! unbound-case #f)
+		  (set! (hook-functions *missing-close-paren-hook*) old-badexpr-hook)
+		  (set! (hook-functions *unbound-variable-hook*) old-unbound-var-hook))
+		
+		(define* (new-load file (e (*repl* 'top-level-let)))
+		  (dynamic-wind original-hooks (lambda () (load file e)) repl-hooks))
+		
+		(define* (new-eval form (e (*repl* 'top-level-let))) 
+		  (dynamic-wind original-hooks (lambda () (eval form e)) repl-hooks))
+		
+		(define* (new-eval-string str (e (*repl* 'top-level-let)))
+		  (dynamic-wind original-hooks (lambda () (eval-string str e)) repl-hooks))
+		
+		(dynamic-wind
+		    (lambda ()
+		      (repl-hooks)
+		      (set! eval new-eval)
+		      (set! eval-string new-eval-string)
+		      (set! load new-load))
+		    body
+		    (lambda ()
+		      (set! eval old-eval)
+		      (set! eval-string old-eval-string)
+		      (set! load old-load)
+		      (original-hooks)))))
+	    
+	    
 	    ;; -------- match parens --------
 	    (define (char-constant? pos)
 	      (and (> pos 2)
-		   (char=? (current-line (- pos 1)) #\\)
-		   (char=? (current-line (- pos 2)) #\#)))
+		   (char=? (cur-line (- pos 1)) #\\)
+		   (char=? (cur-line (- pos 2)) #\#)))
 	    
 	    (define (check-parens)
-	      (let ((endpos (- cursor-position 1)))
-		(if (and (> cursor-position 1)
-			 (char=? (current-line endpos) #\))              ; ")" on left of cursor
+	      (let ((endpos (- cursor-pos 1)))
+		(if (and (> cursor-pos 1)
+			 (char=? (cur-line endpos) #\))              ; ")" on left of cursor
 			 (not (char-constant? endpos)))                  ; it's not "#\)"
 		    (let ((oparens ())
 			  (new-red-pos #f))
 		      (do ((i 0 (+ i 1)))
 			  ((>= i endpos))
-			(case (current-line i)
+			(case (cur-line i)
 			  ((#\()
 			   (set! oparens (cons i oparens)))
-
+			  
 			  ((#\))
 			   (if (pair? oparens)
 			       (set! oparens (cdr oparens))))
-
+			  
 			  ((#\;)
 			   (do ((k (+ i 1) (+ k 1)))
 			       ((or (>= k endpos)
-				    (char=? (current-line k) #\newline))
+				    (char=? (cur-line k) #\newline))
 				(set! i k)
 				(if (>= i endpos)   ; (f1 "(+ 1 3) should not show first paren as a match (similarly below)
 				    (set! oparens ())))))
-				
+			  
 			  ((#\")
 			   (do ((k (+ i 1) (+ k 1)))
 			       ((or (>= k endpos)
-				    (and (char=? (current-line k) #\")
-					 (not (char=? (current-line (- k 1)) #\\))))
+				    (and (char=? (cur-line k) #\")
+					 (not (char=? (cur-line (- k 1)) #\\))))
 				(set! i k)
 				(if (>= i endpos)
 				    (set! oparens ())))))
-
+			  
 			  ((#\#)
-			   (if (char=? (current-line (+ i 1)) #\|)
+			   (if (char=? (cur-line (+ i 1)) #\|)
 			       (do ((k (+ i 1) (+ k 1)))
 				   ((or (>= k endpos)
-					(and (char=? (current-line k) #\|)
-					     (char=? (current-line (+ k 1)) #\#)))
+					(and (char=? (cur-line k) #\|)
+					     (char=? (cur-line (+ k 1)) #\#)))
 				    (set! i (+ k 1))
 				    (if (>= i endpos)
 					(set! oparens ()))))))))
@@ -265,40 +262,40 @@
 	    ;; -------- indentation --------
 	    (define (indent pos)
 	      (let ((old-red red-par-pos)
-		    (old-line (copy current-line))
-		    (old-cursor cursor-position))
-		(set! current-line (string-append (substring current-line 0 cursor-position) ")"))
-		(set! cursor-position (length current-line))
+		    (old-line (copy cur-line))
+		    (old-cursor cursor-pos))
+		(set! cur-line (string-append (substring cur-line 0 cursor-pos) ")"))
+		(set! cursor-pos (length cur-line))
 		(check-parens)
-		(set! current-line old-line)
-		(set! cursor-position old-cursor)
+		(set! cur-line old-line)
+		(set! cursor-pos old-cursor)
 		(let ((new-red red-par-pos))
 		  (set! red-par-pos old-red)
 		  (let ((col 0))
 		    (do ((i 0 (+ i 1)))
 			((= i new-red))
-		      (if (char=? (current-line i) #\newline)
+		      (if (char=? (cur-line i) #\newline)
 			  (set! col 0)
 			  (set! col (+ col 1))))
 		    (let ((sym (do ((i (+ new-red 1) (+ i 1)))
-				   ((not (char-alphabetic? (current-line i)))
-				    (substring current-line (+ new-red 1) i)))))
-
+				   ((not (char-alphabetic? (cur-line i)))
+				    (substring cur-line (+ new-red 1) i)))))
+		      
 		      (let ((spaces (+ col (if (member sym '("or" "and" "cond" "if"))
 					       (+ (length sym) 2)
 					       2))))
-			(if (= cursor-position (length current-line))
+			(if (= cursor-pos (length cur-line))
 			    (begin
-			      (set! current-line (format #f "~A~NC" current-line spaces #\space))
-			      (set! cursor-position (length current-line)))
+			      (set! cur-line (format #f "~A~NC" cur-line spaces #\space))
+			      (set! cursor-pos (length cur-line)))
 			    (begin
-			      (set! current-line (format #f "~A~NC~A" 
-							 (substring current-line 0 cursor-position)
-							 spaces #\space
-							 (substring current-line (+ cursor-position 1))))
-			      (set! cursor-position (+ cursor-position spaces))))))))))
-
-
+			      (set! cur-line (format #f "~A~NC~A" 
+						     (substring cur-line 0 cursor-pos)
+						     spaces #\space
+						     (substring cur-line (+ cursor-pos 1))))
+			      (set! cursor-pos (+ cursor-pos spaces))))))))))
+	    
+	    
 	    ;; -------- prompt --------
 	    (define prompt (dilambda
 			    (lambda ()
@@ -307,7 +304,7 @@
 			      (set! prompt-length (length new-prompt))
 			      (set! prompt-string new-prompt))))
 	    
-
+	    
 	    ;; -------- vt100 --------
 	    (define (bold text) (format #f "~C[1m~A~C[21m" #\escape text #\escape)) 
 	    (define (red text) (format #f "~C[31m~A~C[0m" #\escape text #\escape))  ; black=30, green=32, yellow=33, blue=34
@@ -316,7 +313,7 @@
 	      (if all-colors
 		  (format #f "~C[38;5;~Dm~A~C[0m" #\escape (+ 16 (* 36 (round (* r 5))) (* 6 (round (* g 5))) (round (* b 5))) text #\escape)
 		  (format #f "~C[~Dm~A~C[0m" #\escape (+ 30 (ash (round b) 2) (ash (round g) 1) (round r)) text #\escape)))
-
+	    
 	    (define (cursor-coords)
 	      (let* ((c (string #\null #\null))
 		     (cc (string->c-pointer c))
@@ -337,7 +334,7 @@
 				 (and (char=? (c 0) #\R)
 				      (cons x y)))
 			      (set! x (+ (* 10 x) (- (char->integer (c 0)) (char->integer #\0))))))))))
-
+	    
 	    (define (cursor-bounds)
 	      (let ((coords (cursor-coords)))
 		(set! prompt-col (car coords))
@@ -348,16 +345,22 @@
 		  (set! last-col (car bounds))
 		  (set! last-row (cdr bounds)))))
 	    
-
+	    ;; to enable mouse click coords (in xterm anyway), (format *stderr* "~C[?9h" #\escape)
+	    ;;    disable: (format *stderr* "~C[?9l" #\escape)
+	    ;; while enabled, mouse selection instead sends coords to repl (so it's annoying)
+	    ;;    also it's sticky!  exit repl does not clear this flag so mouse is effectively dead
+	    ;; upon click, we get ESC [ M bxy -- need to poll for this?
+	    
+	    
 	    ;; -------- display --------
 	    (define (display-prompt)
 	      (format *stderr* "~A" prompt-string))
 	    
 	    (define (new-prompt)
-	      (set! current-line "")
-	      (set! cursor-position 0)
-	      (set! current-row 0)
-	      (set! previous-line ())
+	      (set! cur-line "")
+	      (set! cursor-pos 0)
+	      (set! cur-row 0)
+	      (set! prev-line ())
 	      (display-prompt)
 	      (cursor-bounds))
 	    
@@ -367,7 +370,7 @@
 	      (let ((line-len (+ (- end start) 1 prompt-length)))
 		(if (>= line-len last-col)
 		    (set! end (- end (- line-len last-col)))))
-			
+	      
 	      (if (and red-par-pos
 		       (<= start red-par-pos)
 		       (< red-par-pos end))
@@ -378,31 +381,31 @@
 		   (if (= start red-par-pos)
 		       (format #f "~A~A"
 			       (bold (red "(")) 
-			       (substring current-line (+ start 1) end))
+			       (substring cur-line (+ start 1) end))
 		       (format #f "~A~A~A"
-			       (substring current-line start red-par-pos) 
+			       (substring cur-line start red-par-pos) 
 			       (bold (red "(")) 
-			       (substring current-line (+ red-par-pos 1) end))))
+			       (substring cur-line (+ red-par-pos 1) end))))
 		  (if (zero? start)
-		      (format #f "~A~A" prompt-string (substring current-line 0 end))
-		      (format #f "~NC~A" prompt-length #\space (substring current-line start end)))))
+		      (format #f "~A~A" prompt-string (substring cur-line 0 end))
+		      (format #f "~NC~A" prompt-length #\space (substring cur-line start end)))))
 	    
 	    (define (display-cursor)
 	      (let ((row 0)
 		    (start 0)
-		    (len (length current-line)))
+		    (len (length cur-line)))
 		(do ((i 0 (+ i 1)))
 		    ((or (= i len)
-			 (= i cursor-position))
-		     (format *stderr* "~C[~D;~DH" #\escape (+ prompt-row row) (+ prompt-col (- cursor-position start))))
-		  (when (char=? (current-line i) #\newline)
+			 (= i cursor-pos))
+		     (format *stderr* "~C[~D;~DH" #\escape (+ prompt-row row) (+ prompt-col (- cursor-pos start))))
+		  (when (char=? (cur-line i) #\newline)
 		    (set! row (+ row 1))
 		    (set! start (+ i 1))))))
-
+	    
 	    (define (display-lines)
 	      (format *stderr* "~C[~D;0H~C[J" #\escape prompt-row #\escape) ; set cursor back to prompt, erase down from there
 	      
-	      (let ((len (length current-line))
+	      (let ((len (length cur-line))
 		    (new-line ""))
 		(let ((line-end 0))
 		  (do ((i 0 (+ line-end 2)))
@@ -429,50 +432,50 @@
 		      (col (floor (/ last-col 2))))
 		  (format *stderr* "~C[~D;~DH" #\escape 1 col)
 		  (format *stderr* "+~NC" (- col 2) #\-)
-
+		  
 		  (do ((i 2 (+ i 1)) ; put box in top right corner so we don't get trailing output as we scroll
 		       (lst (*repl* 'helpers) (cdr lst)))
 		      ((null? lst))
 		    (let ((str ((car lst) c)))
 		      (format *stderr* "~C[~D;~DH" #\escape i col)
 		      (format *stderr* "~C[K| ~A"  #\escape (if (> (length str) col) (substring str 0 (- col 1)) str))))
-
+		  
 		  (format *stderr* "~C[~D;~DH" #\escape (+ 2 (length (*repl* 'helpers))) col)
 		  (format *stderr* "+~NC" (- col 2) #\-)
 		  (format *stderr* "~C[~D;~DH"   #\escape (cdr coords) (car coords)))))
-		  
+	    
 	    (define (debug-help)
 	      (set! (*repl* 'helpers)
 		    (list
 		     (lambda (c) 
 		       (format #f "cursor: ~A, ~C, line: ~S"
-			       cursor-position
-			       (if (> (length current-line) 0)
-				   (let ((c (current-line (max 0 (min cursor-position (- (length current-line) 1))))))
+			       cursor-pos
+			       (if (> (length cur-line) 0)
+				   (let ((c (cur-line (max 0 (min cursor-pos (- (length cur-line) 1))))))
 				     (if (char=? c #\newline) #\| c))
 				   #\space)
-			       (one-line current-line)))
+			       (one-line cur-line)))
 		     (lambda (c)
 		       (format #f "len: ~D, selection: ~S, previous: ~S" 
-			       (length current-line) 
+			       (length cur-line) 
 			       (one-line selection) 
-			       (if (pair? previous-line) (one-line (cdar previous-line)) ())))
+			       (if (pair? prev-line) (one-line (cdar prev-line)) ())))
 		     (lambda (c)
-		       (format #f "current-row: ~A, prompt-row: ~A" 
-			       current-row 
+		       (format #f "cur-row: ~A, prompt-row: ~A" 
+			       cur-row 
 			       prompt-row))
 		     (lambda (c)
 		       (format #f "c: ~S ~D, start: ~A, end: ~A" 
 			       (object->string c #t) 
 			       (char->integer c)	
-			       (start-of-line cursor-position)	
-			       (end-of-line cursor-position))))))
-		 
-
+			       (start-of-line cursor-pos)	
+			       (end-of-line cursor-pos))))))
+	    
+	    
 	    ;; -------- keymap(s) --------
 	    (define meta-keymap-functions (make-vector 256))
 	    (define keymap-functions (make-vector 256 #f))
-
+	    
 	    (define keymap (dilambda
 			    (lambda (c)
 			      (cond ((char? c) 
@@ -487,7 +490,7 @@
 					     (meta-keymap-functions (char->integer (c 1)))
 					     (lambda (c) #t))))
 				    (else (error 'wrong-type-arg "keymap takes a character or string argument"))))
-
+			    
 			    (lambda (c f)
 			      (cond ((char? c) 
 				     (set! (keymap-functions (char->integer c)) f))
@@ -523,18 +526,18 @@
 	    (define Escape 27)          ; #\escape
 	    
 	    (define (end-of-line pos)             ; prompt or #\newline mark the line boundary
-	      (let ((len (length current-line)))
+	      (let ((len (length cur-line)))
 		(do ((i (max 0 (min pos len)) (+ i 1)))
 		    ((or (>= i len)
-			 (char=? (current-line i) #\newline))
+			 (char=? (cur-line i) #\newline))
 		     (if (>= i len) len (max 0 (- i 1)))))))
 	    
 	    (define (start-of-line pos)
 	      (if (<= pos 0)
 		  0
-		  (do ((i (min pos (- (length current-line) 1)) (- i 1)))
+		  (do ((i (min pos (- (length cur-line) 1)) (- i 1)))
 		      ((or (zero? i)
-			   (char=? (current-line i) #\newline))
+			   (char=? (cur-line i) #\newline))
 		       (if (zero? i) 0 (+ i 1))))))
 	    
 	    (define (count-newlines line)
@@ -542,212 +545,212 @@
 		    (newlines 0))
 		(do ((i 0 (+ i 1)))
 		    ((= i len) newlines)
-		  (if (char=? (current-line i) #\newline)
+		  (if (char=? (cur-line i) #\newline)
 		      (set! newlines (+ newlines 1))))))
 	    
 	    (define (append-newline)
-	      (set! current-line (string-append current-line (string #\space #\newline)))
-	      (set! cursor-position (length current-line))
-	      (when (= last-row (+ prompt-row current-row))
+	      (set! cur-line (string-append cur-line (string #\space #\newline)))
+	      (set! cursor-pos (length cur-line))
+	      (when (= last-row (+ prompt-row cur-row))
 		(format *stderr* "~%")
 		(set! prompt-row (- prompt-row 1)))
-	      (set! current-row (+ current-row 1)))
+	      (set! cur-row (+ cur-row 1)))
 	    
 	    (define (word-break pos) ; assume we're at the start of a word
-	      (let ((len (length current-line)))
+	      (let ((len (length cur-line)))
 		(let loop ((i pos))
 		  (if (or (>= i len)
-			  (not (or (char-alphabetic? (current-line i))
-				   (char-numeric? (current-line i)))))
+			  (not (or (char-alphabetic? (cur-line i))
+				   (char-numeric? (cur-line i)))))
 		      i
 		      (loop (+ i 1))))))
-
+	    
 	    (define (save-line)
-	      (set! previous-line (cons (cons cursor-position (copy current-line)) previous-line)))
+	      (set! prev-line (cons (cons cursor-pos (copy cur-line)) prev-line)))
 	    
 	    (let ((main-keyfunc (lambda (c)
 				  (if (<= chars 1) (save-line))
-				  (if (= cursor-position (length current-line))
-				      (set! current-line (string-append current-line (string c)))
-				      (if (= cursor-position 0)
-					  (set! current-line (string-append (string c) current-line))
-					  (set! current-line (string-append 
-							      (substring current-line 0 cursor-position) 
-							      (string c) 
-							      (substring current-line cursor-position)))))
-				  (set! cursor-position (+ cursor-position 1))
+				  (if (= cursor-pos (length cur-line))
+				      (set! cur-line (string-append cur-line (string c)))
+				      (if (= cursor-pos 0)
+					  (set! cur-line (string-append (string c) cur-line))
+					  (set! cur-line (string-append 
+							  (substring cur-line 0 cursor-pos) 
+							  (string c) 
+							  (substring cur-line cursor-pos)))))
+				  (set! cursor-pos (+ cursor-pos 1))
 				  (set! history-index 0)))
 		  (no-op-keyfunc (lambda (c) #t)))
-
+	      
 	      (do ((i 0 (+ i 1)))
 		  ((= i 32))
 		(set! (keymap-functions i) no-op-keyfunc))
-
+	      
 	      (do ((i 32 (+ i 1)))
 		  ((= i 256))
 		(set! (keymap-functions i) main-keyfunc))
-
+	      
 	      (do ((i 0 (+ i 1)))
 		  ((= i 256))
 		(set! (meta-keymap-functions i) no-op-keyfunc)))
-
-
+	    
+	    
 	    ;; -------- cursor movement 
 	    (set! (keymap-functions C-a) 
 		  (lambda (c)
-		    (set! cursor-position (start-of-line cursor-position))
+		    (set! cursor-pos (start-of-line cursor-pos))
 		    'just-cursor))
 	    
 	    (set! (keymap-functions C-e) 
 		  (lambda (c)
-		    (set! cursor-position (end-of-line cursor-position))
+		    (set! cursor-pos (end-of-line cursor-pos))
 		    'just-cursor))
 	    
 	    (set! (keymap-functions C-b) 
 		  (lambda (c)
-		    (when (> cursor-position 0)
-		      (set! cursor-position (- cursor-position 1))
-		      (if (char=? (current-line cursor-position) #\newline)
-			  (set! cursor-position (- cursor-position 1))))
+		    (when (> cursor-pos 0)
+		      (set! cursor-pos (- cursor-pos 1))
+		      (if (char=? (cur-line cursor-pos) #\newline)
+			  (set! cursor-pos (- cursor-pos 1))))
 		    'just-cursor))
 	    
 	    (set! (keymap-functions C-f) 
 		  (lambda (c)
-		    (let ((len (length current-line)))
-		      (when (< cursor-position len)
-			(set! cursor-position (+ cursor-position 1))
-			(if (and (< cursor-position len)
-				 (char=? (current-line cursor-position) #\newline))
-			    (set! cursor-position (+ cursor-position 1)))))
+		    (let ((len (length cur-line)))
+		      (when (< cursor-pos len)
+			(set! cursor-pos (+ cursor-pos 1))
+			(if (and (< cursor-pos len)
+				 (char=? (cur-line cursor-pos) #\newline))
+			    (set! cursor-pos (+ cursor-pos 1)))))
 		    'just-cursor))
 	    
 	    (set! (keymap-functions C-p) 
 		  (lambda (c)
 		    ;; try to find corresponding column in previous line
-		    (let ((start (start-of-line cursor-position)))
+		    (let ((start (start-of-line cursor-pos)))
 		      (when (positive? start)
 			(let ((upstart (start-of-line (- start 2)))
 			      (upend (end-of-line (- start 2)))
-			      (line-pos (- cursor-position start)))
-			  (set! cursor-position (min (+ upstart line-pos) upend)))))
+			      (line-pos (- cursor-pos start)))
+			  (set! cursor-pos (min (+ upstart line-pos) upend)))))
 		    'just-cursor))
 	    
 	    (set! (keymap-functions C-n) 
 		  (lambda (c)
 		    ;; try to find corresponding column in next line
-		    (let ((start (start-of-line cursor-position))
-			  (len (length current-line))
-			  (next-start (+ (end-of-line cursor-position) 1)))      ; should be at #\newline (if any)
-		      (if (> len next-start)                                     ; not already at last line
+		    (let ((start (start-of-line cursor-pos))
+			  (len (length cur-line))
+			  (next-start (+ (end-of-line cursor-pos) 1)))      ; should be at #\newline (if any)
+		      (if (> len next-start)                                ; not already at last line
 			  (let ((next-end (end-of-line (+ next-start 1)))
-				(line-pos (- cursor-position start)))
-			    (set! cursor-position (min (+ next-start 1 line-pos) next-end)))))
+				(line-pos (- cursor-pos start)))
+			    (set! cursor-pos (min (+ next-start 1 line-pos) next-end)))))
 		    'just-cursor))
 	    
 	    (set! (keymap-functions C-l) 
 		  (lambda (c)
 		    (format *stderr* "~C[H~C[J" #\escape #\escape)
 		    (new-prompt)))
-
+	    
 	    ;; -------- deletion
 	    (set! (keymap-functions C-d) 
 		  (lambda (c)
-		    (let ((len (length current-line)))
-		      (when (< cursor-position len)
+		    (let ((len (length cur-line)))
+		      (when (< cursor-pos len)
 			(save-line)
-			(do ((i cursor-position (+ i 1)))
+			(do ((i cursor-pos (+ i 1)))
 			    ((>= i (- len 1)))
-			  (set! (current-line i) (current-line (+ i 1))))
-			(set! current-line (substring current-line 0 (- len 1)))))))
+			  (set! (cur-line i) (cur-line (+ i 1))))
+			(set! cur-line (substring cur-line 0 (- len 1)))))))
 	    
 	    (set! (keymap-functions C-h) 
 		  (lambda (c)
-		    (when (positive? cursor-position)
+		    (when (positive? cursor-pos)
 		      (save-line)
-		      (let ((len (length current-line)))
-			(set! cursor-position (- cursor-position 1))
-			(do ((i cursor-position (+ i 1)))
+		      (let ((len (length cur-line)))
+			(set! cursor-pos (- cursor-pos 1))
+			(do ((i cursor-pos (+ i 1)))
 			    ((>= i (- len 1)))
-			  (set! (current-line i) (current-line (+ i 1))))
-			(set! current-line (substring current-line 0 (- len 1)))))))
+			  (set! (cur-line i) (cur-line (+ i 1))))
+			(set! cur-line (substring cur-line 0 (- len 1)))))))
 	    
 	    (set! (keymap-functions Backspace) 
 		  (keymap-functions C-h))
 	    
 	    (set! (keymap-functions C-k) 
 		  (lambda (c)
-		    (let ((len (length current-line)))
-		      (when (< cursor-position len)
+		    (let ((len (length cur-line)))
+		      (when (< cursor-pos len)
 			(save-line)
-			(let ((end (end-of-line cursor-position)))
+			(let ((end (end-of-line cursor-pos)))
 			  (if (= end len)
 			      (begin
-				(set! selection (substring current-line cursor-position))
-				(set! current-line (substring current-line 0 cursor-position)))
-			      (if (or (= cursor-position end) ; delete following newline
-				      (char=? (current-line cursor-position) #\newline))
-				  (set! current-line (string-append (substring current-line 0 cursor-position)
-								    (substring current-line (+ cursor-position 1))))
+				(set! selection (substring cur-line cursor-pos))
+				(set! cur-line (substring cur-line 0 cursor-pos)))
+			      (if (or (= cursor-pos end) ; delete following newline
+				      (char=? (cur-line cursor-pos) #\newline))
+				  (set! cur-line (string-append (substring cur-line 0 cursor-pos)
+								(substring cur-line (+ cursor-pos 1))))
 				  (begin
-				    (set! selection (substring current-line cursor-position (+ end 1)))
-				    (set! current-line (string-append (substring current-line 0 cursor-position)
-								      (substring current-line (+ end 1))))
+				    (set! selection (substring cur-line cursor-pos (+ end 1)))
+				    (set! cur-line (string-append (substring cur-line 0 cursor-pos)
+								  (substring cur-line (+ end 1))))
 				    ))))))))
-
+	    
 	    ;; -------- undo/selection
 	    (set! (keymap-functions C-y) 
 		  (lambda (c)
 		    (when selection
 		      (save-line)
-		      (if (zero? cursor-position)
-			  (set! current-line (string-append selection current-line))
-			  (if (>= cursor-position (length current-line))
-			      (set! current-line (string-append current-line selection))
-			      (set! current-line (string-append (substring current-line 0 cursor-position)
-								selection
-								(substring current-line cursor-position)))))
-		      (set! cursor-position (+ cursor-position (length selection))))))
+		      (if (zero? cursor-pos)
+			  (set! cur-line (string-append selection cur-line))
+			  (if (>= cursor-pos (length cur-line))
+			      (set! cur-line (string-append cur-line selection))
+			      (set! cur-line (string-append (substring cur-line 0 cursor-pos)
+							    selection
+							    (substring cur-line cursor-pos)))))
+		      (set! cursor-pos (+ cursor-pos (length selection))))))
 	    
 	    (set! (keymap-functions C-_) 
 		  (lambda (c)
-		    (when (pair? previous-line)
-		      (set! current-line (cdar previous-line))
-		      (set! cursor-position (caar previous-line))
-		      (set! previous-line (cdr previous-line)))))
-
+		    (when (pair? prev-line)
+		      (set! cur-line (cdar prev-line))
+		      (set! cursor-pos (caar prev-line))
+		      (set! prev-line (cdr prev-line)))))
+	    
 	    ;; -------- add newline
 	    (set! (keymap-functions C-o)
 		  (lambda (c)
-		    (if (= cursor-position 0)
-			(set! current-line (string-append (string #\space #\newline) current-line))
-			(if (>= cursor-position (length current-line))
-			    (set! current-line (string-append current-line (string #\space #\newline)))
-			    (if (char=? (current-line (- cursor-position 1)) #\newline)
-				(set! current-line (string-append (substring current-line 0 cursor-position)
-								  (string #\space #\newline)
-								  (substring current-line cursor-position)))
-				(set! current-line (string-append (substring current-line 0 cursor-position)
-								  (if (char=? (current-line (+ cursor-position 1)) #\newline)
-								      (string #\space #\newline #\space)
-								      (string #\space #\newline))
-								  (substring current-line (+ cursor-position 1)))))))
-		    (when (= last-row (+ prompt-row current-row))
+		    (if (= cursor-pos 0)
+			(set! cur-line (string-append (string #\space #\newline) cur-line))
+			(if (>= cursor-pos (length cur-line))
+			    (set! cur-line (string-append cur-line (string #\space #\newline)))
+			    (if (char=? (cur-line (- cursor-pos 1)) #\newline)
+				(set! cur-line (string-append (substring cur-line 0 cursor-pos)
+							      (string #\space #\newline)
+							      (substring cur-line cursor-pos)))
+				(set! cur-line (string-append (substring cur-line 0 cursor-pos)
+							      (if (char=? (cur-line (+ cursor-pos 1)) #\newline)
+								  (string #\space #\newline #\space)
+								  (string #\space #\newline))
+							      (substring cur-line (+ cursor-pos 1)))))))
+		    (when (= last-row (+ prompt-row cur-row))
 		      (set! prompt-row (- prompt-row 1))
 		      (display-lines))))
 	    
 	    ;; -------- transpose
 	    (set! (keymap-functions C-t) 
 		  (lambda (c)
-		    (let ((end (end-of-line cursor-position)))
+		    (let ((end (end-of-line cursor-pos)))
 		      (save-line)
-		      (let ((cur (if (>= cursor-position end)
-				     (- cursor-position 1)
-				     cursor-position)))
+		      (let ((cur (if (>= cursor-pos end)
+				     (- cursor-pos 1)
+				     cursor-pos)))
 			(if (positive? cur)
-			    (let ((tmp-c (current-line (- cur 1))))
-			      (set! (current-line (- cur 1)) (current-line cur))
-			      (set! (current-line cur) tmp-c)
-			      (set! cursor-position (+ cur 1))))))))
+			    (let ((tmp-c (cur-line (- cur 1))))
+			      (set! (cur-line (- cur 1)) (cur-line cur))
+			      (set! (cur-line cur) tmp-c)
+			      (set! cursor-pos (+ cur 1))))))))
 	    
 	    ;; -------- indentation/completion
 	    (set! (keymap-functions Tab) 
@@ -757,34 +760,34 @@
 		    ;;   that a selection will not be the single character #\tab
 		    (if (> chars 1)
 			(begin
-			  (set! current-line (string-append current-line "    "))
-			  (set! cursor-position (+ cursor-position 4)))
-			(let ((start (start-of-line cursor-position))
-			      (end (end-of-line cursor-position))
+			  (set! cur-line (string-append cur-line "    "))
+			  (set! cursor-pos (+ cursor-pos 4)))
+			(let ((start (start-of-line cursor-pos))
+			      (end (end-of-line cursor-pos))
 			      (completion #f))
 			  (if (and (positive? start)
 				   (= end start))
 			      (indent start)
-			      (if (= cursor-position end)
+			      (if (= cursor-pos end)
 				  (let ((loc (do ((i (- end 1) (- i 1)))
 						 ((or (< i 0)
-						      (char-whitespace? (current-line i))
-						      (member (current-line i) '(#\( #\' #\" #\)) eqv?))
+						      (char-whitespace? (cur-line i))
+						      (member (cur-line i) '(#\( #\' #\" #\)) eqv?))
 						  i))))
 				    (if (< loc 0)
-					(set! completion (symbol-completion current-line))
-					(if (char=? (current-line loc) #\")
-					    (set! completion (filename-completion (substring current-line (+ loc 1))))
-					    (set! completion (symbol-completion (substring current-line (+ loc 1))))))
+					(set! completion (symbol-completion cur-line))
+					(if (char=? (cur-line loc) #\")
+					    (set! completion (filename-completion (substring cur-line (+ loc 1))))
+					    (set! completion (symbol-completion (substring cur-line (+ loc 1))))))
 				    (when (and completion
 					       (> (length completion) (- end loc 1)))
 				      (save-line)
-				      (if (= end (length current-line))
-					  (set! current-line (string-append (substring current-line 0 (+ loc 1)) completion))
-					  (set! current-line (string-append (substring current-line 0 (+ loc 1)) 
-									    completion
-									    (substring current-line (+ end 1)))))
-				      (set! cursor-position (end-of-line cursor-position))))))))))
+				      (if (= end (length cur-line))
+					  (set! cur-line (string-append (substring cur-line 0 (+ loc 1)) completion))
+					  (set! cur-line (string-append (substring cur-line 0 (+ loc 1)) 
+									completion
+									(substring cur-line (+ end 1)))))
+				      (set! cursor-pos (end-of-line cursor-pos))))))))))
 	    
 	    ;; -------- evaluation/multiline
 	    (set! (keymap-functions Enter) 
@@ -792,11 +795,11 @@
 		    
 		    (call-with-exit
 		     (lambda (return)
-		       (let ((len (length current-line)))
+		       (let ((len (length cur-line)))
 			 
 			 (do ((i 0 (+ i 1))) ; check for just whitespace
 			     ((or (= i len)
-				  (not (char-whitespace? (current-line i))))
+				  (not (char-whitespace? (cur-line i))))
 			      (when (= i len)
 				(append-newline)
 				(return))))
@@ -805,33 +808,33 @@
 			 (if (or (= chars 1) 
 				 (not (= input-fd terminal-fd)))
 			     (display-lines))
-
+			 
 			 (catch #t
 			   (lambda ()
 			     
-			     ;; we want to add current-line (copied) to the history buffer
+			     ;; we want to add cur-line (copied) to the history buffer
 			     ;;   unless it is an on-going edit (missing close paren)
 			     (catch 'string-read-error
 			       
 			       (lambda ()
-				 (set! cursor-position len)
+				 (set! cursor-pos len)
 				 (if (or (= chars 1)
 					 (not (= input-fd terminal-fd)))
 				     (display-lines))
-				 (set! (history) (copy current-line))
+				 (set! (history) (copy cur-line))
 				 (set! history-index 0)
 				 
 				 (with-repl-let
 				  (lambda ()
 				    ;; get the newline out if the expression does not involve a read error
-				    (let ((form (with-input-from-string current-line #_read))) ; not libc's read
+				    (let ((form (with-input-from-string cur-line #_read))) ; not libc's read
 				      (newline *stderr*)
 				      (let ((val (eval form (*repl* 'top-level-let))))
 					(if unbound-case
 					    (set! unbound-case #f)
 					    (begin
 					      (format *stderr* "~S~%" val)
-					      (set! ** val))))))))
+					      (set! ((*repl* 'top-level-let) '**) val))))))))
 			       
 			       (lambda (type info)
 				 (pop-history)               ; remove last history entry
@@ -850,7 +853,7 @@
 		  (lambda (esc)
 		    (let ((chr (next-char)))
 		      ((meta-keymap-functions (char->integer chr)) chr))))
-		    
+	    
 	    (set! (meta-keymap-functions (char->integer #\[))
 		  (lambda (c)
 		    (let ((chr (next-char)))
@@ -859,96 +862,96 @@
 			((#\B) ((keymap-functions C-n) C-n))
 			((#\C) ((keymap-functions C-f) C-f))
 			((#\D) ((keymap-functions C-b) C-b))))))
-			
+	    
 	    (set! (meta-keymap-functions (char->integer #\<))
 		  (lambda (c) 
-		    (set! cursor-position 0)
+		    (set! cursor-pos 0)
 		    'just-cursor))
-
+	    
 	    (set! (meta-keymap-functions (char->integer #\>))
 		  (lambda (c) 
-		    (set! cursor-position (length current-line))
+		    (set! cursor-pos (length cur-line))
 		    'just-cursor))
-			
+	    
 	    ;; ((#\x02) ; C-M-b
-			
+	    
 	    (set! (meta-keymap-functions (char->integer #\c))
 		  (lambda (c) 
-		    (let ((len (length current-line)))
-		      (let loop ((i cursor-position))
+		    (let ((len (length cur-line)))
+		      (let loop ((i cursor-pos))
 			(if (< i len)
-			    (if (char-alphabetic? (current-line i))
+			    (if (char-alphabetic? (cur-line i))
 				(begin
 				  (save-line)
-				  (set! (current-line i) (char-upcase (current-line i)))
-				  (set! cursor-position (word-break i)))
+				  (set! (cur-line i) (char-upcase (cur-line i)))
+				  (set! cursor-pos (word-break i)))
 				(loop (+ i 1))))))))
-
+	    
 	    (set! (meta-keymap-functions (char->integer #\p))
 		  (lambda (c) 
 		    (let ((old-index history-index))
 		      (when (and (zero? history-index) 
-				 (> (length current-line) 0))
-			(set! (history) current-line)
+				 (> (length cur-line) 0))
+			(set! (history) cur-line)
 			(set! history-index -1))
 		      (set! history-index (max (- history-index 1) (- current-history-size)))
 		      (if (history history-index)
 			  (begin
-			    (set! current-line (history history-index))
-			    (set! cursor-position (length current-line))
-			    (let ((newlines (count-newlines current-line)))
+			    (set! cur-line (history history-index))
+			    (set! cursor-pos (length cur-line))
+			    (let ((newlines (count-newlines cur-line)))
 			      (when (< last-row (+ prompt-row newlines))
 				(format *stderr* "~NC" (- (+ prompt-row newlines) last-row) #\newline)
 				(set! prompt-row (- prompt-row newlines)))
-			      (set! current-row newlines)))
+			      (set! cur-row newlines)))
 			  (set! history-index old-index)))))
-			
+	    
 	    (set! (meta-keymap-functions (char->integer #\n))
 		  (lambda (c) 
 		    (set! history-index (min 0 (+ history-index 1)))
 		    (when (history history-index)
-		      (set! current-line (history history-index))
-		      (set! cursor-position (length current-line))
-		      (let ((newlines (count-newlines current-line)))
+		      (set! cur-line (history history-index))
+		      (set! cursor-pos (length cur-line))
+		      (let ((newlines (count-newlines cur-line)))
 			(when (< last-row (+ prompt-row newlines))
 			  (format *stderr* "~NC" (- (+ prompt-row newlines) last-row) #\newline)
 			  (set! prompt-row (- prompt-row newlines)))
-			(set! current-row newlines)))))
-		  
+			(set! cur-row newlines)))))
+	    
 	    (set! (meta-keymap-functions (char->integer #\u))
 		  (lambda (c) 
-		    (let ((len (length current-line)))
-		      (do ((i cursor-position (+ i 1)))
+		    (let ((len (length cur-line)))
+		      (do ((i cursor-pos (+ i 1)))
 			  ((or (= i len)
-			       (char-alphabetic? (current-line i)))
+			       (char-alphabetic? (cur-line i)))
 			   (when (< i len)
 			     (save-line)
 			     (do ((k i (+ k 1)))
 				 ((or (= k len)
-				      (not (char-alphabetic? (current-line k))))
-				  (set! cursor-position k))
-			       (set! (current-line k) (char-upcase (current-line k))))))))))
-			
+				      (not (char-alphabetic? (cur-line k))))
+				  (set! cursor-pos k))
+			       (set! (cur-line k) (char-upcase (cur-line k))))))))))
+	    
 	    (set! (meta-keymap-functions (char->integer #\l))
 		  (lambda (c) 
-		    (let ((len (length current-line)))
-		      (do ((i cursor-position (+ i 1)))
+		    (let ((len (length cur-line)))
+		      (do ((i cursor-pos (+ i 1)))
 			  ((or (= i len)
-			       (char-alphabetic? (current-line i)))
+			       (char-alphabetic? (cur-line i)))
 			   (when (< i len)
 			     (save-line)
 			     (do ((k i (+ k 1)))
 				 ((or (= k len)
-				      (not (char-alphabetic? (current-line k))))
-				  (set! cursor-position k))
-			       (set! (current-line k) (char-downcase (current-line k))))))))))
+				      (not (char-alphabetic? (cur-line k))))
+				  (set! cursor-pos k))
+			       (set! (cur-line k) (char-downcase (cur-line k))))))))))
 	    
-	      
+	    
 	    ;; -------- terminal setup --------
 	    (define* (run file)
 	      (let ((saved #f)
 		    (tty #t))
-
+		
 		;; we're in libc here, so exit is libc's exit!
 		(define (tty-reset no)
 		  (if tty (tcsetattr terminal-fd TCSAFLUSH saved))
@@ -960,7 +963,7 @@
 			  (lambda ()
 			    (newline *stderr*)
 			    (tty-reset 0))))
-
+		
 		;; check for dumb terminal
 		(if (or (zero? (isatty terminal-fd))        ; not a terminal -- input from pipe probably
 			(string=? (getenv "TERM") "dumb"))  ; no vt100 codes -- emacs shell for example
@@ -985,12 +988,12 @@
 					  (format *stderr* "error: ")
 					  (apply format *stderr* info)
 					  (newline *stderr*)))))
-				    (format *stderr* "> ")))))))))
-	      
+				   (format *stderr* "> ")))))))))
+		
 		;; not a pipe or a dumb terminal -- hopefully all others accept vt100 codes
 		(let ((buf (termios.make))
 		      (read-size 128))
-
+		  
 		  (set! next-char                                     ; this indirection is needed if user pastes the selection into the repl
 			(let* ((c (make-string read-size #\null)) 
 			       (cc (string->c-pointer c))
@@ -1003,7 +1006,7 @@
 				 (set! chars (read input-fd cc read-size))
 				 (if (= chars 0)
 				     (tty-reset terminal-fd))
-
+				 
 				 (when (= chars read-size)
 				   ;; concatenate buffers until we get the entire selection
 				   (let ((str (substring c 0 read-size)))
@@ -1012,7 +1015,7 @@
 				       (set! chars (+ chars num))
 				       (if (= num read-size)
 					   (reading (read input-fd cc read-size))))
-
+				     
 				     ;; look for simple cut/paste -- no control chars etc
 				     (when (= input-fd terminal-fd)
 				       (let ((bcksp (integer->char 127))
@@ -1022,7 +1025,7 @@
 						  (char>=? (str i) bcksp)
 						  (and (char<? (str i) #\space)
 						       (not (member (str i) ok-chars eq?))))
-
+					      
 					      (when (= i chars)
 						(let ((search-chars (string #\tab #\return #\newline))
 						      (old-pos 0)
@@ -1030,33 +1033,35 @@
 						      (max-cols 0))
 						  (do ((pos (char-position search-chars str 0) (char-position search-chars str (+ pos 1))))
 						      ((not pos))
-						    (set! current-line (string-append current-line 
-										      (substring str old-pos pos)
-										      (if (char=? (str pos) #\tab) 
-											  tab-as-space 
-											  (string #\space #\newline))))
+						    (set! cur-line (string-append cur-line 
+										  (substring str old-pos pos)
+										  (if (char=? (str pos) #\tab) 
+										      tab-as-space 
+										      (string #\space #\newline))))
 						    (set! old-pos (+ pos 1))
 						    (unless (char=? (str pos) #\tab)
 						      (set! max-cols (max max-cols (- pos start)))
 						      (set! start pos)))
 						  (if (< (+ old-pos 1) (length str))
-						      (set! current-line (string-append current-line (substring str (+ old-pos 1)))))
-
+						      (set! cur-line (string-append cur-line (substring str (+ old-pos 1)))))
+						  
 						  ;; if the line is too long, the cursor gets confused, so try to reformat over-long strings
+						  ;; this still messes up sometimes
+
 						  (when (> max-cols (- last-col prompt-length))
 						    (let ((old-len ((funclet pretty-print) '*pretty-print-length*)))
 						      (set! ((funclet pretty-print) '*pretty-print-length*) (- last-col prompt-length 2))
-						      (set! current-line (with-output-to-string
-									   (lambda ()
-									     (pretty-print (with-input-from-string current-line #_read)))))
+						      (set! cur-line (with-output-to-string
+								       (lambda ()
+									 (pretty-print (with-input-from-string cur-line #_read)))))
 						      (set! ((funclet pretty-print) '*pretty-print-length*) old-len)))
-
-						  (set! cursor-position (length current-line))
+						  
+						  (set! cursor-pos (length cur-line))
 						  (set! chars 0)
 						  (set! ctr 1)
 						  (display-lines)
 						  (return #\newline)))))))
-
+				     
 				     (set! c str)
 				     (set! cc (string->c-pointer c))
 				     ;; avoid time-consuming redisplays.  We need to use a recursive call on next-char here
@@ -1089,14 +1094,14 @@
 			       (let ((result (c ctr)))
 				 (set! ctr (+ ctr 1))
 				 result))))))
-
+		  
 		  (set! input-fd (if (not file) 
-				terminal-fd
-				(open file O_RDONLY 0)))
-
+				     terminal-fd
+				     (open file O_RDONLY 0)))
+		  
 		  (set! saved (termios.make))
 		  (tcgetattr terminal-fd saved) 
-
+		  
 		  (tcgetattr terminal-fd buf)
 		  (termios.set_c_lflag buf (logand (termios.c_lflag buf) (lognot (logior ECHO ICANON))))
 		  (termios.set_c_cc buf VMIN 1)
@@ -1108,8 +1113,8 @@
 		  ;; -------- the repl --------
 		  (display-prompt)
 		  (cursor-bounds)
-		  ;(debug-help)
-
+					;(debug-help)
+		  
 		  (do () 
 		      (all-done
 		       (set! all-done #f)) ; clear for next call
@@ -1132,7 +1137,7 @@
 			(format *stderr* "~%line ~A: ~A~%" ((owlet) 'error-line) ((owlet) 'error-code))
 			(set! chars 0)
 			(new-prompt)))))))
-	      
+	    
 	    (curlet))))))
       
       (define (save-repl) 
@@ -1153,7 +1158,7 @@
       (define (restore-repl) 
 	(set! (*repl* 'top-level-let) (load "save.repl")))  
       ;; I think this could be a merge rather than a reset by using (inlet top-level-let (load ...))
-
+      
       
       (set! keymap (repl-let 'keymap))
       (set! history (repl-let 'history))
@@ -1196,12 +1201,12 @@
 ;; cd needs to be implemented
 (define cd
   (openlet (inlet 'object->string (lambda args
-				    (let ((line ((*repl* 'repl-let) 'current-line)))
+				    (let ((line ((*repl* 'repl-let) 'cur-line)))
 				      ((*libc* 'chdir)
 				       (do ((i 3 (+ i 1)))
 					   ((or (not (char-whitespace? (line i)))
 						(= i (length line)))
-					    (substring ((*repl* 'repl-let) 'current-line) i))))
+					    (substring ((*repl* 'repl-let) 'cur-line) i))))
 				      ((*libc* 'getcwd) (make-string 256 #\null) 256)))
 		  'let-ref-fallback (lambda (obj str)  ; let-ref-fallback's first arg will be cd: (cd "..")
 				      ((*libc* 'chdir) str)
@@ -1216,7 +1221,7 @@
   `(define ,name
      (openlet 
       (inlet 'object->string (lambda args
-			       (system ((*repl* 'repl-let) 'current-line) #t))))))
+			       (system ((*repl* 'repl-let) 'cur-line) #t))))))
 ;; (make-command ls)
 |#
 
@@ -1315,7 +1320,7 @@
 ;;; --------------------------------------------------------------------------------
 #|
 to work in a particular environment:
-    (set! (*repl* 'top-level-let) (sublet (rootlet))) ; or any other like *libc*
+    (set! (*repl* 'top-level-let) (sublet (rootlet) :** #f)) ; or any other like *libc*
 now (define g 43) puts g in the new top-level-let, so ((rootlet) 'g) -> #<undefined>, and ((*repl* 'top-level-let) 'g) -> 43 (= g in repl of course)
 to start with a fresh top-level, just set top-level-let to (sublet (rootlet)) again.
 
@@ -1327,17 +1332,17 @@ to add/change keymap entry (using sublet here to protect against inadvertent cha
 (set! ((*repl* 'keymap) (integer->char 12)) ; C-l will expand to "(lambda " at the cursor
       (lambda (c)
 	(with-let (sublet (*repl* 'repl-let))
-	   (if (zero? cursor-position)
-	       (set! current-line (string-append "(lambda " current-line))
-	       (if (>= cursor-position (length current-line))
-		   (set! current-line (string-append current-line "(lambda "))
-		   (set! current-line (string-append (substring current-line 0 cursor-position)
-						     "(lambda "
-						     (substring current-line cursor-position)))))
-	   (set! cursor-position (+ cursor-position (length "(lambda "))))))
+	  (if (zero? cursor-pos)
+	      (set! cur-line (string-append "(lambda " cur-line))
+	      (if (>= cursor-pos (length cur-line))
+		  (set! cur-line (string-append cur-line "(lambda "))
+		  (set! cur-line (string-append (substring cur-line 0 cursor-pos)
+						"(lambda "
+						(substring cur-line cursor-pos)))))
+	  (set! cursor-pos (+ cursor-pos (length "(lambda "))))))
 
 change the prompt:
-    (set! ((*repl* 'prompt)) "scheme> ")
+(set! ((*repl* 'prompt)) "scheme> ")
 
 red lambda prompt: 
     (with-let (sublet (*repl* 'repl-let))
@@ -1348,15 +1353,15 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 (set! (*repl* 'helpers)
       (list (lambda (c)
 	      (let ((sym (with-let (sublet (*repl* 'repl-let))
-			   (let ((len (length current-line)))
-			     (let loop ((i (min (- len 1) cursor-position)))
+			   (let ((len (length cur-line)))
+			     (let loop ((i (min (- len 1) cursor-pos)))
 			       (and (not (negative? i))
-				    (if (char=? (current-line i) #\()
+				    (if (char=? (cur-line i) #\()
 					(let loop1 ((k (+ i 1)))
 					  (and (< k len)
-					       (if (not (char-alphabetic? (current-line k)))
+					       (if (not (char-alphabetic? (cur-line k)))
 						   (and (> k (+ i 1))
-							(string->symbol (substring current-line (+ i 1) k)))
+							(string->symbol (substring cur-line (+ i 1) k)))
 						   (loop1 (+ k 1)))))
 					(loop (- i 1)))))))))
 		(if sym
@@ -1379,7 +1384,7 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 	      ((#\1) ; on my system F1 is esc [ 1 1 ~, F2 esc [ 1 2 ~, etc (but they skip F6?)
 	       (let ((n (- (char->integer (next-char)) (char->integer #\0))))
 		 (next-char) ; throw away the tilde
-		 (set! current-line (string-append current-line (format #f "--F~D!--" n))))))))))
+		 (set! cur-line (string-append cur-line (format #f "--F~D!--" n))))))))))
 
 ;; this actually works but doesn't echo the filename correctly and the cursor is off during the filename processing
 (set! ((*repl* 'keymap) (integer->char 24)) ; C-x
@@ -1391,20 +1396,20 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 	      ;; now recursive call: prompt="load: "
 	      (let ((old-prompt-string prompt-string)
 		    (old-prompt-length prompt-length)
-		    (old-current-line current-line)
-		    (old-cursor-position cursor-position)
+		    (old-cur-line cur-line)
+		    (old-cursor-pos cursor-pos)
 		    (old-enter-func (keymap-functions 10))
 		    (filename #f))
 		(set! prompt-string "load: ")
 		(set! prompt-length 6)
-		(set! current-line "")
-		(set! cursor-position 0)
+		(set! cur-line "")
+		(set! cursor-pos 0)
 		(set! (keymap-functions 10) (lambda (c)
-					      (set! filename current-line)
+					      (set! filename cur-line)
 					      (set! prompt-string old-prompt-string)
 					      (set! prompt-length old-prompt-length)
-					      (set! current-line old-current-line)
-					      (set! cursor-position old-cursor-position)
+					      (set! cur-line old-cur-line)
+					      (set! cursor-pos old-cursor-pos)
 					      (set! (keymap-functions 10) old-enter-func)))
 		(do ((c (next-char) (next-char)))
 		    ((string? filename))
