@@ -67329,4 +67329,5 @@ int main(int argc, char **argv)
  * permutation-iterator (iterator-as-continuation?)
  * define-safe-macro fixed/tested. doc/finish define-with-macros.
  * ~W car-cycle in iterator bug
+ * repl: maybe [num]> then <num>C-! gets that one, also need associated values? export the buffers (*h* num)
  */

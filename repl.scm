@@ -61,16 +61,22 @@
 	
 	
 	;; -------- history --------
-	(let ((history-buffer (make-vector 100 #f))
+	(let ((history-buffer (make-vector 100 ""))
 	      (current-history-size 100)
 	      (history-position 0)
 	      (history-index 0))
+
+	  (define (history-member line)
+	    (do ((i 0 (+ i 1)))
+		((or (= i current-history-size)
+		     (string=? (vector-ref history-buffer i) line))
+		 (and (< i current-history-size) i))))
 	  
 	  (define history-size (dilambda
 				(lambda ()
 				  current-history-size)
 				(lambda (new-size)
-				  (set! history-buffer (copy history-buffer (make-vector new-size #f)))
+				  (set! history-buffer (copy history-buffer (make-vector new-size "")))
 				  (set! current-history-size new-size))))
 	  
 	  (define history (dilambda 
@@ -81,11 +87,26 @@
 				   (if (>= i current-history-size)
 				       (history-buffer (- i current-history-size))
 				       (history-buffer i)))))
+
 			   (lambda (new-line)
-			     (set! (history-buffer history-position) new-line)
-			     (set! history-position (+ history-position 1))
-			     (if (= history-position current-history-size)
-				 (set! history-position 0)))))
+			     (let ((pos (history-member new-line)))
+			       (when (integer? pos)                   ; remove the earlier case, circularly compress the buffer
+				 (when (>= pos history-position)
+				   (do ((i pos (+ i 1)))
+				       ((>= i (- current-history-size 1)))
+				     (set! (history-buffer i) (history-buffer (+ i 1))))
+				   (set! (history-buffer (- current-history-size 1)) (history-buffer 0))
+				   (set! pos 0))
+
+				 (do ((i pos (+ i 1)))
+				     ((>= i (- history-position 1)))
+				   (set! (history-buffer i) (history-buffer (+ i 1))))
+				 (set! history-position (- history-position 1)))
+
+			       (set! (history-buffer history-position) new-line)
+			       (set! history-position (+ history-position 1))
+			       (if (= history-position current-history-size)
+				   (set! history-position 0))))))
 	  
 	  (define (pop-history) ; throw away most recent addition
 	    (set! history-position (- history-position 1))
@@ -895,7 +916,7 @@
 			(set! (history) cur-line)
 			(set! history-index -1))
 		      (set! history-index (max (- history-index 1) (- current-history-size)))
-		      (if (history history-index)
+		      (if (positive? (length (history history-index)))
 			  (begin
 			    (set! cur-line (history history-index))
 			    (set! cursor-pos (length cur-line))
@@ -909,7 +930,7 @@
 	    (set! (meta-keymap-functions (char->integer #\n))
 		  (lambda (c) 
 		    (set! history-index (min 0 (+ history-index 1)))
-		    (when (history history-index)
+		    (when (positive? (length (history history-index)))
 		      (set! cur-line (history history-index))
 		      (set! cursor-pos (length cur-line))
 		      (let ((newlines (count-newlines cur-line)))
@@ -1113,7 +1134,7 @@
 		  ;; -------- the repl --------
 		  (display-prompt)
 		  (cursor-bounds)
-					;(debug-help)
+		  ;; (debug-help)
 		  
 		  (do () 
 		      (all-done
@@ -1157,7 +1178,7 @@
       
       (define (restore-repl) 
 	(set! (*repl* 'top-level-let) (load "save.repl")))  
-      ;; I think this could be a merge rather than a reset by using (inlet top-level-let (load ...))
+      ;; I think this could be a merge rather than a reset by using (with-let top-level-let (load ...))
       
       
       (set! keymap (repl-let 'keymap))
@@ -1416,7 +1437,6 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 		  ((keymap-functions (char->integer c)) c)
 		  (display-lines))
 		(load filename)))))))
-
 
 |#
 

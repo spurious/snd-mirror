@@ -560,7 +560,11 @@ if test "$with_audio" != no ; then
   if test "$with_alsa" = yes ; then
     AC_DEFINE(HAVE_ALSA)
     AUDIO_LIB="-lasound"
-    AUDIO_SYSTEM=ALSA
+    if test "$with_jack" = yes ; then
+      AUDIO_SYSTEM=ALSA+JACK
+    else
+      AUDIO_SYSTEM=ALSA
+    fi
   fi
 
   if test "$with_oss" = yes ; then
