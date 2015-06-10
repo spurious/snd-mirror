@@ -3933,8 +3933,7 @@
 			  (catch #t
 			    (lambda ()
 			      (let ((p (open-input-file file)))
-				(if (not (string=? file "t631-temp.scm"))
-				    (format outport ";~A~%" file))
+				(format outport ";~A~%" file)
 				(set! loaded-files (cons file loaded-files))
 				p))
 			    (lambda args

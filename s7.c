@@ -5526,6 +5526,7 @@ static s7_pointer g_unlet(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_openlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_openlet "(openlet? obj) returns #t is 'obj' has methods."
+  /* if car(args) is not a let (or possibly have one), should this raise an error? */
   check_method(sc, car(args), sc->IS_OPENLET, args);
   return(make_boolean(sc, has_methods(car(args))));
 }
@@ -9160,6 +9161,8 @@ static void init_ctables(void)
   white_space[(unsigned char)'\f'] = true;
   white_space[(unsigned char)'\v'] = true;
   white_space[(unsigned char)' '] = true;
+  white_space[(unsigned char)'\205'] = true; /* 133 */
+  white_space[(unsigned char)'\240'] = true; /* 160 */
 
   /* surely only 'e' is needed... */
   exponent_table[(unsigned char)'e'] = true; exponent_table[(unsigned char)'E'] = true;
@@ -10453,10 +10456,6 @@ the 'radix' it is ignored: (string->number \"#x11\" 2) -> 17 not 3."
   if (!is_string(car(args)))
     method_or_bust(sc, car(args), caller, args, T_STRING, 1);
 
-  str = (char *)string_value(car(args));
-  if ((!str) || (!(*str)))
-    return(sc->F);
-
   if (is_pair(cdr(args)))
     {
       s7_pointer rad, p;
@@ -10473,6 +10472,10 @@ the 'radix' it is ignored: (string->number \"#x11\" 2) -> 17 not 3."
 	return(out_of_range(sc, caller, small_int(2), rad, A_VALID_RADIX));
     }
   else radix = 10;
+
+  str = (char *)string_value(car(args));
+  if ((!str) || (!(*str)))
+    return(sc->F);
 
   switch (str[0])
     {
@@ -12329,6 +12332,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	    return(simple_out_of_range(sc, sc->REMAINDER, args, ITS_TOO_LARGE));
 	  if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
 	  return(make_real(sc, real(x) - integer(y) * quo));
+	  /* but... (remainder 1e+18 9223372036854775807) -> 1e+18 */
 
 	case T_RATIO:
 	  {
@@ -18459,7 +18463,7 @@ static char *print_rng(s7_scheme *sc, void *val)
   char *buf;
   s7_rng_t *r = (s7_rng_t *)val;
   buf = (char *)malloc(64 * sizeof(char));
-  snprintf(buf, 64, "#<rng %d %d>", (unsigned int)(r->ran_seed), (unsigned int)(r->ran_carry));
+  snprintf(buf, 64, "#<rng %llu %llu>", r->ran_seed, r->ran_carry);
   return(buf);
 }
 
@@ -18469,7 +18473,7 @@ static char *print_rng_readably(s7_scheme *sc, void *val)
   char *buf;
   s7_rng_t *r = (s7_rng_t *)val;
   buf = (char *)malloc(64 * sizeof(char));
-  snprintf(buf, 64, "(make-random-state %d %d)", (unsigned int)(r->ran_seed), (unsigned int)(r->ran_carry));
+  snprintf(buf, 64, "(make-random-state %llu %llu)", r->ran_seed, r->ran_carry);
   return(buf);
 }
 
@@ -18498,24 +18502,34 @@ Pass this as the second argument to 'random' to get a repeatable random number s
     (let ((seed (make-random-state 1234))) (random 1.0 seed))"
 
   s7_rng_t *r;
+  s7_pointer r1, r2;
+  s7_Int i1, i2;
 
-  if (!(s7_is_integer(car(args))))
-    method_or_bust(sc, car(args), sc->MAKE_RANDOM_STATE, args, T_INTEGER, 1);
+  r1 = car(args);
+  if (!s7_is_integer(r1))
+    method_or_bust(sc, r1, sc->MAKE_RANDOM_STATE, args, T_INTEGER, 1);
+  i1 = s7_integer(r1);
+  if (i1 < 0)
+    return(out_of_range(sc, sc->MAKE_RANDOM_STATE, small_int(1), r1, ITS_NEGATIVE));
 
   if (is_null(cdr(args)))
     {
       r = (s7_rng_t *)malloc(sizeof(s7_rng_t));
-      r->ran_seed = s7_integer(car(args));
-      r->ran_carry = 1675393560;  /* should this be dependent on the seed? */
+      r->ran_seed = (unsigned long long int)i1;
+      r->ran_carry = 1675393560;                          /* should this be dependent on the seed? */
       return(s7_make_object(sc, sc->rng_tag, (void *)r));
     }
 
-  if (!(s7_is_integer(cadr(args))))
-    method_or_bust(sc, cadr(args), sc->MAKE_RANDOM_STATE, args, T_INTEGER, 2);
+  r2 = cadr(args);
+  if (!s7_is_integer(r2))
+    method_or_bust(sc, r2, sc->MAKE_RANDOM_STATE, args, T_INTEGER, 2);
+  i2 = s7_integer(r2);
+  if (i2 < 0)
+    return(out_of_range(sc, sc->MAKE_RANDOM_STATE, small_int(2), r2, ITS_NEGATIVE));
 
   r = (s7_rng_t *)malloc(sizeof(s7_rng_t));
-  r->ran_seed = s7_integer(car(args));
-  r->ran_carry = s7_integer(cadr(args));
+  r->ran_seed = (unsigned long long int)i1;
+  r->ran_carry = (unsigned long long int)i2;
   return(s7_make_object(sc, sc->rng_tag, (void *)r));
 }
 
@@ -19808,7 +19822,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
       if ((is_byte_vector(x)) &&
 	  (s7_is_integer(c)))
 	{
-	  int ic;
+	  s7_Int ic;  /* not int here! */
 	  ic = s7_integer(c);
 	  if ((ic < 0) || (ic > 255))
 	    return(wrong_type_argument_with_type(sc, sc->STRING_SET, 3, c, AN_UNSIGNED_BYTE));
@@ -21637,22 +21651,36 @@ static s7_pointer g_write_string(s7_scheme *sc, s7_pointer args)
   end = string_length(str);
   if (!is_null(cdr(args)))
     {
-      s7_pointer p;
+      s7_pointer p, inds;
       port = cadr(args);
-      p = start_and_end(sc, sc->WRITE_STRING, NULL, cddr(args), args, 3, &start, &end);
-      if (p != sc->GC_NIL) return(p);
+      inds = cddr(args);
+      if (!is_null(inds))
+	{
+	  p = start_and_end(sc, sc->WRITE_STRING, NULL, inds, args, 3, &start, &end);
+	  if (p != sc->GC_NIL) return(p);
+	}
     }
   else port = sc->output_port;
   if (!is_output_port(port))
     {
-      if (port == sc->F) return(sc->UNSPECIFIED);
+      if (port == sc->F)
+	{
+	  s7_pointer x;
+	  int len;
+	  if ((start == 0) && (end == string_length(str)))
+	    return(str);
+	  len = (int)(end - start);
+	  x = s7_make_string_with_length(sc, (char *)(string_value(str) + start), len);
+	  string_value(x)[len] = 0;
+	  return(x);
+	}
       method_or_bust_with_type(sc, port, sc->WRITE_STRING, args, AN_OUTPUT_PORT, 2);
     }
 
   if (start == 0)
     port_write_string(port)(sc, string_value(str), end, port);
   else port_write_string(port)(sc, (char *)(string_value(str) + start), (end - start), port);
-  return(sc->UNSPECIFIED);
+  return(str);
 }
 
 
@@ -22359,9 +22387,16 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
   #define H_get_output_string "(get-output-string port clear-port) returns the output accumulated in port.  \
 If the optional 'clear-port' is #t, the current string is flushed."
   s7_pointer p, result;
-  p = car(args);
-  /* should this check that the third argument is boolean? */
+  bool clear_port = false;
 
+  if (is_pair(cdr(args)))
+    {
+      p = cadr(args);
+      if (!s7_is_boolean(p))
+	return(wrong_type_argument(sc, sc->GET_OUTPUT_STRING, 2, p, T_BOOLEAN));
+      clear_port = (p == sc->T);
+    }
+  p = car(args);
   if ((!is_output_port(p)) ||
       (!is_string_port(p)))
     {
@@ -22372,8 +22407,7 @@ If the optional 'clear-port' is #t, the current string is flushed."
     return(simple_wrong_type_argument_with_type(sc, sc->GET_OUTPUT_STRING, p, make_string_wrapper(sc, "an active (open) string port")));
 
   result = s7_make_string_with_length(sc, (const char *)port_data(p), port_position(p));
-  if ((is_pair(cdr(args))) &&
-      (cadr(args) == sc->T))
+  if (clear_port)
     {
       port_position(p) = 0;
       port_data(p)[0] = '\0';
@@ -22579,12 +22613,12 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
   if (is_pair(cdr(args)))
     port = cadr(args);
   else port = sc->output_port;
-  if (port == sc->F) return(sc->UNSPECIFIED);
+  if (port == sc->F) return(chr);
   if (!is_output_port(port))
     method_or_bust_with_type(sc, port, sc->WRITE_CHAR, args, AN_OUTPUT_PORT, 2);
 
   port_write_character(port)(sc, s7_character(chr), port);
-  return(sc->UNSPECIFIED);
+  return(chr);
 }
 
 static s7_pointer write_char_1;
@@ -22597,7 +22631,7 @@ static s7_pointer g_write_char_1(s7_scheme *sc, s7_pointer args)
     method_or_bust(sc, chr, sc->WRITE_CHAR, args, T_CHARACTER, 1);
 
   port_write_character(sc->output_port)(sc, s7_character(chr), sc->output_port);
-  return(sc->UNSPECIFIED);
+  return(chr);
 }
 
 
@@ -26192,7 +26226,7 @@ static s7_pointer g_write(s7_scheme *sc, s7_pointer args)
   else port = sc->output_port;
   if (!is_output_port(port))
     {
-      if (port == sc->F) return(sc->UNSPECIFIED);
+      if (port == sc->F) return(car(args));
       method_or_bust_with_type(sc, port, sc->WRITE, args, AN_OUTPUT_PORT, 2);
     }
   return(write_or_display(sc, car(args), port, USE_WRITE));
@@ -26222,7 +26256,7 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
   else port = sc->output_port;
   if (!is_output_port(port))
     {
-      if (port == sc->F) return(sc->UNSPECIFIED);
+      if (port == sc->F) return(car(args));
       method_or_bust_with_type(sc, port, sc->DISPLAY, args, AN_OUTPUT_PORT, 2);
     }
   return(write_or_display(sc, car(args), port, USE_DISPLAY));
@@ -28952,21 +28986,20 @@ static s7_pointer g_assoc(s7_scheme *sc, s7_pointer args)
   #define H_assoc "(assoc obj alist (func #f)) returns the key-value pair associated (via equal?) with the key obj in the association list alist.\
 If 'func' is a function of 2 arguments, it is used for the comparison instead of 'equal?"
 
-  s7_pointer x, y, obj;
+  s7_pointer x, y, obj, eq_func = NULL;
 
   x = cadr(args);
-  if (!is_pair(x))
+  if (!is_null(x))
     {
-      if (is_null(x))
-	return(sc->F);
-      method_or_bust_with_type(sc, x, sc->ASSOC, args, AN_ASSOCIATION_LIST, 2);
+      if (!is_pair(x))
+	method_or_bust_with_type(sc, x, sc->ASSOC, args, AN_ASSOCIATION_LIST, 2);
+
+      if ((is_pair(x)) && (!is_pair(car(x))))
+	return(wrong_type_argument_with_type(sc, sc->ASSOC, 2, x, AN_ASSOCIATION_LIST)); /* we're assuming caar below so it better exist */
     }
-  if (!is_pair(car(x)))
-    return(wrong_type_argument_with_type(sc, sc->ASSOC, 2, x, AN_ASSOCIATION_LIST)); /* we're assuming caar below so it better exist */
 
   if (is_not_null(cddr(args)))
     {
-      s7_pointer eq_func;
       /* check third arg before second (trailing arg error check) */
       eq_func = caddr(args);
 
@@ -28975,7 +29008,11 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 
       if (!s7_is_aritable(sc, eq_func, 2))
 	return(wrong_type_argument_with_type(sc, sc->ASSOC, 3, eq_func, AN_EQ_FUNC));
+    }
+  if (is_null(x)) return(sc->F);
 
+  if (eq_func)
+    {
       /* now maybe there's a simple case */
       if (s7_list_length(sc, x) > 0)
 	{
@@ -29042,13 +29079,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
     }
 
   x = cadr(args);
-  if (!is_pair(x))
-    {
-      if (is_null(x)) return(sc->F);
-      method_or_bust_with_type(sc, x, sc->ASSOC, args, AN_ASSOCIATION_LIST, 2);
-    }
   obj = car(args);
-
   if (is_simple(obj))
     return(s7_assq(sc, obj, x));
 
@@ -29426,18 +29457,14 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
    * here as in assoc, sort, and make-hash-table we accept macros, but I can't think of a good reason to do so.
    */
 
-  s7_pointer x, y, obj;
+  s7_pointer x, y, obj, eq_func = NULL;
   x = cadr(args);
 
-  if (!is_pair(x))
-    {
-      if (is_null(x)) return(sc->F);
-      method_or_bust_with_type(sc, x, sc->MEMBER, args, A_LIST, 2);
-    }
+  if ((!is_pair(x)) && (!is_null(x)))
+    method_or_bust_with_type(sc, x, sc->MEMBER, args, A_LIST, 2);
 
   if (is_not_null(cddr(args)))
     {
-      s7_pointer eq_func;
       /* check third arg before second (trailing arg error check) */
       eq_func = caddr(args);
 
@@ -29446,7 +29473,11 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 
       if (!s7_is_aritable(sc, eq_func, 2))
 	return(wrong_type_argument_with_type(sc, sc->MEMBER, 3, eq_func, AN_EQ_FUNC));
+    }
 
+  if (is_null(x)) return(sc->F);
+  if (eq_func)
+    {
       /* now maybe there's a simple case */
       if (s7_list_length(sc, x) > 0)
 	{
@@ -66122,7 +66153,7 @@ s7_scheme *s7_init(void)
 	    is_char_alphabetic(cp) = (bool)isalpha(i);
 	    is_char_numeric(cp) = (bool)isdigit(i);
 	    is_char_whitespace(cp) = white_space[i];
-	    is_char_uppercase(cp) = (bool)isupper(i);
+	    is_char_uppercase(cp) = (bool)isupper(i); /* this is apparently wrong -- (char-upper-case? #\xc0) should be #t? */
 	    is_char_lowercase(cp) = (bool)islower(i);
 	    chars[i] = cp;
 
@@ -67294,7 +67325,7 @@ int main(int argc, char **argv)
  * teq           |      |      | 6612                     3887 3020 2538
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301
  * tcopy         |      |      | 13.6                     5355 4728 3877
- * tmap          |      |      | 11.0           5031 4769 4685 4557 4200
+ * tmap          |      |      | 11.0           5031 4769 4685 4557 4230
  * tform         |      |      |                          6816 5536 4242
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6275
  * titer         |      |      |                          7503 6793 6335
@@ -67326,8 +67357,11 @@ int main(int argc, char **argv)
  *   with name/sync/sample settable
  * apropos should scan autoload?
  *
- * permutation-iterator (iterator-as-continuation?)
+ * permutation-iterator 
  * define-safe-macro fixed/tested. doc/finish define-with-macros.
- * ~W car-cycle in iterator bug
- * repl: maybe [num]> then <num>C-! gets that one, also need associated values? export the buffers (*h* num)
+ * ~W car-cycle in iterator bug, safe-fill! created the carcycle I think
+ * repl needs some simple way to navigate back in the history, even given compressions
+ * char-upper/lower-case? do not follow unicode: #\xc0 to #\xd0 (192..222) should be upper case (see also numeric/lower-case tables)
+ * g_member could catch safe-closure-not-all-x-able, set one env, write args->env directly, jump to begin, saving all of apply+apply_lambda
+ *   assoc also: see op_for_each_1.
  */

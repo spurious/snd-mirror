@@ -909,6 +909,9 @@
 				(loop (+ i 1))))))))
 	    
 	    (set! (meta-keymap-functions (char->integer #\p))
+		  ;; this is clumsy, but numbering the lines won't work right; if the buffer is compressed,
+		  ;;   all the locations change, but the old numbers are still displayed in the terminal.
+		  ;;   Perhaps add C-u<num>M-p but that requires counting etc
 		  (lambda (c) 
 		    (let ((old-index history-index))
 		      (when (and (zero? history-index) 
