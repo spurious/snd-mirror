@@ -10,6 +10,7 @@
     (let ((prompt #f)               ; function to get/set prompt
 	  (keymap #f)               ; function to get/set keymap entries
 	  (history #f)              ; function to get/set history buffer entries
+	  (history-size #f)         ; function to get/set history buffer size
 	  (save-history #f)         ; function to save the current history buffer entries in a file
 	  (restore-history #f)      ; function to restore history buffer entries from a file
 	  (helpers ())              ; list of functions displaying help strings 
@@ -61,64 +62,104 @@
 	
 	
 	;; -------- history --------
-	(let ((history-buffer (make-vector 100 ""))
-	      (current-history-size 100)
-	      (history-position 0)
-	      (history-index 0))
+	(let ((histbuf (make-vector 100 "")) ; much longer names originally -- hard to read, tedious to type
+	      (histsize 100)
+	      (histpos 0)
+	      (m-p-pos 0)
+	      (histtop ())
+	      (histtail ()))
+
+	  (define (push-line line)
+	    (if (null? histtop)
+		(begin
+		  (set! histtop (list line))
+		  (set! histtail histtop))
+		(begin
+		  (set-cdr! histtail (list line))
+		  (set! histtail (cdr histtail)))))
 
 	  (define (history-member line)
 	    (do ((i 0 (+ i 1)))
-		((or (= i current-history-size)
-		     (string=? (vector-ref history-buffer i) line))
-		 (and (< i current-history-size) i))))
+		((or (= i histsize)
+		     (string=? (vector-ref histbuf i) line))
+		 (and (< i histsize) i))))
 	  
 	  (define history-size (dilambda
 				(lambda ()
-				  current-history-size)
+				  histsize)
 				(lambda (new-size)
-				  (set! history-buffer (copy history-buffer (make-vector new-size "")))
-				  (set! current-history-size new-size))))
-	  
+				  (unless (= new-size histsize)
+				    (if (<= new-size 0)
+					(error 'out-of-range "new history buffer size must be positive")
+					(let ((new-hist (make-vector new-size ""))
+					      (new-end (min (- new-size 1) histpos)))
+					  (let loop ((oldpos histpos)
+						     (newpos new-end))
+					    (set! (new-hist newpos) (histbuf oldpos))
+					    (if (zero? newpos)
+						(set! newpos (- new-size 1))
+						(set! newpos (- newpos 1)))
+					    (unless (= newpos new-end)
+					      (if (zero? oldpos)
+						  (set! oldpos (- histsize 1))
+						  (set! oldpos (- oldpos 1)))
+					      (unless (= oldpos histpos)
+						(loop oldpos newpos))))
+					  (set! histsize new-size)
+					  (set! histpos new-end)
+					  (set! histbuf new-hist)
+					  new-size))))))
+
 	  (define history (dilambda 
 			   (lambda (back)
-			     (let ((i (+ history-position back)))
+			     (let ((i (+ histpos back)))
 			       (if (< i 0)
-				   (history-buffer (+ current-history-size i))
-				   (if (>= i current-history-size)
-				       (history-buffer (- i current-history-size))
-				       (history-buffer i)))))
+				   (histbuf (+ histsize i))
+				   (if (>= i histsize)
+				       (histbuf (- i histsize))
+				       (histbuf i)))))
 
 			   (lambda (new-line)
 			     (let ((pos (history-member new-line)))
 			       (when (integer? pos)                   ; remove the earlier case, circularly compress the buffer
-				 (when (>= pos history-position)
+				 (when (>= pos histpos)
 				   (do ((i pos (+ i 1)))
-				       ((>= i (- current-history-size 1)))
-				     (set! (history-buffer i) (history-buffer (+ i 1))))
-				   (set! (history-buffer (- current-history-size 1)) (history-buffer 0))
+				       ((>= i (- histsize 1)))
+				     (set! (histbuf i) (histbuf (+ i 1))))
+				   (set! (histbuf (- histsize 1)) (histbuf 0))
 				   (set! pos 0))
 
 				 (do ((i pos (+ i 1)))
-				     ((>= i (- history-position 1)))
-				   (set! (history-buffer i) (history-buffer (+ i 1))))
-				 (set! history-position (- history-position 1)))
+				     ((>= i (- histpos 1)))
+				   (set! (histbuf i) (histbuf (+ i 1))))
+				 (set! histpos (- histpos 1)))
 
-			       (set! (history-buffer history-position) new-line)
-			       (set! history-position (+ history-position 1))
-			       (if (= history-position current-history-size)
-				   (set! history-position 0))))))
+			       (set! (histbuf histpos) new-line)
+			       (set! histpos (+ histpos 1))
+			       (if (= histpos histsize)
+				   (set! histpos 0))))))
 	  
-	  (define (pop-history) ; throw away most recent addition
-	    (set! history-position (- history-position 1))
-	    (if (negative? history-position)
-		(set! history-position (- current-history-size 1))))
+	  (define (history-help)
+	    (set! (*repl* 'helpers)
+		  (list
+		   (lambda (c) 
+		     (format #f "size: ~A, pos: ~A" histsize histpos))
+		   (lambda (c)
+		     (format #f "buf: ~A ~A ~A" (history -1) (history -2) (history -3)))
+		   (lambda (c)
+		     (format #f "line: ~A" histtop)))))
+	  
+	  (define (pop-history)            ; throw away most recent addition
+	    (set! histpos (- histpos 1))
+	    (if (negative? histpos)
+		(set! histpos (- histsize 1))))
 	  
 	  (define* (write-history port (spaces 0))
-	    (format port "~NC(set! history-position ~D)~%" spaces #\space history-position)
-	    (format port "~NC(set! current-history-size ~D)~%" spaces #\space current-history-size)
+	    (format port "~NC(set! histpos ~D)~%" spaces #\space histpos)
+	    (format port "~NC(set! histsize ~D)~%" spaces #\space histsize)
 	    (let ((pl (*s7* 'print-length)))
-	      (set! (*s7* 'print-length) (* 2 current-history-size))
-	      (format port "~NC(set! history-buffer ~A)" spaces #\space (object->string history-buffer))
+	      (set! (*s7* 'print-length) (* 2 histsize))
+	      (format port "~NC(set! histbuf ~A)" spaces #\space (object->string histbuf))
 	      (set! (*s7* 'print-length) pl)))
 	  
 	  (define* (save-history (file "repl-history.scm"))
@@ -129,8 +170,8 @@
 	    (load file (curlet)))
 	  
 	  
-	  (let ((prompt-string "> ")
-		(prompt-length 2)
+	  (let ((prompt-string "<1> ")     ; this doesn't look very good, but I can't find anything better
+		(prompt-length 4)          ;    perhaps the line number could go in the terminal's right margin?
 		(cur-line "")              ; longer name originally, but that makes the code harder to read
 		(prev-line ())             ; for undo via C-_
 		(selection #f)             ; for C-y
@@ -248,7 +289,7 @@
 			       ((or (>= k endpos)
 				    (char=? (cur-line k) #\newline))
 				(set! i k)
-				(if (>= i endpos)   ; (f1 "(+ 1 3) should not show first paren as a match (similarly below)
+				(if (>= i endpos)                   ; (f1 "(+ 1 3) should not show first paren as a match (similarly below)
 				    (set! oparens ())))))
 			  
 			  ((#\")
@@ -318,16 +359,13 @@
 	    
 	    
 	    ;; -------- prompt --------
-	    (define prompt (dilambda
-			    (lambda ()
-			      prompt-string)
-			    (lambda (new-prompt)
-			      (set! prompt-length (length new-prompt))
-			      (set! prompt-string new-prompt))))
+	    (define (original-prompt num)
+	      (set! prompt-string (format #f "<~D> " num))
+	      (set! prompt-length (length prompt-string)))
 	    
 	    
 	    ;; -------- vt100 --------
-	    (define (bold text) (format #f "~C[1m~A~C[21m" #\escape text #\escape)) 
+	    (define (bold text) (format #f "~C[1m~A~C[0m" #\escape text #\escape)) 
 	    (define (red text) (format #f "~C[31m~A~C[0m" #\escape text #\escape))  ; black=30, green=32, yellow=33, blue=34
 	    
 	    (define* (rgb text (r 0) (g 0) (b 0) all-colors)
@@ -335,6 +373,9 @@
 		  (format #f "~C[38;5;~Dm~A~C[0m" #\escape (+ 16 (* 36 (round (* r 5))) (* 6 (round (* g 5))) (round (* b 5))) text #\escape)
 		  (format #f "~C[~Dm~A~C[0m" #\escape (+ 30 (ash (round b) 2) (ash (round g) 1) (round r)) text #\escape)))
 	    
+	    (define (move-cursor y x)
+	      (format *stderr* "~C[~D;~DH" #\escape y x))
+
 	    (define (cursor-coords)
 	      (let* ((c (string #\null #\null))
 		     (cc (string->c-pointer c))
@@ -360,9 +401,9 @@
 	      (let ((coords (cursor-coords)))
 		(set! prompt-col (car coords))
 		(set! prompt-row (cdr coords))
-		(format *stderr* "~C[~D;~DH" #\escape 4000 4000)
+		(move-cursor 4000 4000)
 		(let ((bounds (cursor-coords)))
-		  (format *stderr* "~C[~D;~DH" #\escape (cdr coords) (car coords))
+		  (move-cursor (cdr coords) (car coords))
 		  (set! last-col (car bounds))
 		  (set! last-row (cdr bounds)))))
 	    
@@ -382,6 +423,7 @@
 	      (set! cursor-pos 0)
 	      (set! cur-row 0)
 	      (set! prev-line ())
+	      ((*repl* 'prompt) (+ (length histtop) 1))
 	      (display-prompt)
 	      (cursor-bounds))
 	    
@@ -418,14 +460,14 @@
 		(do ((i 0 (+ i 1)))
 		    ((or (= i len)
 			 (= i cursor-pos))
-		     (format *stderr* "~C[~D;~DH" #\escape (+ prompt-row row) (+ prompt-col (- cursor-pos start))))
+		     (move-cursor (+ prompt-row row) (+ prompt-col (- cursor-pos start))))
 		  (when (char=? (cur-line i) #\newline)
 		    (set! row (+ row 1))
 		    (set! start (+ i 1))))))
 	    
 	    (define (display-lines)
-	      (format *stderr* "~C[~D;0H~C[J" #\escape prompt-row #\escape) ; set cursor back to prompt, erase down from there
-	      
+	      (move-cursor prompt-row 0)
+	      (format *stderr* "~C[J" #\escape)
 	      (let ((len (length cur-line))
 		    (new-line ""))
 		(let ((line-end 0))
@@ -451,19 +493,19 @@
 	      (when (pair? (*repl* 'helpers))
 		(let ((coords (cursor-coords))
 		      (col (floor (/ last-col 2))))
-		  (format *stderr* "~C[~D;~DH" #\escape 1 col)
+		  (move-cursor 1 col)
 		  (format *stderr* "+~NC" (- col 2) #\-)
 		  
-		  (do ((i 2 (+ i 1)) ; put box in top right corner so we don't get trailing output as we scroll
+		  (do ((i 2 (+ i 1))                      ; put box in top right corner so we don't get trailing output as we scroll
 		       (lst (*repl* 'helpers) (cdr lst)))
 		      ((null? lst))
 		    (let ((str ((car lst) c)))
-		      (format *stderr* "~C[~D;~DH" #\escape i col)
+		      (move-cursor i col)
 		      (format *stderr* "~C[K| ~A"  #\escape (if (> (length str) col) (substring str 0 (- col 1)) str))))
 		  
-		  (format *stderr* "~C[~D;~DH" #\escape (+ 2 (length (*repl* 'helpers))) col)
+		  (move-cursor (+ 2 (length (*repl* 'helpers))) col)
 		  (format *stderr* "+~NC" (- col 2) #\-)
-		  (format *stderr* "~C[~D;~DH"   #\escape (cdr coords) (car coords)))))
+		  (move-cursor (cdr coords) (car coords)))))
 	    
 	    (define (debug-help)
 	      (set! (*repl* 'helpers)
@@ -577,7 +619,7 @@
 		(set! prompt-row (- prompt-row 1)))
 	      (set! cur-row (+ cur-row 1)))
 	    
-	    (define (word-break pos) ; assume we're at the start of a word
+	    (define (word-break pos)                 ; assume we're at the start of a word
 	      (let ((len (length cur-line)))
 		(let loop ((i pos))
 		  (if (or (>= i len)
@@ -600,7 +642,7 @@
 							  (string c) 
 							  (substring cur-line cursor-pos)))))
 				  (set! cursor-pos (+ cursor-pos 1))
-				  (set! history-index 0)))
+				  (set! m-p-pos 0)))
 		  (no-op-keyfunc (lambda (c) #t)))
 	      
 	      (do ((i 0 (+ i 1)))
@@ -708,7 +750,7 @@
 			      (begin
 				(set! selection (substring cur-line cursor-pos))
 				(set! cur-line (substring cur-line 0 cursor-pos)))
-			      (if (or (= cursor-pos end) ; delete following newline
+			      (if (or (= cursor-pos end)                            ; delete following newline
 				      (char=? (cur-line cursor-pos) #\newline))
 				  (set! cur-line (string-append (substring cur-line 0 cursor-pos)
 								(substring cur-line (+ cursor-pos 1))))
@@ -818,7 +860,7 @@
 		     (lambda (return)
 		       (let ((len (length cur-line)))
 			 
-			 (do ((i 0 (+ i 1))) ; check for just whitespace
+			 (do ((i 0 (+ i 1)))               ; check for just whitespace
 			     ((or (= i len)
 				  (not (char-whitespace? (cur-line i))))
 			      (when (= i len)
@@ -843,12 +885,12 @@
 					 (not (= input-fd terminal-fd)))
 				     (display-lines))
 				 (set! (history) (copy cur-line))
-				 (set! history-index 0)
+				 (set! m-p-pos 0)
 				 
 				 (with-repl-let
 				  (lambda ()
 				    ;; get the newline out if the expression does not involve a read error
-				    (let ((form (with-input-from-string cur-line #_read))) ; not libc's read
+				    (let ((form (with-input-from-string cur-line #_read)))    ; not libc's read
 				      (newline *stderr*)
 				      (let ((val (eval form (*repl* 'top-level-let))))
 					(if unbound-case
@@ -867,6 +909,7 @@
 			     (apply format *stderr* info)
 			     (newline *stderr*)))
 			 
+			 (push-line (copy cur-line))
 			 (new-prompt))))))
 	    
 	    ;; -------- escaped (Meta/Alt/arrow) keys
@@ -907,41 +950,48 @@
 				  (set! (cur-line i) (char-upcase (cur-line i)))
 				  (set! cursor-pos (word-break i)))
 				(loop (+ i 1))))))))
+
+	    (let ()
+	      (define (fixup-new-line)
+		(set! cursor-pos (length cur-line))
+		(let ((newlines (count-newlines cur-line)))
+		  (when (< last-row (+ prompt-row newlines))
+		    (format *stderr* "~NC" (- (+ prompt-row newlines) last-row) #\newline)
+		    (set! prompt-row (- prompt-row newlines)))
+		  (set! cur-row newlines)))
+
+	      (set! (meta-keymap-functions (char->integer #\p))
+		    ;; this is clumsy, but numbering the lines won't work right; if the buffer is compressed,
+		    ;;   all the locations change, but the old numbers are still displayed in the terminal.
+		    ;;   Perhaps add C-u<num>M-p but that requires counting etc
+		    (lambda (c) 
+		      (let ((old-index m-p-pos))
+			(when (and (zero? m-p-pos) 
+				   (> (length cur-line) 0))
+			  (set! (history) cur-line)
+			  (set! m-p-pos -1))
+			(set! m-p-pos (max (- m-p-pos 1) (- histsize)))
+			(if (positive? (length (history m-p-pos)))
+			    (begin
+			      (set! cur-line (history m-p-pos))
+			      (fixup-new-line))
+			    (set! m-p-pos old-index)))))
 	    
-	    (set! (meta-keymap-functions (char->integer #\p))
-		  ;; this is clumsy, but numbering the lines won't work right; if the buffer is compressed,
-		  ;;   all the locations change, but the old numbers are still displayed in the terminal.
-		  ;;   Perhaps add C-u<num>M-p but that requires counting etc
-		  (lambda (c) 
-		    (let ((old-index history-index))
-		      (when (and (zero? history-index) 
-				 (> (length cur-line) 0))
-			(set! (history) cur-line)
-			(set! history-index -1))
-		      (set! history-index (max (- history-index 1) (- current-history-size)))
-		      (if (positive? (length (history history-index)))
-			  (begin
-			    (set! cur-line (history history-index))
-			    (set! cursor-pos (length cur-line))
-			    (let ((newlines (count-newlines cur-line)))
-			      (when (< last-row (+ prompt-row newlines))
-				(format *stderr* "~NC" (- (+ prompt-row newlines) last-row) #\newline)
-				(set! prompt-row (- prompt-row newlines)))
-			      (set! cur-row newlines)))
-			  (set! history-index old-index)))))
+	      (set! (meta-keymap-functions (char->integer #\n))
+		    (lambda (c) 
+		      (set! m-p-pos (min 0 (+ m-p-pos 1)))
+		      (when (positive? (length (history m-p-pos)))
+			(set! cur-line (history m-p-pos))
+			(fixup-new-line))))
 	    
-	    (set! (meta-keymap-functions (char->integer #\n))
-		  (lambda (c) 
-		    (set! history-index (min 0 (+ history-index 1)))
-		    (when (positive? (length (history history-index)))
-		      (set! cur-line (history history-index))
-		      (set! cursor-pos (length cur-line))
-		      (let ((newlines (count-newlines cur-line)))
-			(when (< last-row (+ prompt-row newlines))
-			  (format *stderr* "~NC" (- (+ prompt-row newlines) last-row) #\newline)
-			  (set! prompt-row (- prompt-row newlines)))
-			(set! cur-row newlines)))))
-	    
+	      (set! (meta-keymap-functions (char->integer #\.))         ; get earlier line indexed by numeric arg
+		    (lambda (c) 
+		      (let ((len (length histtop)))
+			(let ((pos (or (string->number cur-line) len)))
+			  (set! pos (min len (max pos 1)))
+			  (set! cur-line (histtop (- pos 1)))
+			  (fixup-new-line))))))
+
 	    (set! (meta-keymap-functions (char->integer #\u))
 		  (lambda (c) 
 		    (let ((len (length cur-line)))
@@ -969,7 +1019,7 @@
 				      (not (char-alphabetic? (cur-line k))))
 				  (set! cursor-pos k))
 			       (set! (cur-line k) (char-downcase (cur-line k))))))))))
-	    
+
 	    
 	    ;; -------- terminal setup --------
 	    (define* (run file)
@@ -1105,7 +1155,7 @@
 				       
 				       (lambda (type info)
 					 (set! chars 0)
-					 (format *stderr* "~C[~D;~DH" #\escape prompt-row prompt-col)
+					 (move-cursor prompt-row prompt-col)
 					 (format *stderr* "internal error: ")
 					 (apply format *stderr* info)
 					 (newline *stderr*)
@@ -1138,10 +1188,11 @@
 		  (display-prompt)
 		  (cursor-bounds)
 		  ;; (debug-help)
+		  ;; (history-help)
 		  
 		  (do () 
 		      (all-done
-		       (set! all-done #f)) ; clear for next call
+		       (set! all-done #f))       ; clear for next call
 		    (catch #t
 		      (lambda ()
 			(let ((chr (next-char)))
@@ -1155,7 +1206,7 @@
 			  (help chr)))
 		      
 		      (lambda (type info)
-			(format *stderr* "~C[~D;~DH" #\escape prompt-row prompt-col)
+			(move-cursor prompt-row prompt-col)
 			(format *stderr* "internal error: ")
 			(apply format *stderr* info)
 			(format *stderr* "~%line ~A: ~A~%" ((owlet) 'error-line) ((owlet) 'error-code))
@@ -1186,9 +1237,10 @@
       
       (set! keymap (repl-let 'keymap))
       (set! history (repl-let 'history))
+      (set! history-size (repl-let 'history-size))
       (set! save-history (repl-let 'save-history))
       (set! restore-history (repl-let 'restore-history))
-      (set! prompt (repl-let 'prompt))
+      (set! prompt (repl-let 'original-prompt))
       (set! run (repl-let 'run))
       
       (curlet))))
@@ -1366,12 +1418,18 @@ to add/change keymap entry (using sublet here to protect against inadvertent cha
 	  (set! cursor-pos (+ cursor-pos (length "(lambda "))))))
 
 change the prompt:
-(set! ((*repl* 'prompt)) "scheme> ")
+(set! (*repl* 'prompt) (lambda (num) 
+			 (with-let (*repl* 'repl-let)
+			   (set! prompt-string "scheme> ") 
+			   (set! prompt-length (length prompt-string)))))
 
 red lambda prompt: 
-    (with-let (sublet (*repl* 'repl-let))
-      (set! prompt-string (bold (red (string #\xce #\xbb #\> #\space))))
-      (set! prompt-length 3)) ; until we get unicode length calc
+(set! (*repl* 'prompt)
+      (lambda (num)
+	(with-let (*repl* 'repl-let)
+	  (set! prompt-string (bold (red (string #\xce #\xbb #\> #\space))))
+	  (set! prompt-length 3)))) ; until we get unicode length calc
+
 
 to post a help string (kinda tedious, but the helper list is aimed more at posting variable values):
 (set! (*repl* 'helpers)
@@ -1418,20 +1476,20 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 	    (when (char=? next (integer->char 6)) ; C-f
 	      (format *stderr* "~%load: ")
 	      ;; now recursive call: prompt="load: "
-	      (let ((old-prompt-string prompt-string)
-		    (old-prompt-length prompt-length)
+	      (let ((old-prompt (*repl* 'prompt))
 		    (old-cur-line cur-line)
 		    (old-cursor-pos cursor-pos)
 		    (old-enter-func (keymap-functions 10))
 		    (filename #f))
-		(set! prompt-string "load: ")
-		(set! prompt-length 6)
+		(set! (*repl 'prompt) (lambda (num) 
+					(with-let (*repl* 'repl-let)
+					  (set! prompt-string "load: ")
+					  (set! prompt-length 6))))
 		(set! cur-line "")
 		(set! cursor-pos 0)
 		(set! (keymap-functions 10) (lambda (c)
 					      (set! filename cur-line)
-					      (set! prompt-string old-prompt-string)
-					      (set! prompt-length old-prompt-length)
+					      (set! (*repl* 'prompt) old-prompt)
 					      (set! cur-line old-cur-line)
 					      (set! cursor-pos old-cursor-pos)
 					      (set! (keymap-functions 10) old-enter-func)))

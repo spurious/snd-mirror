@@ -9002,9 +9002,9 @@ thread-safe local variables, which can be saved and communicated between s7 runs
 <p>repl.scm implements a repl using vt100 codes and libc.scm.  It includes
 symbol and filename completion, a history buffer, paren matching,
 indentation, multi-line edits, and a debugger window.  
-To move around in the history buffer, use M-p and M-n (C-p and C-n are used to move the cursor in the current expression).  
-You can change the keymap or the prompt, and so on.  All the repl functions are
-exported via the *repl* environment.  One field is 'repl-let which
+To move around in the history buffer, use M-p, M-n or M-. (C-p and C-n are used to move the cursor in the current expression).  
+You can change the keymap or the prompt; all the repl functions are
+accessible through the *repl* environment.  One field is 'repl-let which
 gives you access to all the repl's internal variables and functions.
 Another is 'top-level-let, normally (sublet (rootlet)), which is the environment in
 which the repl's evaluation takes place.  You can reset the repl back to its
@@ -9056,28 +9056,31 @@ to the underlying shell via the system function.  If s7's (as opposed to libc's)
 is accessible, the '** variable holds whatever the command printed.
 </p>
 
-<p>The prompt is set by (*repl* 'prompt), a dilambda, so
-the simplest way to change the prompt is:
+<p>The prompt is set by the function (*repl* 'prompt).  It gets one argument,
+the current line number, and should set the prompt string and its length.
 </p>
-
 <pre class="indented">
-(set! ((*repl* 'prompt)) "scheme&gt; ")
+(set! (*repl* 'prompt) (lambda (num) 
+			 (with-let (*repl* 'repl-let)
+			   (set! prompt-string "scheme&gt; ") 
+			   (set! prompt-length (length prompt-string)))))
+</pre>
+<or, to use the red lambda example mentioned earlier:
+</p>
+<pre class="indented">
+(set! (*repl* 'prompt)
+      (lambda (num)
+	(with-let (*repl* 'repl-let)
+	  (set! prompt-string (bold (red (string #\xce #\xbb #\&gt; #\space))))
+	  (set! prompt-length 3)))) ; until we get unicode length calc
 </pre>
 
-<p>But repl-let gives you low-level access to the repl code, so
-you can also:
+<p>The line number provides a quick way to move around in the history buffer.
+To get a previous line without laboriously typing M-p over and over,
+simply type the line number (without control or meta bits), then M-.
 </p>
 
-<pre class="indented">
-(with-let (sublet (*repl* 'repl-let))  ; red lambda prompt
-  (set! prompt-string (bold (red (string #\xce #\xbb #\&gt; #\space))))
-  (set! prompt-length 3))
-</pre>
-
-<p>The sublet wrapped around repl-let is not needed here, but in more complex
-cases it protects against inadvertent changes to the repl (our local definitions
-go to the inner let, not repl-let).
-Here is an example of adding to the keymap:
+<p>Here is an example of adding to the keymap:
 </p>
 <pre class="indented">
 (set! ((*repl* 'keymap) (integer-&gt;char 17)) ; C-q to quit and return to caller
@@ -9085,10 +9088,9 @@ Here is an example of adding to the keymap:
 	(set! ((*repl* 'repl-let) 'all-done) #t)))
 </pre>
 
-<p>To access the meta keys, use a string:
+<p>To access the meta keys (in the keymap), use a string:
 <code>((*repl* 'keymap) (string #\escape #\p))</code>; this is Meta-p which normally accesses
-the history buffer.  If you paste a large selection into the repl, 
-you may need to type return or move the mouse(!) to get a response from the repl.
+the history buffer.  
 </p>
 
 <p>You can call the repl from other code, poke around in the current environment (or whatever),

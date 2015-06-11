@@ -708,7 +708,12 @@ void snd_doit(int argc, char **argv)
   if (!nostdin)
     {
       s7_load(s7, "repl.scm");
-      s7_eval_c_string(s7, "(set! ((*repl* 'prompt)) *listener-prompt*)");
+      if ((listener_prompt(ss)) && (strcmp(listener_prompt(ss), DEFAULT_LISTENER_PROMPT) != 0))
+	s7_eval_c_string(s7, "(set! (*repl* 'prompt)                \
+                                  (lambda (num)				\
+                                    (with-let (sublet (*repl* 'repl-let) :num num)  \
+			              (set! prompt-string (format #f \"(~D)~A\" num *listener-prompt*)) \
+			              (set! prompt-length (length prompt-string)))))");
       s7_eval_c_string(s7, "((*repl* 'run))");
     }
 #else

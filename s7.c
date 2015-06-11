@@ -23301,10 +23301,14 @@ in the file, or by the function."
       check_method(sc, sym, sc->AUTOLOAD, args);
       return(s7_wrong_type_arg_error(sc, "autoload", 1, sym, "a string (symbol-name) or a symbol"));
     }
+  if (is_keyword(sym))
+    return(s7_wrong_type_arg_error(sc, "autoload", 1, sym, "a normal symbol (a keyword is never unbound)"));
 
   value = cadr(args);
-  if ((is_string(value)) ||
-      (is_closure(value)))
+  if (is_string(value))
+    return(s7_autoload(sc, sym, value));
+  if (((is_closure(value)) || (is_closure_star(value))) &&
+      (s7_is_aritable(sc, value, 1)))
     return(s7_autoload(sc, sym, value));
 
   check_method(sc, value, sc->AUTOLOAD, args);
@@ -35030,6 +35034,8 @@ static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
   sym = car(args);
   if (!is_symbol(sym))
     method_or_bust(sc, sym, sc->SYMBOL_ACCESS, args, T_SYMBOL, 0);
+  if (is_keyword(sym))
+    return(sc->F);
 
   if (is_pair(cdr(args)))
     {
@@ -35062,6 +35068,8 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
   sym = car(args);
   if (!is_symbol(sym))                 /* no check method because no method name? */
     return(s7_wrong_type_arg_error(sc, "set! symbol-access", 1, sym, "a symbol"));
+  if (is_keyword(sym))
+    return(s7_wrong_type_arg_error(sc, "set! symbol-access", 1, sym, "a normal symbol (a keyword can't be set)"));
 
   /* (set! (symbol-access sym) f) or (set! (symbol-access sym env) f) */
   if (is_pair(cddr(args)))
@@ -53932,17 +53940,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_MEMBER_IF1:
 	  /* code=func, args = (list original args) with ecdr->position in cadr (the list), value = result of comparison
 	   */
-	  if (sc->value != sc->F)            /* previous comparison was not #f -- return list */
+	  if (sc->value != sc->F)                      /* previous comparison was not #f -- return list */
 	    {
 	      sc->value = ecdr(sc->args);
 	      goto START;
 	    }
-	  if (!is_pair(cdr(ecdr(sc->args))))     /* no more args -- return #f */
+	  if (!is_pair(cdr(ecdr(sc->args))))           /* no more args -- return #f */
 	    {
 	      sc->value = sc->F;
 	      goto START;
 	    }
-	  set_ecdr(sc->args, cdr(ecdr(sc->args)));  /* cdr down arg list */
+	  set_ecdr(sc->args, cdr(ecdr(sc->args)));     /* cdr down arg list */
 	  
 	  if (sc->op == OP_MEMBER_IF1)
 	    {
@@ -53956,6 +53964,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      push_stack(sc, OP_MEMBER_IF, sc->args, sc->code);
 	    }
 	  else push_stack(sc, OP_MEMBER_IF1, sc->args, sc->code);
+
 	  if (needs_copied_args(sc->code))
 	    sc->args = list_2(sc, caar(sc->args), car(ecdr(sc->args)));
 	  else sc->args = set_plist_2(sc, caar(sc->args), car(ecdr(sc->args)));
@@ -66153,7 +66162,7 @@ s7_scheme *s7_init(void)
 	    is_char_alphabetic(cp) = (bool)isalpha(i);
 	    is_char_numeric(cp) = (bool)isdigit(i);
 	    is_char_whitespace(cp) = white_space[i];
-	    is_char_uppercase(cp) = (bool)isupper(i); /* this is apparently wrong -- (char-upper-case? #\xc0) should be #t? */
+	    is_char_uppercase(cp) = (((bool)isupper(i)) || ((i >= 192) && (i < 208)));
 	    is_char_lowercase(cp) = (bool)islower(i);
 	    chars[i] = cp;
 
@@ -67315,7 +67324,7 @@ int main(int argc, char **argv)
  *   (clang also needs LDFLAGS="-Wl,-export-dynamic" in Linux)
  */
 #endif
-
+ 
 
 /* --------------------------------------------------------------------------
  *
@@ -67337,7 +67346,7 @@ int main(int argc, char **argv)
  *
  * calls 54.6 if no clm2xen, tall: 26.9
  * --------------------------------------------------------------------------
- *
+ * 
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  * cyclic-seq in stuff.scm, but current code is really clumsy
@@ -67356,12 +67365,9 @@ int main(int argc, char **argv)
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
  *   with name/sync/sample settable
  * apropos should scan autoload?
- *
- * permutation-iterator 
- * define-safe-macro fixed/tested. doc/finish define-with-macros.
  * ~W car-cycle in iterator bug, safe-fill! created the carcycle I think
- * repl needs some simple way to navigate back in the history, even given compressions
- * char-upper/lower-case? do not follow unicode: #\xc0 to #\xd0 (192..222) should be upper case (see also numeric/lower-case tables)
- * g_member could catch safe-closure-not-all-x-able, set one env, write args->env directly, jump to begin, saving all of apply+apply_lambda
- *   assoc also: see op_for_each_1.
+ * could fprintf and friends be implemented in libc?
+ *   rest-args, int->int etc, but how is this declared? -- maybe the vprintfs are doable
+ * in repl perhaps the red open-paren should be cleared before anything else --
+ *   it's possible to get a stuck paren
  */

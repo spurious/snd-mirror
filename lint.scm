@@ -319,7 +319,7 @@
 			   'lambda +function+
 			   'lambda* +function+
 			   'lcm +number+
-			   'length +integer+   ; actually integer or #f
+			   'length +integer+   ; actually integer or #f, so we get false complaints about (if (length...) ..) never false
 			   'let->list +list+
 			   'let? +boolean+
 			   'list +list+
