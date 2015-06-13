@@ -24600,9 +24600,6 @@ static s7_pointer g_cyclic_sequences(s7_scheme *sc, s7_pointer args)
   return(cyclic_sequences(sc, car(args), true));
 }
 
-
-#define WITH_ELLIPSES false
-
 static int circular_list_entries(s7_pointer lst)
 {
   int i;
@@ -24618,8 +24615,8 @@ static int circular_list_entries(s7_pointer lst)
 }
 
 
-static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci);
-static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci);
+static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_pointer port, use_write_t use_write, shared_info *ci);
+static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci);
 static s7_pointer write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write);
 
 static char *multivector_indices_to_string(s7_scheme *sc, s7_Int index, s7_pointer vect, char *str, int cur_dim)
@@ -24644,7 +24641,7 @@ static char *multivector_indices_to_string(s7_scheme *sc, s7_Int index, s7_point
 
 static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
 			       int out_len, int flat_ref, int dimension, int dimensions, bool *last,
-			       use_write_t use_write, bool to_file, shared_info *ci)
+			       use_write_t use_write, shared_info *ci)
 {
   int i;
 
@@ -24674,7 +24671,7 @@ static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
 		  port_write_string(port)(sc, buf, plen, port);
 		  tmpbuf_free(indices, 128);
 		}
-	      object_to_port_with_circle_check(sc, vector_element(vec, flat_ref), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	      object_to_port_with_circle_check(sc, vector_element(vec, flat_ref), port, DONT_USE_DISPLAY(use_write), ci);
 
 	      if (use_write == USE_READABLE_WRITE)
 		port_write_string(port)(sc, ") ", 2, port);
@@ -24692,7 +24689,7 @@ static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
       else
 	{
 	  if (flat_ref < out_len)
-	    flat_ref = multivector_to_port(sc, vec, port, out_len, flat_ref, dimension + 1, dimensions, last, DONT_USE_DISPLAY(use_write), to_file, ci);
+	    flat_ref = multivector_to_port(sc, vec, port, out_len, flat_ref, dimension + 1, dimensions, last, DONT_USE_DISPLAY(use_write), ci);
 	  else
 	    {
 	      port_write_string(port)(sc, "...)", 4, port);
@@ -24707,7 +24704,7 @@ static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
 }
 
 
-static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
+static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   s7_Int i, len;
   int plen;
@@ -24726,12 +24723,8 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
       return;
     }
 
-  if ((use_write != USE_READABLE_WRITE) &&
-      ((!to_file) || (port == sc->standard_output) || (port == sc->standard_error)))
+  if (use_write != USE_READABLE_WRITE)
     {
-      /* if to_file we ignore (*s7* 'print-length) so a subsequent read will be ok
-       * (with-output-to-file "test.test" (lambda () (let ((vect (make-vector (+ (*s7* 'print-length) 2) 1.0))) (write vect))))
-       */
       plen = sc->print_length;
       if (plen <= 0)
 	{
@@ -24782,7 +24775,7 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	  if (vector_rank(vect) > 1)
 	    {
 	      bool last = false;
-	      multivector_to_port(sc, vect, port, len, 0, 0, vector_ndims(vect), &last, use_write, to_file, ci);
+	      multivector_to_port(sc, vect, port, len, 0, 0, vector_ndims(vect), &last, use_write, ci);
 	    }
 	  else
 	    {
@@ -24791,7 +24784,7 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 		  port_write_string(port)(sc, "(set! ({v} ", 11, port);
 		  plen = snprintf(buf, 128, "%lld) ", i);
 		  port_write_string(port)(sc, buf, plen, port);
-		  object_to_port_with_circle_check(sc, vector_element(vect, i), port, use_write, to_file, ci);
+		  object_to_port_with_circle_check(sc, vector_element(vect, i), port, use_write, ci);
 		  port_write_string(port)(sc, ") ", 2, port);
 		}
 	    }
@@ -24806,7 +24799,7 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	  for (i = 0; i < len; i++)
 	    {
 	      port_write_character(port)(sc, ' ', port);
-	      object_to_port_with_circle_check(sc, vector_element(vect, i), port, use_write, to_file, ci);
+	      object_to_port_with_circle_check(sc, vector_element(vect, i), port, use_write, ci);
 	    }
 	  port_write_character(port)(sc, ')', port);
 
@@ -24836,17 +24829,17 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	      port_write_string(port)(sc, buf, plen, port);
 	    }
 	  else port_write_character(port)(sc, '#', port);
-	  multivector_to_port(sc, vect, port, len, 0, 0, vector_ndims(vect), &last, use_write, to_file, ci);
+	  multivector_to_port(sc, vect, port, len, 0, 0, vector_ndims(vect), &last, use_write, ci);
 	}
       else
 	{
 	  port_write_string(port)(sc, "#(", 2, port);
 	  for (i = 0; i < len - 1; i++)
 	    {
-	      object_to_port_with_circle_check(sc, vector_element(vect, i), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	      object_to_port_with_circle_check(sc, vector_element(vect, i), port, DONT_USE_DISPLAY(use_write), ci);
 	      port_write_character(port)(sc, ' ', port);
 	    }
-	  object_to_port_with_circle_check(sc, vector_element(vect, i), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	  object_to_port_with_circle_check(sc, vector_element(vect, i), port, DONT_USE_DISPLAY(use_write), ci);
 
 	  if (too_long)
 	    port_write_string(port)(sc, " ...)", 5, port);
@@ -24855,7 +24848,7 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
     }
 }
 
-static void output_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file)
+static void output_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write)
 {
   if ((obj == sc->standard_output) ||
       (obj == sc->standard_error))
@@ -24902,7 +24895,7 @@ static void output_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, 
     }
 }
 
-static void input_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file)
+static void input_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write)
 {
   if (obj == sc->standard_input)
     port_write_string(port)(sc, port_filename(obj), port_filename_length(obj), port);
@@ -24959,7 +24952,7 @@ static bool symbol_needs_slashification(const char *str, int len)
   return(false);
 }
 
-static void symbol_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file)
+static void symbol_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write)
 {
   /* I think this is the only place we print a symbol's name
    *   but in the readable case, what about (symbol "1;3")? it actually seems ok!
@@ -24985,7 +24978,7 @@ static void symbol_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
     }
 }
 
-static void string_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file)
+static void string_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write)
 {
   if (string_length(obj) > 0)
     {
@@ -25018,7 +25011,7 @@ static void string_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
     }
 }
 
-static void byte_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write, bool to_file)
+static void byte_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write)
 {
   s7_Int i, len;
   int plen;
@@ -25062,7 +25055,7 @@ static void byte_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port,
 }
 
 
-static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write, bool to_file)
+static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write)
 {
   s7_Int i, len;
   int plen;
@@ -25136,7 +25129,7 @@ static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_point
 }
 
 
-static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
+static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   /* we need list_to_starboard... */
   s7_pointer x;
@@ -25169,7 +25162,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
        * so (quote x) = 'x but (quote x y z) should be left alone (if evaluated, it's an error)
        */
       port_write_character(port)(sc, '\'', port);
-      object_to_port_with_circle_check(sc, cadr(lst), port, USE_WRITE, to_file, ci);
+      object_to_port_with_circle_check(sc, cadr(lst), port, USE_WRITE, ci);
       return;
     }
   else port_write_character(port)(sc, '(', port);
@@ -25199,7 +25192,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 	  for (i = 0, x = lst; (i < len) && (is_pair(x)); i++, x = cdr(x))
 	    {
 	      port_write_string(port)(sc, "(set-car! {x} ", 14, port);
-	      object_to_port_with_circle_check(sc, car(x), port, use_write, to_file, ci);
+	      object_to_port_with_circle_check(sc, car(x), port, use_write, ci);
 	      port_write_string(port)(sc, ") ", 2, port);
 	      if (i < len - 1)
 		port_write_string(port)(sc, "(set! {x} (cdr {x})) ", 21, port);
@@ -25207,7 +25200,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 	  if (!is_null(x))
 	    {
 	      port_write_string(port)(sc, "(set-cdr! {x} ", 14, port);
-	      object_to_port_with_circle_check(sc, x, port, use_write, to_file, ci);
+	      object_to_port_with_circle_check(sc, x, port, use_write, ci);
 	      port_write_string(port)(sc, ") ", 2, port);
 	    }
 	  port_write_string(port)(sc, ") {lst})", 8, port);
@@ -25226,22 +25219,22 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 	      for (x = lst; is_pair(x); x = cdr(x))
 		{
 		  port_write_character(port)(sc, ' ', port);
-		  object_to_port_with_circle_check(sc, car(x), port, use_write, to_file, ci);
+		  object_to_port_with_circle_check(sc, car(x), port, use_write, ci);
 		}
 	      port_write_character(port)(sc, ')', port);
 	    }
 	  else
 	    {
 	      port_write_string(port)(sc, "cons ", 5, port);
-	      object_to_port_with_circle_check(sc, car(lst), port, use_write, to_file, ci);
+	      object_to_port_with_circle_check(sc, car(lst), port, use_write, ci);
 	      for (x = cdr(lst); is_pair(x); x = cdr(x))
 		{
 		  port_write_character(port)(sc, ' ', port);
 		  port_write_string(port)(sc, "(cons ", 6, port);
-		  object_to_port_with_circle_check(sc, car(x), port, use_write, to_file, ci);
+		  object_to_port_with_circle_check(sc, car(x), port, use_write, ci);
 		}
 	      port_write_character(port)(sc, ' ', port);
-	      object_to_port_with_circle_check(sc, x, port, use_write, to_file, ci);
+	      object_to_port_with_circle_check(sc, x, port, use_write, ci);
 	      for (i = 1; i < len; i++)
 		port_write_character(port)(sc, ')', port);
 	    }
@@ -25253,7 +25246,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 	{
 	  for (x = lst, i = 0; (is_pair(x)) && (i < len) && ((!ci) || (i == 0) || (peek_shared_ref(ci, x) == 0)); i++, x = cdr(x))
 	    {
-	      object_to_port_with_circle_check(sc, car(x), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	      object_to_port_with_circle_check(sc, car(x), port, DONT_USE_DISPLAY(use_write), ci);
 	      if (i < (len - 1))
 		port_write_character(port)(sc, ' ', port);
 	    }
@@ -25263,7 +25256,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 		  (i == len))
 		port_write_string(port)(sc, " . ", 3, port);
 	      else port_write_string(port)(sc, ". ", 2, port);
-	      object_to_port_with_circle_check(sc, x, port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	      object_to_port_with_circle_check(sc, x, port, DONT_USE_DISPLAY(use_write), ci);
 	    }
 	  port_write_character(port)(sc, ')', port);
 	}
@@ -25271,14 +25264,14 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 	{
 	  for (x = lst, i = 0; (is_pair(x)) && (i < len); i++, x = cdr(x))
 	    {
-	      object_to_port(sc, car(x), port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	      object_to_port(sc, car(x), port, DONT_USE_DISPLAY(use_write), ci);
 	      if (i < (len - 1))
 		port_write_character(port)(sc, ' ', port);
 	    }
 	  if (is_not_null(x))
 	    {
 	      port_write_string(port)(sc, ". ", 2, port);
-	      object_to_port(sc, x, port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	      object_to_port(sc, x, port, DONT_USE_DISPLAY(use_write), ci);
 	    }
 	  port_write_character(port)(sc, ')', port);
 	}
@@ -25286,7 +25279,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 }
 
 
-static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
+static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   int i, len, gc_iter;
   bool too_long = false;
@@ -25305,8 +25298,7 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
       return;
     }
 
-  if ((use_write != USE_READABLE_WRITE) &&
-      ((!to_file) || (port == sc->standard_output) || (port == sc->standard_error)))
+  if (use_write != USE_READABLE_WRITE)
     {
       s7_Int plen;
       plen = sc->print_length;
@@ -25349,11 +25341,11 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
 	  port_write_string(port)(sc, " (set! ({ht} ", 13, port);
 	  if (key == hash)
 	    port_write_string(port)(sc, "{ht}", 4, port);
-	  else object_to_port_with_circle_check(sc, key, port, USE_READABLE_WRITE, to_file, ci);
+	  else object_to_port_with_circle_check(sc, key, port, USE_READABLE_WRITE, ci);
 	  port_write_string(port)(sc, ") ", 2, port);
 	  if (val == hash)
 	    port_write_string(port)(sc, "{ht}", 4, port);
-	  else object_to_port_with_circle_check(sc, val, port, USE_READABLE_WRITE, to_file, ci);
+	  else object_to_port_with_circle_check(sc, val, port, USE_READABLE_WRITE, ci);
 	  port_write_character(port)(sc, ')', port);
 	}
       port_write_string(port)(sc, " {ht})", 6, port);
@@ -25368,7 +25360,7 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
 	    port_write_character(port)(sc, ' ', port);
 	  else port_write_string(port)(sc, " '", 2, port);
 	  key_val = hash_table_iterate(sc, iterator);
-	  object_to_port_with_circle_check(sc, key_val, port, DONT_USE_DISPLAY(use_write), to_file, ci);
+	  object_to_port_with_circle_check(sc, key_val, port, DONT_USE_DISPLAY(use_write), ci);
 	  free_cell(sc, key_val);
 	}
 
@@ -25381,17 +25373,17 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
 }
 
 
-static void slot_to_port_1(s7_scheme *sc, s7_pointer x, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
+static void slot_to_port_1(s7_scheme *sc, s7_pointer x, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   if (is_slot(x))
     {
-      slot_to_port_1(sc, next_slot(x), port, use_write, to_file, ci);
+      slot_to_port_1(sc, next_slot(x), port, use_write, ci);
       port_write_character(port)(sc, ' ', port);
-      object_to_port_with_circle_check(sc, x, port, use_write, to_file, ci);
+      object_to_port_with_circle_check(sc, x, port, use_write, ci);
     }
 }
 
-static void let_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
+static void let_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   /* if outer env points to (say) method list, the object needs to specialize object->string itself
    */
@@ -25445,9 +25437,9 @@ static void let_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_writ
 	  for (x = let_slots(obj); is_slot(x); x = next_slot(x))
 	    {
 	      port_write_string(port)(sc, "(cons ", 6, port);
-	      object_to_port(sc, slot_symbol(x), port, use_write, to_file, ci);
+	      object_to_port(sc, slot_symbol(x), port, use_write, ci);
 	      port_write_character(port)(sc, ' ', port);
-	      object_to_port_with_circle_check(sc, slot_value(x), port, use_write, to_file, ci);
+	      object_to_port_with_circle_check(sc, slot_value(x), port, use_write, ci);
 	      port_write_character(port)(sc, ')', port);
 	    }
 	  port_write_string(port)(sc, "))) {e})", 8, port);
@@ -25455,7 +25447,7 @@ static void let_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_writ
       else
 	{
 	  port_write_string(port)(sc, "(inlet", 6, port);
-	  slot_to_port_1(sc, let_slots(obj), port, use_write, to_file, ci);
+	  slot_to_port_1(sc, let_slots(obj), port, use_write, ci);
 	  port_write_character(port)(sc, ')', port);
 	}
     }
@@ -25486,18 +25478,18 @@ static void write_macro_readably(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 	  for (expr = arglist; is_pair(expr); expr = cdr(expr))
 	    {
 	      port_write_character(port)(sc, ' ', port);
-	      object_to_port(sc, car(expr), port, USE_WRITE, false, NULL);
+	      object_to_port(sc, car(expr), port, USE_WRITE, NULL);
 	    }
 	  if (!is_null(expr))
 	    {
 	      port_write_string(port)(sc, " . ", 3, port);
-	      object_to_port(sc, expr, port, USE_WRITE, false, NULL);
+	      object_to_port(sc, expr, port, USE_WRITE, NULL);
 	    }
 	}
     }
   port_write_string(port)(sc, ") ", 2, port);
   for (expr = body; is_pair(expr); expr = cdr(expr))
-    object_to_port(sc, car(expr), port, USE_WRITE, false, NULL);
+    object_to_port(sc, car(expr), port, USE_WRITE, NULL);
   port_write_character(port)(sc, ')', port);
 }
 
@@ -25688,7 +25680,7 @@ static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port
 }
 #endif
 
-static void iterator_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
+static void iterator_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   int nlen;
   if (use_write == USE_READABLE_WRITE)
@@ -25710,7 +25702,7 @@ static void iterator_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use
 	      if (iterator_position(obj) > 0)
 		port_write_string(port)(sc, "(let ((iter (make-iterator ", 27, port);
 	      else port_write_string(port)(sc, "(make-iterator ", 15, port);
-	      object_to_port_with_circle_check(sc, iterator_sequence(obj), port, use_write, to_file, ci);
+	      object_to_port_with_circle_check(sc, iterator_sequence(obj), port, use_write, ci);
 	      if (iterator_position(obj) > 0)
 		{
 		  char *str;
@@ -25756,7 +25748,7 @@ static void c_pointer_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, us
   port_write_string(port)(sc, buf, nlen, port);
 }
 
-static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
+static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   int nlen;
   char *str;
@@ -25765,27 +25757,27 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
     {
     case T_FLOAT_VECTOR:
     case T_INT_VECTOR:
-      int_or_float_vector_to_port(sc, obj, port, use_write, to_file);
+      int_or_float_vector_to_port(sc, obj, port, use_write);
       break;
 
     case T_VECTOR:
-      vector_to_port(sc, obj, port, use_write, to_file, ci);
+      vector_to_port(sc, obj, port, use_write, ci);
       break;
 
     case T_PAIR:
-      list_to_port(sc, obj, port, use_write, to_file, ci);
+      list_to_port(sc, obj, port, use_write, ci);
       break;
 
     case T_HASH_TABLE:
-      hash_table_to_port(sc, obj, port, use_write, to_file, ci);
+      hash_table_to_port(sc, obj, port, use_write, ci);
       break;
 
     case T_ITERATOR:
-      iterator_to_port(sc, obj, port, use_write, to_file, ci);
+      iterator_to_port(sc, obj, port, use_write, ci);
       break;
 
     case T_LET:
-      let_to_port(sc, obj, port, use_write, to_file, ci);
+      let_to_port(sc, obj, port, use_write, ci);
       break;
 
     case T_UNIQUE:
@@ -25803,11 +25795,11 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_INPUT_PORT:
-      input_port_to_port(sc, obj, port, use_write, to_file);
+      input_port_to_port(sc, obj, port, use_write);
       break;
 
     case T_OUTPUT_PORT:
-      output_port_to_port(sc, obj, port, use_write, to_file);
+      output_port_to_port(sc, obj, port, use_write);
       break;
 
     case T_COUNTER:
@@ -25861,7 +25853,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 #endif
 
     case T_SYMBOL:
-      symbol_to_port(sc, obj, port, use_write, to_file);
+      symbol_to_port(sc, obj, port, use_write);
       break;
 
     case T_SYNTAX:
@@ -25870,8 +25862,8 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 
     case T_STRING:
       if (is_byte_vector(obj))
-	byte_vector_to_port(sc, obj, port, use_write, to_file);
-      else string_to_port(sc, obj, port, use_write, to_file);
+	byte_vector_to_port(sc, obj, port, use_write);
+      else string_to_port(sc, obj, port, use_write);
       break;
 
     case T_CHARACTER:
@@ -25974,9 +25966,9 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
     case T_SLOT:
       if (use_write != USE_READABLE_WRITE)
 	port_write_character(port)(sc, '\'', port);
-      object_to_port(sc, slot_symbol(obj), port, use_write, to_file, ci);
+      object_to_port(sc, slot_symbol(obj), port, use_write, ci);
       port_write_character(port)(sc, ' ', port);
-      object_to_port_with_circle_check(sc, slot_value(obj), port, use_write, to_file, ci);
+      object_to_port_with_circle_check(sc, slot_value(obj), port, use_write, ci);
       break;
 
     default:
@@ -26002,7 +25994,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 }
 
 
-static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_pointer port, use_write_t use_write, bool to_file, shared_info *ci)
+static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   if ((ci) &&
       (has_structure(vr)))
@@ -26019,7 +26011,7 @@ static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_po
 		{
 		  nlen = snprintf(buf, 32, "(set! {%d} ", ref);
 		  port_write_string(port)(sc, buf, nlen, port);
-		  object_to_port(sc, vr, port, USE_READABLE_WRITE, to_file, ci);
+		  object_to_port(sc, vr, port, USE_READABLE_WRITE, ci);
 		  port_write_character(port)(sc, ')', port);
 		}
 	      else
@@ -26030,7 +26022,7 @@ static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_po
 		  p = pos_int_to_str((s7_Int)ref, &len);
 		  port_write_string(port)(sc, p, len - 1, port);
 		  port_write_character(port)(sc, '=', port);
-		  object_to_port(sc, vr, port, DONT_USE_DISPLAY(use_write), WITH_ELLIPSES, ci);
+		  object_to_port(sc, vr, port, DONT_USE_DISPLAY(use_write), ci);
 		}
 	    }
 	  else
@@ -26053,7 +26045,7 @@ static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_po
 	  return;
 	}
     }
-  object_to_port(sc, vr, port, use_write, to_file, ci);
+  object_to_port(sc, vr, port, use_write, ci);
 }
 
 
@@ -26077,7 +26069,7 @@ static void finish_shared_reads(s7_scheme *sc, s7_pointer port, shared_info *ci)
   port_write_character(port)(sc, ')', port);
 }
 
-static void object_out(s7_scheme *sc, s7_pointer obj, s7_pointer strport, use_write_t choice, bool to_file)
+static void object_out(s7_scheme *sc, s7_pointer obj, s7_pointer strport, use_write_t choice)
 {
   if ((has_structure(obj)) &&
       (obj != sc->rootlet))
@@ -26089,14 +26081,14 @@ static void object_out(s7_scheme *sc, s7_pointer obj, s7_pointer strport, use_wr
 	  if (choice == USE_READABLE_WRITE)
 	    {
 	      setup_shared_reads(sc, strport, ci);
-	      object_to_port_with_circle_check(sc, obj, strport, choice, to_file, ci);
+	      object_to_port_with_circle_check(sc, obj, strport, choice, ci);
 	      finish_shared_reads(sc, strport, ci);
 	    }
-	  else object_to_port_with_circle_check(sc, obj, strport, choice, to_file, ci);
+	  else object_to_port_with_circle_check(sc, obj, strport, choice, ci);
 	  return;
 	}
     }
-  object_to_port(sc, obj, strport, choice, to_file, NULL);
+  object_to_port(sc, obj, strport, choice, NULL);
 }
   
 
@@ -26104,7 +26096,7 @@ static s7_pointer write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer por
 {
   if (port_is_closed(port))
     return(s7_wrong_type_arg_error(sc, (use_write != USE_DISPLAY) ? "write" : "display", 2, port, "an open input port"));
-  object_out(sc, obj, port, use_write, is_file_port(port));
+  object_out(sc, obj, port, use_write);
   return(obj);
 }
 
@@ -26157,7 +26149,7 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t 
   s7_pointer strport;
 
   strport = open_format_port(sc);
-  object_out(sc, obj, strport, use_write, WITH_ELLIPSES);
+  object_out(sc, obj, strport, use_write);
   if (nlen) (*nlen) = port_position(strport);
 
   str = (char *)malloc((port_position(strport) + 1) * sizeof(char));
@@ -26855,7 +26847,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		    fdat->strport = strport;
 		  }
 		else strport = port;
-		object_out(sc, obj, strport, choice, is_file_port(port));
+		object_out(sc, obj, strport, choice);
 		if (columnized)
 		  {
 		    port_data(strport)[port_position(strport)] = '\0';		    
@@ -33043,6 +33035,12 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
   #define H_make_hash_table "(make-hash-table (size 511) eq-func) returns a new hash table"
   s7_Int size;
   size = sc->default_hash_table_length;
+
+  /* the "eq_func" arg can't work.  For example, string-ci=? is the
+   *   obvious candidate.  But strings are hashed to different hash locations is they differ
+   *   in upper/lower case, so "ab" and "AB" will almost certainly not be in the same hash list.
+   *   Even = won't work because (for example) 1.0 goes to bin (1000 % hash-len), but 1 goes to bin 1.
+   */
 
   if (is_not_null(args))
     {
@@ -67336,7 +67334,7 @@ int main(int argc, char **argv)
  * tcopy         |      |      | 13.6                     5355 4728 3877
  * tmap          |      |      | 11.0           5031 4769 4685 4557 4230
  * tform         |      |      |                          6816 5536 4242
- * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6275
+ * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283
  * titer         |      |      |                          7503 6793 6335
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6354
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9
@@ -67346,7 +67344,7 @@ int main(int argc, char **argv)
  *
  * calls 54.6 if no clm2xen, tall: 26.9
  * --------------------------------------------------------------------------
- * 
+ *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  *   also needs a complete morally-equal? method that cooperates with the built-in version
  * cyclic-seq in stuff.scm, but current code is really clumsy
@@ -67365,9 +67363,6 @@ int main(int argc, char **argv)
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
  *   with name/sync/sample settable
  * apropos should scan autoload?
- * ~W car-cycle in iterator bug, safe-fill! created the carcycle I think
- * could fprintf and friends be implemented in libc?
- *   rest-args, int->int etc, but how is this declared? -- maybe the vprintfs are doable
  * in repl perhaps the red open-paren should be cleared before anything else --
  *   it's possible to get a stuck paren
  */

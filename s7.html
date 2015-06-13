@@ -2198,7 +2198,7 @@ but a function grabs all remaining indices.  Trickier than I expected!
 
 
 <ul>
-<li>(<em class=def id="makehashtable">make-hash-table</em> (size 8) eq-func)
+<li>(<em class=def id="makehashtable">make-hash-table</em> (size 8) eq-func) ; don't use eq-func!
 <li>(<em class=def id="hashtable">hash-table</em> ...)
 <li>(<em class=def id="hashtablestar">hash-table*</em> ...)
 <li>(<em class=def id="hashtableref">hash-table-ref</em> ht key)
@@ -2210,12 +2210,11 @@ but a function grabs all remaining indices.  Trickier than I expected!
 </ul>
 
 <p>
-Any s7 object can be the key or the key's value.
 Each hash-table keeps track of the keys it contains, optimizing the search wherever possible.
-If you know what equality function you want, you can override this optimization by passing that function
-as the third argument to make-hash-table (see also r7rs.scm for a version with a different argument order).
+Any s7 object can be the key or the key's value.
 If you pass a table size that is not a power of 2, make-hash-table rounds it up to the next power of 2.
-The table grows as needed.  If a key is not in the table, hash-table-ref returns #f.  To remove a key,
+The table grows as needed.  
+If a key is not in the table, hash-table-ref returns #f.  To remove a key,
 set its value to #f; to remove all keys, <code>(fill! table #f)</code>.
 </p>
 
@@ -2276,6 +2275,33 @@ of the table sizes, or the order in which the key/value pairs were added.
 </p>
 </div>
 
+<div class="indented">
+<p>If you know what equality function you want, you can pass that function
+as the third argument to make-hash-table.
+But unless s7 already knows about that function, it won't work;
+the equality function and the internal hashing function have to work together so that
+things equal according to eq-func are hashed to the same location, else they aren't equal because they are
+never compared.  Perhaps eq-func could be an equality function and its associated hashing function, but
+that will not be fast, which defeats the whole purpose of hash-tables.
+</p>
+
+<pre class="indented">
+(let ((ht (make-hash-table 31 =)))
+  (set! (ht 1) 1)        ; hashed to bin 1
+  (set! (ht 1.0) 32)     ; hashed to bin (logand 1000 table-len) or something like that
+  (list (ht 1.0) (ht 1)))
+
+ -&gt; '(32 1) ; 1 != 1.0?
+
+(let ((ht (make-hash-table 512 string-ci=?)))
+  (set! (ht "abc") 1)
+  (set! (ht "ABC") 2)
+  (set! (ht "aBc") 3)
+  (list (ht "abc") (ht "ABC") (ht "aBc") (ht "AbC")))
+
+ -&gt; '(1 2 3 #f)   ; but if the table size is 32, they are all 3!
+</pre>
+</div>
 
 <div class="indented">
 <p>If the hash key is a float (a non-rational number), hash-table-ref uses <a href="#morallyequalp">morally-equal?</a>.
@@ -9015,6 +9041,12 @@ is in the file save.repl, or the filename can be passed as an argument to save-r
 The special symbol '** holds the last value.
 </p>
 
+<p>Meta keys are a problem on the Mac.  You can use ESC instead, but that requires
+super-human capacities.  I stared at replacement control keys, and nothing seemed
+right.  I don't know how to remap these commands, but it's easy to do: see repl.scm
+which has a small table of mappings, and try out your own.
+</p>
+
 <p>To run the repl, either build s7 with the compiler flag -DWITH_MAIN,
 or conjure up a wrapper:
 </p>
@@ -9065,7 +9097,7 @@ the current line number, and should set the prompt string and its length.
 			   (set! prompt-string "scheme&gt; ") 
 			   (set! prompt-length (length prompt-string)))))
 </pre>
-<or, to use the red lambda example mentioned earlier:
+<p>or, to use the red lambda example mentioned earlier:
 </p>
 <pre class="indented">
 (set! (*repl* 'prompt)
