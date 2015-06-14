@@ -73,10 +73,12 @@
 		      (let ((end (char-position #\space line k)))
 			(if end
 			    (let ((num (string->number-ignoring-commas (substring line k end))))
-			      (let ((func-end (char-position #\space line (+ end 2))))
-				(if func-end
+			      (when num
+				(let ((func-end (char-position #\space line (+ end 2))))
+				  (when (and (number? func-end)
+					     (> func-end (+ end 2)))
 				    (let ((func (string->symbol (substring line (+ end 2) func-end))))
-				      (hash-table-set! h func num)))))))))))))))
+				      (hash-table-set! h func num))))))))))))))))
     h))
     
 

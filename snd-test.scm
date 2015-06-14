@@ -5,30 +5,30 @@
 ;;;  test 2: headers                            [1578]
 ;;;  test 3: variables                          [1893]
 ;;;  test 4: sndlib                             [2457]
-;;;  test 5: simple overall checks              [4460]
-;;;  test 6: float-vectors                      [9205]
-;;;  test 7: colors                             [9477]
-;;;  test 8: clm                                [9996]
-;;;  test 9: mix                                [22057]
-;;;  test 10: marks                             [23836]
-;;;  test 11: dialogs                           [24780]
-;;;  test 12: extensions                        [24953]
-;;;  test 13: menus, edit lists, hooks, etc     [25219]
-;;;  test 14: all together now                  [26545]
-;;;  test 15: chan-local vars                   [27421]
-;;;  test 16: regularized funcs                 [29157]
-;;;  test 17: dialogs and graphics              [32925]
-;;;  test 18: save and restore                  [33037]
-;;;  test 19: transforms                        [34690]
-;;;  test 20: new stuff                         [36797]
-;;;  test 21: optimizer                         [37994]
-;;;  test 22: with-sound                        [38518]
-;;;  test 23: X/Xt/Xm                           [41499]
-;;;  test 24: GL                                [45173]
-;;;  test 25: errors                            [45296]
-;;;  test 26: s7                                [46814]
-;;;  test all done                              [46887]
-;;;  test the end                               [47068]
+;;;  test 5: simple overall checks              [4490]
+;;;  test 6: float-vectors                      [9237]
+;;;  test 7: colors                             [9509]
+;;;  test 8: clm                                [10028]
+;;;  test 9: mix                                [22107]
+;;;  test 10: marks                             [23886]
+;;;  test 11: dialogs                           [24830]
+;;;  test 12: extensions                        [25003]
+;;;  test 13: menus, edit lists, hooks, etc     [25269]
+;;;  test 14: all together now                  [26595]
+;;;  test 15: chan-local vars                   [27471]
+;;;  test 16: regularized funcs                 [29208]
+;;;  test 17: dialogs and graphics              [32976]
+;;;  test 18: save and restore                  [33088]
+;;;  test 19: transforms                        [34741]
+;;;  test 20: new stuff                         [36848]
+;;;  test 21: optimizer                         [38045]
+;;;  test 22: with-sound                        [38461]
+;;;  test 23: X/Xt/Xm                           [41431]
+;;;  test 24: GL                                [45105]
+;;;  test 25: errors                            [45228]
+;;;  test 26: s7                                [46746]
+;;;  test all done                              [46819]
+;;;  test the end                               [47001]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
@@ -38450,115 +38450,7 @@ EDITS: 1
 		   )
 		 args3))
 	      args2))
-	   args1)
-	  
-#|
-	  (for-each
-	   (lambda (d)
-	     (for-each 
-	      (lambda (c)
-		(for-each
-		 (lambda (b)
-		   (for-each
-		    (lambda (a)
-		      (try (format #f "(+ ~A ~A ~A ~A)" a b c d))
-		      (try (format #f "(* ~A ~A ~A ~A)" a b c d))
-		      (try (format #f "(+ (* ~A ~A) (* ~A ~A))" a b c d))
-		      (try (format #f "(* (+ ~A ~A) (+ ~A ~A))" a b c d))
-		      (try (format #f "(+ ~A (* ~A ~A ~A))" a b c d))
-		      (try (format #f "(* ~A (+ ~A ~A ~A))" a b c d))
-		      (try (format #f "(+ ~A (* ~A (+ ~A ~A)))" a b c d))
-		      (try (format #f "(* ~A (+ ~A (* ~A ~A)))" a b c d))
-		      (try (format #f "(+ (* ~A ~A ~A) ~A)" a b c d))
-		      (try (format #f "(* (+ ~A ~A ~A) ~A)" a b c d))
-		      (try (format #f "(+ (* ~A (+ ~A ~A)) ~A)" a b c d))
-		      (try (format #f "(* (+ ~A (* ~A ~A)) ~A)" a b c d))
-		      
-		      (try (format #f "(+ (oscil o ~A) ~A ~A ~A)" a b c d))
-		      (try (format #f "(* (oscil o ~A) ~A ~A ~A)" a b c d))
-		      (try (format #f "(+ (* (oscil o ~A) ~A) (* ~A ~A))" a b c d))
-		      (try (format #f "(* (+ (oscil o ~A) ~A) (+ ~A ~A))" a b c d))
-		      (try (format #f "(+ (oscil o ~A) (* ~A ~A ~A))" a b c d))
-		      (try (format #f "(* (oscil o ~A) (+ ~A ~A ~A))" a b c d))
-		      (try (format #f "(+ (oscil o ~A) (* ~A (+ ~A ~A)))" a b c d))
-		      (try (format #f "(* (oscil o ~A) (+ ~A (* ~A ~A)))" a b c d))
-		      (try (format #f "(+ (* (oscil o ~A) ~A ~A) ~A)" a b c d))
-		      (try (format #f "(* (+ (oscil o ~A) ~A ~A) ~A)" a b c d))
-		      (try (format #f "(+ (* (oscil o ~A) (+ ~A ~A)) ~A)" a b c d))
-		      (try (format #f "(* (+ (oscil o ~A) (* ~A ~A)) ~A)" a b c d))
-		      
-		      (try (format #f "(+ ~A (oscil o ~A) ~A ~A)" a b c d))
-		      (try (format #f "(* ~A (oscil o ~A) ~A ~A)" a b c d))
-		      (try (format #f "(+ (* ~A (oscil o ~A)) (* ~A ~A))" a b c d))
-		      (try (format #f "(* (+ ~A (oscil o ~A)) (+ ~A ~A))" a b c d))
-		      (try (format #f "(+ ~A (* (oscil o ~A) ~A ~A))" a b c d))
-		      (try (format #f "(* ~A (+ (oscil o ~A) ~A ~A))" a b c d))
-		      (try (format #f "(+ ~A (* (oscil o ~A) (+ ~A ~A)))" a b c d))
-		      (try (format #f "(* ~A (+ (oscil o ~A) (* ~A ~A)))" a b c d))
-		      (try (format #f "(+ (* ~A (oscil o ~A) ~A) ~A)" a b c d))
-		      (try (format #f "(* (+ ~A (oscil o ~A) ~A) ~A)" a b c d))
-		      (try (format #f "(+ (* ~A (+ (oscil o ~A) ~A)) ~A)" a b c d))
-		      (try (format #f "(* (+ ~A (* (oscil o ~A) ~A)) ~A)" a b c d))
-		      
-		      (try (format #f "(+ ~A ~A (oscil o ~A) ~A)" a b c d))
-		      (try (format #f "(* ~A ~A (oscil o ~A) ~A)" a b c d))
-		      (try (format #f "(+ (* ~A ~A) (* (oscil o ~A) ~A))" a b c d))
-		      (try (format #f "(* (+ ~A ~A) (+ (oscil o ~A) ~A))" a b c d))
-		      (try (format #f "(+ ~A (* ~A (oscil o ~A) ~A))" a b c d))
-		      (try (format #f "(* ~A (+ ~A (oscil o ~A) ~A))" a b c d))
-		      (try (format #f "(+ ~A (* ~A (+ (oscil o ~A) ~A)))" a b c d))
-		      (try (format #f "(* ~A (+ ~A (* (oscil o ~A) ~A)))" a b c d))
-		      (try (format #f "(+ (* ~A ~A (oscil o ~A)) ~A)" a b c d))
-		      (try (format #f "(* (+ ~A ~A (oscil o ~A)) ~A)" a b c d))
-		      (try (format #f "(+ (* ~A (+ ~A (oscil o ~A))) ~A)" a b c d))
-		      (try (format #f "(* (+ ~A (* ~A (oscil o ~A))) ~A)" a b c d))
-		      
-		      (try (format #f "(+ ~A ~A ~A (oscil o ~A))" a b c d))
-		      (try (format #f "(* ~A ~A ~A (oscil o ~A))" a b c d))
-		      (try (format #f "(+ (* ~A ~A) (* ~A (oscil o ~A)))" a b c d))
-		      (try (format #f "(* (+ ~A ~A) (+ ~A (oscil o ~A)))" a b c d))
-		      (try (format #f "(+ ~A (* ~A ~A (oscil o ~A)))" a b c d))
-		      (try (format #f "(* ~A (+ ~A ~A (oscil o ~A)))" a b c d))
-		      (try (format #f "(+ ~A (* ~A (+ ~A (oscil o ~A))))" a b c d))
-		      (try (format #f "(* ~A (+ ~A (* ~A (oscil o ~A))))" a b c d))
-		      (try (format #f "(+ (* ~A ~A ~A) (oscil o ~A))" a b c d))
-		      (try (format #f "(* (+ ~A ~A ~A) (oscil o ~A))" a b c d))
-		      (try (format #f "(+ (* ~A (+ ~A ~A)) (oscil o ~A))" a b c d))
-		      (try (format #f "(* (+ ~A (* ~A ~A)) (oscil o ~A))" a b c d))
-		      
-		      (try (format #f "(oscil o (+ ~A ~A ~A ~A))" a b c d))
-		      (try (format #f "(oscil o (* ~A ~A ~A ~A))" a b c d))
-		      (try (format #f "(oscil o (+ (* ~A ~A) (* ~A ~A)))" a b c d))
-		      (try (format #f "(oscil o (* (+ ~A ~A) (+ ~A ~A)))" a b c d))
-		      (try (format #f "(oscil o (+ ~A (* ~A ~A ~A)))" a b c d))
-		      (try (format #f "(oscil o (* ~A (+ ~A ~A ~A)))" a b c d))
-		      (try (format #f "(oscil o (+ ~A (* ~A (+ ~A ~A))))" a b c d))
-		      (try (format #f "(oscil o (* ~A (+ ~A (* ~A ~A))))" a b c d))
-		      (try (format #f "(oscil o (+ (* ~A ~A ~A) ~A))" a b c d))
-		      (try (format #f "(oscil o (* (+ ~A ~A ~A) ~A))" a b c d))
-		      (try (format #f "(oscil o (+ (* ~A (+ ~A ~A)) ~A))" a b c d))
-		      (try (format #f "(oscil o (* (+ ~A (* ~A ~A)) ~A))" a b c d))
-		      
-		      (try (format #f "(+ (oscil o (* ~A ~A)) (* ~A ~A))" a b c d))
-		      (try (format #f "(* (oscil o (+ ~A ~A)) (+ ~A ~A))" a b c d))
-		      (try (format #f "(+ ~A (oscil o (* ~A ~A) ~A))" a b c d))
-		      (try (format #f "(* ~A (oscil o (+ ~A ~A) ~A))" a b c d))
-		      (try (format #f "(+ ~A (* ~A (oscil o (+ ~A ~A))))" a b c d))
-		      (try (format #f "(* ~A (+ ~A (oscil o (* ~A ~A))))" a b c d))
-		      (try (format #f "(+ (oscil o (* ~A ~A) ~A) ~A)" a b c d))
-		      (try (format #f "(* (oscil o (+ ~A ~A) ~A) ~A)" a b c d))
-		      (try (format #f "(+ (* ~A (oscil o (+ ~A ~A))) ~A)" a b c d))
-		      (try (format #f "(* (+ ~A (oscil o (* ~A ~A))) ~A)" a b c d))
-		      
-		      (try (format #f "(+ ~A ~A ~A ~A (oscil o))" a b c d))
-		      (try (format #f "(* ~A ~A ~A ~A (oscil o))" a b c d))
-		      )
-		    args4))
-		 args3))
-	      args2))
-	   args1)
-|#	
-	  )
+	   args1))
 	(out-args)
 	(set! *clm-file-buffer-size* old-size)
 	)))

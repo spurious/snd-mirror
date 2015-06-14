@@ -5291,6 +5291,16 @@ static s7_pointer find_let(s7_scheme *sc, s7_pointer obj)
 }
 
 
+static s7_pointer free_let(s7_scheme *sc, s7_pointer e)
+{
+  s7_pointer p;
+  for (p = let_slots(e); is_slot(p); p = next_slot(p))
+    free_cell(sc, p);
+  free_cell(sc, e);
+  return(sc->NIL);
+}
+
+
 static s7_pointer find_method(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 {
   s7_pointer x;
@@ -26376,8 +26386,8 @@ static s7_pointer format_error_1(s7_scheme *sc, s7_pointer msg, const char *str,
   else
     {
       if (is_pair(args))
-	x = set_elist_5(sc, format_string_3, ctrl_str, args, make_integer(sc, fdat->loc + 12), msg);
-      else x = set_elist_4(sc, format_string_4, ctrl_str, make_integer(sc, fdat->loc + 12), msg);
+	x = set_elist_5(sc, format_string_3, ctrl_str, args, make_integer(sc, fdat->loc + 20), msg);
+      else x = set_elist_4(sc, format_string_4, ctrl_str, make_integer(sc, fdat->loc + 20), msg);
     }
   if (fdat->port)
     {
@@ -32577,7 +32587,7 @@ static int hash_float_location(s7_Double x)
     loc = 1000.0 * x;     /* this means hash_table_float_epsilon only works if it is less than about .001 */
   else loc = x;
 
-  if (loc < 0) /* (hash-table-index 1e+18) -> -2147483648 */
+  if (loc < 0)
     return(0);
   return(loc);
 }
@@ -32712,12 +32722,6 @@ static unsigned int hasher_pair(s7_scheme *sc, s7_pointer key)
 	}
     }
   return(loc);
-}
-
-
-static s7_pointer g_hash_table_index(s7_scheme *sc, s7_pointer args)
-{
-  return(make_integer(sc, hash_loc(sc, car(args))));
 }
 
 
@@ -39725,6 +39729,7 @@ static s7_function all_x_init(s7_scheme *sc, s7_function allx, s7_pointer expr)
       sc->d2 = cadr(caddr(expr));
       return(x_sq);
     }
+  /* fprintf(stderr, "%s\n", opt_names[optimize_data(expr)]); */
   return(allx);
 }
 
@@ -50564,15 +50569,6 @@ static s7_pointer check_do(s7_scheme *sc)
       return(sc->NIL);
     }
   return(sc->code);
-}
-
-static s7_pointer free_let(s7_scheme *sc, s7_pointer e)
-{
-  s7_pointer p;
-  for (p = let_slots(e); is_slot(p); p = next_slot(p))
-    free_cell(sc, p);
-  free_cell(sc, e);
-  return(sc->NIL);
 }
 
 #define CLM2XEN 1
@@ -66859,7 +66855,6 @@ s7_scheme *s7_init(void)
 #endif
   sc->HASH_TABLE_ENTRIES =    s7_define_integer_function(sc, "hash-table-entries",   g_hash_table_entries,     1, 0, false, H_hash_table_entries);
   sc->HASH_TABLE_FUNCTION =   s7_define_safe_function(sc, "hash-table-function",     g_hash_table_function,    1, 0, false, H_hash_table_function);
-                              s7_define_safe_function(sc, "hash-table-index",        g_hash_table_index,       1, 0, false, "an experiment");
 
                               s7_define_safe_function(sc, "cyclic-sequences",        g_cyclic_sequences,       1, 0, false, H_cyclic_sequences);
   sc->CALL_CC =               s7_define_function(sc,      "call/cc",                 g_call_cc,                1, 0, false, H_call_cc);
@@ -67322,27 +67317,27 @@ int main(int argc, char **argv)
  *   (clang also needs LDFLAGS="-Wl,-export-dynamic" in Linux)
  */
 #endif
- 
+
 
 /* --------------------------------------------------------------------------
  *
- *           12  |  13  |  14  | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7
+ *           12  |  13  |  14  | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7 15.8
  * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133
- * teq           |      |      | 6612                     3887 3020 2538
+ * teq           |      |      | 6612                     3887 3020 2516
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301
- * tcopy         |      |      | 13.6                     5355 4728 3877
+ * tcopy         |      |      | 13.6                     5355 4728 3887
  * tmap          |      |      | 11.0           5031 4769 4685 4557 4230
- * tform         |      |      |                          6816 5536 4242
+ * tform         |      |      |                          6816 5536 4287
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283
- * titer         |      |      |                          7503 6793 6335
- * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6354
+ * titer         |      |      |                          7503 6793 6351
+ * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9
+ * thash         |      |      |                          50.7 23.8 14.9
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3
- * thash         |      |      |                          50.7 23.8 18.3
  * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1
  *
- * calls 54.6 if no clm2xen, tall: 26.9
+ * calls 54.6 if no clm2xen, tall: 26.9 
  * --------------------------------------------------------------------------
  *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
@@ -67356,7 +67351,7 @@ int main(int argc, char **argv)
  *   currently define_integer_function stores sc->IS_INTEGER which is a symbol, but for T_REAL:
  *   (lambda (x) (and (real? x) (not rational? x))) -- i.e. want it to remain anonymous
  *   but for lint, we'd want the intersection of arg-types and func-types (logand a b) or (logand (lognot a) b)
- *   (->type x): T_INTEGER: slot_value(initial_slot(sc->IS_INTEGER) etc
+ *   (->type x): T_INTEGER: slot_value(initial_slot(sc->IS_INTEGER)) etc
  *
  * the old mus-audio-* code needs to use play or something, especially bess*
  * define-constant func gives a way to avoid closure_is_ok in all cases, so maybe move the arg checks into the main op?
@@ -67365,4 +67360,5 @@ int main(int argc, char **argv)
  * apropos should scan autoload?
  * in repl perhaps the red open-paren should be cleared before anything else --
  *   it's possible to get a stuck paren
+ * extend x_sss cases/use old_op to decode c_c cases
  */

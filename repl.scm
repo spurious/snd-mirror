@@ -62,7 +62,7 @@
 	
 	
 	;; -------- history --------
-	(let ((histbuf (make-vector 100 "")) ; much longer names originally -- hard to read, tedious to type
+	(let ((histbuf (make-vector 100 ""))
 	      (histsize 100)
 	      (histpos 0)
 	      (m-p-pos 0)
@@ -172,7 +172,7 @@
 	  
 	  (let ((prompt-string "<1> ")     ; this doesn't look very good, but I can't find anything better
 		(prompt-length 4)          ;    perhaps the line number could go in the terminal's right margin?
-		(cur-line "")              ; longer name originally, but that makes the code harder to read
+		(cur-line "")              ; current expression (can contain newlines)
 		(prev-line ())             ; for undo via C-_
 		(selection #f)             ; for C-y
 		(cursor-pos 0)             ; cursor-pos is the logical position (index into cur-line)

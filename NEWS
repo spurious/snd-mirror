@@ -1,10 +1,13 @@
-Snd 15.6:
+Snd 15.7:
 
-add int-vector? int-vector make-int-vector
+added CM_patterns.scm thanks to Rick and Anders
 
-changed s7_copy arg interpretation (it's now a normal s7_function).
+removed s7 ~<~> format directive
+changed bytevector* to byte-vector* (r7rs.scm has definitions of the old forms)
+added hash-table-function
 
-checked: gtk 3.16.1|2 3.17.1, FC 22 (gcc 5), Ruby 2.2, sbcl 1.2.11
+checked: gtk 3.17.2|3, sbcl 1.2.12
 
-Thanks!: Tito Latini (found and fixed many bugs), 
-         Donny Ward (MS Visual Studio 2013)
+Thanks!:  Tito Latini, Kjetil Matheussen, Anders Vinjar
+
+

@@ -1,5 +1,6 @@
 Snd change log
 
+ 15-Jun:    Snd 15.7.
  11-May:    Snd 15.6.
  3-Apr:     Snd 15.5.
  20-Mar:    changed the no-gui repl to use repl.scm in the s7 case.
