@@ -30,16 +30,16 @@
 
 
 ;;; ----------------
-(define (first obj) (obj 0))
-(define (second obj) (obj 1))
-(define (third obj) (obj 2))
-(define (fourth obj) (obj 3))
-(define (fifth obj) (obj 4))
-(define (sixth obj) (obj 5))
-(define (seventh obj) (obj 6))
-(define (eighth obj) (obj 7))
-(define (ninth obj) (obj 8))
-(define (tenth obj) (obj 9))
+(define (first obj)  (if (sequence? obj) (obj 0) (error "first argument, ~S, is not a sequence" obj)))
+(define (second obj) (if (sequence? obj) (obj 1) (error "second argument, ~S, is not a sequence" obj)))
+(define (third obj)  (if (sequence? obj) (obj 2) (error "third argument, ~S, is not a sequence" obj)))
+(define (fourth obj) (if (sequence? obj) (obj 3) (error "fourth argument, ~S, is not a sequence" obj)))
+(define (fifth obj)  (if (sequence? obj) (obj 4) (error "fifth argument, ~S, is not a sequence" obj)))
+(define (sixth obj)  (if (sequence? obj) (obj 5) (error "sixth argument, ~S, is not a sequence" obj)))
+(define (seventh obj)(if (sequence? obj) (obj 6) (error "seventh argument, ~S, is not a sequence" obj)))
+(define (eighth obj) (if (sequence? obj) (obj 7) (error "eighthment, ~S, is not a sequence" obj)))
+(define (ninth obj)  (if (sequence? obj) (obj 8) (error "ninth argument, ~S, is not a sequence" obj)))
+(define (tenth obj)  (if (sequence? obj) (obj 9) (error "tenth argument, ~S, is not a sequence" obj)))
 
 
 (define iota 
@@ -278,7 +278,9 @@
   (let ((documentation "(hash-table->alist table) returns the contents of table as an association list:\n\
     (hash-table->alist (hash-table '(a . 1))) -> '((a . 1))"))
     (lambda (table)
-      (map values table))))
+      (if (hash-table? table)
+	  (map values table)
+	  (error "hash-table->alist argument, ~A, is not a hash-table" table)))))
 
 (define merge-hash-tables 
   (let ((documentation "(merge-hash-tables . tables) returns a new hash-table with the contents of all the tables"))
@@ -533,9 +535,13 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
   ;; currently the complete-iterator above skips repetitions, including the outer sequence,
   ;;   so this count will be off if there are shared sequences or repeated cycles.
   ;; Perhaps make an iterator that returns everything.
-  (let ((count 0))
-    (safe-find-if (lambda (x) (if (f x) (set! count (+ count 1))) #f) sequence)
-    count))
+  (if (sequence? sequence)
+      (if (procedure? f)
+	  (let ((count 0))
+	    (safe-find-if (lambda (x) (if (f x) (set! count (+ count 1))) #f) sequence)
+	    count)
+	  (error "safe-count-if first argument, ~A, should be a function" f))
+      (error "safe-count-if second argument, ~A, should be a sequence" sequence)))
 
 
 
@@ -560,18 +566,20 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
   (let ((documentation "(intersection type . sequences) returns via type the intersection of the sequences:\n\
     (intersection vector '(1 2 3) #(2 3 4)) -> #(2 3)"))
     (lambda (type . sequences)
-      (apply type (let ((lst ()))
-		    (if (pair? sequences)
-			(for-each (lambda (obj)
-				    (if (every? (lambda (seq) 
-						  (find-if (lambda (x) 
-							     (equal? x obj)) 
-							   seq)) 
-						(cdr sequences))
-					(set! lst (cons obj lst))))
-				  (car sequences)))
-		    (reverse lst))))))
-
+      (if (every? sequence? sequences)
+	  (apply type (let ((lst ()))
+			(if (pair? sequences)
+			    (for-each (lambda (obj)
+					(if (every? (lambda (seq) 
+						      (find-if (lambda (x) 
+								 (equal? x obj)) 
+							       seq)) 
+						    (cdr sequences))
+					    (set! lst (cons obj lst))))
+				      (car sequences)))
+			(reverse lst)))
+	  (error "intersection arguments should be sequences: ~A" sequences)))))
+  
 (define union 
   (let ((documentation "(union type . sequences) returns via type the union of the sequences:\n\
     (union  vector '(1 2 3) #(2 3 4)) -> #(1 2 3 4)"))
@@ -649,17 +657,26 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 			  random-state? 
 			  eof-object? 
 			  c-pointer? 
-			  (lambda (obj) (eq? obj #<unspecified>))
-			  (lambda (obj) (eq? obj #<undefined>))))
+			  (lambda (obj) 
+			    (eq? obj #<unspecified>))
+			  (lambda (obj) 
+			    (eq? obj #<undefined>))
+			  (lambda (obj)
+			    (memq obj (list quote if when unless begin set! let let* letrec letrec* cond and or case do
+					    lambda lambda* define define* define-macro define-macro* define-bacro define-bacro*
+					    define-constant with-baffle macroexpand with-let)))))
 	(documentation "(->predicate obj) returns the type predicate function for obj: (->predicate 31) -> integer?"))
     (lambda (obj)
       (find-if (lambda (pred) (pred obj)) predicates))))
 
 (define add-predicate 
-  (let ((documentation "(add-predicate p) adds p (and boolean function of one argument) to the list of predicates used by ->predicate"))
-    (lambda (p) 
-      (let ((e (funclet ->predicate)))
-	(set! (e 'predicates) (cons p (e 'predicates)))))))
+  (let ((documentation "(add-predicate p) adds p (a boolean function of one argument) to the list of predicates used by ->predicate"))
+    (lambda (p)
+      (if (and (procedure? p)
+	       (aritable? p 1))
+	  (let ((e (funclet ->predicate)))
+	    (set! (e 'predicates) (cons p (e 'predicates))))
+	  (error "add-predicate argument, ~A, is not a procedure of one argument" p)))))
 
 (define typeq? 
   (let ((documentation "(typeq? . objs) returns #t if all objs have the same type (as determined by ->predicate)"))
@@ -687,12 +704,14 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 ;;; ----------------
 (define 2^n? 
   (let ((documentation "(2^n? x) returns #t if x is a power of 2"))
-    (lambda (x) 
-      (and (not (zero? x)) 
+    (lambda (x)
+      (and (integer> x)
+	   (not (zero? x)) 
 	   (zero? (logand x (- x 1)))))))
 
 (define (2^n-1? x) 
-  (zero? (logand x (+ x 1))))
+  (and (integer? x)
+       (zero? (logand x (+ x 1)))))
 
 (define (lognand . ints) 
   (lognot (apply logand ints)))
@@ -965,16 +984,21 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 (define n-choose-k 
   (let ((documentation "(n-choose-k n k) returns the binomial coefficient C(N,K)"))
     (lambda (n k)
-      (let ((mn (min k (- n k))))
-	(if (< mn 0)
-	    0
-	    (if (= mn 0)
-		1
-		(let* ((mx (max k (- n k)))
-		       (cnk (+ 1 mx)))
-		  (do ((i 2 (+ i 1)))
-		      ((> i mn) cnk)
-		    (set! cnk (/ (* cnk (+ mx i)) i))))))))))
+      (if (integer? n)
+	  (if (integer? k)
+	      (let ((mn (min k (- n k))))
+		(if (or (negative? mn)
+			(negative? n))
+		    0
+		    (if (= mn 0)
+			1
+			(let* ((mx (max k (- n k)))
+			       (cnk (+ 1 mx)))
+			  (do ((i 2 (+ i 1)))
+			      ((> i mn) cnk)
+			    (set! cnk (/ (* cnk (+ mx i)) i)))))))
+	      (error "n-choose-k 'k argument, ~A, should be an integer" k))
+	  (error "n-choose-k 'n argument, ~A, should be an integer" n)))))
 
 
 
@@ -1025,14 +1049,18 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 ;;; ----------------
 
 (define (flatten-let e)
-  (let ((slots ()))
-    (do ((pe e (outlet pe)))
-	((eq? pe (rootlet))
-	 (apply inlet slots))
-      (for-each (lambda (slot)
-		  (if (not (assq (car slot) slots))
-		      (set! slots (cons slot slots))))
-		pe))))
+  (if (let? e)
+      (let ((slots ()))
+	(do ((pe e (outlet pe)))
+	    ((eq? pe (rootlet))
+	     (apply inlet slots))
+	  (for-each (lambda (slot)
+		      (if (and (not (assq (car slot) slots))
+			       (not (constant? (car slot)))) ; immutable symbol
+			  (set! slots (cons slot slots))))
+		    pe)))
+      (error "flatten-let argument, ~A, is not a let" e)))
+
 
 
 ;;; ----------------
