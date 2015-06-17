@@ -13756,45 +13756,47 @@ static void add_gen(mus_any *g)
     }
 }
 
+static void gen_list_walk_symbol(s7_scheme *sc, s7_pointer sym)
+{
+  s7_pointer gp;
+  mus_xen *gn;
+  gp = s7_symbol_value(s7, sym); /* not s7_value because that will complain about currently undefined local vars in the tree */
+  gn = (mus_xen *)s7_object_value_checked(gp, mus_xen_tag);
+  if ((gn) && (gn->gen))
+    add_gen(gn->gen);
+}
+
 static void gen_list_walk(s7_scheme *sc, s7_pointer tree)
 {
   if (s7_is_symbol(tree))
-    {
-      s7_pointer gp;
-      mus_xen *gn;
-      gp = s7_symbol_value(s7, tree); /* not s7_value because that will complain about currently undefined local vars in the tree */
-      gn = (mus_xen *)s7_object_value_checked(gp, mus_xen_tag);
-      if (gn)
-	{
-	  if (gn->gen)
-	    add_gen(gn->gen);
-	}
-#if 0
-      else
-	{
-	  /* this is actually not necessary right now -- if we get a vector of gens, the gf* process gives up */
-	  if (s7_is_sundry_vector(gp))
-	    {
-	      int i, len;
-	      s7_pointer *gens;
-	      len = s7_vector_length(gp);
-	      gens = s7_vector_elements(gp);
-	      for (i = 0; i < len; i++)
-		{
-		  gn = (mus_xen *)s7_object_value_checked(gens[i], mus_xen_tag);
-		  if ((gn) && (gn->gen))
-		    add_gen(gn->gen);
-		}
-	    }
-	}
-#endif
-    }
+    gen_list_walk_symbol(sc, tree);
   else
     {
       if (s7_is_pair(tree))
 	{
-	  gen_list_walk(sc, car(tree));
-	  gen_list_walk(sc, cdr(tree));
+	  s7_pointer p;
+	  p = car(tree);
+	  if (s7_is_symbol(p)) 
+	    gen_list_walk_symbol(sc, p);
+	  else
+	    {
+	      if (s7_is_pair(p))
+		{
+		  gen_list_walk(sc, car(p));
+		  gen_list_walk(sc, cdr(p));
+		}
+	    }
+	  p = cdr(tree);
+	  if (s7_is_symbol(p)) 
+	    gen_list_walk_symbol(sc, p);
+	  else
+	    {
+	      if (s7_is_pair(p))
+		{
+		  gen_list_walk(sc, car(p));
+		  gen_list_walk(sc, cdr(p));
+		}
+	    }
 	}
     }
 }

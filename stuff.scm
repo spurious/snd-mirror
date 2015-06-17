@@ -407,18 +407,23 @@ If func approves of one, index-if returns the index that gives that element's po
 (define full-find-if 
   (let ((documentation "(full-find-if func sequence) searches sequence, and recursively any sequences it contains, for an element that satisfies func"))
     (lambda (f sequence)
-      (call-with-exit
-       (lambda (return)
-	 (letrec ((full-find-if-1 
-		   (lambda (seq)
-		     (for-each (lambda (x)
-				 (if (f x)
-				     (return x)
-				     (if (sequence? x)
-					 (full-find-if-1 x))))
-			       seq))))
-	   (full-find-if-1 sequence))
-	 #f)))))
+      (if (and (procedure? f)
+	       (aritable? f 1))
+	  (if (sequence? sequence)
+	      (call-with-exit
+	       (lambda (return)
+		 (letrec ((full-find-if-1 
+			   (lambda (seq)
+			     (for-each (lambda (x)
+					 (if (f x)
+					     (return x)
+					     (if (sequence? x)
+						 (full-find-if-1 x))))
+				       seq))))
+		   (full-find-if-1 sequence))
+		 #f))
+	      (error "full-find-if second argument, ~A, is not a sequence" sequence))
+	  (error "full-find-if first argument, ~A, is not a procedure of one argument" f)))))
 
 (define full-count-if 
   (let ((documentation "(full-count-if func sequence) searches sequence, and recursively any sequences it contains, returning the number of elements that satisfy func"))
@@ -472,7 +477,8 @@ If func approves of one, index-if returns the index that gives that element's po
 	   (let ((len (length p)))
 	     (if (infinite? len)      ; circular list
 		 (make-iterator
-		  (let ((cur p))
+		  (let ((cur p)
+			(iterator #t))
 		    (lambda (pos)
 		      (if (memq cur seen-cycles)
 			  #<eof>
@@ -484,7 +490,8 @@ If func approves of one, index-if returns the index that gives that element's po
 		 (if (positive? len)  ; normal list
 		     (make-iterator p)
 		     (make-iterator   ; dotted list
-		      (let ((cur p))
+		      (let ((cur p)
+			    (iterator #t))
 			(lambda (pos)
 			  (if (pair? cur)
 			      (let ((result (car cur)))
@@ -515,8 +522,9 @@ If func approves of one, index-if returns the index that gives that element's po
 			 (set! iters (cdr iters))
 			 (iterloop)))
 		   result))))
-       (lambda (pos) 
-	 (iterloop))))))
+       (let ((iterator #t))
+	 (lambda (pos) 
+	   (iterloop)))))))
 
 
 (define safe-find-if 
@@ -582,7 +590,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
   
 (define union 
   (let ((documentation "(union type . sequences) returns via type the union of the sequences:\n\
-    (union  vector '(1 2 3) #(2 3 4)) -> #(1 2 3 4)"))
+    (union vector '(1 2 3) #(2 3 4)) -> #(1 2 3 4)"))
     (lambda (type . sequences)
       (apply type (let ((lst ()))
 		    (for-each (lambda (obj)
@@ -660,7 +668,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 			  (lambda (obj) 
 			    (eq? obj #<unspecified>))
 			  (lambda (obj) 
-			    (eq? obj #<undefined>))
+			     (eq? obj #<undefined>))
 			  (lambda (obj)
 			    (memq obj (list quote if when unless begin set! let let* letrec letrec* cond and or case do
 					    lambda lambda* define define* define-macro define-macro* define-bacro define-bacro*
@@ -734,25 +742,29 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
   (apply logior ints))
 
 (define (log-n-of n . ints)   ; return the bits on in exactly n of ints
-  (let ((len (length ints)))
-    (cond ((= len 0) (if (= n 0) -1 0))
-	  ((= n 0)   (lognot (apply logior ints)))
-	  ((= n len) (apply logand ints))
-	  ((> n len) 0)
-	  (#t 
-	   (do ((1s 0)
-		(prev ints)
-		(i 0 (+ i 1)))
-	       ((= i len) 1s)
-	     (let ((cur (ints i)))
-	       (if (= i 0)
-		   (set! 1s (logior 1s (logand cur (apply log-n-of (- n 1) (cdr ints)))))
-		   (let* ((mid (cdr prev))
-			  (nxt (if (= i (- len 1)) () (cdr mid))))
-		     (set! (cdr prev) nxt)  
-		     (set! 1s (logior 1s (logand cur (apply log-n-of (- n 1) ints))))
-		     (set! (cdr prev) mid)
-		     (set! prev mid)))))))))
+  (if (integer? n)
+      (if (every? integer? ints)
+	  (let ((len (length ints)))
+	    (cond ((= len 0) (if (= n 0) -1 0))
+		  ((= n 0)   (lognot (apply logior ints)))
+		  ((= n len) (apply logand ints))
+		  ((> n len) 0)
+		  (#t 
+		   (do ((1s 0)
+			(prev ints)
+			(i 0 (+ i 1)))
+		       ((= i len) 1s)
+		     (let ((cur (ints i)))
+		       (if (= i 0)
+			   (set! 1s (logior 1s (logand cur (apply log-n-of (- n 1) (cdr ints)))))
+			   (let* ((mid (cdr prev))
+				  (nxt (if (= i (- len 1)) () (cdr mid))))
+			     (set! (cdr prev) nxt)  
+			     (set! 1s (logior 1s (logand cur (apply log-n-of (- n 1) ints))))
+			     (set! (cdr prev) mid)
+			     (set! prev mid))))))))
+	  (error "log-n-of ints arguments, ~A, should all be integers" ints))
+      (error "log-n-of first argument, ~A, should be an integer" n)))
 
 ;; from Rick
 (define (byte siz pos) ;; -> cache size, position and mask.
@@ -926,16 +938,18 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 (define (all-methods obj method)
   ;; for arbitrary method combinations: this returns a list of all the methods of a given name
   ;;   in obj's class and the classes it inherits from (see example below)
-  (let* ((base-method (obj method))
-	 (methods (if (procedure? base-method) (list base-method) ())))
-    (for-each 
-     (lambda (ancestor)
-       (let ((next-method (ancestor method)))
-	 (if (and (procedure? next-method)
-		  (not (memq next-method methods)))
-	     (set! methods (cons next-method methods)))))
-     (obj 'inherited))
-    (reverse methods)))
+  (if (symbol? method)
+      (let* ((base-method (obj method))
+	     (methods (if (procedure? base-method) (list base-method) ())))
+	(for-each 
+	 (lambda (ancestor)
+	   (let ((next-method (ancestor method)))
+	     (if (and (procedure? next-method)
+		      (not (memq next-method methods)))
+		 (set! methods (cons next-method methods)))))
+	 (obj 'inherited))
+	(reverse methods))
+      (error "all-methods 'method argument should be a symbol: ~A" method)))
 
 
 
@@ -1018,10 +1032,12 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	  (((owlet) 'continue))))))
 
 (define (call-with-input-vector v proc)
-  (let ((i -1))
-    (proc (openlet
-	   (inlet 'read (lambda (p)
-			  (v (set! i (+ i 1)))))))))
+  (if (vector? v)
+      (let ((i -1))
+	(proc (openlet
+	       (inlet 'read (lambda (p)
+			      (v (set! i (+ i 1))))))))
+      (error "call-with-input-vector first argument, ~A, should be a vector" v)))
 
 (define (call-with-output-vector proc)
   (let* ((size 1)

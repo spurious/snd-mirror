@@ -1338,7 +1338,8 @@
     (if (eq? stop lt)
 	(make-iterator lt)
 	(letrec ((iterloop 
-		  (let ((iter (make-iterator lt)))
+		  (let ((iter (make-iterator lt))
+			(iterator #t))
 		    (lambda (pos)
 		      (let ((result (iter)))
 			(if (and (eof-object? result)

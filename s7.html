@@ -1833,19 +1833,24 @@ instead of eof-object?.
 
 <p>The argument to make-iterator can also be a function or macro.  In this case,
 the function should take one argument, the current position (just ignore this argument
-if it doesn't make sense):
+if it doesn't make sense), and there should be a variable named 'iterator with a non-#f
+value in the closure's environment:
 </p>
 <pre class="indented">
 (define (make-circular-iterator obj)
   (let ((iter (make-iterator obj)))
     (make-iterator 
-     (lambda (pos)
-       (let ((result (iter)))
-	 (if (eof-object? result)
-	     ((set! iter (make-iterator obj)))
-	     result))))))
+     (let ((iterator #t))
+       (lambda (pos)
+         (let ((result (iter)))
+	   (if (eof-object? result)
+	       ((set! iter (make-iterator obj)))
+	       result)))))))
 </pre>
-
+<p>The 'iterator variable is similar to the 'documentation variable used by procedure-documentation.
+It gives make-iterator some hope of catching inadvertent bogus function arguments that would
+otherwise cause an infinite loop.
+</p>
 
 
 <div class="header" id="multidimensionalvectors"><h4>multidimensional vectors</h4></div>
@@ -8999,15 +9004,16 @@ thread-safe local variables, which can be saved and communicated between s7 runs
 			     (let ((key #f)
 				   (length (lambda (obj) (expt 2 20))))
 			       (#_make-iterator
-				(openlet 
-				 (lambda (pos)
-				   (if key
-				       (set! key (gdbm_nextkey (obj 'file) (cdr key)))
-				       (set! key (gdbm_firstkey (obj 'file))))
-				   (if (pair? key)
-				       (cons (string-&gt;symbol (car key))
-					     (eval-string (gdbm_fetch (obj 'file) (car key))))
-				       key)))))))))
+                                (let ((iterator #t))
+				  (openlet 
+				   (lambda (pos)
+				     (if key
+				         (set! key (gdbm_nextkey (obj 'file) (cdr key)))
+				         (set! key (gdbm_firstkey (obj 'file))))
+				     (if (pair? key)
+				         (cons (string-&gt;symbol (car key))
+					       (eval-string (gdbm_fetch (obj 'file) (car key))))
+				         key))))))))))
 
   (set! (*db* 'str) "123") ; add a variable named 'str with the value "123"
   (set! (*db* 'int) 432)
