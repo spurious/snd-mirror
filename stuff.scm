@@ -1064,11 +1064,13 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
 ;;; ----------------
 
-(define (flatten-let e)
+(define* (flatten-let e (n -1))
   (if (let? e)
       (let ((slots ()))
-	(do ((pe e (outlet pe)))
-	    ((eq? pe (rootlet))
+	(do ((pe e (outlet pe))
+	     (i 0 (+ i 1)))
+	    ((or (eq? pe (rootlet))
+		 (= i n))
 	     (apply inlet slots))
 	  (for-each (lambda (slot)
 		      (if (and (not (assq (car slot) slots))
@@ -1077,6 +1079,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		    pe)))
       (error "flatten-let argument, ~A, is not a let" e)))
 
+(define* (owlets (ows 1)) (flatten-let (owlet) ows))
+  
 
 
 ;;; ----------------

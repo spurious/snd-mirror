@@ -9595,21 +9595,57 @@ static void ferest(mus_any *pt)
 
 static mus_any *seg_copy(mus_any *ptr)
 {
-  seg *g, *p;
+  seg *e = NULL, *p;
   p = (seg *)ptr;
-  g = (seg *)malloc(sizeof(seg));
-  memcpy((void *)g, (void *)ptr, sizeof(seg));
-  if (p->rates)
+
+  switch (p->size) /* "npts" */
     {
-      int bytes;
-      bytes = p->size * sizeof(mus_float_t);
-      g->rates = (mus_float_t *)malloc(bytes);
-      memcpy((void *)(g->rates), (void *)(p->rates), bytes);
-      bytes = (p->size + 1) * sizeof(mus_long_t);
-      g->locs = (mus_long_t *)malloc(bytes);
-      memcpy((void *)(g->locs), (void *)(p->locs), bytes);
+    case 1:
+      e = (seg *)malloc(sizeof(seg));
+      memcpy((void *)e, (void *)ptr, sizeof(seg));
+      return((mus_any *)e);
+
+    case 2: if (e2_free_list) {e = e2_free_list; e2_free_list = (seg *)(e->next);} break;
+    case 3: if (e3_free_list) {e = e3_free_list; e3_free_list = (seg *)(e->next);} break;
+    case 4: if (e4_free_list) {e = e4_free_list; e4_free_list = (seg *)(e->next);} break;
+    default: break;
     }
-  return((mus_any *)g);
+
+  if (!e)
+    {
+      e = (seg *)malloc(sizeof(seg));
+      memcpy((void *)e, (void *)ptr, sizeof(seg));
+      if (p->rates)
+	{
+	  int bytes;
+	  bytes = p->size * sizeof(mus_float_t);
+	  e->rates = (mus_float_t *)malloc(bytes);
+	  memcpy((void *)(e->rates), (void *)(p->rates), bytes);
+
+	  bytes = (p->size + 1) * sizeof(mus_long_t);
+	  e->locs = (mus_long_t *)malloc(bytes);
+	  memcpy((void *)(e->locs), (void *)(p->locs), bytes);
+	}
+    }
+  else
+    {
+      mus_float_t *r;
+      mus_long_t *l;
+      int bytes;
+
+      bytes = p->size * sizeof(mus_float_t);
+      r = e->rates;
+      memcpy((void *)r, (void *)(p->rates), bytes);
+
+      bytes = (p->size + 1) * sizeof(mus_long_t);
+      l = e->locs;
+      memcpy((void *)l, (void *)(p->locs), bytes);
+
+      memcpy((void *)e, (void *)ptr, sizeof(seg));
+      e->rates = r;
+      e->locs = l;
+    }
+  return((mus_any *)e);
 }
 
 static mus_float_t *env_data(mus_any *ptr) {return(((seg *)ptr)->original_data);}    /* mus-data */

@@ -1412,24 +1412,24 @@ static Xen mus_xen_copy(mus_xen *ms)
     {
       if (ms->nvcts == 1)
 	{
-	  if ((mus_is_comb_bank(np->gen)) ||
-	      (mus_is_all_pass_bank(np->gen)) ||
-	      (mus_is_filtered_comb_bank(np->gen)))
-	    {
-	      /* set up objects for new gens so that they will eventually be GC'd */
-	      Xen v;
-	      int i, len;
-	      len = Xen_vector_length(ms->vcts[MUS_DATA_WRAPPER]);
-	      v = Xen_make_vector(len, Xen_false);
-	      np->vcts[MUS_DATA_WRAPPER] = v;
-	      for (i = 0; i < len; i++)
-		Xen_vector_set(v, i, mus_xen_to_object(mus_any_to_mus_xen(mus_bank_generator(np->gen, i))));
-	    }
+	  if ((mus_is_env(np->gen)) || /* do the most common case first */
+	      (mus_is_formant_bank(np->gen)))
+	    np->vcts[MUS_DATA_WRAPPER] = ms->vcts[MUS_DATA_WRAPPER];
 	  else
 	    {
-	      if ((mus_is_formant_bank(np->gen)) ||
-		  (mus_is_env(np->gen)))
-		np->vcts[MUS_DATA_WRAPPER] = ms->vcts[MUS_DATA_WRAPPER];
+	      if ((mus_is_comb_bank(np->gen)) ||
+		  (mus_is_all_pass_bank(np->gen)) ||
+		  (mus_is_filtered_comb_bank(np->gen)))
+		{
+		  /* set up objects for new gens so that they will eventually be GC'd */
+		  Xen v;
+		  int i, len;
+		  len = Xen_vector_length(ms->vcts[MUS_DATA_WRAPPER]);
+		  v = Xen_make_vector(len, Xen_false);
+		  np->vcts[MUS_DATA_WRAPPER] = v;
+		  for (i = 0; i < len; i++)
+		    Xen_vector_set(v, i, mus_xen_to_object(mus_any_to_mus_xen(mus_bank_generator(np->gen, i))));
+		}
 	      else np->vcts[MUS_DATA_WRAPPER] = xen_make_vct_wrapper(mus_length(np->gen), mus_data(np->gen));
 	    }
 	}
@@ -6441,40 +6441,6 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
   return(clm_mus_error(local_error_type, local_error_msg, S_make_env));
 }
 
-#if HAVE_SCHEME
-static Xen make_env_q_length;
-static Xen g_make_env_q_length(s7_scheme *sc, s7_pointer args)
-{
-  /* (define (hi) (let ((e (make-env (float-vector 0 0 1 1) :length 10))) (env e))) */
-  mus_any *ge;
-  mus_long_t flen;
-  mus_error_handler_t *old_error_handler;
-  int npts, v_len;
-  Xen len, v;
-
-  v = Xen_car(args);
-  if (!s7_is_float_vector(v))
-    return(g_make_env(args));
-
-  len = Xen_caddr(args);
-  Xen_check_type(Xen_is_integer(len), len, 3, S_make_env, "an integer");
-  flen = Xen_llong_to_C_llong(len);
-
-  v_len = s7_vector_length(v); 
-  if ((v_len == 0) || ((v_len & 1) != 0))
-    return(g_make_env(args));
-  npts = v_len / 2; 
-
-  old_error_handler = mus_error_set_handler(local_mus_error);
-  ge = mus_make_env(mus_vct_data(v), npts, 1.0, 0.0, 1.0, 0.0, flen - 1, NULL);
-  mus_error_set_handler(old_error_handler);
-
-  if (ge) 
-    return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, v)));
-  return(clm_mus_error(local_error_type, local_error_msg, S_make_env));
-}
-#endif
-
 
 static Xen g_env_interp(Xen x, Xen env1) /* "env" causes trouble in Objective-C!! */
 {
@@ -11330,7 +11296,7 @@ static s7_pointer g_out_bank_looped(s7_scheme *sc, s7_pointer args)
   s7_pointer stepper, val, index_slot, locsym, obj, vec;
   s7_Int *step, *stop;
   gf *gf1;
-  int i, len;
+  int len;
   
   /* fprintf(stderr, "out-bank args: %s\n", DISPLAY(args)); */
 
@@ -11368,6 +11334,7 @@ static s7_pointer g_out_bank_looped(s7_scheme *sc, s7_pointer args)
       mus_float_t x;
       bool is_delay = true;
       mus_any **fs;
+      int i;
       
       fs = (mus_any **)malloc(len * sizeof(mus_any *));
       els = s7_vector_elements(vec);
@@ -18558,17 +18525,6 @@ static s7_pointer env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 }
 
 
-static s7_pointer make_env_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if (args == 3)
-    {
-      if (caddr(expr) == kw_length)
-	return(make_env_q_length);
-    }
-  return(f);
-}
-
-
 static s7_pointer readin_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 1) &&
@@ -20693,10 +20649,6 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, S_file_to_sample);
   s7_function_set_chooser(sc, f, file_to_sample_chooser);
   file_to_sample_ss = clm_make_function_no_choice(sc, S_file_to_sample, g_file_to_sample_ss, 2, 1, false, "file->sample opt", f);
-
-  f = s7_name_to_value(sc, "make-env");
-  s7_function_set_chooser(sc, f, make_env_chooser);
-  make_env_q_length = clm_make_function_no_choice(sc, "make-env", g_make_env_q_length, 3, 0, false, "make-env opt", f);
 
   f = s7_name_to_value(sc, "frample->file");
   s7_function_set_chooser(sc, f, frample_to_file_chooser);
