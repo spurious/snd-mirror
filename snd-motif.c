@@ -30662,6 +30662,10 @@ void snd_doit(int argc, char **argv)
 			      NULL);
 #endif
 
+#ifndef _MSC_VER
+  setlocale(LC_NUMERIC, "C");
+#endif
+
   /* if user has *keyboardFocusPolicy: Pointer in .Xdefaults, it can screw up Snd's attempt to
    * keep the channel graphics window as the active widget in case of keyboard input.  So,
    * we try to force Snd's focus policy to be XmEXPLICIT

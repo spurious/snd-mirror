@@ -255,12 +255,15 @@
 #ifndef OP_NAMES
   #define OP_NAMES 0
 #endif
+#define CLM2XEN 1
+
 
 #ifndef _MSC_VER
   #include <unistd.h>
   #include <sys/param.h>
   #include <strings.h>
   #include <errno.h>
+  #include <locale.h>
 #else
   #include <io.h>
   #pragma warning(disable: 4244)
@@ -373,7 +376,6 @@ typedef struct port_t {
 
 typedef struct c_proc_ext_t {
   s7_pointer looped_ff, let_looped_ff;
-  s7_ex *(*exf)(s7_scheme *sc, s7_pointer expr);
   void *chooser_data;
   s7_pointer *arg_defaults, *arg_names;
   s7_pointer call_args;
@@ -934,7 +936,6 @@ struct s7_scheme {
   int format_depth;
   int slash_str_size;
   char *slash_str;
-  s7_ex *(*ex_fallback)(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
 
   /* s7 env symbols */
   s7_pointer stack_top_symbol, symbol_table_is_locked_symbol, heap_size_symbol, gc_freed_symbol, gc_protected_objects_symbol;
@@ -1384,14 +1385,6 @@ static void init_types(void)
 /* optimizer flag saying "this expression is not completely self-contained.  It might involve the stack, etc"
  */
 
-#define T_STEP_SAFE                   T_UNSAFE
-#define is_step_safe(p)               ((typeflag(p) & T_STEP_SAFE) != 0)
-#define set_step_safe(p)              typeflag(p) |= T_STEP_SAFE
-/* marks a built-in function (via FFI) as safe for mutable vals in do
- *   currently only marks outa and float-vector-set! ?? I surmise: (integer) var in question can't be stored anywhere
- *   by the given function.  Used only in tall.scm and snd-test.scm, and never hits a false case, so seems unnecessary.
- */
-
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 16))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
 #define set_immutable(p)              typeflag(p) |= T_IMMUTABLE
@@ -1409,7 +1402,6 @@ static void init_types(void)
 #define T_MUTABLE                     (1 << (TYPE_BITS + 18))
 #define is_mutable(p)                 ((typeflag(p) & T_MUTABLE) != 0)
 #define set_mutable(p)                typeflag(p) |= T_MUTABLE
-#define clear_mutable(p)              typeflag(p) &= (~T_MUTABLE)
 /* used for mutable numbers in clm2xen
  */
 
@@ -1860,7 +1852,6 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define c_function_chooser_data(f)    c_function_ext(f)->chooser_data
 #define c_function_looped(f)          c_function_ext(f)->looped_ff
 #define c_function_let_looped(f)      c_function_ext(f)->let_looped_ff
-#define c_function_ex_parser(f)       c_function_ext(f)->exf
 
 #define c_function_arg_defaults(f)    c_function_ext(f)->arg_defaults
 #define c_function_keyed_args(f)      c_function_ext(f)->keyed_args
@@ -13601,8 +13592,7 @@ static s7_pointer g_add_f_sf(s7_scheme *sc, s7_pointer args)
 
 
 static s7_pointer add_ss_1ss;
-s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args);
-s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args)
 {
   /* (+ (* s1 s2) (* (- 1.0 s1) s3)) */
   s7_pointer s1, s2, s3;
@@ -33660,12 +33650,6 @@ bool s7_is_object(s7_pointer p)
 }
 
 
-void s7_function_set_step_safe(s7_pointer f)
-{
-  set_step_safe(f);
-}
-
-
 static s7_pointer fallback_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   return(f);
@@ -33692,31 +33676,6 @@ void s7_function_set_let_looped(s7_pointer f, s7_pointer c)
   if (!c_function_ext(f))
     c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
   c_function_let_looped(f) = c;
-}
-
-
-void s7_function_set_ex_parser(s7_pointer f, s7_ex *(*func)(s7_scheme *sc, s7_pointer expr))
-{
-  if (!c_function_ext(f))
-    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
-  c_function_ex_parser(f) = func;
-}
-
-s7_ex *(*s7_function_ex_parser(s7_pointer f))(s7_scheme *sc, s7_pointer expr)
-{
-  if (c_function_ext(f))
-    return(c_function_ex_parser(f));
-  return(NULL);
-}
-
-s7_ex *(*s7_ex_fallback(s7_scheme *sc))(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
-{
-  return(sc->ex_fallback);
-}
-
-void s7_set_ex_fallback(s7_scheme *sc, s7_ex *(*fallback)(s7_scheme *sc, s7_pointer expr, s7_pointer locals))
-{
-  sc->ex_fallback = fallback;
 }
 
 
@@ -49765,24 +49724,6 @@ static s7_pointer step_dox_c_subtract_f(s7_scheme *sc, s7_pointer code, s7_point
   return(g_subtract_2(sc, sc->T2_1));
 }
 
-static s7_pointer step_dox_c_mutable_subtract_f(s7_scheme *sc, s7_pointer code, s7_pointer slot)
-{
-  real(slot_value(slot)) -= real(slot_value(slot_pending_value(slot)));
-  return(slot_value(slot));
-}
-
-static s7_pointer step_dox_c_mutable_add_f(s7_scheme *sc, s7_pointer code, s7_pointer slot)
-{
-  real(slot_value(slot)) += real(slot_value(slot_pending_value(slot)));
-  return(slot_value(slot));
-}
-
-static s7_pointer step_dox_c_mutable_add1(s7_scheme *sc, s7_pointer code, s7_pointer slot)
-{
-  integer(slot_value(slot))++;
-  return(slot_value(slot));
-}
-
 static s7_pointer step_dox_c_add_i(s7_scheme *sc, s7_pointer code, s7_pointer slot)
 {
   if ((is_integer(slot_value(slot))) &&
@@ -49918,39 +49859,6 @@ static s7_pointer dox_add_ti(s7_scheme *sc, s7_pointer args, s7_pointer slot)
 static s7_pointer dox_cdr_s(s7_scheme *sc, s7_pointer arg, s7_pointer slot)
 {
   return((is_pair(slot_value(slot))) ? cdr(slot_value(slot)) : g_cdr(sc, set_plist_1(sc, slot_value(slot))));
-}
-
-
-static dox_function dox_mutate(s7_scheme *sc, s7_pointer slot)
-{
-  s7_pointer expr;
-  expr = slot_expression(slot);
-#if (!WITH_GMP)
-  if ((((dox_function)fcdr(expr)) == step_dox_c_subtract_f) ||
-      (((dox_function)fcdr(expr)) == step_dox_c_add_f))
-    {
-      if ((type(slot_value(slot)) == T_REAL) &&
-	  (type(slot_value(slot_pending_value(slot))) == T_REAL))
-	{
-	  slot_value(slot) = s7_make_mutable_real(sc, real(slot_value(slot)));
-	  if (((dox_function)fcdr(expr)) == step_dox_c_subtract_f)
-	    return(step_dox_c_mutable_subtract_f);
-	  else return(step_dox_c_mutable_add_f);
-	}
-    }
-  else
-    {
-      if (((dox_function)fcdr(expr)) == dox_add_t1)
-	{
-	  if (type(slot_value(slot)) == T_INTEGER)
-	    {
-	      slot_value(slot) = make_mutable_integer(sc, integer(slot_value(slot)));
-	      return(step_dox_c_mutable_add1);
-	    }
-	}
-    }
-#endif
-  return((dox_function)fcdr(expr));
 }
 
 
@@ -50284,19 +50192,6 @@ static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code)
   return(NULL);
 }
 
-
-static s7_pointer g_mutable_add1(s7_scheme *sc, s7_pointer args)
-{
-  integer(car(args))++;
-  return(car(args));
-}
-
-
-static s7_pointer g_mutable_subtract1(s7_scheme *sc, s7_pointer args)
-{
-  integer(car(args))--;
-  return(car(args));
-}
 
 static s7_pointer check_do_all_x(s7_scheme *sc, s7_pointer code)
 {
@@ -50769,8 +50664,6 @@ static s7_pointer check_do(s7_scheme *sc)
   return(sc->code);
 }
 
-#define CLM2XEN 1
-
 static int dox_ex(s7_scheme *sc)
 {
   /* any number of steppers using dox exprs, end also dox, body and end result arbitrary.
@@ -50937,151 +50830,6 @@ static int dox_ex(s7_scheme *sc)
 	  return(goto_START_WITHOUT_POP_STACK);
 	}
 
-#if CLM2XEN
-      if (is_symbol(car(code)))
-	{
-	  s7_pointer f;
-	  f = s7_symbol_value(sc, car(code));
-	  
-	  if ((is_c_function(f)) &&
-	      (c_function_ext(f)) &&
-	      (c_function_ex_parser(f)))
-	    {
-	      s7_ex *exd = NULL;
-	      exd = c_function_ex_parser(f)(sc, code);
-	      if (exd)
-		{
-		  s7_function endf;
-		  s7_pointer endp, slots, slot;
-		  int arg;
-		  s7_pointer p, slot1 = NULL, slot2 = NULL, slot3 = NULL, expr1 = NULL, expr2 = NULL, expr3 = NULL;
-		  dox_function d1 = NULL, d2 = NULL, d3 = NULL;
-		  bool mut; /* C++ claims "mutable" */
-		  
-		  mut = is_step_safe(f);
-		  for (arg = 0, p = let_slots(sc->envir); is_slot(p); p = next_slot(p))
-		    if (is_pair(slot_expression(p)))
-		      {
-			arg++;
-			if (!slot1)
-			  {
-			    slot1 = p;
-			    expr1 = slot_expression(slot1);
-			    if (mut)
-			      d1 = dox_mutate(sc, p);
-			    else d1 = (dox_function)fcdr(expr1);
-			    expr1 = car(expr1);
-			  }
-			else
-			  {
-			    if (!slot2)
-			      {
-				slot2 = p;
-				expr2 = slot_expression(slot2);
-				if (mut)
-				  d2 = dox_mutate(sc, p);
-				else d2 = (dox_function)fcdr(expr2);
-				expr2 = car(expr2);
-			      }
-			    else
-			      {
-				if (!slot3)
-				  {
-				    slot3 = p;
-				    expr3 = slot_expression(slot3);
-				    if (mut)
-				      d3 = dox_mutate(sc, p);
-				    else d3 = (dox_function)fcdr(expr3);
-				    expr3 = car(expr3);
-				  }
-			      }
-			  }
-		      }
-		  
-		  endf = (s7_function)fcdr(cdr(sc->code));
-		  endp = fcdr(sc->code);
-		  slots = let_slots(sc->envir);
-		  
-		  if (arg == 1)
-		    {
-		      while (true)
-			{
-			  exd->func(exd);
-			  slot_set_value(slot1, d1(sc, expr1, slot1));
-			  if (is_true(sc, endf(sc, endp)))
-			    {
-			      exd->free(exd);
-			      sc->code = cdadr(sc->code);
-			      if (!is_null(sc->code))
-				{
-				  if (mut)
-				    clear_mutable(slot_value(slot1));
-				  return(goto_BEGIN1);
-				}
-			      sc->value = sc->NIL;
-			      return(goto_START);
-			    }
-			}
-		    }
-		  
-		  if (arg < 4)
-		    {
-		      while (true)
-			{
-			  exd->func(exd);
-			  slot_set_value(slot1, d1(sc, expr1, slot1));
-			  slot_set_value(slot2, d2(sc, expr2, slot2));
-			  if (slot3) slot_set_value(slot3, d3(sc, expr3, slot3));
-			  if (is_true(sc, endf(sc, endp)))
-			    {
-			      exd->free(exd);
-			      sc->code = cdadr(sc->code);
-			      if (!is_null(sc->code))
-				{
-				  if (mut)
-				    {
-				      clear_mutable(slot_value(slot1));
-				      clear_mutable(slot_value(slot2));
-				      if (slot3) clear_mutable(slot_value(slot3));
-				    }
-				  return(goto_BEGIN1);
-				}
-			      sc->value = sc->NIL;
-			      return(goto_START);
-			    }
-			}
-		    }
-		  
-		  while (true)
-		    {
-		      exd->func(exd);
-		      
-		      for (slot = slots; is_slot(slot); slot = next_slot(slot))
-			if (is_pair(slot_expression(slot)))
-			  slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
-		      
-		      if (is_true(sc, endf(sc, endp)))
-			{
-			  exd->free(exd);
-			  sc->code = cdadr(sc->code);
-			  if (!is_null(sc->code))
-			    {
-			      if (mut)
-				{
-				  if (slot1) clear_mutable(slot_value(slot1));
-				  if (slot2) clear_mutable(slot_value(slot2));
-				}
-			      return(goto_BEGIN1);
-			    }
-			  sc->value = sc->NIL;
-			  return(goto_START);
-			}
-		    }
-		} 
-	    }
-	} /* if symbol car */
-#endif
-      
       if (is_all_x_safe(sc, code))
 	{
 	  s7_function body, endf;
@@ -51129,101 +50877,42 @@ static int dox_ex(s7_scheme *sc)
   return(fall_through);
 }
 
-/* opt order should probably be looped, ex_fallback, direct */
 	  
 static int simple_do_ex(s7_scheme *sc, s7_pointer code)
 {
-  s7_pointer step_var, ctr, end, body;
-  s7_function func = NULL, endf, stepf;
-  
-  body = car(fcdr(code));
-  ctr = dox_slot1(sc->envir);
-  end = dox_slot2(sc->envir);
-  endf = c_call(caadr(code));
-  stepf = c_call(caddr(caar(code)));
-  step_var = caddr(caddr(caar(code)));
-  
-#if CLM2XEN
-  if (is_symbol(car(body)))
-    {
-      s7_pointer f;
-      f = s7_symbol_value(sc, car(body));
-      
-      if ((is_c_function(f)) &&
-	  (c_function_ext(f)) &&
-	  (c_function_ex_parser(f)))
-	{
-	  s7_ex *exd = NULL;
-	  exd = c_function_ex_parser(f)(sc, body);
-	  if (exd)
-	    {
-	      bool mut;
-	      /* outa in tall.scm, float-vector-set! in snd-test */
-	      mut = is_step_safe(f);
-	      
-	      if ((mut) &&
-		  (type(slot_value(ctr)) == T_INTEGER) &&
-		  (((s7_function)stepf == g_subtract_s1) ||
-		   ((s7_function)stepf == g_add_s1)))
-		{
-		  slot_value(ctr) = make_mutable_integer(sc, integer(slot_value(ctr)));
-		  if ((s7_function)stepf == g_subtract_s1)
-		    stepf = g_mutable_subtract1;
-		  else stepf = g_mutable_add1;
-		}
-	      else mut = false;
-	      
-	      while (true)
-		{
-		  exd->func(exd);
-		  
-		  car(sc->T2_1) = slot_value(ctr);
-		  car(sc->T2_2) = step_var;
-		  slot_set_value(ctr, stepf(sc, sc->T2_1));
-		  
-		  car(sc->T2_1) = slot_value(ctr);
-		  car(sc->T2_2) = slot_value(end);
-		  if (is_true(sc, endf(sc, sc->T2_1)))
-		    {
-		      exd->free(exd);
-		      sc->code = cdr(cadr(code));
-		      if (!is_null(sc->code))
-			{
-			  if (mut)
-			    clear_mutable(slot_value(ctr));
-			  return(goto_BEGIN1);
-			}
-		      sc->value = sc->NIL;
-		      return(goto_START);
-		    }
-		}
-	    }
-	}
-    }
-#endif
-
-  if ((!func) &&
-      (is_optimized(car(fcdr(code)))) &&
+  if ((is_optimized(car(fcdr(code)))) &&
       (is_all_x_op(optimize_op(car(fcdr(code))))))
-    func = all_x_eval(sc, car(fcdr(code)), sc->envir); /* safe local */
-  
-  if (func)
     {
-      func = all_x_init(sc, func, body);
-      while (true)
+      s7_function func;
+      func = all_x_eval(sc, car(fcdr(code)), sc->envir); /* safe local */
+      if (func)
 	{
-	  func(sc, body);
-
-	  car(sc->T2_1) = slot_value(ctr);
-	  car(sc->T2_2) = step_var;
-	  slot_set_value(ctr, stepf(sc, sc->T2_1));
+	  s7_pointer step_var, ctr, end, body;
+	  s7_function endf, stepf;
+  
+	  body = car(fcdr(code));
+	  ctr = dox_slot1(sc->envir);
+	  end = dox_slot2(sc->envir);
+	  endf = c_call(caadr(code));
+	  stepf = c_call(caddr(caar(code)));
+	  step_var = caddr(caddr(caar(code)));
 	  
-	  car(sc->T2_1) = slot_value(ctr);
-	  car(sc->T2_2) = slot_value(end);
-	  if (is_true(sc, endf(sc, sc->T2_1)))
+	  func = all_x_init(sc, func, body);
+	  while (true)
 	    {
-	      sc->code = cdr(cadr(code));
-	      return(goto_DO_END_CLAUSES);
+	      func(sc, body);
+	      
+	      car(sc->T2_1) = slot_value(ctr);
+	      car(sc->T2_2) = step_var;
+	      slot_set_value(ctr, stepf(sc, sc->T2_1));
+	      
+	      car(sc->T2_1) = slot_value(ctr);
+	      car(sc->T2_2) = slot_value(end);
+	      if (is_true(sc, endf(sc, sc->T2_1)))
+		{
+		  sc->code = cdr(cadr(code));
+		  return(goto_DO_END_CLAUSES);
+		}
 	    }
 	}
     }
@@ -51374,30 +51063,6 @@ static int safe_dotimes_ex(s7_scheme *sc)
 			{
 			  sc->code = cdr(cadr(code));
 			  return(goto_SAFE_DO_END_CLAUSES);
-			}
-		    }
-		  
-		  /* try ex_fallback (gf*) */
-		  if ((sc->ex_fallback) &&
-		      (!is_unsafe_do(sc->code)))
-		    {
-		      s7_ex *e = NULL;
-		      e = sc->ex_fallback(sc, sc->code, sc->envir);
-		      if (e)
-			{
-			  s7_pointer stepper;
-			  stepper = slot_value(sc->args);
-			  while (true)
-			    {
-			      e->f(e);
-			      numerator(stepper)++;
-			      if (numerator(stepper) == denominator(stepper))
-				{
-				  e->free(e);
-				  sc->code = cdr(cadr(code));
-				  return(goto_SAFE_DO_END_CLAUSES);
-				}
-			    }
 			}
 		    }
 #endif
@@ -51562,26 +51227,6 @@ static int safe_dotimes_c_c_ex(s7_scheme *sc)
 		}
 	      /* else fall into the ordinary loop */
 	    }
-	  
-	  if (sc->ex_fallback)
-	    {
-	      s7_ex *e = NULL;
-	      e = sc->ex_fallback(sc, func, sc->envir);
-	      if (e)
-		{
-		  while (true)
-		    {
-		      e->f(e);
-		      numerator(stepper)++;
-		      if (numerator(stepper) == denominator(stepper))
-			{
-			  e->free(e);
-			  sc->code = cdr(cadr(sc->code));
-			  return(goto_SAFE_DO_END_CLAUSES);
-			}
-		    }
-		}
-	    }
 #endif
 	  
 	  while (true)
@@ -51674,27 +51319,6 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
 	      s7_function func;
 	      func = (s7_function)(fcdr(body));
 	      body = car(body);
-	      
-	      if (sc->ex_fallback)
-		{
-		  s7_ex *e = NULL;
-		  e = sc->ex_fallback(sc, body, sc->envir);
-		  if (e)
-		    {
-		      while (true)
-			{
-			  e->f(e);
-			  numerator(stepper)++;
-			  if (numerator(stepper) == denominator(stepper))
-			    {
-			      e->free(e);
-			      sc->code = cdr(cadr(sc->code));
-			      return(goto_SAFE_DO_END_CLAUSES);
-			    }
-			}
-		    }
-		}
-
 	      func = all_x_init(sc, func, body);
 	      while (true)
 		{
@@ -51806,35 +51430,8 @@ static int safe_do_ex(s7_scheme *sc)
   if ((is_null(cdr(sc->code))) &&
       (is_pair(car(sc->code))))
     {
-      s7_ex *e = NULL;
-      s7_pointer obj, body;
+      s7_pointer body;
       body = car(sc->code);
-      /* very few calls */
-      if ((sc->ex_fallback) &&
-	  (!is_unsafe_do(sc->code)) &&
-	  (car(body) == sc->SET) &&
-	  (is_pair(cadr(body))) &&
-	  (is_symbol(caadr(body))) &&
-	  (is_null(cdddr(body))) &&
-	  (cadr(cadr(body)) == caaar(code)) &&
-	  (is_null(cddr(cadr(body)))) &&
-	  (is_float_vector(obj = find_symbol_unchecked(sc, caadr(body)))))
-	{
-	  e = sc->ex_fallback(sc, caddr(body), sc->envir);
-	  if (e)
-	    {
-	      s7_Int i, start, lim;
-	      lim = s7_integer(end_val);
-	      start = s7_integer(init_val);
-	      for (i = start; i < lim; i++)
-		float_vector_element(obj, i) = e->f(e);
-	      e->free(e);
-	      
-	      slot_value(dox_slot1(sc->envir)) = slot_value(dox_slot2(sc->envir));
-	      sc->code = cdr(cadr(code));
-	      return(goto_SAFE_DO_END_CLAUSES);
-	    }
-	}
       set_unsafe_do(sc->code);
       set_fcdr(code, sc->code);
       push_stack(sc, OP_SAFE_DO_STEP_1, sc->args, code);
@@ -66085,6 +65682,10 @@ s7_scheme *s7_init(void)
   s7_pointer sym;
   static bool already_inited = false;
 
+#if (!_MSC_VER)
+  setlocale(LC_NUMERIC, "C"); /* use decimal point in floats */
+#endif
+
   if (!already_inited)
     {
       init_types();
@@ -66215,7 +65816,6 @@ s7_scheme *s7_init(void)
 
   sc->begin_hook = NULL;
   sc->default_rng = NULL;
-  sc->ex_fallback = NULL;
 
   sc->autoload_table = sc->NIL;
   sc->autoload_names = NULL;
@@ -67564,14 +67164,16 @@ int main(int argc, char **argv)
  * tform         |      |      |                          6816 5536 4287 4034
  * tmap          |      |      | 11.0           5031 4769 4685 4557 4230 4213
  * titer         |      |      |                          7503 6793 6351 6105
- * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6281
+ * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6266
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 6380
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 13.0
- * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 13.7
+ * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 13.8
  * thash         |      |      |                          50.7 23.8 14.9 14.6
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 34.3
+ *               |      |      |
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 13.6
+ * tallx         |      |      |                                    26.9 27.5
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 38.0
+ * callsx        |      |      |                                    54.6 56.0
  *
- * calls 54.6 if no clm2xen, tall: 26.9 
  * --------------------------------------------------------------------------
  *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
@@ -67590,4 +67192,8 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
  *   with name/sync/sample settable
+ * perhaps iterator should have a cleanup function for gc? and *autoload* needs an iterator
+ * define-constant for functions is not ideal -- reload complains (check equality of source?)
+ * float_vector_ref|set_chooser (see vct_set case in clm2xen)
+ *   the biggie: (float-vector-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1))) currently uses add_ss_1ss [candidate for dn!]
  */

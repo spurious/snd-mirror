@@ -44,8 +44,6 @@ static void ps_write(const char *buf)
 }
 
 
-static char *previous_locale = NULL;
-
 static int start_ps_graph(const char *output, const char *title) 
 { 
   ps_fd = CREAT(output, 0666);
@@ -53,10 +51,6 @@ static int start_ps_graph(const char *output, const char *title)
   if (!pbuf) pbuf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   bbx = 0;
   bby = 0;
-
-#ifndef _MSC_VER
-  previous_locale = mus_strdup(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since PostScript assumes that format */
-#endif
 
   snprintf(pbuf, PRINT_BUFFER_SIZE, 
 	       "%%!PS-Adobe-2.0 EPSF-2.0\n%%%%Title: %s\n%%%%Creator: Snd: %s\n%%%%CreationDate: %s", 
@@ -100,14 +94,6 @@ static void end_ps_graph(void)
   ps_write(pbuf);
   ps_flush(ps_fd);
   snd_close(ps_fd, "eps file");
-  if (previous_locale)
-    {
-#ifndef _MSC_VER
-      setlocale(LC_NUMERIC, previous_locale);
-#endif
-      free(previous_locale);
-      previous_locale = NULL;
-    }
   if (nbuf)
     {
       free(nbuf);
@@ -652,10 +638,6 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
   chan_info *cp;
   int state = GL2PS_OVERFLOW, buffsize = 1024 * 1024, type = 0;
 
-#ifndef _MSC_VER
-  char *old_locale = NULL;
-#endif
-
   Xen_check_type(Xen_is_string_or_unbound(filename), filename, 1, S_gl_graph_to_ps, "a string (filename)");
   Xen_check_type(Xen_is_integer_or_unbound(output_type), output_type, 2, S_gl_graph_to_ps, "an integer, 0=eps");
 
@@ -672,10 +654,6 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
   if ((type < 0) || (type >= NUM_GL2PS_TYPES))
     Xen_out_of_range_error(S_gl_graph_to_ps, 2, output_type, "must be between 0 and 5");
 
-#ifndef _MSC_VER
-  old_locale = mus_strdup(setlocale(LC_NUMERIC, "C"));
-#endif
-  
   fp = fopen(file, "wb");
 
   while (state == GL2PS_OVERFLOW)
@@ -702,10 +680,6 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
 	}
     }
   fclose(fp);
-#ifndef _MSC_VER
-  setlocale(LC_NUMERIC, old_locale);
-  if (old_locale) free(old_locale);
-#endif
   
   return(C_string_to_Xen_string(file));
 }

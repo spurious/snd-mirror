@@ -535,6 +535,10 @@ int main(int argc, char **argv)
 {
   int i;
 
+#if (!_MSC_VER)
+  setlocale(LC_NUMERIC, "C"); /* use decimal point in floats */
+#endif
+
 #if HAVE_GSL
   /* if HAVE_GSL and the environment variable GSL_IEEE_MODE exists, use it */
   /* GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized */

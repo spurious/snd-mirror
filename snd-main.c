@@ -387,13 +387,6 @@ static void pcp_sl(FILE *fd, const char *name, mus_float_t val1, mus_float_t val
 
 static void save_options(FILE *fd)
 {
-  char *locale = NULL;
-
-#if (!_MSC_VER) && HAVE_SCHEME
-  locale = mus_strdup(setlocale(LC_NUMERIC, "C")); 
-  /* must use decimal point in floats */
-#endif
-
   fprintf(fd, "\n%s Snd %s (%s) options saved %s\n", Xen_comment_mark, SND_VERSION, SND_DATE, snd_local_time());
 
   if (transform_size(ss) != DEFAULT_TRANSFORM_SIZE) pss_sod(fd, S_transform_size, transform_size(ss));
@@ -621,13 +614,6 @@ static void save_options(FILE *fd)
   }
   
   fprintf(fd, "%s end of snd options\n", Xen_comment_mark);
-  if (locale)
-    {
-#ifndef _MSC_VER
-      setlocale(LC_NUMERIC, locale);
-#endif
-      free(locale);
-    }
 }
 
 
@@ -1175,7 +1161,7 @@ static Xen before_save_state_hook;
 void save_state(const char *save_state_name)
 {
   FILE *save_fd;
-  char *locale = NULL, *fullname;
+  char *fullname;
   bool append_new_state = false;
   if (!save_state_name)
     {
@@ -1201,9 +1187,6 @@ void save_state(const char *save_state_name)
       return;
     }
 
-#ifndef _MSC_VER
-  locale = mus_strdup(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
-#endif
   save_options(save_fd);                            /* options = user-settable global state variables */
   /* the global settings need to precede possible local settings */
 
@@ -1302,13 +1285,6 @@ void save_state(const char *save_state_name)
    *   what if the user has changed these before restoring -- should the old forms be restored?
    */
   
-  if (locale)
-    {
-#ifndef _MSC_VER
-      setlocale(LC_NUMERIC, locale);
-#endif
-      free(locale);
-    }
   snd_fclose(save_fd, save_state_name);
   if (Xen_hook_has_list(after_save_state_hook))
     run_hook(after_save_state_hook, 

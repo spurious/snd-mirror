@@ -3492,12 +3492,6 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
       s7_pointer arg;
       if (s7_is_null(s7, s7_cdr(body)))
 	{
-	  s7_pointer old_e;
-#if (!WITH_GMP)
-	  s7_ex *gf1;
-	  s7_pointer y;
-	  s7_Double *ry;
-#endif
 	  res = s7_car(body);
 	  arg = s7_car(s7_closure_args(s7, proc));
 
@@ -3516,6 +3510,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      s7_Double x;
 	      if (s7_is_symbol(res))
 		{
+		  s7_pointer old_e;
 		  e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7)); 
 		  old_e = s7_set_curlet(s7, e);                  /* new env for map lambda */
 		  res = s7_value(s7, res);
@@ -3544,6 +3539,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      if (s7_cadr(res) == arg) fx = s7_caddr(res); else fx = s7_cadr(res);
 	      if (s7_is_symbol(fx))
 		{
+		  s7_pointer old_e;
 		  e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7)); 
 		  old_e = s7_set_curlet(s7, e);                  /* new env for map lambda */
 		  fx = s7_value(s7, fx);
@@ -3563,48 +3559,6 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      sf = free_snd_fd(sf);
 	      return(res);
 	    }
-	  
-#if (!WITH_GMP)
-	  {
-	    s7_ex *(*fallback)(s7_scheme *sc, s7_pointer expr, s7_pointer locals);
-	    fallback = s7_ex_fallback(s7);
-
-	    e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7));
-	    old_e = s7_set_curlet(s7, e);                  /* new env for map lambda */
-	    /* we need to connect to the lambda's closure so subsequent symbol lookups work right */
-
-	    y = s7_make_mutable_real(s7, 1.5);                          /* slot for the map lambda arg */
-	    ry = (s7_Double *)((unsigned char *)(y) + xen_s7_number_location);
-	    s7_make_slot(s7, e, arg, y);
-
-	    gf1 = fallback(s7, res, old_e);
-	    if (gf1)
-	      {
-		data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
-		if (s7_tree_memq(s7, arg, res))
-		  {
-		    samples_to_vct_with_reader(num, data, sf);
-		    for (kp = 0; kp < num; kp++)
-		      {
-			(*ry) = data[kp];
-			data[kp] = gf1->f((void *)gf1);
-		      }
-		  }
-		else
-		  {
-		    for (kp = 0; kp < num; kp++)
-		      data[kp] = gf1->f((void *)gf1);
-		  }
-		sf = free_snd_fd(sf);
-		change_samples(beg, num, data, cp, caller, pos, -1.0);
-		free(data);
-		gf1->free((void *)gf1);
-		s7_set_curlet(s7, old_e);
-		return(res);
-	      }
-	    s7_set_curlet(s7, old_e);
-	  }
-#endif
 	}
       /* (let ((rd (make-sampler 0))) (map-channel (lambda (y) (+ (next-sample rd) y)))) */
 
@@ -3834,7 +3788,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   snd_info *sp;
   snd_fd *sf;
   mus_long_t kp, num;
-  int rpt = 0, rpt4 = 0;
+  int rpt = 0, rpt4;
   bool reporting = false;
   int counts = 0, pos;
   char *errmsg;
@@ -3886,7 +3840,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   s7_pointer arg_list;
   int gc_loc;
   bool use_apply;
-  s7_pointer arg, body, e, slot;
+  s7_pointer body, e, slot;
   s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
 
   arg_list = xen_nil;
@@ -3898,6 +3852,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   body = s7_closure_body(s7, proc);
   if (s7_is_pair(body))
     {
+      s7_pointer arg;
       arg = s7_car(s7_closure_args(s7, proc));
 #if (!WITH_GMP)
       /* (let () (define (hi) (scan-channel (lambda (y) (or (< y -0.001) (> y 0.001))))) (open-sound "1a.snd") (let ((val (hi))) (close-sound) val))
@@ -3924,7 +3879,6 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 	    {
 	      s7_pointer y, args, val;
 	      s7_Double *ry;
-	      int len;
 
 	      if (s7_function_choice_is_direct(s7, res)) /* global HOP_SAFE_C_C in s7 */
 		{
@@ -3960,6 +3914,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 		{
 		  /* res: (> y .1) or whatever */
 		  s7_pointer s;
+		  int len;
 		  s = s7_cadr(res);
 		  
 		  len = s7_list_length(s7, res);

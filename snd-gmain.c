@@ -423,6 +423,10 @@ void snd_doit(int argc, char **argv)
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   sg_make_resizable(shell);
 
+#ifndef _MSC_VER
+  setlocale(LC_NUMERIC, "C");
+#endif
+
   auto_open_files = argc-1;
   if (argc > 1) auto_open_file_names = (char **)(argv + 1);
   ss->startup_title = mus_strdup("snd");

@@ -6798,14 +6798,6 @@ static Xen safe_out_any_2_to_mus_xen(mus_long_t pos, mus_float_t inv, int chn, c
   return(xen_zero);
 }
 
-#if (!WITH_GMP)
-static Xen safe_outa_2_to_mus_xen(mus_long_t pos, mus_float_t inv, const char *caller)
-{
-  if (!mus_simple_outa_to_file(pos, inv, clm_output_gen))
-    mus_safe_out_any_to_file(pos, inv, 0, clm_output_gen);
-  return(xen_zero);
-}
-#endif
 
 static Xen out_any_2_to_vct(mus_long_t pos, mus_float_t inv, int chn, const char *caller)
 {
@@ -9948,273 +9940,6 @@ static gf *fixup_vct_ref(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 }
 
 
-/* -------------------------------------------------------------------------------- */
-
-s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args);
-
-
-typedef struct vcset_ex {
-  s7_pointer i_slot, val_slot;
-  int v_len;
-  mus_float_t *v_data;
-  mus_float_t x1, x2;
-  void *gen;
-  gf *g;
-  s7_scheme *sc;
-  mus_float_t (*func_1)(void *p);
-  mus_float_t (*func)(void *p);
-  struct vcset_ex *next;
-} vcset_ex;
-
-
-static vcset_ex *vex_free_list = NULL;
-static s7_ex *s7ex_free_list = NULL;
-
-static void s7ex_free(s7_ex *p)
-{
-  p->data = (void *)s7ex_free_list;
-  s7ex_free_list = p;
-}
-
-static s7_ex *s7ex_alloc(void)
-{
-  if (s7ex_free_list)
-    {
-      s7_ex *p;
-      p = s7ex_free_list;
-      s7ex_free_list = (s7_ex *)(p->data);
-      return(p);
-    }
-  return((s7_ex *)malloc(sizeof(s7_ex)));
-}
-
-static void vcset_free(void *p)
-{
-  s7_ex *e = (s7_ex *)p;
-  vcset_ex *ep;
-  ep = (vcset_ex *)(e->data);
-  if (ep->g) gf_free(ep->g);
-  ep->next = (struct vcset_ex *)vex_free_list;
-  vex_free_list = ep;
-  s7ex_free(e);
-}
-
-
-static vcset_ex *allocate_vcset_ex(void)
-{
-  if (vex_free_list)
-    {
-      vcset_ex *e;
-      e = vex_free_list;
-      vex_free_list = e->next;
-      memset((void *)e, 0, sizeof(vcset_ex));
-      return(e);
-    }
-  return((vcset_ex *)calloc(1, sizeof(vcset_ex)));
-}
-
-
-static void vcset_0(void *p)
-{
-  s7_ex *e = (s7_ex *)p;
-  vcset_ex *ep;
-  mus_long_t pos;
-
-  ep = (vcset_ex *)(e->data);
-  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
-  if (pos < ep->v_len)
-    ep->v_data[pos] = ep->x1;
-}
-
-
-static void vcset_s(void *p)
-{
-  s7_ex *e = (s7_ex *)p;
-  vcset_ex *ep;
-  mus_long_t pos;
-
-  ep = (vcset_ex *)(e->data);
-  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
-  if (pos < ep->v_len)
-    ep->v_data[pos] = s7_number_to_real_with_caller(ep->sc, s7_cell_slot_value(ep->val_slot), "float-vector-set!");
-}
-
-
-static void vcset_1(void *p)
-{
-  s7_ex *e = (s7_ex *)p;
-  vcset_ex *ep;
-  mus_long_t pos;
-
-  ep = (vcset_ex *)(e->data);
-  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
-  if (pos < ep->v_len)
-    ep->v_data[pos] = ep->func_1(ep->gen);
-}
-
-
-static void vcset_2(void *p)
-{
-  s7_ex *e = (s7_ex *)p;
-  vcset_ex *ep;
-  mus_long_t pos;
-
-  ep = (vcset_ex *)(e->data);
-  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
-  if (pos < ep->v_len)
-    ep->v_data[pos] = ep->func(ep->g);
-}
-
-
-static void vcset_3(void *p)
-{
-  s7_ex *e = (s7_ex *)p;
-  vcset_ex *ep;
-  mus_long_t pos;
-
-  ep = (vcset_ex *)(e->data);
-  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
-  if (pos < ep->v_len)
-    {
-      mus_float_t x;
-      x = s7_cell_real(s7_cell_slot_value(ep->val_slot));
-      ep->v_data[pos] = (x * ep->x1) + ((1.0 - x) * ep->x2);
-    }
-}
-
-
-static s7_ex *vct_set_ex_parser(s7_scheme *sc, s7_pointer expr)
-{
-  /* get vct, check type, get loc, check type
-   *   run find_gf on cadddr
-   */
-  s7_pointer v, v_arg, i_arg, val_arg, i_slot;
-  gf *gf1;
-  vcset_ex *p;
-  s7_ex *e;
-
-  v_arg = cadr(expr);
-  if (s7_local_slot(sc, v_arg))
-    return(NULL);
-
-  i_arg = caddr(expr);
-  if ((!s7_is_symbol(v_arg)) ||
-      (!s7_is_symbol(i_arg)))
-    return(NULL);
-
-  v = s7_value(sc, v_arg);
-  if ((!(s7_is_float_vector(v))) ||
-      (s7_vector_rank(v) != 1))
-    return(NULL);
-
-  i_slot = s7_local_slot(sc, i_arg);
-  if ((!i_slot) ||
-      (!s7_is_integer(s7_cell_slot_value(i_slot))))
-    return(NULL);
-
-  val_arg = cadddr(expr);
-  if (!s7_is_pair(val_arg))
-    {
-      p = allocate_vcset_ex();
-      e = s7ex_alloc();
-      e->free = vcset_free;
-      e->data = p;
-      p->v_len = mus_vct_length(v);
-      p->v_data = mus_vct_data(v);
-      p->i_slot = i_slot;
-      p->sc = sc;
-      if (s7_is_symbol(val_arg))
-	{
-	  e->func = vcset_s;
-	  p->val_slot = s7_slot(sc, val_arg);
-	}
-      else
-	{
-	  p->x1 = s7_number_to_real(sc, val_arg);
-	  e->func = vcset_0;
-	}
-      return(e);
-    }
-
-  /* fade.scm (crossfade) uses the add_ss_1ss calculation so much that it's worth splitting out that one special case.
-   */
-  if (s7_function_choice(sc, val_arg) == g_add_ss_1ss)
-    {
-      s7_pointer x_slot;
-
-      x_slot = s7_local_slot(sc, cadr(cadr(val_arg)));              /* x is real */
-      if ((x_slot) &&
-	  (s7_is_real(s7_cell_slot_value(x_slot))))
-	{
-	  if ((!s7_local_slot(sc, caddr(cadr(val_arg)))) &&
-	      (!s7_local_slot(sc, caddr(caddr(val_arg)))))          /* x1 and x2 are not steppers */
-	    {
-	      s7_pointer xp;
-	      xp = s7_symbol_value(sc, caddr(cadr(val_arg)));
-	      if (s7_is_real(xp))
-		{
-		  mus_float_t x1;
-		  x1 = s7_cell_real(xp);
-		  xp = s7_symbol_value(sc, caddr(caddr(val_arg)));
-		  if (s7_is_real(xp))
-		    {
-		      mus_float_t x2;
-		      x2 = s7_cell_real(xp);                        /* x1 and x2 are real */
-
-		      p = allocate_vcset_ex();
-		      e = s7ex_alloc();
-		      e->free = vcset_free;
-		      e->data = p;
-		      p->v_len = mus_vct_length(v);
-		      p->v_data = mus_vct_data(v);
-		      p->i_slot = i_slot;
-		      p->val_slot = x_slot;
-		      p->x1 = x1;
-		      p->x2 = x2;
-		      e->func = vcset_3;
-		      return(e);
-		    }
-		}
-	    }
-	}
-    }
-
-  gf1 = find_gf(sc, val_arg);
-  if (gf1)
-    {
-      p = allocate_vcset_ex();
-      e = s7ex_alloc();
-      e->free = vcset_free;
-      e->data = p;
-      p->v_len = mus_vct_length(v);
-      p->v_data = mus_vct_data(v);
-      p->i_slot = i_slot;
-
-      if (gf1->func_1)
-	{
-	  p->func_1 = gf1->func_1;
-	  p->gen = gf1->gen;
-	  p->g = NULL;
-	  gf_free(gf1);
-	  e->func = vcset_1;
-	  return(e);
-	}
-      if (gf1->func)
-	{
-	  p->func = gf1->func;
-	  p->g = gf1;
-	  e->func = vcset_2;
-	  return(e);
-	}
-
-      gf_free(gf1);
-    }
-
-  /* fprintf(stderr, "ex: %s\n", DISPLAY(expr)); */
-  /* expt ss, (* r r s)
-   */
-  return(NULL);
-}
 /* -------------------------------------------------------------------------------- */
 
 
@@ -14624,40 +14349,6 @@ static gf *find_gf_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals
 
 #if (!WITH_GMP)
 
-static s7_Double exfunc(void *p)
-{
-  s7_ex *e = (s7_ex *)p;
-  gf *g;
-  g = (gf *)(e->data);
-  return(g->func(g));
-}
-
-static void exfree(void *p)
-{
-  s7_ex *e = (s7_ex *)p;
-  if (e->data) gf_free((gf *)(e->data));
-  s7ex_free(e);
-}
-
-static s7_ex *find_ex_with_locals(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
-{
-  gf *g;
-  setup_gen_list(sc, expr);
-  g = find_gf_with_locals(sc, expr, locals);
-  clear_gen_list();
-  if (g)
-    {
-      s7_ex *e;
-      e = s7ex_alloc();
-      e->free = exfree;
-      e->data = (void *)g;
-      e->f = exfunc;
-      return(e);
-    }
-  return(NULL);
-}
-
-
 static s7_pointer g_indirect_placer_3_looped(s7_scheme *sc, s7_pointer args, void (*mover)(mus_any *ptr, mus_long_t loc, mus_float_t uval))
 {
   s7_Int pos, end;
@@ -15556,165 +15247,6 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 /* -------------------------------------------------------------------------------- */
 
 #if (!WITH_GMP)
-
-typedef struct {
-  s7_pointer i_slot, val_slot;
-  mus_float_t x1;
-  void *gen;
-  gf *g;
-  s7_scheme *sc;
-  int chan;
-  mus_float_t (*func_1)(void *p);
-  mus_float_t (*func)(void *p);
-} outa_ex;
-
-
-static void outa_ex_free(void *p)
-{
-  s7_ex *e = (s7_ex *)p;
-  outa_ex *ep;
-  ep = (outa_ex *)(e->data);
-  if (ep->g) gf_free(ep->g);
-  free(ep);
-  s7ex_free(e);
-}
-
-
-static void outa_0(void *p)
-{
-  s7_ex *e = (s7_ex *)p;
-  outa_ex *ep;
-  mus_long_t pos;
-  ep = (outa_ex *)(e->data);
-  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
-  out_any_2(pos, ep->x1, ep->chan, S_outa);
-}
-
-
-static void outa_s(void *p)
-{
-  s7_ex *e = (s7_ex *)p;
-  outa_ex *ep;
-  mus_long_t pos;
-  ep = (outa_ex *)(e->data);
-  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
-  out_any_2(pos, s7_number_to_real(ep->sc, s7_cell_slot_value(ep->val_slot)), ep->chan, S_outa);
-}
-
-
-static void outa_1(void *p)
-{
-  s7_ex *e = (s7_ex *)p;
-  outa_ex *ep;
-  mus_long_t pos;
-  ep = (outa_ex *)(e->data);
-  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
-  out_any_2(pos, ep->func_1(ep->gen), ep->chan, S_outa);
-}
-
-
-static void outa_2(void *p)
-{
-  s7_ex *e = (s7_ex *)p;
-  outa_ex *ep;
-  mus_long_t pos;
-  ep = (outa_ex *)(e->data);
-  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
-  out_any_2(pos, ep->func(ep->g), ep->chan, S_outa);
-}
-
-static void safe_outa_2(void *p)
-{
-  s7_ex *e = (s7_ex *)p;
-  outa_ex *ep;
-  mus_long_t pos;
-  ep = (outa_ex *)(e->data);
-  pos = s7_cell_integer(s7_cell_slot_value(ep->i_slot));
-  safe_outa_2_to_mus_xen(pos, ep->func(ep->g), S_outa);
-}
-
-
-static s7_ex *outa_ex_parser(s7_scheme *sc, s7_pointer expr)
-{
-  s7_pointer i_arg, val_arg, i_slot;
-  gf *gf1;
-  outa_ex *p;
-  s7_ex *e;
-
-  if (s7_list_length(sc, expr) != 3)
-    return(NULL);
-  i_arg = cadr(expr);
-  if (!s7_is_symbol(i_arg))
-    return(NULL);
-  i_slot = s7_local_slot(sc, i_arg);
-  if ((!i_slot) ||
-      (!s7_is_integer(s7_cell_slot_value(i_slot))))
-    return(NULL);
-
-  val_arg = caddr(expr);
-  if (!s7_is_pair(val_arg))
-    {
-      p = (outa_ex *)calloc(1, sizeof(outa_ex));
-      e = s7ex_alloc();
-      e->free = outa_ex_free;
-      e->data = p;
-      p->i_slot = i_slot;
-      p->sc = sc;
-      if (car(expr) == outa_symbol)
-	p->chan = 0;
-      else p->chan = 1;
-      if (s7_is_symbol(val_arg))
-	{
-	  p->val_slot = s7_slot(sc, val_arg);
-	  e->func = outa_s;
-	}
-      else
-	{
-	  p->x1 = s7_number_to_real(sc, val_arg);
-	  e->func = outa_0;
-	}
-      return(e);
-    }
-
-  gf1 = find_gf(sc, val_arg);
-  if (gf1)
-    {
-      p = (outa_ex *)calloc(1, sizeof(outa_ex));
-      e = s7ex_alloc();
-      e->free = outa_ex_free;
-      e->data = p;
-      p->i_slot = i_slot;
-      if (car(expr) == outa_symbol)
-	p->chan = 0;
-      else p->chan = 1;
-
-      if (gf1->func_1)
-	{
-	  p->func_1 = gf1->func_1;
-	  p->gen = gf1->gen;
-	  p->g = NULL;
-	  gf_free(gf1);
-	  e->func = outa_1;
-	  return(e);
-	}
-      if (gf1->func)
-	{
-	  p->func = gf1->func;
-	  p->g = gf1;
-	  if (out_any_2 == safe_out_any_2_to_mus_xen)
-	    e->func = safe_outa_2;
-	  else e->func = outa_2;
-	  return(e);
-	}
-
-      gf_free(gf1);
-    }
-
-  /* fprintf(stderr, "outa ex: %s\n", DISPLAY(expr)); */
-
-  return(NULL);
-}
-
 
 static s7_pointer indirect_outa_2_looped;
 static s7_pointer g_indirect_outa_2_looped(s7_scheme *sc, s7_pointer args)
@@ -19750,10 +19282,6 @@ static void init_choosers(s7_scheme *sc)
 {
   s7_pointer f;
 
-#if (!WITH_GMP)
-  s7_set_ex_fallback(sc, find_ex_with_locals);
-#endif
-
   abs_symbol = s7_make_symbol(sc, "abs");
   env_symbol = s7_make_symbol(sc, "env");
   vector_ref_symbol = s7_make_symbol(sc, "vector-ref");
@@ -20563,10 +20091,6 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, S_outa);
   s7_function_set_chooser(sc, f, outa_chooser);
-#if (!WITH_GMP)
-  s7_function_set_ex_parser(f, outa_ex_parser);
-#endif
-  s7_function_set_step_safe(f);
 
   outa_mul_s_delay = clm_make_function_no_choice(sc, S_outa, g_outa_mul_s_delay, 2, 0, false, "outa opt", f);
   outa_mul_s_env = clm_make_function_no_choice(sc, S_outa, g_outa_mul_s_env, 2, 0, false, "outa opt", f);
@@ -20617,10 +20141,6 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, S_outb);
   s7_function_set_chooser(sc, f, outb_chooser);
-#if (!WITH_GMP)
-  s7_function_set_ex_parser(f, outa_ex_parser);
-#endif
-
   outb_mul_s_delay = clm_make_function_no_choice(sc, S_outb, g_outb_mul_s_delay, 2, 0, false, "outb opt", f);
   outb_two = clm_make_function_no_choice(sc, S_outb, g_outb_two, 2, 0, false, "outb opt", f);
 #if (!WITH_GMP)
@@ -20715,10 +20235,6 @@ static void init_choosers(s7_scheme *sc)
     /* vct-set! */
     f = s7_name_to_value(s7, "float-vector-set!");
     s7_function_set_chooser(s7, f, vct_set_chooser);
-#if (!WITH_GMP)
-    s7_function_set_ex_parser(f, vct_set_ex_parser);
-#endif
-    s7_function_set_step_safe(f);
 
 #if (!WITH_GMP)
     vct_set_vector_ref = s7_make_function(s7, "float-vector-set!", g_vct_set_vector_ref, 3, 0, false, "float-vector-set! opt");

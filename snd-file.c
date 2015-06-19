@@ -1099,7 +1099,7 @@ static void load_sound_file_extras(snd_info *sp)
 
 static void remember_sound_file(snd_info *sp)
 {
-  char *locale = NULL, *newname;
+  char *newname;
   FILE *fd;
 
   newname = remembered_sound_file_name(sp);
@@ -1110,21 +1110,9 @@ static void remember_sound_file(snd_info *sp)
       snd_error("remember sound state can't write %s: %s", newname, snd_io_strerror());
       return;
     }
-#ifndef _MSC_VER
-  locale = mus_strdup(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
-#endif
-
   sp->remembering = true;
   save_sound_state(sp, fd);
   sp->remembering = false;
-
-  if (locale)
-    {
-#ifndef _MSC_VER
-      setlocale(LC_NUMERIC, locale);
-#endif
-      free(locale);
-    }
   snd_fclose(fd, newname);
   free(newname);
 }
