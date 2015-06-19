@@ -1831,9 +1831,8 @@ arcane consequence for method writers: specialize make-iterator, not map or for-
 instead of eof-object?.
 </p>
 
-<p>The argument to make-iterator can also be a function or macro.  In this case,
-the function should take one argument, the current position (just ignore this argument
-if it doesn't make sense), and there should be a variable named 'iterator with a non-#f
+<p>The argument to make-iterator can also be a function or macro.  
+There should be a variable named 'iterator with a non-#f
 value in the closure's environment:
 </p>
 <pre class="indented">
@@ -1841,7 +1840,7 @@ value in the closure's environment:
   (let ((iter (make-iterator obj)))
     (make-iterator 
      (let ((iterator #t))
-       (lambda (pos)
+       (lambda ()
          (let ((result (iter)))
 	   (if (eof-object? result)
 	       ((set! iter (make-iterator obj)))
@@ -6171,6 +6170,14 @@ These symbols are not just an optimization of string comparison:
        (body `((+ ,x x 1)))) 
   ((apply lambda arg body) 12)) ; "legolambda"?
 
+(define (engulph form)
+  (let ((body `(let ((L ()))
+		 (do ((i 0 (+ i 1)))
+		     ((= i 10) (reverse L))
+		   (set! L (cons ,form L))))))
+    (define function (apply lambda () (list (copy body :readable))))
+    (function)))
+
 (let ()
   (define (hi a) (+ a x))
   ((apply let '((x 32)) (list (procedure-source hi))) 12)) ; one function, many closures?
@@ -6249,7 +6256,6 @@ use a trailing null instead (mimicking apply* in some ancient lisps):
 &gt; (apply let '((a 2) (b 3)) '(list + a b) ())
 <em class="gray">(+ 2 3)</em>
 </pre>
-
 
 <p>
 Currently, you can't set! a built-in syntactic keyword to some new value:
@@ -9006,7 +9012,7 @@ thread-safe local variables, which can be saved and communicated between s7 runs
 			       (#_make-iterator
                                 (let ((iterator #t))
 				  (openlet 
-				   (lambda (pos)
+				   (lambda ()
 				     (if key
 				         (set! key (gdbm_nextkey (obj 'file) (cdr key)))
 				         (set! key (gdbm_firstkey (obj 'file))))

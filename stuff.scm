@@ -479,7 +479,7 @@ If func approves of one, index-if returns the index that gives that element's po
 		 (make-iterator
 		  (let ((cur p)
 			(iterator #t))
-		    (lambda (pos)
+		    (lambda ()
 		      (if (memq cur seen-cycles)
 			  #<eof>
 			  (let ((result (car cur)))
@@ -492,7 +492,7 @@ If func approves of one, index-if returns the index that gives that element's po
 		     (make-iterator   ; dotted list
 		      (let ((cur p)
 			    (iterator #t))
-			(lambda (pos)
+			(lambda ()
 			  (if (pair? cur)
 			      (let ((result (car cur)))
 				(set! cur (cdr cur))
@@ -523,7 +523,7 @@ If func approves of one, index-if returns the index that gives that element's po
 			 (iterloop)))
 		   result))))
        (let ((iterator #t))
-	 (lambda (pos) 
+	 (lambda () 
 	   (iterloop)))))))
 
 
@@ -1956,3 +1956,58 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
    :catches                       (*s7* 'catches)
    :exits                         (*s7* 'exits)))
 
+
+
+;;; --------------------------------------------------------------------------------
+
+(define* (make-directory-iterator name (recursive #t))
+  (if (not (string? name))
+      (error "directory name should be a string: ~S" name)
+      (make-iterator
+       (with-let (sublet *libc* :name name :recursive recursive)
+	 (let ((dir (opendir name)))
+	   (if (equal? dir NULL)
+	       (error "can't open ~S: ~S" name (strerror (errno)))
+	       (let ((iterator #t)
+		     (dirs ())
+		     (dir-names ())
+		     (dir-name name))
+		 (define* (reader quit)            ; returned from with-let
+		   (if (eq? quit #<eof>)           ; caller requests cleanup and early exit
+		       (begin                      ;   via ((iterator-sequence iter) #<eof>)
+			 (closedir dir)
+			 (for-each closedir dirs)
+			 quit)
+		       (let ((file (read_dir dir)))
+			 (if (zero? (length file)) ; null filename => all done
+			     (begin
+			       (closedir dir)
+			       (if (null? dirs)
+				   #<eof>
+				   (begin          ; else pop back to outer dir
+				     (set! dir (car dirs))
+				     (set! dirs (cdr dirs))
+				     (set! dir-name (car dir-names))
+				     (set! dir-names (cdr dir-names))
+				     (reader))))
+			     (if (not (member file '("." "..") string=?))
+				 (if (and recursive 
+					  (if (defined? 'directory?)
+					      (directory? file)
+					      (let ((buf (stat.make)))
+						(let ((result (and (stat file buf) (S_ISDIR (stat.st_mode buf)))))
+						  (free buf)
+						  result))))
+				     (let ((new-dir (opendir file)))
+				       (if (equal? new-dir NULL)  ; inner directory is unreadable?
+					   (begin
+					     (format *stderr* "can't read ~S: ~S" file (strerror (errno)))
+					     (reader))
+					   (begin
+					     (set! dirs (cons dir dirs))
+					     (set! dir new-dir)
+					     (set! dir-names (cons dir-name dir-names))
+					     (set! dir-name (string-append dir-name "/" file))
+					     (reader))))
+				     (string-append dir-name "/" file))
+				 (reader)))))))))))))

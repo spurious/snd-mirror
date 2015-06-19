@@ -1340,7 +1340,7 @@
 	(letrec ((iterloop 
 		  (let ((iter (make-iterator lt))
 			(iterator #t))
-		    (lambda (pos)
+		    (lambda ()
 		      (let ((result (iter)))
 			(if (and (eof-object? result)
 				 (iterator-at-end? iter))
@@ -1348,7 +1348,7 @@
 				result
 				(begin 
 				  (set! iter (make-iterator (outlet (iterator-sequence iter))))
-				  (iterloop pos)))
+				  (iterloop)))
 			    result))))))
 	    (make-iterator iterloop))))
   

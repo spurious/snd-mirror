@@ -24032,6 +24032,15 @@ static s7_pointer vector_iterate(s7_scheme *sc, s7_pointer obj)
   return(sc->ITERATOR_END);
 }
 
+static s7_pointer closure_iterate(s7_scheme *sc, s7_pointer obj)
+{
+  s7_pointer result;
+  result = s7_apply_function(sc, iterator_sequence(obj), sc->NIL);
+  if (result == sc->ITERATOR_END)
+    iterator_next(obj) = iterator_finished;
+  return(result);
+}
+
 static s7_pointer other_iterate(s7_scheme *sc, s7_pointer obj)
 {
   if (iterator_position(obj) < iterator_length(obj))
@@ -24042,9 +24051,7 @@ static s7_pointer other_iterate(s7_scheme *sc, s7_pointer obj)
       car(sc->Z2_1) = sc->x;
       car(sc->Z2_2) = sc->z; /* is this necessary? */
       car(cur) = make_integer(sc, iterator_position(obj));
-      if (is_c_object(p))
-	result = (*(c_object_ref(p)))(sc, p, cur);
-      else result = s7_apply_function(sc, p, cur);
+      result = (*(c_object_ref(p)))(sc, p, cur);
       sc->x = car(sc->Z2_1);
       sc->z = car(sc->Z2_2);
       iterator_position(obj)++;
@@ -24185,7 +24192,7 @@ s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e)
 	    car(p) = small_int(0);
 	    iterator_current(iter) = p;
 	    set_mutable(iter);
-	    iterator_next(iter) = other_iterate;
+	    iterator_next(iter) = closure_iterate;
 	    if (has_methods(e))
 	      iterator_length(iter) = closure_length(sc, e);
 	    else iterator_length(iter) = s7_Int_max;
@@ -24218,9 +24225,6 @@ s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e)
   return(iter);
 }
 
-/* (let ((lst (list 0 1 2))) (let ((lti (make-iterator lst))) (iterate lti)))
- * (let ((lst (vector 0 1 2))) (let ((lti (make-iterator lst))) (iterate lti)))
- */
 
 static s7_pointer g_make_iterator(s7_scheme *sc, s7_pointer args)
 {
@@ -49374,14 +49378,14 @@ static int set_pair_ex(s7_scheme *sc)
 	if (is_procedure(setter))
 	  {
 	    push_op_stack(sc, setter);
-	    push_stack(sc, OP_EVAL_ARGS1, cons(sc, make_integer(sc, iterator_position(cx)), sc->NIL), sc->NIL);
+	    push_stack(sc, OP_EVAL_ARGS1, sc->NIL, sc->NIL);
 	    sc->code = cadr(sc->code);    /* the (as yet unevaluated) value, incoming code was ((obj) val) */
 	  }
 	else
 	  {
 	    if (is_any_macro(setter))
 	      {
-		sc->args = list_2(sc, make_integer(sc, iterator_position(cx)), cadr(sc->code));
+		sc->args = list_1(sc, cadr(sc->code));
 		sc->code = setter;
 		return(goto_APPLY);
 	      }
@@ -49395,15 +49399,6 @@ static int set_pair_ex(s7_scheme *sc)
     }
   return(goto_EVAL);
 }
-	  
-
-/* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (let ((val 1)) (set! val 2) )))
- * (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (let ((val 3)) (set! val i) )))
- * (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline))
- * (define (hi) (do ((i 0 (+ i 1))) ((= i 10)) (set! i (+ i 1)) (display i)) (newline))
- *
- * (define (hi a) (do ((i 0 (+ i 1))) ((= i a)) (display i)))
- */
 
 
 static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_pointer var_list, bool *has_set)
@@ -66469,25 +66464,25 @@ s7_scheme *s7_init(void)
   #define MACROEXPAND_HELP       "(macroexpand macro-call) returns the result of the expansion phase of evaluating the macro call."
   #define WITH_LET_HELP          "(with-let env ...) evaluates its body in the environment env."
 
-  sc->QUOTE =       assign_syntax(sc, "quote",                 OP_QUOTE,             small_int(1), small_int(1), QUOTE_HELP);
-  sc->IF =          assign_syntax(sc, "if",                    OP_IF,                small_int(2), small_int(3), IF_HELP);
-  sc->WHEN =        assign_syntax(sc, "when",                  OP_WHEN,              small_int(2), max_arity,	 WHEN_HELP);
-  sc->UNLESS =      assign_syntax(sc, "unless",                OP_UNLESS,            small_int(2), max_arity,	 UNLESS_HELP);
-  sc->BEGIN =       assign_syntax(sc, "begin",                 OP_BEGIN,             small_int(0), max_arity,	 BEGIN_HELP);
-  sc->SET =         assign_syntax(sc, "set!",                  OP_SET,               small_int(2), small_int(2), SET_HELP);
-  sc->LET =         assign_syntax(sc, "let",                   OP_LET,               small_int(2), max_arity,    LET_HELP);
-  sc->LET_STAR =    assign_syntax(sc, "let*",                  OP_LET_STAR,          small_int(2), max_arity,    LET_STAR_HELP);
-  sc->LETREC =      assign_syntax(sc, "letrec",                OP_LETREC,            small_int(2), max_arity,    LETREC_HELP);
-  sc->LETREC_STAR = assign_syntax(sc, "letrec*",               OP_LETREC_STAR,       small_int(2), max_arity,    LETREC_STAR_HELP);
-  sc->COND =        assign_syntax(sc, "cond",                  OP_COND,              small_int(1), max_arity,    COND_HELP);
-  sc->AND =         assign_syntax(sc, "and",                   OP_AND,               small_int(0), max_arity,    AND_HELP);
-  sc->OR =          assign_syntax(sc, "or",                    OP_OR,                small_int(0), max_arity,    OR_HELP);
-  sc->CASE =        assign_syntax(sc, "case",                  OP_CASE,              small_int(2), max_arity,    CASE_HELP);
-  sc->DO =          assign_syntax(sc, "do",                    OP_DO,                small_int(2), max_arity,    DO_HELP); /* 2 because body can be null */
-  sc->LAMBDA =      assign_syntax(sc, "lambda",                OP_LAMBDA,            small_int(2), max_arity,    LAMBDA_HELP);
-  sc->LAMBDA_STAR = assign_syntax(sc, "lambda*",               OP_LAMBDA_STAR,       small_int(2), max_arity,    LAMBDA_STAR_HELP);
-  sc->DEFINE =      assign_syntax(sc, "define",                OP_DEFINE,            small_int(2), max_arity,    DEFINE_HELP);
-  sc->DEFINE_STAR = assign_syntax(sc, "define*",               OP_DEFINE_STAR,       small_int(2), max_arity,    DEFINE_STAR_HELP);
+  sc->QUOTE =             assign_syntax(sc, "quote",           OP_QUOTE,             small_int(1), small_int(1), QUOTE_HELP);
+  sc->IF =                assign_syntax(sc, "if",              OP_IF,                small_int(2), small_int(3), IF_HELP);
+  sc->WHEN =              assign_syntax(sc, "when",            OP_WHEN,              small_int(2), max_arity,	 WHEN_HELP);
+  sc->UNLESS =            assign_syntax(sc, "unless",          OP_UNLESS,            small_int(2), max_arity,	 UNLESS_HELP);
+  sc->BEGIN =             assign_syntax(sc, "begin",           OP_BEGIN,             small_int(0), max_arity,	 BEGIN_HELP);
+  sc->SET =               assign_syntax(sc, "set!",            OP_SET,               small_int(2), small_int(2), SET_HELP);
+  sc->LET =               assign_syntax(sc, "let",             OP_LET,               small_int(2), max_arity,    LET_HELP);
+  sc->LET_STAR =          assign_syntax(sc, "let*",            OP_LET_STAR,          small_int(2), max_arity,    LET_STAR_HELP);
+  sc->LETREC =            assign_syntax(sc, "letrec",          OP_LETREC,            small_int(2), max_arity,    LETREC_HELP);
+  sc->LETREC_STAR =       assign_syntax(sc, "letrec*",         OP_LETREC_STAR,       small_int(2), max_arity,    LETREC_STAR_HELP);
+  sc->COND =              assign_syntax(sc, "cond",            OP_COND,              small_int(1), max_arity,    COND_HELP);
+  sc->AND =               assign_syntax(sc, "and",             OP_AND,               small_int(0), max_arity,    AND_HELP);
+  sc->OR =                assign_syntax(sc, "or",              OP_OR,                small_int(0), max_arity,    OR_HELP);
+  sc->CASE =              assign_syntax(sc, "case",            OP_CASE,              small_int(2), max_arity,    CASE_HELP);
+  sc->DO =                assign_syntax(sc, "do",              OP_DO,                small_int(2), max_arity,    DO_HELP); /* 2 because body can be null */
+  sc->LAMBDA =            assign_syntax(sc, "lambda",          OP_LAMBDA,            small_int(2), max_arity,    LAMBDA_HELP);
+  sc->LAMBDA_STAR =       assign_syntax(sc, "lambda*",         OP_LAMBDA_STAR,       small_int(2), max_arity,    LAMBDA_STAR_HELP);
+  sc->DEFINE =            assign_syntax(sc, "define",          OP_DEFINE,            small_int(2), max_arity,    DEFINE_HELP);
+  sc->DEFINE_STAR =       assign_syntax(sc, "define*",         OP_DEFINE_STAR,       small_int(2), max_arity,    DEFINE_STAR_HELP);
   sc->DEFINE_CONSTANT =   assign_syntax(sc, "define-constant", OP_DEFINE_CONSTANT,   small_int(2), max_arity,    DEFINE_CONSTANT_HELP);
   sc->DEFINE_MACRO =      assign_syntax(sc, "define-macro",    OP_DEFINE_MACRO,      small_int(2), max_arity,    DEFINE_MACRO_HELP);
   sc->DEFINE_MACRO_STAR = assign_syntax(sc, "define-macro*",   OP_DEFINE_MACRO_STAR, small_int(2), max_arity,    DEFINE_MACRO_STAR_HELP);
@@ -67595,6 +67590,4 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
  *   with name/sync/sample settable
- * directory/permutation iterator
- * execve et al in libc.scm (list of str->char** etc)
  */
