@@ -381,6 +381,12 @@ typedef struct c_proc_ext_t {
   s7_pointer call_args;
   int keyed_args;       /* 2 * args == number of args if all are specified via keywords */
   bool simple_defaults;
+#if 0
+  void *(*unwrap_p)(void *p);
+  s7_Double (*f1)(void *p);
+  s7_Double (*f2)(void *p, s7_Double x);
+  s7_Double (*f3)(void *p, s7_Double x, s7_Double y);
+#endif
 } c_proc_ext_t;
 
 typedef struct c_proc_t {
@@ -17796,22 +17802,13 @@ static s7_pointer g_numerator(s7_scheme *sc, s7_pointer args)
   x = car(args);
   switch (type(x))
     {
-    case T_RATIO:
-      return(make_integer(sc, numerator(x)));
-
-    case T_INTEGER:
-      return(x);
-
+    case T_RATIO:       return(make_integer(sc, numerator(x)));
+    case T_INTEGER:     return(x);
 #if WITH_GMP
-    case T_BIG_INTEGER:
-      return(x);
-
-    case T_BIG_RATIO:
-      return(mpz_to_big_integer(sc, mpq_numref(big_ratio(x))));
+    case T_BIG_INTEGER: return(x);
+    case T_BIG_RATIO:   return(mpz_to_big_integer(sc, mpq_numref(big_ratio(x))));
 #endif
-
-    default:
-      method_or_bust_with_type(sc, x, sc->NUMERATOR, args, A_RATIONAL, 0);
+    default:            method_or_bust_with_type(sc, x, sc->NUMERATOR, args, A_RATIONAL, 0);
     }
 }
 
@@ -17824,22 +17821,13 @@ static s7_pointer g_denominator(s7_scheme *sc, s7_pointer args)
   x = car(args);
   switch (type(x))
     {
-    case T_RATIO:
-      return(make_integer(sc, denominator(x)));
-
-    case T_INTEGER:
-      return(small_int(1));
-
+    case T_RATIO:       return(make_integer(sc, denominator(x)));
+    case T_INTEGER:     return(small_int(1));
 #if WITH_GMP
-    case T_BIG_INTEGER:
-      return(small_int(1));
-
-    case T_BIG_RATIO:
-      return(mpz_to_big_integer(sc, mpq_denref(big_ratio(x))));
+    case T_BIG_INTEGER: return(small_int(1));
+    case T_BIG_RATIO:   return(mpz_to_big_integer(sc, mpq_denref(big_ratio(x))));
 #endif
-
-    default:
-      method_or_bust_with_type(sc, x, sc->DENOMINATOR, args, A_RATIONAL, 0);
+    default:            method_or_bust_with_type(sc, x, sc->DENOMINATOR, args, A_RATIONAL, 0);
     }
 }
 
@@ -31933,6 +31921,9 @@ static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
 
 
 
+
+/* -------------------------------------------------------------------------------- */
+
 static bool c_function_is_ok(s7_scheme *sc, s7_pointer x)
 {
   /* macro version of this (below) is much slower! */
@@ -33969,7 +33960,6 @@ static s7_pointer g_funclet(s7_scheme *sc, s7_pointer args)
       if (p == sc->UNDEFINED)
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, set_elist_2(sc, make_string_wrapper(sc, "funclet arg, '~S, is unbound"), car(args)))); /* not p here */
     }
-
   check_method(sc, p, sc->FUNCLET, args);
 
   if (!is_procedure_or_macro(p))
@@ -36128,17 +36118,10 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	  return(dest);
 
 #if WITH_GMP
-	case T_BIG_INTEGER:
-	  return(mpz_to_big_integer(sc, big_integer(source)));
-	  
-	case T_BIG_RATIO:
-	  return(mpq_to_big_ratio(sc, big_ratio(source)));
-	  
-	case T_BIG_REAL:
-	  return(mpfr_to_big_real(sc, big_real(source)));
-	  
-	case T_BIG_COMPLEX:
-	  return(mpc_to_big_complex(sc, big_complex(source)));
+	case T_BIG_INTEGER: return(mpz_to_big_integer(sc, big_integer(source)));
+	case T_BIG_RATIO:   return(mpq_to_big_ratio(sc, big_ratio(source)));
+	case T_BIG_REAL:    return(mpfr_to_big_real(sc, big_real(source)));
+	case T_BIG_COMPLEX: return(mpc_to_big_complex(sc, big_complex(source)));
 #endif
 	  
 	case T_C_POINTER:
@@ -38848,7 +38831,6 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
    *   (apply + 1 2 ()) -> 3
    *   (apply + 1 2 (apply values ())) -> error
    */
-
   sc->code = car(args);
   if (is_null(cdr(args)))
     sc->args = sc->NIL;
@@ -43749,6 +43731,7 @@ static void init_choosers(s7_scheme *sc)
   random_ic = make_function_with_class(sc, f, "random", g_random_ic, 1, 0, false, "random opt");
   random_rc = make_function_with_class(sc, f, "random", g_random_rc, 1, 0, false, "random opt");
   set_returns_temp(random_rc);
+
 #endif
 
   /* list */
@@ -50657,11 +50640,55 @@ static s7_pointer check_do(s7_scheme *sc)
 		}
 	    }
 	}
-      /* there are only a couple of cases in snd-test where a multi-statement do body is completely all-x-able
-       */
+      /* there are only a couple of cases in snd-test where a multi-statement do body is completely all-x-able */
       return(sc->NIL);
     }
   return(sc->code);
+}
+
+static s7_pointer fv_set_a(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer val;
+  val = ((s7_function)fcdr(sc->d3))(sc, car(sc->d3));
+  float_vector_element(sc->d1, integer(slot_value(sc->d2))) = s7_number_to_real_with_caller(sc, val, "float-vector-set!");
+  return(val);
+}
+
+static s7_pointer fv_set_b(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer val;
+  s7_Int index;
+  index = integer(slot_value(sc->d2));
+  if ((index < 0) || (index >= vector_length(sc->d1)))
+    return(out_of_range(sc, sc->FLOAT_VECTOR_SET, small_int(2), slot_value(sc->d2), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+  val = ((s7_function)fcdr(sc->d3))(sc, car(sc->d3));
+  float_vector_element(sc->d1, integer(slot_value(sc->d2))) = s7_number_to_real_with_caller(sc, val, "float-vector-set!");
+  return(val);
+}
+
+static s7_pointer fv_s1, fv_s2, fv_s3;
+static s7_function fv_f1;
+static s7_pointer fv_set_add1ss(s7_scheme *sc, s7_pointer expr)
+{
+  s7_Double s1;
+  s1 = real(slot_value(fv_s1));
+  float_vector_element(sc->d1, integer(slot_value(sc->d2))) = (s1 * real(slot_value(fv_s2))) + ((1.0 - s1) * real(slot_value(fv_s3)));
+  return(real_zero);
+}
+
+static s7_pointer fv_set_s(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer val;
+  car(sc->T1_1) = fv_s1;
+  val = fv_f1(sc, sc->T1_1);
+  float_vector_element(sc->d1, integer(slot_value(sc->d2))) = s7_number_to_real_with_caller(sc, val, "float-vector-set!");
+  return(val);
+}
+
+static s7_pointer fv_set_vref(s7_scheme *sc, s7_pointer expr)
+{
+  float_vector_element(sc->d1, int_vector_element(fv_s1, numerator(fv_s2))) = real(sc->d3);
+  return(sc->d3);
 }
 
 static int dox_ex(s7_scheme *sc)
@@ -50840,7 +50867,42 @@ static int dox_ex(s7_scheme *sc)
 	  endp = fcdr(sc->code);
 	  slots = let_slots(sc->envir);
 	  body = all_x_init(sc, body, code);
-	  if ((!is_slot(next_slot(slots))) &&   /* 1 stepper */
+
+	  if ((body == x_ssa) &&
+	      (c_call(code) == g_float_vector_set) &&
+	      (is_float_vector(slot_value(sc->d1))) &&
+	      (is_integer(slot_value(sc->d2))))
+	    {
+	      s7_pointer slot;
+	      for (slot = slots; is_slot(slot); slot = next_slot(slot))
+		{
+		  if ((slot == sc->d2) &&
+		      ((dox_function)fcdr(slot_expression(slot)) != dox_add_t1))
+		    break;
+		  if (slot == sc->d1)
+		    break;
+		}
+	      if (!is_slot(slot))
+		{
+		  sc->d1 = slot_value(sc->d1);
+		  body = fv_set_b; 
+		  if (((s7_function)fcdr(sc->d3) == all_x_c_c) &&
+		      (c_call(car(sc->d3)) == g_add_ss_1ss))
+		    {
+		      /* sc->d3: ((+ (* ks inval2) (* (- 1.0 ks) inval1))) */
+		      fv_s1 = find_symbol(sc, cadr(cadar(sc->d3)));
+		      fv_s2 = find_symbol(sc, caddr(cadar(sc->d3)));
+		      fv_s3 = find_symbol(sc, caddr(caddar(sc->d3)));
+		      
+		      /* TODO: also that they stay real */
+		      if ((is_slot(fv_s1)) && (is_slot(fv_s2)) && (is_slot(fv_s3)) &&
+			  (is_real(slot_value(fv_s1))) && (is_real(slot_value(fv_s2))) && (is_real(slot_value(fv_s3))))
+			body = fv_set_add1ss;
+		    }
+		}
+	    }
+
+	  if ((!is_slot(next_slot(slots))) &&    /* 1 stepper */
 	      (is_pair(slot_expression(slots)))) /*   incremented */
 	    {
 	      s7_pointer slot_expr;
@@ -50896,8 +50958,8 @@ static int simple_do_ex(s7_scheme *sc, s7_pointer code)
 	  endf = c_call(caadr(code));
 	  stepf = c_call(caddr(caar(code)));
 	  step_var = caddr(caddr(caar(code)));
-	  
 	  func = all_x_init(sc, func, body);
+
 	  while (true)
 	    {
 	      func(sc, body);
@@ -50947,8 +51009,7 @@ static int safe_dotimes_ex(s7_scheme *sc)
 	  sc->args = add_slot(sc, caaar(code), make_mutable_integer(sc, s7_integer(init_val)));
 	  
 	  denominator(slot_value(sc->args)) = s7_integer(end_val);
-	  /* (define (hi) (do ((i 1 (+ 1 i))) ((= i 1) i))) -- we need the frame even if the loop is not evaluated
-	   */
+	  /* (define (hi) (do ((i 1 (+ 1 i))) ((= i 1) i))) -- we need the frame even if the loop is not evaluated */
 	  if ((is_null(sc->code)) ||
 	      ((!is_pair(car(sc->code))) &&
 	       (is_null(cdr(sc->code)))))
@@ -50973,10 +51034,8 @@ static int safe_dotimes_ex(s7_scheme *sc)
 	      if ((typesflag(sc->code) == SYNTACTIC_PAIR) ||
 		  (typesflag(car(sc->code)) == SYNTACTIC_TYPE))
 		{
-		  /* (with-sound () (mosquito 0 5 560 .2))
-		   */
-		  /* if we don't handle it here, check_let mangles it, and a subsequent return here sees OP_LET_ALL_X or whatever
-		   */
+		  /* (with-sound () (mosquito 0 5 560 .2)) */
+		  /* if we don't handle it here, check_let mangles it, and a subsequent return here sees OP_LET_ALL_X or whatever */
 #if CLM2XEN
 		  if (((symbol_syntax_op(car(sc->code)) == OP_LET) ||
 		       (symbol_syntax_op(car(sc->code)) == OP_LET_STAR)) &&
@@ -51245,6 +51304,7 @@ static int safe_dotimes_c_c_ex(s7_scheme *sc)
   return(fall_through);
 }
 
+
 static int safe_dotimes_c_a_ex(s7_scheme *sc)
 {
   s7_pointer init_val;
@@ -51299,6 +51359,11 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
 	      car_body = car(body);
 	      cdr_body = cdr(body);
 	      func = all_x_init(sc, (s7_function)fcdr(body), car_body);
+	      if (func == all_x_c_c)
+		{
+		  func = c_call(car_body);
+		  car_body = cdr(car_body);
+		}
 	      while (true)
 		{
 		  s7_pointer p;
@@ -51320,6 +51385,61 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
 	      func = (s7_function)(fcdr(body));
 	      body = car(body);
 	      func = all_x_init(sc, func, body);
+
+	      /* common snd-test case */
+	      if ((func == x_ssa) &&
+		  (c_call(body) == g_float_vector_set) &&
+		  (is_float_vector(slot_value(sc->d1))) &&
+		  (sc->d2 == sc->args) &&
+		  (numerator(stepper) >= 0) &&
+		  (denominator(stepper) <= vector_length(slot_value(sc->d1))))
+		{
+		  s7_pointer a;
+		  sc->d1 = slot_value(sc->d1);
+		  func = fv_set_a; 
+		  
+		  a = car(sc->d3);
+		  if (((s7_function)fcdr(sc->d3) == all_x_c_c) &&
+		      (is_null(cddr(a))) &&
+		      (is_symbol(cadr(a))))
+		    {
+		      fv_s1 = find_symbol(sc, cadr(a));
+		      fv_s2 = find_symbol(sc, car(a));
+		      if ((is_slot(fv_s1)) && (is_slot(fv_s2)))
+			{
+			  func = fv_set_s;
+			  fv_f1 = (s7_function)c_function_call(slot_value(fv_s2));
+			  fv_s1 = slot_value(fv_s1);
+			}
+		    }
+		}
+
+	      /* second case: x_sas with all_x_c_ss (fvset) (float-vector-set! inputs (vector-ref in2s k) inval2) */
+	      if ((func == x_sas) &&
+		  (c_call(body) == g_float_vector_set) &&
+		  (is_float_vector(slot_value(sc->d1))) &&
+		  (is_real(slot_value(sc->d3))) &&
+		  ((s7_function)fcdr(sc->d2) == all_x_c_ss) &&
+		  (c_call(car(sc->d2)) == g_vector_ref_2) &&
+		  (caddar(sc->d2) == slot_symbol(sc->args)))
+		{
+		  s7_pointer a;
+		  a = car(sc->d2);
+		  fv_s1 = find_symbol(sc, cadr(a));
+		  if ((is_slot(fv_s1)) &&
+		      (is_int_vector(slot_value(fv_s1))) &&
+		      (numerator(stepper) >= 0) &&
+		      (denominator(stepper) <= vector_length(slot_value(sc->d1))) &&
+		      (denominator(stepper) <= vector_length(slot_value(fv_s1))))
+		    {
+		      fv_s1 = slot_value(fv_s1);
+		      fv_s2 = stepper;
+		      sc->d1 = slot_value(sc->d1);
+		      sc->d3 = slot_value(sc->d3);
+		      func = fv_set_vref;
+		    }
+		}
+
 	      while (true)
 		{
 		  func(sc, body);
@@ -51360,8 +51480,7 @@ static int safe_do_ex(s7_scheme *sc)
     end_val = find_symbol_checked(sc, end);
   else end_val = end;
   
-  /* (let ((sum 0)) (define (hi) (do ((i 10 (+ i 1))) ((= i 10) i) (set! sum (+ sum i)))) (hi))
-   */
+  /* (let ((sum 0)) (define (hi) (do ((i 10 (+ i 1))) ((= i 10) i) (set! sum (+ sum i)))) (hi)) */
   sc->envir = new_frame_in_env(sc, sc->envir);
   dox_slot1(sc->envir) = add_slot(sc, caaar(code), init_val); /* define the step var -- might be needed in the end clauses */
   
@@ -53303,12 +53422,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case OP_READ_INTERNAL:
 	  /* if we're loading a file, and in the file we evaluate something like:
-	   *
 	   *    (let ()
 	   *      (set-current-input-port (open-input-file "tmp2.r5rs"))
 	   *      (close-input-port (current-input-port)))
 	   *    ... (with no reset of input port to its original value)
-	   *
 	   * the load process tries to read the loaded string, but the sc->input_port is now closed,
 	   * and the original is inaccessible!  So we get a segfault in token.  We don't want to put
 	   * a port_is_closed check there because token only rarely is in this danger.  I think this
@@ -54047,8 +54164,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    set_fcdr(code, cddr(code));
 	    if ((is_null(cdr(fcdr(code)))) &&
 		(is_pair(car(fcdr(code)))) &&
-		/* (is_optimized(car(fcdr(code)))) && */
-		/* (is_all_x_op(optimize_op(car(fcdr(code))))) && */
 		(is_symbol(cadr(caddr(caar(code)))))) /* caar=(i 0 (+ i 1)), caddr=(+ i 1), so this is apparently checking that the stepf is reasonable? */
 	      {
 		int choice;
@@ -54230,8 +54345,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		car(sc->T1_1) = now;
 		slot_set_value(ctr, g_add_s1(sc, sc->T1_1));
-		/* (define (hi) (let ((x 0.0) (y 1.0)) (do ((i y (+ i 1))) ((= i 6)) (do ((i i (+ i 1))) ((>= i 7)) (set! x (+ x i)))) x))
-		 */
+		/* (define (hi) (let ((x 0.0) (y 1.0)) (do ((i y (+ i 1))) ((= i 6)) (do ((i i (+ i 1))) ((>= i 7)) (set! x (+ x i)))) x)) */
 		car(sc->T2_1) = slot_value(ctr);
 		car(sc->T2_2) = end;
 		if (is_true(sc, c_call(end_test)(sc, sc->T2_1)))
@@ -54334,8 +54448,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto BEGIN1;
 	  }
 	  
-	  /* we could use slot_pending_value, slot_expression, not this extra list, but the list seems simpler.
-	   */
+	  /* we could use slot_pending_value, slot_expression, not this extra list, but the list seems simpler. */
         #define DO_VAR_SLOT(P) ecdr(P)
         #define DO_VAR_NEW_VALUE(P) cdr(P)
         #define DO_VAR_STEP_EXPR(P) car(P)
@@ -54372,19 +54485,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       *    making the rebinding explicit.
 	       *
 	       * Hmmm... I'll leave this alone, but there are other less cut-and-dried cases:
-	       *
 	       *   (let ((j (lambda () 0))
 	       *         (k 0))
 	       *     (do ((i (j) (j))
 	       *          (j (lambda () 1) (lambda () (+ i 1)))) ; bind here hits different "i" than set!
 	       *         ((= i 3) k)
 	       *       (set! k (+ k i))))
-	       *
 	       *   is it 6 or 3?
 	       *
 	       * if we had a way to tell that there were no lambdas in the do expression, would that
 	       *   guarantee that set was ok?  Here's a bad case:
-	       *
 	       *   (let ((f #f))
 	       *     (do ((i 0 (+ i 1)))
 	       *         ((= i 3))
@@ -54392,7 +54502,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       *         (define (x) i)
 	       *         (if (= i 1) (set! f x))))
 	       *    (f))
-	       *
 	       * s7 says 3, guile says 1.
 	       *
 	       * I wonder if what they're actually talking about is a kind of shared value problem.  If we
@@ -55848,7 +55957,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    val1 = c_call(op1)(sc, sc->T2_1);
 		    
 		    car(sc->T2_1) = find_symbol_checked(sc, cadr(op3));
-		    car(sc->T2_2) = find_symbol_checked(sc, caddr(op3));			    /* perhaps: this is normally already ok (b == d) */
+		    car(sc->T2_2) = find_symbol_checked(sc, caddr(op3));    /* perhaps: this is normally already ok (b == d) */
 		    car(sc->T1_1) = c_call(op3)(sc, sc->T2_1);
 		    
 		    car(sc->T2_2) = c_call(op2)(sc, sc->T1_1);
@@ -57684,8 +57793,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    /* car is a symbol, sc->code a list */
 		    sc->value = find_global_symbol_checked(sc, carc);
 		    sc->code = cdr(code);
-		    /* drop into eval args
-		     */
+		    /* drop into eval args */
 		  }
 		else
 		  {
@@ -57788,12 +57896,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  sc->args = sc->NIL;
 	  goto EVAL_ARGS;
-	  /* moving eval_args up here (to avoid this goto) was slightly slower, probably by chance.
-	   */
+	  /* moving eval_args up here (to avoid this goto) was slightly slower, probably by chance. */
 	  
 	case OP_EVAL_ARGS5:
-	  /* sc->value is the last arg, sc->code is the previous
-	   */
+	  /* sc->value is the last arg, sc->code is the previous */
 	  {
 	    s7_pointer x, y, lx;
 	    
@@ -57811,11 +57917,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  
 	case OP_EVAL_ARGS2:
-	  /* sc->value is the last arg, [so if is_null(cdr(sc->code) and current is pair, push args2]
-	   */
+	  /* sc->value is the last arg, [so if is_null(cdr(sc->code) and current is pair, push args2] */
 	  {
 	    s7_pointer x;
-	    
 	    sc->code = pop_op_stack(sc);
 	    NEW_CELL(sc, x, T_PAIR);
 	    car(x) = sc->value;
@@ -58107,13 +58211,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   (values 1 . 2) -> improper arg list error (same with apply values)
 	   *
 	   * currently (values) does not simply erase itself:
-	   *
 	   *   :(let () (define (arg2 a) (let ((b 1)) (set! b (+ a b)) (values))) (define (hi c) (expt (abs c) (arg2 2))) (hi 2))
 	   *   ;expt power, argument 2, #<unspecified>, is an untyped but should be a number
-	   *
 	   *   :(s7-version (values))
 	   *   ;s7-version: too many arguments: (#<unspecified>)
-	   *
 	   *   :(exp (values) 0.0)
 	   *   ;exp: too many arguments: (#<unspecified> 0.0)
 	   *
@@ -58914,7 +59015,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 	  
 	  
-	  
 	  /* -------------------------------- IF -------------------------------- */
 	case OP_IF:
 	  check_if(sc);
@@ -59655,12 +59755,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case OP_LET_STAR1:    /* let* -- calculate parameters */
 	  /* we can't skip (or reuse) this new frame -- we have to imitate a nested let, otherwise
-	   *
 	   *   (let ((f1 (lambda (arg) (+ arg 1))))
 	   *     (let* ((x 32)
 	   *            (f1 (lambda (arg) (f1 (+ x arg)))))
 	   *       (f1 1)))
-	   *
 	   * will hang.  (much later -- this worries me... Could we defer making the slot?)
 	   */
 	  while (true)
@@ -60536,7 +60634,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * also, currently a mock-let is an error -- perhaps add the method checks?
 	   *   but unless 'values, that would require a 'with-let method (it's not a function)
 	   */
-	  
 	case OP_WITH_LET_S:
 	  {
 	    s7_pointer e;
@@ -62099,27 +62196,11 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 
       switch (type(obj))
 	{
-	case T_BIG_INTEGER:
-	  for (i = 0; i < len; i++)
-	    tp[i] = mpz_to_big_integer(sc, big_integer(obj));
-	  break;
-
-	case T_BIG_RATIO:
-	  for (i = 0; i < len; i++)
-	    tp[i] = mpq_to_big_ratio(sc, big_ratio(obj));
-	  break;
-
-	case T_BIG_REAL:
-	  for (i = 0; i < len; i++)
-	    tp[i] = mpfr_to_big_real(sc, big_real(obj));
-	  break;
-
-	default:
-	  for (i = 0; i < len; i++)
-	    tp[i] = mpc_to_big_complex(sc, big_complex(obj));
-	  break;
+	case T_BIG_INTEGER: for (i = 0; i < len; i++) tp[i] = mpz_to_big_integer(sc, big_integer(obj)); break;
+	case T_BIG_RATIO:   for (i = 0; i < len; i++) tp[i] = mpq_to_big_ratio(sc, big_ratio(obj));     break;
+	case T_BIG_REAL:    for (i = 0; i < len; i++) tp[i] = mpfr_to_big_real(sc, big_real(obj));      break;
+	default:  	    for (i = 0; i < len; i++) tp[i] = mpc_to_big_complex(sc, big_complex(obj)); break;
 	}
-
       s7_gc_unprotect_at(sc, gc_loc);
     }
   else vector_fill(sc, vec, obj);
@@ -67166,13 +67247,13 @@ int main(int argc, char **argv)
  * titer         |      |      |                          7503 6793 6351 6105
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6266
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 6380
- * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 13.8
+ * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.1
  * thash         |      |      |                          50.7 23.8 14.9 14.6
  *               |      |      |
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 13.6
- * tallx         |      |      |                                    26.9 27.5
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 38.0
- * callsx        |      |      |                                    54.6 56.0
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 13.5
+ * tallx         |      |      |                                    26.9 26.8
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 39.7
+ * callsx        |      |      |                                    54.6 51.8
  *
  * --------------------------------------------------------------------------
  *
@@ -67194,6 +67275,4 @@ int main(int argc, char **argv)
  *   with name/sync/sample settable
  * perhaps iterator should have a cleanup function for gc? and *autoload* needs an iterator
  * define-constant for functions is not ideal -- reload complains (check equality of source?)
- * float_vector_ref|set_chooser (see vct_set case in clm2xen)
- *   the biggie: (float-vector-set! inputs k (+ (* ks inval2) (* (- 1.0 ks) inval1))) currently uses add_ss_1ss [candidate for dn!]
  */

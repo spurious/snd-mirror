@@ -158,6 +158,7 @@
 (define full-test (< snd-test 0))
 (define total-tests 26)
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
+(define s7test-exits #f)
 (define test-number -1)
 
 (define-constant (snd-display line . args)
