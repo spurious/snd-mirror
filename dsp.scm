@@ -1598,9 +1598,14 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	      ((= i pairs))
 	    (let ((gen (vector-ref ssbs i))
 		  (filt (vector-ref bands i)))
+	      (set! *output* adder)
 	      (do ((k 0 (+ k 1)))
 		  ((= k len))
-		(float-vector-set! adder k (ssb-am gen (bandpass filt (float-vector-ref data k)))))
+		(outa k (ssb-am gen (bandpass filt (float-vector-ref data k)))))
+	      (set! *output* #f)
+	      ;; (do ((k 0 (+ k 1)))
+	      ;;     ((= k len))
+	      ;;   (float-vector-set! adder k (ssb-am gen (bandpass filt (float-vector-ref data k)))))
 	      (float-vector-add! summer adder)
 	      (fill! adder 0.0)))
 	  (float-vector-scale! summer (/ mx (float-vector-peak summer)))
@@ -1913,17 +1918,13 @@ and replaces it with the spectrum given in coeffs"))
 	      ((= pair pairs))
 	    (let ((bp (vector-ref bands pair))
 		  (pk (vector-ref peaks pair))
-		  (pk2 (vector-ref peaks2 pair)))
-	      
+		  (pk2 (vector-ref peaks2 pair))
+		  (x 0.0))
 	      (do ((k startup (+ k 1)))
 		  ((= k len))
-		(float-vector-set! adder k (bandpass bp (float-vector-ref indata k))))
-	      
-	      (do ((k startup (+ k 1)))
-		  ((= k len))
-		(float-vector-set! adder k (* (moving-max pk (float-vector-ref adder k))
-					      (polynomial pcoeffs (* (float-vector-ref adder k)
-								     (moving-norm pk2 (float-vector-ref adder k)))))))
+		(set! x (bandpass bp (float-vector-ref indata k)))
+		(float-vector-set! adder k (* (moving-max pk x) (polynomial pcoeffs (* x (moving-norm pk2 x))))))
+
 	      ;; we're normalizing the polynomial input so its waveshaping index is more-or-less 1.0
 	      ;;   this might work better with len=256, max .1 -- we're assuming a well-behaved signal 
 	      

@@ -852,3 +852,10 @@
 		    (set! x (+ x zig-size))))
 	      (set! x (- x zig-size)))))
       (list (abs (+ (sin x) (sin (+ (* n x) offset)))) x))))
+
+;;; --------------------------------------------------------------------------------
+
+(define (exptmod a b n) ; from the net somewhere: (modulo (expt a b) n)
+  (cond ((zero? b) 1)
+        ((even? b) (exptmod (modulo (* a a) n) (quotient b 2) n))
+        (else (modulo (* a (exptmod (modulo (* a a) n) (quotient b 2) n)) n))))

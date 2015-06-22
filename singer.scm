@@ -176,6 +176,7 @@
 	      (noseposition 3)
 
 	      (target-radii (make-float-vector tractlength+8 0.0))
+	      (target-temp (make-float-vector tractlength+8 0.0))
 	      (radii-poles (make-float-vector tractlength+8 0.0))
 	      (radii-pole-gains (make-float-vector tractlength+8 0.0))
 	      (radii (make-float-vector tractlength+8 0.0))
@@ -332,10 +333,14 @@
 		(begin
 		  (if (not new-tract)
 		      (begin
-			(do ((j 0 (+ j 1)))
-			    ((= j tractlength+8))
-			  (float-vector-set! radii j (+ (* (float-vector-ref radii j) (float-vector-ref radii-poles j))
-					     (* (float-vector-ref target-radii j) (float-vector-ref radii-pole-gains j)))))))
+			(float-vector-multiply! radii radii-poles)
+			(copy target-radii target-temp)
+			(float-vector-multiply! target-temp radii-pole-gains)
+			(float-vector-add! radii target-temp)
+			;; (do ((j 0 (+ j 1))) ((= j tractlength+8))
+			;;   (float-vector-set! radii j (+ (* (float-vector-ref radii j) (float-vector-ref radii-poles j))
+			;; 		                   (* (float-vector-ref target-radii j) (float-vector-ref radii-pole-gains j)))))
+			))
 		  ;; set tract shape
 		  (let ((tj 1.0)
 			(tk 0.0))

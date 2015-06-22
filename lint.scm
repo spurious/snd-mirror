@@ -3994,7 +3994,8 @@
 ;;;
 ;;; if case selector is a (code-)constant, the whole thing collapses, but that never happens
 ;;; if with-let, lint should try to be smarter about local names
-
+;;; (do ((i b (+ i 1))) ((= i e)) (..set! s i c)) -> fill! and the same for copy
+;;; complain about old-style doc string
 
 
 ;;; --------------------------------------------------------------------------------

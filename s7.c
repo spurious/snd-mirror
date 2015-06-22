@@ -12613,39 +12613,6 @@ static s7_Int c_mod(s7_Int x, s7_Int y)
 }
 
 
-/*
-(define (exptmod a b n) ; from the net somewhere
-  (cond ((zero? b) 1)
-        ((even? b) (exptmod (modulo (* a a) n) (quotient b 2) n))
-        (else (modulo (* a (exptmod (modulo (* a a) n) (quotient b 2) n)) n))))
-
-(define (compare a b n)
-  (list (exptmod a b n)
-        (modulo (expt a b) n)))
-
-;; using gmp
-:(compare 4 20 7)
-(2 2)
-:(compare 4 20 3)
-(1 1)
-:(compare 117 30 11)
-(1 1)
-:(compare 1170 310 13)
-(0 0)
-:(compare 1178 31 13)
-(5 5)
-:(compare 1178 31 131211)
-(59921 59921)
-:(compare 117812 31 131211)
-(85196 85196)
-:(compare 117812 311 131211)
-(91715 91715)
-:(compare 117812 311 13121112334)
-(4399226350 4399226350)
-
-;; could this be built-into the non-gmp case?
-*/
-
 static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 {
   #define H_modulo "(modulo x1 x2) returns x1 mod x2; (modulo 4 3) = 1.  The arguments can be real numbers."
@@ -17958,16 +17925,11 @@ static s7_pointer g_is_even(s7_scheme *sc, s7_pointer args)
   p = car(args);
   switch (type(p))
     {
-    case T_INTEGER:
-      return(make_boolean(sc, ((integer(p) & 1) == 0)));
-
+    case T_INTEGER:     return(make_boolean(sc, ((integer(p) & 1) == 0)));
 #if WITH_GMP
-    case T_BIG_INTEGER:
-      return(make_boolean(sc, mpz_even_p(big_integer(p))));
+    case T_BIG_INTEGER: return(make_boolean(sc, mpz_even_p(big_integer(p))));
 #endif
-
-    default:
-      method_or_bust(sc, p, sc->IS_EVEN, args, T_INTEGER, 0);
+    default:            method_or_bust(sc, p, sc->IS_EVEN, args, T_INTEGER, 0);
     }
 
   /* extension to gaussian integers: odd if a+b is odd? */
@@ -17982,16 +17944,11 @@ static s7_pointer g_is_odd(s7_scheme *sc, s7_pointer args)
   p = car(args);
   switch (type(p))
     {
-    case T_INTEGER:
-      return(make_boolean(sc, ((integer(p) & 1) == 1)));
-
+    case T_INTEGER:     return(make_boolean(sc, ((integer(p) & 1) == 1)));
 #if WITH_GMP
-    case T_BIG_INTEGER:
-      return(make_boolean(sc, mpz_odd_p(big_integer(p))));
+    case T_BIG_INTEGER: return(make_boolean(sc, mpz_odd_p(big_integer(p))));
 #endif
-
-    default:
-      method_or_bust(sc, p, sc->IS_ODD, args, T_INTEGER, 0);
+    default:            method_or_bust(sc, p, sc->IS_ODD, args, T_INTEGER, 0);
     }
 }
 
@@ -40054,6 +40011,11 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	  sc->envir = new_frame_in_env(sc, sc->envir);
 	  slot = add_slot(sc, car(closure_args(sc->code)), sc->F);
 	  func = all_x_init(sc, all_x_eval(sc, expr, sc->envir), expr);
+	  if (func == all_x_c_c)
+	    {
+	      func = c_call(expr);
+	      expr = cdr(expr);
+	    }
 	  
 	  while (true)
 	    {
@@ -40229,6 +40191,11 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  sc->envir = new_frame_in_env(sc, sc->envir);
 	  slot = add_slot(sc, car(closure_args(sc->code)), sc->F);
 	  func = all_x_init(sc, all_x_eval(sc, expr, sc->envir), expr);
+	  if (func == all_x_c_c)
+	    {
+	      func = c_call(expr);
+	      expr = cdr(expr);
+	    }
 	  
 	  while (true)
 	    {
@@ -50691,6 +50658,14 @@ static s7_pointer fv_set_vref(s7_scheme *sc, s7_pointer expr)
   return(sc->d3);
 }
 
+static s7_pointer fv_set_sf(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer val;
+  val = slot_value(sc->d3);
+  float_vector_element(sc->d1, integer(slot_value(sc->d2))) = s7_number_to_real_with_caller(sc, val, "float-vector-set!");
+  return(val);
+}
+
 static int dox_ex(s7_scheme *sc)
 {
   /* any number of steppers using dox exprs, end also dox, body and end result arbitrary.
@@ -50868,7 +50843,7 @@ static int dox_ex(s7_scheme *sc)
 	  slots = let_slots(sc->envir);
 	  body = all_x_init(sc, body, code);
 
-	  if ((body == x_ssa) &&
+	  if (((body == x_ssa) || (body == x_sss)) &&
 	      (c_call(code) == g_float_vector_set) &&
 	      (is_float_vector(slot_value(sc->d1))) &&
 	      (is_integer(slot_value(sc->d2))))
@@ -50885,22 +50860,36 @@ static int dox_ex(s7_scheme *sc)
 	      if (!is_slot(slot))
 		{
 		  sc->d1 = slot_value(sc->d1);
-		  body = fv_set_b; 
-		  if (((s7_function)fcdr(sc->d3) == all_x_c_c) &&
-		      (c_call(car(sc->d3)) == g_add_ss_1ss))
+		  if (body == x_ssa)
 		    {
-		      /* sc->d3: ((+ (* ks inval2) (* (- 1.0 ks) inval1))) */
-		      fv_s1 = find_symbol(sc, cadr(cadar(sc->d3)));
-		      fv_s2 = find_symbol(sc, caddr(cadar(sc->d3)));
-		      fv_s3 = find_symbol(sc, caddr(caddar(sc->d3)));
-		      
-		      /* TODO: also that they stay real */
-		      if ((is_slot(fv_s1)) && (is_slot(fv_s2)) && (is_slot(fv_s3)) &&
-			  (is_real(slot_value(fv_s1))) && (is_real(slot_value(fv_s2))) && (is_real(slot_value(fv_s3))))
-			body = fv_set_add1ss;
+		      body = fv_set_b; 
+		      if (((s7_function)fcdr(sc->d3) == all_x_c_c) &&
+			  (c_call(car(sc->d3)) == g_add_ss_1ss))
+			{
+			  /* sc->d3: ((+ (* ks inval2) (* (- 1.0 ks) inval1))) */
+			  fv_s1 = find_symbol(sc, cadr(cadar(sc->d3)));
+			  fv_s2 = find_symbol(sc, caddr(cadar(sc->d3)));
+			  fv_s3 = find_symbol(sc, caddr(caddar(sc->d3)));
+			  
+			  /* TODO: also that they stay real */
+			  if ((is_slot(fv_s1)) && (is_slot(fv_s2)) && (is_slot(fv_s3)) &&
+			      (is_real(slot_value(fv_s1))) && (is_real(slot_value(fv_s2))) && (is_real(slot_value(fv_s3))))
+			    body = fv_set_add1ss;
+			}
+		    }
+		  else
+		    {
+		      if (is_real(slot_value(sc->d3)))
+			body = fv_set_sf;
 		    }
 		}
 	    }
+	  if (body == all_x_c_c)
+	    {
+	      body = c_call(code);
+	      code = cdr(code);
+	    }
+
 
 	  if ((!is_slot(next_slot(slots))) &&    /* 1 stepper */
 	      (is_pair(slot_expression(slots)))) /*   incremented */
@@ -51685,6 +51674,11 @@ static int safe_do_step_1_ex(s7_scheme *sc)
 	    }
 	  arg = car(arg);
 	  increment = all_x_init(sc, increment, arg);
+	  if (increment == all_x_c_c)
+	    {
+	      increment = c_call(arg);
+	      arg = cdr(arg);
+	    }
 
 	  while (true)
 	    {
@@ -67232,7 +67226,7 @@ int main(int argc, char **argv)
  *   (clang also needs LDFLAGS="-Wl,-export-dynamic" in Linux)
  */
 #endif
-
+ 
 
 /* --------------------------------------------------------------------------
  *
@@ -67242,19 +67236,19 @@ int main(int argc, char **argv)
  * teq           |      |      | 6612                     3887 3020 2516 2460
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3307
  * tcopy         |      |      | 13.6                     5355 4728 3887 3878
- * tform         |      |      |                          6816 5536 4287 4034
- * tmap          |      |      | 11.0           5031 4769 4685 4557 4230 4213
+ * tform         |      |      |                          6816 5536 4287 4027
+ * tmap          |      |      | 11.0           5031 4769 4685 4557 4230 4187
  * titer         |      |      |                          7503 6793 6351 6105
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6266
- * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 6380
- * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.1
+ * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 6395
+ * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.3
  * thash         |      |      |                          50.7 23.8 14.9 14.6
  *               |      |      |
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 13.5
- * tallx         |      |      |                                    26.9 26.8
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 39.7
- * callsx        |      |      |                                    54.6 51.8
- *
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 13.0
+ * tallx         |      |      |                                    26.9 26.5
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 38.7
+ * callsx        |      |      |                                    54.6 51.4
+ * 
  * --------------------------------------------------------------------------
  *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
@@ -67275,4 +67269,6 @@ int main(int argc, char **argv)
  *   with name/sync/sample settable
  * perhaps iterator should have a cleanup function for gc? and *autoload* needs an iterator
  * define-constant for functions is not ideal -- reload complains (check equality of source?)
+ *
+ * all_x_init with all_x_c_c: if if_all_not_x1 perhaps all_x_init for fcdr?
  */
