@@ -1071,6 +1071,10 @@
 ;;; (define aaa (make-markov '((a -> b c d) (b -> a) (c -> d) (d -> (a 3) b c))))
 ;;; (next aaa 30)
 
+(define (last-pair l)
+  (if (pair? (cdr l)) 
+      (last-pair (cdr l)) l))
+
 (define (markov-analyze seq . args) 
   (let* ((morder #f) ; markov order
 	 (result #f) ; what to return
@@ -1098,7 +1102,7 @@
 		      (let ((e (assoc next (cddr entry)))) 
 			(if e 
 			    (set-car! (cdr e) (+ 1 (cadr e)))
-			    (set-cdr! (last (cdr entry))
+			    (set-cdr! (last-pair (cdr entry))
 				      (list (list next 1)))))))))
 	     (before?
 	      (lambda (x y l) 
@@ -1212,7 +1216,7 @@
 			(display sp port)
 			;; s7: trim number to fit field
 			(if (>= n field)
-			    (let ((d (position #\. s)))
+			    (let ((d (char-position #\. s)))
 			      (set! s (substring s 0 (min (+ d 4) n)))
 			      (set! n (string-length s))))
 			;; pad number

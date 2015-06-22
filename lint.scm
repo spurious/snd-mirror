@@ -42,7 +42,7 @@
 (define *report-multiply-defined-top-level-functions* #f) ; same name defined at top level in more than one file
 (define *report-shadowed-variables* #f)
 (define *report-minor-stuff* #t)                          ; let*, (= 1.5 x), numerical and boolean simplification
-
+(define *report-doc-strings* #f)                          ; report old-style (CL) doc strings
 
 (define *load-file-first* #f)                             ; this will actually load the file, so errors will stop lint
 (define start-up-let (rootlet))
@@ -3141,7 +3141,8 @@
 		 (pair? (cdr body))
 		 (string? (car body)))
 	    (begin
-	      ;(format *stderr* "old-style doc string: ~S~%" (car body))
+	      (if *report-doc-strings*
+		  (lint-format "old-style doc string: ~S~%" name (car body)))
 	      (set! body (cdr body)))) ; ignore old-style doc-string
 	(lint-walk-body name head body env)
 	env)
@@ -3309,7 +3310,10 @@
 				     (if (and (pair? (cdr sym))
 					      (repeated-member? (proper-list (cdr sym)) env))
 					 (lint-format "~A parameter is repeated:~A" name head (truncated-list->string sym)))
-				     
+
+				     (if (and (eq? head 'definstrument)
+					      (string? (car val)))
+					 (set! val (cdr val)))
 				     (lint-walk-function head (car sym) (cdr sym) val env))
 				   
 				   (begin
@@ -3589,7 +3593,31 @@
 					       (if (pair? (cdr end+result))
 						   (lint-format "result is unreachable: ~A" name end+result))))))
 				 (lint-walk-body name head (cdddr form) (append vars env)))
-			     (report-usage name 'variable head vars)))
+			     (report-usage name 'variable head vars)
+
+			     (let ((end-test (and (pair? (caddr form)) (caaddr form)))
+				   (body (cdddr form))
+				   (setv #f))
+			       (when (and (pair? end-test)
+					  (= (length vars) 1)
+					  (= (length body) 1)
+					  (memq (caar body) '(vector-set! float-vector-set! list-set!))
+					  (equal? (var-type (car vars)) +integer+)
+					  (eq? (car end-test) '=)
+					  (eq? (cadr end-test) (var-name (car vars)))
+					  (eq? (caddar body) (var-name (car vars)))
+					  (let ((val (car (cdddar body))))
+					    (set! setv val)
+					    (or (code-constant? val)
+						(and (pair? val)
+						     (memq (car val) '(vector-ref float-vector-ref list-ref))
+						     (eq? (caddr val) (var-name (car vars)))))))
+				 (if (code-constant? setv)
+				     (lint-format "possible simplification: ~A" name 
+						  (lists->string form `(fill! ,(cadar body) ,(car (cdddar body)) 0 ,(caddr end-test))))
+				     (lint-format "possible simplification: ~A" name 
+						  (lists->string form `(copy ,(cadr setv) ,(cadar body) 0 ,(caddr end-test)))))))
+			     ))
 
 		       ;; if end=#f, result can't be reached?
 
@@ -3994,8 +4022,6 @@
 ;;;
 ;;; if case selector is a (code-)constant, the whole thing collapses, but that never happens
 ;;; if with-let, lint should try to be smarter about local names
-;;; (do ((i b (+ i 1))) ((= i e)) (..set! s i c)) -> fill! and the same for copy
-;;; complain about old-style doc string
 
 
 ;;; --------------------------------------------------------------------------------
