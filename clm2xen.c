@@ -11307,23 +11307,6 @@ static gf *fixup_abs(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
 }
 
 
-/* -------- mus-srate -------- */
-
-static gf *fixup_mus_srate(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
-{
-  if (s7_list_length(sc, expr) == 1)
-    {
-      gf *g;
-      g = gf_alloc();
-      g->func = gf_constant;
-      g->x1 = mus_srate();
-      return(g);
-    }
-  return(NULL);
-}
-
-  
-
 /* -------- random -------- */
 
 static mus_float_t gf_random_x1(void *p) {gf *g = (gf *)p; return(g->x1 * s7_random((s7_scheme *)(g->gen1), NULL));}
@@ -11565,152 +11548,6 @@ static gf *fixup_multiple(s7_scheme *sc, s7_pointer expr, s7_pointer locals, boo
 
 static gf *fixup_even_multiple(s7_scheme *sc, s7_pointer expr, s7_pointer locals) {return(fixup_multiple(sc, expr, locals, true));}
 static gf *fixup_odd_multiple(s7_scheme *sc, s7_pointer expr, s7_pointer locals) {return(fixup_multiple(sc, expr, locals, false));}
-
-
-
-/* -------- remainder -------- */
-
-static mus_float_t gf_remainder(mus_float_t x, mus_float_t y)
-{
-  /* checked in advance that y is not 0.0
-   */
-  mus_long_t quo;
-  mus_float_t pre_quo;
-  pre_quo = x / y;
-  if (pre_quo > 0.0) quo = (mus_long_t)floor(pre_quo); else quo = (mus_long_t)ceil(pre_quo);
-  return(x - (y * quo));
-}
-
-static mus_float_t gf_remainder_g1_x1(void *p) {gf *g = (gf *)p; return(gf_remainder(g->f1(g->g1), g->x1));}
-
-static gf *fixup_remainder(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
-{
-  if (s7_list_length(sc, expr) == 3)
-    {
-      gf *g1 = NULL;
-      mus_float_t x, x1 = 0.0;
-      mus_float_t *rx;
-      s7_pointer r, s, y;
-      
-      y = caddr(expr);
-      if ((s7_is_symbol(y)) &&
-	  (!s7_is_local_variable(sc, y, locals)))
-	{
-	  r = s7_symbol_value(sc, y);
-	  if (s7_is_real(r))
-	    x1 = s7_number_to_real(sc, r);
-	  else return(NULL);
-	}
-
-      if (x1 != 0.0)
-	{
-	  int typ;
-	  typ = gf_parse(sc, cadr(expr), locals, &g1, &s, &x, &rx);
-	  if (typ == GF_G)
-	    {
-	      gf *g;
-	      g = gf_alloc();
-	      g->func = gf_remainder_g1_x1;
-	      g->x1 = x1;
-	      g->f1 = g1->func;
-	      g->g1 = g1;
-	      return(g);
-	    }
-	  if (g1) gf_free(g1);
-	}
-    }
-  return(NULL);
-}
-
-
-/* -------- amplitude-modulate -------- */
-
-static mus_float_t gf_am_x1_rx1_g1(void *p) {gf *g = (gf *)p; return(mus_amplitude_modulate(g->x1, (*(g->rx1)), g->f1(g->g1)));}
-
-static gf *fixup_amplitude_modulate(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
-{
-  if (s7_list_length(sc, expr) == 4)
-    {
-      if (s7_is_real(cadr(expr)))
-	{
-	  int typ1, typ2;
-	  mus_float_t x1, x2;
-	  mus_float_t *rx1, *rx2;
-	  s7_pointer s1, s2;
-	  gf *g1 = NULL, *g2 = NULL;
-	  
-	  typ1 = gf_parse(sc, caddr(expr), locals, &g1, &s1, &x1, &rx1);
-	  typ2 = gf_parse(sc, cadddr(expr), locals, &g2, &s2, &x2, &rx2);
-	  
-	  if ((typ1 == GF_RX) && (typ2 == GF_G))
-	    {
-	      gf *g;
-	      g = gf_alloc();
-	      g->func = gf_am_x1_rx1_g1;
-	      g->x1 = s7_number_to_real(sc, cadr(expr));
-	      g->rx1 = rx1;
-	      g->g1 = g2;
-	      g->f1 = g2->func;
-	      return(g);
-	    }
-	  if (g1) gf_free(g1);
-	  if (g2) gf_free(g2);
-	}
-    }
-  return(NULL);
-}
-
-
-/* -------- array-interp -------- */
-
-static mus_float_t gf_array_interp_x1_g1_i1(void *p) {gf *g = (gf *)p; return(mus_array_interp((mus_float_t *)(g->gen), g->f1(g->g1), g->i1));}
-
-static gf *fixup_array_interp(s7_scheme *sc, s7_pointer expr, s7_pointer locals)
-{
-  /* (env-sound-interp '(0 0 1 1 2 0) 2.0)
-   */
-  if (s7_list_length(sc, expr) == 4)
-    {
-      s7_pointer arg1, arg2, arg3;
-      arg1 = cadr(expr);
-      arg2 = caddr(expr);
-      arg3 = cadddr(expr);
-      if (((s7_is_integer(arg3)) || ((s7_is_symbol(arg3)) && (!s7_is_local_variable(sc, arg3, locals)))) &&
-	  (s7_is_symbol(arg1)) &&
-	  (!s7_is_local_variable(sc, arg1, locals)))
-	{
-	  s7_pointer obj;
-	  obj = s7_value(sc, arg1);
-	  if (mus_is_vct(obj))
-	    {
-	      int typ;
-	      mus_float_t x;
-	      mus_float_t *rx;
-	      s7_pointer s;
-	      gf *g1 = NULL;
-
-	      typ = gf_parse(sc, arg2, locals, &g1, &s, &x, &rx);
-	      if (typ == GF_G)
-		{
-		  gf *g;
-		  vct *v;
-		  v = (vct *)obj;
-		  g = gf_alloc();
-		  g->gen = (void *)(mus_vct_data(v));
-		  if (s7_is_integer(arg3))
-		    g->i1 = s7_integer(arg3);
-		  else g->i1 = s7_number_to_integer(sc, s7_symbol_value(sc, arg3));
-		  g->func = gf_array_interp_x1_g1_i1;
-		  g->g1 = g1;
-		  g->f1 = g1->func;
-		  return(g);
-		}
-	      if (g1) gf_free(g1);
-	    }
-	}
-    }
-  return(NULL);
-}
 
 
 /* -------- ina reverb -------- */
@@ -19387,9 +19224,6 @@ static void init_choosers(s7_scheme *sc)
   f = s7_name_to_value(sc, "contrast-enhancement");
   store_gf_fixup(s7, f, fixup_contrast_enhancement);
 
-  f = s7_name_to_value(sc, "remainder");
-  store_gf_fixup(s7, f, fixup_remainder);
-
   f = s7_name_to_value(sc, "hz->radians");
   store_gf_fixup(s7, f, fixup_hz_to_radians);
 
@@ -19416,15 +19250,6 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "max");
   store_gf_fixup(s7, f, fixup_max);
-
-  f = s7_name_to_value(sc, "mus-srate");
-  store_gf_fixup(s7, f, fixup_mus_srate);
-
-  f = s7_name_to_value(sc, "array-interp");
-  store_gf_fixup(s7, f, fixup_array_interp);
-
-  f = s7_name_to_value(sc, "amplitude-modulate");
-  store_gf_fixup(s7, f, fixup_amplitude_modulate);
 }
 
 

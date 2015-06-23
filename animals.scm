@@ -1355,7 +1355,7 @@
 		    (outa n (* pulse-amp
 			       (env pulse-ampf)
 			       (+ (* (env low-ampf) 
-				     (polywave gp (float-vector-ref saved-frq k)))
+				     (polywave gp (ina k saved-frq)))
 				  (polywave gen1 (env frqf))))))
 		  (mus-reset pulse-ampf)
 		  (set! (mus-location ampf) (- i attack-stop))

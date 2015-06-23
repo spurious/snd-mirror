@@ -233,10 +233,10 @@
 		    ((= k ramp-ctr))
 		  (set! rk (ramps k))
 		  (set! sp (vector-ref spectr rk))
-		  (set! (inputs k) (+ (* sp inval1) (* (- 1.0 sp) inval2)))
+		  (float-vector-set! inputs k (+ (* sp inval1) (* (- 1.0 sp) inval2)))
 		  (set! sp (- sp ramp-inc))
 		  (if (> sp 0.0)
-		      (set! (spectr rk) sp)
+		      (vector-set! spectr rk sp)
 		      (begin
 			(set! (in2s in2-ctr) rk)
 			(set! in2-ctr (+ in2-ctr 1))

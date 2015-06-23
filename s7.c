@@ -35194,6 +35194,17 @@ static bool eq_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci,
   return(x == y);
 }
 
+static bool symbol_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+{
+  if (x == y) return(true);
+  if (!morally) return(false);
+  return((is_slot(global_slot(x))) &&                 /* the optimizer can replace the original symbol with its own */
+	 (is_syntax(slot_value(global_slot(x)))) &&
+	 (is_slot(global_slot(y))) &&
+	 (is_syntax(slot_value(global_slot(y)))) &&
+	 (syntax_symbol(slot_value(global_slot(x))) == syntax_symbol(slot_value(global_slot(y)))));
+}
+
 static bool unspecified_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
 {
   return(is_unspecified(y));
@@ -35786,6 +35797,7 @@ static void init_equals(void)
 {
   int i;
   for (i = 0; i < NUM_TYPES; i++) equals[i] = eq_equal;
+  equals[T_SYMBOL] =       symbol_equal;
   equals[T_C_POINTER] =    c_pointer_equal;
   equals[T_UNSPECIFIED] =  unspecified_equal;
   equals[T_STRING] =       string_equal;
@@ -48630,6 +48642,7 @@ static bool set_pair_p_3(s7_scheme *sc, s7_pointer obj, s7_pointer arg, s7_point
       else
 	{
 	  s7_Int index;
+
 	  if (!is_integer(arg))
 	    eval_type_error(sc, "vector-set!: index must be an integer: ~S", sc->code);
 	  index = integer(arg);
@@ -58573,6 +58586,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_DEFINE_CONSTANT:
 	  if ((is_symbol(car(sc->code))) &&                /* (define-constant abs abs): "abs will not be touched" */
 	      (car(sc->code) == cadr(sc->code)) &&
+	      (symbol_id(car(sc->code)) == 0) &&           /* else (let iter ... (define-constant iter iter) ...) -> segfault on later calls */
 	      (is_null(cddr(sc->code))))
 	    {
 	      set_immutable(car(sc->code));
@@ -59547,7 +59561,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		goto BEGIN1;
 	      }
 	  }
-	  
 	  
 	LET1:
 	case OP_LET1:
@@ -67234,19 +67247,19 @@ int main(int argc, char **argv)
  * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1134
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136
  * teq           |      |      | 6612                     3887 3020 2516 2460
- * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3307
+ * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3306
  * tcopy         |      |      | 13.6                     5355 4728 3887 3878
  * tform         |      |      |                          6816 5536 4287 4027
  * tmap          |      |      | 11.0           5031 4769 4685 4557 4230 4187
+ * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5864
  * titer         |      |      |                          7503 6793 6351 6105
- * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6266
- * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 6395
+ * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6272
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.3
  * thash         |      |      |                          50.7 23.8 14.9 14.6
  *               |      |      |
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 13.0
  * tallx         |      |      |                                    26.9 26.5
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 38.7
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 38.4
  * callsx        |      |      |                                    54.6 51.4
  * 
  * --------------------------------------------------------------------------
@@ -67268,7 +67281,5 @@ int main(int argc, char **argv)
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
  *   with name/sync/sample settable
  * perhaps iterator should have a cleanup function for gc? and *autoload* needs an iterator
- * define-constant for functions is not ideal -- reload complains (check equality of source?)
- *
- * all_x_init with all_x_c_c: if if_all_not_x1 perhaps all_x_init for fcdr?
+ *   so, if 'cleanup in funclet is a thunk, it is called at gc-time
  */

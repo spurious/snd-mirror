@@ -25298,7 +25298,6 @@ EDITS: 2
 	     (block-size 256)
 	     (in-block (make-float-vector block-size))
 	     (out-block (make-float-vector block-size))
-	     (out-sd (make-shared-vector out-block (list 1 block-size)))
 	     (len (framples))
 	     (ra (ladspa-run-adding descriptor handle block-size)))
 	(if ra (snd-display #__line__ ";ladspa-run-adding: ~A" ra))
@@ -37774,8 +37773,7 @@ EDITS: 1
 	  (list 'scale-selection (lambda () (begin (select-all) (scale-selection-by 2.0))))
 	  (list 'mix (lambda () (begin (save-sound-as "temp.snd") (mix "temp.snd" 0) (delete-file "temp.snd"))))
 	  (list 'vector2 (lambda ()
-			      (let ((sd (make-shared-vector (channel->float-vector) (list 1 (framples))))
-				    (len (framples)))
+			      (let ((sd (make-shared-vector (channel->float-vector) (list 1 (framples)))))
 				(float-vector-scale! (sd 0) 2.0)
 				(float-vector->channel (sd 0)))))
 	  (list 'convolve (lambda () 
@@ -41302,9 +41300,6 @@ EDITS: 1
 			     (make-moving-autocorrelation (make-readin "oboe.snd")))
 			   (lambda args
 			     (make-moving-pitch (make-readin "oboe.snd")))))
-    
-    (define gens (apply vector (map (lambda (maker) (maker)) gen-list)))
-    
     (for-each
      (lambda (name maker isit run)
        (let ((gen (maker)))

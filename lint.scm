@@ -3081,7 +3081,7 @@
 		      (not (hash-table-ref other-identifiers (var-name arg))))
 		 (if (var-set arg)
 		     (set! set (cons (var-name arg) set))
-		     (if (not (eq? (var-name arg) 'documentation))
+		     (if (not (memq (var-name arg) '(documentation iterator)))
 			 (set! unused (cons (var-name arg) unused))))))
 	   vars)
 	  
@@ -3595,13 +3595,14 @@
 				 (lint-walk-body name head (cdddr form) (append vars env)))
 			     (report-usage name 'variable head vars)
 
+			     ;; check for do-loop as copy/fill! stand-in
 			     (let ((end-test (and (pair? (caddr form)) (caaddr form)))
 				   (body (cdddr form))
 				   (setv #f))
 			       (when (and (pair? end-test)
 					  (= (length vars) 1)
 					  (= (length body) 1)
-					  (memq (caar body) '(vector-set! float-vector-set! list-set!))
+					  (memq (caar body) '(vector-set! float-vector-set! list-set! string-set!))
 					  (equal? (var-type (car vars)) +integer+)
 					  (eq? (car end-test) '=)
 					  (eq? (cadr end-test) (var-name (car vars)))
@@ -3610,7 +3611,7 @@
 					    (set! setv val)
 					    (or (code-constant? val)
 						(and (pair? val)
-						     (memq (car val) '(vector-ref float-vector-ref list-ref))
+						     (memq (car val) '(vector-ref float-vector-ref list-ref string-ref))
 						     (eq? (caddr val) (var-name (car vars)))))))
 				 (if (code-constant? setv)
 				     (lint-format "possible simplification: ~A" name 
