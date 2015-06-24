@@ -21755,7 +21755,7 @@ EDITS: 2
 		      (set! z 0.25)
 		      (set! a 0.25)
 		      (set! b 0.25)
-		      (let ((x0 (+ (+ (formant c1 x) (formant c2 y) (formant c3 z) (formant c4 a) (formant c5 b))))
+		      (let ((x0 (+ (formant c1 x) (formant c2 y) (formant c3 z) (formant c4 a) (formant c5 b)))
 			    (x1 (formant-bank c6 .25)))
 			(if (not (morally-equal? x0 x1))
 			    (snd-display #__line__ ";fb 5(4) no amps c1_c2 at ~A, formant: ~A, bank: ~A" i x0 x1)))))))))
@@ -29051,7 +29051,7 @@ EDITS: 2
 	    (if (not (= (length lst) 5)) (snd-display #__line__ ";length of list: ~A" (length lst)))
 	    (if (not (= (length str) 6)) (snd-display #__line__ ";length of string: ~A" (length str)))
 	    (if (not (= (framples sd) 10)) (snd-display #__line__ ";length of vector2: ~A" (framples sd)))
-	    (if (not (>= (length hsh) 100)) (snd-display #__line__ ";length of hash-table: ~A" (length hsh)))
+	    (if (< (length hsh) 100) (snd-display #__line__ ";length of hash-table: ~A" (length hsh)))
 	    (if (not (= (length mxv) 3)) (snd-display #__line__ ";length of mix: ~A" (length mxv)))
 	    (if (not (= (length reg) 101)) (snd-display #__line__ ";length of region: ~A" (length reg)))
 	    (if (not (= (length dly) 32)) (snd-display #__line__ ";length of delay: ~A" (length dly)))
@@ -38014,7 +38014,7 @@ EDITS: 1
 	(define args1 (list 1.5 '(oscil o1) '(env e1) 'x 'i '(oscil o) '(- 1.0 x) '(oscil (vector-ref oscs k))))
 	(define args2 (list 1.5 '(oscil o2) '(env e2) 'y 'i '(float-vector-ref v-1 i)))
 	(define args3 (list 1.5 '(oscil o3) '(env e3) 'z 'i '(cos x)))
-	(define args4 (list 1.5 '(oscil o4) '(env e4) 'x 'i))
+	;(define args4 (list 1.5 '(oscil o4) '(env e4) 'x 'i))
 	
 	(define (try str)
 	  (eval-string

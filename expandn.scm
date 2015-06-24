@@ -336,9 +336,7 @@
 			      
 			      (if (= next-samp ex-samp)
 				  ;; output actual samples
-				  (do ((ix 0 (+ ix 1)))
-				      ((= ix in-chans))
-				    (float-vector-set! invals ix (float-vector-ref samples-0 ix)))
+				  (copy samples-0 invals 0 in-chans)
 				  ;; output interpolated samples
 				  (do ((ix 0 (+ ix 1)))
 				      ((= ix in-chans))

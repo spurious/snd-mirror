@@ -145,18 +145,18 @@
     
     (define (sequence? obj)
       ;; scheme and C types here are ok, so...
-      (and (not (number? obj))
-	   (not (char? obj))
-	   (not (boolean? obj))
-	   (not (symbol? obj))))
+      (not (or (number? obj)
+	       (char? obj)
+	       (boolean? obj)
+	       (symbol? obj))))
     
     (define (pair-or-null? obj) ; list? is proper-list?
       (or (pair? obj)
 	  (null? obj)))
 
     (define (code-constant? x)
-      (and (not (pair? x))
-	   (not (symbol? x))))
+      (not (or (pair? x)
+	       (symbol? x))))
 
     (define (t? obj) #t)
 
@@ -2295,29 +2295,27 @@
 	  ((member)
 	   (if (= (length form) 4)
 	       (let ((func (list-ref form 3)))
-		 (if (eq? func 'eq?)
-		     (lint-format "member might perhaps be memq" name)
-		     (if (and (pair? func)
-			      (= (length func) 3)
-			      (eq? (car func) 'lambda)
-			      (pair? (cadr func))
-			      (pair? (caddr func)))
-			 (if (not (member (length (cadr func)) '(2 -1)))
-			     (lint-format "member equality function (optional 3rd arg) should take two arguments" name)
-			     (let ((eq (caddr func))
-				   (args (cadr func)))
-			       (if (and (memq (car eq) '(eq? eqv? equal?))
-					(eq? (car args) (cadr eq))
-					(pair? (caddr eq))
-					(eq? (car (caddr eq)) 'car)
-					(pair? (cdr (caddr eq)))
-					(pair? (cdr args))
-					(eq? (cadr args) (cadr (caddr eq))))
-				   (lint-format "member might perhaps be ~A"
-						name
-						(if (eq? func 'eq?) 'assq
-						    (if (eq? (car (caddr func)) 'eq?) 'assq
-							(if (eq? (car (caddr func)) 'eqv?) 'assv 'assoc))))))))))))
+		 (if (and (pair? func)
+			  (= (length func) 3)
+			  (eq? (car func) 'lambda)
+			  (pair? (cadr func))
+			  (pair? (caddr func)))
+		     (if (not (member (length (cadr func)) '(2 -1)))
+			 (lint-format "member equality function (optional 3rd arg) should take two arguments" name)
+			 (let ((eq (caddr func))
+			       (args (cadr func)))
+			   (if (and (memq (car eq) '(eq? eqv? equal?))
+				    (eq? (car args) (cadr eq))
+				    (pair? (caddr eq))
+				    (eq? (car (caddr eq)) 'car)
+				    (pair? (cdr (caddr eq)))
+				    (pair? (cdr args))
+				    (eq? (cadr args) (cadr (caddr eq))))
+			       (lint-format "member might perhaps be ~A"
+					    name
+					    (if (eq? func 'eq?) 'assq
+						(if (eq? (car (caddr func)) 'eq?) 'assq
+						    (if (eq? (car (caddr func)) 'eqv?) 'assv 'assoc)))))))))))
 	  
 	  ((if)
 	   (let ((len (length form)))
@@ -4021,7 +4019,6 @@
 ;;;  also (set! x 32) (set! x 123) etc [list-set!...]
 ;;;  also (set! x 32) (list-ref x 1)...
 ;;;
-;;; if case selector is a (code-)constant, the whole thing collapses, but that never happens
 ;;; if with-let, lint should try to be smarter about local names
 
 

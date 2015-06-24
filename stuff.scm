@@ -1977,6 +1977,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		       (begin                      ;   via ((iterator-sequence iter) #<eof>)
 			 (closedir dir)
 			 (for-each closedir dirs)
+			 (set! dirs ())
 			 quit)
 		       (let ((file (read_dir dir)))
 			 (if (zero? (length file)) ; null filename => all done

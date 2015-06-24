@@ -4009,9 +4009,9 @@ void g_init_mix(void)
   fth_set_object_apply(mf_tag, Xen_procedure_cast g_read_mix_sample, 0, 0, 0);
 #endif
 
-  Xen_define_procedure(S_make_mix_sampler,       g_make_mix_sampler_w,       1, 1, 0, H_make_mix_sampler);
-  Xen_define_procedure(S_read_mix_sample,        g_read_mix_sample_w,        1, 0, 0, H_read_mix_sample);
-  Xen_define_procedure(S_is_mix_sampler,         g_is_mix_sampler_w,         1, 0, 0, H_is_mix_sampler);
+  Xen_define_safe_procedure(S_make_mix_sampler,  g_make_mix_sampler_w,       1, 1, 0, H_make_mix_sampler);
+  Xen_define_safe_procedure(S_read_mix_sample,   g_read_mix_sample_w,        1, 0, 0, H_read_mix_sample);
+  Xen_define_safe_procedure(S_is_mix_sampler,    g_is_mix_sampler_w,         1, 0, 0, H_is_mix_sampler);
   Xen_define_procedure(S_save_mix,               g_save_mix_w,               2, 0, 0, H_save_mix);
 
   Xen_define_procedure(S_mix,                    g_mix_w,                    1, 6, 0, H_mix);

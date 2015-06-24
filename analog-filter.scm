@@ -42,10 +42,7 @@
 	(do ((i 0 (+ i 1)))
 	    ((= i K))
 	  (conv 2 (A i) (+ 1 (* 2 i)) a1 d)
-	  (let ((end (+ 3 (* 2 i))))
-	    (do ((j 0 (+ j 1)))
-		((= j end))
-	      (float-vector-set! a1 j (float-vector-ref d j)))))
+	  (copy d a1 0 (+ 3 (* 2 i))))
 	a1))
     
     (do ((i 0 (+ i 2))
