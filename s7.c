@@ -373,6 +373,7 @@ typedef struct port_t {
   void (*display)(s7_scheme *sc, const char *s, s7_pointer pt);
 } port_t;
 
+typedef s7_Double (*rsf_t)(void *p);
 
 typedef struct c_proc_ext_t {
   s7_pointer looped_ff, let_looped_ff;
@@ -381,9 +382,10 @@ typedef struct c_proc_ext_t {
   s7_pointer call_args;
   int keyed_args;       /* 2 * args == number of args if all are specified via keywords */
   bool simple_defaults;
+
+  /* an experiment */
+  rsf_t (*rsp)(s7_pointer o);
 #if 0
-  void *(*unwrap_p)(void *p);
-  s7_Double (*f1)(void *p);
   s7_Double (*f2)(void *p, s7_Double x);
   s7_Double (*f3)(void *p, s7_Double x, s7_Double y);
 #endif
@@ -1864,6 +1866,7 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define c_function_call_args(f)       c_function_ext(f)->call_args
 #define c_function_arg_names(f)       c_function_ext(f)->arg_names
 #define c_function_simple_defaults(f) c_function_ext(f)->simple_defaults
+#define is_rs_object(f)               c_function_ext(f)->rsp
 
 void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
 bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_optimized(f)) && (ecdr(f)) && (returns_temp(ecdr(f))));}
@@ -2232,7 +2235,6 @@ static s7_pointer make_string_wrapper_with_length(s7_scheme *sc, const char *str
 static s7_pointer make_string_wrapper(s7_scheme *sc, const char *str);
 static s7_pointer make_permanent_string_with_length_and_hash(const char *str, unsigned int len, unsigned int hash);
 static void check_for_substring_temp(s7_scheme *sc, s7_pointer expr);
-static void prepare_temporary_string(s7_scheme *sc, int len, int which);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static void pop_input_port(s7_scheme *sc);
 static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
@@ -9060,6 +9062,17 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
   /* (log top 10) so we get all the digits in base 10 (??) */
 }
 
+
+static void prepare_temporary_string(s7_scheme *sc, int len, int which)
+{
+  if (len == 0)
+    sc->tmp_str_size[which] = 8;
+  else sc->tmp_str_size[which] = 2 * len;
+  if (!sc->tmp_str_chars[which])
+    sc->tmp_str_chars[which] = (char *)malloc(sc->tmp_str_size[which] * sizeof(char));
+  else sc->tmp_str_chars[which] = (char *)realloc(sc->tmp_str_chars[which], sc->tmp_str_size[which] * sizeof(char));
+  string_value(sc->tmp_str[which]) = sc->tmp_str_chars[which];
+}
 
 static s7_pointer g_number_to_string_1(s7_scheme *sc, s7_pointer args, bool temporary)
 {
@@ -19560,17 +19573,6 @@ static s7_pointer make_permanent_string_with_length_and_hash(const char *str, un
 }
 
 
-static void prepare_temporary_string(s7_scheme *sc, int len, int which)
-{
-  if (len == 0)
-    sc->tmp_str_size[which] = 8;
-  else sc->tmp_str_size[which] = 2 * len;
-  if (!sc->tmp_str_chars[which])
-    sc->tmp_str_chars[which] = (char *)malloc(sc->tmp_str_size[which] * sizeof(char));
-  else sc->tmp_str_chars[which] = (char *)realloc(sc->tmp_str_chars[which], sc->tmp_str_size[which] * sizeof(char));
-  string_value(sc->tmp_str[which]) = sc->tmp_str_chars[which];
-}
-
 static s7_pointer make_temporary_string(s7_scheme *sc, const char *str, int len)
 {
   if (len >= sc->tmp_str_size[0])
@@ -20723,7 +20725,7 @@ static s7_pointer g_to_byte_vector(s7_scheme *sc, s7_pointer args)
   if (!is_string(str))
     {
       if (is_integer(str))
-	str = s7_make_string_with_length(sc, (const char *)(&(integer(str))), 8);
+	str = s7_make_string_with_length(sc, (const char *)(&(integer(str))), sizeof(s7_Int));
       else method_or_bust(sc, str, sc->TO_BYTE_VECTOR, args, T_STRING, 1);
     }
   set_byte_vector(str);
@@ -33621,6 +33623,14 @@ void s7_function_set_looped(s7_pointer f, s7_pointer c)
   if (!c_function_ext(f))
     c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
   c_function_looped(f) = c;
+}
+
+
+void s7_function_set_rs(s7_pointer f, s7_Double (*rsp(s7_pointer o))(void *p))
+{
+  if (!c_function_ext(f))
+    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
+  is_rs_object(f) = rsp;
 }
 
 
@@ -50427,9 +50437,13 @@ static s7_pointer check_do(s7_scheme *sc)
 				   */
 				  if (one_line)
 				    {
+#if CLM2XEN
 				      if ((is_optimized(car(body))) &&
 					  ((!c_function_ext(ecdr(car(body)))) ||
 					   (!c_function_looped(ecdr(car(body))))))
+#else
+				      if (is_optimized(car(body)))
+#endif
 					{
 					  if (optimize_op(car(body)) == HOP_SAFE_C_C)
 					    pair_set_syntax_symbol(sc->code, sc->SAFE_DOTIMES_C_C);
@@ -50669,22 +50683,12 @@ static s7_pointer fv_set_b(s7_scheme *sc, s7_pointer expr)
 }
 
 static s7_pointer fv_s1, fv_s2, fv_s3;
-static s7_function fv_f1;
 static s7_pointer fv_set_add1ss(s7_scheme *sc, s7_pointer expr)
 {
   s7_Double s1;
   s1 = real(slot_value(fv_s1));
   float_vector_element(sc->d1, integer(slot_value(sc->d2))) = (s1 * real(slot_value(fv_s2))) + ((1.0 - s1) * real(slot_value(fv_s3)));
   return(real_zero);
-}
-
-static s7_pointer fv_set_s(s7_scheme *sc, s7_pointer expr)
-{
-  s7_pointer val;
-  car(sc->T1_1) = fv_s1;
-  val = fv_f1(sc, sc->T1_1);
-  float_vector_element(sc->d1, integer(slot_value(sc->d2))) = s7_number_to_real_with_caller(sc, val, "float-vector-set!");
-  return(val);
 }
 
 static s7_pointer fv_set_vref(s7_scheme *sc, s7_pointer expr)
@@ -51344,7 +51348,7 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
   if (s7_is_integer(init_val))
     {
       s7_pointer end_expr, end_val, body, stepper;
-      
+
       end_expr = caadr(sc->code);
       end_val = caddr(end_expr);
       if (is_symbol(end_val))
@@ -51431,9 +51435,28 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
 		      fv_s2 = find_symbol(sc, car(a));
 		      if ((is_slot(fv_s1)) && (is_slot(fv_s2)))
 			{
-			  func = fv_set_s;
-			  fv_f1 = (s7_function)c_function_call(slot_value(fv_s2));
-			  fv_s1 = slot_value(fv_s1);
+			  s7_pointer f, o;
+			  f = slot_value(fv_s2);
+			  o = slot_value(fv_s1);
+			  if ((c_function_ext(f)) &&
+			      (is_rs_object(f)) &&
+			      (is_c_object(o)))
+			    {
+			      /* s7_Double (*rsf)(void *p); */
+			      rsf_t rsf;
+			      rsf = is_rs_object(f)(o);
+			      if (rsf)
+				{
+				  void *obj;
+				  s7_Double *fv_els;
+				  obj = c_object_value(o);
+				  fv_els = float_vector_elements(sc->d1);  /* the float array */
+				  for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
+				    fv_els[integer(slot_value(sc->d2))] = rsf(obj);
+				  sc->code = cdr(cadr(sc->code));
+				  return(goto_SAFE_DO_END_CLAUSES);
+				}
+			    }
 			}
 		    }
 		}
@@ -51463,17 +51486,11 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
 		      func = fv_set_vref;
 		    }
 		}
-
-	      while (true)
-		{
-		  func(sc, body);
-		  numerator(stepper)++;
-		  if (numerator(stepper) == denominator(stepper))
-		    {
-		      sc->code = cdr(cadr(sc->code));
-		      return(goto_SAFE_DO_END_CLAUSES);
-		    }
-		}
+	      
+	      for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
+		func(sc, body);
+	      sc->code = cdr(cadr(sc->code));
+	      return(goto_SAFE_DO_END_CLAUSES);
 	    }
 	}
     }
@@ -67325,18 +67342,19 @@ int main(int argc, char **argv)
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5864
  * titer         |      |      |                          7503 6793 6351 6105
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6272
- * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.3
  * thash         |      |      |                          50.7 23.8 14.9 14.6
  *               |      |      |
+ * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.3
+ * tgenx         |      |      |                                         14.3
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 13.0
- * tallx         |      |      |                                    26.9 26.5
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 38.3
- * callsx        |      |      |                                    54.6 51.4
+ * tallx         |      |      |                                    26.9 26.1
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 37.9
+ * callsx        |      |      |                                    54.6 50.0
  * 
  * --------------------------------------------------------------------------
  *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
- * cyclic-seq in stuff.scm, but current code is really clumsy
+ * cyclic-seq in stuff.scm, but current code is  really clumsy
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
  *
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)
@@ -67350,4 +67368,15 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
  *   with name/sync/sample settable
+ * rss/rsc/rsr, outa+rs? or oir = (outa i (...)), fir for fv cases?
+ *   maybe a type bit -- maybe mutable?
+ *   for recurse, how to map symbols->temps?
+ *   array: symbol/slot/checker
+ *   each time referenced, it is incremented, so next frame is always arr[0]
+ *   so set up inner comps to enforce that order, rs needs to be redone to use it (no fv_s1 et al)
+ *   and new arg: ptr[0] is itself a pointer to this array: s7_pointer* where each entry is a slot.
+ *   but need a size -- just let this array grow.  And how to map calls? is_a_rs -> func, so that's what we call,
+ *   and it could also set the slot(s); add s7_pointer* arg to is_rs, so rsf_t takes s7* not void*,
+ *   gets obj from slot_value[0], increments s7*, is_rs sets [0] to slot, checks type(s), returns called func, incrs
+ *   are all innards C_C cases? so we get constants from the tree?
  */

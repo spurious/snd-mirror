@@ -9436,10 +9436,10 @@ pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 					(if (&lt; ((phase-vocoder-amp-increments v) i) gate)
 					    (set! ((phase-vocoder-amp-increments v) i) 0.0)))
 				      #t))
-				  #f)) ;no change to synthesis
+				  #f))) ;no change to synthesis
 	  
       (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (val)
-		  (<a class=quiet href="sndclm.html#phase-vocoder">phase-vocoder</a> pv)))))))
+		  (<a class=quiet href="sndclm.html#phase-vocoder">phase-vocoder</a> pv))))))
 </pre>
 
 <p>This sets up a phase-vocoder generator whose edit function is squelching soft partials.

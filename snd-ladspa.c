@@ -198,13 +198,10 @@ static void loadLADSPALibrary(void *pvPluginHandle,
 
 static void loadLADSPADirectory(const char *pcDirectory) 
 {
-  char *pcFilename = NULL;
   DIR *psDirectory;
   LADSPA_Descriptor_Function fDescriptorFunction;
   long lDirLength;
   long iNeedSlash;
-  struct dirent *psDirectoryEntry;
-  void *pvPluginHandle;
   
   lDirLength = strlen(pcDirectory);
   if (!lDirLength)
@@ -220,6 +217,9 @@ static void loadLADSPADirectory(const char *pcDirectory)
   
   while (true) 
     {
+      char *pcFilename = NULL;
+      struct dirent *psDirectoryEntry;
+      void *pvPluginHandle;
       
       psDirectoryEntry = readdir(psDirectory);
       if (!psDirectoryEntry) 
@@ -335,7 +335,6 @@ static void ladspa_help_callback(GtkWidget *w, gpointer info)
 {
   /* help dialog with currently loaded plugins (and descriptors), refs to list-ladspa etc */
   int len = 0;
-  char *desc;
   long lIndex;
   LADSPAPluginInfo *psInfo;
   const LADSPA_Descriptor *psDescriptor;
@@ -353,6 +352,7 @@ static void ladspa_help_callback(GtkWidget *w, gpointer info)
     }
   if (len > 0)
     {
+      char *desc;
       desc = (char *)calloc(len, sizeof(char));
       for (lIndex = g_lLADSPARepositoryCount - 1; lIndex >= 0; lIndex--) 
 	{
@@ -433,16 +433,16 @@ information of the LADSPA plugins currently available. For each plugin a \
 list containing the plugin-file and plugin-label is included."
 
   long lIndex;
-  Xen xenList, xenPluginList;
-  LADSPAPluginInfo *psInfo;
+  Xen xenList;
 
   if (!g_bLADSPAInitialised)
     loadLADSPA();
-
   xenList = Xen_empty_list;
 
   for (lIndex = g_lLADSPARepositoryCount - 1; lIndex >= 0; lIndex--) 
     {
+      Xen xenPluginList;
+      LADSPAPluginInfo *psInfo;
       psInfo = g_psLADSPARepository[lIndex];
       xenPluginList = Xen_cons(C_string_to_Xen_string(psInfo->m_pcPackedFilename),
 			       Xen_cons(C_string_to_Xen_string((char *)psInfo->m_pcLabel),
@@ -573,20 +573,19 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   char *pcFilename;
   const char *pcLabel, *pcTmp;
   LADSPA_Handle *psHandle;
-  unsigned long lSampleRate, lPortIndex, lBlockSize, lSampleIndex;
+  unsigned long lSampleRate, lPortIndex, lSampleIndex;
   mus_long_t lAt;
   unsigned long lParameterCount;
   Xen xenParameters;
   LADSPA_PortDescriptor iPortDescriptor;
   LADSPA_Data *pfControls = NULL;
-  chan_info *cp, *ncp;
+  chan_info *cp;
   snd_info *sp;
   char *ofile, *msg;
-  int i, j, ofd, datumb, err = 0, inchans = 1, readers = 0, outchans = 1;
+  int i, ofd, datumb, err = 0, inchans = 1, readers = 0, outchans = 1;
   mus_long_t num;
   snd_fd **sf = NULL;
   file_info *hdr;
-  Xen errmsg;
   mus_float_t **data;
   LADSPA_Data **pfInputBuffer = NULL;
   LADSPA_Data **pfOutputBuffer = NULL;
@@ -656,6 +655,8 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 
   if (inchans != readers)
     {
+      Xen errmsg;
+
       msg = mus_format("Ladspa %s required inputs (%d) != samplers (%d)", pcLabel, inchans, readers);
       errmsg = C_string_to_Xen_string(msg);
       free(msg);
@@ -809,6 +810,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   ss->stopped_explicitly = false;
   while (lAt < num) 
     {
+      unsigned long lBlockSize;
       /* Decide how much audio to process this frame. */
       lBlockSize = num - lAt;
       if (lBlockSize > MAX_BUFFER_SIZE)
@@ -865,10 +867,12 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   hdr = free_file_info(hdr);
   if (!(ss->stopped_explicitly))
     {
+      int j;
       if (outchans > 1)
 	remember_temp(ofile, outchans);
       for (i = 0, j = 0; i < outchans; i++)
 	{
+	  chan_info *ncp;
 	  mus_long_t beg;
 	  if ((cp_from_reader) && (sf) && (sf[j]))
 	    {

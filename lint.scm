@@ -3940,7 +3940,7 @@
       
     ;;; --------------------------------------------------------------------------------
       (let ((documentation "(lint file port) looks for infelicities in file's scheme code"))
-	(lambda* (file (outp *lint-output-port*))
+	(lambda* (file (outp *lint-output-port*) (report-input #t))
 	  (set! outport outp)
 	  (set! globals (make-hash-table))
 	  (set! other-identifiers (make-hash-table))
@@ -3960,7 +3960,7 @@
 			  (catch #t
 			    (lambda ()
 			      (let ((p (open-input-file file)))
-				(format outport ";~A~%" file)
+				(if report-input (format outport ";~A~%" file))
 				(set! loaded-files (cons file loaded-files))
 				p))
 			    (lambda args
@@ -4107,7 +4107,7 @@
 							 (lambda (p)
 							   (let ((old-shadow *report-shadowed-variables*))
 							     (set! *report-shadowed-variables* #t)
-							     (lint "t631-temp.scm" p)
+							     (lint "t631-temp.scm" p #f)
 							     (set! *report-shadowed-variables* old-shadow))))))
 					    (if (> (length outstr) 0)
 						(format #t ";~A ~D: ~A~%" file line-num outstr)))))

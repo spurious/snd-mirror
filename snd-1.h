@@ -1796,6 +1796,7 @@ bool play_mix_from_id(int mix_id);
 Xen g_play_mix(Xen num, mus_long_t beg);
 void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y);
 
+snd_fd *mf_to_snd_fd(void *p);
 
 
 /* -------- snd-find.c -------- */

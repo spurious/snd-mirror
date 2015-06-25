@@ -3616,6 +3616,8 @@ snd_fd *xen_mix_to_snd_fd(Xen obj)
   return(mf->sf);
 }
 
+snd_fd *mf_to_snd_fd(void *p) {return(((mix_fd *)p)->sf);}
+
 
 #if HAVE_SCHEME
 static Xen s7_read_mix_sample(s7_scheme *sc, Xen obj, Xen args)

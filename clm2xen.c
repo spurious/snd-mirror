@@ -177,7 +177,6 @@ static void mx_free(mus_xen *p)
 mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #define mus_xen_to_mus_any(Gn) (((mus_xen *)Gn)->gen)
 
-
 #if (!HAVE_SCHEME)
 #define XEN_NULL 0
 
@@ -200,6 +199,7 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 
 #else
 #define imported_s7_object_value_checked(Obj, Typ) s7_object_value_checked(Obj, Typ)
+#define s7_object_to_mus_any(Obj) ((mus_any *)((mus_xen *)s7_object_value(Obj))->gen)
 
 #define Xen_real_to_C_double_if_bound(Xen_Arg, C_Val, Caller, ArgNum) if (Xen_is_bound(Xen_Arg)) C_Val = (double)s7_number_to_real_with_caller(s7, Xen_Arg, Caller)
 #define Xen_to_C_double_or_error(Xen_Arg, C_Val, Caller, ArgNum) C_Val = (double)s7_number_to_real_with_caller(s7, Xen_Arg, Caller)
@@ -9917,6 +9917,117 @@ GEN_1(convolve, mus_convolve_simple)
 GEN_1(phase_vocoder, mus_phase_vocoder_simple)
 
 
+#define mus_oscil_rs mus_oscil_unmodulated
+#define mus_polywave_rs mus_polywave_unmodulated
+#define mus_ncos_rs mus_ncos_unmodulated
+#define mus_nsin_rs mus_nsin_unmodulated
+#define mus_nrxycos_rs mus_nrxycos_unmodulated
+#define mus_nrxysin_rs mus_nrxysin_unmodulated
+#define mus_rxykcos_rs mus_rxykcos_unmodulated
+#define mus_rxyksin_rs mus_rxyksin_unmodulated
+#define mus_rand_rs mus_rand_unmodulated
+#define mus_rand_interp_rs mus_rand_interp_unmodulated
+#define mus_readin_rs mus_readin
+#define mus_env_rs mus_env
+#define mus_pulsed_env_rs mus_pulsed_env_unmodulated
+#define mus_oscil_bank_rs mus_oscil_bank
+#define mus_table_lookup_rs mus_table_lookup_unmodulated
+#define mus_sawtooth_wave_rs mus_sawtooth_wave_unmodulated
+#define mus_pulse_train_rs mus_pulse_train_unmodulated
+#define mus_triangle_wave_rs mus_triangle_wave_unmodulated
+#define mus_square_wave_rs mus_square_wave_unmodulated
+#define mus_wave_train_rs mus_wave_train_unmodulated
+
+#define mus_convolve_rs mus_convolve_simple
+#define mus_src_rs mus_src_simple
+#define mus_granulate_rs mus_granulate_simple
+#define mus_phase_vocoder_rs mus_phase_vocoder_simple
+
+static mus_float_t mus_one_pole_rs(mus_any *p) {return(mus_one_pole(p, 0.0));}
+static mus_float_t mus_two_pole_rs(mus_any *p) {return(mus_two_pole(p, 0.0));}
+static mus_float_t mus_one_zero_rs(mus_any *p) {return(mus_one_zero(p, 0.0));}
+static mus_float_t mus_two_zero_rs(mus_any *p) {return(mus_two_zero(p, 0.0));}
+static mus_float_t mus_delay_rs(mus_any *p) {return(mus_delay_unmodulated(p, 0.0));}
+static mus_float_t mus_comb_rs(mus_any *p) {return(mus_comb_unmodulated(p, 0.0));}
+static mus_float_t mus_comb_bank_rs(mus_any *p) {return(mus_comb_bank(p, 0.0));}
+static mus_float_t mus_notch_rs(mus_any *p) {return(mus_notch_unmodulated(p, 0.0));}
+static mus_float_t mus_all_pass_rs(mus_any *p) {return(mus_all_pass_unmodulated(p, 0.0));}
+static mus_float_t mus_one_pole_all_pass_rs(mus_any *p) {return(mus_one_pole_all_pass(p, 0.0));}
+static mus_float_t mus_moving_average_rs(mus_any *p) {return(mus_moving_average(p, 0.0));}
+static mus_float_t mus_moving_max_rs(mus_any *p) {return(mus_moving_max(p, 0.0));}
+static mus_float_t mus_moving_norm_rs(mus_any *p) {return(mus_moving_norm(p, 0.0));}
+static mus_float_t mus_filter_rs(mus_any *p) {return(mus_filter(p, 0.0));}
+static mus_float_t mus_fir_filter_rs(mus_any *p) {return(mus_fir_filter(p, 0.0));}
+static mus_float_t mus_iir_filter_rs(mus_any *p) {return(mus_iir_filter(p, 0.0));}
+static mus_float_t mus_polyshape_rs(mus_any *p) {return(mus_polyshape_unmodulated(p, 1.0));}
+static mus_float_t mus_filtered_comb_rs(mus_any *p) {return(mus_filtered_comb_unmodulated(p, 0.0));}
+static mus_float_t mus_filtered_comb_bank_rs(mus_any *p) {return(mus_filtered_comb_bank(p, 0.0));}
+static mus_float_t mus_asymmetric_fm_rs(mus_any *p) {return(mus_asymmetric_fm_unmodulated(p, 0.0));}
+static mus_float_t mus_formant_rs(mus_any *p) {return(mus_formant(p, 0.0));}
+static mus_float_t mus_firmant_rs(mus_any *p) {return(mus_firmant(p, 0.0));}
+
+#define GEN_RS(Type, Func) \
+  static s7_Double Type ## _rs(void *p) \
+  { \
+    return(Func(mus_xen_to_mus_any(p))); \
+  }								\
+  static s7_Double (*is_ ## Type ## _rs(s7_pointer o))(void *p)\
+  {\
+    if ((s7_object_type(o) == mus_xen_tag) && (mus_is_ ## Type(s7_object_to_mus_any(o)))) \
+      return(Type ## _rs); \
+    return(NULL); \
+  }
+
+GEN_RS(all_pass, mus_all_pass_rs)
+GEN_RS(asymmetric_fm, mus_asymmetric_fm_rs)
+GEN_RS(comb, mus_comb_rs)
+GEN_RS(comb_bank, mus_comb_bank_rs)
+GEN_RS(convolve, mus_convolve_rs)
+GEN_RS(delay, mus_delay_rs)
+GEN_RS(env, mus_env_rs)
+GEN_RS(filter, mus_filter_rs)
+GEN_RS(filtered_comb, mus_filtered_comb_rs)
+GEN_RS(filtered_comb_bank, mus_filtered_comb_bank_rs)
+GEN_RS(fir_filter, mus_fir_filter_rs)
+GEN_RS(firmant, mus_firmant_rs)
+GEN_RS(formant, mus_formant_rs)
+GEN_RS(granulate, mus_granulate_rs)
+GEN_RS(iir_filter, mus_iir_filter_rs)
+GEN_RS(moving_average, mus_moving_average_rs)
+GEN_RS(moving_max, mus_moving_max_rs)
+GEN_RS(moving_norm, mus_moving_norm_rs)
+GEN_RS(ncos, mus_ncos_rs)
+GEN_RS(notch, mus_notch_rs)
+GEN_RS(nrxycos, mus_nrxycos_rs)
+GEN_RS(nrxysin, mus_nrxysin_rs)
+GEN_RS(nsin, mus_nsin_rs)
+GEN_RS(one_pole, mus_one_pole_rs)
+GEN_RS(one_pole_all_pass, mus_one_pole_all_pass_rs)
+GEN_RS(one_zero, mus_one_zero_rs)
+GEN_RS(oscil, mus_oscil_rs)
+GEN_RS(oscil_bank, mus_oscil_bank_rs)
+GEN_RS(phase_vocoder, mus_phase_vocoder_rs)
+GEN_RS(polyshape, mus_polyshape_rs)
+GEN_RS(polywave, mus_polywave_rs)
+GEN_RS(pulse_train, mus_pulse_train_rs)
+GEN_RS(pulsed_env, mus_pulsed_env_rs)
+GEN_RS(rand, mus_rand_rs)
+GEN_RS(rand_interp, mus_rand_interp_rs)
+GEN_RS(readin, mus_readin_rs)
+GEN_RS(rxykcos, mus_rxykcos_rs)
+GEN_RS(rxyksin, mus_rxyksin_rs)
+GEN_RS(sawtooth_wave, mus_sawtooth_wave_rs)
+GEN_RS(square_wave, mus_square_wave_rs)
+GEN_RS(src, mus_src_rs)
+GEN_RS(table_lookup, mus_table_lookup_rs)
+GEN_RS(triangle_wave, mus_triangle_wave_rs)
+GEN_RS(two_pole, mus_two_pole_rs)
+GEN_RS(two_zero, mus_two_zero_rs)
+GEN_RS(wave_train, mus_wave_train_rs)
+
+#define is_all_pass_bank_rs NULL
+#define is_ssb_am_rs NULL
+
 
 
 /* ---------------- special cases ---------------- */
@@ -18293,7 +18404,6 @@ static s7_pointer clm_make_temp_function(s7_scheme *sc, const char *name, s7_fun
   s7_pointer fin;
   /* s7_make_safe_function works here and elsewhere (but not for symbol accessors perhaps), but is
    *   a no-op -- it is the base function that the optimizer checks for safety, not the chooser-related stuff.
-   *   Also, callgrind is seriously confused about hop_c_all_x -- ignore the bogus stats!
    */
   fin = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
   s7_function_set_class(fin, base_f);
@@ -18629,16 +18739,19 @@ static void init_choosers(s7_scheme *sc)
 #define GEN_F(Name, Type)				\
   f = s7_name_to_value(sc, Name);			\
   s7_function_set_chooser(sc, f, Type ## _chooser);			\
+  s7_function_set_rs(f, is_ ## Type ## _rs); \
   store_choices(sc, f, wrapped_ ## Type ## _1, wrapped_ ## Type ## _2, NULL, wrapped_ ## Type ## _p);
   
 #define GEN_F1(Name, Type)				\
   f = s7_name_to_value(sc, Name);			\
   s7_function_set_chooser(sc, f, Type ## _chooser);			\
+  s7_function_set_rs(f, is_ ## Type ## _rs); \
   store_choices(sc, f, wrapped_ ## Type ## _1, NULL, NULL, wrapped_ ## Type ## _p);
 
 #define GEN_F3(Name, Type)				\
   f = s7_name_to_value(sc, Name);			\
   s7_function_set_chooser(sc, f, Type ## _chooser);			\
+  s7_function_set_rs(f, is_ ## Type ## _rs); \
   store_choices(sc, f, wrapped_ ## Type ## _1, wrapped_ ## Type ## _2, wrapped_ ## Type ## _3, wrapped_ ## Type ## _p);
 
 

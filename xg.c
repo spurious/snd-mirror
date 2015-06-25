@@ -31844,6 +31844,81 @@ static Xen gxg_gtk_popover_get_default_widget(Xen popover)
   return(C_to_Xen_GtkWidget_(gtk_popover_get_default_widget(Xen_to_C_GtkPopover_(popover))));
 }
 
+static Xen gxg_gdk_window_set_pass_through(Xen window, Xen pass_through)
+{
+  #define H_gdk_window_set_pass_through "void gdk_window_set_pass_through(GdkWindow* window, gboolean pass_through)"
+  Xen_check_type(Xen_is_GdkWindow_(window), window, 1, "gdk_window_set_pass_through", "GdkWindow*");
+  Xen_check_type(Xen_is_gboolean(pass_through), pass_through, 2, "gdk_window_set_pass_through", "gboolean");
+  gdk_window_set_pass_through(Xen_to_C_GdkWindow_(window), Xen_to_C_gboolean(pass_through));
+  return(Xen_false);
+}
+
+static Xen gxg_gdk_window_get_pass_through(Xen window)
+{
+  #define H_gdk_window_get_pass_through "gboolean gdk_window_get_pass_through(GdkWindow* window)"
+  Xen_check_type(Xen_is_GdkWindow_(window), window, 1, "gdk_window_get_pass_through", "GdkWindow*");
+  return(C_to_Xen_gboolean(gdk_window_get_pass_through(Xen_to_C_GdkWindow_(window))));
+}
+
+static Xen gxg_gtk_overlay_reorder_overlay(Xen overlay, Xen child, Xen position)
+{
+  #define H_gtk_overlay_reorder_overlay "void gtk_overlay_reorder_overlay(GtkOverlay* overlay, GtkWidget* child, \
+gint position)"
+  Xen_check_type(Xen_is_GtkOverlay_(overlay), overlay, 1, "gtk_overlay_reorder_overlay", "GtkOverlay*");
+  Xen_check_type(Xen_is_GtkWidget_(child), child, 2, "gtk_overlay_reorder_overlay", "GtkWidget*");
+  Xen_check_type(Xen_is_gint(position), position, 3, "gtk_overlay_reorder_overlay", "gint");
+  gtk_overlay_reorder_overlay(Xen_to_C_GtkOverlay_(overlay), Xen_to_C_GtkWidget_(child), Xen_to_C_gint(position));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_overlay_get_overlay_pass_through(Xen overlay, Xen widget)
+{
+  #define H_gtk_overlay_get_overlay_pass_through "gboolean gtk_overlay_get_overlay_pass_through(GtkOverlay* overlay, \
+GtkWidget* widget)"
+  Xen_check_type(Xen_is_GtkOverlay_(overlay), overlay, 1, "gtk_overlay_get_overlay_pass_through", "GtkOverlay*");
+  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 2, "gtk_overlay_get_overlay_pass_through", "GtkWidget*");
+  return(C_to_Xen_gboolean(gtk_overlay_get_overlay_pass_through(Xen_to_C_GtkOverlay_(overlay), Xen_to_C_GtkWidget_(widget))));
+}
+
+static Xen gxg_gtk_overlay_set_overlay_pass_through(Xen overlay, Xen widget, Xen pass_through)
+{
+  #define H_gtk_overlay_set_overlay_pass_through "void gtk_overlay_set_overlay_pass_through(GtkOverlay* overlay, \
+GtkWidget* widget, gboolean pass_through)"
+  Xen_check_type(Xen_is_GtkOverlay_(overlay), overlay, 1, "gtk_overlay_set_overlay_pass_through", "GtkOverlay*");
+  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 2, "gtk_overlay_set_overlay_pass_through", "GtkWidget*");
+  Xen_check_type(Xen_is_gboolean(pass_through), pass_through, 3, "gtk_overlay_set_overlay_pass_through", "gboolean");
+  gtk_overlay_set_overlay_pass_through(Xen_to_C_GtkOverlay_(overlay), Xen_to_C_GtkWidget_(widget), Xen_to_C_gboolean(pass_through));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_places_sidebar_get_show_recent(Xen sidebar)
+{
+  #define H_gtk_places_sidebar_get_show_recent "gboolean gtk_places_sidebar_get_show_recent(GtkPlacesSidebar* sidebar)"
+  Xen_check_type(Xen_is_GtkPlacesSidebar_(sidebar), sidebar, 1, "gtk_places_sidebar_get_show_recent", "GtkPlacesSidebar*");
+  return(C_to_Xen_gboolean(gtk_places_sidebar_get_show_recent(Xen_to_C_GtkPlacesSidebar_(sidebar))));
+}
+
+static Xen gxg_gtk_places_sidebar_set_show_recent(Xen sidebar, Xen show_recent)
+{
+  #define H_gtk_places_sidebar_set_show_recent "void gtk_places_sidebar_set_show_recent(GtkPlacesSidebar* sidebar, \
+gboolean show_recent)"
+  Xen_check_type(Xen_is_GtkPlacesSidebar_(sidebar), sidebar, 1, "gtk_places_sidebar_set_show_recent", "GtkPlacesSidebar*");
+  Xen_check_type(Xen_is_gboolean(show_recent), show_recent, 2, "gtk_places_sidebar_set_show_recent", "gboolean");
+  gtk_places_sidebar_set_show_recent(Xen_to_C_GtkPlacesSidebar_(sidebar), Xen_to_C_gboolean(show_recent));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_places_sidebar_set_drop_targets_visible(Xen sidebar, Xen visible, Xen context)
+{
+  #define H_gtk_places_sidebar_set_drop_targets_visible "void gtk_places_sidebar_set_drop_targets_visible(GtkPlacesSidebar* sidebar, \
+gboolean visible, GdkDragContext* context)"
+  Xen_check_type(Xen_is_GtkPlacesSidebar_(sidebar), sidebar, 1, "gtk_places_sidebar_set_drop_targets_visible", "GtkPlacesSidebar*");
+  Xen_check_type(Xen_is_gboolean(visible), visible, 2, "gtk_places_sidebar_set_drop_targets_visible", "gboolean");
+  Xen_check_type(Xen_is_GdkDragContext_(context), context, 3, "gtk_places_sidebar_set_drop_targets_visible", "GdkDragContext*");
+  gtk_places_sidebar_set_drop_targets_visible(Xen_to_C_GtkPlacesSidebar_(sidebar), Xen_to_C_gboolean(visible), Xen_to_C_GdkDragContext_(context));
+  return(Xen_false);
+}
+
 #endif
 
 static Xen gxg_cairo_create(Xen target)
@@ -38448,6 +38523,14 @@ Xen_wrap_2_args(gxg_gtk_font_chooser_set_font_map_w, gxg_gtk_font_chooser_set_fo
 Xen_wrap_1_arg(gxg_gtk_font_chooser_get_font_map_w, gxg_gtk_font_chooser_get_font_map)
 Xen_wrap_2_args(gxg_gtk_popover_set_default_widget_w, gxg_gtk_popover_set_default_widget)
 Xen_wrap_1_arg(gxg_gtk_popover_get_default_widget_w, gxg_gtk_popover_get_default_widget)
+Xen_wrap_2_args(gxg_gdk_window_set_pass_through_w, gxg_gdk_window_set_pass_through)
+Xen_wrap_1_arg(gxg_gdk_window_get_pass_through_w, gxg_gdk_window_get_pass_through)
+Xen_wrap_3_args(gxg_gtk_overlay_reorder_overlay_w, gxg_gtk_overlay_reorder_overlay)
+Xen_wrap_2_args(gxg_gtk_overlay_get_overlay_pass_through_w, gxg_gtk_overlay_get_overlay_pass_through)
+Xen_wrap_3_args(gxg_gtk_overlay_set_overlay_pass_through_w, gxg_gtk_overlay_set_overlay_pass_through)
+Xen_wrap_1_arg(gxg_gtk_places_sidebar_get_show_recent_w, gxg_gtk_places_sidebar_get_show_recent)
+Xen_wrap_2_args(gxg_gtk_places_sidebar_set_show_recent_w, gxg_gtk_places_sidebar_set_show_recent)
+Xen_wrap_3_args(gxg_gtk_places_sidebar_set_drop_targets_visible_w, gxg_gtk_places_sidebar_set_drop_targets_visible)
 #endif
 
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
@@ -42528,6 +42611,14 @@ static void define_functions(void)
   Xg_define_procedure(gtk_font_chooser_get_font_map, gxg_gtk_font_chooser_get_font_map_w, 1, 0, 0, H_gtk_font_chooser_get_font_map);
   Xg_define_procedure(gtk_popover_set_default_widget, gxg_gtk_popover_set_default_widget_w, 2, 0, 0, H_gtk_popover_set_default_widget);
   Xg_define_procedure(gtk_popover_get_default_widget, gxg_gtk_popover_get_default_widget_w, 1, 0, 0, H_gtk_popover_get_default_widget);
+  Xg_define_procedure(gdk_window_set_pass_through, gxg_gdk_window_set_pass_through_w, 2, 0, 0, H_gdk_window_set_pass_through);
+  Xg_define_procedure(gdk_window_get_pass_through, gxg_gdk_window_get_pass_through_w, 1, 0, 0, H_gdk_window_get_pass_through);
+  Xg_define_procedure(gtk_overlay_reorder_overlay, gxg_gtk_overlay_reorder_overlay_w, 3, 0, 0, H_gtk_overlay_reorder_overlay);
+  Xg_define_procedure(gtk_overlay_get_overlay_pass_through, gxg_gtk_overlay_get_overlay_pass_through_w, 2, 0, 0, H_gtk_overlay_get_overlay_pass_through);
+  Xg_define_procedure(gtk_overlay_set_overlay_pass_through, gxg_gtk_overlay_set_overlay_pass_through_w, 3, 0, 0, H_gtk_overlay_set_overlay_pass_through);
+  Xg_define_procedure(gtk_places_sidebar_get_show_recent, gxg_gtk_places_sidebar_get_show_recent_w, 1, 0, 0, H_gtk_places_sidebar_get_show_recent);
+  Xg_define_procedure(gtk_places_sidebar_set_show_recent, gxg_gtk_places_sidebar_set_show_recent_w, 2, 0, 0, H_gtk_places_sidebar_set_show_recent);
+  Xg_define_procedure(gtk_places_sidebar_set_drop_targets_visible, gxg_gtk_places_sidebar_set_drop_targets_visible_w, 3, 0, 0, H_gtk_places_sidebar_set_drop_targets_visible);
 #endif
 
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
@@ -45177,7 +45268,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("26-May-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("24-Jun-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

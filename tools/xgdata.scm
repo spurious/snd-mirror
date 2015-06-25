@@ -9163,3 +9163,13 @@
 (CFNC-3.18 "void gtk_popover_set_default_widget GtkPopover* popover GtkWidget* widget")
 (CFNC-3.18 "GtkWidget* gtk_popover_get_default_widget GtkPopover* popover")
 
+;;; 3.17.4:
+
+(CFNC-3.18 "void gdk_window_set_pass_through GdkWindow* window gboolean pass_through")
+(CFNC-3.18 "gboolean gdk_window_get_pass_through GdkWindow* window")
+(CFNC-3.18 "void gtk_overlay_reorder_overlay GtkOverlay* overlay GtkWidget* child gint position")
+(CFNC-3.18 "gboolean gtk_overlay_get_overlay_pass_through GtkOverlay* overlay GtkWidget* widget")
+(CFNC-3.18 "void gtk_overlay_set_overlay_pass_through GtkOverlay* overlay GtkWidget* widget gboolean pass_through")
+(CFNC-3.18 "gboolean gtk_places_sidebar_get_show_recent GtkPlacesSidebar* sidebar")
+(CFNC-3.18 "void gtk_places_sidebar_set_show_recent GtkPlacesSidebar* sidebar gboolean show_recent")
+(CFNC-3.18 "void gtk_places_sidebar_set_drop_targets_visible GtkPlacesSidebar* sidebar gboolean visible GdkDragContext* context")

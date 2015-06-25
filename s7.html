@@ -1848,7 +1848,7 @@ value in the closure's environment:
 </pre>
 <p>The 'iterator variable is similar to the 'documentation variable used by procedure-documentation.
 It gives make-iterator some hope of catching inadvertent bogus function arguments that would
-otherwise cause an infinite loop.
+otherwise cause an infinite loop. 
 </p>
 
 
@@ -5448,7 +5448,7 @@ is simply returned, unevaluated.
       (if (null? (cdr args))
 	  `(display ',(car args))
 	  (append (list 'begin `(display ',(car args)))
-		  (append (list (apply macroexpand (list (append '(rmac) (cdr args))))))))))
+		  (list (apply macroexpand (list (append '(rmac) (cdr args)))))))))
 
 &gt; (macroexpand (rmac a b c))
 <em class="gray">(begin (display 'a) (begin (display 'b) (display 'c)))</em>
