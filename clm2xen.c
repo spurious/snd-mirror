@@ -9966,16 +9966,33 @@ static mus_float_t mus_asymmetric_fm_rs(mus_any *p) {return(mus_asymmetric_fm_un
 static mus_float_t mus_formant_rs(mus_any *p) {return(mus_formant(p, 0.0));}
 static mus_float_t mus_firmant_rs(mus_any *p) {return(mus_firmant(p, 0.0));}
 
+static mus_any *car_gen(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer sym, o;
+  mus_xen *gn;
+
+  sym = s7_cadr(expr);
+  if (!s7_is_symbol(sym)) return(NULL);
+  o = s7_symbol_value(sc, sym);
+  gn = s7_object_value_checked(o, mus_xen_tag);
+  if (!gn) return(NULL);
+
+  return(gn->gen);
+}
+
 #define GEN_RS(Type, Func) \
-  static s7_Double Type ## _rs(void *p) \
-  { \
-    return(Func(mus_xen_to_mus_any(p))); \
+  static s7_Double Type ## _rs(s7_scheme *sc, s7_pointer **p)	\
+  {								\
+    mus_any *g = (mus_any *)(*(*p));				\
+    (*p)++;							\
+    return(Func(g));						\
   }								\
-  static s7_Double (*is_ ## Type ## _rs(s7_pointer o))(void *p)\
-  {\
-    if ((s7_object_type(o) == mus_xen_tag) && (mus_is_ ## Type(s7_object_to_mus_any(o)))) \
-      return(Type ## _rs); \
-    return(NULL); \
+  static s7_Double (*is_ ## Type ## _rs(s7_scheme *sc, s7_pointer expr))(s7_scheme *scm, s7_pointer **p) \
+  {									\
+    mus_any *g;								\
+    g = car_gen(sc, expr);						\
+    if ((g) && (mus_is_ ## Type(g))) {s7_rs_store(sc, (void *)g); return(Type ## _rs);} \
+    return(NULL);							\
   }
 
 GEN_RS(all_pass, mus_all_pass_rs)

@@ -9132,41 +9132,75 @@ static s7_pointer read_sample_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
 }
 
 
-static s7_Double next_sample_rs(void *p)
+static s7_Double next_sample_rs(s7_scheme *sc, s7_pointer **p)
 {
-  return(protected_next_sample((snd_fd *)p));
+  snd_fd *fd = (snd_fd *)(*(*p));
+  (*p)++;
+  return(protected_next_sample(fd));
 }
 
-static s7_Double read_sample_rs(void *p)
+static s7_Double read_sample_rs(s7_scheme *sc, s7_pointer **p)
 {
-  return(read_sample((snd_fd *)p));
+  snd_fd *fd = (snd_fd *)(*(*p));
+  (*p)++;
+  return(read_sample(fd));
 }
 
-static s7_Double next_mix_sample_rs(void *p)
+static s7_Double next_mix_sample_rs(s7_scheme *sc, s7_pointer **p)
 {
-  return(protected_next_sample(mf_to_snd_fd(p)));
+  snd_fd *fd = (snd_fd *)(*(*p));
+  (*p)++;
+  return(protected_next_sample(fd));
 }
 
-static s7_Double read_mix_sample_rs(void *p)
+static s7_Double read_mix_sample_rs(s7_scheme *sc, s7_pointer **p)
 {
-  return(read_sample(mf_to_snd_fd(p)));
+  snd_fd *fd = (snd_fd *)(*(*p));
+  (*p)++;
+  return(read_sample(fd));
 }
 
-static s7_Double (*is_read_sample(s7_pointer o))(void *p)
+static s7_Double (*is_read_sample(s7_scheme *sc, s7_pointer expr))(s7_scheme *sc, s7_pointer **p)
 {
-  if (is_sampler(o))
-    return(read_sample_rs);
+  s7_pointer sym, o;
+  void *g;
+
+  sym = s7_cadr(expr);
+  if (!s7_is_symbol(sym)) return(NULL);
+  o = s7_symbol_value(sc, sym);
+  g = s7_object_value_checked(o, sf_tag);
+  if (g)
+    {
+      s7_rs_store(sc, g);
+      return(read_sample_rs);
+    }
   if (is_mix_sampler(o))
-    return(read_mix_sample_rs);
+    {
+      s7_rs_store(sc, (void *)mf_to_snd_fd(s7_object_value(o)));
+      return(read_mix_sample_rs);
+    }
   return(NULL);
 }
 
-static s7_Double (*is_next_sample(s7_pointer o))(void *p)
+static s7_Double (*is_next_sample(s7_scheme *sc, s7_pointer expr))(s7_scheme *sc, s7_pointer **p)
 {
-  if (is_sampler(o))
-    return(next_sample_rs);
+  s7_pointer sym, o;
+  void *g;
+  
+  sym = s7_cadr(expr);
+  if (!s7_is_symbol(sym)) return(NULL);
+  o = s7_symbol_value(sc, sym);
+  g = s7_object_value_checked(o, sf_tag);
+  if (g)
+    {
+      s7_rs_store(sc, g);
+      return(next_sample_rs);
+    }
   if (is_mix_sampler(o))
-    return(next_mix_sample_rs);
+    {
+      s7_rs_store(sc, (void *)mf_to_snd_fd(s7_object_value(o)));
+      return(next_mix_sample_rs);
+    }
   return(NULL);
 }
 #endif

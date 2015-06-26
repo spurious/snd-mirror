@@ -265,9 +265,21 @@
   #include <errno.h>
   #include <locale.h>
 #else
+  /* in Snd these are in mus-config.h */
+  #ifndef MUS_CONFIG_H_LOADED
+    #define ssize_t int 
+    #define snprintf _snprintf 
+    #define strtoll strtol
+    #if _MSC_VER > 1200
+      #define _CRT_SECURE_NO_DEPRECATE 1
+      #define _CRT_NONSTDC_NO_DEPRECATE 1
+      #define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
+    #endif
+  #endif
   #include <io.h>
   #pragma warning(disable: 4244)
 #endif
+
 #include <limits.h>
 #include <ctype.h>
 #include <string.h>
@@ -373,22 +385,18 @@ typedef struct port_t {
   void (*display)(s7_scheme *sc, const char *s, s7_pointer pt);
 } port_t;
 
-typedef s7_Double (*rsf_t)(void *p);
+typedef s7_Double (*rsf_t)(s7_scheme *sc, s7_pointer **p);
 
 typedef struct c_proc_ext_t {
   s7_pointer looped_ff, let_looped_ff;
+
   void *chooser_data;
   s7_pointer *arg_defaults, *arg_names;
   s7_pointer call_args;
   int keyed_args;       /* 2 * args == number of args if all are specified via keywords */
   bool simple_defaults;
 
-  /* an experiment */
-  rsf_t (*rsp)(s7_pointer o);
-#if 0
-  s7_Double (*f2)(void *p, s7_Double x);
-  s7_Double (*f3)(void *p, s7_Double x, s7_Double y);
-#endif
+  rsf_t (*rsp)(s7_scheme *sc, s7_pointer o);
 } c_proc_ext_t;
 
 typedef struct c_proc_t {
@@ -944,6 +952,9 @@ struct s7_scheme {
   int format_depth;
   int slash_str_size;
   char *slash_str;
+
+  s7_pointer *rs_data, *rs_cur, *rs_end;
+  int rs_size;
 
   /* s7 env symbols */
   s7_pointer stack_top_symbol, symbol_table_is_locked_symbol, heap_size_symbol, gc_freed_symbol, gc_protected_objects_symbol;
@@ -1866,7 +1877,9 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define c_function_call_args(f)       c_function_ext(f)->call_args
 #define c_function_arg_names(f)       c_function_ext(f)->arg_names
 #define c_function_simple_defaults(f) c_function_ext(f)->simple_defaults
-#define is_rs_object(f)               c_function_ext(f)->rsp
+
+#define rs_function(f)                c_function_ext(f)->rsp
+#define has_rs_function(f)            ((c_function_ext(f)) && (rs_function(f)))
 
 void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
 bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_optimized(f)) && (ecdr(f)) && (returns_temp(ecdr(f))));}
@@ -2007,6 +2020,13 @@ static void set_print_name(s7_pointer p, const char *name, int len)
 }
 
 
+static void free_cell(s7_scheme *sc, s7_pointer p)
+{
+  clear_type(p);
+  (*(sc->free_heap_top++)) = p;
+}
+
+
 #if WITH_GCC
 #define make_integer(Sc, N) \
   ({ s7_Int _N_; _N_ = N; (is_small(_N_) ? small_int(_N_) : ({ s7_pointer _X_; NEW_CELL(Sc, _X_, T_INTEGER); integer(_X_) = _N_; _X_;}) ); })
@@ -2014,13 +2034,6 @@ static void set_print_name(s7_pointer p, const char *name, int len)
 #define make_real(Sc, X) \
   ({ s7_Double _N_ = X; ((_N_ == 0.0) ? real_zero : ({ s7_pointer _X_; NEW_CELL(Sc, _X_, T_REAL); real(_X_) = _N_; _X_;}) ); })
                      /* the x == 0.0 check saves more than it costs */
-
-static void free_cell(s7_scheme *sc, s7_pointer p)
-{
-  clear_type(p);
-  (*(sc->free_heap_top++)) = p;
-}
-
 
 #define remake_real(Sc, R, X) ({ s7_Double _x_; _x_ = X; ((is_simple_real(R)) ? ({real(R) = _x_; R;}) : make_real(Sc, _x_)); })
 
@@ -33626,11 +33639,24 @@ void s7_function_set_looped(s7_pointer f, s7_pointer c)
 }
 
 
-void s7_function_set_rs(s7_pointer f, s7_Double (*rsp(s7_pointer o))(void *p))
+void s7_function_set_rs(s7_pointer f, s7_Double (*rsp(s7_scheme *sc, s7_pointer expr))(s7_scheme *sc, s7_pointer **p))
 {
   if (!c_function_ext(f))
     c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
-  is_rs_object(f) = rsp;
+  rs_function(f) = rsp;
+}
+
+s7_pointer *s7_rs_store(s7_scheme *sc, s7_pointer val)
+{
+  if (sc->rs_cur == sc->rs_end)
+    {
+      sc->rs_data = realloc(sc->rs_data, sc->rs_size * 2 * sizeof(s7_pointer));
+      sc->rs_cur = (s7_pointer *)(sc->rs_data + sc->rs_size);
+      sc->rs_size *= 2;
+      sc->rs_end = (s7_pointer *)(sc->rs_data + sc->rs_size);
+    }
+  (*(sc->rs_cur)) = val;
+  return(sc->rs_cur++);
 }
 
 
@@ -51435,24 +51461,22 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
 		      fv_s2 = find_symbol(sc, car(a));
 		      if ((is_slot(fv_s1)) && (is_slot(fv_s2)))
 			{
-			  s7_pointer f, o;
+			  s7_pointer f;
 			  f = slot_value(fv_s2);
-			  o = slot_value(fv_s1);
-			  if ((c_function_ext(f)) &&
-			      (is_rs_object(f)) &&
-			      (is_c_object(o)))
+			  if (has_rs_function(f))
 			    {
-			      /* s7_Double (*rsf)(void *p); */
 			      rsf_t rsf;
-			      rsf = is_rs_object(f)(o);
+			      sc->rs_cur = sc->rs_data;
+			      rsf = rs_function(f)(sc, a);
 			      if (rsf)
 				{
-				  void *obj;
 				  s7_Double *fv_els;
-				  obj = c_object_value(o);
 				  fv_els = float_vector_elements(sc->d1);  /* the float array */
 				  for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
-				    fv_els[integer(slot_value(sc->d2))] = rsf(obj);
+				    {
+				      sc->rs_cur = sc->rs_data;
+				      fv_els[integer(slot_value(sc->d2))] = rsf(sc, &(sc->rs_cur));
+				    }
 				  sc->code = cdr(cadr(sc->code));
 				  return(goto_SAFE_DO_END_CLAUSES);
 				}
@@ -65916,6 +65940,11 @@ s7_scheme *s7_init(void)
   sc->read_line_buf = NULL;
   sc->read_line_buf_size = 0;
 
+  sc->rs_size = 8;
+  sc->rs_data = (s7_pointer *)calloc(sc->rs_size, sizeof(s7_pointer));
+  sc->rs_cur = sc->rs_data;
+  sc->rs_end = (s7_pointer *)(sc->rs_data + sc->rs_size);
+
   sc->NIL =         make_unique_object("()",             T_NIL);
   sc->GC_NIL =      make_unique_object("#<nil>",         T_UNIQUE);
   sc->T =           make_unique_object("#t",             T_BOOLEAN);
@@ -67343,6 +67372,7 @@ int main(int argc, char **argv)
  * titer         |      |      |                          7503 6793 6351 6105
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6272
  * thash         |      |      |                          50.7 23.8 14.9 14.6
+ * tgmp          |      |      |                                         10.2
  *               |      |      |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.3
  * tgenx         |      |      |                                         14.3
@@ -67368,15 +67398,14 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
  *   with name/sync/sample settable
+ *
+ * just noticed gmp_copyi is 20% of time: gmp version can be made faster.
+ *
  * rss/rsc/rsr, outa+rs? or oir = (outa i (...)), fir for fv cases?
- *   maybe a type bit -- maybe mutable?
- *   for recurse, how to map symbols->temps?
- *   array: symbol/slot/checker
- *   each time referenced, it is incremented, so next frame is always arr[0]
- *   so set up inner comps to enforce that order, rs needs to be redone to use it (no fv_s1 et al)
- *   and new arg: ptr[0] is itself a pointer to this array: s7_pointer* where each entry is a slot.
- *   but need a size -- just let this array grow.  And how to map calls? is_a_rs -> func, so that's what we call,
- *   and it could also set the slot(s); add s7_pointer* arg to is_rs, so rsf_t takes s7* not void*,
- *   gets obj from slot_value[0], increments s7*, is_rs sets [0] to slot, checks type(s), returns called func, incrs
- *   are all innards C_C cases? so we get constants from the tree?
+ * fv_set: fv_set_rsr: fv=(**p);p++;i_slot=(**p);p++;rsf=(**p);p++;val=rsf(sc, p);fv_el[integer(slot_value(i_slot))]=val;return(val)
+ * fv_is_rs: symbol(car)=fv;symbol(cadr)=stepper;bounds-are-ok;store(fv);store(i_slot);save p;p++;(*save_p)=is_rsf(caddr);
+ *   so this needs stepper(s)/end? store fv_val? sc->envir? s7_local_slot(sc, sym)
+ *   in dotimes case this includes end val
+ *   else bounds check in fv_set 
+ * outa: i_slot and rest as above, no stream?
  */
