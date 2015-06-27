@@ -267,9 +267,7 @@
 #else
   /* in Snd these are in mus-config.h */
   #ifndef MUS_CONFIG_H_LOADED
-    #define ssize_t int 
     #define snprintf _snprintf 
-    #define strtoll strtol
     #if _MSC_VER > 1200
       #define _CRT_SECURE_NO_DEPRECATE 1
       #define _CRT_NONSTDC_NO_DEPRECATE 1
@@ -385,7 +383,6 @@ typedef struct port_t {
   void (*display)(s7_scheme *sc, const char *s, s7_pointer pt);
 } port_t;
 
-typedef s7_Double (*rsf_t)(s7_scheme *sc, s7_pointer **p);
 
 typedef struct c_proc_ext_t {
   s7_pointer looped_ff, let_looped_ff;
@@ -396,7 +393,7 @@ typedef struct c_proc_ext_t {
   int keyed_args;       /* 2 * args == number of args if all are specified via keywords */
   bool simple_defaults;
 
-  rsf_t (*rsp)(s7_scheme *sc, s7_pointer o);
+  s7_rsp_t rsp;
 } c_proc_ext_t;
 
 typedef struct c_proc_t {
@@ -1430,6 +1427,12 @@ static void init_types(void)
 /* marks a string that the caller considers a byte_vector
 */
 
+#define T_LOOP_BOUNDS                  T_MUTABLE
+#define is_loop_bounds(p)              ((typeflag(p) & T_LOOP_BOUNDS) != 0)
+#define set_loop_bounds(p)             typeflag(p) |= T_LOOP_BOUNDS
+/* marks a slot that holds a do-loop's controlling step variable (numerator=current, denominator=end)
+*/
+
 #define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
 #define has_print_name(p)             ((typeflag(p) & T_PRINT_NAME) != 0)
 #define set_has_print_name(p)         typeflag(p) |= T_PRINT_NAME
@@ -1494,9 +1497,10 @@ static void init_types(void)
 /* using bit 23 for this makes a big difference in the GC
  */
 
-#define UNUSED_BITS 0 /* (1 << (TYPE_BITS + 11)) */
+#define UNUSED_BITS 0
 
-
+#define BOLD_TEXT "\033[1m"
+#define UNBOLD_TEXT "\033[22m"
 #if 0
   /* to find who is stomping on our symbols:
    */
@@ -1879,7 +1883,7 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define c_function_simple_defaults(f) c_function_ext(f)->simple_defaults
 
 #define rs_function(f)                c_function_ext(f)->rsp
-#define has_rs_function(f)            ((c_function_ext(f)) && (rs_function(f)))
+#define has_rs_function(f)            ((is_any_c_function(f)) && (c_function_ext(f)) && (rs_function(f)))
 
 void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
 bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_optimized(f)) && (ecdr(f)) && (returns_temp(ecdr(f))));}
@@ -13595,15 +13599,8 @@ static s7_pointer g_add_f_sf(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer add_ss_1ss;
-static s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args)
+static s7_pointer add_ss_1ss_1(s7_scheme *sc, s7_pointer s1, s7_pointer s2, s7_pointer s3)
 {
-  /* (+ (* s1 s2) (* (- 1.0 s1) s3)) */
-  s7_pointer s1, s2, s3;
-  s1 = find_symbol_checked(sc, cadr(car(args)));
-  s2 = find_symbol_checked(sc, ecdr(args)); /* caddr(car(args))) */
-  s3 = find_symbol_checked(sc, fcdr(args)); /* caddr(cadr(args))) */
-
   if ((type(s1) == T_REAL) &&
       (type(s2) == T_REAL) &&
       (type(s3) == T_REAL))
@@ -13634,6 +13631,18 @@ static s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args)
    *   (define (ho a b c) (list (hi a b c) (hi1 a b c)))
    *   (ho 1.4 2.5+i 3.1))
    */
+}
+
+static s7_pointer add_ss_1ss;
+static s7_pointer g_add_ss_1ss(s7_scheme *sc, s7_pointer args)
+{
+  /* (+ (* s1 s2) (* (- 1.0 s1) s3)) */
+  s7_pointer s1, s2, s3;
+  s1 = find_symbol_checked(sc, cadr(car(args)));
+  s2 = find_symbol_checked(sc, ecdr(args)); /* caddr(car(args))) */
+  s3 = find_symbol_checked(sc, fcdr(args)); /* caddr(cadr(args))) */
+
+  return(add_ss_1ss_1(sc, s1, s2, s3));
 }
 
 
@@ -31891,11 +31900,97 @@ static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
       val = caddr(args);
     }
 
+  if (!s7_is_real(val))
+    method_or_bust(sc, val, sc->FLOAT_VECTOR_SET, args, T_REAL, 3);
+
   float_vector_element(vec, index) = number_to_double(sc, val, "float-vector-set!");
   /* currently this accepts a complex value and assigns real_part(val) to the float-vector -- maybe an error instead? */
   return(val);
 }
 
+
+static s7_Double fv_set_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer fv, ind_slot;
+  s7_Double val;
+  s7_rsf_t rsf;
+  fv = **p;
+  (*p)++;
+  ind_slot = **p;
+  (*p)++;
+  rsf = (s7_rsf_t)(**p);
+  (*p)++;
+  val = rsf(sc, p);
+  float_vector_element(fv, integer(slot_value(ind_slot))) = val;
+  return(val);
+}
+
+static s7_Double fv_set_rs_checked(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer fv, ind_slot;
+  s7_Double val;
+  s7_Int index;
+  s7_rsf_t rsf;
+  fv = **p;
+  (*p)++;
+  ind_slot = **p;
+  index = integer(slot_value(ind_slot));
+  if ((index < 0) || (index >= vector_length(fv)))
+    out_of_range(sc, sc->FLOAT_VECTOR_SET, small_int(2), slot_value(ind_slot), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+  (*p)++;
+  rsf = (s7_rsf_t)(**p);
+  (*p)++;
+  val = rsf(sc, p);
+  float_vector_element(fv, index) = val;
+  return(val);
+}
+
+static s7_rsf_t is_fv_set(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer fv_sym, ind_sym, ind, ind_slot, fv, val_sym, val, val_expr;
+  s7_Int len;
+  s7_pointer *cur_rs;
+  s7_rsf_t rsf;
+  bool checked;
+
+  fv_sym = s7_cadr(expr);
+  if (!is_symbol(fv_sym)) return(NULL);
+  if (s7_local_slot(sc, fv_sym)) return(NULL);
+  fv = s7_symbol_value(sc, fv_sym);
+  if (!is_float_vector(fv)) return(NULL);
+
+  ind_sym = s7_caddr(expr);
+  if (!is_symbol(ind_sym)) return(NULL);
+  ind_slot = s7_local_slot(sc, ind_sym);
+  if (!ind_slot) return(NULL);
+  ind = slot_value(ind_slot);
+  if (!is_integer(ind)) return(NULL);
+
+  val_expr = cadddr(expr);
+  if (!is_pair(val_expr)) return(NULL);
+  val_sym = car(val_expr);
+  if (!is_symbol(val_sym)) return(NULL);
+  if (s7_local_slot(sc, val_sym)) return(NULL);
+  val = s7_symbol_value(sc, val_sym);
+  if (!has_rs_function(val)) return(NULL);
+
+  if (ind < 0) return(NULL);
+  len = vector_length(fv);
+  checked = ((!is_loop_bounds(ind_slot)) || ((numerator(ind) > len) || (denominator(ind) > len) || (denominator(ind) < 0)));
+
+  s7_rs_store(sc, fv);
+  s7_rs_store(sc, ind_slot);
+  cur_rs = s7_rs_store(sc, NULL);
+
+  /* TODO: other case: stepped sym as cadddr -- fv_set_sf below */
+
+  rsf = rs_function(val)(sc, val_expr);
+  if (!rsf) return(NULL);
+  (*cur_rs) = (s7_pointer)rsf;
+
+  /* fprintf(stderr, "%s%s%s\n", BOLD_TEXT, DISPLAY(expr), UNBOLD_TEXT); */
+  return((checked) ? fv_set_rs_checked : fv_set_rs);
+}
 
 
 
@@ -33639,7 +33734,7 @@ void s7_function_set_looped(s7_pointer f, s7_pointer c)
 }
 
 
-void s7_function_set_rs(s7_pointer f, s7_Double (*rsp(s7_scheme *sc, s7_pointer expr))(s7_scheme *sc, s7_pointer **p))
+void s7_rs_set_function(s7_pointer f, s7_rsp_t rsp)
 {
   if (!c_function_ext(f))
     c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
@@ -33648,15 +33743,24 @@ void s7_function_set_rs(s7_pointer f, s7_Double (*rsp(s7_scheme *sc, s7_pointer 
 
 s7_pointer *s7_rs_store(s7_scheme *sc, s7_pointer val)
 {
+  s7_pointer *cur;
   if (sc->rs_cur == sc->rs_end)
     {
-      sc->rs_data = realloc(sc->rs_data, sc->rs_size * 2 * sizeof(s7_pointer));
+      sc->rs_data = (s7_pointer *)realloc(sc->rs_data, sc->rs_size * 2 * sizeof(s7_pointer));
       sc->rs_cur = (s7_pointer *)(sc->rs_data + sc->rs_size);
       sc->rs_size *= 2;
       sc->rs_end = (s7_pointer *)(sc->rs_data + sc->rs_size);
     }
-  (*(sc->rs_cur)) = val;
-  return(sc->rs_cur++);
+  cur = sc->rs_cur++;
+  (*cur) = val;
+  return(cur);
+}
+
+s7_rsp_t s7_rs_function(s7_scheme *sc, s7_pointer func)
+{
+  if (has_rs_function(func))
+    return(rs_function(func));
+  return(NULL);
 }
 
 
@@ -43958,6 +44062,11 @@ static void init_choosers(s7_scheme *sc)
   vector_set_vector_ref = make_function_with_class(sc, f, "vector-set!", g_vector_set_vector_ref, 3, 0, false, "vector-set! opt");
   vector_set_3 = make_function_with_class(sc, f, "vector-set!", g_vector_set_3, 3, 0, false, "vector-set! opt");
 
+
+  f = slot_value(global_slot(sc->FLOAT_VECTOR_SET));
+  s7_rs_set_function(f, is_fv_set);
+
+
   /* list-ref */
   f = set_function_chooser(sc, sc->LIST_REF, list_ref_chooser);
   list_ref_ic = make_function_with_class(sc, f, "list-ref", g_list_ref_ic, 2, 0, false, "list-ref opt");
@@ -50692,7 +50801,9 @@ static s7_pointer fv_set_a(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer val;
   val = ((s7_function)fcdr(sc->d3))(sc, car(sc->d3));
-  float_vector_element(sc->d1, integer(slot_value(sc->d2))) = s7_number_to_real_with_caller(sc, val, "float-vector-set!");
+  if (s7_is_real(val))
+    float_vector_element(sc->d1, integer(slot_value(sc->d2))) = s7_number_to_real_with_caller(sc, val, "float-vector-set!");
+  else return(wrong_type_argument(sc, sc->FLOAT_VECTOR_SET, 3, val, T_REAL));
   return(val);
 }
 
@@ -50704,17 +50815,34 @@ static s7_pointer fv_set_b(s7_scheme *sc, s7_pointer expr)
   if ((index < 0) || (index >= vector_length(sc->d1)))
     return(out_of_range(sc, sc->FLOAT_VECTOR_SET, small_int(2), slot_value(sc->d2), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
   val = ((s7_function)fcdr(sc->d3))(sc, car(sc->d3));
-  float_vector_element(sc->d1, integer(slot_value(sc->d2))) = s7_number_to_real_with_caller(sc, val, "float-vector-set!");
+  if (s7_is_real(val))
+    float_vector_element(sc->d1, integer(slot_value(sc->d2))) = s7_number_to_real_with_caller(sc, val, "float-vector-set!");
+  else return(wrong_type_argument(sc, sc->FLOAT_VECTOR_SET, 3, val, T_REAL));
   return(val);
 }
 
 static s7_pointer fv_s1, fv_s2, fv_s3;
 static s7_pointer fv_set_add1ss(s7_scheme *sc, s7_pointer expr)
 {
-  s7_Double s1;
-  s1 = real(slot_value(fv_s1));
-  float_vector_element(sc->d1, integer(slot_value(sc->d2))) = (s1 * real(slot_value(fv_s2))) + ((1.0 - s1) * real(slot_value(fv_s3)));
-  return(real_zero);
+  s7_pointer val, s1, s2, s3;
+
+  s1 = slot_value(fv_s1);
+  s2 = slot_value(fv_s2);
+  s3 = slot_value(fv_s3);
+
+  if ((type(s1) == T_REAL) &&
+      (type(s2) == T_REAL) &&
+      (type(s3) == T_REAL))
+    {
+      float_vector_element(sc->d1, integer(slot_value(sc->d2))) = (real(s1) * real(s2))  + ((1.0 - real(s1)) * real(s3));
+      return(real_zero);
+    }
+
+  val = add_ss_1ss_1(sc, s1, s2, s3);
+  if (s7_is_real(val))
+    float_vector_element(sc->d1, integer(slot_value(sc->d2))) = s7_number_to_real_with_caller(sc, val, "float-vector-set!");
+  else return(wrong_type_argument(sc, sc->FLOAT_VECTOR_SET, 3, val, T_REAL));
+  return(val);
 }
 
 static s7_pointer fv_set_vref(s7_scheme *sc, s7_pointer expr)
@@ -50936,7 +51064,6 @@ static int dox_ex(s7_scheme *sc)
 			  fv_s2 = find_symbol(sc, caddr(cadar(sc->d3)));
 			  fv_s3 = find_symbol(sc, caddr(caddar(sc->d3)));
 			  
-			  /* TODO: also that they stay real */
 			  if ((is_slot(fv_s1)) && (is_slot(fv_s2)) && (is_slot(fv_s3)) &&
 			      (is_real(slot_value(fv_s1))) && (is_real(slot_value(fv_s2))) && (is_real(slot_value(fv_s3))))
 			    body = fv_set_add1ss;
@@ -50954,7 +51081,6 @@ static int dox_ex(s7_scheme *sc)
 	      body = c_call(code);
 	      code = cdr(code);
 	    }
-
 
 	  if ((!is_slot(next_slot(slots))) &&    /* 1 stepper */
 	      (is_pair(slot_expression(slots)))) /*   incremented */
@@ -51063,6 +51189,8 @@ static int safe_dotimes_ex(s7_scheme *sc)
 	  sc->args = add_slot(sc, caaar(code), make_mutable_integer(sc, s7_integer(init_val)));
 	  
 	  denominator(slot_value(sc->args)) = s7_integer(end_val);
+	  set_loop_bounds(sc->args);
+
 	  /* (define (hi) (do ((i 1 (+ 1 i))) ((= i 1) i))) -- we need the frame even if the loop is not evaluated */
 	  if ((is_null(sc->code)) ||
 	      ((!is_pair(car(sc->code))) &&
@@ -51231,6 +51359,7 @@ static int simple_safe_dotimes_ex(s7_scheme *sc)
 	      return(goto_SAFE_DO_END_CLAUSES);
 	    }
 	  denominator(slot_value(sc->args)) = s7_integer(end_val);
+	  set_loop_bounds(sc->args);
 	  
 	  /* add the let vars but not initialized yet
 	   */
@@ -51321,6 +51450,8 @@ static int safe_dotimes_c_c_ex(s7_scheme *sc)
 	    }
 	  
 	  denominator(slot_value(sc->args)) = s7_integer(end_val);
+	  set_loop_bounds(sc->args);
+
 	  func = caddr(sc->code);
 	  body = cdr(caddr(sc->code));
 	  stepper = slot_value(sc->args);
@@ -51394,6 +51525,8 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
 	    }
 	  
 	  denominator(slot_value(sc->args)) = s7_integer(end_val);
+	  set_loop_bounds(sc->args);
+
 	  stepper = slot_value(sc->args);
 	  body = cddr(sc->code);
 	  
@@ -51418,6 +51551,7 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
 		  func = c_call(car_body);
 		  car_body = cdr(car_body);
 		}
+
 	      while (true)
 		{
 		  s7_pointer p;
@@ -51436,11 +51570,34 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
 	  else
 	    {
 	      s7_function func;
+	      /* look for rs_function */
+	      if (is_symbol(caar(body)))
+		{
+		  s7_pointer fcar;
+		  fcar = find_symbol_checked(sc, caar(body));
+		  if (has_rs_function(fcar))
+		    {
+		      s7_rsf_t rsf;
+		      sc->rs_cur = sc->rs_data;
+		      rsf = rs_function(fcar)(sc, car(body));
+		      if (rsf)
+			{
+			  for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
+			    {
+			      sc->rs_cur = sc->rs_data;
+			      rsf(sc, &(sc->rs_cur));
+			    }
+			  sc->code = cdr(cadr(sc->code));
+			  return(goto_SAFE_DO_END_CLAUSES);
+			}
+		    }
+		}
+		
 	      func = (s7_function)(fcdr(body));
 	      body = car(body);
 	      func = all_x_init(sc, func, body);
 
-	      /* common snd-test case */
+	      /* common snd-test case, this is all in flux */
 	      if ((func == x_ssa) &&
 		  (c_call(body) == g_float_vector_set) &&
 		  (is_float_vector(slot_value(sc->d1))) &&
@@ -51448,41 +51605,8 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
 		  (numerator(stepper) >= 0) &&
 		  (denominator(stepper) <= vector_length(slot_value(sc->d1))))
 		{
-		  s7_pointer a;
 		  sc->d1 = slot_value(sc->d1);
 		  func = fv_set_a; 
-		  
-		  a = car(sc->d3);
-		  if (((s7_function)fcdr(sc->d3) == all_x_c_c) &&
-		      (is_null(cddr(a))) &&
-		      (is_symbol(cadr(a))))
-		    {
-		      fv_s1 = find_symbol(sc, cadr(a));
-		      fv_s2 = find_symbol(sc, car(a));
-		      if ((is_slot(fv_s1)) && (is_slot(fv_s2)))
-			{
-			  s7_pointer f;
-			  f = slot_value(fv_s2);
-			  if (has_rs_function(f))
-			    {
-			      rsf_t rsf;
-			      sc->rs_cur = sc->rs_data;
-			      rsf = rs_function(f)(sc, a);
-			      if (rsf)
-				{
-				  s7_Double *fv_els;
-				  fv_els = float_vector_elements(sc->d1);  /* the float array */
-				  for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
-				    {
-				      sc->rs_cur = sc->rs_data;
-				      fv_els[integer(slot_value(sc->d2))] = rsf(sc, &(sc->rs_cur));
-				    }
-				  sc->code = cdr(cadr(sc->code));
-				  return(goto_SAFE_DO_END_CLAUSES);
-				}
-			    }
-			}
-		    }
 		}
 
 	      /* second case: x_sas with all_x_c_ss (fvset) (float-vector-set! inputs (vector-ref in2s k) inval2) */
@@ -51902,19 +52026,7 @@ static int simple_do_forever_ex(s7_scheme *sc)
   /* this is almost never called -- perhaps delete? */
   s7_pointer body;
   s7_function func;
-  
   body = cddr(sc->code);
-#if CLM2XEN
-  if ((c_function_ext(ecdr(car(body)))) && 
-      (c_function_looped(ecdr(car(body)))))
-    {
-      func = (s7_function)c_function_call(c_function_looped(ecdr(car(body))));
-      if (func(sc, sc->z = cons(sc, small_int(0), cdar(body)))) /* make it compatible with the other looped calls */
-	return(goto_START); /* won't happen? */
-      sc->z = sc->NIL;
-      /* else fall into the ordinary loop */
-    }
-#endif
   func = all_x_init(sc, (s7_function)fcdr(body), car(body)); /* all_x annotated in check_do */
   while (true) {func(sc, car(body));}
   return(fall_through);
@@ -67378,7 +67490,7 @@ int main(int argc, char **argv)
  * tgenx         |      |      |                                         14.3
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 13.0
  * tallx         |      |      |                                    26.9 26.1
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 37.9
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 38.3
  * callsx        |      |      |                                    54.6 50.0
  * 
  * --------------------------------------------------------------------------
@@ -67402,10 +67514,8 @@ int main(int argc, char **argv)
  * just noticed gmp_copyi is 20% of time: gmp version can be made faster.
  *
  * rss/rsc/rsr, outa+rs? or oir = (outa i (...)), fir for fv cases?
- * fv_set: fv_set_rsr: fv=(**p);p++;i_slot=(**p);p++;rsf=(**p);p++;val=rsf(sc, p);fv_el[integer(slot_value(i_slot))]=val;return(val)
- * fv_is_rs: symbol(car)=fv;symbol(cadr)=stepper;bounds-are-ok;store(fv);store(i_slot);save p;p++;(*save_p)=is_rsf(caddr);
- *   so this needs stepper(s)/end? store fv_val? sc->envir? s7_local_slot(sc, sym)
- *   in dotimes case this includes end val
- *   else bounds check in fv_set 
+ * fv_set: rest of loops (precede clm2xen)
  * outa: i_slot and rest as above, no stream?
+ * rsf multiple statements, safe_glosures
+ * t258->s7test
  */

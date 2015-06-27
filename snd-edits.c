@@ -9160,45 +9160,49 @@ static s7_Double read_mix_sample_rs(s7_scheme *sc, s7_pointer **p)
   return(read_sample(fd));
 }
 
-static s7_Double (*is_read_sample(s7_scheme *sc, s7_pointer expr))(s7_scheme *sc, s7_pointer **p)
+static s7_rsf_t is_read_sample(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer sym, o;
-  void *g;
+  snd_fd *g;
 
+  if (!s7_is_null(sc, s7_cddr(expr))) return(NULL); /* just (gen s) for now */
   sym = s7_cadr(expr);
   if (!s7_is_symbol(sym)) return(NULL);
+  if (s7_local_slot(sc, sym)) return(NULL);
   o = s7_symbol_value(sc, sym);
-  g = s7_object_value_checked(o, sf_tag);
+  g = (snd_fd *)s7_object_value_checked(o, sf_tag);
   if (g)
     {
-      s7_rs_store(sc, g);
+      s7_rs_store(sc, (s7_pointer)g);
       return(read_sample_rs);
     }
   if (is_mix_sampler(o))
     {
-      s7_rs_store(sc, (void *)mf_to_snd_fd(s7_object_value(o)));
+      s7_rs_store(sc, (s7_pointer)mf_to_snd_fd(s7_object_value(o)));
       return(read_mix_sample_rs);
     }
   return(NULL);
 }
 
-static s7_Double (*is_next_sample(s7_scheme *sc, s7_pointer expr))(s7_scheme *sc, s7_pointer **p)
+static s7_rsf_t is_next_sample(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer sym, o;
-  void *g;
+  snd_fd *g;
   
+  if (!s7_is_null(sc, s7_cddr(expr))) return(NULL);
   sym = s7_cadr(expr);
   if (!s7_is_symbol(sym)) return(NULL);
+  if (s7_local_slot(sc, sym)) return(NULL);
   o = s7_symbol_value(sc, sym);
-  g = s7_object_value_checked(o, sf_tag);
+  g = (snd_fd *)s7_object_value_checked(o, sf_tag);
   if (g)
     {
-      s7_rs_store(sc, g);
+      s7_rs_store(sc, (s7_pointer)g);
       return(next_sample_rs);
     }
   if (is_mix_sampler(o))
     {
-      s7_rs_store(sc, (void *)mf_to_snd_fd(s7_object_value(o)));
+      s7_rs_store(sc, (s7_pointer)mf_to_snd_fd(s7_object_value(o)));
       return(next_mix_sample_rs);
     }
   return(NULL);
@@ -9377,7 +9381,7 @@ keep track of which files are in a given saved state batch, and a way to rename 
     /* next-sample */
     f = s7_name_to_value(s7, "next-sample");
     s7_function_set_chooser(s7, f, next_sample_chooser);
-    s7_function_set_rs(f, is_next_sample);
+    s7_rs_set_function(f, is_next_sample);
 
     next_sample_s = s7_make_function(s7, "next-sample", g_next_sample_s, 1, 0, false, "next-sample optimization");
     s7_function_set_class(next_sample_s, f);
@@ -9388,7 +9392,7 @@ keep track of which files are in a given saved state batch, and a way to rename 
     /* read-sample */
     f = s7_name_to_value(s7, "read-sample");
     s7_function_set_chooser(s7, f, read_sample_chooser);
-    s7_function_set_rs(f, is_read_sample);
+    s7_rs_set_function(f, is_read_sample);
 
     read_sample_s = s7_make_function(s7, "read-sample", g_read_sample_s, 1, 0, false, "read-sample optimization");
     s7_function_set_class(read_sample_s, f);

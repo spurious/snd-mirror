@@ -9966,84 +9966,169 @@ static mus_float_t mus_asymmetric_fm_rs(mus_any *p) {return(mus_asymmetric_fm_un
 static mus_float_t mus_formant_rs(mus_any *p) {return(mus_formant(p, 0.0));}
 static mus_float_t mus_firmant_rs(mus_any *p) {return(mus_firmant(p, 0.0));}
 
-static mus_any *car_gen(s7_scheme *sc, s7_pointer expr)
+static mus_float_t mus_ssb_am_rs_1(mus_any *p) {return(mus_ssb_am(p, 0.0, 0.0));}
+
+static mus_any *cadr_gen(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer sym, o;
   mus_xen *gn;
 
+  if (!s7_is_null(sc, s7_cdddr(expr))) return(NULL);
   sym = s7_cadr(expr);
   if (!s7_is_symbol(sym)) return(NULL);
+  if (s7_local_slot(sc, sym)) return(NULL);
   o = s7_symbol_value(sc, sym);
-  gn = s7_object_value_checked(o, mus_xen_tag);
+  gn = (mus_xen *)s7_object_value_checked(o, mus_xen_tag);
   if (!gn) return(NULL);
 
   return(gn->gen);
 }
 
-#define GEN_RS(Type, Func) \
+static s7_rsf_t caddr_gen(s7_scheme *sc, s7_pointer a2, s7_rsf_t func)
+{
+  s7_pointer *cur_rs;
+  s7_pointer val_sym, val;
+  s7_rsf_t rsf; s7_rsp_t rsp;
+  val_sym = car(a2);
+  if (!s7_is_symbol(val_sym)) return(NULL);
+  if (s7_local_slot(sc, val_sym)) return(NULL);
+  val = s7_symbol_value(sc, val_sym);
+  rsp = s7_rs_function(sc, val); 
+  if (!rsp) return(NULL);
+  cur_rs = s7_rs_store(sc, NULL);
+  rsf = rsp(sc, a2);
+  if (!rsf) return(NULL);
+  (*cur_rs) = (s7_pointer)rsf;
+  return(func);
+}
+
+#define GEN_RS_1(Type, Func)					\
   static s7_Double Type ## _rs(s7_scheme *sc, s7_pointer **p)	\
   {								\
-    mus_any *g = (mus_any *)(*(*p));				\
+    mus_any *g; g = (mus_any *)(*(*p));				\
     (*p)++;							\
     return(Func(g));						\
   }								\
-  static s7_Double (*is_ ## Type ## _rs(s7_scheme *sc, s7_pointer expr))(s7_scheme *scm, s7_pointer **p) \
+  static s7_rsf_t is_ ## Type ## _rs(s7_scheme *sc, s7_pointer expr) \
   {									\
     mus_any *g;								\
-    g = car_gen(sc, expr);						\
-    if ((g) && (mus_is_ ## Type(g))) {s7_rs_store(sc, (void *)g); return(Type ## _rs);} \
+    if (!s7_is_null(sc, s7_cddr(expr))) return(NULL);			\
+    g = cadr_gen(sc, expr);						\
+    if ((g) && (mus_is_ ## Type(g))) {s7_rs_store(sc, (s7_pointer)g); return(Type ## _rs);} \
     return(NULL);							\
   }
 
-GEN_RS(all_pass, mus_all_pass_rs)
-GEN_RS(asymmetric_fm, mus_asymmetric_fm_rs)
-GEN_RS(comb, mus_comb_rs)
-GEN_RS(comb_bank, mus_comb_bank_rs)
-GEN_RS(convolve, mus_convolve_rs)
-GEN_RS(delay, mus_delay_rs)
-GEN_RS(env, mus_env_rs)
-GEN_RS(filter, mus_filter_rs)
-GEN_RS(filtered_comb, mus_filtered_comb_rs)
-GEN_RS(filtered_comb_bank, mus_filtered_comb_bank_rs)
-GEN_RS(fir_filter, mus_fir_filter_rs)
-GEN_RS(firmant, mus_firmant_rs)
-GEN_RS(formant, mus_formant_rs)
-GEN_RS(granulate, mus_granulate_rs)
-GEN_RS(iir_filter, mus_iir_filter_rs)
-GEN_RS(moving_average, mus_moving_average_rs)
-GEN_RS(moving_max, mus_moving_max_rs)
-GEN_RS(moving_norm, mus_moving_norm_rs)
-GEN_RS(ncos, mus_ncos_rs)
-GEN_RS(notch, mus_notch_rs)
-GEN_RS(nrxycos, mus_nrxycos_rs)
-GEN_RS(nrxysin, mus_nrxysin_rs)
-GEN_RS(nsin, mus_nsin_rs)
-GEN_RS(one_pole, mus_one_pole_rs)
-GEN_RS(one_pole_all_pass, mus_one_pole_all_pass_rs)
-GEN_RS(one_zero, mus_one_zero_rs)
-GEN_RS(oscil, mus_oscil_rs)
-GEN_RS(oscil_bank, mus_oscil_bank_rs)
-GEN_RS(phase_vocoder, mus_phase_vocoder_rs)
-GEN_RS(polyshape, mus_polyshape_rs)
-GEN_RS(polywave, mus_polywave_rs)
-GEN_RS(pulse_train, mus_pulse_train_rs)
-GEN_RS(pulsed_env, mus_pulsed_env_rs)
-GEN_RS(rand, mus_rand_rs)
-GEN_RS(rand_interp, mus_rand_interp_rs)
-GEN_RS(readin, mus_readin_rs)
-GEN_RS(rxykcos, mus_rxykcos_rs)
-GEN_RS(rxyksin, mus_rxyksin_rs)
-GEN_RS(sawtooth_wave, mus_sawtooth_wave_rs)
-GEN_RS(square_wave, mus_square_wave_rs)
-GEN_RS(src, mus_src_rs)
-GEN_RS(table_lookup, mus_table_lookup_rs)
-GEN_RS(triangle_wave, mus_triangle_wave_rs)
-GEN_RS(two_pole, mus_two_pole_rs)
-GEN_RS(two_zero, mus_two_zero_rs)
-GEN_RS(wave_train, mus_wave_train_rs)
+
+#define GEN_RS(Type, Func1, Func2)				\
+  static s7_Double Type ## _rs(s7_scheme *sc, s7_pointer **p)	\
+  {								\
+    mus_any *g; g = (mus_any *)(*(*p));				\
+    (*p)++;							\
+    return(Func1(g));						\
+  }								\
+  static s7_Double Type ## _rs_g(s7_scheme *sc, s7_pointer **p)	\
+  {								\
+    s7_pointer a2;						\
+    mus_any *g; g = (mus_any *)(*(*p));				\
+    (*p)++;							\
+    a2 = (**p);							\
+    (*p)++;							\
+    return(Func2(g, s7_number_to_real(sc, a2)));		\
+  }								\
+  static s7_Double Type ## _rs_slot(s7_scheme *sc, s7_pointer **p)	\
+  {								\
+    s7_Double a2;						\
+    s7_pointer slot;						\
+    mus_any *g; g = (mus_any *)(*(*p));				\
+    (*p)++;							\
+    slot = **p;							\
+    a2 = s7_number_to_real(sc, s7_slot_value(slot));		\
+    (*p)++;							\
+    return(Func2(g, a2));					\
+  }								\
+  static s7_Double Type ## _rs_rsf(s7_scheme *sc, s7_pointer **p)	\
+  {								\
+    s7_rsf_t f;							\
+    mus_any *g; g = (mus_any *)(*(*p));				\
+    (*p)++;							\
+    f = (s7_rsf_t)(**p);					\
+    (*p)++;							\
+    return(Func2(g, f(sc, p)));					\
+  }								\
+  static s7_rsf_t is_ ## Type ## _rs(s7_scheme *sc, s7_pointer expr) \
+  {									\
+    mus_any *g;								\
+    g = cadr_gen(sc, expr);						\
+    if ((g) && (mus_is_ ## Type(g)))					\
+      {									\
+        s7_pointer a2;							\
+        s7_rs_store(sc, (s7_pointer)g);					\
+        if (s7_is_null(sc, s7_cddr(expr))) return(Type ## _rs); \
+        a2 = caddr(expr);						\
+        if (s7_is_real(a2)) {s7_rs_store(sc, a2); return(Type ## _rs_g);} \
+        if (s7_is_symbol(a2))						\
+          {								\
+	    s7_pointer slot;						\
+	    slot = s7_local_slot(sc, a2);				\
+            if (slot) {s7_rs_store(sc, (s7_pointer)slot); return(Type ## _rs_slot);} \
+            s7_rs_store(sc, (s7_pointer)s7_symbol_value(sc, a2)); return(Type ## _rs_g); \
+	  }								\
+        if (s7_is_pair(a2))						\
+          return(caddr_gen(sc, a2, Type ## _rs_rsf));			\
+      }									\
+    return(NULL);							\
+  }
+
+GEN_RS(all_pass, mus_all_pass_rs, mus_all_pass_unmodulated)
+GEN_RS(asymmetric_fm, mus_asymmetric_fm_rs, mus_asymmetric_fm_unmodulated)
+GEN_RS(comb, mus_comb_rs, mus_comb_unmodulated)
+GEN_RS(comb_bank, mus_comb_bank_rs, mus_comb_bank)
+GEN_RS_1(convolve, mus_convolve_rs)
+GEN_RS(delay, mus_delay_rs, mus_delay_unmodulated)
+GEN_RS_1(env, mus_env_rs)
+GEN_RS(filter, mus_filter_rs, mus_filter)
+GEN_RS(filtered_comb, mus_filtered_comb_rs, mus_filtered_comb_unmodulated)
+GEN_RS(filtered_comb_bank, mus_filtered_comb_bank_rs, mus_filtered_comb_bank)
+GEN_RS(fir_filter, mus_fir_filter_rs, mus_fir_filter)
+GEN_RS(firmant, mus_firmant_rs, mus_firmant)
+GEN_RS(formant, mus_formant_rs, mus_formant)
+GEN_RS_1(granulate, mus_granulate_rs)
+GEN_RS(iir_filter, mus_iir_filter_rs, mus_iir_filter)
+GEN_RS(moving_average, mus_moving_average_rs, mus_moving_average)
+GEN_RS(moving_max, mus_moving_max_rs, mus_moving_max)
+GEN_RS(moving_norm, mus_moving_norm_rs, mus_moving_norm)
+GEN_RS(ncos, mus_ncos_rs, mus_ncos)
+GEN_RS(notch, mus_notch_rs, mus_notch_unmodulated)
+GEN_RS(nrxycos, mus_nrxycos_rs, mus_nrxycos)
+GEN_RS(nrxysin, mus_nrxysin_rs, mus_nrxysin)
+GEN_RS(nsin, mus_nsin_rs, mus_nsin)
+GEN_RS(one_pole, mus_one_pole_rs, mus_one_pole)
+GEN_RS(one_pole_all_pass, mus_one_pole_all_pass_rs, mus_one_pole_all_pass)
+GEN_RS(one_zero, mus_one_zero_rs, mus_one_zero)
+GEN_RS(oscil, mus_oscil_rs, mus_oscil_fm)
+GEN_RS_1(oscil_bank, mus_oscil_bank_rs)
+GEN_RS_1(phase_vocoder, mus_phase_vocoder_rs)
+GEN_RS(polyshape, mus_polyshape_rs, mus_polyshape_unmodulated)
+GEN_RS(polywave, mus_polywave_rs, mus_polywave)
+GEN_RS(pulse_train, mus_pulse_train_rs, mus_pulse_train)
+GEN_RS(pulsed_env, mus_pulsed_env_rs, mus_pulsed_env)
+GEN_RS(rand, mus_rand_rs, mus_rand)
+GEN_RS(rand_interp, mus_rand_interp_rs, mus_rand_interp)
+GEN_RS_1(readin, mus_readin_rs)
+GEN_RS(rxykcos, mus_rxykcos_rs, mus_rxykcos)
+GEN_RS(rxyksin, mus_rxyksin_rs, mus_rxyksin)
+GEN_RS(sawtooth_wave, mus_sawtooth_wave_rs, mus_sawtooth_wave)
+GEN_RS(square_wave, mus_square_wave_rs, mus_square_wave)
+GEN_RS_1(src, mus_src_rs)
+GEN_RS(table_lookup, mus_table_lookup_rs, mus_table_lookup)
+GEN_RS(triangle_wave, mus_triangle_wave_rs, mus_triangle_wave)
+GEN_RS(two_pole, mus_two_pole_rs, mus_two_pole)
+GEN_RS(two_zero, mus_two_zero_rs, mus_two_zero)
+GEN_RS(wave_train, mus_wave_train_rs, mus_wave_train)
+
+GEN_RS(ssb_am, mus_ssb_am_rs_1, mus_ssb_am_unmodulated)
 
 #define is_all_pass_bank_rs NULL
-#define is_ssb_am_rs NULL
 
 
 
@@ -18756,19 +18841,19 @@ static void init_choosers(s7_scheme *sc)
 #define GEN_F(Name, Type)				\
   f = s7_name_to_value(sc, Name);			\
   s7_function_set_chooser(sc, f, Type ## _chooser);			\
-  s7_function_set_rs(f, is_ ## Type ## _rs); \
+  s7_rs_set_function(f, is_ ## Type ## _rs); \
   store_choices(sc, f, wrapped_ ## Type ## _1, wrapped_ ## Type ## _2, NULL, wrapped_ ## Type ## _p);
   
 #define GEN_F1(Name, Type)				\
   f = s7_name_to_value(sc, Name);			\
   s7_function_set_chooser(sc, f, Type ## _chooser);			\
-  s7_function_set_rs(f, is_ ## Type ## _rs); \
+  s7_rs_set_function(f, is_ ## Type ## _rs); \
   store_choices(sc, f, wrapped_ ## Type ## _1, NULL, NULL, wrapped_ ## Type ## _p);
 
 #define GEN_F3(Name, Type)				\
   f = s7_name_to_value(sc, Name);			\
   s7_function_set_chooser(sc, f, Type ## _chooser);			\
-  s7_function_set_rs(f, is_ ## Type ## _rs); \
+  s7_rs_set_function(f, is_ ## Type ## _rs); \
   store_choices(sc, f, wrapped_ ## Type ## _1, wrapped_ ## Type ## _2, wrapped_ ## Type ## _3, wrapped_ ## Type ## _p);
 
 

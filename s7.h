@@ -683,7 +683,10 @@ void s7_function_set_let_looped(s7_pointer f, s7_pointer c);
 s7_pointer s7_local_slot(s7_scheme *sc, s7_pointer symbol);
 s7_pointer s7_is_local_variable(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
 
-void s7_function_set_rs(s7_pointer f, s7_Double (*rsp(s7_scheme *sc, s7_pointer expr))(s7_scheme *sc, s7_pointer **p));
+typedef s7_Double (*s7_rsf_t)(s7_scheme *sc, s7_pointer **p);
+typedef s7_rsf_t (*s7_rsp_t)(s7_scheme *sc, s7_pointer expr);
+void s7_rs_set_function(s7_pointer f, s7_rsp_t rsp);
+s7_rsp_t s7_rs_function(s7_scheme *sc, s7_pointer func);
 s7_pointer *s7_rs_store(s7_scheme *sc, s7_pointer val);
 /* end CLM stuff */
 

@@ -855,7 +855,7 @@ implement the standard old-time macros.
 &gt; (define-macro (<em class=def id="trace">trace</em> f)
     `(define ,f 
        (apply lambda 'args 
-         `((format #t "(~A ~{~A~^ ~}) -&gt; " ',,f args)
+         `((format #t "(~A ~{~A~^ ~}) -&gt; " ',',f args)
            (let ((val (apply ,,f args))) 
              (format #t "~A~%" val) 
              val)))))
