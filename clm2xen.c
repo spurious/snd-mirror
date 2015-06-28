@@ -9973,40 +9973,39 @@ static mus_any *cadr_gen(s7_scheme *sc, s7_pointer expr)
   s7_pointer sym, o;
   mus_xen *gn;
 
-  if (!s7_is_null(sc, s7_cdddr(expr))) return(NULL);
   sym = s7_cadr(expr);
   if (!s7_is_symbol(sym)) return(NULL);
-  if (s7_local_slot(sc, sym)) return(NULL);
+  /* if (s7_local_slot(sc, sym)) return(NULL); */
   o = s7_symbol_value(sc, sym);
   gn = (mus_xen *)s7_object_value_checked(o, mus_xen_tag);
   if (!gn) return(NULL);
-
   return(gn->gen);
 }
 
-static s7_rsf_t caddr_gen(s7_scheme *sc, s7_pointer a2, s7_rsf_t func)
+static s7_rsf_t caddr_rsf(s7_scheme *sc, s7_pointer a2, s7_rsf_t func)
 {
-  s7_pointer *cur_rs;
+  s7_Int cur_rs;
   s7_pointer val_sym, val;
-  s7_rsf_t rsf; s7_rsp_t rsp;
+  s7_rsf_t rsf; 
+  s7_rsp_t rsp;
+
   val_sym = car(a2);
   if (!s7_is_symbol(val_sym)) return(NULL);
-  if (s7_local_slot(sc, val_sym)) return(NULL);
+  /* if (s7_local_slot(sc, val_sym)) return(NULL); */
   val = s7_symbol_value(sc, val_sym);
   rsp = s7_rs_function(sc, val); 
   if (!rsp) return(NULL);
   cur_rs = s7_rs_store(sc, NULL);
   rsf = rsp(sc, a2);
   if (!rsf) return(NULL);
-  (*cur_rs) = (s7_pointer)rsf;
+  s7_rs_store_at(sc, cur_rs, (s7_pointer)rsf);
   return(func);
 }
 
 #define GEN_RS_1(Type, Func)					\
   static s7_Double Type ## _rs(s7_scheme *sc, s7_pointer **p)	\
   {								\
-    mus_any *g; g = (mus_any *)(*(*p));				\
-    (*p)++;							\
+    mus_any *g; g = (mus_any *)(*(*p));	(*p)++;			\
     return(Func(g));						\
   }								\
   static s7_rsf_t is_ ## Type ## _rs(s7_scheme *sc, s7_pointer expr) \
@@ -10022,37 +10021,30 @@ static s7_rsf_t caddr_gen(s7_scheme *sc, s7_pointer a2, s7_rsf_t func)
 #define GEN_RS(Type, Func1, Func2)				\
   static s7_Double Type ## _rs(s7_scheme *sc, s7_pointer **p)	\
   {								\
-    mus_any *g; g = (mus_any *)(*(*p));				\
-    (*p)++;							\
+    mus_any *g; g = (mus_any *)(*(*p));	(*p)++;			\
     return(Func1(g));						\
   }								\
   static s7_Double Type ## _rs_g(s7_scheme *sc, s7_pointer **p)	\
   {								\
     s7_pointer a2;						\
-    mus_any *g; g = (mus_any *)(*(*p));				\
-    (*p)++;							\
-    a2 = (**p);							\
-    (*p)++;							\
+    mus_any *g; g = (mus_any *)(*(*p));	(*p)++;			\
+    a2 = (**p);	(*p)++;						\
     return(Func2(g, s7_number_to_real(sc, a2)));		\
   }								\
   static s7_Double Type ## _rs_slot(s7_scheme *sc, s7_pointer **p)	\
   {								\
     s7_Double a2;						\
     s7_pointer slot;						\
-    mus_any *g; g = (mus_any *)(*(*p));				\
-    (*p)++;							\
+    mus_any *g; g = (mus_any *)(*(*p));	(*p)++;			\
     slot = **p;							\
-    a2 = s7_number_to_real(sc, s7_slot_value(slot));		\
-    (*p)++;							\
+    a2 = s7_number_to_real(sc, s7_slot_value(slot)); (*p)++;	\
     return(Func2(g, a2));					\
   }								\
   static s7_Double Type ## _rs_rsf(s7_scheme *sc, s7_pointer **p)	\
   {								\
     s7_rsf_t f;							\
-    mus_any *g; g = (mus_any *)(*(*p));				\
-    (*p)++;							\
-    f = (s7_rsf_t)(**p);					\
-    (*p)++;							\
+    mus_any *g; g = (mus_any *)(*(*p)); (*p)++;			\
+    f = (s7_rsf_t)(**p); (*p)++;				\
     return(Func2(g, f(sc, p)));					\
   }								\
   static s7_rsf_t is_ ## Type ## _rs(s7_scheme *sc, s7_pointer expr) \
@@ -10063,18 +10055,19 @@ static s7_rsf_t caddr_gen(s7_scheme *sc, s7_pointer a2, s7_rsf_t func)
       {									\
         s7_pointer a2;							\
         s7_rs_store(sc, (s7_pointer)g);					\
-        if (s7_is_null(sc, s7_cddr(expr))) return(Type ## _rs); \
+        if (s7_is_null(sc, s7_cddr(expr))) return(Type ## _rs);		\
+	if (!s7_is_null(sc, s7_cdddr(expr))) return(NULL);		\
         a2 = caddr(expr);						\
         if (s7_is_real(a2)) {s7_rs_store(sc, a2); return(Type ## _rs_g);} \
         if (s7_is_symbol(a2))						\
           {								\
 	    s7_pointer slot;						\
-	    slot = s7_local_slot(sc, a2);				\
+	    slot = s7_slot(sc, a2);					\
             if (slot) {s7_rs_store(sc, (s7_pointer)slot); return(Type ## _rs_slot);} \
-            s7_rs_store(sc, (s7_pointer)s7_symbol_value(sc, a2)); return(Type ## _rs_g); \
+	    return(NULL);						\
 	  }								\
         if (s7_is_pair(a2))						\
-          return(caddr_gen(sc, a2, Type ## _rs_rsf));			\
+          return(caddr_rsf(sc, a2, Type ## _rs_rsf));			\
       }									\
     return(NULL);							\
   }
@@ -10119,16 +10112,109 @@ GEN_RS(rxykcos, mus_rxykcos_rs, mus_rxykcos)
 GEN_RS(rxyksin, mus_rxyksin_rs, mus_rxyksin)
 GEN_RS(sawtooth_wave, mus_sawtooth_wave_rs, mus_sawtooth_wave)
 GEN_RS(square_wave, mus_square_wave_rs, mus_square_wave)
-GEN_RS_1(src, mus_src_rs)
+GEN_RS(src, mus_src_rs, mus_src_two)
 GEN_RS(table_lookup, mus_table_lookup_rs, mus_table_lookup)
 GEN_RS(triangle_wave, mus_triangle_wave_rs, mus_triangle_wave)
 GEN_RS(two_pole, mus_two_pole_rs, mus_two_pole)
 GEN_RS(two_zero, mus_two_zero_rs, mus_two_zero)
 GEN_RS(wave_train, mus_wave_train_rs, mus_wave_train)
-
 GEN_RS(ssb_am, mus_ssb_am_rs_1, mus_ssb_am_unmodulated)
 
 #define is_all_pass_bank_rs NULL
+
+
+
+static s7_Double outa_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer ind_slot;
+  s7_Double val;
+  s7_rsf_t rsf;
+  ind_slot = **p; (*p)++;
+  rsf = (s7_rsf_t)(**p); (*p)++;
+  val = rsf(sc, p);
+  out_any_2(s7_integer(s7_slot_value(ind_slot)), val, 0, S_outa); 
+  return(val);
+}
+
+static s7_rsf_t is_outa_rs(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer ind_sym, ind, ind_slot, val_sym, val, val_expr;
+  s7_Int cur_rs;
+  s7_rsf_t rsf;
+  
+  if (!s7_is_null(sc, s7_cdddr(expr))) return(NULL);
+  ind_sym = s7_cadr(expr);
+  if (!s7_is_symbol(ind_sym)) return(NULL);
+  ind_slot = s7_slot(sc, ind_sym);
+  if (!ind_slot) return(NULL);
+  ind = s7_slot_value(ind_slot);
+  if (!s7_is_integer(ind)) return(NULL);
+  if (ind < 0) return(NULL);
+
+  val_expr = s7_caddr(expr);
+  if (!s7_is_pair(val_expr)) return(NULL);
+  val_sym = car(val_expr);
+  if (!s7_is_symbol(val_sym)) return(NULL);
+  val = s7_symbol_value(sc, val_sym);
+  if (!s7_rs_function(sc, val)) return(NULL);
+
+  s7_rs_store(sc, ind_slot);
+  cur_rs = s7_rs_store(sc, NULL);
+  rsf = s7_rs_function(sc, val)(sc, val_expr);
+  if (!rsf) return(NULL);
+  s7_rs_store_at(sc, cur_rs, (s7_pointer)rsf);
+
+  return(outa_rs);
+}
+
+
+static s7_Double locsig_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer ind_slot;
+  mus_any *lc;
+  s7_Double val;
+  s7_rsf_t rsf;
+  lc = (mus_any *)(**p); (*p)++;
+  ind_slot = **p; (*p)++;
+  rsf = (s7_rsf_t)(**p); (*p)++;
+  val = rsf(sc, p);
+  mus_locsig(lc, s7_integer(s7_slot_value(ind_slot)), val);
+  return(val);
+}
+
+static s7_rsf_t is_locsig_rs(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer ind_sym, ind, ind_slot, val_sym, val, val_expr;
+  s7_Int cur_rs;
+  s7_rsf_t rsf;
+  mus_any *lc;
+
+  lc = cadr_gen(sc, expr);
+  if ((!lc) || (!mus_is_locsig(lc))) return(NULL);
+
+  ind_sym = s7_caddr(expr);
+  if (!s7_is_symbol(ind_sym)) return(NULL);
+  ind_slot = s7_slot(sc, ind_sym);
+  if (!ind_slot) return(NULL);
+  ind = s7_slot_value(ind_slot);
+  if (!s7_is_integer(ind)) return(NULL);
+
+  val_expr = s7_cadddr(expr);
+  if (!s7_is_pair(val_expr)) return(NULL);
+  val_sym = s7_car(val_expr);
+  if (!s7_is_symbol(val_sym)) return(NULL);
+  val = s7_symbol_value(sc, val_sym);
+  if (!s7_rs_function(sc, val)) return(NULL);
+
+  s7_rs_store(sc, (s7_pointer)lc);
+  s7_rs_store(sc, ind_slot);
+  cur_rs = s7_rs_store(sc, NULL);
+  rsf = s7_rs_function(sc, val)(sc, val_expr);
+  if (!rsf) return(NULL);
+  s7_rs_store_at(sc, cur_rs, (s7_pointer)rsf);
+
+  return(locsig_rs);
+}
 
 
 
@@ -19319,6 +19405,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   f = s7_name_to_value(sc, S_locsig);
+  s7_rs_set_function(f, is_locsig_rs);
   s7_function_set_chooser(sc, f, locsig_chooser);
 
   fm_violin_2 = clm_make_function_no_choice(sc, S_locsig, g_fm_violin_2, 3, 0, false, "fm-violin opt", f);
@@ -19354,6 +19441,7 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, S_outa);
   s7_function_set_chooser(sc, f, outa_chooser);
+  s7_rs_set_function(f, is_outa_rs);
 
   outa_mul_s_delay = clm_make_function_no_choice(sc, S_outa, g_outa_mul_s_delay, 2, 0, false, "outa opt", f);
   outa_mul_s_env = clm_make_function_no_choice(sc, S_outa, g_outa_mul_s_env, 2, 0, false, "outa opt", f);

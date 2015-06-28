@@ -10151,12 +10151,13 @@ EDITS: 2
 		(do ((i 0 (+ i 1)))
 		    ((= i 200))
 		  (outa i (oscil-bank ob))))))
-      (set! vp (channel->float-vector 0 #f (find-sound t1) 0))
-      (set! vo (channel->float-vector 0 #f (find-sound t2) 0))
+      (set! vp (channel->float-vector 0 200 (find-sound t1) 0))
+      (set! vo (channel->float-vector 0 200 (find-sound t2) 0))
       
       (if (not (mus-arrays-equal? vp vo))
-	  (format *stderr* ";simple polywave (with-sound) ~A ~A ~A: ~A~%    ~A~%    ~A~%~A ~A~%" 
+	  (format *stderr* ";simple polywave (with-sound) n: ~A, offset: ~A, type: ~A (len: ~D ~D): dist: ~A~%    ~A~%    ~A~%~A ~A~%" 
 		  n offset (if (= kind mus-chebyshev-first-kind) 'first 'second)
+		  (length vp) (length vo)
 		  (float-vector-peak (float-vector-subtract! (copy vp) vo))
 		  vp vo
 		  p ob))

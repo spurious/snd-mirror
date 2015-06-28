@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.27"
-#define S7_DATE "19-Jun-15"
+#define S7_VERSION "3.28"
+#define S7_DATE "27-Jun-15"
 
 
 typedef long long int s7_Int;
@@ -683,11 +683,13 @@ void s7_function_set_let_looped(s7_pointer f, s7_pointer c);
 s7_pointer s7_local_slot(s7_scheme *sc, s7_pointer symbol);
 s7_pointer s7_is_local_variable(s7_scheme *sc, s7_pointer symbol, s7_pointer e);
 
+  /* these are the new form -- most of the stuff above is probably going away */
 typedef s7_Double (*s7_rsf_t)(s7_scheme *sc, s7_pointer **p);
 typedef s7_rsf_t (*s7_rsp_t)(s7_scheme *sc, s7_pointer expr);
 void s7_rs_set_function(s7_pointer f, s7_rsp_t rsp);
 s7_rsp_t s7_rs_function(s7_scheme *sc, s7_pointer func);
-s7_pointer *s7_rs_store(s7_scheme *sc, s7_pointer val);
+s7_Int s7_rs_store(s7_scheme *sc, s7_pointer val);
+void s7_rs_store_at(s7_scheme *sc, s7_Int index, s7_pointer val);
 /* end CLM stuff */
 
 
@@ -766,6 +768,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 27-Jun:    s7_rsf_t, s7_rsp_t etc.
  * 19-Jun:    removed the ex_parser stuff, set_step_safe, s7_ex_fallback.
  * 5-May:     s7_make_iterator and friends.
  * 16-Apr:    added s7_fill, changed arg interpretation of s7_copy, s7_dynamic_wind.
