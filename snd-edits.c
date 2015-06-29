@@ -9168,7 +9168,6 @@ static s7_rsf_t is_read_sample_rs(s7_scheme *sc, s7_pointer expr)
   if (!s7_is_null(sc, s7_cddr(expr))) return(NULL); /* just (gen s) for now */
   sym = s7_cadr(expr);
   if (!s7_is_symbol(sym)) return(NULL);
-  if (s7_local_slot(sc, sym)) return(NULL);
   o = s7_symbol_value(sc, sym);
   g = (snd_fd *)s7_object_value_checked(o, sf_tag);
   if (g)
@@ -9192,7 +9191,6 @@ static s7_rsf_t is_next_sample_rs(s7_scheme *sc, s7_pointer expr)
   if (!s7_is_null(sc, s7_cddr(expr))) return(NULL);
   sym = s7_cadr(expr);
   if (!s7_is_symbol(sym)) return(NULL);
-  if (s7_local_slot(sc, sym)) return(NULL);
   o = s7_symbol_value(sc, sym);
   g = (snd_fd *)s7_object_value_checked(o, sf_tag);
   if (g)

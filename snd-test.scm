@@ -1247,339 +1247,349 @@
 		   (return (integer->colormap i))))))))
 
 (define (snd_test_1)
-  (letrec ((test-defaults
-	    (lambda (lst)
-	      (if (pair? lst)
-		  (begin
-		    (if (and (not (equal? (cadr lst)  (caddr lst)))
-			     (or (not (pair? (caddr lst)))
-				 (not (member (cadr lst) (caddr lst)))))
-			(if (and (number? (caddr lst))
-				 (not (rational? (caddr lst))))
-			    (if (fneq (cadr lst) (caddr lst))
-				(snd-display #__line__ ";~A is not ~A (~A)" (car lst) (caddr lst) (cadr lst)))
-			    (snd-display #__line__ ";~A is not ~A (~A)" (car lst) (caddr lst) (cadr lst))))
-		    (test-defaults (cdddr lst)))))))
-    
-    (for-each close-sound (sounds)) ; in case others opened elsewhere
-    (test-defaults
-     (list
-      'amp-control (without-errors (amp-control)) 'no-such-sound
-      'amp-control-bounds (cadr (amp-control-bounds)) 8.0
-      'ask-about-unsaved-edits *ask-about-unsaved-edits* #f 
-      'ask-before-overwrite *ask-before-overwrite* #f 
-      'auto-resize *auto-resize* #t 
-      'auto-update *auto-update* #f
-      'auto-update-interval *auto-update-interval* 60.0 
-      'beats-per-measure *beats-per-measure* 4
-      'beats-per-minute *beats-per-minute* 60.0
-      'channel-style *channel-style* 1
-      'clipping *clipping* #f 
-      'clm-table-size *clm-table-size* 512
-      'clm-default-frequency *clm-default-frequency* 0.0
-      'color-cutoff *color-cutoff* '(0.003 0.001)
-      'color-inverted *color-inverted* #t
-      'color-scale *color-scale* 1.0 
-      'colormap *colormap* (list hot-colormap jet-colormap)
-      'contrast-control (without-errors (contrast-control)) 'no-such-sound
-      'contrast-control-amp *contrast-control-amp* 1.0
-      'contrast-control-bounds (cadr (contrast-control-bounds)) 10.0
-      'contrast-control? (without-errors (contrast-control?)) 'no-such-sound
-      'cursor-location-offset *cursor-location-offset* 0
-      'cursor-size *cursor-size* 15
-      'cursor-style *cursor-style* cursor-cross
-      'cursor-update-interval *cursor-update-interval* 0.05
-      'dac-combines-channels *dac-combines-channels* #t
-      'dac-size *dac-size* 256 
-      'default-output-chans *default-output-chans* 1 
-      'default-output-sample-type *default-output-sample-type* mus-ldouble
-      'default-output-header-type *default-output-header-type* mus-next
-      'default-output-srate *default-output-srate* 44100
-      'dot-size *dot-size* 1 
-      'enved-base *enved-base* 1.0 
-      'enved-clip? (enved-clip?) #t
-      'enved-envelope (enved-envelope) ()
-      'enved-filter (enved-filter) #t
-      'enved-filter-order *enved-filter-order* 40
-      'enved-in-dB (enved-in-dB) #f 
-      'enved-power *enved-power* 3.0
-      'enved-style *enved-style* envelope-linear
-      'enved-target *enved-target* 0 
-      'enved-wave? *enved-wave?* #f 
-      'eps-bottom-margin *eps-bottom-margin* 0.0
-      'eps-file *eps-file* "snd.eps" 
-      'eps-left-margin *eps-left-margin* 0.0
-      'eps-size *eps-size* 1.0
-      'expand-control (without-errors (expand-control)) 'no-such-sound
-      'expand-control-bounds (cadr (expand-control-bounds)) 20.0
-      'expand-control-hop *expand-control-hop* 0.05
-      'expand-control-jitter *expand-control-jitter* 0.1
-      'expand-control-length *expand-control-length* 0.15
-      'expand-control-ramp *expand-control-ramp* 0.4
-      'expand-control? (without-errors (expand-control?)) 'no-such-sound
-      'fft-log-frequency *fft-log-frequency* #f 
-      'fft-log-magnitude *fft-log-magnitude* #f 
-      'fft-with-phases *fft-with-phases* #f 
-      'fft-window *fft-window* 6 
-      'fft-window-alpha *fft-window-alpha* 0.0 
-      'fft-window-beta *fft-window-beta* 0.0 
-      'filter-control-coeffs (without-errors (filter-control-coeffs)) 'no-such-sound
-      'filter-control-envelope (without-errors (filter-control-envelope)) 'no-such-sound
-      'filter-control-in-dB *filter-control-in-dB* #f
-      'filter-control-in-hz *filter-control-in-hz* #f
-      'filter-control-order *filter-control-order* 20
-      'filter-control? (without-errors (filter-control?)) 'no-such-sound
-      'graph-cursor *graph-cursor* 34
-      'graph-style *graph-style* graph-lines
-      'graphs-horizontal *graphs-horizontal* #t
-      'grid-density *grid-density* 1.0
-      'html-dir *html-dir* "."
-      'html-program *html-program* "firefox"
-      'initial-beg *initial-beg* 0.0
-      'initial-dur *initial-dur* 0.1
-      'just-sounds *just-sounds* #t
-      'ladspa-dir *ladspa-dir* ""
-      'peak-env-dir *peak-env-dir* (list "" "/home/bil/peaks")
-      'lisp-graph? (without-errors (lisp-graph?)) 'no-such-sound
-;      'listener-prompt *listener-prompt* ">" 
-      'log-freq-start *log-freq-start* 32.0	
-      'mark-tag-height *mark-tag-height* 4
-      'mark-tag-width *mark-tag-width* 10
-      'max-regions *max-regions* 16 
-      'max-transform-peaks *max-transform-peaks* 100
-      'min-dB *min-dB* -60.0 
-      'mix-tag-height *mix-tag-height* 14
-      'mix-tag-width *mix-tag-width* 6
-      'mix-waveform-height *mix-waveform-height* 20 
-      'mus-array-print-length *mus-array-print-length* 8
-      'mus-clipping (mus-clipping) #f
-      'mus-float-equal-fudge-factor *mus-float-equal-fudge-factor* .0000001
-      'play-arrow-size *play-arrow-size* 10
-      'print-length *print-length* '(12 32)
-      'read-only (without-errors (read-only)) 'no-such-sound
-      'region-graph-style *region-graph-style* graph-lines
-      'remember-sound-state *remember-sound-state* #f
-      'reverb-control-feedback *reverb-control-feedback* 1.09
-      'reverb-control-length (without-errors (reverb-control-length)) 'no-such-sound
-      'reverb-control-length-bounds (cadr (reverb-control-length-bounds)) 5.0
-      'reverb-control-lowpass *reverb-control-lowpass* 0.7
-      'reverb-control-scale (without-errors (reverb-control-scale)) 'no-such-sound
-      'reverb-control-scale-bounds (cadr (reverb-control-scale-bounds)) 4.0
-      'reverb-control? (without-errors (reverb-control?)) 'no-such-sound
-      'save-as-dialog-auto-comment *save-as-dialog-auto-comment* #f
-      'save-as-dialog-src *save-as-dialog-src* #f
-      'save-state-file *save-state-file* "saved-snd.scm" 
-      'selection-creates-region *selection-creates-region* #t 
-      'show-axes *show-axes* 1
-      'show-controls *show-controls* #f
-      'show-full-duration *show-full-duration* '(#f #t)
-      'show-full-range *show-full-range* #f 
-      'show-grid *show-grid* #f 
-      'show-indices *show-indices* '(#f #t)
-      'show-marks *show-marks* #t 
-      'show-mix-waveforms *show-mix-waveforms* #t
-      'show-selection-transform *show-selection-transform* #f 
-      'show-sonogram-cursor *show-sonogram-cursor* #f 
-      'show-transform-peaks *show-transform-peaks* '(#f #t)
-      'show-y-zero *show-y-zero* #f 
-      'sinc-width *sinc-width* 10 
-      'spectrum-end *spectrum-end* 1.0
-      'spectro-hop *spectro-hop* 4 
-      'spectrum-start *spectrum-start* 0.0 
-      'spectro-x-angle *spectro-x-angle* (if (provided? 'gl) 300.0 90.0)
-      'spectro-x-scale *spectro-x-scale* (if (provided? 'gl) 1.5 1.0)
-      'spectro-y-angle *spectro-y-angle* (if (provided? 'gl) 320.0 0.0)
-      'spectro-y-scale *spectro-y-scale* 1.0 
-      'spectro-z-angle *spectro-z-angle* (if (provided? 'gl) 0.0 358.0)
-      'spectro-z-scale *spectro-z-scale* (if (provided? 'gl) 1.0 0.1)
-      'speed-control (without-errors (speed-control)) 'no-such-sound
-      'speed-control-bounds (cadr (speed-control-bounds)) 20.0
-      'sync (without-errors (sync)) 'no-such-sound
-      'sync-style *sync-style* sync-by-sound
-      'temp-dir *temp-dir* (list "" "/home/bil/zap/tmp")
-      'time-graph-type *time-graph-type* graph-once
-      'time-graph? (without-errors (time-graph?)) 'no-such-sound
-      'tiny-font *tiny-font* (if (provided? 'snd-motif) "6x12" "Sans 8")
-      'tracking-cursor-style *tracking-cursor-style* cursor-line
-      'transform-graph-type *transform-graph-type* graph-once
-      'transform-graph? (without-errors (transform-graph?)) 'no-such-sound
-      'transform-normalization *transform-normalization* normalize-by-channel
-      'transform-size *transform-size* *transform-size*
-      'transform-type *transform-type* fourier-transform
-      'wavelet-type *wavelet-type* 0 
-      'wavo-hop *wavo-hop* 3 
-      'wavo-trace *wavo-trace* 64 
-      'with-mix-tags *with-mix-tags* #t
-      'with-relative-panes *with-relative-panes* #t
-;      'with-tracking-cursor *with-tracking-cursor* '(#f 1)
-      'with-verbose-cursor *with-verbose-cursor* '(#f #t)
-      'with-inset-graph *with-inset-graph* '(#f #t)
-      'with-interrupts *with-interrupts* #t
-      'with-smpte-label *with-smpte-label* #f
-      'with-toolbar *with-toolbar* '(#f #t)
-      'with-tooltips *with-tooltips* #t
-      'with-menu-icons *with-menu-icons* '(#f #t)
-      'with-pointer-focus *with-pointer-focus* '(#f #t)
-      'x-axis-style *x-axis-style* 0 
-      'zero-pad *zero-pad* 0
-      'zoom-focus-style *zoom-focus-style* 2 
-      ))
-    (if *snd-opened-sound* (snd-display #__line__ ";*snd-opened-sound*: ~A" *snd-opened-sound*))
-
-    (let ((s (open-sound "oboe.snd")))
-    (letrec ((test-vars
+  (when with-gui
+    (letrec ((test-defaults
 	      (lambda (lst)
 		(if (pair? lst)
-		    (let* ((args (car lst))
-			   (name (args 0))
-			   (getfnc (args 1))
-			   (setfnc (lambda (val) (set! (getfnc) val)))
-			   (initval (args 2))
-			   (newval (args 3))
-			   (star-name (args 4)))
-		      (setfnc newval)
-		      (let ((nowval (symbol->value star-name)))
-			(if (and (not (equal? newval nowval))
-				 (or (not (list? newval))
-				     (not (feql newval nowval))))
-			    (if (and (number? newval) (not (rational? newval)))
-				(if (> (abs (- newval nowval)) .01)
-				    (snd-display #__line__ ";~A is not ~A (~A)" star-name newval nowval))
-				(snd-display #__line__ ";~A is not ~A (~A)" star-name newval nowval)))
-			(eval `(set! ,star-name ,initval))
-			(if (not (morally-equal? (getfnc) initval))
-			    (snd-display #__line__ ";* ~A is not ~A" name initval))
-			(eval `(set! ,star-name ,newval))
-			(let ((nowval (getfnc)))
-			  (if (and (not (equal? newval nowval))
-				   (or (not (list? newval))
-				       (not (feql newval nowval))))
-			      (if (and (number? newval) (not (rational? newval)))
-				  (if (> (abs (- newval nowval)) .01)
-				      (snd-display #__line__ ";set! ~A is not ~A (~A)" star-name newval nowval))
-				  (snd-display #__line__ ";set! ~A is not ~A (~A)" star-name newval nowval)))
-			  (setfnc initval))
-			(test-vars (cdr lst))))))))
-      (test-vars 
+		    (begin
+		      (if (and (not (equal? (cadr lst)  (caddr lst)))
+			       (or (not (pair? (caddr lst)))
+				   (not (member (cadr lst) (caddr lst)))))
+			  (if (and (number? (caddr lst))
+				   (not (rational? (caddr lst))))
+			      (if (fneq (cadr lst) (caddr lst))
+				  (snd-display #__line__ ";~A is not ~A (~A)" (car lst) (caddr lst) (cadr lst)))
+			      (snd-display #__line__ ";~A is not ~A (~A)" (car lst) (caddr lst) (cadr lst))))
+		      (test-defaults (cdddr lst)))))))
+      
+      (for-each close-sound (sounds)) ; in case others opened elsewhere
+      (test-defaults
        (list
-	(list 'ask-about-unsaved-edits ask-about-unsaved-edits #f #t '*ask-about-unsaved-edits*)
-	(list 'ask-before-overwrite ask-before-overwrite #f #t '*ask-before-overwrite*)
-	(list 'auto-resize auto-resize #t #f '*auto-resize*)
-	(list 'auto-update auto-update #f #t '*auto-update*)
-	(list 'channel-style channel-style 0 1 '*channel-style*)
-	(list 'color-cutoff color-cutoff 0.003 0.01 '*color-cutoff*)
-	(list 'color-inverted color-inverted #t #f '*color-inverted*)
-	(list 'color-scale color-scale 1.0 0.5 '*color-scale*)
-	(list 'contrast-control-amp contrast-control-amp 1.0 0.5 '*contrast-control-amp*)
-	(list 'auto-update-interval auto-update-interval 60.0 120.0 '*auto-update-interval*)
-	(list 'cursor-update-interval cursor-update-interval 0.05 0.10 '*cursor-update-interval*)
-	(list 'cursor-location-offset cursor-location-offset 0 32768 '*cursor-location-offset*)
-;	(list 'with-tracking-cursor with-tracking-cursor 2 1 '*with-tracking-cursor*)
-	(list 'cursor-size cursor-size 15 30 '*cursor-size*)
-	(list 'cursor-style cursor-style cursor-cross cursor-line '*cursor-style*)
-	(list 'tracking-cursor-style tracking-cursor-style cursor-line cursor-cross '*tracking-cursor-style*)
-	(list 'dac-combines-channels dac-combines-channels #t #f '*dac-combines-channels*)
-	(list 'dac-size dac-size 256 512 '*dac-size*)
-	(list 'clipping clipping #f #t '*clipping*)
-	(list 'default-output-chans default-output-chans 1 2 '*default-output-chans*)
-	(list 'default-output-sample-type default-output-sample-type 1 1 '*default-output-sample-type*)
-	(list 'default-output-srate default-output-srate 22050 44100 '*default-output-srate*)
-	(list 'default-output-header-type default-output-header-type mus-next mus-aifc '*default-output-header-type*)
-	(list 'dot-size dot-size 1 4 '*dot-size*)
-	(list 'enved-base enved-base 1.0  1.5 '*enved-base*)
-	(list 'enved-style enved-style envelope-linear envelope-exponential '*enved-style*)
-	(list 'enved-power enved-power 3.0 3.5 '*enved-power*)
-	(list 'enved-target enved-target 0 1 '*enved-target*)
-	(list 'enved-wave? enved-wave? #f #t '*enved-wave?*)
-	(list 'eps-file eps-file "snd.eps" "snd-1.eps" '*eps-file*)
-	(list 'eps-left-margin eps-left-margin 0.0 72.0 '*eps-left-margin*)
-	(list 'eps-size eps-size 1.0 2.0 '*eps-size*)
-	(list 'eps-bottom-margin eps-bottom-margin 0.0 36.0 '*eps-bottom-margin*)
-	(list 'expand-control-hop expand-control-hop 0.05 0.1 '*expand-control-hop*)
-	(list 'expand-control-jitter expand-control-jitter 0.1 0.2 '*expand-control-jitter*)
-	(list 'expand-control-length expand-control-length 0.15 0.2 '*expand-control-length*)
-	(list 'expand-control-ramp expand-control-ramp 0.4 0.2 '*expand-control-ramp*)
-	(list 'fft-window-alpha fft-window-alpha 0.0  1.0 '*fft-window-alpha*)
-	(list 'fft-window-beta fft-window-beta 0.0  0.5 '*fft-window-beta*)
-	(list 'fft-log-frequency fft-log-frequency #f #t '*fft-log-frequency*)
-	(list 'fft-log-magnitude fft-log-magnitude #f #t '*fft-log-magnitude*)
-	(list 'fft-with-phases fft-with-phases #f #t '*fft-with-phases*)
-	(list 'transform-size transform-size 512 1024 '*transform-size*)
-	(list 'transform-graph-type transform-graph-type graph-once graph-as-sonogram '*transform-graph-type*)
-	(list 'fft-window fft-window 6 5 '*fft-window*)
-	(list 'filter-control-in-dB filter-control-in-dB #f #t '*filter-control-in-dB*)
-	(list 'enved-filter-order enved-filter-order 40 20 '*enved-filter-order*)
-	(list 'filter-control-in-hz filter-control-in-hz #f #t '*filter-control-in-hz*)
-	(list 'filter-control-order filter-control-order 20 40 '*filter-control-order*)
-;	(list 'graph-cursor graph-cursor 34 32 '*graph-cursor*)
-	(list 'graph-style graph-style 0 1 '*graph-style*)
-	(list 'initial-beg initial-beg 0.0 1.0 '*initial-beg*)
-	(list 'initial-dur initial-dur 0.1 1.0 '*initial-dur*)
-	(list 'just-sounds just-sounds #f #t '*just-sounds*)
-	(list 'listener-prompt listener-prompt ">" ":" '*listener-prompt*)
-	(list 'max-transform-peaks max-transform-peaks 100 10 '*max-transform-peaks*)
-	(list 'max-regions max-regions 16 6 '*max-regions*)
-	(list 'min-dB min-dB -60.0 -90.0 '*min-dB*)
-	(list 'log-freq-start log-freq-start 32.0 10.0 '*log-freq-start*)
-	(list 'mix-waveform-height mix-waveform-height 20 40 '*mix-waveform-height*)
-	(list 'mix-tag-height mix-tag-height 14 20 '*mix-tag-height*)
-	(list 'mix-tag-width mix-tag-width 6 20 '*mix-tag-width*)
-	(list 'mark-tag-height mark-tag-height 4 20 '*mark-tag-height*)
-	(list 'mark-tag-width mark-tag-width 10 20 '*mark-tag-width*)
-	(list 'selection-creates-region selection-creates-region #t #f '*selection-creates-region*)
-	(list 'transform-normalization transform-normalization normalize-by-channel dont-normalize '*transform-normalization*)
-	(list 'play-arrow-size play-arrow-size 10 16 '*play-arrow-size*)
-	(list 'print-length print-length 12 16 '*print-length*)
-	(list 'region-graph-style region-graph-style graph-lines graph-lollipops '*region-graph-style*)
-	(list 'reverb-control-decay reverb-control-decay 1.0 2.0 '*reverb-control-decay*)
-	(list 'reverb-control-feedback reverb-control-feedback 1.09 1.6 '*reverb-control-feedback*)
-	(list 'reverb-control-lowpass reverb-control-lowpass 0.7 0.9 '*reverb-control-lowpass*)
-	(list 'show-axes show-axes 1 0 '*show-axes*)
-	(list 'show-full-duration show-full-duration #f #t '*show-full-duration*)
-	(list 'show-full-range show-full-range #f #t '*show-full-range*)
-	(list 'show-transform-peaks show-transform-peaks #f #t '*show-transform-peaks*)
-	(list 'show-indices show-indices #f #t '*show-indices*)
-	(list 'show-marks show-marks #t #f '*show-marks*)
-	(list 'show-mix-waveforms show-mix-waveforms #t #f '*show-mix-waveforms*)
-	(list 'show-selection-transform show-selection-transform #f #t '*show-selection-transform*)
-	(list 'show-y-zero show-y-zero #f #t '*show-y-zero*)
-	(list 'show-grid show-grid #f #t '*show-grid*)
-	(list 'grid-density grid-density 1.0 0.5 '*grid-density*)
-	(list 'show-sonogram-cursor show-sonogram-cursor #f #t '*show-sonogram-cursor*)
-	(list 'sinc-width sinc-width 10 40 '*sinc-width*)
-	(list 'spectrum-end spectrum-end 1.0 0.7 '*spectrum-end*)
-	(list 'spectro-hop spectro-hop 4 10 '*spectro-hop*)
-	(list 'spectrum-start spectrum-start 0.0 0.1 '*spectrum-start*)
-	(list 'spectro-x-angle spectro-x-angle (if (provided? 'gl) 300.0 90.0) 60.0 '*spectro-x-angle*)
-	(list 'spectro-x-scale spectro-x-scale (if (provided? 'gl) 1.5 1.0) 2.0 '*spectro-x-scale*)
-	(list 'spectro-y-angle spectro-y-angle (if (provided? 'gl) 320.0 0.0) 60.0 '*spectro-y-angle*)
-	(list 'spectro-y-scale spectro-y-scale 1.0 2.0 '*spectro-y-scale*)
-	(list 'spectro-z-angle spectro-z-angle (if (provided? 'gl) 0.0 358.0) 60.0 '*spectro-z-angle*)
-	(list 'spectro-z-scale spectro-z-scale (if (provided? 'gl) 1.0 0.1) 0.2 '*spectro-z-scale*)
-	(list 'speed-control-style speed-control-style 0 1 '*speed-control-style*)
-	(list 'speed-control-tones speed-control-tones 12 18 '*speed-control-tones*)
-	(list 'sync-style sync-style sync-by-sound sync-all '*sync-style*)
-	(list 'tiny-font tiny-font (if (provided? 'snd-gtk) "Sans 8" "6x12") (if (provided? 'snd-gtk) "Monospace 10" "9x15") '*tiny-font*)
-	(list 'with-verbose-cursor with-verbose-cursor #f #t '*with-verbose-cursor*)
-	(list 'wavelet-type wavelet-type 0 1 '*wavelet-type*)
-	(list 'time-graph-type time-graph-type graph-once graph-as-wavogram '*time-graph-type*)
-	(list 'wavo-hop wavo-hop 3 6 '*wavo-hop*)
-	(list 'wavo-trace wavo-trace 64 128 '*wavo-trace*)
-	(list 'with-mix-tags with-mix-tags #t #f '*with-mix-tags*)
-	(list 'with-relative-panes with-relative-panes #t #f '*with-relative-panes*)
-	(list 'with-gl with-gl (provided? 'gl) #f '*with-gl*)
-	(list 'x-axis-style x-axis-style 0 1 '*x-axis-style*)
-	(list 'beats-per-minute beats-per-minute 30.0 120.0 '*beats-per-minute*)
-	(list 'beats-per-measure beats-per-measure 1 120 '*beats-per-measure*)
-	(list 'zero-pad zero-pad 0 1 '*zero-pad*)
-	(list 'zoom-focus-style zoom-focus-style 2 1 '*zoom-focus-style*))))
-    (close-sound s))
+	'amp-control (without-errors (amp-control)) 'no-such-sound
+	'amp-control-bounds (cadr (amp-control-bounds)) 8.0
+	'ask-about-unsaved-edits *ask-about-unsaved-edits* #f 
+	'ask-before-overwrite *ask-before-overwrite* #f 
+	'auto-resize *auto-resize* #t 
+	'auto-update *auto-update* #f
+	'auto-update-interval *auto-update-interval* 60.0 
+
+	'beats-per-measure *beats-per-measure* 4
+	'beats-per-minute *beats-per-minute* 60.0
+	'channel-style *channel-style* 1
+	'clipping *clipping* #f 
+	'clm-table-size *clm-table-size* 512
+	'clm-default-frequency *clm-default-frequency* 0.0
+
+	'color-cutoff *color-cutoff* '(0.003 0.001)
+	'color-inverted *color-inverted* #t
+	'color-scale *color-scale* 1.0 
+	'colormap *colormap* (list hot-colormap jet-colormap)
+	'contrast-control (without-errors (contrast-control)) 'no-such-sound
+	'contrast-control-amp *contrast-control-amp* 1.0
+	'contrast-control-bounds (cadr (contrast-control-bounds)) 10.0
+	'contrast-control? (without-errors (contrast-control?)) 'no-such-sound
+	'cursor-location-offset *cursor-location-offset* 0
+	'cursor-size *cursor-size* 15
+	'cursor-style *cursor-style* cursor-cross
+	'cursor-update-interval *cursor-update-interval* 0.05
+	'dac-combines-channels *dac-combines-channels* #t
+	'dac-size *dac-size* 256 
+	'default-output-chans *default-output-chans* 1 
+	'default-output-sample-type *default-output-sample-type* mus-ldouble
+	'default-output-header-type *default-output-header-type* mus-next
+	'default-output-srate *default-output-srate* 44100
+	'dot-size *dot-size* 1 
+
+	'enved-base *enved-base* 1.0 
+	'enved-clip? (enved-clip?) #t
+	'enved-envelope (enved-envelope) ()
+	'enved-filter (enved-filter) #t
+	'enved-filter-order *enved-filter-order* 40
+	'enved-in-dB (enved-in-dB) #f 
+	'enved-power *enved-power* 3.0
+	'enved-style *enved-style* envelope-linear
+	'enved-target *enved-target* 0 
+	'enved-wave? *enved-wave?* #f 
+	'eps-bottom-margin *eps-bottom-margin* 0.0
+	'eps-file *eps-file* "snd.eps" 
+	'eps-left-margin *eps-left-margin* 0.0
+	'eps-size *eps-size* 1.0
+	'expand-control (without-errors (expand-control)) 'no-such-sound
+	'expand-control-bounds (cadr (expand-control-bounds)) 20.0
+	'expand-control-hop *expand-control-hop* 0.05
+	'expand-control-jitter *expand-control-jitter* 0.1
+	'expand-control-length *expand-control-length* 0.15
+	'expand-control-ramp *expand-control-ramp* 0.4
+	'expand-control? (without-errors (expand-control?)) 'no-such-sound
+	'fft-log-frequency *fft-log-frequency* #f 
+	'fft-log-magnitude *fft-log-magnitude* #f 
+	'fft-with-phases *fft-with-phases* #f 
+	'fft-window *fft-window* 6 
+	'fft-window-alpha *fft-window-alpha* 0.0 
+	'fft-window-beta *fft-window-beta* 0.0 
+	'filter-control-coeffs (without-errors (filter-control-coeffs)) 'no-such-sound
+	'filter-control-envelope (without-errors (filter-control-envelope)) 'no-such-sound
+	'filter-control-in-dB *filter-control-in-dB* #f
+	'filter-control-in-hz *filter-control-in-hz* #f
+	'filter-control-order *filter-control-order* 20
+	'filter-control? (without-errors (filter-control?)) 'no-such-sound
+	'graph-cursor *graph-cursor* 34
+	'graph-style *graph-style* graph-lines
+	'graphs-horizontal *graphs-horizontal* #t
+	'grid-density *grid-density* 1.0
+	'html-dir *html-dir* "."
+	'html-program *html-program* "firefox"
+	'initial-beg *initial-beg* 0.0
+	'initial-dur *initial-dur* 0.1
+	'just-sounds *just-sounds* #t
+	'ladspa-dir *ladspa-dir* ""
+	'peak-env-dir *peak-env-dir* (list "" "/home/bil/peaks")
+	'lisp-graph? (without-errors (lisp-graph?)) 'no-such-sound
+					;      'listener-prompt *listener-prompt* ">" 
+	'log-freq-start *log-freq-start* 32.0	
+	'mark-tag-height *mark-tag-height* 4
+	'mark-tag-width *mark-tag-width* 10
+	'max-regions *max-regions* 16 
+	'max-transform-peaks *max-transform-peaks* 100
+	'min-dB *min-dB* -60.0 
+	'mix-tag-height *mix-tag-height* 14
+	'mix-tag-width *mix-tag-width* 6
+	'mix-waveform-height *mix-waveform-height* 20 
+	'mus-array-print-length *mus-array-print-length* 8
+	'mus-clipping (mus-clipping) #f
+	'mus-float-equal-fudge-factor *mus-float-equal-fudge-factor* .0000001
+	'play-arrow-size *play-arrow-size* 10
+	'print-length *print-length* '(12 32)
+	'read-only (without-errors (read-only)) 'no-such-sound
+	'region-graph-style *region-graph-style* graph-lines
+	'remember-sound-state *remember-sound-state* #f
+	'reverb-control-feedback *reverb-control-feedback* 1.09
+	'reverb-control-length (without-errors (reverb-control-length)) 'no-such-sound
+	'reverb-control-length-bounds (cadr (reverb-control-length-bounds)) 5.0
+	'reverb-control-lowpass *reverb-control-lowpass* 0.7
+	'reverb-control-scale (without-errors (reverb-control-scale)) 'no-such-sound
+	'reverb-control-scale-bounds (cadr (reverb-control-scale-bounds)) 4.0
+	'reverb-control? (without-errors (reverb-control?)) 'no-such-sound
+	'save-as-dialog-auto-comment *save-as-dialog-auto-comment* #f
+	'save-as-dialog-src *save-as-dialog-src* #f
+	'save-state-file *save-state-file* "saved-snd.scm" 
+	'selection-creates-region *selection-creates-region* #t 
+	'show-axes *show-axes* 1
+	'show-controls *show-controls* #f
+	'show-full-duration *show-full-duration* '(#f #t)
+	'show-full-range *show-full-range* #f 
+	'show-grid *show-grid* #f 
+	'show-indices *show-indices* '(#f #t)
+	'show-marks *show-marks* #t 
+	'show-mix-waveforms *show-mix-waveforms* #t
+	'show-selection-transform *show-selection-transform* #f 
+	'show-sonogram-cursor *show-sonogram-cursor* #f 
+	'show-transform-peaks *show-transform-peaks* '(#f #t)
+	'show-y-zero *show-y-zero* #f 
+	'sinc-width *sinc-width* 10 
+	'spectrum-end *spectrum-end* 1.0
+	'spectro-hop *spectro-hop* 4 
+	'spectrum-start *spectrum-start* 0.0 
+	'spectro-x-angle *spectro-x-angle* (if (provided? 'gl) 300.0 90.0)
+	'spectro-x-scale *spectro-x-scale* (if (provided? 'gl) 1.5 1.0)
+	'spectro-y-angle *spectro-y-angle* (if (provided? 'gl) 320.0 0.0)
+	'spectro-y-scale *spectro-y-scale* 1.0 
+	'spectro-z-angle *spectro-z-angle* (if (provided? 'gl) 0.0 358.0)
+	'spectro-z-scale *spectro-z-scale* (if (provided? 'gl) 1.0 0.1)
+	'speed-control (without-errors (speed-control)) 'no-such-sound
+	'speed-control-bounds (cadr (speed-control-bounds)) 20.0
+	'sync (without-errors (sync)) 'no-such-sound
+	'sync-style *sync-style* sync-by-sound
+	'temp-dir *temp-dir* (list "" "/home/bil/zap/tmp")
+	'time-graph-type *time-graph-type* graph-once
+	'time-graph? (without-errors (time-graph?)) 'no-such-sound
+	'tiny-font *tiny-font* (if (provided? 'snd-motif) "6x12" "Sans 8")
+	'tracking-cursor-style *tracking-cursor-style* cursor-line
+	'transform-graph-type *transform-graph-type* graph-once
+	'transform-graph? (without-errors (transform-graph?)) 'no-such-sound
+	'transform-normalization *transform-normalization* normalize-by-channel
+	'transform-size *transform-size* *transform-size*
+	'transform-type *transform-type* fourier-transform
+	'wavelet-type *wavelet-type* 0 
+	'wavo-hop *wavo-hop* 3 
+	'wavo-trace *wavo-trace* 64 
+	'with-mix-tags *with-mix-tags* #t
+	'with-relative-panes *with-relative-panes* #t
+					;      'with-tracking-cursor *with-tracking-cursor* '(#f 1)
+	'with-verbose-cursor *with-verbose-cursor* '(#f #t)
+	'with-inset-graph *with-inset-graph* '(#f #t)
+	'with-interrupts *with-interrupts* #t
+	'with-smpte-label *with-smpte-label* #f
+	'with-toolbar *with-toolbar* '(#f #t)
+	'with-tooltips *with-tooltips* #t
+	'with-menu-icons *with-menu-icons* '(#f #t)
+	'with-pointer-focus *with-pointer-focus* '(#f #t)
+	'x-axis-style *x-axis-style* 0 
+	'zero-pad *zero-pad* 0
+	'zoom-focus-style *zoom-focus-style* 2 
+	))
+      (if *snd-opened-sound* (snd-display #__line__ ";*snd-opened-sound*: ~A" *snd-opened-sound*))
+
+      (let ((s (open-sound "oboe.snd")))
+	(letrec ((test-vars
+		  (lambda (lst)
+		    (if (pair? lst)
+			(let* ((args (car lst))
+			       (name (args 0))
+			       (getfnc (args 1))
+			       (setfnc (lambda (val) (set! (getfnc) val)))
+			       (initval (args 2))
+			       (newval (args 3))
+			       (star-name (args 4)))
+			  (setfnc newval)
+			  (let ((nowval (symbol->value star-name)))
+			    (if (and (not (equal? newval nowval))
+				     (or (not (list? newval))
+					 (not (feql newval nowval))))
+				(if (and (number? newval) (not (rational? newval)))
+				    (if (> (abs (- newval nowval)) .01)
+					(snd-display #__line__ ";~A is not ~A (~A)" star-name newval nowval))
+				    (snd-display #__line__ ";~A is not ~A (~A)" star-name newval nowval)))
+			    (eval `(set! ,star-name ,initval))
+			    (if (not (morally-equal? (getfnc) initval))
+				(snd-display #__line__ ";* ~A is not ~A" name initval))
+			    (eval `(set! ,star-name ,newval))
+			    (let ((nowval (getfnc)))
+			      (if (and (not (equal? newval nowval))
+				       (or (not (list? newval))
+					   (not (feql newval nowval))))
+				  (if (and (number? newval) (not (rational? newval)))
+				      (if (> (abs (- newval nowval)) .01)
+					  (snd-display #__line__ ";set! ~A is not ~A (~A)" star-name newval nowval))
+				      (snd-display #__line__ ";set! ~A is not ~A (~A)" star-name newval nowval)))
+			      (setfnc initval))
+			    (test-vars (cdr lst))))))))
+	  (test-vars 
+	   (list
+	    (list 'ask-about-unsaved-edits ask-about-unsaved-edits #f #t '*ask-about-unsaved-edits*)
+	    (list 'ask-before-overwrite ask-before-overwrite #f #t '*ask-before-overwrite*)
+	    (list 'auto-resize auto-resize #t #f '*auto-resize*)
+	    (list 'auto-update auto-update #f #t '*auto-update*)
+	    (list 'channel-style channel-style 0 1 '*channel-style*)
+	    (list 'color-cutoff color-cutoff 0.003 0.01 '*color-cutoff*)
+	    (list 'color-inverted color-inverted #t #f '*color-inverted*)
+	    (list 'color-scale color-scale 1.0 0.5 '*color-scale*)
+	    (list 'contrast-control-amp contrast-control-amp 1.0 0.5 '*contrast-control-amp*)
+	    (list 'auto-update-interval auto-update-interval 60.0 120.0 '*auto-update-interval*)
+	    (list 'cursor-update-interval cursor-update-interval 0.05 0.10 '*cursor-update-interval*)
+	    (list 'cursor-location-offset cursor-location-offset 0 32768 '*cursor-location-offset*)
+					;	(list 'with-tracking-cursor with-tracking-cursor 2 1 '*with-tracking-cursor*)
+	    (list 'cursor-size cursor-size 15 30 '*cursor-size*)
+	    (list 'cursor-style cursor-style cursor-cross cursor-line '*cursor-style*)
+	    (list 'tracking-cursor-style tracking-cursor-style cursor-line cursor-cross '*tracking-cursor-style*)
+	    (list 'dac-combines-channels dac-combines-channels #t #f '*dac-combines-channels*)
+	    (list 'dac-size dac-size 256 512 '*dac-size*)
+	    (list 'clipping clipping #f #t '*clipping*)
+	    (list 'default-output-chans default-output-chans 1 2 '*default-output-chans*)
+	    (list 'default-output-sample-type default-output-sample-type 1 1 '*default-output-sample-type*)
+	    (list 'default-output-srate default-output-srate 22050 44100 '*default-output-srate*)
+	    (list 'default-output-header-type default-output-header-type mus-next mus-aifc '*default-output-header-type*)
+	    (list 'dot-size dot-size 1 4 '*dot-size*)
+
+	    (list 'enved-base enved-base 1.0  1.5 '*enved-base*)
+	    (list 'enved-style enved-style envelope-linear envelope-exponential '*enved-style*)
+	    (list 'enved-power enved-power 3.0 3.5 '*enved-power*)
+	    (list 'enved-target enved-target 0 1 '*enved-target*)
+	    (list 'enved-wave? enved-wave? #f #t '*enved-wave?*)
+	    (list 'eps-file eps-file "snd.eps" "snd-1.eps" '*eps-file*)
+	    (list 'eps-left-margin eps-left-margin 0.0 72.0 '*eps-left-margin*)
+	    (list 'eps-size eps-size 1.0 2.0 '*eps-size*)
+	    (list 'eps-bottom-margin eps-bottom-margin 0.0 36.0 '*eps-bottom-margin*)
+	    (list 'expand-control-hop expand-control-hop 0.05 0.1 '*expand-control-hop*)
+	    (list 'expand-control-jitter expand-control-jitter 0.1 0.2 '*expand-control-jitter*)
+	    (list 'expand-control-length expand-control-length 0.15 0.2 '*expand-control-length*)
+	    (list 'expand-control-ramp expand-control-ramp 0.4 0.2 '*expand-control-ramp*)
+
+	    (list 'fft-window-alpha fft-window-alpha 0.0  1.0 '*fft-window-alpha*)
+	    (list 'fft-window-beta fft-window-beta 0.0  0.5 '*fft-window-beta*)
+	    (list 'fft-log-frequency fft-log-frequency #f #t '*fft-log-frequency*)
+	    (list 'fft-log-magnitude fft-log-magnitude #f #t '*fft-log-magnitude*)
+	    (list 'fft-with-phases fft-with-phases #f #t '*fft-with-phases*)
+	    (list 'transform-size transform-size 512 1024 '*transform-size*)
+	    (list 'transform-graph-type transform-graph-type graph-once graph-as-sonogram '*transform-graph-type*)
+	    (list 'fft-window fft-window 6 5 '*fft-window*)
+	    (list 'filter-control-in-dB filter-control-in-dB #f #t '*filter-control-in-dB*)
+	    (list 'enved-filter-order enved-filter-order 40 20 '*enved-filter-order*)
+	    (list 'filter-control-in-hz filter-control-in-hz #f #t '*filter-control-in-hz*)
+	    (list 'filter-control-order filter-control-order 20 40 '*filter-control-order*)
+					;	(list 'graph-cursor graph-cursor 34 32 '*graph-cursor*)
+
+	    (list 'graph-style graph-style 0 1 '*graph-style*)
+	    (list 'initial-beg initial-beg 0.0 1.0 '*initial-beg*)
+	    (list 'initial-dur initial-dur 0.1 1.0 '*initial-dur*)
+	    (list 'just-sounds just-sounds #f #t '*just-sounds*)
+	    (list 'listener-prompt listener-prompt ">" ":" '*listener-prompt*)
+	    (list 'max-transform-peaks max-transform-peaks 100 10 '*max-transform-peaks*)
+	    (list 'max-regions max-regions 16 6 '*max-regions*)
+	    (list 'min-dB min-dB -60.0 -90.0 '*min-dB*)
+	    (list 'log-freq-start log-freq-start 32.0 10.0 '*log-freq-start*)
+	    (list 'mix-waveform-height mix-waveform-height 20 40 '*mix-waveform-height*)
+	    (list 'mix-tag-height mix-tag-height 14 20 '*mix-tag-height*)
+	    (list 'mix-tag-width mix-tag-width 6 20 '*mix-tag-width*)
+	    (list 'mark-tag-height mark-tag-height 4 20 '*mark-tag-height*)
+	    (list 'mark-tag-width mark-tag-width 10 20 '*mark-tag-width*)
+	    (list 'selection-creates-region selection-creates-region #t #f '*selection-creates-region*)
+	    (list 'transform-normalization transform-normalization normalize-by-channel dont-normalize '*transform-normalization*)
+	    (list 'play-arrow-size play-arrow-size 10 16 '*play-arrow-size*)
+	    (list 'print-length print-length 12 16 '*print-length*)
+	    (list 'region-graph-style region-graph-style graph-lines graph-lollipops '*region-graph-style*)
+	    (list 'reverb-control-decay reverb-control-decay 1.0 2.0 '*reverb-control-decay*)
+	    (list 'reverb-control-feedback reverb-control-feedback 1.09 1.6 '*reverb-control-feedback*)
+	    (list 'reverb-control-lowpass reverb-control-lowpass 0.7 0.9 '*reverb-control-lowpass*)
+	    (list 'show-axes show-axes 1 0 '*show-axes*)
+	    (list 'show-full-duration show-full-duration #f #t '*show-full-duration*)
+	    (list 'show-full-range show-full-range #f #t '*show-full-range*)
+	    (list 'show-transform-peaks show-transform-peaks #f #t '*show-transform-peaks*)
+	    (list 'show-indices show-indices #f #t '*show-indices*)
+	    (list 'show-marks show-marks #t #f '*show-marks*)
+	    (list 'show-mix-waveforms show-mix-waveforms #t #f '*show-mix-waveforms*)
+	    (list 'show-selection-transform show-selection-transform #f #t '*show-selection-transform*)
+	    (list 'show-y-zero show-y-zero #f #t '*show-y-zero*)
+	    (list 'show-grid show-grid #f #t '*show-grid*)
+	    (list 'grid-density grid-density 1.0 0.5 '*grid-density*)
+	    (list 'show-sonogram-cursor show-sonogram-cursor #f #t '*show-sonogram-cursor*)
+	    (list 'sinc-width sinc-width 10 40 '*sinc-width*)
+	    (list 'spectrum-end spectrum-end 1.0 0.7 '*spectrum-end*)
+	    (list 'spectro-hop spectro-hop 4 10 '*spectro-hop*)
+	    (list 'spectrum-start spectrum-start 0.0 0.1 '*spectrum-start*)
+	    (list 'spectro-x-angle spectro-x-angle (if (provided? 'gl) 300.0 90.0) 60.0 '*spectro-x-angle*)
+	    (list 'spectro-x-scale spectro-x-scale (if (provided? 'gl) 1.5 1.0) 2.0 '*spectro-x-scale*)
+	    (list 'spectro-y-angle spectro-y-angle (if (provided? 'gl) 320.0 0.0) 60.0 '*spectro-y-angle*)
+	    (list 'spectro-y-scale spectro-y-scale 1.0 2.0 '*spectro-y-scale*)
+	    (list 'spectro-z-angle spectro-z-angle (if (provided? 'gl) 0.0 358.0) 60.0 '*spectro-z-angle*)
+	    (list 'spectro-z-scale spectro-z-scale (if (provided? 'gl) 1.0 0.1) 0.2 '*spectro-z-scale*)
+	    (list 'speed-control-style speed-control-style 0 1 '*speed-control-style*)
+	    (list 'speed-control-tones speed-control-tones 12 18 '*speed-control-tones*)
+	    (list 'sync-style sync-style sync-by-sound sync-all '*sync-style*)
+	    (list 'tiny-font tiny-font (if (provided? 'snd-gtk) "Sans 8" "6x12") (if (provided? 'snd-gtk) "Monospace 10" "9x15") '*tiny-font*)
+	    (list 'with-verbose-cursor with-verbose-cursor #f #t '*with-verbose-cursor*)
+	    (list 'wavelet-type wavelet-type 0 1 '*wavelet-type*)
+	    (list 'time-graph-type time-graph-type graph-once graph-as-wavogram '*time-graph-type*)
+	    (list 'wavo-hop wavo-hop 3 6 '*wavo-hop*)
+	    (list 'wavo-trace wavo-trace 64 128 '*wavo-trace*)
+	    ;(list 'with-mix-tags with-mix-tags #t #f '*with-mix-tags*)
+	    (list 'with-relative-panes with-relative-panes #t #f '*with-relative-panes*)
+	    (list 'with-gl with-gl (provided? 'gl) #f '*with-gl*)
+	    (list 'x-axis-style x-axis-style 0 1 '*x-axis-style*)
+	    (list 'beats-per-minute beats-per-minute 30.0 120.0 '*beats-per-minute*)
+	    (list 'beats-per-measure beats-per-measure 1 120 '*beats-per-measure*)
+	    (list 'zero-pad zero-pad 0 1 '*zero-pad*)
+	    (list 'zoom-focus-style zoom-focus-style 2 1 '*zoom-focus-style*)
+	    )))
+	(close-sound s)
+	))
 
     (set! *ask-about-unsaved-edits* #f)
     (set! *remember-sound-state* #f)
     ))
 
 
+(set! (with-mix-tags) #t) ; assumed in test 16(!)
 (set! *default-output-sample-type* mus-ldouble)
 
 
@@ -1919,307 +1929,307 @@
 	  (set! *temp-dir* "")))
     (if (fneq (sample 1000) 0.0328) (snd-display #__line__ ";sample: ~A?" (sample 1000)))
     
-    (set! *show-controls* #t)
-    (if with-gui
-	(begin
-	  (let ((wid (enved-dialog) ))
-	    (if (not (equal? wid ((dialog-widgets) 1)))
-		(snd-display #__line__ ";enved-dialog -> ~A ~A" wid ((dialog-widgets) 1))))
+    (when with-gui
+      (set! *show-controls* #t)
+      
+      (let ((wid (enved-dialog) ))
+	(if (not (equal? wid ((dialog-widgets) 1)))
+	    (snd-display #__line__ ";enved-dialog -> ~A ~A" wid ((dialog-widgets) 1))))
 					;(if (not ((dialog-widgets) 1)) (snd-display #__line__ ";enved-dialog?"))
-	  (set! (enved-envelope) '(0.0 0.0 1.0 1.0 2.0 0.0))
-	  (if (not (equal? (enved-envelope) (list 0.0 0.0 1.0 1.0 2.0 0.0)))
-	      (snd-display #__line__ ";set enved-envelope to self: ~A?" (enved-envelope)))))
-    
-    (letrec ((test-vars
-	      (lambda (lst)
-		(if (pair? lst)
-		    (let* ((name ((car lst) 0))
-			   (getfnc ((car lst) 1))
-			   (setfnc (lambda (val) (set! (getfnc) val)))
-			   (initval ((car lst) 2))
-			   (newval ((car lst) 3)))
-		      
-		      (setfnc newval)
-		      (let ((nowval (getfnc)))
-			(if (and (not (equal? newval nowval))
-				 (or (not (list? newval))
-				     (not (feql newval nowval))))
-			    (if (and (number? newval) (not (rational? newval)))
-				(if (> (abs (- newval nowval)) .01)
-				    (snd-display #__line__ ";~A is not ~A (~A)" name newval nowval))
-				(snd-display #__line__ ";~A is not ~A (~A)" name newval nowval)))
-			(setfnc initval)
-			(set! (getfnc) newval)
+      (set! (enved-envelope) '(0.0 0.0 1.0 1.0 2.0 0.0))
+      (if (not (equal? (enved-envelope) (list 0.0 0.0 1.0 1.0 2.0 0.0)))
+	  (snd-display #__line__ ";set enved-envelope to self: ~A?" (enved-envelope)))
+      
+      (letrec ((test-vars
+		(lambda (lst)
+		  (if (pair? lst)
+		      (let* ((name ((car lst) 0))
+			     (getfnc ((car lst) 1))
+			     (setfnc (lambda (val) (set! (getfnc) val)))
+			     (initval ((car lst) 2))
+			     (newval ((car lst) 3)))
+			
+			(setfnc newval)
 			(let ((nowval (getfnc)))
 			  (if (and (not (equal? newval nowval))
 				   (or (not (list? newval))
 				       (not (feql newval nowval))))
 			      (if (and (number? newval) (not (rational? newval)))
 				  (if (> (abs (- newval nowval)) .01)
-				      (snd-display #__line__ ";set! ~A is not ~A (~A)" name newval nowval))
-				  (snd-display #__line__ ";set! ~A is not ~A (~A)" name newval nowval)))
-			  (setfnc initval))
-			(test-vars (cdr lst))))))))
-      (test-vars 
-       (list
-	(list 'amp-control amp-control 1.0 0.5)
-	(list 'amp-control-bounds amp-control-bounds (list 0.0 8.0) (list 1.0 5.0))
-	(list 'ask-about-unsaved-edits ask-about-unsaved-edits #f #t)
-	(list 'ask-before-overwrite ask-before-overwrite #f #t)
-	(list 'auto-resize auto-resize #t #f)
-	(list 'auto-update auto-update #f #t)
-	(list 'channel-style channel-style 0 1)
-	(list 'colormap colormap good-colormap better-colormap)
-	(list 'color-cutoff color-cutoff 0.003 0.01)
-	(list 'color-inverted color-inverted #t #f)
-	(list 'color-scale color-scale 1.0 0.5)
-	(list 'contrast-control contrast-control 0.0 0.5)
-	(list 'contrast-control-bounds contrast-control-bounds (list 0.0 10.0) (list 1.0 5.0))
-	(list 'contrast-control-amp contrast-control-amp 1.0 0.5)
-	(list 'contrast-control? contrast-control? #f #t)
-	(list 'auto-update-interval auto-update-interval 60.0 120.0)
-	(list 'cursor-update-interval cursor-update-interval 0.05 0.10)
-	(list 'cursor-location-offset cursor-location-offset 0 32768)
-	(list 'with-tracking-cursor with-tracking-cursor #f #t)
-	(list 'cursor-size cursor-size 15 30)
-	(list 'cursor-style cursor-style cursor-cross cursor-line)
-	(list 'tracking-cursor-style tracking-cursor-style cursor-line cursor-cross)
-	(list 'dac-combines-channels dac-combines-channels #t #f)
-	(list 'dac-size dac-size 256 512)
-	(list 'clipping clipping #f #t)
-	(list 'default-output-chans default-output-chans 1 2)
-	(list 'default-output-sample-type default-output-sample-type 1 1)
-	(list 'default-output-srate default-output-srate 22050 44100)
-	(list 'default-output-header-type default-output-header-type mus-next mus-aifc)
-	(list 'dot-size dot-size 1 4)
-	(list 'enved-base enved-base 1.0  1.5)
-	(list 'enved-clip? enved-clip? #f #t)
-	(list 'enved-in-dB enved-in-dB #f #t)
-	(list 'enved-style enved-style envelope-linear envelope-exponential)
-	(list 'enved-power enved-power 3.0 3.5)
-	(list 'enved-target enved-target 0 1)
-	(list 'enved-wave? enved-wave? #f #t)
-	(list 'eps-file eps-file "snd.eps" "snd-1.eps")
-	(list 'eps-left-margin eps-left-margin 0.0 72.0)
-	(list 'eps-size eps-size 1.0 2.0)
-	(list 'eps-bottom-margin eps-bottom-margin 0.0 36.0)
-	(list 'expand-control expand-control 1.0 2.0)
-	(list 'expand-control-bounds expand-control-bounds (list .001 20.0) (list 1.0 2.0))
-	(list 'expand-control-hop expand-control-hop 0.05 0.1)
-	(list 'expand-control-jitter expand-control-jitter 0.1 0.2)
-	(list 'expand-control-length expand-control-length 0.15 0.2)
-	(list 'expand-control-ramp expand-control-ramp 0.4 0.2)
-	(list 'expand-control? expand-control? #f #t)
-	(list 'fft-window-alpha fft-window-alpha 0.0  1.0)
-	(list 'fft-window-beta fft-window-beta 0.0  0.5)
-	(list 'fft-log-frequency fft-log-frequency #f #t)
-	(list 'fft-log-magnitude fft-log-magnitude #f #t)
-	(list 'fft-with-phases fft-with-phases #f #t)
-	(list 'transform-size transform-size 512 1024)
-	(list 'transform-graph-type transform-graph-type graph-once graph-as-sonogram)
-	(list 'fft-window fft-window 6 5)
-	(list 'transform-graph? transform-graph? #f #t)
-	(list 'filter-control-in-dB filter-control-in-dB #f #t)
-	(list 'filter-control-envelope filter-control-envelope (list 0.0 1.0 1.0 1.0) (list 0.0 1.0 1.0 0.0))
-	(list 'enved-filter enved-filter #t #f)
-	(list 'enved-filter-order enved-filter-order 40 20)
-	(list 'filter-control-in-hz filter-control-in-hz #f #t)
-	(list 'filter-control-order filter-control-order 20 40)
-	(list 'filter-control? filter-control? #f #t)
-	(list 'graph-cursor graph-cursor 34 32)
-	(list 'graph-style graph-style 0 1)
-	(list 'initial-beg initial-beg 0.0 1.0)
-	(list 'initial-dur initial-dur 0.1 1.0)
-	(list 'just-sounds just-sounds #f #t)
-	(list 'listener-prompt listener-prompt ">" ":")
-	(list 'max-transform-peaks max-transform-peaks 100 10)
-	(list 'max-regions max-regions 16 6)
-	(list 'min-dB min-dB -60.0 -90.0)
-	(list 'log-freq-start log-freq-start 32.0 10.0)
-	(list 'mix-waveform-height mix-waveform-height 20 40)
-	(list 'mix-tag-height mix-tag-height 14 20)
-	(list 'mix-tag-width mix-tag-width 6 20)
-	(list 'mark-tag-height mark-tag-height 4 20)
-	(list 'mark-tag-width mark-tag-width 10 20)
-	(list 'mus-clipping mus-clipping #f #t)
-	(list 'selection-creates-region selection-creates-region #t #f)
-	(list 'transform-normalization transform-normalization normalize-by-channel dont-normalize)
-	(list 'play-arrow-size play-arrow-size 10 16)
-	(list 'print-length print-length 12 16)
-	(list 'region-graph-style region-graph-style graph-lines graph-lollipops)
-	(list 'reverb-control-decay reverb-control-decay 1.0 2.0)
-	(list 'reverb-control-feedback reverb-control-feedback 1.09 1.6)
-	(list 'reverb-control-length reverb-control-length 1.0 2.0)
-	(list 'reverb-control-length-bounds reverb-control-length-bounds (list 0.0 5.0) (list 1.0 2.0))
-	(list 'reverb-control-lowpass reverb-control-lowpass 0.7 0.9)
-	(list 'reverb-control-scale reverb-control-scale 0.0 0.2)
-	(list 'reverb-control-scale-bounds reverb-control-scale-bounds (list 0.0 4.0) (list 0.0 0.2))
-	(list 'reverb-control? reverb-control? #f #t)
-	(list 'show-axes show-axes 1 0)
-	(list 'show-full-duration show-full-duration #f #t)
-	(list 'show-full-range show-full-range #f #t)
-	(list 'show-transform-peaks show-transform-peaks #f #t)
-	(list 'show-indices show-indices #f #t)
-	(list 'show-marks show-marks #t #f)
-	(list 'show-mix-waveforms show-mix-waveforms #t #f)
-	(list 'show-selection-transform show-selection-transform #f #t)
-	(list 'show-y-zero show-y-zero #f #t)
-	(list 'show-grid show-grid #f #t)
-	(list 'grid-density grid-density 1.0 0.5)
-	(list 'show-sonogram-cursor show-sonogram-cursor #f #t)
-	(list 'sinc-width sinc-width 10 40)
-	(list 'spectrum-end spectrum-end 1.0 0.7)
-	(list 'spectro-hop spectro-hop 4 10)
-	(list 'spectrum-start spectrum-start 0.0 0.1)
-	(list 'spectro-x-angle spectro-x-angle (if (provided? 'gl) 300.0 90.0) 60.0)
-	(list 'spectro-x-scale spectro-x-scale (if (provided? 'gl) 1.5 1.0) 2.0)
-	(list 'spectro-y-angle spectro-y-angle (if (provided? 'gl) 320.0 0.0) 60.0)
-	(list 'spectro-y-scale spectro-y-scale 1.0 2.0)
-	(list 'spectro-z-angle spectro-z-angle (if (provided? 'gl) 0.0 358.0) 60.0)
-	(list 'spectro-z-scale spectro-z-scale (if (provided? 'gl) 1.0 0.1) 0.2)
-	(list 'speed-control speed-control 1.0 0.5)
-	(list 'speed-control-bounds speed-control-bounds (list 0.05 20.0) (list 1.0 5.0))
-	(list 'speed-control-style speed-control-style 0 1)
-	(list 'speed-control-tones speed-control-tones 12 18)
-	(list 'sync sync 0 1)
-	(list 'sync-style sync-style sync-by-sound sync-all)
-	(list 'tiny-font tiny-font (if (provided? 'snd-gtk) "Sans 8" "6x12") (if (provided? 'snd-gtk) "Monospace 10" "9x15"))
-	(list 'transform-type transform-type fourier-transform autocorrelation)
-	(list 'with-verbose-cursor with-verbose-cursor #f #t)
-	(list 'wavelet-type wavelet-type 0 1)
-	(list 'time-graph? time-graph? #f #t)
-	(list 'time-graph-type time-graph-type graph-once graph-as-wavogram)
-	(list 'wavo-hop wavo-hop 3 6)
-	(list 'wavo-trace wavo-trace 64 128)
-	(list 'with-mix-tags with-mix-tags #t #f)
-	(list 'with-relative-panes with-relative-panes #t #f)
-	(list 'with-gl with-gl (provided? 'gl) #f)
-	(list 'x-axis-style x-axis-style 0 1)
-	(list 'beats-per-minute beats-per-minute 30.0 120.0)
-	(list 'beats-per-measure beats-per-measure 1 120)
-	(list 'zero-pad zero-pad 0 1)
-	(list 'zoom-focus-style zoom-focus-style 2 1))))
-
-    (set! *ask-about-unsaved-edits* #f)    
-    (letrec ((test-bad-args
-	      (lambda (lst)
-		(if (pair? lst)
-		    (let* ((name ((car lst) 0))
-			   (getfnc ((car lst) 1))
-			   (setfnc (lambda (val) (set! (getfnc) val)))
-			   (initval ((car lst) 2))
-			   (newvals ((car lst) 3)))
-		      (for-each
-		       (lambda (n)
-			 (catch #t 
-				(lambda ()
-				  (setfnc n))
-				(lambda args (car args)))
-			 (let ((nowval (getfnc)))
-			   (if (equal? n nowval)
-			       (snd-display #__line__ ";(bad set) ~A = ~A (~A)" name n initval))
-			   (setfnc initval)))
-		       newvals)
-		      (test-bad-args (cdr lst)))))))
-      (test-bad-args
-       (list
-	(list 'amp-control amp-control 1.0 '(-1.0 123.123))
-	(list 'amp-control-bounds amp-control-bounds (list 0.0 8.0) (list #f (list 0.0) (list 1.0 0.0) 2.0))
-	(list 'channel-style channel-style 0 '(32 -1 1.0))
-	(list 'colormap colormap good-colormap '(321 -123))
-	(list 'color-cutoff color-cutoff 0.003 '(-1.0 123.123))
-	(list 'color-scale color-scale 1.0 '(-32.0 2000.0))
-	(list 'contrast-control contrast-control 0.0 '(-123.123 123.123))
-	(list 'contrast-control-bounds contrast-control-bounds (list 0.0 10.0) (list #f (list 0.0) (list 1.0 0.0) 2.0))
-	(list 'cursor-size cursor-size 15 '(1.123 -2.5))
-	(list 'dac-size dac-size 256 '(-1 0 -123))
-	(list 'dot-size dot-size 1 '(0 -1 -123))
-	(list 'enved-target enved-target 0 '(123 -321))
-	(list 'expand-control expand-control 1.0 '(-1.0 0.0))
-	(list 'expand-control-bounds expand-control-bounds (list 0.001 20.0) (list #f (list 0.0) (list 1.0 0.0) 2.0))
-	(list 'expand-control-hop expand-control-hop 0.05 '(-1.0))
-	(list 'expand-control-length expand-control-length 0.15 '(-1.0 0.0))
-	(list 'expand-control-ramp expand-control-ramp 0.4 '(-1.0 1.0 123.123))
-	(list 'fft-window-alpha fft-window-alpha 0.0  '(-1.0 123.123))
-	(list 'fft-window-beta fft-window-beta 0.0  '(-1.0 123.123))
-	(list 'transform-size transform-size 512 '(-1 0))
-	(list 'zero-pad zero-pad 0 '(-1 -123))
-	(list 'cursor-style cursor-style cursor-cross '(-1))
-	(list 'cursor-style cursor-style cursor-line '(2 123))
-	(list 'tracking-cursor-style tracking-cursor-style cursor-line '(-1))
-	(list 'tracking-cursor-style tracking-cursor-style cursor-line '(2 123))
-	(list 'transform-graph-type transform-graph-type graph-once '(-1 123))
-	(list 'fft-window fft-window 6 '(-1 123))
-	(list 'enved-filter-order enved-filter-order 40 '(-1 0))
-	(list 'filter-control-order filter-control-order 20 '(-10 -1 0))
-	(list 'max-transform-peaks max-transform-peaks 100 '(-1))
-	(list 'max-regions max-regions 16 '(-1 -123))
-	(list 'reverb-control-length reverb-control-length 1.0 '(-1.0))
-	(list 'show-axes show-axes 1 '(-1 123))
-	(list 'sinc-width sinc-width 10 '(-10))
-	(list 'spectrum-end spectrum-end 1.0 '(-1.0))
-	(list 'spectro-hop spectro-hop 4 '(-10 -1 0))
-	(list 'spectrum-start spectrum-start 0.0 '(-1.0))
-	(list 'speed-control speed-control 1.0 '(0.0))
-	(list 'speed-control-bounds speed-control-bounds (list 0.05 20.0) (list #f (list 0.0) (list 1.0 0.0) 2.0))
-	(list 'speed-control-style speed-control-style 0 '(-1 10))
-	(list 'sync-style sync-style sync-by-sound '(-1 123))
-	(list 'transform-type transform-type fourier-transform (list (integer->transform -1) (integer->transform 123)))
-	(list 'wavelet-type wavelet-type 0 '(-1 123))
-	(list 'wavo-hop wavo-hop 1 '(0 -123))
-	(list 'wavo-trace wavo-trace 1 '(0 -123))
-	(list 'x-axis-style x-axis-style 0 '(-1 123))
-	(list 'zoom-focus-style zoom-focus-style 2 '(-1 123)))))
-    
-    (set! *sync-style* sync-none)
-
-    (set! (window-width) 300)
-    (set! (window-height) 300)
-    (if (not (> (window-width) 30))
-	(snd-display #__line__ ";window width: ~A is not 300?" (window-width)))
-    (if (not (> (window-height) 30))
-	(snd-display #__line__ ";window height: ~A is not 300?" (window-height)))
-;    (set! (window-x) 123)
-;    (set! (window-y) 321)
-;    (if (not (equal? (window-x) 123))
-;	(snd-display #__line__ ";window x: ~A is not 123?" (window-x)))
-;    (if (not (equal? (window-y) 321))
-;	(snd-display #__line__ ";window y: ~A is not 321?" (window-y)))
-;    (set! (window-y) 10) ; get it back out of harm's way
-    (set! *color-scale* 100.0)
-    (if (fneq *color-scale* 100.0) (snd-display #__line__ ";color-scale to 100: ~A" *color-scale*))
-    
-    (if (procedure? (search-procedure))
-	(snd-display #__line__ ";global search procedure: ~A?" (search-procedure)))
-    (set! (search-procedure) (lambda (y) (> y .1)))
-    (if (not (procedure? (search-procedure)))
-	(snd-display #__line__ ";set global search procedure: ~A?" (search-procedure)))
-    (if (not ((search-procedure) .2))
-	(snd-display #__line__ ";search > .1 .2"))
-    (if ((search-procedure) .02)
-	(snd-display #__line__ ";search > .1 .02"))
-    (set! (search-procedure) (lambda (y) (< y 0.0)))
-    (if ((search-procedure) .02)
-	(snd-display #__line__ ";search < 0.0 .02"))
-    (set! (search-procedure) #f)
-    (if (procedure? (search-procedure))
-	(snd-display #__line__ ";global search procedure after reset: ~A?" (search-procedure)))
-    (set! (search-procedure) (lambda (y) (> y .1)))
-    (if (not (procedure? (search-procedure)))
-	(snd-display #__line__ ";set global search procedure: ~A?" (search-procedure)))
-    
-    (set! *enved-filter-order* 5)
-    (if (not (= *enved-filter-order* 6)) (snd-display #__line__ ";set enved-filter-order 5: ~A" *enved-filter-order*))
-    (if with-gui
-	(begin
-	  (set! (enved-envelope) 'zero_to_one) ; funcs.scm above
-	  (if (not (feql (enved-envelope) zero_to_one)) (snd-display #__line__ ";set symbol enved-envelope: ~A ~A" (enved-envelope) zero_to_one))
-	  (set! (enved-envelope) "mod_down")
-	  (if (not (feql (enved-envelope) mod_down)) (snd-display #__line__ ";set string enved-envelope: ~A ~A" (enved-envelope) mod_down))))
-    
+				      (snd-display #__line__ ";~A is not ~A (~A)" name newval nowval))
+				  (snd-display #__line__ ";~A is not ~A (~A)" name newval nowval)))
+			  (setfnc initval)
+			  (set! (getfnc) newval)
+			  (let ((nowval (getfnc)))
+			    (if (and (not (equal? newval nowval))
+				     (or (not (list? newval))
+					 (not (feql newval nowval))))
+				(if (and (number? newval) (not (rational? newval)))
+				    (if (> (abs (- newval nowval)) .01)
+					(snd-display #__line__ ";set! ~A is not ~A (~A)" name newval nowval))
+				    (snd-display #__line__ ";set! ~A is not ~A (~A)" name newval nowval)))
+			    (setfnc initval))
+			  (test-vars (cdr lst))))))))
+	(test-vars 
+	 (list
+	  (list 'amp-control amp-control 1.0 0.5)
+	  (list 'amp-control-bounds amp-control-bounds (list 0.0 8.0) (list 1.0 5.0))
+	  (list 'ask-about-unsaved-edits ask-about-unsaved-edits #f #t)
+	  (list 'ask-before-overwrite ask-before-overwrite #f #t)
+	  (list 'auto-resize auto-resize #t #f)
+	  (list 'auto-update auto-update #f #t)
+	  (list 'channel-style channel-style 0 1)
+	  (list 'colormap colormap good-colormap better-colormap)
+	  (list 'color-cutoff color-cutoff 0.003 0.01)
+	  (list 'color-inverted color-inverted #t #f)
+	  (list 'color-scale color-scale 1.0 0.5)
+	  (list 'contrast-control contrast-control 0.0 0.5)
+	  (list 'contrast-control-bounds contrast-control-bounds (list 0.0 10.0) (list 1.0 5.0))
+	  (list 'contrast-control-amp contrast-control-amp 1.0 0.5)
+	  (list 'contrast-control? contrast-control? #f #t)
+	  (list 'auto-update-interval auto-update-interval 60.0 120.0)
+	  (list 'cursor-update-interval cursor-update-interval 0.05 0.10)
+	  (list 'cursor-location-offset cursor-location-offset 0 32768)
+	  (list 'with-tracking-cursor with-tracking-cursor #f #t)
+	  (list 'cursor-size cursor-size 15 30)
+	  (list 'cursor-style cursor-style cursor-cross cursor-line)
+	  (list 'tracking-cursor-style tracking-cursor-style cursor-line cursor-cross)
+	  (list 'dac-combines-channels dac-combines-channels #t #f)
+	  (list 'dac-size dac-size 256 512)
+	  (list 'clipping clipping #f #t)
+	  (list 'default-output-chans default-output-chans 1 2)
+	  (list 'default-output-sample-type default-output-sample-type 1 1)
+	  (list 'default-output-srate default-output-srate 22050 44100)
+	  (list 'default-output-header-type default-output-header-type mus-next mus-aifc)
+	  (list 'dot-size dot-size 1 4)
+	  (list 'enved-base enved-base 1.0  1.5)
+	  (list 'enved-clip? enved-clip? #f #t)
+	  (list 'enved-in-dB enved-in-dB #f #t)
+	  (list 'enved-style enved-style envelope-linear envelope-exponential)
+	  (list 'enved-power enved-power 3.0 3.5)
+	  (list 'enved-target enved-target 0 1)
+	  (list 'enved-wave? enved-wave? #f #t)
+	  (list 'eps-file eps-file "snd.eps" "snd-1.eps")
+	  (list 'eps-left-margin eps-left-margin 0.0 72.0)
+	  (list 'eps-size eps-size 1.0 2.0)
+	  (list 'eps-bottom-margin eps-bottom-margin 0.0 36.0)
+	  (list 'expand-control expand-control 1.0 2.0)
+	  (list 'expand-control-bounds expand-control-bounds (list .001 20.0) (list 1.0 2.0))
+	  (list 'expand-control-hop expand-control-hop 0.05 0.1)
+	  (list 'expand-control-jitter expand-control-jitter 0.1 0.2)
+	  (list 'expand-control-length expand-control-length 0.15 0.2)
+	  (list 'expand-control-ramp expand-control-ramp 0.4 0.2)
+	  (list 'expand-control? expand-control? #f #t)
+	  (list 'fft-window-alpha fft-window-alpha 0.0  1.0)
+	  (list 'fft-window-beta fft-window-beta 0.0  0.5)
+	  (list 'fft-log-frequency fft-log-frequency #f #t)
+	  (list 'fft-log-magnitude fft-log-magnitude #f #t)
+	  (list 'fft-with-phases fft-with-phases #f #t)
+	  (list 'transform-size transform-size 512 1024)
+	  (list 'transform-graph-type transform-graph-type graph-once graph-as-sonogram)
+	  (list 'fft-window fft-window 6 5)
+	  (list 'transform-graph? transform-graph? #f #t)
+	  (list 'filter-control-in-dB filter-control-in-dB #f #t)
+	  (list 'filter-control-envelope filter-control-envelope (list 0.0 1.0 1.0 1.0) (list 0.0 1.0 1.0 0.0))
+	  (list 'enved-filter enved-filter #t #f)
+	  (list 'enved-filter-order enved-filter-order 40 20)
+	  (list 'filter-control-in-hz filter-control-in-hz #f #t)
+	  (list 'filter-control-order filter-control-order 20 40)
+	  (list 'filter-control? filter-control? #f #t)
+	  (list 'graph-cursor graph-cursor 34 32)
+	  (list 'graph-style graph-style 0 1)
+	  (list 'initial-beg initial-beg 0.0 1.0)
+	  (list 'initial-dur initial-dur 0.1 1.0)
+	  (list 'just-sounds just-sounds #f #t)
+	  (list 'listener-prompt listener-prompt ">" ":")
+	  (list 'max-transform-peaks max-transform-peaks 100 10)
+	  (list 'max-regions max-regions 16 6)
+	  (list 'min-dB min-dB -60.0 -90.0)
+	  (list 'log-freq-start log-freq-start 32.0 10.0)
+	  (list 'mix-waveform-height mix-waveform-height 20 40)
+	  (list 'mix-tag-height mix-tag-height 14 20)
+	  (list 'mix-tag-width mix-tag-width 6 20)
+	  (list 'mark-tag-height mark-tag-height 4 20)
+	  (list 'mark-tag-width mark-tag-width 10 20)
+	  (list 'mus-clipping mus-clipping #f #t)
+	  (list 'selection-creates-region selection-creates-region #t #f)
+	  (list 'transform-normalization transform-normalization normalize-by-channel dont-normalize)
+	  (list 'play-arrow-size play-arrow-size 10 16)
+	  (list 'print-length print-length 12 16)
+	  (list 'region-graph-style region-graph-style graph-lines graph-lollipops)
+	  (list 'reverb-control-decay reverb-control-decay 1.0 2.0)
+	  (list 'reverb-control-feedback reverb-control-feedback 1.09 1.6)
+	  (list 'reverb-control-length reverb-control-length 1.0 2.0)
+	  (list 'reverb-control-length-bounds reverb-control-length-bounds (list 0.0 5.0) (list 1.0 2.0))
+	  (list 'reverb-control-lowpass reverb-control-lowpass 0.7 0.9)
+	  (list 'reverb-control-scale reverb-control-scale 0.0 0.2)
+	  (list 'reverb-control-scale-bounds reverb-control-scale-bounds (list 0.0 4.0) (list 0.0 0.2))
+	  (list 'reverb-control? reverb-control? #f #t)
+	  (list 'show-axes show-axes 1 0)
+	  (list 'show-full-duration show-full-duration #f #t)
+	  (list 'show-full-range show-full-range #f #t)
+	  (list 'show-transform-peaks show-transform-peaks #f #t)
+	  (list 'show-indices show-indices #f #t)
+	  (list 'show-marks show-marks #t #f)
+	  (list 'show-mix-waveforms show-mix-waveforms #t #f)
+	  (list 'show-selection-transform show-selection-transform #f #t)
+	  (list 'show-y-zero show-y-zero #f #t)
+	  (list 'show-grid show-grid #f #t)
+	  (list 'grid-density grid-density 1.0 0.5)
+	  (list 'show-sonogram-cursor show-sonogram-cursor #f #t)
+	  (list 'sinc-width sinc-width 10 40)
+	  (list 'spectrum-end spectrum-end 1.0 0.7)
+	  (list 'spectro-hop spectro-hop 4 10)
+	  (list 'spectrum-start spectrum-start 0.0 0.1)
+	  (list 'spectro-x-angle spectro-x-angle (if (provided? 'gl) 300.0 90.0) 60.0)
+	  (list 'spectro-x-scale spectro-x-scale (if (provided? 'gl) 1.5 1.0) 2.0)
+	  (list 'spectro-y-angle spectro-y-angle (if (provided? 'gl) 320.0 0.0) 60.0)
+	  (list 'spectro-y-scale spectro-y-scale 1.0 2.0)
+	  (list 'spectro-z-angle spectro-z-angle (if (provided? 'gl) 0.0 358.0) 60.0)
+	  (list 'spectro-z-scale spectro-z-scale (if (provided? 'gl) 1.0 0.1) 0.2)
+	  (list 'speed-control speed-control 1.0 0.5)
+	  (list 'speed-control-bounds speed-control-bounds (list 0.05 20.0) (list 1.0 5.0))
+	  (list 'speed-control-style speed-control-style 0 1)
+	  (list 'speed-control-tones speed-control-tones 12 18)
+	  (list 'sync sync 0 1)
+	  (list 'sync-style sync-style sync-by-sound sync-all)
+	  (list 'tiny-font tiny-font (if (provided? 'snd-gtk) "Sans 8" "6x12") (if (provided? 'snd-gtk) "Monospace 10" "9x15"))
+	  (list 'transform-type transform-type fourier-transform autocorrelation)
+	  (list 'with-verbose-cursor with-verbose-cursor #f #t)
+	  (list 'wavelet-type wavelet-type 0 1)
+	  (list 'time-graph? time-graph? #f #t)
+	  (list 'time-graph-type time-graph-type graph-once graph-as-wavogram)
+	  (list 'wavo-hop wavo-hop 3 6)
+	  (list 'wavo-trace wavo-trace 64 128)
+	  (list 'with-mix-tags with-mix-tags #t #f)
+	  (list 'with-relative-panes with-relative-panes #t #f)
+	  (list 'with-gl with-gl (provided? 'gl) #f)
+	  (list 'x-axis-style x-axis-style 0 1)
+	  (list 'beats-per-minute beats-per-minute 30.0 120.0)
+	  (list 'beats-per-measure beats-per-measure 1 120)
+	  (list 'zero-pad zero-pad 0 1)
+	  (list 'zoom-focus-style zoom-focus-style 2 1))))
+      
+      (set! *ask-about-unsaved-edits* #f)    
+      (letrec ((test-bad-args
+		(lambda (lst)
+		  (if (pair? lst)
+		      (let* ((name ((car lst) 0))
+			     (getfnc ((car lst) 1))
+			     (setfnc (lambda (val) (set! (getfnc) val)))
+			     (initval ((car lst) 2))
+			     (newvals ((car lst) 3)))
+			(for-each
+			 (lambda (n)
+			   (catch #t 
+			     (lambda ()
+			       (setfnc n))
+			     (lambda args (car args)))
+			   (let ((nowval (getfnc)))
+			     (if (equal? n nowval)
+				 (snd-display #__line__ ";(bad set) ~A = ~A (~A)" name n initval))
+			     (setfnc initval)))
+			 newvals)
+			(test-bad-args (cdr lst)))))))
+	(test-bad-args
+	 (list
+	  (list 'amp-control amp-control 1.0 '(-1.0 123.123))
+	  (list 'amp-control-bounds amp-control-bounds (list 0.0 8.0) (list #f (list 0.0) (list 1.0 0.0) 2.0))
+	  (list 'channel-style channel-style 0 '(32 -1 1.0))
+	  (list 'colormap colormap good-colormap '(321 -123))
+	  (list 'color-cutoff color-cutoff 0.003 '(-1.0 123.123))
+	  (list 'color-scale color-scale 1.0 '(-32.0 2000.0))
+	  (list 'contrast-control contrast-control 0.0 '(-123.123 123.123))
+	  (list 'contrast-control-bounds contrast-control-bounds (list 0.0 10.0) (list #f (list 0.0) (list 1.0 0.0) 2.0))
+	  (list 'cursor-size cursor-size 15 '(1.123 -2.5))
+	  (list 'dac-size dac-size 256 '(-1 0 -123))
+	  (list 'dot-size dot-size 1 '(0 -1 -123))
+	  (list 'enved-target enved-target 0 '(123 -321))
+	  (list 'expand-control expand-control 1.0 '(-1.0 0.0))
+	  (list 'expand-control-bounds expand-control-bounds (list 0.001 20.0) (list #f (list 0.0) (list 1.0 0.0) 2.0))
+	  (list 'expand-control-hop expand-control-hop 0.05 '(-1.0))
+	  (list 'expand-control-length expand-control-length 0.15 '(-1.0 0.0))
+	  (list 'expand-control-ramp expand-control-ramp 0.4 '(-1.0 1.0 123.123))
+	  (list 'fft-window-alpha fft-window-alpha 0.0  '(-1.0 123.123))
+	  (list 'fft-window-beta fft-window-beta 0.0  '(-1.0 123.123))
+	  (list 'transform-size transform-size 512 '(-1 0))
+	  (list 'zero-pad zero-pad 0 '(-1 -123))
+	  (list 'cursor-style cursor-style cursor-cross '(-1))
+	  (list 'cursor-style cursor-style cursor-line '(2 123))
+	  (list 'tracking-cursor-style tracking-cursor-style cursor-line '(-1))
+	  (list 'tracking-cursor-style tracking-cursor-style cursor-line '(2 123))
+	  (list 'transform-graph-type transform-graph-type graph-once '(-1 123))
+	  (list 'fft-window fft-window 6 '(-1 123))
+	  (list 'enved-filter-order enved-filter-order 40 '(-1 0))
+	  (list 'filter-control-order filter-control-order 20 '(-10 -1 0))
+	  (list 'max-transform-peaks max-transform-peaks 100 '(-1))
+	  (list 'max-regions max-regions 16 '(-1 -123))
+	  (list 'reverb-control-length reverb-control-length 1.0 '(-1.0))
+	  (list 'show-axes show-axes 1 '(-1 123))
+	  (list 'sinc-width sinc-width 10 '(-10))
+	  (list 'spectrum-end spectrum-end 1.0 '(-1.0))
+	  (list 'spectro-hop spectro-hop 4 '(-10 -1 0))
+	  (list 'spectrum-start spectrum-start 0.0 '(-1.0))
+	  (list 'speed-control speed-control 1.0 '(0.0))
+	  (list 'speed-control-bounds speed-control-bounds (list 0.05 20.0) (list #f (list 0.0) (list 1.0 0.0) 2.0))
+	  (list 'speed-control-style speed-control-style 0 '(-1 10))
+	  (list 'sync-style sync-style sync-by-sound '(-1 123))
+	  (list 'transform-type transform-type fourier-transform (list (integer->transform -1) (integer->transform 123)))
+	  (list 'wavelet-type wavelet-type 0 '(-1 123))
+	  (list 'wavo-hop wavo-hop 1 '(0 -123))
+	  (list 'wavo-trace wavo-trace 1 '(0 -123))
+	  (list 'x-axis-style x-axis-style 0 '(-1 123))
+	  (list 'zoom-focus-style zoom-focus-style 2 '(-1 123)))))
+      
+      (set! *sync-style* sync-none)
+      
+      (set! (window-width) 300)
+      (set! (window-height) 300)
+      (if (not (> (window-width) 30))
+	  (snd-display #__line__ ";window width: ~A is not 300?" (window-width)))
+      (if (not (> (window-height) 30))
+	  (snd-display #__line__ ";window height: ~A is not 300?" (window-height)))
+					;    (set! (window-x) 123)
+					;    (set! (window-y) 321)
+					;    (if (not (equal? (window-x) 123))
+					;	(snd-display #__line__ ";window x: ~A is not 123?" (window-x)))
+					;    (if (not (equal? (window-y) 321))
+					;	(snd-display #__line__ ";window y: ~A is not 321?" (window-y)))
+					;    (set! (window-y) 10) ; get it back out of harm's way
+      (set! *color-scale* 100.0)
+      (if (fneq *color-scale* 100.0) (snd-display #__line__ ";color-scale to 100: ~A" *color-scale*))
+      
+      (if (procedure? (search-procedure))
+	  (snd-display #__line__ ";global search procedure: ~A?" (search-procedure)))
+      (set! (search-procedure) (lambda (y) (> y .1)))
+      (if (not (procedure? (search-procedure)))
+	  (snd-display #__line__ ";set global search procedure: ~A?" (search-procedure)))
+      (if (not ((search-procedure) .2))
+	  (snd-display #__line__ ";search > .1 .2"))
+      (if ((search-procedure) .02)
+	  (snd-display #__line__ ";search > .1 .02"))
+      (set! (search-procedure) (lambda (y) (< y 0.0)))
+      (if ((search-procedure) .02)
+	  (snd-display #__line__ ";search < 0.0 .02"))
+      (set! (search-procedure) #f)
+      (if (procedure? (search-procedure))
+	  (snd-display #__line__ ";global search procedure after reset: ~A?" (search-procedure)))
+      (set! (search-procedure) (lambda (y) (> y .1)))
+      (if (not (procedure? (search-procedure)))
+	  (snd-display #__line__ ";set global search procedure: ~A?" (search-procedure)))
+      
+      (set! *enved-filter-order* 5)
+      (if (not (= *enved-filter-order* 6)) (snd-display #__line__ ";set enved-filter-order 5: ~A" *enved-filter-order*))
+      (if with-gui
+	  (begin
+	    (set! (enved-envelope) 'zero_to_one) ; funcs.scm above
+	    (if (not (feql (enved-envelope) zero_to_one)) (snd-display #__line__ ";set symbol enved-envelope: ~A ~A" (enved-envelope) zero_to_one))
+	    (set! (enved-envelope) "mod_down")
+	    (if (not (feql (enved-envelope) mod_down)) (snd-display #__line__ ";set string enved-envelope: ~A ~A" (enved-envelope) mod_down))))
+      
+      (dismiss-all-dialogs))
     (close-sound ind) 
-    (dismiss-all-dialogs)
-    
+      
     (let ((undef ())
 	  (names (list '*snd-opened-sound* 'abort 'add-colormap 'add-mark
 		       'add-player 'add-sound-file-extension 'add-source-file-extension 'add-to-main-menu 'add-to-menu
@@ -7271,15 +7281,16 @@ EDITS: 5
 		(snd-display #__line__ ";with-tracking-cursor set to :track-and-return: start: ~A, end: ~A" here (cursor))))
 
 	  (set! (zoom-focus-style) zoom-focus-middle) 
-	  (set! (x-zoom-slider) .5)
-	  (if (fneq (x-position-slider) 0.25) (snd-display #__line__ ";zoom focus middle .5: ~A" (x-position-slider)))
-	  (set! (x-zoom-slider) .1)
-	  (if (fneq (x-position-slider) 0.45) (snd-display #__line__ ";zoom focus middle .1: ~A" (x-position-slider)))
-	  (set! (x-zoom-slider) .9)
-	  (if (fneq (x-position-slider) 0.05) (snd-display #__line__ ";zoom focus middle .9: ~A" (x-position-slider)))
-	  (set! (zoom-focus-style) zoom-focus-left) 
-	  (set! (x-zoom-slider) .1)
-	  (if (fneq (x-position-slider) 0.05) (snd-display #__line__ ";zoom focus left .1: ~A" (x-position-slider)))
+	  (when with-motif
+	    (set! (x-zoom-slider) .5)
+	    (if (fneq (x-position-slider) 0.25) (snd-display #__line__ ";zoom focus middle .5: ~A" (x-position-slider)))
+	    (set! (x-zoom-slider) .1)
+	    (if (fneq (x-position-slider) 0.45) (snd-display #__line__ ";zoom focus middle .1: ~A" (x-position-slider)))
+	    (set! (x-zoom-slider) .9)
+	    (if (fneq (x-position-slider) 0.05) (snd-display #__line__ ";zoom focus middle .9: ~A" (x-position-slider)))
+	    (set! (zoom-focus-style) zoom-focus-left) 
+	    (set! (x-zoom-slider) .1)
+	    (if (fneq (x-position-slider) 0.05) (snd-display #__line__ ";zoom focus left .1: ~A" (x-position-slider))))
 
 	  (close-sound ind))
 	
@@ -25453,24 +25464,24 @@ EDITS: 2
 	    (snd-display #__line__ ";help-hook #f: ~A ~A" hi ho))
 	(set! (hook-functions help-hook) ())))
     (set! (transform-size fd 0) 256)
-    (if (not (provided? 'snd-gtk))
-	(for-each
-	 (lambda (dpy-type fft-type)
-	   (set! (transform-graph-type fd 0) dpy-type)
-	   (set! (transform-type fd 0) fft-type)
-	   (update-transform-graph fd 0)
-	   (let ((vals (transform->float-vector fd 0)))
-	     (if (not vals) 
-		 (snd-display #__line__ ";transform graph-type: ~A type: ~A -> data: ~A" dpy-type fft-type vals)
-		 (begin
-		   (if (fneq (transform-sample 0 0 fd 0) (vals 0))
-		       (snd-display #__line__ ";transform-sample ~A ~A -> ~A ~A" dpy-type fft-type (vals 0) (transform-sample 0 0 fd 0)))
-		   (if (< (length vals) 256)
-		       (snd-display #__line__ ";transform-> float-vector size: ~A" (length vals)))))))
-	 (list graph-once graph-as-sonogram graph-as-spectrogram
-	       graph-once graph-as-sonogram graph-as-spectrogram)
-	 (list fourier-transform fourier-transform fourier-transform 
-	       autocorrelation autocorrelation autocorrelation)))
+    (when with-motif
+      (for-each
+       (lambda (dpy-type fft-type)
+	 (set! (transform-graph-type fd 0) dpy-type)
+	 (set! (transform-type fd 0) fft-type)
+	 (update-transform-graph fd 0)
+	 (let ((vals (transform->float-vector fd 0)))
+	   (if (not vals) 
+	       (snd-display #__line__ ";transform graph-type: ~A type: ~A -> data: ~A" dpy-type fft-type vals)
+	       (begin
+		 (if (fneq (transform-sample 0 0 fd 0) (vals 0))
+		     (snd-display #__line__ ";transform-sample ~A ~A -> ~A ~A" dpy-type fft-type (vals 0) (transform-sample 0 0 fd 0)))
+		 (if (< (length vals) 256)
+		     (snd-display #__line__ ";transform-> float-vector size: ~A" (length vals)))))))
+       (list graph-once graph-as-sonogram graph-as-spectrogram
+	     graph-once graph-as-sonogram graph-as-spectrogram)
+       (list fourier-transform fourier-transform fourier-transform 
+	     autocorrelation autocorrelation autocorrelation)))
     (let ((tag (catch #t
 		      (lambda ()
 			(transform-sample 5000 0 fd 0))
@@ -37213,319 +37224,324 @@ EDITS: 1
 	(if (fneq (sample 20) -.992) (snd-display #__line__ ";scale-to 1.0 byte (20): ~A" (sample 10)))
 	(close-sound ind))
       
-      (set! *transform-graph-type* graph-once)
-      (set! *fft-window* 6)
-      (set! *show-y-zero* #f)
-      (set! *show-transform-peaks* #f)
-      (set! *fft-log-frequency* #f)
-      (set! *fft-log-magnitude* #f)
-      (set! *with-verbose-cursor* #f)
-      (set! *show-grid* #f)
-      (set! *show-sonogram-cursor* #f)
-      (set! *with-tracking-cursor* #f)
-      (set! *show-controls* #f)
-      (set! *speed-control-tones* 12)
-      (set! *wavelet-type* 0)
-      (set! *spectrum-start* 0.0)
-      (set! *spectro-hop* 4)
-      (set! *fft-window-alpha* 0.0)
-      (set! *fft-window-beta* 0.0)
-      (set! *min-dB* -60.0)
-      (set! *reverb-control-decay* 1.0)
-      
-      (letrec ((test-sound-func-1
-		(lambda (func name ind-1 ind-2 new-val eq-func leq-func settable channel global)
-		  (let* ((old-val (func))
-			 (old-vals (func #t))
-			 (old-default (func #f))
-			 (old-1 (func ind-1))
-			 (old-2 (func ind-2))
-			 (sel-snd (selected-sound))
-			 (unsel-snd (if (equal? sel-snd ind-1) ind-2 ind-1))
-			 (caller (if channel "channel" "sound")))
-		    (if (not (eq-func old-val old-default))
-			(snd-display #__line__ ";~A sound-func: no arg: ~A, #f: ~A" name old-val old-default))
-		    (if (not (or (leq-func old-vals (list old-1 old-2))
-				 (leq-func old-vals (list old-2 old-1))))
-			(snd-display #__line__ ";~A sound-func #t: ~A, sep: ~A" name old-vals (list old-1 old-2)))
-		    (if settable
-			(begin
-			  (set! (func) new-val)
-			  (if (not (eq-func (func) new-val))
-			      (snd-display #__line__ ";~A set no arg: ~A ~A" name (func) new-val))
-			  (if (not (eq-func (func) (func sel-snd)))
-			      (snd-display #__line__ ";~A set no arg sel: ~A ~A" name (func) (func sel-snd)))
-			  (if (or (and global (not (eq-func (func) (func unsel-snd))))
-				  (and (not global) (eq-func (func) (func unsel-snd))))
-			      (snd-display #__line__ ";~A set no arg unsel: ~A ~A (sel: ~A)" name (func) (func unsel-snd) (func sel-snd)))
-			  (if (not (or (leq-func (func #t) (list (func sel-snd) (func unsel-snd)))
-				       (leq-func (func #t) (list (func unsel-snd) (func sel-snd)))))
-			      (snd-display #__line__ ";~A ~A-func #t set: ~A, sep: ~A" name caller (func #t) (list (func sel-snd) (func unsel-snd))))
-			  (set! (func) old-val)
-			  (set! (func ind-1) new-val)
-			  (if (not (eq-func (func ind-1) new-val))
-			      (snd-display #__line__ ";~A set arg: ~A ~A" name (func ind-1) new-val))
-			  (if (eq-func (func ind-2) new-val)
-			      (snd-display #__line__ ";~A set arg (2): ~A ~A" name (func ind-2) new-val))
-			  (if (not (or (leq-func (func #t) (list (func ind-1) (func ind-2)))
-				       (leq-func (func #t) (list (func ind-2) (func ind-1)))))
-			      (snd-display #__line__ ";~A ~A-func arg set: ~A, sep: ~A" name caller (func #t) (list (func ind-1) (func ind-2))))
-			  (set! (func ind-1) old-1)
-			  (set! (func #t) new-val)
-			  (if (not (leq-func (func #t) (list new-val new-val)))
-			      (snd-display #__line__ ";~A ~A-func arg set #t: ~A, sep: ~A" name caller (func #t) (list new-val new-val)))
-			  (if (not (eq-func (func ind-1) new-val))
-			      (snd-display #__line__ ";~A set arg #t: ~A ~A" name (func ind-1) new-val))
-			  (if (not (eq-func (func ind-2) new-val))
-			      (snd-display #__line__ ";~A set arg #t (2): ~A ~A" name (func ind-2) new-val))
-			  (set! (func ind-1) old-1)
-			  (set! (func ind-2) old-2)
-			  (if (not (eq-func (func ind-1) old-1))
-			      (snd-display #__line__ ";~A set arg #t old: ~A ~A" name (func ind-1) old-1))
-			  (if (not (eq-func (func ind-2) old-2))
-			      (snd-display #__line__ ";~A set arg #t (2): ~A ~A" name (func ind-2) old-2)))))))
-	       (test-sound-func (lambda (func name ind-1 ind-2 new-val eq-func leq-func settable)
-				  (test-sound-func-1 func name ind-1 ind-2 new-val eq-func leq-func settable #f #f))))
+      (when with-gui
 	
-	(let ((ind-1 (new-sound "test-1.snd" 1 22050 mus-lfloat mus-next "mono testing" 100))
-	      (ind-2 (new-sound "test-2.snd" 2 44100 mus-bshort mus-aifc "stereo testing" 300)))
+	(set! *transform-graph-type* graph-once)
+	(set! *fft-window* 6)
+	(set! *show-y-zero* #f)
+	(set! *show-transform-peaks* #f)
+	(set! *fft-log-frequency* #f)
+	(set! *fft-log-magnitude* #f)
+	(set! *with-verbose-cursor* #f)
+	(set! *show-grid* #f)
+	(set! *show-sonogram-cursor* #f)
+	(set! *with-tracking-cursor* #f)
+	(set! *show-controls* #f)
+	(set! *speed-control-tones* 12)
+	(set! *wavelet-type* 0)
+	(set! *spectrum-start* 0.0)
+	(set! *spectro-hop* 4)
+	(set! *fft-window-alpha* 0.0)
+	(set! *fft-window-beta* 0.0)
+	(set! *min-dB* -60.0)
+	(set! *reverb-control-decay* 1.0)
+	
+	(letrec ((test-sound-func-1
+		  (lambda (func name ind-1 ind-2 new-val eq-func leq-func settable channel global)
+		    (let* ((old-val (func))
+			   (old-vals (func #t))
+			   (old-default (func #f))
+			   (old-1 (func ind-1))
+			   (old-2 (func ind-2))
+			   (sel-snd (selected-sound))
+			   (unsel-snd (if (equal? sel-snd ind-1) ind-2 ind-1))
+			   (caller (if channel "channel" "sound")))
+		      (if (not (eq-func old-val old-default))
+			  (snd-display #__line__ ";~A sound-func: no arg: ~A, #f: ~A" name old-val old-default))
+		      (if (not (or (leq-func old-vals (list old-1 old-2))
+				   (leq-func old-vals (list old-2 old-1))))
+			  (snd-display #__line__ ";~A sound-func #t: ~A, sep: ~A" name old-vals (list old-1 old-2)))
+		      (if settable
+			  (begin
+			    (set! (func) new-val)
+			    (if (not (eq-func (func) new-val))
+				(snd-display #__line__ ";~A set no arg: ~A ~A" name (func) new-val))
+			    (if (not (eq-func (func) (func sel-snd)))
+				(snd-display #__line__ ";~A set no arg sel: ~A ~A" name (func) (func sel-snd)))
+			    (if (or (and global (not (eq-func (func) (func unsel-snd))))
+				    (and (not global) (eq-func (func) (func unsel-snd))))
+				(snd-display #__line__ ";~A set no arg unsel: ~A ~A (sel: ~A)" name (func) (func unsel-snd) (func sel-snd)))
+			    (if (not (or (leq-func (func #t) (list (func sel-snd) (func unsel-snd)))
+					 (leq-func (func #t) (list (func unsel-snd) (func sel-snd)))))
+				(snd-display #__line__ ";~A ~A-func #t set: ~A, sep: ~A" name caller (func #t) (list (func sel-snd) (func unsel-snd))))
+			    (set! (func) old-val)
+			    (set! (func ind-1) new-val)
+			    (if (not (eq-func (func ind-1) new-val))
+				(snd-display #__line__ ";~A set arg: ~A ~A" name (func ind-1) new-val))
+			    (if (eq-func (func ind-2) new-val)
+				(snd-display #__line__ ";~A set arg (2): ~A ~A" name (func ind-2) new-val))
+			    (if (not (or (leq-func (func #t) (list (func ind-1) (func ind-2)))
+					 (leq-func (func #t) (list (func ind-2) (func ind-1)))))
+				(snd-display #__line__ ";~A ~A-func arg set: ~A, sep: ~A" name caller (func #t) (list (func ind-1) (func ind-2))))
+			    (set! (func ind-1) old-1)
+			    (set! (func #t) new-val)
+			    (if (not (leq-func (func #t) (list new-val new-val)))
+				(snd-display #__line__ ";~A ~A-func arg set #t: ~A, sep: ~A" name caller (func #t) (list new-val new-val)))
+			    (if (not (eq-func (func ind-1) new-val))
+				(snd-display #__line__ ";~A set arg #t: ~A ~A" name (func ind-1) new-val))
+			    (if (not (eq-func (func ind-2) new-val))
+				(snd-display #__line__ ";~A set arg #t (2): ~A ~A" name (func ind-2) new-val))
+			    (set! (func ind-1) old-1)
+			    (set! (func ind-2) old-2)
+			    (if (not (eq-func (func ind-1) old-1))
+				(snd-display #__line__ ";~A set arg #t old: ~A ~A" name (func ind-1) old-1))
+			    (if (not (eq-func (func ind-2) old-2))
+				(snd-display #__line__ ";~A set arg #t (2): ~A ~A" name (func ind-2) old-2)))))))
+		 (test-sound-func (lambda (func name ind-1 ind-2 new-val eq-func leq-func settable)
+				    (test-sound-func-1 func name ind-1 ind-2 new-val eq-func leq-func settable #f #f))))
 	  
-	  (for-each
-	   (lambda (data)
-	     (apply test-sound-func data))
-	   (list
-	    (list srate 'srate ind-1 ind-2 48000 = equal? #t)
-	    (list sample-type 'sample-type ind-1 ind-2 mus-byte = equal? #t)
-	    (list data-location 'data-location ind-1 ind-2 123 = equal? #t)
-	    (list data-size 'data-size ind-1 ind-2 12348 = equal? #t)
-	    (list framples 'framples ind-1 ind-2 12348 = equal? #t)
-	    (list sync 'sync ind-1 ind-2 2 = equal? #t)
-	    (list sample-type 'sample-type ind-1 ind-2 mus-byte = equal? #t)
-	    (list channels 'channels ind-1 ind-2 0 = equal? #f)
-	    (list chans 'chans ind-1 ind-2 0 = equal? #f)
-	    (list header-type 'header-type ind-1 ind-2 0 = equal? #f)
+	  (let ((ind-1 (new-sound "test-1.snd" 1 22050 mus-lfloat mus-next "mono testing" 100))
+		(ind-2 (new-sound "test-2.snd" 2 44100 mus-bshort mus-aifc "stereo testing" 300)))
 	    
-	    (list amp-control 'amp-control ind-1 ind-2 .5 within-.01? feql #t)
-	    (list contrast-control 'contrast-control ind-1 ind-2 .5 within-.01? feql #t)
-	    (list expand-control 'expand-control ind-1 ind-2 .5 within-.01? ffeql #t)
-	    (list speed-control 'speed-control ind-1 ind-2 .5 within-.01? feql #t)
-	    (list reverb-control-length 'reverb-control-length ind-1 ind-2 .5 within-.01? feql #t)
-	    (list reverb-control-scale 'reverb-control-scale ind-1 ind-2 .5 within-.01? feql #t)
+	    (for-each
+	     (lambda (data)
+	       (apply test-sound-func data))
+	     (list
+	      (list srate 'srate ind-1 ind-2 48000 = equal? #t)
+	      (list sample-type 'sample-type ind-1 ind-2 mus-byte = equal? #t)
+	      (list data-location 'data-location ind-1 ind-2 123 = equal? #t)
+	      (list data-size 'data-size ind-1 ind-2 12348 = equal? #t)
+	      (list framples 'framples ind-1 ind-2 12348 = equal? #t)
+	      (list sync 'sync ind-1 ind-2 2 = equal? #t)
+	      (list sample-type 'sample-type ind-1 ind-2 mus-byte = equal? #t)
+	      (list channels 'channels ind-1 ind-2 0 = equal? #f)
+	      (list chans 'chans ind-1 ind-2 0 = equal? #f)
+	      (list header-type 'header-type ind-1 ind-2 0 = equal? #f)
+	      
+	      (reader-cond (with-gui 
+			    (list amp-control 'amp-control ind-1 ind-2 .5 within-.01? feql #t)
+			    (list contrast-control 'contrast-control ind-1 ind-2 .5 within-.01? feql #t)
+			    (list expand-control 'expand-control ind-1 ind-2 .5 within-.01? ffeql #t)
+			    (list speed-control 'speed-control ind-1 ind-2 .5 within-.01? feql #t)
+			    (list reverb-control-length 'reverb-control-length ind-1 ind-2 .5 within-.01? feql #t)
+			    (list reverb-control-scale 'reverb-control-scale ind-1 ind-2 .5 within-.01? feql #t)
+			    
+			    (list contrast-control? 'contrast-control? ind-1 ind-2 #t equal? equal? #t)
+			    (list expand-control? 'expand-control? ind-1 ind-2 #t equal? equal? #t)
+			    (list filter-control? 'filter-control? ind-1 ind-2 #t equal? equal? #t)
+			    (list reverb-control? 'reverb-control? ind-1 ind-2 #t equal? equal? #t)
+			    (list read-only 'read-only ind-1 ind-2 #t equal? equal? #t)))
+	      
+	      (list file-name 'file-name ind-1 ind-2 #f string=? equal? #f)
+	      (list short-file-name 'short-file-name ind-1 ind-2 #f string=? equal? #f)
+	      (list comment 'comment ind-1 ind-2 #f string=? equal? #f)))
 	    
-	    (list contrast-control? 'contrast-control? ind-1 ind-2 #t equal? equal? #t)
-	    (list expand-control? 'expand-control? ind-1 ind-2 #t equal? equal? #t)
-	    (list filter-control? 'filter-control? ind-1 ind-2 #t equal? equal? #t)
-	    (list reverb-control? 'reverb-control? ind-1 ind-2 #t equal? equal? #t)
-	    (list read-only 'read-only ind-1 ind-2 #t equal? equal? #t)
+	    (save-controls #t)
+	    (restore-controls #t)
+	    (reset-controls #t)
+	    (close-sound #t)
+	    (if (not (equal? (sounds) ())) (snd-display #__line__ ";sounds after close-sound #t: ~A" (sounds)))
 	    
-	    (list file-name 'file-name ind-1 ind-2 #f string=? equal? #f)
-	    (list short-file-name 'short-file-name ind-1 ind-2 #f string=? equal? #f)
-	    (list comment 'comment ind-1 ind-2 #f string=? equal? #f)))
-	  
-	  (save-controls #t)
-	  (restore-controls #t)
-	  (reset-controls #t)
-	  (close-sound #t)
-	  (if (not (equal? (sounds) ())) (snd-display #__line__ ";sounds after close-sound #t: ~A" (sounds)))
-	  
-	  ;; snd chn cases
-	  (letrec ((test-channel-func-1 
-		    (lambda (func name ind-1 ind-2 new-val eq-func leq-func settable global)
-		      (let ((old-1-0 (func ind-1 0))
-			    (old-2-0 (func ind-2 0))
-			    (old-2-1 (func ind-2 1))
-			    (old-1-all (func ind-1 #t))
-			    (old-2-all (func ind-2 #t))
-			    (old-all-all (func #t #t)))
-			(if (not (eq-func old-1-0 (car old-1-all))) (snd-display #__line__ ";~A channel-func old 1/#t: ~A ~A" name old-1-0 old-1-all))
-			(if (not (eq-func old-2-0 (car old-2-all))) (snd-display #__line__ ";~A channel-func old 2/#t: ~A ~A" name old-2-0 old-2-all))
-			(if (not (eq-func old-2-1 (cadr old-2-all))) (snd-display #__line__ ";~A channel-func old 2-2/#t: ~A ~A" name old-2-1 old-2-all))
-			(if (not (leq-func old-1-all (list old-1-0))) (snd-display #__line__ ";~A channel-func #t list: ~A ~A" name old-1-all old-1-0))
-			(if (not (leq-func old-2-all (list old-2-0 old-2-1))) 
-			    (snd-display #__line__ ";~A channel-func (2) #t list: ~A ~A ~A" name old-2-all old-2-0 old-2-1))
-			(if (not (and (or (leq-func (car old-all-all) old-1-all)
-					  (leq-func (car old-all-all) old-2-all))
-				      (or (leq-func (cadr old-all-all) old-1-all)
-					  (leq-func (cadr old-all-all) old-2-all))))
-			    (snd-display #__line__ ";~A channel-func #t #t: ~A ~A ~A" name old-all-all old-1-all old-2-all))
-			(if settable
-			    (begin
-			      (set! (func ind-1 0) new-val)
-			      (if (not (eq-func (func ind-1 0) new-val)) (snd-display #__line__ ";~A set channel-func: ~A ~A" name (func ind-1 0) new-val))
-			      (if (eq-func (func ind-2 0) new-val) (snd-display #__line__ ";~A set 2 channel-func: ~A ~A" name (func ind-2 0) new-val))
-			      (set! (func ind-1 0) old-1-0)
-			      (set! (func ind-2 1) new-val)
-			      (if (eq-func (func ind-1 0) new-val) (snd-display #__line__ ";~A set (2) channel-func: ~A ~A" name (func ind-1 0) new-val))
-			      (if (not (eq-func (func ind-2 1) new-val)) (snd-display #__line__ ";~A set (2) 2 channel-func: ~A ~A" name (func ind-2 0) new-val))
-			      (set! (func ind-2 0) new-val)
-			      (set! (func ind-2 #t) old-2-0)
-			      (if (not (eq-func (func ind-2 0) old-2-0)) (snd-display #__line__ ";~A set (#t 0) 2 channel-func: ~A ~A" name (func ind-2 0) old-2-0))
-			      (if (not (eq-func (func ind-2 1) old-2-0)) (snd-display #__line__ ";~A set (#t 1) 2 channel-func: ~A ~A" name (func ind-2 1) old-2-0))
-			      (set! (func ind-2 0) old-2-0)
-			      (set! (func ind-2 1) old-2-1)))
-			)))
-		   (test-channel-func 
-		    (lambda (func name ind-1 ind-2 new-val eq-func leq-func settable global)
-		      (test-sound-func-1 func name ind-1 ind-2 new-val eq-func leq-func settable #t global)
-		      (test-channel-func-1 func name ind-1 ind-2 new-val eq-func leq-func settable global))))
+	    ;; snd chn cases
+	    (letrec ((test-channel-func-1 
+		      (lambda (func name ind-1 ind-2 new-val eq-func leq-func settable global)
+			(let ((old-1-0 (func ind-1 0))
+			      (old-2-0 (func ind-2 0))
+			      (old-2-1 (func ind-2 1))
+			      (old-1-all (func ind-1 #t))
+			      (old-2-all (func ind-2 #t))
+			      (old-all-all (func #t #t)))
+			  (if (not (eq-func old-1-0 (car old-1-all))) (snd-display #__line__ ";~A channel-func old 1/#t: ~A ~A" name old-1-0 old-1-all))
+			  (if (not (eq-func old-2-0 (car old-2-all))) (snd-display #__line__ ";~A channel-func old 2/#t: ~A ~A" name old-2-0 old-2-all))
+			  (if (not (eq-func old-2-1 (cadr old-2-all))) (snd-display #__line__ ";~A channel-func old 2-2/#t: ~A ~A" name old-2-1 old-2-all))
+			  (if (not (leq-func old-1-all (list old-1-0))) (snd-display #__line__ ";~A channel-func #t list: ~A ~A" name old-1-all old-1-0))
+			  (if (not (leq-func old-2-all (list old-2-0 old-2-1))) 
+			      (snd-display #__line__ ";~A channel-func (2) #t list: ~A ~A ~A" name old-2-all old-2-0 old-2-1))
+			  (if (not (and (or (leq-func (car old-all-all) old-1-all)
+					    (leq-func (car old-all-all) old-2-all))
+					(or (leq-func (cadr old-all-all) old-1-all)
+					    (leq-func (cadr old-all-all) old-2-all))))
+			      (snd-display #__line__ ";~A channel-func #t #t: ~A ~A ~A" name old-all-all old-1-all old-2-all))
+			  (if settable
+			      (begin
+				(set! (func ind-1 0) new-val)
+				(if (not (eq-func (func ind-1 0) new-val)) (snd-display #__line__ ";~A set channel-func: ~A ~A" name (func ind-1 0) new-val))
+				(if (eq-func (func ind-2 0) new-val) (snd-display #__line__ ";~A set 2 channel-func: ~A ~A" name (func ind-2 0) new-val))
+				(set! (func ind-1 0) old-1-0)
+				(set! (func ind-2 1) new-val)
+				(if (eq-func (func ind-1 0) new-val) (snd-display #__line__ ";~A set (2) channel-func: ~A ~A" name (func ind-1 0) new-val))
+				(if (not (eq-func (func ind-2 1) new-val)) (snd-display #__line__ ";~A set (2) 2 channel-func: ~A ~A" name (func ind-2 0) new-val))
+				(set! (func ind-2 0) new-val)
+				(set! (func ind-2 #t) old-2-0)
+				(if (not (eq-func (func ind-2 0) old-2-0)) (snd-display #__line__ ";~A set (#t 0) 2 channel-func: ~A ~A" name (func ind-2 0) old-2-0))
+				(if (not (eq-func (func ind-2 1) old-2-0)) (snd-display #__line__ ";~A set (#t 1) 2 channel-func: ~A ~A" name (func ind-2 1) old-2-0))
+				(set! (func ind-2 0) old-2-0)
+				(set! (func ind-2 1) old-2-1)))
+			  )))
+		     (test-channel-func 
+		      (lambda (func name ind-1 ind-2 new-val eq-func leq-func settable global)
+			(test-sound-func-1 func name ind-1 ind-2 new-val eq-func leq-func settable #t global)
+			(test-channel-func-1 func name ind-1 ind-2 new-val eq-func leq-func settable global))))
+	      
+	      (let ((ind-1 (new-sound "test-1.snd" 1 22050 mus-ldouble mus-next "mono testing" 100))
+		    (ind-2 (new-sound "test-2.snd" 2 44100 mus-bshort mus-aifc "stereo testing" 300)))
+		(set! (sample 1 ind-1 0) .1)
+		(set! (sample 2 ind-2 0) .2)
+		(set! (sample 3 ind-2 1) .3)
+		(for-each
+		 (lambda (data)
+		   (apply test-channel-func data))
+		 (list
+		  (list min-dB 'min-dB ind-1 ind-2 -100.0 within-.01? feql #t #t)
+		  
+		  (list x-position-slider 'x-position-slider ind-1 ind-2 .1 within-.01? feql #t #f)
+		  ;; (list y-position-slider 'y-position-slider ind-1 ind-2 0.5 within-.01? feql #t #f)
+		  (list x-zoom-slider 'x-zoom-slider ind-1 ind-2 0.2 within-.01? feql #t #f)
+		  (list y-zoom-slider 'y-zoom-slider ind-1 ind-2 0.2 within-.01? feql #t #f)
+		  (list fft-window-alpha 'fft-window-alpha ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .02)) feql #t #t)
+		  (list fft-window-beta 'fft-window-beta ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .02)) feql #t #t)
+		  (list spectrum-end 'spectrum-end ind-1 ind-2 0.2 within-.01? feql #t #t)
+		  (list spectrum-start 'spectrum-start ind-1 ind-2 0.1 within-.01? feql #t #t)
+		  (list spectro-x-angle 'spectro-x-angle ind-1 ind-2 10.0 within-.01? feql #t #t)
+		  (list spectro-x-scale 'spectro-x-scale ind-1 ind-2 0.2 within-.01? feql #t #t)
+		  (list spectro-y-angle 'spectro-y-angle ind-1 ind-2 10.0 within-.01? feql #t #t)
+		  (list spectro-y-scale 'spectro-y-scale ind-1 ind-2 0.1 within-.01? feql #t #t)
+		  (list spectro-z-angle 'spectro-z-angle ind-1 ind-2 10.0 within-.01? feql #t #t)
+		  (list spectro-z-scale 'spectro-z-scale ind-1 ind-2 0.3 within-.01? feql #t #t)
+		  (list beats-per-minute 'beats-per-minute ind-1 ind-2 100.0 within-.01? feql #t #t)
+		  
+		  (list dot-size 'dot-size ind-1 ind-2 10 = equal? #t #t)
+		  (list x-axis-style 'x-axis-style ind-1 ind-2 1 = equal? #t #t)
+		  ;; (list left-sample 'left-sample ind-1 ind-2 1 (lambda (a b) (< (abs (- a b)) 2)) equal? #t #f)
+		  ;; (list right-sample 'right-sample ind-1 ind-2 50 (lambda (a b) (< (abs (- a b)) 2)) equal? #t #f)
+		  (list show-axes 'show-axes ind-1 ind-2 2 = equal? #t #t)
+		  
+		  (list transform-graph? 'transform-graph? ind-1 ind-2 #t equal? equal? #t #f)
+		  (list time-graph? 'time-graph? ind-1 ind-2 #f equal? equal? #t #f)
+		  (list lisp-graph? 'lisp-graph? ind-1 ind-2 #t equal? equal? #t #f)
+		  (list squelch-update 'squelch-update ind-1 ind-2 #t equal? equal? #t #f)
+		  (list show-y-zero 'show-y-zero ind-1 ind-2 #t equal? equal? #t #t)
+		  (list show-grid 'show-grid ind-1 ind-2 #t equal? equal? #t #t)
+		  (list grid-density 'grid-density ind-1 ind-2 0.5 within-.01? feql #t #t)
+		  (list show-sonogram-cursor 'show-sonogram-cursor ind-1 ind-2 #t equal? equal? #t #t)
+		  (list show-marks 'show-marks ind-1 ind-2 #f equal? equal? #t #t)
+		  (list show-transform-peaks 'show-transform-peaks ind-1 ind-2 #t equal? equal? #t #t)
+		  (list fft-log-frequency 'fft-log-frequency ind-1 ind-2 #t equal? equal? #t #t)
+		  (list fft-log-magnitude 'fft-log-magnitude ind-1 ind-2 #t equal? equal? #t #t)
+		  (list show-mix-waveforms 'show-mix-waveforms ind-1 ind-2 #f equal? equal? #t #t)
+		  (list with-verbose-cursor 'with-verbose-cursor ind-1 ind-2 #t equal? equal? #t #t)
+		  (list max-transform-peaks 'max-transform-peaks ind-1 ind-2 10 = equal? #t #t)
+		  (list wavelet-type 'wavelet-type ind-1 ind-2 1 = equal? #t #t)
+		  (list transform-size 'transform-size ind-1 ind-2 64 = equal? #t #t)
+		  (list transform-graph-type 'transform-graph-type ind-1 ind-2 1 = equal? #t #t)
+		  (list transform-normalization 'transform-normalization ind-1 ind-2 2 = equal? #t #t)
+		  
+		  (list time-graph-type 'time-graph-type ind-1 ind-2 graph-as-wavogram = equal? #t #t)
+		  (list wavo-hop 'wavo-hop ind-1 ind-2 10 = equal? #t #t)
+		  (list wavo-trace 'wavo-trace ind-1 ind-2 10 = equal? #t #t)
+		  (list spectro-hop 'spectro-hop ind-1 ind-2 10 = equal? #t #t)
+		  (list cursor 'cursor ind-1 ind-2 50 = equal? #t #f)
+		  (list cursor-style 'cursor-style ind-1 ind-2 1 = equal? #t #t)
+		  (list cursor-size 'cursor-size ind-1 ind-2 10 = equal? #t #t)
+		  
+		  (list framples 'framples ind-1 ind-2 50 = equal? #t #f)
+		  (list zero-pad 'zero-pad ind-1 ind-2 1 = equal? #t #t)
+		  (list fft-window 'fft-window ind-1 ind-2 1 = equal? #t #t)
+					;               (list transform-type 'transform-type ind-1 ind-2 1 equal? equal? #t #t)
+		  )))
+	      (update-time-graph #t #t)
+	      (update-transform-graph #t #t)
+	      (update-lisp-graph #t #t)
+	      
+	      (close-sound #f)
+	      (close-sound #f)
+	      (if (not (equal? (sounds) ())) (snd-display #__line__ ";sounds after close-sound #t: ~A" (sounds)))))
+	
+	  (letrec ((test-sound-func-2
+		    (lambda (func name ind-1 ind-2 new-val eq-func leq-func)
+		      (let* ((old-global-val (func))
+			     (old-vals (func #t))
+			     (old-1 (func ind-1))
+			     (old-2 (func ind-2))
+			     (sel-snd (selected-sound))
+			     (unsel-snd (if (equal? sel-snd ind-1) ind-2 ind-1)))
+			(if (not (or (leq-func old-vals (list old-1 old-2))
+				     (leq-func old-vals (list old-2 old-1))))
+			    (snd-display #__line__ ";~A sound-func #t: ~A, sep: ~A" name old-vals (list old-1 old-2)))
+			(set! (func) new-val)
+			(if (not (eq-func (func) new-val))
+			    (snd-display #__line__ ";~A global set no arg: ~A ~A" name (func) new-val))
+			(if (not (eq-func (func) (func sel-snd)))
+			    (snd-display #__line__ ";~A global set no arg sel: ~A ~A" name (func) (func sel-snd)))
+			(if (not (eq-func (func) (func unsel-snd)))
+			    (snd-display #__line__ ";~A set global no arg unsel: ~A ~A (sel: ~A)" name (func) (func unsel-snd) (func sel-snd)))
+			(if (not (or (leq-func (func #t) (list (func sel-snd) (func unsel-snd)))
+				     (leq-func (func #t) (list (func unsel-snd) (func sel-snd)))))
+			    (snd-display #__line__ ";~A func #t set: ~A, sep: ~A" name (func #t) (list (func sel-snd) (func unsel-snd))))
+			(set! (func) old-global-val)
+			(set! (func ind-1) new-val)
+			(if (not (eq-func (func ind-1) new-val))
+			    (snd-display #__line__ ";~A set arg: ~A ~A" name (func ind-1) new-val))
+			(if (eq-func (func ind-2) new-val)
+			    (snd-display #__line__ ";~A set arg (2): ~A ~A" name (func ind-2) new-val))
+			(if (not (or (leq-func (func #t) (list (func ind-1) (func ind-2)))
+				     (leq-func (func #t) (list (func ind-2) (func ind-1)))))
+			    (snd-display #__line__ ";~A func arg set: ~A, sep: ~A" name (func #t) (list (func ind-1) (func ind-2))))
+			(set! (func ind-1) old-1)
+			(set! (func #t) new-val)
+			(if (not (leq-func (func #t) (list new-val new-val)))
+			    (snd-display #__line__ ";~A func arg set #t: ~A, sep: ~A" name (func #t) (list new-val new-val)))
+			(if (not (eq-func (func ind-1) new-val))
+			    (snd-display #__line__ ";~A set arg #t: ~A ~A" name (func ind-1) new-val))
+			(if (not (eq-func (func ind-2) new-val))
+			    (snd-display #__line__ ";~A set arg #t (2): ~A ~A" name (func ind-2) new-val))
+			(if (eq-func (func) new-val)
+			    (snd-display #__line__ ";~A overwrote global: ~A ~A" name (func) new-val))
+			(set! (func ind-1) old-1)
+			(set! (func ind-2) old-2)
+			(if (not (eq-func (func ind-1) old-1))
+			    (snd-display #__line__ ";~A set arg #t old: ~A ~A" name (func ind-1) old-1))
+			(if (not (eq-func (func ind-2) old-2))
+			    (snd-display #__line__ ";~A set arg #t (2): ~A ~A" name (func ind-2) old-2))))))
+	    
 	    (let ((ind-1 (new-sound "test-1.snd" 1 22050 mus-ldouble mus-next "mono testing" 100))
 		  (ind-2 (new-sound "test-2.snd" 2 44100 mus-bshort mus-aifc "stereo testing" 300)))
-	      (set! (sample 1 ind-1 0) .1)
-	      (set! (sample 2 ind-2 0) .2)
-	      (set! (sample 3 ind-2 1) .3)
+	      
 	      (for-each
 	       (lambda (data)
-		 (apply test-channel-func data))
+		 (apply test-sound-func-2 data))
 	       (list
-		(list min-dB 'min-dB ind-1 ind-2 -100.0 within-.01? feql #t #t)
-		(list x-position-slider 'x-position-slider ind-1 ind-2 .1 within-.01? feql #t #f)
+		(list filter-control-in-dB 'filter-control-in-dB ind-1 ind-2 #t eq? equal?)
+		(list filter-control-in-hz 'filter-control-in-hz ind-1 ind-2 #t eq? equal?)
+		(list show-controls 'show-controls ind-1 ind-2 #t eq? equal?)
 		
-;		(list y-position-slider 'y-position-slider ind-1 ind-2 0.5 within-.01? feql #t #f)
-		(list x-zoom-slider 'x-zoom-slider ind-1 ind-2 0.2 within-.01? feql #t #f)
-		(list y-zoom-slider 'y-zoom-slider ind-1 ind-2 0.2 within-.01? feql #t #f)
-		(list fft-window-alpha 'fft-window-alpha ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .02)) feql #t #t)
-		(list fft-window-beta 'fft-window-beta ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .02)) feql #t #t)
-		(list spectrum-end 'spectrum-end ind-1 ind-2 0.2 within-.01? feql #t #t)
-		(list spectrum-start 'spectrum-start ind-1 ind-2 0.1 within-.01? feql #t #t)
-		(list spectro-x-angle 'spectro-x-angle ind-1 ind-2 10.0 within-.01? feql #t #t)
-		(list spectro-x-scale 'spectro-x-scale ind-1 ind-2 0.2 within-.01? feql #t #t)
-		(list spectro-y-angle 'spectro-y-angle ind-1 ind-2 10.0 within-.01? feql #t #t)
-		(list spectro-y-scale 'spectro-y-scale ind-1 ind-2 0.1 within-.01? feql #t #t)
-		(list spectro-z-angle 'spectro-z-angle ind-1 ind-2 10.0 within-.01? feql #t #t)
-		(list spectro-z-scale 'spectro-z-scale ind-1 ind-2 0.3 within-.01? feql #t #t)
-		(list beats-per-minute 'beats-per-minute ind-1 ind-2 100.0 within-.01? feql #t #t)
+		(list speed-control-tones 'speed-control-tones ind-1 ind-2 14 = equal?)
+		(list speed-control-style 'speed-control-style ind-1 ind-2 speed-control-as-semitone = equal?)
+		(list filter-control-order 'filter-control-order ind-1 ind-2 14 = equal?)
 		
-		(list spectro-hop 'spectro-hop ind-1 ind-2 10 = equal? #t #t)
-		(list cursor 'cursor ind-1 ind-2 50 = equal? #t #f)
-		(list cursor-style 'cursor-style ind-1 ind-2 1 = equal? #t #t)
-		(list cursor-size 'cursor-size ind-1 ind-2 10 = equal? #t #t)
-		(list framples 'framples ind-1 ind-2 50 = equal? #t #f)
-		(list zero-pad 'zero-pad ind-1 ind-2 1 = equal? #t #t)
-		(list wavelet-type 'wavelet-type ind-1 ind-2 1 = equal? #t #t)
-		(list time-graph-type 'time-graph-type ind-1 ind-2 graph-as-wavogram = equal? #t #t)
-		(list wavo-hop 'wavo-hop ind-1 ind-2 10 = equal? #t #t)
-		(list wavo-trace 'wavo-trace ind-1 ind-2 10 = equal? #t #t)
-		(list transform-size 'transform-size ind-1 ind-2 64 = equal? #t #t)
-		(list transform-graph-type 'transform-graph-type ind-1 ind-2 1 = equal? #t #t)
-		(list fft-window 'fft-window ind-1 ind-2 1 = equal? #t #t)
-					;               (list transform-type 'transform-type ind-1 ind-2 1 equal? equal? #t #t)
-		(list transform-normalization 'transform-normalization ind-1 ind-2 2 = equal? #t #t)
-		(list max-transform-peaks 'max-transform-peaks ind-1 ind-2 10 = equal? #t #t)
-		(list dot-size 'dot-size ind-1 ind-2 10 = equal? #t #t)
-		(list x-axis-style 'x-axis-style ind-1 ind-2 1 = equal? #t #t)
-					;		(list left-sample 'left-sample ind-1 ind-2 1 (lambda (a b) (< (abs (- a b)) 2)) equal? #t #f)
-					;		(list right-sample 'right-sample ind-1 ind-2 50 (lambda (a b) (< (abs (- a b)) 2)) equal? #t #f)
-		(list show-axes 'show-axes ind-1 ind-2 2 = equal? #t #t)
+		(list expand-control-length 'expand-control-length ind-1 ind-2 .25 within-.01? feql)
+		(list expand-control-ramp 'expand-control-ramp ind-1 ind-2 .25 within-.01? feql)
+		(list expand-control-hop 'expand-control-hop ind-1 ind-2 .25 within-.01? feql)
+		(list expand-control-jitter 'expand-control-jitter ind-1 ind-2 .25 within-.01? feql)
+		(list contrast-control-amp 'contrast-control-amp ind-1 ind-2 .25 within-.01? feql)
+		(list reverb-control-feedback 'reverb-control-feedback ind-1 ind-2 .25 within-.01? feql)
+		(list reverb-control-lowpass 'reverb-control-lowpass ind-1 ind-2 .25 within-.01? feql)
+		(list reverb-control-decay 'reverb-control-decay ind-1 ind-2 .25 within-.01? feql)
 		
-		(list transform-graph? 'transform-graph? ind-1 ind-2 #t equal? equal? #t #f)
-		(list time-graph? 'time-graph? ind-1 ind-2 #f equal? equal? #t #f)
-		(list lisp-graph? 'lisp-graph? ind-1 ind-2 #t equal? equal? #t #f)
-		(list squelch-update 'squelch-update ind-1 ind-2 #t equal? equal? #t #f)
-		(list show-y-zero 'show-y-zero ind-1 ind-2 #t equal? equal? #t #t)
-		(list show-grid 'show-grid ind-1 ind-2 #t equal? equal? #t #t)
-		(list grid-density 'grid-density ind-1 ind-2 0.5 within-.01? feql #t #t)
-		(list show-sonogram-cursor 'show-sonogram-cursor ind-1 ind-2 #t equal? equal? #t #t)
-		(list show-marks 'show-marks ind-1 ind-2 #f equal? equal? #t #t)
-		(list show-transform-peaks 'show-transform-peaks ind-1 ind-2 #t equal? equal? #t #t)
-		(list fft-log-frequency 'fft-log-frequency ind-1 ind-2 #t equal? equal? #t #t)
-		(list fft-log-magnitude 'fft-log-magnitude ind-1 ind-2 #t equal? equal? #t #t)
-		(list show-mix-waveforms 'show-mix-waveforms ind-1 ind-2 #f equal? equal? #t #t)
-		(list with-verbose-cursor 'with-verbose-cursor ind-1 ind-2 #t equal? equal? #t #t)
-		
-		)))
-	    (update-time-graph #t #t)
-	    (update-transform-graph #t #t)
-	    (update-lisp-graph #t #t)
-	    
-	    (close-sound #f)
-	    (close-sound #f)
-	    (if (not (equal? (sounds) ())) (snd-display #__line__ ";sounds after close-sound #t: ~A" (sounds))))))
-      
-      (letrec ((test-sound-func-2
-		(lambda (func name ind-1 ind-2 new-val eq-func leq-func)
-		  (let* ((old-global-val (func))
-			 (old-vals (func #t))
-			 (old-1 (func ind-1))
-			 (old-2 (func ind-2))
-			 (sel-snd (selected-sound))
-			 (unsel-snd (if (equal? sel-snd ind-1) ind-2 ind-1)))
-		    (if (not (or (leq-func old-vals (list old-1 old-2))
-				 (leq-func old-vals (list old-2 old-1))))
-			(snd-display #__line__ ";~A sound-func #t: ~A, sep: ~A" name old-vals (list old-1 old-2)))
-		    (set! (func) new-val)
-		    (if (not (eq-func (func) new-val))
-			(snd-display #__line__ ";~A global set no arg: ~A ~A" name (func) new-val))
-		    (if (not (eq-func (func) (func sel-snd)))
-			(snd-display #__line__ ";~A global set no arg sel: ~A ~A" name (func) (func sel-snd)))
-		    (if (not (eq-func (func) (func unsel-snd)))
-			(snd-display #__line__ ";~A set global no arg unsel: ~A ~A (sel: ~A)" name (func) (func unsel-snd) (func sel-snd)))
-		    (if (not (or (leq-func (func #t) (list (func sel-snd) (func unsel-snd)))
-				 (leq-func (func #t) (list (func unsel-snd) (func sel-snd)))))
-			(snd-display #__line__ ";~A func #t set: ~A, sep: ~A" name (func #t) (list (func sel-snd) (func unsel-snd))))
-		    (set! (func) old-global-val)
-		    (set! (func ind-1) new-val)
-		    (if (not (eq-func (func ind-1) new-val))
-			(snd-display #__line__ ";~A set arg: ~A ~A" name (func ind-1) new-val))
-		    (if (eq-func (func ind-2) new-val)
-			(snd-display #__line__ ";~A set arg (2): ~A ~A" name (func ind-2) new-val))
-		    (if (not (or (leq-func (func #t) (list (func ind-1) (func ind-2)))
-				 (leq-func (func #t) (list (func ind-2) (func ind-1)))))
-			(snd-display #__line__ ";~A func arg set: ~A, sep: ~A" name (func #t) (list (func ind-1) (func ind-2))))
-		    (set! (func ind-1) old-1)
-		    (set! (func #t) new-val)
-		    (if (not (leq-func (func #t) (list new-val new-val)))
-			(snd-display #__line__ ";~A func arg set #t: ~A, sep: ~A" name (func #t) (list new-val new-val)))
-		    (if (not (eq-func (func ind-1) new-val))
-			(snd-display #__line__ ";~A set arg #t: ~A ~A" name (func ind-1) new-val))
-		    (if (not (eq-func (func ind-2) new-val))
-			(snd-display #__line__ ";~A set arg #t (2): ~A ~A" name (func ind-2) new-val))
-		    (if (eq-func (func) new-val)
-			(snd-display #__line__ ";~A overwrote global: ~A ~A" name (func) new-val))
-		    (set! (func ind-1) old-1)
-		    (set! (func ind-2) old-2)
-		    (if (not (eq-func (func ind-1) old-1))
-			(snd-display #__line__ ";~A set arg #t old: ~A ~A" name (func ind-1) old-1))
-		    (if (not (eq-func (func ind-2) old-2))
-			(snd-display #__line__ ";~A set arg #t (2): ~A ~A" name (func ind-2) old-2))))))
-	
-	(let ((ind-1 (new-sound "test-1.snd" 1 22050 mus-ldouble mus-next "mono testing" 100))
-	      (ind-2 (new-sound "test-2.snd" 2 44100 mus-bshort mus-aifc "stereo testing" 300)))
-	  
-	  (for-each
-	   (lambda (data)
-	     (apply test-sound-func-2 data))
-	   (list
-	    (list filter-control-in-dB 'filter-control-in-dB ind-1 ind-2 #t eq? equal?)
-	    (list filter-control-in-hz 'filter-control-in-hz ind-1 ind-2 #t eq? equal?)
-	    (list show-controls 'show-controls ind-1 ind-2 #t eq? equal?)
-	    
-	    (list speed-control-tones 'speed-control-tones ind-1 ind-2 14 = equal?)
-	    (list speed-control-style 'speed-control-style ind-1 ind-2 speed-control-as-semitone = equal?)
-	    (list filter-control-order 'filter-control-order ind-1 ind-2 14 = equal?)
-	    
-	    (list expand-control-length 'expand-control-length ind-1 ind-2 .25 within-.01? feql)
-	    (list expand-control-ramp 'expand-control-ramp ind-1 ind-2 .25 within-.01? feql)
-	    (list expand-control-hop 'expand-control-hop ind-1 ind-2 .25 within-.01? feql)
-	    (list expand-control-jitter 'expand-control-jitter ind-1 ind-2 .25 within-.01? feql)
-	    (list contrast-control-amp 'contrast-control-amp ind-1 ind-2 .25 within-.01? feql)
-	    (list reverb-control-feedback 'reverb-control-feedback ind-1 ind-2 .25 within-.01? feql)
-	    (list reverb-control-lowpass 'reverb-control-lowpass ind-1 ind-2 .25 within-.01? feql)
-	    (list reverb-control-decay 'reverb-control-decay ind-1 ind-2 .25 within-.01? feql)
-	    
-	    (list amp-control-bounds 'amp-control-bounds ind-1 ind-2 (list 0.0 2.0) feql 
-		  (lambda (a b) (and (feql (car a) (car b)) (feql (cadr a) (cadr b)))))
-	    (list contrast-control-bounds 'contrast-control-bounds ind-1 ind-2 (list 0.0 2.0) feql
-		  (lambda (a b) (and (feql (car a) (car b)) (feql (cadr a) (cadr b)))))
-	    (list expand-control-bounds 'expand-control-bounds ind-1 ind-2 (list 0.1 2.0) feql
-		  (lambda (a b) (and (feql (car a) (car b)) (feql (cadr a) (cadr b)))))
-	    (list speed-control-bounds 'speed-control-bounds ind-1 ind-2 (list 0.1 2.0) feql
-		  (lambda (a b) (and (feql (car a) (car b)) (feql (cadr a) (cadr b)))))
-	    (list reverb-control-length-bounds 'reverb-control-length-bounds ind-1 ind-2 (list 0.0 2.0) feql
-		  (lambda (a b) (and (feql (car a) (car b)) (feql (cadr a) (cadr b)))))
-	    (list reverb-control-scale-bounds 'reverb-control-scale-bounds ind-1 ind-2 (list 0.0 2.0) feql
-		  (lambda (a b) (and (feql (car a) (car b)) (feql (cadr a) (cadr b)))))))
-	  (close-sound ind-1)
-	  (close-sound ind-2)))
+		(list amp-control-bounds 'amp-control-bounds ind-1 ind-2 (list 0.0 2.0) feql 
+		      (lambda (a b) (and (feql (car a) (car b)) (feql (cadr a) (cadr b)))))
+		(list contrast-control-bounds 'contrast-control-bounds ind-1 ind-2 (list 0.0 2.0) feql
+		      (lambda (a b) (and (feql (car a) (car b)) (feql (cadr a) (cadr b)))))
+		(list expand-control-bounds 'expand-control-bounds ind-1 ind-2 (list 0.1 2.0) feql
+		      (lambda (a b) (and (feql (car a) (car b)) (feql (cadr a) (cadr b)))))
+		(list speed-control-bounds 'speed-control-bounds ind-1 ind-2 (list 0.1 2.0) feql
+		      (lambda (a b) (and (feql (car a) (car b)) (feql (cadr a) (cadr b)))))
+		(list reverb-control-length-bounds 'reverb-control-length-bounds ind-1 ind-2 (list 0.0 2.0) feql
+		      (lambda (a b) (and (feql (car a) (car b)) (feql (cadr a) (cadr b)))))
+		(list reverb-control-scale-bounds 'reverb-control-scale-bounds ind-1 ind-2 (list 0.0 2.0) feql
+		      (lambda (a b) (and (feql (car a) (car b)) (feql (cadr a) (cadr b)))))))
+	      (close-sound ind-1)
+	      (close-sound ind-2)))))
       
       (set! *remember-sound-state* #t)
       (let ((ind (open-sound "oboe.snd")))
