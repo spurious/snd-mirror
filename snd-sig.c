@@ -3504,7 +3504,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		delete_samples(beg, num, cp, pos);
 	      return(res);
 	    }
-
+	  
 	  if (!s7_is_pair(res))
 	    {
 	      s7_Double x;
@@ -3516,7 +3516,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		  res = s7_value(s7, res);
 		  s7_set_curlet(s7, old_e);
 		}
-	      x = s7_number_to_real(s7, res);
+	      x = s7_number_to_real_with_caller(s7, res, "map-channel");
 	      data = (mus_float_t *)malloc(num * sizeof(mus_float_t));
 	      for (kp = 0; kp < num; kp++)
 		data[kp] = x;
@@ -3545,7 +3545,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		  fx = s7_value(s7, fx);
 		  s7_set_curlet(s7, old_e);
 		}
-	      x = s7_number_to_real(s7, fx);
+	      x = s7_number_to_real_with_caller(s7, fx, "map-channel");
 	      if (s7_car(res) == s7_make_symbol(s7, "*"))
 		scale_channel(cp, x, beg, num, pos, NOT_IN_AS_ONE_EDIT);
 	      else
@@ -3558,6 +3558,56 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		}
 	      sf = free_snd_fd(sf);
 	      return(res);
+	    }
+
+	  /* try rsf mechanism */
+	  if (s7_is_symbol(s7_car(res)))
+	    {
+	      s7_pointer fcar;
+	      fcar = s7_symbol_value(s7, s7_car(res));
+	      if (s7_rs_function(s7, fcar))
+		{
+		  s7_rsf_t rsf;
+		  s7_pointer yp, old_e, y;
+
+		  e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7));
+		  old_e = s7_set_curlet(s7, e);                  /* new env for map lambda */
+		  /* we need to connect to the lambda's closure so subsequent symbol lookups work right */
+		  y = s7_make_mutable_real(s7, 1.5);                          /* slot for the map lambda arg */
+		  yp = s7_make_slot(s7, e, arg, y);
+
+		  s7_rsf_prepare(s7);
+		  rsf = s7_rs_function(s7, fcar)(s7, res);
+		  if (rsf)
+		    {
+		      s7_pointer **p;
+		      data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
+		      if (s7_tree_memq(s7, arg, res))
+			{
+			  samples_to_vct_with_reader(num, data, sf);
+			  for (kp = 0; kp < num; kp++)
+			    {
+			      s7_slot_set_real_value(s7, yp, data[kp]);
+			      p = s7_rsf_prepare(s7);
+			      data[kp] = rsf(s7, p);
+			    }
+			}
+		      else
+			{
+			  for (kp = 0; kp < num; kp++)
+			    {
+			      p = s7_rsf_prepare(s7);
+			      data[kp] = rsf(s7, p);
+			    }
+			}
+		      sf = free_snd_fd(sf);
+		      change_samples(beg, num, data, cp, caller, pos, -1.0);
+		      free(data);
+		      s7_set_curlet(s7, old_e);
+		      return(res);
+		    }
+		  s7_set_curlet(s7, old_e);
+		}
 	    }
 	}
       /* (let ((rd (make-sampler 0))) (map-channel (lambda (y) (+ (next-sample rd) y)))) */

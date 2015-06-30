@@ -6352,6 +6352,12 @@ s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value)
 }
 
 
+void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_Double value)
+{
+  real(slot_value(slot)) = value;
+}
+
+
 static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer symbol, s7_pointer e)
 {
   if (!is_let(e))
@@ -10585,7 +10591,15 @@ static s7_rsp_t pair_to_rsp(s7_scheme *sc, s7_pointer expr)
   return(s7_rs_function(sc, val)); 
  }
 
-static s7_rsf_t is_rs_1(s7_scheme *sc, s7_pointer expr, s7_rsf_t c, s7_rsf_t s, s7_rsf_t r)
+#if 0
+s7_rsf_t s7_is_rs_0(s7_scheme *sc, s7_pointer expr, s7_rsf_t p)
+{
+  if (is_null(cdr(expr))) return(NULL);
+  return(p);
+}
+#endif
+
+s7_rsf_t s7_is_rs_1(s7_scheme *sc, s7_pointer expr, s7_rsf_t c, s7_rsf_t s, s7_rsf_t r)
 {
   s7_pointer a1;
 
@@ -10618,6 +10632,113 @@ static s7_rsf_t is_rs_1(s7_scheme *sc, s7_pointer expr, s7_rsf_t c, s7_rsf_t s, 
       if (!rsf) return(NULL);
       s7_rs_store_at(sc, rs1, (s7_pointer)rsf);
       return(r);
+    }
+  return(NULL);
+}
+
+s7_rsf_t s7_is_rs_2(s7_scheme *sc, s7_pointer expr, 
+		    s7_rsf_t c_s, s7_rsf_t s_s, s7_rsf_t r_s, s7_rsf_t c_r, s7_rsf_t s_r, s7_rsf_t r_r, s7_rsf_t c_c, s7_rsf_t s_c, s7_rsf_t r_c)
+{
+  s7_pointer a1, a2;
+
+  if ((is_null(cdr(expr))) || (!is_null(cdddr(expr)))) return(NULL);
+  a1 = cadr(expr);
+  a2 = caddr(expr);
+
+  if (is_real(a1))
+    {
+      s7_rs_store(sc, a1);
+      if (is_real(a2))
+	{
+	  s7_rs_store(sc, a2);
+	  return(c_c);
+	}
+      if (is_symbol(a2))
+	{
+	  s7_rs_store(sc, s7_slot(sc, a2));
+	  return(c_s);
+	}
+      if (is_pair(a2))
+	{
+	  s7_Int rs1;
+	  s7_rsp_t rsp;
+	  s7_rsf_t rsf;
+	  rs1 = s7_rs_store(sc, NULL);
+	  rsp = pair_to_rsp(sc, a2);
+	  if (!rsp) return(NULL);
+	  rsf = rsp(sc, a2);
+	  if (!rsf) return(NULL);
+	  s7_rs_store_at(sc, rs1, (s7_pointer)rsf);
+	  return(c_r);
+	}
+      return(NULL);
+    }
+
+  if (is_symbol(a1))
+    {
+      s7_rs_store(sc, s7_slot(sc, a1));
+      if (is_real(a2))
+	{
+	  s7_rs_store(sc, a2);
+	  return(s_c);
+	}
+      if (is_symbol(a2))
+	{
+	  s7_rs_store(sc, s7_slot(sc, a2));
+	  return(s_s);
+	}
+      if (is_pair(a2))
+	{
+	  s7_Int rs1;
+	  s7_rsp_t rsp;
+	  s7_rsf_t rsf;
+	  rs1 = s7_rs_store(sc, NULL);
+	  rsp = pair_to_rsp(sc, a2);
+	  if (!rsp) return(NULL);
+	  rsf = rsp(sc, a2);
+	  if (!rsf) return(NULL);
+	  s7_rs_store_at(sc, rs1, (s7_pointer)rsf);
+	  return(s_r);
+	}
+      return(NULL);
+    }
+
+  if (is_pair(a1))
+    {
+      s7_Int rs1;
+      s7_rsp_t rsp;
+      s7_rsf_t rsf;
+      rs1 = s7_rs_store(sc, NULL);
+      rsp = pair_to_rsp(sc, a1);
+      if (!rsp) return(NULL);
+      rsf = rsp(sc, a1);
+      if (!rsf) return(NULL);
+      s7_rs_store_at(sc, rs1, (s7_pointer)rsf);
+
+      if (is_real(a2))
+	{
+	  s7_rs_store(sc, a2);
+	  return(r_c);
+	}
+      if (is_symbol(a2))
+	{
+	  s7_rs_store(sc, s7_slot(sc, a2));
+	  return(r_s);
+	}
+      if (is_pair(a2))
+	{
+	  s7_Int rs1;
+	  s7_rsp_t rsp;
+	  s7_rsf_t rsf;
+	  rs1 = s7_rs_store(sc, NULL);
+	  rsp = pair_to_rsp(sc, a2);
+	  if (!rsp) return(NULL);
+	  rsf = rsp(sc, a2);
+	  if (!rsf) return(NULL);
+	  s7_rs_store_at(sc, rs1, (s7_pointer)rsf);
+	  return(r_r);
+	}
+      return(NULL);
     }
   return(NULL);
 }
@@ -10900,7 +11021,7 @@ static s7_Double abs_r_rs(s7_scheme *sc, s7_pointer **p)
 
 static s7_rsf_t is_abs_rs(s7_scheme *sc, s7_pointer expr)
 {
-  return(is_rs_1(sc, expr, NULL, abs_s_rs, abs_r_rs));
+  return(s7_is_rs_1(sc, expr, NULL, abs_s_rs, abs_r_rs));
 }
 
 
@@ -16584,6 +16705,54 @@ static s7_pointer g_min_f2(s7_scheme *sc, s7_pointer args)
   method_or_bust(sc, y, sc->MIN, args, T_REAL, 2);
 }
 #endif
+
+
+
+static s7_Double max_rr_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_rsf_t r1, r2;
+  s7_Double v1, v2;
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  r2 = (s7_rsf_t)(**p); (*p)++;
+  v1 = r1(sc, p);
+  v2 = r2(sc, p);
+  if (v1 > v2) return(v1);
+  return(v2);
+}
+
+static s7_Double max_cr_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s7_rsf_t r1;
+  s7_Double v1, v2;
+  s1 = **p; (*p)++;
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  v1 = r1(sc, p);
+  v2 = s7_number_to_real(sc, s1);
+  if (v1 > v2) return(v1);
+  return(v2);
+}
+
+static s7_Double max_sr_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s7_rsf_t r1;
+  s7_Double v1, v2;
+  s1 = **p; (*p)++;
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  v1 = r1(sc, p);
+  v2 = s7_number_to_real(sc, slot_value(s1));
+  if (v1 > v2) return(v1);
+  return(v2);
+}
+
+static s7_rsf_t is_max_rs(s7_scheme *sc, s7_pointer expr)
+{
+  if (is_null(cdddr(expr)))
+    return(is_com_rs_2(sc, expr, NULL, max_cr_rs, max_sr_rs, NULL, max_rr_rs));
+  return(NULL);
+}
+
 
 
 /* ---------------------------------------- = > < >= <= ---------------------------------------- */
@@ -34228,6 +34397,23 @@ void s7_rs_store_at(s7_scheme *sc, s7_Int index, s7_pointer val)
   sc->rs_data[index] = val;
 }
 
+
+bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree)
+{
+  if (symbol == tree)
+    return(true);
+  if (is_pair(tree))
+    return((s7_tree_memq(sc, symbol, car(tree))) ||
+	   (s7_tree_memq(sc, symbol, cdr(tree))));
+  return(false);
+}
+
+s7_pointer **s7_rsf_prepare(s7_scheme *sc)
+{
+  sc->rs_cur = sc->rs_data;
+  return(&(sc->rs_cur));
+}
+
 s7_rsp_t s7_rs_function(s7_scheme *sc, s7_pointer func)
 {
   if (has_rs_function(func))
@@ -44277,6 +44463,7 @@ static void init_choosers(s7_scheme *sc)
 
   /* max */
   f = set_function_chooser(sc, sc->MAX, max_chooser);
+  s7_rs_set_function(f, is_max_rs);
   max_f2 = make_function_with_class(sc, f, "max", g_max_f2, 2, 0, false, "max opt");
 
   /* min */
@@ -68025,9 +68212,9 @@ int main(int argc, char **argv)
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6272
  * thash         |      |      |                          50.7 23.8 14.9 14.6
  *               |      |      |
- * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.2
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 20.1
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 46.0
+ * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.1
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 19.3
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 43.9
  * 
  * --------------------------------------------------------------------------
  *
@@ -68048,11 +68235,10 @@ int main(int argc, char **argv)
  *   with name/sync/sample settable
  *
  * fv_set: rest of loops fv_ref?
- * rsf multiple statements as in let_looped
+ * rsf multiple statements as in let_looped -- where are these loops?  tree_memq->snd-sig
  * t258->s7test|snd-test
- * +|* can be n(4|5:sr) arg cases, -|/ and any 1-arg case -- perhaps export?
- * rs_0?, -|/, max|min?, odd|even-multiple|weight, oscil-3 et al (asyfm), ina, out-bank, all-pass-bank, notch|comb-3, formant-bank? (1st arg is vector)
+ * +|* can be n(4|5:sr)
+ * rs_0?, -|/, oscil-3 et al (asyfm), notch|comb-3
  * rs_any_1: checker for 1st, 2nd is real out is real -- like gen/bank, rs_any_2, rs_any_0 for env
- * check animals for env changes?
- * snd-sig loops as let_looped: rsf for arg, then rsf for body (or input-as-needed style arg + rsf body)
+ * amplitude-mod|contrast-enh|array-interp|polynomial, inb, expt? move-sound, float-vector-ref[ss, sr]
  */
