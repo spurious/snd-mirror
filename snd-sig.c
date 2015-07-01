@@ -3587,7 +3587,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		  y = s7_make_mutable_real(s7, 1.5);                          /* slot for the map lambda arg */
 		  yp = s7_make_slot(s7, e, arg, y);
 
-		  s7_rsf_prepare(s7);
+		  s7_rsf_new(s7, e);
 		  rsf = s7_rs_function(s7, fcar)(s7, res);
 		  if (rsf)
 		    {
@@ -3599,7 +3599,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 			  for (kp = 0; kp < num; kp++)
 			    {
 			      s7_slot_set_real_value(s7, yp, data[kp]);
-			      p = s7_rsf_prepare(s7);
+			      p = s7_rsf_start(s7);
 			      data[kp] = rsf(s7, p);
 			    }
 			}
@@ -3607,16 +3607,18 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 			{
 			  for (kp = 0; kp < num; kp++)
 			    {
-			      p = s7_rsf_prepare(s7);
+			      p = s7_rsf_start(s7);
 			      data[kp] = rsf(s7, p);
 			    }
 			}
+		      s7_rsf_free(s7);
 		      sf = free_snd_fd(sf);
 		      change_samples(beg, num, data, cp, caller, pos, -1.0);
 		      free(data);
 		      s7_set_curlet(s7, old_e);
 		      return(res);
 		    }
+		  s7_rsf_free(s7);
 		  s7_set_curlet(s7, old_e);
 		}
 	    }

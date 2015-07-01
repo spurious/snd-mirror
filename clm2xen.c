@@ -8286,15 +8286,17 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
 
       gn->gen = ge;
       src_obj = mus_xen_to_object(gn);
-
+#if HAVE_SCHEME
       loc = s7_gc_protect(s7, src_obj);
+#endif
+      /* src_init can call an input function which can trigger the GC, so we need to GC-protect the new object */
 
       gn->vcts[MUS_SELF_WRAPPER] = src_obj;
       set_as_needed_input_choices(ge, in_obj, gn);
       mus_src_init(ge);
-
+#if HAVE_SCHEME
       s7_gc_unprotect_at(s7, loc);
-
+#endif
       return(src_obj);
     }
 
@@ -9869,6 +9871,7 @@ static mus_any *cadr_gen(s7_scheme *sc, s7_pointer expr)
 
   sym = s7_cadr(expr);
   if (!s7_is_symbol(sym)) return(NULL);
+  if (s7_rsf_is_stepper(sc, sym)) return(NULL);
   o = s7_symbol_value(sc, sym);
   gn = (mus_xen *)s7_object_value_checked(o, mus_xen_tag);
   if (!gn) return(NULL);
