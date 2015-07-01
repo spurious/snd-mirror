@@ -8282,11 +8282,19 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   if (ge)
     {
       Xen src_obj;
+      int loc;
+
       gn->gen = ge;
       src_obj = mus_xen_to_object(gn);
+
+      loc = s7_gc_protect(s7, src_obj);
+
       gn->vcts[MUS_SELF_WRAPPER] = src_obj;
       set_as_needed_input_choices(ge, in_obj, gn);
       mus_src_init(ge);
+
+      s7_gc_unprotect_at(s7, loc);
+
       return(src_obj);
     }
 

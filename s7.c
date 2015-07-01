@@ -1876,7 +1876,7 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define c_function_arg_names(f)       c_function_ext(f)->arg_names
 #define c_function_simple_defaults(f) c_function_ext(f)->simple_defaults
 
-#define rs_function(f)                c_function_ext(f)->rsp
+#define rs_function(f)                c_function_ext(f)->rsp 
 #define has_rs_function(f)            ((is_any_c_function(f)) && (c_function_ext(f)) && (rs_function(f)))
 
 void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
@@ -14284,6 +14284,10 @@ static s7_Double add_css_rs(s7_scheme *sc, s7_pointer **p)
 
 static s7_rsf_t is_add_rs(s7_scheme *sc, s7_pointer expr)
 {
+  /*
+  if (s7_list_length(sc, expr) > 4)
+    fprintf(stderr, "%d: %s\n", s7_list_length(sc, expr) - 1, DISPLAY(expr));
+  */
   if (is_null(cdddr(expr)))
     return(is_com_rs_2(sc, expr, add_cs_rs, add_cr_rs, add_sr_rs, add_ss_rs, add_rr_rs));
   return(is_com_rs_3(sc, expr, add_css_rs, add_csr_rs, add_ssr_rs, add_crr_rs, add_srr_rs, add_sss_rs, add_rrr_rs));
@@ -15906,6 +15910,10 @@ static s7_Double multiply_css_rs(s7_scheme *sc, s7_pointer **p)
 
 static s7_rsf_t is_multiply_rs(s7_scheme *sc, s7_pointer expr)
 {
+  /*
+  if (s7_list_length(sc, expr) > 4)
+    fprintf(stderr, "%d: %s\n", s7_list_length(sc, expr) - 1, DISPLAY(expr));
+  */
   if (is_null(cdddr(expr)))
     return(is_com_rs_2(sc, expr, multiply_cs_rs, multiply_cr_rs, multiply_sr_rs, multiply_ss_rs, multiply_rr_rs));
   return(is_com_rs_3(sc, expr, multiply_css_rs, multiply_csr_rs, multiply_ssr_rs, multiply_crr_rs, multiply_srr_rs, multiply_sss_rs, multiply_rrr_rs));
@@ -59287,7 +59295,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case OP_SAFE_C_SZ_1:
 	  /*
-547236: (oscil carrier (+ vib (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib)...    v with fm-noi: 4 in add: srrr
 508280: (outa i (ssb-am ssb (bandpass flt (float-vector-ref in-data j))))           clm23 [2 indices in do] -- rs case in dox? -- currently goes to eval op_s_opss...qq
 496110: (all-pass-bank (vector-ref allp-c c) (filtered-comb-bank (vector-ref fcmb-c... freeverb
 176400: (* (env ampf) (r2k!cos gen))

@@ -3651,7 +3651,6 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
   samples_to_vct_with_reader(num, in_data, sf);
 #endif
   cur_size = num;
-
   for (kp = 0; kp < num; kp++)
     {
 #if HAVE_SCHEME
