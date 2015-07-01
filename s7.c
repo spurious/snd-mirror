@@ -10591,6 +10591,32 @@ static s7_rsp_t pair_to_rsp(s7_scheme *sc, s7_pointer expr)
   return(s7_rs_function(sc, val)); 
  }
 
+static bool is_all_real(s7_scheme *sc, s7_pointer expr)
+{
+  if (type(expr) == T_COMPLEX)
+    return(false);
+
+  if (is_symbol(expr))
+    {
+      s7_pointer val;
+      val = find_symbol_unchecked(sc, expr);
+      return((!val) || (type(val) != T_COMPLEX));
+    }
+
+  if (is_pair(expr))
+    {
+      s7_pointer p;
+      if (is_symbol(car(expr)))
+	p = cdr(expr);
+      else p = expr;
+      for (; is_pair(p); p = cdr(p))
+	if (!is_all_real(sc, car(p)))
+	  return(false);
+    }
+
+  return(true);
+}
+
 #if 0
 s7_rsf_t s7_is_rs_0(s7_scheme *sc, s7_pointer expr, s7_rsf_t p)
 {
@@ -10708,6 +10734,7 @@ s7_rsf_t s7_is_rs_2(s7_scheme *sc, s7_pointer expr,
       s7_Int rs1;
       s7_rsp_t rsp;
       s7_rsf_t rsf;
+
       rs1 = s7_rs_store(sc, NULL);
       rsp = pair_to_rsp(sc, a1);
       if (!rsp) return(NULL);
@@ -10725,6 +10752,7 @@ s7_rsf_t s7_is_rs_2(s7_scheme *sc, s7_pointer expr,
 	  s7_rs_store(sc, s7_slot(sc, a2));
 	  return(r_s);
 	}
+
       if (is_pair(a2))
 	{
 	  s7_Int rs1;
@@ -12786,6 +12814,27 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
     default:
       method_or_bust(sc, x, sc->REMAINDER, args, T_REAL, 1);
     }
+}
+
+static s7_Double remainder_rs_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s7_rsf_t r1;
+  s7_Double v1, v2, pre_quo;
+  s7_Int quo;
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  v1 = r1(sc, p);
+  s1 = **p; (*p)++;
+  v2 = s7_number_to_real(sc, slot_value(s1));
+  if (v2 == 0.0) division_by_zero_error(sc, sc->REMAINDER, list_2(sc, make_real(sc, v1), real_zero));
+  pre_quo = v1 / v2;
+  if (pre_quo > 0.0) quo = (s7_Int)floor(pre_quo); else quo = (s7_Int)ceil(pre_quo);
+  return(v1 - (v2 * quo));
+}
+
+static s7_rsf_t is_remainder_rs(s7_scheme *sc, s7_pointer expr)
+{
+  return(s7_is_rs_2(sc, expr, NULL, NULL, remainder_rs_rs, NULL, NULL, NULL, NULL, NULL, NULL));
 }
 
 
@@ -14875,6 +14924,106 @@ static s7_pointer g_sub_random_rc(s7_scheme *sc, s7_pointer args)
 #endif
 
 
+static s7_Double negate_r_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_rsf_t r1;
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  return(-r1(sc, p));
+}
+
+static s7_Double negate_s_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s1 = **p; (*p)++;
+  return(-s7_number_to_real(sc, s7_slot_value(s1)));
+}
+
+static s7_Double subtract_rr_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_rsf_t r1, r2;
+  s7_Double v1;
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  v1 = r1(sc, p);
+  r2 = (s7_rsf_t)(**p); (*p)++;
+  return(v1 - r2(sc, p));
+}
+
+static s7_Double subtract_cr_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s7_rsf_t r1;
+  s1 = **p; (*p)++;
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  return(s7_number_to_real(sc, s1) - r1(sc, p));
+}
+
+static s7_Double subtract_rc_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s7_Double v1;
+  s7_rsf_t r1;
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  v1 = r1(sc, p);
+  s1 = **p; (*p)++; 
+ return(v1 - s7_number_to_real(sc, s1));
+}
+
+static s7_Double subtract_sr_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s7_rsf_t r1;
+  s1 = **p; (*p)++;
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  return(s7_number_to_real(sc, slot_value(s1)) - r1(sc, p));
+}
+
+static s7_Double subtract_rs_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s7_Double v1;
+  s7_rsf_t r1;
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  v1 = r1(sc, p);
+  s1 = **p; (*p)++;
+  return(v1 - s7_number_to_real(sc, slot_value(s1)));
+}
+
+static s7_Double subtract_ss_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1, s2;
+  s1 = **p; (*p)++;
+  s2 = **p; (*p)++;
+  return(s7_number_to_real(sc, slot_value(s1)) - s7_number_to_real(sc, slot_value(s2)));
+}
+
+static s7_Double subtract_cs_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1, s2;
+  s1 = **p; (*p)++;
+  s2 = **p; (*p)++;
+  return(s7_number_to_real(sc, s1) - s7_number_to_real(sc, slot_value(s2)));
+}
+
+static s7_Double subtract_sc_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1, s2;
+  s1 = **p; (*p)++;
+  s2 = **p; (*p)++;
+  return(s7_number_to_real(sc, slot_value(s1)) - s7_number_to_real(sc, s2));
+}
+
+
+static s7_rsf_t is_subtract_rs(s7_scheme *sc, s7_pointer expr)
+{
+  if (is_null(cddr(expr)))
+    return(s7_is_rs_1(sc, expr, NULL, negate_s_rs, negate_r_rs));
+  return(s7_is_rs_2(sc, expr, 
+		 subtract_cs_rs, subtract_ss_rs, subtract_rs_rs, 
+		 subtract_cr_rs, subtract_sr_rs, subtract_rr_rs, 
+		 NULL, subtract_sc_rs, subtract_rc_rs));
+}
+
+
 
 /* ---------------------------------------- multiply ---------------------------------------- */
 
@@ -16272,6 +16421,138 @@ static s7_pointer g_divide_s_temp(s7_scheme *sc, s7_pointer args)
   return(g_divide(sc, args));
 }
 #endif
+
+static s7_Double invert_r_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_rsf_t r1;
+  s7_Double v1;
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  v1 = r1(sc, p);
+  if (v1 == 0.0) division_by_zero_error(sc, sc->DIVIDE, list_1(sc, real_zero));
+  return(1.0 / v1);
+}
+
+static s7_Double invert_s_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s1 = **p; (*p)++;
+  s7_Double v1;
+  v1 = s7_number_to_real(sc, s7_slot_value(s1));
+  if (v1 == 0.0) division_by_zero_error(sc, sc->DIVIDE, list_1(sc, real_zero));
+  return(1.0 / v1);
+}
+
+static s7_Double divide_rr_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_rsf_t r1, r2;
+  s7_Double v1, v2;
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  v1 = r1(sc, p);
+  r2 = (s7_rsf_t)(**p); (*p)++;
+  v2 = r2(sc, p);
+  if (v2 == 0.0) division_by_zero_error(sc, sc->DIVIDE, list_2(sc, make_real(sc, v1), real_zero));
+  return(v1 / v2);
+}
+
+static s7_Double divide_cr_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s7_rsf_t r1;
+  s7_Double v1, v2;
+  s1 = **p; (*p)++;
+  v1 = s7_number_to_real(sc, s1);
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  v2 = r1(sc, p);
+  if (v2 == 0.0) division_by_zero_error(sc, sc->DIVIDE, list_2(sc, make_real(sc, v1), real_zero));
+  return(v1 / v2);
+}
+
+static s7_Double divide_rc_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s7_Double v1, v2;
+  s7_rsf_t r1;
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  v1 = r1(sc, p);
+  s1 = **p; (*p)++; 
+  v2 = s7_number_to_real(sc, s1);
+  if (v2 == 0.0) division_by_zero_error(sc, sc->DIVIDE, list_2(sc, make_real(sc, v1), real_zero));
+  return(v1 / v2);
+}
+
+static s7_Double divide_sr_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s7_rsf_t r1;
+  s7_Double v1, v2;
+  s1 = **p; (*p)++;
+  v1 = s7_number_to_real(sc, slot_value(s1));
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  v2 = r1(sc, p);
+  if (v2 == 0.0) division_by_zero_error(sc, sc->DIVIDE, list_2(sc, make_real(sc, v1), real_zero));
+  return(v1 / v2);
+}
+
+static s7_Double divide_rs_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s7_Double v1, v2;
+  s7_rsf_t r1;
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  v1 = r1(sc, p);
+  s1 = **p; (*p)++;
+  v2 = s7_number_to_real(sc, slot_value(s1));
+  if (v2 == 0.0) division_by_zero_error(sc, sc->DIVIDE, list_2(sc, make_real(sc, v1), real_zero));
+  return(v1 / v2); 
+}
+
+static s7_Double divide_ss_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1, s2;
+  s7_Double v1, v2;
+  s1 = **p; (*p)++;
+  v1 = s7_number_to_real(sc, slot_value(s1));
+  s2 = **p; (*p)++;
+  v2 = s7_number_to_real(sc, slot_value(s2));
+  if (v2 == 0.0) division_by_zero_error(sc, sc->DIVIDE, list_2(sc, make_real(sc, v1), real_zero));
+  return(v1 / v2);
+}
+
+static s7_Double divide_cs_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1, s2;
+  s7_Double v1, v2;
+  s1 = **p; (*p)++;
+  v1 = s7_number_to_real(sc, s1);
+  s2 = **p; (*p)++;
+  v2 = s7_number_to_real(sc, slot_value(s2));
+  if (v2 == 0.0) division_by_zero_error(sc, sc->DIVIDE, list_2(sc, make_real(sc, v1), real_zero));
+  return(v1 / v2);
+}
+
+static s7_Double divide_sc_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1, s2;
+  s7_Double v1, v2;
+  s1 = **p; (*p)++;
+  v1 = s7_number_to_real(sc, slot_value(s1));
+  s2 = **p; (*p)++;
+  v2 = s7_number_to_real(sc, s2);
+  if (v2 == 0.0) division_by_zero_error(sc, sc->DIVIDE, list_2(sc, make_real(sc, v1), real_zero));
+  return(v1 / v2);
+}
+
+
+static s7_rsf_t is_divide_rs(s7_scheme *sc, s7_pointer expr)
+{
+  if (is_null(cddr(expr)))
+    return(s7_is_rs_1(sc, expr, NULL, invert_s_rs, invert_r_rs));
+  return(s7_is_rs_2(sc, expr, 
+		 divide_cs_rs, divide_ss_rs, divide_rs_rs, 
+		 divide_cr_rs, divide_sr_rs, divide_rr_rs, 
+		 NULL, divide_sc_rs, divide_rc_rs));
+}
+
 
 
 /* ---------------------------------------- max/min ---------------------------------------- */
@@ -32633,6 +32914,28 @@ static s7_rsf_t is_fv_set_rs(s7_scheme *sc, s7_pointer expr)
 }
 
 
+static s7_Double fv_ref_ss_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1, s2;
+  s7_Int ind;
+  s1 = (**p); (*p)++;
+  s1 = slot_value(s1);
+  s2 = (**p); (*p)++;
+  s2 = slot_value(s2);
+  ind = s7_number_to_integer(sc, s2);
+  if ((ind < 0) || (ind >= vector_length(s1)))
+    out_of_range(sc, sc->FLOAT_VECTOR_REF, small_int(2), s2, (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);    
+  return(float_vector_elements(s1)[ind]);
+}
+
+static s7_rsf_t is_fv_ref_rs(s7_scheme *sc, s7_pointer expr)
+{
+  if (is_float_vector(s7_symbol_value(sc, cadr(expr))))
+    return(s7_is_rs_2(sc, expr, NULL, fv_ref_ss_rs, NULL, NULL, NULL, NULL, NULL, NULL, NULL));
+  return(NULL);
+}
+
+
 
 /* -------------------------------------------------------------------------------- */
 
@@ -34397,16 +34700,6 @@ void s7_rs_store_at(s7_scheme *sc, s7_Int index, s7_pointer val)
   sc->rs_data[index] = val;
 }
 
-
-bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree)
-{
-  if (symbol == tree)
-    return(true);
-  if (is_pair(tree))
-    return((s7_tree_memq(sc, symbol, car(tree))) ||
-	   (s7_tree_memq(sc, symbol, cdr(tree))));
-  return(false);
-}
 
 s7_pointer **s7_rsf_prepare(s7_scheme *sc)
 {
@@ -44391,6 +44684,7 @@ static void init_choosers(s7_scheme *sc)
 
   /* - */
   f = set_function_chooser(sc, sc->MINUS, subtract_chooser);
+  s7_rs_set_function(f, is_subtract_rs);
 
   subtract_1 = make_function_with_class(sc, f, "-", g_subtract_1, 1, 0, false, "- opt");
   subtract_2 = make_function_with_class(sc, f, "-", g_subtract_2, 2, 0, false, "- opt");
@@ -44435,6 +44729,7 @@ static void init_choosers(s7_scheme *sc)
 
   /* / */
   f = set_function_chooser(sc, sc->DIVIDE, divide_chooser);
+  s7_rs_set_function(f, is_divide_rs);
   invert_1 = make_function_with_class(sc, f, "/", g_invert_1, 1, 0, false, "/ opt");
   divide_1r = make_function_with_class(sc, f, "/", g_divide_1r, 2, 0, false, "/ opt");
   divide_temp_s = make_temp_function_with_class(sc, f, "/", g_divide_temp_s, 2, 0, false, "/ opt");
@@ -44443,6 +44738,10 @@ static void init_choosers(s7_scheme *sc)
   /* modulo */
   f = set_function_chooser(sc, sc->MODULO, modulo_chooser);
   mod_si = make_function_with_class(sc, f, "modulo", g_mod_si, 2, 0, false, "modulo opt");
+
+  /* remainder */
+  f = slot_value(global_slot(sc->REMAINDER));
+  s7_rs_set_function(f, is_remainder_rs);
 
   /* floor */
   f = set_function_chooser(sc, sc->FLOOR, floor_chooser);
@@ -44716,6 +45015,9 @@ static void init_choosers(s7_scheme *sc)
   vector_set_vector_ref = make_function_with_class(sc, f, "vector-set!", g_vector_set_vector_ref, 3, 0, false, "vector-set! opt");
   vector_set_3 = make_function_with_class(sc, f, "vector-set!", g_vector_set_3, 3, 0, false, "vector-set! opt");
 
+
+  f = slot_value(global_slot(sc->FLOAT_VECTOR_REF));
+  s7_rs_set_function(f, is_fv_ref_rs);
 
   f = slot_value(global_slot(sc->FLOAT_VECTOR_SET));
   s7_rs_set_function(f, is_fv_set_rs);
@@ -51711,7 +52013,7 @@ static int dox_ex(s7_scheme *sc)
 			  fv_s1 = find_symbol(sc, cadr(cadar(sc->d3)));
 			  fv_s2 = find_symbol(sc, caddr(cadar(sc->d3)));
 			  fv_s3 = find_symbol(sc, caddr(caddar(sc->d3)));
-			  
+
 			  if ((is_slot(fv_s1)) && (is_slot(fv_s2)) && (is_slot(fv_s3)) &&
 			      (is_real(slot_value(fv_s1))) && (is_real(slot_value(fv_s2))) && (is_real(slot_value(fv_s3))))
 			    body = fv_set_add1ss;
@@ -51931,7 +52233,8 @@ static int safe_dotimes_ex(s7_scheme *sc)
 				      fcar = find_symbol_checked(sc, car(let_body));
 				      rsp = rs_function(fcar);
 				      rsf = rsp(sc, let_body);
-				      if (rsf)
+				      if ((rsf) &&
+					  (is_all_real(sc, code)))
 					{
 					  set_let_slots(sc->envir, reverse_slots(sc, let_slots(sc->envir)));
 					  s7_rs_store_at(sc, loc, (s7_pointer)rsf);
@@ -51988,7 +52291,8 @@ static int safe_dotimes_ex(s7_scheme *sc)
 			  sc->rs_cur = sc->rs_data;
 			  rsf = rs_function(fcar)(sc, body);
 			  
-			  if (rsf)
+			  if ((rsf) &&
+			      (is_all_real(sc, code)))
 			    {
 			      for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
 				{
@@ -52095,7 +52399,8 @@ static int simple_safe_dotimes_ex(s7_scheme *sc)
 			      fcar = find_symbol_checked(sc, car(body));
 			      rsp = rs_function(fcar);
 			      rsf = rsp(sc, body);
-			      if (rsf)
+			      if ((rsf) &&
+				  (is_all_real(sc, sc->code)))
 				{
 				  s7_pointer letp;
 				  letp = let_slots(sc->envir);
@@ -52184,7 +52489,8 @@ static int safe_dotimes_c_c_ex(s7_scheme *sc)
 		  s7_rsf_t rsf;
 		  sc->rs_cur = sc->rs_data;
 		  rsf = rs_function(fcar)(sc, body);
-		  if (rsf)
+		  if ((rsf) &&
+		      (is_all_real(sc, sc->code)))
 		    {
 		      for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
 			{
@@ -52306,7 +52612,8 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
 		      s7_rsf_t rsf;
 		      sc->rs_cur = sc->rs_data;
 		      rsf = rs_function(fcar)(sc, car(body));
-		      if (rsf)
+		      if ((rsf) &&
+			  (is_all_real(sc, sc->code)))
 			{
 			  for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
 			    {
@@ -58979,6 +59286,84 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  
 	case OP_SAFE_C_SZ_1:
+	  /*
+547236: (oscil carrier (+ vib (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib)...    v with fm-noi: 4 in add: srrr
+508280: (outa i (ssb-am ssb (bandpass flt (float-vector-ref in-data j))))           clm23 [2 indices in do] -- rs case in dox? -- currently goes to eval op_s_opss...qq
+496110: (all-pass-bank (vector-ref allp-c c) (filtered-comb-bank (vector-ref fcmb-c... freeverb
+176400: (* (env ampf) (r2k!cos gen))
+154350: (outa i (* (env ampf) (r2k!cos gen)))
+132300: (outa i (* (env aenv) (comb d0 (pulse-train s) (env zenv))))                comb-3
+        101888: (* 0.5 (+ (* pscl (remainder (float-vector-ref diffs k) pi2)) kx))          remainder (snd-test)[added]
+83052: (* e1 (cos (* n x)))
+79248: (+ (float-vector-ref x0 i) (* p2 (+ (float-vector-ref x1 (- i 1))...         fv_ref + index op +|-
+78524: (- (cos x) (* r (cos (- x y))))
+78524: (* r (cos (- x y)))
+65406: (one-pole incr (expt (abs (next-sample reader)) p))
+65100: (+ inval (delay del (* scaler (+ (tap del) inval)) (* amp (oscil os))))      delay-3
+         65100: (* scaler (+ (tap del) inval))                                               tap? [added]
+60574: (/ rr-1 (- rr+1 (* r2 (oscil osc fm))))
+60003: (expt cutoff (/ (floor (- (/ two-pi (* 3 ratio (+ fm frequency))) (/ ratio)))))
+60000: (+ inval (delay del (* scaler (+ (tap del) inval))))
+56007: (outa i (* (env ampf) (+ (* fr1 (formant frm1 val (env intrpf1))) (* fr2...
+55123: (outa i (+ valA0 (* (- next-samp ex-samp) (- valA1 valA0))))
+52000: (outa i (nrcos gen))
+50828: (vector-ref ops (floor (* nbins (abs (next-sample reader)))))
+46305: (outa i (* (env ampf) (+ (polywave gen1 (* 2.0 frq)) (* amp2 (polywave gen2...
+44999: (outa k (+ (* val val-amp) (formant-bank fb val)))                           animals -- rk!cos in let
+44100: (* (env (vector-ref ampfs k)) (oscil (carriers k) (+ (* vib (c-rats k)) (*...
+44100: (outa i (* amp (oscil osc (+ (env e) (green-noise-interp grn 0.0)))))
+44100: (outa i (* (env ampf) (rk!ssb gen)))
+44100: (+ (env e) (green-noise-interp grn 0.0))
+44100: (* (env ampf) (rk!ssb gen))
+40872: (* (cos cx) (+ 1.0 (* -1.0 r (cos mx)) (* rn (cos nmx)) (* rn1 (cos n1mx))))  add 4 or more
+40402: (outa i (* (env (vector-ref ampfs k)) (+ (* (- 1.0 frac) (- (* yfax (oscil... gen vector 
+40402: (* frac (- (* yfax (oscil (vector-ref sin-odds k) (+ fracf rfrq))) (* fax...
+34257: (* (sin cxx) (atan (* 2.0 r (sin mx)) (- 1.0 (* r r)))) 
+32735: (min 1.0 (max 0.0 (+ val (if up incr (- incr)))))
+30000: (outa i (nchoosekcos gen))
+30000: (outa i (izcos gen))
+27078: (+ 0.5 (* 0.5 (abs (oscil trem (rand-interp rnd1)))))
+25748: (outa i (* (env (vector-ref ampfs k)) (+ (* frac (- (* yfax (oscil...
+25748: (* frac (- (* yfax (oscil (vector-ref sin-evens k) (+ fracf rfrq))) (* fax...
+23813: (outa i (+ (* 0.75 val1) (* fr1 (env frmaf-1) (formant frm1 frm-in (env...
+22100: (+ phase (* 0.5 index (+ r r1) (sin modphase)))
+22051: (oscil gens7 (+ (* vib freqratios7) (* (env gens4ampenv) (oscil gens4 (+...
+22051: (oscil gens6 (+ (* vib freqratios6) (* (env gens3ampenv) (oscil gens3 (+...
+22051: (oscil gens5 (+ (* vib freqratios5) (* (env gens2ampenv) (oscil gens2 (+...
+22051: (+ (* vib freqratios5) (* (env gens2ampenv) (oscil gens2 (+ cascadeout (*...
+22051: (+ (* vib freqratios6) (* (env gens3ampenv) (oscil gens3 (+ cascadeout (*...
+22051: (+ (* vib freqratios7) (* (env gens4ampenv) (oscil gens4 (+ cascadeout (*...
+22050: (oscil carrier (+ vib (* (env indf1) (oscil fmosc1 vib)) (* (env indf2)...
+22050: (+ glotsamp (- (dline2 1) temp))
+22050: (outa i (+ (* (env clangf) (rkoddssb clang 0.0)) (* (env ampf) (rcos carrier...
+22050: (outa i (+ (* (env ampf) (r2k!cos gen)) (* (env kmpf) (fmssb knock 0.0))))
+22050: (outa i (* (env ampf) (+ (* (env f1) (oscil gen1 frq)) (* (env f2) (oscil...
+22050: (outa i (* (env amplitude) (nrcos gen (* ind (oscil mod)))))
+22050: (outa i (* (env ampf) (nkssb-interp gen (polywave vib) (env move))))
+22050: (outa i (* (env ampf) (oscil carrier (+ vib (* (env indf1) (oscil fmosc1...
+22050: (outa i (* amp (ina ctr fil)))
+
+
+tall:
+176400: (+ x (* (coeffs j) (- (dline1 k) x)))
+108271: (outa i (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0))))
+56007: (outa i (* (env ampf) (+ (* fr1 (formant frm1 val (env intrpf1))) (* fr2... barred-owl which looks ok??
+46305: (outa i (* (env ampf) (+ (polywave gen1 (* 2.0 frq)) (* amp2 (polywave gen2... these also look ok??
+44999: (outa k (+ (* val val-amp) (formant-bank fb val))) [rk!cos]
+44100: (+ glotsamp (- (dline2 1) temp))
+44100: (+ temp (* (coeffs 1) (- glotsamp temp)))
+44100: (+ last-lip-refl (* (coeffs tractlength-1) (- (dline1 tractlength-2)...
+44100: (one-pole lp (+ (dline1 2) temp))
+40255: (* icf (abs (- (last-peak-freqs j) current-freq)))
+27078: (+ 0.5 (* 0.5 (abs (oscil trem (rand-interp rnd1)))))
+26461: (/ 2.0 (+ alpha1 alpha2 alpha3))
+23813: (outa i (+ (* 0.75 val1) (* fr1 (env frmaf-1) (formant frm1 frm-in (env...
+22050: (outa i (* (env ampf) (+ (* (env f1) (oscil gen1 frq)) (* (env f2) (oscil...
+21168: (outa k (* (env pulsef) (blackman gen1) (+ (* (env indf) (oscil gen2 (* 10.0...
+19845: (outa i (+ (* frm (+ (* fr1 (formant frm1 val)) (* fr2 (formant frm2 val))))...
+
+	   */
+
 	  car(sc->T2_1) = sc->args;
 	  car(sc->T2_2) = sc->value;
 	  sc->value = c_call(sc->code)(sc, sc->T2_1);
@@ -68213,8 +68598,8 @@ int main(int argc, char **argv)
  * thash         |      |      |                          50.7 23.8 14.9 14.6
  *               |      |      |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.1
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 19.3
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 43.9
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 19.2
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 43.1
  * 
  * --------------------------------------------------------------------------
  *
@@ -68234,11 +68619,11 @@ int main(int argc, char **argv)
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
  *   with name/sync/sample settable
  *
- * fv_set: rest of loops fv_ref?
- * rsf multiple statements as in let_looped -- where are these loops?  tree_memq->snd-sig
+ * rsf multiple statements as in let_looped -- where are these loops?
  * t258->s7test|snd-test
  * +|* can be n(4|5:sr)
- * rs_0?, -|/, oscil-3 et al (asyfm), notch|comb-3
- * rs_any_1: checker for 1st, 2nd is real out is real -- like gen/bank, rs_any_2, rs_any_0 for env
- * amplitude-mod|contrast-enh|array-interp|polynomial, inb, expt? move-sound, float-vector-ref[ss, sr]
+ * oscil-3 et al (asyfm), notch|comb-3
+ * contrast-enh|array-interp, move-sound
+ *   not currently: frample->file[same as locsig and always involves frample->frample]--all symbols, expandn+freeverb
+ * fix up the arg order and names for is_rs...
  */

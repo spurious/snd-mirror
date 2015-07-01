@@ -10004,7 +10004,7 @@ GEN_RS(two_pole, mus_two_pole_rs, mus_two_pole)
 GEN_RS(two_zero, mus_two_zero_rs, mus_two_zero)
 GEN_RS(wave_train, mus_wave_train_rs, mus_wave_train)
 GEN_RS(ssb_am, mus_ssb_am_rs_1, mus_ssb_am_unmodulated)
-
+GEN_RS(tap, mus_tap_unmodulated, mus_tap)
 
 
 
@@ -10414,7 +10414,7 @@ RS_1(random)
 RS_1(sin)
 RS_1(cos)
 
-static s7_Double odd_multiple_rs_ss(s7_scheme *sc, s7_pointer **p)
+static s7_Double odd_multiple_ss_rs(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer s1, s2;
   s1 = (**p); (*p)++;
@@ -10422,7 +10422,7 @@ static s7_Double odd_multiple_rs_ss(s7_scheme *sc, s7_pointer **p)
   return(mus_odd_multiple(s7_number_to_real(sc, s7_slot_value(s1)), s7_number_to_real(sc, s7_slot_value(s2))));
 }
 
-static s7_Double even_multiple_rs_ss(s7_scheme *sc, s7_pointer **p)
+static s7_Double even_multiple_ss_rs(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer s1, s2;
   s1 = (**p); (*p)++;
@@ -10432,12 +10432,85 @@ static s7_Double even_multiple_rs_ss(s7_scheme *sc, s7_pointer **p)
 
 static s7_rsf_t is_odd_multiple_rs(s7_scheme *sc, s7_pointer expr)
 {
-  return(s7_is_rs_2(sc, expr, NULL, odd_multiple_rs_ss, NULL, NULL, NULL, NULL, NULL, NULL, NULL));
+  return(s7_is_rs_2(sc, expr, NULL, odd_multiple_ss_rs, NULL, NULL, NULL, NULL, NULL, NULL, NULL));
 }
 
 static s7_rsf_t is_even_multiple_rs(s7_scheme *sc, s7_pointer expr)
 {
-  return(s7_is_rs_2(sc, expr, NULL, even_multiple_rs_ss, NULL, NULL, NULL, NULL, NULL, NULL, NULL));
+  return(s7_is_rs_2(sc, expr, NULL, even_multiple_ss_rs, NULL, NULL, NULL, NULL, NULL, NULL, NULL));
+}
+
+
+static s7_Double polynomial_ss_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1, s2;
+  s1 = (**p); (*p)++;
+  s1 = s7_slot_value(s1);
+  s2 = (**p); (*p)++;
+  s2 = s7_slot_value(s2);
+  return(mus_polynomial(s7_float_vector_elements(s1), s7_number_to_real(sc, s2), s7_vector_length(s1)));
+}
+
+static s7_Double polynomial_sr_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s7_rsf_t r1;
+  s1 = (**p); (*p)++;
+  s1 = s7_slot_value(s1);
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  return(mus_polynomial(s7_float_vector_elements(s1), r1(sc, p), s7_vector_length(s1)));
+}
+
+static s7_rsf_t is_polynomial_rs(s7_scheme *sc, s7_pointer expr)
+{
+  if (s7_is_float_vector(s7_symbol_value(sc, s7_cadr(expr))))
+    return(s7_is_rs_2(sc, expr, NULL, polynomial_ss_rs, NULL, NULL, polynomial_sr_rs, NULL, NULL, NULL, NULL));
+  return(NULL);
+}
+
+
+static s7_Double am_csr_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer c1, s1;
+  s7_rsf_t r1;
+  c1 = (**p); (*p)++;
+  s1 = (**p); (*p)++;
+  s1 = s7_slot_value(s1);
+  r1 = (s7_rsf_t)(**p); (*p)++;
+  return(mus_amplitude_modulate(s7_number_to_real(sc, c1), s7_number_to_real(sc, s1), r1(sc, p)));
+}
+
+static s7_rsf_t is_am_rs(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer a1, a2, a3;
+  a1 = s7_cadr(expr);
+  a2 = s7_caddr(expr);
+  a3 = s7_cadddr(expr);
+  if ((s7_is_real(a1)) &&
+      (s7_is_symbol(a2)) &&
+      (s7_is_pair(a3)))
+    {
+      s7_rsp_t rsp;
+      s7_rsf_t rsf;
+      s7_Int cur_rs;
+      s7_pointer sym, val;
+
+      s7_rs_store(sc, a1);
+      s7_rs_store(sc, s7_slot(sc, a2));
+
+      sym = car(a3);
+      if (!s7_is_symbol(sym)) return(NULL);
+      val = s7_symbol_value(sc, sym);
+      rsp = s7_rs_function(sc, val); 
+      if (!rsp) return(NULL);
+      cur_rs = s7_rs_store(sc, NULL);
+      rsf = rsp(sc, a3);
+      if (!rsf) return(NULL);
+      s7_rs_store_at(sc, cur_rs, (s7_pointer)rsf);
+
+      return(am_csr_rs);
+    }
+  return(NULL);
 }
 
 
@@ -14453,6 +14526,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   f = s7_name_to_value(sc, "tap");
+  s7_rs_set_function(f, is_tap_rs);
   store_choices(sc, f, wrapped_tap_1, NULL, NULL, wrapped_tap_p);
 
 
@@ -14668,6 +14742,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   f = s7_name_to_value(sc, "polynomial");
+  s7_rs_set_function(f, is_polynomial_rs);
   s7_function_set_chooser(sc, f, polynomial_chooser);
   direct_choice_2(sc, f, (mus_float_t (*)(mus_xen *, mus_float_t))wrapped_polynomial_2, wrapped_polynomial_p);
   polynomial_temp = clm_make_function_no_choice(sc, "polynomial", g_polynomial_temp, 2, 0, false, "polynomial optimization", f);
@@ -14820,6 +14895,9 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "mus-random");
   s7_rs_set_function(f, is_random_rs);
+
+  f = s7_name_to_value(sc, "amplitude-modulate");
+  s7_rs_set_function(f, is_am_rs);
 }
 
 

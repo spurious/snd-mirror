@@ -3464,6 +3464,17 @@ static Xen map_channel_to_temp_file(chan_info *cp, snd_fd *sf, Xen proc, mus_lon
   return(res);
 }
 
+#if HAVE_SCHEME
+static bool tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree)
+{
+  if (symbol == tree)
+    return(true);
+  if (s7_is_pair(tree))
+    return((tree_memq(sc, symbol, s7_car(tree))) ||
+	   (tree_memq(sc, symbol, s7_cdr(tree))));
+  return(false);
+}
+#endif
 
 static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t beg, mus_long_t num, int pos, const char *caller)
 {
@@ -3582,7 +3593,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		    {
 		      s7_pointer **p;
 		      data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
-		      if (s7_tree_memq(s7, arg, res))
+		      if (tree_memq(s7, arg, res))
 			{
 			  samples_to_vct_with_reader(num, data, sf);
 			  for (kp = 0; kp < num; kp++)

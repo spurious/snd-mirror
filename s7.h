@@ -674,7 +674,7 @@ s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst);
 s7_pointer s7_cadar_value(s7_scheme *sc, s7_pointer lst);
 
 
-  /* these are the new form -- most of the stuff above is probably going away */
+  /* these are the new form */
 typedef s7_Double (*s7_rsf_t)(s7_scheme *sc, s7_pointer **p);
 typedef s7_rsf_t (*s7_rsp_t)(s7_scheme *sc, s7_pointer expr);
 void s7_rs_set_function(s7_pointer f, s7_rsp_t rsp);
@@ -684,11 +684,8 @@ void s7_rs_store_at(s7_scheme *sc, s7_Int index, s7_pointer val);
 s7_rsf_t s7_is_rs_1(s7_scheme *sc, s7_pointer expr, s7_rsf_t c, s7_rsf_t s, s7_rsf_t p);
 s7_rsf_t s7_is_rs_2(s7_scheme *sc, s7_pointer expr, s7_rsf_t c_s, s7_rsf_t s_s, s7_rsf_t r_s, 
 		    s7_rsf_t c_r, s7_rsf_t s_r, s7_rsf_t r_r, s7_rsf_t c_c, s7_rsf_t s_c, s7_rsf_t r_c);
-
-  /* under protest... */
-  bool s7_tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree);
-  s7_pointer **s7_rsf_prepare(s7_scheme *sc);
-  void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_Double value);
+s7_pointer **s7_rsf_prepare(s7_scheme *sc);
+void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_Double value);
 /* end CLM stuff */
 
 

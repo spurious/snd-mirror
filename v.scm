@@ -134,9 +134,9 @@
 				  (locsig locs i (* (env ampf) 
 						    (oscil carrier 
 							   (+ vib
-							      (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-							      (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-							      (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))))
+							      (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+								 (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+								 (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz))))))))))
 
 			      (do ((i beg (+ i 1)))
 				  ((= i end))
@@ -158,9 +158,9 @@
 			    (let ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
 			      (locsig locs i (* (env ampf)
 						(oscil carrier (+ vib
-								  (* (env indf1) (oscil fmosc1 (* fm1-rat vib)))
-								  (* (env indf2) (oscil fmosc2 (* fm2-rat vib)))
-								  (* (env indf3) (oscil fmosc3 (* fm3-rat vib))))))))))))
+								  (+ (* (env indf1) (oscil fmosc1 (* fm1-rat vib)))
+								     (* (env indf2) (oscil fmosc2 (* fm2-rat vib)))
+								     (* (env indf3) (oscil fmosc3 (* fm3-rat vib)))))))))))))
 		(if (= (mus-scaler frqf) 0.0)
 		    (do ((i beg (+ i 1)))
 			((= i end))
