@@ -1,34 +1,34 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [546]
-;;;  test 1: defaults                           [1218]
-;;;  test 2: headers                            [1578]
-;;;  test 3: variables                          [1893]
-;;;  test 4: sndlib                             [2457]
-;;;  test 5: simple overall checks              [4490]
-;;;  test 6: float-vectors                      [9237]
-;;;  test 7: colors                             [9509]
-;;;  test 8: clm                                [10028]
-;;;  test 9: mix                                [22107]
-;;;  test 10: marks                             [23886]
-;;;  test 11: dialogs                           [24830]
-;;;  test 12: extensions                        [25003]
-;;;  test 13: menus, edit lists, hooks, etc     [25269]
-;;;  test 14: all together now                  [26595]
-;;;  test 15: chan-local vars                   [27471]
-;;;  test 16: regularized funcs                 [29208]
-;;;  test 17: dialogs and graphics              [32976]
-;;;  test 18: save and restore                  [33088]
-;;;  test 19: transforms                        [34741]
-;;;  test 20: new stuff                         [36848]
-;;;  test 21: optimizer                         [38045]
-;;;  test 22: with-sound                        [38461]
-;;;  test 23: X/Xt/Xm                           [41431]
-;;;  test 24: GL                                [45105]
-;;;  test 25: errors                            [45228]
-;;;  test 26: s7                                [46746]
-;;;  test all done                              [46819]
-;;;  test the end                               [47001]
+;;;  test 0: constants                          [554]
+;;;  test 1: defaults                           [1226]
+;;;  test 2: headers                            [1596]
+;;;  test 3: variables                          [1911]
+;;;  test 4: sndlib                             [2475]
+;;;  test 5: simple overall checks              [4489]
+;;;  test 6: float-vectors                      [9233]
+;;;  test 7: colors                             [9505]
+;;;  test 8: clm                                [10024]
+;;;  test 9: mix                                [22104]
+;;;  test 10: marks                             [23883]
+;;;  test 11: dialogs                           [24824]
+;;;  test 12: extensions                        [24997]
+;;;  test 13: menus, edit lists, hooks, etc     [25263]
+;;;  test 14: all together now                  [26588]
+;;;  test 15: chan-local vars                   [27464]
+;;;  test 16: regularized funcs                 [29201]
+;;;  test 17: dialogs and graphics              [32953]
+;;;  test 18: save and restore                  [33065]
+;;;  test 19: transforms                        [34718]
+;;;  test 20: new stuff                         [36821]
+;;;  test 21: optimizer                         [38020]
+;;;  test 22: with-sound                        [39034]
+;;;  test 23: X/Xt/Xm                           [42001]
+;;;  test 24: GL                                [45675]
+;;;  test 25: errors                            [45798]
+;;;  test 26: s7                                [47316]
+;;;  test all done                              [47389]
+;;;  test the end                               [47571]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
@@ -38020,6 +38020,604 @@ EDITS: 1
 ;;; ---------------- test 21: optimizer ----------------
 
 (define (snd_test_21)
+
+  (let ()
+    (define-macro (test tst expected)
+      `(let ((val ,tst))
+	 (if (not (morally-equal? val ,expected))
+	     (format *stderr* "~S: ~S but expected ~S~%" ',tst val ,expected))))
+    
+    (define (fv0)
+      (let ((fv (make-float-vector 3))
+	    (g (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 3) fv)
+	  (float-vector-set! fv i (oscil g)))))
+    (test (fv0) (float-vector 0.0 0.1419943179576268 0.2811111133316549))
+    
+    (define (fv01)
+      (let ((fv (make-float-vector 3))
+	    (g (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 5) fv)
+	  (float-vector-set! fv i (oscil g)))))
+    
+    (test (catch #t
+	    (lambda ()
+	      (fv01))
+	    (lambda args 
+	      (apply format #f (cadr args))))    ; float-vector-set! argument 2, 3, is out of range (it is too large)
+	  "float-vector-set! argument 2, 3, is out of range (it is too large)")
+    
+    (define (fv02)
+      (let ((fv (make-float-vector 3))
+	    (g (make-oscil 1000)))
+	(do ((i 0 (+ i 1/2)))
+	    ((= i 2) fv)
+	  (float-vector-set! fv i (oscil g)))))
+    
+    (test (catch #t
+	    (lambda ()
+	      (display (fv02)) (newline))
+	    (lambda args 
+	      (apply format #f (cadr args))))   ; float-vector-set! argument 2, 1/2, is a ratio but should be an integer
+	  "float-vector-set! argument 2, 1/2, is a ratio but should be an integer")
+    
+    ;; (+ (* s1 s2) (* (- 1.0 s1) s3)) 
+    
+    (define (fv1 s1 s2 s3)
+      (let ((fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ (* s1 s2) (* (- 1.0 s1) s3))))))
+    
+    (test (fv1 1 2 3) (float-vector 2.0 2.0 2.0 2.0))
+    (test (fv1 2 3 4) (float-vector 2.0 2.0 2.0 2.0))
+    (test (fv1 1.0 2.0 3.0) (float-vector 2.0 2.0 2.0 2.0))
+    (test (fv1 2.0 3.0 4.0) (float-vector 2.0 2.0 2.0 2.0))
+    (test (fv1 1/2 5/4 3/4) (float-vector 1.0 1.0 1.0 1.0))
+    
+    (test 
+     (catch #t 
+       (lambda ()
+	 (fv1 1+i 2+2i 3+3i)) ; 'error? -- 3+i 
+       (lambda args 
+	 (apply format #f (cadr args))))   ; float-vector-set! argument 3, 3+1i, is a complex number but should be a real
+     "float-vector-set! argument 3, 3+1i, is a complex number but should be a real")
+    
+    (define (fv2 s1 s2 s3)
+      (let ((fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1))
+	     (x 1.0 (+ x 0+i)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ (* x s2) (* (- 1.0 x) s3))))))
+    (test
+     (catch #t
+       (lambda ()
+	 (fv2 1 2 3)) ; 'error again #(2.0 2-1i 2-2i 2-3i)
+       (lambda args
+	 (apply format #f (cadr args))))    ; float-vector-set! argument 3, 2-1i, is a complex number but should be a real
+     "float-vector-set! argument 3, 2-1i, is a complex number but should be a real")
+    
+    (set! (*s7* 'print-length) 123)
+    (define (fv3)
+      (let ((gens (vector (make-oscil 100) (make-oscil 200 1.7) (make-oscil 300 5.0))))
+	(let ((fv (make-float-vector 3))
+	      (iter (make-iterator gens)))
+	  (do ((i 0 (+ i 1))
+	       (g (iterate iter) (iterate iter)))
+	      ((= i 3) fv)
+	    (float-vector-set! fv i (oscil g))))))
+    
+    (test (fv3) (float-vector 0.0 0.9916648104524686 -0.9589242746631385))
+    
+    (define (fv4)
+      (let ((fv-a (make-float-vector 4))
+	    (fv-b (make-float-vector 4))
+	    (g (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) (list fv-a fv-b))
+	  (float-vector-set! fv-a i (float-vector-set! fv-b i (oscil g))))))
+    
+    (test (fv4) (list (float-vector 0.0 0.1419943179576268 0.2811111133316549 0.4145311766902953) 
+		      (float-vector 0.0 0.1419943179576268 0.2811111133316549 0.4145311766902953)))
+    
+    (define (fv5)
+      (let ((fv-a (make-float-vector 4))
+	    (g1 (make-oscil 1000))
+	    (g2 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv-a)
+	  (float-vector-set! fv-a i (oscil g1 (oscil g2))))))
+    
+    (test (fv5) (float-vector 0.0 0.1419943179576268 0.4140929109323406 0.7516320715399403))
+    
+    (define (fv6)
+      (let ((g1 (make-oscil 1000))
+	    (g2 (make-oscil 1000)))
+	(list (oscil g1 (oscil g2)) (oscil g1 (oscil g2)) (oscil g1 (oscil g2)) (oscil g1 (oscil g2)))))
+    
+    (test (fv6) '(0.0 0.1419943179576268 0.4140929109323406 0.7516320715399403))
+    
+    (define (fv7)
+      (let ((g0 (make-oscil 1000))
+	    (g1 (make-oscil 1000))
+	    (x 0.1))
+	(let ((fv (make-float-vector 6)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 3))
+	    (float-vector-set! fv i (oscil g0 0.1)))
+	  (do ((i 3 (+ i 1)))
+	      ((= i 6))
+	    (float-vector-set! fv i (oscil g1 x)))
+	  fv)))
+    
+    (test (fv7) (float-vector 0.0 0.2401067896488338 0.4661656420314379 0.0 0.2401067896488338 0.4661656420314379))
+    
+    (define (fv8)
+      (let ((g (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4))
+	  (oscil g))
+	(oscil g)))
+    
+    (test (fv8) 0.5395507431861811)
+    
+    (define (fv9)
+      (let ((g (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4))
+	  (oscil g 0.1))
+	(oscil g 0.1)))
+    
+    (test (fv9) 0.8248311180769614)
+    
+    (define (fv10)
+      (let ((fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (* i i)))))
+    (test (fv10) (float-vector 0.0 1.0 4.0 9.0))
+    
+    (define (fv11)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000))
+	    (g1 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (* (oscil g0) (oscil g1))))))
+    (test (fv11) (float-vector 0.0 0.02016238633225161 0.07902345803856255 0.1718360964482408))
+    
+    (define (fv12)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (* 2.0 (oscil g0))))))
+    (test (fv12) (float-vector 0.0 0.2839886359152535 0.5622222266633099 0.8290623533805906))
+    
+    (define (fv13)
+      (let ((fv (make-float-vector 4))
+	    (x 2.0)
+	    (g0 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (* (oscil g0) x)))))
+    (test (fv13) (float-vector 0.0 0.2839886359152535 0.5622222266633099 0.8290623533805906))
+    
+    (define (fv14)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000))
+	    (g1 (make-oscil 1000))
+	    (s0 2.0)
+	    (s1 3.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (* s0 (oscil g0 (* s1 (oscil g1))))))))
+    (test (fv14) (float-vector 0.0 0.2839886359152535 1.305084606281564 1.984158175327229))
+    
+    (define (fv15)
+      (let ((fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ i i)))))
+    (test (fv15) (float-vector 0.0 2.0 4.0 6.0))
+    
+    (define (fv16)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000))
+	    (g1 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ (oscil g0) (oscil g1))))))
+    (test (fv16) (float-vector 0.0 0.2839886359152535 0.5622222266633099 0.8290623533805906))
+    
+    (define (fv17)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ 2.0 (oscil g0))))))
+    (test (fv17) (float-vector 2.0 2.141994317957627 2.281111113331655 2.414531176690295))
+    
+    (define (fv18)
+      (let ((fv (make-float-vector 4))
+	    (x 2.0)
+	    (g0 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ (oscil g0) x)))))
+    (test (fv18) (float-vector 2.0 2.141994317957627 2.281111113331655 2.414531176690295))
+    
+    (define (fv19)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000))
+	    (g1 (make-oscil 1000))
+	    (s0 2.0)
+	    (s1 3.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ s0 (oscil g0 (* s1 (oscil g1))))))))
+    (test (fv19) (float-vector 2.0 2.141994317957627 2.652542303140782 2.992079087663615))
+    
+    (define (fv20)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000))
+	    (g1 (make-oscil 1000))
+	    (g2 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ (oscil g0) (oscil g1) (oscil g2))))))
+    (test (fv20) (float-vector 0.0 0.4259829538728803 0.8433333399949648 1.243593530070886))
+    
+    (define (fv21)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000))
+	    (g1 (make-oscil 1000))
+	    (s1 1.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ (oscil g0) (oscil g1) s1)))))
+    (test (fv21) (float-vector 1.0 1.283988635915253 1.56222222666331 1.829062353380591))
+    
+    (define (fv22)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000))
+	    (g1 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ (oscil g0) 1.0 (oscil g1))))))
+    (test (fv22) (float-vector 1.0 1.283988635915253 1.56222222666331 1.829062353380591))
+    
+    (define (fv23)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000))
+	    (s1 1.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ s1 1.0 (oscil g0))))))
+    (test (fv23) (float-vector 2.0 2.141994317957627 2.281111113331655 2.414531176690295))
+    
+    (define (fv24)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000))
+	    (s1 1.0)
+	    (s2 2.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ s1 (oscil g0) s2)))))
+    (test (fv24) (float-vector 3.0 3.141994317957627 3.281111113331655 3.414531176690295))
+    
+    (define (fv25)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000))
+	    (s1 1.0)
+	    (s2 2.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ s1 s2 (oscil g0))))))
+    (test (fv25) (float-vector 3.0 3.141994317957627 3.281111113331655 3.414531176690295))
+    
+    (define (fv26)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000))
+	    (s1 1.0)
+	    (s2 2.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ (oscil g0) s1 s2)))))
+    (test (fv26) (float-vector 3.0 3.141994317957627 3.281111113331655 3.414531176690295))
+    
+    (define (fv27)
+      (let ((fv (make-float-vector 4))
+	    (s3 4.0)
+	    (s1 1.0)
+	    (s2 2.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ s3 s1 s2)))))
+    (test (fv27) (float-vector 7.0 7.0 7.0 7.0))
+    
+    (define (fv28)
+      (let ((fv (make-float-vector 4))
+	    (s1 1.0)
+	    (s2 2.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ 4.0 s1 s2)))))
+    (test (fv28) (float-vector 7.0 7.0 7.0 7.0))
+    
+    (define (fv29)
+      (let ((fv (make-float-vector 4))
+	    (s1 1.0)
+	    (s2 2.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ s1 s2 4.0)))))
+    (test (fv29) (float-vector 7.0 7.0 7.0 7.0))
+    
+    (define (fv30)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000))
+	    (g1 (make-oscil 1000))
+	    (g2 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (* (oscil g0) (oscil g1) (oscil g2))))))
+    (test (fv30) (float-vector 0.0 0.002862944295646243 0.02221437226853764 0.07123141925855635))
+    
+    (define (fv31)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000 4.0)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (abs (oscil g0))))))
+    (test (fv31) (float-vector 0.7568024953079282 0.8419478535558946 0.9100310927158114 0.9596725022396432))
+    
+    (define (fv32)
+      (let ((fv (make-float-vector 4))
+	    (s0 -1.5))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (abs s0)))))
+    (test (fv32) (float-vector 1.5 1.5 1.5 1.5))
+    
+    (define (fv31)
+      (let ((g0 (make-oscil 1000))
+	    (fv (make-float-vector 4))
+	    (g1 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (let ((x (oscil g0)))
+	    (float-vector-set! fv i (oscil g1 x))))))
+    (test (fv31) (float-vector 0.0 0.1419943179576268 0.4140929109323406 0.7516320715399403))
+    
+    (define (fv32)
+      (let ((g0 (make-oscil 1000))
+	    (fv (make-float-vector 4))
+	    (g1 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (let* ((x (oscil g0)))
+	    (float-vector-set! fv i (oscil g1 x))))))
+    (test (fv32) (float-vector 0.0 0.1419943179576268 0.4140929109323406 0.7516320715399403))
+    
+    (define (fv33)
+      (let ((g0 (make-oscil 1000))
+	    (fv (make-float-vector 4))
+	    (g1 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (let ((x (oscil g0))
+		(y (oscil g0)))
+	    (float-vector-set! fv i (* y (oscil g1 x)))))))
+    (test (fv33) (float-vector 0.0 0.05886107170631096 0.3505537450231597 0.7966641560805439))
+    
+    (define (fv34)
+      (let ((g0 (make-oscil 1000))
+	    (fv (make-float-vector 4))
+	    (g1 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (let* ((x (oscil g0))
+		 (y (oscil g0)))
+	    (float-vector-set! fv i (* y (oscil g1 x)))))))
+    (test (fv34) (float-vector 0.0 0.05886107170631096 0.3505537450231597 0.7966641560805439))
+    
+    (define (fv35)
+      (let ((g0 (make-oscil 1000))
+	    (fv (make-float-vector 4))
+	    (g1 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (let* ((x (oscil g0))
+		 (y x))
+	    (float-vector-set! fv i (+ y (oscil g1)))))))
+    (test (fv35) (float-vector 0.0 0.2839886359152535 0.5622222266633099 0.8290623533805906))
+    
+    (define (fv36)
+      (let ((g0 (make-oscil 1000))
+	    (fv (make-float-vector 4))
+	    (g1 (make-oscil 1000))
+	    (x 1.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (let ((x (oscil g0))
+		(y x))
+	    (float-vector-set! fv i (+ y (oscil g1)))))))
+    (test (fv36) (float-vector 1.0 1.141994317957627 1.281111113331655 1.414531176690295))
+    
+    (define (fv37)
+      (let ((g0 (make-oscil 1000))
+	    (fv (make-float-vector 4))
+	    (x0 1.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (odd-weight (+ x0 (oscil g0)))))))
+    (test (fv37) (float-vector 1.0 0.8580056820423732 0.7188888866683452 0.5854688233097047))
+    
+    (define (fv38)
+      (let ((g0 (make-oscil 1000))
+	    (fv (make-float-vector 4))
+	    (x0 1.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (even-weight (+ x0 (oscil g0)))))))
+    (test (fv38) (float-vector 0.0 0.1419943179576268 0.2811111133316548 0.4145311766902953))
+    
+    (define (fv39)
+      (let ((g0 (make-oscil 1000))
+	    (fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (max (oscil g0) 0.25)))))
+    (test (fv39) (float-vector 0.25 0.25 0.2811111133316549 0.4145311766902953))
+    
+    (define (fv40)
+      (let ((g0 (make-file->sample "oboe.snd"))
+	    (fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (ina i g0)))))
+    (test (fv40) (float-vector 0.0 -0.00030517578125 -0.00030517578125 -0.000274658203125))
+    
+    (define (fv41)
+      (let ((g0 (make-float-vector 3 0.5))
+	    (fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (ina i g0)))))
+    (test (fv41) (float-vector 0.5 0.5 0.5 0.0))
+    
+    (define (fv42)
+      (let ((g0 (make-float-vector 3 0.5))
+	    (fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (- (ina i g0))))))
+    (test (fv42) (float-vector -0.5 -0.5 -0.5 0.0))
+    
+    (define (fv43)
+      (let ((g0 (make-float-vector 3 0.5))
+	    (fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (- i)))))
+    (test (fv43) (float-vector 0 -1 -2 -3))
+    
+    (define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
+      "(for-each-permutation func vals) applies func to every permutation of vals"
+      ;;   (for-each-permutation (lambda args (format-logged #t "~{~A~^ ~}~%" args)) '(1 2 3))
+      (define (pinner cur nvals len)
+	(if (= len 1)
+	    (apply func (cons (car nvals) cur))
+	    (do ((i 0 (+ i 1)))                       ; I suppose a named let would be more Schemish
+		((= i len))
+	      (let ((start nvals))
+		(set! nvals (cdr nvals))
+		(let ((cur1 (cons (car nvals) cur)))  ; add (car nvals) to our arg list
+		  (set! (cdr start) (cdr nvals))      ; splice out that element and 
+		  (pinner cur1 (cdr start) (- len 1)) ;   pass a smaller circle on down
+		  (set! (cdr start) nvals))))))       ; restore original circle
+      (let ((len (length vals)))
+	(set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
+	(pinner () vals len)
+	(set-cdr! (list-tail vals (- len 1)) ())))   ; restore its original shape
+    
+    (define (for-each-subset func args)
+      (let ((subsets ()))
+	(define (subset source dest len)
+	  (if (null? source)
+	      (begin
+		(if (member dest subsets)
+		    (format-logged #t ";got ~S twice in for-each-subset: ~S~%" dest args))
+		(set! subsets (cons dest subsets))
+		(if (aritable? func len)
+		    (apply func dest)))
+	      (begin
+		(subset (cdr source) (cons (car source) dest) (+ len 1))
+		(subset (cdr source) dest len))))
+	(subset args () 0)))
+    
+    (define (permute op . args)
+      (let ((body (copy `(let () 
+			   (define (t1)
+			     (let ((x 1.5) (y 3.5) (g0 (make-oscil 1000)) (g1 (make-oscil 2000)) (fv (make-float-vector 4)))
+			       (do ((i 0 (+ i 1)))
+				   ((= i 4) fv)
+				 (float-vector-set! fv i (,op ,@args)))))
+			   (define (t2)
+			     (let ((x 1.5) (y 3.5) (g0 (make-oscil 1000)) (g1 (make-oscil 2000)) (v (make-vector 4)))
+			       (do ((i 0 (+ i 1)))
+				   ((= i 4) v)
+				 (vector-set! v i (,op ,@args)))))
+			   (let ((v1 (t1))
+				 (v2 (copy (t2) (make-float-vector 4))))
+			     (if (not (morally-equal? v1 v2))
+				 (format *stderr* "~A -> ~A ~A~%" args v1 v2))))
+			:readable)))
+	(eval body)))
+    
+    (for-each
+     (lambda (op)
+       (for-each-subset
+	(lambda s-args
+	  (if (pair? s-args)
+	      (for-each-permutation (lambda args (apply permute op args)) s-args)))
+	(list 'x '(oscil g0) 2.0 '(oscil g1) 'y)))
+     (list '+ '* '-))
+    
+    (for-each-subset
+     (lambda s-args
+       (if (pair? s-args)
+	   (for-each-permutation (lambda args (apply permute '/ args)) s-args)))
+     (list 'x '(+ .01 (oscil g0)) 2.0 '(+ .01 (oscil g1)) 'y))
+    
+    (define (fv44)
+      (let ((g0 (make-float-vector 3 1.0))
+	    (fv (make-float-vector 4))
+	    (x 2.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (polynomial g0 x)))))
+    (test (fv44) (float-vector 7.0 7.0 7.0 7.0))
+    
+    (define (fv45)
+      (let ((g0 (make-float-vector 3 1.0))
+	    (fv (make-float-vector 4))
+	    (x (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (polynomial g0 (* 2.0 (oscil x)))))))
+    (test (fv45) (float-vector 1.0 1.36463818124426 1.87831605881756 2.516406739173554))
+    
+    (define (fv46)
+      (let ((g0 (make-float-vector 4 1.0))
+	    (fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (float-vector-ref g0 i)))))
+    (test (fv46) (float-vector 1.0 1.0 1.0 1.0))
+    
+    (define (fv47)
+      (let ((g0 (make-oscil 1000))
+	    (fv (make-float-vector 4))
+	    (x 1.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (amplitude-modulate 1.0 x (oscil g0))))))
+    (test (fv47) (float-vector 1.0 1.141994317957627 1.281111113331655 1.414531176690295))
+    
+    (define (fv48)
+      (let ((g0 (make-oscil 1000))
+	    (fv (make-float-vector 4))
+	    (x 1.0))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (remainder (* 10 (oscil g0)) 1.0)))))
+    (test (fv48) (float-vector 0.0 0.4199431795762676 0.8111111333165493 0.1453117669029531))
+    )
+  
   (if all-args
       (let ((old-size *clm-file-buffer-size*))
 	(set! *clm-file-buffer-size* 100)

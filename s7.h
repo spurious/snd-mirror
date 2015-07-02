@@ -675,20 +675,19 @@ s7_pointer s7_cadar_value(s7_scheme *sc, s7_pointer lst);
 
 
   /* these are the new form */
-typedef s7_Double (*s7_rsf_t)(s7_scheme *sc, s7_pointer **p);
-typedef s7_rsf_t (*s7_rsp_t)(s7_scheme *sc, s7_pointer expr);
-void s7_rs_set_function(s7_pointer f, s7_rsp_t rsp);
-s7_rsp_t s7_rs_function(s7_scheme *sc, s7_pointer func);
-s7_Int s7_rs_store(s7_scheme *sc, s7_pointer val);
-void s7_rs_store_at(s7_scheme *sc, s7_Int index, s7_pointer val);
-s7_rsf_t s7_is_rs_1(s7_scheme *sc, s7_pointer expr, s7_rsf_t c, s7_rsf_t s, s7_rsf_t p);
-s7_rsf_t s7_is_rs_2(s7_scheme *sc, s7_pointer expr, s7_rsf_t c_s, s7_rsf_t s_s, s7_rsf_t r_s, 
-		    s7_rsf_t c_r, s7_rsf_t s_r, s7_rsf_t r_r, s7_rsf_t c_c, s7_rsf_t s_c, s7_rsf_t r_c);
+typedef s7_Double (*s7_rf_t)(s7_scheme *sc, s7_pointer **p);
+typedef s7_rf_t (*s7_rp_t)(s7_scheme *sc, s7_pointer expr);
+void s7_rf_set_function(s7_pointer f, s7_rp_t rp);
+s7_rp_t s7_rf_function(s7_scheme *sc, s7_pointer func);
+s7_rf_t s7_is_rf_1(s7_scheme *sc, s7_pointer expr, s7_rf_t r, s7_rf_t s, s7_rf_t p);
+s7_rf_t s7_is_rf_2(s7_scheme *sc, s7_pointer expr, s7_rf_t rr, s7_rf_t sr, s7_rf_t pr, s7_rf_t rs, s7_rf_t ss, s7_rf_t ps, s7_rf_t rp, s7_rf_t sp, s7_rf_t pp);
 
-void s7_rsf_free(s7_scheme *sc);
-s7_pointer **s7_rsf_start(s7_scheme *sc);
-void *s7_rsf_new(s7_scheme *sc, s7_pointer e);
-bool s7_rsf_is_stepper(s7_scheme *sc, s7_pointer sym);
+void s7_xf_store_at(s7_scheme *sc, s7_Int index, s7_pointer val);
+s7_Int s7_xf_store(s7_scheme *sc, s7_pointer val);
+void s7_xf_free(s7_scheme *sc);
+s7_pointer *s7_xf_start(s7_scheme *sc);
+void *s7_xf_new(s7_scheme *sc, s7_pointer e);
+bool s7_xf_is_stepper(s7_scheme *sc, s7_pointer sym);
 
 void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_Double value);
 /* end CLM stuff */
@@ -769,7 +768,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
- * 27-Jun:    s7_rsf_t, s7_rsp_t etc.
+ * 27-Jun:    s7_rf_t, s7_rp_t etc.
  * 19-Jun:    removed the ex_parser stuff, set_step_safe, s7_ex_fallback.
  * 5-May:     s7_make_iterator and friends.
  * 16-Apr:    added s7_fill, changed arg interpretation of s7_copy, s7_dynamic_wind.
