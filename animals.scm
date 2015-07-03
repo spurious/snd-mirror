@@ -5435,9 +5435,9 @@
 	  (outa i (* (env ampf)
 		     (+ (* (env f1) (oscil gen1 frq))
 			(* (env f2) (oscil gen2 (* 2.0 frq)))
-			(* (env f3) (oscil gen3 (* 3.0 frq)))
-			(* .005 (oscil gen4 (* 4.0 frq)))
-			(* .005 (oscil gen5 (* 5.0 frq)))))))))))
+			(+ (* (env f3) (oscil gen3 (* 3.0 frq)))
+			   (* .005 (oscil gen4 (* 4.0 frq)))
+			   (* .005 (oscil gen5 (* 5.0 frq))))))))))))
 
 ;;; formants sounded bad here, polywave worse
 
@@ -5547,9 +5547,9 @@
 	  (outa i (* (env ampf)
 		     (+ (* (env f1) (oscil gen1 frq))
 			(* (env f2) (oscil gen2 (* 2.0 frq)))
-			(* (env f3) (oscil gen3 (* 3.0 frq)))
-			(* (env f4) (oscil gen4 (* 4.0 frq)))
-			(* .005 (oscil gen5 (* 5.0 frq))))))))))
+			(+ (* (env f3) (oscil gen3 (* 3.0 frq)))
+			   (* (env f4) (oscil gen4 (* 4.0 frq)))
+			   (* .005 (oscil gen5 (* 5.0 frq)))))))))))
   
   ;; note #2
   (let ((dur 0.085)
@@ -9989,8 +9989,8 @@
 		     (+ (* (env ampf1) (oscil gen1 frq))
 			(* .5 (oscil gen2 (* 2.0 frq)))
 			(* (env ampf3) (oscil gen3 (* 3.0 frq)))
-			(* (env ampf4) (polywave gen4 frq))
-			(+ (* (env ampf5) (nrxysin gen5 (* 6.0 frq)))
+			(+ (* (env ampf4) (polywave gen4 frq))
+			   (* (env ampf5) (nrxysin gen5 (* 6.0 frq)))
 			   (* (env humf) 
 			      (+ .25 (abs (triangle-wave tri1)))
 			      (oscil hum (env humfrq))))))))))))
@@ -10315,10 +10315,10 @@
 		     (+ .9 (abs (rand-interp rnd1)))
 		     (+ (* (env attf) (polywave att (* 0.5 frq)))
 			(* (env ampf1) (oscil gen1 frq))
-			(* (env ampf2) (oscil gen2 (* 2.0 frq)))
-			(* (env ampf3) (oscil gen3 (* 3.0 frq)))
-			(* (env ampf4) (+ (oscil gen4 (* 4.0 frq))
-					  (oscil gen5 (* 5.0 frq))))))))))))
+			(+ (* (env ampf2) (oscil gen2 (* 2.0 frq)))
+			   (* (env ampf3) (oscil gen3 (* 3.0 frq)))
+			   (* (env ampf4) (+ (oscil gen4 (* 4.0 frq))
+					     (oscil gen5 (* 5.0 frq)))))))))))))
 
 ;; (with-sound (:play #t) (wood-duck 0 .5))
 

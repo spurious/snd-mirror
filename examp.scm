@@ -1187,9 +1187,8 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
   (let ((documentation "(expsrc rate snd chn) uses sampling-rate conversion and granular synthesis 
 to produce a sound at a new pitch but at the original tempo.  It returns a function for map-channel."))
     (lambda* (rate snd chn)
-      (let* ((rd (make-sampler 0 snd chn))
-	     (gr (make-granulate :expansion rate
-				 :input (lambda (dir) (read-sample rd))))
+      (let* ((gr (make-granulate :expansion rate
+				 :input (make-sampler 0 snd chn)))
 	     (sr (make-src :srate rate
 			   :input (lambda (dir) (granulate gr)))))
 	(lambda (inval)

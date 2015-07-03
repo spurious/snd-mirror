@@ -480,10 +480,6 @@ MUS_EXPORT mus_float_t mus_out_any(mus_long_t frample, mus_float_t val, int chan
 MUS_EXPORT mus_float_t mus_safe_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO);
 MUS_EXPORT bool mus_out_any_is_safe(mus_any *IO);
 MUS_EXPORT mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_float_t val);
-MUS_EXPORT mus_long_t mus_out_any_data_start(mus_any *IO);
-MUS_EXPORT mus_long_t mus_out_any_data_end(mus_any *IO);
-MUS_EXPORT mus_float_t **mus_out_any_buffers(mus_any *IO);
-MUS_EXPORT void mus_out_any_set_end(mus_any *IO, mus_long_t end);
 
 MUS_EXPORT void mus_locsig(mus_any *ptr, mus_long_t loc, mus_float_t val);
 MUS_EXPORT mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t reverb, int chans, 

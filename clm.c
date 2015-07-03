@@ -11401,32 +11401,6 @@ int mus_close_file(mus_any *ptr)
 
 /* ---------------- out-any ---------------- */
 
-
-mus_long_t mus_out_any_data_start(mus_any *IO)
-{
-  rdout *gen = (rdout *)IO;
-  return(gen->data_start);
-}
-
-mus_long_t mus_out_any_data_end(mus_any *IO)
-{
-  rdout *gen = (rdout *)IO;
-  return(gen->data_end);
-}
-
-mus_float_t **mus_out_any_buffers(mus_any *IO)
-{
-  rdout *gen = (rdout *)IO;
-  return(gen->obufs);
-}
-
-void mus_out_any_set_end(mus_any *IO, mus_long_t end)
-{
-  rdout *gen = (rdout *)IO;
-  if (gen->out_end < end)
-    gen->out_end = end;
-}
-
 mus_float_t mus_out_any(mus_long_t samp, mus_float_t val, int chan, mus_any *IO)
 {
   if ((IO) && 

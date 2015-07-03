@@ -38616,6 +38616,25 @@ EDITS: 1
 	    ((= i 4) fv)
 	  (float-vector-set! fv i (remainder (* 10 (oscil g0)) 1.0)))))
     (test (fv48) (float-vector 0.0 0.4199431795762676 0.8111111333165493 0.1453117669029531))
+
+    (define (fv49)
+      (let ((g0 (float-vector 1 2 3 4 5 6))
+	    (fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (float-vector-ref g0 (+ i 2))))))
+    (test (fv49) (float-vector 3 4 5 6))
+
+    (define (fv49)
+      (let ((fv (make-float-vector 4))
+	    (g0 (make-oscil 1000))
+	    (g1 (make-oscil 1000))
+	    (g2 (make-oscil 1000))
+	    (g3 (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ (oscil g0) (oscil g1) (oscil g2) (oscil g3))))))
+    (test (fv49) (float-vector 0.0 0.5679772718305071 1.12444445332662 1.658124706761181))
     )
   
   (if all-args

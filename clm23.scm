@@ -1459,9 +1459,9 @@
 	      (outa i (* (env ampf)
 			 (oscil carrier
 				(+ vib 
-				   (* (env indf1) (oscil fmosc1 vib))
-				   (* (env indf2) (oscil fmosc2 (* 3.0 vib)))
-				   (* (env indf3) (oscil fmosc3 (* 4.0 vib))))))))))))))
+				   (+ (* (env indf1) (oscil fmosc1 vib))
+				      (* (env indf2) (oscil fmosc2 (* 3.0 vib)))
+				      (* (env indf3) (oscil fmosc3 (* 4.0 vib)))))))))))))))
 
 (define (fmdoc-cascade beg dur freq amp modrat modind casrat casind caspha)
   (let ((start (seconds->samples beg))
