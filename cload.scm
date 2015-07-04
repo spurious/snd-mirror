@@ -131,9 +131,9 @@
 	    (set! all-names (cons name all-names)))
 	name)))
 
-  (define handlers (list '(integer s7_is_integer s7_integer s7_make_integer s7_Int)
+  (define handlers (list '(integer s7_is_integer s7_integer s7_make_integer s7_int)
 			 '(boolean s7_is_boolean s7_boolean s7_make_boolean bool)
-			 '(real s7_is_real s7_number_to_real s7_make_real s7_Double)
+			 '(real s7_is_real s7_number_to_real s7_make_real s7_double)
 
 			 ;; '(complex s7_is_complex #f s7_make_complex s7_Complex)
 			 ;; the typedef is around line 6116 in s7.c, but we also need s7_complex which requires the s7_Complex type

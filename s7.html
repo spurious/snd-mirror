@@ -314,7 +314,7 @@ Its argument is a string representing the desired number:
 <blockquote> 
 <div class="indented">
 
-<p>In the non-gmp case, if s7 is built using doubles (s7_Double in s7.h), the float "epsilon" is
+<p>In the non-gmp case, if s7 is built using doubles (s7_double in s7.h), the float "epsilon" is
 around (expt 2 -53), or about 1e-16.  In the gmp case, it is around (expt 2 (- (*s7* 'bignum-precision))).
 So in the default case (precision = 128), using gmp:
 </p>
@@ -1899,7 +1899,7 @@ vector-dimensions returns a list of the dimensions.
 
 <p>make-vector also takes an optional fourth argument.  If it is #t, and the initial-value
 is either an integer or a real, make-vector produces a homogenous vector, a vector that
-can only hold elements of the same type as the initial value (either s7_Int or s7_Double
+can only hold elements of the same type as the initial value (either s7_int or s7_double
 internally).  Homogenous vectors are mostly useful in conjunction with C code.  Eight
 homogenous vector functions are currently built-in:
 </p>
@@ -6440,7 +6440,7 @@ WITH_C_LOADER		       1 if you want to be able to load shared object files with 
 </pre>
 
 <p>See the comment at the start of s7.c for more information about these switches.
-s7.h defines the two main number types: s7_Int and s7_Double.
+s7.h defines the two main number types: s7_int and s7_double.
 The examples that follow show:
 </p>
 
@@ -7154,7 +7154,7 @@ static void set_listener_prompt(s7_scheme *sc, const char *new_prompt)
 /*   since the data field is an s7 object, we'll need to mark it to protect it from the GC */
 
 typedef struct {
-  s7_Double x;
+  s7_double x;
   s7_pointer data;
 } dax;
 
@@ -7447,7 +7447,7 @@ static s7_pointer our_abs(s7_scheme *sc, s7_pointer args)
 	s7_wrong_type_arg_error(sc, "abs", 1, x, "a real"); 
       return(s7_apply_function(sc, method, args));          /*   else apply the method to the args */
     }
-  return(s7_make_real(sc, (s7_Double)fabs(s7_number_to_real(sc, x))));
+  return(s7_make_real(sc, (s7_double)fabs(s7_number_to_real(sc, x))));
 }
 
 int main(int argc, char **argv)
@@ -7750,12 +7750,12 @@ static s7_pointer multivector_ref(s7_scheme *sc, s7_pointer vector, int indices,
   if (ndims == indices)
     {
       va_list ap;
-      s7_Int index = 0;
+      s7_int index = 0;
       va_start(ap, indices);
 
       if (ndims == 1)
 	{
-	  index = va_arg(ap, s7_Int);
+	  index = va_arg(ap, s7_int);
 	  va_end(ap);
 	  return(s7_vector_ref(sc, vector, index));
 	}
@@ -7763,7 +7763,7 @@ static s7_pointer multivector_ref(s7_scheme *sc, s7_pointer vector, int indices,
 	{
 	  int i;
 	  s7_pointer *elements;
-	  s7_Int *offsets, *dimensions;
+	  s7_int *offsets, *dimensions;
 
 	  elements = <em class=red>s7_vector_elements</em>(vector);
 	  dimensions = <em class=red>s7_vector_dimensions</em>(vector);

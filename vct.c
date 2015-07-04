@@ -450,21 +450,21 @@ static Xen g_vct_copy(Xen obj)
 #else /* HAVE_SCHEME */
 vct *mus_vct_make(mus_long_t len)
 {
-  s7_Int di[1];
+  s7_int di[1];
   di[0] = len;
   return(s7_make_float_vector(s7, len, 1, di));
 }
 
 Xen xen_make_vct(mus_long_t len, mus_float_t *data)
 {
-  return(s7_make_float_vector_wrapper(s7, len, (s7_Double *)data, 1, NULL, true));     /* freed by s7 */
+  return(s7_make_float_vector_wrapper(s7, len, (s7_double *)data, 1, NULL, true));     /* freed by s7 */
 }
 
 Xen xen_make_vct_wrapper(mus_long_t len, mus_float_t *data)
 {
-  s7_Int di[1];
+  s7_int di[1];
   di[0] = len;
-  return(s7_make_float_vector_wrapper(s7, len, (s7_Double *)data, 1, di, false));     /* not freed by s7 */
+  return(s7_make_float_vector_wrapper(s7, len, (s7_double *)data, 1, di, false));     /* not freed by s7 */
 }
 
 vct *mus_vct_wrap(mus_long_t len, mus_float_t *data)

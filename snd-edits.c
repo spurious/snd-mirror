@@ -9132,28 +9132,28 @@ static s7_pointer read_sample_chooser(s7_scheme *sc, s7_pointer f, int args, s7_
 }
 
 
-static s7_Double next_sample_rf(s7_scheme *sc, s7_pointer **p)
+static s7_double next_sample_rf(s7_scheme *sc, s7_pointer **p)
 {
   snd_fd *fd;
   fd = (snd_fd *)(*(*p)); (*p)++;
   return(protected_next_sample(fd));
 }
 
-static s7_Double read_sample_rf(s7_scheme *sc, s7_pointer **p)
+static s7_double read_sample_rf(s7_scheme *sc, s7_pointer **p)
 {
   snd_fd *fd;
   fd = (snd_fd *)(*(*p)); (*p)++;
   return(read_sample(fd));
 }
 
-static s7_Double next_mix_sample_rf(s7_scheme *sc, s7_pointer **p)
+static s7_double next_mix_sample_rf(s7_scheme *sc, s7_pointer **p)
 {
   snd_fd *fd;
   fd = (snd_fd *)(*(*p)); (*p)++;
   return(protected_next_sample(fd));
 }
 
-static s7_Double read_mix_sample_rf(s7_scheme *sc, s7_pointer **p)
+static s7_double read_mix_sample_rf(s7_scheme *sc, s7_pointer **p)
 {
   snd_fd *fd;
   fd = (snd_fd *)(*(*p)); (*p)++;

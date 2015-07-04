@@ -3518,7 +3518,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	  
 	  if (!s7_is_pair(res))
 	    {
-	      s7_Double x;
+	      s7_double x;
 	      if (s7_is_symbol(res))
 		{
 		  s7_pointer old_e;
@@ -5396,7 +5396,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 
 
 #if defined(__sun) && defined(__SVR4)
-  static bool isinf(s7_Double x) {return((x == x) && (is_NaN(x - x)));}
+  static bool isinf(s7_double x) {return((x == x) && (is_NaN(x - x)));}
 #endif
 
 static Xen g_src_1(Xen ratio_or_env, Xen ebase, Xen snd, Xen chn_n, Xen edpos, const char *caller, bool over_selection)
@@ -6300,7 +6300,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 #if HAVE_SCHEME
 static s7_pointer g_phases_get_peak(s7_scheme *sc, s7_pointer args)
 {
-  s7_Int choice, i, m, n;
+  s7_int choice, i, m, n;
   int fft_size, fft_mult = 128, n1;
   s7_pointer phases;
   s7_pointer *elements;

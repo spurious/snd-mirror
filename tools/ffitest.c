@@ -67,7 +67,7 @@ static s7_pointer scheme_set_notification(s7_scheme *sc, s7_pointer args)
 
 
 typedef struct {
-  s7_Double x;
+  s7_double x;
   s7_pointer data;
 } dax;
 
@@ -194,12 +194,12 @@ static s7_pointer multivector_ref(s7_scheme *sc, s7_pointer vector, int indices,
   if (ndims == indices)
     {
       va_list ap;
-      s7_Int index = 0;
+      s7_int index = 0;
       va_start(ap, indices);
 
       if (ndims == 1)
 	{
-	  index = va_arg(ap, s7_Int);
+	  index = va_arg(ap, s7_int);
 	  va_end(ap);
 	  return(s7_vector_ref(sc, vector, index));
 	}
@@ -207,7 +207,7 @@ static s7_pointer multivector_ref(s7_scheme *sc, s7_pointer vector, int indices,
 	{
 	  int i;
 	  s7_pointer *elements;
-	  s7_Int *offsets, *dimensions;
+	  s7_int *offsets, *dimensions;
 
 	  elements = s7_vector_elements(vector);
 	  dimensions = s7_vector_dimensions(vector);
@@ -309,7 +309,7 @@ static s7_pointer g_block_ref(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 static s7_pointer g_block_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   g_block *g = (g_block *)s7_object_value(obj);
-  s7_Int index;
+  s7_int index;
   index = s7_integer(s7_car(args));
   if ((index >= 0) && (index < g->size))
     {
@@ -1080,7 +1080,7 @@ int main(int argc, char **argv)
     {fprintf(stderr, "%d: (vector-dimensions %s) is not 3?\n", __LINE__, s1 = TO_STR(p1)); free(s1);}
 
   {
-    s7_Int *dims, *offs;
+    s7_int *dims, *offs;
     s7_pointer *els;
     dims = s7_vector_dimensions(p1);
     offs = s7_vector_offsets(p1);

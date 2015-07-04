@@ -2402,7 +2402,7 @@ static Xen g_gsl_eigenvectors(Xen matrix)
 	{
 	  Xen vect;
 #if HAVE_SCHEME
-	  s7_Double *fv_data;
+	  s7_double *fv_data;
 #endif
 	  gsl_complex eval_i = gsl_vector_complex_get(eval, i);
 	  gsl_vector_complex_view evec_i = gsl_matrix_complex_column(evec, i);
@@ -2466,7 +2466,7 @@ static Xen g_gsl_roots(Xen poly)
 #if HAVE_SCHEME
   if (s7_is_float_vector(poly))
     {
-      s7_Double *e;
+      s7_double *e;
       e = s7_float_vector_elements(poly);
       for (i = 0; i < n; i++)
 	p[i] = e[i];

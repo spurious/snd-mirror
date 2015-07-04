@@ -1607,7 +1607,7 @@
 	   (in-C "static s7_pointer g_gsl_matrix_size(s7_scheme *sc, s7_pointer args)
                   {
                     gsl_matrix *g; g = (gsl_matrix *)s7_c_pointer(s7_car(args));
-                    return(s7_cons(sc, s7_make_integer(sc, (s7_Int)(g->size1)), s7_make_integer(sc, (s7_Int)(g->size2))));
+                    return(s7_cons(sc, s7_make_integer(sc, (s7_int)(g->size1)), s7_make_integer(sc, (s7_int)(g->size2))));
                   }")
            (C-function ("gsl_matrix_size" g_gsl_matrix_size "" 1))
 	   
@@ -1742,13 +1742,13 @@
                   {
                      gsl_combination *g;
                      int i, size;
-                     s7_Int *el;
+                     s7_int *el;
                      s7_pointer v;
                      v = s7_cadr(args);
                      size = s7_vector_length(v);
                      g = (gsl_combination *)s7_c_pointer(s7_car(args));
                      el = s7_int_vector_elements(v);
-                     for (i = 0; i < size; i++) el[i] = (s7_Int)(g->data[i]);
+                     for (i = 0; i < size; i++) el[i] = (s7_int)(g->data[i]);
                      return(s7_cadr(args));
                   }
                   ")
@@ -1848,7 +1848,7 @@
 	   (in-C "static s7_pointer g_gsl_eigen_jacobi(s7_scheme *sc, s7_pointer args)
                   {
                     unsigned int ref_arg = 0;
-                    return(s7_make_integer(sc, (s7_Int)gsl_eigen_jacobi((gsl_matrix*)s7_c_pointer(s7_car(args)), (gsl_vector*)s7_c_pointer(s7_cadr(args)),
+                    return(s7_make_integer(sc, (s7_int)gsl_eigen_jacobi((gsl_matrix*)s7_c_pointer(s7_car(args)), (gsl_vector*)s7_c_pointer(s7_cadr(args)),
                                                (gsl_matrix*)s7_c_pointer(s7_caddr(args)), (int)s7_integer(s7_cadddr(args)), &ref_arg)));
                   }")
 	   (C-function ("gsl_eigen_jacobi" g_gsl_eigen_jacobi "" 4))
@@ -2254,7 +2254,7 @@
 	   (in-C "static s7_pointer g_gsl_linalg_LU_decomp(s7_scheme *sc, s7_pointer args)
                   {
                     int s = 0;
-                    return(s7_make_integer(sc, (s7_Int)gsl_linalg_LU_decomp((gsl_matrix *)s7_c_pointer(s7_car(args)),
+                    return(s7_make_integer(sc, (s7_int)gsl_linalg_LU_decomp((gsl_matrix *)s7_c_pointer(s7_car(args)),
                                                (gsl_permutation *)s7_c_pointer(s7_cadr(args)), &s)));
                   }")
 	   (C-function ("gsl_linalg_LU_decomp" g_gsl_linalg_LU_decomp "" 2))
@@ -2268,7 +2268,7 @@
 	   (in-C "static s7_pointer g_gsl_linalg_complex_LU_decomp(s7_scheme *sc, s7_pointer args)
                   {
                     int s = 0;
-                    return(s7_make_integer(sc, (s7_Int)gsl_linalg_complex_LU_decomp((gsl_matrix_complex *)s7_c_pointer(s7_car(args)),
+                    return(s7_make_integer(sc, (s7_int)gsl_linalg_complex_LU_decomp((gsl_matrix_complex *)s7_c_pointer(s7_car(args)),
                                                (gsl_permutation *)s7_c_pointer(s7_cadr(args)), &s)));
                   }")
 	   (C-function ("gsl_linalg_complex_LU_decomp" g_gsl_linalg_complex_LU_decomp "" 2))
@@ -2294,7 +2294,7 @@
 	   (in-C "static s7_pointer g_gsl_linalg_QRPT_decomp(s7_scheme *sc, s7_pointer args)
                   {
                     int s = 0;
-                    return(s7_make_integer(sc, (s7_Int)gsl_linalg_QRPT_decomp((gsl_matrix *)s7_c_pointer(s7_car(args)),
+                    return(s7_make_integer(sc, (s7_int)gsl_linalg_QRPT_decomp((gsl_matrix *)s7_c_pointer(s7_car(args)),
                                                (gsl_vector *)s7_c_pointer(s7_cadr(args)), (gsl_permutation *)s7_c_pointer(s7_caddr(args)), &s,
                                                (gsl_vector *)s7_c_pointer(s7_cadddr(args)))));
                   }")
@@ -2302,7 +2302,7 @@
 	   (in-C "static s7_pointer g_gsl_linalg_QRPT_decomp2(s7_scheme *sc, s7_pointer args)
                   {
                     int s = 0;
-                    return(s7_make_integer(sc, (s7_Int)gsl_linalg_QRPT_decomp2((gsl_matrix *)s7_c_pointer(s7_car(args)), (gsl_matrix *)s7_c_pointer(s7_cadr(args)),
+                    return(s7_make_integer(sc, (s7_int)gsl_linalg_QRPT_decomp2((gsl_matrix *)s7_c_pointer(s7_car(args)), (gsl_matrix *)s7_c_pointer(s7_cadr(args)),
                                                (gsl_matrix *)s7_c_pointer(s7_caddr(args)),
                                                (gsl_vector *)s7_c_pointer(s7_cadddr(args)), (gsl_permutation *)s7_c_pointer(s7_list_ref(sc, args, 4)), &s,
                                                (gsl_vector *)s7_c_pointer(s7_list_ref(sc, args, 5)))));
@@ -2329,7 +2329,7 @@
 	   (in-C "static s7_pointer g_gsl_linalg_PTLQ_decomp(s7_scheme *sc, s7_pointer args)
                   {
                     int s = 0;
-                    return(s7_make_integer(sc, (s7_Int)gsl_linalg_PTLQ_decomp((gsl_matrix *)s7_c_pointer(s7_car(args)),
+                    return(s7_make_integer(sc, (s7_int)gsl_linalg_PTLQ_decomp((gsl_matrix *)s7_c_pointer(s7_car(args)),
                                                (gsl_vector *)s7_c_pointer(s7_cadr(args)), (gsl_permutation *)s7_c_pointer(s7_caddr(args)), &s,
                                                (gsl_vector *)s7_c_pointer(s7_cadddr(args)))));
                   }")
@@ -2337,7 +2337,7 @@
 	   (in-C "static s7_pointer g_gsl_linalg_PTLQ_decomp2(s7_scheme *sc, s7_pointer args)
                   {
                     int s = 0;
-                    return(s7_make_integer(sc, (s7_Int)gsl_linalg_PTLQ_decomp2((gsl_matrix *)s7_c_pointer(s7_car(args)), (gsl_matrix *)s7_c_pointer(s7_cadr(args)),
+                    return(s7_make_integer(sc, (s7_int)gsl_linalg_PTLQ_decomp2((gsl_matrix *)s7_c_pointer(s7_car(args)), (gsl_matrix *)s7_c_pointer(s7_cadr(args)),
                                                (gsl_matrix *)s7_c_pointer(s7_caddr(args)),
                                                (gsl_vector *)s7_c_pointer(s7_cadddr(args)), (gsl_permutation *)s7_c_pointer(s7_list_ref(sc, args, 4)), &s,
                                                (gsl_vector *)s7_c_pointer(s7_list_ref(sc, args, 5)))));

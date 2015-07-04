@@ -23,7 +23,7 @@ snd_info *get_sp(Xen snd)
 #else
   if (Xen_is_integer(snd))
     {
-      s7_Int p;
+      s7_int p;
       p = s7_integer(snd);
       if ((p < 0) ||
 	  (p > ss->max_sounds))

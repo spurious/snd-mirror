@@ -1,15 +1,15 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.28"
-#define S7_DATE "27-Jun-15"
+#define S7_VERSION "3.29"
+#define S7_DATE "3-Jul-15"
 
 
-typedef long long int s7_Int;
+typedef long long int s7_int;
 /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer.
  */
 
-typedef double s7_Double;
+typedef double s7_double;
 /* similarly for Scheme reals; only "double" works in C++
  */
 
@@ -26,6 +26,10 @@ typedef double s7_Double;
  *   Common Music/Grace by Rick Taube: http://camil.music.uiuc.edu/Software/grace/downloads/cm3.tar.gz (composition)
  *     which can use sndlib -- see Snd's grfsnd.html or the cmdist archives for details
  */
+
+/* old forms... */
+typedef s7_int s7_Int;
+typedef s7_double s7_Double;
 
 
 #include <stdio.h>
@@ -252,17 +256,17 @@ s7_pointer s7_make_character(s7_scheme *sc, unsigned int c);                 /* 
 
 bool s7_is_number(s7_pointer p);                                             /* (number? p) */
 bool s7_is_integer(s7_pointer p);                                            /* (integer? p) */
-s7_Int s7_integer(s7_pointer p);                                             /* Scheme integer -> C int (long long int probably) */
-s7_pointer s7_make_integer(s7_scheme *sc, s7_Int num);                       /* C long long int -> Scheme integer */
+s7_int s7_integer(s7_pointer p);                                             /* Scheme integer -> C int (long long int probably) */
+s7_pointer s7_make_integer(s7_scheme *sc, s7_int num);                       /* C long long int -> Scheme integer */
 
 bool s7_is_real(s7_pointer p);                                               /* (real? p) */
-s7_Double s7_real(s7_pointer p);                                             /* Scheme real -> C double */
-s7_pointer s7_make_real(s7_scheme *sc, s7_Double num);                       /* C double -> Scheme real */
-s7_pointer s7_make_mutable_real(s7_scheme *sc, s7_Double n);
-s7_Double s7_number_to_real(s7_scheme *sc, s7_pointer x);                    /* x can be any kind of number */
-s7_Double s7_number_to_real_with_caller(s7_scheme *sc, s7_pointer x, const char *caller);
-s7_Int s7_number_to_integer(s7_scheme *sc, s7_pointer x);
-s7_Int s7_number_to_integer_with_caller(s7_scheme *sc, s7_pointer x, const char *caller);
+s7_double s7_real(s7_pointer p);                                             /* Scheme real -> C double */
+s7_pointer s7_make_real(s7_scheme *sc, s7_double num);                       /* C double -> Scheme real */
+s7_pointer s7_make_mutable_real(s7_scheme *sc, s7_double n);
+s7_double s7_number_to_real(s7_scheme *sc, s7_pointer x);                    /* x can be any kind of number */
+s7_double s7_number_to_real_with_caller(s7_scheme *sc, s7_pointer x, const char *caller);
+s7_int s7_number_to_integer(s7_scheme *sc, s7_pointer x);
+s7_int s7_number_to_integer_with_caller(s7_scheme *sc, s7_pointer x, const char *caller);
 bool s7_is_mutable(s7_pointer p);
 
 bool s7_is_ulong(s7_pointer arg);                                            /* returns true if arg is an unsigned long */
@@ -275,52 +279,52 @@ s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n);          /* 
 
 bool s7_is_rational(s7_pointer arg);                                        /* (rational? arg) -- integer or ratio */
 bool s7_is_ratio(s7_pointer arg);                                           /* true if arg is a ratio, not an integer */
-s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b);                /* returns the Scheme object a/b */
-s7_pointer s7_rationalize(s7_scheme *sc, s7_Double x, s7_Double error);     /* (rationalize x error) */
-s7_Int s7_numerator(s7_pointer x);                                          /* (numerator x) */
-s7_Int s7_denominator(s7_pointer x);                                        /* (denominator x) */
-s7_Double s7_random(s7_scheme *sc, s7_pointer state);                       /* (random x) */
+s7_pointer s7_make_ratio(s7_scheme *sc, s7_int a, s7_int b);                /* returns the Scheme object a/b */
+s7_pointer s7_rationalize(s7_scheme *sc, s7_double x, s7_double error);     /* (rationalize x error) */
+s7_int s7_numerator(s7_pointer x);                                          /* (numerator x) */
+s7_int s7_denominator(s7_pointer x);                                        /* (denominator x) */
+s7_double s7_random(s7_scheme *sc, s7_pointer state);                       /* (random x) */
 s7_pointer s7_make_random_state(s7_scheme *sc, s7_pointer seed);            /* (make-random-state seed) */
 s7_pointer s7_random_state_to_list(s7_scheme *sc, s7_pointer args);         /* (random-state->list r) */
-void s7_set_default_random_state(s7_scheme *sc, s7_Int seed, s7_Int carry);
+void s7_set_default_random_state(s7_scheme *sc, s7_int seed, s7_int carry);
 
 bool s7_is_complex(s7_pointer arg);                                         /* (complex? arg) */
-s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b);        /* returns the Scheme object a+bi */
-s7_Double s7_real_part(s7_pointer z);                                       /* (real-part z) */
-s7_Double s7_imag_part(s7_pointer z);                                       /* (imag-part z) */
+s7_pointer s7_make_complex(s7_scheme *sc, s7_double a, s7_double b);        /* returns the Scheme object a+bi */
+s7_double s7_real_part(s7_pointer z);                                       /* (real-part z) */
+s7_double s7_imag_part(s7_pointer z);                                       /* (imag-part z) */
 char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix);        /* (number->string obj radix) */
 s7_pointer s7_cos(s7_scheme *sc, s7_pointer z);                             /* (cos z) */
 
 
 bool s7_is_vector(s7_pointer p);                                            /* (vector? p) */
-s7_Int s7_vector_length(s7_pointer vec);                                    /* (vector-length vec) */
+s7_int s7_vector_length(s7_pointer vec);                                    /* (vector-length vec) */
 int s7_vector_rank(s7_pointer vect);                                        /* number of dimensions in vect */
-s7_Int *s7_vector_dimensions(s7_pointer vec);                               /* dimensions */
-s7_Int *s7_vector_offsets(s7_pointer vec);                                  /* precalculated offsets to speed-up addressing */
+s7_int *s7_vector_dimensions(s7_pointer vec);                               /* dimensions */
+s7_int *s7_vector_offsets(s7_pointer vec);                                  /* precalculated offsets to speed-up addressing */
 bool s7_is_sundry_vector(s7_pointer p);
 s7_pointer *s7_vector_elements(s7_pointer vec);                             /* a pointer to the array of s7_pointers */
-s7_Int *s7_int_vector_elements(s7_pointer vec);
-s7_Double *s7_float_vector_elements(s7_pointer vec);
+s7_int *s7_int_vector_elements(s7_pointer vec);
+s7_double *s7_float_vector_elements(s7_pointer vec);
 bool s7_is_float_vector(s7_pointer p);                                    
 bool s7_is_int_vector(s7_pointer p);                                      
 
-s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_Int index);                            /* (vector-ref vec index) */
-s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer a);              /* (vector-set! vec index a) */
+s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_int index);                            /* (vector-ref vec index) */
+s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_int index, s7_pointer a);              /* (vector-set! vec index a) */
 s7_pointer s7_vector_ref_n(s7_scheme *sc, s7_pointer vector, int indices, ...);                   /* multidimensional vector-ref */
 s7_pointer s7_vector_set_n(s7_scheme *sc, s7_pointer vector, s7_pointer value, int indices, ...); /* multidimensional vector-set! */
 
-s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len);                                 /* (make-vector len) */
-s7_pointer s7_make_int_vector(s7_scheme *sc, s7_Int len, int dims, s7_Int *dim_info);
-s7_pointer s7_make_float_vector(s7_scheme *sc, s7_Int len, int dims, s7_Int *dim_info);
-s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_Int len, s7_Double *data, int dims, s7_Int *dim_info, bool free_data);
-s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill);       /* (make-vector len fill) */
+s7_pointer s7_make_vector(s7_scheme *sc, s7_int len);                                 /* (make-vector len) */
+s7_pointer s7_make_int_vector(s7_scheme *sc, s7_int len, int dims, s7_int *dim_info);
+s7_pointer s7_make_float_vector(s7_scheme *sc, s7_int len, int dims, s7_int *dim_info);
+s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_int len, s7_double *data, int dims, s7_int *dim_info, bool free_data);
+s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_int len, s7_pointer fill);       /* (make-vector len fill) */
 
 void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj);                   /* (vector-fill! vec obj) */
 s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect);
 s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect);                         /* (vector->list vec) */
 
-s7_Int s7_print_length(s7_scheme *sc);                                                /* value of (*s7* 'print-length) */
-s7_Int s7_set_print_length(s7_scheme *sc, s7_Int new_len);
+s7_int s7_print_length(s7_scheme *sc);                                                /* value of (*s7* 'print-length) */
+s7_int s7_set_print_length(s7_scheme *sc, s7_int new_len);
 
   /* 
    *  (vect i) is the same as (vector-ref vect i)
@@ -333,7 +337,7 @@ s7_Int s7_set_print_length(s7_scheme *sc, s7_Int new_len);
   
 
 bool s7_is_hash_table(s7_pointer p);                                        /* (hash-table? p) */
-s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size);                  /* (make-hash-table size) */
+s7_pointer s7_make_hash_table(s7_scheme *sc, s7_int size);                  /* (make-hash-table size) */
 s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, s7_pointer key);   
                                                                             /* (hash-table-ref table key) */
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7_pointer value);  
@@ -664,10 +668,10 @@ bool s7_function_choice_is_direct(s7_scheme *sc, s7_pointer expr);
 void s7_function_choice_set_direct(s7_scheme *sc, s7_pointer expr);
 bool s7_function_choice_is_direct_to_real(s7_scheme *sc, s7_pointer expr);
 s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr);
-s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n);
+s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_double n);
 void s7_function_set_returns_temp(s7_pointer f);
 bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f);
-s7_Double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr);
+s7_double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr);
 s7_pointer s7_value(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_car_value(s7_scheme *sc, s7_pointer lst);
 s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst);
@@ -675,26 +679,26 @@ s7_pointer s7_cadar_value(s7_scheme *sc, s7_pointer lst);
 
 
   /* these are the new form */
-typedef s7_Double (*s7_rf_t)(s7_scheme *sc, s7_pointer **p);
+typedef s7_double (*s7_rf_t)(s7_scheme *sc, s7_pointer **p);
 typedef s7_rf_t (*s7_rp_t)(s7_scheme *sc, s7_pointer expr);
 void s7_rf_set_function(s7_pointer f, s7_rp_t rp);
 s7_rp_t s7_rf_function(s7_scheme *sc, s7_pointer func);
 s7_rf_t s7_is_rf_1(s7_scheme *sc, s7_pointer expr, s7_rf_t r, s7_rf_t s, s7_rf_t x);
 s7_rf_t s7_is_rf_2(s7_scheme *sc, s7_pointer expr, s7_rf_t rr, s7_rf_t sr, s7_rf_t xr, s7_rf_t rs, s7_rf_t ss, s7_rf_t xs, s7_rf_t rx, s7_rf_t sx, s7_rf_t xx);
 
-typedef s7_Int (*s7_if_t)(s7_scheme *sc, s7_pointer **p);
+typedef s7_int (*s7_if_t)(s7_scheme *sc, s7_pointer **p);
 typedef s7_if_t (*s7_ip_t)(s7_scheme *sc, s7_pointer expr);
 void s7_if_set_function(s7_pointer f, s7_ip_t rp);
 s7_ip_t s7_if_function(s7_scheme *sc, s7_pointer func);
 
-void s7_xf_store_at(s7_scheme *sc, s7_Int index, s7_pointer val);
-s7_Int s7_xf_store(s7_scheme *sc, s7_pointer val);
+void s7_xf_store_at(s7_scheme *sc, s7_int index, s7_pointer val);
+s7_int s7_xf_store(s7_scheme *sc, s7_pointer val);
 void s7_xf_free(s7_scheme *sc);
 s7_pointer *s7_xf_start(s7_scheme *sc);
 void *s7_xf_new(s7_scheme *sc, s7_pointer e);
 bool s7_xf_is_stepper(s7_scheme *sc, s7_pointer sym);
 
-void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_Double value);
+void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_double value);
 /* end CLM stuff */
 
 
@@ -773,6 +777,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 3-Jul:     s7_Double -> s7_double, s7_Int -> s7_int.
  * 27-Jun:    s7_rf_t, s7_rp_t etc.
  * 19-Jun:    removed the ex_parser stuff, set_step_safe, s7_ex_fallback.
  * 5-May:     s7_make_iterator and friends.
@@ -945,7 +950,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 7-Sep:     s7_open_input_function. with-environment. receive.
  * 3-Sep:     s7.html, s7-slib-init.scm. 
  *            s7_stacktrace in s7.h.
- * 27-Aug:    vector and hash-table sizes are now s7_Ints, rather than ints.
+ * 27-Aug:    vector and hash-table sizes are now s7_ints, rather than ints.
  * 20-Aug:    s7_remove_from_heap.
  * 17-Aug:    *error-info*.
  * 14-Aug:    define-expansion.

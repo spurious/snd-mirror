@@ -1616,7 +1616,7 @@ static Xen g_mus_reset(Xen gen)
 #if HAVE_SCHEME
   if (s7_is_float_vector(gen))
     {
-      memset((void *)s7_float_vector_elements(gen), 0, s7_vector_length(gen) * sizeof(s7_Double));
+      memset((void *)s7_float_vector_elements(gen), 0, s7_vector_length(gen) * sizeof(s7_double));
       return(gen);
     }
   {
@@ -6691,7 +6691,7 @@ static Xen fallback_out_any_2(Xen outp, mus_long_t pos, mus_float_t inv, int chn
 #if HAVE_SCHEME
       else
 	{
-	  s7_Int *offsets;
+	  s7_int *offsets;
 	  offsets = s7_vector_offsets(outp);
 	  pos += (chn * offsets[0]);
 	  if (pos < mus_vct_length(v))
@@ -6753,11 +6753,11 @@ static Xen out_any_2_to_vct(mus_long_t pos, mus_float_t inv, int chn, const char
     }
   else
     {
-      s7_Int chans;
+      s7_int chans;
       chans = s7_vector_dimensions(clm_output_vct)[0];
       if (chn < chans)
 	{
-	  s7_Int chan_len;
+	  s7_int chan_len;
 	  chan_len = s7_vector_dimensions(clm_output_vct)[1];
 	  if (pos < chan_len)
 	    vdata[chn * chan_len + pos] += inv;
@@ -7466,7 +7466,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 #if HAVE_SCHEME
 	  else
 	    {
-	      s7_Int chan_len;
+	      s7_int chan_len;
 	      chan_len = s7_vector_dimensions(output)[1]; /* '(4 20) so each chan len is [1] */
 	      if (pos < chan_len)
 		{
@@ -7503,7 +7503,7 @@ static void mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 #if HAVE_SCHEME
 	  else
 	    {
-	      s7_Int chan_len;
+	      s7_int chan_len;
 	      chan_len = s7_vector_dimensions(reverb)[1];
 	      if (pos < chan_len)
 		{
@@ -9882,7 +9882,7 @@ static mus_any *cadr_gen(s7_scheme *sc, s7_pointer expr)
 
 static s7_rf_t caddr_rf(s7_scheme *sc, s7_pointer a2, s7_rf_t func)
 {
-  s7_Int loc;
+  s7_int loc;
   s7_pointer val_sym, val;
   s7_rf_t rf; 
   s7_rp_t rp;
@@ -9900,7 +9900,7 @@ static s7_rf_t caddr_rf(s7_scheme *sc, s7_pointer a2, s7_rf_t func)
 }
 
 #define GEN_RF_1(Type, Func)					\
-  static s7_Double Type ## _rf(s7_scheme *sc, s7_pointer **p)	\
+  static s7_double Type ## _rf(s7_scheme *sc, s7_pointer **p)	\
   {								\
     mus_any *g; g = (mus_any *)(*(*p));	(*p)++;			\
     return(Func(g));						\
@@ -9916,28 +9916,28 @@ static s7_rf_t caddr_rf(s7_scheme *sc, s7_pointer a2, s7_rf_t func)
 
 
 #define GEN_RF(Type, Func1, Func2)				\
-  static s7_Double Type ## _rf(s7_scheme *sc, s7_pointer **p)	\
+  static s7_double Type ## _rf(s7_scheme *sc, s7_pointer **p)	\
   {								\
     mus_any *g; g = (mus_any *)(*(*p));	(*p)++;			\
     return(Func1(g));						\
   }								\
-  static s7_Double Type ## _rf_r(s7_scheme *sc, s7_pointer **p)	\
+  static s7_double Type ## _rf_r(s7_scheme *sc, s7_pointer **p)	\
   {								\
     s7_pointer a2;						\
     mus_any *g; g = (mus_any *)(*(*p));	(*p)++;			\
     a2 = (**p);	(*p)++;						\
     return(Func2(g, s7_number_to_real(sc, a2)));		\
   }								\
-  static s7_Double Type ## _rf_s(s7_scheme *sc, s7_pointer **p)	\
+  static s7_double Type ## _rf_s(s7_scheme *sc, s7_pointer **p)	\
   {								\
-    s7_Double a2;						\
+    s7_double a2;						\
     s7_pointer slot;						\
     mus_any *g; g = (mus_any *)(*(*p));	(*p)++;			\
     slot = **p;							\
     a2 = s7_number_to_real(sc, s7_slot_value(slot)); (*p)++;	\
     return(Func2(g, a2));					\
   }								\
-  static s7_Double Type ## _rf_x(s7_scheme *sc, s7_pointer **p)	\
+  static s7_double Type ## _rf_x(s7_scheme *sc, s7_pointer **p)	\
   {								\
     s7_rf_t f;							\
     mus_any *g; g = (mus_any *)(*(*p)); (*p)++;			\
@@ -10020,10 +10020,10 @@ GEN_RF(ssb_am, mus_ssb_am_rf_1, mus_ssb_am_unmodulated)
 GEN_RF(tap, mus_tap_unmodulated, mus_tap)
 
 
-static s7_Double oscil_rf_sxx(s7_scheme *sc, s7_pointer **p)
+static s7_double oscil_rf_sxx(s7_scheme *sc, s7_pointer **p)
 {
   s7_rf_t rf1, rf2;
-  s7_Double v1;
+  s7_double v1;
   mus_any *g; g = (mus_any *)(*(*p)); (*p)++;
   rf1 = (s7_rf_t)(**p); (*p)++;
   v1 = rf1(sc, p);
@@ -10031,7 +10031,7 @@ static s7_Double oscil_rf_sxx(s7_scheme *sc, s7_pointer **p)
   return(mus_oscil(g, v1, rf2(sc, p)));
 }
 
-static s7_Double oscil_rf_ssx(s7_scheme *sc, s7_pointer **p)
+static s7_double oscil_rf_ssx(s7_scheme *sc, s7_pointer **p)
 {
   s7_rf_t rf1;
   s7_pointer s1;
@@ -10041,7 +10041,7 @@ static s7_Double oscil_rf_ssx(s7_scheme *sc, s7_pointer **p)
   return(mus_oscil(g, s7_number_to_real(sc, s7_slot_value(s1)), rf1(sc, p)));
 }
 
-static s7_Double oscil_rf_sss(s7_scheme *sc, s7_pointer **p)
+static s7_double oscil_rf_sss(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer s1, s2;
   mus_any *g; g = (mus_any *)(*(*p)); (*p)++;
@@ -10050,7 +10050,7 @@ static s7_Double oscil_rf_sss(s7_scheme *sc, s7_pointer **p)
   return(mus_oscil(g, s7_number_to_real(sc, s7_slot_value(s1)), s7_number_to_real(sc, s7_slot_value(s2))));
 }
 
-static s7_Double oscil_rf_srs(s7_scheme *sc, s7_pointer **p)
+static s7_double oscil_rf_srs(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer s1, s2;
   mus_any *g; g = (mus_any *)(*(*p)); (*p)++;
@@ -10059,7 +10059,7 @@ static s7_Double oscil_rf_srs(s7_scheme *sc, s7_pointer **p)
   return(mus_oscil(g, s7_number_to_real(sc, s1), s7_number_to_real(sc, s7_slot_value(s2))));
 }
 
-static s7_Double oscil_rf_srx(s7_scheme *sc, s7_pointer **p)
+static s7_double oscil_rf_srx(s7_scheme *sc, s7_pointer **p)
 {
   s7_rf_t rf1;
   s7_pointer s1;
@@ -10083,10 +10083,10 @@ static s7_rf_t is_oscil_rf_3(s7_scheme *sc, s7_pointer expr)
 }
 
 
-static s7_Double comb_rf_sxx(s7_scheme *sc, s7_pointer **p)
+static s7_double comb_rf_sxx(s7_scheme *sc, s7_pointer **p)
 {
   s7_rf_t rf1, rf2;
-  s7_Double v1;
+  s7_double v1;
   mus_any *g; g = (mus_any *)(*(*p)); (*p)++;
   rf1 = (s7_rf_t)(**p); (*p)++;
   v1 = rf1(sc, p);
@@ -10094,7 +10094,7 @@ static s7_Double comb_rf_sxx(s7_scheme *sc, s7_pointer **p)
   return(mus_comb(g, v1, rf2(sc, p)));
 }
 
-static s7_Double comb_rf_ssx(s7_scheme *sc, s7_pointer **p)
+static s7_double comb_rf_ssx(s7_scheme *sc, s7_pointer **p)
 {
   s7_rf_t rf1;
   s7_pointer s1;
@@ -10104,7 +10104,7 @@ static s7_Double comb_rf_ssx(s7_scheme *sc, s7_pointer **p)
   return(mus_comb(g, s7_number_to_real(sc, s7_slot_value(s1)), rf1(sc, p)));
 }
 
-static s7_Double comb_rf_sss(s7_scheme *sc, s7_pointer **p)
+static s7_double comb_rf_sss(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer s1, s2;
   mus_any *g; g = (mus_any *)(*(*p)); (*p)++;
@@ -10128,7 +10128,7 @@ static s7_rf_t is_comb_rf_3(s7_scheme *sc, s7_pointer expr)
 
 
   /* formant-bank: c g r, or v for with_inputs */
-static s7_Double formant_bank_rf_s(s7_scheme *sc, s7_pointer **p)
+static s7_double formant_bank_rf_s(s7_scheme *sc, s7_pointer **p)
 {								
   mus_any *bank;
   s7_pointer slot;
@@ -10137,7 +10137,7 @@ static s7_Double formant_bank_rf_s(s7_scheme *sc, s7_pointer **p)
   return(mus_formant_bank(bank, s7_number_to_real(sc, s7_slot_value(slot))));
 }	
 							
-static s7_Double formant_bank_rf_r(s7_scheme *sc, s7_pointer **p)
+static s7_double formant_bank_rf_r(s7_scheme *sc, s7_pointer **p)
 {								
   mus_any *bank;
   s7_pointer slot;
@@ -10146,7 +10146,7 @@ static s7_Double formant_bank_rf_r(s7_scheme *sc, s7_pointer **p)
   return(mus_formant_bank(bank, s7_number_to_real(sc, slot)));
 }	
 							
-static s7_Double formant_bank_rf_x(s7_scheme *sc, s7_pointer **p)
+static s7_double formant_bank_rf_x(s7_scheme *sc, s7_pointer **p)
 {								
   mus_any *bank;
   s7_rf_t r1;
@@ -10155,12 +10155,12 @@ static s7_Double formant_bank_rf_x(s7_scheme *sc, s7_pointer **p)
   return(mus_formant_bank(bank, r1(sc, p)));
 }								
 
-static s7_Double formant_bank_rf_v(s7_scheme *sc, s7_pointer **p)
+static s7_double formant_bank_rf_v(s7_scheme *sc, s7_pointer **p)
 {								
   mus_any *bank;
-  s7_Double *els;
+  s7_double *els;
   bank = (mus_any *)(**p); (*p)++;
-  els = (s7_Double *)(**p); (*p)++;
+  els = (s7_double *)(**p); (*p)++;
   return(mus_formant_bank_with_inputs(bank, els));
 }	
 							
@@ -10172,7 +10172,7 @@ static s7_rf_t is_formant_bank_rf(s7_scheme *sc, s7_pointer expr)
   if ((g) && (mus_is_formant_bank(g)))
     {
       s7_pointer a1, val_sym, val;
-      s7_Int loc;
+      s7_int loc;
       s7_rf_t rf;
 
       s7_xf_store(sc, (s7_pointer)g);
@@ -10213,10 +10213,10 @@ static s7_rf_t is_formant_bank_rf(s7_scheme *sc, s7_pointer expr)
 }
 
 
-static s7_Double outa_rf(s7_scheme *sc, s7_pointer **p)
+static s7_double outa_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer ind_slot;
-  s7_Double val;
+  s7_double val;
   s7_rf_t rf;
 
   ind_slot = **p; (*p)++;
@@ -10229,7 +10229,7 @@ static s7_Double outa_rf(s7_scheme *sc, s7_pointer **p)
 static s7_rf_t is_outa_rf(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer ind_sym, ind, ind_slot, val_sym, val, val_expr;
-  s7_Int loc;
+  s7_int loc;
   s7_rf_t rf;
   
   if (!s7_is_null(sc, s7_cdddr(expr))) return(NULL);
@@ -10257,11 +10257,67 @@ static s7_rf_t is_outa_rf(s7_scheme *sc, s7_pointer expr)
 }
 
 
-static s7_Double locsig_rf(s7_scheme *sc, s7_pointer **p)
+static s7_double sample_to_file_rf(s7_scheme *sc, s7_pointer **p)
+{
+  /* (sample->file obj samp chan[always int] val) */
+  s7_pointer ind_slot, chan;
+  mus_any *lc;
+  s7_double val;
+  s7_rf_t rf;
+
+  lc = (mus_any *)(**p); (*p)++;
+  ind_slot = s7_slot_value(**p); (*p)++;
+  chan = (**p); (*p)++;
+  rf = (s7_rf_t)(**p); (*p)++;
+  val = rf(sc, p);
+  mus_sample_to_file(lc, s7_integer(ind_slot), s7_integer(chan), val);
+  return(val);
+}
+
+static s7_rf_t is_sample_to_file_rf(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer ind_sym, ind, ind_slot, chan, val_sym, val, val_expr;
+  s7_int loc;
+  s7_rf_t rf;
+  mus_any *lc;
+
+  lc = cadr_gen(sc, expr);
+  if ((!lc) || (!mus_is_sample_to_file(lc))) return(NULL);
+
+  ind_sym = s7_caddr(expr);
+  if (!s7_is_symbol(ind_sym)) return(NULL);
+  ind_slot = s7_slot(sc, ind_sym);
+  if (!ind_slot) return(NULL);
+  ind = s7_slot_value(ind_slot);
+  if (!s7_is_integer(ind)) return(NULL);
+
+  chan = s7_cadddr(expr);
+  if (!s7_is_integer(chan)) return(NULL);
+
+  val_expr = s7_car(s7_cddddr(expr));
+  if (!s7_is_pair(val_expr)) return(NULL);
+  val_sym = s7_car(val_expr);
+  if (!s7_is_symbol(val_sym)) return(NULL);
+  val = s7_symbol_value(sc, val_sym);
+  if (!s7_rf_function(sc, val)) return(NULL);
+
+  s7_xf_store(sc, (s7_pointer)lc);
+  s7_xf_store(sc, ind_slot);
+  s7_xf_store(sc, chan);
+  loc = s7_xf_store(sc, NULL);
+  rf = s7_rf_function(sc, val)(sc, val_expr);
+  if (!rf) return(NULL);
+  s7_xf_store_at(sc, loc, (s7_pointer)rf);
+
+  return(sample_to_file_rf);
+}
+
+
+static s7_double locsig_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer ind_slot;
   mus_any *lc;
-  s7_Double val;
+  s7_double val;
   s7_rf_t rf;
 
   lc = (mus_any *)(**p); (*p)++;
@@ -10275,7 +10331,7 @@ static s7_Double locsig_rf(s7_scheme *sc, s7_pointer **p)
 static s7_rf_t is_locsig_rf(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer ind_sym, ind, ind_slot, val_sym, val, val_expr;
-  s7_Int loc;
+  s7_int loc;
   s7_rf_t rf;
   mus_any *lc;
 
@@ -10307,11 +10363,11 @@ static s7_rf_t is_locsig_rf(s7_scheme *sc, s7_pointer expr)
 }
 
 
-static s7_Double move_sound_rf(s7_scheme *sc, s7_pointer **p)
+static s7_double move_sound_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer ind_slot;
   mus_any *lc;
-  s7_Double val;
+  s7_double val;
   s7_rf_t rf;
 
   lc = (mus_any *)(**p); (*p)++;
@@ -10325,7 +10381,7 @@ static s7_Double move_sound_rf(s7_scheme *sc, s7_pointer **p)
 static s7_rf_t is_move_sound_rf(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer ind_sym, ind, ind_slot, val_sym, val, val_expr;
-  s7_Int loc;
+  s7_int loc;
   s7_rf_t rf;
   mus_any *lc;
 
@@ -10357,12 +10413,12 @@ static s7_rf_t is_move_sound_rf(s7_scheme *sc, s7_pointer expr)
 }
 
 
-static s7_Double out_bank_rf_1(s7_scheme *sc, s7_pointer **p)
+static s7_double out_bank_rf_1(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer ind_slot;
-  s7_Double val;
+  s7_double val;
   s7_rf_t rf;
-  s7_Int loc;
+  s7_int loc;
   mus_any *g1;
 
   g1 = (mus_any *)(**p); (*p)++;
@@ -10376,12 +10432,12 @@ static s7_Double out_bank_rf_1(s7_scheme *sc, s7_pointer **p)
   return(val);
 }
 
-static s7_Double out_bank_rf_2(s7_scheme *sc, s7_pointer **p)
+static s7_double out_bank_rf_2(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer ind_slot;
-  s7_Double val;
+  s7_double val;
   s7_rf_t rf;
-  s7_Int loc;
+  s7_int loc;
   mus_any *g1, *g2;
 
   g1 = (mus_any *)(**p); (*p)++;
@@ -10403,12 +10459,12 @@ static s7_Double out_bank_rf_2(s7_scheme *sc, s7_pointer **p)
   return(val);
 }
 
-static s7_Double out_bank_rf_4(s7_scheme *sc, s7_pointer **p)
+static s7_double out_bank_rf_4(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer ind_slot;
-  s7_Double val;
+  s7_double val;
   s7_rf_t rf;
-  s7_Int loc;
+  s7_int loc;
   mus_any *g1, *g2, *g3, *g4;
 
   g1 = (mus_any *)(**p); (*p)++;
@@ -10439,9 +10495,9 @@ static s7_Double out_bank_rf_4(s7_scheme *sc, s7_pointer **p)
 static s7_rf_t is_out_bank_rf(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer ind_sym, ind, ind_slot, val_sym, val, val_expr, filts;
-  s7_Int loc;
+  s7_int loc;
   s7_rf_t rf;
-  s7_Int i, len;
+  s7_int i, len;
   mus_xen *gn;
   mus_any *g;
   s7_pointer *els;
@@ -10486,7 +10542,7 @@ static s7_rf_t is_out_bank_rf(s7_scheme *sc, s7_pointer expr)
 }
 
 
-static s7_Double ina_rf_ss(s7_scheme *sc, s7_pointer **p)
+static s7_double ina_rf_ss(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer ind_slot;
   mus_any *stream;
@@ -10495,10 +10551,10 @@ static s7_Double ina_rf_ss(s7_scheme *sc, s7_pointer **p)
   return(mus_in_any(s7_integer(s7_slot_value(ind_slot)), 0, stream));
 }
 
-static s7_Double ina_rf_fv(s7_scheme *sc, s7_pointer **p)
+static s7_double ina_rf_fv(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer ind_slot, fv;
-  s7_Int index;
+  s7_int index;
   ind_slot = **p; (*p)++;
   index = s7_integer(s7_slot_value(ind_slot));
   fv = (**p); (*p)++;
@@ -10537,7 +10593,7 @@ static s7_rf_t is_ina_rf(s7_scheme *sc, s7_pointer expr)
 
 
 #define RS_0(Call) \
-  static s7_Double Call ## _rf(s7_scheme *sc, s7_pointer **p) \
+  static s7_double Call ## _rf(s7_scheme *sc, s7_pointer **p) \
   {								\
     return(mus_ ## Call());					\
   }								\
@@ -10551,19 +10607,19 @@ RS_0(srate)
 
 
 #define RS_1(Call)						\
-  static s7_Double Call ## _rf_s(s7_scheme *sc, s7_pointer **p) \
+  static s7_double Call ## _rf_s(s7_scheme *sc, s7_pointer **p) \
   {								\
     s7_pointer slot;						\
     slot = (**p); (*p)++;					\
     return(mus_ ## Call(s7_number_to_real(sc, s7_slot_value(slot))));	\
   }								\
-  static s7_Double Call ## _rf_c(s7_scheme *sc, s7_pointer **p) \
+  static s7_double Call ## _rf_c(s7_scheme *sc, s7_pointer **p) \
   {								\
     s7_pointer slot;						\
     slot = (**p); (*p)++;					\
     return(mus_ ## Call(s7_number_to_real(sc, slot)));			\
     }								\
-  static s7_Double Call ## _rf_r(s7_scheme *sc, s7_pointer **p) \
+  static s7_double Call ## _rf_r(s7_scheme *sc, s7_pointer **p) \
   {								\
     s7_rf_t r;							\
     r = (s7_rf_t)(**p); (*p)++;					\
@@ -10585,7 +10641,7 @@ RS_1(random)
 RS_1(sin)
 RS_1(cos)
 
-static s7_Double odd_multiple_ss_rf(s7_scheme *sc, s7_pointer **p)
+static s7_double odd_multiple_ss_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer s1, s2;
   s1 = (**p); (*p)++;
@@ -10593,7 +10649,7 @@ static s7_Double odd_multiple_ss_rf(s7_scheme *sc, s7_pointer **p)
   return(mus_odd_multiple(s7_number_to_real(sc, s7_slot_value(s1)), s7_number_to_real(sc, s7_slot_value(s2))));
 }
 
-static s7_Double even_multiple_ss_rf(s7_scheme *sc, s7_pointer **p)
+static s7_double even_multiple_ss_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer s1, s2;
   s1 = (**p); (*p)++;
@@ -10612,7 +10668,7 @@ static s7_rf_t is_even_multiple_rf(s7_scheme *sc, s7_pointer expr)
 }
 
 
-static s7_Double polynomial_ss_rf(s7_scheme *sc, s7_pointer **p)
+static s7_double polynomial_ss_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer s1, s2;
   s1 = (**p); (*p)++;
@@ -10622,7 +10678,7 @@ static s7_Double polynomial_ss_rf(s7_scheme *sc, s7_pointer **p)
   return(mus_polynomial(s7_float_vector_elements(s1), s7_number_to_real(sc, s2), s7_vector_length(s1)));
 }
 
-static s7_Double polynomial_sr_rf(s7_scheme *sc, s7_pointer **p)
+static s7_double polynomial_sr_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer s1;
   s7_rf_t r1;
@@ -10640,7 +10696,7 @@ static s7_rf_t is_polynomial_rf(s7_scheme *sc, s7_pointer expr)
 }
 
 
-static s7_Double am_csr_rf(s7_scheme *sc, s7_pointer **p)
+static s7_double am_csr_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer c1, s1;
   s7_rf_t r1;
@@ -10663,7 +10719,7 @@ static s7_rf_t is_am_rf(s7_scheme *sc, s7_pointer expr)
     {
       s7_rp_t rp;
       s7_rf_t rf;
-      s7_Int loc;
+      s7_int loc;
       s7_pointer sym, val;
 
       s7_xf_store(sc, a1);
@@ -10979,7 +11035,7 @@ static s7_pointer g_file_to_sample_ss(s7_scheme *sc, s7_pointer args)
 static s7_pointer ina_reverb_2;
 static s7_pointer g_ina_reverb_2(s7_scheme *sc, s7_pointer args)
 {
-  s7_Int pos;
+  s7_int pos;
   GET_INTEGER(args, ina, pos);
   return(s7_make_real(sc, in_any_2(pos, 0)));
 }
@@ -10988,7 +11044,7 @@ static s7_pointer g_ina_reverb_2(s7_scheme *sc, s7_pointer args)
 static s7_pointer mul_s_ina_reverb_2;
 static s7_pointer g_mul_s_ina_reverb_2(s7_scheme *sc, s7_pointer args)
 {
-  s7_Int pos;
+  s7_int pos;
   mus_float_t scl;
   
   GET_REAL(args, S_ina, scl);
@@ -11002,7 +11058,7 @@ static s7_pointer g_mul_s_ina_reverb_2(s7_scheme *sc, s7_pointer args)
 static s7_pointer indirect_locsig_3;
 static s7_pointer g_indirect_locsig_3(s7_scheme *sc, s7_pointer args)
 {
-  s7_Int pos;
+  s7_int pos;
   s7_pointer x;
   mus_any *locs;
 
@@ -11010,21 +11066,6 @@ static s7_pointer g_indirect_locsig_3(s7_scheme *sc, s7_pointer args)
   GET_INTEGER_CADR(args, outa, pos);
   x = s7_call_direct(sc, caddr(args));
   mus_locsig(locs, pos, s7_number_to_real_with_caller(sc, x, S_locsig));
-  return(Xen_integer_zero);
-}
-
-
-static s7_pointer indirect_move_sound_3;
-static s7_pointer g_indirect_move_sound_3(s7_scheme *sc, s7_pointer args)
-{
-  s7_Int pos;
-  s7_pointer x;
-  mus_any *locs;
-
-  GET_GENERATOR(args, move-sound, locs);
-  GET_INTEGER_CADR(args, outa, pos);
-  x = s7_call_direct(sc, caddr(args));
-  mus_move_sound(locs, pos, s7_number_to_real_with_caller(sc, x, S_locsig));
   return(Xen_integer_zero);
 }
 
@@ -11044,7 +11085,7 @@ static s7_pointer jc_reverb_out;
 static s7_pointer g_jc_reverb_out(s7_scheme *sc, s7_pointer args)
 {
   int i, size;
-  s7_Int pos;
+  s7_int pos;
   s7_pointer fs, vol, p;
   mus_any *combs, *allpasses;
   mus_float_t x;
@@ -11074,7 +11115,7 @@ static s7_pointer g_nrev_out(s7_scheme *sc, s7_pointer args)
   /* (out-bank i filts (all-pass allpass4 (one-pole low (all-pass-bank allpasses (comb-bank combs (* volume (ina i *reverb*)))))))
    */
   int i, size;
-  s7_Int pos;
+  s7_int pos;
   s7_pointer fs, vol, p;
   mus_any *combs, *allpasses, *op, *ap4;
   mus_float_t x;
@@ -11106,7 +11147,7 @@ static s7_pointer g_nrev_out(s7_scheme *sc, s7_pointer args)
 static s7_pointer outa_ss;
 static s7_pointer g_outa_ss(s7_scheme *sc, s7_pointer args)
 {
-  s7_Int pos;
+  s7_int pos;
   mus_float_t x, y;
   s7_pointer vargs;
   GET_INTEGER(args, outa, pos);
@@ -11119,7 +11160,7 @@ static s7_pointer g_outa_ss(s7_scheme *sc, s7_pointer args)
 static s7_pointer indirect_outa_2;
 static s7_pointer g_indirect_outa_2(s7_scheme *sc, s7_pointer args)
 {
-  s7_Int pos;
+  s7_int pos;
   s7_pointer x;
   GET_INTEGER(args, outa, pos);
   x = s7_call_direct(sc, cadr(args));
@@ -11130,7 +11171,7 @@ static s7_pointer g_indirect_outa_2(s7_scheme *sc, s7_pointer args)
 static s7_pointer indirect_outa_2_temp;
 static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 {
-  s7_Int pos;
+  s7_int pos;
   mus_float_t x;
   GET_INTEGER(args, outa, pos);
   x = s7_call_direct_to_real_and_free(sc, cadr(args));
@@ -11141,7 +11182,7 @@ static s7_pointer g_indirect_outa_2_temp(s7_scheme *sc, s7_pointer args)
 static s7_pointer indirect_outa_2_env;
 static s7_pointer g_indirect_outa_2_env(s7_scheme *sc, s7_pointer args)
 {
-  s7_Int pos;
+  s7_int pos;
   mus_float_t x;
   mus_any *e = NULL;
 
@@ -11161,7 +11202,7 @@ static s7_pointer g_indirect_outa_2_env(s7_scheme *sc, s7_pointer args)
 static s7_pointer indirect_outa_ss;
 static s7_pointer g_indirect_outa_ss(s7_scheme *sc, s7_pointer args)
 {
-  s7_Int pos;
+  s7_int pos;
   mus_float_t x;
 
   GET_INTEGER(args, outa, pos);
@@ -11798,6 +11839,7 @@ static s7_pointer (*initial_multiply_chooser)(s7_scheme *sc, s7_pointer f, int a
 static s7_pointer clm_multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   /* fprintf(stderr, "* expr: %s\n", DISPLAY(expr)); */
+
   if (args == 2)
     {
       s7_pointer arg1, arg2;
@@ -13286,20 +13328,6 @@ static s7_pointer filtered_comb_chooser(s7_scheme *sc, s7_pointer f, int args, s
 }
 
 
-static s7_pointer move_sound_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if ((args == 3) &&
-      (s7_is_symbol(cadr(expr))) &&
-      (s7_is_symbol(caddr(expr))) &&
-      (s7_is_pair(cadr(cddr(expr)))) &&
-      (s7_function_choice_is_direct(sc, cadr(cddr(expr)))))
-    {
-      s7_function_choice_set_direct(sc, expr);
-      return(indirect_move_sound_3);
-    }
-  return(f);
-}
-
 static s7_pointer locsig_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 3) &&
@@ -13498,7 +13526,7 @@ static s7_pointer out_any_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       arg3 = cadddr(expr);
       if (s7_is_integer(arg3))
 	{
-	  s7_Int c;
+	  s7_int c;
 	  c = s7_integer(arg3);
 	  if (c == 0)
 	    return(outa_chooser(sc, f, 2, expr));
@@ -14042,6 +14070,7 @@ static void init_choosers(s7_scheme *sc)
 
 
   f = s7_name_to_value(sc, "sample->file");
+  s7_rf_set_function(f, is_sample_to_file_rf);
   s7_function_set_chooser(sc, f, sample_to_file_chooser);
   sample_to_file_four = clm_make_temp_function_no_choice(sc, "sample->file", g_sample_to_file_four, 4, 0, false, "sample->file opt", f);
 
@@ -14323,9 +14352,6 @@ static void init_choosers(s7_scheme *sc)
 
   f = s7_name_to_value(sc, "move-sound");
   s7_rf_set_function(f, is_move_sound_rf);
-  s7_function_set_chooser(sc, f, move_sound_chooser);
-  indirect_move_sound_3 = clm_make_function_no_choice(sc, "move-sound", g_indirect_move_sound_3, 3, 0, false, "move-sound opt", f);
-
 
   f = s7_name_to_value(sc, S_locsig);
   s7_rf_set_function(f, is_locsig_rf);
@@ -15368,9 +15394,9 @@ void Init_sndlib(void)
   mus_xen_init();
 
 #if HAVE_SCHEME
-  if (sizeof(mus_float_t) != sizeof(s7_Double))
-    fprintf(stderr, "in s7-clm, s7_Double must match mus_float_t.  Currently s7_Double has %d bytes, but mus_float_t has %d\n", 
-	    (int)sizeof(s7_Double), 
+  if (sizeof(mus_float_t) != sizeof(s7_double))
+    fprintf(stderr, "in s7-clm, s7_double must match mus_float_t.  Currently s7_double has %d bytes, but mus_float_t has %d\n", 
+	    (int)sizeof(s7_double), 
 	    (int)sizeof(mus_float_t));
 
   init_choices();
