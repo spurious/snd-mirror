@@ -1908,12 +1908,11 @@ and replaces it with the spectrum given in coeffs"))
 	      ((= pair pairs))
 	    (let ((bp (vector-ref bands pair))
 		  (pk (vector-ref peaks pair))
-		  (pk2 (vector-ref peaks2 pair))
-		  (x 0.0))
+		  (pk2 (vector-ref peaks2 pair)))
 	      (do ((k startup (+ k 1)))
 		  ((= k len))
-		(set! x (bandpass bp (float-vector-ref indata k)))
-		(outa k (* (moving-max pk x) (polynomial pcoeffs (* x (moving-norm pk2 x))))))))
+		(let ((x (bandpass bp (float-vector-ref indata k))))
+		  (outa k (* (moving-max pk x) (polynomial pcoeffs (* x (moving-norm pk2 x)))))))))
 
 	      ;; we're normalizing the polynomial input so its waveshaping index is more-or-less 1.0
 	      ;;   this might work better with len=256, max .1 -- we're assuming a well-behaved signal 

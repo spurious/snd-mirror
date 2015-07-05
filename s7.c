@@ -33111,41 +33111,6 @@ static s7_double fv_set_rf_checked(s7_scheme *sc, s7_pointer **p)
   return(val);
 }
 
-static s7_double fv_set_rf_vref(s7_scheme *sc, s7_pointer **p)
-{
-  s7_pointer fv, iv, ind, val;
-  s7_double x;
-  fv = **p; (*p)++;
-  iv = **p; (*p)++;
-  ind = slot_value(**p); (*p)++;
-  val = slot_value(**p); (*p)++;
-  x = real_to_double(sc, val, "float-vector-set!");
-  float_vector_element(fv, int_vector_element(iv, integer(ind))) = x;
-  return(x);
-}
-
-static s7_double fv_set_rf_add_ss_1ss(s7_scheme *sc, s7_pointer **p)
-{
-  s7_pointer fv, s1, s2, s3, ind_slot;
-  s7_double x1, x2, x3;
-  s7_int index;
-
-  fv = **p; (*p)++;
-  ind_slot = **p; (*p)++;
-  index = integer(slot_value(ind_slot));
-
-  s1 = slot_value(**p); (*p)++;
-  s2 = slot_value(**p); (*p)++;
-  s3 = slot_value(**p); (*p)++;
-  x1 = real_to_double(sc, s1, "+");
-  x2 = real_to_double(sc, s2, "+");
-  x3 = real_to_double(sc, s3, "+");
-  x1 = ((x1 * x2) + ((1.0 - x1) * x3));
-
-  float_vector_element(fv, index) = x1;
-  return(x1);
-}
-
 static s7_rf_t is_fv_set_rf(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer fv_sym, ind_sym, ind, ind_slot, fv, val_sym, val, val_expr;
@@ -33163,33 +33128,6 @@ static s7_rf_t is_fv_set_rf(s7_scheme *sc, s7_pointer expr)
   ind_sym = caddr(expr);
   val_expr = cadddr(expr);
 
-  if ((is_pair(ind_sym)) &&
-      (c_call(ind_sym) == g_vector_ref_2) &&
-      (is_symbol(val_expr)))
-    {
-      ind_slot = s7_slot(sc, caddr(ind_sym));
-      if (!ind_slot) return(NULL);
-      ind = slot_value(ind_slot);
-      if (!is_integer(ind)) return(NULL);
-      if (numerator(ind) < 0) return(NULL);
-      checked = ((!is_loop_bounds(ind_slot)) || ((numerator(ind) >= len) || (denominator(ind) >= len) || (denominator(ind) < 0)));
-      if (!checked)
-	{
-	  s7_pointer iv, val_slot;
-	  iv = s7_slot(sc, cadr(ind_sym));
-	  if ((!iv) || (s7_xf_is_stepper(sc, cadr(ind_sym)))) return(NULL);
-	  iv = slot_value(iv);
-	  if (!is_int_vector(iv)) return(NULL);
-	  val_slot = s7_slot(sc, val_expr);
-	  if (!val_slot) return(NULL);
-	  s7_xf_store(sc, fv);
-	  s7_xf_store(sc, iv);
-	  s7_xf_store(sc, ind_slot);
-	  s7_xf_store(sc, val_slot);
-	  return(fv_set_rf_vref);
-	}
-    }
-
   if (!is_symbol(ind_sym)) return(NULL);
   ind_slot = s7_slot(sc, ind_sym);
   if (!ind_slot) return(NULL);
@@ -33203,21 +33141,6 @@ static s7_rf_t is_fv_set_rf(s7_scheme *sc, s7_pointer expr)
 
   val_expr = cadddr(expr);
   if (!is_pair(val_expr)) return(NULL);
-
-  if ((!checked) &&
-      (c_call(val_expr) == g_add_ss_1ss))
-    {
-      /* (+ (* s1 s2) (* (- 1.0 s1) s3)) */
-      s7_pointer s1, s2, s3;
-      s1 = cadr(cadr(val_expr));
-      s2 = caddr(cadr(val_expr));
-      s3 = caddr(caddr(val_expr));
-      s7_xf_store(sc, s7_slot(sc, s1));
-      s7_xf_store(sc, s7_slot(sc, s2));
-      s7_xf_store(sc, s7_slot(sc, s3));
-      return(fv_set_rf_add_ss_1ss);
-    }
-
   val_sym = car(val_expr);
   if (!is_symbol(val_sym)) return(NULL);
   val = s7_symbol_value(sc, val_sym);
@@ -52174,7 +52097,8 @@ static int dox_ex(s7_scheme *sc)
   if (is_null(code)) /* no body? */
     {
       s7_function endf;
-      s7_pointer endp, slots;
+      s7_pointer endp, slots, scc;
+      scc = sc->code;
       endf = (s7_function)fcdr(cdr(sc->code));
       endp = fcdr(sc->code);
       slots = let_slots(sc->envir);
@@ -52189,7 +52113,7 @@ static int dox_ex(s7_scheme *sc)
 	      slot_set_value(slots, f(sc, a, slots));
 	      if (is_true(sc, endf(sc, endp)))
 		{
-		  sc->code = cdadr(sc->code);
+		  sc->code = cdadr(scc);
 		  return(goto_DO_END_CLAUSES);
 		}
 	    }
@@ -52204,7 +52128,7 @@ static int dox_ex(s7_scheme *sc)
 		  slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
 	      if (is_true(sc, endf(sc, endp)))
 		{
-		  sc->code = cdadr(sc->code);
+		  sc->code = cdadr(scc);
 		  return(goto_DO_END_CLAUSES);
 		}
 	    }
@@ -52249,74 +52173,38 @@ static int dox_ex(s7_scheme *sc)
 	      endf = (s7_function)fcdr(cdr(sc->code));
 
 	      s7_xf_new(sc, sc->envir);
+#if (!WITH_GMP)
 	      if ((dox_slot1(sc->envir)) &&
 		  (is_slot(dox_slot1(sc->envir))) &&
 		  (s7_xf_is_safe_stepper(sc, slot_symbol(dox_slot1(sc->envir)))) &&
 		  ((endf == end_dox_equal_s_ic) || (endf == end_dox_equal_ss) ||
 		   ((endf == end_dox_c_ss) && (c_call(endp) == g_geq_2))))
 		set_loop_bounds(dox_slot1(sc->envir));
+#endif
 	      rf = rf_function(fcar)(sc, code);
-	      if (rf)
+	      if ((rf) &&
+		  (is_all_real(sc, sc->code)))
 		{
-		  s7_pointer slots;
-		  slots = let_slots(sc->envir);
-		  if ((rf == fv_set_rf_vref) &&
-		      (is_slot(next_slot(slots))) &&
-		      (!is_slot(next_slot(next_slot(slots)))))
-		    {
-		      s7_pointer fv, iv, ind, val, s1, s2, s1_expr, s2_expr;
-		      dox_function d1, d2;
-		      s7_pointer *top, *temp;
-		      s7_pointer **p;
-		      s7_double *fvs;
-		      s7_int *ivs;
+		  s7_pointer slots, scc;
+		  s7_pointer *top;
 
-		      top = sc->cur_rf->data;
-		      temp = top;
-		      p = &temp;
-		      fv = **p; (*p)++; fvs = float_vector_elements(fv);
-		      iv = **p; (*p)++; ivs = int_vector_elements(iv);
-		      ind = **p; (*p)++;
-		      val = **p; (*p)++;
-		      s1 = slots;
-		      s2 = next_slot(slots);
-		      s1_expr = car(slot_expression(s1));
-		      s2_expr = car(slot_expression(s1));
-		      d1 = (dox_function)fcdr(slot_expression(s1));
-		      d2 = (dox_function)fcdr(slot_expression(s2));
-		      while (true)
-			{
-			  fvs[ivs[integer(slot_value(ind))]] = real_to_double(sc, slot_value(val), "float-vector-set!");
-			  d1(sc, s1_expr, s1);
-			  d2(sc, s2_expr, s2);
-			  if (is_true(sc, endf(sc, endp)))
-			    {
-			      s7_xf_free(sc);
-			      sc->code = cdadr(sc->code);
-			      return(goto_DO_END_CLAUSES);
-			    }
-			}
-		    }
-		  
-		  if (is_all_real(sc, sc->code))
+		  scc = sc->code;
+		  slots = let_slots(sc->envir);
+		  top = sc->cur_rf->data;
+		  while (true)
 		    {
-		      s7_pointer *top;
-		      top = sc->cur_rf->data;
-		      while (true)
-			{
-			  s7_pointer slot;
-			  s7_pointer *temp;
-			  temp = top;
-			  rf(sc, &temp);
+		      s7_pointer slot;
+		      s7_pointer *temp;
+		      temp = top;
+		      rf(sc, &temp);
 			  
-			  for (slot = slots; is_slot(slot); slot = next_slot(slot))
-			    slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
-			  if (is_true(sc, endf(sc, endp)))
-			    {
-			      s7_xf_free(sc);
-			      sc->code = cdadr(sc->code);
-			      return(goto_DO_END_CLAUSES);
-			    }
+		      for (slot = slots; is_slot(slot); slot = next_slot(slot))
+			slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
+		      if (is_true(sc, endf(sc, endp)))
+			{
+			  s7_xf_free(sc);
+			  sc->code = cdadr(scc);
+			  return(goto_DO_END_CLAUSES);
 			}
 		    }
 		}
@@ -52328,8 +52216,9 @@ static int dox_ex(s7_scheme *sc)
       if (is_all_x_safe(sc, code))
 	{
 	  s7_function body, endf;
-	  s7_pointer endp, slots;
+	  s7_pointer endp, slots, scc;
 	  
+	  scc = sc->code;
 	  body = all_x_eval(sc, code, sc->envir); /* safe local */
 	  endf = (s7_function)fcdr(cdr(sc->code));
 	  endp = fcdr(sc->code);
@@ -52356,7 +52245,7 @@ static int dox_ex(s7_scheme *sc)
 		  slot_set_value(slots, df(sc, slot_expr, slots));
 		  if (is_true(sc, endf(sc, endp)))
 		    {
-		      sc->code = cdadr(sc->code);
+		      sc->code = cdadr(scc);
 		      return(goto_DO_END_CLAUSES);
 		    }
 		}
@@ -52370,7 +52259,7 @@ static int dox_ex(s7_scheme *sc)
 		  slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
 	      if (is_true(sc, endf(sc, endp)))
 		{
-		  sc->code = cdadr(sc->code);
+		  sc->code = cdadr(scc);
 		  return(goto_DO_END_CLAUSES);
 		}
 	    }
@@ -52401,10 +52290,11 @@ static int simple_do_ex(s7_scheme *sc, s7_pointer code)
 	  endf = c_call(caadr(code));
 	  
 	  s7_xf_new(sc, sc->envir);
-
+#if (!WITH_GMP)
 	  if (((stepf == g_subtract_s1) && (endf == g_less_s0)) ||
 	      ((stepf == g_add_s1) && (endf == g_equal_2)))
-	    set_loop_bounds(cadr(step_expr));
+	    set_loop_bounds(dox_slot1(sc->envir));
+#endif
 	  rf = rf_function(fcar)(sc, body);
 	  
 	  if ((rf) &&
@@ -68879,8 +68769,8 @@ int main(int argc, char **argv)
  * thash         |      |      |                          50.7 23.8 14.9 14.6
  *               |      |      |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.1
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 18.4
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 41.8
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 18.2
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 39.9
  * 
  * --------------------------------------------------------------------------
  *
@@ -68904,6 +68794,6 @@ int main(int argc, char **argv)
  * array-interp(50828)
  *   not currently: frample->file[same as locsig and always involves frample->frample]--all symbols, expandn+freeverb
  * remove internal sc->* from doloops (recursive dox)
- * defgen support?, vector->gen[freeverb]
- * outa_rf -> safe_outa outer rf?
+ * doc/test/cleanup vct-spatter|interpolate
+ * do-all-x rf?
  */

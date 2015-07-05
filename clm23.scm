@@ -1997,7 +1997,7 @@
 	(asyf (make-asymmetric-fm :r r :ratio ratio :frequency freq)))
     (do ((i st (+ i 1))) 
 	((= i nd))
-      (outa i (* amp (asymmetric-fm asyf index 0.0))))))
+      (outa i (* amp (asymmetric-fm asyf index))))))
 
 (define (sndclmdoc-simple-f2s beg dur amp file)
   (let ((start (seconds->samples beg))

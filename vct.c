@@ -825,6 +825,45 @@ static Xen g_vct_offset(Xen obj1, Xen obj2)
   return(obj1);
 }
 
+#if HAVE_SCHEME
+#define S_vct_spatter "float-vector-spatter"
+static Xen g_vct_spatter(Xen fv, XEN iv, XEN end, XEN val)
+{
+  #define H_vct_spatter "(" S_vct_spatter " fv iv end val) places val in fv at locations determined by iv"
+  s7_double *fv_vals;
+  s7_int *iv_vals;
+  s7_double x;
+  int i, len;
+  fv_vals = s7_float_vector_elements(fv);
+  iv_vals = s7_int_vector_elements(iv);
+  len = s7_integer(end);
+  x = s7_real(val);
+  for (i = 0; i < len; i++)
+    fv_vals[iv_vals[i]] = x;
+  return(val);
+}
+
+#define S_vct_interpolate "float-vector-interpolate"
+static Xen g_vct_interpolate(Xen fv, Xen start_index, Xen end_index, Xen start_x, XEN incr, XEN val1, XEN val2)
+{
+  #define H_vct_interpolate "(" S_vct_interpolate " fv index0 index1 x0 dx x1 x2) sets the values of fv between\
+index0 and index1 interpolating between x2 and x1 by incrementing x0 by dx"
+  s7_double x0, dx, x1, x2;
+  int i, beg, lim;
+  s7_double *fv_vals;
+  fv_vals = s7_float_vector_elements(fv);
+  beg = s7_integer(start_index);
+  lim = s7_integer(end_index);
+  x0 = s7_real(start_x);
+  dx = s7_real(incr);
+  x1 = s7_real(val1);
+  x2 = s7_real(val2);
+  for (i = beg; i < lim; i++, x0 += dx)
+    fv_vals[i] = (x0 * x1) + ((1.0 - x0) * x2);
+  return(val1);
+}
+#endif
+
 
 #if (!HAVE_SCHEME)
 static Xen g_vct_fill(Xen obj1, Xen obj2)
@@ -1525,6 +1564,10 @@ Xen_wrap_2_args(g_vct_times_w, g_vct_times)
 Xen_wrap_2_args(g_vct_plus_w, g_vct_plus)
 Xen_wrap_1_arg(g_vct_max_w, g_vct_max)
 Xen_wrap_1_arg(g_vct_min_w, g_vct_min)
+#if HAVE_SCHEME
+Xen_wrap_4_args(g_vct_spatter_w, g_vct_spatter)
+Xen_wrap_7_args(g_vct_interpolate_w, g_vct_interpolate)
+#endif
 
 void mus_vct_init(void)
 {
@@ -1638,5 +1681,7 @@ void mus_vct_init(void)
   Xen_define_safe_procedure(S_vct_to_vector,     g_vct_to_vector_w, 1, 0, 0, H_vct_to_vector);
   Xen_define_safe_procedure(S_make_vct,          g_make_vct_w,      1, 1, 0, H_make_vct);
 #else
+  Xen_define_safe_procedure(S_vct_spatter,       g_vct_spatter_w,   4, 0, 0, H_vct_spatter);
+  Xen_define_safe_procedure(S_vct_interpolate,   g_vct_interpolate_w, 7, 0, 0, H_vct_interpolate);
 #endif
 }

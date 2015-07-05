@@ -3569,7 +3569,7 @@ static void convert_incoming(char *to_buf, int fill_point, int lim, char *buf)
 int mus_audio_write(int line, char *buf, int bytes) 
 {
   OSStatus err = noErr;
-  unsigned int lim, bp, out_bytes;
+  unsigned int lim, out_bytes;
   UInt32 sizeof_running;
   UInt32 running;
   char *to_buf;
@@ -3610,6 +3610,7 @@ int mus_audio_write(int line, char *buf, int bytes)
     }
   if ((fill_point == 0) && (in_buf == out_buf))
     {
+      unsigned int bp;
       bp = out_buf;
       sizeof_running = sizeof(UInt32);
       while (bp == out_buf)
@@ -3712,13 +3713,13 @@ int mus_audio_open_input(int dev, int srate, int chans, mus_sample_t samp_type, 
 int mus_audio_read(int line, char *buf, int bytes) 
 {
   OSStatus err = noErr;
-  unsigned int bp;
   UInt32 sizeof_running;
   UInt32 running;
   char *to_buf;
 
   if (in_buf == out_buf)
     {
+      unsigned int bp;
       bp = out_buf;
       sizeof_running = sizeof(UInt32);
       while (bp == out_buf)
