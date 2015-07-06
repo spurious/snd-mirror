@@ -1678,19 +1678,21 @@ is a physical model of a flute:
 		(ampenv2 (make-env '(0 1 100 0)
 				   :scaler (* amplitude (ampfun1 (- (length ampfun1) 1)))
 				   :duration env1dur
-				   :base 1.0))
-		(obank (make-oscil-bank freqs phases alist)))
+				   :base 1.0)))
+
 	    (do ((i 0 (+ i 2))
 		 (j 0 (+ j 1)))
 		((= i (length partials)))
 	      (set! (alist j) (partials (+ i 1)))
 	      (set! (freqs j) (hz->radians (* (partials i) frequency))))
-	    (do ((i beg (+ i 1)))
-		((= i env1samples))
-	      (locsig locs i (* (env ampenv1) (oscil-bank obank))))
-	    (do ((i env1samples (+ i 1)))
-		((= i end))
-	      (locsig locs i (* (env ampenv2) (oscil-bank obank))))))))))
+	    
+	    (let ((obank (make-oscil-bank freqs phases alist #t)))
+	      (do ((i beg (+ i 1)))
+		  ((= i env1samples))
+		(locsig locs i (* (env ampenv1) (oscil-bank obank))))
+	      (do ((i env1samples (+ i 1)))
+		  ((= i end))
+		(locsig locs i (* (env ampenv2) (oscil-bank obank)))))))))))
 
 ;;; (with-sound () (lbj-piano 0 3 440.0 .2))
 

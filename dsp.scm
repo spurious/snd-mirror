@@ -1702,7 +1702,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	(let ((dither (coeffs 0)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i fft-len))
-	    (set! (newv i) (mus-random dither)))))
+	    (float-vector-set! newv i (mus-random dither)))))
     (if (> num-coeffs 1)
 	(begin
 	  (float-vector-add! newv (float-vector-scale! (copy sound) (coeffs 1)))

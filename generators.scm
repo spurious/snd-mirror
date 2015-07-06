@@ -5776,7 +5776,7 @@ returns the sum of the last n inputs weighted by (-n/(n+1))^k"))
 		    (set! (phases i) (cur-phases (+ j 2))))
 		  
 		  (let ((gen (make-polyoid 1.0 cur-phases))
-			(obank (make-oscil-bank freqs phases)))
+			(obank (make-oscil-bank freqs phases (make-float-vector n 1.0) #t)))
 		    (do ((i 0 (+ i 1)))
 			((= i 88200))
 		      (outa i (* amp (oscil-bank obank))))

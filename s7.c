@@ -17255,6 +17255,18 @@ static s7_double max_rf_rx(s7_scheme *sc, s7_pointer **p)
   return(v2);
 }
 
+static s7_double max_rf_rs(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1, c1;
+  s7_double v1, v2;
+  c1 = **p; (*p)++;
+  s1 = slot_value(**p); (*p)++;
+  v1 = real_to_double(sc, c1, "max");
+  v2 = real_to_double(sc, s1, "max");
+  if (v1 > v2) return(v1);
+  return(v2);
+}
+
 static s7_double max_rf_sx(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer s1;
@@ -17271,7 +17283,7 @@ static s7_double max_rf_sx(s7_scheme *sc, s7_pointer **p)
 static s7_rf_t is_max_rf(s7_scheme *sc, s7_pointer expr)
 {
   if (is_null(cdddr(expr)))
-    return(is_com_rf_2(sc, expr, NULL, max_rf_rx, max_rf_sx, NULL, max_rf_xx));
+    return(is_com_rf_2(sc, expr, max_rf_rs, max_rf_rx, max_rf_sx, NULL, max_rf_xx));
   return(NULL);
 }
 
@@ -52673,7 +52685,8 @@ static int simple_safe_dotimes_ex(s7_scheme *sc)
 			      if ((rf) &&
 				  (is_all_real(sc, sc->code)))
 				{
-				  s7_pointer letp;
+				  s7_pointer letp, scc;
+				  scc = sc->code;
 				  letp = let_slots(sc->envir);
 				  s7_xf_store_at(sc, let_loc, (s7_pointer)rf);
 				  s7_pointer *top;
@@ -52691,7 +52704,7 @@ static int simple_safe_dotimes_ex(s7_scheme *sc)
 				      rf(sc, rp);
 				    }
 				  s7_xf_free(sc);
-				  sc->code = cdr(cadr(sc->code));
+				  sc->code = cdr(cadr(scc));
 				  return(goto_SAFE_DO_END_CLAUSES);
 				}
 			    }
@@ -52771,6 +52784,8 @@ static int safe_dotimes_c_c_ex(s7_scheme *sc)
 		      (is_all_real(sc, sc->code)))
 		    {
 		      s7_pointer *top;
+		      s7_pointer scc;
+		      scc = sc->code;
 		      top = sc->cur_rf->data;
 		      for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
 			{
@@ -52779,7 +52794,7 @@ static int safe_dotimes_c_c_ex(s7_scheme *sc)
 			  rf(sc, &p);
 			}
 		      s7_xf_free(sc);
-		      sc->code = cdr(cadr(sc->code));
+		      sc->code = cdr(cadr(scc));
 		      return(goto_SAFE_DO_END_CLAUSES);
 		    }
 		  s7_xf_free(sc);
@@ -52899,6 +52914,8 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
 			  (is_all_real(sc, sc->code)))
 			{
 			  s7_pointer *top;
+			  s7_pointer scc;
+			  scc = sc->code;
 			  top = sc->cur_rf->data;
 			  for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
 			    {
@@ -52907,7 +52924,7 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
 			      rf(sc, &temp);
 			    }
 			  s7_xf_free(sc);
-			  sc->code = cdr(cadr(sc->code));
+			  sc->code = cdr(cadr(scc));
 			  return(goto_SAFE_DO_END_CLAUSES);
 			}
 		      s7_xf_free(sc);
@@ -68769,8 +68786,8 @@ int main(int argc, char **argv)
  * thash         |      |      |                          50.7 23.8 14.9 14.6
  *               |      |      |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.1
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 18.2
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 39.9
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 17.8
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 39.4
  * 
  * --------------------------------------------------------------------------
  *
@@ -68791,9 +68808,9 @@ int main(int argc, char **argv)
  *   with name/sync/sample settable
  *
  * rf multiple statements as in let_looped -- where are these loops? (simple do, simple_do_step to begin1 for example)
- * array-interp(50828)
- *   not currently: frample->file[same as locsig and always involves frample->frample]--all symbols, expandn+freeverb
- * remove internal sc->* from doloops (recursive dox)
+ *   52476, bullfrog for example -- would also need rf for mus_set_formant_frequency_sx
  * doc/test/cleanup vct-spatter|interpolate
- * do-all-x rf?
+ * can rf be used for map/for-each/sort etc?
+ * check add_direct_2|any clm2xen
+ *   vector-gen for ssb-am, bandpass[fir-filter], env (ssb-transposer in snd-test)
  */

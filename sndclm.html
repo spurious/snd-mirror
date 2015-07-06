@@ -735,7 +735,7 @@ away in a macro:
 <em class=def id="oscil">oscil</em> os (fm-input 0.0) (pm-input 0.0)
 <em class=def id="oscil?">oscil?</em> os
 
-<em class=def id="make-oscil-bank">make-oscil-bank</em> freqs phases amps
+<em class=def id="make-oscil-bank">make-oscil-bank</em> freqs phases amps stable
 <em class=def id="oscil-bank">oscil-bank</em> os fms
 <em class=def id="oscil-bank?">oscil-bank?</em> os
 </pre>
@@ -1159,6 +1159,10 @@ magnitude spectrum, but with the phases chosen to minimize the peak amplitude.
 	(set! angle (+ angle freq (rand-interp vib))))))
 -->
 
+<p>The last argument to make-oscil-bank, "stable", defaults to false.  If it is
+true, oscil-bank can assume that the frequency, phase, and amplitude values passed to
+make-oscil-bank will not change over the life of the generator.
+</p>
 
 <p>
 Related generators are 

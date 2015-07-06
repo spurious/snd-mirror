@@ -139,10 +139,13 @@
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
 	(freqs (make-float-vector 20)))
-    (let ((obank (make-oscil-bank freqs (make-float-vector 20 0.0))))
-      (do ((i 0 (+ i 1)))
-	  ((= i 20))
-	(set! (freqs i) (hz->radians (* (+ i 1) 100))))
+    (let ((obank (make-oscil-bank freqs 
+				  (let ((fv (make-float-vector 20 0.0)))
+				    (do ((i 0 (+ i 1)))
+					((= i 20) fv)
+				      (set! (freqs i) (hz->radians (* (+ i 1) 100)))))
+				  (make-float-vector 20 1.0)
+				  #t)))
       (set! amp (* 0.05 amp))
       (do ((i start (+ i 1))) 
 	  ((= i end))
@@ -562,7 +565,7 @@
     (do ((i start (+ i 1))
 	 (ctr 0 (+ ctr 1)))
 	((= i end))
-      (outa i (* amp (file->sample fil ctr 0))))))
+      (outa i (* amp (file->sample fil ctr))))))
 
 (define (simple-rdf beg dur amp file)
   (let ((rd (make-readin file))
@@ -1429,7 +1432,7 @@
 	      ((= i n))
 	    (set! (modulators i) (hz->radians (* freq (mc-ratios i) (mod-phases i))))
 	    (set! (fm-indices i) (hz->radians (* freq (indexes i) (mc-ratios i)))))
-	  (let ((ob (make-oscil-bank modulators (make-float-vector n 0.0) fm-indices)))
+	  (let ((ob (make-oscil-bank modulators (make-float-vector n 0.0) fm-indices) #t))
 	    (do ((i start (+ i 1)))
 		((= i end))
 	      (outa i (* amp (oscil cr (oscil-bank ob))))))))))
@@ -1486,7 +1489,7 @@
     (do ((i start (+ i 1))
 	 (x 0.0 (+ x x-incr)))
 	((= i end))
-      (set! y (+ x (* index (sin y)))) ; 2 statements better here than 1 -- opt sees (* s (sin s)) twice
+      (set! y (+ x (* index (sin y))))
       (outa i (* amp (sin y))))))
 
 
@@ -2006,7 +2009,7 @@
     (do ((i start (+ i 1))
 	 (ctr 0 (+ ctr 1)))
 	((= i end))
-      (outa i (* amp (file->sample fil ctr 0))))))
+      (outa i (* amp (file->sample fil ctr))))))
 
 (definstrument (sndclmdoc-simple-ina beg dur amp file)
   (let ((start (seconds->samples beg))

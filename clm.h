@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 11
-#define MUS_DATE "12-May-15"
+#define MUS_REVISION 12
+#define MUS_DATE "5-Jul-15"
 
 /* isn't mus_env_interp backwards? */
 
@@ -202,7 +202,7 @@ MUS_EXPORT mus_any *mus_make_oscil(mus_float_t freq, mus_float_t phase);
 
 MUS_EXPORT bool mus_is_oscil_bank(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_oscil_bank(mus_any *ptr);
-MUS_EXPORT mus_any *mus_make_oscil_bank(int size, mus_float_t *freqs, mus_float_t *phases, mus_float_t *amps);
+  MUS_EXPORT mus_any *mus_make_oscil_bank(int size, mus_float_t *freqs, mus_float_t *phases, mus_float_t *amps, bool stable);
 
 MUS_EXPORT mus_any *mus_make_ncos(mus_float_t freq, int n);
 MUS_EXPORT mus_float_t mus_ncos(mus_any *ptr, mus_float_t fm);
@@ -596,6 +596,7 @@ MUS_EXPORT mus_any *mus_bank_generator(mus_any *g, int i);
 
 /* Change log.
  *
+ * 5-Jul:      added stable arg to mus_make_oscil_bank.
  * 15-Feb:     removed mus_set_name, changed mus_free to void.
  * 31-Jan-15:  removed mus_multiply_arrays.
  * --------
