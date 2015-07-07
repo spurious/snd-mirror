@@ -384,7 +384,6 @@ typedef struct {
 
 
 typedef struct {
-  void *chooser_data;
   s7_pointer *arg_defaults, *arg_names;
   s7_pointer call_args;
   int keyed_args;       /* 2 * args == number of args if all are specified via keywords */
@@ -1878,7 +1877,6 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define c_function_type(f)            c_function_data(f)->otype
 
 #define c_function_ext(f)             c_function_data(f)->ext
-#define c_function_chooser_data(f)    c_function_ext(f)->chooser_data
 #define c_function_arg_defaults(f)    c_function_ext(f)->arg_defaults
 #define c_function_keyed_args(f)      c_function_ext(f)->keyed_args
 #define c_function_call_args(f)       c_function_ext(f)->call_args
@@ -16005,7 +16003,7 @@ static s7_pointer g_mul_s_cos_s(s7_scheme *sc, s7_pointer args)
 #endif /* with-gmp */
 
 
-
+#if (!WITH_GMP)
 static s7_double multiply_rf_xx(s7_scheme *sc, s7_pointer **p)
 {
   s7_rf_t r1, r2;
@@ -16153,7 +16151,7 @@ static s7_rf_t is_multiply_rf(s7_scheme *sc, s7_pointer expr)
     return(is_rf_4(sc, expr, multiply_rf_xxxx));
   return(NULL);
 }
-
+#endif
 
 
 /* ---------------------------------------- divide ---------------------------------------- */
@@ -16664,7 +16662,7 @@ static s7_pointer g_divide_s_temp(s7_scheme *sc, s7_pointer args)
     }
   return(g_divide(sc, args));
 }
-#endif
+
 
 static s7_double invert_rf_x(s7_scheme *sc, s7_pointer **p)
 {
@@ -16793,7 +16791,7 @@ static s7_rf_t is_divide_rf(s7_scheme *sc, s7_pointer expr)
     return(s7_is_rf_1(sc, expr, NULL, invert_rf_s, invert_rf_x));
   return(s7_is_rf_2(sc, expr, NULL, divide_rf_sr, divide_rf_xr, divide_rf_rs, divide_rf_ss, divide_rf_xs, divide_rf_rx, divide_rf_sx, divide_rf_xx));
 }
-
+#endif /* !WITH_GMP */
 
 
 /* ---------------------------------------- max/min ---------------------------------------- */
@@ -17226,8 +17224,6 @@ static s7_pointer g_min_f2(s7_scheme *sc, s7_pointer args)
     return((real(x) <= real_to_double(sc, y, "min")) ? x : y);
   method_or_bust(sc, y, sc->MIN, args, T_REAL, 2);
 }
-#endif
-
 
 
 static s7_double max_rf_xx(s7_scheme *sc, s7_pointer **p)
@@ -17286,6 +17282,7 @@ static s7_rf_t is_max_rf(s7_scheme *sc, s7_pointer expr)
     return(is_com_rf_2(sc, expr, max_rf_rs, max_rf_rx, max_rf_sx, NULL, max_rf_xx));
   return(NULL);
 }
+#endif
 
 
 
@@ -34924,17 +34921,11 @@ static s7_pointer hash_table_reverse(s7_scheme *sc, s7_pointer old_hash)
 
 
 
-/* -------------------------------- objects and functions -------------------------------- */
+/* -------------------------------- functions -------------------------------- */
 
 bool s7_is_function(s7_pointer p)
 {
   return(is_c_function(p));
-}
-
-
-bool s7_is_object(s7_pointer p)
-{
-  return(is_c_object(p));
 }
 
 
@@ -34962,45 +34953,6 @@ void s7_function_set_chooser(s7_scheme *sc, s7_pointer fnc,  s7_pointer (*choose
   c_function_chooser(fnc) = chooser;
 }
 
-
-void *s7_function_chooser_data(s7_scheme *sc, s7_pointer expr)
-{
-  if ((is_optimized(expr)) &&
-      (is_symbol(car(expr))) &&
-      (car(expr) != sc->QUOTE) &&
-      (ecdr(expr)) &&
-      (is_c_function(ecdr(expr))) &&
-      (c_function_ext(ecdr(expr))))
-    return(c_function_chooser_data(ecdr(expr)));
-  return(NULL);
-}
-
-void *s7_function_chooser_data_direct(s7_pointer f)
-{
-  if ((is_c_function(f)) &&
-      (c_function_ext(f)))
-    return(c_function_chooser_data(f));
-  return(NULL);
-}
-
-void s7_function_chooser_set_data(s7_scheme *sc, s7_pointer f, void *data)
-{
-  if (!c_function_ext(f))
-    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
-  c_function_chooser_data(f) = data;
-}
-
-
-s7_function s7_function_choice(s7_scheme *sc, s7_pointer expr)
-{
-  if ((is_safely_optimized(expr)) &&
-      (is_symbol(car(expr))) &&
-      (car(expr) != sc->QUOTE) &&
-      (ecdr(expr)) &&
-      (is_c_function(ecdr(expr))))
-    return(c_function_call(ecdr(expr)));
-  return(NULL);
-}
 
 void s7_function_choice_set_direct(s7_scheme *sc, s7_pointer expr)
 {
@@ -35577,7 +35529,7 @@ static s7_pointer closure_name(s7_scheme *sc, s7_pointer closure)
 
 
 
-/* -------------------------------- new types -------------------------------- */
+/* -------------------------------- new types (c_objects) -------------------------------- */
 
 static void fallback_free(void *value) {}
 static void fallback_mark(void *value) {}
@@ -35610,6 +35562,12 @@ static s7_pointer fallback_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 static s7_pointer fallback_length(s7_scheme *sc, s7_pointer obj)
 {
   eval_error(sc, "attempt to get length of ~S?", obj);
+}
+
+
+bool s7_is_object(s7_pointer p)
+{
+  return(is_c_object(p));
 }
 
 
@@ -68786,13 +68744,13 @@ int main(int argc, char **argv)
  * thash         |      |      |                          50.7 23.8 14.9 14.6
  *               |      |      |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.1
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 17.8
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 39.4
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 17.7
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 38.5
  * 
  * --------------------------------------------------------------------------
  *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
- * cyclic-seq in stuff.scm, but current code is  really clumsy
+ * cyclic-seq in stuff.scm, but current code is really clumsy
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
  *
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)
@@ -68810,7 +68768,7 @@ int main(int argc, char **argv)
  * rf multiple statements as in let_looped -- where are these loops? (simple do, simple_do_step to begin1 for example)
  *   52476, bullfrog for example -- would also need rf for mus_set_formant_frequency_sx
  * doc/test/cleanup vct-spatter|interpolate
- * can rf be used for map/for-each/sort etc?
- * check add_direct_2|any clm2xen
- *   vector-gen for ssb-am, bandpass[fir-filter], env (ssb-transposer in snd-test)
+ * check add_direct_any clm2xen
+ * env/oscil vector-ref and run-time if in vox (clm-ins/clm23)
+ * possibly split add_rf_xx, multiply_sx
  */

@@ -53,7 +53,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	  (lf (if (= lossfact 0.0) 1.0 (min 1.0 lossfact))))
 
       (let ((wt (if (= wt0 0.0) 0.5 (min 1.0 wt0)))
-	    (tab (make-vector dlen 0.0)))
+	    (tab (make-float-vector dlen)))
 
 	;; get initial waveform in "tab" -- here we can introduce 0's to simulate different pick
 	;; positions, and so on -- see the CMJ article for numerous extensions.  The normal case
@@ -65,13 +65,13 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	  
 	  (do ((i 0 (+ i 1)))
 	      ((= i dlen))
-	    (set! (tab i) (mus-random 1.0)))
-	  (do ((i beg (+ i 1)))
+	    (float-vector-set! tab i (mus-random 1.0)))
+
+	  (do ((i beg (+ i 1))
+	       (ctr 0 (modulo (+ ctr 1) dlen)))
 	      ((= i end))
-	    (let ((val (tab ctr)))	;current output value
-	      (set! (tab ctr) (* c1 (one-zero feedb (one-zero allp val))))
-	      (set! ctr (+ ctr 1))
-	      (if (>= ctr dlen) (set! ctr 0))
+	    (let ((val (float-vector-ref tab ctr)))	;current output value
+	      (float-vector-set! tab ctr (* c1 (one-zero feedb (one-zero allp val))))
 	      (outa i (* amp val)))))))))
 
 

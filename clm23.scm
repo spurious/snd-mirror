@@ -1899,11 +1899,14 @@
 
 (definstrument (sndclmdoc-echo beg dur scaler secs file)
   (let ((del (make-delay (seconds->samples secs)))
-	(rd (make-sampler 0 file)))
+	(rd (make-sampler 0 file))
+	(stop (+ beg dur)))
     (do ((i beg (+ i 1)))
-	((= i (+ beg dur)))
+	((= i stop))
       (let ((inval (read-sample rd)))
 	(outa i (+ inval (delay del (* scaler (+ (tap del) inval)))))))))
+
+;  (with-sound () (sndclmdoc-echo 0 60000 .5 1.0 "pistol.snd"))
 
 (define* (sndclmdoc-make-moving-max (size 128))
   (let ((gen (make-delay size)))
@@ -1981,9 +1984,10 @@
 
 (definstrument (sndclmdoc-grev beg dur exp-amt file file-beg)
   (let ((exA (make-granulate :expansion exp-amt
-			     :input (make-readin file 0 file-beg -1))))
+			     :input (make-readin file 0 file-beg -1)))
+	(stop (+ beg dur)))
     (do ((i beg (+ i 1)))
-	((= i (+ beg dur)))
+	((= i stop))
       (outa i (granulate exA)))))
 
 (definstrument (sndclmdoc-simple-pvoc beg dur amp size file)

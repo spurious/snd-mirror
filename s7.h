@@ -659,11 +659,7 @@ s7_pointer s7_fill(s7_scheme *sc, s7_pointer args);
   /* these are aimed at the CLM optimizer */
 s7_pointer (*s7_function_chooser(s7_scheme *sc, s7_pointer fnc))(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
 void s7_function_set_chooser(s7_scheme *sc, s7_pointer fnc,  s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr));
-void *s7_function_chooser_data(s7_scheme *sc, s7_pointer f);
-void *s7_function_chooser_data_direct(s7_pointer f);
-void s7_function_chooser_set_data(s7_scheme *sc, s7_pointer f, void *data);
 void s7_function_set_class(s7_pointer f, s7_pointer base_f);
-s7_function s7_function_choice(s7_scheme *sc, s7_pointer expr);
 bool s7_function_choice_is_direct(s7_scheme *sc, s7_pointer expr);
 void s7_function_choice_set_direct(s7_scheme *sc, s7_pointer expr);
 bool s7_function_choice_is_direct_to_real(s7_scheme *sc, s7_pointer expr);
@@ -777,7 +773,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
- * 3-Jul:     s7_Double -> s7_double, s7_Int -> s7_int.
+ * 3-Jul:     s7_Double -> s7_double, s7_Int -> s7_int. Removed function_chooser_data.
  * 27-Jun:    s7_rf_t, s7_rp_t etc.
  * 19-Jun:    removed the ex_parser stuff, set_step_safe, s7_ex_fallback.
  * 5-May:     s7_make_iterator and friends.

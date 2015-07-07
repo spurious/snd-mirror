@@ -9413,37 +9413,38 @@ EDITS: 2
 	  (if (fneq (v1 1) 2.0)
 	      (snd-display #__line__ ";(v1 1) = ~A?" (v1 1))))
 	
-	(let ((ind (open-sound "oboe.snd")))
-	  (set! (speed-control ind) .5)
-	  (play :wait #t)
-	  (apply-controls)
-	  (revert-sound)
-	  (reset-controls ind)
-	  ;; try some special cases
-	  (apply-controls)
-	  (if (not (= (edit-position ind) 0))
-	      (snd-display #__line__ ";apply-controls with no:change: ~A: ~A" (edits ind) (edit-tree ind)))
-	  (set! (speed-control ind) -1.0)
-	  (apply-controls)
-	  (if (not (= (edit-position ind) 1))
-	      (snd-display #__line__ ";apply-controls with srate -1.0: ~A ~A ~A" (edit-position ind) (edits ind) (edit-tree ind)))
-	  (if (> (abs (- (framples ind 0) (framples ind 0 0))) 2)
-	      (snd-display #__line__ ";apply-controls srate -1.0 lengths: ~A ~A" (framples ind 0) (framples ind 0 0)))
-	  (if (or (fneq (maxamp) .147)
-		  (< (abs (sample 9327)) .01))
-	      (snd-display #__line__ ";apply-controls srate -1.0 samples: ~A ~A" (maxamp) (sample 9327)))
-	  (if (fneq (speed-control ind) 1.0) (snd-display #__line__ ";apply-controls -1.0 -> ~A?" (speed-control ind)))
-	  
-	  (hook-push after-apply-controls-hook (lambda (hook) 
-						 (let ((tag (catch #t 
-								   (lambda () (apply-controls)) 
-								   (lambda args args))))
-						   (if (not (eq? (car tag) 'cannot-apply-controls))
-						       (snd-display #__line__ ";after-apply-controls-hook: recursive attempt apply-controls: ~A" tag)))))
-	  (apply-controls)
-	  (set! (hook-functions after-apply-controls-hook) ())
-	  (revert-sound)
-	  (close-sound ind))
+	(when with-gui
+	  (let ((ind (open-sound "oboe.snd")))
+	    (set! (speed-control ind) .5)
+	    (play :wait #t)
+	    (apply-controls)
+	    (revert-sound)
+	    (reset-controls ind)
+	    ;; try some special cases
+	    (apply-controls)
+	    (if (not (= (edit-position ind) 0))
+		(snd-display #__line__ ";apply-controls with no:change: ~A: ~A" (edits ind) (edit-tree ind)))
+	    (set! (speed-control ind) -1.0)
+	    (apply-controls)
+	    (if (not (= (edit-position ind) 1))
+		(snd-display #__line__ ";apply-controls with srate -1.0: ~A ~A ~A" (edit-position ind) (edits ind) (edit-tree ind)))
+	    (if (> (abs (- (framples ind 0) (framples ind 0 0))) 2)
+		(snd-display #__line__ ";apply-controls srate -1.0 lengths: ~A ~A" (framples ind 0) (framples ind 0 0)))
+	    (if (or (fneq (maxamp) .147)
+		    (< (abs (sample 9327)) .01))
+		(snd-display #__line__ ";apply-controls srate -1.0 samples: ~A ~A" (maxamp) (sample 9327)))
+	    (if (fneq (speed-control ind) 1.0) (snd-display #__line__ ";apply-controls -1.0 -> ~A?" (speed-control ind)))
+	    
+	    (hook-push after-apply-controls-hook (lambda (hook) 
+						   (let ((tag (catch #t 
+								(lambda () (apply-controls)) 
+								(lambda args args))))
+						     (if (not (eq? (car tag) 'cannot-apply-controls))
+							 (snd-display #__line__ ";after-apply-controls-hook: recursive attempt apply-controls: ~A" tag)))))
+	    (apply-controls)
+	    (set! (hook-functions after-apply-controls-hook) ())
+	    (revert-sound)
+	    (close-sound ind)))
 	
 	(let ((hi (make-float-vector 3)))
 	  (let ((tag (catch #t
@@ -33164,11 +33165,11 @@ EDITS: 1
 	   (order 40)
 	   (bw 50.0))
        (let ((factor (/ (- new-freq old-freq) old-freq)))
-	 (do ((i 1 (+ i 5)))
+	 (do ((i 1 (+ i 4)))
 	     ((> i pairs))
 	   (let ((inner-body ())
-		 (n (+ 1 (min 4 (- pairs i)))))
-	     (do ((k 0 (+ k 1))) ; the inner loop is dividing up large sums for the optimizer's benefit (it can handle 5 at a time currently)
+		 (n (+ 1 (min 3 (- pairs i)))))
+	     (do ((k 0 (+ k 1))) ; the inner loop is dividing up large sums for the optimizer's benefit (it can handle 4 at a time currently)
 		 ((= k n))
 	       (let ((aff (* (+ i k) old-freq))
 		     (bwf (* bw (+ 1.0 (/ (+ i k) (* 2 pairs)))))
@@ -38571,7 +38572,8 @@ EDITS: 1
 				 (format *stderr* "~A -> ~A ~A~%" args v1 v2))))
 			:readable)))
 	(eval body)))
-    
+
+    (set! (*s7* 'morally-equal-float-epsilon) 1e-14)    
     (for-each
      (lambda (op)
        (for-each-subset
@@ -38749,6 +38751,46 @@ EDITS: 1
 	  (float-vector-set! fv i (array-interp xv (* 4 (abs (oscil g))) len)))))
 
     (test (fv60) (float-vector 0.0 0.5679772718305071 1.12444445332662 1.658124706761181))
+
+    (define (fv60a)
+      (let ((xv (float-vector 0 1 2 3 4))
+	    (fv (make-float-vector 4))
+	    (g (make-oscil 1000))
+	    (len 5))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (array-interp xv (* 4 (abs (oscil g))) len)))))
+    
+    (test (fv60a) (float-vector 0.0 0.5679772718305071 1.12444445332662 1.658124706761181))
+
+    (define (fv61)
+      (let ((fv (make-float-vector 4))
+	    (g (make-oscil 1000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ (oscil g) (oscil g))))))
+    
+    (test (fv61) (float-vector 0.1419943179576268 0.6956422900219503 1.193187027684375 1.594501774071586))
+    
+    (define (fv62)
+      (let ((fv (make-float-vector 4))
+	    (g (make-oscil 1000))
+	    (x .1))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ (oscil g) (oscil g x))))))
+    
+    (test (fv62) (float-vector 0.1419943179576268 0.8788265473477139 1.4870276868047 1.877577239959861))
+    
+    (define (fv63)
+      (let ((fv (make-float-vector 4))
+	    (g (make-oscil 1000))
+	    (x .1))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (+ (oscil g x) (oscil g))))))
+    
+    (test (fv63) (float-vector 0.2401067896488338 0.962578603769539 1.544160801705073 1.899729018207357))
     )
   
   (if all-args

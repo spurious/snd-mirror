@@ -7202,13 +7202,6 @@ static Xen g_copy_sampler(Xen obj)
 }
 
 
-#if HAVE_SCHEME
-static mus_float_t next_sample_direct(void *p)
-{
-  return(protected_next_sample((snd_fd *)p));
-}
-#endif
-
 static Xen g_next_sample(Xen obj)
 {
   #define H_next_sample "(" S_next_sample " reader): next sample from reader"
@@ -7221,13 +7214,6 @@ static Xen g_next_sample(Xen obj)
   Xen_check_type(false, obj, 1, S_next_sample, "a sampler");
   return(C_double_to_Xen_real(0.0));
 }
-
-#if HAVE_SCHEME
-static mus_float_t read_sample_direct(void *p)
-{
-  return(read_sample((snd_fd *)p));
-}
-#endif
 
 
 mus_float_t read_sample_with_direction(void *p, int dir);
@@ -9385,8 +9371,6 @@ keep track of which files are in a given saved state batch, and a way to rename 
     next_sample_s = s7_make_function(s7, "next-sample", g_next_sample_s, 1, 0, false, "next-sample optimization");
     s7_function_set_class(next_sample_s, f);
     s7_function_set_returns_temp(next_sample_s);
-    store_choices(s7, next_sample_s, (mus_float_t (*)(mus_xen *))next_sample_direct, NULL, NULL, is_sampler);
-    store_choices(s7, f, (mus_float_t (*)(mus_xen *))next_sample_direct, NULL, NULL, is_sampler);
 
     /* read-sample */
     f = s7_name_to_value(s7, "read-sample");
@@ -9396,12 +9380,9 @@ keep track of which files are in a given saved state batch, and a way to rename 
     read_sample_s = s7_make_function(s7, "read-sample", g_read_sample_s, 1, 0, false, "read-sample optimization");
     s7_function_set_class(read_sample_s, f);
     s7_function_set_returns_temp(read_sample_s);
-    store_choices(s7, read_sample_s, (mus_float_t (*)(mus_xen *))read_sample_direct, NULL, NULL, is_sampler);
-    store_choices(s7, f, (mus_float_t (*)(mus_xen *))read_sample_direct, NULL, NULL, is_sampler);
 
     /* read-sample-with-direction */
     f = s7_name_to_value(s7, "read-sample-with-direction");
-    store_choices(s7, f, NULL, (mus_float_t (*)(mus_xen *, mus_float_t))read_sample_with_direction, NULL, is_sampler);
   }
 #endif
 
