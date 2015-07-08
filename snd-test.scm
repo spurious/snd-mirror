@@ -6,29 +6,29 @@
 ;;;  test 3: variables                          [1911]
 ;;;  test 4: sndlib                             [2475]
 ;;;  test 5: simple overall checks              [4489]
-;;;  test 6: float-vectors                      [9233]
-;;;  test 7: colors                             [9505]
-;;;  test 8: clm                                [10024]
-;;;  test 9: mix                                [22104]
-;;;  test 10: marks                             [23883]
-;;;  test 11: dialogs                           [24824]
-;;;  test 12: extensions                        [24997]
-;;;  test 13: menus, edit lists, hooks, etc     [25263]
-;;;  test 14: all together now                  [26588]
-;;;  test 15: chan-local vars                   [27464]
-;;;  test 16: regularized funcs                 [29201]
-;;;  test 17: dialogs and graphics              [32953]
-;;;  test 18: save and restore                  [33065]
-;;;  test 19: transforms                        [34718]
-;;;  test 20: new stuff                         [36821]
-;;;  test 21: optimizer                         [38020]
-;;;  test 22: with-sound                        [39034]
-;;;  test 23: X/Xt/Xm                           [42001]
-;;;  test 24: GL                                [45675]
-;;;  test 25: errors                            [45798]
-;;;  test 26: s7                                [47316]
-;;;  test all done                              [47389]
-;;;  test the end                               [47571]
+;;;  test 6: float-vectors                      [9234]
+;;;  test 7: colors                             [9507]
+;;;  test 8: clm                                [10026]
+;;;  test 9: mix                                [22111]
+;;;  test 10: marks                             [23890]
+;;;  test 11: dialogs                           [24831]
+;;;  test 12: extensions                        [25004]
+;;;  test 13: menus, edit lists, hooks, etc     [25270]
+;;;  test 14: all together now                  [26602]
+;;;  test 15: chan-local vars                   [27480]
+;;;  test 16: regularized funcs                 [29217]
+;;;  test 17: dialogs and graphics              [32969]
+;;;  test 18: save and restore                  [33081]
+;;;  test 19: transforms                        [34735]
+;;;  test 20: new stuff                         [36834]
+;;;  test 21: optimizer                         [38029]
+;;;  test 22: with-sound                        [39307]
+;;;  test 23: X/Xt/Xm                           [42274]
+;;;  test 24: GL                                [45948]
+;;;  test 25: errors                            [46071]
+;;;  test 26: s7                                [47589]
+;;;  test all done                              [47662]
+;;;  test the end                               [47844]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
@@ -36417,10 +36417,11 @@ EDITS: 1
 	  (set! (transform-graph-type ind1 0) graph-as-sonogram)
 	  (set! *transform-size* 256)
 	  (update-transform-graph)
-	  (let ((size (transform-framples ind1 0)))
-	    (if (or (number? size)
-		    (not (= (length size) 3)))
-		(snd-display #__line__ ";transform-framples of sonogram: ~A" size)))
+	  (when with-gui
+	    (let ((size (transform-framples ind1 0)))
+	      (if (or (number? size)
+		      (not (= (length size) 3)))
+		  (snd-display #__line__ ";transform-framples of sonogram: ~A" size))))
 	  (graph->ps "aaa.eps")
 	  (let ((old-colormap *colormap*))
 	    (if (and (defined? 'integer->colormap)
@@ -36756,11 +36757,7 @@ EDITS: 1
 	  (automorph 0.0+1.0i 0 0 1)
 	  (automorph 0.0+1.0i 0 0 1)
 	  (automorph 0.0+1.0i 0 0 1)
-	  (let ((mxdiff 0.0) 
-		(rd1 (make-sampler 0 ind 0)) 
-		(rd2 (make-sampler 0 ind 0 1 0))) 
-	    (scan-channel (lambda (y)
-			    (not (set! mxdiff (max mxdiff (abs (- (rd1) (rd2))))))))
+	  (let ((mxdiff (float-vector-peak (float-vector-subtract! (channel->float-vector 0 #f ind 0 0) (channel->float-vector 0 #f ind 0) ))))
 	    (if (> mxdiff .003) (snd-display #__line__ ";automorph rotation: ~A" mxdiff)))
 	  
 	  (revert-sound ind)
@@ -37705,15 +37702,11 @@ EDITS: 1
 		     (if (not (= (chans ind) chns)) (snd-display #__line__ ";update-sound looped chans: ~A ~A" chns (chans ind)))
 		     (if (not (= (srate ind) sr)) (snd-display #__line__ ";update-sound looped srate: ~A ~A" sr (srate ind)))
 		     (if (not (= (framples ind) fr)) (snd-display #__line__ ";update-sound looped framples: ~A ~A" fr (framples ind 0)))))
-		 (let* ((old-ind (open-sound "oboe.snd"))
-			(diff 0.0)
-			(rd (make-sampler 0 ind 0))
-			(home (sampler-home rd)))
-		   (scan-channel (lambda (y)
-				   (not (set! diff (max diff (abs (- y (next-sample rd)))))))
-				 0 fr old-ind 0)
-		   (if (fneq diff 0.0) 
-		       (snd-display #__line__ ";update-sound looped overall max diff: ~A, sounds: ~A, ind: ~A, old-ind: ~A, rd: ~A" diff (sounds) ind old-ind home))
+		 (let* ((old-ind (open-sound "oboe.snd")))
+		   (let ((mxdiff (float-vector-peak (float-vector-subtract! (channel->float-vector 0 #f ind 0 0) (channel->float-vector 0 #f old-ind 0)))))
+		     (if (fneq mxdiff 0.0) 
+			 (snd-display #__line__ ";update-sound looped overall max diff: ~A, sounds: ~A, ind: ~A, old-ind: ~A, rd: ~A" 
+				      mxdiff (sounds) ind old-ind home)))
 		   (close-sound old-ind)))))
 	  (close-sound ind)))
       
@@ -38883,6 +38876,20 @@ EDITS: 1
     (test (fv70) (list (float-vector 0.0 0.1419943179576268 0.2811111133316549 0.4145311766902953) 
 		       (float-vector 0.0 0.2839886359152535 0.5622222266633099 0.8290623533805906)))
 
+    (define (fv71)
+      (let ((fv (make-float-vector 8))
+	    (gv (make-vector 8))
+	    (g0 (make-env '(0 0 1 1) :length 5))
+	    (g1 (make-env '(0 0 1 1) :length 5)))
+	(do ((i 0 (+ i 2)))
+	    ((= i 8))
+	  (set! (gv i) g0)
+	  (set! (gv (+ i 1)) g1))
+	(do ((i 0 (+ i 1)))
+	    ((= i 8) fv)
+	  (float-vector-set! fv i (env (vector-ref gv i))))))
+    
+    (test (fv71) (float-vector 0.0 0.0 0.25 0.25 0.5 0.5 0.75 0.75))
     )
   
   (if all-args

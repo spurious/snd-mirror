@@ -68757,7 +68757,7 @@ int main(int argc, char **argv)
  *               |      |      |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.1
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 17.5
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 37.9 
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 37.7
  * 
  * --------------------------------------------------------------------------
  *
@@ -68780,6 +68780,7 @@ int main(int argc, char **argv)
  * doc/test/cleanup vct-spatter|interpolate
  * possibly split multiply_sx[oscil_x, oscil, srcx]
  * pluck is do_all_x -- could add support for it.
- * env vect from tmp, check formant_bank_sz
- * mul_env_x _> env_env|oscil? mul_env_polywave_env? outa_rf split?
+ * mul_env_x _> env_env|oscil? mul_env_polywave_env?
+ * implicit ref/set opts
+ * previous splits can use the functions!
  */

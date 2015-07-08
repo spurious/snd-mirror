@@ -813,6 +813,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       if (include_y_tick_labels)
 	curx += number_width("10000", use_tiny_font);
       curx += major_tick_length;
+      ap->y_axis_y1 = include_y_ticks ? top_border_width : 0;
     }
   
   ap->x_axis_x1 = width - right_border_width;
@@ -835,9 +836,11 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	default:
 	  tdx = describe_ticks(ap->x_ticks, ap->x0, ap->x1, num_ticks, grid_scale); 
 	  break;
+
 	case X_AXIS_IN_SAMPLES: 
 	  tdx = describe_ticks(ap->x_ticks, ap->x0 * srate, ap->x1 * srate, num_ticks, grid_scale); 
 	  break;
+
 	case X_AXIS_IN_BEATS: 
 	case X_AXIS_IN_MEASURES:
 	  if (ap->cp) /* cp==null probably can't happen -- ap->cp is null (only?) if we're called from the envelope editor */
@@ -1339,10 +1342,12 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	      label = "100";
 	      freq = 100.0;
 	      break;
+
 	    case 1:
 	      label = "1000";
 	      freq = 1000.0;
 	      break;
+
 	    case 2:
 	      label = "10000";
 	      freq = 10000.0;
@@ -1401,10 +1406,12 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	      label = "100";
 	      freq = 100.0;
 	      break;
+
 	    case 1:
 	      label = "1000";
 	      freq = 1000.0;
 	      break;
+
 	    case 2:
 	      label = "10000";
 	      freq = 10000.0;
