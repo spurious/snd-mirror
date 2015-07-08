@@ -33160,7 +33160,6 @@ static s7_rf_t is_fv_set_rf(s7_scheme *sc, s7_pointer expr)
   if (!rf) return(NULL);
   s7_xf_store_at(sc, loc, (s7_pointer)rf);
 
-  /* fprintf(stderr, "%s%s%s\n", BOLD_TEXT, DISPLAY(expr), UNBOLD_TEXT); */
   return((checked) ? fv_set_rf_checked : fv_set_rf);
 }
 
@@ -52400,99 +52399,109 @@ static int safe_dotimes_ex(s7_scheme *sc)
 
 		  /* let_looped here */
 		  if (((symbol_syntax_op(car(sc->code)) == OP_LET) ||
-		       (symbol_syntax_op(car(sc->code)) == OP_LET_STAR)) &&
-		      (is_null(cdddr(sc->code))))
+		       (symbol_syntax_op(car(sc->code)) == OP_LET_STAR)))
 		    {
-		      s7_pointer let_body;
+		      s7_pointer let_body, p, fcar;
 		      bool let_star;
+		      int body_len;
+
 		      let_star = (symbol_syntax_op(car(sc->code)) == OP_LET_STAR);
-		      let_body = caddr(sc->code);
-		      if ((is_optimized(let_body)) &&
-			  (is_symbol(car(let_body))))
+		      let_body = cddr(sc->code);
+
+		      for (body_len = 0, p = let_body; is_pair(p); body_len++, p = cdr(p))
+			if (is_optimized(car(p)))
+			  {
+			    fcar = find_symbol_checked(sc, caar(p));
+			    if (!has_rf_function(fcar))
+			      break;
+			  }
+			else break;
+		      if (is_null(p))
 			{
-			  s7_pointer fcar;
-			  fcar = find_symbol_checked(sc, car(let_body));
-			  if (has_rf_function(fcar))
+			  for (p = cadr(sc->code); is_pair(p); p = cdr(p))
+			    if (is_optimized(cadar(p)))
+			      {
+				fcar = find_symbol_checked(sc, caadar(p));
+				if (!has_rf_function(fcar))
+				  break;
+			      }
+			    else break;
+			  if (is_null(p))
 			    {
-			      s7_pointer p;
-			      int len;
-			      for (len = 0, p = cadr(sc->code); is_pair(p); len++, p = cdr(p))
-				if (is_optimized(cadar(p)))
-				  {
-				    fcar = find_symbol_checked(sc, caadar(p));
-				    if (!has_rf_function(fcar))
-				      break;
-				  }
-				else break;
+			      s7_pointer old_e, stepper;
+			      int i, loc;
+			      s7_rp_t rp;
+			      s7_rf_t rf;
+
+			      stepper = slot_value(sc->args);
+			      old_e = sc->envir;
+			      sc->envir = new_frame_in_env(sc, sc->envir);
+
+			      s7_xf_new(sc, old_e);
+			      for (i = 0, p = cadr(sc->code); is_pair(p); i++, p = cdr(p))
+				{
+				  s7_pointer expr;
+				  loc = s7_xf_store(sc, NULL);
+				  expr = cadar(p);
+				  fcar = find_symbol_checked(sc, car(expr));
+				  rp = rf_function(fcar);
+				  rf = rp(sc, expr);
+				  if (!rf) break;
+				  s7_xf_store_at(sc, loc, (s7_pointer)rf);
+				  if (let_star)
+				    add_slot(sc, caar(p), s7_make_mutable_real(sc, 1.5));
+				}
 			      if (is_null(p))
 				{
-				  s7_pointer old_e, stepper;
-				  int *lets;
-				  int i;
-				  s7_rp_t rp;
-				  s7_rf_t rf;
-
-				  stepper = slot_value(sc->args);
-				  old_e = sc->envir;
-				  sc->envir = new_frame_in_env(sc, sc->envir);
-				  lets = (int *)malloc((len + 1) * sizeof(int));
-
-				  s7_xf_new(sc, old_e);
-
-				  for (i = 0, p = cadr(sc->code); is_pair(p); i++, p = cdr(p))
+				  if (!let_star)
+				    for (p = cadr(sc->code); is_pair(p); p = cdr(p))
+				      add_slot(sc, caar(p), s7_make_mutable_real(sc, 1.5));
+				  
+				  for (i = 0, p = let_body; is_pair(p); i++, p = cdr(p))
 				    {
-				      s7_pointer expr;
-				      lets[i] = s7_xf_store(sc, NULL);
-				      expr = cadar(p);
-				      fcar = find_symbol_checked(sc, car(expr));
-				      rp = rf_function(fcar);
-				      rf = rp(sc, expr);
-				      if (!rf) break;
-				      s7_xf_store_at(sc, lets[i], (s7_pointer)rf);
-				      if (let_star)
-					add_slot(sc, caar(p), s7_make_mutable_real(sc, 1.5));
-				    }
-				  free(lets);
-				  if (is_null(p))
-				    {
-				      int loc;
-				      if (!let_star)
-					for (p = cadr(sc->code); is_pair(p); p = cdr(p))
-					  add_slot(sc, caar(p), s7_make_mutable_real(sc, 1.5));
+				      s7_pointer lp;
+				      lp = car(p);
 				      loc = s7_xf_store(sc, NULL);
-				      fcar = find_symbol_checked(sc, car(let_body));
+				      fcar = find_symbol_checked(sc, car(lp));
 				      rp = rf_function(fcar);
-				      rf = rp(sc, let_body);
-				      if ((rf) &&
-					  (is_all_real(sc, code)))
+				      rf = rp(sc, lp);
+				      if (!rf) break;
+				      s7_xf_store_at(sc, loc, (s7_pointer)rf);
+				    }
+				  if ((is_null(p)) &&
+				      (is_all_real(sc, code)))
+				    {
+				      s7_pointer *top;
+				      set_let_slots(sc->envir, reverse_slots(sc, let_slots(sc->envir)));
+				      
+				      top = sc->cur_rf->data;
+				      for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
 					{
-					  s7_pointer *top;
-					  set_let_slots(sc->envir, reverse_slots(sc, let_slots(sc->envir)));
-					  s7_xf_store_at(sc, loc, (s7_pointer)rf);
-					  top = sc->cur_rf->data;
-					  for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
+					  s7_pointer **rp;
+					  s7_pointer *temp;
+
+					  temp = top;
+					  rp = &temp;
+
+					  for (p = let_slots(sc->envir); is_slot(p); p = next_slot(p))
 					    {
-					      s7_pointer **rp;
-					      s7_pointer *temp;
-					      temp = top;
-					      rp = &temp;
-					      for (p = let_slots(sc->envir); is_slot(p); p = next_slot(p))
-						{
-						  s7_rf_t r1;
-						  r1 = (s7_rf_t)(**rp); (*rp)++;
-						  real(slot_value(p)) = r1(sc, rp);
-						}
-					      (*rp)++; 
+					      s7_rf_t r1;
+					      r1 = (s7_rf_t)(**rp); (*rp)++;
+					      real(slot_value(p)) = r1(sc, rp); 
+					    }
+					  for (i = 0; i < body_len; i++)
+					    {
+					      rf = (s7_rf_t)(**rp); (*rp)++;
 					      rf(sc, rp);
 					    }
-					  s7_xf_free(sc);
-					  sc->code = cdr(cadr(code));
-					  return(goto_SAFE_DO_END_CLAUSES);
 					}
+				      s7_xf_free(sc);
+				      sc->code = cdr(cadr(code));
+				      return(goto_SAFE_DO_END_CLAUSES);
 				    }
-				  sc->envir = old_e;
-				  s7_xf_free(sc);
 				}
+			      sc->envir = old_e;
+			      s7_xf_free(sc);
 			    }
 			}
 		    }
@@ -68744,8 +68753,8 @@ int main(int argc, char **argv)
  * thash         |      |      |                          50.7 23.8 14.9 14.6
  *               |      |      |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.1
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 17.7
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 38.5
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 17.5
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 37.9 
  * 
  * --------------------------------------------------------------------------
  *
@@ -68765,10 +68774,9 @@ int main(int argc, char **argv)
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
  *   with name/sync/sample settable
  *
- * rf multiple statements as in let_looped -- where are these loops? (simple do, simple_do_step to begin1 for example)
- *   52476, bullfrog for example -- would also need rf for mus_set_formant_frequency_sx
  * doc/test/cleanup vct-spatter|interpolate
- * check add_direct_any clm2xen
- * env/oscil vector-ref and run-time if in vox (clm-ins/clm23)
- * possibly split add_rf_xx, multiply_sx
+ * possibly split multiply_sx[oscil_x, oscil, srcx]
+ * pluck is do_all_x -- could add support for it.
+ * env vect from tmp, check formant_bank_sz
+ * mul_env_x _> env_env|oscil? mul_env_polywave_env? outa_rf split?
  */

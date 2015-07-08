@@ -3571,7 +3571,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      return(res);
 	    }
 
-	  /* try rsf mechanism */
+	  /* try rf mechanism */
 	  if (s7_is_symbol(s7_car(res)))
 	    {
 	      s7_pointer fcar;
@@ -3648,6 +3648,8 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
     }
   proc_loc = s7_gc_protect(s7, proc);
 #endif
+
+  /* fprintf(stderr, "map %lld: body: %s\n", num, s7_object_to_c_string(s7, body)); */
 
   data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
 #if HAVE_SCHEME
@@ -3916,11 +3918,58 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   body = s7_closure_body(s7, proc);
   if (s7_is_pair(body))
     {
-      s7_pointer arg;
+      s7_pointer arg, expr;
+
       arg = s7_car(s7_closure_args(s7, proc));
-      /* (fneq y 1.0)?
-       * 400000: (or (> n3 0.1) (not|begin (set! samp (+ samp 1))[ #f]))
-       */
+      expr = s7_car(body);
+
+      if (expr == xen_false)		       
+	{
+	  free_snd_fd(sf);
+	  return(xen_false);
+	}
+      if (!s7_is_pair(expr))
+	{
+	  free_snd_fd(sf);
+	  return(s_beg);
+	}
+
+      if ((s7_is_null(s7, s7_cdr(body))) &&
+	  (s7_is_pair(s7_cdr(expr))) &&
+	  (s7_cadr(expr) == arg) &&
+	  (s7_is_pair(s7_cddr(expr))) &&
+	  (s7_is_real(s7_caddr(expr))) &&
+	  (s7_is_null(s7, s7_cdddr(expr))) &&
+	  ((s7_car(expr) == s7_make_symbol(s7, ">")) || (s7_car(expr) == s7_make_symbol(s7, "<"))))
+	{
+	  s7_double y;
+	  bool lt;
+	  lt = (s7_car(expr) == s7_make_symbol(s7, "<"));
+	  y = s7_real(s7_caddr(expr));
+	  for (kp = 0; kp < num; kp++)
+	    {
+	      s7_double x;
+	      x = read_sample(sf);
+	      if (((!lt) && (x > y)) || ((lt) && (x < y)))
+		{
+		  if (counting)	
+		    counts++; 
+		  else
+		    {
+		      if (reporting) finish_progress_report(cp);
+		      sf = free_snd_fd(sf);
+		      return(C_llong_to_Xen_llong(kp + beg));
+		    }
+		}
+	    }
+	  if (reporting) finish_progress_report(cp);
+	  sf = free_snd_fd(sf);
+	  if (counting)
+	    return(C_int_to_Xen_integer(counts));
+
+	  return(Xen_false);
+	}
+
       e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7));
       gc_loc = s7_gc_protect(s7, e);
       slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));

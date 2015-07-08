@@ -974,11 +974,11 @@ is a physical model of a flute:
 	    (allpasses (make-all-pass-bank (vector allpass1 allpass2 allpass3))))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
-	    (out-bank filts i
-		      (all-pass allpass4
-				(one-pole low
-					  (all-pass-bank allpasses
-							 (comb-bank combs (* volume (ina i *reverb*))))))))))))
+	  (out-bank filts i
+		    (all-pass allpass4
+			      (one-pole low
+					(all-pass-bank allpasses
+						       (comb-bank combs (* volume (ina i *reverb*))))))))))))
 
 (definstrument (reson startime dur pitch amp numformants indxfun skewfun pcskew skewat skewdc
 		      vibfreq vibpc ranvibfreq ranvibpc degree distance reverb-amount data)
