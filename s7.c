@@ -33260,20 +33260,21 @@ static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code);
 
 static void initialize_dox_end_vars(s7_scheme *sc, s7_pointer end)
 {
+  /* fprintf(stderr, "init: %s %s\n", DISPLAY(end), opt_names[optimize_op(end)]); */
+
   switch (optimize_op(end))
     {
-    case HOP_SAFE_C_C:
-      break;
-
     case HOP_SAFE_C_S:
     case HOP_SAFE_C_SC:
     case HOP_SAFE_C_S_opCq:
       dox_slot1(sc->envir) = find_symbol(sc, cadr(end));
+      dox_slot2(sc->envir) = NULL;
       break;
 
     case HOP_SAFE_C_CS:
     case HOP_SAFE_C_QS:
       dox_slot1(sc->envir) = find_symbol(sc, caddr(end));
+      dox_slot2(sc->envir) = NULL;
       break;
 
     case HOP_SAFE_C_SS:
@@ -33296,6 +33297,11 @@ static void initialize_dox_end_vars(s7_scheme *sc, s7_pointer end)
     case HOP_SAFE_C_opSq_opSq:
       dox_slot1(sc->envir) = find_symbol(sc, cadr(cadr(end)));
       dox_slot2(sc->envir) = find_symbol(sc, cadr(caddr(end)));
+      break;
+      
+    default:
+      dox_slot1(sc->envir) = NULL;
+      dox_slot2(sc->envir) = NULL;
       break;
     }
 }
@@ -52052,7 +52058,7 @@ static int dox_ex(s7_scheme *sc)
 	  }
       }
   initialize_dox_end_vars(sc, fcdr(sc->code));
-  
+
   if (is_true(sc, ((s7_function)fcdr(cdr(sc->code)))(sc, fcdr(sc->code))))
     {
       /* if no end result exprs, we return nil, but others probably #<unspecified>
@@ -52611,9 +52617,6 @@ static int simple_safe_dotimes_ex(s7_scheme *sc)
 	  
 	  /* add the let vars but not initialized yet
 	   */
-	  if (!is_null(cdr(car(cdaddr(sc->code)))))
-	    fprintf(stderr, "locals: %s\n", DISPLAY(sc->code));
-
 	  let_var = caar(cdaddr(sc->code));
 	  add_slot(sc, car(let_var), s7_make_mutable_real(sc, 1.5));
 	  stepper = slot_value(sc->args);
