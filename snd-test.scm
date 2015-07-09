@@ -25929,7 +25929,7 @@ EDITS: 2
       
       (if (not op) (snd-display #__line__ ";open-hook not called?"))
       (if (not dop) (snd-display #__line__ ";during-open-hook not called?"))
-      (if (not ig) (snd-display #__line__ ";initial-graph-hook not called?"))
+      (when with-gui (if (not ig) (snd-display #__line__ ";initial-graph-hook not called?")))
       (if (not (sound? aop)) (snd-display #__line__ ";after-open-hook not called?"))
       (if (not (equal? aop ind)) (snd-display #__line__ ";after-open-hook ~A but ind: ~A?" aop ind))
       (select-all)
@@ -26070,9 +26070,10 @@ EDITS: 2
 	(set! (reverb-control? ind) #f)
 	(set! (expand-control? ind) #f)
 	
-	(if (not spl) (snd-display #__line__ ";start-playing-hook not called?"))
-	(if (not stl) (snd-display #__line__ ";stop-playing-hook not called?"))
-	(if (not ph) (snd-display #__line__ ";play-hook not called?"))
+	(when with-gui
+	  (if (not spl) (snd-display #__line__ ";start-playing-hook not called?"))
+	  (if (not stl) (snd-display #__line__ ";stop-playing-hook not called?"))
+	  (if (not ph) (snd-display #__line__ ";play-hook not called?")))
 	(set! (hook-functions start-playing-hook) ())
 	(set! (hook-functions start-playing-selection-hook) ())
 	(set! (hook-functions stop-playing-hook) ())
@@ -33556,12 +33557,13 @@ EDITS: 1
       (for-each forget-region (regions))
       (load (string-append cwd "s61.scm"))
       (set! ind (find-sound "oboe.snd"))
-      (for-each (lambda (func func-name global local)
-		  (if (or (not (local-eq? (func) global))
-			  (not (local-eq? (func ind 0) local)))
-		      (snd-display #__line__ "; save ~A reversed: ~A [~A] ~A [~A]" 
-				   func-name (func) global (func ind 0) local)))
-		funcs func-names new-globals new-locals)
+      (when with-gui
+	(for-each (lambda (func func-name global local)
+		    (if (or (not (local-eq? (func) global))
+			    (not (local-eq? (func ind 0) local)))
+			(snd-display #__line__ "; save ~A reversed: ~A [~A] ~A [~A]" 
+				     func-name (func) global (func ind 0) local)))
+		  funcs func-names new-globals new-locals))
       (if (not (= (channel-style ind) channels-separate))
 	  (snd-display #__line__ ";save channel-style reversed: ~A ~A" *channel-style* (channel-style ind)))
       (for-each (lambda (func val) (set! (func) val)) funcs old-globals)

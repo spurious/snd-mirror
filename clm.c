@@ -1225,6 +1225,7 @@ static mus_float_t oscil_unmodulated_1(mus_any *ptr)
   return(sin(result));
 }
 
+#if HAVE_SINCOS
 static mus_float_t oscil_unmodulated_2(mus_any *ptr)
 {
   osc *gen = (osc *)ptr;
@@ -1234,7 +1235,6 @@ static mus_float_t oscil_unmodulated_2(mus_any *ptr)
   return(sin(result));
 }
 
-#if HAVE_SINCOS
 static mus_float_t unmod_oscil_1b(mus_any *p);
 static mus_float_t unmod_oscil_1a(mus_any *p)
 {

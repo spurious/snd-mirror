@@ -6409,24 +6409,6 @@ s7_pointer s7_value(s7_scheme *sc, s7_pointer sym)
 }
 
 
-s7_pointer s7_car_value(s7_scheme *sc, s7_pointer lst)
-{
-  return(find_symbol_checked(sc, car(lst)));
-}
-
-
-s7_pointer s7_cadr_value(s7_scheme *sc, s7_pointer lst)
-{
-  return(find_symbol_checked(sc, cadr(lst)));
-}
-
-
-s7_pointer s7_cadar_value(s7_scheme *sc, s7_pointer lst)
-{
-  return(find_symbol_checked(sc, cadar(lst)));
-}
-
-
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env)
 {
   if (is_let(local_env))
@@ -34990,24 +34972,6 @@ s7_pointer s7_call_direct(s7_scheme *sc, s7_pointer expr)
 }
 
 
-s7_double s7_call_direct_to_real_and_free(s7_scheme *sc, s7_pointer expr)
-{
-  s7_double val;
-  s7_pointer temp;
-
-  temp = c_function_call(ecdr(expr))(sc, cdr(expr));
-#if (!WITH_GMP)
-  val = real(temp);
-#else
-  val = s7_real(temp);
-#endif
-
-  if (is_simple_real(temp)) /* i.e. not immutable, not integer or something else unexpected */
-    free_cell(sc, temp);
-  return(val);
-}
-
-
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   c_proc_t *ptr;
@@ -53093,7 +53057,6 @@ static int do_all_x_ex(s7_scheme *sc)
 	      for (slot = let_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
 		if (is_pair(slot_expression(slot)))
 		  slot_set_value(slot, slot_pending_value(slot));
-	      /* no body */
 	      if (is_true(sc, fend(sc, end)))
 		{
 		  sc->code = cdadr(sc->code);
@@ -53103,6 +53066,65 @@ static int do_all_x_ex(s7_scheme *sc)
 	}
       /* end = cddr(sc->code); */
     }
+
+#if 1
+  if ((is_null(cdr(end))) && (is_pair(car(end))))
+    {
+      s7_pointer code;
+      code = car(end);
+      /* try rf case */
+      if (is_symbol(car(code)))
+	{
+	  s7_pointer fcar;
+	  fcar = find_symbol_checked(sc, car(code));
+	  if (has_rf_function(fcar))
+	    {
+	      s7_rf_t rf;
+	      s7_xf_new(sc, sc->envir);
+	      rf = rf_function(fcar)(sc, code);
+	      if ((rf) &&
+		  (is_all_real(sc, sc->code)))
+		{
+		  s7_pointer slots, end, scc;
+		  s7_pointer *top;
+		  s7_function fend;
+
+		  end = cadr(sc->code);
+		  fend = (s7_function)fcdr(end);
+		  end = car(end);
+
+		  scc = sc->code;
+		  slots = let_slots(sc->envir);
+		  top = sc->cur_rf->data;
+		  while (true)
+		    {
+		      s7_pointer slot;
+		      s7_pointer *temp;
+		      temp = top;
+		      rf(sc, &temp);
+
+		      for (slot = slots; is_slot(slot); slot = next_slot(slot))
+			if (is_pair(slot_expression(slot)))
+			  slot_pending_value(slot) = ((s7_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)));
+		      for (slot = slots; is_slot(slot); slot = next_slot(slot))
+			if (is_pair(slot_expression(slot)))
+			  slot_set_value(slot, slot_pending_value(slot));
+
+		      if (is_true(sc, fend(sc, end)))
+			{
+			  s7_xf_free(sc);
+			  sc->code = cdadr(scc);
+			  return(goto_DO_END_CLAUSES);
+			}
+		    }
+		}
+	      s7_xf_free(sc);
+	    }
+	}
+    }
+#endif
+
+
   push_stack_no_args(sc, OP_DO_ALL_X_STEP, sc->code);
   sc->code = end;
   return(goto_BEGIN1);
@@ -57800,13 +57822,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer args, val3;
 		    args = cdr(code);
-		    val3 = find_symbol_checked(sc, cadr(cadr(args)));
-		    car(sc->T2_2) = find_symbol_checked(sc, caddr(cadr(args)));
-		    car(sc->T2_1) = val3;
-		    val3 = c_call(cadr(args))(sc, sc->T2_1);
 		    car(sc->T1_1) = find_symbol_checked(sc, cadr(car(args)));
-		    car(sc->T2_1) = c_call(car(args))(sc, sc->T1_1);
-		    car(sc->T2_2) = val3;
+		    val3 = c_call(car(args))(sc, sc->T1_1);
+		    car(sc->T2_2) = find_symbol_checked(sc, caddr(cadr(args)));
+		    car(sc->T2_1) = find_symbol_checked(sc, cadr(cadr(args)));
+		    car(sc->T2_2) = c_call(cadr(args))(sc, sc->T2_1);
+		    car(sc->T2_1) = val3;
 		    sc->value = c_call(code)(sc, sc->T2_1);
 		    goto START;
 		  }
@@ -68778,9 +68799,8 @@ int main(int argc, char **argv)
  *   with name/sync/sample settable
  *
  * doc/test/cleanup vct-spatter|interpolate
- * possibly split multiply_sx[oscil_x, oscil, srcx]
- * pluck is do_all_x -- could add support for it.
- * mul_env_x _> env_env|oscil? mul_env_polywave_env?
+ * possibly split multiply_sx[oscil_x, oscil, srcx], mul_env_x _> env_env|oscil? mul_env_polywave_env?
  * implicit ref/set opts
- * previous splits can use the functions!
+ * previous splits can use the functions (if exported)
+ * much of the rf code can be collapsed
  */

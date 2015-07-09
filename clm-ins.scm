@@ -20,7 +20,7 @@
   "(pluck start dur freq amp weighting lossfact) implements the Jaffe-Smith plucked string physical model. 
 'weighting' is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5=shortest decay. 
 Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. 
-'lossfact' can be used to shorten decays.  Most useful values are between .8 and 1.0. (with-sound () (pluck 0 1 330 .3 .995 .995))"
+'lossfact' can be used to shorten decays.  Most useful values are between .8 and 1.0. (with-sound () (pluck 0 1 330 .3 .7 .995))"
 
   (define (getOptimumC S o p)
     (let* ((pa (* (/ 1.0 o) (atan (* S (sin o)) (+ (- 1.0 S) (* S (cos o))))))
@@ -70,10 +70,12 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	  (do ((i beg (+ i 1))
 	       (ctr 0 (modulo (+ ctr 1) dlen)))
 	      ((= i end))
+	    (outa i (* amp (float-vector-set! tab ctr (* c1 (one-zero feedb (one-zero allp (float-vector-ref tab ctr)))))))))))))
+#|
 	    (let ((val (float-vector-ref tab ctr)))	;current output value
 	      (float-vector-set! tab ctr (* c1 (one-zero feedb (one-zero allp val))))
 	      (outa i (* amp val)))))))))
-
+|#
 
 
 ;;; -------- mlbvoi

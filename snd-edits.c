@@ -9065,59 +9065,6 @@ static Xen g_edit_list_to_function(Xen snd, Xen chn, Xen start, Xen end)
 }
 
 #if HAVE_SCHEME
-static s7_pointer next_sample_s;
-static s7_pointer g_next_sample_s(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer obj;
-  obj = s7_car_value(s7, args);
-
-  if (is_sampler(obj))
-    return(C_double_to_Xen_real(protected_next_sample((snd_fd *)Xen_object_ref(obj))));
-  if (is_mix_sampler(obj))
-    return(C_double_to_Xen_real(protected_next_sample(xen_mix_to_snd_fd(obj))));
-
-  Xen_check_type(false, obj, 1, S_next_sample, "a sampler");
-  return(s7_f(sc));
-}
-
-static s7_pointer next_sample_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if ((args == 1) &&
-      (s7_is_symbol(s7_cadr(expr))))
-    {
-      s7_function_choice_set_direct(sc, expr);
-      return(next_sample_s);
-    }
-  return(f);
-}
-
-static s7_pointer read_sample_s;
-static s7_pointer g_read_sample_s(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer obj;
-  obj = s7_car_value(s7, args);
-
-  if (is_sampler(obj))
-    return(C_double_to_Xen_real(read_sample((snd_fd *)Xen_object_ref(obj))));
-  if (is_mix_sampler(obj))
-    return(C_double_to_Xen_real(read_sample(xen_mix_to_snd_fd(obj))));
-
-  Xen_check_type(false, obj, 1, S_read_sample, "a sampler");
-  return(s7_f(sc));
-}
-
-static s7_pointer read_sample_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
-{
-  if ((args == 1) &&
-      (s7_is_symbol(s7_cadr(expr))))
-    {
-      s7_function_choice_set_direct(sc, expr);
-      return(read_sample_s);
-    }
-  return(f);
-}
-
-
 static s7_double next_sample_rf(s7_scheme *sc, s7_pointer **p)
 {
   snd_fd *fd;
@@ -9145,7 +9092,6 @@ static s7_double read_mix_sample_rf(s7_scheme *sc, s7_pointer **p)
   fd = (snd_fd *)(*(*p)); (*p)++;
   return(read_sample(fd));
 }
-
 
 static s7_rf_t is_read_sample_rf(s7_scheme *sc, s7_pointer expr)
 {
@@ -9360,28 +9306,14 @@ keep track of which files are in a given saved state batch, and a way to rename 
 #if HAVE_SCHEME
   {
     s7_pointer f;
-
     edit_finish = s7_make_function(s7, "(finish-as-one-edit)", g_edit_finish, 0, 0, false, "");
 
-    /* next-sample */
     f = s7_name_to_value(s7, "next-sample");
-    s7_function_set_chooser(s7, f, next_sample_chooser);
     s7_rf_set_function(f, is_next_sample_rf);
 
-    next_sample_s = s7_make_function(s7, "next-sample", g_next_sample_s, 1, 0, false, "next-sample optimization");
-    s7_function_set_class(next_sample_s, f);
-    s7_function_set_returns_temp(next_sample_s);
-
-    /* read-sample */
     f = s7_name_to_value(s7, "read-sample");
-    s7_function_set_chooser(s7, f, read_sample_chooser);
     s7_rf_set_function(f, is_read_sample_rf);
 
-    read_sample_s = s7_make_function(s7, "read-sample", g_read_sample_s, 1, 0, false, "read-sample optimization");
-    s7_function_set_class(read_sample_s, f);
-    s7_function_set_returns_temp(read_sample_s);
-
-    /* read-sample-with-direction */
     f = s7_name_to_value(s7, "read-sample-with-direction");
   }
 #endif
