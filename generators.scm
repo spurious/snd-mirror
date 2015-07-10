@@ -5189,6 +5189,8 @@ returns the next random value in the 1/f stream produced by gen."))
 
 (define pink-noise? float-vector?)
 
+;;; pink-noise func is in clm2xen.c
+
 #|
 (define (pink-noise v)
   (let ((amp (v 0))

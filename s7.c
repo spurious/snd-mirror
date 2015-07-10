@@ -6675,6 +6675,18 @@ static int closure_length(s7_scheme *sc, s7_pointer e)
   return(-1);
 }
 
+#define check_closure_for(Sc, Fnc, Sym)				    \
+  if ((has_closure_let(Fnc)) && (is_let(closure_let(Fnc))))	    \
+    {								    \
+      s7_pointer val;						    \
+      val = find_local_symbol(Sc, Sym, closure_let(Fnc));	    \
+      if ((!is_slot(val)) && (is_let(outlet(closure_let(Fnc)))))    \
+	val = find_local_symbol(Sc, Sym, outlet(closure_let(Fnc))); \
+      if (is_slot(val))						    \
+	return(slot_value(val));				    \
+    }
+
+
 static s7_pointer copy_tree(s7_scheme *sc, s7_pointer tree)
 {
 #if WITH_GCC
@@ -7016,7 +7028,7 @@ static s7_pointer g_c_pointer(s7_scheme *sc, s7_pointer args)
 
 
 
-/* --------------------------------- rsf ----------------------------------------------- */
+/* --------------------------------- rf ----------------------------------------------- */
 
 static s7_rp_t pair_to_rp(s7_scheme *sc, s7_pointer expr)
 {
@@ -8630,8 +8642,8 @@ static s7_pointer make_permanent_real(s7_double n)
   return(x);
 }
 
-
-s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_double n)
+#if 0
+static s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_double n)
 {
   if (is_simple_real(rl))
     {
@@ -8640,7 +8652,7 @@ s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_double n)
     }
   return(make_real(sc, n));
 }
-
+#endif
 
 s7_pointer s7_make_complex(s7_scheme *sc, s7_double a, s7_double b)
 {
@@ -25026,17 +25038,7 @@ static s7_pointer g_is_iterator(s7_scheme *sc, s7_pointer args)
 
   x = car(args);
   if (is_iterator(x)) return(sc->T);
-
-  if (has_closure_let(x))
-    {
-      s7_pointer val;
-      val = find_local_symbol(sc, sc->ITERATOR, closure_let(x));
-      if (!is_slot(val))
-	val = find_local_symbol(sc, sc->ITERATOR, outlet(closure_let(x)));
-      if (is_slot(val))
-	return(slot_value(val));
-    }
-
+  check_closure_for(sc, x, sc->IS_ITERATOR);
   check_boolean_method(sc, is_iterator, sc->IS_ITERATOR, args);
   return(sc->F);
 }
@@ -33104,10 +33106,8 @@ static s7_double fv_set_rf_checked(s7_scheme *sc, s7_pointer **p)
 
 static s7_rf_t is_fv_set_rf(s7_scheme *sc, s7_pointer expr)
 {
-  s7_pointer fv_sym, ind_sym, ind, ind_slot, fv, val_sym, val, val_expr;
+  s7_pointer fv_sym, ind_sym, ind, ind_slot, fv, val_expr;
   s7_int len;
-  s7_int loc;
-  s7_rf_t rf;
   bool checked;
 
   fv_sym = s7_cadr(expr);
@@ -33132,17 +33132,7 @@ static s7_rf_t is_fv_set_rf(s7_scheme *sc, s7_pointer expr)
 
   val_expr = cadddr(expr);
   if (!is_pair(val_expr)) return(NULL);
-  val_sym = car(val_expr);
-  if (!is_symbol(val_sym)) return(NULL);
-  val = s7_symbol_value(sc, val_sym);
-  if (!has_rf_function(val)) return(NULL);
-
-  loc = s7_xf_store(sc, NULL);
-  rf = rf_function(val)(sc, val_expr);
-  if (!rf) return(NULL);
-  s7_xf_store_at(sc, loc, (s7_pointer)rf);
-
-  return((checked) ? fv_set_rf_checked : fv_set_rf);
+  return(pair_to_rf(sc, val_expr, (checked) ? fv_set_rf_checked : fv_set_rf));
 }
 
 
@@ -35391,9 +35381,15 @@ s7_pointer set_c_function_call_args(s7_scheme *sc)
   return(call_args);
 }
 
+static s7_pointer get_doc(s7_scheme *sc, s7_pointer x)
+{
+  check_closure_for(sc, x, sc->DOCUMENTATION);
+  return(NULL);
+}
 
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 {
+  s7_pointer val;
   if (is_symbol(x))
     {
       if ((symbol_has_help(x)) &&
@@ -35406,19 +35402,10 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
       (is_c_macro(x)))
     return((char *)c_function_documentation(x));
 
-  if (has_closure_let(x))
-    {
-      s7_pointer val;
-      val = find_local_symbol(sc, sc->DOCUMENTATION, closure_let(x));
-      if (!is_slot(val))
-	val = find_local_symbol(sc, sc->DOCUMENTATION, outlet(closure_let(x)));
-      if (is_slot(val))
-	{
-	  val = slot_value(val);
-	  if (is_string(val))
-	    return(string_value(val));
-	}
-    }
+  val = get_doc(sc, x);
+  if ((val) && (is_string(val)))
+    return(string_value(val));
+
   return(NULL);
 }
 
@@ -68798,9 +68785,15 @@ int main(int argc, char **argv)
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
  *   with name/sync/sample settable
  *
- * doc/test/cleanup vct-spatter|interpolate
  * possibly split multiply_sx[oscil_x, oscil, srcx], mul_env_x _> env_env|oscil? mul_env_polywave_env?
  * implicit ref/set opts
  * previous splits can use the functions (if exported)
  * much of the rf code can be collapsed
+ * is_all_real can be folded into preceding tree walk
+ * check clm2xen names for consistency (csr style)
+ * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
+ *   get args, plug into closure_let, then call closure_rf_body via the saved array
+ *   free-var: slot search each time, so a special rf func?
+ *   lambda* args: rf_closure* (with-let??) 
+ * rf set|if
  */

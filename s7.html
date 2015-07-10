@@ -1839,14 +1839,14 @@ value in the closure's environment:
 (define (make-circular-iterator obj)
   (let ((iter (make-iterator obj)))
     (make-iterator 
-     (let ((iterator #t))
+     (let ((iterator? #t))
        (lambda ()
          (let ((result (iter)))
 	   (if (eof-object? result)
 	       ((set! iter (make-iterator obj)))
 	       result)))))))
 </pre>
-<p>The 'iterator variable is similar to the 'documentation variable used by procedure-documentation.
+<p>The 'iterator? variable is similar to the 'documentation variable used by procedure-documentation.
 It gives make-iterator some hope of catching inadvertent bogus function arguments that would
 otherwise cause an infinite loop. 
 </p>
@@ -9010,7 +9010,7 @@ thread-safe local variables, which can be saved and communicated between s7 runs
 			     (let ((key #f)
 				   (length (lambda (obj) (expt 2 20))))
 			       (#_make-iterator
-                                (let ((iterator #t))
+                                (let ((iterator? #t))
 				  (openlet 
 				   (lambda ()
 				     (if key

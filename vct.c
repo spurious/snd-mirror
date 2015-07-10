@@ -834,12 +834,19 @@ static Xen g_vct_spatter(Xen fv, XEN iv, XEN end, XEN val)
   s7_int *iv_vals;
   s7_double x;
   int i, len;
+
+  if (!s7_is_float_vector(fv)) s7_wrong_type_arg_error(s7, S_vct_spatter, 1, fv, "a float-vector");
+  if (!s7_is_int_vector(iv)) s7_wrong_type_arg_error(s7, S_vct_spatter, 2, iv, "an int-vector");
+  if (!s7_is_integer(end)) s7_wrong_type_arg_error(s7, S_vct_spatter, 3, end, "an integer");
+  if (!s7_is_real(val)) s7_wrong_type_arg_error(s7, S_vct_spatter, 4, val, "a real");
+
   fv_vals = s7_float_vector_elements(fv);
   iv_vals = s7_int_vector_elements(iv);
   len = s7_integer(end);
   x = s7_real(val);
   for (i = 0; i < len; i++)
     fv_vals[iv_vals[i]] = x;
+
   return(val);
 }
 
@@ -852,6 +859,15 @@ index0 and index1 interpolating between x2 and x1 by incrementing x0 by dx"
   int i, beg, lim;
   s7_double *fv_vals;
   fv_vals = s7_float_vector_elements(fv);
+
+  if (!s7_is_float_vector(fv)) s7_wrong_type_arg_error(s7, S_vct_interpolate, 1, fv, "a float-vector");
+  if (!s7_is_integer(start_index)) s7_wrong_type_arg_error(s7, S_vct_spatter, 2, start_index, "an integer");
+  if (!s7_is_integer(end_index)) s7_wrong_type_arg_error(s7, S_vct_spatter, 3, end_index, "an integer");
+  if (!s7_is_real(start_x)) s7_wrong_type_arg_error(s7, S_vct_spatter, 4, start_x, "a real");
+  if (!s7_is_real(incr)) s7_wrong_type_arg_error(s7, S_vct_spatter, 5, incr, "a real");
+  if (!s7_is_real(val1)) s7_wrong_type_arg_error(s7, S_vct_spatter, 6, val1, "a real");
+  if (!s7_is_real(val2)) s7_wrong_type_arg_error(s7, S_vct_spatter, 7, val2, "a real");
+
   beg = s7_integer(start_index);
   lim = s7_integer(end_index);
   x0 = s7_real(start_x);
