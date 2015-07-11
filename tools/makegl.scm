@@ -616,8 +616,7 @@
      (if (= (length args) 0)
 	 (heyc "void")
 	 (if (>= (length args) max-args)
-	     (begin
-	       (heyc "Xen arglist"))
+	     (heyc "Xen arglist")
 	     (let ((previous-arg #f))
 	       (for-each 
 		(lambda (arg)

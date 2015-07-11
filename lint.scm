@@ -997,6 +997,13 @@
       (define (check-args name head form checkers env max-arity)
 	;; check for obvious argument type problems
 	;; name = overall caller, head = current caller, checkers = proc or list of procs for checking args
+
+	(define (prettify-arg-number argn)
+	  (if (or (not (= argn 1))
+		  (pair? (cddr form)))
+	      (format #f "~D " argn)
+	      ""))
+
 	(let ((arg-number 1))
 	  (call-with-exit
 	   (lambda (done)
@@ -1009,8 +1016,9 @@
 		      (if (eq? (car arg) 'quote)
 			  (if (and checker
 				   (not (checker (if (pair? (cadr arg)) +list+ (->type (cadr arg))))))
-			      (lint-format "~A's argument ~D should be a~A ~A: ~S:~A" 
-					   name head arg-number 
+			      (lint-format "~A's argument ~Ashould be a~A ~A: ~S:~A" 
+					   name head 
+					   (prettify-arg-number arg-number)
 					   (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
 					   checker arg 
 					   (truncated-list->string form)))
@@ -1021,12 +1029,14 @@
 				  (if (and checker
 					   *report-minor-stuff*)
 				      (if (memq op '(number-or-f list-or-f))
-					  (lint-format "~A argument ~D might be #f:~A"
-						       name head arg-number
+					  (lint-format "~A's argument ~Amight be #f:~A"
+						       name head 
+						       (prettify-arg-number arg-number)
 						       (truncated-list->string form))
 					  (if (memq op '(number-or-eof char-or-eof string-or-eof))
-					      (lint-format "~A argument ~D might be #<eof>:~A"
-							   name head arg-number
+					      (lint-format "~A's argument ~Amight be #<eof>:~A"
+							   name head 
+							   (prettify-arg-number arg-number)
 							   (truncated-list->string form)))))
 				  (if (or (not (checker op))
 					  (and (just-constants? arg env)
@@ -1035,8 +1045,9 @@
 						   (not (checker (eval arg))))
 						 (lambda ignore-catch-error-args
 						   #f))))
-				      (lint-format "~A's argument ~D should be a~A ~A: ~S:~A" 
-						   name head arg-number 
+				      (lint-format "~A's argument ~Ashould be a~A ~A: ~S:~A" 
+						   name head 
+						   (prettify-arg-number arg-number)
 						   (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
 						   checker arg 
 						   (truncated-list->string form))
@@ -1059,8 +1070,9 @@
 				     (not (var-set var-data)) ;               set?
 				     (not (memq (var-type var-data) v-types))
 				     (not (checker (var-type var-data))))
-				(lint-format "~A's argument ~D might not be a~A ~A: ~S:~A" 
-					     name head arg-number 
+				(lint-format "~A's argument ~Amight not be a~A ~A: ~S:~A" 
+					     name head 
+					     (prettify-arg-number arg-number)
 					     (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
 					     checker arg
 					     (truncated-list->string form)))
@@ -1068,14 +1080,16 @@
 				     (not (var-member arg env))
 				     (hash-table-ref globals arg)
 				     (not (checker (symbol->value arg))))
-				(lint-format "~A's argument ~D should be a~A ~A: ~S:~A" 
-					     name head arg-number 
+				(lint-format "~A's argument ~Ashould be a~A ~A: ~S:~A" 
+					     name head 
+					     (prettify-arg-number arg-number)
 					     (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
 					     checker arg 
 					     (truncated-list->string form))))
 			  (if (not (checker arg))
-			      (lint-format "~A's argument ~D should be a~A ~A: ~S:~A" 
-					   name head arg-number 
+			      (lint-format "~A's argument ~Ashould be a~A ~A: ~S:~A" 
+					   name head
+					   (prettify-arg-number arg-number)
 					   (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
 					   checker arg 
 					   (truncated-list->string form)))))
@@ -2634,17 +2648,16 @@
 						   (begin
 						     ;; if ,n -- add another, if then not T, add another
 						     (if (char=? (string-ref str j) #\,)
-							 (begin
-							   (if (>= (+ j 1) len)
-							       (lint-format "missing format directive: ~S" name str)
-							       (begin
-								 (if (char-ci=? (string-ref str (+ j 1)) #\n)
-								     (begin
-								       (set! dirs (+ dirs 1))
-								       (set! j (+ j 2)))
-								     (if (char-numeric? (string-ref str (+ j 1)))
-									 (set! j (+ j 2))
-									 (set! j ( + j 1))))))))
+							 (if (>= (+ j 1) len)
+							     (lint-format "missing format directive: ~S" name str)
+							     (begin
+							       (if (char-ci=? (string-ref str (+ j 1)) #\n)
+								   (begin
+								     (set! dirs (+ dirs 1))
+								     (set! j (+ j 2)))
+								   (if (char-numeric? (string-ref str (+ j 1)))
+								       (set! j (+ j 2))
+								       (set! j ( + j 1)))))))
 						     (if (>= j len)
 							 (lint-format "missing format directive: ~S" name str)
 							 (if (not (char-ci=? (string-ref str j) #\t))
@@ -3079,7 +3092,7 @@
 		      (not (hash-table-ref other-identifiers (var-name arg))))
 		 (if (var-set arg)
 		     (set! set (cons (var-name arg) set))
-		     (if (not (memq (var-name arg) '(documentation iterator)))
+		     (if (not (memq (var-name arg) '(documentation iterator?)))
 			 (set! unused (cons (var-name arg) unused))))))
 	   vars)
 	  
@@ -3104,6 +3117,9 @@
 
 	      (for-each
 	       (lambda (f)
+		 (if (and (pair? f)
+			  (eq? (car f) 'begin))
+		     (lint-format "redundant begin:~A" name (truncated-list->string f)))
 		 (if (< ctr (- len 1)) ; not the last form, so its value is ignored
 		     (begin
 		       (if (and (pair? f)
@@ -3113,15 +3129,31 @@
 		       (if (not (side-effect? f env))
 			   (lint-format "this could be omitted:~A" name (truncated-list->string f))))
 		     (begin
-		       (if (and (pair? prev-f)
-				(eq? (car prev-f) 'set!)
-				(pair? (cdr prev-f))
-				(pair? (cddr prev-f))         ; (set! ((L 1) 2)) an error, but lint should keep going
-				(equal? (caddr prev-f) f)
-				(not (side-effect? f env)))
-			   (lint-format "this could be omitted:~A" name (truncated-list->string f)))))
+		       (when (and (pair? prev-f)
+				  (pair? (cdr prev-f))
+				  (pair? (cddr prev-f)))                ; (set! ((L 1) 2)) an error, but lint should keep going
+			 (if (eq? (car prev-f) 'set!)
+			     (if (or (and (equal? (caddr prev-f) f)     ; (begin ... (set! x (...)) (...))
+					  (not (side-effect? f env)))
+				     (and (symbol? f)                   ; (begin ... (set! x ...) x)
+					  (eq? f (cadr prev-f))))
+				 (lint-format "this could be omitted:~A" name (truncated-list->string f))))
+			 (if (and (pair? f)
+				  (pair? (cdr f))
+				  (pair? (cddr f))
+				  (eq? (cadr prev-f) (cadr f))
+				  (or (and (eq? (car prev-f) 'vector-set!)
+					   (eq? (car f) 'vector-ref))
+				      (and (eq? (car prev-f) 'list-set!)
+					   (eq? (car f) 'list-ref)))
+				  (equal? (caddr f) (caddr prev-f))
+				  (pair? (cdddr prev-f))
+				  (not (pair? (cddddr prev-f)))
+				  (not (pair? (cdddr f)))
+				  (not (side-effect? (caddr f) env)))
+			     (lint-format "this could be omitted:~A" name (truncated-list->string f)))
+			 )))
 		 (set! prev-f f)
-		 
 		 (if (and (pair? f)
 			  (memq head '(defmacro defmacro* define-macro define-macro* define-bacro define-bacro*))
 			  (tree-member 'unquote f))
@@ -3795,35 +3827,12 @@
 			 (begin
 			   (lint-format "stray dot in begin? ~A" name (truncated-list->string form))
 			   env)
-			 (let* ((ctr 0)
-				(body (cdr form))
-				(len (length body))
-				(vars env))
-			   (for-each
-			    (lambda (f)
-			      (if (< ctr (- len 1))
-				  (if (and (pair? f)
-					   (eq? (car f) 'map))
-				      (lint-format "map could be for-each:~A" name (truncated-list->string f))
-				      (if (not (side-effect? f env))
-					  (lint-format "this could be omitted:~A" name (truncated-list->string f)))))
-			      
-			      (if (and (pair? f)
-				       (eq? (car f) 'begin))
-				  (lint-format "redundant begin:~A" name (truncated-list->string form)))
-			      
-			      (set! vars (lint-walk name f vars))
-			      (set! ctr (+ ctr 1)))
-			    body)
-			   (if (and (not (eq? head 'begin))
-				    (not (eq? vars env)))
-			       (let ((nvars ()))
-				 (do ((v vars (cdr v)))
-				     ((or (null? v)
-					  (eq? v env)))
-				   (set! nvars (cons (car v) nvars)))
-				 (report-usage name 'local-variable head nvars))) ; this is not right, but it's better than nothing
-			   vars)))
+			 (begin
+			   (if (and (pair? (cdr form))
+				    (null? (cddr form)))
+			       (lint-format "begin could be omitted:~A" name (truncated-list->string form)))
+			   (lint-walk-body name head (cdr form) env)))
+		     env)
 		    
 		    ;; ---------------- other schemes ----------------		  
 		    ((define-syntax let-syntax letrec-syntax define-module re-export case-lambda) ; for other's code
@@ -4019,7 +4028,7 @@
 ;;;  also (set! x 32) (set! x 123) etc [list-set!...]
 ;;;  also (set! x 32) (list-ref x 1)...
 ;;;
-;;; if with-let, lint should try to be smarter about local names
+;;; if with-let, lint should try to be smarter about local names (read if *libc*)
 
 
 ;;; --------------------------------------------------------------------------------

@@ -137,9 +137,8 @@
        (list 'sound 'selection 'marks)
        (list #t #f #f))
       (if truncate-callback
-	  (begin
-	    (XtCreateManagedWidget "trsep" xmSeparatorWidgetClass mainform
-				   (list XmNorientation      XmHORIZONTAL)))
+	  (XtCreateManagedWidget "trsep" xmSeparatorWidgetClass mainform
+				 (list XmNorientation      XmHORIZONTAL))
 	  (let ((trbutton (XtCreateManagedWidget "truncate at end" xmToggleButtonWidgetClass mainform
 						 (list XmNbackground       *basic-color*
 						       XmNset              #t

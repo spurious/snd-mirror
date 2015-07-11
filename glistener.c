@@ -2166,6 +2166,22 @@ static void glistener_return_callback(glistener *g)
 /* realpath eqv in glib? -- not available yet (many complaints ...)
  */
 
+#ifndef _MSC_VER
+#include <sys/stat.h>
+#endif
+
+static bool is_directory(const char *filename)
+{
+#ifndef _MSC_VER
+  #ifdef S_ISDIR
+    struct stat statbuf;
+    return((stat(filename, &statbuf) >= 0) &&
+	   (S_ISDIR(statbuf.st_mode)));
+  #endif
+#endif
+  return(false);
+}
+
 static char *filename_completion(glistener *g, const char *partial_name)
 {
   char *file_name = NULL, *directory_name = NULL, *temp, *new_name = NULL, *slash, *current_match = NULL, *result = NULL;
@@ -2271,8 +2287,28 @@ static char *filename_completion(glistener *g, const char *partial_name)
 	  strcat(result, current_match);
 	  free(current_match);
 	}
+
       if ((result) && (matches == 0))
-	strcat(result, "\"");
+	{
+	  char *str;
+	  if ((directory_name) && (result[0] == '~'))
+	    {
+	      str = (char *)calloc(strlen(directory_name) + strlen(result) + 2, sizeof(char));
+	      strcat(str, directory_name);
+	      strcat(str, "/");
+	      strcat(str, (char *)(result + 1));
+	      if (is_directory(str))
+		strcat(result, "/");
+	      else strcat(result, "\"");
+	      free(str);
+	    }
+	  else 
+	    {
+	      if (is_directory(result))
+		strcat(result, "/");
+	      else strcat(result, "\"");
+	    }
+	}
     }
   if (directory_name) free(directory_name);
   if (new_name) free(new_name);

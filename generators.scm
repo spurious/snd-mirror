@@ -6239,10 +6239,9 @@ The magnitudes are available as mus-xcoeffs, the phases as mus-ycoeffs, and the 
 	  (if (>= outctr hop)
 	      (let ((fft-window window))
 		(if (> outctr n) ; must be first time through -- fill data array
-		    (begin
-		      (do ((i 0 (+ i 1)))
-			  ((= i n))
-			(float-vector-set! data i (readin input))))
+		    (do ((i 0 (+ i 1)))
+			((= i n))
+		      (float-vector-set! data i (readin input)))
 		    (let ((mid (- n hop)))
 		      (float-vector-move! data 0 hop)
 		      (do ((i mid (+ i 1)))
@@ -6305,10 +6304,9 @@ The magnitudes are available as mus-xcoeffs, the phases as mus-ycoeffs, and the 
       (if (>= outctr hop)
 	  (begin
 	    (if (> outctr n) ; must be first time through -- fill data array
-		(begin
-		  (do ((i 0 (+ i 1)))
-		      ((= i n))
-		    (float-vector-set! data i (readin input))))
+		(do ((i 0 (+ i 1)))
+		    ((= i n))
+		  (float-vector-set! data i (readin input)))
 		(begin
 		  (float-vector-move! data 0 hop)
 		  (do ((i (- n hop) (+ i 1)))
@@ -6531,10 +6529,9 @@ input from the readin generator 'reader'.  The output data is available via mus-
 	  (if (>= outctr hop)
 	      (begin
 		(if (> outctr n) ; must be first time through -- fill data array
-		    (begin
-		      (do ((i 0 (+ i 1)))
-			  ((= i n))
-			(float-vector-set! data i (readin input))))
+		    (do ((i 0 (+ i 1)))
+			((= i n))
+		      (float-vector-set! data i (readin input)))
 		    (begin
 		      (float-vector-move! data 0 hop)
 		      (do ((i (- n hop) (+ i 1)))

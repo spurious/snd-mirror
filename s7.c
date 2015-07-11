@@ -600,7 +600,10 @@ typedef struct s7_cell {
     struct {                       /* syntax */
       s7_pointer symbol;
       int op;
-      s7_pointer min_args, max_args, doc;
+      short min_args, max_args;
+      s7_pointer doc;
+      s7_rp_t rp;
+      s7_ip_t ip;
     } syn;
 
     struct {                       /* slots (bindings) */
@@ -903,7 +906,7 @@ struct s7_scheme {
   /* these are the associated functions, not symbols */
   s7_pointer Vector_Set, String_Set, List_Set, Hash_Table_Set, Let_Set; /* Cons (see the setter stuff at the end) */
 
-  s7_pointer LAMBDA, LAMBDA_STAR, LET, QUOTE, UNQUOTE, MACROEXPAND, DEFINE_EXPANSION, BAFFLE, WITH_LET, DOCUMENTATION, ITERATOR;
+  s7_pointer LAMBDA, LAMBDA_STAR, LET, QUOTE, UNQUOTE, MACROEXPAND, DEFINE_EXPANSION, BAFFLE, WITH_LET, DOCUMENTATION;
   s7_pointer IF, WHEN, UNLESS, BEGIN, COND, CASE, AND, OR, DO, DEFINE, DEFINE_STAR, DEFINE_CONSTANT, WITH_BAFFLE;
   s7_pointer DEFINE_MACRO, DEFINE_MACRO_STAR, DEFINE_BACRO, DEFINE_BACRO_STAR;
   s7_pointer LETREC, LETREC_STAR, LET_STAR;
@@ -1745,6 +1748,8 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define syntax_min_args(p)            (p)->object.syn.min_args
 #define syntax_max_args(p)            (p)->object.syn.max_args
 #define syntax_documentation(p)       (p)->object.syn.doc
+#define syntax_rp(p)                  (p)->object.syn.rp
+#define syntax_ip(p)                  (p)->object.syn.ip
 
 #define pair_syntax_op(P)             (P)->object.cons.op
 #define pair_syntax_symbol(P)         car(ecdr(P))
@@ -1882,11 +1887,13 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define c_function_call_args(f)       c_function_ext(f)->call_args
 #define c_function_arg_names(f)       c_function_ext(f)->arg_names
 #define c_function_simple_defaults(f) c_function_ext(f)->simple_defaults
+#define c_function_rp(f)              c_function_ext(f)->rp
+#define c_function_ip(f)              c_function_ext(f)->ip
 
-#define rf_function(f)                c_function_ext(f)->rp 
-#define has_rf_function(f)            ((is_any_c_function(f)) && (c_function_ext(f)) && (rf_function(f)))
-#define if_function(f)                c_function_ext(f)->ip 
-#define has_if_function(f)            ((is_any_c_function(f)) && (c_function_ext(f)) && (if_function(f)))
+#define rf_function(f)                ((is_any_c_function(f)) ? c_function_rp(f) : syntax_rp(f))
+#define has_rf_function(f)            (((is_any_c_function(f)) && (c_function_ext(f)) && (rf_function(f))) || ((is_syntax(f)) && (syntax_rp(f))))
+#define if_function(f)                ((is_any_c_function(f)) ? c_function_ip(f) : syntax_ip(f))
+#define has_if_function(f)            (((is_any_c_function(f)) && (c_function_ext(f)) && (if_function(f))) || ((is_syntax(f)) && (syntax_ip(f))))
 
 void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
 bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_optimized(f)) && (ecdr(f)) && (returns_temp(ecdr(f))));}
@@ -7075,15 +7082,6 @@ static bool is_all_real(s7_scheme *sc, s7_pointer expr)
   return(true);
 }
 
-#if 0
-s7_rf_t s7_is_rf_0(s7_scheme *sc, s7_pointer expr, s7_rf_t p)
-{
-  if (is_null(cdr(expr))) return(NULL);
-  return(p);
-}
-#endif
-
-
 static s7_rf_t pair_to_rf(s7_scheme *sc, s7_pointer a1, s7_rf_t x)
 {
   s7_int loc;
@@ -7470,14 +7468,14 @@ void s7_rf_set_function(s7_pointer f, s7_rp_t rp)
 {
   if (!c_function_ext(f))
     c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
-  rf_function(f) = rp;
+  c_function_rp(f) = rp;
 }
 
 void s7_if_set_function(s7_pointer f, s7_ip_t ip)
 {
   if (!c_function_ext(f))
     c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
-  if_function(f) = ip;
+  c_function_ip(f) = ip;
 }
 
 
@@ -7536,6 +7534,129 @@ bool s7_xf_is_stepper(s7_scheme *sc, s7_pointer sym)
     if (slot_symbol(p) == sym)
       return(true);
   return(false);
+}
+
+
+static s7_double set_rf_sr(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1, c1;
+  s7_double x;
+  s1 = (**p); (*p)++;
+  c1 = (**p); (*p)++;
+  x = real(c1);
+  slot_value(s1) = make_real(sc, x);
+  return(x);
+}
+
+static s7_double set_rf_ss(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1, s2;
+  s7_double x;
+  s1 = (**p); (*p)++;
+  s2 = (**p); (*p)++;
+  x = real_to_double(sc, slot_value(s2), "set!");
+  slot_value(s1) = make_real(sc, x);
+  return(x);
+}
+
+static s7_double set_rf_sx(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s7_double x;
+  s7_rf_t r1;
+  s1 = (**p); (*p)++;
+  r1 = (s7_rf_t)(**p); (*p)++;
+  x = r1(sc, p);
+  slot_value(s1) = make_real(sc, x);
+  return(x);
+}
+
+static s7_int set_if_sx(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1;
+  s7_int x;
+  s7_if_t i1;
+  s1 = (**p); (*p)++;
+  i1 = (s7_if_t)(**p); (*p)++;
+  x = i1(sc, p);
+  slot_value(s1) = make_integer(sc, x);
+  return(x);
+}
+
+static s7_rf_t is_set_rf(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer slot;
+  if ((is_pair(cdddr(expr))) ||
+      (!is_symbol(cadr(expr))))
+    return(NULL);
+  /* if sym has real value and new val is real, we're ok */
+  slot = s7_slot(sc, cadr(expr));
+  if (!is_slot(slot)) return(NULL);
+
+  if (type(slot_value(slot)) == T_REAL)
+    {
+      s7_pointer a2;
+      s7_xf_store(sc, slot);
+      a2 = caddr(expr);
+      if (type(a2) == T_REAL)
+	{
+	  s7_xf_store(sc, a2);
+	  return(set_rf_sr);
+	}
+      if (is_symbol(a2))
+	{
+	  s7_pointer a2_slot;
+	  a2_slot = s7_slot(sc, a2);
+	  if (!is_slot(a2_slot)) return(NULL);
+	  if (type(slot_value(a2_slot)) != T_REAL) return(NULL);
+	  s7_xf_store(sc, a2_slot);
+	  return(set_rf_ss);
+	}
+      if (is_pair(a2))
+	{
+	  s7_rp_t rp;
+	  s7_rf_t rf;
+	  int loc;
+	  loc = s7_xf_store(sc, NULL);
+	  rp = pair_to_rp(sc, a2);
+	  if (!rp) return(NULL);
+	  rf = rp(sc, a2);
+	  if (!rf) return(NULL);
+	  s7_xf_store_at(sc, loc, (s7_pointer)rf);
+	  return(set_rf_sx);
+	}
+    }
+  return(NULL);
+}
+
+static s7_if_t is_set_if(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer slot;
+  if ((is_pair(cdddr(expr))) ||
+      (!is_symbol(cadr(expr))))
+    return(NULL);
+  slot = s7_slot(sc, cadr(expr));
+  if (!is_slot(slot)) return(NULL);
+  if (type(slot_value(slot)) == T_INTEGER)
+    {
+      s7_pointer a2;
+      a2 = caddr(expr);
+      if (is_pair(a2))
+	{
+	  s7_ip_t ip;
+	  s7_if_t xf;
+	  int loc;
+	  s7_xf_store(sc, slot);
+	  loc = s7_xf_store(sc, NULL);
+	  ip = pair_to_ip(sc, a2);
+	  if (!ip) return(NULL);
+	  xf = ip(sc, a2);
+	  if (!xf) return(NULL);
+	  s7_xf_store_at(sc, loc, (s7_pointer)xf);
+	  return(set_if_sx);
+	}
+    }
+  return(NULL);
 }
 
 
@@ -8642,17 +8763,6 @@ static s7_pointer make_permanent_real(s7_double n)
   return(x);
 }
 
-#if 0
-static s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_double n)
-{
-  if (is_simple_real(rl))
-    {
-      real(rl) = n;
-      return(rl);
-    }
-  return(make_real(sc, n));
-}
-#endif
 
 s7_pointer s7_make_complex(s7_scheme *sc, s7_double a, s7_double b)
 {
@@ -36044,7 +36154,7 @@ s7_pointer s7_arity(s7_scheme *sc, s7_pointer x)
       return(s7_cons(sc, small_int(0), small_int(0)));
 
     case T_SYNTAX:
-      return(s7_cons(sc, syntax_min_args(x), syntax_max_args(x)));
+      return(s7_cons(sc, small_int(syntax_min_args(x)), (syntax_max_args(x) == -1) ? max_arity : small_int(syntax_max_args(x))));
     }
   return(sc->F);
 }
@@ -36151,8 +36261,7 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
       return(args == 0);
 
     case T_SYNTAX:
-      return((args >= integer(syntax_min_args(x))) &&
-	     (args <= integer(syntax_max_args(x))));
+      return((args >= syntax_min_args(x)) && ((args <= syntax_max_args(x)) || (syntax_max_args(x) == -1)));
     }
   return(false);
 }
@@ -42671,9 +42780,11 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op, s7
   set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS);
   syntax_opcode(syn) = op;
   syntax_symbol(syn) = x;
-  syntax_min_args(syn) = min_args;
-  syntax_max_args(syn) = max_args;
+  syntax_min_args(syn) = integer(min_args);
+  syntax_max_args(syn) = ((max_args == max_arity) ? -1 : integer(max_args));
   syntax_documentation(syn) = s7_make_permanent_string(doc);
+  syntax_rp(syn) = NULL;
+  syntax_ip(syn) = NULL;
 
   global_slot(x) = permanent_slot(x, syn);
   initial_slot(x) = permanent_slot(x, syn);
@@ -42707,6 +42818,8 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   syntax_min_args(syn) = syntax_min_args(old_syn);
   syntax_max_args(syn) = syntax_max_args(old_syn);
   syntax_documentation(syn) = syntax_documentation(old_syn);
+  syntax_rp(syn) = syntax_rp(old_syn);
+  syntax_ip(syn) = syntax_ip(old_syn);
 
   global_slot(x) = permanent_slot(x, syn);
   initial_slot(x) = permanent_slot(x, syn);
@@ -52066,23 +52179,6 @@ static int dox_ex(s7_scheme *sc)
     {
       code = car(code);
       
-      if ((typesflag(code) == SYNTACTIC_PAIR) ||
-	  (typesflag(car(code)) == SYNTACTIC_TYPE))
-	{
-	  push_stack_no_args(sc, OP_DOX_STEP_P, sc->code);
-	  
-	  if (typesflag(code) == SYNTACTIC_PAIR)
-	    sc->op = (opcode_t)pair_syntax_op(code);
-	  else
-	    {
-	      sc->op = (opcode_t)symbol_syntax_op(car(code));
-	      pair_syntax_op(code) = sc->op;
-	      set_type(code, SYNTACTIC_PAIR);
-	    }
-	  sc->code = cdr(code);
-	  return(goto_START_WITHOUT_POP_STACK);
-	}
-
 #if 1
       /* try rf case */
       if ((all_pairs) && (is_symbol(car(code))))
@@ -52139,6 +52235,23 @@ static int dox_ex(s7_scheme *sc)
 	}
 #endif
       
+      if ((typesflag(code) == SYNTACTIC_PAIR) ||
+	  (typesflag(car(code)) == SYNTACTIC_TYPE))
+	{
+	  push_stack_no_args(sc, OP_DOX_STEP_P, sc->code);
+	  
+	  if (typesflag(code) == SYNTACTIC_PAIR)
+	    sc->op = (opcode_t)pair_syntax_op(code);
+	  else
+	    {
+	      sc->op = (opcode_t)symbol_syntax_op(car(code));
+	      pair_syntax_op(code) = sc->op;
+	      set_type(code, SYNTACTIC_PAIR);
+	    }
+	  sc->code = cdr(code);
+	  return(goto_START_WITHOUT_POP_STACK);
+	}
+
       if (is_all_x_safe(sc, code))
 	{
 	  s7_function body, endf;
@@ -52294,6 +52407,43 @@ static int simple_do_ex(s7_scheme *sc, s7_pointer code)
 	}
     }
   return(fall_through);
+}
+
+static bool rf_ok(s7_scheme *sc, s7_pointer body, s7_pointer scc)
+{  
+  if (is_symbol(car(body)))
+    {
+      s7_pointer fcar;
+      fcar = find_symbol_checked(sc, car(body));
+      if (has_rf_function(fcar))
+	{
+	  s7_rf_t rf;
+	  
+	  s7_xf_new(sc, sc->envir);
+	  rf = rf_function(fcar)(sc, body);
+	  
+	  if ((rf) &&
+	      (is_all_real(sc, sc->code)))
+	    {
+	      s7_pointer *top;
+	      s7_pointer stepper;
+
+	      stepper = slot_value(sc->args);
+	      top = sc->cur_rf->data;
+	      for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
+		{
+		  s7_pointer *p;
+		  p = top;
+		  rf(sc, &p);
+		}
+	      s7_xf_free(sc);
+	      sc->code = cdr(cadr(scc));
+	      return(true);  /* goto_SAFE_DO_END_CLAUSES */
+	    }
+	  s7_xf_free(sc);
+	}
+    }
+  return(false);
 }
 
 static int safe_dotimes_ex(s7_scheme *sc)
@@ -52477,40 +52627,8 @@ static int safe_dotimes_ex(s7_scheme *sc)
 		}
 	      else
 		{
-		  s7_pointer body, stepper;
-		  body = sc->code;
-		  stepper = slot_value(sc->args);
-
-		  /* look for rf_function */
-		  if (is_symbol(car(body)))
-		    {
-		      s7_pointer fcar;
-		      fcar = find_symbol_checked(sc, car(body));
-		      if (has_rf_function(fcar))
-			{
-			  s7_rf_t rf;
-			  s7_xf_new(sc, sc->envir);
-			  rf = rf_function(fcar)(sc, body);
-			  
-			  if ((rf) &&
-			      (is_all_real(sc, code)))
-			    {
-			      s7_pointer *top;
-			      top = sc->cur_rf->data;
-
-			      for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
-				{
-				  s7_pointer *p;
-				  p = top;
-				  rf(sc, &p);
-				}
-			      s7_xf_free(sc);
-			      sc->code = cdr(cadr(code));
-			      return(goto_SAFE_DO_END_CLAUSES);
-			    }
-			  s7_xf_free(sc);
-			}
-		    }
+		  if (rf_ok(sc, sc->code, code))
+		    return(goto_SAFE_DO_END_CLAUSES);
 
 		  /* (let () (define (f1) (do ((i 0 (+ i 1))) ((= i 3)) (format #f "i: ~A " i))) (f1)) */
 		  if (is_optimized(sc->code)) /* think this is not needed -- can we get here otherwise? */
@@ -52649,7 +52767,8 @@ static int simple_safe_dotimes_ex(s7_scheme *sc)
     }
   return(fall_through);
 }
-  
+
+
 static int safe_dotimes_c_c_ex(s7_scheme *sc)
 {
   /* called mainly from snd-test, a few in index, s7test */
@@ -52690,37 +52809,9 @@ static int safe_dotimes_c_c_ex(s7_scheme *sc)
 	  denominator(stepper) = s7_integer(end_val);
 
 	  /* look for rf_function */
-	  if (is_symbol(car(body)))
-	    {
-	      s7_pointer fcar;
-	      fcar = find_symbol_checked(sc, car(body));
-	      if (has_rf_function(fcar))
-		{
-		  s7_rf_t rf;
+	  if (rf_ok(sc, body, sc->code))
+	    return(goto_SAFE_DO_END_CLAUSES);
 
-		  s7_xf_new(sc, sc->envir);
-		  rf = rf_function(fcar)(sc, body);
-
-		  if ((rf) &&
-		      (is_all_real(sc, sc->code)))
-		    {
-		      s7_pointer *top;
-		      s7_pointer scc;
-		      scc = sc->code;
-		      top = sc->cur_rf->data;
-		      for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
-			{
-			  s7_pointer *p;
-			  p = top;
-			  rf(sc, &p);
-			}
-		      s7_xf_free(sc);
-		      sc->code = cdr(cadr(scc));
-		      return(goto_SAFE_DO_END_CLAUSES);
-		    }
-		  s7_xf_free(sc);
-		}
-	    }
 	  body = cdr(body);
 	  func = caddr(sc->code);
 	  while (true)
@@ -52821,36 +52912,8 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
 	    {
 	      s7_function func;
 
-	      /* look for rf_function */
-	      if (is_symbol(caar(body)))
-		{
-		  s7_pointer fcar;
-		  fcar = find_symbol_checked(sc, caar(body));
-		  if (has_rf_function(fcar))
-		    {
-		      s7_rf_t rf;
-		      s7_xf_new(sc, sc->envir);
-		      rf = rf_function(fcar)(sc, car(body));
-		      if ((rf) &&
-			  (is_all_real(sc, sc->code)))
-			{
-			  s7_pointer *top;
-			  s7_pointer scc;
-			  scc = sc->code;
-			  top = sc->cur_rf->data;
-			  for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
-			    {
-			      s7_pointer *temp;
-			      temp = top;
-			      rf(sc, &temp);
-			    }
-			  s7_xf_free(sc);
-			  sc->code = cdr(cadr(scc));
-			  return(goto_SAFE_DO_END_CLAUSES);
-			}
-		      s7_xf_free(sc);
-		    }
-		}
+	      if (rf_ok(sc, car(body), sc->code))
+		return(goto_SAFE_DO_END_CLAUSES);
 		
 	      func = (s7_function)(fcdr(body));
 	      body = car(body);
@@ -52949,6 +53012,7 @@ static int safe_do_ex(s7_scheme *sc)
 	}
     }
   
+  /* t259 */
   if (is_unsafe_do(sc->code))              /* we've seen this loop before and it's not optimizable */
     {
       set_fcdr(code, sc->code);
@@ -54405,7 +54469,7 @@ static void apply_c_macro(s7_scheme *sc)  	                    /* -------- C-bas
 
 static void apply_syntax(s7_scheme *sc)                            /* -------- syntactic keyword as applicable object -------- */
 {                                                                  /* current reader-cond macro uses this via (map quote ...) */
-  unsigned int len;                                                /*    ((apply lambda '((x) (+ x 1))) 4) */
+  int len;                                                         /*    ((apply lambda '((x) (+ x 1))) 4) */
   if (is_pair(sc->args))
     {
       len = s7_list_length(sc, sc->args);
@@ -54413,10 +54477,11 @@ static void apply_syntax(s7_scheme *sc)                            /* -------- s
     }
   else len = 0;
   
-  if (len < integer(syntax_min_args(sc->code)))
+  if (len < syntax_min_args(sc->code))
     s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args));
   
-  if (integer(syntax_max_args(sc->code)) < len)
+  if ((syntax_max_args(sc->code) < len) &&
+      (syntax_max_args(sc->code) != -1))
     s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args));
 
   sc->op = (opcode_t)syntax_opcode(sc->code);         /* (apply begin '((define x 3) (+ x 2))) */
@@ -67688,6 +67753,9 @@ s7_scheme *s7_init(void)
   sc->WITH_LET =          assign_syntax(sc, "with-let",        OP_WITH_LET,          small_int(1), max_arity,    WITH_LET_HELP);
   set_immutable(sc->WITH_LET);
 
+  syntax_rp(slot_value(global_slot(sc->SET))) = is_set_rf;
+  syntax_ip(slot_value(global_slot(sc->SET))) = is_set_if;
+
   sc->QUOTE_UNCHECKED =       assign_internal_syntax(sc, "quote",       OP_QUOTE_UNCHECKED);
   sc->BEGIN_UNCHECKED =       assign_internal_syntax(sc, "begin",       OP_BEGIN_UNCHECKED);
   sc->WITH_BAFFLE_UNCHECKED = assign_internal_syntax(sc, "with-baffle", OP_WITH_BAFFLE_UNCHECKED);
@@ -67828,7 +67896,6 @@ s7_scheme *s7_init(void)
   sc->DO_ALL_X =              assign_internal_syntax(sc, "do",          OP_DO_ALL_X);
 
   sc->DOCUMENTATION =         make_symbol(sc, "documentation");
-  sc->ITERATOR =              make_symbol(sc, "iterator");
 
 #if WITH_IMMUTABLE_UNQUOTE
   /* this code solves the various unquote redefinition troubles
@@ -68764,7 +68831,7 @@ int main(int argc, char **argv)
  * thash         |      |      |                          50.7 23.8 14.9 14.6
  *               |      |      |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.1
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 17.5
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 17.6
  * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 37.7
  * 
  * --------------------------------------------------------------------------
@@ -68785,15 +68852,21 @@ int main(int argc, char **argv)
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
  *   with name/sync/sample settable
  *
+ * why didn't the clm23 oscil-bank bug get reported?
+ *   glistener is unhappy: gtk_text_buffer_emit_insert: assertion `g_utf8_validate etc
+ *   (define* (hi a b) (+ a b))
+ *   (let ((x (hi 1) 2)) x)
+ *  but this works in motif/no-gui: could it be that with-sound swallows the error?
+ *
  * possibly split multiply_sx[oscil_x, oscil, srcx], mul_env_x _> env_env|oscil? mul_env_polywave_env?
  * implicit ref/set opts
  * previous splits can use the functions (if exported)
  * much of the rf code can be collapsed
  * is_all_real can be folded into preceding tree walk
- * check clm2xen names for consistency (csr style)
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array
  *   free-var: slot search each time, so a special rf func?
  *   lambda* args: rf_closure* (with-let??) 
- * rf set|if
+ * rf set|if -- tie in if case and safe_do?
+ *   t260 (from tall) goes to safe_do_step_1_ex, current cases could step using mutable index
  */

@@ -364,11 +364,10 @@
 		       (set! j (+ j 1)))))
 		
 		((#\")
-		 (begin
-		   (set! (outstr j) #\\)
-		   (set! j (+ j 1))
-		   (set! (outstr j) c)
-		   (set! j (+ j 1))))
+		 (set! (outstr j) #\\)
+		 (set! j (+ j 1))
+		 (set! (outstr j) c)
+		 (set! j (+ j 1)))
 		
 		((#\&)
 		 (if (and (< (+ i 4) len) 
@@ -379,24 +378,22 @@
 		       (set! i (+ i 3))))) ; incf'd again below
 		
 		((#\newline)
-		 (begin
-		   (set! (outstr j) #\")
-		   (set! j (+ j 1))
-		   (set! need-start #t)))
+		 (set! (outstr j) #\")
+		 (set! j (+ j 1))
+		 (set! need-start #t))
 		
 		(else
-		 (begin
-		   (if need-start
-		       (begin
-			 (set! (outstr j) #\,)
-			 (set! (outstr (+ j 1)) #\newline)
-			 (set! (outstr (+ j 2)) #\space)
-			 (set! (outstr (+ j 3)) #\space)
-			 (set! (outstr (+ j 4)) #\")
-			 (set! j (+ j 5))
-			 (set! need-start #f)))
-		   (set! (outstr j) c)
-		   (set! j (+ j 1)))))
+		 (if need-start
+		     (begin
+		       (set! (outstr j) #\,)
+		       (set! (outstr (+ j 1)) #\newline)
+		       (set! (outstr (+ j 2)) #\space)
+		       (set! (outstr (+ j 3)) #\space)
+		       (set! (outstr (+ j 4)) #\")
+		       (set! j (+ j 5))
+		       (set! need-start #f)))
+		 (set! (outstr j) c)
+		 (set! j (+ j 1))))
 	      )))
       (list 
        (substring outstr 0 j)

@@ -517,15 +517,14 @@ read an ASCII sound file"))
       (let ((loops (or (sound-loop-info)
 		       (mus-sound-loop-info (file-name)))))
 	(if (pair? loops)
-	    (begin
-	      (if (not (and (= (car loops) 0) (= (cadr loops) 0)))
-		  (begin
-		    (add-mark (car loops))
-		    (add-mark (cadr loops))
-		    (if (not (and (= (caddr loops) 0) (= (cadddr loops) 0)))
-			(begin
-			  (add-mark (caddr loops))
-			  (add-mark (cadddr loops)))))))
+	    (if (not (and (= (car loops) 0) (= (cadr loops) 0)))
+		(begin
+		  (add-mark (car loops))
+		  (add-mark (cadr loops))
+		  (if (not (and (= (caddr loops) 0) (= (cadddr loops) 0)))
+		      (begin
+			(add-mark (caddr loops))
+			(add-mark (cadddr loops))))))
 	    (snd-print (format #f "~S has no loop info" (short-file-name))))))))
 
 
@@ -578,10 +577,9 @@ indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"))
     (lambda* (proc origin)
       (let ((snd (selected-sound)))
 	(if snd
-	    (begin
-	      (do ((chn 0 (+ 1 chn)))
-		  ((= chn (channels snd)) #f)
-		(map-channel proc 0 #f snd chn #f origin)))
+	    (do ((chn 0 (+ 1 chn)))
+		((= chn (channels snd)) #f)
+	      (map-channel proc 0 #f snd chn #f origin))
 	    (snd-warning "no selected sound"))))))
 
 (define every-sample? 

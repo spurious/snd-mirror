@@ -54,31 +54,30 @@
 		      #f)))
       
       (if matrix
-	  (begin
-	    (if (list? matrix) ; matrix is list of scalers, envelopes (lists), or env gens
-		(do ((inp 0 (+ inp 1))
-		     (off 0 (+ off out-chans)))
-		    ((= inp in-chans))
-		  (let ((inlist (list-ref matrix inp)))
-		    (do ((outp 0 (+ outp 1)))
-			((= outp out-chans))
-		      (let ((outn (list-ref inlist outp)))
-			(if outn
-			    (if (number? outn)
-				(set! (mx inp outp) outn)
-				(if (or (env? outn)
-					(list? outn))
-				    (begin
-				      (if (not envs)
-					  (set! envs (make-vector (* in-chans out-chans) #f)))
-				      (if (env? outn)
-					  (vector-set! envs (+ off outp) outn)
-					  (vector-set! envs (+ off outp) (make-env outn :duration dur))))
-				    (format #t "unknown element in matrix: ~A" outn))))))))
-		(do ((inp 0 (+ inp 1))) ; matrix is a number in this case (a global scaler)
-		    ((= inp in-chans))
-		  (if (< inp out-chans)
-		      (set! (mx inp inp) matrix))))))
+	  (if (list? matrix) ; matrix is list of scalers, envelopes (lists), or env gens
+	      (do ((inp 0 (+ inp 1))
+		   (off 0 (+ off out-chans)))
+		  ((= inp in-chans))
+		(let ((inlist (list-ref matrix inp)))
+		  (do ((outp 0 (+ outp 1)))
+		      ((= outp out-chans))
+		    (let ((outn (list-ref inlist outp)))
+		      (if outn
+			  (if (number? outn)
+			      (set! (mx inp outp) outn)
+			      (if (or (env? outn)
+				      (list? outn))
+				  (begin
+				    (if (not envs)
+					(set! envs (make-vector (* in-chans out-chans) #f)))
+				    (if (env? outn)
+					(vector-set! envs (+ off outp) outn)
+					(vector-set! envs (+ off outp) (make-env outn :duration dur))))
+				  (format #t "unknown element in matrix: ~A" outn))))))))
+	      (do ((inp 0 (+ inp 1))) ; matrix is a number in this case (a global scaler)
+		  ((= inp in-chans))
+		(if (< inp out-chans)
+		    (set! (mx inp inp) matrix)))))
       
       (if (or (not srate)
 	      (and (number? srate)

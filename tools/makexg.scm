@@ -863,30 +863,29 @@
 		       (lambda (func)
 			 (string=? type (symbol->string (car func))))))
 		 (not (string=? type "GCallback")))
-	    (begin
-	      (hey "Xm_type~A(~A, ~A)~%" 
-		   (if (or (has-stars type) 
-			   (string=? type "gpointer")
-			   (string=? type "GClosureNotify"))
-		       (if (member type no-c-to-xen)
-			   "_Ptr_1"
-			   (if (member type no-xen-p)
-			       (if (member type no-xen-to-c)
-				   "_Ptr_2"
-				   "_Ptr_no_P")
-			       (if (or (string=? type "guint8*")
-				       (string=? type "GtkRecentFilterInfo*"))
-				   "_Ptr_const"
-				   "_Ptr")))
-		       (if (member type no-c-to-xen)
-			   "_1"
-			   (if (member type no-xen-p)
-			       (if (member type no-xen-to-c)
-				   "_no_p_2"
-				   "_no_p")
-			       "")))
-		   (no-stars type) 
-		   type))))))
+	    (hey "Xm_type~A(~A, ~A)~%" 
+		 (if (or (has-stars type) 
+			 (string=? type "gpointer")
+			 (string=? type "GClosureNotify"))
+		     (if (member type no-c-to-xen)
+			 "_Ptr_1"
+			 (if (member type no-xen-p)
+			     (if (member type no-xen-to-c)
+				 "_Ptr_2"
+				 "_Ptr_no_P")
+			     (if (or (string=? type "guint8*")
+				     (string=? type "GtkRecentFilterInfo*"))
+				 "_Ptr_const"
+				 "_Ptr")))
+		     (if (member type no-c-to-xen)
+			 "_1"
+			 (if (member type no-xen-p)
+			     (if (member type no-xen-to-c)
+				 "_no_p_2"
+				 "_no_p")
+			     "")))
+		 (no-stars type) 
+		 type)))))
 
 (define (func-type strs)
   (call-with-exit
@@ -1947,8 +1946,7 @@
       (if (= (length args) 0)
 	  (heyc "void")
 	  (if (>= (length args) max-args)
-	      (begin
-		(heyc "Xen arglist"))
+	      (heyc "Xen arglist")
 	      (let ((previous-arg #f))
 		(for-each 
 		 (lambda (arg)

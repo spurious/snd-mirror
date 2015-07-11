@@ -243,9 +243,8 @@
 				    (round (* winlen overlap-ratio-compl)))
 				;; Alternative style - start each overlap series at 0
 				0)))
-		       (begin
-			 (set! readstart (round (* fsr (+ inputbeg init-read-start))))
-			 (if (not (= overlap 0)) (set! winsamps (floor (* winsamps overlap-ratio))))))
+		       (set! readstart (round (* fsr (+ inputbeg init-read-start))))
+		       (if (not (= overlap 0)) (set! winsamps (floor (* winsamps overlap-ratio)))))
 		     ;; remaining sections
 		     (set! readstart (round (+ readstart (* fsr (/ winlen time-val)))))))
 	     ;; Set readin position and sampling rate

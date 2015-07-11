@@ -34,8 +34,7 @@
 	 (begs (let ((bg beg))
 		 (append (list beg)
 			 (map (lambda (x)
-				(set! bg (+ bg x))
-				bg)
+				(set! bg (+ bg x)))
 			      durs))))
 	 (beg-samps (map seconds->samples begs)))
 
