@@ -7583,12 +7583,24 @@ static s7_int set_if_sx(s7_scheme *sc, s7_pointer **p)
   return(x);
 }
 
+static s7_rf_t is_fv_set_rf_expanded(s7_scheme *sc, s7_pointer fv, s7_pointer ind_sym, s7_pointer val_expr);
+
 static s7_rf_t is_set_rf(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer slot;
-  if ((is_pair(cdddr(expr))) ||
-      (!is_symbol(cadr(expr))))
-    return(NULL);
+
+  if (!is_symbol(cadr(expr))) /* look for implicit index case */
+    {
+      s7_pointer a1, fv;
+      a1 = cadr(expr);
+
+      if ((!is_pair(a1)) || (!is_symbol(car(a1))) || (!is_null(cdddr(expr)))) return(NULL);
+      fv = s7_symbol_value(sc, car(a1));
+      if (!is_float_vector(fv)) return(NULL);
+      return(is_fv_set_rf_expanded(sc, fv, cadr(a1), caddr(expr)));
+    }
+
+  if (is_pair(cdddr(expr))) return(NULL);
   /* if sym has real value and new val is real, we're ok */
   slot = s7_slot(sc, cadr(expr));
   if (!is_slot(slot)) return(NULL);
@@ -33214,35 +33226,39 @@ static s7_double fv_set_rf_checked(s7_scheme *sc, s7_pointer **p)
   return(val);
 }
 
-static s7_rf_t is_fv_set_rf(s7_scheme *sc, s7_pointer expr)
+static s7_rf_t is_fv_set_rf_expanded(s7_scheme *sc, s7_pointer fv, s7_pointer ind_sym, s7_pointer val_expr)
 {
-  s7_pointer fv_sym, ind_sym, ind, ind_slot, fv, val_expr;
-  s7_int len;
+  s7_pointer ind, ind_slot;
   bool checked;
-
-  fv_sym = s7_cadr(expr);
-  if (!is_symbol(fv_sym)) return(NULL);
-  fv = s7_symbol_value(sc, fv_sym);
-  if (!is_float_vector(fv)) return(NULL);
-  len = vector_length(fv);
-
-  ind_sym = caddr(expr);
-  val_expr = cadddr(expr);
+  s7_int len;
 
   if (!is_symbol(ind_sym)) return(NULL);
   ind_slot = s7_slot(sc, ind_sym);
-  if (!ind_slot) return(NULL);
+  if (!is_slot(ind_slot)) return(NULL);
   ind = slot_value(ind_slot);
   if (!is_integer(ind)) return(NULL);
   if (numerator(ind) < 0) return(NULL);
+  if (!is_pair(val_expr)) return(NULL);
+
+  len = vector_length(fv);
   checked = ((!is_loop_bounds(ind_slot)) || ((numerator(ind) >= len) || (denominator(ind) >= len) || (denominator(ind) < 0)));
 
   s7_xf_store(sc, fv);
   s7_xf_store(sc, ind_slot);
 
-  val_expr = cadddr(expr);
-  if (!is_pair(val_expr)) return(NULL);
   return(pair_to_rf(sc, val_expr, (checked) ? fv_set_rf_checked : fv_set_rf));
+}
+
+static s7_rf_t is_fv_set_rf(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer fv_sym, fv;
+
+  fv_sym = s7_cadr(expr);
+  if (!is_symbol(fv_sym)) return(NULL);
+  fv = s7_symbol_value(sc, fv_sym);
+  if (!is_float_vector(fv)) return(NULL);
+
+  return(is_fv_set_rf_expanded(sc, fv, caddr(expr), cadddr(expr)));
 }
 
 
@@ -33277,6 +33293,7 @@ static s7_double fv_ref_rf_sx(s7_scheme *sc, s7_pointer **p)
 static s7_rf_t is_fv_ref_rf(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer a1, a2;
+
   if ((is_null(cdr(expr))) || (is_null(cddr(expr))) || (!is_null(cdddr(expr)))) return(NULL);
   a1 = cadr(expr);
   a2 = caddr(expr);
@@ -52808,7 +52825,6 @@ static int safe_dotimes_c_c_ex(s7_scheme *sc)
 	  stepper = slot_value(sc->args);
 	  denominator(stepper) = s7_integer(end_val);
 
-	  /* look for rf_function */
 	  if (rf_ok(sc, body, sc->code))
 	    return(goto_SAFE_DO_END_CLAUSES);
 
@@ -52968,6 +52984,26 @@ static int safe_do_ex(s7_scheme *sc)
 	sc->code = cdr(cadr(code));
 	return(goto_SAFE_DO_END_CLAUSES);
       }
+
+#if (!WITH_GMP)
+  if ((is_null(cdddr(sc->code))) &&
+      (is_optimized(caadr(code))) &&
+      (ecdr(caadr(code)) != geq_2))
+    {
+      s7_pointer body, stepper;
+      
+      sc->args = dox_slot1(sc->envir);
+      slot_value(sc->args) = make_mutable_integer(sc, s7_integer(init_val));
+      set_loop_bounds(sc->args);
+      body = caddr(sc->code);
+      stepper = slot_value(sc->args);
+      denominator(stepper) = s7_integer(end_val);
+
+      if (rf_ok(sc, body, sc->code))
+	return(goto_SAFE_DO_END_CLAUSES);
+    }
+#endif  
+
 
   if (is_symbol(end))
     sc->args = find_symbol(sc, end);
@@ -53185,6 +53221,7 @@ static int safe_do_step_1_ex(s7_scheme *sc)
 {
   s7_pointer body;
   body = car(fcdr(sc->code));
+
   if (typesflag(body) == SYNTACTIC_PAIR)
     {
       if ((pair_syntax_op(body) == OP_INCREMENT_SA) ||
@@ -68831,8 +68868,8 @@ int main(int argc, char **argv)
  * thash         |      |      |                          50.7 23.8 14.9 14.6
  *               |      |      |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.1
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 17.6
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 37.7
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 16.5
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 37.5
  * 
  * --------------------------------------------------------------------------
  *
@@ -68852,21 +68889,18 @@ int main(int argc, char **argv)
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
  *   with name/sync/sample settable
  *
- * why didn't the clm23 oscil-bank bug get reported?
- *   glistener is unhappy: gtk_text_buffer_emit_insert: assertion `g_utf8_validate etc
- *   (define* (hi a b) (+ a b))
- *   (let ((x (hi 1) 2)) x)
- *  but this works in motif/no-gui: could it be that with-sound swallows the error?
- *
- * possibly split multiply_sx[oscil_x, oscil, srcx], mul_env_x _> env_env|oscil? mul_env_polywave_env?
- * implicit ref/set opts
+ * possibly more splits
+ * implicit ref opts -- requires check car=fv
  * previous splits can use the functions (if exported)
- * much of the rf code can be collapsed
+ * much of the rf code can be collapsed [52186+53150]
  * is_all_real can be folded into preceding tree walk
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array
  *   free-var: slot search each time, so a special rf func?
  *   lambda* args: rf_closure* (with-let??) 
- * rf set|if -- tie in if case and safe_do?
- *   t260 (from tall) goes to safe_do_step_1_ex, current cases could step using mutable index
+ * rf set|if -- tie in if case
+ * to get voiced->unvoiced add, dox_ex needs to handle multiple exprs, and we need to return the s7_pointer!
+ *   pp/pf s7.h -- fill out here
+ *   need to check ip/pp as well in do-loops -- xp? [move doc in syntax to table]
+ *   in loop all outers can be cast to s7_rf_t
  */

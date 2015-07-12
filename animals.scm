@@ -655,7 +655,8 @@
 	  (pulse-frqf (make-env '(0 0 1 .9 2 1 ) :base .1 :duration pulse-dur :scaler (hz->radians 100))))
 
       (let ((fb (vector frm1 frm2 frm3 frm4))
-	    (fs (float-vector 0.0 0.0 ampfr3 0.0)))
+	    (fs (float-vector 0.0 0.0 ampfr3 0.0))
+	    (rk (make-float-vector pulse-out)))
 	(set! fb (make-formant-bank fb fs))
 
 	(do ((i start (+ i pulse-samps)))
@@ -688,11 +689,17 @@
 	    (float-vector-set! fs 1 (env ampfr2))
 	    (float-vector-set! fs 3 (env ampfr4))
 	    
-	    (do ((k i (+ k 1)))
+	    (do ((k 0 (+ k 1)))
+		((= k pulse-out))
+	      (float-vector-set! rk k (rk!cos gen1 (env pulse-frqf))))
+	    
+	    (do ((k i (+ k 1))
+		 (j 0 (+ j 1)))
 		((= k reset-stop))
 	      (let ((val (* pulse-amp
 			    (env pulsef)
-			    (rk!cos gen1 (env pulse-frqf)))))
+			    (float-vector-ref rk j))))
+			    ;(rk!cos gen1 (env pulse-frqf)))))
 		(outa k (+ (* val val-amp)
 			   (formant-bank fb val)))))
 	    

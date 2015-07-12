@@ -356,7 +356,8 @@
 			(couplingFilter-output 0.0)
 			(temp1 0.0)
 			(noi 0.0)
-			(pn-gen 16383)
+			;; (pn-gen 16383)
+			(pnoise (int-vector 16383))
 			)
 
 		    (do ((i beg (+ i 1)))
@@ -370,17 +371,19 @@
 				(set! dryTap-rx (- 1.0 sb-cutoff-rate))
 				(set! wetTap-rx dryTap-rx))))
 		      
-		      (set! pn-gen (logand (+ (* pn-gen 1103515245) 12345) #xffffffff))
-		      (set! noi (* amp (- (* pn-gen 4.6566128730774e-10) 1.0)))
+		      (set! noi (piano-noise pnoise amp))
+		      ;; (set! pn-gen (logand (+ (* pn-gen 1103515245) 12345) #xffffffff))
+		      ;; (set! noi (* amp (- (* pn-gen 4.6566128730774e-10) 1.0)))
 
 		      (set! temp1 (one-zero dryTap0 (one-pole dryTap1 noi)))
 		      (set! dry-coef (+ dry-coef-ry (* dry-coef-rx dry-coef)))
 		      (set! dryTap-one-pole-swept (- (* (+ 1.0 dry-coef) temp1) (* dry-coef dryTap-one-pole-swept)))
 		      (set! dryTap-x (* dryTap-x dryTap-rx))
 		      (set! dryTap (* dryTap-x dryTap-one-pole-swept))
-						      
-		      (set! pn-gen (logand (+ (* pn-gen 1103515245) 12345) #xffffffff))
-		      (set! noi (* amp (- (* pn-gen 4.6566128730774e-10) 1.0)))
+
+		      (set! noi (piano-noise pnoise amp))
+		      ;; (set! pn-gen (logand (+ (* pn-gen 1103515245) 12345) #xffffffff))
+		      ;; (set! noi (* amp (- (* pn-gen 4.6566128730774e-10) 1.0))))
 
 		      (set! temp1 (one-zero wetTap0 (one-pole wetTap1 noi)))
 		      (set! wet-coef (+ wet-coef-ry (* wet-coef-rx wet-coef)))

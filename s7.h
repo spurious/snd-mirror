@@ -674,6 +674,13 @@ typedef s7_if_t (*s7_ip_t)(s7_scheme *sc, s7_pointer expr);
 void s7_if_set_function(s7_pointer f, s7_ip_t rp);
 s7_ip_t s7_if_function(s7_scheme *sc, s7_pointer func);
 
+#if 0
+typedef s7_pointer (*s7_pf_t)(s7_scheme *sc, s7_pointer **p);
+typedef s7_pf_t (*s7_pp_t)(s7_scheme *sc, s7_pointer expr);
+void s7_pf_set_function(s7_pointer f, s7_pp_t rp);
+s7_pp_t s7_pf_function(s7_scheme *sc, s7_pointer func);
+#endif
+
 void s7_xf_store_at(s7_scheme *sc, s7_int index, s7_pointer val);
 s7_int s7_xf_store(s7_scheme *sc, s7_pointer val);
 void s7_xf_free(s7_scheme *sc);

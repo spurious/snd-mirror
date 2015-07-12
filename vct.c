@@ -594,11 +594,38 @@ static Xen g_vct_multiply(Xen obj1, Xen obj2)
   return(obj1);
 }
 
+static void vct_add(mus_float_t *d1, mus_float_t *d2, mus_long_t lim)
+{
+  mus_long_t i, lim8;
+  lim8 = lim - 16;
+  i = 0;
+  while (i <= lim8)
+    {
+      d1[i] += d2[i]; i++;
+      d1[i] += d2[i]; i++;
+      d1[i] += d2[i]; i++;
+      d1[i] += d2[i]; i++;
+      d1[i] += d2[i]; i++;
+      d1[i] += d2[i]; i++;
+      d1[i] += d2[i]; i++;
+      d1[i] += d2[i]; i++;
+      d1[i] += d2[i]; i++;
+      d1[i] += d2[i]; i++;
+      d1[i] += d2[i]; i++;
+      d1[i] += d2[i]; i++;
+      d1[i] += d2[i]; i++;
+      d1[i] += d2[i]; i++;
+      d1[i] += d2[i]; i++;
+      d1[i] += d2[i]; i++;
+    }
+  for (; i < lim; i++) 
+    d1[i] += d2[i];
+}
 
 static Xen g_vct_add(Xen obj1, Xen obj2, Xen offs)
 {
   #define H_vct_addB "(" S_vct_addB " v1 v2 :optional (offset 0)): element-wise add of " S_vct "s v1 and v2: v1[i + offset] += v2[i], returns v1"
-  mus_long_t i, lim, len1;
+  mus_long_t lim, len1;
   vct *v1, *v2;
   mus_float_t *d1, *d2;
 
@@ -627,36 +654,9 @@ static Xen g_vct_add(Xen obj1, Xen obj2, Xen offs)
       if ((j + lim) > len1)
 	lim = (len1 - j);
 
-      for (i = 0; i < lim; i++, j++) 
-	d1[j] += d2[i];
+      vct_add((mus_float_t *)(d1 + j), d2, lim);
     }
-  else
-    {
-      mus_long_t lim8;
-      lim8 = lim - 16;
-      i = 0;
-      while (i <= lim8)
-	{
-	  d1[i] += d2[i]; i++;
-	  d1[i] += d2[i]; i++;
-	  d1[i] += d2[i]; i++;
-	  d1[i] += d2[i]; i++;
-	  d1[i] += d2[i]; i++;
-	  d1[i] += d2[i]; i++;
-	  d1[i] += d2[i]; i++;
-	  d1[i] += d2[i]; i++;
-	  d1[i] += d2[i]; i++;
-	  d1[i] += d2[i]; i++;
-	  d1[i] += d2[i]; i++;
-	  d1[i] += d2[i]; i++;
-	  d1[i] += d2[i]; i++;
-	  d1[i] += d2[i]; i++;
-	  d1[i] += d2[i]; i++;
-	  d1[i] += d2[i]; i++;
-	}
-      for (; i < lim; i++) 
-	d1[i] += d2[i];
-    }
+  else vct_add(d1, d2, lim);
   return(obj1);
 }
 
@@ -1547,6 +1547,52 @@ vct( 0.5 0.3 0.1 ) .g => #<vct[len=3]: 0.500 0.300 0.100>"
 }
 #endif
 
+#if 0
+
+static s7_pointer fv_add_pf_ss(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1, s2;
+  s7_int len1, lim;
+
+  s1 = s7_slot_value(**p); (*p)++;
+  s2 = s7_slot_value(**p); (*p)++;
+
+  len1 = s7_vector_length(s1);
+  lim = s7_vector_length(s2);
+  if (lim > len1) lim = len1;
+  if (lim == 0) return(0.0);
+
+  vct_add(s7_float_vector_elements(s1), s7_float_vector_elements(s2), lim);
+  return(s1);
+}
+
+static s7_pf_t is_fv_add_pf(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer a1, a2;
+
+  if ((s7_is_null(sc, s7_cdr(expr))) || (s7_is_null(sc, s7_cddr(expr))) || (!s7_is_null(sc, s7_cdddr(expr)))) return(NULL);
+  a1 = s7_cadr(expr);
+  a2 = s7_caddr(expr);
+  if ((s7_is_symbol(a1)) &&
+      (s7_is_symbol(a2)))
+    {
+      s7_pointer fv1, fv2;
+      fv1 = s7_slot(sc, a1);
+      fv2 = s7_slot(sc, a2);
+      if ((fv1 != xen_undefined) &&
+	  (fv2 != xen_undefined) &&
+	  (s7_is_float_vector(s7_slot_value(fv1))) &&
+	  (s7_is_float_vector(s7_slot_value(fv2))))
+	{
+	  s7_xf_store(sc, fv1);
+	  s7_xf_store(sc, fv2);
+	  return(fv_add_pf_ss);
+	}
+    }
+  return(NULL);
+}
+#endif
+
 
 
 #if (!HAVE_SCHEME)
@@ -1699,5 +1745,13 @@ void mus_vct_init(void)
 #else
   Xen_define_safe_procedure(S_vct_spatter,       g_vct_spatter_w,   4, 0, 0, H_vct_spatter);
   Xen_define_safe_procedure(S_vct_interpolate,   g_vct_interpolate_w, 7, 0, 0, H_vct_interpolate);
+
+#if 0
+  {
+    s7_pointer f;
+    f = s7_name_to_value(s7, "float-vector-add!");
+    s7_pf_set_function(f, is_fv_add_pf);
+  }
+#endif
 #endif
 }
