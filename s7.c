@@ -1893,7 +1893,7 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define c_function_pp(f)              c_function_ext(f)->pp
 
 void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
-bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_optimized(f)) && (ecdr(f)) && (returns_temp(ecdr(f))));}
+static bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_optimized(f)) && (ecdr(f)) && (returns_temp(ecdr(f))));}
 
 #define c_call(f)                     ((s7_function)(fcdr(f)))
 #define set_c_function(f, X)          do {set_ecdr(f, X); set_fcdr(f, (s7_pointer)(c_function_call(ecdr(f))));} while (0)
@@ -6404,12 +6404,6 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym)
     return(slot_value(x));
 
   return(sc->UNDEFINED);
-}
-
-
-s7_pointer s7_value(s7_scheme *sc, s7_pointer sym)
-{
-  return(find_symbol_checked(sc, sym));
 }
 
 
@@ -16857,8 +16851,8 @@ static s7_double invert_rf_x(s7_scheme *sc, s7_pointer **p)
 static s7_double invert_rf_s(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer s1;
-  s1 = slot_value(**p); (*p)++;
   s7_double v1;
+  s1 = slot_value(**p); (*p)++;
   v1 = real_to_double(sc, s1, "/");
   if (v1 == 0.0) division_by_zero_error(sc, sc->DIVIDE, list_1(sc, real_zero));
   return(1.0 / v1);
@@ -35142,17 +35136,10 @@ static s7_pointer fallback_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 }
 
 
-void s7_function_set_class(s7_pointer f, s7_pointer base_f)
+static void s7_function_set_class(s7_pointer f, s7_pointer base_f)
 {
   c_function_class(f) = c_function_class(base_f);
   c_function_base(f) = base_f;
-}
-
-
-static void s7_function_choice_set_direct(s7_scheme *sc, s7_pointer expr)
-{
-  set_optimize_op(expr, HOP_SAFE_C_C);
-  clear_unsafe(expr);
 }
 
 
@@ -44025,7 +44012,8 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  ((car(arg2) == sc->SIN) || (car(arg2) == sc->COS)) &&
 	  (is_symbol(cadr(arg2))))
 	{
-	  s7_function_choice_set_direct(sc, expr);
+	  set_optimize_op(expr, HOP_SAFE_C_C);
+	  clear_unsafe(expr);
 	  if (car(arg2) == sc->SIN)
 	    return(mul_s_sin_s);
 	  return(mul_s_cos_s);
@@ -52110,7 +52098,7 @@ bool s7_xf_is_safe_stepper(s7_scheme *sc, s7_pointer sym)
 }
 
 
-static bool dox_rf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool all_pairs, s7_function endf)
+static bool dox_rf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool dox_case, s7_function endf)
 {
   s7_pointer fcar, p, endp;
   int body_len, i, loc;
@@ -52132,7 +52120,7 @@ static bool dox_rf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool all_p
 
   s7_xf_new(sc, sc->envir);
 #if (!WITH_GMP)
-  if ((all_pairs) &&
+  if ((dox_case) &&
       (dox_slot1(sc->envir)) &&
       (is_slot(dox_slot1(sc->envir))) &&
       (s7_xf_is_safe_stepper(sc, slot_symbol(dox_slot1(sc->envir)))) &&
@@ -52187,10 +52175,11 @@ static bool dox_rf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool all_p
 	      rf(sc, rp);
 	    }
 
-	  if (all_pairs)
+	  if (dox_case)
 	    {
 	      for (slot = slots; is_slot(slot); slot = next_slot(slot))
-		slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
+		if (is_pair(slot_expression(slot)))
+		  slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
 	    }
 	  else
 	    {
@@ -52364,9 +52353,11 @@ static int dox_ex(s7_scheme *sc)
 	}
     }
 
-  if (dox_rf_ok(sc, code, sc->code, all_pairs, (s7_function)fcdr(cdr(sc->code))))
+  if ((!is_unsafe_do(sc->code)) &&
+      (dox_rf_ok(sc, code, sc->code, true, (s7_function)fcdr(cdr(sc->code)))))
     return(goto_DO_END_CLAUSES);
       
+  set_unsafe_do(sc->code);
   if ((is_null(cdr(code))) && /* one expr */
       (is_pair(car(code))))
     {
@@ -52864,10 +52855,10 @@ static int simple_safe_dotimes_ex(s7_scheme *sc)
 				  (is_all_real(sc, sc->code)))
 				{
 				  s7_pointer letp, scc;
+				  s7_pointer *top;
 				  scc = sc->code;
 				  letp = let_slots(sc->envir);
 				  s7_xf_store_at(sc, let_loc, (s7_pointer)rf);
-				  s7_pointer *top;
 				  top = sc->cur_rf->data;
 				  for (; numerator(stepper) < denominator(stepper); numerator(stepper)++)
 				    {
@@ -53228,9 +53219,11 @@ static int do_all_x_ex(s7_scheme *sc)
     }
 
   body = cddr(sc->code);
-  if (dox_rf_ok(sc, body, sc->code, false, (s7_function)fcdr(end)))
+  if ((!is_unsafe_do(sc->code)) &&
+      (dox_rf_ok(sc, body, sc->code, false, (s7_function)fcdr(end))))
     return(goto_DO_END_CLAUSES);
 
+  set_unsafe_do(sc->code);
   push_stack_no_args(sc, OP_DO_ALL_X_STEP, sc->code);
   sc->code = body;
   return(goto_BEGIN1);
@@ -68895,7 +68888,7 @@ int main(int argc, char **argv)
  * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1134
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136
  * teq           |      |      | 6612                     3887 3020 2516 2460
- * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3321
+ * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3322
  * tcopy         |      |      | 13.6                     5355 4728 3887 3827
  * tform         |      |      |                          6816 5536 4287 4027
  * tmap          |      |      | 11.0           5031 4769 4685 4557 4230 4187
@@ -68905,8 +68898,8 @@ int main(int argc, char **argv)
  * thash         |      |      |                          50.7 23.8 14.9 14.7
  *               |      |      |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.1
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 16.9
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 38.0
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 16.5
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 37.7
  * 
  * --------------------------------------------------------------------------
  *
@@ -68935,6 +68928,6 @@ int main(int argc, char **argv)
  *   lambda* args: rf_closure* (with-let??) 
  * rf set|if -- tie in if cases
  * mark known unrfable cases (unsafe_do)
- * jcrev/nrev special handling
- * is do_all_x of any use now? (not the allx part, check bench)  dotimes_c_c|a_ex?
+ * jcrev/nrev special handling [out_bank_1|2 +  mul_s_comb_bank and all_pass]
+ * check for empty zones in do*_ex (and all_x)
  */

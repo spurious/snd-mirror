@@ -9195,7 +9195,7 @@ Xen_wrap_1_arg(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
   do { \
   s7_pointer sym, f;							\
   sym = s7_define_safe_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc); \
-  f = s7_value(s7, sym); \
+  f = s7_symbol_value(s7, sym);					\
   s7_function_set_returns_temp(f);\
   } while (0)
 #else

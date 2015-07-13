@@ -656,10 +656,7 @@ s7_pointer s7_fill(s7_scheme *sc, s7_pointer args);
 
 
   /* these are aimed at the CLM optimizer */
-void s7_function_set_class(s7_pointer f, s7_pointer base_f);
 void s7_function_set_returns_temp(s7_pointer f);
-bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f);
-s7_pointer s7_value(s7_scheme *sc, s7_pointer sym);
 
 typedef s7_double (*s7_rf_t)(s7_scheme *sc, s7_pointer **p);
 typedef s7_rf_t (*s7_rp_t)(s7_scheme *sc, s7_pointer expr);

@@ -3524,7 +3524,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		  s7_pointer old_e;
 		  e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7)); 
 		  old_e = s7_set_curlet(s7, e);                  /* new env for map lambda */
-		  res = s7_value(s7, res);
+		  res = s7_symbol_value(s7, res);
 		  s7_set_curlet(s7, old_e);
 		}
 	      x = s7_number_to_real_with_caller(s7, res, "map-channel");
@@ -3553,7 +3553,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		  s7_pointer old_e;
 		  e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7)); 
 		  old_e = s7_set_curlet(s7, e);                  /* new env for map lambda */
-		  fx = s7_value(s7, fx);
+		  fx = s7_symbol_value(s7, fx);
 		  s7_set_curlet(s7, old_e);
 		}
 	      x = s7_number_to_real_with_caller(s7, fx, "map-channel");

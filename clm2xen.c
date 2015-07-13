@@ -10454,6 +10454,62 @@ static s7_double out_bank_rf_1(s7_scheme *sc, s7_pointer **p)
   return(val);
 }
 
+static s7_double mul_s_comb_bank_x_rf(s7_scheme *sc, s7_pointer **p);
+
+static s7_double out_bank_rf_comb_bank_1(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer ind_slot, s1;
+  s7_double val;
+  s7_rf_t rf;
+  s7_int loc;
+  mus_any *g1, *o;
+
+  g1 = (mus_any *)(**p); (*p)++;
+  ind_slot = (**p); (*p) += 2;
+  loc = s7_integer(s7_slot_value(ind_slot));
+
+  s1 = s7_slot_value(**p); (*p) += 2;
+  o = (mus_any *)(**p); (*p)++;
+  rf = (s7_rf_t)(**p); (*p)++;
+  val = s7_number_to_real(sc, s1) * mus_comb_bank(o, rf(sc, p));
+
+  if (mus_is_delay(g1))
+    out_any_2(loc, mus_delay_unmodulated_noz(g1, val), 0, "out-bank");
+  else out_any_2(loc, mus_all_pass_unmodulated_noz(g1, val), 0, "out-bank");
+  return(val);
+}
+
+static s7_double out_bank_rf_comb_bank_2(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer ind_slot, s1;
+  s7_double val;
+  s7_rf_t rf;
+  s7_int loc;
+  mus_any *g1, *g2, *o;
+
+  g1 = (mus_any *)(**p); (*p)++;
+  g2 = (mus_any *)(**p); (*p)++;
+  ind_slot = (**p); (*p) += 2;
+  loc = s7_integer(s7_slot_value(ind_slot));
+
+  s1 = s7_slot_value(**p); (*p) += 2;
+  o = (mus_any *)(**p); (*p)++;
+  rf = (s7_rf_t)(**p); (*p)++;
+  val = s7_number_to_real(sc, s1) * mus_comb_bank(o, rf(sc, p));
+
+  if (mus_is_delay(g1))
+    {
+      out_any_2(loc, mus_delay_unmodulated_noz(g1, val), 0, "out-bank");
+      out_any_2(loc, mus_delay_unmodulated_noz(g2, val), 1, "out-bank");
+    }
+  else
+    {
+      out_any_2(loc, mus_all_pass_unmodulated_noz(g1, val), 0, "out-bank");
+      out_any_2(loc, mus_all_pass_unmodulated_noz(g2, val), 1, "out-bank");
+    }
+  return(val);
+}
+
 static s7_double out_bank_rf_2(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer ind_slot;
@@ -10558,8 +10614,18 @@ static s7_rf_t is_out_bank_rf(s7_scheme *sc, s7_pointer expr)
   if (!rf) return(NULL);
   s7_xf_store_at(sc, loc, (s7_pointer)rf);
 
-  if (len == 1) return(out_bank_rf_1);
-  if (len == 2) return(out_bank_rf_2);
+  if (len == 1) 
+    {
+      if (rf == mul_s_comb_bank_x_rf)
+	return(out_bank_rf_comb_bank_1);
+      return(out_bank_rf_1);
+    }
+  if (len == 2) 
+    {
+      if (rf == mul_s_comb_bank_x_rf)
+	return(out_bank_rf_comb_bank_2);
+      return(out_bank_rf_2);
+    }
   return(out_bank_rf_4);
 }
 
@@ -11658,7 +11724,7 @@ Xen_wrap_2_args(g_piano_noise_w, g_piano_noise)
   do { \
   s7_pointer sym, f;							\
   sym = s7_define_safe_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc); \
-  f = s7_value(s7, sym); \
+  f = s7_symbol_value(s7, sym); \
   s7_function_set_returns_temp(f);\
   } while (0)
 #else
