@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.29"
-#define S7_DATE "3-Jul-15"
+#define S7_VERSION "3.30"
+#define S7_DATE "12-Jul-15"
 
 
 typedef long long int s7_int;
@@ -293,7 +293,6 @@ s7_pointer s7_make_complex(s7_scheme *sc, s7_double a, s7_double b);        /* r
 s7_double s7_real_part(s7_pointer z);                                       /* (real-part z) */
 s7_double s7_imag_part(s7_pointer z);                                       /* (imag-part z) */
 char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix);        /* (number->string obj radix) */
-s7_pointer s7_cos(s7_scheme *sc, s7_pointer z);                             /* (cos z) */
 
 
 bool s7_is_vector(s7_pointer p);                                            /* (vector? p) */
@@ -674,12 +673,10 @@ typedef s7_if_t (*s7_ip_t)(s7_scheme *sc, s7_pointer expr);
 void s7_if_set_function(s7_pointer f, s7_ip_t rp);
 s7_ip_t s7_if_function(s7_scheme *sc, s7_pointer func);
 
-#if 0
 typedef s7_pointer (*s7_pf_t)(s7_scheme *sc, s7_pointer **p);
 typedef s7_pf_t (*s7_pp_t)(s7_scheme *sc, s7_pointer expr);
 void s7_pf_set_function(s7_pointer f, s7_pp_t rp);
 s7_pp_t s7_pf_function(s7_scheme *sc, s7_pointer func);
-#endif
 
 void s7_xf_store_at(s7_scheme *sc, s7_int index, s7_pointer val);
 s7_int s7_xf_store(s7_scheme *sc, s7_pointer val);

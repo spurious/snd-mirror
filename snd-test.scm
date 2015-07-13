@@ -38998,6 +38998,22 @@ EDITS: 1
 	    ((= i 10) x)
 	  (set! x (+ x (* i 2.0))))))
     (test (fv84) 91.0)
+
+    (define (fv85)
+      (let ((fv1 (make-float-vector 4 1.5))
+	    (fv2 (make-float-vector 4 0.0)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 10) fv2)
+	  (float-vector-add! fv2 fv1))))
+    (test (fv85) (make-float-vector 4 15.0))
+
+    (define (fv86)
+      (let ((g0 (make-float-vector 4 1.0))
+	    (fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (set! (fv i) (g0 i)))))
+    (test (fv86) (float-vector 1.0 1.0 1.0 1.0))
     )
   
   (if all-args

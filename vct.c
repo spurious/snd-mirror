@@ -1431,14 +1431,6 @@ static Xen rb_vct_scale_cp(Xen obj, Xen scl)
 }
 
 
-#if 0
-static Xen rb_vct_fill_cp(Xen obj, Xen scl)
-{
-  return g_vct_fill(g_vct_copy(obj), scl);
-}
-#endif
-
-
 /* destructive */
 
 static Xen rb_vct_move(int argc, Xen *argv, Xen obj)
@@ -1547,7 +1539,8 @@ vct( 0.5 0.3 0.1 ) .g => #<vct[len=3]: 0.500 0.300 0.100>"
 }
 #endif
 
-#if 0
+
+#if HAVE_SCHEME
 
 static s7_pointer fv_add_pf_ss(s7_scheme *sc, s7_pointer **p)
 {
@@ -1560,7 +1553,7 @@ static s7_pointer fv_add_pf_ss(s7_scheme *sc, s7_pointer **p)
   len1 = s7_vector_length(s1);
   lim = s7_vector_length(s2);
   if (lim > len1) lim = len1;
-  if (lim == 0) return(0.0);
+  if (lim == 0) return(s1);
 
   vct_add(s7_float_vector_elements(s1), s7_float_vector_elements(s2), lim);
   return(s1);
@@ -1746,12 +1739,10 @@ void mus_vct_init(void)
   Xen_define_safe_procedure(S_vct_spatter,       g_vct_spatter_w,   4, 0, 0, H_vct_spatter);
   Xen_define_safe_procedure(S_vct_interpolate,   g_vct_interpolate_w, 7, 0, 0, H_vct_interpolate);
 
-#if 0
   {
     s7_pointer f;
     f = s7_name_to_value(s7, "float-vector-add!");
     s7_pf_set_function(f, is_fv_add_pf);
   }
-#endif
 #endif
 }
