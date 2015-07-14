@@ -940,7 +940,7 @@ struct s7_scheme {
   s7_pointer COND_ALL_X, COND_ALL_X_2, COND_S;
   s7_pointer INCREMENT_1, DECREMENT_1, SET_CONS, INCREMENT_SS, INCREMENT_SSS, INCREMENT_SZ, INCREMENT_C_TEMP, INCREMENT_SA, INCREMENT_SAA;
   s7_pointer LET_opSq, LET_ALL_opSq, LET_opSq_P, LET_ONE, LET_Z;
-  s7_pointer SIMPLE_DO, SAFE_DOTIMES, SIMPLE_SAFE_DOTIMES, SAFE_DOTIMES_C_C, SAFE_DOTIMES_C_A, SAFE_DO, SAFE_DO_ALL_X;
+  s7_pointer SIMPLE_DO, SAFE_DOTIMES, SIMPLE_SAFE_DOTIMES, SAFE_DOTIMES_C_A, SAFE_DO, SAFE_DO_ALL_X;
   s7_pointer SIMPLE_DO_P, DOTIMES_P, SIMPLE_DO_FOREVER, SIMPLE_DO_A, SIMPLE_DO_E;
   s7_pointer DOX, DO_ALL_X, dox_slot_symbol, else_symbol;
 
@@ -2393,7 +2393,7 @@ enum {OP_NO_OP,
 
       OP_CATCH_1, OP_CATCH_2, OP_CATCH_ALL, OP_COND_ALL_X, OP_COND_ALL_X_2, OP_COND_S,
       OP_SIMPLE_DO, OP_SIMPLE_DO_STEP, OP_SAFE_DOTIMES, OP_SAFE_DOTIMES_STEP, OP_SAFE_DOTIMES_STEP_P, OP_SAFE_DOTIMES_STEP_O, OP_SAFE_DOTIMES_STEP_A,
-      OP_SIMPLE_SAFE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_SAFE_DO_STEP_1, OP_SAFE_DOTIMES_C_C,
+      OP_SIMPLE_SAFE_DOTIMES, OP_SAFE_DO, OP_SAFE_DO_STEP, OP_SAFE_DO_STEP_1, 
       OP_SIMPLE_DO_P, OP_SIMPLE_DO_STEP_P, OP_DOX, OP_DOX_STEP, OP_DOX_STEP_P, OP_SIMPLE_DO_FOREVER,
       OP_DOTIMES_P, OP_DOTIMES_STEP_P, OP_SAFE_DOTIMES_C_A, OP_SAFE_DO_ALL_X,
       OP_SIMPLE_DO_A, OP_SIMPLE_DO_STEP_A, OP_SIMPLE_DO_E, OP_SIMPLE_DO_STEP_E, OP_DO_ALL_X, OP_DO_ALL_X_STEP,
@@ -2589,7 +2589,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
 
       "catch_1", "catch_2", "catch_all", "cond_all_x", "cond_all_x_2", "cond_s",
       "simple_do", "simple_do_step", "safe_dotimes", "safe_dotimes_step", "safe_dotimes_step_p", "safe_dotimes_step_o", "safe_dotimes_step_a",
-      "simple_safe_dotimes", "safe_do", "safe_do_step", "safe_do_step_1", "safe_dotimes_c_c",
+      "simple_safe_dotimes", "safe_do", "safe_do_step", "safe_do_step_1", 
       "simple_do_p", "simple_do_step_p", "dox", "dox_step", "dox_step_p", "simple_do_forever",
       "dotimes_p", "dotimes_step_p", "safe_dotimes_c_a", "safe_do_all_x",
       "simple_do_a", "simple_do_step_a", "simple_do_e", "simple_do_step_e", "do_all_x", "do_all_x_step",
@@ -16177,7 +16177,6 @@ static s7_pointer g_mul_s_cos_s(s7_scheme *sc, s7_pointer args)
 #endif /* with-gmp */
 
 
-#if (!WITH_GMP)
 static s7_double multiply_rf_xx(s7_scheme *sc, s7_pointer **p)
 {
   s7_rf_t r1, r2;
@@ -16325,7 +16324,7 @@ static s7_rf_t is_multiply_rf(s7_scheme *sc, s7_pointer expr)
     return(is_rf_4(sc, expr, multiply_rf_xxxx));
   return(NULL);
 }
-#endif
+
 
 
 /* ---------------------------------------- divide ---------------------------------------- */
@@ -16836,6 +16835,7 @@ static s7_pointer g_divide_s_temp(s7_scheme *sc, s7_pointer args)
     }
   return(g_divide(sc, args));
 }
+#endif
 
 
 static s7_double invert_rf_x(s7_scheme *sc, s7_pointer **p)
@@ -16965,7 +16965,6 @@ static s7_rf_t is_divide_rf(s7_scheme *sc, s7_pointer expr)
     return(s7_is_rf_1(sc, expr, NULL, invert_rf_s, invert_rf_x));
   return(s7_is_rf_2(sc, expr, NULL, divide_rf_sr, divide_rf_xr, divide_rf_rs, divide_rf_ss, divide_rf_xs, divide_rf_rx, divide_rf_sx, divide_rf_xx));
 }
-#endif /* !WITH_GMP */
 
 
 /* ---------------------------------------- max/min ---------------------------------------- */
@@ -18911,9 +18910,12 @@ static s7_pointer g_greater_2_f(s7_scheme *sc, s7_pointer args)
 {
   return(make_boolean(sc, real(car(args)) > real(cadr(args))));
 }
+#endif
 
-
-static s7_pointer geq_2;
+static s7_pointer geq_2 = NULL;
+#if (WITH_GMP)
+static s7_function g_geq_2 = NULL;
+#else
 static s7_pointer g_geq_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, y;
@@ -43918,9 +43920,10 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 }
 
 
-#if (!WITH_GMP)
+
 static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+#if (!WITH_GMP)
   /* it's possible to precompute constant multiplies, use OP_CONSTANT as the optimize_op,
    *    put the value in fcdr, remove it from the heap, return NULL (checking for ecdr null in
    *    set_c_function and c_function_is_ok), then simply return fcdr in OP_CONSTANT, but
@@ -44058,9 +44061,9 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       if (s7_function_returns_temp(sc, arg1))
 	return(multiply_1_any);
     }
+#endif
   return(f);
 }
-#endif
 
 
 static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -44101,13 +44104,11 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 		  set_optimize_op(expr, HOP_SAFE_C_C);
 		  return(subtract_sf_f);
 		}
-#if (!WITH_GMP)
 	      if (c_call(arg1) == g_random_rc)
 		{
 		  set_optimize_op(expr, HOP_SAFE_C_C);
 		  return(sub_random_rc);
 		}
-#endif
 	    }
 	}
 
@@ -44133,14 +44134,12 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	      set_optimize_op(expr, HOP_SAFE_C_C);
 	      return(subtract_csn);
 	    }
-#if (!WITH_GMP)
 	  if ((is_safely_optimized(arg1)) &&
 	      (c_call(arg1) == g_random_ic))
 	    {
 	      set_optimize_op(expr, HOP_SAFE_C_C);
 	      return(sub_random_ic);
 	    }
-#endif
 	}
 
       if ((s7_function_returns_temp(sc, arg1)) &&
@@ -44158,9 +44157,9 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 }
 
 
-#if (!WITH_GMP)
 static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
+#if (!WITH_GMP)
   if (args == 1)
     return(invert_1);
 
@@ -44180,10 +44179,11 @@ static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
       if (s7_function_returns_temp(sc, arg2))
 	return(divide_s_temp);
     }
+#endif
   return(f);
 }
 
-
+#if (!WITH_GMP)
 static s7_pointer expt_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if (args == 2)
@@ -44195,10 +44195,8 @@ static s7_pointer expt_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
     }
   return(f);
 }
-#endif
 
 
-#if (!WITH_GMP)
 static s7_pointer max_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args == 2) &&
@@ -45042,12 +45040,13 @@ static void init_choosers(s7_scheme *sc)
   set_returns_temp(sub_random_rc);
 #endif
 
-#if (!WITH_GMP)
+
   /* * */
   f = set_function_chooser(sc, sc->MULTIPLY, multiply_chooser);
   s7_rf_set_function(f, is_multiply_rf);
-  multiply_2 = make_function_with_class(sc, f, "*", g_multiply_2, 2, 0, false, "* opt");
 
+#if (!WITH_GMP)
+  multiply_2 = make_function_with_class(sc, f, "*", g_multiply_2, 2, 0, false, "* opt");
   multiply_2_temp = make_temp_function_with_class(sc, f, "*", g_multiply_2_temp, 2, 0, false, "* opt");
   multiply_3_temp = make_temp_function_with_class(sc, f, "*", g_multiply_3_temp, 3, 0, false, "* opt");
   multiply_1_any = make_temp_function_with_class(sc, f, "*", g_multiply_1_any, 3, 0, true, "* opt");
@@ -45065,10 +45064,13 @@ static void init_choosers(s7_scheme *sc)
   multiply_cs_cos = make_function_with_class(sc, f, "*", g_multiply_cs_cos, 3, 0, false, "* opt");
   mul_s_sin_s = make_function_with_class(sc, f, "*", g_mul_s_sin_s, 2, 0, false, "* opt");
   mul_s_cos_s = make_function_with_class(sc, f, "*", g_mul_s_cos_s, 2, 0, false, "* opt");
+#endif
 
   /* / */
   f = set_function_chooser(sc, sc->DIVIDE, divide_chooser);
   s7_rf_set_function(f, is_divide_rf);
+
+#if (!WITH_GMP)
   invert_1 = make_function_with_class(sc, f, "/", g_invert_1, 1, 0, false, "/ opt");
   divide_1r = make_function_with_class(sc, f, "/", g_divide_1r, 2, 0, false, "/ opt");
   divide_temp_s = make_temp_function_with_class(sc, f, "/", g_divide_temp_s, 2, 0, false, "/ opt");
@@ -51816,7 +51818,7 @@ static s7_pointer check_do(s7_scheme *sc)
 			  pair_syntax_op(car(body)) = symbol_syntax_op(caar(body));
 			  pair_set_syntax_symbol(sc->code, sc->SIMPLE_DO_P);
 			  set_fcdr(sc->code, caddr(caar(sc->code)));
-#if (!WITH_GMP)
+
 			  if ((s7_is_integer(caddr(step_expr))) &&
 			      (s7_integer(caddr(step_expr)) == 1) &&
 			      (c_function_class(ecdr(step_expr)) == sc->add_class) &&
@@ -51826,7 +51828,6 @@ static s7_pointer check_do(s7_scheme *sc)
 			      ((c_function_class(ecdr(end)) == sc->equal_class) ||
 			       (ecdr(end) == geq_2)))
 			    pair_set_syntax_symbol(sc->code, sc->DOTIMES_P);
-#endif
 			}
 
 		      if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->NIL, &has_set))
@@ -51838,12 +51839,8 @@ static s7_pointer check_do(s7_scheme *sc)
 			       ((s7_is_integer(cadr(step_expr))) &&
 				(s7_integer(cadr(step_expr)) == 1))) &&
 			      (c_function_class(ecdr(step_expr)) == sc->add_class) &&
-#if WITH_GMP
-			      (c_function_class(ecdr(end)) == sc->equal_class)
-#else
 			      ((c_function_class(ecdr(end)) == sc->equal_class) ||
 			       (ecdr(end) == geq_2))
-#endif
 			      )
 			    {
 			      /* we're stepping by +1 and going to =
@@ -51863,22 +51860,14 @@ static s7_pointer check_do(s7_scheme *sc)
 				  (c_function_class(ecdr(end)) == sc->equal_class))
 				{
 				  pair_set_syntax_symbol(sc->code, sc->SAFE_DOTIMES);
-				  /* what are the most common cases here?
-				   */
+				  /* what are the most common cases here? */
 				  if (one_line)
 				    {
-				      if (is_optimized(car(body)))
+				      if ((is_optimized(car(body))) &&
+					  (is_all_x_op(optimize_op(car(body)))))
 					{
-					  if (optimize_op(car(body)) == HOP_SAFE_C_C)
-					    pair_set_syntax_symbol(sc->code, sc->SAFE_DOTIMES_C_C);
-					  else
-					    {
-					      if (is_all_x_op(optimize_op(car(body))))
-						{
-						  annotate_arg(sc, body);
-						  pair_set_syntax_symbol(sc->code, sc->SAFE_DOTIMES_C_A);
-						}
-					    }
+					  annotate_arg(sc, body);
+					  pair_set_syntax_symbol(sc->code, sc->SAFE_DOTIMES_C_A);
 					}
 				      else
 					{
@@ -52119,7 +52108,7 @@ static bool dox_rf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool dox_c
   endp = caadr(scc);
 
   s7_xf_new(sc, sc->envir);
-#if (!WITH_GMP)
+
   if ((dox_case) &&
       (dox_slot1(sc->envir)) &&
       (is_slot(dox_slot1(sc->envir))) &&
@@ -52127,7 +52116,6 @@ static bool dox_rf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool dox_c
       ((endf == end_dox_equal_s_ic) || (endf == end_dox_equal_ss) ||
        ((endf == end_dox_c_ss) && (c_call(endp) == g_geq_2))))
     set_loop_bounds(dox_slot1(sc->envir));
-#endif
 
   for (i = 0, p = code; is_pair(p); i++, p = cdr(p))
     {
@@ -52150,7 +52138,7 @@ static bool dox_rf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool dox_c
 	  s7_xf_store_at(sc, loc, (s7_pointer)pf);
 	}
     }
-  
+
   if ((is_null(p)) &&
       (is_all_real(sc, scc)))
     {
@@ -52326,7 +52314,7 @@ static int dox_ex(s7_scheme *sc)
 	  s7_pointer a;
 	  f = (dox_function)fcdr(slot_expression(slots));
 	  a = car(slot_expression(slots));
-	  while (true)
+	  while (true) /* thash titer */
 	    {
 	      slot_set_value(slots, f(sc, a, slots));
 	      if (is_true(sc, endf(sc, endp)))
@@ -52346,7 +52334,7 @@ static int dox_ex(s7_scheme *sc)
 		  slot_set_value(slot, ((dox_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot)), slot));
 	      if (is_true(sc, endf(sc, endp)))
 		{
-		  sc->code = cdadr(scc);
+		  sc->code = cdadr(scc); 
 		  return(goto_DO_END_CLAUSES);
 		}
 	    }
@@ -52444,7 +52432,6 @@ static int simple_do_ex(s7_scheme *sc, s7_pointer code)
   step_expr = caddr(caar(code));
   stepf = c_call(step_expr);
 
-#if 1
   /* try rf case */
   if (is_symbol(car(body)))
     {
@@ -52498,7 +52485,6 @@ static int simple_do_ex(s7_scheme *sc, s7_pointer code)
 	  s7_xf_free(sc);
 	}
     }
-#endif
 
   if ((is_optimized(body)) &&
       (is_all_x_op(optimize_op(body))))
@@ -52622,7 +52608,7 @@ static int safe_dotimes_ex(s7_scheme *sc)
 	      return(goto_SAFE_DO_END_CLAUSES);
 	    }
 	  
-	  if ((is_null(cdr(sc->code))) &&
+	  if ((is_null(cdr(sc->code))) && /* body is (let ...) */
 	      (is_pair(car(sc->code))))
 	    {
 	      sc->code = car(sc->code);
@@ -52757,13 +52743,14 @@ static int safe_dotimes_ex(s7_scheme *sc)
 		}
 	      else
 		{
-		  if (rf_ok(sc, sc->code, code))
+		  if ((!is_unsafe_do(code)) &&
+		      (rf_ok(sc, sc->code, code)))
 		    return(goto_SAFE_DO_END_CLAUSES);
 
+		  set_unsafe_do(code);
 		  /* (let () (define (f1) (do ((i 0 (+ i 1))) ((= i 3)) (format #f "i: ~A " i))) (f1)) */
 		  if (is_optimized(sc->code)) /* think this is not needed -- can we get here otherwise? */
 		    {
-		      set_unsafe_do(sc->code);
 		      push_stack(sc, OP_SAFE_DOTIMES_STEP_O, sc->args, code);
 		      return(goto_OPT_EVAL);
 		    }
@@ -52899,67 +52886,6 @@ static int simple_safe_dotimes_ex(s7_scheme *sc)
 }
 
 
-static int safe_dotimes_c_c_ex(s7_scheme *sc)
-{
-  /* called mainly from snd-test, a few in index, s7test */
-  s7_pointer init_val;
-
-  init_val = cadr(caar(sc->code));
-  if (is_symbol(init_val))
-    init_val = find_symbol_checked(sc, init_val);
-  else
-    {
-      if (is_pair(init_val))
-	init_val = c_call(init_val)(sc, cdr(init_val));
-    }
-  if (s7_is_integer(init_val))
-    {
-      s7_pointer end_expr, end_val, func, body, stepper;
-      
-      end_expr = caadr(sc->code);
-      end_val = caddr(end_expr);
-      if (is_symbol(end_val))
-	end_val = find_symbol_checked(sc, end_val);
-      
-      if (s7_is_integer(end_val))
-	{
-	  /* (let () (define (hi a) (do ((i a (+ i 1))) ((= i a) i) (+ a 1))) (hi 1)) */
-	  sc->envir = new_frame_in_env(sc, sc->envir);
-	  sc->args = add_slot(sc, caaar(sc->code), make_mutable_integer(sc, s7_integer(init_val)));
-	  
-	  if (s7_integer(init_val) == s7_integer(end_val))
-	    {
-	      sc->code = cdr(cadr(sc->code));
-	      return(goto_SAFE_DO_END_CLAUSES);
-	    }
-	  
-	  set_loop_bounds(sc->args);
-	  body = caddr(sc->code);
-	  stepper = slot_value(sc->args);
-	  denominator(stepper) = s7_integer(end_val);
-
-	  if (rf_ok(sc, body, sc->code))
-	    return(goto_SAFE_DO_END_CLAUSES);
-
-	  body = cdr(body);
-	  func = caddr(sc->code);
-	  while (true)
-	    {
-	      /* eval body (cddr(sc->code)) */
-	      c_call(func)(sc, body);
-	      numerator(stepper)++;
-	      if (numerator(stepper) == denominator(stepper))
-		{
-		  sc->code = cdr(cadr(sc->code));
-		  return(goto_SAFE_DO_END_CLAUSES);
-		}
-	    }
-	}
-    }
-  return(fall_through);
-}
-
-
 static int safe_dotimes_c_a_ex(s7_scheme *sc)
 {
   s7_pointer init_val;
@@ -53041,9 +52967,11 @@ static int safe_dotimes_c_a_ex(s7_scheme *sc)
 	    {
 	      s7_function func;
 
-	      if (rf_ok(sc, car(body), sc->code))
+	      if ((!is_unsafe_do(sc->code)) &&
+		  (rf_ok(sc, car(body), sc->code)))
 		return(goto_SAFE_DO_END_CLAUSES);
 		
+	      set_unsafe_do(sc->code);
 	      func = (s7_function)(fcdr(body));
 	      body = car(body);
 	      func = all_x_init(sc, func, body);
@@ -53086,19 +53014,14 @@ static int safe_do_ex(s7_scheme *sc)
   sc->envir = new_frame_in_env(sc, sc->envir);
   dox_slot1(sc->envir) = add_slot(sc, caaar(code), init_val); /* define the step var -- might be needed in the end clauses */
   
-#if WITH_GMP
-  if (s7_integer(init_val) == s7_integer(end_val))
-#else
     if ((s7_integer(init_val) == s7_integer(end_val)) ||
 	((s7_integer(init_val) > s7_integer(end_val)) &&
 	 (ecdr(car(cadr(code))) == geq_2)))
-#endif
       {
 	sc->code = cdr(cadr(code));
 	return(goto_SAFE_DO_END_CLAUSES);
       }
 
-#if (!WITH_GMP)
   if ((is_null(cdddr(sc->code))) &&
       (is_optimized(caadr(code))) &&
       (ecdr(caadr(code)) != geq_2))
@@ -53112,11 +53035,11 @@ static int safe_do_ex(s7_scheme *sc)
       stepper = slot_value(sc->args);
       denominator(stepper) = s7_integer(end_val);
 
-      if (rf_ok(sc, body, sc->code))
+      if ((!is_unsafe_do(sc->code)) &&
+	  (rf_ok(sc, body, sc->code)))
 	return(goto_SAFE_DO_END_CLAUSES);
+      set_unsafe_do(sc->code);
     }
-#endif  
-
 
   if (is_symbol(end))
     sc->args = find_symbol(sc, end);
@@ -53132,11 +53055,8 @@ static int safe_do_ex(s7_scheme *sc)
 
       step_slot = dox_slot1(sc->envir);
       end_slot = dox_slot2(sc->envir);
-#if (!WITH_GMP)
       use_geq = ((is_optimized(caadr(code))) && (ecdr(caadr(code)) == geq_2));
-#else
-      use_geq = false;
-#endif
+
       for (p = sc->code; is_pair(p); p = cdr(p))
 	set_fcdr(p, (s7_pointer)all_x_eval(sc, car(p), sc->envir)); /* safe local */
 
@@ -53249,11 +53169,7 @@ static int safe_do_step_1_ex(s7_scheme *sc)
 	  step_slot = dox_slot1(sc->envir);
 	  end_slot = dox_slot2(sc->envir);
 	  
-#if (!WITH_GMP)
 	  use_geq = ((is_optimized(caadr(code))) && (ecdr(caadr(code)) == geq_2));
-#else
-	  use_geq = false;
-#endif
 	  if (pair_syntax_op(body) == OP_INCREMENT_1)
 	    {
 	      increment = all_x_c;
@@ -53334,7 +53250,6 @@ static int dotimes_p_ex(s7_scheme *sc)
       return(goto_DO_END_CLAUSES);
     }
 
-#if (!WITH_GMP)
   if (ecdr(caadr(code)) != geq_2)
     {
       s7_pointer old_args, old_init;
@@ -53345,12 +53260,13 @@ static int dotimes_p_ex(s7_scheme *sc)
       slot_set_value(sc->args, make_mutable_integer(sc, integer(slot_value(dox_slot1(sc->envir)))));
       denominator(slot_value(sc->args)) = integer(slot_value(dox_slot2(sc->envir)));
       set_loop_bounds(sc->args);
-      if (rf_ok(sc, caddr(code), code))
+      if ((!is_unsafe_do(code)) &&
+	  (rf_ok(sc, caddr(code), code)))
 	return(goto_DO_END_CLAUSES);
+      set_unsafe_do(code);
       slot_set_value(sc->args, old_init);
       sc->args = old_args;
     }
-#endif
 
   push_stack(sc, OP_DOTIMES_STEP_P, sc->args, code);
   sc->code = caddr(code);
@@ -55537,14 +55453,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto SIMPLE_DO;
 	  
 	  
-	SAFE_DOTIMES_C_C:
-	case OP_SAFE_DOTIMES_C_C:
-	  if (safe_dotimes_c_c_ex(sc) == goto_SAFE_DO_END_CLAUSES) 
-	    goto SAFE_DO_END_CLAUSES;
-	  pair_set_syntax_symbol(sc->code, sc->SIMPLE_DO);
-	  goto SIMPLE_DO;
-	  
-	  
 	SAFE_DOTIMES_C_A:
 	case OP_SAFE_DOTIMES_C_A:
 	  if (safe_dotimes_c_a_ex(sc) == goto_SAFE_DO_END_CLAUSES) 
@@ -55675,13 +55583,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    step = s7_integer(slot_value(slot)) + 1;
 	    slot_set_value(slot, make_integer(sc, step));
 	    end = s7_integer(slot_value(dox_slot2(args)));
-#if WITH_GMP
-	    if (step == end)
-#else
-	      if ((step == end) ||
-		  ((step > end) &&
-		   (ecdr(caadr(code)) == geq_2)))
-#endif
+
+	    if ((step == end) ||
+		((step > end) &&
+		 (ecdr(caadr(code)) == geq_2)))
 		{
 		  sc->code = cdadr(code);
 		  goto DO_END_CLAUSES;
@@ -55910,13 +55815,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		now = slot_value(ctr);
 		if (is_integer(end))
 		  {
-#if (!WITH_GMP)
 		    if ((integer(now) == integer(end)) ||
 			((integer(now) > integer(end)) &&
 			 (ecdr(end_test) == geq_2)))
-#else
-		      if (integer(now) == integer(end))
-#endif
 			{
 			  sc->code = cdadr(code);
 			  goto DO_END_CLAUSES;
@@ -56140,7 +56041,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (op == sc->SAFE_DOTIMES_C_A)    goto SAFE_DOTIMES_C_A;
 	      if (op == sc->SIMPLE_DO)           goto SIMPLE_DO;
 	      if (op == sc->SIMPLE_DO_P)         goto SIMPLE_DO_P;
-	      if (op == sc->SAFE_DOTIMES_C_C)    goto SAFE_DOTIMES_C_C;
 	      if (op == sc->SIMPLE_SAFE_DOTIMES) goto SIMPLE_SAFE_DOTIMES;
 	      if (op == sc->DO_ALL_X)	         goto DO_ALL_X;
 	      if (op == sc->SAFE_DO_ALL_X)       goto SAFE_DO_ALL_X;
@@ -67954,7 +67854,6 @@ s7_scheme *s7_init(void)
   sc->SIMPLE_DO_E =           assign_internal_syntax(sc, "do",          OP_SIMPLE_DO_E);
   sc->SIMPLE_DO_FOREVER =     assign_internal_syntax(sc, "do",          OP_SIMPLE_DO_FOREVER);
   sc->SAFE_DOTIMES =          assign_internal_syntax(sc, "do",          OP_SAFE_DOTIMES);
-  sc->SAFE_DOTIMES_C_C =      assign_internal_syntax(sc, "do",          OP_SAFE_DOTIMES_C_C);
   sc->SAFE_DOTIMES_C_A =      assign_internal_syntax(sc, "do",          OP_SAFE_DOTIMES_C_A);
   sc->SIMPLE_SAFE_DOTIMES =   assign_internal_syntax(sc, "do",          OP_SIMPLE_SAFE_DOTIMES);
   sc->SAFE_DO =               assign_internal_syntax(sc, "do",          OP_SAFE_DO);
@@ -68887,19 +68786,19 @@ int main(int argc, char **argv)
  *
  * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1134
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136
- * teq           |      |      | 6612                     3887 3020 2516 2460
- * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3322
+ * teq           |      |      | 6612                     3887 3020 2516 2468
+ * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3320
  * tcopy         |      |      | 13.6                     5355 4728 3887 3827
- * tform         |      |      |                          6816 5536 4287 4027
+ * tform         |      |      |                          6816 5536 4287 3996
  * tmap          |      |      | 11.0           5031 4769 4685 4557 4230 4187
- * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5874
+ * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5897
  * titer         |      |      |                          7503 6793 6351 6105
- * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6272
+ * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6358
  * thash         |      |      |                          50.7 23.8 14.9 14.7
  *               |      |      |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.1
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 16.5
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 37.7
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 37.5
  * 
  * --------------------------------------------------------------------------
  *
@@ -68919,15 +68818,25 @@ int main(int argc, char **argv)
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
  *   with name/sync/sample settable
  *
+ * let-looped rf code might be collapsible [safe_dotimes_ex 52600, simple_safe_dotimes_ex just after it]
+ *   [simple* is the fm-violin optimization]
  * possibly more splits, previous splits can use the functions (if exported)
- * much of the rf code can be collapsed [52186+53150]
+ *   nrev special handling? [out_bank_1|2 +  all_pass + one_pole, also all_pass_bank in jcrev case]
  * is_all_real can be folded into preceding tree walk
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array
  *   free-var: slot search each time, so a special rf func?
  *   lambda* args: rf_closure* (with-let??) 
- * rf set|if -- tie in if cases
- * mark known unrfable cases (unsafe_do)
- * jcrev/nrev special handling [out_bank_1|2 +  mul_s_comb_bank and all_pass]
- * check for empty zones in do*_ex (and all_x)
+ *   rcos: simple_do_step->eval->safe_closure_star_s0, so if body is rfable, it could be handled [~/old/s7-closure-rf.c]
+ * rf set|if -- tie in if cases: if 1|2 in latter need to agree on types
+ * none of the _temp|_direct functions  are used much now -- s7_function_set_returns_temp not needed? [used only in clm2xen and here]
+ *  [these still make a difference, ~.1 in snd-test]
+ * freeverb needs frample->file|frample file->frample, then expand the loop to make the 5 cases explicit
+ *
+ * t258 fv88 needs constant as fv-set|ref index
+
+bad: (set! (gv i) g0)                   symbol val I think
+bad: (float-vector-set! fv1 j 2.5)      constant val
+bad: (float-vector-set! fv i (ifv 0))   constant index
+
  */

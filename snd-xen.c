@@ -2828,28 +2828,16 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
   Xen_define_procedure("fmod",           g_fmod_w,          2, 0, 0, "C's fmod");
 #endif
 
-#if HAVE_SCHEME && (!HAVE_GSL)
-#define Xen_define_real_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  do { \
-  s7_pointer sym, f;							\
-  sym = s7_define_safe_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc); \
-  f = s7_value(s7, sym); \
-  s7_function_set_returns_temp(f);\
-  } while (0)
-#else
-#define Xen_define_real_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc) Xen_define_safe_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc)
-#endif
-
 #if HAVE_SPECIAL_FUNCTIONS || HAVE_GSL
-  Xen_define_real_procedure(S_bes_j0, g_j0_w,     1, 0, 0, H_j0);
-  Xen_define_real_procedure(S_bes_j1, g_j1_w,     1, 0, 0, H_j1);
-  Xen_define_real_procedure(S_bes_jn, g_jn_w,     2, 0, 0, H_jn);
-  Xen_define_real_procedure(S_bes_y0, g_y0_w,     1, 0, 0, H_y0);
-  Xen_define_real_procedure(S_bes_y1, g_y1_w,     1, 0, 0, H_y1);
-  Xen_define_real_procedure(S_bes_yn, g_yn_w,     2, 0, 0, H_yn);
-  Xen_define_real_procedure("erf",    g_erf_w,    1, 0, 0, H_erf);
-  Xen_define_real_procedure("erfc",   g_erfc_w,   1, 0, 0, H_erfc);
-  Xen_define_real_procedure("lgamma", g_lgamma_w, 1, 0, 0, H_lgamma);
+  Xen_define_safe_procedure(S_bes_j0, g_j0_w,     1, 0, 0, H_j0);
+  Xen_define_safe_procedure(S_bes_j1, g_j1_w,     1, 0, 0, H_j1);
+  Xen_define_safe_procedure(S_bes_jn, g_jn_w,     2, 0, 0, H_jn);
+  Xen_define_safe_procedure(S_bes_y0, g_y0_w,     1, 0, 0, H_y0);
+  Xen_define_safe_procedure(S_bes_y1, g_y1_w,     1, 0, 0, H_y1);
+  Xen_define_safe_procedure(S_bes_yn, g_yn_w,     2, 0, 0, H_yn);
+  Xen_define_safe_procedure("erf",    g_erf_w,    1, 0, 0, H_erf);
+  Xen_define_safe_procedure("erfc",   g_erfc_w,   1, 0, 0, H_erfc);
+  Xen_define_safe_procedure("lgamma", g_lgamma_w, 1, 0, 0, H_lgamma);
 #endif
 
   Xen_define_safe_procedure(S_bes_i0, g_i0_w,     1, 0, 0, H_i0);

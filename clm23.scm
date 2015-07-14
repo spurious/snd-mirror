@@ -555,8 +555,8 @@
 	    (do ((i start (+ i 1))) ((= i end))
 	      (outa i (* ampa (ina i *reverb*))))
 	    (do ((i start (+ i 1))) ((= i end))
-	      (if (> ampa 0.0) (outa i (* ampa (ina i *reverb*))))
-	      (if (> ampb 0.0) (outb i (* ampb (inb i *reverb*)))))))))
+	      (outa i (* ampa (ina i *reverb*)))
+	      (outb i (* ampb (inb i *reverb*))))))))
 
 (define (simple-f2s beg dur amp file)
   (let ((start (seconds->samples beg))

@@ -9190,19 +9190,6 @@ Xen_wrap_1_optional_arg(g_make_snd_to_sample_w, g_make_snd_to_sample)
 Xen_wrap_4_optional_args(g_edit_list_to_function_w, g_edit_list_to_function)
 Xen_wrap_1_arg(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 
-#if HAVE_SCHEME
-#define Xen_define_direct_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  do { \
-  s7_pointer sym, f;							\
-  sym = s7_define_safe_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc); \
-  f = s7_symbol_value(s7, sym);					\
-  s7_function_set_returns_temp(f);\
-  } while (0)
-#else
-#define Xen_define_direct_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc) Xen_define_safe_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc)
-#endif
-
-
 void g_init_edits(void)
 {
 #if HAVE_SCHEME
@@ -9226,15 +9213,15 @@ void g_init_edits(void)
 
   Xen_define_safe_procedure(S_make_sampler,           g_make_sampler_w,           0, 5, 0, H_make_sampler);
   Xen_define_safe_procedure(S_make_region_sampler,    g_make_region_sampler_w,    1, 3, 0, H_make_region_sampler);
-  Xen_define_direct_procedure(S_read_sample,          g_read_sample_w,            1, 0, 0, H_read_sample);
-  Xen_define_direct_procedure(S_read_sample_with_direction, g_read_sample_with_direction_w, 2, 0, 0, H_read_sample_with_direction);
+  Xen_define_safe_procedure(S_read_sample,            g_read_sample_w,            1, 0, 0, H_read_sample);
+  Xen_define_safe_procedure(S_read_sample_with_direction, g_read_sample_with_direction_w, 2, 0, 0, H_read_sample_with_direction);
   Xen_define_safe_procedure(S_read_region_sample,     g_read_sample_w,            1, 0, 0, H_read_sample);
-  Xen_define_direct_procedure(S_next_sample,          g_next_sample_w,            1, 0, 0, H_next_sample);
-  Xen_define_direct_procedure(S_previous_sample,      g_previous_sample_w,        1, 0, 0, H_previous_sample);
+  Xen_define_safe_procedure(S_next_sample,            g_next_sample_w,            1, 0, 0, H_next_sample);
+  Xen_define_safe_procedure(S_previous_sample,        g_previous_sample_w,        1, 0, 0, H_previous_sample);
   Xen_define_safe_procedure(S_free_sampler,           g_free_sampler_w,           1, 0, 0, H_free_sampler);
   Xen_define_safe_procedure(S_sampler_home,           g_sampler_home_w,           1, 0, 0, H_sampler_home);
-  Xen_define_safe_procedure(S_is_sampler,             g_is_sampler_w,              1, 0, 0, H_is_sampler);
-  Xen_define_safe_procedure(S_is_region_sampler,      g_region_is_sampler_w,       1, 0, 0, H_region_is_sampler);
+  Xen_define_safe_procedure(S_is_sampler,             g_is_sampler_w,             1, 0, 0, H_is_sampler);
+  Xen_define_safe_procedure(S_is_region_sampler,      g_region_is_sampler_w,      1, 0, 0, H_region_is_sampler);
   Xen_define_safe_procedure(S_is_sampler_at_end,      g_sampler_at_end_w,         1, 0, 0, H_sampler_at_end);
   Xen_define_safe_procedure(S_sampler_position,       g_sampler_position_w,       1, 0, 0, H_sampler_position);
   Xen_define_safe_procedure(S_copy_sampler,           g_copy_sampler_w,           1, 0, 0, H_copy_sampler);

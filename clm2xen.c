@@ -9491,14 +9491,11 @@ Xen_wrap_no_args(g_get_internal_real_time_w, g_get_internal_real_time)
 /* -------------------------------- scheme-side optimization -------------------------------- */
 
 #if HAVE_SCHEME
-/* many of these are not in xen.h */
 #define car(E)    s7_car(E)
 #define cdr(E)    s7_cdr(E)
 #define cadr(E)   s7_cadr(E)
 #define caddr(E)  s7_caddr(E)
 #define cadddr(E) s7_cadddr(E)
-#define cdar(E)   s7_cdar(E)
-#define cdadr(E)  s7_cdadr(E)
 #define cadddr(E) s7_cadddr(E)
 
 static mus_float_t mus_nsin_unmodulated(mus_any *p) {return(mus_nsin(p, 0.0));}
@@ -10664,6 +10661,50 @@ static s7_rf_t is_file_to_sample_rf(s7_scheme *sc, s7_pointer expr)
 }
 
 
+static s7_pointer file_to_frample_pf_sss(s7_scheme *sc, s7_pointer **p)
+{
+  /* (file->frample gen loc fv) -> fv */
+  s7_pointer ind, fv;
+  mus_any *stream;
+  stream = (mus_any *)(**p); (*p)++;
+  ind = s7_slot_value(**p); (*p)++;
+  fv = s7_slot_value(**p); (*p)++;
+  mus_file_to_frample(stream, s7_integer(ind), s7_float_vector_elements(fv));
+  return(fv);
+}
+
+static s7_pf_t is_file_to_frample_pf(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer ind_sym, ind_slot, fv_slot, fv_sym, sym, o;
+  mus_xen *gn;
+  
+  if (!s7_is_null(sc, s7_cddddr(expr))) return(NULL);
+
+  sym = s7_cadr(expr);
+  if (!s7_is_symbol(sym)) return(NULL);
+  o = s7_symbol_value(sc, sym);
+  gn = (mus_xen *)s7_object_value_checked(o, mus_xen_tag);
+  if (!gn) return(NULL);
+  s7_xf_store(sc, (s7_pointer)(gn->gen));
+
+  ind_sym = s7_caddr(expr);
+  if (!s7_is_symbol(ind_sym)) return(NULL);
+  ind_slot = s7_slot(sc, ind_sym);
+  if (ind_slot == xen_undefined) return(NULL);
+  if (!s7_is_integer(s7_slot_value(ind_slot))) return(NULL);
+  s7_xf_store(sc, ind_slot);
+
+  fv_sym = s7_cadddr(expr);
+  if (!s7_is_symbol(fv_sym)) return(NULL);
+  fv_slot = s7_slot(sc, fv_sym);
+  if (fv_slot == xen_undefined) return(NULL);
+  if (!s7_is_float_vector(s7_slot_value(fv_slot))) return(NULL);
+  s7_xf_store(sc, fv_slot);
+  
+  return(file_to_frample_pf_sss);
+}
+
+
 static s7_double ina_rf_ss(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer ind_slot;
@@ -11033,7 +11074,7 @@ static s7_double mul_env_oscil_x_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_rf_t r2;
   mus_any *e, *o; 
-  (*p)++; (*p)++; /* skip env and oscil */
+  (*p) += 2; /* skip env and oscil */
   e = (mus_any *)(**p); (*p)++;
   o = (mus_any *)(**p); (*p)++;
   r2 = (s7_rf_t)(**p); (*p)++;
@@ -11045,12 +11086,12 @@ static s7_double fm_violin_rf(s7_scheme *sc, s7_pointer **p)
   mus_any *e, *o, *fp, *a; 
   s7_pointer vib;
 
-  (*p)++; (*p)++; 
+  (*p) += 2;
   e = (mus_any *)(**p); (*p)++;
-  o = (mus_any *)(**p); (*p)++; (*p)++;
+  o = (mus_any *)(**p); (*p) += 2;
   vib = s7_slot_value(**p); (*p) += 4;
   a = (mus_any *)(**p); (*p)++;
-  fp = (mus_any *)(**p); (*p)++; (*p)++;
+  fp = (mus_any *)(**p); (*p) += 2;
   return(mus_env(e) * mus_oscil_fm(o, s7_real(vib) + (mus_env(a) * mus_polywave(fp, s7_real(vib)))));
 }
 
@@ -11058,7 +11099,7 @@ static s7_double mul_env_polywave_x_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_rf_t r2;
   mus_any *e, *o; 
-  (*p)++; (*p)++; /* skip env and oscil */
+  (*p) += 2;
   e = (mus_any *)(**p); (*p)++;
   o = (mus_any *)(**p); (*p)++;
   r2 = (s7_rf_t)(**p); (*p)++;
@@ -11069,7 +11110,7 @@ static s7_double mul_env_polywave_s_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer s1;
   mus_any *e, *o; 
-  (*p)++; (*p)++; /* skip env and oscil */
+  (*p) += 2;
   e = (mus_any *)(**p); (*p)++;
   o = (mus_any *)(**p); (*p)++;
   s1 = s7_slot_value(**p); (*p)++;
@@ -11081,7 +11122,7 @@ static s7_double mul_s_comb_bank_x_rf(s7_scheme *sc, s7_pointer **p)
   s7_rf_t r1;
   s7_pointer s1;
   mus_any *o; 
-  s1 = s7_slot_value(**p); (*p)++; (*p)++; 
+  s1 = s7_slot_value(**p); (*p) += 2;
   o = (mus_any *)(**p); (*p)++;
   r1 = (s7_rf_t)(**p); (*p)++;
   return(s7_number_to_real(sc, s1) * mus_comb_bank(o, r1(sc, p)));
@@ -11170,7 +11211,7 @@ static s7_rf_t clm_multiply_rf(s7_scheme *sc, s7_pointer expr)
 static s7_double add_env_ri_rf(s7_scheme *sc, s7_pointer **p)
 {
   mus_any *e, *o; 
-  (*p)++; (*p)++; /* skip env and rand_interp */
+  (*p) += 2;
   e = (mus_any *)(**p); (*p)++;
   o = (mus_any *)(**p); (*p)++;
   return(mus_env(e) + mus_rand_interp_unmodulated(o));
@@ -11179,7 +11220,7 @@ static s7_double add_env_ri_rf(s7_scheme *sc, s7_pointer **p)
 static s7_double add_tri_ri_rf(s7_scheme *sc, s7_pointer **p)
 {
   mus_any *e, *o; 
-  (*p)++; (*p)++; /* skip triangle-wave and rand_interp */
+  (*p) += 2;
   e = (mus_any *)(**p); (*p)++;
   o = (mus_any *)(**p); (*p)++;
   return(mus_triangle_wave_unmodulated(e) + mus_rand_interp_unmodulated(o));
@@ -11312,6 +11353,7 @@ static void init_choosers(s7_scheme *sc)
   s7_rf_set_function(s7_name_to_value(sc, S_outb), is_outb_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_ina), is_ina_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_file_to_sample), is_file_to_sample_rf);
+  s7_pf_set_function(s7_name_to_value(sc, S_file_to_frample), is_file_to_frample_pf);
   s7_rf_set_function(s7_name_to_value(sc, S_oscil), is_oscil_rf_3);
   s7_rf_set_function(s7_name_to_value(sc, S_polywave), is_polywave_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_wave_train), is_wave_train_rf);

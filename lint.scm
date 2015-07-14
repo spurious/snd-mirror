@@ -3632,6 +3632,7 @@
 			       (when (and (pair? end-test)
 					  (= (length vars) 1)
 					  (= (length body) 1)
+					  (pair? (car body)) 
 					  (memq (caar body) '(vector-set! float-vector-set! list-set! string-set!))
 					  (equal? (var-type (car vars)) +integer+)
 					  (eq? (car end-test) '=)
