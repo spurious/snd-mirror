@@ -8693,11 +8693,15 @@ Ruby:   set_sample(100, 0.5)
 Forth:  100 0.5 set-sample
 </pre>
 
-<p>If the desired sample happens to fall outside the current buffer 
-for the indicated channel, sample grinds to a halt &mdash; if you're 
-running a loop through a bunch of samples, use the <a href="#samplers">samplers</a> 
-or <a href="#channeltovct">channel-&gt;vct</a> instead.  'samp' defaults to the current cursor location.
+<p>'samp' defaults to the current cursor location.  If 'chn' is #t, sample returns a list of all the
+samples at 'samp', so:
 </p>
+
+<pre class="indented">
+(define* (frample samp snd edpos)
+  (apply float-vector (sample samp snd #t edpos)))
+</pre>
+
 <div class="separator"></div>
 
 

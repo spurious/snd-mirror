@@ -426,6 +426,8 @@
 
 	      (set! (dline2 1) (+ temp (* (coeffs 1) (- glotsamp temp))))
 	      (set! temp (+ glotsamp (- (dline2 1) temp)))
+	      (set! temp (singer-filter 1 noseposition temp dline1 dline2 coeffs))
+#|
 	      (let ((x 0.0))
 		(do ((j 2 (+ j 1))
 		     (k 1 (+ k 1)))
@@ -435,6 +437,7 @@
 		  (set! temp1 temp)
 		  (set! temp (+ (float-vector-ref dline1 k) (- (float-vector-ref dline2 j) x)))
 		  (float-vector-set! dline1 k temp1)))
+|#
 	      (set! j noseposition)	;added
 	      ;;next nasal tick
 	      (let ((plussamp (dline1 (- j 1)))
@@ -481,6 +484,8 @@
 	      (set! temp nose-last-plus-refl)
 	      
 	      ;; j always starts at 4, goes to 8 so this loop can be unrolled, but doing so doesn't make a big difference
+	      (set! temp (singer-filter noseposition tractlength-1 temp dline1 dline2 coeffs))
+#|
 	      (let ((x 0.0))
 		(do ((j (+ noseposition 1) (+ j 1))
 		     (k noseposition (+ k 1)))
@@ -490,6 +495,7 @@
 		  (set! temp1 temp)
 		  (set! temp (+ (float-vector-ref dline1 k) (- (float-vector-ref dline2 j) x)))
 		  (float-vector-set! dline1 k temp1)))
+|#
 
 	      (set! (dline2 tractlength-1) (+ last-lip-refl (* (coeffs tractlength-1) (- (dline1 tractlength-2) last-lip-refl))))
 	      (set! (dline1 tractlength-1) (+ (dline1 tractlength-2) (- (dline2 tractlength-1) last-lip-refl)))

@@ -4931,6 +4931,41 @@ static Xen g_piano_noise(Xen gen, XEN amp)
   noi *= (((s7_double)pn_gen * 4.6566128730774e-10) - 1.0);
   return(C_double_to_Xen_real(noi));
 }
+
+#define S_singer_filter "singer-filter"
+static Xen g_singer_filter(Xen start, Xen end, Xen tmp, Xen dline1, Xen dline2, Xen coeffs)
+{
+  #define H_singer_filter "this is an optimization for the singer instrument"
+  int j, k, beg, lim;
+  s7_double *d1, *d2, *cf;
+  s7_double temp, temp1, x;
+
+  if (!s7_is_integer(start)) s7_wrong_type_arg_error(s7, S_singer_filter, 1, start, "an integer");
+  if (!s7_is_integer(end)) s7_wrong_type_arg_error(s7, S_singer_filter, 2, end, "an integer");
+  if (!s7_is_real(tmp)) s7_wrong_type_arg_error(s7, S_singer_filter, 3, tmp, "a real");
+  if (!s7_is_float_vector(dline1)) s7_wrong_type_arg_error(s7, S_singer_filter, 3, dline1, "a float-vector");
+  if (!s7_is_float_vector(dline2)) s7_wrong_type_arg_error(s7, S_singer_filter, 4, dline2, "a float-vector");
+  if (!s7_is_float_vector(coeffs)) s7_wrong_type_arg_error(s7, S_singer_filter, 5, coeffs, "a float-vector");
+  
+  x = 0.0;
+  beg = s7_integer(start);
+  lim = s7_integer(end);
+  d1 = s7_float_vector_elements(dline1);
+  d2 = s7_float_vector_elements(dline2);
+  cf = s7_float_vector_elements(coeffs);
+  temp = s7_number_to_real(s7, tmp);
+
+  for (k = beg, j = beg + 1; j < lim; k++, j++)
+    {
+      x = d2[j + 1];
+      d2[j] = x + (cf[j] * (d1[k] - x));
+      temp1 = temp;
+      temp = d1[k] + d2[j] - x;
+      d1[k] = temp1;
+    }
+  return(s7_make_real(s7, temp));
+}
+
 #endif
 
 
@@ -10705,6 +10740,113 @@ static s7_pf_t is_file_to_frample_pf(s7_scheme *sc, s7_pointer expr)
 }
 
 
+static s7_pointer frample_to_file_pf_sss(s7_scheme *sc, s7_pointer **p)
+{
+  /* (frample->file gen loc fv) -> fv */
+  s7_pointer ind, fv;
+  mus_any *stream;
+  stream = (mus_any *)(**p); (*p)++;
+  ind = s7_slot_value(**p); (*p)++;
+  fv = s7_slot_value(**p); (*p)++;
+  mus_frample_to_file(stream, s7_integer(ind), s7_float_vector_elements(fv));
+  return(fv);
+}
+
+static s7_pointer frample_to_file_pf_ssx(s7_scheme *sc, s7_pointer **p)
+{
+  /* (frample->file gen loc fv) -> fv */
+  s7_pointer ind, fv;
+  s7_pf_t pf;
+  mus_any *stream;
+  stream = (mus_any *)(**p); (*p)++;
+  ind = s7_slot_value(**p); (*p)++;
+  pf = (s7_pf_t)(**p); (*p)++;
+  fv = pf(sc, p);
+  mus_frample_to_file(stream, s7_integer(ind), s7_float_vector_elements(fv));
+  return(fv);
+}
+
+static s7_pf_t is_frample_to_file_pf(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer ind_sym, ind_slot, fv_slot, fv_sym, sym, o;
+  mus_xen *gn;
+  if (!s7_is_null(sc, s7_cddddr(expr))) return(NULL);
+
+  sym = s7_cadr(expr);
+  if (!s7_is_symbol(sym)) return(NULL);
+  o = s7_symbol_value(sc, sym);
+  gn = (mus_xen *)s7_object_value_checked(o, mus_xen_tag);
+  if (!gn) return(NULL);
+  s7_xf_store(sc, (s7_pointer)(gn->gen));
+
+  ind_sym = s7_caddr(expr);
+  if (!s7_is_symbol(ind_sym)) return(NULL);
+  ind_slot = s7_slot(sc, ind_sym);
+  if (ind_slot == xen_undefined) return(NULL);
+  if (!s7_is_integer(s7_slot_value(ind_slot))) return(NULL);
+  s7_xf_store(sc, ind_slot);
+
+  fv_sym = s7_cadddr(expr);
+  if (s7_is_symbol(fv_sym))
+    {
+      fv_slot = s7_slot(sc, fv_sym);
+      if (fv_slot == xen_undefined) return(NULL);
+      if (!s7_is_float_vector(s7_slot_value(fv_slot))) return(NULL);
+      s7_xf_store(sc, fv_slot);
+      return(frample_to_file_pf_sss);
+    }
+  if (s7_is_pair(fv_sym))
+    {
+      s7_pp_t pp;
+      s7_pf_t pf;
+      int loc;
+      pp = s7_pf_function(sc, s7_symbol_value(sc, s7_car(fv_sym)));
+      if (!pp) return(NULL);
+      loc = s7_xf_store(sc, NULL);
+      pf = pp(sc, fv_sym);
+      if (!pf) return(NULL);
+      s7_xf_store_at(sc, loc, (s7_pointer)pf);
+      return(frample_to_file_pf_ssx);
+    }
+  return(NULL);
+}
+
+
+static s7_pointer frample_to_frample_pf_all_s(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer matrix, in_data, in_chans, out_data, out_chans;
+  matrix = s7_slot_value(**p); (*p)++;
+  in_data = s7_slot_value(**p); (*p)++;
+  in_chans = s7_slot_value(**p); (*p)++;
+  out_data = s7_slot_value(**p); (*p)++;
+  out_chans = s7_slot_value(**p); (*p)++;
+
+  mus_frample_to_frample(s7_float_vector_elements(matrix), (int)sqrt(s7_vector_length(matrix)),
+			 s7_float_vector_elements(in_data), s7_number_to_integer(sc, in_chans),
+			 s7_float_vector_elements(out_data), s7_number_to_integer(sc, out_chans));
+  return(out_data);
+}
+
+static s7_pf_t is_frample_to_frample_pf(s7_scheme *sc, s7_pointer expr)
+{
+  s7_int i;
+  s7_pointer p;
+  for (i = 0, p = s7_cdr(expr); (s7_is_pair(p)) && (i < 5); i++, p = s7_cdr(p))
+    {
+      if (s7_is_symbol(s7_car(p)))
+	{
+	  s7_pointer slot;
+	  slot = s7_slot(sc, s7_car(p));
+	  if (slot == xen_undefined) return(NULL);
+	  s7_xf_store(sc, slot);
+	}
+      else return(NULL);
+    }
+  if ((i == 5) && (s7_is_null(sc, p)))
+    return(frample_to_frample_pf_all_s);
+  return(NULL);
+}
+
 static s7_double ina_rf_ss(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer ind_slot;
@@ -11354,6 +11496,8 @@ static void init_choosers(s7_scheme *sc)
   s7_rf_set_function(s7_name_to_value(sc, S_ina), is_ina_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_file_to_sample), is_file_to_sample_rf);
   s7_pf_set_function(s7_name_to_value(sc, S_file_to_frample), is_file_to_frample_pf);
+  s7_pf_set_function(s7_name_to_value(sc, S_frample_to_file), is_frample_to_file_pf);
+  s7_pf_set_function(s7_name_to_value(sc, S_frample_to_frample), is_frample_to_frample_pf);
   s7_rf_set_function(s7_name_to_value(sc, S_oscil), is_oscil_rf_3);
   s7_rf_set_function(s7_name_to_value(sc, S_polywave), is_polywave_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_wave_train), is_wave_train_rf);
@@ -11761,6 +11905,7 @@ Xen_wrap_3_args(g_out_bank_w, g_out_bank)
 
 #if HAVE_SCHEME
 Xen_wrap_2_args(g_piano_noise_w, g_piano_noise)
+Xen_wrap_6_args(g_singer_filter_w, g_singer_filter)
 
 #define Xen_define_real_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   do { \
@@ -12332,6 +12477,7 @@ static void mus_xen_init(void)
 
 #if HAVE_SCHEME
   Xen_define_real_procedure(S_piano_noise,            g_piano_noise_w,            2, 0, 0, H_piano_noise);
+  Xen_define_safe_procedure(S_singer_filter,          g_singer_filter_w,          6, 0, 0, H_singer_filter);
 
   s7_define_safe_function_star(s7, S_make_oscil,      g_make_oscil, "(frequency 0.0) (initial-phase 0.0)", H_make_oscil);
   s7_define_safe_function_star(s7, S_make_ncos,       g_make_ncos,  "(frequency 0.0) (n 1)",               H_make_ncos);
