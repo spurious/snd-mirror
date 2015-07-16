@@ -328,7 +328,7 @@
 			(loop-gain-ry (* releaseLoopGain (In-t60 loop-gain-env-t60)))
 			(loop-gain-rx (- 1.0 (In-t60 loop-gain-env-t60)))
 
-			(dry-coef DryTapFiltCoefCurrent)
+			(dry-coef (* 1.0 DryTapFiltCoefCurrent))
 			(dry-coef-ry (* DryTapFiltCoefTarget (In-t60 DryTapFiltCoeft60)))
 			(dry-coef-rx (- 1.0 (In-t60 DryTapFiltCoeft60)))
 
@@ -348,84 +348,77 @@
 			(adelOut 0.0)
 			(adelIn 0.0)
 			(totalTap 0.0)
-			(is-release-time #f)
 			(string1-junction-input 0.0)
 			(string2-junction-input 0.0)
 			(string3-junction-input 0.0)
 			(couplingFilter-input 0.0)
 			(couplingFilter-output 0.0)
 			(temp1 0.0)
-			(noi 0.0)
 			;; (pn-gen 16383)
 			(pnoise (int-vector 16383))
+			(interp 0.0)
 			)
 
-		    (do ((i beg (+ i 1)))
-			((= i end))
-		      
-		      (if is-release-time
-			  (set! loop-gain (+ loop-gain-ry (* loop-gain-rx loop-gain)))
-			  (if (= i release-time)
-			      (begin
-				(set! is-release-time #t)
-				(set! dryTap-rx (- 1.0 sb-cutoff-rate))
-				(set! wetTap-rx dryTap-rx))))
-		      
-		      (set! noi (piano-noise pnoise amp))
-		      ;; (set! pn-gen (logand (+ (* pn-gen 1103515245) 12345) #xffffffff))
-		      ;; (set! noi (* amp (- (* pn-gen 4.6566128730774e-10) 1.0)))
+		    (define (piano-loop beg end)
+		      (do ((i beg (+ i 1)))
+			  ((= i end))
+			
+			(set! loop-gain (+ (* interp (+ loop-gain-ry (* loop-gain-rx loop-gain)))
+					   (* (- 1.0 interp) loop-gain-default)))
+			
+			(set! temp1 (one-zero dryTap0 (one-pole dryTap1 (piano-noise pnoise amp))))
+			(set! dry-coef (+ dry-coef-ry (* dry-coef-rx dry-coef)))
+			(set! dryTap-one-pole-swept (- (* (+ 1.0 dry-coef) temp1) (* dry-coef dryTap-one-pole-swept)))
+			(set! dryTap-x (* dryTap-x dryTap-rx))
+			(set! dryTap (* dryTap-x dryTap-one-pole-swept))
+			
+			(set! temp1 (one-zero wetTap0 (one-pole wetTap1 (piano-noise pnoise amp))))
+			(set! wet-coef (+ wet-coef-ry (* wet-coef-rx wet-coef)))
+			(set! wetTap-one-pole-swept (- (* (+ 1.0 wet-coef) temp1) (* wet-coef wetTap-one-pole-swept)))
+			(set! wetTap-x (* wetTap-x wetTap-rx))
+			(set! openStrings (* wetTap-x wetTap-one-pole-swept))
+			
+			(set! totalTap (+ dryTap openStrings))
+			
+			(set! adelIn (one-pole op1 (one-pole op2 (one-pole op3 (one-pole op4 totalTap)))))
+			(set! combedExcitationSignal (* hammerGain (+ adelOut (* adelIn StrikePositionInvFac))))
+			(set! adelOut (one-pole-all-pass agraffe-tuning-ap1 (delay agraffe-delay1 adelIn)))
+			
+			(set! string1-junction-input 
+			      (+ (* unaCordaGain combedExcitationSignal)
+				 (* loop-gain
+				    (delay string1-delay
+					   (one-pole-all-pass string1-tuning-ap 
+							      (one-pole-all-pass string1-stiffness-ap 
+										 (+ string1-junction-input couplingFilter-output)))))))
+			(set! string2-junction-input 
+			      (+ combedExcitationSignal
+				 (* loop-gain 
+				    (delay string2-delay
+					   (one-pole-all-pass string2-tuning-ap 
+							      (one-pole-all-pass string2-stiffness-ap 
+										 (+ string2-junction-input couplingFilter-output)))))))
+			(set! string3-junction-input 
+			      (+ combedExcitationSignal
+				 (* loop-gain
+				    (delay string3-delay
+					   (one-pole-all-pass string3-tuning-ap 
+							      (one-pole-all-pass string3-stiffness-ap
+										 (+ string3-junction-input couplingFilter-output)))))))
 
-		      (set! temp1 (one-zero dryTap0 (one-pole dryTap1 noi)))
-		      (set! dry-coef (+ dry-coef-ry (* dry-coef-rx dry-coef)))
-		      (set! dryTap-one-pole-swept (- (* (+ 1.0 dry-coef) temp1) (* dry-coef dryTap-one-pole-swept)))
-		      (set! dryTap-x (* dryTap-x dryTap-rx))
-		      (set! dryTap (* dryTap-x dryTap-one-pole-swept))
+			(set! couplingFilter-input (+ string1-junction-input string2-junction-input string3-junction-input))
+			(set! couplingFilter-output (one-zero cou0 (one-pole cou1 couplingFilter-input)))
+			
+			(outa i couplingFilter-input)))
 
-		      (set! noi (piano-noise pnoise amp))
-		      ;; (set! pn-gen (logand (+ (* pn-gen 1103515245) 12345) #xffffffff))
-		      ;; (set! noi (* amp (- (* pn-gen 4.6566128730774e-10) 1.0))))
-
-		      (set! temp1 (one-zero wetTap0 (one-pole wetTap1 noi)))
-		      (set! wet-coef (+ wet-coef-ry (* wet-coef-rx wet-coef)))
-		      (set! wetTap-one-pole-swept (- (* (+ 1.0 wet-coef) temp1) (* wet-coef wetTap-one-pole-swept)))
-		      (set! wetTap-x (* wetTap-x wetTap-rx))
-		      (set! openStrings (* wetTap-x wetTap-one-pole-swept))
-							   
-		      (set! totalTap (+ dryTap openStrings))
-		      
-		      (set! adelIn (one-pole op1 (one-pole op2 (one-pole op3 (one-pole op4 totalTap)))))
-		      (set! combedExcitationSignal (* hammerGain (+ adelOut (* adelIn StrikePositionInvFac))))
-		      (set! noi (delay agraffe-delay1 adelIn))
-		      (set! adelOut (one-pole-all-pass agraffe-tuning-ap1 noi))
-		      
-		      (set! string1-junction-input (+ string1-junction-input couplingFilter-output))
-		      (set! string1-junction-input (one-pole-all-pass string1-stiffness-ap string1-junction-input))
-		      (set! string1-junction-input (+ (* unaCordaGain combedExcitationSignal)
-						      (* loop-gain
-							 (delay string1-delay
-								(one-pole-all-pass string1-tuning-ap string1-junction-input)))))
-		      
-		      (set! string2-junction-input (+ string2-junction-input couplingFilter-output))
-		      (set! string2-junction-input (one-pole-all-pass string2-stiffness-ap string2-junction-input))
-		      (set! string2-junction-input (+ combedExcitationSignal
-						      (* loop-gain 
-							 (delay string2-delay
-								(one-pole-all-pass string2-tuning-ap string2-junction-input)))))
-		      
-		      (set! string3-junction-input (+ string3-junction-input couplingFilter-output))
-		      (set! string3-junction-input (one-pole-all-pass string3-stiffness-ap string3-junction-input))
-		      (set! string3-junction-input (+ combedExcitationSignal
-						      (* loop-gain
-							 (delay string3-delay
-								(one-pole-all-pass string3-tuning-ap string3-junction-input)))))
-		      
-		      (set! couplingFilter-input (+ string1-junction-input string2-junction-input string3-junction-input))
-		      (set! couplingFilter-output (one-zero cou0 (one-pole cou1 couplingFilter-input)))
-		      
-		      (outa i couplingFilter-input))))))))))))
+		    (piano-loop beg release-time)
+		    (set! dryTap-rx (- 1.0 sb-cutoff-rate))
+		    (set! wetTap-rx dryTap-rx)
+		    (set! interp 1.0)
+		    (piano-loop release-time end)
+		    ))))))))))
 
 #|
-
 (with-sound ()
 	    (do ((i 0 (+ i 1))) ((= i 8))
 	      (p

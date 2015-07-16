@@ -455,7 +455,7 @@
 			  (set! time-nose-closed (+ time-nose-closed 1))) ; added 1 bil 17-Apr-11 but didn't test it
 		      ;; nasal tick
 		      (let ((nose-reftemp (+ (* alpha1 plussamp) (* alpha2 minussamp) (* alpha3 (nose2 1)))))
-			(let ((nose-t1 0.0)
+			(let (;(nose-t1 0.0)
 			      (nose-temp 0.0)
 			      (plus-in (* velum-pos (- nose-reftemp (nose2 1)))))
 			  (set! nose-last-minus-refl (- nose-reftemp plussamp))
@@ -463,6 +463,9 @@
 			  (set! nose-reftemp (* (nose-coeffs 1) (- plus-in (nose2 2))))
 			  (set! (nose2 1) (+ (nose2 2) nose-reftemp))
 			  (set! nose-temp (+ plus-in nose-reftemp))
+			  
+			  (set! nose-temp (singer-nose-filter noselength-1 nose-temp nose1 nose2 nose-coeffs))
+#|
 			  (do ((j 2 (+ j 1))
 			       (k 1 (+ k 1)))
 			      ((= j noselength-1))
@@ -471,6 +474,8 @@
 			    (set! nose-t1 nose-temp)
 			    (set! nose-temp (+ (nose1 k) nose-reftemp))
 			    (set! (nose1 k) nose-t1))
+|#
+
 			  (set! nose-reftemp (* (nose-coeffs noselength-1) (- (nose1 noselength-2) (* nose-last-output 0.25))))
 			  (set! (nose2 noselength-1) (+ (* nose-last-output 0.25) nose-reftemp))
 			  (set! (nose1 noselength-1) (+ (nose1 noselength-2) nose-reftemp))

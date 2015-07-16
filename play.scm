@@ -176,10 +176,8 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
       (let ((len 44100)
 	    (osc (make-oscil freq)))
 	(play (lambda ()
-		(set! len (- len 1))
-		(if (<= len 0)
-		    #f
-		    (* amp (oscil osc)))))))))
+		(and (positive? (set! len (- len 1)))
+		     (* amp (oscil osc)))))))))
 
 
 (define play-sines 

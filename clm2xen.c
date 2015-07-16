@@ -4912,25 +4912,24 @@ static Xen g_pink_noise(Xen gens)
 }
 
 #if HAVE_SCHEME
+static s7_double piano_noise(s7_int *g, s7_double noi)
+{
+  g[0] = ((g[0] * 1103515245) + 12345) & 0xffffffff;
+  noi *= (((s7_double)g[0] * 4.6566128730774e-10) - 1.0);
+  return(noi);
+}
+
 #define S_piano_noise "piano-noise"
 static Xen g_piano_noise(Xen gen, XEN amp)
 {
-  #define H_piano_noise "(piano-noise gen) generates the noise used in the piano instrument."
-  s7_double noi;
-  s7_int *ints;
-  s7_int pn_gen;
+  #define H_piano_noise "(piano-noise gen amp) generates the noise used in the piano instrument."
 
   if (!s7_is_int_vector(gen)) s7_wrong_type_arg_error(s7, S_piano_noise, 1, gen, "an int-vector");
   if (!s7_is_real(amp)) s7_wrong_type_arg_error(s7, S_piano_noise, 2, amp, "a real");
 
-  ints = s7_int_vector_elements(gen);
-  noi = Xen_real_to_C_double(amp);
-  
-  pn_gen = (*ints);
-  (*ints) = ((pn_gen * 1103515245) + 12345) & 0xffffffff;
-  noi *= (((s7_double)pn_gen * 4.6566128730774e-10) - 1.0);
-  return(C_double_to_Xen_real(noi));
+  return(C_double_to_Xen_real(piano_noise(s7_int_vector_elements(gen), Xen_real_to_C_double(amp))));
 }
+
 
 #define S_singer_filter "singer-filter"
 static Xen g_singer_filter(Xen start, Xen end, Xen tmp, Xen dline1, Xen dline2, Xen coeffs)
@@ -4943,9 +4942,9 @@ static Xen g_singer_filter(Xen start, Xen end, Xen tmp, Xen dline1, Xen dline2, 
   if (!s7_is_integer(start)) s7_wrong_type_arg_error(s7, S_singer_filter, 1, start, "an integer");
   if (!s7_is_integer(end)) s7_wrong_type_arg_error(s7, S_singer_filter, 2, end, "an integer");
   if (!s7_is_real(tmp)) s7_wrong_type_arg_error(s7, S_singer_filter, 3, tmp, "a real");
-  if (!s7_is_float_vector(dline1)) s7_wrong_type_arg_error(s7, S_singer_filter, 3, dline1, "a float-vector");
-  if (!s7_is_float_vector(dline2)) s7_wrong_type_arg_error(s7, S_singer_filter, 4, dline2, "a float-vector");
-  if (!s7_is_float_vector(coeffs)) s7_wrong_type_arg_error(s7, S_singer_filter, 5, coeffs, "a float-vector");
+  if (!s7_is_float_vector(dline1)) s7_wrong_type_arg_error(s7, S_singer_filter, 4, dline1, "a float-vector");
+  if (!s7_is_float_vector(dline2)) s7_wrong_type_arg_error(s7, S_singer_filter, 5, dline2, "a float-vector");
+  if (!s7_is_float_vector(coeffs)) s7_wrong_type_arg_error(s7, S_singer_filter, 6, coeffs, "a float-vector");
   
   x = 0.0;
   beg = s7_integer(start);
@@ -4963,6 +4962,40 @@ static Xen g_singer_filter(Xen start, Xen end, Xen tmp, Xen dline1, Xen dline2, 
       temp = d1[k] + d2[j] - x;
       d1[k] = temp1;
     }
+  return(s7_make_real(s7, temp));
+}
+
+
+#define S_singer_nose_filter "singer-nose-filter"
+static Xen g_singer_nose_filter(Xen end, Xen tmp, Xen dline1, Xen dline2, Xen coeffs)
+{
+  #define H_singer_nose_filter "this is an optimization for the singer instrument"
+  int j, k, lim;
+  s7_double *d1, *d2, *cf;
+  s7_double reftemp, t1, temp;
+
+  if (!s7_is_integer(end)) s7_wrong_type_arg_error(s7, S_singer_nose_filter, 1, end, "an integer");
+  if (!s7_is_real(tmp)) s7_wrong_type_arg_error(s7, S_singer_nose_filter, 2, tmp, "a real");
+  if (!s7_is_float_vector(dline1)) s7_wrong_type_arg_error(s7, S_singer_nose_filter, 3, dline1, "a float-vector");
+  if (!s7_is_float_vector(dline2)) s7_wrong_type_arg_error(s7, S_singer_nose_filter, 4, dline2, "a float-vector");
+  if (!s7_is_float_vector(coeffs)) s7_wrong_type_arg_error(s7, S_singer_nose_filter, 5, coeffs, "a float-vector");
+  
+  reftemp = 0.0;
+  lim = s7_integer(end);
+  d1 = s7_float_vector_elements(dline1);
+  d2 = s7_float_vector_elements(dline2);
+  cf = s7_float_vector_elements(coeffs);
+  temp = s7_number_to_real(s7, tmp);
+
+  for (k = 1, j = 2; j < lim; k++, j++)
+    {
+      reftemp = cf[j] * (d1[k] - d2[j + 1]);
+      d2[j] = d2[j + 1] + reftemp;
+      t1 = temp;
+      temp = d1[k] + reftemp;
+      d1[k] = t1;
+    }
+
   return(s7_make_real(s7, temp));
 }
 
@@ -10119,7 +10152,7 @@ static s7_rf_t is_set_formant_frequency_rf(s7_scheme *sc, s7_pointer expr)
 }
 
 
-static s7_double outa_rf(s7_scheme *sc, s7_pointer **p)
+static s7_double outa_x_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer ind_slot;
   s7_double val;
@@ -10132,7 +10165,19 @@ static s7_double outa_rf(s7_scheme *sc, s7_pointer **p)
   return(val);
 }
 
-static s7_double outa_rf_to_mus_xen(s7_scheme *sc, s7_pointer **p)
+static s7_double outa_s_rf(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer ind, x;
+  s7_double val;
+
+  ind = s7_slot_value(**p); (*p)++;
+  x = s7_slot_value(**p); (*p)++;
+  val = s7_number_to_real(sc, x);
+  out_any_2(s7_integer(ind), val, 0, S_outa); 
+  return(val);
+}
+
+static s7_double outa_x_rf_to_mus_xen(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer ind_slot;
   s7_double val;
@@ -10148,7 +10193,22 @@ static s7_double outa_rf_to_mus_xen(s7_scheme *sc, s7_pointer **p)
   return(val);
 }
 
-static s7_double outb_rf(s7_scheme *sc, s7_pointer **p)
+static s7_double outa_s_rf_to_mus_xen(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer ind, x;
+  s7_double val;
+  s7_int pos;
+
+  ind = s7_slot_value(**p); (*p)++;
+  pos = s7_integer(ind);
+  x = s7_slot_value(**p); (*p)++;
+  val = s7_number_to_real(sc, x);
+  if (!mus_simple_out_any_to_file(pos, val, 0, clm_output_gen))
+    mus_safe_out_any_to_file(pos, val, 0, clm_output_gen);
+  return(val);
+}
+
+static s7_double outb_x_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer ind_slot;
   s7_double val;
@@ -10158,6 +10218,18 @@ static s7_double outb_rf(s7_scheme *sc, s7_pointer **p)
   rf = (s7_rf_t)(**p); (*p)++;
   val = rf(sc, p);
   out_any_2(s7_integer(s7_slot_value(ind_slot)), val, 1, S_outb); 
+  return(val);
+}
+
+static s7_double outb_s_rf(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer ind, x;
+  s7_double val;
+
+  ind = s7_slot_value(**p); (*p)++;
+  x = s7_slot_value(**p); (*p)++;
+  val = s7_number_to_real(sc, x);
+  out_any_2(s7_integer(ind), val, 1, S_outb); 
   return(val);
 }
 
@@ -10229,7 +10301,7 @@ static s7_rf_t is_out_rf(s7_scheme *sc, s7_pointer expr, int chan)
 {
   s7_pointer ind_sym, ind, ind_slot, val_sym, val, val_expr;
   s7_int loc;
-  s7_rf_t rf;
+  s7_rf_t rf = NULL;
   
   if (!s7_is_null(sc, s7_cdddr(expr))) return(NULL);
   ind_sym = s7_cadr(expr);
@@ -10242,15 +10314,25 @@ static s7_rf_t is_out_rf(s7_scheme *sc, s7_pointer expr, int chan)
   s7_xf_store(sc, ind_slot);
 
   val_expr = s7_caddr(expr);
-  if (!s7_is_pair(val_expr)) return(NULL);
-  val_sym = car(val_expr);
-  if (!s7_is_symbol(val_sym)) return(NULL);
-  val = s7_symbol_value(sc, val_sym);
-  if (!s7_rf_function(sc, val)) return(NULL);
-  loc = s7_xf_store(sc, NULL);
-  rf = s7_rf_function(sc, val)(sc, val_expr);
-  if (!rf) return(NULL);
-  s7_xf_store_at(sc, loc, (s7_pointer)rf);
+  if (s7_is_symbol(val_expr))
+    {
+      s7_pointer slot;
+      slot = s7_slot(sc, val_expr);
+      if (slot == xen_undefined) return(NULL);
+      s7_xf_store(sc, slot);
+    }
+  else
+    {
+      if (!s7_is_pair(val_expr)) return(NULL);
+      val_sym = car(val_expr);
+      if (!s7_is_symbol(val_sym)) return(NULL);
+      val = s7_symbol_value(sc, val_sym);
+      if (!s7_rf_function(sc, val)) return(NULL);
+      loc = s7_xf_store(sc, NULL);
+      rf = s7_rf_function(sc, val)(sc, val_expr);
+      if (!rf) return(NULL);
+      s7_xf_store_at(sc, loc, (s7_pointer)rf);
+    }
 
   if (chan == 0)
     {
@@ -10268,11 +10350,11 @@ static s7_rf_t is_out_rf(s7_scheme *sc, s7_pointer expr, int chan)
 	    }
 	  if (rf == mul_env_x_rf)
 	    return(outa_mul_env_x_rf);
-	  return(outa_rf_to_mus_xen);
+	  return((rf) ? outa_x_rf_to_mus_xen : outa_s_rf_to_mus_xen);
 	}
-      return(outa_rf);
+      return((rf) ? outa_x_rf : outa_s_rf);
     }
-  return(outb_rf);
+  return((rf) ? outb_x_rf : outb_s_rf);
 }
 
 static s7_rf_t is_outa_rf(s7_scheme *sc, s7_pointer expr)
@@ -11110,6 +11192,33 @@ static s7_rf_t is_pink_noise_rf(s7_scheme *sc, s7_pointer expr)
   return(NULL);
 }
 
+static s7_double piano_noise_rf(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer s1, s2;
+  s1 = s7_slot_value(**p); (*p)++;
+  s2 = s7_slot_value(**p); (*p)++;
+  return(piano_noise(s7_int_vector_elements(s1), s7_number_to_real(sc, s2)));
+}
+
+static s7_rf_t is_piano_noise_rf(s7_scheme *sc, s7_pointer expr)
+{
+  if ((s7_is_symbol(s7_cadr(expr))) &&
+      (s7_is_symbol(s7_caddr(expr))))
+    {
+      s7_pointer slot1, slot2;
+      slot1 = s7_slot(sc, s7_cadr(expr));
+      slot2 = s7_slot(sc, s7_caddr(expr));
+      if ((s7_is_int_vector(s7_slot_value(slot1))) &&
+	  (s7_is_real(s7_slot_value(slot2))))
+	{
+	  s7_xf_store(sc, slot1);
+	  s7_xf_store(sc, slot2);
+	  return(piano_noise_rf);
+	}
+    }
+  return(NULL);
+}
+
 
 static s7_double array_interp_rf_sxr(s7_scheme *sc, s7_pointer **p)
 {
@@ -11527,6 +11636,7 @@ static void init_choosers(s7_scheme *sc)
   s7_rf_set_function(s7_name_to_value(sc, S_in_any), is_in_any_rf);
   s7_rf_set_function(s7_name_to_value(sc, "polynomial"), is_polynomial_rf);
   s7_rf_set_function(s7_name_to_value(sc, "pink-noise"), is_pink_noise_rf);
+  s7_rf_set_function(s7_name_to_value(sc, "piano-noise"), is_piano_noise_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_nsin), is_nsin_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_nrxysin), is_nrxysin_rf);
   s7_rf_set_function(s7_name_to_value(sc, "rxyk!sin"), is_rxyksin_rf);
@@ -11906,6 +12016,7 @@ Xen_wrap_3_args(g_out_bank_w, g_out_bank)
 #if HAVE_SCHEME
 Xen_wrap_2_args(g_piano_noise_w, g_piano_noise)
 Xen_wrap_6_args(g_singer_filter_w, g_singer_filter)
+Xen_wrap_5_args(g_singer_nose_filter_w, g_singer_nose_filter)
 
 #define Xen_define_real_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   do { \
@@ -12478,6 +12589,7 @@ static void mus_xen_init(void)
 #if HAVE_SCHEME
   Xen_define_real_procedure(S_piano_noise,            g_piano_noise_w,            2, 0, 0, H_piano_noise);
   Xen_define_safe_procedure(S_singer_filter,          g_singer_filter_w,          6, 0, 0, H_singer_filter);
+  Xen_define_safe_procedure(S_singer_nose_filter,     g_singer_nose_filter_w,     5, 0, 0, H_singer_nose_filter);
 
   s7_define_safe_function_star(s7, S_make_oscil,      g_make_oscil, "(frequency 0.0) (initial-phase 0.0)", H_make_oscil);
   s7_define_safe_function_star(s7, S_make_ncos,       g_make_ncos,  "(frequency 0.0) (n 1)",               H_make_ncos);

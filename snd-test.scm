@@ -5,30 +5,30 @@
 ;;;  test 2: headers                            [1596]
 ;;;  test 3: variables                          [1911]
 ;;;  test 4: sndlib                             [2475]
-;;;  test 5: simple overall checks              [4489]
-;;;  test 6: float-vectors                      [9234]
-;;;  test 7: colors                             [9507]
-;;;  test 8: clm                                [10026]
+;;;  test 5: simple overall checks              [4490]
+;;;  test 6: float-vectors                      [9238]
+;;;  test 7: colors                             [9509]
+;;;  test 8: clm                                [10028]
 ;;;  test 9: mix                                [22111]
 ;;;  test 10: marks                             [23890]
-;;;  test 11: dialogs                           [24831]
-;;;  test 12: extensions                        [25004]
-;;;  test 13: menus, edit lists, hooks, etc     [25270]
-;;;  test 14: all together now                  [26602]
-;;;  test 15: chan-local vars                   [27480]
-;;;  test 16: regularized funcs                 [29217]
-;;;  test 17: dialogs and graphics              [32969]
-;;;  test 18: save and restore                  [33081]
-;;;  test 19: transforms                        [34735]
-;;;  test 20: new stuff                         [36834]
-;;;  test 21: optimizer                         [38029]
-;;;  test 22: with-sound                        [39307]
-;;;  test 23: X/Xt/Xm                           [42274]
-;;;  test 24: GL                                [45948]
-;;;  test 25: errors                            [46071]
-;;;  test 26: s7                                [47589]
-;;;  test all done                              [47662]
-;;;  test the end                               [47844]
+;;;  test 11: dialogs                           [24828]
+;;;  test 12: extensions                        [25001]
+;;;  test 13: menus, edit lists, hooks, etc     [25267]
+;;;  test 14: all together now                  [26600]
+;;;  test 15: chan-local vars                   [27478]
+;;;  test 16: regularized funcs                 [29215]
+;;;  test 17: dialogs and graphics              [32964]
+;;;  test 18: save and restore                  [33076]
+;;;  test 19: transforms                        [34728]
+;;;  test 20: new stuff                         [36828]
+;;;  test 21: optimizer                         [38021]
+;;;  test 22: with-sound                        [39522]
+;;;  test 23: X/Xt/Xm                           [42507]
+;;;  test 24: GL                                [46181]
+;;;  test 25: errors                            [46304]
+;;;  test 26: s7                                [47822]
+;;;  test all done                              [47893]
+;;;  test the end                               [48075]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
@@ -39104,6 +39104,49 @@ EDITS: 1
       (test (fv93) (list (float-vector .02 .04 .08 .16)
 			 (float-vector .04 .08 .16 .32)))
       (set! (*s7* 'morally-equal-float-epsilon) old-fudge))
+
+    (define (fv94)
+      (let ((fv0 (float-vector 0 1 2 3 4 5))
+	    (fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1))
+	     (x 0.4 (+ x 0.7)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (float-vector-ref fv0 (floor x))))))
+    (test (fv94) (float-vector 0.0 1.0 1.0 2.0))
+
+    (define (fv95)
+      (let ((fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) fv)
+	  (if (even? i)
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv95) (float-vector 10.0 -9.0 12.0 -7.0))
+    
+    (define (fv96)
+      (let ((fv (make-float-vector 4))
+	    (fv1 (make-float-vector 4)))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) (list fv fv1))
+	  (float-vector-set! fv1 i 3.0)
+	  (if (even? i)
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0)))
+	  (float-vector-set! fv1 i (+ (float-vector-ref fv1 i) 1.0)))))
+    (test (fv96) (list (float-vector 10.0 -9.0 12.0 -7.0)
+		       (float-vector 4.0 4.0 4.0 4.0)))
+
+    (define (fv97)
+      (let ((fv (make-float-vector 4))
+	    (j 0))
+	(do ((i 0 (+ i 1))
+	     (x 0.4 (+ x 0.7)))
+	    ((= i 4) fv)
+	  (set! j (floor x))
+	  (float-vector-set! fv i (* j 2.0)))))
+    (test (fv97) (float-vector 0.0 2.0 2.0 4.0))
     )
   
   (if all-args
@@ -40948,19 +40991,22 @@ EDITS: 1
 						       :delays '(.010 .020 .030 .040 .050)
 						       :channel-map '(0 1 3 2 4)))
 	  (with-sound (:channels 5) (dloc-sinewave 0 1.0 440 .5 :path (make-spiral-path :turns 2)))
-	  (with-sound (:channels 5 :reverb freeverb :reverb-channels 5) (dloc-sinewave 0 1.0 440 .5 :path (make-spiral-path :turns 2)))
+	  (with-sound (:channels 5 :reverb freeverb :reverb-channels 5 :reverb-data '(:decay-time .9))
+	    (dloc-sinewave 0 1.0 440 .5 :path (make-spiral-path :turns 2)))
 	  
 	  (set-speaker-configuration (arrange-speakers :speakers '(-45 45 90 135 225) 
 						       :delays '(.010 .020 .030 .040 .050)
 						       :channel-map '(4 3 2 1 0)))
 	  
-	  (with-sound (:channels 5 :reverb freeverb :reverb-channels 5) (dloc-sinewave 0 1.0 440 .5 :path (make-spiral-path :turns 2)))
+	  (with-sound (:channels 5 :reverb freeverb :reverb-channels 5) 
+	    (dloc-sinewave 0 1.0 440 .5 :path (make-spiral-path :turns 2)))
 	  (with-sound (:channels 4) 
 		      (dlocsig-sinewave-1 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f) :decode b-format-ambisonics))
 	  (with-sound (:channels 4) 
 		      (dlocsig-sinewave-1 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f) :decode decoded-ambisonics))
 	  )))
-  (let ((f (with-sound (:channels 5 :reverb freeverb :reverb-channels 5 :srate 44100) (frample->file *reverb* 0 (float-vector .2 .1 .05 .025 .0125)))))
+  (let ((f (with-sound (:channels 5 :reverb freeverb :reverb-channels 5 :srate 44100 :reverb-data '(:decay-time .1))
+	     (frample->file *reverb* 0 (float-vector .2 .1 .05 .025 .0125)))))
     (define (frample n)
       (let ((ind (selected-sound)))
 	(let ((c (channels ind)))
