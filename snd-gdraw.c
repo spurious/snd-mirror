@@ -1319,7 +1319,7 @@ static Xen g_background_gradient(void) {return(C_double_to_Xen_real(ss->bg_gradi
 static Xen g_set_background_gradient(Xen val) 
 {
   #define H_background_gradient "(" S_background_gradient "): channel graph background color gradient"
-  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_background_gradient, "a number between 0 (none) and 1");
+  Xen_check_type(Xen_is_number(val), val, 1, S_set S_background_gradient, "a number between 0 (none) and 1");
 
   ss->bg_gradient = Xen_real_to_C_double(val);
   for_each_chan(update_graph);
@@ -1334,7 +1334,7 @@ Xen_wrap_1_arg(g_set_background_gradient_w, g_set_background_gradient)
 void g_init_gxdraw(void)
 {
   Xen_define_dilambda(S_background_gradient, g_background_gradient_w, H_background_gradient,
-				   S_setB S_background_gradient, g_set_background_gradient_w,  0, 0, 1, 0);
+				   S_set S_background_gradient, g_set_background_gradient_w,  0, 0, 1, 0);
 
   #define H_orientation_hook S_orientation_hook " (): called whenever one of the variables associated with the \
 orientation dialog changes"

@@ -557,14 +557,14 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
 {
   chan_info *cp;
 
-  Snd_assert_channel(S_setB S_foreground_color, snd, chn, 2);
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_foreground_color, "a color");
-  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_foreground_color, "an integer");
+  Snd_assert_channel(S_set S_foreground_color, snd, chn, 2);
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_foreground_color, "a color");
+  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_set S_foreground_color, "an integer");
 
-  cp = get_cp(snd, chn, S_setB S_foreground_color);
+  cp = get_cp(snd, chn, S_set S_foreground_color);
   if (!cp) return(Xen_false);
 
-  set_foreground_color(get_ax_no_cr(cp, (Xen_is_integer(ax)) ? Xen_integer_to_C_int(ax) : (int)CHAN_GC, S_setB S_foreground_color),
+  set_foreground_color(get_ax_no_cr(cp, (Xen_is_integer(ax)) ? Xen_integer_to_C_int(ax) : (int)CHAN_GC, S_set S_foreground_color),
 		       Xen_unwrap_pixel(color));
   return(color);
 }
@@ -578,12 +578,12 @@ static Xen g_set_current_font(Xen id, Xen snd, Xen chn, Xen ax_id)
 {
   graphics_context *ax;
 
-  Snd_assert_channel(S_setB S_current_font, snd, chn, 2);
-  Xen_check_type(Xen_is_integer_or_unbound(ax_id), ax_id, 4, S_setB S_current_font, "an integer such as time-graph");
+  Snd_assert_channel(S_set S_current_font, snd, chn, 2);
+  Xen_check_type(Xen_is_integer_or_unbound(ax_id), ax_id, 4, S_set S_current_font, "an integer such as time-graph");
   Xen_check_type((Xen_is_list(id)) &&
 		  (Xen_list_length(id) >= 2) &&
 		  (Xen_is_symbol(Xen_car(id))) &&
-		  (strcmp("Font", Xen_symbol_to_C_string(Xen_car(id))) == 0), id, 1, S_setB S_current_font, "a Font");
+		  (strcmp("Font", Xen_symbol_to_C_string(Xen_car(id))) == 0), id, 1, S_set S_current_font, "a Font");
 
   ax = TO_C_AXIS_CONTEXT_NO_CR(snd, chn, ax_id, S_current_font);
   ax->current_font = (Font)Xen_ulong_to_C_ulong(Xen_cadr(id));
@@ -622,15 +622,15 @@ static Xen g_set_current_font(Xen id, Xen snd, Xen chn, Xen ax_id)
 {
   graphics_context *ax;
 
-  Snd_assert_channel(S_setB S_current_font, snd, chn, 2);
-  Xen_check_type(Xen_is_integer_or_unbound(ax_id), ax_id, 4, S_setB S_current_font, "an integer such as time-graph");
+  Snd_assert_channel(S_set S_current_font, snd, chn, 2);
+  Xen_check_type(Xen_is_integer_or_unbound(ax_id), ax_id, 4, S_set S_current_font, "an integer such as time-graph");
 
-  ax = TO_C_AXIS_CONTEXT_NO_CR(snd, chn, ax_id, S_setB S_current_font);
+  ax = TO_C_AXIS_CONTEXT_NO_CR(snd, chn, ax_id, S_set S_current_font);
   Xen_check_type((Xen_is_wrapped_c_pointer(id)) ||
 		  (Xen_is_list(id) && 
 		   (Xen_list_length(id) >= 2) &&
 		   (Xen_is_symbol(Xen_car(id)))),
-		  id, 1, S_setB S_current_font, "a wrapped object or a raw pointer");
+		  id, 1, S_set S_current_font, "a wrapped object or a raw pointer");
 
   if (Xen_is_wrapped_c_pointer(id))
     ax->current_font = (PangoFontDescription *)Xen_unwrap_C_pointer(id); 
@@ -839,15 +839,15 @@ static Xen g_widget_position(Xen wid)
 static Xen g_set_widget_position(Xen wid, Xen xy)
 {
   widget_t w;
-  Xen_check_type(Xen_is_widget(wid), wid, 1, S_setB S_widget_position, "a Widget");  
-  Xen_check_type(Xen_is_list(xy) && (Xen_list_length(xy) == 2), xy, 2, S_setB S_widget_position, "a list: (x y)");  
+  Xen_check_type(Xen_is_widget(wid), wid, 1, S_set S_widget_position, "a Widget");  
+  Xen_check_type(Xen_is_list(xy) && (Xen_list_length(xy) == 2), xy, 2, S_set S_widget_position, "a list: (x y)");  
   w = (widget_t)(Xen_unwrap_widget(wid));
   if (w)
     set_widget_position(w,
 			mus_iclamp(0, Xen_integer_to_C_int(Xen_car(xy)), LOTSA_PIXELS),
 			mus_iclamp(0, Xen_integer_to_C_int(Xen_cadr(xy)), LOTSA_PIXELS));
   else Xen_error(NO_SUCH_WIDGET,
-		 Xen_list_2(C_string_to_Xen_string(S_setB S_widget_position ": no such widget: ~A"),
+		 Xen_list_2(C_string_to_Xen_string(S_set S_widget_position ": no such widget: ~A"),
 			    wid));
   return(wid);
 }
@@ -871,15 +871,15 @@ static Xen g_widget_size(Xen wid)
 static Xen g_set_widget_size(Xen wid, Xen wh)
 {
   widget_t w;
-  Xen_check_type(Xen_is_widget(wid), wid, 1, S_setB S_widget_size, "a Widget");  
-  Xen_check_type(Xen_is_list(wh) && (Xen_list_length(wh) == 2), wh, 2, S_setB S_widget_size, "a list: (width height)");  
+  Xen_check_type(Xen_is_widget(wid), wid, 1, S_set S_widget_size, "a Widget");  
+  Xen_check_type(Xen_is_list(wh) && (Xen_list_length(wh) == 2), wh, 2, S_set S_widget_size, "a list: (width height)");  
   w = (widget_t)(Xen_unwrap_widget(wid));
   if (w)
     set_widget_size(w,
 		    mus_iclamp(1, Xen_integer_to_C_int(Xen_car(wh)), LOTSA_PIXELS),
 		    mus_iclamp(1, Xen_integer_to_C_int(Xen_cadr(wh)), LOTSA_PIXELS));
   else Xen_error(NO_SUCH_WIDGET,
-		 Xen_list_2(C_string_to_Xen_string(S_setB S_widget_size ": no such widget: ~A"),
+		 Xen_list_2(C_string_to_Xen_string(S_set S_widget_size ": no such widget: ~A"),
 			    wid));
   return(wid);
 }
@@ -955,8 +955,8 @@ static Xen g_set_widget_text(Xen wid, Xen text)
 {
   widget_t w;
 
-  Xen_check_type(Xen_is_widget(wid), wid, 1, S_setB S_widget_text, "a Widget");
-  Xen_check_type(Xen_is_string(text) || Xen_is_false(text), text, 2, S_setB S_widget_text, "a string");
+  Xen_check_type(Xen_is_widget(wid), wid, 1, S_set S_widget_text, "a Widget");
+  Xen_check_type(Xen_is_string(text) || Xen_is_false(text), text, 2, S_set S_widget_text, "a string");
 
   w = (widget_t)(Xen_unwrap_widget(wid));
   if (w)
@@ -974,7 +974,7 @@ static Xen g_set_widget_text(Xen wid, Xen text)
 #endif
     }
   else Xen_error(NO_SUCH_WIDGET,
-		 Xen_list_2(C_string_to_Xen_string(S_setB S_widget_text ": no such widget: ~A"),
+		 Xen_list_2(C_string_to_Xen_string(S_set S_widget_text ": no such widget: ~A"),
 			    wid));
   return(text);
 }
@@ -1262,7 +1262,7 @@ mus_float_t check_color_range(const char *caller, Xen val)
 
 static Xen g_set_cursor_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_cursor_color, "a color"); 
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_cursor_color, "a color"); 
   color_cursor(Xen_unwrap_pixel(color));
   for_each_chan(update_graph);
   return(color);
@@ -1311,7 +1311,7 @@ void set_highlight_color(color_t color)
 
 static Xen g_set_highlight_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_highlight_color, "a color"); 
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_highlight_color, "a color"); 
   set_highlight_color(Xen_unwrap_pixel(color));
   return(color);
 }
@@ -1326,7 +1326,7 @@ static Xen g_highlight_color(void)
 
 static Xen g_set_mark_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_mark_color, "a color"); 
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_mark_color, "a color"); 
   color_marks(Xen_unwrap_pixel(color));
   for_each_chan(update_graph);
   return(color);
@@ -1352,7 +1352,7 @@ void set_zoom_color(color_t color)
 
 static Xen g_set_zoom_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_zoom_color, "a color"); 
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_zoom_color, "a color"); 
   set_zoom_color(Xen_unwrap_pixel(color)); 
   return(color);
 }
@@ -1377,7 +1377,7 @@ void set_position_color(color_t color)
 
 static Xen g_set_position_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_position_color, "a color"); 
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_position_color, "a color"); 
   set_position_color(Xen_unwrap_pixel(color)); 
   return(color);
 }
@@ -1392,7 +1392,7 @@ static Xen g_position_color(void)
 
 static Xen g_set_listener_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_listener_color, "a color"); 
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_listener_color, "a color"); 
   color_listener(Xen_unwrap_pixel(color));
   return(color);
 }
@@ -1407,7 +1407,7 @@ static Xen g_listener_color(void)
 
 static Xen g_set_listener_text_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_listener_text_color, "a color"); 
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_listener_text_color, "a color"); 
   color_listener_text(Xen_unwrap_pixel(color));
   return(color);
 }
@@ -1422,7 +1422,7 @@ static Xen g_listener_text_color(void)
 
 static Xen g_set_enved_waveform_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_enved_waveform_color, "a color"); 
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_enved_waveform_color, "a color"); 
   ss->enved_waveform_color = Xen_unwrap_pixel(color);
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, ss->enved_waveform_color_symbol, color);
@@ -1441,7 +1441,7 @@ static Xen g_enved_waveform_color(void)
 
 static Xen g_set_filter_control_waveform_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_filter_control_waveform_color, "a color");
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_filter_control_waveform_color, "a color");
   ss->filter_control_waveform_color = Xen_unwrap_pixel(color);
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, ss->filter_control_waveform_color_symbol, color);
@@ -1460,7 +1460,7 @@ static Xen g_filter_control_waveform_color(void)
 
 static Xen g_set_selection_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_selection_color, "a color"); 
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_selection_color, "a color"); 
   color_selection(Xen_unwrap_pixel(color));
   for_each_chan(update_graph);
   return(color);
@@ -1476,7 +1476,7 @@ static Xen g_selection_color(void)
 
 static Xen g_set_text_focus_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_text_focus_color, "a color"); 
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_text_focus_color, "a color"); 
   ss->text_focus_color = Xen_unwrap_pixel(color);
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, ss->text_focus_color_symbol, color);
@@ -1494,7 +1494,7 @@ static Xen g_text_focus_color(void)
 
 static Xen g_set_sash_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_sash_color, "a color"); 
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_sash_color, "a color"); 
   ss->sash_color = Xen_unwrap_pixel(color);
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, ss->sash_color_symbol, color);
@@ -1531,7 +1531,7 @@ void set_data_color(color_t color)
 
 static Xen g_set_data_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_data_color, "a color"); 
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_data_color, "a color"); 
   set_data_color(Xen_unwrap_pixel(color));
   return(color);
 }
@@ -1553,7 +1553,7 @@ void set_selected_data_color(color_t color)
 
 static Xen g_set_selected_data_color(Xen color)
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_selected_data_color, "a color"); 
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_selected_data_color, "a color"); 
   set_selected_data_color(Xen_unwrap_pixel(color));
   return(color);
 }
@@ -1580,7 +1580,7 @@ void set_graph_color(color_t color)
 
 static Xen g_set_graph_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_graph_color, "a color");
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_graph_color, "a color");
   set_graph_color(Xen_unwrap_pixel(color));
   return(color);
 }
@@ -1616,7 +1616,7 @@ void set_selected_graph_color(color_t color)
 
 static Xen g_set_selected_graph_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_selected_graph_color, "a color");
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_selected_graph_color, "a color");
   set_selected_graph_color(Xen_unwrap_pixel(color));
   return(color);
 }
@@ -1631,7 +1631,7 @@ static Xen g_selected_graph_color(void)
 
 static Xen g_set_axis_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_axis_color, "a color");
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_axis_color, "a color");
   ss->axis_color = Xen_unwrap_pixel(color);
   ss->axis_color_set = true;
 #if HAVE_SCHEME
@@ -1847,7 +1847,7 @@ void set_basic_color(color_t color)
 
 static Xen g_set_basic_color(Xen color) 
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_basic_color, "a color"); 
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_basic_color, "a color"); 
   set_basic_color(Xen_unwrap_pixel(color));
   return(color);
 }
@@ -1864,8 +1864,8 @@ static Xen g_mix_color(Xen mix_id)
 
 static Xen g_set_mix_color(Xen color, Xen mix_id)
 {
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_mix_color, "a color"); 
-  Xen_check_type(xen_is_mix(mix_id) || !Xen_is_bound(mix_id), mix_id, 2, S_setB S_mix_color, "a mix");
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_mix_color, "a color"); 
+  Xen_check_type(xen_is_mix(mix_id) || !Xen_is_bound(mix_id), mix_id, 2, S_set S_mix_color, "a mix");
   if (xen_is_mix(mix_id))
     mix_set_color_from_id(Xen_mix_to_C_int(mix_id), Xen_unwrap_pixel(color));
   else color_mixes(Xen_unwrap_pixel(color));
@@ -1904,7 +1904,7 @@ static Xen g_set_combined_data_color(Xen color, Xen snd, Xen chn)
 {
   chan_info *cp;
 
-  Xen_check_type(Xen_is_pixel(color), color, 1, S_setB S_combined_data_color, "a color"); 
+  Xen_check_type(Xen_is_pixel(color), color, 1, S_set S_combined_data_color, "a color"); 
   Snd_assert_channel(S_combined_data_color, snd, chn, 1);
   cp = get_cp(snd, chn, S_combined_data_color);
   if (!cp) return(Xen_false);
@@ -2047,31 +2047,31 @@ void g_init_draw(void)
   Xen_define_safe_procedure(S_make_graph_data,  g_make_graph_data_w, 0, 5, 0, H_make_graph_data);
   Xen_define_safe_procedure(S_graph_data,       g_graph_data_w,     1, 7, 0,  H_graph_data);
 
-  Xen_define_dilambda(S_foreground_color, g_foreground_color_w, H_foreground_color, S_setB S_foreground_color, g_set_foreground_color_w, 0, 3, 1, 3);
-  Xen_define_dilambda(S_current_font, g_current_font_w, H_current_font, S_setB S_current_font, g_set_current_font_w, 0, 3, 1, 3);
-  Xen_define_dilambda(S_widget_size, g_widget_size_w, H_widget_size, S_setB S_widget_size, g_set_widget_size_w,  1, 0, 2, 0);
-  Xen_define_dilambda(S_widget_position, g_widget_position_w, H_widget_position, S_setB S_widget_position, g_set_widget_position_w,  1, 0, 2, 0);
-  Xen_define_dilambda(S_widget_text, g_widget_text_w, H_widget_text, S_setB S_widget_text, g_set_widget_text_w,  1, 0, 2, 0);
-  Xen_define_dilambda(S_selection_color, g_selection_color_w, H_selection_color, S_setB S_selection_color, g_set_selection_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_zoom_color, g_zoom_color_w, H_zoom_color, S_setB S_zoom_color, g_set_zoom_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_position_color, g_position_color_w, H_position_color, S_setB S_position_color, g_set_position_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_mark_color, g_mark_color_w, H_mark_color, S_setB S_mark_color, g_set_mark_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_listener_color, g_listener_color_w, H_listener_color, S_setB S_listener_color, g_set_listener_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_listener_text_color, g_listener_text_color_w, H_listener_text_color, S_setB S_listener_text_color, g_set_listener_text_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_waveform_color, g_enved_waveform_color_w, H_enved_waveform_color, S_setB S_enved_waveform_color, g_set_enved_waveform_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_filter_control_waveform_color, g_filter_control_waveform_color_w, H_filter_control_waveform_color, S_setB S_filter_control_waveform_color, g_set_filter_control_waveform_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_highlight_color, g_highlight_color_w, H_highlight_color, S_setB S_highlight_color, g_set_highlight_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_cursor_color, g_cursor_color_w, H_cursor_color, S_setB S_cursor_color, g_set_cursor_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_text_focus_color, g_text_focus_color_w, H_text_focus_color, S_setB S_text_focus_color, g_set_text_focus_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_sash_color, g_sash_color_w, H_sash_color, S_setB S_sash_color, g_set_sash_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_data_color, g_data_color_w, H_data_color, S_setB S_data_color, g_set_data_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_graph_color, g_graph_color_w, H_graph_color, S_setB S_graph_color, g_set_graph_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_selected_graph_color, g_selected_graph_color_w, H_selected_graph_color, S_setB S_selected_graph_color, g_set_selected_graph_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_selected_data_color, g_selected_data_color_w, H_selected_data_color, S_setB S_selected_data_color, g_set_selected_data_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_axis_color, g_axis_color_w, H_axis_color, S_setB S_axis_color, g_set_axis_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_basic_color, g_basic_color_w, H_basic_color, S_setB S_basic_color, g_set_basic_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_mix_color, g_mix_color_w, H_mix_color, S_setB S_mix_color, g_set_mix_color_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_combined_data_color, g_combined_data_color_w, H_combined_data_color, S_setB S_combined_data_color, g_set_combined_data_color_w, 2, 0, 3, 0);
+  Xen_define_dilambda(S_foreground_color, g_foreground_color_w, H_foreground_color, S_set S_foreground_color, g_set_foreground_color_w, 0, 3, 1, 3);
+  Xen_define_dilambda(S_current_font, g_current_font_w, H_current_font, S_set S_current_font, g_set_current_font_w, 0, 3, 1, 3);
+  Xen_define_dilambda(S_widget_size, g_widget_size_w, H_widget_size, S_set S_widget_size, g_set_widget_size_w,  1, 0, 2, 0);
+  Xen_define_dilambda(S_widget_position, g_widget_position_w, H_widget_position, S_set S_widget_position, g_set_widget_position_w,  1, 0, 2, 0);
+  Xen_define_dilambda(S_widget_text, g_widget_text_w, H_widget_text, S_set S_widget_text, g_set_widget_text_w,  1, 0, 2, 0);
+  Xen_define_dilambda(S_selection_color, g_selection_color_w, H_selection_color, S_set S_selection_color, g_set_selection_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_zoom_color, g_zoom_color_w, H_zoom_color, S_set S_zoom_color, g_set_zoom_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_position_color, g_position_color_w, H_position_color, S_set S_position_color, g_set_position_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_mark_color, g_mark_color_w, H_mark_color, S_set S_mark_color, g_set_mark_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_listener_color, g_listener_color_w, H_listener_color, S_set S_listener_color, g_set_listener_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_listener_text_color, g_listener_text_color_w, H_listener_text_color, S_set S_listener_text_color, g_set_listener_text_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_enved_waveform_color, g_enved_waveform_color_w, H_enved_waveform_color, S_set S_enved_waveform_color, g_set_enved_waveform_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_filter_control_waveform_color, g_filter_control_waveform_color_w, H_filter_control_waveform_color, S_set S_filter_control_waveform_color, g_set_filter_control_waveform_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_highlight_color, g_highlight_color_w, H_highlight_color, S_set S_highlight_color, g_set_highlight_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_cursor_color, g_cursor_color_w, H_cursor_color, S_set S_cursor_color, g_set_cursor_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_text_focus_color, g_text_focus_color_w, H_text_focus_color, S_set S_text_focus_color, g_set_text_focus_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_sash_color, g_sash_color_w, H_sash_color, S_set S_sash_color, g_set_sash_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_data_color, g_data_color_w, H_data_color, S_set S_data_color, g_set_data_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_graph_color, g_graph_color_w, H_graph_color, S_set S_graph_color, g_set_graph_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_selected_graph_color, g_selected_graph_color_w, H_selected_graph_color, S_set S_selected_graph_color, g_set_selected_graph_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_selected_data_color, g_selected_data_color_w, H_selected_data_color, S_set S_selected_data_color, g_set_selected_data_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_axis_color, g_axis_color_w, H_axis_color, S_set S_axis_color, g_set_axis_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_basic_color, g_basic_color_w, H_basic_color, S_set S_basic_color, g_set_basic_color_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_mix_color, g_mix_color_w, H_mix_color, S_set S_mix_color, g_set_mix_color_w, 0, 1, 1, 1);
+  Xen_define_dilambda(S_combined_data_color, g_combined_data_color_w, H_combined_data_color, S_set S_combined_data_color, g_set_combined_data_color_w, 2, 0, 3, 0);
 
   Xen_define_safe_procedure(S_is_color,      g_is_color_w,        1, 0, 0, H_is_color);
   Xen_define_safe_procedure(S_make_color,    g_make_color_w,     3, 1, 0, H_make_color);

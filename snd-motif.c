@@ -5806,14 +5806,14 @@ static Xen g_enved_envelope(void)
 
 static Xen g_set_enved_envelope(Xen e)
 {
-  Xen_check_type(Xen_is_list(e) || Xen_is_string(e) || Xen_is_symbol(e), e, 1, S_setB S_enved_envelope, "a list, symbol, or string");
+  Xen_check_type(Xen_is_list(e) || Xen_is_string(e) || Xen_is_symbol(e), e, 1, S_set S_enved_envelope, "a list, symbol, or string");
   if (active_env) active_env = free_env(active_env);
   if ((Xen_is_string(e)) || (Xen_is_symbol(e)))
     active_env = name_to_env((Xen_is_string(e)) ? Xen_string_to_C_string(e) : Xen_symbol_to_C_string(e)); /* xen_to_env in name_to_env, so no copy */
   else active_env = xen_to_env(e);
   if ((!active_env) && (!(Xen_is_list(e))))
     Xen_error(NO_SUCH_ENVELOPE,
-	      Xen_list_2(C_string_to_Xen_string(S_setB S_enved_envelope ": bad envelope arg: ~A"),
+	      Xen_list_2(C_string_to_Xen_string(S_set S_enved_envelope ": bad envelope arg: ~A"),
 			 e));
   if (enved_dialog) 
     env_redisplay();
@@ -5830,7 +5830,7 @@ static Xen g_enved_filter(void)
 
 static Xen g_set_enved_filter(Xen type)
 {
-  Xen_check_type(Xen_is_boolean(type), type, 1, S_setB S_enved_filter, "boolean");
+  Xen_check_type(Xen_is_boolean(type), type, 1, S_set S_enved_filter, "boolean");
   is_FIR = Xen_boolean_to_C_bool(type);
   if (fir_button)
     set_label(fir_button, (is_FIR) ? "fir" : "fft");
@@ -5846,9 +5846,9 @@ Xen_wrap_1_arg(g_set_enved_envelope_w, g_set_enved_envelope)
 void g_init_gxenv(void)
 {
   Xen_define_dilambda(S_enved_filter, g_enved_filter_w, H_enved_filter,
-				   S_setB S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
+				   S_set S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
   Xen_define_dilambda(S_enved_envelope, g_enved_envelope_w, H_enved_envelope,
-				   S_setB S_enved_envelope, g_set_enved_envelope_w,  0, 0, 1, 0);
+				   S_set S_enved_envelope, g_set_enved_envelope_w,  0, 0, 1, 0);
 }
 /* Transform settings dialog */
 
@@ -16980,17 +16980,17 @@ static Xen g_set_view_files_sort(Xen dialog, Xen val)
   Xen sort_choice;
 
   if (Xen_is_bound(val)) sort_choice = val; else sort_choice = dialog;
-  Xen_check_type(Xen_is_integer(sort_choice), sort_choice, 1, S_setB S_view_files_sort, "an integer"); 
+  Xen_check_type(Xen_is_integer(sort_choice), sort_choice, 1, S_set S_view_files_sort, "an integer"); 
 
   choice = Xen_integer_to_C_int(sort_choice);
   if ((choice < 0) ||
       (choice >= (ss->file_sorters_size + SORT_XEN)))
-    Xen_out_of_range_error(S_setB S_view_files_sort, 2, sort_choice, "must be a valid file-sorter index");
+    Xen_out_of_range_error(S_set S_view_files_sort, 2, sort_choice, "must be a valid file-sorter index");
 
   if (Xen_is_bound(val))
     {
       widget_t w;
-      Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_setB S_view_files_sort, "a view-files dialog widget"); 
+      Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_set S_view_files_sort, "a view-files dialog widget"); 
       w = (widget_t)(Xen_unwrap_widget(dialog));
       view_files_set_local_sort(w, choice);
       return(C_int_to_Xen_integer((int)view_files_sort(ss)));
@@ -17011,8 +17011,8 @@ static Xen g_view_files_amp(Xen dialog)
 
 static Xen g_view_files_set_amp(Xen dialog, Xen amp)
 {
-  Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_setB S_view_files_amp, "a view-files dialog widget"); 
-  Xen_check_type(Xen_is_number(amp), amp, 2, S_setB S_view_files_amp, "a number");
+  Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_set S_view_files_amp, "a view-files dialog widget"); 
+  Xen_check_type(Xen_is_number(amp), amp, 2, S_set S_view_files_amp, "a number");
   view_files_set_amp((widget_t)(Xen_unwrap_widget(dialog)), Xen_real_to_C_double(amp));
   return(amp);
 }
@@ -17028,8 +17028,8 @@ static Xen g_view_files_speed(Xen dialog)
 
 static Xen g_view_files_set_speed(Xen dialog, Xen speed)
 {
-  Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_setB S_view_files_speed, "a view-files dialog widget"); 
-  Xen_check_type(Xen_is_number(speed), speed, 2, S_setB S_view_files_speed, "a number");
+  Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_set S_view_files_speed, "a view-files dialog widget"); 
+  Xen_check_type(Xen_is_number(speed), speed, 2, S_set S_view_files_speed, "a number");
   view_files_set_speed((widget_t)(Xen_unwrap_widget(dialog)), Xen_real_to_C_double(speed));
   return(speed);
 }
@@ -17045,8 +17045,8 @@ static Xen g_view_files_amp_env(Xen dialog)
 
 static Xen g_view_files_set_amp_env(Xen dialog, Xen amp_env)
 {
-  Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_setB S_view_files_amp_env, "a view-files dialog widget"); 
-  Xen_check_type(Xen_is_list(amp_env), amp_env, 2, S_setB S_view_files_amp_env, "an envelope");
+  Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_set S_view_files_amp_env, "a view-files dialog widget"); 
+  Xen_check_type(Xen_is_list(amp_env), amp_env, 2, S_set S_view_files_amp_env, "an envelope");
   view_files_set_amp_env((widget_t)(Xen_unwrap_widget(dialog)), xen_to_env(amp_env));
   return(amp_env);
 }
@@ -17062,8 +17062,8 @@ static Xen g_view_files_speed_style(Xen dialog)
 
 static Xen g_view_files_set_speed_style(Xen dialog, Xen speed_style)
 {
-  Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_setB S_view_files_speed_style, "a view-files dialog widget"); 
-  Xen_check_type(Xen_is_integer(speed_style), speed_style, 2, S_setB S_view_files_speed_style, "an int");
+  Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_set S_view_files_speed_style, "a view-files dialog widget"); 
+  Xen_check_type(Xen_is_integer(speed_style), speed_style, 2, S_set S_view_files_speed_style, "an int");
   view_files_set_speed_style((widget_t)(Xen_unwrap_widget(dialog)), (speed_style_t)(Xen_integer_to_C_int(speed_style)));
   return(speed_style);
 }
@@ -17097,8 +17097,8 @@ static Xen g_view_files_set_selected_files(Xen dialog, Xen files)
 {
   int len;
 
-  Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_setB S_view_files_selected_files, "a view-files dialog widget");   
-  Xen_check_type(Xen_is_list(files), files, 2, S_setB S_view_files_selected_files, "a list of files or directories");
+  Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_set S_view_files_selected_files, "a view-files dialog widget");   
+  Xen_check_type(Xen_is_list(files), files, 2, S_set S_view_files_selected_files, "a list of files or directories");
 
   len = Xen_list_length(files);
   if (len > 0)
@@ -17108,7 +17108,7 @@ static Xen g_view_files_set_selected_files(Xen dialog, Xen files)
       for (i = 0; i < len; i++)
 	if (!(Xen_is_string(Xen_list_ref(files, i))))
 	  {
-	    Xen_check_type(0, Xen_list_ref(files, i), i, S_setB S_view_files_selected_files, "a filename (string)");
+	    Xen_check_type(0, Xen_list_ref(files, i), i, S_set S_view_files_selected_files, "a filename (string)");
 	    return(Xen_false);
 	  }
       cfiles = (char **)calloc(len, sizeof(char *));
@@ -17143,8 +17143,8 @@ static Xen g_view_files_set_files(Xen dialog, Xen files)
   int len = 0;
   char **cfiles = NULL;
 
-  Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_setB S_view_files_files, "a view-files dialog widget");   
-  Xen_check_type(Xen_is_list(files), files, 2, S_setB S_view_files_files, "a list of files or directories");
+  Xen_check_type(Xen_is_widget(dialog), dialog, 1, S_set S_view_files_files, "a view-files dialog widget");   
+  Xen_check_type(Xen_is_list(files), files, 2, S_set S_view_files_files, "a list of files or directories");
 
   len = Xen_list_length(files);
   if (len > 0)
@@ -17153,7 +17153,7 @@ static Xen g_view_files_set_files(Xen dialog, Xen files)
       for (i = 0; i < len; i++)
 	if (!(Xen_is_string(Xen_list_ref(files, i))))
 	  {
-	    Xen_check_type(0, Xen_list_ref(files, i), i, S_setB S_view_files_files, "a filename (string)");
+	    Xen_check_type(0, Xen_list_ref(files, i), i, S_set S_view_files_files, "a filename (string)");
 	    return(Xen_false);
 	  }
       cfiles = (char **)calloc(len, sizeof(char *));
@@ -17648,24 +17648,24 @@ to popup file info as follows: \n\
   mouse_leave_label_hook = Xen_define_hook(S_mouse_leave_label_hook, "(make-hook 'type 'position 'label)", 3, H_mouse_leave_label_hook);
 
   Xen_define_dilambda(S_view_files_amp, g_view_files_amp_w, H_view_files_amp,
-				   S_setB S_view_files_amp, g_view_files_set_amp_w,  1, 0, 2, 0);
+				   S_set S_view_files_amp, g_view_files_set_amp_w,  1, 0, 2, 0);
   Xen_define_dilambda(S_view_files_amp_env, g_view_files_amp_env_w, H_view_files_amp_env,
-				   S_setB S_view_files_amp_env, g_view_files_set_amp_env_w,  1, 0, 2, 0);
+				   S_set S_view_files_amp_env, g_view_files_set_amp_env_w,  1, 0, 2, 0);
   Xen_define_dilambda(S_view_files_speed_style, g_view_files_speed_style_w, H_view_files_speed_style,
-				   S_setB S_view_files_speed_style, g_view_files_set_speed_style_w,  1, 0, 2, 0);
+				   S_set S_view_files_speed_style, g_view_files_set_speed_style_w,  1, 0, 2, 0);
   Xen_define_dilambda(S_view_files_speed, g_view_files_speed_w, H_view_files_speed,
-				   S_setB S_view_files_speed, g_view_files_set_speed_w,  1, 0, 2, 0);
+				   S_set S_view_files_speed, g_view_files_set_speed_w,  1, 0, 2, 0);
   Xen_define_dilambda(S_view_files_files, g_view_files_files_w, H_view_files_files,
-				   S_setB S_view_files_files, g_view_files_set_files_w,  1, 0, 2, 0);
+				   S_set S_view_files_files, g_view_files_set_files_w,  1, 0, 2, 0);
   Xen_define_dilambda(S_view_files_selected_files, g_view_files_selected_files_w, H_view_files_selected_files,
-				   S_setB S_view_files_selected_files, g_view_files_set_selected_files_w,  1, 0, 2, 0);
+				   S_set S_view_files_selected_files, g_view_files_set_selected_files_w,  1, 0, 2, 0);
 
   Xen_define_safe_procedure(S_add_directory_to_view_files_list, g_add_directory_to_view_files_list_w, 1, 1, 0, H_add_directory_to_view_files_list);
   Xen_define_safe_procedure(S_add_file_to_view_files_list,      g_add_file_to_view_files_list_w,      1, 1, 0, H_add_file_to_view_files_list);
   Xen_define_safe_procedure(S_view_files_dialog,                g_view_files_dialog_w,                0, 2, 0, H_view_files_dialog);
 
   Xen_define_dilambda(S_view_files_sort, g_view_files_sort_w, H_view_files_sort,
-				   S_setB S_view_files_sort, g_set_view_files_sort_w,  0, 1, 1, 1);
+				   S_set S_view_files_sort, g_set_view_files_sort_w,  0, 1, 1, 1);
 
   Xen_add_to_hook_list(ss->snd_open_file_hook, vf_open_file_watcher_w, "view-files-dialog-open-file-handler", "view-files dialog open-file handler");
 
@@ -26795,7 +26795,7 @@ static Xen g_graph_cursor(void)
 static Xen g_set_graph_cursor(Xen curs)
 {
   int val;
-  Xen_check_type(Xen_is_integer(curs), curs, 1, S_setB S_graph_cursor, "an integer");
+  Xen_check_type(Xen_is_integer(curs), curs, 1, S_set S_graph_cursor, "an integer");
   /* X11/cursorfont.h has various even-numbered glyphs, but the odd numbers are ok, and XC_num_glyphs is a lie */
   /*   if you use too high a number here, X dies */
   val = Xen_integer_to_C_int(curs);
@@ -26804,7 +26804,7 @@ static Xen g_set_graph_cursor(Xen curs)
       ss->Graph_Cursor = val;
       ss->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
     }
-  else Xen_out_of_range_error(S_setB S_graph_cursor, 1, curs, "invalid cursor");
+  else Xen_out_of_range_error(S_set S_graph_cursor, 1, curs, "invalid cursor");
   return(curs);
 }
 
@@ -26824,7 +26824,7 @@ void g_init_gxchn(void)
   Xen_define_procedure(S_in,            g_in_w,             2, 0, 0, H_in);
 
   Xen_define_dilambda(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
-				   S_setB S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
+				   S_set S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
 
   Xen_define_safe_procedure(S_channel_widgets, g_channel_widgets_w, 0, 2, 0, H_channel_widgets);
 

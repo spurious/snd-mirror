@@ -6,29 +6,29 @@
 ;;;  test 3: variables                          [1911]
 ;;;  test 4: sndlib                             [2475]
 ;;;  test 5: simple overall checks              [4490]
-;;;  test 6: float-vectors                      [9238]
-;;;  test 7: colors                             [9509]
-;;;  test 8: clm                                [10028]
-;;;  test 9: mix                                [22111]
-;;;  test 10: marks                             [23890]
-;;;  test 11: dialogs                           [24828]
-;;;  test 12: extensions                        [25001]
-;;;  test 13: menus, edit lists, hooks, etc     [25267]
-;;;  test 14: all together now                  [26600]
-;;;  test 15: chan-local vars                   [27478]
-;;;  test 16: regularized funcs                 [29215]
-;;;  test 17: dialogs and graphics              [32964]
-;;;  test 18: save and restore                  [33076]
-;;;  test 19: transforms                        [34728]
-;;;  test 20: new stuff                         [36828]
-;;;  test 21: optimizer                         [38021]
-;;;  test 22: with-sound                        [39522]
-;;;  test 23: X/Xt/Xm                           [42507]
-;;;  test 24: GL                                [46181]
-;;;  test 25: errors                            [46304]
-;;;  test 26: s7                                [47822]
-;;;  test all done                              [47893]
-;;;  test the end                               [48075]
+;;;  test 6: float-vectors                      [9242]
+;;;  test 7: colors                             [9513]
+;;;  test 8: clm                                [10032]
+;;;  test 9: mix                                [22115]
+;;;  test 10: marks                             [23894]
+;;;  test 11: dialogs                           [24832]
+;;;  test 12: extensions                        [25005]
+;;;  test 13: menus, edit lists, hooks, etc     [25271]
+;;;  test 14: all together now                  [26604]
+;;;  test 15: chan-local vars                   [27487]
+;;;  test 16: regularized funcs                 [29224]
+;;;  test 17: dialogs and graphics              [32973]
+;;;  test 18: save and restore                  [33085]
+;;;  test 19: transforms                        [34737]
+;;;  test 20: new stuff                         [36837]
+;;;  test 21: optimizer                         [38030]
+;;;  test 22: with-sound                        [40229]
+;;;  test 23: X/Xt/Xm                           [43214]
+;;;  test 24: GL                                [46888]
+;;;  test 25: errors                            [47011]
+;;;  test 26: s7                                [48529]
+;;;  test all done                              [48600]
+;;;  test the end                               [48782]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
@@ -6954,15 +6954,19 @@ EDITS: 5
 	(test-orig (lambda (snd) (map-channel (lambda (n) (* n 2.0)))) (lambda (snd) (map-channel (lambda (n) (* n 0.5)))) 'map-channel ind1)
 	(test-orig (lambda (snd) (map-channel (lambda (n) (* n 2.0)) 1234)) (lambda (snd) (map-channel (lambda (n) (* n 0.5)) 1234)) 'map-channel ind1)
 	(test-orig (lambda (snd) (map-channel (lambda (n) (* n 2.0)) 12005 10)) (lambda (snd) (map-channel (lambda (n) (* n 0.5)) 12005 10)) 'map-channel ind1)
-	(test-orig (lambda (snd) (map-channel 
-				  (let ((vect (make-float-vector 2 0.0))) 
-				    (lambda (y) 
-				      (set! (vect 0) (set! (vect 1) (* y 2)))
-				      vect))))
-		   (lambda (snd) (map-channel
-				  (let ((outp #f))
-				    (lambda (y) 
-				      (and (set! outp (not outp)) (* y 0.5))))))
+	(test-orig (lambda (snd) 
+		     (define m1
+		       (let ((vect (make-float-vector 2 0.0))) 
+			 (lambda (y) 
+			   (float-vector-set! vect 0 (float-vector-set! vect 1 (* y 2)))
+			   vect)))
+		     (map-channel m1))
+		   (lambda (snd) 
+		     (define m2
+		       (let ((outp #f))
+			 (lambda (y) 
+			   (and (set! outp (not outp)) (* y 0.5)))))
+		     (map-channel m2))
 		   'map-channel ind1)
 	(test-orig (lambda (snd) (map-channel (lambda (n) (* n 2.0)))) (lambda (snd) (map-channel (lambda (n) (* n 0.5)))) 'map-channel ind1)
 	(test-orig (lambda (snd) (pad-channel 1000 2000 ind1)) (lambda (snd) (delete-samples 1000 2000 ind1)) 'pad-channel ind1)
@@ -21061,8 +21065,8 @@ EDITS: 2
 		 (for-each 
 		  (lambda (g name)
 		    (let ((tag (catch #t (lambda () (g :frequency 440.0)) (lambda args (car args)))))
-		      (if (not (eq? tag 'out-of-range))
-			  (snd-display #__line__ ";srate ~A: ~A -> ~A" n name tag))))
+		      (if (not (memq tag '(wrong-type-arg out-of-range)))
+			  (snd-display #__line__ ";key-check ~A: ~A -> ~A" n name tag))))
 		  (list make-oscil make-asymmetric-fm 
 			make-triangle-wave make-square-wave make-pulse-train make-sawtooth-wave
 			make-rand make-rand-interp)
@@ -26657,11 +26661,16 @@ EDITS: 2
   (define rev-funcs-set #f)
   
   (let* ((cur-dir-files (remove-if 
-			 (lambda (file) (<= (catch #t 
-						   (lambda () 
-						     (mus-sound-framples file))
-						   (lambda args 0))
-					    0))
+			 (lambda (file) 
+			   (<= (catch #t 
+				 (lambda () 
+				   (let ((len (mus-sound-framples file))
+					 (chns (mus-sound-chans file)))
+				     (if (or (> len 80000)
+					     (> chns 2))
+					 -1 len)))
+				 (lambda args 0))
+			       0))
 			 (sound-files-in-directory ".")))
 	 (cur-dir-len (length cur-dir-files))
 	 (stereo-files ())
@@ -26671,7 +26680,7 @@ EDITS: 2
 	 (open-files ())
 	 (s8-snd (if (file-exists? "s8.snd") "s8.snd" "oboe.snd"))
 	 (open-ctr 0))
-    
+
     (define* (clone-sound-as new-name snd)
       ;; copies any edit-sounds to save-dir!
       (let* ((tmpf (snd-tempnam))
@@ -27264,7 +27273,7 @@ EDITS: 2
 				(mus-data temp-buffer))
 			     (delay temp-buffer (if (> (moving-average gen 0.0) .01) fy 0.0))))
 			 old-y)
-		     #f)))))
+		     #f)))) 0 20)
 	  
 	  (let ((maxval1 (+ (maxamp) .01)))
 	    (if (not (every-sample? (lambda (y) (< y maxval1)))) 
@@ -29648,7 +29657,7 @@ EDITS: 2
 		      (if (and expected-vals (not (vequal split-vals expected-vals)))
 			  (let ((bad-data (vequal-at split-vals expected-vals)))
 			    (snd-display #__line__ ";checking ~A (from ~A), split vals disagree (loc cur expect): ~A" name line bad-data)
-			    (error 'uhoh1)
+			    ; (error 'uhoh1)
 			    )))))))))
   
   (define (reversed-read snd chn)
@@ -38023,6 +38032,35 @@ EDITS: 1
 (define (snd_test_21)
 
   (let ()
+    (define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
+      "(for-each-permutation func vals) applies func to every permutation of vals"
+      ;;   (for-each-permutation (lambda args (format-logged #t "~{~A~^ ~}~%" args)) '(1 2 3))
+      (define (pinner cur nvals len)
+	(if (= len 1)
+	    (apply func (cons (car nvals) cur))
+	    (do ((i 0 (+ i 1)))                       ; I suppose a named let would be more Schemish
+		((= i len))
+	      (let ((start nvals))
+		(set! nvals (cdr nvals))
+		(let ((cur1 (cons (car nvals) cur)))  ; add (car nvals) to our arg list
+		  (set! (cdr start) (cdr nvals))      ; splice out that element and 
+		  (pinner cur1 (cdr start) (- len 1)) ;   pass a smaller circle on down
+		  (set! (cdr start) nvals))))))       ; restore original circle
+      (let ((len (length vals)))
+	(set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
+	(pinner () vals len)
+	(set-cdr! (list-tail vals (- len 1)) ())))   ; restore its original shape
+    
+    (define (for-each-subset func args)
+      (define (subset source dest len)
+	(if (null? source)
+	    (if (aritable? func len)
+		(apply func dest))
+	    (begin
+	      (subset (cdr source) (cons (car source) dest) (+ len 1))
+	      (subset (cdr source) dest len))))
+      (subset args () 0))
+    
     (define-macro (test tst expected)
       `(let ((val ,tst))
 	 (if (not (morally-equal? val ,expected))
@@ -38170,7 +38208,7 @@ EDITS: 1
 	  (oscil g))
 	(oscil g)))
     
-    (test (fv8) 0.5395507431861811)
+    (test (morally-equal? (fv8) 0.5395507431861811) #t)
     
     (define (fv9)
       (let ((g (make-oscil 1000)))
@@ -38179,7 +38217,7 @@ EDITS: 1
 	  (oscil g 0.1))
 	(oscil g 0.1)))
     
-    (test (fv9) 0.8248311180769614)
+    (test (morally-equal? (fv9) 0.8248311180769614) #t)
     
     (define (fv10)
       (let ((fv (make-float-vector 4)))
@@ -38514,40 +38552,6 @@ EDITS: 1
 	  (float-vector-set! fv i (- i)))))
     (test (fv43) (float-vector 0 -1 -2 -3))
     
-    (define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
-      "(for-each-permutation func vals) applies func to every permutation of vals"
-      ;;   (for-each-permutation (lambda args (format-logged #t "~{~A~^ ~}~%" args)) '(1 2 3))
-      (define (pinner cur nvals len)
-	(if (= len 1)
-	    (apply func (cons (car nvals) cur))
-	    (do ((i 0 (+ i 1)))                       ; I suppose a named let would be more Schemish
-		((= i len))
-	      (let ((start nvals))
-		(set! nvals (cdr nvals))
-		(let ((cur1 (cons (car nvals) cur)))  ; add (car nvals) to our arg list
-		  (set! (cdr start) (cdr nvals))      ; splice out that element and 
-		  (pinner cur1 (cdr start) (- len 1)) ;   pass a smaller circle on down
-		  (set! (cdr start) nvals))))))       ; restore original circle
-      (let ((len (length vals)))
-	(set-cdr! (list-tail vals (- len 1)) vals)    ; make vals into a circle
-	(pinner () vals len)
-	(set-cdr! (list-tail vals (- len 1)) ())))   ; restore its original shape
-    
-    (define (for-each-subset func args)
-      (let ((subsets ()))
-	(define (subset source dest len)
-	  (if (null? source)
-	      (begin
-		(if (member dest subsets)
-		    (format-logged #t ";got ~S twice in for-each-subset: ~S~%" dest args))
-		(set! subsets (cons dest subsets))
-		(if (aritable? func len)
-		    (apply func dest)))
-	      (begin
-		(subset (cdr source) (cons (car source) dest) (+ len 1))
-		(subset (cdr source) dest len))))
-	(subset args () 0)))
-    
     (define (permute op . args)
       (let ((body (copy `(let () 
 			   (define (t1)
@@ -38563,11 +38567,11 @@ EDITS: 1
 			   (let ((v1 (t1))
 				 (v2 (copy (t2) (make-float-vector 4))))
 			     (if (not (morally-equal? v1 v2))
-				 (format *stderr* "~A -> ~A ~A~%" args v1 v2))))
+				 (format *stderr* "~D: ~A -> ~A ~A~%" #__line__ args v1 v2))))
 			:readable)))
 	(eval body)))
 
-    (set! (*s7* 'morally-equal-float-epsilon) 1e-14)    
+    (set! (*s7* 'morally-equal-float-epsilon) 1e-12)    
     (for-each
      (lambda (op)
        (for-each-subset
@@ -38961,43 +38965,11 @@ EDITS: 1
 	  (float-vector-set! fv i (r2k!cos g (env x))))))
     (test (fv77) (float-vector 0.008 0.01517028252035849 0.03244495213443228 0.07802652038780451))
 
-    (define (fv80)
-      (let ((x 0.0))
-	(do ((i 0 (+ i 1)))
-	    ((= i 4) x)
-	  (set! x .1))))
-    (test (fv80) .1)
-    
-    (define (fv81)
-      (let ((x 0.0))
-	(do ((i 0 (+ i 1))
-	     (y .1 .1))
-	    ((= i 4) x)
-	  (set! x y))))
-    (test (fv81) .1)
-    
-    (define (fv82)
-      (let ((x 0.0)
-	    (y 0.1))
-	(do ((i 0 (+ i 1)))
-	    ((= i 4) x)
-	  (set! x y))))
-    (test (fv82) .1)
-    
-    (define (fv83)
-      (let ((x 0.0)
-	    (y 0.1))
-	(do ((i 0 (+ i 1)))
-	    ((= i 4) x)
-	  (set! x (+ x y)))))
-    (test (fv83) .4)
-    
-    (define (fv84)
-      (let ((x 1.0))
-	(do ((i 0 (+ i 1)))
-	    ((= i 10) x)
-	  (set! x (+ x (* i 2.0))))))
-    (test (fv84) 91.0)
+    (define (fv80) (let ((x 0.0)) (do ((i 0 (+ i 1))) ((= i 4) x) (set! x .1)))) (test (fv80) .1)
+    (define (fv81) (let ((x 0.0)) (do ((i 0 (+ i 1)) (y .1 .1)) ((= i 4) x) (set! x y)))) (test (fv81) .1)
+    (define (fv82) (let ((x 0.0) (y 0.1)) (do ((i 0 (+ i 1))) ((= i 4) x) (set! x y)))) (test (fv82) .1)
+    (define (fv83) (let ((x 0.0) (y 0.1)) (do ((i 0 (+ i 1))) ((= i 4) x) (set! x (+ x y))))) (test (fv83) .4)
+    (define (fv84) (let ((x 1.0)) (do ((i 0 (+ i 1))) ((= i 10) x) (set! x (+ x (* i 2.0)))))) (test (fv84) 91.0)
 
     (define (fv85)
       (let ((fv1 (make-float-vector 4 1.5))
@@ -39114,6 +39086,15 @@ EDITS: 1
 	  (float-vector-set! fv i (float-vector-ref fv0 (floor x))))))
     (test (fv94) (float-vector 0.0 1.0 1.0 2.0))
 
+    (define (fv94a)
+      (let ((fv0 (float-vector 0 1 2 3 4 5))
+	    (fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1))
+	     (x 0.4 (+ x 0.7)))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (float-vector-ref fv0 (ceiling x))))))
+    (test (fv94a) (float-vector 1.0 2.0 2.0 3.0))
+    
     (define (fv95)
       (let ((fv (make-float-vector 4)))
 	(do ((i 0 (+ i 1))
@@ -39124,6 +39105,26 @@ EDITS: 1
 	      (float-vector-set! fv i (- i 10.0))))))
     (test (fv95) (float-vector 10.0 -9.0 12.0 -7.0))
     
+    (define (fv95a)
+      (let ((fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) fv)
+	  (if (odd? i)
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv95a) (float-vector -10.0 11.0 -8.0 13.0))
+
+    (define (fv95b)
+      (let ((fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) fv)
+	  (if (not (odd? i))
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv95b) (float-vector 10.0 -9.0 12.0 -7.0))
+
     (define (fv96)
       (let ((fv (make-float-vector 4))
 	    (fv1 (make-float-vector 4)))
@@ -39147,6 +39148,771 @@ EDITS: 1
 	  (set! j (floor x))
 	  (float-vector-set! fv i (* j 2.0)))))
     (test (fv97) (float-vector 0.0 2.0 2.0 4.0))
+
+    (define (fv98)
+      (let ((fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 0.1)))
+	    ((not (= i 0)) fv)
+	  (set! i (* i 0.5))
+	  (set! (fv i) x))))
+    (test (catch #t
+	    (lambda ()
+	      (fv98))
+	    (lambda args 
+	      (apply format #f (cadr args)))) "vector-set!: index must be an integer: ((fv i) x)")
+
+    (define (fv99)
+      (let ((fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) fv)
+	  (if (zero? i)
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv99) (float-vector 10.0 -9.0 -8.0 -7.0))
+
+    (define (fv100)
+      (let ((fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) fv)
+	  (if (zero? (modulo i 2))
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv100) (float-vector 10.0 -9.0 12.0 -7.0))
+
+    (define (fv101)
+      (let ((fv (make-float-vector 4))
+	    (ctr 0))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) ctr)
+	  (if (zero? (modulo i 2))
+	      (set! ctr (+ ctr 1))))))
+    (test (fv101) 2)
+
+    (define (fv103)
+      (let ((fv (make-float-vector 100))
+	    (n 100))
+	(do ((i 0 (+ i 1)))
+	    ((= i n))
+	  (do ((j 0 (+ j 1))
+	       (k i (+ k 1)))
+	      ((= j n))
+	    (float-vector-set! fv i (+ (float-vector-ref fv i) 1.0))))))
+    (fv103) ; just run without overflow
+
+    (define (fv104)
+      (let ((fv (make-float-vector 10)))
+	(do ((i 0 (+ i 1))) ((= i 10) fv)
+	  (do ((j 0 (+ j 1))) ((= j i))
+	    (float-vector-set! fv i (+ (float-vector-ref fv j) 1.0))))))
+    (test (fv104) (float-vector 0 1 2 3 4 5 6 7 8 9))
+    
+    (define (fv104)
+      (let ((fv (make-float-vector 10)))
+	(do ((i 0 (+ i 1))) ((= i 10) fv)
+	  (do ((j 0 (+ j 1))) ((= j i))
+	    (float-vector-set! fv i (+ (float-vector-ref fv j) 1.0))))))
+    (test (fv104) (float-vector 0 1 2 3 4 5 6 7 8 9))
+    
+    (define (fv106) (let ((x 0.0) (n 1.0) (p 20)) (do ((i n (+ i 1))) ((= i p) x)   (set! x (+ x i)))))  (test (fv106) 190.0)
+    
+    (define (fv105) (let ((x 0.0) (n 10.0)) (do ((i 0 (+ i 1))) ((= i n) x)   (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (n 10.0)) (do ((i 0.0 (+ i 1))) ((= i n) x) (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (n 10))   (do ((i 0.0 (+ i 1))) ((= i n) x) (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (n 10))   (do ((i 0 (+ i 1))) ((= i n) x)   (set! x (+ x i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x 0.0) (n 10.0)) (do ((i 0 (+ i 1))) ((>= i n) x)   (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (n 10.0)) (do ((i 0.0 (+ i 1))) ((>= i n) x) (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (n 10))   (do ((i 0.0 (+ i 1))) ((>= i n) x) (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (n 10))   (do ((i 0 (+ i 1))) ((>= i n) x)   (set! x (+ x i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x 0.0) (n 9.5))  (do ((i 0 (+ i 1))) ((>= i n) x)   (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (n 9.5))  (do ((i 0.0 (+ i 1))) ((>= i n) x) (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (n 19/2)) (do ((i 0.0 (+ i 1))) ((>= i n) x) (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (n 19/2)) (do ((i 0 (+ i 1))) ((>= i n) x)   (set! x (+ x i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x 0.0)) (do ((i 0 (+ i 1))) ((= i 10.0) x)   (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0)) (do ((i 0.0 (+ i 1))) ((= i 10.0) x) (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0)) (do ((i 0.0 (+ i 1))) ((= i 10) x)   (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0)) (do ((i 0 (+ i 1))) ((= i 10) x)     (set! x (+ x i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x 0.0) (n 10.0)) (do ((i n (- i 1))) ((= i 0) x)   (set! x (+ x i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x 0.0) (n 10.0)) (do ((i n (- i 1))) ((= i 0.0) x) (set! x (+ x i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x 0.0) (n 10))   (do ((i n (- i 1))) ((= i 0) x)   (set! x (+ x i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x 0.0) (n 10))   (do ((i n (- i 1))) ((= i 0.0) x) (set! x (+ x i)))))  (test (fv105) 55.0)
+    
+    (define (fv105) (let ((x 0.0) (n 10.0)) (do ((i 0 (+ i 1)) (j 0 (+ j 1))) ((= i n) x)   (set! x (+ x j)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (n 10.0)) (do ((i 0.0 (+ i 1)) (j 0 (+ j 1))) ((= i n) x) (set! x (+ x j)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (n 10))   (do ((i 0.0 (+ i 1)) (j 0 (+ j 1))) ((= i n) x) (set! x (+ x j)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (n 10))   (do ((i 0 (+ i 1)) (j 0 (+ j 1))) ((= i n) x)   (set! x (+ x j)))))  (test (fv105) 45.0)
+    
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i 0 (+ i 1))) ((= i n) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i 0.0 (+ i 1))) ((= i n) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i 0.0 (+ i 1))) ((= i n) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i 0 (+ i 1))) ((= i n) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i 0 (+ i 1))) ((>= i n) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i 0.0 (+ i 1))) ((>= i n) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i 0.0 (+ i 1))) ((>= i n) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i 0 (+ i 1))) ((>= i n) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (n 9.5))  (do ((i 0 (+ i 1))) ((>= i n) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 9.5))  (do ((i 0.0 (+ i 1))) ((>= i n) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 19/2)) (do ((i 0.0 (+ i 1))) ((>= i n) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 19/2)) (do ((i 0 (+ i 1))) ((>= i n) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0))) (do ((i 0 (+ i 1))) ((= i 10.0) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0))) (do ((i 0.0 (+ i 1))) ((= i 10.0) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0))) (do ((i 0.0 (+ i 1))) ((= i 10) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0))) (do ((i 0 (+ i 1))) ((= i 10) (x 0))     (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i n (- i 1))) ((= i 0) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i n (- i 1))) ((= i 0.0) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i n (- i 1))) ((= i 0) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i n (- i 1))) ((= i 0.0) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 55.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i 0 (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0))   (set! (x 0) (+ (x 0) j)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i 0.0 (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0)) (set! (x 0) (+ (x 0) j)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i 0.0 (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0)) (set! (x 0) (+ (x 0) j)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i 0 (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0))   (set! (x 0) (+ (x 0) j)))))  (test (fv105) 45.0)
+    
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i 0 (+ i 1))) ((= i n) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i 0.0 (+ i 1))) ((= i n) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i 0.0 (+ i 1))) ((= i n) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i 0 (+ i 1))) ((= i n) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i 0 (+ i 1))) ((>= i n) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i 0.0 (+ i 1))) ((>= i n) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i 0.0 (+ i 1))) ((>= i n) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i 0 (+ i 1))) ((>= i n) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (n 9.5))  (do ((i 0 (+ i 1))) ((>= i n) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 9.5))  (do ((i 0.0 (+ i 1))) ((>= i n) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 19/2)) (do ((i 0.0 (+ i 1))) ((>= i n) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 19/2)) (do ((i 0 (+ i 1))) ((>= i n) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0))) (do ((i 0 (+ i 1))) ((= i 10.0) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0))) (do ((i 0.0 (+ i 1))) ((= i 10.0) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0))) (do ((i 0.0 (+ i 1))) ((= i 10) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0))) (do ((i 0 (+ i 1))) ((= i 10) (x 0))     (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i n (- i 1))) ((= i 0) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i n (- i 1))) ((= i 0.0) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i n (- i 1))) ((= i 0) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i n (- i 1))) ((= i 0.0) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 55.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i 0 (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0))   (float-vector-set! x 0 (+ (x 0) j)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10.0)) (do ((i 0.0 (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0)) (float-vector-set! x 0 (+ (x 0) j)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i 0.0 (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0)) (float-vector-set! x 0 (+ (x 0) j)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (n 10))   (do ((i 0 (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0))   (float-vector-set! x 0 (+ (x 0) j)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x 0.0) (p 0) (n 10.0)) (do ((i p (+ i 1))) ((= i n) x)   (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (p 0.0) (n 10.0)) (do ((i p (+ i 1))) ((= i n) x) (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (p 0.0) (n 10))   (do ((i p (+ i 1))) ((= i n) x) (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (p 0) (n 10))   (do ((i p (+ i 1))) ((= i n) x)   (set! x (+ x i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x 0.0) (p 0) (n 10.0)) (do ((i p (+ i 1))) ((>= i n) x)   (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (p 0.0) (n 10.0)) (do ((i p (+ i 1))) ((>= i n) x) (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (p 0.0) (n 10))   (do ((i p (+ i 1))) ((>= i n) x) (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (p 0) (n 10))   (do ((i p (+ i 1))) ((>= i n) x)   (set! x (+ x i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x 0.0) (p 0) (n 9.5))  (do ((i p (+ i 1))) ((>= i n) x)   (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (p 0.0) (n 9.5))  (do ((i p (+ i 1))) ((>= i n) x) (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (p 0.0) (n 19/2)) (do ((i p (+ i 1))) ((>= i n) x) (set! x (+ x i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (p 0) (n 19/2)) (do ((i p (+ i 1))) ((>= i n) x)   (set! x (+ x i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x 0.0) (p 0) (n 10.0)) (do ((i n (- i 1))) ((= i p) x)   (set! x (+ x i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x 0.0) (p 0.0) (n 10.0)) (do ((i n (- i 1))) ((= i p) x) (set! x (+ x i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x 0.0) (p 0) (n 10))   (do ((i n (- i 1))) ((= i p) x)   (set! x (+ x i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x 0.0) (p 0.0) (n 10))   (do ((i n (- i 1))) ((= i p) x) (set! x (+ x i)))))  (test (fv105) 55.0)
+    
+    (define (fv105) (let ((x 0.0) (p 0) (n 10.0)) (do ((i p (+ i 1)) (j 0 (+ j 1))) ((= i n) x)   (set! x (+ x j)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (p 0.0) (n 10.0)) (do ((i p (+ i 1)) (j 0 (+ j 1))) ((= i n) x) (set! x (+ x j)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (p 0.0) (n 10))   (do ((i p (+ i 1)) (j 0 (+ j 1))) ((= i n) x) (set! x (+ x j)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x 0.0) (p 0) (n 10))   (do ((i p (+ i 1)) (j 0 (+ j 1))) ((= i n) x)   (set! x (+ x j)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10.0)) (do ((i p (+ i 1))) ((= i n) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10.0)) (do ((i p (+ i 1))) ((= i n) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10))   (do ((i p (+ i 1))) ((= i n) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10))   (do ((i p (+ i 1))) ((= i n) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10.0)) (do ((i p (+ i 1))) ((>= i n) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10.0)) (do ((i p (+ i 1))) ((>= i n) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10))   (do ((i p (+ i 1))) ((>= i n) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10))   (do ((i p (+ i 1))) ((>= i n) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 9.5))  (do ((i p (+ i 1))) ((>= i n) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 9.5))  (do ((i p (+ i 1))) ((>= i n) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 19/2)) (do ((i p (+ i 1))) ((>= i n) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 19/2)) (do ((i p (+ i 1))) ((>= i n) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10.0)) (do ((i n (- i 1))) ((= i p) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10.0)) (do ((i n (- i 1))) ((= i p) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10))   (do ((i n (- i 1))) ((= i p) (x 0))   (set! (x 0) (+ (x 0) i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10))   (do ((i n (- i 1))) ((= i p) (x 0)) (set! (x 0) (+ (x 0) i)))))  (test (fv105) 55.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10.0)) (do ((i p (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0))   (set! (x 0) (+ (x 0) j)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10.0)) (do ((i p (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0)) (set! (x 0) (+ (x 0) j)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10))   (do ((i p (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0)) (set! (x 0) (+ (x 0) j)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10))   (do ((i p (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0))   (set! (x 0) (+ (x 0) j)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10.0)) (do ((i p (+ i 1))) ((= i n) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10.0)) (do ((i p (+ i 1))) ((= i n) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10))   (do ((i p (+ i 1))) ((= i n) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10))   (do ((i p (+ i 1))) ((= i n) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10.0)) (do ((i p (+ i 1))) ((>= i n) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10.0)) (do ((i p (+ i 1))) ((>= i n) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10))   (do ((i p (+ i 1))) ((>= i n) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10))   (do ((i p (+ i 1))) ((>= i n) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 9.5))  (do ((i p (+ i 1))) ((>= i n) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 9.5))  (do ((i p (+ i 1))) ((>= i n) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 19/2)) (do ((i p (+ i 1))) ((>= i n) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 19/2)) (do ((i p (+ i 1))) ((>= i n) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10.0)) (do ((i n (- i 1))) ((= i p) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10.0)) (do ((i n (- i 1))) ((= i p) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10))   (do ((i n (- i 1))) ((= i p) (x 0))   (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 55.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10))   (do ((i n (- i 1))) ((= i p) (x 0)) (float-vector-set! x 0 (+ (x 0) i)))))  (test (fv105) 55.0)
+    
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10.0)) 
+		      (do ((i p (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0)) 
+			(float-vector-set! x 0 (+ (x 0) j)))))  
+    (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10.0)) 
+		      (do ((i p (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0)) 
+			(float-vector-set! x 0 (+ (x 0) j)))))  
+    (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0.0) (n 10))   
+		      (do ((i p (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0)) 
+			(float-vector-set! x 0 (+ (x 0) j)))))  
+    (test (fv105) 45.0)
+    (define (fv105) (let ((x (float-vector 0.0)) (p 0) (n 10))   
+		      (do ((i p (+ i 1)) (j 0 (+ j 1))) ((= i n) (x 0))   
+			(float-vector-set! x 0 (+ (x 0) j)))))  
+    (test (fv105) 45.0)
+    
+    (define (fv105) (let ((x 0.0) (n 10)) (do ((i 0 (+ i 1))) ((>= i n) x) (set! x (+ x 1)) (set! n (* n 1.0))))) (fv105)
+    (define (fv105) (let ((x 0.0) (n 10)) (do ((i 0 (+ i 1))) ((>= i n) x) (set! n (* n 1.0))))) (fv105)
+    
+    (define (fv105) (let ((port #f) (n 4)) (do ((i 0 (+ i 1))) ((= i n)) (write-char #\space port)))) (fv105)
+    (define (fv105) (let ((port #f) (n 4.0)) (do ((i 0 (+ i 1))) ((= i n)) (write-char #\space port)))) (fv105)
+    
+    (define (fv105) (let ((port #f) (n 4)) (do ((i 0 (+ i 1))) ((= i n)) (let ((j 0)) (write-char #\space port))))) (fv105)
+    (define (fv105) (let ((port #f) (n 4.0)) (do ((i 0 (+ i 1))) ((= i n)) (let ((j 0)) (write-char #\space port))))) (fv105)
+    
+    (define (fv105) 
+      (let ((x 0)
+	    (y 0.0))
+	(do ((i (set! x (+ x 1)) (+ i 1)))
+	    ((= i 10) y)
+	  (set! y (+ y x)))))
+    (test (fv105) 9.0)
+    
+    (define (fv105) 
+      (let ((x 4)
+	    (y 1.0))
+	(do ((i 0 (+ i 1))
+	     (j 0 (set! x (+ x 1/2))))
+	    ((>= i x) y)
+	  (set! y (+ y x)))))
+    (test (fv105) 47.0)
+    
+    (when all-args
+      (define (do-permute init step end)
+	(let ((body (copy `(let () 
+			     (define (t1)
+			       (let ((fv (make-float-vector 4)))
+				 (if (<= ,step 0) (error 'out-of-range "step > 0"))
+				 (do ((i ,init (+ i ,step))
+				      (x 1.0 (+ x 1.0)))
+				     ((>= i ,end) fv)
+				   (float-vector-set! fv i x))))
+			     (define (t2)
+			       (let ((fv (make-float-vector 4)))
+				 (if (<= ,step 0) (error 'out-of-range "step > 0"))
+				 (do ((i ,init (+ i ,step))
+				      (x 1.0 (+ x 1.0)))
+				     ((>= i ,end) fv)
+				   (float-vector-set! fv i x))))
+			     (let ((v1 (catch #t t1 (lambda args 'error)))
+				   (v2 (catch #t (lambda () (copy (t2) (make-float-vector 4))) (lambda args 'error))))
+			       (if (not (morally-equal? v1 v2))
+				   (format *stderr* "~D: permute ~A, ~A -> ~A ~A, ~A~%" #__line__ op args v1 v2 (float-vector-peak (float-vector-subtract! v1 v2))))))
+			  :readable)))
+	  (eval body)))
+      
+      (set! (*s7* 'morally-equal-float-epsilon) 1e-12)
+      
+      (for-each-subset
+       (lambda (a b c)
+	 (for-each-permutation
+	  do-permute
+	  (list a b c)))
+       (list 0 4 1 2 0.0 4.0 1.0 2.0 1/2 1+i 2/3 #\a "hi" #f)))
+
+    (define (fv107)
+      (let ((g0 (make-hash-table)))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 10.0)))
+	    ((= i 4) g0)
+	  (hash-table-set! g0 i x))))
+    (test (fv107) (hash-table* 0 0.0 1 10.0 2 20.0 3 30.0))
+
+    (define (fv108)
+      (let ((fv (make-float-vector 10)))
+	(let ((locs (make-locsig :output fv))
+	      (k 0))
+	  (do ((i 0 (- i 1)))
+	      ((= i -10) fv)
+	    (set! k (abs i))
+	    (locsig locs k (* .1 i))))))
+    (test (fv108) (float-vector 0 -.1 -.2 -.3 -.4 -.5 -.6 -.7 -.8 -.9))
+    
+    (define (fv109)
+      (let ((fv (make-float-vector 10)))
+	(let ((locs (make-locsig :output fv))
+	      (k 0))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10) fv)
+	    (locsig locs k (* .1 i))
+	    (set! k (+ k 1))))))
+    (test (fv109) (float-vector 0 .1 .2 .3 .4 .5 .6 .7 .8 .9))
+
+    (define (fv110)
+      (let ((fv (make-float-vector 10))
+	    (k 0))
+	(set! *output* fv)
+	(do ((i 0 (+ i 1)))
+	    ((= i 10) fv)
+	  (outa k (* .1 i))
+	  (set! k (+ k 1)))))
+    (test (fv110) (float-vector 0 .1 .2 .3 .4 .5 .6 .7 .8 .9))
+    
+    (define (fv111)
+      (let ((fv (make-float-vector 10))
+	    (k 0))
+	(set! *output* fv)
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 0.1)))
+	    ((= i 10) fv)
+	  (outa k x)
+	  (set! k (+ k 1)))))
+    (test (fv111) (float-vector 0 .1 .2 .3 .4 .5 .6 .7 .8 .9))
+    
+    (define (fv112)
+      (let ((fv (make-float-vector 10))
+	    (k 0))
+	(set! *output* fv)
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 0.1)))
+	    ((= i 10) fv)
+	  (outa k x)
+	  (set! k (+ k 1.2)))))
+    (test (catch #t fv112 (lambda args 'error)) 'error)
+    
+    (define (fv113)
+      (let ((fv (make-float-vector 10)))
+	(let ((locs (make-locsig :output fv))
+	      (k 0))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10) fv)
+	    (locsig locs k (* .1 i))
+	    (set! k (+ k 1.2))))))
+    (test (catch #t fv113 (lambda args 'error)) 'error)
+    
+    (define (fv114)
+      (let ((fv (make-float-vector 10000))
+	    (k 0)
+	    (x 1.2))
+	(set! *output* fv)
+	(do ((i 0 (+ i 1)))
+	    ((= i 10000) fv)
+	  (outa k (* .001 i))
+	  (set! k (+ k x)))))
+    (test (catch #t fv114 (lambda args 'error)) 'error)
+
+    (define (fv115)
+      (let ((g0 (make-float-vector 4 1.0))
+	    (fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (let ((x (g0 i)))
+	    (set! (fv i) x)))))
+    (test (fv115) (float-vector 1.0 1.0 1.0 1.0))
+    
+    (define (fv116)
+      (let ((fv (make-float-vector 4))
+	    (g (make-oscil 100)))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) fv)
+	  (if (oscil? g)
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv116) (float-vector 10.0 11.0 12.0 13.0))
+
+    (define (fv117)
+      (let ((fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) fv)
+	  (if (even? (round i))
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv117) (float-vector 10.0 -9.0 12.0 -7.0))
+    
+    (define (fv118)
+      (let ((fv (make-float-vector 4))
+	    (lst '(1 2 3)))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) fv)
+	  (if (even? (car lst))
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv118) (float-vector -10.0 -9.0 -8.0 -7.0))
+
+    (define (fv119)
+      (let ((fv (make-float-vector 4))
+	    (lst '(1 2 3)))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) fv)
+	  (if (eqv? i (car lst))
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv119) (float-vector -10.0 11.0 -8.0 -7.0))
+
+    (define (fv120)
+      (let ((fv (make-float-vector 4))
+	    (j 2))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) fv)
+	  (if (= i j)
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv120) (float-vector -10.0 -9.0 12.0 -7.0))
+
+    (define (fv121)
+      (let ((fv (make-float-vector 4))
+	    (j 2))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) fv)
+	  (if (< i j)
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv121) (float-vector 10.0 11.0 -8.0 -7.0))
+    
+    (define (fv122)
+      (let ((fv (make-float-vector 4))
+	    (j 2))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) fv)
+	  (if (<= i j)
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv122) (float-vector 10.0 11.0 12.0 -7.0))
+    
+    (define (fv123)
+      (let ((fv (make-float-vector 4))
+	    (j 2))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) fv)
+	  (if (>= i j)
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv123) (float-vector -10.0 -9.0 12.0 13.0))
+    
+    (define (fv124)
+      (let ((fv (make-float-vector 4))
+	    (j 2))
+	(do ((i 0 (+ i 1))
+	     (x 0 (+ x 1)))
+	    ((= i 4) fv)
+	  (if (> i j)
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv124) (float-vector -10.0 -9.0 -8.0 13.0))
+
+    (define (fv125)
+      (let ((gen (make-delay 5)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 3))
+	  (float-vector-set! (mus-data gen) i 0.3))
+	(let ((fv (make-float-vector 5)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 5) fv)
+	    (float-vector-set! fv i (float-vector-ref (mus-data gen) i))))))
+    (test (fv125) (float-vector 0.3 0.3 0.3 0.0 0.0))
+
+    (define (fv126)
+      (let ((d0 (float-vector 1 0 -1 0 1 0 -1 0))
+	    (d1 (float-vector 0 1 0 -1 0 1 0 -1))
+	    (e0 (float-vector 0 0 8 0 0 0 0 0))
+	    (e1 (float-vector 0 0 0 0 0 0 0 0))
+	    (rl (make-float-vector 8))
+	    (im (make-float-vector 8)))
+	(set! (rl 2) 1.0)
+	(mus-fft rl im 8 1)
+	(if (or (not (morally-equal? d0 rl)) 
+		(not (morally-equal? d1 im)))
+	    (format *stderr* ";fv126 mus-fft 0: ~A ~A~%" rl im))
+	(mus-fft rl im 8 -1)
+	(if (or (not (morally-equal? e0 rl)) 
+		(not (morally-equal? e1 im)))
+	    (format *stderr* ";fv126 mus-fft 1: ~A ~A~%" rl im))
+	(set! (rl 2) 1.0)
+	(do ((i 0 (+ i 1)))
+	    ((= i 1))
+	  (mus-fft rl im))
+	(if (or (not (morally-equal? d0 rl)) 
+		(not (morally-equal? d1 im)))
+	    (format *stderr* ";fv126 mus-fft 2: ~A ~A~%" rl im))
+	(let ((loc 2)
+	      (val 1.0))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 1))
+	    (mus-fft rl im 8 -1)
+	    (float-vector-set! rl loc val)
+	    (mus-fft rl im 8))
+	  (if (or (not (morally-equal? d0 rl)) 
+		  (not (morally-equal? d1 im)))
+	      (format *stderr* ";fv126 mus-fft 2: ~A ~A~%" rl im)))))
+    (fv126)
+
+    (define (fv127)
+      (let ((fv (make-float-vector 4))
+	    (j 2))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (if (or (> i j)
+		  (= i 3))
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv127) (float-vector -10.0 -9.0 -8.0 13.0))
+    
+    (define (fv128)
+      (let ((fv (make-float-vector 4))
+	    (j 2))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (if (or (= i 1)
+		  (= i 3))
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv128) (float-vector -10.0 11.0 -8.0 13.0))
+
+    (define (fv129)
+      (let ((fv (make-float-vector 4))
+	    (j 2))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (if (and (= i j)
+		   (< i 3))
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv129) (float-vector -10.0 -9.0 12.0 -7.0))
+
+    (define (fv130)
+      (let ((fv (make-float-vector 4))
+	    (j #\a))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (if (char=? j #\a)
+	      (float-vector-set! fv i (+ i 10.0))
+	      (float-vector-set! fv i (- i 10.0))))))
+    (test (fv130) (float-vector 10.0 11.0 12.0 13.0))
+
+    (define (char-permute op . args)
+      (let ((body (copy `(let () 
+			   (define (t1)
+			     (let ((x #\a) (y #\A) (fv (make-float-vector 4)))
+			       (do ((i 0 (+ i 1))
+				    (x1 1.0 (+ x1 1.0)))
+				   ((= i 4) fv)
+				 (if (,op ,@args)
+				     (float-vector-set! fv i x1)
+				     (float-vector-set! fv i 0.0)))))
+			   (define (t2)
+			     (let ((x #\a) (y #\A) (fv (make-float-vector 4)))
+			       (do ((i 0 (+ i 1))
+				    (x1 1.0 (+ x1 1.0)))
+				   ((= i 4) fv)
+				 (if (apply ,op (list ,@args))
+				     (float-vector-set! fv i x1)
+				     (float-vector-set! fv i 0.0)))))
+			   (let ((v1 (t1))
+				 (v2 (t2)))
+			     (if (not (morally-equal? v1 v2))
+				 (format *stderr* "char-permute ~A, ~A -> ~A ~A~%" op args v1 v2))))
+			:readable)))
+	(eval body)))
+    
+    (for-each
+     (lambda (op)
+       (for-each-subset
+	(lambda s-args
+	  (if (= (length s-args) 2)
+	      (for-each-permutation 
+	       (lambda args 
+		 (apply char-permute op args)) 
+	       s-args)))
+	(list 'x 'y #\b #\newline)))
+     (if (provided? 'pure-s7)
+	 (list 'char=? 'char<? 'char<=? 'char>? 'char>=?)
+	 (list 'char=? 'char<? 'char<=? 'char>? 'char>=? 'char-ci=? 'char-ci<? 'char-ci<=? 'char-ci>? 'char-ci>=?)))
+    
+    (define (string-permute op . args)
+      (let ((body (copy `(let () 
+			   (define (t1)
+			     (let ((x "a") (y "A") (fv (make-float-vector 4)))
+			       (do ((i 0 (+ i 1))
+				    (x1 1.0 (+ x1 1.0)))
+				   ((= i 4) fv)
+				 (if (,op ,@args)
+				     (float-vector-set! fv i x1)
+				     (float-vector-set! fv i 0.0)))))
+			   (define (t2)
+			     (let ((x "a") (y "A") (fv (make-float-vector 4)))
+			       (do ((i 0 (+ i 1))
+				    (x1 1.0 (+ x1 1.0)))
+				   ((= i 4) fv)
+				 (if (apply ,op (list ,@args))
+				     (float-vector-set! fv i x1)
+				     (float-vector-set! fv i 0.0)))))
+			   (let ((v1 (t1))
+				 (v2 (t2)))
+			     (if (not (morally-equal? v1 v2))
+				 (format *stderr* "string-permute ~A, ~A -> ~A ~A~%" op args v1 v2))))
+			:readable)))
+	(eval body)))
+    
+    (for-each
+     (lambda (op)
+       (for-each-subset
+	(lambda s-args
+	  (if (= (length s-args) 2)
+	      (for-each-permutation 
+	       (lambda args 
+		 (apply string-permute op args))
+	       s-args)))
+	(list 'x 'y "ab" "b")))
+     (if (provided? 'pure-s7)
+	 (list 'string=? 'string<? 'string<=? 'string>? 'string>=?)
+	 (list 'string=? 'string<? 'string<=? 'string>? 'string>=? 'string-ci=? 'string-ci<? 'string-ci<=? 'string-ci>? 'string-ci>=?)))
+
+    (unless (provided? 'pure-s7)
+      (define (fv131)
+	(let ((fv1 (make-float-vector 10))
+	      (fv2 #f)
+	      (coeffs (float-vector 0.0 0.5 0.25 0.125)))
+	  (do ((i 0 (+ i 1))
+	       (x 0.0 (+ x 0.1)))
+	      ((= i 10))
+	    (float-vector-set! fv1 i (mus-chebyshev-t-sum x coeffs)))
+	  (do ((i 0 (+ i 1))
+	       (x 0.0 (+ x 0.1))
+	       (lst ()))
+	      ((= i 10)
+	       (set! fv2 (list->vector (reverse lst))))
+	    (set! lst (cons (mus-chebyshev-t-sum x coeffs) lst)))
+	  (if (not (morally-equal? fv1 fv2))
+	      (format *stderr* ";t-sum: ~A ~A~%" fv1 fv2))))
+      (fv131)
+      
+      (define (fv132)
+	(let ((fv1 (make-float-vector 10))
+	      (fv2 #f)
+	      (t-coeffs (float-vector 0.0 0.5 0.25 0.125))
+	      (u-coeffs (float-vector 0.0 0.2 0.1 0.05)))
+	  (do ((i 0 (+ i 1))
+	       (x 0.0 (+ x 0.1)))
+	      ((= i 10))
+	    (float-vector-set! fv1 i (mus-chebyshev-tu-sum x t-coeffs u-coeffs)))
+	  (do ((i 0 (+ i 1))
+	       (x 0.0 (+ x 0.1))
+	       (lst ()))
+	      ((= i 10)
+	       (set! fv2 (list->vector (reverse lst))))
+	    (set! lst (cons (mus-chebyshev-tu-sum x t-coeffs u-coeffs) lst)))
+	  (if (not (morally-equal? fv1 fv2))
+	      (format *stderr* ";tu-sum: ~A ~A~%" fv1 fv2))))
+      (fv132))
+
+    (define (fv132a)
+      (let ((fv (make-float-vector 10)))
+	(let ((o1 (make-oscil 1000))
+	      (o2 (make-oscil 1000))
+	      (s1 (make-sawtooth-wave 1000))
+	      (s2 (make-sawtooth-wave 1000))
+	      (s3 (make-sawtooth-wave 1000))
+	      (s4 (make-sawtooth-wave 1000))
+	      (t1 (make-triangle-wave 1000))
+	      (t2 (make-triangle-wave 1000))
+	      (p1 (make-polywave 1000 '(1 .4 2 .6)))
+	      (p2 (make-polywave 1000 '(1 .4 2 .6)))
+	      (p3 (make-polywave 1000 '(1 .4 2 .6)))
+	      (p4 (make-polywave 1000 '(1 .4 2 .6))))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10) fv)
+	    (set! (fv i) 
+		  (if (even? i) 
+		      (+ (oscil o1)
+			 (* (triangle-wave t1)
+			    (if (zero? (modulo i 2))
+				(polywave p1)
+				(polywave p2)))
+			 (if (odd? i)
+			     (sawtooth-wave s1)
+			     (sawtooth-wave s2)))
+		      (+ (oscil o2)
+			 (* (triangle-wave t2)
+			    (if (zero? (modulo i 2))
+				(polywave p3)
+				(polywave p4)))
+			 (if (odd? i)
+			     (sawtooth-wave s3)
+			     (sawtooth-wave s4)))))))))
+    
+    (test (fv132a) (float-vector 0.0 0.0 0.2754865742400099 0.2754865742400099 0.5330915108442034 0.5330915108442034 
+				 0.7567925994733748 0.7567925994733748 0.9340879688376413 0.9340879688376413))
+    
+    (define (fv133)
+      (let ((fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  ((lambda ()
+	     (set! (fv i) i))))))
+    (test (fv133) (float-vector 0.0 1.0 2.0 3.0))
+    
+    (define (fv134)
+      (let ((fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (let ((y 1.0))
+	    ((lambda ()
+	       (set! (fv i) i)))))))
+    (test (fv134) (float-vector 0.0 1.0 2.0 3.0))
+    
+    (define (fv135)
+      (let ((fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 1.0)))
+	    ((= i 4) fv)
+	  ((lambda ()
+	     (set! (fv i) i))))))
+    (test (fv135) (float-vector 0.0 1.0 2.0 3.0))
     )
   
   (if all-args
@@ -47945,7 +48711,7 @@ EDITS: 1
 (set! *ask-about-unsaved-edits* #f)
 (set! *remember-sound-state* #f)
 
-(save-listener "test.output")
+;(save-listener "test.output")
 (set! *listener-prompt* original-prompt)
 (clear-listener)
 (set! (show-listener) #t)

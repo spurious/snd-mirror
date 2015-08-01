@@ -1,4 +1,4 @@
-#if 1
+#if 0
 #if 1
 #define NUM_COUNTS 65536
 static int counts[NUM_COUNTS];
@@ -157,11 +157,11 @@ static void init_hashes(s7_scheme *sc)
 }
 
 typedef struct {
-  s7_Int count;
+  s7_int count;
   s7_pointer expr;
 } datum;
 
-static datum *new_datum(s7_Int ctr, s7_pointer e)
+static datum *new_datum(s7_int ctr, s7_pointer e)
 {
   datum *d;
   d = calloc(1, sizeof(datum));
@@ -180,7 +180,7 @@ static int sort_data(const void *v1, const void *v2)
 static void report_counts(s7_scheme *sc)
 {
   int len, i, loc = 0, entries;
-  s7_pointer *elements;
+  hash_entry_t **elements;
   datum **data;
 
   len = hash_table_length(hashes);

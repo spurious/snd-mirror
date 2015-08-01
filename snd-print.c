@@ -720,7 +720,7 @@ static Xen g_eps_file(void) {return(C_string_to_Xen_string(eps_file(ss)));}
 static Xen g_set_eps_file(Xen val) 
 {
   #define H_eps_file "(" S_eps_file "): File:Print and " S_graph_to_ps " file name (snd.eps)"
-  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_eps_file, "a string"); 
+  Xen_check_type(Xen_is_string(val), val, 1, S_set S_eps_file, "a string"); 
   if (eps_file(ss)) free(eps_file(ss));
   set_eps_file(mus_strdup(Xen_string_to_C_string(val))); 
   return(C_string_to_Xen_string(eps_file(ss)));
@@ -734,7 +734,7 @@ static Xen g_eps_left_margin(void) {return(C_double_to_Xen_real(eps_left_margin(
 static Xen g_set_eps_left_margin(Xen val) 
 {
   #define H_eps_left_margin "(" S_eps_left_margin "): File:Print and " S_graph_to_ps " left margin"
-  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_eps_left_margin, "a number"); 
+  Xen_check_type(Xen_is_number(val), val, 1, S_set S_eps_left_margin, "a number"); 
   set_eps_left_margin(mus_fclamp(0.0, Xen_real_to_C_double(val), MAX_EPS_MARGIN));
   return(C_double_to_Xen_real(eps_left_margin(ss)));
 }
@@ -745,7 +745,7 @@ static Xen g_eps_bottom_margin(void) {return(C_double_to_Xen_real(eps_bottom_mar
 static Xen g_set_eps_bottom_margin(Xen val) 
 {
   #define H_eps_bottom_margin "(" S_eps_bottom_margin "): File:Print and " S_graph_to_ps " bottom margin"
-  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_eps_bottom_margin, "a number"); 
+  Xen_check_type(Xen_is_number(val), val, 1, S_set S_eps_bottom_margin, "a number"); 
   set_eps_bottom_margin(mus_fclamp(0.0, Xen_real_to_C_double(val), MAX_EPS_MARGIN));
   return(C_double_to_Xen_real(eps_bottom_margin(ss)));
 }
@@ -757,7 +757,7 @@ static Xen g_set_eps_size(Xen val)
 {
   #define MAX_EPS_SIZE 1000.0
   #define H_eps_size "(" S_eps_size "): File:Print and " S_graph_to_ps " output size scaler (1.0)"
-  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_eps_size, "a number"); 
+  Xen_check_type(Xen_is_number(val), val, 1, S_set S_eps_size, "a number"); 
   set_eps_size(mus_fclamp(0.0, Xen_real_to_C_double(val), MAX_EPS_SIZE));
   return(C_double_to_Xen_real(eps_size(ss)));
 }
@@ -787,16 +787,16 @@ void g_init_print(void)
   Xen_define_procedure(S_gl_graph_to_ps, g_gl_graph_to_ps_w, 0, 4, 0, H_gl_graph_to_ps);
 
   Xen_define_dilambda(S_eps_file, g_eps_file_w, H_eps_file,
-				   S_setB S_eps_file, g_set_eps_file_w,  0, 0, 1, 0);
+				   S_set S_eps_file, g_set_eps_file_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_eps_left_margin, g_eps_left_margin_w, H_eps_left_margin,
-				   S_setB S_eps_left_margin, g_set_eps_left_margin_w,  0, 0, 1, 0);
+				   S_set S_eps_left_margin, g_set_eps_left_margin_w,  0, 0, 1, 0);
   
   Xen_define_dilambda(S_eps_bottom_margin, g_eps_bottom_margin_w, H_eps_bottom_margin,
-				   S_setB S_eps_bottom_margin, g_set_eps_bottom_margin_w,  0, 0, 1, 0);
+				   S_set S_eps_bottom_margin, g_set_eps_bottom_margin_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_eps_size, g_eps_size_w, H_eps_size,
-				   S_setB S_eps_size, g_set_eps_size_w,  0, 0, 1, 0);
+				   S_set S_eps_size, g_set_eps_size_w,  0, 0, 1, 0);
 
 #if HAVE_GL && WITH_GL2PS
   Xen_provide_feature("gl2ps");

@@ -5065,8 +5065,8 @@ returns a sum of cosines scaled by the binomial coeffcients."))
 	(let* ((x angle)
 	       (y (* x ratio)))
 	  (set! angle (+ angle fm frequency))
-	  (* (cos x)
-	     (expt (cos y) n)))))))
+	  (real-part (* (cos x)
+			(expt (cos y) n))))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)

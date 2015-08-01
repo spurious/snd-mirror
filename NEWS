@@ -1,13 +1,30 @@
-Snd 15.7:
+Snd 15.8:
 
-added CM_patterns.scm thanks to Rick and Anders
+changed make-iterator with a closure argument -- the closure
+  is now called without any arguments, and the it should
+  contain a variable named 'iterator? with a non-false value.
 
-removed s7 ~<~> format directive
-changed bytevector* to byte-vector* (r7rs.scm has definitions of the old forms)
-added hash-table-function
+s7 now calls setlocale(LC_NUMERIC, "C") at startup.
 
-checked: gtk 3.17.2|3, sbcl 1.2.12
+What used to be called the run macro (clm optimizer) has been
+  completely rewritten for about the sixth time; many changes
+  in s7.h, etc. 
 
-Thanks!:  Tito Latini, Kjetil Matheussen, Anders Vinjar
+  1990: CL version (from Mus10 from MusicN)
+  1993: CL + FFI
+  1994: CL->C
+  2002: Guile+Snd run macro
+  2008: s7+sndlib
+  2015: This time for sure!
 
+  This change is about 1/3 complete, so view this version of
+  Snd with grave suspicion.  
 
+The Snd CVS site at Sourceforge has been offline for about two
+  weeks ("storage fault"), and Sourceforge itself is up for sale. 
+  I'll update the files there as soon as it comes online (Aug-3 is
+  the current prediction).
+
+checked: gtk 3.17.4|5, sbcl 1.2.13
+
+Thanks!: Anders Vinjar, Tito Latini, Greg Santucci, Mike Scholz

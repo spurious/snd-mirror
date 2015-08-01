@@ -1352,7 +1352,7 @@ static Xen g_graph_cursor(void)
 static Xen g_set_graph_cursor(Xen curs)
 {
   int val;
-  Xen_check_type(Xen_is_integer(curs), curs, 1, S_setB S_graph_cursor, "an integer");
+  Xen_check_type(Xen_is_integer(curs), curs, 1, S_set S_graph_cursor, "an integer");
   val = Xen_integer_to_C_int(curs);
   if ((val >= 0) && ((val & 1) == 0) && (val <= GDK_XTERM)) /* these are even numbers up to about 152 (gdkcursor.h) */
     {
@@ -1360,7 +1360,7 @@ static Xen g_set_graph_cursor(Xen curs)
       ss->graph_cursor = GDK_CURSOR_NEW((GdkCursorType)in_graph_cursor(ss));
       /* the gtk examples ignore g_object_ref|unref in this regard, so I will also */
     }
-  else Xen_out_of_range_error(S_setB S_graph_cursor, 1, curs, "invalid cursor");
+  else Xen_out_of_range_error(S_set S_graph_cursor, 1, curs, "invalid cursor");
   return(curs);
 }
 
@@ -1379,7 +1379,7 @@ void g_init_gxchn(void)
   Xen_define_procedure(S_in,            g_in_w,             2, 0, 0, H_in);
 
   Xen_define_dilambda(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
-				   S_setB S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
+				   S_set S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
 
   Xen_define_procedure(S_channel_widgets, g_channel_widgets_w, 0, 2, 0, H_channel_widgets);
 

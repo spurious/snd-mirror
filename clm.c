@@ -447,7 +447,7 @@ mus_float_t mus_frequency(mus_any *gen)
 
 mus_float_t mus_set_frequency(mus_any *gen, mus_float_t val)
 {
-  if ((check_gen(gen, S_setB S_mus_frequency)) &&
+  if ((check_gen(gen, S_set S_mus_frequency)) &&
       (gen->core->set_frequency))
     return((*(gen->core->set_frequency))(gen, val));
   return((mus_float_t)mus_error(MUS_NO_FREQUENCY, "can't set %s's frequency", mus_name(gen)));
@@ -465,7 +465,7 @@ mus_float_t mus_phase(mus_any *gen)
 
 mus_float_t mus_set_phase(mus_any *gen, mus_float_t val)
 {
-  if ((check_gen(gen, S_setB S_mus_phase)) &&
+  if ((check_gen(gen, S_set S_mus_phase)) &&
       (gen->core->set_phase))
     return((*(gen->core->set_phase))(gen, val));
   return((mus_float_t)mus_error(MUS_NO_PHASE, "can't set %s's phase", mus_name(gen)));
@@ -484,7 +484,7 @@ mus_float_t mus_scaler(mus_any *gen)
 
 mus_float_t mus_set_scaler(mus_any *gen, mus_float_t val)
 {
-  if ((check_gen(gen, S_setB S_mus_scaler)) &&
+  if ((check_gen(gen, S_set S_mus_scaler)) &&
       (gen->core->set_scaler))
     return((*(gen->core->set_scaler))(gen, val));
   return((mus_float_t)mus_error(MUS_NO_SCALER, "can't set %s's scaler", mus_name(gen)));
@@ -502,7 +502,7 @@ mus_float_t mus_feedforward(mus_any *gen) /* shares "scaler" */
 
 mus_float_t mus_set_feedforward(mus_any *gen, mus_float_t val)
 {
-  if ((check_gen(gen, S_setB S_mus_feedforward)) &&
+  if ((check_gen(gen, S_set S_mus_feedforward)) &&
       (gen->core->set_scaler))
     return((*(gen->core->set_scaler))(gen, val));
   return((mus_float_t)mus_error(MUS_NO_FEEDFORWARD, "can't set %s's feedforward", mus_name(gen)));
@@ -520,7 +520,7 @@ mus_float_t mus_offset(mus_any *gen)
 
 mus_float_t mus_set_offset(mus_any *gen, mus_float_t val)
 {
-  if ((check_gen(gen, S_setB S_mus_offset)) &&
+  if ((check_gen(gen, S_set S_mus_offset)) &&
       (gen->core->set_offset))
     return((*(gen->core->set_offset))(gen, val));
   return((mus_float_t)mus_error(MUS_NO_OFFSET, "can't set %s's offset", mus_name(gen)));
@@ -538,7 +538,7 @@ mus_float_t mus_width(mus_any *gen)
 
 mus_float_t mus_set_width(mus_any *gen, mus_float_t val)
 {
-  if ((check_gen(gen, S_setB S_mus_width)) &&
+  if ((check_gen(gen, S_set S_mus_width)) &&
       (gen->core->set_width))
     return((*(gen->core->set_width))(gen, val));
   return((mus_float_t)mus_error(MUS_NO_WIDTH, "can't set %s's width", mus_name(gen)));
@@ -556,7 +556,7 @@ mus_float_t mus_increment(mus_any *gen)
 
 mus_float_t mus_set_increment(mus_any *gen, mus_float_t val)
 {
-  if ((check_gen(gen, S_setB S_mus_increment)) &&
+  if ((check_gen(gen, S_set S_mus_increment)) &&
       (gen->core->set_increment))
     return((*(gen->core->set_increment))(gen, val));
   return((mus_float_t)mus_error(MUS_NO_INCREMENT, "can't set %s's increment", mus_name(gen)));
@@ -574,7 +574,7 @@ mus_float_t mus_feedback(mus_any *gen) /* shares "increment" */
 
 mus_float_t mus_set_feedback(mus_any *gen, mus_float_t val)
 {
-  if ((check_gen(gen, S_setB S_mus_feedback)) &&
+  if ((check_gen(gen, S_set S_mus_feedback)) &&
       (gen->core->set_increment))
     return((*(gen->core->set_increment))(gen, val));
   return((mus_float_t)mus_error(MUS_NO_FEEDBACK, "can't set %s's feedback", mus_name(gen)));
@@ -591,7 +591,7 @@ void *mus_environ(mus_any *gen)
 
 void *mus_set_environ(mus_any *gen, void *e)
 {
-  if (check_gen(gen, S_setB "mus-environ")) 
+  if (check_gen(gen, S_set "mus-environ")) 
     return((*(gen->core->set_closure))(gen, e));
   return(NULL);
 }
@@ -617,7 +617,7 @@ mus_long_t mus_length(mus_any *gen)
 
 mus_long_t mus_set_length(mus_any *gen, mus_long_t len)
 {
-  if ((check_gen(gen, S_setB S_mus_length)) &&
+  if ((check_gen(gen, S_set S_mus_length)) &&
       (gen->core->set_length))
     return((*(gen->core->set_length))(gen, len));
   return(mus_error(MUS_NO_LENGTH, "can't set %s's length", mus_name(gen)));
@@ -680,7 +680,7 @@ mus_long_t mus_hop(mus_any *gen)
 
 mus_long_t mus_set_hop(mus_any *gen, mus_long_t len)
 {
-  if ((check_gen(gen, S_setB S_mus_hop)) &&
+  if ((check_gen(gen, S_set S_mus_hop)) &&
       (gen->core->set_hop))
     return((*(gen->core->set_hop))(gen, len));
   return(mus_error(MUS_NO_HOP, "can't set %s's hop value", mus_name(gen)));
@@ -698,7 +698,7 @@ mus_long_t mus_ramp(mus_any *gen)
 
 mus_long_t mus_set_ramp(mus_any *gen, mus_long_t len)
 {
-  if ((check_gen(gen, S_setB S_mus_ramp)) &&
+  if ((check_gen(gen, S_set S_mus_ramp)) &&
       (gen->core->set_ramp))
     return((*(gen->core->set_ramp))(gen, len));
   return(mus_error(MUS_NO_RAMP, "can't set %s's ramp value", mus_name(gen)));
@@ -721,7 +721,7 @@ mus_float_t *mus_data(mus_any *gen)
 
 mus_float_t *mus_set_data(mus_any *gen, mus_float_t *new_data)
 {
-  if (check_gen(gen, S_setB S_mus_data))
+  if (check_gen(gen, S_set S_mus_data))
     {
       if (gen->core->set_data)
 	{
@@ -765,7 +765,7 @@ mus_float_t mus_xcoeff(mus_any *gen, int index)
 
 mus_float_t mus_set_xcoeff(mus_any *gen, int index, mus_float_t val)
 {
-  if ((check_gen(gen, S_setB S_mus_xcoeff)) &&
+  if ((check_gen(gen, S_set S_mus_xcoeff)) &&
       (gen->core->set_xcoeff))
     return((*(gen->core->set_xcoeff))(gen, index, val));
   return(mus_error(MUS_NO_XCOEFF, "can't set %s's xcoeff[%d] value", mus_name(gen), index));
@@ -783,7 +783,7 @@ mus_float_t mus_ycoeff(mus_any *gen, int index)
 
 mus_float_t mus_set_ycoeff(mus_any *gen, int index, mus_float_t val)
 {
-  if ((check_gen(gen, S_setB S_mus_ycoeff)) &&
+  if ((check_gen(gen, S_set S_mus_ycoeff)) &&
       (gen->core->set_ycoeff))
     return((*(gen->core->set_ycoeff))(gen, index, val));
   return(mus_error(MUS_NO_YCOEFF, "can't set %s's ycoeff[%d] value", mus_name(gen), index));
@@ -8843,13 +8843,13 @@ static mus_float_t filter_xcoeff(mus_any *ptr, int index)
 static mus_float_t filter_set_xcoeff(mus_any *ptr, int index, mus_float_t val) 
 {
   flt *gen = (flt *)ptr;
-  if (!(gen->x)) return((mus_float_t)mus_error(MUS_NO_XCOEFFS, S_setB S_mus_xcoeff ": no xcoeffs"));
+  if (!(gen->x)) return((mus_float_t)mus_error(MUS_NO_XCOEFFS, S_set S_mus_xcoeff ": no xcoeffs"));
   if ((index >= 0) && (index < gen->order))
     {
       gen->x[index] = val;
       return(val);
     }
-  return((mus_float_t)mus_error(MUS_ARG_OUT_OF_RANGE, S_setB S_mus_xcoeff ": invalid index %d, order = %d?", index, gen->order));
+  return((mus_float_t)mus_error(MUS_ARG_OUT_OF_RANGE, S_set S_mus_xcoeff ": invalid index %d, order = %d?", index, gen->order));
 }
 
 
@@ -8866,13 +8866,13 @@ static mus_float_t filter_ycoeff(mus_any *ptr, int index)
 static mus_float_t filter_set_ycoeff(mus_any *ptr, int index, mus_float_t val) 
 {
   flt *gen = (flt *)ptr;
-  if (!(gen->y)) return((mus_float_t)mus_error(MUS_NO_YCOEFFS, S_setB S_mus_ycoeff ": no ycoeffs"));
+  if (!(gen->y)) return((mus_float_t)mus_error(MUS_NO_YCOEFFS, S_set S_mus_ycoeff ": no ycoeffs"));
   if ((index >= 0) && (index < gen->order))
     {
       gen->y[index] = val;
       return(val);
     }
-  return((mus_float_t)mus_error(MUS_ARG_OUT_OF_RANGE, S_setB S_mus_ycoeff ": invalid index %d, order = %d?", index, gen->order));
+  return((mus_float_t)mus_error(MUS_ARG_OUT_OF_RANGE, S_set S_mus_ycoeff ": invalid index %d, order = %d?", index, gen->order));
 }
 
 
@@ -10844,7 +10844,7 @@ mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, mus_lo
 
 mus_long_t mus_set_location(mus_any *gen, mus_long_t loc)
 {
-  if ((check_gen(gen, S_setB S_mus_location)) &&
+  if ((check_gen(gen, S_set S_mus_location)) &&
       (gen->core->set_location))
     return((*(gen->core->set_location))(gen, loc));
   return((mus_long_t)mus_error(MUS_NO_LOCATION, "can't set %s's location", mus_name(gen)));

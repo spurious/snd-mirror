@@ -1332,14 +1332,14 @@ static Xen g_enved_envelope(void)
 
 static Xen g_set_enved_envelope(Xen e)
 {
-  Xen_check_type(Xen_is_list(e) || Xen_is_string(e) || Xen_is_symbol(e), e, 1, S_setB S_enved_envelope, "a list, symbol, or string");
+  Xen_check_type(Xen_is_list(e) || Xen_is_string(e) || Xen_is_symbol(e), e, 1, S_set S_enved_envelope, "a list, symbol, or string");
   if (active_env) active_env = free_env(active_env);
   if ((Xen_is_string(e)) || (Xen_is_symbol(e)))
     active_env = name_to_env((Xen_is_string(e)) ? Xen_string_to_C_string(e) : Xen_symbol_to_C_string(e));
   else active_env = xen_to_env(e);
   if ((!active_env) && (!(Xen_is_list(e))))
     Xen_error(NO_SUCH_ENVELOPE,
-	      Xen_list_2(C_string_to_Xen_string(S_setB S_enved_envelope ": bad envelope arg: ~A"),
+	      Xen_list_2(C_string_to_Xen_string(S_set S_enved_envelope ": bad envelope arg: ~A"),
 			 e));
   if (enved_dialog) 
     env_redisplay();
@@ -1356,7 +1356,7 @@ static Xen g_enved_filter(void)
 
 static Xen g_set_enved_filter(Xen type)
 {
-  Xen_check_type(Xen_is_boolean(type), type, 1, S_setB S_enved_filter, "boolean");
+  Xen_check_type(Xen_is_boolean(type), type, 1, S_set S_enved_filter, "boolean");
   is_FIR = Xen_boolean_to_C_bool(type);
   if (fir_button)
     gtk_label_set_text(GTK_LABEL(fir_button), (is_FIR) ? "fir" : "fft");
@@ -1372,8 +1372,8 @@ Xen_wrap_1_arg(g_set_enved_envelope_w, g_set_enved_envelope)
 void g_init_gxenv(void)
 {
   Xen_define_dilambda(S_enved_filter, g_enved_filter_w, H_enved_filter,
-				   S_setB S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
+				   S_set S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
   Xen_define_dilambda(S_enved_envelope, g_enved_envelope_w, H_enved_envelope,
-				   S_setB S_enved_envelope, g_set_enved_envelope_w,  0, 0, 1, 0);
+				   S_set S_enved_envelope, g_set_enved_envelope_w,  0, 0, 1, 0);
 }
 

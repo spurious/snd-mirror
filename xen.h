@@ -1055,7 +1055,7 @@ extern size_t xen_s7_number_location, xen_s7_denominator_location;
 #define XEN_ZERO                                   xen_zero
 #define XEN_INTEGER_P(Arg)                         s7_is_integer(Arg)
 #define C_TO_XEN_INT(Arg)                          s7_make_integer(s7, Arg)
-#define XEN_TO_C_INT(Arg)                          ((int)s7_number_to_integer(s7, Arg))
+#define XEN_TO_C_INT(Arg)                          s7_integer(Arg)
 
 #define XEN_ULONG_P(Arg)                           s7_is_ulong(Arg)
 #define XEN_TO_C_ULONG(Arg)                        s7_ulong(Arg)

@@ -3284,7 +3284,7 @@ static Xen g_set_dac_size(Xen val)
 {
   #define H_dac_size "(" S_dac_size "): the current DAC buffer size in framples (256)"
   int len;
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_dac_size, "an integer");
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_dac_size, "an integer");
   len = Xen_integer_to_C_int(val);
   if (len > 0)
     set_dac_size(len); /* macro in snd-0.h */
@@ -3300,7 +3300,7 @@ static Xen g_set_dac_combines_channels(Xen val)
 That is, if the sound to be played has 4 channels, but the DAC can only handle 2, if this \
 variable is " PROC_TRUE ", the extra channels are mixed into the available ones; otherwise they are ignored."
 
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_dac_combines_channels, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_dac_combines_channels, "a boolean");
   set_dac_combines_channels(Xen_boolean_to_C_bool(val)); 
   return(C_bool_to_Xen_boolean(dac_combines_channels(ss)));
 }
@@ -3317,7 +3317,7 @@ setting this to " PROC_TRUE " starts them; setting it to " PROC_FALSE " stops ou
 static Xen g_set_playing(Xen on)
 {
   bool starting = false;
-  Xen_check_type(Xen_is_boolean(on), on, 1, S_setB S_playing, "a boolean");
+  Xen_check_type(Xen_is_boolean(on), on, 1, S_set S_playing, "a boolean");
   starting = Xen_boolean_to_C_bool(on);
   if (starting)
     start_dac((int)mus_srate(), 1, IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY); /* how to get plausible srate chans here? */
@@ -3335,7 +3335,7 @@ static Xen g_pausing(void)
 
 static Xen g_set_pausing(Xen pause)
 {
-  Xen_check_type(Xen_is_boolean(pause), pause, 1, S_setB S_pausing, "a boolean");
+  Xen_check_type(Xen_is_boolean(pause), pause, 1, S_set S_pausing, "a boolean");
   dac_pausing = Xen_boolean_to_C_bool(pause);
   play_button_pause(dac_pausing);
   return(pause);
@@ -3349,11 +3349,11 @@ static Xen g_set_cursor_update_interval(Xen val)
   mus_float_t ctime;
   #define H_cursor_update_interval "(" S_cursor_update_interval "): time (seconds) between cursor updates if " S_with_tracking_cursor "."
 
-  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_cursor_update_interval, "a number"); 
+  Xen_check_type(Xen_is_number(val), val, 1, S_set S_cursor_update_interval, "a number"); 
 
   ctime = Xen_real_to_C_double(val);
   if ((ctime < 0.0) || (ctime > (24 * 3600)))
-    Xen_out_of_range_error(S_setB S_cursor_update_interval, 1, val, "invalid time");
+    Xen_out_of_range_error(S_set S_cursor_update_interval, 1, val, "invalid time");
   set_cursor_update_interval(ctime);
 
   return(C_double_to_Xen_real(cursor_update_interval(ss)));
@@ -3367,7 +3367,7 @@ static Xen g_set_cursor_location_offset(Xen val)
   int ctime;
   #define H_cursor_location_offset "(" S_cursor_location_offset "): samples added to cursor location if cursor displayed during play."
 
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_cursor_location_offset, "an integer"); 
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_cursor_location_offset, "an integer"); 
 
   ctime = Xen_integer_to_C_int(val);
   set_cursor_location_offset(ctime);
@@ -3423,7 +3423,7 @@ static Xen g_set_with_tracking_cursor(Xen on)
 	}
     }
 
-  Xen_check_type(false, on, 1, S_setB S_with_tracking_cursor, ":dont-track, :track-and-return, or :track-and-stay");
+  Xen_check_type(false, on, 1, S_set S_with_tracking_cursor, ":dont-track, :track-and-return, or :track-and-stay");
   return(on);
 }
 
@@ -3472,8 +3472,8 @@ void g_init_dac(void)
   Xen_define_procedure(S_play,           g_play_w,           0, 0, 1, H_play);
   Xen_define_procedure(S_stop_playing,   g_stop_playing_w,   0, 1, 0, H_stop_playing);
 
-  Xen_define_dilambda(S_pausing, g_pausing_w, H_pausing, S_setB S_pausing, g_set_pausing_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_playing, g_playing_w, H_playing, S_setB S_playing, g_set_playing_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_pausing, g_pausing_w, H_pausing, S_set S_pausing, g_set_pausing_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_playing, g_playing_w, H_playing, S_set S_playing, g_set_playing_w, 0, 0, 1, 0);
 
   Xen_define_procedure(S_make_player,    g_make_player_w,    0, 2, 0, H_make_player);
   Xen_define_procedure(S_add_player,     g_add_player_w,     1, 5, 0, H_add_player);
@@ -3485,19 +3485,19 @@ void g_init_dac(void)
   Xen_define_safe_procedure(S_is_player,      g_is_player_w,      1, 0, 0, H_is_player);
 
   Xen_define_dilambda(S_with_tracking_cursor, g_with_tracking_cursor_w, H_with_tracking_cursor,
-				   S_setB S_with_tracking_cursor, g_set_with_tracking_cursor_w, 0, 0, 1, 0);
+				   S_set S_with_tracking_cursor, g_set_with_tracking_cursor_w, 0, 0, 1, 0);
 
   Xen_define_dilambda(S_dac_size, g_dac_size_w, H_dac_size,
-				   S_setB S_dac_size, g_set_dac_size_w,  0, 0, 1, 0);
+				   S_set S_dac_size, g_set_dac_size_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_dac_combines_channels, g_dac_combines_channels_w, H_dac_combines_channels,
-				   S_setB S_dac_combines_channels, g_set_dac_combines_channels_w,  0, 0, 1, 0);
+				   S_set S_dac_combines_channels, g_set_dac_combines_channels_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_cursor_update_interval, g_cursor_update_interval_w, H_cursor_update_interval,
-				   S_setB S_cursor_update_interval, g_set_cursor_update_interval_w,  0, 0, 1, 0);
+				   S_set S_cursor_update_interval, g_set_cursor_update_interval_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_cursor_location_offset, g_cursor_location_offset_w, H_cursor_location_offset,
-				   S_setB S_cursor_location_offset, g_set_cursor_location_offset_w,  0, 0, 1, 0);
+				   S_set S_cursor_location_offset, g_set_cursor_location_offset_w,  0, 0, 1, 0);
 
   #define H_stop_playing_hook S_stop_playing_hook " (snd): called when a sound finishes playing."
   #define H_play_hook S_play_hook " (size): called each time a buffer is sent to the DAC."

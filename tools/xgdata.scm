@@ -8551,8 +8551,8 @@
 (CFNC-3.10 "void gtk_places_sidebar_set_location GtkPlacesSidebar* sidebar GFile* location")
 (CFNC-3.10 "gboolean gtk_places_sidebar_get_show_desktop GtkPlacesSidebar* sidebar")
 (CFNC-3.10 "void gtk_places_sidebar_set_show_desktop GtkPlacesSidebar* sidebar gboolean show_desktop")
-(CFNC-3.10 "gboolean gtk_places_sidebar_get_show_connect_to_server GtkPlacesSidebar* sidebar")
-(CFNC-3.10 "void gtk_places_sidebar_set_show_connect_to_server GtkPlacesSidebar* sidebar gboolean show_connect_to_server")
+;;; 3.18 (CFNC-3.10 "gboolean gtk_places_sidebar_get_show_connect_to_server GtkPlacesSidebar* sidebar")
+;;; 3.18 (CFNC-3.10 "void gtk_places_sidebar_set_show_connect_to_server GtkPlacesSidebar* sidebar gboolean show_connect_to_server")
 (CFNC-3.10 "void gtk_places_sidebar_add_shortcut GtkPlacesSidebar* sidebar GFile* location")
 (CFNC-3.10 "void gtk_places_sidebar_remove_shortcut GtkPlacesSidebar* sidebar GFile* location")
 (CFNC-3.10 "GSList* gtk_places_sidebar_list_shortcuts GtkPlacesSidebar* sidebar")
@@ -9173,3 +9173,16 @@
 (CFNC-3.18 "gboolean gtk_places_sidebar_get_show_recent GtkPlacesSidebar* sidebar")
 (CFNC-3.18 "void gtk_places_sidebar_set_show_recent GtkPlacesSidebar* sidebar gboolean show_recent")
 (CFNC-3.18 "void gtk_places_sidebar_set_drop_targets_visible GtkPlacesSidebar* sidebar gboolean visible GdkDragContext* context")
+
+;;; 3.17.5:
+
+(CFNC-3.18 "gboolean gtk_places_sidebar_get_show_trash GtkPlacesSidebar* sidebar")
+(CFNC-3.18 "void gtk_places_sidebar_set_show_trash GtkPlacesSidebar* sidebar gboolean show_trash")
+(CFNC-3.18 "void gtk_places_sidebar_set_show_other_locations GtkPlacesSidebar* sidebar gboolean show_other_locations")
+(CFNC-3.18 "gboolean gtk_places_sidebar_get_show_other_locations GtkPlacesSidebar* sidebar")
+(CFNC-3.18 "void gtk_stack_set_interpolate_size GtkStack* stack gboolean interpolate_size")
+(CFNC-3.18 "gboolean gtk_stack_get_interpolate_size GtkStack* stack")
+(CFNC-3.18 "void gtk_widget_set_font_options GtkWidget* widget cairo_font_options_t* options" 'const)
+(CFNC-3.18 "cairo_font_options_t* gtk_widget_get_font_options GtkWidget* widget" 'const-return)
+(CFNC-3.18 "void gtk_widget_set_font_map GtkWidget* widget PangoFontMap* fontmap")
+(CFNC-3.18 "PangoFontMap* gtk_widget_get_font_map GtkWidget* widget")

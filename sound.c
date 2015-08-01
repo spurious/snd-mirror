@@ -741,7 +741,7 @@ mus_sample_t mus_sound_sample_type(const char *arg)
 }
 
 
-int mus_sound_original_format(const char *arg) 
+int mus_sound_original_sample_type(const char *arg) 
 {
   sound_file *sf;
   sf = get_sf(arg);

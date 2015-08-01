@@ -1218,7 +1218,7 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
       int j = 0;
       
       temp_file = snd_tempnam();
-      hdr = make_temp_header(temp_file, snd_srate(cp->sound), 1, len, S_setB S_mix_amp_env);
+      hdr = make_temp_header(temp_file, snd_srate(cp->sound), 1, len, S_set S_mix_amp_env);
       fd = open_temp_file(temp_file, 1, hdr, &io_err);
       data = (mus_float_t **)malloc(sizeof(mus_float_t *));
       new_buffer = (mus_float_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_float_t));
@@ -2747,14 +2747,14 @@ static Xen g_set_mix_position(Xen n, Xen pos)
 {
   int id;
   mus_long_t beg;
-  Xen_check_type(xen_is_mix(n), n, 1, S_setB S_mix_position, "a mix");
-  Xen_check_type(Xen_is_llong(pos), pos, 2, S_setB S_mix_position, "an integer");
+  Xen_check_type(xen_is_mix(n), n, 1, S_set S_mix_position, "a mix");
+  Xen_check_type(Xen_is_llong(pos), pos, 2, S_set S_mix_position, "an integer");
 
   id = Xen_mix_to_C_int(n);
   if (!(mix_is_active(id)))
-    return(snd_no_such_mix_error(S_setB S_mix_position, n));
+    return(snd_no_such_mix_error(S_set S_mix_position, n));
 
-  beg = beg_to_sample(pos, S_setB S_mix_position);
+  beg = beg_to_sample(pos, S_set S_mix_position);
   if (mix_set_position_edit(id, beg))
     after_mix_edit(id);
   return(pos);
@@ -2778,12 +2778,12 @@ static Xen g_mix_amp(Xen n)
 static Xen g_set_mix_amp(Xen n, Xen uval) 
 {
   int id;
-  Xen_check_type(xen_is_mix(n), n, 1, S_setB S_mix_amp, "a mix");
-  Xen_check_type(Xen_is_number(uval), uval, 2, S_setB S_mix_amp, "a number");
+  Xen_check_type(xen_is_mix(n), n, 1, S_set S_mix_amp, "a mix");
+  Xen_check_type(Xen_is_number(uval), uval, 2, S_set S_mix_amp, "a number");
 
   id = Xen_mix_to_C_int(n);
   if (!(mix_is_active(id)))
-    return(snd_no_such_mix_error(S_setB S_mix_amp, n));
+    return(snd_no_such_mix_error(S_set S_mix_amp, n));
 
   if (mix_set_amp_edit(id, Xen_real_to_C_double(uval)))
     after_mix_edit(id);
@@ -2810,15 +2810,15 @@ static Xen g_set_mix_amp_env(Xen n, Xen val)
 {
   env *e = NULL;
   int id;
-  Xen_check_type(xen_is_mix(n), n, 1, S_setB S_mix_amp_env, "a mix");
-  Xen_check_type(Xen_is_list(val) || Xen_is_false(val), val, 2, S_setB S_mix_amp_env, "a list or " PROC_FALSE);
+  Xen_check_type(xen_is_mix(n), n, 1, S_set S_mix_amp_env, "a mix");
+  Xen_check_type(Xen_is_list(val) || Xen_is_false(val), val, 2, S_set S_mix_amp_env, "a list or " PROC_FALSE);
 
   id = Xen_mix_to_C_int(n);
   if (!(mix_is_active(id)))
-    return(snd_no_such_mix_error(S_setB S_mix_amp_env, n));  
+    return(snd_no_such_mix_error(S_set S_mix_amp_env, n));  
 
   if (Xen_is_list(val))
-    e = get_env(val, S_setB S_mix_amp_env);
+    e = get_env(val, S_set S_mix_amp_env);
 
   if (mix_set_amp_env_edit(id, e))
     after_mix_edit(id);
@@ -2844,12 +2844,12 @@ static Xen g_mix_speed(Xen n)
 static Xen g_set_mix_speed(Xen n, Xen uval) 
 {
   int id;
-  Xen_check_type(xen_is_mix(n), n, 1, S_setB S_mix_speed, "a mix");
-  Xen_check_type(Xen_is_number(uval), uval, 2, S_setB S_mix_speed, "a number");
+  Xen_check_type(xen_is_mix(n), n, 1, S_set S_mix_speed, "a mix");
+  Xen_check_type(Xen_is_number(uval), uval, 2, S_set S_mix_speed, "a number");
 
   id = Xen_mix_to_C_int(n);
   if (!(mix_is_active(id)))
-    return(snd_no_such_mix_error(S_setB S_mix_speed, n));  
+    return(snd_no_such_mix_error(S_set S_mix_speed, n));  
 
   if (mix_set_speed_edit(id, Xen_real_to_C_double(uval)))
     after_mix_edit(id);
@@ -2873,15 +2873,15 @@ static Xen g_mix_name(Xen n)
 static Xen g_set_mix_name(Xen n, Xen val) 
 {
   int id;
-  Xen_check_type(xen_is_mix(n), n, 1, S_setB S_mix_name, "a mix");
-  Xen_check_type(Xen_is_string(val) || Xen_is_false(val), val, 2, S_setB S_mix_name, "a string");
+  Xen_check_type(xen_is_mix(n), n, 1, S_set S_mix_name, "a mix");
+  Xen_check_type(Xen_is_string(val) || Xen_is_false(val), val, 2, S_set S_mix_name, "a string");
   id = Xen_mix_to_C_int(n);
   if (mix_exists(id))
     {
       mix_set_name_from_id(id, (Xen_is_string(val) ? Xen_string_to_C_string(val) : NULL));
       update_graph(mix_chan_info_from_id(id));
     }
-  else return(snd_no_such_mix_error(S_setB S_mix_name, n));
+  else return(snd_no_such_mix_error(S_set S_mix_name, n));
   return(val);
 }
 
@@ -2901,12 +2901,12 @@ Xen g_mix_sync(Xen n)
 Xen g_set_mix_sync(Xen n, Xen val) 
 {
   int id;
-  Xen_check_type(xen_is_mix(n), n, 1, S_setB S_mix_sync, "a mix");
-  Xen_check_type(Xen_is_integer(val), val, 2, S_setB S_mix_sync, "an integer");
+  Xen_check_type(xen_is_mix(n), n, 1, S_set S_mix_sync, "a mix");
+  Xen_check_type(Xen_is_integer(val), val, 2, S_set S_mix_sync, "an integer");
   id = Xen_mix_to_C_int(n);
   if (mix_exists(id))
     mix_set_sync_from_id(id, Xen_integer_to_C_int(val));
-  else return(snd_no_such_mix_error(S_setB S_mix_sync, n));
+  else return(snd_no_such_mix_error(S_set S_mix_sync, n));
   return(val);
 }
 
@@ -2934,8 +2934,8 @@ static Xen g_set_mix_tag_y(Xen n, Xen val)
 {
   int id;
 
-  Xen_check_type(xen_is_mix(n), n, 1, S_setB S_mix_tag_y, "a mix");
-  Xen_check_type(Xen_is_integer(val), val, 2, S_setB S_mix_tag_y, "an integer");
+  Xen_check_type(xen_is_mix(n), n, 1, S_set S_mix_tag_y, "a mix");
+  Xen_check_type(Xen_is_integer(val), val, 2, S_set S_mix_tag_y, "an integer");
   id = Xen_mix_to_C_int(n);
 
   if (mix_exists(id))
@@ -2966,7 +2966,7 @@ static Xen g_set_mix_tag_y(Xen n, Xen val)
 	}
       else md->tag_y = Xen_integer_to_C_int(val);
     }
-  else return(snd_no_such_mix_error(S_setB S_mix_tag_y, n));
+  else return(snd_no_such_mix_error(S_set S_mix_tag_y, n));
 
   return(val);
 }
@@ -2999,7 +2999,7 @@ static Xen g_set_mix_properties(Xen n, Xen val)
 
   md = md_from_id(Xen_mix_to_C_int(n));
   if (md == NULL)
-    return(snd_no_such_mix_error(S_setB S_mix_properties, n));
+    return(snd_no_such_mix_error(S_set S_mix_properties, n));
 
   if (!(Xen_is_vector(md->properties)))
     {
@@ -3114,7 +3114,7 @@ static Xen g_mix_waveform_height(void)
 static Xen g_set_mix_waveform_height(Xen val) 
 {
   int new_val;
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_mix_waveform_height, "an integer"); 
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_mix_waveform_height, "an integer"); 
   new_val = mus_iclamp(0, Xen_integer_to_C_int(val), LOTSA_PIXELS);
   set_mix_waveform_height(new_val);
   return(C_int_to_Xen_integer(mix_waveform_height(ss)));
@@ -3130,7 +3130,7 @@ static Xen g_with_mix_tags(void)
 
 static Xen g_set_with_mix_tags(Xen val) 
 {
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_with_mix_tags, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_with_mix_tags, "a boolean");
   set_with_mix_tags(Xen_boolean_to_C_bool(val));
   return(C_bool_to_Xen_boolean(with_mix_tags(ss)));
 }
@@ -3146,7 +3146,7 @@ static Xen g_mix_tag_width(void)
 static Xen g_set_mix_tag_width(Xen val) 
 {
   int width;
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_mix_tag_width, "an integer"); 
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_mix_tag_width, "an integer"); 
   width = mus_iclamp(0, Xen_integer_to_C_int(val), LOTSA_PIXELS);
   set_mix_tag_width(width);
   for_each_normal_chan(update_graph);
@@ -3164,7 +3164,7 @@ static Xen g_mix_tag_height(void)
 static Xen g_set_mix_tag_height(Xen val) 
 {
   int height;
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_mix_tag_height, "an integer"); 
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_mix_tag_height, "an integer"); 
   height = mus_iclamp(0, Xen_integer_to_C_int(val), LOTSA_PIXELS);
   set_mix_tag_height(height);
   for_each_normal_chan(update_graph);
@@ -3823,7 +3823,7 @@ static Xen g_mix_dialog_mix(void)
 
 static Xen g_set_mix_dialog_mix(Xen val)
 {
-  Xen_check_type(xen_is_mix(val), val, 1, S_setB S_mix_dialog_mix, "a mix");
+  Xen_check_type(xen_is_mix(val), val, 1, S_set S_mix_dialog_mix, "a mix");
   mix_dialog_set_mix(Xen_mix_to_C_int(val));
   return(val);
 }
@@ -4027,23 +4027,23 @@ void g_init_mix(void)
   Xen_define_safe_procedure(S_view_mixes_dialog, g_view_mixes_dialog_w,      0, 0, 0, H_view_mixes_dialog);
   Xen_define_safe_procedure(S_mix_sync_max,      g_mix_sync_max_w,           0, 0, 0, H_mix_sync_max);
 
-  Xen_define_dilambda(S_mix_position,   g_mix_position_w,   H_mix_position,   S_setB S_mix_position,   g_set_mix_position_w,   1, 0, 2, 0);
-  Xen_define_dilambda(S_mix_speed,      g_mix_speed_w,      H_mix_speed,      S_setB S_mix_speed,      g_set_mix_speed_w,      1, 0, 2, 0);
-  Xen_define_dilambda(S_mix_amp,        g_mix_amp_w,        H_mix_amp,        S_setB S_mix_amp,        g_set_mix_amp_w,        1, 0, 2, 0);
-  Xen_define_dilambda(S_mix_amp_env,    g_mix_amp_env_w,    H_mix_amp_env,    S_setB S_mix_amp_env,    g_set_mix_amp_env_w,    1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_position,   g_mix_position_w,   H_mix_position,   S_set S_mix_position,   g_set_mix_position_w,   1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_speed,      g_mix_speed_w,      H_mix_speed,      S_set S_mix_speed,      g_set_mix_speed_w,      1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_amp,        g_mix_amp_w,        H_mix_amp,        S_set S_mix_amp,        g_set_mix_amp_w,        1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_amp_env,    g_mix_amp_env_w,    H_mix_amp_env,    S_set S_mix_amp_env,    g_set_mix_amp_env_w,    1, 0, 2, 0);
 
-  Xen_define_dilambda(S_mix_name,       g_mix_name_w,       H_mix_name,       S_setB S_mix_name,       g_set_mix_name_w,       1, 0, 2, 0);
-  Xen_define_dilambda(S_mix_sync,       g_mix_sync_w,       H_mix_sync,       S_setB S_mix_sync,       g_set_mix_sync_w,       1, 0, 2, 0);
-  Xen_define_dilambda(S_mix_properties, g_mix_properties_w, H_mix_properties, S_setB S_mix_properties, g_set_mix_properties_w, 1, 0, 2, 0);
-  Xen_define_dilambda(S_mix_property,   g_mix_property_w,   H_mix_property,   S_setB S_mix_property,   g_set_mix_property_w,   2, 0, 3, 0);
-  Xen_define_dilambda(S_mix_tag_y,      g_mix_tag_y_w,      H_mix_tag_y,      S_setB S_mix_tag_y,      g_set_mix_tag_y_w,      1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_name,       g_mix_name_w,       H_mix_name,       S_set S_mix_name,       g_set_mix_name_w,       1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_sync,       g_mix_sync_w,       H_mix_sync,       S_set S_mix_sync,       g_set_mix_sync_w,       1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_properties, g_mix_properties_w, H_mix_properties, S_set S_mix_properties, g_set_mix_properties_w, 1, 0, 2, 0);
+  Xen_define_dilambda(S_mix_property,   g_mix_property_w,   H_mix_property,   S_set S_mix_property,   g_set_mix_property_w,   2, 0, 3, 0);
+  Xen_define_dilambda(S_mix_tag_y,      g_mix_tag_y_w,      H_mix_tag_y,      S_set S_mix_tag_y,      g_set_mix_tag_y_w,      1, 0, 2, 0);
 
-  Xen_define_dilambda(S_mix_tag_width,  g_mix_tag_width_w,  H_mix_tag_width,  S_setB S_mix_tag_width,  g_set_mix_tag_width_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_mix_tag_height, g_mix_tag_height_w, H_mix_tag_height, S_setB S_mix_tag_height, g_set_mix_tag_height_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_mix_tag_width,  g_mix_tag_width_w,  H_mix_tag_width,  S_set S_mix_tag_width,  g_set_mix_tag_width_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_mix_tag_height, g_mix_tag_height_w, H_mix_tag_height, S_set S_mix_tag_height, g_set_mix_tag_height_w, 0, 0, 1, 0);
 
-  Xen_define_dilambda(S_mix_waveform_height, g_mix_waveform_height_w, H_mix_waveform_height, S_setB S_mix_waveform_height, g_set_mix_waveform_height_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags, S_setB S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_mix_dialog_mix, g_mix_dialog_mix_w, H_mix_dialog_mix, S_setB S_mix_dialog_mix, g_set_mix_dialog_mix_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_mix_waveform_height, g_mix_waveform_height_w, H_mix_waveform_height, S_set S_mix_waveform_height, g_set_mix_waveform_height_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_with_mix_tags, g_with_mix_tags_w, H_with_mix_tags, S_set S_with_mix_tags, g_set_with_mix_tags_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_mix_dialog_mix, g_mix_dialog_mix_w, H_mix_dialog_mix, S_set S_mix_dialog_mix, g_set_mix_dialog_mix_w, 0, 0, 1, 0);
 
 
   #define H_mix_release_hook S_mix_release_hook " (id samples): called after the mouse has dragged a mix to some new position. \

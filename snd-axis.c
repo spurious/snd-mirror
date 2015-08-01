@@ -1773,9 +1773,9 @@ static Xen g_set_x_axis_label(Xen label, Xen snd, Xen chn, Xen ax)
 {
   axis_info *ap;
 
-  Snd_assert_channel(S_setB S_x_axis_label, snd, chn, 2);
-  Xen_check_type(Xen_is_string(label) || Xen_is_false(label), label, 1, S_setB S_x_axis_label, "a string");
-  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_x_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  Snd_assert_channel(S_set S_x_axis_label, snd, chn, 2);
+  Xen_check_type(Xen_is_string(label) || Xen_is_false(label), label, 1, S_set S_x_axis_label, "a string");
+  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_set S_x_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
 
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_axis_label);
   if (ap->xlabel) free(ap->xlabel);
@@ -1817,10 +1817,10 @@ static Xen g_set_y_axis_label(Xen label, Xen snd, Xen chn, Xen ax)
 {
   axis_info *ap;
 
-  Snd_assert_channel(S_setB S_y_axis_label, snd, chn, 2);
-  Xen_check_type(Xen_is_string(label) || Xen_is_false(label), label, 1, S_setB S_y_axis_label, "a string");
+  Snd_assert_channel(S_set S_y_axis_label, snd, chn, 2);
+  Xen_check_type(Xen_is_string(label) || Xen_is_false(label), label, 1, S_set S_y_axis_label, "a string");
 
-  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_y_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_set S_y_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_y_axis_label);
   if (ap->ylabel) free(ap->ylabel);
 
@@ -1857,12 +1857,12 @@ static Xen g_set_x_bounds(Xen bounds, Xen snd, Xen chn, Xen ax)
   axis_info *ap;
   mus_float_t x0 = 0.0, x1 = 0.0;
 
-  Snd_assert_channel(S_setB S_x_bounds, snd, chn, 2);
-  Xen_check_type(Xen_is_number(bounds) || (Xen_is_list(bounds) && (Xen_list_length(bounds) == 2)), bounds, 1, S_setB S_x_bounds, "a list: (x0 x1) or a number");
-  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_x_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
-  ap = TO_C_AXIS_INFO(snd, chn, ax, S_setB S_x_bounds);
+  Snd_assert_channel(S_set S_x_bounds, snd, chn, 2);
+  Xen_check_type(Xen_is_number(bounds) || (Xen_is_list(bounds) && (Xen_list_length(bounds) == 2)), bounds, 1, S_set S_x_bounds, "a list: (x0 x1) or a number");
+  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_set S_x_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  ap = TO_C_AXIS_INFO(snd, chn, ax, S_set S_x_bounds);
 
-  cp = get_cp(snd, chn, S_setB S_x_bounds);
+  cp = get_cp(snd, chn, S_set S_x_bounds);
   if (!cp) return(Xen_false);
 
   if (Xen_is_number(bounds))
@@ -1875,7 +1875,7 @@ static Xen g_set_x_bounds(Xen bounds, Xen snd, Xen chn, Xen ax)
       x0 = Xen_real_to_C_double(Xen_car(bounds));
       x1 = Xen_real_to_C_double(Xen_cadr(bounds));
       if (x1 < x0)
-	Xen_out_of_range_error(S_setB S_x_bounds, 1, bounds, "x1 < x0?");
+	Xen_out_of_range_error(S_set S_x_bounds, 1, bounds, "x1 < x0?");
     }
 
   if (ap == cp->axis)
@@ -1931,12 +1931,12 @@ static Xen g_set_y_bounds(Xen bounds, Xen snd, Xen chn, Xen ax)
   mus_float_t low = 0.0, hi = 0.0;
   Xen y0 = Xen_undefined, y1 = Xen_undefined;
 
-  Snd_assert_channel(S_setB S_y_bounds, snd, chn, 2);
-  Xen_check_type((Xen_is_number(bounds)) || (Xen_is_list(bounds)), bounds, 1, S_setB S_y_bounds, "a list or a number");
-  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_setB S_y_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
-  ap = TO_C_AXIS_INFO(snd, chn, ax, S_setB S_y_bounds);
+  Snd_assert_channel(S_set S_y_bounds, snd, chn, 2);
+  Xen_check_type((Xen_is_number(bounds)) || (Xen_is_list(bounds)), bounds, 1, S_set S_y_bounds, "a list or a number");
+  Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 4, S_set S_y_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  ap = TO_C_AXIS_INFO(snd, chn, ax, S_set S_y_bounds);
 
-  cp = get_cp(snd, chn, S_setB S_y_bounds);
+  cp = get_cp(snd, chn, S_set S_y_bounds);
   if (!cp) return(Xen_false);
 
   if (Xen_is_number(bounds))
@@ -2041,10 +2041,10 @@ void g_init_axis(void)
   Xen_define_safe_procedure(S_axis_info,     g_axis_info_w,       0, 3, 0, H_axis_info);
   Xen_define_safe_procedure(S_draw_axes,     g_draw_axes_w,       0, 0, 1, H_draw_axes);
   
-  Xen_define_dilambda(S_x_axis_label, g_x_axis_label_w, H_x_axis_label, S_setB S_x_axis_label, g_set_x_axis_label_w, 0, 3, 1, 3);
-  Xen_define_dilambda(S_y_axis_label, g_y_axis_label_w, H_y_axis_label, S_setB S_y_axis_label, g_set_y_axis_label_w, 0, 3, 1, 3);
-  Xen_define_dilambda(S_x_bounds, g_x_bounds_w, H_x_bounds, S_setB S_x_bounds, g_set_x_bounds_w, 0, 3, 1, 3);
-  Xen_define_dilambda(S_y_bounds, g_y_bounds_w, H_y_bounds, S_setB S_y_bounds, g_set_y_bounds_w, 0, 3, 1, 3);
+  Xen_define_dilambda(S_x_axis_label, g_x_axis_label_w, H_x_axis_label, S_set S_x_axis_label, g_set_x_axis_label_w, 0, 3, 1, 3);
+  Xen_define_dilambda(S_y_axis_label, g_y_axis_label_w, H_y_axis_label, S_set S_y_axis_label, g_set_y_axis_label_w, 0, 3, 1, 3);
+  Xen_define_dilambda(S_x_bounds, g_x_bounds_w, H_x_bounds, S_set S_x_bounds, g_set_x_bounds_w, 0, 3, 1, 3);
+  Xen_define_dilambda(S_y_bounds, g_y_bounds_w, H_y_bounds, S_set S_y_bounds, g_set_y_bounds_w, 0, 3, 1, 3);
 
   Xen_define_constant(S_time_graph,      TIME_AXIS_INFO,      "time domain graph axis info");
   Xen_define_constant(S_transform_graph, TRANSFORM_AXIS_INFO, "frequency domain graph axis info");

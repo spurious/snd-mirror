@@ -2235,9 +2235,9 @@ static Xen g_mark_sample(Xen mark_n, Xen pos_n)
 
 static Xen g_set_mark_sample(Xen mark_n, Xen samp_n) 
 {
-  Xen_check_type(xen_is_mark(mark_n), mark_n, 1, S_setB S_mark_sample, "a mark");
-  Xen_check_type(Xen_is_llong(samp_n) || !Xen_is_bound(samp_n), samp_n, 2, S_setB S_mark_sample, "an integer");
-  return(mark_set(mark_n, samp_n, MARK_SAMPLE, S_setB S_mark_sample));
+  Xen_check_type(xen_is_mark(mark_n), mark_n, 1, S_set S_mark_sample, "a mark");
+  Xen_check_type(Xen_is_llong(samp_n) || !Xen_is_bound(samp_n), samp_n, 2, S_set S_mark_sample, "an integer");
+  return(mark_set(mark_n, samp_n, MARK_SAMPLE, S_set S_mark_sample));
 }
 
 
@@ -2250,9 +2250,9 @@ Xen g_mark_sync(Xen mark_n)
 
 Xen g_set_mark_sync(Xen mark_n, Xen sync_n)
 {
-  Xen_check_type(xen_is_mark(mark_n), mark_n, 1, S_setB S_mark_sync, "a mark");
-  Xen_check_type(Xen_is_integer_or_boolean(sync_n), sync_n, 2, S_setB S_mark_sync, "an integer");
-  return(mark_set(mark_n, sync_n, MARK_SYNC, S_setB S_mark_sync));
+  Xen_check_type(xen_is_mark(mark_n), mark_n, 1, S_set S_mark_sync, "a mark");
+  Xen_check_type(Xen_is_integer_or_boolean(sync_n), sync_n, 2, S_set S_mark_sync, "an integer");
+  return(mark_set(mark_n, sync_n, MARK_SYNC, S_set S_mark_sync));
 }
 
 
@@ -2265,9 +2265,9 @@ static Xen g_mark_name(Xen mark_n)
 
 static Xen g_set_mark_name(Xen mark_n, Xen name) 
 {
-  Xen_check_type(xen_is_mark(mark_n), mark_n, 1, S_setB S_mark_name, "a mark");
-  Xen_check_type(Xen_is_string(name) || Xen_is_false(name), name, 2, S_setB S_mark_name, "a string");
-  return(mark_set(mark_n, name, MARK_NAME, S_setB S_mark_name));
+  Xen_check_type(xen_is_mark(mark_n), mark_n, 1, S_set S_mark_name, "a mark");
+  Xen_check_type(Xen_is_string(name) || Xen_is_false(name), name, 2, S_set S_mark_name, "a string");
+  return(mark_set(mark_n, name, MARK_NAME, S_set S_mark_name));
 }
 
 
@@ -2474,7 +2474,7 @@ static Xen g_set_mark_tag_width(Xen val)
 {
   #define H_mark_tag_width "(" S_mark_tag_width "): width (pixels) of mark tags (10)"
   int width;
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_mark_tag_width, "an integer"); 
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_mark_tag_width, "an integer"); 
   width = mus_iclamp(0, Xen_integer_to_C_int(val), LOTSA_PIXELS);
   set_mark_tag_width(width);
   for_each_normal_chan(update_graph);
@@ -2488,7 +2488,7 @@ static Xen g_set_mark_tag_height(Xen val)
 {
   #define H_mark_tag_height "(" S_mark_tag_height "): height (pixels) of mark tags (4)"
   int height;
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_mark_tag_height, "an integer"); 
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_mark_tag_height, "an integer"); 
   height = mus_iclamp(0, Xen_integer_to_C_int(val), LOTSA_PIXELS);
   set_mark_tag_height(height);
   for_each_normal_chan(update_graph);
@@ -2850,7 +2850,7 @@ static Xen g_set_mark_properties(Xen n, Xen val)
 
   m = find_mark_from_id(Xen_mark_to_C_int(n), NULL, AT_CURRENT_EDIT_POSITION);
   if (m == NULL)
-    return(snd_no_such_mark_error(S_setB S_mark_properties, n));
+    return(snd_no_such_mark_error(S_set S_mark_properties, n));
 
   if (!(Xen_is_vector(m->properties)))
     {
@@ -2923,9 +2923,9 @@ void g_init_marks(void)
   mark_drag_hook = Xen_define_hook(S_mark_drag_hook, "(make-hook 'id)", 1, H_mark_drag_hook);
   mark_hook = Xen_define_hook(S_mark_hook, "(make-hook 'id 'snd 'chn 'reason)", 4, H_mark_hook); 
 
-  Xen_define_dilambda(S_mark_sample, g_mark_sample_w, H_mark_sample, S_setB S_mark_sample, g_set_mark_sample_w, 1, 1, 2, 0);
-  Xen_define_dilambda(S_mark_sync, g_mark_sync_w, H_mark_sync, S_setB S_mark_sync, g_set_mark_sync_w, 1, 0, 2, 0);
-  Xen_define_dilambda(S_mark_name, g_mark_name_w, H_mark_name, S_setB S_mark_name, g_set_mark_name_w, 1, 0, 2, 0);
+  Xen_define_dilambda(S_mark_sample, g_mark_sample_w, H_mark_sample, S_set S_mark_sample, g_set_mark_sample_w, 1, 1, 2, 0);
+  Xen_define_dilambda(S_mark_sync, g_mark_sync_w, H_mark_sync, S_set S_mark_sync, g_set_mark_sync_w, 1, 0, 2, 0);
+  Xen_define_dilambda(S_mark_name, g_mark_name_w, H_mark_name, S_set S_mark_name, g_set_mark_name_w, 1, 0, 2, 0);
 
   Xen_define_safe_procedure(S_mark_sync_max,   g_mark_sync_max_w,   0, 0, 0, H_mark_sync_max);
   Xen_define_safe_procedure(S_mark_home,       g_mark_home_w,       1, 0, 0, H_mark_home); 
@@ -2941,10 +2941,10 @@ void g_init_marks(void)
   Xen_define_safe_procedure(S_integer_to_mark, g_integer_to_mark_w, 1, 0, 0, H_integer_to_mark);
   Xen_define_safe_procedure(S_mark_to_integer, g_mark_to_integer_w, 1, 0, 0, H_mark_to_integer);
 
-  Xen_define_dilambda(S_mark_tag_width, g_mark_tag_width_w, H_mark_tag_width, S_setB S_mark_tag_width, g_set_mark_tag_width_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mark_tag_height, g_mark_tag_height_w, H_mark_tag_height, S_setB S_mark_tag_height, g_set_mark_tag_height_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mark_properties, g_mark_properties_w, H_mark_properties, S_setB S_mark_properties, g_set_mark_properties_w, 1, 0, 2, 0);
-  Xen_define_dilambda(S_mark_property, g_mark_property_w, H_mark_property, S_setB S_mark_property, g_set_mark_property_w, 2, 0, 3, 0);
+  Xen_define_dilambda(S_mark_tag_width, g_mark_tag_width_w, H_mark_tag_width, S_set S_mark_tag_width, g_set_mark_tag_width_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_mark_tag_height, g_mark_tag_height_w, H_mark_tag_height, S_set S_mark_tag_height, g_set_mark_tag_height_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_mark_properties, g_mark_properties_w, H_mark_properties, S_set S_mark_properties, g_set_mark_properties_w, 1, 0, 2, 0);
+  Xen_define_dilambda(S_mark_property, g_mark_property_w, H_mark_property, S_set S_mark_property, g_set_mark_property_w, 2, 0, 3, 0);
 
   #define H_draw_mark_hook S_draw_mark_hook " (id): called before a mark is drawn. \
 If the hook returns " PROC_TRUE ", the mark is not drawn."

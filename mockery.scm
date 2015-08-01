@@ -51,7 +51,7 @@
 		   'sort!              (lambda (obj f) (#_sort! (obj 'value) f))
 		   'make-iterator      (lambda (obj) (#_make-iterator (obj 'value)))
 		   'arity              (lambda (obj) (#_arity (obj 'value)))
-		   'object->string     (lambda* (obj (w #t)) "#<mock-vector-class>")
+		   'object->string     (lambda* (obj (w #t)) (if (eq? w :readable) "*mock-vector*" "#<mock-vector-class>"))
 		   'vector-dimensions  (lambda (obj) (#_vector-dimensions (obj 'value)))
 		   'fill!              (lambda (obj val) (#_fill! (obj 'value) val))
 
@@ -178,7 +178,7 @@
 		   
 		   'fill!              (lambda (obj val)      (#_fill! (obj 'mock-hash-table-table) val))
 		   'reverse            (lambda (obj)          (#_reverse (obj 'mock-hash-table-table)))
-		   'object->string     (lambda* (obj (w #t))  "#<mock-hash-table-class>")
+		   'object->string     (lambda* (obj (w #t))  (if (eq? w :readable) "*mock-hash-table*" "#<mock-hash-table-class>"))
 		   'arity              (lambda (obj)          (#_arity (obj 'mock-hash-table-table)))
 		   'copy               (lambda* (source dest . args)
 					 (if (mock-hash-table? source)
@@ -260,7 +260,7 @@
 	   (openlet
 	    (inlet 'morally-equal?         (lambda (x y) (#_morally-equal? (x 'value) y))
 		   'reverse                (lambda (obj) (#_reverse (obj 'value)))
-		   'object->string         (lambda* (obj (w #t)) "#<mock-string-class>")
+		   'object->string         (lambda* (obj (w #t)) (if (eq? w :readable) "*mock-string*" "#<mock-string-class>"))
 		   'arity                  (lambda (obj) (#_arity (obj 'value)))
 		   'make-iterator          (lambda (obj) (#_make-iterator (obj 'value)))
 		   'let-ref                (lambda (obj i) (#_string-ref (obj 'value) i))           ; these are the implicit cases
@@ -421,7 +421,7 @@
 		   'char-ci<=?         (make-method #_char-ci<=? (lambda (obj) (obj 'value)))
 		   'char-ci>=?         (make-method #_char-ci>=? (lambda (obj) (obj 'value)))
 		   'string             (make-method #_string (lambda (obj) (obj 'value)))
-		   'object->string     (lambda (obj . args) "#<mock-char-class>")
+		   'object->string     (lambda* (obj (w #t)) (if (eq? w :readable) "*mock-char*" "#<mock-char-class>"))
 		   'arity              (lambda (obj) (#_arity (obj 'value)))
 		   'format             (make-method #_format (lambda (obj) (obj 'value)))
 		   'make-string        (make-method #_make-string (lambda (obj) (obj 'value)))
@@ -499,7 +499,7 @@
 	   (openlet
 	    (inlet 
 		   'morally-equal?   (lambda (x y) (#_morally-equal? (x 'value) y))
-		   'object->string   (lambda (obj . args) "#<mock-number-class>")
+		   'object->string   (lambda* (obj (w #t)) (if (eq? w :readable) "*mock-number*" "#<mock-number-class>"))
 		   'arity            (lambda (obj) (#_arity (obj 'value)))
 		   'real-part        (lambda (obj) (#_real-part (obj 'value)))
 		   'imag-part        (lambda (obj) (#_imag-part (obj 'value)))
@@ -836,7 +836,7 @@
 	    (inlet 'morally-equal?   (lambda (x y) (#_morally-equal? (x 'value) y))
 		   'pair-line-number (lambda (obj) (#_pair-line-number (obj 'value)))
 		   'list->string     (lambda (obj) (#_list->string (obj 'value)))
-		   'object->string   (lambda (obj . arg) "#<mock-pair-class>")
+		   'object->string   (lambda* (obj (w #t)) (if (eq? w :readable) "*mock-pair*" "#<mock-pair-class>"))
 		   'list?            (lambda (obj) (#_list? (obj 'value)))
 		   'car              (lambda (obj) (#_car (obj 'value)))
 		   'cdr              (lambda (obj) (#_cdr (obj 'value)))
@@ -975,7 +975,7 @@
 (define *mock-symbol*
   (let ((mock-symbol-class
 	 (openlet
-	  (inlet 'object->string        (lambda (obj . arg) "#<mock-symbol-class>")
+	  (inlet 'object->string        (lambda* (obj (w #t)) (if (eq? w :readable) "*mock-symbol*" "#<mock-symbol-class>"))
 		 'morally-equal?        (lambda (x y) (#_morally-equal? (x 'value) y))
 		 'gensym?               (lambda (obj) (#_gensym? (obj 'value)))
 		 'symbol->string        (lambda (obj) (#_symbol->string (obj 'value)))
@@ -1036,7 +1036,7 @@
 		   'char-ready?         (lambda (obj) (#_char-ready? (obj 'value)))
 		   'port-line-number    (lambda (obj) (#_port-line-number (obj 'value)))
 		   'port-filename       (lambda (obj) (#_port-filename (obj 'value)))
-		   'object->string      (lambda (obj . args) "#<mock-port-class>")
+		   'object->string      (lambda* (obj (w #t)) (if (eq? w :readable) "*mock-port*" "#<mock-port-class>"))
 		   'format              (make-method #_format (lambda (obj) (obj 'value)))
 
 		   'set-current-output-port (lambda (obj) (#_set-current-output-port (obj 'value)))

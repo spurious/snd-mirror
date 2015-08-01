@@ -1928,7 +1928,7 @@ static Xen g_set_log_freq_start(Xen val)
   mus_float_t base;
   #define H_log_freq_start "(" S_log_freq_start "): log freq base (default: 25.0)"
 
-  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_log_freq_start, "a number");
+  Xen_check_type(Xen_is_number(val), val, 1, S_set S_log_freq_start, "a number");
   base = Xen_real_to_C_double(val);
   if ((base < 0.0) ||
       (base > 100000.0))
@@ -1946,7 +1946,7 @@ static Xen g_show_selection_transform(void) {return(C_bool_to_Xen_boolean(show_s
 static Xen g_set_show_selection_transform(Xen val) 
 {
   #define H_show_selection_transform "(" S_show_selection_transform "): " PROC_TRUE " if transform display reflects selection, not time-domain window"
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_show_selection_transform, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_show_selection_transform, "a boolean");
   set_show_selection_transform(Xen_boolean_to_C_bool(val));
   return(C_bool_to_Xen_boolean(show_selection_transform(ss)));
 }
@@ -2514,10 +2514,10 @@ of a moving mark:\n\
   Xen_define_safe_procedure("snd-transform",        g_snd_transform_w,    2, 1, 0, H_snd_transform);
 
   Xen_define_dilambda(S_log_freq_start, g_log_freq_start_w, H_log_freq_start,
-				   S_setB S_log_freq_start, g_set_log_freq_start_w,  0, 0, 1, 0);
+				   S_set S_log_freq_start, g_set_log_freq_start_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_show_selection_transform, g_show_selection_transform_w, H_show_selection_transform,
-				   S_setB S_show_selection_transform, g_set_show_selection_transform_w,  0, 0, 1, 0);
+				   S_set S_show_selection_transform, g_set_show_selection_transform_w,  0, 0, 1, 0);
 
   Xen_define_safe_procedure(S_integer_to_transform, g_integer_to_transform_w, 1, 0, 0, H_integer_to_transform);
   Xen_define_safe_procedure(S_transform_to_integer, g_transform_to_integer_w, 1, 0, 0, H_transform_to_integer);

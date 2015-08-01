@@ -135,7 +135,7 @@ static Xen g_show_listener(void)
 
 static Xen g_set_show_listener(Xen val)
 {
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_show_listener, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_show_listener, "a boolean");
   handle_listener(Xen_boolean_to_C_bool(val));
   return(C_bool_to_Xen_boolean(listener_is_visible()));
 }
@@ -187,7 +187,7 @@ static Xen g_set_listener_prompt(Xen val)
 {
   char *new_prompt;
   #define H_listener_prompt "(" S_listener_prompt "): the current lisp listener prompt character ('>') "
-  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_listener_prompt, "a string"); 
+  Xen_check_type(Xen_is_string(val), val, 1, S_set S_listener_prompt, "a string"); 
 
   if (listener_prompt(ss)) free(listener_prompt(ss));
   new_prompt = mus_strdup(Xen_string_to_C_string(val));
@@ -234,7 +234,7 @@ static Xen g_listener_colorized(void)
 static Xen g_listener_set_colorized(Xen val) 
 {
 #if USE_GTK
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_listener_colorized, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_listener_colorized, "a boolean");
   listener_set_colorized(Xen_boolean_to_C_bool(val));
 #endif
   return(val);
@@ -263,10 +263,10 @@ void g_init_listener(void)
   Xen_define_procedure(S_save_listener,  g_save_listener_w,  1, 0, 0, H_save_listener);
   Xen_define_procedure(S_clear_listener, g_clear_listener_w, 0, 0, 0, H_clear_listener);
 
-  Xen_define_dilambda(S_show_listener, g_show_listener_w, H_show_listener, S_setB S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_listener_prompt, g_listener_prompt_w, H_listener_prompt, S_setB S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_show_listener, g_show_listener_w, H_show_listener, S_set S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_listener_prompt, g_listener_prompt_w, H_listener_prompt, S_set S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0);
   Xen_define_dilambda(S_listener_colorized, g_listener_colorized_w, H_listener_colorized,
-				   S_setB S_listener_colorized, g_listener_set_colorized_w,  0, 0, 1, 0);
+				   S_set S_listener_colorized, g_listener_set_colorized_w,  0, 0, 1, 0);
 
   #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns true, Snd assumes you've dealt the text yourself, and does not try to evaluate it."

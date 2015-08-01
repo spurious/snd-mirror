@@ -184,17 +184,17 @@
   #include "xen.h"
   /* in snd-0.h: */
   #if HAVE_RUBY
-    #define S_setB "set_"
+    #define S_set "set_"
     #define PROC_FALSE "false"
     #define PROC_TRUE "true"
   #endif
   #if HAVE_SCHEME
-    #define S_setB "set! "
+    #define S_set "set! "
     #define PROC_FALSE "#f"
     #define PROC_TRUE "#t"
   #endif
   #if HAVE_FORTH
-    #define S_setB "set-"
+    #define S_set "set-"
     #define PROC_FALSE "#f" 
     #define PROC_TRUE "#t"
  #endif
@@ -229,11 +229,11 @@
 
 #if HAVE_RUBY
   #define XM_set_field_assert_type(Assertion, Arg, Position, Caller, Correct_Type) \
-    Xen_check_type(Assertion, Arg, Position, XM_FIELD_PREFIX S_setB Caller XM_POSTFIX, Correct_Type)
+    Xen_check_type(Assertion, Arg, Position, XM_FIELD_PREFIX S_set Caller XM_POSTFIX, Correct_Type)
 #endif
 #if HAVE_SCHEME || HAVE_FORTH
   #define XM_set_field_assert_type(Assertion, Arg, Position, Caller, Correct_Type) \
-    Xen_check_type(Assertion, Arg, Position, S_setB XM_FIELD_PREFIX Caller XM_POSTFIX, Correct_Type)
+    Xen_check_type(Assertion, Arg, Position, S_set XM_FIELD_PREFIX Caller XM_POSTFIX, Correct_Type)
 #endif
 
 #define XtIsSubClass XtIsSubclass

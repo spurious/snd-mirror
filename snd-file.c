@@ -2958,7 +2958,7 @@ static Xen g_set_sound_file_extensions(Xen lst)
   for (i = 0; i < len; i++)
     if (!(Xen_is_string(Xen_list_ref(lst, i))))
       {
-	Xen_check_type(0, Xen_list_ref(lst, i), i, S_setB S_sound_file_extensions, "a filename extension (a string like \"snd\")");
+	Xen_check_type(0, Xen_list_ref(lst, i), i, S_set S_sound_file_extensions, "a filename extension (a string like \"snd\")");
 	return(Xen_false);
       }
   for (i = 0; i < len; i++)
@@ -3027,64 +3027,64 @@ static Xen g_set_sound_loop_info(Xen snd, Xen vals)
   Xen start1 = Xen_integer_zero, end1 = Xen_integer_zero; 
   Xen mode0 = Xen_integer_zero, mode1 = Xen_integer_zero;
   Xen note = Xen_integer_zero, detune = Xen_integer_zero;
-  Xen_check_type((!Xen_is_bound(vals)) || (Xen_is_list(vals)), vals, 2, S_setB S_sound_loop_info, "a list");
+  Xen_check_type((!Xen_is_bound(vals)) || (Xen_is_list(vals)), vals, 2, S_set S_sound_loop_info, "a list");
 
   if (!Xen_is_bound(vals))
     {
       /* what is going on here? -- (set! (sound-loop-info) (list...))? */
-      Xen_check_type(Xen_is_list(snd), snd, 1, S_setB S_sound_loop_info, "a list");
+      Xen_check_type(Xen_is_list(snd), snd, 1, S_set S_sound_loop_info, "a list");
       vals = snd;
       sp = get_sp(Xen_undefined);
     }
   else 
     {
-      Snd_assert_sound(S_setB S_sound_loop_info, snd, 1);
+      Snd_assert_sound(S_set S_sound_loop_info, snd, 1);
       sp = get_sp(snd);
     }
   len = Xen_list_length(vals);
 
   if (sp == NULL) 
-    return(snd_no_such_sound_error(S_setB S_sound_loop_info, snd));
+    return(snd_no_such_sound_error(S_set S_sound_loop_info, snd));
 
   if ((sp->user_read_only == FILE_READ_ONLY) || 
       (sp->file_read_only == FILE_READ_ONLY))
     Xen_error(CANNOT_SAVE,
-	      Xen_list_2(C_string_to_Xen_string(S_setB S_sound_loop_info ": ~S is write-protected"),
+	      Xen_list_2(C_string_to_Xen_string(S_set S_sound_loop_info ": ~S is write-protected"),
 			 C_string_to_Xen_string(sp->filename)));
 
   hdr = sp->hdr;
   if (len > 0) 
     {
       start0 = Xen_list_ref(vals, 0);
-      Xen_check_type(Xen_is_integer(start0), start0, 2, S_setB S_sound_loop_info, "start0 must be an integer");
+      Xen_check_type(Xen_is_integer(start0), start0, 2, S_set S_sound_loop_info, "start0 must be an integer");
       if (len > 1) 
 	{
 	  end0 = Xen_list_ref(vals, 1);
-	  Xen_check_type(Xen_is_integer(end0), end0, 2, S_setB S_sound_loop_info, "end0 must be an integer");
+	  Xen_check_type(Xen_is_integer(end0), end0, 2, S_set S_sound_loop_info, "end0 must be an integer");
 	  if (len > 2) 
 	    {
 	      start1 = Xen_list_ref(vals, 2);
-	      Xen_check_type(Xen_is_integer(start1), start1, 2, S_setB S_sound_loop_info, "start1 must be an integer");
+	      Xen_check_type(Xen_is_integer(start1), start1, 2, S_set S_sound_loop_info, "start1 must be an integer");
 	      if (len > 3) 
 		{
 		  end1 = Xen_list_ref(vals, 3);
-		  Xen_check_type(Xen_is_integer(end1), end1, 2, S_setB S_sound_loop_info, "end1 must be an integer");
+		  Xen_check_type(Xen_is_integer(end1), end1, 2, S_set S_sound_loop_info, "end1 must be an integer");
 		  if (len > 4)
 		    {
 		      note = Xen_list_ref(vals, 4);
-		      Xen_check_type(Xen_is_integer(note), note, 2, S_setB S_sound_loop_info, "note must be an integer");
+		      Xen_check_type(Xen_is_integer(note), note, 2, S_set S_sound_loop_info, "note must be an integer");
 		      if (len > 5) 
 			{
 			  detune = Xen_list_ref(vals, 5);
-			  Xen_check_type(Xen_is_integer(detune), detune, 2, S_setB S_sound_loop_info, "detune must be an integer");
+			  Xen_check_type(Xen_is_integer(detune), detune, 2, S_set S_sound_loop_info, "detune must be an integer");
 			  if (len > 6) 
 			    {
 			      mode0 = Xen_list_ref(vals, 6);
-			      Xen_check_type(Xen_is_integer(mode0), mode0, 2, S_setB S_sound_loop_info, "mode0 must be an integer");
+			      Xen_check_type(Xen_is_integer(mode0), mode0, 2, S_set S_sound_loop_info, "mode0 must be an integer");
 			      if (len > 7)
 				{
 				mode1 = Xen_list_ref(vals, 7);
-				Xen_check_type(Xen_is_integer(mode1), mode1, 2, S_setB S_sound_loop_info, "mode1 must be an integer");
+				Xen_check_type(Xen_is_integer(mode1), mode1, 2, S_set S_sound_loop_info, "mode1 must be an integer");
 				}}}}}}}}
 
   if (hdr->loops == NULL)
@@ -3137,7 +3137,7 @@ static Xen g_set_sound_loop_info(Xen snd, Xen vals)
 	(err != IO_SAVE_HOOK_CANCELLATION))
       {
 	Xen_error(CANNOT_SAVE,
-		  Xen_list_3(C_string_to_Xen_string(S_setB S_sound_loop_info ": can't save ~S, ~A"),
+		  Xen_list_3(C_string_to_Xen_string(S_set S_sound_loop_info ": can't save ~S, ~A"),
 			     C_string_to_Xen_string(tmp_file),
 			     C_string_to_Xen_string(snd_io_strerror())));
 	return(Xen_false); /* not executed -- just for emphasis */
@@ -3153,7 +3153,7 @@ static Xen g_set_sound_loop_info(Xen snd, Xen vals)
 	    free(tmp_file);
 	    sp->writing = false;
 	    Xen_error(CANT_UPDATE_FILE,
-		      Xen_list_4(C_string_to_Xen_string(S_setB S_sound_loop_info ": can't update ~S: ~A ~A"),
+		      Xen_list_4(C_string_to_Xen_string(S_set S_sound_loop_info ": can't update ~S: ~A ~A"),
 				 C_string_to_Xen_string(sp->filename),
 				 C_string_to_Xen_string(io_error_name(err)),
 				 C_string_to_Xen_string(snd_io_strerror())));
@@ -3347,7 +3347,7 @@ static Xen g_set_auto_update(Xen val)
 {
   #define H_auto_update "(" S_auto_update "): " PROC_TRUE " if Snd should automatically update a file if it changes unexpectedly (default: " PROC_FALSE "). \
 The number of seconds between update checks is set by " S_auto_update_interval "."
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_auto_update, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_auto_update, "a boolean");
   set_auto_update(Xen_boolean_to_C_bool(val)); 
   return(C_bool_to_Xen_boolean(auto_update(ss)));
 }
@@ -3361,13 +3361,13 @@ static Xen g_set_auto_update_interval(Xen val)
   #define H_auto_update_interval "(" S_auto_update_interval "): time (seconds) between background checks for changed file on disk (default: 60). \
 This value only matters if " S_auto_update " is " PROC_TRUE
 
-  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_auto_update_interval, "a number"); 
+  Xen_check_type(Xen_is_number(val), val, 1, S_set S_auto_update_interval, "a number"); 
   ctime = Xen_real_to_C_double(val);
   if (ctime != auto_update_interval(ss))
     {
       mus_float_t old_time;
       if ((ctime < 0.0) || (ctime > (24 * 3600)))
-	Xen_out_of_range_error(S_setB S_auto_update_interval, 1, val, "invalid time");
+	Xen_out_of_range_error(S_set S_auto_update_interval, 1, val, "invalid time");
 
       old_time = auto_update_interval(ss);
       set_auto_update_interval(ctime);
@@ -3387,7 +3387,7 @@ static Xen g_set_default_output_chans(Xen val)
 {
   #define MAX_OUTPUT_CHANS 1024
   #define H_default_output_chans "(" S_default_output_chans "): default number of channels when a new or temporary file is created (1)"
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_default_output_chans, "an integer"); 
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_default_output_chans, "an integer"); 
   set_default_output_chans(mus_iclamp(1, Xen_integer_to_C_int(val), MAX_OUTPUT_CHANS));
   return(C_int_to_Xen_integer(default_output_chans(ss)));
 }
@@ -3400,7 +3400,7 @@ static Xen g_set_default_output_srate(Xen val)
   #define MAX_OUTPUT_SRATE 1000000000
   #define H_default_output_srate "(" S_default_output_srate "): default srate when a new or temporary file is created (22050)" 
 
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_default_output_srate, "an integer"); 
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_default_output_srate, "an integer"); 
   set_default_output_srate(mus_iclamp(1, Xen_integer_to_C_int(val), MAX_OUTPUT_SRATE));
   return(C_int_to_Xen_integer(default_output_srate(ss)));
 }
@@ -3415,12 +3415,12 @@ static Xen g_set_default_output_header_type(Xen val)
 Normally this is " S_mus_next "; -1 here indicates you want Snd to use the current sound's header type, if possible. \
 Other writable headers include " S_mus_aiff ", " S_mus_riff ", " S_mus_ircam ", " S_mus_nist ", " S_mus_aifc ", and " S_mus_raw "."
 
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_default_output_header_type, "an integer"); 
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_default_output_header_type, "an integer"); 
 
   typ = (mus_header_t)Xen_integer_to_C_int(val);
   if (mus_header_writable(typ, MUS_IGNORE_SAMPLE))
     set_default_output_header_type(typ);
-  else Xen_out_of_range_error(S_setB S_default_output_header_type, 1, val, "unwritable header type");
+  else Xen_out_of_range_error(S_set S_default_output_header_type, 1, val, "unwritable header type");
   return(C_int_to_Xen_integer((int)default_output_header_type(ss)));
 }
 
@@ -3434,12 +3434,12 @@ static Xen g_set_default_output_sample_type(Xen val)
 normally " S_mus_ldouble "; mus-unknown-sample here means try to use the current sound's sample type; many other sample types \
 are available, but not all are compatible with all header types"
 
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_default_output_sample_type, "an integer"); 
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_default_output_sample_type, "an integer"); 
 
   samp_type = (mus_sample_t)Xen_integer_to_C_int(val);
   if (mus_is_sample_type(samp_type))
     set_default_output_sample_type(samp_type);
-  else Xen_out_of_range_error(S_setB S_default_output_sample_type, 1, val, "unknown sample type");
+  else Xen_out_of_range_error(S_set S_default_output_sample_type, 1, val, "unknown sample type");
   return(C_int_to_Xen_integer((int)default_output_sample_type(ss)));
 }
 
@@ -3450,7 +3450,7 @@ static Xen g_set_clipping(Xen val)
 {
   #define H_clipping "(" S_clipping "): " PROC_TRUE " if Snd should clip output values to the current \
 output sample type's maximum. The default (" PROC_FALSE ") allows them to wrap-around which makes a very loud click"
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_clipping, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_clipping, "a boolean");
   set_clipping(Xen_boolean_to_C_bool(val));
   return(C_bool_to_Xen_boolean(clipping(ss)));
 }
@@ -3462,7 +3462,7 @@ static Xen g_set_ask_before_overwrite(Xen val)
 {
   #define H_ask_before_overwrite "(" S_ask_before_overwrite "): " PROC_TRUE " if you want Snd to ask before overwriting a file. \
 If " PROC_FALSE ", any existing file of the same name will be overwritten without warning when you save a sound."
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_ask_before_overwrite, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_ask_before_overwrite, "a boolean");
   set_ask_before_overwrite(Xen_boolean_to_C_bool(val)); 
   return(C_bool_to_Xen_boolean(ask_before_overwrite(ss)));
 }
@@ -3483,7 +3483,7 @@ void set_with_toolbar_and_display(bool val)
 static Xen g_set_with_toolbar(Xen val) 
 {
   #define H_with_toolbar "(" S_with_toolbar "): " PROC_TRUE " if you want a toolbar"
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_with_toolbar, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_with_toolbar, "a boolean");
   set_with_toolbar_and_display(Xen_boolean_to_C_bool(val));
   return(C_bool_to_Xen_boolean(with_toolbar(ss)));
 }
@@ -3504,7 +3504,7 @@ void set_with_tooltips(bool val)
 static Xen g_set_with_tooltips(Xen val) 
 {
   #define H_with_tooltips "(" S_with_tooltips "): " PROC_TRUE " if you want tooltips displayed at all"
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_with_tooltips, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_with_tooltips, "a boolean");
   set_with_tooltips(Xen_boolean_to_C_bool(val));
   return(C_bool_to_Xen_boolean(with_tooltips(ss)));
 }
@@ -3527,7 +3527,7 @@ static Xen g_with_menu_icons(void) {return(C_bool_to_Xen_boolean(with_menu_icons
 static Xen g_set_with_menu_icons(Xen val) 
 {
   #define H_with_menu_icons "(" S_with_menu_icons "): " PROC_TRUE " if you want icons in the menus (gtk only)"
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_with_menu_icons, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_with_menu_icons, "a boolean");
   set_with_menu_icons(Xen_boolean_to_C_bool(val));
   return(C_bool_to_Xen_boolean(with_menu_icons(ss)));
 }
@@ -3544,7 +3544,7 @@ static Xen g_save_as_dialog_src(void) {return(C_bool_to_Xen_boolean(save_as_dial
 static Xen g_set_save_as_dialog_src(Xen val) 
 {
   #define H_save_as_dialog_src "(" S_save_as_dialog_src "): " PROC_TRUE " if you want the 'src' button set by default in the various Save-as dialogs"
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_save_as_dialog_src, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_save_as_dialog_src, "a boolean");
   set_save_as_dialog_src(Xen_boolean_to_C_bool(val));
   return(C_bool_to_Xen_boolean(save_as_dialog_src(ss)));
 }
@@ -3561,7 +3561,7 @@ static Xen g_save_as_dialog_auto_comment(void) {return(C_bool_to_Xen_boolean(sav
 static Xen g_set_save_as_dialog_auto_comment(Xen val) 
 {
   #define H_save_as_dialog_auto_comment "(" S_save_as_dialog_auto_comment "): " PROC_TRUE " if you want the 'auto' button set by default in the various Save-as dialogs"
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_save_as_dialog_auto_comment, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_save_as_dialog_auto_comment, "a boolean");
   set_save_as_dialog_auto_comment(Xen_boolean_to_C_bool(val));
   return(C_bool_to_Xen_boolean(save_as_dialog_auto_comment(ss)));
 }
@@ -3573,7 +3573,7 @@ static Xen g_set_remember_sound_state(Xen val)
 {
   #define H_remember_sound_state "(" S_remember_sound_state "): " PROC_TRUE " if you want a Snd to remember the current \
 state of each sound when it is closed, restoring that state when it is opened again later."
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_remember_sound_state, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_remember_sound_state, "a boolean");
   set_remember_sound_state(Xen_boolean_to_C_bool(val)); 
   return(C_bool_to_Xen_boolean(remember_sound_state(ss)));
 }
@@ -3586,7 +3586,7 @@ static Xen g_set_ask_about_unsaved_edits(Xen val)
   #define H_ask_about_unsaved_edits "(" S_ask_about_unsaved_edits "): " PROC_TRUE " if you want Snd to ask whether \
 to save unsaved edits when a sound is closed."
 
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_ask_about_unsaved_edits, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_ask_about_unsaved_edits, "a boolean");
   set_ask_about_unsaved_edits(Xen_boolean_to_C_bool(val)); 
   return(C_bool_to_Xen_boolean(ask_about_unsaved_edits(ss)));
 }
@@ -3600,7 +3600,7 @@ static Xen g_set_show_full_duration(Xen val)
   #define H_show_full_duration "(" S_show_full_duration "): " PROC_TRUE " if you want the entire sound \
 displayed whn it is opened."
 
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_show_full_duration, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_show_full_duration, "a boolean");
   set_show_full_duration(Xen_boolean_to_C_bool(val)); 
   
   for (i = 0; i < ss->max_sounds; i++)
@@ -3625,7 +3625,7 @@ static Xen g_set_initial_beg(Xen val)
 {
   #define H_initial_beg "(" S_initial_beg "): the begin point (in seconds) for the initial graph of a sound."
 
-  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_initial_beg, "a number");
+  Xen_check_type(Xen_is_number(val), val, 1, S_set S_initial_beg, "a number");
   set_initial_beg(Xen_real_to_C_double(val)); 
   return(C_double_to_Xen_real(initial_beg(ss)));
 }
@@ -3637,7 +3637,7 @@ static Xen g_set_initial_dur(Xen val)
 {
   #define H_initial_dur "(" S_initial_dur "): the duration (in seconds) for the initial graph of a sound."
 
-  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_initial_dur, "a number");
+  Xen_check_type(Xen_is_number(val), val, 1, S_set S_initial_dur, "a number");
   set_initial_dur(Xen_real_to_C_double(val)); 
   return(C_double_to_Xen_real(initial_dur(ss)));
 }
@@ -3651,7 +3651,7 @@ static Xen g_set_show_full_range(Xen val)
   #define H_show_full_range "(" S_show_full_range "): " PROC_TRUE " if you want the graph y-bounds to accommodate the sound's \
 max and min when it is opened."
 
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_show_full_range, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_show_full_range, "a boolean");
   set_show_full_range(Xen_boolean_to_C_bool(val)); 
 
   for (i = 0; i < ss->max_sounds; i++)
@@ -3780,7 +3780,7 @@ void g_init_file(void)
 {
   Xen_define_safe_procedure(S_add_sound_file_extension, g_add_sound_file_extension_w, 1, 0, 0, H_add_sound_file_extension);
   Xen_define_dilambda(S_sound_file_extensions, g_sound_file_extensions_w, H_sound_file_extensions,
-				   S_setB S_sound_file_extensions, g_set_sound_file_extensions_w,  0, 0, 1, 0);
+				   S_set S_sound_file_extensions, g_set_sound_file_extensions_w,  0, 0, 1, 0);
 
   Xen_define_safe_procedure(S_is_sound_file,                     g_is_sound_file_w,                     1, 0, 0, H_is_sound_file);
   Xen_define_safe_procedure(S_file_write_date,                  g_file_write_date_w,                  1, 0, 0, H_file_write_date);
@@ -3799,7 +3799,7 @@ void g_init_file(void)
   Xen_define_safe_procedure(S_info_dialog,                      g_info_dialog_w,                      2, 0, 0, H_info_dialog);
 
   Xen_define_dilambda(S_sound_loop_info,      g_sound_loop_info_w, H_sound_loop_info,
-				   S_setB S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
+				   S_set S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
 
   Xen_define_variable(S_snd_opened_sound, snd_opened_sound, Xen_false);
 
@@ -3882,60 +3882,60 @@ the newly updated sound may have a different index."
   Xen_define_safe_procedure(S_snd_tempnam,        g_snd_tempnam_w,        0, 0, 0, H_snd_tempnam);
 
   Xen_define_dilambda(S_auto_update, g_auto_update_w, H_auto_update,
-				   S_setB S_auto_update, g_set_auto_update_w,  0, 0, 1, 0);
+				   S_set S_auto_update, g_set_auto_update_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_auto_update_interval, g_auto_update_interval_w, H_auto_update_interval,
-				   S_setB S_auto_update_interval, g_set_auto_update_interval_w,  0, 0, 1, 0);
+				   S_set S_auto_update_interval, g_set_auto_update_interval_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_ask_before_overwrite, g_ask_before_overwrite_w, H_ask_before_overwrite,
-				   S_setB S_ask_before_overwrite, g_set_ask_before_overwrite_w,  0, 0, 1, 0);
+				   S_set S_ask_before_overwrite, g_set_ask_before_overwrite_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_with_toolbar, g_with_toolbar_w, H_with_toolbar,
-				   S_setB S_with_toolbar, g_set_with_toolbar_w,  0, 0, 1, 0);
+				   S_set S_with_toolbar, g_set_with_toolbar_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_with_tooltips, g_with_tooltips_w, H_with_tooltips,
-				   S_setB S_with_tooltips, g_set_with_tooltips_w,  0, 0, 1, 0);
+				   S_set S_with_tooltips, g_set_with_tooltips_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_with_menu_icons, g_with_menu_icons_w, H_with_menu_icons,
-				   S_setB S_with_menu_icons, g_set_with_menu_icons_w,  0, 0, 1, 0);
+				   S_set S_with_menu_icons, g_set_with_menu_icons_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_save_as_dialog_src, g_save_as_dialog_src_w, H_save_as_dialog_src,
-				   S_setB S_save_as_dialog_src, g_set_save_as_dialog_src_w,  0, 0, 1, 0);
+				   S_set S_save_as_dialog_src, g_set_save_as_dialog_src_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_save_as_dialog_auto_comment, g_save_as_dialog_auto_comment_w, H_save_as_dialog_auto_comment,
-				   S_setB S_save_as_dialog_auto_comment, g_set_save_as_dialog_auto_comment_w,  0, 0, 1, 0);
+				   S_set S_save_as_dialog_auto_comment, g_set_save_as_dialog_auto_comment_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_remember_sound_state, g_remember_sound_state_w, H_remember_sound_state,
-				   S_setB S_remember_sound_state, g_set_remember_sound_state_w,  0, 0, 1, 0);
+				   S_set S_remember_sound_state, g_set_remember_sound_state_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_ask_about_unsaved_edits, g_ask_about_unsaved_edits_w, H_ask_about_unsaved_edits,
-				   S_setB S_ask_about_unsaved_edits, g_set_ask_about_unsaved_edits_w,  0, 0, 1, 0);
+				   S_set S_ask_about_unsaved_edits, g_set_ask_about_unsaved_edits_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_show_full_duration, g_show_full_duration_w, H_show_full_duration,
-				   S_setB S_show_full_duration, g_set_show_full_duration_w,  0, 0, 1, 0);
+				   S_set S_show_full_duration, g_set_show_full_duration_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_show_full_range, g_show_full_range_w, H_show_full_range,
-				   S_setB S_show_full_range, g_set_show_full_range_w,  0, 0, 1, 0);
+				   S_set S_show_full_range, g_set_show_full_range_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_initial_beg, g_initial_beg_w, H_initial_beg,
-				   S_setB S_initial_beg, g_set_initial_beg_w,  0, 0, 1, 0);
+				   S_set S_initial_beg, g_set_initial_beg_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_initial_dur, g_initial_dur_w, H_initial_dur,
-				   S_setB S_initial_dur, g_set_initial_dur_w,  0, 0, 1, 0);
+				   S_set S_initial_dur, g_set_initial_dur_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_default_output_chans, g_default_output_chans_w, H_default_output_chans,
-				   S_setB S_default_output_chans, g_set_default_output_chans_w,  0, 0, 1, 0);
+				   S_set S_default_output_chans, g_set_default_output_chans_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_default_output_srate, g_default_output_srate_w, H_default_output_srate,
-				   S_setB S_default_output_srate, g_set_default_output_srate_w,  0, 0, 1, 0);
+				   S_set S_default_output_srate, g_set_default_output_srate_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_default_output_header_type, g_default_output_header_type_w, H_default_output_header_type,
-				   S_setB S_default_output_header_type, g_set_default_output_header_type_w,  0, 0, 1, 0);
+				   S_set S_default_output_header_type, g_set_default_output_header_type_w,  0, 0, 1, 0);
 
   Xen_define_dilambda(S_default_output_sample_type, g_default_output_sample_type_w, H_default_output_sample_type,
-				   S_setB S_default_output_sample_type, g_set_default_output_sample_type_w,  0, 0, 1, 0);
+				   S_set S_default_output_sample_type, g_set_default_output_sample_type_w,  0, 0, 1, 0);
   Xen_define_dilambda(S_clipping, g_clipping_w, H_clipping,
-				   S_setB S_clipping, g_set_clipping_w,  0, 0, 1, 0);
+				   S_set S_clipping, g_set_clipping_w,  0, 0, 1, 0);
 
   Xen_define_safe_procedure(S_add_file_filter,    g_add_file_filter_w,    2, 0, 0, H_add_file_filter);
   Xen_define_safe_procedure(S_delete_file_filter, g_delete_file_filter_w, 1, 0, 0, H_delete_file_filter);

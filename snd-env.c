@@ -1697,7 +1697,7 @@ static Xen g_enved_base(void) {return(C_double_to_Xen_real(enved_base(ss)));}
 static Xen g_set_enved_base(Xen val) 
 {
   #define H_enved_base "(" S_enved_base "): envelope editor exponential base value (1.0)"
-  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_enved_base, "a number"); 
+  Xen_check_type(Xen_is_number(val), val, 1, S_set S_enved_base, "a number"); 
   set_enved_base(mus_fclamp(0.0, Xen_real_to_C_double(val), 300000.0));
   return(C_double_to_Xen_real(enved_base(ss)));
 }
@@ -1708,7 +1708,7 @@ static Xen g_enved_power(void) {return(C_double_to_Xen_real(enved_power(ss)));}
 static Xen g_set_enved_power(Xen val) 
 {
   #define H_enved_power "(" S_enved_power "): envelope editor base scale range (9.0^power)"
-  Xen_check_type(Xen_is_number(val), val, 1, S_setB S_enved_power, "a number"); 
+  Xen_check_type(Xen_is_number(val), val, 1, S_set S_enved_power, "a number"); 
   set_enved_power(mus_fclamp(0.0, Xen_real_to_C_double(val), 10.0));
   return(C_double_to_Xen_real(enved_power(ss)));
 }
@@ -1721,7 +1721,7 @@ static Xen g_set_enved_clipping(Xen on)
   #define H_enved_clipping "(" S_enved_clipping "): envelope editor clip button setting; \
 if clipping, the motion of the mouse is restricted to the current graph bounds."
 
-  Xen_check_type(Xen_is_boolean(on), on, 1, S_setB S_enved_clipping, "a boolean");
+  Xen_check_type(Xen_is_boolean(on), on, 1, S_set S_enved_clipping, "a boolean");
   set_enved_clipping(Xen_boolean_to_C_bool(on)); 
   return(C_bool_to_Xen_boolean(enved_clipping(ss)));
 }
@@ -1735,7 +1735,7 @@ static Xen g_set_enved_style(Xen val)
 be " S_envelope_linear ", or " S_envelope_exponential
 
   int choice;
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_enved_style, S_envelope_linear ", or " S_envelope_exponential);
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_enved_style, S_envelope_linear ", or " S_envelope_exponential);
   choice = Xen_integer_to_C_int(val);
   if ((choice == ENVELOPE_LINEAR) || (choice == ENVELOPE_EXPONENTIAL))
     {
@@ -1756,11 +1756,11 @@ static Xen g_set_enved_target(Xen val)
   #define H_enved_target "(" S_enved_target "): determines how the envelope edit envelope is applied; \
 choices are " S_enved_amplitude ", " S_enved_srate "(apply to speed), and " S_enved_spectrum "(apply as a filter)."
 
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_enved_target, "an integer"); 
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_enved_target, "an integer"); 
   in_n = Xen_integer_to_C_int(val);
   if ((in_n < 0) ||
       (in_n > (int)ENVED_SRATE))
-    Xen_out_of_range_error(S_setB S_enved_target, 1, val, S_enved_target " should be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
+    Xen_out_of_range_error(S_set S_enved_target, 1, val, S_enved_target " should be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
   else
     {
       enved_target_t n;
@@ -1779,7 +1779,7 @@ static Xen g_enved_with_wave(void) {return(C_bool_to_Xen_boolean(enved_with_wave
 static Xen g_set_enved_with_wave(Xen val) 
 {
   #define H_enved_with_wave "(" S_enved_with_wave "): " PROC_TRUE " if the envelope editor is displaying the waveform to be edited"
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_enved_with_wave, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_enved_with_wave, "a boolean");
   set_enved_with_wave(Xen_boolean_to_C_bool(val));
   return(C_bool_to_Xen_boolean(enved_with_wave(ss)));
 }
@@ -1790,7 +1790,7 @@ static Xen g_enved_in_dB(void) {return(C_bool_to_Xen_boolean(enved_in_dB(ss)));}
 static Xen g_set_enved_in_dB(Xen val) 
 {
   #define H_enved_in_dB "(" S_enved_in_dB "): " PROC_TRUE " if the envelope editor is using dB"
-  Xen_check_type(Xen_is_boolean(val), val, 1, S_setB S_enved_in_dB, "a boolean");
+  Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_enved_in_dB, "a boolean");
   set_enved_in_dB(Xen_boolean_to_C_bool(val)); 
   return(C_bool_to_Xen_boolean(enved_in_dB(ss)));
 }
@@ -1801,7 +1801,7 @@ static Xen g_enved_filter_order(void) {return(C_int_to_Xen_integer(enved_filter_
 static Xen g_set_enved_filter_order(Xen val) 
 {
   #define H_enved_filter_order "(" S_enved_filter_order "): envelope editor's FIR filter order (40)"
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_enved_filter_order, "an integer"); 
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_enved_filter_order, "an integer"); 
   set_enved_filter_order(Xen_integer_to_C_int(val));
   return(C_int_to_Xen_integer(enved_filter_order(ss)));
 }
@@ -1856,16 +1856,16 @@ void g_init_env(void)
   Xen_define_constant(S_envelope_linear,      ENVELOPE_LINEAR,      S_enved_style " choice: linear connections between breakpoints");
   Xen_define_constant(S_envelope_exponential, ENVELOPE_EXPONENTIAL, S_enved_style " choice: exponential connections between breakpoints");
 
-  Xen_define_dilambda(S_enved_base,   g_enved_base_w,   H_enved_base,   S_setB S_enved_base,   g_set_enved_base_w,    0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_power,  g_enved_power_w,  H_enved_power,  S_setB S_enved_power,  g_set_enved_power_w,   0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_clipping, g_enved_clipping_w, H_enved_clipping, S_setB S_enved_clipping, g_set_enved_clipping_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_style,  g_enved_style_w,  H_enved_style,  S_setB S_enved_style,  g_set_enved_style_w,   0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_target, g_enved_target_w, H_enved_target, S_setB S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_with_wave, g_enved_with_wave_w, H_enved_with_wave, S_setB S_enved_with_wave, g_set_enved_with_wave_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  S_setB S_enved_in_dB,  g_set_enved_in_dB_w,   0, 0, 1, 0);
+  Xen_define_dilambda(S_enved_base,   g_enved_base_w,   H_enved_base,   S_set S_enved_base,   g_set_enved_base_w,    0, 0, 1, 0);
+  Xen_define_dilambda(S_enved_power,  g_enved_power_w,  H_enved_power,  S_set S_enved_power,  g_set_enved_power_w,   0, 0, 1, 0);
+  Xen_define_dilambda(S_enved_clipping, g_enved_clipping_w, H_enved_clipping, S_set S_enved_clipping, g_set_enved_clipping_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_enved_style,  g_enved_style_w,  H_enved_style,  S_set S_enved_style,  g_set_enved_style_w,   0, 0, 1, 0);
+  Xen_define_dilambda(S_enved_target, g_enved_target_w, H_enved_target, S_set S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_enved_with_wave, g_enved_with_wave_w, H_enved_with_wave, S_set S_enved_with_wave, g_set_enved_with_wave_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  S_set S_enved_in_dB,  g_set_enved_in_dB_w,   0, 0, 1, 0);
 
   Xen_define_dilambda(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,
-				   S_setB S_enved_filter_order, g_set_enved_filter_order_w,  0, 0, 1, 0);
+				   S_set S_enved_filter_order, g_set_enved_filter_order_w,  0, 0, 1, 0);
 
   Xen_define_safe_procedure(S_enved_dialog,    g_enved_dialog_w,    0, 0, 0, H_enved_dialog);
   Xen_define_safe_procedure(S_save_envelopes,  g_save_envelopes_w,  0, 1, 0, H_save_envelopes);

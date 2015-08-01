@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.30"
-#define S7_DATE "12-Jul-15"
+#define S7_VERSION "3.32"
+#define S7_DATE "23-Jul-15"
 
 
 typedef long long int s7_int;
@@ -675,6 +675,9 @@ typedef s7_pf_t (*s7_pp_t)(s7_scheme *sc, s7_pointer expr);
 void s7_pf_set_function(s7_pointer f, s7_pp_t rp);
 s7_pp_t s7_pf_function(s7_scheme *sc, s7_pointer func);
 
+typedef s7_pointer (*s7_gf_t)(s7_scheme *sc, s7_pointer **p);
+typedef s7_gf_t (*s7_gp_t)(s7_scheme *sc, s7_pointer expr);
+
 void s7_xf_store_at(s7_scheme *sc, s7_int index, s7_pointer val);
 s7_int s7_xf_store(s7_scheme *sc, s7_pointer val);
 void s7_xf_free(s7_scheme *sc);
@@ -682,6 +685,14 @@ s7_pointer *s7_xf_start(s7_scheme *sc);
 void *s7_xf_new(s7_scheme *sc, s7_pointer e);
 bool s7_xf_is_stepper(s7_scheme *sc, s7_pointer sym);
 
+bool s7_arg_to_pf(s7_scheme *sc, s7_pointer a1);
+bool s7_arg_to_if(s7_scheme *sc, s7_pointer a1);
+bool s7_arg_to_rf(s7_scheme *sc, s7_pointer a1);
+
+s7_int s7_slot_integer_value(s7_pointer slot);
+bool s7_is_stepper(s7_pointer p);
+s7_int s7_slot_integer_value_checked(s7_scheme *sc, s7_pointer slot, const char *caller);
+s7_double s7_slot_real_value(s7_scheme *sc, s7_pointer slot, const char *caller);
 void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_double value);
 /* end CLM stuff */
 

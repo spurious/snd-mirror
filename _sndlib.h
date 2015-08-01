@@ -62,18 +62,18 @@
   #define FCLOSE(Fd, Name)    fclose(Fd)
 #endif
 
-#ifndef S_setB
+#ifndef S_set
   #if (!HAVE_EXTENSION_LANGUAGE)
-    #define S_setB "set-"
+    #define S_set "set-"
   #else
   #if HAVE_RUBY
-    #define S_setB "set_"
+    #define S_set "set_"
   #else
   #if HAVE_SCHEME
-    #define S_setB "set! "
+    #define S_set "set! "
   #else
   #if HAVE_FORTH
-    #define S_setB "set-"
+    #define S_set "set-"
   #endif
   #endif
   #endif

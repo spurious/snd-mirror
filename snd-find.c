@@ -247,7 +247,7 @@ static Xen g_set_search_procedure(Xen proc)
   char *error = NULL;
   /* (set! (search-procedure) (lambda (y) #t)) -> #<procedure #f ((n) #t)> */
   
-  Xen_check_type(Xen_is_procedure(proc) || Xen_is_false(proc), proc, 1, S_setB S_search_procedure, "a procedure or " PROC_FALSE);
+  Xen_check_type(Xen_is_procedure(proc) || Xen_is_false(proc), proc, 1, S_set S_search_procedure, "a procedure or " PROC_FALSE);
 
   error = procedure_ok(proc, 1, S_search_procedure, "search", 1);
   if (!error)
@@ -264,7 +264,7 @@ static Xen g_set_search_procedure(Xen proc)
       Xen errstr;
       errstr = C_string_to_Xen_string(error);
       free(error);
-      return(snd_bad_arity_error(S_setB S_search_procedure, errstr, proc));
+      return(snd_bad_arity_error(S_set S_search_procedure, errstr, proc));
     }
   return(proc);
 }
@@ -276,5 +276,5 @@ Xen_wrap_1_arg(g_set_search_procedure_w, g_set_search_procedure)
 void g_init_find(void)
 {
   Xen_define_dilambda(S_search_procedure, g_search_procedure_w, H_search_procedure,
-				   S_setB S_search_procedure, g_set_search_procedure_w,  0, 0, 1, 0);
+				   S_set S_search_procedure, g_set_search_procedure_w,  0, 0, 1, 0);
 }

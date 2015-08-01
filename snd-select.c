@@ -1481,10 +1481,10 @@ static Xen g_set_selection_position(Xen pos, Xen snd, Xen chn)
   chan_info *cp;
   mus_long_t beg;
 
-  Snd_assert_channel(S_setB S_selection_position, snd, chn, 2);
+  Snd_assert_channel(S_set S_selection_position, snd, chn, 2);
   Xen_check_type(Xen_is_integer(pos), pos, 1, S_selection_position, "an integer");
 
-  beg = beg_to_sample(pos, S_setB S_selection_position);
+  beg = beg_to_sample(pos, S_set S_selection_position);
   if (!Xen_is_bound(snd))
     {
       sync_info *si = NULL;
@@ -1505,7 +1505,7 @@ static Xen g_set_selection_position(Xen pos, Xen snd, Xen chn)
     }
   else 
     {
-      cp = get_cp(snd, chn, S_setB S_selection_position);
+      cp = get_cp(snd, chn, S_set S_selection_position);
       if (!cp) return(Xen_false);
       cp_set_selection_beg(cp, beg);
     }
@@ -1541,10 +1541,10 @@ static Xen g_set_selection_framples(Xen samps, Xen snd, Xen chn)
   chan_info *cp;
   mus_long_t len;
 
-  Xen_check_type(Xen_is_llong(samps), samps, 1, S_setB S_selection_framples, "an integer");
+  Xen_check_type(Xen_is_llong(samps), samps, 1, S_set S_selection_framples, "an integer");
   len = Xen_llong_to_C_llong(samps);
   if (len <= 0)
-    Xen_wrong_type_arg_error(S_setB S_selection_framples, 1, samps, "a positive integer");
+    Xen_wrong_type_arg_error(S_set S_selection_framples, 1, samps, "a positive integer");
   if (!Xen_is_bound(snd))
     {
       sync_info *si = NULL;
@@ -1565,8 +1565,8 @@ static Xen g_set_selection_framples(Xen samps, Xen snd, Xen chn)
     }
   else 
     {
-      Snd_assert_channel(S_setB S_selection_framples, snd, chn, 2);
-      cp = get_cp(snd, chn, S_setB S_selection_framples);
+      Snd_assert_channel(S_set S_selection_framples, snd, chn, 2);
+      cp = get_cp(snd, chn, S_set S_selection_framples);
       if (!cp) return(Xen_false);
       cp_set_selection_len(cp, len);
     }
@@ -1590,14 +1590,14 @@ static Xen g_selection_member(Xen snd, Xen chn)
 
 static Xen g_set_selection_member(Xen on, Xen snd, Xen chn)
 {
-  Xen_check_type(Xen_is_boolean(on), on, 1, S_setB S_selection_member, "a boolean");
+  Xen_check_type(Xen_is_boolean(on), on, 1, S_set S_selection_member, "a boolean");
   if ((Xen_is_true(snd)) && (Xen_is_false(on)))
     deactivate_selection();
   else
     {
       chan_info *cp;
-      Snd_assert_channel(S_setB S_selection_member, snd, chn, 2);
-      cp = get_cp(snd, chn, S_setB S_selection_member);
+      Snd_assert_channel(S_set S_selection_member, snd, chn, 2);
+      cp = get_cp(snd, chn, S_set S_selection_member);
       if (!cp) return(Xen_false);
       if (Xen_is_true(on))
 	{
@@ -1876,9 +1876,9 @@ void g_init_selection(void)
   init_selection_keywords();
   init_xen_selection();
 
-  Xen_define_dilambda(S_selection_position, g_selection_position_w, H_selection_position, S_setB S_selection_position, g_set_selection_position_w, 0, 2, 1, 2);
-  Xen_define_dilambda(S_selection_framples, g_selection_framples_w, H_selection_framples, S_setB S_selection_framples, g_set_selection_framples_w, 0, 2, 1, 2);
-  Xen_define_dilambda(S_selection_member, g_selection_member_w, H_selection_member, S_setB S_selection_member, g_set_selection_member_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_selection_position, g_selection_position_w, H_selection_position, S_set S_selection_position, g_set_selection_position_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_selection_framples, g_selection_framples_w, H_selection_framples, S_set S_selection_framples, g_set_selection_framples_w, 0, 2, 1, 2);
+  Xen_define_dilambda(S_selection_member, g_selection_member_w, H_selection_member, S_set S_selection_member, g_set_selection_member_w, 0, 2, 1, 2);
 
   Xen_define_safe_procedure(S_selection,        g_selection_w,        0, 0, 0, H_selection);
   Xen_define_safe_procedure(S_is_selection,      g_is_selection_w,      0, 1, 0, H_is_selection);

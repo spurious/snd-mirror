@@ -5750,7 +5750,7 @@ src runs.  If you use too low a setting, you can sometimes hear high \
 frequency whistles leaking through."
 
   int len;
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_sinc_width, "an integer"); 
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_sinc_width, "an integer"); 
   len = Xen_integer_to_C_int(val);
   if ((len >= 0) && (len <= MUS_MAX_CLM_SINC_WIDTH))
     set_sinc_width(len);
@@ -6517,7 +6517,7 @@ void g_init_sig(void)
   Xen_define_safe_procedure(S_src_channel,                 g_src_channel_w,                 1, 5, 0, H_src_channel);
   Xen_define_safe_procedure(S_pad_channel,                 g_pad_channel_w,                 2, 3, 0, H_pad_channel);
 
-  Xen_define_dilambda(S_sinc_width, g_sinc_width_w, H_sinc_width, S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_sinc_width, g_sinc_width_w, H_sinc_width, S_set S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
 
   Xen_define_procedure(S_fpsap, g_fpsap_w, 3, 2, 0, H_fpsap);
 #if HAVE_SCHEME

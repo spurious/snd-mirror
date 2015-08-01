@@ -1086,7 +1086,7 @@ static Xen g_set_colormap(Xen val)
 {
   int index;
 
-  Xen_check_type(xen_is_colormap(val), val, 1, S_setB S_colormap, "a colormap"); 
+  Xen_check_type(xen_is_colormap(val), val, 1, S_set S_colormap, "a colormap"); 
 
   index = Xen_colormap_to_C_int(val);
   if (!(is_colormap(index)))
@@ -1106,13 +1106,13 @@ static Xen g_set_colormap_size(Xen val)
   int size;
   #define H_colormap_size "(" S_colormap_size "): current colormap size; default is 512."
 
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_colormap_size, "an integer"); 
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_colormap_size, "an integer"); 
 
   size = Xen_integer_to_C_int(val);
   if (size < 0)
-    Xen_out_of_range_error(S_setB S_colormap_size, 1, val, "size < 0?");
+    Xen_out_of_range_error(S_set S_colormap_size, 1, val, "size < 0?");
   if (size > (1 << 26))
-    Xen_out_of_range_error(S_setB S_colormap_size, 1, val, "size too large");
+    Xen_out_of_range_error(S_set S_colormap_size, 1, val, "size too large");
 
   set_color_map_size(size);
   check_colormap_sizes(color_map_size(ss));
@@ -1277,8 +1277,8 @@ void g_init_gxcolormaps(void)
   Xen_define_safe_procedure(S_colormap_name, g_colormap_name_w,     1, 0, 0, H_colormap_name);
   Xen_define_safe_procedure(S_delete_colormap, g_delete_colormap_w, 1, 0, 0, H_delete_colormap);
 
-  Xen_define_dilambda(S_colormap,      g_colormap_w,      H_colormap,      S_setB S_colormap,      g_set_colormap_w,      0, 0, 1, 0);
-  Xen_define_dilambda(S_colormap_size, g_colormap_size_w, H_colormap_size, S_setB S_colormap_size, g_set_colormap_size_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_colormap,      g_colormap_w,      H_colormap,      S_set S_colormap,      g_set_colormap_w,      0, 0, 1, 0);
+  Xen_define_dilambda(S_colormap_size, g_colormap_size_w, H_colormap_size, S_set S_colormap_size, g_set_colormap_size_w, 0, 0, 1, 0);
 
   Xen_define_safe_procedure(S_integer_to_colormap,       g_integer_to_colormap_w, 1, 0, 0, H_integer_to_colormap);
   Xen_define_safe_procedure(S_colormap_to_integer,       g_colormap_to_integer_w, 1, 0, 0, H_colormap_to_integer);

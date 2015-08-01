@@ -28955,23 +28955,6 @@ gboolean show_desktop)"
   return(Xen_false);
 }
 
-static Xen gxg_gtk_places_sidebar_get_show_connect_to_server(Xen sidebar)
-{
-  #define H_gtk_places_sidebar_get_show_connect_to_server "gboolean gtk_places_sidebar_get_show_connect_to_server(GtkPlacesSidebar* sidebar)"
-  Xen_check_type(Xen_is_GtkPlacesSidebar_(sidebar), sidebar, 1, "gtk_places_sidebar_get_show_connect_to_server", "GtkPlacesSidebar*");
-  return(C_to_Xen_gboolean(gtk_places_sidebar_get_show_connect_to_server(Xen_to_C_GtkPlacesSidebar_(sidebar))));
-}
-
-static Xen gxg_gtk_places_sidebar_set_show_connect_to_server(Xen sidebar, Xen show_connect_to_server)
-{
-  #define H_gtk_places_sidebar_set_show_connect_to_server "void gtk_places_sidebar_set_show_connect_to_server(GtkPlacesSidebar* sidebar, \
-gboolean show_connect_to_server)"
-  Xen_check_type(Xen_is_GtkPlacesSidebar_(sidebar), sidebar, 1, "gtk_places_sidebar_set_show_connect_to_server", "GtkPlacesSidebar*");
-  Xen_check_type(Xen_is_gboolean(show_connect_to_server), show_connect_to_server, 2, "gtk_places_sidebar_set_show_connect_to_server", "gboolean");
-  gtk_places_sidebar_set_show_connect_to_server(Xen_to_C_GtkPlacesSidebar_(sidebar), Xen_to_C_gboolean(show_connect_to_server));
-  return(Xen_false);
-}
-
 static Xen gxg_gtk_places_sidebar_add_shortcut(Xen sidebar, Xen location)
 {
   #define H_gtk_places_sidebar_add_shortcut "void gtk_places_sidebar_add_shortcut(GtkPlacesSidebar* sidebar, \
@@ -31917,6 +31900,88 @@ gboolean visible, GdkDragContext* context)"
   Xen_check_type(Xen_is_GdkDragContext_(context), context, 3, "gtk_places_sidebar_set_drop_targets_visible", "GdkDragContext*");
   gtk_places_sidebar_set_drop_targets_visible(Xen_to_C_GtkPlacesSidebar_(sidebar), Xen_to_C_gboolean(visible), Xen_to_C_GdkDragContext_(context));
   return(Xen_false);
+}
+
+static Xen gxg_gtk_places_sidebar_get_show_trash(Xen sidebar)
+{
+  #define H_gtk_places_sidebar_get_show_trash "gboolean gtk_places_sidebar_get_show_trash(GtkPlacesSidebar* sidebar)"
+  Xen_check_type(Xen_is_GtkPlacesSidebar_(sidebar), sidebar, 1, "gtk_places_sidebar_get_show_trash", "GtkPlacesSidebar*");
+  return(C_to_Xen_gboolean(gtk_places_sidebar_get_show_trash(Xen_to_C_GtkPlacesSidebar_(sidebar))));
+}
+
+static Xen gxg_gtk_places_sidebar_set_show_trash(Xen sidebar, Xen show_trash)
+{
+  #define H_gtk_places_sidebar_set_show_trash "void gtk_places_sidebar_set_show_trash(GtkPlacesSidebar* sidebar, \
+gboolean show_trash)"
+  Xen_check_type(Xen_is_GtkPlacesSidebar_(sidebar), sidebar, 1, "gtk_places_sidebar_set_show_trash", "GtkPlacesSidebar*");
+  Xen_check_type(Xen_is_gboolean(show_trash), show_trash, 2, "gtk_places_sidebar_set_show_trash", "gboolean");
+  gtk_places_sidebar_set_show_trash(Xen_to_C_GtkPlacesSidebar_(sidebar), Xen_to_C_gboolean(show_trash));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_places_sidebar_set_show_other_locations(Xen sidebar, Xen show_other_locations)
+{
+  #define H_gtk_places_sidebar_set_show_other_locations "void gtk_places_sidebar_set_show_other_locations(GtkPlacesSidebar* sidebar, \
+gboolean show_other_locations)"
+  Xen_check_type(Xen_is_GtkPlacesSidebar_(sidebar), sidebar, 1, "gtk_places_sidebar_set_show_other_locations", "GtkPlacesSidebar*");
+  Xen_check_type(Xen_is_gboolean(show_other_locations), show_other_locations, 2, "gtk_places_sidebar_set_show_other_locations", "gboolean");
+  gtk_places_sidebar_set_show_other_locations(Xen_to_C_GtkPlacesSidebar_(sidebar), Xen_to_C_gboolean(show_other_locations));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_places_sidebar_get_show_other_locations(Xen sidebar)
+{
+  #define H_gtk_places_sidebar_get_show_other_locations "gboolean gtk_places_sidebar_get_show_other_locations(GtkPlacesSidebar* sidebar)"
+  Xen_check_type(Xen_is_GtkPlacesSidebar_(sidebar), sidebar, 1, "gtk_places_sidebar_get_show_other_locations", "GtkPlacesSidebar*");
+  return(C_to_Xen_gboolean(gtk_places_sidebar_get_show_other_locations(Xen_to_C_GtkPlacesSidebar_(sidebar))));
+}
+
+static Xen gxg_gtk_stack_set_interpolate_size(Xen stack, Xen interpolate_size)
+{
+  #define H_gtk_stack_set_interpolate_size "void gtk_stack_set_interpolate_size(GtkStack* stack, gboolean interpolate_size)"
+  Xen_check_type(Xen_is_GtkStack_(stack), stack, 1, "gtk_stack_set_interpolate_size", "GtkStack*");
+  Xen_check_type(Xen_is_gboolean(interpolate_size), interpolate_size, 2, "gtk_stack_set_interpolate_size", "gboolean");
+  gtk_stack_set_interpolate_size(Xen_to_C_GtkStack_(stack), Xen_to_C_gboolean(interpolate_size));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_stack_get_interpolate_size(Xen stack)
+{
+  #define H_gtk_stack_get_interpolate_size "gboolean gtk_stack_get_interpolate_size(GtkStack* stack)"
+  Xen_check_type(Xen_is_GtkStack_(stack), stack, 1, "gtk_stack_get_interpolate_size", "GtkStack*");
+  return(C_to_Xen_gboolean(gtk_stack_get_interpolate_size(Xen_to_C_GtkStack_(stack))));
+}
+
+static Xen gxg_gtk_widget_set_font_options(Xen widget, Xen options)
+{
+  #define H_gtk_widget_set_font_options "void gtk_widget_set_font_options(GtkWidget* widget, cairo_font_options_t* options)"
+  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 1, "gtk_widget_set_font_options", "GtkWidget*");
+  Xen_check_type(Xen_is_cairo_font_options_t_(options), options, 2, "gtk_widget_set_font_options", "cairo_font_options_t*");
+  gtk_widget_set_font_options(Xen_to_C_GtkWidget_(widget), Xen_to_C_cairo_font_options_t_(options));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_widget_get_font_options(Xen widget)
+{
+  #define H_gtk_widget_get_font_options "cairo_font_options_t* gtk_widget_get_font_options(GtkWidget* widget)"
+  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 1, "gtk_widget_get_font_options", "GtkWidget*");
+    return(C_to_Xen_cairo_font_options_t_((cairo_font_options_t*)gtk_widget_get_font_options(Xen_to_C_GtkWidget_(widget))));
+}
+
+static Xen gxg_gtk_widget_set_font_map(Xen widget, Xen fontmap)
+{
+  #define H_gtk_widget_set_font_map "void gtk_widget_set_font_map(GtkWidget* widget, PangoFontMap* fontmap)"
+  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 1, "gtk_widget_set_font_map", "GtkWidget*");
+  Xen_check_type(Xen_is_PangoFontMap_(fontmap), fontmap, 2, "gtk_widget_set_font_map", "PangoFontMap*");
+  gtk_widget_set_font_map(Xen_to_C_GtkWidget_(widget), Xen_to_C_PangoFontMap_(fontmap));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_widget_get_font_map(Xen widget)
+{
+  #define H_gtk_widget_get_font_map "PangoFontMap* gtk_widget_get_font_map(GtkWidget* widget)"
+  Xen_check_type(Xen_is_GtkWidget_(widget), widget, 1, "gtk_widget_get_font_map", "GtkWidget*");
+  return(C_to_Xen_PangoFontMap_(gtk_widget_get_font_map(Xen_to_C_GtkWidget_(widget))));
 }
 
 #endif
@@ -38191,8 +38256,6 @@ Xen_wrap_1_arg(gxg_gtk_places_sidebar_get_location_w, gxg_gtk_places_sidebar_get
 Xen_wrap_2_args(gxg_gtk_places_sidebar_set_location_w, gxg_gtk_places_sidebar_set_location)
 Xen_wrap_1_arg(gxg_gtk_places_sidebar_get_show_desktop_w, gxg_gtk_places_sidebar_get_show_desktop)
 Xen_wrap_2_args(gxg_gtk_places_sidebar_set_show_desktop_w, gxg_gtk_places_sidebar_set_show_desktop)
-Xen_wrap_1_arg(gxg_gtk_places_sidebar_get_show_connect_to_server_w, gxg_gtk_places_sidebar_get_show_connect_to_server)
-Xen_wrap_2_args(gxg_gtk_places_sidebar_set_show_connect_to_server_w, gxg_gtk_places_sidebar_set_show_connect_to_server)
 Xen_wrap_2_args(gxg_gtk_places_sidebar_add_shortcut_w, gxg_gtk_places_sidebar_add_shortcut)
 Xen_wrap_2_args(gxg_gtk_places_sidebar_remove_shortcut_w, gxg_gtk_places_sidebar_remove_shortcut)
 Xen_wrap_1_arg(gxg_gtk_places_sidebar_list_shortcuts_w, gxg_gtk_places_sidebar_list_shortcuts)
@@ -38531,6 +38594,16 @@ Xen_wrap_3_args(gxg_gtk_overlay_set_overlay_pass_through_w, gxg_gtk_overlay_set_
 Xen_wrap_1_arg(gxg_gtk_places_sidebar_get_show_recent_w, gxg_gtk_places_sidebar_get_show_recent)
 Xen_wrap_2_args(gxg_gtk_places_sidebar_set_show_recent_w, gxg_gtk_places_sidebar_set_show_recent)
 Xen_wrap_3_args(gxg_gtk_places_sidebar_set_drop_targets_visible_w, gxg_gtk_places_sidebar_set_drop_targets_visible)
+Xen_wrap_1_arg(gxg_gtk_places_sidebar_get_show_trash_w, gxg_gtk_places_sidebar_get_show_trash)
+Xen_wrap_2_args(gxg_gtk_places_sidebar_set_show_trash_w, gxg_gtk_places_sidebar_set_show_trash)
+Xen_wrap_2_args(gxg_gtk_places_sidebar_set_show_other_locations_w, gxg_gtk_places_sidebar_set_show_other_locations)
+Xen_wrap_1_arg(gxg_gtk_places_sidebar_get_show_other_locations_w, gxg_gtk_places_sidebar_get_show_other_locations)
+Xen_wrap_2_args(gxg_gtk_stack_set_interpolate_size_w, gxg_gtk_stack_set_interpolate_size)
+Xen_wrap_1_arg(gxg_gtk_stack_get_interpolate_size_w, gxg_gtk_stack_get_interpolate_size)
+Xen_wrap_2_args(gxg_gtk_widget_set_font_options_w, gxg_gtk_widget_set_font_options)
+Xen_wrap_1_arg(gxg_gtk_widget_get_font_options_w, gxg_gtk_widget_get_font_options)
+Xen_wrap_2_args(gxg_gtk_widget_set_font_map_w, gxg_gtk_widget_set_font_map)
+Xen_wrap_1_arg(gxg_gtk_widget_get_font_map_w, gxg_gtk_widget_get_font_map)
 #endif
 
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
@@ -42279,8 +42352,6 @@ static void define_functions(void)
   Xg_define_procedure(gtk_places_sidebar_set_location, gxg_gtk_places_sidebar_set_location_w, 2, 0, 0, H_gtk_places_sidebar_set_location);
   Xg_define_procedure(gtk_places_sidebar_get_show_desktop, gxg_gtk_places_sidebar_get_show_desktop_w, 1, 0, 0, H_gtk_places_sidebar_get_show_desktop);
   Xg_define_procedure(gtk_places_sidebar_set_show_desktop, gxg_gtk_places_sidebar_set_show_desktop_w, 2, 0, 0, H_gtk_places_sidebar_set_show_desktop);
-  Xg_define_procedure(gtk_places_sidebar_get_show_connect_to_server, gxg_gtk_places_sidebar_get_show_connect_to_server_w, 1, 0, 0, H_gtk_places_sidebar_get_show_connect_to_server);
-  Xg_define_procedure(gtk_places_sidebar_set_show_connect_to_server, gxg_gtk_places_sidebar_set_show_connect_to_server_w, 2, 0, 0, H_gtk_places_sidebar_set_show_connect_to_server);
   Xg_define_procedure(gtk_places_sidebar_add_shortcut, gxg_gtk_places_sidebar_add_shortcut_w, 2, 0, 0, H_gtk_places_sidebar_add_shortcut);
   Xg_define_procedure(gtk_places_sidebar_remove_shortcut, gxg_gtk_places_sidebar_remove_shortcut_w, 2, 0, 0, H_gtk_places_sidebar_remove_shortcut);
   Xg_define_procedure(gtk_places_sidebar_list_shortcuts, gxg_gtk_places_sidebar_list_shortcuts_w, 1, 0, 0, H_gtk_places_sidebar_list_shortcuts);
@@ -42619,6 +42690,16 @@ static void define_functions(void)
   Xg_define_procedure(gtk_places_sidebar_get_show_recent, gxg_gtk_places_sidebar_get_show_recent_w, 1, 0, 0, H_gtk_places_sidebar_get_show_recent);
   Xg_define_procedure(gtk_places_sidebar_set_show_recent, gxg_gtk_places_sidebar_set_show_recent_w, 2, 0, 0, H_gtk_places_sidebar_set_show_recent);
   Xg_define_procedure(gtk_places_sidebar_set_drop_targets_visible, gxg_gtk_places_sidebar_set_drop_targets_visible_w, 3, 0, 0, H_gtk_places_sidebar_set_drop_targets_visible);
+  Xg_define_procedure(gtk_places_sidebar_get_show_trash, gxg_gtk_places_sidebar_get_show_trash_w, 1, 0, 0, H_gtk_places_sidebar_get_show_trash);
+  Xg_define_procedure(gtk_places_sidebar_set_show_trash, gxg_gtk_places_sidebar_set_show_trash_w, 2, 0, 0, H_gtk_places_sidebar_set_show_trash);
+  Xg_define_procedure(gtk_places_sidebar_set_show_other_locations, gxg_gtk_places_sidebar_set_show_other_locations_w, 2, 0, 0, H_gtk_places_sidebar_set_show_other_locations);
+  Xg_define_procedure(gtk_places_sidebar_get_show_other_locations, gxg_gtk_places_sidebar_get_show_other_locations_w, 1, 0, 0, H_gtk_places_sidebar_get_show_other_locations);
+  Xg_define_procedure(gtk_stack_set_interpolate_size, gxg_gtk_stack_set_interpolate_size_w, 2, 0, 0, H_gtk_stack_set_interpolate_size);
+  Xg_define_procedure(gtk_stack_get_interpolate_size, gxg_gtk_stack_get_interpolate_size_w, 1, 0, 0, H_gtk_stack_get_interpolate_size);
+  Xg_define_procedure(gtk_widget_set_font_options, gxg_gtk_widget_set_font_options_w, 2, 0, 0, H_gtk_widget_set_font_options);
+  Xg_define_procedure(gtk_widget_get_font_options, gxg_gtk_widget_get_font_options_w, 1, 0, 0, H_gtk_widget_get_font_options);
+  Xg_define_procedure(gtk_widget_set_font_map, gxg_gtk_widget_set_font_map_w, 2, 0, 0, H_gtk_widget_set_font_map);
+  Xg_define_procedure(gtk_widget_get_font_map, gxg_gtk_widget_get_font_map_w, 1, 0, 0, H_gtk_widget_get_font_map);
 #endif
 
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
@@ -45268,7 +45349,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("24-Jun-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("23-Jul-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

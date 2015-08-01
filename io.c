@@ -3286,9 +3286,12 @@ int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, mus_
 char *mus_strdup(const char *str)
 {
   char *newstr = NULL;
+  int len;
   if ((!str) || (!(*str))) return(NULL);
-  newstr = (char *)malloc(strlen(str) + 1);
+  len = strlen(str);
+  newstr = (char *)malloc(len + 1);
   if (newstr) strcpy(newstr, str);
+  newstr[len] = '\0';
   return(newstr);
 }
 

@@ -308,6 +308,8 @@
 			   'inlet +let+
 			   'input-port? +boolean+
 			   'int-vector +vector+
+			   'int-vector-ref +integer+
+			   'int-vector-set! +integer+
 			   'int-vector? +boolean+
 			   'integer->char +character+
 			   'integer-decode-float +list+
@@ -3377,26 +3379,12 @@
 					(if (> (length form) 3) "many" "few") 
 					form)
 			   env)
-			 
 			 (let ((settee (cadr form))
 			       (setval (caddr form)))
-
 			   (let ((result (lint-walk name setval env)))
-
 			     (if (symbol? settee)
-				 (begin
-				   (if (and (pair? setval)
-					    (> (length setval) 2) ; not (set! i (+))
-					    (eq? (car setval) '+)
-					    (not (eq? (cadr setval) settee))
-					    (or (not (equal? (cadr setval) 1)) (pair? (cdddr setval))) ; ignore (+ 1 i) -- it's handled ok
-					    (memq settee setval))
-				       (lint-format "possible optimization: ~A -> ~A"
-						    name form
-						    `(set! ,settee (+ ,settee ,(cadr setval) ,@(remove settee (cddr setval))))))
-				   (if (constant? settee)
-				       (lint-format "can't set! a constant:~A" name (truncated-list->string form))))
-			     
+				 (if (constant? settee)
+				     (lint-format "can't set! ~A (it is a constant)" name (truncated-list->string form)))
 				 (if (pair? settee)
 				     (begin
 				       (if (and *report-minor-stuff*
@@ -3405,13 +3393,12 @@
 				       (lint-walk name settee env) ; this counts as a reference since it's by reference so to speak
 				       (set! settee (do ((sym (car settee) (car sym)))
 							((not (pair? sym)) sym))))
-				     (lint-format "odd target for set! ~A" name (truncated-list->string form))))
+				     (lint-format "can't set! ~A" name (truncated-list->string form))))
 
-			     (if (symbol? settee) ; might be changed in loop above
-				 (begin
-				   (set-set? settee setval env)
-				   (if (equal? (cadr form) (caddr form)) ; not settee and setval here!
-				       (lint-format "pointless set!~A" name (truncated-list->string form)))))
+			     (when (symbol? settee) ; see do above
+			       (set-set? settee setval env))
+			     (if (equal? (cadr form) (caddr form)) ; not settee and setval here!
+				 (lint-format "pointless set!~A" name (truncated-list->string form)))
 			     
 			     result))))
 		    
@@ -3633,7 +3620,7 @@
 					  (= (length vars) 1)
 					  (= (length body) 1)
 					  (pair? (car body)) 
-					  (memq (caar body) '(vector-set! float-vector-set! list-set! string-set!))
+					  (memq (caar body) '(vector-set! float-vector-set! int-vector-set! list-set! string-set!))
 					  (equal? (var-type (car vars)) +integer+)
 					  (eq? (car end-test) '=)
 					  (eq? (cadr end-test) (var-name (car vars)))
@@ -3642,7 +3629,7 @@
 					    (set! setv val)
 					    (or (code-constant? val)
 						(and (pair? val)
-						     (memq (car val) '(vector-ref float-vector-ref list-ref string-ref))
+						     (memq (car val) '(vector-ref float-vector-ref int-vector-ref list-ref string-ref))
 						     (eq? (caddr val) (var-name (car vars)))))))
 				 (if (code-constant? setv)
 				     (lint-format "possible simplification: ~A" name 

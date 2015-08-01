@@ -1025,7 +1025,7 @@
 	(end (seconds->samples (+ beg dur)))
 	(sr (make-granulate :input (make-readin file) 
 			    :expansion speed
-			    :edit (lambda (g) (float-vector-scale! (mus-data g) 2.0) 0.0))))
+			    :edit (lambda (g) (float-vector-scale! (mus-data g) 2.0) 0))))
     (do ((i start (+ i 1))) ((= i end))
       (outa i (* amp (granulate sr))))))
 					;(with-sound (:statistics #t) (simple-grn-f5 0 1 1 2 "oboe.snd"))

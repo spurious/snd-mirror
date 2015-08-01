@@ -3722,7 +3722,7 @@ static Xen g_html_dir(void)
 
 static Xen g_set_html_dir(Xen val) 
 {
-  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_html_dir, "a string");
+  Xen_check_type(Xen_is_string(val), val, 1, S_set S_html_dir, "a string");
   set_html_dir(mus_strdup(Xen_string_to_C_string(val))); 
   return(val);
 }
@@ -3737,7 +3737,7 @@ static Xen g_html_program(void)
 
 static Xen g_set_html_program(Xen val) 
 {
-  Xen_check_type(Xen_is_string(val), val, 1, S_setB S_html_program, "a string");
+  Xen_check_type(Xen_is_string(val), val, 1, S_set S_html_program, "a string");
   if (html_program(ss)) free(html_program(ss));
   set_html_program(mus_strdup(Xen_string_to_C_string(val))); 
   return(val);
@@ -3874,8 +3874,8 @@ If more than one hook function, each function gets the previous function's outpu
 
   output_comment_hook = Xen_define_hook(S_output_comment_hook, "(make-hook 'comment)", 1, H_output_comment_hook);
 
-  Xen_define_dilambda(S_html_dir,     g_html_dir_w,     H_html_dir,     S_setB S_html_dir,     g_set_html_dir_w,      0, 0, 1, 0);
-  Xen_define_dilambda(S_html_program, g_html_program_w, H_html_program, S_setB S_html_program, g_set_html_program_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_html_dir,     g_html_dir_w,     H_html_dir,     S_set S_html_dir,     g_set_html_dir_w,      0, 0, 1, 0);
+  Xen_define_dilambda(S_html_program, g_html_program_w, H_html_program, S_set S_html_program, g_set_html_program_w,  0, 0, 1, 0);
 
 #if HAVE_SCHEME
   autoload_info(s7); /* snd-xref.c included above */

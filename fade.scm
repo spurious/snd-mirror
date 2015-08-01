@@ -217,7 +217,7 @@
 	      (inval2 (read-sample fil2)))
 	  (fill! inputs inval1)
 	  (float-vector-spatter inputs in2s in2-ctr inval2)
-	  ;; (do ((k 0 (+ k 1))) ((= k in2-ctr)) (float-vector-set! inputs (vector-ref in2s k) inval2))
+	  ;; (do ((k 0 (+ k 1))) ((= k in2-ctr)) (float-vector-set! inputs (int-vector-ref in2s k) inval2))
 
 	  (if (> ramp-ctr 0)
 	      (let ((rk 0)

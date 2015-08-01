@@ -1,4 +1,4 @@
-;; find where two callgrind runs differ
+;; find where two callgrind runs differ, also combine n callgrind runs
 
 (define (compare-calls f1 f2)
   (let ((h1 (with-input-from-file f1 read-calls))
@@ -9,7 +9,7 @@
     (let ((h2 (with-input-from-file f2 read-calls)))
       (for-each 
        (lambda (kv1)
-	 (let ((kv2 (hash-table-ref h2 (car kv1))))
+	 (let ((kv2 (h2 (car kv1))))
 	   (let ((diff (if kv2 (- kv2 (cdr kv1)) (- (cdr kv1)))))
 	     (if (> (abs diff) 3e6)
 		 (begin
@@ -18,7 +18,7 @@
        h1)
       (for-each
        (lambda (kv2)
-	 (let ((kv1 (hash-table-ref h1 (car kv2))))
+	 (let ((kv1 (h1 (car kv2))))
 	   (if (not kv1)
 	       (let ((diff (cdr kv2)))
 		 (if (> (abs diff) 3e6)
@@ -32,11 +32,11 @@
       (for-each
        (lambda (entry)
 	 (format *stderr* "~A~,3F~12T(~,3F~24T~,3F)~40T~A~%" 
-		 (if (negative? (list-ref entry 0)) "" " ")
-		 (* scl (list-ref entry 0)) 
-		 (* scl (list-ref entry 2)) 
-		 (* scl (list-ref entry 3)) 
-		 (list-ref entry 1)))
+		 (if (negative? (entry 0)) "" " ")
+		 (* scl (entry 0)) 
+		 (* scl (entry 2)) 
+		 (* scl (entry 3)) 
+		 (entry 1)))
        vals)))
   (exit))
 
@@ -78,7 +78,7 @@
 				  (when (and (number? func-end)
 					     (> func-end (+ end 2)))
 				    (let ((func (string->symbol (substring line (+ end 2) func-end))))
-				      (hash-table-set! h func num))))))))))))))))
+				      (set! (h func) num))))))))))))))))
     h))
     
 
@@ -117,3 +117,97 @@
 	(format *stderr* "~{~^~A~%~}" (list-tail overheads (max 10 (- (length overheads) 40))))
 	(format *stderr* "total: ~A~%" total)))))
 
+
+
+
+(define (read-all-calls)
+  ;; throw away the header
+  (do ((i 0 (+ i 1)))
+      ((= i 25))
+    (read-line))
+  (let ((h (make-hash-table)))
+    (call-with-exit
+     (lambda (quit)
+       (do () ()
+	 (let ((line (read-line)))
+	   (if (or (eof-object? line)
+		   (and (= (length line) 80)
+			(char=? (line 0) #\-)))
+	       (quit))
+	   (let ((len (length line)))
+	     (do ((k 0 (+ k 1)))
+		 ((or (= k len)
+		      (not (char-whitespace? (line k))))
+		  (if (< k len)
+		      (let ((end (char-position #\space line k)))
+			(if end
+			    (let ((num (string->number-ignoring-commas (substring line k end))))
+			      (when num
+				(let ((func-end (char-position #\space line (+ end 2))))
+				  (when (and (number? func-end)
+					     (> func-end (+ end 2)))
+				    (let* ((name (substring line (+ end 2) func-end))
+					   (len (length name)))
+				      (if (and (not (char=? (name 0) #\?))
+					       (not (char=? (name 0) #\/))
+					       (or (< len 3)
+						   (not (char=? (name (- len 2)) #\')))
+					       (or (< len 8)
+						   (not (string=? "libgsl_" (substring name 0 7)))))
+					  (set! (h (string->symbol name)) num)))))))))))))))))
+    h))
+
+(define (combine . files)
+  (let ((tables (map (lambda (file)
+		       (with-input-from-file file
+			 read-all-calls))
+		     files)))
+    (let ((h (make-hash-table)))
+      (for-each
+       (lambda (file table)
+	 (for-each
+	  (lambda (entry)
+	    (let ((current-entry (h (car entry))))
+	      (if current-entry
+		  (set! (h (car entry)) 
+			(cons (max (cdr entry)
+				   (car current-entry))
+			      (cons (list file (cdr entry))
+				    (cdr current-entry))))
+		  (set! (h (car entry))
+			(cons (cdr entry)
+			      (list (list file (cdr entry))))))))
+	  table))
+       files tables)
+
+      (let ((v (copy h (make-vector (hash-table-entries h)))))
+	(set! v (sort! v (lambda (a b) (> (cadr a) (cadr b)))))
+	(call-with-output-file "test.table"
+	  (lambda (p)
+	    (for-each
+	     (lambda (entry)
+	       (format p "~A: ~A ~{~%~16T~{~A~32T ~A~}~}~%" (car entry) (cadr entry) (cddr entry)))
+	     v)))))))
+
+(define (combine-latest)
+  (let ((file-names (list "v-eq" "v-iter" "v-map" "v-form" "v-hash" "v-cop"
+			  "v-lg" "v-gen" "v-auto" "v-index" "v-call" "v-all" 
+			  "v-test" "/home/bil/test/bench/src/v-b")))
+
+    (define (next-file f)
+      (let ((name (system (format #f "ls -t ~A*" f) #t)))
+	(let ((len (length name)))
+	  (do ((i 0 (+ i 1)))
+	      ((or (= i len)
+		   (and (char-numeric? (name i))
+			(char-numeric? (name (+ i 1)))))
+	       (string-append f (substring name i (+ i 2))))))))
+
+    (apply combine (map next-file file-names))))
+    
+
+#|
+(combine "v-call53" "v-map52" "v-all98" "v-hash31" "v-gen72" "v-auto51" 
+	 "v-lg73" "v-cop55" "v-form66" "v-eq46" "v-test57" "v-iter70" "v-index22"
+         "/home/bil/test/bench/src/v-b28")
+|#

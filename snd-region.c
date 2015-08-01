@@ -1661,11 +1661,11 @@ static Xen g_max_regions(void)
 static Xen g_set_max_regions(Xen n) 
 {
   int regs;
-  Xen_check_type(Xen_is_integer(n), n, 1, S_setB S_max_regions, "an integer"); 
+  Xen_check_type(Xen_is_integer(n), n, 1, S_set S_max_regions, "an integer"); 
 
   regs = Xen_integer_to_C_int(n);
   if (regs < 0)
-    Xen_out_of_range_error(S_setB S_max_regions, 1, n, S_max_regions "negative?");
+    Xen_out_of_range_error(S_set S_max_regions, 1, n, S_max_regions "negative?");
 
   set_max_regions(regs);
   return(C_int_to_Xen_integer(max_regions(ss)));
@@ -2134,11 +2134,11 @@ static Xen g_set_region_graph_style(Xen val)
 The " S_region_graph_style " choices are " S_graph_lines ", " S_graph_dots ", " S_graph_filled ", " S_graph_lollipops ", \
 and " S_graph_dots_and_lines "."
 
-  Xen_check_type(Xen_is_integer(val), val, 1, S_setB S_region_graph_style, "an integer");
+  Xen_check_type(Xen_is_integer(val), val, 1, S_set S_region_graph_style, "an integer");
 
   style = Xen_integer_to_C_int(val);
   if (!is_graph_style(style))
-    Xen_out_of_range_error(S_setB S_region_graph_style, 1, val, "unknown " S_lisp_graph_style);
+    Xen_out_of_range_error(S_set S_region_graph_style, 1, val, "unknown " S_lisp_graph_style);
 
   set_region_graph_style((graph_style_t)style);
   reflect_region_graph_style();
@@ -2203,10 +2203,10 @@ void g_init_regions(void)
   Xen_define_safe_procedure(S_integer_to_region,      g_integer_to_region_w,      1, 0, 0, H_integer_to_region);
   Xen_define_safe_procedure(S_region_to_integer,      g_region_to_integer_w,      1, 0, 0, H_region_to_integer);
 
-  Xen_define_dilambda(S_max_regions, g_max_regions_w, H_max_regions, S_setB S_max_regions, g_set_max_regions_w, 0, 0, 1, 0);
+  Xen_define_dilambda(S_max_regions, g_max_regions_w, H_max_regions, S_set S_max_regions, g_set_max_regions_w, 0, 0, 1, 0);
 
   Xen_define_dilambda(S_region_graph_style, g_region_graph_style_w, H_region_graph_style,
-				   S_setB S_region_graph_style, g_set_region_graph_style_w,  0, 0, 1, 0);
+				   S_set S_region_graph_style, g_set_region_graph_style_w,  0, 0, 1, 0);
 
 #if HAVE_SCHEME
   s7_symbol_set_access(s7, ss->max_regions_symbol, s7_make_function(s7, "[acc-" S_max_regions, acc_max_regions, 2, 0, false, "accessor"));

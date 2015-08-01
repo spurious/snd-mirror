@@ -2290,9 +2290,9 @@ static char *filename_completion(glistener *g, const char *partial_name)
 
       if ((result) && (matches == 0))
 	{
-	  char *str;
 	  if ((directory_name) && (result[0] == '~'))
 	    {
+	      char *str;
 	      str = (char *)calloc(strlen(directory_name) + strlen(result) + 2, sizeof(char));
 	      strcat(str, directory_name);
 	      strcat(str, "/");

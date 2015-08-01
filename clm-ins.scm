@@ -2272,7 +2272,7 @@ is a physical model of a flute:
 		(let ((sl (env lenenv))) ;current segment length
 		  ;; now we set the granulate generator internal state to reflect all these envelopes
 		  (set! vol (env ampe))
-		  (set! (mus-length exA) sl)
+		  (set! (mus-length exA) (round sl))
 		  (set! (mus-ramp exA) (floor (* sl (env rampenv)))) ;current ramp length (0 to .5)
 		  (set! (mus-frequency exA) (env hopenv))            ;current hop size
 		  (set! (mus-increment exA) (env expenv))            ;current expansion amount

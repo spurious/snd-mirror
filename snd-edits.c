@@ -7955,18 +7955,18 @@ static Xen g_set_sample(Xen samp_n, Xen val, Xen snd, Xen chn_n, Xen edpos)
   mus_float_t fval;
   mus_float_t ival[1];
 
-  Xen_check_type(Xen_is_integer_or_unbound(samp_n), samp_n, 1, S_setB S_sample, "an integer");
-  Xen_check_type(Xen_is_number(val), val, 2, S_setB S_sample, "a number");
-  Snd_assert_channel(S_setB S_sample, snd, chn_n, 3);
-  cp = get_cp(snd, chn_n, S_setB S_sample);
+  Xen_check_type(Xen_is_integer_or_unbound(samp_n), samp_n, 1, S_set S_sample, "an integer");
+  Xen_check_type(Xen_is_number(val), val, 2, S_set S_sample, "a number");
+  Snd_assert_channel(S_set S_sample, snd, chn_n, 3);
+  cp = get_cp(snd, chn_n, S_set S_sample);
   if (!cp) return(Xen_false);
-  pos = to_c_edit_position(cp, edpos, S_setB S_sample, 5);
+  pos = to_c_edit_position(cp, edpos, S_set S_sample, 5);
   if (pos > cp->edit_ctr)
     Xen_error(NO_SUCH_EDIT,
-	      Xen_list_2(C_string_to_Xen_string(S_setB S_sample ": no such edit: ~A"),
+	      Xen_list_2(C_string_to_Xen_string(S_set S_sample ": no such edit: ~A"),
 			 edpos));
   if (Xen_is_bound(samp_n))
-    beg = beg_to_sample(samp_n, S_setB S_sample);
+    beg = beg_to_sample(samp_n, S_set S_sample);
   else beg = cursor_sample(cp);
 
   fval = Xen_real_to_C_double(val);
@@ -9253,8 +9253,8 @@ void g_init_edits(void)
   Xen_define_procedure(S_insert_samples_with_origin,   g_insert_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
   Xen_define_procedure(S_override_samples_with_origin, g_override_samples_with_origin_w, 5, 1, 0, "internal function used in save-state");
 
-  Xen_define_dilambda(S_sample,  g_sample_w,  H_sample,  S_setB S_sample,  g_set_sample_w,  0, 4, 1, 4);
-  Xen_define_dilambda(S_samples, g_samples_w, H_samples, S_setB S_samples, g_set_samples_w, 0, 5, 3, 7);
+  Xen_define_dilambda(S_sample,  g_sample_w,  H_sample,  S_set S_sample,  g_set_sample_w,  0, 4, 1, 4);
+  Xen_define_dilambda(S_samples, g_samples_w, H_samples, S_set S_samples, g_set_samples_w, 0, 5, 3, 7);
 
 #if HAVE_SCHEME
   Xen_define_procedure("set-sample",                   orig_g_set_sample_w,              2, 3, 0, H_sample);   /* for edit-list->function */
