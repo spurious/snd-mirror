@@ -20,11 +20,6 @@ What used to be called the run macro (clm optimizer) has been
   This change is about 1/3 complete, so view this version of
   Snd with grave suspicion.  
 
-The Snd CVS site at Sourceforge has been offline for about two
-  weeks ("storage fault"), and Sourceforge itself is up for sale. 
-  I'll update the files there as soon as it comes online (Aug-3 is
-  the current prediction).
-
 checked: gtk 3.17.4|5, sbcl 1.2.13
 
 Thanks!: Anders Vinjar, Tito Latini, Greg Santucci, Mike Scholz
