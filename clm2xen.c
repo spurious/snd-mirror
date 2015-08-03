@@ -50,13 +50,6 @@
   #endif
 #endif
 
-#if (!DISABLE_SINCOS) && defined(__GNUC__) && defined(__linux__)
-  void sincos(double x, double *sin, double *cos);
-  #define HAVE_SINCOS 1
-#else
-  #define HAVE_SINCOS 0
-#endif
-
 
 /* -------------------------------------------------------------------------------- */
 #if HAVE_SCHEME
@@ -519,7 +512,6 @@ static Xen g_set_clm_default_frequency(Xen val)
 #endif
   return(val);
 }
-
 
 
 

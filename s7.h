@@ -655,7 +655,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args);
 s7_pointer s7_fill(s7_scheme *sc, s7_pointer args);
 
 
-  /* these are aimed at the CLM optimizer */
+  /* these are aimed at the CLM optimizer -- they change daily! */
 void s7_function_set_returns_temp(s7_pointer f);
 
 typedef s7_double (*s7_rf_t)(s7_scheme *sc, s7_pointer **p);
@@ -675,8 +675,8 @@ typedef s7_pf_t (*s7_pp_t)(s7_scheme *sc, s7_pointer expr);
 void s7_pf_set_function(s7_pointer f, s7_pp_t rp);
 s7_pp_t s7_pf_function(s7_scheme *sc, s7_pointer func);
 
-typedef s7_pointer (*s7_gf_t)(s7_scheme *sc, s7_pointer **p);
-typedef s7_gf_t (*s7_gp_t)(s7_scheme *sc, s7_pointer expr);
+void s7_gf_set_function(s7_pointer f, s7_pp_t gp);
+s7_pp_t s7_gf_function(s7_scheme *sc, s7_pointer func);
 
 void s7_xf_store_at(s7_scheme *sc, s7_int index, s7_pointer val);
 s7_int s7_xf_store(s7_scheme *sc, s7_pointer val);
@@ -685,6 +685,7 @@ s7_pointer *s7_xf_start(s7_scheme *sc);
 void *s7_xf_new(s7_scheme *sc, s7_pointer e);
 bool s7_xf_is_stepper(s7_scheme *sc, s7_pointer sym);
 
+bool s7_arg_to_gf(s7_scheme *sc, s7_pointer a1);
 bool s7_arg_to_pf(s7_scheme *sc, s7_pointer a1);
 bool s7_arg_to_if(s7_scheme *sc, s7_pointer a1);
 bool s7_arg_to_rf(s7_scheme *sc, s7_pointer a1);

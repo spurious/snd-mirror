@@ -955,7 +955,7 @@ void mus_polar_to_rectangular(mus_float_t *rl, mus_float_t *im, mus_long_t size)
   for (i = 0; i < size; i++)
     {
 #if HAVE_SINCOS
-      mus_float_t sx, cx;
+      double sx, cx;
       sincos(-im[i], &sx, &cx);
       im[i] = sx * rl[i];
       rl[i] *= cx;
@@ -1201,7 +1201,7 @@ typedef struct {
   mus_float_t phase, freq;
 #if HAVE_SINCOS
   mus_float_t (*unmod)(mus_any *p);
-  mus_float_t sn, cn, sn_1, cn_1, freq_2;
+  double sn, cn, sn_1, cn_1, freq_2;
 #endif
 } osc;
 
@@ -1427,7 +1427,7 @@ typedef struct {
   bool free_phases;
   mus_float_t (*ob_func)(mus_any *ptr);
 #if HAVE_SINCOS
-  mus_float_t *sn1, *cs1, *sn2, *cs2, *phs;
+  double *sn1, *cs1, *sn2, *cs2, *phs;
   bool use_sc;
 #endif
 } ob;
@@ -1455,27 +1455,28 @@ static mus_any *ob_copy(mus_any *ptr)
   p = (ob *)ptr;
   g = (ob *)malloc(sizeof(ob));
   memcpy((void *)g, (void *)ptr, sizeof(ob));
-  bytes = g->size * sizeof(mus_float_t);
 
   g->ob_func = p->ob_func;
 
 #if HAVE_SINCOS
   if (g->sn1)
     {
-      g->sn1 = (mus_float_t *)malloc(bytes);
+      bytes = g->size * sizeof(double);
+      g->sn1 = (double *)malloc(bytes);
       memcpy((void *)(g->sn1), (void *)(p->sn1), bytes);
-      g->sn2 = (mus_float_t *)malloc(bytes);
+      g->sn2 = (double *)malloc(bytes);
       memcpy((void *)(g->sn2), (void *)(p->sn2), bytes);
-      g->cs1 = (mus_float_t *)malloc(bytes);
+      g->cs1 = (double *)malloc(bytes);
       memcpy((void *)(g->cs1), (void *)(p->cs1), bytes);
-      g->cs2 = (mus_float_t *)malloc(bytes);
+      g->cs2 = (double *)malloc(bytes);
       memcpy((void *)(g->cs2), (void *)(p->cs2), bytes);
-      g->phs = (mus_float_t *)malloc(bytes);
+      g->phs = (double *)malloc(bytes);
       memcpy((void *)(g->phs), (void *)(p->phs), bytes);
       g->use_sc = p->use_sc;
     }
 #endif
 
+  bytes = g->size * sizeof(mus_float_t);
   /* we have to make a new phases array -- otherwise the original and copy step on each other */
   g->free_phases = true;
   g->phases = (mus_float_t *)malloc(bytes);
@@ -1616,7 +1617,7 @@ static mus_float_t stable_oscil_bank(mus_any *ptr)
     }
   else
     {
-      mus_float_t s, c;
+      double s, c;
       if (!p->amps)
 	{
 	  for (i = 0; i < p->size; i++)
@@ -1671,15 +1672,15 @@ mus_any *mus_make_oscil_bank(int size, mus_float_t *freqs, mus_float_t *phases, 
   if (stable)
     {
       int i;
-      mus_float_t s, c;
+      double s, c;
 
       gen->ob_func = stable_oscil_bank;
       gen->use_sc = false;
-      gen->sn1 = (mus_float_t *)malloc(size * sizeof(mus_float_t));
-      gen->sn2 = (mus_float_t *)malloc(size * sizeof(mus_float_t));
-      gen->cs1 = (mus_float_t *)malloc(size * sizeof(mus_float_t));
-      gen->cs2 = (mus_float_t *)malloc(size * sizeof(mus_float_t));
-      gen->phs = (mus_float_t *)malloc(size * sizeof(mus_float_t));
+      gen->sn1 = (double *)malloc(size * sizeof(double));
+      gen->sn2 = (double *)malloc(size * sizeof(double));
+      gen->cs1 = (double *)malloc(size * sizeof(double));
+      gen->cs2 = (double *)malloc(size * sizeof(double));
+      gen->phs = (double *)malloc(size * sizeof(double));
 
       for (i = 0; i < size; i++)
 	{
@@ -2085,7 +2086,7 @@ mus_float_t mus_nsin(mus_any *ptr, mus_float_t fm)
 	   (/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den)))
   */
 #if HAVE_SINCOS
-  mus_float_t val, a2, ns, nc, s, c;
+  double val, a2, ns, nc, s, c;
   cosp *gen = (cosp *)ptr;
   a2 = gen->phase * 0.5;
   sincos(a2, &s, &c);
@@ -2444,7 +2445,7 @@ mus_float_t mus_nrxysin(mus_any *ptr, mus_float_t fm)
 	return(0.0);
       return((sin(x) - gen->r_to_n_plus_1 * (sin(x * (n + 2)) - r * sin(x * (n + 1)))) / divisor);
 #else
-      mus_float_t sx, cx, snx, cnx;
+      double sx, cx, snx, cnx;
       sincos(x, &sx, &cx);
       divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * cx));
       if (DIVISOR_NEAR_ZERO(divisor))
@@ -2456,7 +2457,7 @@ mus_float_t mus_nrxysin(mus_any *ptr, mus_float_t fm)
 
 #if HAVE_SINCOS
   {
-    mus_float_t xs, xc, ys, yc, nys, nyc, sin_x_y, sin_x_ny, sin_x_n1y, cos_x_ny;
+    double xs, xc, ys, yc, nys, nyc, sin_x_y, sin_x_ny, sin_x_n1y, cos_x_ny;
 
     y = x * gen->y_over_x;
     sincos(y, &ys, &yc);
@@ -2576,7 +2577,7 @@ mus_float_t mus_nrxycos(mus_any *ptr, mus_float_t fm)
 
 #if HAVE_SINCOS
   {
-    mus_float_t xs, xc, ys, yc, nys, nyc, cos_x_y, cos_x_ny, cos_x_n1y, sin_x_ny;
+    double xs, xc, ys, yc, nys, nyc, cos_x_y, cos_x_ny, cos_x_n1y, sin_x_ny;
 
     sincos(y, &ys, &yc);
     divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * yc));
@@ -9178,7 +9179,7 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
       for (j = 0, jj = n - 1; j < m; j++, jj--)
 	{
 #if HAVE_SINCOS
-	  mus_float_t s1, c1, s2, c2, qj1;
+	  double s1, c1, s2, c2, qj1;
 	  xt = xt0;
 	  qj = q * (am - j);
 	  sincos(qj, &s1, &c1);
@@ -12957,7 +12958,7 @@ static int init_sinc_table(int width)
   int i, size, padded_size, loc;
   mus_float_t win_freq, win_phase;
 #if HAVE_SINCOS
-  mus_float_t sn, snp, cs, csp;
+  double sn, snp, cs, csp;
 #endif
 
   if (width > sinc_size)
@@ -15594,7 +15595,7 @@ typedef struct {
   mus_float_t sum1;
   bool calc;
 #if HAVE_SINCOS
-  mus_float_t *cs, *sn;
+  double *cs, *sn;
   bool *sc_safe;
   int *indices;
 #endif
@@ -15684,10 +15685,10 @@ static mus_any *pv_info_copy(mus_any *ptr)
   g->indices = (int *)malloc(bytes);
   memcpy((void *)(g->indices), (void *)(p->indices), bytes);
 
-  bytes = p->N * sizeof(mus_float_t);
-  g->sn = (mus_float_t *)malloc(bytes);
+  bytes = p->N * sizeof(double);
+  g->sn = (double *)malloc(bytes);
   memcpy((void *)(g->sn), (void *)(p->sn), bytes);
-  g->cs = (mus_float_t *)malloc(bytes);
+  g->cs = (double *)malloc(bytes);
   memcpy((void *)(g->cs), (void *)(p->cs), bytes);
 
   bytes = p->N * sizeof(bool);
@@ -15842,8 +15843,8 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
    *   in Linux at least, sincos is faster than sin+sin -- in my timing tests, although
    *   callgrind is crazy, the actual runtimes are about 25% faster (sincos vs sin+sin).
    */
-  pv->cs = (mus_float_t *)malloc(fftsize * sizeof(mus_float_t));
-  pv->sn = (mus_float_t *)malloc(fftsize * sizeof(mus_float_t));
+  pv->cs = (double *)malloc(fftsize * sizeof(double));
+  pv->sn = (double *)malloc(fftsize * sizeof(double));
   pv->sc_safe = (bool *)calloc(fftsize, sizeof(bool));
   pv->indices = (int *)malloc(N2 * sizeof(int));
 #endif
@@ -15952,7 +15953,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
       for (i = 0; i < N2; i++)
 	{
 #if HAVE_SINCOS
-	  mus_float_t s, c;
+	  double s, c;
 	  bool amp_zero;
 	  
 	  amp_zero = ((pv->amps[i] < 1e-7) && (pv->ampinc[i] == 0.0));
@@ -15996,7 +15997,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
       int topN;
 #if HAVE_SINCOS
       int j;
-      mus_float_t *cs, *sn;
+      double *cs, *sn;
 #endif
 
       topN = pv->topN;
@@ -16031,7 +16032,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 #if HAVE_SINCOS
       for (j = 0; j < topN; j++)
 	{
-	  mus_float_t sx, cx;
+	  double sx, cx;
 
 	  i = pv->indices[j];
 	  pinc[i] += frq[i];
@@ -16156,7 +16157,7 @@ typedef struct {
 #if (!HAVE_SINCOS)
   mus_any *sin_osc, *cos_osc;
 #else
-  mus_float_t phase, freq, sign;
+  double phase, freq, sign;
 #endif
   int size;
 } ssbam;
@@ -16224,7 +16225,7 @@ mus_float_t mus_ssb_am_unmodulated(mus_any *ptr, mus_float_t insig)
   return((mus_oscil_unmodulated(gen->cos_osc) * mus_delay_unmodulated_noz(gen->dly, insig)) +
 	 (mus_oscil_unmodulated(gen->sin_osc) * run_hilbert((flt *)(gen->hilbert), insig)));
 #else
-  mus_float_t cx, sx;
+  double cx, sx;
   sincos(gen->phase, &sx, &cx);
   gen->phase += gen->freq;
   return((cx * mus_delay_unmodulated_noz(gen->dly, insig)) +
@@ -16240,7 +16241,7 @@ mus_float_t mus_ssb_am(mus_any *ptr, mus_float_t insig, mus_float_t fm)
   return((mus_oscil_fm(gen->cos_osc, fm) * mus_delay_unmodulated_noz(gen->dly, insig)) +
 	 (mus_oscil_fm(gen->sin_osc, fm) * run_hilbert((flt *)(gen->hilbert), insig)));
 #else
-  mus_float_t cx, sx;
+  double cx, sx;
   sincos(gen->phase, &sx, &cx);
   gen->phase += (fm + gen->freq);
   return((cx * mus_delay_unmodulated_noz(gen->dly, insig)) +

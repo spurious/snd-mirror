@@ -340,19 +340,21 @@
   #define opcode_t unsigned int
   #define PRINT_NAME_PADDING 8
   #define PRINT_NAME_SIZE (20 - PRINT_NAME_PADDING - 2)
-  #define ptr_to_int(x) (s7_int)(int)(x)
-  #define int_to_ptr(x) (s7_pointer)(int)(x)
+  #define ptr_int unsigned int
+  #define ptr_int_format "(c-pointer %u)"
   #define WITH_OPTIMIZATION 0
-  /* we have a problem... The new optimizer doesn't work in 32-bits apparently because pointers are
-   *   smaller than doubles/long long ints (though even after a day of debugging I am not sure this
-   *   is the source of the NaNs).
+  /* we have a problem... The new optimizer seems to trigger flakiness in 32-bit systems.  I get very odd
+   *   cases where isnan is both true and false of the same number at the same time!  The actual bits are
+   *   not a NaN, so x != x and isnan(x) are returning incorrect results (x == 10.0 or 0.0 for example).  
+   *   How could the optimizer cause this?  Also sincos is a mess in 32-bits, but I finally disabled it,
+   *   and still get these bizarre results.
    */
 #else
   #define opcode_t unsigned long long int
+  #define ptr_int unsigned long long int
+  #define ptr_int_format "(c-pointer %llu)"
   #define PRINT_NAME_PADDING 16
   #define PRINT_NAME_SIZE (40 - PRINT_NAME_PADDING - 2)
-  #define ptr_to_int(x) (s7_int)(x)
-  #define int_to_ptr(x) (s7_pointer)(x)
   #define WITH_OPTIMIZATION 1
 #endif
 /* ideally we'd use (2 * max(sizeof(s7_int), sizeof(s7_double))) for the padding,
@@ -397,10 +399,9 @@ typedef struct {
   s7_pointer call_args;
   int keyed_args;       /* 2 * args == number of args if all are specified via keywords */
   bool simple_defaults;
-
   s7_rp_t rp;
   s7_ip_t ip;
-  s7_pp_t pp;
+  s7_pp_t pp, gp;
 } c_proc_ext_t;
 
 typedef struct {
@@ -710,18 +711,19 @@ typedef struct {
 } s7_rng_t;
 
 
-typedef struct xf_t {
-  s7_pointer *data, *cur, *end;
-  s7_pointer e;
-  int size;
-  struct xf_t *next;
-} xf_t;
-
-
 typedef struct gc_obj {
   s7_pointer p;
   struct gc_obj *nxt;
 } gc_obj;
+
+
+typedef struct xf_t {
+  s7_pointer *data, *cur, *end;
+  s7_pointer e;
+  int size;
+  gc_obj *gc_list;
+  struct xf_t *next;
+} xf_t;
 
 
 static s7_pointer *small_ints, *chars;
@@ -1906,6 +1908,7 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define c_function_rp(f)              c_function_ext(f)->rp
 #define c_function_ip(f)              c_function_ext(f)->ip
 #define c_function_pp(f)              c_function_ext(f)->pp
+#define c_function_gp(f)              c_function_ext(f)->gp
 
 void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
 static bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_optimized(f)) && (ecdr(f)) && (returns_temp(ecdr(f))));}
@@ -3826,6 +3829,14 @@ static void mark_input_port(s7_pointer p)
   set_mark(port_original_input_string(p));
 }
 
+static void gf_mark(s7_scheme *sc)
+{
+  gc_obj *p;
+  if (sc->cur_rf)
+    for (p = sc->cur_rf->gc_list; p; p = p->nxt)
+      S7_MARK(p->p);
+}
+
 
 static void init_mark_functions(void)
 {
@@ -4008,6 +4019,7 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->temp6);
   S7_MARK(sc->temp7);
   S7_MARK(sc->temp8);
+  gf_mark(sc);
 
   set_mark(sc->input_port);
   S7_MARK(sc->input_port_stack);
@@ -7052,12 +7064,19 @@ static s7_pointer g_is_c_pointer(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer c_c_pointer(s7_scheme *sc, s7_pointer arg)
+{
+  ptr_int p;
+  if (!s7_is_integer(arg))
+    method_or_bust(sc, arg, sc->C_POINTER, list_1(sc, arg), T_INTEGER, 1);
+  p = (ptr_int)integer(arg);
+  return(s7_make_c_pointer(sc, (void *)p));
+}
+
 static s7_pointer g_c_pointer(s7_scheme *sc, s7_pointer args)
 {
   #define H_c_pointer "(c-pointer int) returns a c-pointer object."
-  if (!s7_is_integer(car(args)))
-    method_or_bust(sc, car(args), sc->C_POINTER, args, T_INTEGER, 1);
-  return(s7_make_c_pointer(sc, (void *)int_to_ptr(s7_integer(car(args)))));
+  return(c_c_pointer(sc, car(args)));
 }
 
 
@@ -7066,8 +7085,8 @@ static s7_pointer g_c_pointer(s7_scheme *sc, s7_pointer args)
 
 static s7_rf_t is_implicit_fv_ref_rf(s7_scheme *sc, s7_pointer expr);
 
-#define rc_loc(sc)     (s7_int)(sc->cur_rf->cur - sc->cur_rf->data)
-#define rc_pos(sc, p)  (s7_int)(*p - sc->cur_rf->data)
+#define rc_loc(sc)     (ptr_int)(sc->cur_rf->cur - sc->cur_rf->data)
+#define rc_pos(sc, p)  (ptr_int)(*p - sc->cur_rf->data)
 #define rc_go(sc, loc) (s7_pointer *)(sc->cur_rf->data + loc)
 
 static s7_rp_t rf_function(s7_pointer f)
@@ -7114,6 +7133,18 @@ static bool has_pf_function(s7_pointer f)
   return(false);
 }
 
+static s7_pp_t gf_function(s7_pointer f)
+{
+  if (is_any_c_function(f)) return(c_function_gp(f));
+  return(NULL);
+}
+
+static bool has_gf_function(s7_pointer f)
+{
+  if (is_any_c_function(f)) return((c_function_ext(f)) && (c_function_gp(f)));
+  return(false);
+}
+
 static s7_rp_t pair_to_rp(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer val_sym, val;
@@ -7142,6 +7173,16 @@ static s7_pp_t pair_to_pp(s7_scheme *sc, s7_pointer expr)
   if (s7_local_slot(sc, val_sym)) return(NULL);
   val = s7_symbol_value(sc, val_sym);
   return(s7_pf_function(sc, val)); 
+}
+
+static s7_pp_t pair_to_gp(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer val_sym, val;
+  val_sym = car(expr);
+  if (!s7_is_symbol(val_sym)) return(NULL);
+  if (s7_local_slot(sc, val_sym)) return(NULL);
+  val = s7_symbol_value(sc, val_sym);
+  return(s7_gf_function(sc, val)); 
 }
 
 static bool do_var_is_real(s7_scheme *sc, s7_pointer step, s7_pointer expr)
@@ -7375,8 +7416,34 @@ bool s7_arg_to_pf(s7_scheme *sc, s7_pointer a1)
   return(arg_to_pf(sc, a1, -1));
 }
 
-#define s7_arg_to_gf s7_arg_to_pf
+static bool arg_to_gf(s7_scheme *sc, s7_pointer a1, s7_int in_loc)
+{
+  if (is_pair(a1))
+    {
+      s7_pp_t gp;
+      s7_pf_t gf;
+      gp = pair_to_gp(sc, a1);
+      if (gp)
+	{
+	  s7_int loc;
+	  if (in_loc == -1)
+	    loc = s7_xf_store(sc, NULL);
+	  else loc = in_loc;
+	  gf = gp(sc, a1);
+	  if (gf)
+	    {
+	      s7_xf_store_at(sc, loc, (s7_pointer)gf);
+	      return(true);
+	    }
+	}
+    }
+  return(false);
+}
 
+bool s7_arg_to_gf(s7_scheme *sc, s7_pointer a1)
+{
+  return(arg_to_gf(sc, a1, -1));
+}
 
 static s7_rf_t pair_to_rf(s7_scheme *sc, s7_pointer a1, s7_rf_t x)
 {
@@ -7788,6 +7855,13 @@ s7_pp_t s7_pf_function(s7_scheme *sc, s7_pointer func)
   return(NULL);
 }
 
+s7_pp_t s7_gf_function(s7_scheme *sc, s7_pointer func)
+{
+  if (has_gf_function(func))
+    return(gf_function(func));
+  return(NULL);
+}
+
 void s7_rf_set_function(s7_pointer f, s7_rp_t rp)
 {
 #if WITH_OPTIMIZATION
@@ -7821,6 +7895,17 @@ void s7_pf_set_function(s7_pointer f, s7_pp_t pp)
 #endif
 }
 
+void s7_gf_set_function(s7_pointer f, s7_pp_t gp)
+{
+#if WITH_OPTIMIZATION
+  if (!c_function_ext(f))
+    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
+  c_function_gp(f) = gp;
+#else
+  return;
+#endif
+}
+
 
 s7_pointer *s7_xf_start(s7_scheme *sc)
 {
@@ -7828,10 +7913,47 @@ s7_pointer *s7_xf_start(s7_scheme *sc)
   return(sc->cur_rf->cur);
 }
 
+static void gf_clear_list(s7_scheme *sc)
+{
+  gc_obj *p, *op;
+  for (p = sc->cur_rf->gc_list; p; p = op)
+    {
+      op = p->nxt;
+      free(p);
+    }
+  sc->cur_rf->gc_list = NULL;
+}
+
+static void gf_push(s7_scheme *sc, s7_pointer obj)
+{
+  gc_obj *p;
+  p = malloc(sizeof(gc_obj));
+  p->nxt = sc->cur_rf->gc_list;
+  sc->cur_rf->gc_list = p;
+  p->p = obj;
+}
+
+static s7_pointer gf_pop(s7_scheme *sc)
+{
+  if ((sc->cur_rf) && 
+      (sc->cur_rf->gc_list))
+    {
+      s7_pointer p;
+      gc_obj *g;
+      g = sc->cur_rf->gc_list;
+      p = g->p;
+      sc->cur_rf->gc_list = g->nxt;
+      free(g);
+      return(p);
+    }
+  return(NULL);
+}
+
 void s7_xf_free(s7_scheme *sc)
 {
   sc->cur_rf->next = sc->rf_free_list;
   sc->rf_free_list = sc->cur_rf;
+  gf_clear_list(sc);
   sc->cur_rf = sc->rf_stack;
   if (sc->rf_stack)
     sc->rf_stack = sc->rf_stack->next;
@@ -7860,6 +7982,7 @@ void *s7_xf_new(s7_scheme *sc, s7_pointer e)
   sc->cur_rf = result;
   result->cur = result->data;
   result->e = e;
+  result->gc_list = NULL;
   return((void *)result);
 }
 
@@ -8173,6 +8296,12 @@ PF2_TO_PF(cutlet, g_cutlet(sc, list_2(sc, x, y)))
 PF3_TO_PF(let_set, s7_let_set(sc, x, y, z))
 PF3_TO_PF(varlet, g_varlet(sc, list_3(sc, x, y, z)))
 
+#define PF2_TO_GF(A, B) PF2_TO_PF(A, B)
+#define PF_TO_GF(A, B) PF_TO_PF(A, B)
+
+PF_TO_GF(c_pointer, c_c_pointer(sc, arg))
+
+
 #define PIF_TO_PF(CName, Cfnc)					  \
   static s7_pointer CName ## _pf_a(s7_scheme *sc, s7_pointer **p) \
   {								  \
@@ -8194,7 +8323,7 @@ PF3_TO_PF(varlet, g_varlet(sc, list_3(sc, x, y, z)))
     return(NULL);							\
   }
 
-#define PIPF_TO_PF(CName, Sfnc, Cfnc, Tester)			  \
+#define PIGF_TO_PF(CName, Sfnc, Cfnc, Tester)			  \
   static s7_pointer CName ## _pf_slot(s7_scheme *sc, s7_pointer **p)	\
   {								  \
     s7_pf_t pf;							  \
@@ -8237,14 +8366,19 @@ PF3_TO_PF(varlet, g_varlet(sc, list_3(sc, x, y, z)))
       {									\
 	int choice;							\
 	choice = Tester(sc, expr);					\
-	if (((choice == 1) || (choice == 2)) &&				\
-	    (s7_arg_to_gf(sc, cadddr(expr))))				\
-	  return((choice == 1) ? CName ## _pf_slot : CName ## _pf_s);	\
-	if ((choice == 0) &&						\
-	    (s7_arg_to_pf(sc, cadr(expr))) &&				\
-	    (s7_arg_to_if(sc, caddr(expr))) &&				\
-	    (s7_arg_to_gf(sc, cadddr(expr))))				\
-	  return(CName ## _pf_a);					\
+	if ((choice == 1) || (choice == 2) ||				\
+	    ((choice == 0) &&			                        \
+	     (s7_arg_to_pf(sc, cadr(expr))) &&				\
+	     (s7_arg_to_if(sc, caddr(expr)))))				\
+	  {								\
+	    ptr_int loc;							\
+	    loc = rc_loc(sc);						\
+	    if (s7_arg_to_pf(sc, cadddr(expr)))				\
+	      return((choice == 1) ? CName ## _pf_slot : ((choice == 2) ? CName ## _pf_s : CName ## _pf_a)); \
+	    sc->cur_rf->cur = rc_go(sc, loc);				\
+	    if (s7_arg_to_gf(sc, cadddr(expr)))				\
+	      return((choice == 1) ? CName ## _pf_slot : ((choice == 2) ? CName ## _pf_s : CName ## _pf_a)); \
+	    }								\
       }									\
     return(NULL);							\
   }
@@ -8279,7 +8413,7 @@ PF3_TO_PF(varlet, g_varlet(sc, list_3(sc, x, y, z)))
   {									\
     if ((is_pair(cdr(expr))) && (is_null(cddr(expr))))			\
       {									\
-        s7_int loc;							\
+        ptr_int loc;							\
         loc = rc_loc(sc);						\
 	if (s7_arg_to_if(sc, cadr(expr))) return(CName ## _pf_i);	\
 	sc->cur_rf->cur = rc_go(sc, loc);				\
@@ -8320,7 +8454,7 @@ PF3_TO_PF(varlet, g_varlet(sc, list_3(sc, x, y, z)))
   {									\
   if ((is_pair(cdr(expr))) && (is_pair(cddr(expr))) && (is_null(cdddr(expr)))) \
       {									\
-        s7_int loc;							\
+        ptr_int loc;							\
         loc = rc_loc(sc);						\
 	if ((s7_arg_to_if(sc, cadr(expr))) &&				\
             (s7_arg_to_if(sc, caddr(expr))))				\
@@ -8555,11 +8689,11 @@ static s7_pointer if_pf_xx(s7_scheme *sc, s7_pointer **p)
 {
   s7_pf_t test, t;
   s7_pointer val;
-  s7_int e1;
+  ptr_int e1;
   
   test = (s7_pf_t)(**p); (*p)++;
   t = (s7_pf_t)(**p); (*p)++;
-  e1 = ptr_to_int(**p); (*p)++;
+  e1 = (ptr_int)(**p); (*p)++;
 
   val = test(sc, p);
   if (val != sc->F)
@@ -8574,11 +8708,11 @@ static s7_pointer if_pf_not_xx(s7_scheme *sc, s7_pointer **p)
 {
   s7_pf_t test, t;
   s7_pointer val;
-  s7_int e1; 
+  ptr_int e1; 
   
   test = (s7_pf_t)(**p); (*p)++;
   t = (s7_pf_t)(**p); (*p)++;
-  e1 = ptr_to_int(**p); (*p)++;
+  e1 = (ptr_int)(**p); (*p)++;
 
   val = test(sc, p);
   if (val == sc->F)
@@ -8610,7 +8744,7 @@ static s7_pf_t if_pf(s7_scheme *sc, s7_pointer expr)
 
   if (!arg_to_pf(sc, test, test_loc)) return(NULL);
   if (!arg_to_pf(sc, t, t_loc)) return(NULL);
-  s7_xf_store_at(sc, e1_loc, int_to_ptr(rc_loc(sc)));
+  s7_xf_store_at(sc, e1_loc, (s7_pointer)rc_loc(sc));
 
   if (not_case) 
     return(if_pf_not_xx);
@@ -8624,13 +8758,13 @@ static s7_double if_rf_xxx(s7_scheme *sc, s7_pointer **p)
   s7_rf_t r1, r2;
   s7_pf_t pf;
   s7_pointer val;
-  s7_int e1, e2;
+  ptr_int e1, e2;
   
   pf = (s7_pf_t)(**p); (*p)++;
   r1 = (s7_rf_t)(**p); (*p)++;
   r2 = (s7_rf_t)(**p); (*p)++;
-  e1 = ptr_to_int(**p); (*p)++;
-  e2 = ptr_to_int(**p); (*p)++;
+  e1 = (ptr_int)(**p); (*p)++;
+  e2 = (ptr_int)(**p); (*p)++;
 
   val = pf(sc, p);
   if (val != sc->F)
@@ -8664,9 +8798,9 @@ static s7_rf_t if_rf(s7_scheme *sc, s7_pointer expr)
 
   if (!arg_to_pf(sc, test, test_loc)) return(NULL);
   if (!arg_to_rf(sc, t, t_loc)) return(NULL);
-  s7_xf_store_at(sc, e1_loc, int_to_ptr(rc_loc(sc)));
+  s7_xf_store_at(sc, e1_loc, (s7_pointer)rc_loc(sc));
   if (!arg_to_rf(sc, f, f_loc)) return(NULL);
-  s7_xf_store_at(sc, e2_loc, int_to_ptr(rc_loc(sc)));
+  s7_xf_store_at(sc, e2_loc, (s7_pointer)rc_loc(sc));
 
   return(if_rf_xxx);
 }
@@ -8675,12 +8809,12 @@ static s7_rf_t if_rf(s7_scheme *sc, s7_pointer expr)
 static s7_pointer or_pf_xx(s7_scheme *sc, s7_pointer **p)
 {
   s7_pf_t pf1, pf2;
-  s7_int e1;
+  ptr_int e1;
   s7_pointer val;
 
   pf1 = (s7_pf_t)(**p); (*p)++;
   pf2 = (s7_pf_t)(**p); (*p)++;
-  e1 = ptr_to_int(**p); (*p)++;
+  e1 = (ptr_int)(**p); (*p)++;
 
   val = pf1(sc, p);
   if (val != sc->F)
@@ -8704,7 +8838,7 @@ static s7_pf_t or_pf(s7_scheme *sc, s7_pointer expr)
 
       if (!arg_to_pf(sc, cadr(expr), loc1)) return(NULL);
       if (!arg_to_pf(sc, caddr(expr), loc2)) return(NULL);
-      s7_xf_store_at(sc, eloc, int_to_ptr(rc_loc(sc)));
+      s7_xf_store_at(sc, eloc, (s7_pointer)rc_loc(sc));
 
       return(or_pf_xx);
     }
@@ -8714,11 +8848,11 @@ static s7_pf_t or_pf(s7_scheme *sc, s7_pointer expr)
 static s7_pointer and_pf_xx(s7_scheme *sc, s7_pointer **p)
 {
   s7_pf_t pf1, pf2;
-  s7_int e1;
+  ptr_int e1;
 
   pf1 = (s7_pf_t)(**p); (*p)++;
   pf2 = (s7_pf_t)(**p); (*p)++;
-  e1 = ptr_to_int(**p); (*p)++;
+  e1 = (ptr_int)(**p); (*p)++;
 
   if (pf1(sc, p) == sc->F) 
     {
@@ -8741,7 +8875,7 @@ static s7_pf_t and_pf(s7_scheme *sc, s7_pointer expr)
 
       if (!arg_to_pf(sc, cadr(expr), loc1)) return(NULL);
       if (!arg_to_pf(sc, caddr(expr), loc2)) return(NULL);
-      s7_xf_store_at(sc, eloc, int_to_ptr(rc_loc(sc)));
+      s7_xf_store_at(sc, eloc, (s7_pointer)rc_loc(sc));
 
       return(and_pf_xx);
     }
@@ -22070,7 +22204,7 @@ static s7_pointer c_string_set(s7_scheme *sc, s7_pointer vec, s7_int index, s7_p
   return(c_string_set_s(sc, vec, index, val));
 }
 
-PIPF_TO_PF(string_set, c_string_set_s(sc, x, y, z), c_string_set(sc, x, y, z), c_string_tester)
+PIGF_TO_PF(string_set, c_string_set_s(sc, x, y, z), c_string_set(sc, x, y, z), c_string_tester)
 
 
 static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, bool use_temp)
@@ -28046,13 +28180,7 @@ static void c_pointer_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, us
   char buf[64];
 
   if (use_write == USE_READABLE_WRITE)
-    {
-#if ((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4))
-      nlen = snprintf(buf, 64, "(c-pointer %ld)", (long)raw_pointer(obj));
-#else
-      nlen = snprintf(buf, 64, "(c-pointer %lld)", (long long int)raw_pointer(obj));
-#endif
-    }
+    nlen = snprintf(buf, 64, ptr_int_format, (ptr_int)raw_pointer(obj));
   else nlen = snprintf(buf, 64, "#<c_pointer %p>", raw_pointer(obj));
   port_write_string(port)(sc, buf, nlen, port);
 }
@@ -30730,7 +30858,7 @@ static s7_pointer c_list_set(s7_scheme *sc, s7_pointer vec, s7_int index, s7_poi
   return(c_list_set_s(sc, vec, index, val));
 }
 
-PIPF_TO_PF(list_set, c_list_set_s(sc, x, y, z), c_list_set(sc, x, y, z), c_list_tester)
+PIGF_TO_PF(list_set, c_list_set_s(sc, x, y, z), c_list_set(sc, x, y, z), c_list_tester)
 
 static s7_pointer list_set_ic;
 static s7_pointer g_list_set_ic(s7_scheme *sc, s7_pointer args)
@@ -30799,6 +30927,7 @@ static s7_pointer g_cons(s7_scheme *sc, s7_pointer args)
   return(x);
 }
 
+PF2_TO_GF(cons, cons(sc, x, y))
 
 static void init_car_a_list(void)
 {
@@ -34066,7 +34195,7 @@ static s7_pointer g_vector_set_3(s7_scheme *sc, s7_pointer args)
   return(c_vector_set_3(sc, car(args), s7_integer(ind), caddr(args)));
 }
 
-PIPF_TO_PF(vector_set, c_vector_set_s(sc, x, y, z), c_vector_set_3(sc, x, y, z), c_vector_tester)
+PIGF_TO_PF(vector_set, c_vector_set_s(sc, x, y, z), c_vector_set_3(sc, x, y, z), c_vector_tester)
 
 
 static s7_pointer g_make_vector(s7_scheme *sc, s7_pointer args)
@@ -46513,6 +46642,9 @@ static void init_choosers(s7_scheme *sc)
   s7_pf_set_function(slot_value(global_slot(sc->SET_CDR)), set_cdr_pf);
   s7_pf_set_function(slot_value(global_slot(sc->LIST_TAIL)), list_tail_pf);
 
+  s7_gf_set_function(slot_value(global_slot(sc->CONS)), cons_pf);
+  s7_gf_set_function(slot_value(global_slot(sc->C_POINTER)), c_pointer_pf);
+
 #if (!WITH_PURE_S7)
   s7_pf_set_function(slot_value(global_slot(sc->MEMQ)), memq_pf);
   s7_pf_set_function(slot_value(global_slot(sc->MEMV)), memv_pf);
@@ -52893,6 +53025,7 @@ static s7_pointer end_dox_is_eof(s7_scheme *sc, s7_pointer code)
   return(make_boolean(sc, is_eof(slot_value(dox_slot1(sc->envir)))));
 }
 
+#if 0
 static s7_pointer end_dox_equal_s_ic(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer x;
@@ -52903,6 +53036,7 @@ static s7_pointer end_dox_equal_s_ic(s7_scheme *sc, s7_pointer code)
     return(make_boolean(sc, real(x) == integer(caddr(code))));
   return(sc->F);
 }
+#endif
 
 static s7_pointer end_dox_or_cs2(s7_scheme *sc, s7_pointer code)
 {
@@ -53012,8 +53146,10 @@ static s7_function end_dox_eval(s7_scheme *sc, s7_pointer code)
       return(end_dox_c_ss);
 
     case HOP_SAFE_C_SC:
+#if 0
       if (fcdr(code) == (s7_pointer)g_equal_s_ic) /* yow! memories from a previous life? */
 	return(end_dox_equal_s_ic);
+#endif
       return(end_dox_c_sc);
 
     case HOP_SAFE_C_CS:        return(end_dox_c_cs);
@@ -53837,6 +53973,7 @@ static int simple_do_ex(s7_scheme *sc, s7_pointer code)
 	      (is_all_real(sc, code)))
 	    {
 	      s7_pointer *top;
+	      /* fprintf(stderr, "ex: %s\n", DISPLAY(code)); */
 	      top = sc->cur_rf->data;
 	      top++;
 	      while (true)
@@ -68218,11 +68355,9 @@ s7_scheme *s7_init(void)
   sc->longjmp_ok = false;
   sc->symbol_table_is_locked = false;
 
-#if ((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4))
-  sc->max_vector_length = (1LL << 24);
-#else
-  sc->max_vector_length = (1LL << 32);
-#endif
+  if (sizeof(s7_int) == 4)
+    sc->max_vector_length = (1 << 24);
+  else sc->max_vector_length = (1LL << 32);
   sc->max_string_length = 1073741824;
   sc->max_list_length = 1073741824;
   sc->max_vector_dimensions = 512;
@@ -69663,21 +69798,21 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7 15.8 15.9
  *
- * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1127
- * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136
- * teq           |      |      | 6612                     3887 3020 2516 2468
- * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212
- * tcopy         |      |      | 13.6                     5355 4728 3887 3817
- * tform         |      |      |                          6816 5536 4287 3996
- * tmap          |      |      | 11.0           5031 4769 4685 4557 4230 4157
- * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945
- * titer         |      |      |                          7503 6793 6351 6048
- * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386
- * thash         |      |      |                          50.7 23.8 14.9 13.7
+ * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1127 1143
+ * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136 1134
+ * teq           |      |      | 6612                     3887 3020 2516 2468 2468
+ * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212 3219
+ * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3817
+ * tform         |      |      |                          6816 5536 4287 3996 4021
+ * tmap          |      |      | 11.0           5031 4769 4685 4557 4230 4157 4162
+ * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 5948
+ * titer         |      |      |                          7503 6793 6351 6048 6046
+ * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 6389
+ * thash         |      |      |                          50.7 23.8 14.9 13.7 13.7
  *               |      |      |
- * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 36.3
+ * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 14.0
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 14.8
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 36.3 36.4
  * 
  * ----------------------------------------------------------------------------------
  *
@@ -69747,6 +69882,7 @@ int main(int argc, char **argv)
  * p0_1_to_i: read-byte write-byte [pif->i byte-vector-ref|set!]
  * odd: length char-position string-position
  * i|r|p_to_r|i: real-part imag-part numerator denominator
+ * with-input-from-string|file with-output-to-file call-with-input-string|file call-with-output-file call/cc call-with-exit
  *
  * full +|-|*|/ -- how to handle various range checks? and ratios?
  * b: vset sss of int vect, test loop through car/cdr
@@ -69762,14 +69898,20 @@ int main(int argc, char **argv)
  *   mus-scaler et al method (try gen without the gen)
  *   clm2xen: [rf2_to_rf in clm2xen] [sec->smp autocor fft-window[gf] convol] vct-move? (spectrum is from snd)
  * 
- * gf cases:
- *   arity procedure-source|documentation help string-up|downcase
- *   expt? arc* make-rectangular rationalize make-polar
- *   port-line-number c-pointer make-symbol list->vector 
- *   gensym inlet sublet *->list make-iterator iterate port-filename port* call* with* 
- *   make-random-state number->string->number copy reverse make-string make-list make-*-vector
- *   *append substring string list vector float-vector hash-table|* object->string format cons vector-dimensions make-shared-vector
- *   c_pointer symbol_to_string -- needs temp handle
+ * gf cases (with rf/if cases also)
+ *   pf->gf arity procedure-source|documentation help string-up|downcase acos(h)|sin(h) atanh c-pointer make-iterator let->list
+ *          vector-dimensions reverse(!) symbol->string iterate port-filename port-line-number pair-line-number
+ *          directory->list with-output-to-string call-with-output-string
+ *   pf2->gf expt atan make-rectangular make-polar list->vector 
+ *   pf_1->gf rationalize object->string make-random-state number->string string->number
+ *   i|pf_1->gf make-list make-string make-vector make-float-vector make-int-vector
+ *   pf_0->gf gensym random-state->list
+ *   pf_n->gf inlet list vector float-vector int-vector hash-table(*) sublet string format vector-append string-append append
+ *   pf_2?->gf substring vector->list string->list
+ *   pf2_1->gf make-shared-vector
+ *   pf_3->gf copy
+ * cur_rf->gc_list is the temp list: gc mark, clear at new(and end?), push/pop in gf funcs
+ *
  * temp: *_to_gf: gf func adds obj to temp list in sc->cur_data (from freelist?), returns it
  *   receiver can reuse it, or return it to the free list, or return it (ie set)
  *   store_new returns all temp list to free list, as does restart via top?
@@ -69790,7 +69932,7 @@ int main(int argc, char **argv)
  * c_vector_tester et al need enum for the choices (and perhaps usable in string|list_ref -- need at least the ss case here) -- PIF_TO_PF extended
  * if_rf/if_x are ok if the return value is ignored (fv-set)
  * remember to check roundcube
- * why the NaNs in 32-bit optimizer?
  * bignum morally-equal? ignores float-epsilon
  * someday fix the freed snd_fd problem
+ * s7_is_rf_2 etc are bad names (exported currently)
  */

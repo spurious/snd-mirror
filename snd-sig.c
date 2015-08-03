@@ -3014,8 +3014,6 @@ void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection)
 #if (!DISABLE_SINCOS) && defined(__GNUC__) && defined(__linux__)
   #define HAVE_SINCOS 1
   void sincos(double x, double *sin, double *cos);
-  void sincosl(long double x, long double *sin, long double *cos);
-  #define Sincos sincos
 #else
   #define HAVE_SINCOS 0
 #endif
@@ -3062,14 +3060,14 @@ static void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int ed
        */
 #if HAVE_SINCOS
       {
-	mus_float_t sn, cs, isn, ics;
+	double sn, cs, isn, ics;
 	mus_long_t dur1;
 	if (dur & 1) dur1 = dur - 1; else dur1 = dur;
-	Sincos(incr, &isn, &ics);
+	sincos(incr, &isn, &ics);
 	incr *= 2.0;
 	for (k = 0; k < dur1; k += 2, angle += incr) 
 	  {
-	    Sincos(angle, &sn, &cs);
+	    sincos(angle, &sn, &cs);
 	    data[k] = (off + scale * cs);
 	    data[k + 1] = (off + scale * (cs * ics - sn * isn));
 	  }
