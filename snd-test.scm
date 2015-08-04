@@ -39913,6 +39913,32 @@ EDITS: 1
 	  ((lambda ()
 	     (set! (fv i) i))))))
     (test (fv135) (float-vector 0.0 1.0 2.0 3.0))
+
+    (define (fv136)
+      (let ((fv (make-vector 4)))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 1.0)))
+	    ((= i 4) fv)
+	  (vector-set! fv i (cons i x)))))
+    (test (fv136) (vector '(0 . 0.0) '(1 . 1.0) '(2 . 2.0) '(3 . 3.0)))
+    
+    (define (fv137)
+      (let ((fv (make-vector 4)))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 0.6)))
+	    ((= i 4) fv)
+	  (vector-set! fv i (asin x)))))
+    (test (fv137) (vector (asin 0.0) (asin 0.6) (asin 1.2) (asin 1.8)))
+    
+    (define (fv138)
+      (let ((fv (make-vector 4))
+	    (fv1 (vector 0.0 0.6 1.2 1.8)))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 0.6)))
+	    ((= i 4) fv)
+	  (vector-set! fv i (asin (vector-ref fv1 i))))))
+    (test (fv138) (vector (asin 0.0) (asin 0.6) (asin 1.2) (asin 1.8)))
+    
     )
   
   (if all-args

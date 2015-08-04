@@ -662,8 +662,8 @@ typedef s7_double (*s7_rf_t)(s7_scheme *sc, s7_pointer **p);
 typedef s7_rf_t (*s7_rp_t)(s7_scheme *sc, s7_pointer expr);
 void s7_rf_set_function(s7_pointer f, s7_rp_t rp);
 s7_rp_t s7_rf_function(s7_scheme *sc, s7_pointer func);
-s7_rf_t s7_is_rf_1(s7_scheme *sc, s7_pointer expr, s7_rf_t r, s7_rf_t s, s7_rf_t x);
-s7_rf_t s7_is_rf_2(s7_scheme *sc, s7_pointer expr, s7_rf_t rr, s7_rf_t sr, s7_rf_t xr, s7_rf_t rs, s7_rf_t ss, s7_rf_t xs, s7_rf_t rx, s7_rf_t sx, s7_rf_t xx);
+s7_rf_t s7_rf_1(s7_scheme *sc, s7_pointer expr, s7_rf_t r, s7_rf_t s, s7_rf_t x);
+s7_rf_t s7_rf_2(s7_scheme *sc, s7_pointer expr, s7_rf_t rr, s7_rf_t sr, s7_rf_t xr, s7_rf_t rs, s7_rf_t ss, s7_rf_t xs, s7_rf_t rx, s7_rf_t sx, s7_rf_t xx);
 
 typedef s7_int (*s7_if_t)(s7_scheme *sc, s7_pointer **p);
 typedef s7_if_t (*s7_ip_t)(s7_scheme *sc, s7_pointer expr);

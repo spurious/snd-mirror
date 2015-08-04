@@ -9841,22 +9841,25 @@ GEN_RF(tap, mus_tap_unmodulated, mus_tap)
 static s7_double oscil_rf_sxx(s7_scheme *sc, s7_pointer **p)
 {
   s7_rf_t rf1, rf2;
-  s7_double v1;
+  s7_double v1, v2;
   mus_any *g; g = (mus_any *)(*(*p)); (*p)++;
   rf1 = (s7_rf_t)(**p); (*p)++;
   v1 = rf1(sc, p);
   rf2 = (s7_rf_t)(**p); (*p)++;
-  return(mus_oscil(g, v1, rf2(sc, p)));
+  v2 = rf2(sc, p);
+  return(mus_oscil(g, v1, v2));
 }
 
 static s7_double oscil_rf_ssx(s7_scheme *sc, s7_pointer **p)
 {
   s7_rf_t rf1;
   s7_pointer s1;
+  s7_double v1;
   mus_any *g; g = (mus_any *)(*(*p)); (*p)++;
   s1 = (**p); (*p)++;
   rf1 = (s7_rf_t)(**p); (*p)++;
-  return(mus_oscil(g, s7_slot_real_value(sc, s1, "oscil"), rf1(sc, p)));
+  v1 = rf1(sc, p);
+  return(mus_oscil(g, s7_slot_real_value(sc, s1, "oscil"), v1));
 }
 
 static s7_double oscil_rf_sss(s7_scheme *sc, s7_pointer **p)
@@ -9881,10 +9884,12 @@ static s7_double oscil_rf_srx(s7_scheme *sc, s7_pointer **p)
 {
   s7_rf_t rf1;
   s7_pointer s1;
+  s7_double v1;
   mus_any *g; g = (mus_any *)(*(*p)); (*p)++;
   s1 = (**p); (*p)++;
   rf1 = (s7_rf_t)(**p); (*p)++;
-  return(mus_oscil(g, s7_number_to_real(sc, s1), rf1(sc, p)));
+  v1 = rf1(sc, p);
+  return(mus_oscil(g, s7_number_to_real(sc, s1), v1));
 }
 
 
@@ -9904,7 +9909,7 @@ static s7_rf_t oscil_rf_3(s7_scheme *sc, s7_pointer expr)
   if (len > 5) return(NULL);
 
   s7_xf_store(sc, (s7_pointer)g);
-  return(s7_is_rf_2(sc, cdr(expr), NULL, NULL, NULL, oscil_rf_srs, oscil_rf_sss, NULL, oscil_rf_srx, oscil_rf_ssx, oscil_rf_sxx));
+  return(s7_rf_2(sc, cdr(expr), NULL, NULL, NULL, oscil_rf_srs, oscil_rf_sss, NULL, oscil_rf_srx, oscil_rf_ssx, oscil_rf_sxx));
 }
 
 
@@ -9948,7 +9953,7 @@ static s7_rf_t comb_rf_3(s7_scheme *sc, s7_pointer expr)
   g = cadr_gen(sc, expr);
   if ((!g) || (!mus_is_comb(g))) return(NULL);
   s7_xf_store(sc, (s7_pointer)g);
-  return(s7_is_rf_2(sc, cdr(expr), NULL, NULL, NULL, NULL, comb_rf_sss, NULL, NULL, comb_rf_ssx, comb_rf_sxx));
+  return(s7_rf_2(sc, cdr(expr), NULL, NULL, NULL, NULL, comb_rf_sss, NULL, NULL, comb_rf_ssx, comb_rf_sxx));
 }
 
 static s7_double notch_rf_sxx(s7_scheme *sc, s7_pointer **p)
@@ -9972,7 +9977,7 @@ static s7_rf_t notch_rf_3(s7_scheme *sc, s7_pointer expr)
   g = cadr_gen(sc, expr);
   if ((!g) || (!mus_is_notch(g))) return(NULL);
   s7_xf_store(sc, (s7_pointer)g);
-  return(s7_is_rf_2(sc, cdr(expr), NULL, NULL, NULL, NULL, NULL, NULL, NULL,NULL, notch_rf_sxx));
+  return(s7_rf_2(sc, cdr(expr), NULL, NULL, NULL, NULL, NULL, NULL, NULL,NULL, notch_rf_sxx));
 }
 
 static s7_double delay_rf_sxx(s7_scheme *sc, s7_pointer **p)
@@ -9996,7 +10001,7 @@ static s7_rf_t delay_rf_3(s7_scheme *sc, s7_pointer expr)
   g = cadr_gen(sc, expr);
   if ((!g) || (!mus_is_delay(g))) return(NULL);
   s7_xf_store(sc, (s7_pointer)g);
-  return(s7_is_rf_2(sc, cdr(expr), NULL, NULL, NULL, NULL, NULL, NULL, NULL,NULL, delay_rf_sxx));
+  return(s7_rf_2(sc, cdr(expr), NULL, NULL, NULL, NULL, NULL, NULL, NULL,NULL, delay_rf_sxx));
 }
 
 static s7_double all_pass_rf_sxx(s7_scheme *sc, s7_pointer **p)
@@ -10020,7 +10025,7 @@ static s7_rf_t all_pass_rf_3(s7_scheme *sc, s7_pointer expr)
   g = cadr_gen(sc, expr);
   if ((!g) || (!mus_is_all_pass(g))) return(NULL);
   s7_xf_store(sc, (s7_pointer)g);
-  return(s7_is_rf_2(sc, cdr(expr), NULL, NULL, NULL, NULL, NULL, NULL, NULL,NULL, all_pass_rf_sxx));
+  return(s7_rf_2(sc, cdr(expr), NULL, NULL, NULL, NULL, NULL, NULL, NULL,NULL, all_pass_rf_sxx));
 }
 
 static s7_double ssb_am_rf_sss(s7_scheme *sc, s7_pointer **p)
@@ -10042,7 +10047,7 @@ static s7_rf_t ssb_am_rf_3(s7_scheme *sc, s7_pointer expr)
   g = cadr_gen(sc, expr);
   if ((!g) || (!mus_is_ssb_am(g))) return(NULL);
   s7_xf_store(sc, (s7_pointer)g);
-  return(s7_is_rf_2(sc, cdr(expr), NULL, NULL, NULL, NULL, ssb_am_rf_sss, NULL, NULL, NULL, NULL));
+  return(s7_rf_2(sc, cdr(expr), NULL, NULL, NULL, NULL, ssb_am_rf_sss, NULL, NULL, NULL, NULL));
 }
 
 static s7_double formant_rf_ssx(s7_scheme *sc, s7_pointer **p)
@@ -10074,7 +10079,7 @@ static s7_rf_t formant_rf_3(s7_scheme *sc, s7_pointer expr)
   g = cadr_gen(sc, expr);
   if ((!g) || (!mus_is_formant(g))) return(NULL);
   s7_xf_store(sc, (s7_pointer)g);
-  return(s7_is_rf_2(sc, cdr(expr), NULL, NULL, NULL, NULL, formant_rf_sss, NULL, NULL, formant_rf_ssx, NULL));
+  return(s7_rf_2(sc, cdr(expr), NULL, NULL, NULL, NULL, formant_rf_sss, NULL, NULL, formant_rf_ssx, NULL));
 }
 
 
@@ -10186,7 +10191,7 @@ static s7_rf_t set_formant_frequency_rf(s7_scheme *sc, s7_pointer expr)
       a1 = s7_caddr(expr);
       if (s7_is_pair(a1))
 	{
-	  int loc;
+	  s7_int loc;
 	  s7_pointer val, val_sym;
 	  s7_rf_t rf;
 	  val_sym = car(a1);
@@ -10964,7 +10969,7 @@ static s7_pf_t frample_to_file_pf(s7_scheme *sc, s7_pointer expr)
     {
       s7_pp_t pp;
       s7_pf_t pf;
-      int loc;
+      s7_int loc;
       pp = s7_pf_function(sc, s7_symbol_value(sc, s7_car(fv_sym)));
       if (!pp) return(NULL);
       loc = s7_xf_store(sc, NULL);
@@ -11203,7 +11208,7 @@ RF_0(srate)
   }								\
   static s7_rf_t Call ## _rf(s7_scheme *sc, s7_pointer expr)	\
   {									\
-    return(s7_is_rf_1(sc, expr, Call ## _rf_c, Call ## _rf_s, Call ## _rf_r)); \
+    return(s7_rf_1(sc, expr, Call ## _rf_c, Call ## _rf_s, Call ## _rf_r)); \
   }
 
 RF_1(odd_weight)
@@ -11244,7 +11249,7 @@ static s7_rf_t polynomial_rf(s7_scheme *sc, s7_pointer expr)
 {
   if ((s7_is_symbol(s7_cadr(expr))) &&
       (s7_is_float_vector(s7_symbol_value(sc, s7_cadr(expr)))))
-    return(s7_is_rf_2(sc, expr, NULL, NULL, NULL, NULL, polynomial_rf_ss, NULL, NULL, polynomial_rf_sx, NULL));
+    return(s7_rf_2(sc, expr, NULL, NULL, NULL, NULL, polynomial_rf_ss, NULL, NULL, polynomial_rf_sx, NULL));
   return(NULL);
 }
 
@@ -11339,7 +11344,7 @@ static s7_rf_t array_interp_rf(s7_scheme *sc, s7_pointer expr)
 	      (s7_is_null(sc, s7_cdddr(rst))))
 	    {
 	      s7_xf_store(sc, fv);
-	      return(s7_is_rf_2(sc, rst, NULL, NULL, array_interp_rf_sxr, NULL, NULL, array_interp_rf_sxs, NULL, NULL, NULL));
+	      return(s7_rf_2(sc, rst, NULL, NULL, array_interp_rf_sxr, NULL, NULL, array_interp_rf_sxs, NULL, NULL, NULL));
 	    }
 	}
     }

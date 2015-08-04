@@ -347,7 +347,8 @@
    *   cases where isnan is both true and false of the same number at the same time!  The actual bits are
    *   not a NaN, so x != x and isnan(x) are returning incorrect results (x == 10.0 or 0.0 for example).  
    *   How could the optimizer cause this?  Also sincos is a mess in 32-bits, but I finally disabled it,
-   *   and still get these bizarre results.
+   *   and still get these bizarre results. Later... it seems only the set!, float-vector-set!, and oscil
+   *   opts (oscil_rf in particular) are the culprits -- what is their problem?  
    */
 #else
   #define opcode_t unsigned long long int
@@ -7089,6 +7090,145 @@ static s7_rf_t is_implicit_fv_ref_rf(s7_scheme *sc, s7_pointer expr);
 #define rc_pos(sc, p)  (ptr_int)(*p - sc->cur_rf->data)
 #define rc_go(sc, loc) (s7_pointer *)(sc->cur_rf->data + loc)
 
+s7_pointer *s7_xf_start(s7_scheme *sc)
+{
+  sc->cur_rf->cur = sc->cur_rf->data;
+  return(sc->cur_rf->cur);
+}
+
+s7_int s7_xf_store(s7_scheme *sc, s7_pointer val)
+{
+  s7_pointer *cur;
+  xf_t *rc;
+  rc = sc->cur_rf;
+  if (rc->cur == rc->end)
+    {
+      /* if we're saving pointers into this array (for later fill-in), this realloc
+       *   means earlier (backfill) pointers are not valid, so we have to save the position to be
+       *   filled, not the pointer to it.
+       */
+#if DEBUGGING
+      int i;
+      s7_pointer *old;
+      old = rc->data;
+
+      fprintf(stderr, "realloc opt data to %d\n", rc->size * 2);
+
+      rc->data = (s7_pointer *)calloc(rc->size * 2, sizeof(s7_pointer));
+      for (i = 0; i < rc->size; i++)
+	{
+	  rc->data[i] = old[i];
+	  old[i] = NULL;
+	}
+#else
+      rc->data = (s7_pointer *)realloc(rc->data, rc->size * 2 * sizeof(s7_pointer));
+#endif
+      rc->cur = (s7_pointer *)(rc->data + rc->size);
+      rc->size *= 2;
+      rc->end = (s7_pointer *)(rc->data + rc->size);
+    }
+  cur = rc->cur++;
+  (*cur) = val;
+  return(cur - rc->data);
+}
+
+void s7_xf_store_at(s7_scheme *sc, s7_int index, s7_pointer val)
+{
+  sc->cur_rf->data[index] = val;
+}
+
+void *s7_xf_new(s7_scheme *sc, s7_pointer e)
+{
+  xf_t *result;
+  if (sc->rf_free_list)
+    {
+      result = sc->rf_free_list;
+      sc->rf_free_list = sc->rf_free_list->next;
+    }
+  else
+    {
+      result = (xf_t *)malloc(sizeof(xf_t));
+      result->size = 8;
+      result->data = (s7_pointer *)calloc(result->size, sizeof(s7_pointer));
+      result->end = (s7_pointer *)(result->data + result->size);
+    }
+  if (sc->cur_rf)
+    {
+      sc->cur_rf->next = sc->rf_stack;
+      sc->rf_stack = sc->cur_rf;
+    }
+  sc->cur_rf = result;
+  result->cur = result->data;
+  result->e = e; /* set only here? */
+  result->gc_list = NULL;
+  return((void *)result);
+}
+
+static void s7_xf_clear(s7_scheme *sc)
+{
+  while (sc->cur_rf) {s7_xf_free(sc);}
+}
+
+bool s7_xf_is_stepper(s7_scheme *sc, s7_pointer sym)
+{
+  s7_pointer e, p;
+  e = sc->cur_rf->e;
+  if (!e) return(false);
+  for (p = let_slots(e); is_slot(p); p = next_slot(p))
+    if (slot_symbol(p) == sym)
+      return(true);
+  return(false);
+}
+
+
+static void gf_clear_list(s7_scheme *sc)
+{
+  gc_obj *p, *op;
+  for (p = sc->cur_rf->gc_list; p; p = op)
+    {
+      op = p->nxt;
+      free(p);
+    }
+  sc->cur_rf->gc_list = NULL;
+}
+
+#if 0
+static void gf_push(s7_scheme *sc, s7_pointer obj)
+{
+  gc_obj *p;
+  p = (gc_obj *)malloc(sizeof(gc_obj));
+  p->nxt = sc->cur_rf->gc_list;
+  sc->cur_rf->gc_list = p;
+  p->p = obj;
+}
+
+static s7_pointer gf_pop(s7_scheme *sc)
+{
+  if ((sc->cur_rf) && 
+      (sc->cur_rf->gc_list))
+    {
+      s7_pointer p;
+      gc_obj *g;
+      g = sc->cur_rf->gc_list;
+      p = g->p;
+      sc->cur_rf->gc_list = g->nxt;
+      free(g);
+      return(p);
+    }
+  return(NULL);
+}
+#endif
+
+void s7_xf_free(s7_scheme *sc)
+{
+  sc->cur_rf->next = sc->rf_free_list;
+  sc->rf_free_list = sc->cur_rf;
+  gf_clear_list(sc);
+  sc->cur_rf = sc->rf_stack;
+  if (sc->rf_stack)
+    sc->rf_stack = sc->rf_stack->next;
+}
+
 static s7_rp_t rf_function(s7_pointer f)
 {
   if (is_any_c_function(f)) return(c_function_rp(f));
@@ -7143,6 +7283,90 @@ static bool has_gf_function(s7_pointer f)
 {
   if (is_any_c_function(f)) return((c_function_ext(f)) && (c_function_gp(f)));
   return(false);
+}
+
+static bool has_xf_function(s7_pointer f)
+{
+  if (is_any_c_function(f))
+    return((c_function_ext(f)) &&
+	   ((rf_function(f)) || (pf_function(f)) || (if_function(f))));
+
+  if (is_syntax(f))
+    return((syntax_rp(f)) || (syntax_pp(f)) || (syntax_ip(f)));
+
+  return(false);
+}
+
+s7_rp_t s7_rf_function(s7_scheme *sc, s7_pointer func)
+{
+  if (has_rf_function(func))
+    return(rf_function(func));
+  return(NULL);
+}
+
+s7_ip_t s7_if_function(s7_scheme *sc, s7_pointer func)
+{
+  if (has_if_function(func))
+    return(if_function(func));
+  return(NULL);
+}
+
+s7_pp_t s7_pf_function(s7_scheme *sc, s7_pointer func)
+{
+  if (has_pf_function(func))
+    return(pf_function(func));
+  return(NULL);
+}
+
+s7_pp_t s7_gf_function(s7_scheme *sc, s7_pointer func)
+{
+  if (has_gf_function(func))
+    return(gf_function(func));
+  return(NULL);
+}
+
+void s7_rf_set_function(s7_pointer f, s7_rp_t rp)
+{
+#if WITH_OPTIMIZATION
+  if (!c_function_ext(f))
+    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
+  c_function_rp(f) = rp;
+#else
+  return;
+#endif
+}
+
+void s7_if_set_function(s7_pointer f, s7_ip_t ip)
+{
+#if WITH_OPTIMIZATION
+  if (!c_function_ext(f))
+    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
+  c_function_ip(f) = ip;
+#else
+  return;
+#endif
+}
+
+void s7_pf_set_function(s7_pointer f, s7_pp_t pp)
+{
+#if WITH_OPTIMIZATION
+  if (!c_function_ext(f))
+    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
+  c_function_pp(f) = pp;
+#else
+  return;
+#endif
+}
+
+void s7_gf_set_function(s7_pointer f, s7_pp_t gp)
+{
+#if WITH_OPTIMIZATION
+  if (!c_function_ext(f))
+    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
+  c_function_gp(f) = gp;
+#else
+  return;
+#endif
 }
 
 static s7_rp_t pair_to_rp(s7_scheme *sc, s7_pointer expr)
@@ -7460,7 +7684,7 @@ static s7_rf_t pair_to_rf_via_if(s7_scheme *sc, s7_pointer a1, s7_rf_t x)
 }
 
 
-s7_rf_t s7_is_rf_1(s7_scheme *sc, s7_pointer expr, s7_rf_t r, s7_rf_t s, s7_rf_t x)
+s7_rf_t s7_rf_1(s7_scheme *sc, s7_pointer expr, s7_rf_t r, s7_rf_t s, s7_rf_t x)
 {
   s7_pointer a1;
 
@@ -7487,7 +7711,7 @@ s7_rf_t s7_is_rf_1(s7_scheme *sc, s7_pointer expr, s7_rf_t r, s7_rf_t s, s7_rf_t
   return(NULL);
 }
 
-s7_rf_t s7_is_rf_2(s7_scheme *sc, s7_pointer expr, s7_rf_t rr, s7_rf_t sr, s7_rf_t xr, s7_rf_t rs, s7_rf_t ss, s7_rf_t xs, s7_rf_t rx, s7_rf_t sx, s7_rf_t xx)
+s7_rf_t s7_rf_2(s7_scheme *sc, s7_pointer expr, s7_rf_t rr, s7_rf_t sr, s7_rf_t xr, s7_rf_t rs, s7_rf_t ss, s7_rf_t xs, s7_rf_t rx, s7_rf_t sx, s7_rf_t xx)
 {
   s7_pointer a1, a2;
 
@@ -7570,7 +7794,7 @@ s7_rf_t s7_is_rf_2(s7_scheme *sc, s7_pointer expr, s7_rf_t rr, s7_rf_t sr, s7_rf
 }
 
 #if (!WITH_GMP)
-static s7_rf_t is_rf_4(s7_scheme *sc, s7_pointer expr, s7_rf_t xxxx)
+static s7_rf_t s7_rf_4(s7_scheme *sc, s7_pointer expr, s7_rf_t xxxx)
 {
   s7_pointer a1;
   a1 = cadr(expr);
@@ -7584,7 +7808,7 @@ static s7_rf_t is_rf_4(s7_scheme *sc, s7_pointer expr, s7_rf_t xxxx)
 	{
 	  s7_rp_t rp;
 	  s7_rf_t rf;
-	  int loc1, loc2, loc3, loc4;
+	  s7_int loc1, loc2, loc3, loc4;
 	  loc1 = s7_xf_store(sc, NULL);
 	  loc2 = s7_xf_store(sc, NULL);
 	  loc3 = s7_xf_store(sc, NULL);
@@ -7616,7 +7840,7 @@ static s7_rf_t is_rf_4(s7_scheme *sc, s7_pointer expr, s7_rf_t xxxx)
 }
 
 
-static s7_rf_t is_com_rf_2(s7_scheme *sc, s7_pointer expr, s7_rf_t rs, s7_rf_t rx, s7_rf_t sx, s7_rf_t ss, s7_rf_t xx)
+static s7_rf_t com_rf_2(s7_scheme *sc, s7_pointer expr, s7_rf_t rs, s7_rf_t rx, s7_rf_t sx, s7_rf_t ss, s7_rf_t xx)
 {
   s7_pointer a1, a2, p1 = NULL, p2 = NULL, s1 = NULL, s2 = NULL, c1 = NULL, c2 = NULL;
   s7_int loc;
@@ -7692,7 +7916,7 @@ static s7_rf_t is_com_rf_2(s7_scheme *sc, s7_pointer expr, s7_rf_t rs, s7_rf_t r
   return(NULL);
 }
 
-static s7_rf_t is_com_rf_3(s7_scheme *sc, s7_pointer expr, s7_rf_t rss, s7_rf_t rsx, s7_rf_t ssx, s7_rf_t rxx, s7_rf_t sxx, s7_rf_t sss, s7_rf_t xxx)
+static s7_rf_t com_rf_3(s7_scheme *sc, s7_pointer expr, s7_rf_t rss, s7_rf_t rsx, s7_rf_t ssx, s7_rf_t rxx, s7_rf_t sxx, s7_rf_t sss, s7_rf_t xxx)
 {
   s7_pointer a1, a2, a3, p1 = NULL, p2 = NULL, p3 = NULL, s1 = NULL, s2 = NULL, s3 = NULL, c1 = NULL, c2 = NULL, c3 = NULL;
   s7_int loc1, loc2;
@@ -7805,214 +8029,6 @@ static s7_rf_t is_com_rf_3(s7_scheme *sc, s7_pointer expr, s7_rf_t rss, s7_rf_t 
 }
 #endif
 
-s7_int s7_xf_store(s7_scheme *sc, s7_pointer val)
-{
-  s7_pointer *cur;
-  xf_t *rc;
-  rc = sc->cur_rf;
-  if (rc->cur == rc->end)
-    {
-      /* if we're saving pointers into this array (for later rf fill-in), this realloc
-       *   means earlier (backfill) pointers are not valid, so we have to save the position to be
-       *   filled, not the pointer to it.
-       */
-      /* fprintf(stderr, "realloc to %d\n", rc->size * 2); */
-      rc->data = (s7_pointer *)realloc(rc->data, rc->size * 2 * sizeof(s7_pointer));
-      rc->cur = (s7_pointer *)(rc->data + rc->size);
-      rc->size *= 2;
-      rc->end = (s7_pointer *)(rc->data + rc->size);
-    }
-  cur = rc->cur++;
-  (*cur) = val;
-  return(cur - rc->data);
-}
-
-
-void s7_xf_store_at(s7_scheme *sc, s7_int index, s7_pointer val)
-{
-  sc->cur_rf->data[index] = val;
-}
-
-
-s7_rp_t s7_rf_function(s7_scheme *sc, s7_pointer func)
-{
-  if (has_rf_function(func))
-    return(rf_function(func));
-  return(NULL);
-}
-
-s7_ip_t s7_if_function(s7_scheme *sc, s7_pointer func)
-{
-  if (has_if_function(func))
-    return(if_function(func));
-  return(NULL);
-}
-
-s7_pp_t s7_pf_function(s7_scheme *sc, s7_pointer func)
-{
-  if (has_pf_function(func))
-    return(pf_function(func));
-  return(NULL);
-}
-
-s7_pp_t s7_gf_function(s7_scheme *sc, s7_pointer func)
-{
-  if (has_gf_function(func))
-    return(gf_function(func));
-  return(NULL);
-}
-
-void s7_rf_set_function(s7_pointer f, s7_rp_t rp)
-{
-#if WITH_OPTIMIZATION
-  if (!c_function_ext(f))
-    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
-  c_function_rp(f) = rp;
-#else
-  return;
-#endif
-}
-
-void s7_if_set_function(s7_pointer f, s7_ip_t ip)
-{
-#if WITH_OPTIMIZATION
-  if (!c_function_ext(f))
-    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
-  c_function_ip(f) = ip;
-#else
-  return;
-#endif
-}
-
-void s7_pf_set_function(s7_pointer f, s7_pp_t pp)
-{
-#if WITH_OPTIMIZATION
-  if (!c_function_ext(f))
-    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
-  c_function_pp(f) = pp;
-#else
-  return;
-#endif
-}
-
-void s7_gf_set_function(s7_pointer f, s7_pp_t gp)
-{
-#if WITH_OPTIMIZATION
-  if (!c_function_ext(f))
-    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
-  c_function_gp(f) = gp;
-#else
-  return;
-#endif
-}
-
-
-s7_pointer *s7_xf_start(s7_scheme *sc)
-{
-  sc->cur_rf->cur = sc->cur_rf->data;
-  return(sc->cur_rf->cur);
-}
-
-static void gf_clear_list(s7_scheme *sc)
-{
-  gc_obj *p, *op;
-  for (p = sc->cur_rf->gc_list; p; p = op)
-    {
-      op = p->nxt;
-      free(p);
-    }
-  sc->cur_rf->gc_list = NULL;
-}
-
-static void gf_push(s7_scheme *sc, s7_pointer obj)
-{
-  gc_obj *p;
-  p = malloc(sizeof(gc_obj));
-  p->nxt = sc->cur_rf->gc_list;
-  sc->cur_rf->gc_list = p;
-  p->p = obj;
-}
-
-static s7_pointer gf_pop(s7_scheme *sc)
-{
-  if ((sc->cur_rf) && 
-      (sc->cur_rf->gc_list))
-    {
-      s7_pointer p;
-      gc_obj *g;
-      g = sc->cur_rf->gc_list;
-      p = g->p;
-      sc->cur_rf->gc_list = g->nxt;
-      free(g);
-      return(p);
-    }
-  return(NULL);
-}
-
-void s7_xf_free(s7_scheme *sc)
-{
-  sc->cur_rf->next = sc->rf_free_list;
-  sc->rf_free_list = sc->cur_rf;
-  gf_clear_list(sc);
-  sc->cur_rf = sc->rf_stack;
-  if (sc->rf_stack)
-    sc->rf_stack = sc->rf_stack->next;
-}
-
-void *s7_xf_new(s7_scheme *sc, s7_pointer e)
-{
-  xf_t *result;
-  if (sc->rf_free_list)
-    {
-      result = sc->rf_free_list;
-      sc->rf_free_list = sc->rf_free_list->next;
-    }
-  else
-    {
-      result = (xf_t *)malloc(sizeof(xf_t));
-      result->size = 8;
-      result->data = (s7_pointer *)calloc(result->size, sizeof(s7_pointer));
-      result->end = (s7_pointer *)(result->data + result->size);
-    }
-  if (sc->cur_rf)
-    {
-      sc->cur_rf->next = sc->rf_stack;
-      sc->rf_stack = sc->cur_rf;
-    }
-  sc->cur_rf = result;
-  result->cur = result->data;
-  result->e = e;
-  result->gc_list = NULL;
-  return((void *)result);
-}
-
-static void s7_xf_clear(s7_scheme *sc)
-{
-  while (sc->cur_rf) {s7_xf_free(sc);}
-}
-
-bool s7_xf_is_stepper(s7_scheme *sc, s7_pointer sym)
-{
-  s7_pointer e, p;
-  e = sc->cur_rf->e;
-  if (!e) return(false);
-  for (p = let_slots(e); is_slot(p); p = next_slot(p))
-    if (slot_symbol(p) == sym)
-      return(true);
-  return(false);
-}
-
-static bool has_xf_function(s7_pointer f)
-{
-  if (is_any_c_function(f))
-    return((c_function_ext(f)) &&
-	   ((rf_function(f)) || (pf_function(f)) || (if_function(f))));
-
-  if (is_syntax(f))
-    return((syntax_rp(f)) || (syntax_pp(f)) || (syntax_ip(f)));
-
-  return(false);
-}
 
 static s7_double set_rf_sr(s7_scheme *sc, s7_pointer **p)
 {
@@ -8108,7 +8124,7 @@ static s7_rf_t set_rf(s7_scheme *sc, s7_pointer expr)
 	{
 	  s7_rp_t rp;
 	  s7_rf_t rf;
-	  int loc;
+	  s7_int loc;
 	  loc = s7_xf_store(sc, NULL);
 	  rp = pair_to_rp(sc, a2);
 	  if (!rp) return(NULL);
@@ -8138,7 +8154,7 @@ static s7_if_t set_if(s7_scheme *sc, s7_pointer expr)
 	{
 	  s7_ip_t ip;
 	  s7_if_t xf;
-	  int loc;
+	  s7_int loc;
 	  s7_xf_store(sc, slot);
 	  loc = s7_xf_store(sc, NULL);
 	  ip = pair_to_ip(sc, a2);
@@ -8472,6 +8488,133 @@ PF_TO_GF(c_pointer, c_c_pointer(sc, arg))
   }
 
 
+/* -------- IF_TO_IF -------- */
+typedef s7_int (*if_if_t)(s7_scheme *sc, s7_int x);
+static s7_int if_if_1(s7_scheme *sc, s7_pointer **p, if_if_t fnc)
+{
+  s7_if_t f;
+  s7_int x;
+  f = (s7_if_t)(**p); (*p)++;	
+  x = f(sc, p);
+  return(fnc(sc, x));
+}
+
+static s7_if_t if_1(s7_scheme *sc, s7_pointer expr, s7_if_t f)
+{
+  if ((is_pair(cdr(expr))) && (is_null(cddr(expr))) && (s7_arg_to_if(sc, cadr(expr))))
+    return(f);
+  return(NULL);
+}
+
+#define IF_TO_IF(CName, Ifnc)			\
+  static s7_int CName ## _if_i(s7_scheme *sc, s7_pointer **rp) {return(if_if_1(sc, rp, Ifnc));} \
+  static s7_if_t CName ## _if(s7_scheme *sc, s7_pointer expr) {return(if_1(sc, expr, CName ## _if_i));}
+
+
+/* -------- IF2_TO_IF -------- */
+typedef s7_int (*if2_if_t)(s7_scheme *sc, s7_int x, s7_int y);
+static s7_int if2_if_1(s7_scheme *sc, s7_pointer **p, if2_if_t fnc)
+{
+  s7_if_t f;
+  s7_int x, y;
+  f = (s7_if_t)(**p); (*p)++;	
+  x = f(sc, p);
+  f = (s7_if_t)(**p); (*p)++;	
+  y = f(sc, p);
+  return(fnc(sc, x, y));
+}
+
+static s7_if_t if_2(s7_scheme *sc, s7_pointer expr, s7_if_t f)
+{
+  if ((is_pair(cdr(expr))) && (is_pair(cddr(expr))) && (is_null(cdddr(expr))) &&
+      (s7_arg_to_if(sc, cadr(expr))) &&
+      (s7_arg_to_if(sc, caddr(expr))))
+    return(f);
+  return(NULL);
+}
+
+#define IF2_TO_IF(CName, Ifnc)						\
+  static s7_int CName ## _if_i2(s7_scheme *sc, s7_pointer **rp) {return(if2_if_1(sc, rp, Ifnc));} \
+  static s7_if_t CName ## _if(s7_scheme *sc, s7_pointer expr) {return(if_2(sc, expr, CName ## _if_i2));}
+
+
+/* -------- IF_3_TO_IF -------- */
+
+typedef s7_int (*if3_if_t)(s7_scheme *sc, s7_int x, s7_int y, s7_int z);
+static s7_int if3_if_1(s7_scheme *sc, s7_pointer **p, if3_if_t fnc)
+{
+  s7_if_t f;
+  s7_int x, y, z;
+  f = (s7_if_t)(**p); (*p)++;	
+  x = f(sc, p);
+  f = (s7_if_t)(**p); (*p)++;	
+  y = f(sc, p);
+  f = (s7_if_t)(**p); (*p)++;	
+  z = f(sc, p);
+  return(fnc(sc, x, y, z));
+}
+
+static s7_if_t if_3(s7_scheme *sc, s7_pointer expr, s7_if_t f1, s7_if_t f2, s7_if_t f3)
+{
+  if (!is_pair(cdr(expr))) return(NULL);
+  if (!s7_arg_to_if(sc, cadr(expr))) return(NULL);
+  if (is_null(cddr(expr))) return(f1);
+  if (!s7_arg_to_if(sc, caddr(expr))) return(NULL);
+  if (is_null(cdddr(expr))) return(f2);
+  if (!s7_arg_to_if(sc, cadddr(expr))) return(NULL);
+  if (is_null(cddddr(expr))) return(f3);
+  return(NULL);
+}
+
+#define IF_3_TO_IF(CName, Ifnc1, Ifnc2, Ifnc3)				\
+  static s7_int CName ## _if_i1(s7_scheme *sc, s7_pointer **rp) {return(if_if_1(sc, rp, Ifnc1));} \
+  static s7_int CName ## _if_i2(s7_scheme *sc, s7_pointer **rp) {return(if2_if_1(sc, rp, Ifnc2));} \
+  static s7_int CName ## _if_i3(s7_scheme *sc, s7_pointer **rp) {return(if3_if_1(sc, rp, Ifnc3));} \
+  static s7_if_t CName ## _if(s7_scheme *sc, s7_pointer expr) {return(if_3(sc, expr, CName ## _if_i1, CName ## _if_i2, CName ## _if_i3));}
+
+
+
+/* -------- IF_TO_PF -------- */
+typedef s7_pointer (*if_pf_t)(s7_scheme *sc, s7_int x);
+static s7_pointer if_p_1(s7_scheme *sc, s7_pointer **p, if_pf_t fnc)
+{
+  s7_if_t f;
+  s7_int x;
+  f = (s7_if_t)(**p); (*p)++;	
+  x = f(sc, p);
+  return(fnc(sc, x));
+}
+
+static s7_pf_t if_pf_1(s7_scheme *sc, s7_pointer expr, s7_pf_t f)
+{
+  if ((is_pair(cdr(expr))) && (is_null(cddr(expr))) && (s7_arg_to_if(sc, cadr(expr))))
+    return(f);
+  return(NULL);
+}
+
+#define IF_TO_PF(CName, Ifnc)			\
+  static s7_pointer CName ## _pf_i(s7_scheme *sc, s7_pointer **rp) {return(if_p_1(sc, rp, Ifnc));} \
+  static s7_pf_t CName ## _pf(s7_scheme *sc, s7_pointer expr) {return(if_pf_1(sc, expr, CName ## _pf_i));}
+
+
+#define PF_TO_IF(CName, Ifnc)						\
+  static s7_int CName ## _if_a(s7_scheme *sc, s7_pointer **p)		\
+  {									\
+    s7_pf_t f;								\
+    s7_pointer arg;							\
+    f = (s7_pf_t)(**p); (*p)++;						\
+    arg = f(sc, p);							\
+    return(Ifnc);							\
+  }									\
+  static s7_if_t CName ## _if(s7_scheme *sc, s7_pointer expr)		\
+  {									\
+    if ((is_pair(cdr(expr))) && (is_null(cddr(expr))) && (s7_arg_to_pf(sc, cadr(expr)))) \
+      return(CName ## _if_a);						\
+    return(NULL);							\
+  }
+
+
+
 #define RF_TO_IF(CName, Rfnc)						\
   static s7_int CName ## _if_r(s7_scheme *sc, s7_pointer **p)		\
   {									\
@@ -8489,63 +8632,12 @@ PF_TO_GF(c_pointer, c_c_pointer(sc, arg))
     return(NULL);							\
   }
 
-#define IF_TO_IF(CName, Ifnc)						\
-  static s7_int CName ## _if_i(s7_scheme *sc, s7_pointer **p)		\
-  {									\
-    s7_if_t f;								\
-    s7_int arg;								\
-    f = (s7_if_t)(**p); (*p)++;						\
-    arg = f(sc, p);							\
-    return(Ifnc);							\
-  }									\
-  static s7_if_t CName ## _if(s7_scheme *sc, s7_pointer expr)		\
-  {									\
-    if ((is_pair(cdr(expr))) && (is_null(cddr(expr))) &&		\
-        (s7_arg_to_if(sc, cadr(expr))))					\
-      return(CName ## _if_i);						\
-    return(NULL);							\
-  }
-
-#define IF2_TO_IF(CName, Ifnc)						\
-  static s7_int CName ## _if_i2(s7_scheme *sc, s7_pointer **p)		\
-  {									\
-    s7_if_t f;								\
-    s7_int x, y;							\
-    f = (s7_if_t)(**p); (*p)++;	x = f(sc, p);				\
-    f = (s7_if_t)(**p); (*p)++;	y = f(sc, p);				\
-    return(Ifnc);							\
-  }									\
-  static s7_if_t CName ## _if(s7_scheme *sc, s7_pointer expr)		\
-  {									\
-    if ((is_pair(cdr(expr))) && (is_pair(cddr(expr))) && (is_null(cdddr(expr))) &&  \
-        (s7_arg_to_if(sc, cadr(expr))) &&				\
-        (s7_arg_to_if(sc, caddr(expr))))				\
-      return(CName ## _if_i2);						\
-    return(NULL);							\
-  }
-
-#define IF_TO_PF(CName, Ifnc)						\
-  static s7_pointer CName ## _pf_i(s7_scheme *sc, s7_pointer **p)	\
-  {									\
-    s7_if_t f;								\
-    s7_int arg;								\
-    f = (s7_if_t)(**p); (*p)++;						\
-    arg = f(sc, p);							\
-    return(Ifnc);							\
-  }									\
-  static s7_pf_t CName ## _pf(s7_scheme *sc, s7_pointer expr)		\
-  {									\
-    if ((is_pair(cdr(expr))) && (is_null(cddr(expr))) &&		\
-        (s7_arg_to_if(sc, cadr(expr))))					\
-      return(CName ## _pf_i);						\
-    return(NULL);							\
-  }
 
 #define RF_TO_PF(CName, Rfnc)						\
   static s7_pointer CName ## _pf_r(s7_scheme *sc, s7_pointer **p)	\
   {									\
     s7_rf_t f;								\
-    s7_double arg;								\
+    s7_double arg;							\
     f = (s7_rf_t)(**p); (*p)++;						\
     arg = f(sc, p);							\
     return(Rfnc);							\
@@ -8557,6 +8649,39 @@ PF_TO_GF(c_pointer, c_c_pointer(sc, arg))
       return(CName ## _pf_r);						\
     return(NULL);							\
   }
+
+#define R_P_F_TO_PF(CName, Rfnc, Pfnc)					\
+  static s7_pointer CName ## _pf_r(s7_scheme *sc, s7_pointer **p)	\
+  {									\
+    s7_rf_t f;								\
+    s7_double arg;							\
+    f = (s7_rf_t)(**p); (*p)++;						\
+    arg = f(sc, p);							\
+    return(Rfnc);							\
+  }									\
+  static s7_pointer CName ## _pf_p(s7_scheme *sc, s7_pointer **p)	\
+  {									\
+    s7_pf_t f;								\
+    s7_pointer arg;							\
+    f = (s7_pf_t)(**p); (*p)++;						\
+    arg = f(sc, p);							\
+    return(Pfnc);							\
+  }									\
+  static s7_pf_t CName ## _pf(s7_scheme *sc, s7_pointer expr)		\
+  {									\
+    if ((is_pair(cdr(expr))) && (is_null(cddr(expr))))			\
+      {									\
+	ptr_int loc;							\
+        loc = rc_loc(sc);						\
+	if (s7_arg_to_rf(sc, cadr(expr)))				\
+	  return(CName ## _pf_r);					\
+	sc->cur_rf->cur = rc_go(sc, loc);				\
+	if (s7_arg_to_pf(sc, cadr(expr)))				\
+	  return(CName ## _pf_p);					\
+      }									\
+    return(NULL);							\
+  }
+
 
 #define RF_TO_RF(CName, Rfnc)						\
   static s7_double CName ## _rf_r(s7_scheme *sc, s7_pointer **p)	\
@@ -8627,60 +8752,6 @@ PF_TO_GF(c_pointer, c_c_pointer(sc, arg))
     if (is_null(cdddr(expr))) return(CName ## _rf_r2);			\
     if (!s7_arg_to_rf(sc, cadddr(expr))) return(NULL);			\
     if (is_null(cddddr(expr))) return(CName ## _rf_r3);			\
-    return(NULL);							\
-  }
-
-#define IF_3_TO_IF(CName, Rfnc1, Rfnc2, Rfnc3)				\
-  static s7_int CName ## _if_i3(s7_scheme *sc, s7_pointer **p)	\
-  {									\
-    s7_if_t f;								\
-    s7_int x, y, z;							\
-    f = (s7_if_t)(**p); (*p)++;	x = f(sc, p);				\
-    f = (s7_if_t)(**p); (*p)++;	y = f(sc, p);				\
-    f = (s7_if_t)(**p); (*p)++;	z = f(sc, p);				\
-    return(Rfnc3);							\
-  }									\
-  static s7_int CName ## _if_i2(s7_scheme *sc, s7_pointer **p)	\
-  {									\
-    s7_if_t f;								\
-    s7_int x, y;							\
-    f = (s7_if_t)(**p); (*p)++;	x = f(sc, p);				\
-    f = (s7_if_t)(**p); (*p)++;	y = f(sc, p);				\
-    return(Rfnc2);							\
-  }									\
-  static s7_int CName ## _if_i1(s7_scheme *sc, s7_pointer **p)	\
-  {									\
-    s7_if_t f;								\
-    s7_int x;							\
-    f = (s7_if_t)(**p); (*p)++;	x = f(sc, p);				\
-    return(Rfnc1);							\
-  }									\
-  static s7_if_t CName ## _if(s7_scheme *sc, s7_pointer expr)		\
-  {									\
-    if (!is_pair(cdr(expr))) return(NULL);				\
-    if (!s7_arg_to_if(sc, cadr(expr))) return(NULL);			\
-    if (is_null(cddr(expr))) return(CName ## _if_i1);			\
-    if (!s7_arg_to_if(sc, caddr(expr))) return(NULL);			\
-    if (is_null(cdddr(expr))) return(CName ## _if_i2);			\
-    if (!s7_arg_to_if(sc, cadddr(expr))) return(NULL);			\
-    if (is_null(cddddr(expr))) return(CName ## _if_i3);			\
-    return(NULL);							\
-  }
-
-
-#define PF_TO_IF(CName, Ifnc)						\
-  static s7_int CName ## _if_a(s7_scheme *sc, s7_pointer **p)		\
-  {									\
-    s7_pf_t f;								\
-    s7_pointer arg;							\
-    f = (s7_pf_t)(**p); (*p)++;						\
-    arg = f(sc, p);							\
-    return(Ifnc);							\
-  }									\
-  static s7_if_t CName ## _if(s7_scheme *sc, s7_pointer expr)		\
-  {									\
-    if ((is_pair(cdr(expr))) && (is_null(cddr(expr))) && (s7_arg_to_pf(sc, cadr(expr)))) \
-      return(CName ## _if_a);						\
     return(NULL);							\
   }
 
@@ -8783,7 +8854,7 @@ static s7_double if_rf_xxx(s7_scheme *sc, s7_pointer **p)
 static s7_rf_t if_rf(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer test, t, f;
-  int test_loc, t_loc, f_loc = 0, e1_loc = 0, e2_loc;
+  s7_int test_loc, t_loc, f_loc = 0, e1_loc = 0, e2_loc;
 
   if ((is_null(cdr(expr))) || (is_null(cddr(expr))) || (is_null(cdddr(expr)))) return(NULL);
   test = cadr(expr);
@@ -8868,7 +8939,7 @@ static s7_pf_t and_pf(s7_scheme *sc, s7_pointer expr)
   len = s7_list_length(sc, expr);
   if (len == 3)
     {
-      int loc1, loc2, eloc;
+      s7_int loc1, loc2, eloc;
       loc1 = s7_xf_store(sc, NULL);
       loc2 = s7_xf_store(sc, NULL);
       eloc = s7_xf_store(sc, NULL);
@@ -9711,7 +9782,7 @@ bool s7_is_complex(s7_pointer p)
 }
 
 
-static s7_int c_gcd(s7_int u, s7_int v)
+static s7_int c_gcd(s7_scheme *sc, s7_int u, s7_int v)
 {
   s7_int a, b;
 
@@ -10047,7 +10118,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_int a, s7_int b)
       a = -a;
       b = -b;
     }
-  divisor = c_gcd(a, b);
+  divisor = c_gcd(sc, a, b);
   if (divisor != 1)
     {
       a /= divisor;
@@ -12452,7 +12523,8 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
     }
 }
 
-IF_TO_IF(abs, (arg < 0) ? (-arg) : arg)
+static s7_int c_abs_i(s7_scheme *sc, s7_int arg) {return((arg < 0) ? (-arg) : arg);}
+IF_TO_IF(abs, c_abs_i)
 RF_TO_RF(abs, (arg < 0.0) ? (-arg) : arg)
 
 
@@ -12495,7 +12567,7 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
     }
 }
 
-IF_TO_IF(magnitude, (arg < 0) ? -arg : arg)
+IF_TO_IF(magnitude, c_abs_i)
 RF_TO_RF(magnitude, (arg < 0.0) ? -arg : arg)
 #endif
 
@@ -13055,37 +13127,37 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
 RF_TO_RF(tan, tan(arg))
 
 
-static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
+static s7_pointer c_asin(s7_scheme *sc, s7_double x)
 {
-  #define H_asin "(asin z) returns asin(z); (sin (asin x)) = x"
-  s7_pointer n;
+  s7_double absx, recip;
+  s7_Complex result;
 
-  n = car(args);
+  absx = fabs(x);
+  if (absx <= 1.0)
+    return(make_real(sc, asin(x)));
+
+  /* otherwise use maxima code: */
+  recip = 1.0 / absx;
+  result = (M_PI / 2.0) - (_Complex_I * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip)))));
+  if (x < 0.0)
+    return(s7_from_c_complex(sc, -result));
+  return(s7_from_c_complex(sc, result));
+}
+
+static s7_pointer g_asin_1(s7_scheme *sc, s7_pointer n)
+{
   switch (type(n))
     {
     case T_INTEGER:
       if (integer(n) == 0) return(small_int(0));                    /* (asin 0) -> 0 */
+      /* in netBSD, (asin 2) returns 0.25383842987008+0.25383842987008i according to Peter Bex */
+      return(c_asin(sc, (s7_double)integer(n)));
 
-      /* in netBSD, (asin 2) returns 0.25383842987008+0.25383842987008i according to Peter Bex
-       */
+    case T_RATIO:
+      return(c_asin(sc, (s7_double)numerator(n) / (s7_double)denominator(n)));
 
     case T_REAL:
-    case T_RATIO:
-      {
-	s7_double x, absx, recip;
-	s7_Complex result;
-	x = real_to_double(sc, n, "asin");
-	absx = fabs(x);
-	if (absx <= 1.0)
-	  return(make_real(sc, asin(x)));
-
-	/* otherwise use maxima code: */
-	recip = 1.0 / absx;
- 	result = (M_PI / 2.0) - (_Complex_I * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip)))));
-	if (x < 0.0)
-	  return(s7_from_c_complex(sc, -result));
-	return(s7_from_c_complex(sc, result));
-      }
+      return(c_asin(sc, real(n)));
 
     case T_COMPLEX:
 #if HAVE_COMPLEX_NUMBERS
@@ -13110,9 +13182,18 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
 #endif
 
     default:
-      method_or_bust_with_type(sc, n, sc->ASIN, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, n, sc->ASIN, list_1(sc, n), A_NUMBER, 0);
     }
 }
+
+static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
+{
+  #define H_asin "(asin z) returns asin(z); (sin (asin x)) = x"
+  return(g_asin_1(sc, car(args)));
+}
+
+R_P_F_TO_PF(asin, c_asin(sc, arg), g_asin_1(sc, arg))
+/* GF_TO_GF could remake_real or reuse the input for the complex output if mutable */
 
 
 static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
@@ -13760,14 +13841,13 @@ static s7_pointer g_expt_temp_s(s7_scheme *sc, s7_pointer args)
 #endif
 
 
-static s7_int c_lcm(s7_int a, s7_int b)
+static s7_int c_lcm(s7_scheme *sc, s7_int a, s7_int b)
 {
   if ((a == 0) || (b == 0)) return(0);
   if (a < 0) a = -a;
   if (b < 0) b = -b;
-  return((a / c_gcd(a, b)) * b);
+  return((a / c_gcd(sc, a, b)) * b);
 }
-
 
 static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 {
@@ -13792,19 +13872,19 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
       switch (type(x))
 	{
 	case T_INTEGER:
-	  n = c_lcm(n, integer(x));
+	  n = c_lcm(sc, n, integer(x));
 	  if (d != 0) d = 1;
 	  break;
 
 	case T_RATIO:
-	  n = c_lcm(n, s7_numerator(x));
+	  n = c_lcm(sc, n, s7_numerator(x));
 	  if (d == 0)
 	    {
 	      if (p == args)
 		d = s7_denominator(x);
 	      else d = 1;
 	    }
-	  else d = c_gcd(d, s7_denominator(x));
+	  else d = c_gcd(sc, d, s7_denominator(x));
 	  break;
 
 	default:
@@ -13825,7 +13905,7 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
   return(s7_make_ratio(sc, n, d));
 }
 
-IF2_TO_IF(lcm, c_lcm(x, y))
+IF2_TO_IF(lcm, c_lcm)
 
 
 static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
@@ -13851,12 +13931,12 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
       switch (type(x))
 	{
 	case T_INTEGER:
-	  n = c_gcd(n, integer(x));
+	  n = c_gcd(sc, n, integer(x));
 	  break;
 
 	case T_RATIO:
-	  n = c_gcd(n, s7_numerator(x));
-	  d = c_lcm(d, s7_denominator(x));
+	  n = c_gcd(sc, n, s7_numerator(x));
+	  d = c_lcm(sc, d, s7_denominator(x));
 	  if (d < 0) return(simple_out_of_range(sc, sc->GCD, args, RESULT_IS_TOO_LARGE));
 	  break;
 
@@ -13871,7 +13951,7 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
   return(s7_make_ratio(sc, n, d));
 }
 
-IF2_TO_IF(gcd, c_gcd(x, y))
+IF2_TO_IF(gcd, c_gcd)
 
 
 static s7_pointer s7_truncate(s7_scheme *sc, s7_pointer caller, s7_double xf)   /* can't use "truncate" -- it's in unistd.h */
@@ -14034,7 +14114,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 }
 
 
-IF2_TO_IF(quotient, c_quo_int(sc, x, y))
+IF2_TO_IF(quotient, c_quo_int)
 RF2_TO_RF(quotient, c_quo_dbl(sc, x, y))
 
 
@@ -14259,7 +14339,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
     }
 }
 
-IF2_TO_IF(remainder, c_rem_int(sc, x, y))
+IF2_TO_IF(remainder, c_rem_int)
 RF2_TO_RF(remainder, c_rem_dbl(sc, x, y))
 
 
@@ -14480,7 +14560,7 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
 RF_TO_IF(round, (s7_int)round_per_R5RS(arg))
 
 
-static s7_int c_mod(s7_int x, s7_int y)
+static s7_int c_mod(s7_scheme *sc, s7_int x, s7_int y)
 {
   s7_int z;
   /* if (y == 0) return(x); */ /* else arithmetic exception, but we're checking for this elsewhere */
@@ -14515,7 +14595,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	  if ((integer(y) == 1) || (integer(y) == -1))
 	    return(small_int(0));
 	  /* (modulo most-negative-fixnum -1) will segfault with arithmetic exception */
-	  return(make_integer(sc, c_mod(integer(x), integer(y))));
+	  return(make_integer(sc, c_mod(sc, integer(x), integer(y))));
 
 	case T_RATIO:
 	  n1 = integer(x);
@@ -14563,7 +14643,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	  n2 = numerator(y); /* can't be 0 */
 	  d2 = denominator(y);
 	  if (d1 == d2)
-	    return(s7_make_ratio(sc, c_mod(n1, n2), d1));
+	    return(s7_make_ratio(sc, c_mod(sc, n1, n2), d1));
 
 	RATIO_MOD_RATIO:
 
@@ -14676,7 +14756,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
     }
 }
 
-IF2_TO_IF(modulo, c_mod(x, y))
+IF2_TO_IF(modulo, c_mod)
 RF2_TO_RF(modulo, x - y * (s7_int)floor(x / y))
 
 static s7_pointer mod_si;
@@ -14745,7 +14825,7 @@ static s7_pointer g_mod_si_is_zero(s7_scheme *sc, s7_pointer args)
 /* !WITH_GMP */
 
 
-static int reduce_fraction(s7_int *numer, s7_int *denom)
+static int reduce_fraction(s7_scheme *sc, s7_int *numer, s7_int *denom)
 {
   /* we're assuming in several places that we have a normal s7 rational after returning,
    *    so the denominator needs to be positive.
@@ -14785,7 +14865,7 @@ static int reduce_fraction(s7_int *numer, s7_int *denom)
       *denom = -*denom; 
       *numer = -*numer;
     }
-  divisor = c_gcd(*numer, *denom);
+  divisor = c_gcd(sc, *numer, *denom);
   if (divisor != 1)
     {
       *numer /= divisor;
@@ -14962,7 +15042,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	    }
 	  if (is_null(p)) return(s7_make_ratio(sc, dn, den_a));
 	  num_a = dn;
-	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	  if (reduce_fraction(sc, &num_a, &den_a) == T_INTEGER)
 	    goto ADD_INTEGERS;
 	  goto ADD_RATIOS;
 
@@ -15027,7 +15107,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	      }
 	    /* (+ 1/100 99/100 (- most-positive-fixnum 2)) should not be converted to real
 	     */
-	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	    if (reduce_fraction(sc, &num_a, &den_a) == T_INTEGER)
 	    goto ADD_INTEGERS;
 	  goto ADD_RATIOS;
 	  }
@@ -15642,11 +15722,11 @@ static s7_rf_t add_rf(s7_scheme *sc, s7_pointer expr)
   int len;
   len = s7_list_length(sc, expr);
   if (len == 3)
-    return(is_com_rf_2(sc, expr, add_rf_rs, add_rf_rx, add_rf_sx, add_rf_ss, add_rf_xx));
+    return(com_rf_2(sc, expr, add_rf_rs, add_rf_rx, add_rf_sx, add_rf_ss, add_rf_xx));
   if (len == 4)
-    return(is_com_rf_3(sc, expr, add_rf_rss, add_rf_rsx, add_rf_ssx, add_rf_rxx, add_rf_sxx, add_rf_sss, add_rf_xxx));
+    return(com_rf_3(sc, expr, add_rf_rss, add_rf_rsx, add_rf_ssx, add_rf_rxx, add_rf_sxx, add_rf_sss, add_rf_xxx));
   if (len == 5)
-    return(is_rf_4(sc, expr, add_rf_xxxx));
+    return(s7_rf_4(sc, expr, add_rf_xxxx));
   return(NULL);
 }
 
@@ -15797,7 +15877,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 #endif
 	    if (is_null(p)) return(s7_make_ratio(sc, dn, den_a));
 	    num_a = dn;
-	    if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	    if (reduce_fraction(sc, &num_a, &den_a) == T_INTEGER)
 	      goto SUBTRACT_INTEGERS;
 	    goto SUBTRACT_RATIOS;
 	  }
@@ -15857,7 +15937,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 	  if (is_null(p)) return(s7_make_ratio(sc, num_a - (den_a * integer(x)), den_a));
 	  num_a -= (den_a * integer(x));
 #endif
-	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	  if (reduce_fraction(sc, &num_a, &den_a) == T_INTEGER)
 	    goto SUBTRACT_INTEGERS;
 	  goto SUBTRACT_RATIOS;
 
@@ -15917,7 +15997,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 		if (is_null(p))
 		  return(s7_make_ratio(sc, num_a, den_a));
 	      }
-	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	    if (reduce_fraction(sc, &num_a, &den_a) == T_INTEGER)
 	    goto SUBTRACT_INTEGERS;
 	  goto SUBTRACT_RATIOS;
 	  }
@@ -16301,7 +16381,10 @@ static s7_pointer g_sub_random_rc(s7_scheme *sc, s7_pointer args)
 
 #if (!WITH_GMP)
 RF_3_TO_RF(subtract, -x, x - y, x - y - z)
-IF_3_TO_IF(subtract, -x, x - y, x - y - z)
+static s7_int c_sub_i1(s7_scheme *sc, s7_int x) {return(-x);}
+static s7_int c_sub_i2(s7_scheme *sc, s7_int x, s7_int y) {return(x - y);}
+static s7_int c_sub_i3(s7_scheme *sc, s7_int x, s7_int y, s7_int z) {return(x - y - z);}
+IF_3_TO_IF(subtract, c_sub_i1, c_sub_i2, c_sub_i3)
 #endif
 
 
@@ -16402,7 +16485,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 #endif
 	  den_a = denominator(x);
 	  if (is_null(p)) return(s7_make_ratio(sc, num_a, den_a));
-	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	  if (reduce_fraction(sc, &num_a, &den_a) == T_INTEGER)
 	    goto MULTIPLY_INTEGERS;
 	  goto MULTIPLY_RATIOS;
 
@@ -16468,7 +16551,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	  num_a *= integer(x);
 #endif
 	  if (is_null(p)) return(s7_make_ratio(sc, num_a, den_a));
-	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	  if (reduce_fraction(sc, &num_a, &den_a) == T_INTEGER)
 	    goto MULTIPLY_INTEGERS;
 	  goto MULTIPLY_RATIOS;
 
@@ -16514,7 +16597,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	    den_a *= d2;
 #endif
 	    if (is_null(p)) return(s7_make_ratio(sc, num_a, den_a));
-	    if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	    if (reduce_fraction(sc, &num_a, &den_a) == T_INTEGER)
 	      goto MULTIPLY_INTEGERS;
 	    goto MULTIPLY_RATIOS;
 	  }
@@ -17181,11 +17264,11 @@ static s7_rf_t multiply_rf(s7_scheme *sc, s7_pointer expr)
   int len;
   len = s7_list_length(sc, expr);
   if (len == 3)
-    return(is_com_rf_2(sc, expr, multiply_rf_rs, multiply_rf_rx, multiply_rf_sx, multiply_rf_ss, multiply_rf_xx));
+    return(com_rf_2(sc, expr, multiply_rf_rs, multiply_rf_rx, multiply_rf_sx, multiply_rf_ss, multiply_rf_xx));
   if (len == 4)
-    return(is_com_rf_3(sc, expr, multiply_rf_rss, multiply_rf_rsx, multiply_rf_ssx, multiply_rf_rxx, multiply_rf_sxx, multiply_rf_sss, multiply_rf_xxx));
+    return(com_rf_3(sc, expr, multiply_rf_rss, multiply_rf_rsx, multiply_rf_ssx, multiply_rf_rxx, multiply_rf_sxx, multiply_rf_sss, multiply_rf_xxx));
   if (len == 5)
-    return(is_rf_4(sc, expr, multiply_rf_xxxx));
+    return(s7_rf_4(sc, expr, multiply_rf_xxxx));
   return(NULL);
 }
 #endif /* with-gmp */
@@ -17282,7 +17365,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	    return(s7_make_ratio(sc, num_a, integer(x)));
 
 	  den_a = integer(x);
-	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	  if (reduce_fraction(sc, &num_a, &den_a) == T_INTEGER)
 	    goto DIVIDE_INTEGERS;
 	  goto DIVIDE_RATIOS;
 
@@ -17310,7 +17393,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 #endif
 	  den_a = numerator(x);
 	  if (is_null(p)) return(s7_make_ratio(sc, num_a, den_a));
-	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	  if (reduce_fraction(sc, &num_a, &den_a) == T_INTEGER)
 	    goto DIVIDE_INTEGERS;
 	  goto DIVIDE_RATIOS;
 
@@ -17384,7 +17467,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	  den_a *= integer(x);
 #endif
 	  if (is_null(p)) return(s7_make_ratio(sc, num_a, den_a));
-	  if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	  if (reduce_fraction(sc, &num_a, &den_a) == T_INTEGER)
 	    goto DIVIDE_INTEGERS;
 	  goto DIVIDE_RATIOS;
 
@@ -17443,7 +17526,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 		if (is_null(p))
 		  return(s7_make_ratio(sc, num_a, den_a));
 	      }
-	    if (reduce_fraction(&num_a, &den_a) == T_INTEGER)
+	    if (reduce_fraction(sc, &num_a, &den_a) == T_INTEGER)
 	      goto DIVIDE_INTEGERS;
 	    goto DIVIDE_RATIOS;
 	  }
@@ -18141,8 +18224,16 @@ static s7_pointer g_min_f2(s7_scheme *sc, s7_pointer args)
   method_or_bust(sc, y, sc->MIN, args, T_REAL, 2);
 }
 
-IF_3_TO_IF(max, x, (x >= y) ? x : y, ((x >= y) ? ((x >= z) ? x : z) : ((y >= z) ? y : z)))
-IF_3_TO_IF(min, x, (x <= y) ? x : y, ((x <= y) ? ((x <= z) ? x : z) : ((y <= z) ? y : z)))
+static s7_int c_max_i1(s7_scheme *sc, s7_int x) {return(x);}
+static s7_int c_max_i2(s7_scheme *sc, s7_int x, s7_int y) {return((x >= y) ? x : y);}
+static s7_int c_max_i3(s7_scheme *sc, s7_int x, s7_int y, s7_int z) {return(((x >= y) ? ((x >= z) ? x : z) : ((y >= z) ? y : z)));}
+IF_3_TO_IF(max, c_max_i1, c_max_i2, c_max_i3)
+
+static s7_int c_min_i1(s7_scheme *sc, s7_int x) {return(x);}
+static s7_int c_min_i2(s7_scheme *sc, s7_int x, s7_int y) {return((x <= y) ? x : y);}
+static s7_int c_min_i3(s7_scheme *sc, s7_int x, s7_int y, s7_int z) {return(((x <= y) ? ((x <= z) ? x : z) : ((y <= z) ? y : z)));}
+IF_3_TO_IF(min, c_min_i1, c_min_i2, c_min_i3)
+
 RF_3_TO_RF(max, x, (x >= y) ? x : y, ((x >= y) ? ((x >= z) ? x : z) : ((y >= z) ? y : z)))
 RF_3_TO_RF(min, x, (x <= y) ? x : y, ((x <= y) ? ((x <= z) ? x : z) : ((y <= z) ? y : z)))
 #endif
@@ -20185,7 +20276,8 @@ static s7_pointer g_is_even(s7_scheme *sc, s7_pointer args)
 }
 
 #if (!WITH_GMP)
-IF_TO_PF(is_even, ((arg & 1) == 0) ? sc->T : sc->F)
+static s7_pointer c_is_even(s7_scheme *sc, s7_int arg) {return(((arg & 1) == 0) ? sc->T : sc->F);}
+IF_TO_PF(is_even, c_is_even)
 #endif
 
 
@@ -20206,7 +20298,8 @@ static s7_pointer g_is_odd(s7_scheme *sc, s7_pointer args)
 }
 
 #if (!WITH_GMP)
-IF_TO_PF(is_odd, ((arg & 1) == 0) ? sc->F : sc->T)
+static s7_pointer c_is_odd(s7_scheme *sc, s7_int arg) {return(((arg & 1) == 0) ? sc->F : sc->T);}
+IF_TO_PF(is_odd, c_is_odd)
 #endif
 
 
@@ -20423,7 +20516,8 @@ static s7_pointer g_integer_length(s7_scheme *sc, s7_pointer args)
 }
 
 #if (!WITH_GMP)
-IF_TO_IF(integer_length, ((arg < 0) ? integer_length(-(arg + 1)) : integer_length(arg)))
+static s7_int c_integer_length(s7_scheme *sc, s7_int arg) {return((arg < 0) ? integer_length(-(arg + 1)) : integer_length(arg));}
+IF_TO_IF(integer_length, c_integer_length)
 #endif
 #endif
 
@@ -20490,7 +20584,8 @@ static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
 }
 
 #if (!WITH_GMP)
-IF2_TO_IF(logior, x | y)
+static s7_int c_logior(s7_scheme *sc, s7_int x, s7_int y) {return(x | y);}
+IF2_TO_IF(logior, c_logior)
 #endif
 
 
@@ -20510,7 +20605,8 @@ static s7_pointer g_logxor(s7_scheme *sc, s7_pointer args)
 }
 
 #if (!WITH_GMP)
-IF2_TO_IF(logxor, x ^ y)
+static s7_int c_logxor(s7_scheme *sc, s7_int x, s7_int y) {return(x ^ y);}
+IF2_TO_IF(logxor, c_logxor)
 #endif
 
 
@@ -20530,7 +20626,8 @@ static s7_pointer g_logand(s7_scheme *sc, s7_pointer args)
 }
 
 #if (!WITH_GMP)
-IF2_TO_IF(logand, x & y)
+static s7_int c_logand(s7_scheme *sc, s7_int x, s7_int y) {return(x & y);}
+IF2_TO_IF(logand, c_logand)
 #endif
 
 
@@ -20543,7 +20640,8 @@ static s7_pointer g_lognot(s7_scheme *sc, s7_pointer args)
 }
 
 #if (!WITH_GMP)
-IF_TO_IF(lognot, ~arg)
+static s7_int c_lognot(s7_scheme *sc, s7_int arg) {return(~arg);}
+IF_TO_IF(lognot, c_lognot)
 #endif
 
 /* logbit?  CL is (logbitp index int) using 2^index, but that order strikes me as backwards
@@ -20633,7 +20731,7 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
 }
 
 #if (!WITH_GMP)
-IF2_TO_IF(ash, c_ash(sc, x, y))
+IF2_TO_IF(ash, c_ash)
 #endif
 
 
@@ -20931,7 +21029,8 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 }
 
 #if (!WITH_GMP)
-IF_TO_IF(random, (s7_int)s7_round(arg * next_random(sc->default_rng)))
+static s7_int c_random_i(s7_scheme *sc, s7_int arg) {return(s7_round(arg * next_random(sc->default_rng)));}
+IF_TO_IF(random, c_random_i)
 RF_TO_RF(random, arg * next_random(sc->default_rng))
 #endif
 
@@ -21040,7 +21139,7 @@ static s7_pointer g_integer_to_char(s7_scheme *sc, s7_pointer args)
   return(c_integer_to_char(sc, car(args)));
 }
 
-IF_TO_PF(integer_to_char, c_int_to_char(sc, arg))
+IF_TO_PF(integer_to_char, c_int_to_char)
 
 
 static s7_pointer c_char_upcase(s7_scheme *sc, s7_pointer arg)
@@ -34955,7 +35054,7 @@ static s7_rf_t is_fv_set_rf_expanded(s7_scheme *sc, s7_pointer fv, s7_pointer in
     {
       s7_ip_t ip;
       s7_if_t xf;
-      int loc;
+      s7_int loc;
       if (!is_pair(val_expr)) return(NULL);
       loc = s7_xf_store(sc, NULL);
       ip = pair_to_ip(sc, ind_sym);
@@ -46522,6 +46621,8 @@ static void init_choosers(s7_scheme *sc)
   s7_rf_set_function(slot_value(global_slot(sc->TANH)), tanh_rf);
   s7_rf_set_function(slot_value(global_slot(sc->EXP)), exp_rf);
 
+  s7_gf_set_function(slot_value(global_slot(sc->ASIN)), asin_pf);
+
   s7_rf_set_function(slot_value(global_slot(sc->RANDOM)), random_rf);
   s7_if_set_function(slot_value(global_slot(sc->RANDOM)), random_if);
 
@@ -53529,7 +53630,7 @@ static s7_pointer check_do(s7_scheme *sc)
 
 static s7_pf_t xf_function(s7_scheme *sc, s7_pointer lp)
 {
-  int loc;
+  s7_int loc;
   s7_pointer f;
   s7_rp_t rp;
   s7_pp_t pp;
@@ -54186,7 +54287,7 @@ static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc)
 	  s7_pointer old_e, stepper;
 	  int var_len;
 	  s7_rp_t rp;
-	  s7_rf_t rf = NULL, varf = NULL;
+	  s7_rf_t varf = NULL;
 
 	  stepper = slot_value(step_slot);
 	  old_e = sc->envir;
@@ -54195,19 +54296,18 @@ static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc)
 	  s7_xf_new(sc, old_e);
 	  for (var_len = 0, p = let_vars; is_pair(p); var_len++, p = cdr(p))
 	    {
-	      int loc;
+	      s7_int var_loc;
 	      s7_pointer expr, fcar;
-	      loc = s7_xf_store(sc, NULL);
+	      var_loc = s7_xf_store(sc, NULL);
 	      expr = cadar(p);
 	      fcar = find_symbol_checked(sc, car(expr));
 	      rp = rf_function(fcar);
-	      rf = rp(sc, expr);
-	      if (!rf) break;
-	      s7_xf_store_at(sc, loc, (s7_pointer)rf);
+	      varf = rp(sc, expr);
+	      if (!varf) break;
+	      s7_xf_store_at(sc, var_loc, (s7_pointer)varf);
 	      if (let_star)
 		add_slot(sc, caar(p), s7_make_mutable_real(sc, 1.5));
 	    }
-	  varf = rf;
 
 	  if (is_null(p))
 	    {
@@ -54268,8 +54368,9 @@ static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc)
 			    }
 			  for (i = 0; i < body_len; i++)
 			    {
-			      rf = (s7_rf_t)(**rp); (*rp)++;
-			      rf(sc, rp);
+			      s7_pf_t pf;
+			      pf = (s7_pf_t)(**rp); (*rp)++;
+			      pf(sc, rp);
 			    }
 			}
 		    }
@@ -69798,21 +69899,21 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7 15.8 15.9
  *
- * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1127 1143
+ * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1127 1124
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136 1134
  * teq           |      |      | 6612                     3887 3020 2516 2468 2468
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212 3219
  * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3817
- * tform         |      |      |                          6816 5536 4287 3996 4021
- * tmap          |      |      | 11.0           5031 4769 4685 4557 4230 4157 4162
- * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 5948
+ * tform         |      |      |                          6816 5536 4287 3996 4015
+ * tmap          |      |      | 11.0           5031 4769 4685 4557 4230 4157 4168
+ * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 5943
  * titer         |      |      |                          7503 6793 6351 6048 6046
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 6389
  * thash         |      |      |                          50.7 23.8 14.9 13.7 13.7
  *               |      |      |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 14.0
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 14.8
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 36.3 36.4
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 36.3 36.3
  * 
  * ----------------------------------------------------------------------------------
  *
@@ -69934,5 +70035,4 @@ int main(int argc, char **argv)
  * remember to check roundcube
  * bignum morally-equal? ignores float-epsilon
  * someday fix the freed snd_fd problem
- * s7_is_rf_2 etc are bad names (exported currently)
  */

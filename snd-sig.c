@@ -3011,14 +3011,6 @@ void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection)
 
 /* smooth-channel could be a built-in virtual op, but the smoothed section is never long, so it doesn't save anything */
 
-#if (!DISABLE_SINCOS) && defined(__GNUC__) && defined(__linux__)
-  #define HAVE_SINCOS 1
-  void sincos(double x, double *sin, double *cos);
-#else
-  #define HAVE_SINCOS 0
-#endif
-
-
 static void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int edpos)
 {
   mus_float_t *data = NULL;
@@ -3058,26 +3050,8 @@ static void smooth_channel(chan_info *cp, mus_long_t beg, mus_long_t dur, int ed
       scale = 0.5 * fabs(y0 - y1);
       /* if scale is very small, it might work here to just use linear interpolation, but that case appears to be very uncommon.
        */
-#if HAVE_SINCOS
-      {
-	double sn, cs, isn, ics;
-	mus_long_t dur1;
-	if (dur & 1) dur1 = dur - 1; else dur1 = dur;
-	sincos(incr, &isn, &ics);
-	incr *= 2.0;
-	for (k = 0; k < dur1; k += 2, angle += incr) 
-	  {
-	    sincos(angle, &sn, &cs);
-	    data[k] = (off + scale * cs);
-	    data[k + 1] = (off + scale * (cs * ics - sn * isn));
-	  }
-	if (dur1 < dur)
-	  data[k] = (off + scale * cos(angle));
-      }
-#else
       for (k = 0; k < dur; k++, angle += incr) 
 	data[k] = (off + scale * cos(angle));
-#endif
       change_samples(beg, dur, data, cp, origin, edpos, ((y0 > y1) && (y1 >= 0.0)) ? y0 : -1.0);
     }
   if (origin) free(origin);
