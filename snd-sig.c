@@ -3556,7 +3556,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		  e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7));
 		  old_e = s7_set_curlet(s7, e);                  /* new env for map lambda */
 		  /* we need to connect to the lambda's closure so subsequent symbol lookups work right */
-		  y = s7_make_mutable_real(s7, 1.5);                          /* slot for the map lambda arg */
+		  y = s7_make_mutable_real(s7, 1.5);             /* slot for the map lambda arg */
 		  yp = s7_make_slot(s7, e, arg, y);
 
 		  s7_xf_new(s7, e);

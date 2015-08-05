@@ -39939,6 +39939,47 @@ EDITS: 1
 	  (vector-set! fv i (asin (vector-ref fv1 i))))))
     (test (fv138) (vector (asin 0.0) (asin 0.6) (asin 1.2) (asin 1.8)))
     
+    (define (fv139)
+      (with-output-to-string
+	(lambda ()
+	  (do ((i 80 (+ i 1)))
+	      ((= i 84))
+	    (write-char (integer->char i))))))
+    (test (fv139) "PQRS")
+    
+    (define (fv140)
+      (with-output-to-string
+	(lambda ()
+	  (do ((i 80 (+ i 1)))
+	      ((= i 84))
+	    (write-byte i)))))
+    (test (fv140) "PQRS")
+
+    (define (fv141)
+      (let ((g0 (make-hash-table))
+	    (v (vector 0 1 2 3 4 5)))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 10.0)))
+	    ((= i 4) g0)
+	  (hash-table-set! g0 (vector-ref v i) x))))
+    (test (fv141) (hash-table* 0 0.0 1 10.0 2 20.0 3 30.0))
+    
+    (define (fv142)
+      (let ((g0 (make-hash-table)))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 10.0)))
+	    ((= i 4) g0)
+	  (hash-table-set! g0 i (list x)))))
+    (test (fv142) (hash-table* 0 '(0.0) 1 '(10.0) 2 '(20.0) 3 '(30.0)))
+    
+    (define (fv143)
+      (let ((g0 (make-hash-table))
+	    (v (vector 0 1 2 3 4 5)))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 10.0)))
+	    ((= i 4) g0)
+	  (hash-table-set! g0 (vector-ref v i) (list x)))))
+    (test (fv143) (hash-table* 0 '(0.0) 1 '(10.0) 2 '(20.0) 3 '(30.0)))
     )
   
   (if all-args

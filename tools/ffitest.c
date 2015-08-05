@@ -256,7 +256,7 @@ static s7_pointer g_make_block(s7_scheme *sc, s7_pointer args)
   g->data = (double *)calloc(g->size, sizeof(double));
   new_g = s7_make_object(sc, g_block_type, (void *)g);
   s7_object_set_let(new_g, g_block_methods);
-  s7_openlet(new_g);
+  s7_openlet(sc, new_g);
   return(new_g);
 }
 
@@ -1042,7 +1042,7 @@ int main(int argc, char **argv)
 
   s7_define_function(sc, "open-plus", open_plus, 1, 0, true, plus_help);
   p = s7_sublet(sc, s7_nil(sc), s7_cons(sc, s7_cons(sc, s7_make_symbol(sc, "plus"), s7_name_to_value(sc, "plus")), s7_nil(sc)));
-  s7_openlet(p);
+  s7_openlet(sc, p);
   p1 = s7_apply_function(sc, s7_name_to_value(sc, "open-plus"), s7_list(sc, 3, p, s7_make_integer(sc, 2), s7_make_integer(sc, 3)));
   if ((!s7_is_integer(p1)) ||
       (s7_integer(p1) != 7))
@@ -1134,7 +1134,7 @@ int main(int argc, char **argv)
     if (p != s7_f(sc))
       {fprintf(stderr, "%d: set slot-value %s is not #f?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
-    if (s7_outlet(new_env) != old_env)
+    if (s7_outlet(sc, new_env) != old_env)
       {fprintf(stderr, "%d: outer-env %s?\n", __LINE__, s1 = TO_STR(old_env)); free(s1);}
 
     s7_make_slot(sc, new_env, s7_make_symbol(sc, "var2"), TO_S7_INT(-1));

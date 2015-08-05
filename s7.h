@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.32"
-#define S7_DATE "23-Jul-15"
+#define S7_VERSION "3.33"
+#define S7_DATE "5-Aug-15"
 
 
 typedef long long int s7_int;
@@ -420,14 +420,14 @@ s7_pointer s7_shadow_rootlet(s7_scheme *sc);
 s7_pointer s7_set_shadow_rootlet(s7_scheme *sc, s7_pointer let);
 s7_pointer s7_curlet(s7_scheme *sc);                                        /* (curlet) */
 s7_pointer s7_set_curlet(s7_scheme *sc, s7_pointer e);                      /* returns previous curlet */
-s7_pointer s7_outlet(s7_pointer e);                                         /* (outlet e) */
+  s7_pointer s7_outlet(s7_scheme *sc, s7_pointer e);                        /* (outlet e) */
 s7_pointer s7_sublet(s7_scheme *sc, s7_pointer env, s7_pointer bindings);   /* (sublet e ...) */
 s7_pointer s7_inlet(s7_scheme *sc, s7_pointer bindings);                    /* (inlet ...) */
 s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env);                   /* (let->list env) */
 bool s7_is_let(s7_pointer e);                                               /* )let? e) */
 s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer sym);       /* (let-ref e sym) */
 s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer sym, s7_pointer val); /* (let-set! e sym val) */
-s7_pointer s7_openlet(s7_pointer e);                                        /* (openlet e) */
+  s7_pointer s7_openlet(s7_scheme *sc, s7_pointer e);                       /* (openlet e) */
 bool s7_is_openlet(s7_pointer e);                                           /* (openlet? e) */
 s7_pointer s7_method(s7_scheme *sc, s7_pointer obj, s7_pointer method);
 
@@ -773,6 +773,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 5-Aug:     added s7_scheme* arg to s7_openlet and s7_outlet.
  * 3-Jul:     s7_Double -> s7_double, s7_Int -> s7_int. Removed function_chooser_data.
  * 27-Jun:    s7_rf_t, s7_rp_t etc.
  * 19-Jun:    removed the ex_parser stuff, set_step_safe, s7_ex_fallback.
