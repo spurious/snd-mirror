@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 6
-#define MUS_REVISION 12
-#define MUS_DATE "5-Jul-15"
+#define MUS_REVISION 13
+#define MUS_DATE "5-Aug-15"
 
 /* isn't mus_env_interp backwards? */
 
@@ -494,12 +494,8 @@ MUS_EXPORT mus_float_t *mus_locsig_outf(mus_any *ptr);
 MUS_EXPORT mus_float_t *mus_locsig_revf(mus_any *ptr);
 MUS_EXPORT void *mus_locsig_closure(mus_any *ptr);
 MUS_EXPORT void mus_locsig_set_detour(mus_any *ptr, void (*detour)(mus_any *ptr, mus_long_t val));
-MUS_EXPORT bool mus_locsig_output_is_safe(mus_any *ptr);
 MUS_EXPORT int mus_locsig_channels(mus_any *ptr);
 MUS_EXPORT int mus_locsig_reverb_channels(mus_any *ptr);
-MUS_EXPORT mus_any *mus_locsig_out_writer(mus_any *ptr);
-MUS_EXPORT mus_any *mus_locsig_rev_writer(mus_any *ptr);
-MUS_EXPORT void (*mus_locsig_function(mus_any *g))(mus_any *gen, mus_long_t loc, mus_float_t val);
 
 MUS_EXPORT bool mus_is_move_sound(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_move_sound(mus_any *ptr, mus_long_t loc, mus_float_t val);
@@ -596,6 +592,7 @@ MUS_EXPORT mus_any *mus_bank_generator(mus_any *g, int i);
 
 /* Change log.
  *
+ * 5-Aug:      removed some now-obsolete mus_locsig functions.
  * 5-Jul:      added stable arg to mus_make_oscil_bank.
  * 15-Feb:     removed mus_set_name, changed mus_free to void.
  * 31-Jan-15:  removed mus_multiply_arrays.

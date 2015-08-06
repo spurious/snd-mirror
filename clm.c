@@ -11780,14 +11780,6 @@ typedef struct {
 } locs;
 
 
-void (*mus_locsig_function(mus_any *g))(mus_any *gen, mus_long_t loc, mus_float_t val)
-{
-  if (mus_is_locsig(g))
-    return(((locs *)g)->locsig_func);
-  return(NULL);
-}
-
-
 static bool locsig_equalp(mus_any *p1, mus_any *p2) 
 {
   locs *g1 = (locs *)p1;
@@ -11924,9 +11916,6 @@ static mus_float_t *locsig_xcoeffs(mus_any *ptr) {return(((locs *)ptr)->revn);}
 
 mus_float_t *mus_locsig_outf(mus_any *ptr) {return(((locs *)ptr)->outf);}  /* clm2xen.c */
 mus_float_t *mus_locsig_revf(mus_any *ptr) {return(((locs *)ptr)->revf);}
-
-mus_any *mus_locsig_out_writer(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->outn_writer));}
-mus_any *mus_locsig_rev_writer(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->revn_writer));}
 
 void *mus_locsig_closure(mus_any *ptr) {return(((locs *)ptr)->closure);} 
 static void *locsig_set_closure(mus_any *ptr, void *e) {((locs *)ptr)->closure = e; return(e);}
@@ -12523,12 +12512,6 @@ void mus_locsig(mus_any *ptr, mus_long_t loc, mus_float_t val)
 {
   locs *gen = (locs *)ptr;
   (*(gen->locsig_func))(ptr, loc, val);
-}
-
-
-bool mus_locsig_output_is_safe(mus_any *ptr)
-{
-  return(((locs *)ptr)->safe_output);
 }
 
 int mus_locsig_channels(mus_any *ptr)

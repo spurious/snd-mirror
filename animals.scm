@@ -693,12 +693,11 @@
 		((= k pulse-out))
 	      (float-vector-set! rk k (rk!cos gen1 (env pulse-frqf))))
 	    
-	    (do ((k i (+ k 1))
-		 (j 0 (+ j 1)))
+	    (do ((k i (+ k 1)))
 		((= k reset-stop))
 	      (let ((val (* pulse-amp
 			    (env pulsef)
-			    (float-vector-ref rk j))))
+			    (float-vector-ref rk (- k i)))))
 			    ;(rk!cos gen1 (env pulse-frqf)))))
 		(outa k (+ (* val val-amp)
 			   (formant-bank fb val)))))
