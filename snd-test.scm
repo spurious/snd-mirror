@@ -38664,7 +38664,7 @@ EDITS: 1
 	(do ((i 0 (+ i 1)))
 	    ((> i 4) fv)
 	  (float-vector-set! fv i (oscil g)))))
-    (test (catch #t fv51 (lambda args (apply format #f (cadr args)))) "float-vector-set! argument 2, 4, is out of range (it is too large)")
+    (test (catch #t fv51 (lambda args (car args))) 'out-of-range)
     
     (define (fv52)
       (let ((fv (make-float-vector 4))
@@ -38672,7 +38672,7 @@ EDITS: 1
 	(do ((i 0 (+ i 1.1)))
 	    ((= i 4) fv)
 	  (float-vector-set! fv i (oscil g)))))
-    (test (catch #t fv52 (lambda args (apply format #f (cadr args)))) "float-vector-set! argument 2, 1.1, is a real but should be an integer")
+    (test (catch #t fv52 (lambda args (car args))) 'wrong-type-arg)
     
     (define (fv53)
       (let ((fv (make-float-vector 4))
@@ -38680,7 +38680,7 @@ EDITS: 1
 	(do ((i 0 (+ i 2)))
 	    ((= i 3) fv)
 	  (float-vector-set! fv i (oscil g)))))
-    (test (catch #t fv53 (lambda args (apply format #f (cadr args)))) "float-vector-set! argument 2, 4, is out of range (it is too large)")
+    (test (catch #t fv53 (lambda args (car args))) 'out-of-range)
     
     
     (define (fv54)
@@ -38690,7 +38690,7 @@ EDITS: 1
 	     (x 0.0 (+ x 0.1)))
 	    ((> i 4) fv)
 	  (float-vector-set! fv i (oscil g)))))
-    (test (catch #t fv54 (lambda args (apply format #f (cadr args)))) "float-vector-set! argument 2, 4, is out of range (it is too large)")
+    (test (catch #t fv54 (lambda args (car args))) 'out-of-range)
     
     (define (fv55)
       (let ((fv (make-float-vector 4))
@@ -38699,7 +38699,7 @@ EDITS: 1
 	     (x 0.0 (+ x 0.1)))
 	    ((= i 4) fv)
 	  (float-vector-set! fv i (oscil g)))))
-    (test (catch #t fv55 (lambda args (apply format #f (cadr args)))) "float-vector-set! argument 2, 1.1, is a real but should be an integer")
+    (test (catch #t fv55 (lambda args (car args))) 'wrong-type-arg)
     
     (define (fv56)
       (let ((fv (make-float-vector 4))
@@ -38708,8 +38708,8 @@ EDITS: 1
 	     (x 0.0 (+ x 0.1)))
 	    ((= i 3) fv)
 	  (float-vector-set! fv i (oscil g)))))
-    (test (catch #t fv56 (lambda args (apply format #f (cadr args)))) "float-vector-set! argument 2, 4, is out of range (it is too large)")
-
+    (test (catch #t fv56 (lambda args (car args))) 'out-of-range)
+    
     (define (fv57)
       (let ((g (make-oscil 1000))
 	    (e (make-env '(0 0 1 1) :length 5))
@@ -38718,7 +38718,7 @@ EDITS: 1
 	    ((= i 4) fv)
 	  (float-vector-set! fv i (* (env e) (oscil g))))))
     (test (fv57) (float-vector 0.0 0.03549857948940669 0.1405555566658275 0.3108983825177215))
-
+    
     (define (fv58)
       (let ((fv (make-float-vector 4))
 	    (g (make-oscil 1000)))
@@ -39939,6 +39939,24 @@ EDITS: 1
 	  (vector-set! fv i (asin (vector-ref fv1 i))))))
     (test (fv138) (vector (asin 0.0) (asin 0.6) (asin 1.2) (asin 1.8)))
     
+    (define (fv138a)
+      (let ((fv (make-vector 4))
+	    (fv1 (vector 0.0 0.6 1.2 1.8)))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 0.6)))
+	    ((= i 4) fv)
+	  (vector-set! fv i (asin (floor i))))))
+    (test (fv138a) (vector (asin 0) (asin 1) (asin 2) (asin 3)))
+    
+    (define (fv138b)
+      (let ((fv (make-vector 4))
+	    (fv1 (vector 0.0 0.6 1.2 1.8)))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 0.6)))
+	    ((= i 4) fv)
+	  (vector-set! fv i (asin (make-rectangular x i))))))
+    (test (fv138b) (vector (asin 0.0) (asin 0.6+i) (asin 1.2+2i) (asin 1.8+3i)))
+
     (define (fv139)
       (with-output-to-string
 	(lambda ()
@@ -39980,6 +39998,22 @@ EDITS: 1
 	    ((= i 4) g0)
 	  (hash-table-set! g0 (vector-ref v i) (list x)))))
     (test (fv143) (hash-table* 0 '(0.0) 1 '(10.0) 2 '(20.0) 3 '(30.0)))
+
+    (define (fv144)
+      (let ((g0 (make-iterator (list 0 1 2 3 4)))
+	    (v (make-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) v)
+	  (vector-set! v i (iterate g0)))))
+    (test (fv144) (vector 0 1 2 3))
+    
+    (define (fv145)
+      (let ((g0 (list (make-iterator (list 0 1 2 3 4))))
+	    (v (make-vector 4)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) v)
+	  (vector-set! v i (iterate (car g0))))))
+    (test (fv145) (vector 0 1 2 3))
     )
   
   (if all-args
