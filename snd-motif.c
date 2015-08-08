@@ -26713,6 +26713,7 @@ static Xen g_in(Xen ms, Xen code)
   if (Xen_is_aritable(code, 0))
     {
       int secs;
+      Xen_check_type(Xen_is_integer(ms), ms, 3, S_in, "an integer");
       secs = Xen_integer_to_C_int(ms);
       if (secs < 0) 
 	Xen_out_of_range_error(S_in, 1, ms, "a positive integer");

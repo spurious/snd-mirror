@@ -3106,6 +3106,7 @@ static Xen sound_set_global(Xen snd, Xen val, sp_field_t fld, const char *caller
 	break;
 
       case SP_FILTER_ORDER:
+	Xen_check_type(Xen_is_integer(val), val, 0, caller, "an integer");
 	if (Xen_integer_to_C_int(val) > 0)
 	  in_set_filter_control_order(ss, Xen_integer_to_C_int(val));
 	return(sound_set(Xen_true, val, fld, caller));
@@ -3117,11 +3118,13 @@ static Xen sound_set_global(Xen snd, Xen val, sp_field_t fld, const char *caller
 	break;
 
       case SP_SPEED_TONES:
+	Xen_check_type(Xen_is_integer(val), val, 0, caller, "an integer");
 	in_set_speed_control_tones(ss, Xen_integer_to_C_int(val));
 	return(sound_set(Xen_true, val, fld, caller));
 	break;
 
       case SP_SPEED_STYLE:
+	Xen_check_type(Xen_is_integer(val), val, 0, caller, "an integer");
 	in_set_speed_control_style(ss, (speed_style_t)Xen_integer_to_C_int(val)); /* range checked already */
 	return(sound_set(Xen_true, val, fld, caller));
 	break;

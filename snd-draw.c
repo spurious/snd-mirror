@@ -843,9 +843,13 @@ static Xen g_set_widget_position(Xen wid, Xen xy)
   Xen_check_type(Xen_is_list(xy) && (Xen_list_length(xy) == 2), xy, 2, S_set S_widget_position, "a list: (x y)");  
   w = (widget_t)(Xen_unwrap_widget(wid));
   if (w)
-    set_widget_position(w,
-			mus_iclamp(0, Xen_integer_to_C_int(Xen_car(xy)), LOTSA_PIXELS),
-			mus_iclamp(0, Xen_integer_to_C_int(Xen_cadr(xy)), LOTSA_PIXELS));
+    {
+      Xen_check_type(Xen_is_integer(Xen_car(xy)), Xen_car(xy), 0, S_set S_widget_position, "an integer");
+      Xen_check_type(Xen_is_integer(Xen_cadr(xy)), Xen_cadr(xy), 0, S_set S_widget_position, "an integer");
+      set_widget_position(w,
+			  mus_iclamp(0, Xen_integer_to_C_int(Xen_car(xy)), LOTSA_PIXELS),
+			  mus_iclamp(0, Xen_integer_to_C_int(Xen_cadr(xy)), LOTSA_PIXELS));
+    }
   else Xen_error(NO_SUCH_WIDGET,
 		 Xen_list_2(C_string_to_Xen_string(S_set S_widget_position ": no such widget: ~A"),
 			    wid));
@@ -875,9 +879,13 @@ static Xen g_set_widget_size(Xen wid, Xen wh)
   Xen_check_type(Xen_is_list(wh) && (Xen_list_length(wh) == 2), wh, 2, S_set S_widget_size, "a list: (width height)");  
   w = (widget_t)(Xen_unwrap_widget(wid));
   if (w)
-    set_widget_size(w,
-		    mus_iclamp(1, Xen_integer_to_C_int(Xen_car(wh)), LOTSA_PIXELS),
-		    mus_iclamp(1, Xen_integer_to_C_int(Xen_cadr(wh)), LOTSA_PIXELS));
+    {
+      Xen_check_type(Xen_is_integer(Xen_car(wh)), Xen_car(wh), 0, S_set S_widget_size, "an integer");
+      Xen_check_type(Xen_is_integer(Xen_cadr(wh)), Xen_cadr(wh), 0, S_set S_widget_size, "an integer");
+      set_widget_size(w,
+		      mus_iclamp(1, Xen_integer_to_C_int(Xen_car(wh)), LOTSA_PIXELS),
+		      mus_iclamp(1, Xen_integer_to_C_int(Xen_cadr(wh)), LOTSA_PIXELS));
+    }
   else Xen_error(NO_SUCH_WIDGET,
 		 Xen_list_2(C_string_to_Xen_string(S_set S_widget_size ": no such widget: ~A"),
 			    wid));
