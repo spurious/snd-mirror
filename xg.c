@@ -31984,6 +31984,27 @@ static Xen gxg_gtk_widget_get_font_map(Xen widget)
   return(C_to_Xen_PangoFontMap_(gtk_widget_get_font_map(Xen_to_C_GtkWidget_(widget))));
 }
 
+static Xen gxg_gdk_window_fullscreen_on_monitor(Xen window, Xen monitor)
+{
+  #define H_gdk_window_fullscreen_on_monitor "void gdk_window_fullscreen_on_monitor(GdkWindow* window, \
+gint monitor)"
+  Xen_check_type(Xen_is_GdkWindow_(window), window, 1, "gdk_window_fullscreen_on_monitor", "GdkWindow*");
+  Xen_check_type(Xen_is_gint(monitor), monitor, 2, "gdk_window_fullscreen_on_monitor", "gint");
+  gdk_window_fullscreen_on_monitor(Xen_to_C_GdkWindow_(window), Xen_to_C_gint(monitor));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_window_fullscreen_on_monitor(Xen window, Xen screen, Xen monitor)
+{
+  #define H_gtk_window_fullscreen_on_monitor "void gtk_window_fullscreen_on_monitor(GtkWindow* window, \
+GdkScreen* screen, gint monitor)"
+  Xen_check_type(Xen_is_GtkWindow_(window), window, 1, "gtk_window_fullscreen_on_monitor", "GtkWindow*");
+  Xen_check_type(Xen_is_GdkScreen_(screen), screen, 2, "gtk_window_fullscreen_on_monitor", "GdkScreen*");
+  Xen_check_type(Xen_is_gint(monitor), monitor, 3, "gtk_window_fullscreen_on_monitor", "gint");
+  gtk_window_fullscreen_on_monitor(Xen_to_C_GtkWindow_(window), Xen_to_C_GdkScreen_(screen), Xen_to_C_gint(monitor));
+  return(Xen_false);
+}
+
 #endif
 
 static Xen gxg_cairo_create(Xen target)
@@ -38604,6 +38625,8 @@ Xen_wrap_2_args(gxg_gtk_widget_set_font_options_w, gxg_gtk_widget_set_font_optio
 Xen_wrap_1_arg(gxg_gtk_widget_get_font_options_w, gxg_gtk_widget_get_font_options)
 Xen_wrap_2_args(gxg_gtk_widget_set_font_map_w, gxg_gtk_widget_set_font_map)
 Xen_wrap_1_arg(gxg_gtk_widget_get_font_map_w, gxg_gtk_widget_get_font_map)
+Xen_wrap_2_args(gxg_gdk_window_fullscreen_on_monitor_w, gxg_gdk_window_fullscreen_on_monitor)
+Xen_wrap_3_args(gxg_gtk_window_fullscreen_on_monitor_w, gxg_gtk_window_fullscreen_on_monitor)
 #endif
 
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
@@ -42700,6 +42723,8 @@ static void define_functions(void)
   Xg_define_procedure(gtk_widget_get_font_options, gxg_gtk_widget_get_font_options_w, 1, 0, 0, H_gtk_widget_get_font_options);
   Xg_define_procedure(gtk_widget_set_font_map, gxg_gtk_widget_set_font_map_w, 2, 0, 0, H_gtk_widget_set_font_map);
   Xg_define_procedure(gtk_widget_get_font_map, gxg_gtk_widget_get_font_map_w, 1, 0, 0, H_gtk_widget_get_font_map);
+  Xg_define_procedure(gdk_window_fullscreen_on_monitor, gxg_gdk_window_fullscreen_on_monitor_w, 2, 0, 0, H_gdk_window_fullscreen_on_monitor);
+  Xg_define_procedure(gtk_window_fullscreen_on_monitor, gxg_gtk_window_fullscreen_on_monitor_w, 3, 0, 0, H_gtk_window_fullscreen_on_monitor);
 #endif
 
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
@@ -45349,7 +45374,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("23-Jul-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("08-Aug-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

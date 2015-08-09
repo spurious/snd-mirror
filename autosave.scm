@@ -74,6 +74,6 @@
 	    (hook-push save-hook (lambda (hook) (auto-save-done (hook 'snd))))
 	    (hook-push exit-hook (lambda (hook) (for-each auto-save-done (sounds))))))
       (set! auto-saving #t)
-      (in (* 1000 auto-save-interval) auto-save-func))))
+      (in (floor (* 1000 auto-save-interval)) auto-save-func))))
 
 (auto-save)

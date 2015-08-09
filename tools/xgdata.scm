@@ -9186,3 +9186,10 @@
 (CFNC-3.18 "cairo_font_options_t* gtk_widget_get_font_options GtkWidget* widget" 'const-return)
 (CFNC-3.18 "void gtk_widget_set_font_map GtkWidget* widget PangoFontMap* fontmap")
 (CFNC-3.18 "PangoFontMap* gtk_widget_get_font_map GtkWidget* widget")
+
+;;; 13.7.6:
+
+(CFNC-3.18 "void gdk_window_fullscreen_on_monitor GdkWindow* window gint monitor")
+(CFNC-3.18 "void gtk_window_fullscreen_on_monitor GtkWindow* window GdkScreen* screen gint monitor")
+
+
