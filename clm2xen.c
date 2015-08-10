@@ -7794,7 +7794,8 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
       else Xen_check_type(Xen_is_keyword(keys[3]) || Xen_is_false(keys[3]), keys[3], orig_arg[3], S_make_locsig, "an output gen, " S_vct ", vector, or a sound-data object");
 #if HAVE_SCHEME
       if ((out_chans < 0) &&
-	  (Xen_vector_rank(ov) > 1))
+	  (s7_is_vector(ov)) &&
+	  (s7_vector_rank(ov) > 1))
 	out_chans = s7_vector_dimensions(ov)[0];
 #endif
     }

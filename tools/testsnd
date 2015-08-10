@@ -141,7 +141,6 @@ echo ' '
 ./snd --version
 ./snd -l snd-test 23
 ./snd -noinit -l snd-test
-./snd -l snd-test
 make clmclean
 make sndinfo
 ./sndinfo oboe.snd
@@ -184,6 +183,23 @@ echo ' -------------------------------- that was valgrind --with-motif and gl --
 echo ' '
 echo ' '
 
+echo ' -------------------------------- motif + gl + debug -------------------------------- '
+make allclean
+rm -f snd
+rm -f config.cache
+./configure --quiet --with-gl --with-motif CFLAGS="-DDEBUGGING -Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -l snd-test 24
+./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was motif? and gl and debugging -------------------------------- '
+echo ' '
+echo ' '
+
 make allclean
 rm -f snd
 rm -f config.cache
@@ -209,7 +225,6 @@ echo ' '
 ./snd --version
 ./snd tools/va.scm
 ./snd -noinit -l snd-test
-./snd -l snd-test
 echo ' '
 echo ' '
 echo ' -------------------------------- that was snd-test --with-gtk -------------------------------- '
@@ -224,6 +239,20 @@ echo ' '
 # echo ' '
 # echo ' '
 
+echo ' -------------------------------- with-gtk + debug -------------------------------- '
+make allclean
+rm -f snd
+rm -f config.cache
+./configure --quiet CFLAGS="-DDEBUGGING -Wall" --with-gtk --disable-deprecated
+make
+echo ' '
+echo ' '
+./snd snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was snd-test --with-gtk + debug -------------------------------- '
+echo ' '
+echo ' '
 
 cp snd-test.scm orig-snd-test.scm
 ./snd tools/sed.scm -e '(sed "snd-test.scm" "tmp" "(define tests 1)" "(define tests 5)")'
