@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.33"
-#define S7_DATE "5-Aug-15"
+#define S7_VERSION "3.34"
+#define S7_DATE "10-Aug-15"
 
 
 typedef long long int s7_int;
@@ -267,7 +267,6 @@ s7_double s7_number_to_real(s7_scheme *sc, s7_pointer x);                    /* 
 s7_double s7_number_to_real_with_caller(s7_scheme *sc, s7_pointer x, const char *caller);
 s7_int s7_number_to_integer(s7_scheme *sc, s7_pointer x);
 s7_int s7_number_to_integer_with_caller(s7_scheme *sc, s7_pointer x, const char *caller);
-bool s7_is_mutable(s7_pointer p);
 
 bool s7_is_ulong(s7_pointer arg);                                            /* returns true if arg is an unsigned long */
 unsigned long s7_ulong(s7_pointer p);                                        /* Scheme unsigned long -> C */

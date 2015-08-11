@@ -570,9 +570,6 @@ int main(int argc, char **argv)
   if (s7_number_to_real(sc, p) != 1.5)
     {fprintf(stderr, "%d: s7_number_to_real %s is not 1.5?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
 
-  if (s7_is_mutable(p))
-    {fprintf(stderr, "%d: %s is mutable?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
-
   s7_gc_unprotect_at(sc, gc_loc);
   
 

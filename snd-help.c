@@ -3588,24 +3588,27 @@ and its value is returned."
 		  {
 		    s7_pointer x;
 		    /* (cdr (assoc '__func__ (let->list (funclet func)))) => (name file line) or name */
-		    x = s7_cdr(s7_assoc(s7, s7_make_symbol(s7, "__func__"), s7_let_to_list(s7, e)));
-
-		    if ((x) && (s7_is_pair(x)))
+		    x = s7_assoc(s7, s7_make_symbol(s7, "__func__"), s7_let_to_list(s7, e));
+		    if (s7_is_pair(x))
 		      {
-			const char *url;
-			subject = (char *)s7_symbol_name(s7_car(x));
-			url = snd_url(subject);
-			if (url)
-			  snprintf(str, 256, "%s is defined at line %lld of %s, and documented at %s",
+			x = s7_cdr(x);
+			if (s7_is_pair(x))
+			  {
+			    const char *url;
+			    subject = (char *)s7_symbol_name(s7_car(x));
+			    url = snd_url(subject);
+			    if (url)
+			      snprintf(str, 256, "%s is defined at line %lld of %s, and documented at %s",
 				       subject, 
 				       (long long int)s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
 				       s7_string(s7_car(s7_cdr(x))),
 				       url);
-			else 
-			  snprintf(str, 256, "%s is defined at line %lld of %s",
+			    else 
+			      snprintf(str, 256, "%s is defined at line %lld of %s",
 				       subject, 
 				       (long long int)s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
 				       s7_string(s7_car(s7_cdr(x))));
+			  }
 		      }
 		  }
 	      }

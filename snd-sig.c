@@ -3906,42 +3906,65 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 	  return(s_beg);
 	}
 
-      if ((s7_is_null(s7, s7_cdr(body))) &&
-	  (s7_is_pair(s7_cdr(expr))) &&
-	  (s7_cadr(expr) == arg) &&
-	  (s7_is_pair(s7_cddr(expr))) &&
-	  (s7_is_real(s7_caddr(expr))) &&
-	  (s7_is_null(s7, s7_cdddr(expr))) &&
-	  ((s7_car(expr) == s7_make_symbol(s7, ">")) || (s7_car(expr) == s7_make_symbol(s7, "<"))))
+      if (s7_is_null(s7, s7_cdr(body)))
 	{
-	  s7_double y;
-	  bool lt;
-	  lt = (s7_car(expr) == s7_make_symbol(s7, "<"));
-	  y = s7_real(s7_caddr(expr));
-	  for (kp = 0; kp < num; kp++)
+	  s7_pointer res;
+	  res = s7_car(body);
+
+	  /* try pf mechanism */
+	  if (s7_is_symbol(s7_car(res)))
 	    {
-	      s7_double x;
-	      x = read_sample(sf);
-	      if (((!lt) && (x > y)) || ((lt) && (x < y)))
+	      s7_pointer fcar;
+	      fcar = s7_symbol_value(s7, s7_car(res));
+	      if (s7_pf_function(s7, fcar))
 		{
-		  if (counting)	
-		    counts++; 
-		  else
+		  s7_pf_t pf;
+		  s7_pointer yp, old_e, y, val;
+
+		  e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7));
+		  old_e = s7_set_curlet(s7, e);                  /* new env for scan lambda */
+		  y = s7_make_mutable_real(s7, 1.5);             /* slot for the scan lambda arg */
+		  yp = s7_make_slot(s7, e, arg, y);
+
+		  s7_xf_new(s7, e);
+		  pf = s7_pf_function(s7, fcar)(s7, res);
+
+		  if (pf)
 		    {
-		      if (reporting) finish_progress_report(cp);
+		      s7_pointer *top, *p;
+		      top = s7_xf_start(s7);
+		      for (kp = 0; kp < num; kp++)
+			{
+			  s7_slot_set_real_value(s7, yp, read_sample(sf));
+			  p = top;
+			  val = pf(s7, &p);
+			  if (val != s7_f(s7))
+			    {
+			      if (counting)	
+				counts++; 
+			      else
+				{
+				  if (reporting) finish_progress_report(cp);
+				  sf = free_snd_fd(sf);
+				  s7_xf_free(s7);
+				  s7_set_curlet(s7, old_e);
+				  return(C_llong_to_Xen_llong(kp + beg));
+				}
+			    }
+			}
+		      s7_xf_free(s7);
 		      sf = free_snd_fd(sf);
-		      return(C_llong_to_Xen_llong(kp + beg));
+		      s7_set_curlet(s7, old_e);
+		      if (counting)
+			return(C_int_to_Xen_integer(counts));
+		      return(val);
 		    }
+		  s7_xf_free(s7);
+		  s7_set_curlet(s7, old_e);
 		}
 	    }
-	  if (reporting) finish_progress_report(cp);
-	  sf = free_snd_fd(sf);
-	  if (counting)
-	    return(C_int_to_Xen_integer(counts));
-
-	  return(Xen_false);
 	}
-
+      
       e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7));
       gc_loc = s7_gc_protect(s7, e);
       slot = s7_make_slot(s7, e, arg, s7_make_real(s7, 0.0));
