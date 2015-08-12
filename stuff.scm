@@ -363,23 +363,12 @@ If func approves of one, index-if returns the index that gives that element's po
 (define every? 
   (let ((documentation "(every func sequence) returns #t if func approves of every member of sequence"))
     (lambda (f sequence)
-      (call-with-exit
-       (lambda (return)
-	 (for-each (lambda (arg)
-		     (if (not (f arg)) (return #f)))
-		   sequence)
-	 #t)))))
+      (not (member #f sequence (lambda (a b) (not (f b))))))))
 
 (define any? 
   (let ((documentation "(any func sequence) returns #t if func approves of any member of sequence"))
     (lambda (f sequence)
-      (call-with-exit
-       (lambda (return)
-	 (for-each (lambda (arg)
-		     (if (f arg) (return #t)))
-		   sequence)
-	 #f)))))
-
+      (member #f sequence (lambda (a b) (f b))))))
 
 (define collect-if 
   (let ((documentation "(collect-if type func sequence) gathers the elements of sequence that satisfy func, and returns them via type:\n\

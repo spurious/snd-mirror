@@ -901,14 +901,9 @@
 	    (or (and (not (hash-table-ref no-side-effect-functions (car form))) ; if func is not in that list, make no assumptions about it
 		     (or (not (eq? (car form) 'format))                 ; (format #f ...)
 			 (cadr form)))
-		(call-with-exit
-		 (lambda (return)
-		   (for-each
-		    (lambda (f)
-		      (if (side-effect? f env)
-			  (return #t)))
-		    (cdr form))
-		   #f)))
+		(any? (lambda (f) 
+			(side-effect? f env))
+		      (cdr form)))
 	    (and (symbol? form)
 		 (not (hash-table-ref no-side-effect-functions form))
 		 (let ((e (or (var-member form env) (hash-table-ref globals form))))
@@ -1152,14 +1147,7 @@
 		 (and (pair? (car tree))
 		      (tree-car-member sym (car tree)))
 		 (and (pair? (cdr tree))
-		      (call-with-exit
-		       (lambda (return)
-			 (for-each
-			  (lambda (subtree)
-			    (if (tree-car-member sym subtree)
-				(return #t)))
-			  (cdr tree))
-			 #f))))))
+		      (member sym (cdr tree) tree-car-member)))))
       
       (define (remove item sequence)
 	(let ((got-it #f))
@@ -3657,29 +3645,20 @@
 
 			   (unless named-let
 			     ;; this could be extended to other such cases
-			     (call-with-exit
-			      (lambda (return)
-				;; check var values
-				(for-each
-				 (lambda (var)
-				   (if (or (not (pair? var))
-					   (not (pair? (cdr var)))
-					   (not (code-constant? (cadr var))))
-				       (return)))
-				 (cadr form))
-				;; check the body
-				(for-each
-				 (lambda (expr)
-				   (if (side-effect? expr env)
-				       (return)))
-				 (cddr form))
-				;; try to eval it
-				(catch #t
-				  (lambda ()
-				    (let ((val (eval form (rootlet))))
-				      (lint-format "possible simplification:~A" name (lists->string form val))))
-				  (lambda args
-				    'error)))))
+			     (or (any? (lambda (var)
+					 (or (not (pair? var))
+					     (not (pair? (cdr var)))
+					     (not (code-constant? (cadr var)))))
+				       (cadr form))
+				 (any? (lambda (expr) 
+					 (side-effect? expr env))
+				       (cddr form))
+				 (catch #t
+				   (lambda ()
+				     (let ((val (eval form (rootlet))))
+				       (lint-format "possible simplification:~A" name (lists->string form val))))
+				   (lambda args
+				     'error))))
 
 			   (let ((vars (if named-let 
 					   (list (make-var named-let 
@@ -3750,14 +3729,7 @@
 				     (set! vars (append (list (make-var (caar bindings) :val (cadar bindings) :typ (->type (cadar bindings)))) vars)))))
 			     
 			     (if (and *report-minor-stuff* ; maybe we need *report-very-minor-stuff* !
-				      (call-with-exit
-				       (lambda (return)
-					 (for-each
-					  (lambda (v)
-					    (if (var-ref v) 
-						(return #f)))
-					  vars)
-					 #t)))
+				      (not (any? var-ref vars)))
 				 (lint-format "let* could be let:~A" name (truncated-list->string form)))
 
 			     ;; in s7, let evaluates var values top down, so this message is correct

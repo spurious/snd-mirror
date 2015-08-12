@@ -610,7 +610,6 @@ bool s7_is_object(s7_pointer p);
 int s7_object_type(s7_pointer obj);
 void *s7_object_value(s7_pointer obj);
 void *s7_object_value_checked(s7_pointer obj, int type);
-void *s7_vector_ref_object_value_checked(s7_scheme *sc, s7_pointer args, int type);
 s7_pointer s7_make_object(s7_scheme *sc, int type, void *value);
 void s7_mark_object(s7_pointer p);
 s7_pointer s7_object_let(s7_pointer obj);
@@ -691,7 +690,6 @@ bool s7_arg_to_rf(s7_scheme *sc, s7_pointer a1);
 
 s7_int s7_slot_integer_value(s7_pointer slot);
 bool s7_is_stepper(s7_pointer p);
-s7_int s7_slot_integer_value_checked(s7_scheme *sc, s7_pointer slot, const char *caller);
 s7_double s7_slot_real_value(s7_scheme *sc, s7_pointer slot, const char *caller);
 void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_double value);
 /* end CLM stuff */
@@ -795,8 +793,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 16-June:   remove unoptimize and s7_unoptimize.
  * 14-May:    s7_define_safe_function_star.  Removed s7_catch_all.
  * 22-Apr:    remove s7_apply_n_10, s7_is_valid_pointer, s7_keyword_eq_p.
- * 5-Mar:     s7_heap_size, s7_gc_freed.
- * 22-Jan-14: s7_vector_ref_object_value_checked.
+ * 5-Mar-14:  s7_heap_size, s7_gc_freed.
  * --------
  * 8-Nov:     s7_symbol_documentation, s7_define_constant_with_documentation.
  * 17-Oct:    bignum-precision (procedure-with-setter) is now an integer variable named *bignum-precision*.
