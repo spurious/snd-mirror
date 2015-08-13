@@ -1199,10 +1199,6 @@ mus_float_t mus_interpolate(mus_interp_t type, mus_float_t x, mus_float_t *table
 typedef struct {
   mus_any_class *core;
   mus_float_t phase, freq;
-#if HAVE_SINCOS
-  mus_float_t (*unmod)(mus_any *p);
-  double sn, cn, sn_1, cn_1, freq_2;
-#endif
 } osc;
 
 
@@ -1216,67 +1212,13 @@ mus_float_t mus_oscil(mus_any *ptr, mus_float_t fm, mus_float_t pm)
 }
 
 
-static mus_float_t oscil_unmodulated_1(mus_any *ptr)
-{
-  osc *gen = (osc *)ptr;
-  mus_float_t result;
-  result = gen->phase;
-  gen->phase += gen->freq;
-  return(sin(result));
-}
-
-#if HAVE_SINCOS
-static mus_float_t oscil_unmodulated_2(mus_any *ptr)
-{
-  osc *gen = (osc *)ptr;
-  mus_float_t result;
-  result = gen->phase;
-  gen->phase += gen->freq;
-  return(sin(result));
-}
-
-static mus_float_t unmod_oscil_1b(mus_any *p);
-static mus_float_t unmod_oscil_1a(mus_any *p)
-{
-  osc *g = (osc *)p;
-  g->unmod = unmod_oscil_1b;
-  sincos(g->phase, &(g->sn), &(g->cn));
-  g->phase += g->freq_2;
-  return(g->sn);
-}
-
-static mus_float_t unmod_oscil_1b(mus_any *p)
-{
-  osc *g = (osc *)p;
-  g->unmod = unmod_oscil_1a;
-  return(g->sn * g->cn_1 + g->cn * g->sn_1);
-}
-
-static void check_oscil(mus_any *p, bool mod)
-{
-  osc *g = (osc *)p;
-  if (mod)
-    g->unmod = oscil_unmodulated_2;
-  else
-    {
-      if (g->unmod == oscil_unmodulated_1) /* else it has already been set */
-	{
-	  g->unmod = unmod_oscil_1a;
-	  sincos(g->freq, &(g->sn_1), &(g->cn_1));
-	  g->freq_2 = 2.0 * g->freq;
-	}
-    }
-}
-#endif
-
-
 mus_float_t mus_oscil_unmodulated(mus_any *ptr)
 {
-#if HAVE_SINCOS
-  return(((osc *)ptr)->unmod(ptr));
-#else
-  return(oscil_unmodulated_1(ptr));
-#endif
+  osc *gen = (osc *)ptr;
+  mus_float_t result;
+  result = gen->phase;
+  gen->phase += gen->freq;
+  return(sin(result));
 }
 
 
@@ -1305,20 +1247,6 @@ bool mus_is_oscil(mus_any *ptr)
   return((ptr) && 
 	 (ptr->core->type == MUS_OSCIL));
 }
-
-bool mus_is_oscil_checked(mus_any *ptr, bool mod);
-bool mus_is_oscil_checked(mus_any *ptr, bool mod)
-{
-  if ((ptr) && (ptr->core->type == MUS_OSCIL))
-    {
-#if HAVE_SINCOS
-      check_oscil(ptr, mod);
-#endif      
-      return(true);
-    }
-  return(false);
-}
-
 /* this could be: bool mus_is_oscil(mus_any *ptr) {return((ptr) && (ptr->core == &OSCIL_CLASS));}
  */
 
@@ -1406,9 +1334,6 @@ mus_any *mus_make_oscil(mus_float_t freq, mus_float_t phase)
   gen->core = &OSCIL_CLASS;
   gen->freq = mus_hz_to_radians(freq);
   gen->phase = phase;
-#if HAVE_SINCOS
-  gen->unmod = oscil_unmodulated_1;
-#endif
   return((mus_any *)gen);
 }
 

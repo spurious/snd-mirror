@@ -194,7 +194,7 @@
 
 	(let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1))
 	  (do ((i 0 (+ i 1))) ((= i 10))
-	    (float-vector-set! V i ,(copy form))))
+	    (set! (V i) ,(copy form))))
 	
 	(define (tester-1)
 	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1) (v (make-float-vector 10)))
@@ -261,7 +261,7 @@
 	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (y -0.5) (k 1) (v (make-float-vector 10)))
 	    (do ((i 0 (+ i 1))) ((= i 10) v)
 	      (let ((x (,gen o)))
-		(float-vector-set! v i ,(copy form))))))
+		(set! (v i) ,(copy form))))))
 	
 	(define (tester-12)
 	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (y -0.5) (k 1))
@@ -328,7 +328,7 @@
 	(define (tester-6)
 	  (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (k 1) (v (make-float-vector 10)))
 	    (do ((i 0 (+ i 1)) (y -0.5) (z 0.1) (x 0.0 (+ x 0.1))) ((= i 10) v)
-	      (float-vector-set! v i ,(copy form)))))
+	      (set! (v i) ,(copy form)))))
 	
 	(define (tester-7)
 	  (let ((o (Q)) (p (Q)) (q (Q)) (s (Q)) (t (Q)) (oscs (O)) (a (Z)) (b (Z)) (c (Z)) (d (Z)) (x 3.14) (y -0.5) (k 1) (z 0.1) (v (make-float-vector 10)))

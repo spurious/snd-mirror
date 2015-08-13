@@ -9894,8 +9894,6 @@ static s7_double oscil_rf_srx(s7_scheme *sc, s7_pointer **p)
 }
 
 
-bool mus_is_oscil_checked(mus_any *ptr, bool mod);
-
 static s7_rf_t oscil_rf_3(s7_scheme *sc, s7_pointer expr)
 {
   mus_any *g;
@@ -9903,9 +9901,7 @@ static s7_rf_t oscil_rf_3(s7_scheme *sc, s7_pointer expr)
 
   len = s7_list_length(sc, expr);
   g = cadr_gen(sc, expr);
-  if ((!g) || (!mus_is_oscil_checked(g, len > 2)))
-    return(NULL);
-
+  if (!g) return(NULL);
   if (len < 4) return(oscil_rf(sc, expr));
   if (len > 5) return(NULL);
 
@@ -10270,6 +10266,7 @@ static s7_double outa_x_rf_to_mus_xen(s7_scheme *sc, s7_pointer **p)
   pos = s7_slot_integer_value(**p); (*p)++;
   rf = (s7_rf_t)(**p); (*p)++;
   val = rf(sc, p);
+
   if (!mus_simple_out_any_to_file(pos, val, 0, clm_output_gen))
     mus_safe_out_any_to_file(pos, val, 0, clm_output_gen);
   return(val);

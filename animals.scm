@@ -685,19 +685,19 @@
 		(pulse-amp (env ampf))
 		(val-amp (env ampf1)))
 	    
-	    (float-vector-set! fs 0 (env ampfr1))
-	    (float-vector-set! fs 1 (env ampfr2))
-	    (float-vector-set! fs 3 (env ampfr4))
+	    (set! (fs 0) (env ampfr1))
+	    (set! (fs 1) (env ampfr2))
+	    (set! (fs 3) (env ampfr4))
 	    
 	    (do ((k 0 (+ k 1)))
 		((= k pulse-out))
-	      (float-vector-set! rk k (rk!cos gen1 (env pulse-frqf))))
+	      (set! (rk k) (rk!cos gen1 (env pulse-frqf))))
 	    
 	    (do ((k i (+ k 1)))
 		((= k reset-stop))
 	      (let ((val (* pulse-amp
 			    (env pulsef)
-			    (float-vector-ref rk (- k i)))))
+			    (rk (- k i)))))
 			    ;(rk!cos gen1 (env pulse-frqf)))))
 		(outa k (+ (* val val-amp)
 			   (formant-bank fb val)))))
@@ -1455,7 +1455,7 @@
 		      (pulse-ampf (make-env '(0.000 0.000 0.063 0.312 0.277 0.937 0.405 1.000 0.617 0.696 0.929 0.146 2.000 0.000) :length wave-len)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i wave-len))
-		    (float-vector-set! v i (env pulse-ampf)))
+		    (set! (v i) (env pulse-ampf)))
 		  v)))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -3650,7 +3650,7 @@
 						 :scaler (hz->radians 1.0))))
 			    (do ((i 0 (+ i 1)))
 				((= i buzz-size))
-			      (float-vector-set! v i (env bfrqf)))
+			      (set! (v i) (env bfrqf)))
 			    v))
 	  (buzz-amp-table (let ((v (make-float-vector buzz-size 0.0))
 				(bampf (make-env (if gliss-up
@@ -3659,7 +3659,7 @@
 						 :length buzz-size)))
 			    (do ((i 0 (+ i 1)))
 				((= i buzz-size))
-			      (float-vector-set! v i (env bampf)))
+			      (set! (v i) (env bampf)))
 			    v)))
       (let ((buzz-stop (+ initial-stop (seconds->samples buzz-dur)))
 	    (buzz-amp (make-env '(0.000 0.000 0.035 0.190 0.082 0.336 0.168 0.625 0.348 0.743 0.467 0.763 
@@ -4146,7 +4146,7 @@
       (let ((bump-wave (make-float-vector bump-samps 0.0)))
 	(do ((i 0 (+ i 1)))
 	    ((= i bump-samps))
-	  (float-vector-set! bump-wave i (env bump)))
+	  (set! (bump-wave i) (env bump)))
 	(let ((wt (make-wave-train 0.0 0.0 bump-wave)))
 	  (do ((i start (+ i 1)))
 	      ((= i stop))
@@ -7315,8 +7315,8 @@
 	      (do ((k 0 (+ k 1))
 		   (f frq (+ f frq)))
 		  ((= k 5))
-		(float-vector-set! amps k (env (vector-ref ampfs k)))
-		(float-vector-set! frqs k f))
+		(set! (amps k) (env (vector-ref ampfs k)))
+		(set! (frqs k) f))
 	      (outa i (* (env ampf) (oscil-bank obank)))))))))
   
   ;; part 2

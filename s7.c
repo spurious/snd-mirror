@@ -1096,6 +1096,8 @@ static bool t_any_macro_p[NUM_TYPES];
 static bool t_any_closure_p[NUM_TYPES];
 static bool t_has_closure_let[NUM_TYPES];
 static bool t_sequence_p[NUM_TYPES];
+static bool t_pf_sequence_p[NUM_TYPES];
+static bool t_gf_sequence_p[NUM_TYPES];
 static bool t_vector_p[NUM_TYPES];
 static bool t_applicable_p[NUM_TYPES];
 
@@ -1113,6 +1115,8 @@ static void init_types(void)
       t_any_closure_p[i] = false;
       t_has_closure_let[i] = false;
       t_sequence_p[i] = false;
+      t_pf_sequence_p[i] = false;
+      t_gf_sequence_p[i] = false;
       t_vector_p[i] = false;
       t_applicable_p[i] = false;
     }
@@ -1149,6 +1153,22 @@ static void init_types(void)
   t_sequence_p[T_HASH_TABLE] = true;
   t_sequence_p[T_LET] = true;
   t_sequence_p[T_C_OBJECT] = true;
+
+  t_gf_sequence_p[T_PAIR] = true;
+  t_gf_sequence_p[T_STRING] = true;
+  t_gf_sequence_p[T_VECTOR] = true;
+  t_gf_sequence_p[T_INT_VECTOR] = true;
+  t_gf_sequence_p[T_FLOAT_VECTOR] = true;
+  t_gf_sequence_p[T_HASH_TABLE] = true;
+  t_gf_sequence_p[T_LET] = true;
+  t_gf_sequence_p[T_C_OBJECT] = true;
+
+  t_pf_sequence_p[T_PAIR] = true;
+  t_pf_sequence_p[T_STRING] = true;
+  t_pf_sequence_p[T_VECTOR] = true;
+  t_pf_sequence_p[T_HASH_TABLE] = true;
+  t_pf_sequence_p[T_LET] = true;
+  t_pf_sequence_p[T_C_OBJECT] = true;
 
   t_vector_p[T_VECTOR] = true;
   t_vector_p[T_INT_VECTOR] = true;
@@ -6173,6 +6193,7 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
 }
 
 
+
 static s7_pointer call_accessor(s7_scheme *sc, s7_pointer slot, s7_pointer old_value)
 {
   s7_pointer func, new_value;
@@ -7184,8 +7205,6 @@ static s7_pointer g_c_pointer(s7_scheme *sc, s7_pointer args)
 
 /* --------------------------------- rf ----------------------------------------------- */
 
-static s7_rf_t implicit_float_vector_ref_rf(s7_scheme *sc, s7_pointer expr);
-
 #define rc_loc(sc)     (ptr_int)(sc->cur_rf->cur - sc->cur_rf->data)
 #define rc_go(sc, loc) (s7_pointer *)(sc->cur_rf->data + loc)
 
@@ -7329,10 +7348,25 @@ void s7_xf_free(s7_scheme *sc)
     sc->rf_stack = sc->rf_stack->next;
 }
 
+static s7_if_t implicit_int_vector_ref(s7_scheme *sc, s7_pointer expr);
+static s7_rf_t implicit_float_vector_ref(s7_scheme *sc, s7_pointer expr);
+static s7_pf_t implicit_pf_sequence_ref(s7_scheme *sc, s7_pointer expr);
+static s7_pf_t implicit_gf_sequence_ref(s7_scheme *sc, s7_pointer expr);
+
+static s7_pf_t implicit_pf_sequence_set(s7_scheme *sc, s7_pointer v, s7_pointer ind, s7_pointer val);
+static s7_pf_t implicit_gf_sequence_set(s7_scheme *sc, s7_pointer v, s7_pointer ind, s7_pointer val);
+
+/* set cases are via set_if/set_rf -- but set_gp|pf would need to be restricted to non-symbol settees */
+
+#define is_gf_sequence(p) t_gf_sequence_p[type(p)]
+#define is_pf_sequence(p) t_pf_sequence_p[type(p)]
+
+/* need to make sure sequence is not a step var, also set cases */
+
 static s7_rp_t rf_function(s7_pointer f)
 {
   if (is_any_c_function(f)) return(c_function_rp(f));
-  if (is_float_vector(f)) return(implicit_float_vector_ref_rf);
+  if (is_float_vector(f)) return(implicit_float_vector_ref);
   if (is_syntax(f)) return(syntax_rp(f));
   return(NULL);
 }
@@ -7348,6 +7382,7 @@ static bool has_rf_function(s7_pointer f)
 static s7_ip_t if_function(s7_pointer f)
 {
   if (is_any_c_function(f)) return(c_function_ip(f));
+  if (is_int_vector(f)) return(implicit_int_vector_ref);
   if (is_syntax(f)) return(syntax_ip(f));
   return(NULL);
 }
@@ -7355,6 +7390,7 @@ static s7_ip_t if_function(s7_pointer f)
 static bool has_if_function(s7_pointer f)
 {
   if (is_any_c_function(f)) return((c_function_ext(f)) && (c_function_ip(f)));
+  if (is_int_vector(f)) return(true);
   if (is_syntax(f)) return(syntax_ip(f));
   return(false);
 }
@@ -7362,6 +7398,7 @@ static bool has_if_function(s7_pointer f)
 static s7_pp_t pf_function(s7_pointer f)
 {
   if (is_any_c_function(f)) return(c_function_pp(f));
+  if (is_pf_sequence(f)) return(implicit_pf_sequence_ref);
   if (is_syntax(f)) return(syntax_pp(f));
   return(NULL);
 }
@@ -7369,6 +7406,7 @@ static s7_pp_t pf_function(s7_pointer f)
 static bool has_pf_function(s7_pointer f)
 {
   if (is_any_c_function(f)) return((c_function_ext(f)) && (c_function_pp(f)));
+  if (is_pf_sequence(f)) return(true);
   if (is_syntax(f)) return(syntax_pp(f));
   return(false);
 }
@@ -7376,12 +7414,14 @@ static bool has_pf_function(s7_pointer f)
 static s7_pp_t gf_function(s7_pointer f)
 {
   if (is_any_c_function(f)) return(c_function_gp(f));
+  if (is_gf_sequence(f)) return(implicit_gf_sequence_ref);
   return(NULL);
 }
 
 static bool has_gf_function(s7_pointer f)
 {
   if (is_any_c_function(f)) return((c_function_ext(f)) && (c_function_gp(f)));
+  if (is_gf_sequence(f)) return(true);
   return(false);
 }
 
@@ -7389,7 +7429,9 @@ static bool has_xf_function(s7_pointer f)
 {
   if (is_any_c_function(f))
     return((c_function_ext(f)) &&
-	   ((rf_function(f)) || (pf_function(f)) || (if_function(f))));
+	   ((has_rf_function(f)) || (has_pf_function(f)) || (has_if_function(f))));
+
+  if (is_gf_sequence(f)) return(true);
 
   if (is_syntax(f))
     return((syntax_rp(f)) || (syntax_pp(f)) || (syntax_ip(f)));
@@ -8278,6 +8320,25 @@ static s7_if_t set_if(s7_scheme *sc, s7_pointer expr)
   return(NULL);
 }
 
+static s7_pf_t set_pf(s7_scheme *sc, s7_pointer expr)
+{
+  s7_pointer a1;
+  if (is_pair(cdddr(expr))) return(NULL);
+  a1 = cadr(expr);
+  if (is_pair(a1)) /* look for implicit index case */
+    {
+      s7_pointer v;
+      if ((!is_symbol(car(a1))) || (!is_pair(cdr(a1))) || (!is_null(cddr(a1)))) return(NULL);
+      v = s7_slot(sc, car(a1));
+      if (!is_slot(v)) return(NULL);
+      if (is_pf_sequence(slot_value(v)))
+	return(implicit_pf_sequence_set(sc, v, cadr(a1), caddr(expr)));
+      if (is_gf_sequence(slot_value(v)))
+	return(implicit_gf_sequence_set(sc, v, cadr(a1), caddr(expr)));
+    }
+  return(NULL);
+}
+
 
 typedef s7_pointer (*p0_pf_t)(s7_scheme *sc);
 static s7_pointer p0_pf_1(s7_scheme *sc, s7_pointer **p, p0_pf_t fnc)
@@ -8478,11 +8539,20 @@ static s7_pointer pf2_pf_1(s7_scheme *sc, s7_pointer **p, pf2_pf_t fnc)
   return(fnc(sc, x, y));
 }
 
+static s7_pointer pf2_pf_sp(s7_scheme *sc, s7_pointer **p, pf2_pf_t fnc)
+{
+  s7_pf_t f;
+  s7_pointer x, y;
+  x = slot_value(**p); (*p)++;
+  f = (s7_pf_t)(**p); (*p)++;	
+  y = f(sc, p);
+  return(fnc(sc, x, y));
+}
+
 static s7_pointer pf2_pf_ss(s7_scheme *sc, s7_pointer **p, pf2_pf_t fnc)
 {
   s7_pointer x, y;
-  (*p)++;
-  x = slot_value(**p); (*p) += 2;
+  x = slot_value(**p); (*p)++;
   y = slot_value(**p); (*p)++;
   return(fnc(sc, x, y));
 }
@@ -8490,38 +8560,51 @@ static s7_pointer pf2_pf_ss(s7_scheme *sc, s7_pointer **p, pf2_pf_t fnc)
 static s7_pointer pf2_pf_sc(s7_scheme *sc, s7_pointer **p, pf2_pf_t fnc)
 {
   s7_pointer x, y;
-  (*p)++;
-  x = slot_value(**p); (*p) += 2;
+  x = slot_value(**p); (*p)++;
   y = (**p); (*p)++;
   return(fnc(sc, x, y));
 }
 
-static s7_pf_t pf_2(s7_scheme *sc, s7_pointer expr, s7_pf_t f1, s7_pf_t f2, s7_pf_t f3)
+static s7_pf_t pf_2(s7_scheme *sc, s7_pointer expr, s7_pf_t fpp, s7_pf_t fsp, s7_pf_t fss, s7_pf_t fsc)
 {
   if ((is_pair(cdr(expr))) && (is_pair(cddr(expr))) && (is_null(cdddr(expr))))
     {
       s7_pointer a1, a2;
       a1 = cadr(expr);
       a2 = caddr(expr);
+      if (is_symbol(a1))
+	{
+	  a1 = s7_slot(sc, a1);
+	  if (!is_slot(a1)) return(NULL);
+	  s7_xf_store(sc, a1);
+	  if (is_symbol(a2))
+	    {
+	      a2 = s7_slot(sc, a2);
+	      if (!is_slot(a2)) return(NULL);
+	      s7_xf_store(sc, a2);
+	      return(fss);
+	    }
+	  if (is_pair(a2))
+	    {
+	      if (!s7_arg_to_pf(sc, a2)) return(NULL);
+	      return(fsp);
+	    }
+	  s7_xf_store(sc, a2);
+	  return(fsc);
+	}
       if ((s7_arg_to_pf(sc, a1)) &&
 	  (s7_arg_to_pf(sc, a2)))
-	{
-	  if (is_symbol(a1))
-	    {
-	      if (is_symbol(a2)) return(f2);
-	      if (!is_pair(a2)) return(f3);
-	    }
-	  return(f1);
-	}
+	return(fpp);
     }
   return(NULL);
 }
 
 #define PF2_TO_PF(CName, Pfnc)						\
   static s7_pointer CName ## _pf_p2(s7_scheme *sc, s7_pointer **rp) {return(pf2_pf_1(sc, rp, Pfnc));} \
+  static s7_pointer CName ## _pf_p2_sp(s7_scheme *sc, s7_pointer **rp) {return(pf2_pf_sp(sc, rp, Pfnc));} \
   static s7_pointer CName ## _pf_p2_ss(s7_scheme *sc, s7_pointer **rp) {return(pf2_pf_ss(sc, rp, Pfnc));} \
   static s7_pointer CName ## _pf_p2_sc(s7_scheme *sc, s7_pointer **rp) {return(pf2_pf_sc(sc, rp, Pfnc));} \
-  static s7_pf_t CName ## _pf(s7_scheme *sc, s7_pointer expr) {return(pf_2(sc, expr, CName ## _pf_p2, CName ## _pf_p2_ss, CName ## _pf_p2_sc));}
+  static s7_pf_t CName ## _pf(s7_scheme *sc, s7_pointer expr) {return(pf_2(sc, expr, CName ## _pf_p2, CName ## _pf_p2_sp, CName ## _pf_p2_ss, CName ## _pf_p2_sc));}
 
 
 static s7_pointer c_is_eq(s7_scheme *sc, s7_pointer x, s7_pointer y) {return(make_boolean(sc, x == y));}
@@ -8555,19 +8638,46 @@ static s7_pointer pf3_pf_1(s7_scheme *sc, s7_pointer **p, pf3_pf_t fnc)
   return(fnc(sc, x, y, z));
 }
 
-static s7_pf_t pf_3(s7_scheme *sc, s7_pointer expr, s7_pf_t f)
+static s7_pointer pf3_pf_s(s7_scheme *sc, s7_pointer **p, pf3_pf_t fnc)
 {
-  if ((is_pair(cdr(expr))) && (is_pair(cddr(expr))) && (is_pair(cdddr(expr))) && (is_null(cddddr(expr))) &&
-      (s7_arg_to_pf(sc, cadr(expr))) &&
-      (s7_arg_to_pf(sc, caddr(expr))) &&
-      (s7_arg_to_pf(sc, cadddr(expr))))
-    return(f);
+  s7_pf_t f;
+  s7_pointer x, y, z;
+  x = slot_value(**p); (*p)++;
+  f = (s7_pf_t)(**p); (*p)++;	
+  y = f(sc, p);
+  f = (s7_pf_t)(**p); (*p)++;	
+  z = f(sc, p);
+  return(fnc(sc, x, y, z));
+}
+
+static s7_pf_t pf_3(s7_scheme *sc, s7_pointer expr, s7_pf_t fp, s7_pf_t fs)
+{
+  if ((is_pair(cdr(expr))) && (is_pair(cddr(expr))) && (is_pair(cdddr(expr))) && (is_null(cddddr(expr))))
+    {
+      s7_pointer a1;
+      a1 = cadr(expr);
+      if (is_symbol(a1))
+	{
+	  s7_pointer slot;
+	  slot = s7_slot(sc, a1);
+	  if (!is_slot(slot)) return(NULL);
+	  s7_xf_store(sc, slot);
+	}
+      else
+	{
+	  if (!s7_arg_to_pf(sc, a1)) return(NULL);
+	}
+      if ((s7_arg_to_pf(sc, caddr(expr))) &&
+	  (s7_arg_to_pf(sc, cadddr(expr))))
+	return((is_symbol(a1)) ? fs : fp);
+    }
   return(NULL);
 }
 
 #define PF3_TO_PF(CName, Pfnc)						\
   static s7_pointer CName ## _pf_p3(s7_scheme *sc, s7_pointer **rp) {return(pf3_pf_1(sc, rp, Pfnc));} \
-  static s7_pf_t CName ## _pf(s7_scheme *sc, s7_pointer expr) {return(pf_3(sc, expr, CName ## _pf_p3));}
+  static s7_pointer CName ## _pf_p3_s(s7_scheme *sc, s7_pointer **rp) {return(pf3_pf_s(sc, rp, Pfnc));} \
+  static s7_pf_t CName ## _pf(s7_scheme *sc, s7_pointer expr) {return(pf_3(sc, expr, CName ## _pf_p3, CName ## _pf_p3_s));}
 
 PF3_TO_PF(let_set, s7_let_set)
 static s7_pointer c_varlet(s7_scheme *sc, s7_pointer x, s7_pointer y, s7_pointer z) {return(g_varlet(sc, set_plist_3(sc, x, y, z)));}
@@ -8590,18 +8700,46 @@ static s7_pointer pif_pf_1(s7_scheme *sc, s7_pointer **p, pif_pf_t fnc)
   return(fnc(sc, x, y));
 }
 
-static s7_pf_t pif_1(s7_scheme *sc, s7_pointer expr, s7_pf_t f)
+static s7_pointer pif_pf_s(s7_scheme *sc, s7_pointer **p, pif_pf_t fnc)
 {
-  if ((is_pair(cdr(expr))) && (is_pair(cddr(expr))) && (is_null(cdddr(expr))) &&
-      (s7_arg_to_pf(sc, cadr(expr))) &&
-      (s7_arg_to_if(sc, caddr(expr))))
-    return(f);
+  s7_if_t xf;
+  s7_pointer x;
+  s7_int y;
+  x = slot_value(**p); (*p)++;
+  xf = (s7_if_t)(**p); (*p)++;	
+  y = xf(sc, p);
+  return(fnc(sc, x, y));
+}
+
+static s7_pf_t pif_1(s7_scheme *sc, s7_pointer expr, s7_pf_t fp, s7_pf_t fs)
+{
+  if ((is_pair(cdr(expr))) && (is_pair(cddr(expr))) && (is_null(cdddr(expr))))
+    {
+      s7_pointer a1, a2;
+      a1 = cadr(expr);
+      a2 = caddr(expr);
+      if (is_symbol(a1))
+	{
+	  s7_pointer slot;
+	  slot = s7_slot(sc, a1);
+	  if (!is_slot(slot)) return(NULL);
+	  s7_xf_store(sc, slot);
+	}
+      else 
+	{
+	  if (!s7_arg_to_pf(sc, a1))
+	    return(NULL);
+	}
+      if (s7_arg_to_if(sc, a2))
+	return((is_symbol(a1)) ? fs : fp);
+    }
   return(NULL);
 }
 
 #define PIF_TO_PF(CName, Pfnc)						\
   static s7_pointer CName ## _pf_pi(s7_scheme *sc, s7_pointer **rp) {return(pif_pf_1(sc, rp, Pfnc));} \
-  static s7_pf_t CName ## _pf(s7_scheme *sc, s7_pointer expr) {return(pif_1(sc, expr, CName ## _pf_pi));}
+  static s7_pointer CName ## _pf_si(s7_scheme *sc, s7_pointer **rp) {return(pif_pf_s(sc, rp, Pfnc));} \
+  static s7_pf_t CName ## _pf(s7_scheme *sc, s7_pointer expr) {return(pif_1(sc, expr, CName ## _pf_pi, CName ## _pf_si));}
 
 
 /* -------- PPIF_TO_PF -------- */
@@ -8674,6 +8812,20 @@ static s7_pointer pipf_pf_s(s7_scheme *sc, s7_pointer **p, pipf_pf_t fnc)
   return(fnc(sc, x, y, z));
 }
 
+static s7_pointer pipf_pf_seq(s7_scheme *sc, s7_pointer **p, pipf_pf_t fnc)
+{
+  s7_pf_t pf;
+  s7_if_t xf;
+  s7_pointer x, z;
+  s7_int y;
+  x = slot_value(**p); (*p)++;
+  xf = (s7_if_t)(**p); (*p)++;
+  y = xf(sc, p);
+  pf = (s7_pf_t)(**p); (*p)++;	
+  z = pf(sc, p);
+  return(fnc(sc, x, y, z));
+}
+
 static s7_pointer pipf_pf_a(s7_scheme *sc, s7_pointer **p, pipf_pf_t fnc)
 {
   s7_pf_t pf;
@@ -8717,6 +8869,7 @@ static s7_pf_t pipf_1(s7_scheme *sc, s7_pointer expr, s7_pf_t f1, s7_pf_t f2, s7
 #define PIPF_TO_PF(CName, F1, F2, Tester) \
   static s7_pointer CName ## _pf_slot(s7_scheme *sc, s7_pointer **rp) {return(pipf_pf_slot(sc, rp, F1));} \
   static s7_pointer CName ## _pf_s(s7_scheme *sc, s7_pointer **rp) {return(pipf_pf_s(sc, rp, F1));} \
+  static s7_pointer CName ## _pf_seq(s7_scheme *sc, s7_pointer **rp) {return(pipf_pf_seq(sc, rp, F1));} \
   static s7_pointer CName ## _pf_a(s7_scheme *sc, s7_pointer **rp) {return(pipf_pf_a(sc, rp, F2));} \
   static s7_pf_t CName ## _pf(s7_scheme *sc, s7_pointer expr) {return(pipf_1(sc, expr, CName ## _pf_slot, CName ## _pf_s, CName ## _pf_a, Tester));}
 
@@ -32844,6 +32997,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 	      return(sc->F);
 	    }
 
+	  /* lg auto? */
 	  if ((is_closure(eq_func)) &&
 	      (is_pair(closure_args(eq_func))) &&
 	      (is_pair(cdr(closure_args(eq_func))))) /* not dotted arg list */
@@ -33314,6 +33468,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 		  s7_function func;
 		  func = all_x_eval(sc, car(body), closure_args(eq_func));
 
+		  /* tmap, lg falls through*/
 		  if (((func == all_x_c_ss) || (func == all_x_c_uu)) &&
 		      (cadar(body) == car(closure_args(eq_func))) &&
 		      (caddar(body) == cadr(closure_args(eq_func))))
@@ -34918,6 +35073,17 @@ static s7_pointer vector_ref_pf_s(s7_scheme *sc, s7_pointer **p)
   return(vector_elements(x)[y]);
 }
 
+static s7_pointer vector_ref_pf_i(s7_scheme *sc, s7_pointer **p)
+{
+  s7_if_t xf;
+  s7_pointer x;
+  s7_int y;
+  x = slot_value(**p); (*p)++;
+  xf = (s7_if_t)(**p); (*p)++;
+  y = xf(sc, p);
+  return(vector_elements(x)[y]);
+}
+
 static int c_vector_tester(s7_scheme *sc, s7_pointer expr)
 {
   s7_pointer a1;
@@ -35864,14 +36030,15 @@ static s7_pointer g_int_vector_set(s7_scheme *sc, s7_pointer args)
   return(univect_set(sc, args, false));
 }
 
+
+/* int-vector-ref|set optimizers */
+
 static s7_int int_vector_ref_if_a(s7_scheme *sc, s7_pointer **p)
 {
-  s7_pf_t pf;
   s7_if_t xf;
   s7_pointer x;
   s7_int y;
-  pf = (s7_pf_t)(**p); (*p)++;
-  x = pf(sc, p);
+  x = (**p); (*p)++;
   if (!is_int_vector(x))
     wrong_type_argument(sc, sc->INT_VECTOR_REF, 1, x, T_INT_VECTOR);
   xf = (s7_if_t)(**p); (*p)++;
@@ -35881,23 +36048,41 @@ static s7_int int_vector_ref_if_a(s7_scheme *sc, s7_pointer **p)
   return(int_vector_elements(x)[y]);
 }
 
+static s7_if_t int_vector_ref_if_expanded(s7_scheme *sc, s7_pointer iv, s7_pointer ind_expr)
+{
+  s7_xf_store(sc, iv);
+  if (s7_arg_to_if(sc, ind_expr))
+    return(int_vector_ref_if_a);
+  return(NULL);
+}
+
 static s7_if_t int_vector_ref_if(s7_scheme *sc, s7_pointer expr)
 {
-  if ((is_pair(cdr(expr))) && (is_pair(cddr(expr))) && (is_null(cdddr(expr))) &&
-      (s7_arg_to_pf(sc, cadr(expr))) &&
-      (s7_arg_to_if(sc, caddr(expr))))	
-    return(int_vector_ref_if_a);
+  if ((is_pair(cdr(expr))) && (is_pair(cddr(expr))) && (is_null(cdddr(expr))))
+    {
+      s7_pointer iv;
+      iv = cadr(expr);
+      if (!is_symbol(iv)) return(NULL);
+      iv = s7_slot(sc, iv);
+      if (!is_slot(iv)) return(NULL);
+      if (!is_int_vector(slot_value(iv))) return(NULL);
+      return(int_vector_ref_if_expanded(sc, slot_value(iv), caddr(expr)));
+    }
   return(NULL);				
+}
+
+static s7_if_t implicit_int_vector_ref(s7_scheme *sc, s7_pointer expr)
+{
+  if ((is_null(cdr(expr))) || (!is_null(cddr(expr)))) return(NULL);
+  return(int_vector_ref_if_expanded(sc, s7_symbol_value(sc, car(expr)), cadr(expr)));
 }
 
 static s7_int int_vector_set_if_a(s7_scheme *sc, s7_pointer **p)
 {
-  s7_pf_t pf;
   s7_if_t xf;
   s7_pointer x;
   s7_int y, z;
-  pf = (s7_pf_t)(**p); (*p)++;
-  x = pf(sc, p);
+  x = (**p); (*p)++;
   if (!is_int_vector(x))
     wrong_type_argument(sc, sc->INT_VECTOR_SET, 1, x, T_INT_VECTOR);
   xf = (s7_if_t)(**p); (*p)++;
@@ -35912,22 +36097,31 @@ static s7_int int_vector_set_if_a(s7_scheme *sc, s7_pointer **p)
 
 static s7_if_t int_vector_set_if_expanded(s7_scheme *sc, s7_pointer iv, s7_pointer ind_sym, s7_pointer val_expr)
 {
-  /* TODO: like fv case -- seems repetitious: fv|iv|v|hash|lst|str|let all share these choices throughout: *_SET|REF_*?
-   */
+  s7_xf_store(sc, iv);
+  if ((s7_arg_to_if(sc, ind_sym)) &&
+      (s7_arg_to_if(sc, val_expr)))
+    return(int_vector_set_if_a);			
   return(NULL);
 }
 
 static s7_if_t int_vector_set_if(s7_scheme *sc, s7_pointer expr)
 {
-  if ((is_pair(cdr(expr))) && (is_pair(cddr(expr))) && (is_pair(cdddr(expr))) && (is_null(cddddr(expr))) &&
-      (s7_arg_to_pf(sc, cadr(expr))) &&
-      (s7_arg_to_if(sc, caddr(expr))) &&
-      (s7_arg_to_if(sc, cadddr(expr))))
-    return(int_vector_set_if_a);			
-  return(NULL);				
+  if ((is_pair(cdr(expr))) && (is_pair(cddr(expr))) && (is_pair(cdddr(expr))) && (is_null(cddddr(expr))))
+    {
+      s7_pointer iv;
+      iv = cadr(expr);
+      if (!is_symbol(iv)) return(NULL);
+      iv = s7_slot(sc, iv);
+      if (!is_slot(iv)) return(NULL);
+      if (!is_int_vector(slot_value(iv))) return(NULL);
+      return(int_vector_set_if_expanded(sc, slot_value(iv), caddr(expr), cadddr(expr)));
+    }
+  return(NULL);
 }
 
 
+
+/* float-vector-ref|set optimizers */
 static s7_double fv_set_rf_checked(s7_scheme *sc, s7_pointer **p)
 {
   s7_pointer fv, ind;
@@ -36076,14 +36270,13 @@ static s7_rf_t float_vector_set_rf_expanded(s7_scheme *sc, s7_pointer fv, s7_poi
 
 static s7_rf_t float_vector_set_rf(s7_scheme *sc, s7_pointer expr)
 {
-  s7_pointer fv_sym, fv;
-
-  fv_sym = s7_cadr(expr);
-  if (!is_symbol(fv_sym)) return(NULL);
-  fv = s7_symbol_value(sc, fv_sym);
-  if (!is_float_vector(fv)) return(NULL);
-
-  return(float_vector_set_rf_expanded(sc, fv, caddr(expr), cadddr(expr)));
+  s7_pointer fv;
+  fv = cadr(expr);
+  if (!is_symbol(fv)) return(NULL);
+  fv = s7_slot(sc, fv);
+  if (!is_slot(fv)) return(NULL);
+  if (!is_float_vector(slot_value(fv))) return(NULL);
+  return(float_vector_set_rf_expanded(sc, slot_value(fv), caddr(expr), cadddr(expr)));
 }
 
 
@@ -36175,11 +36368,108 @@ static s7_rf_t float_vector_ref_rf(s7_scheme *sc, s7_pointer expr)
   return(float_vector_ref_rf_expanded(sc, cadr(expr), caddr(expr)));
 }
 
-static s7_rf_t implicit_float_vector_ref_rf(s7_scheme *sc, s7_pointer expr)
+static s7_rf_t implicit_float_vector_ref(s7_scheme *sc, s7_pointer expr)
 {
   if ((is_null(cdr(expr))) || (!is_null(cddr(expr)))) return(NULL);
   return(float_vector_ref_rf_expanded(sc, car(expr), cadr(expr)));
 }
+
+
+static s7_pointer hash_table_ref_pf_i(s7_scheme *sc, s7_pointer **p);
+static s7_pointer hash_table_set_pf_sxx(s7_scheme *sc, s7_pointer **p);
+
+static s7_pf_t implicit_pf_sequence_ref(s7_scheme *sc, s7_pointer expr) 
+{
+  s7_pointer seq, ind;
+  if ((is_null(cdr(expr))) || (!is_null(cddr(expr)))) return(NULL);
+  seq = car(expr);
+  ind = cadr(expr);
+  if (!is_symbol(seq)) return(NULL);
+  seq = s7_slot(sc, seq);
+  if (!is_slot(seq)) return(NULL);
+  s7_xf_store(sc, seq);
+  switch (type(slot_value(seq)))
+    {
+    case T_STRING:
+      if (s7_arg_to_if(sc, ind))
+	return(string_ref_pf_si);
+      break;
+      
+    case T_PAIR:
+      if (s7_arg_to_if(sc, ind))
+	return(list_ref_pf_si);
+      break;
+      
+    case T_VECTOR:
+      if (s7_arg_to_if(sc, ind))
+	return(vector_ref_pf_i);  /* TODO: these vref funcs don't check bounds */
+      break;
+      
+    case T_HASH_TABLE:
+      if (s7_arg_to_pf(sc, ind))
+	return(hash_table_ref_pf_i);
+      break;
+      
+    case T_LET:
+      if (s7_arg_to_pf(sc, ind))
+	return(let_ref_pf_p2_sp);
+      break;
+    }
+  return(NULL);
+}
+
+static s7_pf_t implicit_gf_sequence_ref(s7_scheme *sc, s7_pointer expr) 
+{
+  /* only difference from pf case: int|float-vectors return s7_pointer values */
+  return(implicit_pf_sequence_ref(sc, expr));
+}
+
+static s7_pf_t implicit_pf_sequence_set(s7_scheme *sc, s7_pointer seq, s7_pointer ind, s7_pointer val)
+{
+  /* seq is the slot */
+  s7_xf_store(sc, seq);
+  switch (type(slot_value(seq)))
+    {
+    case T_STRING:
+      if ((s7_arg_to_if(sc, ind)) &&
+	  (s7_arg_to_pf(sc, val)))
+	return(string_set_pf_seq);
+      break;
+      
+    case T_PAIR:
+      if ((s7_arg_to_if(sc, ind)) &&
+	  (s7_arg_to_pf(sc, val)))
+	return(list_set_pf_seq);
+      break;
+      
+    case T_VECTOR:
+      if ((s7_arg_to_if(sc, ind)) &&
+	  (s7_arg_to_pf(sc, val)))
+	return(vector_set_pf_seq);
+      break;
+      
+    case T_HASH_TABLE:
+      if ((s7_arg_to_pf(sc, ind)) &&
+	  (s7_arg_to_pf(sc, val)))
+	return(hash_table_set_pf_sxx);
+      break;
+      
+    case T_LET:
+      if ((s7_arg_to_pf(sc, ind)) &&
+	  (s7_arg_to_pf(sc, val)))
+	return(let_set_pf_p3_s);
+      break;
+    }
+  return(NULL);
+}
+
+static s7_pf_t implicit_gf_sequence_set(s7_scheme *sc, s7_pointer v, s7_pointer ind, s7_pointer val) 
+{
+  return(implicit_pf_sequence_set(sc, v, ind, val));
+}
+
+
+
 
 /* -------------------------------------------------------------------------------- */
 
@@ -37669,6 +37959,16 @@ static s7_pointer hash_table_ref_pf_a(s7_scheme *sc, s7_pointer **p)
   return(s7_hash_table_ref(sc, x, y));
 }
 
+static s7_pointer hash_table_ref_pf_i(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pf_t f;
+  s7_pointer x, y;
+  x = slot_value(**p); (*p)++;
+  f = (s7_pf_t)(**p); (*p)++;
+  y = f(sc, p);
+  return(s7_hash_table_ref(sc, x, y));
+}
+
 static s7_pointer hash_table_ref_pf_s(s7_scheme *sc, s7_pointer **p)
 {
   s7_pf_t f;
@@ -37676,6 +37976,14 @@ static s7_pointer hash_table_ref_pf_s(s7_scheme *sc, s7_pointer **p)
   x = (**p); (*p)++;
   f = (s7_pf_t)(**p); (*p)++;
   y = f(sc, p);
+  return(s7_hash_table_ref(sc, x, y));
+}
+
+static s7_pointer hash_table_ref_pf_ps(s7_scheme *sc, s7_pointer **p)
+{
+  s7_pointer x, y;
+  x = (**p); (*p) += 2;
+  y = slot_value(**p); (*p)++;
   return(s7_hash_table_ref(sc, x, y));
 }
 
@@ -37708,10 +38016,10 @@ static s7_pf_t hash_table_ref_pf(s7_scheme *sc, s7_pointer expr)
 	      s7_xf_store(sc, slot_value(table));
 	      loc = rc_loc(sc);
 	      if (s7_arg_to_pf(sc, a2))
-		return(hash_table_ref_pf_s);
+		return((is_symbol(a2)) ? hash_table_ref_pf_ps : hash_table_ref_pf_s);
 	      sc->cur_rf->cur = rc_go(sc, loc);
 	      if (s7_arg_to_gf(sc, a2))
-		return(hash_table_ref_pf_s);
+		return((is_symbol(a2)) ? hash_table_ref_pf_ps : hash_table_ref_pf_s);
 	      sc->cur_rf->cur = rc_go(sc, loc);
 	      if (s7_arg_to_rf(sc, a2))
 		return(hash_table_ref_pf_r);
@@ -54878,11 +55186,13 @@ static bool pf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool safe_step
 }
 
 
-static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc)
+static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool safe_case)
 {
   s7_pointer let_body, p, let_vars, let_code;
   bool let_star;
   int body_len;
+
+  /* fprintf(stderr, "%lld %lld %s %d\n", numerator(step_slot), denominator(step_slot), DISPLAY(scc), safe_case); */
 
   let_code = caddr(scc);
   let_body = cddr(let_code);
@@ -54959,48 +55269,103 @@ static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc)
 		  s7_pointer *top;
 		  s7_int end;
 
-		  end = denominator(stepper);
-		  top = sc->cur_rf->data;
-		  
-		  if ((var_len == 1) && (body_len == 1)) /* very common special case */
+		  if (safe_case)
 		    {
-		      s7_pointer rl;
-		      rl = slot_value(let_slots(sc->envir));
-		      top++;
-		      for (; numerator(stepper) < end; numerator(stepper)++)
+		      end = denominator(stepper);
+		      top = sc->cur_rf->data;
+		      
+		      if ((var_len == 1) && (body_len == 1)) /* very common special case */
 			{
-			  s7_pointer **rp;
-			  s7_pointer *temp;
-			  
-			  temp = top;
-			  rp = &temp;
-			  set_real(rl, varf(sc, rp)); 
-			  (*rp)++;
-			  bodyf(sc, rp);
+			  s7_pointer rl;
+			  rl = slot_value(let_slots(sc->envir));
+			  top++;
+			  for (; numerator(stepper) < end; numerator(stepper)++)
+			    {
+			      s7_pointer **rp;
+			      s7_pointer *temp;
+			      
+			      temp = top;
+			      rp = &temp;
+			      set_real(rl, varf(sc, rp)); 
+			      (*rp)++;
+			      bodyf(sc, rp);
+			    }
+			}
+		      else
+			{
+			  set_let_slots(sc->envir, reverse_slots(sc, let_slots(sc->envir)));
+			  for (; numerator(stepper) < end; numerator(stepper)++)
+			    {
+			      s7_pointer **rp;
+			      s7_pointer *temp;
+			      
+			      temp = top;
+			      rp = &temp;
+			      
+			      for (p = let_slots(sc->envir); is_slot(p); p = next_slot(p))
+				{
+				  s7_rf_t r1;
+				  r1 = (s7_rf_t)(**rp); (*rp)++;
+				  set_real(slot_value(p), r1(sc, rp)); 
+				}
+			      for (i = 0; i < body_len; i++)
+				{
+				  s7_pf_t pf;
+				  pf = (s7_pf_t)(**rp); (*rp)++;
+				  pf(sc, rp);
+				}
+			    }
 			}
 		    }
 		  else
 		    {
-		      set_let_slots(sc->envir, reverse_slots(sc, let_slots(sc->envir)));
-		      for (; numerator(stepper) < end; numerator(stepper)++)
+		      end = denominator(stepper);
+		      top = sc->cur_rf->data;
+		      
+		      if ((var_len == 1) && (body_len == 1)) /* very common special case */
 			{
-			  s7_pointer **rp;
-			  s7_pointer *temp;
-			  
-			  temp = top;
-			  rp = &temp;
-			  
-			  for (p = let_slots(sc->envir); is_slot(p); p = next_slot(p))
+			  s7_pointer rl;
+			  s7_int k;
+			  rl = slot_value(let_slots(sc->envir));
+			  top++;
+			  for (k = numerator(stepper); k < end; k++)
 			    {
-			      s7_rf_t r1;
-			      r1 = (s7_rf_t)(**rp); (*rp)++;
-			      set_real(slot_value(p), r1(sc, rp)); 
+			      s7_pointer **rp;
+			      s7_pointer *temp;
+			      slot_value(step_slot) = make_integer(sc, k);
+			      
+			      temp = top;
+			      rp = &temp;
+			      set_real(rl, varf(sc, rp)); 
+			      (*rp)++;
+			      bodyf(sc, rp);
 			    }
-			  for (i = 0; i < body_len; i++)
+			}
+		      else
+			{
+			  s7_int k;
+			  set_let_slots(sc->envir, reverse_slots(sc, let_slots(sc->envir)));
+			  for (k = numerator(stepper); k < end; k++)
 			    {
-			      s7_pf_t pf;
-			      pf = (s7_pf_t)(**rp); (*rp)++;
-			      pf(sc, rp);
+			      s7_pointer **rp;
+			      s7_pointer *temp;
+			      slot_value(step_slot) = make_integer(sc, k);
+
+			      temp = top;
+			      rp = &temp;
+			      
+			      for (p = let_slots(sc->envir); is_slot(p); p = next_slot(p))
+				{
+				  s7_rf_t r1;
+				  r1 = (s7_rf_t)(**rp); (*rp)++;
+				  set_real(slot_value(p), r1(sc, rp)); 
+				}
+			      for (i = 0; i < body_len; i++)
+				{
+				  s7_pf_t pf;
+				  pf = (s7_pf_t)(**rp); (*rp)++;
+				  pf(sc, rp);
+				}
 			    }
 			}
 		    }
@@ -55080,7 +55445,7 @@ static int safe_dotimes_ex(s7_scheme *sc)
 		      if ((symbol_syntax_op(car(sc->code)) == OP_LET) ||
 			  (symbol_syntax_op(car(sc->code)) == OP_LET_STAR))
 			{
-			  if (let_pf_ok(sc, sc->args, code) == goto_SAFE_DO_END_CLAUSES)
+			  if (let_pf_ok(sc, sc->args, code, true) == goto_SAFE_DO_END_CLAUSES)
 			    return(goto_SAFE_DO_END_CLAUSES);
 			}
 		      else
@@ -55272,12 +55637,12 @@ static int dotimes_p_ex(s7_scheme *sc)
 	  ((symbol_syntax_op(car(body)) == OP_LET) ||
 	   (symbol_syntax_op(car(body)) == OP_LET_STAR)))
 	{
-	  if (let_pf_ok(sc, sc->args, code) == goto_SAFE_DO_END_CLAUSES)
+	  if (let_pf_ok(sc, sc->args, code, false) == goto_SAFE_DO_END_CLAUSES)
 	    return(goto_DO_END_CLAUSES);
 	}
       else
 	{
-	  if (pf_ok(sc, cddr(code), code, true))
+	  if (pf_ok(sc, cddr(code), code, false))
 	    return(goto_DO_END_CLAUSES);
 	}
       slot_set_value(sc->args, old_init);
@@ -69312,6 +69677,7 @@ s7_scheme *s7_init(void)
 #if WITH_OPTIMIZATION
   syntax_rp(slot_value(global_slot(sc->SET))) = set_rf;
   syntax_ip(slot_value(global_slot(sc->SET))) = set_if;
+  syntax_pp(slot_value(global_slot(sc->SET))) = set_pf;
   syntax_rp(slot_value(global_slot(sc->IF))) = if_rf;
   syntax_pp(slot_value(global_slot(sc->IF))) = if_pf;
   syntax_pp(slot_value(global_slot(sc->OR))) = or_pf;
@@ -70377,17 +70743,17 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136 1157
  * teq           |      |      | 6612                     3887 3020 2516 2468 2453
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212 3245
- * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3748
- * tform         |      |      |                          6816 5536 4287 3996 4019
- * tmap          |      |      | 11.0           5031 4769 4685 4557 4230 4157 4171
- * titer         |      |      |                          7503 6793 6351 6048 6182
+ * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3735
+ * tform         |      |      |                          6816 5536 4287 3996 4012
+ * tmap          |      |      |  9.3                                         4568
+ * titer         |      |      |                          7503 6793 6351 6048 6174
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 6269
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 6617
  * thash         |      |      |                          50.7 23.8 14.9 13.7 12.3
  *               |      |      |
- * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 14.0
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 14.8
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 36.3 36.5
+ * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 14.1
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 15.0
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 36.3 37.6
  * 
  * ----------------------------------------------------------------------------------
  *
@@ -70440,9 +70806,6 @@ int main(int argc, char **argv)
  *
  * / -> * for div same for sub, split long +|*
  * is_if_xf: (not (= s s)) (set! i x) -- 70 faster in wc! 41/34
- * implicit ht/str/lst, try removing fv cases
- *   iv|v set (but this messes up t258 tests -- use lambda)
- * check _a: +|*|fv_ref/set|display|hash-table-set!
  * pf/rf for steppers, and eventually end
  *
  * full +|-|*|/ -- how to handle various range checks? and ratios?
@@ -70471,8 +70834,9 @@ int main(int argc, char **argv)
  *
  * pipf testers perhaps usable in string|list_ref
  * plist for method args etc
- * see ~/old/end-dox-s7.c for painful first attempt at end-dox->pf
+ * see ~/old/end-dox-s7.c for painful first attempt at end-dox->pf (in null body section)
  *   probably need to save the data array, reset slot addrs, get rid of is_all_real, still lose by 300!
  *   much of this is huge overhead in or_pf_xx, pf_1->arg_to_pf!, pf_pf_1->...
+ * map/member/alloc support (at least over all_x if any)
  */
  
