@@ -692,6 +692,8 @@ s7_int s7_slot_integer_value(s7_pointer slot);
 bool s7_is_stepper(s7_pointer p);
 s7_double s7_slot_real_value(s7_scheme *sc, s7_pointer slot, const char *caller);
 void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_double value);
+
+s7_pointer s7_set_plist_1(s7_scheme *sc, s7_pointer x1);
 /* end CLM stuff */
 
 

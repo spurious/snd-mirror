@@ -465,7 +465,7 @@
 	  (end-c-file)
 	  (delete-file o-file-name)))
 
-    ;; load the obejct file, clean up
+    ;; load the object file, clean up
     (let ((new-env (sublet cur-env 'init_func (string->symbol init-name))))
       (format *stderr* "loading ~A~%" so-file-name)
       (load so-file-name new-env))))
