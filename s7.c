@@ -233,16 +233,25 @@
 #endif
 
 /* in case mus-config.h forgets these */
-#ifndef HAVE_COMPLEX_NUMBERS
-  #define HAVE_COMPLEX_NUMBERS 1
-#endif
-#if __cplusplus
+#ifdef _MSC_VER
+  #ifndef HAVE_COMPLEX_NUMBERS
+    #define HAVE_COMPLEX_NUMBERS 0
+  #endif
   #ifndef HAVE_COMPLEX_TRIG
     #define HAVE_COMPLEX_TRIG 0
   #endif
 #else
-  #ifndef HAVE_COMPLEX_TRIG
-    #define HAVE_COMPLEX_TRIG 1
+  #ifndef HAVE_COMPLEX_NUMBERS
+    #define HAVE_COMPLEX_NUMBERS 1
+  #endif
+  #if __cplusplus
+    #ifndef HAVE_COMPLEX_TRIG
+      #define HAVE_COMPLEX_TRIG 0
+    #endif
+  #else
+    #ifndef HAVE_COMPLEX_TRIG
+      #define HAVE_COMPLEX_TRIG 1
+    #endif
   #endif
 #endif
 
@@ -256,7 +265,6 @@
 #endif
 
 #define WITH_DO_OPT 0
-#define MAP_OPT 0
 
 #ifndef _MSC_VER
   #include <unistd.h>
@@ -343,13 +351,7 @@
   #define ptr_int unsigned int
   #define ptr_int_format "(c-pointer %u)"
   #define WITH_OPTIMIZATION 0
-  /* we have a problem... The new optimizer seems to trigger flakiness in 32-bit systems.  I get very odd
-   *   cases where isnan is both true and false of the same number at the same time!  The actual bits are
-   *   not a NaN, so x != x and isnan(x) are returning incorrect results (x == 10.0 or 0.0 for example).  
-   *   How could the optimizer cause this?  Also sincos is a mess in 32-bits, but I finally disabled it,
-   *   and still get these bizarre results. Later... it seems only the set!, float-vector-set!, and oscil
-   *   opts (oscil_rf in particular) are the culprits -- what is their problem?  
-   */
+  /* 32-bit optimized case gets inexplicable NaNs in float-vector ops */
 #else
   #define opcode_t unsigned long long int
   #define ptr_int unsigned long long int
@@ -992,10 +994,6 @@ typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_w
 #define NUM_SAFE_LISTS 16
 #define INITIAL_AUTOLOAD_NAMES_SIZE 4
 
-/* is_c_function can be array lookup
- *  the array lookup has exactly the same computational cost as the bit check
- */
-
 #define T_FREE                 0
 #define T_PAIR                 1
 #define T_NIL                  2
@@ -1289,11 +1287,6 @@ static void init_types(void)
   #define _TBfl(P) check_ref(P, T_BAFFLE,            __func__, __LINE__, NULL, NULL)
   #define _TGot(P) check_ref(P, T_GOTO,              __func__, __LINE__, NULL, NULL)
   #define _TStk(P) check_ref(P, T_STACK,             __func__, __LINE__, NULL, NULL)
-  #define _TPrt(P) check_ref3(P,                     __func__, __LINE__)
-  #define _TVec(P) check_ref4(P,                     __func__, __LINE__)
-  #define _TClo(P) check_ref5(P,                     __func__, __LINE__)
-  #define _TFnc(P) check_ref6(P,                     __func__, __LINE__)
-  #define _TNum(P) check_ref7(P,                     __func__, __LINE__)
   #define _TLst(P) check_ref(P, T_PAIR,              __func__, __LINE__, NULL, NULL)
   #define _TCat(P) check_ref(P, T_CATCH,             __func__, __LINE__, NULL, NULL)
   #define _TDyn(P) check_ref(P, T_DYNAMIC_WIND,      __func__, __LINE__, NULL, NULL)
@@ -1312,6 +1305,12 @@ static void init_types(void)
   #define _TFvc(P) check_ref(P, T_FLOAT_VECTOR,      __func__, __LINE__, "sweep", NULL)
   #define _TIvc(P) check_ref(P, T_INT_VECTOR,        __func__, __LINE__, "sweep", NULL)
   #define _TSym(P) check_ref(P, T_SYMBOL,            __func__, __LINE__, "sweep", "remove_from_symbol_table")
+
+  #define _TPrt(P) check_ref3(P,                     __func__, __LINE__)
+  #define _TVec(P) check_ref4(P,                     __func__, __LINE__)
+  #define _TClo(P) check_ref5(P,                     __func__, __LINE__)
+  #define _TFnc(P) check_ref6(P,                     __func__, __LINE__)
+  #define _TNum(P) check_ref7(P,                     __func__, __LINE__)
 
 #else
   #define unchecked_type(p)           ((p)->tf.type_field)
@@ -1377,7 +1376,8 @@ static void init_types(void)
 #define is_simple_sequence(P)         (t_sequence_p[type(P)])
 #define is_sequence(P)                ((t_sequence_p[type(P)]) || (has_methods(P)))
 #define is_applicable(P)              (t_applicable_p[type(P)])
-/* this misses #() which actually is not applicable to anything, probably "" also */
+/* this misses #() which actually is not applicable to anything, probably "" also, and inapplicable c-objects like random-state
+ */
 
 
 /* the layout of these bits does matter in several cases -- in particular, don't use the 2nd byte for anything
@@ -1402,7 +1402,6 @@ static void init_types(void)
 #define T_PROCEDURE                   (1 << (TYPE_BITS + 2))
 #define is_procedure(p)               ((typesflag(p) & T_PROCEDURE) != 0)
 /* closure, c_function, applicable object, goto or continuation, should be in 2nd byte
- *   perhaps this should be T_APPLICABLE? macros?
  */
 
 #define T_OPTIMIZED                   (1 << (TYPE_BITS + 3))
@@ -1540,7 +1539,7 @@ static void init_types(void)
 
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 16))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
-#define set_immutable(p)              typeflag(p) |= T_IMMUTABLE
+#define set_immutable(p)              typeflag(_TSym(p)) |= T_IMMUTABLE
 /* immutable means the value can't be changed via set! or bind -- this is separate from the symbol access stuff
  * this bit can't be in the 2nd byte -- with-let, for example, is immutable, but we use SYNTACTIC_TYPE to 
  * recognize syntax in do loop optimizations.
@@ -1570,13 +1569,13 @@ static void init_types(void)
 /* marks a string that the caller considers a byte_vector
 */
 
-#define T_LOOP_BOUNDS                  T_MUTABLE
-#define is_loop_bounds(p)              ((typeflag(p) & T_LOOP_BOUNDS) != 0)
-#define set_loop_bounds(p)             typeflag(_TSlt(p)) |= T_LOOP_BOUNDS
+#define T_STEPPER                  T_MUTABLE
+#define is_stepper(p)              ((typeflag(p) & T_STEPPER) != 0)
+#define set_stepper(p)             typeflag(_TSlt(p)) |= T_STEPPER
 /* marks a slot that holds a do-loop's controlling step variable (numerator=current, denominator=end)
 */
 
-bool s7_is_stepper(s7_pointer p) {return(is_loop_bounds(p));}
+bool s7_is_stepper(s7_pointer p) {return(is_stepper(p));}
 
 #define T_PRINT_NAME                  (1 << (TYPE_BITS + 19))
 #define has_print_name(p)             ((typeflag(_TNum(p)) & T_PRINT_NAME) != 0)
@@ -2089,9 +2088,9 @@ static bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_op
 #define catch_op_loc(p)               _TCat(p)->object.rcatch.op_stack_loc
 #define catch_handler(p)              _TCat(p)->object.rcatch.handler
 
-#define catch_all_goto_loc(p)         (p)->object.envr.edat.ctall.goto_loc
-#define catch_all_op_loc(p)           (p)->object.envr.edat.ctall.op_stack_loc
-#define catch_all_result(p)           (p)->object.envr.edat.ctall.result
+#define catch_all_goto_loc(p)         _TLet(p)->object.envr.edat.ctall.goto_loc
+#define catch_all_op_loc(p)           _TLet(p)->object.envr.edat.ctall.op_stack_loc
+#define catch_all_result(p)           _TLet(p)->object.envr.edat.ctall.result
 
 enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define dynamic_wind_state(p)         _TDyn(p)->object.winder.state
@@ -7465,6 +7464,7 @@ s7_pp_t s7_gf_function(s7_scheme *sc, s7_pointer func)
 void s7_rf_set_function(s7_pointer f, s7_rp_t rp)
 {
 #if WITH_OPTIMIZATION
+  if (!is_c_function(f)) return;
   if (!c_function_ext(f))
     c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
   c_function_rp(f) = rp;
@@ -7476,6 +7476,7 @@ void s7_rf_set_function(s7_pointer f, s7_rp_t rp)
 void s7_if_set_function(s7_pointer f, s7_ip_t ip)
 {
 #if WITH_OPTIMIZATION
+  if (!is_c_function(f)) return;
   if (!c_function_ext(f))
     c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
   c_function_ip(f) = ip;
@@ -7487,6 +7488,7 @@ void s7_if_set_function(s7_pointer f, s7_ip_t ip)
 void s7_pf_set_function(s7_pointer f, s7_pp_t pp)
 {
 #if WITH_OPTIMIZATION
+  if (!is_c_function(f)) return;
   if (!c_function_ext(f))
     c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
   c_function_pp(f) = pp;
@@ -7498,6 +7500,7 @@ void s7_pf_set_function(s7_pointer f, s7_pp_t pp)
 void s7_gf_set_function(s7_pointer f, s7_pp_t gp)
 {
 #if WITH_OPTIMIZATION
+  if (!is_c_function(f)) return;
   if (!c_function_ext(f))
     c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
   c_function_gp(f) = gp;
@@ -7684,53 +7687,6 @@ static s7_pf_t pf_opt(s7_scheme *sc, s7_pointer lp)
 	}
     }
   return(NULL);
-}
-
-static bool do_var_is_real(s7_scheme *sc, s7_pointer step, s7_pointer expr)
-{
-  if (type(expr) == T_COMPLEX)
-    return(false);
-
-  if ((is_symbol(expr)) && (expr != step))
-    {
-      s7_pointer val;
-      val = find_symbol_unchecked(sc, expr);
-      return((!val) || 
-	     ((type(val) != T_COMPLEX) &&
-	      (type(val) != T_SYNTAX))); /* embedded let?? */
-    }
-
-  if (is_pair(expr))
-    {
-      s7_pointer p;
-      if (is_symbol(car(expr)))
-	p = cdr(expr);
-      else p = expr;
-      for (; is_pair(p); p = cdr(p))
-	if (!do_var_is_real(sc, step, car(p)))
-	  return(false);
-    }
-  return(true);
-}
-
-static bool is_all_real(s7_scheme *sc, s7_pointer expr)
-{
-  /* we've checked all symbols, and all numerals in the do-loop body, so here we only
-   *   need to check the step variables.
-   */
-  s7_pointer vars, p;
-  
-  vars = car(expr);                     /* expr is do loop without the "do" */
-  for (p = vars; is_pair(p); p = cdr(p))
-    {
-      s7_pointer v;
-      v = car(p);
-      if ((!do_var_is_real(sc, car(v), cadr(v))) ||
-	  ((is_pair(cddr(v))) && 
-	   (!do_var_is_real(sc, car(v), caddr(v)))))
-	return(false);
-    }
-  return(true);
 }
 
 static s7_double rf_c(s7_scheme *sc, s7_pointer **p)
@@ -8149,10 +8105,14 @@ static s7_rf_t com_rf_2(s7_scheme *sc, s7_pointer expr, s7_rf_t rs, s7_rf_t rx, 
     }
   if ((s1) && (s2))
     {
-      s7_xf_store(sc, s1);
-      s7_xf_store(sc, s2);
-      /* TODO: here we assume real?? */
-      return(ss);
+      if (((is_simple_real(slot_value(s1))) && (!is_stepper(s1))) ||
+	  ((is_simple_real(slot_value(s2))) && (!is_stepper(s2))))
+	{
+	  s7_xf_store(sc, s1);
+	  s7_xf_store(sc, s2);
+	  return(ss);
+	}
+      return(NULL); /* can't guarantee simple_real result */
     }
 
   if ((p1) && (p2))
@@ -8175,9 +8135,14 @@ static s7_rf_t com_rf_2(s7_scheme *sc, s7_pointer expr, s7_rf_t rs, s7_rf_t rx, 
 
   if ((c1) && (s1))
     {
-      s7_xf_store(sc, c1);
-      s7_xf_store(sc, s1);
-      return(rs);
+      if ((is_simple_real(c1)) ||
+	  ((is_simple_real(slot_value(s1))) && (!is_stepper(s1))))
+	{
+	  s7_xf_store(sc, c1);
+	  s7_xf_store(sc, s1);
+	  return(rs);
+	}
+      return(NULL);
     }
 
   if (p1)
@@ -8236,18 +8201,31 @@ static s7_rf_t com_rf_3(s7_scheme *sc, s7_pointer expr, s7_rf_t rss, s7_rf_t rsx
 
   if ((c1) && (s1) && (s2))
     {
-      s7_xf_store(sc, c1);
-      s7_xf_store(sc, s1);
-      s7_xf_store(sc, s2);
-      return(rss);
+      if ((is_simple_real(c1)) ||
+	  ((is_simple_real(slot_value(s1))) && (!is_stepper(s1))) ||
+	  ((is_simple_real(slot_value(s2))) && (!is_stepper(s2))))
+	{
+	  s7_xf_store(sc, c1);
+	  s7_xf_store(sc, s1);
+	  s7_xf_store(sc, s2);
+	  return(rss);
+	}
+      return(NULL);
     }
 
   if ((s1) && (s2) && (s3))
     {
-      s7_xf_store(sc, s1);
-      s7_xf_store(sc, s2);
-      s7_xf_store(sc, s3);
-      return(sss);
+      /* we need to check is_stepper to avoid dumb cases like: (do ((x 1.5 (sqrt (- x)))) ...) */
+      if (((is_simple_real(slot_value(s1))) && (!is_stepper(s1))) ||
+	  ((is_simple_real(slot_value(s2))) && (!is_stepper(s2))) ||
+	  ((is_simple_real(slot_value(s3))) && (!is_stepper(s3))))
+	{
+	  s7_xf_store(sc, s1);
+	  s7_xf_store(sc, s2);
+	  s7_xf_store(sc, s3);
+	  return(sss);
+	}
+      return(NULL);
     }
 
   if ((p1) && (p2) && (p3))
@@ -8546,6 +8524,8 @@ static s7_pointer c_symbol_to_value(s7_scheme *sc, s7_pointer x) {return(g_symbo
 PF_TO_PF(symbol_to_value, c_symbol_to_value)
 static s7_pointer c_symbol_to_string(s7_scheme *sc, s7_pointer p) {return(g_symbol_to_string(sc, set_plist_1(sc, p)));}
 PF_TO_PF(symbol_to_string, c_symbol_to_string)
+static s7_pointer c_gensym(s7_scheme *sc, s7_pointer p) {return(g_gensym(sc, set_plist_1(sc, p)));}
+PF_TO_PF(gensym, c_gensym)
 
 static s7_pointer c_not(s7_scheme *sc, s7_pointer x) {return((x == sc->F) ? sc->T : sc->F);}
 PF_TO_PF(not, c_not)
@@ -8668,7 +8648,7 @@ static s7_pointer pf2_pf_1(s7_scheme *sc, s7_pointer **p, pf2_pf_t fnc)
 {
   s7_pf_t f;
   s7_pointer x, y;
-  f = (s7_pf_t)(**p); (*p)++;	
+  f = (s7_pf_t)(**p); (*p)++;
   x = f(sc, p);
   f = (s7_pf_t)(**p); (*p)++;	
   y = f(sc, p);
@@ -9266,6 +9246,10 @@ static s7_rf_t rf_1(s7_scheme *sc, s7_pointer expr, s7_rf_t f)
   static s7_double CName ## _rf_r(s7_scheme *sc, s7_pointer **rp) {return(rf_rf_1(sc, rp, Rfnc));} \
   static s7_rf_t CName ## _rf(s7_scheme *sc, s7_pointer expr) {return(rf_1(sc, expr, CName ## _rf_r));}
 
+#define DIRECT_RF_TO_RF(CName) \
+  static s7_double CName ## _rf_r(s7_scheme *sc, s7_pointer **p) {s7_rf_t f; s7_double x; f = (s7_rf_t)(**p); (*p)++; x = f(sc, p); return(CName(x));} \
+  static s7_rf_t CName ## _rf(s7_scheme *sc, s7_pointer expr) {if (s7_arg_to_rf(sc, s7_cadr(expr))) return(CName ## _rf_r); return(NULL);}
+
 
 
 /* -------- RF2_TO_RF -------- */
@@ -9778,7 +9762,7 @@ static s7_pf_t do_pf(s7_scheme *sc, s7_pointer expr)
 	      stepper = slot_value(slot);
 
 	      denominator(stepper) = -1; /* turn on bounds checks */
-	      set_loop_bounds(slot);
+	      set_stepper(slot);
 
 	      s7_arg_to_rf(sc, caddr(sc->code)); /* TODO: pf|xf? -- or try each in turn -- make a func for this */
 
@@ -10905,6 +10889,17 @@ static s7_pointer make_permanent_real(s7_double n)
   return(x);
 }
 
+#if MS_WINDOWS
+static s7_pointer s7_remake_real(s7_scheme *sc, s7_pointer rl, s7_Double n)
+{
+  if (is_simple_real(rl))
+    {
+      real(rl) = n;
+      return(rl);
+    }
+  return(make_real(sc, n));
+}
+#endif
 
 s7_pointer s7_make_complex(s7_scheme *sc, s7_double a, s7_double b)
 {
@@ -13400,8 +13395,8 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 
 static s7_int c_abs_i(s7_scheme *sc, s7_int arg) {return((arg < 0) ? (-arg) : arg);}
 IF_TO_IF(abs, c_abs_i)
-static s7_double c_abs_r(s7_scheme *sc, s7_double arg) {return((arg < 0.0) ? (-arg) : arg);}
-RF_TO_RF(abs, c_abs_r)
+static s7_double c_abs_r(s7_scheme *sc, s7_double arg) {return((arg < 0.0) ? (-arg) : arg);} 
+DIRECT_RF_TO_RF(fabs)
 
 
 #if (!WITH_MAKE_COMPLEX)
@@ -13781,8 +13776,7 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
     }
 }
 
-static s7_double c_exp_r(s7_scheme *sc, s7_double x) {return(exp(x));}
-RF_TO_RF(exp, c_exp_r)
+DIRECT_RF_TO_RF(exp)
 
 /* another possibility:
  * since (log (make-polar 1 .1)) = 0+0.1i and so on,
@@ -13942,8 +13936,7 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
    */
 }
 
-static s7_double c_sin_r(s7_scheme *sc, s7_double x) {return(sin(x));}
-RF_TO_RF(sin, c_sin_r)
+DIRECT_RF_TO_RF(sin)
 
 
 /* -------------------------------- cos -------------------------------- */
@@ -13977,8 +13970,7 @@ static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
     }
 }
 
-static s7_double c_cos_r(s7_scheme *sc, s7_double x) {return(cos(x));}
-RF_TO_RF(cos, c_cos_r)
+DIRECT_RF_TO_RF(cos)
 
 
 /* -------------------------------- tan -------------------------------- */
@@ -14016,8 +14008,7 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
     }
 }
 
-static s7_double c_tan_r(s7_scheme *sc, s7_double x) {return(tan(x));}
-RF_TO_RF(tan, c_tan_r)
+DIRECT_RF_TO_RF(tan)
 
 
 /* -------------------------------- asin -------------------------------- */
@@ -14236,8 +14227,7 @@ static s7_pointer g_sinh(s7_scheme *sc, s7_pointer args)
     }
 }
 
-static s7_double c_sinh_r(s7_scheme *sc, s7_double x) {return(sinh(x));}
-RF_TO_RF(sinh, c_sinh_r)
+DIRECT_RF_TO_RF(sinh)
 
 
 /* -------------------------------- cosh -------------------------------- */
@@ -14276,8 +14266,7 @@ static s7_pointer g_cosh(s7_scheme *sc, s7_pointer args)
     }
 }
 
-static s7_double c_cosh_r(s7_scheme *sc, s7_double x) {return(cosh(x));}
-RF_TO_RF(cosh, c_cosh_r)
+DIRECT_RF_TO_RF(cosh)
 
 
 /* -------------------------------- tanh -------------------------------- */
@@ -14312,8 +14301,7 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
     }
 }
 
-static s7_double c_tanh_r(s7_scheme *sc, s7_double x) {return(tanh(x));}
-RF_TO_RF(tanh, c_tanh_r)
+DIRECT_RF_TO_RF(tanh)
 
 
 /* -------------------------------- asinh -------------------------------- */
@@ -23373,7 +23361,7 @@ static int c_string_tester(s7_scheme *sc, s7_pointer expr)
       s7_pointer table;
       table = s7_slot(sc, a1);
       if ((is_slot(table)) && 
-	  ((is_immutable(a1)) || (!is_loop_bounds(table))) &&
+	  ((is_immutable(a1)) || (!is_stepper(table))) &&
 	  (is_string(slot_value(table))))
 	{
 	  s7_xf_store(sc, slot_value(table));
@@ -27894,7 +27882,7 @@ static s7_pointer iterate_pf_s(s7_scheme *sc, s7_pointer **p)
   return(f(sc, x));
 }
 
-static s7_pf_t iterate_pf(s7_scheme *sc, s7_pointer expr)
+static s7_pf_t iterate_gf(s7_scheme *sc, s7_pointer expr)
 {
   if ((is_pair(cdr(expr))) && (is_null(cddr(expr))))
     {
@@ -27914,6 +27902,28 @@ static s7_pf_t iterate_pf(s7_scheme *sc, s7_pointer expr)
   return(NULL);
 }
 
+static s7_pf_t iterate_pf(s7_scheme *sc, s7_pointer expr)
+{
+  if ((is_pair(cdr(expr))) && (is_null(cddr(expr))))
+    {
+      s7_pointer a1, obj;
+      a1 = cadr(expr);
+      if ((is_symbol(a1)) &&
+	  (!s7_xf_is_stepper(sc, a1)) &&
+	  (is_iterator(obj = s7_symbol_value(sc, a1))))
+	{
+	  s7_pointer seq;
+	  seq = iterator_sequence(obj);
+	  if ((type(seq) == T_VECTOR) || (is_string(seq)) || (is_pair(seq)))
+	    {
+	      s7_xf_store(sc, obj);
+	      s7_xf_store(sc, (s7_pointer)iterator_next(obj));
+	      return(iterate_pf_s);
+	    }
+	}
+    }
+  return(NULL);
+}
 
 s7_pointer s7_iterate(s7_scheme *sc, s7_pointer obj)
 {
@@ -32213,7 +32223,7 @@ static int c_list_tester(s7_scheme *sc, s7_pointer expr)
       s7_pointer table;
       table = s7_slot(sc, a1);
       if ((is_slot(table)) && 
-	  ((is_immutable(a1)) || (!is_loop_bounds(table))) &&
+	  ((is_immutable(a1)) || (!is_stepper(table))) &&
 	  (is_pair(slot_value(table))))
 	{
 	  s7_xf_store(sc, slot_value(table));
@@ -35292,7 +35302,7 @@ static int c_vector_tester(s7_scheme *sc, s7_pointer expr)
     {
       s7_pointer table;
       table = s7_slot(sc, a1);
-      if ((is_slot(table)) && ((is_immutable(a1)) || (!is_loop_bounds(table))))
+      if ((is_slot(table)) && ((is_immutable(a1)) || (!is_stepper(table))))
 	{
 	  table = slot_value(table);
 	  if ((type(table) == T_VECTOR) && (vector_rank(table) == 1))
@@ -36896,6 +36906,8 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 			  if (has_xf_opt(fcar))
 			    {
 			      NEW_FRAME_WITH_TWO_SLOTS(sc, closure_let(lessp), sc->envir, car(largs), sc->F, cadr(largs), sc->F);
+			      set_stepper(let_slots(sc->envir));
+			      set_stepper(next_slot(let_slots(sc->envir)));
 			      s7_xf_new(sc, sc->envir);
 			      compare_pf = xf_opt(sc, expr);
 			      if (compare_pf)
@@ -38207,7 +38219,7 @@ static s7_pf_t hash_table_ref_pf(s7_scheme *sc, s7_pointer expr)
 	{
 	  s7_pointer table;
 	  table = s7_slot(sc, a1);
-	  if ((is_slot(table)) && (!is_loop_bounds(table)) && (is_hash_table(slot_value(table))))
+	  if ((is_slot(table)) && (!is_stepper(table)) && (is_hash_table(slot_value(table))))
 	    {
 	      ptr_int loc;
 	      s7_pointer a2;
@@ -38287,7 +38299,7 @@ static s7_pf_t hash_table_set_pf(s7_scheme *sc, s7_pointer expr)
       if (is_symbol(a1))
 	{
 	  a1 = s7_slot(sc, a1);
-	  if ((!is_slot(a1)) || (!is_hash_table(slot_value(a1))) || (is_loop_bounds(a1))) return(NULL);
+	  if ((!is_slot(a1)) || (!is_hash_table(slot_value(a1))) || (is_stepper(a1))) return(NULL);
 	  s7_xf_store(sc, a1);
 	  if (is_symbol(a2))
 	    {
@@ -44599,6 +44611,7 @@ static bool for_each_pf_ok(s7_scheme *sc, s7_pointer func, s7_pointer args, s7_p
 	      push_stack(sc, OP_NO_OP, args, func); /* temporary GC protection?? */
 	      sc->envir = new_frame_in_env(sc, sc->envir);
 	      slot = add_slot(sc, car(closure_args(func)), sc->F);
+	      set_stepper(slot);
 	      
 	      s7_xf_new(sc, sc->envir);
 	      if (c) xf_push(sc, c);
@@ -44848,13 +44861,11 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
       (closure_arity_to_int(sc, sc->code) == 1) &&     /* not a rest arg: not is_pair: (lambda (x . args) arg) */
       (!is_immutable(car(closure_args(sc->code)))))
     {
-#if MAP_OPT
       s7_pointer c;
       c = make_counter(sc, sc->NIL);
       /* sc->args is GC protected in for_each_pf_ok, and c */
       if (for_each_pf_ok(sc, sc->code, sc->args, c))
 	return(safe_reverse_in_place(sc, counter_result(c)));
-#endif
 
       push_stack(sc, OP_MAP_1, make_counter(sc, car(sc->args)), sc->code);
       return(sc->NIL);
@@ -47934,7 +47945,7 @@ static void init_choosers(s7_scheme *sc)
   s7_gf_set_function(slot_value(global_slot(sc->NUMBER_TO_STRING)), number_to_string_pf);
   s7_gf_set_function(slot_value(global_slot(sc->STRING_TO_NUMBER)), string_to_number_pf);
 
-  s7_rf_set_function(slot_value(global_slot(sc->ABS)), abs_rf);
+  s7_rf_set_function(slot_value(global_slot(sc->ABS)), fabs_rf);
   s7_if_set_function(slot_value(global_slot(sc->ABS)), abs_if);
 #if (!WITH_MAKE_COMPLEX)
   s7_gf_set_function(slot_value(global_slot(sc->MAKE_RECTANGULAR)), make_rectangular_pf);
@@ -48129,7 +48140,8 @@ static void init_choosers(s7_scheme *sc)
   s7_pf_set_function(slot_value(global_slot(sc->IS_ITERATOR)), is_iterator_pf);
   s7_pf_set_function(slot_value(global_slot(sc->ITERATOR_IS_AT_END)), iterator_is_at_end_pf);
   s7_pf_set_function(slot_value(global_slot(sc->ITERATOR_SEQUENCE)), iterator_sequence_pf);
-  s7_gf_set_function(slot_value(global_slot(sc->ITERATE)), iterate_pf);
+  s7_pf_set_function(slot_value(global_slot(sc->ITERATE)), iterate_pf);
+  s7_gf_set_function(slot_value(global_slot(sc->ITERATE)), iterate_gf);
   s7_gf_set_function(slot_value(global_slot(sc->MAKE_ITERATOR)), make_iterator_pf);
   s7_gf_set_function(slot_value(global_slot(sc->MAKE_RANDOM_STATE)), make_random_state_pf);
 
@@ -48143,6 +48155,7 @@ static void init_choosers(s7_scheme *sc)
   s7_pf_set_function(slot_value(global_slot(sc->KEYWORD_TO_SYMBOL)), keyword_to_symbol_pf);
   s7_pf_set_function(slot_value(global_slot(sc->SYMBOL_TO_KEYWORD)), symbol_to_keyword_pf);
   s7_pf_set_function(slot_value(global_slot(sc->SYMBOL_TO_VALUE)), symbol_to_value_pf);
+  s7_gf_set_function(slot_value(global_slot(sc->GENSYM)), gensym_pf);
   s7_gf_set_function(slot_value(global_slot(sc->ARITY)), arity_pf);
 
   s7_pf_set_function(slot_value(global_slot(sc->IS_OPENLET)), is_openlet_pf);
@@ -48234,7 +48247,6 @@ static void init_choosers(s7_scheme *sc)
 
   /* - */
   f = set_function_chooser(sc, sc->SUBTRACT, subtract_chooser);
-
   subtract_1 = make_function_with_class(sc, f, "-", g_subtract_1, 1, 0, false, "- opt");
   subtract_2 = make_function_with_class(sc, f, "-", g_subtract_2, 2, 0, false, "- opt");
   subtract_s1 = make_function_with_class(sc, f, "-", g_subtract_s1, 2, 0, false, "- opt");
@@ -48254,7 +48266,6 @@ static void init_choosers(s7_scheme *sc)
 
   /* * */
   f = set_function_chooser(sc, sc->MULTIPLY, multiply_chooser);
-
 #if (!WITH_GMP)
   multiply_2 = make_function_with_class(sc, f, "*", g_multiply_2, 2, 0, false, "* opt");
   multiply_2_temp = make_temp_function_with_class(sc, f, "*", g_multiply_2_temp, 2, 0, false, "* opt");
@@ -48276,7 +48287,6 @@ static void init_choosers(s7_scheme *sc)
 
   /* / */
   f = set_function_chooser(sc, sc->DIVIDE, divide_chooser);
-
 #if (!WITH_GMP)
   invert_1 = make_function_with_class(sc, f, "/", g_invert_1, 1, 0, false, "/ opt");
   divide_1r = make_function_with_class(sc, f, "/", g_divide_1r, 2, 0, false, "/ opt");
@@ -48312,7 +48322,6 @@ static void init_choosers(s7_scheme *sc)
 
   /* < */
   f = set_function_chooser(sc, sc->LT, less_chooser);
-
   less_s_ic = make_function_with_class(sc, f, "<", g_less_s_ic, 2, 0, false, "< opt");
   less_s0 = make_function_with_class(sc, f, "<", g_less_s0, 2, 0, false, "< opt");
   less_2 = make_function_with_class(sc, f, "<", g_less_2, 2, 0, false, "< opt");
@@ -48320,7 +48329,6 @@ static void init_choosers(s7_scheme *sc)
 
   /* > */
   f = set_function_chooser(sc, sc->GT, greater_chooser);
-
   greater_s_ic = make_function_with_class(sc, f, ">", g_greater_s_ic, 2, 0, false, "> opt");
   greater_s_fc = make_function_with_class(sc, f, ">", g_greater_s_fc, 2, 0, false, "> opt");
   greater_2 = make_function_with_class(sc, f, ">", g_greater_2, 2, 0, false, "> opt");
@@ -48328,13 +48336,11 @@ static void init_choosers(s7_scheme *sc)
 
   /* <= */
   f = set_function_chooser(sc, sc->LEQ, leq_chooser);
-
   leq_s_ic = make_function_with_class(sc, f, "<=", g_leq_s_ic, 2, 0, false, "<= opt");
   leq_2 = make_function_with_class(sc, f, "<=", g_leq_2, 2, 0, false, "<= opt");
 
   /* >= */
   f = set_function_chooser(sc, sc->GEQ, geq_chooser);
-
   geq_s_ic = make_function_with_class(sc, f, ">=", g_geq_s_ic, 2, 0, false, ">= opt");
   geq_s_fc = make_function_with_class(sc, f, ">=", g_geq_s_fc, 2, 0, false, ">= opt");
   geq_2 = make_function_with_class(sc, f, ">=", g_geq_2, 2, 0, false, ">= opt");
@@ -48360,20 +48366,17 @@ static void init_choosers(s7_scheme *sc)
 
   /* char=? */
   f = set_function_chooser(sc, sc->CHAR_EQ, char_equal_chooser);
-
   simple_char_eq = make_function_with_class(sc, f, "char=?", g_simple_char_eq, 2, 0, false, "char=? opt");
   char_equal_s_ic = make_function_with_class(sc, f, "char=?", g_char_equal_s_ic, 2, 0, false, "char=? opt");
   char_equal_2 = make_function_with_class(sc, f, "char=?", g_char_equal_2, 2, 0, false, "char=? opt");
 
   /* char>? */
   f = set_function_chooser(sc, sc->CHAR_GT, char_greater_chooser);
-
   char_greater_s_ic = make_function_with_class(sc, f, "char>?", g_char_greater_s_ic, 2, 0, false, "char>? opt");
   char_greater_2 = make_function_with_class(sc, f, "char>?", g_char_greater_2, 2, 0, false, "char>? opt");
 
   /* char<? */
   f = set_function_chooser(sc, sc->CHAR_LT, char_less_chooser);
-
   char_less_s_ic = make_function_with_class(sc, f, "char<?", g_char_less_s_ic, 2, 0, false, "char<? opt");
   char_less_2 = make_function_with_class(sc, f, "char<?", g_char_less_2, 2, 0, false, "char<? opt");
 
@@ -48382,11 +48385,10 @@ static void init_choosers(s7_scheme *sc)
   char_position_csi = make_function_with_class(sc, f, "char-position", g_char_position_csi, 2, 1, false, "char-position opt");
 
   /* string->symbol */
-  f = set_function_chooser(sc, sc->STRING_TO_SYMBOL, string_to_symbol_chooser);
+  set_function_chooser(sc, sc->STRING_TO_SYMBOL, string_to_symbol_chooser);
 
   /* string=? */
   f = set_function_chooser(sc, sc->STRING_EQ, string_equal_chooser);
-
   string_equal_s_ic = make_function_with_class(sc, f, "string=?", g_string_equal_s_ic, 2, 0, false, "string=? opt");
   string_equal_2 = make_function_with_class(sc, f, "string=?", g_string_equal_2, 2, 0, false, "string=? opt");
 
@@ -48423,7 +48425,6 @@ static void init_choosers(s7_scheme *sc)
 
   /* vector-ref */
   f = set_function_chooser(sc, sc->VECTOR_REF, vector_ref_chooser);
-
   vector_ref_ic = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic, 2, 0, false, "vector-ref opt");
   vector_ref_ic_0 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic_0, 1, 0, false, "vector-ref opt");
   vector_ref_ic_1 = make_function_with_class(sc, f, "vector-ref", g_vector_ref_ic_1, 1, 0, false, "vector-ref opt");
@@ -48436,7 +48437,6 @@ static void init_choosers(s7_scheme *sc)
 
   /* vector-set! */
   f = set_function_chooser(sc, sc->VECTOR_SET, vector_set_chooser);
-
   vector_set_ic = make_function_with_class(sc, f, "vector-set!", g_vector_set_ic, 3, 0, false, "vector-set! opt");
   vector_set_vref = make_function_with_class(sc, f, "vector-set!", g_vector_set_vref, 3, 0, false, "vector-set! opt");
   vector_set_vector_ref = make_function_with_class(sc, f, "vector-set!", g_vector_set_vector_ref, 3, 0, false, "vector-set! opt");
@@ -48453,21 +48453,18 @@ static void init_choosers(s7_scheme *sc)
 
   /* hash-table-ref */
   f = set_function_chooser(sc, sc->HASH_TABLE_REF, hash_table_ref_chooser);
-
   hash_table_ref_2 = make_function_with_class(sc, f, "hash-table-ref", g_hash_table_ref_2, 2, 0, false, "hash-table-ref opt");
   hash_table_ref_ss = make_function_with_class(sc, f, "hash-table-ref", g_hash_table_ref_ss, 2, 0, false, "hash-table-ref opt");
   hash_table_ref_car = make_function_with_class(sc, f, "hash-table-ref", g_hash_table_ref_car, 2, 0, false, "hash-table-ref opt");
 
   /* format */
   f = set_function_chooser(sc, sc->FORMAT, format_chooser);
-
   format_allg = make_function_with_class(sc, f, "format", g_format_allg, 1, 0, true, "format opt");
   format_allg_no_column = make_function_with_class(sc, f, "format", g_format_allg_no_column, 1, 0, true, "format opt");
   format_just_newline = make_function_with_class(sc, f, "format", g_format_just_newline, 2, 0, false, "format opt");
 
   /* not */
   f = set_function_chooser(sc, sc->NOT, not_chooser);
-
   not_is_pair = make_function_with_class(sc, f, "not", g_not_is_pair, 1, 0, false, "not opt");
   not_is_null = make_function_with_class(sc, f, "not", g_not_is_null, 1, 0, false, "not opt");
   not_is_list = make_function_with_class(sc, f, "not", g_not_is_list, 1, 0, false, "not opt");
@@ -48483,7 +48480,6 @@ static void init_choosers(s7_scheme *sc)
 
   /* pair? */
   f = set_function_chooser(sc, sc->IS_PAIR, is_pair_chooser);
-
   is_pair_car = make_function_with_class(sc, f, "pair?", g_is_pair_car, 1, 0, false, "pair? opt");
   is_pair_cdr = make_function_with_class(sc, f, "pair?", g_is_pair_cdr, 1, 0, false, "pair? opt");
   is_pair_cadr = make_function_with_class(sc, f, "pair?", g_is_pair_cadr, 1, 0, false, "pair? opt");
@@ -48494,14 +48490,12 @@ static void init_choosers(s7_scheme *sc)
 
   /* eq? */
   f = set_function_chooser(sc, sc->IS_EQ, is_eq_chooser);
-
   is_eq_car = make_function_with_class(sc, f, "eq?", g_is_eq_car, 2, 0, false, "eq? opt");
   is_eq_car_q = make_function_with_class(sc, f, "eq?", g_is_eq_car_q, 2, 0, false, "eq? opt");
   is_eq_caar_q = make_function_with_class(sc, f, "eq?", g_is_eq_caar_q, 2, 0, false, "eq? opt");
 
   /* member */
   f = set_function_chooser(sc, sc->MEMBER, member_chooser);
-
   member_ss = make_function_with_class(sc, f, "member", g_member_ss, 2, 0, false, "member opt");
   member_sq = make_function_with_class(sc, f, "member", g_member_sq, 2, 0, false, "member opt");
   member_num_s = make_function_with_class(sc, f, "member", g_member_num_s, 2, 0, false, "member opt");
@@ -48511,7 +48505,6 @@ static void init_choosers(s7_scheme *sc)
   f = set_function_chooser(sc, sc->MEMQ, memq_chooser);
   /* is pure-s7, use member here */
 #endif
-
   memq_3 = make_function_with_class(sc, f, "memq", g_memq_3, 2, 0, false, "memq opt");
   memq_4 = make_function_with_class(sc, f, "memq", g_memq_4, 2, 0, false, "memq opt");
   memq_any = make_function_with_class(sc, f, "memq", g_memq_any, 2, 0, false, "memq opt");
@@ -48519,7 +48512,6 @@ static void init_choosers(s7_scheme *sc)
 
   /* read-char */
   f = set_function_chooser(sc, sc->READ_CHAR, read_char_chooser);
-
   read_char_0 = make_function_with_class(sc, f, "read-char", g_read_char_0, 0, 0, false, "read-char opt");
   read_char_1 = make_function_with_class(sc, f, "read-char", g_read_char_1, 1, 0, false, "read-char opt");
 
@@ -54282,8 +54274,7 @@ static bool dox_pf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, s7_functio
       break;
 
   if ((is_null(p)) &&
-      (pf = xf_opt(sc, endp)) &&
-      (is_all_real(sc, scc)))
+      (pf = xf_opt(sc, endp)))
     {
       s7_pointer slots;
       s7_pointer *top;
@@ -54414,7 +54405,7 @@ static int dox_ex(s7_scheme *sc)
 	    
   code = cddr(sc->code);
   endf = (s7_function)fcdr(cdr(sc->code));
-#if 0
+
   if (is_null(code)) /* no body? */
     {
       s7_pointer endp, slots, scc;
@@ -54453,7 +54444,6 @@ static int dox_ex(s7_scheme *sc)
 	    }
 	}
     }
-#endif
 
   if ((!is_unsafe_do(sc->code)) &&
       (dox_pf_ok(sc, code, sc->code, endf)))
@@ -54517,13 +54507,12 @@ static int simple_do_ex(s7_scheme *sc, s7_pointer code)
 #if (!WITH_GMP)
 	  if (((stepf == g_subtract_s1) && (endf == g_less_s0)) ||
 	      ((stepf == g_add_s1) && (endf == g_equal_2)))  /* add_s1 means (+ sym 1) */
-	    set_loop_bounds(ctr);
+	    set_stepper(ctr);
 #endif
 	  
 	  s7_xf_new(sc, sc->envir);
 	  rf = xf_opt(sc, body);
-	  if ((rf) &&
-	      (is_all_real(sc, code)))
+	  if (rf)
 	    {
 	      s7_pointer *top;
 	      /* fprintf(stderr, "ex: %s\n", DISPLAY(code)); */
@@ -54594,8 +54583,7 @@ static bool pf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool safe_step
     if (!xf_opt(sc, car(p)))
       break;
 
-  if ((is_null(p)) &&
-      (is_all_real(sc, scc)))
+  if (is_null(p))
     {
       s7_pointer stepper;
       s7_pointer *top;
@@ -54771,8 +54759,7 @@ static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool s
 		  if (!bodyf) break;
 		}
 
-	      if ((is_null(p)) &&
-		  (is_all_real(sc, scc)))
+	      if (is_null(p))
 		{
 		  s7_pointer *top;
 		  s7_int end;
@@ -54921,7 +54908,7 @@ static int safe_dotimes_ex(s7_scheme *sc)
 	  sc->args = add_slot(sc, caaar(code), make_mutable_integer(sc, s7_integer(init_val)));
 	  
 	  denominator(slot_value(sc->args)) = s7_integer(end_val);
-	  set_loop_bounds(sc->args);
+	  set_stepper(sc->args);
 
 	  /* (define (hi) (do ((i 1 (+ 1 i))) ((= i 1) i))) -- we need the frame even if the loop is not evaluated */
 	  if ((is_null(sc->code)) ||
@@ -55062,7 +55049,7 @@ static int safe_do_ex(s7_scheme *sc)
       ((!is_optimized(caadr(code))) ||
        (ecdr(caadr(code)) != geq_2)))
     {
-      set_loop_bounds(dox_slot1(sc->envir));
+      set_stepper(dox_slot1(sc->envir));
 
       if (pf_ok(sc, cddr(sc->code), sc->code, false))
 	return(goto_SAFE_DO_END_CLAUSES);
@@ -55138,7 +55125,7 @@ static int dotimes_p_ex(s7_scheme *sc)
       sc->args = dox_slot1(sc->envir);
       slot_set_value(sc->args, make_mutable_integer(sc, integer(slot_value(dox_slot1(sc->envir)))));
       denominator(slot_value(sc->args)) = integer(slot_value(dox_slot2(sc->envir)));
-      set_loop_bounds(sc->args);
+      set_stepper(sc->args);
       
       if (((typesflag(body) == SYNTACTIC_PAIR) ||
 	   (typesflag(car(body)) == SYNTACTIC_TYPE)) &&
@@ -68441,6 +68428,7 @@ static void init_s7_let(s7_scheme *sc)
   sc->free_heap_size_symbol =                s7_make_symbol(sc, "free-heap-size");
   sc->gc_freed_symbol =                      s7_make_symbol(sc, "gc-freed");
   sc->gc_protected_objects_symbol =          s7_make_symbol(sc, "gc-protected-objects");
+  set_immutable(sc->gc_protected_objects_symbol);
 #if DEBUGGING
   sc->input_ports_symbol =                   s7_make_symbol(sc, "input-ports");
   sc->output_ports_symbol =                  s7_make_symbol(sc, "output-ports");
@@ -68940,7 +68928,6 @@ s7_scheme *s7_init(void)
   sc->protected_objects = s7_make_vector(sc, INITIAL_PROTECTED_OBJECTS_SIZE);
   for (i = 0; i < INITIAL_PROTECTED_OBJECTS_SIZE; i++)
     vector_element(sc->protected_objects, i) = sc->GC_NIL;
-  set_immutable(sc->protected_objects);
 
   sc->stack = s7_make_vector(sc, INITIAL_STACK_SIZE);
   sc->stack_start = vector_elements(sc->stack);
@@ -70245,23 +70232,23 @@ int main(int argc, char **argv)
 
 /* ----------------------------------------------------------------------------------
  *
- *           12  |  13  |  14  | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7 15.8 15.9  dx'd
+ *           12  |  13  |  14  | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7 15.8 15.9
  *
- * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1127 1130 [1139]
- * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136 1157 [1192]
- * teq           |      |      | 6612                     3887 3020 2516 2468 2453 [2461]
- * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212 3245 [3273]
- * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3735 [3735]
- * tform         |      |      |                          6816 5536 4287 3996 4012 [4015]
- * tmap          |      |      |  9.3                                         4568 [4592]
- * titer         |      |      |                          7503 6793 6351 6048 6174 [6562]
- * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 6269 [6324]
- * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 6617 [6754]
- * thash         |      |      |                          50.7 23.8 14.9 13.7 12.3 [12.6]
+ * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1127 1128
+ * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136 1157
+ * teq           |      |      | 6612                     3887 3020 2516 2468 2461
+ * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212 3266
+ * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3735
+ * tform         |      |      |                          6816 5536 4287 3996 3998
+ * tmap          |      |      |  9.3                                         4584
+ * titer         |      |      |                          7503 6793 6351 6048 6251
+ * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 6273
+ * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 6623
+ * thash         |      |      |                          50.7 23.8 14.9 13.7 12.4
  *               |      |      |
- * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 14.1 [14.1]
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 15.0 [15.1]
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 36.3 37.6 [37.6]
+ * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 14.1
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 15.1
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 36.3 37.6
  * 
  * ----------------------------------------------------------------------------------
  *
@@ -70270,7 +70257,6 @@ int main(int argc, char **argv)
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
  *
  * procedure->type? ->type in funclet for scheme-level (->argument-types?)
- *   also cload: libc libgsl etc arg types/return types [real string ?]
  *   but what to return? and how to handle is-compatible-with questions
  *   currently define_integer_function stores sc->IS_INTEGER which is a symbol, but for T_REAL:
  *   (lambda (x) (and (real? x) (not rational? x))) -- i.e. want it to remain anonymous
@@ -70290,7 +70276,6 @@ int main(int argc, char **argv)
  *
  * little use: zzz cases also, zaz
  *   zzz is needed to fill out the aza table 46894 -- else return(false) from that branch?
- *   step_dox_c_sc, s, s_opcq, c
  *
  * the repl should autoload sndlib/clm, but ideally this would go through sndlib.scm or the equivalent.
  * someday fix the freed snd_fd problem -- where does this happen?
@@ -70303,27 +70288,13 @@ int main(int argc, char **argv)
  *   full bv: ca 250 lines, maybe less since it can piggy-back throughout on current string code
  *   bv cases are already potentially ints
  *
+ * utf8proc.scm
+ *
  * --------------------------------------------------------------------------------
  * 
- * cload or define_function support for the rf/if/pf stuff {real|int-procedure, but how to handle args? cload has that info, but not real_proc*]
- *    '(double (log2 (double))):
- *    creates log2_rf and log2_pf: need RF_TO_RF in libm_s7.c I guess, and PF_TO_PF
- *    s7_set_rf|gf_function to initialize
- *    static s7_pointer c_log2_pf(s7_scheme *sc, s7_pointer **p)
- *    {
- *      s7_pf_t pf; s7_pointer x;
- *      pf = (s7_pf_t)(**p); (*p)++; x = pf(sc, p);
- *      return(g_log2(sc, s7_set_plist_1(sc, x)));
- *    }
- *   which, given arg num, works in all cases
- *   static s7_double c_log2_rf(s7_scheme *sc, s7_double x) {return(log2(x));}
- *   RF_TO_RF(log2, c_log2_rf)
- *   s7_rf_set_function(f, log2_rf) where s7_pointer f = s7_make_safe_function(...) in s7_define for log2
- * so cload sees '(double name (double)), sets flag to include RF_TO_RF macro, adds rf-flag to name's function-info entry(?)
- *   RF_TO_RF sent out...current function sent out + if rf add c_name_rf, call RF_TO_RF(name, c_name_rf)
- *   init func sees rf-flag and calls s7_rf_set_function name_rf
- *   actually it needs the entire rf_to_rf section (the typedef and called opt func -- these could be exported?)
- *   export (s7_)rf_rf_t typedef and (s7_)rf_rf_1 procedure, then do the rest in log2_rf and c_log2 locally
+ * define_function support for the rf/if/pf stuff {real|int-procedure, but how to handle args? cload has that info, but not real_proc*]
+ *   this needs to be done by hand but the non-arg cases already exist
+ *   the gen macros could handle most of this
  *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array
@@ -70331,43 +70302,34 @@ int main(int argc, char **argv)
  *   lambda* args: rf_closure* (with-let??) 
  *   rcos: simple_do_step->eval->safe_closure_star_s0, so if body is rfable, it could be handled [~/old/s7-closure-rf.c]
  *
+ * can memoization be done via self-modifying code?
+ *
  * / -> * for div same for sub, split long +|*
  * is_if_xf: (not (= s s)) (set! i x) -- 70 faster in wc! 41/34
  * pf/rf for steppers, and eventually end
- *
  * full +|-|*|/ -- how to handle various range checks? and ratios?
  * list? and random-state? need to handle methods, let-set ignores non-let arg1
  * combine the random cases -- need to handle ratios -- these are not finished
  * c_equal_2 trick might work elsewhere [move complex unlikely stuff to separate func]
  *
- * quotient unopt always returns int, but currently quo opt if rf returns real, (modulo 4/3 -63): -61.66666666666666 -185/3
- *   use is_simple_real if ratios are handled specially -- this is specific to RF2_TO_RF currently
- *   perhaps arg_to_rf could return 0=not real, 1=either is real, 2=both are ratios/ints
- *
  * clm methods probably also need the method fallbacks (not the direct calls only), set support, a few pf cases
  *   clm needs set_rf|if for methods
  *   mus-scaler et al method (try gen without the gen)
  *   clm2xen: [rf2_to_rf in clm2xen] [sec->smp autocor fft-window[gf] convol] vct-move? (spectrum is from snd) mix-position
- *   does clm2xen handle implicit fv yet?
- *   impulse in snd-test from (do ((x 1.0 0.0)) (filter f x)...)
  * 
  * gf cases (with rf/if cases also)
- *   substring gensym [inlet list] vector [float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
+ *   substring [inlet list] vector [float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
  * cur_rf->gc_list is the temp list: gc mark, clear at new(and end?), push/pop in gf funcs
  *
  * check (name ...) fv/iv/seq if rf/if/pf (also set -- how to deal with dilambda type?)
  * how to handle things like channels automatically? [snd-snd.c]
  *   also channels et al should accept methods (if s7)
  * g_call not c_call if available [see simple_do_ex case/hash_eq*]
- *
  * pipf testers perhaps usable in string|list_ref
  * plist for method args etc
- * member/alloc support (at least over all_x if any)
- * currently com_rf et al assume real if symbol! so map does not handle int ops correctly
- *   why not RF4_TO_RF and IF4_TO_IF for add/multiply/subtract/min/max? the com stuff seems unnecessary [its local, only used in add/mult]
- *   i->if, i+f->f, r->r, else z+checks [and symbol if not in safe-do => check]
- *   so if: ok if if-func, if-constant, symbol-if-val-now-is-int and is-constant or loop-sample+if-step or not local
- *      rf: ok if rf-func, rf-constant, symbol-val=T_REAL[is_simple_real] as above, or caller insists on real so error if not
- *      gf:standard fallback but using slot_value(not lookup): could be simple wrapper
+ * cload gf:standard fallback but using slot_value(not lookup): could be simple wrapper
  * package sym->xf lookup and save the result somewhere [slot_pending?]
+ * tmap: are the int compares restricted to the int-vector cases (i.e. not vector etc)?
+ * need to check all if/rf symbol cases for type+stepper (and set! if/rf: c/p ok, s if like others)
+ * why is multiply_pf a no-op?
  */

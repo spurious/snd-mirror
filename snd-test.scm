@@ -22,13 +22,13 @@
 ;;;  test 19: transforms                        [34737]
 ;;;  test 20: new stuff                         [36837]
 ;;;  test 21: optimizer                         [38030]
-;;;  test 22: with-sound                        [40229]
-;;;  test 23: X/Xt/Xm                           [43214]
-;;;  test 24: GL                                [46888]
-;;;  test 25: errors                            [47011]
-;;;  test 26: s7                                [48529]
-;;;  test all done                              [48600]
-;;;  test the end                               [48782]
+;;;  test 22: with-sound                        [40622]
+;;;  test 23: X/Xt/Xm                           [43607]
+;;;  test 24: GL                                [47281]
+;;;  test 25: errors                            [47404]
+;;;  test 26: s7                                [48922]
+;;;  test all done                              [48993]
+;;;  test the end                               [49175]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
@@ -38142,9 +38142,7 @@ EDITS: 1
      (catch #t
        (lambda ()
 	 (fv2 1 2 3)) ; 'error again #(2.0 2-1i 2-2i 2-3i)
-       (lambda args
-	 (apply format #f (cadr args))))    ; float-vector-set! argument 3, 2-1i, is a complex number but should be a real
-     "float-vector-set! argument 3, 2-1i, is a complex number but should be a real")
+       (lambda args (car args))) 'wrong-type-arg)
     
     (set! (*s7* 'print-length) 123)
     (define (fv3)
@@ -40024,6 +40022,32 @@ EDITS: 1
 	    (set! x (+ x k))))))
     (test (fv146) 24)
     
+    (define (fv147a)
+      (let ((x 0)
+	    (lst '(1 2 3)))
+	(for-each
+	 (lambda (y)
+	   (if (= x y) (display "fv147 oops")))
+	 lst)))
+    (test (fv147a) #<unspecified>)
+    
+    (define (fv147b)
+      (let ((s "012345")
+	    (lst '(1 2 3)))
+	(map
+	 (lambda (y)
+	   (string-ref s y))
+	 lst)))
+    (test (fv147b) '(#\1 #\2 #\3))
+
+    (define (fv147c)
+      (let ((lst '(1 2 3)))
+	(map
+	 (lambda (y)
+	   (* y 2.0))
+	 lst)))
+    (test (fv147c) '(2.0 4.0 6.0))
+
     (define (fv148)
       (let ((g0 (list 0 1 2 3 4))
 	    (v (make-vector 4)))
@@ -40114,6 +40138,70 @@ EDITS: 1
 	    ((= i 4) v)
 	  (set! (v (syms i)) (g0 (syms i))))))
     (test (fv158) (hash-table* 'a 0 'b 1 'c 2 'd 3))
+
+    (define (fv159)
+      (let ((o (make-oscil 1000))
+	    (oscs (vector (make-oscil 400) (make-oscil 500) (make-oscil 600)))
+	    (v1 (make-float-vector 10))
+	    (v2 (make-float-vector 10))
+	    (v3 (float-vector 0.1419943179576268 1.008255926858552 -0.3982998307862416 -0.4953385977530639 
+			      1.122094083214508 0.6986797544826313 -0.5752063448650614 0.5489621715396582 
+			      1.499234145268148 0.1194943083560847))
+	    (k 1))
+	(do ((i 0 (+ i 1))) ((= i 10))
+	  (let ((x (oscil o)))
+	    (set! (v1 i) (+ (oscil (vector-ref oscs k)) (oscil o 1.5)))))
+	(set! o (make-oscil 1000))
+	(set! oscs (vector (make-oscil 400) (make-oscil 500) (make-oscil 600)))
+	(set! (v2 0) ((lambda () (let ((x (oscil o))) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))))
+	(set! (v2 1) ((lambda () (let ((x (oscil o))) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))))
+	(set! (v2 2) ((lambda () (let ((x (oscil o))) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))))
+	(set! (v2 3) ((lambda () (let ((x (oscil o))) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))))
+	(set! (v2 4) ((lambda () (let ((x (oscil o))) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))))
+	(set! (v2 5) ((lambda () (let ((x (oscil o))) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))))
+	(set! (v2 6) ((lambda () (let ((x (oscil o))) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))))
+	(set! (v2 7) ((lambda () (let ((x (oscil o))) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))))
+	(set! (v2 8) ((lambda () (let ((x (oscil o))) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))))
+	(set! (v2 9) ((lambda () (let ((x (oscil o))) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))))
+	(if (or (not (morally-equal? v1 v2))
+		(not (morally-equal? v1 v3)))
+	    (format *stderr* "~A~%~A~%~A~%" v1 v2 v3))))
+    (fv159)
+
+    (define (fv160)
+      (let ((fv (make-float-vector 4))
+	    (g (make-oscil 1000)))
+	(do ((i 0 (+ i 1))
+	     (x 0.1 0.0))
+	    ((= i 4) fv)
+	  (float-vector-set! fv i (oscil g x)))))
+    
+    (test (fv160) (let ((g (make-oscil 1000))) (float-vector (oscil g 0.1) (oscil g) (oscil g) (oscil g))))
+
+    (define (fv161)
+      (let ((log2 (*libm* 'log2)))
+	(let ((fv (make-float-vector 4)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 4) fv)
+	    (set! (fv i) (log2 2.5))))))
+    (test (fv161) (float-vector (log 2.5 2) (log 2.5 2) (log 2.5 2) (log 2.5 2)))
+
+    (define (fv162)
+      (let ((fv (make-int-vector 4))
+	    (iter (make-iterator (list 1 2 3 4))))
+	(do ((i 0 (+ i 1)))
+	    ((= i 4) fv)
+	  (int-vector-set! fv i (iterate iter)))))
+    (test (fv162) (int-vector 1 2 3 4))
+
+    (define (fv163)
+      (let ((fv (make-float-vector 4)))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 0.25)))
+	    ((= i 4) fv)
+	  (set! (fv i) (sin x)))))
+
+    (test (fv163) (float-vector (sin 0.0) (sin 0.25) (sin 0.5) (sin 0.75)))
     )
   
   (if all-args
