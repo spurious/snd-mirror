@@ -40202,6 +40202,213 @@ EDITS: 1
 	  (set! (fv i) (sin x)))))
 
     (test (fv163) (float-vector (sin 0.0) (sin 0.25) (sin 0.5) (sin 0.75)))
+
+    (define (fv164) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 1.0 2.0 3.0)))))
+    (test (fv164) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv165) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 4.5 3/2)))))
+    (test (fv165) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv166) (let ((x 1/2) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 1 x)))))
+    (test (fv166) (float-vector 1.5 1.5 1.5 1.5))
+    
+    (define (fv167) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 6.0)))))
+    (test (fv167) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv168) (let ((x 1.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x 5.0)))))
+    (test (fv168) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv169) (let ((x 1.0) (y 5.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x y)))))
+    (test (fv169) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv170) (let ((x 1.0) (y 6.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x y -1.0)))))
+    (test (fv170) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv171) (let ((x 1.0) (y 6.0) (z -1.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x y z)))))
+    (test (fv171) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv172) (let ((x 1.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x -1.0 6.0)))))
+    (test (fv172) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv173) (let ((x 3.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x (abs x))))))
+    (test (fv173) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv174) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x 2 (abs x))))))
+    (test (fv174) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv175) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 2.0 2 (abs x))))))
+    (test (fv175) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv176) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 2.0 (abs x) (abs x))))))
+    (test (fv176) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv177) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) (abs x) (abs x))))))
+    (test (fv177) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv178) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) x (abs x))))))
+    (test (fv178) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv178) (let ((x 2.0) (y 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) x y)))))
+    (test (fv178) (float-vector 6.0 6.0 6.0 6.0))
+    
+    
+    (define (fv179) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 1.0 2.0 3.0)))))
+    (test (fv179) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv180) (let ((x 1.0) (y 6.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x y -1.0)))))
+    (test (fv180) (float-vector -6.0 -6.0 -6.0 -6.0))
+    
+    (define (fv181) (let ((x 1.0) (y 6.0) (z -1.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x y z)))))
+    (test (fv181) (float-vector -6.0 -6.0 -6.0 -6.0))
+    
+    (define (fv182) (let ((x 1.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x -1.0 6.0)))))
+    (test (fv182) (float-vector -6.0 -6.0 -6.0 -6.0))
+    
+    (define (fv183) (let ((x 3.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x (abs x))))))
+    (test (fv183) (float-vector 9.0 9.0 9.0 9.0))
+    
+    (define (fv184) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x 2 (abs x))))))
+    (test (fv184) (float-vector 8.0 8.0 8.0 8.0))
+    
+    (define (fv185) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 2.0 2 (abs x))))))
+    (test (fv185) (float-vector 8.0 8.0 8.0 8.0))
+    
+    (define (fv186) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 2.0 (abs x) (abs x))))))
+    (test (fv186) (float-vector 8.0 8.0 8.0 8.0))
+    
+    (define (fv187) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) (abs x) (abs x))))))
+    (test (fv187) (float-vector 8.0 8.0 8.0 8.0))
+    
+    (define (fv188) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) x (abs x))))))
+    (test (fv188) (float-vector 8.0 8.0 8.0 8.0))
+    
+    (define (fv188) (let ((x 2.0) (y 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) x y)))))
+    (test (fv188) (float-vector 8.0 8.0 8.0 8.0))
+    
+    (define (fv189) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 4.5 3/2)))))
+    (test (fv189) (float-vector 6.75 6.75 6.75 6.75))
+    
+    (define (fv190) (let ((x 1/2) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 1 x)))))
+    (test (fv190) (float-vector 0.5 0.5 0.5 0.5))
+    
+    (define (fv191) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 6.0)))))
+    (test (fv191) (float-vector 6.0 6.0 6.0 6.0))
+    
+    (define (fv192) (let ((x 1.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x 5.0)))))
+    (test (fv192) (float-vector 5.0 5.0 5.0 5.0))
+    
+    (define (fv193) (let ((x 1.0) (y 5.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x y)))))
+    (test (fv193) (float-vector 5.0 5.0 5.0 5.0))
+
+    (define (fvi164) (let ((fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 1 2 3)))))
+    (test (fvi164) (int-vector 6 6 6 6))
+    
+    (define (fvi165) (let ((fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 4.5 3/2)))))
+    (test (catch #t fvi165 (lambda args 'error)) 'error)
+    
+    (define (fvi166) (let ((x 1/2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 1 x)))))
+    (test (catch #t fvi166 (lambda args 'error))'error)
+    
+    (define (fvi167) (let ((fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 6)))))
+    (test (fvi167) (int-vector 6 6 6 6))
+    
+    (define (fvi168) (let ((x 1) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x 5)))))
+    (test (fvi168) (int-vector 6 6 6 6))
+    
+    (define (fvi169) (let ((x 1) (y 5) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x y)))))
+    (test (fvi169) (int-vector 6 6 6 6))
+    
+    (define (fvi170) (let ((x 1) (y 6) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x y -1)))))
+    (test (fvi170) (int-vector 6 6 6 6))
+    
+    (define (fvi171) (let ((x 1) (y 6) (z -1) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x y z)))))
+    (test (fvi171) (int-vector 6 6 6 6))
+    
+    (define (fvi172) (let ((x 1) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x -1 6)))))
+    (test (fvi172) (int-vector 6 6 6 6))
+    
+    (define (fvi173) (let ((x 3) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x (abs x))))))
+    (test (fvi173) (int-vector 6 6 6 6))
+    
+    (define (fvi174) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x 2 (abs x))))))
+    (test (fvi174) (int-vector 6 6 6 6))
+    
+    (define (fvi175) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 2 2 (abs x))))))
+    (test (fvi175) (int-vector 6 6 6 6))
+    
+    (define (fvi176) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 2 (abs x) (abs x))))))
+    (test (fvi176) (int-vector 6 6 6 6))
+    
+    (define (fvi177) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) (abs x) (abs x))))))
+    (test (fvi177) (int-vector 6 6 6 6))
+    
+    (define (fvi178) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) x (abs x))))))
+    (test (fvi178) (int-vector 6 6 6 6))
+    
+    (define (fvi178) (let ((x 2) (y 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) x y)))))
+    (test (fvi178) (int-vector 6 6 6 6))
+    
+    
+    (define (fvi179) (let ((fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 1 2 3)))))
+    (test (fvi179) (int-vector 6 6 6 6))
+    
+    (define (fvi180) (let ((x 1) (y 6) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x y -1)))))
+    (test (fvi180) (int-vector -6 -6 -6 -6))
+    
+    (define (fvi181) (let ((x 1) (y 6) (z -1) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x y z)))))
+    (test (fvi181) (int-vector -6 -6 -6 -6))
+    
+    (define (fvi182) (let ((x 1) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x -1 6)))))
+    (test (fvi182) (int-vector -6 -6 -6 -6))
+    
+    (define (fvi183) (let ((x 3) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x (abs x))))))
+    (test (fvi183) (int-vector 9 9 9 9))
+    
+    (define (fvi184) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x 2 (abs x))))))
+    (test (fvi184) (int-vector 8 8 8 8))
+    
+    (define (fvi185) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 2 2 (abs x))))))
+    (test (fvi185) (int-vector 8 8 8 8))
+    
+    (define (fvi186) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 2 (abs x) (abs x))))))
+    (test (fvi186) (int-vector 8 8 8 8))
+    
+    (define (fvi187) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) (abs x) (abs x))))))
+    (test (fvi187) (int-vector 8 8 8 8))
+    
+    (define (fvi188) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) x (abs x))))))
+    (test (fvi188) (int-vector 8 8 8 8))
+    
+    (define (fvi188) (let ((x 2) (y 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) x y)))))
+    (test (fvi188) (int-vector 8 8 8 8))
+    
+    (define (fvi191) (let ((fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 6)))))
+    (test (fvi191) (int-vector 6 6 6 6))
+    
+    (define (fvi192) (let ((x 1) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x 5)))))
+    (test (fvi192) (int-vector 5 5 5 5))
+    
+    (define (fvi193) (let ((x 1) (y 5) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x y)))))
+    (test (fvi193) (int-vector 5 5 5 5))
+    
+    
+    (define (fv194) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 1.0 2.0 3.0 4.0)))))
+    (test (fv194) (float-vector 10.0 10.0 10.0 10.0))
+    
+    (define (fv195) (let ((x 1.0) (y 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x y (+ x 2.0) 4.0)))))
+    (test (fv195) (float-vector 10.0 10.0 10.0 10.0))
+    
+    (define (fv196) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 1.0 2.0 3.0 4.0 5.0)))))
+    (test (fv196) (float-vector 15.0 15.0 15.0 15.0))
+    
+    (define (fv197) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 1.0 2.0 3.0 4.0 5.0 6.0)))))
+    (test (fv197) (float-vector 21.0 21.0 21.0 21.0))
+    
+    (define (fv198) (let ((fv (make-float-vector 4))
+			  (a 1.0) (b 2.0) (c 4.0))
+		      (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ a b 3.0 c (+ a c) (+ b c) (+ a b c) (+ a b c a b c a b c) a b c)))))
+    (test (fv198) (float-vector 56.0 56.0 56.0 56.0))
+    
     )
   
   (if all-args
