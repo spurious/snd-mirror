@@ -10319,8 +10319,8 @@ static s7_double outa_mul_env_x_rf(s7_scheme *sc, s7_pointer **p)
   mus_any *g; 
 
   pos = s7_slot_integer_value(**p); (*p) += 3;
-  r2 = (s7_rf_t)(**p); (*p)++;
   g = (mus_any *)(**p); (*p)++;
+  r2 = (s7_rf_t)(**p); (*p)++;
   val = mus_env(g) * r2(sc, p);
   if (!mus_simple_out_any_to_file(pos, val, 0, clm_output_gen))
     mus_safe_out_any_to_file(pos, val, 0, clm_output_gen);
@@ -10334,8 +10334,8 @@ static s7_double outa_mul_env_polywave_x_rf(s7_scheme *sc, s7_pointer **p)
   s7_rf_t r2;
   mus_any *e, *o; 
 
-  pos = s7_slot_integer_value(**p); (*p) += 4;
-  e = (mus_any *)(**p); (*p)++;
+  pos = s7_slot_integer_value(**p); (*p) += 3;
+  e = (mus_any *)(**p); (*p) += 2;
   o = (mus_any *)(**p); (*p)++;
   r2 = (s7_rf_t)(**p); (*p)++;
   val = mus_env(e) * mus_polywave(o, r2(sc, p));
@@ -10352,8 +10352,8 @@ static s7_double outa_mul_env_polywave_env_rf(s7_scheme *sc, s7_pointer **p)
   s7_int pos;
   mus_any *e, *o, *fe; 
 
-  pos = s7_slot_integer_value(**p); (*p) += 4;
-  e = (mus_any *)(**p); (*p)++;
+  pos = s7_slot_integer_value(**p); (*p) += 3;
+  e = (mus_any *)(**p); (*p) += 2;
   o = (mus_any *)(**p); (*p) += 2;
   fe = (mus_any *)(**p); (*p)++;
   val = mus_env(e) * mus_polywave(o, mus_env(fe));
@@ -10538,14 +10538,14 @@ static s7_double locsig_fm_violin_rf(s7_scheme *sc, s7_pointer **p)
   s7_double val, vib;
 
   lc = (mus_any *)(**p); (*p)++;
-  ind = s7_slot_integer_value(**p); (*p) += 4;
+  ind = s7_slot_integer_value(**p); (*p) += 3;
 
   /* fm_violin_rf */
-  e = (mus_any *)(**p); (*p)++;
+  e = (mus_any *)(**p); (*p) += 2;
   o = (mus_any *)(**p); (*p) += 2;
-  vib = s7_slot_real_value(sc, **p, "oscil"); (*p) += 4;
-  a = (mus_any *)(**p); (*p)++;
-  fp = (mus_any *)(**p); (*p) += 2;
+  vib = s7_slot_real_value(sc, **p, "oscil"); (*p) += 3;
+  a = (mus_any *)(**p); (*p) += 2;
+  fp = (mus_any *)(**p); (*p)++;
   val = mus_env(e) * mus_oscil_fm(o, vib + (mus_env(a) * mus_polywave(fp, vib)));
 
   mus_locsig(lc, ind, val);
@@ -11399,8 +11399,9 @@ static s7_double mul_env_x_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_rf_t r2;
   mus_any *g; 
-  (*p)++; r2 = (s7_rf_t)(**p); (*p)++;
+  (*p)++; 
   g = (mus_any *)(**p); (*p)++;
+  r2 = (s7_rf_t)(**p); (*p)++;
   return(mus_env(g) * r2(sc, p));
 }
 
@@ -11408,8 +11409,8 @@ static s7_double mul_env_oscil_x_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_rf_t r2;
   mus_any *e, *o; 
-  (*p) += 2; /* skip env and oscil */
-  e = (mus_any *)(**p); (*p)++;
+  (*p)++;
+  e = (mus_any *)(**p); (*p) += 2;
   o = (mus_any *)(**p); (*p)++;
   r2 = (s7_rf_t)(**p); (*p)++;
   return(mus_env(e) * mus_oscil_fm(o, r2(sc, p)));
@@ -11419,13 +11420,12 @@ static s7_double fm_violin_rf(s7_scheme *sc, s7_pointer **p)
 {
   mus_any *e, *o, *fp, *a; 
   s7_double vib;
-
-  (*p) += 2;
-  e = (mus_any *)(**p); (*p)++;
+  (*p)++;
+  e = (mus_any *)(**p); (*p) += 2;
   o = (mus_any *)(**p); (*p) += 2;
-  vib = s7_slot_real_value(sc, **p, "oscil"); (*p) += 4;
-  a = (mus_any *)(**p); (*p)++;
-  fp = (mus_any *)(**p); (*p) += 2;
+  vib = s7_slot_real_value(sc, **p, "oscil"); (*p) += 3;
+  a = (mus_any *)(**p); (*p) += 2;
+  fp = (mus_any *)(**p); (*p)++;
   return(mus_env(e) * mus_oscil_fm(o, vib + (mus_env(a) * mus_polywave(fp, vib))));
 }
 
@@ -11433,8 +11433,8 @@ static s7_double mul_env_polywave_x_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_rf_t r2;
   mus_any *e, *o; 
-  (*p) += 2;
-  e = (mus_any *)(**p); (*p)++;
+  (*p)++;
+  e = (mus_any *)(**p); (*p) += 2;
   o = (mus_any *)(**p); (*p)++;
   r2 = (s7_rf_t)(**p); (*p)++;
   return(mus_env(e) * mus_polywave(o, r2(sc, p)));
@@ -11444,8 +11444,8 @@ static s7_double mul_env_polywave_s_rf(s7_scheme *sc, s7_pointer **p)
 {
   s7_double s1;
   mus_any *e, *o; 
-  (*p) += 2;
-  e = (mus_any *)(**p); (*p)++;
+  (*p)++;
+  e = (mus_any *)(**p); (*p) += 2;
   o = (mus_any *)(**p); (*p)++;
   s1 = s7_slot_real_value(sc, **p, "polywave"); (*p)++;
   return(mus_env(e) * mus_polywave(o, s1));
@@ -11545,8 +11545,8 @@ static s7_rf_t clm_multiply_rf(s7_scheme *sc, s7_pointer expr)
 static s7_double add_env_ri_rf(s7_scheme *sc, s7_pointer **p)
 {
   mus_any *e, *o; 
-  (*p) += 2;
-  e = (mus_any *)(**p); (*p)++;
+  (*p)++;
+  e = (mus_any *)(**p); (*p) += 2;
   o = (mus_any *)(**p); (*p)++;
   return(mus_env(e) + mus_rand_interp_unmodulated(o));
 }
@@ -11554,8 +11554,8 @@ static s7_double add_env_ri_rf(s7_scheme *sc, s7_pointer **p)
 static s7_double add_tri_ri_rf(s7_scheme *sc, s7_pointer **p)
 {
   mus_any *e, *o; 
-  (*p) += 2;
-  e = (mus_any *)(**p); (*p)++;
+  (*p)++;                          /* triangle-wave */
+  e = (mus_any *)(**p); (*p) += 2; /* rand-interp */
   o = (mus_any *)(**p); (*p)++;
   return(mus_triangle_wave_unmodulated(e) + mus_rand_interp_unmodulated(o));
 }
@@ -12581,7 +12581,7 @@ static void mus_xen_init(void)
   Xen_define_real_procedure(S_odd_weight,           g_odd_weight_w,           1, 0, 0, H_odd_weight);
   Xen_define_real_procedure(S_even_multiple,        g_even_multiple_w,        2, 0, 0, H_even_multiple);
   Xen_define_real_procedure(S_odd_multiple,         g_odd_multiple_w,         2, 0, 0, H_odd_multiple);
-  Xen_define_integer_procedure(S_seconds_to_samples,g_seconds_to_samples_w,   1, 0, 0, H_seconds_to_samples);
+  Xen_define_safe_procedure(S_seconds_to_samples,g_seconds_to_samples_w,   1, 0, 0, H_seconds_to_samples);
   Xen_define_real_procedure(S_samples_to_seconds,   g_samples_to_seconds_w,   1, 0, 0, H_samples_to_seconds);
   Xen_define_real_procedure(S_ring_modulate,        g_ring_modulate_w,        2, 0, 0, H_ring_modulate);
   Xen_define_real_procedure(S_amplitude_modulate,   g_amplitude_modulate_w,   3, 0, 0, H_amplitude_modulate);
@@ -12603,7 +12603,7 @@ static void mus_xen_init(void)
   Xen_define_real_procedure(S_array_interp,         g_array_interp_w,         2, 1, 0, H_array_interp);
   Xen_define_real_procedure(S_mus_interpolate,      g_mus_interpolate_w,      3, 2, 0, H_mus_interpolate);
   Xen_define_real_procedure(S_mus_frandom,          g_mus_frandom_w,          1, 0, 0, "random reals");
-  Xen_define_integer_procedure(S_mus_irandom,       g_mus_irandom_w,          1, 0, 0, "random integers");
+  Xen_define_safe_procedure(S_mus_irandom,       g_mus_irandom_w,          1, 0, 0, "random integers");
 
   Xen_define_constant(S_rectangular_window,     MUS_RECTANGULAR_WINDOW,     "The un-window, so to speak");
   Xen_define_constant(S_hann_window,            MUS_HANN_WINDOW,            "A simple raised cosine window");
@@ -12850,8 +12850,8 @@ static void mus_xen_init(void)
   Xen_define_safe_procedure(S_make_iir_filter,      g_make_iir_filter_w,       0, 4, 0, H_make_iir_filter);
   Xen_define_real_procedure(S_iir_filter,           g_iir_filter_w,            1, 1, 0, H_iir_filter);
   Xen_define_safe_procedure(S_is_iir_filter,        g_is_iir_filter_w,         1, 0, 0, H_is_iir_filter);
-  Xen_define_integer_procedure(S_mus_order,         g_mus_order_w,             1, 0, 0, H_mus_order);
-  Xen_define_integer_procedure(S_mus_type,          g_mus_type_w,              1, 0, 0, H_mus_type);
+  Xen_define_safe_procedure(S_mus_order,         g_mus_order_w,             1, 0, 0, H_mus_order);
+  Xen_define_safe_procedure(S_mus_type,          g_mus_type_w,              1, 0, 0, H_mus_type);
 
 
   Xen_define_safe_procedure(S_is_env,               g_is_env_w,                1, 0, 0, H_is_env);
@@ -12866,7 +12866,7 @@ static void mus_xen_init(void)
   Xen_define_safe_procedure(S_locsig,               g_locsig_w,                3, 0, 0, H_locsig);
   Xen_define_safe_procedure(S_make_locsig,          g_make_locsig_w,           0, 0, 1, H_make_locsig);
   Xen_define_safe_procedure(S_move_locsig,          g_move_locsig_w,           3, 0, 0, H_move_locsig);
-  Xen_define_integer_procedure(S_mus_channels,      g_mus_channels_w,          1, 0, 0, H_mus_channels);
+  Xen_define_safe_procedure(S_mus_channels,      g_mus_channels_w,          1, 0, 0, H_mus_channels);
 
 #if HAVE_SCHEME || HAVE_FORTH
   Xen_define_dilambda(S_locsig_ref, g_locsig_ref_w, H_locsig_ref, S_set S_locsig_ref, g_locsig_set_w,  2, 0, 3, 0);
@@ -12929,8 +12929,8 @@ static void mus_xen_init(void)
   Xen_define_safe_procedure(S_is_readin,            g_is_readin_w,             1, 0, 0, H_is_readin);
   Xen_define_real_procedure(S_readin,               g_readin_w,                1, 0, 0, H_readin);
   Xen_define_safe_procedure(S_make_readin,          g_make_readin_w,           0, 0, 1, H_make_readin);
-  Xen_define_integer_procedure(S_mus_channel,       g_mus_channel_w,           1, 0, 0, H_mus_channel);
-  Xen_define_integer_procedure(S_mus_interp_type,   g_mus_interp_type_w,       1, 0, 0, H_mus_interp_type);
+  Xen_define_safe_procedure(S_mus_channel,       g_mus_channel_w,           1, 0, 0, H_mus_channel);
+  Xen_define_safe_procedure(S_mus_interp_type,   g_mus_interp_type_w,       1, 0, 0, H_mus_interp_type);
 
   Xen_define_dilambda(S_mus_location,  g_mus_location_w, H_mus_location, S_set S_mus_location, g_mus_set_location_w,  1, 0, 2, 0);
   Xen_define_dilambda(S_mus_increment, g_mus_increment_w, H_mus_increment, S_set S_mus_increment, g_mus_set_increment_w,  1, 0, 2, 0);

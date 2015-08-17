@@ -1645,11 +1645,9 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define Xen_define_procedure_with_setter(a, b, c, d, e, f, g, h, i) XEN_DEFINE_PROCEDURE_WITH_SETTER(a, b, c, d, e, f, g, h, i)
 #define Xen_define_dilambda(a, b, c, d, e, f, g, h, i) XEN_DEFINE_PROCEDURE_WITH_SETTER(a, b, c, d, e, f, g, h, i)
 #define Xen_define_safe_procedure(a, b, c, d, e, f)  XEN_DEFINE_SAFE_PROCEDURE(a, b, c, d, e, f)
-#if HAVE_SCHEME
-#define Xen_define_integer_procedure(a, b, c, d, e, f)  s7_define_integer_function(s7, a, b, c, d, e, f)
-#else
-#define Xen_define_integer_procedure(a, b, c, d, e, f)  XEN_DEFINE_SAFE_PROCEDURE(a, b, c, d, e, f)
-#endif
+
+#define Xen_define_integer_procedure(a, b, c, d, e, f)  XEN_DEFINE_SAFE_PROCEDURE(a, b, c, d, e, f) /*obsolete */
+
 #define Xen_define_simple_hook(a, b)                 XEN_DEFINE_SIMPLE_HOOK(a, b)
 #define Xen_define_variable(a, b, c)                 XEN_DEFINE_VARIABLE(a, b, c)
 #define Xen_out_of_range_error(a, b, c, d)           XEN_OUT_OF_RANGE_ERROR(a, b, c, d)

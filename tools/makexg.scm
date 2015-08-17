@@ -2788,7 +2788,6 @@
 
 ;;; --------------------------------------------------------------------------------
 (hey "  #define Xg_define_procedure(Name, Value, A1, A2, A3, Help) Xen_define_safe_procedure(Xg_pre #Name Xg_post, Value, A1, A2, A3, Help)~%")
-(hey "  #define Xg_define_integer_procedure(Name, Value, A1, A2, A3, Help) Xen_define_integer_procedure(Xg_pre #Name Xg_post, Value, A1, A2, A3, Help)~%")
 (hey "~%")
 (hey "static void define_functions(void)~%")
 (hey "{~%")
@@ -2805,11 +2804,7 @@
 	 (args (- cargs refargs))
 	 (return-type (cadr func))
 	 (typ (assoc return-type direct-types)))
-    (hey "  Xg_define_~Aprocedure(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
-	 (if (and typ (cdr typ) (string? (cdr typ))
-		  (member (cdr typ) '("INT" "ULONG")))
-	     "integer_"
-	     "")
+    (hey "  Xg_define_procedure(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
 	 (car func) (car func) 
 	 (if (>= cargs max-args) 0 args)
 	 (if (>= cargs max-args) 0 refargs)

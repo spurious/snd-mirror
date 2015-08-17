@@ -1153,7 +1153,7 @@
 	(let ((got-it #f))
 	  (map (lambda (x)
 		 (if (and (not got-it)
-			  (eqv? x item))
+			  (equal? x item)) ; not eqv? because item can be a list
 		     (begin
 		       (set! got-it #t)
 		       (values))
@@ -3581,9 +3581,10 @@
 			     ;; walk the step exprs
 			     (do ((bindings step-vars (cdr bindings)))
 				 ((not (pair? bindings)))
-			       (if (and (binding-ok? name head (car bindings) env #t)
-					(pair? (cddar bindings)))
-				   (lint-walk name (caddar bindings) (append vars env))))
+			       (let ((stepper (car bindings)))
+				 (when (and (binding-ok? name head stepper env #t)
+					    (pair? (cddr stepper)))
+				   (lint-walk name (caddr stepper) (append vars env)))))
 			     
 			     ;; walk the body and end stuff (it's too tricky to find infinite do loops)
 			     (if (pair? (caddr form))
@@ -3867,35 +3868,45 @@
 			   (lint-format "stray dot? ~A" name (truncated-list->string form))
 			   env)
 			 (begin
-			   (if (symbol? head)
-			       (begin
-				 (check-call name head form env)
-				 (if (not (or (hash-table-ref globals head)
-					      (var-member head env) ))
-				     (check-special-cases name head form env))
-				 (if (assq head deprecated-ops)
-				     (lint-format "~A is deprecated; use ~A" name head (cdr (assq head deprecated-ops))))
+			   (when (symbol? head)
+			     (check-call name head form env)
+			     (if (not (or (hash-table-ref globals head)
+					  (var-member head env) ))
+				 (check-special-cases name head form env))
+			     (if (assq head deprecated-ops)
+				 (lint-format "~A is deprecated; use ~A" name head (cdr (assq head deprecated-ops))))
+			     
+			     (if (and *report-minor-stuff*
+				      (not (= line-number last-simplify-numeric-line-number))
+					;(pair? (cdr form))
+				      (not (hash-table-ref globals head))
+				      (hash-table-ref numeric-ops head)
+				      (not (var-member head env)))
+				 (let ((val (simplify-numerics form env)))
+				   (if (not (equal-ignoring-constants? form val))
+				       (begin
+					 (set! last-simplify-numeric-line-number line-number)
+					 (lint-format "possible simplification:~A" name (lists->string form val))))))
+			     
+			     ;; if we loaded this file first, and f (head) is defined (e.g. scan above),
+			     ;; and it is used before it is defined, but not thereafter, the usage stuff 
+			     ;; can get confused, so other-identifiers is trying to track those.
+			     
+			     (if (and (not (hash-table-ref other-identifiers head))
+				      (not (defined? head start-up-let)))
+				 (hash-table-set! other-identifiers head #t)))
 
-				 (if (and *report-minor-stuff*
-					  (not (= line-number last-simplify-numeric-line-number))
-					  ;(pair? (cdr form))
-					  (not (hash-table-ref globals head))
-					  (hash-table-ref numeric-ops head)
-					  (not (var-member head env)))
-				     (let ((val (simplify-numerics form env)))
-				       (if (not (equal-ignoring-constants? form val))
-					   (begin
-					     (set! last-simplify-numeric-line-number line-number)
-					     (lint-format "possible simplification:~A" name (lists->string form val))))))
-				 
-				 ;; if we loaded this file first, and f (head) is defined (e.g. scan above),
-				 ;; and it is used before it is defined, but not thereafter, the usage stuff 
-				 ;; can get confused, so other-identifiers is trying to track those.
-				 
-				 (if (and (not (hash-table-ref other-identifiers head))
-					  (not (defined? head start-up-let)))
-				     (hash-table-set! other-identifiers head #t))))
-			   
+			   (when (and (pair? head)
+				      (> (length head) 0)
+				      (eq? (car head) 'lambda))
+			     (if (and (list? (cadr head))
+				      (not (= (length (cadr head)) (length (cdr form)))))
+				 (lint-format "~A has ~A arguments:~A" 
+					      head (car head) 
+					      (if (> (length (cadr head)) (length (cdr form)))
+						  "too few" "too many")
+					      (truncated-list->string form))))
+
 			   (let ((vars env))
 			     (for-each
 			      (lambda (f)

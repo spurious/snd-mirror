@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.34"
-#define S7_DATE "10-Aug-15"
+#define S7_VERSION "3.35"
+#define S7_DATE "16-Aug-15"
 
 
 typedef long long int s7_int;
@@ -25,6 +25,7 @@ typedef double s7_double;
  *
  *   Common Music/Grace by Rick Taube: http://camil.music.uiuc.edu/Software/grace/downloads/cm3.tar.gz (composition)
  *     which can use sndlib -- see Snd's grfsnd.html or the cmdist archives for details
+ *   ffitest.c has many short examples.
  */
 
 /* old forms... */
@@ -106,7 +107,7 @@ void s7_set_begin_hook(s7_scheme *sc, void (*hook)(s7_scheme *sc, bool *val));
    *   s7_begin_hook returns the current begin_hook function or NULL.
    */
 
-s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e);
+s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e);    /* (eval code e) -- e is the optional environment */
 s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form, s7_pointer e);
 
 void s7_provide(s7_scheme *sc, const char *feature);                 /* add feature (as a symbol) to the *features* list */
@@ -485,7 +486,6 @@ s7_pointer s7_make_safe_function(s7_scheme *sc, const char *name, s7_function fn
 s7_pointer s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
-s7_pointer s7_define_integer_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 void s7_define_safe_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc);
   /* this is now the same as s7_dilambda (different args) */
@@ -584,7 +584,7 @@ bool s7_is_iterator(s7_pointer obj);
 bool s7_iterator_is_at_end(s7_pointer obj);
 s7_pointer s7_iterate(s7_scheme *sc, s7_pointer iter);
 
-
+  /* ancient form -- backwards compatibility */
 int s7_new_type(const char *name, 
 		char *(*print)(s7_scheme *sc, void *value), 
 		void (*free)(void *value), 
@@ -593,6 +593,7 @@ int s7_new_type(const char *name,
 		s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
 		s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
 
+  /* new form */
 int s7_new_type_x(s7_scheme *sc,
 		  const char *name, 
 		  char *(*print)(s7_scheme *sc, void *value), 
@@ -692,8 +693,6 @@ s7_int s7_slot_integer_value(s7_pointer slot);
 bool s7_is_stepper(s7_pointer p);
 s7_double s7_slot_real_value(s7_scheme *sc, s7_pointer slot, const char *caller);
 void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_double value);
-
-s7_pointer s7_set_plist_1(s7_scheme *sc, s7_pointer x1);
 /* end CLM stuff */
 
 
@@ -764,6 +763,8 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 #define s7_NIL(Sc) s7_nil(Sc)
 #define s7_is_procedure_with_setter s7_is_dilambda
 #define s7_make_procedure_with_setter s7_dilambda
+
+#define s7_define_integer_function s7_define_safe_function
 #endif
 
 
@@ -772,6 +773,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 16-Aug:    remove s7_define_integer_function.
  * 5-Aug:     added s7_scheme* arg to s7_openlet and s7_outlet.
  * 3-Jul:     s7_Double -> s7_double, s7_Int -> s7_int. Removed function_chooser_data.
  * 27-Jun:    s7_rf_t, s7_rp_t etc.

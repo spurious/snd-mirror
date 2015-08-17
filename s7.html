@@ -2632,6 +2632,10 @@ such as abs, we need to put it back to its original form:
 </pre>
 </div>
 
+<p>s7test.scm has two more versions of this idea: local-let and protected-let.
+They restore values of both global variables and outlet variables
+when the let (actually dynamic-wind) exits.  
+</p>
 </blockquote>
 
 
@@ -8911,6 +8915,7 @@ ex1
 </pre>
 
 <p>See also r7rs.scm, libc.scm, libgsl.scm, libm.scm, libdl.scm, and libgdbm.scm.
+libutf8proc.scm exists, but I have not tested it at all.
 </p>
 
 <div class="indented" id="libc">
