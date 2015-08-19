@@ -234,6 +234,7 @@ s7_pointer s7_cddaar(s7_pointer p);
 bool s7_is_list(s7_scheme *sc, s7_pointer p);                                /* (list? p) -> (or (pair? p) (null? p)) */
 int s7_list_length(s7_scheme *sc, s7_pointer a);                             /* (length a) */
 s7_pointer s7_list(s7_scheme *sc, int num_values, ...);                      /* (list ...) */
+s7_pointer s7_make_permanent_list(s7_scheme *sc, int len, ...);              /* (list ...) but permanently GC-protected */
 s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a);                          /* (reverse a) */
 s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b);             /* (append a b) */
 s7_pointer s7_list_ref(s7_scheme *sc, s7_pointer lst, int num);              /* (list-ref lst num) */
@@ -489,6 +490,10 @@ void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, c
 void s7_define_safe_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc);
   /* this is now the same as s7_dilambda (different args) */
+
+s7_pointer s7_define_typed_function(s7_scheme *sc, const char *name, s7_function fnc,
+				    int required_args, int optional_args, bool rest_arg, 
+				    const char *doc, s7_pointer signature);
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
 s7_pointer s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
@@ -773,7 +778,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
- * 16-Aug:    remove s7_define_integer_function.
+ * 16-Aug:    remove s7_define_integer_function, add s7_define_typed_function, s7_make_permanent_list.
  * 5-Aug:     added s7_scheme* arg to s7_openlet and s7_outlet.
  * 3-Jul:     s7_Double -> s7_double, s7_Int -> s7_int. Removed function_chooser_data.
  * 27-Jun:    s7_rf_t, s7_rp_t etc.

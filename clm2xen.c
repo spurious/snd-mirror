@@ -561,6 +561,7 @@ static Xen g_mus_set_file_buffer_size(Xen val)
 static Xen g_radians_to_hz(Xen val) 
 {
   #define H_radians_to_hz "(" S_radians_to_hz " rads): convert radians per sample to frequency in Hz: rads * srate / (2 * pi)"
+  #define Q_radians_to_hz s7_make_permanent_list(s7, 2, s7_make_symbol(s7, "real?"), s7_make_symbol(s7, "real?"))
   mus_float_t x;
   Xen_to_C_double_or_error(val, x, S_radians_to_hz, 1);
   return(C_double_to_Xen_real(mus_radians_to_hz(x)));
@@ -12433,8 +12434,16 @@ Xen_wrap_5_args(g_singer_nose_filter_w, g_singer_nose_filter)
   f = s7_symbol_value(s7, sym); \
   s7_function_set_returns_temp(f);\
   } while (0)
+#define Xen_define_typed_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc, Sig) \
+  do { \
+  s7_pointer sym, f;							\
+  sym = s7_define_typed_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc, Sig); \
+  f = s7_symbol_value(s7, sym); \
+  s7_function_set_returns_temp(f);\
+  } while (0)
 #else
 #define Xen_define_real_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc) Xen_define_safe_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc)
+#define Xen_define_typed_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc, Sig) Xen_define_safe_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc)
 #endif
 
 #if HAVE_SCHEME
@@ -12571,7 +12580,7 @@ static void mus_xen_init(void)
   s7_symbol_set_access(s7, mus_array_print_length_symbol, s7_make_function(s7, "[acc-mus-array-print-length]", acc_mus_array_print_length, 2, 0, false, "accessor"));
 #endif
 
-  Xen_define_real_procedure(S_radians_to_hz,        g_radians_to_hz_w,        1, 0, 0, H_radians_to_hz);
+  Xen_define_typed_procedure(S_radians_to_hz,       g_radians_to_hz_w,        1, 0, 0, H_radians_to_hz, Q_radians_to_hz);
   Xen_define_real_procedure(S_hz_to_radians,        g_hz_to_radians_w,        1, 0, 0, H_hz_to_radians);
   Xen_define_real_procedure(S_radians_to_degrees,   g_radians_to_degrees_w,   1, 0, 0, H_radians_to_degrees);
   Xen_define_real_procedure(S_degrees_to_radians,   g_degrees_to_radians_w,   1, 0, 0, H_degrees_to_radians);

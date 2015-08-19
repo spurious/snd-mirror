@@ -71,43 +71,6 @@
 
 (define lint
   (let ()
-    (define +boolean+ #t)
-    (define +any+ #f)
-    (define +not-integer+ 1/2)
-    (define +number+ 2)
-    (define +integer+ 3)
-    (define +string+ " ")
-    (define +list+ (list 1))
-    (define +vector+ (vector 1))
-    (define +unspecified+ #<unspecified>)
-    (define +symbol+ 'symbol)
-    (define +character+ #\a)
-    (define +let+ (inlet))
-    (define +hash-table+ (hash-table))
-    (define +output-port+ *stdout*)
-    (define +input-port+ *stdin*)
-    (define +c-pointer+ (c-pointer 0))
-    (define +iterator+ (make-iterator "123"))
-    (define +rng+ (make-random-state 123))
-    (define +function+ (lambda args args))
-    (define +macro+ (define-macro (_m_ . args) args))
-
-    (define (integer-between-2-and-16? radix) 
-      (and (integer? radix) 
-	   (<= 2 radix 16)))
-    
-    (define (non-negative-integer? index)
-      (and (integer? index) 
-	   (not (negative? index))))
-    
-    (define (non-zero-number? x)
-      (and (number? x)
-	   (not (zero? x))))
-    
-    (define (real-but-not-rational? x)
-      (and (real? x)
-	   (not (rational? x))))
-    
     (define (any-real? lst) ; ignore 0.0 and 1.0 in this since they normally work
       (and (pair? lst)
 	   (or (and (number? (car lst))
@@ -116,49 +79,9 @@
 		    (not (= (car lst) 1.0)))
 	       (any-real? (cdr lst)))))
     
-    (define (non-null-string? x)
-      (and (string? x)
-	   (> (length x) 0)))
-    
-    (define (non-null-vector? x)
-      (and (vector? x)
-	   (> (length x) 0)))
-    
-    (define (port? p)
-      (or (input-port? p)
-	  (output-port? p)))
-    
-    (define (thunk? p)
-      (and (procedure? p)
-	   (aritable? p 0)))
-
-    (define (int-or-pair? p)
-      (or (integer? p)
-	  (pair? p)))
-    
-    (define (one-argable? p)
-      (and (procedure? p)
-	   (aritable? p 1)))
-    
-    (define (byte? i) 
-      (and (integer? i) (<= 0 i 255)))
-    
-    (define (sequence? obj)
-      ;; scheme and C types here are ok, so...
-      (not (or (number? obj)
-	       (char? obj)
-	       (boolean? obj)
-	       (symbol? obj))))
-    
-    (define (pair-or-null? obj) ; list? is proper-list?
-      (or (pair? obj)
-	  (null? obj)))
-
     (define (code-constant? x)
       (not (or (pair? x)
 	       (symbol? x))))
-
-    (define (t? obj) #t)
 
     (let ((no-side-effect-functions 
 	   (let ((ht (make-hash-table)))
@@ -202,497 +125,6 @@
 		  vector vector->list vector-dimensions vector-length vector-ref vector? 
 		  zero?))
 	     ht))
-	  
-	  (function-types (hash-table* 
-			   '* +number+
-			   '+ +number+
-			   '- +number+
-			   '/ +number+
-			   '< +boolean+
-			   '<= +boolean+
-			   '= +boolean+
-			   '> +boolean+
-			   '>= +boolean+
-			   'abs +number+
-			   'acos +not-integer+
-			   'acosh +not-integer+
-			   'angle +number+
-			   'aritable? +boolean+
-			   'arity +list+
-			   'ash +integer+
-			   'asin +not-integer+
-			   'asinh +not-integer+
-			   'assoc 'list-or-f
-			   'assq 'list-or-f
-			   'assv 'list-or-f
-			   'atan +not-integer+
-			   'atanh +not-integer+
-			   'boolean=? +boolean+
-			   'boolean? +boolean+
-			   'byte-vector? +boolean+
-			   'c-pointer +c-pointer+
-			   'ceiling +integer+
-			   'char->integer +integer+
-			   'char-alphabetic? +boolean+
-			   'char-ci<=? +boolean+
-			   'char-ci<? +boolean+
-			   'char-ci=? +boolean+
-			   'char-ci>=? +boolean+
-			   'char-ci>? +boolean+
-			   'char-downcase +character+
-			   'char-lower-case? +boolean+
-			   'char-numeric? +boolean+
-			   'char-position 'integer-or-f
-			   'char-ready? +boolean+
-			   'char-upcase +character+
-			   'char-upper-case? +boolean+
-			   'char-whitespace? +boolean+
-			   'char<=? +boolean+
-			   'char<? +boolean+
-			   'char=? +boolean+
-			   'char>=? +boolean+
-			   'char>? +boolean+
-			   'char? +boolean+
-			   'close-input-port +unspecified+
-			   'close-output-port +unspecified+
-			   'complex? +boolean+
-			   'cons +list+
-			   'constant? +boolean+
-			   'continuation? +boolean+
-			   'cos +number+
-			   'cosh +not-integer+
-			   'curlet +let+
-			   'current-error-port +output-port+
-			   'current-input-port +input-port+
-			   'current-output-port +output-port+
-			   'cyclic-sequences +list+
-			   'define-bacro +macro+
-			   'define-bacro* +macro+
-			   'define-macro +macro+
-			   'define-macro* +macro+
-			   'defined? +boolean+
-			   'denominator +integer+
-			   'dilambda? +boolean+
-			   'display +unspecified+
-			   'eof-object? +boolean+
-			   'eq? +boolean+
-			   'equal? +boolean+
-			   'eqv? +boolean+
-			   'even? +boolean+
-			   'exact->inexact +not-integer+
-			   'exact? +boolean+
-			   'exp +number+
-			   'expt +number+
-			   'float-vector +vector+
-			   'float-vector-ref +number+
-			   'float-vector-set! +number+
-			   'float-vector? +boolean+
-			   'floor +integer+
-			   'flush-output-port +unspecified+
-			   'for-each +unspecified+
-			   'funclet +let+
-			   'gcd +number+
-			   'gensym +symbol+
-			   'gensym? +boolean+
-			   'get-output-string +string+
-			   'hash-table +hash-table+
-			   'hash-table* +hash-table+
-			   'hash-table-entries +integer+
-			   'hash-table-size +integer+
-			   'hash-table? +boolean+
-			   'imag-part +number+
-			   'inexact->exact +number+
-			   'inexact? +boolean+
-			   'infinite? +boolean+
-			   'inlet +let+
-			   'inlet +let+
-			   'input-port? +boolean+
-			   'int-vector +vector+
-			   'int-vector-ref +integer+
-			   'int-vector-set! +integer+
-			   'int-vector? +boolean+
-			   'integer->char +character+
-			   'integer-decode-float +list+
-			   'integer-length +integer+
-			   'integer? +boolean+
-			   'iterator? +boolean+
-			   'keyword->symbol +symbol+
-			   'keyword? +boolean+
-			   'lambda +function+
-			   'lambda* +function+
-			   'lcm +number+
-			   'length +integer+   ; actually integer or #f, so we get false complaints about (if (length...) ..) never false
-			   'let->list +list+
-			   'let? +boolean+
-			   'list +list+
-			   'list->string +string+
-			   'list->vector +vector+
-			   'list-tail 'pair-or-null
-			   'list? +boolean+
-			   'log +number+
-			   'logand +integer+
-			   'logbit? +boolean+
-			   'logior +integer+
-			   'lognot +integer+
-			   'logxor +integer+
-			   'macro? +boolean+
-			   'magnitude +number+
-			   'make-float-vector +vector+
-			   'make-hash-table +hash-table+
-			   'make-int-vector +vector+
-			   'make-iterator +iterator+
-			   'make-keyword +symbol+
-			   'make-list +list+
-			   'make-polar +number+
-			   'make-random-state +rng+
-			   'make-rectangular +number+
-			   'make-shared-vector +vector+
-			   'make-string +string+
-			   'make-vector +vector+
-			   'map +list+
-			   'max +number+
-			   'member 'list-or-f
-			   'memq 'list-or-f
-			   'memv 'list-or-f
-			   'min +number+
-			   'modulo +number+
-			   'morally-equal? +boolean+
-			   'nan? +boolean+
-			   'negative? +boolean+
-			   'newline +unspecified+
-			   'not +boolean+
-			   'null? +boolean+
-			   'number->string +string+
-			   'number? +boolean+
-			   'numerator +integer+
-			   'object->string +string+
-			   'odd? +boolean+
-			   'open-input-file +input-port+
-			   'open-output-file +output-port+
-			   'open-input-string +input-port+
-			   'open-output-string +output-port+
-			   'openlet +let+
-			   'openlet? +boolean+
-			   'outlet +let+
-			   'output-port? +boolean+
-			   'owlet +let+
-			   'pair-line-number +integer+
-			   'pair? +boolean+
-			   'peek-char 'char-or-eof
-			   'port-closed? +boolean+
-			   'port-file-name +string+
-			   'port-line-number +integer+
-			   'positive? +boolean+
-			   'procedure? +boolean+
-			   'provided? +boolean+
-			   'quotient +number+
-			   'random +number+
-			   'random-state->list +list+
-			   'random-state? +boolean+
-			   'rational? +boolean+
-			   'rationalize +number+
-			   'read-byte 'number-or-eof
-			   'read-char 'char-or-eof
-			   'read-line 'string-or-eof
-			   'read-string 'string-or-eof
-			   'real-part +number+
-			   'real? +boolean+
-			   'remainder +number+
-			   'rootlet +let+
-			   'round +integer+
-			   's7-version +string+
-			   'sin +number+
-			   'sinh +not-integer+
-			   'sqrt +number+
-			   'string +string+
-			   'string->list +list+
-			   'string->number 'number-or-f
-			   'string->symbol +symbol+
-			   'string-append +string+
-			   'string-ci<=? +boolean+
-			   'string-ci<? +boolean+
-			   'string-ci=? +boolean+
-			   'string-ci>=? +boolean+
-			   'string-ci>? +boolean+
-			   'string-copy +string+
-			   'string-downcase +string+
-			   'string-fill! +character+
-			   'string-length +integer+
-			   'string-position 'integer-or-f
-			   'string-ref +character+
-			   'string-upcase +string+
-			   'string<=? +boolean+
-			   'string<? +boolean+
-			   'string=? +boolean+
-			   'string>=? +boolean+
-			   'string>? +boolean+
-			   'string? +boolean+
-			   'sublet +let+
-			   'substring +string+
-			   'symbol +symbol+
-			   'symbol->string +string+
-			   'symbol=? +boolean+
-			   'symbol? +boolean+
-			   'tan +number+
-			   'tanh +not-integer+
-			   'truncate +integer+
-			   'varlet +let+
-			   'vector +vector+
-			   'vector->list +list+
-			   'vector-append +vector+
-			   'vector-dimensions +list+
-			   'vector-length +integer+
-			   'vector-rank +integer+
-			   'vector? +boolean+
-			   'write +unspecified+
-			   'write-char +unspecified+
-			   'write-string +unspecified+
-			   'zero? +boolean+))
-	  (argument-data (hash-table*
-			  '* number?
-			  '+ number?
-			  '- number?
-			  '->byte-vector string?
-			  '/ number?
-			  '< real?
-			  '<= real?
-			  '= number?
-			  '> real?
-			  '>= real?
-			  'abs number?
-			  'acos number?
-			  'acosh number?
-			  'angle number?
-			  'ash (list integer? integer?)
-			  'asin number?
-			  'asinh number?
-			  'assoc (list t? pair? procedure?)
-			  'assq (list t? pair?)
-			  'assv (list t? pair?)
-			  'atan (list number? number?)
-			  'atanh number?
-			  'byte-vector byte?
-			  'c-pointer integer?
-			  'caaaar pair?
-			  'caaadr pair?
-			  'caaar pair?
-			  'caadar pair?
-			  'caaddr pair?
-			  'caadr pair?
-			  'caar pair?
-			  'cadaar pair?
-			  'cadadr pair?
-			  'cadar pair?
-			  'caddar pair?
-			  'cadddr pair?
-			  'caddr pair?
-			  'cadr pair?
-			  'call-with-current-continuation one-argable?
-			  'call-with-exit one-argable?
-			  'call-with-input-file (list string? procedure?) ; maybe these should also be one-argable?
-			  'call-with-input-string (list string? procedure?)
-			  'call-with-output-file (list string? procedure?)
-			  'call-with-output-string procedure?
-			  'call/cc one-argable?
-			  'car pair?
-			  'cdaaar pair?
-			  'cdaadr pair?
-			  'cdaar pair?
-			  'cdadar pair?
-			  'cdaddr pair?
-			  'cdadr pair?
-			  'cdar pair?
-			  'cddaar pair?
-			  'cddadr pair?
-			  'cddar pair?
-			  'cdddar pair?
-			  'cddddr pair?
-			  'cdddr pair?
-			  'cddr pair?
-			  'cdr pair?
-			  'ceiling real?
-			  'char->integer char?
-			  'char-alphabetic? char?
-			  'char-ci<=? char?
-			  'char-ci<? char?
-			  'char-ci=? char?
-			  'char-ci>=? char?
-			  'char-ci>? char?
-			  'char-downcase char?
-			  'char-lower-case? char?
-			  'char-numeric? char?
-			  'char-ready? port?
-			  'char-upcase char?
-			  'char-upper-case? char?
-			  'char-whitespace? char?
-			  'char<=? char?
-			  'char<? char?
-			  'char=? char?
-			  'char>=? char?
-			  'char>? char?
-			  'close-input-port input-port?
-			  'close-output-port output-port?
-			  'cos number?
-			  'cosh number?
-			  'coverlet let?
-			  'defined? (list symbol? let? boolean?)
-			  'denominator rational?
-			  'dilambda procedure?
-			  'dynamic-wind (list thunk? thunk? thunk?)
-			  'eval-string (list string? let?)
-			  'even? integer?
-			  'exact->inexact real?
-			  'exact? number?
-			  'exp number?
-			  'expt (list number? number?)
-			  'fill! (list sequence?)
-			  'float-vector real?
-			  'floor real?
-			  'funclet procedure?
-			  'gc boolean?
-			  'gcd (list real? real?)
-			  'gensym string?
-			  'get-output-string (list output-port? boolean?)
-			  'hash-table-entries hash-table?
-			  'hash-table-ref (list hash-table?)
-			  'hash-table-set! (list hash-table?)
-			  'hash-table-size hash-table?
-			  'imag-part number?
-			  'inexact->exact real?
-			  'inexact? number?
-			  'infinite? number?
-			  'input-port? port?
-			  'int-vector integer?
-			  'integer->char byte?
-			  'integer-decode-float real-but-not-rational?
-			  'integer-length integer?
-			  'iterate iterator?
-			  'keyword->symbol keyword?
-			  'lcm (list real? real?)
-			  'length sequence?
-			  'let->list (list let?)
-			  'let-ref (list let? symbol?)
-			  'let-set! (list let? symbol?)
-			  'list->string list?
-			  'list->vector list?
-			  'list-ref (list pair-or-null? non-negative-integer?)
-			  'list-set! (list pair? non-negative-integer?)
-			  'list-tail (list pair-or-null? non-negative-integer?)
-			  'load (list non-null-string?)
-			  'log (list number? non-zero-number?)
-			  'logand (list integer? integer?)
-			  'logbit? (list integer? integer?)
-			  'logior (list integer? integer?)
-			  'lognot integer?
-			  'logxor (list integer? integer?)
-			  'magnitude number?
-			  'make-int-vector (list int-or-pair? integer?)
-			  'make-float-vector (list int-or-pair? real?)
-			  'make-hash-table (list non-negative-integer? procedure?)
-			  'make-keyword string?
-			  'make-list (list non-negative-integer?)
-			  'make-polar real?
-			  'make-random-state integer?
-			  'make-rectangular real?
-			  'make-shared-vector (list vector? int-or-pair? integer?)
-			  'make-string (list non-negative-integer? char?)
-			  'make-vector (list int-or-pair? t? boolean?)
-			  'max real?
-			  'member (list t? pair? procedure?) ; or list? 
-			  'memq (list t? pair?)
-			  'memv (list t? pair?)
-			  'min real?
-			  'modulo (list real? real?)
-			  'nan? number?
-			  'negative? real?
-			  'number->string (list number? integer-between-2-and-16?)
-			  'numerator rational?
-			  'odd? integer?
-			  'open-input-file (list string? string?)
-			  'open-input-string string?
-			  'openlet let?
-			  'open-output-file (list string? string?)
-			  'outlet let?
-			  'output-port? port?
-			  'pair-line-number pair?
-			  'peek-char input-port?
-			  'port-closed? port?
-			  'port-filename input-port?
-			  'port-line-number input-port?
-			  'positive? real?
-			  'procedure-documentation procedure?
-			  'procedure-setter procedure?
-			  'procedure-source procedure?
-			  'provide symbol?
-			  'provided? symbol?
-			  'quotient (list real? real?)
-			  'random (list number? random-state?)
-			  'rationalize (list real? real?)
-			  'read-char input-port?
-			  'read-byte input-port?
-			  'read-line (list input-port? boolean?)
-			  'read-string (list integer? input-port?)
-			  'real-part number?
-			  'remainder (list real? real?)
-			  'reverse sequence?
-			  'reverse! sequence?
-			  'round real?
-			  'set-car! (list pair?)
-			  'set-cdr! (list pair?)
-			  'sin number?
-			  'sinh number?
-			  'sort! (list sequence? procedure?)
-			  'sqrt number?
-			  'string char?
-			  'string->list string?
-			  'string->number (list string? integer-between-2-and-16?)
-			  'string->symbol string?
-			  'string-append string?
-			  'string-ci<=? string?
-			  'string-ci<? string?
-			  'string-ci=? string?
-			  'string-ci>=? string?
-			  'string-ci>? string?
-			  'string-copy string?
-			  'string-downcase string?
-			  'string-fill! (list string? char? non-negative-integer? non-negative-integer?)
-			  'string-length string?
-			  'string-position (list string? string?)
-			  'string-ref (list non-null-string? non-negative-integer?)
-			  'string-set! (list non-null-string? non-negative-integer? char?)
-			  'string-upcase string?
-			  'string<=? string?
-			  'string<? string?
-			  'string=? string?
-			  'string>=? string?
-			  'string>? string?
-			  'substring (list string? non-negative-integer? non-negative-integer?)
-			  'symbol->dynamic-value symbol?
-			  'symbol->keyword symbol?
-			  'symbol->string symbol?
-			  'symbol->value (list symbol?) ; opt arg is env
-			  'symbol=? symbol?
-			  'symbol string?
-			  'symbol-access (list symbol? let?)
-			  'system (list string? boolean?)
-			  'tan number?
-			  'tanh number?
-			  'truncate real?
-			  'vector->list vector?
-			  'vector-append vector?
-			  'vector-dimensions vector?
-			  'vector-fill! (list vector?)
-			  'vector-length vector?
-			  'vector-ref (list non-null-vector? non-negative-integer?)
-			  'vector-set! (list non-null-vector? non-negative-integer?)
-			  'with-input-from-file (list string? thunk?)
-			  'with-input-from-string (list string? thunk?)
-			  'with-output-to-file (list string? thunk?)
-			  'with-output-to-string thunk?
-			  'write-byte (list byte?)
-			  'write-char (list char?)
-			  'write-string (list string?)
-			  'zero? number?))
 
 	  (deprecated-ops '((global-environment . rootlet)
 			    (current-environment . curlet)
@@ -757,10 +189,9 @@
 				    #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p #\N #\n #\W #\w
 				    #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
 				 chars))
-	  (f-types (list +any+ +boolean+ +symbol+ 'integer-or-f 'list-or-f 'number-or-f))
-	  (sel-types (list +any+ +symbol+ +boolean+ +character+ +integer+ +number+ +unspecified+ 'char-or-eof))
-	  (num-types (list integer? real? rational? complex?))
-	  (v-types (list +any+ +symbol+))
+
+	  (num-types '(integer? real? rational? complex?))
+	  (selector-types '(#t symbol? char? boolean? integer? number?))
 	  (outport #t)
 	  (loaded-files #f)
 	  (globals #f)
@@ -769,8 +200,6 @@
 	  (last-simplify-numeric-line-number -1)
 	  (line-number -1))
 
-
-      ;; list version
       (define-constant var-name car)
       (define-constant var-ref cadr)
       (define-constant var-set caddr)
@@ -783,82 +212,87 @@
       (set! (procedure-setter cadddr) set-cadddr!)
       (define-constant var-type (dilambda (lambda (v) (list-ref v 4)) (lambda (v x) (list-set! v 4 x))))
       (define-constant var-value (dilambda (lambda (v) (list-ref v 5)) (lambda (v x) (list-set! v 5 x))))
-      (define make-var (lambda* (name ref set fnc typ val :allow-other-keys)
-	;(reflective-probe)
-	(list name ref set fnc typ val)))
+      (define make-var (lambda* (name ref set fnc typ val :allow-other-keys) (list name ref set fnc typ val)))
       (define-constant var? pair?)
       (define-constant var-member assq)
 
-#|      
-      ;; vector version
-      (define var-name (dilambda (lambda (v) (v 0)) (lambda (v x) (set! (v 0) x))))
-      (define var-ref (dilambda (lambda (v) (v 1)) (lambda (v x) (set! (v 1) x))))
-      (define var-set (dilambda (lambda (v) (v 2)) (lambda (v x) (set! (v 2) x))))
-      (define var-func-info (dilambda (lambda (v) (v 3)) (lambda (v x) (set! (v 3) x))))
-      (define var-type (dilambda (lambda (v) (v 4)) (lambda (v x) (set! (v 4) x))))
-      (define var-value (dilambda (lambda (v) (v 5)) (lambda (v x) (set! (v 5) x))))
-      (define* (make-var name ref set fnc typ val :allow-other-keys) 
-        (vector name ref set fnc typ val))
-      (define var? vector?)
-      (define (mf a b) (eq? a (vector-ref b 0)))
-      (define (var-member v q) (let ((lst (member v q mf))) (and lst (car lst))))
-
-      ;; environment version
-      (define var-name (dilambda (lambda (v) (v 'name)) (lambda (v x) (set! (v 'name) x))))
-      (define var-ref (dilambda (lambda (v) (v 'ref)) (lambda (v x) (set! (v 'ref) x))))
-      (define var-set (dilambda (lambda (v) (v 'set)) (lambda (v x) (set! (v 'set) x))))
-      (define var-func-info (dilambda (lambda (v) (v 'fnc)) (lambda (v x) (set! (v 'fnc) x))))
-      (define var-type (dilambda (lambda (v) (v 'type)) (lambda (v x) (set! (v 'type) x))))
-      (define var-value (dilambda (lambda (v) (v 'value)) (lambda (v x) (set! (v 'value) x))))
-      (define* (make-var name ref set fnc typ val :allow-other-keys)
-        (inlet 'name name 'ref ref 'set set 'fnc fnc 'type typ 'value val))
-      (define var? let?)
-      (define (mf a b) (eq? a (b 'name)))
-      (define (var-member v q) (let ((lst (member v q mf))) (and lst (car lst))))
-|#
-
+      (define (return-type sym)
+	(let ((sig (procedure-signature sym)))
+	  (and (pair? sig)
+	       (car sig))))
 
       (define (->type c)
 	(cond ((pair? c)
 	       (if (symbol? (car c))
-		   (hash-table-ref function-types (car c))
+		   (return-type (car c))
 		   (if (pair? (car c))
-		       +any+ ; might be expr as func
-		       +list+)))
-	      ((integer? c) +integer+)
-	      ((symbol? c) +symbol+)
-	      ((number? c) +not-integer+)
-	      ((null? c) +list+)
-	      ((string? c) +string+)
-	      ((char? c) +character+)
-	      ((boolean? c) +boolean+)
-	      ((vector? c) +vector+)
-	      ((let? c) +let+)
-	      ((hash-table? c) +hash-table+)
-	      ((input-port? c) +input-port)
-	      ((output-port? c) +output-port+)
-	      (#t (if (eq? c #<unspecified>) +unspecified+ +any+))))
+		       #t ; might be expr as func
+		       'list?)))
+	      ((integer? c) 'integer?)
+	      ((rational? c) 'rational?)
+	      ((real? c) 'real?)
+	      ((number? c) 'number?)
+	      ((keyword? c) 'keyword?)
+	      ((symbol? c) 'symbol?)
+	      ((byte-vector? c) 'byte-vector)
+	      ((string? c) 'string?)
+	      ((null? c) 'list?)
+	      ((char? c) 'char?)
+	      ((boolean? c) 'boolean?)
+	      ((float-vector? c) 'float-vector?)
+	      ((int-vector? c) 'int-vector?)
+	      ((vector? c) 'vector?)
+	      ((let? c) 'let?)
+	      ((hash-table? c) 'hash-table?)
+	      ((input-port? c) 'input-port?)
+	      ((output-port? c) 'output-port?)
+	      ((iterator? c) 'iterator?)
+	      ((continuation? c) 'continuation?)
+	      ((dilambda? c) 'dilambda)
+	      ((procedure? c) 'procedure?)
+	      ((macro? c) 'macro)
+	      ((random-state? c) 'random-state?)
+	      ((eof-object? c) 'eof-object?)
+	      ((c-pointer? c) 'c-pointer?)
+	      (#t #t)))
       
-      (define (type-compatible type obj)
-	(or (eq? type +any+)
-	    (let ((obj-type (->type obj)))
-	      (or (equal? type obj-type)
-		  (and (equal? type +number+) (equal? obj-type +integer+))
-		  (and (equal? type +integer+) (equal? obj-type +number+))
-		  (and (equal? type 'char-or-eof) (equal? obj-type +character+))))))
+      (define (compatible? type1 type2)
+	;(format *stderr* "compatible ~S ~S~%" type1 type2)
+	(or (eq? type1 type2)
+	    (not (symbol? type1))
+	    (not (symbol? type2))
+	    (case type1
+	      ((number?) (memq type2 '(real? rational? integer?)))
+	      ((real?)   (memq type2 '(number? rational? integer?)))
+	      ((rational?) (memq type2 '(number? integer?)))
+	      ((integer?) (memq type2 '(real? rational? number?)))
+	      ((vector?) (memq type2 '(float-vector? int-vector?)))
+	      ((float-vector?) (eq? type2 'vector?))
+	      ((int-vector?) (eq? type2 'vector?))
+	      ((symbol?) (eq? type2 'keyword?))
+	      ((list?) (eq? type2 'pair?))
+	      ((pair?) (eq? type2 'list?))
+	      (else #f))))
 
       (define (never-false expr)
 	(or (eq? expr #t)
 	    (let ((type (if (pair? expr)
-			    (hash-table-ref function-types (car expr))
+			    (and (hash-table-ref no-side-effect-functions (car expr))
+				 (return-type (car expr)))
 			    (->type expr))))
-	      (not (member type f-types)))))
+	      ;(format *stderr* "type ~S -> ~S~%" expr type)
+	      (and (symbol? type)
+		   (not (symbol? expr))
+		   (not (eq? type 'boolean?))))))
 	
       (define (never-true expr)
+	;(format *stderr* "true? ~S~%" expr)
 	(or (not expr)
 	    (and (pair? expr)
 		 (eq? (car expr) 'not)
-		 (never-false (cadr expr)))))
+		 (let ((f (never-false (cadr expr))))
+		   ;(format *stderr* "f: ~S~%" f)
+		   f))))
 
       ;; --------------------------------------------------------------------------------
       
@@ -1009,93 +443,56 @@
 		(let ((checker (if (list? checkers) 
 				   (car checkers) 
 				   checkers)))
-		  (if (pair? arg)
-		      (if (eq? (car arg) 'quote)
-			  (if (and checker
-				   (not (checker (if (pair? (cadr arg)) +list+ (->type (cadr arg))))))
-			      (lint-format "~A's argument ~Ashould be a~A ~A: ~S:~A" 
-					   name head 
-					   (prettify-arg-number arg-number)
-					   (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
-					   checker arg 
-					   (truncated-list->string form)))
-			  (let ((op (hash-table-ref function-types (car arg))))
-			    (when op
-			      (if (and (symbol? op)
-				       (not (eq? symbol +symbol+)))
-				  (if (and checker
-					   *report-minor-stuff*)
-				      (if (memq op '(number-or-f list-or-f))
-					  (lint-format "~A's argument ~Amight be #f:~A"
-						       name head 
-						       (prettify-arg-number arg-number)
-						       (truncated-list->string form))
-					  (if (memq op '(number-or-eof char-or-eof string-or-eof))
-					      (lint-format "~A's argument ~Amight be #<eof>:~A"
-							   name head 
-							   (prettify-arg-number arg-number)
-							   (truncated-list->string form)))))
-				  (if (or (not (checker op))
-					  (and (just-constants? arg env)
-					       (catch #t 
-						 (lambda ()
-						   (not (checker (eval arg))))
-						 (lambda ignore-catch-error-args
-						   #f))))
-				      (lint-format "~A's argument ~Ashould be a~A ~A: ~S:~A" 
-						   name head 
-						   (prettify-arg-number arg-number)
-						   (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
-						   checker arg 
-						   (truncated-list->string form))
-				      
-				      (if (and (eq? (car arg) 'if)
-					       (= (length arg) 3)
-					       (not (checker #<unspecified>)))
-					  (lint-format "~A argument might be ~A:~A"
-						       name head
-						       #<unspecified>
-						       (truncated-list->string form))))))))
-		      
-		      (if (and (symbol? arg)
-			       (not (keyword? arg)))
-			  ;; if we're in a loop of some sort and the set! follows the ref,
-			  ;;   this can be fooled, especially by with-let
-			  (let ((var-data (or (var-member arg env) (hash-table-ref globals arg))))
-			    (if (and (var? var-data)
-				     (not (var-ref var-data)) ; a stop-gap -- refd?
-				     (not (var-set var-data)) ;               set?
-				     (not (memq (var-type var-data) v-types))
-				     (not (checker (var-type var-data))))
-				(lint-format "~A's argument ~Amight not be a~A ~A: ~S:~A" 
-					     name head 
-					     (prettify-arg-number arg-number)
-					     (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
-					     checker arg
-					     (truncated-list->string form)))
-			    (if (and (not (memq arg '(angle)))
-				     (not (var-member arg env))
-				     (hash-table-ref globals arg)
-				     (not (checker (symbol->value arg))))
+		  ;(format *stderr* "~S -> ~S~%" arg checker)
+		  (when (symbol? checker) ; otherwise ignore type check on this argument (for now TODO: handle pair)
+
+		    (if (pair? arg)                  ; arg is expr -- try to guess its type
+			(if (eq? (car arg) 'quote)   ; '1 -> 1
+
+			    ;; arg is quoted expression
+			    (if (not (compatible? checker (if (pair? (cadr arg)) 'list? (->type (cadr arg)))))
 				(lint-format "~A's argument ~Ashould be a~A ~A: ~S:~A" 
 					     name head 
 					     (prettify-arg-number arg-number)
 					     (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
 					     checker arg 
-					     (truncated-list->string form))))
-			  (if (not (checker arg))
-			      (lint-format "~A's argument ~Ashould be a~A ~A: ~S:~A" 
-					   name head
-					   (prettify-arg-number arg-number)
-					   (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
-					   checker arg 
-					   (truncated-list->string form)))))
+					     (truncated-list->string form)))
+
+			    ;; arg is an evaluated expression
+			    (let ((op (return-type (car arg))))
+			      ;; checker is arg-type, op is expression type
+			      ;(format *stderr* "~S -> ~S, checker: ~S~%" arg op checker)
+			      (if (or (not (compatible? checker op))
+				      (and (just-constants? arg env) ; try to eval the arg
+					   (catch #t 
+					     (lambda ()
+					       (not (checker (eval arg))))
+					     (lambda ignore-catch-error-args
+					       #f))))
+				  (lint-format "~A's argument ~Ashould be a~A ~A: ~S:~A" 
+					       name head 
+					       (prettify-arg-number arg-number)
+					       (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
+					       checker arg 
+					       (truncated-list->string form)))))
+			;; arg is not a pair
+			(if (not (symbol? arg))
+			    (if (not ((symbol->value checker) arg))
+				(lint-format "~A's argument ~Ashould be a~A ~A: ~S:~A" 
+					     name head
+					     (prettify-arg-number arg-number)
+					     (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
+					     checker arg 
+					     (truncated-list->string form))))))
+
 		  (if (list? checkers)
 		      (if (null? (cdr checkers))
 			  (done)
 			  (set! checkers (cdr checkers))))
 		  (set! arg-number (+ arg-number 1))
 		  (if (> arg-number max-arity) (done))))
+
+
 	      (cdr form))))))
       
       
@@ -1113,6 +510,11 @@
 		(set! (var-value data) new-val)
 		(set! (var-set data) #t)))))
       
+      (define (proper-list? x) 
+	(and (list? x)
+	     (let ((len (length x)))
+	       (and (>= len 0)
+		    (not (infinite? len))))))
       
       (define (proper-list lst)
 	;; return lst as a proper list
@@ -1153,7 +555,7 @@
 	(let ((got-it #f))
 	  (map (lambda (x)
 		 (if (and (not got-it)
-			  (equal? x item)) ; not eqv? because item can be a list
+			  (equal? x item))
 		     (begin
 		       (set! got-it #t)
 		       (values))
@@ -1191,7 +593,9 @@
 	;; I wonder how far this could be pushed
 	;;   (or x1 x2 x1) -> (or x1 x2) 
 	;;   (and x1 x2 x1) -> (and x2 x1)
-	
+
+	;(format *stderr* "simplify ~S~%" in-form)
+
 	(define (bsimp uform)
 	  ;; find and remove any expressions that have no effect on the outcome
 	  (if (or (not (pair? uform))
@@ -1339,12 +743,12 @@
 						 (else #f)))))))
 		       (and (pair? (cadr e))
 			    (case (car e)
-			      ((complex? number?) (number? (hash-table-ref function-types (caadr e))))
+			      ((complex? number?) (eq? 'number? (return-type (caadr e))))
 			      ((exact? rational?) (eq? (caadr e) 'inexact->exact))
 			      ((inexact? real?)   (eq? (caadr e) 'exact->inexact))
-			      ((char?)            (char? (hash-table-ref function-types (caadr e))))
-			      ((string?)          (string? (hash-table-ref function-types (caadr e))))
-			      ((vector?)          (vector? (hash-table-ref function-types (caadr e))))
+			      ((char?)            (eq? 'char? (return-type (caadr e))))
+			      ((string?)          (eq? 'string? (return-type (caadr e))))
+			      ((vector?)          (eq? 'vector? (return-type (caadr e))))
 			      (else #f)))))))
 	
 	(define (false? e)
@@ -1399,10 +803,12 @@
 					     (bad-arg-match (car a) (car b)))))
 		       (and (eq? (car e) 'null?)
 			    (pair? (cadr e))
-			    (eq? (hash-table-ref function-types (caadr e)) 'list-or-f))))))
+			    (eq? (return-type (caadr e)) 'list-or-f))))))
 	
 	
 	(define (contradictory? ands)
+	  #f)
+#|
 	  (let ((vars ()))
 	    (call-with-exit
 	     (lambda (return)
@@ -1412,30 +818,33 @@
 			  (pair? (car b))
 			  (pair? (cdar b)))
 		     (let* ((func (caar b))
-			    (arg-type (or (hash-table-ref argument-data func)
-					  (and (memq func '(string? pair? symbol? number? hash-table? boolean? char? vector? procedure?))
-					       (symbol->value func))
+			    (arg-type (or (and (memq func '(string? pair? symbol? number? hash-table? boolean? char? vector? procedure?))
+					       func)
 					  (and (memq func '(complex? integer? rational? real?))
-					       number?)
+					       'number?)
 					  (and (memq func '(null? list?))
-					       pair?)))
+					       'pair?)
+					  (let ((sig (procedure-signature func)))
+					    (and (pair? sig)
+						 (symbol? (cadr sig))
+						 (cadr sig)))))
 			    (args (cdar b)))
 		       (if (memq arg-type num-types)
-			   (set! arg-type number?)
-			   (if (eq? arg-type list?)
-			       (set! arg-type pair?)))
+			   (set! arg-type 'number?)
+			   (if (eq? arg-type 'list?)
+			       (set! arg-type 'pair?)))
 		       
-		       (if (and (procedure? arg-type)
-				(not (eq? arg-type sequence?)))
+		       (if (symbol? arg-type)
 			   (for-each
 			    (lambda (arg)
 			      (if (symbol? arg)
 				  (let ((type (assq arg vars)))
 				    (if (not type)
 					(set! vars (cons (cons arg arg-type) vars))
-					(if (not (eq? (cdr type) arg-type))
+					(if (not (compatible? (cdr type) arg-type))
 					    (return #t))))))
 			    args)))))))))
+|#
 	
 	
 	(define (classify e)
@@ -1470,6 +879,7 @@
 		    (set! false (cons e false))))))
 	
 	(let ((form (bsimp in-form)))
+	  ;(format *stderr* "form: ~S~%" form)
 	  (if (or (not (pair? form))
 		  (not (memq (car form) '(or and not))))
 	      (classify form)
@@ -1484,13 +894,14 @@
 					    (memq (car arg) '(and or not)))
 				       (classify (simplify-boolean arg true false env))
 				       (classify arg))))
+			 ;(format *stderr* "val ~S, arg: ~S~%" val arg)
 			 (if (boolean? val)
 			     (not val)
 			     (if (or (code-constant? arg)
 				     (and (pair? arg)
 					  (symbol? (car arg))
 					  (not (hash-table-ref globals (car arg)))
-					  (not (member (hash-table-ref function-types (car arg)) '(#f #t list-or-f number-or-f integer-or-f)))
+					  (not (memq (return-type (car arg)) '(#f #t boolean?)))
 					  (not (var-member (car arg) env))))
 				 #f
 				 (if (and (pair? arg)               ; (not (not ...)) -> ...
@@ -1632,7 +1043,7 @@
 					 (if (eq? val #t)
 					     (if (and (not (eq? e #t))
 						      (or (not (pair? e))
-							  (not (eq? (hash-table-ref function-types (car e)) #t)))
+							  (not (eq? (return-type (car e)) #t)))
 						      (or (null? new-form)
 							  (not (equal? e (car new-form)))))
 						 (set! new-form (cons e new-form)))
@@ -2340,6 +1751,7 @@
 
 		       (if *report-minor-stuff*
 			   (let ((expr (simplify-boolean test () () env)))
+			     ;(format *stderr* "expr simplified: ~S~%" expr)
 
 			     (if (and (eq? false 'no-false) ; (if (pair? lst) (for-each f lst)) -> (for-each f lst)
 				      (pair? test)
@@ -2363,7 +1775,7 @@
 				 (let ((test1 (simplify-boolean `(or ,test ,(cadr false)) () () env)))
 				   (lint-format "possible simplification:~A" name (lists->string form `(if ,test1 ,true)))))
 
-			     (if (and (not (eq? false 'no-false))        ; (if expr (set! var #t|#f) (set! var #f|#t)) -> (set! var expr|(not expr))??
+			     (if (and (not (eq? false 'no-false))        ; (if expr (set! var #t | #f) (set! var #f | #t)) -> (set! var expr|(not expr))??
 				      (pair? true)
 				      (pair? false)
 				      (eq? (car true) 'set!)
@@ -2647,7 +2059,7 @@
 								     (set! j (+ j 2)))
 								   (if (char-numeric? (string-ref str (+ j 1)))
 								       (set! j (+ j 2))
-								       (set! j ( + j 1)))))))
+								       (set! j (+ j 1)))))))
 						     (if (>= j len)
 							 (lint-format "missing format directive: ~S" name str)
 							 (if (not (char-ci=? (string-ref str j) #\t))
@@ -2928,7 +2340,9 @@
 				       (check-for-repeated-args name head form env)
 				       
 				       ;; now try to check arg types for egregious errors
-				       (let ((arg-data (hash-table-ref argument-data head)))
+				       (let ((arg-data (let ((sig (procedure-signature head)))
+							 (and (pair? sig)
+							      (cdr sig)))))
 					 (if arg-data
 					     (check-args name head form arg-data env max-arity)))))))))))))))
 
@@ -3118,31 +2532,29 @@
 		       
 		       (if (not (side-effect? f env))
 			   (lint-format "this could be omitted:~A" name (truncated-list->string f))))
-		     (begin
-		       (when (and (pair? prev-f)
-				  (pair? (cdr prev-f))
-				  (pair? (cddr prev-f)))                ; (set! ((L 1) 2)) an error, but lint should keep going
-			 (if (eq? (car prev-f) 'set!)
-			     (if (or (and (equal? (caddr prev-f) f)     ; (begin ... (set! x (...)) (...))
-					  (not (side-effect? f env)))
-				     (and (symbol? f)                   ; (begin ... (set! x ...) x)
-					  (eq? f (cadr prev-f))))
-				 (lint-format "this could be omitted:~A" name (truncated-list->string f))))
-			 (if (and (pair? f)
-				  (pair? (cdr f))
-				  (pair? (cddr f))
-				  (eq? (cadr prev-f) (cadr f))
-				  (or (and (eq? (car prev-f) 'vector-set!)
-					   (eq? (car f) 'vector-ref))
-				      (and (eq? (car prev-f) 'list-set!)
-					   (eq? (car f) 'list-ref)))
-				  (equal? (caddr f) (caddr prev-f))
-				  (pair? (cdddr prev-f))
-				  (not (pair? (cddddr prev-f)))
-				  (not (pair? (cdddr f)))
-				  (not (side-effect? (caddr f) env)))
-			     (lint-format "this could be omitted:~A" name (truncated-list->string f)))
-			 )))
+		     (when (and (pair? prev-f)
+				(pair? (cdr prev-f))
+				(pair? (cddr prev-f)))                ; (set! ((L 1) 2)) an error, but lint should keep going
+		       (if (eq? (car prev-f) 'set!)
+			   (if (or (and (equal? (caddr prev-f) f)     ; (begin ... (set! x (...)) (...))
+					(not (side-effect? f env)))
+				   (and (symbol? f)                   ; (begin ... (set! x ...) x)
+					(eq? f (cadr prev-f))))
+			       (lint-format "this could be omitted:~A" name (truncated-list->string f))))
+		       (if (and (pair? f)
+				(pair? (cdr f))
+				(pair? (cddr f))
+				(eq? (cadr prev-f) (cadr f))
+				(or (and (eq? (car prev-f) 'vector-set!)
+					 (eq? (car f) 'vector-ref))
+				    (and (eq? (car prev-f) 'list-set!)
+					 (eq? (car f) 'list-ref)))
+				(equal? (caddr f) (caddr prev-f))
+				(pair? (cdddr prev-f))
+				(not (pair? (cddddr prev-f)))
+				(not (pair? (cdddr f)))
+				(not (side-effect? (caddr f) env)))
+			   (lint-format "this could be omitted:~A" name (truncated-list->string f)))))
 		 (set! prev-f f)
 		 (if (and (pair? f)
 			  (memq head '(defmacro defmacro* define-macro define-macro* define-bacro define-bacro*))
@@ -3157,13 +2569,12 @@
       
       (define (lint-walk-function-body name head args arg-data body env)
 	;; walk function body, with possible doc string at the start
-	(if (and (pair? body)
-		 (pair? (cdr body))
-		 (string? (car body)))
-	    (begin
-	      (if *report-doc-strings*
-		  (lint-format "old-style doc string: ~S~%" name (car body)))
-	      (set! body (cdr body)))) ; ignore old-style doc-string
+	(when (and (pair? body)
+		   (pair? (cdr body))
+		   (string? (car body)))
+	  (if *report-doc-strings*
+	      (lint-format "old-style doc string: ~S~%" name (car body)))
+	  (set! body (cdr body))) ; ignore old-style doc-string
 	(lint-walk-body name head body env)
 	env)
       
@@ -3494,7 +2905,7 @@
 		     ;; here the keys are not evaluated, so we might have a list like (letrec define ...)
 		     (if (< (length form) 3)
 			 (lint-format "case is messed up: ~A" name (truncated-list->string form))
-			 (let ((sel-type +any+)
+			 (let ((sel-type #t)
 			       (selector (cadr form)))
 			   (if (and (not (pair? selector))
 				    (constant? selector))
@@ -3503,8 +2914,9 @@
 			   (if (and (pair? selector)
 				    (symbol? (car selector)))
 			       (begin
-				 (set! sel-type (hash-table-ref function-types (car selector)))
-				 (if (not (member sel-type sel-types))
+				 (set! sel-type (return-type (car selector)))
+				 (if (and (symbol? sel-type)
+					  (not (memq sel-type selector-types)))
 				     (lint-format "case selector may not work with eqv: ~A" name (truncated-list->string selector)))))
 			   (let ((all-keys ())
 				 (ctr 0)
@@ -3534,7 +2946,7 @@
 						     (lint-format "case key ~S in ~S is unlikely to work (case uses eqv?)" name key clause))
 						 (if (member key all-keys)
 						     (lint-format "repeated case key ~S in ~S" name key clause))
-						 (if (not (type-compatible sel-type key))
+						 (if (not (compatible? sel-type (->type key)))
 						     (lint-format "case key ~S in ~S is pointless" name key clause)))
 					       keys))
 					  (if (not (eq? keys 'else))
@@ -3545,7 +2957,7 @@
 						    (lint-format "case else clause is not the last:~A"
 								 name 
 								 (truncated-list->string (cddr form)))))))
-				      (set! all-keys (append (if (and (list? keys)
+				      (set! all-keys (append (if (and (proper-list? keys)
 								      (pair? keys))
 								 keys 
 								 (list keys))
@@ -3610,7 +3022,7 @@
 					  (= (length body) 1)
 					  (pair? (car body)) 
 					  (memq (caar body) '(vector-set! float-vector-set! int-vector-set! list-set! string-set!))
-					  (equal? (var-type (car vars)) +integer+)
+					  (eq? (var-type (car vars)) 'integer?)
 					  (eq? (car end-test) '=)
 					  (eq? (cadr end-test) (var-name (car vars)))
 					  (eq? (caddar body) (var-name (car vars)))
@@ -3838,9 +3250,9 @@
 					(defined? e)
 					(not (let? (symbol->value e))))
 				   (and (pair? e)
-					(let ((op (hash-table-ref function-types (car e))))
+					(let ((op (return-type (car e))))
 					  (and op
-					       (not (let? op))))))
+					       (not (eq? 'let? op))))))
 			       (lint-format "~A: first argument should be an environment: ~A" head name (truncated-list->string form)))
 			   (if (symbol? e)
 			       (set-ref? e env)

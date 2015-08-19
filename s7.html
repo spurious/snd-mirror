@@ -1900,7 +1900,7 @@ vector-dimensions returns a list of the dimensions.
 <p>make-vector also takes an optional fourth argument.  If it is #t, and the initial-value
 is either an integer or a real, make-vector produces a homogenous vector, a vector that
 can only hold elements of the same type as the initial value (either s7_int or s7_double
-internally).  Homogenous vectors are mostly useful in conjunction with C code.  Eight
+internally).  Homogenous vectors are mostly useful in conjunction with C code.  These
 homogenous vector functions are currently built-in:
 </p>
 
@@ -3832,6 +3832,7 @@ result = s7_call(s7, hook, s7_list(s7, 2, s7_make_integer(s7, 1), s7_make_intege
 <pre class="indented">
 (<em class=def id="proceduresource">procedure-source</em> proc)
 (<em class=def id="proceduredocumentation">procedure-documentation</em> proc)
+(<em class=def id="proceduresignature">procedure-signature</em> proc)
 (<em class=def id="proceduresetter">procedure-setter</em> proc)
 (funclet proc)
 
@@ -3878,6 +3879,44 @@ applied to that many arguments.
 <em class="gray">(0 . 2)</em>
 </pre>
 
+<p>
+procedure-signature is a list describing the argument types and returned value type
+of the function.  The first entry in the list is the return type, and the rest are
+argument types.  #t means any type is possible.
+</p>
+
+<pre class="indented">
+&gt; (procedure-signature round)
+<em class="gray">(integer? real?)</em> ; round takes a real argument, returns an integer
+&gt; (procedure-signature vector-ref)
+<em class="gray">(#t vector? . #1=(integer? . #1#))</em> ; trailing args are all integers (indices)
+</pre>
+
+<p>If an entry is a list, any of the listed types can occur:
+</p>
+
+<pre class="indented">
+&gt; (procedure-signature char-position)
+<em class="gray">(#t (char? string?) string? integer?)</em>
+</pre>
+
+<p>which says that the first argument to char-position can be a string or a character.
+Eventually, this list will be something like <code>((boolean? integer?) (char? string?) string? integer?)</code>.
+If the function is defined in scheme, its signature is the value of the 'signature variable
+in its closure:
+</p>
+
+<pre class="indented">
+&gt; (define f1 (let ((documentation "helpful info") 
+                   (signature '(boolean? real?))) 
+                (lambda (x) 
+                  (zero? x))))
+<em class="gray">f1</em>
+&gt; (procedure-documentation f1)
+<em class="gray">"helpful info"</em>
+&gt; (procedure-signature f1)
+<em class="gray">(boolean? real?)</em>
+</pre>
 
 <blockquote>
 

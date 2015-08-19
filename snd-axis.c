@@ -1001,7 +1001,11 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	      if ((ap->y_axis_y0 - ap->y_axis_y1) > (y_label_width + 20))
 		draw_rotated_axis_label(ap->cp,	ax, ap->ylabel, 
 					(tdy) ? 
+#if USE_GTK
+					    (ap->y_axis_x0 - tdy->maj_tick_len - tdy->min_label_width - inner_border_width - 10) :
+#else
 					    (ap->y_axis_x0 - tdy->maj_tick_len - tdy->min_label_width - inner_border_width) :
+#endif
 					    (ap->y_axis_x0 - inner_border_width - 30),
 					/* tdy might be null if not y_axis_linear (sonogram + log-freq + y axis label) */
 					(int)((ap->y_axis_y0 + ap->y_axis_y1 - y_label_width) * 0.5) - 8);

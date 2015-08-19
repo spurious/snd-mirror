@@ -1003,14 +1003,6 @@
 (make-fnc "3.16")
 (make-fnc "3.18")
 
-(define structs ())
-(define make-structs ()) ; these have a xg-specific make function
-(define cairo-make-structs ())
-(define struct-fields ())
-(define settable-struct-fields ())
-(define make-structs-3.0 ()) ; these have a xg-specific make function
-
-
 (define cairo-funcs ())
 (define cairo-png-funcs ())
 (define cairo-ints ())
@@ -1231,48 +1223,6 @@
 	(hash-table-set! names name 'def))))
 
 
-(define (STRUCT data)
-  (let ((name (car-str data)) ; struct name (type)
-	(args (cdr-str data)))
-    (if (hash-table-ref names name)
-	(no-way "~A STRUCT~%" name)
-	(let ((strs (parse-args args 'ok))
-	      (type-name (string-append name "*")))
-	  (if (not (member type-name all-types))
-	      (begin
-		(set! all-types (cons type-name all-types))
-		(set! types (cons type-name types))))
-	  (for-each 
-	   (lambda (field)
-	     (if (settable-field? field)
-		 (if (not (member (cadr field) settable-struct-fields))
-		     (set! settable-struct-fields (cons (cadr field) settable-struct-fields)))
-		 (if (not (member (cadr field) struct-fields))
-		     (set! struct-fields (cons (cadr field) struct-fields)))))
-	   strs)
-	  (set! structs (cons (list name strs args) structs))))))
-
-(define (STRUCT-make data)
-  (STRUCT data)
-  (set! make-structs (cons (car-str data) make-structs)))
-
-(define (STRUCT-3.0-make data)
-  (STRUCT data)
-  (set! make-structs-3.0 (cons (car-str data) make-structs-3.0)))
-
-(define (CAIRO-STRUCT-make data)
-  (STRUCT data) ; fields not needed currently
-  (set! cairo-make-structs (cons (car-str data) cairo-make-structs)))
-
-(define (find-struct name)
-  (call-with-exit
-   (lambda (return)
-     (for-each
-      (lambda (struct)
-	(if (string=? name (car struct))
-	    (return struct)))
-      structs))))
-
 (define (no-arg name)
   (let ((len (length name)))
     (call-with-exit
@@ -1382,30 +1332,10 @@
 (hey " *    (c-array->list arr len) derefs each member of arr, returning lisp list, len=#f: null terminated array~%")
 (hey " *    (list->c-array lst ctype) packages each member of list as c-type \"type\" returning (wrapped) c array~%")
 (hey " *    (make-target-entry lst) returns a GtkTargetEntry table, each member of 'lst' should be (list target flags info)~%")
-
-(for-each
- (lambda (name)
-   (let ((args (cadr (find-struct name))))
-     (hey " *    (~A" name)
-     (for-each
-      (lambda (str)
-	(hey " ~A" (cadr str)))
-      args)
-     (hey "): ~A struct~%" name)))
- (reverse make-structs))
-
-(if (pair? cairo-make-structs)
-    (for-each
-     (lambda (name)
-       (let ((args (cadr (find-struct name))))
-	 (hey " *    (~A" name)
-	 (for-each
-	  (lambda (str)
-	    (hey " ~A" (cadr str)))
-	  args)
-	 (hey "): ~A struct (if cairo)~%" name)))
-     (reverse cairo-make-structs)))
-
+(hey " *    (GtkTextIter): GtkTextIter struct~%")
+(hey " *    (GtkTreeIter): GtkTreeIter struct~%")
+(hey " *    (PangoRectangle): PangoRectangle struct~%")
+(hey " *    (cairo_matrix_t): cairo_matrix_t struct (if cairo)~%")
 (hey " *~%")
 (hey " * omitted functions and macros:~%")
 (hey " *     anything with a va_list or GtkArg* argument.~%")
@@ -2428,22 +2358,6 @@
 (hey "  return(C_to_Xen_GtkTargetEntry_(targets));~%")
 (hey "}~%")
 
-(hey "/* ---------------------------------------- structs ---------------------------------------- */~%~%")
-
-;;; (hey "  #define Xg_define_reader(Name, Value, A1, A2, A3) Xen_define_procedure(Xg_field_pre #Name Xg_post, Value, A1, A2, A3, #Name \" field reader\")~%")
-(hey "  #if HAVE_RUBY~%")
-(hey "    #define Xg_define_accessor(Name, Value, SetValue, A1, A2, A3, A4) \\~%")
-(hey "      Xen_define_dilambda(Xg_field_pre #Name Xg_post, Value, #Name \" field accessor\", Xg_field_pre \"set_\" #Name Xg_post, SetValue, A1, A2, A3, A4)~%")
-(hey "  #endif~%")
-(hey "  #if HAVE_SCHEME~%")
-(hey "    #define Xg_define_accessor(Name, Value, SetValue, A1, A2, A3, A4) \\~%")
-(hey "      Xen_define_dilambda(Xg_field_pre #Name Xg_post, Value, #Name \" field accessor\", \"set! \" Xg_field_pre #Name Xg_post, SetValue, A1, A2, A3, A4)~%")
-(hey "  #endif~%~%")
-(hey "  #if HAVE_FORTH~%")
-(hey "    #define Xg_define_accessor(Name, Value, SetValue, A1, A2, A3, A4) \\~%")
-(hey "      Xen_define_dilambda(Xg_field_pre #Name Xg_post, Value, #Name \" field accessor\", \"set-\" Xg_field_pre #Name Xg_post, SetValue, A1, A2, A3, A4)~%")
-(hey "  #endif~%")
-
 (define (array->list type)
   (hey "  if (ctype == xg_~A_symbol)~%" (no-stars type))
   (hey "    {~%")
@@ -2543,150 +2457,71 @@
        (list->array type)))
  types)
 (hey "  return(Xen_false);~%")
+(hey "}~%")
+
+
+(hey "static Xen gxg_make_GtkTextIter(void)~%")
+(hey "{~%")
+(hey "  GtkTextIter* result;~%")
+(hey "  result = (GtkTextIter*)calloc(1, sizeof(GtkTextIter));~%")
+(hey "  return(Xen_list_3(C_string_to_Xen_symbol(\"GtkTextIter_\"), Xen_wrap_C_pointer(result), make_xm_obj(result)));~%")
+(hey "}~%")
+(hey "~%")
+(hey "static Xen gxg_make_GtkTreeIter(void)~%")
+(hey "{~%")
+(hey "  GtkTreeIter* result;~%")
+(hey "  result = (GtkTreeIter*)calloc(1, sizeof(GtkTreeIter));~%")
+(hey "  return(Xen_list_3(C_string_to_Xen_symbol(\"GtkTreeIter_\"), Xen_wrap_C_pointer(result), make_xm_obj(result)));~%")
+(hey "}~%")
+(hey "~%")
+(hey "static Xen gxg_make_PangoRectangle(void)~%")
+(hey "{~%")
+(hey "  PangoRectangle* result;~%")
+(hey "  result = (PangoRectangle*)calloc(1, sizeof(PangoRectangle));~%")
+(hey "  return(Xen_list_3(C_string_to_Xen_symbol(\"PangoRectangle_\"), Xen_wrap_C_pointer(result), make_xm_obj(result)));~%")
+(hey "}~%")
+(hey "~%")
+(hey "static Xen gxg_make_cairo_matrix_t(void)~%")
+(hey "{~%")
+(hey "  cairo_matrix_t* result;~%")
+(hey "  result = (cairo_matrix_t*)calloc(1, sizeof(cairo_matrix_t));~%")
+(hey "  return(Xen_list_3(C_string_to_Xen_symbol(\"cairo_matrix_t_\"), Xen_wrap_C_pointer(result), make_xm_obj(result)));~%")
 (hey "}~%~%")
+(hey "#if GTK_CHECK_VERSION(3, 0, 0)~%")
+(hey "static Xen gxg_make_GdkRGBA(void)~%")
+(hey "{~%")
+(hey "  GdkRGBA* result;~%")
+(hey "  result = (GdkRGBA*)calloc(1, sizeof(GdkRGBA));~%")
+(hey "  return(Xen_list_3(C_string_to_Xen_symbol(\"GdkRGBA_\"), Xen_wrap_C_pointer(result), make_xm_obj(result)));~%")
+(hey "}~%")
+(hey "#endif~%~%")
 
-(define (make-reader field)
-  ;; gather structs that share field
-  ;; if 1 or 2 assert type, if and return,
-  ;;   else if on each, assert 0 at end and xen false
-  (hey "~%")
-  (hey "static Xen gxg_~A(Xen ptr)~%" field)
-  (hey "{~%")
-  (let ((vals ()))
-    (for-each
-     (lambda (struct)
-       (let ((strs (cadr struct)))
-	 ;; cadr of each inner list is field name, car is field type
-	 (for-each
-	  (lambda (str)
-	    (if (string=? (cadr str) field)
-		(set! vals (cons (list (car struct) (car str)) vals))))
-	  strs)))
-     structs)
-    ;; now vals is list of (struct-type field-type)
-    (if (null? vals)
-	(hey "~A: not found" field)
-	(begin
-	  (if (= (length vals) 1)
-	      (hey "  Xen_check_type(Xen_is__~A(ptr), ptr, 1, ~S, ~S);~%" 
-		   (caar vals) field 
-		   (caar vals))
-	      (if (= (length vals) 2)
-		  (hey "  Xen_check_type(Xen_is__~A(ptr) || Xen_is__~A(ptr), ptr, 1, ~S, ~S \" or \" ~S);~%" 
-		       (caar vals) (car (cadr vals)) field 
-		       (caar vals) (car (cadr vals)))))))
-    (let ((ctr 0))
-      (for-each
-       (lambda (val)
-	 (if (or (> (length vals) 2)
-		 (and (= (length vals) 2)
-		      (= ctr 0)))
-	     (hey "  if (Xen_is__~A(ptr)) " (car val))
-	     (heyc "  "))
-	 (set! ctr (+ ctr 1))
-	 (hey "return(C_to_Xen_~A((~A)((Xen_to_C_~A_(ptr))->~A)));~%"
-	      (no-stars (cadr val)) (cadr val) (car val) field))
-       vals))
-    (if (> (length vals) 2)
-	(hey "  Xen_check_type(0, ptr, 1, ~S, \"pointer to struct with ~A field\");~%  return(Xen_false);~%"
-	     field field))
-    (hey "}~%")
-    ))
+(hey "#if HAVE_SCHEME~%")
+(hey "  #define Xg_define_procedure(Name, Value, A1, A2, A3, Help, Sig) s7_define_typed_function(s7, Xg_pre #Name Xg_post, Value, A1, A2, A3, Help, Sig)~%")
+(hey "#else~%")
+(hey "  #define Xg_define_procedure(Name, Value, A1, A2, A3, Help, Sig) Xen_define_safe_procedure(Xg_pre #Name Xg_post, Value, A1, A2, A3, Help)~%")
+(hey "#endif~%")
+(hey "~%")
 
-(define (make-writer field)
-  (hey "~%")
-  (hey "static Xen gxg_set_~A(Xen ptr, Xen val)~%" field)
-  (hey "{~%")
-  (let ((vals ()))
-    (for-each
-     (lambda (struct)
-       (let ((strs (cadr struct)))
-	 ;; cadr of each inner list is field name, car is field type
-	 (for-each
-	  (lambda (str)
-	    (if (string=? (cadr str) field)
-		(set! vals (cons (list (car struct) (car str)) vals))))
-	  strs)))
-     structs)
-    (if (null? vals)
-	(format #t "(writer) ~A: not found" field)
-	(begin
-	  (if (= (length vals) 1)
-	      (hey "  Xen_check_type(Xen_is__~A(ptr), ptr, 1, ~S, ~S);~%" 
-		   (caar vals) field 
-		   (caar vals))
-	      (if (= (length vals) 2)
-		  (hey "  Xen_check_type(Xen_is__~A(ptr) || Xen_is__~A(ptr), ptr, 1, ~S, ~S \" or \" ~S);~%" 
-		       (caar vals) (car (cadr vals)) field 
-		       (caar vals) (car (cadr vals)))))))
-    (let ((ctr 0))
-      (for-each
-       (lambda (val)
-	 (if (or (> (length vals) 2)
-		 (and (= (length vals) 2)
-		      (= ctr 0)))
-	     (hey "  if (Xen_is__~A(ptr)) " (car val))
-	     (heyc "  "))
-	 (set! ctr (+ ctr 1))
-	 (hey "(Xen_to_C_~A_(ptr))->~A = Xen_to_C_~A(val);~%"
-	      (car val) field (no-stars (cadr val))))
-       vals))
-    (if (> (length vals) 2)
-	(hey "  Xen_check_type(0, ptr, 1, \"set! ~A\", \"pointer to struct with ~A field\");~% return(Xen_false);~%"
-	     field field))
-    (hey "  return(val);~%}~%")
-    ))
-
-(for-each make-reader (reverse struct-fields))
-(for-each make-reader (reverse settable-struct-fields))
-(for-each make-writer (reverse settable-struct-fields))
-
-(define (define-struct name)
-  (let* ((struct (find-struct name))
-	 (strs (cadr struct)))
-    ;; cadr of each inner list is field name, car is field type
-    (if (= (length strs) 0)
-	(begin
-	  (hey "static Xen gxg_make_~A(void)~%" name)
-	  (hey "{~%")
-	  (hey "  ~A* result;~%" name)
-	  (hey "  result = (~A*)calloc(1, sizeof(~A));~%" name name)
-	  (hey "  return(Xen_list_3(C_string_to_Xen_symbol(~S), Xen_wrap_C_pointer(result), make_xm_obj(result)));~%" 
-	       (string-append name "_"))
-	  (hey "}~%~%"))
-	(begin
-	  (hey "static Xen gxg_make_~A(Xen arglist)~%" name)
-	  (hey "{~%")
-	  (hey "  ~A* result;~%" name)
-	  (hey "  int i, len;~%")
-	  (hey "  result = (~A*)calloc(1, sizeof(~A));~%" name name)
-	  (hey "  len = Xen_list_length(arglist);~%")
-	  (hey "  for (i = 0; i < len; i++)~%")
-	  (hey "    switch (i)~%")
-	  (hey "      {~%")
-	  (let ((ctr 0))
-	    (for-each
-	     (lambda (str)
-	       (let ((field-name (cadr str))
-		     (field-type (car str)))
-		 (hey "      case ~D: result->~A = Xen_to_C_~A(Xen_list_ref(arglist, ~D));~%"
-		      ctr field-name (no-stars field-type) ctr)
-		 (set! ctr (+ ctr 1))))
-	     strs))
-	  (hey "      }~%")
-	  (hey "  return(Xen_list_3(C_string_to_Xen_symbol(~S), Xen_wrap_C_pointer(result), make_xm_obj(result)));~%" 
-	       (string-append name "_"))
-	  (hey "}~%~%")))))
-
-(for-each define-struct (reverse make-structs))
-(if (pair? cairo-make-structs)
-    (with-cairo hey 
-		(lambda () 
-		  (for-each define-struct (reverse cairo-make-structs)))))
-
-(with-3.0 hey (lambda ()
-		(for-each define-struct (reverse make-structs-3.0))))
-
+(hey "Xen_wrap_no_args(gxg_make_GtkTextIter_w, gxg_make_GtkTextIter)~%")
+(hey "Xen_wrap_no_args(gxg_make_GtkTreeIter_w, gxg_make_GtkTreeIter)~%")
+(hey "Xen_wrap_no_args(gxg_make_PangoRectangle_w, gxg_make_PangoRectangle)~%")
+(hey "Xen_wrap_no_args(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)~%")
+(hey "#if GTK_CHECK_VERSION(3, 0, 0)~%")
+(hey "Xen_wrap_no_args(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)~%")
+(hey "#endif~%")
+(hey "~%~%")
+(hey "static void define_structs(void)~%")
+(hey "{~%")
+(hey "  Xg_define_procedure(GtkTextIter, gxg_make_GtkTextIter_w, 0, 0, 0, \"(GtkTextIter): a new GtkTextIter struct\", NULL);~%")
+(hey "  Xg_define_procedure(GtkTreeIter, gxg_make_GtkTreeIter_w, 0, 0, 0, \"(GtkTreeIter): a new GtkTreeIter struct\", NULL);~%")
+(hey "  Xg_define_procedure(PangoRectangle, gxg_make_PangoRectangle_w, 0, 0, 0, \"(PangoRectangle): a new PangoRectangle struct\", NULL);~%")
+(hey "  Xg_define_procedure(cairo_matrix_t, gxg_make_cairo_matrix_t_w, 0, 0, 0, \"(cairo_matrix_t): a new cairo_matrix_t struct\", NULL);~%")
+(hey "#if GTK_CHECK_VERSION(3, 0, 0)~%")
+(hey "  Xg_define_procedure(GdkRGBA, gxg_make_GdkRGBA_w, 0, 0, 0, \"(GdkRGBA): a new GdkRGBA struct\", NULL);~%")
+(hey "#endif~%")
+(hey "}~%~%")
+  
 
 
 ;;; ---------------- argify ----------------
@@ -2752,43 +2587,75 @@
  all-checks all-check-withs)
 
 
-(for-each (lambda (field) (hey "Xen_wrap_1_arg(gxg_~A_w, gxg_~A)~%" field field)) struct-fields)
-(for-each (lambda (field) (hey "Xen_wrap_1_arg(gxg_~A_w, gxg_~A)~%" field field)) settable-struct-fields)
-(for-each (lambda (field) (hey "Xen_wrap_2_args(gxg_set_~A_w, gxg_set_~A)~%" field field)) settable-struct-fields)
+;;; --------------------------------------------------------------------------------
+(hey "#if HAVE_SCHEME~%")
 
-(for-each (lambda (struct) 
-	    (let ((s (find-struct struct)))
-	      (if (> (length (cadr s)) 0)
-		  (hey "Xen_wrap_any_args(gxg_make_~A_w, gxg_make_~A)~%" struct struct)
-		  (hey "Xen_wrap_no_args(gxg_make_~A_w, gxg_make_~A)~%" struct struct))))
-	  (reverse make-structs))
-(hey "~%")
+(define (gtk-type->s7-type gtk)
+  (let ((dt (assoc gtk direct-types)))
+    (if (and (pair? dt)
+	     (string? (cdr dt)))
+	(let ((direct (cdr dt)))
+	  (cond ((member direct '("INT" "ULONG") string=?) 'integer?)
+		((string=? direct "BOOLEAN")               'boolean?)
+		((string=? direct "DOUBLE")                'real?)
+		((string=? direct "CHAR")                  'char?)
+		((string=? direct "String")                'string?)
+		(#t #t)))
+	#t)))
+	       
+(define (make-signature fnc)
+  (let ((sig (list (gtk-type->s7-type (cadr fnc)))))
+    (for-each
+     (lambda (arg)
+       (set! sig (cons (gtk-type->s7-type (car arg)) sig)))
+     (caddr fnc))
+    (reverse sig)))
 
-(with-cairo hey
-	    (lambda ()
-	      (for-each 
-	       (lambda (struct) 
-		 (let ((s (find-struct struct)))
-		   (if (> (length (cadr s)) 0)
-		       (hey "Xen_wrap_any_args(gxg_make_~A_w, gxg_make_~A)~%" struct struct)
-		       (hey "Xen_wrap_no_args(gxg_make_~A_w, gxg_make_~A)~%" struct struct))))
-	       (reverse cairo-make-structs))))
-(hey "~%")
+(define signatures (make-hash-table))
+(define (make-signatures lst)
+  (for-each
+   (lambda (f)
+     (let ((sig (make-signature f)))
+       (if (pair? sig)
+	   (let ((count (signatures sig)))
+	     (if (not count)
+		 (set! (signatures sig) 0)
+		 (set! (signatures sig) (+ count 1)))))))
+   lst))
 
-(with-3.0 hey (lambda ()
-		(for-each (lambda (struct) 
-			    (let ((s (find-struct struct)))
-			      (if (> (length (cadr s)) 0)
-				  (hey "Xen_wrap_any_args(gxg_make_~A_w, gxg_make_~A)~%" struct struct)
-				  (hey "Xen_wrap_no_args(gxg_make_~A_w, gxg_make_~A)~%" struct struct))))
-			  (reverse make-structs-3.0))
-		(hey "~%")))
+(make-signatures funcs)
+(for-each make-signatures all-funcs)
 
+;(format *stderr* "~D entries, ~D funcs~%" (hash-table-entries signatures) (length funcs))
 
+(hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any;~%")
+(hey "static s7_pointer ")
+
+(define (sig-name sig)
+  (call-with-output-string
+   (lambda (p)
+     (display "pl_" p)
+     (for-each
+      (lambda (typ)
+	(display (case typ
+		   ((integer?) "i")
+		   ((boolean?) "b")
+		   ((real?) "r")
+		   ((string?) "s")
+		   (else "t"))
+		 p))
+      sig))))
+     
+(for-each
+ (lambda (sigc)
+   (let ((sig (car sigc)))
+     (hey (sig-name sig))
+     (hey ", ")))
+ signatures)
+(hey "pl_unused;~%")
+(hey "#endif~%~%")
 
 ;;; --------------------------------------------------------------------------------
-(hey "  #define Xg_define_procedure(Name, Value, A1, A2, A3, Help) Xen_define_safe_procedure(Xg_pre #Name Xg_post, Value, A1, A2, A3, Help)~%")
-(hey "~%")
 (hey "static void define_functions(void)~%")
 (hey "{~%")
 
@@ -2796,7 +2663,39 @@
 (hey "  Xen_GC_protect(xm_gc_table);~%")
 (hey "  xm_protected_size = 512;~%")
 (hey "  xm_protected = Xen_make_vector(xm_protected_size, Xen_false);~%")
-(hey "  Xen_vector_set(xm_gc_table, 0, xm_protected);~%")
+(hey "  Xen_vector_set(xm_gc_table, 0, xm_protected);~%~%")
+
+(hey "#if HAVE_SCHEME~%")
+(hey "  s_boolean = s7_make_symbol(s7, \"boolean?\");~%")
+(hey "  s_integer = s7_make_symbol(s7, \"integer?\");~%")
+(hey "  s_real = s7_make_symbol(s7, \"real?\");~%")
+(hey "  s_string = s7_make_symbol(s7, \"string?\");~%")
+(hey "  s_any = s7_t(s7);~%~%")
+
+(for-each
+ (lambda (sigc)
+   (let ((sig (car sigc)))
+     (hey "  ")
+     (hey (sig-name sig))
+     (hey " = s7_make_permanent_list(s7, ")
+     (let ((len (length sig)))
+       (hey (number->string len))
+       (hey ", ")
+       (do ((i 0 (+ i 1))
+	    (s sig (cdr s)))
+	   ((= i len))
+	 (let ((typ (car s)))
+	   (hey (case typ
+		  ((integer?) "s_integer")
+		  ((boolean?) "s_boolean")
+		  ((real?) "s_real")
+		  ((string?) "s_string")
+		  (else "s_any"))))
+	 (if (< i (- len 1)) (hey ", "))))
+     (hey ");~%")))
+ signatures)
+(hey "pl_unused = NULL;~%")
+(hey "#endif~%~%")
 
 (define (defun func)
   (let* ((cargs (length (caddr func)))
@@ -2804,12 +2703,14 @@
 	 (args (- cargs refargs))
 	 (return-type (cadr func))
 	 (typ (assoc return-type direct-types)))
-    (hey "  Xg_define_procedure(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
+    (hey "  Xg_define_procedure(~A, gxg_~A_w, ~D, ~D, ~D, H_~A, ~A);~%"
 	 (car func) (car func) 
 	 (if (>= cargs max-args) 0 args)
 	 (if (>= cargs max-args) 0 refargs)
 	 (if (>= cargs max-args) 1 0)
-	 (car func))))
+	 (car func)
+	 (sig-name (make-signature func)))))
+
 
 (for-each defun (reverse funcs))
 (for-each
@@ -2820,13 +2721,13 @@
  all-funcs all-func-withs)
 
 (define (cast-out func)
-  (hey "  Xg_define_procedure(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) casts obj to ~A\");~%" 
+  (hey "  Xg_define_procedure(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) casts obj to ~A\", NULL);~%" 
        (no-arg (car func)) 
        (no-arg (car func))
        (no-arg (car func))
        (no-arg (car func))))
 
-(hey "  Xg_define_procedure(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, \"(GPOINTER obj) casts obj to GPOINTER\");~%")
+(hey "  Xg_define_procedure(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, \"(GPOINTER obj) casts obj to GPOINTER\", NULL);~%")
 
 (for-each cast-out (reverse casts))
 (for-each
@@ -2837,19 +2738,19 @@
  all-casts all-cast-withs)
 
 
-(hey "  Xg_define_procedure(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);~%")
-(hey "  Xg_define_procedure(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);~%")
-(hey "  Xg_define_procedure(->string, c_to_xen_string_w, 1, 0, 0, NULL);~%")
-(hey "  Xg_define_procedure(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);~%")
-(hey "  Xg_define_procedure(g_object_get, xg_object_get_w, 3, 0, 0, NULL);~%")
-(hey "  Xg_define_procedure(g_object_set, xg_object_set_w, 3, 0, 0, NULL);~%")
-(hey "  Xg_define_procedure(gtk_event_keyval, xg_gtk_event_keyval_w, 1, 0, 0, NULL);~%")
+(hey "  Xg_define_procedure(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL, NULL);~%")
+(hey "  Xg_define_procedure(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL, NULL);~%")
+(hey "  Xg_define_procedure(->string, c_to_xen_string_w, 1, 0, 0, NULL, NULL);~%")
+(hey "  Xg_define_procedure(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry, NULL);~%")
+(hey "  Xg_define_procedure(g_object_get, xg_object_get_w, 3, 0, 0, NULL, NULL);~%")
+(hey "  Xg_define_procedure(g_object_set, xg_object_set_w, 3, 0, 0, NULL, NULL);~%")
+(hey "  Xg_define_procedure(gtk_event_keyval, xg_gtk_event_keyval_w, 1, 0, 0, NULL, NULL);~%")
 
-(hey "  Xg_define_procedure(gtk_init, gxg_gtk_init_w, 0, 2, 0, H_gtk_init);~%")
-(hey "  Xg_define_procedure(gtk_init_check, gxg_gtk_init_check_w, 0, 2, 0, H_gtk_init_check);~%")
+(hey "  Xg_define_procedure(gtk_init, gxg_gtk_init_w, 0, 2, 0, H_gtk_init, NULL);~%")
+(hey "  Xg_define_procedure(gtk_init_check, gxg_gtk_init_check_w, 0, 2, 0, H_gtk_init_check, NULL);~%")
 
 (define (check-out func)
-  (hey "  Xg_define_procedure(~A, gxg_~A_w, 1, 0, 0, \"(~A obj): \" PROC_TRUE \" if obj is a ~A\");~%" 
+  (hey "  Xg_define_procedure(~A, gxg_~A_w, 1, 0, 0, \"(~A obj): \" PROC_TRUE \" if obj is a ~A\", NULL);~%" 
        (no-arg (car func)) 
        (no-arg (car func))
        (no-arg (car func))
@@ -2862,52 +2763,6 @@
        (check-func hey (lambda () 
 			 (for-each check-out (reverse check-list))))))
  all-checks all-check-withs)
-
-(hey "}~%~%")
-
-
-(hey "static void define_structs(void)~%")
-(hey "{~%")
-
-(for-each (lambda (field) (hey "  Xg_define_reader(~A, gxg_~A_w, 1, 0, 0);~%" field field)) struct-fields)
-(for-each (lambda (field) (hey "  Xg_define_accessor(~A, gxg_~A_w, gxg_set_~A_w, 1, 0, 2, 0);~%" field field field)) settable-struct-fields)
-
-(for-each (lambda (struct)
-	    (let ((s (find-struct struct)))
-	      (hey "  Xg_define_procedure(~A, gxg_make_~A_w, 0, 0, ~D, \"(~A~A): a new ~A struct\");~%" 
-		   struct 
-		   struct 
-		   (if (> (length (cadr s)) 0) 1 0)
-		   struct
-		   (if (> (length (cadr s)) 0) " ..." "")
-		   struct)))
-	  (reverse make-structs))
-
-(if (pair? cairo-make-structs)
-    (with-cairo hey
-		(lambda ()
-		  (for-each 
-		   (lambda (struct)
-		     (let ((s (find-struct struct)))
-		       (hey "  Xg_define_procedure(~A, gxg_make_~A_w, 0, 0, ~D, \"(~A~A): a new ~A struct\");~%" 
-			    struct 
-			    struct 
-			    (if (> (length (cadr s)) 0) 1 0)
-			    struct
-			    (if (> (length (cadr s)) 0) " ..." "")
-			    struct)))
-		   (reverse cairo-make-structs)))))
-(with-3.0 hey (lambda ()
-		(for-each (lambda (struct)
-			    (let ((s (find-struct struct)))
-			      (hey "  Xg_define_procedure(~A, gxg_make_~A_w, 0, 0, ~D, \"(~A~A): a new ~A struct\");~%" 
-				   struct 
-				   struct 
-				   (if (> (length (cadr s)) 0) 1 0)
-				   struct
-				   (if (> (length (cadr s)) 0) " ..." "")
-				   struct)))
-			  (reverse make-structs-3.0))))
 
 (hey "}~%~%")
 
@@ -3011,9 +2866,9 @@
 (hey "      define_integers();~%")
 (hey "      define_doubles();~%")
 (hey "      define_functions();~%")
-(hey "      define_structs();~%")
 (hey "      define_atoms();~%")
 (hey "      define_strings();~%")
+(hey "      define_structs();~%")
 (hey "      Xen_provide_feature(\"xg\");~%")
 (hey "      #if GTK_CHECK_VERSION(3, 0, 0)~%")
 (hey "        Xen_provide_feature(\"gtk3\");~%")

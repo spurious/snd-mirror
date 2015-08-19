@@ -413,7 +413,7 @@ typedef struct {
   int name_length;
   unsigned int id;
   char *doc;
-  s7_pointer generic_ff, otype;
+  s7_pointer generic_ff, otype, signature;
   s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
   c_proc_ext_t *ext;
 } c_proc_t;
@@ -892,7 +892,7 @@ struct s7_scheme {
   s7_pointer NOT, IS_NULL, IS_NUMBER, NUMBER_TO_STRING, NUMERATOR, OBJECT_TO_STRING, IS_ODD, OPENLET, IS_OPENLET, OPEN_INPUT_FILE;
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTLET, IS_OUTPUT_PORT, OWLET, IS_PAIR, PAIR_LINE_NUMBER, PEEK_CHAR;
   s7_pointer IS_PORT_CLOSED, PORT_FILENAME, PORT_LINE_NUMBER;
-  s7_pointer IS_POSITIVE, IS_PROCEDURE, PROCEDURE_DOCUMENTATION, FUNCLET, PROCEDURE_SOURCE;
+  s7_pointer IS_POSITIVE, IS_PROCEDURE, PROCEDURE_DOCUMENTATION, PROCEDURE_SIGNATURE, FUNCLET, PROCEDURE_SOURCE;
   s7_pointer IS_DILAMBDA, PROVIDE, MAKE_RECTANGULAR, ROOTLET;
   s7_pointer IS_PROVIDED, QUOTIENT, RANDOM, IS_RANDOM_STATE, RANDOM_STATE_TO_LIST, RATIONALIZE, IS_RATIONAL, READ, READ_BYTE, READ_CHAR, READ_LINE, IS_REAL;
   s7_pointer READ_STRING, REAL_PART, REMAINDER, REQUIRE, REVERSE, REVERSEB, ROUND, SET_CAR, SET_CDR, SIN, SINH, SORT, SQRT, STACKTRACE;
@@ -923,7 +923,7 @@ struct s7_scheme {
   /* these are the associated functions, not symbols */
   s7_pointer Vector_Set, String_Set, List_Set, Hash_Table_Set, Let_Set; /* Cons (see the setter stuff at the end) */
 
-  s7_pointer LAMBDA, LAMBDA_STAR, LET, QUOTE, UNQUOTE, MACROEXPAND, DEFINE_EXPANSION, BAFFLE, WITH_LET, DOCUMENTATION;
+  s7_pointer LAMBDA, LAMBDA_STAR, LET, QUOTE, UNQUOTE, MACROEXPAND, DEFINE_EXPANSION, BAFFLE, WITH_LET, DOCUMENTATION, SIGNATURE;
   s7_pointer IF, WHEN, UNLESS, BEGIN, COND, CASE, AND, OR, DO, DEFINE, DEFINE_STAR, DEFINE_CONSTANT, WITH_BAFFLE;
   s7_pointer DEFINE_MACRO, DEFINE_MACRO_STAR, DEFINE_BACRO, DEFINE_BACRO_STAR;
   s7_pointer LETREC, LETREC_STAR, LET_STAR;
@@ -2030,6 +2030,7 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define c_function_name(f)            c_function_data(f)->name
 #define c_function_name_length(f)     c_function_data(f)->name_length
 #define c_function_documentation(f)   c_function_data(f)->doc
+#define c_function_signature(f)       c_function_data(f)->signature
 #define c_function_class(f)           c_function_data(f)->id
 #define c_function_chooser(f)         c_function_data(f)->chooser
 #define c_function_base(f)            c_function_data(f)->generic_ff
@@ -3105,6 +3106,7 @@ s7_pointer s7_eof_object(s7_scheme *sc)          /* returns #<eof> -- not equiva
 static s7_pointer g_not(s7_scheme *sc, s7_pointer args)
 {
   #define H_not "(not obj) returns #t if obj is #f, otherwise #t: (not ()) -> #f"
+  #define Q_not pl_bool_t
   return(make_boolean(sc, is_false(sc, car(args))));
 }
 
@@ -3130,6 +3132,7 @@ s7_pointer s7_make_boolean(s7_scheme *sc, bool x)
 static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_boolean "(boolean? obj) returns #t if obj is #f or #t: (boolean? ()) -> #f"
+  #define Q_is_boolean pl_bool_t
   check_boolean_method(sc, s7_is_boolean, sc->IS_BOOLEAN, args);
 }
 
@@ -3147,6 +3150,7 @@ bool s7_is_constant(s7_pointer p)
 static s7_pointer g_is_constant(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_constant "(constant? obj) returns #t if obj is a constant (unsettable): (constant? pi) -> #t"
+  #define Q_is_constant pl_bool_t
   check_boolean_method(sc, s7_is_constant, sc->IS_CONSTANT, args);
 }
 
@@ -4493,6 +4497,7 @@ static s7_pointer g_gc(s7_scheme *sc, s7_pointer args)
 {
   #define H_gc "(gc (on #t)) runs the garbage collector.  If 'on' is supplied, it turns the GC on or off. \
 Evaluation produces a surprising amount of garbage, so don't leave the GC off for very long!"
+  #define Q_gc s7_make_permanent_list(sc, 2, sc->IS_BOOLEAN, sc->IS_BOOLEAN)
 
   if (is_not_null(args))
     {
@@ -4906,6 +4911,7 @@ static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, uns
 static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_table "(symbol-table) returns a list containing the current symbol-table symbols"
+  #define Q_symbol_table s7_make_permanent_list(sc, 1, sc->IS_PAIR)
   s7_pointer lst, x;
   int i;
 
@@ -5064,6 +5070,8 @@ static bool s7_is_gensym(s7_pointer g) {return((is_symbol(g)) && (is_gensym(g)))
 static s7_pointer g_is_gensym(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_gensym "(gensym? sym) returns #t if sym is a gensym"
+  #define Q_is_gensym pl_bool_t
+
   check_boolean_method(sc, s7_is_gensym, sc->IS_GENSYM, args);
 }
 
@@ -5085,6 +5093,7 @@ static char *pos_int_to_str(s7_int num, unsigned int *len)
 static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
 {
   #define H_gensym "(gensym (prefix \"gensym\")) returns a new, unused symbol"
+  #define Q_gensym s7_make_permanent_list(sc, 2, sc->IS_SYMBOL, sc->IS_STRING)
 
   const char *prefix;
   char *name, *p;
@@ -5176,6 +5185,8 @@ bool s7_is_syntax(s7_pointer p)
 static s7_pointer g_is_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_symbol "(symbol? obj) returns #t if obj is a symbol"
+  #define Q_is_symbol pl_bool_t
+
   check_boolean_method(sc, is_symbol, sc->IS_SYMBOL, args);
 }
 
@@ -5189,6 +5200,7 @@ const char *s7_symbol_name(s7_pointer p)
 static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_to_string "(symbol->string sym) returns the symbol sym converted to a string"
+  #define Q_symbol_to_string s7_make_permanent_list(sc, 2, sc->IS_STRING, sc->IS_SYMBOL)
   s7_pointer sym;
 
   sym = car(args);
@@ -5225,6 +5237,7 @@ static s7_pointer g_string_to_symbol_1(s7_scheme *sc, s7_pointer str, s7_pointer
 static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_to_symbol "(string->symbol str) returns the string str converted to a symbol"
+  #define Q_string_to_symbol s7_make_permanent_list(sc, 2, sc->IS_SYMBOL, sc->IS_STRING)
   return(g_string_to_symbol_1(sc, car(args), sc->STRING_TO_SYMBOL));
 }
 
@@ -5232,6 +5245,7 @@ static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol "(symbol str) returns the string str converted to a symbol"
+  #define Q_symbol s7_make_permanent_list(sc, 2, sc->IS_SYMBOL, sc->IS_STRING)
   return(g_string_to_symbol_1(sc, car(args), sc->SYMBOL));
 }
 
@@ -5450,6 +5464,8 @@ bool s7_is_let(s7_pointer e)
 static s7_pointer g_is_let(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_let "(let? obj) returns #t if obj is a let (an environment)."
+  #define Q_is_let pl_bool_t
+
   check_boolean_method(sc, is_let, sc->IS_LET, args);
 }
 
@@ -5674,6 +5690,7 @@ static s7_pointer g_unlet(s7_scheme *sc, s7_pointer args)
 {
   /* add sc->unlet bindings to the current environment */
   #define H_unlet "(unlet) establishes the original bindings of all the predefined functions"
+  #define Q_unlet s7_make_permanent_list(sc, 1, sc->IS_LET)
 
   /* slightly confusing:
    *    :((unlet) 'abs)
@@ -5726,6 +5743,8 @@ static s7_pointer g_unlet(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_openlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_openlet "(openlet? obj) returns #t is 'obj' has methods."
+  #define Q_is_openlet pl_bool_t
+
   /* if car(args) is not a let (or possibly have one), should this raise an error? */
   check_method(sc, car(args), sc->IS_OPENLET, args);
   return(make_boolean(sc, has_methods(car(args))));
@@ -5735,6 +5754,7 @@ static s7_pointer g_is_openlet(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_openlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_openlet "(openlet e) tells the built-in generic functions that the environment 'e might have an over-riding method."
+  #define Q_openlet pl_t_t
   s7_pointer e;
 
   e = car(args);
@@ -5766,6 +5786,7 @@ static s7_pointer c_coverlet(s7_scheme *sc, s7_pointer e)
 static s7_pointer g_coverlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_coverlet "(coverlet e) undoes an earlier openlet."
+  #define Q_coverlet pl_t_t
   return(c_coverlet(sc, car(args)));
 }
 
@@ -5824,6 +5845,7 @@ static s7_pointer g_varlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_varlet "(varlet env ...) adds its arguments (an environment, a cons: symbol . value, or a pair of arguments, the symbol and its value) \
 to the environment env, and returns the environment."
+  #define Q_varlet s7_make_permanent_circular_list(sc, 2, 3, sc->IS_LET, sc->IS_LET, sc->T)
 
   s7_pointer x, e, sym, val, p;
 
@@ -5901,6 +5923,8 @@ to the environment env, and returns the environment."
 static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_cutlet "(cutlet e symbol ...) removes symbols from the environment e."
+  #define Q_cutlet s7_make_permanent_circular_list(sc, 2, 3, sc->IS_LET, sc->IS_LET, sc->IS_SYMBOL)
+
   s7_pointer e, syms;
   #define THE_UN_ID -1
 
@@ -6038,6 +6062,7 @@ static s7_pointer g_sublet(s7_scheme *sc, s7_pointer args)
   #define H_sublet "(sublet env ...) adds its \
 arguments (each an environment or a cons: symbol . value) to the environment env, and returns the \
 new environment."
+  #define Q_sublet s7_make_permanent_circular_list(sc, 2, 3, sc->IS_LET, sc->T, sc->T)
 
   s7_pointer e;
 
@@ -6059,10 +6084,12 @@ s7_pointer s7_inlet(s7_scheme *sc, s7_pointer args)
   #define H_inlet "(inlet ...) adds its \
 arguments, each an environment, a cons: '(symbol . value), or a keyword/value pair, to a new environment, and returns the \
 new environment."
+  #define Q_inlet s7_make_permanent_circular_list(sc, 1, 2, sc->IS_LET, sc->T)
 
   return(sublet_1(sc, sc->rootlet, args, sc->INLET));
 }
 
+#define g_inlet s7_inlet
 
 s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env)
 {
@@ -6123,6 +6150,7 @@ s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env)
 static s7_pointer g_let_to_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_let_to_list "(let->list env) returns env's bindings as a list of cons's: '(symbol . value)."
+  #define Q_let_to_list s7_make_permanent_list(sc, 2, sc->IS_PAIR, sc->IS_LET)
 
   s7_pointer env;
   env = car(args);
@@ -6189,6 +6217,7 @@ s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_let_ref "(let-ref env sym) returns the value of the symbol sym in the environment env"
+  #define Q_let_ref s7_make_permanent_list(sc, 3, sc->T, sc->IS_LET, sc->IS_SYMBOL)
   s7_pointer e, s;
 
   e = car(args);
@@ -6292,8 +6321,9 @@ static s7_pointer g_let_set(s7_scheme *sc, s7_pointer args)
 {
   /* (let ((a 1)) (set! ((curlet) 'a) 32) a) */
   #define H_let_set "(let-set! env sym val) sets the symbol sym's value in the environment env to val"
-  s7_pointer e, s;
+  #define Q_let_set s7_make_permanent_list(sc, 4, sc->T, sc->IS_LET, sc->IS_SYMBOL, sc->T)
 
+  s7_pointer e, s;
   e = car(args);
   if (!is_let(e))
     return(wrong_type_argument_with_type(sc, sc->LET_SET, 1, e, A_LET));
@@ -6376,6 +6406,7 @@ static s7_pointer let_copy(s7_scheme *sc, s7_pointer env)
 static s7_pointer g_rootlet(s7_scheme *sc, s7_pointer ignore)
 {
   #define H_rootlet "(rootlet) returns the current top-level definitions (symbol bindings)."
+  #define Q_rootlet s7_make_permanent_list(sc, 1, sc->IS_LET)
   return(sc->rootlet);
 }
 /* as with the symbol-table, this function can lead to disaster -- user could
@@ -6404,6 +6435,7 @@ s7_pointer s7_set_shadow_rootlet(s7_scheme *sc, s7_pointer let)
 static s7_pointer g_curlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_curlet "(curlet) returns the current definitions (symbol bindings)"
+  #define Q_curlet s7_make_permanent_list(sc, 1, sc->IS_LET)
 
   sc->capture_let_counter++;
   if (is_let(sc->envir))
@@ -6437,8 +6469,9 @@ s7_pointer s7_outlet(s7_scheme *sc, s7_pointer e)
 static s7_pointer g_outlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_outlet "(outlet env) is the environment that contains env."
-  s7_pointer env;
+  #define Q_outlet s7_make_permanent_list(sc, 2, sc->IS_LET, sc->IS_LET)
 
+  s7_pointer env;
   env = car(args);
   if (!is_let(env))
     method_or_bust_with_type(sc, env, sc->OUTLET, args, A_LET, 0);
@@ -6593,6 +6626,7 @@ static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_to_value "(symbol->value sym (env (curlet))) returns the binding of (the value associated with) the \
 symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
+  #define Q_symbol_to_value s7_make_permanent_list(sc, 3, sc->T, sc->IS_SYMBOL, sc->IS_LET)
 
   s7_pointer sym;
   sym = car(args);
@@ -6666,6 +6700,7 @@ static s7_pointer find_dynamic_value(s7_scheme *sc, s7_pointer x, s7_pointer sym
 static s7_pointer g_symbol_to_dynamic_value(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_to_dynamic_value "(symbol->dynamic-value sym) returns the dynamic binding of the symbol sym"
+  #define Q_symbol_to_dynamic_value s7_make_permanent_list(sc, 2, sc->T, sc->IS_SYMBOL)
 
   s7_pointer sym, val;
   long long int top_id;
@@ -6917,6 +6952,8 @@ static s7_pointer copy_closure(s7_scheme *sc, s7_pointer fnc)
 static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_defined "(defined? obj (env (curlet)) ignore-globals) returns #t if obj has a binding (a value) in the environment env"
+  #define Q_is_defined s7_make_permanent_list(sc, 4, sc->IS_BOOLEAN, sc->IS_SYMBOL, sc->IS_LET, sc->IS_BOOLEAN)
+
   s7_pointer sym;
 
   /* is this correct?
@@ -7091,6 +7128,7 @@ bool s7_is_keyword(s7_pointer obj)
 static s7_pointer g_is_keyword(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_keyword "(keyword? obj) returns #t if obj is a keyword, (keyword? :key) -> #t"
+  #define Q_is_keyword pl_bool_t
   check_boolean_method(sc, is_keyword, sc->IS_KEYWORD, args);
 }
 
@@ -7114,6 +7152,8 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
 static s7_pointer g_make_keyword(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_keyword "(make-keyword str) prepends ':' to str and defines that as a keyword"
+  #define Q_make_keyword s7_make_permanent_list(sc, 2, sc->IS_KEYWORD, sc->IS_STRING)
+
   if (!is_string(car(args)))
     method_or_bust(sc, car(args), sc->MAKE_KEYWORD, args, T_STRING, 0);
   return(s7_make_keyword(sc, string_value(car(args))));
@@ -7130,8 +7170,9 @@ static s7_pointer c_make_keyword(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_keyword_to_symbol "(keyword->symbol key) returns a symbol with the same name as key but no prepended colon"
-  s7_pointer sym;
+  #define Q_keyword_to_symbol s7_make_permanent_list(sc, 2, sc->IS_SYMBOL, sc->IS_KEYWORD)
 
+  s7_pointer sym;
   sym = car(args);
   if (!is_keyword(sym))
     method_or_bust_with_type(sc, sym, sc->KEYWORD_TO_SYMBOL, args, make_string_wrapper(sc, "a keyword"), 0);
@@ -7149,6 +7190,8 @@ static s7_pointer c_keyword_to_symbol(s7_scheme *sc, s7_pointer sym)
 static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_to_keyword "(symbol->keyword sym) returns a keyword with the same name as sym, but with a colon prepended"
+  #define Q_symbol_to_keyword s7_make_permanent_list(sc, 2, sc->IS_KEYWORD, sc->IS_SYMBOL)
+
   if (!is_symbol(car(args)))
     method_or_bust(sc, car(args), sc->SYMBOL_TO_KEYWORD, args, T_SYMBOL, 0);
   return(s7_make_keyword(sc, symbol_name(car(args))));
@@ -7196,6 +7239,8 @@ s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr)
 static s7_pointer g_is_c_pointer(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_c_pointer "(c-pointer? obj) returns #t if obj is a C pointer being held in s7."
+  #define Q_is_c_pointer pl_bool_t
+
   check_boolean_method(sc, s7_is_c_pointer, sc->IS_C_POINTER, args);
 }
 
@@ -7212,6 +7257,7 @@ static s7_pointer c_c_pointer(s7_scheme *sc, s7_pointer arg)
 static s7_pointer g_c_pointer(s7_scheme *sc, s7_pointer args)
 {
   #define H_c_pointer "(c-pointer int) returns a c-pointer object."
+  #define Q_c_pointer s7_make_permanent_list(sc, 2, sc->IS_C_POINTER, sc->IS_INTEGER)
   return(c_c_pointer(sc, car(args)));
 }
 
@@ -9902,6 +9948,8 @@ static s7_pf_t do_pf(s7_scheme *sc, s7_pointer expr)
 static s7_pointer g_is_continuation(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_continuation "(continuation? obj) returns #t if obj is a continuation"
+  #define Q_is_continuation pl_bool_t
+
   check_boolean_method(sc, is_continuation, sc->IS_CONTINUATION, args);
   /* is this the right thing?  It returns #f for call-with-exit ("goto") because
    *   that form of continuation can't continue (via a jump back to its context).
@@ -10394,8 +10442,9 @@ static void call_with_exit(s7_scheme *sc)
 static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_cc "(call-with-current-continuation func) is always a mistake!"
-  s7_pointer p;
+  #define Q_call_cc s7_make_permanent_list(sc, 2, sc->T, sc->IS_PROCEDURE)
 
+  s7_pointer p;
   p = car(args);                             /* this is the procedure passed to call/cc */
   if (!is_procedure(p))                      /* this includes continuations */
     {
@@ -10421,8 +10470,9 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_exit "(call-with-exit func) is call/cc without the ability to jump back into a previous computation."
-  s7_pointer p, x;
+  #define Q_call_with_exit s7_make_permanent_list(sc, 2, sc->T, sc->IS_PROCEDURE)
 
+  s7_pointer p, x;
   /* (call-with-exit (lambda (return) ...)) */
   p = car(args);
   if (!is_procedure(p))                           /* this includes continuations */
@@ -11919,6 +11969,8 @@ static void prepare_temporary_string(s7_scheme *sc, int len, int which)
 static s7_pointer g_number_to_string_1(s7_scheme *sc, s7_pointer args, bool temporary)
 {
   #define H_number_to_string "(number->string num (radix 10)) converts the number num into a string."
+  #define Q_number_to_string s7_make_permanent_list(sc, 3, sc->IS_STRING, sc->IS_NUMBER, sc->IS_INTEGER)
+
   s7_int radix = 10;
   int size = 20, nlen = 0;
   char *res;
@@ -13347,6 +13399,7 @@ static s7_pointer g_string_to_number_1(s7_scheme *sc, s7_pointer args, s7_pointe
   #define H_string_to_number "(string->number str (radix 10)) converts str into a number. \
 If str does not represent a number, string->number returns #f.  If 'str' has an embedded radix, \
 the 'radix' it is ignored: (string->number \"#x11\" 2) -> 17 not 3."
+  #define Q_string_to_number s7_make_permanent_list(sc, 3, sc->IS_NUMBER, sc->IS_STRING, sc->IS_INTEGER)
 
   s7_int radix = 0;
   char *str;
@@ -13463,6 +13516,7 @@ static bool is_rational_via_method(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 {
   #define H_abs "(abs x) returns the absolute value of the real number x"
+  #define Q_abs s7_make_permanent_list(sc, 2, sc->IS_REAL, sc->IS_NUMBER)  
 
   s7_pointer x;
   x = car(args);
@@ -13513,6 +13567,7 @@ DIRECT_RF_TO_RF(fabs)
 static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
 {
   #define H_magnitude "(magnitude z) returns the magnitude of z"
+  #define Q_magnitude s7_make_permanent_list(sc, 2, sc->IS_REAL, sc->IS_NUMBER)
   s7_pointer x;
   x = car(args);
 
@@ -13555,6 +13610,7 @@ RF_TO_RF(magnitude, c_abs_r)
 static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
 {
   #define H_angle "(angle z) returns the angle of z"
+  #define Q_angle s7_make_permanent_list(sc, 2, sc->IS_REAL, sc->IS_NUMBER)
   s7_pointer x;
   /* (angle inf+infi) -> 0.78539816339745 ? */
 
@@ -13589,6 +13645,7 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 {
   #define H_rationalize "(rationalize x err) returns the ratio with lowest denominator within err of x"
+  #define Q_rationalize s7_make_permanent_list(sc, 3, sc->IS_RATIONAL, sc->IS_REAL, sc->IS_REAL)
   s7_double err;
   s7_pointer x;
 
@@ -13674,6 +13731,7 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
   s7_pointer x, y;
   s7_double ang, mag;
   #define H_make_polar "(make-polar mag ang) returns a complex number with magnitude mag and angle ang"
+  #define Q_make_polar s7_make_permanent_list(sc, 3, sc->IS_NUMBER, sc->IS_REAL, sc->IS_REAL)
 
   x = car(args);
   y = cadr(args);
@@ -13790,6 +13848,7 @@ static s7_pointer g_make_rectangular(s7_scheme *sc, s7_pointer args)
 #else
   #define H_make_rectangular "(make-rectangular x1 x2) returns a complex number with real-part x1 and imaginary-part x2"
 #endif
+  #define Q_make_rectangular s7_make_permanent_list(sc, 3, sc->IS_NUMBER, sc->IS_REAL, sc->IS_REAL)
 
   x = car(args);
   y = cadr(args);
@@ -13856,6 +13915,8 @@ PF2_TO_PF(make_rectangular, c_make_rectangular_2)
 static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
 {
   #define H_exp "(exp z) returns e^z, (exp 1) is 2.718281828459"
+  #define Q_exp pl_num_num  
+
   s7_pointer x;
 
   x = car(args);
@@ -13908,8 +13969,9 @@ DIRECT_RF_TO_RF(exp)
 static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 {
   #define H_log "(log z1 (z2 e)) returns log(z1) / log(z2) where z2 (the base) defaults to e: (log 8 2) = 3"
-  s7_pointer x;
+  #define Q_log s7_make_permanent_list(sc, 3, sc->IS_NUMBER, sc->IS_NUMBER, sc->IS_NUMBER)  
 
+  s7_pointer x;
   x = car(args);
   if (!s7_is_number(x))
     method_or_bust_with_type(sc, x, sc->LOG, args, A_NUMBER, 1);
@@ -14008,8 +14070,9 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
 {
   #define H_sin "(sin z) returns sin(z)"
-  s7_pointer x;
+  #define Q_sin pl_num_num  
 
+  s7_pointer x;
   x = car(args);
   switch (type(x))
     {
@@ -14053,8 +14116,9 @@ DIRECT_RF_TO_RF(sin)
 static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
 {
   #define H_cos "(cos z) returns cos(z)"
-  s7_pointer x;
+  #define Q_cos pl_num_num  
 
+  s7_pointer x;
   x = car(args);
   switch (type(x))
     {
@@ -14087,8 +14151,9 @@ DIRECT_RF_TO_RF(cos)
 static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
 {
   #define H_tan "(tan z) returns tan(z)"
-  s7_pointer x;
+  #define Q_tan pl_num_num  
 
+  s7_pointer x;
   x = car(args);
   switch (type(x))
     {
@@ -14184,6 +14249,8 @@ static s7_pointer g_asin_1(s7_scheme *sc, s7_pointer n)
 static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
 {
   #define H_asin "(asin z) returns asin(z); (sin (asin x)) = x"
+  #define Q_asin pl_num_num  
+
   return(g_asin_1(sc, car(args)));
 }
 
@@ -14252,6 +14319,7 @@ static s7_pointer g_acos_1(s7_scheme *sc, s7_pointer n)
 static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
 {
   #define H_acos "(acos z) returns acos(z); (cos (acos 1)) = 1"
+  #define Q_acos pl_num_num  
   return(g_acos_1(sc, car(args)));
 }
 
@@ -14268,6 +14336,7 @@ static s7_double c_atan(s7_scheme *sc, s7_double x, s7_double y)
 static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
 {
   #define H_atan "(atan z) returns atan(z), (atan y x) returns atan(y/x)"
+  #define Q_atan s7_make_permanent_list(sc, 3, sc->IS_NUMBER, sc->IS_NUMBER, sc->IS_NUMBER)  
   s7_pointer x, y;
 
   /* currently (atan inf.0 inf.0) -> 0.78539816339745, and (atan inf.0 -inf.0) -> 2.3561944901923 (etc) */
@@ -14313,8 +14382,9 @@ RF2_TO_RF(atan, c_atan)
 static s7_pointer g_sinh(s7_scheme *sc, s7_pointer args)
 {
   #define H_sinh "(sinh z) returns sinh(z)"
-  s7_pointer x;
+  #define Q_sinh pl_num_num  
 
+  s7_pointer x;
   x = car(args);
   switch (type(x))
     {
@@ -14344,8 +14414,9 @@ DIRECT_RF_TO_RF(sinh)
 static s7_pointer g_cosh(s7_scheme *sc, s7_pointer args)
 {
   #define H_cosh "(cosh z) returns cosh(z)"
-  s7_pointer x;
+  #define Q_cosh pl_num_num  
 
+  s7_pointer x;
   x = car(args);
   switch (type(x))
     {
@@ -14383,8 +14454,9 @@ DIRECT_RF_TO_RF(cosh)
 static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
 {
   #define H_tanh "(tanh z) returns tanh(z)"
-  s7_pointer x;
+  #define Q_tanh pl_num_num  
 
+  s7_pointer x;
   x = car(args);
   switch (type(x))
     {
@@ -14448,6 +14520,8 @@ static s7_pointer c_asinh_1(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_asinh(s7_scheme *sc, s7_pointer args)
 {
   #define H_asinh "(asinh z) returns asinh(z)"
+  #define Q_asinh pl_num_num  
+
   return(c_asinh_1(sc, car(args)));
 }
 
@@ -14492,6 +14566,7 @@ static s7_pointer c_acosh_1(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_acosh(s7_scheme *sc, s7_pointer args)
 {
   #define H_acosh "(acosh z) returns acosh(z)"
+  #define Q_acosh pl_num_num  
   return(c_acosh_1(sc, car(args)));
 }
 
@@ -14541,6 +14616,7 @@ static s7_pointer c_atanh_1(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_atanh(s7_scheme *sc, s7_pointer args)
 {
   #define H_atanh "(atanh z) returns atanh(z)"
+  #define Q_atanh pl_num_num  
   return(c_atanh_1(sc, car(args)));
 }
 
@@ -14558,6 +14634,8 @@ R_P_F_TO_PF(atanh, c_atanh, c_atanh_1, c_atanh_1)
 static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 {
   #define H_sqrt "(sqrt z) returns the square root of z"
+  #define Q_sqrt pl_num_num  
+
   s7_pointer n;
   s7_double sqx;
 
@@ -14668,6 +14746,7 @@ static bool int_pow_ok(s7_int x, s7_int y)
 static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 {
   #define H_expt "(expt z1 z2) returns z1^z2"
+  #define Q_expt s7_make_permanent_list(sc, 3, sc->IS_NUMBER, sc->IS_NUMBER, sc->IS_NUMBER)  
   s7_pointer n, pw;
 
   n = car(args);
@@ -14929,6 +15008,8 @@ static s7_int c_lcm(s7_scheme *sc, s7_int a, s7_int b)
 static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 {
   #define H_lcm "(lcm ...) returns the least common multiple of its rational arguments"
+  #define Q_lcm s7_make_permanent_circular_list(sc, 1, 2, sc->IS_RATIONAL, sc->IS_RATIONAL)
+
   s7_int n = 1, d = 0;
   s7_pointer p;
 
@@ -14988,6 +15069,7 @@ IF2_TO_IF(lcm, c_lcm)
 static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 {
   #define H_gcd "(gcd ...) returns the greatest common divisor of its rational arguments"
+  #define Q_gcd s7_make_permanent_circular_list(sc, 1, 2, sc->IS_RATIONAL, sc->IS_RATIONAL)
   s7_int n = 0, d = 1;
   s7_pointer p;
 
@@ -15073,6 +15155,7 @@ static s7_double c_quo_dbl(s7_scheme *sc, s7_double x, s7_double y)
 static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 {
   #define H_quotient "(quotient x1 x2) returns the integer quotient of x1 and x2; (quotient 4 3) = 1"
+  #define Q_quotient s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_REAL)
   /* (define (quo x1 x2) (truncate (/ x1 x2))) ; slib
    */
   s7_pointer x, y;
@@ -15225,8 +15308,9 @@ static s7_double c_rem_dbl(s7_scheme *sc, s7_double x, s7_double y)
 static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 {
   #define H_remainder "(remainder x1 x2) returns the remainder of x1/x2; (remainder 10 3) = 1"
-  /* (define (rem x1 x2) (- x1 (* x2 (quo x1 x2)))) ; slib
-   */
+  #define Q_remainder s7_make_permanent_list(sc, 2, sc->IS_REAL, sc->IS_REAL)
+  /* (define (rem x1 x2) (- x1 (* x2 (quo x1 x2)))) ; slib */
+
   s7_pointer x, y;
   s7_int quo, d1, d2, n1, n2;
   s7_double pre_quo;
@@ -15420,6 +15504,7 @@ IF2_TO_IF(remainder, c_rem_int)
 RF2_TO_RF(remainder, c_rem_dbl)
 
 
+/* -------------------------------- floor -------------------------------- */
 
 #define REAL_TO_INT_LIMIT 9.2233727815085e+18
 /* unfortunately, this limit is only a max in a sense: (ceiling 9223372036854770.9) => 9223372036854770
@@ -15429,6 +15514,8 @@ RF2_TO_RF(remainder, c_rem_dbl)
 static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
 {
   #define H_floor "(floor x) returns the integer closest to x toward -inf"
+  #define Q_floor s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_REAL)
+
   s7_pointer x;
 
   x = car(args);
@@ -15470,9 +15557,12 @@ static s7_int c_floor(s7_scheme *sc, s7_double x) {return((s7_int)floor(x));}
 RF_TO_IF(floor, c_floor)
 
 
+/* -------------------------------- ceiling -------------------------------- */
 static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
 {
   #define H_ceiling "(ceiling x) returns the integer closest to x toward inf"
+  #define Q_ceiling s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_REAL)
+
   s7_pointer x;
 
   x = car(args);
@@ -15513,11 +15603,13 @@ static s7_int c_ceiling(s7_scheme *sc, s7_double x) {return((s7_int)ceil(x));}
 RF_TO_IF(ceiling, c_ceiling)
 
 
+/* -------------------------------- trunc -------------------------------- */
 static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
 {
   #define H_truncate "(truncate x) returns the integer closest to x toward 0"
-  s7_pointer x;
+  #define Q_truncate s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_REAL)
 
+  s7_pointer x;
   x = car(args);
   switch (type(x))
     {
@@ -15556,6 +15648,7 @@ static s7_int c_trunc(s7_scheme *sc, s7_double x)
 RF_TO_IF(truncate, c_trunc)
 
 
+/* -------------------------------- round -------------------------------- */
 static s7_double round_per_R5RS(s7_double x)
 {
   s7_double fl, ce, dfl, dce;
@@ -15571,12 +15664,12 @@ static s7_double round_per_R5RS(s7_double x)
   return(ce);
 }
 
-
 static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
 {
   #define H_round "(round x) returns the integer closest to x"
-  s7_pointer x;
+  #define Q_round s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_REAL)
 
+  s7_pointer x;
   x = car(args);
   switch (type(x))
     {
@@ -15640,6 +15733,7 @@ static s7_int c_mod(s7_scheme *sc, s7_int x, s7_int y)
 static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 {
   #define H_modulo "(modulo x1 x2) returns x1 mod x2; (modulo 4 3) = 1.  The arguments can be real numbers."
+  #define Q_modulo s7_make_permanent_list(sc, 2, sc->IS_REAL, sc->IS_REAL)
   /* (define (mod x1 x2) (- x1 (* x2 (floor (/ x1 x2))))) from slib
    * (mod x 0) = x according to "Concrete Mathematics"
    */
@@ -15950,6 +16044,7 @@ static int reduce_fraction(s7_scheme *sc, s7_int *numer, s7_int *denom)
 static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 {
   #define H_add "(+ ...) adds its arguments"
+  #define Q_add s7_make_permanent_circular_list(sc, 1, 2, sc->IS_NUMBER, sc->IS_NUMBER)
   s7_pointer x, p;
   s7_int num_a, den_a, dn;
   s7_double rl_a, im_a;
@@ -17070,6 +17165,8 @@ static s7_pf_t add_pf(s7_scheme *sc, s7_pointer expr)
 static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 {
   #define H_subtract "(- x1 ...) subtracts its trailing arguments from the first, or negates the first if only one it is given"
+  #define Q_subtract s7_make_permanent_circular_list(sc, 1, 2, sc->IS_NUMBER, sc->IS_NUMBER)
+
   s7_pointer x, p;
   s7_int num_a, den_a;
   s7_double rl_a, im_a;
@@ -18101,6 +18198,8 @@ static s7_pf_t subtract_pf(s7_scheme *sc, s7_pointer expr)
 static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 {
   #define H_multiply "(* ...) multiplies its arguments"
+  #define Q_multiply s7_make_permanent_circular_list(sc, 1, 2, sc->IS_NUMBER, sc->IS_NUMBER)
+
   s7_pointer x, p;
   s7_int num_a, den_a;
   s7_double rl_a, im_a;
@@ -19268,6 +19367,8 @@ static bool is_number_via_method(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 {
   #define H_divide "(/ x1 ...) divides its first argument by the rest, or inverts the first if there is only one argument"
+  #define Q_divide s7_make_permanent_circular_list(sc, 1, 2, sc->IS_NUMBER, sc->IS_NUMBER)
+
   s7_pointer x, p;
   s7_int num_a, den_a;
   s7_double rl_a, im_a;
@@ -19786,6 +19887,7 @@ static bool is_real_via_method(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 {
   #define H_max "(max ...) returns the maximum of its arguments"
+  #define Q_max s7_make_permanent_circular_list(sc, 1, 2, sc->IS_REAL, sc->IS_REAL)
 
   s7_pointer x, y, p;
   s7_int num_a, num_b, den_a, den_b;
@@ -20006,6 +20108,7 @@ static s7_pointer g_max_f2(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 {
   #define H_min "(min ...) returns the minimum of its arguments"
+  #define Q_min s7_make_permanent_circular_list(sc, 1, 2, sc->IS_REAL, sc->IS_REAL)
 
   s7_pointer x, y, p;
   s7_int num_a, num_b, den_a, den_b;
@@ -20226,6 +20329,7 @@ RF_3_TO_RF(min, c_min_r1, c_min_r2, c_min_r3)
 static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_equal "(= z1 ...) returns #t if all its arguments are equal"
+  #define Q_equal s7_make_permanent_circular_list(sc, 1, 2, sc->IS_BOOLEAN, sc->IS_NUMBER)
   s7_pointer x, p;
   s7_int num_a, den_a;
   s7_double rl_a, im_a;
@@ -20615,6 +20719,8 @@ static s7_pf_t equal_pf(s7_scheme *sc, s7_pointer expr)
 static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 {
   #define H_less "(< x1 ...) returns #t if its arguments are in increasing order"
+  #define Q_less s7_make_permanent_circular_list(sc, 1, 2, sc->IS_BOOLEAN, sc->IS_REAL)
+
   s7_pointer x, y, p;
 
   x = car(args);
@@ -20822,6 +20928,8 @@ static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_less_or_equal "(<= x1 ...) returns #t if its arguments are in increasing order"
+  #define Q_less_or_equal s7_make_permanent_circular_list(sc, 1, 2, sc->IS_BOOLEAN, sc->IS_REAL)
+
   s7_pointer x, y, p;
 
   x = car(args);
@@ -21017,8 +21125,9 @@ static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
 {
   #define H_greater "(> x1 ...) returns #t if its arguments are in decreasing order"
-  s7_pointer x, y, p;
+  #define Q_greater s7_make_permanent_circular_list(sc, 1, 2, sc->IS_BOOLEAN, sc->IS_REAL)
 
+  s7_pointer x, y, p;
   x = car(args);
   p = cdr(args);
 
@@ -21223,8 +21332,8 @@ static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_greater_or_equal "(>= x1 ...) returns #t if its arguments are in decreasing order"
-  /* (>= 1+i 1+i) is an error which seems unfortunate
-   */
+  #define Q_greater_or_equal s7_make_permanent_circular_list(sc, 1, 2, sc->IS_BOOLEAN, sc->IS_REAL)
+  /* (>= 1+i 1+i) is an error which seems unfortunate */
   s7_pointer x, y, p;
 
   x = car(args);
@@ -22072,8 +22181,9 @@ s7_double s7_imag_part(s7_pointer x)
 static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
 {
   #define H_real_part "(real-part num) returns the real part of num"
-  s7_pointer p;
+  #define Q_real_part s7_make_permanent_list(sc, 2, sc->IS_REAL, sc->IS_NUMBER)  
 
+  s7_pointer p;
   p = car(args);
   switch (type(p))
     {
@@ -22116,6 +22226,7 @@ PF_TO_RF(real_part, c_real_part)
 static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
 {
   #define H_imag_part "(imag-part num) returns the imaginary part of num"
+  #define Q_imag_part s7_make_permanent_list(sc, 2, sc->IS_REAL, sc->IS_NUMBER)  
   s7_pointer p;
   /* currently (imag-part nan.0) -> 0.0 ? it's true but maybe confusing */
 
@@ -22167,8 +22278,9 @@ PF_TO_RF(imag_part, c_imag_part)
 static s7_pointer g_numerator(s7_scheme *sc, s7_pointer args)
 {
   #define H_numerator "(numerator rat) returns the numerator of the rational number rat"
-  s7_pointer x;
+  #define Q_numerator s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_RATIONAL)
 
+  s7_pointer x;
   x = car(args);
   switch (type(x))
     {
@@ -22189,8 +22301,9 @@ PF_TO_IF(numerator, c_numerator)
 static s7_pointer g_denominator(s7_scheme *sc, s7_pointer args)
 {
   #define H_denominator "(denominator rat) returns the denominator of the rational number rat"
-  s7_pointer x;
+  #define Q_denominator s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_RATIONAL)
 
+  s7_pointer x;
   x = car(args);
   switch (type(x))
     {
@@ -22213,8 +22326,9 @@ PF_TO_IF(denominator, c_denominator)
 static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_nan "(nan? obj) returns #t if obj is a NaN"
-  s7_pointer x;
+  #define Q_is_nan pl_bool_num  
 
+  s7_pointer x;
   x = car(args);
   switch (type(x))
     {
@@ -22254,8 +22368,9 @@ RF_TO_PF(is_nan, c_is_nan)
 static s7_pointer g_is_infinite(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_infinite "(infinite? obj) returns #t if obj is an infinite real"
-  s7_pointer x;
+  #define Q_is_infinite pl_bool_num  
 
+  s7_pointer x;
   x = car(args);
   switch (type(x))
     {
@@ -22299,6 +22414,7 @@ RF_TO_PF(is_infinite, c_is_infinite)
 static s7_pointer g_is_number(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_number "(number? obj) returns #t if obj is a number"
+  #define Q_is_number pl_bool_t  
   check_boolean_method(sc, s7_is_number, sc->IS_NUMBER, args); /* we need the s7_* versions here for the GMP case */
 }
 
@@ -22306,6 +22422,7 @@ static s7_pointer g_is_number(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_integer(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_integer "(integer? obj) returns #t if obj is an integer"
+  #define Q_is_integer pl_bool_t  
   check_boolean_method(sc, s7_is_integer, sc->IS_INTEGER, args);
 }
 
@@ -22313,6 +22430,7 @@ static s7_pointer g_is_integer(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_real(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_real "(real? obj) returns #t if obj is a real number"
+  #define Q_is_real pl_bool_t  
   check_boolean_method(sc, s7_is_real, sc->IS_REAL, args);
 }
 
@@ -22320,6 +22438,7 @@ static s7_pointer g_is_real(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_complex(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_complex "(complex? obj) returns #t if obj is a number"
+  #define Q_is_complex pl_bool_t  
   check_boolean_method(sc, s7_is_number, sc->IS_COMPLEX, args);
 }
 
@@ -22327,6 +22446,7 @@ static s7_pointer g_is_complex(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_rational(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_rational "(rational? obj) returns #t if obj is a rational number (either an integer or a ratio)"
+  #define Q_is_rational pl_bool_t  
   check_boolean_method(sc, s7_is_rational, sc->IS_RATIONAL, args);
   /* in the non-gmp case, (rational? 455702434782048082459/86885567283849955830) -> #f, not #t
    *  and similarly for exact? etc.
@@ -22339,8 +22459,9 @@ static s7_pointer g_is_rational(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_even(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_even "(even? int) returns #t if the integer int is even"
-  s7_pointer p;
+  #define Q_is_even s7_make_permanent_list(sc, 2, sc->IS_BOOLEAN, sc->IS_INTEGER)
 
+  s7_pointer p;
   p = car(args);
   switch (type(p))
     {
@@ -22361,8 +22482,9 @@ IF_TO_PF(is_even, c_is_even)
 static s7_pointer g_is_odd(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_odd "(odd? int) returns #t if the integer int is odd"
-  s7_pointer p;
+  #define Q_is_odd s7_make_permanent_list(sc, 2, sc->IS_BOOLEAN, sc->IS_INTEGER)
 
+  s7_pointer p;
   p = car(args);
   switch (type(p))
     {
@@ -22404,6 +22526,8 @@ static s7_pointer c_is_zero(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_is_zero(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_zero "(zero? num) returns #t if the number num is zero"
+  #define Q_is_zero pl_bool_num
+
   return(c_is_zero(sc, car(args)));
 }
 
@@ -22432,6 +22556,8 @@ static s7_pointer c_is_positive(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_is_positive(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_positive "(positive? num) returns #t if the real number num is positive (greater than 0)"
+  #define Q_is_positive pl_bool_num
+
   return(c_is_positive(sc, car(args)));
 }
 
@@ -22460,6 +22586,8 @@ static s7_pointer c_is_negative(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_negative "(negative? num) returns #t if the real number num is negative (less than 0)"
+  #define Q_is_negative pl_bool_num
+
   return(c_is_negative(sc, car(args)));
 }
 
@@ -22475,6 +22603,7 @@ XF_TO_PF(is_negative, c_is_negative_i, c_is_negative_r, c_is_negative)
 static s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args)
 {
   #define H_exact_to_inexact "(exact->inexact num) converts num to an inexact number; (exact->inexact 3/2) = 1.5"
+  #define Q_exact_to_inexact s7_make_permanent_list(sc, 2, sc->IS_REAL, sc->IS_REAL)
   return(exact_to_inexact(sc, car(args)));
 }
 
@@ -22482,6 +22611,7 @@ static s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 {
   #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number; (inexact->exact 1.5) = 3/2"
+  #define Q_inexact_to_exact s7_make_permanent_list(sc, 2, sc->IS_RATIONAL, sc->IS_REAL)
   return(inexact_to_exact(sc, car(args), WITH_OVERFLOW_ERROR));
 }
 #endif
@@ -22491,8 +22621,9 @@ static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_exact(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_exact "(exact? num) returns #t if num is exact (an integer or a ratio)"
-  s7_pointer x;
+  #define Q_is_exact pl_bool_num
 
+  s7_pointer x;
   x = car(args);
   switch (type(x))
     {
@@ -22515,8 +22646,9 @@ static s7_pointer g_is_exact(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_inexact "(inexact? num) returns #t if num is inexact (neither an integer nor a ratio)"
-  s7_pointer x;
+  #define Q_is_inexact pl_bool_num
 
+  s7_pointer x;
   x = car(args);
   switch (type(x))
     {
@@ -22584,6 +22716,8 @@ s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n)
 static s7_pointer g_integer_length(s7_scheme *sc, s7_pointer args)
 {
   #define H_integer_length "(integer-length arg) returns the number of bits required to represent the integer 'arg': (ceiling (log (abs arg) 2))"
+  #define Q_integer_length s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_INTEGER)
+
   s7_int x;
   s7_pointer p;
 
@@ -22609,6 +22743,8 @@ static s7_pointer g_integer_decode_float(s7_scheme *sc, s7_pointer args)
 {
   #define H_integer_decode_float "(integer-decode-float x) returns a list containing the significand, exponent, and \
 sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
+  #define Q_integer_decode_float s7_make_permanent_list(sc, 2, sc->IS_PAIR, sc->IS_REAL)
+  /* TODO: arg should be float? or non-rational-real? */
 
   /* no matter what s7_double is, integer-decode-float acts as if x is a C double */
 
@@ -22649,11 +22785,11 @@ sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
 }
 
 
-/* ---------------------------------------- logand, logior, logxor, lognot, logbit?, ash ---------------------------------------- */
-
+/* -------------------------------- logior -------------------------------- */
 static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
 {
   #define H_logior "(logior int ...) returns the bitwise OR of its integer arguments (the bits that are on in any of the arguments)"
+  #define Q_logior s7_make_permanent_circular_list(sc, 1, 2, sc->IS_INTEGER, sc->IS_INTEGER)
   s7_int result = 0;
   s7_pointer x;
 
@@ -22672,9 +22808,11 @@ IF2_TO_IF(logior, c_logior)
 #endif
 
 
+/* -------------------------------- logxor -------------------------------- */
 static s7_pointer g_logxor(s7_scheme *sc, s7_pointer args)
 {
   #define H_logxor "(logxor int ...) returns the bitwise XOR of its integer arguments (the bits that are on in an odd number of the arguments)"
+  #define Q_logxor s7_make_permanent_circular_list(sc, 1, 2, sc->IS_INTEGER, sc->IS_INTEGER)
   s7_int result = 0;
   s7_pointer x;
 
@@ -22693,9 +22831,11 @@ IF2_TO_IF(logxor, c_logxor)
 #endif
 
 
+/* -------------------------------- logand -------------------------------- */
 static s7_pointer g_logand(s7_scheme *sc, s7_pointer args)
 {
   #define H_logand "(logand int ...) returns the bitwise AND of its integer arguments (the bits that are on in every argument)"
+  #define Q_logand s7_make_permanent_circular_list(sc, 1, 2, sc->IS_INTEGER, sc->IS_INTEGER)
   s7_int result = -1;
   s7_pointer x;
 
@@ -22714,9 +22854,12 @@ IF2_TO_IF(logand, c_logand)
 #endif
 
 
+/* -------------------------------- lognot -------------------------------- */
+
 static s7_pointer g_lognot(s7_scheme *sc, s7_pointer args)
 {
   #define H_lognot "(lognot num) returns the bitwise negation (the complement, the bits that are not on) in num: (lognot 0) -> -1"
+  #define Q_lognot s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_INTEGER)
   if (!s7_is_integer(car(args)))
     method_or_bust(sc, car(args), sc->LOGNOT, args, T_INTEGER, 0);
   return(make_integer(sc, ~s7_integer(car(args))));
@@ -22727,6 +22870,8 @@ static s7_int c_lognot(s7_scheme *sc, s7_int arg) {return(~arg);}
 IF_TO_IF(lognot, c_lognot)
 #endif
 
+
+/* -------------------------------- logbit? -------------------------------- */
 /* logbit?  CL is (logbitp index int) using 2^index, but that order strikes me as backwards
  *   at least gmp got the arg order right!
  */
@@ -22735,6 +22880,7 @@ static s7_pointer g_logbit(s7_scheme *sc, s7_pointer args)
 {
   #define H_logbit "(logbit? int index) returns #t if the index-th bit is on in int, otherwise #f. The argument \
 order here follows gmp, and is the opposite of the CL convention.  (logbit? int bit) is the same as (not (zero? (logand int (ash 1 bit))))."
+  #define Q_logbit s7_make_permanent_list(sc, 3, sc->IS_BOOLEAN, sc->IS_INTEGER, sc->IS_INTEGER)
 
   s7_pointer x, y;
   s7_int index;      /* index in gmp is mp_bitcnt which is an unsigned long int */
@@ -22768,7 +22914,7 @@ order here follows gmp, and is the opposite of the CL convention.  (logbit? int 
   return(make_boolean(sc, ((((long long int)(1LL << (long long int)index)) & (long long int)integer(x)) != 0)));
 }
 
-
+/* -------------------------------- ash -------------------------------- */
 static s7_int c_ash(s7_scheme *sc, s7_int arg1, s7_int arg2)
 {
   if (arg1 == 0) return(0);
@@ -22800,6 +22946,7 @@ static s7_int c_ash(s7_scheme *sc, s7_int arg1, s7_int arg2)
 static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
 {
   #define H_ash "(ash i1 i2) returns i1 shifted right or left i2 times, i1 << i2, (ash 1 3) -> 8, (ash 8 -3) -> 1"
+  #define Q_ash s7_make_permanent_list(sc, 3, sc->IS_INTEGER, sc->IS_INTEGER, sc->IS_INTEGER)
   s7_pointer x, y;
 
   x = car(args);
@@ -22873,6 +23020,7 @@ s7_pointer s7_make_random_state(s7_scheme *sc, s7_pointer args)
   #define H_make_random_state "(make-random-state seed (carry plausible-default)) returns a new random number state initialized with 'seed'. \
 Pass this as the second argument to 'random' to get a repeatable random number sequence:\n\
     (let ((seed (make-random-state 1234))) (random 1.0 seed))"
+  #define Q_make_random_state s7_make_permanent_list(sc, 3, sc->IS_RANDOM_STATE, sc->IS_INTEGER, sc->IS_INTEGER)
 
   s7_rng_t *r;
   s7_pointer r1, r2;
@@ -22906,6 +23054,8 @@ Pass this as the second argument to 'random' to get a repeatable random number s
   return(s7_make_object(sc, sc->rng_tag, (void *)r));
 }
 
+#define g_make_random_state s7_make_random_state
+
 static s7_pointer c_make_random_state(s7_scheme *sc, s7_pointer x) {return(s7_make_random_state(sc, set_plist_1(sc, x)));}
 PF_TO_PF(make_random_state, c_make_random_state)
 
@@ -22931,6 +23081,8 @@ static s7_pointer copy_random_state(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_random_state(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_random_state "(random-state? obj) returns #t if obj is a random-state object (from make-random-state)."
+  #define Q_is_random_state pl_bool_t
+
   s7_pointer obj;
   obj = car(args);
   if (is_c_object(obj))
@@ -22979,6 +23131,7 @@ s7_pointer s7_random_state_to_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_random_state_to_list "(random-state->list r) returns the random state object as a list.\
 You can later apply make-random-state to this list to continue a random number sequence from any point."
+  #define Q_random_state_to_list s7_make_permanent_list(sc, 2, sc->IS_PAIR, sc->IS_RANDOM_STATE)
 
   s7_rng_t *r = NULL;
   if (is_null(args))
@@ -22997,6 +23150,8 @@ You can later apply make-random-state to this list to continue a random number s
     return(list_2(sc, make_integer(sc, r->ran_seed), make_integer(sc, r->ran_carry)));
   return(sc->F);
 }
+
+#define g_random_state_to_list s7_random_state_to_list
 
 s7_pointer c_random_state_to_list(s7_scheme *sc, s7_pointer x) {return(s7_random_state_to_list(sc, set_plist_1(sc, x)));}
 PF_TO_PF(random_state_to_list, c_random_state_to_list)
@@ -23022,6 +23177,7 @@ s7_double s7_random(s7_scheme *sc, s7_pointer state)
 static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 {
   #define H_random "(random num (state #f)) returns a random number between 0 and num (0 if num=0)."
+  #define Q_random s7_make_permanent_list(sc, 3, sc->IS_NUMBER, sc->IS_NUMBER, sc->IS_RANDOM_STATE)
   s7_pointer num;
   s7_rng_t *r;
 
@@ -23180,6 +23336,8 @@ static s7_pointer random_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 static s7_pointer g_char_to_integer(s7_scheme *sc, s7_pointer args)
 {
   #define H_char_to_integer "(char->integer c) converts the character c to an integer"
+  #define Q_char_to_integer s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_CHAR)
+
   if (!s7_is_character(car(args)))
     method_or_bust(sc, car(args), sc->CHAR_TO_INTEGER, args, T_CHARACTER, 0);
   return(small_int(character(car(args))));
@@ -23225,6 +23383,7 @@ static s7_pointer c_integer_to_char(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_integer_to_char(s7_scheme *sc, s7_pointer args)
 {
   #define H_integer_to_char "(integer->char i) converts the non-negative integer i to a character"
+  #define Q_integer_to_char s7_make_permanent_list(sc, 2, sc->IS_CHAR, sc->IS_INTEGER)
   return(c_integer_to_char(sc, car(args)));
 }
 
@@ -23241,6 +23400,7 @@ static s7_pointer c_char_upcase(s7_scheme *sc, s7_pointer arg)
 static s7_pointer g_char_upcase(s7_scheme *sc, s7_pointer args)
 {
   #define H_char_upcase "(char-upcase c) converts the character c to upper case"
+  #define Q_char_upcase s7_make_permanent_list(sc, 2, sc->IS_CHAR, sc->IS_CHAR)
   if (!s7_is_character(car(args)))
     method_or_bust(sc, car(args), sc->CHAR_UPCASE, args, T_CHARACTER, 0);
   return(s7_make_character(sc, upper_character(car(args))));
@@ -23259,6 +23419,7 @@ static s7_pointer c_char_downcase(s7_scheme *sc, s7_pointer arg)
 static s7_pointer g_char_downcase(s7_scheme *sc, s7_pointer args)
 {
   #define H_char_downcase "(char-downcase c) converts the character c to lower case"
+  #define Q_char_downcase s7_make_permanent_list(sc, 2, sc->IS_CHAR, sc->IS_CHAR)
   if (!s7_is_character(car(args)))
     method_or_bust(sc, car(args), sc->CHAR_DOWNCASE, args, T_CHARACTER, 0);
   return(s7_make_character(sc, lower_character(car(args))));
@@ -23277,6 +23438,7 @@ static s7_pointer c_is_char_alphabetic(s7_scheme *sc, s7_pointer arg)
 static s7_pointer g_is_char_alphabetic(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_alphabetic "(char-alphabetic? c) returns #t if the character c is alphabetic"
+  #define Q_is_char_alphabetic pl_bool_char
   if (!s7_is_character(car(args)))
     method_or_bust(sc, car(args), sc->IS_CHAR_ALPHABETIC, args, T_CHARACTER, 0);
   return(make_boolean(sc, is_char_alphabetic(car(args))));
@@ -23297,6 +23459,7 @@ static s7_pointer c_is_char_numeric(s7_scheme *sc, s7_pointer arg)
 static s7_pointer g_is_char_numeric(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_numeric "(char-numeric? c) returns #t if the character c is a digit"
+  #define Q_is_char_numeric pl_bool_char
   return(c_is_char_numeric(sc, car(args)));
 }
 
@@ -23313,6 +23476,7 @@ static s7_pointer c_is_char_whitespace(s7_scheme *sc, s7_pointer arg)
 static s7_pointer g_is_char_whitespace(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_whitespace "(char-whitespace? c) returns #t if the character c is non-printing character"
+  #define Q_is_char_whitespace pl_bool_char
   return(c_is_char_whitespace(sc, car(args)));
 }
 
@@ -23329,6 +23493,7 @@ static s7_pointer c_is_char_upper_case(s7_scheme *sc, s7_pointer arg)
 static s7_pointer g_is_char_upper_case(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_upper_case "(char-upper-case? c) returns #t if the character c is in upper case"
+  #define Q_is_char_upper_case pl_bool_char
   return(c_is_char_upper_case(sc, car(args)));
 }
 
@@ -23345,6 +23510,7 @@ static s7_pointer c_is_char_lower_case(s7_scheme *sc, s7_pointer arg)
 static s7_pointer g_is_char_lower_case(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_lower_case "(char-lower-case? c) returns #t if the character c is in lower case"
+  #define Q_is_char_lower_case pl_bool_char
   return(c_is_char_lower_case(sc, car(args)));
 }
 
@@ -23355,6 +23521,7 @@ PF_TO_PF(is_char_lower_case, c_is_char_lower_case)
 static s7_pointer g_is_char(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char "(char? obj) returns #t if obj is a character"
+  #define Q_is_char pl_bool_t
   check_boolean_method(sc, s7_is_character, sc->IS_CHAR, args);
 }
 
@@ -23457,6 +23624,8 @@ static s7_pointer g_char_cmp_not(s7_scheme *sc, s7_pointer args, int val, s7_poi
 static s7_pointer g_chars_are_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_equal "(char=? char ...) returns #t if all the character arguments are equal"
+  #define Q_chars_are_equal pcl_bool_char
+
   s7_pointer x, y;
 
   y = car(args);
@@ -23483,6 +23652,8 @@ static s7_pointer g_chars_are_equal(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_chars_are_less(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_less "(char<? char ...) returns #t if all the character arguments are increasing"
+  #define Q_chars_are_less pcl_bool_char
+
   return(g_char_cmp(sc, args, -1, sc->CHAR_LT));
 }
 
@@ -23490,6 +23661,8 @@ static s7_pointer g_chars_are_less(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_chars_are_greater(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_greater "(char>? char ...) returns #t if all the character arguments are decreasing"
+  #define Q_chars_are_greater pcl_bool_char
+
   return(g_char_cmp(sc, args, 1, sc->CHAR_GT));
 }
 
@@ -23497,6 +23670,8 @@ static s7_pointer g_chars_are_greater(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_chars_are_geq(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_geq "(char>=? char ...) returns #t if all the character arguments are equal or decreasing"
+  #define Q_chars_are_geq pcl_bool_char
+
   return(g_char_cmp_not(sc, args, -1, sc->CHAR_GEQ));
 }
 
@@ -23504,6 +23679,8 @@ static s7_pointer g_chars_are_geq(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_chars_are_leq(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_leq "(char<=? char ...) returns #t if all the character arguments are equal or increasing"
+  #define Q_chars_are_leq pcl_bool_char
+
   return(g_char_cmp_not(sc, args, 1, sc->CHAR_LEQ));
 }
 
@@ -23684,6 +23861,8 @@ static s7_pointer g_char_cmp_ci_not(s7_scheme *sc, s7_pointer args, int val, s7_
 static s7_pointer g_chars_are_ci_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_ci_equal "(char-ci=? char ...) returns #t if all the character arguments are equal, ignoring case"
+  #define Q_chars_are_ci_equal pcl_bool_char
+
   return(g_char_cmp_ci(sc, args, 0, sc->CHAR_CI_EQ));
 }
 
@@ -23702,6 +23881,8 @@ PF2_TO_PF(char_ci_eq, c_char_ci_eq)
 static s7_pointer g_chars_are_ci_less(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_ci_less "(char-ci<? char ...) returns #t if all the character arguments are increasing, ignoring case"
+  #define Q_chars_are_ci_less pcl_bool_char
+
   return(g_char_cmp_ci(sc, args, -1, sc->CHAR_CI_LT));
 }
 
@@ -23720,6 +23901,8 @@ PF2_TO_PF(char_ci_lt, c_char_ci_lt)
 static s7_pointer g_chars_are_ci_greater(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_ci_greater "(char-ci>? char ...) returns #t if all the character arguments are decreasing, ignoring case"
+  #define Q_chars_are_ci_greater pcl_bool_char
+
   return(g_char_cmp_ci(sc, args, 1, sc->CHAR_CI_GT));
 }
 
@@ -23738,6 +23921,8 @@ PF2_TO_PF(char_ci_gt, c_char_ci_gt)
 static s7_pointer g_chars_are_ci_geq(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_ci_geq "(char-ci>=? char ...) returns #t if all the character arguments are equal or decreasing, ignoring case"
+  #define Q_chars_are_ci_geq pcl_bool_char
+
   return(g_char_cmp_ci_not(sc, args, -1, sc->CHAR_CI_GEQ));
 }
 
@@ -23756,6 +23941,8 @@ PF2_TO_PF(char_ci_geq, c_char_ci_geq)
 static s7_pointer g_chars_are_ci_leq(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_ci_leq "(char-ci<=? char ...) returns #t if all the character arguments are equal or increasing, ignoring case"
+  #define Q_chars_are_ci_leq pcl_bool_char
+
   return(g_char_cmp_ci_not(sc, args, 1, sc->CHAR_CI_LEQ));
 }
 
@@ -23775,6 +23962,8 @@ PF2_TO_PF(char_ci_leq, c_char_ci_leq)
 static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
 {
   #define H_char_position "(char-position char-or-str str (start 0)) returns the position of the first occurrence of char in str, or #f"
+  #define Q_char_position s7_make_permanent_list(sc, 4, sc->T, s7_make_permanent_list(sc, 2, sc->IS_CHAR, sc->IS_STRING), sc->IS_STRING, sc->IS_INTEGER)
+
   const char *porig, *p, *pset;
   s7_int start, pos, len; /* not "int" because start arg might be most-negative-fixnum */
   s7_pointer arg1, arg2;
@@ -23884,6 +24073,7 @@ static s7_pointer g_char_position_csi(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_position "(string-position str1 str2 (start 0)) returns the starting position of str1 in str2 or #f"
+  #define Q_string_position s7_make_permanent_list(sc, 4, sc->T, sc->IS_STRING, sc->IS_STRING, sc->IS_INTEGER)
   const char *s1, *s2, *p2;
   s7_int start = 0;
   s7_pointer s1p, s2p;
@@ -24089,6 +24279,8 @@ const char *s7_string(s7_pointer p)
 static s7_pointer g_is_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_string "(string? obj) returns #t if obj is a string"
+  #define Q_is_string pl_bool_t
+
   check_boolean_method(sc, is_string, sc->IS_STRING, args);
 }
 
@@ -24096,6 +24288,8 @@ static s7_pointer g_is_string(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_make_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_string "(make-string len (val #\\space)) makes a string of length len filled with the character val (default: space)"
+  #define Q_make_string s7_make_permanent_list(sc, 3, sc->IS_STRING, sc->IS_INTEGER, sc->IS_CHAR)
+
   s7_pointer n;
   s7_int len;
   char fill = ' ';
@@ -24131,6 +24325,7 @@ IF_TO_PF(make_string, c_make_string)
 static s7_pointer g_string_length(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_length "(string-length str) returns the length of the string str"
+  #define Q_string_length s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_STRING)
   s7_pointer p;
   p = car(args);
   if (!is_string(p))
@@ -24173,6 +24368,7 @@ static s7_pointer c_string_downcase(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_string_downcase(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_downcase "(string-downcase str) returns the lower case version of str."
+  #define Q_string_downcase s7_make_permanent_list(sc, 2, sc->IS_STRING, sc->IS_STRING)
   return(c_string_downcase(sc, car(args)));
 }
 
@@ -24203,6 +24399,7 @@ static s7_pointer c_string_upcase(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_string_upcase(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_upcase "(string-upcase str) returns the upper case version of str."
+  #define Q_string_upcase s7_make_permanent_list(sc, 2, sc->IS_STRING, sc->IS_STRING)
   return(c_string_upcase(sc, car(args)));
 }
 
@@ -24245,6 +24442,7 @@ static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
   s7_int ind;
 
   #define H_string_ref "(string-ref str index) returns the character at the index-th element of the string str"
+  #define Q_string_ref s7_make_permanent_list(sc, 3, sc->IS_CHAR, sc->IS_STRING, sc->IS_INTEGER)
 
   strng = car(args);
   if (!is_string(strng))
@@ -24284,6 +24482,7 @@ PIF_TO_PF(string_ref, c_string_ref)
 static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_set "(string-set! str index chr) sets the index-th element of the string str to the character chr"
+  #define Q_string_set s7_make_permanent_list(sc, 4, sc->IS_CHAR, sc->IS_STRING, sc->IS_INTEGER, sc->IS_CHAR)
 
   s7_pointer x, c, index;
   char *str;
@@ -24388,7 +24587,6 @@ PIPF_TO_PF(string_set, c_string_set_s, c_string_set, c_string_tester)
 
 static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, bool use_temp)
 {
-  #define H_string_append "(string-append str1 ...) appends all its string arguments into one string"
   int len = 0;
   s7_pointer x, newstr;
   char *pos;
@@ -24445,7 +24643,10 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, bool use_tem
 
 static s7_pointer g_string_append(s7_scheme *sc, s7_pointer args)
 {
+
   #define H_string_append "(string-append str1 ...) appends all its string arguments into one string"
+  #define Q_string_append s7_make_permanent_circular_list(sc, 1, 2, sc->IS_STRING, sc->IS_STRING)
+
   return(g_string_append_1(sc, args, false));
 }
 
@@ -24460,6 +24661,7 @@ static s7_pointer g_string_append_to_temp(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_copy "(string-copy str) returns a copy of its string argument"
+  #define Q_string_copy s7_make_permanent_list(sc, 2, sc->IS_STRING, sc->IS_STRING)
   s7_pointer p;
   p = car(args);
   if (!is_string(p))
@@ -24524,6 +24726,7 @@ static s7_pointer g_substring(s7_scheme *sc, s7_pointer args)
 {
   #define H_substring "(substring str start (end (length str))) returns the portion of the string str between start and \
 end: (substring \"01234\" 1 2) -> \"1\""
+  #define Q_substring s7_make_permanent_list(sc, 4, sc->IS_STRING, sc->IS_STRING, sc->IS_INTEGER, sc->IS_INTEGER)
 
   s7_pointer x, str;
   s7_int start = 0, end;
@@ -24586,6 +24789,8 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t 
 static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_object_to_string "(object->string obj (write #t)) returns a string representation of obj."
+  #define Q_object_to_string s7_make_permanent_list(sc, 3, sc->IS_STRING, sc->T, sc->T)
+
   use_write_t choice;
   char *str;
   s7_pointer obj;
@@ -24598,8 +24803,7 @@ static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 	method_or_bust(sc, cadr(args), sc->OBJECT_TO_STRING, args, T_BOOLEAN, 2);
     }
   else choice = USE_WRITE;
-  /* can't use s7_object_to_string here anymore because it assumes use_write arg is a boolean
-   */
+  /* can't use s7_object_to_string here anymore because it assumes use_write arg is a boolean */
 
   obj = car(args);
   check_method(sc, obj, sc->OBJECT_TO_STRING, args);
@@ -24723,6 +24927,7 @@ static bool scheme_strings_are_equal(s7_pointer x, s7_pointer y)
 static s7_pointer g_strings_are_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_equal "(string=? str ...) returns #t if all the string arguments are equal"
+  #define Q_strings_are_equal pcl_bool_str
 
   /* C-based check stops at null, but we can have embedded nulls.
    *   (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string=? s1 s2))
@@ -24767,6 +24972,8 @@ PF2_TO_PF(string_eq, c_string_eq)
 static s7_pointer g_strings_are_less(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_less "(string<? str ...) returns #t if all the string arguments are increasing"
+  #define Q_strings_are_less pcl_bool_str
+
   return(g_string_cmp(sc, args, -1, sc->STRING_LT));
 }
 
@@ -24785,6 +24992,8 @@ PF2_TO_PF(string_lt, c_string_lt)
 static s7_pointer g_strings_are_greater(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_greater "(string>? str ...) returns #t if all the string arguments are decreasing"
+  #define Q_strings_are_greater pcl_bool_str
+
   return(g_string_cmp(sc, args, 1, sc->STRING_GT));
 }
 
@@ -24803,6 +25012,8 @@ PF2_TO_PF(string_gt, c_string_gt)
 static s7_pointer g_strings_are_geq(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_geq "(string>=? str ...) returns #t if all the string arguments are equal or decreasing"
+  #define Q_strings_are_geq pcl_bool_str
+
   return(g_string_cmp_not(sc, args, -1, sc->STRING_GEQ));
 }
 
@@ -24821,6 +25032,8 @@ PF2_TO_PF(string_geq, c_string_geq)
 static s7_pointer g_strings_are_leq(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_leq "(string<=? str ...) returns #t if all the string arguments are equal or increasing"
+  #define Q_strings_are_leq pcl_bool_str
+
   return(g_string_cmp_not(sc, args, 1, sc->STRING_LEQ));
 }
 
@@ -25005,6 +25218,7 @@ static s7_pointer g_string_ci_cmp_not(s7_scheme *sc, s7_pointer args, int val, s
 static s7_pointer g_strings_are_ci_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_ci_equal "(string-ci=? str ...) returns #t if all the string arguments are equal, ignoring case"
+  #define Q_strings_are_ci_equal pcl_bool_str
   return(g_string_ci_cmp(sc, args, 0, sc->STRING_CI_EQ));
 }
 
@@ -25023,6 +25237,7 @@ PF2_TO_PF(string_ci_eq, c_string_ci_eq)
 static s7_pointer g_strings_are_ci_less(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_ci_less "(string-ci<? str ...) returns #t if all the string arguments are increasing, ignoring case"
+  #define Q_strings_are_ci_less pcl_bool_str
   return(g_string_ci_cmp(sc, args, -1, sc->STRING_CI_LT));
 }
 
@@ -25041,6 +25256,7 @@ PF2_TO_PF(string_ci_lt, c_string_ci_lt)
 static s7_pointer g_strings_are_ci_greater(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_ci_greater "(string-ci>? str ...) returns #t if all the string arguments are decreasing, ignoring case"
+  #define Q_strings_are_ci_greater pcl_bool_str
   return(g_string_ci_cmp(sc, args, 1, sc->STRING_CI_GT));
 }
 
@@ -25059,6 +25275,7 @@ PF2_TO_PF(string_ci_gt, c_string_ci_gt)
 static s7_pointer g_strings_are_ci_geq(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_ci_geq "(string-ci>=? str ...) returns #t if all the string arguments are equal or decreasing, ignoring case"
+  #define Q_strings_are_ci_geq pcl_bool_str
   return(g_string_ci_cmp_not(sc, args, -1, sc->STRING_CI_GEQ));
 }
 
@@ -25077,6 +25294,7 @@ PF2_TO_PF(string_ci_geq, c_string_ci_geq)
 static s7_pointer g_strings_are_ci_leq(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_ci_leq "(string-ci<=? str ...) returns #t if all the string arguments are equal or increasing, ignoring case"
+  #define Q_strings_are_ci_leq pcl_bool_str
   return(g_string_ci_cmp_not(sc, args, 1, sc->STRING_CI_LEQ));
 }
 
@@ -25096,6 +25314,8 @@ PF2_TO_PF(string_ci_leq, c_string_ci_leq)
 static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_fill "(string-fill! str chr start end) fills the string str with the character chr"
+  #define Q_string_fill s7_make_permanent_list(sc, 5, sc->IS_STRING, sc->IS_STRING, sc->IS_CHAR, sc->IS_INTEGER, sc->IS_INTEGER)
+
   s7_pointer x, chr;
   s7_int start = 0, end, byte = 0;
   x = car(args);
@@ -25189,6 +25409,8 @@ static s7_pointer g_string_1(s7_scheme *sc, s7_pointer args, s7_pointer sym)
 static s7_pointer g_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_string "(string chr...) appends all its character arguments into one string"
+  #define Q_string s7_make_permanent_circular_list(sc, 1, 2, sc->IS_STRING, sc->IS_CHAR)
+
   if (is_null(args))                                /* (string) but not (string ()) */
     return(s7_make_string_with_length(sc, "", 0));
   return(g_string_1(sc, args, sc->STRING));
@@ -25198,6 +25420,8 @@ static s7_pointer g_string(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_list_to_string "(list->string lst) appends all the list's characters into one string; (apply string lst)"
+  #define Q_list_to_string s7_make_permanent_list(sc, 2, sc->IS_STRING, sc->IS_LIST)
+
   if (is_null(car(args)))
     return(s7_make_string_with_length(sc, "", 0));
 
@@ -25233,6 +25457,8 @@ static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str, int len)
 static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_to_list "(string->list str start end) returns the elements of the string str in a list; (map values str)"
+  #define Q_string_to_list s7_make_permanent_list(sc, 2, sc->IS_LIST, sc->IS_STRING)
+
   s7_int i, start = 0, end;
   s7_pointer p, str;
 
@@ -25278,6 +25504,8 @@ static bool s7_is_byte_vector(s7_pointer b) {return((is_string(b)) && (is_byte_v
 static s7_pointer g_is_byte_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_byte_vector "(byte-vector? obj) returns #t if obj is a byte-vector"
+  #define Q_is_byte_vector pl_bool_t
+
   check_boolean_method(sc, s7_is_byte_vector, sc->IS_BYTE_VECTOR, args);
 }
 
@@ -25285,6 +25513,7 @@ static s7_pointer g_is_byte_vector(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_to_byte_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_to_byte_vector "(->byte-vector obj) turns a string into a byte-vector."
+  #define Q_to_byte_vector s7_make_permanent_list(sc, 2, sc->IS_BYTE_VECTOR, sc->IS_STRING)
   s7_pointer str;
   str = car(args);
   if (is_integer(str))
@@ -25306,6 +25535,8 @@ PF_TO_PF(to_byte_vector, c_to_byte_vector)
 static s7_pointer g_make_byte_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_byte_vector "(make-byte-vector len (byte 0)) makes a byte-vector of length len filled with byte."
+  #define Q_make_byte_vector s7_make_permanent_list(sc, 3, sc->IS_BYTE_VECTOR, sc->IS_INTEGER, sc->IS_INTEGER)
+
   s7_pointer str;
   if (is_null(cdr(args)))
     {
@@ -25338,6 +25569,8 @@ static s7_pointer g_make_byte_vector(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_byte_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_byte_vector "(byte-vector ...) returns a byte-vector whose elements are the arguments"
+  #define Q_byte_vector s7_make_permanent_circular_list(sc, 1, 2, sc->IS_BYTE_VECTOR, sc->IS_INTEGER)
+
   s7_int i, len;
   s7_pointer vec, x;
   char *str;
@@ -25405,6 +25638,7 @@ static s7_pointer byte_vector_to_list(s7_scheme *sc, const char *str, int len)
 static s7_pointer g_is_port_closed(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_port_closed "(port-closed? p) returns #t if the port p is closed."
+  #define Q_is_port_closed pl_bool_t
   s7_pointer x;
 
   x = car(args);
@@ -25426,6 +25660,8 @@ static s7_pointer c_port_line_number(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_port_line_number(s7_scheme *sc, s7_pointer args)
 {
   #define H_port_line_number "(port-line-number input-file-port) returns the current read line number of port"
+  #define Q_port_line_number s7_make_permanent_list(sc, 2, sc->T, sc->IS_INPUT_PORT)
+
   if (is_null(args))
     return(c_port_line_number(sc, sc->input_port));
   return(c_port_line_number(sc, car(args)));
@@ -25468,6 +25704,8 @@ static s7_pointer c_port_filename(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
 {
   #define H_port_filename "(port-filename file-port) returns the filename associated with port"
+  #define Q_port_filename s7_make_permanent_list(sc, 2, sc->IS_STRING, sc->T)
+
   if (is_null(args))
     return(c_port_filename(sc, sc->input_port));
   return(c_port_filename(sc, car(args)));
@@ -25485,6 +25723,7 @@ bool s7_is_input_port(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_is_input_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_input_port "(input-port? p) returns #t if p is an input port"
+  #define Q_is_input_port pl_bool_t
   check_boolean_method(sc, is_input_port, sc->IS_INPUT_PORT, args);
 }
 
@@ -25498,6 +25737,7 @@ bool s7_is_output_port(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_is_output_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_output_port "(output-port? p) returns #t if p is an output port"
+  #define Q_is_output_port pl_bool_t
   check_boolean_method(sc, is_output_port, sc->IS_OUTPUT_PORT, args);
 }
 
@@ -25511,6 +25751,7 @@ s7_pointer s7_current_input_port(s7_scheme *sc)
 static s7_pointer g_current_input_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_current_input_port "(current-input-port) returns the current input port"
+  #define Q_current_input_port s7_make_permanent_list(sc, 1, sc->IS_INPUT_PORT)
   return(sc->input_port);
 }
 
@@ -25518,8 +25759,9 @@ static s7_pointer g_current_input_port(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_set_current_input_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_set_current_input_port "(set-current-input-port port) sets the current-input port to port and returns the previous value of the input port"
-  s7_pointer old_port, port;
+  #define Q_set_current_input_port s7_make_permanent_list(sc, 2, sc->IS_INPUT_PORT, sc->IS_INPUT_PORT)
 
+  s7_pointer old_port, port;
   old_port = sc->input_port;
   port = car(args);
   if ((is_input_port(port)) &&
@@ -25561,6 +25803,7 @@ s7_pointer s7_set_current_output_port(s7_scheme *sc, s7_pointer port)
 static s7_pointer g_current_output_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_current_output_port "(current-output-port) returns the current output port"
+  #define Q_current_output_port s7_make_permanent_list(sc, 1, sc->IS_OUTPUT_PORT)
   return(sc->output_port);
 }
 
@@ -25568,8 +25811,9 @@ static s7_pointer g_current_output_port(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_set_current_output_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_set_current_output_port "(set-current-output-port port) sets the current-output port to port and returns the previous value of the output port"
-  s7_pointer old_port, port;
+  #define Q_set_current_output_port s7_make_permanent_list(sc, 2, sc->IS_OUTPUT_PORT, sc->IS_OUTPUT_PORT)
 
+  s7_pointer old_port, port;
   old_port = sc->output_port;
   port = car(args);
   if (((is_output_port(port)) &&
@@ -25603,6 +25847,7 @@ s7_pointer s7_set_current_error_port(s7_scheme *sc, s7_pointer port)
 static s7_pointer g_current_error_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_current_error_port "(current-error-port) returns the current error port"
+  #define Q_current_error_port s7_make_permanent_list(sc, 1, sc->IS_OUTPUT_PORT)
   return(sc->error_port);
 }
 
@@ -25610,6 +25855,7 @@ static s7_pointer g_current_error_port(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_set_current_error_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_set_current_error_port "(set-current-error-port port) sets the current-error port to port and returns the previous value of the error port"
+  #define Q_set_current_error_port s7_make_permanent_list(sc, 2, sc->IS_OUTPUT_PORT, sc->IS_OUTPUT_PORT)
   s7_pointer old_port, port;
 
   old_port = sc->error_port;
@@ -25631,6 +25877,7 @@ static s7_pointer g_set_current_error_port(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_ready "(char-ready? (port (current-input-port))) returns #t if a character is ready for input on the given port"
+  #define Q_is_char_ready s7_make_permanent_list(sc, 2, sc->IS_BOOLEAN, sc->IS_INPUT_PORT)
   if (is_not_null(args))
     {
       s7_pointer pt = car(args);
@@ -25651,6 +25898,7 @@ static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_eof_object(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_eof_object "(eof-object? val) returns #t if val is the end-of-file object"
+  #define Q_is_eof_object pl_bool_t
   check_boolean_method(sc, is_eof, sc->IS_EOF_OBJECT, args);
 }
 
@@ -25723,6 +25971,7 @@ static s7_pointer c_close_input_port(s7_scheme *sc, s7_pointer pt)
 static s7_pointer g_close_input_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_close_input_port "(close-input-port port) closes the port"
+  #define Q_close_input_port s7_make_permanent_list(sc, 2, sc->T, sc->IS_INPUT_PORT)
   return(c_close_input_port(sc, car(args)));
 }
 
@@ -25753,6 +26002,7 @@ void s7_flush_output_port(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_flush_output_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_flush_output_port "(flush-output-port port) flushes the port"
+  #define Q_flush_output_port s7_make_permanent_list(sc, 2, sc->T, sc->IS_OUTPUT_PORT)
   s7_pointer pt;
 
   if (is_null(args))
@@ -25836,6 +26086,7 @@ static s7_pointer c_close_output_port(s7_scheme *sc, s7_pointer pt)
 static s7_pointer g_close_output_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_close_output_port "(close-output-port port) closes the port"
+  #define Q_close_output_port s7_make_permanent_list(sc, 2, sc->T, sc->IS_OUTPUT_PORT)
   return(c_close_output_port(sc, car(args)));
 }
 
@@ -26193,6 +26444,7 @@ static void stderr_display(s7_scheme *sc, const char *s, s7_pointer port)
 static s7_pointer g_write_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_write_string "(write-string str port start end) writes str to port."
+  #define Q_write_string s7_make_permanent_list(sc, 5, sc->IS_STRING, sc->IS_STRING, sc->IS_OUTPUT_PORT, sc->IS_INTEGER, sc->IS_INTEGER)
   s7_pointer str, port;
   s7_int start = 0, end;
 
@@ -26676,6 +26928,7 @@ s7_pointer s7_open_input_file(s7_scheme *sc, const char *name, const char *mode)
 static s7_pointer g_open_input_file(s7_scheme *sc, s7_pointer args)
 {
   #define H_open_input_file "(open-input-file filename (mode \"r\")) opens filename for reading"
+  #define Q_open_input_file s7_make_permanent_list(sc, 3, sc->IS_INPUT_PORT, sc->IS_STRING, sc->IS_STRING)
   s7_pointer name = car(args);
 
   if (!is_string(name))
@@ -26816,6 +27069,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
 static s7_pointer g_open_output_file(s7_scheme *sc, s7_pointer args)
 {
   #define H_open_output_file "(open-output-file filename (mode \"w\")) opens filename for writing"
+  #define Q_open_output_file s7_make_permanent_list(sc, 3, sc->IS_OUTPUT_PORT, sc->IS_STRING, sc->IS_STRING)
   s7_pointer name = car(args);
 
   if (!is_string(name))
@@ -26883,6 +27137,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
 static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_open_input_string "(open-input-string str) opens an input port reading str"
+  #define Q_open_input_string s7_make_permanent_list(sc, 2, sc->IS_INPUT_PORT, sc->IS_STRING)
   s7_pointer input_string, port;
 
   input_string = car(args);
@@ -26929,6 +27184,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
 static s7_pointer g_open_output_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_open_output_string "(open-output-string) opens an output string port"
+  #define Q_open_output_string s7_make_permanent_list(sc, 1, sc->IS_OUTPUT_PORT)
   return(s7_open_output_string(sc));
 }
 
@@ -26944,6 +27200,8 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_get_output_string "(get-output-string port clear-port) returns the output accumulated in port.  \
 If the optional 'clear-port' is #t, the current string is flushed."
+  #define Q_get_output_string s7_make_permanent_list(sc, 3, sc->IS_STRING, sc->IS_OUTPUT_PORT, sc->IS_BOOLEAN)
+
   s7_pointer p, result;
   bool clear_port = false;
 
@@ -27117,6 +27375,7 @@ static s7_pointer input_port_if_not_loading(s7_scheme *sc)
 static s7_pointer g_read_char(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_char "(read-char (port (current-input-port))) returns the next character in the input port"
+  #define Q_read_char s7_make_permanent_list(sc, 2, sc->T, sc->IS_INPUT_PORT)
   s7_pointer port;
 
   if (is_not_null(args))
@@ -27177,6 +27436,7 @@ static s7_pointer read_char_chooser(s7_scheme *sc, s7_pointer f, int args, s7_po
 static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
 {
   #define H_write_char "(write-char char (port (current-output-port))) writes char to the output port"
+  #define Q_write_char s7_make_permanent_list(sc, 3, sc->IS_CHAR, sc->IS_CHAR, sc->IS_OUTPUT_PORT)
   s7_pointer port, chr;
 
   chr = car(args);
@@ -27225,6 +27485,7 @@ static s7_pointer write_char_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 static s7_pointer g_peek_char(s7_scheme *sc, s7_pointer args)
 {
   #define H_peek_char "(peek-char (port (current-input-port))) returns the next character in the input port, but does not remove it from the input stream"
+  #define Q_peek_char s7_make_permanent_list(sc, 2, sc->IS_CHAR, sc->IS_INPUT_PORT)
   s7_pointer port;
 
   if (is_not_null(args))
@@ -27248,6 +27509,7 @@ PF_0(peek_char, c_peek_char)
 static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_byte "(read-byte (port (current-input-port))): reads a byte from the input port"
+  #define Q_read_byte s7_make_permanent_list(sc, 2, sc->T, sc->IS_INPUT_PORT)
   s7_pointer port;
   int c;
 
@@ -27284,6 +27546,7 @@ PF_0(read_byte, c_read_byte)
 static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
 {
   #define H_write_byte "(write-byte byte (port (current-output-port))): writes byte to the output port"
+  #define Q_write_byte s7_make_permanent_list(sc, 3, sc->IS_INTEGER, sc->IS_INTEGER, sc->IS_OUTPUT_PORT)
   s7_pointer port, b;
   s7_int val;
 
@@ -27323,6 +27586,7 @@ static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_line "(read-line port (with-eol #f)) returns the next line from port, or #<eof>.\
 If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
+  #define Q_read_line s7_make_permanent_list(sc, 3, sc->T, sc->IS_INPUT_PORT, sc->IS_BOOLEAN)
 
   s7_pointer port;
   bool with_eol = false;
@@ -27401,6 +27665,7 @@ static s7_pointer c_read_string(s7_scheme *sc, s7_int chars, s7_pointer port)
 static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_string "(read-string k port) reads k characters from port into a new string and returns it."
+  #define Q_read_string s7_make_permanent_list(sc, 3, sc->T, sc->IS_INTEGER, sc->IS_INPUT_PORT)
   s7_pointer k, port;
 
   k = car(args);
@@ -27468,6 +27733,7 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
    * (eval, eval-string and load already have an env arg)
    */
   #define H_read "(read (port (current-input-port))) returns the next object in the input port, or #<eof> at the end"
+  #define Q_read s7_make_permanent_list(sc, 2, sc->T, sc->IS_INPUT_PORT)
   s7_pointer port;
 
   if (is_not_null(args))
@@ -27608,6 +27874,7 @@ static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
 {
   #define H_load "(load file (env (rootlet))) loads the scheme file 'file'. The 'env' argument \
 defaults to the rootlet.  To load into the current environment instead, pass (curlet)."
+  #define Q_load s7_make_permanent_list(sc, 3, sc->T, sc->IS_STRING, sc->IS_LET)
 
   FILE *fp = NULL;
   s7_pointer name, port;
@@ -27894,6 +28161,7 @@ static s7_pointer g_autoload(s7_scheme *sc, s7_pointer args)
 If that symbol is encountered as an unbound variable, s7 either loads the file (following *load-path*), or calls \
 the function.  The function takes one argument, the calling environment.  Presumably the symbol is defined \
 in the file, or by the function."
+  #define Q_autoload s7_make_permanent_list(sc, 3, sc->T, sc->IS_SYMBOL, sc->T)
 
   s7_pointer sym, value;
 
@@ -27927,6 +28195,7 @@ in the file, or by the function."
 static s7_pointer g_autoloader(s7_scheme *sc, s7_pointer args)
 {
   #define H_autoloader "(*autoload* sym) returns the autoload info for the symbol sym, or #f."
+  #define Q_autoloader s7_make_permanent_list(sc, 2, sc->T, sc->IS_SYMBOL)
   s7_pointer sym;
 
   sym = car(args);
@@ -27954,6 +28223,7 @@ static s7_pointer g_require(s7_scheme *sc, s7_pointer args)
 {
   #define H_require "(require . symbols) loads each file associated with each symbol if it has not been loaded already.\
 The symbols refer to the argument to \"provide\"."
+  #define Q_require s7_make_permanent_circular_list(sc, 1, 2, sc->T, sc->IS_SYMBOL)
 
   s7_pointer p;
   sc->temp5 = cons(sc, args, sc->temp5);
@@ -28064,6 +28334,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_eval_string "(eval-string str (env (curlet))) returns the result of evaluating the string str as Scheme code"
+  #define Q_eval_string s7_make_permanent_list(sc, 3, sc->T, sc->IS_STRING, sc->IS_LET)
   s7_pointer port, str;
 
   str = car(args);
@@ -28113,6 +28384,7 @@ static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer str, proc;
   #define H_call_with_input_string "(call-with-input-string str proc) opens a string port for str and applies proc to it"
+  #define Q_call_with_input_string pl_t_str_proc
 
   /* (call-with-input-string "44" (lambda (p) (+ 1 (read p)))) -> 45
    */
@@ -28140,6 +28412,7 @@ PF2_TO_PF(call_with_input_string, c_call_with_input_string)
 static s7_pointer g_call_with_input_file(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_input_file "(call-with-input-file filename proc) opens filename and calls proc with the input port as its argument"
+  #define Q_call_with_input_file pl_t_str_proc
   s7_pointer str, proc;
 
   str = car(args);
@@ -28176,6 +28449,7 @@ static s7_pointer with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
 static s7_pointer g_with_input_from_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_with_input_from_string "(with-input-from-string str thunk) opens str as the temporary current-input-port and calls thunk"
+  #define Q_with_input_from_string pl_t_str_proc
   s7_pointer str;
 
   str = car(args);
@@ -28200,6 +28474,7 @@ PF_TO_PF(with_input_from_string, c_with_input_from_string)
 static s7_pointer g_with_input_from_file(s7_scheme *sc, s7_pointer args)
 {
   #define H_with_input_from_file "(with-input-from-file filename thunk) opens filename as the temporary current-input-port and calls thunk"
+  #define Q_with_input_from_file pl_t_str_proc
 
   if (!is_string(car(args)))
     method_or_bust(sc, car(args), sc->WITH_INPUT_FROM_FILE, args, T_STRING, 1);
@@ -28477,6 +28752,7 @@ bool s7_is_valid(s7_scheme *sc, s7_pointer arg)
 static s7_pointer g_is_iterator(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_iterator "(iterator? obj) returns #t if obj is an iterator."
+  #define Q_is_iterator pl_bool_t
   s7_pointer x;
 
   x = car(args);
@@ -28816,6 +29092,7 @@ static s7_pointer g_make_iterator(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_iterator "(make-iterator sequence) returns an iterator object that \
 returns the next value in the sequence each time it is called.  When it reaches the end, it returns " ITERATOR_END_NAME "."
+  #define Q_make_iterator s7_make_permanent_list(sc, 2, sc->IS_ITERATOR, sc->T)
 
   return(s7_make_iterator(sc, car(args)));
 }
@@ -28833,6 +29110,8 @@ static s7_pointer c_iterate(s7_scheme *sc, s7_pointer iter)
 static s7_pointer g_iterate(s7_scheme *sc, s7_pointer args)
 {
   #define H_iterate "(iterate obj) returns the next element from the iterator obj, or " ITERATOR_END_NAME "."
+  #define Q_iterate s7_make_permanent_list(sc, 2, sc->T, sc->IS_ITERATOR)
+
   s7_pointer iter;
   iter = car(args);
   if (!is_iterator(iter))
@@ -28920,6 +29199,8 @@ bool s7_iterator_is_at_end(s7_pointer obj)
 static s7_pointer g_iterator_sequence(s7_scheme *sc, s7_pointer args)
 {
   #define H_iterator_sequence "(iterator-sequence iterator) returns the sequence that iterator is traversing."
+  #define Q_iterator_sequence s7_make_permanent_list(sc, 2, sc->T, sc->IS_ITERATOR)
+
   s7_pointer iter;
 
   iter = car(args);
@@ -28941,6 +29222,7 @@ PF_TO_PF(iterator_sequence, c_iterator_sequence)
 static s7_pointer g_iterator_is_at_end(s7_scheme *sc, s7_pointer args)
 {
   #define H_iterator_is_at_end "(iterator-at-end? iter) returns #t if the iterator has reached the end of its sequence."
+  #define Q_iterator_is_at_end s7_make_permanent_list(sc, 2, sc->IS_BOOLEAN, sc->IS_ITERATOR)
   s7_pointer iter;
 
   iter = car(args);
@@ -29319,6 +29601,7 @@ static s7_pointer cyclic_sequences(s7_scheme *sc, s7_pointer obj, bool return_li
 static s7_pointer g_cyclic_sequences(s7_scheme *sc, s7_pointer args)
 {
   #define H_cyclic_sequences "(cyclic-sequences obj) returns a list of elements that are cyclic."
+  #define Q_cyclic_sequences s7_make_permanent_list(sc, 2, sc->IS_LIST, sc->T)
   return(cyclic_sequences(sc, car(args), true));
 }
 
@@ -30268,6 +30551,23 @@ static void collect_locals(s7_scheme *sc, s7_pointer body, s7_pointer e, s7_poin
     }
 }
 
+static s7_pointer closure_name(s7_scheme *sc, s7_pointer closure)
+{
+  /* this is used by the error handlers to get the current function name
+   */
+  s7_pointer x;
+
+  x = find_closure(sc, closure, sc->envir);
+  if (is_symbol(x))
+    return(x);
+
+  if (is_pair(sc->cur_code))
+    return(sc->cur_code);
+
+  return(closure); /* desperation -- the parameter list (caar here) will cause endless confusion in OP_APPLY errors! */
+}
+
+
 static void write_closure_readably_1(s7_scheme *sc, s7_pointer obj, s7_pointer arglist, s7_pointer body, s7_pointer port)
 {
   s7_int old_print_length;
@@ -30997,6 +31297,7 @@ void s7_newline(s7_scheme *sc, s7_pointer port)
 static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
 {
   #define H_newline "(newline (port (current-output-port))) writes a carriage return to the port"
+  #define Q_newline s7_make_permanent_list(sc, 2, sc->T, sc->IS_OUTPUT_PORT)
   s7_pointer port;
 
   if (is_not_null(args))
@@ -31026,7 +31327,8 @@ void s7_write(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 
 static s7_pointer g_write(s7_scheme *sc, s7_pointer args)
 {
-  #define H_write "(write str (port (current-output-port))) writes str (a string) to the output port"
+  #define H_write "(write obj (port (current-output-port))) writes (object->string obj) to the output port"
+  #define Q_write s7_make_permanent_list(sc, 3, sc->T, sc->T, sc->IS_OUTPUT_PORT)
   s7_pointer port;
 
   if (is_pair(cdr(args)))
@@ -31062,6 +31364,7 @@ void s7_display(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
 {
   #define H_display "(display obj (port (current-output-port))) prints obj"
+  #define Q_display s7_make_permanent_list(sc, 3, sc->T, sc->T, sc->IS_OUTPUT_PORT)
   s7_pointer port;
 
   if (is_pair(cdr(args)))
@@ -31082,6 +31385,7 @@ PF_TO_PF(display, c_display)
 static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_output_string "(call-with-output-string proc) opens a string port applies proc to it, then returns the collected output"
+  #define Q_call_with_output_string s7_make_permanent_list(sc, 2, sc->IS_STRING, sc->IS_PROCEDURE)
   s7_pointer port, proc;
 
   proc = car(args);
@@ -31106,6 +31410,7 @@ PF_TO_PF(call_with_output_string, c_call_with_output_string)
 static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_output_file "(call-with-output-file filename proc) opens filename and calls proc with the output port as its argument"
+  #define Q_call_with_output_file pl_t_str_proc
   s7_pointer port, file, proc;
 
   file = car(args);
@@ -31132,6 +31437,7 @@ PF_TO_PF(call_with_output_file, c_call_with_output_file)
 static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_with_output_to_string "(with-output-to-string thunk) opens a string as a temporary current-output-port, calls thunk, then returns the collected output"
+  #define Q_with_output_to_string s7_make_permanent_list(sc, 2, sc->IS_STRING, sc->IS_PROCEDURE)
   s7_pointer old_output_port, p;
 
   p = car(args);
@@ -31157,6 +31463,7 @@ PF_TO_PF(with_output_to_string, c_with_output_to_string)
 static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 {
   #define H_with_output_to_file "(with-output-to-file filename thunk) opens filename as the temporary current-output-port and calls thunk"
+  #define Q_with_output_to_file pl_t_str_proc
   s7_pointer old_output_port, file, proc;
 
   file = car(args);
@@ -32042,6 +32349,7 @@ spacing (and spacing character) and precision.  ~{ starts an embedded format dir
 If the 'out' it is not an output port, the resultant string is returned.  If it \
 is #t, the string is also sent to the current-output-port."
 
+  #define Q_format s7_make_permanent_circular_list(sc, 1, 2, sc->T, sc->T)
   return(g_format_1(sc, args));
 }
 
@@ -32065,6 +32373,7 @@ const char *s7_format(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_directory(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_directory "(directory? str) returns #t if str is the name of a directory"
+  #define Q_is_directory s7_make_permanent_list(sc, 2, sc->IS_BOOLEAN, sc->IS_STRING)
   s7_pointer name;
   name = car(args);
 
@@ -32091,6 +32400,8 @@ static bool file_probe(const char *arg)
 static s7_pointer g_file_exists(s7_scheme *sc, s7_pointer args)
 {
   #define H_file_exists "(file-exists? filename) returns #t if the file exists"
+  #define Q_file_exists s7_make_permanent_list(sc, 2, sc->IS_BOOLEAN, sc->IS_STRING)
+
   s7_pointer name;
   name = car(args);
 
@@ -32103,6 +32414,8 @@ static s7_pointer g_file_exists(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_delete_file(s7_scheme *sc, s7_pointer args)
 {
   #define H_delete_file "(delete-file filename) deletes the file filename."
+  #define Q_delete_file s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_STRING)
+
   s7_pointer name;
   name = car(args);
 
@@ -32112,9 +32425,11 @@ static s7_pointer g_delete_file(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_getenv_1(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_getenv(s7_scheme *sc, s7_pointer args)
 {
   #define H_getenv "(getenv var) returns the value of an environment variable."
+  #define Q_getenv s7_make_permanent_list(sc, 2, sc->IS_STRING, sc->IS_STRING)
+
   s7_pointer name;
   name = car(args);
 
@@ -32128,6 +32443,8 @@ static s7_pointer g_system(s7_scheme *sc, s7_pointer args)
 {
   #define H_system "(system command) executes the command.  If the optional second it is #t, \
 system captures the output as a string and returns it."
+  #define Q_system s7_make_permanent_list(sc, 2, sc->T, sc->IS_STRING)
+
   s7_pointer name;
   name = car(args);
 
@@ -32197,6 +32514,7 @@ static s7_pointer c_directory_to_list(s7_scheme *sc, s7_pointer name)
 static s7_pointer g_directory_to_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_directory_to_list "(directory->list directory) returns the contents of the directory as a list of strings (filenames)."
+  #define Q_directory_to_list s7_make_permanent_list(sc, 2, sc->IS_PAIR, sc->IS_STRING)
   return(c_directory_to_list(sc, car(args)));
 }
 
@@ -32206,6 +32524,7 @@ PF_TO_PF(directory_to_list, c_directory_to_list)
 static s7_pointer g_file_mtime(s7_scheme *sc, s7_pointer args)
 {
   #define H_file_mtime "(file-mtime file): return the write date of file"
+  #define Q_file_mtime s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_STRING)
 
   struct stat statbuf;
   int err;
@@ -32269,6 +32588,55 @@ static s7_pointer permanent_list(s7_scheme *sc, int len)
   for (j = 0; j < len; j++)
     p = permanent_cons(sc->NIL, p, T_PAIR);
   return(p);
+}
+
+s7_pointer s7_make_permanent_list(s7_scheme *sc, int len, ...)
+{
+  va_list ap;
+  s7_pointer p, res;
+
+  res = permanent_list(sc, len);
+  va_start(ap, len);
+  for (p = res; is_pair(p); p = cdr(p))
+    {
+      car(p) = va_arg(ap, s7_pointer);
+#if DEBUGGING
+      if (!car(p))
+	{
+	  fprintf(stderr, "missed type check in procedure-signature\n");
+	  abort();
+	}
+#endif    
+    }
+  va_end(ap);
+
+  return(res);
+}
+
+static s7_pointer s7_make_permanent_circular_list(s7_scheme *sc, int cycle_point, int len, ...)
+{
+  va_list ap;
+  int i;
+  s7_pointer p, res, back = NULL, end = NULL;
+
+  res = permanent_list(sc, len);
+  va_start(ap, len);
+  for (p = res, i = 0; is_pair(p); p = cdr(p), i++)
+    {
+      car(p) = va_arg(ap, s7_pointer);
+      if (i == cycle_point) back = p;
+      if (i == (len - 1)) end = p;
+#if DEBUGGING
+      if (!car(p))
+	{
+	  fprintf(stderr, "missed type check in (circular) procedure-signature\n");
+	  abort();
+	}
+#endif    
+    }
+  va_end(ap);
+  cdr(end) = back;
+  return(res);
 }
 
 
@@ -32926,6 +33294,7 @@ int s7_list_length(s7_scheme *sc, s7_pointer a)
 static s7_pointer g_is_null(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_null "(null? obj) returns #t if obj is the empty list"
+  #define Q_is_null pl_bool_t
   check_boolean_method(sc, is_null, sc->IS_NULL, args);
   /* as a generic this could be: has_structure and length == 0 */
 }
@@ -32934,6 +33303,7 @@ static s7_pointer g_is_null(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_pair(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_pair "(pair? obj) returns #t if obj is a pair (a non-empty list)"
+  #define Q_is_pair pl_bool_t
   check_boolean_method(sc, is_pair, sc->IS_PAIR, args);
 }
 
@@ -32972,8 +33342,9 @@ static bool is_proper_list(s7_scheme *sc, s7_pointer lst)
 
 static s7_pointer g_is_list(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_list "(list? obj) returns #t if obj is a proper list"
-  #define is_a_list(p) is_proper_list(sc, p)
+  #define H_is_list "(list? obj) returns #t if obj is a pair or null"
+  #define Q_is_list pl_bool_t
+  #define is_a_list(p) s7_is_list(sc, p)
   check_boolean_method(sc, is_a_list, sc->IS_LIST, args);
 }
 
@@ -33020,6 +33391,7 @@ static s7_pointer make_list(s7_scheme *sc, int len, s7_pointer init)
 static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_list "(make-list length (initial-element #f)) returns a list of 'length' elements whose value is 'initial-element'."
+  #define Q_make_list s7_make_permanent_list(sc, 3, sc->IS_LIST, sc->IS_INTEGER, sc->T)
 
   s7_pointer init;
   s7_int len;
@@ -33098,6 +33470,7 @@ static s7_pointer list_ref_1(s7_scheme *sc, s7_pointer lst, s7_pointer ind)
 static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_list_ref "(list-ref lst i ...) returns the i-th element (0-based) of the list"
+  #define Q_list_ref s7_make_permanent_circular_list(sc, 2, 3, sc->T, sc->IS_PAIR, sc->IS_INTEGER)
 
   /* (let ((L '((1 2 3) (4 5 6)))) (list-ref L 1 2))
 
@@ -33148,6 +33521,7 @@ PIF_TO_PF(list_ref, c_list_ref)
 static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, int arg_num)
 {
   #define H_list_set "(list-set! lst i ... val) sets the i-th element (0-based) of the list to val"
+  #define Q_list_set s7_make_permanent_circular_list(sc, 2, 3, sc->T, sc->IS_PAIR, sc->T)
 
   int i;
   s7_int index;
@@ -33285,6 +33659,7 @@ static s7_pointer c_list_tail(s7_scheme *sc, s7_pointer lst, s7_int index)
 static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
 {
   #define H_list_tail "(list-tail lst i) returns the list from the i-th element on"
+  #define Q_list_tail s7_make_permanent_list(sc, 3, sc->IS_LIST, sc->IS_PAIR, sc->IS_INTEGER)
   s7_pointer p;
 
   p = cadr(args);
@@ -33308,6 +33683,7 @@ static s7_pointer g_cons(s7_scheme *sc, s7_pointer args)
   /*   (set! (cadr (cons 1 2 3)) 4) -> (1 4 . 3) */
 
   #define H_cons "(cons a b) returns a pair containing a and b"
+  #define Q_cons s7_make_permanent_list(sc, 3, sc->IS_PAIR, sc->T, sc->T)
 
   /* cdr(args) = cadr(args);
    * this is not safe -- it changes a variable's value directly:
@@ -33396,6 +33772,8 @@ static s7_pointer g_car_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_car(s7_scheme *sc, s7_pointer args)
 {
   #define H_car "(car pair) returns the first element of the pair"
+  #define Q_car pl_t_pair  
+
   s7_pointer lst;
   lst = car(args);
   if (!is_pair(lst))
@@ -33409,6 +33787,7 @@ PF_TO_PF(car, g_car_1)
 static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
 {
   #define H_set_car "(set-car! pair val) sets the pair's first element to val"
+  #define Q_set_car s7_make_permanent_list(sc, 3, sc->T, sc->IS_PAIR, sc->T)
   s7_pointer p;
 
   p = car(args);
@@ -33441,6 +33820,8 @@ static s7_pointer g_cdr_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cdr(s7_scheme *sc, s7_pointer args)
 {
   #define H_cdr "(cdr pair) returns the second element of the pair"
+  #define Q_cdr pl_t_pair  
+
   s7_pointer lst;
   lst = car(args);
   if (!is_pair(lst))
@@ -33454,6 +33835,7 @@ PF_TO_PF(cdr, g_cdr_1)
 static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
 {
   #define H_set_cdr "(set-cdr! pair val) sets the pair's second element to val"
+  #define Q_set_cdr s7_make_permanent_list(sc, 3, sc->T, sc->IS_PAIR, sc->T)
   s7_pointer p;
 
   p = car(args);
@@ -33488,6 +33870,8 @@ static s7_pointer g_caar_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_caar(s7_scheme *sc, s7_pointer args)
 {
   #define H_caar "(caar lst) returns (car (car lst)): (caar '((1 2))) -> 1"
+  #define Q_caar pl_t_pair  
+
   s7_pointer lst;
   lst = car(args);
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->CAAR, args, T_PAIR, 0);
@@ -33510,6 +33894,8 @@ static s7_pointer g_cadr_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cadr(s7_scheme *sc, s7_pointer args)
 {
   #define H_cadr "(cadr lst) returns (car (cdr lst)): (cadr '(1 2 3)) -> 2"
+  #define Q_cadr pl_t_pair  
+
   s7_pointer lst;
   lst = car(args);
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->CADR, args, T_PAIR, 0);
@@ -33531,6 +33917,8 @@ static s7_pointer g_cdar_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cdar(s7_scheme *sc, s7_pointer args)
 {
   #define H_cdar "(cdar lst) returns (cdr (car lst)): (cdar '((1 2 3))) -> '(2 3)"
+  #define Q_cdar pl_t_pair  
+
   s7_pointer lst;
   lst = car(args);
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->CDAR, args, T_PAIR, 0);
@@ -33552,6 +33940,8 @@ static s7_pointer g_cddr_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cddr(s7_scheme *sc, s7_pointer args)
 {
   #define H_cddr "(cddr lst) returns (cdr (cdr lst)): (cddr '(1 2 3 4)) -> '(3 4)"
+  #define Q_cddr pl_t_pair  
+
   s7_pointer lst;
   lst = car(args);
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->CDDR, args, T_PAIR, 0);
@@ -33574,6 +33964,8 @@ static s7_pointer g_caaar_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_caaar(s7_scheme *sc, s7_pointer args)
 {
   #define H_caaar "(caaar lst) returns (car (car (car lst))): (caaar '(((1 2)))) -> 1"
+  #define Q_caaar pl_t_pair  
+
   return(g_caaar_1(sc, car(args)));
 }
 
@@ -33592,6 +33984,8 @@ static s7_pointer g_caadr_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_caadr(s7_scheme *sc, s7_pointer args)
 {
   #define H_caadr "(caadr lst) returns (car (car (cdr lst))): (caadr '(1 (2 3))) -> 2"
+  #define Q_caadr pl_t_pair  
+
   return(g_caadr_1(sc, car(args)));
 }
 
@@ -33610,6 +34004,8 @@ static s7_pointer g_cadar_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cadar(s7_scheme *sc, s7_pointer args)
 {
   #define H_cadar "(cadar lst) returns (car (cdr (car lst))): (cadar '((1 2 3))) -> 2"
+  #define Q_cadar pl_t_pair  
+
   return(g_cadar_1(sc, car(args)));
 }
 
@@ -33628,6 +34024,8 @@ static s7_pointer g_cdaar_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cdaar(s7_scheme *sc, s7_pointer args)
 {
   #define H_cdaar "(cdaar lst) returns (cdr (car (car lst))): (cdaar '(((1 2 3)))) -> '(2 3)"
+  #define Q_cdaar pl_t_pair  
+
   return(g_cdaar_1(sc, car(args)));
 }
 
@@ -33646,6 +34044,8 @@ static s7_pointer g_caddr_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_caddr(s7_scheme *sc, s7_pointer args)
 {
   #define H_caddr "(caddr lst) returns (car (cdr (cdr lst))): (caddr '(1 2 3 4)) -> 3"
+  #define Q_caddr pl_t_pair  
+
   return(g_caddr_1(sc, car(args)));
 }
 
@@ -33664,6 +34064,8 @@ static s7_pointer g_cdddr_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cdddr(s7_scheme *sc, s7_pointer args)
 {
   #define H_cdddr "(cdddr lst) returns (cdr (cdr (cdr lst))): (cdddr '(1 2 3 4)) -> '(4)"
+  #define Q_cdddr pl_t_pair  
+
   return(g_cdddr_1(sc, car(args)));
 }
 
@@ -33682,6 +34084,8 @@ static s7_pointer g_cdadr_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cdadr(s7_scheme *sc, s7_pointer args)
 {
   #define H_cdadr "(cdadr lst) returns (cdr (car (cdr lst))): (cdadr '(1 (2 3 4))) -> '(3 4)"
+  #define Q_cdadr pl_t_pair  
+
   return(g_cdadr_1(sc, car(args)));
 }
 
@@ -33700,6 +34104,8 @@ static s7_pointer g_cddar_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cddar(s7_scheme *sc, s7_pointer args)
 {
   #define H_cddar "(cddar lst) returns (cdr (cdr (car lst))): (cddar '((1 2 3 4))) -> '(3 4)"
+  #define Q_cddar pl_t_pair  
+
   return(g_cddar_1(sc, car(args)));
 }
 
@@ -33719,6 +34125,8 @@ static s7_pointer g_caaaar_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_caaaar(s7_scheme *sc, s7_pointer args)
 {
   #define H_caaaar "(caaaar lst) returns (car (car (car (car lst)))): (caaaar '((((1 2))))) -> 1"
+  #define Q_caaaar pl_t_pair  
+
   return(g_caaaar_1(sc, car(args)));
 }
 
@@ -33738,6 +34146,8 @@ static s7_pointer g_caaadr_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_caaadr(s7_scheme *sc, s7_pointer args)
 {
   #define H_caaadr "(caaadr lst) returns (car (car (car (cdr lst)))): (caaadr '(1 ((2 3)))) -> 2"
+  #define Q_caaadr pl_t_pair  
+
   return(g_caaadr_1(sc, car(args)));
 }
 
@@ -33757,6 +34167,8 @@ static s7_pointer g_caadar_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_caadar(s7_scheme *sc, s7_pointer args)
 {
   #define H_caadar "(caadar lst) returns (car (car (cdr (car lst)))): (caadar '((1 (2 3)))) -> 2"
+  #define Q_caadar pl_t_pair  
+
   return(g_caadar_1(sc, car(args)));
 }
 
@@ -33776,6 +34188,8 @@ static s7_pointer g_cadaar_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cadaar(s7_scheme *sc, s7_pointer args)
 {
   #define H_cadaar "(cadaar lst) returns (car (cdr (car (car lst)))): (cadaar '(((1 2 3)))) -> 2"
+  #define Q_cadaar pl_t_pair  
+
   return(g_cadaar_1(sc, car(args)));
 }
 
@@ -33795,6 +34209,8 @@ static s7_pointer g_caaddr_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_caaddr(s7_scheme *sc, s7_pointer args)
 {
   #define H_caaddr "(caaddr lst) returns (car (car (cdr (cdr lst)))): (caaddr '(1 2 (3 4))) -> 3"
+  #define Q_caaddr pl_t_pair  
+
   return(g_caaddr_1(sc, car(args)));
 }
 
@@ -33814,6 +34230,8 @@ static s7_pointer g_cadddr_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cadddr(s7_scheme *sc, s7_pointer args)
 {
   #define H_cadddr "(cadddr lst) returns (car (cdr (cdr (cdr lst)))): (cadddr '(1 2 3 4 5)) -> 4"
+  #define Q_cadddr pl_t_pair  
+
   return(g_cadddr_1(sc, car(args)));
 }
 
@@ -33833,6 +34251,8 @@ static s7_pointer g_cadadr_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cadadr(s7_scheme *sc, s7_pointer args)
 {
   #define H_cadadr "(cadadr lst) returns (car (cdr (car (cdr lst)))): (cadadr '(1 (2 3 4))) -> 3"
+  #define Q_cadadr pl_t_pair  
+
   return(g_cadadr_1(sc, car(args)));
 }
 
@@ -33852,6 +34272,8 @@ static s7_pointer g_caddar_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_caddar(s7_scheme *sc, s7_pointer args)
 {
   #define H_caddar "(caddar lst) returns (car (cdr (cdr (car lst)))): (caddar '((1 2 3 4))) -> 3"
+  #define Q_caddar pl_t_pair  
+
   return(g_caddar_1(sc, car(args)));
 }
 
@@ -33871,6 +34293,8 @@ static s7_pointer g_cdaaar_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cdaaar(s7_scheme *sc, s7_pointer args)
 {
   #define H_cdaaar "(cdaaar lst) returns (cdr (car (car (car lst)))): (cdaaar '((((1 2 3))))) -> '(2 3)"
+  #define Q_cdaaar pl_t_pair  
+
   return(g_cdaaar_1(sc, car(args)));
 }
 
@@ -33890,6 +34314,8 @@ static s7_pointer g_cdaadr_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cdaadr(s7_scheme *sc, s7_pointer args)
 {
   #define H_cdaadr "(cdaadr lst) returns (cdr (car (car (cdr lst)))): (cdaadr '(1 ((2 3 4)))) -> '(3 4)"
+  #define Q_cdaadr pl_t_pair  
+
   return(g_cdaadr_1(sc, car(args)));
 }
 
@@ -33909,6 +34335,8 @@ static s7_pointer g_cdadar_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cdadar(s7_scheme *sc, s7_pointer args)
 {
   #define H_cdadar "(cdadar lst) returns (cdr (car (cdr (car lst)))): (cdadar '((1 (2 3 4)))) -> '(3 4)"
+  #define Q_cdadar pl_t_pair  
+
   return(g_cdadar_1(sc, car(args)));
 }
 
@@ -33928,6 +34356,8 @@ static s7_pointer g_cddaar_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cddaar(s7_scheme *sc, s7_pointer args)
 {
   #define H_cddaar "(cddaar lst) returns (cdr (cdr (car (car lst)))): (cddaar '(((1 2 3 4)))) -> '(3 4)"
+  #define Q_cddaar pl_t_pair  
+
   return(g_cddaar_1(sc, car(args)));
 }
 
@@ -33947,6 +34377,8 @@ static s7_pointer g_cdaddr_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cdaddr(s7_scheme *sc, s7_pointer args)
 {
   #define H_cdaddr "(cdaddr lst) returns (cdr (car (cdr (cdr lst)))): (cdaddr '(1 2 (3 4 5))) -> '(4 5)"
+  #define Q_cdaddr pl_t_pair  
+
   return(g_cdaddr_1(sc, car(args)));
 }
 
@@ -33966,6 +34398,7 @@ static s7_pointer g_cddddr_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cddddr(s7_scheme *sc, s7_pointer args)
 {
   #define H_cddddr "(cddddr lst) returns (cdr (cdr (cdr (cdr lst)))): (cddddr '(1 2 3 4 5)) -> '(5)"
+  #define Q_cddddr pl_t_pair  
   return(g_cddddr_1(sc, car(args)));
 }
 
@@ -33985,6 +34418,7 @@ static s7_pointer g_cddadr_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cddadr(s7_scheme *sc, s7_pointer args)
 {
   #define H_cddadr "(cddadr lst) returns (cdr (cdr (car (cdr lst)))): (cddadr '(1 (2 3 4 5))) -> '(4 5)"
+  #define Q_cddadr pl_t_pair  
   return(g_cddadr_1(sc, car(args)));
 }
 
@@ -34004,6 +34438,8 @@ static s7_pointer g_cdddar_1(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_cdddar(s7_scheme *sc, s7_pointer args)
 {
   #define H_cdddar "(cdddar lst) returns (cdr (cdr (cdr (car lst)))): (cdddar '((1 2 3 4 5))) -> '(4 5)"
+  #define Q_cdddar pl_t_pair  
+
   return(g_cdddar_1(sc, car(args)));
 }
 
@@ -34072,6 +34508,7 @@ static s7_pointer c_assq(s7_scheme *sc, s7_pointer x, s7_pointer y)
 static s7_pointer g_assq(s7_scheme *sc, s7_pointer args)
 {
   #define H_assq "(assq obj alist) returns the key-value pair associated (via eq?) with the key obj in the association list alist"
+  #define Q_assq pl_t_t_pair
   return(c_assq(sc, car(args), cadr(args)));
 }
 
@@ -34112,6 +34549,7 @@ static s7_pointer c_assv(s7_scheme *sc, s7_pointer x, s7_pointer y)
 static s7_pointer g_assv(s7_scheme *sc, s7_pointer args)        /* g_assv is called by g_assoc below */
 { 
   #define H_assv "(assv obj alist) returns the key-value pair associated (via eqv?) with the key obj in the association list alist"
+  #define Q_assv pl_t_t_pair
   return(c_assv(sc, car(args), cadr(args)));
 }
 
@@ -34128,6 +34566,7 @@ static s7_pointer g_assoc(s7_scheme *sc, s7_pointer args)
 {
   #define H_assoc "(assoc obj alist (func #f)) returns the key-value pair associated (via equal?) with the key obj in the association list alist.\
 If 'func' is a function of 2 arguments, it is used for the comparison instead of 'equal?"
+  #define Q_assoc s7_make_permanent_list(sc, 4, sc->T, sc->T, sc->IS_PAIR, sc->IS_PROCEDURE)
 
   s7_pointer x, y, obj, eq_func = NULL;
 
@@ -34325,6 +34764,7 @@ static s7_pointer c_memq(s7_scheme *sc, s7_pointer x, s7_pointer y)
 static s7_pointer g_memq(s7_scheme *sc, s7_pointer args)
 {
   #define H_memq "(memq obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. memq uses eq?"
+  #define Q_memq pl_t_t_pair
   return(c_memq(sc, car(args), cadr(args)));
 }
 
@@ -34524,6 +34964,8 @@ static s7_pointer c_memv(s7_scheme *sc, s7_pointer x, s7_pointer y)
 static s7_pointer g_memv(s7_scheme *sc, s7_pointer args)
 {
   #define H_memv "(memv obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. memv uses eqv?"
+  #define Q_memv pl_t_t_pair
+
   return(c_memv(sc, car(args), cadr(args)));
 }
 
@@ -34588,6 +35030,7 @@ static s7_pointer g_member(s7_scheme *sc, s7_pointer args)
 {
   #define H_member "(member obj list (func #f)) looks for obj in list and returns the list from that point if it is found, otherwise #f. \
 member uses equal?  If 'func' is a function of 2 arguments, it is used for the comparison instead of 'equal?"
+  #define Q_member s7_make_permanent_list(sc, 4, sc->T, sc->T, sc->IS_PAIR, sc->IS_PROCEDURE)
 
   /* this could be extended to accept sequences:
    *    (member #\a "123123abnfc" char=?) -> "abnfc"
@@ -34851,6 +35294,8 @@ static s7_pointer c_is_provided(s7_scheme *sc, s7_pointer sym)
 static s7_pointer g_is_provided(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_provided "(provided? symbol) returns #t if symbol is a member of the *features* list"
+  #define Q_is_provided s7_make_permanent_list(sc, 2, sc->IS_BOOLEAN, sc->IS_SYMBOL)
+
   return(c_is_provided(sc, car(args)));
 }
 
@@ -34890,6 +35335,7 @@ static s7_pointer c_provide(s7_scheme *sc, s7_pointer sym)
 static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
 {
   #define H_provide "(provide symbol) adds symbol to the *features* list"
+  #define Q_provide s7_make_permanent_list(sc, 2, sc->IS_SYMBOL, sc->IS_SYMBOL)
   return(c_provide(sc, car(args)));
 }
 
@@ -34913,7 +35359,7 @@ static s7_pointer g_features_set(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_list "(list ...) returns its arguments in a list"
-
+  #define Q_list s7_make_permanent_circular_list(sc, 1, 2, sc->IS_PAIR, sc->T)
   return(copy_list(sc, args));
 }
 
@@ -34973,6 +35419,7 @@ s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
 static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
 {
   #define H_append "(append ...) returns its argument lists appended into one list"
+  #define Q_append s7_make_permanent_circular_list(sc, 1, 2, sc->T, sc->T)
   /* but weirdly (append () 1) returns 1
    */
   s7_pointer y, tp, np = NULL, pp;
@@ -35383,6 +35830,8 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector_fill "(vector-fill! v val start end) sets all elements of the vector v between start and end to val"
+  #define Q_vector_fill s7_make_permanent_list(sc, 5, sc->T, sc->IS_VECTOR, sc->T, sc->IS_INTEGER, sc->IS_INTEGER)
+
   s7_pointer x, fill;
   s7_int start = 0, end;
 
@@ -35556,6 +36005,8 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
    *   which is too much trouble.
    */
   #define H_vector_append "(vector-append . vectors) returns a new (1-dimensional) vector containing the elements of its vector arguments."
+  #define Q_vector_append s7_make_permanent_circular_list(sc, 1, 2, sc->IS_VECTOR, sc->IS_VECTOR)
+
   s7_int len = 0;
   s7_pointer p, v, x;
   int result_type = -1;
@@ -35816,6 +36267,7 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
   s7_int i, start = 0, end;
   s7_pointer p, vec;
   #define H_vector_to_list "(vector->list v start end) returns the elements of the vector v as a list; (map values v)"
+  #define Q_vector_to_list s7_make_permanent_list(sc, 4, sc->IS_PAIR, sc->IS_VECTOR, sc->IS_INTEGER, sc->IS_INTEGER)
 
   vec = car(args);
   if (!s7_is_vector(vec))
@@ -35854,6 +36306,8 @@ s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_int len, s7_pointer fill)
 static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector "(vector ...) returns a vector whose elements are the arguments"
+  #define Q_vector s7_make_permanent_circular_list(sc, 1, 2, sc->IS_VECTOR, sc->T)
+
   s7_int len;
   s7_pointer vec;
 
@@ -35873,12 +36327,15 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_float_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_float_vector "(float-vector? obj) returns #t if obj is an homogenous float vector"
+  #define Q_is_float_vector pl_bool_t
   check_boolean_method(sc, s7_is_float_vector, sc->IS_FLOAT_VECTOR, args);
 }
 
 static s7_pointer g_float_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_float_vector "(float-vector ...) returns an homogenous float vector whose elements are the arguments"
+  #define Q_float_vector s7_make_permanent_circular_list(sc, 1, 2, sc->IS_FLOAT_VECTOR, sc->IS_REAL)
+
   s7_int i, len;
   s7_pointer vec, x;
 
@@ -35903,12 +36360,15 @@ PF_TO_PF(float_vector, c_float_vector_1)
 static s7_pointer g_is_int_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_int_vector "(int-vector? obj) returns #t if obj is an homogenous int vector"
+  #define Q_is_int_vector pl_bool_t
   check_boolean_method(sc, is_int_vector, sc->IS_INT_VECTOR, args);
 }
 
 static s7_pointer g_int_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_int_vector "(int-vector ...) returns an homogenous int vector whose elements are the arguments"
+  #define Q_int_vector s7_make_permanent_circular_list(sc, 1, 2, sc->IS_INT_VECTOR, sc->IS_INTEGER)
+
   s7_int i, len;
   s7_pointer vec, x;
 
@@ -35946,6 +36406,7 @@ static s7_pointer c_list_to_vector(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_list_to_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_list_to_vector "(list->vector lst) returns a vector containing the elements of lst; (apply vector lst)"
+  #define Q_list_to_vector s7_make_permanent_list(sc, 2, sc->IS_VECTOR, sc->IS_LIST)
   return(c_list_to_vector(sc, car(args)));
 }
 
@@ -35956,6 +36417,7 @@ static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer vec;
   #define H_vector_length "(vector-length v) returns the length of vector v"
+  #define Q_vector_length s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_VECTOR)
 
   vec = car(args);
   if (!s7_is_vector(vec))
@@ -36023,6 +36485,7 @@ static s7_pointer g_make_shared_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_shared_vector "(make-shared-vector original-vector new-dimensions (offset 0)) returns \
 a vector that points to the same elements as the original-vector but with different dimensional info."
+  #define Q_make_shared_vector s7_make_permanent_list(sc, 4, sc->IS_VECTOR, sc->IS_VECTOR, sc->T, sc->IS_INTEGER)
 
   /* (let ((v1 #2d((1 2 3) (4 5 6)))) (let ((v2 (make-shared-vector v1 '(6)))) v2)) -> #(1 2 3 4 5 6)
    * (let ((v1 #(1 2 3 4 5 6))) (let ((v2 (make-shared-vector v1 '(3 2)))) v2)) -> #2D((1 2) (3 4) (5 6))
@@ -36217,6 +36680,8 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 static s7_pointer g_vector_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector_ref "(vector-ref v ... i) returns the i-th element of vector v."
+  #define Q_vector_ref s7_make_permanent_circular_list(sc, 2, 3, sc->T, sc->IS_VECTOR, sc->IS_INTEGER)
+
   s7_pointer vec;
 
   vec = car(args);
@@ -36430,6 +36895,7 @@ static s7_pointer g_vector_ref_2(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector_set "(vector-set! v i ... value) sets the i-th element of vector v to value."
+  #define Q_vector_set s7_make_permanent_circular_list(sc, 2, 3, sc->T, sc->IS_VECTOR, sc->T)
 
   s7_pointer vec, val;
   s7_int index;
@@ -36655,6 +37121,7 @@ To create a multidimensional vector, put the dimension bounds in a list (this is
 (make-vector 1 2) where it's not clear whether the '2' is an initial value or a dimension size).  (make-vector '(2 3) 1.0) \
 returns a 2 dimensional vector of 6 total elements, all initialized to 1.0.  If homogenous is #t, and value is either an integer \
 or a real, the vector can only hold numbers of that type (s7_int or s7_double)."
+  #define Q_make_vector s7_make_permanent_list(sc, 4, sc->IS_VECTOR, sc->T, sc->T, sc->IS_BOOLEAN)
 
   s7_int len;
   s7_pointer x, fill, vec;
@@ -36763,6 +37230,7 @@ IF_TO_PF(make_vector, s7_make_vector)
 static s7_pointer g_make_float_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_float_vector "(make-float-vector len (init 0.0)) returns a float-vector."
+  #define Q_make_float_vector s7_make_permanent_list(sc, 3, sc->IS_VECTOR, sc->T, sc->IS_REAL)
   s7_int len;
   s7_pointer x, p;
   s7_double *arr;
@@ -36816,6 +37284,8 @@ IF_TO_PF(make_float_vector, c_make_float_vector)
 static s7_pointer g_make_int_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_int_vector "(make-int-vector len (init 0.0)) returns an int-vector."
+  #define Q_make_int_vector s7_make_permanent_list(sc, 3, sc->IS_VECTOR, sc->T, sc->IS_INTEGER)
+
   s7_int len;
   s7_pointer x, p;
   s7_int *arr;
@@ -36863,6 +37333,7 @@ IF_TO_PF(make_int_vector, c_make_int_vector)
 static s7_pointer g_is_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_vector "(vector? obj) returns #t if obj is a vector"
+  #define Q_is_vector pl_bool_t
   check_boolean_method(sc, s7_is_vector, sc->IS_VECTOR, args);
 }
 
@@ -36878,9 +37349,9 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
   #define H_vector_dimensions "(vector-dimensions vect) returns a list of vect's dimensions.  In srfi-63 terms:\n\
     (define array-dimensions vector-dimensions)\n\
     (define (array-rank v) (length (vector-dimensions v)))"
+  #define Q_vector_dimensions s7_make_permanent_list(sc, 2, sc->IS_PAIR, sc->T, sc->IS_VECTOR)
 
   s7_pointer x;
-
   x = car(args);
   if (!s7_is_vector(x))
     method_or_bust(sc, x, sc->VECTOR_DIMENSIONS, args, T_VECTOR, 0);
@@ -37004,6 +37475,7 @@ static s7_pointer g_qq_multivector(s7_scheme *sc, s7_pointer args)
 {
   /* `#2d((1 2) ,(list 3 4)) */
   #define H_qq_multivector "quasiquote internal support for multidimensional vector constants"
+  #define Q_qq_multivector s7_make_permanent_list(sc, 2, sc->IS_VECTOR, sc->T)
   return(g_multivector(sc, s7_integer(car(args)), cdr(args)));
 }
 
@@ -37194,6 +37666,7 @@ static s7_pointer univect_set(s7_scheme *sc, s7_pointer args, bool flt)
 static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_float_vector_ref "(float-vector-ref v ...) returns an element of the float-vector v."
+  #define Q_float_vector_ref s7_make_permanent_circular_list(sc, 2, 3, sc->IS_REAL, sc->IS_FLOAT_VECTOR, sc->IS_INTEGER)
   return(univect_ref(sc, args, true));
 }
 
@@ -37201,18 +37674,21 @@ static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_float_vector_set "(float-vector-set! v i ... value) sets the i-th element of the float-vector v to value."
+  #define Q_float_vector_set s7_make_permanent_circular_list(sc, 2, 3, sc->IS_REAL, sc->IS_FLOAT_VECTOR, sc->T)
   return(univect_set(sc, args, true));
 }
 
 static s7_pointer g_int_vector_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_int_vector_ref "(int-vector-ref v ...) returns an element of the int-vector v."
+  #define Q_int_vector_ref s7_make_permanent_circular_list(sc, 2, 3, sc->IS_INTEGER, sc->IS_INT_VECTOR, sc->IS_INTEGER)
   return(univect_ref(sc, args, false));
 }
 
 static s7_pointer g_int_vector_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_int_vector_set "(int-vector-set! v i ... value) sets the i-th element of the int-vector v to value."
+  #define Q_int_vector_set s7_make_permanent_circular_list(sc, 2, 3, sc->IS_INTEGER, sc->IS_INT_VECTOR, sc->T)
   return(univect_set(sc, args, false));
 }
 
@@ -37801,6 +38277,7 @@ static int closure_compare_begin(const void *v1, const void *v2)
 static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 {
   #define H_sort "(sort! sequence less?) sorts a sequence using the function 'less?' to compare elements."
+  #define Q_sort s7_make_permanent_list(sc, 3, sc->T, sc->T, sc->IS_PROCEDURE)
 
   s7_pointer data, lessp, lx;
   s7_int len = 0, n, k;
@@ -38285,6 +38762,7 @@ bool s7_is_hash_table(s7_pointer p)
 static s7_pointer g_is_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_hash_table "(hash-table? obj) returns #t if obj is a hash-table"
+  #define Q_is_hash_table pl_bool_t
   check_boolean_method(sc, is_hash_table, sc->IS_HASH_TABLE, args);
 }
 
@@ -38293,6 +38771,8 @@ static s7_pointer g_is_hash_table(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_size "(hash-table-size obj) returns the size of the hash-table obj"
+  #define Q_hash_table_size s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_HASH_TABLE)
+
   if (!is_hash_table(car(args)))
     method_or_bust(sc, car(args), sc->HASH_TABLE_SIZE, args, T_HASH_TABLE, 0);
   return(make_integer(sc, hash_table_length(car(args))));
@@ -38312,6 +38792,8 @@ PF_TO_IF(hash_table_size, c_hash_table_size)
 static s7_pointer g_hash_table_entries(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_entries "(hash-table-entries obj) returns the number of entries in the hash-table obj"
+  #define Q_hash_table_entries s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_HASH_TABLE)
+
   if (!is_hash_table(car(args)))
     method_or_bust(sc, car(args), sc->HASH_TABLE_ENTRIES, args, T_HASH_TABLE, 0);
   return(make_integer(sc, hash_table_entries(car(args))));
@@ -38797,6 +39279,8 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_int size)
 static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_hash_table "(make-hash-table (size 511) eq-func) returns a new hash table"
+  #define Q_make_hash_table s7_make_permanent_list(sc, 3, sc->IS_HASH_TABLE, sc->IS_INTEGER, sc->IS_PROCEDURE)
+
   s7_int size;
   size = sc->default_hash_table_length;
 
@@ -38978,6 +39462,7 @@ static s7_pointer c_hash_table_function(s7_scheme *sc, s7_pointer table)
 static s7_pointer g_hash_table_function(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_function "(hash-table-function obj) returns the key equality function used by the hash-table obj"
+  #define Q_hash_table_function s7_make_permanent_list(sc, 2, sc->IS_PROCEDURE, sc->IS_HASH_TABLE)
   return(c_hash_table_function(sc, car(args)));
 }
 
@@ -39069,8 +39554,9 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
 static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_ref "(hash-table-ref table key) returns the value associated with key in the hash table"
-  s7_pointer table;
+  #define Q_hash_table_ref s7_make_permanent_list(sc, 3, sc->T, sc->IS_HASH_TABLE, sc->T)
 
+  s7_pointer table;
   table = car(args);
   if (!is_hash_table(table))
     method_or_bust(sc, table, sc->HASH_TABLE_REF, args, T_HASH_TABLE, 1);
@@ -39320,8 +39806,9 @@ static s7_pf_t hash_table_set_pf(s7_scheme *sc, s7_pointer expr)
 static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_set "(hash-table-set! table key value) sets the value associated with key in the hash table to value"
-  s7_pointer table;
+  #define Q_hash_table_set s7_make_permanent_list(sc, 4, sc->T, sc->IS_HASH_TABLE, sc->T, sc->T)
 
+  s7_pointer table;
   table = car(args);
   if (!is_hash_table(table))
     method_or_bust(sc, table, sc->HASH_TABLE_SET, args,T_HASH_TABLE, 1);
@@ -39336,6 +39823,7 @@ static s7_pointer g_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table "(hash-table ...) returns a hash-table containing the cons's passed as its arguments. \
 That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with the two key/value pairs preinstalled."
+  #define Q_hash_table s7_make_permanent_circular_list(sc, 1, 2, sc->IS_HASH_TABLE, sc->T)
 
   int len;
   s7_pointer x, ht;
@@ -39365,6 +39853,7 @@ static s7_pointer g_hash_table_star(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_star "(hash-table* ...) returns a hash-table containing the symbol/value pairs passed as its arguments. \
 That is, (hash-table* 'a 1 'b 2) returns a new hash-table with the two key/value pairs preinstalled."
+  #define Q_hash_table_star s7_make_permanent_circular_list(sc, 1, 2, sc->IS_HASH_TABLE, sc->T)
 
   int len;
   s7_pointer ht;
@@ -39597,6 +40086,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   if (doc)
     c_function_documentation(x) = make_permanent_string(doc);
   else c_function_documentation(x) = NULL;
+  c_function_signature(x) = NULL;
 
   c_function_required_args(x) = required_args;
   c_function_optional_args(x) = optional_args;
@@ -39632,6 +40122,7 @@ bool s7_is_procedure(s7_pointer x)
 static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_procedure "(procedure? obj) returns #t if obj is a procedure"
+  #define Q_is_procedure pl_bool_t
   s7_pointer x;
   int typ;
 
@@ -39723,6 +40214,7 @@ static s7_pointer c_procedure_source(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 {
   #define H_procedure_source "(procedure-source func) tries to return the definition of func"
+  #define Q_procedure_source s7_make_permanent_list(sc, 2, sc->T, sc->IS_PROCEDURE)
   return(c_procedure_source(sc, car(args)));
 }
 
@@ -39741,6 +40233,7 @@ static s7_pointer g_funclet(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p, e;
   #define H_funclet "(funclet func) tries to return an object's environment"
+  #define Q_funclet s7_make_permanent_list(sc, 2, sc->IS_LET, sc->IS_PROCEDURE)
 
   /* this procedure gives direct access to a function's closure -- see s7test.scm
    *   for some wild examples.  At least it provides a not-too-kludgey way for several functions
@@ -39791,17 +40284,31 @@ s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function 
 }
 
 
-static s7_pointer s7_define_constant_function(s7_scheme *sc, const char *name, s7_function fnc,
-					      int required_args, int optional_args, bool rest_arg, const char *doc)
+s7_pointer s7_define_typed_function(s7_scheme *sc, const char *name, s7_function fnc,
+				    int required_args, int optional_args, bool rest_arg, 
+				    const char *doc, s7_pointer signature)
 {
-  s7_pointer func, sym, p;
+  /* returns (string->symbol name), not the c_proc_t func */
+  s7_pointer func, sym;
+  func = s7_make_safe_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
+  c_function_signature(func) = signature;
   sym = make_symbol(sc, name);
-  func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   s7_define(sc, sc->NIL, sym, func);
-  set_immutable(sym);
-  p = s7_symbol_value(sc, sym);
-  typeflag(p) &= ~(T_SAFE_PROCEDURE);
-  return(p);
+  return(sym);
+}
+
+
+static s7_pointer s7_define_unsafe_typed_function(s7_scheme *sc, const char *name, s7_function fnc,
+				    int required_args, int optional_args, bool rest_arg, 
+				    const char *doc, s7_pointer signature)
+{
+  /* returns (string->symbol name), not the c_proc_t func */
+  s7_pointer func, sym;
+  func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
+  c_function_signature(func) = signature;
+  sym = make_symbol(sc, name);
+  s7_define(sc, sc->NIL, sym, func);
+  return(sym);
 }
 
 
@@ -39826,6 +40333,7 @@ bool s7_is_macro(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_is_macro(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_macro "(macro? arg) returns #t if 'arg' is a macro or a bacro"
+  #define Q_is_macro pl_bool_t
   check_boolean_method(sc, is_any_macro, sc->IS_MACRO, args);
 }
 
@@ -39962,6 +40470,8 @@ s7_pointer set_c_function_call_args(s7_scheme *sc)
   return(call_args);
 }
 
+
+/* -------------------------------- procedure-documentation -------------------------------- */
 static s7_pointer get_doc(s7_scheme *sc, s7_pointer x)
 {
   check_closure_for(sc, x, sc->DOCUMENTATION);
@@ -39990,7 +40500,6 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
   return(NULL);
 }
 
-
 static s7_pointer c_procedure_documentation(s7_scheme *sc, s7_pointer p)
 {
   if (is_symbol(p))
@@ -40012,6 +40521,7 @@ static s7_pointer c_procedure_documentation(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 {
   #define H_procedure_documentation "(procedure-documentation func) returns func's documentation string"
+  #define Q_procedure_doumentation s7_make_permanent_list(sc, 2, sc->IS_STRING, sc->IS_PROCEDURE)
   return(c_procedure_documentation(sc, car(args)));
 }
 
@@ -40043,6 +40553,7 @@ const char *s7_help(s7_scheme *sc, s7_pointer obj)
 static s7_pointer g_help(s7_scheme *sc, s7_pointer args)
 {
   #define H_help "(help obj) returns obj's documentation"
+  #define Q_help s7_make_permanent_list(sc, 2, sc->IS_STRING, sc->T)
   const char *doc;
 
   check_method(sc, car(args), sc->HELP, args);
@@ -40056,22 +40567,47 @@ static s7_pointer c_help(s7_scheme *sc, s7_pointer x) {return(g_help(sc, set_pli
 PF_TO_PF(help, c_help)
 
 
-static s7_pointer closure_name(s7_scheme *sc, s7_pointer closure)
+/* -------------------------------- procedure-signature -------------------------------- */
+static s7_pointer get_signature(s7_scheme *sc, s7_pointer x)
 {
-  /* this is used by the error handlers to get the current function name
-   */
-  s7_pointer x;
-
-  x = find_closure(sc, closure, sc->envir);
-  if (is_symbol(x))
-    return(x);
-
-  if (is_pair(sc->cur_code))
-    return(sc->cur_code);
-
-  return(closure); /* desperation -- the parameter list (caar here) will cause endless confusion in OP_APPLY errors! */
+  check_closure_for(sc, x, sc->SIGNATURE);
+  return(NULL);
 }
 
+static s7_pointer s7_procedure_signature(s7_scheme *sc, s7_pointer x)
+{
+  if ((is_any_c_function(x)) ||
+      (is_c_macro(x)))
+    return(c_function_signature(x));
+  return(get_signature(sc, x));
+}
+
+static s7_pointer c_procedure_signature(s7_scheme *sc, s7_pointer p)
+{
+  if (is_symbol(p)) 
+    {
+      p = s7_symbol_value(sc, p);
+      if (p == sc->UNDEFINED)
+	return(NULL);
+    }
+  check_method(sc, p, sc->PROCEDURE_SIGNATURE, list_1(sc, p));
+  if (!is_procedure(p))
+    return(NULL);
+  return(s7_procedure_signature(sc, p));
+}
+
+static s7_pointer g_procedure_signature(s7_scheme *sc, s7_pointer args)
+{
+  #define H_procedure_signature "(procedure-signature func) returns func's signature"
+  #define Q_procedure_signature s7_make_permanent_list(sc, 2, sc->IS_PAIR, sc->T)
+
+  s7_pointer res;
+  res = c_procedure_signature(sc, car(args));
+  if (res) return(res);
+  return(sc->F);
+}
+
+PF_TO_PF(procedure_signature, c_procedure_signature)
 
 
 /* -------------------------------- new types (c_objects) -------------------------------- */
@@ -40340,6 +40876,7 @@ bool s7_is_dilambda(s7_pointer obj)
 static s7_pointer g_is_dilambda(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_dilambda "(dilambda? obj) returns #t if obj is a procedure with setter."
+  #define Q_is_dilambda pl_bool_t
   check_boolean_method(sc, s7_is_dilambda, sc->IS_DILAMBDA, args);
 }
 
@@ -40356,6 +40893,7 @@ s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj)
 static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
 {
   #define H_procedure_setter "(procedure-setter obj) returns the setter associated with obj, or #f"
+  #define Q_procedure_setter s7_make_permanent_list(sc, 2, sc->T, sc->IS_PROCEDURE)
   s7_pointer p;
 
   p = car(args);
@@ -40617,6 +41155,7 @@ s7_pointer s7_arity(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 {
   #define H_arity "(arity obj) the min and max acceptable args for obj if it is applicable, otherwise #f."
+  #define Q_arity pl_t_t
   /* check_method(sc, p, sc->ARITY, args); */
   return(s7_arity(sc, car(args)));
 }
@@ -40725,6 +41264,8 @@ bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args)
 static s7_pointer g_is_aritable(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_aritable "(aritable? obj num-args) returns #t if 'obj can be applied to 'num-args arguments."
+  #define Q_is_aritable s7_make_permanent_list(sc, 3, sc->IS_BOOLEAN, sc->T, sc->IS_INTEGER)
+
   s7_pointer n;
   s7_int num;
 
@@ -40802,6 +41343,7 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
 static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_access "(symbol-access sym (env (curlet))) is the function called when the symbol is set!."
+  #define Q_symbol_access s7_make_permanent_list(sc, 3, sc->T, sc->IS_SYMBOL, sc->IS_LET)
   s7_pointer sym, p, e;
 
   sym = car(args);
@@ -40945,6 +41487,7 @@ bool s7_is_eq(s7_pointer obj1, s7_pointer obj2)
 static s7_pointer g_is_eq(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_eq "(eq? obj1 obj2) returns #t if obj1 is eq to (the same object as) obj2"
+  #define Q_is_eq pl_bool_t_t
   return(make_boolean(sc, ((car(args) == cadr(args)) ||
 			   ((is_unspecified(car(args))) && (is_unspecified(cadr(args)))))));
   /* (eq? (apply apply apply values '(())) #<unspecified>) should return #t
@@ -40981,6 +41524,7 @@ bool s7_is_eqv(s7_pointer a, s7_pointer b)
 static s7_pointer g_is_eqv(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_eqv "(eqv? obj1 obj2) returns #t if obj1 is equivalent to obj2"
+  #define Q_is_eqv pl_bool_t_t
   return(make_boolean(sc, s7_is_eqv(car(args), cadr(args))));
 }
 
@@ -41653,12 +42197,14 @@ bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 static s7_pointer g_is_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_equal "(equal? obj1 obj2) returns #t if obj1 is equal to obj2"
+  #define Q_is_equal pl_bool_t_t
   return(make_boolean(sc, s7_is_equal(sc, car(args), cadr(args))));
 }
 
 static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_morally_equal "(morally-equal? obj1 obj2) returns #t if obj1 is close enough to obj2."
+  #define Q_is_morally_equal pl_bool_t_t
   return(make_boolean(sc, s7_is_morally_equal(sc, car(args), cadr(args))));
 }
 
@@ -41724,6 +42270,8 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
   #define H_length "(length obj) returns the length of obj, which can be a list, vector, string, or hash-table. \
 The length of a dotted list does not include the final cdr, and is returned as a negative number.  A circular \
 list has infinite length.  Length of anything else returns #f."
+  #define Q_length pl_t_t
+
   return(s7_length(sc, car(args)));
 }
 
@@ -41816,6 +42364,8 @@ static s7_pointer hash_table_setter(s7_scheme *sc, s7_pointer e, s7_int loc, s7_
 s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 {
   #define H_copy "(copy obj) returns a copy of obj, (copy src dest) copies src into dest, (copy src dest start end) copies src from start to end."
+  #define Q_copy s7_make_permanent_list(sc, 5, sc->T, sc->T, sc->T, sc->IS_INTEGER, sc->IS_INTEGER)
+
   s7_pointer source, dest, source_iter;
   s7_int i, j, dest_len, start, end, source_len;
   s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_int loc, s7_pointer val) = NULL;
@@ -42258,6 +42808,8 @@ static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
 {
   #define H_reverse "(reverse lst) returns a list with the elements of lst in reverse order.  reverse \
 also accepts a string or vector argument."
+  #define Q_reverse pl_t_t
+
   s7_pointer p, np;
 
   p = car(args);
@@ -42429,6 +42981,7 @@ static s7_pointer c_reverse_in_place(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 {
   #define H_reverse_in_place "(reverse! lst) reverses lst in place"
+  #define Q_reverse_in_place pl_t_t
   return(c_reverse_in_place(sc, car(args)));
 }
 
@@ -42487,6 +43040,7 @@ static s7_pointer list_fill(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_fill(s7_scheme *sc, s7_pointer args)
 {
   #define H_fill "(fill! obj val (start 0) end) fills obj with val"
+  #define Q_fill s7_make_permanent_list(sc, 5, sc->T, sc->T, sc->T, sc->IS_INTEGER, sc->IS_INTEGER)
   s7_pointer p;
 
   p = car(args);
@@ -42996,6 +43550,7 @@ a stacktrace as a string.  Each line has two portions, the code being evaluated 
 the value of local variables in that code.  The first argument sets how many lines are displayed. \
 The next three arguments set the length and layout of those lines.  'as-comment' if #t causes each \
 line to be preceded by a semicolon."
+  #define Q_stacktrace s7_make_permanent_list(sc, 6, sc->IS_STRING, sc->IS_INTEGER, sc->IS_INTEGER, sc->IS_INTEGER, sc->IS_INTEGER, sc->IS_BOOLEAN)
 
   s7_int max_frames = 30, code_cols = 50, total_cols = 80, notes_start_col = 50;
   bool as_comment = false;
@@ -43344,6 +43899,8 @@ static s7_pointer g_dynamic_wind(s7_scheme *sc, s7_pointer args)
 {
   #define H_dynamic_wind "(dynamic-wind init body finish) calls init, then body, then finish, \
 each a function of no arguments, guaranteeing that finish is called even if body is exited"
+  #define Q_dynamic_wind s7_make_permanent_list(sc, 4, sc->T, sc->IS_PROCEDURE, sc->IS_PROCEDURE, sc->IS_PROCEDURE)
+
   s7_pointer p;
 
   if (!is_thunk(sc, car(args)))
@@ -43445,6 +44002,8 @@ s7_pointer s7_dynamic_wind(s7_scheme *sc, s7_pointer init, s7_pointer body, s7_p
 static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 {
   #define H_catch "(catch tag thunk handler) evaluates thunk; if an error occurs that matches the tag (#t matches all), the handler is called"
+  #define Q_catch s7_make_permanent_list(sc, 4, sc->T, sc->T, sc->IS_PROCEDURE, sc->IS_PROCEDURE)
+
   s7_pointer p, proc, err;
 
   proc = cadr(args);
@@ -43541,6 +44100,7 @@ static s7_pointer g_owlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_owlet "(owlet) returns the environment at the point of the last error. \
 It has the additional local variables: error-type, error-data, error-code, error-line, and error-file."
+  #define Q_owlet s7_make_permanent_list(sc, 1, sc->IS_LET)
   /* if owlet is not copied, (define e (owlet)), e changes as owlet does!
    */
   s7_pointer e, x;
@@ -43891,6 +44451,7 @@ static s7_pointer g_throw(s7_scheme *sc, s7_pointer args)
 {
   #define H_throw "(throw tag . info) is like (error ...) but it does not affect the owlet. \
 It looks for an existing catch with a matching tag, and jumps to it if found.  Otherwise it raises an error."
+  #define Q_throw s7_make_permanent_circular_list(sc, 2, 3, sc->T, sc->T, sc->T)
 
   bool ignored_flag = false;
   int i;
@@ -44302,6 +44863,7 @@ static s7_pointer g_error(s7_scheme *sc, s7_pointer args)
   #define H_error "(error type ...) signals an error.  The 'type' can be used with catch to trap \
 particular errors.  If the error is not caught, s7 treats the second argument as a format control string, \
 and applies it to the rest of the arguments."
+  #define Q_error s7_make_permanent_circular_list(sc, 1, 2, sc->T, sc->T)
 
   if (is_not_null(args))
     {
@@ -44621,6 +45183,7 @@ static s7_pointer apply_list_error(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 {
   #define H_apply "(apply func ...) applies func to the rest of the arguments"
+  #define Q_apply s7_make_permanent_circular_list(sc, 1, 2, sc->T, sc->T)
 
   /* can apply always be replaced with apply values?
    *   (apply + '(1 2 3)) is the same as (+ (apply values '(1 2 3)))
@@ -44719,6 +45282,7 @@ pass (rootlet):\n\
     (eval 'x (rootlet)))\n\
 \n\
   returns 32"
+  #define Q_eval s7_make_permanent_list(sc, 3, sc->T, sc->IS_LIST, sc->IS_LET)
 
   if (is_not_null(cdr(args)))
     {
@@ -44876,6 +45440,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 {
   #define H_s7_version "(s7-version) returns some string describing the current s7"
+  #define Q_s7_version s7_make_permanent_list(sc, 1, sc->IS_STRING)
 
 #if WITH_COUNTS
   report_counts(sc);
@@ -44896,6 +45461,8 @@ void s7_quit(s7_scheme *sc)
 static s7_pointer g_emergency_exit(s7_scheme *sc, s7_pointer args)
 {
   #define H_emergency_exit "(emergency-exit obj) exits s7 immediately"
+  #define Q_emergency_exit pl_t_t
+
   s7_pointer obj;
 #ifndef EXIT_SUCCESS
   #define EXIT_SUCCESS 0
@@ -44916,6 +45483,8 @@ static s7_pointer g_emergency_exit(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_exit(s7_scheme *sc, s7_pointer args)
 {
   #define H_exit "(exit obj) exits s7"
+  #define Q_exit pl_t_t
+
   s7_quit(sc);
   return(g_emergency_exit(sc, args));
 }
@@ -45611,6 +46180,7 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 {
   #define H_for_each "(for-each proc object . objects) applies proc to each element of the objects traversed in parallel. \
 Each object can be a list, string, vector, hash-table, or any other sequence."
+  #define Q_for_each s7_make_permanent_circular_list(sc, 2, 3, sc->T, sc->IS_PROCEDURE, sc->T)
 
   s7_pointer p;
   int len;
@@ -45761,6 +46331,7 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 {
   #define H_map "(map proc object . objects) applies proc to a list made up of the next element of each of its arguments, returning \
 a list of the results.  Its arguments can be lists, vectors, strings, hash-tables, or any applicable objects."
+  #define Q_map s7_make_permanent_circular_list(sc, 2, 3, sc->T, sc->IS_PROCEDURE, sc->T)
 
   s7_pointer p;
   int len;
@@ -46071,6 +46642,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_values(s7_scheme *sc, s7_pointer args)
 {
   #define H_values "(values obj ...) splices its arguments into whatever list holds it (its 'continuation')"
+  #define Q_values s7_make_permanent_circular_list(sc, 1, 2, sc->T, sc->T)
 
   if (is_null(args))         /* ((lambda () (let ((x 1)) (set! x (boolean? (values)))))) */
     return(sc->NO_VALUE);
@@ -46112,6 +46684,7 @@ s7_pointer s7_values(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_qq_list "({list} ...) returns its arguments in a list (internal to quasiquote)"
+  #define Q_qq_list s7_make_permanent_circular_list(sc, 1, 2, sc->T, sc->T)
 
   s7_pointer x, y, px;
 
@@ -46155,6 +46728,7 @@ static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_apply_values(s7_scheme *sc, s7_pointer args)
 {
   #define H_apply_values "({apply_values} var) applies values to var.  This is an internal function."
+  #define Q_apply_values pl_t_t
   s7_pointer x;
 
   if (is_null(args))
@@ -46217,6 +46791,7 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 comma (\"unquote\") and comma-atsign (\"apply values\") to pre-evaluate portions of the list. \
 unquoted expressions are evaluated and plugged into the list, apply-values evaluates the expression \
 and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -> (1 2 3 4)."
+  #define Q_quasiquote pl_t_t
 
   if (!is_pair(form))
     {
@@ -47145,6 +47720,7 @@ static s7_int c_pair_line_number(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_pair_line_number(s7_scheme *sc, s7_pointer args)
 {
   #define H_pair_line_number "(pair-line-number pair) returns the line number at which it read 'pair'"
+  #define Q_pair_line_number s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_PAIR)
   return(make_integer(sc, c_pair_line_number(sc, car(args))));
 }
 
@@ -49192,6 +49768,7 @@ static void init_choosers(s7_scheme *sc)
   s7_gf_set_function(slot_value(global_slot(sc->HELP)), help_pf);
   s7_gf_set_function(slot_value(global_slot(sc->PROCEDURE_SOURCE)), procedure_source_pf);
   s7_gf_set_function(slot_value(global_slot(sc->PROCEDURE_DOCUMENTATION)), procedure_documentation_pf);
+  s7_gf_set_function(slot_value(global_slot(sc->PROCEDURE_SIGNATURE)), procedure_signature_pf);
 
   s7_pf_set_function(slot_value(global_slot(sc->IS_CHAR_ALPHABETIC)), is_char_alphabetic_pf);
   s7_pf_set_function(slot_value(global_slot(sc->IS_CHAR_LOWER_CASE)), is_char_lower_case_pf);
@@ -57839,6 +58416,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     START_WITHOUT_POP_STACK:
       /* fprintf(stderr, "%s (%d)\n", op_names[sc->op], (int)(sc->op)); */
+      /* gc(sc); */
+
       switch (sc->op)
 	{
 	case OP_NO_OP:
@@ -66233,6 +66812,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
 {
   #define H_bignum "(bignum val (radix 10)) returns a multiprecision version of the string 'val'"
+  #define Q_bignum s7_make_permanent_list(sc, 3, sc->IS_BIGNUM, sc->IS_NUMBER, sc->IS_INTEGER)
   s7_pointer p;
 
   p = g_string_to_number_1(sc, args, sc->BIGNUM);
@@ -66273,6 +66853,7 @@ bool s7_is_bignum(s7_pointer obj)
 static s7_pointer g_is_bignum(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_bignum "(bignum? obj) returns #t if obj is a multiprecision number."
+  #define Q_is_bignum pl_bool_t
   return(s7_make_boolean(sc, is_big_number(car(args))));
 }
 
@@ -69818,8 +70399,10 @@ s7_scheme *s7_init(void)
       init_equals();
       init_hashers();
       init_pows();
+#if (!WITH_GMP)
       init_add_ops();
       init_multiply_ops();
+#endif
 #if (!WITH_PURE_S7)
       init_uppers();
 #endif
@@ -70368,6 +70951,7 @@ s7_scheme *s7_init(void)
   sc->DOX =                   assign_internal_syntax(sc, "do",          OP_DOX);
 
   sc->DOCUMENTATION =         make_symbol(sc, "documentation");
+  sc->SIGNATURE =             make_symbol(sc, "signature");
 
 #if WITH_IMMUTABLE_UNQUOTE
   /* this code solves the various unquote redefinition troubles
@@ -70438,444 +71022,481 @@ s7_scheme *s7_init(void)
 
   sc->gc_off = false;
 
-  sc->IS_SYMBOL =             s7_define_safe_function(sc, "symbol?",                 g_is_symbol,              1, 0, false, H_is_symbol);
-  sc->GENSYM =                s7_define_safe_function(sc, "gensym",                  g_gensym,                 0, 1, false, H_gensym);
-  sc->IS_GENSYM =             s7_define_safe_function(sc, "gensym?",                 g_is_gensym,              1, 0, false, H_is_gensym);
-                              s7_define_safe_function(sc, "symbol-table",            g_symbol_table,           0, 0, false, H_symbol_table);
-  sc->SYMBOL_TO_STRING =      s7_define_safe_function(sc, "symbol->string",          g_symbol_to_string,       1, 0, false, H_symbol_to_string);
-  sc->STRING_TO_SYMBOL =      s7_define_safe_function(sc, "string->symbol",          g_string_to_symbol,       1, 0, false, H_string_to_symbol);
-  sc->SYMBOL =                s7_define_safe_function(sc, "symbol",                  g_symbol,                 1, 0, false, H_symbol);
-  sc->SYMBOL_TO_VALUE =       s7_define_safe_function(sc, "symbol->value",           g_symbol_to_value,        1, 1, false, H_symbol_to_value);
-  sc->SYMBOL_TO_DYNAMIC_VALUE = s7_define_safe_function(sc, "symbol->dynamic-value", g_symbol_to_dynamic_value,1, 0, false, H_symbol_to_dynamic_value);
-  s7_dilambda(sc, "symbol-access", g_symbol_access, 1, 1, g_symbol_set_access, 2, 1, H_symbol_access);
+  {
+    s7_pointer pl_bool_t, pl_t_t, pl_t_pair, pl_bool_char, pcl_bool_char, pcl_bool_str, pl_bool_num, pl_num_num, pl_t_str_proc;
+    s7_pointer pl_bool_t_t, pl_t_t_pair;
+
+  #define defun(Scheme_Name, C_Name, Req, Opt, Rst) s7_define_typed_function(sc, Scheme_Name, g_ ## C_Name, Req, Opt, Rst, H_ ## C_Name, Q_ ## C_Name)
+  #define unsafe_defun(Scheme_Name, C_Name, Req, Opt, Rst) s7_define_unsafe_typed_function(sc, Scheme_Name, g_ ## C_Name, Req, Opt, Rst, H_ ## C_Name, Q_ ## C_Name)
+
+  /* we need the sc->IS_* symbols first for the procedure signature lists */
+  sc->IS_BOOLEAN = make_symbol(sc, "boolean?");
+  pl_bool_t = s7_make_permanent_list(sc, 2, sc->IS_BOOLEAN, sc->T);
+
+  sc->IS_SYMBOL =             defun("symbol?",		is_symbol,		1, 0, false);
+  sc->IS_GENSYM =             defun("gensym?",		is_gensym,		1, 0, false); 
+  sc->IS_KEYWORD =            defun("keyword?",		is_keyword,		1, 0, false);
+  sc->IS_LET =                defun("let?",		is_let,			1, 0, false);
+  sc->IS_OPENLET =            defun("openlet?",		is_openlet,		1, 0, false);
+  sc->IS_ITERATOR =           defun("iterator?",	is_iterator,		1, 0, false);
+  sc->IS_CONSTANT =           defun("constant?",	is_constant,		1, 0, false);
+  sc->IS_MACRO =              defun("macro?",		is_macro,		1, 0, false);
+  sc->IS_C_POINTER =          defun("c-pointer?",	is_c_pointer,		1, 0, false);
+  sc->IS_INPUT_PORT =         defun("input-port?",	is_input_port,		1, 0, false);
+  sc->IS_OUTPUT_PORT =        defun("output-port?",	is_output_port,		1, 0, false);
+  sc->IS_EOF_OBJECT =         defun("eof-object?",	is_eof_object,		1, 0, false);
+  sc->IS_INTEGER =            defun("integer?",		is_integer,		1, 0, false);
+  sc->IS_NUMBER =             defun("number?",		is_number,		1, 0, false);
+  sc->IS_REAL =               defun("real?",		is_real,		1, 0, false);
+  sc->IS_COMPLEX =            defun("complex?",		is_complex,		1, 0, false);
+  sc->IS_RATIONAL =           defun("rational?",	is_rational,		1, 0, false);
+  sc->IS_RANDOM_STATE =       defun("random-state?",	is_random_state,	1, 0, false);
+  sc->IS_CHAR =               defun("char?",		is_char,		1, 0, false);
+  sc->IS_STRING =             defun("string?",		is_string,		1, 0, false);
+  sc->IS_LIST =               defun("list?",		is_list,		1, 0, false);
+  sc->IS_PAIR =               defun("pair?",		is_pair,		1, 0, false);
+  sc->IS_VECTOR =             defun("vector?",		is_vector,		1, 0, false);
+  sc->IS_FLOAT_VECTOR =       defun("float-vector?",	is_float_vector,	1, 0, false);
+  sc->IS_INT_VECTOR =         defun("int-vector?",	is_int_vector,		1, 0, false);
+  sc->IS_BYTE_VECTOR =        defun("byte-vector?",	is_byte_vector,		1, 0, false);
+  sc->IS_HASH_TABLE =         defun("hash-table?",	is_hash_table,		1, 0, false);
+  sc->IS_CONTINUATION =       defun("continuation?",	is_continuation,	1, 0, false);
+  sc->IS_PROCEDURE =          defun("procedure?",	is_procedure,		1, 0, false);
+  sc->IS_DILAMBDA =           defun("dilambda?",	is_dilambda,		1, 0, false);
+                              defun("boolean?",		is_boolean,		1, 0, false);
+
+  pl_t_pair =     s7_make_permanent_list(sc, 2, sc->T, sc->IS_PAIR);
+  pl_t_t_pair =   s7_make_permanent_list(sc, 3, sc->T, sc->T, sc->IS_PAIR);
+  pl_t_t =        s7_make_permanent_list(sc, 2, sc->T, sc->T);
+  pl_bool_char =  s7_make_permanent_list(sc, 2, sc->IS_BOOLEAN, sc->IS_CHAR);
+  pl_bool_num =   s7_make_permanent_list(sc, 2, sc->IS_BOOLEAN, sc->IS_NUMBER);
+  pl_num_num =    s7_make_permanent_list(sc, 2, sc->IS_NUMBER, sc->IS_NUMBER);
+  pl_t_str_proc = s7_make_permanent_list(sc, 3, sc->T, sc->IS_STRING, sc->IS_PROCEDURE);
+  pl_bool_t_t =   s7_make_permanent_list(sc, 3, sc->IS_BOOLEAN, sc->T, sc->T);
+  pcl_bool_char = s7_make_permanent_circular_list(sc, 1, 2, sc->IS_BOOLEAN, sc->IS_CHAR);
+  pcl_bool_str =  s7_make_permanent_circular_list(sc, 1, 2, sc->IS_BOOLEAN, sc->IS_STRING);
+
+
+  sc->GENSYM =                defun("gensym",		gensym,			0, 1, false);
+                              defun("symbol-table",	symbol_table,		0, 0, false);
+  sc->SYMBOL_TO_STRING =      defun("symbol->string",	symbol_to_string,	1, 0, false);
+  sc->STRING_TO_SYMBOL =      defun("string->symbol",	string_to_symbol,	1, 0, false);
+  sc->SYMBOL =                defun("symbol",		symbol,			1, 0, false);
+  sc->SYMBOL_TO_VALUE =       defun("symbol->value",	symbol_to_value,	1, 1, false);
+  sc->SYMBOL_TO_DYNAMIC_VALUE = defun("symbol->dynamic-value", symbol_to_dynamic_value, 1, 0, false);
+  s7_dilambda(sc, "symbol-access", g_symbol_access, 1, 1, g_symbol_set_access,	2, 1, H_symbol_access);
   sc->SYMBOL_ACCESS = make_symbol(sc, "symbol-access");
 
-  sc->IS_KEYWORD =            s7_define_safe_function(sc, "keyword?",                g_is_keyword,             1, 0, false, H_is_keyword);
-  sc->MAKE_KEYWORD =          s7_define_safe_function(sc, "make-keyword",            g_make_keyword,           1, 0, false, H_make_keyword);
-  sc->SYMBOL_TO_KEYWORD =     s7_define_safe_function(sc, "symbol->keyword",         g_symbol_to_keyword,      1, 0, false, H_symbol_to_keyword);
-  sc->KEYWORD_TO_SYMBOL =     s7_define_safe_function(sc, "keyword->symbol",         g_keyword_to_symbol,      1, 0, false, H_keyword_to_symbol);
+  sc->MAKE_KEYWORD =          defun("make-keyword",	make_keyword,		1, 0, false);
+  sc->SYMBOL_TO_KEYWORD =     defun("symbol->keyword",	symbol_to_keyword,	1, 0, false);
+  sc->KEYWORD_TO_SYMBOL =     defun("keyword->symbol",	keyword_to_symbol,	1, 0, false);
 
-  sc->OUTLET =                s7_define_safe_function(sc, "outlet",                  g_outlet,                 1, 0, false, H_outlet);
-  sc->ROOTLET =               s7_define_safe_function(sc, "rootlet",                 g_rootlet,                0, 0, false, H_rootlet);
-  sc->CURLET =                s7_define_safe_function(sc, "curlet",                  g_curlet,                 0, 0, false, H_curlet);
-                              s7_define_constant_function(sc, "unlet",               g_unlet,                  0, 0, false, H_unlet); /* returns value */
-  sc->UNLET = make_symbol(sc, "unlet");
-  sc->SUBLET =                s7_define_safe_function(sc, "sublet",                  g_sublet,                 1, 0, true,  H_sublet);
-  sc->VARLET =                s7_define_function(sc,      "varlet",                  g_varlet,                 1, 0, true,  H_varlet);
-  sc->CUTLET =                s7_define_function(sc,      "cutlet",                  g_cutlet,                 1, 0, true,  H_cutlet);
-  sc->INLET =                 s7_define_safe_function(sc, "inlet",                   s7_inlet,                 0, 0, true,  H_inlet);
-  sc->IS_LET =                s7_define_safe_function(sc, "let?",                    g_is_let,                 1, 0, false, H_is_let);
+  sc->OUTLET =                defun("outlet",		outlet,			1, 0, false);
+  sc->ROOTLET =               defun("rootlet",		rootlet,		0, 0, false);
+  sc->CURLET =                defun("curlet",		curlet,			0, 0, false);
+  sc->UNLET =                 defun("unlet",		unlet,			0, 0, false);
+  set_immutable(sc->UNLET);
+  sc->SUBLET =                defun("sublet",		sublet,			1, 0, true);
+  sc->VARLET =                unsafe_defun("varlet",	varlet,			1, 0, true);
+  sc->CUTLET =                unsafe_defun("cutlet",	cutlet,			1, 0, true);
+  sc->INLET =                 defun("inlet",		inlet,			0, 0, true);
 #if (!WITH_PURE_S7)
-  sc->LET_TO_LIST =           s7_define_safe_function(sc, "let->list",               g_let_to_list,            1, 0, false, H_let_to_list);
+  sc->LET_TO_LIST =           defun("let->list",	let_to_list,		1, 0, false);
 #endif
-  sc->OWLET =                 s7_define_safe_function(sc, "owlet",                   g_owlet,                  0, 0, false, H_owlet);
-  sc->COVERLET =              s7_define_safe_function(sc, "coverlet",                g_coverlet,               1, 0, false, H_coverlet);
-  sc->OPENLET =               s7_define_safe_function(sc, "openlet",                 g_openlet,                1, 0, false, H_openlet);
-  sc->IS_OPENLET =            s7_define_safe_function(sc, "openlet?",                g_is_openlet,             1, 0, false, H_is_openlet);
-  sc->LET_REF =               s7_define_safe_function(sc, "let-ref",                 g_let_ref,                2, 0, false, H_let_ref);
-  sc->LET_SET =               s7_define_safe_function(sc, "let-set!",                g_let_set,                3, 0, false, H_let_set);
+  sc->OWLET =                 defun("owlet",		owlet,			0, 0, false);
+  sc->COVERLET =              defun("coverlet",		coverlet,		1, 0, false);
+  sc->OPENLET =               defun("openlet",		openlet,		1, 0, false);
+  sc->LET_REF =               defun("let-ref",		let_ref,		2, 0, false);
+  sc->LET_SET =               defun("let-set!",		let_set,		3, 0, false);
   sc->LET_REF_FALLBACK = make_symbol(sc, "let-ref-fallback");
   sc->LET_SET_FALLBACK = make_symbol(sc, "let-set!-fallback");
 
-  sc->MAKE_ITERATOR =         s7_define_safe_function(sc, "make-iterator",           g_make_iterator,          1, 0, false, H_make_iterator);
-  sc->IS_ITERATOR =           s7_define_safe_function(sc, "iterator?",               g_is_iterator,            1, 0, false, H_is_iterator);
-  sc->ITERATE =               s7_define_safe_function(sc, "iterate",                 g_iterate,                1, 0, false, H_iterate);
-  sc->ITERATOR_SEQUENCE =     s7_define_safe_function(sc, "iterator-sequence",       g_iterator_sequence,      1, 0, false, H_iterator_sequence);
-  sc->ITERATOR_IS_AT_END =    s7_define_safe_function(sc, "iterator-at-end?",        g_iterator_is_at_end,     1, 0, false, H_iterator_is_at_end);
+  sc->MAKE_ITERATOR =         defun("make-iterator",	make_iterator,		1, 0, false);
+  sc->ITERATE =               defun("iterate",		iterate,		1, 0, false);
+  sc->ITERATOR_SEQUENCE =     defun("iterator-sequence", iterator_sequence,	1, 0, false);
+  sc->ITERATOR_IS_AT_END =    defun("iterator-at-end?", iterator_is_at_end,	1, 0, false);
 
-  sc->IS_PROVIDED =           s7_define_safe_function(sc, "provided?",               g_is_provided,            1, 0, false, H_is_provided);
-  sc->PROVIDE =               s7_define_safe_function(sc, "provide",                 g_provide,                1, 0, false, H_provide);
-  sc->IS_DEFINED =            s7_define_safe_function(sc, "defined?",                g_is_defined,             1, 2, false, H_is_defined);
-  sc->IS_CONSTANT =           s7_define_safe_function(sc, "constant?",               g_is_constant,            1, 0, false, H_is_constant);
-  sc->IS_MACRO =              s7_define_safe_function(sc, "macro?",                  g_is_macro,               1, 0, false, H_is_macro);
+  sc->IS_PROVIDED =           defun("provided?",	is_provided,		1, 0, false);
+  sc->PROVIDE =               defun("provide",		provide,		1, 0, false);
+  sc->IS_DEFINED =            defun("defined?",		is_defined,		1, 2, false);
 
-  sc->IS_C_POINTER =          s7_define_safe_function(sc, "c-pointer?",              g_is_c_pointer,           1, 0, false, H_is_c_pointer);
-  sc->C_POINTER =             s7_define_safe_function(sc, "c-pointer",               g_c_pointer,              1, 0, false, H_c_pointer);
+  sc->C_POINTER =             defun("c-pointer",	c_pointer,		1, 0, false);
 
-  sc->PORT_LINE_NUMBER =      s7_define_safe_function(sc, "port-line-number",        g_port_line_number,       0, 1, false, H_port_line_number);
-  sc->PORT_FILENAME =         s7_define_safe_function(sc, "port-filename",           g_port_filename,          0, 1, false, H_port_filename);
-  sc->PAIR_LINE_NUMBER =      s7_define_safe_function(sc, "pair-line-number",        g_pair_line_number,       1, 0, false, H_pair_line_number);
+  sc->PORT_LINE_NUMBER =      defun("port-line-number", port_line_number,	0, 1, false);
+  sc->PORT_FILENAME =         defun("port-filename",	port_filename,		0, 1, false);
+  sc->PAIR_LINE_NUMBER =      defun("pair-line-number", pair_line_number,	1, 0, false);
 
-  sc->IS_INPUT_PORT =         s7_define_safe_function(sc, "input-port?",             g_is_input_port,          1, 0, false, H_is_input_port);
-  sc->IS_OUTPUT_PORT =        s7_define_safe_function(sc, "output-port?",            g_is_output_port,         1, 0, false, H_is_output_port);
-  sc->IS_PORT_CLOSED =        s7_define_safe_function(sc, "port-closed?",            g_is_port_closed,         1, 0, false, H_is_port_closed);
-  sc->IS_EOF_OBJECT =         s7_define_safe_function(sc, "eof-object?",             g_is_eof_object,          1, 0, false, H_is_eof_object);
+  sc->IS_PORT_CLOSED =        defun("port-closed?",	is_port_closed,		1, 0, false);
 
-  sc->CURRENT_INPUT_PORT =    s7_define_safe_function(sc, "current-input-port",      g_current_input_port,     0, 0, false, H_current_input_port);
-  sc->CURRENT_OUTPUT_PORT =   s7_define_safe_function(sc, "current-output-port",     g_current_output_port,    0, 0, false, H_current_output_port);
-  sc->CURRENT_ERROR_PORT =    s7_define_safe_function(sc, "current-error-port",      g_current_error_port,     0, 0, false, H_current_error_port);
-                              s7_define_safe_function(sc, "set-current-error-port",  g_set_current_error_port, 1, 0, false, H_set_current_error_port);
+  sc->CURRENT_INPUT_PORT =    defun("current-input-port", current_input_port,	0, 0, false);
+  sc->CURRENT_OUTPUT_PORT =   defun("current-output-port", current_output_port, 0, 0, false);
+  sc->CURRENT_ERROR_PORT =    defun("current-error-port", current_error_port,	0, 0, false);
+                              defun("set-current-error-port", set_current_error_port, 1, 0, false);
 #if (!WITH_PURE_S7)
-                              s7_define_safe_function(sc, "set-current-input-port",  g_set_current_input_port, 1, 0, false, H_set_current_input_port);
-                              s7_define_safe_function(sc, "set-current-output-port", g_set_current_output_port,1, 0, false, H_set_current_output_port);
-  sc->IS_CHAR_READY =         s7_define_safe_function(sc, "char-ready?",             g_is_char_ready,          0, 1, false, H_is_char_ready);
+                              defun("set-current-input-port", set_current_input_port, 1, 0, false);
+                              defun("set-current-output-port", set_current_output_port, 1, 0, false);
+  sc->IS_CHAR_READY =         defun("char-ready?",	is_char_ready,		0, 1, false);
 #endif
 
-  sc->CLOSE_INPUT_PORT =      s7_define_safe_function(sc, "close-input-port",        g_close_input_port,       1, 0, false, H_close_input_port);
-  sc->CLOSE_OUTPUT_PORT =     s7_define_safe_function(sc, "close-output-port",       g_close_output_port,      1, 0, false, H_close_output_port);
-  sc->FLUSH_OUTPUT_PORT =     s7_define_safe_function(sc, "flush-output-port",       g_flush_output_port,      0, 1, false, H_flush_output_port);
-  sc->OPEN_INPUT_FILE =       s7_define_safe_function(sc, "open-input-file",         g_open_input_file,        1, 1, false, H_open_input_file);
-  sc->OPEN_OUTPUT_FILE =      s7_define_safe_function(sc, "open-output-file",        g_open_output_file,       1, 1, false, H_open_output_file);
-  sc->OPEN_INPUT_STRING =     s7_define_safe_function(sc, "open-input-string",       g_open_input_string,      1, 0, false, H_open_input_string);
-                              s7_define_safe_function(sc, "open-output-string",      g_open_output_string,     0, 0, false, H_open_output_string);
-  sc->GET_OUTPUT_STRING =     s7_define_safe_function(sc, "get-output-string",       g_get_output_string,      1, 1, false, H_get_output_string);
+  sc->CLOSE_INPUT_PORT =      defun("close-input-port", close_input_port,	1, 0, false);
+  sc->CLOSE_OUTPUT_PORT =     defun("close-output-port", close_output_port,	1, 0, false);
+  sc->FLUSH_OUTPUT_PORT =     defun("flush-output-port", flush_output_port,	0, 1, false);
+  sc->OPEN_INPUT_FILE =       defun("open-input-file", open_input_file,		1, 1, false);
+  sc->OPEN_OUTPUT_FILE =      defun("open-output-file", open_output_file,	1, 1, false);
+  sc->OPEN_INPUT_STRING =     defun("open-input-string", open_input_string,	1, 0, false);
+                              defun("open-output-string", open_output_string,	0, 0, false);
+  sc->GET_OUTPUT_STRING =     defun("get-output-string", get_output_string,	1, 1, false);
 
-  sc->NEWLINE =               s7_define_safe_function(sc, "newline",                 g_newline,                0, 1, false, H_newline);
-  sc->WRITE =                 s7_define_safe_function(sc, "write",                   g_write,                  1, 1, false, H_write);
-  sc->DISPLAY =               s7_define_safe_function(sc, "display",                 g_display,                1, 1, false, H_display);
-  sc->READ_CHAR =             s7_define_safe_function(sc, "read-char",               g_read_char,              0, 1, false, H_read_char);
-  sc->PEEK_CHAR =             s7_define_safe_function(sc, "peek-char",               g_peek_char,              0, 1, false, H_peek_char);
-  sc->WRITE_CHAR =            s7_define_safe_function(sc, "write-char",              g_write_char,             1, 1, false, H_write_char);
-  sc->WRITE_STRING =          s7_define_safe_function(sc, "write-string",            g_write_string,           1, 3, false, H_write_string);
-  sc->READ_BYTE =             s7_define_safe_function(sc, "read-byte",               g_read_byte,              0, 1, false, H_read_byte);
-  sc->WRITE_BYTE =            s7_define_safe_function(sc, "write-byte",              g_write_byte,             1, 1, false, H_write_byte);
-  sc->READ_LINE =             s7_define_safe_function(sc, "read-line",               g_read_line,              0, 2, false, H_read_line);
-  sc->READ_STRING =           s7_define_safe_function(sc, "read-string",             g_read_string,            1, 1, false, H_read_string);
-  sc->READ =                  s7_define_function(sc,      "read",                    g_read,                   0, 1, false, H_read);
+  sc->NEWLINE =               defun("newline",		newline,		0, 1, false);
+  sc->WRITE =                 defun("write",		write,			1, 1, false);
+  sc->DISPLAY =               defun("display",		display,		1, 1, false);
+  sc->READ_CHAR =             defun("read-char",	read_char,		0, 1, false);
+  sc->PEEK_CHAR =             defun("peek-char",	peek_char,		0, 1, false);
+  sc->WRITE_CHAR =            defun("write-char",	write_char,		1, 1, false);
+  sc->WRITE_STRING =          defun("write-string",	write_string,		1, 3, false);
+  sc->READ_BYTE =             defun("read-byte",	read_byte,		0, 1, false);
+  sc->WRITE_BYTE =            defun("write-byte",	write_byte,		1, 1, false);
+  sc->READ_LINE =             defun("read-line",	read_line,		0, 2, false);
+  sc->READ_STRING =           defun("read-string",	read_string,		1, 1, false);
+  sc->READ =                  unsafe_defun("read",	read,			0, 1, false);
   /* read can't be safe because it messes with the stack, expecting to be all by itself in the call sequence (not embedded in OP_SAFE_C_opSq for example)
    */
 
-  sc->CALL_WITH_INPUT_STRING = s7_define_function(sc,     "call-with-input-string",  g_call_with_input_string, 2, 0, false, H_call_with_input_string);
-  sc->CALL_WITH_INPUT_FILE =  s7_define_function(sc,      "call-with-input-file",    g_call_with_input_file,   2, 0, false, H_call_with_input_file);
-  sc->WITH_INPUT_FROM_STRING = s7_define_function(sc,     "with-input-from-string",  g_with_input_from_string, 2, 0, false, H_with_input_from_string);
-  sc->WITH_INPUT_FROM_FILE =  s7_define_function(sc,      "with-input-from-file",    g_with_input_from_file,   2, 0, false, H_with_input_from_file);
+  sc->CALL_WITH_INPUT_STRING = unsafe_defun("call-with-input-string", call_with_input_string, 2, 0, false);
+  sc->CALL_WITH_INPUT_FILE =  unsafe_defun("call-with-input-file", call_with_input_file, 2, 0, false);
+  sc->WITH_INPUT_FROM_STRING = unsafe_defun("with-input-from-string", with_input_from_string, 2, 0, false);
+  sc->WITH_INPUT_FROM_FILE =  unsafe_defun("with-input-from-file", with_input_from_file, 2, 0, false);
 
-  sc->CALL_WITH_OUTPUT_STRING = s7_define_function(sc,    "call-with-output-string", g_call_with_output_string,1, 0, false, H_call_with_output_string);
-  sc->CALL_WITH_OUTPUT_FILE = s7_define_function(sc,      "call-with-output-file",   g_call_with_output_file,  2, 0, false, H_call_with_output_file);
-  sc->WITH_OUTPUT_TO_STRING = s7_define_function(sc,      "with-output-to-string",   g_with_output_to_string,  1, 0, false, H_with_output_to_string);
-  sc->WITH_OUTPUT_TO_FILE =   s7_define_function(sc,      "with-output-to-file",     g_with_output_to_file,    2, 0, false, H_with_output_to_file);
+  sc->CALL_WITH_OUTPUT_STRING = unsafe_defun("call-with-output-string", call_with_output_string, 1, 0, false);
+  sc->CALL_WITH_OUTPUT_FILE = unsafe_defun("call-with-output-file", call_with_output_file, 2, 0, false);
+  sc->WITH_OUTPUT_TO_STRING = unsafe_defun("with-output-to-string", with_output_to_string, 1, 0, false);
+  sc->WITH_OUTPUT_TO_FILE =   unsafe_defun("with-output-to-file", with_output_to_file, 2, 0, false);
 
 #if WITH_SYSTEM_EXTRAS
-  sc->IS_DIRECTORY =          s7_define_safe_function(sc, "directory?",              g_is_directory,           1, 0, false, H_is_directory);
-  sc->FILE_EXISTS =           s7_define_safe_function(sc, "file-exists?",            g_file_exists,            1, 0, false, H_file_exists);
-  sc->DELETE_FILE =           s7_define_safe_function(sc, "delete-file",             g_delete_file,            1, 0, false, H_delete_file);
-  sc->GETENV =                s7_define_safe_function(sc, "getenv",                  g_getenv_1,               1, 0, false, H_getenv);
-  sc->SYSTEM =                s7_define_safe_function(sc, "system",                  g_system,                 1, 1, false, H_system);
+  sc->IS_DIRECTORY =          defun("directory?",	is_directory,		1, 0, false);
+  sc->FILE_EXISTS =           defun("file-exists?",	file_exists,		1, 0, false);
+  sc->DELETE_FILE =           defun("delete-file",	delete_file,		1, 0, false);
+  sc->GETENV =                defun("getenv",		getenv,			1, 0, false);
+  sc->SYSTEM =                defun("system",		system,			1, 1, false);
 #ifndef _MSC_VER
-  sc->DIRECTORY_TO_LIST =     s7_define_safe_function(sc, "directory->list",         g_directory_to_list,      1, 0, false, H_directory_to_list);
-  sc->FILE_MTIME =            s7_define_safe_function(sc, "file-mtime",              g_file_mtime,             1, 0, false, H_file_mtime);
+  sc->DIRECTORY_TO_LIST =     defun("directory->list", directory_to_list,	1, 0, false);
+  sc->FILE_MTIME =            defun("file-mtime",	file_mtime,		1, 0, false);
 #endif
 #endif
 
-  sc->IS_INTEGER =            s7_define_safe_function(sc, "integer?",                g_is_integer,             1, 0, false, H_is_integer);
-  sc->IS_NUMBER =             s7_define_safe_function(sc, "number?",                 g_is_number,              1, 0, false, H_is_number);
-  sc->IS_REAL =               s7_define_safe_function(sc, "real?",                   g_is_real,                1, 0, false, H_is_real);
-  sc->IS_COMPLEX =            s7_define_safe_function(sc, "complex?",                g_is_complex,             1, 0, false, H_is_complex);
-  sc->IS_RATIONAL =           s7_define_safe_function(sc, "rational?",               g_is_rational,            1, 0, false, H_is_rational);
-
-  sc->REAL_PART =             s7_define_safe_function(sc, "real-part",               g_real_part,              1, 0, false, H_real_part);
-  sc->IMAG_PART =             s7_define_safe_function(sc, "imag-part",               g_imag_part,              1, 0, false, H_imag_part);
-  sc->NUMERATOR =             s7_define_safe_function(sc, "numerator",               g_numerator,              1, 0, false, H_numerator);
-  sc->DENOMINATOR =           s7_define_safe_function(sc, "denominator",             g_denominator,            1, 0, false, H_denominator);
-  sc->IS_EVEN =               s7_define_safe_function(sc, "even?",                   g_is_even,                1, 0, false, H_is_even);
-  sc->IS_ODD =                s7_define_safe_function(sc, "odd?",                    g_is_odd,                 1, 0, false, H_is_odd);
-  sc->IS_ZERO =               s7_define_safe_function(sc, "zero?",                   g_is_zero,                1, 0, false, H_is_zero);
-  sc->IS_POSITIVE =           s7_define_safe_function(sc, "positive?",               g_is_positive,            1, 0, false, H_is_positive);
-  sc->IS_NEGATIVE =           s7_define_safe_function(sc, "negative?",               g_is_negative,            1, 0, false, H_is_negative);
-  sc->IS_INFINITE =           s7_define_safe_function(sc, "infinite?",               g_is_infinite,            1, 0, false, H_is_infinite);
-  sc->IS_NAN =                s7_define_safe_function(sc, "nan?",                    g_is_nan,                 1, 0, false, H_is_nan);
+  sc->REAL_PART =             defun("real-part",	real_part,		1, 0, false);
+  sc->IMAG_PART =             defun("imag-part",	imag_part,		1, 0, false);
+  sc->NUMERATOR =             defun("numerator",	numerator,		1, 0, false);
+  sc->DENOMINATOR =           defun("denominator",	denominator,		1, 0, false);
+  sc->IS_EVEN =               defun("even?",		is_even,		1, 0, false);
+  sc->IS_ODD =                defun("odd?",		is_odd,			1, 0, false);
+  sc->IS_ZERO =               defun("zero?",		is_zero,		1, 0, false);
+  sc->IS_POSITIVE =           defun("positive?",	is_positive,		1, 0, false);
+  sc->IS_NEGATIVE =           defun("negative?",	is_negative,		1, 0, false);
+  sc->IS_INFINITE =           defun("infinite?",	is_infinite,		1, 0, false);
+  sc->IS_NAN =                defun("nan?",		is_nan,			1, 0, false);
 
 #if (!WITH_GMP)
 #if WITH_MAKE_COMPLEX
-  sc->MAKE_RECTANGULAR =      s7_define_safe_function(sc, "make-complex",            g_make_rectangular,       2, 0, false, H_make_rectangular);
+  sc->MAKE_RECTANGULAR =      defun("make-complex",	make_rectangular,	2, 0, false);
 #else
-  sc->MAKE_POLAR =            s7_define_safe_function(sc, "make-polar",              g_make_polar,             2, 0, false, H_make_polar);
-  sc->MAKE_RECTANGULAR =      s7_define_safe_function(sc, "make-rectangular",        g_make_rectangular,       2, 0, false, H_make_rectangular);
-  sc->MAGNITUDE =             s7_define_safe_function(sc, "magnitude",               g_magnitude,              1, 0, false, H_magnitude);
+  sc->MAKE_POLAR =            defun("make-polar",	make_polar,		2, 0, false);
+  sc->MAKE_RECTANGULAR =      defun("make-rectangular", make_rectangular,	2, 0, false);
+  sc->MAGNITUDE =             defun("magnitude",	magnitude,		1, 0, false);
 #endif
-  sc->ANGLE =                 s7_define_safe_function(sc, "angle",                   g_angle,                  1, 0, false, H_angle);
-  sc->RATIONALIZE =           s7_define_safe_function(sc, "rationalize",             g_rationalize,            1, 1, false, H_rationalize);
-  sc->ABS =                   s7_define_safe_function(sc, "abs",                     g_abs,                    1, 0, false, H_abs);
-  sc->EXP =                   s7_define_safe_function(sc, "exp",                     g_exp,                    1, 0, false, H_exp);
-  sc->LOG =                   s7_define_safe_function(sc, "log",                     g_log,                    1, 1, false, H_log);
-  sc->SIN =                   s7_define_safe_function(sc, "sin",                     g_sin,                    1, 0, false, H_sin);
-  sc->COS =                   s7_define_safe_function(sc, "cos",                     g_cos,                    1, 0, false, H_cos);
-  sc->TAN =                   s7_define_safe_function(sc, "tan",                     g_tan,                    1, 0, false, H_tan);
-  sc->ASIN =                  s7_define_safe_function(sc, "asin",                    g_asin,                   1, 0, false, H_asin);
-  sc->ACOS =                  s7_define_safe_function(sc, "acos",                    g_acos,                   1, 0, false, H_acos);
-  sc->ATAN =                  s7_define_safe_function(sc, "atan",                    g_atan,                   1, 1, false, H_atan);
-  sc->SINH =                  s7_define_safe_function(sc, "sinh",                    g_sinh,                   1, 0, false, H_sinh);
-  sc->COSH =                  s7_define_safe_function(sc, "cosh",                    g_cosh,                   1, 0, false, H_cosh);
-  sc->TANH =                  s7_define_safe_function(sc, "tanh",                    g_tanh,                   1, 0, false, H_tanh);
-  sc->ASINH =                 s7_define_safe_function(sc, "asinh",                   g_asinh,                  1, 0, false, H_asinh);
-  sc->ACOSH =                 s7_define_safe_function(sc, "acosh",                   g_acosh,                  1, 0, false, H_acosh);
-  sc->ATANH =                 s7_define_safe_function(sc, "atanh",                   g_atanh,                  1, 0, false, H_atanh);
-  sc->SQRT =                  s7_define_safe_function(sc, "sqrt",                    g_sqrt,                   1, 0, false, H_sqrt);
-  sc->EXPT =                  s7_define_safe_function(sc, "expt",                    g_expt,                   2, 0, false, H_expt);
-  sc->FLOOR =                 s7_define_safe_function(sc, "floor",                   g_floor,                  1, 0, false, H_floor);
-  sc->CEILING =               s7_define_safe_function(sc, "ceiling",                 g_ceiling,                1, 0, false, H_ceiling);
-  sc->TRUNCATE =              s7_define_safe_function(sc, "truncate",                g_truncate,               1, 0, false, H_truncate);
-  sc->ROUND =                 s7_define_safe_function(sc, "round",                   g_round,                  1, 0, false, H_round);
-  sc->LCM =                   s7_define_safe_function(sc, "lcm",                     g_lcm,                    0, 0, true,  H_lcm);
-  sc->GCD =                   s7_define_safe_function(sc, "gcd",                     g_gcd,                    0, 0, true,  H_gcd);
-  sc->ADD =                   s7_define_safe_function(sc, "+",                       g_add,                    0, 0, true,  H_add);
-  sc->SUBTRACT =                 s7_define_safe_function(sc, "-",                       g_subtract,               1, 0, true,  H_subtract);
-  sc->MULTIPLY =              s7_define_safe_function(sc, "*",                       g_multiply,               0, 0, true,  H_multiply);
-  sc->DIVIDE =                s7_define_safe_function(sc, "/",                       g_divide,                 1, 0, true,  H_divide);
-  sc->MAX =                   s7_define_safe_function(sc, "max",                     g_max,                    1, 0, true,  H_max);
-  sc->MIN =                   s7_define_safe_function(sc, "min",                     g_min,                    1, 0, true,  H_min);
-  sc->QUOTIENT =              s7_define_safe_function(sc, "quotient",                g_quotient,               2, 0, false, H_quotient);
-  sc->REMAINDER =             s7_define_safe_function(sc, "remainder",               g_remainder,              2, 0, false, H_remainder);
-  sc->MODULO =                s7_define_safe_function(sc, "modulo",                  g_modulo,                 2, 0, false, H_modulo);
-  sc->EQ =                    s7_define_safe_function(sc, "=",                       g_equal,                  2, 0, true,  H_equal);
-  sc->LT =                    s7_define_safe_function(sc, "<",                       g_less,                   2, 0, true,  H_less);
-  sc->GT =                    s7_define_safe_function(sc, ">",                       g_greater,                2, 0, true,  H_greater);
-  sc->LEQ =                   s7_define_safe_function(sc, "<=",                      g_less_or_equal,          2, 0, true,  H_less_or_equal);
-  sc->GEQ =                   s7_define_safe_function(sc, ">=",                      g_greater_or_equal,       2, 0, true,  H_greater_or_equal);
+  sc->ANGLE =                 defun("angle",		angle,			1, 0, false);
+  sc->RATIONALIZE =           defun("rationalize",	rationalize,		1, 1, false);
+  sc->ABS =                   defun("abs",		abs,			1, 0, false);
+  sc->EXP =                   defun("exp",		exp,			1, 0, false);
+  sc->LOG =                   defun("log",		log,			1, 1, false);
+  sc->SIN =                   defun("sin",		sin,			1, 0, false);
+  sc->COS =                   defun("cos",		cos,			1, 0, false);
+  sc->TAN =                   defun("tan",		tan,			1, 0, false);
+  sc->ASIN =                  defun("asin",		asin,			1, 0, false);
+  sc->ACOS =                  defun("acos",		acos,			1, 0, false);
+  sc->ATAN =                  defun("atan",		atan,			1, 1, false);
+  sc->SINH =                  defun("sinh",		sinh,			1, 0, false);
+  sc->COSH =                  defun("cosh",		cosh,			1, 0, false);
+  sc->TANH =                  defun("tanh",		tanh,			1, 0, false);
+  sc->ASINH =                 defun("asinh",		asinh,			1, 0, false);
+  sc->ACOSH =                 defun("acosh",		acosh,			1, 0, false);
+  sc->ATANH =                 defun("atanh",		atanh,			1, 0, false);
+  sc->SQRT =                  defun("sqrt",		sqrt,			1, 0, false);
+  sc->EXPT =                  defun("expt",		expt,			2, 0, false);
+  sc->FLOOR =                 defun("floor",		floor,			1, 0, false);
+  sc->CEILING =               defun("ceiling",		ceiling,		1, 0, false);
+  sc->TRUNCATE =              defun("truncate",		truncate,		1, 0, false);
+  sc->ROUND =                 defun("round",		round,			1, 0, false);
+  sc->LCM =                   defun("lcm",		lcm,			0, 0, true);
+  sc->GCD =                   defun("gcd",		gcd,			0, 0, true);
+  sc->ADD =                   defun("+",		add,			0, 0, true);
+  sc->SUBTRACT =              defun("-",		subtract,		1, 0, true);
+  sc->MULTIPLY =              defun("*",		multiply,		0, 0, true);
+  sc->DIVIDE =                defun("/",		divide,			1, 0, true);
+  sc->MAX =                   defun("max",		max,			1, 0, true);
+  sc->MIN =                   defun("min",		min,			1, 0, true);
+  sc->QUOTIENT =              defun("quotient",		quotient,		2, 0, false);
+  sc->REMAINDER =             defun("remainder",	remainder,		2, 0, false);
+  sc->MODULO =                defun("modulo",		modulo,			2, 0, false);
+  sc->EQ =                    defun("=",		equal,			2, 0, true);
+  sc->LT =                    defun("<",		less,			2, 0, true);
+  sc->GT =                    defun(">",		greater,		2, 0, true);
+  sc->LEQ =                   defun("<=",		less_or_equal,		2, 0, true);
+  sc->GEQ =                   defun(">=",		greater_or_equal,	2, 0, true);
 #if (!WITH_PURE_S7)
-  sc->INEXACT_TO_EXACT =      s7_define_safe_function(sc, "inexact->exact",          g_inexact_to_exact,       1, 0, false, H_inexact_to_exact);
-  sc->EXACT_TO_INEXACT =      s7_define_safe_function(sc, "exact->inexact",          g_exact_to_inexact,       1, 0, false, H_exact_to_inexact);
-  sc->INTEGER_LENGTH =        s7_define_safe_function(sc, "integer-length",          g_integer_length,         1, 0, false, H_integer_length);
+  sc->INEXACT_TO_EXACT =      defun("inexact->exact",	inexact_to_exact,	1, 0, false);
+  sc->EXACT_TO_INEXACT =      defun("exact->inexact",	exact_to_inexact,	1, 0, false);
+  sc->INTEGER_LENGTH =        defun("integer-length",	integer_length,		1, 0, false);
 #endif
-  sc->LOGIOR =                s7_define_safe_function(sc, "logior",                  g_logior,                 0, 0, true,  H_logior);
-  sc->LOGXOR =                s7_define_safe_function(sc, "logxor",                  g_logxor,                 0, 0, true,  H_logxor);
-  sc->LOGAND =                s7_define_safe_function(sc, "logand",                  g_logand,                 0, 0, true,  H_logand);
-  sc->LOGNOT =                s7_define_safe_function(sc, "lognot",                  g_lognot,                 1, 0, false, H_lognot);
-  sc->ASH =                   s7_define_safe_function(sc, "ash",                     g_ash,                    2, 0, false, H_ash);
+  sc->LOGIOR =                defun("logior",		logior,			0, 0, true);
+  sc->LOGXOR =                defun("logxor",		logxor,			0, 0, true);
+  sc->LOGAND =                defun("logand",		logand,			0, 0, true);
+  sc->LOGNOT =                defun("lognot",		lognot,			1, 0, false);
+  sc->ASH =                   defun("ash",		ash,			2, 0, false);
 #endif
-  sc->LOGBIT =                s7_define_safe_function(sc, "logbit?",                 g_logbit,                 2, 0, false, H_logbit);
-  sc->INTEGER_DECODE_FLOAT =  s7_define_safe_function(sc, "integer-decode-float",    g_integer_decode_float,   1, 0, false, H_integer_decode_float);
+  sc->LOGBIT =                defun("logbit?",		logbit,			2, 0, false);
+  sc->INTEGER_DECODE_FLOAT =  defun("integer-decode-float", integer_decode_float, 1, 0, false);
 #if (!WITH_PURE_S7)
-  sc->IS_EXACT =              s7_define_safe_function(sc, "exact?",                  g_is_exact,               1, 0, false, H_is_exact);
-  sc->IS_INEXACT =            s7_define_safe_function(sc, "inexact?",                g_is_inexact,             1, 0, false, H_is_inexact);
+  sc->IS_EXACT =              defun("exact?",		is_exact,		1, 0, false);
+  sc->IS_INEXACT =            defun("inexact?",		is_inexact,		1, 0, false);
 #endif
   sc->rng_tag = s7_new_type_x(sc, "<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL, NULL, copy_random_state, NULL, NULL);
   s7_set_object_print_readably(sc->rng_tag, print_rng_readably);
-  sc->IS_RANDOM_STATE =       s7_define_safe_function(sc, "random-state?",           g_is_random_state,        1, 0, false, H_is_random_state);
-  sc->RANDOM_STATE_TO_LIST =  s7_define_safe_function(sc, "random-state->list",      s7_random_state_to_list,  0, 1, false, H_random_state_to_list);
-  sc->MAKE_RANDOM_STATE =     s7_define_safe_function(sc, "make-random-state",       s7_make_random_state,     1, 1, false, H_make_random_state);
-  sc->RANDOM =                s7_define_safe_function(sc, "random",                  g_random,                 1, 1, false, H_random);
+  sc->RANDOM_STATE_TO_LIST =  defun("random-state->list", random_state_to_list, 0, 1, false);
+  sc->MAKE_RANDOM_STATE =     defun("make-random-state", make_random_state,	1, 1, false);
+  sc->RANDOM =                defun("random",		random,			1, 1, false);
 
-  sc->NUMBER_TO_STRING =      s7_define_safe_function(sc, "number->string",          g_number_to_string,       1, 1, false, H_number_to_string);
-  sc->STRING_TO_NUMBER =      s7_define_safe_function(sc, "string->number",          g_string_to_number,       1, 1, false, H_string_to_number);
+  sc->NUMBER_TO_STRING =      defun("number->string",	number_to_string,	1, 1, false);
+  sc->STRING_TO_NUMBER =      defun("string->number",	string_to_number,	1, 1, false);
 
-  sc->IS_CHAR =               s7_define_safe_function(sc, "char?",                   g_is_char,                1, 0, false, H_is_char);
-  sc->CHAR_UPCASE =           s7_define_safe_function(sc, "char-upcase",             g_char_upcase,            1, 0, false, H_char_upcase);
-  sc->CHAR_DOWNCASE =         s7_define_safe_function(sc, "char-downcase",           g_char_downcase,          1, 0, false, H_char_downcase);
-  sc->CHAR_TO_INTEGER =       s7_define_safe_function(sc, "char->integer",           g_char_to_integer,        1, 0, false, H_char_to_integer);
-  sc->INTEGER_TO_CHAR =       s7_define_safe_function(sc, "integer->char",           g_integer_to_char,        1, 0, false, H_integer_to_char);
+  sc->CHAR_UPCASE =           defun("char-upcase",	char_upcase,		1, 0, false);
+  sc->CHAR_DOWNCASE =         defun("char-downcase",	char_downcase,		1, 0, false);
+  sc->CHAR_TO_INTEGER =       defun("char->integer",	char_to_integer,	1, 0, false);
+  sc->INTEGER_TO_CHAR =       defun("integer->char",	integer_to_char,	1, 0, false);
 
-  sc->IS_CHAR_UPPER_CASE =    s7_define_safe_function(sc, "char-upper-case?",        g_is_char_upper_case,     1, 0, false, H_is_char_upper_case);
-  sc->IS_CHAR_LOWER_CASE =    s7_define_safe_function(sc, "char-lower-case?",        g_is_char_lower_case,     1, 0, false, H_is_char_lower_case);
-  sc->IS_CHAR_ALPHABETIC =    s7_define_safe_function(sc, "char-alphabetic?",        g_is_char_alphabetic,     1, 0, false, H_is_char_alphabetic);
-  sc->IS_CHAR_NUMERIC =       s7_define_safe_function(sc, "char-numeric?",           g_is_char_numeric,        1, 0, false, H_is_char_numeric);
-  sc->IS_CHAR_WHITESPACE =    s7_define_safe_function(sc, "char-whitespace?",        g_is_char_whitespace,     1, 0, false, H_is_char_whitespace);
+  sc->IS_CHAR_UPPER_CASE =    defun("char-upper-case?", is_char_upper_case,	1, 0, false);
+  sc->IS_CHAR_LOWER_CASE =    defun("char-lower-case?", is_char_lower_case,	1, 0, false);
+  sc->IS_CHAR_ALPHABETIC =    defun("char-alphabetic?", is_char_alphabetic,	1, 0, false);
+  sc->IS_CHAR_NUMERIC =       defun("char-numeric?",	is_char_numeric,	1, 0, false);
+  sc->IS_CHAR_WHITESPACE =    defun("char-whitespace?", is_char_whitespace,	1, 0, false);
 
-  sc->CHAR_EQ =               s7_define_safe_function(sc, "char=?",                  g_chars_are_equal,        2, 0, true,  H_chars_are_equal);
-  sc->CHAR_LT =               s7_define_safe_function(sc, "char<?",                  g_chars_are_less,         2, 0, true,  H_chars_are_less);
-  sc->CHAR_GT =               s7_define_safe_function(sc, "char>?",                  g_chars_are_greater,      2, 0, true,  H_chars_are_greater);
-  sc->CHAR_LEQ =              s7_define_safe_function(sc, "char<=?",                 g_chars_are_leq,          2, 0, true,  H_chars_are_leq);
-  sc->CHAR_GEQ =              s7_define_safe_function(sc, "char>=?",                 g_chars_are_geq,          2, 0, true,  H_chars_are_geq);
+  sc->CHAR_EQ =               defun("char=?",		chars_are_equal,	2, 0, true);
+  sc->CHAR_LT =               defun("char<?",		chars_are_less,		2, 0, true);
+  sc->CHAR_GT =               defun("char>?",		chars_are_greater,	2, 0, true);
+  sc->CHAR_LEQ =              defun("char<=?",		chars_are_leq,		2, 0, true);
+  sc->CHAR_GEQ =              defun("char>=?",		chars_are_geq,		2, 0, true);
 #if (!WITH_PURE_S7)
-  sc->CHAR_CI_EQ =            s7_define_safe_function(sc, "char-ci=?",               g_chars_are_ci_equal,     2, 0, true,  H_chars_are_ci_equal);
-  sc->CHAR_CI_LT =            s7_define_safe_function(sc, "char-ci<?",               g_chars_are_ci_less,      2, 0, true,  H_chars_are_ci_less);
-  sc->CHAR_CI_GT =            s7_define_safe_function(sc, "char-ci>?",               g_chars_are_ci_greater,   2, 0, true,  H_chars_are_ci_greater);
-  sc->CHAR_CI_LEQ =           s7_define_safe_function(sc, "char-ci<=?",              g_chars_are_ci_leq,       2, 0, true,  H_chars_are_ci_leq);
-  sc->CHAR_CI_GEQ =           s7_define_safe_function(sc, "char-ci>=?",              g_chars_are_ci_geq,       2, 0, true,  H_chars_are_ci_geq);
+  sc->CHAR_CI_EQ =            defun("char-ci=?",	chars_are_ci_equal,	2, 0, true);
+  sc->CHAR_CI_LT =            defun("char-ci<?",	chars_are_ci_less,	2, 0, true);
+  sc->CHAR_CI_GT =            defun("char-ci>?",	chars_are_ci_greater,	2, 0, true);
+  sc->CHAR_CI_LEQ =           defun("char-ci<=?",	chars_are_ci_leq,	2, 0, true);
+  sc->CHAR_CI_GEQ =           defun("char-ci>=?",	chars_are_ci_geq,	2, 0, true);
 #endif
-  sc->CHAR_POSITION =         s7_define_safe_function(sc, "char-position",           g_char_position,          2, 1, false, H_char_position);
-  sc->STRING_POSITION =       s7_define_safe_function(sc, "string-position",         g_string_position,        2, 1, false, H_string_position);
+  sc->CHAR_POSITION =         defun("char-position",	char_position,		2, 1, false);
+  sc->STRING_POSITION =       defun("string-position",	string_position,	2, 1, false);
 
-  sc->IS_STRING =             s7_define_safe_function(sc, "string?",                 g_is_string,              1, 0, false, H_is_string);
-  sc->MAKE_STRING =           s7_define_safe_function(sc, "make-string",             g_make_string,            1, 1, false, H_make_string);
-  sc->STRING_REF =            s7_define_safe_function(sc, "string-ref",              g_string_ref,             2, 0, false, H_string_ref);
-  sc->STRING_SET =            s7_define_safe_function(sc, "string-set!",             g_string_set,             3, 0, false, H_string_set);
-  sc->STRING_EQ =             s7_define_safe_function(sc, "string=?",                g_strings_are_equal,      2, 0, true,  H_strings_are_equal);
-  sc->STRING_LT =             s7_define_safe_function(sc, "string<?",                g_strings_are_less,       2, 0, true,  H_strings_are_less);
-  sc->STRING_GT =             s7_define_safe_function(sc, "string>?",                g_strings_are_greater,    2, 0, true,  H_strings_are_greater);
-  sc->STRING_LEQ =            s7_define_safe_function(sc, "string<=?",               g_strings_are_leq,        2, 0, true,  H_strings_are_leq);
-  sc->STRING_GEQ =            s7_define_safe_function(sc, "string>=?",               g_strings_are_geq,        2, 0, true,  H_strings_are_geq);
+  sc->MAKE_STRING =           defun("make-string",	make_string,		1, 1, false);
+  sc->STRING_REF =            defun("string-ref",	string_ref,		2, 0, false);
+  sc->STRING_SET =            defun("string-set!",	string_set,		3, 0, false);
+  sc->STRING_EQ =             defun("string=?",		strings_are_equal,	2, 0, true);
+  sc->STRING_LT =             defun("string<?",		strings_are_less,	2, 0, true);
+  sc->STRING_GT =             defun("string>?",		strings_are_greater,	2, 0, true);
+  sc->STRING_LEQ =            defun("string<=?",	strings_are_leq,	2, 0, true);
+  sc->STRING_GEQ =            defun("string>=?",	strings_are_geq,	2, 0, true);
 #if (!WITH_PURE_S7)
-  sc->STRING_CI_EQ =          s7_define_safe_function(sc, "string-ci=?",             g_strings_are_ci_equal,   2, 0, true,  H_strings_are_ci_equal);
-  sc->STRING_CI_LT =          s7_define_safe_function(sc, "string-ci<?",             g_strings_are_ci_less,    2, 0, true,  H_strings_are_ci_less);
-  sc->STRING_CI_GT =          s7_define_safe_function(sc, "string-ci>?",             g_strings_are_ci_greater, 2, 0, true,  H_strings_are_ci_greater);
-  sc->STRING_CI_LEQ =         s7_define_safe_function(sc, "string-ci<=?",            g_strings_are_ci_leq,     2, 0, true,  H_strings_are_ci_leq);
-  sc->STRING_CI_GEQ =         s7_define_safe_function(sc, "string-ci>=?",            g_strings_are_ci_geq,     2, 0, true,  H_strings_are_ci_geq);
-  sc->STRING_COPY =           s7_define_safe_function(sc, "string-copy",             g_string_copy,            1, 0, false, H_string_copy);
-  sc->STRING_FILL =           s7_define_safe_function(sc, "string-fill!",            g_string_fill,            2, 2, false, H_string_fill);
-  sc->LIST_TO_STRING =        s7_define_safe_function(sc, "list->string",            g_list_to_string,         1, 0, false, H_list_to_string);
-  sc->STRING_LENGTH =         s7_define_safe_function(sc, "string-length",           g_string_length,          1, 0, false, H_string_length);
-  sc->STRING_TO_LIST =        s7_define_safe_function(sc, "string->list",            g_string_to_list,         1, 2, false, H_string_to_list);
+  sc->STRING_CI_EQ =          defun("string-ci=?",	strings_are_ci_equal,	2, 0, true);
+  sc->STRING_CI_LT =          defun("string-ci<?",	strings_are_ci_less,	2, 0, true);
+  sc->STRING_CI_GT =          defun("string-ci>?",	strings_are_ci_greater, 2, 0, true);
+  sc->STRING_CI_LEQ =         defun("string-ci<=?",	strings_are_ci_leq,	2, 0, true);
+  sc->STRING_CI_GEQ =         defun("string-ci>=?",	strings_are_ci_geq,	2, 0, true);
+  sc->STRING_COPY =           defun("string-copy",	string_copy,		1, 0, false);
+  sc->STRING_FILL =           defun("string-fill!",	string_fill,		2, 2, false);
+  sc->LIST_TO_STRING =        defun("list->string",	list_to_string,		1, 0, false);
+  sc->STRING_LENGTH =         defun("string-length",	string_length,		1, 0, false);
+  sc->STRING_TO_LIST =        defun("string->list",	string_to_list,		1, 2, false);
 #endif
-  sc->STRING_DOWNCASE =       s7_define_safe_function(sc, "string-downcase",         g_string_downcase,        1, 0, false, H_string_downcase);
-  sc->STRING_UPCASE =         s7_define_safe_function(sc, "string-upcase",           g_string_upcase,          1, 0, false, H_string_upcase);
-  sc->STRING_APPEND =         s7_define_safe_function(sc, "string-append",           g_string_append,          0, 0, true,  H_string_append);
-  sc->SUBSTRING =             s7_define_safe_function(sc, "substring",               g_substring,              2, 1, false, H_substring);
-  sc->STRING =                s7_define_safe_function(sc, "string",                  g_string,                 0, 0, true,  H_string);
-  sc->OBJECT_TO_STRING =      s7_define_safe_function(sc, "object->string",          g_object_to_string,       1, 1, false, H_object_to_string);
-  sc->FORMAT =                s7_define_safe_function(sc, "format",                  g_format,                 1, 0, true,  H_format);
-  /* this was unsafe, but was that due to the (ill-advised) use of temp_call_2 in the arg lists?
-   */
+  sc->STRING_DOWNCASE =       defun("string-downcase",	string_downcase,	1, 0, false);
+  sc->STRING_UPCASE =         defun("string-upcase",	string_upcase,		1, 0, false);
+  sc->STRING_APPEND =         defun("string-append",	string_append,		0, 0, true);
+  sc->SUBSTRING =             defun("substring",	substring,		2, 1, false);
+  sc->STRING =                defun("string",		string,			0, 0, true);
+  sc->OBJECT_TO_STRING =      defun("object->string",	object_to_string,	1, 1, false);
+  sc->FORMAT =                defun("format",		format,			1, 0, true);
+  /* this was unsafe, but was that due to the (ill-advised) use of temp_call_2 in the arg lists? */
 
-  sc->IS_NULL =               s7_define_safe_function(sc, "null?",                   g_is_null,                1, 0, false, H_is_null);
-  sc->IS_LIST =               s7_define_safe_function(sc, "list?",                   g_is_list,                1, 0, false, H_is_list);
-  sc->IS_PAIR =               s7_define_safe_function(sc, "pair?",                   g_is_pair,                1, 0, false, H_is_pair);
-  sc->CONS =                  s7_define_safe_function(sc, "cons",                    g_cons,                   2, 0, false, H_cons);
+  sc->IS_NULL =               defun("null?",		is_null,		1, 0, false);
+  sc->CONS =                  defun("cons",		cons,			2, 0, false);
 
-  sc->CAR =                   s7_define_safe_function(sc, "car",                     g_car,                    1, 0, false, H_car);
-  sc->CDR =                   s7_define_safe_function(sc, "cdr",                     g_cdr,                    1, 0, false, H_cdr);
-  sc->SET_CAR =               s7_define_safe_function(sc, "set-car!",                g_set_car,                2, 0, false, H_set_car);
-  sc->SET_CDR =               s7_define_function(sc,      "set-cdr!",                g_set_cdr,                2, 0, false, H_set_cdr);
-  sc->CAAR =                  s7_define_safe_function(sc, "caar",                    g_caar,                   1, 0, false, H_caar);
-  sc->CADR =                  s7_define_safe_function(sc, "cadr",                    g_cadr,                   1, 0, false, H_cadr);
-  sc->CDAR =                  s7_define_safe_function(sc, "cdar",                    g_cdar,                   1, 0, false, H_cdar);
-  sc->CDDR =                  s7_define_safe_function(sc, "cddr",                    g_cddr,                   1, 0, false, H_cddr);
-  sc->CAAAR =                 s7_define_safe_function(sc, "caaar",                   g_caaar,                  1, 0, false, H_caaar);
-  sc->CAADR =                 s7_define_safe_function(sc, "caadr",                   g_caadr,                  1, 0, false, H_caadr);
-  sc->CADAR =                 s7_define_safe_function(sc, "cadar",                   g_cadar,                  1, 0, false, H_cadar);
-  sc->CDAAR =                 s7_define_safe_function(sc, "cdaar",                   g_cdaar,                  1, 0, false, H_cdaar);
-  sc->CADDR =                 s7_define_safe_function(sc, "caddr",                   g_caddr,                  1, 0, false, H_caddr);
-  sc->CDDDR =                 s7_define_safe_function(sc, "cdddr",                   g_cdddr,                  1, 0, false, H_cdddr);
-  sc->CDADR =                 s7_define_safe_function(sc, "cdadr",                   g_cdadr,                  1, 0, false, H_cdadr);
-  sc->CDDAR =                 s7_define_safe_function(sc, "cddar",                   g_cddar,                  1, 0, false, H_cddar);
-  sc->CAAAAR =                s7_define_safe_function(sc, "caaaar",                  g_caaaar,                 1, 0, false, H_caaaar);
-  sc->CAAADR =                s7_define_safe_function(sc, "caaadr",                  g_caaadr,                 1, 0, false, H_caaadr);
-  sc->CAADAR =                s7_define_safe_function(sc, "caadar",                  g_caadar,                 1, 0, false, H_caadar);
-  sc->CADAAR =                s7_define_safe_function(sc, "cadaar",                  g_cadaar,                 1, 0, false, H_cadaar);
-  sc->CAADDR =                s7_define_safe_function(sc, "caaddr",                  g_caaddr,                 1, 0, false, H_caaddr);
-  sc->CADDDR =                s7_define_safe_function(sc, "cadddr",                  g_cadddr,                 1, 0, false, H_cadddr);
-  sc->CADADR =                s7_define_safe_function(sc, "cadadr",                  g_cadadr,                 1, 0, false, H_cadadr);
-  sc->CADDAR =                s7_define_safe_function(sc, "caddar",                  g_caddar,                 1, 0, false, H_caddar);
-  sc->CDAAAR =                s7_define_safe_function(sc, "cdaaar",                  g_cdaaar,                 1, 0, false, H_cdaaar);
-  sc->CDAADR =                s7_define_safe_function(sc, "cdaadr",                  g_cdaadr,                 1, 0, false, H_cdaadr);
-  sc->CDADAR =                s7_define_safe_function(sc, "cdadar",                  g_cdadar,                 1, 0, false, H_cdadar);
-  sc->CDDAAR =                s7_define_safe_function(sc, "cddaar",                  g_cddaar,                 1, 0, false, H_cddaar);
-  sc->CDADDR =                s7_define_safe_function(sc, "cdaddr",                  g_cdaddr,                 1, 0, false, H_cdaddr);
-  sc->CDDDDR =                s7_define_safe_function(sc, "cddddr",                  g_cddddr,                 1, 0, false, H_cddddr);
-  sc->CDDADR =                s7_define_safe_function(sc, "cddadr",                  g_cddadr,                 1, 0, false, H_cddadr);
-  sc->CDDDAR =                s7_define_safe_function(sc, "cdddar",                  g_cdddar,                 1, 0, false, H_cdddar);
+  sc->CAR =                   defun("car",		car,			1, 0, false);
+  sc->CDR =                   defun("cdr",		cdr,			1, 0, false);
+  sc->SET_CAR =               defun("set-car!",		set_car,		2, 0, false);
+  sc->SET_CDR =               unsafe_defun("set-cdr!",	set_cdr,		2, 0, false);
+  sc->CAAR =                  defun("caar",		caar,			1, 0, false);
+  sc->CADR =                  defun("cadr",		cadr,			1, 0, false);
+  sc->CDAR =                  defun("cdar",		cdar,			1, 0, false);
+  sc->CDDR =                  defun("cddr",		cddr,			1, 0, false);
+  sc->CAAAR =                 defun("caaar",		caaar,			1, 0, false);
+  sc->CAADR =                 defun("caadr",		caadr,			1, 0, false);
+  sc->CADAR =                 defun("cadar",		cadar,			1, 0, false);
+  sc->CDAAR =                 defun("cdaar",		cdaar,			1, 0, false);
+  sc->CADDR =                 defun("caddr",		caddr,			1, 0, false);
+  sc->CDDDR =                 defun("cdddr",		cdddr,			1, 0, false);
+  sc->CDADR =                 defun("cdadr",		cdadr,			1, 0, false);
+  sc->CDDAR =                 defun("cddar",		cddar,			1, 0, false);
+  sc->CAAAAR =                defun("caaaar",		caaaar,			1, 0, false);
+  sc->CAAADR =                defun("caaadr",		caaadr,			1, 0, false);
+  sc->CAADAR =                defun("caadar",		caadar,			1, 0, false);
+  sc->CADAAR =                defun("cadaar",		cadaar,			1, 0, false);
+  sc->CAADDR =                defun("caaddr",		caaddr,			1, 0, false);
+  sc->CADDDR =                defun("cadddr",		cadddr,			1, 0, false);
+  sc->CADADR =                defun("cadadr",		cadadr,			1, 0, false);
+  sc->CADDAR =                defun("caddar",		caddar,			1, 0, false);
+  sc->CDAAAR =                defun("cdaaar",		cdaaar,			1, 0, false);
+  sc->CDAADR =                defun("cdaadr",		cdaadr,			1, 0, false);
+  sc->CDADAR =                defun("cdadar",		cdadar,			1, 0, false);
+  sc->CDDAAR =                defun("cddaar",		cddaar,			1, 0, false);
+  sc->CDADDR =                defun("cdaddr",		cdaddr,			1, 0, false);
+  sc->CDDDDR =                defun("cddddr",		cddddr,			1, 0, false);
+  sc->CDDADR =                defun("cddadr",		cddadr,			1, 0, false);
+  sc->CDDDAR =                defun("cdddar",		cdddar,			1, 0, false);
 
-  sc->ASSOC =                 s7_define_function(sc,      "assoc",                   g_assoc,                  2, 1, false, H_assoc);
-  sc->MEMBER =                s7_define_function(sc,      "member",                  g_member,                 2, 1, false, H_member);
+  sc->ASSOC =                 unsafe_defun("assoc",	assoc,			2, 1, false);
+  sc->MEMBER =                unsafe_defun("member",	member,			2, 1, false);
 #if (!WITH_PURE_S7)
-  sc->ASSQ =                  s7_define_safe_function(sc, "assq",                    g_assq,                   2, 0, false, H_assq);
-  sc->ASSV =                  s7_define_safe_function(sc, "assv",                    g_assv,                   2, 0, false, H_assv);
-  sc->MEMQ =                  s7_define_safe_function(sc, "memq",                    g_memq,                   2, 0, false, H_memq);
-  sc->MEMV =                  s7_define_safe_function(sc, "memv",                    g_memv,                   2, 0, false, H_memv);
+  sc->ASSQ =                  defun("assq",		assq,			2, 0, false);
+  sc->ASSV =                  defun("assv",		assv,			2, 0, false);
+  sc->MEMQ =                  defun("memq",		memq,			2, 0, false);
+  sc->MEMV =                  defun("memv",		memv,			2, 0, false);
 #endif
 
-  sc->APPEND =                s7_define_safe_function(sc, "append",                  g_append,                 0, 0, true,  H_append);
-  sc->LIST =                  s7_define_safe_function(sc, "list",                    g_list,                   0, 0, true,  H_list);
-  sc->LIST_REF =              s7_define_safe_function(sc, "list-ref",                g_list_ref,               2, 0, true,  H_list_ref);
-  sc->LIST_SET =              s7_define_safe_function(sc, "list-set!",               g_list_set,               3, 0, true,  H_list_set);
-  sc->LIST_TAIL =             s7_define_safe_function(sc, "list-tail",               g_list_tail,              2, 0, false, H_list_tail);
-  sc->MAKE_LIST =             s7_define_safe_function(sc, "make-list",               g_make_list,              1, 1, false, H_make_list);
+  sc->APPEND =                defun("append",		append,			0, 0, true);
+  sc->LIST =                  defun("list",		list,			0, 0, true);
+  sc->LIST_REF =              defun("list-ref",		list_ref,		2, 0, true);
+  sc->LIST_SET =              defun("list-set!",	list_set,		3, 0, true);
+  sc->LIST_TAIL =             defun("list-tail",	list_tail,		2, 0, false);
+  sc->MAKE_LIST =             defun("make-list",	make_list,		1, 1, false);
 
-  sc->LENGTH =                s7_define_safe_function(sc, "length",                  g_length,                 1, 0, false, H_length);
-  sc->COPY =                  s7_define_safe_function(sc, "copy",                    g_copy,                   1, 3, false, H_copy);
-  sc->FILL =                  s7_define_safe_function(sc, "fill!",                   g_fill,                   2, 2, false, H_fill); 
-  sc->REVERSE =               s7_define_safe_function(sc, "reverse",                 g_reverse,                1, 0, false, H_reverse);
-  sc->REVERSEB =              s7_define_safe_function(sc, "reverse!",                g_reverse_in_place,       1, 0, false, H_reverse_in_place);
-  sc->SORT =                  s7_define_function(sc,      "sort!",                   g_sort,                   2, 0, false, H_sort);
+  sc->LENGTH =                defun("length",		length,			1, 0, false);
+  sc->COPY =                  defun("copy",		copy,			1, 3, false);
+  sc->FILL =                  defun("fill!",		fill,			2, 2, false);
+  sc->REVERSE =               defun("reverse",		reverse,		1, 0, false);
+  sc->REVERSEB =              defun("reverse!",		reverse_in_place,	1, 0, false);
+  sc->SORT =                  unsafe_defun("sort!",	sort,			2, 0, false);
 
-  sc->IS_VECTOR =             s7_define_safe_function(sc, "vector?",                 g_is_vector,              1, 0, false, H_is_vector);
-  sc->VECTOR_APPEND =         s7_define_safe_function(sc, "vector-append",           g_vector_append,          0, 0, true,  H_vector_append);
+  sc->VECTOR_APPEND =         defun("vector-append",	vector_append,		0, 0, true);
 #if (!WITH_PURE_S7)
-  sc->LIST_TO_VECTOR =        s7_define_safe_function(sc, "list->vector",            g_list_to_vector,         1, 0, false, H_list_to_vector);
-  sc->VECTOR_FILL =           s7_define_safe_function(sc, "vector-fill!",            g_vector_fill,            2, 2, false, H_vector_fill);
-  sc->VECTOR_LENGTH =         s7_define_safe_function(sc, "vector-length",           g_vector_length,          1, 0, false, H_vector_length);
-  sc->VECTOR_TO_LIST =        s7_define_safe_function(sc, "vector->list",            g_vector_to_list,         1, 2, false, H_vector_to_list);
+  sc->LIST_TO_VECTOR =        defun("list->vector",	list_to_vector,		1, 0, false);
+  sc->VECTOR_FILL =           defun("vector-fill!",	vector_fill,		2, 2, false);
+  sc->VECTOR_LENGTH =         defun("vector-length",	vector_length,		1, 0, false);
+  sc->VECTOR_TO_LIST =        defun("vector->list",	vector_to_list,		1, 2, false);
 #else
   sc->VECTOR_FILL = sc->FILL;
   sc->STRING_FILL = sc->FILL;
 #endif
-  sc->VECTOR_REF =            s7_define_safe_function(sc, "vector-ref",              g_vector_ref,             2, 0, true,  H_vector_ref);
-  sc->VECTOR_SET =            s7_define_safe_function(sc, "vector-set!",             g_vector_set,             3, 0, true,  H_vector_set);
-  sc->VECTOR_DIMENSIONS =     s7_define_safe_function(sc, "vector-dimensions",       g_vector_dimensions,      1, 0, false, H_vector_dimensions);
-  sc->MAKE_VECTOR =           s7_define_safe_function(sc, "make-vector",             g_make_vector,            1, 2, false, H_make_vector);
-  sc->MAKE_SHARED_VECTOR =    s7_define_safe_function(sc, "make-shared-vector",      g_make_shared_vector,     2, 1, false, H_make_shared_vector);
-  sc->VECTOR =                s7_define_safe_function(sc, "vector",                  g_vector,                 0, 0, true,  H_vector);
+  sc->VECTOR_REF =            defun("vector-ref",	vector_ref,		2, 0, true);
+  sc->VECTOR_SET =            defun("vector-set!",	vector_set,		3, 0, true);
+  sc->VECTOR_DIMENSIONS =     defun("vector-dimensions", vector_dimensions,	1, 0, false);
+  sc->MAKE_VECTOR =           defun("make-vector",	make_vector,		1, 2, false);
+  sc->MAKE_SHARED_VECTOR =    defun("make-shared-vector", make_shared_vector,	2, 1, false);
+  sc->VECTOR =                defun("vector",		vector,			0, 0, true);
   set_setter(sc->VECTOR); /* like cons, I guess */
   sc->Vector = slot_value(global_slot(sc->VECTOR));
   set_setter(sc->Vector);
 
-  sc->IS_FLOAT_VECTOR =       s7_define_safe_function(sc, "float-vector?",           g_is_float_vector,        1, 0, false, H_is_float_vector);
-  sc->FLOAT_VECTOR =          s7_define_safe_function(sc, "float-vector",            g_float_vector,           0, 0, true,  H_float_vector);
-  sc->MAKE_FLOAT_VECTOR =     s7_define_safe_function(sc, "make-float-vector",       g_make_float_vector,      1, 1, false, H_make_float_vector);
-  sc->FLOAT_VECTOR_SET =      s7_define_safe_function(sc, "float-vector-set!",       g_float_vector_set,       3, 0, true,  H_float_vector_set);
-  sc->FLOAT_VECTOR_REF =      s7_define_safe_function(sc, "float-vector-ref",        g_float_vector_ref,       2, 0, true,  H_float_vector_ref);
+  sc->FLOAT_VECTOR =          defun("float-vector",	float_vector,		0, 0, true);
+  sc->MAKE_FLOAT_VECTOR =     defun("make-float-vector", make_float_vector,	1, 1, false);
+  sc->FLOAT_VECTOR_SET =      defun("float-vector-set!", float_vector_set,	3, 0, true);
+  sc->FLOAT_VECTOR_REF =      defun("float-vector-ref", float_vector_ref,	2, 0, true);
   set_returns_temp(slot_value(global_slot(sc->FLOAT_VECTOR_REF)));
 
-  sc->IS_INT_VECTOR =         s7_define_safe_function(sc, "int-vector?",             g_is_int_vector,          1, 0, false, H_is_int_vector);
-  sc->INT_VECTOR =            s7_define_safe_function(sc, "int-vector",              g_int_vector,             0, 0, true,  H_int_vector);
-  sc->MAKE_INT_VECTOR =       s7_define_safe_function(sc, "make-int-vector",         g_make_int_vector,        1, 1, false, H_make_int_vector);
-  sc->INT_VECTOR_SET =        s7_define_safe_function(sc, "int-vector-set!",         g_int_vector_set,         3, 0, true,  H_int_vector_set);
-  sc->INT_VECTOR_REF =        s7_define_safe_function(sc, "int-vector-ref",          g_int_vector_ref,         2, 0, true,  H_int_vector_ref);
+  sc->INT_VECTOR =            defun("int-vector",	int_vector,		0, 0, true);
+  sc->MAKE_INT_VECTOR =       defun("make-int-vector",	make_int_vector,	1, 1, false);
+  sc->INT_VECTOR_SET =        defun("int-vector-set!",	int_vector_set,		3, 0, true);
+  sc->INT_VECTOR_REF =        defun("int-vector-ref",	int_vector_ref,		2, 0, true);
 
-  sc->IS_BYTE_VECTOR =        s7_define_safe_function(sc, "byte-vector?",            g_is_byte_vector,         1, 0, false, H_is_byte_vector);
-  sc->TO_BYTE_VECTOR =        s7_define_safe_function(sc, "->byte-vector",           g_to_byte_vector,         1, 0, false, H_to_byte_vector);
-  sc->BYTE_VECTOR =           s7_define_safe_function(sc, "byte-vector",             g_byte_vector,            0, 0, true,  H_byte_vector);
-  sc->MAKE_BYTE_VECTOR =      s7_define_safe_function(sc, "make-byte-vector",        g_make_byte_vector,       1, 1, false, H_make_byte_vector);
+  sc->TO_BYTE_VECTOR =        defun("->byte-vector",	to_byte_vector,		1, 0, false);
+  sc->BYTE_VECTOR =           defun("byte-vector",	byte_vector,		0, 0, true);
+  sc->MAKE_BYTE_VECTOR =      defun("make-byte-vector", make_byte_vector,	1, 1, false);
 
-  sc->HASH_TABLE =            s7_define_safe_function(sc, "hash-table",              g_hash_table,             0, 0, true,  H_hash_table);
-  sc->HASH_TABLE_STAR =       s7_define_safe_function(sc, "hash-table*",             g_hash_table_star,        0, 0, true,  H_hash_table_star);
-  sc->IS_HASH_TABLE =         s7_define_safe_function(sc, "hash-table?",             g_is_hash_table,          1, 0, false, H_is_hash_table);
-  sc->MAKE_HASH_TABLE =       s7_define_safe_function(sc, "make-hash-table",         g_make_hash_table,        0, 2, false, H_make_hash_table);
-  sc->HASH_TABLE_REF =        s7_define_safe_function(sc, "hash-table-ref",          g_hash_table_ref,         2, 0, true,  H_hash_table_ref);
-  sc->HASH_TABLE_SET =        s7_define_safe_function(sc, "hash-table-set!",         g_hash_table_set,         3, 0, false, H_hash_table_set);
+  sc->HASH_TABLE =            defun("hash-table",	hash_table,		0, 0, true);
+  sc->HASH_TABLE_STAR =       defun("hash-table*",	hash_table_star,	0, 0, true);
+  sc->MAKE_HASH_TABLE =       defun("make-hash-table",	make_hash_table,	0, 2, false);
+  sc->HASH_TABLE_REF =        defun("hash-table-ref",	hash_table_ref,		2, 0, true);
+  sc->HASH_TABLE_SET =        defun("hash-table-set!",	hash_table_set,		3, 0, false);
 #if (!WITH_PURE_S7)
-  sc->HASH_TABLE_SIZE =       s7_define_safe_function(sc, "hash-table-size",         g_hash_table_size,        1, 0, false, H_hash_table_size);
+  sc->HASH_TABLE_SIZE =       defun("hash-table-size",	hash_table_size,	1, 0, false);
 #endif
-  sc->HASH_TABLE_ENTRIES =    s7_define_safe_function(sc, "hash-table-entries",      g_hash_table_entries,     1, 0, false, H_hash_table_entries);
-  sc->HASH_TABLE_FUNCTION =   s7_define_safe_function(sc, "hash-table-function",     g_hash_table_function,    1, 0, false, H_hash_table_function);
+  sc->HASH_TABLE_ENTRIES =    defun("hash-table-entries", hash_table_entries,	1, 0, false);
+  sc->HASH_TABLE_FUNCTION =   defun("hash-table-function", hash_table_function, 1, 0, false);
 
-                              s7_define_safe_function(sc, "cyclic-sequences",        g_cyclic_sequences,       1, 0, false, H_cyclic_sequences);
-  sc->CALL_CC =               s7_define_function(sc,      "call/cc",                 g_call_cc,                1, 0, false, H_call_cc);
-  sc->CALL_WITH_CURRENT_CONTINUATION = s7_define_function(sc, "call-with-current-continuation", g_call_cc,     1, 0, false, H_call_cc);
-  sc->IS_CONTINUATION =       s7_define_safe_function(sc, "continuation?",           g_is_continuation,        1, 0, false, H_is_continuation);
-  sc->CALL_WITH_EXIT =        s7_define_function(sc,      "call-with-exit",          g_call_with_exit,         1, 0, false, H_call_with_exit);
+                              defun("cyclic-sequences", cyclic_sequences,	1, 0, false);
+  sc->CALL_CC =               unsafe_defun("call/cc",	call_cc,		1, 0, false);
+  sc->CALL_WITH_CURRENT_CONTINUATION = unsafe_defun("call-with-current-continuation", call_cc, 1, 0, false);
+  sc->CALL_WITH_EXIT =        unsafe_defun("call-with-exit", call_with_exit,	1, 0, false);
 
-  sc->LOAD =                  s7_define_function(sc,      "load",                    g_load,                   1, 1, false, H_load);
-  sc->AUTOLOAD =              s7_define_function(sc,      "autoload",                g_autoload,               2, 0, false, H_autoload);
-  sc->EVAL =                  s7_define_function(sc,      "eval",                    g_eval,                   1, 1, false, H_eval);
-  sc->EVAL_STRING =           s7_define_function(sc,      "eval-string",             g_eval_string,            1, 1, false, H_eval_string);
-  sc->APPLY =                 s7_define_function(sc,      "apply",                   g_apply,                  1, 0, true,  H_apply);
+  sc->LOAD =                  unsafe_defun("load",	load,			1, 1, false);
+  sc->AUTOLOAD =              unsafe_defun("autoload",	autoload,		2, 0, false);
+  sc->EVAL =                  unsafe_defun("eval",	eval,			1, 1, false);
+  sc->EVAL_STRING =           unsafe_defun("eval-string", eval_string,		1, 1, false);
+  sc->APPLY =                 unsafe_defun("apply",	apply,			1, 0, true);
   sc->Apply = slot_value(global_slot(sc->APPLY));
   set_type(sc->Apply, type(sc->Apply) | T_COPY_ARGS);
   /* (let ((x '((1 2) 3 4))) (catch #t (lambda () (apply apply apply x)) (lambda args 'error)) x) should not mess up x! */
 
-  sc->FOR_EACH =              s7_define_function(sc,      "for-each",                g_for_each,               2, 0, true,  H_for_each);
-  sc->MAP =                   s7_define_function(sc,      "map",                     g_map,                    2, 0, true,  H_map);
-  sc->VALUES =                s7_define_function(sc,      "values",                  g_values,                 0, 0, true,  H_values);
-  sc->DYNAMIC_WIND =          s7_define_function(sc,      "dynamic-wind",            g_dynamic_wind,           3, 0, false, H_dynamic_wind);
-  sc->CATCH =                 s7_define_function(sc,      "catch",                   g_catch,                  3, 0, false, H_catch);
-  sc->THROW =                 s7_define_function(sc,      "throw",                   g_throw,                  1, 0, true,  H_throw);
-  sc->ERROR =                 s7_define_function(sc,      "error",                   g_error,                  0, 0, true,  H_error);
+  sc->FOR_EACH =              unsafe_defun("for-each",	for_each,		2, 0, true);
+  sc->MAP =                   unsafe_defun("map",	map,			2, 0, true);
+  sc->VALUES =                unsafe_defun("values",	values,			0, 0, true);
+  sc->DYNAMIC_WIND =          unsafe_defun("dynamic-wind", dynamic_wind,	3, 0, false);
+  sc->CATCH =                 unsafe_defun("catch",	catch,			3, 0, false);
+  sc->THROW =                 unsafe_defun("throw",	throw,			1, 0, true);
+  sc->ERROR =                 unsafe_defun("error",	error,			0, 0, true);
   /* it's faster to leave error/throw unsafe than to set needs_copied_args and use s7_define_safe_function because copy_list overwhelms any other savings */
-  sc->STACKTRACE =            s7_define_safe_function(sc, "stacktrace",              g_stacktrace,             0, 5, false, H_stacktrace);
+  sc->STACKTRACE =            defun("stacktrace",	stacktrace,		0, 5, false);
 
-  /* these are internal for quasiquote's use -- they are values, not symbols */
-  sc->QQ_Apply_Values =       s7_define_constant_function(sc, "{apply_values}",      g_apply_values,           0, 0, true,  H_apply_values);
-  sc->QQ_Append =             s7_define_constant_function(sc, "{append}",            g_append,                 0, 0, true,  H_append);
-  sc->Multivector =           s7_define_constant_function(sc, "{multivector}",       g_qq_multivector,         1, 0, true,  H_qq_multivector);
-  sc->QQ_List =               s7_define_constant_function(sc, "{list}",              g_qq_list,                0, 0, true,  H_qq_list);
-  set_type(sc->QQ_List, T_C_RST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS);
+  { /* these are internal for quasiquote's use */
+    s7_pointer sym;
+    sym = unsafe_defun("{apply_values}", apply_values, 0, 0, true);
+    set_immutable(sym);
+    sc->QQ_Apply_Values = slot_value(global_slot(sym));
 
-  sc->IS_PROCEDURE =          s7_define_safe_function(sc, "procedure?",              g_is_procedure,           1, 0, false, H_is_procedure);
+    sym = unsafe_defun("{append}", append, 0, 0, true);
+    set_immutable(sym);
+    sc->QQ_Append = slot_value(global_slot(sym));
+
+    sym = unsafe_defun("{multivector}", qq_multivector, 1, 0, true);
+    set_immutable(sym);
+    sc->Multivector = slot_value(global_slot(sym));
+
+    sym = unsafe_defun("{list}", qq_list, 0, 0, true);
+    set_immutable(sym);
+    sc->QQ_List = slot_value(global_slot(sym));
+    set_type(sc->QQ_List, T_C_RST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS);
+  }
+  
   sc->PROCEDURE_DOCUMENTATION = s7_define_safe_function(sc, "procedure-documentation", g_procedure_documentation, 1, 0, false, H_procedure_documentation);
-  sc->HELP =                  s7_define_safe_function(sc, "help",                    g_help,                   1, 0, false, H_help);
-  sc->PROCEDURE_SOURCE =      s7_define_safe_function(sc, "procedure-source",        g_procedure_source,       1, 0, false, H_procedure_source);
-  sc->FUNCLET =               s7_define_safe_function(sc, "funclet",                 g_funclet,                1, 0, false, H_funclet);
+  sc->PROCEDURE_SIGNATURE =   defun("procedure-signature", procedure_signature,	1, 0, false);
+  sc->HELP =                  defun("help",		help,			1, 0, false);
+  sc->PROCEDURE_SOURCE =      defun("procedure-source", procedure_source,	1, 0, false);
+  sc->FUNCLET =               defun("funclet",		funclet,		1, 0, false);
   s7_dilambda(sc, "procedure-setter", g_procedure_setter, 1, 0, g_procedure_set_setter, 2, 0, H_procedure_setter);
-  sc->IS_DILAMBDA =           s7_define_safe_function(sc, "dilambda?",               g_is_dilambda,            1, 0, false, H_is_dilambda);
 
-  sc->ARITY =                 s7_define_safe_function(sc, "arity",                   g_arity,                  1, 0, false, H_arity);
-  sc->IS_ARITABLE =           s7_define_safe_function(sc, "aritable?",               g_is_aritable,            2, 0, false, H_is_aritable);
+  sc->ARITY =                 defun("arity",		arity,			1, 0, false);
+  sc->IS_ARITABLE =           defun("aritable?",	is_aritable,		2, 0, false);
 
-  sc->NOT =                   s7_define_safe_function(sc, "not",                     g_not,                    1, 0, false, H_not);
-  sc->IS_BOOLEAN =            s7_define_safe_function(sc, "boolean?",                g_is_boolean,             1, 0, false, H_is_boolean);
-  sc->IS_EQ =                 s7_define_safe_function(sc, "eq?",                     g_is_eq,                  2, 0, false, H_is_eq);
-  sc->IS_EQV =                s7_define_safe_function(sc, "eqv?",                    g_is_eqv,                 2, 0, false, H_is_eqv);
-  sc->IS_EQUAL =              s7_define_safe_function(sc, "equal?",                  g_is_equal,               2, 0, false, H_is_equal);
-  sc->IS_MORALLY_EQUAL =      s7_define_safe_function(sc, "morally-equal?",          g_is_morally_equal,       2, 0, false, H_is_morally_equal);
+  sc->NOT =                   defun("not",		not,			1, 0, false);
+  sc->IS_EQ =                 defun("eq?",		is_eq,			2, 0, false);
+  sc->IS_EQV =                defun("eqv?",		is_eqv,			2, 0, false);
+  sc->IS_EQUAL =              defun("equal?",		is_equal,		2, 0, false);
+  sc->IS_MORALLY_EQUAL =      defun("morally-equal?",	is_morally_equal,	2, 0, false);
 
-  sc->GC =                    s7_define_safe_function(sc, "gc",                      g_gc,                     0, 1, false, H_gc);
-                              s7_define_safe_function(sc, "s7-version",              g_s7_version,             0, 0, false, H_s7_version);
-                              s7_define_safe_function(sc, "emergency-exit",          g_emergency_exit,         0, 1, false, H_emergency_exit);
-                              s7_define_safe_function(sc, "exit",                    g_exit,                   0, 1, false, H_exit);
+  sc->GC =                    defun("gc",		gc,			0, 1, false);
+                              defun("s7-version",	s7_version,		0, 0, false);
+                              defun("emergency-exit",	emergency_exit,		0, 1, false);
+                              defun("exit",		exit,			0, 1, false);
 #if DEBUGGING
-                              s7_define_function(sc,      "abort",                   g_abort,                  0, 0, false, "drop into gdb I hope");
+                              s7_define_function(sc, "abort",  g_abort,         0, 0, false, "drop into gdb I hope");
 #endif
+  }
 
   sym = s7_define_function(sc, "(c-object set)", g_internal_object_set, 1, 0, true, "internal object setter redirection");
   sc->Object_Set = slot_value(global_slot(sym));
@@ -71287,17 +71908,17 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7 15.8 15.9
  *
- * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1127 1151
- * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136 1192
+ * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1127 1139
+ * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136 1158
  * teq           |      |      | 6612                     3887 3020 2516 2468 2465
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212 3266
  * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3735
  * tform         |      |      |                          6816 5536 4287 3996 3992
- * tmap          |      |      |  9.3                                         4489
+ * tmap          |      |      |  9.3                                         4423
  * titer         |      |      |                          7503 6793 6351 6048 6258
- * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 6331
- * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 6779
- * thash         |      |      |                          50.7 23.8 14.9 13.7 12.8
+ * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 6272
+ * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 6699
+ * thash         |      |      |                          50.7 23.8 14.9 13.7 12.4
  *               |      |      |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 14.0
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 15.1
@@ -71318,6 +71939,7 @@ int main(int argc, char **argv)
  *       (let () ...) where no definitions in body -> ...[if one] or begin?
  *       letrec->let
  *       (do ((x lst (cdr lst))) ((null? x)) ...) -- infinite loop normally (same for (+ x 0) (* x 1) etc, and also recursion)
+ *       contradictory is broken
  *
  * the repl should autoload sndlib/clm, but ideally this would go through sndlib.scm or the equivalent.
  * someday fix the freed snd_fd problem -- where does this happen?
@@ -71330,16 +71952,13 @@ int main(int argc, char **argv)
  *   full bv: ca 250 lines, maybe less since it can piggy-back throughout on current string code
  *   bv cases are already potentially ints
  *
- * procedure-signature to get all type info (if available)
- *   if multiple type #t=any, (t1 t2 t3) = these types are possible
- *   length -> '((int bool) (#t))
- *   string-ref -> '(char (string int))
- *   closure 'signature local (like 'documentation)
- *   for c-func, place list in ext->signature
- *   maybe add :temp at end if value can be reused
- *   makexg|gl and cload can generate these automatically (another reason to write libsndlib.scm!)
- *
- * --------------------------------------------------------------------------------
+ * fill in procedure-signature info in s7/sndlib/cload/gl/maybe xm (hs?)
+ *   closure 'signature local (like 'documentation) -- dsp.scm etc?
+ *   also need side-effect | temp-return info [bit on sig list]
+ *   perhaps also search *libraries* for name -- if ambiguous check all?  do-all-libraries...
+ *   reuse the basic sig lists (also in makexg etc)
+ *   TODO: there are still #t's where type info could be [see plist]
+ *         explicitly test the signatures via tauto
  * 
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array
@@ -71371,4 +71990,6 @@ int main(int argc, char **argv)
  * need to check all if/rf symbol cases for type+stepper (and set! if/rf: c/p ok, s if like others)
  * in vector-set|list-set|etc: it would be better to try if|rf first (before pf|gf) then make the number at the end
  *   so wrap: if|rf_to_pf used in pf_opt: this gets messy fast
+ * remove define_real_function [only use: generators.scm -- how to call the C version here?]
+ * permanent-lists for c_function arity preset as with sig/help (share these)
  */

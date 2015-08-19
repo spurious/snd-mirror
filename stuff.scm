@@ -1861,14 +1861,14 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	      (args (cdadr definition))
 	      (body `(begin ,@(proc-walk (cddr definition)))))
 	  (let* ((no-noise-args (remove-keys args))                                ; omit noise words like :optional
-		 (arg-names (if (list? args)                                       ; handle (f x ...), (f (x 1) ...), (f . x), and (f x . z)
+		 (arg-names (if (proper-list? args)                                ; handle (f x ...), (f (x 1) ...), (f . x), and (f x . z)
 				(map (lambda (a) 
 				       (if (symbol? a) a (car a)))                 ; omit the default values
 				     no-noise-args)                                
 				(if (pair? args)
 				    (append (butlast no-noise-args) (list :rest (last args)))
 				    (list :rest args))))
-		 (call-args (if (list? args)
+		 (call-args (if (proper-list? args)
 				(if (memq :rest args)
 				    (append (butlast (butlast no-noise-args))      ; also omit the :rest
 					    (list (list '{apply_values} (last args))))
