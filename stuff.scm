@@ -653,6 +653,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 			  boolean?
 			  random-state? 
 			  eof-object? 
+			  c-object?
 			  c-pointer? 
 			  (lambda (obj) 
 			    (eq? obj #<unspecified>))

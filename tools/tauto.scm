@@ -80,8 +80,9 @@
 
 (define low 0)
 (define-constant arglists (vector (make-list 1) (make-list 2) (make-list 3) (make-list 4) (make-list 5) (make-list 6)))
+(define (ok x) #t)
 
-(define-constant (autotest func args args-now args-left)
+(define-constant (autotest func args args-now args-left sig)
   ;; args-left is at least 1, args-now starts at 0, args starts at ()
   ;; (format *stderr* "~A: ~D ~D (~D ~D): ~A~%" func (length args) args-now low args-left args)
   ;(if (pair? args) (format *stderr* "~A " (car args)))
@@ -108,7 +109,6 @@
 		(set-car! p car-constants)
 		(catch #t
 		  (lambda ()
-		    ;(format *stderr* "args: ~A~%" args)
 		    (apply func c-args))
 		  (lambda any 
 		    (if (and (memq (car any) '(wrong-type-arg syntax-error))
@@ -123,17 +123,19 @@
 		   (catch #t 
 		     (lambda () 
 		       (set-car! p c)
-		       ;(format *stderr* "args: ~A~%" args)
 		       (apply func c-args))
 		     (lambda any 
 		       'error)))
 		 cdr-constants)))
 	   
-	     (for-each
-	      (lambda (c)
-		(set-car! p c)
-		(autotest func c-args (+ args-now 1) (- args-left 1)))
-	      constants)))))))
+	     (let ((checker (if (pair? sig) (car sig) ok)))
+	       (for-each
+		(lambda (c)
+		  (set-car! p c)
+		  (if (checker c)
+		      (autotest func c-args (+ args-now 1) (- args-left 1) (if (pair? sig) (cdr sig) ()))))
+		    ;(format *stderr* "~S arg ~D not ~S~%" func args-now c)
+		constants))))))))
 
 ;(set! low 3)
 ;(autotest string-set! () 0 3)
@@ -173,6 +175,15 @@
 		  
 		  outlet-member make-method make-object))
 
+(define (map-values lst)
+  (if (or (not (pair? lst))
+	  (procedure? (car lst)))
+      lst
+      (begin
+	(if (symbol? (car lst))
+	    (set! (car lst) (symbol->value (car lst)))
+	    (set! (car lst) ok))
+	(map-values (cdr lst)))))
 
 (define (test-sym sym)
   (if (and (not (memq sym baddies))
@@ -190,7 +201,9 @@
 			  ;(format *stderr* ";~A...~%" sym))
 		      (set! low bottom)
 		      (if (positive? (cdr argn))
-			  (autotest f () 0 top))))))))))
+			  (let ((sig (copy (procedure-signature f))))
+			    (map-values sig)
+			    (autotest f () 0 top (if (pair? sig) (cdr sig) ()))))))))))))
 
 (define (all)
   (let ((st (symbol-table)))

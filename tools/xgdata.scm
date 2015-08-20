@@ -6661,7 +6661,7 @@
 (CAIRO-FUNC "void cairo_matrix_transform_distance cairo_matrix_t* matrix gdouble* [dx] gdouble* [dy]")
 (CAIRO-FUNC "void cairo_matrix_transform_point cairo_matrix_t* matrix gdouble* [x] gdouble* [y]")
 
-(CAIRO-STRUCT-make "cairo_matrix_t")
+;(CAIRO-STRUCT-make "cairo_matrix_t")
 
 
 (CAIRO-PNG-FUNC "cairo_surface_t* cairo_image_surface_create_from_png char* filename" 'const)
@@ -6957,10 +6957,10 @@
 ;;; (STRUCT-make "GdkRectangle gint x gint y gint width gint height")
 ;;; (STRUCT-make "GtkRequisition gint width gint height")
 ;;; (STRUCT-make "GtkStockItem")
-(STRUCT-make "GtkTextIter")
-(STRUCT-make "GtkTreeIter")
+;(STRUCT-make "GtkTextIter")
+;(STRUCT-make "GtkTreeIter")
 ;;; (STRUCT-make "PangoColor")
-(STRUCT-make "PangoRectangle")
+;(STRUCT-make "PangoRectangle")
 ;;; (STRUCT-make "PangoLogAttr")
 ;;; (STRUCT "GdkEventKey GdkEventType type GdkWindow* window guint32 time guint state guint keyval")
 
@@ -8127,7 +8127,7 @@
 (CFNC-3.0 "gboolean gdk_rgba_parse GdkRGBA* rgba gchar* spec" 'const)
 (CFNC-3.0 "gchar* gdk_rgba_to_string GdkRGBA* rgba" 'const)
 
-(STRUCT-3.0-make "GdkRGBA")
+;(STRUCT-3.0-make "GdkRGBA")
 
 (CINT-3.0 "GTK_STATE_FLAG_NORMAL" "GtkStateFlags")
 (CINT-3.0 "GTK_STATE_FLAG_ACTIVE" "GtkStateFlags")
@@ -9187,9 +9187,27 @@
 (CFNC-3.18 "void gtk_widget_set_font_map GtkWidget* widget PangoFontMap* fontmap")
 (CFNC-3.18 "PangoFontMap* gtk_widget_get_font_map GtkWidget* widget")
 
-;;; 13.7.6:
+;;; 3.17.6:
 
 (CFNC-3.18 "void gdk_window_fullscreen_on_monitor GdkWindow* window gint monitor")
 (CFNC-3.18 "void gtk_window_fullscreen_on_monitor GtkWindow* window GdkScreen* screen gint monitor")
 
+;;; 3.17.7:
+
+(CINT-3.18 "GDK_TOUCHPAD_SWIPE" "GdkEventType")
+(CINT-3.18 "GDK_TOUCHPAD_PINCH" "GdkEventType")
+
+(CINT-3.18 "GDK_TOUCHPAD_GESTURE_PHASE_BEGIN" "GdkTouchpadGesturePhase")
+(CINT-3.18 "GDK_TOUCHPAD_GESTURE_PHASE_UPDATE" "GdkTouchpadGesturePhase")
+(CINT-3.18 "GDK_TOUCHPAD_GESTURE_PHASE_END" "GdkTouchpadGesturePhase")
+(CINT-3.18 "GDK_TOUCHPAD_GESTURE_PHASE_CANCEL" "GdkTouchpadGesturePhase")
+
+(CINT-3.18 "GDK_TOUCHPAD_GESTURE_MASK" "GdkEventMask")
+
+;(CFNC-3.18 "void gtk_flow_box_bind_model GtkFlowBox* box GListModel* model GtkFlowBoxCreateWidgetFunc create_widget_func gpointer user_data GDestroyNotify user_data_free_func")
+
+(CFNC-3.18 "void gtk_text_view_set_top_margin GtkTextView* text_view gint top_margin")
+(CFNC-3.18 "gint gtk_text_view_get_top_margin GtkTextView* text_view")
+(CFNC-3.18 "void gtk_text_view_set_bottom_margin GtkTextView* text_view gint bottom_margin")
+(CFNC-3.18 "gint gtk_text_view_get_bottom_margin GtkTextView* text_view")
 

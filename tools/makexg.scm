@@ -2628,7 +2628,7 @@
 
 ;(format *stderr* "~D entries, ~D funcs~%" (hash-table-entries signatures) (length funcs))
 
-(hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any;~%")
+(hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_char;~%")
 (hey "static s7_pointer ")
 
 (define (sig-name sig)
@@ -2670,6 +2670,7 @@
 (hey "  s_integer = s7_make_symbol(s7, \"integer?\");~%")
 (hey "  s_real = s7_make_symbol(s7, \"real?\");~%")
 (hey "  s_string = s7_make_symbol(s7, \"string?\");~%")
+(hey "  s_char = s7_make_symbol(s7, \"char?\");~%")
 (hey "  s_any = s7_t(s7);~%~%")
 
 (for-each
@@ -2690,6 +2691,7 @@
 		  ((boolean?) "s_boolean")
 		  ((real?) "s_real")
 		  ((string?) "s_string")
+		  ((char?) "s_char")
 		  (else "s_any"))))
 	 (if (< i (- len 1)) (hey ", "))))
      (hey ");~%")))

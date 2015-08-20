@@ -32005,6 +32005,39 @@ GdkScreen* screen, gint monitor)"
   return(Xen_false);
 }
 
+static Xen gxg_gtk_text_view_set_top_margin(Xen text_view, Xen top_margin)
+{
+  #define H_gtk_text_view_set_top_margin "void gtk_text_view_set_top_margin(GtkTextView* text_view, gint top_margin)"
+  Xen_check_type(Xen_is_GtkTextView_(text_view), text_view, 1, "gtk_text_view_set_top_margin", "GtkTextView*");
+  Xen_check_type(Xen_is_gint(top_margin), top_margin, 2, "gtk_text_view_set_top_margin", "gint");
+  gtk_text_view_set_top_margin(Xen_to_C_GtkTextView_(text_view), Xen_to_C_gint(top_margin));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_text_view_get_top_margin(Xen text_view)
+{
+  #define H_gtk_text_view_get_top_margin "gint gtk_text_view_get_top_margin(GtkTextView* text_view)"
+  Xen_check_type(Xen_is_GtkTextView_(text_view), text_view, 1, "gtk_text_view_get_top_margin", "GtkTextView*");
+  return(C_to_Xen_gint(gtk_text_view_get_top_margin(Xen_to_C_GtkTextView_(text_view))));
+}
+
+static Xen gxg_gtk_text_view_set_bottom_margin(Xen text_view, Xen bottom_margin)
+{
+  #define H_gtk_text_view_set_bottom_margin "void gtk_text_view_set_bottom_margin(GtkTextView* text_view, \
+gint bottom_margin)"
+  Xen_check_type(Xen_is_GtkTextView_(text_view), text_view, 1, "gtk_text_view_set_bottom_margin", "GtkTextView*");
+  Xen_check_type(Xen_is_gint(bottom_margin), bottom_margin, 2, "gtk_text_view_set_bottom_margin", "gint");
+  gtk_text_view_set_bottom_margin(Xen_to_C_GtkTextView_(text_view), Xen_to_C_gint(bottom_margin));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_text_view_get_bottom_margin(Xen text_view)
+{
+  #define H_gtk_text_view_get_bottom_margin "gint gtk_text_view_get_bottom_margin(GtkTextView* text_view)"
+  Xen_check_type(Xen_is_GtkTextView_(text_view), text_view, 1, "gtk_text_view_get_bottom_margin", "GtkTextView*");
+  return(C_to_Xen_gint(gtk_text_view_get_bottom_margin(Xen_to_C_GtkTextView_(text_view))));
+}
+
 #endif
 
 static Xen gxg_cairo_create(Xen target)
@@ -38636,6 +38669,10 @@ Xen_wrap_2_args(gxg_gtk_widget_set_font_map_w, gxg_gtk_widget_set_font_map)
 Xen_wrap_1_arg(gxg_gtk_widget_get_font_map_w, gxg_gtk_widget_get_font_map)
 Xen_wrap_2_args(gxg_gdk_window_fullscreen_on_monitor_w, gxg_gdk_window_fullscreen_on_monitor)
 Xen_wrap_3_args(gxg_gtk_window_fullscreen_on_monitor_w, gxg_gtk_window_fullscreen_on_monitor)
+Xen_wrap_2_args(gxg_gtk_text_view_set_top_margin_w, gxg_gtk_text_view_set_top_margin)
+Xen_wrap_1_arg(gxg_gtk_text_view_get_top_margin_w, gxg_gtk_text_view_get_top_margin)
+Xen_wrap_2_args(gxg_gtk_text_view_set_bottom_margin_w, gxg_gtk_text_view_set_bottom_margin)
+Xen_wrap_1_arg(gxg_gtk_text_view_get_bottom_margin_w, gxg_gtk_text_view_get_bottom_margin)
 #endif
 
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
@@ -39350,7 +39387,7 @@ Xen_wrap_1_arg(gxg_GTK_IS_STACK_SIDEBAR_w, gxg_GTK_IS_STACK_SIDEBAR)
 #endif
 
 #if HAVE_SCHEME
-static s7_pointer s_boolean, s_integer, s_real, s_string, s_any;
+static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_char;
 static s7_pointer pl_stttb, pl_stt, pl_t, pl_rtst, pl_rtsr, pl_rts, pl_tt, pl_tsttt, pl_tstbiiiitt, pl_tst, pl_tstit, pl_tstt, pl_btsit, pl_btssttt, pl_btsi, pl_btsib, pl_btsittt, pl_btst, pl_bts, pl_btsst, pl_tttir, pl_tttiiiiiii, pl_tttrrt, pl_tttrrrrirr, pl_tttrrrri, pl_tttrrrr, pl_ttttrr, pl_tttss, pl_tttsb, pl_tttitt, pl_ttttiii, pl_tttttb, pl_ttttti, pl_tttttti, pl_tttiti, pl_ttttiisi, pl_tttrb, pl_tttiiiirrrri, pl_tttiiiirrrrii, pl_tttiiiirrrriiiiiii, pl_tttbbi, pl_tttbbii, pl_ttttstti, pl_ttttttii, pl_tttbb, pl_tttisi, pl_tttri, pl_tttsit, pl_tttrbrr, pl_ttti, pl_tttrr, pl_ttttt, pl_tttttt, pl_tttt, pl_ttt, pl_ttttttt, pl_tttb, pl_ttts, pl_tttii, pl_tttbrr, pl_ttttb, pl_ttttii, pl_tttitti, pl_tttirr, pl_tttrrrrrr, pl_tttiiii, pl_tttsi, pl_tttti, pl_ttttbrr, pl_ttttbb, pl_tttiii, pl_tttit, pl_bsit, pl_bsittb, pl_bsiib, pl_bsiittst, pl_it, pl_btiit, pl_btiib, pl_btittt, pl_btitii, pl_btiiii, pl_bti, pl_btib, pl_btit, pl_btiitt, pl_btitt, pl_btii, pl_btiitttt, pl_titt, pl_tit, pl_bii, pl_btrr, pl_ittttt, pl_ittttttt, pl_ittt, pl_itttt, pl_ittti, pl_itttti, pl_itt, pl_itti, pl_btbb, pl_btb, pl_rt, pl_iittt, pl_iitt, pl_bt, pl_sss, pl_ss, pl_sts, pl_s, pl_ssii, pl_ssi, pl_ts, pl_tss, pl_si, pl_rtt, pl_stiii, pl_sti, pl_stii, pl_i, pl_bst, pl_ttsititit, pl_ttsiii, pl_ttsiiit, pl_ttsiitit, pl_ttsit, pl_ttstb, pl_ttstt, pl_ttsi, pl_tts, pl_ttsrt, pl_ttsr, pl_ttsb, pl_ttss, pl_ttsttt, pl_ttst, pl_ttsii, pl_ttsiit, pl_ttsiis, pl_ttsititt, pl_ttsitibt, pl_ttsiitt, pl_ttstiii, pl_ti, pl_tsiiii, pl_tsii, pl_tsi, pl_tsitt, pl_tsiitti, pl_tsitti, pl_is, pl_btttiiitttt, pl_bttib, pl_btttstti, pl_bttittt, pl_bttsib, pl_bttttb, pl_btttb, pl_bttrbrr, pl_btttbttt, pl_bttt, pl_btttttit, pl_btt, pl_bttbb, pl_bttiitt, pl_bttii, pl_bttb, pl_btttt, pl_bttti, pl_btts, pl_btti, pl_siii, pl_sii, pl_ttitttt, pl_ttitiiii, pl_ttiiti, pl_ttiss, pl_ttisi, pl_ttiti, pl_ttiiiitii, pl_ttiii, pl_ttiiiiiii, pl_ttiiit, pl_ttiit, pl_ttir, pl_ttii, pl_ttiitt, pl_tti, pl_ttibt, pl_ttibtt, pl_ttitii, pl_ttiiii, pl_ttib, pl_ttittt, pl_ttis, pl_ttit, pl_ttitt, pl_ttiittt, pl_ttiiiii, pl_ttiiitt, pl_b, pl_ii, pl_tr, pl_tsrrrb, pl_iss, pl_tb, pl_tsb, pl_tii, pl_tiii, pl_ttrrr, pl_ttrrrrr, pl_ttrrtt, pl_ttris, pl_ttrrrrrr, pl_ttrrrb, pl_ttri, pl_ttrr, pl_ttrt, pl_ttrrrr, pl_ttr, pl_itssitt, pl_itstb, pl_itsttti, pl_itsi, pl_its, pl_ttbt, pl_ttbi, pl_ttbiii, pl_ttbbi, pl_ttb, pl_ttbiiitt, pl_isiittttiit, pl_isi, pl_isitt, pl_itittttt, pl_itisi, pl_itiitb, pl_itiiittt, pl_itis, pl_ititt, pl_iti, pl_itii, pl_itistttt, pl_itistt, pl_tirrr, pl_iii, pl_iiittt, pl_bi, pl_itrr, pl_itrrsittttt, pl_trrrr, pl_trr, pl_trrrttt, pl_trrrrrr, pl_bb, pl_trrr, pl_st, pl_unused;
 #endif
 
@@ -39367,6 +39404,7 @@ static void define_functions(void)
   s_integer = s7_make_symbol(s7, "integer?");
   s_real = s7_make_symbol(s7, "real?");
   s_string = s7_make_symbol(s7, "string?");
+  s_char = s7_make_symbol(s7, "char?");
   s_any = s7_t(s7);
 
   pl_stttb = s7_make_permanent_list(s7, 5, s_string, s_any, s_any, s_any, s_boolean);
@@ -42994,6 +43032,10 @@ pl_unused = NULL;
   Xg_define_procedure(gtk_widget_get_font_map, gxg_gtk_widget_get_font_map_w, 1, 0, 0, H_gtk_widget_get_font_map, pl_tt);
   Xg_define_procedure(gdk_window_fullscreen_on_monitor, gxg_gdk_window_fullscreen_on_monitor_w, 2, 0, 0, H_gdk_window_fullscreen_on_monitor, pl_tti);
   Xg_define_procedure(gtk_window_fullscreen_on_monitor, gxg_gtk_window_fullscreen_on_monitor_w, 3, 0, 0, H_gtk_window_fullscreen_on_monitor, pl_ttti);
+  Xg_define_procedure(gtk_text_view_set_top_margin, gxg_gtk_text_view_set_top_margin_w, 2, 0, 0, H_gtk_text_view_set_top_margin, pl_tti);
+  Xg_define_procedure(gtk_text_view_get_top_margin, gxg_gtk_text_view_get_top_margin_w, 1, 0, 0, H_gtk_text_view_get_top_margin, pl_it);
+  Xg_define_procedure(gtk_text_view_set_bottom_margin, gxg_gtk_text_view_set_bottom_margin_w, 2, 0, 0, H_gtk_text_view_set_bottom_margin, pl_tti);
+  Xg_define_procedure(gtk_text_view_get_bottom_margin, gxg_gtk_text_view_get_bottom_margin_w, 1, 0, 0, H_gtk_text_view_get_bottom_margin, pl_it);
 #endif
 
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create, pl_tt);
@@ -44856,6 +44898,16 @@ static void define_integers(void)
   define_integer(GTK_TEXT_EXTEND_SELECTION_LINE);
 #endif
 
+#if GTK_CHECK_VERSION(3, 18, 0)
+  define_integer(GDK_TOUCHPAD_SWIPE);
+  define_integer(GDK_TOUCHPAD_PINCH);
+  define_integer(GDK_TOUCHPAD_GESTURE_PHASE_BEGIN);
+  define_integer(GDK_TOUCHPAD_GESTURE_PHASE_UPDATE);
+  define_integer(GDK_TOUCHPAD_GESTURE_PHASE_END);
+  define_integer(GDK_TOUCHPAD_GESTURE_PHASE_CANCEL);
+  define_integer(GDK_TOUCHPAD_GESTURE_MASK);
+#endif
+
   define_integer(CAIRO_STATUS_SUCCESS);
   define_integer(CAIRO_STATUS_NO_MEMORY);
   define_integer(CAIRO_STATUS_INVALID_RESTORE);
@@ -45631,7 +45683,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("18-Aug-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("19-Aug-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

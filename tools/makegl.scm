@@ -796,9 +796,113 @@
 
 
 ;;; ---------------- procedure linkages
+
+(define (gtk-type->s7-type gtk)
+  (let ((dt (assoc gtk direct-types)))
+    (if (and (pair? dt)
+	     (string? (cdr dt)))
+	(let ((direct (cdr dt)))
+	  (cond ((member direct '("INT" "ULONG") string=?) 'integer?)
+		((string=? direct "BOOLEAN")               'boolean?)
+		((string=? direct "DOUBLE")                'real?)
+		((string=? direct "CHAR")                  'char?)
+		((string=? direct "String")                'string?)
+		(#t #t)))
+	#t)))
+	       
+(define (make-signature fnc)
+  (let ((sig (list (gtk-type->s7-type (cadr fnc)))))
+    (for-each
+     (lambda (arg)
+       (set! sig (cons (gtk-type->s7-type (car arg)) sig)))
+     (caddr fnc))
+    (reverse sig)))
+
+(define signatures (make-hash-table))
+(define (make-signatures lst)
+  (for-each
+   (lambda (f)
+     (let ((sig (make-signature f)))
+       (if (pair? sig)
+	   (let ((count (signatures sig)))
+	     (if (not count)
+		 (set! (signatures sig) 0)
+		 (set! (signatures sig) (+ count 1)))))))
+   lst))
+
+(make-signatures funcs)
+(make-signatures x-funcs)
+;(format *stderr* "~D entries, ~D funcs~%" (hash-table-entries signatures) (length funcs))
+
 (hey "static void define_functions(void)~%")
 (hey "{~%")
-(hey "  #define GL_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) Xen_define_safe_procedure(XL_PRE #Name XL_POST, Value, A1, A2, A3, Help)~%")
+
+(hey "#if HAVE_SCHEME~%")
+(hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_char;~%")
+(hey "static s7_pointer ")
+
+(define (sig-name sig)
+  (call-with-output-string
+   (lambda (p)
+     (display "pl_" p)
+     (for-each
+      (lambda (typ)
+	(display (case typ
+		   ((integer?) "i")
+		   ((boolean?) "b")
+		   ((real?) "r")
+		   ((string?) "s")
+		   (else "t"))
+		 p))
+      sig))))
+     
+(for-each
+ (lambda (sigc)
+   (let ((sig (car sigc)))
+     (hey (sig-name sig))
+     (hey ", ")))
+ signatures)
+(hey "pl_unused;~%")
+
+(hey "  s_boolean = s7_make_symbol(s7, \"boolean?\");~%")
+(hey "  s_integer = s7_make_symbol(s7, \"integer?\");~%")
+(hey "  s_real = s7_make_symbol(s7, \"real?\");~%")
+(hey "  s_string = s7_make_symbol(s7, \"string?\");~%")
+(hey "  s_char = s7_make_symbol(s7, \"char?\");~%")
+(hey "  s_any = s7_t(s7);~%~%")
+
+(for-each
+ (lambda (sigc)
+   (let ((sig (car sigc)))
+     (hey "  ")
+     (hey (sig-name sig))
+     (hey " = s7_make_permanent_list(s7, ")
+     (let ((len (length sig)))
+       (hey (number->string len))
+       (hey ", ")
+       (do ((i 0 (+ i 1))
+	    (s sig (cdr s)))
+	   ((= i len))
+	 (let ((typ (car s)))
+	   (hey (case typ
+		  ((integer?) "s_integer")
+		  ((boolean?) "s_boolean")
+		  ((real?) "s_real")
+		  ((string?) "s_string")
+		  ((char?) "s_char")
+		  (else "s_any"))))
+	 (if (< i (- len 1)) (hey ", "))))
+     (hey ");~%")))
+ signatures)
+(hey "pl_unused = NULL;~%")
+(hey "#endif~%~%")
+
+(hey "#if HAVE_SCHEME~%")
+(hey "  #define gl_define_procedure(Name, Value, A1, A2, A3, Help, Sig) s7_define_typed_function(s7, XL_PRE #Name XL_POST, Value, A1, A2, A3, Help, Sig)~%")
+(hey "#else~%")
+(hey "  #define gl_define_procedure(Name, Value, A1, A2, A3, Help, Sig) Xen_define_safe_procedure(XL_PRE #Name XL_POST, Value, A1, A2, A3, Help)~%")
+(hey "#endif~%")
+(hey "~%")
 
 (define (defun func)
   (let* ((cargs (length (caddr func)))
@@ -808,12 +912,14 @@
     (check-glu name)
     (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
 
-    (hey "  GL_DEFINE_PROCEDURE(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
+    (hey "  gl_define_procedure(~A, gxg_~A_w, ~D, ~D, ~D, H_~A, ~A);~%"
 		     (car func) (car func) 
 		     (if (>= cargs max-args) 0 args)
 		     (if (>= cargs max-args) 0 refargs) ; optional ignored
 		     (if (>= cargs max-args) 1 0)
-		     (car func))
+		     (car func)
+		     (sig-name (make-signature func)))
+
     (if (member (car func) glu-1-2) (hey "#endif~%"))
     ))
 
