@@ -235,6 +235,7 @@ bool s7_is_list(s7_scheme *sc, s7_pointer p);                                /* 
 int s7_list_length(s7_scheme *sc, s7_pointer a);                             /* (length a) */
 s7_pointer s7_list(s7_scheme *sc, int num_values, ...);                      /* (list ...) */
 s7_pointer s7_make_permanent_list(s7_scheme *sc, int len, ...);              /* (list ...) but permanently GC-protected */
+s7_pointer s7_make_permanent_circular_list(s7_scheme *sc, int cycle_point, int len, ...);
 s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a);                          /* (reverse a) */
 s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b);             /* (append a b) */
 s7_pointer s7_list_ref(s7_scheme *sc, s7_pointer lst, int num);              /* (list-ref lst num) */
@@ -660,8 +661,6 @@ s7_pointer s7_fill(s7_scheme *sc, s7_pointer args);
 
 
   /* these are aimed at the CLM optimizer -- they change daily! */
-void s7_function_set_returns_temp(s7_pointer f);
-
 typedef s7_double (*s7_rf_t)(s7_scheme *sc, s7_pointer **p);
 typedef s7_rf_t (*s7_rp_t)(s7_scheme *sc, s7_pointer expr);
 void s7_rf_set_function(s7_pointer f, s7_rp_t rp);
@@ -778,7 +777,8 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
- * 16-Aug:    remove s7_define_integer_function, add s7_define_typed_function, s7_make_permanent_list.
+ * 16-Aug:    remove s7_define_integer_function, s7_function_set_removes_temp, 
+ *              add s7_define_typed_function, s7_make_permanent_list.
  * 5-Aug:     added s7_scheme* arg to s7_openlet and s7_outlet.
  * 3-Jul:     s7_Double -> s7_double, s7_Int -> s7_int. Removed function_chooser_data.
  * 27-Jun:    s7_rf_t, s7_rp_t etc.

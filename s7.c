@@ -877,7 +877,7 @@ struct s7_scheme {
   s7_pointer CHAR_LEQ, CHAR_LT, CHAR_EQ, CHAR_GEQ, CHAR_GT, IS_CHAR, CHAR_POSITION, CHAR_TO_INTEGER, IS_CHAR_ALPHABETIC;
   s7_pointer CHAR_DOWNCASE, IS_CHAR_LOWER_CASE, IS_CHAR_NUMERIC, CHAR_UPCASE, IS_CHAR_UPPER_CASE;
   s7_pointer IS_CHAR_WHITESPACE, CLOSE_INPUT_PORT, CLOSE_OUTPUT_PORT, IS_COMPLEX, CONS, IS_CONSTANT, IS_CONTINUATION, COPY, COS, COSH;
-  s7_pointer CURRENT_INPUT_PORT, CURRENT_OUTPUT_PORT, CURRENT_ERROR_PORT, C_POINTER, IS_C_POINTER;
+  s7_pointer CURRENT_INPUT_PORT, CURRENT_OUTPUT_PORT, CURRENT_ERROR_PORT, C_POINTER, IS_C_POINTER, IS_C_OBJECT;
   s7_pointer IS_DEFINED, DENOMINATOR, DISPLAY, DYNAMIC_WIND, IS_LET, INLET, LET_REF, LET_REF_FALLBACK, LET_SET, LET_SET_FALLBACK;
   s7_pointer IS_EOF_OBJECT, IS_EQ, IS_EQUAL, IS_EQV, ERROR, EVAL, EVAL_STRING, IS_EVEN, IS_EXACT;
   s7_pointer EXACT_TO_INEXACT, EXP, EXPT, FILL, INT_VECTOR_REF, INT_VECTOR_SET;
@@ -936,7 +936,7 @@ struct s7_scheme {
   s7_pointer __FUNC__;
   s7_pointer Object_Set;               /* applicable object set method */
   s7_pointer FEED_TO;                  /* => */
-  s7_pointer BODY, CLASS_NAME;
+  s7_pointer BODY, CLASS_NAME, IS_FLOAT, IS_INTEGER_OR_REAL_AT_END, IS_INTEGER_OR_ANY_AT_END;
   s7_pointer QUOTE_UNCHECKED, BEGIN_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_LET_UNCHECKED, WITH_LET_S;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, LETREC_STAR_UNCHECKED, COND_UNCHECKED, COND_SIMPLE, WITH_BAFFLE_UNCHECKED;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_A;
@@ -2046,10 +2046,6 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define c_function_ip(f)              c_function_ext(f)->ip
 #define c_function_pp(f)              c_function_ext(f)->pp
 #define c_function_gp(f)              c_function_ext(f)->gp
-
-void s7_function_set_returns_temp(s7_pointer f) {set_returns_temp(f);}
-static bool s7_function_returns_temp(s7_scheme *sc, s7_pointer f) {return((is_optimized(f)) && (ecdr(f)) && (is_any_c_function(ecdr(f))) && (returns_temp(ecdr(f))));}
-
 #define c_call(f)                     ((s7_function)(fcdr(f)))
 #define set_c_function(f, X)          do {set_ecdr(f, X); set_fcdr(f, (s7_pointer)(c_function_call(ecdr(f))));} while (0)
 
@@ -15155,7 +15151,7 @@ static s7_double c_quo_dbl(s7_scheme *sc, s7_double x, s7_double y)
 static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 {
   #define H_quotient "(quotient x1 x2) returns the integer quotient of x1 and x2; (quotient 4 3) = 1"
-  #define Q_quotient s7_make_permanent_list(sc, 2, sc->IS_INTEGER, sc->IS_REAL)
+  #define Q_quotient s7_make_permanent_list(sc, 2, sc->IS_REAL, sc->IS_REAL)
   /* (define (quo x1 x2) (truncate (/ x1 x2))) ; slib
    */
   s7_pointer x, y;
@@ -32443,7 +32439,7 @@ static s7_pointer g_system(s7_scheme *sc, s7_pointer args)
 {
   #define H_system "(system command) executes the command.  If the optional second it is #t, \
 system captures the output as a string and returns it."
-  #define Q_system s7_make_permanent_list(sc, 2, sc->T, sc->IS_STRING)
+  #define Q_system s7_make_permanent_list(sc, 3, sc->T, sc->IS_STRING, sc->IS_BOOLEAN)
 
   s7_pointer name;
   name = car(args);
@@ -32586,7 +32582,7 @@ static s7_pointer permanent_list(s7_scheme *sc, int len)
   s7_pointer p;
   p = sc->NIL;
   for (j = 0; j < len; j++)
-    p = permanent_cons(sc->NIL, p, T_PAIR);
+    p = permanent_cons(sc->NIL, p, T_PAIR | T_IMMUTABLE);
   return(p);
 }
 
@@ -32613,7 +32609,7 @@ s7_pointer s7_make_permanent_list(s7_scheme *sc, int len, ...)
   return(res);
 }
 
-static s7_pointer s7_make_permanent_circular_list(s7_scheme *sc, int cycle_point, int len, ...)
+s7_pointer s7_make_permanent_circular_list(s7_scheme *sc, int cycle_point, int len, ...)
 {
   va_list ap;
   int i;
@@ -36895,7 +36891,7 @@ static s7_pointer g_vector_ref_2(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector_set "(vector-set! v i ... value) sets the i-th element of vector v to value."
-  #define Q_vector_set s7_make_permanent_circular_list(sc, 2, 3, sc->T, sc->IS_VECTOR, sc->T)
+  #define Q_vector_set s7_make_permanent_circular_list(sc, 3, 4, sc->T, sc->IS_VECTOR, sc->IS_INTEGER, sc->IS_INTEGER_OR_ANY_AT_END)
 
   s7_pointer vec, val;
   s7_int index;
@@ -37666,7 +37662,7 @@ static s7_pointer univect_set(s7_scheme *sc, s7_pointer args, bool flt)
 static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_float_vector_ref "(float-vector-ref v ...) returns an element of the float-vector v."
-  #define Q_float_vector_ref s7_make_permanent_circular_list(sc, 2, 3, sc->IS_REAL, sc->IS_FLOAT_VECTOR, sc->IS_INTEGER)
+  #define Q_float_vector_ref s7_make_permanent_circular_list(sc, 2, 3, sc->IS_FLOAT, sc->IS_FLOAT_VECTOR, sc->IS_INTEGER)
   return(univect_ref(sc, args, true));
 }
 
@@ -37674,7 +37670,7 @@ static s7_pointer g_float_vector_ref(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_float_vector_set "(float-vector-set! v i ... value) sets the i-th element of the float-vector v to value."
-  #define Q_float_vector_set s7_make_permanent_circular_list(sc, 2, 3, sc->IS_REAL, sc->IS_FLOAT_VECTOR, sc->T)
+  #define Q_float_vector_set s7_make_permanent_circular_list(sc, 3, 4, sc->IS_REAL, sc->IS_FLOAT_VECTOR, sc->IS_INTEGER, sc->IS_INTEGER_OR_REAL_AT_END)
   return(univect_set(sc, args, true));
 }
 
@@ -37688,7 +37684,7 @@ static s7_pointer g_int_vector_ref(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_int_vector_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_int_vector_set "(int-vector-set! v i ... value) sets the i-th element of the int-vector v to value."
-  #define Q_int_vector_set s7_make_permanent_circular_list(sc, 2, 3, sc->IS_INTEGER, sc->IS_INT_VECTOR, sc->T)
+  #define Q_int_vector_set s7_make_permanent_circular_list(sc, 2, 3, sc->IS_INTEGER, sc->IS_INT_VECTOR, sc->IS_INTEGER)
   return(univect_set(sc, args, false));
 }
 
@@ -40040,6 +40036,10 @@ static s7_pointer fallback_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
   return(f);
 }
 
+static bool function_returns_temp(s7_pointer f) 
+{
+  return((is_optimized(f)) && (ecdr(f)) && (is_any_c_function(ecdr(f))) && (returns_temp(ecdr(f))));
+}
 
 static void s7_function_set_class(s7_pointer f, s7_pointer base_f)
 {
@@ -40292,6 +40292,7 @@ s7_pointer s7_define_typed_function(s7_scheme *sc, const char *name, s7_function
   s7_pointer func, sym;
   func = s7_make_safe_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   c_function_signature(func) = signature;
+  if ((signature) && (is_pair(signature)) && (car(signature) == sc->IS_FLOAT)) set_returns_temp(func);
   sym = make_symbol(sc, name);
   s7_define(sc, sc->NIL, sym, func);
   return(sym);
@@ -40649,6 +40650,24 @@ static s7_pointer fallback_length(s7_scheme *sc, s7_pointer obj)
 bool s7_is_object(s7_pointer p)
 {
   return(is_c_object(p));
+}
+
+static s7_pointer g_is_c_object(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_c_object "(c-object? obj) returns the object's type tag if obj is a C object, otherwise #f"
+  #define Q_is_c_object s7_make_permanent_list(sc, 2, sc->T, sc->T)
+
+  s7_pointer p;
+  p = car(args);
+  if (is_c_object(p)) 
+    return(make_integer(sc, c_object_type(p))); /* this is the object_types table index = tag */
+  check_method(sc, p, sc->IS_C_OBJECT, args);
+  return(sc->F);
+  /* <1> (*s7* 'c-types)
+     ("<random-number-generator>")
+     <2> (c-object? (make-random-state 123))
+     0
+  */
 }
 
 
@@ -48573,15 +48592,15 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 	      return(add_ss_1ss);
 	    }
 
-	  if ((s7_function_returns_temp(sc, arg1)) &&
-	      (s7_function_returns_temp(sc, arg2)))
+	  if ((function_returns_temp(arg1)) &&
+	      (function_returns_temp(arg2)))
 	    return(add_2_temp);
 	}
 
-      if (s7_function_returns_temp(sc, arg2))
+      if (function_returns_temp(arg2))
 	return(add_s_temp);
 
-      if (s7_function_returns_temp(sc, arg1))
+      if (function_returns_temp(arg1))
 	return(add_temp_s);
 
       return(add_2);
@@ -48594,9 +48613,9 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
       arg2 = caddr(expr);
       arg3 = cadddr(expr);
 
-      if ((s7_function_returns_temp(sc, arg1)) &&
-	  (s7_function_returns_temp(sc, arg2)) &&
-	  (s7_function_returns_temp(sc, arg3)))
+      if ((function_returns_temp(arg1)) &&
+	  (function_returns_temp(arg2)) &&
+	  (function_returns_temp(arg3)))
 	return(add_3_temp);
     }
 #endif
@@ -48676,13 +48695,13 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	  return(mul_1ss);
 	}
 
-      if ((s7_function_returns_temp(sc, arg1)) &&
-	  (s7_function_returns_temp(sc, arg2)))
+      if ((function_returns_temp(arg1)) &&
+	  (function_returns_temp(arg2)))
 	return(multiply_2_temp);
-      if (s7_function_returns_temp(sc, arg2))
+      if (function_returns_temp(arg2))
 	return(multiply_s_temp);
 
-      if (s7_function_returns_temp(sc, arg1))
+      if (function_returns_temp(arg1))
 	return(multiply_temp_s);
 
       if ((is_symbol(arg1)) &&
@@ -48728,7 +48747,7 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
       s7_pointer arg1;
 
       arg1 = cadr(expr);
-      if (s7_function_returns_temp(sc, arg1))
+      if (function_returns_temp(arg1))
 	return(multiply_1_any);
     }
 #endif
@@ -48806,9 +48825,9 @@ static s7_pointer subtract_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	    }
 	}
 
-      if ((s7_function_returns_temp(sc, arg1)) &&
+      if ((function_returns_temp(arg1)) &&
 	  ((is_t_real(arg2)) ||
-	   (s7_function_returns_temp(sc, arg2))))
+	   (function_returns_temp(arg2))))
 	return(subtract_2_temp); /* this only cares that arg2 is known to be T_REAL */
 
       if (is_t_real(arg2))
@@ -48837,7 +48856,7 @@ static s7_pointer divide_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 	  (real(arg1) == 1.0))
 	return(divide_1r);
 
-      if (s7_function_returns_temp(sc, arg2))
+      if (function_returns_temp(arg2))
 	return(divide_s_temp);
     }
 #endif
@@ -48851,7 +48870,7 @@ static s7_pointer expt_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
     {
       s7_pointer arg1;
       arg1 = cadr(expr);
-      if (s7_function_returns_temp(sc, arg1))
+      if (function_returns_temp(arg1))
 	return(expt_temp_s);
     }
   return(f);
@@ -48986,8 +49005,8 @@ static s7_pointer greater_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
       arg1 = cadr(expr);
       arg2 = caddr(expr);
 
-      if ((s7_function_returns_temp(sc, arg1)) &&
-	  (s7_function_returns_temp(sc, arg2)))
+      if ((function_returns_temp(arg1)) &&
+	  (function_returns_temp(arg2)))
 	return(greater_2_f);
 
       if ((is_integer(arg2)) &&
@@ -49457,7 +49476,7 @@ static s7_pointer make_temp_function_with_class(s7_scheme *sc, s7_pointer cls, c
   s7_pointer uf;
   uf = s7_make_safe_function(sc, name, f, required_args, optional_args, rest_arg, doc);
   s7_function_set_class(uf, cls);
-  s7_function_set_returns_temp(uf);
+  set_returns_temp(uf);
   return(uf);
 }
 
@@ -54507,7 +54526,7 @@ static s7_pointer check_set(s7_scheme *sc)
 				      if ((settee == cadr(value)) &&
 					  (car(value) == sc->ADD) &&
 					  (is_null(cdddr(value))) &&
-					  (s7_function_returns_temp(sc, caddr(value))) &&
+					  (function_returns_temp(caddr(value))) &&
 					  (optimize_op(caddr(value)) == HOP_SAFE_C_C)) /* paranoia... */
 					{
 					  pair_set_syntax_symbol(sc->code, sc->INCREMENT_C_TEMP);
@@ -70193,9 +70212,9 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
       s7_pointer res;
       int i;
       sc->w = sc->NIL;
-      for (i = 0; i < num_object_types; i++)
-	sc->w = cons(sc, make_string_wrapper(sc, object_types[i]->name), sc->w);
-      res = sc->w;
+      for (i = 0; i < num_object_types; i++)                             /* c-object type (tag) is i */
+	sc->w = cons(sc, object_types[i]->scheme_name, sc->w);
+      res = safe_reverse_in_place(sc, sc->w);                            /*  so car(types) has tag 0 */
       sc->w = sc->NIL;
       return(res);
     }
@@ -70362,6 +70381,33 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
       return(simple_wrong_type_argument(sc, sym, val, T_INTEGER));
     }
   return(sc->UNDEFINED);
+}
+
+/* some procedure-signature support functions */
+
+static s7_pointer g_is_float(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer p;
+  p = car(args);
+  return(make_boolean(sc, ((is_real(p)) && (!is_rational(p)))));
+}
+
+static s7_pointer g_is_integer_or_real_at_end(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer p;
+  p = car(args);
+  fprintf(stderr, "check %s\n", DISPLAY(p));
+  if (is_integer(p)) return(sc->T);
+  if (is_real(p)) return(sc->EOF_OBJECT);
+  return(sc->F);
+}
+
+static s7_pointer g_is_integer_or_any_at_end(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer p;
+  p = car(args);
+  if (is_integer(p)) return(sc->T);
+  return(sc->EOF_OBJECT);
 }
 
 
@@ -71042,6 +71088,7 @@ s7_scheme *s7_init(void)
   sc->IS_CONSTANT =           defun("constant?",	is_constant,		1, 0, false);
   sc->IS_MACRO =              defun("macro?",		is_macro,		1, 0, false);
   sc->IS_C_POINTER =          defun("c-pointer?",	is_c_pointer,		1, 0, false);
+  sc->IS_C_OBJECT =           defun("c-object?",	is_c_object,		1, 0, false);
   sc->IS_INPUT_PORT =         defun("input-port?",	is_input_port,		1, 0, false);
   sc->IS_OUTPUT_PORT =        defun("output-port?",	is_output_port,		1, 0, false);
   sc->IS_EOF_OBJECT =         defun("eof-object?",	is_eof_object,		1, 0, false);
@@ -71064,6 +71111,9 @@ s7_scheme *s7_init(void)
   sc->IS_PROCEDURE =          defun("procedure?",	is_procedure,		1, 0, false);
   sc->IS_DILAMBDA =           defun("dilambda?",	is_dilambda,		1, 0, false);
                               defun("boolean?",		is_boolean,		1, 0, false);
+  sc->IS_INTEGER_OR_REAL_AT_END = s7_define_function(sc, "integer:real?", g_is_integer_or_real_at_end, 1, 0, false, "internal signature helper");
+  sc->IS_INTEGER_OR_ANY_AT_END =  s7_define_function(sc, "integer:any?", g_is_integer_or_any_at_end, 1, 0, false, "internal signature helper");
+  sc->IS_FLOAT =                  s7_define_function(sc, "float?", g_is_float, 1, 0, false, "internal signature helper");
 
   pl_t_pair =     s7_make_permanent_list(sc, 2, sc->T, sc->IS_PAIR);
   pl_t_t_pair =   s7_make_permanent_list(sc, 3, sc->T, sc->T, sc->IS_PAIR);
@@ -71914,21 +71964,23 @@ int main(int argc, char **argv)
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212 3266
  * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3735
  * tform         |      |      |                          6816 5536 4287 3996 3992
+ * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 4208
  * tmap          |      |      |  9.3                                         4423
  * titer         |      |      |                          7503 6793 6351 6048 6258
- * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 6272
- * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 6699
+ * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 7070
  * thash         |      |      |                          50.7 23.8 14.9 13.7 12.4
  *               |      |      |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 14.0
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 15.1
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 36.3 37.6
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 36.3 37.5
  * 
  * ----------------------------------------------------------------------------------
  *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  * cyclic-seq in stuff.scm, but current code is really clumsy
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
+ * is this correct: (map symbol->value (let ((lst (list 'integer? 'boolean?))) (set-cdr! (cdr lst) lst) lst))) -> (integer?)
+ *   I think this depends on when the list iterator notices the cycle
  *
  * the old mus-audio-* code needs to use play or something, especially bess*
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f)
@@ -71940,11 +71992,23 @@ int main(int argc, char **argv)
  *       letrec->let
  *       (do ((x lst (cdr lst))) ((null? x)) ...) -- infinite loop normally (same for (+ x 0) (* x 1) etc, and also recursion)
  *       contradictory is broken
+ *       handle lists of types, notice other libraries and with-let, autoload 
  *
  * the repl should autoload sndlib/clm, but ideally this would go through sndlib.scm or the equivalent.
  * someday fix the freed snd_fd problem -- where does this happen?
  * libutf8proc.scm tested (s7test), doc, examples?
  *
+ * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
+ *   get args, plug into closure_let, then call closure_rf_body via the saved array
+ *   free-var: slot search each time, so a special rf func?
+ *   lambda* args: rf_closure* (with-let??) 
+ *   rcos: simple_do_step->eval->safe_closure_star_s0, so if body is rfable, it could be handled [~/old/s7-closure-rf.c]
+ *
+ * clm methods probably also need the method fallbacks (not the direct calls only), set support, a few pf cases
+ *   clm needs set_rf|if for methods
+ *   mus-scaler et al method (try gen without the gen)
+ *   clm2xen: [rf2_to_rf in clm2xen] [sec->smp autocor fft-window[gf] convol] vct-move? (spectrum is from snd) mix-position
+ * 
  * chars-as-int|byte, byte-vector-as-int-vector (also string) so those 3 types go away and can be optimized at c level
  *   so which way to handle read|write-byte|char?
  *   leaning toward: full homogenous bv and T_BYTE/T_BYTE_VECTOR as underlying types
@@ -71952,31 +72016,20 @@ int main(int argc, char **argv)
  *   full bv: ca 250 lines, maybe less since it can piggy-back throughout on current string code
  *   bv cases are already potentially ints
  *
- * fill in procedure-signature info in s7/sndlib/cload/gl/maybe xm (hs?)
- *   closure 'signature local (like 'documentation) -- dsp.scm etc?
- *   also need side-effect | temp-return info [bit on sig list]
+ * fill in procedure-signature info in sndlib/cload/snd
+ *   local closure 'signature -- dsp.scm etc?
+ *   also need side-effect info
  *   perhaps also search *libraries* for name -- if ambiguous check all?  do-all-libraries...
- *   reuse the basic sig lists (also in makexg etc)
+ *     currently gl/gtk names are missed, but the code starts with (with-let *gl*...) for example
  *   TODO: there are still #t's where type info could be [see plist]
- *         explicitly test the signatures via tauto
+ *   s7_signature to handle the hash-table?  how to specify circles? s7_circular_signature
+ *     then change to 1/2 byte storage -- 100 times less space
  * 
- * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
- *   get args, plug into closure_let, then call closure_rf_body via the saved array
- *   free-var: slot search each time, so a special rf func?
- *   lambda* args: rf_closure* (with-let??) 
- *   rcos: simple_do_step->eval->safe_closure_star_s0, so if body is rfable, it could be handled [~/old/s7-closure-rf.c]
- *
  * is_if_xf: (not (= s s)) (set! i x) -- 70 faster in wc 41/34
  * pf/rf for steppers, and eventually end
  * list? and random-state? need to handle methods, let-set ignores non-let arg1
  * combine the random cases -- need to handle ratios -- these are not finished
  * c_equal_2 trick might work elsewhere [move complex unlikely stuff to separate func]
- *
- * clm methods probably also need the method fallbacks (not the direct calls only), set support, a few pf cases
- *   clm needs set_rf|if for methods
- *   mus-scaler et al method (try gen without the gen)
- *   clm2xen: [rf2_to_rf in clm2xen] [sec->smp autocor fft-window[gf] convol] vct-move? (spectrum is from snd) mix-position
- * 
  * gf cases (with rf/if cases also)
  *   substring [inlet list] vector [float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
  * check (name ...) fv/iv/seq if rf/if/pf (also set -- how to deal with dilambda type?)
@@ -71990,6 +72043,5 @@ int main(int argc, char **argv)
  * need to check all if/rf symbol cases for type+stepper (and set! if/rf: c/p ok, s if like others)
  * in vector-set|list-set|etc: it would be better to try if|rf first (before pf|gf) then make the number at the end
  *   so wrap: if|rf_to_pf used in pf_opt: this gets messy fast
- * remove define_real_function [only use: generators.scm -- how to call the C version here?]
- * permanent-lists for c_function arity preset as with sig/help (share these)
+ * permanent-lists for c_function arity preset as with sig/help (share these) via define_typed...
  */

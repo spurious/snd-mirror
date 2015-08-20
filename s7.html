@@ -5601,6 +5601,13 @@ The boolean sets whether the entire output should be displayed as a comment.
 The defaults are '(3 45 80 45 #t).
 </p>
 
+<p>c-types returns a list of the types created by s7_new_type_x and friends.
+The built-in random-state is an instance of one such type.  The function
+c-object? returns the type tag if passed such an object (otherwise #f of course).  This tag is also the position
+of the object's type in the c-types list. You can also wrap up raw C pointers and
+pass them around in s7 code. The function c-pointer returns a wrapped pointer,
+and c-pointer? returns #t if passed it.  In libc.scm, we <code>(define NULL (c-pointer 0))</code>.
+</p>
 
 
 <div class="separator"></div>

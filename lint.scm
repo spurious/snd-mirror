@@ -262,10 +262,10 @@
 	    (not (symbol? type1))
 	    (not (symbol? type2))
 	    (case type1
-	      ((number?) (memq type2 '(real? rational? integer?)))
-	      ((real?)   (memq type2 '(number? rational? integer?)))
+	      ((number?) (memq type2 '(float? real? rational? integer?)))
+	      ((real? float?) (memq type2 '(number? rational? integer?)))
 	      ((rational?) (memq type2 '(number? integer?)))
-	      ((integer?) (memq type2 '(real? rational? number?)))
+	      ((integer?) (memq type2 '(float? real? rational? number?)))
 	      ((vector?) (memq type2 '(float-vector? int-vector?)))
 	      ((float-vector?) (eq? type2 'vector?))
 	      ((int-vector?) (eq? type2 'vector?))
@@ -435,14 +435,19 @@
 	      (format #f "~D " argn)
 	      ""))
 
+	(define (check-checker checker at-end)
+	  (if (eq? checker 'integer:real?)
+	      (if at-end 'real? 'integer?)
+	      (if (eq? checker 'integer:any?)
+		  (if at-end #t 'integer?)
+		  checker)))
+
 	(let ((arg-number 1))
 	  (call-with-exit
 	   (lambda (done)
 	     (for-each 
 	      (lambda (arg)
-		(let ((checker (if (list? checkers) 
-				   (car checkers) 
-				   checkers)))
+		(let ((checker (check-checker (if (list? checkers) (car checkers) checkers) (= arg-number (length (cdr form))))))
 		  ;(format *stderr* "~S -> ~S~%" arg checker)
 		  (when (symbol? checker) ; otherwise ignore type check on this argument (for now TODO: handle pair)
 
@@ -2052,14 +2057,13 @@
 						     (if (char=? (string-ref str j) #\,)
 							 (if (>= (+ j 1) len)
 							     (lint-format "missing format directive: ~S" name str)
-							     (begin
-							       (if (char-ci=? (string-ref str (+ j 1)) #\n)
-								   (begin
-								     (set! dirs (+ dirs 1))
-								     (set! j (+ j 2)))
-								   (if (char-numeric? (string-ref str (+ j 1)))
-								       (set! j (+ j 2))
-								       (set! j (+ j 1)))))))
+							     (if (char-ci=? (string-ref str (+ j 1)) #\n)
+								 (begin
+								   (set! dirs (+ dirs 1))
+								   (set! j (+ j 2)))
+								 (if (char-numeric? (string-ref str (+ j 1)))
+								     (set! j (+ j 2))
+								     (set! j (+ j 1))))))
 						     (if (>= j len)
 							 (lint-format "missing format directive: ~S" name str)
 							 (if (not (char-ci=? (string-ref str j) #\t))
@@ -2133,44 +2137,43 @@
 	  ;(format *stderr* "call: ~A~%" fdata)
 	  (if (var? fdata)
 	      ;; a local var
-	      (begin
-		(if (pair? (var-func-info fdata))
-		    (let ((type (car (var-func-info fdata)))
-			  (args (cadr (var-func-info fdata))))
+	      (if (pair? (var-func-info fdata))
+		  (let ((type (car (var-func-info fdata)))
+			(args (cadr (var-func-info fdata))))
+		    
+		    (let ((rst (or (not (pair? args))
+				   (not (list? args))
+				   (memq :rest args)))
+			  (pargs (if (pair? args) (proper-list args) ())))
 		      
-		      (let ((rst (or (not (pair? args))
-				     (not (list? args))
-				     (memq :rest args)))
-			    (pargs (if (pair? args) (proper-list args) ())))
+		      (let ((call-args (length (cdr form)))
+			    (decl-args (max 0 (- (length pargs) (keywords pargs) (if rst 1 0)))))
 			
-			(let ((call-args (length (cdr form)))
-			      (decl-args (max 0 (- (length pargs) (keywords pargs) (if rst 1 0)))))
-			  
-			  (let ((req (if (memq type '(define lambda)) decl-args 0))
-				(opt (if (memq type '(define lambda)) 0 decl-args)))
-			    (if (< call-args req)
-				(lint-format "~A needs ~D argument~A:~A" 
-					     name head 
-					     req (if (> req 1) "s" "") 
-					     (truncated-list->string form))
-				(if (and (not rst)
-					 (> (- call-args (keywords (cdr form))) (+ req opt))
-					 (symbol? head))
-				    (lint-format "~A has too many arguments:~A" name head (truncated-list->string form))))
-			    (if (and (memq type '(define* lambda*))
-				     (not (memq :allow-other-keys pargs))
-				     (not (memq :rest pargs)))
-				(for-each
-				 (lambda (arg)
-				   (if (and (keyword? arg)
-					    (not (memq arg '(:rest :key :optional)))
-					    (not (member (keyword->symbol arg) pargs 
-							 (lambda (a b)
-							   (if (pair? b) 
-							       (eq? a (car b))
-							       (eq? a b))))))
-				       (lint-format "~A keyword argument ~A (in ~S) does not match any argument in ~S" name head arg form pargs)))
-				 (cdr form)))))))))
+			(let ((req (if (memq type '(define lambda)) decl-args 0))
+			      (opt (if (memq type '(define lambda)) 0 decl-args)))
+			  (if (< call-args req)
+			      (lint-format "~A needs ~D argument~A:~A" 
+					   name head 
+					   req (if (> req 1) "s" "") 
+					   (truncated-list->string form))
+			      (if (and (not rst)
+				       (> (- call-args (keywords (cdr form))) (+ req opt))
+				       (symbol? head))
+				  (lint-format "~A has too many arguments:~A" name head (truncated-list->string form))))
+			  (if (and (memq type '(define* lambda*))
+				   (not (memq :allow-other-keys pargs))
+				   (not (memq :rest pargs)))
+			      (for-each
+			       (lambda (arg)
+				 (if (and (keyword? arg)
+					  (not (memq arg '(:rest :key :optional)))
+					  (not (member (keyword->symbol arg) pargs 
+						       (lambda (a b)
+							 (if (pair? b) 
+							     (eq? a (car b))
+							     (eq? a b))))))
+				     (lint-format "~A keyword argument ~A (in ~S) does not match any argument in ~S" name head arg form pargs)))
+			       (cdr form))))))))
 	      ;; not local var
 	      (if (symbol? head)
 		  (let ((head-value (symbol->value head))) ; head might be "arity"!
@@ -2343,7 +2346,10 @@
 				       (let ((arg-data (let ((sig (procedure-signature head)))
 							 (and (pair? sig)
 							      (cdr sig)))))
-					 (if arg-data
+					 (if (and arg-data
+						  (or (not (pair? arg-data))
+						      (not (eq? (car arg-data) #t))
+						      (not (infinite? (length arg-data)))))
 					     (check-args name head form arg-data env max-arity)))))))))))))))
 
       (define (get-generator form name head) ; defgenerator funcs
