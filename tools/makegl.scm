@@ -839,7 +839,7 @@
 
 (hey "#if HAVE_SCHEME~%")
 (hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_char;~%")
-(hey "static s7_pointer ")
+(hey "static s7_sig_t ")
 
 (define (sig-name sig)
   (call-with-output-string
@@ -876,7 +876,7 @@
    (let ((sig (car sigc)))
      (hey "  ")
      (hey (sig-name sig))
-     (hey " = s7_make_permanent_list(s7, ")
+     (hey " = s7_make_signature(s7, ")
      (let ((len (length sig)))
        (hey (number->string len))
        (hey ", ")

@@ -67,15 +67,6 @@ static bool mus_simple_out_any_to_file(mus_long_t samp, mus_float_t val, int cha
     }
   return(false);
 }
-
-static s7_pointer pcl_ct, pl_rcr, pl_bt, pl_rr, pl_ri, pl_ir, pl_cc, pl_ccc, pl_ccic, pl_ccrr, pl_fc, pl_fcif, 
-                  pl_cs, pl_fc, pl_ff, pl_tt, pl_fff, pl_fffifi, pl_ffftii, pl_fffi, pl_fffii, pl_fti, pl_fif, pl_fiir, pl_fttb, pl_ic, 
-                  pl_nrn, pl_rc, pl_rccrt, pl_rit, pl_rcii, pl_rciir, pl_rcir, pl_ririt, pl_rcrr, pl_rirt, pl_rffi, 
-                  pl_rfri, pl_riirfff, pl_riit, pl_rirfff, pl_rirfir, pl_rrc, pl_rrf, pl_rrpr, pl_rrr, 
-                  pl_rrrr, pl_rv, pl_rvir, pl_sc, pl_sssrs, pl_tc, pl_ii, pl_rrff, pl_ct;
-static s7_pointer pl_dcr, pl_dr, pl_drr, pl_drrr, pl_dffi, pl_dfri, pl_dirfir, pl_dc, pl_dcrr,
-                  pl_dv, pl_dvir, pl_drf, pl_drff, pl_drc, pl_dcii, pl_diit, pl_dit;
-
 #endif
 
 /* -------------------------------------------------------------------------------- */
@@ -12364,10 +12355,6 @@ Xen_wrap_3_args(g_out_bank_w, g_out_bank)
 Xen_wrap_2_args(g_piano_noise_w, g_piano_noise)
 Xen_wrap_6_args(g_singer_filter_w, g_singer_filter)
 Xen_wrap_5_args(g_singer_nose_filter_w, g_singer_nose_filter)
-
-#define Xen_define_typed_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc, Sig) s7_define_typed_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc, Sig)
-#else
-#define Xen_define_typed_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc, Sig) Xen_define_safe_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc)
 #endif
 
 #if HAVE_SCHEME
@@ -12394,6 +12381,17 @@ static char *mus_generator_to_readable_string(s7_scheme *sc, void *obj)
 
 static void mus_xen_init(void)
 {
+#if HAVE_SCHEME
+  s7_pointer s, i, p, t, r, c, f, v, b, n, d;
+
+  s7_sig_t pcl_ct, pl_rcr, pl_bt, pl_ir, pl_cc, pl_ccc, pl_ccic, pl_ccrr, pl_fc, pl_fcif, 
+                  pl_cs, pl_ff, pl_tt, pl_fff, pl_fffifi, pl_ffftii, pl_fffi, pl_fffii, pl_fti, pl_fif, pl_fiir, pl_fttb, pl_ic, 
+                  pl_rciir, pl_rcir, pl_ririt, pl_rcrr, pl_rirt, pl_riirfff, pl_rirfff, pl_rrpr,  
+                  pl_sc, pl_sssrs, pl_tc, pl_ii, pl_ct;
+  s7_sig_t pl_dcr, pl_dr, pl_drr, pl_drrr, pl_dffi, pl_dfri, pl_dirfir, pl_dc, pl_dcrr,
+                  pl_dv, pl_dvir, pl_drf, pl_drff, pl_drc, pl_dcii, pl_diit, pl_dit;
+#endif
+
   mus_initialize();
   current_connect_func = Xen_false;
 
@@ -12403,95 +12401,74 @@ static void mus_xen_init(void)
   Xen_GC_protect(as_needed_arglist);
   s7_set_object_print_readably(mus_xen_tag, mus_generator_to_readable_string);
 
-  {
-    s7_pointer s, i, p, t, r, c, f, v, b, n, d;
-    s = s7_make_symbol(s7, "string?");
-    i = s7_make_symbol(s7, "integer?");
-    p = s7_make_symbol(s7, "pair?");
-    t = s7_t(s7);
-    r = s7_make_symbol(s7, "real?");
-    c = s7_make_symbol(s7, "c-object?");
-    f = s7_make_symbol(s7, "float-vector?");
-    v = s7_make_symbol(s7, "vector?");
-    b = s7_make_symbol(s7, "boolean?");
-    n = s7_make_symbol(s7, "number?");
-    d = s7_make_symbol(s7, "float?");
-
-    pcl_ct = s7_make_permanent_circular_list(s7, 1, 2, c, t);
-    pl_bt = s7_make_permanent_list(s7, 2, b, t);
-    pl_rcr = s7_make_permanent_list(s7, 3, r, c, r);
-
-    pl_dcr = s7_make_permanent_list(s7, 3, d, c, r);
-    pl_dr = s7_make_permanent_list(s7, 2, d, r);
-    pl_drr = s7_make_permanent_list(s7, 3, d, r, r);
-    pl_drrr = s7_make_permanent_list(s7, 4, d, c, r, r);
-    pl_dffi = s7_make_permanent_list(s7, 4, d, f, f, i);
-    pl_dfri = s7_make_permanent_list(s7, 4, d, f, r, i);
-    pl_dirfir = s7_make_permanent_list(s7, 6, d, i, r, f, i, r);
-    pl_dc = s7_make_permanent_list(s7, 2, d, c);
-    pl_dcrr = s7_make_permanent_list(s7, 4, d, c, r, r);
-    pl_dv = s7_make_permanent_list(s7, 2, d, v);
-    pl_dvir = s7_make_permanent_list(s7, 4, d, v, i, r);
-    pl_drf = s7_make_permanent_list(s7, 3, d, r, f);
-    pl_drff = s7_make_permanent_list(s7, 4, d, r, f, f);
-    pl_drc = s7_make_permanent_list(s7, 3, d, r, c);
-    pl_dcii = s7_make_permanent_list(s7, 4, d, c, i, i);
-    pl_diit = s7_make_permanent_list(s7, 4, d, i, i, t);
-    pl_dit = s7_make_permanent_list(s7, 3, d, i, t);
-
-    pl_rr = s7_make_permanent_list(s7, 2, r, r);
-    pl_ri = s7_make_permanent_list(s7, 2, r, i);
-    pl_ir = s7_make_permanent_list(s7, 2, i, r);
-    pl_ii = s7_make_permanent_list(s7, 2, i, i);
-    pl_rrff = s7_make_permanent_list(s7, 4, r, r, f, f);
-    pl_ct = s7_make_permanent_list(s7, 2, c, t);
-    pl_cc = s7_make_permanent_list(s7, 2, c, c);
-    pl_ccc = s7_make_permanent_list(s7, 3, c, c, c);
-    pl_ccic = s7_make_permanent_list(s7, 3, c, c, i, c);
-    pl_ccrr = s7_make_permanent_list(s7, 4, c, c, r, r);
-    pl_fc = s7_make_permanent_list(s7, 2, f, c);
-    pl_cs = s7_make_permanent_list(s7, 2, c, s);
-    pl_fc = s7_make_permanent_list(s7, 2, f, c);
-    pl_ff = s7_make_permanent_list(s7, 2, f, f);
-    pl_tt = s7_make_permanent_list(s7, 2, t, t);
-    pl_fff = s7_make_permanent_list(s7, 3, f, f, f);
-    pl_fffifi = s7_make_permanent_list(s7, 6, f, f, f, i, f, i);
-    pl_ffftii = s7_make_permanent_list(s7, 6, f, f, f, t, i, i);
-    pl_fffi = s7_make_permanent_list(s7, 4, f, f, f, i);
-    pl_fffii = s7_make_permanent_list(s7, 5, f, f, f, i, i);
-    pl_fti = s7_make_permanent_list(s7, 3, f, t, i);
-    pl_fif = s7_make_permanent_list(s7, 3, f, i, f);
-    pl_fiir = s7_make_permanent_list(s7, 4, f, i, i, r);
-    pl_fttb = s7_make_permanent_list(s7, 4, f, t, t, b);
-    pl_ic = s7_make_permanent_list(s7, 2, i, c);
-    pl_nrn = s7_make_permanent_list(s7, 3, n, r, n);
-    pl_rc = s7_make_permanent_list(s7, 2, r, c);
-    pl_rccrt = s7_make_permanent_list(s7, 5, r, c, c, r, t);
-    pl_rit = s7_make_permanent_list(s7, 3, r, i, t);
-    pl_rcii = s7_make_permanent_list(s7, 4, r, c, i, i);
-    pl_rciir = s7_make_permanent_list(s7, 5, r, c, i, i, r);
-    pl_rcir = s7_make_permanent_list(s7, 4, r, c, i, r);
-    pl_ririt = s7_make_permanent_list(s7,5, r, i, r, i, t);
-    pl_rcrr = s7_make_permanent_list(s7, 4, r, c, r, r);
-    pl_rirt = s7_make_permanent_list(s7, 4, r, i, r, t);
-    pl_rffi = s7_make_permanent_list(s7, 4, r, f, f, i);
-    pl_rfri = s7_make_permanent_list(s7, 4, r, f, r, i);
-    pl_riirfff = s7_make_permanent_list(s7, 7, r, i, i, r, f, f, f);
-    pl_riit = s7_make_permanent_list(s7, 4, r, i, i, t);
-    pl_rirfff = s7_make_permanent_list(s7, 6, r, i, r, f, f, f);
-    pl_rirfir = s7_make_permanent_list(s7, 5, r, i, r, f, i, r);
-    pl_rrc = s7_make_permanent_list(s7, 3, r, r, c);
-    pl_rrf = s7_make_permanent_list(s7, 3, r, r, f);
-    pl_rrpr = s7_make_permanent_list(s7, 4, r, r, p, r);
-    pl_rrr = s7_make_permanent_list(s7, 3, r, r, r);
-    pl_rrrr = s7_make_permanent_list(s7, 4, r, r, r, r);
-    pl_rv = s7_make_permanent_list(s7, 2, r, v);
-    pl_rvir = s7_make_permanent_list(s7, 4, r, v, i, r);
-    pl_sc = s7_make_permanent_list(s7, 2, s, c);
-    pl_sssrs = s7_make_permanent_list(s7, 5, s, s, s, r, s);
-    pl_tc = s7_make_permanent_list(s7, 2, t, c);
-    pl_fcif = s7_make_permanent_list(s7, 4, f, c, i, f);
-  }
+  s = s7_make_symbol(s7, "string?");
+  i = s7_make_symbol(s7, "integer?");
+  p = s7_make_symbol(s7, "pair?");
+  t = s7_t(s7);
+  r = s7_make_symbol(s7, "real?");
+  c = s7_make_symbol(s7, "c-object?");
+  f = s7_make_symbol(s7, "float-vector?");
+  v = s7_make_symbol(s7, "vector?");
+  b = s7_make_symbol(s7, "boolean?");
+  n = s7_make_symbol(s7, "number?");
+  d = s7_make_symbol(s7, "float?");
+  
+  pcl_ct = s7_make_circular_signature(s7, 1, 2, c, t);
+  pl_bt = s7_make_signature(s7, 2, b, t);
+  pl_rcr = s7_make_signature(s7, 3, r, c, r);
+  
+  pl_dcr = s7_make_signature(s7, 3, d, c, r);
+  pl_dr = s7_make_signature(s7, 2, d, r);
+  pl_drr = s7_make_signature(s7, 3, d, r, r);
+  pl_drrr = s7_make_signature(s7, 4, d, r, r, r);
+  pl_dffi = s7_make_signature(s7, 4, d, f, f, i);
+  pl_dfri = s7_make_signature(s7, 4, d, f, r, i);
+  pl_dirfir = s7_make_signature(s7, 6, d, i, r, f, i, r);
+  pl_dc = s7_make_signature(s7, 2, d, c);
+  pl_dcrr = s7_make_signature(s7, 4, d, c, r, r);
+  pl_dv = s7_make_signature(s7, 2, d, v);
+  pl_dvir = s7_make_signature(s7, 4, d, v, i, r);
+  pl_drf = s7_make_signature(s7, 3, d, r, f);
+  pl_drff = s7_make_signature(s7, 4, d, r, f, f);
+  pl_drc = s7_make_signature(s7, 3, d, r, c);
+  pl_dcii = s7_make_signature(s7, 4, d, c, i, i);
+  pl_diit = s7_make_signature(s7, 4, d, i, i, t);
+  pl_dit = s7_make_signature(s7, 3, d, i, t);
+  
+  pl_ir = s7_make_signature(s7, 2, i, r);
+  pl_ii = s7_make_signature(s7, 2, i, i);
+  pl_ct = s7_make_signature(s7, 2, c, t);
+  pl_cc = s7_make_signature(s7, 2, c, c);
+  pl_ccc = s7_make_signature(s7, 3, c, c, c);
+  pl_ccic = s7_make_signature(s7, 3, c, c, i, c);
+  pl_ccrr = s7_make_signature(s7, 4, c, c, r, r);
+  pl_fc = s7_make_signature(s7, 2, f, c);
+  pl_cs = s7_make_signature(s7, 2, c, s);
+  pl_fc = s7_make_signature(s7, 2, f, c);
+  pl_ff = s7_make_signature(s7, 2, f, f);
+  pl_tt = s7_make_signature(s7, 2, t, t);
+  pl_fff = s7_make_signature(s7, 3, f, f, f);
+  pl_fffifi = s7_make_signature(s7, 6, f, f, f, i, f, i);
+  pl_ffftii = s7_make_signature(s7, 6, f, f, f, t, i, i);
+  pl_fffi = s7_make_signature(s7, 4, f, f, f, i);
+  pl_fffii = s7_make_signature(s7, 5, f, f, f, i, i);
+  pl_fti = s7_make_signature(s7, 3, f, t, i);
+  pl_fif = s7_make_signature(s7, 3, f, i, f);
+  pl_fiir = s7_make_signature(s7, 4, f, i, i, r);
+  pl_fttb = s7_make_signature(s7, 4, f, t, t, b);
+  pl_ic = s7_make_signature(s7, 2, i, c);
+  pl_rciir = s7_make_signature(s7, 5, r, c, i, i, r);
+  pl_rcir = s7_make_signature(s7, 4, r, c, i, r);
+  pl_ririt = s7_make_signature(s7,5, r, i, r, i, t);
+  pl_rcrr = s7_make_signature(s7, 4, r, c, r, r);
+  pl_rirt = s7_make_signature(s7, 4, r, i, r, t);
+  pl_riirfff = s7_make_signature(s7, 7, r, i, i, r, f, f, f);
+  pl_rirfff = s7_make_signature(s7, 6, r, i, r, f, f, f);
+  pl_rrpr = s7_make_signature(s7, 4, r, r, p, r);
+  pl_sc = s7_make_signature(s7, 2, s, c);
+  pl_sssrs = s7_make_signature(s7, 5, s, s, s, r, s);
+  pl_tc = s7_make_signature(s7, 2, t, c);
+  pl_fcif = s7_make_signature(s7, 4, f, c, i, f);
 #else
   mus_xen_tag = Xen_make_object_type("Mus", sizeof(mus_xen));
 #endif
@@ -12594,7 +12571,7 @@ static void mus_xen_init(void)
   s7_symbol_set_access(s7, mus_array_print_length_symbol, s7_make_function(s7, "[acc-mus-array-print-length]", acc_mus_array_print_length, 2, 0, false, "accessor"));
 #endif
 
-  Xen_define_typed_procedure(S_radians_to_hz,		g_radians_to_hz_w,		1, 0, 0, H_radians_to_hz,	pl_rr);
+  Xen_define_typed_procedure(S_radians_to_hz,		g_radians_to_hz_w,		1, 0, 0, H_radians_to_hz,	pl_dr);
   Xen_define_typed_procedure(S_hz_to_radians,		g_hz_to_radians_w,		1, 0, 0, H_hz_to_radians,	pl_dr);
   Xen_define_typed_procedure(S_radians_to_degrees,	g_radians_to_degrees_w,		1, 0, 0, H_radians_to_degrees,	pl_dr);
   Xen_define_typed_procedure(S_degrees_to_radians,	g_degrees_to_radians_w,		1, 0, 0, H_degrees_to_radians,	pl_dr);
@@ -12604,14 +12581,14 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_odd_weight,		g_odd_weight_w,			1, 0, 0, H_odd_weight,		pl_dr);
   Xen_define_typed_procedure(S_even_multiple,		g_even_multiple_w,		2, 0, 0, H_even_multiple,	pl_drr);
   Xen_define_typed_procedure(S_odd_multiple,		g_odd_multiple_w,		2, 0, 0, H_odd_multiple,	pl_drr);
-  Xen_define_typed_procedure(S_seconds_to_samples,	g_seconds_to_samples_w,		1, 0, 0, H_seconds_to_samples,	pl_rr);
+  Xen_define_typed_procedure(S_seconds_to_samples,	g_seconds_to_samples_w,		1, 0, 0, H_seconds_to_samples,	pl_ir);
   Xen_define_typed_procedure(S_samples_to_seconds,	g_samples_to_seconds_w,		1, 0, 0, H_samples_to_seconds,	pl_dr);
   Xen_define_typed_procedure(S_ring_modulate,		g_ring_modulate_w,		2, 0, 0, H_ring_modulate,	pl_drr);
   Xen_define_typed_procedure(S_amplitude_modulate,	g_amplitude_modulate_w,		3, 0, 0, H_amplitude_modulate,	pl_drrr);
   Xen_define_typed_procedure(S_contrast_enhancement,	g_contrast_enhancement_w,	1, 1, 0, H_contrast_enhancement, pl_drr);
   Xen_define_typed_procedure(S_dot_product,		g_dot_product_w,		2, 1, 0, H_dot_product,		pl_dffi);
 #if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS && (!HAVE_RUBY)
-  Xen_define_typed_procedure(S_edot_product,		g_edot_product_w,		2, 0, 0, H_edot_product,	pl_nrn);
+  Xen_define_typed_procedure(S_edot_product,		g_edot_product_w,		2, 0, 0, H_edot_product,	NULL);
 #endif
   Xen_define_typed_procedure(S_polynomial,		g_polynomial_w,			2, 0, 0, H_polynomial,		pl_dfri);
   Xen_define_typed_procedure(S_make_fft_window,		g_make_fft_window_w,		2, 2, 0, H_make_fft_window,	pl_fiir);
@@ -12713,7 +12690,7 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_make_moving_max,		g_make_moving_max_w,       0, 0, 1, H_make_moving_max,		pcl_ct);
   Xen_define_typed_procedure(S_make_moving_norm,	g_make_moving_norm_w,      0, 0, 1, H_make_moving_norm,		pcl_ct);
   Xen_define_typed_procedure(S_delay,			g_delay_w,                 1, 2, 0, H_delay,			pl_dcrr); 
-  Xen_define_typed_procedure(S_delay_tick,		g_delay_tick_w,            1, 1, 0, H_delay_tick,		pl_rcr); 
+  Xen_define_typed_procedure(S_delay_tick,		g_delay_tick_w,            1, 1, 0, H_delay_tick,		pl_dcr); 
   Xen_define_typed_procedure(S_tap,			g_tap_w,                   1, 1, 0, H_tap,			pl_dcr);
   Xen_define_typed_procedure(S_notch,			g_notch_w,                 1, 2, 0, H_notch,			pl_dcrr);
   Xen_define_typed_procedure(S_comb,			g_comb_w,                  1, 2, 0, H_comb,			pl_dcrr);

@@ -1773,8 +1773,9 @@ Xen_wrap_7_args(g_vct_interpolate_w, g_vct_interpolate)
 
 void mus_vct_init(void)
 {
-
-#if (!HAVE_SCHEME)
+#if HAVE_SCHEME
+  s7_sig_t pl_ff, pl_rf, pl_fff, pl_fffi, pl_ffr, pl_pf, pl_bffr, pl_ftt, pl_ffii, pl_ffiif, pl_sf;
+#else
   vct_tag = Xen_make_object_type("Vct", sizeof(vct));
 
   /* for ruby and forth, I think we can define Frame, SoundData, and Mixer to be Vct's with
@@ -1843,15 +1844,39 @@ void mus_vct_init(void)
   rb_define_method(vct_tag, "last=",     Xen_procedure_cast rb_set_vct_last, 1);
 #endif
 
-  Xen_define_safe_procedure(S_vct_multiply,      g_vct_multiply_w,  2, 0, 0, H_vct_multiplyB);
-  Xen_define_safe_procedure(S_vct_add,           g_vct_add_w,       2, 1, 0, H_vct_addB);
-  Xen_define_safe_procedure(S_vct_subtract,      g_vct_subtract_w,  2, 0, 0, H_vct_subtractB);
-  Xen_define_safe_procedure(S_vct_offset,        g_vct_offset_w,    2, 0, 0, H_vct_offsetB);
-  Xen_define_safe_procedure(S_vct_peak,          g_vct_peak_w,      1, 0, 0, H_vct_peak);
-  Xen_define_safe_procedure(S_vct_peak_and_location, g_vct_peak_and_location_w, 1, 0, 0, H_vct_peak_and_location);
-  Xen_define_safe_procedure(S_vct_move,          g_vct_move_w,      3, 1, 0, H_vct_moveB);
-  Xen_define_safe_procedure(S_vct_subseq,        g_vct_subseq_w,    2, 2, 0, H_vct_subseq);
-  Xen_define_safe_procedure(S_vct_copy,          g_vct_copy_w,      1, 0, 0, H_vct_copy);
+#if HAVE_SCHEME
+  {
+    s7_pointer s, i, p, b, r, f, t;
+    s = s7_make_symbol(s7, "string?");
+    i = s7_make_symbol(s7, "integer?");
+    p = s7_make_symbol(s7, "pair?");
+    r = s7_make_symbol(s7, "real?");
+    b = s7_make_symbol(s7, "boolean?");
+    f = s7_make_symbol(s7, "float-vector?");
+    t = s7_t(s7);
+    pl_rf = s7_make_signature(s7, 2, r, f);
+    pl_ff = s7_make_signature(s7, 2, f, f);
+    pl_sf = s7_make_signature(s7, 2, s, f);
+    pl_pf = s7_make_signature(s7, 2, p, f);
+    pl_ftt = s7_make_signature(s7, 3, f, t, t);
+    pl_fff = s7_make_signature(s7, 3, f, f, f);
+    pl_ffr = s7_make_signature(s7, 3, f, f, r);
+    pl_bffr = s7_make_signature(s7, 4, b, f, f, r);
+    pl_fffi = s7_make_signature(s7, 4, f, f, f, i);
+    pl_ffii = s7_make_signature(s7, 4, f, f, i, i);
+    pl_ffiif = s7_make_signature(s7, 5, f, f, i, i, f);
+  }
+#endif
+
+  Xen_define_typed_procedure(S_vct_multiply,      g_vct_multiply_w,  2, 0, 0, H_vct_multiplyB,		pl_fff);
+  Xen_define_typed_procedure(S_vct_add,           g_vct_add_w,       2, 1, 0, H_vct_addB,		pl_fffi);
+  Xen_define_typed_procedure(S_vct_subtract,      g_vct_subtract_w,  2, 0, 0, H_vct_subtractB,		pl_fff);
+  Xen_define_typed_procedure(S_vct_offset,        g_vct_offset_w,    2, 0, 0, H_vct_offsetB,		pl_ffr);
+  Xen_define_typed_procedure(S_vct_peak,          g_vct_peak_w,      1, 0, 0, H_vct_peak,		pl_rf);
+  Xen_define_typed_procedure(S_vct_peak_and_location, g_vct_peak_and_location_w, 1, 0, 0, H_vct_peak_and_location, pl_pf);
+  Xen_define_typed_procedure(S_vct_move,          g_vct_move_w,      3, 1, 0, H_vct_moveB,		pl_ffii);
+  Xen_define_typed_procedure(S_vct_subseq,        g_vct_subseq_w,    2, 2, 0, H_vct_subseq,		pl_ffiif);
+  Xen_define_typed_procedure(S_vct_copy,          g_vct_copy_w,      1, 0, 0, H_vct_copy,		pl_ff);
 
 #if HAVE_FORTH
   Xen_define_dilambda(S_vct_ref,                 g_vct_ref_w, H_vct_ref, "set-" S_vct_ref, g_vct_set_w,  2, 0, 3, 0);
@@ -1861,30 +1886,30 @@ void mus_vct_init(void)
 #endif
 #endif
 
-  Xen_define_safe_procedure(S_vct_to_string,     g_vct_to_readable_string_w, 1, 0, 0, H_vct_to_string);
-  Xen_define_safe_procedure(S_vct_times,         g_vct_times_w,     2, 0, 0, H_vct_times);
-  Xen_define_safe_procedure(S_vct_plus,          g_vct_plus_w,      2, 0, 0, H_vct_plus);
-  Xen_define_safe_procedure(S_vct_max,           g_vct_max_w,       1, 0, 0, H_vct_max);
-  Xen_define_safe_procedure(S_vct_min,           g_vct_min_w,       1, 0, 0, H_vct_min);
-  Xen_define_safe_procedure(S_vct_scale,         g_vct_scale_w,     2, 0, 0, H_vct_scaleB);
-  Xen_define_safe_procedure(S_vct_abs,           g_vct_abs_w,       1, 0, 0, H_vct_absB);
-  Xen_define_safe_procedure(S_vct_equal,         g_vct_equal_w,     3, 0, 0, H_vct_equal);
+  Xen_define_typed_procedure(S_vct_to_string,     g_vct_to_readable_string_w, 1, 0, 0, H_vct_to_string, pl_sf);
+  Xen_define_typed_procedure(S_vct_times,         g_vct_times_w,     2, 0, 0, H_vct_times,		pl_ftt);
+  Xen_define_typed_procedure(S_vct_plus,          g_vct_plus_w,      2, 0, 0, H_vct_plus,		pl_ftt);
+  Xen_define_typed_procedure(S_vct_max,           g_vct_max_w,       1, 0, 0, H_vct_max,		pl_rf);
+  Xen_define_typed_procedure(S_vct_min,           g_vct_min_w,       1, 0, 0, H_vct_min,		pl_rf);
+  Xen_define_typed_procedure(S_vct_scale,         g_vct_scale_w,     2, 0, 0, H_vct_scaleB,		pl_ftt);
+  Xen_define_typed_procedure(S_vct_abs,           g_vct_abs_w,       1, 0, 0, H_vct_absB,		pl_ff);
+  Xen_define_typed_procedure(S_vct_equal,         g_vct_equal_w,     3, 0, 0, H_vct_equal,		pl_bffr);
 
 #if (!HAVE_SCHEME)
-  Xen_define_safe_procedure(S_vct_set,           g_vct_set_w,       3, 0, 0, H_vct_setB);
-  Xen_define_safe_procedure(S_is_vct,            g_is_vct_w,        1, 0, 0, H_is_vct);
-  Xen_define_safe_procedure(S_vct_fill,          g_vct_fill_w,      2, 0, 0, H_vct_fillB);
-  Xen_define_procedure(S_vct,                    g_vct_w,           0, 0, 1, H_vct);
-  Xen_define_safe_procedure(S_vct_length,        g_vct_length_w,    1, 0, 0, H_vct_length);
-  Xen_define_safe_procedure(S_vct_reverse,       g_vct_reverse_w,   1, 1, 0, H_vct_reverse);
-  Xen_define_safe_procedure(S_vct_to_list,       g_vct_to_list_w,   1, 0, 0, H_vct_to_list);
-  Xen_define_safe_procedure(S_list_to_vct,       g_list_to_vct_w,   1, 0, 0, H_list_to_vct);
-  Xen_define_safe_procedure(S_vector_to_vct,     g_vector_to_vct_w, 1, 0, 0, H_vector_to_vct);
-  Xen_define_safe_procedure(S_vct_to_vector,     g_vct_to_vector_w, 1, 0, 0, H_vct_to_vector);
-  Xen_define_safe_procedure(S_make_vct,          g_make_vct_w,      1, 1, 0, H_make_vct);
+  Xen_define_procedure(S_vct_set,           g_vct_set_w,       3, 0, 0, H_vct_setB);
+  Xen_define_procedure(S_is_vct,            g_is_vct_w,        1, 0, 0, H_is_vct);
+  Xen_define_procedure(S_vct_fill,          g_vct_fill_w,      2, 0, 0, H_vct_fillB);
+  Xen_define_procedure(S_vct,               g_vct_w,           0, 0, 1, H_vct);
+  Xen_define_procedure(S_vct_length,        g_vct_length_w,    1, 0, 0, H_vct_length);
+  Xen_define_procedure(S_vct_reverse,       g_vct_reverse_w,   1, 1, 0, H_vct_reverse);
+  Xen_define_procedure(S_vct_to_list,       g_vct_to_list_w,   1, 0, 0, H_vct_to_list);
+  Xen_define_procedure(S_list_to_vct,       g_list_to_vct_w,   1, 0, 0, H_list_to_vct);
+  Xen_define_procedure(S_vector_to_vct,     g_vector_to_vct_w, 1, 0, 0, H_vector_to_vct);
+  Xen_define_procedure(S_vct_to_vector,     g_vct_to_vector_w, 1, 0, 0, H_vct_to_vector);
+  Xen_define_procedure(S_make_vct,          g_make_vct_w,      1, 1, 0, H_make_vct);
 #else
-  Xen_define_safe_procedure(S_vct_spatter,       g_vct_spatter_w,   4, 0, 0, H_vct_spatter);
-  Xen_define_safe_procedure(S_vct_interpolate,   g_vct_interpolate_w, 7, 0, 0, H_vct_interpolate);
+  Xen_define_procedure(S_vct_spatter,       g_vct_spatter_w,   4, 0, 0, H_vct_spatter);
+  Xen_define_procedure(S_vct_interpolate,   g_vct_interpolate_w, 7, 0, 0, H_vct_interpolate);
 
   s7_pf_set_function(s7_name_to_value(s7, S_vct_add), float_vector_add_pf);
   s7_pf_set_function(s7_name_to_value(s7, S_vct_subtract), float_vector_subtract_pf);

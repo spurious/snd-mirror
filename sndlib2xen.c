@@ -997,8 +997,6 @@ static Xen g_mus_set_max_table_size(Xen val)
 }
 
 
-
-
 #if __APPLE__
 #define S_mus_audio_output_properties_mutable "mus-audio-output-properties-mutable"
 static Xen g_mus_audio_output_properties_mutable(Xen mut)
@@ -1089,6 +1087,10 @@ Xen_wrap_1_arg(g_mus_set_sound_path_w, g_mus_set_sound_path)
 
 void mus_sndlib_xen_initialize(void)
 {
+#if HAVE_SCHEME
+  s7_sig_t pl_is, pl_isi, pl_si, pl_ss, pl_ps, pl_psp, pl_i, pl_ii, pl_bii, pl_p, pl_pp, pl_rs, pl_bi, pl_bib, pl_b, pl_bb, pl_isfiii, pl_fsiiif, pl_bs, pl_ts;
+#endif
+
   mus_sound_initialize();
   sound_path = Xen_empty_list;
 
@@ -1136,74 +1138,111 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_constant(S_mus_bfloat_unscaled,      MUS_BFLOAT_UNSCALED,      "unscaled big-endian float sample type id");
   Xen_define_constant(S_mus_lfloat_unscaled,      MUS_LFLOAT_UNSCALED,      "unscaled little-endian float sample type id");
 
-  Xen_define_dilambda(S_mus_sound_samples, g_mus_sound_samples_w, H_mus_sound_samples,  S_set S_mus_sound_samples, g_mus_sound_set_samples_w, 1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_sound_data_location, g_mus_sound_data_location_w, H_mus_sound_data_location,
-		      S_set S_mus_sound_data_location, g_mus_sound_set_data_location_w, 1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_sound_chans, g_mus_sound_chans_w, H_mus_sound_chans, S_set S_mus_sound_chans, g_mus_sound_set_chans_w, 1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_sound_srate, g_mus_sound_srate_w, H_mus_sound_srate, S_set S_mus_sound_srate, g_mus_sound_set_srate_w, 1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_sound_header_type, g_mus_sound_header_type_w, H_mus_sound_header_type,
-		      S_set S_mus_sound_header_type, g_mus_sound_set_header_type_w, 1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_sound_sample_type, g_mus_sound_sample_type_w, H_mus_sound_sample_type,
-		      S_set S_mus_sound_sample_type, g_mus_sound_set_sample_type_w, 1, 0, 2, 0);
-
-
-  /* -------------------------------------------------------------------------------- */
-
-  Xen_define_safe_procedure(S_mus_sound_framples,       g_mus_sound_framples_w,         1, 0, 0, H_mus_sound_framples);
-  Xen_define_safe_procedure("mus-sound-frames",         g_mus_sound_framples_w,         1, 0, 0, H_mus_sound_framples);
-  Xen_define_safe_procedure(S_mus_sound_duration,       g_mus_sound_duration_w,         1, 0, 0, H_mus_sound_duration);
-  Xen_define_safe_procedure(S_mus_sound_datum_size,     g_mus_sound_datum_size_w,       1, 0, 0, H_mus_sound_datum_size);
-  Xen_define_safe_procedure(S_mus_sound_length,         g_mus_sound_length_w,           1, 0, 0, H_mus_sound_length);
-  Xen_define_safe_procedure(S_mus_sound_type_specifier, g_mus_sound_type_specifier_w,   1, 0, 0, H_mus_sound_type_specifier);
-  Xen_define_safe_procedure(S_mus_header_type_name,     g_mus_header_type_name_w,       1, 0, 0, H_mus_header_type_name);
-  Xen_define_safe_procedure(S_mus_header_type_to_string,g_mus_header_type_to_string_w,  1, 0, 0, H_mus_header_type_to_string);
-  Xen_define_safe_procedure(S_mus_header_writable,      g_mus_header_writable_w,        2, 0, 0, H_mus_header_writable);
-  Xen_define_safe_procedure(S_mus_sample_type_name,     g_mus_sample_type_name_w,       1, 0, 0, H_mus_sample_type_name);
-  Xen_define_safe_procedure(S_mus_sample_type_to_string,g_mus_sample_type_to_string_w,  1, 0, 0, H_mus_sample_type_to_string);
 #if HAVE_SCHEME
-  Xen_define_dilambda(S_mus_sound_sample_type, g_mus_sound_sample_type_w, H_mus_sound_sample_type,
-		      S_set S_mus_sound_sample_type, g_mus_sound_set_sample_type_w, 1, 0, 2, 0);
+  {
+    s7_pointer s, i, p, b, r, f, t;
+    s = s7_make_symbol(s7, "string?");
+    i = s7_make_symbol(s7, "integer?");
+    p = s7_make_symbol(s7, "pair?");
+    b = s7_make_symbol(s7, "boolean?");
+    r = s7_make_symbol(s7, "real?");
+    f = s7_make_symbol(s7, "float-vector?");
+    t = s7_t(s7);
+    pl_is = s7_make_signature(s7, 2, i, s);
+    pl_isi = s7_make_signature(s7, 3, i, s, i);
+    pl_si = s7_make_signature(s7, 2, s, i);
+    pl_ss = s7_make_signature(s7, 2, s, s);
+    pl_ts = s7_make_signature(s7, 2, t, s);
+    pl_ps = s7_make_signature(s7, 2, p, s);
+    pl_psp = s7_make_signature(s7, 3, p, s, p);
+    pl_i = s7_make_signature(s7, 1, i);
+    pl_ii = s7_make_signature(s7, 2, i, i);
+    pl_bii = s7_make_signature(s7, 3, b, i, i);
+    pl_p = s7_make_signature(s7, 1, p);
+    pl_pp = s7_make_signature(s7, 2, p, p);
+    pl_rs = s7_make_signature(s7, 2, r, s);
+    pl_bi = s7_make_signature(s7, 2, b, i);
+    pl_bib = s7_make_signature(s7, 3, b, i, b);
+    pl_b = s7_make_signature(s7, 1, b);
+    pl_bb = s7_make_signature(s7, 2, b, b);
+    pl_bs = s7_make_signature(s7, 2, b, s);
+    pl_isfiii = s7_make_signature(s7, 6, i, s, f, i, i, i);
+    pl_fsiiif = s7_make_signature(s7, 6, f, s, i, i, i, f);
+  }
 #endif
-  Xen_define_safe_procedure(S_mus_sound_comment,        g_mus_sound_comment_w,          1, 0, 0, H_mus_sound_comment);
-  Xen_define_safe_procedure(S_mus_sound_write_date,     g_mus_sound_write_date_w,       1, 0, 0, H_mus_sound_write_date);
-  Xen_define_safe_procedure(S_mus_bytes_per_sample,     g_mus_bytes_per_sample_w,       1, 0, 0, H_mus_bytes_per_sample);
-  Xen_define_safe_procedure(S_mus_sound_loop_info,      g_mus_sound_loop_info_w,        1, 0, 0, H_mus_sound_loop_info);
-  Xen_define_safe_procedure(S_mus_sound_mark_info,      g_mus_sound_mark_info_w,        1, 0, 0, H_mus_sound_mark_info);
-  Xen_define_safe_procedure(S_mus_sound_maxamp_exists,  g_mus_sound_maxamp_exists_w,    1, 0, 0, H_mus_sound_maxamp_exists);
-  Xen_define_safe_procedure(S_mus_sound_forget,         g_mus_sound_forget_w,           1, 0, 0, H_mus_sound_forget);
-  Xen_define_safe_procedure(S_mus_sound_prune,          g_mus_sound_prune_w,            0, 0, 0, H_mus_sound_prune);
 
-  Xen_define_safe_procedure(S_mus_expand_filename,      g_mus_expand_filename_w,        1, 0, 0, H_mus_expand_filename);
-  Xen_define_safe_procedure(S_mus_sound_report_cache,   g_mus_sound_report_cache_w,     0, 1, 0, H_mus_sound_report_cache);
-  Xen_define_safe_procedure(S_mus_error_type_to_string, g_mus_error_type_to_string_w,   1, 0, 0, H_mus_error_type_to_string);
-  Xen_define_safe_procedure(S_mus_oss_set_buffers,      g_mus_oss_set_buffers_w,        2, 0, 0, H_mus_oss_set_buffers);
-  Xen_define_safe_procedure(S_array_to_file,            g_array_to_file_w,              5, 0, 0, H_array_to_file);
-  Xen_define_safe_procedure(S_file_to_array,            g_file_to_array_w,              5, 0, 0, H_file_to_array);
+  Xen_define_typed_dilambda(S_mus_sound_samples, g_mus_sound_samples_w, H_mus_sound_samples,  
+			    S_set S_mus_sound_samples, g_mus_sound_set_samples_w, 1, 0, 2, 0, pl_is, pl_isi);
+  Xen_define_typed_dilambda(S_mus_sound_data_location, g_mus_sound_data_location_w, H_mus_sound_data_location,
+			    S_set S_mus_sound_data_location, g_mus_sound_set_data_location_w, 1, 0, 2, 0, pl_is, pl_isi);
+  Xen_define_typed_dilambda(S_mus_sound_chans, g_mus_sound_chans_w, H_mus_sound_chans, 
+			    S_set S_mus_sound_chans, g_mus_sound_set_chans_w, 1, 0, 2, 0, pl_is, pl_isi);
+  Xen_define_typed_dilambda(S_mus_sound_srate, g_mus_sound_srate_w, H_mus_sound_srate,
+			    S_set S_mus_sound_srate, g_mus_sound_set_srate_w, 1, 0, 2, 0, pl_is, pl_isi);
+  Xen_define_typed_dilambda(S_mus_sound_header_type, g_mus_sound_header_type_w, H_mus_sound_header_type,
+			    S_set S_mus_sound_header_type, g_mus_sound_set_header_type_w, 1, 0, 2, 0, pl_is, pl_isi);
+  Xen_define_typed_dilambda(S_mus_sound_sample_type, g_mus_sound_sample_type_w, H_mus_sound_sample_type,
+			    S_set S_mus_sound_sample_type, g_mus_sound_set_sample_type_w, 1, 0, 2, 0, pl_is, pl_isi);
 
-  Xen_define_safe_procedure(S_mus_sound_preload,        g_mus_sound_preload_w,          1, 0, 0, H_mus_sound_preload);
+  Xen_define_typed_procedure(S_mus_sound_framples,       g_mus_sound_framples_w,         1, 0, 0, H_mus_sound_framples,	       pl_is);
+  Xen_define_typed_procedure("mus-sound-frames",         g_mus_sound_framples_w,         1, 0, 0, H_mus_sound_framples,        pl_is);
+  Xen_define_typed_procedure(S_mus_sound_duration,       g_mus_sound_duration_w,         1, 0, 0, H_mus_sound_duration,        pl_rs);
+  Xen_define_typed_procedure(S_mus_sound_datum_size,     g_mus_sound_datum_size_w,       1, 0, 0, H_mus_sound_datum_size,      pl_is);
+  Xen_define_typed_procedure(S_mus_sound_length,         g_mus_sound_length_w,           1, 0, 0, H_mus_sound_length,          pl_is);
+  Xen_define_typed_procedure(S_mus_sound_type_specifier, g_mus_sound_type_specifier_w,   1, 0, 0, H_mus_sound_type_specifier,  pl_is);
+  Xen_define_typed_procedure(S_mus_header_type_name,     g_mus_header_type_name_w,       1, 0, 0, H_mus_header_type_name,      pl_si);
+  Xen_define_typed_procedure(S_mus_header_type_to_string,g_mus_header_type_to_string_w,  1, 0, 0, H_mus_header_type_to_string, pl_si);
+  Xen_define_typed_procedure(S_mus_header_writable,      g_mus_header_writable_w,        2, 0, 0, H_mus_header_writable,       pl_bii);
+  Xen_define_typed_procedure(S_mus_sample_type_name,     g_mus_sample_type_name_w,       1, 0, 0, H_mus_sample_type_name,      pl_si);
+  Xen_define_typed_procedure(S_mus_sample_type_to_string,g_mus_sample_type_to_string_w,  1, 0, 0, H_mus_sample_type_to_string, pl_si);
+  Xen_define_typed_procedure(S_mus_sound_comment,        g_mus_sound_comment_w,          1, 0, 0, H_mus_sound_comment,         pl_ts);
+  Xen_define_typed_procedure(S_mus_sound_write_date,     g_mus_sound_write_date_w,       1, 0, 0, H_mus_sound_write_date,      pl_is);
+  Xen_define_typed_procedure(S_mus_bytes_per_sample,     g_mus_bytes_per_sample_w,       1, 0, 0, H_mus_bytes_per_sample,      pl_ii);
+  Xen_define_typed_procedure(S_mus_sound_loop_info,      g_mus_sound_loop_info_w,        1, 0, 0, H_mus_sound_loop_info,       pl_ps);
+  Xen_define_typed_procedure(S_mus_sound_mark_info,      g_mus_sound_mark_info_w,        1, 0, 0, H_mus_sound_mark_info,       pl_ps);
+  Xen_define_typed_procedure(S_mus_sound_maxamp_exists,  g_mus_sound_maxamp_exists_w,    1, 0, 0, H_mus_sound_maxamp_exists,   pl_bs);
+  Xen_define_typed_procedure(S_mus_sound_forget,         g_mus_sound_forget_w,           1, 0, 0, H_mus_sound_forget,          pl_is);
+  Xen_define_typed_procedure(S_mus_sound_prune,          g_mus_sound_prune_w,            0, 0, 0, H_mus_sound_prune,           pl_i);
 
-  Xen_define_dilambda(S_mus_header_raw_defaults, g_mus_header_raw_defaults_w, H_mus_header_raw_defaults,
-		      S_set S_mus_header_raw_defaults, g_mus_header_set_raw_defaults_w, 0, 0, 1, 0);
+  Xen_define_typed_procedure(S_mus_expand_filename,      g_mus_expand_filename_w,        1, 0, 0, H_mus_expand_filename,       pl_ss);
+  Xen_define_typed_procedure(S_mus_sound_report_cache,   g_mus_sound_report_cache_w,     0, 1, 0, H_mus_sound_report_cache,    NULL);
+  Xen_define_typed_procedure(S_mus_error_type_to_string, g_mus_error_type_to_string_w,   1, 0, 0, H_mus_error_type_to_string,  pl_si);
+  Xen_define_typed_procedure(S_mus_oss_set_buffers,      g_mus_oss_set_buffers_w,        2, 0, 0, H_mus_oss_set_buffers,       pl_bii);
+  Xen_define_typed_procedure(S_array_to_file,            g_array_to_file_w,              5, 0, 0, H_array_to_file,             pl_isfiii);
+  Xen_define_typed_procedure(S_file_to_array,            g_file_to_array_w,              5, 0, 0, H_file_to_array,             pl_fsiiif);
 
-  Xen_define_dilambda(S_mus_clipping, g_mus_clipping_w, H_mus_clipping, S_set S_mus_clipping, g_mus_set_clipping_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_file_clipping, g_mus_file_clipping_w, H_mus_file_clipping, S_set S_mus_file_clipping, g_mus_file_set_clipping_w, 1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_sound_maxamp, g_mus_sound_maxamp_w, H_mus_sound_maxamp, S_set S_mus_sound_maxamp, g_mus_sound_set_maxamp_w, 1, 0, 2, 0);
+  Xen_define_typed_procedure(S_mus_sound_preload,        g_mus_sound_preload_w,          1, 0, 0, H_mus_sound_preload,         pl_ss);
+
+  Xen_define_typed_dilambda(S_mus_header_raw_defaults, g_mus_header_raw_defaults_w, H_mus_header_raw_defaults,
+			    S_set S_mus_header_raw_defaults, g_mus_header_set_raw_defaults_w, 0, 0, 1, 0, pl_p, pl_pp);
+
+  Xen_define_typed_dilambda(S_mus_clipping, g_mus_clipping_w, H_mus_clipping, 
+			    S_set S_mus_clipping, g_mus_set_clipping_w, 0, 0, 1, 0, pl_b, pl_bb);
+  Xen_define_typed_dilambda(S_mus_file_clipping, g_mus_file_clipping_w, H_mus_file_clipping, 
+			    S_set S_mus_file_clipping, g_mus_file_set_clipping_w, 1, 0, 2, 0, pl_bi, pl_bib);
+  Xen_define_typed_dilambda(S_mus_sound_maxamp, g_mus_sound_maxamp_w, H_mus_sound_maxamp, 
+			    S_set S_mus_sound_maxamp, g_mus_sound_set_maxamp_w, 1, 0, 2, 0, pl_ps, pl_psp);
 
   /* these are no-ops if not ALSA, but that makes it easier to maintain global initialization files */
-  Xen_define_dilambda(S_mus_alsa_buffers, g_mus_alsa_buffers_w, H_mus_alsa_buffers, S_set S_mus_alsa_buffers, g_mus_alsa_set_buffers_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_alsa_buffer_size, g_mus_alsa_buffer_size_w, H_mus_alsa_buffer_size, S_set S_mus_alsa_buffer_size, g_mus_alsa_set_buffer_size_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_alsa_device, g_mus_alsa_device_w, H_mus_alsa_device, S_set S_mus_alsa_device, g_mus_alsa_set_device_w, 0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_mus_alsa_buffers, g_mus_alsa_buffers_w, H_mus_alsa_buffers, S_set 
+			    S_mus_alsa_buffers, g_mus_alsa_set_buffers_w, 0, 0, 1, 0, NULL, NULL);
+  Xen_define_typed_dilambda(S_mus_alsa_buffer_size, g_mus_alsa_buffer_size_w, H_mus_alsa_buffer_size, 
+			    S_set S_mus_alsa_buffer_size, g_mus_alsa_set_buffer_size_w, 0, 0, 1, 0, NULL, NULL);
+  Xen_define_typed_dilambda(S_mus_alsa_device, g_mus_alsa_device_w, H_mus_alsa_device, 
+			    S_set S_mus_alsa_device, g_mus_alsa_set_device_w, 0, 0, 1, 0, NULL, NULL);
+  Xen_define_typed_dilambda(S_mus_alsa_playback_device, g_mus_alsa_playback_device_w, H_mus_alsa_playback_device, 
+			    S_set S_mus_alsa_playback_device, g_mus_alsa_set_playback_device_w, 0, 0, 1, 0, NULL, NULL);
+  Xen_define_typed_dilambda(S_mus_alsa_capture_device, g_mus_alsa_capture_device_w, H_mus_alsa_capture_device, 
+			    S_set S_mus_alsa_capture_device, g_mus_alsa_set_capture_device_w, 0, 0, 1, 0, NULL, NULL);
+  Xen_define_typed_dilambda(S_mus_alsa_squelch_warning, g_mus_alsa_squelch_warning_w, H_mus_alsa_squelch_warning,
+			    S_set S_mus_alsa_squelch_warning, g_mus_alsa_set_squelch_warning_w, 0, 0, 1, 0, NULL, NULL);
 
-  Xen_define_dilambda(S_mus_alsa_playback_device, g_mus_alsa_playback_device_w, H_mus_alsa_playback_device, 
-		      S_set S_mus_alsa_playback_device, g_mus_alsa_set_playback_device_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_alsa_capture_device, g_mus_alsa_capture_device_w, H_mus_alsa_capture_device, 
-		      S_set S_mus_alsa_capture_device, g_mus_alsa_set_capture_device_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_alsa_squelch_warning, g_mus_alsa_squelch_warning_w, H_mus_alsa_squelch_warning,
-		      S_set S_mus_alsa_squelch_warning, g_mus_alsa_set_squelch_warning_w, 0, 0, 1, 0);
-
-  Xen_define_dilambda(S_mus_max_malloc, g_mus_max_malloc_w, H_mus_max_malloc, S_set S_mus_max_malloc, g_mus_set_max_malloc_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_max_table_size, g_mus_max_table_size_w, H_mus_max_table_size, S_set S_mus_max_table_size, g_mus_set_max_table_size_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_sound_path, g_mus_sound_path_w, H_mus_sound_path, S_set S_mus_sound_path, g_mus_set_sound_path_w, 0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_mus_max_malloc, g_mus_max_malloc_w, H_mus_max_malloc, 
+			    S_set S_mus_max_malloc, g_mus_set_max_malloc_w, 0, 0, 1, 0, pl_i, pl_ii);
+  Xen_define_typed_dilambda(S_mus_max_table_size, g_mus_max_table_size_w, H_mus_max_table_size, 
+			    S_set S_mus_max_table_size, g_mus_set_max_table_size_w, 0, 0, 1, 0, pl_i, pl_ii);
+  Xen_define_typed_dilambda(S_mus_sound_path, g_mus_sound_path_w, H_mus_sound_path, 
+			    S_set S_mus_sound_path, g_mus_set_sound_path_w, 0, 0, 1, 0, pl_p, pl_pp);
 
 #if HAVE_SCHEME
   mus_max_table_size_symbol = s7_define_variable(s7, "*" S_mus_max_table_size "*", s7_make_integer(s7, MUS_MAX_TABLE_SIZE_DEFAULT));

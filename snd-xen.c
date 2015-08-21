@@ -2716,6 +2716,10 @@ Xen_wrap_1_arg(g_snd_warning_w, g_snd_warning)
 
 void g_xen_initialize(void)
 {
+#if HAVE_SCHEME
+  s7_sig_t pl_dr, pl_dir, pl_drr, pl_pf, pl_ss, pl_b;
+#endif
+
 #if HAVE_RUBY
   rb_gc_disable();
 #endif
@@ -2819,8 +2823,27 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
   gc_protection = Xen_false;
 #endif
 
-  Xen_define_safe_procedure(S_snd_print,      g_snd_print_w,     1, 0, 0, H_snd_print);
-  Xen_define_safe_procedure("little-endian?", g_little_endian_w, 0, 0, 0, "return " PROC_TRUE " if host is little endian");
+#if HAVE_SCHEME
+  {
+    s7_pointer s, i, p, b, r, f, v, d;
+    s = s7_make_symbol(s7, "string?");
+    i = s7_make_symbol(s7, "integer?");
+    p = s7_make_symbol(s7, "pair?");
+    b = s7_make_symbol(s7, "boolean?");
+    r = s7_make_symbol(s7, "real?");
+    d = s7_make_symbol(s7, "float?");
+    f = s7_make_symbol(s7, "float-vector?");
+    v = s7_make_symbol(s7, "vector?");
+    pl_ss = s7_make_signature(s7, 2, s, s);
+    pl_dr = s7_make_signature(s7, 2, d, r);
+    pl_dir = s7_make_signature(s7, 3, d, i, r);
+    pl_drr = s7_make_signature(s7, 3, d, r, r);
+    pl_b = s7_make_signature(s7, 1, b);
+    pl_pf = s7_make_signature(s7, 2, p, f);
+  }
+#endif
+  Xen_define_typed_procedure(S_snd_print,      g_snd_print_w,     1, 0, 0, H_snd_print, pl_ss);
+  Xen_define_typed_procedure("little-endian?", g_little_endian_w, 0, 0, 0, "return " PROC_TRUE " if host is little endian", pl_b);
 
 #if HAVE_SCHEME
   Xen_eval_C_string("(define fmod modulo)");
@@ -2829,35 +2852,35 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
 #endif
 
 #if HAVE_SPECIAL_FUNCTIONS || HAVE_GSL
-  Xen_define_safe_procedure(S_bes_j0, g_j0_w,     1, 0, 0, H_j0);
-  Xen_define_safe_procedure(S_bes_j1, g_j1_w,     1, 0, 0, H_j1);
-  Xen_define_safe_procedure(S_bes_jn, g_jn_w,     2, 0, 0, H_jn);
-  Xen_define_safe_procedure(S_bes_y0, g_y0_w,     1, 0, 0, H_y0);
-  Xen_define_safe_procedure(S_bes_y1, g_y1_w,     1, 0, 0, H_y1);
-  Xen_define_safe_procedure(S_bes_yn, g_yn_w,     2, 0, 0, H_yn);
-  Xen_define_safe_procedure("erf",    g_erf_w,    1, 0, 0, H_erf);
-  Xen_define_safe_procedure("erfc",   g_erfc_w,   1, 0, 0, H_erfc);
-  Xen_define_safe_procedure("lgamma", g_lgamma_w, 1, 0, 0, H_lgamma);
+  Xen_define_typed_procedure(S_bes_j0, g_j0_w,     1, 0, 0, H_j0,	pl_dr);
+  Xen_define_typed_procedure(S_bes_j1, g_j1_w,     1, 0, 0, H_j1,	pl_dr);
+  Xen_define_typed_procedure(S_bes_jn, g_jn_w,     2, 0, 0, H_jn,	pl_dir);
+  Xen_define_typed_procedure(S_bes_y0, g_y0_w,     1, 0, 0, H_y0,	pl_dr);
+  Xen_define_typed_procedure(S_bes_y1, g_y1_w,     1, 0, 0, H_y1,	pl_dr);
+  Xen_define_typed_procedure(S_bes_yn, g_yn_w,     2, 0, 0, H_yn,	pl_dir);
+  Xen_define_typed_procedure("erf",    g_erf_w,    1, 0, 0, H_erf,	pl_dr);
+  Xen_define_typed_procedure("erfc",   g_erfc_w,   1, 0, 0, H_erfc,	pl_dr);
+  Xen_define_typed_procedure("lgamma", g_lgamma_w, 1, 0, 0, H_lgamma,	pl_dr);
 #endif
 
   Xen_define_safe_procedure(S_bes_i0, g_i0_w,     1, 0, 0, H_i0);
 
 #if HAVE_GSL
-  Xen_define_safe_procedure(S_bes_i1, g_i1_w,     1, 0, 0, H_i1);
-  Xen_define_safe_procedure(S_bes_in, g_in_w,     2, 0, 0, H_in);
-  Xen_define_safe_procedure(S_bes_k0, g_k0_w,     1, 0, 0, H_k0);
-  Xen_define_safe_procedure(S_bes_k1, g_k1_w,     1, 0, 0, H_k1);
-  Xen_define_safe_procedure(S_bes_kn, g_kn_w,     2, 0, 0, H_kn);
+  Xen_define_typed_procedure(S_bes_i1, g_i1_w,     1, 0, 0, H_i1,	pl_dr);
+  Xen_define_typed_procedure(S_bes_in, g_in_w,     2, 0, 0, H_in,	pl_dir);
+  Xen_define_typed_procedure(S_bes_k0, g_k0_w,     1, 0, 0, H_k0,	pl_dr);
+  Xen_define_typed_procedure(S_bes_k1, g_k1_w,     1, 0, 0, H_k1,	pl_dr);
+  Xen_define_typed_procedure(S_bes_kn, g_kn_w,     2, 0, 0, H_kn,	pl_dir);
 
-  Xen_define_safe_procedure("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
-  Xen_define_safe_procedure("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
+  Xen_define_typed_procedure("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk, pl_dr);
+  Xen_define_typed_procedure("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj, pl_drr);
 
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
-  Xen_define_safe_procedure("gsl-eigenvectors", g_gsl_eigenvectors_w, 1, 0, 0, "returns eigenvalues and eigenvectors");
+  Xen_define_typed_procedure("gsl-eigenvectors", g_gsl_eigenvectors_w, 1, 0, 0, "returns eigenvalues and eigenvectors", pl_pf);
 #endif
 
 #if HAVE_COMPLEX_TRIG && HAVE_COMPLEX_NUMBERS
-  Xen_define_safe_procedure("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
+  Xen_define_typed_procedure("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots, NULL);
 #endif
 #endif
 

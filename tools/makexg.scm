@@ -2628,13 +2628,20 @@
 
 ;(format *stderr* "~D entries, ~D funcs~%" (hash-table-entries signatures) (length funcs))
 
-(hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_char;~%")
-(hey "static s7_pointer ")
+(hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_char, s_float;~%")
+(hey "static s7_sig_t ")
 
 (define (sig-name sig)
   (call-with-output-string
    (lambda (p)
      (display "pl_" p)
+     (display (case (car sig)
+		((integer?) "i")
+		((boolean?) "b")
+		((real?) "d")
+		((string?) "s")
+		(else "t"))
+	      p)
      (for-each
       (lambda (typ)
 	(display (case typ
@@ -2644,7 +2651,7 @@
 		   ((string?) "s")
 		   (else "t"))
 		 p))
-      sig))))
+      (cdr sig)))))
      
 (for-each
  (lambda (sigc)
@@ -2669,6 +2676,7 @@
 (hey "  s_boolean = s7_make_symbol(s7, \"boolean?\");~%")
 (hey "  s_integer = s7_make_symbol(s7, \"integer?\");~%")
 (hey "  s_real = s7_make_symbol(s7, \"real?\");~%")
+(hey "  s_float = s7_make_symbol(s7, \"float?\");~%")
 (hey "  s_string = s7_make_symbol(s7, \"string?\");~%")
 (hey "  s_char = s7_make_symbol(s7, \"char?\");~%")
 (hey "  s_any = s7_t(s7);~%~%")
@@ -2678,12 +2686,20 @@
    (let ((sig (car sigc)))
      (hey "  ")
      (hey (sig-name sig))
-     (hey " = s7_make_permanent_list(s7, ")
+     (hey " = s7_make_signature(s7, ")
      (let ((len (length sig)))
        (hey (number->string len))
        (hey ", ")
-       (do ((i 0 (+ i 1))
-	    (s sig (cdr s)))
+       (hey (case (car sig)
+	      ((integer?) "s_integer")
+	      ((boolean?) "s_boolean")
+	      ((real?) "s_float")
+	      ((string?) "s_string")
+	      ((char?) "s_char")
+	      (else "s_any")))
+       (if (> len 1) (hey ", "))
+       (do ((i 1 (+ i 1))
+	    (s (cdr sig) (cdr s)))
 	   ((= i len))
 	 (let ((typ (car s)))
 	   (hey (case typ

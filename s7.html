@@ -5065,17 +5065,17 @@ I need to know where something unexpected happened.  So:
 
 <div class="separator"></div>
 
+<pre class="indented">
+(<em class=def id="charposition">char-position</em> char-or-string searched-string (start 0))
+(<em class=def id="stringposition">string-position</em> substring searched-string (start 0))
+</pre>
+
 <p>
 <b>char-position</b> and <b>string-position</b> search a string for the occurrence of a character,
 any of a set of characters, or a string.  They return either #f if none is found, or the position
 within the searched string of the first occurrence.  The optional third argument sets where the
 search starts in the second argument.
 </p>
-
-<pre class="indented">
-(<em class=def id="charposition">char-position</em> char-or-string searched-string (start 0))
-(<em class=def>string-position</em> substring searched-string (start 0))
-</pre>
 
 <p>If char-position's first argument is a string, it is treated as a set of characters, and
 char-position looks for the first occurrence of any member of that set.
@@ -5578,6 +5578,7 @@ free-heap-size                the number of currently unused cells
 gc-freed                      number of cells freed by the last GC pass
 gc-protected-objects          vector of the objects permanently protected from the GC
 gc-stats                      #f (#t turns on printout of the GC activity)
+memory-usage                  a description of current memory allocations
 </pre>
 
 <p>
@@ -5601,12 +5602,20 @@ The boolean sets whether the entire output should be displayed as a comment.
 The defaults are '(3 45 80 45 #t).
 </p>
 
-<p>c-types returns a list of the types created by s7_new_type_x and friends.
-The built-in random-state is an instance of one such type.  The function
-c-object? returns the type tag if passed such an object (otherwise #f of course).  This tag is also the position
-of the object's type in the c-types list. You can also wrap up raw C pointers and
+<pre class="indented">
+(<em class=def id="cobject">c-object?</em> obj)
+(<em class=def id="cpointer">c-pointer?</em> obj)
+(<em class=def id="cpoint">c-pointer</em> int)
+</pre>
+
+<p>
+You can wrap up raw C pointers and
 pass them around in s7 code. The function c-pointer returns a wrapped pointer,
-and c-pointer? returns #t if passed it.  In libc.scm, we <code>(define NULL (c-pointer 0))</code>.
+and c-pointer? returns #t if passed one.  <code>(define NULL (c-pointer 0))</code>.
+c-object? returns the object's type tag if passed such an object (otherwise #f of course).  This tag is also the position
+of the object's type in the (*s7* 'c-types) list. 
+(*s7* 'c-types) returns a list of the types created by s7_new_type_x and friends.
+The built-in random-state is one such type.
 </p>
 
 
@@ -9432,4 +9441,3 @@ circular func (implicit set!):
 	 (a (lambda () (b))))
   (a))
 -->
-
