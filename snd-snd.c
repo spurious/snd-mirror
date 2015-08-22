@@ -5901,19 +5901,34 @@ static s7_pointer acc_show_controls(s7_scheme *sc, s7_pointer args) {return(g_se
 void g_init_snd(void)
 {
 #if HAVE_SCHEME
-  s7_sig_t pl_it, pl_iti, pl_sts, pl_bt, pl_st, pl_i;
+  s7_sig_t pl_iq, pl_iqi, pl_sq, pl_sts, pl_bq, pl_i, pl_osi, pl_bt, pl_bo, pl_bob, pl_io, pl_ioi, pl_po, pl_pop, pl_ro, pl_ror, pl_oi;
   {
-    s7_pointer i, t, s, b;
+    s7_pointer i, t, s, b, o, q, p, r;
     i = s7_make_symbol(s7, "integer?");
     s = s7_make_symbol(s7, "string?");
     b = s7_make_symbol(s7, "boolean?");
+    p = s7_make_symbol(s7, "pair?");
+    r = s7_make_symbol(s7, "real?");
     t = s7_t(s7);
+    q = t; /* sigh -- #t is legal here which is idiotic */
+    o = t;
     pl_i = s7_make_signature(s7, 1, i);
-    pl_it = s7_make_signature(s7, 2, i, t);
-    pl_iti = s7_make_signature(s7, 3, i, t, i);
+    pl_iq = s7_make_signature(s7, 2, i, q);
+    pl_iqi = s7_make_signature(s7, 3, i, q, i);
     pl_sts = s7_make_signature(s7, 3, s, t, s);
-    pl_st = s7_make_signature(s7, 2, s, t);
+    pl_sq = s7_make_signature(s7, 2, s, q);
+    pl_bq = s7_make_signature(s7, 2, b, q);
+    pl_osi = s7_make_signature(s7, 3, o, s, i);
     pl_bt = s7_make_signature(s7, 2, b, t);
+    pl_bo = s7_make_signature(s7, 2, b, o);
+    pl_bob = s7_make_signature(s7, 3, b, o, b);
+    pl_io = s7_make_signature(s7, 2, i, o);
+    pl_oi = s7_make_signature(s7, 2, o, i);
+    pl_ioi = s7_make_signature(s7, 3, i, o, i);
+    pl_po = s7_make_signature(s7, 2, p, o);
+    pl_pop = s7_make_signature(s7, 3, p, o, p);
+    pl_ro = s7_make_signature(s7, 2, r, o);
+    pl_ror = s7_make_signature(s7, 3, r, o, r);
   }
 #endif
 
@@ -5938,22 +5953,22 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
 
   Xen_define_typed_procedure(S_status_report,          g_status_report_w,          1, 1, 0, H_status_report, pl_sts);
 
-  Xen_define_typed_dilambda(S_channels,      g_channels_w,      H_channels,      S_set S_channels,      g_set_channels_w,       0, 1, 1, 1, pl_it, pl_iti);
-  Xen_define_typed_dilambda(S_chans,         g_channels_w,      H_channels,      S_set S_chans,         g_set_channels_w,       0, 1, 1, 1, pl_it, pl_iti);
-  Xen_define_typed_dilambda(S_srate,         g_srate_w,         H_srate,         S_set S_srate,         g_set_srate_w,          0, 1, 1, 1, pl_it, pl_iti);
-  Xen_define_typed_dilambda(S_data_location, g_data_location_w, H_data_location, S_set S_data_location, g_set_data_location_w,  0, 1, 1, 1, pl_it, pl_iti);
-  Xen_define_typed_dilambda(S_data_size,     g_data_size_w,     H_data_size,     S_set S_data_size,     g_set_data_size_w,      0, 1, 1, 1, pl_it, pl_iti);
-  Xen_define_typed_dilambda(S_sample_type,   g_sample_type_w,   H_sample_type,   S_set S_sample_type,   g_set_sample_type_w,    0, 1, 1, 1, pl_it, pl_iti);
-  Xen_define_typed_dilambda(S_header_type,   g_header_type_w,   H_header_type,   S_set S_header_type,   g_set_header_type_w,    0, 1, 1, 1, pl_it, pl_iti);
+  Xen_define_typed_dilambda(S_channels,      g_channels_w,      H_channels,      S_set S_channels,      g_set_channels_w,       0, 1, 1, 1, pl_iq, pl_iqi);
+  Xen_define_typed_dilambda(S_chans,         g_channels_w,      H_channels,      S_set S_chans,         g_set_channels_w,       0, 1, 1, 1, pl_iq, pl_iqi);
+  Xen_define_typed_dilambda(S_srate,         g_srate_w,         H_srate,         S_set S_srate,         g_set_srate_w,          0, 1, 1, 1, pl_iq, pl_iqi);
+  Xen_define_typed_dilambda(S_data_location, g_data_location_w, H_data_location, S_set S_data_location, g_set_data_location_w,  0, 1, 1, 1, pl_iq, pl_iqi);
+  Xen_define_typed_dilambda(S_data_size,     g_data_size_w,     H_data_size,     S_set S_data_size,     g_set_data_size_w,      0, 1, 1, 1, pl_iq, pl_iqi);
+  Xen_define_typed_dilambda(S_sample_type,   g_sample_type_w,   H_sample_type,   S_set S_sample_type,   g_set_sample_type_w,    0, 1, 1, 1, pl_iq, pl_iqi);
+  Xen_define_typed_dilambda(S_header_type,   g_header_type_w,   H_header_type,   S_set S_header_type,   g_set_header_type_w,    0, 1, 1, 1, pl_iq, pl_iqi);
   Xen_define_typed_dilambda(S_comment,       g_comment_w,       H_comment,       S_set S_comment,       g_set_comment_w,        0, 1, 1, 1, NULL, NULL);
 
-  Xen_define_typed_procedure(S_is_sound,             g_is_sound_w,         1, 0, 0, H_is_sound, pl_bt);
-  Xen_define_safe_procedure(S_find_sound,            g_find_sound_w,       1, 1, 0, H_find_sound);
-  Xen_define_typed_procedure(S_file_name,            g_file_name_w,        0, 1, 0, H_file_name, pl_st);
-  Xen_define_typed_procedure(S_short_file_name,      g_short_file_name_w,  0, 1, 0, H_short_file_name, pl_st);
-  Xen_define_safe_procedure(S_save_controls,         g_save_controls_w,    0, 1, 0, H_save_controls);
-  Xen_define_safe_procedure(S_restore_controls,      g_restore_controls_w, 0, 1, 0, H_restore_controls);
-  Xen_define_safe_procedure(S_reset_controls,        g_reset_controls_w,   0, 1, 0, H_reset_controls);
+  Xen_define_typed_procedure(S_is_sound,             g_is_sound_w,         1, 0, 0, H_is_sound,		pl_bt);
+  Xen_define_typed_procedure(S_find_sound,           g_find_sound_w,       1, 1, 0, H_find_sound,	pl_osi);
+  Xen_define_typed_procedure(S_file_name,            g_file_name_w,        0, 1, 0, H_file_name,	pl_sq);
+  Xen_define_typed_procedure(S_short_file_name,      g_short_file_name_w,  0, 1, 0, H_short_file_name,	pl_sq);
+  Xen_define_typed_procedure(S_save_controls,        g_save_controls_w,    0, 1, 0, H_save_controls,	pl_bt);
+  Xen_define_typed_procedure(S_restore_controls,     g_restore_controls_w, 0, 1, 0, H_restore_controls, pl_bt);
+  Xen_define_typed_procedure(S_reset_controls,       g_reset_controls_w,   0, 1, 0, H_reset_controls,	pl_bt);
   Xen_define_safe_procedure(S_select_sound,          g_select_sound_w,     1, 0, 0, H_select_sound);
   Xen_define_safe_procedure(S_select_channel,        g_select_channel_w,   0, 1, 0, H_select_channel);
 
@@ -5977,77 +5992,78 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_procedure(S_save_sound_as,          g_save_sound_as_w,           0, 0, 1, H_save_sound_as);
   Xen_define_procedure(S_apply_controls,         g_apply_controls_w,          0, 4, 0, H_apply_controls);
   Xen_define_procedure(S_controls_to_channel,    g_controls_to_channel_w,     0, 6, 0, H_controls_to_channel);
-  Xen_define_typed_procedure(S_sync_max,         g_sync_max_w,                0, 0, 0, H_sync_max, pl_i);
+  Xen_define_typed_procedure(S_sync_max,         g_sync_max_w,                0, 0, 0, H_sync_max,	pl_i);
   Xen_define_safe_procedure(S_filter_control_coeffs,  g_filter_control_coeffs_w,   0, 1, 0, H_filter_control_coeffs);
 
   Xen_define_dilambda(S_filter_control_envelope, g_filter_control_envelope_w, H_filter_control_envelope, 
 		      S_set S_filter_control_envelope, g_set_filter_control_envelope_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_show_controls, g_show_controls_w, H_show_controls, 
-		      S_set S_show_controls, g_set_show_controls_w, 0, 1, 1, 1);  
-  Xen_define_dilambda(S_sync, g_sync_w, H_sync, 
-		      S_set S_sync, g_set_sync_w, 0, 1, 1, 1);
   Xen_define_dilambda(S_sound_properties, g_sound_properties_w, H_sound_properties, 
 		      S_set S_sound_properties, g_set_sound_properties_w, 0, 1, 1, 1);
   Xen_define_dilambda(S_sound_property, g_sound_property_w, H_sound_property, 
 		      S_set S_sound_property, g_set_sound_property_w, 1, 1, 2, 1);
-  Xen_define_dilambda(S_channel_style, g_channel_style_w, H_channel_style, 
-		      S_set S_channel_style, g_set_channel_style_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_read_only, g_read_only_w, H_read_only, 
-		      S_set S_read_only, g_set_read_only_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_expand_control_on, g_expand_control_on_w, H_expand_control_on, 
-		      S_set S_expand_control_on, g_set_expand_control_on_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_contrast_control_on, g_contrast_control_on_w, H_contrast_control_on, 
-		      S_set S_contrast_control_on, g_set_contrast_control_on_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_reverb_control_on, g_reverb_control_on_w, H_reverb_control_on, 
-		      S_set S_reverb_control_on, g_set_reverb_control_on_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_filter_control_on, g_filter_control_on_w, H_filter_control_on, 
-		      S_set S_filter_control_on, g_set_filter_control_on_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_filter_control_in_dB, g_filter_control_in_dB_w, H_filter_control_in_dB, 
-		      S_set S_filter_control_in_dB, g_set_filter_control_in_dB_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_filter_control_in_hz, g_filter_control_in_hz_w, H_filter_control_in_hz, 
-		      S_set S_filter_control_in_hz, g_set_filter_control_in_hz_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_filter_control_order, g_filter_control_order_w, H_filter_control_order, 
-		      S_set S_filter_control_order, g_set_filter_control_order_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_contrast_control, g_contrast_control_w, H_contrast_control, 
-		      S_set S_contrast_control, g_set_contrast_control_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_contrast_control_bounds, g_contrast_control_bounds_w, H_contrast_control_bounds, 
-		      S_set S_contrast_control_bounds, g_set_contrast_control_bounds_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_contrast_control_amp, g_contrast_control_amp_w, H_contrast_control_amp, 
-		      S_set S_contrast_control_amp, g_set_contrast_control_amp_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_expand_control, g_expand_control_w, H_expand_control, 
-		      S_set S_expand_control, g_set_expand_control_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_expand_control_bounds, g_expand_control_bounds_w, H_expand_control_bounds, 
-		      S_set S_expand_control_bounds, g_set_expand_control_bounds_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_expand_control_length, g_expand_control_length_w, H_expand_control_length, 
-		      S_set S_expand_control_length, g_set_expand_control_length_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_expand_control_ramp, g_expand_control_ramp_w, H_expand_control_ramp, 
-		      S_set S_expand_control_ramp, g_set_expand_control_ramp_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_expand_control_hop, g_expand_control_hop_w, H_expand_control_hop, 
-		      S_set S_expand_control_hop, g_set_expand_control_hop_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_expand_control_jitter, g_expand_control_jitter_w, H_expand_control_jitter, 
-		      S_set S_expand_control_jitter, g_set_expand_control_jitter_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_speed_control, g_speed_control_w, H_speed_control, 
-		      S_set S_speed_control, g_set_speed_control_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_speed_control_bounds, g_speed_control_bounds_w, H_speed_control_bounds, 
-		      S_set S_speed_control_bounds, g_set_speed_control_bounds_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_reverb_control_length, g_reverb_control_length_w, H_reverb_control_length, 
-		      S_set S_reverb_control_length, g_set_reverb_control_length_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_reverb_control_length_bounds, g_reverb_control_length_bounds_w, H_reverb_control_length_bounds, 
-		      S_set S_reverb_control_length_bounds, g_set_reverb_control_length_bounds_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_reverb_control_scale, g_reverb_control_scale_w, H_reverb_control_scale, 
-		      S_set S_reverb_control_scale, g_set_reverb_control_scale_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_reverb_control_scale_bounds, g_reverb_control_scale_bounds_w, H_reverb_control_scale_bounds, 
-		      S_set S_reverb_control_scale_bounds, g_set_reverb_control_scale_bounds_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_reverb_control_feedback, g_reverb_control_feedback_w, H_reverb_control_feedback, 
-		      S_set S_reverb_control_feedback, g_set_reverb_control_feedback_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_reverb_control_lowpass, g_reverb_control_lowpass_w, H_reverb_control_lowpass, 
-		      S_set S_reverb_control_lowpass, g_set_reverb_control_lowpass_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_amp_control, g_amp_control_w, H_amp_control, 
-		      S_set S_amp_control, g_set_amp_control_w, 0, 2, 1, 2);
-  Xen_define_dilambda(S_amp_control_bounds, g_amp_control_bounds_w, H_amp_control_bounds, 
-		      S_set S_amp_control_bounds, g_set_amp_control_bounds_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_reverb_control_decay, g_reverb_control_decay_w, H_reverb_control_decay, 
-		      S_set S_reverb_control_decay, g_set_reverb_control_decay_w, 0, 1, 1, 1);
+
+  Xen_define_typed_dilambda(S_show_controls, g_show_controls_w, H_show_controls, 
+			    S_set S_show_controls, g_set_show_controls_w, 0, 1, 1, 1, pl_bo, pl_bob);
+  Xen_define_typed_dilambda(S_sync, g_sync_w, H_sync, 
+			    S_set S_sync, g_set_sync_w, 0, 1, 1, 1, pl_io, pl_ioi);
+  Xen_define_typed_dilambda(S_channel_style, g_channel_style_w, H_channel_style, 
+			    S_set S_channel_style, g_set_channel_style_w, 0, 1, 1, 1, pl_io, pl_ioi);
+  Xen_define_typed_dilambda(S_read_only, g_read_only_w, H_read_only, 
+			    S_set S_read_only, g_set_read_only_w, 0, 1, 1, 1, pl_bo, pl_bob);
+  Xen_define_typed_dilambda(S_expand_control_on, g_expand_control_on_w, H_expand_control_on, 
+			    S_set S_expand_control_on, g_set_expand_control_on_w, 0, 1, 1, 1, pl_bo, pl_bob);
+  Xen_define_typed_dilambda(S_contrast_control_on, g_contrast_control_on_w, H_contrast_control_on, 
+			    S_set S_contrast_control_on, g_set_contrast_control_on_w, 0, 1, 1, 1, pl_bo, pl_bob);
+  Xen_define_typed_dilambda(S_reverb_control_on, g_reverb_control_on_w, H_reverb_control_on, 
+			    S_set S_reverb_control_on, g_set_reverb_control_on_w, 0, 1, 1, 1, pl_bo, pl_bob);
+  Xen_define_typed_dilambda(S_filter_control_on, g_filter_control_on_w, H_filter_control_on, 
+			    S_set S_filter_control_on, g_set_filter_control_on_w, 0, 1, 1, 1, pl_bo, pl_bob);
+  Xen_define_typed_dilambda(S_filter_control_in_dB, g_filter_control_in_dB_w, H_filter_control_in_dB, 
+			    S_set S_filter_control_in_dB, g_set_filter_control_in_dB_w, 0, 1, 1, 1, pl_bo, pl_bob);
+  Xen_define_typed_dilambda(S_filter_control_in_hz, g_filter_control_in_hz_w, H_filter_control_in_hz, 
+			    S_set S_filter_control_in_hz, g_set_filter_control_in_hz_w, 0, 1, 1, 1, pl_bo, pl_bob);
+  Xen_define_typed_dilambda(S_filter_control_order, g_filter_control_order_w, H_filter_control_order, 
+			    S_set S_filter_control_order, g_set_filter_control_order_w, 0, 1, 1, 1, pl_io, pl_ioi);
+  Xen_define_typed_dilambda(S_contrast_control, g_contrast_control_w, H_contrast_control, 
+			    S_set S_contrast_control, g_set_contrast_control_w, 0, 1, 1, 1, pl_ro, pl_ror);
+  Xen_define_typed_dilambda(S_contrast_control_bounds, g_contrast_control_bounds_w, H_contrast_control_bounds, 
+			    S_set S_contrast_control_bounds, g_set_contrast_control_bounds_w, 0, 1, 1, 1, pl_po, pl_pop);
+  Xen_define_typed_dilambda(S_contrast_control_amp, g_contrast_control_amp_w, H_contrast_control_amp, 
+			    S_set S_contrast_control_amp, g_set_contrast_control_amp_w, 0, 1, 1, 1, pl_ro, pl_ror);
+  Xen_define_typed_dilambda(S_expand_control, g_expand_control_w, H_expand_control, 
+			    S_set S_expand_control, g_set_expand_control_w, 0, 1, 1, 1, pl_ro, pl_ror);
+  Xen_define_typed_dilambda(S_expand_control_bounds, g_expand_control_bounds_w, H_expand_control_bounds, 
+			    S_set S_expand_control_bounds, g_set_expand_control_bounds_w, 0, 1, 1, 1, pl_po, pl_pop);
+  Xen_define_typed_dilambda(S_expand_control_length, g_expand_control_length_w, H_expand_control_length, 
+			    S_set S_expand_control_length, g_set_expand_control_length_w, 0, 1, 1, 1, pl_ro, pl_ror);
+  Xen_define_typed_dilambda(S_expand_control_ramp, g_expand_control_ramp_w, H_expand_control_ramp, 
+			    S_set S_expand_control_ramp, g_set_expand_control_ramp_w, 0, 1, 1, 1, pl_ro, pl_ror);
+  Xen_define_typed_dilambda(S_expand_control_hop, g_expand_control_hop_w, H_expand_control_hop, 
+			    S_set S_expand_control_hop, g_set_expand_control_hop_w, 0, 1, 1, 1, pl_ro, pl_ror);
+  Xen_define_typed_dilambda(S_expand_control_jitter, g_expand_control_jitter_w, H_expand_control_jitter, 
+			    S_set S_expand_control_jitter, g_set_expand_control_jitter_w, 0, 1, 1, 1, pl_ro, pl_ror);
+  Xen_define_typed_dilambda(S_speed_control, g_speed_control_w, H_speed_control, 
+			    S_set S_speed_control, g_set_speed_control_w, 0, 1, 1, 1, pl_ro, pl_ror);
+  Xen_define_typed_dilambda(S_speed_control_bounds, g_speed_control_bounds_w, H_speed_control_bounds, 
+			    S_set S_speed_control_bounds, g_set_speed_control_bounds_w, 0, 1, 1, 1, pl_po, pl_pop);
+  Xen_define_typed_dilambda(S_reverb_control_length, g_reverb_control_length_w, H_reverb_control_length, 
+			    S_set S_reverb_control_length, g_set_reverb_control_length_w, 0, 1, 1, 1, pl_ro, pl_ror);
+  Xen_define_typed_dilambda(S_reverb_control_length_bounds, g_reverb_control_length_bounds_w, H_reverb_control_length_bounds, 
+			    S_set S_reverb_control_length_bounds, g_set_reverb_control_length_bounds_w, 0, 1, 1, 1, pl_po, pl_pop);
+  Xen_define_typed_dilambda(S_reverb_control_scale, g_reverb_control_scale_w, H_reverb_control_scale, 
+			    S_set S_reverb_control_scale, g_set_reverb_control_scale_w, 0, 1, 1, 1, pl_ro, pl_ror);
+  Xen_define_typed_dilambda(S_reverb_control_scale_bounds, g_reverb_control_scale_bounds_w, H_reverb_control_scale_bounds, 
+			    S_set S_reverb_control_scale_bounds, g_set_reverb_control_scale_bounds_w, 0, 1, 1, 1, pl_po, pl_pop);
+  Xen_define_typed_dilambda(S_reverb_control_feedback, g_reverb_control_feedback_w, H_reverb_control_feedback, 
+			    S_set S_reverb_control_feedback, g_set_reverb_control_feedback_w, 0, 1, 1, 1, pl_ro, pl_ror);
+  Xen_define_typed_dilambda(S_reverb_control_lowpass, g_reverb_control_lowpass_w, H_reverb_control_lowpass, 
+			    S_set S_reverb_control_lowpass, g_set_reverb_control_lowpass_w, 0, 1, 1, 1, pl_ro, pl_ror);
+  Xen_define_typed_dilambda(S_amp_control, g_amp_control_w, H_amp_control, 
+			    S_set S_amp_control, g_set_amp_control_w, 0, 2, 1, 2, pl_ro, pl_ror);
+  Xen_define_typed_dilambda(S_amp_control_bounds, g_amp_control_bounds_w, H_amp_control_bounds, 
+			    S_set S_amp_control_bounds, g_set_amp_control_bounds_w, 0, 1, 1, 1, pl_po, pl_pop);
+  Xen_define_typed_dilambda(S_reverb_control_decay, g_reverb_control_decay_w, H_reverb_control_decay, 
+			    S_set S_reverb_control_decay, g_set_reverb_control_decay_w, 0, 1, 1, 1, pl_ro, pl_ror);
   
   #define H_speed_control_as_float "The value for " S_speed_control_style " that interprets the speed slider as a float"
   #define H_speed_control_as_ratio "The value for " S_speed_control_style " that interprets the speed slider as a just-intonation ratio"
@@ -6057,15 +6073,15 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_constant(S_speed_control_as_ratio,        SPEED_CONTROL_AS_RATIO,    H_speed_control_as_ratio);
   Xen_define_constant(S_speed_control_as_semitone,     SPEED_CONTROL_AS_SEMITONE, H_speed_control_as_semitone);
   
-  Xen_define_dilambda(S_speed_control_style, g_speed_control_style_w, H_speed_control_style, 
-		      S_set S_speed_control_style, g_set_speed_control_style_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_speed_control_tones, g_speed_control_tones_w, H_speed_control_tones, 
-		      S_set S_speed_control_tones, g_set_speed_control_tones_w, 0, 1, 1, 1);
+  Xen_define_typed_dilambda(S_speed_control_style, g_speed_control_style_w, H_speed_control_style, 
+			    S_set S_speed_control_style, g_set_speed_control_style_w, 0, 1, 1, 1, pl_io, pl_ioi);
+  Xen_define_typed_dilambda(S_speed_control_tones, g_speed_control_tones_w, H_speed_control_tones, 
+			    S_set S_speed_control_tones, g_set_speed_control_tones_w, 0, 1, 1, 1, pl_io, pl_ioi);
 
   Xen_define_procedure(S_channel_amp_envs,              g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs);
   Xen_define_safe_procedure(S_sounds,                   g_sounds_w,                   0, 0, 0, H_sounds);
-  Xen_define_safe_procedure(S_integer_to_sound,         g_integer_to_sound_w,         1, 0, 0, H_integer_to_sound);
-  Xen_define_safe_procedure(S_sound_to_integer,         g_sound_to_integer_w,         1, 0, 0, H_sound_to_integer);
+  Xen_define_typed_procedure(S_integer_to_sound,        g_integer_to_sound_w,         1, 0, 0, H_integer_to_sound, pl_oi);
+  Xen_define_typed_procedure(S_sound_to_integer,        g_sound_to_integer_w,         1, 0, 0, H_sound_to_integer, pl_io);
 
 #if HAVE_SCHEME
   s7_symbol_set_documentation(s7, ss->channel_style_symbol, "*channel-style*: how multichannel sounds lay out the channels: channels-combined, channels-separate or channels-superimposed.");

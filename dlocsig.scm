@@ -227,10 +227,7 @@
 		  (set! res (cons (a (- (length a) (+ i 1))) res)))
 		res))))))
 
-(define listp 
-  (let ((documentation "(listp lst) is #t is 'lst' is a non-null list"))
-    (lambda (a) 
-      (and (list? a) (pair? a)))))
+(define listp pair?)
 
 (define (make-list-1 n val)
   (let ((lst ()))
@@ -310,7 +307,7 @@
 	 groups))
       
       ;; if the speakers are defined with only azimuth angles (no elevation)
-      (if (not (list? (car speakers)))
+      (if (not (pair? (car speakers)))
 	  ;; then create the groups ourselves because it is a 2d configuration;
 	  ;; we could create the 3d configuration groups but the algorithm for
 	  ;; doing that in the generic case is not trivial
@@ -366,8 +363,8 @@
 	  (let ((val ()))
 	    (for-each
 	     (lambda (s) ; speakers
-	       (let* ((a (if (list? s) (car s) s))
-		      (e (if (list? s) (or (cadr s) 0.0) 0.0))
+	       (let* ((a (if (pair? s) (car s) s))
+		      (e (if (pair? s) (or (cadr s) 0.0) 0.0))
 		      (evec (cis (* (/ e dlocsig-one-turn) 2 pi)))
 		      (dxy (real-part evec))
 		      (avec (cis (* (/ a dlocsig-one-turn) 2 pi)))
@@ -786,7 +783,7 @@
       (error 'mus-error "ERROR: Can't specify final direction ~A for a closed path ~A~%" final-direction path))
   
   (if (and closed
-	   (not (if (list? (car path))
+	   (not (if (pair? (car path))
 		    (let ((start (car path))
 			  (end (car (last path))))
 		      (and (= (car start) (car end))
@@ -871,7 +868,7 @@
 (define parse-cartesian-coordinates 
   (let ((documentation "(parse-cartesian-coordinates points 3d) parses a set of 2d or 3d points into the separate coordinates"))
     (lambda (points 3d)
-      (if (list? (car points))
+      (if (pair? (car points))
 	  ;; decode a list of lists into x:y:z:v components
 	  ;; 3d -> t [default]
 	  ;;   '((x0 y0 z0 v0) (x1 y1 z1 v1)...(xn yn zn vn))
@@ -933,7 +930,7 @@
 (define parse-polar-coordinates 
   (let ((documentation "(parse-polar-coordinates points 3d) parses a polar path"))
     (lambda (points 3d)
-      (if (list? (car points))
+      (if (pair? (car points))
 	  ;; decode a list of lists of d:a:e:v into x:y:z:v components
 	  ;; 3d --> t [default]
 	  ;;   '((d0 a0 e0 v0) (d1 a1 e1 v1)...(dn an en vn))
@@ -1287,11 +1284,11 @@
 			   (do ((i 0 (+ i 1)))
 			       ((= i n))
 			     (set! (cs i) (list c c)))
-			   (if (and (list? c) (= n (length c)))   ; list of curvatures
+			   (if (and (pair? c) (= n (length c)))   ; list of curvatures
 			       (let ((i 0))
 				 (for-each
 				  (lambda (ci)
-				    (set! (cs i) (if (list? ci) 
+				    (set! (cs i) (if (pair? ci) 
 						     (if (not (= (length ci) 2))
 							 (error 'mus-error "ERROR: curvature sublist must have two elements ~A~%" ci)
 							 ci)

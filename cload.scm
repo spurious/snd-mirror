@@ -204,6 +204,48 @@
   (define (checker type)
     (find-handler (C-type->s7-type type) cadr))
 
+  (define* (cload->signature type (rtn #f))
+    (case (C-type->s7-type type)
+      ((real)      (if rtn 'float? 'real?))
+      ((integer)   'integer?)
+      ((string)    'string?)
+      ((boolean)   'boolean?)
+      ((character) 'char?)
+      ((c_pointer) 'c-pointer?)
+      (else #t)))
+
+  (define (signature->pl type)
+    (case type
+      ((integer?)   #\i)
+      ((boolean?)   #\b)
+      ((real?)      #\r)
+      ((float?)     #\d)
+      ((char?)      #\c)
+      ((string?)    #\s)
+      ((c-pointer?) #\x)
+      (else         #\t)))
+
+  (define signatures (make-hash-table))
+
+  (define (make-signature rtn args)
+    (let ((sig (list (cload->signature rtn #t))))
+      (for-each
+       (lambda (arg)
+	 (set! sig (cons (cload->signature arg) sig)))
+       args)
+      (set! sig (reverse sig))
+      (when (not (signatures sig)) ; it's not in our collection yet
+	(let ((pl (make-string (+ 4 (length args))))
+	      (loc 3))
+	  (set! (pl 0) #\p) (set! (pl 1) #\l) (set! (pl 2) #\_)
+	  (for-each 
+	   (lambda (typer)
+	     (set! (pl loc) (signature->pl typer))
+	     (set! loc (+ loc 1)))
+	   sig)
+	  (set! (signatures sig) pl)))
+      sig))
+
   (set! c-define-output-file-counter (+ c-define-output-file-counter 1))
 
   (let* ((file-name (or output-name (format "temp-s7-output-~D" c-define-output-file-counter)))
@@ -238,11 +280,11 @@
   
 
     (define* (add-one-function return-type name arg-types doc)
-      ;; (format *stderr* "~A ~A ~A~%" return-type name arg-types)
+      ;; (format *stderr* "~A ~A ~A~%" return-type name arg-types): double j0 (double) for example
       ;; C function -> scheme
-      (let* ((func-name (symbol->string (collides? name)))
-	     (num-args (length arg-types))
-	     (base-name (string-append (if (> (length prefix) 0) prefix "s7_dl") "_" func-name)) ; not "g" -- collides with glib
+      (let* ((func-name   (symbol->string (collides? name)))
+	     (num-args    (length arg-types))
+	     (base-name   (string-append (if (> (length prefix) 0) prefix "s7_dl") "_" func-name)) ; not "g" -- collides with glib
 	     (scheme-name (string-append prefix (if (> (length prefix) 0) ":" "") func-name)))
 
 	(if (and (= num-args 1) 
@@ -265,9 +307,9 @@
 		   (type arg-types (cdr type)))
 		  ((= i num-args))
 
-		(let* ((nominal-type (if (pair? (car type)) (caar type) (car type)))
-		       (true-type (if (pair? (car type)) (cadar type) (car type)))
-		       (s7-type (C-type->s7-type true-type)))
+		(let* ((nominal-type (if (pair? (car type)) (caar type) (car type)))  ; double in the example
+		       (true-type    (if (pair? (car type)) (cadar type) (car type)))
+		       (s7-type      (C-type->s7-type true-type)))                    ; real
 		  (if (eq? true-type 's7_pointer)
 		      (format p "    ~A_~D = s7_car(arg);~%" base-name i)
 		      (begin
@@ -275,8 +317,8 @@
 			(format p "    ~A_~D = (~A)~A(~As7_car(arg));~%"
 				base-name i
 				nominal-type
-				(s7->C true-type)
-				(if (member s7-type '(boolean real) eq?)
+				(s7->C true-type)                                     ; s7_number_to_real which requires 
+				(if (member s7-type '(boolean real) eq?)              ;   the extra sc arg
 				    "sc, " ""))
 			(format p "  else return(s7_wrong_type_arg_error(sc, ~S, ~D, s7_car(arg), ~S));~%"
 				func-name 
@@ -352,7 +394,10 @@
 	     (format p "static s7_if_t ~A_if(s7_scheme *sc, s7_pointer expr) {return(~A_if_i);}~%" func-name func-name))))
 	  
 	(format p "~%")
-	(set! functions (cons (list scheme-name base-name (or doc func-name) num-args) functions))))
+	(set! functions (cons (list scheme-name base-name (or doc func-name) 
+				    num-args 0 
+				    (make-signature return-type arg-types))
+			      functions))))
 
     
     (define (add-one-constant type name)
@@ -385,6 +430,32 @@
       (format p "void ~A(s7_scheme *sc)~%" init-name)
       (format p "{~%")
       (format p "  s7_pointer cur_env;~%")
+      (format p "  s7_sig_t ")
+      (let ((pls (hash-table-entries signatures))
+	    (loc 1))
+	(for-each
+	 (lambda (s)
+	   (format p "~A~A~A" (cdr s) (if (< loc pls) "," ";") (if (< loc pls) " " #\newline))
+	   (set! loc (+ loc 1)))
+	 signatures))
+      (format p "  {~%    s7_pointer i, s, c, b, d, r, x, t;~%    ~
+                  i = s7_make_symbol(sc, \"integer?\");~%    ~
+                  s = s7_make_symbol(sc, \"string?\");~%    ~
+                  c = s7_make_symbol(sc, \"char?\");~%    ~
+                  b = s7_make_symbol(sc, \"boolean?\");~%    ~
+                  d = s7_make_symbol(sc, \"float?\");~%    ~
+                  r = s7_make_symbol(sc, \"real?\");~%    ~
+                  x = s7_make_symbol(sc, \"c-pointer?\");~%    ~
+                  t = s7_t(sc);~%")
+      (for-each
+       (lambda (sig)
+	 (format p "    ~A = s7_make_signature(sc, ~D" (cdr sig) (length (car sig)))
+	 (format p "~{~^, ~C~}" (substring (cdr sig) 3))
+	 (format p ");~%"))
+       signatures)
+
+      (format p "  }~%~%")
+
       (format p "  cur_env = s7_outlet(sc, s7_curlet(sc));~%") ; this must exist because we pass load the env ourselves
       
       ;; send out any special initialization code
@@ -429,19 +500,21 @@
       
       ;; functions
       (for-each
-       (lambda (f)
+       (lambda (f) 
 	 (let ((scheme-name (f 0))
 	       (base-name   (f 1))
 	       (help        (f 2))
 	       (num-args    (f 3))
-	       (opt-args    (if (= (length f) 5) (f 4) 0)))
+	       (opt-args    (if (> (length f) 4) (f 4) 0))
+	       (sig         (and (> (length f) 5) (f 5))))
 	   (format p "~%  s7_define(sc, cur_env,~%            s7_make_symbol(sc, ~S),~%" scheme-name)
-	   (format p "            s7_make_safe_function(sc, ~S, ~A, ~D, ~D, false, ~S));~%"
+	   (format p "            s7_make_typed_function(sc, ~S, ~A, ~D, ~D, false, ~S, ~A));~%"
 		   scheme-name
 		   base-name
 		   num-args
 		   opt-args
-		   help)))
+		   help
+		   (if (pair? sig) (signatures sig) 'NULL))))
        functions)
 
       ;; optimizer connection

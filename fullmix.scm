@@ -18,7 +18,7 @@
 	(in-chans (channels in-file))
 	(out-chans (channels *output*))
 	(reversed (or (and (number? srate) (negative? srate))
-		      (and (list? srate) (negative? (cadr srate)))))
+		      (and (pair? srate) (negative? (cadr srate)))))
 	
 	(inloc (floor (* (or inbeg 0.0) (mus-sound-srate in-file)))))
     
@@ -49,12 +49,12 @@
 			(vector-set! vect i (make-readin in-file i inloc :direction (if reversed -1 1))))
 		      vect)))
 	  (envs #f)
-	  (srcenv (if (list? srate)
+	  (srcenv (if (pair? srate)
 		      (make-env srate :duration dur :scaler (if reversed -1.0 1.0))
 		      #f)))
       
       (if matrix
-	  (if (list? matrix) ; matrix is list of scalers, envelopes (lists), or env gens
+	  (if (pair? matrix) ; matrix is list of scalers, envelopes (lists), or env gens
 	      (do ((inp 0 (+ inp 1))
 		   (off 0 (+ off out-chans)))
 		  ((= inp in-chans))
@@ -66,7 +66,7 @@
 			  (if (number? outn)
 			      (set! (mx inp outp) outn)
 			      (if (or (env? outn)
-				      (list? outn))
+				      (pair? outn))
 				  (begin
 				    (if (not envs)
 					(set! envs (make-vector (* in-chans out-chans) #f)))

@@ -12382,7 +12382,7 @@ static char *mus_generator_to_readable_string(s7_scheme *sc, void *obj)
 static void mus_xen_init(void)
 {
 #if HAVE_SCHEME
-  s7_pointer s, i, p, t, r, c, f, v, b, n, d;
+  s7_pointer s, i, p, t, r, c, f, v, b, d;
 
   s7_sig_t pcl_ct, pl_rcr, pl_bt, pl_ir, pl_cc, pl_ccc, pl_ccic, pl_ccrr, pl_fc, pl_fcif, 
                   pl_cs, pl_ff, pl_tt, pl_fff, pl_fffifi, pl_ffftii, pl_fffi, pl_fffii, pl_fti, pl_fif, pl_fiir, pl_fttb, pl_ic, 
@@ -12410,7 +12410,6 @@ static void mus_xen_init(void)
   f = s7_make_symbol(s7, "float-vector?");
   v = s7_make_symbol(s7, "vector?");
   b = s7_make_symbol(s7, "boolean?");
-  n = s7_make_symbol(s7, "number?");
   d = s7_make_symbol(s7, "float?");
   
   pcl_ct = s7_make_circular_signature(s7, 1, 2, c, t);

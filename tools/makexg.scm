@@ -750,6 +750,25 @@
 	(cons "GtkPrintOperationResult" "INT")
 	(cons "GtkPrintOperationAction" "INT")
 	(cons "GtkPrintError" "INT")
+
+	(cons "GtkRevealerTransitionType" "INT")
+	(cons "GtkStackTransitionType" "INT")
+	(cons "GtkTextViewLayer" "INT")
+	(cons "GdkTouchpadGesturePhase" "INT")
+	(cons "GtkLevelBarMode" "INT")
+	(cons "GdkWindowClass" "INT")
+	(cons "GdkColorspace" "INT")
+	(cons "GtkNotebookTab" "INT")
+	(cons "GdkPixbufError" "INT")
+	(cons "PangoRenderPart" "INT")
+	(cons "GtkDragResult" "INT")
+	(cons "GtkToolPaletteDragTargets" "INT")
+	(cons "GtkInputPurpose" "INT")
+	(cons "GtkInputHints" "INT")
+	(cons "GdkFullscreenMode" "INT")
+	(cons "GtkBaselinePosition" "INT")
+	(cons "GtkPlacesOpenFlags" "INT")
+	(cons "GtkRegionFlags" "INT")
 	
 	(cons "cairo_status_t" "INT")
 	(cons "cairo_content_t" "INT")
@@ -960,6 +979,8 @@
 
        (define* (,intfnc name type)      ; CINT-2.12
 	 (save-declared-type type)
+	 (if (and type (not (assoc type direct-types)))
+	     (format *stderr* "could be direct int: ~S (~S)~%" type name))
 	 (if (hash-table-ref names name)
 	     (format #t "~A ~A~%" name ',intfnc)
 	     (begin
@@ -1166,6 +1187,8 @@
 
 (define* (CINT name type)
   (save-declared-type type)
+  (if (and type (not (assoc type direct-types)))
+      (format *stderr* "could be direct int: ~S (~S)~%" type name))
   (if (hash-table-ref names name)
       (no-way "~A CINT~%" name)
       (begin
@@ -1345,6 +1368,8 @@
 (hey " *~%")
 (hey " * HISTORY:~%")
 (hey " *~%")
+(hey " *     21-Aug-15: procedure-signature changes.~%")
+(hey " *     --------~%")
 (hey " *     27-Dec:    integer procedure stuff.~%")
 (hey " *     16-Apr:    changed max-args to 8.~%")
 (hey " *     6-Mar:     changed most macros.~%")
@@ -2598,10 +2623,11 @@
 	  (cond ((member direct '("INT" "ULONG") string=?) 'integer?)
 		((string=? direct "BOOLEAN")               'boolean?)
 		((string=? direct "DOUBLE")                'real?)
-		((string=? direct "CHAR")                  'char?)
 		((string=? direct "String")                'string?)
 		(#t #t)))
-	#t)))
+	(if (has-stars gtk)
+	    'pair?
+	    #t))))
 	       
 (define (make-signature fnc)
   (let ((sig (list (gtk-type->s7-type (cadr fnc)))))
@@ -2628,7 +2654,7 @@
 
 ;(format *stderr* "~D entries, ~D funcs~%" (hash-table-entries signatures) (length funcs))
 
-(hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_char, s_float;~%")
+(hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_pair, s_float;~%")
 (hey "static s7_sig_t ")
 
 (define (sig-name sig)
@@ -2640,6 +2666,7 @@
 		((boolean?) "b")
 		((real?) "d")
 		((string?) "s")
+		((pair?) "p")
 		(else "t"))
 	      p)
      (for-each
@@ -2649,6 +2676,7 @@
 		   ((boolean?) "b")
 		   ((real?) "r")
 		   ((string?) "s")
+		   ((pair?) "t") ; because we're stupidly using #f=null
 		   (else "t"))
 		 p))
       (cdr sig)))))
@@ -2678,7 +2706,7 @@
 (hey "  s_real = s7_make_symbol(s7, \"real?\");~%")
 (hey "  s_float = s7_make_symbol(s7, \"float?\");~%")
 (hey "  s_string = s7_make_symbol(s7, \"string?\");~%")
-(hey "  s_char = s7_make_symbol(s7, \"char?\");~%")
+(hey "  s_pair = s7_make_symbol(s7, \"pair?\");~%")
 (hey "  s_any = s7_t(s7);~%~%")
 
 (for-each
@@ -2695,7 +2723,7 @@
 	      ((boolean?) "s_boolean")
 	      ((real?) "s_float")
 	      ((string?) "s_string")
-	      ((char?) "s_char")
+	      ((pair?) "s_pair")
 	      (else "s_any")))
        (if (> len 1) (hey ", "))
        (do ((i 1 (+ i 1))
@@ -2707,7 +2735,7 @@
 		  ((boolean?) "s_boolean")
 		  ((real?) "s_real")
 		  ((string?) "s_string")
-		  ((char?) "s_char")
+		  ((pair?) "s_any") ; see above
 		  (else "s_any"))))
 	 (if (< i (- len 1)) (hey ", "))))
      (hey ");~%")))

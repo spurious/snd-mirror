@@ -2825,7 +2825,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
 
 #if HAVE_SCHEME
   {
-    s7_pointer s, i, p, b, r, f, v, d;
+    s7_pointer s, i, p, b, r, f, d;
     s = s7_make_symbol(s7, "string?");
     i = s7_make_symbol(s7, "integer?");
     p = s7_make_symbol(s7, "pair?");
@@ -2833,7 +2833,6 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
     r = s7_make_symbol(s7, "real?");
     d = s7_make_symbol(s7, "float?");
     f = s7_make_symbol(s7, "float-vector?");
-    v = s7_make_symbol(s7, "vector?");
     pl_ss = s7_make_signature(s7, 2, s, s);
     pl_dr = s7_make_signature(s7, 2, d, r);
     pl_dir = s7_make_signature(s7, 3, d, i, r);

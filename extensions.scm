@@ -139,14 +139,14 @@ a list (file-name-or-sound-object [beg [channel]])."))
 	      (close-sound output)
 	      (mix output-name output-beg 0 output-snd output-chn #t #t))))
       
-      (let* ((input (if (not (list? input-data)) 
+      (let* ((input (if (not (pair? input-data)) 
 			input-data 
 			(car input-data)))
-	     (input-beg (if (or (not (list? input-data))
+	     (input-beg (if (or (not (pair? input-data))
 				(< (length input-data) 2)) 
 			    0 
 			    (cadr input-data)))
-	     (input-channel (if (or (not (list? input-data))
+	     (input-channel (if (or (not (pair? input-data))
 				    (< (length input-data) 3))
 				0 
 				(caddr input-data)))

@@ -410,7 +410,7 @@
 						   (- a2)
 						   1.0))))
 	 (if (and yroot
-		  (list? yroot)
+		  (pair? yroot)
 		  (= (length yroot) 4))
 	     (do ((i 0 (+ i 1)))
 		 ((= i 3))

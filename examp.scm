@@ -1888,7 +1888,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
       ;; we take this list and create and evaluate a new function
       
       (let ((dsp-chain (apply vector (reverse (map (lambda (gen)
-						     (if (list? gen)
+						     (if (pair? gen)
 							 (make-env gen :duration dur)
 							 gen))
 						   dsps))))

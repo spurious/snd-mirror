@@ -846,7 +846,7 @@
       (gdk_window_invalidate_rect (GDK_WINDOW (gtk_widget_get_window (GTK_WIDGET wid))) (list 'GdkRectangle_ 0) #t)
       (gdk_window_process_updates (GDK_WINDOW (gtk_widget_get_window (GTK_WIDGET wid))) #t))
     
-    (define (widget? w) (and (list? w) (= (length w) 2) (eq? (car w) 'GtkWidget_)))
+    (define (widget? w) (and (pair? w) (= (length w) 2) (eq? (car w) 'GtkWidget_)))
     
     ;; (let ((wid1 (make-variable-display "do-loop" "i*1" 'spectrum))) (variable-display 0.1 wid1))
     
@@ -856,7 +856,7 @@
 	      (gtk_label_set_text (GTK_LABEL widget) (object->string var))
 	      (force-update widget)))
 	
-	(if (list? widget)
+	(if (pair? widget)
 	    (if (or (number? (car widget))
 		    (sound? (car widget)))
 		;; graph/spectrum -- does this need an explicit update?

@@ -1384,7 +1384,7 @@
 	(sb-data sound-buttons))
 	|#
 	(define (make-sound-button-pixmap dpy wn data width height)
-	  (if (list? (sound-button-peaks data))
+	  (if (pair? (sound-button-peaks data))
 	      (let ((mins (car (sound-button-peaks data)))
 		    (maxes (cadr (sound-button-peaks data)))
 		    (gc (sound-button-gc data))
@@ -1436,7 +1436,6 @@
 	    (XtAddCallback container XmNselectionCallback 
 			   (lambda (w c i)
 			     (if (and (= (.auto_selection_type i) XmAUTO_BEGIN) ; just click to select for now
-				      (list? (.selected_items i))
 				      (pair? (.selected_items i)))
 				 (select-func (XtName (car (.selected_items i)))))))
 	    (for-each
@@ -2621,7 +2620,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
 		(if (XmIsScale widget)
 		    ;; thermometer
 		    (XmScaleSetValue widget (floor (* 100 var)))))
-	    (if (and (list? widget)
+	    (if (and (pair? widget)
 		     (or (number? (car widget))
 			 (sound? (car widget))))
 		;; graph/spectrum -- does this need an explicit update?
@@ -2640,7 +2639,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
   (define variable-display-reset 
     (let ((documentation "(variable-display-reset widget) restarts the variable graphs -- this is intended for the start (or perhaps end) of a note"))
       (lambda (widget)
-	(if (and (list? widget)
+	(if (and (pair? widget)
 		 (number? (car widget)))
 	    ;; graph/spectrum
 	    (let* ((snd (car widget))

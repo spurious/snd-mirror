@@ -468,13 +468,13 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		(set-car! (cdr nsym) (car old))
 		(set-car! nsym (list 'quote (car old)))))))))
 
-  (let* ((name (if (list? struct-name) 
+  (let* ((name (if (pair? struct-name) 
 		   (car struct-name) 
 		   struct-name))
 	 (sname (if (string? name) 
 		    name 
 		    (symbol->string name)))
-	 (wrapper (or (and (list? struct-name)
+	 (wrapper (or (and (pair? struct-name)
 			   (or (and (> (length struct-name) 2)
 				    (equal? (struct-name 1) :make-wrapper)
 				    (struct-name 2))
@@ -482,7 +482,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				    (equal? (struct-name 3) :make-wrapper)
 				    (struct-name 4))))
 		      (lambda (gen) gen)))
-	 (methods (and (list? struct-name)
+	 (methods (and (pair? struct-name)
 		       (or (and (> (length struct-name) 2)
 				(equal? (struct-name 1) :methods)
 				(struct-name 2))
@@ -503,7 +503,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 	 (set! ,(string->symbol (string-append "make-" sname))
 	       (lambda* ,(map (lambda (n) 
-				(if (list? n) n (list n 0.0)))
+				(if (pair? n) n (list n 0.0)))
 			      fields)
   	         (,wrapper 
 		  (openlet
