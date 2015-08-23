@@ -192,7 +192,7 @@
 				  (lambda (c)
 				    (vector-set! chars (char->integer c) #t))
 				  '(#\A #\S #\C #\F #\E #\G #\O #\D #\B #\X #\, #\{ #\} #\@ #\P #\*
-				    #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p #\N #\n #\W #\w
+				    #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p #\N #\n #\W #\w #\v #\V
 				    #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
 				 chars))
 
@@ -236,32 +236,32 @@
 		   (if (pair? (car c))
 		       #t ; might be expr as func
 		       'pair?)))
-	      ((integer? c) 'integer?)
-	      ((rational? c) 'rational?)
-	      ((real? c) 'real?)
-	      ((number? c) 'number?)
-	      ((keyword? c) 'keyword?)
-	      ((symbol? c) 'symbol?)
-	      ((byte-vector? c) 'byte-vector?)
-	      ((string? c) 'string?)
-	      ((null? c) 'null?)
-	      ((char? c) 'char?)
-	      ((boolean? c) 'boolean?)
-	      ((float-vector? c) 'float-vector?)
-	      ((int-vector? c) 'int-vector?)
-	      ((vector? c) 'vector?)
-	      ((let? c) 'let?)
-	      ((hash-table? c) 'hash-table?)
-	      ((input-port? c) 'input-port?)
-	      ((output-port? c) 'output-port?)
-	      ((iterator? c) 'iterator?)
-	      ((continuation? c) 'continuation?)
-	      ((dilambda? c) 'dilambda?)
-	      ((procedure? c) 'procedure?)
-	      ((macro? c) 'macro?)
-	      ((random-state? c) 'random-state?)
-	      ((eof-object? c) 'eof-object?)
-	      ((c-pointer? c) 'c-pointer?)
+	      ((integer? c)	  'integer?)
+	      ((rational? c)	  'rational?)
+	      ((real? c)	  'real?)
+	      ((number? c)	  'number?)
+	      ((keyword? c)	  'keyword?)
+	      ((symbol? c)	  'symbol?)
+	      ((byte-vector? c)   'byte-vector?)
+	      ((string? c)	  'string?)
+	      ((null? c)	  'null?)
+	      ((char? c)	  'char?)
+	      ((boolean? c)	  'boolean?)
+	      ((float-vector? c)  'float-vector?)
+	      ((int-vector? c)	  'int-vector?)
+	      ((vector? c)	  'vector?)
+	      ((let? c)		  'let?)
+	      ((hash-table? c)	  'hash-table?)
+	      ((input-port? c)	  'input-port?)
+	      ((output-port? c)   'output-port?)
+	      ((iterator? c)	  'iterator?)
+	      ((continuation? c)  'continuation?)
+	      ((dilambda? c)	  'dilambda?)
+	      ((procedure? c)	  'procedure?)
+	      ((macro? c)         'macro?)
+	      ((random-state? c)  'random-state?)
+	      ((eof-object? c)    'eof-object?)
+	      ((c-pointer? c)     'c-pointer?)
 	      (#t #t)))
       
       (define bools '(symbol? integer? rational? real? number? complex? float? keyword? byte-vector? string? list?
@@ -2155,10 +2155,7 @@
 			   (if (and (not (cadr form))
 				    (zero? ndirs)
 				    (not (char-position #\~ control-string)))
-			       (lint-format "~A could be ~S, (format is a no-op here)" name form (caddr form))))))
-		 
-					;(lint-walk name (cdr form) env)
-		 )))
+			       (lint-format "~A could be ~S, (format is a no-op here)" name form (caddr form)))))))))
 
 	  ((sort!)
 	   (if (and (= (length form) 3)
@@ -2175,7 +2172,7 @@
 		     (lint-format "possible simplification:~S" name val)))
 		 (lambda (type info)
 		   (lint-format "~A -> ~A~%" name form (apply format #f info))))))
-	  ))
+	  )) ; end define-check-special-cases
 
       
       (define (check-call name head form env)
@@ -3492,8 +3489,6 @@
 ;;; what about cond expr that can't be true given previous exprs? -- like or (1508)  and test (cond (#f ...)...)?
 ;;;  also (set! x 32) (set! x 123) etc [list-set!...]
 ;;;  also (set! x 32) (list-ref x 1)...
-;;;
-;;; if with-let, lint should try to be smarter about local names (read if *libc*)
 
 
 ;;; --------------------------------------------------------------------------------

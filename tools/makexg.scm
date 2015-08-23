@@ -2654,7 +2654,7 @@
 
 ;(format *stderr* "~D entries, ~D funcs~%" (hash-table-entries signatures) (length funcs))
 
-(hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_pair, s_float;~%")
+(hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_pair, s_float, s_pair_false;~%")
 (hey "static s7_sig_t ")
 
 (define (sig-name sig)
@@ -2664,20 +2664,20 @@
      (display (case (car sig)
 		((integer?) "i")
 		((boolean?) "b")
-		((real?) "d")
-		((string?) "s")
-		((pair?) "p")
-		(else "t"))
+		((real?)    "d")
+		((string?)  "s")
+		((pair?)    "p")
+		(else       "t"))
 	      p)
      (for-each
       (lambda (typ)
 	(display (case typ
 		   ((integer?) "i")
 		   ((boolean?) "b")
-		   ((real?) "r")
-		   ((string?) "s")
-		   ((pair?) "t") ; because we're stupidly using #f=null
-		   (else "t"))
+		   ((real?)    "r")
+		   ((string?)  "s")
+		   ((pair?)    "u") ; because we're stupidly using #f=null
+		   (else       "t"))
 		 p))
       (cdr sig)))))
      
@@ -2707,6 +2707,7 @@
 (hey "  s_float = s7_make_symbol(s7, \"float?\");~%")
 (hey "  s_string = s7_make_symbol(s7, \"string?\");~%")
 (hey "  s_pair = s7_make_symbol(s7, \"pair?\");~%")
+(hey "  s_pair_false = s7_make_signature(s7, 2, s_pair, s_boolean);~%")
 (hey "  s_any = s7_t(s7);~%~%")
 
 (for-each
@@ -2721,10 +2722,10 @@
        (hey (case (car sig)
 	      ((integer?) "s_integer")
 	      ((boolean?) "s_boolean")
-	      ((real?) "s_float")
-	      ((string?) "s_string")
-	      ((pair?) "s_pair")
-	      (else "s_any")))
+	      ((real?)    "s_float")
+	      ((string?)  "s_string")
+	      ((pair?)    "s_pair")
+	      (else       "s_any")))
        (if (> len 1) (hey ", "))
        (do ((i 1 (+ i 1))
 	    (s (cdr sig) (cdr s)))
@@ -2733,10 +2734,10 @@
 	   (hey (case typ
 		  ((integer?) "s_integer")
 		  ((boolean?) "s_boolean")
-		  ((real?) "s_real")
-		  ((string?) "s_string")
-		  ((pair?) "s_any") ; see above
-		  (else "s_any"))))
+		  ((real?)    "s_real")
+		  ((string?)  "s_string")
+		  ((pair?)    "s_pair_false")
+		  (else       "s_any"))))
 	 (if (< i (- len 1)) (hey ", "))))
      (hey ");~%")))
  signatures)

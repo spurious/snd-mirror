@@ -838,7 +838,7 @@
 (hey "{~%")
 
 (hey "#if HAVE_SCHEME~%")
-(hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_char;~%")
+(hey "static s7_pointer s_boolean, s_integer, s_real, s_any;~%")
 (hey "static s7_sig_t ")
 
 (define (sig-name sig)
@@ -851,7 +851,6 @@
 		   ((integer?) "i")
 		   ((boolean?) "b")
 		   ((real?) "r")
-		   ((string?) "s")
 		   (else "t"))
 		 p))
       sig))))
@@ -867,8 +866,6 @@
 (hey "  s_boolean = s7_make_symbol(s7, \"boolean?\");~%")
 (hey "  s_integer = s7_make_symbol(s7, \"integer?\");~%")
 (hey "  s_real = s7_make_symbol(s7, \"real?\");~%")
-(hey "  s_string = s7_make_symbol(s7, \"string?\");~%")
-(hey "  s_char = s7_make_symbol(s7, \"char?\");~%")
 (hey "  s_any = s7_t(s7);~%~%")
 
 (for-each
@@ -888,8 +885,6 @@
 		  ((integer?) "s_integer")
 		  ((boolean?) "s_boolean")
 		  ((real?) "s_real")
-		  ((string?) "s_string")
-		  ((char?) "s_char")
 		  (else "s_any"))))
 	 (if (< i (- len 1)) (hey ", "))))
      (hey ");~%")))

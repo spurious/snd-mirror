@@ -5901,7 +5901,7 @@ static s7_pointer acc_show_controls(s7_scheme *sc, s7_pointer args) {return(g_se
 void g_init_snd(void)
 {
 #if HAVE_SCHEME
-  s7_sig_t pl_iq, pl_iqi, pl_sq, pl_sts, pl_bq, pl_i, pl_osi, pl_bt, pl_bo, pl_bob, pl_io, pl_ioi, pl_po, pl_pop, pl_ro, pl_ror, pl_oi;
+  s7_sig_t pl_iq, pl_iqi, pl_sq, pl_sts, pl_i, pl_osi, pl_bt, pl_bo, pl_bob, pl_io, pl_ioi, pl_po, pl_pop, pl_ro, pl_ror, pl_oi;
   {
     s7_pointer i, t, s, b, o, q, p, r;
     i = s7_make_symbol(s7, "integer?");
@@ -5917,7 +5917,6 @@ void g_init_snd(void)
     pl_iqi = s7_make_signature(s7, 3, i, q, i);
     pl_sts = s7_make_signature(s7, 3, s, t, s);
     pl_sq = s7_make_signature(s7, 2, s, q);
-    pl_bq = s7_make_signature(s7, 2, b, q);
     pl_osi = s7_make_signature(s7, 3, o, s, i);
     pl_bt = s7_make_signature(s7, 2, b, t);
     pl_bo = s7_make_signature(s7, 2, b, o);

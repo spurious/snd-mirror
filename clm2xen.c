@@ -74,6 +74,9 @@ static bool mus_simple_out_any_to_file(mus_long_t samp, mus_float_t val, int cha
 struct mus_xen {
   mus_any *gen;
   int nvcts;
+#if HAVE_SCHEME
+  bool free_data;
+#endif
   Xen *vcts; /* one for each accessible mus_float_t array (wrapped up here in a vct) */
   struct mus_xen *next;
 };
@@ -97,12 +100,22 @@ static mus_xen *mx_alloc(int vcts)
   if (vcts > 0)
     p->vcts = (Xen *)malloc(vcts * sizeof(Xen));
   else p->vcts = NULL;
+#if HAVE_SCHEME
+  p->free_data = false;
+#endif
   return(p);
 }
 
 
 static void mx_free(mus_xen *p)
 {
+#if HAVE_SCHEME
+  if (p->free_data)
+    {
+      s7_xf_attach(s7, (void *)(p->vcts[MUS_INPUT_DATA]));
+      p->free_data = false;
+    }
+#endif
   p->next = mx_free_lists[p->nvcts];
   mx_free_lists[p->nvcts] = p;
 }
@@ -1319,6 +1332,17 @@ static Xen_object_mark_t mark_mus_xen(Xen obj)
       int i, lim;
       lim = MUS_SELF_WRAPPER;
       if (ms->nvcts < lim) lim = ms->nvcts;
+#if HAVE_SCHEME
+      if (ms->free_data)
+	{
+	  for (i = 0; i < lim; i++) 
+	    if ((i != MUS_INPUT_FUNCTION) && 
+		(i != MUS_INPUT_DATA) &&
+		(Xen_is_bound(ms->vcts[i])))
+	      xen_gc_mark(ms->vcts[i]);
+	  return;
+	}
+#endif
       for (i = 0; i < lim; i++) 
 	if (Xen_is_bound(ms->vcts[i]))
 	  xen_gc_mark(ms->vcts[i]);
@@ -8164,6 +8188,41 @@ static mus_float_t as_needed_input_func(void *ptr, int direction) /* intended fo
   return(0.0);
 }
 
+#if HAVE_SCHEME
+static mus_float_t as_needed_input_rf(void *ptr, int direction)
+{
+  mus_xen *gn = (mus_xen *)ptr;
+  if (gn)
+    {
+      s7_rf_t rf;
+      s7_pointer *top, *p;
+      rf = (s7_rf_t)(gn->vcts[MUS_INPUT_FUNCTION]);
+      top = s7_xf_top(s7, (void *)(gn->vcts[MUS_INPUT_DATA]));
+      p = top;
+      return(rf(s7, &p));
+    }
+  return(0.0);
+}
+
+static mus_float_t as_needed_block_input_rf(void *ptr, int direction, mus_float_t *data, mus_long_t start, mus_long_t end)
+{
+  mus_xen *gn = (mus_xen *)ptr;
+  if (gn)
+    {
+      mus_long_t i;
+      s7_rf_t rf;
+      s7_pointer *top, *p;
+      rf = (s7_rf_t)(gn->vcts[MUS_INPUT_FUNCTION]);
+      top = s7_xf_top(s7, (void *)(gn->vcts[MUS_INPUT_DATA]));
+      for (i = start; i < end; i++)
+	{
+	  p = top;
+	  data[i] = rf(s7, &p);
+	}
+    }
+  return(0.0);
+}
+#endif
 
 static void set_as_needed_input_choices(mus_any *gen, Xen obj, mus_xen *gn)
 {
@@ -8203,16 +8262,44 @@ static void set_as_needed_input_choices(mus_any *gen, Xen obj, mus_xen *gn)
 		}
 	      if (s7_is_pair(res))
 		{
-		  s7_pointer arg;
-		  arg = s7_car(s7_closure_args(s7, obj));
-#if USE_SND
-		  if ((arg == s7_caddr(res)) &&
-		      (s7_car(res) == s7_make_symbol(s7, "read-sample-with-direction")))
+		  if (s7_is_symbol(s7_car(res)))
 		    {
-		      gn->vcts[MUS_INPUT_DATA] = (Xen)xen_to_sampler(s7_symbol_local_value(s7, s7_cadr(res), s7_closure_let(s7, obj)));
-		      mus_generator_set_feeders(gen, as_needed_input_sampler_with_direction, as_needed_block_input_sampler_with_direction);
-		      return;
+		      s7_pointer fcar;
+		      fcar = s7_symbol_value(s7, s7_car(res));
+		      if (s7_rf_function(s7, fcar))
+			{
+			  s7_rf_t rf;
+			  s7_pointer old_e, e;
+			  e = s7_sublet(s7, s7_closure_let(s7, obj), s7_nil(s7));
+			  old_e = s7_set_curlet(s7, e);
+			  s7_xf_new(s7, e);
+			  rf = s7_rf_function(s7, fcar)(s7, res);
+			  if (rf)
+			    {
+			      /* fprintf(stderr, "try %s\n", DISPLAY(res)); */
+			      gn->vcts[MUS_INPUT_DATA] = (s7_pointer)s7_xf_detach(s7);
+			      gn->vcts[MUS_INPUT_FUNCTION] = (s7_pointer)rf;
+			      gn->free_data = true;
+			      mus_generator_set_feeders(gen, as_needed_input_rf, as_needed_block_input_rf);
+			      s7_set_curlet(s7, old_e);
+			      return;
+			    }
+			  s7_xf_free(s7);
+			  s7_set_curlet(s7, old_e);
+			}
 		    }
+#if USE_SND
+		  {
+		    s7_pointer arg;
+		    arg = s7_car(s7_closure_args(s7, obj));
+		    if ((arg == s7_caddr(res)) &&
+			(s7_car(res) == s7_make_symbol(s7, "read-sample-with-direction")))
+		      {
+			gn->vcts[MUS_INPUT_DATA] = (Xen)xen_to_sampler(s7_symbol_local_value(s7, s7_cadr(res), s7_closure_let(s7, obj)));
+			mus_generator_set_feeders(gen, as_needed_input_sampler_with_direction, as_needed_block_input_sampler_with_direction);
+			return;
+		      }
+		  }
 #endif
 		}
 	    }

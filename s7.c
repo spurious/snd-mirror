@@ -7346,15 +7346,39 @@ bool s7_xf_is_stepper(s7_scheme *sc, s7_pointer sym)
 }
 
 
-static void xf_clear_list(s7_scheme *sc)
+static void xf_clear_list(s7_scheme *sc, xf_t *r)
 {
   gc_obj *p, *op;
-  for (p = sc->cur_rf->gc_list; p; p = op)
+  for (p = r->gc_list; p; p = op)
     {
       op = p->nxt;
       free(p);
     }
-  sc->cur_rf->gc_list = NULL;
+  r->gc_list = NULL;
+}
+
+void *s7_xf_detach(s7_scheme *sc)
+{
+  xf_t *r;
+  r = sc->cur_rf;
+  sc->cur_rf = sc->rf_stack;
+  if (sc->rf_stack)
+    sc->rf_stack = sc->rf_stack->next;
+  return((void *)r);
+}
+
+void s7_xf_attach(s7_scheme *sc, void *ur)
+{
+  xf_t *r = (xf_t *)ur;
+  r->next = sc->rf_free_list;
+  sc->rf_free_list = r;
+  xf_clear_list(sc, r);
+}
+
+s7_pointer *s7_xf_top(s7_scheme *sc, void *ur)
+{
+  xf_t *r = (xf_t *)ur;
+  return(r->data);
 }
 
 static s7_pointer xf_push(s7_scheme *sc, s7_pointer obj)
@@ -7389,7 +7413,7 @@ void s7_xf_free(s7_scheme *sc)
 {
   sc->cur_rf->next = sc->rf_free_list;
   sc->rf_free_list = sc->cur_rf;
-  xf_clear_list(sc);
+  xf_clear_list(sc, sc->cur_rf);
   sc->cur_rf = sc->rf_stack;
   if (sc->rf_stack)
     sc->rf_stack = sc->rf_stack->next;
@@ -69788,7 +69812,7 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
    *   sinc_tables, c-objects, rc_data, strbuf/tmpbuf[reallocs], autoload tables, hash_entrys, symbol_table,
    *   small_ints?
    */
-  return(make_string_uncopied_with_length(sc, "nothing yet", 11));
+  return(make_string_uncopied_with_length(sc, (char *)"nothing yet", 11));
 }
 
 static void init_s7_let(s7_scheme *sc)
@@ -71686,15 +71710,15 @@ int main(int argc, char **argv)
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212 3266
  * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3735
  * tform         |      |      |                          6816 5536 4287 3996 3992
- * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 4208
+ * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 4201
  * tmap          |      |      |  9.3                                         4423
  * titer         |      |      |                          7503 6793 6351 6048 6258
- * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 7001
+ * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 7348
  * thash         |      |      |                          50.7 23.8 14.9 13.7 12.4
  *               |      |      |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 14.0
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 15.1
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 36.3 37.5
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 36.3 37.4
  * 
  * ----------------------------------------------------------------------------------
  *
@@ -71737,13 +71761,13 @@ int main(int argc, char **argv)
  *   full bv: ca 250 lines, maybe less since it can piggy-back throughout on current string code
  *   bv cases are already potentially ints
  *
- * fill in procedure-signature info in cload/snd (638 plist)
+ * fill in procedure-signature info in cload/snd (530 plist)
  *   local closure 'signature -- dsp.scm etc?
- *   also need side-effect info
  *   there are still #t's where type info could be
- *   signature/documentation: check storage totals, compress? (*s7* 'space|memory-usage)
+ *   (*s7* 'space|memory-usage), also need side-effect info
  *     need a way to attach funcs to the space reporting (clm2xen etc)
  *   use to categorize steppers
+ *   check signatures (t292) via protected-let?
  * 
  * is_if_xf: (not (= s s)) (set! i x) -- 70 faster in wc 41/34
  * pf/rf for steppers, and eventually end
@@ -71764,4 +71788,5 @@ int main(int argc, char **argv)
  * permanent-lists for c_function arity
  *   s7_arity -- the c_func cases could save the cons, or maybe share the common cases
  * float return-type guarantees double, as int does int -- these can be optimized
+ * remove the #t=all sounds business! = (map f (sounds))
  */

@@ -6748,6 +6748,13 @@ static bool s7_equalp_sf(void *s1, void *s2)
 {
   return(s1 == s2);
 }
+
+static s7_pointer length_sf(s7_scheme *sc, s7_pointer obj)
+{
+  snd_fd *fd;
+  fd = (snd_fd *)s7_object_value(obj);
+  return(s7_make_integer(sc, current_samples(fd->cp)));
+}
 #endif
 
 
@@ -9226,7 +9233,7 @@ Xen_wrap_1_arg(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 void g_init_edits(void)
 {
 #if HAVE_SCHEME
-  sf_tag = s7_new_type_x(s7, "<sampler>", print_sf, free_sf, s7_equalp_sf, NULL, s7_read_sample, NULL, NULL, NULL, NULL, NULL);
+  sf_tag = s7_new_type_x(s7, "<sampler>", print_sf, free_sf, s7_equalp_sf, NULL, s7_read_sample, NULL, length_sf, NULL, NULL, NULL);
 #else
   sf_tag = Xen_make_object_type("Sampler", sizeof(snd_fd));
 #endif

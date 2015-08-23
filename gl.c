@@ -4453,13 +4453,11 @@ Xen_wrap_any_args(gxg_gluUnProject4_w, gxg_gluUnProject4)
 static void define_functions(void)
 {
 #if HAVE_SCHEME
-static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_char;
+static s7_pointer s_boolean, s_integer, s_real, s_any;
 static s7_sig_t pl_t, pl_tirriit, pl_tirriirriit, pl_tirr, pl_tirrirr, pl_tir, pl_tibiit, pl_tt, pl_i, pl_irrrtttttt, pl_irrrrtttrrtttt, pl_ti, pl_bi, pl_iiiiitiiit, pl_iiiiiiiit, pl_iiiiiiiiiiit, pl_iiiiiiit, pl_iiiiiiiiiit, pl_iiiiiit, pl_iiiiiiiiit, pl_tttti, pl_ttttb, pl_ttt, pl_tttt, pl_ttttt, pl_bttt, pl_btt, pl_ttiii, pl_ttii, pl_ttit, pl_ttir, pl_tti, pl_ttitii, pl_ttititiitiii, pl_ttititii, pl_ii, pl_tr, pl_tit, pl_tb, pl_bitt, pl_trrrrrr, pl_trrr, pl_trr, pl_trrrrt, pl_trrrr, pl_trrrrrrrrr, pl_tiiii, pl_tiirrrrt, pl_tiiiit, pl_tiiit, pl_tiiiiiiit, pl_tiiiiiiiit, pl_tiiiiiii, pl_tiiiiiiii, pl_tii, pl_tiiiiiiiiit, pl_tiiiiiiiiiit, pl_tiiiiiiiii, pl_tiiib, pl_tiib, pl_tiit, pl_tiiiiit, pl_tiiiiiit, pl_tiir, pl_tiii, pl_tiiiii, pl_tiiiiii, pl_tiiiiiitt, pl_ttrrr, pl_ttrii, pl_ttrriirr, pl_ttrrii, pl_ttrrrii, pl_ttb, pl_tbbbb, pl_ittit, pl_unused;
   s_boolean = s7_make_symbol(s7, "boolean?");
   s_integer = s7_make_symbol(s7, "integer?");
   s_real = s7_make_symbol(s7, "real?");
-  s_string = s7_make_symbol(s7, "string?");
-  s_char = s7_make_symbol(s7, "char?");
   s_any = s7_t(s7);
 
   pl_t = s7_make_signature(s7, 1, s_any);
@@ -5746,7 +5744,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       Xen_provide_feature("gl");
-      Xen_define("gl-version", C_string_to_Xen_string("20-Aug-15"));
+      Xen_define("gl-version", C_string_to_Xen_string("22-Aug-15"));
       gl_already_inited = true;
     }
 }

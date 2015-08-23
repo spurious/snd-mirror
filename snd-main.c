@@ -1606,6 +1606,7 @@ static int snd_access(const char *dir, const char *caller)
       res = C_string_to_Xen_string(temp);
       free(temp);
       Xen_error(NO_SUCH_FILE, Xen_list_1(res));
+      return(0);
     }
   else snd_close(err, temp);
   snd_remove(temp, IGNORE_CACHE);
@@ -2315,94 +2316,145 @@ static s7_pointer acc_open_file_dialog_directory(s7_scheme *sc, s7_pointer args)
 
 void g_init_main(void)
 {
-  Xen_define_procedure(S_save_state,   g_save_state_w,   0, 1, 0, H_save_state);
+#if HAVE_SCHEME
+  s7_sig_t pl_b, pl_bb, pl_i, pl_ii, pl_s, pl_ss, pl_d, pl_dr, pl_p, pl_pb, pl_pbb;
+  {
+    s7_pointer i, b, d, r, s, p;
+    i = s7_make_symbol(s7, "integer?");
+    b = s7_make_symbol(s7, "boolean?");
+    d = s7_make_symbol(s7, "float?");
+    r = s7_make_symbol(s7, "real?");
+    s = s7_make_symbol(s7, "string?");
+    p = s7_make_symbol(s7, "pair?");
+    
+    pl_b = s7_make_signature(s7, 1, b);
+    pl_bb = s7_make_signature(s7, 2, b, b);
+    pl_i = s7_make_signature(s7, 1, i);
+    pl_ii = s7_make_signature(s7, 2, i, i);
+    pl_s = s7_make_signature(s7, 1, s);
+    pl_ss = s7_make_signature(s7, 2, s, s);
+    pl_d = s7_make_signature(s7, 1, d);
+    pl_dr = s7_make_signature(s7, 2, d, r);
+    pl_p = s7_make_signature(s7, 1, p);
+    pl_pb = s7_make_signature(s7, 2, p, b);
+    pl_pbb = s7_make_signature(s7, 3, p, b, b);
+  }
+#endif
+  Xen_define_typed_procedure(S_save_state,   g_save_state_w,   0, 1, 0, H_save_state, pl_ss);
 #if HAVE_FORTH			/* exit is an existing word */
   Xen_define_procedure("snd-" S_exit,  g_exit_w,         0, 1, 0, H_exit);
 #else
   Xen_define_procedure(S_exit,         g_exit_w,         0, 1, 0, H_exit);
 #endif
-
-  Xen_define_dilambda(S_save_state_file, g_save_state_file_w, H_save_state_file, S_set S_save_state_file, g_set_save_state_file_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_save_dir, g_save_dir_w, H_save_dir,S_set S_save_dir, g_set_save_dir_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_open_file_dialog_directory, g_open_file_dialog_directory_w, H_open_file_dialog_directory,
-				   S_set S_open_file_dialog_directory, g_set_open_file_dialog_directory_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_peak_env_dir, g_peak_env_dir_w, H_peak_env_dir, S_set S_peak_env_dir, g_set_peak_env_dir_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_temp_dir, g_temp_dir_w, H_temp_dir, S_set S_temp_dir, g_set_temp_dir_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_ladspa_dir, g_ladspa_dir_w, H_ladspa_dir, S_set S_ladspa_dir, g_set_ladspa_dir_w,  0, 0, 1, 0);
-
+  
+  Xen_define_typed_dilambda(S_save_state_file, g_save_state_file_w, H_save_state_file, 
+			    S_set S_save_state_file, g_set_save_state_file_w, 0, 0, 1, 0, pl_s, pl_ss);
+  Xen_define_typed_dilambda(S_save_dir, g_save_dir_w, H_save_dir,
+			    S_set S_save_dir, g_set_save_dir_w,  0, 0, 1, 0, pl_s, pl_ss);
+  
+  Xen_define_typed_dilambda(S_open_file_dialog_directory, g_open_file_dialog_directory_w, H_open_file_dialog_directory,
+			    S_set S_open_file_dialog_directory, g_set_open_file_dialog_directory_w,  0, 0, 1, 0, pl_s, pl_ss);
+  
+  Xen_define_typed_dilambda(S_peak_env_dir, g_peak_env_dir_w, H_peak_env_dir, 
+			    S_set S_peak_env_dir, g_set_peak_env_dir_w,  0, 0, 1, 0, pl_s, pl_ss);
+  Xen_define_typed_dilambda(S_temp_dir, g_temp_dir_w, H_temp_dir, 
+			    S_set S_temp_dir, g_set_temp_dir_w,  0, 0, 1, 0, pl_s, pl_ss);
+  Xen_define_typed_dilambda(S_ladspa_dir, g_ladspa_dir_w, H_ladspa_dir, 
+			    S_set S_ladspa_dir, g_set_ladspa_dir_w,  0, 0, 1, 0, pl_s, pl_ss);
+  
 #if (!DISABLE_DEPRECATED)
-  #define H_start_hook S_start_hook " (name): called upon start-up. If it returns " PROC_TRUE ", snd exits immediately."
+#define H_start_hook S_start_hook " (name): called upon start-up. If it returns " PROC_TRUE ", snd exits immediately."
   start_hook = Xen_define_hook(S_start_hook, "(make-hook 'name)", 1, H_start_hook); 
 #endif
-
-  #define H_before_exit_hook S_before_exit_hook " (): called upon exit. \
-If it returns " PROC_TRUE ", Snd does not exit.  This can be used to check for unsaved edits."
-
+  
+  #define H_before_exit_hook S_before_exit_hook " (): called upon exit. If it returns " PROC_TRUE ", Snd does not exit."
+  
   before_exit_hook = Xen_define_hook(S_before_exit_hook, "(make-hook)", 0, H_before_exit_hook);
-
+  
   #define H_exit_hook S_exit_hook " (): called upon exit.  This can be used to perform cleanup activities."
-
+  
   exit_hook = Xen_define_hook(S_exit_hook, "(make-hook)", 0, H_exit_hook);
-
-  #define H_after_save_state_hook S_after_save_state_hook " (name): called after Snd state has been saved; \
-filename is the save state file."
+  
+  #define H_after_save_state_hook S_after_save_state_hook " (name): called after Snd state has been saved; filename is the save state file."
   after_save_state_hook = Xen_define_hook(S_after_save_state_hook, "(make-hook 'name)", 1, H_after_save_state_hook);
-
+  
   #define H_before_save_state_hook S_before_save_state_hook " (name): called before Snd state is saved. If \
 the hook functions return " PROC_TRUE ", the save state process opens the file 'name' for appending, rather than truncating."
   before_save_state_hook = Xen_define_hook(S_before_save_state_hook, "(make-hook 'name)", 1, H_before_save_state_hook);
-
-  Xen_define_dilambda(S_script_arg, g_script_arg_w, H_script_arg, S_set S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);
-  Xen_define_safe_procedure(S_script_args, g_script_args_w, 0, 0, 0, H_script_args);
-
-  Xen_define_dilambda(S_window_x, g_window_x_w, H_window_x, S_set S_window_x, g_set_window_x_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_window_y, g_window_y_w, H_window_y, S_set S_window_y, g_set_window_y_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_window_width, g_window_width_w, H_window_width, S_set S_window_width, g_set_window_width_w,  0, 0, 1, 0);  
-  Xen_define_dilambda(S_window_height, g_window_height_w, H_window_height, S_set S_window_height, g_set_window_height_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_auto_resize, g_auto_resize_w, H_auto_resize, S_set S_auto_resize, g_set_auto_resize_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_color_cutoff, g_color_cutoff_w, H_color_cutoff, S_set S_color_cutoff, g_set_color_cutoff_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_color_inverted, g_color_inverted_w, H_color_inverted, S_set S_color_inverted, g_set_color_inverted_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_color_scale, g_color_scale_w, H_color_scale, S_set S_color_scale, g_set_color_scale_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_selection_creates_region, g_selection_creates_region_w, H_selection_creates_region,
-				   S_set S_selection_creates_region, g_set_selection_creates_region_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_print_length, g_print_length_w, H_print_length, S_set S_print_length, g_set_print_length_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_show_indices, g_show_indices_w, H_show_indices, S_set S_show_indices, g_set_show_indices_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_with_relative_panes, g_with_relative_panes_w, H_with_relative_panes,
-				   S_set S_with_relative_panes, g_set_with_relative_panes_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_with_background_processes, g_with_background_processes_w, H_with_background_processes,
-				   S_set S_with_background_processes, g_set_with_background_processes_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_with_file_monitor, g_with_file_monitor_w, H_with_file_monitor, S_set S_with_file_monitor, g_set_with_file_monitor_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_tiny_font, g_tiny_font_w, H_tiny_font, S_set S_tiny_font, g_set_tiny_font_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_peaks_font, g_peaks_font_w, H_peaks_font, S_set S_peaks_font, g_set_peaks_font_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_bold_peaks_font, g_bold_peaks_font_w, H_bold_peaks_font, S_set S_bold_peaks_font, g_set_bold_peaks_font_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_axis_label_font, g_axis_label_font_w, H_axis_label_font, S_set S_axis_label_font, g_set_axis_label_font_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_axis_numbers_font, g_axis_numbers_font_w, H_axis_numbers_font, S_set S_axis_numbers_font, g_set_axis_numbers_font_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_listener_font, g_listener_font_w, H_listener_font, S_set S_listener_font, g_set_listener_font_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_just_sounds, g_just_sounds_w, H_just_sounds, S_set S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_play_arrow_size, g_play_arrow_size_w, H_play_arrow_size, S_set S_play_arrow_size, g_set_play_arrow_size_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_with_inset_graph, g_with_inset_graph_w, H_with_inset_graph, S_set S_with_inset_graph, g_set_with_inset_graph_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_with_interrupts, g_with_interrupts_w, H_with_interrupts, S_set S_with_interrupts, g_set_with_interrupts_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_with_smpte_label, g_with_smpte_label_w, H_with_smpte_label, S_set S_with_smpte_label, g_set_with_smpte_label_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_with_pointer_focus, g_with_pointer_focus_w, H_with_pointer_focus, S_set S_with_pointer_focus, g_set_with_pointer_focus_w,  0, 0, 1, 0);
-
-  Xen_define_safe_procedure(S_snd_version,         g_snd_version_w,              0, 0, 0, H_snd_version);
-  Xen_define_safe_procedure(S_color_orientation_dialog, g_color_orientation_dialog_w, 0, 1, 0, H_color_orientation_dialog);
-  Xen_define_safe_procedure(S_transform_dialog,         g_transform_dialog_w,         0, 1, 0, H_transform_dialog);
-  Xen_define_safe_procedure(S_print_dialog,             g_print_dialog_w,             0, 2, 0, H_print_dialog);
-  Xen_define_safe_procedure(S_preferences_dialog,       g_preferences_dialog_w,       0, 0, 0, H_preferences_dialog);
-  Xen_define_procedure(S_abort,                    g_abort_w,                    0, 0, 0, H_abort);
+  
+  Xen_define_typed_dilambda(S_script_arg, g_script_arg_w, H_script_arg, 
+			    S_set S_script_arg, g_set_script_arg_w,  0, 0, 1, 0, pl_i, pl_ii);
+  Xen_define_typed_procedure(S_script_args, g_script_args_w, 0, 0, 0, H_script_args, pl_p);
+  
+  Xen_define_typed_dilambda(S_window_x, g_window_x_w, H_window_x, 
+			    S_set S_window_x, g_set_window_x_w,  0, 0, 1, 0, pl_i, pl_ii);
+  Xen_define_typed_dilambda(S_window_y, g_window_y_w, H_window_y, 
+			    S_set S_window_y, g_set_window_y_w,  0, 0, 1, 0, pl_i, pl_ii);
+  Xen_define_typed_dilambda(S_window_width, g_window_width_w, H_window_width, 
+			    S_set S_window_width, g_set_window_width_w,  0, 0, 1, 0, pl_i, pl_ii);  
+  Xen_define_typed_dilambda(S_window_height, g_window_height_w, H_window_height, 
+			    S_set S_window_height, g_set_window_height_w,  0, 0, 1, 0, pl_i, pl_ii);
+  
+  Xen_define_typed_dilambda(S_auto_resize, g_auto_resize_w, H_auto_resize, 
+			    S_set S_auto_resize, g_set_auto_resize_w,  0, 0, 1, 0, pl_b, pl_bb);
+  Xen_define_typed_dilambda(S_color_cutoff, g_color_cutoff_w, H_color_cutoff, 
+			    S_set S_color_cutoff, g_set_color_cutoff_w,  0, 0, 1, 0, pl_d, pl_dr);
+  Xen_define_typed_dilambda(S_color_inverted, g_color_inverted_w, H_color_inverted, 
+			    S_set S_color_inverted, g_set_color_inverted_w,  0, 0, 1, 0, pl_b, pl_bb);
+  Xen_define_typed_dilambda(S_color_scale, g_color_scale_w, H_color_scale, 
+			    S_set S_color_scale, g_set_color_scale_w,  0, 0, 1, 0, pl_d, pl_dr);
+  
+  Xen_define_typed_dilambda(S_selection_creates_region, g_selection_creates_region_w, H_selection_creates_region,
+			    S_set S_selection_creates_region, g_set_selection_creates_region_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_dilambda(S_print_length, g_print_length_w, H_print_length, 
+			    S_set S_print_length, g_set_print_length_w,  0, 0, 1, 0, pl_i, pl_ii);
+  Xen_define_typed_dilambda(S_show_indices, g_show_indices_w, H_show_indices, 
+			    S_set S_show_indices, g_set_show_indices_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_dilambda(S_with_relative_panes, g_with_relative_panes_w, H_with_relative_panes,
+			    S_set S_with_relative_panes, g_set_with_relative_panes_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_dilambda(S_with_background_processes, g_with_background_processes_w, H_with_background_processes,
+			    S_set S_with_background_processes, g_set_with_background_processes_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_dilambda(S_with_file_monitor, g_with_file_monitor_w, H_with_file_monitor, 
+			    S_set S_with_file_monitor, g_set_with_file_monitor_w,  0, 0, 1, 0, pl_b, pl_bb);
+  Xen_define_typed_dilambda(S_tiny_font, g_tiny_font_w, H_tiny_font, 
+			    S_set S_tiny_font, g_set_tiny_font_w,  0, 0, 1, 0, pl_s, pl_ss);
+  Xen_define_typed_dilambda(S_peaks_font, g_peaks_font_w, H_peaks_font, 
+			    S_set S_peaks_font, g_set_peaks_font_w,  0, 0, 1, 0, pl_s, pl_ss);
+  Xen_define_typed_dilambda(S_bold_peaks_font, g_bold_peaks_font_w, H_bold_peaks_font, 
+			    S_set S_bold_peaks_font, g_set_bold_peaks_font_w,  0, 0, 1, 0, pl_s, pl_ss);
+  Xen_define_typed_dilambda(S_axis_label_font, g_axis_label_font_w, H_axis_label_font, 
+			    S_set S_axis_label_font, g_set_axis_label_font_w,  0, 0, 1, 0, pl_s, pl_ss);
+  Xen_define_typed_dilambda(S_axis_numbers_font, g_axis_numbers_font_w, H_axis_numbers_font, 
+			    S_set S_axis_numbers_font, g_set_axis_numbers_font_w,  0, 0, 1, 0, pl_s, pl_ss);
+  Xen_define_typed_dilambda(S_listener_font, g_listener_font_w, H_listener_font, 
+			    S_set S_listener_font, g_set_listener_font_w,  0, 0, 1, 0, pl_s, pl_ss);
+  Xen_define_typed_dilambda(S_just_sounds, g_just_sounds_w, H_just_sounds, 
+			    S_set S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0, pl_b, pl_bb);
+  Xen_define_typed_dilambda(S_play_arrow_size, g_play_arrow_size_w, H_play_arrow_size, 
+			    S_set S_play_arrow_size, g_set_play_arrow_size_w,  0, 0, 1, 0, pl_i, pl_ii);
+  Xen_define_typed_dilambda(S_with_inset_graph, g_with_inset_graph_w, H_with_inset_graph, 
+			    S_set S_with_inset_graph, g_set_with_inset_graph_w,  0, 0, 1, 0, pl_b, pl_bb);
+  Xen_define_typed_dilambda(S_with_interrupts, g_with_interrupts_w, H_with_interrupts, 
+			    S_set S_with_interrupts, g_set_with_interrupts_w,  0, 0, 1, 0, pl_b, pl_bb);
+  Xen_define_typed_dilambda(S_with_smpte_label, g_with_smpte_label_w, H_with_smpte_label, 
+			    S_set S_with_smpte_label, g_set_with_smpte_label_w,  0, 0, 1, 0, pl_b, pl_bb);
+  Xen_define_typed_dilambda(S_with_pointer_focus, g_with_pointer_focus_w, H_with_pointer_focus, 
+			    S_set S_with_pointer_focus, g_set_with_pointer_focus_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_procedure(S_snd_version,		g_snd_version_w,              0, 0, 0, H_snd_version,		   pl_s);
+  Xen_define_typed_procedure(S_color_orientation_dialog,g_color_orientation_dialog_w, 0, 1, 0, H_color_orientation_dialog, pl_pb);
+  Xen_define_typed_procedure(S_transform_dialog,        g_transform_dialog_w,         0, 1, 0, H_transform_dialog,	   pl_pb);
+  Xen_define_typed_procedure(S_print_dialog,            g_print_dialog_w,             0, 2, 0, H_print_dialog,		   pl_pbb);
+  Xen_define_typed_procedure(S_preferences_dialog,      g_preferences_dialog_w,       0, 0, 0, H_preferences_dialog,	   pl_p);
+  Xen_define_procedure(S_abort,				g_abort_w,                    0, 0, 0, H_abort);
 #if (!HAVE_SCHEME)
-  Xen_define_procedure(S_c_g,                      g_abortq_w,                   0, 0, 0, H_abortQ);
+  Xen_define_procedure(S_c_g,				g_abortq_w,                   0, 0, 0, H_abortQ);
 #endif
-
+  
 #if HAVE_SCHEME
   s7_symbol_set_documentation(s7, ss->temp_dir_symbol, "*temp-dir*: name of directory for temp files (or #f=null)"); 
   s7_symbol_set_documentation(s7, ss->save_dir_symbol, "*save-dir*: name of directory for saved state data (or #f=null)");
