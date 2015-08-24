@@ -225,27 +225,6 @@
       ((c-pointer?) #\x)
       (else         #\t)))
 
-  (define signatures (make-hash-table))
-
-  (define (make-signature rtn args)
-    (let ((sig (list (cload->signature rtn #t))))
-      (for-each
-       (lambda (arg)
-	 (set! sig (cons (cload->signature arg) sig)))
-       args)
-      (set! sig (reverse sig))
-      (when (not (signatures sig)) ; it's not in our collection yet
-	(let ((pl (make-string (+ 4 (length args))))
-	      (loc 3))
-	  (set! (pl 0) #\p) (set! (pl 1) #\l) (set! (pl 2) #\_)
-	  (for-each 
-	   (lambda (typer)
-	     (set! (pl loc) (signature->pl typer))
-	     (set! loc (+ loc 1)))
-	   sig)
-	  (set! (signatures sig) pl)))
-      sig))
-
   (set! c-define-output-file-counter (+ c-define-output-file-counter 1))
 
   (let* ((file-name (or output-name (format "temp-s7-output-~D" c-define-output-file-counter)))
@@ -261,8 +240,32 @@
 	 (inits ())      ; C code (a string in s7) inserted in the library initialization function
 	 (p #f)
 	 (if-funcs ())   ; if-functions (guaranteed to return int, so we can optimize away make-integer etc)
-	 (rf-funcs ()))  ; rf-functions
+	 (rf-funcs ())  ; rf-functions
+	 (sig-symbols (list (cons 'integer? 0) (cons 'boolean? 0) (cons 'real?  0) (cons 'float? 0) 
+			    (cons 'char? 0) (cons 'string? 0) (cons 'c-pointer? 0) (cons 't 0)))
+	 (signatures (make-hash-table)))
 
+    (define (make-signature rtn args)
+      (let ((sig (list (cload->signature rtn #t))))
+	(for-each
+	 (lambda (arg)
+	   (set! sig (cons (cload->signature arg) sig)))
+	 args)
+	(set! sig (reverse sig))
+	(when (not (signatures sig)) ; it's not in our collection yet
+	  (let ((pl (make-string (+ 4 (length args))))
+		(loc 3))
+	    (set! (pl 0) #\p) (set! (pl 1) #\l) (set! (pl 2) #\_)
+	    (for-each 
+	     (lambda (typer)
+	       (set! (pl loc) (signature->pl typer))
+	       (let ((count (or (assq typer sig-symbols)
+				(assq 't sig-symbols))))
+		 (set-cdr! count (+ (cdr count) 1)))
+	       (set! loc (+ loc 1)))
+	     sig)
+	    (set! (signatures sig) pl)))
+	sig))
 
     (define (initialize-c-file)
       ;; C header stuff
@@ -438,23 +441,31 @@
 	   (format p "~A~A~A" (cdr s) (if (< loc pls) "," ";") (if (< loc pls) " " #\newline))
 	   (set! loc (+ loc 1)))
 	 signatures))
-      (format p "  {~%    s7_pointer i, s, c, b, d, r, x, t;~%    ~
-                  i = s7_make_symbol(sc, \"integer?\");~%    ~
-                  s = s7_make_symbol(sc, \"string?\");~%    ~
-                  c = s7_make_symbol(sc, \"char?\");~%    ~
-                  b = s7_make_symbol(sc, \"boolean?\");~%    ~
-                  d = s7_make_symbol(sc, \"float?\");~%    ~
-                  r = s7_make_symbol(sc, \"real?\");~%    ~
-                  x = s7_make_symbol(sc, \"c-pointer?\");~%    ~
-                  t = s7_t(sc);~%")
-      (for-each
-       (lambda (sig)
-	 (format p "    ~A = s7_make_signature(sc, ~D" (cdr sig) (length (car sig)))
-	 (format p "~{~^, ~C~}" (substring (cdr sig) 3))
-	 (format p ");~%"))
-       signatures)
 
-      (format p "  }~%~%")
+      (let ((syms ())
+	    (names ()))
+	(for-each
+	 (lambda (q)
+	   (when (positive? (cdr q))
+	     (set! syms (cons (car q) syms))
+	     (set! names (cons (signature->pl (car q)) names))))
+	 sig-symbols)
+	(when (pair? syms)
+	  (format p "  {~%    s7_pointer ~{~C~^, ~};~%" names)
+	  (for-each
+	   (lambda (name sym)
+	     (if (eq? name 't)
+		 (format p "    t = s7_t(sc);~%")
+		 (format p "    ~C = s7_make_symbol(sc, ~S);~%" name (symbol->string sym))))
+	   names syms))
+	(format p "~%")
+	(for-each
+	 (lambda (sig)
+	   (format p "    ~A = s7_make_signature(sc, ~D" (cdr sig) (length (car sig)))
+	   (format p "~{~^, ~C~}" (substring (cdr sig) 3))
+	   (format p ");~%"))
+	 signatures)
+	(format p "  }~%~%"))
 
       (format p "  cur_env = s7_outlet(sc, s7_curlet(sc));~%") ; this must exist because we pass load the env ourselves
       

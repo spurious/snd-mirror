@@ -12474,9 +12474,9 @@ static void mus_xen_init(void)
   s7_sig_t pcl_ct, pl_rcr, pl_bt, pl_ir, pl_cc, pl_ccc, pl_ccic, pl_ccrr, pl_fc, pl_fcif, 
                   pl_cs, pl_ff, pl_tt, pl_fff, pl_fffifi, pl_ffftii, pl_fffi, pl_fffii, pl_fti, pl_fif, pl_fiir, pl_fttb, pl_ic, 
                   pl_rciir, pl_rcir, pl_ririt, pl_rcrr, pl_rirt, pl_riirfff, pl_rirfff, pl_rrpr,  
-                  pl_sc, pl_sssrs, pl_tc, pl_ii, pl_ct;
-  s7_sig_t pl_dcr, pl_dr, pl_drr, pl_drrr, pl_dffi, pl_dfri, pl_dirfir, pl_dc, pl_dcrr,
-                  pl_dv, pl_dvir, pl_drf, pl_drff, pl_drc, pl_dcii, pl_diit, pl_dit;
+    pl_sc, pl_sssrs, pl_tc, pl_ii, pl_ct, pl_ici, pl_i, pl_fcf;
+  s7_sig_t pl_dcr, pl_dr, pl_drr, pl_drrr, pl_dffi, pl_dfri, pl_dirfir, pl_dc, pl_dcrr, pl_dci, pl_dcir,
+    pl_dv, pl_dvir, pl_drf, pl_drff, pl_drc, pl_dcii, pl_diit, pl_dit, pl_dct, pl_d;
 #endif
 
   mus_initialize();
@@ -12503,7 +12503,11 @@ static void mus_xen_init(void)
   pl_bt = s7_make_signature(s7, 2, b, t);
   pl_rcr = s7_make_signature(s7, 3, r, c, r);
   
+  pl_d = s7_make_signature(s7, 1, d);
   pl_dcr = s7_make_signature(s7, 3, d, c, r);
+  pl_dct = s7_make_signature(s7, 3, d, c, t);
+  pl_dci = s7_make_signature(s7, 3, d, c, i);
+  pl_dcir = s7_make_signature(s7, 4, d, c, i, r);
   pl_dr = s7_make_signature(s7, 2, d, r);
   pl_drr = s7_make_signature(s7, 3, d, r, r);
   pl_drrr = s7_make_signature(s7, 4, d, r, r, r);
@@ -12523,9 +12527,11 @@ static void mus_xen_init(void)
   
   pl_ir = s7_make_signature(s7, 2, i, r);
   pl_ii = s7_make_signature(s7, 2, i, i);
+  pl_i = s7_make_signature(s7, 1, i);
   pl_ct = s7_make_signature(s7, 2, c, t);
   pl_cc = s7_make_signature(s7, 2, c, c);
   pl_ccc = s7_make_signature(s7, 3, c, c, c);
+  pl_ici = s7_make_signature(s7, 3, i, c, i);
   pl_ccic = s7_make_signature(s7, 3, c, c, i, c);
   pl_ccrr = s7_make_signature(s7, 4, c, c, r, r);
   pl_fc = s7_make_signature(s7, 2, f, c);
@@ -12534,6 +12540,7 @@ static void mus_xen_init(void)
   pl_ff = s7_make_signature(s7, 2, f, f);
   pl_tt = s7_make_signature(s7, 2, t, t);
   pl_fff = s7_make_signature(s7, 3, f, f, f);
+  pl_fcf = s7_make_signature(s7, 3, f, c, f);
   pl_fffifi = s7_make_signature(s7, 6, f, f, f, i, f, i);
   pl_ffftii = s7_make_signature(s7, 6, f, f, f, t, i, i);
   pl_fffi = s7_make_signature(s7, 4, f, f, f, i);
@@ -12624,14 +12631,16 @@ static void mus_xen_init(void)
 
   init_keywords();
 
-  Xen_define_dilambda(S_mus_srate, g_mus_srate_w, H_mus_srate, S_set S_mus_srate, g_mus_set_srate_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_float_equal_fudge_factor, g_mus_float_equal_fudge_factor_w, H_mus_float_equal_fudge_factor,
-		      S_set S_mus_float_equal_fudge_factor, g_mus_set_float_equal_fudge_factor_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mus_array_print_length, g_mus_array_print_length_w, H_mus_array_print_length,
-		      S_set S_mus_array_print_length, g_mus_set_array_print_length_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_clm_table_size, g_clm_table_size_w, H_clm_table_size, S_set S_clm_table_size, g_set_clm_table_size_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_clm_default_frequency, g_clm_default_frequency_w, H_clm_default_frequency,
-		      S_set S_clm_default_frequency, g_set_clm_default_frequency_w, 0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_mus_srate, g_mus_srate_w, H_mus_srate, 
+			    S_set S_mus_srate, g_mus_set_srate_w, 0, 0, 1, 0, pl_d, pl_dr);
+  Xen_define_typed_dilambda(S_mus_float_equal_fudge_factor, g_mus_float_equal_fudge_factor_w, H_mus_float_equal_fudge_factor,
+			    S_set S_mus_float_equal_fudge_factor, g_mus_set_float_equal_fudge_factor_w, 0, 0, 1, 0, pl_d, pl_dr);
+  Xen_define_typed_dilambda(S_mus_array_print_length, g_mus_array_print_length_w, H_mus_array_print_length,
+			    S_set S_mus_array_print_length, g_mus_set_array_print_length_w, 0, 0, 1, 0, pl_i, pl_ii);
+  Xen_define_typed_dilambda(S_clm_table_size, g_clm_table_size_w, H_clm_table_size, 
+			    S_set S_clm_table_size, g_set_clm_table_size_w, 0, 0, 1, 0, pl_i, pl_ii);
+  Xen_define_typed_dilambda(S_clm_default_frequency, g_clm_default_frequency_w, H_clm_default_frequency,
+			    S_set S_clm_default_frequency, g_set_clm_default_frequency_w, 0, 0, 1, 0, pl_d, pl_dr);
 
 #if HAVE_SCHEME
   clm_srate_symbol = s7_define_variable(s7, "*clm-srate*", s7_make_real(s7, MUS_DEFAULT_SAMPLING_RATE));
@@ -12747,16 +12756,16 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_mus_copy,		g_mus_copy_w,			1, 0, 0,  H_mus_copy,		pl_cc);
   Xen_define_procedure(S_mus_run,			g_mus_run_w,			1, 2, 0,  H_mus_run);
 
-  Xen_define_typed_procedure(S_mus_name, g_mus_name_w, 1, 0, 0,  H_mus_name, pl_sc);
-  Xen_define_dilambda(S_mus_phase,     g_mus_phase_w,     H_mus_phase,     S_set S_mus_phase,     g_mus_set_phase_w,      1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_scaler,    g_mus_scaler_w,    H_mus_scaler,    S_set S_mus_scaler,    g_mus_set_scaler_w,     1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_width,     g_mus_width_w,     H_mus_width,     S_set S_mus_width,     g_mus_set_width_w,      1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_frequency, g_mus_frequency_w, H_mus_frequency, S_set S_mus_frequency, g_mus_set_frequency_w,  1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_length,    g_mus_length_w,    H_mus_length,    S_set S_mus_length,    g_mus_set_length_w,     1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_data,      g_mus_data_w,      H_mus_data,      S_set S_mus_data,      g_mus_set_data_w,       1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_xcoeff,    g_mus_xcoeff_w,    H_mus_xcoeff,    S_set S_mus_xcoeff,    g_mus_set_xcoeff_w,     2, 0, 3, 0);
-  Xen_define_dilambda(S_mus_ycoeff,    g_mus_ycoeff_w,    H_mus_ycoeff,    S_set S_mus_ycoeff,    g_mus_set_ycoeff_w,     2, 0, 3, 0);
-  Xen_define_dilambda(S_mus_offset,    g_mus_offset_w,    H_mus_offset,    S_set S_mus_offset,    g_mus_set_offset_w,     1, 0, 2, 0);
+  Xen_define_typed_procedure(S_mus_name,     g_mus_name_w, 1, 0, 0,  H_mus_name, pl_sc);
+  Xen_define_typed_dilambda(S_mus_phase,     g_mus_phase_w,     H_mus_phase,     S_set S_mus_phase,     g_mus_set_phase_w,      1, 0, 2, 0, pl_dc, pl_dcr);
+  Xen_define_typed_dilambda(S_mus_scaler,    g_mus_scaler_w,    H_mus_scaler,    S_set S_mus_scaler,    g_mus_set_scaler_w,     1, 0, 2, 0, pl_dc, pl_dcr);
+  Xen_define_typed_dilambda(S_mus_width,     g_mus_width_w,     H_mus_width,     S_set S_mus_width,     g_mus_set_width_w,      1, 0, 2, 0, pl_ic, pl_ici);
+  Xen_define_typed_dilambda(S_mus_frequency, g_mus_frequency_w, H_mus_frequency, S_set S_mus_frequency, g_mus_set_frequency_w,  1, 0, 2, 0, pl_dc, pl_dcr);
+  Xen_define_typed_dilambda(S_mus_length,    g_mus_length_w,    H_mus_length,    S_set S_mus_length,    g_mus_set_length_w,     1, 0, 2, 0, pl_ic, pl_ici);
+  Xen_define_typed_dilambda(S_mus_data,      g_mus_data_w,      H_mus_data,      S_set S_mus_data,      g_mus_set_data_w,       1, 0, 2, 0, pl_fc, pl_fcf);
+  Xen_define_typed_dilambda(S_mus_xcoeff,    g_mus_xcoeff_w,    H_mus_xcoeff,    S_set S_mus_xcoeff,    g_mus_set_xcoeff_w,     2, 0, 3, 0, pl_dci, pl_dcir);
+  Xen_define_typed_dilambda(S_mus_ycoeff,    g_mus_ycoeff_w,    H_mus_ycoeff,    S_set S_mus_ycoeff,    g_mus_set_ycoeff_w,     2, 0, 3, 0, pl_dci, pl_dcir);
+  Xen_define_typed_dilambda(S_mus_offset,    g_mus_offset_w,    H_mus_offset,    S_set S_mus_offset,    g_mus_set_offset_w,     1, 0, 2, 0, pl_dc, pl_dcr);
 
   Xen_define_typed_procedure(S_mus_xcoeffs,		g_mus_xcoeffs_w,		1, 0, 0, H_mus_xcoeffs,		pl_fc);
   Xen_define_typed_procedure(S_mus_ycoeffs,		g_mus_ycoeffs_w,		1, 0, 0, H_mus_ycoeffs,		pl_fc);
@@ -12811,8 +12820,10 @@ static void mus_xen_init(void)
 
   Xen_define_typed_procedure(S_out_bank,		g_out_bank_w,              3, 0, 0, H_out_bank,			pl_dvir);
 
-  Xen_define_dilambda(S_mus_feedback,  g_mus_feedback_w, H_mus_feedback, S_set S_mus_feedback, g_mus_set_feedback_w,  1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_feedforward, g_mus_feedforward_w, H_mus_feedforward, S_set S_mus_feedforward, g_mus_set_feedforward_w,  1, 0, 2, 0);
+  Xen_define_typed_dilambda(S_mus_feedback,  g_mus_feedback_w, H_mus_feedback, 
+			    S_set S_mus_feedback, g_mus_set_feedback_w,  1, 0, 2, 0, pl_dc, pl_dcr);
+  Xen_define_typed_dilambda(S_mus_feedforward, g_mus_feedforward_w, H_mus_feedforward, 
+			    S_set S_mus_feedforward, g_mus_set_feedforward_w,  1, 0, 2, 0, pl_dc, pl_dcr);
 
   Xen_define_typed_procedure(S_make_rand,		g_make_rand_w,             0, 0, 1, H_make_rand,		pcl_ct);
   Xen_define_typed_procedure(S_make_rand_interp,	g_make_rand_interp_w,      0, 0, 1, H_make_rand_interp,		pcl_ct);
@@ -12825,7 +12836,8 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_is_rand_interp,		g_is_rand_interp_w,        1, 0, 0, H_is_rand_interp,		pl_bt);
   Xen_define_typed_procedure(S_mus_random,		g_mus_random_w,            1, 0, 0, H_mus_random,		pl_dr);
 
-  Xen_define_dilambda(S_mus_rand_seed, g_mus_rand_seed_w, H_mus_rand_seed, S_set S_mus_rand_seed, g_mus_set_rand_seed_w, 0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_mus_rand_seed, g_mus_rand_seed_w, H_mus_rand_seed, 
+			    S_set S_mus_rand_seed, g_mus_set_rand_seed_w, 0, 0, 1, 0, pl_i, pl_ii);
 
   Xen_define_typed_procedure(S_ncos,			g_ncos_w,                  1, 1, 0, H_ncos,			pl_dcr);
   Xen_define_typed_procedure(S_is_ncos,			g_is_ncos_w,               1, 0, 0, H_is_ncos,			pl_bt);
@@ -12945,8 +12957,7 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_make_env,		g_make_env_w,              0, 0, 1, H_make_env,			pcl_ct);
   Xen_define_typed_procedure(S_env_interp,		g_env_interp_w,            2, 0, 0, H_env_interp,		pl_drc);
   Xen_define_typed_procedure(S_envelope_interp,		g_envelope_interp_w,       2, 1, 0, H_envelope_interp,		pl_rrpr);
-  Xen_define_procedure(S_env_any,			g_env_any_w,               2, 0, 0, H_env_any);
-
+  Xen_define_typed_procedure(S_env_any,			g_env_any_w,               2, 0, 0, H_env_any,                  pl_dct);
 
   Xen_define_typed_procedure(S_is_locsig,		g_is_locsig_w,             1, 0, 0, H_is_locsig,		pl_bt);
   Xen_define_typed_procedure(S_locsig,			g_locsig_w,                3, 0, 0, H_locsig,			pl_rcr);
@@ -12954,26 +12965,23 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_move_locsig,		g_move_locsig_w,           3, 0, 0, H_move_locsig,		pl_ccrr);
   Xen_define_typed_procedure(S_mus_channels,		g_mus_channels_w,          1, 0, 0, H_mus_channels,		pl_ic);
 
-#if HAVE_SCHEME || HAVE_FORTH
-  Xen_define_dilambda(S_locsig_ref, g_locsig_ref_w, H_locsig_ref, S_set S_locsig_ref, g_locsig_set_w,  2, 0, 3, 0);
-#endif
-
 #if HAVE_RUBY
   Xen_define_procedure(S_locsig_ref,			g_locsig_ref_w,            2, 0, 0, H_locsig_ref);
+  Xen_define_procedure(S_locsig_reverb_ref,		g_locsig_reverb_ref_w,     2, 0, 0, H_locsig_reverb_ref);
 #endif
 
   Xen_define_typed_procedure(S_locsig_set,		g_locsig_set_w,            3, 0, 0, H_locsig_set,		pl_rcir);
 
 #if HAVE_SCHEME || HAVE_FORTH
-  Xen_define_dilambda(S_locsig_reverb_ref, g_locsig_reverb_ref_w, H_locsig_reverb_ref, S_locsig_reverb_set, g_locsig_reverb_set_w,  2, 0, 3, 0);
-#endif
-
-#if HAVE_RUBY
-  Xen_define_procedure(S_locsig_reverb_ref,		g_locsig_reverb_ref_w,     2, 0, 0, H_locsig_reverb_ref);
+  Xen_define_typed_dilambda(S_locsig_ref, g_locsig_ref_w, H_locsig_ref, 
+			    S_set S_locsig_ref, g_locsig_set_w,  2, 0, 3, 0, pl_dci, pl_dcir);
+  Xen_define_typed_dilambda(S_locsig_reverb_ref, g_locsig_reverb_ref_w, H_locsig_reverb_ref, 
+			    S_locsig_reverb_set, g_locsig_reverb_set_w,  2, 0, 3, 0, pl_dci, pl_dcir);
 #endif
 
   Xen_define_typed_procedure(S_locsig_reverb_set,	g_locsig_reverb_set_w,     3, 0, 0, H_locsig_reverb_set,	pl_rcir);
-  Xen_define_dilambda(S_locsig_type,   g_locsig_type_w, H_locsig_type, S_set S_locsig_type, g_set_locsig_type_w,  0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_locsig_type,   g_locsig_type_w, H_locsig_type, 
+			    S_set S_locsig_type, g_set_locsig_type_w,  0, 0, 1, 0, pl_i, pl_ii);
 
   Xen_define_typed_procedure(S_is_move_sound,		g_is_move_sound_w,         1, 0, 0, H_is_move_sound,		pl_bt);
   Xen_define_typed_procedure(S_move_sound,		g_move_sound_w,            3, 0, 0, H_move_sound,		pl_rcr);
@@ -13008,8 +13016,8 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_outd,			g_outd_w,                  2, 1, 0, H_outd,			pl_rirt);
   Xen_define_typed_procedure(S_mus_close,		g_mus_close_w,             1, 0, 0, H_mus_close,		pl_tc);
 
-  Xen_define_dilambda(S_mus_file_buffer_size, g_mus_file_buffer_size_w, H_mus_file_buffer_size,
-		      S_set S_mus_file_buffer_size, g_mus_set_file_buffer_size_w,  0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_mus_file_buffer_size, g_mus_file_buffer_size_w, H_mus_file_buffer_size,
+		      S_set S_mus_file_buffer_size, g_mus_set_file_buffer_size_w,  0, 0, 1, 0, pl_i, pl_ii);
 
 
   Xen_define_typed_procedure(S_is_readin,		g_is_readin_w,             1, 0, 0, H_is_readin,		pl_bt);
@@ -13018,37 +13026,41 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_mus_channel,		g_mus_channel_w,           1, 0, 0, H_mus_channel,		pl_ic);
   Xen_define_typed_procedure(S_mus_interp_type,		g_mus_interp_type_w,       1, 0, 0, H_mus_interp_type,		pl_ic);
 
-  Xen_define_dilambda(S_mus_location,  g_mus_location_w, H_mus_location, S_set S_mus_location, g_mus_set_location_w,  1, 0, 2, 0);
-  Xen_define_dilambda(S_mus_increment, g_mus_increment_w, H_mus_increment, S_set S_mus_increment, g_mus_set_increment_w,  1, 0, 2, 0);
+  Xen_define_typed_dilambda(S_mus_location,  g_mus_location_w, H_mus_location, 
+			    S_set S_mus_location, g_mus_set_location_w,  1, 0, 2, 0, pl_ic, pl_ici);
+  Xen_define_typed_dilambda(S_mus_increment, g_mus_increment_w, H_mus_increment, 
+			    S_set S_mus_increment, g_mus_set_increment_w,  1, 0, 2, 0, pl_dc, pl_dcr);
 
   Xen_define_typed_procedure(S_is_granulate,		g_is_granulate_w,          1, 0, 0, H_is_granulate,		pl_bt);
   Xen_define_typed_procedure(S_granulate,		g_granulate_w,             1, 2, 0, H_granulate,		pl_dcr);
-  Xen_define_procedure(S_make_granulate,		g_make_granulate_w,        0, 0, 1, H_make_granulate);
+  Xen_define_typed_procedure(S_make_granulate,		g_make_granulate_w,        0, 0, 1, H_make_granulate,           pcl_ct);
 
-  Xen_define_dilambda(S_mus_ramp, g_mus_ramp_w, H_mus_ramp, S_set S_mus_ramp, g_mus_set_ramp_w,  1, 0, 2, 0);
+  Xen_define_typed_dilambda(S_mus_ramp, g_mus_ramp_w, H_mus_ramp, 
+			    S_set S_mus_ramp, g_mus_set_ramp_w,  1, 0, 2, 0, pl_dc, pl_dcr);
 
 
   Xen_define_typed_procedure(S_clear_sincs,		g_mus_clear_sincs_w,       0, 0, 0, "clears out any sinc tables", NULL);
   Xen_define_typed_procedure(S_is_src,			g_is_src_w,                1, 0, 0, H_is_src,			pl_bt);
   Xen_define_typed_procedure(S_src,			g_src_w,                   1, 2, 0, H_src,			pl_dcr);
-  Xen_define_procedure(S_make_src,			g_make_src_w,              0, 6, 0, H_make_src);
+  Xen_define_typed_procedure(S_make_src,		g_make_src_w,              0, 6, 0, H_make_src,                 pcl_ct);
 
 
   Xen_define_typed_procedure(S_is_convolve,		g_is_convolve_w,           1, 0, 0, H_is_convolve,		pl_bt);
   Xen_define_typed_procedure(S_convolve,		g_convolve_w,              1, 1, 0, H_convolve_gen,		pl_dcr);
-  Xen_define_procedure(S_make_convolve,			g_make_convolve_w,         0, 0, 1, H_make_convolve);
+  Xen_define_typed_procedure(S_make_convolve,		g_make_convolve_w,         0, 0, 1, H_make_convolve,            pcl_ct);
   Xen_define_typed_procedure(S_convolve_files,		g_convolve_files_w,        2, 2, 0, H_convolve_files,		pl_sssrs);
 
   Xen_define_typed_procedure(S_is_phase_vocoder,	g_is_phase_vocoder_w,      1, 0, 0, H_is_phase_vocoder,		pl_bt);
   Xen_define_typed_procedure(S_phase_vocoder,		g_phase_vocoder_w,         1, 4, 0, H_phase_vocoder,		pl_dcr);
-  Xen_define_procedure(S_make_phase_vocoder,		g_make_phase_vocoder_w,    0, 0, 1, H_make_phase_vocoder);
+  Xen_define_typed_procedure(S_make_phase_vocoder,	g_make_phase_vocoder_w,    0, 0, 1, H_make_phase_vocoder,       pcl_ct);
   Xen_define_typed_procedure(S_phase_vocoder_amp_increments, g_phase_vocoder_amp_increments_w, 1, 0, 0, H_phase_vocoder_amp_increments, pl_fc);
   Xen_define_typed_procedure(S_phase_vocoder_amps,	g_phase_vocoder_amps_w,    1, 0, 0, H_phase_vocoder_amps,	pl_fc);
   Xen_define_typed_procedure(S_phase_vocoder_freqs,	g_phase_vocoder_freqs_w,   1, 0, 0, H_phase_vocoder_freqs,	pl_fc);
   Xen_define_typed_procedure(S_phase_vocoder_phases,	g_phase_vocoder_phases_w,  1, 0, 0, H_phase_vocoder_phases,	pl_fc);
   Xen_define_typed_procedure(S_phase_vocoder_phase_increments, g_phase_vocoder_phase_increments_w, 1, 0, 0, H_phase_vocoder_phase_increments, pl_fc);
 
-  Xen_define_dilambda(S_mus_hop, g_mus_hop_w, H_mus_hop, S_set S_mus_hop, g_mus_set_hop_w,  1, 0, 2, 0);
+  Xen_define_typed_dilambda(S_mus_hop, g_mus_hop_w, H_mus_hop, 
+			    S_set S_mus_hop, g_mus_set_hop_w,  1, 0, 2, 0, pl_dc, pl_dcr);
 
   Xen_define_typed_procedure(S_make_ssb_am,		g_make_ssb_am_w,           0, 4, 0, H_make_ssb_am,		pcl_ct); 
   Xen_define_typed_procedure(S_ssb_am,			g_ssb_am_w,                1, 2, 0, H_ssb_am,			pl_dcr);

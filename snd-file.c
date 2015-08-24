@@ -3778,28 +3778,62 @@ static s7_pointer acc_clipping(s7_scheme *sc, s7_pointer args) {return(g_set_cli
 
 void g_init_file(void)
 {
-  Xen_define_safe_procedure(S_add_sound_file_extension, g_add_sound_file_extension_w, 1, 0, 0, H_add_sound_file_extension);
-  Xen_define_dilambda(S_sound_file_extensions, g_sound_file_extensions_w, H_sound_file_extensions,
-				   S_set S_sound_file_extensions, g_set_sound_file_extensions_w,  0, 0, 1, 0);
+#if HAVE_SCHEME
+  s7_sig_t pl_b, pl_bb, pl_i, pl_ii, pl_s, pl_ss, pl_d, pl_dr, pl_pb, pl_l, pl_ll, pl_bs, pl_is, pl_lt, pl_pt, pl_pss, pl_ltl, pl_ls;
+  {
+    s7_pointer i, b, d, r, s, p, l, t;
+    i = s7_make_symbol(s7, "integer?");
+    b = s7_make_symbol(s7, "boolean?");
+    d = s7_make_symbol(s7, "float?");
+    r = s7_make_symbol(s7, "real?");
+    s = s7_make_symbol(s7, "string?");
+    p = s7_make_symbol(s7, "pair?");
+    l = s7_make_symbol(s7, "list");
+    t = s7_t(s7);
+    
+    pl_b = s7_make_signature(s7, 1, b);
+    pl_bb = s7_make_signature(s7, 2, b, b);
+    pl_bs = s7_make_signature(s7, 2, b, s);
+    pl_i = s7_make_signature(s7, 1, i);
+    pl_ii = s7_make_signature(s7, 2, i, i);
+    pl_is = s7_make_signature(s7, 2, i, s);
+    pl_s = s7_make_signature(s7, 1, s);
+    pl_ss = s7_make_signature(s7, 2, s, s);
+    pl_d = s7_make_signature(s7, 1, d);
+    pl_dr = s7_make_signature(s7, 2, d, r);
+    pl_pb = s7_make_signature(s7, 2, p, b);
+    pl_pt = s7_make_signature(s7, 2, p, t);
+    pl_pss = s7_make_signature(s7, 3, p, s, s);
+    pl_l = s7_make_signature(s7, 1, l);
+    pl_ll = s7_make_signature(s7, 2, l, l);
+    pl_lt = s7_make_signature(s7, 2, l, t);
+    pl_ls = s7_make_signature(s7, 2, l, s);
+    pl_ltl = s7_make_signature(s7, 3, l, t, l);
+  }
+#endif
 
-  Xen_define_safe_procedure(S_is_sound_file,                     g_is_sound_file_w,                     1, 0, 0, H_is_sound_file);
-  Xen_define_safe_procedure(S_file_write_date,                  g_file_write_date_w,                  1, 0, 0, H_file_write_date);
-  Xen_define_safe_procedure(S_soundfont_info,                   g_soundfont_info_w,                   0, 1, 0, H_soundfont_info);
-  Xen_define_safe_procedure(S_sound_files_in_directory,         g_sound_files_in_directory_w,         0, 1, 0, H_sound_files_in_directory);
-  Xen_define_safe_procedure(S_disk_kspace,                      g_disk_kspace_w,                      1, 0, 0, H_disk_kspace);
+  Xen_define_typed_procedure(S_add_sound_file_extension, g_add_sound_file_extension_w, 1, 0, 0, H_add_sound_file_extension, pl_ss);
+  Xen_define_typed_dilambda(S_sound_file_extensions, g_sound_file_extensions_w, H_sound_file_extensions,
+			    S_set S_sound_file_extensions, g_set_sound_file_extensions_w,  0, 0, 1, 0, pl_l, pl_ll);
 
-  Xen_define_safe_procedure(S_open_file_dialog,                 g_open_file_dialog_w,                 0, 1, 0, H_open_file_dialog);
-  Xen_define_safe_procedure(S_mix_file_dialog,                  g_mix_file_dialog_w,                  0, 1, 0, H_mix_file_dialog);
-  Xen_define_safe_procedure(S_insert_file_dialog,               g_insert_file_dialog_w,               0, 1, 0, H_insert_file_dialog);
-  Xen_define_safe_procedure(S_edit_header_dialog,               g_edit_header_dialog_w,               0, 1, 0, H_edit_header_dialog);
-  Xen_define_safe_procedure(S_save_selection_dialog,            g_save_selection_dialog_w,            0, 1, 0, H_save_selection_dialog);
-  Xen_define_safe_procedure(S_save_region_dialog,               g_save_region_dialog_w,               0, 1, 0, H_save_region_dialog);
-  Xen_define_safe_procedure(S_save_sound_dialog,                g_save_sound_dialog_w,                0, 1, 0, H_save_sound_dialog);
-  Xen_define_safe_procedure(S_new_sound_dialog,                 g_new_sound_dialog_w,                 0, 1, 0, H_new_sound_dialog);
-  Xen_define_safe_procedure(S_info_dialog,                      g_info_dialog_w,                      2, 0, 0, H_info_dialog);
+  Xen_define_typed_procedure(S_is_sound_file,              g_is_sound_file_w,              1, 0, 0, H_is_sound_file,	    pl_bs);
+  Xen_define_typed_procedure(S_file_write_date,            g_file_write_date_w,            1, 0, 0, H_file_write_date,	    pl_is);
+  Xen_define_typed_procedure(S_soundfont_info,             g_soundfont_info_w,             0, 1, 0, H_soundfont_info,	    pl_lt);
+  Xen_define_typed_procedure(S_sound_files_in_directory,   g_sound_files_in_directory_w,   0, 1, 0, H_sound_files_in_directory, pl_ls);
+  Xen_define_typed_procedure(S_disk_kspace,                g_disk_kspace_w,                1, 0, 0, H_disk_kspace,	    pl_is);
 
-  Xen_define_dilambda(S_sound_loop_info,      g_sound_loop_info_w, H_sound_loop_info,
-				   S_set S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
+  Xen_define_typed_procedure(S_open_file_dialog,           g_open_file_dialog_w,           0, 1, 0, H_open_file_dialog,     pl_pb);
+  Xen_define_typed_procedure(S_mix_file_dialog,            g_mix_file_dialog_w,            0, 1, 0, H_mix_file_dialog,	    pl_pb);
+  Xen_define_typed_procedure(S_insert_file_dialog,         g_insert_file_dialog_w,         0, 1, 0, H_insert_file_dialog,   pl_pb);
+  Xen_define_typed_procedure(S_edit_header_dialog,         g_edit_header_dialog_w,         0, 1, 0, H_edit_header_dialog,   pl_pt);
+  Xen_define_typed_procedure(S_save_selection_dialog,      g_save_selection_dialog_w,      0, 1, 0, H_save_selection_dialog, pl_pb);
+  Xen_define_typed_procedure(S_save_region_dialog,         g_save_region_dialog_w,         0, 1, 0, H_save_region_dialog,   pl_pb);
+  Xen_define_typed_procedure(S_save_sound_dialog,          g_save_sound_dialog_w,          0, 1, 0, H_save_sound_dialog,    pl_pb);
+  Xen_define_typed_procedure(S_new_sound_dialog,           g_new_sound_dialog_w,           0, 1, 0, H_new_sound_dialog,     pl_pb);
+  Xen_define_typed_procedure(S_info_dialog,                g_info_dialog_w,                2, 0, 0, H_info_dialog,          pl_pss);
+
+  Xen_define_typed_dilambda(S_sound_loop_info,      g_sound_loop_info_w, H_sound_loop_info,
+			    S_set S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1, pl_lt, pl_ltl);
 
   Xen_define_variable(S_snd_opened_sound, snd_opened_sound, Xen_false);
 
@@ -3879,64 +3913,64 @@ the newly updated sound may have a different index."
 
   update_hook = Xen_define_hook(S_update_hook, "(make-hook 'snd)", 1, H_update_hook);
 
-  Xen_define_safe_procedure(S_snd_tempnam,        g_snd_tempnam_w,        0, 0, 0, H_snd_tempnam);
+  Xen_define_typed_procedure(S_snd_tempnam,        g_snd_tempnam_w,        0, 0, 0, H_snd_tempnam, pl_s);
 
-  Xen_define_dilambda(S_auto_update, g_auto_update_w, H_auto_update,
-				   S_set S_auto_update, g_set_auto_update_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_auto_update_interval, g_auto_update_interval_w, H_auto_update_interval,
-				   S_set S_auto_update_interval, g_set_auto_update_interval_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_ask_before_overwrite, g_ask_before_overwrite_w, H_ask_before_overwrite,
-				   S_set S_ask_before_overwrite, g_set_ask_before_overwrite_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_with_toolbar, g_with_toolbar_w, H_with_toolbar,
-				   S_set S_with_toolbar, g_set_with_toolbar_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_with_tooltips, g_with_tooltips_w, H_with_tooltips,
-				   S_set S_with_tooltips, g_set_with_tooltips_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_with_menu_icons, g_with_menu_icons_w, H_with_menu_icons,
-				   S_set S_with_menu_icons, g_set_with_menu_icons_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_save_as_dialog_src, g_save_as_dialog_src_w, H_save_as_dialog_src,
-				   S_set S_save_as_dialog_src, g_set_save_as_dialog_src_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_save_as_dialog_auto_comment, g_save_as_dialog_auto_comment_w, H_save_as_dialog_auto_comment,
-				   S_set S_save_as_dialog_auto_comment, g_set_save_as_dialog_auto_comment_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_remember_sound_state, g_remember_sound_state_w, H_remember_sound_state,
-				   S_set S_remember_sound_state, g_set_remember_sound_state_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_ask_about_unsaved_edits, g_ask_about_unsaved_edits_w, H_ask_about_unsaved_edits,
-				   S_set S_ask_about_unsaved_edits, g_set_ask_about_unsaved_edits_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_show_full_duration, g_show_full_duration_w, H_show_full_duration,
-				   S_set S_show_full_duration, g_set_show_full_duration_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_show_full_range, g_show_full_range_w, H_show_full_range,
-				   S_set S_show_full_range, g_set_show_full_range_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_initial_beg, g_initial_beg_w, H_initial_beg,
-				   S_set S_initial_beg, g_set_initial_beg_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_initial_dur, g_initial_dur_w, H_initial_dur,
-				   S_set S_initial_dur, g_set_initial_dur_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_default_output_chans, g_default_output_chans_w, H_default_output_chans,
-				   S_set S_default_output_chans, g_set_default_output_chans_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_default_output_srate, g_default_output_srate_w, H_default_output_srate,
-				   S_set S_default_output_srate, g_set_default_output_srate_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_default_output_header_type, g_default_output_header_type_w, H_default_output_header_type,
-				   S_set S_default_output_header_type, g_set_default_output_header_type_w,  0, 0, 1, 0);
-
-  Xen_define_dilambda(S_default_output_sample_type, g_default_output_sample_type_w, H_default_output_sample_type,
-				   S_set S_default_output_sample_type, g_set_default_output_sample_type_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_clipping, g_clipping_w, H_clipping,
-				   S_set S_clipping, g_set_clipping_w,  0, 0, 1, 0);
-
+  Xen_define_typed_dilambda(S_auto_update, g_auto_update_w, H_auto_update,
+			    S_set S_auto_update, g_set_auto_update_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_dilambda(S_auto_update_interval, g_auto_update_interval_w, H_auto_update_interval,
+			    S_set S_auto_update_interval, g_set_auto_update_interval_w,  0, 0, 1, 0, pl_d, pl_dr);
+  
+  Xen_define_typed_dilambda(S_ask_before_overwrite, g_ask_before_overwrite_w, H_ask_before_overwrite,
+			    S_set S_ask_before_overwrite, g_set_ask_before_overwrite_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_dilambda(S_with_toolbar, g_with_toolbar_w, H_with_toolbar,
+			    S_set S_with_toolbar, g_set_with_toolbar_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_dilambda(S_with_tooltips, g_with_tooltips_w, H_with_tooltips,
+			    S_set S_with_tooltips, g_set_with_tooltips_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_dilambda(S_with_menu_icons, g_with_menu_icons_w, H_with_menu_icons,
+			    S_set S_with_menu_icons, g_set_with_menu_icons_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_dilambda(S_save_as_dialog_src, g_save_as_dialog_src_w, H_save_as_dialog_src,
+			    S_set S_save_as_dialog_src, g_set_save_as_dialog_src_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_dilambda(S_save_as_dialog_auto_comment, g_save_as_dialog_auto_comment_w, H_save_as_dialog_auto_comment,
+			    S_set S_save_as_dialog_auto_comment, g_set_save_as_dialog_auto_comment_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_dilambda(S_remember_sound_state, g_remember_sound_state_w, H_remember_sound_state,
+			    S_set S_remember_sound_state, g_set_remember_sound_state_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_dilambda(S_ask_about_unsaved_edits, g_ask_about_unsaved_edits_w, H_ask_about_unsaved_edits,
+			    S_set S_ask_about_unsaved_edits, g_set_ask_about_unsaved_edits_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_dilambda(S_show_full_duration, g_show_full_duration_w, H_show_full_duration,
+			    S_set S_show_full_duration, g_set_show_full_duration_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_dilambda(S_show_full_range, g_show_full_range_w, H_show_full_range,
+			    S_set S_show_full_range, g_set_show_full_range_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
+  Xen_define_typed_dilambda(S_initial_beg, g_initial_beg_w, H_initial_beg,
+			    S_set S_initial_beg, g_set_initial_beg_w,  0, 0, 1, 0, pl_d, pl_dr);
+  
+  Xen_define_typed_dilambda(S_initial_dur, g_initial_dur_w, H_initial_dur,
+			    S_set S_initial_dur, g_set_initial_dur_w,  0, 0, 1, 0, pl_d, pl_dr);
+  
+  Xen_define_typed_dilambda(S_default_output_chans, g_default_output_chans_w, H_default_output_chans,
+			    S_set S_default_output_chans, g_set_default_output_chans_w,  0, 0, 1, 0, pl_i, pl_ii);
+  
+  Xen_define_typed_dilambda(S_default_output_srate, g_default_output_srate_w, H_default_output_srate,
+			    S_set S_default_output_srate, g_set_default_output_srate_w,  0, 0, 1, 0, pl_i, pl_ii);
+  
+  Xen_define_typed_dilambda(S_default_output_header_type, g_default_output_header_type_w, H_default_output_header_type,
+			    S_set S_default_output_header_type, g_set_default_output_header_type_w,  0, 0, 1, 0, pl_i, pl_ii);
+  
+  Xen_define_typed_dilambda(S_default_output_sample_type, g_default_output_sample_type_w, H_default_output_sample_type,
+			    S_set S_default_output_sample_type, g_set_default_output_sample_type_w,  0, 0, 1, 0, pl_i, pl_ii);
+  Xen_define_typed_dilambda(S_clipping, g_clipping_w, H_clipping,
+			    S_set S_clipping, g_set_clipping_w,  0, 0, 1, 0, pl_b, pl_bb);
+  
   Xen_define_safe_procedure(S_add_file_filter,    g_add_file_filter_w,    2, 0, 0, H_add_file_filter);
   Xen_define_safe_procedure(S_delete_file_filter, g_delete_file_filter_w, 1, 0, 0, H_delete_file_filter);
 

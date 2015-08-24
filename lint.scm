@@ -83,12 +83,6 @@
       (not (or (pair? x)
 	       (symbol? x))))
 
-    (define (proper-list? x) 
-      (and (list? x)
-	   (let ((len (length x)))
-	     (and (>= len 0)
-		  (not (infinite? len))))))
-      
     (let ((no-side-effect-functions 
 	   (let ((ht (make-hash-table)))
 	     (for-each
@@ -296,6 +290,26 @@
 	      ((byte-vector?)     (eq? type2 'string?))
 	      (else #f))))
 
+      (define (any-compatible? type1 type2)
+	;; type1 and tyupe2 can be either a list of types or a type
+	;(format *stderr* "any-compatible ~S ~S~%" type1 type2)
+	(if (symbol? type1)
+	    (if (symbol? type2)
+		(compatible? type1 type2)
+		(and (pair? type2)
+		     (or (compatible? type1 (car type2))
+			 (any-compatible? type1 (cdr type2)))))
+	    (and (pair? type1)
+		 (or (compatible? (car type1) type2)
+		     (any-compatible? (cdr type1) type2)))))
+
+      (define (any-checker? types arg)
+	(if (symbol? types)
+	    ((symbol->value types *e*) arg)
+	    (and (pair? types)
+		 (or (any-checker? (car types) arg)
+		     (any-checker? (cdr types) arg)))))
+
       (define (never-false expr)
 	(or (eq? expr #t)
 	    (let ((type (if (pair? expr)
@@ -470,14 +484,15 @@
 	     (for-each 
 	      (lambda (arg)
 		(let ((checker (check-checker (if (list? checkers) (car checkers) checkers) (= arg-number (length (cdr form))))))
-		  ;(format *stderr* "~S -> ~S~%" arg checker)
-		  (when (symbol? checker) ; otherwise ignore type check on this argument (for now TODO: handle pair)
+		  ;(format *stderr* "check-arg ~A check ~S via ~S~%" head arg checker)
+		  (when (or (pair? checker)
+			    (symbol? checker)) ; otherwise ignore type check on this argument (#t -> anything goes)
 
 		    (if (pair? arg)                  ; arg is expr -- try to guess its type
 			(if (eq? (car arg) 'quote)   ; '1 -> 1
 
 			    ;; arg is quoted expression
-			    (if (not (compatible? checker (if (pair? (cadr arg)) 'list? (->type (cadr arg)))))
+			    (if (not (any-compatible? checker (if (pair? (cadr arg)) 'list? (->type (cadr arg)))))
 				(lint-format "~A's argument ~Ashould be a~A ~A: ~S:~A" 
 					     name head 
 					     (prettify-arg-number arg-number)
@@ -487,24 +502,26 @@
 
 			    ;; arg is an evaluated expression
 			    (let ((op (return-type (car arg))))
-			      ;; checker is arg-type, op is expression type
+			      ;; checker is arg-type, op is expression type (can also be a pair)
 			      ;(format *stderr* "~S -> ~S, checker: ~S~%" arg op checker)
-			      (if (or (not (compatible? checker op))
-				      (and (just-constants? arg env) ; try to eval the arg
-					   (catch #t 
-					     (lambda ()
-					       (not (checker (eval arg))))
-					     (lambda ignore-catch-error-args
-					       #f))))
-				  (lint-format "~A's argument ~Ashould be a~A ~A: ~S:~A" 
-					       name head 
-					       (prettify-arg-number arg-number)
-					       (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
-					       checker arg 
-					       (truncated-list->string form)))))
+			      (when (not (boolean? op))
+
+				(if (or (not (any-compatible? checker op))
+					(and (just-constants? arg env) ; try to eval the arg
+					     (catch #t 
+					       (lambda ()
+						 (not (any-checker? checker (eval arg))))
+					       (lambda ignore-catch-error-args
+						 #f))))
+				    (lint-format "~A's argument ~Ashould be a~A ~A: ~S:~A" 
+						 name head 
+						 (prettify-arg-number arg-number)
+						 (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
+						 checker arg 
+						 (truncated-list->string form))))))
 			;; arg is not a pair
 			(if (not (symbol? arg))
-			    (if (not ((symbol->value checker *e*) arg))
+			    (if (not (any-checker? checker arg))
 				(lint-format "~A's argument ~Ashould be a~A ~A: ~S:~A" 
 					     name head
 					     (prettify-arg-number arg-number)
@@ -602,6 +619,11 @@
 	    (eval form))
 	  (lambda args
 	    #t)))   ; just ignore errors in this context
+
+      (define (return-type-ok? type ret)
+	(or (eq? type ret)
+	    (and (pair? ret)
+		 (memq type ret))))
 
 
       (define (simplify-boolean in-form true false env)
@@ -764,12 +786,12 @@
 						 (else #f)))))))
 		       (and (pair? (cadr e))
 			    (case (car e)
-			      ((complex? number?) (eq? 'number? (return-type (caadr e))))
+			      ((complex? number?) (return-type-ok? 'number? (return-type (caadr e))))
 			      ((exact? rational?) (eq? (caadr e) 'inexact->exact))
 			      ((inexact? real?)   (eq? (caadr e) 'exact->inexact))
-			      ((char?)            (eq? 'char? (return-type (caadr e))))
-			      ((string?)          (eq? 'string? (return-type (caadr e))))
-			      ((vector?)          (eq? 'vector? (return-type (caadr e))))
+			      ((char?)            (return-type-ok? 'char? (return-type (caadr e))))
+			      ((string?)          (return-type-ok? 'string? (return-type (caadr e))))
+			      ((vector?)          (return-type-ok? 'vector? (return-type (caadr e))))
 			      (else #f)))))))
 	
 	(define (false? e)
@@ -824,7 +846,7 @@
 					     (bad-arg-match (car a) (car b)))))
 		       (and (eq? (car e) 'null?)
 			    (pair? (cadr e))
-			    (eq? (return-type (caadr e)) 'list-or-f))))))
+			    (return-type-ok? 'list? (return-type (caadr e))))))))
 	
 	(define (contradictory? ands)
 	  (let ((vars ()))
@@ -930,7 +952,9 @@
 				     (and (pair? arg)
 					  (symbol? (car arg))
 					  (not (hash-table-ref globals (car arg)))
-					  (not (memq (return-type (car arg)) '(#f #t boolean?)))
+					  (let ((ret (return-type (car arg))))
+					    (and (or (symbol? ret) (pair? ret))
+						 (not (return-type-ok? 'boolean? ret))))
 					  (not (var-member (car arg) env))))
 				 #f
 				 (if (and (pair? arg)               ; (not (not ...)) -> ...
@@ -3306,7 +3330,7 @@
 				   (and (pair? e)
 					(let ((op (return-type (car e))))
 					  (and op
-					       (not (eq? 'let? op))))))
+					       (not (return-type-ok? 'let? op))))))
 			       (lint-format "~A: first argument should be an environment: ~A" head name (truncated-list->string form)))
 			   (if (symbol? e)
 			       (set-ref? e env)

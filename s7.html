@@ -3897,11 +3897,11 @@ argument types.  #t means any type is possible.
 
 <pre class="indented">
 &gt; (procedure-signature char-position)
-<em class="gray">(#t (char? string?) string? integer?)</em>
+<em class="gray">((boolean? integer?) (char? string?) string? integer?)</em>
 </pre>
 
-<p>which says that the first argument to char-position can be a string or a character.
-Eventually, this list will be something like <code>((boolean? integer?) (char? string?) string? integer?)</code>.
+<p>which says that the first argument to char-position can be a string or a character,
+and the return type can be either boolean or an integer.
 If the function is defined in scheme, its signature is the value of the 'signature variable
 in its closure:
 </p>
