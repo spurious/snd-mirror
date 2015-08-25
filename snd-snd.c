@@ -5901,9 +5901,9 @@ static s7_pointer acc_show_controls(s7_scheme *sc, s7_pointer args) {return(g_se
 void g_init_snd(void)
 {
 #if HAVE_SCHEME
-  s7_sig_t pl_iq, pl_iqi, pl_sq, pl_sts, pl_i, pl_osi, pl_bt, pl_bo, pl_bob, pl_io, pl_ioi, pl_po, pl_pop, pl_ro, pl_ror, pl_oi;
+  s7_sig_t pl_iq, pl_iqi, pl_sq, pl_sts, pl_i, pl_osi, pl_bt, pl_bo, pl_bob, pl_io, pl_ioi, pl_po, pl_pop, pl_ro, pl_ror, pl_oi, pl_ioz;
   {
-    s7_pointer i, t, s, b, o, q, p, r;
+    s7_pointer i, t, s, b, o, q, p, r, z;
     i = s7_make_symbol(s7, "integer?");
     s = s7_make_symbol(s7, "string?");
     b = s7_make_symbol(s7, "boolean?");
@@ -5912,6 +5912,7 @@ void g_init_snd(void)
     t = s7_t(s7);
     q = t; /* sigh -- #t is legal here which is idiotic */
     o = t;
+    z = s7_make_signature(s7, 2, i, b);
     pl_i = s7_make_signature(s7, 1, i);
     pl_iq = s7_make_signature(s7, 2, i, q);
     pl_iqi = s7_make_signature(s7, 3, i, q, i);
@@ -5924,6 +5925,7 @@ void g_init_snd(void)
     pl_io = s7_make_signature(s7, 2, i, o);
     pl_oi = s7_make_signature(s7, 2, o, i);
     pl_ioi = s7_make_signature(s7, 3, i, o, i);
+    pl_ioz = s7_make_signature(s7, 3, i, o, z);
     pl_po = s7_make_signature(s7, 2, p, o);
     pl_pop = s7_make_signature(s7, 3, p, o, p);
     pl_ro = s7_make_signature(s7, 2, r, o);
@@ -6004,7 +6006,7 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_typed_dilambda(S_show_controls, g_show_controls_w, H_show_controls, 
 			    S_set S_show_controls, g_set_show_controls_w, 0, 1, 1, 1, pl_bo, pl_bob);
   Xen_define_typed_dilambda(S_sync, g_sync_w, H_sync, 
-			    S_set S_sync, g_set_sync_w, 0, 1, 1, 1, pl_io, pl_ioi);
+			    S_set S_sync, g_set_sync_w, 0, 1, 1, 1, pl_io, pl_ioz);
   Xen_define_typed_dilambda(S_channel_style, g_channel_style_w, H_channel_style, 
 			    S_set S_channel_style, g_set_channel_style_w, 0, 1, 1, 1, pl_io, pl_ioi);
   Xen_define_typed_dilambda(S_read_only, g_read_only_w, H_read_only, 

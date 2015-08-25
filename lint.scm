@@ -2574,7 +2574,7 @@
 		      (not (hash-table-ref other-identifiers (var-name arg))))
 		 (if (var-set arg)
 		     (set! set (cons (var-name arg) set))
-		     (if (not (memq (var-name arg) '(documentation iterator?)))
+		     (if (not (memq (var-name arg) '(documentation signature iterator?)))
 			 (set! unused (cons (var-name arg) unused))))))
 	   vars)
 	  
@@ -2868,6 +2868,26 @@
 						(memq (car settee) '(vector-ref list-ref string-ref hash-table-ref)))
 					   (lint-format "~A as target of set!~A" name (car settee) (truncated-list->string form)))
 				       (lint-walk name settee env) ; this counts as a reference since it's by reference so to speak
+				       
+				       ;; try type check (dilambda signatures)
+				       (when (symbol? (car settee))
+					 (let ((f (symbol->value (car settee) *e*)))
+					   (when (dilambda? f)
+					     (let ((sig (procedure-signature (procedure-setter f)))
+						   (settee-len (length settee)))
+					       (when (and (pair? sig)
+							  (pair? (list-tail sig settee-len)))
+						 (let ((checker (list-ref sig settee-len))
+						       (arg-type (->type setval)))
+						   (when (and (not (eq? 'symbol? arg-type))
+							      (symbol? checker)
+							      (not (compatible? checker arg-type)))
+						     (lint-format "~A: new value should be a~A ~A: ~S:~A" 
+								  name (car settee)
+								  (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
+								  checker arg-type
+								  (truncated-list->string form)))))))))
+
 				       (set! settee (do ((sym (car settee) (car sym)))
 							((not (pair? sym)) sym))))
 				     (lint-format "can't set! ~A" name (truncated-list->string form))))

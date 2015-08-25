@@ -700,11 +700,14 @@ s7_pp_t s7_pf_function(s7_scheme *sc, s7_pointer func);
 void s7_gf_set_function(s7_pointer f, s7_pp_t gp);
 s7_pp_t s7_gf_function(s7_scheme *sc, s7_pointer func);
 
-void s7_xf_store_at(s7_scheme *sc, s7_int index, s7_pointer val);
-s7_int s7_xf_store(s7_scheme *sc, s7_pointer val);
-void s7_xf_free(s7_scheme *sc);
-s7_pointer *s7_xf_start(s7_scheme *sc);
 void *s7_xf_new(s7_scheme *sc, s7_pointer e);
+void s7_xf_free(s7_scheme *sc);
+s7_int s7_xf_store(s7_scheme *sc, s7_pointer val);
+void s7_xf_store_at(s7_scheme *sc, s7_int index, s7_pointer val);
+void *s7_xf_detach(s7_scheme *sc);
+void s7_xf_attach(s7_scheme *sc, void *ur);
+s7_pointer *s7_xf_start(s7_scheme *sc);
+s7_pointer *s7_xf_top(s7_scheme *sc, void *ur);
 bool s7_xf_is_stepper(s7_scheme *sc, s7_pointer sym);
 
 bool s7_arg_to_gf(s7_scheme *sc, s7_pointer a1);

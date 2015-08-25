@@ -2838,7 +2838,9 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
     pl_dir = s7_make_signature(s7, 3, d, i, r);
     pl_drr = s7_make_signature(s7, 3, d, r, r);
     pl_b = s7_make_signature(s7, 1, b);
+#if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
     pl_pf = s7_make_signature(s7, 2, p, f);
+#endif
   }
 #endif
   Xen_define_typed_procedure(S_snd_print,      g_snd_print_w,     1, 0, 0, H_snd_print, pl_ss);

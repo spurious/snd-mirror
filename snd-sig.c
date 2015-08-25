@@ -3561,7 +3561,6 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 
 		  s7_xf_new(s7, e);
 		  rf = s7_rf_function(s7, fcar)(s7, res);
-
 		  if (rf)
 		    {
 		      s7_pointer *top, *p;

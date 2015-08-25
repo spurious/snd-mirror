@@ -267,7 +267,6 @@ static void loadLADSPADirectory(const char *pcDirectory)
 
 static void loadLADSPA(void) 
 {
-  char *pcBuffer = NULL;
   const char *pcEnd;
   const char *pcLADSPAPath;
   const char *pcStart;
@@ -292,6 +291,7 @@ static void loadLADSPA(void)
   pcStart = pcLADSPAPath;
   while (*pcStart != '\0') 
     {
+      char *pcBuffer;
       pcEnd = pcStart;
       while (*pcEnd != ':' && *pcEnd != '\0')
 	pcEnd++;
@@ -308,7 +308,6 @@ static void loadLADSPA(void)
 	pcStart++;
       
       free(pcBuffer);
-      pcBuffer = NULL;
     }
 }
 
@@ -582,7 +581,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   chan_info *cp;
   snd_info *sp;
   char *ofile, *msg;
-  int i, ofd, datumb, err = 0, inchans = 1, readers = 0, outchans = 1;
+  int i, ofd, datumb, inchans = 1, readers = 0, outchans = 1;
   mus_long_t num;
   snd_fd **sf = NULL;
   file_info *hdr;
@@ -810,6 +809,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   ss->stopped_explicitly = false;
   while (lAt < num) 
     {
+      int err;
       unsigned long lBlockSize;
       /* Decide how much audio to process this frame. */
       lBlockSize = num - lAt;

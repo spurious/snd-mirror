@@ -246,16 +246,31 @@
 	 (signatures (make-hash-table)))
 
     (define (make-signature rtn args)
-      (let ((sig (list (cload->signature rtn #t))))
+
+      (define (compress sig)
+	(if (and (pair? sig)
+		 (pair? (cdr sig))
+		 (eq? (car sig) (cadr sig)))
+	    (compress (cdr sig))
+	    sig))
+
+      (let ((sig (list (cload->signature rtn #t)))
+	    (cyclic #f))
 	(for-each
 	 (lambda (arg)
 	   (set! sig (cons (cload->signature arg) sig)))
 	 args)
+	(let ((len (length sig)))
+	  (set! sig (compress sig))
+	  (set! cyclic (not (= len (length sig)))))
 	(set! sig (reverse sig))
 	(when (not (signatures sig)) ; it's not in our collection yet
-	  (let ((pl (make-string (+ 4 (length args))))
-		(loc 3))
-	    (set! (pl 0) #\p) (set! (pl 1) #\l) (set! (pl 2) #\_)
+	  (let ((pl (make-string (+ (if cyclic 4 3) (length sig))))
+		(loc (if cyclic 4 3)))
+	    (set! (pl 0) #\p) 
+	    (if cyclic
+		(begin (set! (pl 1) #\c) (set! (pl 2) #\l) (set! (pl 3) #\_))
+		(begin (set! (pl 1) #\l) (set! (pl 2) #\_)))
 	    (for-each 
 	     (lambda (typer)
 	       (set! (pl loc) (signature->pl typer))
@@ -461,9 +476,12 @@
 	(format p "~%")
 	(for-each
 	 (lambda (sig)
-	   (format p "    ~A = s7_make_signature(sc, ~D" (cdr sig) (length (car sig)))
-	   (format p "~{~^, ~C~}" (substring (cdr sig) 3))
-	   (format p ");~%"))
+	   (let ((cyclic (char=? ((cdr sig) 1) #\c)))
+	     (if cyclic
+		 (format p "    ~A = s7_make_circular_signature(sc, ~D, ~D" (cdr sig) (- (length (car sig)) 1) (length (car sig)))
+		 (format p "    ~A = s7_make_signature(sc, ~D" (cdr sig) (length (car sig))))
+	     (format p "~{~^, ~C~}" (substring (cdr sig) (if cyclic 4 3)))
+	     (format p ");~%")))
 	 signatures)
 	(format p "  }~%~%"))
 

@@ -1668,7 +1668,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   Xen_define_safe_procedure("getpid",              g_getpid_w,             0, 0, 0, H_getpid);
 #if (!WITH_SYSTEM_EXTRAS)
   Xen_define_safe_procedure("file-exists?",        g_file_exists_p_w,      1, 0, 0, H_file_exists_p);
-  Xen_define_safe_procedure("directory?",          g_is_directory_w,        1, 0, 0, H_is_directory);
+  Xen_define_safe_procedure("directory?",          g_is_directory_w,       1, 0, 0, H_is_directory);
   Xen_define_safe_procedure("delete-file",         g_delete_file_w,        1, 0, 0, H_delete_file);
   Xen_define_safe_procedure("getenv",              g_s7_getenv_w,          1, 0, 0, H_getenv);
   Xen_define_safe_procedure("system",              g_system_w,             1, 0, 0, H_system);
