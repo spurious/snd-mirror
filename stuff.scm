@@ -27,6 +27,12 @@
       (and (sequence? obj)
 	   (applicable? obj)))))
 
+(define (ow!)
+  (call-with-output-string
+    (lambda (p)
+      (do ((e (outlet (owlet)) (outlet e))) 
+	  ((eq? e (rootlet))) 
+	(format p "~{~A ~}~%" e)))))
 
 
 ;;; ----------------
@@ -1861,23 +1867,28 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	(let ((func (caadr definition))
 	      (args (cdadr definition))
 	      (body `(begin ,@(proc-walk (cddr definition)))))
+	  ;(format *stderr* "~A ~A ~A~%" func args body)
 	  (let* ((no-noise-args (remove-keys args))                                ; omit noise words like :optional
-		 (arg-names (if (proper-list? args)                                ; handle (f x ...), (f (x 1) ...), (f . x), and (f x . z)
-				(map (lambda (a) 
-				       (if (symbol? a) a (car a)))                 ; omit the default values
-				     no-noise-args)                                
-				(if (pair? args)
-				    (append (butlast no-noise-args) (list :rest (last args)))
-				    (list :rest args))))
-		 (call-args (if (proper-list? args)
-				(if (memq :rest args)
-				    (append (butlast (butlast no-noise-args))      ; also omit the :rest
-					    (list (list '{apply_values} (last args))))
-				    arg-names)                                     ; (... y x)
-				(if (pair? args)
-				    (append (butlast no-noise-args)                ; (... y ({apply_values} x))
-					    (list (list '{apply_values} (last args))))
-				    (list (list '{apply_values} args))))))         ; (... ({apply_values} x))
+		 (arg-names (if (null? args)
+				()
+				(if (proper-list? args)                            ; handle (f x ...), (f (x 1) ...), (f . x), and (f x . z)
+				    (map (lambda (a) 
+					   (if (symbol? a) a (car a)))             ; omit the default values
+					 no-noise-args)                                
+				    (if (pair? args)
+					(append (butlast no-noise-args) (list :rest (last args)))
+					(list :rest args)))))
+		 (call-args (if (null? args)
+				()
+				(if (proper-list? args)
+				    (if (memq :rest args)
+					(append (butlast (butlast no-noise-args))  ; also omit the :rest
+						(list (list '{apply_values} (last args))))
+					arg-names)                                 ; (... y x)
+				    (if (pair? args)
+					(append (butlast no-noise-args)            ; (... y ({apply_values} x))
+						(list (list '{apply_values} (last args))))
+					(list (list '{apply_values} args)))))))    ; (... ({apply_values} x))
 	    `(define ,func
 	       (define-macro* ,(cons (gensym) args)                                ; args might be a symbol etc
 		 `((lambda* ,(cons ',e ',arg-names)                                ; prepend added env arg because there might be a rest arg

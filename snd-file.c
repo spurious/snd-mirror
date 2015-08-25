@@ -3779,9 +3779,9 @@ static s7_pointer acc_clipping(s7_scheme *sc, s7_pointer args) {return(g_set_cli
 void g_init_file(void)
 {
 #if HAVE_SCHEME
-  s7_sig_t pl_b, pl_bb, pl_i, pl_ii, pl_s, pl_ss, pl_d, pl_dr, pl_pb, pl_l, pl_ll, pl_bs, pl_is, pl_lt, pl_pt, pl_pss, pl_ltl, pl_ls;
+  s7_sig_t pl_b, pl_bb, pl_i, pl_ii, pl_s, pl_ss, pl_d, pl_dr, pl_zb, pl_l, pl_ll, pl_bs, pl_is, pl_lt, pl_zt, pl_zss, pl_ltl, pl_ls;
   {
-    s7_pointer i, b, d, r, s, p, l, t;
+    s7_pointer i, b, d, r, s, p, l, t, z;
     i = s7_make_symbol(s7, "integer?");
     b = s7_make_symbol(s7, "boolean?");
     d = s7_make_symbol(s7, "float?");
@@ -3791,6 +3791,7 @@ void g_init_file(void)
     l = s7_make_symbol(s7, "list");
     t = s7_t(s7);
     
+    z = s7_make_signature(s7, 2, b, p);
     pl_b = s7_make_signature(s7, 1, b);
     pl_bb = s7_make_signature(s7, 2, b, b);
     pl_bs = s7_make_signature(s7, 2, b, s);
@@ -3801,9 +3802,9 @@ void g_init_file(void)
     pl_ss = s7_make_signature(s7, 2, s, s);
     pl_d = s7_make_signature(s7, 1, d);
     pl_dr = s7_make_signature(s7, 2, d, r);
-    pl_pb = s7_make_signature(s7, 2, p, b);
-    pl_pt = s7_make_signature(s7, 2, p, t);
-    pl_pss = s7_make_signature(s7, 3, p, s, s);
+    pl_zb = s7_make_signature(s7, 2, z, b);
+    pl_zt = s7_make_signature(s7, 2, z, t);
+    pl_zss = s7_make_signature(s7, 3, z, s, s);
     pl_l = s7_make_signature(s7, 1, l);
     pl_ll = s7_make_signature(s7, 2, l, l);
     pl_lt = s7_make_signature(s7, 2, l, t);
@@ -3822,15 +3823,15 @@ void g_init_file(void)
   Xen_define_typed_procedure(S_sound_files_in_directory,   g_sound_files_in_directory_w,   0, 1, 0, H_sound_files_in_directory, pl_ls);
   Xen_define_typed_procedure(S_disk_kspace,                g_disk_kspace_w,                1, 0, 0, H_disk_kspace,	    pl_is);
 
-  Xen_define_typed_procedure(S_open_file_dialog,           g_open_file_dialog_w,           0, 1, 0, H_open_file_dialog,     pl_pb);
-  Xen_define_typed_procedure(S_mix_file_dialog,            g_mix_file_dialog_w,            0, 1, 0, H_mix_file_dialog,	    pl_pb);
-  Xen_define_typed_procedure(S_insert_file_dialog,         g_insert_file_dialog_w,         0, 1, 0, H_insert_file_dialog,   pl_pb);
-  Xen_define_typed_procedure(S_edit_header_dialog,         g_edit_header_dialog_w,         0, 1, 0, H_edit_header_dialog,   pl_pt);
-  Xen_define_typed_procedure(S_save_selection_dialog,      g_save_selection_dialog_w,      0, 1, 0, H_save_selection_dialog, pl_pb);
-  Xen_define_typed_procedure(S_save_region_dialog,         g_save_region_dialog_w,         0, 1, 0, H_save_region_dialog,   pl_pb);
-  Xen_define_typed_procedure(S_save_sound_dialog,          g_save_sound_dialog_w,          0, 1, 0, H_save_sound_dialog,    pl_pb);
-  Xen_define_typed_procedure(S_new_sound_dialog,           g_new_sound_dialog_w,           0, 1, 0, H_new_sound_dialog,     pl_pb);
-  Xen_define_typed_procedure(S_info_dialog,                g_info_dialog_w,                2, 0, 0, H_info_dialog,          pl_pss);
+  Xen_define_typed_procedure(S_open_file_dialog,           g_open_file_dialog_w,           0, 1, 0, H_open_file_dialog,     pl_zb);
+  Xen_define_typed_procedure(S_mix_file_dialog,            g_mix_file_dialog_w,            0, 1, 0, H_mix_file_dialog,	    pl_zb);
+  Xen_define_typed_procedure(S_insert_file_dialog,         g_insert_file_dialog_w,         0, 1, 0, H_insert_file_dialog,   pl_zb);
+  Xen_define_typed_procedure(S_edit_header_dialog,         g_edit_header_dialog_w,         0, 1, 0, H_edit_header_dialog,   pl_zt);
+  Xen_define_typed_procedure(S_save_selection_dialog,      g_save_selection_dialog_w,      0, 1, 0, H_save_selection_dialog, pl_zb);
+  Xen_define_typed_procedure(S_save_region_dialog,         g_save_region_dialog_w,         0, 1, 0, H_save_region_dialog,   pl_zb);
+  Xen_define_typed_procedure(S_save_sound_dialog,          g_save_sound_dialog_w,          0, 1, 0, H_save_sound_dialog,    pl_zb);
+  Xen_define_typed_procedure(S_new_sound_dialog,           g_new_sound_dialog_w,           0, 1, 0, H_new_sound_dialog,     pl_zb);
+  Xen_define_typed_procedure(S_info_dialog,                g_info_dialog_w,                2, 0, 0, H_info_dialog,          pl_zss);
 
   Xen_define_typed_dilambda(S_sound_loop_info,      g_sound_loop_info_w, H_sound_loop_info,
 			    S_set S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1, pl_lt, pl_ltl);

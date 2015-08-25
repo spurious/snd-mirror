@@ -1088,7 +1088,8 @@ Xen_wrap_1_arg(g_mus_set_sound_path_w, g_mus_set_sound_path)
 void mus_sndlib_xen_initialize(void)
 {
 #if HAVE_SCHEME
-  s7_sig_t pl_is, pl_isi, pl_si, pl_ss, pl_ps, pl_psp, pl_i, pl_ii, pl_bii, pl_p, pl_pp, pl_rs, pl_bi, pl_bib, pl_b, pl_bb, pl_isfiii, pl_fsiiif, pl_bs, pl_ts;
+  s7_sig_t pl_is, pl_isi, pl_si, pl_ss, pl_ps, pl_psp, pl_i, pl_ii, pl_bii, pl_p, pl_pp, pl_rs, pl_bi, pl_bib, pl_b, pl_bb;
+  s7_sig_t pl_l, pl_ll, pl_isfiii, pl_fsiiif, pl_bs, pl_ts;
 #endif
 
   mus_sound_initialize();
@@ -1140,10 +1141,11 @@ void mus_sndlib_xen_initialize(void)
 
 #if HAVE_SCHEME
   {
-    s7_pointer s, i, p, b, r, f, t;
+    s7_pointer s, i, p, b, r, f, t, l;
     s = s7_make_symbol(s7, "string?");
     i = s7_make_symbol(s7, "integer?");
     p = s7_make_symbol(s7, "pair?");
+    l = s7_make_symbol(s7, "list?");
     b = s7_make_symbol(s7, "boolean?");
     r = s7_make_symbol(s7, "real?");
     f = s7_make_symbol(s7, "float-vector?");
@@ -1160,6 +1162,8 @@ void mus_sndlib_xen_initialize(void)
     pl_bii = s7_make_signature(s7, 3, b, i, i);
     pl_p = s7_make_signature(s7, 1, p);
     pl_pp = s7_make_signature(s7, 2, p, p);
+    pl_l = s7_make_signature(s7, 1, l);
+    pl_ll = s7_make_signature(s7, 2, l, l);
     pl_rs = s7_make_signature(s7, 2, r, s);
     pl_bi = s7_make_signature(s7, 2, b, i);
     pl_bib = s7_make_signature(s7, 3, b, i, b);
@@ -1242,7 +1246,7 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_typed_dilambda(S_mus_max_table_size, g_mus_max_table_size_w, H_mus_max_table_size, 
 			    S_set S_mus_max_table_size, g_mus_set_max_table_size_w, 0, 0, 1, 0, pl_i, pl_ii);
   Xen_define_typed_dilambda(S_mus_sound_path, g_mus_sound_path_w, H_mus_sound_path, 
-			    S_set S_mus_sound_path, g_mus_set_sound_path_w, 0, 0, 1, 0, pl_p, pl_pp);
+			    S_set S_mus_sound_path, g_mus_set_sound_path_w, 0, 0, 1, 0, pl_l, pl_ll);
 
 #if HAVE_SCHEME
   mus_max_table_size_symbol = s7_define_variable(s7, "*" S_mus_max_table_size "*", s7_make_integer(s7, MUS_MAX_TABLE_SIZE_DEFAULT));

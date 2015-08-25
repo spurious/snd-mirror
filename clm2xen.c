@@ -12473,7 +12473,7 @@ static void mus_xen_init(void)
 
   s7_sig_t pcl_ct, pl_rcr, pl_bt, pl_ir, pl_cc, pl_ccc, pl_ccic, pl_ccrr, pl_fc, pl_fcif, 
                   pl_cs, pl_ff, pl_tt, pl_fff, pl_fffifi, pl_ffftii, pl_fffi, pl_fffii, pl_fti, pl_fif, pl_fiir, pl_fttb, pl_ic, 
-                  pl_rciir, pl_rcir, pl_ririt, pl_rcrr, pl_rirt, pl_riirfff, pl_rirfff, pl_rrpr,  
+    pl_rciir, pl_rcir, pl_ririt, pl_rcrr, pl_rirt, pl_riirfff, pl_rirfff, pl_rrpr, pcl_zt,
     pl_sc, pl_sssrs, pl_tc, pl_ii, pl_ct, pl_ici, pl_i, pl_fcf;
   s7_sig_t pl_dcr, pl_dr, pl_drr, pl_drrr, pl_dffi, pl_dfri, pl_dirfir, pl_dc, pl_dcrr, pl_dci, pl_dcir,
     pl_dv, pl_dvir, pl_drf, pl_drff, pl_drc, pl_dcii, pl_diit, pl_dit, pl_dct, pl_d;
@@ -12500,6 +12500,7 @@ static void mus_xen_init(void)
   d = s7_make_symbol(s7, "float?");
   
   pcl_ct = s7_make_circular_signature(s7, 1, 2, c, t);
+  pcl_zt = s7_make_circular_signature(s7, 1, 2, s7_make_signature(s7, 2, b, c), t);
   pl_bt = s7_make_signature(s7, 2, b, t);
   pl_rcr = s7_make_signature(s7, 3, r, c, r);
   
@@ -12897,7 +12898,7 @@ static void mus_xen_init(void)
 
   Xen_define_typed_procedure(S_formant_bank,		g_formant_bank_w,          2, 0, 0, H_formant_bank,		pl_dcr);
   Xen_define_typed_procedure(S_is_formant_bank,		g_is_formant_bank_w,       1, 0, 0, H_is_formant_bank,		pl_bt);
-  Xen_define_typed_procedure(S_make_formant_bank,	g_make_formant_bank_w,     1, 1, 0, H_make_formant_bank,	pcl_ct);
+  Xen_define_typed_procedure(S_make_formant_bank,	g_make_formant_bank_w,     1, 1, 0, H_make_formant_bank,	pcl_zt);
 
   Xen_define_typed_procedure(S_is_firmant,		g_is_firmant_w,            1, 0, 0, H_is_firmant,		pl_bt);
   Xen_define_typed_procedure(S_make_firmant,		g_make_firmant_w,          0, 4, 0, H_make_firmant,		pcl_ct);
@@ -13002,7 +13003,7 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_continue_frample_to_file, g_continue_frample_to_file_w, 1, 0, 0, H_continue_frample_to_file, pl_cs);
   Xen_define_typed_procedure(S_is_frample_to_file,	g_is_frample_to_file_w,    1, 0, 0, H_is_frample_to_file,	pl_bt);
   Xen_define_typed_procedure(S_frample_to_file,		g_frample_to_file_w,       3, 0, 0, H_frample_to_file,		pl_fcif);
-  Xen_define_typed_procedure(S_make_frample_to_file,	g_make_frample_to_file_w,  1, 4, 0, H_make_frample_to_file,	pcl_ct);
+  Xen_define_typed_procedure(S_make_frample_to_file,	g_make_frample_to_file_w,  1, 4, 0, H_make_frample_to_file,	pcl_zt);
 
   Xen_define_typed_procedure(S_is_mus_input,		g_is_mus_input_w,          1, 0, 0, H_is_mus_input,		pl_bt);
   Xen_define_typed_procedure(S_is_mus_output,		g_is_mus_output_w,         1, 0, 0, H_is_mus_output,		pl_bt);

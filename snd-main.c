@@ -2317,16 +2317,17 @@ static s7_pointer acc_open_file_dialog_directory(s7_scheme *sc, s7_pointer args)
 void g_init_main(void)
 {
 #if HAVE_SCHEME
-  s7_sig_t pl_b, pl_bb, pl_i, pl_ii, pl_s, pl_ss, pl_d, pl_dr, pl_p, pl_pb, pl_pbb;
+  s7_sig_t pl_b, pl_bb, pl_i, pl_ii, pl_s, pl_ss, pl_d, pl_dr, pl_p, pl_z, pl_zb, pl_zbb;
   {
-    s7_pointer i, b, d, r, s, p;
+    s7_pointer i, b, d, r, s, p, z;
     i = s7_make_symbol(s7, "integer?");
     b = s7_make_symbol(s7, "boolean?");
     d = s7_make_symbol(s7, "float?");
     r = s7_make_symbol(s7, "real?");
     s = s7_make_symbol(s7, "string?");
     p = s7_make_symbol(s7, "pair?");
-    
+
+    z = s7_make_signature(s7, 2, p, b);
     pl_b = s7_make_signature(s7, 1, b);
     pl_bb = s7_make_signature(s7, 2, b, b);
     pl_i = s7_make_signature(s7, 1, i);
@@ -2336,8 +2337,9 @@ void g_init_main(void)
     pl_d = s7_make_signature(s7, 1, d);
     pl_dr = s7_make_signature(s7, 2, d, r);
     pl_p = s7_make_signature(s7, 1, p);
-    pl_pb = s7_make_signature(s7, 2, p, b);
-    pl_pbb = s7_make_signature(s7, 3, p, b, b);
+    pl_z = s7_make_signature(s7, 1, z);
+    pl_zb = s7_make_signature(s7, 2, z, b);
+    pl_zbb = s7_make_signature(s7, 3, z, b, b);
   }
 #endif
   Xen_define_typed_procedure(S_save_state,   g_save_state_w,   0, 1, 0, H_save_state, pl_ss);
@@ -2446,10 +2448,10 @@ the hook functions return " PROC_TRUE ", the save state process opens the file '
 			    S_set S_with_pointer_focus, g_set_with_pointer_focus_w,  0, 0, 1, 0, pl_b, pl_bb);
   
   Xen_define_typed_procedure(S_snd_version,		g_snd_version_w,              0, 0, 0, H_snd_version,		   pl_s);
-  Xen_define_typed_procedure(S_color_orientation_dialog,g_color_orientation_dialog_w, 0, 1, 0, H_color_orientation_dialog, pl_pb);
-  Xen_define_typed_procedure(S_transform_dialog,        g_transform_dialog_w,         0, 1, 0, H_transform_dialog,	   pl_pb);
-  Xen_define_typed_procedure(S_print_dialog,            g_print_dialog_w,             0, 2, 0, H_print_dialog,		   pl_pbb);
-  Xen_define_typed_procedure(S_preferences_dialog,      g_preferences_dialog_w,       0, 0, 0, H_preferences_dialog,	   pl_p);
+  Xen_define_typed_procedure(S_color_orientation_dialog,g_color_orientation_dialog_w, 0, 1, 0, H_color_orientation_dialog, pl_zb);
+  Xen_define_typed_procedure(S_transform_dialog,        g_transform_dialog_w,         0, 1, 0, H_transform_dialog,	   pl_zb);
+  Xen_define_typed_procedure(S_print_dialog,            g_print_dialog_w,             0, 2, 0, H_print_dialog,		   pl_zbb);
+  Xen_define_typed_procedure(S_preferences_dialog,      g_preferences_dialog_w,       0, 0, 0, H_preferences_dialog,	   pl_z);
   Xen_define_procedure(S_abort,				g_abort_w,                    0, 0, 0, H_abort);
 #if (!HAVE_SCHEME)
   Xen_define_procedure(S_c_g,				g_abortq_w,                   0, 0, 0, H_abortQ);

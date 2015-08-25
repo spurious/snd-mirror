@@ -60,7 +60,7 @@
 			  ))
 (define-constant constants-len (length constants))
 
-(define-constant ctrl-chars (vector ;#\A #\S #\C #\F #\E #\G #\O #\D #\B #\X #\W
+(define-constant ctrl-chars (string ;#\A #\S #\C #\F #\E #\G #\O #\D #\B #\X #\W
 		    #\, #\{ #\} #\@ #\P #\*
 		    #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p #\n #\w
 		    #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9
@@ -87,7 +87,7 @@
 	    (set! tildes 1)
 	    (do ((j 1 (+ j 1)))
 		((= j size1))
-	      (if (char=? (string-set! ctrl-str j (vector-ref ctrl-chars (random ctrl-chars-len))) #\~)
+	      (if (char=? (string-set! ctrl-str j (string-ref ctrl-chars (random ctrl-chars-len))) #\~)
 		  (set! tildes (+ tildes 1))))
 	    
 	    (set! x (constants (random constants-len)))

@@ -2552,8 +2552,8 @@
       (define (report-usage name type head vars)
 	;; report unused or set-but-unreferenced variables
 	(if (and (not (eq? head 'begin)) ; begin can redefine = set a variable
-		 (proper-list? vars)
-		 (pair? vars))
+		 (pair? vars)
+		 (proper-list? vars))
 	    (do ((cur vars (cdr cur))
 		 (rst (cdr vars) (cdr rst)))
 		((null? rst))

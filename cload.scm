@@ -259,8 +259,8 @@
 	    (for-each 
 	     (lambda (typer)
 	       (set! (pl loc) (signature->pl typer))
-	       (let ((count (or (assq typer sig-symbols)
-				(assq 't sig-symbols))))
+	       (let ((count (or (assoc typer sig-symbols eq?)
+				(assoc 't sig-symbols eq?))))
 		 (set-cdr! count (+ (cdr count) 1)))
 	       (set! loc (+ loc 1)))
 	     sig)
@@ -374,7 +374,7 @@
 		  func-name func-name))
 
 	(when (and (eq? return-type 'int)        ; int (f int|double|void)
-		   (memq (car arg-types) '(int double void))
+		   (member (car arg-types) '(int double void) eq?)
 		   (<= num-args 1))
 	  (set! if-funcs (cons (cons func-name scheme-name) if-funcs))
 	  (case (car arg-types)
@@ -454,7 +454,7 @@
 	  (format p "  {~%    s7_pointer ~{~C~^, ~};~%" names)
 	  (for-each
 	   (lambda (name sym)
-	     (if (eq? name 't)
+	     (if (eq? sym 't)
 		 (format p "    t = s7_t(sc);~%")
 		 (format p "    ~C = s7_make_symbol(sc, ~S);~%" name (symbol->string sym))))
 	   names syms))
