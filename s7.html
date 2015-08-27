@@ -1610,7 +1610,7 @@ value passed to set!:
 <p>A procedure with a setter can be viewed as one generalization of set!.  Another
 treats objects as having predefined get and set functions.  In s7
 lists, strings, vectors, hash-tables, environments, and any cooperating C or Scheme-defined objects
-are both applicable and settable.  newLisp calls this implicit indexing, Gauche implements it
+are both applicable and settable.  newLisp calls this implicit indexing, Kawa has it, Gauche implements it
 via object-apply, Guile via procedure-with-setter; CL's funcallable instance might be the same idea.
 </p>
 
@@ -5551,6 +5551,7 @@ default-rationalize-error     1e-12 (settable)
 morally-equal-float-epsilon   1e-15 (settable)
 hash-table-float-epsilon      1e-12 (settable, but currently limited to less than 1e-3).
 bignum-precision              bits for bignum floats (128)
+float-format-precision        digits to print for floats (16)
 default-random-state          the default arg for random (settable)
 
 cpu-time                      run time so far
@@ -5638,8 +5639,10 @@ The built-in random-state is one such type.
 <li>for-each and map accept any applicable object as the first argument, and any sequence or iterator as a trailing argument.
 <li>letrec*, but without conviction.
 <li>set! and *-set! return the new value (modulo symbol-access), not #&lt;unspecified&gt;.
-<li>port-closed?
-<li>current-input-port, current-output-port, and current-error-port have setters
+<li>port-closed? 
+<li>list? means "pair or null", proper-list? is r5rs list?, float? means "real and not rational"
+<!-- a vector can be a member of itself, and yet vector? returns #t, why is list? different; we even call it a circular list! -->
+<li>current-input-port, current-output-port, and current-error-port have setters (but I may remove these)
 <li>the default IO ports are named *stdin*, *stdout*, and *stderr*.
 <li>#f as an output port means nothing is output (#f is /dev/null, I guess).
 <li>member and assoc accept an optional third argument, the comparison function (equal? is the default).

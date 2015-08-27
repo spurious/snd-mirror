@@ -190,7 +190,6 @@
 				    #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
 				 chars))
 
-	  (num-types '(integer? real? rational? complex?))
 	  (selector-types '(#t symbol? char? boolean? integer? number?))
 	  (outport #t)
 	  (loaded-files #f)
@@ -504,7 +503,7 @@
 			    (let ((op (return-type (car arg))))
 			      ;; checker is arg-type, op is expression type (can also be a pair)
 			      ;(format *stderr* "~S -> ~S, checker: ~S~%" arg op checker)
-			      (when (not (boolean? op))
+			      (unless (boolean? op)
 
 				(if (or (not (any-compatible? checker op))
 					(and (just-constants? arg env) ; try to eval the arg
@@ -3094,8 +3093,13 @@
 			       (let ((stepper (car bindings)))
 				 (when (and (binding-ok? name head stepper env #t)
 					    (pair? (cddr stepper)))
-				   (lint-walk name (caddr stepper) (append vars env)))))
-			     
+				   (lint-walk name (caddr stepper) (append vars env))
+				   (when (and (pair? (caddr stepper))
+					      (not (eq? (car stepper) (cadr stepper))) ; (lst lst (cdr lst))
+					      (eq? (car (caddr stepper)) 'cdr)
+					      (eq? (cadr stepper) (cadr (caddr stepper))))
+				     (lint-format "this looks suspicious: ~A" name stepper)))))
+				 
 			     ;; walk the body and end stuff (it's too tricky to find infinite do loops)
 			     (if (pair? (caddr form))
 				 (let ((end+result (caddr form)))
