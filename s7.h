@@ -720,7 +720,7 @@ bool s7_is_stepper(s7_pointer p);
 s7_double s7_slot_real_value(s7_scheme *sc, s7_pointer slot, const char *caller);
 void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_double value);
 
-s7_pointer s7_object_set_xf(s7_pointer obj, s7_ip_t ip, s7_rp_t rp, s7_pp_t pp);
+void s7_object_type_set_xf(int tag, s7_ip_t ip, s7_ip_t set_ip, s7_rp_t rp, s7_rp_t set_rp);
 /* end CLM stuff */
 
 

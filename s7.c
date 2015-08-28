@@ -454,9 +454,8 @@ typedef struct {
   s7_pointer (*reverse)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*fill)(s7_scheme *sc, s7_pointer args);
   char *(*print_readably)(s7_scheme *sc, void *value);
-  s7_ip_t ip;
-  s7_rp_t rp;
-  s7_pp_t pp;
+  s7_ip_t ip, set_ip;
+  s7_rp_t rp, set_rp;
 } c_object_t;
 
 
@@ -2104,7 +2103,8 @@ static int num_object_types = 0;
 #define c_object_reverse(p)           c_object_info(p)->reverse
 #define c_object_ip(p)                c_object_info(p)->ip
 #define c_object_rp(p)                c_object_info(p)->rp
-#define c_object_pp(p)                c_object_info(p)->pp
+#define c_object_set_ip(p)            c_object_info(p)->set_ip
+#define c_object_set_rp(p)            c_object_info(p)->set_rp
 /* #define c_object_outer_type(p)     c_object_info(p)->outer_type */
 
 #define raw_pointer(p)                _TPtr(p)->object.c_pointer
@@ -7456,9 +7456,6 @@ static s7_pp_t pf_function(s7_pointer f)
       if (c_function_ext(f)) return(c_function_pp(f));
       return(NULL);
 
-    case T_C_OBJECT:
-      return(c_object_pp(f));
-
     case T_PAIR: case T_STRING: case T_VECTOR: case T_HASH_TABLE: case T_LET:
       return(implicit_pf_sequence_ref);
 
@@ -8494,8 +8491,12 @@ static s7_rf_t set_rf(s7_scheme *sc, s7_pointer expr)
       s7_pointer fv;
       if ((!is_pair(a1)) || (!is_symbol(car(a1))) || (!is_null(cddr(a1)))) return(NULL);
       fv = s7_symbol_value(sc, car(a1));
-      if (!is_float_vector(fv)) return(NULL);
-      return(float_vector_set_rf_expanded(sc, fv, cadr(a1), caddr(expr)));
+      if (is_float_vector(fv))
+	return(float_vector_set_rf_expanded(sc, fv, cadr(a1), caddr(expr)));
+      if ((is_c_object(fv)) &&
+	  (c_object_set_rp(fv)))
+	return(c_object_set_rp(fv)(sc, expr));
+      return(NULL);
     }
 
   /* if sym has real value and new val is real, we're ok */
@@ -8551,8 +8552,12 @@ static s7_if_t set_if(s7_scheme *sc, s7_pointer expr)
       s7_pointer fv;
       if ((!is_pair(a1)) || (!is_symbol(car(a1))) || (!is_null(cddr(a1)))) return(NULL);
       fv = s7_symbol_value(sc, car(a1));
-      if (!is_int_vector(fv)) return(NULL);
-      return(int_vector_set_if_expanded(sc, fv, cadr(a1), caddr(expr)));
+      if (is_int_vector(fv))
+	return(int_vector_set_if_expanded(sc, fv, cadr(a1), caddr(expr)));
+      if ((is_c_object(fv)) &&
+	  (c_object_set_ip(fv)))
+	return(c_object_set_ip(fv)(sc, expr));
+      return(NULL);
     }
 
   if (!is_symbol(a1)) return(NULL);
@@ -11895,12 +11900,12 @@ static s7_pointer g_number_to_string_1(s7_scheme *sc, s7_pointer args, bool temp
     }
 #endif
 
+  size = float_format_precision;
   if (!is_rational(x))
     {
       /* if size = 20, (number->string .1) gives "0.10000000000000000555", but if it's less than 20,
        *    large numbers (or very small numbers) mess up the less significant digits.
        */
-      size = float_format_precision;
       if (radix == 10)
 	{
 	  if (is_real(x))
@@ -39294,28 +39299,6 @@ static unsigned int resize_hash_table(s7_scheme *sc, s7_pointer table)
 }
 
 
-static s7_pointer hash_add(s7_scheme *sc, s7_pointer table, s7_pointer key, s7_pointer value)
-{
-  unsigned int hash_len, raw_hash, loc;
-  hash_entry_t *p;
-  
-  hash_len = hash_table_length(table) - 1;
-  if (hash_table_entries(table) > hash_len)
-    hash_len = resize_hash_table(sc, table);
-
-  raw_hash = hash_loc(sc, key);
-  p = make_hash_entry(key, value, raw_hash);
-  loc = raw_hash & hash_len;
-  p->next = hash_table_element(table, loc);
-  hash_table_element(table, loc) = p;
-  hash_table_entries(table)++;
-  
-  if (!hash_table_function_locked(table))
-    hash_table_set_function(table, type(key));
-  return(value);
-}
-
-
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7_pointer value)
 {
   hash_entry_t *x;
@@ -40525,7 +40508,8 @@ int s7_new_type(const char *name,
 
   object_types[tag]->ip = NULL;
   object_types[tag]->rp = NULL;
-  object_types[tag]->pp = NULL;
+  object_types[tag]->set_ip = NULL;
+  object_types[tag]->set_rp = NULL;
 
   return(tag);
 }
@@ -40628,12 +40612,12 @@ s7_pointer s7_object_set_let(s7_pointer obj, s7_pointer e)
 }
 
 
-s7_pointer s7_object_set_xf(s7_pointer obj, s7_ip_t ip, s7_rp_t rp, s7_pp_t pp)
+void s7_object_type_set_xf(int tag, s7_ip_t ip, s7_ip_t set_ip, s7_rp_t rp, s7_rp_t set_rp)
 {
-  c_object_ip(obj) = ip;
-  c_object_rp(obj) = rp;
-  c_object_pp(obj) = pp;
-  return(obj);
+  object_types[tag]->ip = ip;
+  object_types[tag]->rp = rp;
+  object_types[tag]->set_ip = set_ip;
+  object_types[tag]->set_rp = set_rp;
 }
 
 static s7_pointer object_length(s7_scheme *sc, s7_pointer obj)
@@ -42206,7 +42190,7 @@ static s7_pointer hash_table_setter(s7_scheme *sc, s7_pointer e, s7_int loc, s7_
    */
   if (!is_pair(val))
     return(wrong_type_argument_with_type(sc, sc->COPY, 3, e, A_LIST));
-  return(hash_add(sc, e, car(val), cdr(val)));
+  return(s7_hash_table_set(sc, e, car(val), cdr(val)));
 }
 
 
@@ -42215,7 +42199,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
   #define H_copy "(copy obj) returns a copy of obj, (copy src dest) copies src into dest, (copy src dest start end) copies src from start to end."
   #define Q_copy s7_make_signature(sc, 5, sc->T, sc->T, sc->T, sc->IS_INTEGER, sc->IS_INTEGER)
 
-  s7_pointer source, dest, source_iter;
+  s7_pointer source, dest;
   s7_int i, j, dest_len, start, end, source_len;
   s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_int loc, s7_pointer val) = NULL;
   s7_pointer (*get)(s7_scheme *sc, s7_pointer obj, s7_int loc) = NULL;
@@ -42547,45 +42531,94 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	return(dest);
       }
 
-    case T_HASH_TABLE:
     case T_LET:
-      source_iter = s7_make_iterator(sc, source);
-      sc->temp3 = source_iter;
-      if (start > 0)
-	for (i = 0; i < start; i++)
-	  free_cell(sc, iterator_next(source_iter)(sc, source_iter));
+      /* implicit index can give n-way reality check (ht growth by new entries) 
+       * if shadowed entries are they unshadowed by reversal?
+       */
+      {
+	/* source and dest can't be rootlet (checked above) */
+	s7_pointer slot;
+	slot = let_slots(source);
+	for (i = 0; i < start; i++) slot = next_slot(slot);
+	if (is_pair(dest))
+	  {
+	    s7_pointer p;
+	    for (i = start, p = dest; i < end; i++, p = cdr(p), slot = next_slot(slot))
+	      car(p) = cons(sc, slot_symbol(slot), slot_value(slot));
+	  }
+	else
+	  {
+	    if (is_let(dest))
+	      {
+		for (i = start; i < end; i++, slot = next_slot(slot))
+		  make_slot_1(sc, dest, slot_symbol(slot), slot_value(slot));
+	      }
+	    else
+	      {
+		if (is_hash_table(dest))
+		  {
+		    for (i = start; i < end; i++, slot = next_slot(slot))
+		      s7_hash_table_set(sc, dest, slot_symbol(slot), slot_value(slot));
+		  }
+		else
+		  {
+		    for (i = start, j = 0; i < end; i++, j++, slot = next_slot(slot))
+		      set(sc, dest, j, cons(sc, slot_symbol(slot), slot_value(slot)));
+		  }
+	      }
+	  }
+	return(dest);
+      }
+
+    case T_HASH_TABLE:
+      {
+	int loc, skip;
+	hash_entry_t **elements;
+	hash_entry_t *x = NULL;
+	elements = hash_table_elements(source);
+	loc = -1;
+
+	skip = start;
+	while (skip > 0)
+	  {
+	    while (!x) x = elements[++loc];
+	    skip--;
+	    x = x->next;
+	  }
+
       if (is_pair(dest))
 	{
 	  s7_pointer p;
 	  for (i = start, p = dest; i < end; i++, p = cdr(p))
-	    car(p) = iterator_next(source_iter)(sc, source_iter);
+	    {
+	      while (!x) x = elements[++loc];
+	      car(p) = cons(sc, x->key, x->value);
+	      x = x->next;
+	    }
 	}
       else
 	{
-	  if ((is_let(dest)) || (is_hash_table(dest)))
+	  if (is_let(dest))
 	    {
-	      long long int old_id = 0; /* we're not updating existing values here, so set let_id to skip the search */
-	      if (is_let(dest))
+	      for (i = start; i < end; i++)
 		{
-		  old_id = let_id(dest);
-		  let_id(dest) = S7_LLONG_MAX;
+		  while (!x) x = elements[++loc];
+		  make_slot_1(sc, dest, x->key, x->value);
+		  x = x->next;
 		}
-	      for (i = start, j = 0; i < end; i++, j++)
-		{
-		  s7_pointer p;
-		  set(sc, dest, j, p = iterator_next(source_iter)(sc, source_iter));
-		  free_cell(sc, p);
-		}
-	      if (is_let(dest))
-		let_id(dest) = old_id;
 	    }
 	  else
 	    {
 	      for (i = start, j = 0; i < end; i++, j++)
-		set(sc, dest, j,  iterator_next(source_iter)(sc, source_iter));
+		{
+		  while (!x) x = elements[++loc];
+		  set(sc, dest, j, cons(sc, x->key, x->value));
+		  x = x->next;
+		}
 	    }
 	}
       return(dest);
+      }
 
     case T_FLOAT_VECTOR:
       if (is_int_vector(dest))
@@ -71642,7 +71675,7 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136 1158
  * teq           |      |      | 6612                     3887 3020 2516 2468 2461
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212 3266
- * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3727
+ * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3376
  * tform         |      |      |                          6816 5536 4287 3996 4195
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 4212
  * tmap          |      |      |  9.3                                         4382
@@ -71685,8 +71718,5 @@ int main(int argc, char **argv)
  *   T_XF_OK -> no need to look, or maybe put this at the top so scan is not taken
  *   split s7_xf_store into size check, local inits, locs and stores, else do_pf complete
  *   initial_slot has 3 pointers available: nxt, pending-value, expr
- *
- * include c-objects in the if/rf/pf cases like implicit_int_vector?
- *   probably also need the set case rp|pp|ip_set.
- * let/hash-table-iterate should have no_cons versions for copy and maybe someday safe do loops
  */
+ 
