@@ -426,7 +426,6 @@ MUS_EXPORT mus_float_t mus_env_initial_power(mus_any *gen); /* for Snd */
 MUS_EXPORT int mus_env_breakpoints(mus_any *gen);      /* for Snd */
 MUS_EXPORT mus_float_t mus_env_any(mus_any *e, mus_float_t (*connect_points)(mus_float_t val));
 MUS_EXPORT mus_float_t (*mus_env_function(mus_any *g))(mus_any *gen);
-MUS_EXPORT bool mus_env_is_constant(mus_any *ptr);
 
 MUS_EXPORT mus_any *mus_make_pulsed_env(mus_any *e, mus_any *p);
 MUS_EXPORT bool mus_is_pulsed_env(mus_any *ptr);

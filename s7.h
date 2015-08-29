@@ -300,7 +300,6 @@ s7_int s7_vector_length(s7_pointer vec);                                    /* (
 int s7_vector_rank(s7_pointer vect);                                        /* number of dimensions in vect */
 s7_int *s7_vector_dimensions(s7_pointer vec);                               /* dimensions */
 s7_int *s7_vector_offsets(s7_pointer vec);                                  /* precalculated offsets to speed-up addressing */
-bool s7_is_sundry_vector(s7_pointer p);
 s7_pointer *s7_vector_elements(s7_pointer vec);                             /* a pointer to the array of s7_pointers */
 s7_int *s7_int_vector_elements(s7_pointer vec);
 s7_double *s7_float_vector_elements(s7_pointer vec);
@@ -721,6 +720,9 @@ s7_double s7_slot_real_value(s7_scheme *sc, s7_pointer slot, const char *caller)
 void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_double value);
 
 void s7_object_type_set_xf(int tag, s7_ip_t ip, s7_ip_t set_ip, s7_rp_t rp, s7_rp_t set_rp);
+void s7_object_type_set_direct(int tag, 
+			       s7_pointer (*dref)(s7_scheme *sc, s7_pointer obj, s7_int index), 
+			       s7_pointer (*dset)(s7_scheme *sc, s7_pointer obj, s7_int index, s7_pointer val));
 /* end CLM stuff */
 
 

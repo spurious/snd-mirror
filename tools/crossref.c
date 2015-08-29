@@ -706,7 +706,9 @@ int main(int argc, char **argv)
 		bool name_printed = false;
 		for (m = 0; m < all_names_top; m++)
 		  if ((all_names_counts[m] == 0) &&
-		      (all_names[m][0] != '_'))
+		      (all_names[m][0] != '_') &&
+		      (((all_names[m][0] != 'Q') && (all_names[m][0] != 'H')) || (all_names[m][1] != '_')))
+			
 		    {
 		      if (!name_printed)
 			{

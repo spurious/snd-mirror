@@ -9461,13 +9461,6 @@ static mus_float_t mus_env_line(mus_any *ptr)
 }
 
 
-bool mus_env_is_constant(mus_any *ptr)
-{
-  seg *gen = (seg *)ptr;
-  return(gen->env_func == mus_env_line);
-}
-
-
 static mus_float_t mus_env_linear(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
