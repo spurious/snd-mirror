@@ -80,7 +80,6 @@
 
 (define low 0)
 (define-constant arglists (vector (make-list 1) (make-list 2) (make-list 3) (make-list 4) (make-list 5) (make-list 6)))
-(define (ok x) #t)
 
 (define-constant (autotest func args args-now args-left sig)
   ;; args-left is at least 1, args-now starts at 0, args starts at ()
@@ -118,24 +117,41 @@
 			     (< (caddr (cadr any)) low))
 			(quit))))
 		 
-		(for-each
-		 (lambda (c)
-		   (catch #t 
-		     (lambda () 
-		       (set-car! p c)
-		       (apply func c-args))
-		     (lambda any 
-		       'error)))
-		 cdr-constants)))
+		(let ((checker (if (pair? sig) (car sig) #f)))
+		  (if checker
+		      (for-each
+		       (lambda (c)
+			 (catch #t 
+			   (lambda () 
+			     (when (checker c)
+			       (set-car! p c)
+			       (apply func c-args)))
+			   (lambda any 
+			     'error)))
+		       cdr-constants)
+		      (for-each
+		       (lambda (c)
+			 (catch #t 
+			   (lambda () 
+			     (set-car! p c)
+			     (apply func c-args))
+			   (lambda any 
+			     'error)))
+		       cdr-constants)))))
 	   
-	     (let ((checker (if (pair? sig) (car sig) ok)))
-	       (for-each
-		(lambda (c)
-		  (set-car! p c)
-		  (if (checker c)
-		      (autotest func c-args (+ args-now 1) (- args-left 1) (if (pair? sig) (cdr sig) ()))))
-		    ;(format *stderr* "~S arg ~D not ~S~%" func args-now c)
-		constants))))))))
+	     (let ((checker (if (pair? sig) (car sig) #f)))
+	       (if checker
+		   (for-each
+		    (lambda (c)
+		      (when (checker c)
+			(set-car! p c)
+			(autotest func c-args (+ args-now 1) (- args-left 1) (if (pair? sig) (cdr sig) ()))))
+		    constants)
+		   (for-each
+		    (lambda (c)
+		      (set-car! p c)
+		      (autotest func c-args (+ args-now 1) (- args-left 1) (if (pair? sig) (cdr sig) ())))
+		    constants)))))))))
 
 ;(set! low 3)
 ;(autotest string-set! () 0 3)
@@ -177,12 +193,13 @@
 
 (define (map-values lst)
   (if (or (not (pair? lst))
+	  (not (car lst))
 	  (procedure? (car lst)))
       lst
       (begin
 	(if (symbol? (car lst))
-	    (set! (car lst) (symbol->value (car lst)))
-	    (set! (car lst) ok))
+	    (set-car! lst (symbol->value (car lst)))
+	    (set-car! lst #f))
 	(map-values (cdr lst)))))
 
 (define (test-sym sym)

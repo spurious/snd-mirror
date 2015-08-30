@@ -13033,7 +13033,7 @@ static void mus_xen_init(void)
 			    S_set S_mus_increment, g_mus_set_increment_w,  1, 0, 2, 0, pl_dc, pl_dcr);
 
   Xen_define_typed_procedure(S_is_granulate,		g_is_granulate_w,          1, 0, 0, H_is_granulate,		pl_bt);
-  Xen_define_typed_procedure(S_granulate,		g_granulate_w,             1, 2, 0, H_granulate,		pl_dcr);
+  Xen_define_typed_procedure(S_granulate,		g_granulate_w,             1, 2, 0, H_granulate,		pl_dc);
   Xen_define_typed_procedure(S_make_granulate,		g_make_granulate_w,        0, 0, 1, H_make_granulate,           pcl_ct);
 
   Xen_define_typed_dilambda(S_mus_ramp, g_mus_ramp_w, H_mus_ramp, 
@@ -13047,12 +13047,12 @@ static void mus_xen_init(void)
 
 
   Xen_define_typed_procedure(S_is_convolve,		g_is_convolve_w,           1, 0, 0, H_is_convolve,		pl_bt);
-  Xen_define_typed_procedure(S_convolve,		g_convolve_w,              1, 1, 0, H_convolve_gen,		pl_dcr);
+  Xen_define_typed_procedure(S_convolve,		g_convolve_w,              1, 1, 0, H_convolve_gen,		pl_dc);
   Xen_define_typed_procedure(S_make_convolve,		g_make_convolve_w,         0, 0, 1, H_make_convolve,            pcl_ct);
   Xen_define_typed_procedure(S_convolve_files,		g_convolve_files_w,        2, 2, 0, H_convolve_files,		pl_sssrs);
 
   Xen_define_typed_procedure(S_is_phase_vocoder,	g_is_phase_vocoder_w,      1, 0, 0, H_is_phase_vocoder,		pl_bt);
-  Xen_define_typed_procedure(S_phase_vocoder,		g_phase_vocoder_w,         1, 4, 0, H_phase_vocoder,		pl_dcr);
+  Xen_define_typed_procedure(S_phase_vocoder,		g_phase_vocoder_w,         1, 4, 0, H_phase_vocoder,		pl_dc);
   Xen_define_typed_procedure(S_make_phase_vocoder,	g_make_phase_vocoder_w,    0, 0, 1, H_make_phase_vocoder,       pcl_ct);
   Xen_define_typed_procedure(S_phase_vocoder_amp_increments, g_phase_vocoder_amp_increments_w, 1, 0, 0, H_phase_vocoder_amp_increments, pl_fc);
   Xen_define_typed_procedure(S_phase_vocoder_amps,	g_phase_vocoder_amps_w,    1, 0, 0, H_phase_vocoder_amps,	pl_fc);
