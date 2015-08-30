@@ -859,7 +859,7 @@ struct s7_scheme {
   s7_pointer elist_1, elist_2, elist_3, elist_4, elist_5, plist_1, plist_2, plist_3;
 
   s7_pointer *strings, *vectors, *input_ports, *output_ports, *continuations, *c_objects, *hash_tables, *gensyms, *setters;
-  unsigned int strings_size, vectosize, input_ports_size, output_ports_size, continuations_size, c_objects_size, hash_tables_size, gensyms_size, settesize;
+  unsigned int strings_size, vectors_size, input_ports_size, output_ports_size, continuations_size, c_objects_size, hash_tables_size, gensyms_size, settesize;
   unsigned int strings_loc, vectors_loc, input_ports_loc, output_ports_loc, continuations_loc, c_objects_loc, hash_tables_loc, gensyms_loc, setters_loc;
 
   unsigned int syms_tag;
@@ -3485,6 +3485,8 @@ static void add_string(s7_scheme *sc, s7_pointer p)
   sc->strings[sc->strings_loc++] = p;
 }
 
+#define Add_String(Str) if (sc->strings_loc == sc->strings_size) add_string(sc, Str); else sc->strings[sc->strings_loc++] = Str
+
 
 static void add_gensym(s7_scheme *sc, s7_pointer p)
 {
@@ -3522,14 +3524,15 @@ static void add_hash_table(s7_scheme *sc, s7_pointer p)
 
 static void add_vector(s7_scheme *sc, s7_pointer p)
 {
-  if (sc->vectors_loc == sc->vectosize)
+  if (sc->vectors_loc == sc->vectors_size)
     {
-      sc->vectosize *= 2;
-      sc->vectors = (s7_pointer *)realloc(sc->vectors, sc->vectosize * sizeof(s7_pointer));
+      sc->vectors_size *= 2;
+      sc->vectors = (s7_pointer *)realloc(sc->vectors, sc->vectors_size * sizeof(s7_pointer));
     }
   sc->vectors[sc->vectors_loc++] = p;
 }
 
+#define Add_Vector(Vec) if (sc->vectors_loc == sc->vectors_size) add_vector(sc, Vec); else sc->vectors[sc->vectors_loc++] = Vec
 
 static void add_input_port(s7_scheme *sc, s7_pointer p)
 {
@@ -3618,9 +3621,9 @@ static void init_gc_caches(s7_scheme *sc)
   sc->gensyms_size = INIT_GC_CACHE_SIZE;
   sc->gensyms_loc = 0;
   sc->gensyms = (s7_pointer *)malloc(sc->gensyms_size * sizeof(s7_pointer));
-  sc->vectosize = INIT_GC_CACHE_SIZE * 8;
+  sc->vectors_size = INIT_GC_CACHE_SIZE * 8;
   sc->vectors_loc = 0;
-  sc->vectors = (s7_pointer *)malloc(sc->vectosize * sizeof(s7_pointer));
+  sc->vectors = (s7_pointer *)malloc(sc->vectors_size * sizeof(s7_pointer));
   sc->hash_tables_size = INIT_GC_CACHE_SIZE;
   sc->hash_tables_loc = 0;
   sc->hash_tables = (s7_pointer *)malloc(sc->hash_tables_size * sizeof(s7_pointer));
@@ -24052,7 +24055,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
   string_length(x) = len;
   string_hash(x) = 0;
   string_needs_free(x) = true;
-  add_string(sc, x);
+  Add_String(x);
   return(x);
 }
 
@@ -35568,7 +35571,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_int len, bool filled, unsigned
 	}
     }
 
-  add_vector(sc, x);
+  Add_Vector(x);
   return(x);
 }
 
@@ -35669,8 +35672,7 @@ s7_pointer s7_make_float_vector_wrapper(s7_scheme *sc, s7_int len, s7_double *da
       else vector_dimension_info(x) = NULL;
     }
   else vector_dimension_info(x) = make_vdims(sc, free_data, dims, dim_info);
-  add_vector(sc, x);
-
+  Add_Vector(x);
   return(x);
 }
 
@@ -39593,7 +39595,7 @@ static s7_pointer hash_table_ref_pf_a(s7_scheme *sc, s7_pointer **p)
   return(s7_hash_table_ref(sc, x, y));
 }
 
-static s7_pointer hash_table_ref_pf_i(s7_scheme *sc, s7_pointer **p)
+static s7_pointer hash_table_ref_pf_i(s7_scheme *sc, s7_pointer **p) /* i=implicit I think */
 {
   s7_pf_t f;
   s7_pointer x, y;
@@ -39607,10 +39609,13 @@ static s7_pointer hash_table_ref_pf_s(s7_scheme *sc, s7_pointer **p)
 {
   s7_pf_t f;
   s7_pointer x, y;
+  hash_entry_t *h;
   x = (**p); (*p)++;
   f = (s7_pf_t)(**p); (*p)++;
   y = f(sc, p);
-  return(s7_hash_table_ref(sc, x, y));
+  h = (*hash_table_function(x))(sc, x, y);
+  if (h) return(h->value);
+  return(sc->F);
 }
 
 static s7_pointer hash_table_ref_pf_ps(s7_scheme *sc, s7_pointer **p)
@@ -39626,10 +39631,15 @@ static s7_pointer hash_table_ref_pf_r(s7_scheme *sc, s7_pointer **p)
   s7_rf_t f;
   s7_pointer x;
   s7_double y;
+  int hash_len;
+  hash_entry_t *h;
   x = (**p); (*p)++;
   f = (s7_rf_t)(**p); (*p)++;
   y = f(sc, p);
-  return(s7_hash_table_ref(sc, x, make_real(sc, y)));
+  hash_len = (int)hash_table_length(x) - 1;
+  h = hash_float_1(sc, x, hash_float_location(y) & hash_len, y);
+  if (h) return(h->value);
+  return(sc->F);
 }
 
 static s7_pf_t hash_table_ref_pf(s7_scheme *sc, s7_pointer expr)
@@ -40004,6 +40014,7 @@ static void s7_function_set_class(s7_pointer f, s7_pointer base_f)
   c_function_base(f) = base_f;
 }
 
+static int c_functions = 0;
 
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
@@ -40015,6 +40026,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   heap_location(x) = NOT_IN_HEAP;
 
   ptr = (c_proc_t *)malloc(sizeof(c_proc_t));
+  c_functions++;
   if (required_args == 0)
     {
       if (rest_arg)
@@ -56114,9 +56126,26 @@ static bool pf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool safe_step
 	{
 	  if (body_len == 1)
 	    {
+	      s7_int end4;
 	      s7_rf_t rf;
 	      rf = (s7_rf_t)(*top);
 	      top++;
+	      end4 = end - 4;
+	      for (; numerator(stepper) < end4; numerator(stepper)++)
+		{
+		  s7_pointer *rp;
+		  rp = top;
+		  rf(sc, &rp);
+		  numerator(stepper)++;
+		  rp = top;
+		  rf(sc, &rp);
+		  numerator(stepper)++;
+		  rp = top;
+		  rf(sc, &rp);
+		  numerator(stepper)++;
+		  rp = top;
+		  rf(sc, &rp);
+		}
 	      for (; numerator(stepper) < end; numerator(stepper)++)
 		{
 		  s7_pointer *rp;
@@ -56275,13 +56304,35 @@ static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool s
 	      if ((var_len == 1) && (body_len == 1)) /* very common special case */
 		{
 		  s7_pointer rl;
+		  s7_int end3;
+		  s7_pointer **rp;
+		  s7_pointer *temp;
+
+		  end3 = end - 3;
 		  rl = slot_value(let_slots(sc->envir));
 		  top++;
+		  for (; numerator(stepper) < end3; numerator(stepper)++)
+		    {
+		      temp = top;
+		      rp = &temp;
+		      set_real(rl, varf(sc, rp)); 
+		      (*rp)++;
+		      bodyf(sc, rp);
+		      numerator(stepper)++;
+		      temp = top;
+		      rp = &temp;
+		      set_real(rl, varf(sc, rp)); 
+		      (*rp)++;
+		      bodyf(sc, rp);
+		      numerator(stepper)++;
+		      temp = top;
+		      rp = &temp;
+		      set_real(rl, varf(sc, rp)); 
+		      (*rp)++;
+		      bodyf(sc, rp);
+		    }
 		  for (; numerator(stepper) < end; numerator(stepper)++)
 		    {
-		      s7_pointer **rp;
-		      s7_pointer *temp;
-		      
 		      temp = top;
 		      rp = &temp;
 		      set_real(rl, varf(sc, rp)); 
@@ -69914,37 +69965,6 @@ static void s7_gmp_init(s7_scheme *sc)
 
 /* -------------------------------- *s7* environment -------------------------------- */
 
-static int nsyms(s7_scheme *sc)
-{
-  int i, syms = 0;
-  s7_pointer x;
-  for (i = 0; i < vector_length(sc->symbol_table); i++)
-    for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x))
-      syms++;
-  return(syms);
-}
-
-static s7_pointer describe_memory_usage(s7_scheme *sc)
-{
-  /* heap, permanent, stack?, doc strings, sigs, c_func structs (and ports etc), vcts, mx_alloc, output bufs,
-   *   sinc_tables, c-objects, rc_data, strbuf/tmpbuf[reallocs], autoload tables, hash_entrys, symbol_table,
-   *   small_ints?
-   */
-  int syms;
-#ifdef __linux__
-  #include <sys/resource.h>
-  struct rusage info;
-  getrusage(RUSAGE_SELF, &info);
-  fprintf(stderr, "process size: %lld\n", (s7_int)(info.ru_maxrss * 1024));
-#endif
-  fprintf(stderr, "heap: %lld\n", (s7_int)(sc->heap_size * (sizeof(s7_pointer) + sizeof(s7_cell))));
-  fprintf(stderr, "permanent cells: %lld\n", (s7_int)(permanent_cells * sizeof(s7_cell)));
-  syms = nsyms(sc);
-  fprintf(stderr, "symbol table: %lld (%d symbols)\n", (s7_int)(SYMBOL_TABLE_SIZE * sizeof(s7_pointer) + syms * 3 * sizeof(s7_cell)), syms);
-  fprintf(stderr, "stack: %lld\n", (s7_int)(sc->stack_size * sizeof(s7_pointer)));
-  return(sc->F);
-}
-
 static void init_s7_let(s7_scheme *sc)
 {
   sc->stack_top_symbol =                     s7_make_symbol(sc, "stack-top");
@@ -69992,6 +70012,36 @@ static void init_s7_let(s7_scheme *sc)
   sc->bignum_precision_symbol =              s7_make_symbol(sc, "bignum-precision");
   sc->memory_usage_symbol =                  s7_make_symbol(sc, "memory-usage");
   sc->float_format_precision_symbol =        s7_make_symbol(sc, "float-format-precision");
+}
+
+static s7_pointer describe_memory_usage(s7_scheme *sc)
+{
+  /* heap, permanent, stack?, doc strings, sigs, c_func structs (and ports etc), vcts, mx_alloc, output bufs,
+   *   sinc_tables, c-objects, rc_data, strbuf/tmpbuf[reallocs], autoload tables, hash_entrys, symbol_table,
+   *   small_ints?
+   */
+  int i, syms = 0;
+  s7_pointer x;
+
+#ifdef __linux__
+  #include <sys/resource.h>
+  struct rusage info;
+  getrusage(RUSAGE_SELF, &info);
+  fprintf(stderr, "process size: %lld\n", (s7_int)(info.ru_maxrss * 1024));
+#endif
+
+  fprintf(stderr, "heap: %d (%lld bytes)\n", sc->heap_size, (s7_int)(sc->heap_size * (sizeof(s7_pointer) + sizeof(s7_cell))));
+  fprintf(stderr, "permanent cells: %d (%lld bytes)\n", permanent_cells, (s7_int)(permanent_cells * sizeof(s7_cell)));
+
+  for (i = 0; i < vector_length(sc->symbol_table); i++)
+    for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x))
+      syms++;
+  fprintf(stderr, "symbol table: %d (%d symbols, %lld bytes)\n", SYMBOL_TABLE_SIZE, syms, 
+	  (s7_int)(SYMBOL_TABLE_SIZE * sizeof(s7_pointer) + syms * 3 * sizeof(s7_cell)));
+
+  fprintf(stderr, "stack: %d (%lld bytes)\n", sc->stack_size, (s7_int)(sc->stack_size * sizeof(s7_pointer)));
+  fprintf(stderr, "c_functions: %d (%d bytes)\n", c_functions, (int)(c_functions * sizeof(c_proc_t)));
+  return(sc->F);
 }
 
 static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
@@ -71862,20 +71912,20 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  | 15.0 15.1 15.2 15.3 15.4 15.5 15.6 15.7 15.8 15.9 | 16.0
  *
- * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1127 1131 |
+ * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1127 1129 |
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136 1158 |
- * teq           |      |      | 6612                     3887 3020 2516 2468 2461 |
+ * teq           |      |      | 6612                     3887 3020 2516 2468 2456 |
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212 3266 |
  * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3281 |
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 3298 |
  * tform         |      |      |                          6816 5536 4287 3996 4085 |
- * tmap          |      |      |  9.3                                         4238 |
+ * tmap          |      |      |  9.3                                         4235 |
  * titer         |      |      |                          7503 6793 6351 6048 6258 |
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 7279 |
- * thash         |      |      |                          50.7 23.8 14.9 13.7 12.4 |
+ * thash         |      |      |                          50.7 23.8 14.9 13.7 12.3 |
  *               |      |      |                                                   |
- * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 13.9 |
- * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 15.1 |
+ * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 13.0 |
+ * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 15.0 |
  * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 36.3 37.2 |
  * 
  * ------------------------------------------------------------------------------------------
@@ -71891,6 +71941,7 @@ int main(int argc, char **argv)
  * permanent-lists for c_function arity:  s7_arity -- the c_func cases could save the cons, or maybe share the common cases
  * remove the #t=all sounds business! = (map f (sounds))
  * set (ht-ref) #f -> delete key, decrement entries, if 0, set func to hash-empty, and set #f key not in table seems wasteful
+ * remove the func args to convolve/phase-vocoder/granulate/src etc
  *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array
@@ -71903,4 +71954,7 @@ int main(int argc, char **argv)
  * pipf testers perhaps usable in string|list_ref
  * in vector-set|list-set|etc: it would be better to try if|rf first (before pf|gf) then make the number at the end
  *   so wrap: if|rf_to_pf used in pf_opt: this gets messy fast
+ * 
+ * formant-bank: not enough arguments: (formant-bank size: 1)
+ *   why the size 1? -- this is mus-describe but it should be more obvious
  */

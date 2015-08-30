@@ -6869,6 +6869,7 @@ static void list_reader(snd_fd *fd)
 static void unlist_reader(snd_fd *fd)
 {
   if ((fd) && 
+      (!(fd->freed)) &&
       (fd->cp) && 
       (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) &&
       (fd->current_state) && 

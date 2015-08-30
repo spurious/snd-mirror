@@ -157,11 +157,11 @@ static void init_hashes(s7_scheme *sc)
 }
 
 typedef struct {
-  s7_Int count;
+  s7_int count;
   s7_pointer expr;
 } datum;
 
-static datum *new_datum(s7_Int ctr, s7_pointer e)
+static datum *new_datum(s7_int ctr, s7_pointer e)
 {
   datum *d;
   d = calloc(1, sizeof(datum));

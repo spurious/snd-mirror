@@ -4757,12 +4757,18 @@ static Xen g_formant_bank(Xen gens, Xen inp)
   mus_any *bank = NULL;
   mus_xen *gn;
 
-  Xen_check_type((Xen_is_number(inp)) || (mus_is_vct(inp)), inp, 2, S_formant_bank, "a number or a " S_vct);
   Xen_to_C_generator(gens, gn, bank, mus_is_formant_bank, S_formant_bank, "a formant-bank generator");
+  if (mus_is_vct(inp))
+    return(C_double_to_Xen_real(mus_formant_bank_with_inputs(bank, mus_vct_data(Xen_to_vct(inp)))));
 
   if (Xen_is_number(inp))
     return(C_double_to_Xen_real(mus_formant_bank(bank, Xen_real_to_C_double(inp))));
-  return(C_double_to_Xen_real(mus_formant_bank_with_inputs(bank, mus_vct_data(Xen_to_vct(inp)))));
+
+  if (!Xen_is_bound(inp))
+    return(C_double_to_Xen_real(mus_formant_bank(bank, 0.0)));
+
+  Xen_check_type(false, inp, 2, S_formant_bank, "a number or a " S_vct);
+  return(Xen_false);
 }
 
 
@@ -12262,7 +12268,7 @@ Xen_wrap_1_arg(g_is_formant_w, g_is_formant)
 Xen_wrap_4_optional_args(g_make_formant_w, g_make_formant)
 Xen_wrap_3_optional_args(g_formant_w, g_formant)
 
-Xen_wrap_2_args(g_formant_bank_w, g_formant_bank)
+Xen_wrap_2_optional_args(g_formant_bank_w, g_formant_bank)
 Xen_wrap_1_arg(g_is_formant_bank_w, g_is_formant_bank)
 Xen_wrap_2_optional_args(g_make_formant_bank_w, g_make_formant_bank)
 
@@ -12896,7 +12902,7 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_make_formant,		g_make_formant_w,          0, 4, 0, H_make_formant,		pcl_ct);
   Xen_define_typed_procedure(S_formant,			g_formant_w,               1, 2, 0, H_formant,			pl_dcr);
 
-  Xen_define_typed_procedure(S_formant_bank,		g_formant_bank_w,          2, 0, 0, H_formant_bank,		pl_dcr);
+  Xen_define_typed_procedure(S_formant_bank,		g_formant_bank_w,          1, 1, 0, H_formant_bank,		pl_dcr);
   Xen_define_typed_procedure(S_is_formant_bank,		g_is_formant_bank_w,       1, 0, 0, H_is_formant_bank,		pl_bt);
   Xen_define_typed_procedure(S_make_formant_bank,	g_make_formant_bank_w,     1, 1, 0, H_make_formant_bank,	pcl_zt);
 
