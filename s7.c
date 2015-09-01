@@ -9239,7 +9239,7 @@ static s7_pointer pipf_pf_s(s7_scheme *sc, s7_pointer **p, pipf_pf_t fnc)
   return(fnc(sc, x, y, z));
 }
 
-static s7_pointer pipf_pf_seq(s7_scheme *sc, s7_pointer **p, pipf_pf_t fnc)
+static s7_pointer pipf_pf_seq(s7_scheme *sc, s7_pointer **p, pipf_pf_t fnc) /* used in implicit_sequence_set */
 {
   s7_pf_t pf;
   s7_if_t xf;
@@ -9268,7 +9268,7 @@ static s7_pointer pipf_pf_a(s7_scheme *sc, s7_pointer **p, pipf_pf_t fnc)
   return(fnc(sc, x, y, z));
 }
 
-enum {TEST_NO_S, TEST_SS, TEST_SI, TEST_SQ};
+enum {TEST_NO_S, TEST_SS, TEST_SI, TEST_SQ}; /* si = sym ind, ss = sym sym for first two */
 typedef int (*pf_i_t)(s7_scheme *sc, s7_pointer x);
 static s7_pf_t pipf_1(s7_scheme *sc, s7_pointer expr, s7_pf_t f1, s7_pf_t f2, s7_pf_t f3, pf_i_t tester)
 {
@@ -39496,12 +39496,27 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
     {
       unsigned int hash_len, raw_hash, loc;
       hash_entry_t *p;
+      if (value == sc->F) return(sc->F);
       
       hash_len = hash_table_length(table) - 1;
       if (hash_table_entries(table) > hash_len)
 	hash_len = resize_hash_table(sc, table);
       raw_hash = hash_loc(sc, key);
-      p = make_hash_entry(key, value, raw_hash);
+
+      if (!hash_free_list)
+	{
+	  int i;
+	  hash_free_list = (hash_entry_t *)malloc(16 * sizeof(hash_entry_t));
+	  for (p = hash_free_list, i = 0; i < 15; i++) {p->next = p + 1; p++;}
+	  p->next = NULL;
+	}
+
+      p = hash_free_list;
+      hash_free_list = p->next;
+      p->key = key;
+      p->value = value;
+      p->raw_hash = raw_hash;
+
       loc = raw_hash & hash_len;
       p->next = hash_table_element(table, loc);
       hash_table_element(table, loc) = p;
@@ -39540,8 +39555,8 @@ static s7_pointer g_hash_table_ref_2(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer table;
   hash_entry_t *x;
-  table = car(args);
 
+  table = car(args);
   if (!is_hash_table(table))
     method_or_bust(sc, table, sc->HASH_TABLE_REF, args, T_HASH_TABLE, 1);
 
@@ -39555,11 +39570,11 @@ static s7_pointer g_hash_table_ref_ss(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer table;
   hash_entry_t *x;
-  table = find_symbol_checked(sc, car(args));
 
+  table = find_symbol_checked(sc, car(args));
   if (!is_hash_table(table))
     method_or_bust(sc, table, sc->HASH_TABLE_REF, list_2(sc, table, find_symbol_checked(sc, cadr(args))), T_HASH_TABLE, 1);
-
+  
   x = (*hash_table_function(table))(sc, table, find_symbol_checked(sc, cadr(args)));
   if (x) return(x->value);
   return(sc->F);
@@ -39570,8 +39585,8 @@ static s7_pointer g_hash_table_ref_car(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer y, table;
   hash_entry_t *x;
-  table = find_symbol_checked(sc, car(args));
 
+  table = find_symbol_checked(sc, car(args));
   if (!is_hash_table(table))
     method_or_bust(sc, table, sc->HASH_TABLE_REF, list_2(sc, table, car(find_symbol_checked(sc, cadadr(args)))), T_HASH_TABLE, 1);
 
@@ -71915,14 +71930,14 @@ int main(int argc, char **argv)
  * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1127 1129 |
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136 1158 |
  * teq           |      |      | 6612                     3887 3020 2516 2468 2456 |
+ * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3258 |
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212 3266 |
- * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3281 |
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 3298 |
  * tform         |      |      |                          6816 5536 4287 3996 4085 |
  * tmap          |      |      |  9.3                                         4235 |
  * titer         |      |      |                          7503 6793 6351 6048 6258 |
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 7279 |
- * thash         |      |      |                          50.7 23.8 14.9 13.7 12.3 |
+ * thash         |      |      |                          50.7 23.8 14.9 13.7 12.1 |
  *               |      |      |                                                   |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 13.0 |
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 15.0 |
@@ -71931,17 +71946,16 @@ int main(int argc, char **argv)
  * ------------------------------------------------------------------------------------------
  *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
- * cyclic-seq in stuff.scm, but current code is really clumsy
+ * cyclic-seq in stuff.scm, but current code is really clumsy 
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
  * the old mus-audio-* code needs to use play or something, especially bess*
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
  * the repl should autoload sndlib/clm, but ideally this would go through sndlib.scm or the equivalent.
- * libutf8proc.scm tested (s7test), doc, examples?
- * permanent-lists for c_function arity:  s7_arity -- the c_func cases could save the cons, or maybe share the common cases
+ * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds))
- * set (ht-ref) #f -> delete key, decrement entries, if 0, set func to hash-empty, and set #f key not in table seems wasteful
- * remove the func args to convolve/phase-vocoder/granulate/src etc
+ * set (ht-ref) #f -> delete key, decrement entries, if 0, set func to hash-empty
+ * for closure, proc-sig could be a guarantee to the optimizer
  *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array
@@ -71951,10 +71965,4 @@ int main(int argc, char **argv)
  *
  * (*s7* 'memory-usage), need a way to attach funcs to the space reporting (clm2xen etc)
  * gf cases (rf/if also): substring [inlet list] vector [float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
- * pipf testers perhaps usable in string|list_ref
- * in vector-set|list-set|etc: it would be better to try if|rf first (before pf|gf) then make the number at the end
- *   so wrap: if|rf_to_pf used in pf_opt: this gets messy fast
- * 
- * formant-bank: not enough arguments: (formant-bank size: 1)
- *   why the size 1? -- this is mus-describe but it should be more obvious
  */
