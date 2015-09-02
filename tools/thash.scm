@@ -88,7 +88,7 @@
     (fill! chr-hash #f))
 
 
-  (let ((any-hash (make-hash-table size)))
+  (let ((any-hash (make-hash-table size eq?)))
     (if (= size 1)
 	(hash-table-set! any-hash (vector-set! strings 0 (list 0)) 0)
 	(do ((i 0 (+ i 2))
@@ -103,7 +103,7 @@
     (fill! any-hash #f))
 
 
-  (let ((any-hash1 (make-hash-table size)))
+  (let ((any-hash1 (make-hash-table size eq?)))
     (if (= size 1)
 	(hash-table-set! any-hash1 (vector-set! strings 0 (inlet :a 0)) 0)
 	(do ((i 0 (+ i 2))

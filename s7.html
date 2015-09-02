@@ -2212,7 +2212,6 @@ but a function grabs all remaining indices.  Trickier than I expected!
 <li>(<em class=def id="hashtablep">hash-table?</em> obj)
 <li>(<em class=def id="hashtablesize">hash-table-size</em> ht)
 <li>(<em class=def id="hashtableentries">hash-table-entries</em> ht)
-<li>(<em class=def id="hashtablefunction">hash-table-function</em> ht)
 </ul>
 
 <p>
@@ -2282,32 +2281,19 @@ of the table sizes, or the order in which the key/value pairs were added.
 </div>
 
 <div class="indented">
-<p>If you know what equality function you want, you can pass that function
-as the third argument to make-hash-table.
-But unless s7 already knows about that function, it won't work;
-the equality function and the internal hashing function have to work together so that
-things equal according to eq-func are hashed to the same location, else they aren't equal because they are
-never compared.  Perhaps eq-func could be an equality function and its associated hashing function, but
-that will not be fast, which defeats the whole purpose of hash-tables.
+<p>The third argument to make-hash-table is complicated.  There are times when you either know
+in advance what equality function you want, or you have some special function you want to use.
+However, for the arbitrary equality function to work, objects that are equal according to that
+function have to be mapped to the same hash-table location.  There's no way for s7 to intuit
+what this mapping should be except in the nine built-in cases: eq?, eqv?, equal?,
+morally-equal?, =, string=?, string-ci=?, char=?, and char-ci=?.  These have preset functions
+in s7 to handle the mapping, so you can <code>(make-hash-table 31 char=?)</code> and the
+hash-table will use only char=? for equality checks.  Any other function has to provide both
+the equality checker, and a function to map from an object to a hash-table location.
+Since dilambdas already exist in s7, I decided to comandeer that machinery here.  The
+first function returns whether two objects are equal, and the second function returns the
+location to place the object.
 </p>
-
-<pre class="indented">
-(let ((ht (make-hash-table 31 =)))
-  (set! (ht 1) 1)        ; hashed to bin 1
-  (set! (ht 1.0) 32)     ; hashed to bin (logand 1000 table-len) or something like that
-  (list (ht 1.0) (ht 1)))
-
- -&gt; '(32 1) ; 1 != 1.0?
-
-(let ((ht (make-hash-table 512 string-ci=?)))
-  (set! (ht "abc") 1)
-  (set! (ht "ABC") 2)
-  (set! (ht "aBc") 3)
-  (list (ht "abc") (ht "ABC") (ht "aBc") (ht "AbC")))
-
- -&gt; '(1 2 3 #f)   ; but if the table size is 32, they are all 3!
-</pre>
-</div>
 
 <div class="indented">
 <p>If the hash key is a float (a non-rational number), hash-table-ref uses <a href="#morallyequalp">morally-equal?</a>.
