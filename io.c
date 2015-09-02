@@ -2216,7 +2216,7 @@ char *mus_expand_filename(const char *filename)
 
   char *file_name_buf;
   char *tok, *orig;
-  int i, j, len;
+  int i, j, len, orig_len;
 
   /* realpath does not speed this up */
 
@@ -2227,9 +2227,12 @@ char *mus_expand_filename(const char *filename)
   if ((len == 1) && (filename[0] == '.'))
     {
       orig = mus_getcwd();
-      file_name_buf = (char *)malloc((sndlib_strlen(orig) + 4) * sizeof(char));
+      orig_len = sndlib_strlen(orig);
+      file_name_buf = (char *)malloc((orig_len + 4) * sizeof(char));
       strcpy(file_name_buf, orig);
-      strcat(file_name_buf, "/");
+      file_name_buf[orig_len] = '/';
+      file_name_buf[orig_len + 1] = '\0';
+      /* fprintf(stderr, "%d: %s -> %s\n", __LINE__, filename, file_name_buf); */
       return(file_name_buf);
     }
      
@@ -2237,10 +2240,13 @@ char *mus_expand_filename(const char *filename)
   if (!tok)
     {
       orig = mus_getcwd();
-      file_name_buf = (char *)malloc((len + sndlib_strlen(orig) + 4) * sizeof(char));
+      orig_len = sndlib_strlen(orig);
+      file_name_buf = (char *)malloc((len + orig_len + 4) * sizeof(char));
       strcpy(file_name_buf, orig);
-      strcat(file_name_buf, "/");
-      strcat(file_name_buf, filename);
+      file_name_buf[orig_len] = '/';
+      strncpy((char *)(file_name_buf + orig_len + 1), filename, len + 1);
+      /* fprintf(stderr, "%d: %s -> %s\n", __LINE__, filename, file_name_buf); */
+
 #if HAVE_EXTENSION_LANGUAGE
       if (!mus_file_probe(file_name_buf))
 	{
@@ -2254,9 +2260,13 @@ char *mus_expand_filename(const char *filename)
 	      path_len = sndlib_strlen(path);
 	      nfile = (char *)malloc((len + path_len + 4) * sizeof(char));
 	      strcpy(nfile, path);
-	      if (path[path_len - 1] != '/')
-		strcat(nfile, "/");
-	      strcat(nfile, filename);
+	      if (nfile[path_len - 1] != '/')
+		{
+		  nfile[path_len] = '/';
+		  strncpy((char *)(nfile + path_len + 1), filename, len + 1);
+		}
+	      else strncpy((char *)(nfile + path_len), filename, len + 1);
+	      /* fprintf(stderr, "%d: %s -> %s\n", __LINE__, filename, nfile); */
 	      if (mus_file_probe(nfile))
 		{
 		  free(file_name_buf);

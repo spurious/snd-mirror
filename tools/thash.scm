@@ -150,7 +150,7 @@
       (do ((pos (char-position #\space line 0) (char-position #\space line (+ pos 1))))
 	  ((not pos))
 	(unless (= pos new-pos)
-	  (let* ((start (do ((k new-pos (+ k 1)))
+	  (let* ((start (do ((k new-pos (+ k 1))) ; char-position here is slower!
 			    ((or (= k pos)
 				 (char-alphabetic? (string-ref line k)))
 			     k)))

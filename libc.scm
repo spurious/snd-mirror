@@ -373,26 +373,26 @@
              {
                struct lconv *lc;
                lc = localeconv();
-               return(s7_list(sc, 18,
-             		     s7_cons(sc, s7_make_symbol(sc, \"decimal_point\"),     s7_make_string(sc, lc->decimal_point)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"thousands_sep\"),     s7_make_string(sc, lc->thousands_sep)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"grouping\"),          s7_make_string(sc, lc->grouping)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"int_curr_symbol\"),   s7_make_string(sc, lc->int_curr_symbol)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"currency_symbol\"),   s7_make_string(sc, lc->currency_symbol)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"mon_decimal_point\"), s7_make_string(sc, lc->mon_decimal_point)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"mon_thousands_sep\"), s7_make_string(sc, lc->mon_thousands_sep)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"mon_grouping\"),      s7_make_string(sc, lc->mon_grouping)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"positive_sign\"),     s7_make_string(sc, lc->positive_sign)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"negative_sign\"),     s7_make_string(sc, lc->negative_sign)),
+               return(s7_inlet(sc, s7_list(sc, 36,
+             		     s7_make_symbol(sc, \"decimal_point\"),     s7_make_string(sc, lc->decimal_point),
+             		     s7_make_symbol(sc, \"thousands_sep\"),     s7_make_string(sc, lc->thousands_sep),
+             		     s7_make_symbol(sc, \"grouping\"),          s7_make_string(sc, lc->grouping),
+             		     s7_make_symbol(sc, \"int_curr_symbol\"),   s7_make_string(sc, lc->int_curr_symbol),
+             		     s7_make_symbol(sc, \"currency_symbol\"),   s7_make_string(sc, lc->currency_symbol),
+             		     s7_make_symbol(sc, \"mon_decimal_point\"), s7_make_string(sc, lc->mon_decimal_point),
+             		     s7_make_symbol(sc, \"mon_thousands_sep\"), s7_make_string(sc, lc->mon_thousands_sep),
+             		     s7_make_symbol(sc, \"mon_grouping\"),      s7_make_string(sc, lc->mon_grouping),
+             		     s7_make_symbol(sc, \"positive_sign\"),     s7_make_string(sc, lc->positive_sign),
+             		     s7_make_symbol(sc, \"negative_sign\"),     s7_make_string(sc, lc->negative_sign),
              		     
-             		     s7_cons(sc, s7_make_symbol(sc, \"int_frac_digits\"),   s7_make_integer(sc, lc->int_frac_digits)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"frac_digits\"),       s7_make_integer(sc, lc->frac_digits)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"p_cs_precedes\"),     s7_make_integer(sc, lc->p_cs_precedes)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"p_sep_by_space\"),    s7_make_integer(sc, lc->p_sep_by_space)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"n_cs_precedes\"),     s7_make_integer(sc, lc->n_cs_precedes)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"n_sep_by_space\"),    s7_make_integer(sc, lc->n_sep_by_space)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"p_sign_posn\"),       s7_make_integer(sc, lc->p_sign_posn)),
-             		     s7_cons(sc, s7_make_symbol(sc, \"n_sign_posn\"),       s7_make_integer(sc, lc->n_sign_posn))));
+             		     s7_make_symbol(sc, \"int_frac_digits\"),   s7_make_integer(sc, lc->int_frac_digits),
+             		     s7_make_symbol(sc, \"frac_digits\"),       s7_make_integer(sc, lc->frac_digits),
+             		     s7_make_symbol(sc, \"p_cs_precedes\"),     s7_make_integer(sc, lc->p_cs_precedes),
+             		     s7_make_symbol(sc, \"p_sep_by_space\"),    s7_make_integer(sc, lc->p_sep_by_space),
+             		     s7_make_symbol(sc, \"n_cs_precedes\"),     s7_make_integer(sc, lc->n_cs_precedes),
+             		     s7_make_symbol(sc, \"n_sep_by_space\"),    s7_make_integer(sc, lc->n_sep_by_space),
+             		     s7_make_symbol(sc, \"p_sign_posn\"),       s7_make_integer(sc, lc->p_sign_posn),
+             		     s7_make_symbol(sc, \"n_sign_posn\"),       s7_make_integer(sc, lc->n_sign_posn))));
               }")
 	   (C-function ("localeconv" g_localeconv "" 0))
 	   

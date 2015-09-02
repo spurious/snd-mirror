@@ -148,7 +148,7 @@
 					     (> func-end (+ end 2)))
 				    (let* ((name (substring line (+ end 2) func-end))
 					   (len (length name)))
-				      (if (and (not (char=? (name 0) #\?))
+				      (if (and ;(not (char=? (name 0) #\?))
 					       (not (char=? (name 0) #\/))
 					       (or (< len 3)
 						   (not (char=? (name (- len 2)) #\')))

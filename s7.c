@@ -32,7 +32,7 @@
  * s7, Bill Schottstaedt, Aug-08
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
- * Rick Taube, Andrew Burnson, and Donny Ward provided the MS Visual C++ support
+ * Rick Taube, Andrew Burnson, Donny Ward, and Greg Santucci provided the MS Visual C++ support
  *
  * Documentation is in s7.h and s7.html.
  * s7test.scm is a regression test.
@@ -804,7 +804,7 @@ struct s7_scheme {
   s7_pointer error_hook;              /* *error-hook* hook object */
   s7_pointer direct_str;
 
-  bool gc_off;              /* gc_off: if true, the GC won't run */
+  bool gc_off;                        /* gc_off: if true, the GC won't run */
   unsigned int gc_stats;
   unsigned int gensym_counter, cycle_counter, f_class, add_class, multiply_class, subtract_class, equal_class;
   int format_column;
@@ -4305,7 +4305,7 @@ static int gc(s7_scheme *sc)
 #endif
     }
 
-  if (sc->begin_hook) call_begin_hook(sc);
+  /* if (sc->begin_hook) call_begin_hook(sc); */
   sc->previous_free_heap_top = sc->free_heap_top;
   return(sc->gc_freed); /* needed by cell allocator to decide when to increase heap size */
 }
@@ -36288,6 +36288,9 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
   return(vec);
 }
 
+static s7_pointer c_vector_1(s7_scheme *sc, s7_pointer x) {return(g_vector(sc, set_plist_1(sc, x)));}
+PF_TO_PF(vector, c_vector_1)
+
 
 static s7_pointer g_is_float_vector(s7_scheme *sc, s7_pointer args)
 {
@@ -38854,15 +38857,19 @@ static unsigned int hasher_real(s7_scheme *sc, s7_pointer key)
 
 static unsigned int hasher_hash_table(s7_scheme *sc, s7_pointer key)
 {
+  /* hash-tables are equal if key/values match independent of table size */
   int i;
   hash_entry_t **entries;
   if (hash_table_entries(key) == 0)
     return(0);
   entries = hash_table_elements(key);
   for (i = 0; i < hash_table_length(key); i++)
-    if ((entries[i]) &&
-	(!is_sequence(entries[i]->value)))
-      return(hash_table_length(key) + hash_loc(sc, entries[i]->value));
+    if (entries[i])
+      {
+	if (!is_sequence(entries[i]->value))
+	  return(i + hash_loc(sc, entries[i]->value));
+	return(i);
+      }
   return(0);
 }
 
@@ -38897,19 +38904,35 @@ static unsigned int hasher_vector(s7_scheme *sc, s7_pointer key)
 
 static unsigned int hasher_let(s7_scheme *sc, s7_pointer key)
 {
+  /* lets are equal if same symbol/value pairs, independent of order, taking into account shadowing
+   *   (length (inlet 'a 1 'a 2)) = 2
+   * but this counts as just one entry from equal?'s point of view, so if more than one entry, we have a problem.
+   *   (equal? (inlet 'a 1) (inlet 'a 3 'a 2 'a 1)) = #t
+   */
+  s7_pointer slot;
+
   if ((key == sc->rootlet) ||
-      (!is_slot(let_slots(key))) ||
-      (is_sequence(slot_value(let_slots(key)))))
+      (!is_slot(let_slots(key))))
     return(0);
-  if ((!is_slot(next_slot(let_slots(key)))) ||
-      (is_sequence(slot_value(next_slot(let_slots(key))))))
-    return(hash_loc(sc, slot_value(let_slots(key))));
-  return(hash_loc(sc, slot_value(let_slots(key))) + hash_loc(sc, slot_value(next_slot(let_slots(key)))));
+  slot = let_slots(key);
+  if (!is_slot(next_slot(slot)))
+    {
+      if (is_sequence(slot_value(slot))) /* avoid loop if cycles */
+	return(symbol_raw_hash(slot_symbol(slot)));
+      return(symbol_raw_hash(slot_symbol(slot)) + hash_loc(sc, slot_value(slot)));
+    }
+  /* TODO: if more than 1 slot, find how many unshadowed symbols, if 1, use the code above on the active case,
+   *   else return the symbol number
+   * perhaps use set|clear_match_symbol with is_matched_symbol
+   * try hash + anything (1/2/3), also gensym names in let (what about functions/closures here?)
+   * since user-function can't work, maybe remove the lock?
+   */
+  return(1);
 }
 
 static unsigned int hasher_pair(s7_scheme *sc, s7_pointer key)
 {
-  /* len+loc(car) is not horrible, but it means (for example) every list '(set! a b) is hashed to the same location,
+  /* len+loc(car) is not horrible, but it means (for example) every list '(set! ...) is hashed to the same location,
    *   so at least we need to take cadr into account if possible.  Better would combine the list_length(max 5 == safe_strlen5?) call
    *   with stats like symbols/pairs/constants at top level, then use those to spread it out over all the locs.
    */
@@ -39270,7 +39293,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
   size = sc->default_hash_table_length;
 
   /* the "eq_func" arg can't work.  For example, string-ci=? is the
-   *   obvious candidate.  But strings are hashed to different hash locations is they differ
+   *   obvious candidate.  But strings are hashed to different hash locations if they differ
    *   in upper/lower case, so "ab" and "AB" will almost certainly not be in the same hash list.
    *   Even = won't work because (for example) 1.0 goes to bin (1000 % hash-len), but 1 goes to bin 1.
    */
@@ -45222,7 +45245,7 @@ void s7_set_begin_hook(s7_scheme *sc, void (*hook)(s7_scheme *sc, bool *val))
 static bool call_begin_hook(s7_scheme *sc)
 {
   bool result = false;
-  /* originally the begin_hook was bool (*hook)(s7_scheme *sc): the value was returned directly,
+  /* originally begin_hook was bool (*hook)(s7_scheme *sc): the value was returned directly,
    *   rather than going through a *bool arg (&result below).  That works in gcc (Linux/OSX),
    *   but does not work in MS Visual C++.  In the latter, the compiler apparently completely
    *   eliminates any local, returning (for example) a thread-relative stack-allocated value
@@ -49667,6 +49690,7 @@ static void init_choosers(s7_scheme *sc)
   s7_gf_set_function(slot_value(global_slot(sc->LIST)), list_pf);
   s7_gf_set_function(slot_value(global_slot(sc->INT_VECTOR)), int_vector_pf);
   s7_gf_set_function(slot_value(global_slot(sc->FLOAT_VECTOR)), float_vector_pf);
+  s7_gf_set_function(slot_value(global_slot(sc->VECTOR)), vector_pf);
   s7_gf_set_function(slot_value(global_slot(sc->C_POINTER)), c_pointer_pf);
   s7_gf_set_function(slot_value(global_slot(sc->VECTOR_DIMENSIONS)), vector_dimensions_pf);
   s7_gf_set_function(slot_value(global_slot(sc->MAKE_SHARED_VECTOR)), make_shared_vector_pf);
@@ -55971,13 +55995,27 @@ static int dox_ex(s7_scheme *sc)
       s7_pointer endp, slots, scc;
       scc = sc->code;
       endp = fcdr(sc->code);
+
+      if (endf == all_x_c_c)
+	{
+	  endf = c_call(endp);
+	  endp = cdr(endp);
+	}
+
       slots = let_slots(sc->envir);
       if ((is_null(next_slot(slots))) && (is_pair(slot_expression(slots))))
 	{
 	  s7_function f;
 	  s7_pointer a;
+
 	  f = (s7_function)fcdr(slot_expression(slots));
 	  a = car(slot_expression(slots));
+	  if (f == all_x_c_c)
+	    {
+	      f = c_call(a);
+	      a = cdr(a);
+	    }
+
 	  while (true) /* thash titer */
 	    {
 	      slot_set_value(slots, f(sc, a));
@@ -59531,25 +59569,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  /* -------------------------------- BEGIN -------------------------------- */
 	case OP_BEGIN:
-	  if (!is_proper_list(sc, sc->code)) /* proper list includes nil, I think */
+	  if (!is_proper_list(sc, sc->code))       /* proper list includes nil, I think */
 	    eval_error(sc, "unexpected dot? ~A", sc->code);
 	   
-	  if ((!is_null(sc->code)) &&        /* so check for it here */
+	  if ((!is_null(sc->code)) &&              /* so check for it here */
 	      (!is_null(cdr(sc->code))) &&
 	      (is_overlaid(sc->code)) &&
 	      (cdr(ecdr(sc->code)) == sc->code))
 	    pair_set_syntax_symbol(sc->code, sc->BEGIN_UNCHECKED);
 	  
 	case OP_BEGIN_UNCHECKED:
-	  if ((sc->begin_hook) && (call_begin_hook(sc))) return(sc->F);
+	  /* if ((sc->begin_hook) && (call_begin_hook(sc))) return(sc->F); */
 	  if (is_null(sc->code))                   /* (begin) -> () */
 	    {
 	      sc->value = sc->NIL;
 	      goto START;
 	    }
 	  
-	BEGIN1:
 	case OP_BEGIN1:
+	  if ((sc->begin_hook) && (call_begin_hook(sc))) return(sc->F);
+	BEGIN1:
 	  if (is_pair(cdr(sc->code)))
 	    push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
 	  sc->code = car(sc->code);
@@ -59568,8 +59607,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->cur_code = sc->code;                /* in case an error occurs, this helps tell us where we are */
 	      sc->op = (opcode_t)pair_syntax_op(sc->code);
 	      sc->code = cdr(sc->code);
-	      goto START_WITHOUT_POP_STACK;
-	      /* it is only slightly faster to use labels as values (computed gotos) here */
+	      goto START_WITHOUT_POP_STACK;	      /* it is only slightly faster to use labels as values (computed gotos) here */
 	    }
 	  
 	  if (is_optimized(sc->code))
@@ -70035,7 +70073,7 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
    *   sinc_tables, c-objects, rc_data, strbuf/tmpbuf[reallocs], autoload tables, hash_entrys, symbol_table,
    *   small_ints?
    */
-  int i, syms = 0;
+  int i, syms = 0, len;
   s7_pointer x;
 
 #ifdef __linux__
@@ -70056,6 +70094,12 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
 
   fprintf(stderr, "stack: %d (%lld bytes)\n", sc->stack_size, (s7_int)(sc->stack_size * sizeof(s7_pointer)));
   fprintf(stderr, "c_functions: %d (%d bytes)\n", c_functions, (int)(c_functions * sizeof(c_proc_t)));
+
+  len = 0;
+  for (i = 0; i < (int)(sc->strings_loc); i++)
+    len += string_length(sc->strings[i]);
+  fprintf(stderr, "strings: %d, %d bytes\n", sc->strings_loc, len); /* also doc strings, permanent strings, etc */
+
   return(sc->F);
 }
 
@@ -70165,7 +70209,7 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
     return(s7_make_integer(sc, sc->bignum_precision));
   if (sym == sc->float_format_precision_symbol)                          /* float-format-precision */
     return(s7_make_integer(sc, float_format_precision));
-  if (sym == sc->memory_usage_symbol)
+  if (sym == sc->memory_usage_symbol)                                    /* memory-usage */
     return(describe_memory_usage(sc));
 
   /* sc->unlet is a scheme vector of slots -- not very useful at the scheme level */
@@ -70563,7 +70607,7 @@ s7_scheme *s7_init(void)
 	sc->heap[i] = &cells[i];
  	sc->free_heap[i] = sc->heap[i];
  	heap_location(sc->heap[i]) = i;
-      }
+     }
   }
 
   /* this has to precede s7_make_* allocations */
@@ -71929,13 +71973,13 @@ int main(int argc, char **argv)
  *
  * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1127 1129 |
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136 1158 |
- * teq           |      |      | 6612                     3887 3020 2516 2468 2456 |
+ * teq           |      |      | 6612                     3887 3020 2516 2468 2452 |
  * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3258 |
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212 3266 |
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 3298 |
- * tform         |      |      |                          6816 5536 4287 3996 4085 |
- * tmap          |      |      |  9.3                                         4235 |
- * titer         |      |      |                          7503 6793 6351 6048 6258 |
+ * tform         |      |      |                          6816 5536 4287 3996 4066 |
+ * tmap          |      |      |  9.3                                         4231 |
+ * titer         |      |      |                          7503 6793 6351 6048 6054 |
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 7279 |
  * thash         |      |      |                          50.7 23.8 14.9 13.7 12.1 |
  *               |      |      |                                                   |
@@ -71951,7 +71995,8 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
- * the repl should autoload sndlib/clm, but ideally this would go through sndlib.scm or the equivalent.
+ * the repl should autoload sndlib/clm, but ideally this would go through sndlib.scm or the equivalent: just the load code?
+ *   (load "/home/bil/test/sndlib/libsndlib.so" (inlet 'init_func 's7_init_sndlib)): (make-oscil 300) etc
  * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds))
  * set (ht-ref) #f -> delete key, decrement entries, if 0, set func to hash-empty
@@ -71964,5 +72009,5 @@ int main(int argc, char **argv)
  *   rcos: simple_do_step->eval->safe_closure_star_s0, so if body is rfable, it could be handled [~/old/s7-closure-rf.c]
  *
  * (*s7* 'memory-usage), need a way to attach funcs to the space reporting (clm2xen etc)
- * gf cases (rf/if also): substring [inlet list] vector [float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
+ * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
  */

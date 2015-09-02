@@ -411,13 +411,6 @@ static int oss_mus_audio_initialize(void)
   return(MUS_NO_ERROR);
 }
 
-int mus_audio_reinitialize(void)
-{
-  /* an experiment */
-  audio_initialized = false;
-  return(mus_audio_initialize());
-}
-
 static int linux_audio_open(const char *pathname, int flags, mode_t mode, int system)
 {
   /* sometimes this is simply searching for a device (so failure is not a mus_error) */

@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 24
-#define SNDLIB_REVISION 3
-#define SNDLIB_DATE "12-May-15"
+#define SNDLIB_REVISION 4
+#define SNDLIB_DATE "1-Sep-15"
 
 #include <stdio.h>
 #include <time.h>
@@ -15,7 +15,7 @@
   #include <stdbool.h>
 #else
 #ifndef true
-  #define bool	int
+  #define bool	unsigned char
   #define true	1
   #define false	0
 #endif
@@ -240,7 +240,6 @@ MUS_EXPORT int mus_audio_close(int line);
 MUS_EXPORT int mus_audio_read(int line, char *buf, int bytes);
 
 MUS_EXPORT int mus_audio_initialize(void);
-MUS_EXPORT int mus_audio_reinitialize(void); /* 29-Aug-01 for CLM/Snd bugfix? */
 MUS_EXPORT char *mus_audio_moniker(void);
 MUS_EXPORT int mus_audio_api(void);
 MUS_EXPORT mus_sample_t mus_audio_compatible_sample_type(int dev);

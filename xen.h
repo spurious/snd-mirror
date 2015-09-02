@@ -10,8 +10,8 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 24
-#define XEN_VERSION "3.24"
+#define XEN_MINOR_VERSION 25
+#define XEN_VERSION "3.25"
 
 /* HISTORY:
  *
@@ -145,7 +145,7 @@
   #include <stdbool.h>
 #else
 #ifndef true
-  #define bool	int
+  #define bool  unsigned char
   #define true	1
   #define false	0
 #endif
