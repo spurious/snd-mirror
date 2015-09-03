@@ -3825,7 +3825,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   snd_info *sp;
   snd_fd *sf;
   mus_long_t kp, num;
-  int rpt = 0, rpt4;
+  int rpt = 0, rpt4 = 0;
   bool reporting = false;
   int counts = 0, pos;
   char *errmsg;
@@ -3924,6 +3924,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 		  old_e = s7_set_curlet(s7, e);                  /* new env for scan lambda */
 		  y = s7_make_mutable_real(s7, 1.5);             /* slot for the scan lambda arg */
 		  yp = s7_make_slot(s7, e, arg, y);
+		  val = y;
 
 		  s7_xf_new(s7, e);
 		  pf = s7_pf_function(s7, fcar)(s7, res);

@@ -2875,6 +2875,7 @@
 					     (let ((sig (procedure-signature (procedure-setter f)))
 						   (settee-len (length settee)))
 					       (when (and (pair? sig)
+							  (positive? settee-len)
 							  (pair? (list-tail sig settee-len)))
 						 (let ((checker (list-ref sig settee-len))
 						       (arg-type (->type setval)))

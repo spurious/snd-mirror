@@ -529,9 +529,9 @@ typedef struct hash_entry_t {
   unsigned int raw_hash;
 } hash_entry_t;
 
-typedef unsigned int (*hash_locator)(s7_scheme *sc, s7_pointer table, s7_pointer key);
+typedef unsigned int (*hash_mapper)(s7_scheme *sc, s7_pointer table, s7_pointer key);
 typedef hash_entry_t *(*hash_checker)(s7_scheme *sc, s7_pointer table, s7_pointer key);
-static hash_locator *default_hashers;
+static hash_mapper *default_hashers;
 
 /* cell structure */
 typedef struct s7_cell {
@@ -622,7 +622,7 @@ typedef struct s7_cell {
       unsigned int length, entries;
       hash_entry_t **elements;
       hash_checker hash_func;
-      hash_locator *loc;
+      hash_mapper *loc;
       s7_pointer dproc;
     } hasher;
 
@@ -987,7 +987,7 @@ struct s7_scheme {
 #endif
 
 #if WITH_GMP
-  s7_pointer BIGNUM;
+  s7_pointer BIGNUM, IS_BIGNUM;
 #endif
 #if WITH_SYSTEM_EXTRAS
   s7_pointer IS_DIRECTORY, FILE_EXISTS, DELETE_FILE, GETENV, SYSTEM, DIRECTORY_TO_LIST, FILE_MTIME;
@@ -1918,7 +1918,7 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define hash_table_checker_locked(p) (hash_table_mapper(p) != default_hashers)
 #define hash_table_procedures(p)       _THsh(p)->object.hasher.dproc
 #define hash_table_procedures_checker(p) car(hash_table_procedures(p))
-#define hash_table_procedures_locator(p) cdr(hash_table_procedures(p))
+#define hash_table_procedures_mapper(p) cdr(hash_table_procedures(p))
 
 #define is_iterator(p)                (type(p) == T_ITERATOR)
 #define iterator_sequence(p)          _TItr(p)->object.iter.obj
@@ -5445,8 +5445,18 @@ static s7_pointer find_let(s7_scheme *sc, s7_pointer obj)
 static s7_pointer free_let(s7_scheme *sc, s7_pointer e)
 {
   s7_pointer p;
+#if DEBUGGING
+  for (p = let_slots(e); is_slot(p);)
+    {
+      s7_pointer n;
+      n = next_slot(p); /* grab it before we free p, or the type check stuff will complain */
+      free_cell(sc, p);
+      p = n;
+    }
+#else
   for (p = let_slots(e); is_slot(p); p = next_slot(p))
     free_cell(sc, p);
+#endif
   free_cell(sc, e);
   return(sc->NIL);
 }
@@ -9696,7 +9706,7 @@ static s7_pf_t xf2_pf_1(s7_scheme *sc, s7_pointer expr, s7_pf_t f1, s7_pf_t f2, 
     return(xf2_pf_1(sc, expr, CName ## _pf_i2, CName ## _pf_r2, CName ## _pf_r2_sc, CName ## _pf_p2, CName ## _pf_ss));	\
   }
 
-
+#if WITH_OPTIMIZATION
 static s7_pointer if_pf_xx(s7_scheme *sc, s7_pointer **p)
 {
   s7_pf_t test, t;
@@ -9735,7 +9745,6 @@ static s7_pointer if_pf_not_xx(s7_scheme *sc, s7_pointer **p)
   return(val);
 }
 
-#if WITH_OPTIMIZATION
 #if (!WITH_GMP)
 static s7_pointer equal_p2(s7_scheme *sc, s7_pointer **p);
 #endif
@@ -28644,10 +28653,9 @@ bool s7_is_valid(s7_scheme *sc, s7_pointer arg)
       can_jump = 1;
       old_segv = signal(SIGSEGV, segv);
 #endif
-
       result = ((!is_free(arg)) &&
 		(type(arg) < NUM_TYPES) &&
-		((arg->hloc == -1) ||
+		((arg->hloc < 0) ||
 		 ((arg->hloc >= 0) &&
 		  (arg->hloc < (int)sc->heap_size) && (sc->heap[arg->hloc] == arg))));
 
@@ -38072,11 +38080,12 @@ static s7_pf_t implicit_pf_sequence_set(s7_scheme *sc, s7_pointer seq, s7_pointe
   return(NULL);
 }
 
+#if WITH_OPTIMIZATION
 static s7_pf_t implicit_gf_sequence_set(s7_scheme *sc, s7_pointer v, s7_pointer ind, s7_pointer val) 
 {
   return(implicit_pf_sequence_set(sc, v, ind, val));
 }
-
+#endif
 
 
 
@@ -38778,7 +38787,7 @@ static s7_int c_hash_table_entries(s7_scheme *sc, s7_pointer p)
 PF_TO_IF(hash_table_entries, c_hash_table_entries)
 
 
-/* ---------------- locators ---------------- */
+/* ---------------- mappers ---------------- */
 static unsigned int hash_float_location(s7_double x)
 {
   int loc;
@@ -38797,15 +38806,17 @@ static unsigned int hash_float_location(s7_double x)
 
 /* built in hash loc tables for eq? eqv? equal? morally-equal? = string=? string-ci=? char=? char-ci=? (default=equal?) */
 
-static hash_locator *eq_hashers, *string_eq_hashers, *number_eq_hashers, *char_eq_hashers, *closure_hashers;
-static hash_locator *morally_equal_hashers, *string_ci_eq_hashers, *char_ci_eq_hashers, *c_function_hashers;
+static hash_mapper *eq_hashers, *eqv_hashers, *string_eq_hashers, *number_eq_hashers, *char_eq_hashers, *closure_hashers;
+static hash_mapper *morally_equal_hashers, *c_function_hashers;
+#if (!WITH_PURE_S7)
+static hash_mapper *string_ci_eq_hashers, *char_ci_eq_hashers;
+#endif
 
 #define hash_loc(Sc, Table, Key) (*(hash_table_mapper(Table)[type(Key)]))(Sc, Table, Key)
 
 static unsigned int hasher_nil(s7_scheme *sc, s7_pointer table, s7_pointer key)     {return(type(key));}
 static unsigned int hasher_int(s7_scheme *sc, s7_pointer table, s7_pointer key)     {return((unsigned int)(s7_int_abs(integer(key))));}
 static unsigned int hasher_char(s7_scheme *sc, s7_pointer table, s7_pointer key)    {return(character(key));}
-static unsigned int hasher_ci_char(s7_scheme *sc, s7_pointer table, s7_pointer key) {return(upper_character(key));}
 static unsigned int hasher_ratio(s7_scheme *sc, s7_pointer table, s7_pointer key)   {return((unsigned int)denominator(key));} /* overflow possible as elsewhere */
 static unsigned int hasher_complex(s7_scheme *sc, s7_pointer table, s7_pointer key) {return(hash_float_location(real_part(key)));}
 static unsigned int hasher_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)  {return(symbol_raw_hash(key));}
@@ -38828,6 +38839,9 @@ static unsigned int hasher_string(s7_scheme *sc, s7_pointer table, s7_pointer ke
   return(loc);
 }
 
+#if (!WITH_PURE_S7)
+static unsigned int hasher_ci_char(s7_scheme *sc, s7_pointer table, s7_pointer key) {return(upper_character(key));}
+
 static unsigned int hasher_ci_string(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   int len;
@@ -38835,6 +38849,7 @@ static unsigned int hasher_ci_string(s7_scheme *sc, s7_pointer table, s7_pointer
   if (len == 0) return(0);
   return(len + (toupper(string_value(key)[0]) << 4));
 }
+#endif
 
 static unsigned int hasher_real(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
@@ -38851,8 +38866,8 @@ static unsigned int hasher_real(s7_scheme *sc, s7_pointer table, s7_pointer key)
 static unsigned int hasher_real_eq(s7_scheme *sc, s7_pointer table, s7_pointer x)
 {
   if (real(x) < 0.0)
-    return((unsigned int)(-real(x)));
-  return((unsigned int)real(x));
+    return((unsigned int)(s7_round(-real(x))));
+  return((unsigned int)s7_round(real(x)));
 }
 
 static unsigned int hasher_ratio_eq(s7_scheme *sc, s7_pointer table, s7_pointer y)
@@ -38860,8 +38875,8 @@ static unsigned int hasher_ratio_eq(s7_scheme *sc, s7_pointer table, s7_pointer 
   s7_double x;
   x = fraction(y);
   if (x < 0.0)
-    return((unsigned int)(-x));
-  return((unsigned int)x);
+    return((unsigned int)s7_round(-x));
+  return((unsigned int)s7_round(x));
 }
 
 static unsigned int hasher_hash_table(s7_scheme *sc, s7_pointer table, s7_pointer key)
@@ -38911,7 +38926,7 @@ static unsigned int hasher_vector(s7_scheme *sc, s7_pointer table, s7_pointer ke
   return(vector_length(key) + hash_loc(sc, table, vector_element(key, 0)) + hash_loc(sc, table, vector_element(key, 1)));
 }
 
-static unsigned int eq_locator(s7_scheme *sc, s7_pointer table, s7_pointer key)
+static unsigned int eq_mapper(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   int x;
   x = heap_location(key);
@@ -38919,11 +38934,11 @@ static unsigned int eq_locator(s7_scheme *sc, s7_pointer table, s7_pointer key)
   return(x);
 }
 
-static unsigned int closure_locator(s7_scheme *sc, s7_pointer table, s7_pointer key)
+static unsigned int closure_mapper(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   s7_pointer f, old_e, args, body;
 
-  f = hash_table_procedures_locator(table);
+  f = hash_table_procedures_mapper(table);
   old_e = sc->envir;
   args = closure_args(f);
   body = closure_body(f);
@@ -38937,10 +38952,10 @@ static unsigned int closure_locator(s7_scheme *sc, s7_pointer table, s7_pointer 
   return(integer(sc->value));
 }
 
-static unsigned int c_function_locator(s7_scheme *sc, s7_pointer table, s7_pointer key)
+static unsigned int c_function_mapper(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   s7_function f;
-  f = c_function_call(hash_table_procedures_locator(table));
+  f = c_function_call(hash_table_procedures_mapper(table));
   car(sc->T1_1) = key;
   return(integer(f(sc, sc->T1_1)));
 }
@@ -39062,7 +39077,7 @@ static hash_entry_t *hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key
   return(NULL);
 }
 
-
+#if (!WITH_PURE_S7)
 static hash_entry_t *hash_ci_string(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   if (is_string(key))
@@ -39080,6 +39095,23 @@ static hash_entry_t *hash_ci_string(s7_scheme *sc, s7_pointer table, s7_pointer 
   return(NULL);
 }
 
+static hash_entry_t *hash_ci_char(s7_scheme *sc, s7_pointer table, s7_pointer key)
+{
+  if (s7_is_character(key))
+    {
+      hash_entry_t *x;
+      unsigned int hash_len, loc;
+
+      hash_len = (unsigned int)hash_table_length(table) - 1;
+      loc = hash_loc(sc, table, key) & hash_len;
+
+      for (x = hash_table_element(table, loc); x; x = x->next)
+	if (upper_character(key) == upper_character(x->key))
+	  return(x);
+    }
+  return(NULL);
+}
+#endif
 
 static hash_entry_t *hash_float_1(s7_scheme *sc, s7_pointer table, int loc, s7_double keyval)
 {
@@ -39206,10 +39238,21 @@ static hash_entry_t *hash_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
 
 static hash_entry_t *hash_morally_equal(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
-  return((*(hash_morally_equals[type(key)]))(sc, table, key));
+  hash_entry_t *x;
+  unsigned int loc;
+  loc = hash_loc(sc, table, key) & ((int)hash_table_length(table) - 1);
+
+  for (x = hash_table_element(table, loc); x; x = x->next)
+    if (x->key == key)
+      return(x);
+
+  for (x = hash_table_element(table, loc); x; x = x->next)
+    if (s7_is_morally_equal(sc, x->key, key))
+      return(x);
+  return(NULL);
 }
 
-static hash_entry_t *hash_eq_c_function(s7_scheme *sc, s7_pointer table, s7_pointer key)
+static hash_entry_t *hash_c_function(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   hash_entry_t *x;
   unsigned int hash_len, loc;
@@ -39230,7 +39273,7 @@ static hash_entry_t *hash_eq_c_function(s7_scheme *sc, s7_pointer table, s7_poin
 }
 
 
-static hash_entry_t *hash_eq_eq(s7_scheme *sc, s7_pointer table, s7_pointer key)
+static hash_entry_t *hash_eq(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   /* explicit eq? as hash equality func or (for example) symbols as keys */
   hash_entry_t *x;
@@ -39241,6 +39284,21 @@ static hash_entry_t *hash_eq_eq(s7_scheme *sc, s7_pointer table, s7_pointer key)
 
   for (x = hash_table_element(table, loc); x; x = x->next)
     if (key == x->key)
+      return(x);
+
+  return(NULL);
+}
+
+static hash_entry_t *hash_eqv(s7_scheme *sc, s7_pointer table, s7_pointer key)
+{
+  hash_entry_t *x;
+  unsigned int hash_len, loc;
+
+  hash_len = (unsigned int)hash_table_length(table) - 1;
+  loc = hash_loc(sc, table, key) & hash_len;
+
+  for (x = hash_table_element(table, loc); x; x = x->next)
+    if (s7_is_eqv(key, x->key))
       return(x);
 
   return(NULL);
@@ -39263,27 +39321,10 @@ static hash_entry_t *hash_number(s7_scheme *sc, s7_pointer table, s7_pointer key
   return(NULL);
 }
 
-static hash_entry_t *hash_number_eqv(s7_scheme *sc, s7_pointer table, s7_pointer key)
-{
-  hash_entry_t *x;
-  unsigned int hash_len, loc;
-
-  hash_len = (unsigned int)hash_table_length(table) - 1;
-  loc = hash_loc(sc, table, key) & hash_len;
-
-  for (x = hash_table_element(table, loc); x; x = x->next)
-    if ((is_number(x->key)) &&
-	(numbers_are_eqv(key, x->key)))
-      return(x);
-
-  return(NULL);
-}
-
-
 static hash_entry_t *hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   if (is_symbol(key))
-    return(hash_eq_eq(sc, table, key));
+    return(hash_eq(sc, table, key));
   return(NULL);
 }
 
@@ -39291,29 +39332,11 @@ static hash_entry_t *hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key
 static hash_entry_t *hash_char(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   if (s7_is_character(key))
-    return(hash_eq_eq(sc, table, key));
+    return(hash_eq(sc, table, key));
   return(NULL);
 }
 
-static hash_entry_t *hash_ci_char(s7_scheme *sc, s7_pointer table, s7_pointer key)
-{
-  if (s7_is_character(key))
-    {
-      hash_entry_t *x;
-      unsigned int hash_len, loc;
-
-      hash_len = (unsigned int)hash_table_length(table) - 1;
-      loc = hash_loc(sc, table, key) & hash_len;
-
-      for (x = hash_table_element(table, loc); x; x = x->next)
-	if (upper_character(key) == upper_character(x->key))
-	  return(x);
-    }
-  return(NULL);
-}
-
-
-static hash_entry_t *hash_eq_closure(s7_scheme *sc, s7_pointer table, s7_pointer key)
+static hash_entry_t *hash_closure(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   hash_entry_t *x;
   unsigned int hash_len, loc;
@@ -39427,7 +39450,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 		return(ht);
 	      if (c_function_call(proc) == g_is_eq)
 		{
-		  hash_table_checker(ht) = hash_eq_eq;
+		  hash_table_checker(ht) = hash_eq;
 		  hash_table_mapper(ht) = eq_hashers;
 		}
 	      else
@@ -39439,6 +39462,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 		    }
 		  else
 		    {
+#if (!WITH_PURE_S7)
 		      if (c_function_call(proc) == g_strings_are_ci_equal)
 			{
 			  hash_table_checker(ht) = hash_ci_string; 
@@ -39446,17 +39470,18 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 			}
 		      else
 			{
-			  if (c_function_call(proc) == g_chars_are_equal)
+			  if (c_function_call(proc) == g_chars_are_ci_equal)
 			    {
-			      hash_table_checker(ht) = hash_char; 
-			      hash_table_mapper(ht) = char_eq_hashers;
+			      hash_table_checker(ht) = hash_ci_char; 
+			      hash_table_mapper(ht) = char_ci_eq_hashers;
 			    }
-			  else
+			  else	
 			    {
-			      if (c_function_call(proc) == g_chars_are_ci_equal)
+#endif
+			      if (c_function_call(proc) == g_chars_are_equal)
 				{
-				  hash_table_checker(ht) = hash_ci_char; 
-				  hash_table_mapper(ht) = char_ci_eq_hashers;
+				  hash_table_checker(ht) = hash_char; 
+				  hash_table_mapper(ht) = char_eq_hashers;
 				}
 			      else
 				{
@@ -39469,8 +39494,8 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 				    {				  
 				      if (c_function_call(proc) == g_is_eqv)
 					{
-					  hash_table_checker(ht) = hash_number_eqv; 
-					  hash_table_mapper(ht) = number_eq_hashers;
+					  hash_table_checker(ht) = hash_eqv; 
+					  hash_table_mapper(ht) = eqv_hashers;
 					}
 				      else
 					{
@@ -39481,7 +39506,10 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 					    }
 					  else return(wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, 3, proc, 
 										    make_string_wrapper(sc, "a hash function")));
-					}}}}}}}
+					}}}}}
+#if (!WITH_PURE_S7)
+		    }}
+#endif
 	      return(ht);
 	    }
 	  /* proc not c_function */
@@ -39490,14 +39518,14 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 	      if (is_pair(proc))
 		{
 		  s7_sig_t sig;
-		  s7_pointer checker, locator;
+		  s7_pointer checker, mapper;
 		  checker = car(proc);
-		  locator = cdr(proc);
+		  mapper = cdr(proc);
 
 		  if (((is_any_c_function(checker)) || (is_any_closure(checker))) &&
-		      ((is_any_c_function(locator)) || (is_any_closure(locator))) &&
+		      ((is_any_c_function(mapper)) || (is_any_closure(mapper))) &&
 		      (s7_is_aritable(sc, checker, 2)) &&
-		      (s7_is_aritable(sc, locator, 1)))
+		      (s7_is_aritable(sc, mapper, 1)))
 		    {
 		      ht = s7_make_hash_table(sc, size);
 		      if (is_any_c_function(checker))
@@ -39508,12 +39536,12 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 			      (car(sig) != sc->IS_BOOLEAN))
 			    return(wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, 3, proc, 
 								 make_string_wrapper(sc, "equality function should return a boolean")));
-			  hash_table_checker(ht) = hash_eq_c_function;
+			  hash_table_checker(ht) = hash_c_function;
 			}
-		      else hash_table_checker(ht) = hash_eq_closure;
-		      if (is_any_c_function(locator))
+		      else hash_table_checker(ht) = hash_closure;
+		      if (is_any_c_function(mapper))
 			{
-			  sig = c_function_signature(locator);
+			  sig = c_function_signature(mapper);
 			  if ((sig) &&
 			      (is_pair(sig)) &&
 			      (car(sig) != sc->IS_INTEGER))
@@ -39541,28 +39569,34 @@ void init_hashers(void)
 {
   int i;
   
-  default_hashers = (hash_locator *)malloc(NUM_TYPES * sizeof(hash_locator));
-  eq_hashers = (hash_locator *)malloc(NUM_TYPES * sizeof(hash_locator));
-  string_eq_hashers = (hash_locator *)malloc(NUM_TYPES * sizeof(hash_locator));
-  string_ci_eq_hashers = (hash_locator *)malloc(NUM_TYPES * sizeof(hash_locator));
-  number_eq_hashers = (hash_locator *)malloc(NUM_TYPES * sizeof(hash_locator));
-  char_eq_hashers = (hash_locator *)malloc(NUM_TYPES * sizeof(hash_locator));
-  char_ci_eq_hashers = (hash_locator *)malloc(NUM_TYPES * sizeof(hash_locator));
-  closure_hashers = (hash_locator *)malloc(NUM_TYPES * sizeof(hash_locator));
-  c_function_hashers = (hash_locator *)malloc(NUM_TYPES * sizeof(hash_locator));
-  morally_equal_hashers = (hash_locator *)malloc(NUM_TYPES * sizeof(hash_locator));
+  default_hashers = (hash_mapper *)malloc(NUM_TYPES * sizeof(hash_mapper));
+  eq_hashers = (hash_mapper *)malloc(NUM_TYPES * sizeof(hash_mapper));
+  eqv_hashers = (hash_mapper *)malloc(NUM_TYPES * sizeof(hash_mapper));
+  string_eq_hashers = (hash_mapper *)malloc(NUM_TYPES * sizeof(hash_mapper));
+  number_eq_hashers = (hash_mapper *)malloc(NUM_TYPES * sizeof(hash_mapper));
+  char_eq_hashers = (hash_mapper *)malloc(NUM_TYPES * sizeof(hash_mapper));
+#if (!WITH_PURE_S7)
+  string_ci_eq_hashers = (hash_mapper *)malloc(NUM_TYPES * sizeof(hash_mapper));
+  char_ci_eq_hashers = (hash_mapper *)malloc(NUM_TYPES * sizeof(hash_mapper));
+#endif
+  closure_hashers = (hash_mapper *)malloc(NUM_TYPES * sizeof(hash_mapper));
+  c_function_hashers = (hash_mapper *)malloc(NUM_TYPES * sizeof(hash_mapper));
+  morally_equal_hashers = (hash_mapper *)malloc(NUM_TYPES * sizeof(hash_mapper));
 
   for (i = 0; i < NUM_TYPES; i++) 
     {
       default_hashers[i] = hasher_nil;
       string_eq_hashers[i] = hasher_nil;
-      string_ci_eq_hashers[i] = hasher_nil;
       char_eq_hashers[i] = hasher_nil;
+#if (!WITH_PURE_S7)
+      string_ci_eq_hashers[i] = hasher_nil;
       char_ci_eq_hashers[i] = hasher_nil;
+#endif
       number_eq_hashers[i] = hasher_nil;
-      closure_hashers[i] = closure_locator;
-      c_function_hashers[i] = c_function_locator;
-      eq_hashers[i] = eq_locator;
+      closure_hashers[i] = closure_mapper;
+      c_function_hashers[i] = c_function_mapper;
+      eq_hashers[i] = eq_mapper;
+      eqv_hashers[i] = eq_mapper;
       hash_equals[i] = hash_equal_any;
       hash_morally_equals[i] = hash_equal_any;
       hash_funcs[i] = hash_equal;
@@ -39591,14 +39625,26 @@ void init_hashers(void)
   for (i = 0; i < NUM_TYPES; i++) morally_equal_hashers[i] = default_hashers[i];
 
   string_eq_hashers[T_STRING] =     hasher_string;
-  string_ci_eq_hashers[T_STRING] =  hasher_ci_string;
   char_eq_hashers[T_CHARACTER] =    hasher_char;
+#if (!WITH_PURE_S7)
+  string_ci_eq_hashers[T_STRING] =  hasher_ci_string;
   char_ci_eq_hashers[T_CHARACTER] = hasher_ci_char;
+#endif
 
   number_eq_hashers[T_INTEGER] =    hasher_int;
   number_eq_hashers[T_RATIO] =      hasher_ratio_eq;
   number_eq_hashers[T_REAL] =       hasher_real_eq;
   number_eq_hashers[T_COMPLEX] =    hasher_complex;
+
+  eqv_hashers[T_INTEGER] =          hasher_int;
+  eqv_hashers[T_RATIO] =            hasher_ratio_eq;
+  eqv_hashers[T_REAL] =             hasher_real_eq;
+  eqv_hashers[T_COMPLEX] =          hasher_complex;
+
+  morally_equal_hashers[T_INTEGER] = hasher_int;
+  morally_equal_hashers[T_RATIO] =   hasher_ratio_eq;
+  morally_equal_hashers[T_REAL] =    hasher_real_eq;
+  morally_equal_hashers[T_COMPLEX] = hasher_complex;
 
   hash_equals[T_REAL] =             hash_equal_real;
   hash_equals[T_COMPLEX] =          hash_equal_complex;
@@ -42135,9 +42181,8 @@ static bool vector_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info 
   if (type(x) != type(y))
     {
       if (!morally) return(false);
-      /* (morally-equal? (make-vector 3 0 #t) (make-vector 3 0)) -> #t
-       * (morally-equal? (make-vector 3 1.0 #t) (vector 1 1 1)) -> #t
-       * (morally-equal? (make-vector 0 1.0 #t) (vector)) -> #t
+      /* (morally-equal? (make-int-vector 3 0) (make-vector 3 0)) -> #t
+       * (morally-equal? (make-float-vector 3 1.0) (vector 1 1 1)) -> #t
        */
       for (i = 0; i < len; i++)
 	if (!s7_is_equal_1(sc, vector_getter(x)(sc, x, i), vector_getter(y)(sc, y, i), NULL, true)) /* this could be greatly optimized */
@@ -65842,6 +65887,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif
 
 
+/* needed in s7_gmp_init and s7_init, initialized in s7_int before we get to gmp */
+static s7_sig_t pl_bt, pl_t, pl_p, pl_bc, pcl_bc, pcl_bs, pl_bn, pl_sf, pl_btt, pcl_i, pcl_t, pcl_r, pcl_n, pcl_s, pcl_v, pcl_f, pcl_c;
+#if (!WITH_PURE_S7)
+static s7_sig_t pl_tp;
+#endif
+
+
 
 /* -------------------------------- multiprecision arithmetic -------------------------------- */
 
@@ -66948,7 +67000,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 }
 
 
-static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
+static s7_pointer big_bignum(s7_scheme *sc, s7_pointer args)
 {
   #define H_bignum "(bignum val (radix 10)) returns a multiprecision version of the string 'val'"
   #define Q_bignum s7_make_signature(sc, 3, sc->IS_BIGNUM, sc->IS_NUMBER, sc->IS_INTEGER)
@@ -66989,7 +67041,7 @@ bool s7_is_bignum(s7_pointer obj)
 }
 
 
-static s7_pointer g_is_bignum(s7_scheme *sc, s7_pointer args)
+static s7_pointer big_is_bignum(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_bignum "(bignum? obj) returns #t if obj is a multiprecision number."
   #define Q_is_bignum pl_bt
@@ -67464,6 +67516,7 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_abs(s7_scheme *sc, s7_pointer args)
 {
   #define H_abs "(abs x) returns the absolute value of the real number x"
+  
   s7_pointer p, x;
 
   p = car(args);
@@ -68404,6 +68457,7 @@ static s7_pointer big_asinh(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_acosh(s7_scheme *sc, s7_pointer args)
 {
   #define H_acosh "(acosh z) returns acosh(z)"
+
   s7_pointer p;
   double x;
   mpc_t n;
@@ -69762,6 +69816,7 @@ static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
 {
   #define H_lcm "(lcm ...) returns the least common multiple of its rational arguments"
+
   s7_pointer x, lst;
   bool rats = false;
 
@@ -70098,74 +70153,121 @@ static void s7_gmp_init(s7_scheme *sc)
 {
   /* if these are defined as "safe", the optimizer needs to be smarter about things like (/ 1 ...)
    */
-  sc->ADD =              s7_define_function(sc, "+",                   big_add,              0, 0, true,  H_add);
-  sc->SUBTRACT =         s7_define_function(sc, "-",                   big_subtract,         1, 0, true,  H_subtract);
-  sc->MULTIPLY =         s7_define_function(sc, "*",                   big_multiply,         0, 0, true,  H_multiply);
-  sc->DIVIDE =           s7_define_function(sc, "/",                   big_divide,           1, 0, true,  H_divide);
+  #define big_defun(Scheme_Name, C_Name, Req, Opt, Rst) s7_define_typed_function(sc, Scheme_Name, big_ ## C_Name, Req, Opt, Rst, H_ ## C_Name, Q_ ## C_Name)
 
-  sc->MAX =              s7_define_function(sc, "max",                 big_max,              1, 0, true,  H_max);
-  sc->MIN =              s7_define_function(sc, "min",                 big_min,              1, 0, true,  H_min);
-  sc->LT =               s7_define_function(sc, "<",                   big_less,             2, 0, true,  H_less);
-  sc->LEQ =              s7_define_function(sc, "<=",                  big_less_or_equal,    2, 0, true,  H_less_or_equal);
-  sc->GT =               s7_define_function(sc, ">",                   big_greater,          2, 0, true,  H_greater);
-  sc->GEQ =              s7_define_function(sc, ">=",                  big_greater_or_equal, 2, 0, true,  H_greater_or_equal);
-  sc->EQ =               s7_define_function(sc, "=",                   big_equal,            2, 0, true,  H_equal);
+  /* TODO: distribute these sigs */
+  #define Q_abs s7_make_signature(sc, 2, sc->IS_REAL, sc->IS_REAL)  
+  #define Q_magnitude s7_make_signature(sc, 2, sc->IS_REAL, sc->IS_NUMBER)
+  #define Q_angle s7_make_signature(sc, 2, sc->IS_REAL, sc->IS_NUMBER)
+  #define Q_rationalize s7_make_signature(sc, 3, sc->IS_RATIONAL, sc->IS_REAL, sc->IS_REAL)
+  #define Q_make_polar s7_make_signature(sc, 3, sc->IS_NUMBER, sc->IS_REAL, sc->IS_REAL)
+  #define Q_make_rectangular s7_make_signature(sc, 3, sc->IS_NUMBER, sc->IS_REAL, sc->IS_REAL)
+  #define Q_exp pcl_n  
+  #define Q_log pcl_n
+  #define Q_sin pcl_n  
+  #define Q_cos pcl_n  
+  #define Q_tan pcl_n  
+  #define Q_asin pcl_n  
+  #define Q_acos pcl_n  
+  #define Q_atan s7_make_signature(sc, 3, sc->IS_NUMBER, sc->IS_NUMBER, sc->IS_REAL)  
+  #define Q_sinh pcl_n  
+  #define Q_cosh pcl_n  
+  #define Q_tanh pcl_n  
+  #define Q_asinh pcl_n  
+  #define Q_acosh pcl_n  
+  #define Q_atanh pcl_n  
+  #define Q_sqrt pcl_n  
+  #define Q_expt pcl_n
+  #define Q_lcm pcl_f
+  #define Q_gcd pcl_f
+  #define Q_quotient pcl_r
+  #define Q_remainder pcl_r
+  #define Q_floor s7_make_signature(sc, 2, sc->IS_INTEGER, sc->IS_REAL)
+  #define Q_ceiling s7_make_signature(sc, 2, sc->IS_INTEGER, sc->IS_REAL)
+  #define Q_truncate s7_make_signature(sc, 2, sc->IS_INTEGER, sc->IS_REAL)
+  #define Q_round s7_make_signature(sc, 2, sc->IS_INTEGER, sc->IS_REAL)
+  #define Q_modulo pcl_r
+  #define Q_add pcl_n
+  #define Q_subtract pcl_n
+  #define Q_multiply pcl_n
+  #define Q_divide pcl_n
+  #define Q_max pcl_r
+  #define Q_min pcl_r
+  #define Q_equal s7_make_circular_signature(sc, 1, 2, sc->IS_BOOLEAN, sc->IS_NUMBER)
+  #define Q_less s7_make_circular_signature(sc, 1, 2, sc->IS_BOOLEAN, sc->IS_REAL)
+  #define Q_less_or_equal s7_make_circular_signature(sc, 1, 2, sc->IS_BOOLEAN, sc->IS_REAL)
+  #define Q_greater s7_make_circular_signature(sc, 1, 2, sc->IS_BOOLEAN, sc->IS_REAL)
+  #define Q_greater_or_equal s7_make_circular_signature(sc, 1, 2, sc->IS_BOOLEAN, sc->IS_REAL)
+  #define Q_real_part s7_make_signature(sc, 2, sc->IS_REAL, sc->IS_NUMBER)  
+  #define Q_imag_part s7_make_signature(sc, 2, sc->IS_REAL, sc->IS_NUMBER)  
+  #define Q_numerator s7_make_signature(sc, 2, sc->IS_INTEGER, sc->IS_RATIONAL)
+  #define Q_denominator s7_make_signature(sc, 2, sc->IS_INTEGER, sc->IS_RATIONAL)
+  #define Q_exact_to_inexact pcl_r
+  #define Q_inexact_to_exact s7_make_signature(sc, 2, sc->IS_RATIONAL, sc->IS_REAL)
 
-  sc->RATIONALIZE =      s7_define_function(sc, "rationalize",         big_rationalize,      1, 1, false, H_rationalize);
+  sc->ADD =              big_defun("+",                add,              0, 0, true);
+  sc->SUBTRACT =         big_defun("-",                subtract,         1, 0, true);
+  sc->MULTIPLY =         big_defun("*",                multiply,         0, 0, true);
+  sc->DIVIDE =           big_defun("/",                divide,           1, 0, true);
+  sc->MAX =              big_defun("max",              max,              1, 0, true);
+  sc->MIN =              big_defun("min",              min,              1, 0, true);
+  sc->LT =               big_defun("<",                less,             2, 0, true);
+  sc->LEQ =              big_defun("<=",               less_or_equal,    2, 0, true);
+  sc->GT =               big_defun(">",                greater,          2, 0, true);
+  sc->GEQ =              big_defun(">=",               greater_or_equal, 2, 0, true);
+  sc->EQ =               big_defun("=",                equal,            2, 0, true);
+  sc->RATIONALIZE =      big_defun("rationalize",      rationalize,      1, 1, false);
 #if (!WITH_PURE_S7)
-  sc->EXACT_TO_INEXACT = s7_define_function(sc, "exact->inexact",      big_exact_to_inexact, 1, 0, false, H_exact_to_inexact);
-  sc->INEXACT_TO_EXACT = s7_define_function(sc, "inexact->exact",      big_inexact_to_exact, 1, 0, false, H_inexact_to_exact);
-  sc->INTEGER_LENGTH =   s7_define_function(sc, "integer-length",      big_integer_length,   1, 0, false, H_integer_length);
+  sc->EXACT_TO_INEXACT = big_defun("exact->inexact",   exact_to_inexact, 1, 0, false);
+  sc->INEXACT_TO_EXACT = big_defun("inexact->exact",   inexact_to_exact, 1, 0, false);
+  sc->INTEGER_LENGTH =   big_defun("integer-length",   integer_length,   1, 0, false);
 #endif
-  sc->FLOOR =            s7_define_function(sc, "floor",               big_floor,            1, 0, false, H_floor);
-  sc->CEILING =          s7_define_function(sc, "ceiling",             big_ceiling,          1, 0, false, H_ceiling);
-  sc->TRUNCATE =         s7_define_function(sc, "truncate",            big_truncate,         1, 0, false, H_truncate);
-  sc->ROUND =            s7_define_function(sc, "round",               big_round,            1, 0, false, H_round);
-  sc->QUOTIENT =         s7_define_function(sc, "quotient",            big_quotient,         2, 0, false, H_quotient);
-  sc->REMAINDER =        s7_define_function(sc, "remainder",           big_remainder,        2, 0, false, H_remainder);
-  sc->MODULO =           s7_define_function(sc, "modulo",              big_modulo,           2, 0, false, H_modulo);
-  sc->GCD =              s7_define_function(sc, "gcd",                 big_gcd,              0, 0, true,  H_gcd);
-  sc->LCM =              s7_define_function(sc, "lcm",                 big_lcm,              0, 0, true,  H_lcm);
-
+  sc->FLOOR =            big_defun("floor",            floor,            1, 0, false);
+  sc->CEILING =          big_defun("ceiling",          ceiling,          1, 0, false);
+  sc->TRUNCATE =         big_defun("truncate",         truncate,         1, 0, false);
+  sc->ROUND =            big_defun("round",            round,            1, 0, false);
+  sc->QUOTIENT =         big_defun("quotient",         quotient,         2, 0, false);
+  sc->REMAINDER =        big_defun("remainder",        remainder,        2, 0, false);
+  sc->MODULO =           big_defun("modulo",           modulo,           2, 0, false);
+  sc->GCD =              big_defun("gcd",              gcd,              0, 0, true);
+  sc->LCM =              big_defun("lcm",              lcm,              0, 0, true);
 #if WITH_MAKE_COMPLEX
-  sc->MAKE_RECTANGULAR = s7_define_function(sc, "make-complex",        big_make_rectangular, 2, 0, false, H_make_rectangular);
+  sc->MAKE_RECTANGULAR = big_defun("make-complex",     make_rectangular, 2, 0, false);
 #else
-  sc->MAKE_RECTANGULAR = s7_define_function(sc, "make-rectangular",    big_make_rectangular, 2, 0, false, H_make_rectangular);
-  sc->MAKE_POLAR =       s7_define_function(sc, "make-polar",          big_make_polar,       2, 0, false, H_make_polar);
-  sc->MAGNITUDE =        s7_define_function(sc, "magnitude",           big_magnitude,        1, 0, false, H_magnitude);
+  sc->MAKE_RECTANGULAR = big_defun("make-rectangular", make_rectangular, 2, 0, false);
+  sc->MAKE_POLAR =       big_defun("make-polar",       make_polar,       2, 0, false);
+  sc->MAGNITUDE =        big_defun("magnitude",        magnitude,        1, 0, false);
 #endif
-  sc->ANGLE =            s7_define_function(sc, "angle",               big_angle,            1, 0, false, H_angle);
-  sc->ABS =              s7_define_function(sc, "abs",                 big_abs,              1, 0, false, H_abs);
+  sc->ANGLE =            big_defun("angle",            angle,            1, 0, false);
+  sc->ABS =              big_defun("abs",              abs,              1, 0, false);
+  sc->LOGNOT =           big_defun("lognot",           lognot,           1, 0, false);
+  sc->LOGIOR =           big_defun("logior",           logior,           0, 0, true);
+  sc->LOGXOR =           big_defun("logxor",           logxor,           0, 0, true);
+  sc->LOGAND =           big_defun("logand",           logand,           0, 0, true);
+  sc->ASH =              big_defun("ash",              ash,              2, 0, false);
+  sc->EXP =              big_defun("exp",              exp,              1, 0, false);
+  sc->EXPT =             big_defun("expt",             expt,             2, 0, false);
+  sc->LOG =              big_defun("log",              log,              1, 1, false);
+  sc->SQRT =             big_defun("sqrt",             sqrt,             1, 0, false);
+  sc->SIN =              big_defun("sin",              sin,              1, 0, false);
+  sc->COS =              big_defun("cos",              cos,              1, 0, false);
+  sc->TAN =              big_defun("tan",              tan,              1, 0, false);
+  sc->ASIN =             big_defun("asin",             asin,             1, 0, false);
+  sc->ACOS =             big_defun("acos",             acos,             1, 0, false);
+  sc->ATAN =             big_defun("atan",             atan,             1, 1, false);
+  sc->SINH =             big_defun("sinh",             sinh,             1, 0, false);
+  sc->COSH =             big_defun("cosh",             cosh,             1, 0, false);
+  sc->TANH =             big_defun("tanh",             tanh,             1, 0, false);
+  sc->ASINH =            big_defun("asinh",            asinh,            1, 0, false);
+  sc->ACOSH =            big_defun("acosh",            acosh,            1, 0, false);
+  sc->ATANH =            big_defun("atanh",            atanh,            1, 0, false);
 
-  sc->LOGNOT =           s7_define_function(sc, "lognot",              big_lognot,           1, 0, false, H_lognot);
-  sc->LOGIOR =           s7_define_function(sc, "logior",              big_logior,           0, 0, true,  H_logior);
-  sc->LOGXOR =           s7_define_function(sc, "logxor",              big_logxor,           0, 0, true,  H_logxor);
-  sc->LOGAND =           s7_define_function(sc, "logand",              big_logand,           0, 0, true,  H_logand);
-  sc->ASH =              s7_define_function(sc, "ash",                 big_ash,              2, 0, false, H_ash);
-
-  sc->EXP =              s7_define_function(sc, "exp",                 big_exp,              1, 0, false, H_exp);
-  sc->EXPT =             s7_define_function(sc, "expt",                big_expt,             2, 0, false, H_expt);
-  sc->LOG =              s7_define_function(sc, "log",                 big_log,              1, 1, false, H_log);
-  sc->SQRT =             s7_define_function(sc, "sqrt",                big_sqrt,             1, 0, false, H_sqrt);
-  sc->SIN =              s7_define_function(sc, "sin",                 big_sin,              1, 0, false, H_sin);
-  sc->COS =              s7_define_function(sc, "cos",                 big_cos,              1, 0, false, H_cos);
-  sc->TAN =              s7_define_function(sc, "tan",                 big_tan,              1, 0, false, H_tan);
-  sc->ASIN =             s7_define_function(sc, "asin",                big_asin,             1, 0, false, H_asin);
-  sc->ACOS =             s7_define_function(sc, "acos",                big_acos,             1, 0, false, H_acos);
-  sc->ATAN =             s7_define_function(sc, "atan",                big_atan,             1, 1, false, H_atan);
-  sc->SINH =             s7_define_function(sc, "sinh",                big_sinh,             1, 0, false, H_sinh);
-  sc->COSH =             s7_define_function(sc, "cosh",                big_cosh,             1, 0, false, H_cosh);
-  sc->TANH =             s7_define_function(sc, "tanh",                big_tanh,             1, 0, false, H_tanh);
-  sc->ASINH =            s7_define_function(sc, "asinh",               big_asinh,            1, 0, false, H_asinh);
-  sc->ACOSH =            s7_define_function(sc, "acosh",               big_acosh,            1, 0, false, H_acosh);
-  sc->ATANH =            s7_define_function(sc, "atanh",               big_atanh,            1, 0, false, H_atanh);
-
+  sc->RANDOM =           big_defun("random",           random,           1, 1, false);
   sc->big_rng_tag = s7_new_type("<big-random-number-generator>", print_big_rng, free_big_rng, equal_big_rng, NULL, NULL, NULL);
-  sc->RANDOM =           s7_define_function(sc, "random",              big_random,           1, 1, false, H_random);
-  sc->MAKE_RANDOM_STATE = s7_define_function(sc,"make-random-state",  make_big_random_state,1, 1, false, H_make_random_state);
+  sc->MAKE_RANDOM_STATE = s7_define_typed_function(sc,"make-random-state",  make_big_random_state,1, 1, false, H_make_random_state, Q_make_random_state);
 
-  sc->BIGNUM =          s7_define_function(sc, "bignum",              g_bignum,             1, 1, false, H_bignum);
-                        s7_define_function(sc, "bignum?",             g_is_bignum,          1, 0, false, H_is_bignum);
+  sc->BIGNUM =          big_defun("bignum",            bignum,           1, 1, false);
+  sc->IS_BIGNUM =       big_defun("bignum?",           is_bignum,        1, 0, false);
 
   sc->bignum_precision = DEFAULT_BIGNUM_PRECISION;
   mpfr_set_default_prec((mp_prec_t)DEFAULT_BIGNUM_PRECISION);
@@ -70238,6 +70340,10 @@ static void init_s7_let(s7_scheme *sc)
   sc->float_format_precision_symbol =        s7_make_symbol(sc, "float-format-precision");
 }
 
+#ifdef __linux__
+  #include <sys/resource.h>
+#endif
+
 static s7_pointer describe_memory_usage(s7_scheme *sc)
 {
   /* heap, permanent, stack?, doc strings, sigs, c_func structs (and ports etc), vcts, mx_alloc, output bufs,
@@ -70248,7 +70354,6 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
   s7_pointer x;
 
 #ifdef __linux__
-  #include <sys/resource.h>
   struct rusage info;
   getrusage(RUSAGE_SELF, &info);
   fprintf(stderr, "process size: %lld\n", (s7_int)(info.ru_maxrss * 1024));
@@ -71240,12 +71345,6 @@ s7_scheme *s7_init(void)
 
   sc->gc_off = false;
 
-  {
-    s7_sig_t pl_bt, pl_t, pl_p, pl_bc, pcl_bc, pcl_bs, pl_bn, pl_sf, pl_btt, pcl_i, pcl_t, pcl_r, pcl_n, pcl_s, pcl_v, pcl_f, pcl_c;
-#if (!WITH_PURE_S7)
-    s7_sig_t pl_tp;
-#endif
-
   #define defun(Scheme_Name, C_Name, Req, Opt, Rst) s7_define_typed_function(sc, Scheme_Name, g_ ## C_Name, Req, Opt, Rst, H_ ## C_Name, Q_ ## C_Name)
   #define unsafe_defun(Scheme_Name, C_Name, Req, Opt, Rst) s7_define_unsafe_typed_function(sc, Scheme_Name, g_ ## C_Name, Req, Opt, Rst, H_ ## C_Name, Q_ ## C_Name)
 
@@ -71729,7 +71828,6 @@ s7_scheme *s7_init(void)
 #if DEBUGGING
                               s7_define_function(sc, "abort",  g_abort,         0, 0, false, "drop into gdb I hope");
 #endif
-  }
 
   sym = s7_define_function(sc, "(c-object set)", g_internal_object_set, 1, 0, true, "internal object setter redirection");
   sc->Object_Set = slot_value(global_slot(sym));
@@ -72168,11 +72266,8 @@ int main(int argc, char **argv)
  * repl: (load "/home/bil/test/sndlib/libsndlib.so" (inlet 'init_func 's7_init_sndlib)): (make-oscil 300) etc
  * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds))
- * set (ht-ref) #f -> delete key, decrement entries, if 0, set func to hash-empty
  * for closure, proc-sig could be a guarantee to the optimizer
- *
- * morally-equal? hash-table-function is not actually implemented yet, need more hash tests
- * crossref missed an unused (but set) global var (A_FUNCTION) -- it doesn't track these?
+ * gmp sig cases
  *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array

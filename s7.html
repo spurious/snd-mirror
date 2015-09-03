@@ -2406,6 +2406,8 @@ Environments are first class (and applicable) objects in s7.
 <em class="gray">(inlet 'a 1)</em>
 &gt; (let ((a 1)) (let ((b 2)) (outlet (curlet))))
 <em class="gray">(inlet 'a 1)</em>
+&gt; (let ((e (inlet 'a (inlet 'b 1 'c 2) 'b (inlet 'b 3 'c 4)))) (e 'a 'b))
+<em class="gray">1</em>
 </pre>
 </blockquote>
 <br>
