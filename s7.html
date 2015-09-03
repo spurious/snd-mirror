@@ -2204,7 +2204,7 @@ but a function grabs all remaining indices.  Trickier than I expected!
 
 
 <ul>
-<li>(<em class=def id="makehashtable">make-hash-table</em> (size 8) eq-func) ; don't use eq-func!
+<li>(<em class=def id="makehashtable">make-hash-table</em> (size 8) eq-func)
 <li>(<em class=def id="hashtable">hash-table</em> ...)
 <li>(<em class=def id="hashtablestar">hash-table*</em> ...)
 <li>(<em class=def id="hashtableref">hash-table-ref</em> ht key)
@@ -2294,6 +2294,7 @@ Since dilambdas already exist in s7, I decided to comandeer that machinery here.
 first function returns whether two objects are equal, and the second function returns the
 location to place the object.
 </p>
+</div>
 
 <div class="indented">
 <p>If the hash key is a float (a non-rational number), hash-table-ref uses <a href="#morallyequalp">morally-equal?</a>.

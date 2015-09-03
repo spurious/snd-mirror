@@ -55,7 +55,7 @@
     (fill! sym-hash #f))
 
 
-  (let ((str-hash (make-hash-table size)))
+  (let ((str-hash (make-hash-table size eq?)))
     (do ((i 0 (+ i 1))) 
 	((= i size)) 
       (hash-table-set! str-hash (vector-ref strings i) i))

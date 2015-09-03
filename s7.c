@@ -38975,7 +38975,7 @@ static unsigned int c_function_locator(s7_scheme *sc, s7_pointer table, s7_point
 
 static unsigned int hasher_let(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
-  /* lets are equal if same symbol/value pairs, independent of order, taking into account shadowing
+  /* lets are equal if same symbol/value pairs, independent of order, taking into account shadowing, ignoring outlet(?)
    *   (length (inlet 'a 1 'a 2)) = 2
    * but this counts as just one entry from equal?'s point of view, so if more than one entry, we have a problem.
    *   (equal? (inlet 'a 1) (inlet 'a 3 'a 2 'a 1)) = #t
@@ -39023,29 +39023,11 @@ static unsigned int hasher_pair(s7_scheme *sc, s7_pointer table, s7_pointer key)
   s7_pointer p1;
   unsigned int loc = 0;
 
-  if (car(key) != key)
+  if (!is_sequence(car(key)))
     loc = hash_loc(sc, table, car(key)) + 1;
   p1 = cdr(key);
-  if (is_pair(p1))
-    {
-      s7_pointer p2;
-      if ((car(p1) != key) && (car(p1) != p1))
-	{
-	  if (is_pair(car(p1)))
-	    loc = hash_loc(sc, table, caar(p1)) + 1 + loc * 2 + s7_list_length(sc, car(p1));
-	  else loc = hash_loc(sc, table, car(p1)) + 1 + loc * 2;
-	}
-      p2 = cdr(p1);
-      if (is_pair(p2))
-	{
-	  if ((car(p2) != key) && (car(p2) != p1) && (car(p2) != p2))
-	    {
-	      if (is_pair(car(p2)))
-		loc = hash_loc(sc, table, caar(p2)) + 1 + loc * 2 + s7_list_length(sc, car(p2));
-	      else loc = hash_loc(sc, table, car(p2)) + 1 + loc * 2;
-	    }
-	}
-    }
+  if ((is_pair(p1)) && (!is_sequence(car(p1))))
+    loc += hash_loc(sc, table, car(p1)) + 1;
   return(loc);
 }
 
@@ -39186,10 +39168,12 @@ static hash_entry_t *hash_equal_real(s7_scheme *sc, s7_pointer table, s7_pointer
   return(hash_float_1(sc, table, hash_loc(sc, table, key) & ((int)hash_table_length(table) - 1), real(key)));
 }
 
+
 static hash_entry_t *hash_equal_complex(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   return(hash_complex_1(sc, table, hash_loc(sc, table, key) & ((int)hash_table_length(table) - 1), key));
 }
+
 
 static hash_entry_t *hash_equal_syntax(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
@@ -39203,6 +39187,7 @@ static hash_entry_t *hash_equal_syntax(s7_scheme *sc, s7_pointer table, s7_point
   return(NULL);
 }
 
+
 static hash_entry_t *hash_equal_eq(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   hash_entry_t *x;
@@ -39213,6 +39198,7 @@ static hash_entry_t *hash_equal_eq(s7_scheme *sc, s7_pointer table, s7_pointer k
       return(x);
   return(NULL);
 }
+
 
 static hash_entry_t *hash_equal_any(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
@@ -39234,6 +39220,7 @@ static hash_entry_t *hash_equal_any(s7_scheme *sc, s7_pointer table, s7_pointer 
       return(x);
   return(NULL);
 }
+
 
 static hash_entry_t *(*hash_equals[NUM_TYPES])(s7_scheme *sc, s7_pointer table, s7_pointer key);
 static hash_entry_t *(*hash_morally_equals[NUM_TYPES])(s7_scheme *sc, s7_pointer table, s7_pointer key);
@@ -72172,14 +72159,14 @@ int main(int argc, char **argv)
  * s7test   1721 | 1358 |  995 | 1194 1185 1144 1152 1136 1111 1150 1108 1127 1129 |
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136 1158 |
  * teq           |      |      | 6612                     3887 3020 2516 2468 2452 |
- * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3258 |
+ * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3268 |
  * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212 3266 |
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 3298 |
  * tform         |      |      |                          6816 5536 4287 3996 4066 |
  * tmap          |      |      |  9.3                                         4231 |
  * titer         |      |      |                          7503 6793 6351 6048 6054 |
- * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 7279 |
- * thash         |      |      |                          50.7 23.8 14.9 13.7 11.5 |
+ * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 7293 |
+ * thash         |      |      |                          50.7 23.8 14.9 13.7 9865 |
  *               |      |      |                                                   |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 13.0 |
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 15.0 |
@@ -72193,12 +72180,13 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
- * the repl should autoload sndlib/clm, but ideally this would go through sndlib.scm or the equivalent: just the load code?
  *   (load "/home/bil/test/sndlib/libsndlib.so" (inlet 'init_func 's7_init_sndlib)): (make-oscil 300) etc
  * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds))
  * set (ht-ref) #f -> delete key, decrement entries, if 0, set func to hash-empty
  * for closure, proc-sig could be a guarantee to the optimizer
+ * morally-equal? hash-table-function is not actually implemented yet, need more hash tests
+ * does equal? ignore outlet? I think not but locator does? (equal? (sublet (inlet 'a 1)) (inlet 'a 1)) got #f but expected #t
  *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array
