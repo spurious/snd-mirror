@@ -2234,8 +2234,15 @@ set its value to #f; to remove all keys, <code>(fill! table #f)</code>.
 The result is a new hash-table with those values preinstalled: <code>(hash-table '("hi" . 32) '("ho" . 1))</code>.
 After much use, I now think it is more convenient here, as in inlet, to use hash-table*; its arguments are
 simply the keys and values, without the consing: <code>(hash-table* 'a 1 'b 2)</code>.
+Implicit indexing gives multilevel hashes:
 </p>
 
+<pre class="indented">
+&gt; (let ((h (hash-table* 'a (hash-table* 'b 2 'c 3)
+		        'b (hash-table* 'b 3 'c 4))))
+  (h 'a 'b))
+<em class="gray">2</em>
+</pre>
 
 <blockquote>
 
@@ -2281,18 +2288,22 @@ of the table sizes, or the order in which the key/value pairs were added.
 </div>
 
 <div class="indented">
-<p>The third argument to make-hash-table is complicated.  There are times when you either know
-in advance what equality function you want, or you have some special function you want to use.
-However, for the arbitrary equality function to work, objects that are equal according to that
+<p>The third argument to make-hash-table is slightly complicated.  There are times when you know
+in advance what equality function you want.  If it's one of the built-in s7 equality
+functions, eq?, eqv?, equal?, morally-equal?, =, string=?, string-ci=?, char=?, or char-ci=?,
+you can pass that function as the third argument.  In any other case, you need to
+give s7 both the equality function and the mapping function that takes any object
+and returns the hash-table location for it.  The problem here is that
+for the arbitrary equality function to work, objects that are equal according to that
 function have to be mapped to the same hash-table location.  There's no way for s7 to intuit
-what this mapping should be except in the nine built-in cases: eq?, eqv?, equal?,
-morally-equal?, =, string=?, string-ci=?, char=?, and char-ci=?.  These have preset functions
-in s7 to handle the mapping, so you can <code>(make-hash-table 31 char=?)</code> and the
-hash-table will use only char=? for equality checks.  Any other function has to provide both
-the equality checker, and a function to map from an object to a hash-table location.
-Since dilambdas already exist in s7, I decided to comandeer that machinery here.  The
-first function returns whether two objects are equal, and the second function returns the
-location to place the object.
+what this mapping should be except in the built-in cases.  So to specify some arbitrary function, the third
+argument is a cons: '(equality-checker mapper).
+</p>
+
+<p>Here's a brief example.  In CLM, we have c-objects of type mus-generator (from s7's point of view),
+and we want to hash them using equal? (which will call the generator-specific equality function).
+But s7 doesn't realize that the mus-generator type covers 40 or 50 internal types, so as the locator we pass mus-type:
+<code>(make-hash-table 64 (cons equal? mus-type))</code>.
 </p>
 </div>
 

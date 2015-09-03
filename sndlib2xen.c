@@ -1088,8 +1088,8 @@ Xen_wrap_1_arg(g_mus_set_sound_path_w, g_mus_set_sound_path)
 void mus_sndlib_xen_initialize(void)
 {
 #if HAVE_SCHEME
-  s7_sig_t pl_is, pl_isi, pl_si, pl_ss, pl_ps, pl_psp, pl_i, pl_ii, pl_bii, pl_p, pl_pp, pl_rs, pl_bi, pl_bib, pl_b, pl_bb;
-  s7_sig_t pl_l, pl_ll, pl_isfiii, pl_fsiiif, pl_bs, pl_ts;
+  s7_sig_t pl_is, pl_isi, pl_si, pl_ss, pl_ps, pl_psp, pl_i, pl_bii, pl_p, pl_rs, pl_bi, pl_bib, pl_b;
+  s7_sig_t pl_l, pl_isfiii, pl_fsiiif, pl_bs, pl_ts;
 #endif
 
   mus_sound_initialize();
@@ -1157,18 +1157,14 @@ void mus_sndlib_xen_initialize(void)
     pl_ts = s7_make_signature(s7, 2, t, s);
     pl_ps = s7_make_signature(s7, 2, p, s);
     pl_psp = s7_make_signature(s7, 3, p, s, p);
-    pl_i = s7_make_signature(s7, 1, i);
-    pl_ii = s7_make_signature(s7, 2, i, i);
+    pl_i = s7_make_circular_signature(s7, 0, 1, i);
     pl_bii = s7_make_signature(s7, 3, b, i, i);
-    pl_p = s7_make_signature(s7, 1, p);
-    pl_pp = s7_make_signature(s7, 2, p, p);
-    pl_l = s7_make_signature(s7, 1, l);
-    pl_ll = s7_make_signature(s7, 2, l, l);
+    pl_p = s7_make_circular_signature(s7, 0, 1, p);
+    pl_l = s7_make_circular_signature(s7, 0, 1, l);
     pl_rs = s7_make_signature(s7, 2, r, s);
     pl_bi = s7_make_signature(s7, 2, b, i);
     pl_bib = s7_make_signature(s7, 3, b, i, b);
-    pl_b = s7_make_signature(s7, 1, b);
-    pl_bb = s7_make_signature(s7, 2, b, b);
+    pl_b = s7_make_circular_signature(s7, 0, 1, b);
     pl_bs = s7_make_signature(s7, 2, b, s);
     pl_isfiii = s7_make_signature(s7, 6, i, s, f, i, i, i);
     pl_fsiiif = s7_make_signature(s7, 6, f, s, i, i, i, f);
@@ -1201,7 +1197,7 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_typed_procedure(S_mus_sample_type_to_string,g_mus_sample_type_to_string_w,  1, 0, 0, H_mus_sample_type_to_string, pl_si);
   Xen_define_typed_procedure(S_mus_sound_comment,        g_mus_sound_comment_w,          1, 0, 0, H_mus_sound_comment,         pl_ts);
   Xen_define_typed_procedure(S_mus_sound_write_date,     g_mus_sound_write_date_w,       1, 0, 0, H_mus_sound_write_date,      pl_is);
-  Xen_define_typed_procedure(S_mus_bytes_per_sample,     g_mus_bytes_per_sample_w,       1, 0, 0, H_mus_bytes_per_sample,      pl_ii);
+  Xen_define_typed_procedure(S_mus_bytes_per_sample,     g_mus_bytes_per_sample_w,       1, 0, 0, H_mus_bytes_per_sample,      pl_i);
   Xen_define_typed_procedure(S_mus_sound_loop_info,      g_mus_sound_loop_info_w,        1, 0, 0, H_mus_sound_loop_info,       pl_ps);
   Xen_define_typed_procedure(S_mus_sound_mark_info,      g_mus_sound_mark_info_w,        1, 0, 0, H_mus_sound_mark_info,       pl_ps);
   Xen_define_typed_procedure(S_mus_sound_maxamp_exists,  g_mus_sound_maxamp_exists_w,    1, 0, 0, H_mus_sound_maxamp_exists,   pl_bs);
@@ -1218,10 +1214,10 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_typed_procedure(S_mus_sound_preload,        g_mus_sound_preload_w,          1, 0, 0, H_mus_sound_preload,         pl_ss);
 
   Xen_define_typed_dilambda(S_mus_header_raw_defaults, g_mus_header_raw_defaults_w, H_mus_header_raw_defaults,
-			    S_set S_mus_header_raw_defaults, g_mus_header_set_raw_defaults_w, 0, 0, 1, 0, pl_p, pl_pp);
+			    S_set S_mus_header_raw_defaults, g_mus_header_set_raw_defaults_w, 0, 0, 1, 0, pl_p, pl_p);
 
   Xen_define_typed_dilambda(S_mus_clipping, g_mus_clipping_w, H_mus_clipping, 
-			    S_set S_mus_clipping, g_mus_set_clipping_w, 0, 0, 1, 0, pl_b, pl_bb);
+			    S_set S_mus_clipping, g_mus_set_clipping_w, 0, 0, 1, 0, pl_b, pl_b);
   Xen_define_typed_dilambda(S_mus_file_clipping, g_mus_file_clipping_w, H_mus_file_clipping, 
 			    S_set S_mus_file_clipping, g_mus_file_set_clipping_w, 1, 0, 2, 0, pl_bi, pl_bib);
   Xen_define_typed_dilambda(S_mus_sound_maxamp, g_mus_sound_maxamp_w, H_mus_sound_maxamp, 
@@ -1242,11 +1238,11 @@ void mus_sndlib_xen_initialize(void)
 			    S_set S_mus_alsa_squelch_warning, g_mus_alsa_set_squelch_warning_w, 0, 0, 1, 0, NULL, NULL);
 
   Xen_define_typed_dilambda(S_mus_max_malloc, g_mus_max_malloc_w, H_mus_max_malloc, 
-			    S_set S_mus_max_malloc, g_mus_set_max_malloc_w, 0, 0, 1, 0, pl_i, pl_ii);
+			    S_set S_mus_max_malloc, g_mus_set_max_malloc_w, 0, 0, 1, 0, pl_i, pl_i);
   Xen_define_typed_dilambda(S_mus_max_table_size, g_mus_max_table_size_w, H_mus_max_table_size, 
-			    S_set S_mus_max_table_size, g_mus_set_max_table_size_w, 0, 0, 1, 0, pl_i, pl_ii);
+			    S_set S_mus_max_table_size, g_mus_set_max_table_size_w, 0, 0, 1, 0, pl_i, pl_i);
   Xen_define_typed_dilambda(S_mus_sound_path, g_mus_sound_path_w, H_mus_sound_path, 
-			    S_set S_mus_sound_path, g_mus_set_sound_path_w, 0, 0, 1, 0, pl_l, pl_ll);
+			    S_set S_mus_sound_path, g_mus_set_sound_path_w, 0, 0, 1, 0, pl_l, pl_l);
 
 #if HAVE_SCHEME
   mus_max_table_size_symbol = s7_define_variable(s7, "*" S_mus_max_table_size "*", s7_make_integer(s7, MUS_MAX_TABLE_SIZE_DEFAULT));

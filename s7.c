@@ -376,7 +376,7 @@ typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_A
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST,
 	      TOKEN_VECTOR, TOKEN_BYTE_VECTOR} token_t;
 
-
+/* types */
 #define T_FREE                 0
 #define T_PAIR                 1
 #define T_NIL                  2
@@ -392,40 +392,10 @@ typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_A
 #define T_REAL                11
 #define T_COMPLEX             12
 
-#define T_BIG_INTEGER         13
+#define T_BIG_INTEGER         13 /* these four used only if WITH_GMP -- order matters.*/
 #define T_BIG_RATIO           14
 #define T_BIG_REAL            15
-#define T_BIG_COMPLEX         16
-
-/* only used in WITH_GMP case -- order matters.
- *
- * We could manipulate these types so that (type(x) | (type(y) << 1)) is unique and retains x&y type info:
- *   (1 2 9 10 (from 2 to 30) -> (2 3 5 6 10 11 13 14 18 19 21 22 26 27 29 30))
- *   (1 2 8 11 (from 2 to 31) -> (2 3 5 6 10 11 12 15 17 18 22 23 24 27 30 31))
- * and move the other types out beyond 30 so that wrong type args are easy to catch.
- * Then procedures that, for example, add 2 things need only one switch statement.
- * But timing tests indicate it's actually just as fast to trap the most common cases
- * by hand, leaving these type numbers alone.
- *
- * other cases: ((1 4 5) ((top 15) (3 6 7 9 11 12 13 14 15)))
- *              ((1 2 8 11) (top 31) (2 3 5 6 10 11 12 15 17 18 22 23 24 27 30 31))
- *              ((1 4 5 16 17) ((top 51) (3 6 7 9 11 12 13 14 15 18 19 24 25 26 27 33 35 36 37 38 39 48 49 50 51)))
- *              ((1 4 5 16 17 20) (top 60) 3 9 11 33 35 41 6 12 14 36 38 44 7 13 15 37 39 45 18 24 26 48 50 56 19 25 27 49 51 57 22 28 30 52 54 60)
- *              ((1 4 5 16 17 20 21) (top 63) 3 9 11 33 35 41 43 6 12 14 36 38 44 46 7 13 15 37 39 45
- *                                            47 18 24 26 48 50 56 58 19 25 27 49 51 57 59 22 28 30 52 54 60 62 23 29 31 53 55 61 63)
- *              ((1 4 8 13 36 37 40 41) (top 123) 3 9 17 27 73 75 81 83 6 12 20 30 76 78 84 86 10 8 24
- *                                            26 72 74 88 90 15 13 29 31 77 79 93 95 38 44 52 62 108 110 116 118 39 45 53 63 109 111
- *                                            117 119 42 40 56 58 104 106 120 122 43 41 57 59 105 107 121 123
- *              the 1 2 8 11 32 35 41 42 case tops out at 126
- *
- * so we actually could do the same thing with 8 types in the bignum case,
- * even though we have only a byte for all the types! (top=n|n<<1 where n=top choice, normally close to n*3)
- */
-
-/* can we use type bits for all ops?  10 bits more or less
- *   hloc is heap_location 
- *   long long tf -> 1 MB extra runtime memory + 100GC, at best we'd save 200 = 2%
- */
+#define T_BIG_COMPLEX         16  
 
 #define T_STRING              17
 #define T_C_OBJECT            18
@@ -1943,10 +1913,12 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define hash_table_element(p, i)      (_THsh(p)->object.hasher.elements[i])
 #define hash_table_elements(p)        _THsh(p)->object.hasher.elements
 #define hash_table_entries(p)         _THsh(p)->object.hasher.entries
-#define hash_table_function(p)        _THsh(p)->object.hasher.hash_func
-#define hash_table_locator(p)         _THsh(p)->object.hasher.loc
-#define hash_table_function_locked(p) (hash_table_locator(p) != default_hashers)
-#define hash_table_procedure(p)       _THsh(p)->object.hasher.dproc
+#define hash_table_checker(p)        _THsh(p)->object.hasher.hash_func
+#define hash_table_mapper(p)         _THsh(p)->object.hasher.loc
+#define hash_table_checker_locked(p) (hash_table_mapper(p) != default_hashers)
+#define hash_table_procedures(p)       _THsh(p)->object.hasher.dproc
+#define hash_table_procedures_checker(p) car(hash_table_procedures(p))
+#define hash_table_procedures_locator(p) cdr(hash_table_procedures(p))
 
 #define is_iterator(p)                (type(p) == T_ITERATOR)
 #define iterator_sequence(p)          _TItr(p)->object.iter.obj
@@ -2451,7 +2423,7 @@ static s7_pointer simple_out_of_range_error_prepackaged(s7_scheme *sc, s7_pointe
 static s7_pointer CAR_A_LIST, CDR_A_LIST;
 static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
 static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
-static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, AN_OPEN_PORT, A_NORMAL_REAL, A_RATIONAL, A_FUNCTION, A_BOOLEAN;
+static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, AN_OPEN_PORT, A_NORMAL_REAL, A_RATIONAL, A_BOOLEAN;
 static s7_pointer A_NUMBER, A_LET, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL, A_NON_NEGATIVE_INTEGER;
 static s7_pointer A_FORMAT_PORT, AN_UNSIGNED_BYTE, A_BINDING, A_NON_CONSTANT_SYMBOL, AN_EQ_FUNC, A_SEQUENCE, ITS_TOO_SMALL, A_NORMAL_PROCEDURE;
 static s7_pointer ITS_TOO_LARGE, ITS_NEGATIVE, RESULT_IS_TOO_LARGE, ITS_NAN, ITS_INFINITE, TOO_MANY_INDICES, A_VALID_RADIX;
@@ -3904,6 +3876,7 @@ static void mark_dynamic_wind(s7_pointer p)
 static void mark_hash_table(s7_pointer p)
 {
   set_mark(p);
+  S7_MARK(hash_table_procedures(p));
   if (hash_table_entries(p) > 0)
     {
       unsigned int i;
@@ -29353,8 +29326,8 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 	      hash_entry_t **entries;
 	      bool keys_safe;
 
-	      keys_safe = ((hash_table_function(top) != hash_equal) &&
-			   (!hash_table_function_locked(top)));
+	      keys_safe = ((hash_table_checker(top) != hash_equal) &&
+			   (!hash_table_checker_locked(top)));
 	      entries = hash_table_elements(top);
 
 	      for (i = 0; i < hash_table_length(top); i++)
@@ -33705,7 +33678,6 @@ static void init_car_a_list(void)
   A_NORMAL_PROCEDURE =     s7_make_permanent_string("a normal procedure (not a continuation)");
   A_LET =                  s7_make_permanent_string("a let (environment)");
   A_PROPER_LIST =          s7_make_permanent_string("a proper list");
-  A_FUNCTION =             s7_make_permanent_string("a function");
   A_BOOLEAN =              s7_make_permanent_string("a boolean");
   AN_INPUT_PORT =          s7_make_permanent_string("an input port");
   AN_OPEN_PORT =           s7_make_permanent_string("an open port");
@@ -38828,7 +38800,7 @@ static unsigned int hash_float_location(s7_double x)
 static hash_locator *eq_hashers, *string_eq_hashers, *number_eq_hashers, *char_eq_hashers, *closure_hashers;
 static hash_locator *morally_equal_hashers, *string_ci_eq_hashers, *char_ci_eq_hashers, *c_function_hashers;
 
-#define hash_loc(Sc, Table, Key) (*(hash_table_locator(Table)[type(Key)]))(Sc, Table, Key)
+#define hash_loc(Sc, Table, Key) (*(hash_table_mapper(Table)[type(Key)]))(Sc, Table, Key)
 
 static unsigned int hasher_nil(s7_scheme *sc, s7_pointer table, s7_pointer key)     {return(type(key));}
 static unsigned int hasher_int(s7_scheme *sc, s7_pointer table, s7_pointer key)     {return((unsigned int)(s7_int_abs(integer(key))));}
@@ -38951,7 +38923,7 @@ static unsigned int closure_locator(s7_scheme *sc, s7_pointer table, s7_pointer 
 {
   s7_pointer f, old_e, args, body;
 
-  f = closure_setter(hash_table_procedure(table));
+  f = hash_table_procedures_locator(table);
   old_e = sc->envir;
   args = closure_args(f);
   body = closure_body(f);
@@ -38968,17 +38940,19 @@ static unsigned int closure_locator(s7_scheme *sc, s7_pointer table, s7_pointer 
 static unsigned int c_function_locator(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   s7_function f;
-  f = c_function_call(c_function_setter(hash_table_procedure(table)));
+  f = c_function_call(hash_table_procedures_locator(table));
   car(sc->T1_1) = key;
   return(integer(f(sc, sc->T1_1)));
 }
 
 static unsigned int hasher_let(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
-  /* lets are equal if same symbol/value pairs, independent of order, taking into account shadowing, ignoring outlet(?)
+  /* lets are equal if same symbol/value pairs, independent of order, taking into account shadowing
    *   (length (inlet 'a 1 'a 2)) = 2
    * but this counts as just one entry from equal?'s point of view, so if more than one entry, we have a problem.
    *   (equal? (inlet 'a 1) (inlet 'a 3 'a 2 'a 1)) = #t
+   * also currently equal? follows outlet, but that is ridiculous here, so in this case hash equal?
+   *   is not the same as equal?  Surely anyone using lets as keys wants eq?
    */
   s7_pointer slot;
   int slots;
@@ -39241,7 +39215,7 @@ static hash_entry_t *hash_eq_c_function(s7_scheme *sc, s7_pointer table, s7_poin
   unsigned int hash_len, loc;
   s7_function f;
 
-  f = c_function_call(hash_table_procedure(table));
+  f = c_function_call(hash_table_procedures_checker(table));
   hash_len = (unsigned int)hash_table_length(table) - 1;
   loc = hash_loc(sc, table, key) & hash_len;
   
@@ -39345,7 +39319,7 @@ static hash_entry_t *hash_eq_closure(s7_scheme *sc, s7_pointer table, s7_pointer
   unsigned int hash_len, loc;
   s7_pointer f, args, body, old_e;
 
-  f = hash_table_procedure(table);
+  f = hash_table_procedures_checker(table);
   hash_len = (unsigned int)hash_table_length(table) - 1;
   loc = hash_loc(sc, table, key) & hash_len;
 
@@ -39401,10 +39375,10 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_int size)
   NEW_CELL(sc, table, T_HASH_TABLE | T_SAFE_PROCEDURE);
   hash_table_length(table) = size;
   hash_table_elements(table) = els;
-  hash_table_function(table) = hash_empty;
-  hash_table_locator(table) = default_hashers;
+  hash_table_checker(table) = hash_empty;
+  hash_table_mapper(table) = default_hashers;
   hash_table_entries(table) = 0;
-  hash_table_procedure(table) = sc->F;
+  hash_table_procedures(table) = sc->F;
   add_hash_table(sc, table);
 
   return(table);
@@ -39416,7 +39390,7 @@ static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_hash_table "(make-hash-table (size 511) eq-func) returns a new hash table"
-  #define Q_make_hash_table s7_make_signature(sc, 3, sc->IS_HASH_TABLE, sc->IS_INTEGER, sc->IS_PROCEDURE)
+  #define Q_make_hash_table s7_make_signature(sc, 3, sc->IS_HASH_TABLE, sc->IS_INTEGER, sc->IS_PAIR)
 
   s7_int size;
   size = sc->default_hash_table_length;
@@ -39441,106 +39415,120 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
       if (is_not_null(cdr(args)))
 	{
 	  s7_pointer ht, proc;
-	  proc = cadr(args);	          /* true procedure needed here else (make-hash-table ()) will work */
-	  if (type(proc) < T_GOTO)
-	    method_or_bust_with_type(sc, proc, sc->MAKE_HASH_TABLE, args, A_PROCEDURE, 2);
-
-	  if ((!s7_is_aritable(sc, proc, 2)) ||
-	      ((has_closure_let(proc)) &&
-	       ((!is_pair(closure_args(proc))) || (!is_pair(cdr(closure_args(proc)))))))
-	    return(wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, 3, proc, AN_EQ_FUNC));
-
-	  if (is_c_function(proc))                      /* we need to restrict this function so that hash-table-ref|set! remain safe functions */
+	  proc = cadr(args);
+	  
+	  if (is_c_function(proc))
 	    {
+	      if (!s7_is_aritable(sc, proc, 2))
+		return(wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, 3, proc, AN_EQ_FUNC));
+
 	      ht = s7_make_hash_table(sc, size);
 	      if (c_function_call(proc) == g_is_equal)
 		return(ht);
 	      if (c_function_call(proc) == g_is_eq)
 		{
-		  hash_table_function(ht) = hash_eq_eq; /* (let ((ht (make-hash-table 511 eq?))) (set! (ht 'a) 1) (ht 'a)) */
-		  hash_table_locator(ht) = eq_hashers;
+		  hash_table_checker(ht) = hash_eq_eq;
+		  hash_table_mapper(ht) = eq_hashers;
 		}
 	      else
 		{
 		  if (c_function_call(proc) == g_strings_are_equal)
 		    {
-		      hash_table_function(ht) = hash_string; 
-		      hash_table_locator(ht) = string_eq_hashers;
+		      hash_table_checker(ht) = hash_string; 
+		      hash_table_mapper(ht) = string_eq_hashers;
 		    }
 		  else
 		    {
 		      if (c_function_call(proc) == g_strings_are_ci_equal)
 			{
-			  hash_table_function(ht) = hash_ci_string; 
-			  hash_table_locator(ht) = string_ci_eq_hashers;
+			  hash_table_checker(ht) = hash_ci_string; 
+			  hash_table_mapper(ht) = string_ci_eq_hashers;
 			}
 		      else
 			{
 			  if (c_function_call(proc) == g_chars_are_equal)
 			    {
-			      hash_table_function(ht) = hash_char; 
-			      hash_table_locator(ht) = char_eq_hashers;
+			      hash_table_checker(ht) = hash_char; 
+			      hash_table_mapper(ht) = char_eq_hashers;
 			    }
 			  else
 			    {
 			      if (c_function_call(proc) == g_chars_are_ci_equal)
 				{
-				  hash_table_function(ht) = hash_ci_char; 
-				  hash_table_locator(ht) = char_ci_eq_hashers;
+				  hash_table_checker(ht) = hash_ci_char; 
+				  hash_table_mapper(ht) = char_ci_eq_hashers;
 				}
 			      else
 				{
 				  if (c_function_call(proc) == g_equal)
 				    {
-				      hash_table_function(ht) = hash_number; 
-				      hash_table_locator(ht) = number_eq_hashers;
+				      hash_table_checker(ht) = hash_number; 
+				      hash_table_mapper(ht) = number_eq_hashers;
 				    }
 				  else
 				    {				  
 				      if (c_function_call(proc) == g_is_eqv)
 					{
-					  hash_table_function(ht) = hash_number_eqv; 
-					  hash_table_locator(ht) = number_eq_hashers;
+					  hash_table_checker(ht) = hash_number_eqv; 
+					  hash_table_mapper(ht) = number_eq_hashers;
 					}
 				      else
 					{
 					  if (c_function_call(proc) == g_is_morally_equal)
 					    {
-					      hash_table_function(ht) = hash_morally_equal;
-					      hash_table_locator(ht) = morally_equal_hashers;
+					      hash_table_checker(ht) = hash_morally_equal;
+					      hash_table_mapper(ht) = morally_equal_hashers;
 					    }
-					  else
-					    {
-					      if ((c_function_setter(proc)) &&
-						  (is_c_function(c_function_setter(proc))))
-						{
-						  hash_table_function(ht) = hash_eq_c_function;
-						  hash_table_locator(ht) = c_function_hashers;  
-						  hash_table_procedure(ht) = proc;
-						}
-					      else return(wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, 3, proc, make_string_wrapper(sc, "a dilambda")));
-					    }
-					}
-				    }
-				}
-			    }
-			}
-		    }
-		}
+					  else return(wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, 3, proc, 
+										    make_string_wrapper(sc, "a hash function")));
+					}}}}}}}
 	      return(ht);
 	    }
-
-	  /* here we have a scheme function */
-	  ht = s7_make_hash_table(sc, size);
-	  if ((is_any_closure(proc)) &&
-	      (is_procedure(closure_setter(proc))))
+	  /* proc not c_function */
+	  else
 	    {
-	      hash_table_function(ht) = hash_eq_closure; /* calls the getter */
-	      hash_table_locator(ht) = closure_hashers;  /* calls the setter via closure_locator */
-	      hash_table_procedure(ht) = proc;
+	      if (is_pair(proc))
+		{
+		  s7_sig_t sig;
+		  s7_pointer checker, locator;
+		  checker = car(proc);
+		  locator = cdr(proc);
+
+		  if (((is_any_c_function(checker)) || (is_any_closure(checker))) &&
+		      ((is_any_c_function(locator)) || (is_any_closure(locator))) &&
+		      (s7_is_aritable(sc, checker, 2)) &&
+		      (s7_is_aritable(sc, locator, 1)))
+		    {
+		      ht = s7_make_hash_table(sc, size);
+		      if (is_any_c_function(checker))
+			{
+			  sig = c_function_signature(checker);
+			  if ((sig) &&
+			      (is_pair(sig)) &&
+			      (car(sig) != sc->IS_BOOLEAN))
+			    return(wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, 3, proc, 
+								 make_string_wrapper(sc, "equality function should return a boolean")));
+			  hash_table_checker(ht) = hash_eq_c_function;
+			}
+		      else hash_table_checker(ht) = hash_eq_closure;
+		      if (is_any_c_function(locator))
+			{
+			  sig = c_function_signature(locator);
+			  if ((sig) &&
+			      (is_pair(sig)) &&
+			      (car(sig) != sc->IS_INTEGER))
+			    return(wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, 3, proc, 
+								 make_string_wrapper(sc, "mapping function should return an integer")));
+			  hash_table_mapper(ht) = c_function_hashers;
+			}
+		      else hash_table_mapper(ht) = closure_hashers;
+		      hash_table_procedures(ht) = proc;
+		      return(ht);
+		    }
+		}
+	      return(wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, 3, proc, 
+						   make_string_wrapper(sc, "a cons of two functions")));
 	    }
-	  else return(wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, 3, proc, make_string_wrapper(sc, "a dilambda")));
-	  return(ht);
 	}
     }
   return(s7_make_hash_table(sc, size));
@@ -39643,13 +39631,13 @@ static void hash_table_set_function(s7_pointer table, int typ)
    * but this applies to all such variables, even strings.  Do other schemes copy the key?
    */
 
-  if (hash_table_function(table) != hash_equal)
+  if (hash_table_checker(table) != hash_equal)
     {
-      if (hash_table_function(table) != hash_funcs[typ])
+      if (hash_table_checker(table) != hash_funcs[typ])
 	{
-	  if (hash_table_function(table) == hash_empty)
-	    hash_table_function(table) = hash_funcs[typ];
-	  else hash_table_function(table) = hash_equal;
+	  if (hash_table_checker(table) == hash_empty)
+	    hash_table_checker(table) = hash_funcs[typ];
+	  else hash_table_checker(table) = hash_equal;
 	}
     }
 }
@@ -39689,7 +39677,7 @@ static unsigned int resize_hash_table(s7_scheme *sc, s7_pointer table)
 s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   hash_entry_t *x;
-  x = (*hash_table_function(table))(sc, table, key);
+  x = (*hash_table_checker(table))(sc, table, key);
   if (x) return(x->value);
   return(sc->F);
 }
@@ -39698,7 +39686,7 @@ s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, s7_pointer key)
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7_pointer value)
 {
   hash_entry_t *x;
-  x = (*hash_table_function(table))(sc, table, key);
+  x = (*hash_table_checker(table))(sc, table, key);
 
   if (x)
     x->value = value;
@@ -39732,7 +39720,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
       hash_table_element(table, loc) = p;
       hash_table_entries(table)++;
       
-      if (!hash_table_function_locked(table))
+      if (!hash_table_checker_locked(table))
 	hash_table_set_function(table, type(key));
     }
   return(value);
@@ -39770,7 +39758,7 @@ static s7_pointer g_hash_table_ref_2(s7_scheme *sc, s7_pointer args)
   if (!is_hash_table(table))
     method_or_bust(sc, table, sc->HASH_TABLE_REF, args, T_HASH_TABLE, 1);
 
-  x = (*hash_table_function(table))(sc, table, cadr(args));
+  x = (*hash_table_checker(table))(sc, table, cadr(args));
   if (x) return(x->value);
   return(sc->F);
 }
@@ -39785,7 +39773,7 @@ static s7_pointer g_hash_table_ref_ss(s7_scheme *sc, s7_pointer args)
   if (!is_hash_table(table))
     method_or_bust(sc, table, sc->HASH_TABLE_REF, list_2(sc, table, find_symbol_checked(sc, cadr(args))), T_HASH_TABLE, 1);
   
-  x = (*hash_table_function(table))(sc, table, find_symbol_checked(sc, cadr(args)));
+  x = (*hash_table_checker(table))(sc, table, find_symbol_checked(sc, cadr(args)));
   if (x) return(x->value);
   return(sc->F);
 }
@@ -39804,7 +39792,7 @@ static s7_pointer g_hash_table_ref_car(s7_scheme *sc, s7_pointer args)
   if (!is_pair(y))
     return(simple_wrong_type_argument(sc, sc->CAR, y, T_PAIR));
 
-  x = (*hash_table_function(table))(sc, table, car(y));
+  x = (*hash_table_checker(table))(sc, table, car(y));
   if (x) return(x->value);
   return(sc->F);
 }
@@ -39838,7 +39826,7 @@ static s7_pointer hash_table_ref_pf_s(s7_scheme *sc, s7_pointer **p)
   x = (**p); (*p)++;
   f = (s7_pf_t)(**p); (*p)++;
   y = f(sc, p);
-  h = (*hash_table_function(x))(sc, x, y);
+  h = (*hash_table_checker(x))(sc, x, y);
   if (h) return(h->value);
   return(sc->F);
 }
@@ -40089,7 +40077,7 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer
   
   if (hash_table_entries(new_hash) == 0)
     {
-      hash_table_function(new_hash) = hash_table_function(old_hash);
+      hash_table_checker(new_hash) = hash_table_checker(old_hash);
       for (i = 0; i < old_len; i++)
 	for (x = old_lists[i]; x; x = x->next)
 	  {
@@ -40121,7 +40109,7 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer
 	if (count >= start)
 	  {
 	    hash_entry_t *y;
-	    y = (*hash_table_function(new_hash))(sc, new_hash, x->key);
+	    y = (*hash_table_checker(new_hash))(sc, new_hash, x->key);
 	    if (y)
 	      y->value = x->value;
 	    else
@@ -40132,7 +40120,7 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer
 		p->next = new_lists[loc];
 		new_lists[loc] = p;
 		hash_table_entries(new_hash)++;
-		if (!hash_table_function_locked(new_hash))
+		if (!hash_table_checker_locked(new_hash))
 		  hash_table_set_function(new_hash, type(x->key));
 	      }
 	  }
@@ -40168,8 +40156,8 @@ s7_pointer hash_table_fill(s7_scheme *sc, s7_pointer args)
 		hash_free_list = *hp;
 	      }
 	  memset(entries, 0, len * sizeof(hash_entry_t *));
-	  if (!hash_table_function_locked(table))
-	    hash_table_function(table) = hash_empty;
+	  if (!hash_table_checker_locked(table))
+	    hash_table_checker(table) = hash_empty;
 	  hash_table_entries(table) = 0;
 	}
       else
@@ -40179,7 +40167,7 @@ s7_pointer hash_table_fill(s7_scheme *sc, s7_pointer args)
 	  for (i = 0; i < len; i++)
 	    for (x = entries[i]; x; x = x->next)
 	      x->value = val;
-	  /* keys haven't changed, so no need to mess with hash_table_function */
+	  /* keys haven't changed, so no need to mess with hash_table_checker */
 	}
     }
   return(val);
@@ -40197,23 +40185,20 @@ static s7_pointer hash_table_reverse(s7_scheme *sc, s7_pointer old_hash)
   new_hash = s7_make_hash_table(sc, len);
   gc_loc = s7_gc_protect(sc, new_hash);
 
-  old_lists = hash_table_elements(old_hash);
-  /* don't set entries or function -- s7_hash_table_set below will handle those (really?) */
+  if (hash_table_checker_locked(old_hash))
+    {
+      hash_table_checker(new_hash) = hash_table_checker(old_hash);
+      hash_table_procedures(new_hash) = hash_table_procedures(old_hash);
+      hash_table_mapper(new_hash) = hash_table_mapper(old_hash);
+    }
 
+  old_lists = hash_table_elements(old_hash);
   for (i = 0; i < len; i++)
     {
       hash_entry_t *x;
       for (x = old_lists[i]; x; x = x->next)
 	s7_hash_table_set(sc, new_hash, x->value, x->key);
     }
-
-  if (hash_table_function_locked(old_hash))
-    {
-      hash_table_function(new_hash) = hash_table_function(old_hash);
-      hash_table_procedure(new_hash) = hash_table_procedure(old_hash);
-      hash_table_locator(new_hash) = hash_table_locator(old_hash);
-    }
-
   s7_gc_unprotect_at(sc, gc_loc);
   return(new_hash);
 }
@@ -41912,9 +41897,9 @@ static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_i
     return(true);
   if (!morally)
     {
-      if (hash_table_function(x) != hash_table_function(y))
+      if (hash_table_checker(x) != hash_table_checker(y))
 	return(false);
-      if (hash_table_locator(x) != hash_table_locator(y))
+      if (hash_table_mapper(x) != hash_table_mapper(y))
 	return(false);
     }
 
@@ -41928,7 +41913,7 @@ static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_i
       for (p = lists[i]; p; p = p->next)
 	{
 	  hash_entry_t *y_val;
-	  y_val = (*hash_table_function(y))(sc, y, p->key);
+	  y_val = (*hash_table_checker(y))(sc, y, p->key);
 
 	  if ((!y_val) ||
 	      (!s7_is_equal_1(sc, p->value, y_val->value, nci, morally)))
@@ -42654,9 +42639,9 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	    s7_pointer new_hash;
 	    new_hash = s7_make_hash_table(sc, hash_table_length(source));
 	    gc_loc = s7_gc_protect(sc, new_hash);
-	    hash_table_function(new_hash) = hash_table_function(source);
-	    hash_table_locator(new_hash) = hash_table_locator(source);
-	    hash_table_procedure(new_hash) = hash_table_procedure(source);
+	    hash_table_checker(new_hash) = hash_table_checker(source);
+	    hash_table_mapper(new_hash) = hash_table_mapper(source);
+	    hash_table_procedures(new_hash) = hash_table_procedures(source);
 	    hash_table_copy(sc, source, new_hash, 0, hash_table_entries(source));
 	    s7_gc_unprotect_at(sc, gc_loc);
 	    return(new_hash);
@@ -42928,12 +42913,12 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	  {
 	    s7_pointer p;
 	    p = hash_table_copy(sc, source, dest, start, end);
-	    if ((hash_table_function(source) != hash_table_function(dest)) &&
-		(!hash_table_function_locked(dest)))
+	    if ((hash_table_checker(source) != hash_table_checker(dest)) &&
+		(!hash_table_checker_locked(dest)))
 	      {
-		if (hash_table_function(dest) == hash_empty)
-		  hash_table_function(dest) = hash_table_function(source);
-		else hash_table_function(dest) = hash_equal;
+		if (hash_table_checker(dest) == hash_empty)
+		  hash_table_checker(dest) = hash_table_checker(source);
+		else hash_table_checker(dest) = hash_equal;
 	      }
 	    return(p);
 	  }
@@ -72180,13 +72165,14 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess*
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
- *   (load "/home/bil/test/sndlib/libsndlib.so" (inlet 'init_func 's7_init_sndlib)): (make-oscil 300) etc
+ * repl: (load "/home/bil/test/sndlib/libsndlib.so" (inlet 'init_func 's7_init_sndlib)): (make-oscil 300) etc
  * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds))
  * set (ht-ref) #f -> delete key, decrement entries, if 0, set func to hash-empty
  * for closure, proc-sig could be a guarantee to the optimizer
+ *
  * morally-equal? hash-table-function is not actually implemented yet, need more hash tests
- * does equal? ignore outlet? I think not but locator does? (equal? (sublet (inlet 'a 1)) (inlet 'a 1)) got #f but expected #t
+ * crossref missed an unused (but set) global var (A_FUNCTION) -- it doesn't track these?
  *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array
