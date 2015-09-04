@@ -40187,7 +40187,7 @@ EDITS: 1
 	  (float-vector-set! fv i (oscil g x)))))
     
     (test (fv160) (let ((g (make-oscil 1000))) (float-vector (oscil g 0.1) (oscil g) (oscil g) (oscil g))))
-
+#|
     (define (fv161)
       (let ((log2 (*libm* 'log2)))
 	(let ((fv (make-float-vector 4)))
@@ -40195,7 +40195,7 @@ EDITS: 1
 	      ((= i 4) fv)
 	    (set! (fv i) (log2 2.5))))))
     (test (fv161) (float-vector (log 2.5 2) (log 2.5 2) (log 2.5 2) (log 2.5 2)))
-
+|#
     (define (fv162)
       (let ((fv (make-int-vector 4))
 	    (iter (make-iterator (list 1 2 3 4))))

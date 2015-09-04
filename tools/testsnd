@@ -279,7 +279,7 @@ rm -f config.cache
 make
 echo ' '
 echo ' '
-./snd snd-test
+./snd -l snd-test
 echo ' '
 echo ' '
 echo ' -------------------------------- that was snd-test --with-gtk + debug -------------------------------- '

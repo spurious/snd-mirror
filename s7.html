@@ -2288,12 +2288,14 @@ of the table sizes, or the order in which the key/value pairs were added.
 </div>
 
 <div class="indented">
-<p>The third argument to make-hash-table is slightly complicated.  There are times when you know
+<p>The third argument to make-hash-table (eq-func) is slightly complicated.  If it is omitted,
+s7 chooses the hashing equality and mapping functions based on the keys in the hash-table.
+There are times when you know
 in advance what equality function you want.  If it's one of the built-in s7 equality
 functions, eq?, eqv?, equal?, morally-equal?, =, string=?, string-ci=?, char=?, or char-ci=?,
 you can pass that function as the third argument.  In any other case, you need to
-give s7 both the equality function and the mapping function that takes any object
-and returns the hash-table location for it.  The problem here is that
+give s7 both the equality function and the mapping function. The latter that takes any object
+and returns the hash-table location for it (an integer).  The problem here is that
 for the arbitrary equality function to work, objects that are equal according to that
 function have to be mapped to the same hash-table location.  There's no way for s7 to intuit
 what this mapping should be except in the built-in cases.  So to specify some arbitrary function, the third
