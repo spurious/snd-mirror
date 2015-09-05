@@ -13553,6 +13553,7 @@ static bool is_rational_via_method(s7_scheme *sc, s7_pointer p)
 }
 
 
+/* -------------------------------- abs -------------------------------- */
 #if (!WITH_GMP)
 static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 {
@@ -13609,6 +13610,7 @@ static s7_double c_abs_r(s7_scheme *sc, s7_double arg) {return((arg < 0.0) ? (-a
 DIRECT_RF_TO_RF(fabs)
 
 
+/* -------------------------------- magnitude -------------------------------- */
 #if (!WITH_MAKE_COMPLEX)
 static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
 {
@@ -13653,41 +13655,8 @@ IF_TO_IF(magnitude, c_abs_i)
 RF_TO_RF(magnitude, c_abs_r)
 #endif
 
-static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
-{
-  #define H_angle "(angle z) returns the angle of z"
-  #define Q_angle s7_make_signature(sc, 2, sc->IS_REAL, sc->IS_NUMBER)
-  s7_pointer x;
-  /* (angle inf+infi) -> 0.78539816339745 ? */
 
-  x = car(args);
-  switch (type(x))
-    {
-    case T_INTEGER:
-      if (integer(x) < 0)
-	return(real_pi);
-      return(small_int(0));
-
-    case T_RATIO:
-      if (numerator(x) < 0)
-	return(real_pi);
-      return(small_int(0));
-
-    case T_REAL:
-      if (is_NaN(real(x))) return(x);
-      if (real(x) < 0.0)
-	return(real_pi);
-      return(real_zero);
-
-    case T_COMPLEX:
-      return(make_real(sc, atan2(imag_part(x), real_part(x))));
-
-    default:
-      method_or_bust_with_type(sc, x, sc->ANGLE, args, A_NUMBER, 0);
-    }
-}
-
-
+/* -------------------------------- rationalize -------------------------------- */
 static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 {
   #define H_rationalize "(rationalize x err) returns the ratio with lowest denominator within err of x"
@@ -13771,6 +13740,43 @@ static s7_pointer c_rats(s7_scheme *sc, s7_pointer x) {return(g_rationalize(sc, 
 PF_TO_PF(rationalize, c_rats)
 
 
+/* -------------------------------- angle -------------------------------- */
+static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
+{
+  #define H_angle "(angle z) returns the angle of z"
+  #define Q_angle s7_make_signature(sc, 2, sc->IS_REAL, sc->IS_NUMBER)
+  s7_pointer x;
+  /* (angle inf+infi) -> 0.78539816339745 ? */
+
+  x = car(args);
+  switch (type(x))
+    {
+    case T_INTEGER:
+      if (integer(x) < 0)
+	return(real_pi);
+      return(small_int(0));
+
+    case T_RATIO:
+      if (numerator(x) < 0)
+	return(real_pi);
+      return(small_int(0));
+
+    case T_REAL:
+      if (is_NaN(real(x))) return(x);
+      if (real(x) < 0.0)
+	return(real_pi);
+      return(real_zero);
+
+    case T_COMPLEX:
+      return(make_real(sc, atan2(imag_part(x), real_part(x))));
+
+    default:
+      method_or_bust_with_type(sc, x, sc->ANGLE, args, A_NUMBER, 0);
+    }
+}
+
+
+/* -------------------------------- make-polar -------------------------------- */
 #if (!WITH_MAKE_COMPLEX)
 static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 {
@@ -13886,6 +13892,7 @@ PF2_TO_PF(make_polar, c_make_polar_2)
 #endif
 
 
+/* -------------------------------- make-rectaangular -------------------------------- */
 static s7_pointer g_make_rectangular(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, y;
@@ -13958,6 +13965,7 @@ static s7_pointer c_make_rectangular_2(s7_scheme *sc, s7_pointer x, s7_pointer y
 PF2_TO_PF(make_rectangular, c_make_rectangular_2)
 
 
+/* -------------------------------- exp -------------------------------- */
 static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
 {
   #define H_exp "(exp z) returns e^z, (exp 1) is 2.718281828459"
@@ -22064,7 +22072,6 @@ s7_double s7_imag_part(s7_pointer x)
     }
   return(0.0);
 }
-
 
 static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
 {
@@ -38276,7 +38283,15 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
   
   if ((is_safe_procedure(lessp)) &&     /* (sort! a <) */
       (is_c_function(lessp)))
-    compare_func = c_function_call(lessp);
+    {
+      s7_sig_t sig;
+      sig = c_function_signature(lessp);
+      if ((sig) &&
+	  (is_pair(sig)) &&
+	  (car(sig) != sc->IS_BOOLEAN))
+	return(wrong_type_argument_with_type(sc, sc->SORT, 2, lessp, make_string_wrapper(sc, "sort! function should return a boolean")));
+      compare_func = c_function_call(lessp);
+    }
   else
     {
       if (is_closure(lessp))
@@ -39311,17 +39326,26 @@ static hash_entry_t *hash_eqv(s7_scheme *sc, s7_pointer table, s7_pointer key)
 
 static hash_entry_t *hash_number(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
-  hash_entry_t *x;
-  unsigned int hash_len, loc;
+  if (is_number(key))
+    {
+      hash_entry_t *x;
+      unsigned int hash_len, loc;
 
-  hash_len = (unsigned int)hash_table_length(table) - 1;
-  loc = hash_loc(sc, table, key) & hash_len;
+      hash_len = (unsigned int)hash_table_length(table) - 1;
+      loc = hash_loc(sc, table, key) & hash_len;
 
-  for (x = hash_table_element(table, loc); x; x = x->next)
-    if ((is_number(x->key)) &&
-	(is_true(sc, c_equal_2_1(sc, key, x->key))))
-      return(x);
-
+#if (!WITH_GMP)
+      for (x = hash_table_element(table, loc); x; x = x->next)
+	if ((is_number(x->key)) &&
+	    (is_true(sc, c_equal_2_1(sc, key, x->key))))
+	  return(x);
+#else
+      for (x = hash_table_element(table, loc); x; x = x->next)
+	if ((is_number(x->key)) &&
+	    (is_true(sc, big_equal(sc, set_plist_2(sc, key, x->key)))))
+	  return(x);
+#endif
+    }
   return(NULL);
 }
 
@@ -39489,7 +39513,12 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 				}
 			      else
 				{
+#if (!WITH_GMP)
 				  if (c_function_call(proc) == g_equal)
+#else
+				  if ((c_function_call(proc) == g_equal) ||
+				      (c_function_call(proc) == big_equal))
+#endif
 				    {
 				      hash_table_checker(ht) = hash_number; 
 				      hash_table_mapper(ht) = number_eq_hash_map;
@@ -39638,6 +39667,12 @@ void init_hash_maps(void)
   number_eq_hash_map[T_RATIO] =      hash_map_ratio_eq;
   number_eq_hash_map[T_REAL] =       hash_map_real_eq;
   number_eq_hash_map[T_COMPLEX] =    hash_map_complex;
+#if (WITH_GMP)
+  number_eq_hash_map[T_BIG_INTEGER] =  hash_map_big_int;
+  number_eq_hash_map[T_BIG_RATIO] =    hash_map_big_ratio;
+  number_eq_hash_map[T_BIG_REAL] =     hash_map_big_real;
+  number_eq_hash_map[T_BIG_COMPLEX] =  hash_map_big_complex;
+#endif
 
   eqv_hash_map[T_INTEGER] =          hash_map_int;
   eqv_hash_map[T_RATIO] =            hash_map_ratio_eq;
@@ -40239,13 +40274,7 @@ static s7_pointer hash_table_reverse(s7_scheme *sc, s7_pointer old_hash)
   new_hash = s7_make_hash_table(sc, len);
   gc_loc = s7_gc_protect(sc, new_hash);
 
-  if (hash_table_checker_locked(old_hash))
-    {
-      hash_table_checker(new_hash) = hash_table_checker(old_hash);
-      hash_table_procedures(new_hash) = hash_table_procedures(old_hash);
-      hash_table_mapper(new_hash) = hash_table_mapper(old_hash);
-    }
-
+  /* I don't think the original hash functions can make any sense in general, so ignore them */
   old_lists = hash_table_elements(old_hash);
   for (i = 0; i < len; i++)
     {
@@ -58584,6 +58613,12 @@ static bool a_is_ok(s7_scheme *sc, s7_pointer p)
 #endif
 #endif
 
+#if WITH_GMP
+#define global_add big_add
+#else
+#define global_add g_add
+#endif
+
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 {
@@ -60056,8 +60091,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_C_SZ:
 		  check_stack_size(sc);
 		  push_stack(sc, OP_SAFE_C_SZ_1, find_symbol_checked(sc, cadr(code)), code);
-		  sc->code = caddr(code);
-		  /* splitting out the all_x cases here and elsewhere saves nothing */
+		  sc->code = caddr(code);		            /* splitting out the all_x cases here and elsewhere saves nothing */
 		  goto OPT_EVAL;
 		  
 		  
@@ -60194,7 +60228,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  push_stack(sc, OP_SAFE_C_ZA_1, sc->NIL, code);
 		  sc->code = cadr(code);
 		  goto OPT_EVAL;
-		  /* b: h_safe_c_c_op_s_opcqq: 400000 */
 		  
 		  
 		case OP_SAFE_C_ZZ:
@@ -62095,8 +62128,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_GOTO_C:
-		  /* call-with-exit repeat use internally is very rare, so let's just look it up
-		   */
+		  /* call-with-exit repeat use internally is very rare, so let's just look it up */
 		  set_ecdr(code, find_symbol_checked(sc, car(code)));
 		  if (!is_goto(ecdr(code)))
 		    {
@@ -62105,8 +62137,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 		  
 		case HOP_GOTO_C:
-		  /* (return #t) -- recognized via OP_UNKNOWN_G, ecdr(code) is the function [parallels OP_CLOSURE_C]
-		   */
+		  /* (return #t) -- recognized via OP_UNKNOWN_G, ecdr(code) is the function [parallels OP_CLOSURE_C] */
 		  sc->args = cdr(code);
 		  sc->code = ecdr(code);
 		  call_with_exit(sc);
@@ -63271,7 +63302,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      apply_lambda(sc);
 	      goto BEGIN1;
 	      
-	    case T_BACRO:                                /* -------- bacro -------- */
+	    case T_BACRO: 
 	      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
 	      NEW_FRAME(sc, sc->envir, sc->envir);       /* like let* -- we'll be adding macro args, so might as well sequester things here */
 	      apply_lambda(sc);
@@ -63638,7 +63669,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			 slot_set_value(lx, make_real(sc, real(x1) + real(x2) + real(x3))); \
 		       else {						\
 		         car(sc->T3_1) = x1; car(sc->T3_2) = x2; car(sc->T3_3) = x3; \
-			 slot_set_value(lx, g_add(sc, sc->T3_1));	\
+			 slot_set_value(lx, global_add(sc, sc->T3_1));	\
 		       }						\
 		     } while (0))
 	    
@@ -67111,7 +67142,6 @@ static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
 
   if (result_type < T_BIG_INTEGER)
     return(g_add(sc, args));
-
   if (!s7_is_number(car(args)))
     check_method(sc, car(args), sc->ADD, args);
 
@@ -72285,14 +72315,13 @@ int main(int argc, char **argv)
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  * cyclic-seq in stuff.scm, but current code is really clumsy 
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
- * the old mus-audio-* code needs to use play or something, especially bess*
+ * the old mus-audio-* code needs to use play or something, especially bess* -- what about soundio
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
  * repl: (load "/home/bil/test/sndlib/libsndlib.so" (inlet 'init_func 's7_init_sndlib)): (make-oscil 300) etc
  * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds))
  * for closure, proc-sig could be a guarantee to the optimizer
- *  sort! check?
  *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array

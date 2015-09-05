@@ -2294,7 +2294,7 @@ There are times when you know
 in advance what equality function you want.  If it's one of the built-in s7 equality
 functions, eq?, eqv?, equal?, morally-equal?, =, string=?, string-ci=?, char=?, or char-ci=?,
 you can pass that function as the third argument.  In any other case, you need to
-give s7 both the equality function and the mapping function. The latter that takes any object
+give s7 both the equality function and the mapping function. The latter takes any object
 and returns the hash-table location for it (an integer).  The problem here is that
 for the arbitrary equality function to work, objects that are equal according to that
 function have to be mapped to the same hash-table location.  There's no way for s7 to intuit
@@ -2408,11 +2408,13 @@ Environments are first class (and applicable) objects in s7.
 <em class="gray">(inlet 'a 1)</em>
 &gt; (let ((a 1)) (let ((b 2)) (outlet (curlet))))
 <em class="gray">(inlet 'a 1)</em>
-&gt; (let ((e (inlet 'a (inlet 'b 1 'c 2) 'b (inlet 'b 3 'c 4)))) (e 'a 'b))
-<em class="gray">1</em>
+&gt; (let ((e (inlet 'a (inlet 'b 1 'c 2) 
+                  'b (inlet 'b 3 'c 4)))) 
+    (e 'a 'b)) ; in C terms, e-&gt;a-&gt;b 
+<em class="gray">1</em>  
 </pre>
 </blockquote>
-<br>
+
 
 <p>As the names suggest, in s7 an environment is viewed as a disembodied let.  Environments are equal if they
 contain the same symbols with the same values leaving aside shadowing, and taking into account the environment
@@ -6863,7 +6865,7 @@ int main(int argc, char **argv)
     {
       buf = save_buf;
       buf.c_lflag &amp;= ~ICANON;
-      buf.c_cc[VMIN] = 0;         /* if no chars waiting, just return */
+      buf.c_cc[VMIN] = 0;
       buf.c_cc[VTIME] = 0;
 
       signal(SIGINT, sigcatch);
