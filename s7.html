@@ -6803,7 +6803,7 @@ static bool is_not_white(std::string str)
 
 <p id="beginhook">
 Common Lisp has something called "evalhook" that makes it possible
-to insert your own function into the eval loop.  In s7, we have a "begin_hook" which sits at the opening of any begin block
+to insert your own function into the eval loop.  In s7, we have a "begin_hook" which sits at the opening of many begin blocks
 (implicit or explicit).  begin_hook is a (C) function; 
 if it sets its bool argument to true, 
 s7 interrupts the current evaluation. 

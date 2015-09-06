@@ -75,8 +75,10 @@
  *    initialization
  *    repl
  *
- * naming conventions: s7_* usually are C accessible (s7.h), g_* are scheme accessible (FFI), H_* are documentation strings,
- *   *_1 are auxilliary functions, big_* refer to gmp and friends, scheme "?" corresponds to C "_is_", scheme "->" to C "_to_".
+ * naming conventions: s7_* usually are C accessible (s7.h), g_* are scheme accessible (FFI), 
+ *   H_* are documentation strings, Q_* are procedure signatures,
+ *   *_1 are auxilliary functions, big_* refer to gmp and friends, 
+ *   scheme "?" corresponds to C "is_", scheme "->" to C "_to_".
  *
  * ---------------- compile time switches ----------------
  */
@@ -370,12 +372,6 @@ static int float_format_precision = WRITE_REAL_PRECISION;
  *   If someone defines s7_double to be long double, there's much wasted memory (and other more serious problems...)
  */
 
-#define NUM_CHARS 256
-
-typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE,
-	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST,
-	      TOKEN_VECTOR, TOKEN_BYTE_VECTOR} token_t;
-
 /* types */
 #define T_FREE                 0
 #define T_PAIR                 1
@@ -437,6 +433,9 @@ typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_A
  * I tried T_CASE_SELECTOR that turned a case statement into an array, but it was slower!
  */
 
+typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE,
+	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST,
+	      TOKEN_VECTOR, TOKEN_BYTE_VECTOR} token_t;
 
 typedef enum {FILE_PORT, STRING_PORT, FUNCTION_PORT} port_type_t;
 
@@ -2549,8 +2548,6 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_C_op_opSq_q, HOP_SAFE_C_op_opSq_q, OP_SAFE_C_C_op_S_opCqq, HOP_SAFE_C_C_op_S_opCqq,
       OP_SAFE_C_op_S_opSq_q, HOP_SAFE_C_op_S_opSq_q, 
 
-      OP_SAFE_C_STAR_CD, HOP_SAFE_C_STAR_CD,
-
       OP_SAFE_C_Z, HOP_SAFE_C_Z, OP_SAFE_C_ZZ, HOP_SAFE_C_ZZ, OP_SAFE_C_SZ, HOP_SAFE_C_SZ, OP_SAFE_C_ZS, HOP_SAFE_C_ZS,
       OP_SAFE_C_CZ, HOP_SAFE_C_CZ, OP_SAFE_C_ZC, HOP_SAFE_C_ZC,
       OP_SAFE_C_opCq_Z, HOP_SAFE_C_opCq_Z, OP_SAFE_C_S_opSZq, HOP_SAFE_C_S_opSZq,
@@ -2725,8 +2722,6 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "safe_c_s_op_opssq_opssqq", "h_safe_c_s_op_opssq_opssqq",
       "safe_c_op_opsq_q", "h_safe_c_op_opsq_q", "safe_c_c_op_s_opcqq", "h_safe_c_c_op_s_opcqq",
       "safe_c_op_s_opsq_q", "h_safe_c_op_s_opsq_q",
-
-      "safe_c_star_cd", "h_safe_c_star_cd",
 
       "safe_c_z", "h_safe_c_z", "safe_c_zz", "h_safe_c_zz", "safe_c_sz", "h_safe_c_sz", "safe_c_zs", "h_safe_c_zs",
       "safe_c_cz", "h_safe_c_cz", "safe_c_zc", "h_safe_c_zc",
@@ -6403,14 +6398,18 @@ s7_pointer s7_set_curlet(s7_scheme *sc, s7_pointer e)
   old_e = sc->envir;
   sc->envir = e;
 
-  let_id(e) = ++sc->let_number;
-  for (p = let_slots(e); is_slot(p); p = next_slot(p))
+  if ((is_let(e)) && (let_id(e) > 0)) /* might be () [id=-1] or rootlet [id=0] etc */
     {
-      s7_pointer sym;
-      sym = slot_symbol(p);
-      if (symbol_id(sym) != sc->let_number)
-	symbol_set_local(sym, sc->let_number, p);
+      let_id(e) = ++sc->let_number;
+      for (p = let_slots(e); is_slot(p); p = next_slot(p))
+	{
+	  s7_pointer sym;
+	  sym = slot_symbol(p);
+	  if (symbol_id(sym) != sc->let_number)
+	    symbol_set_local(sym, sc->let_number, p);
+	}
     }
+
   return(old_e);
 }
 
@@ -23272,6 +23271,8 @@ static s7_pointer random_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 
 /* -------------------------------- characters -------------------------------- */
 
+#define NUM_CHARS 256
+
 static s7_pointer g_char_to_integer(s7_scheme *sc, s7_pointer args)
 {
   #define H_char_to_integer "(char->integer c) converts the character c to an integer"
@@ -23304,7 +23305,8 @@ PF_TO_IF(char_to_integer, c_char_to_integer)
 static s7_pointer c_int_to_char(s7_scheme *sc, s7_int ind)
 {
   if ((ind < 0) || (ind >= NUM_CHARS))
-    return(simple_wrong_type_argument_with_type(sc, sc->INTEGER_TO_CHAR, make_integer(sc, ind), make_string_wrapper(sc, "an integer that can represent a character")));
+    return(simple_wrong_type_argument_with_type(sc, sc->INTEGER_TO_CHAR, make_integer(sc, ind), 
+						make_string_wrapper(sc, "an integer that can represent a character")));
   return(s7_make_character(sc, (unsigned char)ind));
 }
 
@@ -38883,10 +38885,25 @@ static unsigned int hash_map_symbol(s7_scheme *sc, s7_pointer table, s7_pointer 
 static unsigned int hash_map_syntax(s7_scheme *sc, s7_pointer table, s7_pointer key)  {return(symbol_raw_hash(syntax_symbol(key)));}
 
 #if WITH_GMP
-static unsigned int hash_map_big_int(s7_scheme *sc, s7_pointer table, s7_pointer key)     {return((unsigned int)(big_integer_to_s7_int(big_integer(key))));}
-static unsigned int hash_map_big_ratio(s7_scheme *sc, s7_pointer table, s7_pointer key)   {return((unsigned int)(big_integer_to_s7_int(mpq_denref(big_ratio(key)))));}
-static unsigned int hash_map_big_real(s7_scheme *sc, s7_pointer table, s7_pointer key)    {return((unsigned int)mpfr_get_d(big_real(key), GMP_RNDN));}
-static unsigned int hash_map_big_complex(s7_scheme *sc, s7_pointer table, s7_pointer key) {return((unsigned int)mpfr_get_d(mpc_realref(big_complex(key)), GMP_RNDN));}
+static unsigned int hash_map_big_int(s7_scheme *sc, s7_pointer table, s7_pointer key)     
+{
+  return((unsigned int)(big_integer_to_s7_int(big_integer(key))));
+}
+
+static unsigned int hash_map_big_ratio(s7_scheme *sc, s7_pointer table, s7_pointer key)   
+{
+  return((unsigned int)(big_integer_to_s7_int(mpq_denref(big_ratio(key)))));
+}
+
+static unsigned int hash_map_big_real(s7_scheme *sc, s7_pointer table, s7_pointer key)    
+{
+  return((unsigned int)mpfr_get_d(big_real(key), GMP_RNDN));
+}
+
+static unsigned int hash_map_big_complex(s7_scheme *sc, s7_pointer table, s7_pointer key) 
+{
+  return((unsigned int)mpfr_get_d(mpc_realref(big_complex(key)), GMP_RNDN));
+}
 #endif
 
 static unsigned int hash_map_string(s7_scheme *sc, s7_pointer table, s7_pointer key)
@@ -48938,11 +48955,6 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
 #if (!WITH_GMP)
-  /* it's possible to precompute constant multiplies, use OP_CONSTANT as the optimize_op,
-   *    put the value in fcdr, remove it from the heap, return NULL (checking for ecdr null in
-   *    set_c_function and c_function_is_ok), then simply return fcdr in OP_CONSTANT, but
-   *    that sort of thing almost never happens in real code.
-   */
   if (args == 2)
     {
       s7_pointer arg1, arg2;
@@ -51006,19 +51018,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 
   if (pairs == 0)
     {
-      if (is_c_function_star(func))
-	{
-	  if ((symbols == 0) &&
-	      (is_safe_procedure(func)) &&
-	      (c_function_simple_defaults(func)))
-	    {
-	      set_safe_optimize_op(expr, hop + OP_SAFE_C_STAR_CD);
-	      set_c_function(expr, func);
-	      return(true);
-	    }
-	  return(is_optimized(expr));
-	}
-
       if (s7_is_vector(func))
 	{
 	  set_safe_optimize_op(expr, hop + ((symbols == 1) ? OP_VECTOR_S : OP_VECTOR_C));
@@ -53024,21 +53023,14 @@ static void check_lambda(s7_scheme *sc)
   clear_syms_in_list(sc);
   
   /* look for (define f (let (...) (lambda ...))) and treat as equivalent to (define (f ...)...)
-   *   this allows us to put the docstring (and other such stuff) in the funclet, not the function body
-   *   without losing any optimization.  It's actually safe to ignore main_stack_op, but s7test has
-   *   some dubious tests that this check gets around -- need to decide about these cases!
+   *   It's actually safe to ignore main_stack_op, but s7test has some dubious tests that this 
+   *   check gets around -- need to decide about these cases!
    */
   if ((sc->safety != 0) ||
       (main_stack_op(sc) != OP_DEFINE1))
     optimize(sc, body, 0, sc->NIL);
   else optimize_lambda(sc, true, sc->GC_NIL, car(code), body); /* why was lambda the func? */
   
-  /* there is a problem here...
-   * (define f1 (lambda (x) (if (= x 0) 0 (+ x (f1 (- x 1))))))
-   * (f1 3) -> 6! -- in Guile also
-   * so in traversing the body we actually won't see a recursive call, which if a tail call
-   * should not make this function unsafe, but it will currently.
-   */
   if ((is_overlaid(code)) &&
       (cdr(ecdr(code)) == code))
     pair_set_syntax_symbol(code, sc->LAMBDA_UNCHECKED);
@@ -61465,26 +61457,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(sc->T2_1) = c_call(arg1)(sc, sc->T2_1);
 		    car(sc->T2_2) = c_call(arg2)(sc, cdr(arg2));
 		    sc->value = c_call(code)(sc, sc->T2_1);
-		    goto START;
-		  }
-		  
-		  
-		  /* c_function_star */
-		case OP_SAFE_C_STAR_CD:
-		  if (!c_function_is_ok(sc, code)) break;
-		  
-		case HOP_SAFE_C_STAR_CD:
-		  {
-		    int i;
-		    s7_pointer par, call_args, func;
-		    s7_pointer *df;
-		    func = ecdr(code);
-		    call_args = c_function_call_args(func);
-		    df = c_function_arg_defaults(func);
-		    for (i = 1, par = cdr(call_args); is_pair(par); i++, par = cdr(par))
-		      car(par) = df[i];
-		    car(call_args) = cadr(code);
-		    sc->value = c_call(code)(sc, call_args);
 		    goto START;
 		  }
 		  
@@ -70265,8 +70237,6 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 
 static void s7_gmp_init(s7_scheme *sc)
 {
-  /* if these are defined as "safe", the optimizer needs to be smarter about things like (/ 1 ...)
-   */
   #define big_defun(Scheme_Name, C_Name, Req, Opt, Rst) s7_define_typed_function(sc, Scheme_Name, big_ ## C_Name, Req, Opt, Rst, H_ ## C_Name, Q_ ## C_Name)
 
   sc->ADD =              big_defun("+",                add,              0, 0, true);
@@ -72269,12 +72239,10 @@ int main(int argc, char **argv)
   else 
     {
 #ifndef _MSC_VER
-      /* this is libc dependent */
-      s7_load(sc, "repl.scm");
+      s7_load(sc, "repl.scm");              /* this is libc dependent */
       s7_eval_c_string(sc, "((*repl* 'run))");
 #else
-      /* a minimal repl -- taken from s7.html */
-      while (1)
+      while (1)                             /* a minimal repl -- taken from s7.html */
 	{
 	  char buffer[512];
 	  char response[1024];
@@ -72317,7 +72285,7 @@ int main(int argc, char **argv)
  *               |      |      |                                                   |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 13.0 |
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 15.0 |
- * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 36.3 37.2 |
+ * calls     359 |  275 | 54   | 34.7 34.7 35.2 34.3 33.9 33.9 34.1 34.1 36.3 37.1 |
  * 
  * ------------------------------------------------------------------------------------------
  *
@@ -72328,10 +72296,10 @@ int main(int argc, char **argv)
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
  * repl: (load "/home/bil/test/sndlib/libsndlib.so" (inlet 'init_func 's7_init_sndlib)): (make-oscil 300) etc
- * libutf8proc.scm doc/examples?
+ * libutf8proc.scm doc/examples? [from cl-unicode? what about cl-ppcre?]
  * remove the #t=all sounds business! = (map f (sounds))
  * for closure, proc-sig could be a guarantee to the optimizer
- * test s7_set_curlet
+ * we could see sig-collisions during optimization, at least where opts build them in, (*s7* 'with-type-checks)?
  *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array
