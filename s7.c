@@ -6399,9 +6399,18 @@ s7_pointer s7_curlet(s7_scheme *sc)
 
 s7_pointer s7_set_curlet(s7_scheme *sc, s7_pointer e)
 {
-  s7_pointer old_e;
+  s7_pointer p, old_e;
   old_e = sc->envir;
   sc->envir = e;
+
+  let_id(e) = ++sc->let_number;
+  for (p = let_slots(e); is_slot(p); p = next_slot(p))
+    {
+      s7_pointer sym;
+      sym = slot_symbol(p);
+      if (symbol_id(sym) != sc->let_number)
+	symbol_set_local(sym, sc->let_number, p);
+    }
   return(old_e);
 }
 
@@ -6476,6 +6485,39 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer symbol)
     }
 
   return(global_slot(symbol));
+}
+
+
+static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol) /* find_symbol_checked includes the unbound_variable call */
+{
+  s7_pointer x;
+
+  if (let_id(sc->envir) == symbol_id(symbol))
+    return(slot_value(local_slot(symbol)));
+
+  for (x = sc->envir; symbol_id(symbol) < let_id(x); x = outlet(x));
+
+  /* this looks redundant, but every attempt to improve it is much slower! */
+  if (let_id(x) == symbol_id(symbol))
+    return(slot_value(local_slot(symbol)));
+
+  for (; is_let(x); x = outlet(x))
+    {
+      s7_pointer y;
+      for (y = let_slots(x); is_slot(y); y = next_slot(y))
+	if (slot_symbol(y) == symbol)
+	  return(slot_value(y));
+    }
+
+  x = global_slot(symbol);
+  if (is_slot(x))
+    return(slot_value(x));
+
+#if WITH_GCC
+  return(NULL);
+#else
+  return(unbound_variable(sc, symbol));
+#endif
 }
 
 
@@ -7213,7 +7255,7 @@ static s7_pointer g_c_pointer(s7_scheme *sc, s7_pointer args)
 
 
 
-/* --------------------------------- rf ----------------------------------------------- */
+/* --------------------------------- rf (CLM optimizer) ----------------------------------------------- */
 
 s7_pointer *s7_xf_start(s7_scheme *sc)
 {
@@ -48283,39 +48325,6 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 }
 
 
-static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol)
-{
-  s7_pointer x;
-
-  if (let_id(sc->envir) == symbol_id(symbol))
-    return(slot_value(local_slot(symbol)));
-
-  for (x = sc->envir; symbol_id(symbol) < let_id(x); x = outlet(x));
-
-  /* this looks redundant, but every attempt to improve it is much slower! */
-  if (let_id(x) == symbol_id(symbol))
-    return(slot_value(local_slot(symbol)));
-
-  for (; is_let(x); x = outlet(x))
-    {
-      s7_pointer y;
-      for (y = let_slots(x); is_slot(y); y = next_slot(y))
-	if (slot_symbol(y) == symbol)
-	  return(slot_value(y));
-    }
-
-  x = global_slot(symbol);
-  if (is_slot(x))
-    return(slot_value(x));
-
-#if WITH_GCC
-  return(NULL);
-#else
-  return(unbound_variable(sc, symbol));
-#endif
-}
-
-
 static s7_pointer is_pair_car, is_pair_cdr, is_pair_cadr;
 static s7_pointer g_is_pair_car(s7_scheme *sc, s7_pointer args)
 {
@@ -72322,6 +72331,7 @@ int main(int argc, char **argv)
  * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds))
  * for closure, proc-sig could be a guarantee to the optimizer
+ * test s7_set_curlet
  *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array

@@ -25,7 +25,6 @@ typedef s7_double s7_Double;
 #endif
 #endif
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -58,8 +57,7 @@ bool s7_is_null(s7_scheme *sc, s7_pointer p);                        /* null? */
 bool s7_is_valid(s7_scheme *sc, s7_pointer arg);                     /* does 'arg' look like an s7 object? */
 bool s7_is_c_pointer(s7_pointer arg);
 void *s7_c_pointer(s7_pointer p);
-s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr);
-  /* these are for passing uninterpreted C pointers through Scheme */
+s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr);              /* these are for passing uninterpreted C pointers through Scheme */
 
 s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str);         /* (eval-string str) */
 s7_pointer s7_eval_c_string_with_environment(s7_scheme *sc, const char *str, s7_pointer e);
