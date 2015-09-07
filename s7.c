@@ -51,9 +51,8 @@
  *    constants
  *    GC
  *    stacks
- *    symbols
+ *    symbols and keywords
  *    environments
- *    keywords
  *    continuations
  *    numbers
  *    characters
@@ -224,8 +223,6 @@
   /* this removes magnitude (use abs for all numbers), make-polar, and make-rectangular, renaming the latter make-complex */
 #endif
 
-#define WITH_GCC (defined(__GNUC__) || defined(__clang__))
-
 #ifndef WITH_C_LOADER
   #define WITH_C_LOADER WITH_GCC
   /* (load file.so [e]) looks for (e 'init_func) and if found, calls it
@@ -233,6 +230,8 @@
    *   needs to supply system and delete-file so that cload.scm works.
    */
 #endif
+
+#define WITH_GCC (defined(__GNUC__) || defined(__clang__))
 
 /* in case mus-config.h forgets these */
 #ifdef _MSC_VER
@@ -1619,7 +1618,7 @@ bool s7_is_stepper(s7_pointer p)      {return(is_stepper(p));}
 
 static int not_heap = -1;
 #define heap_location(p)              (p)->hloc
-#define not_in_heap(p)                (p)->hloc < 0
+#define not_in_heap(p)                ((p)->hloc < 0)
 #define unheap(p)                     (p)->hloc = not_heap--
 
 #define is_eof(p)                     (p == sc->EOF_OBJECT)
@@ -35430,8 +35429,7 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
 {
   #define H_append "(append ...) returns its argument lists appended into one list"
   #define Q_append pcl_t
-  /* but weirdly (append () 1) returns 1
-   */
+  /* but weirdly (append () 1) returns 1 */
   s7_pointer y, tp, np = NULL, pp;
 
   if (is_null(args))
@@ -35561,11 +35559,6 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_int len, bool filled, unsigned
     return(wrong_type_argument_with_type(sc, sc->MAKE_VECTOR, 1, make_integer(sc, len), A_NON_NEGATIVE_INTEGER));
   if (len > sc->max_vector_length)
     return(out_of_range(sc, sc->MAKE_VECTOR, small_int(1), make_integer(sc, len), ITS_TOO_LARGE));
-
-  /* if (len == 0) typ = T_VECTOR; *//* all empty vectors are the same type */
-  /* this produces odd results: (float-vector? (float-vector)) -> #f etc
-   *   but keeping the type means equal? has to be smarter about empty vectors.
-   */
 
   /* this has to follow the error checks! (else garbage in free_heap temps portion confuses GC when "vector" is finalized) */
   NEW_CELL(sc, x, typ | T_SAFE_PROCEDURE); /* (v 0) as vector-ref is safe */
@@ -65455,8 +65448,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		let_id(e) = ++sc->let_number;
 		sc->envir = e;
 		/* if the let in question has 10,000 names (e.g. *gtk*) this loop (which can't be avoided currently)
-		 *   will dominate the computation.  So, instead of saying (with-let *gtk* ...) use something
-		 *   equivalent to (with-let (sublet *gtk*) ...) which is cleaner anyway.
+		 *   will be noticeable in a few cases.  So, instead of saying (with-let *gtk* ...) use something
+		 *   equivalent to (with-let (sublet *gtk*) ...) which is cleaner anyway.  (In my timing tests, even
+		 *   when pounding on this one block, the loop only amounts to 1% of the time.  Normally it's
+		 *   negligible).
 		 */
 		for (p = let_slots(e); is_slot(p); p = next_slot(p))
 		  {
@@ -72295,11 +72290,11 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess* -- what about soundio
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
- * repl: (load "/home/bil/test/sndlib/libsndlib.so" (inlet 'init_func 's7_init_sndlib)): (make-oscil 300) etc
- * libutf8proc.scm doc/examples? [from cl-unicode? what about cl-ppcre?]
+ * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds))
  * for closure, proc-sig could be a guarantee to the optimizer
  * we could see sig-collisions during optimization, at least where opts build them in, (*s7* 'with-type-checks)?
+ * try timing tests running with symbols from *gtk* or *libsgl* -- maybe really big lets need to be hash-tables
  *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array

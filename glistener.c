@@ -2655,7 +2655,8 @@ static void glistener_colorizer_callback(glistener *g)
 	    case ')':
 	      if (atom_awaits)
 		{
-		  g->colorizer(g, GLISTENER_ATOM, end_space_pos + 1, cur_pos);
+		  if (cur_pos > end_space_pos + 1)
+		    g->colorizer(g, GLISTENER_ATOM, end_space_pos + 1, cur_pos);
 		  atom_awaits = false;
 		}
 	      end_space_pos = cur_pos;

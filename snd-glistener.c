@@ -137,6 +137,7 @@ static void listener_init(glistener *g, GtkWidget *w)
 static const char *helper(glistener *g, const char *text)
 {
   s7_pointer sym;
+  if (!text) return(NULL);
 
   sym = s7_symbol_table_find_name(s7, text);
   if (sym)

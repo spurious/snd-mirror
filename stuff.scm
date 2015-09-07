@@ -8,7 +8,6 @@
   (define (assq a b) (assoc a b eq?)))
   
 
-
 ;;; ----------------
 (define empty? 
   (let ((documentation "(empty? obj) returns #t if obj is an empty sequence"))
@@ -1944,6 +1943,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
    :default-random-state          (*s7* 'default-random-state)
    :morally-equal-float-epsilon   (*s7* 'morally-equal-float-epsilon)
    :hash-table-float-epsilon      (*s7* 'hash-table-float-epsilon)
+   :float-format-precision        (*s7* 'float-format-precision)
    :bignum-precision              (*s7* 'bignum-precision)
    :file-names                    (*s7* 'file-names)
    :rootlet-size                  (*s7* 'rootlet-size)
