@@ -478,7 +478,7 @@ typedef struct {
   unsigned int id;
   char *doc;
   s7_pointer generic_ff;
-  s7_sig_t signature;
+  s7_pointer signature;
   s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
   c_proc_ext_t *ext;
 } c_proc_t;
@@ -10868,7 +10868,7 @@ bool s7_is_complex(s7_pointer p)
 }
 
 
-static s7_int c_gcd(s7_scheme *sc, s7_int u, s7_int v)
+static s7_int c_gcd(s7_int u, s7_int v)
 {
   s7_int a, b;
 
@@ -11200,7 +11200,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_int a, s7_int b)
       a = -a;
       b = -b;
     }
-  divisor = c_gcd(sc, a, b);
+  divisor = c_gcd(a, b);
   if (divisor != 1)
     {
       a /= divisor;
@@ -15077,14 +15077,6 @@ XF2_TO_PF(expt, c_expt_i, c_expt_r, c_expt_2)
 #endif
 
 
-static s7_int c_lcm(s7_scheme *sc, s7_int a, s7_int b)
-{
-  if ((a == 0) || (b == 0)) return(0);
-  if (a < 0) a = -a;
-  if (b < 0) b = -b;
-  return((a / c_gcd(sc, a, b)) * b);
-}
-
 static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 {
   #define H_lcm "(lcm ...) returns the least common multiple of its rational arguments"
@@ -15106,23 +15098,33 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
   for (p = args; is_pair(p); p = cdr(p))
     {
       s7_pointer x;
+      s7_int b;
       x = car(p);
       switch (type(x))
 	{
 	case T_INTEGER:
-	  n = c_lcm(sc, n, integer(x));
+	  if (integer(x) == 0)
+	    n = 0;
+	  else 
+	    {
+	      b = integer(x);
+	      if (b < 0) b = -b;
+	      n = (n / c_gcd(n, b)) * b;
+	    }
 	  if (d != 0) d = 1;
 	  break;
 
 	case T_RATIO:
-	  n = c_lcm(sc, n, s7_numerator(x));
+	  b = numerator(x);
+	  if (b < 0) b = -b;
+	  n = (n / c_gcd(n, b)) * b;
 	  if (d == 0)
 	    {
 	      if (p == args)
 		d = s7_denominator(x);
 	      else d = 1;
 	    }
-	  else d = c_gcd(sc, d, s7_denominator(x));
+	  else d = c_gcd(d, s7_denominator(x));
 	  break;
 
 	default:
@@ -15141,6 +15143,14 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
   if (d <= 1)
     return(make_integer(sc, n));
   return(s7_make_ratio(sc, n, d));
+}
+
+static s7_int c_lcm(s7_scheme *sc, s7_int a, s7_int b)
+{
+  if ((a == 0) || (b == 0)) return(0);
+  if (a < 0) a = -a;
+  if (b < 0) b = -b;
+  return((a / c_gcd(a, b)) * b);
 }
 
 IF2_TO_IF(lcm, c_lcm)
@@ -15166,16 +15176,19 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
   for (p = args; is_pair(p); p = cdr(p))
     {
       s7_pointer x;
+      s7_int b;
       x = car(p);
       switch (type(x))
 	{
 	case T_INTEGER:
-	  n = c_gcd(sc, n, integer(x));
+	  n = c_gcd(n, integer(x));
 	  break;
 
 	case T_RATIO:
-	  n = c_gcd(sc, n, s7_numerator(x));
-	  d = c_lcm(sc, d, s7_denominator(x));
+	  n = c_gcd(n, s7_numerator(x));
+	  b = s7_denominator(x);
+	  if (b < 0) b = -b;
+	  d = (d / c_gcd(d, b)) * b;
 	  if (d < 0) return(simple_out_of_range(sc, sc->GCD, args, RESULT_IS_TOO_LARGE));
 	  break;
 
@@ -15190,7 +15203,9 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
   return(s7_make_ratio(sc, n, d));
 }
 
-IF2_TO_IF(gcd, c_gcd)
+static s7_int c_gcd_1(s7_scheme *sc, s7_int a, s7_int b) {return(c_gcd(a, b));}
+
+IF2_TO_IF(gcd, c_gcd_1)
 
 
 static s7_pointer s7_truncate(s7_scheme *sc, s7_pointer caller, s7_double xf)   /* can't use "truncate" -- it's in unistd.h */
@@ -16106,7 +16121,7 @@ static int reduce_fraction(s7_scheme *sc, s7_int *numer, s7_int *denom)
       *denom = -*denom; 
       *numer = -*numer;
     }
-  divisor = c_gcd(sc, *numer, *denom);
+  divisor = c_gcd(*numer, *denom);
   if (divisor != 1)
     {
       *numer /= divisor;
@@ -19806,19 +19821,17 @@ RF_3_TO_RF(divide, c_dbl_invert, c_dbl_divide_2, c_dbl_divide_3)
 
 /* ---------------------------------------- max/min ---------------------------------------- */
 
-static bool is_real_via_method(s7_scheme *sc, s7_pointer p)
+static bool is_real_via_method_1(s7_scheme *sc, s7_pointer p)
 {
-  if (s7_is_real(p))
-    return(true);
-  if (has_methods(p))
-    {
-      s7_pointer f;
-      f = find_method(sc, find_let(sc, p), sc->IS_REAL);
-      if (f != sc->UNDEFINED)
-	return(is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL))));
-    }
+  s7_pointer f;
+  f = find_method(sc, find_let(sc, p), sc->IS_REAL);
+  if (f != sc->UNDEFINED)
+    return(is_true(sc, s7_apply_function(sc, f, cons(sc, p, sc->NIL))));
   return(false);
 }
+
+#define is_real_via_method(sc, p) ((s7_is_real(p)) || ((has_methods(p)) && (is_real_via_method_1(sc, p))))
+
 
 static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 {
@@ -32592,7 +32605,7 @@ static s7_pointer permanent_list(s7_scheme *sc, int len)
 static int sigs = 0, sig_pairs = 0;
 #endif
 
-s7_sig_t s7_make_signature(s7_scheme *sc, int len, ...)
+s7_pointer s7_make_signature(s7_scheme *sc, int len, ...)
 {
   va_list ap;
   s7_pointer p, res;
@@ -32616,10 +32629,10 @@ s7_sig_t s7_make_signature(s7_scheme *sc, int len, ...)
     }
   va_end(ap);
 
-  return((s7_sig_t)res);
+  return((s7_pointer)res);
 }
 
-s7_sig_t s7_make_circular_signature(s7_scheme *sc, int cycle_point, int len, ...)
+s7_pointer s7_make_circular_signature(s7_scheme *sc, int cycle_point, int len, ...)
 {
   va_list ap;
   int i;
@@ -32646,7 +32659,7 @@ s7_sig_t s7_make_circular_signature(s7_scheme *sc, int cycle_point, int len, ...
     }
   va_end(ap);
   cdr(end) = back;
-  return((s7_sig_t)res);
+  return((s7_pointer)res);
 }
 
 
@@ -38321,7 +38334,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
   if ((is_safe_procedure(lessp)) &&     /* (sort! a <) */
       (is_c_function(lessp)))
     {
-      s7_sig_t sig;
+      s7_pointer sig;
       sig = c_function_signature(lessp);
       if ((sig) &&
 	  (is_pair(sig)) &&
@@ -39404,7 +39417,12 @@ static hash_entry_t *hash_number(s7_scheme *sc, s7_pointer table, s7_pointer key
 static hash_entry_t *hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   if (is_symbol(key))
-    return(hash_eq(sc, table, key));
+    {
+      hash_entry_t *x;
+      for (x = hash_table_element(table, symbol_raw_hash(key) & ((unsigned int)hash_table_length(table) - 1)); x; x = x->next)
+	if (key == x->key)
+	  return(x);
+    }
   return(NULL);
 }
 
@@ -39611,7 +39629,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 		      (s7_is_aritable(sc, checker, 2)) &&
 		      (s7_is_aritable(sc, mapper, 1)))
 		    {
-		      s7_sig_t sig;
+		      s7_pointer sig;
 		      ht = s7_make_hash_table(sc, size);
 		      if (is_any_c_function(checker))
 			{
@@ -40427,7 +40445,7 @@ s7_pointer s7_make_safe_function(s7_scheme *sc, const char *name, s7_function f,
 
 
 s7_pointer s7_make_typed_function(s7_scheme *sc, const char *name, s7_function f, 
-				  int required_args, int optional_args, bool rest_arg, const char *doc, s7_sig_t signature)
+				  int required_args, int optional_args, bool rest_arg, const char *doc, s7_pointer signature)
 {
   s7_pointer func;
   func = s7_make_function(sc, name, f, required_args, optional_args, rest_arg, doc);
@@ -41233,7 +41251,7 @@ s7_pointer s7_typed_dilambda(s7_scheme *sc,
 			     s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
 			     int set_req_args, int set_opt_args,
 			     const char *documentation,
-			     s7_sig_t get_sig, s7_sig_t set_sig)
+			     s7_pointer get_sig, s7_pointer set_sig)
 {
   s7_pointer get_func, set_func;
   get_func = s7_dilambda(sc, name, getter, get_req_args, get_opt_args, setter, set_req_args, set_opt_args, documentation);
@@ -65903,9 +65921,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 /* needed in s7_gmp_init and s7_init, initialized in s7_int before we get to gmp */
-static s7_sig_t pl_bt, pl_t, pl_p, pl_bc, pcl_bc, pcl_bs, pl_bn, pl_sf, pl_btt, pcl_i, pcl_t, pcl_r, pcl_n, pcl_s, pcl_v, pcl_f, pcl_c;
+static s7_pointer pl_bt, pl_t, pl_p, pl_bc, pcl_bc, pcl_bs, pl_bn, pl_sf, pl_btt, pcl_i, pcl_t, pcl_r, pcl_n, pcl_s, pcl_v, pcl_f, pcl_c;
 #if (!WITH_PURE_S7)
-static s7_sig_t pl_tp;
+static s7_pointer pl_tp;
 #endif
 
 
@@ -72276,7 +72294,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3                                         4231 |
  * titer         |      |      |                          7503 6793 6351 6048 6054 |
  * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 7293 |
- * thash         |      |      |                          50.7 23.8 14.9 13.7 9865 |
+ * thash         |      |      |                          50.7 23.8 14.9 13.7 9840 |
  *               |      |      |                                                   |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 13.0 |
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 15.0 |
@@ -72294,7 +72312,8 @@ int main(int argc, char **argv)
  * remove the #t=all sounds business! = (map f (sounds))
  * for closure, proc-sig could be a guarantee to the optimizer
  * we could see sig-collisions during optimization, at least where opts build them in, (*s7* 'with-type-checks)?
- * try timing tests running with symbols from *gtk* or *libsgl* -- maybe really big lets need to be hash-tables
+ * with-let and let_fallback are inconsistent if symbol in question exists at outer level?
+ *   find_symbol ideally would look for let-ref|set-fallback before going on -- document it...
  *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array

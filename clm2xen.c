@@ -12477,7 +12477,7 @@ static void mus_xen_init(void)
 #if HAVE_SCHEME
   s7_pointer s, i, p, t, r, c, f, v, b, d;
 
-  s7_sig_t pcl_ct, pl_rcr, pl_bt, pl_ir, pl_cc, pl_ccic, pl_ccrr, pl_fc, pl_fcif, pl_cs, pl_ff, pl_tt, pl_fffifi, pl_ffftii, pl_fffi, 
+  s7_pointer pcl_ct, pl_rcr, pl_bt, pl_ir, pl_cc, pl_ccic, pl_ccrr, pl_fc, pl_fcif, pl_cs, pl_ff, pl_tt, pl_fffifi, pl_ffftii, pl_fffi, 
     pl_fti, pl_fif, pl_fiir, pl_fttb, pl_ic, pl_rciir, pl_rcir, pl_ririt, pl_rcrr, pl_rirt, pl_riirfff, pl_rirfff, pl_rrpr, pcl_zt, 
     pl_sc, pl_sssrs, pl_tc, pl_ct, pl_ici, pl_i, pl_fcf, pl_dcr, pl_dr, pl_dffi, pl_dfri, pl_dirfir, pl_dc, pl_dci, pl_dcir, pl_dv, 
     pl_dvir, pl_drf, pl_drc, pl_diit, pl_dit, pl_dct, pl_d;

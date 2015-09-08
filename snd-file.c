@@ -3779,7 +3779,7 @@ static s7_pointer acc_clipping(s7_scheme *sc, s7_pointer args) {return(g_set_cli
 void g_init_file(void)
 {
 #if HAVE_SCHEME
-  s7_sig_t pl_b, pl_bb, pl_i, pl_ii, pl_s, pl_ss, pl_d, pl_dr, pl_zb, pl_l, pl_ll, pl_bs, pl_is, pl_lt, pl_zt, pl_zss, pl_ltl, pl_ls;
+  s7_pointer pl_b, pl_bb, pl_i, pl_ii, pl_s, pl_ss, pl_d, pl_dr, pl_zb, pl_l, pl_ll, pl_bs, pl_is, pl_lt, pl_zt, pl_zss, pl_ltl, pl_ls;
   {
     s7_pointer i, b, d, r, s, p, l, t, z;
     i = s7_make_symbol(s7, "integer?");

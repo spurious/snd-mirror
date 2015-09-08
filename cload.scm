@@ -448,7 +448,7 @@
       (format p "void ~A(s7_scheme *sc)~%" init-name)
       (format p "{~%")
       (format p "  s7_pointer cur_env;~%")
-      (format p "  s7_sig_t ")
+      (format p "  s7_pointer ")
       (let ((pls (hash-table-entries signatures))
 	    (loc 1))
 	(for-each

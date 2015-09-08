@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "3.37"
-#define S7_DATE "1-Sep-15"
+#define S7_VERSION "3.38"
+#define S7_DATE "8-Sep-15"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -366,9 +366,8 @@ s7_pointer s7_closure_let(s7_scheme *sc, s7_pointer p);
 s7_pointer s7_closure_args(s7_scheme *sc, s7_pointer p);
 s7_pointer s7_funclet(s7_scheme *sc, s7_pointer p);                         /* (funclet x) */
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);        /* (procedure-documentation x) if any (don't free the string) */
-typedef s7_pointer s7_sig_t;
-s7_sig_t s7_make_signature(s7_scheme *sc, int len, ...);                  /* procedure-signature data */
-s7_sig_t s7_make_circular_signature(s7_scheme *sc, int cycle_point, int len, ...);
+s7_pointer s7_make_signature(s7_scheme *sc, int len, ...);                  /* procedure-signature data */
+s7_pointer s7_make_circular_signature(s7_scheme *sc, int cycle_point, int len, ...);
 bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args);                 /* (aritable? x args) */
 s7_pointer s7_arity(s7_scheme *sc, s7_pointer x);                           /* (arity x) */
 
@@ -463,7 +462,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function fnc,
 s7_pointer s7_make_safe_function(s7_scheme *sc, const char *name, s7_function fnc, 
 				 int required_args, int optional_args, bool rest_arg, const char *doc);
 s7_pointer s7_make_typed_function(s7_scheme *sc, const char *name, s7_function f, 
-				  int required_args, int optional_args, bool rest_arg, const char *doc, s7_sig_t signature);
+				  int required_args, int optional_args, bool rest_arg, const char *doc, s7_pointer signature);
 
 s7_pointer s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, 
 			      int required_args, int optional_args, bool rest_arg, const char *doc);
@@ -471,7 +470,7 @@ s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function 
 				   int required_args, int optional_args, bool rest_arg, const char *doc);
 s7_pointer s7_define_typed_function(s7_scheme *sc, const char *name, s7_function fnc,
 				    int required_args, int optional_args, bool rest_arg, 
-				    const char *doc, s7_sig_t signature);
+				    const char *doc, s7_pointer signature);
 
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 void s7_define_safe_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
@@ -574,7 +573,7 @@ s7_pointer s7_typed_dilambda(s7_scheme *sc,
 		       s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
 		       int set_req_args, int set_opt_args,
 		       const char *documentation,
- 		       s7_sig_t get_sig, s7_sig_t set_sig);
+ 		       s7_pointer get_sig, s7_pointer set_sig);
 
 s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj);
 s7_pointer s7_values(s7_scheme *sc, s7_pointer args);
