@@ -2238,10 +2238,10 @@ Implicit indexing gives multilevel hashes:
 </p>
 
 <pre class="indented">
-&gt; (let ((h (hash-table* 'a (hash-table* 'b 2 'c 3)
-		        'b (hash-table* 'b 3 'c 4))))
-  (h 'a 'b))
+&gt; (let ((h (hash-table* 'a (hash-table* 'b 2 'c 3)))) (h 'a 'b))
 <em class="gray">2</em>
+&gt; (let ((h (hash-table* 'a (hash-table* 'b 2 'c 3)))) (set! (h 'a 'b) 4) (h 'a 'b))
+<em class="gray">4</em>
 </pre>
 
 <blockquote>
@@ -2408,10 +2408,10 @@ Environments are first class (and applicable) objects in s7.
 <em class="gray">(inlet 'a 1)</em>
 &gt; (let ((a 1)) (let ((b 2)) (outlet (curlet))))
 <em class="gray">(inlet 'a 1)</em>
-&gt; (let ((e (inlet 'a (inlet 'b 1 'c 2) 
-                  'b (inlet 'b 3 'c 4)))) 
-    (e 'a 'b)) ; in C terms, e-&gt;a-&gt;b 
+&gt; (let ((e (inlet 'a (inlet 'b 1 'c 2)))) (e 'a 'b)) ; in C terms, e-&gt;a-&gt;b 
 <em class="gray">1</em>  
+&gt; (let ((e (inlet 'a (inlet 'b 1 'c 2)))) (set! (e 'a 'b) 3) (e 'a 'b))
+<em class="gray">3</em>  
 </pre>
 </blockquote>
 

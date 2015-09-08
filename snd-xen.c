@@ -2717,9 +2717,9 @@ Xen_wrap_1_arg(g_snd_warning_w, g_snd_warning)
 void g_xen_initialize(void)
 {
 #if HAVE_SCHEME
-  s7_sig_t pl_dr, pl_dir, pl_drr, pl_ss, pl_b;
+  s7_pointer pl_dr, pl_dir, pl_drr, pl_ss, pl_b;
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
-  s7_sig_t pl_pf;
+  s7_pointer pl_pf;
 #endif
 #endif
 

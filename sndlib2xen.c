@@ -1088,8 +1088,8 @@ Xen_wrap_1_arg(g_mus_set_sound_path_w, g_mus_set_sound_path)
 void mus_sndlib_xen_initialize(void)
 {
 #if HAVE_SCHEME
-  s7_sig_t pl_is, pl_isi, pl_si, pl_ss, pl_ps, pl_psp, pl_i, pl_bii, pl_p, pl_rs, pl_bi, pl_bib, pl_b;
-  s7_sig_t pl_l, pl_isfiii, pl_fsiiif, pl_bs, pl_ts;
+  s7_pointer pl_is, pl_isi, pl_si, pl_ss, pl_ps, pl_psp, pl_i, pl_bii, pl_p, pl_rs, pl_bi, pl_bib, pl_b;
+  s7_pointer pl_l, pl_isfiii, pl_fsiiif, pl_bs, pl_ts;
 #endif
 
   mus_sound_initialize();

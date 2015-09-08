@@ -97,8 +97,28 @@
 	(set! str (cyclic-sequences vj))))
     (close-output-port p)))
 
-
 #|
+(define (tests size)
+  (let ((str #f)
+	(vj #f)
+	(p (open-output-string)))
+    (do ((i 0 (+ i 1)))
+	((= i size))
+      (do ((a vars (cdr a)))
+	  ((null? a))
+	(set! vj (car a))
+	(do ((b vars (cdr b)))
+	    ((null? b))
+	  (if (equal? vj (car b))
+	      (if (not (eq? a b))
+		  (format *stderr* "oops!: ~A ~A~%"  a b))))
+	(write vj p)
+	(set! str (get-output-string p #t))
+	(set! str (object->string vj))
+	(set! str (format #f "~A~%" vj))
+	(set! str (cyclic-sequences vj))))
+    (close-output-port p)))
+
 ;; almost as fast
 (define (tests size)
   (let ((str #f)
@@ -126,6 +146,7 @@
        vars))
     (close-output-port p)))
 |#
+
 
 (tests 10000)
 

@@ -2663,7 +2663,7 @@
 ;(format *stderr* "~D entries, ~D funcs~%" (hash-table-entries signatures) (length funcs))
 
 (hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_pair, s_float, s_pair_false;~%")
-(hey "static s7_sig_t ")
+(hey "static s7_pointer ")
 
 (define (sig-name sig)
   (call-with-output-string

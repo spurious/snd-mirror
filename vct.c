@@ -1774,7 +1774,7 @@ Xen_wrap_7_args(g_vct_interpolate_w, g_vct_interpolate)
 void mus_vct_init(void)
 {
 #if HAVE_SCHEME
-  s7_sig_t pl_ff, pl_rf, pl_fff, pl_fffi, pl_ffr, pl_pf, pl_bffr, pl_ftt, pl_ffii, pl_ffiif, pl_sf;
+  s7_pointer pl_ff, pl_rf, pl_fff, pl_fffi, pl_ffr, pl_pf, pl_bffr, pl_ftt, pl_ffii, pl_ffiif, pl_sf;
 #else
   vct_tag = Xen_make_object_type("Vct", sizeof(vct));
 

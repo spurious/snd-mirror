@@ -2317,7 +2317,7 @@ static s7_pointer acc_open_file_dialog_directory(s7_scheme *sc, s7_pointer args)
 void g_init_main(void)
 {
 #if HAVE_SCHEME
-  s7_sig_t pl_b, pl_bb, pl_i, pl_ii, pl_s, pl_ss, pl_d, pl_dr, pl_p, pl_z, pl_zb, pl_zbb;
+  s7_pointer pl_b, pl_bb, pl_i, pl_ii, pl_s, pl_ss, pl_d, pl_dr, pl_p, pl_z, pl_zb, pl_zbb;
   {
     s7_pointer i, b, d, r, s, p, z;
     i = s7_make_symbol(s7, "integer?");

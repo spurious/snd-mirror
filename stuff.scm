@@ -1923,7 +1923,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 ;;; --------------------------------------------------------------------------------
 
 
-(define (*s7*->list)
+(define (*s7*->list) 
   (list 
    :print-length                  (*s7* 'print-length)
    :safety                        (*s7* 'safety)

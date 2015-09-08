@@ -669,7 +669,7 @@ typedef struct s7_cell {
 	bool needs_free;
 	int accessor;
       } str_ext;
-      unsigned int shash;         /* symbol-table location = hash % symbol-table-size */
+      unsigned int unused_int;
       s7_pointer initial_slot;
       union {
 	char *documentation;
@@ -1269,7 +1269,7 @@ static void init_types(void)
   #define _TCon(P) check_ref(P, T_CONTINUATION,      __func__, __LINE__, "sweep", NULL)
   #define _TFvc(P) check_ref(P, T_FLOAT_VECTOR,      __func__, __LINE__, "sweep", NULL)
   #define _TIvc(P) check_ref(P, T_INT_VECTOR,        __func__, __LINE__, "sweep", NULL)
-  #define _TSym(P) check_ref(P, T_SYMBOL,            __func__, __LINE__, "sweep", "remove_from_symbol_table")
+  #define _TSym(P) check_ref(P, T_SYMBOL,            __func__, __LINE__, "sweep", "remove_gensym_from_symbol_table")
 
   #define _TPrt(P) check_ref3(P,                     __func__, __LINE__)
   #define _TVec(P) check_ref4(P,                     __func__, __LINE__)
@@ -1803,8 +1803,7 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define symbol_name_cell(p)           _TSym(p)->object.sym.name
 #define symbol_name(p)                string_value(symbol_name_cell(p))
 #define symbol_name_length(p)         string_length(symbol_name_cell(p))
-#define symbol_hash(p)                (symbol_name_cell(p))->object.string.shash
-#define symbol_raw_hash(p)            (symbol_name_cell(p))->object.string.hash
+#define symbol_hmap(p)                s7_int_abs(heap_location(p))
 #define symbol_global_accessor_gc_index(p) symbol_name_cell(p)->object.string.str_ext.accessor
 #define symbol_has_accessor(p)        has_accessor(p)
 #define symbol_set_has_accessor(p)    set_has_accessor(p)
@@ -2365,7 +2364,7 @@ static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
 static token_t token(s7_scheme *sc);
 static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indices);
 static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y);
-static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym);
+static void remove_gensym_from_symbol_table(s7_scheme *sc, s7_pointer sym);
 static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol);
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym);
 static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer func, s7_pointer args, s7_pointer body);
@@ -3251,7 +3250,7 @@ static void sweep(s7_scheme *sc)
 	  s1 = sc->gensyms[i];
 	  if (is_free_and_clear(s1))
 	    {
-	      remove_from_symbol_table(sc, s1); /* this uses symbol_name_cell data */
+	      remove_gensym_from_symbol_table(sc, s1); /* this uses symbol_name_cell data */
 	      free(symbol_name(s1));
 	      if ((is_documented(s1)) &&
 		  (symbol_help(s1)))
@@ -4562,7 +4561,12 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 	  free_cell(sc, sc->heap[loc]);
 	  heap_location(sc->heap[loc]) = loc;
 
-	  unheap(x);
+	  /* unheap(x); */
+	  heap_location(x) = -heap_location(x);
+	  /* if gensym is a hash-table key, then is removed from the heap, we need to be sure the hash-table map to it
+	   *   continues to be valid.  symbol_hmap is abs(heap_location), and the possible overlap with other not-in-heap
+	   *   ints is not problematic (they'll jusst hash to the same location).
+	   */
 	  for (i = 0; i < sc->gensyms_loc; i++)
 	    if (sc->gensyms[i] == x)
 	      {
@@ -4806,7 +4810,6 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
   initial_slot(x) = sc->UNDEFINED;
   symbol_set_local(x, 0LL, sc->NIL);
   symbol_tag(x) = 0;
-  symbol_hash(x) = location;
 
   if (symbol_name_length(x) > 1)                           /* not 0, otherwise : is a keyword */
     {
@@ -4967,16 +4970,20 @@ s7_pointer s7_symbol_table_find_name(s7_scheme *sc, const char *name)
 }
 
 
-static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym)
+static void remove_gensym_from_symbol_table(s7_scheme *sc, s7_pointer sym)
 {
-  unsigned int loc;
-  s7_pointer x;
+  /* sym is a free cell at this point (we're called after the GC), but the name_cell is still intact */
+  s7_pointer x, name;
+  unsigned int hash, location;
 
-  loc = symbol_hash(sym);
-  x = vector_element(sc->symbol_table, loc);
+  name = symbol_name_cell(sym);
+  hash = raw_string_hash((const unsigned char *)string_value(name), string_length(name));
+  location = hash % SYMBOL_TABLE_SIZE;
+
+  x = vector_element(sc->symbol_table, location);
   if (car(x) == sym)
     {
-      vector_element(sc->symbol_table, loc) = cdr(x);
+      vector_element(sc->symbol_table, location) = cdr(x);
       free(x);
     }
   else
@@ -4988,9 +4995,12 @@ static void remove_from_symbol_table(s7_scheme *sc, s7_pointer sym)
 	    {
 	      cdr(y) = cdr(x);
 	      free(x);
-	      break;
+	      return;
 	    }
 	}
+#if DEBUGGING
+      fprintf(stderr, "could not remove %s?\n", string_value(name));
+#endif
     }
 }
 
@@ -5091,7 +5101,6 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   global_slot(x) = sc->UNDEFINED;
   initial_slot(x) = sc->UNDEFINED;
   symbol_set_local(x, 0LL, sc->NIL);
-  symbol_hash(x) = location;
 
   /* place new symbol in symbol-table, but using calloc so we can easily free it (remove it from the table) in GC sweep */
   stc = (s7_cell *)malloc(sizeof(s7_cell)); /* was calloc? */
@@ -38887,8 +38896,8 @@ static unsigned int hash_map_int(s7_scheme *sc, s7_pointer table, s7_pointer key
 static unsigned int hash_map_char(s7_scheme *sc, s7_pointer table, s7_pointer key)    {return(character(key));}
 static unsigned int hash_map_ratio(s7_scheme *sc, s7_pointer table, s7_pointer key)   {return((unsigned int)denominator(key));} /* overflow possible as elsewhere */
 static unsigned int hash_map_complex(s7_scheme *sc, s7_pointer table, s7_pointer key) {return(hash_float_location(real_part(key)));}
-static unsigned int hash_map_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)  {return(symbol_raw_hash(key));}
-static unsigned int hash_map_syntax(s7_scheme *sc, s7_pointer table, s7_pointer key)  {return(symbol_raw_hash(syntax_symbol(key)));}
+static unsigned int hash_map_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key)  {return(symbol_hmap(key));}
+static unsigned int hash_map_syntax(s7_scheme *sc, s7_pointer table, s7_pointer key)  {return(symbol_hmap(syntax_symbol(key)));}
 
 #if WITH_GMP
 static unsigned int hash_map_big_int(s7_scheme *sc, s7_pointer table, s7_pointer key)     
@@ -39062,8 +39071,8 @@ static unsigned int hash_map_let(s7_scheme *sc, s7_pointer table, s7_pointer key
   if (!is_slot(next_slot(slot)))
     {
       if (is_sequence(slot_value(slot))) /* avoid loop if cycles */
-	return(symbol_raw_hash(slot_symbol(slot)));
-      return(symbol_raw_hash(slot_symbol(slot)) + hash_loc(sc, table, slot_value(slot)));
+	return(symbol_hmap(slot_symbol(slot)));
+      return(symbol_hmap(slot_symbol(slot)) + hash_loc(sc, table, slot_value(slot)));
     }
   slots = 0;
   for (; is_slot(slot); slot = next_slot(slot))
@@ -39079,8 +39088,8 @@ static unsigned int hash_map_let(s7_scheme *sc, s7_pointer table, s7_pointer key
     {
       slot = let_slots(key);
       if (is_sequence(slot_value(slot))) /* avoid loop if cycles */
-	return(symbol_raw_hash(slot_symbol(slot)));
-      return(symbol_raw_hash(slot_symbol(slot)) + hash_loc(sc, table, slot_value(slot)));
+	return(symbol_hmap(slot_symbol(slot)));
+      return(symbol_hmap(slot_symbol(slot)) + hash_loc(sc, table, slot_value(slot)));
     }
   
   return(slots);
@@ -39419,7 +39428,7 @@ static hash_entry_t *hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key
   if (is_symbol(key))
     {
       hash_entry_t *x;
-      for (x = hash_table_element(table, symbol_raw_hash(key) & ((unsigned int)hash_table_length(table) - 1)); x; x = x->next)
+      for (x = hash_table_element(table, symbol_hmap(key) & ((unsigned int)hash_table_length(table) - 1)); x; x = x->next)
 	if (key == x->key)
 	  return(x);
     }
@@ -40155,9 +40164,6 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
   table = car(args);
   if (!is_hash_table(table))
     method_or_bust(sc, table, sc->HASH_TABLE_SET, args,T_HASH_TABLE, 1);
-  /* how would (set! (ht a b) c) choose the inner table if (ht a b) is not found?
-   *   I'm not sure the multi-index case makes sense here
-   */
   return(s7_hash_table_set(sc, table, cadr(args), caddr(args)));
 }
 
@@ -40167,12 +40173,12 @@ static s7_pointer g_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table "(hash-table ...) returns a hash-table containing the cons's passed as its arguments. \
 That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with the two key/value pairs preinstalled."
-  #define Q_hash_table s7_make_circular_signature(sc, 1, 2, sc->IS_HASH_TABLE, sc->T)
+  #define Q_hash_table s7_make_circular_signature(sc, 1, 2, sc->IS_HASH_TABLE, sc->IS_LIST)
 
   int len;
   s7_pointer x, ht;
 
-  /* this accepts repeated keys: (hash-table '(a . 1) '(a . 1)) -- or just '(a) for that matter */
+  /* this accepts repeated keys: (hash-table '(a . 1) '(a . 1)) */
   for (len = 0, x = args; is_pair(x); x = cdr(x), len++)
     if ((!is_pair(car(x))) &&
 	(!is_null(car(x))))
@@ -45854,7 +45860,11 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 
     case T_STRING:                       /* (#("12" "34") 0 1) -> #\2 */
       if (is_null(cdr(indices)))
-	return(string_ref_1(sc, obj, car(indices)));
+	{
+	  if (is_byte_vector(obj))       /* ((vector (byte-vector 1)) 0 0) */
+	    return(small_int((unsigned int)(character(string_ref_1(sc, obj, car(indices))))));
+	  return(string_ref_1(sc, obj, car(indices)));
+	}
       return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, obj, indices)));
 
     case T_PAIR:                         /* (#((1 2) (3 4)) 1 0) -> 3, (#((1 (2 3))) 0 1 0) -> 2 */
@@ -48087,7 +48097,6 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   unheap(x);
   set_type(x, T_SYMBOL);
   symbol_name_cell(x) = str;
-  symbol_hash(x) = symbol_hash(symbol);
   symbol_set_local(x, 0LL, sc->NIL);
   symbol_syntax_op(x) = op;
 
@@ -52785,7 +52794,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		  if (((is_c_function(f)) &&
 		       ((is_safe_procedure(f)) ||
 			(((c_function_call(f) == g_member) || (c_function_call(f) == g_assoc)) &&
-			 ((is_pair(cdr(x))) && (is_pair(cddr(x))) && (is_null(cdddr(x))))))) /* TODO: what?!? */ ||
+			 ((is_pair(cdr(x))) && (is_pair(cddr(x))) && (is_null(cdddr(x))))))) /* no explicit function arg to member/assoc */ ||
 		      ((is_closure(f)) &&
 		       (is_safe_closure(f))))
 		    {
@@ -55076,6 +55085,7 @@ static bool safe_stepper(s7_scheme *sc, s7_pointer expr, s7_pointer vars)
 static int set_pair_ex(s7_scheme *sc)
 {
   s7_pointer caar_code, cx;
+
   caar_code = caar(sc->code);
   if (is_pair(caar_code))
     {
@@ -55134,7 +55144,10 @@ static int set_pair_ex(s7_scheme *sc)
 	if ((is_null(cdr(settee))) ||
 	    (!is_null(cddr(settee))))
 	  {
-	    /* no-index or multi-index case -- use slow version */
+	    /* no-index or multi-index case -- use slow version.
+	     *  TODO: ambiguity here -- is (set! (obj a b) v) actually (set! ((obj a) b) v)?
+	     *  perhaps look at setter? c-object-set takes 1 arg -- is this a bug?
+	     */
 	    push_op_stack(sc, sc->Object_Set);
 	    if (is_null(cdr(settee)))
 	      {
@@ -55197,6 +55210,15 @@ static int set_pair_ex(s7_scheme *sc)
 	settee = car(sc->code);
 	if (is_null(cdr(settee)))
 	  s7_wrong_number_of_args_error(sc, "no index for vector-set!: ~S", sc->code);
+
+	if ((!is_null(cddr(settee))) &&
+	    (type(cx) == T_VECTOR))
+	  {
+	    push_stack(sc, OP_SET2, cddr(settee), cdr(sc->code));
+	    sc->code = list_2(sc, car(settee), cadr(settee));
+	    return(goto_EVAL);
+	  }
+
 	if ((!is_null(cddr(settee))) ||
 	    (vector_rank(cx) > 1))
 	  {
@@ -55326,12 +55348,7 @@ static int set_pair_ex(s7_scheme *sc)
       break;
       
     case T_PAIR:
-      /* code: ((lst 1) 32) from (let ((lst '(1 2 3))) (set! (lst 1) 32))
-       * old form:
-       *    sc->code = cons(sc, sc->List_Set, s7_append(sc, car(sc->code), cdr(sc->code)));
-       *    old: 2.32, new: 1.77 (1.50 direct), (12.2): 1.07
-       *    (time (let ((lst '(1 2 3))) (do ((i 0 (+ i 1))) ((= i 10000000)) (set! (lst 1) 32))))
-       */
+      /* code: ((lst 1) 32) from (let ((lst '(1 2 3))) (set! (lst 1) 32)) */
       {
 	s7_pointer settee, index, val;
 	
@@ -55339,16 +55356,25 @@ static int set_pair_ex(s7_scheme *sc)
 	  s7_wrong_number_of_args_error(sc, "no value for list-set!: ~S", sc->code);
 	if (!is_null(cddr(sc->code)))
 	  s7_wrong_number_of_args_error(sc, "too many values for list-set!: ~S", sc->code);
-	
+
 	settee = car(sc->code);
 	if (is_null(cdr(settee)))
 	  s7_wrong_number_of_args_error(sc, "no index for list-set!: ~S", sc->code);
-	
+
+	if (!is_null(cddr(settee)))
+	  {
+	    /* split (set! (a b c...) v) into (set! ((a b) c ...) v), eval (a b), return 
+	     *    (let ((L (list (list 1 2)))) (set! (L 0 0) 3) L)
+	     */
+	    push_stack(sc, OP_SET2, cddr(settee), cdr(sc->code));
+	    sc->code = list_2(sc, car(settee), cadr(settee));
+	    return(goto_EVAL);
+	  }
+
 	index = cadr(settee);
 	val = cadr(sc->code);
 	
-	if ((!is_null(cddr(settee))) ||
-	    (is_pair(index)) ||
+	if ((is_pair(index)) ||
 	    (is_pair(val)))
 	  {
 	    push_op_stack(sc, sc->List_Set);
@@ -55382,8 +55408,13 @@ static int set_pair_ex(s7_scheme *sc)
 	settee = car(sc->code);
 	if (is_null(cdr(settee)))
 	  s7_wrong_number_of_args_error(sc, "no key for hash-table-set!: ~S", sc->code);
+
 	if (!is_null(cddr(settee)))
-	  s7_wrong_number_of_args_error(sc, "too many keys for hash-table-set!: ~S", sc->code);
+	  {
+	    push_stack(sc, OP_SET2, cddr(settee), cdr(sc->code));
+	    sc->code = list_2(sc, car(settee), cadr(settee));
+	    return(goto_EVAL);
+	  }
 	
 	key = cadr(settee);
 	if (!is_pair(key))
@@ -55429,9 +55460,14 @@ static int set_pair_ex(s7_scheme *sc)
 	settee = car(sc->code);
 	if (is_null(cdr(settee)))
 	  s7_wrong_number_of_args_error(sc, "no identifier for let-set!: ~S", sc->code);
-	if (!is_null(cddr(settee)))
-	  s7_wrong_number_of_args_error(sc, "too many identifiers for let-set!: ~S", sc->code);
 	
+	if (!is_null(cddr(settee)))
+	  {
+	    push_stack(sc, OP_SET2, cddr(settee), cdr(sc->code));
+	    sc->code = list_2(sc, car(settee), cadr(settee));
+	    return(goto_EVAL);
+	  }
+
 	key = cadr(settee);
 	if ((is_pair(key)) &&
 	    (car(key) == sc->QUOTE))
@@ -72288,13 +72324,13 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 1243 1173 1141 1141 1144 1129 1133 1136 1158 |
  * teq           |      |      | 6612                     3887 3020 2516 2468 2452 |
  * tcopy         |      |      | 13.6                     5355 4728 3887 3817 3268 |
- * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212 3266 |
+ * bench    42.7 | 8752 | 4220 | 3506 3506 3104 3020 3002 3342 3328 3301 3212 3272 |
  * tauto     265 |   89 |  9   |       8.4 8045 7482 7265 7104 6715 6373 5945 3298 |
  * tform         |      |      |                          6816 5536 4287 3996 4066 |
  * tmap          |      |      |  9.3                                         4231 |
- * titer         |      |      |                          7503 6793 6351 6048 6054 |
- * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 7293 |
- * thash         |      |      |                          50.7 23.8 14.9 13.7 9840 |
+ * titer         |      |      |                          7503 6793 6351 6048 6069 |
+ * lg            |      |      | 6547 6497 6494 6235 6229 6239 6611 6283 6386 7276 |
+ * thash         |      |      |                          50.7 23.8 14.9 13.7 9395 |
  *               |      |      |                                                   |
  * tgen          |   71 | 70.6 | 38.0 31.8 28.2 23.8 21.5 20.8 20.8 17.3 14.0 13.0 |
  * tall       90 |   43 | 14.5 | 12.7 12.7 12.6 12.6 12.8 12.8 12.8 12.9 14.8 15.0 |
@@ -72323,4 +72359,5 @@ int main(int argc, char **argv)
  *
  * (*s7* 'memory-usage), need a way to attach funcs to the space reporting (clm2xen etc)
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
+ * t305->s7test, also check c-obj in this case (both inner and outer)
  */

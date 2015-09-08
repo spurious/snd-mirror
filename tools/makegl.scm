@@ -847,7 +847,7 @@
 
 (hey "#if HAVE_SCHEME~%")
 (hey "static s7_pointer s_boolean, s_integer, s_real, s_any;~%")
-(hey "static s7_sig_t ")
+(hey "static s7_pointer ")
 
 (define (sig-name sig)
   (call-with-output-string
