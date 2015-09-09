@@ -7449,8 +7449,10 @@ static s7_rf_t implicit_float_vector_ref(s7_scheme *sc, s7_pointer expr);
 static s7_pf_t implicit_pf_sequence_ref(s7_scheme *sc, s7_pointer expr);
 static s7_pf_t implicit_gf_sequence_ref(s7_scheme *sc, s7_pointer expr);
 
+#if WITH_OPTIMIZATION
 static s7_pf_t implicit_pf_sequence_set(s7_scheme *sc, s7_pointer v, s7_pointer ind, s7_pointer val);
 static s7_pf_t implicit_gf_sequence_set(s7_scheme *sc, s7_pointer v, s7_pointer ind, s7_pointer val);
+#endif
 
 /* set cases are via set_if/set_rf -- but set_gp|pf would need to be restricted to non-symbol settees */
 
@@ -38109,6 +38111,7 @@ static s7_pf_t implicit_gf_sequence_ref(s7_scheme *sc, s7_pointer expr)
   return(implicit_pf_sequence_ref(sc, expr));
 }
 
+#if WITH_OPTIMIZATION
 static s7_pf_t implicit_pf_sequence_set(s7_scheme *sc, s7_pointer seq, s7_pointer ind, s7_pointer val)
 {
   /* seq is the slot */
@@ -38148,7 +38151,6 @@ static s7_pf_t implicit_pf_sequence_set(s7_scheme *sc, s7_pointer seq, s7_pointe
   return(NULL);
 }
 
-#if WITH_OPTIMIZATION
 static s7_pf_t implicit_gf_sequence_set(s7_scheme *sc, s7_pointer v, s7_pointer ind, s7_pointer val) 
 {
   return(implicit_pf_sequence_set(sc, v, ind, val));
@@ -38973,20 +38975,10 @@ static unsigned int hash_map_ratio_eq(s7_scheme *sc, s7_pointer table, s7_pointe
 
 static unsigned int hash_map_hash_table(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
-  /* hash-tables are equal if key/values match independent of table size */
-  unsigned int i;
-  hash_entry_t **entries;
-  if (hash_table_entries(key) == 0)
-    return(0);
-  entries = hash_table_elements(key);
-  for (i = 0; i < hash_table_length(key); i++)
-    if (entries[i])
-      {
-	if (!is_sequence(entries[i]->value))
-	  return(i + hash_loc(sc, table, entries[i]->value));
-	return(i);
-      }
-  return(0);
+  /* hash-tables are equal if key/values match independent of table size and entry order.
+   * if not using morally-equal?, hash_table_checker|mapper must also be the same.
+   */
+  return(hash_table_entries(key));
 }
 
 static unsigned int hash_map_int_vector(s7_scheme *sc, s7_pointer table, s7_pointer key)
@@ -72351,6 +72343,9 @@ int main(int argc, char **argv)
  * with-let and let_fallback are inconsistent if symbol in question exists at outer level?
  *   find_symbol ideally would look for let-ref|set-fallback before going on -- document it...
  *
+ * I think hash-table-set to #f should actually remove the key
+ * timing test for implicit/multiindex cases?
+ *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array
  *   free-var: slot search each time, so a special rf func?
@@ -72359,5 +72354,4 @@ int main(int argc, char **argv)
  *
  * (*s7* 'memory-usage), need a way to attach funcs to the space reporting (clm2xen etc)
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
- * t305->s7test, also check c-obj in this case (both inner and outer)
  */

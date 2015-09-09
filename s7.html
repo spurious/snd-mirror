@@ -2304,7 +2304,7 @@ argument is a cons: '(equality-checker mapper).
 
 <p>Here's a brief example.  In CLM, we have c-objects of type mus-generator (from s7's point of view),
 and we want to hash them using equal? (which will call the generator-specific equality function).
-But s7 doesn't realize that the mus-generator type covers 40 or 50 internal types, so as the locator we pass mus-type:
+But s7 doesn't realize that the mus-generator type covers 40 or 50 internal types, so as the maapper we pass mus-type:
 <code>(make-hash-table 64 (cons equal? mus-type))</code>.
 </p>
 </div>
