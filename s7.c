@@ -38885,13 +38885,13 @@ static unsigned int hash_float_location(s7_double x)
 
 /* built in hash loc tables for eq? eqv? equal? morally-equal? = string=? string-ci=? char=? char-ci=? (default=equal?) */
 
+#define hash_loc(Sc, Table, Key) (*(hash_table_mapper(Table)[type(Key)]))(Sc, Table, Key)
+
 static hash_map_t *eq_hash_map, *eqv_hash_map, *string_eq_hash_map, *number_eq_hash_map, *char_eq_hash_map, *closure_hash_map;
 static hash_map_t *morally_equal_hash_map, *c_function_hash_map;
 #if (!WITH_PURE_S7)
 static hash_map_t *string_ci_eq_hash_map, *char_ci_eq_hash_map;
 #endif
-
-#define hash_loc(Sc, Table, Key) (*(hash_table_mapper(Table)[type(Key)]))(Sc, Table, Key)
 
 static unsigned int hash_map_nil(s7_scheme *sc, s7_pointer table, s7_pointer key)     {return(type(key));}
 static unsigned int hash_map_int(s7_scheme *sc, s7_pointer table, s7_pointer key)     {return((unsigned int)(s7_int_abs(integer(key))));}
@@ -38941,7 +38941,7 @@ static unsigned int hash_map_ci_string(s7_scheme *sc, s7_pointer table, s7_point
   int len;
   len = string_length(key);
   if (len == 0) return(0);
-  return(len + (toupper(string_value(key)[0]) << 4));
+  return(len + (toupper((int)string_value(key)[0]) << 4));
 }
 #endif
 
@@ -38977,6 +38977,7 @@ static unsigned int hash_map_hash_table(s7_scheme *sc, s7_pointer table, s7_poin
 {
   /* hash-tables are equal if key/values match independent of table size and entry order.
    * if not using morally-equal?, hash_table_checker|mapper must also be the same.
+   * Keys are supposed to be constant while keys, so a hash-table shouldn't be a key of itself.
    */
   return(hash_table_entries(key));
 }
@@ -39468,6 +39469,38 @@ static hash_entry_t *hash_closure(s7_scheme *sc, s7_pointer table, s7_pointer ke
     }
   sc->envir = old_e;
   return(NULL);
+}
+
+
+static s7_pointer remove_from_hash_table(s7_scheme *sc, s7_pointer table, s7_pointer key, hash_entry_t *p)
+{
+  hash_entry_t *x;
+  unsigned int hash_len, loc;
+
+  hash_len = (unsigned int)hash_table_length(table) - 1;
+  loc = hash_loc(sc, table, key) & hash_len;
+
+  x = hash_table_element(table, loc);
+  if (x == p)
+    hash_table_element(table, loc) = x->next;
+  else
+    {
+      hash_entry_t *y;
+      for (y = x, x = x->next; x; y = x, x = x->next)
+	if (x == p)
+	  {
+	    y->next = x->next;
+	    break;
+	  }
+      if (!x) fprintf(stderr, "lost %s!\n", DISPLAY(key));
+    }
+  hash_table_entries(table)--;
+  if ((hash_table_entries(table) == 0) &&
+      (!hash_table_checker_locked(table)))
+    hash_table_checker(table) = hash_empty;
+  x->next = hash_free_list;
+  hash_free_list = x;
+  return(sc->F);
 }
 
 /* -------------------------------- make-hash-table -------------------------------- */
@@ -39979,21 +40012,6 @@ static s7_pf_t hash_table_ref_pf(s7_scheme *sc, s7_pointer expr)
 
 static void hash_table_set_function(s7_pointer table, int typ)
 {
-  /* if every key structure is simple, we'd like to use a simple equal checker (no circles),
-   *    but circles can sneak in!  lists (etc) are dangerous keys:
-   *
-   (let ((ht (make-hash-table))
-   (lst1 (list 1 2))
-   (lst2 (list 1 2)))
-   (set! (ht lst1) 32)
-   (let ((start (ht lst2)))
-   (set! (lst1 0) 3)
-   (list start (ht lst2))))
-   (32 #f)
-   *
-   * but this applies to all such variables, even strings.  Do other schemes copy the key?
-   */
-
   if (hash_table_checker(table) != hash_equal)
     {
       if (hash_table_checker(table) != default_hash_checks[typ])
@@ -40012,7 +40030,11 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
   x = (*hash_table_checker(table))(sc, table, key);
 
   if (x)
-    x->value = value;
+    {
+      if (value == sc->F)
+	return(remove_from_hash_table(sc, table, key, x));
+      x->value = value;
+    }
   else 
     {
       unsigned int hash_len, raw_hash, loc;
@@ -42046,7 +42068,8 @@ static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_i
     return(false);
   if (hash_table_entries(x) == 0)
     return(true);
-  if (!morally)
+  if ((!morally) &&
+      ((hash_table_checker_locked(x)) || (hash_table_checker_locked(y))))
     {
       if (hash_table_checker(x) != hash_table_checker(y))
 	return(false);
@@ -47907,6 +47930,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
    */
   if (has_ref_fallback(sc->envir)) /* an experiment -- see s7test (with-let *db* (+ int (length str))) */
     check_method(sc, sc->envir, sc->LET_REF_FALLBACK, sc->w = list_2(sc, sc->envir, sym));
+  /* but if the thing we want to hit this fallback happens to exist at a higher level, oops... */
 
   if (sym == sc->UNQUOTE)
     eval_error(sc, "unquote (',') occurred outside quasiquote: ~S", sc->cur_code);
@@ -48058,6 +48082,7 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op, s7
   x = new_symbol(sc, name, safe_strlen(name), hash, loc);
 
   syn = alloc_pointer();
+  unheap(syn);
   set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS);
   syntax_opcode(syn) = op;
   syntax_symbol(syn) = x;
@@ -48093,6 +48118,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   symbol_syntax_op(x) = op;
 
   syn = alloc_pointer();
+  heap_location(syn) = heap_location(old_syn);
   set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS);
   syntax_opcode(syn) = op;
   syntax_symbol(syn) = symbol;
@@ -52062,22 +52088,6 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
        */
       break;
 
-    case OP_CASE:
-      if (is_pair(cddr(expr)))
-	{
-	  s7_pointer kp;
-	  for (kp = cddr(expr); is_pair(kp); kp = cdr(kp))
-	    if (is_pair(car(kp)))
-	      {
-		s7_pointer k;
-		for (k = caar(kp); is_pair(k); k = cdr(k))
-		  if ((is_symbol(car(k))) &&
-		      (symbol_tag(car(k)) == 0))
-		    symbol_tag(car(k)) = 1;
-	      }
-	}
-      break;
-
     default:
       break;
     }
@@ -52222,8 +52232,6 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
 static bool rdirect_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer symbols)
 {
   s7_pointer x;
-  if (symbol_tag(symbol) != sc->syms_tag)
-    return(false);
   for (x = symbols; is_pair(x); x = cdr(x))
     {
       if (car(x) == symbol)
@@ -52240,7 +52248,8 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer symbol, s7
   s7_pointer x;
   long long int id;
 
-  if (rdirect_memq(sc, symbol, e)) /* it's probably a local variable reference */
+  if ((symbol_tag(symbol) == sc->syms_tag) &&
+      (rdirect_memq(sc, symbol, e)))   /* it's probably a local variable reference */
     return(sc->NIL);
 
   if (is_global(symbol))
@@ -72340,11 +72349,6 @@ int main(int argc, char **argv)
  * remove the #t=all sounds business! = (map f (sounds))
  * for closure, proc-sig could be a guarantee to the optimizer
  * we could see sig-collisions during optimization, at least where opts build them in, (*s7* 'with-type-checks)?
- * with-let and let_fallback are inconsistent if symbol in question exists at outer level?
- *   find_symbol ideally would look for let-ref|set-fallback before going on -- document it...
- *
- * I think hash-table-set to #f should actually remove the key
- * timing test for implicit/multiindex cases?
  *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array
@@ -72354,4 +72358,8 @@ int main(int argc, char **argv)
  *
  * (*s7* 'memory-usage), need a way to attach funcs to the space reporting (clm2xen etc)
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
+ *
+ * sym+str allocated together: alloc_pointer2? or 3 -- permanent cons for the symbol-table, or 3+strlen (alignment?)
+ * pure-s7 list-ref problem (in cload? -- end of snd-test)
+ * check possible memleak hash_table_set 40052
  */

@@ -49480,6 +49480,7 @@ EDITS: 1
    st))
 |#
 
+(gc) (gc)
 (s7-version)
 
 (if with-exit (exit))
