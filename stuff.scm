@@ -646,7 +646,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
   (let ((predicates (list integer? rational? real? complex? number?
 			  byte-vector? string?
 			  float-vector? int-vector? vector?
-			  null? pair? list? 
+			  null? proper-list? pair? list? 
 			  keyword? gensym? symbol?
 			  char? string?
 			  hash-table?

@@ -290,7 +290,7 @@
 	      (else #f))))
 
       (define (any-compatible? type1 type2)
-	;; type1 and tyupe2 can be either a list of types or a type
+	;; type1 and type2 can be either a list of types or a type
 	;(format *stderr* "any-compatible ~S ~S~%" type1 type2)
 	(if (symbol? type1)
 	    (if (symbol? type2)
@@ -784,14 +784,9 @@
 						 ((real?)            (memq (car b) '(< > <= >=)))
 						 (else #f)))))))
 		       (and (pair? (cadr e))
-			    (case (car e)
-			      ((complex? number?) (return-type-ok? 'number? (return-type (caadr e))))
-			      ((exact? rational?) (eq? (caadr e) 'inexact->exact))
-			      ((inexact? real?)   (eq? (caadr e) 'exact->inexact))
-			      ((char?)            (return-type-ok? 'char? (return-type (caadr e))))
-			      ((string?)          (return-type-ok? 'string? (return-type (caadr e))))
-			      ((vector?)          (return-type-ok? 'vector? (return-type (caadr e))))
-			      (else #f)))))))
+			    (memq (car e) bools)
+			    (memq (return-type (caadr e)) bools)
+			    (any-compatible? (car e) (return-type (caadr e))))))))
 	
 	(define (false? e)
 	  
@@ -843,9 +838,10 @@
 					     (>= (length b) 2)
 					     (member (cadr a) (cdr b))
 					     (bad-arg-match (car a) (car b)))))
-		       (and (eq? (car e) 'null?)
-			    (pair? (cadr e))
-			    (return-type-ok? 'list? (return-type (caadr e))))))))
+		       (and (pair? (cadr e))
+			    (memq (car e) bools)
+			    (memq (return-type (caadr e)) bools)
+			    (not (any-compatible? (car e) (return-type (caadr e)))))))))
 	
 	(define (contradictory? ands)
 	  (let ((vars ()))

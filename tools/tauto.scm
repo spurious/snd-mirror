@@ -117,7 +117,11 @@
 			     (< (caddr (cadr any)) low))
 			(quit))))
 		 
-		(let ((checker (if (pair? sig) (car sig) #f)))
+		(let ((checker (if (pair? sig) 
+				   (if (pair? (car sig))
+				       (lambda (x) (or ((caar sig) x) ((cadar sig) x)))
+				       (car sig))
+				   #f)))
 		  (if checker
 		      (for-each
 		       (lambda (c)
@@ -139,7 +143,11 @@
 			     'error)))
 		       cdr-constants)))))
 	   
-	     (let ((checker (if (pair? sig) (car sig) #f)))
+	     (let ((checker (if (pair? sig) 
+				(if (pair? (car sig))
+				    (lambda (x) (or ((caar sig) x) ((cadar sig) x)))
+				    (car sig))
+				#f)))
 	       (if checker
 		   (for-each
 		    (lambda (c)
@@ -155,16 +163,18 @@
 
 ;(set! low 3)
 ;(autotest string-set! () 0 3)
-
+#|
 (define (safe-map f . args)
   (if (procedure? f)
       (if (< (apply max (map (lambda (x) (or (length x) 0)) args)) 10)
 	  (apply map f args))
       (error 'wrong-type-arg "gotta have a func!")))
+|#
 
 (define (safe-fill! obj arg)
   (if (not (let? obj))
       (fill! obj arg)))
+
 #|
 (define (safe-cutlet e s)
   (if (not (eq? e (rootlet)))
@@ -179,7 +189,7 @@
 		  ;dilambda object->string
 		  global-environment current-environment make-procedure-with-setter procedure-with-setter? procedure-arity
 		  
-		  copy map fill!
+		  copy fill! ;map
 		  hash-table-set! vector-set! let-set!
 		  
 		  mock-number mock-pair mock-string mock-char mock-vector 
@@ -215,7 +225,7 @@
 		    (begin
 		      (if (< top bottom)
 			  (format *stderr* ";~A (bottom: ~A, top: ~A)...~%" sym bottom top))
-			  ;(format *stderr* ";~A...~%" sym))
+			  ;(format *stderr* ";~A...~%" sym)
 		      (set! low bottom)
 		      (if (positive? (cdr argn))
 			  (let ((sig (copy (procedure-signature f))))

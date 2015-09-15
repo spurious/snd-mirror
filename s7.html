@@ -2304,7 +2304,7 @@ argument is a cons: '(equality-checker mapper).
 
 <p>Here's a brief example.  In CLM, we have c-objects of type mus-generator (from s7's point of view),
 and we want to hash them using equal? (which will call the generator-specific equality function).
-But s7 doesn't realize that the mus-generator type covers 40 or 50 internal types, so as the maapper we pass mus-type:
+But s7 doesn't realize that the mus-generator type covers 40 or 50 internal types, so as the mapper we pass mus-type:
 <code>(make-hash-table 64 (cons equal? mus-type))</code>.
 </p>
 </div>
@@ -2426,7 +2426,9 @@ chain up to the rootlet.  That is, two environments are equal if any local varia
 <code>(eval `(begin ,@body) e)</code>, but probably faster.
 Similarly, <code>(let bindings . body)</code> is equivalent to
 <code>(eval `(begin ,@body) (apply inlet (flatten bindings)))</code>,
-ignoring the outer (enclosing) environment. Or better,
+ignoring the outer (enclosing) environment (the default outer environment
+of inlet is rootlet).
+Or better,
 </p>
 <pre class="indented">
 (define-macro (with-environs e . body) 
@@ -4890,7 +4892,7 @@ at startup *features* is:
 
 <pre class="indented">
 &gt; *features*
-<em class="gray">(snd-15.7 snd15 snd audio snd-s7 snd-gtk gsl alsa gtk2 xg clm6 clm sndlib linux
+<em class="gray">(snd-16.7 snd15 snd audio snd-s7 snd-gtk gsl alsa gtk2 xg clm6 clm sndlib linux
  dlopen complex-numbers system-extras dfls-exponents ratio s7-3.26 s7) </em>
 &gt; (provided? 'gsl)
 <em class="gray">#t</em>
@@ -8358,7 +8360,7 @@ int main(int argc, char **argv)
  *
  * and run it:
  *   ex3
- *   &gt; (cload "/home/bil/snd-15/ex3a.so" "init_ex")
+ *   &gt; (cload "/home/bil/snd-16/ex3a.so" "init_ex")
  *   <em class="gray">#t</em>
  *   &gt; (add-1 2)
  *   <em class="gray">3</em>

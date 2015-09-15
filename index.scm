@@ -24,18 +24,18 @@ and if one is found, and the Snd documentation can be found, calls *html-program
 				 (if (and (string? *html-dir*)
 					  (file-exists? (string-append *html-dir* "/snd.html")))
 				     *html-dir*
-				     (if (file-exists? "/usr/share/doc/snd-15/snd.html")
-					 "/usr/share/doc/snd-15"
-					 (if (file-exists? "/usr/local/share/doc/snd-15/snd.html")
-					     "/usr/local/share/doc/snd-15"
-					     (if (file-exists? "/usr/doc/snd-15/snd.html")
-						 "/usr/doc/snd-15"
-						 (if (file-exists? "/usr/share/doc/snd-14/snd.html")
-						     "/usr/share/doc/snd-14"
-						     (if (file-exists? "/usr/local/share/doc/snd-14/snd.html")
-							 "/usr/local/share/doc/snd-14"
-							 (if (file-exists? "/usr/doc/snd-14/snd.html")
-							     "/usr/doc/snd-14"
+				     (if (file-exists? "/usr/share/doc/snd-16/snd.html")
+					 "/usr/share/doc/snd-16"
+					 (if (file-exists? "/usr/local/share/doc/snd-16/snd.html")
+					     "/usr/local/share/doc/snd-16"
+					     (if (file-exists? "/usr/doc/snd-16/snd.html")
+						 "/usr/doc/snd-16"
+						 (if (file-exists? "/usr/share/doc/snd-15/snd.html")
+						     "/usr/share/doc/snd-15"
+						     (if (file-exists? "/usr/local/share/doc/snd-15/snd.html")
+							 "/usr/local/share/doc/snd-15"
+							 (if (file-exists? "/usr/doc/snd-15/snd.html")
+							     "/usr/doc/snd-15"
 							     #f))))))))))
 		    (if dir
 			(system (string-append *html-program* " file:" dir "/" n)))))))

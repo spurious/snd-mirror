@@ -2105,7 +2105,7 @@ Xen g_mus_data(Xen gen)
 #if HAVE_SCHEME
   {
     s7_pointer func; 
-    func = s7_method(s7, gen, s7_make_symbol(s7, "mus-data"));
+    func = s7_method(s7, gen, s7_make_symbol(s7, S_mus_data));
     if (func != Xen_undefined) return(s7_apply_function(s7, func, s7_list(s7, 1, gen))); 
   }
 #endif
@@ -12533,9 +12533,8 @@ static void mus_xen_init(void)
   pl_ici = s7_make_signature(s7, 3, i, c, i);
   pl_ccic = s7_make_signature(s7, 3, c, c, i, c);
   pl_ccrr = s7_make_signature(s7, 4, c, c, r, r);
-  pl_fc = s7_make_signature(s7, 2, f, c);
+  pl_fc = s7_make_signature(s7, 2, s7_make_signature(s7, 2, f, b), c);
   pl_cs = s7_make_signature(s7, 2, c, s);
-  pl_fc = s7_make_signature(s7, 2, f, c);
   pl_ff = s7_make_circular_signature(s7, 1, 2, f, f);
   pl_tt = s7_make_signature(s7, 2, t, t);
   pl_fcf = s7_make_signature(s7, 3, f, c, f);
