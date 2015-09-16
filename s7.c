@@ -956,7 +956,7 @@ struct s7_scheme {
   s7_pointer FLOOR, FLUSH_OUTPUT_PORT, FORMAT, FOR_EACH, GC, GCD, GENSYM, IS_GENSYM, GET_OUTPUT_STRING, HASH_TABLE, HASH_TABLE_STAR;
   s7_pointer IS_HASH_TABLE, HASH_TABLE_REF, HASH_TABLE_SET, HASH_TABLE_ENTRIES, HELP, IMAG_PART, IS_INEXACT, INEXACT_TO_EXACT;
   s7_pointer IS_INFINITE, IS_INPUT_PORT, IS_INTEGER, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, IS_KEYWORD, KEYWORD_TO_SYMBOL;
-  s7_pointer LCM, LENGTH, IS_ITERATOR, MAKE_ITERATOR, ITERATE, ITERATOR_SEQUENCE, ITERATOR_IS_AT_END;
+  s7_pointer LCM, LENGTH, IS_SEQUENCE, IS_ITERATOR, MAKE_ITERATOR, ITERATE, ITERATOR_SEQUENCE, ITERATOR_IS_AT_END;
   s7_pointer LIST, IS_LIST, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBIT, LOGIOR, LOGNOT, LOGXOR;
   s7_pointer IS_MACRO, MAKE_BYTE_VECTOR, MAKE_HASH_TABLE, MAKE_KEYWORD, MAKE_LIST, MAKE_RANDOM_STATE;
   s7_pointer MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, IS_MORALLY_EQUAL, IS_NAN, IS_NEGATIVE, NEWLINE;
@@ -1007,7 +1007,7 @@ struct s7_scheme {
   s7_pointer __FUNC__;
   s7_pointer Object_Set;               /* applicable object set method */
   s7_pointer FEED_TO;                  /* => */
-  s7_pointer BODY, CLASS_NAME, IS_FLOAT, IS_INTEGER_OR_REAL_AT_END, IS_INTEGER_OR_ANY_AT_END;
+  s7_pointer BODY, CLASS_NAME, IS_FLOAT, IS_INTEGER_OR_REAL_AT_END, IS_INTEGER_OR_ANY_AT_END, IS_LIST_OR_ANY_AT_END;
   s7_pointer QUOTE_UNCHECKED, BEGIN_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_LET_UNCHECKED, WITH_LET_S;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, LETREC_STAR_UNCHECKED, COND_UNCHECKED, COND_SIMPLE, WITH_BAFFLE_UNCHECKED;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_A;
@@ -1463,7 +1463,6 @@ static void init_types(void)
 #define is_with_let_let(p)            ((typeflag(_TLet(p)) & T_WITH_LET_LET) != 0)
 #define set_with_let_let(p)           typeflag(_TLet(p)) |= T_WITH_LET_LET
 /* marks a let that is the argument to with-let */
-
 
 #define T_SHARED                      (1 << (TYPE_BITS + 11))
 #define is_shared(p)                  ((typeflag(_TSeq(p)) & T_SHARED) != 0)
@@ -5718,7 +5717,7 @@ static s7_pointer g_is_openlet(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_openlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_openlet "(openlet e) tells the built-in generic functions that the environment 'e might have an over-riding method."
-  #define Q_openlet pl_t
+  #define Q_openlet pcl_t
   s7_pointer e;
 
   e = car(args);
@@ -5750,7 +5749,7 @@ static s7_pointer c_coverlet(s7_scheme *sc, s7_pointer e)
 static s7_pointer g_coverlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_coverlet "(coverlet e) undoes an earlier openlet."
-  #define Q_coverlet pl_t
+  #define Q_coverlet pcl_t
   return(c_coverlet(sc, car(args)));
 }
 
@@ -11920,12 +11919,6 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
   switch (type(obj))
     {
     case T_INTEGER:
-      if ((width == 0) &&
-	  (radix == 10))
-	{
-	  p = integer_to_string_base_10_no_width(obj, nlen);
-	  return(copy_string_with_length(p, *nlen));
-	}
       p = (char *)malloc((128 + width) * sizeof(char));
       *nlen = s7_int_to_string(p, s7_integer(obj), radix, width);
       return(p);
@@ -18597,7 +18590,7 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 	{
 	  switch (type(x))
 	    {
-#if HAVE_OVERFLOW_CHECKS /* just an experiment... */
+#if HAVE_OVERFLOW_CHECKS
 	    case T_INTEGER:
 	      {
 		s7_int n;
@@ -27372,7 +27365,7 @@ static s7_pointer input_port_if_not_loading(s7_scheme *sc)
 static s7_pointer g_read_char(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_char "(read-char (port (current-input-port))) returns the next character in the input port"
-  #define Q_read_char s7_make_signature(sc, 2, sc->T, sc->IS_INPUT_PORT)
+  #define Q_read_char s7_make_signature(sc, 2, s7_make_signature(sc, 2, sc->IS_CHAR, sc->IS_EOF_OBJECT), sc->IS_INPUT_PORT)
   s7_pointer port;
 
   if (is_not_null(args))
@@ -27482,7 +27475,7 @@ static s7_pointer write_char_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 static s7_pointer g_peek_char(s7_scheme *sc, s7_pointer args)
 {
   #define H_peek_char "(peek-char (port (current-input-port))) returns the next character in the input port, but does not remove it from the input stream"
-  #define Q_peek_char s7_make_signature(sc, 2, sc->T, sc->IS_INPUT_PORT)
+  #define Q_peek_char s7_make_signature(sc, 2, s7_make_signature(sc, 2, sc->IS_CHAR, sc->IS_EOF_OBJECT), sc->IS_INPUT_PORT)
   s7_pointer port;
 
   if (is_not_null(args))
@@ -27506,7 +27499,7 @@ PF_0(peek_char, c_peek_char)
 static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_byte "(read-byte (port (current-input-port))): reads a byte from the input port"
-  #define Q_read_byte s7_make_signature(sc, 2, sc->T, sc->IS_INPUT_PORT)
+  #define Q_read_byte s7_make_signature(sc, 2, s7_make_signature(sc, 2, sc->IS_INTEGER, sc->IS_EOF_OBJECT), sc->IS_INPUT_PORT)
   s7_pointer port;
   int c;
 
@@ -27583,7 +27576,7 @@ static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_line "(read-line port (with-eol #f)) returns the next line from port, or #<eof>.\
 If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
-  #define Q_read_line s7_make_signature(sc, 3, sc->T, sc->IS_INPUT_PORT, sc->IS_BOOLEAN)
+  #define Q_read_line s7_make_signature(sc, 3, s7_make_signature(sc, 2, sc->IS_STRING, sc->IS_EOF_OBJECT), sc->IS_INPUT_PORT, sc->IS_BOOLEAN)
 
   s7_pointer port;
   bool with_eol = false;
@@ -27662,7 +27655,7 @@ static s7_pointer c_read_string(s7_scheme *sc, s7_int chars, s7_pointer port)
 static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_string "(read-string k port) reads k characters from port into a new string and returns it."
-  #define Q_read_string s7_make_signature(sc, 3, sc->T, sc->IS_INTEGER, sc->IS_INPUT_PORT)
+  #define Q_read_string s7_make_signature(sc, 3, s7_make_signature(sc, 2, sc->IS_STRING, sc->IS_EOF_OBJECT), sc->IS_INTEGER, sc->IS_INPUT_PORT)
   s7_pointer k, port;
 
   k = car(args);
@@ -29136,7 +29129,7 @@ static s7_pointer g_make_iterator(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_iterator "(make-iterator sequence) returns an iterator object that \
 returns the next value in the sequence each time it is called.  When it reaches the end, it returns " ITERATOR_END_NAME "."
-  #define Q_make_iterator s7_make_signature(sc, 2, sc->IS_ITERATOR, sc->LENGTH)
+  #define Q_make_iterator s7_make_signature(sc, 2, sc->IS_ITERATOR, sc->IS_SEQUENCE)
 
   return(s7_make_iterator(sc, car(args)));
 }
@@ -29243,7 +29236,7 @@ bool s7_iterator_is_at_end(s7_pointer obj)
 static s7_pointer g_iterator_sequence(s7_scheme *sc, s7_pointer args)
 {
   #define H_iterator_sequence "(iterator-sequence iterator) returns the sequence that iterator is traversing."
-  #define Q_iterator_sequence s7_make_signature(sc, 2, sc->T, sc->IS_ITERATOR)
+  #define Q_iterator_sequence s7_make_signature(sc, 2, sc->IS_SEQUENCE, sc->IS_ITERATOR)
 
   s7_pointer iter;
 
@@ -30910,7 +30903,6 @@ static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port
 
 static void iterator_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
-  int nlen;
   if (use_write == USE_READABLE_WRITE)
     {
       if (iterator_is_at_end(obj))
@@ -30933,6 +30925,7 @@ static void iterator_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use
 	      object_to_port_with_circle_check(sc, iterator_sequence(obj), port, use_write, ci);
 	      if (iterator_position(obj) > 0)
 		{
+		  int nlen;
 		  char *str;
 		  str = (char *)malloc(128 * sizeof(char));
 		  nlen = snprintf(str, 128, "))) (do ((i 0 (+ i 1))) ((= i %lld) iter) (iterate iter)))", iterator_position(obj));
@@ -31840,7 +31833,6 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
   int i = 0, str_len = 0;
   format_data *fdat = NULL;
   s7_pointer deferred_port = sc->F;
-  use_write_t choice;
 
   if ((!with_result) &&
       (port == sc->F))
@@ -31910,6 +31902,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
     {
       if ((unsigned char)(str[i]) == (unsigned char)'~') /* what does MS C want? */
 	{
+	  use_write_t use_write;
 	  switch (str[i + 1])
 	    {
 	    case '%':                           /* -------- newline -------- */
@@ -32082,15 +32075,15 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	      format_error(sc, "unmatched '}'", str, args, fdat);
 
 	    case 'W': case 'w':
-	      choice = USE_READABLE_WRITE;
+	      use_write = USE_READABLE_WRITE;
 	      goto OBJSTR;
 
 	    case 'S': case 's':
-	      choice = USE_WRITE;
+	      use_write = USE_WRITE;
 	      goto OBJSTR;
 
 	    case 'A': case 'a':
-	      choice = USE_DISPLAY;
+	      use_write = USE_DISPLAY;
 	    OBJSTR:
 	      /* object->string */
 	      {
@@ -32108,7 +32101,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		    fdat->strport = strport;
 		  }
 		else strport = port;
-		object_out(sc, obj, strport, choice);
+		object_out(sc, obj, strport, use_write);
 		if (columnized)
 		  {
 		    if (port_position(strport) >= port_data_size(strport))
@@ -32465,7 +32458,7 @@ spacing (and spacing character) and precision.  ~{ starts an embedded format dir
 If the 'out' it is not an output port, the resultant string is returned.  If it \
 is #t, the string is also sent to the current-output-port."
 
-  #define Q_format pcl_t
+  #define Q_format s7_make_circular_signature(sc, 1, 2, sc->IS_STRING, sc->T)
   return(g_format_1(sc, args));
 }
 
@@ -33598,7 +33591,7 @@ static s7_pointer list_ref_1(s7_scheme *sc, s7_pointer lst, s7_pointer ind)
 static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_list_ref "(list-ref lst i ...) returns the i-th element (0-based) of the list"
-  #define Q_list_ref s7_make_circular_signature(sc, 2, 3, sc->T, sc->IS_PAIR, sc->IS_INTEGER)
+  #define Q_list_ref s7_make_circular_signature(sc, 2, 3, sc->T, sc->IS_PROPER_LIST, sc->IS_INTEGER)
 
   /* (let ((L '((1 2 3) (4 5 6)))) (list-ref L 1 2))
 
@@ -33649,7 +33642,7 @@ PIF_TO_PF(list_ref, c_list_ref)
 static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, int arg_num)
 {
   #define H_list_set "(list-set! lst i ... val) sets the i-th element (0-based) of the list to val"
-  #define Q_list_set s7_make_circular_signature(sc, 2, 3, sc->T, sc->IS_PAIR, sc->T)
+  #define Q_list_set s7_make_circular_signature(sc, 2, 3, sc->T, sc->IS_PROPER_LIST, sc->T)
 
   int i;
   s7_int index;
@@ -34635,7 +34628,7 @@ static s7_pointer c_assq(s7_scheme *sc, s7_pointer x, s7_pointer y)
 static s7_pointer g_assq(s7_scheme *sc, s7_pointer args)
 {
   #define H_assq "(assq obj alist) returns the key-value pair associated (via eq?) with the key obj in the association list alist"
-  #define Q_assq pl_tp
+  #define Q_assq s7_make_signature(sc, 3, s7_make_signature(sc, 2, sc->IS_PAIR, sc->IS_BOOLEAN), sc->T, sc->IS_LIST)
   return(c_assq(sc, car(args), cadr(args)));
 }
 
@@ -34676,7 +34669,7 @@ static s7_pointer c_assv(s7_scheme *sc, s7_pointer x, s7_pointer y)
 static s7_pointer g_assv(s7_scheme *sc, s7_pointer args)        /* g_assv is called by g_assoc below */
 { 
   #define H_assv "(assv obj alist) returns the key-value pair associated (via eqv?) with the key obj in the association list alist"
-  #define Q_assv pl_tp
+  #define Q_assv Q_assq
   return(c_assv(sc, car(args), cadr(args)));
 }
 
@@ -34693,7 +34686,7 @@ static s7_pointer g_assoc(s7_scheme *sc, s7_pointer args)
 {
   #define H_assoc "(assoc obj alist (func #f)) returns the key-value pair associated (via equal?) with the key obj in the association list alist.\
 If 'func' is a function of 2 arguments, it is used for the comparison instead of 'equal?"
-  #define Q_assoc s7_make_signature(sc, 4, sc->T, sc->T, sc->IS_LIST, sc->IS_PROCEDURE)
+  #define Q_assoc s7_make_signature(sc, 4, s7_make_signature(sc, 2, sc->IS_PAIR, sc->IS_BOOLEAN), sc->T, sc->IS_LIST, sc->IS_PROCEDURE)
 
   s7_pointer x, y, obj, eq_func = NULL;
 
@@ -35546,8 +35539,8 @@ s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
 static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
 {
   #define H_append "(append ...) returns its argument lists appended into one list"
-  #define Q_append pcl_t
-  /* but weirdly (append () 1) returns 1 */
+  #define Q_append s7_make_circular_signature(sc, 1, 2, sc->T, sc->IS_LIST_OR_ANY_AT_END)
+  /* weird: (append () 1) returns 1 */
   s7_pointer y, tp, np = NULL, pp;
 
   if (is_null(args))
@@ -35944,7 +35937,7 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector_fill "(vector-fill! v val start end) sets all elements of the vector v between start and end to val"
-#define Q_vector_fill s7_make_circular_signature(sc, 3, 4, sc->T, sc->IS_VECTOR, sc->T, sc->IS_INTEGER)
+  #define Q_vector_fill s7_make_circular_signature(sc, 3, 4, sc->T, sc->IS_VECTOR, sc->T, sc->IS_INTEGER)
 
   s7_pointer x, fill;
   s7_int start = 0, end;
@@ -36383,7 +36376,7 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
   s7_int i, start = 0, end;
   s7_pointer p, vec;
   #define H_vector_to_list "(vector->list v start end) returns the elements of the vector v as a list; (map values v)"
-#define Q_vector_to_list s7_make_circular_signature(sc, 2, 3, sc->IS_LIST, sc->IS_VECTOR, sc->IS_INTEGER)
+  #define Q_vector_to_list s7_make_circular_signature(sc, 2, 3, sc->IS_LIST, sc->IS_VECTOR, sc->IS_INTEGER)
 
   vec = car(args);
   if (!s7_is_vector(vec))
@@ -37236,7 +37229,7 @@ To create a multidimensional vector, put the dimension bounds in a list (this is
 (make-vector 1 2) where it's not clear whether the '2' is an initial value or a dimension size).  (make-vector '(2 3) 1.0) \
 returns a 2 dimensional vector of 6 total elements, all initialized to 1.0.  If homogenous is #t, and value is either an integer \
 or a real, the vector can only hold numbers of that type (s7_int or s7_double)."
-  #define Q_make_vector s7_make_signature(sc, 4, sc->IS_VECTOR, sc->T, sc->T, sc->IS_BOOLEAN)
+  #define Q_make_vector s7_make_signature(sc, 4, sc->IS_VECTOR, s7_make_signature(sc, 2, sc->IS_INTEGER, sc->IS_PAIR), sc->T, sc->IS_BOOLEAN)
 
   s7_int len;
   s7_pointer x, fill, vec;
@@ -37345,7 +37338,7 @@ IF_TO_PF(make_vector, s7_make_vector)
 static s7_pointer g_make_float_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_float_vector "(make-float-vector len (init 0.0)) returns a float-vector."
-  #define Q_make_float_vector s7_make_signature(sc, 3, sc->IS_VECTOR, sc->T, sc->IS_REAL)
+  #define Q_make_float_vector s7_make_signature(sc, 3, sc->IS_FLOAT_VECTOR, s7_make_signature(sc, 2, sc->IS_INTEGER, sc->IS_PAIR), sc->IS_REAL)
   s7_int len;
   s7_pointer x, p;
   s7_double *arr;
@@ -37399,7 +37392,7 @@ IF_TO_PF(make_float_vector, c_make_float_vector)
 static s7_pointer g_make_int_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_int_vector "(make-int-vector len (init 0.0)) returns an int-vector."
-  #define Q_make_int_vector s7_make_signature(sc, 3, sc->IS_VECTOR, sc->T, sc->IS_INTEGER)
+  #define Q_make_int_vector s7_make_signature(sc, 3, sc->IS_INT_VECTOR, s7_make_signature(sc, 2, sc->IS_INTEGER, sc->IS_PAIR), sc->IS_INTEGER)
 
   s7_int len;
   s7_pointer x, p;
@@ -37464,7 +37457,7 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
   #define H_vector_dimensions "(vector-dimensions vect) returns a list of vect's dimensions.  In srfi-63 terms:\n\
     (define array-dimensions vector-dimensions)\n\
     (define (array-rank v) (length (vector-dimensions v)))"
-  #define Q_vector_dimensions s7_make_signature(sc, 2, sc->IS_PAIR, sc->T, sc->IS_VECTOR)
+  #define Q_vector_dimensions s7_make_signature(sc, 2, sc->IS_PAIR, sc->IS_VECTOR)
 
   s7_pointer x;
   x = car(args);
@@ -38397,7 +38390,7 @@ static int closure_compare_begin(const void *v1, const void *v2)
 static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 {
   #define H_sort "(sort! sequence less?) sorts a sequence using the function 'less?' to compare elements."
-  #define Q_sort s7_make_signature(sc, 3, sc->T, sc->LENGTH, sc->IS_PROCEDURE)
+  #define Q_sort s7_make_signature(sc, 3, sc->T, sc->IS_SEQUENCE, sc->IS_PROCEDURE)
 
   s7_pointer data, lessp, lx;
   s7_int len = 0, n, k;
@@ -40317,8 +40310,8 @@ That is, (hash-table* 'a 1 'b 2) returns a new hash-table with the two key/value
   s7_pointer ht;
 
   len = safe_list_length(sc, args);
-  if (len & 1)
-    return(s7_error(sc, sc->WRONG_TYPE_ARG, set_elist_2(sc, make_string_wrapper(sc, "hash-table* got an odd number of arguments: ~S"), args)));
+  if (len & 1) 
+    return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_2(sc, make_string_wrapper(sc, "hash-table* got an odd number of arguments: ~S"), args)));
   len /= 2;
 
   ht = s7_make_hash_table(sc, (len > sc->default_hash_table_length) ? len : sc->default_hash_table_length);
@@ -40670,7 +40663,7 @@ static s7_pointer c_procedure_source(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 {
   #define H_procedure_source "(procedure-source func) tries to return the definition of func"
-  #define Q_procedure_source s7_make_signature(sc, 2, sc->T, sc->IS_PROCEDURE)
+  #define Q_procedure_source s7_make_signature(sc, 2, sc->IS_LIST, sc->IS_PROCEDURE)
   return(c_procedure_source(sc, car(args)));
 }
 
@@ -41008,7 +41001,7 @@ const char *s7_help(s7_scheme *sc, s7_pointer obj)
 static s7_pointer g_help(s7_scheme *sc, s7_pointer args)
 {
   #define H_help "(help obj) returns obj's documentation"
-  #define Q_help s7_make_signature(sc, 2, sc->IS_STRING, sc->T)
+  #define Q_help s7_make_signature(sc, 2, s7_make_signature(sc, 2, sc->IS_STRING, sc->IS_BOOLEAN), sc->T)
   const char *doc;
 
   check_method(sc, car(args), sc->HELP, args);
@@ -41054,7 +41047,7 @@ static s7_pointer c_procedure_signature(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_procedure_signature(s7_scheme *sc, s7_pointer args)
 {
   #define H_procedure_signature "(procedure-signature func) returns func's signature"
-  #define Q_procedure_signature s7_make_signature(sc, 2, sc->IS_PAIR, sc->T)
+  #define Q_procedure_signature s7_make_signature(sc, 2, s7_make_signature(sc, 2, sc->IS_PAIR, sc->IS_BOOLEAN), sc->T)
 
   s7_pointer res;
   res = c_procedure_signature(sc, car(args));
@@ -41109,7 +41102,7 @@ bool s7_is_object(s7_pointer p)
 static s7_pointer g_is_c_object(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_c_object "(c-object? obj) returns the object's type tag if obj is a C object, otherwise #f"
-  #define Q_is_c_object s7_make_signature(sc, 2, sc->T, sc->T)
+  #define Q_is_c_object pl_bt
 
   s7_pointer p;
   p = car(args);
@@ -41666,7 +41659,7 @@ s7_pointer s7_arity(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 {
   #define H_arity "(arity obj) the min and max acceptable args for obj if it is applicable, otherwise #f."
-  #define Q_arity pl_t
+  #define Q_arity pcl_t
   /* check_method(sc, p, sc->ARITY, args); */
   return(s7_arity(sc, car(args)));
 }
@@ -41998,7 +41991,7 @@ bool s7_is_eq(s7_pointer obj1, s7_pointer obj2)
 static s7_pointer g_is_eq(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_eq "(eq? obj1 obj2) returns #t if obj1 is eq to (the same object as) obj2"
-  #define Q_is_eq pl_btt
+  #define Q_is_eq pcl_bt
   return(make_boolean(sc, ((car(args) == cadr(args)) ||
 			   ((is_unspecified(car(args))) && (is_unspecified(cadr(args)))))));
   /* (eq? (apply apply apply values '(())) #<unspecified>) should return #t
@@ -42035,7 +42028,7 @@ bool s7_is_eqv(s7_pointer a, s7_pointer b)
 static s7_pointer g_is_eqv(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_eqv "(eqv? obj1 obj2) returns #t if obj1 is equivalent to obj2"
-  #define Q_is_eqv pl_btt
+  #define Q_is_eqv pcl_bt
   return(make_boolean(sc, s7_is_eqv(car(args), cadr(args))));
 }
 
@@ -42708,14 +42701,14 @@ bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 static s7_pointer g_is_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_equal "(equal? obj1 obj2) returns #t if obj1 is equal to obj2"
-  #define Q_is_equal pl_btt
+  #define Q_is_equal pcl_bt
   return(make_boolean(sc, s7_is_equal(sc, car(args), cadr(args))));
 }
 
 static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_morally_equal "(morally-equal? obj1 obj2) returns #t if obj1 is close enough to obj2."
-  #define Q_is_morally_equal pl_btt
+  #define Q_is_morally_equal pcl_bt
   return(make_boolean(sc, s7_is_morally_equal(sc, car(args), cadr(args))));
 }
 
@@ -42780,10 +42773,14 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
   #define H_length "(length obj) returns the length of obj, which can be a list, vector, string, or hash-table. \
 The length of a dotted list does not include the final cdr, and is returned as a negative number.  A circular \
 list has infinite length.  Length of anything else returns #f."
-  #define Q_length pl_t
+  #define Q_length pcl_t
+  #define Q_is_sequence Q_length
+  #define H_is_sequence H_length
 
   return(s7_length(sc, car(args)));
 }
+
+#define g_is_sequence g_length
 
 /* what about (length file)?  input port, read_file gets the file length, so perhaps save it
  *   but we're actually looking at the port, so its length is what remains to be read? (if input port)
@@ -42874,7 +42871,7 @@ static s7_pointer hash_table_setter(s7_scheme *sc, s7_pointer e, s7_int loc, s7_
 s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 {
   #define H_copy "(copy obj) returns a copy of obj, (copy src dest) copies src into dest, (copy src dest start end) copies src from start to end."
-  #define Q_copy s7_make_circular_signature(sc, 3, 4, sc->T, sc->LENGTH, sc->LENGTH, sc->IS_INTEGER)
+  #define Q_copy s7_make_circular_signature(sc, 3, 4, sc->T, sc->IS_SEQUENCE, sc->IS_SEQUENCE, sc->IS_INTEGER)
 
   s7_pointer source, dest;
   s7_int i, j, dest_len, start, end, source_len;
@@ -43369,7 +43366,7 @@ static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
 {
   #define H_reverse "(reverse lst) returns a list with the elements of lst in reverse order.  reverse \
 also accepts a string or vector argument."
-  #define Q_reverse s7_make_signature(sc, 2, sc->T, sc->LENGTH)
+  #define Q_reverse s7_make_signature(sc, 2, sc->IS_SEQUENCE, sc->IS_SEQUENCE)
 
   s7_pointer p, np;
 
@@ -43542,7 +43539,7 @@ static s7_pointer c_reverse_in_place(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 {
   #define H_reverse_in_place "(reverse! lst) reverses lst in place"
-  #define Q_reverse_in_place s7_make_signature(sc, 2, sc->T, sc->LENGTH)
+  #define Q_reverse_in_place s7_make_signature(sc, 2, sc->IS_SEQUENCE, sc->IS_SEQUENCE)
   return(c_reverse_in_place(sc, car(args)));
 }
 
@@ -43601,7 +43598,7 @@ static s7_pointer list_fill(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_fill(s7_scheme *sc, s7_pointer args)
 {
   #define H_fill "(fill! obj val (start 0) end) fills obj with val"
-  #define Q_fill s7_make_circular_signature(sc, 3, 4, sc->T, sc->LENGTH, sc->T, sc->IS_INTEGER)
+  #define Q_fill s7_make_circular_signature(sc, 3, 4, sc->T, sc->IS_SEQUENCE, sc->T, sc->IS_INTEGER)
   s7_pointer p;
 
   p = car(args);
@@ -46025,7 +46022,7 @@ void s7_quit(s7_scheme *sc)
 static s7_pointer g_emergency_exit(s7_scheme *sc, s7_pointer args)
 {
   #define H_emergency_exit "(emergency-exit obj) exits s7 immediately"
-  #define Q_emergency_exit pl_t
+  #define Q_emergency_exit pcl_t
 
   s7_pointer obj;
 #ifndef EXIT_SUCCESS
@@ -46047,7 +46044,7 @@ static s7_pointer g_emergency_exit(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_exit(s7_scheme *sc, s7_pointer args)
 {
   #define H_exit "(exit obj) exits s7"
-  #define Q_exit pl_t
+  #define Q_exit pcl_t
 
   s7_quit(sc);
   return(g_emergency_exit(sc, args));
@@ -46714,7 +46711,7 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 {
   #define H_for_each "(for-each proc object . objects) applies proc to each element of the objects traversed in parallel. \
 Each object can be a list, string, vector, hash-table, or any other sequence."
-  #define Q_for_each s7_make_circular_signature(sc, 2, 3, sc->T, sc->IS_PROCEDURE, sc->LENGTH)
+  #define Q_for_each s7_make_circular_signature(sc, 2, 3, sc->T, sc->IS_PROCEDURE, sc->IS_SEQUENCE)
 
   s7_pointer p;
   int len;
@@ -46865,7 +46862,7 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 {
   #define H_map "(map proc object . objects) applies proc to a list made up of the next element of each of its arguments, returning \
 a list of the results.  Its arguments can be lists, vectors, strings, hash-tables, or any applicable objects."
-  #define Q_map s7_make_circular_signature(sc, 2, 3, sc->IS_LIST, sc->IS_PROCEDURE, sc->LENGTH)
+  #define Q_map s7_make_circular_signature(sc, 2, 3, sc->IS_LIST, sc->IS_PROCEDURE, sc->IS_SEQUENCE)
 
   s7_pointer p;
   int len;
@@ -47262,7 +47259,7 @@ static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_apply_values(s7_scheme *sc, s7_pointer args)
 {
   #define H_apply_values "({apply_values} var) applies values to var.  This is an internal function."
-  #define Q_apply_values pl_t
+  #define Q_apply_values pcl_t
   s7_pointer x;
 
   if (is_null(args))
@@ -47325,7 +47322,7 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 comma (\"unquote\") and comma-atsign (\"apply values\") to pre-evaluate portions of the list. \
 unquoted expressions are evaluated and plugged into the list, apply-values evaluates the expression \
 and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -> (1 2 3 4)."
-  #define Q_quasiquote pl_t
+  #define Q_quasiquote pcl_t
 
   if (!is_pair(form))
     {
@@ -50825,6 +50822,8 @@ static void annotate_arg(s7_scheme *sc, s7_pointer arg)
   set_fcdr(arg, (s7_pointer)all_x_eval(sc, car(arg), sc->NIL));
 }
 
+/* TODO: sc->NIL here cancels symbol_is_safe */
+
 
 static void opt_generator(s7_scheme *sc, s7_pointer func, s7_pointer expr, int hop)
 {
@@ -52144,12 +52143,23 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
     case OP_DEFINE_MACRO_STAR:
     case OP_DEFINE_BACRO:
     case OP_DEFINE_BACRO_STAR:
+    case OP_DEFINE_CONSTANT:
+    case OP_DEFINE_EXPANSION:
     case OP_DEFINE:
     case OP_DEFINE_STAR:
-      if ((is_pair(cadr(expr))) &&
-	  (is_symbol(caadr(expr))))
-	e = cons(sc, add_sym_to_list(sc, caadr(expr)), e);
-      /* fall through */
+      if (is_pair(cadr(expr)))
+	{
+	  s7_pointer name_args;
+	  name_args = cadr(expr);
+	  if (is_symbol(car(name_args)))
+	    e = cons(sc, add_sym_to_list(sc, car(name_args)), e);
+	  if (is_symbol(cdr(name_args)))
+	    e = cons(sc, add_sym_to_list(sc, cdr(name_args)), e);
+	  else e = collect_collisions_star(sc, cdr(name_args), e);
+	  /* fprintf(stderr, "%s -> e: %s\n", DISPLAY(expr), DISPLAY(e)); */
+	  /* TODO: this adds :optional etc to e! */
+	}
+      break;
 
     case OP_LAMBDA:
     case OP_LAMBDA_STAR:
@@ -52184,6 +52194,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
       break;
     }
   if (is_pair(e)) sc->w = e;
+  /* fprintf(stderr, "%s -> e: %s\n", DISPLAY(expr), DISPLAY(e)); */
 
   for (p = cdr(expr); is_pair(p); p = cdr(p))
     if ((is_pair(car(p))) && (!is_checked(car(p)))) /* ((typeflag & (0xff | T_CHECKED)) == T_PAIR) is not faster */
@@ -52367,7 +52378,7 @@ static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer symbol, s7
 static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e)
 {
   s7_pointer car_expr;
-  /* fprintf(stderr, "opt %d %s\n", hop, DISPLAY_80(expr)); */
+  /* fprintf(stderr, "opt %d %s %s\n", hop, DISPLAY(expr), DISPLAY(e)); */
   /* if (is_checked(expr)) return(true); */
 
   set_checked(expr);
@@ -52656,7 +52667,7 @@ static s7_pointer optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e
 {
   s7_pointer x;
   if (sc->safety > 1) return(NULL);
-  /* fprintf(stderr, "optimize %s %d %s\n", DISPLAY_80(code), hop, DISPLAY_80(e)); */
+  /* fprintf(stderr, "optimize %s %d %s\n", DISPLAY_80(code), hop, DISPLAY(e)); */
   for (x = code; (is_pair(x)) && (!is_checked(x)); x = cdr(x))
     {
       set_checked(x);
@@ -56397,6 +56408,14 @@ static int dox_ex(s7_scheme *sc)
 	}
 
       slots = let_slots(sc->envir);
+      /* TODO: test this!! */
+      if (!is_slot(slots))
+	{
+	  while (!is_true(sc, endf(sc, endp)));
+	  sc->code = cdadr(scc);
+	  return(goto_DO_END_CLAUSES);
+	}
+
       if ((is_null(next_slot(slots))) && (is_pair(slot_expression(slots))))
 	{
 	  s7_function f;
@@ -58639,9 +58658,13 @@ static void define2_ex(s7_scheme *sc)
 	  (port_file(sc->input_port) != stdin))
 	{
 	  /* unbound_variable will be called if __func__ is encountered, and will return this info as if __func__ had some meaning */
-	  typeflag(new_env) |= T_LINE_NUMBER;
 	  let_file(new_env) = port_file_number(sc->input_port);
 	  let_line(new_env) = port_line_number(sc->input_port);
+	}
+      else
+	{
+	  let_file(new_env) = 0;
+	  let_line(new_env) = 0;
 	}
       
       /* this should happen only if the closure* default values do not refer in any way to
@@ -66049,8 +66072,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif
 
 
-/* needed in s7_gmp_init and s7_init, initialized in s7_int before we get to gmp */
-static s7_pointer pl_bt, pl_t, pl_p, pl_bc, pcl_bc, pcl_bs, pl_bn, pl_sf, pl_btt, pcl_i, pcl_t, pcl_r, pcl_n, pcl_s, pcl_v, pcl_f, pcl_c;
+/* needed in s7_gmp_init and s7_init, initialized in s7_init before we get to gmp */
+static s7_pointer pl_bt, pl_p, pl_bc, pcl_bc, pcl_bs, pl_bn, pl_sf, pcl_bt, pcl_i, pcl_t, pcl_r, pcl_n, pcl_s, pcl_v, pcl_f, pcl_c;
 #if (!WITH_PURE_S7)
 static s7_pointer pl_tp;
 #endif
@@ -70851,22 +70874,10 @@ static s7_pointer g_is_proper_list(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc, is_proper_list(sc, p)));
 }
 
-static s7_pointer g_is_integer_or_real_at_end(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer p;
-  p = car(args);
-  if (is_integer(p)) return(sc->T);
-  if (is_real(p)) return(sc->EOF_OBJECT);
-  return(sc->F);
-}
-
-static s7_pointer g_is_integer_or_any_at_end(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer p;
-  p = car(args);
-  if (is_integer(p)) return(sc->T);
-  return(sc->EOF_OBJECT);
-}
+/* how to handle this? */
+static s7_pointer g_is_integer_or_real_at_end(s7_scheme *sc, s7_pointer args) {return(sc->T);}
+static s7_pointer g_is_integer_or_any_at_end(s7_scheme *sc, s7_pointer args) {return(sc->T);}
+static s7_pointer g_is_list_or_any_at_end(s7_scheme *sc, s7_pointer args) {return(sc->T);}
 
 
 
@@ -71562,21 +71573,20 @@ s7_scheme *s7_init(void)
                               defun("boolean?",		is_boolean,		1, 0, false);
   sc->IS_FLOAT =              defun("float?",           is_float,               1, 0, false);
   sc->IS_PROPER_LIST =        defun("proper-list?",     is_proper_list,         1, 0, false);
+  sc->IS_SEQUENCE =           defun("sequence?",	is_sequence,		1, 0, false);
 
   sc->IS_INTEGER_OR_REAL_AT_END = s7_define_function(sc, "integer:real?", g_is_integer_or_real_at_end, 1, 0, false, "internal signature helper");
   sc->IS_INTEGER_OR_ANY_AT_END =  s7_define_function(sc, "integer:any?", g_is_integer_or_any_at_end, 1, 0, false, "internal signature helper");
-
-  sc->LENGTH =                defun("length",		length,			1, 0, false); /* i.e. equence? */
+  sc->IS_LIST_OR_ANY_AT_END =  s7_define_function(sc, "list:any?", g_is_list_or_any_at_end, 1, 0, false, "internal signature helper");
 
   pl_p =   s7_make_signature(sc, 2, sc->T, sc->IS_PAIR);
 #if (!WITH_PURE_S7)
   pl_tp =  s7_make_signature(sc, 3, sc->T, sc->T, sc->IS_PAIR);
 #endif
-  pl_t =   s7_make_signature(sc, 2, sc->T, sc->T);
   pl_bc =  s7_make_signature(sc, 2, sc->IS_BOOLEAN, sc->IS_CHAR);
   pl_bn =  s7_make_signature(sc, 2, sc->IS_BOOLEAN, sc->IS_NUMBER);
   pl_sf =  s7_make_signature(sc, 3, sc->T, sc->IS_STRING, sc->IS_PROCEDURE);
-  pl_btt = s7_make_signature(sc, 3, sc->IS_BOOLEAN, sc->T, sc->T);
+  pcl_bt = s7_make_circular_signature(sc, 1, 2, sc->IS_BOOLEAN, sc->T);
   pcl_bc = s7_make_circular_signature(sc, 1, 2, sc->IS_BOOLEAN, sc->IS_CHAR);
   pcl_bs = s7_make_circular_signature(sc, 1, 2, sc->IS_BOOLEAN, sc->IS_STRING);
 
@@ -71888,6 +71898,7 @@ s7_scheme *s7_init(void)
   sc->LIST_TAIL =             defun("list-tail",	list_tail,		2, 0, false);
   sc->MAKE_LIST =             defun("make-list",	make_list,		1, 1, false);
 
+  sc->LENGTH =                defun("length",		length,			1, 0, false); /* i.e. equence? */
   sc->COPY =                  defun("copy",		copy,			1, 3, false);
   sc->FILL =                  defun("fill!",		fill,			2, 2, false);
   sc->REVERSE =               defun("reverse",		reverse,		1, 0, false);
@@ -72414,17 +72425,17 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  | 16.0
  *
- * s7test   1721 | 1358 |  995 | 1194 | 1140
+ * s7test   1721 | 1358 |  995 | 1194 | 1133
  * index    44.3 | 3291 | 1725 | 1276 | 1161
- * teq           |      |      | 6612 | 2393
- * tauto     265 |   89 |  9   |  8.4 | 3148
+ * teq           |      |      | 6612 | 2388
+ * tauto     265 |   89 |  9   |  8.4 | 2682
  * bench    42.7 | 8752 | 4220 | 3506 | 3273
  * tcopy         |      |      | 13.6 | 3284
  * tform         |      |      | 6816 | 3938
  * tmap          |      |      |  9.3 | 4236
  * titer         |      |      | 7503 | 6072
- * lg            |      |      | 6547 | 7275
- * thash         |      |      | 50.7 | 9426
+ * lg            |      |      | 6547 | 7286
+ * thash         |      |      | 50.7 | 9420
  *               |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 13.0
  * tall       90 |   43 | 14.5 | 12.7 | 15.0
@@ -72443,8 +72454,7 @@ int main(int argc, char **argv)
  * for closure, proc-sig could be a guarantee to the optimizer
  * we could see sig-collisions during optimization, at least where opts build them in, (*s7* 'with-type-checks)?
  * procedure-signature of implicit cases? need to know car type, Q_fv = Q_fv_ref
- * float-vector doesn't accept mock-real?
- * length c-obj -> #f if no c_length?
+ * doc sequence?
  *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array
@@ -72453,4 +72463,8 @@ int main(int argc, char **argv)
  *   rcos: simple_do_step->eval->safe_closure_star_s0, so if body is rfable, it could be handled [~/old/s7-closure-rf.c]
  *
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
+ *
+ * annotate_arg|s ignores incoming env, so symbols not safe.  Pass in, try titer in motif-snd.
+ *   dox_ex 56411 no vars case -- what happened here before? 
+ *   keyword args in e 52160
  */

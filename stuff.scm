@@ -18,7 +18,7 @@
 
 (define applicable? arity)
 
-(define sequence? length)
+;(define sequence? length) -- now built-in for procedure-signatures
 
 (define indexable? 
   (let ((documentation "(indexable? obj) returns #t if obj can be applied to an index: (obj 0)"))

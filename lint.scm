@@ -302,6 +302,18 @@
 		 (or (compatible? (car type1) type2)
 		     (any-compatible? (cdr type1) type2)))))
 
+      (define (subsumes? type1 type2)
+	(or (eq? type1 type2)
+	    (case type1
+	      ((rational?)        (eq? type2 'integer?))
+	      ((real?)            (memq type2 '(integer? rational? float?)))
+	      ((complex? number?) (memq type2 '(integer? rational? float? real? complex? number?)))
+	      ((list?)            (memq type2 '(pair? null? proper-list?)))
+	      ((pair?)            (eq? type2 'proper-list?))
+	      ((vector?)          (memq type2 '(float-vector? int-vector?)))
+	      ((symbol?)          (eq? type2 'keyword?))
+	      (else #f))))
+
       (define (any-checker? types arg)
 	(if (symbol? types)
 	    ((symbol->value types *e*) arg)
@@ -475,7 +487,9 @@
 	      (if at-end 'real? 'integer?)
 	      (if (eq? checker 'integer:any?)
 		  (if at-end #t 'integer?)
-		  checker)))
+		  (if (eq? checker 'list:any?)
+		      (if at-end #t 'list?)
+		      checker))))
 
 	(let ((arg-number 1))
 	  (call-with-exit
@@ -786,7 +800,7 @@
 		       (and (pair? (cadr e))
 			    (memq (car e) bools)
 			    (memq (return-type (caadr e)) bools)
-			    (any-compatible? (car e) (return-type (caadr e))))))))
+			    (subsumes? (car e) (return-type (caadr e))))))))
 	
 	(define (false? e)
 	  

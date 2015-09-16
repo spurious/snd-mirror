@@ -95,7 +95,7 @@
 	     (apply func args))
 	   (lambda any
 	     (if (and (positive? args-now)
-		      (memq (car any) '(wrong-type-arg syntax-error)))
+		      (memq (car any) '(wrong-type-arg wrong-number-of-args syntax-error)))
 		 (quit)))))
      
      (let ((c-args (vector-ref arglists args-now)))
@@ -110,28 +110,27 @@
 		  (lambda ()
 		    (apply func c-args))
 		  (lambda any 
-		    (if (and (memq (car any) '(wrong-type-arg syntax-error))
+		    (if (and (memq (car any) '(wrong-type-arg wrong-number-of-args syntax-error))
 			     (pair? (cdadr any))
 			     (pair? (cddr (cadr any)))
 			     (integer? (caddr (cadr any))) ; if just 1 arg, arg num can be omitted
 			     (< (caddr (cadr any)) low))
 			(quit))))
 		 
-		(let ((checker (if (pair? sig) 
-				   (if (pair? (car sig))
-				       (lambda (x) (or ((caar sig) x) ((cadar sig) x)))
-				       (car sig))
-				   #f)))
+		(let ((checker (and (pair? sig) 
+				    (if (pair? (car sig))
+					(lambda (x) (or ((caar sig) x) ((cadar sig) x)))
+					(car sig)))))
 		  (if checker
 		      (for-each
 		       (lambda (c)
-			 (catch #t 
-			   (lambda () 
-			     (when (checker c)
+			 (when (checker c)
+			   (catch #t 
+			     (lambda () 
 			       (set-car! p c)
-			       (apply func c-args)))
-			   (lambda any 
-			     'error)))
+			       (apply func c-args))
+			     (lambda any 
+			       'error))))
 		       cdr-constants)
 		      (for-each
 		       (lambda (c)
@@ -143,11 +142,12 @@
 			     'error)))
 		       cdr-constants)))))
 	   
-	     (let ((checker (if (pair? sig) 
-				(if (pair? (car sig))
-				    (lambda (x) (or ((caar sig) x) ((cadar sig) x)))
-				    (car sig))
-				#f)))
+	     (let ((checker (and (pair? sig) 
+				 (if (pair? (car sig))
+				     (lambda (x) (or ((caar sig) x) ((cadar sig) x)))
+				     (if (eq? (car sig) list:any?)
+					 list?
+					 (car sig))))))
 	       (if checker
 		   (for-each
 		    (lambda (c)
@@ -161,25 +161,12 @@
 		      (autotest func c-args (+ args-now 1) (- args-left 1) (if (pair? sig) (cdr sig) ())))
 		    constants)))))))))
 
-;(set! low 3)
-;(autotest string-set! () 0 3)
-#|
-(define (safe-map f . args)
-  (if (procedure? f)
-      (if (< (apply max (map (lambda (x) (or (length x) 0)) args)) 10)
-	  (apply map f args))
-      (error 'wrong-type-arg "gotta have a func!")))
-|#
+(define safe-fill!
+  (let ((signature '(#t sequence? #t)))
+    (lambda (obj arg)
+      (if (not (let? obj))
+	  (fill! obj arg)))))
 
-(define (safe-fill! obj arg)
-  (if (not (let? obj))
-      (fill! obj arg)))
-
-#|
-(define (safe-cutlet e s)
-  (if (not (eq? e (rootlet)))
-      (cutlet e s)))
-|#
 (define baddies '(exit emergency-exit abort autotest 
 		  all delete-file system set-cdr! stacktrace test-sym
 		  cutlet varlet gc cond-expand reader-cond
@@ -189,7 +176,7 @@
 		  ;dilambda object->string
 		  global-environment current-environment make-procedure-with-setter procedure-with-setter? procedure-arity
 		  
-		  copy fill! ;map
+		  copy fill!
 		  hash-table-set! vector-set! let-set!
 		  
 		  mock-number mock-pair mock-string mock-char mock-vector 
@@ -197,7 +184,7 @@
 		  *mock-number* *mock-pair* *mock-string* *mock-char* *mock-vector*
 		  *mock-symbol* *mock-port* *mock-hash-table*
 
-		  c-define-1 apropos
+		  c-define-1 apropos ;sequence? list:any? integer:any? integer:real? warned
 		  
 		  outlet-member make-method make-object))
 

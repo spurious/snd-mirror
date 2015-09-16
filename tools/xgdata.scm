@@ -9211,6 +9211,6 @@
 (CFNC-3.18 "void gtk_text_view_set_bottom_margin GtkTextView* text_view gint bottom_margin")
 (CFNC-3.18 "gint gtk_text_view_get_bottom_margin GtkTextView* text_view")
 
-;;; 3.17.8:
+;;; 3.17.8|9:
 
 (CINT-3.18 "GDK_MODIFIER_INTENT_DEFAULT_MOD_MASK" "GdkModifierIntent")
