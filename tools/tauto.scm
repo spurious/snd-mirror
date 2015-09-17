@@ -64,16 +64,6 @@
 			(mock-hash-table* 'b 2)
 			np mp nv mv ns ms (gensym)
 			))
-#|
-(let ((len (length constants)))
-  (do ((i 0 (+ i 1)))
-      ((= i 100))
-    (let ((i1 (random len))
-	  (i2 (random len)))
-      (let ((tmp (constants i1)))
-	(set! (constants i1) (constants i2))
-	(set! (constants i2) tmp)))))
-|#
       
 (define car-constants (constants 0))
 (define-constant cdr-constants (make-shared-vector constants (list (- (length constants) 1)) 1))
@@ -167,6 +157,17 @@
       (if (not (let? obj))
 	  (fill! obj arg)))))
 
+(define (map-values lst)
+  (if (or (not (pair? lst))
+	  (not (car lst))
+	  (procedure? (car lst)))
+      lst
+      (begin
+	(if (symbol? (car lst))
+	    (set-car! lst (symbol->value (car lst)))
+	    (set-car! lst #f))
+	(map-values (cdr lst)))))
+
 (define baddies '(exit emergency-exit abort autotest 
 		  all delete-file system set-cdr! stacktrace test-sym
 		  cutlet varlet gc cond-expand reader-cond
@@ -184,20 +185,9 @@
 		  *mock-number* *mock-pair* *mock-string* *mock-char* *mock-vector*
 		  *mock-symbol* *mock-port* *mock-hash-table*
 
-		  c-define-1 apropos ;sequence? list:any? integer:any? integer:real? warned
+		  c-define-1 apropos map-values ;sequence? list:any? integer:any? integer:real? warned
 		  
 		  outlet-member make-method make-object))
-
-(define (map-values lst)
-  (if (or (not (pair? lst))
-	  (not (car lst))
-	  (procedure? (car lst)))
-      lst
-      (begin
-	(if (symbol? (car lst))
-	    (set-car! lst (symbol->value (car lst)))
-	    (set-car! lst #f))
-	(map-values (cdr lst)))))
 
 (define (test-sym sym)
   (if (and (not (memq sym baddies))

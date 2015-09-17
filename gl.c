@@ -4454,7 +4454,7 @@ static void define_functions(void)
 {
 #if HAVE_SCHEME
 static s7_pointer s_boolean, s_integer, s_real, s_any;
-static s7_pointer pl_t, pl_tttti, pl_ttttb, pl_ttri, pl_ttit, pl_ttr, pl_ttir, pl_ttb, pl_tti, pl_ttiti, pl_ttrriir, pl_ttititiiti, pl_ttititi, pl_ttrri, pl_ttrrri, pl_i, pl_ittit, pl_tiirrrrt, pl_tiiiit, pl_tiiit, pl_tiiiiiiit, pl_tiiiiiiiit, pl_tirriit, pl_tirriirriit, pl_tirrir, pl_tir, pl_tit, pl_tiiiiiiiiit, pl_tiiiiiiiiiit, pl_tiiib, pl_ti, pl_tiiiiiit, pl_tiir, pl_tiiiiit, pl_tiit, pl_tibiit, pl_tiib, pl_iiiiitiiit, pl_iiiiiiiit, pl_iiiiiiiiiiit, pl_iiiiiiit, pl_iiiiiiiiiit, pl_iiiiiit, pl_iiiiiiiiit, pl_trrrrt, pl_tr, pl_tb, pl_bt, pl_irrrt, pl_irrrrtttrrt, pl_bit, pl_bi, pl_unused;
+static s7_pointer pl_t, pl_tttti, pl_ttttb, pl_ttri, pl_ttit, pl_ttr, pl_ttir, pl_ttb, pl_tti, pl_ttiti, pl_ttrriir, pl_ttititiiti, pl_ttititi, pl_ttrri, pl_ttrrri, pl_tb, pl_bt, pl_iiiiitiiit, pl_iiiiiiiit, pl_iiiiiiiiiiit, pl_iiiiiiit, pl_iiiiiiiiiit, pl_iiiiiit, pl_iiiiiiiiit, pl_irrrt, pl_irrrrtttrrt, pl_i, pl_ittit, pl_tiirrrrt, pl_tiiiit, pl_tiiit, pl_tiiiiiiit, pl_tiiiiiiiit, pl_tirriit, pl_tirriirriit, pl_tirrir, pl_tir, pl_tit, pl_tiiiiiiiiit, pl_tiiiiiiiiiit, pl_tiiib, pl_ti, pl_tiiiiiit, pl_tiir, pl_tiiiiit, pl_tiit, pl_tibiit, pl_tiib, pl_bit, pl_bi, pl_trrrrt, pl_tr, pl_unused;
   s_boolean = s7_make_symbol(s7, "boolean?");
   s_integer = s7_make_symbol(s7, "integer?");
   s_real = s7_make_symbol(s7, "real?");
@@ -4475,6 +4475,17 @@ static s7_pointer pl_t, pl_tttti, pl_ttttb, pl_ttri, pl_ttit, pl_ttr, pl_ttir, p
   pl_ttititi = s7_make_circular_signature(s7, 6, 7, s_any, s_any, s_integer, s_any, s_integer, s_any, s_integer);
   pl_ttrri = s7_make_circular_signature(s7, 4, 5, s_any, s_any, s_real, s_real, s_integer);
   pl_ttrrri = s7_make_circular_signature(s7, 5, 6, s_any, s_any, s_real, s_real, s_real, s_integer);
+  pl_tb = s7_make_circular_signature(s7, 1, 2, s_any, s_boolean);
+  pl_bt = s7_make_circular_signature(s7, 1, 2, s_boolean, s_any);
+  pl_iiiiitiiit = s7_make_circular_signature(s7, 9, 10, s_integer, s_integer, s_integer, s_integer, s_integer, s_any, s_integer, s_integer, s_integer, s_any);
+  pl_iiiiiiiit = s7_make_circular_signature(s7, 8, 9, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
+  pl_iiiiiiiiiiit = s7_make_circular_signature(s7, 11, 12, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
+  pl_iiiiiiit = s7_make_circular_signature(s7, 7, 8, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
+  pl_iiiiiiiiiit = s7_make_circular_signature(s7, 10, 11, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
+  pl_iiiiiit = s7_make_circular_signature(s7, 6, 7, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
+  pl_iiiiiiiiit = s7_make_circular_signature(s7, 9, 10, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
+  pl_irrrt = s7_make_circular_signature(s7, 4, 5, s_integer, s_real, s_real, s_real, s_any);
+  pl_irrrrtttrrt = s7_make_circular_signature(s7, 10, 11, s_integer, s_real, s_real, s_real, s_real, s_any, s_any, s_any, s_real, s_real, s_any);
   pl_i = s7_make_circular_signature(s7, 0, 1, s_integer);
   pl_ittit = s7_make_circular_signature(s7, 4, 5, s_integer, s_any, s_any, s_integer, s_any);
   pl_tiirrrrt = s7_make_circular_signature(s7, 7, 8, s_any, s_integer, s_integer, s_real, s_real, s_real, s_real, s_any);
@@ -4497,21 +4508,10 @@ static s7_pointer pl_t, pl_tttti, pl_ttttb, pl_ttri, pl_ttit, pl_ttr, pl_ttir, p
   pl_tiit = s7_make_circular_signature(s7, 3, 4, s_any, s_integer, s_integer, s_any);
   pl_tibiit = s7_make_circular_signature(s7, 5, 6, s_any, s_integer, s_boolean, s_integer, s_integer, s_any);
   pl_tiib = s7_make_circular_signature(s7, 3, 4, s_any, s_integer, s_integer, s_boolean);
-  pl_iiiiitiiit = s7_make_circular_signature(s7, 9, 10, s_integer, s_integer, s_integer, s_integer, s_integer, s_any, s_integer, s_integer, s_integer, s_any);
-  pl_iiiiiiiit = s7_make_circular_signature(s7, 8, 9, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
-  pl_iiiiiiiiiiit = s7_make_circular_signature(s7, 11, 12, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
-  pl_iiiiiiit = s7_make_circular_signature(s7, 7, 8, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
-  pl_iiiiiiiiiit = s7_make_circular_signature(s7, 10, 11, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
-  pl_iiiiiit = s7_make_circular_signature(s7, 6, 7, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
-  pl_iiiiiiiiit = s7_make_circular_signature(s7, 9, 10, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_integer, s_any);
-  pl_trrrrt = s7_make_circular_signature(s7, 5, 6, s_any, s_real, s_real, s_real, s_real, s_any);
-  pl_tr = s7_make_circular_signature(s7, 1, 2, s_any, s_real);
-  pl_tb = s7_make_circular_signature(s7, 1, 2, s_any, s_boolean);
-  pl_bt = s7_make_circular_signature(s7, 1, 2, s_boolean, s_any);
-  pl_irrrt = s7_make_circular_signature(s7, 4, 5, s_integer, s_real, s_real, s_real, s_any);
-  pl_irrrrtttrrt = s7_make_circular_signature(s7, 10, 11, s_integer, s_real, s_real, s_real, s_real, s_any, s_any, s_any, s_real, s_real, s_any);
   pl_bit = s7_make_circular_signature(s7, 2, 3, s_boolean, s_integer, s_any);
   pl_bi = s7_make_circular_signature(s7, 1, 2, s_boolean, s_integer);
+  pl_trrrrt = s7_make_circular_signature(s7, 5, 6, s_any, s_real, s_real, s_real, s_real, s_any);
+  pl_tr = s7_make_circular_signature(s7, 1, 2, s_any, s_real);
 pl_unused = NULL;
 #endif
 
@@ -5720,7 +5720,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       Xen_provide_feature("gl");
-      Xen_define("gl-version", C_string_to_Xen_string("07-Sep-15"));
+      Xen_define("gl-version", C_string_to_Xen_string("16-Sep-15"));
       gl_already_inited = true;
     }
 }
