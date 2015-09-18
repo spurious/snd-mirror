@@ -1811,9 +1811,14 @@ or (for code clarity) it can be the argument to <b>iterate</b>, which does the s
 That is <code>(iter)</code> is the same as <code>(iterate iter)</code>.  The sequence that an iterator is traversing
 is <b>iterator-sequence</b>.
 </p>
+<p>
+If the sequence is a hash-table or let, the iterator normally returns a cons of the key and value.
+There are many cases where this overhead is objectionable, so make-iterator takes a third optional
+argument, the cons to use (changing its car and cdr directly on each call).
+</p>
 
-<p>When an iterator reaches the end of its sequence, it returns #&lt;eof&gt;.  I used to
-return nil, and can't decide whether this change is an improvement.  If an iterator over a
+<p>When an iterator reaches the end of its sequence, it returns #&lt;eof&gt;.  It used to
+return nil; I can't decide whether this change is an improvement.  If an iterator over a
 list notices that its list is circular, it returns #&lt;eof&gt;.  map and for-each use
 iterators, so if you pass a circular list to either, it will stop eventually.  (An
 arcane consequence for method writers: specialize make-iterator, not map or for-each).
@@ -4893,7 +4898,7 @@ at startup *features* is:
 <pre class="indented">
 &gt; *features*
 <em class="gray">(snd-16.7 snd15 snd audio snd-s7 snd-gtk gsl alsa gtk2 xg clm6 clm sndlib linux
- dlopen complex-numbers system-extras dfls-exponents ratio s7-3.26 s7) </em>
+ dlopen complex-numbers system-extras ratio s7-3.26 s7) </em>
 &gt; (provided? 'gsl)
 <em class="gray">#t</em>
 </pre>
@@ -5646,7 +5651,7 @@ The built-in random-state is one such type.
 <li>letrec*, but without conviction.
 <li>set! and *-set! return the new value (modulo symbol-access), not #&lt;unspecified&gt;.
 <li>port-closed? 
-<li>list? means "pair or null", proper-list? is r5rs list?, float? means "real and not rational"
+<li>list? means "pair or null", proper-list? is r5rs list?, float? means "real and not rational", sequence? = length.
 <!-- a vector can be a member of itself, and yet vector? returns #t, why is list? different; we even call it a circular list! -->
 <!-- <li>current-input-port, current-output-port, and current-error-port have setters (but I may remove these) -->
 <li>the default IO ports are named *stdin*, *stdout*, and *stderr*.

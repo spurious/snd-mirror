@@ -119,7 +119,7 @@ define s7cell
   end
 
   if ($type == T_ITERATOR)
-      printf "iter:           obj: %p, cur: %p, loc: %lld\n", $cell.object.iter.obj,  $cell.object.iter.cur,  $cell.object.iter.loc
+      printf "iter:           obj: %p, cur: %p, loc: %lld\n", $cell.object.iter.obj,  $cell.object.iter.cur,  $cell.object.iter.lc.loc
   end
 
   if ($type == T_COUNTER)

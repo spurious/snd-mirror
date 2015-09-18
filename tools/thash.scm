@@ -8,7 +8,8 @@
 
   (format *stderr* "~D " size)
 
-  (let ((int-hash (make-hash-table size)))
+  (let ((int-hash (make-hash-table size))
+	(p (cons #f #f)))
     (do ((i 0 (+ i 1))) 
 	((= i size)) 
       (hash-table-set! int-hash i i))
@@ -19,7 +20,7 @@
     (for-each (lambda (key&value)
 		(if (not (= (car key&value) (cdr key&value)))
 		    (display "oops"))) ;(format *stderr* "hash iter ~A~%" key&value)))
-	      int-hash)
+	      (make-iterator int-hash p))
     (fill! int-hash #f))
 
   (let ((int-hash (make-hash-table size =)))

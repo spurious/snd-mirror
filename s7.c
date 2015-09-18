@@ -61,9 +61,11 @@
  *    format
  *    system extras
  *    lists
- *    vectors and hash-tables
- *    c-objects and functions
- *    eq?
+ *    vectors
+ *    hash-tables
+ *    c-objects
+ *    functions
+ *    equal?
  *    generic length, copy, reverse, fill!
  *    error handlers
  *    sundry leftovers
@@ -76,7 +78,7 @@
  *
  * naming conventions: s7_* usually are C accessible (s7.h), g_* are scheme accessible (FFI), 
  *   H_* are documentation strings, Q_* are procedure signatures,
- *   *_1 are auxilliary functions, big_* refer to gmp and friends, 
+ *   *_1 are auxilliary functions, big_* refer to gmp, 
  *   scheme "?" corresponds to C "is_", scheme "->" to C "_to_".
  *
  * ---------------- compile time switches ----------------
@@ -196,7 +198,7 @@
 #endif
 
 #ifndef WITH_EXTRA_EXPONENT_MARKERS
-  #define WITH_EXTRA_EXPONENT_MARKERS 1
+  #define WITH_EXTRA_EXPONENT_MARKERS 0
   /* if 1, s7 recognizes "d", "f", "l", and "s" as exponent markers, in addition to "e" (also "D", "F", "L", "S")
    */
 #endif
@@ -623,7 +625,10 @@ typedef struct s7_cell {
 
     struct {
       s7_pointer obj, cur;
-      s7_int loc;
+      union {
+	s7_int loc;
+	s7_pointer lcur;
+      } lc;
       union {
 	s7_int len;
 	s7_pointer slow;
@@ -1923,7 +1928,8 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 
 #define is_iterator(p)                (type(p) == T_ITERATOR)
 #define iterator_sequence(p)          _TItr(p)->object.iter.obj
-#define iterator_position(p)          _TItr(p)->object.iter.loc
+#define iterator_position(p)          _TItr(p)->object.iter.lc.loc
+#define iterator_let_cons(p)          _TItr(p)->object.iter.lc.lcur
 #define iterator_length(p)            _TItr(p)->object.iter.lw.len
 #define iterator_slow(p)              _TItr(p)->object.iter.lw.slow
 #define iterator_hash_current(p)      _TItr(p)->object.iter.lw.hcur
@@ -4800,7 +4806,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
   val[len] = '\0';
 
   unheap(str);
-  typeflag(str) = T_STRING | T_IMMUTABLE;                 /* avoid debugging confusion involving set_type (alos below) */
+  typeflag(str) = T_STRING | T_IMMUTABLE;                  /* avoid debugging confusion involving set_type (also below) */
   string_length(str) = len;
   string_value(str) = (char *)val;
   string_hash(str) = hash;
@@ -26641,8 +26647,7 @@ static s7_pointer string_read_name_no_free(s7_scheme *sc, s7_pointer pt)
   if (!number_table[(unsigned char)(*orig_str)])
     return(make_symbol_with_length(sc, orig_str, k));
 
-  /* eval_c_string string is a constant so we can't set and unset the token's end char
-   */
+  /* eval_c_string string is a constant so we can't set and unset the token's end char */
   if ((k + 1) >= sc->strbuf_size)
     resize_strbuf(sc, k + 1);
 
@@ -27947,8 +27952,7 @@ defaults to the rootlet.  To load into the current environment instead, pass (cu
 #if WITH_GCC
   if (!fp)
     {
-      /* catch one special case, "~/..." since it causes 99.9% of the "can't load ..." errors
-       */
+      /* catch one special case, "~/..." since it causes 99.9% of the "can't load ..." errors */
       if ((fname[0] == '~') &&
 	  (fname[1] == '/'))
 	{
@@ -28372,9 +28376,7 @@ static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
   s7_pointer str, proc;
   #define H_call_with_input_string "(call-with-input-string str proc) opens a string port for str and applies proc to it"
   #define Q_call_with_input_string pl_sf
-
-  /* (call-with-input-string "44" (lambda (p) (+ 1 (read p)))) -> 45
-   */
+  /* (call-with-input-string "44" (lambda (p) (+ 1 (read p)))) -> 45 */
 
   str = car(args);
   if (!is_string(str))
@@ -28383,9 +28385,11 @@ static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
   proc = cadr(args);
   if (is_let(proc))
     check_method(sc, proc, sc->CALL_WITH_INPUT_STRING, args);
+
   if (!s7_is_aritable(sc, proc, 1))
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_STRING, 2, proc,
 					 make_string_wrapper(sc, "a procedure of one argument (the port)")));
+
   if ((is_continuation(proc)) || (is_goto(proc)))
     return(wrong_type_argument_with_type(sc, sc->CALL_WITH_INPUT_STRING, 2, proc, A_NORMAL_PROCEDURE));
 
@@ -28831,6 +28835,14 @@ static s7_pointer let_iterate(s7_scheme *sc, s7_pointer iterator)
   if (is_slot(slot))
     {
       iterator_current(iterator) = next_slot(slot);
+      if (iterator_let_cons(iterator))
+	{
+	  s7_pointer p;
+	  p = iterator_let_cons(iterator);
+	  car(p) = slot_symbol(slot);
+	  cdr(p) = slot_value(slot);
+	  return(p);
+	}
       return(cons(sc, slot_symbol(slot), slot_value(slot)));
     }
   iterator_next(iterator) = iterator_finished;
@@ -28866,6 +28878,14 @@ static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator)
   if (lst)
     {
       iterator_hash_current(iterator) = lst->next;
+      if (iterator_current(iterator))
+	{
+	  s7_pointer p;
+	  p = iterator_current(iterator);
+	  car(p) = lst->key;
+	  cdr(p) = lst->value;
+	  return(p);
+	}
       return(cons(sc, lst->key, lst->value));
     }
 
@@ -28881,6 +28901,14 @@ static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator)
 	{
 	  iterator_position(iterator) = loc;
 	  iterator_hash_current(iterator) = x->next;
+	  if (iterator_current(iterator))
+	    {
+	      s7_pointer p;
+	      p = iterator_current(iterator);
+	      car(p) = x->key;
+	      cdr(p) = x->value;
+	      return(p);
+	    }
 	  return(cons(sc, x->key, x->value));
 	}
     }
@@ -28937,7 +28965,23 @@ static s7_pointer closure_iterate(s7_scheme *sc, s7_pointer obj)
   return(result);
 }
 
-static s7_pointer other_iterate(s7_scheme *sc, s7_pointer obj)
+static s7_pointer c_object_direct_iterate(s7_scheme *sc, s7_pointer obj)
+{
+  if (iterator_position(obj) < iterator_length(obj))
+    {
+      s7_pointer result, p;
+      p = iterator_sequence(obj);
+      result = c_object_direct_ref(p)(sc, p, iterator_position(obj));
+      iterator_position(obj)++;
+      if (result == sc->ITERATOR_END)
+	iterator_next(obj) = iterator_finished;
+      return(result);
+    }
+  iterator_next(obj) = iterator_finished;
+  return(sc->ITERATOR_END);
+}
+
+static s7_pointer c_object_iterate(s7_scheme *sc, s7_pointer obj)
 {
   if (iterator_position(obj) < iterator_length(obj))
     {
@@ -29040,11 +29084,13 @@ s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e)
 	  if (f) {free_cell(sc, iter); return(f);}
 	  iterator_current(iter) = let_slots(e);
 	  iterator_next(iter) = let_iterate;
+	  iterator_let_cons(iter) = NULL;
 	}
       break;
 
     case T_HASH_TABLE:
       iterator_hash_current(iter) = NULL;
+      iterator_current(iter) = NULL;
       iterator_position(iter) = -1;
       iterator_next(iter) = hash_table_iterate;
       break;
@@ -29102,17 +29148,20 @@ s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e)
       break;
 
     case T_C_OBJECT:
-      {
-	s7_pointer f;
-	sc->temp6 = iter;
-	f = iterator_method(sc, e);
-	sc->temp6 = sc->NIL;
-	if (f) {free_cell(sc, iter); return(f);}
-	iterator_current(iter) = cons(sc, small_int(0), sc->NIL);
-	set_mark_seq(iter);
-	iterator_next(iter) = other_iterate;
-	iterator_length(iter) = object_length_to_int(sc, e);
-      }
+      iterator_length(iter) = object_length_to_int(sc, e);
+      if (c_object_direct_ref(e))
+	iterator_next(iter) = c_object_direct_iterate;
+      else
+	{
+	  s7_pointer f;
+	  sc->temp6 = iter;
+	  f = iterator_method(sc, e);
+	  sc->temp6 = sc->NIL;
+	  if (f) {free_cell(sc, iter); return(f);}
+	  iterator_current(iter) = cons(sc, small_int(0), sc->NIL);
+	  set_mark_seq(iter);
+	  iterator_next(iter) = c_object_iterate;
+	}
       break;
 
     default:
@@ -29127,8 +29176,32 @@ static s7_pointer g_make_iterator(s7_scheme *sc, s7_pointer args)
   #define H_make_iterator "(make-iterator sequence) returns an iterator object that \
 returns the next value in the sequence each time it is called.  When it reaches the end, it returns " ITERATOR_END_NAME "."
   #define Q_make_iterator s7_make_signature(sc, 2, sc->IS_ITERATOR, sc->IS_SEQUENCE)
+  
+  s7_pointer seq;
+  seq = car(args);
 
-  return(s7_make_iterator(sc, car(args)));
+  if (is_pair(cdr(args)))
+    {
+      if (is_pair(cadr(args)))
+	{
+	  if (is_hash_table(seq))
+	    {
+	      s7_pointer iter;
+	      iter = s7_make_iterator(sc, seq);
+	      iterator_current(iter) = cadr(args);
+	      return(iter);
+	    }
+	  if ((is_let(seq)) && (seq != sc->rootlet))
+	    {
+	      s7_pointer iter;
+	      iter = s7_make_iterator(sc, seq);
+	      iterator_let_cons(iter) = cadr(args);
+	      return(iter);
+	    }
+	}
+      else return(simple_wrong_type_argument(sc, sc->MAKE_ITERATOR, cadr(args), T_PAIR));
+    }
+  return(s7_make_iterator(sc, seq));
 }
 
 PF_TO_PF(make_iterator, s7_make_iterator)
@@ -29273,8 +29346,7 @@ static s7_pointer g_iterator_is_at_end(s7_scheme *sc, s7_pointer args)
 
 static int shared_ref(shared_info *ci, s7_pointer p)
 {
-  /* from print after collecting refs, not called by equality check
-   */
+  /* from print after collecting refs, not called by equality check */
   int i;
   s7_pointer *objs;
 
@@ -29425,8 +29497,6 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 	    collect_shared_info(sc, ci, car(top), stop_at_print_length, &top_cyclic);
 	  if (has_structure(cdr(top)))
 	    collect_shared_info(sc, ci, cdr(top), stop_at_print_length, &top_cyclic);
-	  
-	  /* (let ((lst (list 1))) (set! (cdr lst) lst) lst) */
 	  break;
 
 	case T_VECTOR:
@@ -30371,9 +30441,9 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 
 static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
-  int i, len, gc_iter;
+  int i, len, gc_iter, p_iter;
   bool too_long = false;
-  s7_pointer iterator;
+  s7_pointer iterator, p;
 
   /* if hash is a member of ci, just print its number
    * (let ((ht (hash-table '(a . 1)))) (hash-table-set! ht 'b ht))
@@ -30406,6 +30476,9 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
 
   iterator = s7_make_iterator(sc, hash);
   gc_iter = s7_gc_protect(sc, iterator);
+  p = cons(sc, sc->F, sc->F);
+  p_iter = s7_gc_protect(sc, p);
+  iterator_current(iterator) = p;
 
   if ((use_write == USE_READABLE_WRITE) &&
       (ci) &&
@@ -30426,7 +30499,6 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
 	  key_val = hash_table_iterate(sc, iterator);
 	  key = car(key_val);
 	  val = cdr(key_val);
-	  free_cell(sc, key_val);
 
 	  port_write_string(port)(sc, " (set! ({ht} ", 13, port);
 	  if (key == hash)
@@ -30451,7 +30523,6 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
 	  else port_write_string(port)(sc, " '", 2, port);
 	  key_val = hash_table_iterate(sc, iterator);
 	  object_to_port_with_circle_check(sc, key_val, port, DONT_USE_DISPLAY(use_write), ci);
-	  free_cell(sc, key_val);
 	}
 
       if (too_long)
@@ -30459,6 +30530,7 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
       else port_write_character(port)(sc, ')', port);
     }
 
+  s7_gc_unprotect_at(sc, p_iter);
   s7_gc_unprotect_at(sc, gc_iter);
 }
 
@@ -40110,14 +40182,12 @@ static s7_pf_t hash_table_ref_pf(s7_scheme *sc, s7_pointer expr)
 
 static void hash_table_set_function(s7_pointer table, int typ)
 {
-  if (hash_table_checker(table) != hash_equal)
+  if ((hash_table_checker(table) != hash_equal) &&
+      (hash_table_checker(table) != default_hash_checks[typ]))
     {
-      if (hash_table_checker(table) != default_hash_checks[typ])
-	{
-	  if (hash_table_checker(table) == hash_empty)
-	    hash_table_checker(table) = default_hash_checks[typ];
-	  else hash_table_checker(table) = hash_equal;
-	}
+      if (hash_table_checker(table) == hash_empty)
+	hash_table_checker(table) = default_hash_checks[typ];
+      else hash_table_checker(table) = hash_equal;
     }
 }
 
@@ -46101,6 +46171,26 @@ static s7_pointer all_x_u(s7_scheme *sc, s7_pointer arg)    {return(find_symbol_
 static s7_pointer all_x_k(s7_scheme *sc, s7_pointer arg)    {return(arg);}
 static s7_pointer all_x_c_c(s7_scheme *sc, s7_pointer arg)  {return(c_call(arg)(sc, cdr(arg)));}
 
+static s7_pointer all_x_c_add1(s7_scheme *sc, s7_pointer arg)  
+{
+  s7_pointer x;
+  x = find_symbol_unchecked(sc, cadr(arg));
+  if (is_integer(x))
+    return(make_integer(sc, integer(x) + 1));
+  return(g_add_s1_1(sc, x, arg));
+}
+
+static s7_pointer all_x_c_char_eq(s7_scheme *sc, s7_pointer arg)  
+{
+  s7_pointer c;
+  c = find_symbol_unchecked(sc, cadr(arg));
+  if (c == caddr(arg))
+    return(sc->T);
+  if (s7_is_character(c))
+    return(sc->F);
+  method_or_bust(sc, c, sc->CHAR_EQ, set_plist_2(sc, c, caddr(arg)), T_CHARACTER, 1);
+}
+
 static s7_pointer all_x_c_q(s7_scheme *sc, s7_pointer arg)
 {
   car(sc->T1_1) = cadr(cadr(arg));
@@ -46669,6 +46759,15 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg, s7_pointer e)
 	{
 	  switch (optimize_op(arg))
 	    {
+	    case HOP_SAFE_C_C:
+	      if ((c_call(arg) == g_add_cs1) &&
+		  (symbol_is_safe(sc, cadr(arg), e)))
+		return(all_x_c_add1);
+	      if ((c_call(arg) == g_char_equal_s_ic) &&
+		  (symbol_is_safe(sc, cadr(arg), e)))
+		return(all_x_c_char_eq);
+	      return(all_x_c_c);
+
 	    case HOP_SAFE_C_S:
 	      if (car(arg) == sc->CDR)
 		{
@@ -71220,6 +71319,10 @@ s7_scheme *s7_init(void)
 	sc->heap[i] = &cells[i];
  	sc->free_heap[i] = sc->heap[i];
  	heap_location(sc->heap[i]) = i;
+	i++;
+	sc->heap[i] = &cells[i];
+ 	sc->free_heap[i] = sc->heap[i];
+ 	heap_location(sc->heap[i]) = i;
      }
   }
 
@@ -71379,7 +71482,7 @@ s7_scheme *s7_init(void)
 	      case (char)8:    character_name(cp) = copy_string("#\\backspace"); break;
 	      default:
 		{
-                  #define P_SIZE 16
+                  #define P_SIZE 8 /* actually 6 is big enough */
 		  char *p;
 		  p = (char *)malloc(P_SIZE * sizeof(char));
 		  if ((c < 32) || (c >= 127))
@@ -71773,9 +71876,6 @@ s7_scheme *s7_init(void)
   sc->VARLET =                unsafe_defun("varlet",	varlet,			1, 0, true);
   sc->CUTLET =                unsafe_defun("cutlet",	cutlet,			1, 0, true);
   sc->INLET =                 defun("inlet",		inlet,			0, 0, true);
-#if (!WITH_PURE_S7)
-  sc->LET_TO_LIST =           defun("let->list",	let_to_list,		1, 0, false);
-#endif
   sc->OWLET =                 defun("owlet",		owlet,			0, 0, false);
   sc->COVERLET =              defun("coverlet",		coverlet,		1, 0, false);
   sc->OPENLET =               defun("openlet",		openlet,		1, 0, false);
@@ -71784,7 +71884,7 @@ s7_scheme *s7_init(void)
   sc->LET_REF_FALLBACK = make_symbol(sc, "let-ref-fallback");
   sc->LET_SET_FALLBACK = make_symbol(sc, "let-set!-fallback");
 
-  sc->MAKE_ITERATOR =         defun("make-iterator",	make_iterator,		1, 0, false);
+  sc->MAKE_ITERATOR =         defun("make-iterator",	make_iterator,		1, 1, false);
   sc->ITERATE =               defun("iterate",		iterate,		1, 0, false);
   sc->ITERATOR_SEQUENCE =     defun("iterator-sequence", iterator_sequence,	1, 0, false);
   sc->ITERATOR_IS_AT_END =    defun("iterator-at-end?", iterator_is_at_end,	1, 0, false);
@@ -71806,6 +71906,7 @@ s7_scheme *s7_init(void)
   sc->CURRENT_ERROR_PORT =    defun("current-error-port", current_error_port,	0, 0, false);
                               defun("set-current-error-port", set_current_error_port, 1, 0, false);
 #if (!WITH_PURE_S7)
+  sc->LET_TO_LIST =           defun("let->list",	let_to_list,		1, 0, false);
                               defun("set-current-input-port", set_current_input_port, 1, 0, false);
                               defun("set-current-output-port", set_current_output_port, 1, 0, false);
   sc->IS_CHAR_READY =         defun("char-ready?",	is_char_ready,		0, 1, false);
@@ -71958,13 +72059,6 @@ s7_scheme *s7_init(void)
   sc->CHAR_GT =               defun("char>?",		chars_are_greater,	2, 0, true);
   sc->CHAR_LEQ =              defun("char<=?",		chars_are_leq,		2, 0, true);
   sc->CHAR_GEQ =              defun("char>=?",		chars_are_geq,		2, 0, true);
-#if (!WITH_PURE_S7)
-  sc->CHAR_CI_EQ =            defun("char-ci=?",	chars_are_ci_equal,	2, 0, true);
-  sc->CHAR_CI_LT =            defun("char-ci<?",	chars_are_ci_less,	2, 0, true);
-  sc->CHAR_CI_GT =            defun("char-ci>?",	chars_are_ci_greater,	2, 0, true);
-  sc->CHAR_CI_LEQ =           defun("char-ci<=?",	chars_are_ci_leq,	2, 0, true);
-  sc->CHAR_CI_GEQ =           defun("char-ci>=?",	chars_are_ci_geq,	2, 0, true);
-#endif
   sc->CHAR_POSITION =         defun("char-position",	char_position,		2, 1, false);
   sc->STRING_POSITION =       defun("string-position",	string_position,	2, 1, false);
 
@@ -71976,7 +72070,13 @@ s7_scheme *s7_init(void)
   sc->STRING_GT =             defun("string>?",		strings_are_greater,	2, 0, true);
   sc->STRING_LEQ =            defun("string<=?",	strings_are_leq,	2, 0, true);
   sc->STRING_GEQ =            defun("string>=?",	strings_are_geq,	2, 0, true);
+
 #if (!WITH_PURE_S7)
+  sc->CHAR_CI_EQ =            defun("char-ci=?",	chars_are_ci_equal,	2, 0, true);
+  sc->CHAR_CI_LT =            defun("char-ci<?",	chars_are_ci_less,	2, 0, true);
+  sc->CHAR_CI_GT =            defun("char-ci>?",	chars_are_ci_greater,	2, 0, true);
+  sc->CHAR_CI_LEQ =           defun("char-ci<=?",	chars_are_ci_leq,	2, 0, true);
+  sc->CHAR_CI_GEQ =           defun("char-ci>=?",	chars_are_ci_geq,	2, 0, true);
   sc->STRING_CI_EQ =          defun("string-ci=?",	strings_are_ci_equal,	2, 0, true);
   sc->STRING_CI_LT =          defun("string-ci<?",	strings_are_ci_less,	2, 0, true);
   sc->STRING_CI_GT =          defun("string-ci>?",	strings_are_ci_greater, 2, 0, true);
@@ -71988,6 +72088,7 @@ s7_scheme *s7_init(void)
   sc->STRING_LENGTH =         defun("string-length",	string_length,		1, 0, false);
   sc->STRING_TO_LIST =        defun("string->list",	string_to_list,		1, 2, false);
 #endif
+
   sc->STRING_DOWNCASE =       defun("string-downcase",	string_downcase,	1, 0, false);
   sc->STRING_UPCASE =         defun("string-upcase",	string_upcase,		1, 0, false);
   sc->STRING_APPEND =         defun("string-append",	string_append,		0, 0, true);
@@ -72575,16 +72676,16 @@ int main(int argc, char **argv)
  *           12  |  13  |  14  |  15  | 16.0
  *
  * s7test   1721 | 1358 |  995 | 1194 | 1133
- * index    44.3 | 3291 | 1725 | 1276 | 1166
- * teq           |      |      | 6612 | 2382
- * tauto     265 |   89 |  9   |  8.4 | 2794
- * bench    42.7 | 8752 | 4220 | 3506 | 3240
- * tcopy         |      |      | 13.6 | 3261
+ * index    44.3 | 3291 | 1725 | 1276 | 1156
+ * teq           |      |      | 6612 | 2388
+ * tauto     265 |   89 |  9   |  8.4 | 2797
+ * bench    42.7 | 8752 | 4220 | 3506 | 3233
+ * tcopy         |      |      | 13.6 | 3258
  * tform         |      |      | 6816 | 3926
- * tmap          |      |      |  9.3 | 4236
- * titer         |      |      | 7503 | 6043
+ * tmap          |      |      |  9.3 | 4182
+ * titer         |      |      | 7503 | 5684
  * lg            |      |      | 6547 | 7232
- * thash         |      |      | 50.7 | 8782
+ * thash         |      |      | 50.7 | 8690
  *               |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 13.0
  * tall       90 |   43 | 14.5 | 12.7 | 15.0
@@ -72600,10 +72701,6 @@ int main(int argc, char **argv)
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
  * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds))
- * for closure, proc-sig could be a guarantee to the optimizer
- * we could see sig-collisions during optimization, at least where opts build them in, (*s7* 'with-type-checks)?
- * procedure-signature of implicit cases? need to know car type, Q_fv = Q_fv_ref
- * doc sequence?
  *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array
@@ -72612,5 +72709,4 @@ int main(int argc, char **argv)
  *   rcos: simple_do_step->eval->safe_closure_star_s0, so if body is rfable, it could be handled [~/old/s7-closure-rf.c]
  *
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
- * perhaps collapse all_x_c_c
  */
