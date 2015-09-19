@@ -737,6 +737,7 @@ typedef struct s7_cell {
       int type;
       void *value;         /*  the value the caller associates with the object */
       s7_pointer e;        /*   the method list, if any (openlet) */
+      s7_pointer (*ref)(s7_scheme *sc, s7_pointer obj, s7_int pos);
     } c_obj;
 
     struct {
@@ -1929,11 +1930,12 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define is_iterator(p)                (type(p) == T_ITERATOR)
 #define iterator_sequence(p)          _TItr(p)->object.iter.obj
 #define iterator_position(p)          _TItr(p)->object.iter.lc.loc
-#define iterator_let_cons(p)          _TItr(p)->object.iter.lc.lcur
 #define iterator_length(p)            _TItr(p)->object.iter.lw.len
 #define iterator_slow(p)              _TItr(p)->object.iter.lw.slow
 #define iterator_hash_current(p)      _TItr(p)->object.iter.lw.hcur
 #define iterator_current(p)           _TItr(p)->object.iter.cur
+#define iterator_let_current(p)       _TItr(p)->object.iter.lc.lcur
+#define iterator_let_cons(p)          _TItr(p)->object.iter.cur
 #define iterator_next(p)              _TItr(p)->object.iter.next
 #define iterator_is_at_end(p)         (iterator_next(p) == iterator_finished)
 
@@ -2071,6 +2073,7 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define c_object_value(p)             _TObj(p)->object.c_obj.value
 #define c_object_type(p)              _TObj(p)->object.c_obj.type
 #define c_object_let(p)               _TObj(p)->object.c_obj.e
+#define c_object_cref(p)              _TObj(p)->object.c_obj.ref
 
 static c_object_t **object_types = NULL;
 static int object_types_size = 0;
@@ -24275,6 +24278,7 @@ static s7_pointer g_is_string(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* -------------------------------- make-string -------------------------------- */
 static s7_pointer g_make_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_string "(make-string len (val #\\space)) makes a string of length len filled with the character val (default: space)"
@@ -24334,6 +24338,7 @@ PF_TO_IF(string_length, c_string_length)
 #endif
 
 
+/* -------------------------------- string-up|downcase -------------------------------- */
 static s7_pointer c_string_downcase(s7_scheme *sc, s7_pointer p)
 {
   s7_pointer newstr;
@@ -24402,6 +24407,7 @@ unsigned int s7_string_length(s7_pointer str)
 }
 
 
+/* -------------------------------- string-ref -------------------------------- */
 static s7_pointer string_ref_1(s7_scheme *sc, s7_pointer strng, s7_pointer index)
 {
   char *str;
@@ -24469,6 +24475,7 @@ static s7_pointer c_string_ref(s7_scheme *sc, s7_pointer str, s7_int ind)
 PIF_TO_PF(string_ref, c_string_ref)
 
 
+/* -------------------------------- string-set! -------------------------------- */
 static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_set "(string-set! str index chr) sets the index-th element of the string str to the character chr"
@@ -24576,6 +24583,7 @@ static s7_pointer c_string_set(s7_scheme *sc, s7_pointer vec, s7_int index, s7_p
 PIPF_TO_PF(string_set, c_string_set_s, c_string_set, c_string_tester)
 
 
+/* -------------------------------- string-append -------------------------------- */
 static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, bool use_temp)
 {
   int len = 0;
@@ -24661,6 +24669,8 @@ static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
 }
 #endif
 
+
+/* -------------------------------- substring -------------------------------- */
 static s7_pointer start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer fallback,
 				s7_pointer start_and_end_args, s7_pointer args, int position, s7_int *start, s7_int *end)
 {
@@ -24765,6 +24775,7 @@ static s7_pointer g_substring_to_temp(s7_scheme *sc, s7_pointer args)
  */
 
 
+/* -------------------------------- object->string -------------------------------- */
 static use_write_t write_choice(s7_scheme *sc, s7_pointer arg)
 {
   if (arg == sc->F) return(USE_DISPLAY);
@@ -24808,6 +24819,7 @@ static s7_pointer c_object_to_string(s7_scheme *sc, s7_pointer x) {return(g_obje
 PF_TO_PF(object_to_string, c_object_to_string)
 
 
+/* -------------------------------- string comparisons -------------------------------- */
 static int scheme_strcmp(s7_pointer s1, s7_pointer s2)
 {
   /* tricky here because str[i] must be treated as unsigned
@@ -28803,13 +28815,14 @@ static s7_pointer g_is_iterator(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer iterator_copy(s7_scheme *sc, s7_pointer p)
 {
+  /* fields are obj cur [loc|lcur] [len|slow|hcur] next */
   s7_pointer iter;
   NEW_CELL(sc, iter, T_ITERATOR | T_SAFE_PROCEDURE);
-  iterator_sequence(iter) = iterator_sequence(p);
-  iterator_position(iter) = iterator_position(p);
-  iterator_length(iter) = iterator_length(p);
-  iterator_current(iter) = iterator_current(p);
-  iterator_next(iter) = iterator_next(p);
+  iterator_sequence(iter) = iterator_sequence(p);   /* obj */
+  iterator_position(iter) = iterator_position(p);   /* loc|lcur (loc is s7_int) */
+  iterator_length(iter) = iterator_length(p);       /* len|slow|hcur (len is s7_int) */
+  iterator_current(iter) = iterator_current(p);     /* cur */
+  iterator_next(iter) = iterator_next(p);           /* next */
   return(iter);
 }
 
@@ -28818,8 +28831,9 @@ static bool iterators_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
   return((iterator_sequence(x) == iterator_sequence(y)) &&
 	 (iterator_position(x) == iterator_position(y)) &&
-	 (iterator_current(x) == iterator_current(y)));
-  /* presumably if the sequences are the same, so are the lengths and functions (next) */
+	 (iterator_current(x) == iterator_current(y)) &&
+	 (iterator_length(x) == iterator_length(y)));        /* len|slow|hcur: the latter two might differ */
+  /* presumably if the sequences are the same, so are functions (next) */
 }
 
 
@@ -28831,10 +28845,10 @@ static s7_pointer iterator_finished(s7_scheme *sc, s7_pointer iterator)
 static s7_pointer let_iterate(s7_scheme *sc, s7_pointer iterator)
 {
   s7_pointer slot;
-  slot = iterator_current(iterator);
+  slot = iterator_let_current(iterator);
   if (is_slot(slot))
     {
-      iterator_current(iterator) = next_slot(slot);
+      iterator_let_current(iterator) = next_slot(slot);
       if (iterator_let_cons(iterator))
 	{
 	  s7_pointer p;
@@ -28971,7 +28985,7 @@ static s7_pointer c_object_direct_iterate(s7_scheme *sc, s7_pointer obj)
     {
       s7_pointer result, p;
       p = iterator_sequence(obj);
-      result = c_object_direct_ref(p)(sc, p, iterator_position(obj));
+      result = c_object_cref(p)(sc, p, iterator_position(obj));
       iterator_position(obj)++;
       if (result == sc->ITERATOR_END)
 	iterator_next(obj) = iterator_finished;
@@ -29072,7 +29086,7 @@ s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e)
     case T_LET:
       if (e == sc->rootlet)
 	{
-	  iterator_current(iter) = vector_element(e, 0);
+	  iterator_current(iter) = vector_element(e, 0); /* unfortunately tricky -- let_iterate uses different fields */
 	  iterator_next(iter) = rootlet_iterate;
 	}
       else
@@ -29082,7 +29096,7 @@ s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e)
 	  f = iterator_method(sc, e);
 	  sc->temp6 = sc->NIL;
 	  if (f) {free_cell(sc, iter); return(f);}
-	  iterator_current(iter) = let_slots(e);
+	  iterator_let_current(iter) = let_slots(e);
 	  iterator_next(iter) = let_iterate;
 	  iterator_let_cons(iter) = NULL;
 	}
@@ -29150,7 +29164,10 @@ s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e)
     case T_C_OBJECT:
       iterator_length(iter) = object_length_to_int(sc, e);
       if (c_object_direct_ref(e))
-	iterator_next(iter) = c_object_direct_iterate;
+	{
+	  iterator_next(iter) = c_object_direct_iterate;
+	  c_object_cref(e) = c_object_direct_ref(e);
+	}
       else
 	{
 	  s7_pointer f;
@@ -29189,6 +29206,7 @@ returns the next value in the sequence each time it is called.  When it reaches 
 	      s7_pointer iter;
 	      iter = s7_make_iterator(sc, seq);
 	      iterator_current(iter) = cadr(args);
+	      set_mark_seq(iter);
 	      return(iter);
 	    }
 	  if ((is_let(seq)) && (seq != sc->rootlet))
@@ -29196,6 +29214,7 @@ returns the next value in the sequence each time it is called.  When it reaches 
 	      s7_pointer iter;
 	      iter = s7_make_iterator(sc, seq);
 	      iterator_let_cons(iter) = cadr(args);
+	      set_mark_seq(iter);
 	      return(iter);
 	    }
 	}
@@ -30332,8 +30351,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 
   if (use_write == USE_READABLE_WRITE)
     {
-      if ((ci) &&
-	  (peek_shared_ref(ci, lst) != 0))
+      if (ci)
 	{
 	  int plen;
 	  char buf[128];
@@ -30367,11 +30385,6 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 	}
       else
 	{
-	  if (car(lst) == lst) /* this is a bug */
-	    {
-	      port_write_string(port)(sc, "let ((lst (list 1))) (set-car! lst lst))", 40, port);
-	      return;
-	    }
 	  /* the easier cases: no circles or shared refs to patch up */
 	  if (true_len > 0)
 	    {
@@ -30441,7 +30454,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 
 static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
-  int i, len, gc_iter, p_iter;
+  int i, len, gc_iter;
   bool too_long = false;
   s7_pointer iterator, p;
 
@@ -30477,8 +30490,8 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
   iterator = s7_make_iterator(sc, hash);
   gc_iter = s7_gc_protect(sc, iterator);
   p = cons(sc, sc->F, sc->F);
-  p_iter = s7_gc_protect(sc, p);
   iterator_current(iterator) = p;
+  set_mark_seq(iterator);
 
   if ((use_write == USE_READABLE_WRITE) &&
       (ci) &&
@@ -30530,7 +30543,6 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
       else port_write_character(port)(sc, ')', port);
     }
 
-  s7_gc_unprotect_at(sc, p_iter);
   s7_gc_unprotect_at(sc, gc_iter);
 }
 
@@ -32162,8 +32174,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 
 		i++;
 		obj = car(fdat->args);
-		/* for the column check, we need to know the length of the object->string output
-		 */
+		/* for the column check, we need to know the length of the object->string output */
 		if (columnized)
 		  {
 		    strport = open_format_port(sc);
@@ -72432,6 +72443,7 @@ s7_scheme *s7_init(void)
   s7_function_set_setter(sc, "float-vector-ref", "float-vector-set!");
   s7_function_set_setter(sc, "int-vector-ref",   "int-vector-set!");
   s7_function_set_setter(sc, "list-ref",         "list-set!");
+  s7_function_set_setter(sc, "let-ref",          "let-set!");
   s7_function_set_setter(sc, "string-ref",       "string-set!");
   c_function_setter(slot_value(global_slot(sc->OUTLET))) = s7_make_function(sc, "(set! outlet)", g_set_outlet, 2, 0, false, "outlet setter");
 
@@ -72677,8 +72689,8 @@ int main(int argc, char **argv)
  *
  * s7test   1721 | 1358 |  995 | 1194 | 1133
  * index    44.3 | 3291 | 1725 | 1276 | 1156
- * teq           |      |      | 6612 | 2388
- * tauto     265 |   89 |  9   |  8.4 | 2797
+ * teq           |      |      | 6612 | 2372
+ * tauto     265 |   89 |  9   |  8.4 | 2756
  * bench    42.7 | 8752 | 4220 | 3506 | 3233
  * tcopy         |      |      | 13.6 | 3258
  * tform         |      |      | 6816 | 3926
@@ -72687,7 +72699,7 @@ int main(int argc, char **argv)
  * lg            |      |      | 6547 | 7232
  * thash         |      |      | 50.7 | 8690
  *               |      |      |      |
- * tgen          |   71 | 70.6 | 38.0 | 13.0
+ * tgen          |   71 | 70.6 | 38.0 | 12.0
  * tall       90 |   43 | 14.5 | 12.7 | 15.0
  * calls     359 |  275 | 54   | 34.7 | 37.1
  * 
@@ -72701,6 +72713,8 @@ int main(int argc, char **argv)
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
  * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds))
+ * string-upcase -> temp? more temp strs? a temp str allocator? -- replace check_for_substring_temp and handle at higher level than the choosers
+ * (apply x (map cf pl)) -> (x (cf pl0) (cf pl1)...)
  *
  * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
  *   get args, plug into closure_let, then call closure_rf_body via the saved array

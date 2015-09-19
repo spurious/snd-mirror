@@ -107,10 +107,7 @@
 			     (< (caddr (cadr any)) low))
 			(quit))))
 		 
-		(let ((checker (and (pair? sig) 
-				    (if (pair? (car sig))
-					(lambda (x) (or ((caar sig) x) ((cadar sig) x)))
-					(car sig)))))
+		(let ((checker (and (pair? sig) (car sig))))
 		  (if checker
 		      (for-each
 		       (lambda (c)
@@ -133,11 +130,9 @@
 		       cdr-constants)))))
 	   
 	     (let ((checker (and (pair? sig) 
-				 (if (pair? (car sig))
-				     (lambda (x) (or ((caar sig) x) ((cadar sig) x)))
-				     (if (eq? (car sig) list:any?)
-					 list?
-					 (car sig))))))
+				 (if (eq? (car sig) list:any?)
+				     list?
+				     (car sig)))))
 	       (if checker
 		   (for-each
 		    (lambda (c)
@@ -165,7 +160,9 @@
       (begin
 	(if (symbol? (car lst))
 	    (set-car! lst (symbol->value (car lst)))
-	    (set-car! lst #f))
+	    (if (pair? (car lst))
+		(set-car! lst (apply lambda '(x) `((or (,(caar lst) x) (,(cadar lst) x)))))
+		(set-car! lst #f)))
 	(map-values (cdr lst)))))
 
 (define baddies '(exit emergency-exit abort autotest 

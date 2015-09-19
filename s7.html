@@ -3921,7 +3921,7 @@ in its closure:
 &gt; (define f1 (let ((documentation "helpful info") 
                    (signature '(boolean? real?))) 
                 (lambda (x) 
-                  (zero? x))))
+                  (positive? x))))
 <em class="gray">f1</em>
 &gt; (procedure-documentation f1)
 <em class="gray">"helpful info"</em>

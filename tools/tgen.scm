@@ -186,11 +186,8 @@
     (let ((body
      `(let ()
 	(define G (,make-gen 1000)) 
-	(define H (,make-gen 400)) 
 	(define I (,make-gen 500)) 
-	(define J (,make-gen 600))
-
-	(define (O) (vector (mus-copy H) (mus-copy I) (mus-copy J)))
+	(define (O) (vector #f (mus-copy I) #f))
 	(define (Q) (mus-copy G))
 	(define (Z) (mus-copy F))
 
@@ -287,11 +284,8 @@
     (let ((body
      `(let ()
 	(define G (,make-gen 1000)) 
-	(define H (,make-gen 400)) 
 	(define I (,make-gen 500)) 
-	(define J (,make-gen 600))
-
-	(define (O) (vector (mus-copy H) (mus-copy I) (mus-copy J)))
+	(define (O) (vector #f (mus-copy I) #f))
 	(define (Q) (mus-copy G))
 	(define (Z) (mus-copy F))
 
