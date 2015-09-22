@@ -302,11 +302,14 @@
   
   (define (fe11 p) (if (member 1 (make-list p 2) >) (display "oops")))
   (fe11 size)
+  (fe11 1)
   (define (less a b) (> a b))
   (define (fe12 p) (if (member 1 (make-list p 2) less) (display "oops")))
   (fe12 size)
+  (fe12 1)
   (define (fe13 p) (if (member 1 (make-list p 2) (lambda (a b) (cond ((> a b) #t) (#t #f)))) (display "oops")))
-  (fe13 size))
+  (fe13 size)
+  (fe13 1))
 
 (s7-version)
 (exit)
