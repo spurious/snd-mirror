@@ -27718,10 +27718,10 @@ EDITS: 2
 	      (hook-push graph-hook auto-dot)
 	      (hook-push graph-hook superimpose-ffts)
 	      (set! (transform-graph? obi 0) #t)
-	      (when (provided? 'motif) (update-graphs)) ; damned thing hangs in gtk
+	      ;(update-graphs)
 	      (set! s2i (open-sound (car (match-sound-files (lambda (file) (= (mus-sound-chans file) 2))))))
 	      (if (not (= (chans s2i) 2)) (snd-display #__line__ ";match 2 got ~A with ~A chans" (short-file-name s2i) (chans s2i)))
-	      (update-graphs)
+	      ;(update-graphs)
 	      (hook-remove graph-hook auto-dot)
 	      (hook-remove graph-hook superimpose-ffts)
 	      (set! (transform-graph? obi 0) #f)

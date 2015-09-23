@@ -2212,10 +2212,9 @@ but a function grabs all remaining indices.  Trickier than I expected!
 <li>(<em class=def id="makehashtable">make-hash-table</em> (size 8) eq-func)
 <li>(<em class=def id="hashtable">hash-table</em> ...)
 <li>(<em class=def id="hashtablestar">hash-table*</em> ...)
+<li>(<em class=def id="hashtablep">hash-table?</em> obj)
 <li>(<em class=def id="hashtableref">hash-table-ref</em> ht key)
 <li>(<em class=def id="hashtableset">hash-table-set!</em> ht key value)
-<li>(<em class=def id="hashtablep">hash-table?</em> obj)
-<li>(<em class=def id="hashtablesize">hash-table-size</em> ht)
 <li>(<em class=def id="hashtableentries">hash-table-entries</em> ht)
 </ul>
 
@@ -2223,7 +2222,7 @@ but a function grabs all remaining indices.  Trickier than I expected!
 Each hash-table keeps track of the keys it contains, optimizing the search wherever possible.
 Any s7 object can be the key or the key's value.
 If you pass a table size that is not a power of 2, make-hash-table rounds it up to the next power of 2.
-The table grows as needed.  
+The table grows as needed.  length returns the current size.
 If a key is not in the table, hash-table-ref returns #f.  To remove a key,
 set its value to #f; to remove all keys, <code>(fill! table #f)</code>.
 </p>
@@ -5661,6 +5660,7 @@ The built-in random-state is one such type.
 <li>if WITH_SYSTEM_EXTRAS is 1, the following are built-in: directory?, file-exists?, delete-file, system, directory-&gt;list, getenv.
 <li>s7 is case sensitive.
 <li>when and unless (for r7rs), returning the value of the last form.
+<li>the "d", "f", "s", and "l" exponent markers are not supported by default (use "e", "E", or "@").
 </ul>
 
 <p>In s7 if a built-in function like gcd is referred to in a function
@@ -5695,7 +5695,6 @@ definition, and a later redefinition does not affect earlier uses.
 <li>remove call-with-values and its friends
 <li>remove char-ready?
 <li>change eof-object? to eof? or just omit it (you can use eq? #&lt;eof&gt;)
-<li>remove the "d", "f", "s", and "l" exponent markers (leaving "e", "E", and "@")
 <li>change make-rectangular to make-complex, and remove make-polar, angle, and magnitude.
 <li>remove unquote (the name, not the functionality).
 <li>remove cond-expand.
@@ -5707,7 +5706,7 @@ definition, and a later redefinition does not affect earlier uses.
 
 <ul>
 <li>remove even? and odd?, gcd and lcm.
-<li>remove string-length, vector-length, and hash-table-size.
+<li>remove string-length and vector-length.
 <li>remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!, set-car!|cdr!, and set-current-output|input|error-port.
 <li>change file-exists? to file? (or omit it and assume the use of libc.scm &mdash; why reinvent the wheel?).
 <li>remove all the conversion and copy functions like vector-&gt;list and vector-copy (use copy or map).
@@ -5772,7 +5771,7 @@ Better ideas are always welcome!
 <li>omits char-ready, char-ci*, string-ci*
 <li>omits string-copy, string-fill!, vector-fill!
 <li>omits list-&gt;string, list-&gt;vector, string-&gt;list, vector-&gt;list, let-&gt;list
-<li>omits string-length, vector-length, hash-table-size
+<li>omits string-length and vector-length
 <li>omits cond-expand, multiple-values-bind|set!, call-with-values, defmacro(*)
 <li>omits unquote (the name), and quasiquoted vector constants
 <li>omits d/f/s/l exponents

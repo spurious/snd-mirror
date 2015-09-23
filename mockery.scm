@@ -157,7 +157,6 @@
 	    (inlet 'morally-equal?     (lambda (x y)          (#_morally-equal? (x 'mock-hash-table-table) y))
 		   'hash-table-ref     (lambda (obj key)      (#_hash-table-ref (obj 'mock-hash-table-table) key))
 		   'hash-table-set!    (lambda (obj key val)  (#_hash-table-set! (obj 'mock-hash-table-table) key val))
-		   'hash-table-size    (lambda (obj)          (#_length (obj 'mock-hash-table-table)))
 		   'hash-table-entries (lambda (obj)          (#_hash-table-entries (obj 'mock-hash-table-table)))
 		   'make-iterator      (lambda (obj)          (#_make-iterator (obj 'mock-hash-table-table)))
 

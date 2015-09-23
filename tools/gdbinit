@@ -101,8 +101,8 @@ define s7cell
   end
 
   if (($type == T_CHARACTER) || ($is_bad_type))	 
-      printf "chr:            c: %c, up_c: %c, down_c: %c, alpha_c: %c, digit_c: %c, space_c: %c, upper_c: %c, lower_c: %c", \
-         $cell.object.chr.c, $cell.object.chr.up_c, $cell.object.chr.down_c, \
+      printf "chr:            c: %c, up_c: %c, alpha_c: %d, digit_c: %d, space_c: %d, upper_c: %d, lower_c: %d", \
+         $cell.object.chr.c, $cell.object.chr.up_c, \
          $cell.object.chr.alpha_c, $cell.object.chr.digit_c, $cell.object.chr.space_c, $cell.object.chr.upper_c, $cell.object.chr.lower_c
       if ($type == T_CHARACTER) 
         printf ", c_name: %s, length: %d", $cell.object.chr.c_name, $cell.object.chr.length
