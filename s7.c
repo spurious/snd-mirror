@@ -588,7 +588,7 @@ typedef struct s7_cell {
       unsigned char c, up_c;
       int length;
       bool alpha_c, digit_c, space_c, upper_c, lower_c;
-      const char c_name[12];
+      char c_name[12];
     } chr;
 
     void *c_pointer;
@@ -1558,7 +1558,7 @@ bool s7_is_stepper(s7_pointer p)      {return(is_stepper(p));}
 #define T_POSSIBLY_SAFE               T_SAFE_STEPPER
 #define is_possibly_safe(p)           ((typeflag(_TFnc(p)) & T_POSSIBLY_SAFE) != 0)
 #define set_is_possibly_safe(p)       typeflag(_TFnc(p)) |= T_POSSIBLY_SAFE
-/* marks c_functions that are not always unsafe */
+/* marks c_functions that are not always unsafe -- this bit didn't work out as intended */
 
 #define T_HAS_SET_FALLBACK            T_SAFE_STEPPER
 #define T_HAS_REF_FALLBACK            T_MUTABLE

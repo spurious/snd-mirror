@@ -11,7 +11,7 @@ date > $curdir/hi
 echo ' ' >> $curdir/hi
 
 chdir s7dir
-foreach file (*.h *.c *.html *.scm)
+foreach file (*.h *.c *.html *.scm gdbinit)
   if (-e $curdir/$file) then
     find $curdir/$file -newer $s7dir/$file -exec echo ' updating ' $file \;
     find $curdir/$file -newer $s7dir/$file -exec cp $curdir/$file $s7dir \;
