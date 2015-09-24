@@ -347,7 +347,9 @@ static void gzy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 	  cp->gsy = ADJUSTMENT_VALUE(adj);
 	  ADJUSTMENT_SET_VALUE(gsy_adj(cp), cp->gsy);
 	}
+#if (!(GTK_CHECK_VERSION(3, 18, 0)))
       else gtk_adjustment_changed(GTK_ADJUSTMENT(gsy_adj(cp)));
+#endif
       for_each_sound_chan(cp->sound, update_graph_or_warn);
     }
 }

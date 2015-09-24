@@ -1849,7 +1849,7 @@ static mus_sample_t wave_to_sndlib_format(int osf, int bps, bool little)
 }
 
 
-static void read_riff_fmt_chunk(unsigned char *hdrbuf, bool little)
+static void read_riff_fmt_chunk(unsigned char *hbuf, bool little)
 {
   /* fmt chunk (also used in RF64 below)
    *
@@ -1870,62 +1870,62 @@ static void read_riff_fmt_chunk(unsigned char *hdrbuf, bool little)
    *  #x000551f8 = 348664 = size in bytes - 8
    *  #x00000fe4 = 4068 [fmt_ chunk size?]
    */
-  original_sample_type = big_or_little_endian_short((unsigned char *)(hdrbuf + 8), little);
-  chans = big_or_little_endian_short((unsigned char *)(hdrbuf + 10), little);
-  srate = big_or_little_endian_int((unsigned char *)(hdrbuf + 12), little);
-  block_align = big_or_little_endian_short((unsigned char *)(hdrbuf + 20), little);
-  bits_per_sample = big_or_little_endian_short((unsigned char *)(hdrbuf + 22), little);
+  original_sample_type = big_or_little_endian_short((unsigned char *)(hbuf + 8), little);
+  chans = big_or_little_endian_short((unsigned char *)(hbuf + 10), little);
+  srate = big_or_little_endian_int((unsigned char *)(hbuf + 12), little);
+  block_align = big_or_little_endian_short((unsigned char *)(hbuf + 20), little);
+  bits_per_sample = big_or_little_endian_short((unsigned char *)(hbuf + 22), little);
   if (original_sample_type == -2)        /* 0xFFFE = "extensible" : short size=22, short bits, long chanmap, short format */
-    original_sample_type = big_or_little_endian_short((unsigned char *)(hdrbuf + 24 + 8), little);
+    original_sample_type = big_or_little_endian_short((unsigned char *)(hbuf + 24 + 8), little);
   sample_type = wave_to_sndlib_format(original_sample_type, bits_per_sample, little);
 }
 
 
-static int write_riff_fmt_chunk(int fd, unsigned char *hdrbuf, mus_sample_t samp_type, int wsrate, int wchans)
+static int write_riff_fmt_chunk(int fd, unsigned char *hbuf, mus_sample_t samp_type, int wsrate, int wchans)
 {
   int err = MUS_NO_ERROR;
-  write_four_chars((unsigned char *)hdrbuf, I_fmt_);
-  mus_lint_to_char((unsigned char *)(hdrbuf + 4), 16);
+  write_four_chars((unsigned char *)hbuf, I_fmt_);
+  mus_lint_to_char((unsigned char *)(hbuf + 4), 16);
   switch (samp_type)
     {
     case MUS_MULAW: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 7); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 8); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 8), 7); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 22), 8); 
       break;
 
     case MUS_ALAW: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 6); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 8); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 8), 6); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 22), 8); 
       break;
 
     case MUS_UBYTE: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 1); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 8); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 8), 1); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 22), 8); 
       break;
 
     case MUS_LSHORT: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 1); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 16); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 8), 1); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 22), 16); 
       break;
 
     case MUS_L24INT: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 1); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 24); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 8), 1); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 22), 24); 
       break;
 
     case MUS_LINT: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 1); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 32); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 8), 1); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 22), 32); 
       break;
 
     case MUS_LFLOAT: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 3); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 32); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 8), 3); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 22), 32); 
       break;
 
     case MUS_LDOUBLE: 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 8), 3); 
-      mus_lshort_to_char((unsigned char *)(hdrbuf + 22), 64); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 8), 3); 
+      mus_lshort_to_char((unsigned char *)(hbuf + 22), 64); 
       break;
 
     default: 
@@ -1933,12 +1933,12 @@ static int write_riff_fmt_chunk(int fd, unsigned char *hdrbuf, mus_sample_t samp
       err = MUS_UNSUPPORTED_SAMPLE_TYPE;
       break;
     }
-  mus_lshort_to_char((unsigned char *)(hdrbuf + 10), (short)wchans);
-  mus_lint_to_char((unsigned char *)(hdrbuf + 12), wsrate);
-  mus_lint_to_char((unsigned char *)(hdrbuf + 16), wsrate * wchans * mus_bytes_per_sample(samp_type)); /* added chans 10-Mar-99 */
-  mus_lshort_to_char((unsigned char *)(hdrbuf + 20), (short)(wchans * mus_bytes_per_sample(samp_type)));
+  mus_lshort_to_char((unsigned char *)(hbuf + 10), (short)wchans);
+  mus_lint_to_char((unsigned char *)(hbuf + 12), wsrate);
+  mus_lint_to_char((unsigned char *)(hbuf + 16), wsrate * wchans * mus_bytes_per_sample(samp_type)); /* added chans 10-Mar-99 */
+  mus_lshort_to_char((unsigned char *)(hbuf + 20), (short)(wchans * mus_bytes_per_sample(samp_type)));
   /* 22 short written above = bits/sample */
-  header_write(fd, hdrbuf, 24);
+  header_write(fd, hbuf, 24);
   return(err);
 }
 
@@ -6537,12 +6537,12 @@ int mus_header_change_type(const char *filename, mus_header_t new_type, mus_samp
 	    {
 	      if (comment_end > comment_start)
 		{
-		  mus_long_t len;
-		  len = comment_end - comment_start + 1;
-		  comment = (char *)calloc(len + 1, sizeof(char));
+		  mus_long_t clen;
+		  clen = comment_end - comment_start + 1;
+		  comment = (char *)calloc(clen + 1, sizeof(char));
 		  ifd = mus_file_open_read(filename);
 		  lseek(ifd, comment_start, SEEK_SET);
-		  header_read(ifd, (unsigned char *)comment, len);
+		  header_read(ifd, (unsigned char *)comment, clen);
 		  CLOSE(ifd, filename);
 		}
 	      data_size = data_size * mus_bytes_per_sample(sample_type) / mus_bytes_per_sample(new_format);
@@ -6696,16 +6696,19 @@ int mus_header_change_comment(const char *filename, mus_header_t type, const cha
   err = mus_header_read(filename);
   if (err == MUS_NO_ERROR)
     {
-      int fd, len = 0;
+      int fd;
       bool need_ripple = false;
       switch (type)	  
 	{
 	case MUS_IRCAM:
-	  fd = mus_file_reopen_write(filename);
-	  lseek(fd, 16L, SEEK_SET);
-	  if (new_comment) len = strlen(new_comment);
-	  write_ircam_comment(fd, new_comment, len);
-	  CLOSE(fd, filename);
+	  {
+	    int len;
+	    fd = mus_file_reopen_write(filename);
+	    lseek(fd, 16L, SEEK_SET);
+	    if (new_comment) len = strlen(new_comment);
+	    write_ircam_comment(fd, new_comment, len);
+	    CLOSE(fd, filename);
+	  }
 	  break;
 
 	case MUS_NEXT:

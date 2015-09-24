@@ -936,7 +936,7 @@ void clear_stdin(void)
 
 
 #if HAVE_SCHEME
-static int check_balance(const char *expr, int start, int end, bool in_listener) 
+static int check_balance(const char *expr, int start, int end) 
 {
   int i;
   bool not_whitespace = false;
@@ -1143,7 +1143,7 @@ char *stdin_check_for_full_expression(const char *newstr)
     }
   else stdin_str = mus_strdup(newstr);
 #if HAVE_SCHEME
-  end_of_text = check_balance(stdin_str, 0, mus_strlen(stdin_str), false); /* last-arg->not in listener */
+  end_of_text = check_balance(stdin_str, 0, mus_strlen(stdin_str));
   if (end_of_text > 0)
     {
       if (end_of_text + 1 < mus_strlen(stdin_str))

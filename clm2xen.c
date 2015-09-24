@@ -10159,7 +10159,7 @@ static s7_rf_t formant_bank_rf(s7_scheme *sc, s7_pointer expr)
       a1 = caddr(expr);
       if (s7_is_symbol(a1))
 	{
-	  s7_pointer slot, val;
+	  s7_pointer slot;
 	  slot = s7_slot(sc, a1);
 	  if (slot == xen_undefined) return(NULL);
 	  val = s7_slot_value(slot);

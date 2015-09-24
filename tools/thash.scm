@@ -178,7 +178,7 @@
       (format *stderr* "~A: ~A~%" (car (counts i)) (cdr (counts i)))))
 ;;; ----------------------------------------
 
-(gc)
+;(gc)
 (s7-version)
 
 (exit)

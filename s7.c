@@ -1539,7 +1539,7 @@ static void init_types(void)
 /* marks a string that the caller considers a byte_vector */
 
 #define T_STEPPER                     T_MUTABLE
-#define is_stepper(p)                 ((typeflag(p) & T_STEPPER) != 0)
+#define is_stepper(p)                 ((typeflag(_TSlt(p)) & T_STEPPER) != 0)
 #define set_stepper(p)                typeflag(_TSlt(p)) |= T_STEPPER
 bool s7_is_stepper(s7_pointer p)      {return(is_stepper(p));}
 /* marks a slot that holds a do-loop's step variable (if int, can be numerator=current, denominator=end) */
@@ -1839,7 +1839,7 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 /* I think symbol_id is set only here */
 
 #define is_slot(p)                    (type(p) == T_SLOT)
-#define slot_value(p)                 (p)->object.slt.val
+#define slot_value(p)                 (p)->object.slt.val   /* _TSlt(p) is ok here in gcc, but generates rafts of errors in clang */
 #define slot_set_value(p, Val)        _TSlt(p)->object.slt.val = Val
 #define slot_symbol(p)                _TSlt(p)->object.slt.sym
 #define slot_set_symbol(p, Sym)       _TSlt(p)->object.slt.sym = _TSym(Sym)
@@ -2040,7 +2040,7 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define is_continuation(p)            (type(p) == T_CONTINUATION)
 #define is_goto(p)                    (type(p) == T_GOTO)
 #define is_macro(p)                   (type(p) == T_MACRO)
-/* #define is_bacro(p)                   (type(p) == T_BACRO) */
+/* #define is_bacro(p)                (type(p) == T_BACRO) */
 #define is_macro_star(p)              (type(p) == T_MACRO_STAR)
 #define is_bacro_star(p)              (type(p) == T_BACRO_STAR)
 
@@ -3885,16 +3885,16 @@ static void mark_hash_table(s7_pointer p)
       entries = hash_table_elements(p);
       for (i = 0; i < hash_table_length(p); i++)
 	{
-	  hash_entry_t *p;
-	  for (p = entries[i++]; p; p = p->next)
+	  hash_entry_t *xp;
+	  for (xp = entries[i++]; xp; xp = xp->next)
 	    {
-	      S7_MARK(p->key);
-	      S7_MARK(p->value);
+	      S7_MARK(xp->key);
+	      S7_MARK(xp->value);
 	    }
-	  for (p = entries[i]; p; p = p->next)
+	  for (xp = entries[i]; xp; xp = xp->next)
 	    {
-	      S7_MARK(p->key);
-	      S7_MARK(p->value);
+	      S7_MARK(xp->key);
+	      S7_MARK(xp->value);
 	    }
 	}
     }
@@ -24517,6 +24517,9 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, bool use_tem
   for (pos = string_value(newstr), x = args; is_not_null(x); pos += string_length(car(x)), x = cdr(x))
     memcpy(pos, string_value(car(x)), string_length(car(x)));
 
+  if (is_byte_vector(car(args)))
+    set_byte_vector(newstr);
+
   return(newstr);
 }
 
@@ -28256,6 +28259,8 @@ static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer arg
 }
 
 
+/* -------------------------------- call-with-input-string -------------------------------- */
+
 static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer str, proc;
@@ -28284,6 +28289,8 @@ static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
 static s7_pointer c_call_with_input_string(s7_scheme *sc, s7_pointer x, s7_pointer y) {return(g_call_with_input_string(sc, set_plist_2(sc, x, y)));}
 PF2_TO_PF(call_with_input_string, c_call_with_input_string)
 
+
+/* -------------------------------- call-with-input-file -------------------------------- */
 
 static s7_pointer g_call_with_input_file(s7_scheme *sc, s7_pointer args)
 {
@@ -28322,6 +28329,8 @@ static s7_pointer with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
 }
 
 
+/* -------------------------------- with-input-from-string -------------------------------- */
+
 static s7_pointer g_with_input_from_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_with_input_from_string "(with-input-from-string str thunk) opens str as the temporary current-input-port and calls thunk"
@@ -28347,6 +28356,8 @@ static s7_pointer c_with_input_from_string(s7_scheme *sc, s7_pointer x) {return(
 PF_TO_PF(with_input_from_string, c_with_input_from_string)
 
 
+/* -------------------------------- with-input-from-file -------------------------------- */
+
 static s7_pointer g_with_input_from_file(s7_scheme *sc, s7_pointer args)
 {
   #define H_with_input_from_file "(with-input-from-file filename thunk) opens filename as the temporary current-input-port and calls thunk"
@@ -28363,310 +28374,6 @@ static s7_pointer g_with_input_from_file(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer c_with_input_from_file(s7_scheme *sc, s7_pointer x) {return(g_with_input_from_file(sc, set_plist_1(sc, x)));}
 PF_TO_PF(with_input_from_file, c_with_input_from_file)
-
-
-static bool string_needs_slashification(const char *str, int len)
-{
-  /* we have to go by len (str len) not *s==0 because s7 strings can have embedded nulls */
-  unsigned char *p, *pend;
-  pend = (unsigned char *)(str + len);
-  for (p = (unsigned char *)str; p < pend; p++)
-    if (slashify_table[*p])
-      return(true);
-  return(false);
-}
-
-#define IN_QUOTES true
-#define NOT_IN_QUOTES false
-
-static char *slashify_string(s7_scheme *sc, const char *p, int len, bool quoted, int *nlen) /* do not free result */
-{
-  int j = 0, cur_size, size;
-  char *s;
-  unsigned char *pcur, *pend;
-
-  pend = (unsigned char *)(p + len);
-  size = len + 256;
-  if (size > sc->slash_str_size)
-    {
-      if (sc->slash_str) free(sc->slash_str);
-      sc->slash_str_size = size;
-      sc->slash_str = (char *)malloc(size);
-    }
-  else size = sc->slash_str_size;
-  cur_size = size - 2;
-
-  /* memset((void *)sc->slash_str, 0, size); */
-  s = sc->slash_str;
-
-  if (quoted) s[j++] = '"';
-
-  /* what about the trailing nulls? Guile writes them out (as does s7 currently)
-   *    but that is not ideal.  I'd like to use ~S for error messages, so that
-   *    strings are clearly identified via the double-quotes, but this way of
-   *    writing them is ugly:
-   *
-   *    :(let ((str (make-string 8 #\null))) (set! (str 0) #\a) str)
-   *    "a\x00\x00\x00\x00\x00\x00\x00"
-   *
-   * but it would be misleading to omit them because:
-   *
-   *    :(let ((str (make-string 8 #\null))) (set! (str 0) #\a) (string-append str "bc"))
-   *    "a\x00\x00\x00\x00\x00\x00\x00bc"
-   */
-
-  for (pcur = (unsigned char *)p; pcur < pend; pcur++)
-    {
-      if (slashify_table[*pcur])
-	{
-	  s[j++] = '\\';
-	  switch (*pcur)
-	    {
-	    case '"':
-	      s[j++] = '"';
-	      break;
-
-	    case '\\':
-	      s[j++] = '\\';
-	      break;
-
-	    default:               /* this is the "\x01" stuff */
-	      {
-		unsigned int n;
-		static char dignum[] = "0123456789abcdef";
-		s[j++] = 'x';
-		n = (unsigned int)(*pcur);
-		if (n < 16)
-		  s[j++] = '0';
-		else s[j++] = dignum[(n / 16) % 16];
-		s[j++] = dignum[n % 16];
-	      }
-	      break;
-	    }
-	}
-      else s[j++] = *pcur;
-      if (j >= cur_size) /* even with 256 extra, we can overflow (for example, inordinately many tabs in ALSA output) */
-	{
-	  /* int k; */
-	  size *= 2;
-	  sc->slash_str = (char *)realloc(sc->slash_str, size * sizeof(char));    
-	  sc->slash_str_size = size;
-	  cur_size = size - 2;
-	  s = sc->slash_str;
-	  /* for (k = j; k < size; k++) s[k] = 0; */
-	}
-    }
-  if (quoted) s[j++] = '"';
-  s[j] = '\0';
-  (*nlen) = j;
-  return(s);
-}
-
-
-/* (let () (define (hi a) (+ a 1)) (object->string hi))
- * (let () (define (hi a) (asd a 1)) (let->list (funclet hi)))
- */
-static s7_pointer find_closure_let(s7_scheme *sc, s7_pointer cur_env)
-{
-  s7_pointer e;
-  for (e = cur_env; is_let(e); e = outlet(e))
-    if (is_function_env(e))
-      return(e);
-  return(sc->NIL);
-}
-
-
-static s7_pointer find_closure(s7_scheme *sc, s7_pointer closure, s7_pointer cur_env)
-{
-  s7_pointer e, y;
-  for (e = cur_env; is_let(e); e = outlet(e))
-    {
-      if ((is_function_env(e)) &&
-	  (is_symbol(funclet_function(e))) &&
-	  (is_global(funclet_function(e))) && /* (define (f1) (lambda () 1)) shouldn't say the returned closure is named f1 */
-	  (slot_value(global_slot(funclet_function(e))) == closure))
-	return(funclet_function(e));
-
-      for (y = let_slots(e); is_slot(y); y = next_slot(y))
-	if (slot_value(y) == closure)
-	  return(slot_symbol(y));
-    }
-  return(sc->NIL);
-}
-
-static void write_closure_name(s7_scheme *sc, s7_pointer closure, s7_pointer port)
-{
-  s7_pointer x;
-  x = find_closure(sc, closure, closure_let(closure));
-  /* this can be confusing!  In some cases, the function is in its environment, and in other very similar-looking cases it isn't:
-   * (let ((a (lambda () 1))) a)
-   * #<lambda ()>
-   * (letrec ((a (lambda () 1))) a)
-   * a
-   * (let () (define (a) 1) a)
-   * a
-   */
-  if (is_symbol(x)) /* after find_closure */
-    {
-      port_write_string(port)(sc, symbol_name(x), symbol_name_length(x), port);
-      return;
-    }
-  
-  /* names like #<closure> and #<macro> are useless -- try to be a bit more informative */
-  switch (type(closure))
-    {
-    case T_CLOSURE:      
-      port_write_string(port)(sc, "#<lambda ", 9, port);  
-      break;
-
-    case T_CLOSURE_STAR: 
-      port_write_string(port)(sc, "#<lambda* ", 10, port);  
-      break;
-
-    case T_MACRO:        
-      if (is_expansion(closure)) 
-	port_write_string(port)(sc, "#<expansion ", 12, port); 
-      else port_write_string(port)(sc, "#<macro ", 8, port); 
-      break;
-
-    case T_MACRO_STAR:   
-      port_write_string(port)(sc, "#<macro* ", 9, port);  
-      break;
-						   
-    case T_BACRO:        
-      port_write_string(port)(sc, "#<bacro ", 8, port);   
-      break;
-
-    case T_BACRO_STAR:   
-      port_write_string(port)(sc, "#<bacro* ", 9, port); 
-      break;
-    }
-
-  if (is_null(closure_args(closure)))
-    port_write_string(port)(sc, "()>", 3, port);
-  else
-    {
-      s7_pointer args;
-      port_write_character(port)(sc, ' ', port);
-      args = closure_args(closure);
-      if (is_symbol(args))
-	port_write_string(port)(sc, symbol_name(args), symbol_name_length(args), port);
-      else
-	{
-	  port_write_character(port)(sc, '(', port);
-	  x = car(args);
-	  if (is_pair(x)) x = car(x);
-	  port_write_string(port)(sc, symbol_name(x), symbol_name_length(x), port);
-	  if (!is_null(cdr(args)))
-	    {
-	      s7_pointer y;
-	      port_write_character(port)(sc, ' ', port);
-	      if (is_pair(cdr(args)))
-		{
-		  y = cadr(args);
-		  if (is_pair(y)) y = car(y);
-		}
-	      else 
-		{
-		  port_write_string(port)(sc, ". ", 2, port);
-		  y = cdr(args);
-		}
-	      port_write_string(port)(sc, symbol_name(y), symbol_name_length(y), port);
-	      if ((is_pair(cdr(args))) &&
-		  (!is_null(cddr(args))))
-		port_write_string(port)(sc, " ...", 4, port);
-	    }
-	  port_write_string(port)(sc, ")>", 2, port);
-	}
-    }
-}
-
-
-enum {NO_ARTICLE, INDEFINITE_ARTICLE};
-
-static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
-{
-  unsigned int full_typ;
-  unsigned char typ;
-  char *buf;
-
-  buf = (char *)malloc(512 * sizeof(char));
-  typ = unchecked_type(obj);
-  full_typ = typeflag(obj);
-
-  /* if debugging all of these bits are being watched, so we need some ugly subterfuges */
-  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
-	   typ,
-	   type_name(sc, obj, NO_ARTICLE),
-	   full_typ,
-	   ((full_typ & T_PROCEDURE) != 0) ?             " procedure" : "",
-	   ((full_typ & T_GC_MARK) != 0) ?               " gc-marked" : "",
-	   ((full_typ & T_IMMUTABLE) != 0) ?             " immutable" : "",
-	   ((full_typ & T_EXPANSION) != 0) ?             " expansion" : "",
-	   ((full_typ & T_MULTIPLE_VALUE) != 0) ?        " values or matched" : "",
-	   ((full_typ & T_KEYWORD) != 0) ?               " keyword" : "",
-	   ((full_typ & T_DONT_EVAL_ARGS) != 0) ?        " dont-eval-args" : "",
-	   ((full_typ & T_SYNTACTIC) != 0) ?             " syntactic" : "",
-	   ((full_typ & T_OVERLAY) != 0) ?               " overlay" : "",
-	   ((full_typ & T_CHECKED) != 0) ?               " checked" : "",
-	   ((full_typ & T_UNSAFE) != 0) ?                " unsafe" : "",
-	   ((full_typ & T_OPTIMIZED) != 0) ?             " optimized" : "",
-	   ((full_typ & T_SAFE_CLOSURE) != 0) ?          " safe-closure" : "",
-	   ((full_typ & T_SAFE_PROCEDURE) != 0)  ?       " safe-procedure" : "",
-	   ((full_typ & T_SETTER) != 0) ?                " setter" : "",
-	   ((full_typ & T_COPY_ARGS) != 0) ?             " copy-args" : "",
-	   ((full_typ & T_COLLECTED) != 0) ?             " collected" : "",
-	   ((full_typ & T_SHARED) != 0) ?                " shared" : "",
-	   ((full_typ & T_HAS_METHODS) != 0) ?           " has-methods" : "",
-	   ((full_typ & T_GLOBAL) != 0) ?                ((is_pair(obj)) ? " unsafe-do" : " global") : "",
-	   ((full_typ & T_SAFE_STEPPER) != 0) ?          ((is_let(obj)) ? " let-set!-fallback" : ((is_slot(obj)) ? " safe-stepper" : " print-name")) : "",
-	   ((full_typ & T_LINE_NUMBER) != 0) ? 
-	        ((is_pair(obj)) ? " line number" : ((is_input_port(obj)) ? " loader-port" : ((is_let(obj)) ? " with-let" : " has accessor"))) : "",
-	   ((full_typ & T_MUTABLE) != 0) ? 
-               ((is_string(obj)) ? " byte-vector" : ((is_let(obj)) ? " let-ref-fallback" : 
-		   ((is_iterator(obj)) ? " mark-seq" : ((is_slot(obj)) ? " stepper" : " mutable")))) : "",
-	   ((full_typ & T_GENSYM) != 0) ?             
-               ((is_let(obj)) ? " function-env" : ((is_unspecified(obj)) ? " no-value" : ((is_pair(obj)) ? " list-in-use" :
-		   ((is_closure_star(obj)) ? " simple-args" : ((is_string(obj)) ? " documented" : " gensym"))))) : "",
-	   ((full_typ & UNUSED_BITS) != 0) ? " bad bits!" : "");
-  return(buf);
-}
-
-
-#if TRAP_SEGFAULT
-#include <signal.h>
-static sigjmp_buf senv; /* global here is not a problem -- it is used only to protect s7_is_valid */
-static volatile sig_atomic_t can_jump = 0;
-static void segv(int ignored) {if (can_jump) siglongjmp(senv, 1);}
-#endif
-
-bool s7_is_valid(s7_scheme *sc, s7_pointer arg)
-{
-  bool result;
-  if (!arg) return(false);
-
-#if TRAP_SEGFAULT
-  if (sigsetjmp(senv, 1) == 0)
-    {
-      void (*old_segv)(int sig);
-      can_jump = 1;
-      old_segv = signal(SIGSEGV, segv);
-#endif
-      result = ((!is_free(arg)) &&
-		(type(arg) < NUM_TYPES) &&
-		((arg->hloc < 0) ||
-		 ((arg->hloc >= 0) &&
-		  (arg->hloc < (int)sc->heap_size) && (sc->heap[arg->hloc] == arg))));
-
-#if TRAP_SEGFAULT
-      signal(SIGSEGV, old_segv);
-    }
-  else result = sc->NIL;
-  can_jump = 0;
-#endif
-
-  return(result);
-}
 
 
 
@@ -29568,6 +29275,7 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top, bool stop_at
   return(ci);
 }
 
+/* -------------------------------- cyclic-sequences -------------------------------- */
 
 static s7_pointer cyclic_sequences(s7_scheme *sc, s7_pointer obj, bool return_list)
 {
@@ -29847,6 +29555,103 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	  else port_write_character(port)(sc, ')', port);
 	}
     }
+}
+
+static bool string_needs_slashification(const char *str, int len)
+{
+  /* we have to go by len (str len) not *s==0 because s7 strings can have embedded nulls */
+  unsigned char *p, *pend;
+  pend = (unsigned char *)(str + len);
+  for (p = (unsigned char *)str; p < pend; p++)
+    if (slashify_table[*p])
+      return(true);
+  return(false);
+}
+
+#define IN_QUOTES true
+#define NOT_IN_QUOTES false
+
+static char *slashify_string(s7_scheme *sc, const char *p, int len, bool quoted, int *nlen) /* do not free result */
+{
+  int j = 0, cur_size, size;
+  char *s;
+  unsigned char *pcur, *pend;
+
+  pend = (unsigned char *)(p + len);
+  size = len + 256;
+  if (size > sc->slash_str_size)
+    {
+      if (sc->slash_str) free(sc->slash_str);
+      sc->slash_str_size = size;
+      sc->slash_str = (char *)malloc(size);
+    }
+  else size = sc->slash_str_size;
+  cur_size = size - 2;
+
+  /* memset((void *)sc->slash_str, 0, size); */
+  s = sc->slash_str;
+
+  if (quoted) s[j++] = '"';
+
+  /* what about the trailing nulls? Guile writes them out (as does s7 currently)
+   *    but that is not ideal.  I'd like to use ~S for error messages, so that
+   *    strings are clearly identified via the double-quotes, but this way of
+   *    writing them is ugly:
+   *
+   *    :(let ((str (make-string 8 #\null))) (set! (str 0) #\a) str)
+   *    "a\x00\x00\x00\x00\x00\x00\x00"
+   *
+   * but it would be misleading to omit them because:
+   *
+   *    :(let ((str (make-string 8 #\null))) (set! (str 0) #\a) (string-append str "bc"))
+   *    "a\x00\x00\x00\x00\x00\x00\x00bc"
+   */
+
+  for (pcur = (unsigned char *)p; pcur < pend; pcur++)
+    {
+      if (slashify_table[*pcur])
+	{
+	  s[j++] = '\\';
+	  switch (*pcur)
+	    {
+	    case '"':
+	      s[j++] = '"';
+	      break;
+
+	    case '\\':
+	      s[j++] = '\\';
+	      break;
+
+	    default:               /* this is the "\x01" stuff */
+	      {
+		unsigned int n;
+		static char dignum[] = "0123456789abcdef";
+		s[j++] = 'x';
+		n = (unsigned int)(*pcur);
+		if (n < 16)
+		  s[j++] = '0';
+		else s[j++] = dignum[(n / 16) % 16];
+		s[j++] = dignum[n % 16];
+	      }
+	      break;
+	    }
+	}
+      else s[j++] = *pcur;
+      if (j >= cur_size) /* even with 256 extra, we can overflow (for example, inordinately many tabs in ALSA output) */
+	{
+	  /* int k; */
+	  size *= 2;
+	  sc->slash_str = (char *)realloc(sc->slash_str, size * sizeof(char));    
+	  sc->slash_str_size = size;
+	  cur_size = size - 2;
+	  s = sc->slash_str;
+	  /* for (k = j; k < size; k++) s[k] = 0; */
+	}
+    }
+  if (quoted) s[j++] = '"';
+  s[j] = '\0';
+  (*nlen) = j;
+  return(s);
 }
 
 static void output_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write)
@@ -30593,6 +30398,113 @@ static void collect_locals(s7_scheme *sc, s7_pointer body, s7_pointer e, s7_poin
     }
 }
 
+
+
+static s7_pointer find_closure(s7_scheme *sc, s7_pointer closure, s7_pointer cur_env)
+{
+  s7_pointer e, y;
+  for (e = cur_env; is_let(e); e = outlet(e))
+    {
+      if ((is_function_env(e)) &&
+	  (is_symbol(funclet_function(e))) &&
+	  (is_global(funclet_function(e))) && /* (define (f1) (lambda () 1)) shouldn't say the returned closure is named f1 */
+	  (slot_value(global_slot(funclet_function(e))) == closure))
+	return(funclet_function(e));
+
+      for (y = let_slots(e); is_slot(y); y = next_slot(y))
+	if (slot_value(y) == closure)
+	  return(slot_symbol(y));
+    }
+  return(sc->NIL);
+}
+
+static void write_closure_name(s7_scheme *sc, s7_pointer closure, s7_pointer port)
+{
+  s7_pointer x;
+  x = find_closure(sc, closure, closure_let(closure));
+  /* this can be confusing!  In some cases, the function is in its environment, and in other very similar-looking cases it isn't:
+   * (let ((a (lambda () 1))) a)
+   * #<lambda ()>
+   * (letrec ((a (lambda () 1))) a)
+   * a
+   * (let () (define (a) 1) a)
+   * a
+   */
+  if (is_symbol(x)) /* after find_closure */
+    {
+      port_write_string(port)(sc, symbol_name(x), symbol_name_length(x), port);
+      return;
+    }
+  
+  /* names like #<closure> and #<macro> are useless -- try to be a bit more informative */
+  switch (type(closure))
+    {
+    case T_CLOSURE:      
+      port_write_string(port)(sc, "#<lambda ", 9, port);  
+      break;
+
+    case T_CLOSURE_STAR: 
+      port_write_string(port)(sc, "#<lambda* ", 10, port);  
+      break;
+
+    case T_MACRO:        
+      if (is_expansion(closure)) 
+	port_write_string(port)(sc, "#<expansion ", 12, port); 
+      else port_write_string(port)(sc, "#<macro ", 8, port); 
+      break;
+
+    case T_MACRO_STAR:   
+      port_write_string(port)(sc, "#<macro* ", 9, port);  
+      break;
+						   
+    case T_BACRO:        
+      port_write_string(port)(sc, "#<bacro ", 8, port);   
+      break;
+
+    case T_BACRO_STAR:   
+      port_write_string(port)(sc, "#<bacro* ", 9, port); 
+      break;
+    }
+
+  if (is_null(closure_args(closure)))
+    port_write_string(port)(sc, "()>", 3, port);
+  else
+    {
+      s7_pointer args;
+      port_write_character(port)(sc, ' ', port);
+      args = closure_args(closure);
+      if (is_symbol(args))
+	port_write_string(port)(sc, symbol_name(args), symbol_name_length(args), port);
+      else
+	{
+	  port_write_character(port)(sc, '(', port);
+	  x = car(args);
+	  if (is_pair(x)) x = car(x);
+	  port_write_string(port)(sc, symbol_name(x), symbol_name_length(x), port);
+	  if (!is_null(cdr(args)))
+	    {
+	      s7_pointer y;
+	      port_write_character(port)(sc, ' ', port);
+	      if (is_pair(cdr(args)))
+		{
+		  y = cadr(args);
+		  if (is_pair(y)) y = car(y);
+		}
+	      else 
+		{
+		  port_write_string(port)(sc, ". ", 2, port);
+		  y = cdr(args);
+		}
+	      port_write_string(port)(sc, symbol_name(y), symbol_name_length(y), port);
+	      if ((is_pair(cdr(args))) &&
+		  (!is_null(cddr(args))))
+		port_write_string(port)(sc, " ...", 4, port);
+	    }
+	  port_write_string(port)(sc, ")>", 2, port);
+	}
+    }
+}
+
 static s7_pointer closure_name(s7_scheme *sc, s7_pointer closure)
 {
   /* this is used by the error handlers to get the current function name
@@ -30689,6 +30601,92 @@ static void write_closure_readably(s7_scheme *sc, s7_pointer obj, s7_pointer por
   s7_gc_unprotect_at(sc, gc_loc);
 }
 
+
+#if TRAP_SEGFAULT
+#include <signal.h>
+static sigjmp_buf senv; /* global here is not a problem -- it is used only to protect s7_is_valid */
+static volatile sig_atomic_t can_jump = 0;
+static void segv(int ignored) {if (can_jump) siglongjmp(senv, 1);}
+#endif
+
+bool s7_is_valid(s7_scheme *sc, s7_pointer arg)
+{
+  bool result;
+  if (!arg) return(false);
+
+#if TRAP_SEGFAULT
+  if (sigsetjmp(senv, 1) == 0)
+    {
+      void (*old_segv)(int sig);
+      can_jump = 1;
+      old_segv = signal(SIGSEGV, segv);
+#endif
+      result = ((!is_free(arg)) &&
+		(type(arg) < NUM_TYPES) &&
+		(arg->hloc >= not_heap) &&
+		((arg->hloc < 0) ||
+		 ((arg->hloc < (int)sc->heap_size) && (sc->heap[arg->hloc] == arg))));
+
+#if TRAP_SEGFAULT
+      signal(SIGSEGV, old_segv);
+    }
+  else result = false; /* ?? was sc->NIL which makes no sense */
+  can_jump = 0;
+#endif
+
+  return(result);
+}
+
+
+enum {NO_ARTICLE, INDEFINITE_ARTICLE};
+
+static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
+{
+  unsigned int full_typ;
+  unsigned char typ;
+  char *buf;
+
+  buf = (char *)malloc(512 * sizeof(char));
+  typ = unchecked_type(obj);
+  full_typ = typeflag(obj);
+
+  /* if debugging all of these bits are being watched, so we need some ugly subterfuges */
+  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+	   typ,
+	   type_name(sc, obj, NO_ARTICLE),
+	   full_typ,
+	   ((full_typ & T_PROCEDURE) != 0) ?             " procedure" : "",
+	   ((full_typ & T_GC_MARK) != 0) ?               " gc-marked" : "",
+	   ((full_typ & T_IMMUTABLE) != 0) ?             " immutable" : "",
+	   ((full_typ & T_EXPANSION) != 0) ?             " expansion" : "",
+	   ((full_typ & T_MULTIPLE_VALUE) != 0) ?        " values or matched" : "",
+	   ((full_typ & T_KEYWORD) != 0) ?               " keyword" : "",
+	   ((full_typ & T_DONT_EVAL_ARGS) != 0) ?        " dont-eval-args" : "",
+	   ((full_typ & T_SYNTACTIC) != 0) ?             " syntactic" : "",
+	   ((full_typ & T_OVERLAY) != 0) ?               " overlay" : "",
+	   ((full_typ & T_CHECKED) != 0) ?               " checked" : "",
+	   ((full_typ & T_UNSAFE) != 0) ?                " unsafe" : "",
+	   ((full_typ & T_OPTIMIZED) != 0) ?             " optimized" : "",
+	   ((full_typ & T_SAFE_CLOSURE) != 0) ?          " safe-closure" : "",
+	   ((full_typ & T_SAFE_PROCEDURE) != 0)  ?       " safe-procedure" : "",
+	   ((full_typ & T_SETTER) != 0) ?                " setter" : "",
+	   ((full_typ & T_COPY_ARGS) != 0) ?             " copy-args" : "",
+	   ((full_typ & T_COLLECTED) != 0) ?             " collected" : "",
+	   ((full_typ & T_SHARED) != 0) ?                " shared" : "",
+	   ((full_typ & T_HAS_METHODS) != 0) ?           " has-methods" : "",
+	   ((full_typ & T_GLOBAL) != 0) ?                ((is_pair(obj)) ? " unsafe-do" : " global") : "",
+	   ((full_typ & T_SAFE_STEPPER) != 0) ?          ((is_let(obj)) ? " let-set!-fallback" : ((is_slot(obj)) ? " safe-stepper" : " print-name")) : "",
+	   ((full_typ & T_LINE_NUMBER) != 0) ? 
+	        ((is_pair(obj)) ? " line number" : ((is_input_port(obj)) ? " loader-port" : ((is_let(obj)) ? " with-let" : " has accessor"))) : "",
+	   ((full_typ & T_MUTABLE) != 0) ? 
+               ((is_string(obj)) ? " byte-vector" : ((is_let(obj)) ? " let-ref-fallback" : 
+		   ((is_iterator(obj)) ? " mark-seq" : ((is_slot(obj)) ? " stepper" : " mutable")))) : "",
+	   ((full_typ & T_GENSYM) != 0) ?             
+               ((is_let(obj)) ? " function-env" : ((is_unspecified(obj)) ? " no-value" : ((is_pair(obj)) ? " list-in-use" :
+		   ((is_closure_star(obj)) ? " simple-args" : ((is_string(obj)) ? " documented" : " gensym"))))) : "",
+	   ((full_typ & UNUSED_BITS) != 0) ? " bad bits!" : "");
+  return(buf);
+}
 
 #if DEBUGGING
 static const char *check_name(int typ)
@@ -30811,6 +30809,7 @@ static void print_gc_info(s7_pointer obj, int line)
 	  obj->gc_func, obj->gc_line, obj->clear_line, obj->alloc_func, obj->alloc_line);
   abort();
 }
+
 
 static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 {
@@ -35495,6 +35494,15 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
   #define Q_append s7_make_circular_signature(sc, 1, 2, sc->T, sc->IS_LIST_OR_ANY_AT_END)
   /* weird: (append () 1) returns 1
    * could append be generic?  what is the return type if mixed args?
+   * use first arg?  vector-append takes most inclusive?
+   * so (append ...empty... any) -> any: (append () () 1) -> 1, but (append () 1 () 1) -> error
+   *    (append () '(1) 1) -> '(1 . 1) as also (append () '(1) () 1)
+   * remove all empty seqs, append rest, but last is cdr if pairs elsewhere?
+   * return obj of first type or error (use null case if necessary: (append (float-vector) (list 1 2 3)) -> (float-vector 1 2 3))
+   * hash-table-append -> copy+merge, let-append->sublet essentially, c-object?
+   * one-arg -> arg direct or copy?
+   * two-args, first empty -> use copy for type conversion? what if none needed: (append #() (vector 1))
+   *   (append x ()) used to assume x was copied and the () is now irrelevant(?) 
    */
   s7_pointer y, tp, np = NULL, pp;
 
@@ -39639,42 +39647,42 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 		      else
 			{
 #endif
-			      if (c_function_call(proc) == g_chars_are_equal)
-				{
-				  hash_table_checker(ht) = hash_char; 
-				  hash_table_mapper(ht) = char_eq_hash_map;
-				}
-			      else
-				{
+			  if (c_function_call(proc) == g_chars_are_equal)
+			    {
+			      hash_table_checker(ht) = hash_char; 
+			      hash_table_mapper(ht) = char_eq_hash_map;
+			    }
+			  else
+			    {
 #if (!WITH_GMP)
-				  if (c_function_call(proc) == g_equal)
+			      if (c_function_call(proc) == g_equal)
 #else
-				  if ((c_function_call(proc) == g_equal) ||
-				      (c_function_call(proc) == big_equal))
+				if ((c_function_call(proc) == g_equal) ||
+				    (c_function_call(proc) == big_equal))
 #endif
-				    {
-				      hash_table_checker(ht) = hash_number; 
-				      hash_table_mapper(ht) = number_eq_hash_map;
-				    }
-				  else
-				    {				  
-				      if (c_function_call(proc) == g_is_eqv)
-					{
-					  hash_table_checker(ht) = hash_eqv; 
-					  hash_table_mapper(ht) = eqv_hash_map;
-					}
-				      else
-					{
-					  if (c_function_call(proc) == g_is_morally_equal)
-					    {
-					      hash_table_checker(ht) = hash_morally_equal;
-					      hash_table_mapper(ht) = morally_equal_hash_map;
-					    }
-					  else return(wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, 3, proc, 
-										    make_string_wrapper(sc, "a hash function")));
-					}}}}
+				  {
+				    hash_table_checker(ht) = hash_number; 
+				    hash_table_mapper(ht) = number_eq_hash_map;
+				  }
+				else
+				  {				  
+				    if (c_function_call(proc) == g_is_eqv)
+				      {
+					hash_table_checker(ht) = hash_eqv; 
+					hash_table_mapper(ht) = eqv_hash_map;
+				      }
+				    else
+				      {
+					if (c_function_call(proc) == g_is_morally_equal)
+					  {
+					    hash_table_checker(ht) = hash_morally_equal;
+					    hash_table_mapper(ht) = morally_equal_hash_map;
+					  }
+					else return(wrong_type_argument_with_type(sc, sc->MAKE_HASH_TABLE, 3, proc, 
+										  make_string_wrapper(sc, "a hash function")));
+				      }}}}}
 #if (!WITH_PURE_S7)
-		    }}
+		    }
 #endif
 	      return(ht);
 	    }
@@ -48154,6 +48162,15 @@ static s7_pointer loaded_library(s7_scheme *sc, const char *file)
   return(sc->NIL);
 }
 
+static s7_pointer find_closure_let(s7_scheme *sc, s7_pointer cur_env)
+{
+  s7_pointer e;
+  for (e = cur_env; is_let(e); e = outlet(e))
+    if (is_function_env(e))
+      return(e);
+  return(sc->NIL);
+}
+
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 {
   /* this always occurs in a context where we're trying to find anything, so I'll move a couple of those checks here
@@ -49454,7 +49471,7 @@ static s7_pointer is_zero_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poin
 }
 
 
-static s7_pointer equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+static s7_pointer equal_chooser(s7_scheme *sc, s7_pointer ur_f, int args, s7_pointer expr)
 {
   if (args == 2)
     {
@@ -49491,7 +49508,7 @@ static s7_pointer equal_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 	}
       return(equal_2);
     }
-  return(f);
+  return(ur_f);
 }
 
 static s7_pointer less_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
@@ -50715,6 +50732,7 @@ static s7_pointer collect_collisions_star(s7_scheme *sc, s7_pointer lst, s7_poin
 
 static bool optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop)
 {
+  /* fprintf(stderr, "expr: %s, hop: %d\n", DISPLAY(expr), hop); */
   if (is_immutable(car(expr)))
     hop = 1;
   if (is_closure(func))
@@ -52921,13 +52939,13 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	    s7_pointer p;
 	    for (p = cdr(x); is_pair(p); p = cdr(p))
 	      {
-		s7_pointer expr;
-		expr = car(p);
-		if (is_pair(expr)) /* ?? */
+		s7_pointer ex;
+		ex = car(p);
+		if (is_pair(ex)) /* ?? */
 		  {
-		    if ((is_pair(car(expr))) && (!form_is_safe(sc, func, car(expr), false)))
+		    if ((is_pair(car(ex))) && (!form_is_safe(sc, func, car(ex), false)))
 		      return(false);
-		    if ((is_pair(cdr(expr))) && (!body_is_safe(sc, func, cdr(expr), at_end)))
+		    if ((is_pair(cdr(ex))) && (!body_is_safe(sc, func, cdr(ex), at_end)))
 		      return(false);
 		  }
 	      }
@@ -53048,10 +53066,9 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		  if (((is_c_function(f)) &&
 		       ((is_safe_procedure(f)) ||
 			((is_possibly_safe(f)) && 
-			 (unsafe_is_safe(sc, f, 
-					 (is_pair(cdr(x))) ? cadr(x) : NULL,
-					 ((is_pair(cdr(x))) && (is_pair(cddr(x)))) ? caddr(x) : NULL,
-					 ((is_pair(cdr(x))) && (is_pair(cddr(x))) && (is_pair(cdddr(x)))) ? cadddr(x) : NULL, sc->NIL))))) ||
+			 (is_pair(cdr(x))) &&
+			 (is_pair(cddr(x))) &&
+			 (unsafe_is_safe(sc, f, cadr(x), caddr(x), (is_pair(cdddr(x))) ? cadddr(x) : NULL, sc->NIL))))) ||
 		      ((is_closure(f)) &&
 		       (is_safe_closure(f))))
 		    {
@@ -53695,7 +53712,7 @@ static s7_pointer check_let(s7_scheme *sc)
     {
       if (named_let)
 	{
-	  s7_pointer x;
+	  s7_pointer ex;
 
 	  if (is_null(start))
 	    pair_set_syntax_symbol(sc->code, sc->NAMED_LET_NO_VARS);
@@ -53703,8 +53720,8 @@ static s7_pointer check_let(s7_scheme *sc)
 
 	  /* this is (let name ...) so the initial values need to be removed from the closure arg list */
 	  sc->args = sc->NIL; /* sc->args is set to nil in named_let below */
-	  for (x = start; is_pair(x); x = cdr(x))
-	    sc->args = cons(sc, caar(x), sc->args);
+	  for (ex = start; is_pair(ex); ex = cdr(ex))
+	    sc->args = cons(sc, caar(ex), sc->args);
 	  optimize_lambda(sc, true, car(sc->code), sc->args = safe_reverse_in_place(sc, sc->args), cddr(sc->code));
 
 	  /* apparently these guys are almost never safe */
@@ -54045,9 +54062,9 @@ static s7_pointer check_or(s7_scheme *sc)
     {
       if (all_pairs)
 	{
-	  s7_pointer p;
-	  for (p = sc->code; is_pair(p); p = cdr(p))
-	    set_fcdr(p, (s7_pointer)all_x_eval(sc, car(p), sc->envir));
+	  s7_pointer ep;
+	  for (ep = sc->code; is_pair(ep); ep = cdr(ep))
+	    set_fcdr(ep, (s7_pointer)all_x_eval(sc, car(ep), sc->envir));
 	  pair_set_syntax_symbol(sc->code, sc->OR_P);
 	}
       else pair_set_syntax_symbol(sc->code, sc->OR_UNCHECKED);
@@ -56596,10 +56613,10 @@ static int dox_ex(s7_scheme *sc)
 	{
 	  while (true)
 	    {
-	      s7_pointer slot;
-	      for (slot = slots; is_slot(slot); slot = next_slot(slot))
-		if (is_pair(slot_expression(slot)))
-		  slot_set_value(slot, ((s7_function)fcdr(slot_expression(slot)))(sc, car(slot_expression(slot))));
+	      s7_pointer slt;
+	      for (slt = slots; is_slot(slt); slt = next_slot(slt))
+		if (is_pair(slot_expression(slt)))
+		  slot_set_value(slt, ((s7_function)fcdr(slot_expression(slt)))(sc, car(slot_expression(slt))));
 	      if (is_true(sc, endf(sc, endp)))
 		{
 		  sc->code = cdadr(scc); 
@@ -56794,7 +56811,7 @@ static bool pf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool safe_step
 	{
 	  /* can't re-use the stepper value directly */
 	  s7_pointer step_slot, end_slot;
-	  s7_int step, end;
+	  s7_int step;
 
 	  step_slot = dox_slot1(sc->envir);
 	  end_slot = dox_slot2(sc->envir);
@@ -56812,8 +56829,7 @@ static bool pf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool safe_step
 
 		  step = s7_integer(slot_value(step_slot)) + 1;
 		  slot_set_value(step_slot, make_integer(sc, step));
-		  end = s7_integer(slot_value(end_slot));
-		  if (step == end) break;
+		  if (step == s7_integer(slot_value(end_slot))) break;
 		}
 	    }
 	  else
@@ -56834,8 +56850,7 @@ static bool pf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool safe_step
 
 		  step = s7_integer(slot_value(step_slot)) + 1;
 		  slot_set_value(step_slot, make_integer(sc, step));
-		  end = s7_integer(slot_value(end_slot));
-		  if (step == end) break;
+		  if (step == s7_integer(slot_value(end_slot))) break;
 		}
 	    }
 	}
@@ -56853,11 +56868,9 @@ static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool s
   s7_pointer let_body, p = NULL, let_vars, let_code;
   bool let_star;
   int body_len;
-
+  s7_rf_t varf = NULL;
   s7_pointer old_e, stepper;
   int var_len;
-  s7_rp_t rp;
-  s7_rf_t varf = NULL;
 
   /* fprintf(stderr, "%lld %lld %s %d\n", numerator(step_slot), denominator(step_slot), DISPLAY(scc), safe_case); */
 
@@ -56877,6 +56890,8 @@ static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool s
     {
       s7_int var_loc;
       s7_pointer expr, fcar, car_ex;
+      s7_rp_t varp;
+
       var_loc = s7_xf_store(sc, NULL);
       expr = cadar(p);
       car_ex = car(expr);
@@ -56887,9 +56902,9 @@ static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool s
       if (!is_slot(fcar)) break;
       fcar = slot_value(fcar);
 
-      rp = rf_function(fcar);
-      if (!rp) break;
-      varf = rp(sc, expr);
+      varp = rf_function(fcar);
+      if (!varp) break;
+      varf = varp(sc, expr);
       if (!varf) break;
       s7_xf_store_at(sc, var_loc, (s7_pointer)varf);
       if (let_star)
@@ -57578,15 +57593,13 @@ static int unknown_g_ex(s7_scheme *sc, s7_pointer f)
       break;
       
     case T_CLOSURE_STAR:
-      if (sym_case)
+      if ((sym_case) &&
+	  (!has_methods(f)) &&
+	  (has_simple_args(closure_body(f))) &&
+	  (!is_null(closure_args(f))))
 	{
-	  if ((!has_methods(f)) &&
-	      (has_simple_args(closure_body(f))) &&
-	      (!is_null(closure_args(f))))
-	    {
-	      set_fcdr(code, cadr(code));
-	      return(fixup_unknown_op(sc, code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_S : OP_CLOSURE_STAR_S)));
-	    }
+	  set_fcdr(code, cadr(code));
+	  return(fixup_unknown_op(sc, code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_S : OP_CLOSURE_STAR_S)));
 	}
       break;
       
@@ -72468,7 +72481,6 @@ s7_scheme *s7_init(void)
                                 clauses)                                                                      \n\
                               (values))))");
 
-
   s7_eval_c_string(sc, "(define (make-hook . args)                                                            \n\
                           (let ((body ()))                                                                    \n\
                             (apply lambda* args                                                               \n\
@@ -72626,12 +72638,12 @@ int main(int argc, char **argv)
  * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds))
  * string-upcase -> temp? more temp strs? a temp str allocator? -- replace check_for_substring_temp and handle at higher level than the choosers
- *
- * rf_closure: if safe, save len+body_rp**, calltime like tmp, 
- *   get args, plug into closure_let, then call closure_rf_body via the saved array
- *   free-var: slot search each time, so a special rf func?
- *   lambda* args: rf_closure* (with-let??) 
- *   rcos: simple_do_step->eval->safe_closure_star_s0, so if body is rfable, it could be handled [~/old/s7-closure-rf.c]
- *
+ * generic append
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
+ * for let-set in gens: let whose outlet is sc->envir not sc->rootlet?
+ *   how to declare this and make it automatic at runtime (not via an explicit set/check)
+ *   would this fix the problem?  let becomes sc->envir
+ *   need a function: (alter-let let :field val...) which sets fields of let
+ *     (let :field val ...) is ambiguous (let f1 f2) -> ((let f1) f2)
+ *   (with-let (begin (set! (let :field) val) let)...) -> (with-let (alter-let let :field val...) ...)
  */

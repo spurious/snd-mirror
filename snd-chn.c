@@ -9440,10 +9440,10 @@ If 'data' is a list of numbers, it is treated as an envelope."
   cp->lisp_info->show_axes = cp->show_axes;
   if (Xen_is_integer(show_axes))
     {
-      show_axes_t val;
-      val = (show_axes_t)Xen_integer_to_C_int(show_axes);
-      if (val < NUM_SHOW_AXES)
-	cp->lisp_info->show_axes = val;
+      show_axes_t aval;
+      aval = (show_axes_t)Xen_integer_to_C_int(show_axes);
+      if (aval < NUM_SHOW_AXES)
+	cp->lisp_info->show_axes = aval;
     }
 
   if ((Xen_is_list(ldata)) &&

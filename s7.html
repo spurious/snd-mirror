@@ -220,7 +220,7 @@ indented and on a sort of brownish background.
   <li><a href="#errors">errors</a>
   <li><a href="#autoload">autoload</a>
   <li><a href="#constants">define-constant, symbol-access</a>
-  <li><a href="#miscellanea">miscellaneous:</a> 
+  <li><a href="#miscellanea">marvels and curiousities:</a> 
 
   <ul>
     <li><a href="#loadpath">*load-path*</a>, <a href="#featureslist">*features*</a>, <a href="#sharpreaders">*#readers*</a>,
@@ -4845,7 +4845,7 @@ that call the lambda body if one of the variables is set.
 
 
 
-<div class="header" id="miscellanea"><h4>miscellaneous stuff</h4></div>
+<div class="header" id="miscellanea"><h4>marvels and curiousities</h4></div>
 
 <p>
 <b><em class=def id="loadpath">*load-path*</em></b> is a list of directories to search when loading a file.
@@ -5661,6 +5661,7 @@ The built-in random-state is one such type.
 <li>s7 is case sensitive.
 <li>when and unless (for r7rs), returning the value of the last form.
 <li>the "d", "f", "s", and "l" exponent markers are not supported by default (use "e", "E", or "@").
+<li>quasiquoted vector constants are not supported by default &mdash; use reader-cond instead.
 </ul>
 
 <p>In s7 if a built-in function like gcd is referred to in a function
@@ -5691,7 +5692,6 @@ definition, and a later redefinition does not affect earlier uses.
 
 <ul>
 <li>remove the exact/inexact distinction including #i and #e
-<li>remove `#(...) quasiquoted vector constants &mdash; use reader-cond instead
 <li>remove call-with-values and its friends
 <li>remove char-ready?
 <li>change eof-object? to eof? or just omit it (you can use eq? #&lt;eof&gt;)
@@ -6504,9 +6504,9 @@ HAVE_COMPLEX_NUMBERS           1 if your compiler supports complex numbers
 HAVE_COMPLEX_TRIG              1 if your math library has complex versions of the trig functions
 DISABLE_DEPRECATED             1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
 
-WITH_QUASIQUOTE_VECTOR         1 if you want to use the `#(...) junk (default is 0)
+WITH_QUASIQUOTE_VECTOR         1 if you want to use the `#(...) junk (defualt is 0)
 WITH_IMMUTATBLE_UNQUOTE        1 if you want "unquote" omitted (default is 0)
-WITH_EXTRA_EXPONENT_MARKERS    1 if you want "d", "f", "l", and "s" in addition to "e" as exponent markers (default is 1)
+WITH_EXTRA_EXPONENT_MARKERS    1 if you want "d", "f", "l", and "s" in addition to "e" as exponent markers (default is 0)
                                    if someone defends these exponent markers, ask him to read 1l11+11l1i
 WITH_SYSTEM_EXTRAS             1 if you want some additional OS-related functions built-in (default is 0)
 WITH_MAIN                      1 if you want s7.c to include a main program section that runs a REPL.
