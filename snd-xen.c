@@ -2556,23 +2556,24 @@ bool is_source_file(const char *name)
 
 void save_added_source_file_extensions(FILE *fd)
 {
-  int i;
-
   if (source_file_extensions_end > default_source_file_extensions)
-    for (i = default_source_file_extensions; i < source_file_extensions_end; i++)
-      {
+    {
+      int i;
+      for (i = default_source_file_extensions; i < source_file_extensions_end; i++)
+	{
 #if HAVE_SCHEME
-	fprintf(fd, "(%s \"%s\")\n", S_add_source_file_extension, source_file_extensions[i]);
+	  fprintf(fd, "(%s \"%s\")\n", S_add_source_file_extension, source_file_extensions[i]);
 #endif
-
+	  
 #if HAVE_RUBY
-	fprintf(fd, "%s(\"%s\")\n", to_proc_name(S_add_source_file_extension), source_file_extensions[i]);
+	  fprintf(fd, "%s(\"%s\")\n", to_proc_name(S_add_source_file_extension), source_file_extensions[i]);
 #endif
-
+	  
 #if HAVE_FORTH
-	fprintf(fd, "\"%s\" %s drop\n", source_file_extensions[i], S_add_source_file_extension);
+	  fprintf(fd, "\"%s\" %s drop\n", source_file_extensions[i], S_add_source_file_extension);
 #endif
-      }
+	}
+    }
 }
 
 
@@ -2828,21 +2829,18 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
 
 #if HAVE_SCHEME
   {
-    s7_pointer s, i, p, b, r, f, d;
+    s7_pointer s, i, b, r, d;
     s = s7_make_symbol(s7, "string?");
     i = s7_make_symbol(s7, "integer?");
-    p = s7_make_symbol(s7, "pair?");
     b = s7_make_symbol(s7, "boolean?");
     r = s7_make_symbol(s7, "real?");
     d = s7_make_symbol(s7, "float?");
-    f = s7_make_symbol(s7, "float-vector?");
     pl_ss = s7_make_signature(s7, 2, s, s);
-    pl_dr = s7_make_signature(s7, 2, d, r);
+    pl_dr = s7_make_circular_signature(s7, 1, 2, d, r);
     pl_dir = s7_make_signature(s7, 3, d, i, r);
-    pl_drr = s7_make_signature(s7, 3, d, r, r);
     pl_b = s7_make_signature(s7, 1, b);
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
-    pl_pf = s7_make_signature(s7, 2, p, f);
+    pl_pf = s7_make_signature(s7, 2, s7_make_symbol(s7, "pair?"), s7_make_symbol(s7, "float-vector?"));
 #endif
   }
 #endif
@@ -2877,7 +2875,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
   Xen_define_typed_procedure(S_bes_kn, g_kn_w,     2, 0, 0, H_kn,	pl_dir);
 
   Xen_define_typed_procedure("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk, pl_dr);
-  Xen_define_typed_procedure("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj, pl_drr);
+  Xen_define_typed_procedure("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj, pl_dr);
 
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
   Xen_define_typed_procedure("gsl-eigenvectors", g_gsl_eigenvectors_w, 1, 0, 0, "returns eigenvalues and eigenvectors", pl_pf);

@@ -218,9 +218,11 @@
 
       (define (return-type sym)
 	(let ((f (if (symbol? sym) (symbol->value sym *e*) sym)))
-	  (let ((sig (procedure-signature f)))
-	    (and (pair? sig)
-		 (car sig)))))
+	  (and (procedure? f)
+	       (let ((sig (procedure-signature f)))
+		 (and (pair? sig)
+		      (or (eq? (car sig) 'values) ; turn it into #t for now
+			  (car sig)))))))
 
       (define (->type c)
 	(cond ((pair? c)
@@ -315,7 +317,8 @@
 	      (else #f))))
 
       (define (any-checker? types arg)
-	(if (symbol? types)
+	(if (and (symbol? types)
+		 (not (eq? types 'values)))
 	    ((symbol->value types *e*) arg)
 	    (and (pair? types)
 		 (or (any-checker? (car types) arg)
@@ -330,7 +333,7 @@
 	      ;(format *stderr* "type ~S -> ~S~%" expr type)
 	      (and (symbol? type)
 		   (not (symbol? expr))
-		   (not (eq? type 'boolean?))))))
+		   (not (memq type '(boolean? values)))))))
 	
       (define (never-true expr)
 	;(format *stderr* "true? ~S~%" expr)
@@ -500,7 +503,6 @@
 		  ;(format *stderr* "check-arg ~A check ~S via ~S~%" head arg checker)
 		  (when (or (pair? checker)
 			    (symbol? checker)) ; otherwise ignore type check on this argument (#t -> anything goes)
-
 		    (if (pair? arg)                  ; arg is expr -- try to guess its type
 			(if (eq? (car arg) 'quote)   ; '1 -> 1
 
@@ -517,7 +519,7 @@
 			    (let ((op (return-type (car arg))))
 			      ;; checker is arg-type, op is expression type (can also be a pair)
 			      ;(format *stderr* "~S -> ~S, checker: ~S~%" arg op checker)
-			      (unless (boolean? op)
+			      (unless (memq op '(#t #f values))
 
 				(if (or (not (any-compatible? checker op))
 					(and (just-constants? arg env) ; try to eval the arg
@@ -548,8 +550,6 @@
 			  (set! checkers (cdr checkers))))
 		  (set! arg-number (+ arg-number 1))
 		  (if (> arg-number max-arity) (done))))
-
-
 	      (cdr form))))))
       
       
@@ -2426,7 +2426,7 @@
 					   (let ((arg-data (let ((sig (procedure-signature func)))
 							     (and (pair? sig)
 								  (cdr sig)))))
-					;(format *stderr* "arg-data: ~A~%" arg-data)
+					     ;; (format *stderr* "arg-data: ~A~%" arg-data)
 					     (if (and arg-data
 						      (or (not (pair? arg-data))
 							  (not (eq? (car arg-data) #t))

@@ -3892,7 +3892,7 @@ applied to that many arguments.
 <p>
 procedure-signature is a list describing the argument types and returned value type
 of the function.  The first entry in the list is the return type, and the rest are
-argument types.  #t means any type is possible.
+argument types.  #t means any type is possible, and 'values means the function returns multiple values.
 </p>
 
 <pre class="indented">
@@ -5942,7 +5942,7 @@ to 1.  <code>(*s7* 'safety)</code> defaults to 0.
 <!-- there is another problem here: if the list constant in question is a program fragment
      that can be optimized, then reapplied elsewhere, the optimization info remains in the
      new, possibly inappropriate context.  This can cause segfaults.  The fix is to copy
-     the list. 
+     the list with 2nd arg :readable -- see tgen.scm
 -->
 
 </div>
