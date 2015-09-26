@@ -9318,6 +9318,13 @@ EDITS: 2
       (let ((v (float-vector 0.0 1.0 -2.0 -3.0)))
 	(if (not (vequal (float-vector-abs! v) (float-vector 0.0 1.0 2.0 3.0)))
 	    (snd-display #__line__ ";float-vector-abs! ~A" v)))
+
+      ;; float-vector-add! + shared-vector:
+      (let ((fv (float-vector 1 2 3 4 5)))
+	(let ((sv (make-shared-vector fv '(4) 1)))
+	  (float-vector-add! sv fv)
+	  (if (not (vequal fv (float-vector 1.0 3.0 6.0 10.0 15.0)))
+	      (snd-display #__line__ ";float-vector+shared-vector: ~A" fv))))
       
       (do ((i 0 (+ i 1)))
 	  ((= i 10))

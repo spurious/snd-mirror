@@ -2126,12 +2126,11 @@ int mus_audio_alsa_samples_per_channel(int dev);
 static bool start_audio_output_1(void)
 {
   int i;
-  static int out_dev[ALSA_MAX_DEVICES];
-  int oss_available_chans = 2;
 
   /* -------------------- ALSA not OSS -------------------- */
   if (mus_audio_api() == MUS_ALSA_API) 
     {
+      static int out_dev[ALSA_MAX_DEVICES];
       int d, alloc_chans, alloc_devs;
       scan_audio_devices();
       /* allocate devices for playback */
@@ -2270,6 +2269,8 @@ static bool start_audio_output_1(void)
 
       /* -------------------- OSS not ALSA -------------------- */
       /* api == MUS_OSS_API -- MUS_JACK_API should not intrude here because we're in HAVE_ALSA || HAVE_OSS */
+      int oss_available_chans = 2;
+
       if (snd_dacp->channels > 2)
 	oss_available_chans = mus_audio_device_channels(MUS_AUDIO_DEFAULT);
       for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;

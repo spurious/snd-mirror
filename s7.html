@@ -5573,6 +5573,7 @@ undefined-identifier-warnings #f
 catches                       a list of the currently active catch tags
 exits                         a list of active call-with-exit exit functions
 c-types                       a list of c-object type names (from s7_new_type, etc)
+input-ports, output-ports, strings, gensyms, vectors, hash-tables, continuations
 
 stack-top                     current stack location
 stack-size                    current stack size
@@ -5942,7 +5943,7 @@ to 1.  <code>(*s7* 'safety)</code> defaults to 0.
 <!-- there is another problem here: if the list constant in question is a program fragment
      that can be optimized, then reapplied elsewhere, the optimization info remains in the
      new, possibly inappropriate context.  This can cause segfaults.  The fix is to copy
-     the list with 2nd arg :readable -- see tgen.scm
+     the list with 2nd arg :readable. see tgen.scm
 -->
 
 </div>

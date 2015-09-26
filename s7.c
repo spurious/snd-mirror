@@ -926,7 +926,7 @@ struct s7_scheme {
   s7_pointer elist_1, elist_2, elist_3, elist_4, elist_5, plist_1, plist_2, plist_3;
 
   s7_pointer *strings, *vectors, *input_ports, *output_ports, *continuations, *c_objects, *hash_tables, *gensyms, *setters;
-  unsigned int strings_size, vectors_size, input_ports_size, output_ports_size, continuations_size, c_objects_size, hash_tables_size, gensyms_size, settesize;
+  unsigned int strings_size, vectors_size, input_ports_size, output_ports_size, continuations_size, c_objects_size, hash_tables_size, gensyms_size, setters_size;
   unsigned int strings_loc, vectors_loc, input_ports_loc, output_ports_loc, continuations_loc, c_objects_loc, hash_tables_loc, gensyms_loc, setters_loc;
 
   unsigned int syms_tag;
@@ -938,7 +938,7 @@ struct s7_scheme {
   int big_rng_tag;
 
   s7_pointer *bigints, *bigratios, *bigreals, *bignumbers;
-  int bigints_size, bigratios_size, bigreals_size, bignumbesize;
+  int bigints_size, bigratios_size, bigreals_size, bignumbers_size;
   int bigints_loc, bigratios_loc, bigreals_loc, bignumbers_loc;
 #endif
 
@@ -1054,10 +1054,8 @@ struct s7_scheme {
   /* s7 env symbols */
   s7_pointer stack_top_symbol, symbol_table_is_locked_symbol, heap_size_symbol, gc_freed_symbol, gc_protected_objects_symbol;
   s7_pointer free_heap_size_symbol, file_names_symbol, symbol_table_symbol, cpu_time_symbol, c_objects_symbol, float_format_precision_symbol;
-    s7_pointer stack_size_symbol, rootlet_size_symbol, c_types_symbol, safety_symbol, max_stack_size_symbol, gc_stats_symbol;
-#if DEBUGGING
+  s7_pointer stack_size_symbol, rootlet_size_symbol, c_types_symbol, safety_symbol, max_stack_size_symbol, gc_stats_symbol;
   s7_pointer strings_symbol, vectors_symbol, input_ports_symbol, output_ports_symbol, continuations_symbol, hash_tables_symbol, gensyms_symbol;
-#endif
   s7_pointer catches_symbol, exits_symbol, stack_symbol, default_rationalize_error_symbol, max_string_length_symbol, default_random_state_symbol;
   s7_pointer max_list_length_symbol, max_vector_length_symbol, max_vector_dimensions_symbol, default_hash_table_length_symbol;
   s7_pointer hash_table_float_epsilon_symbol, morally_equal_float_epsilon_symbol, initial_string_port_length_symbol, memory_usage_symbol;
@@ -1614,6 +1612,7 @@ bool s7_is_stepper(s7_pointer p)      {return(is_stepper(p));}
 
 #define UNUSED_BITS 0
 
+
 #define BOLD_TEXT "\033[1m"
 #define UNBOLD_TEXT "\033[22m"
 #if 0
@@ -1629,6 +1628,7 @@ bool s7_is_stepper(s7_pointer p)      {return(is_stepper(p));}
   #define set_local(Symbol) set_local_1(sc, Symbol, __func__, __LINE__)
 #endif
 
+
 static int not_heap = -1;
 #define heap_location(p)              (p)->hloc
 #define not_in_heap(p)                ((p)->hloc < 0)
@@ -1639,11 +1639,7 @@ static int not_heap = -1;
 #define is_false(Sc, p)               ((p) == Sc->F)
 #ifdef _MSC_VER
   #define MS_WINDOWS 1
-  #if 1
   static s7_pointer make_boolean(s7_scheme *sc, bool val) {if (val) return(sc->T); return(sc->F);}
-  #else
-  #define make_boolean(sc, Val)       (((Val) & 0xff) ? sc->T : sc->F)
-  #endif
 #else
   #define MS_WINDOWS 0
   #define make_boolean(sc, Val)       ((Val) ? sc->T : sc->F)
@@ -1839,7 +1835,7 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 /* I think symbol_id is set only here */
 
 #define is_slot(p)                    (type(p) == T_SLOT)
-#define slot_value(p)                 (p)->object.slt.val   /* _TSlt(p) is ok here in gcc, but generates rafts of errors in clang */
+#define slot_value(p)                 (p)->object.slt.val
 #define slot_set_value(p, Val)        _TSlt(p)->object.slt.val = Val
 #define slot_symbol(p)                _TSlt(p)->object.slt.sym
 #define slot_set_symbol(p, Sym)       _TSlt(p)->object.slt.sym = _TSym(Sym)
@@ -3589,10 +3585,10 @@ static void add_bigreal(s7_scheme *sc, s7_pointer p)
 
 static void add_bignumber(s7_scheme *sc, s7_pointer p)
 {
-  if (sc->bignumbers_loc == sc->bignumbesize)
+  if (sc->bignumbers_loc == sc->bignumbers_size)
     {
-      sc->bignumbesize *= 2;
-      sc->bignumbers = (s7_pointer *)realloc(sc->bignumbers, sc->bignumbesize * sizeof(s7_pointer));
+      sc->bignumbers_size *= 2;
+      sc->bignumbers = (s7_pointer *)realloc(sc->bignumbers, sc->bignumbers_size * sizeof(s7_pointer));
     }
   sc->bignumbers[sc->bignumbers_loc++] = p;
 }
@@ -3636,13 +3632,13 @@ static void init_gc_caches(s7_scheme *sc)
   sc->bigreals_size = INIT_GC_CACHE_SIZE;
   sc->bigreals_loc = 0;
   sc->bigreals = (s7_pointer *)malloc(sc->bigreals_size * sizeof(s7_pointer));
-  sc->bignumbesize = INIT_GC_CACHE_SIZE;
+  sc->bignumbers_size = INIT_GC_CACHE_SIZE;
   sc->bignumbers_loc = 0;
-  sc->bignumbers = (s7_pointer *)malloc(sc->bignumbesize * sizeof(s7_pointer));
+  sc->bignumbers = (s7_pointer *)malloc(sc->bignumbers_size * sizeof(s7_pointer));
 #endif
 
   /* slightly unrelated... */
-  sc->settesize = 4;
+  sc->setters_size = 4;
   sc->setters_loc = 0;
   sc->setters = (s7_pointer *)malloc(sc->c_objects_size * sizeof(s7_pointer));
 }
@@ -3664,10 +3660,10 @@ static void add_setter(s7_scheme *sc, s7_pointer p, s7_pointer setter)
 	  return;
 	}
     }
-  if (sc->setters_loc == sc->settesize)
+  if (sc->setters_loc == sc->setters_size)
     {
-      sc->settesize *= 2;
-      sc->setters = (s7_pointer *)realloc(sc->setters, sc->settesize * sizeof(s7_pointer));
+      sc->setters_size *= 2;
+      sc->setters = (s7_pointer *)realloc(sc->setters, sc->setters_size * sizeof(s7_pointer));
     }
   sc->setters[sc->setters_loc++] = permanent_cons(p, setter, T_PAIR | T_IMMUTABLE);
 }
@@ -5758,6 +5754,7 @@ static s7_pointer g_openlet(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer c_coverlet(s7_scheme *sc, s7_pointer e)
 {
+  sc->temp3 = e;
   check_method(sc, e, sc->COVERLET, list_1(sc, e));
   if (((is_let(e)) && (e != sc->rootlet)) ||
       (has_closure_let(e)) ||
@@ -24422,6 +24419,7 @@ static s7_pointer c_string_downcase(s7_scheme *sc, s7_pointer p)
   int i, len;
   unsigned char *nstr, *ostr;
 
+  sc->temp3 = p;
   if (!is_string(p))
     method_or_bust(sc, p, sc->STRING_DOWNCASE, list_1(sc, p), T_STRING, 0);
 
@@ -24452,6 +24450,7 @@ static s7_pointer c_string_upcase(s7_scheme *sc, s7_pointer p)
   int i, len;
   unsigned char *nstr, *ostr;
 
+  sc->temp3 = p;
   if (!is_string(p))
     method_or_bust(sc, p, sc->STRING_UPCASE, list_1(sc, p), T_STRING, 0);
 
@@ -36523,7 +36522,7 @@ s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
 #if (!WITH_PURE_S7)
 static s7_pointer c_vector_to_list(s7_scheme *sc, s7_pointer vec)
 {
-  /* sc->temp3 = vec; */
+  sc->temp3 = vec;
   if (!s7_is_vector(vec))
     method_or_bust(sc, vec, sc->VECTOR_TO_LIST, list_1(sc, vec), T_VECTOR, 0);
   return(s7_vector_to_list(sc, vec));
@@ -36659,7 +36658,7 @@ PF_TO_PF(int_vector, c_int_vector_1)
 #if (!WITH_PURE_S7)
 static s7_pointer c_list_to_vector(s7_scheme *sc, s7_pointer p)
 {
-  /* sc->temp3 = p; */
+  sc->temp3 = p;
   if (is_null(p))
     return(s7_make_vector(sc, 0));
 
@@ -38559,12 +38558,11 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
   /* both the intermediate vector (if any) and the current args pointer need GC protection,
    *   but it is a real bother to unprotect args at every return statement, so I'll use temp3
    */
-  /* sc->temp3 = args; */
+  sc->temp3 = args; /* this is needed! */
   data = car(args);
   if (is_null(data))
     {
-      /* (apply sort! () #f) should be an error I think
-       */
+      /* (apply sort! () #f) should be an error I think */
       lessp = cadr(args);
       if (type(lessp) < T_GOTO)
 	method_or_bust_with_type(sc, lessp, sc->SORT, args, A_PROCEDURE, 2);
@@ -47018,7 +47016,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 
   if (got_nil) return(sc->UNSPECIFIED);
 
-  /* sc->temp3 = args; */
+  sc->temp3 = args;
   sc->z = sc->NIL;                                    /* don't use sc->args here -- it needs GC protection until we get the iterators */
   for (p = cdr(args); is_not_null(p); p = cdr(p))
     {
@@ -47028,6 +47026,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	iter = s7_make_iterator(sc, iter);
       sc->z = cons(sc, iter, sc->z);
     }
+  sc->temp3 = sc->NIL;
 
   sc->x = make_list(sc, len, sc->NIL);
   sc->z = safe_reverse_in_place(sc, sc->z);
@@ -47169,7 +47168,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	return(p);
     }
 
-  /* sc->temp3 = args; */
+  sc->temp3 = args;
   sc->z = sc->NIL;                                    /* don't use sc->args here -- it needs GC protection until we get the iterators */
   for (p = cdr(args); is_not_null(p); p = cdr(p))
     {
@@ -47180,6 +47179,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
       sc->z = cons(sc, iter, sc->z);
     }
   sc->z = safe_reverse_in_place(sc, sc->z);
+  sc->temp3 = sc->NIL;
 
   /* if function is safe c func, do the map locally */
   if ((is_safe_procedure(f)) &&
@@ -51103,12 +51103,13 @@ static void annotate_args(s7_scheme *sc, s7_pointer args, s7_pointer e)
 {
   s7_pointer p;
   for (p = args; is_pair(p); p = cdr(p))
-    set_fcdr(p, (s7_pointer)all_x_eval(sc, car(p), e, pair_symbol_is_safe));
+    set_fcdr(p, (s7_pointer)all_x_eval(sc, car(p), e, (s7_is_list(sc, e)) ? pair_symbol_is_safe : let_symbol_is_safe));
 }
 
 static void annotate_arg(s7_scheme *sc, s7_pointer arg, s7_pointer e)
 {
-  set_fcdr(arg, (s7_pointer)all_x_eval(sc, car(arg), e, pair_symbol_is_safe));
+  /* if sc->envir is sc->NIL, we're at the top-level, but the global_slot check should suffice for that */
+  set_fcdr(arg, (s7_pointer)all_x_eval(sc, car(arg), e, (s7_is_list(sc, e)) ? pair_symbol_is_safe : let_symbol_is_safe));
 }
 
 
@@ -70881,7 +70882,7 @@ static void init_s7_let(s7_scheme *sc)
   sc->gc_freed_symbol =                      s7_make_symbol(sc, "gc-freed");
   sc->gc_protected_objects_symbol =          s7_make_symbol(sc, "gc-protected-objects");
   set_immutable(sc->gc_protected_objects_symbol);
-#if DEBUGGING
+
   sc->input_ports_symbol =                   s7_make_symbol(sc, "input-ports");
   sc->output_ports_symbol =                  s7_make_symbol(sc, "output-ports");
   sc->strings_symbol =                       s7_make_symbol(sc, "strings");
@@ -70889,7 +70890,7 @@ static void init_s7_let(s7_scheme *sc)
   sc->vectors_symbol =                       s7_make_symbol(sc, "vectors");
   sc->hash_tables_symbol =                   s7_make_symbol(sc, "hash-tables");
   sc->continuations_symbol =                 s7_make_symbol(sc, "continuations");
-#endif
+
   sc->c_objects_symbol =                     s7_make_symbol(sc, "c-objects");
   sc->file_names_symbol =                    s7_make_symbol(sc, "file-names");
   sc->symbol_table_symbol =                  s7_make_symbol(sc, "symbol-table");
@@ -71027,7 +71028,6 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
   if (sym == sc->initial_string_port_length_symbol)                      /* initial-string-port-length */
     return(s7_make_integer(sc, sc->initial_string_port_length));
 
-#if DEBUGGING
   if (sym == sc->input_ports_symbol)                                     /* input-ports */
     return(make_vector_wrapper(sc, sc->input_ports_loc, sc->input_ports));
   if (sym == sc->output_ports_symbol)                                    /* output-ports */
@@ -71042,7 +71042,6 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
     return(make_vector_wrapper(sc, sc->hash_tables_loc, sc->hash_tables));
   if (sym == sc->continuations_symbol)                                   /* continuations */
     return(make_vector_wrapper(sc, sc->continuations_loc, sc->continuations));
-#endif
   if (sym == sc->c_objects_symbol)                                       /* c-objects */
     return(make_vector_wrapper(sc, sc->c_objects_loc, sc->c_objects));
 
@@ -72418,19 +72417,20 @@ s7_scheme *s7_init(void)
   sym = s7_define_variable(sc, "*libraries*", sc->NIL);
   sc->libraries = global_slot(sym);
 
-  s7_autoload(sc, make_symbol(sc, "cload.scm"),    s7_make_permanent_string("cload.scm"));
-  s7_autoload(sc, make_symbol(sc, "lint.scm"),     s7_make_permanent_string("lint.scm"));
-  s7_autoload(sc, make_symbol(sc, "stuff.scm"),    s7_make_permanent_string("stuff.scm"));
-  s7_autoload(sc, make_symbol(sc, "mockery.scm"),  s7_make_permanent_string("mockery.scm"));
-  s7_autoload(sc, make_symbol(sc, "write.scm"),    s7_make_permanent_string("write.scm"));
-  s7_autoload(sc, make_symbol(sc, "repl.scm"),     s7_make_permanent_string("repl.scm"));
-  s7_autoload(sc, make_symbol(sc, "r7rs.scm"),     s7_make_permanent_string("r7rs.scm"));
+  s7_autoload(sc, make_symbol(sc, "cload.scm"),       s7_make_permanent_string("cload.scm"));
+  s7_autoload(sc, make_symbol(sc, "lint.scm"),        s7_make_permanent_string("lint.scm"));
+  s7_autoload(sc, make_symbol(sc, "stuff.scm"),       s7_make_permanent_string("stuff.scm"));
+  s7_autoload(sc, make_symbol(sc, "mockery.scm"),     s7_make_permanent_string("mockery.scm"));
+  s7_autoload(sc, make_symbol(sc, "write.scm"),       s7_make_permanent_string("write.scm"));
+  s7_autoload(sc, make_symbol(sc, "repl.scm"),        s7_make_permanent_string("repl.scm"));
+  s7_autoload(sc, make_symbol(sc, "r7rs.scm"),        s7_make_permanent_string("r7rs.scm"));
 
-  s7_autoload(sc, make_symbol(sc, "libc.scm"),     s7_make_permanent_string("libc.scm"));
-  s7_autoload(sc, make_symbol(sc, "libm.scm"),     s7_make_permanent_string("libm.scm"));
-  s7_autoload(sc, make_symbol(sc, "libdl.scm"),    s7_make_permanent_string("libdl.scm"));
-  s7_autoload(sc, make_symbol(sc, "libgsl.scm"),   s7_make_permanent_string("libgsl.scm"));
-  s7_autoload(sc, make_symbol(sc, "libgdbm.scm"),  s7_make_permanent_string("libgdbm.scm"));
+  s7_autoload(sc, make_symbol(sc, "libc.scm"),        s7_make_permanent_string("libc.scm"));
+  s7_autoload(sc, make_symbol(sc, "libm.scm"),        s7_make_permanent_string("libm.scm"));
+  s7_autoload(sc, make_symbol(sc, "libdl.scm"),       s7_make_permanent_string("libdl.scm"));
+  s7_autoload(sc, make_symbol(sc, "libgsl.scm"),      s7_make_permanent_string("libgsl.scm"));
+  s7_autoload(sc, make_symbol(sc, "libgdbm.scm"),     s7_make_permanent_string("libgdbm.scm"));
+  s7_autoload(sc, make_symbol(sc, "libutf8proc.scm"), s7_make_permanent_string("libutf8proc.scm"));
 
   sc->REQUIRE = s7_define_macro(sc, "require", g_require, 0, 0, true, H_require);
   sc->stacktrace_defaults = s7_list(sc, 5, small_int(3), small_int(45), small_int(80), small_int(45), sc->T);
@@ -72811,13 +72811,13 @@ int main(int argc, char **argv)
  * s7test   1721 | 1358 |  995 | 1194 | 1127
  * index    44.3 | 3291 | 1725 | 1276 | 1156
  * teq           |      |      | 6612 | 2380
- * tauto     265 |   89 |  9   |  8.4 | 2750
- * bench    42.7 | 8752 | 4220 | 3506 | 3233
+ * tauto     265 |   89 |  9   |  8.4 | 2754
+ * bench    42.7 | 8752 | 4220 | 3506 | 3245
  * tcopy         |      |      | 13.6 | 3258
- * tform         |      |      | 6816 | 3926
- * tmap          |      |      |  9.3 | 4182
+ * tform         |      |      | 6816 | 3618
+ * tmap          |      |      |  9.3 | 4179
  * titer         |      |      | 7503 | 5218
- * lg            |      |      | 6547 | 7221
+ * lg            |      |      | 6547 | 7256
  * thash         |      |      | 50.7 | 8595
  *               |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0
@@ -72837,8 +72837,7 @@ int main(int argc, char **argv)
  * temp str allocator? -- replace check_for_substring_temp and handle at higher level than the choosers
  * generic append?
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
- * could lint catch gc-able assignment into an optimizable list constant? [bad-idea in s7.html]
- *   or assignment into a hash key (seq used as key not constant)? Or could the (*s7* 'safety) switch track this?
- *   mark each seq-hash-key T_HASHED (or T_IMMUTABLE?), then catch in set?
- *   what about violations of the signature?
+ * could the hash-table key protection be done via symbol-access?  How to tell when accessor can be removed?  Are accessors called upon element set?
+ *   (*s7* vectors) etc: (any? alive? accessor-seqs) else remove self
+ * to debug 32-bit: fc23->mac32?
  */

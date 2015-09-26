@@ -1494,7 +1494,7 @@ static axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
 {
   #define AXIS_INFO_ID_OK(Id)    (Id <= (int)LISP_AXIS_INFO)
 
-  if ((cp) && (AXIS_INFO_ID_OK(ap_id)))
+  if (AXIS_INFO_ID_OK(ap_id))
     switch (ap_id)
       {
       case TIME_AXIS_INFO:      return(cp->axis);                              break;

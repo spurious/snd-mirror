@@ -145,8 +145,6 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #endif
 
 #else
-#define imported_s7_object_value_checked(Obj, Typ) s7_object_value_checked(Obj, Typ)
-
 #define Xen_real_to_C_double_if_bound(Xen_Arg, C_Val, Caller, ArgNum) if (Xen_is_bound(Xen_Arg)) C_Val = (double)s7_number_to_real_with_caller(s7, Xen_Arg, Caller)
 #define Xen_to_C_double_or_error(Xen_Arg, C_Val, Caller, ArgNum) C_Val = (double)s7_number_to_real_with_caller(s7, Xen_Arg, Caller)
 #define Xen_real_to_C_double_with_caller(Xen_Arg, Caller) s7_number_to_real_with_caller(s7, Xen_Arg, Caller)
@@ -154,7 +152,7 @@ mus_any *mus_xen_gen(mus_xen *x) {return(x->gen);}
 #define Xen_to_C_integer_or_error(Xen_Arg, C_Val, Caller, ArgNum) \
   do {if (s7_is_integer(Xen_Arg)) C_Val = s7_integer(Xen_Arg); else {C_Val = 0.0; Xen_check_type(false, Xen_Arg, ArgNum, Caller, "an integer");}} while (0)
 
-#define Xen_object_ref_checked(Obj, Type) imported_s7_object_value_checked(Obj, Type)
+#define Xen_object_ref_checked(Obj, Type) s7_object_value_checked(Obj, Type)
 #define XEN_NULL NULL
 #endif
 

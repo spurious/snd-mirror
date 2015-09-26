@@ -790,7 +790,9 @@ int mus_file_reopen_write(const char *arg)
 int mus_file_close(int fd)
 {
   io_fd *fdp;
+#if (!USE_SND)
   int close_result = 0;
+#endif
 
   if ((io_fds == NULL) || (fd >= io_fd_size) || (fd < 0) || (io_fds[fd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
   fdp = io_fds[fd];
@@ -805,8 +807,10 @@ int mus_file_close(int fd)
   io_fd_free(fdp);
   io_fds[fd] = NULL;
 
+#if (!USE_SND)
   if (close_result < 0)
     return(MUS_CANT_CLOSE_FILE);
+#endif
   return(MUS_NO_ERROR);
 }
 
@@ -3300,7 +3304,7 @@ char *mus_strdup(const char *str)
   if ((!str) || (!(*str))) return(NULL);
   len = strlen(str);
   newstr = (char *)malloc(len + 1);
-  if (newstr) strcpy(newstr, str);
+  strcpy(newstr, str);
   newstr[len] = '\0';
   return(newstr);
 }

@@ -62,6 +62,13 @@ echo ' '
 echo ' '
 ./snd --version
 ./snd -l snd-test
+./snd lint.scm -e '(begin (lint "s7test.scm" #f) (exit))'
+
+cp s7test.scm tmptest.scm
+./snd tools/sed.scm -e '(sed "tmptest.scm" "tmp" "(define full-test #f)" "(define full-test #t)")'
+mv tmp tmptest.scm
+./snd tmptest.scm
+
 echo ' '
 echo ' '
 echo ' -------------------------------- that was snd-test without-gui debugging disable deprecated -------------------------------- '

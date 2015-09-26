@@ -6702,7 +6702,7 @@ int mus_header_change_comment(const char *filename, mus_header_t type, const cha
 	{
 	case MUS_IRCAM:
 	  {
-	    int len;
+	    int len = 0;
 	    fd = mus_file_reopen_write(filename);
 	    lseek(fd, 16L, SEEK_SET);
 	    if (new_comment) len = strlen(new_comment);
