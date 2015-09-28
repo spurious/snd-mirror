@@ -1453,16 +1453,8 @@
 	       (if (pair? args)
 		   (if (and (rational? (car args))
 			    (= (car args) (* (sqrt (car args)) (sqrt (car args)))))
-		       (sqrt (car args))
-		       (if (and (pair? (car args)) ; (sqrt (* x x)) -> x
-				(eq? (caar args) '*)
-				(pair? (cdar args))
-				(pair? (cddar args))
-				(null? (cdddar args))
-				(equal? (cadar args) (caddar args)))
-			   (cadar args)
-			   `(sqrt ,@args)))
-		   form))
+		       (sqrt (car args)) ; don't collapse (sqrt (* a a)), a=-1 for example
+		       form)))
 	      
 	      ((floor round ceiling truncate)
 	       (if (= len 1)

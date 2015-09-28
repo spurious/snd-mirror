@@ -127,7 +127,7 @@ echo ' -------------------------------- without-gui CC=g++ --disable-deprecated 
 make allclean
 rm -f snd
 rm -f config.cache
-./configure --quiet CFLAGS="-Wall" --without-gui --disable-deprecated CC=g++
+./configure --quiet CFLAGS="-Wall -DWITH_EXTRA_EXPONENT_MARKERS=1 -DWITH_QUASIQUOTE_VECTOR=1" --without-gui --disable-deprecated CC=g++
 make
 echo ' '
 echo ' '

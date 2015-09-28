@@ -644,22 +644,16 @@ typedef struct s7_cell {
       bool rest_arg;
     } fnc;
 
-    struct {                           /* pairs */
-      s7_pointer car, cdr;
-      union {
-	s7_pointer ecdr;
-	unsigned long long int hash;
-      } h;
-      union {
-	s7_pointer fcdr;               /* this is to make MS C++ happy */
-	const char *fstr;
-      } fc;
-      unsigned int op, line;
-    } cons;
-
     struct {
       s7_pointer car, cdr, ecdr, fcdr, gcdr;
-    } ext_cons;
+    } cons;
+
+    struct {                           /* pairs */
+      s7_pointer car, cdr;
+      unsigned long long int hash;
+      const char *fstr;
+      unsigned int op, line;
+    } sym_cons;
 
     struct {
       s7_pointer args, body, env, setter;
@@ -1651,12 +1645,12 @@ static int not_heap = -1;
 
 
 #if (!DEBUGGING)
-  #define ecdr(p)                     ((p)->object.cons.h.ecdr)
-  #define set_ecdr(p, x)              (p)->object.cons.h.ecdr = x
-  #define fcdr(p)                     ((p)->object.cons.fc.fcdr)
-  #define set_fcdr(p, x)              (p)->object.cons.fc.fcdr = x
-  #define gcdr(p)                     ((p)->object.ext_cons.gcdr)
-  #define set_gcdr(p, x)              do {(p)->object.ext_cons.gcdr = x; typeflag(p) &= ~(T_OPTIMIZED | T_LINE_NUMBER);} while (0)
+  #define ecdr(p)                     ((p)->object.cons.ecdr)
+  #define set_ecdr(p, x)              (p)->object.cons.ecdr = x
+  #define fcdr(p)                     ((p)->object.cons.fcdr)
+  #define set_fcdr(p, x)              (p)->object.cons.fcdr = x
+  #define gcdr(p)                     ((p)->object.cons.gcdr)
+  #define set_gcdr(p, x)              do {(p)->object.cons.gcdr = x; typeflag(p) &= ~(T_OPTIMIZED | T_LINE_NUMBER);} while (0)
 #else
     /* ---------------- debugging versions of e|f|gcdr ---------------- */
 #define T_ECDR_SET                    1                                        /* T_HAS_METHODS */
@@ -1668,13 +1662,13 @@ static int not_heap = -1;
 static s7_pointer ecdr_1(s7_scheme *sc, s7_pointer p, const char *func, int line)
 {
   if (!ecdr_is_set(p))
-    fprintf(stderr, "ecdr %s[%d]: %p->%p\n", func, line, p, p->object.cons.h.ecdr);
-  return(p->object.cons.h.ecdr);
+    fprintf(stderr, "ecdr %s[%d]: %p->%p\n", func, line, p, p->object.cons.ecdr);
+  return(p->object.cons.ecdr);
 }
 
 static s7_pointer set_ecdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *func, int line)
 {
-  p->object.cons.h.ecdr = x;
+  p->object.cons.ecdr = x;
   set_ecdr_is_set(p);
   return(x);
 }
@@ -1688,13 +1682,13 @@ static s7_pointer set_ecdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const ch
 static s7_pointer fcdr_1(s7_scheme *sc, s7_pointer p, const char *func, int line)
 {
   if (!fcdr_is_set(p))
-    fprintf(stderr, "ref unset fcdr %s[%d]: %p fcdr: %p\n", func, line, p, p->object.cons.fc.fcdr);
-  return(p->object.cons.fc.fcdr);
+    fprintf(stderr, "ref unset fcdr %s[%d]: %p fcdr: %p\n", func, line, p, p->object.cons.fcdr);
+  return(p->object.cons.fcdr);
 }
 
 static void set_fcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *func, int line)
 {
-  p->object.cons.fc.fcdr = x;
+  p->object.cons.fcdr = x;
   set_fcdr_is_set(p);
 }
 
@@ -1709,8 +1703,8 @@ static void set_fcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 static s7_pointer gcdr_1(s7_scheme *sc, s7_pointer p, const char *func, int line)
 {
   if (!gcdr_is_set(p))
-    fprintf(stderr, "%s[%d]: gcdr %p->%p\n", func, line, p, p->object.ext_cons.gcdr);
-  return(p->object.ext_cons.gcdr);
+    fprintf(stderr, "%s[%d]: gcdr %p->%p\n", func, line, p, p->object.cons.gcdr);
+  return(p->object.cons.gcdr);
 }
 
 static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *func, int line)
@@ -1720,7 +1714,7 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
       fprintf(stderr, "gcdr %s[%d]: set %p to %p (%s) but is optimized\n", func, line, p, x, DISPLAY(x));
       typeflag(p) &= ~(T_OPTIMIZED | T_LINE_NUMBER);
     }
-  p->object.ext_cons.gcdr = x;
+  p->object.cons.gcdr = x;
   set_gcdr_is_set(p);
 }
 #endif
@@ -1773,10 +1767,10 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define list_3(Sc, A, B, C)           cons_unchecked(Sc, A, cons_unchecked(Sc, B, cons(Sc, C, sc->NIL)))
 #define list_4(Sc, A, B, C, D)        cons_unchecked(Sc, A, cons_unchecked(Sc, B, cons_unchecked(Sc, C, cons(Sc, D, sc->NIL))))
 
-#define pair_line_number(p)           _TLst(p)->object.cons.line
-#define pair_raw_hash(p)              _TLst(p)->object.cons.h.hash
-#define pair_raw_len(p)               _TLst(p)->object.cons.op
-#define pair_raw_name(p)              _TLst(p)->object.cons.fc.fstr
+#define pair_line_number(p)           _TLst(p)->object.sym_cons.line
+#define pair_raw_hash(p)              _TLst(p)->object.sym_cons.hash
+#define pair_raw_len(p)               _TLst(p)->object.sym_cons.op
+#define pair_raw_name(p)              _TLst(p)->object.sym_cons.fstr
 
 #define is_string(p)                  (type(p) == T_STRING)
 #define string_value(p)               _TStr(p)->object.string.svalue
@@ -1798,7 +1792,7 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define character_name(p)             _TChr(p)->object.chr.c_name
 #define character_name_length(p)      _TChr(p)->object.chr.length
 
-#define optimize_op(p)                _TLst(p)->object.cons.op
+#define optimize_op(p)                _TLst(p)->object.sym_cons.op
 #define set_optimize_op(P, Op)        optimize_op(P) = Op
 #define optimize_op_match(P, Q)       ((is_optimized(P)) && ((optimize_op(P) & 0xfffe) == Q))
 #define op_no_hop(P)                  (optimize_op(P) & 0xfffe)
@@ -1856,7 +1850,7 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, const char *fu
 #define syntax_ip(p)                  _TSyn(p)->object.syn.ip
 #define syntax_pp(p)                  _TSyn(p)->object.syn.pp
 
-#define pair_syntax_op(P)             _TLst(P)->object.cons.op
+#define pair_syntax_op(P)             _TLst(P)->object.sym_cons.op
 #define pair_syntax_symbol(P)         car(ecdr(P))
 #if (!DEBUGGING)
 static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_symbol(p) = op; pair_syntax_op(ecdr(p)) = symbol_syntax_op(op);}
@@ -13882,7 +13876,9 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
   #define H_angle "(angle z) returns the angle of z"
   #define Q_angle s7_make_signature(sc, 2, sc->IS_REAL, sc->IS_NUMBER)
   s7_pointer x;
-  /* (angle inf+infi) -> 0.78539816339745 ? */
+  /* (angle inf+infi) -> 0.78539816339745 ? 
+   *   I think this should be -pi < ang <= pi
+   */
 
   x = car(args);
   switch (type(x))
@@ -35682,22 +35678,10 @@ s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
 }
 
 
-static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_list_append(s7_scheme *sc, s7_pointer args)
 {
   #define H_append "(append ...) returns its argument lists appended into one list"
   #define Q_append s7_make_circular_signature(sc, 1, 2, sc->T, sc->IS_LIST_OR_ANY_AT_END)
-  /* weird: (append () 1) returns 1
-   * could append be generic?  what is the return type if mixed args?
-   * use first arg?  vector-append takes most inclusive?
-   * so (append ...empty... any) -> any: (append () () 1) -> 1, but (append () 1 () 1) -> error
-   *    (append () '(1) 1) -> '(1 . 1) as also (append () '(1) () 1)
-   * remove all empty seqs, append rest, but last is cdr if pairs elsewhere?
-   * return obj of first type or error (use null case if necessary: (append (float-vector) (list 1 2 3)) -> (float-vector 1 2 3))
-   * hash-table-append -> copy+merge, let-append->sublet essentially, c-object?
-   * one-arg -> arg direct or copy?
-   * two-args, first empty -> use copy for type conversion? what if none needed: (append #() (vector 1))
-   *   (append x ()) used to assume x was copied and the () is now irrelevant(?) 
-   */
   s7_pointer y, tp, np = NULL, pp;
 
   if (is_null(args))
@@ -35762,6 +35746,28 @@ static s7_pointer append_in_place(s7_scheme *sc, s7_pointer a, s7_pointer b)
   return(a);
 }
 
+
+static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer a1;
+  a1 = car(args);                      /* first arg determines result type unless all args but last are empty (sigh) */
+  if (is_null(cdr(args))) return(a1);  /* (append <anything>) -> <anything> */
+
+  return(g_list_append(sc, args));
+}
+
+  /* weird: (append () 1) returns 1
+   * could append be generic?  what is the return type if mixed args?
+   * use first arg?  vector-append takes most inclusive?
+   * so (append ...empty... any) -> any: (append () () 1) -> 1, but (append () 1 () 1) -> error
+   *    (append () '(1) 1) -> '(1 . 1) as also (append () '(1) () 1)
+   * remove all empty seqs, append rest, but last is cdr if pairs elsewhere?
+   * return obj of first type or error (use null case if necessary: (append (float-vector) (list 1 2 3)) -> (float-vector 1 2 3))
+   * hash-table-append -> copy+merge, let-append->sublet essentially, c-object?
+   * one-arg -> arg direct or copy?
+   * two-args, first empty -> use copy for type conversion? what if none needed: (append #() (vector 1))
+   *   (append x ()) used to assume x was copied and the () is now irrelevant(?) 
+   */
 
 
 /* -------------------------------- vectors -------------------------------- */
@@ -72838,6 +72844,7 @@ int main(int argc, char **argv)
  * generic append?
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
  * could the hash-table key protection be done via symbol-access?  How to tell when accessor can be removed?  Are accessors called upon element set?
- *   (*s7* vectors) etc: (any? alive? accessor-seqs) else remove self
- * to debug 32-bit: fc23->mac32?
+ *   (*s7* vectors) etc: (any? alive? accessor-seqs) else remove self -- but how would they ever be gc'd?
+ * fc23-32 opt for nan bug: it's underflows in fc23, not nans
+ * should non-aligned accesses in io (1466) be rewritten?
  */
