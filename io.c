@@ -43,9 +43,13 @@
 #define MUS_SAMPLE_TO_INT24(n) ((int)((n) * (1 << 23)))
 #define MUS_SAMPLE_TO_SHORT(n) ((short)((n) * (1 << 15)))
 #define MUS_SAMPLE_TO_BYTE(n) ((char)((n) * (1 << 7)))
-#define BINT24_TO_SAMPLE(n) ((mus_float_t)(big_endian_int(jchar) >> 8) / (mus_float_t)(1 << 23))
-#define INT24_TO_SAMPLE(n) ((mus_float_t)(little_endian_int(jchar) >> 8) / (mus_float_t)(1 << 23))
-
+#if defined(__x86_64__) || defined(__i386__) 
+  #define BINT24_TO_SAMPLE(n) ((mus_float_t)(big_endian_int(jchar) >> 8) / (mus_float_t)(1 << 23))
+  #define INT24_TO_SAMPLE(n) ((mus_float_t)(little_endian_int(jchar) >> 8) / (mus_float_t)(1 << 23))
+#else
+  #define BINT24_TO_SAMPLE(n) ((mus_float_t)(mus_char_to_bint(jchar) >> 8) / (mus_float_t)(1 << 23))
+  #define INT24_TO_SAMPLE(n) ((mus_float_t)(mus_char_to_lint(jchar) >> 8) / (mus_float_t)(1 << 23))
+#endif
 
 static mus_long_t mus_maximum_malloc = MUS_MAX_MALLOC_DEFAULT;
 

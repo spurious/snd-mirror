@@ -129,10 +129,7 @@
 			     'error)))
 		       cdr-constants)))))
 	   
-	     (let ((checker (and (pair? sig) 
-				 (if (eq? (car sig) list:any?)
-				     list?
-				     (car sig)))))
+	     (let ((checker (and (pair? sig) (car sig))))
 	       (if checker
 		   (for-each
 		    (lambda (c)
@@ -182,7 +179,7 @@
 		  *mock-number* *mock-pair* *mock-string* *mock-char* *mock-vector*
 		  *mock-symbol* *mock-port* *mock-hash-table*
 
-		  c-define-1 apropos map-values ;sequence? list:any? integer:any? integer:real? warned
+		  c-define-1 apropos map-values ;sequence? integer:any? integer:real? warned
 		  
 		  outlet-member make-method make-object))
 
@@ -202,7 +199,10 @@
 			  ;(format *stderr* ";~A...~%" sym)
 		      (set! low bottom)
 		      (if (positive? (cdr argn))
-			  (let ((sig (copy (procedure-signature f))))
+			  (let ((sig (if (eq? sym 'append)
+					 (let ((lst (list 'list?)))
+					   (set-cdr! lst lst))
+					 (copy (procedure-signature f)))))
 			    (map-values sig)
 			    (autotest f () 0 top (if (pair? sig) (cdr sig) ()))))))))))))
 

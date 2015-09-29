@@ -490,9 +490,7 @@
 	      (if at-end 'real? 'integer?)
 	      (if (eq? checker 'integer:any?)
 		  (if at-end #t 'integer?)
-		  (if (eq? checker 'list:any?)
-		      (if at-end #t 'list?)
-		      checker))))
+		  checker)))
 
 	(let ((arg-number 1))
 	  (call-with-exit

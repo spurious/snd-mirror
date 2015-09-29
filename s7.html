@@ -1751,7 +1751,7 @@ And of course:
 <p>By my count, around 20 of the Scheme built-in functions are already generic in the sense
 that they accept arguments of many types (leaving aside the numeric and type checking functions, take for example equal?, display,
 member, assoc, apply, eval, quasiquote, and values).  s7 extends that list with map, for-each, reverse,
-and length, and adds a few others such as copy, fill!, sort!, and object-&gt;string.
+and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and, eventually, append).
 newLisp takes a more radical approach than s7: it extends operators such as '&gt;' 
 to compare strings and lists, as well as numbers.  In map and for-each, however, you can mix the argument
 types, so I'm not as attracted to making '&gt;' generic; you can't, for example, <code>(&gt; "hi" 32.1)</code>,
@@ -5154,7 +5154,7 @@ returns the value dynamically bound to it.  A variable can access both of its va
 </pre>
 
 <p>
-<code>symbol-table</code> returns a list containing the symbols currently in the symbol-table.
+<code>symbol-table</code> returns a vector containing the symbols currently in the symbol-table.
 Here we scan the symbol table looking for any function that doesn't have documentation:
 </p>
 
@@ -5770,7 +5770,7 @@ Better ideas are always welcome!
 <ul>
 <li>places 'pure-s7 in *features*
 <li>omits char-ready, char-ci*, string-ci*
-<li>omits string-copy, string-fill!, vector-fill!
+<li>omits string-copy, string-fill!, vector-fill!, vector-append
 <li>omits list-&gt;string, list-&gt;vector, string-&gt;list, vector-&gt;list, let-&gt;list
 <li>omits string-length and vector-length
 <li>omits cond-expand, multiple-values-bind|set!, call-with-values, defmacro(*)

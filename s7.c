@@ -649,7 +649,7 @@ typedef struct s7_cell {
     } cons;
 
     struct {                           /* pairs */
-      s7_pointer car, cdr;
+      s7_pointer sym_car, sym_cdr;
       unsigned long long int hash;
       const char *fstr;
       unsigned int op, line;
@@ -1005,7 +1005,7 @@ struct s7_scheme {
   s7_pointer __FUNC__;
   s7_pointer Object_Set;               /* applicable object set method */
   s7_pointer FEED_TO;                  /* => */
-  s7_pointer BODY, CLASS_NAME, IS_FLOAT, IS_INTEGER_OR_REAL_AT_END, IS_INTEGER_OR_ANY_AT_END, IS_LIST_OR_ANY_AT_END;
+  s7_pointer BODY, CLASS_NAME, IS_FLOAT, IS_INTEGER_OR_REAL_AT_END, IS_INTEGER_OR_ANY_AT_END;
   s7_pointer QUOTE_UNCHECKED, BEGIN_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_LET_UNCHECKED, WITH_LET_S;
   s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, LETREC_STAR_UNCHECKED, COND_UNCHECKED, COND_SIMPLE, WITH_BAFFLE_UNCHECKED;
   s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_A;
@@ -4922,12 +4922,17 @@ s7_pointer s7_symbol_table_find_name(s7_scheme *sc, const char *name)
 }
 
 
+#define FILLED true
+#define NOT_FILLED false
+
 static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
 {
-  #define H_symbol_table "(symbol-table) returns a list containing the current symbol-table symbols"
-  #define Q_symbol_table s7_make_signature(sc, 1, sc->IS_PAIR)
+  #define H_symbol_table "(symbol-table) returns a vector containing the current symbol-table symbols"
+  #define Q_symbol_table s7_make_signature(sc, 1, sc->IS_VECTOR)
+
   s7_pointer lst, x;
-  int i;
+  s7_pointer *els;
+  int i, j, syms = 0;
 
   /* this can't be optimized by returning the actual symbol-table (a vector of lists), because
    *    gensyms can cause the table's lists and symbols to change at any time.  This wreaks havoc
@@ -4938,12 +4943,16 @@ static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
    *    (define (for-each-symbol func num) (for-each (lambda (sym) (if (> num 0) (for-each-symbol func (- num 1)) (func sym))) (symbol-table)))
    *    (for-each-symbol (lambda (sym) (gensym) 1))
    */
-  sc->w = sc->NIL;
 
-  gc(sc);
   for (i = 0; i < vector_length(sc->symbol_table); i++)
     for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x))
-      sc->w = cons(sc, car(x), sc->w);
+      syms++;
+  sc->w = make_vector_1(sc, syms, NOT_FILLED, T_VECTOR);
+  els = vector_elements(sc->w);
+
+  for (i = 0, j = 0; i < vector_length(sc->symbol_table); i++)
+    for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x))
+      els[j++] = car(x);
 
   lst = sc->w;
   sc->w = sc->NIL;
@@ -10213,9 +10222,6 @@ static s7_pointer copy_counter(s7_scheme *sc, s7_pointer obj)
   return(nobj);
 }
 
-
-#define FILLED true
-#define NOT_FILLED false
 
 static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
 {
@@ -35681,15 +35687,10 @@ s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
 static s7_pointer g_list_append(s7_scheme *sc, s7_pointer args)
 {
   #define H_append "(append ...) returns its argument lists appended into one list"
-  #define Q_append s7_make_circular_signature(sc, 1, 2, sc->T, sc->IS_LIST_OR_ANY_AT_END)
+  #define Q_append s7_make_circular_signature(sc, 0, 1, sc->T)
   s7_pointer y, tp, np = NULL, pp;
 
-  if (is_null(args))
-    return(sc->NIL);
-
-  if (is_null(cdr(args)))
-    return(car(args));   /* no check_method here because we aren't checking the type? */
-
+  /* we know here that args is a pair and cdr(args) is a pair */
   tp = sc->NIL;
   for (y = args; is_pair(y); y = cdr(y)) /* arglist so not dotted */
     {
@@ -35745,29 +35746,6 @@ static s7_pointer append_in_place(s7_scheme *sc, s7_pointer a, s7_pointer b)
   cdr(p) = b;
   return(a);
 }
-
-
-static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer a1;
-  a1 = car(args);                      /* first arg determines result type unless all args but last are empty (sigh) */
-  if (is_null(cdr(args))) return(a1);  /* (append <anything>) -> <anything> */
-
-  return(g_list_append(sc, args));
-}
-
-  /* weird: (append () 1) returns 1
-   * could append be generic?  what is the return type if mixed args?
-   * use first arg?  vector-append takes most inclusive?
-   * so (append ...empty... any) -> any: (append () () 1) -> 1, but (append () 1 () 1) -> error
-   *    (append () '(1) 1) -> '(1 . 1) as also (append () '(1) () 1)
-   * remove all empty seqs, append rest, but last is cdr if pairs elsewhere?
-   * return obj of first type or error (use null case if necessary: (append (float-vector) (list 1 2 3)) -> (float-vector 1 2 3))
-   * hash-table-append -> copy+merge, let-append->sublet essentially, c-object?
-   * one-arg -> arg direct or copy?
-   * two-args, first empty -> use copy for type conversion? what if none needed: (append #() (vector 1))
-   *   (append x ()) used to assume x was copied and the () is now irrelevant(?) 
-   */
 
 
 /* -------------------------------- vectors -------------------------------- */
@@ -43469,6 +43447,12 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
       break;
 
     case T_STRING:
+      if (is_normal_vector(dest))
+	{
+	  for (i = start, j = 0; i < end; i++, j++)
+	    vector_element(dest, j) = s7_make_character(sc, (unsigned char)string_value(source)[i]);
+	  return(dest);
+	}
       if (is_int_vector(dest))
 	{
 	  for (i = start, j = 0; i < end; i++, j++)
@@ -43694,6 +43678,8 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 PF_TO_PF(reverse_in_place, c_reverse_in_place)
 
 
+/* -------------------------------- fill! -------------------------------- */
+
 static s7_pointer list_fill(s7_scheme *sc, s7_pointer args)
 {
   /* ambiguous ("tree-fill"?) but if it's like vector-fill, we just stomp on the top level */
@@ -43788,6 +43774,54 @@ s7_pointer s7_fill(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer c_fill(s7_scheme *sc, s7_pointer x, s7_pointer y) {return(s7_fill(sc, set_plist_2(sc, x, y)));}
 PF2_TO_PF(fill, c_fill)
+
+
+/* -------------------------------- append -------------------------------- */
+
+static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer a1;
+  if (is_null(args)) return(sc->NIL);  /* (append) -> () */
+  a1 = car(args);                      /* first arg determines result type unless all args but last are empty (sigh) */
+  if (is_null(cdr(args))) return(a1);  /* (append <anything>) -> <anything> */
+  switch (type(a1))
+    {
+    case T_NIL:
+    case T_PAIR:
+      return(g_list_append(sc, args));
+
+    case T_VECTOR:
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
+      return(g_vector_append(sc, args));
+
+    case T_STRING:
+      return(g_string_append(sc, args));
+
+    case T_HASH_TABLE:
+      /* hash_table_copy each to new hash_table_copy(sc, source, new_hash, 0, hash_table_entries(source)) */
+
+    case T_LET:
+      /* s7_copy (sc, set_plist_2(source, dest)) applied to all args, starting with a new let */
+
+     default:
+      check_method(sc, a1, sc->APPEND, args);
+    }
+  return(wrong_type_argument_with_type(sc, sc->APPEND, 1, a1, A_SEQUENCE)); /* (append 1 0) */
+}
+
+  /* weird: (append () 1) returns 1
+   * what is the return type if mixed args?
+   * use first arg?  vector-append takes most inclusive?
+   * so (append ...empty... any) -> any: (append () () 1) -> 1, but (append () 1 () 1) -> error
+   *    (append () '(1) 1) -> '(1 . 1) as also (append () '(1) () 1)
+   * remove all empty seqs, append rest, but last is cdr if pairs elsewhere?
+   * return obj of first type or error (use null case if necessary: (append (float-vector) (list 1 2 3)) -> (float-vector 1 2 3))
+   * hash-table-append -> copy+merge, let-append->sublet essentially, c-object?
+   * one-arg -> arg direct or copy?
+   * two-args, first empty -> use copy for type conversion? what if none needed: (append #() (vector 1))
+   *   (append x ()) used to assume x was copied and the () is now irrelevant(?) 
+   */
 
 
 static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
@@ -71262,7 +71296,6 @@ static s7_pointer g_is_proper_list(s7_scheme *sc, s7_pointer args)
 /* how to handle this? */
 static s7_pointer g_is_integer_or_real_at_end(s7_scheme *sc, s7_pointer args) {return(sc->T);}
 static s7_pointer g_is_integer_or_any_at_end(s7_scheme *sc, s7_pointer args) {return(sc->T);}
-static s7_pointer g_is_list_or_any_at_end(s7_scheme *sc, s7_pointer args) {return(sc->T);}
 
 
 
@@ -71965,8 +71998,7 @@ s7_scheme *s7_init(void)
   sc->IS_NULL =               defun("null?",		is_null,		1, 0, false);
 
   sc->IS_INTEGER_OR_REAL_AT_END = s7_define_function(sc, "integer:real?", g_is_integer_or_real_at_end, 1, 0, false, "internal signature helper");
-  sc->IS_INTEGER_OR_ANY_AT_END =  s7_define_function(sc, "integer:any?", g_is_integer_or_any_at_end, 1, 0, false, "internal signature helper");
-  sc->IS_LIST_OR_ANY_AT_END =  s7_define_function(sc, "list:any?", g_is_list_or_any_at_end, 1, 0, false, "internal signature helper");
+  sc->IS_INTEGER_OR_ANY_AT_END =  s7_define_function(sc, "integer:any?",  g_is_integer_or_any_at_end,  1, 0, false, "internal signature helper");
 
   pl_p =   s7_make_signature(sc, 2, sc->T, sc->IS_PAIR);
 #if (!WITH_PURE_S7)
@@ -72273,14 +72305,7 @@ s7_scheme *s7_init(void)
   set_is_possibly_safe(slot_value(global_slot(sc->ASSOC)));
   sc->MEMBER =                unsafe_defun("member",	member,			2, 1, false); 
   set_is_possibly_safe(slot_value(global_slot(sc->MEMBER)));
-#if (!WITH_PURE_S7)
-  sc->ASSQ =                  defun("assq",		assq,			2, 0, false);
-  sc->ASSV =                  defun("assv",		assv,			2, 0, false);
-  sc->MEMQ =                  defun("memq",		memq,			2, 0, false);
-  sc->MEMV =                  defun("memv",		memv,			2, 0, false);
-#endif
 
-  sc->APPEND =                defun("append",		append,			0, 0, true);
   sc->LIST =                  defun("list",		list,			0, 0, true);
   sc->LIST_REF =              defun("list-ref",		list_ref,		2, 0, true);
   sc->LIST_SET =              defun("list-set!",	list_set,		3, 0, true);
@@ -72293,14 +72318,20 @@ s7_scheme *s7_init(void)
   sc->REVERSE =               defun("reverse",		reverse,		1, 0, false);
   sc->REVERSEB =              defun("reverse!",		reverse_in_place,	1, 0, false);
   sc->SORT =                  unsafe_defun("sort!",	sort,			2, 0, false); 
+  sc->APPEND =                defun("append",		append,			0, 0, true);
 
-  sc->VECTOR_APPEND =         defun("vector-append",	vector_append,		0, 0, true);
 #if (!WITH_PURE_S7)
+  sc->ASSQ =                  defun("assq",		assq,			2, 0, false);
+  sc->ASSV =                  defun("assv",		assv,			2, 0, false);
+  sc->MEMQ =                  defun("memq",		memq,			2, 0, false);
+  sc->MEMV =                  defun("memv",		memv,			2, 0, false);
+  sc->VECTOR_APPEND =         defun("vector-append",	vector_append,		0, 0, true);
   sc->LIST_TO_VECTOR =        defun("list->vector",	list_to_vector,		1, 0, false);
   sc->VECTOR_FILL =           defun("vector-fill!",	vector_fill,		2, 2, false);
   sc->VECTOR_LENGTH =         defun("vector-length",	vector_length,		1, 0, false);
   sc->VECTOR_TO_LIST =        defun("vector->list",	vector_to_list,		1, 2, false);
 #else
+  sc->VECTOR_APPEND = sc->APPEND;
   sc->VECTOR_FILL = sc->FILL;
   sc->STRING_FILL = sc->FILL;
 #endif
@@ -72814,16 +72845,16 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  | 16.0
  *
- * s7test   1721 | 1358 |  995 | 1194 | 1127
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 
  * index    44.3 | 3291 | 1725 | 1276 | 1156
  * teq           |      |      | 6612 | 2380
- * tauto     265 |   89 |  9   |  8.4 | 2754
- * bench    42.7 | 8752 | 4220 | 3506 | 3245
- * tcopy         |      |      | 13.6 | 3258
+ * tauto     265 |   89 |  9   |  8.4 | 2669
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230
+ * tcopy         |      |      | 13.6 | 3233
  * tform         |      |      | 6816 | 3618
  * tmap          |      |      |  9.3 | 4179
  * titer         |      |      | 7503 | 5218
- * lg            |      |      | 6547 | 7256
+ * lg            |      |      | 6547 | 7237
  * thash         |      |      | 50.7 | 8595
  *               |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0
@@ -72845,6 +72876,5 @@ int main(int argc, char **argv)
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
  * could the hash-table key protection be done via symbol-access?  How to tell when accessor can be removed?  Are accessors called upon element set?
  *   (*s7* vectors) etc: (any? alive? accessor-seqs) else remove self -- but how would they ever be gc'd?
- * fc23-32 opt for nan bug: it's underflows in fc23, not nans
- * should non-aligned accesses in io (1466) be rewritten?
+ * fc23-32 opt for nan bug: it's underflows in fc23, not nans: everything is ok except syntax_rp (2x) and rf_set_function(1x)
  */

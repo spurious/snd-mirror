@@ -4910,7 +4910,7 @@ generator. (adjustable-oscil gen (fm 0.0)) returns a sinusoid where the duty-fac
 	(* scl (- val (max mtop (min top val))))))))
 
 #|
-(with-sound ()
+(with-sound (:statistics #t)
   (let ((gen (make-adjustable-oscil 100 .2)))
     (do ((i 0 (+ i 1)))
 	((= i 22050))
