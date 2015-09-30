@@ -1864,10 +1864,10 @@ static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {pair_sy
 #define is_let(p)                     (type(p) == T_LET)
 #if DEBUGGING
 static s7_pointer let_slots(s7_pointer p) {if (p->object.vector.length == ROOTLET_SIZE) {fprintf(stderr, "rootlet accessed as let\n"); abort();} return(p->object.envr.slots);}
-static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.vector.length == ROOTLET_SIZE) {fprintf(stderr, "rootlet clobbered\n"); abort();} p->object.envr.slots = slot; return(slot);}
+static s7_pointer let_set_slots(s7_pointer p, s7_pointer slot) {if (p->object.vector.length == ROOTLET_SIZE) {fprintf(stderr, "rootlet clobbered\n"); abort();} p->object.envr.slots = slot; return(slot);}
 #else
 #define let_slots(p)                  _TLet(p)->object.envr.slots
-#define set_let_slots(p, Slot)        _TLet(p)->object.envr.slots = _TSlt(Slot)
+#define let_set_slots(p, Slot)        _TLet(p)->object.envr.slots = _TSlt(Slot)
 #endif
 #define outlet(p)                     _TLet(p)->object.envr.nxt
 #define funclet_function(p)           _TLet(p)->object.envr.edat.efnc.function
@@ -1879,7 +1879,6 @@ static s7_pointer set_let_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define unique_name(p)                (p)->object.unq.name
 #define unique_name_length(p)         (p)->object.unq.len
 #define is_unspecified(p)             (type(p) == T_UNSPECIFIED)
-/* #define unique_car(p)                 (p)->object.unq.unused_slots */
 #define unique_cdr(p)                 (p)->object.unq.unused_nxt
 
 #define vector_length(p)              ((p)->object.vector.length)
@@ -5256,7 +5255,7 @@ static s7_pointer add_sym_to_list(s7_scheme *sc, s7_pointer sym)
     s7_pointer _x_;				      \
       NEW_CELL(Sc, _x_, T_LET | T_IMMUTABLE); \
       let_id(_x_) = ++sc->let_number;		      \
-      set_let_slots(_x_, Sc->NIL);	              \
+      let_set_slots(_x_, Sc->NIL);	              \
       outlet(_x_) = Old_Env;			      \
       New_Env = _x_;				      \
   } while (0)
@@ -5268,7 +5267,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
   s7_pointer x;
   NEW_CELL(sc, x, T_LET | T_IMMUTABLE);
   let_id(x) = ++sc->let_number;
-  set_let_slots(x, sc->NIL);
+  let_set_slots(x, sc->NIL);
   outlet(x) = old_env;
   return(x);
 }
@@ -5279,7 +5278,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
   s7_pointer frame;
   NEW_CELL(sc, frame, T_LET | T_IMMUTABLE);
   let_id(frame) = sc->let_number + 1;
-  set_let_slots(frame, sc->NIL);
+  let_set_slots(frame, sc->NIL);
   outlet(frame) = sc->envir;
   return(frame);
 }
@@ -5297,7 +5296,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
     slot_set_value(_slot_, _val_);			\
     symbol_set_local(_sym_, let_id(Frame), _slot_);	\
     next_slot(_slot_) = let_slots(Frame);		\
-    set_let_slots(Frame, _slot_);	                \
+    let_set_slots(Frame, _slot_);	                \
   } while (0)
 
 #define ADD_SLOT_CHECKED(Frame, Symbol, Value)		\
@@ -5309,7 +5308,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
     slot_set_value(_slot_, _val_);			\
     symbol_set_local(_sym_, let_id(Frame), _slot_);	\
     next_slot(_slot_) = let_slots(Frame);		\
-    set_let_slots(Frame, _slot_); 	                \
+    let_set_slots(Frame, _slot_); 	                \
   } while (0)
 
 /* no set_local here -- presumably done earlier in check_*
@@ -5328,7 +5327,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
     slot_set_value(_slot_, _val_);	                        \
     symbol_set_local(_sym_, sc->let_number, _slot_);            \
     next_slot(_slot_) = sc->NIL;                                \
-    set_let_slots(_x_, _slot_);					\
+    let_set_slots(_x_, _slot_);					\
   } while (0)
 
 
@@ -5345,7 +5344,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
     slot_set_symbol(_slot_, _sym1_);					\
     slot_set_value(_slot_, _val1_);					\
     symbol_set_local(_sym1_, sc->let_number, _slot_);			\
-    set_let_slots(_x_, _slot_);			                        \
+    let_set_slots(_x_, _slot_);			                        \
     NEW_CELL_NO_CHECK(Sc, _x_, T_SLOT | T_IMMUTABLE);			\
     slot_set_symbol(_x_, _sym2_);					\
     slot_set_value(_x_, _val2_);					\
@@ -5357,7 +5356,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
 
 static s7_pointer old_frame_in_env(s7_scheme *sc, s7_pointer frame, s7_pointer next_frame)
 {
-  set_let_slots(frame, sc->NIL);
+  let_set_slots(frame, sc->NIL);
   set_type(frame, T_LET | T_IMMUTABLE);
   outlet(frame) = next_frame;
   let_id(frame) = ++sc->let_number;
@@ -5551,7 +5550,7 @@ static s7_pointer make_slot_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, 
   slot_set_symbol(slot, symbol);
   slot_set_value(slot, value);
   next_slot(slot) = let_slots(env);
-  set_let_slots(env, slot);
+  let_set_slots(env, slot);
   set_local(symbol);
   /* this is called by varlet so we have to be careful about the resultant let_id
    *   check for greater to ensure shadowing stays in effect, and equal to do updates (set! in effect)
@@ -5948,7 +5947,7 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 	    {
 	      if (slot_symbol(slot) == sym)
 		{
-		  set_let_slots(e, next_slot(let_slots(e)));
+		  let_set_slots(e, next_slot(let_slots(e)));
 		  symbol_id(sym) = THE_UN_ID;
 		}
 	      else
@@ -6366,7 +6365,7 @@ static s7_pointer let_copy(s7_scheme *sc, s7_pointer env)
 		symbol_set_local(slot_symbol(x), id, z);
 	      if (is_slot(let_slots(new_e)))
 		next_slot(y) = z;
-	      else set_let_slots(new_e, z);
+	      else let_set_slots(new_e, z);
 	      next_slot(z) = sc->NIL;              /* in case GC runs during this loop */
 	      y = z;
 	    }
@@ -35683,11 +35682,10 @@ s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
   return(safe_reverse_in_place(sc, p));
 }
 
+static s7_int sequence_length(s7_scheme *sc, s7_pointer lst);
 
 static s7_pointer g_list_append(s7_scheme *sc, s7_pointer args)
 {
-  #define H_append "(append ...) returns its argument lists appended into one list"
-  #define Q_append s7_make_circular_signature(sc, 0, 1, sc->T)
   s7_pointer y, tp, np = NULL, pp;
 
   /* we know here that args is a pair and cdr(args) is a pair */
@@ -35703,32 +35701,49 @@ static s7_pointer g_list_append(s7_scheme *sc, s7_pointer args)
 	{
 	  if (is_null(tp))
 	    return(p);
-	  cdr(np) = p;
+	  if ((s7_is_list(sc, p)) ||
+	      (!is_sequence(p)))
+	    cdr(np) = p;
+	  else cdr(np) = s7_copy(sc, set_plist_2(sc, p, make_list(sc, sequence_length(sc, p), sc->F)));
 	  sc->y = sc->NIL;
 	  return(tp);
 	}
       if (!is_null(p))
 	{
-	  if (!is_proper_list(sc, p))
+	  if (is_pair(p))
 	    {
-	      sc->y = sc->NIL;
-	      return(wrong_type_argument_with_type(sc, sc->APPEND, position_of(y, args), p, A_PROPER_LIST));
+	      if (!is_proper_list(sc, p))
+		{
+		  sc->y = sc->NIL;
+		  return(wrong_type_argument_with_type(sc, sc->APPEND, position_of(y, args), p, A_PROPER_LIST));
+		}
+	      /* is this error correct?
+	       *     (append '(3) '(1 . 2)) -> '(3 1 . 2) ; (old) guile also returns this
+	       * but (append '(1 . 2) '(3)) -> this error
+	       */
+	      
+	      if (is_null(tp))
+		{
+		  tp = cons(sc, car(p), sc->NIL);
+		  np = tp;
+		  sc->y = tp; /* GC protect? */
+		  pp = cdr(p);
+		}
+	      else pp = p;
+	      for (; is_pair(pp); pp = cdr(pp), np = cdr(np))
+		cdr(np) = cons(sc, car(pp), sc->NIL);
 	    }
-	  /* is this error correct?
-	   *     (append '(3) '(1 . 2)) -> '(3 1 . 2) ; (old) guile also returns this
-	   * but (append '(1 . 2) '(3)) -> this error
-	   */
-
-	  if (is_null(tp))
+	  else
 	    {
-	      tp = cons(sc, car(p), sc->NIL);
-	      np = tp;
-	      sc->y = tp;
-	      pp = cdr(p);
+	      if (is_null(tp))
+		{
+		  tp = s7_copy(sc, set_plist_2(sc, p, make_list(sc, sequence_length(sc, p), sc->F)));
+		  np = tp;
+		  sc->y = tp;
+		}
+	      else cdr(np) = s7_copy(sc, set_plist_2(sc, p, make_list(sc, sequence_length(sc, p), sc->F)));
+	      for (; is_pair(cdr(np)); np = cdr(np));
 	    }
-	  else pp = p;
-	  for (; is_pair(pp); pp = cdr(pp), np = cdr(np))
-	    cdr(np) = cons(sc, car(pp), sc->NIL);
 	}
     }
   return(tp);
@@ -36247,6 +36262,7 @@ s7_int *s7_vector_offsets(s7_pointer vec)
   return(offs);
 }
 
+static s7_pointer vector_append(s7_scheme *sc, s7_pointer args, int typ);
 
 static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 {
@@ -36257,16 +36273,15 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
   #define H_vector_append "(vector-append . vectors) returns a new (1-dimensional) vector containing the elements of its vector arguments."
   #define Q_vector_append pcl_v
 
-  s7_int len = 0;
-  s7_pointer p, v, x;
-  int result_type = -1;
-  bool parlous_gc = false;
+  s7_pointer p;
+  int i;
 
   if (is_null(args))
     return(make_vector_1(sc, 0, NOT_FILLED, T_VECTOR));
 
-  for (p = args; is_pair(p); p = cdr(p))
+  for (i = 0, p = args; is_pair(p); p = cdr(p), i++)
     {
+      s7_pointer x;
       x = car(p);
       if (!s7_is_vector(x))
 	{
@@ -36276,9 +36291,9 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 	      func = find_method(sc, find_let(sc, x), sc->VECTOR_APPEND);
 	      if (func != sc->UNDEFINED)
 		{
-		  s7_pointer y;
-		  if (len == 0)
-		    return(s7_apply_function(sc, func, p));
+		  s7_pointer v, y;
+		  if (i == 0)
+		    return(s7_apply_function(sc, func, args));
 		  for (y = args; cdr(y) != p; y = cdr(y));
 		  cdr(y) = sc->NIL;
 		  v = g_vector_append(sc, args);
@@ -36286,104 +36301,10 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 		  return(s7_apply_function(sc, func, cons(sc, v, p)));
 		}
 	    }
-	  return(wrong_type_argument(sc, sc->VECTOR_APPEND, position_of(p, args), x, T_VECTOR));
-	}
-      if (vector_length(x) > 0)
-	{
-	  len += vector_length(x);
-	  if (type(x) != T_VECTOR)
-	    parlous_gc = true;            /* might create a new object during append, gc possible: new vector needs fill and gc-protect */
-	  if (result_type != T_VECTOR)
-	    {
-	      if ((result_type == -1) ||
-		  (type(x) == T_VECTOR))
-		result_type = type(x);
-	      else
-		{
-		  if ((type(x) == T_FLOAT_VECTOR) ||
-		      (result_type != type(x)))
-		    result_type = T_FLOAT_VECTOR;
-		}
-	    }
+	  return(wrong_type_argument(sc, sc->VECTOR_APPEND, i, x, T_VECTOR));
 	}
     }
-  if (result_type == -1)
-    result_type = type(car(args));
-
-  if (result_type == T_VECTOR)
-    {
-      s7_pointer *dest;
-      s7_int i = 0;
-
-      /* here the gc might be called since float_vector_getter makes a new real */
-      v = make_vector_1(sc, len, parlous_gc, result_type);
-      if (parlous_gc) sc->temp8 = v;
-      dest = vector_elements(v);
-      for (p = args; is_pair(p); p = cdr(p))
-	{
-	  s7_int source_len, j;
-	  x = car(p);
-	  source_len = vector_length(x);
-	  if (source_len > 0)
-	    for (j = 0; j < source_len; j++, i++)
-	      dest[i] = vector_getter(x)(sc, x, j);
-	}
-      if (parlous_gc) sc->temp8 = sc->NIL;
-    }
-  else
-    {
-      v = make_vector_1(sc, len, NOT_FILLED, result_type);
-      if (result_type == T_INT_VECTOR)
-	{
-	  s7_int *dest;
-	  s7_int i = 0;
-	  dest = int_vector_elements(v);
-	  for (p = args; is_pair(p); p = cdr(p))
-	    {
-	      s7_int source_len;
-	      x = car(p);
-	      source_len = vector_length(x);
-	      if (source_len > 0)
-		{
-		  s7_int *source;
-		  source = int_vector_elements(x);
-		  memcpy((void *)(dest + i), (void *)source, source_len * sizeof(s7_int));
-		  i += source_len;
-		}
-	    }
-	}
-      else
-	{
-	  s7_double *dest;
-	  s7_int i = 0;
-	  dest = float_vector_elements(v);
-	  for (p = args; is_pair(p); p = cdr(p))
-	    {
-	      s7_int source_len;
-	      x = car(p);
-	      source_len = vector_length(x);
-	      if (source_len > 0)
-		{
-		  if (type(x) == T_FLOAT_VECTOR)
-		    {
-		      s7_double *source;
-		      source = float_vector_elements(x);
-		      memcpy((void *)(dest + i), (void *)source, source_len * sizeof(s7_double));
-		      i += source_len;
-		    }
-		  else
-		    {
-		      s7_int *source;
-		      s7_int j;
-		      source = int_vector_elements(x);
-		      for (j = 0; j < source_len; j++, i++)
-			dest[i] = (s7_double)source[j];
-		    }
-		}
-	    }
-	}
-    }
-  return(v);
+  return(vector_append(sc, args, type(car(args))));
 }
 
 
@@ -36785,6 +36706,7 @@ a vector that points to the same elements as the original-vector but with differ
 	    (s7_integer(car(y)) < 0))
 	  return(s7_error(sc, sc->WRONG_TYPE_ARG, set_elist_1(sc, make_string_wrapper(sc, "a list of integers that fits the original vector"))));
     }
+
   v = (vdims_t *)malloc(sizeof(vdims_t));
   v->ndims = safe_list_length(sc, dims);
   v->dims = (s7_int *)malloc(v->ndims * sizeof(s7_int));
@@ -36855,6 +36777,25 @@ static s7_pointer make_vector_wrapper(s7_scheme *sc, s7_int size, s7_pointer *el
   vector_setter(x) = default_vector_setter;
   vector_dimension_info(x) = NULL;
   /* don't add_vector -- no need for sweep to see this */
+  return(x);
+}
+
+static s7_pointer make_subvector(s7_scheme *sc, s7_pointer v)
+{
+  s7_pointer x;
+  NEW_CELL(sc, x, type(v));
+  vector_length(x) = vector_length(v);
+  if (is_normal_vector(v))
+    vector_elements(x) = vector_elements(v);
+  else
+    {
+      if (is_float_vector(v))
+	float_vector_elements(x) = float_vector_elements(v);
+      else int_vector_elements(x) = int_vector_elements(v);
+    }
+  vector_getter(x) = vector_getter(v);
+  vector_setter(x) = vector_setter(v);
+  vector_dimension_info(x) = NULL;
   return(x);
 }
 
@@ -42915,6 +42856,7 @@ list has infinite length.  Length of anything else returns #f."
 PF_TO_PF(length, s7_length)
 
 
+
 /* -------------------------------- copy -------------------------------- */
 
 static s7_pointer string_setter(s7_scheme *sc, s7_pointer str, s7_int loc, s7_pointer val)
@@ -43449,8 +43391,16 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
     case T_STRING:
       if (is_normal_vector(dest))
 	{
-	  for (i = start, j = 0; i < end; i++, j++)
-	    vector_element(dest, j) = s7_make_character(sc, (unsigned char)string_value(source)[i]);
+	  if (is_byte_vector(source))
+	    {
+	      for (i = start, j = 0; i < end; i++, j++)
+		vector_element(dest, j) = make_integer(sc, (s7_int)((unsigned char)string_value(source)[i]));
+	    }
+	  else
+	    {
+	      for (i = start, j = 0; i < end; i++, j++)
+		vector_element(dest, j) = s7_make_character(sc, (unsigned char)string_value(source)[i]);
+	    }
 	  return(dest);
 	}
       if (is_int_vector(dest))
@@ -43778,51 +43728,196 @@ PF2_TO_PF(fill, c_fill)
 
 /* -------------------------------- append -------------------------------- */
 
+static s7_int sequence_length(s7_scheme *sc, s7_pointer lst)
+{
+  switch (type(lst))
+    {
+    case T_PAIR:
+      {
+	int len;
+	len = s7_list_length(sc, lst);
+	if (len == 0) return(-1);
+	return(len);
+      }
+    case T_NIL:        return(0);
+    case T_INT_VECTOR: 
+    case T_FLOAT_VECTOR: 
+    case T_VECTOR:     return(vector_length(lst));
+    case T_STRING:     return(string_length(lst));
+    case T_HASH_TABLE: return(hash_table_entries(lst));
+    case T_C_OBJECT:   return(integer(object_length(sc, lst)));
+    case T_LET:        return(let_length(sc, lst));
+    }
+  return(-1);
+}
+
+static s7_int total_sequence_length(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer p;
+  int i;
+  s7_int n, len = 0;
+
+  for (i = 0, p = args; is_pair(p); p = cdr(p), i++)
+    {
+      n = sequence_length(sc, car(p));
+      if (n < 0)
+	{
+	  wrong_type_argument_with_type(sc, sc->APPEND, i, car(p), (is_pair(car(p))) ? A_PROPER_LIST : A_SEQUENCE);
+	  return(0);
+	}
+      len += n;
+    }
+  return(len);
+}
+
+static s7_pointer vector_append(s7_scheme *sc, s7_pointer args, int typ)
+{
+  s7_pointer new_vec;
+  s7_int len;
+
+  len = total_sequence_length(sc, args);
+  new_vec = make_vector_1(sc, len, FILLED, typ); /* might hit GC in loop below so we can't use NOT_FILLED here */
+
+  if (len > 0)
+    {
+      int v_loc, sv_loc;
+      s7_pointer p, sv;
+      int i;
+      s7_int n;
+
+      v_loc = s7_gc_protect(sc, new_vec);
+      sv = make_subvector(sc, new_vec);
+      sv_loc = s7_gc_protect(sc, sv);
+
+      for (i = 0, p = args; is_pair(p); p = cdr(p))
+	{
+	  s7_pointer x;
+	  x = car(p);
+	  n = sequence_length(sc, x);
+	  if (n > 0)
+	    {
+	      vector_length(sv) = n;
+	      s7_copy(sc, set_plist_2(sc, x, sv));
+	      i += n;
+	      if (typ == T_VECTOR)
+		vector_elements(sv) = (s7_pointer *)(vector_elements(new_vec) + i);
+	      else
+		{
+		  if (typ == T_FLOAT_VECTOR)
+		    float_vector_elements(sv) = (s7_double *)(float_vector_elements(new_vec) + i);
+		  else int_vector_elements(sv) = (s7_int *)(int_vector_elements(new_vec) + i);
+		}
+	    }
+	}
+      set_plist_2(sc, sc->NIL, sc->NIL);
+      s7_gc_unprotect_at(sc, sv_loc);
+      s7_gc_unprotect_at(sc, v_loc);
+      vector_length(sv) = 0;
+    }
+  return(new_vec);
+}
+
+static s7_pointer string_append(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer new_str;
+  s7_int len;
+
+  len = total_sequence_length(sc, args);
+  new_str = make_empty_string(sc, len, 0);
+  if (is_byte_vector(car(args)))
+    set_byte_vector(new_str);
+
+  if (len > 0)
+    {
+      int v_loc, sv_loc;
+      s7_pointer p, sv;
+      int i;
+      s7_int n;
+
+      v_loc = s7_gc_protect(sc, new_str);
+      sv = make_string_wrapper_with_length(sc, (const char *)string_value(new_str), len);
+      if (is_byte_vector(new_str))
+	set_byte_vector(sv);
+      sv_loc = s7_gc_protect(sc, sv);
+
+      for (i = 0, p = args; is_pair(p); p = cdr(p))
+	{
+	  s7_pointer x;
+	  x = car(p);
+	  n = sequence_length(sc, x);
+	  if (n > 0)
+	    {
+	      string_length(sv) = n;
+	      s7_copy(sc, set_plist_2(sc, x, sv));
+	      i += n;
+	      string_value(sv) = (char *)(string_value(new_str) + i);
+	    }
+	}
+      set_plist_2(sc, sc->NIL, sc->NIL);
+      s7_gc_unprotect_at(sc, sv_loc);
+      s7_gc_unprotect_at(sc, v_loc);
+      string_length(sv) = 0;
+    }
+
+  return(new_str);
+}
+
+static s7_pointer hash_table_append(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer new_hash, p;
+  new_hash = s7_make_hash_table(sc, sc->default_hash_table_length);
+  for (p = args; is_pair(p); p = cdr(p))
+    s7_copy(sc, set_plist_2(sc, car(p), new_hash));
+  set_plist_2(sc, sc->NIL, sc->NIL);
+  return(new_hash);
+}
+
+static s7_pointer let_append(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer new_let, p;
+  new_let = new_frame_in_env(sc, sc->NIL);
+  for (p = args; is_pair(p); p = cdr(p))
+    s7_copy(sc, set_plist_2(sc, car(p), new_let)); 
+  set_plist_2(sc, sc->NIL, sc->NIL);
+  return(new_let);
+}
+
 static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
 {
+  #define H_append "(append ...) returns its argument sequences appended into one sequence"
+  #define Q_append s7_make_circular_signature(sc, 0, 1, sc->T)
   s7_pointer a1;
+
   if (is_null(args)) return(sc->NIL);  /* (append) -> () */
   a1 = car(args);                      /* first arg determines result type unless all args but last are empty (sigh) */
   if (is_null(cdr(args))) return(a1);  /* (append <anything>) -> <anything> */
+
   switch (type(a1))
     {
     case T_NIL:
     case T_PAIR:
-      return(g_list_append(sc, args));
+      return(g_list_append(sc, args)); /* only list case accepts any trailing arg because dotted lists are special */
 
     case T_VECTOR:
     case T_INT_VECTOR:
     case T_FLOAT_VECTOR:
-      return(g_vector_append(sc, args));
+      return(vector_append(sc, args, type(a1)));
 
     case T_STRING:
-      return(g_string_append(sc, args));
+      return(string_append(sc, args));
 
     case T_HASH_TABLE:
-      /* hash_table_copy each to new hash_table_copy(sc, source, new_hash, 0, hash_table_entries(source)) */
+      return(hash_table_append(sc, args));
 
     case T_LET:
-      /* s7_copy (sc, set_plist_2(source, dest)) applied to all args, starting with a new let */
+      /* perhaps this should look for an append method (but then what?) */
+      return(let_append(sc, args));
 
      default:
       check_method(sc, a1, sc->APPEND, args);
     }
   return(wrong_type_argument_with_type(sc, sc->APPEND, 1, a1, A_SEQUENCE)); /* (append 1 0) */
 }
-
-  /* weird: (append () 1) returns 1
-   * what is the return type if mixed args?
-   * use first arg?  vector-append takes most inclusive?
-   * so (append ...empty... any) -> any: (append () () 1) -> 1, but (append () 1 () 1) -> error
-   *    (append () '(1) 1) -> '(1 . 1) as also (append () '(1) () 1)
-   * remove all empty seqs, append rest, but last is cdr if pairs elsewhere?
-   * return obj of first type or error (use null case if necessary: (append (float-vector) (list 1 2 3)) -> (float-vector 1 2 3))
-   * hash-table-append -> copy+merge, let-append->sublet essentially, c-object?
-   * one-arg -> arg direct or copy?
-   * two-args, first empty -> use copy for type conversion? what if none needed: (append #() (vector 1))
-   *   (append x ()) used to assume x was copied and the () is now irrelevant(?) 
-   */
-
 
 static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 {
@@ -54645,14 +54740,14 @@ static void define_funchecked(s7_scheme *sc)
       
       NEW_CELL_NO_CHECK(sc, new_env, T_LET | T_IMMUTABLE | T_FUNCTION_ENV);
       let_id(new_env) = ++sc->let_number;
-      set_let_slots(new_env, sc->NIL);
+      let_set_slots(new_env, sc->NIL);
       outlet(new_env) = sc->envir;
       closure_let(new_func) = new_env;
       funclet_function(new_env) = sc->value;
       
       for (arg = closure_args(new_func); is_pair(arg); arg = cdr(arg))
 	make_slot_1(sc, new_env, car(arg), sc->NIL);
-      set_let_slots(new_env, reverse_slots(sc, let_slots(new_env)));
+      let_set_slots(new_env, reverse_slots(sc, let_slots(new_env)));
     }
   else closure_let(new_func) = sc->envir;
   /* unsafe closures created by other functions do not support __func__ */
@@ -54759,7 +54854,7 @@ static void unsafe_closure_star(s7_scheme *sc)
       slot_set_value(z, val);
       set_type(z, T_SLOT | T_IMMUTABLE);
       next_slot(z) = let_slots(e);
-      set_let_slots(e, z);
+      let_set_slots(e, z);
       z = args;
     }
   sc->code = closure_body(sc->code);
@@ -56730,7 +56825,7 @@ static int dox_ex(s7_scheme *sc)
       else all_pairs = false;
 
       next_slot(slot) = let_slots(frame);
-      set_let_slots(frame, slot);
+      let_set_slots(frame, slot);
     }
   
   sc->envir = frame;
@@ -57161,7 +57256,7 @@ static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool s
 		}
 	      else
 		{
-		  set_let_slots(sc->envir, reverse_slots(sc, let_slots(sc->envir)));
+		  let_set_slots(sc->envir, reverse_slots(sc, let_slots(sc->envir)));
 		  for (; numerator(stepper) < end; numerator(stepper)++)
 		    {
 		      s7_pointer **rp;
@@ -57212,7 +57307,7 @@ static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool s
 	      else
 		{
 		  s7_int k;
-		  set_let_slots(sc->envir, reverse_slots(sc, let_slots(sc->envir)));
+		  let_set_slots(sc->envir, reverse_slots(sc, let_slots(sc->envir)));
 		  for (k = numerator(stepper); k < end; k++)
 		    {
 		      s7_pointer **rp;
@@ -57575,7 +57670,7 @@ static int do_init_ex(s7_scheme *sc)
       slot_set_value(y, val);
       set_type(y, T_SLOT | T_IMMUTABLE);
       next_slot(y) = let_slots(sc->envir);
-      set_let_slots(sc->envir, y);
+      let_set_slots(sc->envir, y);
       symbol_set_local(sym, let_id(sc->envir), y);
       
       if (is_not_null(cddar(x)))                /* else no incr expr, so ignore it henceforth */
@@ -58849,7 +58944,7 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
       slot_set_value(z, val);
       set_type(z, T_SLOT | T_IMMUTABLE);
       next_slot(z) = let_slots(e);
-      set_let_slots(e, z);
+      let_set_slots(e, z);
       z = args;
     }
   if (is_null(x))
@@ -59026,7 +59121,7 @@ static void define2_ex(s7_scheme *sc)
       let_id(new_env) = ++sc->let_number;
       outlet(new_env) = closure_let(new_func);
       closure_let(new_func) = new_env;
-      set_let_slots(new_env, sc->NIL);
+      let_set_slots(new_env, sc->NIL);
       funclet_function(new_env) = sc->code;
       
       if ((!is_let(sc->envir)) &&
@@ -59058,7 +59153,7 @@ static void define2_ex(s7_scheme *sc)
 		make_slot_1(sc, new_env, caar(arg), sc->NIL);
 	      else make_slot_1(sc, new_env, car(arg), sc->NIL);
 	    }
-	  set_let_slots(new_env, reverse_slots(sc, let_slots(new_env)));
+	  let_set_slots(new_env, reverse_slots(sc, let_slots(new_env)));
 	}
       /* add the newly defined thing to the current environment */
       if (is_let(sc->envir))
@@ -65028,7 +65123,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      closure_let(sc->x) = new_env;
 		      for (arg = closure_args(sc->x); is_pair(arg); arg = cdr(arg))
 			make_slot_1(sc, new_env, car(arg), sc->NIL);
-		      set_let_slots(new_env, reverse_slots(sc, let_slots(new_env)));
+		      let_set_slots(new_env, reverse_slots(sc, let_slots(new_env)));
 		    }
 		  add_slot(sc, let_name, sc->x);
 		  sc->x = sc->NIL;
@@ -65048,7 +65143,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      slot_set_value(y, val);
 		      set_type(y, T_SLOT | T_IMMUTABLE);
 		      next_slot(y) = let_slots(sc->envir);
-		      set_let_slots(sc->envir, y);
+		      let_set_slots(sc->envir, y);
 		      symbol_set_local(sym, let_id(sc->envir), y);
 		      
 		      y = args;
@@ -65077,7 +65172,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      slot_set_value(y, val);
 		      set_type(y, T_SLOT | T_IMMUTABLE);
 		      next_slot(y) = let_slots(e);
-		      set_let_slots(e, y);
+		      let_set_slots(e, y);
 		      
 		      y = args;
 		    }
@@ -65289,7 +65384,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  x = p;
 		  p = q;
 		}
-	      set_let_slots(sc->envir, x);
+	      let_set_slots(sc->envir, x);
 	      sc->args = let_slots(sc->envir);
 	      push_stack(sc, OP_LETREC_STAR1, sc->args, sc->code);
 	      sc->code = slot_expression(sc->args);
@@ -72872,7 +72967,7 @@ int main(int argc, char **argv)
  * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds))
  * temp str allocator? -- replace check_for_substring_temp and handle at higher level than the choosers
- * generic append?
+ * generic append: perhaps timing test? [set_plist_2 -> set car], check methods I guess
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
  * could the hash-table key protection be done via symbol-access?  How to tell when accessor can be removed?  Are accessors called upon element set?
  *   (*s7* vectors) etc: (any? alive? accessor-seqs) else remove self -- but how would they ever be gc'd?

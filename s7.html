@@ -1751,7 +1751,7 @@ And of course:
 <p>By my count, around 20 of the Scheme built-in functions are already generic in the sense
 that they accept arguments of many types (leaving aside the numeric and type checking functions, take for example equal?, display,
 member, assoc, apply, eval, quasiquote, and values).  s7 extends that list with map, for-each, reverse,
-and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and, eventually, append).
+and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and append.
 newLisp takes a more radical approach than s7: it extends operators such as '&gt;' 
 to compare strings and lists, as well as numbers.  In map and for-each, however, you can mix the argument
 types, so I'm not as attracted to making '&gt;' generic; you can't, for example, <code>(&gt; "hi" 32.1)</code>,
@@ -1772,6 +1772,7 @@ or even <code>(&gt; 1 0+i)</code>.
 (<em class=def id="s7copy">copy</em> obj) and (copy source destination (start 0) end)
 (<em class=def id="objecttostring">object-&gt;string</em> obj)
 (length obj)
+(append . sequences)
 (map func . sequences) and (for-each func . sequences)
 (<a href="#morallyequalp">morally-equal?</a> obj1 obj2)
 </pre>
@@ -1783,6 +1784,17 @@ If the sequence is a list, remember to use set!:
 but historically, lisp programmers have treated the in-place reverse as the fast
 version, so s7 follows suit.
 </p>
+
+<p>Leaving aside the weird list case,
+<b>append</b> returns a sequence of the same type as its first argument.
+</p>
+
+<pre class="indented">
+&gt; (append #(1 2) '(3 4))
+<em class="gray">#(1 2 3 4)</em>
+&gt; (append (float-vector) '(1 2) (byte-vector 3 4))
+<em class="gray">(float-vector 1.0 2.0 3.0 4.0)</em>
+</pre>
 
 <p>
 <b>sort!</b> sorts a sequence using the
