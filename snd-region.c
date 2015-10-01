@@ -2209,8 +2209,8 @@ void g_init_regions(void)
 				   S_set S_region_graph_style, g_set_region_graph_style_w,  0, 0, 1, 0);
 
 #if HAVE_SCHEME
-  s7_symbol_set_access(s7, ss->max_regions_symbol, s7_make_function(s7, "[acc-" S_max_regions, acc_max_regions, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->region_graph_style_symbol, s7_make_function(s7, "[acc-" S_region_graph_style, acc_region_graph_style, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->max_regions_symbol, s7_make_function(s7, "[acc-" S_max_regions "]", acc_max_regions, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->region_graph_style_symbol, s7_make_function(s7, "[acc-" S_region_graph_style "]", acc_region_graph_style, 2, 0, false, "accessor"));
 
   s7_symbol_set_documentation(s7, ss->max_regions_symbol, "*max-regions*: max number of regions saved on the region list");
   s7_symbol_set_documentation(s7, ss->region_graph_style_symbol, "*region-graph-style*: graph style of the region dialog graph (graph-lines etc)");

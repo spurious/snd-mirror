@@ -1284,8 +1284,8 @@ void g_init_gxcolormaps(void)
   Xen_define_safe_procedure(S_colormap_to_integer,       g_colormap_to_integer_w, 1, 0, 0, H_colormap_to_integer);
 
 #if HAVE_SCHEME
-  s7_symbol_set_access(s7, ss->color_map_size_symbol, s7_make_function(s7, "[acc-" S_colormap_size, acc_colormap_size, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->color_map_symbol, s7_make_function(s7, "[acc-" S_colormap, acc_colormap, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->color_map_size_symbol, s7_make_function(s7, "[acc-" S_colormap_size "]", acc_colormap_size, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->color_map_symbol, s7_make_function(s7, "[acc-" S_colormap "]", acc_colormap, 2, 0, false, "accessor"));
 
   s7_symbol_set_documentation(s7, ss->color_map_size_symbol, "*colormap-size*: current colormap size; default is 512.");
   s7_symbol_set_documentation(s7, ss->color_map_symbol, "*colormap*: current colormap choice.");

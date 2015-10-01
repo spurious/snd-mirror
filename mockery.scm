@@ -46,7 +46,8 @@
 
 		   'let-ref            (lambda (obj i) (#_vector-ref (obj 'value) i))   ; the implicit case, so 'i can't be the culprit
 		   'vector-length      (lambda (obj) (#_length (obj 'value)))
-;		   'vector-append      (make-method #_vector-append (lambda (obj) (obj 'value)))
+		   (reader-cond ((not (provided? 'pure-s7))
+		   'vector-append      (make-method #_vector-append (lambda (obj) (obj 'value)))))
 		   'reverse            (lambda (obj) (#_reverse (obj 'value)))
 		   'sort!              (lambda (obj f) (#_sort! (obj 'value) f))
 		   'make-iterator      (lambda (obj) (#_make-iterator (obj 'value)))
@@ -908,7 +909,7 @@
 					   (apply #_make-vector obj (dims 'value) args)
 					   (error 'wrong-type-arg "make-vector ~S ~S ~S" obj dims args)))
 
-;		   'append           (make-method #_append (lambda (obj) (obj 'value)))
+		   'append           (make-method #_append (lambda (obj) (obj 'value)))
 
 		   'list-ref         (lambda (obj ind) 
 				       (if (mock-pair? obj)

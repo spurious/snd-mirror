@@ -89,7 +89,6 @@
 	      (if (not (= j k))
 		  (format *stderr* "oops! (~D ~D): ~A ~A~%" j k vj (vector-ref vars k)))))
 		  ;;(display "oops"))))
-	  
 	(write vj p)
 	(set! str (get-output-string p #t))
 	(set! str (object->string vj))

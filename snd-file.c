@@ -4001,25 +4001,25 @@ the newly updated sound may have a different index."
   s7_symbol_set_documentation(s7, ss->clipping_symbol, "*clipping*: #t if Snd should clip output values");
 
  
-  s7_symbol_set_access(s7, ss->default_output_header_type_symbol, s7_make_function(s7, "[acc-" S_default_output_header_type, acc_default_output_header_type, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->default_output_sample_type_symbol, s7_make_function(s7, "[acc-" S_default_output_sample_type, acc_default_output_sample_type, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->default_output_chans_symbol, s7_make_function(s7, "[acc-" S_default_output_chans, acc_default_output_chans, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->default_output_srate_symbol, s7_make_function(s7, "[acc-" S_default_output_srate, acc_default_output_srate, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->ask_before_overwrite_symbol, s7_make_function(s7, "[acc-" S_ask_before_overwrite, acc_ask_before_overwrite, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->ask_about_unsaved_edits_symbol, s7_make_function(s7, "[acc-" S_ask_about_unsaved_edits, acc_ask_about_unsaved_edits, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->show_full_duration_symbol, s7_make_function(s7, "[acc-" S_show_full_duration, acc_show_full_duration, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->show_full_range_symbol, s7_make_function(s7, "[acc-" S_show_full_range, acc_show_full_range, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->remember_sound_state_symbol, s7_make_function(s7, "[acc-" S_remember_sound_state, acc_remember_sound_state, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->save_as_dialog_src_symbol, s7_make_function(s7, "[acc-" S_save_as_dialog_src, acc_save_as_dialog_src, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->save_as_dialog_auto_comment_symbol, s7_make_function(s7, "[acc-" S_save_as_dialog_auto_comment, acc_save_as_dialog_auto_comment, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->with_toolbar_symbol, s7_make_function(s7, "[acc-" S_with_toolbar, acc_with_toolbar, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->with_tooltips_symbol, s7_make_function(s7, "[acc-" S_with_tooltips, acc_with_tooltips, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->with_menu_icons_symbol, s7_make_function(s7, "[acc-" S_with_menu_icons, acc_with_menu_icons, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->initial_beg_symbol, s7_make_function(s7, "[acc-" S_initial_beg, acc_initial_beg, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->initial_dur_symbol, s7_make_function(s7, "[acc-" S_initial_dur, acc_initial_dur, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->auto_update_symbol, s7_make_function(s7, "[acc-" S_auto_update, acc_auto_update, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->auto_update_interval_symbol, s7_make_function(s7, "[acc-" S_auto_update_interval, acc_auto_update_interval, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->clipping_symbol, s7_make_function(s7, "[acc-" S_clipping, acc_clipping, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->default_output_header_type_symbol, s7_make_function(s7, "[acc-" S_default_output_header_type "]", acc_default_output_header_type, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->default_output_sample_type_symbol, s7_make_function(s7, "[acc-" S_default_output_sample_type "]", acc_default_output_sample_type, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->default_output_chans_symbol, s7_make_function(s7, "[acc-" S_default_output_chans "]", acc_default_output_chans, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->default_output_srate_symbol, s7_make_function(s7, "[acc-" S_default_output_srate "]", acc_default_output_srate, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->ask_before_overwrite_symbol, s7_make_function(s7, "[acc-" S_ask_before_overwrite "]", acc_ask_before_overwrite, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->ask_about_unsaved_edits_symbol, s7_make_function(s7, "[acc-" S_ask_about_unsaved_edits "]", acc_ask_about_unsaved_edits, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->show_full_duration_symbol, s7_make_function(s7, "[acc-" S_show_full_duration "]", acc_show_full_duration, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->show_full_range_symbol, s7_make_function(s7, "[acc-" S_show_full_range "]", acc_show_full_range, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->remember_sound_state_symbol, s7_make_function(s7, "[acc-" S_remember_sound_state "]", acc_remember_sound_state, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->save_as_dialog_src_symbol, s7_make_function(s7, "[acc-" S_save_as_dialog_src "]", acc_save_as_dialog_src, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->save_as_dialog_auto_comment_symbol, s7_make_function(s7, "[acc-" S_save_as_dialog_auto_comment "]", acc_save_as_dialog_auto_comment, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->with_toolbar_symbol, s7_make_function(s7, "[acc-" S_with_toolbar "]", acc_with_toolbar, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->with_tooltips_symbol, s7_make_function(s7, "[acc-" S_with_tooltips "]", acc_with_tooltips, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->with_menu_icons_symbol, s7_make_function(s7, "[acc-" S_with_menu_icons "]", acc_with_menu_icons, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->initial_beg_symbol, s7_make_function(s7, "[acc-" S_initial_beg "]", acc_initial_beg, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->initial_dur_symbol, s7_make_function(s7, "[acc-" S_initial_dur "]", acc_initial_dur, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->auto_update_symbol, s7_make_function(s7, "[acc-" S_auto_update "]", acc_auto_update, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->auto_update_interval_symbol, s7_make_function(s7, "[acc-" S_auto_update_interval "]", acc_auto_update_interval, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->clipping_symbol, s7_make_function(s7, "[acc-" S_clipping "]", acc_clipping, 2, 0, false, "accessor"));
 #endif
 }
 

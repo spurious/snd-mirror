@@ -32,7 +32,7 @@
 ;(define value 1) ; this causes an infinite loop somewhere
 ;(openlet (inlet 'i 0 'list-set! (lambda (l . args) (apply #_list-set! l ((car args) 'i) (cdr args))))))
 
-(define-constant constants (vector #f #t () #\a (/ most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i
+(define-constant constants (list #f #t () #\a (/ most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i
 			"hi455" :key hi: 'hi (list 1) (list 1 2) (cons 1 2) (list (list 1 2)) (list (list 1)) (list ()) #() 
 			1/0+i 0+0/0i 0+1/0i 1+0/0i 0/0+0i 0/0+0/0i 1+1/0i 0/0+i cons ''2 
 			1+i 1+1e10i 1e15+1e15i 0+1e18i 1e18 (integer->char 255) (string (integer->char 255)) 1e308 
@@ -65,8 +65,8 @@
 			np mp nv mv ns ms (gensym)
 			))
       
-(define car-constants (constants 0))
-(define-constant cdr-constants (make-shared-vector constants (list (- (length constants) 1)) 1))
+(define car-constants (car constants))
+(define-constant cdr-constants (cdr constants))
 
 (define low 0)
 (define-constant arglists (vector (make-list 1) (make-list 2) (make-list 3) (make-list 4) (make-list 5) (make-list 6)))
@@ -172,7 +172,7 @@
 		  global-environment current-environment make-procedure-with-setter procedure-with-setter? procedure-arity
 		  
 		  copy fill!
-		  hash-table-set! vector-set! let-set!
+		  hash-table-set! vector-set! let-set! hash-table-size
 		  
 		  mock-number mock-pair mock-string mock-char mock-vector 
 		  mock-symbol mock-port mock-hash-table m 

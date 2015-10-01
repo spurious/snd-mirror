@@ -6518,7 +6518,7 @@ void g_init_sig(void)
 #if HAVE_SCHEME
   Xen_define_procedure("phases-get-peak", g_phases_get_peak, 3, 0, 0, "");
 
-  s7_symbol_set_access(s7, ss->sinc_width_symbol, s7_make_function(s7, "[acc-" S_sinc_width, acc_sinc_width, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->sinc_width_symbol, s7_make_function(s7, "[acc-" S_sinc_width "]", acc_sinc_width, 2, 0, false, "accessor"));
   s7_symbol_set_documentation(s7, ss->sinc_width_symbol, "*sinc-width*: sampling rate conversion sinc width (10).");
 #endif
 }

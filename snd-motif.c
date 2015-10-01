@@ -17692,7 +17692,7 @@ event. If it returns " PROC_TRUE ", the file is not opened or mixed by Snd."
   drop_hook = Xen_define_hook(S_drop_hook, "(make-hook 'name)", 1, H_drop_hook);
 
 #if HAVE_SCHEME
-  s7_symbol_set_access(s7, ss->view_files_sort_symbol, s7_make_function(s7, "[acc-" S_view_files_sort, acc_view_files_sort, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->view_files_sort_symbol, s7_make_function(s7, "[acc-" S_view_files_sort "]", acc_view_files_sort, 2, 0, false, "accessor"));
 #endif
 }
 
@@ -26863,7 +26863,7 @@ leaves the drawing area (graph pane) of the given channel."
   mouse_leave_graph_hook = Xen_define_hook(S_mouse_leave_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_leave_graph_hook);
 
 #if HAVE_SCHEME
-  s7_symbol_set_access(s7, ss->graph_cursor_symbol, s7_make_function(s7, "[acc-" S_graph_cursor, acc_graph_cursor, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->graph_cursor_symbol, s7_make_function(s7, "[acc-" S_graph_cursor "]", acc_graph_cursor, 2, 0, false, "accessor"));
   s7_symbol_set_documentation(s7, ss->graph_cursor_symbol, "*graph-cursor*: current graph cursor shape");
 #endif
 }

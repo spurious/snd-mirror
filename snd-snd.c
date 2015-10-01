@@ -6101,20 +6101,20 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   s7_symbol_set_documentation(s7, ss->filter_control_order_symbol, "*filter-control-order*: control-panel filter order");
   s7_symbol_set_documentation(s7, ss->show_controls_symbol, "*show-controls*: #t if snd's control panel is known to be open");
 
-  s7_symbol_set_access(s7, ss->channel_style_symbol, s7_make_function(s7, "[acc-" S_channel_style, acc_channel_style, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->filter_control_in_db_symbol, s7_make_function(s7, "[acc-" S_filter_control_in_dB, acc_filter_control_in_dB, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->filter_control_in_hz_symbol, s7_make_function(s7, "[acc-" S_filter_control_in_hz, acc_filter_control_in_hz, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->speed_control_tones_symbol, s7_make_function(s7, "[acc-" S_speed_control_tones, acc_speed_control_tones, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->speed_control_style_symbol, s7_make_function(s7, "[acc-" S_speed_control_style, acc_speed_control_style, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->expand_control_length_symbol, s7_make_function(s7, "[acc-" S_expand_control_length, acc_expand_control_length, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->expand_control_ramp_symbol, s7_make_function(s7, "[acc-" S_expand_control_ramp, acc_expand_control_ramp, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->expand_control_hop_symbol, s7_make_function(s7, "[acc-" S_expand_control_hop, acc_expand_control_hop, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->expand_control_jitter_symbol, s7_make_function(s7, "[acc-" S_expand_control_jitter, acc_expand_control_jitter, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->contrast_control_amp_symbol, s7_make_function(s7, "[acc-" S_contrast_control_amp, acc_contrast_control_amp, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->reverb_control_feedback_symbol, s7_make_function(s7, "[acc-" S_reverb_control_feedback, acc_reverb_control_feedback, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->reverb_control_lowpass_symbol, s7_make_function(s7, "[acc-" S_reverb_control_lowpass, acc_reverb_control_lowpass, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->reverb_control_decay_symbol, s7_make_function(s7, "[acc-" S_reverb_control_decay, acc_reverb_control_decay, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->filter_control_order_symbol, s7_make_function(s7, "[acc-" S_filter_control_order, acc_filter_control_order, 2, 0, false, "accessor"));
-  s7_symbol_set_access(s7, ss->show_controls_symbol, s7_make_function(s7, "[acc-" S_show_controls, acc_show_controls, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->channel_style_symbol, s7_make_function(s7, "[acc-" S_channel_style "]", acc_channel_style, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->filter_control_in_db_symbol, s7_make_function(s7, "[acc-" S_filter_control_in_dB "]", acc_filter_control_in_dB, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->filter_control_in_hz_symbol, s7_make_function(s7, "[acc-" S_filter_control_in_hz "]", acc_filter_control_in_hz, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->speed_control_tones_symbol, s7_make_function(s7, "[acc-" S_speed_control_tones "]", acc_speed_control_tones, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->speed_control_style_symbol, s7_make_function(s7, "[acc-" S_speed_control_style "]", acc_speed_control_style, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->expand_control_length_symbol, s7_make_function(s7, "[acc-" S_expand_control_length "]", acc_expand_control_length, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->expand_control_ramp_symbol, s7_make_function(s7, "[acc-" S_expand_control_ramp "]", acc_expand_control_ramp, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->expand_control_hop_symbol, s7_make_function(s7, "[acc-" S_expand_control_hop "]", acc_expand_control_hop, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->expand_control_jitter_symbol, s7_make_function(s7, "[acc-" S_expand_control_jitter "]", acc_expand_control_jitter, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->contrast_control_amp_symbol, s7_make_function(s7, "[acc-" S_contrast_control_amp "]", acc_contrast_control_amp, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->reverb_control_feedback_symbol, s7_make_function(s7, "[acc-" S_reverb_control_feedback "]", acc_reverb_control_feedback, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->reverb_control_lowpass_symbol, s7_make_function(s7, "[acc-" S_reverb_control_lowpass "]", acc_reverb_control_lowpass, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->reverb_control_decay_symbol, s7_make_function(s7, "[acc-" S_reverb_control_decay "]", acc_reverb_control_decay, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->filter_control_order_symbol, s7_make_function(s7, "[acc-" S_filter_control_order "]", acc_filter_control_order, 2, 0, false, "accessor"));
+  s7_symbol_set_access(s7, ss->show_controls_symbol, s7_make_function(s7, "[acc-" S_show_controls "]", acc_show_controls, 2, 0, false, "accessor"));
 #endif
 }
