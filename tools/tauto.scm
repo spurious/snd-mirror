@@ -167,20 +167,16 @@
 		  cutlet varlet gc cond-expand reader-cond
 		  openlet coverlet eval vector list cons hash-table* hash-table values
 		  throw symbol-table load
-
-		  ;dilambda object->string
-		  global-environment current-environment make-procedure-with-setter procedure-with-setter? procedure-arity
+		  global-environment current-environment make-procedure-with-setter procedure-with-setter?
 		  
-		  copy fill!
-		  hash-table-set! vector-set! let-set! hash-table-size
+		  copy fill! hash-table-set! vector-set! let-set! hash-table-size
 		  
 		  mock-number mock-pair mock-string mock-char mock-vector 
 		  mock-symbol mock-port mock-hash-table m 
 		  *mock-number* *mock-pair* *mock-string* *mock-char* *mock-vector*
 		  *mock-symbol* *mock-port* *mock-hash-table*
 
-		  c-define-1 apropos map-values ;sequence? integer:any? integer:real? warned
-		  
+		  c-define-1 apropos map-values 
 		  outlet-member make-method make-object))
 
 (define (test-sym sym)

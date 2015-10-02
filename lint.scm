@@ -102,7 +102,7 @@
 		  eof-object? eq? equal? eqv? owlet even? exact->inexact exact? exp expt 
 		  floor ;for-each 
 		  gcd gensym gensym? rootlet
-		  hash-table hash-table* hash-table-ref hash-table-size hash-table-entries hash-table? iterator? hook-functions 
+		  hash-table hash-table* hash-table-ref hash-table-entries hash-table? iterator? hook-functions 
 		  if imag-part inexact->exact inexact? infinite? unlet input-port? integer->char integer-decode-float 
 		  integer-length integer? 
 		  keyword->symbol keyword? 

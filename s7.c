@@ -356,6 +356,11 @@ static int float_format_precision = WRITE_REAL_PRECISION;
   #define ptr_int_format "(c-pointer %u)"
   #ifndef WITH_OPTIMIZATION
     #define WITH_OPTIMIZATION 0
+    /* the problem here is at least partly the use in the rf functions of (real_to_double() op real_to_double()...)
+     *   if I replace those with x1=real_to_double... x1 op x2..., nearly all the NaN troubles go away.
+     *   only the rf cases are faulty, so it is possible to set this flag to 1, then make s7_rf_set_function a no-op,
+     *   and comment out the 2 syntax_rp cases. 
+     */
   #endif
   /* 32-bit optimized case gets inexplicable NaNs in float-vector ops */
 #else
@@ -427,7 +432,7 @@ static int float_format_precision = WRITE_REAL_PRECISION;
 
 #define NUM_TYPES        48
 
-/* T_STACK, T_SLOT, T_BAFFLE, and T_COUNTER are internal
+/* T_STACK, T_SLOT, T_BAFFLE, T_DYNAMIC_WIND, and T_COUNTER are internal
  * I tried T_CASE_SELECTOR that turned a case statement into an array, but it was slower!
  */
 
@@ -1604,9 +1609,6 @@ bool s7_is_stepper(s7_pointer p)      {return(is_stepper(p));}
 #define clear_mark(p)                 typeflag(p) &= (~T_GC_MARK)
 /* using bit 23 for this makes a big difference in the GC */
 
-#define UNUSED_BITS 0
-
-
 #define BOLD_TEXT "\033[1m"
 #define UNBOLD_TEXT "\033[22m"
 #if 0
@@ -1867,6 +1869,7 @@ static s7_pointer let_set_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define let_set_slots(p, Slot)        _TLet(p)->object.envr.slots = _TSlt(Slot)
 #endif
 #define outlet(p)                     _TLet(p)->object.envr.nxt
+#define set_outlet(p, ol)             _TLet(p)->object.envr.nxt = _TLid(ol)
 #define funclet_function(p)           _TLet(p)->object.envr.edat.efnc.function
 #define let_line(p)                   _TLet(p)->object.envr.edat.efnc.line
 #define let_file(p)                   _TLet(p)->object.envr.edat.efnc.file
@@ -2162,19 +2165,19 @@ static void free_cell(s7_scheme *sc, s7_pointer p)
 
 #else
 
-#define make_integer(Sc, N)             s7_make_integer(Sc, N)
-#define make_real(Sc, X)                s7_make_real(Sc, X)
-#define make_complex(Sc, R, I)          s7_make_complex(Sc, R, I)
-#define real_to_double(Sc, X, Caller)   s7_number_to_real_with_caller(Sc, X, Caller)
-#define rational_to_double(Sc, X)       s7_number_to_real(Sc, X)
+#define make_integer(Sc, N)           s7_make_integer(Sc, N)
+#define make_real(Sc, X)              s7_make_real(Sc, X)
+#define make_complex(Sc, R, I)        s7_make_complex(Sc, R, I)
+#define real_to_double(Sc, X, Caller) s7_number_to_real_with_caller(Sc, X, Caller)
+#define rational_to_double(Sc, X)     s7_number_to_real(Sc, X)
 #endif
 
 
 #if WITH_GMP
-#define big_integer(p)             (_TBgi(p)->object.number.big_integer)
-#define big_ratio(p)               (_TBgf(p)->object.number.big_ratio)
-#define big_real(p)                (_TBgr(p)->object.number.big_real)
-#define big_complex(p)             (_TBgz(p)->object.number.big_complex)
+#define big_integer(p) (_TBgi(p)->object.number.big_integer)
+#define big_ratio(p)   (_TBgf(p)->object.number.big_ratio)
+#define big_real(p)    (_TBgr(p)->object.number.big_real)
+#define big_complex(p) (_TBgz(p)->object.number.big_complex)
 #endif
 
 #define S7_LLONG_MAX 9223372036854775807LL
@@ -5262,7 +5265,7 @@ static s7_pointer add_sym_to_list(s7_scheme *sc, s7_pointer sym)
       NEW_CELL(Sc, _x_, T_LET | T_IMMUTABLE); \
       let_id(_x_) = ++sc->let_number;		      \
       let_set_slots(_x_, Sc->NIL);	              \
-      outlet(_x_) = Old_Env;			      \
+      set_outlet(_x_, Old_Env);	      \
       New_Env = _x_;				      \
   } while (0)
 
@@ -5274,7 +5277,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
   NEW_CELL(sc, x, T_LET | T_IMMUTABLE);
   let_id(x) = ++sc->let_number;
   let_set_slots(x, sc->NIL);
-  outlet(x) = old_env;
+  set_outlet(x, old_env);
   return(x);
 }
 
@@ -5285,7 +5288,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
   NEW_CELL(sc, frame, T_LET | T_IMMUTABLE);
   let_id(frame) = sc->let_number + 1;
   let_set_slots(frame, sc->NIL);
-  outlet(frame) = sc->envir;
+  set_outlet(frame, sc->envir);
   return(frame);
 }
 
@@ -5326,7 +5329,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
     _sym_ = Symbol; _val_ = Value;				\
     NEW_CELL(Sc, _x_, T_LET | T_IMMUTABLE);			\
     let_id(_x_) = ++sc->let_number;				\
-    outlet(_x_) = Old_Env;					\
+    set_outlet(_x_, Old_Env);			\
     New_Env = _x_;						\
     NEW_CELL_NO_CHECK(Sc, _slot_, T_SLOT | T_IMMUTABLE);	\
     slot_set_symbol(_slot_, _sym_);				\
@@ -5344,7 +5347,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
     _sym2_ = Symbol2; _val2_ = Value2;					\
     NEW_CELL(Sc, _x_, T_LET | T_IMMUTABLE);				\
     let_id(_x_) = ++sc->let_number;					\
-    outlet(_x_) = Old_Env;						\
+    set_outlet(_x_, Old_Env);				\
     New_Env = _x_;							\
     NEW_CELL_NO_CHECK(Sc, _slot_, T_SLOT | T_IMMUTABLE);		\
     slot_set_symbol(_slot_, _sym1_);					\
@@ -5364,7 +5367,7 @@ static s7_pointer old_frame_in_env(s7_scheme *sc, s7_pointer frame, s7_pointer n
 {
   let_set_slots(frame, sc->NIL);
   set_type(frame, T_LET | T_IMMUTABLE);
-  outlet(frame) = next_frame;
+  set_outlet(frame, next_frame);
   let_id(frame) = ++sc->let_number;
   return(frame);
 }
@@ -6496,7 +6499,7 @@ static s7_pointer g_set_outlet(s7_scheme *sc, s7_pointer args)
     new_outer = sc->NIL;
 
   if (env != sc->rootlet)
-    outlet(env) = new_outer;
+    set_outlet(env, new_outer);
   return(new_outer);
 }
 
@@ -7010,8 +7013,7 @@ static s7_pointer copy_body(s7_scheme *sc, s7_pointer p)
 
 static s7_pointer copy_closure(s7_scheme *sc, s7_pointer fnc)
 {
-  /* copy the source tree annotating (for eventual optimization), return a thing of the same type as fnc
-   */
+  /* copy the source tree annotating (for eventual optimization), return a thing of the same type as fnc */
   s7_pointer x, body;
 
   body = closure_body(fnc);
@@ -12728,7 +12730,6 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	    /* sscanf here misses errors like #\x1.4, but make_atom misses #\x6/3,
 	     *   #\x#b0, #\x#e0.0, #\x-0, #\x#e0e100 etc, so we have to do it at
 	     *   an even lower level.
-	     *
 	     * another problem: #\xbdca2cbec overflows so lval is -593310740 -> segfault unless caught
 	     */
 	    bool happy = true;
@@ -30839,7 +30840,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
   full_typ = typeflag(obj);
 
   /* if debugging all of these bits are being watched, so we need some ugly subterfuges */
-  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+  snprintf(buf, 512, "type: %d (%s), flags: #x%x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
 	   typ,
 	   type_name(sc, obj, NO_ARTICLE),
 	   full_typ,
@@ -30871,8 +30872,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 		   ((is_iterator(obj)) ? " mark-seq" : ((is_slot(obj)) ? " stepper" : " mutable")))) : "",
 	   ((full_typ & T_GENSYM) != 0) ?             
                ((is_let(obj)) ? " function-env" : ((is_unspecified(obj)) ? " no-value" : ((is_pair(obj)) ? " list-in-use" :
-		   ((is_closure_star(obj)) ? " simple-args" : ((is_string(obj)) ? " documented" : " gensym"))))) : "",
-	   ((full_typ & UNUSED_BITS) != 0) ? " bad bits!" : "");
+	       ((is_closure_star(obj)) ? " simple-args" : ((is_string(obj)) ? " documented" : " gensym"))))) : "");
   return(buf);
 }
 
@@ -31511,11 +31511,11 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj, bool use_write) /*
 }
 
 
+/* -------------------------------- newline -------------------------------- */
 void s7_newline(s7_scheme *sc, s7_pointer port)
 {
   s7_write_char(sc, '\n', port);
 }
-
 
 static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
 {
@@ -31541,6 +31541,7 @@ static s7_pointer c_newline(s7_scheme *sc) {s7_newline(sc, sc->output_port); ret
 PF_0(newline, c_newline)
 
 
+/* -------------------------------- write -------------------------------- */
 void s7_write(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 {
   if (port != sc->F)
@@ -31583,6 +31584,7 @@ static s7_pointer c_write_p(s7_scheme *sc, s7_pointer x) {return(g_write(sc, set
 XF_TO_PF(write, c_write_i, c_write_r, c_write_p)
 
 
+/* -------------------------------- display -------------------------------- */
 void s7_display(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 {
   if (port != sc->F)
@@ -31617,6 +31619,7 @@ static s7_pointer c_display(s7_scheme *sc, s7_pointer x) {return(g_display(sc, s
 PF_TO_PF(display, c_display)
 
 
+/* -------------------------------- call-with-output-string -------------------------------- */
 static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_output_string "(call-with-output-string proc) opens a string port applies proc to it, then returns the collected output"
@@ -31642,6 +31645,7 @@ static s7_pointer c_call_with_output_string(s7_scheme *sc, s7_pointer x) {return
 PF_TO_PF(call_with_output_string, c_call_with_output_string)
 
 
+/* -------------------------------- call-with-output-file -------------------------------- */
 static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_output_file "(call-with-output-file filename proc) opens filename and calls proc with the output port as its argument"
@@ -31669,6 +31673,7 @@ static s7_pointer c_call_with_output_file(s7_scheme *sc, s7_pointer x) {return(g
 PF_TO_PF(call_with_output_file, c_call_with_output_file)
 
 
+/* -------------------------------- with-output-to-string -------------------------------- */
 static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_with_output_to_string "(with-output-to-string thunk) opens a string as a temporary current-output-port, calls thunk, then returns the collected output"
@@ -31695,6 +31700,7 @@ PF_TO_PF(with_output_to_string, c_with_output_to_string)
  */
 
 
+/* -------------------------------- with-output-to-file -------------------------------- */
 static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 {
   #define H_with_output_to_file "(with-output-to-file filename thunk) opens filename as the temporary current-output-port and calls thunk"
@@ -35836,8 +35842,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_int len, bool filled, unsigned
 	    return(s7_error(sc, make_symbol(sc, "out-of-memory"), set_elist_1(sc, make_string_wrapper(sc, "make-vector allocation failed!"))));
 	  vector_getter(x) = default_vector_getter;
 	  vector_setter(x) = default_vector_setter;
-	  /* make_hash_table assumes nil as the default value */
-	  if (filled) s7_vector_fill(sc, x, sc->NIL);
+	  if (filled) s7_vector_fill(sc, x, sc->NIL);  /* make_hash_table assumes nil as the default value */
 	}
       else
 	{
@@ -38173,7 +38178,7 @@ static s7_double fv_ref_rf_pf(s7_scheme *sc, s7_pointer **p)
   fv = (s7_pf_t)(**p); (*p)++;
   s1 = fv(sc, p);
   if (!is_float_vector(s1))
-    wrong_type_argument(sc, sc->FLOAT_VECTOR_SET, 1, s1, T_FLOAT_VECTOR);    
+    wrong_type_argument(sc, sc->FLOAT_VECTOR_REF, 1, s1, T_FLOAT_VECTOR);    
   i1 = (s7_if_t)(**p); (*p)++;
   ind = i1(sc, p);
   if ((ind < 0) || (ind >= vector_length(s1)))
@@ -43772,7 +43777,7 @@ static s7_int sequence_length(s7_scheme *sc, s7_pointer lst)
   return(-1);
 }
 
-static s7_int total_sequence_length(s7_scheme *sc, s7_pointer args)
+static s7_int total_sequence_length(s7_scheme *sc, s7_pointer args, s7_pointer caller, int typ)
 {
   s7_pointer p;
   int i;
@@ -43780,11 +43785,18 @@ static s7_int total_sequence_length(s7_scheme *sc, s7_pointer args)
 
   for (i = 0, p = args; is_pair(p); p = cdr(p), i++)
     {
+      s7_pointer seq;
       s7_int n;
-      n = sequence_length(sc, car(p));
+      seq = car(p);
+      n = sequence_length(sc, seq);
+      if ((n > 0) && (typ != T_FREE) && ((type(seq) == T_HASH_TABLE) || (type(seq) == T_LET)))
+	{
+	  wrong_type_argument(sc, sc->APPEND, i, seq, typ);
+	  return(0);
+	}
       if (n < 0)
 	{
-	  wrong_type_argument_with_type(sc, sc->APPEND, i, car(p), (is_pair(car(p))) ? A_PROPER_LIST : A_SEQUENCE);
+	  wrong_type_argument_with_type(sc, sc->APPEND, i, seq, (is_pair(seq)) ? A_PROPER_LIST : A_SEQUENCE);
 	  return(0);
 	}
       len += n;
@@ -43797,7 +43809,7 @@ static s7_pointer vector_append(s7_scheme *sc, s7_pointer args, int typ)
   s7_pointer new_vec;
   s7_int len;
 
-  len = total_sequence_length(sc, args);
+  len = total_sequence_length(sc, args, sc->VECTOR_APPEND, (typ == T_VECTOR) ? T_FREE : ((typ == T_FLOAT_VECTOR) ? T_REAL : T_INTEGER));
   new_vec = make_vector_1(sc, len, (typ == T_VECTOR) ? FILLED : NOT_FILLED, typ); /* might hit GC in loop below so we can't use NOT_FILLED here */
 
   if (len > 0)
@@ -43843,7 +43855,7 @@ static s7_pointer string_append(s7_scheme *sc, s7_pointer args)
   s7_pointer new_str;
   s7_int len;
 
-  len = total_sequence_length(sc, args);
+  len = total_sequence_length(sc, args, sc->STRING_APPEND, (is_byte_vector(car(args))) ? T_INTEGER : T_CHARACTER);
   new_str = make_empty_string(sc, len, 0);
   if (is_byte_vector(car(args)))
     set_byte_vector(new_str);
@@ -45368,7 +45380,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 
   slot_set_value(sc->error_type, type);
   slot_set_value(sc->error_data, info);
-  outlet(sc->owlet) = sc->envir;
+  set_outlet(sc->owlet, sc->envir);
 
   cur_code = sc->cur_code;
   slot_set_value(sc->error_code, cur_code);
@@ -45996,7 +46008,7 @@ static bool call_begin_hook(s7_scheme *sc)
       slot_set_value(sc->error_code, sc->cur_code);
       slot_set_value(sc->error_line, sc->F);
       slot_set_value(sc->error_file, sc->F);
-      outlet(sc->owlet) = sc->envir;
+      set_outlet(sc->owlet, sc->envir);
 
       sc->value = s7_make_symbol(sc, "begin-hook-interrupt");
       /* otherwise the evaluator returns whatever random thing is in sc->value (normally #<closure>)
@@ -54761,7 +54773,7 @@ static void define_funchecked(s7_scheme *sc)
       NEW_CELL_NO_CHECK(sc, new_env, T_LET | T_IMMUTABLE | T_FUNCTION_ENV);
       let_id(new_env) = ++sc->let_number;
       let_set_slots(new_env, sc->NIL);
-      outlet(new_env) = sc->envir;
+      set_outlet(new_env, sc->envir);
       closure_let(new_func) = new_env;
       funclet_function(new_env) = sc->value;
       
@@ -59139,7 +59151,7 @@ static void define2_ex(s7_scheme *sc)
       
       NEW_CELL_NO_CHECK(sc, new_env, T_LET | T_IMMUTABLE | T_FUNCTION_ENV);
       let_id(new_env) = ++sc->let_number;
-      outlet(new_env) = closure_let(new_func);
+      set_outlet(new_env, closure_let(new_func));
       closure_let(new_func) = new_env;
       let_set_slots(new_env, sc->NIL);
       funclet_function(new_env) = sc->code;
@@ -72910,6 +72922,7 @@ s7_scheme *s7_init(void)
 #endif
   init_s7_let(sc);          /* set up *s7* */
   already_inited = true;
+
   return(sc);
 }
 
@@ -72997,11 +73010,7 @@ int main(int argc, char **argv)
  * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds))
  * temp str allocator? -- replace check_for_substring_temp and handle at higher level than the choosers
- * generic append: check methods I guess
+ * generic append: check methods I guess 
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
- * could the hash-table key protection be done via symbol-access?  How to tell when accessor can be removed?  Are accessors called upon element set?
- *   (*s7* vectors) etc: (any? alive? accessor-seqs) else remove self -- but how would they ever be gc'd?
- * fc23-32 opt for nan bug: it's underflows in fc23, not nans: everything is ok except syntax_rp (2x) and rf_set_function(1x)
- * debugger: check hanging gc_protects, real/real_part shadows (and report subnormal?), imag_part!=0
  */
  
