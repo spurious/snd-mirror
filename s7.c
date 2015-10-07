@@ -467,16 +467,6 @@ typedef struct {
 
 
 typedef struct {
-  s7_pointer *arg_defaults, *arg_names;
-  s7_pointer call_args;
-  int keyed_args;       /* 2 * args == number of args if all are specified via keywords */
-  bool simple_defaults;
-  s7_rp_t rp;
-  s7_ip_t ip;
-  s7_pp_t pp, gp;
-} c_proc_ext_t;
-
-typedef struct {
   const char *name;
   int name_length;
   unsigned int id;
@@ -484,7 +474,11 @@ typedef struct {
   s7_pointer generic_ff;
   s7_pointer signature;
   s7_pointer (*chooser)(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr);
-  c_proc_ext_t *ext;
+  s7_pointer *arg_defaults, *arg_names;
+  s7_pointer call_args;
+  s7_rp_t rp;
+  s7_ip_t ip;
+  s7_pp_t pp, gp;
 } c_proc_t;
 
 
@@ -649,11 +643,11 @@ typedef struct s7_cell {
       bool rest_arg;
     } fnc;
 
-    struct {
+    struct {                           /* pairs */
       s7_pointer car, cdr, ecdr, fcdr, gcdr;
     } cons;
 
-    struct {                           /* pairs */
+    struct {
       s7_pointer sym_car, sym_cdr;
       unsigned long long int hash;
       const char *fstr;
@@ -888,9 +882,8 @@ struct s7_scheme {
   int print_width;
   s7_pointer *singletons;
 
-  #define NUM_TMP_STRS 2
   #define INITIAL_TMP_STR_SIZE 16
-  s7_pointer tmp_strs[NUM_TMP_STRS];
+  s7_pointer *tmp_strs;
 
   #define INITIAL_FILE_NAMES_SIZE 8
   s7_pointer *file_names;
@@ -1472,6 +1465,12 @@ static void init_types(void)
 #define set_with_let_let(p)           typeflag(_TLet(p)) |= T_WITH_LET_LET
 /* marks a let that is the argument to with-let */
 
+#define T_SIMPLE_DEFAULTS             T_LINE_NUMBER
+#define has_simple_defaults(p)        ((typeflag(_TFnc(p)) & T_SIMPLE_DEFAULTS) != 0)
+#define set_simple_defaults(p)        typeflag(_TFnc(p)) |= T_SIMPLE_DEFAULTS
+#define clear_simple_defaults(p)      typeflag(_TFnc(p)) &= (~T_SIMPLE_DEFAULTS)
+/* flag c_func_star arg defaults that need GC protection */
+
 #define T_SHARED                      (1 << (TYPE_BITS + 11))
 #define is_shared(p)                  ((typeflag(_TSeq(p)) & T_SHARED) != 0)
 #define set_shared(p)                 typeflag(_TSeq(p)) |= T_SHARED
@@ -2023,17 +2022,13 @@ static s7_pointer let_set_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define c_function_class(f)           c_function_data(f)->id
 #define c_function_chooser(f)         c_function_data(f)->chooser
 #define c_function_base(f)            c_function_data(f)->generic_ff
-
-#define c_function_ext(f)             c_function_data(f)->ext
-#define c_function_arg_defaults(f)    c_function_ext(f)->arg_defaults
-#define c_function_keyed_args(f)      c_function_ext(f)->keyed_args
-#define c_function_call_args(f)       c_function_ext(f)->call_args
-#define c_function_arg_names(f)       c_function_ext(f)->arg_names
-#define c_function_simple_defaults(f) c_function_ext(f)->simple_defaults
-#define c_function_rp(f)              c_function_ext(f)->rp
-#define c_function_ip(f)              c_function_ext(f)->ip
-#define c_function_pp(f)              c_function_ext(f)->pp
-#define c_function_gp(f)              c_function_ext(f)->gp
+#define c_function_arg_defaults(f)    c_function_data(f)->arg_defaults
+#define c_function_call_args(f)       c_function_data(f)->call_args
+#define c_function_arg_names(f)       c_function_data(f)->arg_names
+#define c_function_rp(f)              c_function_data(f)->rp
+#define c_function_ip(f)              c_function_data(f)->ip
+#define c_function_pp(f)              c_function_data(f)->pp
+#define c_function_gp(f)              c_function_data(f)->gp
 #define set_c_function(f, X)          do {set_opt_cfunc(f, X); set_c_call(f, c_function_call(opt_cfunc(f)));} while (0)
 
 #define is_c_macro(p)                 (type(p) == T_C_MACRO)
@@ -3755,7 +3750,7 @@ static void just_mark(s7_pointer p)
 static void mark_c_proc_star(s7_pointer p)
 {
   set_mark(p);
-  if (!c_function_simple_defaults(p))
+  if (!has_simple_defaults(p))
     {
       s7_pointer arg;
       for (arg = c_function_call_args(p); is_pair(arg); arg = cdr(arg))
@@ -4686,10 +4681,10 @@ static void resize_op_stack(s7_scheme *sc)
 }
 
 
-#define stack_code(Stack, Loc)  vector_element(Stack, Loc - 3)
-#define stack_let(Stack, Loc)   vector_element(Stack, Loc - 2)
-#define stack_args(Stack, Loc)  vector_element(Stack, Loc - 1)
-#define stack_op(Stack, Loc)    ((opcode_t)(vector_element(Stack, Loc)))
+#define stack_code(Stack, Loc)  vector_element(_TStk(Stack), Loc - 3)
+#define stack_let(Stack, Loc)   vector_element(_TStk(Stack), Loc - 2)
+#define stack_args(Stack, Loc)  vector_element(_TStk(Stack), Loc - 1)
+#define stack_op(Stack, Loc)    ((opcode_t)(vector_element(_TStk(Stack), Loc)))
 
 /* these macros are faster than the equivalent simple function calls.  If the s7_scheme struct is set up to reflect the
  *    stack order [code envir args op], we can use memcpy here:
@@ -5580,7 +5575,12 @@ static int let_length(s7_scheme *sc, s7_pointer e)
       s7_pointer length_func;
       length_func = find_method(sc, e, sc->LENGTH);
       if (length_func != sc->UNDEFINED)
-	return((int)s7_integer(s7_apply_function(sc, length_func, list_1(sc, e))));
+	{
+	  p = s7_apply_function(sc, length_func, list_1(sc, e));
+	  if (s7_is_integer(p))
+	    return((int)s7_integer(p));
+	  return(-1); /* ?? */
+	}
     }
 
   for (i = 0, p = let_slots(e); is_slot(p); i++, p = next_slot(p));
@@ -7426,7 +7426,7 @@ static void resize_xf(s7_scheme *sc, xf_t *rc)
 #define xf_save_loc3(Loc1, Loc2, Loc3) do {Loc1 = rc->cur - rc->data; Loc2 = Loc1 + 1; Loc3 = Loc2 + 1; rc->cur += 3;} while (0)
 #define xf_store_at(Loc, Val) rc->data[Loc] = Val
 #define xf_go(loc) rc->cur = (s7_pointer *)(rc->data + loc)
-#define xf_loc() (ptr_int)(rc->cur - rc->data)
+/* #define xf_loc() (ptr_int)(rc->cur - rc->data) */
 
 s7_int s7_xf_store(s7_scheme *sc, s7_pointer val)
 {
@@ -7582,7 +7582,7 @@ static s7_rp_t rf_function(s7_pointer f)
   switch (type(f))
     {
     case T_C_FUNCTION_STAR: case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
-      if (c_function_ext(f)) return(c_function_rp(f));
+      return(c_function_rp(f));
       return(NULL);
 
     case T_FLOAT_VECTOR: 
@@ -7602,7 +7602,7 @@ static s7_ip_t if_function(s7_pointer f)
   switch (type(f))
     {
     case T_C_FUNCTION_STAR: case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
-      if (c_function_ext(f)) return(c_function_ip(f));
+      return(c_function_ip(f));
       return(NULL);
 
     case T_INT_VECTOR: 
@@ -7622,7 +7622,7 @@ static s7_pp_t pf_function(s7_pointer f)
   switch (type(f))
     {
     case T_C_FUNCTION_STAR: case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
-      if (c_function_ext(f)) return(c_function_pp(f));
+      return(c_function_pp(f));
       return(NULL);
 
     case T_PAIR: case T_STRING: case T_VECTOR: case T_HASH_TABLE: case T_LET:
@@ -7639,7 +7639,7 @@ static s7_pp_t gf_function(s7_pointer f)
   switch (type(f))
     {
     case T_C_FUNCTION_STAR: case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
-      if (c_function_ext(f)) return(c_function_gp(f));
+      return(c_function_gp(f));
       return(NULL);
 
     case T_PAIR: case T_STRING: case T_VECTOR: case T_HASH_TABLE: case T_LET: case T_C_OBJECT: case T_INT_VECTOR: case T_FLOAT_VECTOR:
@@ -7672,8 +7672,6 @@ void s7_rf_set_function(s7_pointer f, s7_rp_t rp)
 {
 #if WITH_OPTIMIZATION
   if (!is_c_function(f)) return;
-  if (!c_function_ext(f))
-    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
   c_function_rp(f) = rp;
 #else
   return;
@@ -7684,8 +7682,6 @@ void s7_if_set_function(s7_pointer f, s7_ip_t ip)
 {
 #if WITH_OPTIMIZATION
   if (!is_c_function(f)) return;
-  if (!c_function_ext(f))
-    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
   c_function_ip(f) = ip;
 #else
   return;
@@ -7696,8 +7692,6 @@ void s7_pf_set_function(s7_pointer f, s7_pp_t pp)
 {
 #if WITH_OPTIMIZATION
   if (!is_c_function(f)) return;
-  if (!c_function_ext(f))
-    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
   c_function_pp(f) = pp;
 #else
   return;
@@ -7708,8 +7702,6 @@ void s7_gf_set_function(s7_pointer f, s7_pp_t gp)
 {
 #if WITH_OPTIMIZATION
   if (!is_c_function(f)) return;
-  if (!c_function_ext(f))
-    c_function_ext(f) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
   c_function_gp(f) = gp;
 #else
   return;
@@ -30994,7 +30986,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 #if DEBUGGING
 #define BOLD_TEXT "\033[1m"
 #define UNBOLD_TEXT "\033[22m"
-#define stop_at_error true
+#define stop_at_error false
 
 static const char *check_name(int typ)
 {
@@ -35969,10 +35961,25 @@ static s7_pointer g_list_append(s7_scheme *sc, s7_pointer args)
 	  if ((s7_is_list(sc, p)) ||
 	      (!is_sequence(p)))
 	    cdr(np) = p;
-	  else cdr(np) = s7_copy(sc, set_plist_2(sc, p, make_list(sc, sequence_length(sc, p), sc->F)));
+	  else 
+	    {
+	      s7_int len;
+	      len = sequence_length(sc, p);
+	      if (len > 0)
+		cdr(np) = s7_copy(sc, set_plist_2(sc, p, make_list(sc, len, sc->F)));
+	      else 
+		{
+		  if (len < 0)
+		    cdr(np) = p;
+		}
+	    }
 	  sc->y = sc->NIL;
 	  return(tp);
 	}
+
+      if (!is_sequence(p))
+	return(wrong_type_argument_with_type(sc, sc->APPEND, position_of(y, args), p, A_SEQUENCE));
+
       if (!is_null(p))
 	{
 	  if (is_pair(p))
@@ -36000,14 +36007,24 @@ static s7_pointer g_list_append(s7_scheme *sc, s7_pointer args)
 	    }
 	  else
 	    {
-	      if (is_null(tp))
+	      s7_int len;
+	      len = sequence_length(sc, p);
+	      if (len > 0)
 		{
-		  tp = s7_copy(sc, set_plist_2(sc, p, make_list(sc, sequence_length(sc, p), sc->F)));
-		  np = tp;
-		  sc->y = tp;
+		  if (is_null(tp))
+		    {
+		      tp = s7_copy(sc, set_plist_2(sc, p, make_list(sc, len, sc->F)));
+		      np = tp;
+		      sc->y = tp;
+		    }
+		  else cdr(np) = s7_copy(sc, set_plist_2(sc, p, make_list(sc, len, sc->F)));
+		  for (; is_pair(cdr(np)); np = cdr(np));
 		}
-	      else cdr(np) = s7_copy(sc, set_plist_2(sc, p, make_list(sc, sequence_length(sc, p), sc->F)));
-	      for (; is_pair(cdr(np)); np = cdr(np));
+	      else 
+		{
+		  if (len < 0)
+		    return(wrong_type_argument_with_type(sc, sc->APPEND, position_of(y, args), p, A_SEQUENCE));
+		}
 	    }
 	}
     }
@@ -36774,18 +36791,22 @@ static s7_pointer g_float_vector(s7_scheme *sc, s7_pointer args)
   #define H_float_vector "(float-vector ...) returns an homogenous float vector whose elements are the arguments"
   #define Q_float_vector s7_make_circular_signature(sc, 1, 2, sc->IS_FLOAT_VECTOR, sc->IS_REAL)
 
-  s7_int i, len;
-  s7_pointer vec, x;
+  s7_int len;
+  s7_pointer vec;
 
   len = s7_list_length(sc, args);
   vec = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR); /* dangerous: assumes real_to_double won't trigger GC even if bignums */
   if (len > 0)
-    for (x = args, i = 0; is_pair(x); x = cdr(x), i++)
-      {
-	if (s7_is_real(car(x))) /* bignum is ok here */
-	  float_vector_element(vec, i) = real_to_double(sc, car(x), "float-vector");
-	else return(simple_wrong_type_argument(sc, sc->FLOAT_VECTOR, car(x), T_REAL));
-      }
+    {
+      s7_int i;
+      s7_pointer x;
+      for (x = args, i = 0; is_pair(x); x = cdr(x), i++)
+	{
+	  if (s7_is_real(car(x))) /* bignum is ok here */
+	    float_vector_element(vec, i) = real_to_double(sc, car(x), "float-vector");
+	  else return(simple_wrong_type_argument(sc, sc->FLOAT_VECTOR, car(x), T_REAL));
+	}
+    }
   return(vec);
 }
 
@@ -40870,7 +40891,10 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 
   c_function_class(x) = ++sc->f_class;
   c_function_chooser(x) = fallback_chooser;
-  c_function_ext(x) = NULL;
+  c_function_rp(x) = NULL;
+  c_function_ip(x) = NULL;
+  c_function_pp(x) = NULL;
+  c_function_gp(x) = NULL;
 
   return(x);
 }
@@ -41140,9 +41164,6 @@ static void define_function_star_1(s7_scheme *sc, const char *name, s7_function 
     set_type(func, T_C_FUNCTION_STAR | T_PROCEDURE | T_SAFE_PROCEDURE);
   else set_type(func, T_C_FUNCTION_STAR | T_PROCEDURE);
 
-  if (!c_function_ext(func))
-    c_function_ext(func) = (c_proc_ext_t *)calloc(1, sizeof(c_proc_ext_t));
-  c_function_keyed_args(func) = 2 * n_args;
   c_function_call_args(func) = make_list(sc, n_args, sc->F);
   s7_remove_from_heap(sc, c_function_call_args(func));
 
@@ -41153,7 +41174,7 @@ static void define_function_star_1(s7_scheme *sc, const char *name, s7_function 
   c_function_arg_names(func) = names;
   defaults = (s7_pointer *)malloc(n_args * sizeof(s7_pointer));
   c_function_arg_defaults(func) = defaults;
-  c_function_simple_defaults(func) = true;
+  set_simple_defaults(func);
 
   for (p = local_args, i = 0; i < n_args; p = cdr(p), i++)
     {
@@ -41167,7 +41188,7 @@ static void define_function_star_1(s7_scheme *sc, const char *name, s7_function 
 	  if ((is_symbol(defaults[i])) ||
 	      (is_pair(defaults[i])))
 	    {
-	      c_function_simple_defaults(func) = false;
+	      clear_simple_defaults(func);
 	      mark_function[T_C_FUNCTION_STAR] = mark_c_proc_star;
 	    }
 	}
@@ -41237,7 +41258,7 @@ s7_pointer set_c_function_call_args(s7_scheme *sc)
   if (!is_null(arg))
     return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, func, sc->args)));
 
-  if (!c_function_simple_defaults(func))
+  if (!has_simple_defaults(func))
     for (i = 0, par = call_args; i < n_args; i++, par = cdr(par))
       if (!is_checked(par))
 	{
@@ -45647,17 +45668,19 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
    */
   sc->no_values = 0;
   sc->format_depth = -1;
-  sc->gc_off = false;  /* this is in case we were triggered from the sort function -- clumsy! */
+  sc->gc_off = false;            /* this is in case we were triggered from the sort function -- clumsy! */
   s7_xf_clear(sc);
 
   slot_set_value(sc->error_type, type);
   slot_set_value(sc->error_data, info);
 #if DEBUGGING
-  if (!is_let(sc->owlet)) fprintf(stderr, "owlet clobbered!\n");
+  if (!is_let(sc->owlet)) 
+    fprintf(stderr, "owlet clobbered!\n");
 #endif
   if ((unchecked_type(sc->envir) != T_LET) &&
       (sc->envir != sc->NIL))
-    sc->envir = sc->NIL;           /* this can happen! TODO: track this down! */
+    sc->envir = sc->NIL;          /* in reader, the envir frame is mostly ignored so it can be (and usually is) garbage */
+
   set_outlet(sc->owlet, sc->envir);
 
   cur_code = sc->cur_code;
@@ -46173,6 +46196,10 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
   int len;
   char *msg, *syntax_msg = NULL;
   s7_pointer pt;
+
+  if ((unchecked_type(sc->envir) != T_LET) &&
+      (sc->envir != sc->NIL))
+    sc->envir = sc->NIL;
 
   /* check *missing-close-paren-hook* */
   if (!is_null(sc->missing_close_paren_hook))
@@ -71967,7 +71994,8 @@ s7_scheme *s7_init(void)
   s7_vector_fill(sc, sc->symbol_table, sc->NIL);
   unheap(sc->symbol_table);
 
-  for (i = 0; i < NUM_TMP_STRS; i++)
+  sc->tmp_strs = (s7_pointer *)malloc(2 * sizeof(s7_pointer));
+  for (i = 0; i < 2; i++)
     {
       s7_pointer p;
       p = alloc_pointer();
@@ -73292,17 +73320,17 @@ int main(int argc, char **argv)
 #endif
 
 
-/* --------------------------------------------
+/* ----------------------------------------------------
  *
  *           12  |  13  |  14  |  15  | 16.0
  *                                           no-opt
  * s7test   1721 | 1358 |  995 | 1194 | 1122 (1117)
  * index    44.3 | 3291 | 1725 | 1276 | 1156 (1207)
  * teq           |      |      | 6612 | 2380 (2380)
- * tauto     265 |   89 |  9   |  8.4 | 2630 (2624)
+ * tauto     265 |   89 |  9   |  8.4 | 2638 (2624)
  * bench    42.7 | 8752 | 4220 | 3506 | 3230 (3474)
- * tcopy         |      |      | 13.6 | 3233 (3386)
- * tform         |      |      | 6816 | 3604 (3659)
+ * tcopy         |      |      | 13.6 | 3239 (3386)
+ * tform         |      |      | 6816 | 3627 (3659)
  * tmap          |      |      |  9.3 | 4179 (4701)
  * titer         |      |      | 7503 | 5218 (5295)
  * lg            |      |      | 6547 | 7208 (7007)!
@@ -73312,7 +73340,7 @@ int main(int argc, char **argv)
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 (43.9)
  * calls     359 |  275 | 54   | 34.7 | 37.1 (62.0)
  * 
- * --------------------------------------------
+ * ----------------------------------------------------
  *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  * cyclic-seq in stuff.scm, but current code is really clumsy 
@@ -73323,29 +73351,11 @@ int main(int argc, char **argv)
  * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds))
  *
- * temp str allocator? -- replace check_for_substring_temp and handle at higher level than the choosers
- *   (string=? (substring s1 start) ...) -> use wrapper
- *   (string=? (string-append ...)) -> use temp
- *   (string=? (string-append (string-append...)...)) use either wraps or temps, but need the entire expr?
- *      choosers are top-down? so it can handle the entire descent 
- *      then each temp/wrap choice needs a function callable from c_call? 
- *      need: string-append substring symbol->string format object->string string-up|down-case string list->string? 
- *            read-string? get-output-string number->string with-output-to-string? write-string port-filename read-line
- *            procedure-documentation help
- *        -- too many to copy 8-12 times!  
- *   to implement substring_uncopied we'd need to make sure the lack of a trailing null can't confuse anyone
- *   this is also the case for read-line.
- *   (substring str start) is ok however if no writes -- make_string_wrapper here? or a set of wrap_strs?
- *   let_copy (for owlet) currently does not copy slot_value  
- *   (string=? (substring...) str) or reverse is very common
- *   so temp func can look for gcdr ...?
- *
- * generic append: check methods I guess 
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
  * lint: char|string-pos + substring -> start/end
  *
- * (append '(1) (make-random-state 123)) -> '(1)! -- is rng a sequence? if not '(1 . <rng>), if so '(1 rng1 rng2)???
- * and (append '(1) rng 1) -> error for rng if not a sequence (length is #f)
- * s7_integer[11512]: not an integer, but boolean (5): let_length? [mock-number]
+ * generic append: check methods I guess 
+ *   (append (inlet 'a 1) 1) -> error: copy argument 1, 1, is an integer but should be a sequence
+ *   ie "copy" -> "append" and arg number is confusing
  */
 

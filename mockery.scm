@@ -444,6 +444,7 @@
 					     (error 'wrong-type-arg "copy: ~S ~S" obj args)))
 		   'char?              (lambda (obj) #t)
 		   'class-name         'mock-char
+		   'length             (lambda (obj) #f)
 		   'values             (lambda (obj . args) (obj 'value))))))
       
       (define (mock-char c) 
