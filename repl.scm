@@ -1250,6 +1250,8 @@
 
 (autoload 'lint "lint.scm")
 (autoload 'pretty-print "write.scm")
+(autoload '*libm* "libm.scm")
+(autoload '*libgsl* "libgsl.scm")
 
 #|
 (define pwd

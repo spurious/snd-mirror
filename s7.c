@@ -356,13 +356,11 @@ static int float_format_precision = WRITE_REAL_PRECISION;
   #define ptr_int_format "(c-pointer %u)"
   #ifndef WITH_OPTIMIZATION
     #define WITH_OPTIMIZATION 0
-    /* the problem here is at least partly the use in the rf functions of (real_to_double() op real_to_double()...)
-     *   if I replace those with x1=real_to_double... x1 op x2..., nearly all the NaN troubles go away.
+    /* 32-bit optimized case gets inexplicable NaNs in float-vector ops.
      *   only the rf cases are faulty, so it is possible to set this flag to 1, then make s7_rf_set_function a no-op,
      *   and comment out the 2 syntax_rp cases. 
      */
   #endif
-  /* 32-bit optimized case gets inexplicable NaNs in float-vector ops */
 #else
   #define opcode_t unsigned long long int
   #define ptr_int unsigned long long int
@@ -1203,6 +1201,7 @@ static void init_types(void)
   static s7_pointer check_ref7(s7_pointer p, const char *func, int line);
   static s7_pointer check_ref8(s7_pointer p, const char *func, int line);
   static s7_pointer check_ref9(s7_pointer p, const char *func, int line);
+  static s7_pointer check_nref(s7_pointer p, const char *func, int line);
   static void print_gc_info(s7_pointer obj, int line);
 
   static s7_pointer ecdr_1(s7_scheme *sc, s7_pointer p, int role, const char *func, int line);
@@ -1229,7 +1228,7 @@ static void init_types(void)
         fprintf(stderr, "%d: set free %p type to %x\n", __LINE__, p, f); \
       else								\
 	{								\
-	  if ((is_immutable(p)) && ((typeflag(p) != (f))))		\
+	  if (((typeflag(p) & T_IMMUTABLE) != 0) && ((typeflag(p) != (f))))						\
 	    fprintf(stderr, "%d: set immutable %p type %x to %x\n", __LINE__, p, unchecked_type(p), f); \
 	}								\
       typeflag(p) = f;							\
@@ -1278,6 +1277,7 @@ static void init_types(void)
   #define _TNum(P) check_ref7(P,                     __func__, __LINE__) /* any number (not bignums I think) */
   #define _TSeq(P) check_ref8(P,                     __func__, __LINE__) /* any sequence or structure */
   #define _TMet(P) check_ref9(P,                     __func__, __LINE__) /* anything that might contain a method */
+  #define _NFre(P) check_nref(P,                     __func__, __LINE__)
 
 #else
   #define unchecked_type(p)           ((p)->tf.type_field)
@@ -1322,6 +1322,7 @@ static void init_types(void)
   #define _TSeq(P)                    P
   #define _TMet(P)                    P
   #define _TMac(P)                    P
+  #define _NFre(P)                    P
 #endif
 
 #define is_number(P)                  t_number_p[type(P)]
@@ -1360,19 +1361,19 @@ static void init_types(void)
 #define TYPE_BITS                     8
 
 #define T_KEYWORD                     (1 << (TYPE_BITS + 0))
-#define is_keyword(p)                 ((typesflag(p) & T_KEYWORD) != 0)
+#define is_keyword(p)                 ((typesflag(_NFre(p)) & T_KEYWORD) != 0)
 /* this bit distinguishes a symbol from a symbol that is also a keyword
  * this should be ok in the 2nd byte because keywords are constants in s7 (never syntax)
  */
 
 #define T_SYNTACTIC                   (1 << (TYPE_BITS + 1))
-#define is_syntactic(p)               ((typesflag(p) & T_SYNTACTIC) != 0)
+#define is_syntactic(p)               ((typesflag(_NFre(p)) & T_SYNTACTIC) != 0)
 #define SYNTACTIC_TYPE                (unsigned short)(T_SYMBOL | T_DONT_EVAL_ARGS | T_SYNTACTIC)
 #define SYNTACTIC_PAIR                (unsigned short)(T_PAIR | T_SYNTACTIC)
 /* this marks symbols that represent syntax objects, it should be in the 2nd byte */
 
 #define T_PROCEDURE                   (1 << (TYPE_BITS + 2))
-#define is_procedure(p)               ((typesflag(p) & T_PROCEDURE) != 0)
+#define is_procedure(p)               ((typesflag(_NFre(p)) & T_PROCEDURE) != 0)
 /* closure, c_function, applicable object, goto or continuation, should be in 2nd byte */
 
 #define T_OPTIMIZED                   (1 << (TYPE_BITS + 3))
@@ -1385,7 +1386,7 @@ static void init_types(void)
  */
 
 #define T_SAFE_CLOSURE                (1 << (TYPE_BITS + 4))
-#define is_safe_closure(p)            ((typesflag(p) & T_SAFE_CLOSURE) != 0)
+#define is_safe_closure(p)            ((typesflag(_NFre(p)) & T_SAFE_CLOSURE) != 0)
 #define set_safe_closure(p)           typesflag(p) |= T_SAFE_CLOSURE
 #define clear_safe_closure(p)         typesflag(p) &= (~T_SAFE_CLOSURE)
 /* optimizer flag for a closure body that is completely simple (every expression is safe)
@@ -1395,16 +1396,16 @@ static void init_types(void)
  */
 
 #define T_DONT_EVAL_ARGS              (1 << (TYPE_BITS + 5))
-#define dont_eval_args(p)             ((typesflag(p) & T_DONT_EVAL_ARGS) != 0)
+#define dont_eval_args(p)             ((typesflag(_NFre(p)) & T_DONT_EVAL_ARGS) != 0)
 /* this marks things that don't evaluate their arguments */
 
 #define T_EXPANSION                   (1 << (TYPE_BITS + 6))
-#define is_expansion(p)               ((typesflag(p) & T_EXPANSION) != 0)
+#define is_expansion(p)               ((typesflag(_NFre(p)) & T_EXPANSION) != 0)
 #define clear_expansion(p)            typesflag(_TSym(p)) &= (~T_EXPANSION)
 /* this marks the symbol associated with a run-time macro and distinguishes the value from an ordinary macro */
 
 #define T_MULTIPLE_VALUE              (1 << (TYPE_BITS + 7))
-#define is_multiple_value(p)          ((typesflag(p) & T_MULTIPLE_VALUE) != 0)
+#define is_multiple_value(p)          ((typesflag(_NFre(p)) & T_MULTIPLE_VALUE) != 0)
 #define set_multiple_value(p)         typesflag(_TLst(p)) |= T_MULTIPLE_VALUE
 #define clear_multiple_value(p)       typesflag(_TLst(p)) &= (~T_MULTIPLE_VALUE)
 #define multiple_value(p)             p
@@ -1483,7 +1484,7 @@ static void init_types(void)
 /* optimizer flag that marks a cell whose opt_back [ie ecdr] points to the previous cell in a list */
 
 #define T_SAFE_PROCEDURE              (1 << (TYPE_BITS + 13))
-#define is_safe_procedure(p)          ((typeflag(p) & T_SAFE_PROCEDURE) != 0)
+#define is_safe_procedure(p)          ((typeflag(_NFre(p)) & T_SAFE_PROCEDURE) != 0)
 /* applicable objects that do not return or modify their arg list directly (no :rest arg in particular),
  *    and that can't call apply themselves either directly or via s7_call, and that don't mess with the stack.
  */
@@ -1512,7 +1513,7 @@ static void init_types(void)
 /* set if we know the symbol name can be printed without quotes (slashification) */
 
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 16))
-#define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
+#define is_immutable(p)               ((typeflag(_NFre(p)) & T_IMMUTABLE) != 0)
 #define set_immutable(p)              typeflag(_TSym(p)) |= T_IMMUTABLE
 /* immutable means the value can't be changed via set! or bind -- this is separate from the symbol access stuff
  * this bit can't be in the 2nd byte -- with-let, for example, is immutable, but we use SYNTACTIC_TYPE to 
@@ -1521,7 +1522,7 @@ static void init_types(void)
 
 #define T_SETTER                      (1 << (TYPE_BITS + 17))
 #define set_setter(p)                 typeflag(p) |= T_SETTER
-#define is_setter(p)                  ((typeflag(p) & T_SETTER) != 0)
+#define is_setter(p)                  ((typeflag(_NFre(p)) & T_SETTER) != 0)
 /* optimizer flag for a procedure that sets some variable (set-car! for example). */
 
 #define T_MUTABLE                     (1 << (TYPE_BITS + 18))
@@ -1571,7 +1572,7 @@ bool s7_is_stepper(s7_pointer p)      {return(is_stepper(p));}
 
 
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
-#define needs_copied_args(p)          ((typeflag(p) & T_COPY_ARGS) != 0)
+#define needs_copied_args(p)          ((typeflag(_NFre(p)) & T_COPY_ARGS) != 0)
 /* this marks something that might mess with its argument list, it should not be in the 2nd byte */
 
 #define T_GENSYM                      (1 << (TYPE_BITS + 21))
@@ -1600,7 +1601,7 @@ bool s7_is_stepper(s7_pointer p)      {return(is_stepper(p));}
 /* this marks a symbol that has documentation (bit is set on name cell) */
 
 #define T_HAS_METHODS                 (1 << (TYPE_BITS + 22))
-#define has_methods(p)                ((typeflag(p) & T_HAS_METHODS) != 0)
+#define has_methods(p)                ((typeflag(_NFre(p)) & T_HAS_METHODS) != 0)
 #define set_has_methods(p)            typeflag(_TMet(p)) |= T_HAS_METHODS
 #define clear_has_methods(p)          typeflag(_TMet(p)) &= (~T_HAS_METHODS)
 /* this marks an environment or closure that is "opened" up to generic functions etc
@@ -1848,6 +1849,7 @@ static int not_heap = -1;
 #define symbol_hmap(p)                s7_int_abs(heap_location(p))
 #define symbol_global_accessor_index(p) symbol_name_cell(p)->object.string.str_ext.accessor
 #define symbol_id(p)                  _TSym(p)->object.sym.id
+#define symbol_set_id(p, X)           _TSym(p)->object.sym.id = X
 /* we need 64-bits here, since we don't want this thing to wrap around, and frames are created at a great rate
  *    callgrind says this is faster than an unsigned int!
  */
@@ -1862,9 +1864,8 @@ static int not_heap = -1;
 #define symbol_has_help(p)            (is_documented(symbol_name_cell(p)))
 #define symbol_set_has_help(p)        set_documented(symbol_name_cell(p))
 
-#define symbol_set_local(Symbol, Id, Slot) do {local_slot(Symbol) = Slot; symbol_id(Symbol) = Id;} while (0)
+#define symbol_set_local(Symbol, Id, Slot) do {local_slot(Symbol) = Slot; symbol_set_id(Symbol, Id);} while (0)
 /* set slot before id in case Slot is an expression that tries to find the current Symbol slot (using its old Id obviously) */
-/* I think symbol_id is set only here */
 
 #define is_slot(p)                    (type(p) == T_SLOT)
 #define slot_value(p)                 (p)->object.slt.val
@@ -1972,7 +1973,7 @@ static s7_pointer let_set_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT)
 #if DEBUGGING
-#define is_output_port(p)             (unchecked_type(p) == T_OUTPUT_PORT)
+#define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
 #else
 #define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
 #endif
@@ -3256,6 +3257,7 @@ static void free_port(s7_scheme *sc, port_t *p)
   sc->port_heap = p;
 }
 
+static void close_output_port(s7_scheme *sc, s7_pointer p);
 
 static void sweep(s7_scheme *sc)
 {
@@ -3400,7 +3402,7 @@ static void sweep(s7_scheme *sc)
 	{
 	  if (is_free_and_clear(sc->output_ports[i]))
 	    {
-	      s7_close_output_port(sc, sc->output_ports[i]); /* needed for free filename, etc */
+	      close_output_port(sc, sc->output_ports[i]); /* needed for free filename, etc */
 	      free_port(sc, port_port(sc->output_ports[i]));
 	    }
 	  else sc->output_ports[j++] = sc->output_ports[i];
@@ -4587,12 +4589,15 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 #endif
       return;
 
-    case T_VECTOR:
+    case T_HASH_TABLE:
+    case T_LET:
+    case T_VECTOR: 
+      /* not int|float_vector or string because none of their elements are GC-able (so unheap below is ok)
+       *   but hash-table and let seem like they need protection? And let does happen via define-class.
+       */
       add_permanent_object(sc, x);
       return;
 
-    case T_HASH_TABLE:
-    case T_LET:
     case T_SYNTAX:
       return;
 
@@ -5771,6 +5776,11 @@ static s7_pointer g_unlet(s7_scheme *sc, s7_pointer args)
 }
 
 
+bool s7_is_openlet(s7_pointer e)
+{
+  return(has_methods(e));
+}
+
 static s7_pointer g_is_openlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_openlet "(openlet? obj) returns #t is 'obj' has methods."
@@ -5781,6 +5791,12 @@ static s7_pointer g_is_openlet(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc, has_methods(car(args))));
 }
 
+
+s7_pointer s7_openlet(s7_scheme *sc, s7_pointer e)
+{
+  set_has_methods(e);
+  return(e);
+}
 
 static s7_pointer g_openlet(s7_scheme *sc, s7_pointer args)
 {
@@ -5799,6 +5815,7 @@ static s7_pointer g_openlet(s7_scheme *sc, s7_pointer args)
     }
   return(simple_wrong_type_argument_with_type(sc, sc->OPENLET, e, A_LET));
 }
+
 
 static s7_pointer c_coverlet(s7_scheme *sc, s7_pointer e)
 {
@@ -5819,19 +5836,6 @@ static s7_pointer g_coverlet(s7_scheme *sc, s7_pointer args)
   #define H_coverlet "(coverlet e) undoes an earlier openlet."
   #define Q_coverlet pcl_t
   return(c_coverlet(sc, car(args)));
-}
-
-
-s7_pointer s7_openlet(s7_scheme *sc, s7_pointer e)
-{
-  set_has_methods(e);
-  return(e);
-}
-
-
-bool s7_is_openlet(s7_pointer e)
-{
-  return(has_methods(e));
 }
 
 
@@ -5981,7 +5985,7 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 	{
 	  if (is_slot(global_slot(sym)))
 	    {
-	      symbol_id(sym) = THE_UN_ID;
+	      symbol_set_id(sym, THE_UN_ID);
 	      slot_value(global_slot(sym)) = sc->UNDEFINED;
 	      slot_value(local_slot(sym)) = sc->UNDEFINED;
 	    }
@@ -5994,7 +5998,7 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 	      if (slot_symbol(slot) == sym)
 		{
 		  let_set_slots(e, next_slot(let_slots(e)));
-		  symbol_id(sym) = THE_UN_ID;
+		  symbol_set_id(sym, THE_UN_ID);
 		}
 	      else
 		{
@@ -6004,7 +6008,7 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 		    {
 		      if (slot_symbol(slot) == sym)
 			{
-			  symbol_id(sym) = THE_UN_ID;
+			  symbol_set_id(sym, THE_UN_ID);
 			  next_slot(last_slot) = next_slot(slot);
 			  break; /* let cutlet act as an unshadower */
 			}
@@ -7583,7 +7587,6 @@ static s7_rp_t rf_function(s7_pointer f)
     {
     case T_C_FUNCTION_STAR: case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
       return(c_function_rp(f));
-      return(NULL);
 
     case T_FLOAT_VECTOR: 
       return(implicit_float_vector_ref);
@@ -7603,7 +7606,6 @@ static s7_ip_t if_function(s7_pointer f)
     {
     case T_C_FUNCTION_STAR: case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
       return(c_function_ip(f));
-      return(NULL);
 
     case T_INT_VECTOR: 
       return(implicit_int_vector_ref);
@@ -7623,7 +7625,6 @@ static s7_pp_t pf_function(s7_pointer f)
     {
     case T_C_FUNCTION_STAR: case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
       return(c_function_pp(f));
-      return(NULL);
 
     case T_PAIR: case T_STRING: case T_VECTOR: case T_HASH_TABLE: case T_LET:
       return(implicit_pf_sequence_ref);
@@ -7640,7 +7641,6 @@ static s7_pp_t gf_function(s7_pointer f)
     {
     case T_C_FUNCTION_STAR: case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
       return(c_function_gp(f));
-      return(NULL);
 
     case T_PAIR: case T_STRING: case T_VECTOR: case T_HASH_TABLE: case T_LET: case T_C_OBJECT: case T_INT_VECTOR: case T_FLOAT_VECTOR:
       return(implicit_gf_sequence_ref);
@@ -22637,8 +22637,7 @@ IF_TO_PF(is_odd, c_is_odd)
 #endif
 
 
-/* ---------------------------------------- zero? positive? negative? ---------------------------------------- */
-
+/* ---------------------------------------- zero? ---------------------------------------- */
 static s7_pointer c_is_zero(s7_scheme *sc, s7_pointer x)
 {
   switch (type(x))
@@ -22671,6 +22670,7 @@ static s7_pointer c_is_zero_r(s7_scheme *sc, s7_double x) {return(make_boolean(s
 XF_TO_PF(is_zero, c_is_zero_i, c_is_zero_r, c_is_zero)
 
 
+/* -------------------------------- positive? -------------------------------- */
 static s7_pointer c_is_positive(s7_scheme *sc, s7_pointer x)
 {
   switch (type(x))
@@ -22701,6 +22701,7 @@ static s7_pointer c_is_positive_r(s7_scheme *sc, s7_double x) {return(make_boole
 XF_TO_PF(is_positive, c_is_positive_i, c_is_positive_r, c_is_positive)
 
 
+/* -------------------------------- negative? -------------------------------- */
 static s7_pointer c_is_negative(s7_scheme *sc, s7_pointer x)
 {
   switch (type(x))
@@ -22729,6 +22730,48 @@ static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
 static s7_pointer c_is_negative_i(s7_scheme *sc, s7_int x) {return(make_boolean(sc, x < 0));}
 static s7_pointer c_is_negative_r(s7_scheme *sc, s7_double x) {return(make_boolean(sc, x < 0.0));}
 XF_TO_PF(is_negative, c_is_negative_i, c_is_negative_r, c_is_negative)
+
+
+bool s7_is_ulong(s7_pointer arg)
+{
+  return(is_integer(arg));
+}
+
+
+unsigned long s7_ulong(s7_pointer p)
+{
+  return(p->object.number.ul_value);
+}
+
+
+s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long n)
+{
+  s7_pointer x;
+  NEW_CELL(sc, x, T_INTEGER);
+  x->object.number.ul_value = n;
+  return(x);
+}
+
+
+bool s7_is_ulong_long(s7_pointer arg)
+{
+  return(is_integer(arg));
+}
+
+
+unsigned long long s7_ulong_long(s7_pointer p)
+{
+  return(p->object.number.ull_value);
+}
+
+
+s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n)
+{
+  s7_pointer x;
+  NEW_CELL(sc, x, T_INTEGER);
+  x->object.number.ull_value = n;
+  return(x);
+}
 
 
 #if (!WITH_PURE_S7)
@@ -22801,53 +22844,10 @@ static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
       method_or_bust_with_type(sc, x, sc->IS_INEXACT, args, A_NUMBER, 0);
     }
 }
-#endif /* !WITH_PURE_S7 */
-
-bool s7_is_ulong(s7_pointer arg)
-{
-  return(is_integer(arg));
-}
-
-
-unsigned long s7_ulong(s7_pointer p)
-{
-  return(p->object.number.ul_value);
-}
-
-
-s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long n)
-{
-  s7_pointer x;
-  NEW_CELL(sc, x, T_INTEGER);
-  x->object.number.ul_value = n;
-  return(x);
-}
-
-
-bool s7_is_ulong_long(s7_pointer arg)
-{
-  return(is_integer(arg));
-}
-
-
-unsigned long long s7_ulong_long(s7_pointer p)
-{
-  return(p->object.number.ull_value);
-}
-
-
-s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n)
-{
-  s7_pointer x;
-  NEW_CELL(sc, x, T_INTEGER);
-  x->object.number.ull_value = n;
-  return(x);
-}
 
 
 /* ---------------------------------------- integer-length, integer-decode-float ---------------------------------------- */
 
-#if (!WITH_PURE_S7)
 static s7_pointer g_integer_length(s7_scheme *sc, s7_pointer args)
 {
   #define H_integer_length "(integer-length arg) returns the number of bits required to represent the integer 'arg': (ceiling (log (abs arg) 2))"
@@ -22871,7 +22871,7 @@ static s7_pointer g_integer_length(s7_scheme *sc, s7_pointer args)
 static s7_int c_integer_length(s7_scheme *sc, s7_int arg) {return((arg < 0) ? integer_length(-(arg + 1)) : integer_length(arg));}
 IF_TO_IF(integer_length, c_integer_length)
 #endif
-#endif
+#endif /* !pure s7 */
 
 
 static s7_pointer g_integer_decode_float(s7_scheme *sc, s7_pointer args)
@@ -24778,7 +24778,7 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, bool use_tem
   if (use_temp)
     {
       newstr = sc->tmp_strs[0];
-      prepare_temporary_string(sc, len, 0);
+      prepare_temporary_string(sc, len + 1, 0);
       string_length(newstr) = len;
       string_value(newstr)[len] = 0;
     }
@@ -24836,8 +24836,13 @@ static s7_pointer start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer fal
   s7_pointer pstart, pend, p;
   s7_int index;
 
+#if DEBUGGING
   if (is_null(start_and_end_args))
-    return(sc->GC_NIL);
+    {
+      fprintf(stderr, "start_and_end args is null\n");
+      return(sc->GC_NIL);
+    }
+#endif
 
   pstart = car(start_and_end_args);
   if (!s7_is_integer(pstart))
@@ -24895,9 +24900,11 @@ end: (substring \"01234\" 1 2) -> \"1\""
     method_or_bust(sc, str, sc->SUBSTRING, args, T_STRING, 1);
 
   end = string_length(str);
-  x = start_and_end(sc, sc->SUBSTRING, NULL, cdr(args), args, 2, &start, &end);
-  if (x != sc->GC_NIL) return(x);
-
+  if (!is_null(cdr(args)))
+    {
+      x = start_and_end(sc, sc->SUBSTRING, NULL, cdr(args), args, 2, &start, &end);
+      if (x != sc->GC_NIL) return(x);
+    }
   s = string_value(str);
   len = (int)(end - start);
   x = s7_make_string_with_length(sc, (char *)(s + start), len);
@@ -24917,9 +24924,11 @@ static s7_pointer g_substring_to_temp(s7_scheme *sc, s7_pointer args)
     method_or_bust(sc, str, sc->SUBSTRING, args, T_STRING, 1);
 
   end = string_length(str);
-  x = start_and_end(sc, sc->SUBSTRING, NULL, cdr(args), args, 2, &start, &end);
-  if (x != sc->GC_NIL) return(x);
-
+  if (!is_null(cdr(args)))
+    {
+      x = start_and_end(sc, sc->SUBSTRING, NULL, cdr(args), args, 2, &start, &end);
+      if (x != sc->GC_NIL) return(x);
+    }
   return(make_temporary_string(sc, (const char *)(string_value(str) + start), (int)(end - start)));
 }
 
@@ -26168,16 +26177,11 @@ static s7_pointer g_flush_output_port(s7_scheme *sc, s7_pointer args)
 static s7_pointer c_flush_output_port(s7_scheme *sc) {return(g_flush_output_port(sc, sc->NIL));}
 PF_0(flush_output_port, c_flush_output_port)
 
-void s7_close_output_port(s7_scheme *sc, s7_pointer p)
+static void close_output_port(s7_scheme *sc, s7_pointer p)
 {
-  if ((is_immutable(p)) ||
-      ((is_output_port(p)) && (port_is_closed(p))) ||
-      (p == sc->F))
-    return;
-
   if (is_file_port(p))
     {
-      if (port_filename(p)) /* only a file port has a filename */
+      if (port_filename(p)) /* only a file (output) port has a filename */
 	{
 	  free(port_filename(p));
 	  port_filename(p) = NULL;
@@ -26215,6 +26219,15 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
   port_write_string(p) = closed_port_write_string;
   port_display(p) = closed_port_display;
   port_is_closed(p) = true;
+}
+
+void s7_close_output_port(s7_scheme *sc, s7_pointer p)
+{
+  if ((is_immutable(p)) ||
+      ((is_output_port(p)) && (port_is_closed(p))) ||
+      (p == sc->F))
+    return;
+  close_output_port(sc, p);
 }
 
 
@@ -31121,6 +31134,18 @@ static s7_pointer check_ref9(s7_pointer p, const char *func, int line)
   if ((typ != T_LET) && (typ != T_C_OBJECT) && (!is_any_closure(p)) && (!is_any_macro(p)))
     {
       fprintf(stderr, "%s%s[%d]: not a possible method holder, but %s (%d)%s\n", BOLD_TEXT, func, line, check_name(typ), typ, UNBOLD_TEXT);
+      if (stop_at_error) abort();
+    }
+  return(p);
+}
+
+static s7_pointer check_nref(s7_pointer p, const char *func, int line)
+{
+  int typ;
+  typ = unchecked_type(p);
+  if (typ == T_FREE)
+    {
+      fprintf(stderr, "%s%s[%d]: attempt to use cleared type%s\n", BOLD_TEXT, func, line, UNBOLD_TEXT);
       if (stop_at_error) abort();
     }
   return(p);
@@ -73352,10 +73377,11 @@ int main(int argc, char **argv)
  * remove the #t=all sounds business! = (map f (sounds))
  *
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
- * lint: char|string-pos + substring -> start/end
+ * clm make-* sig should include the actual gen: oscil->(float? oscil? real?)
+ * for define* how to show in sig/pos the individual types? -- take in decl order and reorder if keys?
  *
  * generic append: check methods I guess 
- *   (append (inlet 'a 1) 1) -> error: copy argument 1, 1, is an integer but should be a sequence
- *   ie "copy" -> "append" and arg number is confusing
+ *   (append (inlet 'a 1) 1) -> error: copy argument 1, 1, is an integer but should be a sequence ["copy" -> "append" and arg number is confusing]
+ *   (append ((*mock-number* 'mock-number) 1) ()) got (inlet) but expected error [81405]
  */
 
