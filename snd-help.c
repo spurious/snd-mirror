@@ -3496,7 +3496,7 @@ Xen g_snd_help_with_search(Xen text, int widget_wid, bool search)
   #define H_snd_help "(" S_snd_help " :optional (arg 'snd-help) (formatted " PROC_TRUE ")): return the documentation \
 associated with its argument. " snd_help_example " for example, prints out a brief description of make-" S_vct ". \
 The argument " snd_help_arg_type ". \
-In the help descriptions, optional arguments are in parens with the default value (if any) as the 2nd entry. \
+In the help descriptions, optional arguments are in parens with the default value (if any) as the second entry. \
 A ':' as the start of the argument name marks a CLM-style optional keyword argument.  If you load index." Xen_file_extension " \
 the functions html and ? can be used in place of help to go to the HTML description, \
 and the location of the associated C code will be displayed, if it can be found. \

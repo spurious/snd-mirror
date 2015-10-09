@@ -1714,7 +1714,7 @@ mus_float_t mus_ncos(mus_any *ptr, mus_float_t fm)
    ;; Andrews Askey Roy 261 
    (let* ((num (cos (* x (+ 0.5 n))))
           (den (cos (* x 0.5)))
-          (val (/ num den)))  ; Chebyshev polynomial of the 3rd kind! (4th uses sin = our current formula)
+          (val (/ num den)))  ; Chebyshev polynomial of the third kind! (4th uses sin = our current formula)
      (/ (- (if (even? n) val (- val))
            0.5)
         (+ 1 (* n 2)))))

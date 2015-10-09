@@ -170,8 +170,8 @@ define s7cell
   end
 
   if (($type == T_HASH_TABLE) || ($is_bad_type))
-      printf "hasher:         length: %lld, elements: %p, entries: %d,\n                    hash_func: %p, eq_func: %p\n", \
-         $cell.object.hasher.length, $cell.object.hasher.elements, $cell.object.hasher.entries, $cell.object.hasher.hash_func, $cell.object.hasher.eq_func
+      printf "hasher:         mask: %lld, elements: %p, entries: %d,\n                    hash_func: %p, eq_func: %p\n", \
+         $cell.object.hasher.mask, $cell.object.hasher.elements, $cell.object.hasher.entries, $cell.object.hasher.hash_func, $cell.object.hasher.eq_func
   end
 
   if (($type == T_INPUT_PORT) || ($type == T_OUTPUT_PORT))

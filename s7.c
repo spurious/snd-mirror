@@ -359,6 +359,7 @@ static int float_format_precision = WRITE_REAL_PRECISION;
     /* 32-bit optimized case gets inexplicable NaNs in float-vector ops.
      *   only the rf cases are faulty, so it is possible to set this flag to 1, then make s7_rf_set_function a no-op,
      *   and comment out the 2 syntax_rp cases. 
+     * In standard scheme code, this does not matter much, but it makes CLM run about 3 times as fast.
      */
   #endif
 #else
@@ -527,6 +528,7 @@ typedef unsigned int (*hash_map_t)(s7_scheme *sc, s7_pointer table, s7_pointer k
 typedef hash_entry_t *(*hash_check_t)(s7_scheme *sc, s7_pointer table, s7_pointer key); /* hash-table object equality function */
 static hash_map_t *default_hash_map;
 
+
 /* cell structure */
 typedef struct s7_cell {
   union {
@@ -612,7 +614,7 @@ typedef struct s7_cell {
     } stk;
 
     struct {
-      unsigned int length, entries;
+      unsigned int mask, entries;
       hash_entry_t **elements;
       hash_check_t hash_func;
       hash_map_t *loc;
@@ -1252,7 +1254,7 @@ static void init_types(void)
   #define _TBfl(P) check_ref(P, T_BAFFLE,            __func__, __LINE__, NULL, NULL)
   #define _TGot(P) check_ref(P, T_GOTO,              __func__, __LINE__, NULL, NULL)
   #define _TStk(P) check_ref(P, T_STACK,             __func__, __LINE__, NULL, NULL)
-  #define _TLst(P) check_ref(P, T_PAIR,              __func__, __LINE__, NULL, NULL)
+  #define _TLst(P) check_ref(P, T_PAIR,              __func__, __LINE__, "gc", NULL)
   #define _TCat(P) check_ref(P, T_CATCH,             __func__, __LINE__, NULL, NULL)
   #define _TDyn(P) check_ref(P, T_DYNAMIC_WIND,      __func__, __LINE__, NULL, NULL)
   #define _TSlt(P) check_ref2(P, T_SLOT, T_PAIR,     __func__, __LINE__, NULL, NULL)
@@ -1355,7 +1357,7 @@ static void init_types(void)
 /* this misses #() which actually is not applicable to anything, probably "" also, and inapplicable c-objects like random-state */
 
 
-/* the layout of these bits does matter in several cases -- in particular, don't use the 2nd byte for anything
+/* the layout of these bits does matter in several cases -- in particular, don't use the second byte for anything
  *   that might shadow SYNTACTIC_PAIR and OPTIMIZED_PAIR.
  */
 #define TYPE_BITS                     8
@@ -1363,18 +1365,18 @@ static void init_types(void)
 #define T_KEYWORD                     (1 << (TYPE_BITS + 0))
 #define is_keyword(p)                 ((typesflag(_NFre(p)) & T_KEYWORD) != 0)
 /* this bit distinguishes a symbol from a symbol that is also a keyword
- * this should be ok in the 2nd byte because keywords are constants in s7 (never syntax)
+ * this should be ok in the second byte because keywords are constants in s7 (never syntax)
  */
 
 #define T_SYNTACTIC                   (1 << (TYPE_BITS + 1))
 #define is_syntactic(p)               ((typesflag(_NFre(p)) & T_SYNTACTIC) != 0)
 #define SYNTACTIC_TYPE                (unsigned short)(T_SYMBOL | T_DONT_EVAL_ARGS | T_SYNTACTIC)
 #define SYNTACTIC_PAIR                (unsigned short)(T_PAIR | T_SYNTACTIC)
-/* this marks symbols that represent syntax objects, it should be in the 2nd byte */
+/* this marks symbols that represent syntax objects, it should be in the second byte */
 
 #define T_PROCEDURE                   (1 << (TYPE_BITS + 2))
 #define is_procedure(p)               ((typesflag(_NFre(p)) & T_PROCEDURE) != 0)
-/* closure, c_function, applicable object, goto or continuation, should be in 2nd byte */
+/* closure, c_function, applicable object, goto or continuation, should be in second byte */
 
 #define T_OPTIMIZED                   (1 << (TYPE_BITS + 3))
 #define set_optimized(p)              typesflag(_TLst(p)) |= T_OPTIMIZED
@@ -1382,7 +1384,7 @@ static void init_types(void)
 #define OPTIMIZED_PAIR                (unsigned short)(T_PAIR | T_OPTIMIZED)
 #define is_optimized(p)               (typesflag(p) == OPTIMIZED_PAIR)
 /*   this is faster than the bit extraction above and the same speed as xor */
-/* optimizer flag for an expression that has optimization info, it should be in the 2nd byte
+/* optimizer flag for an expression that has optimization info, it should be in the second byte
  */
 
 #define T_SAFE_CLOSURE                (1 << (TYPE_BITS + 4))
@@ -1391,7 +1393,7 @@ static void init_types(void)
 #define clear_safe_closure(p)         typesflag(p) &= (~T_SAFE_CLOSURE)
 /* optimizer flag for a closure body that is completely simple (every expression is safe)
  *   set_safe_closure happens only in optimize_lambda, clear only in procedure_source, bits only here
- *   this has to be separate from T_SAFE_PROCEDURE, and should be in the 2nd byte.
+ *   this has to be separate from T_SAFE_PROCEDURE, and should be in the second byte.
  *   It can be set on either the body (a pair) or the closure itself.
  */
 
@@ -1516,12 +1518,12 @@ static void init_types(void)
 #define is_immutable(p)               ((typeflag(_NFre(p)) & T_IMMUTABLE) != 0)
 #define set_immutable(p)              typeflag(_TSym(p)) |= T_IMMUTABLE
 /* immutable means the value can't be changed via set! or bind -- this is separate from the symbol access stuff
- * this bit can't be in the 2nd byte -- with-let, for example, is immutable, but we use SYNTACTIC_TYPE to 
+ * this bit can't be in the second byte -- with-let, for example, is immutable, but we use SYNTACTIC_TYPE to 
  * recognize syntax in do loop optimizations.
  */
 
 #define T_SETTER                      (1 << (TYPE_BITS + 17))
-#define set_setter(p)                 typeflag(p) |= T_SETTER
+#define set_setter(p)                 typeflag(_NFre(p)) |= T_SETTER
 #define is_setter(p)                  ((typeflag(_NFre(p)) & T_SETTER) != 0)
 /* optimizer flag for a procedure that sets some variable (set-car! for example). */
 
@@ -1573,7 +1575,7 @@ bool s7_is_stepper(s7_pointer p)      {return(is_stepper(p));}
 
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define needs_copied_args(p)          ((typeflag(_NFre(p)) & T_COPY_ARGS) != 0)
-/* this marks something that might mess with its argument list, it should not be in the 2nd byte */
+/* this marks something that might mess with its argument list, it should not be in the second byte */
 
 #define T_GENSYM                      (1 << (TYPE_BITS + 21))
 #define is_gensym(p)                  ((typeflag(_TSym(p)) & T_GENSYM) != 0)
@@ -1610,7 +1612,7 @@ bool s7_is_stepper(s7_pointer p)      {return(is_stepper(p));}
 
 #define T_GC_MARK                     0x80000000            /* (1 << (TYPE_BITS + 23)) but that makes gcc unhappy */
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
-#define set_mark(p)                   typeflag(p) |= T_GC_MARK
+#define set_mark(p)                   typeflag(_NFre(p)) |= T_GC_MARK
 #define clear_mark(p)                 typeflag(p) &= (~T_GC_MARK)
 /* using bit 23 for this makes a big difference in the GC */
 
@@ -1638,130 +1640,166 @@ static int not_heap = -1;
 
 
 #if (!DEBUGGING)
-  #define ecdr(p, r)                  ((p)->object.cons.ecdr)
-  #define set_ecdr(p, x, r)           (p)->object.cons.ecdr = x
-  #define fcdr(p, r)                  ((p)->object.cons.fcdr)
-  #define set_fcdr(p, x, r)           (p)->object.cons.fcdr = (s7_pointer)(x)
-  #define gcdr(p, r)                  ((p)->object.cons.gcdr)
-  #define set_gcdr(p, x, r)           do {(p)->object.cons.gcdr = x; typeflag(p) &= ~(T_OPTIMIZED | T_LINE_NUMBER);} while (0)
+
+#define ecdr(p, r)                    ((p)->object.cons.ecdr)
+#define set_ecdr(p, x, r)             (p)->object.cons.ecdr = x
+#define fcdr(p, r)                    ((p)->object.cons.fcdr)
+#define set_fcdr(p, x, r)             (p)->object.cons.fcdr = (s7_pointer)(x)
+#define gcdr(p, r)                    ((p)->object.cons.gcdr)
+#define set_gcdr(p, x, r)             do {(p)->object.cons.gcdr = x; typeflag(p) &= ~(T_OPTIMIZED | T_LINE_NUMBER);} while (0)
+
+#define pair_line(p)                 (p)->object.sym_cons.line
+#define pair_set_line(p, X)          (p)->object.sym_cons.line = X
+#define pair_raw_hash(p)             (p)->object.sym_cons.hash
+#define pair_set_raw_hash(p, X)      (p)->object.sym_cons.hash = X
+#define pair_raw_len(p)              (p)->object.sym_cons.op
+#define pair_set_raw_len(p, X)       (p)->object.sym_cons.op = X
+#define pair_raw_name(p)             (p)->object.sym_cons.fstr
+#define pair_set_raw_name(p, X)      (p)->object.sym_cons.fstr = X
+
+/* ecdr == raw_hash, fcdr == raw_name, gcdr == line+op|len, but hash/name/len only apply to
+ *   the symbol table so there's no collision.
+ */
+
 #else
 
-/* these 3 fields hold most of the varigated optimizer info, so they are used in many conflicting ways.
+/* these 3 fields (or 8 counting sym_cons) hold most of the varigated optimizer info, so they are used in many conflicting ways.
  * the bits and funcs here try to track each such use, and report any cross-talk or collisions.
  * all of this machinery vanishes if debugging is turned off.
  */
 
-#define T_ECDR_SET                    (1 << 0)
-#define R_ECDR_FAST                   (1 << 8)   /* fast list in member/assoc circular list check */
-#define R_ECDR_CFUNC                  (1 << 9)   /* c-function */
-#define R_ECDR_CLAUSE                 (1 << 10)  /* case clause */
-#define R_ECDR_BACK                   (1 << 11)  /* back pointer for doubly-linked list */
-#define R_ECDR_LAMBDA                 (1 << 12)  /* lambda(*) */
-#define R_ECDR_SYM                    (1 << 13)
-#define R_ECDR_PAIR                   (1 << 14)
-#define R_ECDR_CON                    (1 << 15)
-#define R_ECDR_GOTO                   (1 << 16)
-#define R_ECDR_VECTOR                 (1 << 17)
-#define R_ECDR_ANY                    (1 << 18)
-#define R_ECDR_SLOT                   (1 << 19)
-#define R_ECDR_MASK                   (R_ECDR_FAST | R_ECDR_CFUNC | R_ECDR_CLAUSE | R_ECDR_BACK | R_ECDR_LAMBDA | R_ECDR_SYM | R_ECDR_PAIR | R_ECDR_CON | R_ECDR_GOTO | R_ECDR_VECTOR | R_ECDR_ANY | R_ECDR_SLOT)
+#define E_SET                         (1 << 0)
+#define E_FAST                        (1 << 6)   /* fast list in member/assoc circular list check */
+#define E_CFUNC                       (1 << 7)   /* c-function */
+#define E_CLAUSE                      (1 << 8)  /* case clause */
+#define E_BACK                        (1 << 9)  /* back pointer for doubly-linked list */
+#define E_LAMBDA                      (1 << 10)  /* lambda(*) */
+#define E_SYM                         (1 << 11)
+#define E_PAIR                        (1 << 12)
+#define E_CON                         (1 << 13)
+#define E_GOTO                        (1 << 14)
+#define E_VECTOR                      (1 << 15)
+#define E_ANY                         (1 << 16)
+#define E_SLOT                        (1 << 17)
+#define E_MASK                        (E_FAST | E_CFUNC | E_CLAUSE | E_BACK | E_LAMBDA | E_SYM | E_PAIR | E_CON | E_GOTO | E_VECTOR | E_ANY | E_SLOT)
 
-#define ecdr_is_set(p)                (((p)->debugger_bits & T_ECDR_SET) != 0)
-#define set_ecdr_is_set(p)            (p)->debugger_bits |= T_ECDR_SET
-#define ecdr_role_matches(p, Role)    (((p)->debugger_bits & R_ECDR_MASK) == Role)
-#define set_ecdr_role(p, Role)        (p)->debugger_bits = (Role | (p->debugger_bits & ~R_ECDR_MASK))
-#define ecdr(p, Role)                 ecdr_1(hidden_sc, _TCdr(p), Role, __func__, __LINE__)
-#define set_ecdr(p, x, Role)          set_ecdr_1(hidden_sc, _TCdr(p), x, Role, __func__, __LINE__)
+#define ecdr_is_set(p)                (((p)->debugger_bits & E_SET) != 0)
+#define set_ecdr_is_set(p)            (p)->debugger_bits |= E_SET
+#define ecdr_role_matches(p, Role)    (((p)->debugger_bits & E_MASK) == Role)
+#define set_ecdr_role(p, Role)        (p)->debugger_bits = (Role | (p->debugger_bits & ~E_MASK))
+#define ecdr(p, Role)                 ecdr_1(hidden_sc, _TLst(p), Role, __func__, __LINE__)
+#define set_ecdr(p, x, Role)          set_ecdr_1(hidden_sc, _TLst(p), x, Role, __func__, __LINE__)
 
-#define T_FCDR_SET                    (1 << 1)
-#define R_FCDR_C_CALL                 (1 << 6)  /* c_function invocation */
-#define R_FCDR_KEY                    (1 << 7)  /* case key */
-#define R_FCDR_SLOW                   (1 << 8)  /* slow list in member/assoc circular list check */
-#define R_FCDR_SYM                    (1 << 23)
-#define R_FCDR_PAIR                   (1 << 24)
-#define R_FCDR_CON                    (1 << 25)
-#define R_FCDR_ANY                    (1 << 26)
-#define R_FCDR_CALL                   (1 << 27)
-#define R_FCDR_LAMBDA                 (1 << 28)
-#define R_FCDR_MASK                   (R_FCDR_C_CALL | R_FCDR_KEY | R_FCDR_SLOW | R_FCDR_SYM | R_FCDR_PAIR | R_FCDR_CON | R_FCDR_ANY | R_FCDR_CALL | R_FCDR_LAMBDA)
+#define F_SET                         (1 << 1)
+#define F_C_CALL                      (1 << 18)  /* c_function invocation */
+#define F_KEY                         (1 << 19)  /* case key */
+#define F_SLOW                        (1 << 20)  /* slow list in member/assoc circular list check */
+#define F_SYM                         (1 << 21)
+#define F_PAIR                        (1 << 22)
+#define F_CON                         (1 << 23)
+#define F_CALL                        (1 << 24)
+#define F_LAMBDA                      (1 << 25)
+#define F_MASK                        (F_C_CALL | F_KEY | F_SLOW | F_SYM | F_PAIR | F_CON | F_CALL | F_LAMBDA)
 
-#define fcdr_is_set(p)                (((p)->debugger_bits & T_FCDR_SET) != 0)
-#define set_fcdr_is_set(p)            (p)->debugger_bits |= T_FCDR_SET
-#define fcdr_role_matches(p, Role)    (((p)->debugger_bits & R_FCDR_MASK) == Role)
-#define set_fcdr_role(p, Role)        (p)->debugger_bits = (Role | (p->debugger_bits & ~R_FCDR_MASK))
-#define fcdr(p, Role)                 fcdr_1(hidden_sc, _TCdr(p), Role, __func__, __LINE__)
-#define set_fcdr(p, x, Role)          set_fcdr_1(hidden_sc, _TCdr(p), (s7_pointer)x, Role, __func__, __LINE__)
+#define fcdr_is_set(p)                (((p)->debugger_bits & F_SET) != 0)
+#define set_fcdr_is_set(p)            (p)->debugger_bits |= F_SET
+#define fcdr_role_matches(p, Role)    (((p)->debugger_bits & F_MASK) == Role)
+#define set_fcdr_role(p, Role)        (p)->debugger_bits = (Role | (p->debugger_bits & ~F_MASK))
+#define fcdr(p, Role)                 fcdr_1(hidden_sc, _TLst(p), Role, __func__, __LINE__)
+#define set_fcdr(p, x, Role)          set_fcdr_1(hidden_sc, _TLst(p), (s7_pointer)x, Role, __func__, __LINE__)
 
 /* gcdr collides with optimization and line number stuff (T_LINE_NUMBER, T_OPTIMIZED) */
-#define T_GCDR_SET                    (1 << 2)
-#define R_GCDR_ARGLEN                 (1 << 3)  /* arglist length */
-#define R_GCDR_SYM                    (1 << 4)  /* expression symbol access */
-#define R_GCDR_AND                    (1 << 5)  /* and second clause */
-#define R_GCDR_MASK                   (R_GCDR_ARGLEN | R_GCDR_SYM | R_GCDR_AND)
+#define G_SET                         (1 << 2)
+#define G_ARGLEN                      (1 << 3)  /* arglist length */
+#define G_SYM                         (1 << 4)  /* expression symbol access */
+#define G_AND                         (1 << 5)  /* and second clause */
+#define G_MASK                        (G_ARGLEN | G_SYM | G_AND)
 
-#define gcdr_is_set(p)                (((p)->debugger_bits & T_GCDR_SET) != 0)
-#define set_gcdr_is_set(p)            (p)->debugger_bits |= T_GCDR_SET
-#define gcdr_role_matches(p, Role)    (((p)->debugger_bits & R_GCDR_MASK) == Role)
+#define gcdr_is_set(p)                (((p)->debugger_bits & G_SET) != 0)
+#define set_gcdr_is_set(p)            (p)->debugger_bits |= G_SET
+#define gcdr_role_matches(p, Role)    (((p)->debugger_bits & G_MASK) == Role)
 #define set_gcdr_role(p, Role)        (p)->debugger_bits |= Role
-#define gcdr(p, Role)                 gcdr_1(hidden_sc, _TCdr(p), Role, __func__, __LINE__)
-#define set_gcdr(p, x, Role)          set_gcdr_1(hidden_sc, _TCdr(p), x, Role, __func__, __LINE__)
+#define gcdr(p, Role)                 gcdr_1(hidden_sc, _TLst(p), Role, __func__, __LINE__)
+#define set_gcdr(p, x, Role)          set_gcdr_1(hidden_sc, _TLst(p), x, Role, __func__, __LINE__)
+
+/* ecdr == s_hash, fcdr == s_fstr, gcdr == s_op|len|line and op==len so they are contradictory 
+ *   need s_hash as ecdr op? s_fstr as fcdr op?
+ *   how to handle s_op/s_len? S_OP|S_LEN as "role". currently T_LINE_NUMBER is on if line
+ *   but each of these ecdr_1 - like funcs needs to return the correct type! -- 5?
+ *
+ * hash: return unsigned long long int, set E_SET and S_HASH check for collision with normal ecdr
+ * name: const char* set F_SET and S_NAME
+ * line|len|op: unsigned int set G_SET and S_* if S_LEN -> not op and vice versa
+ */
+#define S_NAME                        (1 << 26)
+#define S_HASH                        (1 << 27)
+#define S_OP                          (1 << 28)
+#define S_LINE                        (1 << 29)
+#define S_LEN                         (1 << 30)
+
+#define pair_line(p)                  (p)->object.sym_cons.line
+#define pair_set_line(p, X)           (p)->object.sym_cons.line = X
+#define pair_raw_hash(p)         (p)->object.sym_cons.hash
+#define pair_set_raw_hash(p, X)  (p)->object.sym_cons.hash = X
+#define pair_raw_len(p)          (p)->object.sym_cons.op
+#define pair_set_raw_len(p, X)   (p)->object.sym_cons.op = X
+#define pair_raw_name(p)         (p)->object.sym_cons.fstr
+#define pair_set_raw_name(p, X)  (p)->object.sym_cons.fstr = X
 #endif
 
-#define opt_fast(P)                   _TCdr(ecdr(P,              R_ECDR_FAST))
-#define set_opt_fast(P, X)            set_ecdr(P, _TLst(X),      R_ECDR_FAST)
-#define opt_back(P)                   _TLst(ecdr(P,              R_ECDR_BACK))
-#define set_opt_back(P)               set_ecdr(cdr(P), _TLst(P), R_ECDR_BACK)
+#define opt_fast(P)                   _TCdr(ecdr(P,              E_FAST))
+#define set_opt_fast(P, X)            set_ecdr(P, _TLst(X),      E_FAST)
+#define opt_back(P)                   _TLst(ecdr(P,              E_BACK))
+#define set_opt_back(P)               set_ecdr(cdr(P), _TLst(P), E_BACK)
 #define has_opt_back(P)               (cdr(opt_back(P)) == P )
-#define opt_cfunc(P)                  ecdr(P,                    R_ECDR_CFUNC)
-#define set_opt_cfunc(P, X)           set_ecdr(P, X,             R_ECDR_CFUNC)
-#define opt_lambda(P)                 ecdr(P,                    R_ECDR_LAMBDA)
-#define set_opt_lambda(P, X)          set_ecdr(P, X,             R_ECDR_LAMBDA)
-#define opt_goto(P)                   _TGot(ecdr(P,              R_ECDR_GOTO))
-#define set_opt_goto(P, X)            set_ecdr(P, _TGot(X),      R_ECDR_GOTO)
-#define opt_vector(P)                 _TVec(ecdr(P,              R_ECDR_VECTOR))
-#define set_opt_vector(P, X)          set_ecdr(P, _TVec(X),      R_ECDR_VECTOR)
-#define opt_clause(P)                 ecdr(P,                    R_ECDR_CLAUSE)
-#define set_opt_clause(P, X)          set_ecdr(P, X,             R_ECDR_CLAUSE)
-#define opt_sym1(P)                   _TSym(ecdr(P,              R_ECDR_SYM))
-#define set_opt_sym1(P, X)            set_ecdr(P, _TSym(X),      R_ECDR_SYM)
-#define opt_pair1(P)                  _TCdr(ecdr(P,              R_ECDR_PAIR))
-#define set_opt_pair1(P, X)           set_ecdr(P, _TCdr(X),      R_ECDR_PAIR)
-#define opt_con1(P)                   ecdr(P,                    R_ECDR_CON)
-#define set_opt_con1(P, X)            set_ecdr(P, X,             R_ECDR_CON)
-#define opt_any1(P)                   ecdr(P,                    R_ECDR_ANY)
-#define opt_slot1(P)                  _TSlt(ecdr(P,              R_ECDR_SLOT))
-#define set_opt_slot1(P, X)           set_ecdr(P, _TSlt(X),      R_ECDR_SLOT)
+#define opt_cfunc(P)                  ecdr(P,                    E_CFUNC)
+#define set_opt_cfunc(P, X)           set_ecdr(P, X,             E_CFUNC)
+#define opt_lambda(P)                 _TClo(ecdr(P,              E_LAMBDA))
+#define set_opt_lambda(P, X)          set_ecdr(P, X,             E_LAMBDA)
+#define opt_goto(P)                   _TGot(ecdr(P,              E_GOTO))
+#define set_opt_goto(P, X)            set_ecdr(P, _TGot(X),      E_GOTO)
+#define opt_vector(P)                 _TVec(ecdr(P,              E_VECTOR))
+#define set_opt_vector(P, X)          set_ecdr(P, _TVec(X),      E_VECTOR)
+#define opt_clause(P)                 ecdr(P,                    E_CLAUSE)
+#define set_opt_clause(P, X)          set_ecdr(P, X,             E_CLAUSE)
+#define opt_sym1(P)                   _TSym(ecdr(P,              E_SYM))
+#define set_opt_sym1(P, X)            set_ecdr(P, _TSym(X),      E_SYM)
+#define opt_pair1(P)                  _TCdr(ecdr(P,              E_PAIR))
+#define set_opt_pair1(P, X)           set_ecdr(P, _TCdr(X),      E_PAIR)
+#define opt_con1(P)                   ecdr(P,                    E_CON)
+#define set_opt_con1(P, X)            set_ecdr(P, X,             E_CON)
+#define opt_any1(P)                   ecdr(P,                    E_ANY)
+#define opt_slot1(P)                  _TSlt(ecdr(P,              E_SLOT))
+#define set_opt_slot1(P, X)           set_ecdr(P, _TSlt(X),      E_SLOT)
 
-#define c_callee(f)                   ((s7_function)fcdr(f,      R_FCDR_CALL))
-#define c_call(f)                     ((s7_function)fcdr(f,      R_FCDR_CALL))
-#define set_c_call(f, X)              set_fcdr(f, (s7_pointer)X, R_FCDR_CALL)
-#define opt_key(P)                    fcdr(P,                    R_FCDR_KEY)
-#define set_opt_key(P, X)             set_fcdr(P, X,             R_FCDR_KEY)
-#define opt_slow(P)                   _TCdr(fcdr(P,              R_FCDR_SLOW))
-#define set_opt_slow(P, X)            set_fcdr(P, _TLst(X),      R_FCDR_SLOW)
-#define opt_sym2(P)                   _TSym(fcdr(P,              R_FCDR_SYM))
-#define set_opt_sym2(P, X)            set_fcdr(P, _TSym(X),      R_FCDR_SYM)
-#define opt_pair2(P)                  _TCdr(fcdr(P,              R_FCDR_PAIR))
-#define set_opt_pair2(P, X)           set_fcdr(P, _TCdr(X),      R_FCDR_PAIR)
-#define opt_con2(P)                   fcdr(P,                    R_FCDR_CON)
-#define set_opt_con2(P, X)            set_fcdr(P, X,             R_FCDR_CON)
-#define opt_lambda2(P)                _TLst(fcdr(P,              R_FCDR_LAMBDA))
-#define set_opt_lambda2(P, X)         set_fcdr(P, _TLst(X),      R_FCDR_LAMBDA)
-#define opt_any2(P)                   fcdr(P,                    R_FCDR_ANY)
-#define set_opt_any2(P, X)            set_fcdr(P, X,             R_FCDR_ANY)
+#define c_callee(f)                   ((s7_function)fcdr(f,      F_CALL))
+#define c_call(f)                     ((s7_function)fcdr(f,      F_CALL))
+#define set_c_call(f, X)              set_fcdr(f, (s7_pointer)X, F_CALL)
+#define opt_key(P)                    fcdr(P,                    F_KEY)
+#define set_opt_key(P, X)             set_fcdr(P, X,             F_KEY)
+#define opt_slow(P)                   _TCdr(fcdr(P,              F_SLOW))
+#define set_opt_slow(P, X)            set_fcdr(P, _TLst(X),      F_SLOW)
+#define opt_sym2(P)                   _TSym(fcdr(P,              F_SYM))
+#define set_opt_sym2(P, X)            set_fcdr(P, _TSym(X),      F_SYM)
+#define opt_pair2(P)                  _TCdr(fcdr(P,              F_PAIR))
+#define set_opt_pair2(P, X)           set_fcdr(P, _TCdr(X),      F_PAIR)
+#define opt_con2(P)                   fcdr(P,                    F_CON)
+#define set_opt_con2(P, X)            set_fcdr(P, X,             F_CON)
+#define opt_lambda2(P)                _TLst(fcdr(P,              F_LAMBDA))
+#define set_opt_lambda2(P, X)         set_fcdr(P, _TLst(X),      F_LAMBDA)
 
-#define arglist_length(P)             _TI(gcdr(cdr(P),           R_GCDR_ARGLEN))
-#define set_arglist_length(P, X)      set_gcdr(cdr(P), _TI(X),   R_GCDR_ARGLEN)
-#define opt_sym3(P)                   _TSym(gcdr(P,              R_GCDR_SYM))
-#define set_opt_sym3(P, X)            set_gcdr(P, _TSym(X),      R_GCDR_SYM)
-#define opt_and_2_test(P)             _TLst(gcdr(P,              R_GCDR_AND))
-#define set_opt_and_2_test(P, X)      set_gcdr(P, _TLst(X),      R_GCDR_AND)
+#define arglist_length(P)             _TI(gcdr(cdr(P),           G_ARGLEN))
+#define set_arglist_length(P, X)      set_gcdr(cdr(P), _TI(X),   G_ARGLEN)
+#define opt_sym3(P)                   _TSym(gcdr(P,              G_SYM))
+#define set_opt_sym3(P, X)            set_gcdr(P, _TSym(X),      G_SYM)
+#define opt_and_2_test(P)             _TLst(gcdr(P,              G_AND))
+#define set_opt_and_2_test(P, X)      set_gcdr(P, _TLst(X),      G_AND)
 
 
-#define car(p)                        (_TCdr(p)->object.cons.car)
-#define cdr(p)                        (_TCdr(p)->object.cons.cdr)
-#define unchecked_car(p)              (p)->object.cons.car
-#define unchecked_cdr(p)              (p)->object.cons.cdr
+#define car(p)                        _TCdr(p)->object.cons.car
+#define cdr(p)                        _TCdr(p)->object.cons.cdr
+#define unchecked_car(p)              _NFre(p)->object.cons.car
+#define unchecked_cdr(p)              _NFre(p)->object.cons.cdr
 
 #define caar(p)                       car(car(p))
 #define cadr(p)                       car(cdr(p))
@@ -1805,11 +1843,6 @@ static int not_heap = -1;
 #define list_2(Sc, A, B)              cons_unchecked(Sc, A, cons(Sc, B, sc->NIL))
 #define list_3(Sc, A, B, C)           cons_unchecked(Sc, A, cons_unchecked(Sc, B, cons(Sc, C, sc->NIL)))
 #define list_4(Sc, A, B, C, D)        cons_unchecked(Sc, A, cons_unchecked(Sc, B, cons_unchecked(Sc, C, cons(Sc, D, sc->NIL))))
-
-#define pair_line_number(p)           _TLst(p)->object.sym_cons.line
-#define pair_raw_hash(p)              _TLst(p)->object.sym_cons.hash
-#define pair_raw_len(p)               _TLst(p)->object.sym_cons.op
-#define pair_raw_name(p)              _TLst(p)->object.sym_cons.fstr
 
 #define is_string(p)                  (type(p) == T_STRING)
 #define string_value(p)               _TStr(p)->object.string.svalue
@@ -1945,7 +1978,7 @@ static s7_pointer let_set_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define vector_dimensions_allocated(p) (_TVec(p)->object.vector.dim_info->dimensions_allocated)
 
 #define is_hash_table(p)              (type(p) == T_HASH_TABLE)
-#define hash_table_length(p)          _THsh(p)->object.hasher.length
+#define hash_table_mask(p)            _THsh(p)->object.hasher.mask
 #define hash_table_element(p, i)      (_THsh(p)->object.hasher.elements[i])
 #define hash_table_elements(p)        _THsh(p)->object.hasher.elements
 #define hash_table_entries(p)         _THsh(p)->object.hasher.entries
@@ -3357,7 +3390,7 @@ static void sweep(s7_scheme *sc)
 	{
 	  if (is_free_and_clear(sc->hash_tables[i]))
 	    {
-	      if (hash_table_length(sc->hash_tables[i]) > 0)
+	      if (hash_table_mask(sc->hash_tables[i]) > 0)
 		free_hash_table(sc->hash_tables[i]);
 	    }
 	  else sc->hash_tables[j++] = sc->hash_tables[i];
@@ -3903,10 +3936,11 @@ static void mark_hash_table(s7_pointer p)
   S7_MARK(hash_table_procedures(p));
   if (hash_table_entries(p) > 0)
     {
-      unsigned int i;
+      unsigned int i, len;
       hash_entry_t **entries;
       entries = hash_table_elements(p);
-      for (i = 0; i < hash_table_length(p); i++)
+      len = hash_table_mask(p) + 1;
+      for (i = 0; i < len; i++)
 	{
 	  hash_entry_t *xp;
 	  for (xp = entries[i++]; xp; xp = xp->next)
@@ -4893,9 +4927,9 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
   car(p) = x;
   cdr(p) = vector_element(sc->symbol_table, location);
   vector_element(sc->symbol_table, location) = p;
-  pair_raw_hash(p) = hash;
-  pair_raw_len(p) = len;
-  pair_raw_name(p) = string_value(str);
+  pair_set_raw_hash(p, hash);
+  pair_set_raw_len(p, len);
+  pair_set_raw_name(p, string_value(str));
   return(x);
 }
 
@@ -5185,9 +5219,9 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   car(stc) = x;
   cdr(stc) = vector_element(sc->symbol_table, location);
   vector_element(sc->symbol_table, location) = stc;
-  pair_raw_hash(stc) = hash;
-  pair_raw_len(stc) = string_length(str);
-  pair_raw_name(stc) = string_value(str);
+  pair_set_raw_hash(stc, hash);
+  pair_set_raw_len(stc, string_length(str));
+  pair_set_raw_name(stc, string_value(str));
 
   add_gensym(sc, x);
   return(x);
@@ -5485,21 +5519,6 @@ static s7_pointer permanent_slot(s7_pointer symbol, s7_pointer value)
 }
 
 
-bool s7_is_let(s7_pointer e)
-{
-  return(is_let(e));
-}
-
-
-static s7_pointer g_is_let(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_let "(let? obj) returns #t if obj is a let (an environment)."
-  #define Q_is_let pl_bt
-
-  check_boolean_method(sc, is_let, sc->IS_LET, args);
-}
-
-
 static s7_pointer find_let(s7_scheme *sc, s7_pointer obj)
 {
   if (is_let(obj)) return(obj);
@@ -5679,8 +5698,22 @@ static s7_pointer make_slot(s7_scheme *sc, s7_pointer variable, s7_pointer value
 }
 
 
-/* -------- unlet -------- */
+/* -------------------------------- let? -------------------------------- */
+bool s7_is_let(s7_pointer e)
+{
+  return(is_let(e));
+}
 
+static s7_pointer g_is_let(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_let "(let? obj) returns #t if obj is a let (an environment)."
+  #define Q_is_let pl_bt
+
+  check_boolean_method(sc, is_let, sc->IS_LET, args);
+}
+
+
+/* -------------------------------- unlet -------------------------------- */
 #define UNLET_ENTRIES 400
 
 static void save_unlet(s7_scheme *sc)
@@ -5720,7 +5753,6 @@ static void save_unlet(s7_scheme *sc)
 	  }
       }
 }
-
 
 static s7_pointer g_unlet(s7_scheme *sc, s7_pointer args)
 {
@@ -5776,6 +5808,7 @@ static s7_pointer g_unlet(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* -------------------------------- openlet? -------------------------------- */
 bool s7_is_openlet(s7_pointer e)
 {
   return(has_methods(e));
@@ -5792,6 +5825,7 @@ static s7_pointer g_is_openlet(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* -------------------------------- openlet -------------------------------- */
 s7_pointer s7_openlet(s7_scheme *sc, s7_pointer e)
 {
   set_has_methods(e);
@@ -5817,6 +5851,7 @@ static s7_pointer g_openlet(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* -------------------------------- coverlet -------------------------------- */
 static s7_pointer c_coverlet(s7_scheme *sc, s7_pointer e)
 {
   sc->temp3 = e;
@@ -5839,6 +5874,7 @@ static s7_pointer g_coverlet(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* -------------------------------- varlet -------------------------------- */
 static void append_let(s7_scheme *sc, s7_pointer new_e, s7_pointer old_e)
 {
   s7_pointer x;
@@ -5865,7 +5901,6 @@ static void append_let(s7_scheme *sc, s7_pointer new_e, s7_pointer old_e)
     }
 }
 
-
 static s7_pointer check_c_obj_env(s7_scheme *sc, s7_pointer old_e, s7_pointer caller)
 {
   if (is_c_object(old_e))
@@ -5874,7 +5909,6 @@ static s7_pointer check_c_obj_env(s7_scheme *sc, s7_pointer old_e, s7_pointer ca
     return(simple_wrong_type_argument_with_type(sc, caller, old_e, A_LET));
   return(old_e);
 }
-
 
 static s7_pointer g_varlet(s7_scheme *sc, s7_pointer args)
 {
@@ -5955,6 +5989,7 @@ to the environment env, and returns the environment."
 }
 
 
+/* -------------------------------- cutlet -------------------------------- */
 static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_cutlet "(cutlet e symbol ...) removes symbols from the environment e."
@@ -6021,6 +6056,7 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* -------------------------------- sublet -------------------------------- */
 static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_pointer caller)
 {
   s7_pointer new_e;
@@ -6085,12 +6121,10 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
   return(new_e);
 }
 
-
 s7_pointer s7_sublet(s7_scheme *sc, s7_pointer e, s7_pointer bindings)
 {
   return(sublet_1(sc, e, bindings, sc->SUBLET));
 }
-
 
 static s7_pointer g_sublet(s7_scheme *sc, s7_pointer args)
 {
@@ -6114,6 +6148,7 @@ new environment."
 }
 
 
+/* -------------------------------- inlet -------------------------------- */
 s7_pointer s7_inlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_inlet "(inlet ...) adds its \
@@ -6126,6 +6161,8 @@ new environment."
 
 #define g_inlet s7_inlet
 
+
+/* -------------------------------- let->list -------------------------------- */
 s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env)
 {
   s7_pointer x;
@@ -6203,6 +6240,7 @@ static s7_pointer g_let_to_list(s7_scheme *sc, s7_pointer args)
 #endif
 
 
+/* -------------------------------- let-ref -------------------------------- */
 static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 {
   s7_pointer x, y;
@@ -6236,7 +6274,6 @@ static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
   return(sc->UNDEFINED);
 }
 
-
 s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 {
   if (!is_symbol(symbol))
@@ -6248,7 +6285,6 @@ s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
     }
   return(let_ref_1(sc, env, symbol));
 }
-
 
 static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
 {
@@ -6272,7 +6308,7 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
 }
 
 
-
+/* -------------------------------- let-set! -------------------------------- */
 static s7_pointer call_accessor(s7_scheme *sc, s7_pointer slot, s7_pointer old_value)
 {
   s7_pointer func, new_value;
@@ -6303,7 +6339,6 @@ static s7_pointer call_accessor(s7_scheme *sc, s7_pointer slot, s7_pointer old_v
     return(s7_error(sc, sc->ERROR, set_elist_3(sc, make_string_wrapper(sc, "can't set! ~S to ~S"), slot_symbol(slot), old_value)));
   return(new_value);
 }
-
 
 static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
 {
@@ -6339,7 +6374,6 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
   return(sc->UNDEFINED);
 }
 
-
 s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
 {
   if (!is_let(env))
@@ -6355,7 +6389,6 @@ s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_point
 
   return(let_set_1(sc, env, symbol, value));
 }
-
 
 static s7_pointer g_let_set(s7_scheme *sc, s7_pointer args)
 {
@@ -6431,6 +6464,7 @@ static s7_pointer let_copy(s7_scheme *sc, s7_pointer env)
 }
 
 
+/* -------------------------------- rootlet -------------------------------- */
 static s7_pointer g_rootlet(s7_scheme *sc, s7_pointer ignore)
 {
   #define H_rootlet "(rootlet) returns the current top-level definitions (symbol bindings)."
@@ -6441,7 +6475,6 @@ static s7_pointer g_rootlet(s7_scheme *sc, s7_pointer ignore)
  *   clobber the environment etc.  But we want it to be editable and augmentable,
  *   so I guess I'll leave it alone.  (See curlet|funclet as well).
  */
-
 
 s7_pointer s7_rootlet(s7_scheme *sc)
 {
@@ -6460,6 +6493,7 @@ s7_pointer s7_set_shadow_rootlet(s7_scheme *sc, s7_pointer let)
 }
 
 
+/* -------------------------------- curlet -------------------------------- */
 static s7_pointer g_curlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_curlet "(curlet) returns the current definitions (symbol bindings)"
@@ -6471,13 +6505,11 @@ static s7_pointer g_curlet(s7_scheme *sc, s7_pointer args)
   return(sc->rootlet);
 }
 
-
 s7_pointer s7_curlet(s7_scheme *sc)
 {
   sc->capture_let_counter++;
   return(sc->envir);
 }
-
 
 s7_pointer s7_set_curlet(s7_scheme *sc, s7_pointer e)
 {
@@ -6501,11 +6533,11 @@ s7_pointer s7_set_curlet(s7_scheme *sc, s7_pointer e)
 }
 
 
+/* -------------------------------- outlet -------------------------------- */
 s7_pointer s7_outlet(s7_scheme *sc, s7_pointer e)
 {
   return(outlet(e));
 }
-
 
 static s7_pointer g_outlet(s7_scheme *sc, s7_pointer args)
 {
@@ -6522,7 +6554,6 @@ static s7_pointer g_outlet(s7_scheme *sc, s7_pointer args)
     return(sc->rootlet);
   return(outlet(env));
 }
-
 
 static s7_pointer g_set_outlet(s7_scheme *sc, s7_pointer args)
 {
@@ -20640,7 +20671,7 @@ static s7_pointer g_equal_length_ic(s7_scheme *sc, s7_pointer args)
     case T_PAIR:         return(make_boolean(sc, s7_list_length(sc, val) == ilen));
     case T_NIL:          return(make_boolean(sc, ilen == 0));
     case T_STRING:       return(make_boolean(sc, string_length(val) == ilen));
-    case T_HASH_TABLE:   return(make_boolean(sc, hash_table_length(val) == ilen));
+    case T_HASH_TABLE:   return(make_boolean(sc, (hash_table_mask(val) + 1) == ilen));
     case T_ITERATOR:     return(make_boolean(sc, iterator_length(val) == ilen));
     case T_C_OBJECT:     return(make_boolean(sc, object_length_to_int(sc, val) == ilen));
     case T_LET:          return(make_boolean(sc, let_length(sc, val) == ilen));
@@ -21716,7 +21747,7 @@ static s7_pointer g_less_length_ic(s7_scheme *sc, s7_pointer args)
     case T_PAIR:         return(make_boolean(sc, s7_list_length(sc, val) < ilen));
     case T_NIL:          return(make_boolean(sc, ilen > 0));
     case T_STRING:       return(make_boolean(sc, string_length(val) < ilen));
-    case T_HASH_TABLE:   return(make_boolean(sc, hash_table_length(val) < ilen));
+    case T_HASH_TABLE:   return(make_boolean(sc, hash_table_mask(val) <= ilen));
     case T_ITERATOR:     return(make_boolean(sc, iterator_length(val) < ilen));
     case T_C_OBJECT:     return(make_boolean(sc, object_length_to_int(sc, val) < ilen));
     case T_LET:          return(make_boolean(sc, let_length(sc, val) < ilen));  /* this works because let_length handles the length method itself! */
@@ -28763,7 +28794,7 @@ static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator)
     }
 
   table = iterator_sequence(iterator); /* using iterator_length and hash_table_entries here was slightly slower */
-  len = hash_table_length(table);
+  len = hash_table_mask(table) + 1;
   elements = hash_table_elements(table);
 
   for (loc = iterator_position(iterator) + 1; loc < len;  loc++)
@@ -29388,15 +29419,15 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 	case T_HASH_TABLE:
 	  if (hash_table_entries(top) > 0)
 	    {
-	      unsigned int i;
+	      unsigned int i, len;
 	      hash_entry_t **entries;
 	      bool keys_safe;
 
 	      keys_safe = ((hash_table_checker(top) != hash_equal) &&
 			   (!hash_table_checker_locked(top)));
 	      entries = hash_table_elements(top);
-
-	      for (i = 0; i < hash_table_length(top); i++)
+	      len = hash_table_mask(top) + 1;
+	      for (i = 0; i < len; i++)
 		{
 		  hash_entry_t *p;
 		  for (p = entries[i]; p; p = p->next)
@@ -31180,21 +31211,22 @@ static s7_pointer ecdr_1(s7_scheme *sc, s7_pointer p, int role, const char *func
 {
   if ((!ecdr_is_set(p)) ||
       ((!ecdr_role_matches(p, role)) &&
-       (role != R_ECDR_ANY)))
+       (role != E_ANY)))
     {
-      fprintf(stderr, "%secdr %s[%d]: %p->%p %x%s%s%s%s%s%s%s%s%s%s%s%s%s\n", BOLD_TEXT, func, line, p, p->object.cons.ecdr, p->debugger_bits,
-	      ((p->debugger_bits & R_ECDR_FAST) != 0) ? " fast" : "",
-	      ((p->debugger_bits & R_ECDR_CFUNC) != 0) ? " cfunc" : "",
-	      ((p->debugger_bits & R_ECDR_CLAUSE) != 0) ? " clause" : "",
-	      ((p->debugger_bits & R_ECDR_BACK) != 0) ? " back" : "",
-	      ((p->debugger_bits & R_ECDR_LAMBDA) != 0) ? " lambda" : "",
-	      ((p->debugger_bits & R_ECDR_SYM) != 0) ? " sym" : "",
-	      ((p->debugger_bits & R_ECDR_PAIR) != 0) ? " pair" : "",
-	      ((p->debugger_bits & R_ECDR_CON) != 0) ? " con" : "",
-	      ((p->debugger_bits & R_ECDR_GOTO) != 0) ? " goto" : "",
-	      ((p->debugger_bits & R_ECDR_VECTOR) != 0) ? " vector" : "",
-	      ((p->debugger_bits & R_ECDR_ANY) != 0) ? " any" : "",
-	      ((p->debugger_bits & R_ECDR_SLOT) != 0) ? " slot" : "",
+      fprintf(stderr, "%secdr %s[%d]: %p->%p %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n", BOLD_TEXT, func, line, p, p->object.cons.ecdr, p->debugger_bits,
+	      ((p->debugger_bits & E_FAST) != 0) ? " fast" : "",
+	      ((p->debugger_bits & E_CFUNC) != 0) ? " cfunc" : "",
+	      ((p->debugger_bits & E_CLAUSE) != 0) ? " clause" : "",
+	      ((p->debugger_bits & E_BACK) != 0) ? " back" : "",
+	      ((p->debugger_bits & E_LAMBDA) != 0) ? " lambda" : "",
+	      ((p->debugger_bits & E_SYM) != 0) ? " sym" : "",
+	      ((p->debugger_bits & E_PAIR) != 0) ? " pair" : "",
+	      ((p->debugger_bits & E_CON) != 0) ? " con" : "",
+	      ((p->debugger_bits & E_GOTO) != 0) ? " goto" : "",
+	      ((p->debugger_bits & E_VECTOR) != 0) ? " vector" : "",
+	      ((p->debugger_bits & E_ANY) != 0) ? " any" : "",
+	      ((p->debugger_bits & E_SLOT) != 0) ? " slot" : "",
+	      ((p->debugger_bits & S_HASH) != 0) ? " raw-hash" : "",
 	      UNBOLD_TEXT);
       if (stop_at_error) abort();
     }
@@ -31214,16 +31246,15 @@ static s7_pointer fcdr_1(s7_scheme *sc, s7_pointer p, int role, const char *func
   if ((!fcdr_is_set(p)) ||
       (!fcdr_role_matches(p, role)))
     {
-      fprintf(stderr, "%s%s[%d]: fcdr: %p->%p %x%s%s%s%s%s%s%s%s%s%s\n", BOLD_TEXT, func, line, p, p->object.cons.fcdr, p->debugger_bits,
-	      ((p->debugger_bits & R_FCDR_C_CALL) != 0) ? " c-call" : "",
-	      ((p->debugger_bits & R_FCDR_KEY) != 0) ? " key" : "",
-	      ((p->debugger_bits & R_FCDR_SLOW) != 0) ? " slow" : "",
-	      ((p->debugger_bits & R_FCDR_SYM) != 0) ? " sym" : "",
-	      ((p->debugger_bits & R_FCDR_PAIR) != 0) ? " pair" : "",
-	      ((p->debugger_bits & R_FCDR_CON) != 0) ? " con" : "",
-	      ((p->debugger_bits & R_FCDR_ANY) != 0) ? " any" : "",
-	      ((p->debugger_bits & R_FCDR_CALL) != 0) ? " call" : "",
-	      ((p->debugger_bits & R_FCDR_LAMBDA) != 0) ? " lambda" : "",
+      fprintf(stderr, "%s%s[%d]: fcdr: %p->%p %x%s%s%s%s%s%s%s%s%s\n", BOLD_TEXT, func, line, p, p->object.cons.fcdr, p->debugger_bits,
+	      ((p->debugger_bits & F_C_CALL) != 0) ? " c-call" : "",
+	      ((p->debugger_bits & F_KEY) != 0) ? " key" : "",
+	      ((p->debugger_bits & F_SLOW) != 0) ? " slow" : "",
+	      ((p->debugger_bits & F_SYM) != 0) ? " sym" : "",
+	      ((p->debugger_bits & F_PAIR) != 0) ? " pair" : "",
+	      ((p->debugger_bits & F_CON) != 0) ? " con" : "",
+	      ((p->debugger_bits & F_CALL) != 0) ? " call" : "",
+	      ((p->debugger_bits & F_LAMBDA) != 0) ? " lambda" : "",
 	      UNBOLD_TEXT);
       if (stop_at_error) abort();
     }
@@ -31266,9 +31297,9 @@ static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, int role, cons
 	{
 	  fprintf(stderr, "%sgcdr inuse? %s[%d]: %x%s%s%s%s\n", BOLD_TEXT, func, line, 
 		  p->debugger_bits, 
-		  ((p->debugger_bits & R_GCDR_ARGLEN) != 0) ? " arglen" : "",
-		  ((p->debugger_bits & R_GCDR_SYM) != 0) ? " sym" : "",
-		  ((p->debugger_bits & R_GCDR_AND) != 0) ? " and" : "",
+		  ((p->debugger_bits & G_ARGLEN) != 0) ? " arglen" : "",
+		  ((p->debugger_bits & G_SYM) != 0) ? " sym" : "",
+		  ((p->debugger_bits & G_AND) != 0) ? " and" : "",
 		  UNBOLD_TEXT);
 	  if (stop_at_error) abort();
 	}
@@ -39247,26 +39278,30 @@ static hash_entry_t *hash_free_list = NULL;
 
 static void free_hash_table(s7_pointer table)
 {
-  unsigned int i;
   hash_entry_t **entries;
   entries = hash_table_elements(table);
+
   if (hash_table_entries(table) > 0)
-    for (i = 0; i < hash_table_length(table); i++)
-      {
-	hash_entry_t *p, *n;
-	for (p = entries[i++]; p; p = n)
-	  {
-	    n = p->next;
-	    p->next = hash_free_list;
-	    hash_free_list = p;
-	  }
-	for (p = entries[i]; p; p = n)
-	  {
-	    n = p->next;
-	    p->next = hash_free_list;
-	    hash_free_list = p;
-	  }
-      }
+    {
+      unsigned int i, len;
+      len = hash_table_mask(table) + 1;
+      for (i = 0; i < len; i++)
+	{
+	  hash_entry_t *p, *n;
+	  for (p = entries[i++]; p; p = n)
+	    {
+	      n = p->next;
+	      p->next = hash_free_list;
+	      hash_free_list = p;
+	    }
+	  for (p = entries[i]; p; p = n)
+	    {
+	      n = p->next;
+	      p->next = hash_free_list;
+	      hash_free_list = p;
+	    }
+	}
+    }
   free(entries);
 }
 
@@ -39573,7 +39608,7 @@ static hash_entry_t *hash_int(s7_scheme *sc, s7_pointer table, s7_pointer key)
       hash_entry_t *x;
       unsigned int loc, hash_len;
 
-      hash_len = (unsigned int)hash_table_length(table) - 1;
+      hash_len = hash_table_mask(table);
       keyval = integer(key);
       if (keyval < 0)
 	loc = (unsigned int)((-keyval) & hash_len);
@@ -39600,7 +39635,7 @@ static hash_entry_t *hash_string(s7_scheme *sc, s7_pointer table, s7_pointer key
       key_len = string_length(key);
       key_str = string_value(key);
 
-      hash_len = (unsigned int)hash_table_length(table) - 1;
+      hash_len = hash_table_mask(table);
       if (string_hash(key) == 0)
 	string_hash(key) = raw_string_hash((const unsigned char *)string_value(key), string_length(key));
       hash = string_hash(key);
@@ -39632,7 +39667,7 @@ static hash_entry_t *hash_ci_string(s7_scheme *sc, s7_pointer table, s7_pointer 
       hash_entry_t *x;
       unsigned int hash, hash_len;
 
-      hash_len = (unsigned int)hash_table_length(table) - 1;
+      hash_len = hash_table_mask(table);
       hash = hash_map_ci_string(sc, table, key);
 
       for (x = hash_table_element(table, hash & hash_len); x; x = x->next)
@@ -39649,7 +39684,7 @@ static hash_entry_t *hash_ci_char(s7_scheme *sc, s7_pointer table, s7_pointer ke
       hash_entry_t *x;
       unsigned int hash_len, loc;
 
-      hash_len = (unsigned int)hash_table_length(table) - 1;
+      hash_len = hash_table_mask(table);
       loc = hash_loc(sc, table, key) & hash_len;
 
       for (x = hash_table_element(table, loc); x; x = x->next)
@@ -39697,7 +39732,7 @@ static hash_entry_t *hash_float(s7_scheme *sc, s7_pointer table, s7_pointer key)
   s7_double keyval;
   unsigned int hash_len, loc;
 
-  hash_len = hash_table_length(table) - 1;
+  hash_len = hash_table_mask(table);
   keyval = real(key);
   loc = hash_float_location(keyval) & hash_len;
 
@@ -39718,13 +39753,13 @@ static hash_entry_t *hash_complex_1(s7_scheme *sc, s7_pointer table, unsigned in
 
 static hash_entry_t *hash_equal_real(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
-  return(hash_float_1(sc, table, hash_loc(sc, table, key) & (hash_table_length(table) - 1), real(key)));
+  return(hash_float_1(sc, table, hash_loc(sc, table, key) & hash_table_mask(table), real(key)));
 }
 
 
 static hash_entry_t *hash_equal_complex(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
-  return(hash_complex_1(sc, table, hash_loc(sc, table, key) & (hash_table_length(table) - 1), key));
+  return(hash_complex_1(sc, table, hash_loc(sc, table, key) & hash_table_mask(table), key));
 }
 
 
@@ -39732,7 +39767,7 @@ static hash_entry_t *hash_equal_syntax(s7_scheme *sc, s7_pointer table, s7_point
 {
   hash_entry_t *x;
   unsigned int loc;
-  loc = hash_loc(sc, table, key) & ((int)hash_table_length(table) - 1);
+  loc = hash_loc(sc, table, key) & hash_table_mask(table);
   for (x = hash_table_element(table, loc); x; x = x->next)
     if ((is_syntax(x->key)) &&
 	(syntax_symbol(x->key) == syntax_symbol(key))) /* the opcodes might differ, but the symbols should not */
@@ -39745,7 +39780,7 @@ static hash_entry_t *hash_equal_eq(s7_scheme *sc, s7_pointer table, s7_pointer k
 {
   hash_entry_t *x;
   unsigned int loc;
-  loc = hash_loc(sc, table, key) & ((int)hash_table_length(table) - 1);
+  loc = hash_loc(sc, table, key) & hash_table_mask(table);
   for (x = hash_table_element(table, loc); x; x = x->next)
     if (x->key == key)
       return(x);
@@ -39757,7 +39792,7 @@ static hash_entry_t *hash_equal_any(s7_scheme *sc, s7_pointer table, s7_pointer 
 {
   hash_entry_t *x;
   unsigned int loc;
-  loc = hash_loc(sc, table, key) & ((int)hash_table_length(table) - 1);
+  loc = hash_loc(sc, table, key) & hash_table_mask(table);
 
   /* we can get into an infinite loop here, but it requires 2 hash tables that are members of each other
    *    and key is one of them, so I changed the equality check above to use eq? -- not sure this is right.
@@ -39788,7 +39823,7 @@ static hash_entry_t *hash_morally_equal(s7_scheme *sc, s7_pointer table, s7_poin
 {
   hash_entry_t *x;
   unsigned int loc;
-  loc = hash_loc(sc, table, key) & ((int)hash_table_length(table) - 1);
+  loc = hash_loc(sc, table, key) & hash_table_mask(table);
 
   for (x = hash_table_element(table, loc); x; x = x->next)
     if (x->key == key)
@@ -39807,7 +39842,7 @@ static hash_entry_t *hash_c_function(s7_scheme *sc, s7_pointer table, s7_pointer
   s7_function f;
 
   f = c_function_call(hash_table_procedures_checker(table));
-  hash_len = (unsigned int)hash_table_length(table) - 1;
+  hash_len = hash_table_mask(table);
   loc = hash_loc(sc, table, key) & hash_len;
   
   car(sc->T2_1) = key;
@@ -39827,7 +39862,7 @@ static hash_entry_t *hash_eq(s7_scheme *sc, s7_pointer table, s7_pointer key)
   hash_entry_t *x;
   unsigned int hash_len, loc;
 
-  hash_len = (unsigned int)hash_table_length(table) - 1;
+  hash_len = hash_table_mask(table);
   loc = hash_loc(sc, table, key) & hash_len;
 
   for (x = hash_table_element(table, loc); x; x = x->next)
@@ -39842,7 +39877,7 @@ static hash_entry_t *hash_eqv(s7_scheme *sc, s7_pointer table, s7_pointer key)
   hash_entry_t *x;
   unsigned int hash_len, loc;
 
-  hash_len = (unsigned int)hash_table_length(table) - 1;
+  hash_len = hash_table_mask(table);
   loc = hash_loc(sc, table, key) & hash_len;
 
   for (x = hash_table_element(table, loc); x; x = x->next)
@@ -39860,7 +39895,7 @@ static hash_entry_t *hash_number(s7_scheme *sc, s7_pointer table, s7_pointer key
       hash_entry_t *x;
       unsigned int hash_len, loc;
 
-      hash_len = (unsigned int)hash_table_length(table) - 1;
+      hash_len = hash_table_mask(table);
       loc = hash_loc(sc, table, key) & hash_len;
 
 #if (!WITH_GMP)
@@ -39883,7 +39918,7 @@ static hash_entry_t *hash_symbol(s7_scheme *sc, s7_pointer table, s7_pointer key
   if (is_symbol(key))
     {
       hash_entry_t *x;
-      for (x = hash_table_element(table, symbol_hmap(key) & ((unsigned int)hash_table_length(table) - 1)); x; x = x->next)
+      for (x = hash_table_element(table, symbol_hmap(key) & hash_table_mask(table)); x; x = x->next)
 	if (key == x->key)
 	  return(x);
     }
@@ -39905,7 +39940,7 @@ static hash_entry_t *hash_closure(s7_scheme *sc, s7_pointer table, s7_pointer ke
   s7_pointer f, args, body, old_e;
 
   f = hash_table_procedures_checker(table);
-  hash_len = (unsigned int)hash_table_length(table) - 1;
+  hash_len = hash_table_mask(table);
   loc = hash_loc(sc, table, key) & hash_len;
 
   old_e = sc->envir;
@@ -39939,7 +39974,7 @@ static s7_pointer remove_from_hash_table(s7_scheme *sc, s7_pointer table, s7_poi
   hash_entry_t *x;
   unsigned int hash_len, loc;
 
-  hash_len = (unsigned int)hash_table_length(table) - 1;
+  hash_len = hash_table_mask(table);
 #if DEBUGGING
   if (p->raw_hash != hash_loc(sc, table, key)) 
     fprintf(stderr, "%s[%d]: %s raw: %u, loc: %u\n", __func__, __LINE__, DISPLAY(key), p->raw_hash, hash_loc(sc, table, key));
@@ -39997,7 +40032,7 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_int size)
   if (!els) return(s7_error(sc, make_symbol(sc, "out-of-memory"), set_elist_1(sc, make_string_wrapper(sc, "make-hash-table allocation failed!"))));
 
   NEW_CELL(sc, table, T_HASH_TABLE | T_SAFE_PROCEDURE);
-  hash_table_length(table) = size;
+  hash_table_mask(table) = size - 1;
   hash_table_elements(table) = els;
   hash_table_checker(table) = hash_empty;
   hash_table_mapper(table) = default_hash_map;
@@ -40278,7 +40313,7 @@ static unsigned int resize_hash_table(s7_scheme *sc, s7_pointer table)
   int i, old_size, new_size;
   hash_entry_t **new_els, **old_els;
   
-  old_size = hash_table_length(table);
+  old_size = hash_table_mask(table) + 1;
   new_size = old_size * 4;
   hash_len = new_size - 1;
   new_els = (hash_entry_t **)calloc(new_size, sizeof(hash_entry_t *));
@@ -40297,7 +40332,7 @@ static unsigned int resize_hash_table(s7_scheme *sc, s7_pointer table)
     }
   hash_table_elements(table) = new_els;
   free(old_els);
-  hash_table_length(table) = new_size;
+  hash_table_mask(table) = new_size - 1;
   return(hash_len);
 }
 
@@ -40435,7 +40470,7 @@ static s7_pointer hash_table_ref_pf_r(s7_scheme *sc, s7_pointer **p)
   x = (**p); (*p)++;
   f = (s7_rf_t)(**p); (*p)++;
   y = f(sc, p);
-  hash_len = (int)hash_table_length(x) - 1;
+  hash_len = hash_table_mask(x);
   h = hash_float_1(sc, x, hash_float_location(y) & hash_len, y);
   if (h) return(h->value);
   return(sc->F);
@@ -40508,7 +40543,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
       hash_entry_t *p;
       if (value == sc->F) return(sc->F);
       
-      hash_len = hash_table_length(table) - 1;
+      hash_len = hash_table_mask(table);
       if (hash_table_entries(table) > hash_len)
 	hash_len = resize_hash_table(sc, table);
       raw_hash = hash_loc(sc, table, key);
@@ -40716,8 +40751,8 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer
   hash_entry_t **old_lists, **new_lists;
   hash_entry_t *x, *p;
 
-  old_len = hash_table_length(old_hash);
-  new_len = hash_table_length(new_hash) - 1;
+  old_len = hash_table_mask(old_hash) + 1;
+  new_len = hash_table_mask(new_hash);
   old_lists = hash_table_elements(old_hash);
   new_lists = hash_table_elements(new_hash);
   
@@ -40785,7 +40820,7 @@ s7_pointer hash_table_fill(s7_scheme *sc, s7_pointer args)
       int len;
       hash_entry_t **entries;
       entries = hash_table_elements(table);
-      len = hash_table_length(table);
+      len = hash_table_mask(table) + 1;
       /* hash-table-ref returns #f if it can't find a key, so val == #f here means empty the table */
       if (val == sc->F)
 	{
@@ -40827,7 +40862,7 @@ static s7_pointer hash_table_reverse(s7_scheme *sc, s7_pointer old_hash)
   hash_entry_t **old_lists;
   int gc_loc;
 
-  len = hash_table_length(old_hash);
+  len = hash_table_mask(old_hash) + 1;
   new_hash = s7_make_hash_table(sc, len);
   gc_loc = s7_gc_protect(sc, new_hash);
 
@@ -42562,7 +42597,7 @@ static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_i
 	return(false);
     }
 
-  len = hash_table_length(x);
+  len = hash_table_mask(x) + 1;
   lists = hash_table_elements(x);
   if (!nci) nci = new_shared_info(sc);
 
@@ -43145,7 +43180,7 @@ static s7_pointer s7_length(s7_scheme *sc, s7_pointer lst)
       return(make_integer(sc, iterator_length(lst))); /* in several cases, this is incorrect */
 
     case T_HASH_TABLE:
-      return(make_integer(sc, hash_table_length(lst)));
+      return(make_integer(sc, hash_table_mask(lst) + 1));
 
     case T_C_OBJECT:
       check_method(sc, lst, sc->LENGTH, list_1(sc, lst));
@@ -43306,7 +43341,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	  {
 	    int gc_loc;
 	    s7_pointer new_hash;
-	    new_hash = s7_make_hash_table(sc, hash_table_length(source));
+	    new_hash = s7_make_hash_table(sc, hash_table_mask(source) + 1);
 	    gc_loc = s7_gc_protect(sc, new_hash);
 	    hash_table_checker(new_hash) = hash_table_checker(source);
 	    hash_table_mapper(new_hash) = hash_table_mapper(source);
@@ -44224,7 +44259,20 @@ static s7_pointer hash_table_append(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer let_append(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer new_let, p;
+  s7_pointer new_let, p, e;
+  
+  e = car(args);
+  check_method(sc, e, sc->APPEND, args);
+
+  if (has_methods(e))
+    {
+      s7_pointer length_func;
+      length_func = find_method(sc, e, sc->LENGTH);
+      if (length_func != sc->UNDEFINED)
+	if (s7_apply_function(sc, length_func, list_1(sc, e)) == sc->F)
+	  return(wrong_type_argument_with_type(sc, sc->APPEND, 1, e, A_SEQUENCE));
+    }
+  
   new_let = new_frame_in_env(sc, sc->NIL);
   for (p = args; is_pair(p); p = cdr(p))
     s7_copy(sc, set_plist_2(sc, car(p), new_let)); 
@@ -44260,7 +44308,6 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
       return(hash_table_append(sc, args));
 
     case T_LET:
-      /* perhaps this should look for an append method (but then what?) */
       return(let_append(sc, args));
 
      default:
@@ -45713,7 +45760,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
   if (has_line_number(cur_code))
     {
       int line;
-      line = pair_line_number(cur_code);
+      line = pair_line(cur_code);
       if (line != last_line)
 	{
 	  last_line = line;
@@ -48857,7 +48904,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	   *   sc->cur_code is GC-protected, so this should be safe.
 	   */
 	  cur_code = cons(sc, sym, sc->NIL);     /* the error will say "(sym)" which is not too misleading */
-	  pair_line_number(cur_code) = remember_location(port_line_number(sc->input_port), port_file_number(sc->input_port));
+	  pair_set_line(cur_code, remember_location(port_line_number(sc->input_port), port_file_number(sc->input_port)));
 	  set_has_line_number(cur_code);
 	}
 
@@ -49013,7 +49060,7 @@ static s7_int c_pair_line_number(s7_scheme *sc, s7_pointer p)
     int_method_or_bust(sc, p, sc->PAIR_LINE_NUMBER, set_plist_1(sc, p), T_PAIR, 0);
 
   if (has_line_number(p))
-    return(remembered_line_number(pair_line_number(p)));
+    return(remembered_line_number(pair_line(p)));
   return(0);
 }
 
@@ -52789,8 +52836,8 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
 			  set_optimize_op(expr, hop + OP_C_CATCH_ALL);
 			  set_c_function(expr, func);
 			  if (is_pair(error_result))
-			    set_opt_any2(expr, cadr(error_result));
-			  else set_opt_any2(expr, error_result);
+			    set_opt_con2(expr, cadr(error_result));
+			  else set_opt_con2(expr, error_result);
 			  set_opt_pair1(cdr(expr), cddr(body_lambda));
 			}
 		      else
@@ -54238,7 +54285,10 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 	    }
 	  set_opt_pair2(sc->code, cadr(binding));
 	  if (optimize_op(cadr(binding)) == HOP_SAFE_C_SS)
-	    pair_set_syntax_symbol(sc->code, sc->LET_opSSq);
+	    {
+	      pair_set_syntax_symbol(sc->code, sc->LET_opSSq);
+	      set_opt_sym3(sc->code, caddr(cadr(binding)));
+	    }
 	  else
 	    {
 	      if (optimize_op(cadr(binding)) == HOP_SAFE_C_C)
@@ -54547,7 +54597,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	  else
 	    {
 	      pair_set_syntax_symbol(sc->code, sc->NAMED_LET_STAR);
-	      set_opt_any2(sc->code, cadr(car(cadr(sc->code))));
+	      set_opt_con2(sc->code, cadr(car(cadr(sc->code))));
 	    }
 	  return(sc->code);
 	}
@@ -54563,7 +54613,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	    {
 	      s7_pointer p, op;
 	      op = sc->LET_STAR_ALL_X;
-	      set_opt_any2(sc->code, cadaar(sc->code));
+	      set_opt_con2(sc->code, cadaar(sc->code));
 	      for (p = car(sc->code); is_pair(p); p = cdr(p))
 		{
 		  s7_pointer x;
@@ -54855,7 +54905,7 @@ static s7_pointer check_if(s7_scheme *sc)
 					  else
 					    {
 					      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_Z_P : sc->IF_Z_P_P);
-					      set_opt_any2(sc->code, cadr(sc->code));
+					      set_opt_con2(sc->code, cadr(sc->code));
 					    }
 					}
 				    }
@@ -56931,7 +56981,7 @@ static s7_pointer check_do(s7_scheme *sc)
 			{
 			  pair_syntax_op(car(body)) = symbol_syntax_op(caar(body));
 			  pair_set_syntax_symbol(sc->code, sc->SIMPLE_DO_P);
-			  set_opt_any2(sc->code, caddr(caar(sc->code)));
+			  set_opt_pair2(sc->code, caddr(caar(sc->code)));
 
 			  if ((s7_is_integer(caddr(step_expr))) &&
 			      (s7_integer(caddr(step_expr)) == 1) &&
@@ -57915,13 +57965,13 @@ static int safe_do_ex(s7_scheme *sc)
   sc->code = cddr(code);
   if (is_unsafe_do(sc->code))              /* we've seen this loop before and it's not optimizable */
     {
-      set_opt_any2(code, sc->code);
+      set_opt_pair2(code, sc->code);
       push_stack(sc, OP_SAFE_DO_STEP, sc->args, code);
       return(goto_BEGIN1);
     }
   
   set_unsafe_do(sc->code);
-  set_opt_any2(code, sc->code);
+  set_opt_pair2(code, sc->code);
   push_stack(sc, OP_SAFE_DO_STEP, sc->args, code);
   return(goto_BEGIN1);
 }
@@ -58093,10 +58143,11 @@ static int do_init_ex(s7_scheme *sc)
  */
 #if 1
 /* unlike the c_function_is_ok case, the macro form here is faster?? callgrind and time agree on this.
+ *   opt_lambda(_code_) here can (legitimately) be a free cell or almost anything.
  */
 #define closure_is_ok(Sc, Code, Type, Args) \
   ({ s7_pointer _code_, _val_; _code_ = Code; _val_ = find_symbol_unchecked(Sc, car(_code_)); \
-     ((_val_ == opt_lambda(_code_)) || \
+     ((_val_ == opt_any1(_code_)) || \
       ((_val_) && (typesflag(_val_) == (unsigned short)Type) &&		\
        ((closure_arity(_val_) == Args) || (closure_arity_to_int(Sc, _val_) == Args)) && \
        (set_opt_lambda(_code_, _val_)))); })
@@ -58115,7 +58166,7 @@ static bool closure_is_ok(s7_scheme *sc, s7_pointer code, unsigned short type, i
 
 #define closure_star_is_ok(Sc, Code, Type, Args) \
   ({ s7_pointer _val_; _val_ = find_symbol_unchecked(Sc, car(Code)); \
-     ((_val_ == opt_lambda(Code)) || \
+     ((_val_ == opt_any1(Code)) || \
       ((_val_) && (typesflag(_val_) == (unsigned short)Type) &&		\
        ((closure_arity(_val_) >= Args) || (closure_star_arity_to_int(Sc, _val_) >= Args)) && \
        (set_opt_lambda(Code, _val_)))); })
@@ -58136,7 +58187,7 @@ static int fixup_unknown_op(s7_scheme *sc, s7_pointer code, s7_pointer func, int
 {
   /* sc arg used if debugging */
   set_optimize_op(code, op);
-  set_opt_lambda(code, func);
+  set_opt_lambda(code, func); /* opt_lambda works here because it is the only checked case, but ideally we'd split out all the cases via switch (op) */
   return(goto_OPT_EVAL);
 }
 
@@ -60325,7 +60376,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto DO_END_CLAUSES;
 		}
 	    push_stack(sc, OP_SAFE_DO_STEP, sc->args, code);
-	    sc->code = opt_any2(code);
+	    sc->code = opt_pair2(code);
 	    goto BEGIN1;
 	  }
 	  
@@ -62712,7 +62763,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    p = sc->envir;
 		    catch_all_goto_loc(p) = s7_stack_top(sc);
 		    catch_all_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
-		    catch_all_result(p) = opt_any2(code);
+		    catch_all_result(p) = opt_con2(code);
 		    push_stack_no_args(sc, OP_CATCH_ALL, code);
 		    sc->code = opt_pair1(cdr(code));                   /* the body of the first lambda */
 		    goto BEGIN1;                                  /* removed one_liner check here -- rare */
@@ -62750,7 +62801,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 		case OP_SAFE_THUNK_E:
-		  if (find_symbol_unchecked(sc, car(code)) != opt_lambda(code)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
+		  if (find_symbol_unchecked(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_THUNK_E:
 		  sc->envir = closure_let(opt_lambda(code));
@@ -62759,7 +62810,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 		case OP_SAFE_THUNK_P:
-		  if (find_symbol_unchecked(sc, car(code)) != opt_lambda(code)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
+		  if (find_symbol_unchecked(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_THUNK_P:
 		  sc->envir = closure_let(opt_lambda(code));
@@ -62784,7 +62835,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_S_P:
-		  if (find_symbol_unchecked(sc, car(code)) != opt_lambda(code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
+		  if (find_symbol_unchecked(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_S_P:
 		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_checked(sc, opt_sym2(code)));
@@ -62795,8 +62846,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		  
 		case OP_SAFE_GLOSURE_S:
-		  if ((symbol_id(car(code)) != 0) ||
-		      (opt_lambda(code) != slot_value(global_slot(car(code)))))
+		  if ((symbol_id(car(code)) != 0) ||(opt_any1(code) != slot_value(global_slot(car(code)))))
 		    {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_GLOSURE_S:
@@ -62806,8 +62856,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_GLOSURE_S_E:
-		  if ((symbol_id(car(code)) != 0) ||
-		      (opt_lambda(code) != slot_value(global_slot(car(code)))))
+		  if ((symbol_id(car(code)) != 0) || (opt_any1(code) != slot_value(global_slot(car(code)))))
 		    {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_GLOSURE_S_E:
@@ -62835,7 +62884,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_GLOSURE_P:
-		  if ((symbol_id(car(code)) != 0) || (opt_lambda(code) != slot_value(global_slot(car(code))))) break;
+		  if ((symbol_id(car(code)) != 0) || (opt_any1(code) != slot_value(global_slot(car(code))))) break;
 		  
 		case HOP_SAFE_GLOSURE_P:
 		  push_stack(sc, OP_SAFE_CLOSURE_P_1, sc->NIL, code);
@@ -62854,8 +62903,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_GLOSURE_A:
-		  if ((symbol_id(car(code)) != 0) ||
-		      (opt_lambda(code) != slot_value(global_slot(car(code)))))
+		  if ((symbol_id(car(code)) != 0) || (opt_any1(code) != slot_value(global_slot(car(code)))))
 		    {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;}
 		  if (!indirect_c_function_is_ok(sc, cadr(code))) break;
 		  
@@ -63101,7 +63149,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		  
 		case OP_SAFE_CLOSURE_STAR_S0:
-		  if (find_symbol_unchecked(sc, car(code)) != opt_lambda(code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
+		  if (find_symbol_unchecked(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_STAR_S0:
 		  /* here we know we have (let-set! arg1 'name arg2) (with-env arg1 ...) as the safe closure body.
@@ -63262,8 +63310,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_GLOSURE_S:
-		  if ((symbol_id(car(code)) != 0) ||
-		      (opt_lambda(code) != slot_value(global_slot(car(code)))))
+		  if ((symbol_id(car(code)) != 0) || (opt_any1(code) != slot_value(global_slot(car(code)))))
 		    {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_GLOSURE_S:
@@ -64584,7 +64631,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_SET_PAIR_P_1:
 	  {
 	    /* car(sc->code) is a pair, caar(code) is the object with a setter, it has one (safe) argument, and one safe value to set
-	     *   (set! (str i) #\a) in a function (both inner things need to be symbols (or the 2nd can be a quoted symbol) to get here)
+	     *   (set! (str i) #\a) in a function (both inner things need to be symbols (or the second can be a quoted symbol) to get here)
 	     *   the inner list is a proper list, with no embedded list at car.
 	     */
 	    s7_pointer arg, value;
@@ -64988,7 +65035,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  
 	case OP_IF_Z_P:
-	  push_stack_no_args(sc, OP_IF_PP, opt_any2(sc->code));
+	  push_stack_no_args(sc, OP_IF_PP, opt_con2(sc->code));
 	  sc->code = car(sc->code);
 	  goto OPT_EVAL;
 	  
@@ -65269,30 +65316,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	  
 	  
-	case OP_LET_opCq:
-	  /* one var, init is safe_c_c */
+	case OP_LET_opCq:  /* one var, init is safe_c_c */
 	  sc->value = c_call(opt_pair2(sc->code))(sc, cdr(opt_pair2(sc->code)));
 	  NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, opt_sym3(sc->code), sc->value);
 	  sc->code = cdr(sc->code);
 	  goto BEGIN1;
 	  
 	  
-	case OP_LET_opSSq:
-	  /* one var, init is safe_c_ss */
+	case OP_LET_opSSq:  /* one var, init is safe_c_ss */
 	  {
-	    s7_pointer binding, largs, in_val, old_code;
-	    old_code = sc->code;
-	    binding = caar(sc->code);
-	    largs = cadr(binding);
+	    s7_pointer largs, in_val;
+	    largs = opt_pair2(sc->code);                                 /* cadr(caar(sc->code)); */
 	    in_val = find_symbol_checked(sc, cadr(largs));
-	    car(sc->T2_2) = find_symbol_checked(sc, caddr(largs));
+	    car(sc->T2_2) = find_symbol_checked(sc, opt_sym3(sc->code)); /* caddr(largs)); */
 	    car(sc->T2_1) = in_val;
 	    sc->value = c_call(largs)(sc, sc->T2_1);
-#if DEBUGGING
-	    if (sc->code != old_code) fprintf(stderr, "%d %s -> %s\n", __LINE__, DISPLAY(old_code), DISPLAY(sc->code));
-#endif
-	    NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, car(binding), sc->value);
-	    sc->code = cdr(old_code);
+	    NEW_FRAME_WITH_SLOT(sc, sc->envir, sc->envir, caaar(sc->code), sc->value);
+	    sc->code = cdr(sc->code);
 	    goto BEGIN1;
 	  }
 	  
@@ -65597,13 +65637,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case OP_NAMED_LET_STAR:
 	  push_stack(sc, OP_LET_STAR1, sc->code, cadr(sc->code));
-	  sc->code = opt_any2(sc->code);
+	  sc->code = opt_con2(sc->code);
 	  goto EVAL;
 	  
 	  
 	case OP_LET_STAR2:
 	  push_stack(sc, OP_LET_STAR1, sc->code, car(sc->code));
-	  sc->code = opt_any2(sc->code);
+	  sc->code = opt_con2(sc->code);
 	  goto EVAL;
 	  
 	  
@@ -66792,7 +66832,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->value = safe_reverse_in_place(sc, sc->args);
 	      if (is_symbol(car(sc->value)))
 		{
-		  pair_line_number(sc->value) = remember_location(port_line_number(sc->input_port), port_file_number(sc->input_port));
+		  pair_set_line(sc->value, remember_location(port_line_number(sc->input_port), port_file_number(sc->input_port)));
 		  set_has_line_number(sc->value);	      /* sc->input_port above can't be nil(?) -- it falls back on stdin now */
 		  
 		  if ((is_expansion(car(sc->value))) &&
@@ -73348,22 +73388,22 @@ int main(int argc, char **argv)
 /* ----------------------------------------------------
  *
  *           12  |  13  |  14  |  15  | 16.0
- *                                           no-opt
- * s7test   1721 | 1358 |  995 | 1194 | 1122 (1117)
- * index    44.3 | 3291 | 1725 | 1276 | 1156 (1207)
- * teq           |      |      | 6612 | 2380 (2380)
- * tauto     265 |   89 |  9   |  8.4 | 2638 (2624)
- * bench    42.7 | 8752 | 4220 | 3506 | 3230 (3474)
- * tcopy         |      |      | 13.6 | 3239 (3386)
- * tform         |      |      | 6816 | 3627 (3659)
- * tmap          |      |      |  9.3 | 4179 (4701)
- * titer         |      |      | 7503 | 5218 (5295)
- * lg            |      |      | 6547 | 7208 (7007)!
- * thash         |      |      | 50.7 | 8595 (11.4)
+ *                                           
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 
+ * index    44.3 | 3291 | 1725 | 1276 | 1156 
+ * teq           |      |      | 6612 | 2380 
+ * tauto     265 |   89 |  9   |  8.4 | 2638 
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230 
+ * tcopy         |      |      | 13.6 | 3239 
+ * tform         |      |      | 6816 | 3627 
+ * tmap          |      |      |  9.3 | 4176
+ * titer         |      |      | 7503 | 5218 
+ * lg            |      |      | 6547 | 7201
+ * thash         |      |      | 50.7 | 8565
  *               |      |      |      |
- * tgen          |   71 | 70.6 | 38.0 | 12.0 (12.8)
- * tall       90 |   43 | 14.5 | 12.7 | 15.0 (43.9)
- * calls     359 |  275 | 54   | 34.7 | 37.1 (62.0)
+ * tgen          |   71 | 70.6 | 38.0 | 12.0 
+ * tall       90 |   43 | 14.5 | 12.7 | 15.0 
+ * calls     359 |  275 | 54   | 34.7 | 37.1 
  * 
  * ----------------------------------------------------
  *
@@ -73375,13 +73415,9 @@ int main(int argc, char **argv)
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
  * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds))
- *
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?)
  * for define* how to show in sig/pos the individual types? -- take in decl order and reorder if keys?
- *
- * generic append: check methods I guess 
- *   (append (inlet 'a 1) 1) -> error: copy argument 1, 1, is an integer but should be a sequence ["copy" -> "append" and arg number is confusing]
- *   (append ((*mock-number* 'mock-number) 1) ()) got (inlet) but expected error [81405]
+ * handle the S_* debugger bits
  */
 

@@ -573,6 +573,8 @@
    (set! start-run (get-internal-real-time))
    (test-gen gen nargs)
    (format *stderr* "~A: ~20T~,3F~%" gen (* 1.0 (/ (- (get-internal-real-time) start-run) internal-time-units-per-second))))
+; '(adjustable-oscil)
+; '(2)
 
  '(;rand-1 rand-interp-1 ; the y-as-fm case will be different (ignore printout)
    r2k!cos filter-1 fir-filter-1 iir-filter-1 oscil
@@ -603,8 +605,9 @@
    2 
    1 1 2 1 2 1
    )
+
  )
 
-(gc)
+;(gc)
 (s7-version)
 (exit)

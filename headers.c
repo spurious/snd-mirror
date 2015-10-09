@@ -2092,7 +2092,7 @@ static int write_riff_header(int fd, int wsrate, int wchans, int siz, mus_sample
       data_location += (8 + len + extra); 
     }
   /* 36 = "RIFF" + size(4) + "WAVE" + "fmt " + size(4) + 16 for data */
-  /*   2nd 36 is for "JUNK" chunk, 8 is data chunk header */
+  /*   second 36 is for "JUNK" chunk, 8 is data chunk header */
 
   write_four_chars((unsigned char *)hdrbuf, I_RIFF);
   mus_lint_to_char((unsigned char *)(hdrbuf + 4), data_location + siz - 8); /* added -8 25-June-07 */
@@ -6284,7 +6284,7 @@ int mus_header_change_data_size(const char *filename, mus_header_t type, mus_lon
     case MUS_AIFF: 
       /* we apparently have to make sure the form size and the data size are correct 
        * assumed here that we'll only be updating our own AIFF files 
-       * There are 3 such locations -- the 2nd word of the file which is the overall form size, 
+       * There are 3 such locations -- the second word of the file which is the overall form size, 
        * the framples variable in the COMM chunk, and the chunk-size variable in the SSND chunk 
        * an unexpected hassle for CLM is that we can open/close the output file many times if running mix,
        * so we have to update the various size fields taking into account the old size 

@@ -71,7 +71,7 @@ similar to nxysin. (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced
 
 ;;; --------------------------------------------------------------------------------
 
-;;; G&R 1st col rows 1&2
+;;; G&R first col rows 1&2
 
 (define (find-nxysin-max n ratio)
   
@@ -233,7 +233,7 @@ returns n cosines from frequency spaced by frequency * ratio."))
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; G&R 1st col rows 3 4
+;;; G&R first col rows 3 4
 
 (defgenerator (nxy1cos
 	       :make-wrapper (lambda (g)
@@ -325,7 +325,7 @@ returns n sines from frequency spaced by frequency * ratio with every other sine
 
 ;;; n odd sinusoids: noddsin, noddcos, noddssb
 
-;;; sndclm.html (G&R) 1st col 5th row (sum of odd sines)
+;;; sndclm.html (G&R) first col 5th row (sum of odd sines)
 
 (define (find-noddsin-max n)
   
@@ -932,7 +932,7 @@ returns n cosines spaced by frequency with amplitudes scaled by r^k."))
 
 
 
-;;; G&R 2nd col 1st and 2nd rows
+;;; G&R second col first and second rows
 
 (defgenerator (nrssb
 	       :make-wrapper (lambda (g)
@@ -1084,7 +1084,7 @@ scaled by r^k. The 'interp' argument determines whether the sidebands are above 
 ;;; n sinusoids scaled by k: nkssb
 
 
-;;; G&R 1st col ksinkx cases
+;;; G&R first col ksinkx cases
 
 (define nkssb-methods
   (list
@@ -1482,7 +1482,7 @@ returns n cosines spaced by frequency."))
 returns many cosines spaced by frequency with amplitude r^k."))
   
     ;; from Andrews, Askey, Roy "Special Functions" 5.1.16, p243. r^k cos sum
-    ;; a variant of the G&R 2nd col 4th row
+    ;; a variant of the G&R second col 4th row
     
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
@@ -1756,7 +1756,7 @@ with amplitude r^k. The 'interp' argument determines whether the sidebands are a
 ;;;
 ;;; rxysin
 ;;;
-;;; similar to rssb: (JO 1st)
+;;; similar to rssb: (JO first)
 
 (define rxysin-methods
   (list
@@ -1934,7 +1934,7 @@ returns many cosines from frequency spaced by frequency * ratio with amplitude r
 
 ;;; inf cosines scaled by e^-r (special case of rcos): ercos, erssb
 
-;;; sndclm.html G&R 2nd col last row (with normalization)
+;;; sndclm.html G&R second col last row (with normalization)
 
 (define ercos-methods
   (list
@@ -2074,7 +2074,7 @@ returns many sinusoids from frequency spaced by frequency * ratio with amplitude
 
 ;;; inf sinusoids scaled by r^2: r2cos, r2sin, r2ssb
 
-;;; Jolley 2nd col 2nd row (1st row is cos tweak of this)
+;;; Jolley second col second row (first row is cos tweak of this)
 
 (defgenerator (r2sin
 	       :make-wrapper (lambda (g)
@@ -2194,7 +2194,7 @@ returns many even-numbered sinusoids from frequency spaced by frequency * ratio,
 ;;;
 ;;; inf odd cosines scaled by e^-r: eoddcos
 
-;;; Jolley 1st col 2nd row
+;;; Jolley first col second row
 ;;;   heads toward a square wave as "r" -> 0.0 (odd harmonics, 1/k amp)
 
 ;;; this is the cos side of rkoddssb with r=e^-a
@@ -2266,7 +2266,7 @@ returns many cosines from spaced by frequency with amplitude e^(-r)."))
 
 ;;; inf odd cosines scaled by complicated mess: koddcos
 
-;;; Jolley 1st col 5th row 
+;;; Jolley first col 5th row 
 
 (define make-koddcos make-oscil)
 
@@ -2297,7 +2297,7 @@ returns many cosines from spaced by frequency with amplitude too messy to write 
 
 ;;; inf cosines scaled by r^k/k: rkcos, rksin, rkssb
 
-;;; G&R 2nd col 6th row, also J 536
+;;; G&R second col 6th row, also J 536
 ;;; r^k/k -- this sums to ln(1/(1-x)) if x<1 (J 118)
 
 (define rkcos-methods
@@ -2442,7 +2442,7 @@ returns many sinusoids from frequency from spaced by frequency * ratio with ampl
 
 ;;; inf cosines scaled by r^k/k!: rk!cos, rk!ssb
 
-;;; G&R 2nd col 3rd from last (simplified)
+;;; G&R second col third from last (simplified)
 
 (define rk!cos-methods
   (list
@@ -2858,7 +2858,7 @@ returns many cosines spaced by frequency with amplitude too messy to write down.
 
 ;;; inf sines scaled by 1/2^k: k2sin
 
-;;; Jolley 1st col 1st row
+;;; Jolley first col first row
 
 ;;; not flexible -- very similar to several others
 
@@ -2892,7 +2892,7 @@ returns many sines spaced by frequency with amplitude 1/(2^k)."))
 
 
 
-;;; using the 2nd Sansone formula, we get the sum of cos case by using a=-5b/4 or 3/(4cosx-5)
+;;; using the second Sansone formula, we get the sum of cos case by using a=-5b/4 or 3/(4cosx-5)
 
 (defgenerator (k2cos
 	       :make-wrapper (lambda (g)
@@ -3007,7 +3007,7 @@ returns many sines from frequency spaced by frequency * (2k -1) with amplitude r
 
 ;;; inf odd sinusoids scaled by r^odd-k/odd-k: rkoddssb
 
-;;;  G&R 2nd col rows 7&8 (odd r^k/k) 
+;;;  G&R second col rows 7&8 (odd r^k/k) 
 
 (define rkoddssb-methods
   (list
@@ -3096,7 +3096,7 @@ returns many sinusoids from frequency spaced by frequency * 2 * ratio with ampli
 
 ;;; inf sinusoids scaled by kr^k: krksin
 
-;;; Zygmund 1st
+;;; Zygmund first
 ;;;   this looks interesting, but how to normalize?  sum of sines is bad enough, kr^k -> r/(1-r)^2 if x^2<1 (since n=inf)
 ;;;   for low n, we could use the Tn roots stuff (clm.c)
 ;;;   the formula must be assuming r<1.0 -- if greater than 1 it's acting like r2k! above
@@ -3174,7 +3174,7 @@ returns many sines spaced by frequency with amplitude kr^k."))
 
 ;;; absolute value of oscil: abssin
 
-;;; Zygmund 2nd -- not actually very useful, but shows cos 2nx of abs
+;;; Zygmund second -- not actually very useful, but shows cos 2nx of abs
 
 (define abssin-methods
   (list
@@ -3307,7 +3307,7 @@ returns many sines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k."
 
 ;;; inf cosines scaled by 1/(r^2+k^2): r2k2cos
 
-;;; J 2nd col 3rd row
+;;; J second col third row
 
 (defgenerator (r2k2cos
 	       :make-wrapper (lambda (g)

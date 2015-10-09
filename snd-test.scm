@@ -5308,7 +5308,7 @@ EDITS: 5
       (close-sound ind))
     
     ;; xramp
-    (let ((ind (new-sound "test.snd"))) ; 2nd main let
+    (let ((ind (new-sound "test.snd"))) ; second main let
       (map-channel (lambda (y) 1.0) 0 10)
       (xramp-channel 0.0 1.0 32.0)
       (if (not (string-=? (safe-display-edits ind 0 2) "
@@ -5499,7 +5499,7 @@ EDITS: 5
 	)
       (close-sound ind))
     
-    (let ((ind (new-sound "test.snd"))) ; 3rd
+    (let ((ind (new-sound "test.snd"))) ; third
       (map-channel (lambda (y) 1.0) 0 100)
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
@@ -8369,7 +8369,7 @@ EDITS: 5
       
       (reset-all-hooks)
       
-      (let ((ind (new-sound  "test.snd" 1 22050 mus-ldouble mus-next "1st ramp re-order tests" 100)))
+      (let ((ind (new-sound  "test.snd" 1 22050 mus-ldouble mus-next "first ramp re-order tests" 100)))
 	(map-channel (lambda (y) 1.0))
 	(for-each
 	 (lambda (lst)
@@ -8695,10 +8695,10 @@ EDITS: 5
 	 (set! (sample 1239 ind 0) .9)
 	 (set! m4 (add-mark 1237 ind 0)))
        "outer as-one-edit")
-      (if (not (mark? m1)) (snd-display #__line__ ";2nd as-one-edit stepped on m1: ~A" m1))
-      (if (not (mark? m2)) (snd-display #__line__ ";2nd as-one-edit stepped on m2: ~A" m2))
-      (if (not (mark? m3)) (snd-display #__line__ ";2nd as-one-edit stepped on m3: ~A" m3))
-      (if (not (mark? m4)) (snd-display #__line__ ";2nd as-one-edit stepped on m4: ~A" m4))
+      (if (not (mark? m1)) (snd-display #__line__ ";second as-one-edit stepped on m1: ~A" m1))
+      (if (not (mark? m2)) (snd-display #__line__ ";second as-one-edit stepped on m2: ~A" m2))
+      (if (not (mark? m3)) (snd-display #__line__ ";second as-one-edit stepped on m3: ~A" m3))
+      (if (not (mark? m4)) (snd-display #__line__ ";second as-one-edit stepped on m4: ~A" m4))
       (if (not (= (mark-sample m1) 1234)) (snd-display #__line__ ";as-one-edit m1 sample: ~A (1234)" (mark-sample m1)))
       (if (not (= (mark-sample m2) 1235)) (snd-display #__line__ ";as-one-edit m2 sample: ~A (1235)" (mark-sample m2)))
       (if (not (= (mark-sample m3) 1238)) (snd-display #__line__ ";as-one-edit m3 sample: ~A (1238)" (mark-sample m3)))
@@ -8748,10 +8748,10 @@ EDITS: 1
 	 (set! (sample 1239 ind 0) .9)
 	 (set! m4 (mix-float-vector (float-vector .1 .2 .3) 1237 ind 0)))
        "outer as-one-edit")
-      (if (not (mix? m1)) (snd-display #__line__ ";2nd as-one-edit stepped on mx1: ~A" m1))
-      (if (not (mix? m2)) (snd-display #__line__ ";2nd as-one-edit stepped on mx2: ~A" m2))
-      (if (not (mix? m3)) (snd-display #__line__ ";2nd as-one-edit stepped on mx3: ~A" m3))
-      (if (not (mix? m4)) (snd-display #__line__ ";2nd as-one-edit stepped on mx4: ~A" m4))
+      (if (not (mix? m1)) (snd-display #__line__ ";second as-one-edit stepped on mx1: ~A" m1))
+      (if (not (mix? m2)) (snd-display #__line__ ";second as-one-edit stepped on mx2: ~A" m2))
+      (if (not (mix? m3)) (snd-display #__line__ ";second as-one-edit stepped on mx3: ~A" m3))
+      (if (not (mix? m4)) (snd-display #__line__ ";second as-one-edit stepped on mx4: ~A" m4))
       (revert-sound ind))
     
     (let ((ind2 #f))
@@ -9022,7 +9022,7 @@ EDITS: 2
 	(undo)
 	(close-sound ind))))
   
-  (let ((ind (new-sound  "test.snd" 1 22050 mus-ldouble mus-next "3rd ramp re-order tests" 101)))
+  (let ((ind (new-sound  "test.snd" 1 22050 mus-ldouble mus-next "third ramp re-order tests" 101)))
     (offset-channel 1.0)
     (env-sound '(0 0 1 1))
     (contrast-channel 1.0)
@@ -17161,7 +17161,7 @@ EDITS: 2
 	       (if (fneq val1 val2)
 		   (begin
 		     (set! happy #f)
-		     (snd-display #__line__ ";polywave 2nd ~A at ~A: ~A ~A" n i val1 val2)))))))
+		     (snd-display #__line__ ";polywave second ~A at ~A: ~A ~A" n i val1 val2)))))))
        (list 1 8 50 128))
       
       (for-each
@@ -17191,7 +17191,7 @@ EDITS: 2
 	       (if (fneq val1 val2)
 		   (begin
 		     (set! happy #f)
-		     (snd-display #__line__ ";polyshape 2nd ~A at ~A: ~A ~A" n i val1 val2)))))))
+		     (snd-display #__line__ ";polyshape second ~A at ~A: ~A ~A" n i val1 val2)))))))
        (list 1 8 16))
       
       (for-each
@@ -17219,7 +17219,7 @@ EDITS: 2
 		    (val2 (oscil gen2)))
 		(set! max-dist (max max-dist (abs (- val1 val2))))))
 	   (if (fneq max-dist 0.0)
-	       (snd-display #__line__ ";polywave 2nd run ~A: ~A" n max-dist))))
+	       (snd-display #__line__ ";polywave second run ~A: ~A" n max-dist))))
        (list 1 3 30 200))
       
       (for-each
@@ -17247,7 +17247,7 @@ EDITS: 2
 		    (val2 (oscil gen2)))
 		(set! max-dist (max max-dist (abs (- val1 val2))))))
 	   (if (fneq max-dist 0.0)
-	       (snd-display #__line__ ";polyshape 2nd run ~A: ~A" n max-dist))))
+	       (snd-display #__line__ ";polyshape second run ~A: ~A" n max-dist))))
        (list 1 3 25))
       
       (let ((gen (make-polywave 100.0 (list 1 .9 3 .1 4 0.0))))
@@ -17282,7 +17282,7 @@ EDITS: 2
 	(let ((p (make-polywave 100.0 cfs mus-chebyshev-second-kind)))
 	  (let ((val (polywave p)))
 	    (if (fneq val 0.1)
-		(snd-display #__line__ ";polywave ~D order 2nd 0-coeff: ~A" i val))))))
+		(snd-display #__line__ ";polywave ~D order second 0-coeff: ~A" i val))))))
     
     (do ((i 2 (+ i 1)))
 	((= i 7))
@@ -17293,7 +17293,7 @@ EDITS: 2
 	(let ((p (make-polywave 100.0 cfs mus-chebyshev-first-kind)))
 	  (let ((val (polywave p)))
 	    (if (fneq val (* 0.1 i))
-		(snd-display #__line__ ";polywave ~D order 1st 0-coeff: ~A" i val))))))
+		(snd-display #__line__ ";polywave ~D order first 0-coeff: ~A" i val))))))
 
     (let ((var (catch #t (lambda () (make-polywave 440.0 3.14)) (lambda args args))))
       (if (not (eq? (car var) 'wrong-type-arg))
@@ -22551,7 +22551,7 @@ EDITS: 2
 		    (set! (mix-position id) 10)
 		    (set! vals (channel->float-vector 18 10))
 		    (if (not (vequal vals (float-vector 0.000 0.000 0.000 0.100 0.300 0.500 0.300 0.000 0.000 0.000)))
-			(snd-display #__line__ ";mix 3 vs then move 1st: ~A" vals))
+			(snd-display #__line__ ";mix 3 vs then move first: ~A" vals))
 		    (set! (mix-position id2) 30)
 		    (set! vals (channel->float-vector 18 10))
 		    (if (not (vequal vals (float-vector 0.000 0.000 0.000 0.000 0.100 0.200 0.300 0.000 0.000 0.000)))
@@ -22828,7 +22828,7 @@ EDITS: 2
 	    (set! (sync ind) #t)
 	    (let ((md (car (mix-selection 500 ind))))
 	      (if (not (mix? (integer->mix (+ 1 (mix->integer md)))))
-		  (snd-display #__line__ ";where is 2nd mix? ~A ~A" md (mixes)))
+		  (snd-display #__line__ ";where is second mix? ~A ~A" md (mixes)))
 	      (if (not (= (edit-position ind 0) 1))
 		  (snd-display #__line__ ";edit-position 0 after stereo mix selection: ~A" (edit-position ind 0)))
 	      (if (not (= (edit-position ind 1) 1))
@@ -24454,7 +24454,7 @@ EDITS: 2
 	(if (not (selection?))
 	    (snd-display #__line__ ";define-selection-via-marks repeat failed?")
 	    (let ((mc (selection-members)))
-	      (if (not (equal? mc (list (list ind 0)))) (snd-display #__line__ ";selection-members after 2nd mark definition: ~A (should be '((~A 0)))" mc ind))
+	      (if (not (equal? mc (list (list ind 0)))) (snd-display #__line__ ";selection-members after second mark definition: ~A (should be '((~A 0)))" mc ind))
 	      (if (not (= (selection-position) 1000)) (snd-display #__line__ ";selection-position 1000: ~A" (selection-position)))
 	      (if (not (= (selection-framples) 1001)) (snd-display #__line__ ";selection-framples 1001: ~A" (selection-framples)))))
 	(set! (selection-member? #t) #f)
@@ -27936,7 +27936,7 @@ EDITS: 2
 	      (set! *clm-srate* old-srate))
 	    
 	    (let ((ind1 (new-sound :size 20 :comment "new-sound for sound-via-sound"))
-		  (ind2 (new-sound :size 20 :comment "2nd new-sound for sound-via-sound")))
+		  (ind2 (new-sound :size 20 :comment "second new-sound for sound-via-sound")))
 	      (let ((val -0.05)) (map-channel (lambda (y) (set! val (+ val .05))) 0 20 ind1))
 	      (let ((val 1.1)) (map-channel (lambda (y) (set! val (- val .1))) 0 20 ind2))
 	      (select-sound ind1)
@@ -28027,7 +28027,7 @@ EDITS: 2
 		(if (fneq (channel-property 'hi id 0) pi)
 		    (snd-display #__line__ ";channel-property 'hi (pi): ~A?" (channel-property 'hi id 0)))
 		(if (not (= (channel-property 'hiho id 0) 123))
-		    (snd-display #__line__ ";channel-property '2nd hiho (123): ~A?" (channel-property 'hiho id 0)))
+		    (snd-display #__line__ ";channel-property 'second hiho (123): ~A?" (channel-property 'hiho id 0)))
 		(if (not (= (length (channel-properties id 0)) (+ len 2)))
 		    (snd-display #__line__ ";channel-properties: ~A?" (channel-properties id 0))))
 	      
@@ -28043,7 +28043,7 @@ EDITS: 2
 		(if (fneq (sound-property 'hi id) pi)
 		    (snd-display #__line__ ";sound-property 'hi (pi): ~A?" (sound-property 'hi id)))
 		(if (not (= (sound-property 'hiho id) 123))
-		    (snd-display #__line__ ";sound-property '2nd hiho (123): ~A?" (sound-property 'hiho id)))
+		    (snd-display #__line__ ";sound-property 'second hiho (123): ~A?" (sound-property 'hiho id)))
 		(if (not (= (length (sound-properties id)) (+ len 2)))
 		    (snd-display #__line__ ";sound-properties: ~A?" (sound-properties id))))
 	      
@@ -35390,7 +35390,7 @@ EDITS: 1
 	(float-vector-multiply! im2 rl1)       ; (* tempr1 tempi2)
 	(float-vector-multiply! rl2 im1)       ; (* tempr2 tempi1)
 	(float-vector-add! tmprl tmpim)        ; add the first two
-	(float-vector-subtract! im2 rl2)       ; subtract the 4th from the 3rd
+	(float-vector-subtract! im2 rl2)       ; subtract the fourth from the third
 	(float-vector-scale! (fft tmprl im2 -1) fftscale))))
   
   (define (cross-correlate-3 rl1 rl2 fftlen)
@@ -35406,7 +35406,7 @@ EDITS: 1
 	(float-vector-multiply! im2 rl1)       ; (* tempr1 tempi2)
 	(float-vector-multiply! rl2 im1)       ; (* tempr2 tempi1)
 	(float-vector-add! tmprl tmpim)        ; add the first two
-	(float-vector-subtract! im2 rl2)       ; subtract the 4th from the 3rd
+	(float-vector-subtract! im2 rl2)       ; subtract the fourth from the third
 	(float-vector-scale! (fft tmprl im2 -1) fftscale))))
   
   (define* (automorph a b c d snd chn)
@@ -36313,7 +36313,7 @@ EDITS: 1
 		  (set! (im i) (bignum "0.0")))
 		(set! (rl 1) (bignum "-1.0"))
 		(set! (im 1) (bignum "-1.0"))
-		(bignum-fft rl im 8) ; 3rd arg is size
+		(bignum-fft rl im 8) ; third arg is size
 		(let ((crl (bignum-vector -1.000 0.000 1.000 (sqrt (bignum "2")) 1.000 0.000 -1.000 (- (sqrt (bignum "2")))))
 		      (cim (bignum-vector -1.000 (- (sqrt (bignum "2"))) -1.000 0.000 1.000 (sqrt (bignum "2")) 1.000 0.000)))
 		  (if (or (not (vectors-equal? rl crl))

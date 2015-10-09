@@ -19049,7 +19049,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->btxt = make_row_text(prf, NULL, 6, prf->gtxt, box, top_widget);
   float_to_textfield(prf->btxt, b);
 
-  /* 2nd row = 3 scales */
+  /* second row = 3 scales */
   n1 = make_callback_list(prefs_color_callback, (XtPointer)prf);
   
   n = 0;

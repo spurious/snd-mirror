@@ -12703,8 +12703,8 @@ static void mus_xen_init(void)
   Xen_define_constant(S_bohman_window,			MUS_BOHMAN_WINDOW,		"A weighted cosine window");
   Xen_define_constant(S_flat_top_window,		MUS_FLAT_TOP_WINDOW,		"A sum of cosines window");
   Xen_define_constant(S_hamming_window,			MUS_HAMMING_WINDOW,		"A raised cosine");
-  Xen_define_constant(S_blackman2_window,		MUS_BLACKMAN2_WINDOW,		"2nd order cosine window");
-  Xen_define_constant(S_blackman3_window,		MUS_BLACKMAN3_WINDOW,		"3rd order cosine window");
+  Xen_define_constant(S_blackman2_window,		MUS_BLACKMAN2_WINDOW,		"second order cosine window");
+  Xen_define_constant(S_blackman3_window,		MUS_BLACKMAN3_WINDOW,		"third order cosine window");
   Xen_define_constant(S_blackman4_window,		MUS_BLACKMAN4_WINDOW,		"4th order cosine window");
   Xen_define_constant(S_blackman5_window,		MUS_BLACKMAN5_WINDOW,		"5th order cosine window");
   Xen_define_constant(S_blackman6_window,		MUS_BLACKMAN6_WINDOW,		"6th order cosine window");
@@ -12724,8 +12724,8 @@ static void mus_xen_init(void)
   Xen_define_constant(S_hann_poisson_window,		MUS_HANN_POISSON_WINDOW,	"poisson window * hann window");
   Xen_define_constant(S_samaraki_window,		MUS_SAMARAKI_WINDOW,		"window from inverse fft (using Chebyshev Un)");
   Xen_define_constant(S_ultraspherical_window,		MUS_ULTRASPHERICAL_WINDOW,	"window from inverse fft (using Ultraspherical Cn)");
-  Xen_define_constant(S_rv2_window,			MUS_RV2_WINDOW,			"Rife-Vincent 2nd order window (Hann extension)");
-  Xen_define_constant(S_rv3_window,			MUS_RV3_WINDOW,			"Rife-Vincent 3rd order window (Hann extension)");
+  Xen_define_constant(S_rv2_window,			MUS_RV2_WINDOW,			"Rife-Vincent second order window (Hann extension)");
+  Xen_define_constant(S_rv3_window,			MUS_RV3_WINDOW,			"Rife-Vincent third order window (Hann extension)");
   Xen_define_constant(S_rv4_window,			MUS_RV4_WINDOW,			"Rife-Vincent 4th order window (Hann extension)");
   Xen_define_constant(S_mlt_sine_window,		MUS_MLT_SINE_WINDOW,		"modulated lapped transform sine window");
   Xen_define_constant(S_papoulis_window,		MUS_PAPOULIS_WINDOW,		"papoulise window");
@@ -12735,8 +12735,8 @@ static void mus_xen_init(void)
   Xen_define_constant(S_mus_interp_linear,		MUS_INTERP_LINEAR,		"locsig/delay linear interpolation");
   Xen_define_constant(S_mus_interp_sinusoidal,		MUS_INTERP_SINUSOIDAL,		"locsig sinusoidal interpolation");
   Xen_define_constant(S_mus_interp_all_pass,		MUS_INTERP_ALL_PASS,		"delay interpolation");
-  Xen_define_constant(S_mus_interp_lagrange,		MUS_INTERP_LAGRANGE,		"2nd order lagrange interpolation");
-  Xen_define_constant(S_mus_interp_hermite,		MUS_INTERP_HERMITE,		"3rd order hermite interpolation");
+  Xen_define_constant(S_mus_interp_lagrange,		MUS_INTERP_LAGRANGE,		"second order lagrange interpolation");
+  Xen_define_constant(S_mus_interp_hermite,		MUS_INTERP_HERMITE,		"third order hermite interpolation");
   Xen_define_constant(S_mus_interp_none,		MUS_INTERP_NONE,		"no interpolation -- step func");
   Xen_define_constant(S_mus_interp_bezier,		MUS_INTERP_BEZIER,		"bezier interpolation");
 

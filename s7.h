@@ -888,7 +888,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * --------
  * 17-Dec:    removed unquote-splicing; replaced by (unquote (apply values ...)).
  * 12-Dec:    environment? 
- * 7-Dec:     member and assoc have an optional 3rd arg, the comparison function.
+ * 7-Dec:     member and assoc have an optional third arg, the comparison function.
  * 1-Dec:     *gc-stats* in Scheme, s7_gc_stats in C.
  *            gmp and gtk-repl examples in s7.html.
  * 21-Nov:    Load C module example in s7.html.
