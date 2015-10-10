@@ -140,7 +140,7 @@
 (format *stderr* "reader~%")
 
 (define data "/home/bil/test/bench/src/bib")
-(define counts (make-hash-table))
+(define counts (make-hash-table (expt 2 18) string=?))
 
 (define (reader)
   (let ((port (open-input-file data))

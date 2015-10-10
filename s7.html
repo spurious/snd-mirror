@@ -3938,8 +3938,25 @@ in its closure:
 <em class="gray">(boolean? real?)</em>
 </pre>
 
-<blockquote>
+<p>We could do the same thing using methods:
+</p>
 
+<pre class="indented">
+&gt; (define f1 (let ((procedure-documentation (lambda (f) "helpful info"))
+                    (procedure-signature (lambda (f) '(boolean? real?))))
+                (<em class=red>openlet</em>
+                  (lambda (x) 
+                    (positive? x)))))
+&gt; (procedure-documentation f1)
+<em class="gray">"helpful info"</em>
+&gt; (procedure-signature f1)
+<em class="gray">(boolean? real?)</em>
+</pre>
+
+<p>openlet alerts s7 that f1 has methods.
+</p>
+<blockquote>
+<br>
 
 <details>
 <summary class="indented">examples</summary>

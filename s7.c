@@ -1206,12 +1206,25 @@ static void init_types(void)
   static s7_pointer check_nref(s7_pointer p, const char *func, int line);
   static void print_gc_info(s7_pointer obj, int line);
 
-  static s7_pointer ecdr_1(s7_scheme *sc, s7_pointer p, int role, const char *func, int line);
-  static s7_pointer set_ecdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, int role, const char *func, int line);
-  static s7_pointer fcdr_1(s7_scheme *sc, s7_pointer p, int role, const char *func, int line);
-  static void set_fcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, int role, const char *func, int line);
-  static s7_pointer gcdr_1(s7_scheme *sc, s7_pointer p, int role, const char *func, int line);
-  static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, int role, const char *func, int line);
+  static s7_pointer ecdr_1(s7_scheme *sc, s7_pointer p, unsigned int role, const char *func, int line);
+  static s7_pointer set_ecdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, unsigned int role, const char *func, int line);
+  static s7_pointer fcdr_1(s7_scheme *sc, s7_pointer p, unsigned int role, const char *func, int line);
+  static void set_fcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, unsigned int role, const char *func, int line);
+  static s7_pointer gcdr_1(s7_scheme *sc, s7_pointer p, unsigned int role, const char *func, int line);
+  static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, unsigned int role, const char *func, int line);
+
+  static unsigned long long int s_hash_1(s7_scheme *sc, s7_pointer p, const char *func, int line);
+  static void set_s_hash_1(s7_scheme *sc, s7_pointer p, unsigned long long int x, const char *func, int line);
+  static const char *s_name_1(s7_scheme *sc, s7_pointer p, const char *func, int line);
+  static void set_s_name_1(s7_scheme *sc, s7_pointer p, const char *str, const char *func, int line);
+  static unsigned int s_line_1(s7_scheme *sc, s7_pointer p, const char *func, int line);
+  static void set_s_line_1(s7_scheme *sc, s7_pointer p, unsigned int x, const char *func, int line);
+  static unsigned int s_len_1(s7_scheme *sc, s7_pointer p, const char *func, int line);
+  static void set_s_len_1(s7_scheme *sc, s7_pointer p, unsigned int x, const char *func, int line);
+  static unsigned int s_op_1(s7_scheme *sc, s7_pointer p, const char *func, int line);
+  static void set_s_op_1(s7_scheme *sc, s7_pointer p, unsigned int x, const char *func, int line);
+  static unsigned int s_syn_op_1(s7_scheme *sc, s7_pointer p, const char *func, int line);
+  static void set_s_syn_op_1(s7_scheme *sc, s7_pointer p, unsigned int x, const char *func, int line);
 
   static s7_scheme *hidden_sc;
   #define unchecked_type(p)           ((p)->tf.type_field)
@@ -1477,7 +1490,7 @@ static void init_types(void)
 #define T_SHARED                      (1 << (TYPE_BITS + 11))
 #define is_shared(p)                  ((typeflag(_TSeq(p)) & T_SHARED) != 0)
 #define set_shared(p)                 typeflag(_TSeq(p)) |= T_SHARED
-/* #define clear_shared(p)               typeflag(_TSeq(p)) &= (~T_SHARED) */
+/* #define clear_shared(p)            typeflag(_TSeq(p)) &= (~T_SHARED) */
 #define clear_collected_and_shared(p) typeflag(p) &= (~(T_COLLECTED | T_SHARED)) /* this can clear free cells = calloc */
 
 #define T_OVERLAY                     (1 << (TYPE_BITS + 12))
@@ -1667,12 +1680,18 @@ static int not_heap = -1;
  * the bits and funcs here try to track each such use, and report any cross-talk or collisions.
  * all of this machinery vanishes if debugging is turned off.
  */
+#define S_NAME                        (1 << 26)
+#define S_HASH                        (1 << 27)
+#define S_OP                          (1 << 28)
+#define S_LINE                        (1 << 29)
+#define S_LEN                         (1 << 30)
+#define S_SYNOP                       0x80000000 /* (1 << 31) */
 
 #define E_SET                         (1 << 0)
 #define E_FAST                        (1 << 6)   /* fast list in member/assoc circular list check */
 #define E_CFUNC                       (1 << 7)   /* c-function */
-#define E_CLAUSE                      (1 << 8)  /* case clause */
-#define E_BACK                        (1 << 9)  /* back pointer for doubly-linked list */
+#define E_CLAUSE                      (1 << 8)   /* case clause */
+#define E_BACK                        (1 << 9)   /* back pointer for doubly-linked list */
 #define E_LAMBDA                      (1 << 10)  /* lambda(*) */
 #define E_SYM                         (1 << 11)
 #define E_PAIR                        (1 << 12)
@@ -1681,7 +1700,7 @@ static int not_heap = -1;
 #define E_VECTOR                      (1 << 15)
 #define E_ANY                         (1 << 16)
 #define E_SLOT                        (1 << 17)
-#define E_MASK                        (E_FAST | E_CFUNC | E_CLAUSE | E_BACK | E_LAMBDA | E_SYM | E_PAIR | E_CON | E_GOTO | E_VECTOR | E_ANY | E_SLOT)
+#define E_MASK                        (E_FAST | E_CFUNC | E_CLAUSE | E_BACK | E_LAMBDA | E_SYM | E_PAIR | E_CON | E_GOTO | E_VECTOR | E_ANY | E_SLOT | S_HASH)
 
 #define ecdr_is_set(p)                (((p)->debugger_bits & E_SET) != 0)
 #define set_ecdr_is_set(p)            (p)->debugger_bits |= E_SET
@@ -1699,7 +1718,7 @@ static int not_heap = -1;
 #define F_CON                         (1 << 23)
 #define F_CALL                        (1 << 24)
 #define F_LAMBDA                      (1 << 25)
-#define F_MASK                        (F_C_CALL | F_KEY | F_SLOW | F_SYM | F_PAIR | F_CON | F_CALL | F_LAMBDA)
+#define F_MASK                        (F_C_CALL | F_KEY | F_SLOW | F_SYM | F_PAIR | F_CON | F_CALL | F_LAMBDA | S_NAME)
 
 #define fcdr_is_set(p)                (((p)->debugger_bits & F_SET) != 0)
 #define set_fcdr_is_set(p)            (p)->debugger_bits |= F_SET
@@ -1713,38 +1732,28 @@ static int not_heap = -1;
 #define G_ARGLEN                      (1 << 3)  /* arglist length */
 #define G_SYM                         (1 << 4)  /* expression symbol access */
 #define G_AND                         (1 << 5)  /* and second clause */
-#define G_MASK                        (G_ARGLEN | G_SYM | G_AND)
+#define G_MASK                        (G_ARGLEN | G_SYM | G_AND | S_OP | S_LINE | S_LEN | S_SYNOP)
 
 #define gcdr_is_set(p)                (((p)->debugger_bits & G_SET) != 0)
 #define set_gcdr_is_set(p)            (p)->debugger_bits |= G_SET
 #define gcdr_role_matches(p, Role)    (((p)->debugger_bits & G_MASK) == Role)
-#define set_gcdr_role(p, Role)        (p)->debugger_bits |= Role
+#define set_gcdr_role(p, Role)        (p)->debugger_bits = (Role | (p->debugger_bits & ~G_MASK))
 #define gcdr(p, Role)                 gcdr_1(hidden_sc, _TLst(p), Role, __func__, __LINE__)
 #define set_gcdr(p, x, Role)          set_gcdr_1(hidden_sc, _TLst(p), x, Role, __func__, __LINE__)
 
-/* ecdr == s_hash, fcdr == s_fstr, gcdr == s_op|len|line and op==len so they are contradictory 
- *   need s_hash as ecdr op? s_fstr as fcdr op?
- *   how to handle s_op/s_len? S_OP|S_LEN as "role". currently T_LINE_NUMBER is on if line
- *   but each of these ecdr_1 - like funcs needs to return the correct type! -- 5?
- *
- * hash: return unsigned long long int, set E_SET and S_HASH check for collision with normal ecdr
- * name: const char* set F_SET and S_NAME
+/* ecdr == s_hash, fcdr == s_fstr, gcdr == s_op|len|line and op==len so they are contradictory (but only op/line|gcdr actually collide)
  * line|len|op: unsigned int set G_SET and S_* if S_LEN -> not op and vice versa
+ * another collider: pair_syntax_op|optimize_op below.  Both need bits: S_SYNOP?
  */
-#define S_NAME                        (1 << 26)
-#define S_HASH                        (1 << 27)
-#define S_OP                          (1 << 28)
-#define S_LINE                        (1 << 29)
-#define S_LEN                         (1 << 30)
 
-#define pair_line(p)                  (p)->object.sym_cons.line
-#define pair_set_line(p, X)           (p)->object.sym_cons.line = X
-#define pair_raw_hash(p)         (p)->object.sym_cons.hash
-#define pair_set_raw_hash(p, X)  (p)->object.sym_cons.hash = X
-#define pair_raw_len(p)          (p)->object.sym_cons.op
-#define pair_set_raw_len(p, X)   (p)->object.sym_cons.op = X
-#define pair_raw_name(p)         (p)->object.sym_cons.fstr
-#define pair_set_raw_name(p, X)  (p)->object.sym_cons.fstr = X
+#define pair_line(p)                  s_line_1(sc, _TLst(p), __func__, __LINE__)
+#define pair_set_line(p, X)           set_s_line_1(sc, _TLst(p), X, __func__, __LINE__)
+#define pair_raw_hash(p)              s_hash_1(sc, _TLst(p), __func__, __LINE__)
+#define pair_set_raw_hash(p, X)       set_s_hash_1(sc, _TLst(p), X, __func__, __LINE__)
+#define pair_raw_len(p)               s_len_1(sc, _TLst(p), __func__, __LINE__)
+#define pair_set_raw_len(p, X)        set_s_len_1(sc, _TLst(p), X, __func__, __LINE__)
+#define pair_raw_name(p)              s_name_1(sc, _TLst(p), __func__, __LINE__)
+#define pair_set_raw_name(p, X)       set_s_name_1(sc, _TLst(p), X, __func__, __LINE__)
 #endif
 
 #define opt_fast(P)                   _TCdr(ecdr(P,              E_FAST))
@@ -1863,10 +1872,16 @@ static int not_heap = -1;
 #define is_char_uppercase(p)          _TChr(p)->object.chr.upper_c
 #define is_char_lowercase(p)          _TChr(p)->object.chr.lower_c
 #define character_name(p)             _TChr(p)->object.chr.c_name
-#define character_name_length(p)      _TChr(p)->object.chr.length
+ #define character_name_length(p)      _TChr(p)->object.chr.length
 
-#define optimize_op(p)                _TLst(p)->object.sym_cons.op
-#define set_optimize_op(P, Op)        optimize_op(P) = Op
+#if (!DEBUGGING)
+  #define optimize_op(p)              _TLst(p)->object.sym_cons.op
+  #define set_optimize_op(P, Op)      optimize_op(P) = Op
+#else
+  #define optimize_op(p)              s_op_1(hidden_sc, _TLst(p), __func__, __LINE__)
+  #define set_optimize_op(p, Op)      set_s_op_1(hidden_sc, _TLst(p), Op, __func__, __LINE__)
+#endif
+
 #define optimize_op_match(P, Q)       ((is_optimized(P)) && ((optimize_op(P) & 0xfffe) == Q))
 #define op_no_hop(P)                  (optimize_op(P) & 0xfffe)
 #define clear_hop(P)                  set_optimize_op(P, op_no_hop(P))
@@ -1920,25 +1935,21 @@ static int not_heap = -1;
 #define syntax_ip(p)                  _TSyn(p)->object.syn.ip
 #define syntax_pp(p)                  _TSyn(p)->object.syn.pp
 
-#define pair_syntax_op(P)             _TLst(P)->object.sym_cons.op
-#define pair_syntax_symbol(P)         car(opt_back(P))
 #if (!DEBUGGING)
-static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_symbol(p) = op; pair_syntax_op(opt_back(p)) = symbol_syntax_op(op);}
+  #define pair_syntax_op(p)           p->object.sym_cons.op
+  #define pair_set_syntax_op(p, X)    p->object.sym_cons.op = X
 #else
-#define pair_set_syntax_symbol(P, Op) set_syntax_op_1(sc, P, Op)
-static void set_syntax_op_1(s7_scheme *sc, s7_pointer p, s7_pointer op) {pair_syntax_symbol(p) = op; pair_syntax_op(opt_back(p)) = symbol_syntax_op(op);}
+  #define pair_syntax_op(p)           s_syn_op_1(hidden_sc, _TLst(p), __func__, __LINE__)
+  #define pair_set_syntax_op(p, Op)   set_s_syn_op_1(hidden_sc, _TLst(p), Op, __func__, __LINE__)
 #endif
+#define pair_syntax_symbol(P)         car(opt_back(P))
+static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_symbol(p) = op; pair_set_syntax_op(opt_back(p), symbol_syntax_op(op));}
 
 #define ROOTLET_SIZE 512
 #define let_id(p)                     _TLid(p)->object.envr.id
 #define is_let(p)                     (type(p) == T_LET)
-#if DEBUGGING
-static s7_pointer let_slots(s7_pointer p) {if (p->object.vector.length == ROOTLET_SIZE) {fprintf(stderr, "rootlet accessed as let\n"); abort();} return(p->object.envr.slots);}
-static s7_pointer let_set_slots(s7_pointer p, s7_pointer slot) {if (p->object.vector.length == ROOTLET_SIZE) {fprintf(stderr, "rootlet clobbered\n"); abort();} p->object.envr.slots = slot; return(slot);}
-#else
 #define let_slots(p)                  _TLet(p)->object.envr.slots
 #define let_set_slots(p, Slot)        _TLet(p)->object.envr.slots = _TSlt(Slot)
-#endif
 #define outlet(p)                     _TLet(p)->object.envr.nxt
 #define set_outlet(p, ol)             _TLet(p)->object.envr.nxt = _TLid(ol)
 #define funclet_function(p)           _TLet(p)->object.envr.edat.efnc.function
@@ -2005,11 +2016,7 @@ static s7_pointer let_set_slots(s7_pointer p, s7_pointer slot) {if (p->object.ve
 #define ITERATOR_END_NAME "#<eof>"
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT)
-#if DEBUGGING
 #define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
-#else
-#define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
-#endif
 #define port_port(p)                  _TPrt(p)->object.prt.port
 #define port_type(p)                  _TPrt(p)->object.prt.ptype
 #define is_string_port(p)             (port_type(p) == STRING_PORT)
@@ -7679,25 +7686,10 @@ static s7_pp_t gf_function(s7_pointer f)
   return(NULL);
 }
 
-s7_rp_t s7_rf_function(s7_scheme *sc, s7_pointer func)
-{
-  return(rf_function(func));
-}
-
-s7_ip_t s7_if_function(s7_scheme *sc, s7_pointer func)
-{
-  return(if_function(func));
-}
-
-s7_pp_t s7_pf_function(s7_scheme *sc, s7_pointer func)
-{
-  return(pf_function(func));
-}
-
-s7_pp_t s7_gf_function(s7_scheme *sc, s7_pointer func)
-{
-  return(gf_function(func));
-}
+s7_rp_t s7_rf_function(s7_scheme *sc, s7_pointer func) {return(rf_function(func));}
+s7_ip_t s7_if_function(s7_scheme *sc, s7_pointer func) {return(if_function(func));}
+s7_pp_t s7_pf_function(s7_scheme *sc, s7_pointer func) {return(pf_function(func));}
+s7_pp_t s7_gf_function(s7_scheme *sc, s7_pointer func) {return(gf_function(func));}
 
 void s7_rf_set_function(s7_pointer f, s7_rp_t rp)
 {
@@ -26758,7 +26750,7 @@ static void resize_strbuf(s7_scheme *sc, unsigned int needed_size)
 static s7_pointer file_read_name_or_sharp(s7_scheme *sc, s7_pointer pt, bool atom_case)
 {
   int c;
-  unsigned i = 1;
+  unsigned int i = 1;
   /* sc->strbuf[0] has the first char of the string we're reading */
 
   do {
@@ -31207,33 +31199,38 @@ static void print_gc_info(s7_pointer obj, int line)
   #define set_local(Symbol) set_local_1(sc, Symbol, __func__, __LINE__)
 #endif
 
-static s7_pointer ecdr_1(s7_scheme *sc, s7_pointer p, int role, const char *func, int line)
+static void show_ecdr_bits(s7_scheme *sc, s7_pointer p, const char *func, int line)
+{
+  fprintf(stderr, "%secdr %s[%d]: %p->%p %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n", BOLD_TEXT, func, line, p, p->object.cons.ecdr, p->debugger_bits,
+	  ((p->debugger_bits & E_FAST) != 0) ? " fast" : "",
+	  ((p->debugger_bits & E_CFUNC) != 0) ? " cfunc" : "",
+	  ((p->debugger_bits & E_CLAUSE) != 0) ? " clause" : "",
+	  ((p->debugger_bits & E_BACK) != 0) ? " back" : "",
+	  ((p->debugger_bits & E_LAMBDA) != 0) ? " lambda" : "",
+	  ((p->debugger_bits & E_SYM) != 0) ? " sym" : "",
+	  ((p->debugger_bits & E_PAIR) != 0) ? " pair" : "",
+	  ((p->debugger_bits & E_CON) != 0) ? " con" : "",
+	  ((p->debugger_bits & E_GOTO) != 0) ? " goto" : "",
+	  ((p->debugger_bits & E_VECTOR) != 0) ? " vector" : "",
+	  ((p->debugger_bits & E_ANY) != 0) ? " any" : "",
+	  ((p->debugger_bits & E_SLOT) != 0) ? " slot" : "",
+	  ((p->debugger_bits & S_HASH) != 0) ? " raw-hash" : "",
+	  UNBOLD_TEXT);
+}
+
+static s7_pointer ecdr_1(s7_scheme *sc, s7_pointer p, unsigned int role, const char *func, int line)
 {
   if ((!ecdr_is_set(p)) ||
       ((!ecdr_role_matches(p, role)) &&
        (role != E_ANY)))
     {
-      fprintf(stderr, "%secdr %s[%d]: %p->%p %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n", BOLD_TEXT, func, line, p, p->object.cons.ecdr, p->debugger_bits,
-	      ((p->debugger_bits & E_FAST) != 0) ? " fast" : "",
-	      ((p->debugger_bits & E_CFUNC) != 0) ? " cfunc" : "",
-	      ((p->debugger_bits & E_CLAUSE) != 0) ? " clause" : "",
-	      ((p->debugger_bits & E_BACK) != 0) ? " back" : "",
-	      ((p->debugger_bits & E_LAMBDA) != 0) ? " lambda" : "",
-	      ((p->debugger_bits & E_SYM) != 0) ? " sym" : "",
-	      ((p->debugger_bits & E_PAIR) != 0) ? " pair" : "",
-	      ((p->debugger_bits & E_CON) != 0) ? " con" : "",
-	      ((p->debugger_bits & E_GOTO) != 0) ? " goto" : "",
-	      ((p->debugger_bits & E_VECTOR) != 0) ? " vector" : "",
-	      ((p->debugger_bits & E_ANY) != 0) ? " any" : "",
-	      ((p->debugger_bits & E_SLOT) != 0) ? " slot" : "",
-	      ((p->debugger_bits & S_HASH) != 0) ? " raw-hash" : "",
-	      UNBOLD_TEXT);
+      show_ecdr_bits(sc, p, func, line);
       if (stop_at_error) abort();
     }
   return(p->object.cons.ecdr);
 }
 
-static s7_pointer set_ecdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, int role, const char *func, int line)
+static s7_pointer set_ecdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, unsigned int role, const char *func, int line)
 {
   p->object.cons.ecdr = x;
   set_ecdr_role(p, role);
@@ -31241,69 +31238,185 @@ static s7_pointer set_ecdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, int role
   return(x);
 }
 
-static s7_pointer fcdr_1(s7_scheme *sc, s7_pointer p, int role, const char *func, int line)
+static unsigned long long int s_hash_1(s7_scheme *sc, s7_pointer p, const char *func, int line)
+{
+  if ((!ecdr_is_set(p)) ||
+      (!ecdr_role_matches(p, S_HASH)))
+    {
+      show_ecdr_bits(sc, p, func, line);
+      if (stop_at_error) abort();
+    }
+  return(p->object.sym_cons.hash);
+}
+
+static void set_s_hash_1(s7_scheme *sc, s7_pointer p, unsigned long long int x, const char *func, int line)
+{
+  p->object.sym_cons.hash = x;
+  set_ecdr_role(p, S_HASH);
+  set_ecdr_is_set(p);
+}
+
+static void show_fcdr_bits(s7_scheme *sc, s7_pointer p, const char *func, int line)
+{
+  fprintf(stderr, "%s%s[%d]: fcdr: %p->%p %x%s%s%s%s%s%s%s%s%s%s\n", BOLD_TEXT, func, line, p, p->object.cons.fcdr, p->debugger_bits,
+	  ((p->debugger_bits & F_C_CALL) != 0) ? " c-call" : "",
+	  ((p->debugger_bits & F_KEY) != 0) ? " key" : "",
+	  ((p->debugger_bits & F_SLOW) != 0) ? " slow" : "",
+	  ((p->debugger_bits & F_SYM) != 0) ? " sym" : "",
+	  ((p->debugger_bits & F_PAIR) != 0) ? " pair" : "",
+	  ((p->debugger_bits & F_CON) != 0) ? " con" : "",
+	  ((p->debugger_bits & F_CALL) != 0) ? " call" : "",
+	  ((p->debugger_bits & F_LAMBDA) != 0) ? " lambda" : "",
+	  ((p->debugger_bits & S_NAME) != 0) ? " raw-name" : "",
+	  UNBOLD_TEXT);
+}
+
+static s7_pointer fcdr_1(s7_scheme *sc, s7_pointer p, unsigned int role, const char *func, int line)
 {
   if ((!fcdr_is_set(p)) ||
       (!fcdr_role_matches(p, role)))
     {
-      fprintf(stderr, "%s%s[%d]: fcdr: %p->%p %x%s%s%s%s%s%s%s%s%s\n", BOLD_TEXT, func, line, p, p->object.cons.fcdr, p->debugger_bits,
-	      ((p->debugger_bits & F_C_CALL) != 0) ? " c-call" : "",
-	      ((p->debugger_bits & F_KEY) != 0) ? " key" : "",
-	      ((p->debugger_bits & F_SLOW) != 0) ? " slow" : "",
-	      ((p->debugger_bits & F_SYM) != 0) ? " sym" : "",
-	      ((p->debugger_bits & F_PAIR) != 0) ? " pair" : "",
-	      ((p->debugger_bits & F_CON) != 0) ? " con" : "",
-	      ((p->debugger_bits & F_CALL) != 0) ? " call" : "",
-	      ((p->debugger_bits & F_LAMBDA) != 0) ? " lambda" : "",
-	      UNBOLD_TEXT);
+      show_fcdr_bits(sc, p, func, line);
       if (stop_at_error) abort();
     }
   return(p->object.cons.fcdr);
 }
 
-static void set_fcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, int role, const char *func, int line)
+static void set_fcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, unsigned int role, const char *func, int line)
 {
   p->object.cons.fcdr = x;
   set_fcdr_role(p, role);
   set_fcdr_is_set(p);
 }
 
-static s7_pointer gcdr_1(s7_scheme *sc, s7_pointer p, int role, const char *func, int line)
+static const char *s_name_1(s7_scheme *sc, s7_pointer p, const char *func, int line)
+{
+  if ((!fcdr_is_set(p)) ||
+      (!fcdr_role_matches(p, S_NAME)))
+    {
+      show_fcdr_bits(sc, p, func, line);
+      if (stop_at_error) abort();
+    }
+  return(p->object.sym_cons.fstr);
+}
+
+static void set_s_name_1(s7_scheme *sc, s7_pointer p, const char *str, const char *func, int line)
+{
+  p->object.sym_cons.fstr = str;
+  set_fcdr_role(p, S_NAME);
+  set_fcdr_is_set(p);
+}
+
+static void show_gcdr_bits(s7_scheme *sc, s7_pointer p, const char *func, int line)
+{
+  fprintf(stderr, "%s%s[%d]: gcdr: %x%s%s%s%s%s%s%s%s\n", BOLD_TEXT, func, line, 
+	  p->debugger_bits, 
+	  ((p->debugger_bits & G_ARGLEN) != 0) ? " arglen" : "",
+	  ((p->debugger_bits & G_SYM) != 0) ? " sym" : "",
+	  ((p->debugger_bits & G_AND) != 0) ? " and" : "",
+	  ((p->debugger_bits & S_LINE) != 0) ? " line" : "",
+	  ((p->debugger_bits & S_LEN) != 0) ? " len" : "",
+	  ((p->debugger_bits & S_OP) != 0) ? " op" : "",
+	  ((p->debugger_bits & S_SYNOP) != 0) ? " syn-op" : "",
+	  UNBOLD_TEXT);
+}
+
+static s7_pointer gcdr_1(s7_scheme *sc, s7_pointer p, unsigned int role, const char *func, int line)
 {
   if ((!gcdr_is_set(p)) || 
       (!gcdr_role_matches(p, role)))
     {
-      fprintf(stderr, "%s%s[%d]: gcdr %p->%p %x%s\n", BOLD_TEXT, func, line, p, p->object.cons.gcdr, p->debugger_bits, UNBOLD_TEXT);
+      show_gcdr_bits(sc, p, func, line);
       if (stop_at_error) abort();
     }
   return(p->object.cons.gcdr);
 }
 
-static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, int role, const char *func, int line)
+static void set_gcdr_1(s7_scheme *sc, s7_pointer p, s7_pointer x, unsigned int role, const char *func, int line)
 {
-  if ((typeflag(p) & T_OPTIMIZED) != 0)
-    {
-      fprintf(stderr, "%sgcdr %s[%d]: set %p to %p (%s) but is optimized%s\n", BOLD_TEXT, func, line, p, x, DISPLAY(x), UNBOLD_TEXT);
-      if (stop_at_error) abort();
-      typeflag(p) &= ~(T_OPTIMIZED | T_LINE_NUMBER);
-    }
+  typeflag(p) &= ~(T_OPTIMIZED | T_LINE_NUMBER);
   p->object.cons.gcdr = x;
   set_gcdr_is_set(p);
-  if (!gcdr_role_matches(p, role))
+  set_gcdr_role(p, role);
+}
+
+/* S_LINE */
+static unsigned int s_line_1(s7_scheme *sc, s7_pointer p, const char *func, int line)
+{
+  if ((!gcdr_is_set(p)) || 
+      ((p->debugger_bits & S_LINE) == 0) ||
+      (!has_line_number(p)))
     {
-      if (gcdr_role_matches(p, 0))
-	set_gcdr_role(p, role);
-      else 
-	{
-	  fprintf(stderr, "%sgcdr inuse? %s[%d]: %x%s%s%s%s\n", BOLD_TEXT, func, line, 
-		  p->debugger_bits, 
-		  ((p->debugger_bits & G_ARGLEN) != 0) ? " arglen" : "",
-		  ((p->debugger_bits & G_SYM) != 0) ? " sym" : "",
-		  ((p->debugger_bits & G_AND) != 0) ? " and" : "",
-		  UNBOLD_TEXT);
-	  if (stop_at_error) abort();
-	}
+      show_gcdr_bits(sc, p, func, line);
+      if (stop_at_error) abort();
     }
+  return(p->object.sym_cons.line);
+}
+
+static void set_s_line_1(s7_scheme *sc, s7_pointer p, unsigned int x, const char *func, int line)
+{
+  p->object.sym_cons.line = x;
+  (p)->debugger_bits = (S_LINE | (p->debugger_bits & ~S_LEN)); /* turn on line, cancel len */
+  set_gcdr_is_set(p);
+}
+
+/* S_LEN (collides with S_LINE) */
+static unsigned int s_len_1(s7_scheme *sc, s7_pointer p, const char *func, int line)
+{
+  if ((!gcdr_is_set(p)) || 
+      ((p->debugger_bits & S_LEN) == 0)
+      (has_line_number(p)))
+    {
+      show_gcdr_bits(sc, p, func, line);
+      if (stop_at_error) abort();
+    }
+  return(p->object.sym_cons.line);
+}
+
+static void set_s_len_1(s7_scheme *sc, s7_pointer p, unsigned int x, const char *func, int line)
+{
+  typeflag(p) &= ~(T_LINE_NUMBER);
+  p->object.sym_cons.line = x;
+  (p)->debugger_bits = (S_LEN | (p->debugger_bits & ~(S_LINE)));
+  set_gcdr_is_set(p);
+}
+
+/* S_OP */
+static unsigned int s_op_1(s7_scheme *sc, s7_pointer p, const char *func, int line)
+{
+  if ((!gcdr_is_set(p)) || 
+      ((p->debugger_bits & S_OP) == 0))
+    {
+      show_gcdr_bits(sc, p, func, line);
+      if (stop_at_error) abort();
+    }
+  return(p->object.sym_cons.op);
+}
+
+static void set_s_op_1(s7_scheme *sc, s7_pointer p, unsigned int x, const char *func, int line)
+{
+  p->object.sym_cons.op = x;
+  (p)->debugger_bits = (S_OP | (p->debugger_bits & ~(S_SYNOP)));
+  set_gcdr_is_set(p);
+}
+
+/* S_SYNOP (collides with S_OP) */
+static unsigned int s_syn_op_1(s7_scheme *sc, s7_pointer p, const char *func, int line)
+{
+  if ((!gcdr_is_set(p)) || 
+      ((p->debugger_bits & S_SYNOP) == 0))
+    {
+      show_gcdr_bits(sc, p, func, line);
+      if (stop_at_error) abort();
+    }
+  return(p->object.sym_cons.op);
+}
+
+static void set_s_syn_op_1(s7_scheme *sc, s7_pointer p, unsigned int x, const char *func, int line)
+{
+  p->object.sym_cons.op = x;
+  (p)->debugger_bits = (S_SYNOP | (p->debugger_bits & ~(S_OP)));
+  set_gcdr_is_set(p);
 }
 
 static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port)
@@ -31396,7 +31509,7 @@ static void iterator_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use
 
 static void baffle_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 {
-  int nlen = 0;
+  int nlen;
   char buf[64];
   nlen = snprintf(buf, 64, "#<baffle: %d>", baffle_key(obj));
   port_write_string(port)(sc, buf, nlen, port);
@@ -31404,7 +31517,7 @@ static void baffle_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 
 static void c_pointer_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write)
 {
-  int nlen = 0;
+  int nlen;
   char buf[64];
 
   if (use_write == USE_READABLE_WRITE)
@@ -32254,7 +32367,7 @@ static bool format_method(s7_scheme *sc, const char *str, format_data *fdat, s7_
 static int format_numeric_arg(s7_scheme *sc, const char *str, int str_len, format_data *fdat, s7_pointer args, int *i)
 {
   #define MAX_FORMAT_WIDTH 10000
-  int width = 0;
+  int width;
   if ((str[*i] == 'n') || (str[*i] == 'N'))
     {
       *i = *i + 1;
@@ -32284,21 +32397,40 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj);
 static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *str, s7_pointer args,
 				   s7_pointer *next_arg, bool with_result, bool columnized, int len, s7_pointer orig_str)
 {
-  int i = 0, str_len = 0;
-  format_data *fdat = NULL;
-  s7_pointer deferred_port = sc->F;
+  int i, str_len;
+  format_data *fdat;
+  s7_pointer deferred_port;
 
   if ((!with_result) &&
       (port == sc->F))
     return(sc->F);
 
+  if (len <= 0)
+    {
+      str_len = safe_strlen(str);
+      if (str_len == 0)
+	{
+	  if (is_not_null(args))
+	    {
+	      static s7_pointer null_err = NULL;
+	      if (!null_err)
+		null_err = s7_make_permanent_string("format control string is null, but there are arguments: ~S");
+	      return(s7_error(sc, sc->FORMAT_ERROR, set_elist_2(sc, null_err, args)));
+	    }
+	  if (with_result)
+	    return(make_string_wrapper_with_length(sc, "", 0));
+	  return(sc->F);
+	}
+    }
+  else str_len = len;
+
   sc->format_depth++;
   if (sc->format_depth >= sc->num_fdats)
     {
-      int i, new_num_fdats;
+      int k, new_num_fdats;
       new_num_fdats = sc->format_depth * 2;
       sc->fdats = (format_data **)realloc(sc->fdats, sizeof(format_data *) * new_num_fdats);
-      for (i = sc->num_fdats; i < new_num_fdats; i++) sc->fdats[i] = NULL;
+      for (k = sc->num_fdats; k < new_num_fdats; k++) sc->fdats[k] = NULL;
       sc->num_fdats = new_num_fdats;
     }
 
@@ -32325,20 +32457,6 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
   fdat->orig_str = orig_str;
   fdat->curly_arg = sc->NIL;
 
-  if (len <= 0)
-    {
-      str_len = safe_strlen(str);
-      if (str_len == 0)
-	{
-	  if (is_not_null(args))
-	    format_error(sc, "format control string is null, but there are arguments", str, args, fdat);
-	  if (with_result)
-	    return(make_string_wrapper_with_length(sc, "", 0));
-	  return(sc->F);
-	}
-    }
-  else str_len = len;
-
   /* choose whether to write to a temporary string port, or simply use the in-coming port
    *   if with_result, returned string is wanted.
    *   if port is sc->F, no non-string result is wanted.
@@ -32352,6 +32470,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
       port = open_format_port(sc); 
       fdat->port = port;
     }
+  else deferred_port = sc->F;
 
   for (i = 0; i < str_len - 1; i++)
     {
@@ -36882,18 +37001,22 @@ static s7_pointer g_int_vector(s7_scheme *sc, s7_pointer args)
   #define H_int_vector "(int-vector ...) returns an homogenous int vector whose elements are the arguments"
   #define Q_int_vector s7_make_circular_signature(sc, 1, 2, sc->IS_INT_VECTOR, sc->IS_INTEGER)
 
-  s7_int i, len;
-  s7_pointer vec, x;
+  s7_int len;
+  s7_pointer vec;
 
   len = s7_list_length(sc, args);
   vec = make_vector_1(sc, len, NOT_FILLED, T_INT_VECTOR);
   if (len > 0)
-    for (x = args, i = 0; is_pair(x); x = cdr(x), i++)
-      {
-	if (is_integer(car(x)))
-	  int_vector_element(vec, i) = integer(car(x));
-	else return(simple_wrong_type_argument(sc, sc->INT_VECTOR, car(x), T_INTEGER));
-      }
+    {
+      s7_int i;
+      s7_pointer x;
+      for (x = args, i = 0; is_pair(x); x = cdr(x), i++)
+	{
+	  if (is_integer(car(x)))
+	    int_vector_element(vec, i) = integer(car(x));
+	  else return(simple_wrong_type_argument(sc, sc->INT_VECTOR, car(x), T_INTEGER));
+	}
+    }
   return(vec);
 }
 
@@ -40825,17 +40948,27 @@ s7_pointer hash_table_fill(s7_scheme *sc, s7_pointer args)
       if (val == sc->F)
 	{
 	  hash_entry_t **hp, **hn;
+	  hash_entry_t *p;
 	  hp = entries;
 	  hn = (hash_entry_t **)(hp + len);
 	  for (; hp < hn; hp++)
-	    if (*hp)
-	      {
-		hash_entry_t *p;
-		p = *hp;
-		while (p->next) p = p->next;
-		p->next = hash_free_list;
-		hash_free_list = *hp;
-	      }
+	    {
+	      if (*hp)
+		{
+		  p = *hp;
+		  while (p->next) p = p->next;
+		  p->next = hash_free_list;
+		  hash_free_list = *hp;
+		}
+	      hp++;
+	      if (*hp)
+		{
+		  p = *hp;
+		  while (p->next) p = p->next;
+		  p->next = hash_free_list;
+		  hash_free_list = *hp;
+		}
+	    }
 	  memset(entries, 0, len * sizeof(hash_entry_t *));
 	  if (!hash_table_checker_locked(table))
 	    hash_table_checker(table) = hash_empty;
@@ -51416,8 +51549,7 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int 
 			  set_optimize_op(expr, hop + OP_SAFE_THUNK_P);
 			  if (typesflag(car(body)) != SYNTACTIC_PAIR)
 			    {
-			      pair_syntax_op(car(body)) = symbol_syntax_op(caar(body));
-			      /* if (pair_syntax_op(body) > OP_MAX_DEFINED) fprintf(stderr, "%d op: %d\n", __LINE__, pair_syntax_op(car(body))); */
+			      pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
 			      set_type(car(body), SYNTACTIC_PAIR);
 			    }
 			}
@@ -51870,7 +52002,7 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 			      set_optimize_op(expr, hop + OP_SAFE_CLOSURE_S_P);
 			      if (typesflag(car(body)) != SYNTACTIC_PAIR)
 				{
-				  pair_syntax_op(car(body)) = symbol_syntax_op(caar(body));
+				  pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
 				  set_type(car(body), SYNTACTIC_PAIR);
 				}
 			    }
@@ -54267,11 +54399,11 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 		      /* the is_optimized check here and in other parallel cases protects against cases like:
 		       *   (define (hi) (let ((e #f)) (let ((val (not e))) (if (boolean? val) val e)))) (hi)
 		       * where the "(if...)" part is optimized as safe_c_s before we get here.  If we simply
-		       * set pair_syntax_op(cadr(sc->code)) as below, the optimization bit is on, but the
+		       * pair_set_syntax_op(cadr(sc->code)) as below, the optimization bit is on, but the
 		       * apparent optimize_op (op) is now safe_c_qq! So eval ejects it and it is handled by the
 		       * explicit ("trailers") code.
 		       */
-		      pair_syntax_op(cadr(sc->code)) = symbol_syntax_op(caadr(sc->code));
+		      pair_set_syntax_op(cadr(sc->code), symbol_syntax_op(caadr(sc->code)));
 		    }
 		  return(sc->code);
 		}
@@ -54283,6 +54415,7 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 	      set_opt_sym2(sc->code, cadr(cadr(binding)));
 	      return(sc->code);
 	    }
+	  /* ecdr here is opt_back */
 	  set_opt_pair2(sc->code, cadr(binding));
 	  if (optimize_op(cadr(binding)) == HOP_SAFE_C_SS)
 	    {
@@ -54920,7 +55053,7 @@ static s7_pointer check_if(s7_scheme *sc)
 	      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_P_P : sc->IF_P_P_P);
 	      if (is_syntactic(car(test)))
 		{
-		  pair_syntax_op(test) = symbol_syntax_op(car(test));
+		  pair_set_syntax_op(test, symbol_syntax_op(car(test)));
 
 		  if ((symbol_syntax_op(car(test)) == OP_AND) ||
 		      (symbol_syntax_op(car(test)) == OP_OR))
@@ -56979,7 +57112,7 @@ static s7_pointer check_do(s7_scheme *sc)
 			  ((!is_optimized(car(body))) || (op_no_hop(car(body)) != OP_SAFE_C_C)) &&
 			  (is_syntactic(caar(body))))
 			{
-			  pair_syntax_op(car(body)) = symbol_syntax_op(caar(body));
+			  pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
 			  pair_set_syntax_symbol(sc->code, sc->SIMPLE_DO_P);
 			  set_opt_pair2(sc->code, caddr(caar(sc->code)));
 
@@ -57365,7 +57498,7 @@ static int dox_ex(s7_scheme *sc)
 	  else
 	    {
 	      sc->op = (opcode_t)symbol_syntax_op(car(code));
-	      pair_syntax_op(code) = sc->op;
+	      pair_set_syntax_op(code, sc->op);
 	      set_type(code, SYNTACTIC_PAIR);
 	    }
 	  sc->code = cdr(code);
@@ -57860,7 +57993,7 @@ static int safe_dotimes_ex(s7_scheme *sc)
 		  else
 		    {
 		      sc->op = (opcode_t)symbol_syntax_op(car(sc->code));
-		      pair_syntax_op(sc->code) = sc->op;
+		      pair_set_syntax_op(sc->code, sc->op);
 		      set_type(sc->code, SYNTACTIC_PAIR);
 		    }
 		  sc->code = cdr(sc->code);
@@ -58229,8 +58362,7 @@ static int unknown_ex(s7_scheme *sc, s7_pointer f)
 			  set_optimize_op(code, hop + OP_SAFE_THUNK_P);
 			  if (typesflag(car(body)) != SYNTACTIC_PAIR)
 			    {
-			      pair_syntax_op(car(body)) = symbol_syntax_op(caar(body));
-			      /* if (pair_syntax_op(body) > OP_MAX_DEFINED) fprintf(stderr, "%d op: %d\n", __LINE__, pair_syntax_op(car(body))); */
+			      pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
 			      set_type(car(body), SYNTACTIC_PAIR);
 			    }
 			}
@@ -58317,7 +58449,7 @@ static int unknown_g_ex(s7_scheme *sc, s7_pointer f)
 			      set_optimize_op(code, hop + OP_SAFE_CLOSURE_S_P);
 			      if (typesflag(car(body)) != SYNTACTIC_PAIR)
 				{
-				  pair_syntax_op(car(body)) = symbol_syntax_op(caar(body));
+				  pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
 				  set_type(car(body), SYNTACTIC_PAIR);
 				}
 			    }
@@ -63783,7 +63915,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    set_type(code, SYNTACTIC_PAIR);
 		    car(code) = syntax_symbol(slot_value(initial_slot(carc))); /* clear possible optimization confusion */
 		    sc->op = (opcode_t)symbol_syntax_op(car(code));
-		    pair_syntax_op(code) = sc->op;
+		    pair_set_syntax_op(code, sc->op);
 		    sc->code = cdr(code);
 		    goto START_WITHOUT_POP_STACK;
 		  }
@@ -73393,13 +73525,13 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 | 1156 
  * teq           |      |      | 6612 | 2380 
  * tauto     265 |   89 |  9   |  8.4 | 2638 
+ * tcopy         |      |      | 13.6 | 3204
  * bench    42.7 | 8752 | 4220 | 3506 | 3230 
- * tcopy         |      |      | 13.6 | 3239 
  * tform         |      |      | 6816 | 3627 
  * tmap          |      |      |  9.3 | 4176
  * titer         |      |      | 7503 | 5218 
  * lg            |      |      | 6547 | 7201
- * thash         |      |      | 50.7 | 8565
+ * thash         |      |      | 50.7 | 8491
  *               |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0 
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 
@@ -73418,6 +73550,5 @@ int main(int argc, char **argv)
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?)
  * for define* how to show in sig/pos the individual types? -- take in decl order and reorder if keys?
- * handle the S_* debugger bits
  */
 

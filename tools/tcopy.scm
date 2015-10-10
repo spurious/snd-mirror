@@ -14,6 +14,7 @@
 	(old-let #f)
 	(old-block (make-block size)))
     (set! old-let (inlet))
+
     (do ((i 0 (+ i 1)))
 	((= i size))
       (hash-table-set! old-hash i #\a))
@@ -187,7 +188,7 @@
     (reverse! old-block)
     ))
 
-(define-macro (test tst expected)
+(define-expansion (test tst expected)
   `(let ((val ,tst))
      (if (not (equal? val ,expected))
 	 (format *stderr* "~S: ~S but expected ~S~%" ',tst val ,expected))))
