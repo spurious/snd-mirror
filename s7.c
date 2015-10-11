@@ -1949,7 +1949,7 @@ static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_sym
 #define let_id(p)                     _TLid(p)->object.envr.id
 #define is_let(p)                     (type(p) == T_LET)
 #define let_slots(p)                  _TLet(p)->object.envr.slots
-#define let_set_slots(p, Slot)        _TLet(p)->object.envr.slots = _TSlt(Slot)
+#define let_set_slots(p, Slot)        _TLet(p)->object.envr.slots = Slot
 #define outlet(p)                     _TLet(p)->object.envr.nxt
 #define set_outlet(p, ol)             _TLet(p)->object.envr.nxt = _TLid(ol)
 #define funclet_function(p)           _TLet(p)->object.envr.edat.efnc.function
@@ -4697,9 +4697,38 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 
 /* -------------------------------- stacks -------------------------------- */
 
-#define OP_STACK_INITIAL_SIZE 128
+#define OP_STACK_INITIAL_SIZE 32
+
+#if DEBUGGING
+#define BOLD_TEXT "\033[1m"
+#define UNBOLD_TEXT "\033[22m"
+#define stop_at_error false
+
+static void push_op_stack(s7_scheme *sc, s7_pointer op)
+{
+  (*sc->op_stack_now++) = op;
+  if (sc->op_stack_now > (sc->op_stack + sc->op_stack_size)) 
+    {
+      fprintf(stderr, "%sop_stack overflow%s\n", BOLD_TEXT, UNBOLD_TEXT);
+      if (stop_at_error) abort();
+    }
+}
+
+static s7_pointer pop_op_stack(s7_scheme *sc)
+{
+  s7_pointer op;
+  op = (*(--(sc->op_stack_now)));
+  if (sc->op_stack_now < sc->op_stack) 
+    {
+      fprintf(stderr, "%sop_stack underflow%s\n", BOLD_TEXT, UNBOLD_TEXT);
+      if (stop_at_error) abort();
+    }
+  return(op);
+}
+#else
 #define push_op_stack(Sc, Op) (*Sc->op_stack_now++) = Op
 #define pop_op_stack(Sc)      (*(--(Sc->op_stack_now)))
+#endif
 
 static void initialize_op_stack(s7_scheme *sc)
 {
@@ -4732,6 +4761,57 @@ static void resize_op_stack(s7_scheme *sc)
 #define stack_args(Stack, Loc)  vector_element(_TStk(Stack), Loc - 1)
 #define stack_op(Stack, Loc)    ((opcode_t)(vector_element(_TStk(Stack), Loc)))
 
+#if DEBUGGING
+static void pop_stack(s7_scheme *sc)
+{
+  sc->stack_end -= 4;
+  if (sc->stack_end < sc->stack_start) 
+    {
+      fprintf(stderr, "%sstack underflow%s\n", BOLD_TEXT, UNBOLD_TEXT);
+      if (stop_at_error) abort();
+    }
+  sc->code =  sc->stack_end[0];
+  sc->envir = sc->stack_end[1];
+  sc->args =  sc->stack_end[2];
+  sc->op =    (opcode_t)(sc->stack_end[3]);
+  if (sc->op > OP_MAX_DEFINED) 
+    {
+      fprintf(stderr, "%sinvalid opcode: %llu%s\n", BOLD_TEXT, sc->op, UNBOLD_TEXT);
+      if (stop_at_error) abort();
+    }
+}
+
+static void pop_stack_no_op(s7_scheme *sc)
+{
+  sc->stack_end -= 4;
+  if (sc->stack_end < sc->stack_start) 
+    {
+      fprintf(stderr, "%sstack underflow%s\n", BOLD_TEXT, UNBOLD_TEXT);
+      if (stop_at_error) abort();
+    }
+  sc->code =  sc->stack_end[0];
+  sc->envir = sc->stack_end[1];
+  sc->args =  sc->stack_end[2];
+}
+
+static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer code)
+{
+  if (sc->stack_end >= sc->stack_start + sc->stack_size) 
+    {
+      fprintf(stderr, "%sstack overflow%s\n", BOLD_TEXT, UNBOLD_TEXT);
+      if (stop_at_error) abort();
+    }
+  if (code) sc->stack_end[0] = code;
+  sc->stack_end[1] = sc->envir;
+  if (args) sc->stack_end[2] = args;
+  sc->stack_end[3] = (s7_pointer)op;
+  sc->stack_end += 4;
+}
+
+#define push_stack_no_code(Sc, Op, Args) push_stack(Sc, Op, Args, NULL)
+#define push_stack_no_args(Sc, Op, Code) push_stack(Sc, Op, NULL, Code)
+
+#else
 /* these macros are faster than the equivalent simple function calls.  If the s7_scheme struct is set up to reflect the
  *    stack order [code envir args op], we can use memcpy here:
  *      #define pop_stack(Sc) do {Sc->stack_end -= 4; memcpy((void *)Sc, (void *)(Sc->stack_end), 4 * sizeof(s7_pointer));} while (0)
@@ -4778,7 +4858,7 @@ static void resize_op_stack(s7_scheme *sc)
       Sc->stack_end[3] = (s7_pointer)Op; \
       Sc->stack_end += 4; \
   } while (0)
-
+#endif
 /* since we don't GC mark the stack past the stack_top, push_stack_no_args and friends can cause pop_stack to set
  *   sc->code and sc->args to currently free objects.
  */
@@ -5443,8 +5523,8 @@ static s7_pointer make_simple_let(s7_scheme *sc)
 
 static s7_pointer old_frame_in_env(s7_scheme *sc, s7_pointer frame, s7_pointer next_frame)
 {
-  let_set_slots(frame, sc->NIL);
   set_type(frame, T_LET | T_IMMUTABLE);
+  let_set_slots(frame, sc->NIL);
   set_outlet(frame, next_frame);
   let_id(frame) = ++sc->let_number;
   return(frame);
@@ -31020,10 +31100,6 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 }
 
 #if DEBUGGING
-#define BOLD_TEXT "\033[1m"
-#define UNBOLD_TEXT "\033[22m"
-#define stop_at_error false
-
 static const char *check_name(int typ)
 {
   if ((typ >= 0) && (typ < NUM_TYPES))
@@ -31364,7 +31440,7 @@ static void set_s_line_1(s7_scheme *sc, s7_pointer p, unsigned int x, const char
 static unsigned int s_len_1(s7_scheme *sc, s7_pointer p, const char *func, int line)
 {
   if ((!gcdr_is_set(p)) || 
-      ((p->debugger_bits & S_LEN) == 0)
+      ((p->debugger_bits & S_LEN) == 0) ||
       (has_line_number(p)))
     {
       show_gcdr_bits(sc, p, func, line);
@@ -57225,6 +57301,7 @@ static s7_pointer check_do(s7_scheme *sc)
 
       /* each step expr is safe so not an explicit set!
        *   the symbol_is_safe check in all_x_eval needs to see the do envir, not the caller's
+       *   but that means the is_all_x_safe check above also needs to use the local env?
        */
       if (is_pair(vars))
 	{
@@ -57238,9 +57315,10 @@ static s7_pointer check_do(s7_scheme *sc)
 	      if (is_pair(cddr(var))) 
 		{
 		  s7_pointer step_expr;
-		  set_c_call(cddr(var), all_x_eval(sc, caddr(var), vars, do_symbol_is_safe));
 		  step_expr = caddr(var);
+		  set_c_call(cddr(var), all_x_eval(sc, step_expr, vars, do_symbol_is_safe)); /* sets fcdr(cddr(var)), not ecdr */
 		  if ((is_pair(step_expr)) &&
+		      (car(step_expr) != sc->QUOTE) &&     /* opt_cfunc(==ecdr) might not be set in this case (sigh) */
 		      (preserves_type(sc, c_function_class(opt_cfunc(step_expr)))))
 		    set_safe_stepper(cddr(var));
 		}
@@ -73550,5 +73628,6 @@ int main(int argc, char **argv)
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?)
  * for define* how to show in sig/pos the individual types? -- take in decl order and reorder if keys?
+ * need pervasive '<any> tests, especially '(), also why is (test (let...)) so different from (let (test...))?
  */
 
