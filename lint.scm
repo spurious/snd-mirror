@@ -720,12 +720,15 @@
 			      (nonf (make-vector len))
 			      (cur 0)
 			      (ctr 0)
-			      (form (canonical-tree uform)))
+			      (form (canonical-tree uform))) 
+			  ;; (and (real? mag) (real? ang)) -> (and bool-0 bool-1)
+			  ;; (not off)                     -> (not bool-0)
+			  ;; (or din (sqrt 2.0))           -> (or bool-0 bool-1)
 			  
 			  (for-each
 			   (lambda (var)
 			     (do ((i cur (+ i 1)))
-				 ((not (tree-member i form))
+				 ((not (tree-member i form)) ; tree-member uses eq? (should use = for this?)
 				  (set! cur (+ i 1))
 				  (vector-set! nonf ctr i)
 				  (set! ctr (+ ctr 1)))))
