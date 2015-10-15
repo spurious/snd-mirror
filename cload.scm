@@ -412,7 +412,11 @@
 	     (format p "static s7_if_t ~A_if(s7_scheme *sc, s7_pointer expr) {return(~A_if_i);}~%" func-name func-name))))
 	  
 	(format p "~%")
-	(set! functions (cons (list scheme-name base-name (or doc func-name) 
+	(set! functions (cons (list scheme-name base-name 
+				    (if (and (string? doc)
+					     (> (length doc) 0))
+					doc
+					(format #f "~A ~A~A" return-type func-name arg-types))
 				    num-args 0 
 				    (make-signature return-type arg-types))
 			      functions))))
@@ -594,6 +598,12 @@
 		    (system (format #f "gcc ~A -shared -o ~A ~A" 
 				    o-file-name so-file-name (string-append *cload-ldflags* " " ldflags))))))))
 
+    (define (check-doc func-data)
+      (let ((doc (caddr func-data)))
+	(if (and (string? doc)
+		 (> (length doc) 0))
+	    func-data
+	    (append (list (car func-data) (cadr func-data) (car func-data)) (cdddr func-data)))))
 
     (define (handle-declaration func)
       ;; functions
@@ -603,7 +613,7 @@
 	    ((in-C)       (format p "~A~%" (cadr func)))
 	    ((C-init)     (set! inits (cons (cadr func) inits)))
 	    ((C-macro)    (apply add-one-macro (cadr func)))
-	    ((C-function) (collides? (caadr func)) (set! functions (cons (cadr func) functions)))
+	    ((C-function) (collides? (caadr func)) (set! functions (cons (check-doc (cadr func)) functions)))
 	    (else         (apply add-one-constant func)))))
 
 

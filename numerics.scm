@@ -1,8 +1,6 @@
 (provide 'snd-numerics.scm)
 
-(when (provided? 'make-complex)
-  (define magnitude abs)
-  (define make-rectangular make-complex)
+(when (provided? 'pure-s7)
   (define (make-polar mag ang)
     (if (and (real? mag) (real? ang))
 	(make-complex (* mag (cos ang)) (* mag (sin ang)))
@@ -284,7 +282,7 @@
     (float-vector-scale! rl fftscale)
     (float-vector-scale! im fftscale)
     ;; handle 0 case by itself
-    (let* ((c1 (make-rectangular (rl 0) (im 0)))
+    (let* ((c1 (make-complex (rl 0) (im 0)))
 	   (val (/ (+ (* a c1) b)
 		   (+ (* c c1) d)))
 	   (rval (real-part val))
@@ -294,7 +292,7 @@
     (do ((i 1 (+ i 1))
 	 (k (- fftlen 1) (- k 1)))
 	((= i fftlen2))
-      (let* ((c1 (make-rectangular (rl i) (im i)))
+      (let* ((c1 (make-complex (rl i) (im i)))
 	     (val (/ (+ (* a c1) b)      ; (az + b) / (cz + d)
 		     (+ (* c c1) d)))
 	     (rval (real-part val))

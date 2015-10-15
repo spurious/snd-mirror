@@ -5727,7 +5727,7 @@ definition, and a later redefinition does not affect earlier uses.
 <li>remove call-with-values and its friends
 <li>remove char-ready?
 <li>change eof-object? to eof? or just omit it (you can use eq? #&lt;eof&gt;)
-<li>change make-rectangular to make-complex, and remove make-polar, angle, and magnitude.
+<li>change make-rectangular to make-complex, and remove make-polar.
 <li>remove unquote (the name, not the functionality).
 <li>remove cond-expand.
 <li>remove *-ci functions (they are completely useless)
@@ -5775,11 +5775,11 @@ Better ideas are always welcome!
 <p>Here are the built-in s7 variables:
 </p>
 <ul>
-<li>*features*
-<li>*libraries*
-<li>*load-path*
-<li>*autoload*
-<li>*#readers*
+<li>*features*    ; a list of symbols
+<li>*libraries*   ; a list of (filename . let) pairs
+<li>*load-path*   ; a list of directories
+<li>*autoload*    ; autoload info (a function internally)
+<li>*#readers*    ; a list of (char . handler) pairs
 </ul>
 
 <p>And the built-in constants:
@@ -5807,7 +5807,7 @@ Better ideas are always welcome!
 <li>omits cond-expand, multiple-values-bind|set!, call-with-values, defmacro(*)
 <li>omits unquote (the name), and quasiquoted vector constants
 <li>omits d/f/s/l exponents
-<li>omits make-polar, angle, magnitude, and renames make-rectangular to make-complex
+<li>omits make-polar, and renames make-rectangular to make-complex
 <li>omits integer-length, exact?, inexact?, exact-&gt;inexact, inexact-&gt;exact, #i and #e
 <li>omits set-current-output-port and set-current-input-port
 <li>omits memq, memv, assq, assv

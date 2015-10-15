@@ -6,14 +6,10 @@
 (provide 'lint.scm)
 (require stuff.scm)
 
-(if (provided? 'make-complex)
-    (begin
-      (define magnitude abs)
-      (define make-rectangular make-complex)
-      (define (make-polar mag ang) (make-complex (* mag (cos ang)) (* mag (sin ang))))))
-
 (if (provided? 'pure-s7)
     (begin
+      (define (make-polar mag ang) (make-complex (* mag (cos ang)) (* mag (sin ang))))
+
       (define (memq a b) (member a b eq?))
       (define (memv a b) (member a b eqv?))
       (define (assq a b) (assoc a b eq?))
@@ -108,8 +104,8 @@
 		  keyword->symbol keyword? 
 		  lcm length let let* letrec letrec* list list->string list->vector list-ref list-tail 
 		  list? log logand logbit? logior lognot logxor 
-		  macro? magnitude make-hash-table make-iterator make-hook make-keyword make-list make-polar
-		  make-random-state make-rectangular make-string make-vector map max member memq memv min modulo morally-equal?
+		  macro? magnitude make-hash-table make-iterator make-hook make-keyword make-list make-polar make-rectangular
+		  make-random-state make-complex make-string make-vector map max member memq memv min modulo morally-equal?
 		  nan? negative? not null? number->string number? numerator 
 		  object->string odd? openlet? or outlet output-port? 
 		  pair? pair-line-number port-closed? port-filename port-line-number positive? 
@@ -142,7 +138,7 @@
 			    (set! (h op) #t))
 			  '(+ * - / 
 			      sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh 
-			      log exp expt sqrt make-polar make-rectangular
+			      log exp expt sqrt make-polar make-complex
 			      imag-part real-part abs magnitude angle max min exact->inexact
 			      modulo remainder quotient lcm gcd
 			      rationalize inexact->exact random
@@ -222,7 +218,7 @@
 	       (let ((sig (procedure-signature f)))
 		 (and (pair? sig)
 		      (or (eq? (car sig) 'values) ; turn it into #t for now
-			  (car sig)))))))
+			  (car sig)))))))         ; this might be undefined in the current context (eg oscil? outside clm)
 
       (define (->type c)
 	(cond ((pair? c)
@@ -1537,14 +1533,14 @@
 	      ;; what about (* 2.0 (random 1.0)) and the like?
 	      ;;   this is trickier than it appears: (* 2.0 (random 3)) etc
 
-	      ((rationalize make-polar make-rectangular lognot ash modulo remainder quotient tan exact->inexact)
+	      ((rationalize make-polar make-complex lognot ash modulo remainder quotient tan exact->inexact)
 	       (if (just-rationals? args)
 		   (catch #t ; catch needed here for things like (ash 2 64)
 		     (lambda ()
 		       (apply (symbol->value (car form)) args))
 		     (lambda ignore
 		       `(,(car form) ,@args)))
-		   (if (and (eq? (car form) 'make-rectangular)
+		   (if (and (eq? (car form) 'make-complex)
 			    (= len 2)
 			    (morally-equal? (cadr args) 0.0))
 		       (car args)

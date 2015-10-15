@@ -6,9 +6,7 @@
 
 (provide 'snd-poly.scm)
 
-(when (provided? 'make-complex)
-  (define magnitude abs)
-  (define make-rectangular make-complex)
+(when (provided? 'pure-s7)
   (define (make-polar mag ang)
     (if (and (real? mag) (real? ang))
 	(make-complex (* mag (cos ang)) (* mag (sin ang)))
@@ -316,7 +314,7 @@
 	      0.0
 	      (real-part a))
 	  (if (< (abs (real-part a)) poly-roots-epsilon)
-	      (make-rectangular 0.0 (imag-part a))
+	      (make-complex 0.0 (imag-part a))
 	      a)))))
 
 
@@ -573,31 +571,31 @@
 
 #|
 (do ((i 0 (+ i 1))) ((= i 10)) 
-  (poly-as-vector-roots (vector (make-rectangular (mus-random 1.0) (mus-random 1.0)) 
-				(make-rectangular (mus-random 1.0) (mus-random 1.0)))))
+  (poly-as-vector-roots (vector (make-complex (mus-random 1.0) (mus-random 1.0)) 
+				(make-complex (mus-random 1.0) (mus-random 1.0)))))
 (do ((i 0 (+ i 1))) ((= i 10)) 
-  (poly-as-vector-roots (vector (make-rectangular (mus-random 1.0) (mus-random 1.0)) 
-				(make-rectangular (mus-random 1.0) (mus-random 1.0))
-				(make-rectangular (mus-random 1.0) (mus-random 1.0)))))
+  (poly-as-vector-roots (vector (make-complex (mus-random 1.0) (mus-random 1.0)) 
+				(make-complex (mus-random 1.0) (mus-random 1.0))
+				(make-complex (mus-random 1.0) (mus-random 1.0)))))
 
 (do ((i 0 (+ i 1))) ((= i 10)) 
   (poly-roots (float-vector (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0))))
 
 (do ((i 0 (+ i 1))) ((= i 10)) 
-  (poly-as-vector-roots (vector (make-rectangular (mus-random 1.0) (mus-random 1.0)) 
-				(make-rectangular (mus-random 1.0) (mus-random 1.0))
-				(make-rectangular (mus-random 1.0) (mus-random 1.0))
-				(make-rectangular (mus-random 1.0) (mus-random 1.0)))))
+  (poly-as-vector-roots (vector (make-complex (mus-random 1.0) (mus-random 1.0)) 
+				(make-complex (mus-random 1.0) (mus-random 1.0))
+				(make-complex (mus-random 1.0) (mus-random 1.0))
+				(make-complex (mus-random 1.0) (mus-random 1.0)))))
 
 (do ((i 0 (+ i 1))) ((= i 10)) 
   (poly-roots (float-vector (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0))))
 
 (do ((i 0 (+ i 1))) ((= i 10)) 
-  (poly-as-vector-roots (vector (make-rectangular (mus-random 1.0) (mus-random 1.0)) 
-				(make-rectangular (mus-random 1.0) (mus-random 1.0))
-				(make-rectangular (mus-random 1.0) (mus-random 1.0))
-				(make-rectangular (mus-random 1.0) (mus-random 1.0))
-				(make-rectangular (mus-random 1.0) (mus-random 1.0)))))
+  (poly-as-vector-roots (vector (make-complex (mus-random 1.0) (mus-random 1.0)) 
+				(make-complex (mus-random 1.0) (mus-random 1.0))
+				(make-complex (mus-random 1.0) (mus-random 1.0))
+				(make-complex (mus-random 1.0) (mus-random 1.0))
+				(make-complex (mus-random 1.0) (mus-random 1.0)))))
 
 (do ((i 3 (+ i 1))) ((= i 20)) 
   (let ((v (make-float-vector i 0.0)))

@@ -3,10 +3,6 @@
 (provide 'snd-clean.scm)
 (require snd-dsp.scm snd-generators.scm)
 
-(when (provided? 'make-complex)
-  (define magnitude abs)
-  (define make-rectangular make-complex))
-
 (define goertzel-channel
   (let ((documentation "(goertzel-channel freq beg dur snd chn) returns the amplitude of the 'freq' spectral component"))
     (lambda* (freq (beg 0) dur snd chn)
@@ -21,7 +17,7 @@
 	    (two-pole flt (next-sample reader)))
 	  (let ((y1 (two-pole flt (next-sample reader)))
 		(y0 (two-pole flt (next-sample reader))))
-	    (magnitude (- y0 (* y1 (exp (make-rectangular 0.0 (- rfreq))))))))))))
+	    (magnitude (- y0 (* y1 (exp (make-complex 0.0 (- rfreq))))))))))))
 
 
 (define* (check-freq freq snd chn)

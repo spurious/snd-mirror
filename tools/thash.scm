@@ -124,10 +124,10 @@
   (let ((cmp-hash (make-hash-table size)))
     (do ((i 0 (+ i 1))) 
 	((= i size)) 
-      (hash-table-set! cmp-hash (make-rectangular i i) i))
+      (hash-table-set! cmp-hash (make-complex i i) i))
     (do ((i 0 (+ i 1))) 
 	((= i size)) 
-      (if (not (= (hash-table-ref cmp-hash (make-rectangular i i)) i)) 
+      (if (not (= (hash-table-ref cmp-hash (make-complex i i)) i)) 
 	  (display "oops")))
     (fill! cmp-hash #f))
 
