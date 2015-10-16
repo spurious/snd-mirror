@@ -1993,23 +1993,26 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 				     (set! dir-names (cdr dir-names))
 				     (reader))))
 			     (if (not (member file '("." "..") string=?))
-				 (if (and recursive 
-					  (if (defined? 'directory?)
-					      (directory? file)
-					      (let ((buf (stat.make)))
-						(let ((result (and (stat file buf) (S_ISDIR (stat.st_mode buf)))))
-						  (free buf)
-						  result))))
-				     (let ((new-dir (opendir file)))
-				       (if (equal? new-dir NULL)  ; inner directory is unreadable?
-					   (begin
-					     (format *stderr* "can't read ~S: ~S" file (strerror (errno)))
-					     (reader))
-					   (begin
-					     (set! dirs (cons dir dirs))
-					     (set! dir new-dir)
-					     (set! dir-names (cons dir-name dir-names))
-					     (set! dir-name (string-append dir-name "/" file))
-					     (reader))))
-				     (string-append dir-name "/" file))
+				 (let ((full-dir-name (string-append dir-name "/" file)))
+				   (if (and recursive 
+					    (reader-cond 
+					     ((defined? 'directory?)
+					      (directory? full-dir-name))
+					     (#t (let ((buf (stat.make)))
+						   (let ((result (and (stat full-dir-name buf) 
+								      (S_ISDIR (stat.st_mode buf)))))
+						     (free buf)
+						     result)))))
+				       (let ((new-dir (opendir full-dir-name)))
+					 (if (equal? new-dir NULL)  ; inner directory is unreadable?
+					     (begin
+					       (format *stderr* "can't read ~S: ~S" file (strerror (errno)))
+					       (reader))
+					     (begin
+					       (set! dirs (cons dir dirs))
+					       (set! dir new-dir)
+					       (set! dir-names (cons dir-name dir-names))
+					       (set! dir-name full-dir-name)
+					       (reader))))
+				       (string-append dir-name "/" file)))
 				 (reader)))))))))))))

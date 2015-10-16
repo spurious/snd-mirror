@@ -80,6 +80,7 @@
 	       (symbol? x))))
 
     (let ((no-side-effect-functions 
+	   ;; ideally we'd be able to add functions to this list, perhaps similar to the signatures
 	   (let ((ht (make-hash-table)))
 	     (for-each
 	      (lambda (op) 
@@ -96,7 +97,7 @@
 		  defined? denominator do dynamic-wind 
 		  inlet let-ref let?
 		  eof-object? eq? equal? eqv? owlet even? exact->inexact exact? exp expt 
-		  floor ;for-each 
+		  floor 
 		  gcd gensym gensym? rootlet
 		  hash-table hash-table* hash-table-ref hash-table-entries hash-table? iterator? hook-functions 
 		  if imag-part inexact->exact inexact? infinite? unlet input-port? integer->char integer-decode-float 
@@ -112,7 +113,6 @@
 		  procedure-documentation funclet
 		  procedure-setter procedure-source dilambda? procedure? provided? 
 		  quasiquote quote quotient 
-		  ;random 
 		  random-state? rational? rationalize real-part real? remainder reverse round 
 		  s7-version sin sinh sqrt string string->list string->number string->symbol string-append string-ci<=? string-ci<? 
 		  string-ci=? string-ci>=? string-ci>? string-length string-position string-ref string<=? string<? string=? string>=? 
@@ -407,7 +407,7 @@
 
       
       (define (equal-ignoring-constants? a b)
-	(or (equal? a b)
+	(or (morally-equal? a b)
 	    (and (symbol? a)
 		 (constant? a) 
 		 (morally-equal? (symbol->value a) b))
@@ -957,6 +957,7 @@
 			     (if (or (code-constant? arg)
 				     (and (pair? arg)
 					  (symbol? (car arg))
+					  (hash-table-ref no-side-effect-functions (car arg))
 					  (not (hash-table-ref globals (car arg)))
 					  (let ((ret (return-type (car arg))))
 					    (and (or (symbol? ret) (pair? ret))

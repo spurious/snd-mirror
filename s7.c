@@ -198,8 +198,7 @@
 
 #ifndef WITH_EXTRA_EXPONENT_MARKERS
   #define WITH_EXTRA_EXPONENT_MARKERS 0
-  /* if 1, s7 recognizes "d", "f", "l", and "s" as exponent markers, in addition to "e" (also "D", "F", "L", "S")
-   */
+  /* if 1, s7 recognizes "d", "f", "l", and "s" as exponent markers, in addition to "e" (also "D", "F", "L", "S") */
 #endif
 
 #ifndef WITH_SYSTEM_EXTRAS
@@ -1866,7 +1865,7 @@ static int not_heap = -1;
 #define character_name_length(p)      (_TChr(p))->object.chr.length
 
 #if (!DEBUGGING)
-#define optimize_op(p)              (_TLst(p))->object.sym_cons.op
+  #define optimize_op(p)              (_TLst(p))->object.sym_cons.op
   #define set_optimize_op(P, Op)      optimize_op(P) = Op
 #else
   #define optimize_op(p)              s_op_1(hidden_sc, _TLst(p), __func__, __LINE__)
@@ -13844,9 +13843,8 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 
 static s7_int c_abs_i(s7_scheme *sc, s7_int arg) {return((arg < 0) ? (-arg) : arg);}
 IF_TO_IF(abs, c_abs_i)
-#if (!WITH_PURE_S7)
+
 static s7_double c_abs_r(s7_scheme *sc, s7_double arg) {return((arg < 0.0) ? (-arg) : arg);} 
-#endif
 DIRECT_RF_TO_RF(fabs)
 
 
@@ -36759,6 +36757,8 @@ s7_int *s7_vector_offsets(s7_pointer vec)
   return(offs);
 }
 
+
+#if (!WITH_PURE_S7)
 static s7_pointer vector_append(s7_scheme *sc, s7_pointer args, int typ);
 
 static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
@@ -36803,7 +36803,7 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
     }
   return(vector_append(sc, args, type(car(args))));
 }
-
+#endif
 
 s7_pointer s7_vector_ref_n(s7_scheme *sc, s7_pointer vector, int indices, ...)
 {
@@ -70459,7 +70459,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
   }
 }
 
-
+#if (!WITH_PURE_S7)
 static s7_pointer big_exact_to_inexact(s7_scheme *sc, s7_pointer args)
 {
   #define H_exact_to_inexact "(exact->inexact num) converts num to an inexact number; (exact->inexact 3/2) = 1.5"
@@ -70493,7 +70493,7 @@ static s7_pointer big_inexact_to_exact(s7_scheme *sc, s7_pointer args)
     method_or_bust(sc, p, sc->INEXACT_TO_EXACT, args, T_REAL, 0);
   return(big_rationalize(sc, args));
 }
-
+#endif
 
 static s7_pointer big_convert_to_int(s7_scheme *sc, s7_pointer args, s7_pointer sym,
 				     void (*div_func)(mpz_ptr, mpz_srcptr, mpz_srcptr),
@@ -72813,7 +72813,7 @@ s7_scheme *s7_init(void)
   sc->LET_TO_LIST =           defun("let->list",	let_to_list,		1, 0, false);
                               defun("set-current-input-port", set_current_input_port, 1, 0, false);
                               defun("set-current-output-port", set_current_output_port, 1, 0, false);
-  sc->IS_CHAR_READY =         defun("char-ready?",	is_char_ready,		0, 1, false);
+  sc->IS_CHAR_READY =         defun("char-ready?",	is_char_ready,		0, 1, false); /* the least-used scheme function */
 #endif
 
   sc->CLOSE_INPUT_PORT =      defun("close-input-port", close_input_port,	1, 0, false);
@@ -72837,8 +72837,7 @@ s7_scheme *s7_init(void)
   sc->READ_LINE =             defun("read-line",	read_line,		0, 2, false);
   sc->READ_STRING =           defun("read-string",	read_string,		1, 1, false);
   sc->READ =                  unsafe_defun("read",	read,			0, 1, false);
-  /* read can't be safe because it messes with the stack, expecting to be all by itself in the call sequence (not embedded in OP_SAFE_C_opSq for example)
-   */
+  /* read can't be safe because it messes with the stack, expecting to be all by itself in the call sequence (not embedded in OP_SAFE_C_opSq for example) */
 
   sc->CALL_WITH_INPUT_STRING = unsafe_defun("call-with-input-string", call_with_input_string, 2, 0, false);
   sc->CALL_WITH_INPUT_FILE =  unsafe_defun("call-with-input-file", call_with_input_file, 2, 0, false);
@@ -73573,23 +73572,23 @@ int main(int argc, char **argv)
 
 /* ----------------------------------------------------
  *
- *           12  |  13  |  14  |  15  | 16.0
+ *           12  |  13  |  14  |  15  | 16.0 |
  *                                           
- * s7test   1721 | 1358 |  995 | 1194 | 1122 
- * index    44.3 | 3291 | 1725 | 1276 | 1156 
- * teq           |      |      | 6612 | 2380 
- * tauto     265 |   89 |  9   |  8.4 | 2638 
- * tcopy         |      |      | 13.6 | 3204
- * bench    42.7 | 8752 | 4220 | 3506 | 3230 
- * tform         |      |      | 6816 | 3627 
- * tmap          |      |      |  9.3 | 4176
- * titer         |      |      | 7503 | 5218 
- * lg            |      |      | 6547 | 7201
- * thash         |      |      | 50.7 | 8491
- *               |      |      |      |
- * tgen          |   71 | 70.6 | 38.0 | 12.0 
- * tall       90 |   43 | 14.5 | 12.7 | 15.0 
- * calls     359 |  275 | 54   | 34.7 | 37.1 
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 |
+ * index    44.3 | 3291 | 1725 | 1276 | 1156 |
+ * teq           |      |      | 6612 | 2380 |
+ * tauto     265 |   89 |  9   |  8.4 | 2638 |
+ * tcopy         |      |      | 13.6 | 3204 |
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230 |
+ * tform         |      |      | 6816 | 3627 |
+ * tmap          |      |      |  9.3 | 4176 |
+ * titer         |      |      | 7503 | 5218 |
+ * lg            |      |      | 6547 | 7201 |
+ * thash         |      |      | 50.7 | 8491 |
+ *               |      |      |      |      |
+ * tgen          |   71 | 70.6 | 38.0 | 12.0 |
+ * tall       90 |   43 | 14.5 | 12.7 | 15.0 |
+ * calls     359 |  275 | 54   | 34.7 | 37.1 |
  * 
  * ----------------------------------------------------
  *
@@ -73606,7 +73605,5 @@ int main(int argc, char **argv)
  *   make-oscil -> '(oscil? real? real) 
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
  * for define* how to show in sig/pos the individual types? -- take in decl order and reorder if keys? (does this work at all in lint?)
- * lint: float? output func is always #t but might have side-effect:
- *         (or (> n3 0.1) (not (one-pole p 1.0))) -> (> n3 0.1)
- * histogram of scheme built-ins
+ * t318 for things not tested
  */
