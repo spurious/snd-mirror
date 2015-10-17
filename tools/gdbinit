@@ -55,7 +55,7 @@ define s7cell
   printf "hloc: %d, ", $cell.hloc
 
   printf "fields: %p %p %p %p %p\n",\
-     $cell.object.cons.car, $cell.object.cons.cdr, $cell.object.cons.ecdr, $cell.object.cons.fcdr, $cell.object.cons.gcdr
+     $cell.object.cons.car, $cell.object.cons.cdr, $cell.object.cons.opt1, $cell.object.cons.opt2, $cell.object.cons.opt3
 
   if (($type == T_NIL) || ($type == T_BOOLEAN) || ($type == T_UNIQUE))
       printf "constant:       %s\n", $cell.object.unq.name
@@ -94,8 +94,8 @@ define s7cell
   end
 
   if (($type == T_PAIR) || ($is_bad_type))
-      printf "cons:           car: %p, cdr: %p, ecdr: %p, fcdr: %p, gcdr: %p\n", \
-         $cell.object.cons.car, $cell.object.cons.cdr, $cell.object.cons.ecdr, $cell.object.cons.fcdr, $cell.object.cons.gcdr
+      printf "cons:           car: %p, cdr: %p, opt1: %p, opt2: %p, opt3: %p\n", \
+         $cell.object.cons.car, $cell.object.cons.cdr, $cell.object.cons.opt1, $cell.object.cons.opt2, $cell.object.cons.opt3
       printf "                    line: %d, op: %d\n", \
          $cell.object.sym_cons.line, $cell.object.sym_cons.op
   end

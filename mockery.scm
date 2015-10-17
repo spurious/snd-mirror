@@ -517,7 +517,7 @@
 		   'make-polar       (make-method #_make-polar (lambda (obj) (obj 'value)))
 		   'make-rectangular (make-method #_make-rectangular (lambda (obj) (obj 'value)))))
 		   'make-complex     (make-method #_make-rectangular (lambda (obj) (obj 'value)))
-		   'make-random-state (make-method #_make-random-state (lambda (obj) (obj 'value)))
+		   'random-state     (make-method #_random-state (lambda (obj) (obj 'value)))
 		   'magnitude        (lambda (obj) (#_magnitude (obj 'value)))
 		   'angle            (lambda (obj) (#_angle (obj 'value)))
 		   'rationalize      (make-method #_rationalize (lambda (obj) (obj 'value)))

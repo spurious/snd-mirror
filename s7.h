@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "4.0"
-#define S7_DATE "14-Sep-15"
+#define S7_VERSION "4.1"
+#define S7_DATE "16-Oct-15"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -259,7 +259,7 @@ s7_pointer s7_rationalize(s7_scheme *sc, s7_double x, s7_double error);     /* (
 s7_int s7_numerator(s7_pointer x);                                          /* (numerator x) */
 s7_int s7_denominator(s7_pointer x);                                        /* (denominator x) */
 s7_double s7_random(s7_scheme *sc, s7_pointer state);                       /* (random x) */
-s7_pointer s7_make_random_state(s7_scheme *sc, s7_pointer seed);            /* (make-random-state seed) */
+s7_pointer s7_random_state(s7_scheme *sc, s7_pointer seed);                 /* (random-state seed) */
 s7_pointer s7_random_state_to_list(s7_scheme *sc, s7_pointer args);         /* (random-state->list r) */
 void s7_set_default_random_state(s7_scheme *sc, s7_int seed, s7_int carry);
 
@@ -769,6 +769,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 #define s7_make_procedure_with_setter s7_dilambda
 
 #define s7_define_integer_function s7_define_safe_function
+#define s7_make_random_state s7_random_state
 #endif
 
 
@@ -777,6 +778,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 16-Oct:    s7_make_random_state -> s7_random_state.
  * 16-Aug:    remove s7_define_integer_function, s7_function_set_removes_temp, 
  *              add s7_define_typed_function, s7_make_signature.
  * 5-Aug:     added s7_scheme* arg to s7_openlet and s7_outlet.

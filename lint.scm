@@ -54,6 +54,7 @@
 ;;; --------------------------------------------------------------------------------
 ;;; for snd-test.scm
 
+
 (if (provided? 'snd)
     (set! *#readers* 
 	  (cons (cons #\_ (lambda (str)
@@ -106,7 +107,7 @@
 		  lcm length let let* letrec letrec* list list->string list->vector list-ref list-tail 
 		  list? log logand logbit? logior lognot logxor 
 		  macro? magnitude make-hash-table make-iterator make-hook make-keyword make-list make-polar make-rectangular
-		  make-random-state make-complex make-string make-vector map max member memq memv min modulo morally-equal?
+		  random-state make-complex make-string make-vector map max member memq memv min modulo morally-equal?
 		  nan? negative? not null? number->string number? numerator 
 		  object->string odd? openlet? or outlet output-port? 
 		  pair? pair-line-number port-closed? port-filename port-line-number positive? 
@@ -126,6 +127,7 @@
 			    (current-environment . curlet)
 			    (make-procedure-with-setter . dilambda)
 			    (procedure-with-setter? . dilambda?)
+			    (make-random-state . random-state)
 
 			    (data-format . sample-type)
 			    (mus-sound-data-format . mus-sound-sample-type)
@@ -730,17 +732,20 @@
 				  (set! ctr (+ ctr 1)))))
 			   vars)
 			  
-			  (let ((new-func (apply lambda vars form ())))
-			    (do ((ctr 0 (+ ctr 1)))
-				((= ctr vsize))
-			      (vector-set! v ctr (apply new-func (let ((args ()))
-								   (do ((i 0 (+ i 1)))
-								       ((= i len) (reverse args))
-								     (set! args (cons (and (logbit? ctr i) 
-											   (vector-ref nonf i))
-										      args))))))
-			      (if (not (member (vector-ref v ctr) vals))
-				  (set! vals (cons (vector-ref v ctr) vals)))))
+			  (catch #t
+			    (lambda ()
+			      (let ((new-func (apply lambda vars form ())))
+				(do ((ctr 0 (+ ctr 1)))
+				    ((= ctr vsize))
+				  (vector-set! v ctr (apply new-func (let ((args ()))
+								       (do ((i 0 (+ i 1)))
+									   ((= i len) (reverse args))
+									 (set! args (cons (and (logbit? ctr i) 
+											       (vector-ref nonf i))
+											  args))))))
+				  (if (not (member (vector-ref v ctr) vals))
+				      (set! vals (cons (vector-ref v ctr) vals))))))
+			    (lambda args 'error))
 			  
 			  (if (= (length vals) 1)
 			      (car vals)

@@ -406,23 +406,24 @@ static int float_format_precision = WRITE_REAL_PRECISION;
 #define T_OUTPUT_PORT         31
 #define T_INPUT_PORT          32
 #define T_BAFFLE              33
+#define T_RANDOM_STATE        34
 
-#define T_GOTO                34
-#define T_CONTINUATION        35
-#define T_CLOSURE             36
-#define T_CLOSURE_STAR        37
-#define T_C_MACRO             38
-#define T_MACRO               39
-#define T_MACRO_STAR          40
-#define T_BACRO               41
-#define T_BACRO_STAR          42
-#define T_C_FUNCTION_STAR     43
-#define T_C_FUNCTION          44
-#define T_C_ANY_ARGS_FUNCTION 45
-#define T_C_OPT_ARGS_FUNCTION 46
-#define T_C_RST_ARGS_FUNCTION 47
+#define T_GOTO                35
+#define T_CONTINUATION        36
+#define T_CLOSURE             37
+#define T_CLOSURE_STAR        38
+#define T_C_MACRO             39
+#define T_MACRO               40
+#define T_MACRO_STAR          41
+#define T_BACRO               42
+#define T_BACRO_STAR          43
+#define T_C_FUNCTION_STAR     44
+#define T_C_FUNCTION          45
+#define T_C_ANY_ARGS_FUNCTION 46
+#define T_C_OPT_ARGS_FUNCTION 47
+#define T_C_RST_ARGS_FUNCTION 48
 
-#define NUM_TYPES        48
+#define NUM_TYPES        49
 
 /* T_STACK, T_SLOT, T_BAFFLE, T_DYNAMIC_WIND, and T_COUNTER are internal
  * I tried T_CASE_SELECTOR that turned a case statement into an array, but it was slower!
@@ -476,7 +477,7 @@ typedef struct {
 
 typedef struct {               /* call/cc */
   unsigned int stack_size, op_stack_loc, op_stack_size;
-  int local_key;
+  int local_key;   /* for with-baffle */
 } continuation_t;
 
 
@@ -718,6 +719,14 @@ typedef struct s7_cell {
       int cap;             /* val=count */
     } ctr;
 
+    struct {
+#if WITH_GMP
+      gmp_randstate_t state;
+#else
+      unsigned long long int seed, carry;
+#endif
+    } rng;
+
     struct {               /* additional object types (C) */
       int type;
       void *value;         /*  the value the caller associates with the object */
@@ -770,11 +779,6 @@ typedef struct {
   s7_pointer args, orig_str, curly_arg;
   s7_pointer port, strport;
 } format_data;
-
-
-typedef struct {
-  unsigned long long int ran_seed, ran_carry;
-} s7_rng_t;
 
 
 typedef struct gc_obj {
@@ -914,13 +918,10 @@ struct s7_scheme {
   unsigned int strings_loc, vectors_loc, input_ports_loc, output_ports_loc, continuations_loc, c_objects_loc, hash_tables_loc, gensyms_loc, setters_loc;
 
   unsigned int syms_tag;
-  int ht_iter_tag, rng_tag, baffle_ctr, bignum_precision;
-  s7_rng_t *default_rng;
+  int ht_iter_tag, baffle_ctr, bignum_precision;
+  s7_pointer default_rng;
 
 #if WITH_GMP
-  void *default_big_rng;
-  int big_rng_tag;
-
   s7_pointer *bigints, *bigratios, *bigreals, *bignumbers;
   int bigints_size, bigratios_size, bigreals_size, bignumbers_size;
   int bigints_loc, bigratios_loc, bigreals_loc, bignumbers_loc;
@@ -946,7 +947,7 @@ struct s7_scheme {
   s7_pointer IS_INFINITE, IS_INPUT_PORT, IS_INTEGER, INTEGER_TO_CHAR, INTEGER_DECODE_FLOAT, IS_KEYWORD, KEYWORD_TO_SYMBOL;
   s7_pointer LCM, LENGTH, IS_SEQUENCE, IS_ITERATOR, MAKE_ITERATOR, ITERATE, ITERATOR_SEQUENCE, ITERATOR_IS_AT_END;
   s7_pointer LIST, IS_LIST, LIST_REF, LIST_SET, LIST_TAIL, LOAD, LOG, LOGAND, LOGBIT, LOGIOR, LOGNOT, LOGXOR;
-  s7_pointer IS_MACRO, MAKE_BYTE_VECTOR, MAKE_HASH_TABLE, MAKE_KEYWORD, MAKE_LIST, MAKE_RANDOM_STATE;
+  s7_pointer IS_MACRO, MAKE_BYTE_VECTOR, MAKE_HASH_TABLE, MAKE_KEYWORD, MAKE_LIST, RANDOM_STATE;
   s7_pointer MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, IS_MORALLY_EQUAL, IS_NAN, IS_NEGATIVE, NEWLINE;
   s7_pointer NOT, IS_NULL, IS_NUMBER, NUMBER_TO_STRING, NUMERATOR, OBJECT_TO_STRING, IS_ODD, OPENLET, IS_OPENLET, OPEN_INPUT_FILE;
   s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTLET, IS_OUTPUT_PORT, OWLET, IS_PAIR, PAIR_LINE_NUMBER, PEEK_CHAR;
@@ -1265,6 +1266,7 @@ static void init_types(void)
   #define _TMac(P) check_ref(P, T_C_MACRO,           __func__, __LINE__, NULL, NULL)
   #define _TLet(P) check_ref(P, T_LET,               __func__, __LINE__, NULL, NULL)
   #define _TLid(P) check_ref2(P, T_LET, T_NIL,       __func__, __LINE__, NULL, NULL)
+  #define _TRan(P) check_ref(P, T_RANDOM_STATE,      __func__, __LINE__, NULL, NULL)
   #define _TCdr(P) check_ref2(P, T_PAIR, T_NIL,      __func__, __LINE__, "gc", NULL)
   #define _TStr(P) check_ref(P, T_STRING,            __func__, __LINE__, "sweep", NULL)
   #define _TObj(P) check_ref(P, T_C_OBJECT,          __func__, __LINE__, "free_object", NULL)
@@ -1314,6 +1316,7 @@ static void init_types(void)
   #define _TFvc(P)                    P
   #define _TVec(P)                    P
   #define _TLst(P)                    P
+  #define _TRan(P)                    P
   #define _TDyn(P)                    P
   #define _TCat(P)                    P
   #define _TClo(P)                    P
@@ -1689,7 +1692,7 @@ static int not_heap = -1;
 #define E_GOTO                        (1 << 14)  /* call-with-exit exit func */
 #define E_VECTOR                      (1 << 15)  /* vector (any kind) */
 #define E_ANY                         (1 << 16)  /* anything -- deliberate unchecked case */
-#define E_SLOT                        (1 << 17)
+#define E_SLOT                        (1 << 17)  /* slot */
 #define E_MASK                        (E_FAST | E_CFUNC | E_CLAUSE | E_BACK | E_LAMBDA | E_SYM | E_PAIR | E_CON | E_GOTO | E_VECTOR | E_ANY | E_SLOT | S_HASH)
 
 #define opt1_is_set(p)                (((p)->debugger_bits & E_SET) != 0)
@@ -2071,6 +2074,14 @@ static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_sym
 #define c_macro_all_args(f)           (_TMac(f))->object.fnc.all_args
 #define c_macro_setter(f)             (_TMac(f))->object.fnc.setter
 
+#define is_random_state(p)            (type(p) == T_RANDOM_STATE)
+#if WITH_GMP
+#define random_gmp_state(p)           (_TRan(p))->object.rng.state
+#else
+#define random_seed(p)                (_TRan(p))->object.rng.seed
+#define random_carry(p)               (_TRan(p))->object.rng.carry
+#endif
+
 #define continuation_data(p)          (_TCon(p))->object.cwcc.continuation
 #define continuation_stack(p)         (_TCon(p))->object.cwcc.stack
 #define continuation_stack_end(p)     (_TCon(p))->object.cwcc.stack_end
@@ -2441,11 +2452,12 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym);
 static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer func, s7_pointer args, s7_pointer body);
 static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e);
 static s7_pointer optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e);
-static double next_random(s7_rng_t *r);
 static void free_hash_table(s7_pointer table);
 
 #if WITH_GMP
 static s7_int big_integer_to_s7_int(mpz_t n);
+#else
+static double next_random(s7_pointer r);
 #endif
 
 #if WITH_GCC
@@ -4012,6 +4024,7 @@ static void init_mark_functions(void)
   mark_function[T_MACRO_STAR]          = mark_closure;
   mark_function[T_BACRO_STAR]          = mark_closure;
   mark_function[T_C_OBJECT]            = mark_c_object;
+  mark_function[T_RANDOM_STATE]        = just_mark;
   mark_function[T_GOTO]                = just_mark;
   mark_function[T_OUTPUT_PORT]         = just_mark;
   mark_function[T_CATCH]               = mark_catch;
@@ -4172,6 +4185,7 @@ static int gc(s7_scheme *sc)
   set_mark(sc->error_port);
   S7_MARK(sc->stacktrace_defaults);
   S7_MARK(sc->autoload_table);
+  S7_MARK(sc->default_rng);
 
   mark_pair(sc->temp_cell_1);
   mark_pair(sc->temp_cell_2);
@@ -6783,6 +6797,8 @@ s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local
 }
 
 
+/* -------------------------------- symbol->value -------------------------------- */
+
 #define find_global_symbol_checked(Sc, Sym) ((is_global(Sym)) ? slot_value(global_slot(Sym)) : find_symbol_checked(Sc, Sym))
 
 static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
@@ -6860,6 +6876,7 @@ static s7_pointer find_dynamic_value(s7_scheme *sc, s7_pointer x, s7_pointer sym
 }
 
 
+/* -------------------------------- symbol->dynamic-value -------------------------------- */
 static s7_pointer g_symbol_to_dynamic_value(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_to_dynamic_value "(symbol->dynamic-value sym) returns the dynamic binding of the symbol sym"
@@ -7155,7 +7172,7 @@ static s7_pointer copy_closure(s7_scheme *sc, s7_pointer fnc)
   return(x);
 }
 
-
+/* -------------------------------- defined? -------------------------------- */
 static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_defined "(defined? obj (env (curlet)) ignore-globals) returns #t if obj has a binding (a value) in the environment env"
@@ -7323,8 +7340,7 @@ char *s7_symbol_set_documentation(s7_scheme *sc, s7_pointer sym, const char *new
 }
 
 
-
-/* -------- keywords -------- */
+/* -------------------------------- keyword? -------------------------------- */
 
 bool s7_is_keyword(s7_pointer obj)
 {
@@ -7340,6 +7356,7 @@ static s7_pointer g_is_keyword(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* -------------------------------- make-keyword -------------------------------- */
 s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
 {
   s7_pointer sym;
@@ -7374,6 +7391,7 @@ static s7_pointer c_make_keyword(s7_scheme *sc, s7_pointer x)
 }
 
 
+/* -------------------------------- keyword->symbol -------------------------------- */
 static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_keyword_to_symbol "(keyword->symbol key) returns a symbol with the same name as key but no prepended colon"
@@ -7394,6 +7412,7 @@ static s7_pointer c_keyword_to_symbol(s7_scheme *sc, s7_pointer sym)
 }
 
 
+/* -------------------------------- symbol->keyword -------------------------------- */
 static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_to_keyword "(symbol->keyword sym) returns a keyword with the same name as sym, but with a colon prepended"
@@ -8996,8 +9015,7 @@ bool_with_method(is_vector, s7_is_vector, sc->IS_VECTOR)
 #define opt_is_list(p) s7_is_list(sc, p)
 bool_with_method(is_list, opt_is_list, sc->IS_LIST)
 bool_with_method(iterator_is_at_end, iterator_is_at_end, sc->ITERATOR_IS_AT_END)
-#define opt_is_random_state(p) ((is_c_object(p)) && (c_object_type(p) == sc->rng_tag))
-bool_with_method(is_random_state, opt_is_random_state, sc->IS_RANDOM_STATE)
+bool_with_method(is_random_state, is_random_state, sc->IS_RANDOM_STATE)
 
 PF_TO_PF(make_keyword, c_make_keyword)
 PF_TO_PF(keyword_to_symbol, c_keyword_to_symbol)
@@ -23161,152 +23179,107 @@ IF2_TO_IF(ash, c_ash)
  *   but here I'll use Marsaglia's MWC algorithm.
  *     (random num) -> a number (0..num), if num == 0 return 0, use global default state
  *     (random num state) -> same but use this state
- *     (make-random-state seed) -> make a new state
- *     (make-random-state seed type) ??
+ *     (random-state seed) -> make a new state
  *   to save the current seed, use copy
  *   to save it across load, random-state->list and list->random-state.
  *   random-state? returns #t if its arg is one of these guys
  */
 
-static char *print_rng(s7_scheme *sc, void *val)
+#if (!WITH_GMP)
+s7_pointer s7_random_state(s7_scheme *sc, s7_pointer args)
 {
-  char *buf;
-  s7_rng_t *r = (s7_rng_t *)val;
-  buf = (char *)malloc(64 * sizeof(char));
-  snprintf(buf, 64, "#<rng %llu %llu>", r->ran_seed, r->ran_carry);
-  return(buf);
-}
-
-static char *print_rng_readably(s7_scheme *sc, void *val)
-{
-  char *buf;
-  s7_rng_t *r = (s7_rng_t *)val;
-  buf = (char *)malloc(64 * sizeof(char));
-  snprintf(buf, 64, "(make-random-state %llu %llu)", r->ran_seed, r->ran_carry);
-  return(buf);
-}
-
-static void free_rng(void *val)
-{
-  free(val);
-}
-
-static bool equal_rng(void *val1, void *val2)
-{
-  s7_rng_t *r1 = (s7_rng_t *)val1;
-  s7_rng_t *r2 = (s7_rng_t *)val2;
-
-  return((val1 == val2) ||
-	 ((r1->ran_seed == r2->ran_seed) &&
-	  (r1->ran_carry == r2->ran_carry)));
-}
-
-
-s7_pointer s7_make_random_state(s7_scheme *sc, s7_pointer args)
-{
-  #define H_make_random_state "(make-random-state seed (carry plausible-default)) returns a new random number state initialized with 'seed'. \
+  #define H_random_state "(random-state seed (carry plausible-default)) returns a new random number state initialized with 'seed'. \
 Pass this as the second argument to 'random' to get a repeatable random number sequence:\n\
-    (let ((seed (make-random-state 1234))) (random 1.0 seed))"
-  #define Q_make_random_state s7_make_circular_signature(sc, 1, 2, sc->IS_RANDOM_STATE, sc->IS_INTEGER)
+    (let ((seed (random-state 1234))) (random 1.0 seed))"
+  #define Q_random_state s7_make_circular_signature(sc, 1, 2, sc->IS_RANDOM_STATE, sc->IS_INTEGER)
 
-  s7_rng_t *r;
-  s7_pointer r1, r2;
+  s7_pointer r1, r2, p;
   s7_int i1, i2;
 
   r1 = car(args);
   if (!s7_is_integer(r1))
-    method_or_bust(sc, r1, sc->MAKE_RANDOM_STATE, args, T_INTEGER, 1);
+    method_or_bust(sc, r1, sc->RANDOM_STATE, args, T_INTEGER, 1);
   i1 = s7_integer(r1);
   if (i1 < 0)
-    return(out_of_range(sc, sc->MAKE_RANDOM_STATE, small_int(1), r1, ITS_NEGATIVE));
+    return(out_of_range(sc, sc->RANDOM_STATE, small_int(1), r1, ITS_NEGATIVE));
 
   if (is_null(cdr(args)))
     {
-      r = (s7_rng_t *)malloc(sizeof(s7_rng_t));
-      r->ran_seed = (unsigned long long int)i1;
-      r->ran_carry = 1675393560;                          /* should this be dependent on the seed? */
-      return(s7_make_object(sc, sc->rng_tag, (void *)r));
+      NEW_CELL(sc, p, T_RANDOM_STATE);
+      random_seed(p) = (unsigned long long int)i1;
+      random_carry(p) = 1675393560;                          /* should this be dependent on the seed? */
+      return(p);
     }
 
   r2 = cadr(args);
   if (!s7_is_integer(r2))
-    method_or_bust(sc, r2, sc->MAKE_RANDOM_STATE, args, T_INTEGER, 2);
+    method_or_bust(sc, r2, sc->RANDOM_STATE, args, T_INTEGER, 2);
   i2 = s7_integer(r2);
   if (i2 < 0)
-    return(out_of_range(sc, sc->MAKE_RANDOM_STATE, small_int(2), r2, ITS_NEGATIVE));
+    return(out_of_range(sc, sc->RANDOM_STATE, small_int(2), r2, ITS_NEGATIVE));
 
-  r = (s7_rng_t *)malloc(sizeof(s7_rng_t));
-  r->ran_seed = (unsigned long long int)i1;
-  r->ran_carry = (unsigned long long int)i2;
-  return(s7_make_object(sc, sc->rng_tag, (void *)r));
+  NEW_CELL(sc, p, T_RANDOM_STATE);
+  random_seed(p) = (unsigned long long int)i1;
+  random_carry(p) = (unsigned long long int)i2;
+  return(p);
 }
 
-#define g_make_random_state s7_make_random_state
+#define g_random_state s7_random_state
 
-static s7_pointer c_make_random_state(s7_scheme *sc, s7_pointer x) {return(s7_make_random_state(sc, set_plist_1(sc, x)));}
-PF_TO_PF(make_random_state, c_make_random_state)
+static s7_pointer c_random_state(s7_scheme *sc, s7_pointer x) {return(s7_random_state(sc, set_plist_1(sc, x)));}
+PF_TO_PF(random_state, c_random_state)
+#endif
 
-
-static s7_pointer copy_random_state(s7_scheme *sc, s7_pointer args)
+static s7_pointer rng_copy(s7_scheme *sc, s7_pointer args)
 {
+#if WITH_GMP
+  return(sc->F); /* I can't find a way to copy a gmp random generator */
+#else
   s7_pointer obj;
   obj = car(args);
-  if (c_object_type(obj) == sc->rng_tag)
+  if (is_random_state(obj))
     {
-      s7_rng_t *r, *new_r;
-      r = (s7_rng_t *)s7_object_value(obj);
-      new_r = (s7_rng_t *)malloc(sizeof(s7_rng_t));
-      new_r->ran_seed = r->ran_seed;
-      new_r->ran_carry = r->ran_carry;
-      return(s7_make_object(sc, sc->rng_tag, (void *)new_r));
+      s7_pointer new_r;
+      NEW_CELL(sc, new_r, T_RANDOM_STATE);
+      random_seed(new_r) = random_seed(obj);
+      random_carry(new_r) = random_carry(obj);
+      return(new_r);
     }
-  /* I can't find a way to copy a gmp random generator */
   return(sc->F);
+#endif
 }
 
 
 static s7_pointer g_is_random_state(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_random_state "(random-state? obj) returns #t if obj is a random-state object (from make-random-state)."
+  #define H_is_random_state "(random-state? obj) returns #t if obj is a random-state object (from random-state)."
   #define Q_is_random_state pl_bt
-
-  s7_pointer obj;
-  obj = car(args);
-  if (is_c_object(obj))
-    {
-      if (c_object_type(obj) == sc->rng_tag)
-	return(sc->T);
-#if WITH_GMP
-      if (c_object_type(obj) == sc->big_rng_tag)
-	return(sc->T);
-#endif
-    }
-  check_method(sc, obj, sc->IS_RANDOM_STATE, args);
-  return(sc->F);
+  check_boolean_method(sc, is_random_state, sc->IS_RANDOM_STATE, args);
 }
 
 s7_pointer s7_random_state_to_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_random_state_to_list "(random-state->list r) returns the random state object as a list.\
-You can later apply make-random-state to this list to continue a random number sequence from any point."
+You can later apply random-state to this list to continue a random number sequence from any point."
   #define Q_random_state_to_list s7_make_signature(sc, 2, sc->IS_PAIR, sc->IS_RANDOM_STATE)
 
-  s7_rng_t *r = NULL;
+#if WITH_GMP
+  if ((is_pair(args)) &&
+      (!is_random_state(car(args))))
+    method_or_bust_with_type(sc, car(args), sc->RANDOM_STATE_TO_LIST, args, A_RANDOM_STATE_OBJECT, 1);
+  return(sc->NIL);
+#else
+  s7_pointer r;
   if (is_null(args))
     r = sc->default_rng;
   else
     {
-      s7_pointer obj;
-      obj = car(args);
-      if ((!is_c_object(obj)) ||
-	  (c_object_type(obj) != sc->rng_tag))
-	method_or_bust_with_type(sc, obj, sc->RANDOM_STATE_TO_LIST, args, A_RANDOM_STATE_OBJECT, 1);
-      r = (s7_rng_t *)s7_object_value(obj);
+      r = car(args);
+      if (!is_random_state(r))
+	method_or_bust_with_type(sc, r, sc->RANDOM_STATE_TO_LIST, args, A_RANDOM_STATE_OBJECT, 1);
     }
-
-  if (r)
-    return(list_2(sc, make_integer(sc, r->ran_seed), make_integer(sc, r->ran_carry)));
-  return(sc->F);
+  return(list_2(sc, make_integer(sc, random_seed(r)), make_integer(sc, random_carry(r))));
+#endif
 }
 
 #define g_random_state_to_list s7_random_state_to_list
@@ -23317,16 +23290,19 @@ PF_TO_PF(random_state_to_list, c_random_state_to_list)
 
 void s7_set_default_random_state(s7_scheme *sc, s7_int seed, s7_int carry)
 {
-  if (sc->default_rng) free(sc->default_rng);
-  sc->default_rng = (s7_rng_t *)malloc(sizeof(s7_rng_t));
-  (sc->default_rng)->ran_seed = (unsigned long long)seed;
-  (sc->default_rng)->ran_carry = (unsigned long long)carry;
+#if (!WITH_GMP)
+  s7_pointer p;
+  NEW_CELL(sc, p, T_RANDOM_STATE);
+  random_seed(p) = (unsigned long long int)seed;
+  random_carry(p) = (unsigned long long int)carry;
+  sc->default_rng = p;
+#endif
 }
 
-
+#if (!WITH_GMP)
 /* -------------------------------- random -------------------------------- */
 
-static double next_random(s7_rng_t *r)
+static double next_random(s7_pointer r)
 {
   /* The multiply-with-carry generator for 32-bit integers:
    *        x(n)=a*x(n-1) + carry mod 2^32
@@ -23341,10 +23317,10 @@ static double next_random(s7_rng_t *r)
   unsigned long long int temp;
   #define RAN_MULT 2131995753UL
 
-  temp = r->ran_seed * RAN_MULT + r->ran_carry;
-  r->ran_seed = (temp & 0xffffffffUL);
-  r->ran_carry = (temp >> 32);
-  result = (double)((unsigned int)(r->ran_seed)) / 4294967295.5;
+  temp = random_seed(r) * RAN_MULT + random_carry(r);
+  random_seed(r) = (temp & 0xffffffffUL);
+  random_carry(r) = (temp >> 32);
+  result = (double)((unsigned int)(random_seed(r))) / 4294967295.5;
   /* divisor was 2^32-1 = 4294967295.0, but somehow this can round up once in a billion tries?
    *   do we want the double just less than 2^32?
    */
@@ -23358,7 +23334,7 @@ s7_double s7_random(s7_scheme *sc, s7_pointer state)
 {
   if (!state)
     return(next_random(sc->default_rng));
-  return(next_random((s7_rng_t *)s7_object_value(state)));
+  return(next_random(state));
 }
 
 
@@ -23366,8 +23342,7 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 {
   #define H_random "(random num (state #f)) returns a random number between 0 and num (0 if num=0)."
   #define Q_random s7_make_signature(sc, 3, sc->IS_NUMBER, sc->IS_NUMBER, sc->IS_RANDOM_STATE)
-  s7_pointer num;
-  s7_rng_t *r;
+  s7_pointer r, num;
 
   num = car(args);
   if (!s7_is_number(num))
@@ -23375,20 +23350,9 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 
   if (is_not_null(cdr(args)))
     {
-      s7_pointer state;
-      state = cadr(args);
-      if (!is_c_object(state))
-	method_or_bust_with_type(sc, state, sc->RANDOM, args, A_RANDOM_STATE_OBJECT, 2);
-      if (c_object_type(state) == sc->rng_tag)
-	r = (s7_rng_t *)s7_object_value(state);
-      else
-	{
-#if WITH_GMP
-	  if (c_object_type(state) == sc->big_rng_tag)
-	    return(big_random(sc, args));
-#endif
-	  return(wrong_type_argument_with_type(sc, sc->RANDOM, 2, state, A_RANDOM_STATE_OBJECT));
-	}
+      r = cadr(args);
+      if (!is_random_state(r))
+	method_or_bust_with_type(sc, r, sc->RANDOM, args, A_RANDOM_STATE_OBJECT, 2);
     }
   else r = sc->default_rng;
 
@@ -23449,24 +23413,14 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 
     case T_COMPLEX:
       return(s7_make_complex(sc, real_part(num) * next_random(r), imag_part(num) * next_random(r)));
-
-#if WITH_GMP
-    case T_BIG_INTEGER:
-    case T_BIG_RATIO:
-    case T_BIG_REAL:
-    case T_BIG_COMPLEX:
-      return(big_random(sc, args));
-#endif
     }
   return(sc->F);
 }
 
-#if (!WITH_GMP)
 static s7_int c_random_i(s7_scheme *sc, s7_int arg) {return((s7_int)(arg * next_random(sc->default_rng)));} /* not round! */
 IF_TO_IF(random, c_random_i)
 static s7_double c_random_r(s7_scheme *sc, s7_double arg) {return(arg * next_random(sc->default_rng));}
 RF_TO_RF(random, c_random_r)
-
 
 static s7_pointer random_ic, random_rc, random_i;
 
@@ -23513,7 +23467,7 @@ static s7_pointer random_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
     }
   return(f);
 }
-#endif
+#endif /* gmp */
 
 
 
@@ -31571,6 +31525,23 @@ static void c_pointer_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, us
   port_write_string(port)(sc, buf, nlen, port);
 }
 
+static void rng_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write)
+{
+  int nlen;
+  char buf[128];
+#if WITH_GMP
+  if (use_write == USE_READABLE_WRITE)
+    nlen = snprintf(buf, 128, "#<unprint-readable object>");
+  else nlen = snprintf(buf, 128, "#<rng %p>", obj);
+#else
+  if (use_write == USE_READABLE_WRITE)
+    nlen = snprintf(buf, 128, "(random-state %llu %llu)", random_seed(obj), random_carry(obj));
+  else nlen = snprintf(buf, 128, "#<rng %llu %llu>", random_seed(obj), random_carry(obj));
+#endif
+  port_write_string(port)(sc, buf, nlen, port);
+}
+
+
 static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   int nlen;
@@ -31741,6 +31712,10 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 
     case T_C_POINTER:
       c_pointer_to_port(sc, obj, port, use_write);
+      break;
+
+    case T_RANDOM_STATE:
+      rng_to_port(sc, obj, port, use_write);
       break;
 
     case T_CONTINUATION:
@@ -41701,7 +41676,7 @@ static s7_pointer g_is_c_object(s7_scheme *sc, s7_pointer args)
   return(sc->F);
   /* <1> (*s7* 'c-types)
      ("<random-number-generator>")
-     <2> (c-object? (make-random-state 123))
+     <2> (c-object? (random-state 123))
      0
   */
 }
@@ -43259,6 +43234,18 @@ static bool complex_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info
 	  (fabs(imag_part(x) - imag_part(y)) <= sc->morally_equal_float_epsilon)));
 }
 
+static bool rng_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+{
+#if WITH_GMP
+  return(x == y);
+#else
+  return((x == y) ||
+	 ((random_seed(x) == random_seed(y)) &&
+	  (random_carry(x) == random_carry(y))));
+#endif
+}
+
+
 
 static bool (*equals[NUM_TYPES])(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally);
 
@@ -43272,6 +43259,7 @@ static void init_equals(void)
   equals[T_STRING] =       string_equal;
   equals[T_SYNTAX] =       syntax_equal;
   equals[T_C_OBJECT] =     c_object_equal;
+  equals[T_RANDOM_STATE] = rng_equal;
   equals[T_ITERATOR] =     iterator_equal;
   equals[T_INPUT_PORT] =   port_equal;
   equals[T_OUTPUT_PORT] =  port_equal;
@@ -43527,6 +43515,9 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	  
 	case T_C_OBJECT:
 	  return(object_copy(sc, args));
+
+	case T_RANDOM_STATE:
+	  return(rng_copy(sc, args));
 	  
 	case T_HASH_TABLE:              /* this has to copy nearly everything */
 	  {
@@ -45116,6 +45107,7 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
   static const char *big_complexes[2] =  {"big complex number", "a big complex number"};
   static const char *functions[2] =      {"function",           "a function"};
   static const char *function_stars[2] = {"function*",          "a function*"};
+  static const char *rngs[2] =           {"random-state",       "a random-state"};
 
   switch (typ)
     {
@@ -45154,6 +45146,7 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
     case T_LET:             return(environments[article]);
     case T_COUNTER:         return(counters[article]);
     case T_BAFFLE:          return(baffles[article]);
+    case T_RANDOM_STATE:    return(rngs[article]);
     case T_SLOT:            return(slots[article]);
     case T_INTEGER:         return(integers[article]);
     case T_RATIO:           return(ratios[article]);
@@ -51180,8 +51173,9 @@ static void init_choosers(s7_scheme *sc)
   s7_pf_set_function(slot_value(global_slot(sc->ITERATE)), iterate_pf);
   s7_gf_set_function(slot_value(global_slot(sc->ITERATE)), iterate_gf);
   s7_gf_set_function(slot_value(global_slot(sc->MAKE_ITERATOR)), make_iterator_pf);
-  s7_gf_set_function(slot_value(global_slot(sc->MAKE_RANDOM_STATE)), make_random_state_pf);
-
+#if (!WITH_GMP)
+  s7_gf_set_function(slot_value(global_slot(sc->RANDOM_STATE)), random_state_pf);
+#endif
   s7_pf_set_function(slot_value(global_slot(sc->REVERSEB)), reverse_in_place_pf);
   s7_gf_set_function(slot_value(global_slot(sc->SORT)), sort_pf);
   s7_pf_set_function(slot_value(global_slot(sc->PROVIDE)), provide_pf);
@@ -71328,220 +71322,131 @@ static s7_pointer set_bignum_precision(s7_scheme *sc, int precision)
 }
 
 
-typedef struct {
-  gmp_randstate_t state;
-} s7_big_rng_t;
-
-
-static char *print_big_rng(s7_scheme *sc, void *val)
+static s7_pointer big_random_state(s7_scheme *sc, s7_pointer args)
 {
-  char *buf;
-  s7_big_rng_t *r = (s7_big_rng_t *)val;
-  buf = (char *)malloc(64 * sizeof(char));
-  snprintf(buf, 64, "#<big-rng %p>", r);
-  return(buf);
-}
-
-
-static void free_big_rng(void *val)
-{
-  s7_big_rng_t *r = (s7_big_rng_t *)val;
-  gmp_randclear(r->state);
-  free(r);
-}
-
-
-static bool equal_big_rng(void *val1, void *val2)
-{
-  return(val1 == val2);
-  /* I don't think the state is accessible, so we can't mimic the normal rng_t case */
-}
-
-
-static s7_pointer make_big_random_state(s7_scheme *sc, s7_pointer args)
-{
-#ifndef H_make_random_state
-  #define H_make_random_state "(make-random-state seed) returns a new random number state initialized with 'seed'. \
+  #define H_random_state "(random-state seed) returns a new random number state initialized with 'seed'. \
 Pass this as the second argument to 'random' to get a repeatable random number sequence:\n\
-    (let ((seed (make-random-state 1234))) (random 1.0 seed))"
-#endif
+    (let ((seed (random-state 1234))) (random 1.0 seed))"
+  #define Q_random_state s7_make_circular_signature(sc, 1, 2, sc->IS_RANDOM_STATE, sc->IS_INTEGER)
 
-  s7_big_rng_t *r;
-  s7_pointer seed;
-
+  s7_pointer r, seed;
   seed = car(args);
   if (!s7_is_integer(seed))
-    method_or_bust(sc, seed, sc->MAKE_RANDOM_STATE, args, T_INTEGER, 0);
+    method_or_bust(sc, seed, sc->RANDOM_STATE, args, T_INTEGER, 0);
 
-  if (is_big_number(seed))
-    {
-      r = (s7_big_rng_t *)calloc(1, sizeof(s7_big_rng_t));
-      gmp_randinit_default(r->state);
-      gmp_randseed(r->state, big_integer(seed));
-      return(s7_make_object(sc, sc->big_rng_tag, (void *)r));
-    }
-  return(s7_make_random_state(sc, args));
+  if (type(seed) != T_BIG_INTEGER)
+    seed = promote_number(sc, T_BIG_INTEGER, seed);
+
+  NEW_CELL(sc, r, T_RANDOM_STATE);
+  gmp_randinit_default(random_gmp_state(r));
+  gmp_randseed(random_gmp_state(r), big_integer(seed));
+  return(r);
 }
 
 
 static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 {
+  #define H_random "(random num (state #f)) returns a random number between 0 and num (0 if num=0)."
+  #define Q_random s7_make_signature(sc, 3, sc->IS_NUMBER, sc->IS_NUMBER, sc->IS_RANDOM_STATE)
   s7_pointer num, state, x;
-  state = sc->NIL;
 
   num = car(args);
   if (!s7_is_number(num))
     method_or_bust_with_type(sc, num, sc->RANDOM, args, A_NUMBER, 1);
 
+  state = sc->default_rng;
   if (is_not_null(cdr(args)))
     {
       state = cadr(args);
-      if ((!is_c_object(state)) ||
-	  ((c_object_type(state) != sc->big_rng_tag) &&
-	   (c_object_type(state) != sc->rng_tag)))
+      if (!is_random_state(state))
 	return(wrong_type_argument_with_type(sc, sc->RANDOM, 2, state, A_RANDOM_STATE_OBJECT));
     }
 
   if (s7_is_zero(num))
     return(num);
 
-  if ((is_big_number(num)) ||
-      ((is_c_object(state)) &&
-       (c_object_type(state) == sc->big_rng_tag)))
+  if (!is_big_number(num))
     {
-      /* bignum case -- provide a state if none was passed,
-       *   promote num if bignum state was passed but num is not a bignum
-       *   if num==0, just return 0 (above) since gmp otherwise throws an arithmetic exception
-       */
-      s7_big_rng_t *r = NULL;
-
-      if (is_null(state))
-	{
-	  /* no state passed, so make one */
-
-	  if (!sc->default_big_rng)
-	    {
-	      mpz_t seed;
-	      r = (s7_big_rng_t *)calloc(1, sizeof(s7_big_rng_t));
-	      mpz_init_set_ui(seed, (unsigned int)time(NULL));
-	      gmp_randinit_default(r->state);
-	      gmp_randseed(r->state, seed);
-	      mpz_clear(seed);
-	      sc->default_big_rng = (void *)r;
-	    }
-	  else r = (s7_big_rng_t *)(sc->default_big_rng);
-	}
-      else
-	{
-	  /* state was passed, check its type */
-	  if (c_object_type(state) == sc->rng_tag)
-	    {
-	      /* here "num" is a bignum, the state was passed, but it is intended for non-bignums */
-	      switch (type(num))
-		{
-		case T_BIG_REAL:
-		  num = make_real(sc, (s7_double)mpfr_get_d(big_real(num), GMP_RNDN));
-		  break;
-
-		case T_BIG_INTEGER:
-		  num = make_integer(sc, big_integer_to_s7_int(big_integer(num)));
-		  break;
-
-		case T_BIG_RATIO:
-		  num = s7_make_ratio(sc,
-				      big_integer_to_s7_int(mpq_numref(big_ratio(num))),
-				      big_integer_to_s7_int(mpq_denref(big_ratio(num))));
-		  break;
-
-		case T_BIG_COMPLEX:
-		  num = s7_make_complex(sc,
-					(s7_double)mpfr_get_d(mpc_realref(big_complex(num)), GMP_RNDN),
-					(s7_double)mpfr_get_d(mpc_imagref(big_complex(num)), GMP_RNDN));
-		  break;
-		}
-	      return(g_random(sc, set_plist_2(sc, num, state)));
-	    }
-	  r = (s7_big_rng_t *)s7_object_value(state);
-	}
-
-      if (!is_big_number(num))
-	{
-	  switch (type(num))
-	    {
-	    case T_INTEGER: num = promote_number(sc, T_BIG_INTEGER, num);  break;
-	    case T_RATIO:   num = promote_number(sc, T_BIG_RATIO, num);    break;
-	    case T_REAL:    num = promote_number(sc, T_BIG_REAL, num);     break;
-	    default:        num = promote_number(sc, T_BIG_COMPLEX, num);  break;
-	    }
-	}
-      /* finally both the state and the number are big */
-
       switch (type(num))
 	{
-	case T_BIG_INTEGER:
-	  {
-	    mpz_t n;
-	    mpz_init(n);
-	    mpz_urandomm(n, r->state, big_integer(num));
-
-	    /* this does not work if num is a negative number -- you get positive results.
-	     *   so check num for sign, and negate result if necessary.
-	     */
-	    if (mpz_cmp_ui(big_integer(num), 0) < 0)
-	      mpz_neg(n, n);
-
-	    x = mpz_to_big_integer(sc, n);
-	    mpz_clear(n);
-	    return(x);
-	  }
-
-	case T_BIG_RATIO:
-	  {
-	    mpfr_t n, e;
-	    mpfr_t rat;
-
-	    mpfr_init_set_ui(n, 1, GMP_RNDN);
-	    mpfr_urandomb(n, r->state);
-	    mpfr_init_set_q(rat, big_ratio(num), GMP_RNDN);
-	    mpfr_mul(n, n, rat, GMP_RNDN);
-
-	    mpfr_init_set_str(e, "0.0000001", 10, GMP_RNDN);
-	    mpfr_mul(e, e, rat, GMP_RNDN);
-	    mpfr_clear(rat);
-	    /* as in g_random, small ratios are a problem because the error term (sc->default_rationalize_error = 1e-12 here)
-	     *   clobbers everything to 0.
-	     */
-	    x = big_rationalize(sc, set_plist_2(sc, mpfr_to_big_real(sc, n), mpfr_to_big_real(sc, e)));
-	    mpfr_clear(n);
-	    mpfr_clear(e);
-	    return(x);
-	  }
-
-	case T_BIG_REAL:
-	  {
-	    mpfr_t n;
-	    mpfr_init_set_ui(n, 1, GMP_RNDN);
-	    mpfr_urandomb(n, r->state);
-	    mpfr_mul(n, n, big_real(num), GMP_RNDN);
-	    x = mpfr_to_big_real(sc, n);
-	    mpfr_clear(n);
-	    return(x);
-	  }
-
-	case T_BIG_COMPLEX:
-	  {
-	    mpc_t n;
-	    mpc_init(n);
-	    mpc_urandom(n, r->state);
-	    mpfr_mul(mpc_realref(n), mpc_realref(n), mpc_realref(big_complex(num)), GMP_RNDN);
-	    mpfr_mul(mpc_imagref(n), mpc_imagref(n), mpc_imagref(big_complex(num)), GMP_RNDN);
-	    x = mpc_to_big_complex(sc, n);
-	    mpc_clear(n);
-	    return(x);
-	  }
+	case T_INTEGER: num = promote_number(sc, T_BIG_INTEGER, num);  break;
+	case T_RATIO:   num = promote_number(sc, T_BIG_RATIO, num);    break;
+	case T_REAL:    num = promote_number(sc, T_BIG_REAL, num);     break;
+	default:        num = promote_number(sc, T_BIG_COMPLEX, num);  break;
 	}
     }
-  return(g_random(sc, args));
+
+  switch (type(num))
+    {
+    case T_BIG_INTEGER:
+      {
+	mpz_t n;
+	mpz_init(n);
+	mpz_urandomm(n, random_gmp_state(state), big_integer(num));
+	
+	/* this does not work if num is a negative number -- you get positive results.
+	 *   so check num for sign, and negate result if necessary.
+	 */
+	if (mpz_cmp_ui(big_integer(num), 0) < 0)
+	  mpz_neg(n, n);
+	
+	x = mpz_to_big_integer(sc, n);
+	mpz_clear(n);
+	return(x);
+      }
+      
+    case T_BIG_RATIO:
+      {
+	mpfr_t n, e;
+	mpfr_t rat;
+	
+	mpfr_init_set_ui(n, 1, GMP_RNDN);
+	mpfr_urandomb(n, random_gmp_state(state));
+	mpfr_init_set_q(rat, big_ratio(num), GMP_RNDN);
+	mpfr_mul(n, n, rat, GMP_RNDN);
+	
+	mpfr_init_set_str(e, "0.0000001", 10, GMP_RNDN);
+	mpfr_mul(e, e, rat, GMP_RNDN);
+	mpfr_clear(rat);
+	/* as in g_random, small ratios are a problem because the error term (sc->default_rationalize_error = 1e-12 here)
+	 *   clobbers everything to 0.
+	 */
+	x = big_rationalize(sc, set_plist_2(sc, mpfr_to_big_real(sc, n), mpfr_to_big_real(sc, e)));
+	mpfr_clear(n);
+	mpfr_clear(e);
+	return(x);
+      }
+      
+    case T_BIG_REAL:
+      {
+	mpfr_t n;
+	mpfr_init_set_ui(n, 1, GMP_RNDN);
+	mpfr_urandomb(n, random_gmp_state(state));
+	mpfr_mul(n, n, big_real(num), GMP_RNDN);
+	x = mpfr_to_big_real(sc, n);
+	mpfr_clear(n);
+	return(x);
+      }
+      
+    case T_BIG_COMPLEX:
+      {
+	mpc_t n;
+	mpc_init(n);
+	mpc_urandom(n, random_gmp_state(state));
+	mpfr_mul(mpc_realref(n), mpc_realref(n), mpc_realref(big_complex(num)), GMP_RNDN);
+	mpfr_mul(mpc_imagref(n), mpc_imagref(n), mpc_imagref(big_complex(num)), GMP_RNDN);
+	x = mpc_to_big_complex(sc, n);
+	mpc_clear(n);
+	return(x);
+      }
+    }
+}
+
+s7_double s7_random(s7_scheme *sc, s7_pointer state)
+{
+  s7_pointer p;
+  p = big_random(sc, set_plist_1(sc, (state) ? state : sc->default_rng));
+  return((s7_double)mpfr_get_d(big_real(p), GMP_RNDN));
 }
 
 
@@ -71604,11 +71509,10 @@ static void s7_gmp_init(s7_scheme *sc)
   sc->ATANH =            big_defun("atanh",            atanh,            1, 0, false);
 
   sc->RANDOM =           big_defun("random",           random,           1, 1, false);
-  sc->big_rng_tag = s7_new_type("<big-random-number-generator>", print_big_rng, free_big_rng, equal_big_rng, NULL, NULL, NULL);
-  sc->MAKE_RANDOM_STATE = s7_define_typed_function(sc,"make-random-state",  make_big_random_state,1, 1, false, H_make_random_state, Q_make_random_state);
+  sc->RANDOM_STATE =     big_defun("random-state",     random_state,     1, 1, false);
 
-  sc->BIGNUM =          big_defun("bignum",            bignum,           1, 1, false);
-  sc->IS_BIGNUM =       big_defun("bignum?",           is_bignum,        1, 0, false);
+  sc->BIGNUM =           big_defun("bignum",           bignum,           1, 1, false);
+  sc->IS_BIGNUM =        big_defun("bignum?",          is_bignum,        1, 0, false);
 
   sc->bignum_precision = DEFAULT_BIGNUM_PRECISION;
   mpfr_set_default_prec((mp_prec_t)DEFAULT_BIGNUM_PRECISION);
@@ -71770,7 +71674,7 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
   if (sym == sc->default_rationalize_error_symbol)                       /* default-rationalize-error */
     return(make_real(sc, sc->default_rationalize_error));
   if (sym == sc->default_random_state_symbol)                            /* default-random-state */
-    return(s7_make_random_state(sc, s7_random_state_to_list(sc, sc->NIL)));
+    return(sc->default_rng);
 
   if (sym == sc->max_list_length_symbol)                                 /* max-list-length (as arg to make-list) */
     return(s7_make_integer(sc, sc->max_list_length));
@@ -71946,14 +71850,12 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 
   if (sym == sc->default_random_state_symbol)
     {
-      if ((is_c_object(val)) &&
-	  (c_object_type(val) == sc->rng_tag))
+      if (is_random_state(val))
 	{
-	  s7_rng_t *r, *dr;
-	  r = (s7_rng_t *)s7_object_value(val);
-	  dr = sc->default_rng;
-	  dr->ran_seed = r->ran_seed;
-	  dr->ran_carry = r->ran_carry;
+#if (!WITH_GMP)
+	  random_seed(sc->default_rng) = random_seed(val);
+	  random_carry(sc->default_rng) = random_carry(val);
+#endif
 	  return(val);
 	}
       return(wrong_type_argument_with_type(sc, sym, 1, val, A_RANDOM_STATE_OBJECT));
@@ -72180,8 +72082,6 @@ s7_scheme *s7_init(void)
   sc->temp10 = sc->NIL;
 
   sc->begin_hook = NULL;
-  sc->default_rng = NULL;
-
   sc->autoload_table = sc->NIL;
   sc->autoload_names = NULL;
   sc->autoload_names_sizes = NULL;
@@ -72816,14 +72716,14 @@ s7_scheme *s7_init(void)
   sc->IS_CHAR_READY =         defun("char-ready?",	is_char_ready,		0, 1, false); /* the least-used scheme function */
 #endif
 
-  sc->CLOSE_INPUT_PORT =      defun("close-input-port", close_input_port,	1, 0, false);
-  sc->CLOSE_OUTPUT_PORT =     defun("close-output-port", close_output_port,	1, 0, false);
-  sc->FLUSH_OUTPUT_PORT =     defun("flush-output-port", flush_output_port,	0, 1, false);
-  sc->OPEN_INPUT_FILE =       defun("open-input-file", open_input_file,		1, 1, false);
-  sc->OPEN_OUTPUT_FILE =      defun("open-output-file", open_output_file,	1, 1, false);
-  sc->OPEN_INPUT_STRING =     defun("open-input-string", open_input_string,	1, 0, false);
+  sc->CLOSE_INPUT_PORT =      defun("close-input-port",   close_input_port,	1, 0, false);
+  sc->CLOSE_OUTPUT_PORT =     defun("close-output-port",  close_output_port,	1, 0, false);
+  sc->FLUSH_OUTPUT_PORT =     defun("flush-output-port",  flush_output_port,	0, 1, false);
+  sc->OPEN_INPUT_FILE =       defun("open-input-file",    open_input_file,	1, 1, false);
+  sc->OPEN_OUTPUT_FILE =      defun("open-output-file",   open_output_file,	1, 1, false);
+  sc->OPEN_INPUT_STRING =     defun("open-input-string",  open_input_string,	1, 0, false);
                               defun("open-output-string", open_output_string,	0, 0, false);
-  sc->GET_OUTPUT_STRING =     defun("get-output-string", get_output_string,	1, 1, false);
+  sc->GET_OUTPUT_STRING =     defun("get-output-string",  get_output_string,	1, 1, false);
 
   sc->NEWLINE =               defun("newline",		newline,		0, 1, false);
   sc->WRITE =                 defun("write",		write,			1, 1, false);
@@ -72840,14 +72740,14 @@ s7_scheme *s7_init(void)
   /* read can't be safe because it messes with the stack, expecting to be all by itself in the call sequence (not embedded in OP_SAFE_C_opSq for example) */
 
   sc->CALL_WITH_INPUT_STRING = unsafe_defun("call-with-input-string", call_with_input_string, 2, 0, false);
-  sc->CALL_WITH_INPUT_FILE =  unsafe_defun("call-with-input-file", call_with_input_file, 2, 0, false);
+  sc->CALL_WITH_INPUT_FILE =   unsafe_defun("call-with-input-file", call_with_input_file, 2, 0, false);
   sc->WITH_INPUT_FROM_STRING = unsafe_defun("with-input-from-string", with_input_from_string, 2, 0, false);
-  sc->WITH_INPUT_FROM_FILE =  unsafe_defun("with-input-from-file", with_input_from_file, 2, 0, false);
+  sc->WITH_INPUT_FROM_FILE =   unsafe_defun("with-input-from-file", with_input_from_file, 2, 0, false);
 
   sc->CALL_WITH_OUTPUT_STRING = unsafe_defun("call-with-output-string", call_with_output_string, 1, 0, false);
-  sc->CALL_WITH_OUTPUT_FILE = unsafe_defun("call-with-output-file", call_with_output_file, 2, 0, false);
-  sc->WITH_OUTPUT_TO_STRING = unsafe_defun("with-output-to-string", with_output_to_string, 1, 0, false);
-  sc->WITH_OUTPUT_TO_FILE =   unsafe_defun("with-output-to-file", with_output_to_file, 2, 0, false);
+  sc->CALL_WITH_OUTPUT_FILE =   unsafe_defun("call-with-output-file", call_with_output_file, 2, 0, false);
+  sc->WITH_OUTPUT_TO_STRING =   unsafe_defun("with-output-to-string", with_output_to_string, 1, 0, false);
+  sc->WITH_OUTPUT_TO_FILE =     unsafe_defun("with-output-to-file", with_output_to_file, 2, 0, false);
 
 #if WITH_SYSTEM_EXTRAS
   sc->IS_DIRECTORY =          defun("directory?",	is_directory,		1, 0, false);
@@ -72915,6 +72815,13 @@ s7_scheme *s7_init(void)
   sc->GT =                    defun(">",		greater,		2, 0, true);
   sc->LEQ =                   defun("<=",		less_or_equal,		2, 0, true);
   sc->GEQ =                   defun(">=",		greater_or_equal,	2, 0, true);
+  sc->LOGIOR =                defun("logior",		logior,			0, 0, true);
+  sc->LOGXOR =                defun("logxor",		logxor,			0, 0, true);
+  sc->LOGAND =                defun("logand",		logand,			0, 0, true);
+  sc->LOGNOT =                defun("lognot",		lognot,			1, 0, false);
+  sc->ASH =                   defun("ash",		ash,			2, 0, false);
+  sc->RANDOM_STATE =          defun("random-state",     random_state,	        1, 1, false);
+  sc->RANDOM =                defun("random",		random,			1, 1, false);
 #if (!WITH_PURE_S7)
   sc->INEXACT_TO_EXACT =      defun("inexact->exact",	inexact_to_exact,	1, 0, false);
   sc->EXACT_TO_INEXACT =      defun("exact->inexact",	exact_to_inexact,	1, 0, false);
@@ -72922,23 +72829,15 @@ s7_scheme *s7_init(void)
   sc->MAKE_POLAR =            defun("make-polar",	make_polar,		2, 0, false);
   sc->MAKE_RECTANGULAR =      defun("make-rectangular", make_complex,	        2, 0, false);
 #endif
-  sc->LOGIOR =                defun("logior",		logior,			0, 0, true);
-  sc->LOGXOR =                defun("logxor",		logxor,			0, 0, true);
-  sc->LOGAND =                defun("logand",		logand,			0, 0, true);
-  sc->LOGNOT =                defun("lognot",		lognot,			1, 0, false);
-  sc->ASH =                   defun("ash",		ash,			2, 0, false);
-#endif
+#endif /* !gmp */
+
   sc->LOGBIT =                defun("logbit?",		logbit,			2, 0, false);
   sc->INTEGER_DECODE_FLOAT =  defun("integer-decode-float", integer_decode_float, 1, 0, false);
 #if (!WITH_PURE_S7)
   sc->IS_EXACT =              defun("exact?",		is_exact,		1, 0, false);
   sc->IS_INEXACT =            defun("inexact?",		is_inexact,		1, 0, false);
 #endif
-  sc->rng_tag = s7_new_type_x(sc, "<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL, NULL, copy_random_state, NULL, NULL);
-  s7_set_object_print_readably(sc->rng_tag, print_rng_readably);
   sc->RANDOM_STATE_TO_LIST =  defun("random-state->list", random_state_to_list, 0, 1, false);
-  sc->MAKE_RANDOM_STATE =     defun("make-random-state", make_random_state,	1, 1, false);
-  sc->RANDOM =                defun("random",		random,			1, 1, false);
 
   sc->NUMBER_TO_STRING =      defun("number->string",	number_to_string,	1, 1, false);
   sc->STRING_TO_NUMBER =      defun("string->number",	string_to_number,	1, 1, false);
@@ -73367,10 +73266,24 @@ s7_scheme *s7_init(void)
     s7_define_constant(sc, "pi", real_pi);
     sc->PI = s7_make_symbol(sc, "pi");
 
-    sc->default_rng = (s7_rng_t *)malloc(sizeof(s7_rng_t));
-    sc->default_rng->ran_seed = (unsigned int)time(NULL);
-    sc->default_rng->ran_carry = 1675393560;
-
+    {
+      s7_pointer p;
+      NEW_CELL(sc, p, T_RANDOM_STATE);
+#if WITH_GMP
+      {
+	mpz_t seed;
+	mpz_init_set_ui(seed, (unsigned int)time(NULL));
+	gmp_randinit_default(random_gmp_state(p));
+	gmp_randseed(random_gmp_state(p), seed);
+	mpz_clear(seed);
+      }
+#else
+      random_seed(p) = (unsigned long long int)time(NULL);
+      random_carry(p) = 1675393560;
+#endif
+      sc->default_rng = p;
+    }
+    
     for (i = 0; i < 10; i++) sc->singletons[(unsigned char)'0' + i] = small_int(i);
     sc->singletons[(unsigned char)'+'] = sc->ADD;
     sc->singletons[(unsigned char)'-'] = sc->SUBTRACT;
@@ -73498,6 +73411,7 @@ s7_scheme *s7_init(void)
                         (define current-environment        curlet)   \n\
                         (define make-procedure-with-setter dilambda) \n\
                         (define procedure-with-setter?     dilambda?)\n\
+                        (define make-random-state          random-state) \n\
                         (define (procedure-arity obj) (let ((c (arity obj))) (list (car c) (- (cdr c) (car c)) (> (cdr c) 100000))))");
 #endif
 
@@ -73605,5 +73519,11 @@ int main(int argc, char **argv)
  *   make-oscil -> '(oscil? real? real) 
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
  * for define* how to show in sig/pos the individual types? -- take in decl order and reorder if keys? (does this work at all in lint?)
- * t318 for things not tested
+ * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
+ *   currently have port-line-number port-filename
+ *   so present port-data as string/byte-vector (type: string|file-port), pos/size as ints, actual fd? [srfi-6]
+ *   in any case, need much better #reader error message!  maybe a new owlet field? 
+ *   in use elsewhere: port-data port-file port-position[settable?] port-size[length?] port-type[unneeded?] port->byte-vector[copy?]
+ * copy method for tcopy block?
+ * perhaps make-complex -> complex
  */

@@ -490,8 +490,9 @@ The same problem afflicts memq and assq.
 <p>The <em class=def id="random">random</em> function takes a range and an optional state, and returns a number 
 between zero and the range, of the same type as the range.  It is perfectly reasonable
 to use a range of 0, in which case random returns 0.
-<em class=def id="makerandomstate">make-random-state</em> creates a new random state from a seed.  If no state is passed,
+<em class=def id="randomstate">random-state</em> creates a new random state from a seed.  If no state is passed,
 random uses some default state initialized from the current time.  <em class=def id="randomstatep">random-state?</em> returns #t if passed a random state object.
+s7 ought to have a function named random? that always returns #t.
 </p>
 
 <pre class="indented">
@@ -505,13 +506,13 @@ random uses some default state initialized from the current time.  <em class=def
 <em class="gray">0.86300308872748+0.83601002730848i</em>
 &gt; (random -1.0)
 <em class="gray">-0.037691127513267</em>
-&gt; (define r0 (make-random-state 1234))
+&gt; (define r0 (random-state 1234))
 <em class="gray">r0</em>
 &gt; (random 100 r0)
 <em class="gray">94</em>
 &gt; (random 100 r0)
 <em class="gray">19</em>
-&gt; (define r1 (make-random-state 1234))
+&gt; (define r1 (random-state 1234))
 <em class="gray">r1</em>
 &gt; (random 100 r1)
 <em class="gray">94</em>
@@ -520,7 +521,7 @@ random uses some default state initialized from the current time.  <em class=def
 </pre>
 
 <p>copy the random-state to save a spot in a random number sequence, or save the random-state as a list via
-random-state-&gt;list, then to restart from that point, apply make-random-state to that list.
+random-state-&gt;list, then to restart from that point, apply random-state to that list.
 </p>
 </div>
 
@@ -5807,7 +5808,7 @@ Better ideas are always welcome!
 <li>omits cond-expand, multiple-values-bind|set!, call-with-values, defmacro(*)
 <li>omits unquote (the name), and quasiquoted vector constants
 <li>omits d/f/s/l exponents
-<li>omits make-polar, and renames make-rectangular to make-complex
+<li>omits make-polar and make-rectangular (use make-complex)
 <li>omits integer-length, exact?, inexact?, exact-&gt;inexact, inexact-&gt;exact, #i and #e
 <li>omits set-current-output-port and set-current-input-port
 <li>omits memq, memv, assq, assv

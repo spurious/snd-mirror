@@ -36403,7 +36403,7 @@ EDITS: 1
 		    (im (make-vector 64))
 		    (crl (make-vector 64))
 		    (cim (make-vector 64))
-		    (rs (make-random-state (bignum "12345678"))))
+		    (rs (random-state (bignum "12345678"))))
 		(do ((i 0 (+ i 1))) 
 		    ((= i 64)) 
 		  (set! (rl i) (random (bignum "1.0") rs))
@@ -48927,7 +48927,7 @@ EDITS: 1
 				  (let ((x 3)) (lambda (y) (+ x y))) (lambda args args)
 				  "" (make-hash-table 256)
 				  #<undefined> #<unspecified> #<eof>
-				  (make-random-state 12) (float-vector) (vector)))
+				  (random-state 12) (float-vector) (vector)))
 		 (few-args (list 1.5 str-3 (list 0 1) 12 float-vector-3 color-95 #(0 1) 3/4 -1.0 (float-vector) (vector) (list) (string)
 				 0+i delay-32 :feedback -1 0 1 'hi (lambda (a) (+ a 1)) -64 #f #t vector-0))
 		 (less-args (if all-args main-args few-args)))

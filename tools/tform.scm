@@ -32,7 +32,7 @@
 			  #(1 2) (vector 1 '(3)) (let ((x 3)) (lambda (y) (+ x y))) abs 'a 'b one apply 
 			  (lambda args args) (lambda* ((a 3) (b 2)) (+ a b)) (lambda () 3)
 			  (sublet () (cons 'a 1)) (rootlet)
-			  *load-hook*  *error-hook* (make-random-state 123)
+			  *load-hook*  *error-hook* (random-state 123)
 			  quasiquote macroexpand cond-expand begin let letrec* if case cond (call-with-exit (lambda (goto) goto))
 			  (with-baffle (call/cc (lambda (cc) cc)))
 			  (string #\a #\null #\b) #2d((1 2) (3 4)) (inlet 'a 2 'b 3)
