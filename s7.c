@@ -48564,6 +48564,7 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 	 !#
 	 (format #t "a test~%")
 	 (exit)
+      * but very often the closing !# is omitted which is too bad
       */
     case '!':
       {
@@ -73526,4 +73527,5 @@ int main(int argc, char **argv)
  *   in use elsewhere: port-data port-file port-position[settable?] port-size[length?] port-type[unneeded?] port->byte-vector[copy?]
  * copy method for tcopy block?
  * perhaps make-complex -> complex
+ * 4760 %llu -> %u is 32-bit
  */

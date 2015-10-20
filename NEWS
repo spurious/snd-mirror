@@ -1,11 +1,11 @@
-Snd 15.9:
+Snd 16.0:
 
-procedure-signature, c-object?, proper-list?, float?
-list? is now "pair or null" -- use proper-list? for R5RS list?
-(*s7* 'float-format-precision)
-libutf8proc.scm (bindings for the utf8proc library)
-The clm optimizer revision is about 2/3 done
+in s7, the d,f,s,l exponents are now disabled by default (use e,E,@)
+       hash-table-size -> length
+       append is generic
+       make-random-state -> random-state
 
-checked: sbcl 1.2.14|15, gtk 3.17.6|7|8
+checked: gtk 3.18.0|1|2, FC 23, OSX 10.11, sbcl 1.2.16
 
-Thanks!: Greg Santucci, Caio Giovaneti de Barros, Carlos Carrasco
+Thanks!: Greg Santucci, Tito Latini
+

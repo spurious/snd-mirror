@@ -75,7 +75,7 @@
   ;; args-left is at least 1, args-now starts at 0, args starts at ()
   ;; (format *stderr* "~A: ~D ~D (~D ~D): ~A~%" func (length args) args-now low args-left args)
   ;(if (pair? args) (format *stderr* "~A " (car args)))
-    
+
   (call-with-exit
    (lambda (quit)
      (if (>= args-now low)
@@ -176,7 +176,7 @@
 		  *mock-number* *mock-pair* *mock-string* *mock-char* *mock-vector*
 		  *mock-symbol* *mock-port* *mock-hash-table*
 
-		  c-define-1 apropos map-values 
+		  c-define-1 apropos map-values ;set-current-output-port
 		  outlet-member make-method make-object))
 
 (define (test-sym sym)
@@ -192,7 +192,7 @@
 		    (begin
 		      (if (< top bottom)
 			  (format *stderr* ";~A (bottom: ~A, top: ~A)...~%" sym bottom top))
-			  ;(format *stderr* ";~A...~%" sym)
+		      ;(format *stderr* ";~A...~%" sym)
 		      (set! low bottom)
 		      (if (positive? (cdr argn))
 			  (let ((sig (if (eq? sym 'append)
@@ -212,6 +212,6 @@
     (s7-version)
     ))
 
-;(test-sym 'sort!)
+;(test-sym 'write)
 (all)
 (exit)

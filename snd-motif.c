@@ -22541,9 +22541,8 @@ static bool clobber_menu(Widget w, const char *name)
       XtVaGetValues(w, XmNuserData, &slot, NULL);
       unprotect_callback(call_index(slot));
       XtUnmanageChild(w);
-      return(true);
     }
-  return(false);
+  return(true); /* in any case, don't try to recurse into the children */
 }
 
 
