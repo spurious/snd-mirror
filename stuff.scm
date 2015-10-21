@@ -535,7 +535,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
 (define (safe-count-if f sequence)
   ;; currently the complete-iterator above skips repetitions, including the outer sequence,
-  ;;   so this count will be off if there are shared sequences or repeated cycles.
+  ;;   so this count will be off if there are repeated cycles?
   ;; Perhaps make an iterator that returns everything.
   (if (sequence? sequence)
       (if (procedure? f)

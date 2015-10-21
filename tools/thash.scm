@@ -148,7 +148,7 @@
     (do ((line (read-line port) (read-line port)))
 	((eof-object? line))
       (set! new-pos 0)
-      (do ((pos (char-position #\space line 0) (char-position #\space line (+ pos 1))))
+      (do ((pos (char-position #\space line) (char-position #\space line (+ pos 1))))
 	  ((not pos))
 	(unless (= pos new-pos)
 	  (let* ((start (do ((k new-pos (+ k 1))) ; char-position here is slower!

@@ -181,7 +181,74 @@
 (define-constant K (float-vector 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0))
 (define-constant V (make-float-vector 10))
 
-(define (try12 form gen args)
+(define (try1 form gen)
+  (let ((make-gen (string->symbol (string-append "make-" (symbol->string gen)))))
+    (let ((body
+     `(let ()
+	(define G (,make-gen 1000)) 
+	(define I (,make-gen 500)) 
+	(define (O) (vector #f (mus-copy I) #f))
+	(define (Q) (mus-copy G))
+	(define (Z) (mus-copy F))
+
+	(let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1))
+	  (do ((i 0 (+ i 1))) ((= i 10))
+	    (set! (V i) ,(copy form))))
+	
+	(define (tester-1)
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1) (v (make-float-vector 10)))
+	    (do ((i 0 (+ i 1))) ((= i 10) v)
+	      (float-vector-set! v i ,(copy form)))))
+	
+	(define (tester-2)
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1))
+	    (set! *output* (make-float-vector 10))
+	    (do ((i 0 (+ i 1))) ((= i 10) *output*)
+	      (outa i ,(copy form)))))
+	
+	(define (tester-3)
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1))
+	    (set! *output* (make-float-vector 10))
+	    (do ((i 0 (+ i 1))) ((= i 10) *output*)
+	      (out-any i ,(copy form) 0))))
+	
+	(define (tester-4)
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (x 3.14) (y -0.5) (k 1))
+	    (do ((i 0 (+ i 1)) (lst ())) ((= i 10) (apply float-vector (reverse! lst)))
+	      (set! lst (cons ,(copy form) lst)))))
+	
+	(define (tester-5)
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (y -0.5) (k 1) (v (make-float-vector 10)))
+	    (set! *output* (make-sample->file "test.snd" 1 mus-ldouble mus-next "t816"))
+	    (do ((i 0 (+ i 1)) (x 0.0 (+ x 0.1))) ((= i 10))
+	      (outa i ,(copy form)))
+	    (mus-close *output*)
+	    (file->array "test.snd" 0 0 10 v)))
+	
+	(define (tester-6)
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (k 1) (v (make-float-vector 10)))
+	    (do ((i 0 (+ i 1)) (y -0.5) (x 0.0 (+ x 0.1))) ((= i 10) v)
+	      (float-vector-set! v i ,(copy form)))))
+	
+	(define (tester-11)
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (y -0.5) (k 1) (v (make-float-vector 10)))
+	    (do ((i 0 (+ i 1))) ((= i 10) v)
+	      (let ((x (,gen o)))
+		(set! (v i) ,(copy form))))))
+	
+	(define (tester-12)
+	  (let ((o (Q)) (p (Q)) (q (Q)) (oscs (O)) (a (Z)) (b (Z)) (y -0.5) (k 1))
+	    (set! *output* (make-float-vector 10))
+	    (do ((i 0 (+ i 1))) ((= i 10) *output*)
+	      (let ((x (,gen o)))
+		(outa i ,(copy form))))))
+
+	(checkout-1 ',form V (tester-1) (tester-2) (tester-3) (tester-4) (tester-5) (tester-6) (tester-11) (tester-12))
+	)))
+      (define the-body (apply lambda () (list (copy body :readable))))
+      (the-body))))
+
+(define (try2 form gen)
   (let ((make-gen (string->symbol (string-append "make-" (symbol->string gen)))))
     (let ((body
      `(let ()
@@ -269,12 +336,10 @@
 	      (let ((x (,gen o)))
 		(outa i ,(copy form))))))
 
-	(if (= args 1)
-	    (checkout-1 ',form V (tester-1) (tester-2) (tester-3) (tester-4) (tester-5) (tester-6) (tester-11) (tester-12))
-	    (checkout ',form V
-		      (tester-1) (tester-2) (tester-3) (tester-4) (tester-5) (tester-6) 
-		      (tester-7) (tester-8) (tester-9) (tester-10) (tester-11) (tester-12))
-	    ))))
+	(checkout ',form V
+		  (tester-1) (tester-2) (tester-3) (tester-4) (tester-5) (tester-6) 
+		  (tester-7) (tester-8) (tester-9) (tester-10) (tester-11) (tester-12))
+	)))
 
       (define the-body (apply lambda () (list (copy body :readable))))
       (the-body))))
@@ -383,35 +448,68 @@
   (define args3 (list 1.5 (list gen 's) '(env c) 'z 'i '(cos x)))
   (define args4 (list 1.5 (list gen 't) '(env d) 'x 'i))
 
-  (for-each 
-   (lambda (a)
-     (try12 a gen nargs)
-     (when (> nargs 1)
-       (try12 `(,gen o ,a) gen nargs)
-       (try12 `(abs (,gen o ,a)) gen nargs)))
-   args1)
+  (if (= nargs 1)
+      (begin
+	(for-each 
+	 (lambda (a)
+	   (try1 a gen)
+	   (when (> nargs 1)
+	     (try1 `(,gen o ,a) gen)
+	     (try1 `(abs (,gen o ,a)) gen)))
+	 args1)
 
-  (for-each 
-   (lambda (a) 
-     (for-each 
-      (lambda (b) 
-	(try12 `(+ ,a ,b) gen nargs)
-	(try12 `(- ,a ,b) gen nargs)
-	(try12 `(* ,a ,b) gen nargs)
-	(try12 `(cos (+ ,a ,b)) gen nargs)
-	(try12 `(sin (* ,a ,b)) gen nargs)
-	(try12 `(abs (* ,a ,b)) gen nargs)
-	(try12 `(* ,a (abs ,b)) gen nargs)
-	(when (> nargs 1)
-	  (try12 `(,gen o (+ ,a ,b)) gen nargs)
-	  (try12 `(,gen o (* ,a ,b)) gen nargs)
-	  (try12 `(+ ,a (,gen o ,b)) gen nargs)
-	  (try12 `(* ,a (,gen o ,b)) gen nargs)
-	  (try12 `(+ (,gen o ,a) ,b) gen nargs)
-	  (try12 `(* (,gen o ,a) ,b) gen nargs)
-	  (try12 `(* (abs (,gen o ,a)) ,b) gen nargs)))
-      args2))
-   args1)
+	(for-each 
+	 (lambda (a) 
+	   (for-each 
+	    (lambda (b) 
+	      (try1 `(+ ,a ,b) gen)
+	      (try1 `(- ,a ,b) gen)
+	      (try1 `(* ,a ,b) gen)
+	      (try1 `(cos (+ ,a ,b)) gen)
+	      (try1 `(sin (* ,a ,b)) gen)
+	      (try1 `(abs (* ,a ,b)) gen)
+	      (try1 `(* ,a (abs ,b)) gen)
+	      (when (> nargs 1)
+		(try1 `(,gen o (+ ,a ,b)) gen)
+		(try1 `(,gen o (* ,a ,b)) gen)
+		(try1 `(+ ,a (,gen o ,b)) gen)
+		(try1 `(* ,a (,gen o ,b)) gen)
+		(try1 `(+ (,gen o ,a) ,b) gen)
+		(try1 `(* (,gen o ,a) ,b) gen)
+		(try1 `(* (abs (,gen o ,a)) ,b) gen)))
+	    args2))
+	 args1))
+
+      (begin
+       (for-each 
+	(lambda (a)
+	  (try2 a gen)
+	  (when (> nargs 1)
+	    (try2 `(,gen o ,a) gen)
+	    (try2 `(abs (,gen o ,a)) gen)))
+	args1)
+       
+       (for-each 
+	(lambda (a) 
+	  (for-each 
+	   (lambda (b) 
+	     (try2 `(+ ,a ,b) gen)
+	     (try2 `(- ,a ,b) gen)
+	     (try2 `(* ,a ,b) gen)
+	     (try2 `(cos (+ ,a ,b)) gen)
+	     (try2 `(sin (* ,a ,b)) gen)
+	     (try2 `(abs (* ,a ,b)) gen)
+	     (try2 `(* ,a (abs ,b)) gen)
+	     (when (> nargs 1)
+	       (try2 `(,gen o (+ ,a ,b)) gen)
+	       (try2 `(,gen o (* ,a ,b)) gen)
+	       (try2 `(+ ,a (,gen o ,b)) gen)
+	       (try2 `(* ,a (,gen o ,b)) gen)
+	       (try2 `(+ (,gen o ,a) ,b) gen)
+	       (try2 `(* (,gen o ,a) ,b) gen)
+	       (try2 `(* (abs (,gen o ,a)) ,b) gen)))
+	   args2))
+	args1)))
 #|
   (for-each 
    (lambda (c)

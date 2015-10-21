@@ -59,7 +59,6 @@
  *    strings
  *    ports
  *    format
- *    system extras
  *    lists
  *    vectors
  *    hash-tables
@@ -346,7 +345,7 @@ static int float_format_precision = WRITE_REAL_PRECISION;
   #define PRINT_NAME_PADDING 8
   #define PRINT_NAME_SIZE (20 - PRINT_NAME_PADDING - 2)
   #define ptr_int unsigned int
-  #define ptr_int_format "(c-pointer %u)"
+  #define INT_FORMAT "%u"
   #ifndef WITH_OPTIMIZATION
     #define WITH_OPTIMIZATION 0
     /* 32-bit optimized case gets inexplicable NaNs in float-vector ops.
@@ -358,7 +357,7 @@ static int float_format_precision = WRITE_REAL_PRECISION;
 #else
   #define opcode_t unsigned long long int
   #define ptr_int unsigned long long int
-  #define ptr_int_format "(c-pointer %llu)"
+  #define INT_FORMAT "%llu"
   #define PRINT_NAME_PADDING 16
   #define PRINT_NAME_SIZE (40 - PRINT_NAME_PADDING - 2)
   #ifndef WITH_OPTIMIZATION
@@ -4265,8 +4264,7 @@ static int gc(s7_scheme *sc)
     while (tp < heap_top)          /* != here or ^ makes no difference */
       {
 	s7_pointer p;
-	/* from here down is GC_CALL, but I wanted one case explicit for readability
-	 */
+	/* from here down is GC_CALL, but I wanted one case explicit for readability */
 	p = (*tp++);
 
 	if (is_marked(p))          /* this order is faster than checking typeflag(p) != T_FREE first */
@@ -4757,7 +4755,7 @@ static void pop_stack(s7_scheme *sc)
   sc->op =    (opcode_t)(sc->stack_end[3]);
   if (sc->op > OP_MAX_DEFINED) 
     {
-      fprintf(stderr, "%sinvalid opcode: %llu%s\n", BOLD_TEXT, sc->op, UNBOLD_TEXT);
+      fprintf(stderr, "%sinvalid opcode: " INT_FORMAT "%s\n", BOLD_TEXT, sc->op, UNBOLD_TEXT);
       if (stop_at_error) abort();
     }
 }
@@ -5109,8 +5107,7 @@ static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
 
 bool s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
 {
-  /* this includes the special constants #<unspecified> and so on for simplicity -- are there any others?
-   */
+  /* this includes the special constants #<unspecified> and so on for simplicity -- are there any others? */
   int i;
   s7_pointer x;
 
@@ -5459,8 +5456,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
     let_set_slots(Frame, _slot_); 	                \
   } while (0)
 
-/* no set_local here -- presumably done earlier in check_*
- */
+/* no set_local here -- presumably done earlier in check_* */
 
 #define NEW_FRAME_WITH_SLOT(Sc, Old_Env, New_Env, Symbol, Value) \
   do {								 \
@@ -27565,7 +27561,9 @@ static s7_pointer g_read_char_0(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer port;
   port = input_port_if_not_loading(sc);
-  return(chars[port_read_character(port)(sc, port)]);
+  if (port)
+    return(chars[port_read_character(port)(sc, port)]);
+  return(sc->EOF_OBJECT);
 }
 
 
@@ -27583,6 +27581,7 @@ static s7_pointer c_read_char(s7_scheme *sc)
   int c;
   s7_pointer port;
   port = input_port_if_not_loading(sc);
+  if (!port) return(sc->EOF_OBJECT);
   c = port_read_character(port)(sc, port);
   if (c == EOF)
     return(sc->EOF_OBJECT);
@@ -27627,6 +27626,7 @@ static s7_pointer c_write_char(s7_scheme *sc, s7_pointer chr)
 {
   if (!s7_is_character(chr))
     method_or_bust(sc, chr, sc->WRITE_CHAR, set_plist_1(sc, chr), T_CHARACTER, 1);
+  if (sc->output_port == sc->F) return(chr);
   port_write_character(sc->output_port)(sc, s7_character(chr), sc->output_port);
   return(chr);
 }
@@ -27703,6 +27703,7 @@ static s7_pointer c_read_byte(s7_scheme *sc)
   int c;
   s7_pointer port;
   port = input_port_if_not_loading(sc);
+  if (!port) return(sc->EOF_OBJECT);
   c = port_read_character(port)(sc, port);
   if (c == EOF)
     return(sc->EOF_OBJECT);
@@ -27843,8 +27844,7 @@ static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
 
   if (!is_null(cdr(args)))
     port = cadr(args);
-  else port = input_port_if_not_loading(sc);
-
+  else port = input_port_if_not_loading(sc); /* port checked (for NULL) in c_read_string */
   return(c_read_string(sc, s7_integer(k), port));
 }
 
@@ -31520,7 +31520,7 @@ static void c_pointer_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, us
   char buf[64];
 
   if (use_write == USE_READABLE_WRITE)
-    nlen = snprintf(buf, 64, ptr_int_format, (ptr_int)raw_pointer(obj));
+    nlen = snprintf(buf, 64, "(c-pointer " INT_FORMAT ")", (ptr_int)raw_pointer(obj));
   else nlen = snprintf(buf, 64, "#<c_pointer %p>", raw_pointer(obj));
   port_write_string(port)(sc, buf, nlen, port);
 }
@@ -42361,12 +42361,25 @@ static s7_pointer g_is_aritable_ic(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer is_aritable_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if ((args == 2) &&
-      (s7_is_integer(cadr(expr))) &&
-      (s7_integer(cadr(expr)) < MAX_ARITY) &&
-      (s7_integer(cadr(expr)) >= 0))
-    return(is_aritable_ic);
+  if (args == 2)
+    {
+      s7_pointer arg2;
+      arg2 = caddr(expr);
+      if ((s7_is_integer(arg2)) &&
+	  (s7_integer(arg2) < MAX_ARITY) &&
+	  (s7_integer(arg2) >= 0))
+	return(is_aritable_ic);
+    }
   return(f);
+}
+
+
+/* -------- sequence? -------- */
+static s7_pointer g_is_sequence(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_sequence "(sequence? obj) returns #t if obj is a sequence (vector, string, pair, etc)"
+  #define Q_is_sequence pl_bt
+  check_boolean_method(sc, is_simple_sequence, sc->IS_SEQUENCE, args);
 }
 
 
@@ -43155,8 +43168,7 @@ static bool real_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *c
 	   (fabs(real(x) - integer(y)) <= sc->morally_equal_float_epsilon));
 
   if (is_t_ratio(y))
-    return((!is_NaN(real(x))) &&
-	   (s7_fabsl(real(x) - fraction(y)) <= sc->morally_equal_float_epsilon));
+    return(floats_are_morally_equal(sc, real(x), fraction(y)));
 
   if (is_NaN(real(x)))
     return((is_NaN(real_part(y))) &&
@@ -43240,7 +43252,8 @@ static bool rng_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci
   return(x == y);
 #else
   return((x == y) ||
-	 ((random_seed(x) == random_seed(y)) &&
+	 ((is_random_state(y)) &&
+	  (random_seed(x) == random_seed(y)) &&
 	  (random_carry(x) == random_carry(y))));
 #endif
 }
@@ -43363,11 +43376,17 @@ static s7_pointer s7_length(s7_scheme *sc, s7_pointer lst)
     case T_CLOSURE_STAR:
       if (has_methods(lst))
 	return(make_integer(sc, closure_length(sc, lst)));
+      return(sc->F);
+
+    case T_INPUT_PORT:
+      if (is_string_port(lst))
+	return(make_integer(sc, port_data_size(lst)));
+      return(sc->F);
 
     default:
       return(sc->F);
     }
-  return(small_int(0));
+  return(sc->F);
 }
 
 static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
@@ -43376,13 +43395,8 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
 The length of a dotted list does not include the final cdr, and is returned as a negative number.  A circular \
 list has infinite length.  Length of anything else returns #f."
   #define Q_length pcl_t
-  #define Q_is_sequence Q_length
-  #define H_is_sequence H_length
-
   return(s7_length(sc, car(args)));
 }
-
-#define g_is_sequence g_length
 
 /* what about (length file)?  input port, read_file gets the file length, so perhaps save it
  *   but we're actually looking at the port, so its length is what remains to be read? (if input port)
@@ -50610,7 +50624,7 @@ static s7_pointer char_position_chooser(s7_scheme *sc, s7_pointer f, int args, s
 {
   if (((args == 2) || (args == 3)) &&
       (s7_is_character(cadr(expr))))
-    return(char_position_csi);
+     return(char_position_csi);
   return(f);
 }
 
@@ -56852,8 +56866,7 @@ static bool tree_match(s7_scheme *sc, s7_pointer tree)
 
 static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_pointer var_list, bool *has_set)
 {
-  /* here any (unsafe?) closure or jumping-op (call/cc) or shadowed variable is trouble
-   */
+  /* here any (unsafe?) closure or jumping-op (call/cc) or shadowed variable is trouble */
   s7_pointer p;
 
   for (p = body; is_pair(p); p = cdr(p))
@@ -73487,23 +73500,23 @@ int main(int argc, char **argv)
 
 /* ----------------------------------------------------
  *
- *           12  |  13  |  14  |  15  | 16.0 |
+ *           12  |  13  |  14  |  15  | 16.0  16.1
  *                                           
- * s7test   1721 | 1358 |  995 | 1194 | 1122 |
- * index    44.3 | 3291 | 1725 | 1276 | 1156 |
- * teq           |      |      | 6612 | 2380 |
- * tauto     265 |   89 |  9   |  8.4 | 2638 |
- * tcopy         |      |      | 13.6 | 3204 |
- * bench    42.7 | 8752 | 4220 | 3506 | 3230 |
- * tform         |      |      | 6816 | 3627 |
- * tmap          |      |      |  9.3 | 4176 |
- * titer         |      |      | 7503 | 5218 |
- * lg            |      |      | 6547 | 7201 |
- * thash         |      |      | 50.7 | 8491 |
- *               |      |      |      |      |
- * tgen          |   71 | 70.6 | 38.0 | 12.0 |
- * tall       90 |   43 | 14.5 | 12.7 | 15.0 |
- * calls     359 |  275 | 54   | 34.7 | 37.1 |
+ * s7test   1721 | 1358 |  995 | 1194 | 1122  1128
+ * index    44.3 | 3291 | 1725 | 1276 | 1156  1158
+ * teq           |      |      | 6612 | 2380  2376
+ * tauto     265 |   89 |  9   |  8.4 | 2638  2643
+ * tcopy         |      |      | 13.6 | 3204  3203
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230  3229
+ * tform         |      |      | 6816 | 3627  3589
+ * tmap          |      |      |  9.3 | 4176  4177
+ * titer         |      |      | 7503 | 5218  5219
+ * lg            |      |      | 6547 | 7201  7204
+ * thash         |      |      | 50.7 | 8491  8484
+ *               |      |      |      |      
+ * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7
+ * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0
+ * calls     359 |  275 | 54   | 34.7 | 37.1  37.1
  * 
  * ----------------------------------------------------
  *
@@ -73513,7 +73526,7 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess* -- what about soundio
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
- * libutf8proc.scm doc/examples?
+ * libutf8proc.scm doc/examples?  should require throw an error if unsuccessful?
  * remove the #t=all sounds business! = (map f (sounds)) 
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
@@ -73521,11 +73534,8 @@ int main(int argc, char **argv)
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
  * for define* how to show in sig/pos the individual types? -- take in decl order and reorder if keys? (does this work at all in lint?)
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
- *   currently have port-line-number port-filename
- *   so present port-data as string/byte-vector (type: string|file-port), pos/size as ints, actual fd? [srfi-6]
- *   in any case, need much better #reader error message!  maybe a new owlet field? 
- *   in use elsewhere: port-data port-file port-position[settable?] port-size[length?] port-type[unneeded?] port->byte-vector[copy?]
- * copy method for tcopy block?
+ *   port-data port-position
  * perhaps make-complex -> complex
- * 4760 %llu -> %u is 32-bit
+ * zauto add symbol case, and op?
  */
+
