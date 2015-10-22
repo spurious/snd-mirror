@@ -1375,6 +1375,7 @@ static void init_types(void)
 
 #define T_SYNTACTIC                   (1 << (TYPE_BITS + 1))
 #define is_syntactic(p)               ((typesflag(_NFre(p)) & T_SYNTACTIC) != 0)
+#define is_syntactic_symbol(p)        ((typesflag(_NFre(p)) & (T_SYNTACTIC | 0xff)) == (T_SYMBOL | T_SYNTACTIC))
 #define SYNTACTIC_TYPE                (unsigned short)(T_SYMBOL | T_DONT_EVAL_ARGS | T_SYNTACTIC)
 #define SYNTACTIC_PAIR                (unsigned short)(T_PAIR | T_SYNTACTIC)
 /* this marks symbols that represent syntax objects, it should be in the second byte */
@@ -1697,7 +1698,7 @@ static int not_heap = -1;
 #define opt1_is_set(p)                (((p)->debugger_bits & E_SET) != 0)
 #define set_opt1_is_set(p)            (p)->debugger_bits |= E_SET
 #define opt1_role_matches(p, Role)    (((p)->debugger_bits & E_MASK) == Role)
-#define set_opt1_role(p, Role)        (p)->debugger_bits = (Role | (p->debugger_bits & ~E_MASK))
+#define set_opt1_role(p, Role)        (p)->debugger_bits = (Role | ((p)->debugger_bits & ~E_MASK))
 #define opt1(p, Role)                 opt1_1(hidden_sc, _TLst(p), Role, __func__, __LINE__)
 #define set_opt1(p, x, Role)          set_opt1_1(hidden_sc, _TLst(p), x, Role, __func__, __LINE__)
 
@@ -1715,7 +1716,7 @@ static int not_heap = -1;
 #define opt2_is_set(p)                (((p)->debugger_bits & F_SET) != 0)
 #define set_opt2_is_set(p)            (p)->debugger_bits |= F_SET
 #define opt2_role_matches(p, Role)    (((p)->debugger_bits & F_MASK) == Role)
-#define set_opt2_role(p, Role)        (p)->debugger_bits = (Role | (p->debugger_bits & ~F_MASK))
+#define set_opt2_role(p, Role)        (p)->debugger_bits = (Role | ((p)->debugger_bits & ~F_MASK))
 #define opt2(p, Role)                 opt2_1(hidden_sc, _TLst(p), Role, __func__, __LINE__)
 #define set_opt2(p, x, Role)          set_opt2_1(hidden_sc, _TLst(p), (s7_pointer)x, Role, __func__, __LINE__)
 
@@ -1729,7 +1730,7 @@ static int not_heap = -1;
 #define opt3_is_set(p)                (((p)->debugger_bits & G_SET) != 0)
 #define set_opt3_is_set(p)            (p)->debugger_bits |= G_SET
 #define opt3_role_matches(p, Role)    (((p)->debugger_bits & G_MASK) == Role)
-#define set_opt3_role(p, Role)        (p)->debugger_bits = (Role | (p->debugger_bits & ~G_MASK))
+#define set_opt3_role(p, Role)        (p)->debugger_bits = (Role | ((p)->debugger_bits & ~G_MASK))
 #define opt3(p, Role)                 opt3_1(hidden_sc, _TLst(p), Role, __func__, __LINE__)
 #define set_opt3(p, x, Role)          set_opt3_1(hidden_sc, _TLst(p), x, Role, __func__, __LINE__)
 
@@ -1928,8 +1929,8 @@ static int not_heap = -1;
 #define syntax_pp(p)                  (_TSyn(p))->object.syn.pp
 
 #if (!DEBUGGING)
-  #define pair_syntax_op(p)           p->object.sym_cons.op
-  #define pair_set_syntax_op(p, X)    p->object.sym_cons.op = X
+  #define pair_syntax_op(p)           (p)->object.sym_cons.op
+  #define pair_set_syntax_op(p, X)    (p)->object.sym_cons.op = X
 #else
   #define pair_syntax_op(p)           s_syn_op_1(hidden_sc, _TLst(p), __func__, __LINE__)
   #define pair_set_syntax_op(p, Op)   set_s_syn_op_1(hidden_sc, _TLst(p), Op, __func__, __LINE__)
@@ -13788,12 +13789,19 @@ static bool numbers_are_eqv(s7_pointer a, s7_pointer b)
 	return(false);
       return(real(a) == real(b));
 
-    default:
+    case T_COMPLEX:
       if ((is_NaN(real_part(a))) ||
 	  (is_NaN(imag_part(a))))
 	return(false);
       return((real_part(a) == real_part(b)) &&
 	     (imag_part(a) == imag_part(b)));
+
+    default:
+#if WITH_GMP
+      if ((is_big_number(a)) || (is_big_number(b))) /* this can happen if (member bignum ...) -> memv */
+	return(big_numbers_are_eqv(a, b));
+#endif
+      break;
     }
   return(false);
 }
@@ -53792,7 +53800,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
     return(false);
 
   expr = car(x);
-  if (is_syntactic(expr))
+  if (is_syntactic_symbol(expr))
     {
       switch (symbol_syntax_op(expr))
 	{
@@ -54486,7 +54494,7 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 		  set_opt_sym2(sc->code, cadr(cadr(binding)));
 
 		  if ((!is_optimized(cadr(sc->code))) &&
-		      (is_syntactic(caadr(sc->code))))
+		      (is_syntactic_symbol(caadr(sc->code))))
 		    {
 		      /* the is_optimized check here and in other parallel cases protects against cases like:
 		       *   (define (hi) (let ((e #f)) (let ((val (not e))) (if (boolean? val) val e)))) (hi)
@@ -55143,7 +55151,7 @@ static s7_pointer check_if(s7_scheme *sc)
 	  else
 	    {
 	      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_P_P : sc->IF_P_P_P);
-	      if (is_syntactic(car(test)))
+	      if (is_syntactic_symbol(car(test)))
 		{
 		  pair_set_syntax_op(test, symbol_syntax_op(car(test)));
 
@@ -57201,7 +57209,7 @@ static s7_pointer check_do(s7_scheme *sc)
 
 		      if ((one_line) &&
 			  ((!is_optimized(car(body))) || (op_no_hop(car(body)) != OP_SAFE_C_C)) &&
-			  (is_syntactic(caar(body))))
+			  (is_syntactic_symbol(caar(body))))
 			{
 			  pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
 			  pair_set_syntax_symbol(sc->code, sc->SIMPLE_DO_P);
@@ -58450,7 +58458,7 @@ static int unknown_ex(s7_scheme *sc, s7_pointer f)
 		  else
 		    {
 		      if ((is_pair(car(body))) &&
-			  (is_syntactic(caar(body))))
+			  (is_syntactic_symbol(caar(body))))
 			{
 			  set_optimize_op(code, hop + OP_SAFE_THUNK_P);
 			  if (typesflag(car(body)) != SYNTACTIC_PAIR)
@@ -58537,7 +58545,7 @@ static int unknown_g_ex(s7_scheme *sc, s7_pointer f)
 		      else
 			{
 			  if ((is_pair(car(body))) &&
-			      (is_syntactic(caar(body))))
+			      (is_syntactic_symbol(caar(body))))
 			    {
 			      set_optimize_op(code, hop + OP_SAFE_CLOSURE_S_P);
 			      if (typesflag(car(body)) != SYNTACTIC_PAIR)
@@ -59748,12 +59756,14 @@ static int define1_ex(s7_scheme *sc)
       if (!is_symbol(sc->code))                                      /* (define "pi" 3) ? */
 	eval_error_no_return(sc, sc->SYNTAX_ERROR, "define: ~S is immutable", sc->code);
       
-      x = find_symbol(sc, sc->code);
+      x = global_slot(sc->code); /* define-constant sets the global_slot even if symbol is local */
       /* if not a slot, the define-constant must have been local -- this has to still be a constant however:
        *    (let () (define-constant aaa 2)) (define aaa 3) (set! aaa 4) -> error!
        *    but in this case, (define aaa 2) is also an error -- inconsistent in a sense.
+       *    slot_value(x) may be garbage!
        */
       if ((!is_slot(x)) ||
+	  (type(sc->value) != unchecked_type(slot_value(x))) ||
 	  (!s7_is_morally_equal(sc, sc->value, slot_value(x))))      /* if value is unchanged, just ignore this (re)definition */
 	eval_error_no_return(sc, sc->SYNTAX_ERROR, "define: ~S is immutable", sc->code);   /*   can't use s7_is_equal because value might be NaN, etc */
     }
@@ -69035,7 +69045,7 @@ static s7_pointer big_make_complex(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(p1))
     method_or_bust(sc, p1, sc->MAKE_COMPLEX, args, T_REAL, 2);
 
-  if ((!is_big_number(p1)) && (s7_real(p1) == 0.0)) /* imag-part is not bignum and is 0.0 */
+  if ((!is_big_number(p1)) && (real_to_double(sc, p1, "make-complex") == 0.0)) /* imag-part is not bignum and is 0.0 */
     return(p0);
 
   mpfr_init_set(im, big_real(promote_number(sc, T_BIG_REAL, p1)), GMP_RNDN);
@@ -69572,11 +69582,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
   if (s7_is_integer(y))
     {
       s7_int yval;
-
-      if (!is_big_number(y))
-	yval = s7_integer(y);
-      else yval = big_integer_to_s7_int(big_integer(y));
-
+      yval = s7_integer(y);
       if (yval == 0)
 	{
 	  if (s7_is_rational(x))
@@ -69688,7 +69694,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	}
     }
 
-  if ((s7_is_ratio(y)) &&
+  if ((is_t_ratio(y)) &&              /* not s7_is_ratio which accepts bignums */
       (numerator(y) == 1))
     {
       if (denominator(y) == 2)
@@ -71056,40 +71062,32 @@ static s7_pointer big_equal(s7_scheme *sc, s7_pointer args)
   /* this is morally-equal? for bignums, the other case goes through big_numbers_are_eqv */
   int result_type = T_INTEGER;
   s7_pointer x, y, result;
+  bool got_nan = false;
 
   for (x = args; is_not_null(x); x = cdr(x))
     {
       s7_pointer p;
       p = car(x);
+      if (!s7_is_number(p))
+	{
+	  check_method(sc, car(args), sc->EQ, x);
+	  return(wrong_type_argument_with_type(sc, sc->EQ, position_of(x, args), p, A_NUMBER));
+	}
 
       result_type = get_result_type(sc, result_type, p);
-      if (result_type < 0)
-	return(wrong_type_argument_with_type(sc, sc->EQ, position_of(x, args), p, A_NUMBER));
-
-      if ((is_t_real(p)) && (is_NaN(real(p))))  /* (= (bignum "3") 1/0) */
-	return(sc->F);
-      else
-	{
-	  if ((is_t_complex(p)) &&
-	      ((is_NaN(real_part(p))) || (is_NaN(imag_part(p)))))
-	    return(sc->F);
-	}
+      if (!got_nan)
+	got_nan = (((is_t_real(p)) && (is_NaN(real(p)))) ||  /* (= (bignum "3") 1/0) */
+		   ((is_t_complex(p)) && ((is_NaN(real_part(p))) || (is_NaN(imag_part(p))))));
     }
+  if (got_nan) return(sc->F); /* put this off until here so that non-numbers anywhere in the arg list will raise an error */
 
   if (result_type < T_BIG_INTEGER)
     return(g_equal(sc, args));
 
-  if (!s7_is_number(car(args)))
-    check_method(sc, car(args), sc->EQ, args);
-
   result = promote_number(sc, result_type, car(args));
-
   for (y = cdr(args); is_not_null(y); y = cdr(y))
     {
       s7_pointer arg;
-      if (!s7_is_number(car(y)))
-	check_method(sc, car(y), sc->EQ, cons(sc, result, y));
-
       arg = promote_number(sc, result_type, car(y));
       switch (result_type)
 	{
@@ -71525,8 +71523,8 @@ static void s7_gmp_init(s7_scheme *sc)
   sc->RANDOM =           big_defun("random",           random,           1, 1, false);
   sc->RANDOM_STATE =     big_defun("random-state",     random_state,     1, 1, false);
 
+  sc->IS_BIGNUM =        big_defun("bignum?",          is_bignum,        1, 0, false); /* needed by Q_bignum below */
   sc->BIGNUM =           big_defun("bignum",           bignum,           1, 1, false);
-  sc->IS_BIGNUM =        big_defun("bignum?",          is_bignum,        1, 0, false);
 
   sc->bignum_precision = DEFAULT_BIGNUM_PRECISION;
   mpfr_set_default_prec((mp_prec_t)DEFAULT_BIGNUM_PRECISION);
@@ -71764,23 +71762,25 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
     {
       if (s7_is_integer(val))
 	{
-	  if (integer(val) < 0)
+	  s7_int iv;
+	  iv = s7_integer(val);         /* might be bignum if gmp */
+	  if (iv < 0)            
 	    return(simple_out_of_range(sc, sym, val, make_string_wrapper(sc, "should be a positive integer")));
 	  if (sym == sc->print_length_symbol)
-	    sc->print_length = integer(val);
+	    sc->print_length = iv;
 	  else
 	    {
 	      if (sym == sc->max_vector_length_symbol)
-		sc->max_vector_length = integer(val);
+		sc->max_vector_length = iv;
 	      else
 		{
 		  if (sym == sc->max_vector_dimensions_symbol)
-		    sc->max_vector_dimensions = integer(val);
+		    sc->max_vector_dimensions = iv;
 		  else
 		    {
 		      if (sym == sc->max_list_length_symbol)
-			sc->max_list_length = integer(val);
-		      else sc->max_string_length = integer(val);
+			sc->max_list_length = iv;
+		      else sc->max_string_length = iv;
 		    }
 		}
 	    }
@@ -73536,6 +73536,4 @@ int main(int argc, char **argv)
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position
  * perhaps make-complex -> complex
- * zauto add symbol case, and op?
  */
-

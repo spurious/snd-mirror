@@ -172,6 +172,24 @@ echo ' '
 # gcc s7.c -o repl -DWITH_MAIN -I. -O2 -g -Wl,-export-dynamic -ldl -lm -lgmp -lmpfr -lmpc
 # ./repl tools/tauto.scm
 
+
+echo ' -------------------------------- without-gui --with-gmp debugging -------------------------------- '
+make allclean
+rm -f snd
+rm -f config.cache
+./configure --quiet CFLAGS="-Wall -DDEBUGGING=1" --without-gui --with-gmp --disable-deprecated
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -l snd-test
+echo ' '
+echo ' '
+echo ' -------------------------------- that was snd-test --with-gmp debugging -------------------------------- '
+echo ' '
+echo ' '
+
+
 echo ' -------------------------------- motif -------------------------------- '
 make allclean
 rm -f snd
