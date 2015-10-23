@@ -6341,6 +6341,9 @@ static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 
 s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 {
+  if (!is_let(env))
+    return(wrong_type_argument_with_type(sc, sc->LET_REF, 1, env, A_LET));
+    
   if (!is_symbol(symbol))
     {
       check_method(sc, env, sc->LET_REF, sc->w = list_2(sc, env, symbol));
@@ -27063,8 +27066,7 @@ static s7_pointer open_input_file_1(s7_scheme *sc, const char *name, const char 
 #if (!MS_WINDOWS)
       if (errno == EINVAL)
 	return(file_error(sc, caller, "invalid mode", mode));
-
-#if WITH_GCC
+  #if WITH_GCC
       /* catch one special case, "~/..." */
       if ((name[0] == '~') &&
 	  (name[1] == '/'))
@@ -27084,7 +27086,7 @@ static s7_pointer open_input_file_1(s7_scheme *sc, const char *name, const char 
 		return(make_input_file(sc, name, fp));
 	    }
 	}
-#endif
+  #endif
 #endif
       return(file_error(sc, caller, strerror(errno), name));
     }
@@ -27106,12 +27108,16 @@ static s7_pointer g_open_input_file(s7_scheme *sc, s7_pointer args)
 
   if (!is_string(name))
     method_or_bust(sc, name, sc->OPEN_INPUT_FILE, args, T_STRING, 1);
+  /* what if the file name is a byte-vector? currently we accept it */
 
   if (is_pair(cdr(args)))
     {
-      if (!is_string(cadr(args)))
-	method_or_bust_with_type(sc, cadr(args), sc->OPEN_INPUT_FILE, args, make_string_wrapper(sc, "a string (a mode such as \"r\")"), 2);
-      return(open_input_file_1(sc, string_value(name), string_value(cadr(args)), "open-input-file"));
+      s7_pointer mode;
+      mode = cadr(args);
+      if (!is_string(mode))
+	method_or_bust_with_type(sc, mode, sc->OPEN_INPUT_FILE, args, make_string_wrapper(sc, "a string (a mode such as \"r\")"), 2);
+      /* since scheme allows embedded nulls, dumb stuff is accepted here: (open-input-file file "a\x00b") -- should this be an error? */
+      return(open_input_file_1(sc, string_value(name), string_value(mode), "open-input-file"));
     }
   return(open_input_file_1(sc, string_value(name), "r", "open-input-file"));
 }
@@ -27732,6 +27738,10 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
   if (!s7_is_integer(b))
     method_or_bust(sc, car(args), sc->WRITE_BYTE, args, T_INTEGER, 1);
 
+  val = s7_integer(b);
+  if ((val < 0) || (val > 255)) /* need to check this before port==#f, else (write-byte most-positive-fixnum #f) is not an error */
+    return(wrong_type_argument_with_type(sc, sc->WRITE_BYTE, 1, b, AN_UNSIGNED_BYTE));
+
   if (is_pair(cdr(args)))
     port = cadr(args);
   else port = sc->output_port;
@@ -27742,9 +27752,6 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
       method_or_bust_with_type(sc, port, sc->WRITE_BYTE, args, AN_OUTPUT_PORT, 0);
     }
 
-  val = s7_integer(b);
-  if ((val < 0) || (val > 255))
-    return(wrong_type_argument_with_type(sc, sc->WRITE_BYTE, 1, b, AN_UNSIGNED_BYTE));
   s7_write_char(sc, (int)(s7_integer(b)), port);
   return(b);
 }
@@ -31979,8 +31986,6 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
       if (port == sc->F) return(sc->UNSPECIFIED);
       method_or_bust_with_type(sc, port, sc->NEWLINE, args, AN_OUTPUT_PORT, 0);
     }
-  /* hmmm: shouldn't (newline #t) be the same as (format #t "~%")? but (display #\newline #t) is an error.
-   */
   s7_newline(sc, port);
   return(sc->UNSPECIFIED);
 }
@@ -37378,7 +37383,11 @@ static s7_pointer g_vector_ref_ic_n(s7_scheme *sc, s7_pointer args, s7_int index
   if (index >= vector_length(vec))
     return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), ITS_TOO_LARGE));
   if (vector_rank(vec) > 1)
-    return(make_shared_vector(sc, vec, 1, index));
+    {
+      if (index >= vector_dimension(vec, 0))
+	return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), ITS_TOO_LARGE));
+      return(make_shared_vector(sc, vec, 1, index * vector_offset(vec, 0)));
+    }
   return(vector_getter(vec)(sc,vec, index));
 }
 
@@ -37480,6 +37489,7 @@ static s7_pointer g_vector_ref_ic_3(s7_scheme *sc, s7_pointer args) {return(g_ve
 static s7_pointer vector_ref_gs;
 static s7_pointer g_vector_ref_gs(s7_scheme *sc, s7_pointer args)
 {
+  /* global vector ref: (vector-ref global_vector i) */
   s7_pointer x, vec;
   s7_int index;
 
@@ -37497,8 +37507,11 @@ static s7_pointer g_vector_ref_gs(s7_scheme *sc, s7_pointer args)
     return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
 
   if (vector_rank(vec) > 1)
-    return(make_shared_vector(sc, vec, 1, index));
-
+    {
+      if (index >= vector_dimension(vec, 0))
+	return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), ITS_TOO_LARGE));
+      return(make_shared_vector(sc, vec, 1, index * vector_offset(vec, 0)));
+    }
   return(vector_getter(vec)(sc, vec, index));
 }
 
@@ -37524,7 +37537,11 @@ static s7_pointer g_vector_ref_add1(s7_scheme *sc, s7_pointer args)
     return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
 
   if (vector_rank(vec) > 1)
-    return(make_shared_vector(sc, vec, 1, index));
+    {
+      if (index >= vector_dimension(vec, 0))
+	return(out_of_range(sc, sc->VECTOR_REF, small_int(2), cadr(args), ITS_TOO_LARGE));
+      return(make_shared_vector(sc, vec, 1, index * vector_offset(vec, 0)));
+    }
   return(vector_getter(vec)(sc, vec, index));
 }
 
@@ -49891,7 +49908,7 @@ static s7_pointer vector_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_p
 	      (s7_integer(arg2) >= 0))
 	    {
 	      set_optimize_op(expr, HOP_SAFE_C_C);
-	      switch (integer(arg2))
+	      switch (s7_integer(arg2)) /* (might be big int) */
 		{
 		case 0: return(vector_ref_ic_0);
 		case 1: return(vector_ref_ic_1);
@@ -63888,10 +63905,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_ENVIRONMENT_Q:
 		case HOP_ENVIRONMENT_Q:
 		  {
-		    s7_pointer s;
+		    s7_pointer s, sym;
 		    s = find_symbol_checked(sc, car(code));
 		    if (!is_let(s)) break;
-		    sc->value = let_ref_1(sc, s, cadr(cadr(code)));
+		    sym = cadr(cadr(code));
+		    if (is_symbol(sym))
+		      sc->value = let_ref_1(sc, s, sym);
+		    else return(wrong_type_argument_with_type(sc, sc->LET_REF, 2, sym, A_SYMBOL)); /* (e '(1)) */
 		    goto START;
 		  }
 		  
@@ -64041,7 +64061,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			 */
 			if ((code == carc) || (cdr(code) == carc) || (cdr(code) == code))        /* try a few simple cases */
 			  eval_error(sc, "attempt to evaluate a circular list: ~A", carc);
-			
+
 			if (sc->stack_end >= sc->stack_resize_trigger)                           /* ouch -- call in the big guns */
 			  {
 			    if (cyclic_sequences(sc, carc, false) == sc->T)
@@ -64466,6 +64486,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* switch statement here is much slower for some reason */
 	      if (typ == T_PAIR)
 		{
+		  /* all 3 of these push_stacks can result in stack overflow, see above 64065 */
 		  if (is_null(cdr(sc->code)))
 		    push_stack(sc, OP_EVAL_ARGS2, sc->args, sc->NIL);
 		  else
@@ -64505,6 +64526,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      
 		      if (typ == T_PAIR)
 			{
+			  /*overflow possible here */
 			  push_stack(sc, OP_EVAL_ARGS5, sc->args, sc->value);
 			  sc->code = car_code;
 			  goto EVAL;
@@ -71452,6 +71474,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	return(x);
       }
     }
+  return(sc->F); /* make the compiler happy */
 }
 
 s7_double s7_random(s7_scheme *sc, s7_pointer state)
@@ -73338,11 +73361,15 @@ s7_scheme *s7_init(void)
   /* (multiple-value-bind (a b) (values 1 2) (+ a b)), named "receive" in srfi-8 which strikes me as perverse */
 
   s7_eval_c_string(sc, "(define-macro (multiple-value-set! vars expr . body)                                  \n\
-                          (let ((local-vars (map (lambda (n) (gensym)) vars)))                                \n\
-                            `((lambda* (,@local-vars . ,(gensym))                                             \n\
-                                ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars)                        \n\
-                                ,@body)                                                                       \n\
-                              ,expr)))");
+                          (if (pair? vars)                                                                    \n\
+                              (let ((local-vars (map (lambda (n) (gensym)) vars)))                            \n\
+                                `((lambda* (,@local-vars . ,(gensym))                                         \n\
+                                    ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars)                    \n\
+                                    ,@body)                                                                   \n\
+                                  ,expr))                                                                     \n\
+                            (if (and (null? vars) (null? expr))                                               \n\
+                                `(begin ,@body)                                                               \n\
+                                (error \"multiple-value-set! vars/exprs messed up\"))))");
 
   s7_eval_c_string(sc, "(define-macro (cond-expand . clauses)                                                 \n\
                           (letrec ((traverse (lambda (tree)                                                   \n\
@@ -73502,7 +73529,7 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  | 16.0  16.1
  *                                           
- * s7test   1721 | 1358 |  995 | 1194 | 1122  1128
+ * s7test   1721 | 1358 |  995 | 1194 | 1122  1117
  * index    44.3 | 3291 | 1725 | 1276 | 1156  1158
  * teq           |      |      | 6612 | 2380  2376
  * tauto     265 |   89 |  9   |  8.4 | 2638  2643
@@ -73526,7 +73553,7 @@ int main(int argc, char **argv)
  * the old mus-audio-* code needs to use play or something, especially bess* -- what about soundio
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
- * libutf8proc.scm doc/examples?  should require throw an error if unsuccessful?
+ * libutf8proc.scm doc/examples?
  * remove the #t=all sounds business! = (map f (sounds)) 
  * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
