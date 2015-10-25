@@ -91,6 +91,7 @@
 		   'vector?            (lambda (obj) #t)
 		   'values             (lambda (obj . args) (obj 'value))
 		   'length             (lambda (obj) (#_length (obj 'value)))
+		   'append             (make-method #_append (lambda (obj) (obj 'value)))
 		   'class-name         'mock-vector))))
       
       (define* (make-mock-vector len (init #<unspecified>))
@@ -192,6 +193,7 @@
 		   'hash-table?        (lambda (obj) #t)
 		   'values             (lambda (obj . args) (obj 'mock-hash-table-table))
 		   'length             (lambda (obj)          (#_length (obj 'mock-hash-table-table)))
+		   'append             (make-method #_append (lambda (obj) (obj 'value)))
 		   'class-name         'mock-hash-table))))
 
       (define* (make-mock-hash-table (len 511))
@@ -349,6 +351,7 @@
 		   'string?                (lambda (obj) #t)
 		   'values                 (lambda (obj . args) (obj 'value))
 		   'length                 (lambda (obj) (#_string-length (obj 'value)))
+		   'append             (make-method #_append (lambda (obj) (obj 'value)))
 		   'class-name             'mock-string))))
       
       (define* (make-mock-string len (init #\null))
@@ -925,6 +928,7 @@
 		   'pair?            (lambda (obj) #t)
 		   'length           (lambda (obj) (#_length (obj 'value)))
 		   'values           (lambda (obj . args) (obj 'value))
+		   'append             (make-method #_append (lambda (obj) (obj 'value)))
 		   'class-name       'mock-pair))))
       
       (define (mock-pair . args)

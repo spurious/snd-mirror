@@ -1909,8 +1909,8 @@ static int not_heap = -1;
 /* set slot before id in case Slot is an expression that tries to find the current Symbol slot (using its old Id obviously) */
 
 #define is_slot(p)                    (type(p) == T_SLOT)
-#define slot_value(p)                 (_TSlt(p))->object.slt.val
-#define slot_set_value(p, Val)        (_TSlt(p))->object.slt.val = Val
+#define slot_value(p)                 _NFre((_TSlt(p))->object.slt.val)
+#define slot_set_value(p, Val)        (_TSlt(p))->object.slt.val = _NFre(Val)
 #define slot_symbol(p)                _TSym((_TSlt(p))->object.slt.sym)
 #define slot_set_symbol(p, Sym)       (_TSlt(p))->object.slt.sym = _TSym(Sym)
 #define next_slot(p)                  (_TSlt(p))->object.slt.nxt
@@ -4686,7 +4686,7 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 
 static void push_op_stack(s7_scheme *sc, s7_pointer op)
 {
-  (*sc->op_stack_now++) = op;
+  (*sc->op_stack_now++) = _NFre(op);
   if (sc->op_stack_now > (sc->op_stack + sc->op_stack_size)) 
     {
       fprintf(stderr, "%sop_stack overflow%s\n", BOLD_TEXT, UNBOLD_TEXT);
@@ -4703,7 +4703,7 @@ static s7_pointer pop_op_stack(s7_scheme *sc)
       fprintf(stderr, "%sop_stack underflow%s\n", BOLD_TEXT, UNBOLD_TEXT);
       if (stop_at_error) abort();
     }
-  return(op);
+  return(_NFre(op));
 }
 #else
 #define push_op_stack(Sc, Op) (*Sc->op_stack_now++) = Op
@@ -6084,8 +6084,8 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 	  if (is_slot(global_slot(sym)))
 	    {
 	      symbol_set_id(sym, THE_UN_ID);
-	      slot_value(global_slot(sym)) = sc->UNDEFINED;
-	      slot_value(local_slot(sym)) = sc->UNDEFINED;
+	      slot_set_value(global_slot(sym), sc->UNDEFINED);
+	      slot_set_value(local_slot(sym), sc->UNDEFINED);
 	    }
 	}
       else
@@ -8719,7 +8719,7 @@ static s7_double set_rf_sr(s7_scheme *sc, s7_pointer **p)
   s1 = (**p); (*p)++;
   c1 = (**p); (*p)++;
   x = real(c1);
-  slot_value(s1) = make_real(sc, x);
+  slot_set_value(s1, make_real(sc, x));
   return(x);
 }
 
@@ -8731,7 +8731,7 @@ static s7_double set_rf_ss(s7_scheme *sc, s7_pointer **p)
   s1 = (**p); (*p)++;
   s2 = (**p); (*p)++;
   x = real_to_double(sc, slot_value(s2), "set!");
-  slot_value(s1) = make_real(sc, x);
+  slot_set_value(s1, make_real(sc, x));
   return(x);
 }
 #endif
@@ -8744,7 +8744,7 @@ static s7_double set_rf_sx(s7_scheme *sc, s7_pointer **p)
   s1 = (**p); (*p)++;
   r1 = (s7_rf_t)(**p); (*p)++;
   x = r1(sc, p);
-  slot_value(s1) = make_real(sc, x);
+  slot_set_value(s1, make_real(sc, x));
   return(x);
 }
 
@@ -8756,7 +8756,7 @@ static s7_int set_if_sx(s7_scheme *sc, s7_pointer **p)
   s1 = (**p); (*p)++;
   i1 = (s7_if_t)(**p); (*p)++;
   x = i1(sc, p);
-  slot_value(s1) = make_integer(sc, x);
+  slot_set_value(s1, make_integer(sc, x));
   return(x);
 }
 
@@ -24229,8 +24229,7 @@ static s7_pointer g_char_position_csi(s7_scheme *sc, s7_pointer args)
   if (!is_string(arg2))
     return(g_char_position(sc, args));
 
-  len = string_length(arg2);
-  if (len == 0) return(sc->F);
+  len = string_length(arg2); /* can't return #f here if len==0 -- need start error check first */
   porig = string_value(arg2);
 
   if (is_pair(cddr(args)))
@@ -24245,6 +24244,8 @@ static s7_pointer g_char_position_csi(s7_scheme *sc, s7_pointer args)
       if (start >= len) return(sc->F);
     }
   else start = 0;
+
+  if (len == 0) return(sc->F);
   p = strchr((const char *)(porig + start), (int)c);
   if (p)
     return(make_integer(sc, p - porig));
@@ -35365,7 +35366,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 
 		  for (; is_pair(x); x = cdr(x))
 		    {
-		      slot_value(b) = caar(x);
+		      slot_set_value(b, caar(x));
 		      if (is_true(sc, func(sc, car(body))))
 			return(car(x));
 		    }
@@ -35842,7 +35843,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 
 		      for (; is_pair(x); x = cdr(x))
 			{
-			  slot_value(b) = car(x);
+			  slot_set_value(b, car(x));
 			  if (is_true(sc, func(sc, car(body))))
 			    return(x);
 			}
@@ -47894,7 +47895,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	    }
 	  while (true)
 	    {
-	      slot_value(slot) = s7_iterate(sc, iter);
+	      slot_set_value(slot, s7_iterate(sc, iter));
 	      if (iterator_is_at_end(iter))
 		{
 		  pop_stack(sc);
@@ -48032,7 +48033,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	    }
 	  while (true)
 	    {
-	      slot_value(slot) = s7_iterate(sc, iter);
+	      slot_set_value(slot, s7_iterate(sc, iter));
 	      if (iterator_is_at_end(iter))
 		{
 		  pop_stack(sc);
@@ -49229,7 +49230,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	    }
 	}
 
-      sc->value = value;
+      sc->value = _NFre(value);
       sc->cur_code = cur_code;
       sc->args = args;
       sc->code = code;
@@ -55407,7 +55408,7 @@ static int define_unchecked_ex(s7_scheme *sc)
        *   is not cleared in the gc.
        */
       make_closure_with_let(sc, x, cdar(sc->code), cdr(sc->code), sc->envir);
-      sc->value = x;
+      sc->value = _NFre(x);
       sc->code = caar(sc->code);
     }
   return(fall_through);
@@ -56185,7 +56186,7 @@ static bool set_pair_p_3(s7_scheme *sc, s7_pointer obj, s7_pointer arg, s7_point
 	  if (index >= vector_length(obj))
 	    eval_range_error(sc, "vector-set!: index must be less than vector length: ~S", sc->code);
 	  vector_setter(obj)(sc, obj, index, value);
-	  sc->value = value;
+	  sc->value = _NFre(value);
 	}
 #endif
       break;
@@ -56209,7 +56210,7 @@ static bool set_pair_p_3(s7_scheme *sc, s7_pointer obj, s7_pointer arg, s7_point
 	if (s7_is_character(value))
 	  {
 	    string_value(obj)[index] = (char)s7_character(value);
-	    sc->value = value;
+	    sc->value = _NFre(value);
 	  }
 	else
 	  {
@@ -56221,7 +56222,7 @@ static bool set_pair_p_3(s7_scheme *sc, s7_pointer obj, s7_pointer arg, s7_point
 		if ((ic < 0) || (ic > 255))
 		  eval_type_error(sc, "string-set!: value must be a character: ~S", sc->code);
 		string_value(obj)[index] = (char)ic;
-		sc->value = value;
+		sc->value = _NFre(value);
 	      }
 	    else eval_type_error(sc, "string-set!: value must be a character: ~S", sc->code);
 	  }
@@ -56495,7 +56496,7 @@ static int set_pair_ex(s7_scheme *sc)
 		if (is_symbol(val))
 		  val = find_symbol_checked(sc, val);
 		vector_setter(cx)(sc, cx, ind, val);
-		sc->value = val;
+		sc->value = _NFre(val);
 		return(goto_START);
 	      }
 	    push_op_stack(sc, sc->Vector_Set);
@@ -57990,7 +57991,7 @@ static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool s
 		    {
 		      s7_pointer **rp;
 		      s7_pointer *temp;
-		      slot_value(step_slot) = make_integer(sc, k);
+		      slot_set_value(step_slot, make_integer(sc, k));
 		      
 		      temp = top;
 		      rp = &temp;
@@ -58007,7 +58008,7 @@ static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool s
 		    {
 		      s7_pointer **rp;
 		      s7_pointer *temp;
-		      slot_value(step_slot) = make_integer(sc, k);
+		      slot_set_value(step_slot, make_integer(sc, k));
 		      
 		      temp = top;
 		      rp = &temp;
@@ -64100,7 +64101,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    else
 		      {
 			/* car must be the function to be applied */
-			sc->value = carc;
+			sc->value = _NFre(carc);
 			sc->code = cdr(code);
 			/* drop into OP_EVAL_ARGS */
 		      }
@@ -64119,7 +64120,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		else
 		  {
 		    /* sc->code is not a pair or a symbol */
-		    sc->value = code;
+		    sc->value = _NFre(code);
 		    goto START;
 		  }
 	      }
@@ -64166,9 +64167,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_EVAL_ARGS5:
 	  /* sc->value is the last arg, sc->code is the previous */
 	  {
-	    s7_pointer x, y, lx;
-	    
-	    lx = pop_op_stack(sc);
+	    s7_pointer x, y;
 	    new_cell(sc, x, T_PAIR);
 	    new_cell_no_check(sc, y, T_PAIR);
 	    car(x) = sc->code;
@@ -64176,7 +64175,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    car(y) = sc->value;
 	    cdr(y) = x;
 	    sc->args = safe_reverse_in_place(sc, y);
-	    sc->code = lx;
+	    sc->code = pop_op_stack(sc);
 	    goto APPLY;
 	  }
 	  
@@ -64522,7 +64521,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->code = cdr(sc->code);
 		  if (typ == T_SYMBOL)
 		    sc->value = find_symbol_checked(sc, car_code);
-		  else sc->value = car_code;
+		  else sc->value = _NFre(car_code);
 		  /* sc->value is the current arg's value, sc->code is pointing to the next */
 		  
 		  /* cdr(sc->code) may not be a pair or nil here!
@@ -64786,7 +64785,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      set_immutable(sc->code);
 	      if (!is_slot(global_slot(sc->code)))
 		global_slot(sc->code) = permanent_slot(sc->code, sc->value);
-	      else slot_value(global_slot(sc->code)) = sc->value;
+	      else slot_set_value(global_slot(sc->code), sc->value);
 	    }
 	  break;
 	  
@@ -65171,7 +65170,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	    if (is_symbol(x))
 	      sc->value = find_symbol_checked(sc, x);
-	    else sc->value = x;
+	    else sc->value = _NFre(x);
 	    sc->code = car(sc->code);
 	  }
 	  
@@ -65790,7 +65789,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		if (is_symbol(x))
 		  sc->value = find_symbol_checked(sc, x);
-		else sc->value = x;
+		else sc->value = _NFre(x);
 		sc->code = cdr(sc->code);
 		goto LET1;
 	      }
@@ -65984,7 +65983,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    }
 		  if (is_symbol(x))
 		    sc->value = find_symbol_checked(sc, x);
-		  else sc->value = x;
+		  else sc->value = _NFre(x);
 		}
 	      else break;
 	    }
