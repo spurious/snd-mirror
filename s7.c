@@ -4117,7 +4117,7 @@ static int gc(s7_scheme *sc)
   s7_cell **old_free_heap_top;
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
 #if DEBUGGING
-  #define GC_CALL(P, Tp) \
+  #define gc_call(P, Tp) \
     p = (*tp++); \
     if (is_marked(p)) \
        clear_mark(p); \
@@ -4130,7 +4130,7 @@ static int gc(s7_scheme *sc)
             (*fp++) = p;\
           }}
 #else
-  #define GC_CALL(P, Tp) p = (*tp++); if (is_marked(p)) clear_mark(p); else {if (!is_free_and_clear(p)) {clear_type(p); (*fp++) = p;}}
+  #define gc_call(P, Tp) p = (*tp++); if (is_marked(p)) clear_mark(p); else {if (!is_free_and_clear(p)) {clear_type(p); (*fp++) = p;}}
 #endif
 
   if (show_gc_stats(sc))
@@ -4265,7 +4265,7 @@ static int gc(s7_scheme *sc)
     while (tp < heap_top)          /* != here or ^ makes no difference */
       {
 	s7_pointer p;
-	/* from here down is GC_CALL, but I wanted one case explicit for readability */
+	/* from here down is gc_call, but I wanted one case explicit for readability */
 	p = (*tp++);
 
 	if (is_marked(p))          /* this order is faster than checking typeflag(p) != T_FREE first */
@@ -4285,44 +4285,44 @@ static int gc(s7_scheme *sc)
 	/* this looks crazy, but it speeds up the entire GC process by 25%!
 	 *   going from 16 to 32 saves .2% so it may not matter.
 	 */
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
 
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
 
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
 
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
 
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
 
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
 
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
 
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
-	GC_CALL(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
+	gc_call(p, tp);
       }
 
     sc->free_heap_top = fp;
@@ -28708,16 +28708,6 @@ static s7_pointer iterator_copy(s7_scheme *sc, s7_pointer p)
 }
 
 
-static bool iterators_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
-{
-  return((iterator_sequence(x) == iterator_sequence(y)) &&
-	 (iterator_position(x) == iterator_position(y)) &&
-	 (iterator_current(x) == iterator_current(y)) &&
-	 (iterator_length(x) == iterator_length(y)));        /* len|slow|hcur: the latter two might differ */
-  /* presumably if the sequences are the same, so are functions (next) */
-}
-
-
 static s7_pointer iterator_finished(s7_scheme *sc, s7_pointer iterator)
 {
   return(sc->ITERATOR_END);
@@ -36773,14 +36763,18 @@ static s7_pointer g_vector_append(s7_scheme *sc, s7_pointer args)
 	      func = find_method(sc, find_let(sc, x), sc->VECTOR_APPEND);
 	      if (func != sc->UNDEFINED)
 		{
+		  int k;
 		  s7_pointer v, y;
 		  if (i == 0)
 		    return(s7_apply_function(sc, func, args));
-		  for (y = args; cdr(y) != p; y = cdr(y));
-		  cdr(y) = sc->NIL;
-		  v = g_vector_append(sc, args);
-		  cdr(y) = p;
-		  return(s7_apply_function(sc, func, cons(sc, v, p)));
+		  /* we have to copy the arglist here */
+		  sc->temp9 = make_list(sc, i, sc->F);
+		  for (k = 0, y = args, v = sc->temp9; k < i; k++, y = cdr(y), v = cdr(v))
+		    car(v) = car(y);
+		  v = g_vector_append(sc, sc->temp9);
+		  y = s7_apply_function(sc, func, cons(sc, v, p));
+		  sc->temp9 = sc->NIL;
+		  return(y);
 		}
 	    }
 	  return(wrong_type_argument(sc, sc->VECTOR_APPEND, i, x, T_VECTOR));
@@ -42712,7 +42706,17 @@ static bool c_object_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_inf
 
 static bool iterator_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
 {
-  return((is_iterator(y)) && (iterators_are_equal(sc, x, y)));
+  /* morally_equal is a lot work here because we have to check iterator_current/length (lw.len|slow|hcur) as well as iterator_sequence.
+   *   morally_equal(seq, seq) + (by type) either len == len or morally_equal(cur, cur)? or how to check hcur? and what is current?
+   *   and in hash-table|let how to decide that current positions are equal?
+   */
+  if (x == y) return(true);
+  if (!is_iterator(y)) return(false);
+  return((iterator_sequence(x) == iterator_sequence(y)) &&
+	 (iterator_position(x) == iterator_position(y)) &&
+	 (iterator_current(x) == iterator_current(y)) &&
+	 (iterator_length(x) == iterator_length(y)));        /* len|slow|hcur: the latter two might differ */
+  /* presumably if the sequences are the same, so are functions (next) */
 }
 
 static bool port_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
@@ -44507,16 +44511,6 @@ static s7_pointer let_append(s7_scheme *sc, s7_pointer args)
   
   e = car(args);
   check_method(sc, e, sc->APPEND, args);
-
-  if (has_methods(e))
-    {
-      s7_pointer length_func;
-      length_func = find_method(sc, e, sc->LENGTH);
-      if (length_func != sc->UNDEFINED)
-	if (s7_apply_function(sc, length_func, list_1(sc, e)) == sc->F)
-	  return(wrong_type_argument_with_type(sc, sc->APPEND, 1, e, A_SEQUENCE));
-    }
-  
   new_let = new_frame_in_env(sc, sc->NIL);
   for (p = args; is_pair(p); p = cdr(p))
     s7_copy(sc, set_plist_2(sc, car(p), new_let)); 
@@ -45478,7 +45472,7 @@ s7_pointer s7_dynamic_wind(s7_scheme *sc, s7_pointer init, s7_pointer body, s7_p
 static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 {
   #define H_catch "(catch tag thunk handler) evaluates thunk; if an error occurs that matches the tag (#t matches all), the handler is called"
-#define Q_catch s7_make_circular_signature(sc, 2, 3, sc->VALUES, sc->T, sc->IS_PROCEDURE)
+  #define Q_catch s7_make_circular_signature(sc, 2, 3, sc->VALUES, sc->T, sc->IS_PROCEDURE)
 
   s7_pointer p, proc, err;
 
@@ -45744,8 +45738,7 @@ static bool catch_1_function(s7_scheme *sc, int i, s7_pointer type, s7_pointer i
        *   if it is the args symbol, return (list type info)
        */
 
-      /* if OP_CATCH_1, we deferred making the error handler until it is actually needed
-       */
+      /* if OP_CATCH_1, we deferred making the error handler until it is actually needed */
       if (op == OP_CATCH_1)
 	body = cdr(error_func);
       else
@@ -46463,8 +46456,7 @@ static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
 	      len = s7_list_length(sc, car(p));
 	      if (((sym == make_symbol_with_length(sc, "if", 2)) &&
 		   (len > 4)) ||
-		  /* some care is needed -- we can't risk autoloading the very same file we're complaining about!
-		   */
+		  /* some care is needed -- we can't risk autoloading the very same file we're complaining about! */
 		  ((is_slot(global_slot(sym))) &&
 		   (s7_is_procedure(slot_value(global_slot(sym)))) &&
 		   (!s7_is_aritable(sc, slot_value(global_slot(sym)), len))) ||
@@ -59959,12 +59951,9 @@ static bool a_is_ok(s7_scheme *sc, s7_pointer p)
 
 static s7_pointer check_for_cyclic_code(s7_scheme *sc, s7_pointer code)
 {
-  if (sc->stack_end >= sc->stack_resize_trigger)                           /* ouch -- call in the big guns */
-    {
-      if (cyclic_sequences(sc, code, false) == sc->T)
-	eval_error(sc, "attempt to evaluate a circular list: ~A", code);
-      resize_stack(sc);
-    }
+  if (cyclic_sequences(sc, code, false) == sc->T)
+    eval_error(sc, "attempt to evaluate a circular list: ~A", code);
+  resize_stack(sc);
   return(sc->F);
 }
 
@@ -64078,7 +64067,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			/* evaluate the inner list but that list can be circular: carc: #1=(#1# #1#)!
 			 *   and the cycle can be well-hidden -- #1=((#1 2) . 2) and other such stuff
 			 */
-			check_for_cyclic_code(sc, code);
+			if (sc->stack_end >= sc->stack_resize_trigger)
+			  check_for_cyclic_code(sc, code);
 			push_stack(sc, OP_EVAL_ARGS, sc->NIL, cdr(code));
 			if (typesflag(car(carc)) == SYNTACTIC_TYPE)
 			  /* was checking for is_syntactic here but that can be confused by successive optimizer passes:
@@ -64484,17 +64474,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* first time, value = op, args = nil, code is args */
 	  if (is_pair(sc->code))  /* evaluate current arg -- must check for pair here, not sc->NIL (improper list as args) */
 	    {
-	      int typ;
 	      s7_pointer car_code;
 	      
 	    EVAL_ARGS_PAIR:
 	      car_code = car(sc->code);
-	      typ = type(car_code);
 	      
 	      /* switch statement here is much slower for some reason */
-	      if (typ == T_PAIR)
+	      if (is_pair(car_code))
 		{
-		  check_for_cyclic_code(sc, sc->code);
+		  if (sc->stack_end >= sc->stack_resize_trigger)
+		    check_for_cyclic_code(sc, sc->code);
 
 		  /* all 3 of these push_stacks can result in stack overflow, see above 64065 */
 		  if (is_null(cdr(sc->code)))
@@ -64519,7 +64508,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (is_pair(cdr(sc->code)))
 		{
 		  sc->code = cdr(sc->code);
-		  if (typ == T_SYMBOL)
+		  if (is_symbol(car_code))
 		    sc->value = find_symbol_checked(sc, car_code);
 		  else sc->value = _NFre(car_code);
 		  /* sc->value is the current arg's value, sc->code is pointing to the next */
@@ -64532,12 +64521,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      s7_pointer x, y, val;
 		      /* we're at the last arg, sc->value is the previous one, not yet saved in the args list */
 		      car_code = car(sc->code);
-		      typ = type(car_code);
-		      
-		      if (typ == T_PAIR)
+		      if (is_pair(car_code))
 			{
-			  /*overflow possible here */
-			  check_for_cyclic_code(sc, sc->code);
+			  if (sc->stack_end >= sc->stack_resize_trigger)
+			    check_for_cyclic_code(sc, sc->code);
 
 			  push_stack(sc, OP_EVAL_ARGS5, sc->args, sc->value);
 			  sc->code = car_code;
@@ -64545,7 +64532,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			}
 		      
 		      /* get the last arg */
-		      if (typ == T_SYMBOL)
+		      if (is_symbol(car_code))
 			val = find_symbol_checked(sc, car_code);
 		      else val = car_code;
 		      sc->temp4 = val;
@@ -64576,16 +64563,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      else
 		{
-		  /* here we've reached the last arg (sc->code == nil)
-		   *   it is not a pair (typ == T_PAIR was caught earlier)
-		   */
+		  /* here we've reached the last arg (sc->code == nil), it is not a pair */
 		  s7_pointer x, val;
 		  
 		  if (!is_null(cdr(sc->code)))
 		    improper_arglist_error(sc);
 		  
 		  sc->code = pop_op_stack(sc);
-		  if (typ == T_SYMBOL)
+		  if (is_symbol(car_code))
 		    val = find_symbol_checked(sc, car_code); /* this has to precede the set_type below */
 		  else val = car_code;
 		  sc->temp4 = val;
@@ -73561,7 +73546,7 @@ int main(int argc, char **argv)
  *               |      |      |      |      
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0
- * calls     359 |  275 | 54   | 34.7 | 37.1  37.1
+ * calls     359 |  275 | 54   | 34.7 | 37.1  37.0
  * 
  * ----------------------------------------------------
  *
@@ -73582,5 +73567,7 @@ int main(int argc, char **argv)
  *   port-data port-position
  * perhaps make-complex -> complex
  * need a way to break (insert cr) a line and reindent in repl
- * (let ((v (int-vector 0))) (set! (v 0) (bignum "99999999999999999999999999999999999")) (v 0)): 3136633892082024447
+ * (let ((v (int-vector 0))) (set! (v 0) (bignum "99999999999999999999999999999999999")) (v 0)): 3136633892082024447 [if safety>0?]
+ * append: 44522: what if method not first arg?  use 'value?
  */
+ 
