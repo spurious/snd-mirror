@@ -713,9 +713,9 @@ typedef struct s7_cell {
       int len;
     } unq;
 
-    struct {               /* counter (internal) */
+    struct {                        /* counter (internal) */
       s7_pointer result, list, env; /* env = counter_let (curlet after map/for-each frame created) */
-      int cap;             /* val=count */
+      unsigned long long int cap;   /* sc->capture_let_counter for frame reuse */
     } ctr;
 
     struct {
@@ -864,7 +864,7 @@ struct s7_scheme {
   unsigned int gc_stats;
   unsigned int gensym_counter, cycle_counter, f_class, add_class, multiply_class, subtract_class, equal_class;
   int format_column;
-  int capture_let_counter;
+  unsigned long long int capture_let_counter;
   bool symbol_table_is_locked;
   long long int let_number;
   double default_rationalize_error, morally_equal_float_epsilon, hash_table_float_epsilon;
@@ -1181,6 +1181,8 @@ static void init_types(void)
 #define typeflag(p)  ((p)->tf.flag)
 #define typesflag(p) ((p)->tf.sflag)
 
+static s7_scheme *hidden_sc = NULL;
+
 #if DEBUGGING
   static bool check_types = true;
   static const char *check_name(int typ);
@@ -1216,7 +1218,6 @@ static void init_types(void)
   static unsigned int s_syn_op_1(s7_scheme *sc, s7_pointer p, const char *func, int line);
   static void set_s_syn_op_1(s7_scheme *sc, s7_pointer p, unsigned int x, const char *func, int line);
 
-  static s7_scheme *hidden_sc;
   #define unchecked_type(p)           ((p)->tf.type_field)
   #define type(p) ({unsigned char _t_; _t_ = (p)->tf.type_field; if (((check_types) && (_t_ == T_FREE)) || (_t_ >= NUM_TYPES)) print_gc_info(p, __LINE__); _t_;})
 
@@ -2111,7 +2112,8 @@ static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_sym
 #define is_closure_star(p)            (type(p) == T_CLOSURE_STAR)
 #define closure_args(p)               (_TClo(p))->object.func.args
 #define closure_body(p)               (_TClo(p))->object.func.body
-#define closure_let(p)                (_TClo(p))->object.func.env
+#define closure_let(p)                _TLid((_TClo(p))->object.func.env)
+#define closure_set_let(p, L)         (_TClo(p))->object.func.env = _TLid(L)
 #define closure_setter(p)             (_TClo(p))->object.func.setter
 #define closure_arity(p)              (_TClo(p))->object.func.arity
 #define CLOSURE_ARITY_NOT_SET         0x40000000
@@ -2137,7 +2139,8 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define is_c_object(p)                (type(p) == T_C_OBJECT)
 #define c_object_value(p)             (_TObj(p))->object.c_obj.value
 #define c_object_type(p)              (_TObj(p))->object.c_obj.type
-#define c_object_let(p)               (_TObj(p))->object.c_obj.e
+#define c_object_let(p)               _TLid((_TObj(p))->object.c_obj.e)
+#define c_object_set_let(p, L)        (_TObj(p))->object.c_obj.e = _TLid(L)
 #define c_object_cref(p)              (_TObj(p))->object.c_obj.ref
 
 static c_object_t **object_types = NULL;
@@ -2170,7 +2173,8 @@ static int num_object_types = 0;
 #define counter_result(p)             (_TCtr(p))->object.ctr.result
 #define counter_list(p)               (_TCtr(p))->object.ctr.list
 #define counter_capture(p)            (_TCtr(p))->object.ctr.cap
-#define counter_let(p)                (_TCtr(p))->object.ctr.env
+#define counter_let(p)                _TLid((_TCtr(p))->object.ctr.env)
+#define counter_set_let(p, L)         (_TCtr(p))->object.ctr.env = _TLid(L)
 
 #define is_baffle(p)                  (type(p) == T_BAFFLE)
 #define baffle_key(p)                 (_TBfl(p))->object.baffle_key
@@ -2197,6 +2201,13 @@ static int num_object_types = 0;
   #define as_c_complex(p)             CMPLX(real_part(p), imag_part(p))
 #endif
 
+#if WITH_GMP
+#define big_integer(p)                ((_TBgi(p))->object.number.big_integer)
+#define big_ratio(p)                  ((_TBgf(p))->object.number.big_ratio)
+#define big_real(p)                   ((_TBgr(p))->object.number.big_real)
+#define big_complex(p)                ((_TBgz(p))->object.number.big_complex)
+#endif
+
 #define NUM_SMALL_INTS 2048
 #define small_int(Val)                small_ints[Val]
 #define is_small(n)                   ((n & ~(NUM_SMALL_INTS - 1)) == 0)
@@ -2214,17 +2225,6 @@ static void set_print_name(s7_pointer p, const char *name, int len)
       memcpy((void *)print_name(p), (void *)name, len);
     }
 }
-
-
-static void free_cell(s7_scheme *sc, s7_pointer p)
-{
-#if DEBUGGING
-  p->debugger_bits = 0;
-#endif
-  clear_type(p);
-  (*(sc->free_heap_top++)) = p;
-}
-
 
 #if WITH_GCC
 #define make_integer(Sc, N) \
@@ -2247,14 +2247,6 @@ static void free_cell(s7_scheme *sc, s7_pointer p)
 #define make_complex(Sc, R, I)        s7_make_complex(Sc, R, I)
 #define real_to_double(Sc, X, Caller) s7_number_to_real_with_caller(Sc, X, Caller)
 #define rational_to_double(Sc, X)     s7_number_to_real(Sc, X)
-#endif
-
-
-#if WITH_GMP
-#define big_integer(p) ((_TBgi(p))->object.number.big_integer)
-#define big_ratio(p)   ((_TBgf(p))->object.number.big_ratio)
-#define big_real(p)    ((_TBgr(p))->object.number.big_real)
-#define big_complex(p) ((_TBgz(p))->object.number.big_complex)
 #endif
 
 #define S7_LLONG_MAX 9223372036854775807LL
@@ -4555,6 +4547,16 @@ static void add_permanent_object(s7_scheme *sc, s7_pointer obj)
 }
 
 
+static void free_cell(s7_scheme *sc, s7_pointer p)
+{
+#if DEBUGGING
+  p->debugger_bits = 0;
+#endif
+  clear_type(p);
+  (*(sc->free_heap_top++)) = p;
+}
+
+
 static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 {
   int loc;
@@ -4679,9 +4681,10 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 
 #define OP_STACK_INITIAL_SIZE 32
 
-#if DEBUGGING
 #define BOLD_TEXT "\033[1m"
 #define UNBOLD_TEXT "\033[22m"
+
+#if DEBUGGING
 #define stop_at_error true
 
 static void push_op_stack(s7_scheme *sc, s7_pointer op)
@@ -6996,7 +6999,7 @@ static s7_pointer make_macro(s7_scheme *sc)
   closure_args(mac) = cdar(sc->code);
   closure_body(mac) = cdr(sc->code);
   closure_setter(mac) = sc->F;
-  closure_let(mac) = sc->envir;
+  closure_set_let(mac, sc->envir);
   closure_arity(mac) = CLOSURE_ARITY_NOT_SET;
 
   sc->capture_let_counter++;
@@ -7043,7 +7046,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
   if (is_null(args))
     closure_arity(x) = 0;
   else closure_arity(x) = CLOSURE_ARITY_NOT_SET;
-  closure_let(x) = sc->envir;
+  closure_set_let(x, sc->envir);
   sc->capture_let_counter++;
   return(x);
 }
@@ -7060,7 +7063,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
     closure_body(X) = Code;						\
     closure_setter(X) = sc->F;						\
     if (is_null(Args)) closure_arity(X) = 0; else closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
-    closure_let(X) = Env;						\
+    closure_set_let(X, Env); \
     sc->capture_let_counter++;						\
   } while (0)
 
@@ -7076,7 +7079,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
     closure_body(X) = Code;						\
     closure_setter(X) = sc->F;						\
     if (is_null(Args)) closure_arity(X) = 0; else closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
-    closure_let(X) = Env;						\
+    closure_set_let(X, Env); \
   } while (0)
 
 
@@ -7166,7 +7169,7 @@ static s7_pointer copy_closure(s7_scheme *sc, s7_pointer fnc)
   closure_body(x) = body;
   closure_setter(x) = closure_setter(fnc);
   closure_arity(x) = closure_arity(fnc);
-  closure_let(x) = closure_let(fnc);
+  closure_set_let(x, closure_let(fnc));
   return(x);
 }
 
@@ -10347,7 +10350,7 @@ static s7_pointer copy_counter(s7_scheme *sc, s7_pointer obj)
   counter_result(nobj) = counter_result(obj);
   counter_list(nobj) = counter_list(obj);
   counter_capture(nobj) = counter_capture(obj);
-  counter_let(nobj) = counter_let(obj);
+  counter_set_let(nobj, counter_let(obj));
   return(nobj);
 }
 
@@ -41836,7 +41839,7 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
    */
   c_object_type(x) = type;
   c_object_value(x) = value;
-  c_object_let(x) = sc->NIL;
+  c_object_set_let(x, sc->NIL);
   add_c_object(sc, x);
   return(x);
 }
@@ -41850,7 +41853,7 @@ s7_pointer s7_object_let(s7_pointer obj)
 
 s7_pointer s7_object_set_let(s7_pointer obj, s7_pointer e)
 {
-  c_object_let(obj) = e;
+  c_object_set_let(obj, e);
   return(e);
 }
 
@@ -42704,21 +42707,6 @@ static bool c_object_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_inf
   return((is_c_object(y)) && (objects_are_equal(sc, x, y)));
 }
 
-static bool iterator_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
-{
-  /* morally_equal is a lot work here because we have to check iterator_current/length (lw.len|slow|hcur) as well as iterator_sequence.
-   *   morally_equal(seq, seq) + (by type) either len == len or morally_equal(cur, cur)? or how to check hcur? and what is current?
-   *   and in hash-table|let how to decide that current positions are equal?
-   */
-  if (x == y) return(true);
-  if (!is_iterator(y)) return(false);
-  return((iterator_sequence(x) == iterator_sequence(y)) &&
-	 (iterator_position(x) == iterator_position(y)) &&
-	 (iterator_current(x) == iterator_current(y)) &&
-	 (iterator_length(x) == iterator_length(y)));        /* len|slow|hcur: the latter two might differ */
-  /* presumably if the sequences are the same, so are functions (next) */
-}
-
 static bool port_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
 {
   if (x == y)
@@ -43098,6 +43086,42 @@ static bool vector_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info 
     if (!(s7_is_equal_1(sc, vector_element(x, i), vector_element(y, i), nci, morally)))
       return(false);
   return(true);
+}
+
+static bool iterator_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
+{
+  /* morally_equal is a lot work here because we have to check iterator_current/length (lw.len|slow|hcur) as well as iterator_sequence.
+   *   morally_equal(seq, seq) + (by type) either len == len or morally_equal(cur, cur)? or how to check hcur? and what is current?
+   *   and in hash-table|let|list how to decide that current positions are equal?
+   */
+  if (x == y) return(true);
+  if (!is_iterator(y)) return(false);
+
+  if (morally)
+    {
+      switch (type(iterator_sequence(x)))
+	{
+	case T_STRING:
+	  return((is_string(iterator_sequence(y))) &&
+		 (string_equal(sc, iterator_sequence(x), iterator_sequence(y), ci, morally)) &&
+		 (iterator_position(x) == iterator_position(y)));
+
+	case T_VECTOR:
+	case T_INT_VECTOR:
+	case T_FLOAT_VECTOR:
+	  return((s7_is_vector(iterator_sequence(y))) &&
+		 (vector_equal(sc, iterator_sequence(x), iterator_sequence(y), ci, morally)) &&
+		 (iterator_position(x) == iterator_position(y)));
+	  
+	default:
+	  break;
+	}
+    }
+  return((iterator_sequence(x) == iterator_sequence(y)) &&
+	 (iterator_next(x) == iterator_next(y)) &&           /* even if seqs are equal, one might be at end */
+	 (iterator_position(x) == iterator_position(y)) &&   /* next three are problematic... */
+	 (iterator_current(x) == iterator_current(y)) &&
+	 (iterator_length(x) == iterator_length(y)));        /* len|slow|hcur: the latter two might differ */
 }
 
 static bool bignum_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
@@ -47745,7 +47769,7 @@ static s7_pointer make_counter(s7_scheme *sc, s7_pointer iter)
   counter_result(x) = sc->NIL;
   counter_list(x) = iter;        /* iterator */
   counter_capture(x) = 0;        /* will be capture_let_counter */
-  counter_let(x) = sc->NIL;      /* will be the saved env */
+  counter_set_let(x, sc->NIL);   /* will be the saved env */
   return(x);
 }
 
@@ -55365,7 +55389,7 @@ static int define_unchecked_ex(s7_scheme *sc)
       new_cell(sc, x, typ);
       closure_args(x) = cdar(sc->code);
       closure_body(x) = cdr(sc->code);
-      closure_let(x) = sc->envir;
+      closure_set_let(x, sc->envir);
       closure_arity(x) = CLOSURE_ARITY_NOT_SET;
       closure_setter(x) = sc->F;
       sc->capture_let_counter++;
@@ -55428,14 +55452,14 @@ static void define_funchecked(s7_scheme *sc)
       let_id(new_env) = ++sc->let_number;
       let_set_slots(new_env, sc->NIL);
       set_outlet(new_env, sc->envir);
-      closure_let(new_func) = new_env;
+      closure_set_let(new_func, new_env);
       funclet_function(new_env) = sc->value;
       
       for (arg = closure_args(new_func); is_pair(arg); arg = cdr(arg))
 	make_slot_1(sc, new_env, car(arg), sc->NIL);
       let_set_slots(new_env, reverse_slots(sc, let_slots(new_env)));
     }
-  else closure_let(new_func) = sc->envir;
+  else closure_set_let(new_func, sc->envir);
   /* unsafe closures created by other functions do not support __func__ */
   
   add_slot(sc->envir, sc->value, new_func);
@@ -59815,7 +59839,7 @@ static void define2_ex(s7_scheme *sc)
       new_cell_no_check(sc, new_env, T_LET | T_IMMUTABLE | T_FUNCTION_ENV);
       let_id(new_env) = ++sc->let_number;
       set_outlet(new_env, closure_let(new_func));
-      closure_let(new_func) = new_env;
+      closure_set_let(new_func, new_env);
       let_set_slots(new_env, sc->NIL);
       funclet_function(new_env) = sc->code;
       
@@ -60295,7 +60319,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (counter_capture(args) != sc->capture_let_counter)
 	      {
 		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), x);
-		counter_let(args) = sc->envir;
+		counter_set_let(args, sc->envir);
 		counter_capture(args) = sc->capture_let_counter;
 	      }
 	    else sc->envir = old_frame_with_slot(sc, counter_let(args), x);
@@ -60387,7 +60411,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (counter_capture(counter) != sc->capture_let_counter)
 	      {
 		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), arg);
-		counter_let(counter) = sc->envir;
+		counter_set_let(counter, sc->envir);
 		counter_capture(counter) = sc->capture_let_counter;
 	      }
 	    else sc->envir = old_frame_with_slot(sc, counter_let(counter), arg);
@@ -60424,7 +60448,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (counter_capture(c) != sc->capture_let_counter)
 	      {
 		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), arg);
-		counter_let(c) = sc->envir;
+		counter_set_let(c, sc->envir);
 		counter_capture(c) = sc->capture_let_counter;
 	      }
 	    else sc->envir = old_frame_with_slot(sc, counter_let(c), arg);
@@ -65807,7 +65831,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    {
 		      s7_pointer arg, new_env;
 		      new_env = new_frame_in_env(sc, sc->envir);
-		      closure_let(sc->x) = new_env;
+		      closure_set_let(sc->x, new_env);
 		      for (arg = closure_args(sc->x); is_pair(arg); arg = cdr(arg))
 			make_slot_1(sc, new_env, car(arg), sc->NIL);
 		      let_set_slots(new_env, reverse_slots(sc, let_slots(new_env)));
@@ -71961,6 +71985,118 @@ static s7_pointer g_is_integer_or_real_at_end(s7_scheme *sc, s7_pointer args) {r
 static s7_pointer g_is_integer_or_any_at_end(s7_scheme *sc, s7_pointer args) {return(sc->T);}
 
 
+#ifndef _MSC_VER
+/* an experiment -- gdb stacktrace decoding */
+
+static bool is_decodable(s7_scheme *sc, s7_pointer p)
+{
+  int i;
+  s7_pointer x;
+  s7_pointer *tp, *heap_top;
+
+  if ((void *)p == (void *)sc) return(false);
+
+  /* check basic constants */
+  if ((p == sc->NIL) || (p == sc->T) || (p == sc->F) || (p == sc->EOF_OBJECT) || (p == sc->ELSE) ||
+      (p == sc->UNDEFINED) || (p == sc->UNSPECIFIED) || (p == sc->NO_VALUE) || (p == sc->GC_NIL))
+    return(true);
+
+  /* check symbol-table */
+  for (i = 0; i < vector_length(sc->symbol_table); i++)
+    for (x = vector_element(sc->symbol_table, i); is_not_null(x); x = cdr(x))
+      {
+	s7_pointer sym;
+	sym = car(x);
+	if ((sym == p) ||
+	    ((is_slot(initial_slot(sym))) && (p == slot_value(initial_slot(sym)))) ||
+	    ((is_slot(global_slot(sym))) && (p == slot_value(global_slot(sym)))))
+	  return(true);
+      }
+
+  /* check the heap */
+  tp = sc->heap;
+  heap_top = (s7_pointer *)(sc->heap + sc->heap_size);
+  while (tp < heap_top)
+    if (p == (*tp++))
+      return(true);
+
+  return(false);
+}
+
+char *s7_decode_bt(void)
+{
+  FILE *fp;
+  fp = fopen("gdb.txt", "r");
+  if (fp)
+    {
+      long i, size;
+      size_t bytes;
+      bool in_quotes = false;
+      unsigned char *bt;
+      s7_scheme *sc;
+      sc = hidden_sc;
+
+      fseek(fp, 0, SEEK_END);
+      size = ftell(fp);
+      rewind(fp);
+
+      bt = (unsigned char *)malloc((size + 1) * sizeof(unsigned char));
+      bytes = fread(bt, sizeof(unsigned char), size, fp);
+      if (bytes != (size_t)size)
+	{
+	  fclose(fp);
+	  free(bt);
+	  return(" oops ");
+	}
+      bt[size] = '\0';
+      fclose(fp);
+
+      for (i = 0; i < size; i++)
+	{
+	  fputc(bt[i], stdout);
+	  if (bt[i] == '"')
+	    in_quotes = (!in_quotes);
+	  else
+	    {
+	      if ((!in_quotes) && (i < size - 8))
+		{
+		  if ((bt[i] == '=') &&
+		      (((bt[i + 1] == '0') && (bt[i + 2] == 'x')) ||
+		       ((bt[i + 1] == ' ') && (bt[i + 2] == '0') && (bt[i + 3] == 'x'))))
+		    {
+		      void *vp;
+		      int vals;
+		      vals = sscanf((const char *)(bt + i + 1), "%p", &vp);
+		      if (vals == 1)
+			{
+			  int k;
+			  for (k = i + ((bt[i + 2] == 'x') ? 3 : 4); (k < size) && (IS_DIGIT(bt[k], 16)); k++);
+			  if ((bt[k] != ' ') || (bt[k + 1] != '"'))
+			    {
+			      s7_pointer p;
+			      p = (s7_pointer)vp;
+			      if ((is_decodable(sc, p)) &&
+				  (!is_free(p)))
+				{
+				  char *str;
+				  i = k - 1;
+				  str = s7_object_to_c_string(sc, p);
+				  fprintf(stdout, "%s%s%s", BOLD_TEXT, str, UNBOLD_TEXT);
+				  free(str);
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+      free(bt);
+    }
+  return("");
+}
+#endif
+
+
 
 /* -------------------------------- initialization -------------------------------- */
 
@@ -72010,10 +72146,8 @@ s7_scheme *s7_init(void)
     }
 
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
-#if DEBUGGING
-  hidden_sc = sc;
-#endif
-  sc->gc_off = true;                         /* sc->args and so on are not set yet, so a gc during init -> segfault */
+  hidden_sc = sc;                                 /* for gdb/debugging */
+  sc->gc_off = true;                              /* sc->args and so on are not set yet, so a gc during init -> segfault */
   sc->gc_stats = 0;
   init_gc_caches(sc);
 
@@ -73569,5 +73703,11 @@ int main(int argc, char **argv)
  * need a way to break (insert cr) a line and reindent in repl
  * (let ((v (int-vector 0))) (set! (v 0) (bignum "99999999999999999999999999999999999")) (v 0)): 3136633892082024447 [if safety>0?]
  * append: 44522: what if method not first arg?  use 'value?
+ *   (append "asd" ((*mock-string* 'mock-string) "hi")): error: append argument 1, "hi", is mock-string but should be a character
+ *   s7 44522 -- method check is unfinished -- should look for append and make arglists, not length
+ *   (append "asd" ((*mock-char* 'mock-char) #\g)): error: append argument 1, #\g, is mock-char but should be a sequence
+ *   also arg num is incorrect -- always off by 1?
+ * can opt'd *|+ etc use new overflow checks?
+ * is define-constant consistent in use of local/global slots? check gc mark
  */
  

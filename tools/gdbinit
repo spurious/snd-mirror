@@ -44,6 +44,31 @@ document s7value
 print the value of the variable passed by its print name: s7v "*features*"
 end
 
+define s7bt
+set logging overwrite on
+set logging redirect on
+set logging on
+bt
+set logging off
+# now gdb.txt has the backtrace
+print s7_decode_bt()
+end
+document s7bt
+print a backtrace with s7 objects decoded as much as possible
+end
+
+define s7btfull
+set logging overwrite on
+set logging redirect on
+set logging on
+bt full
+set logging off
+print s7_decode_bt()
+end
+document s7btfull
+print a full backtrace with s7 objects decoded as much as possible
+end
+
 
 define s7cell
   set $escape = 27
@@ -77,6 +102,38 @@ define s7cell
       printf "complex_value:  %f + %fi\n", $cell.object.number.complex_value.rl, $cell.object.number.complex_value.im
   end
 
+  if ($type == T_BIG_INTEGER)
+     if (WITH_GMP)
+        printf "big integer: %p\n", $cell.object.number.big_integer
+     else
+        printf "big integer??\n"
+     end
+  end
+
+  if ($type == T_BIG_RATIO)
+     if (WITH_GMP)
+        printf "big ratio: %p\n", $cell.object.number.big_ratio
+     else
+        printf "big ratio??\n"
+     end
+  end
+
+  if ($type == T_BIG_REAL)
+     if (WITH_GMP)
+        printf "big real: %p\n", $cell.object.number.big_real
+     else
+        printf "big real??\n"
+     end
+  end
+
+  if ($type == T_BIG_COMPLEX)
+     if (WITH_GMP)
+        printf "big complex: %p\n", $cell.object.number.big_complex
+     else
+        printf "big complex??\n"
+     end
+  end
+
   if (($is_bad_type) || (($cell.tf.flag & T_PRINT_NAME) != 0))
       printf "pval: padding:  %s, name: %s\n", $cell.object.number.pval.padding, $cell.object.number.pval.name
   end
@@ -91,6 +148,14 @@ define s7cell
 
   if ($type == T_C_POINTER)
       printf "c_pointer:      %p\n", $cell.object.c_pointer
+  end
+
+  if ($type == T_RANDOM_STATE)
+    if (WITH_GMP) 
+       printf "random-state\n"
+    else
+       printf "random-state: seed: %lld, carry: %lld\n", $cell.object.rng.seed, $cell.object.rng.carry
+    end
   end
 
   if (($type == T_PAIR) || ($is_bad_type))
@@ -123,8 +188,8 @@ define s7cell
   end
 
   if ($type == T_COUNTER)
-      printf "ctr:            result: %p, list: %p, env: %p, val: %lld, len: %lld\n", \
-         $cell.object.ctr.result, $cell.object.ctr.list, $cell.object.ctr.env, $cell.object.ctr.val, $cell.object.ctr.len
+      printf "ctr:            result: %p, list: %p, env: %p, cap: %lld, len: %lld\n", \
+         $cell.object.ctr.result, $cell.object.ctr.list, $cell.object.ctr.env, $cell.object.ctr.cap, $cell.object.ctr.len
   end
 
   if ($type == T_C_OBJECT)
