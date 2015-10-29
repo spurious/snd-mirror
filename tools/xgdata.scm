@@ -9217,3 +9217,23 @@
 
 ;;; 3.18.0
 ;;; 3.18.1
+
+
+;;; 3.19.1:
+
+(CFNC-3.20 "gboolean gdk_gl_context_is_legacy GdkGLContext* context")
+(CFNC-3.20 "gboolean gdk_rectangle_equal GdkRectangle* rect1 GdkRectangle*rect2" 'const)
+(CFNC-3.20 "void gtk_application_window_set_help_overlay GtkApplicationWindow* window GtkShortcutsWindow* help_overlay")
+;;; (CFNC-3.20 "GtkShortcutsWindow* gtk_application_window_get_help_overlay GtkApplicationWindow* window")
+(CFNC-3.20 "void gtk_settings_reset_property GtkSettings* settings gchar* name" 'const)
+(CFNC-3.20 "void gtk_text_tag_changed GtkTextTag* tag gboolean size_changed")
+;;; (CFNC-3.20 "void gtk_widget_class_set_css_name GtkWidgetClass* widget_class char* name" 'const)
+;;; (CFNC-3.20 "char* gtk_widget_class_get_css_name GtkWidgetClass* widget_class" 'const-return)
+(CFNC-3.20 "char* gtk_widget_path_iter_get_object_name GtkWidgetPath* path gint pos" 'const-return)
+(CFNC-3.20 "void gtk_widget_path_iter_set_object_name GtkWidgetPath* path gint pos char* name" 'const)
+
+#|
+! gboolean gtk_text_buffer_get_iter_at_line_offset (GtkTextBuffer* buffer 
+! gboolean gtk_text_buffer_get_iter_at_line (GtkTextBuffer* buffer 
+ change of type -- perhaps do this by hand?
+|#

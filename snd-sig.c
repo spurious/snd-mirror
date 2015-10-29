@@ -3470,13 +3470,15 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
   eval = NULL;
 
   body = s7_closure_body(s7, proc);
-  if (s7_is_pair(body))
+  if ((s7_is_pair(body)) &&
+      (s7_is_pair(s7_closure_args(s7, proc))))
     {
       s7_pointer arg;
       if (s7_is_null(s7, s7_cdr(body)))
 	{
 	  res = s7_car(body);
 	  arg = s7_car(s7_closure_args(s7, proc));
+	  if (s7_is_pair(arg)) arg = s7_car(arg); /* lambda* + default */
 
 	  if ((s7_is_boolean(res)) ||
 	      (res == arg))

@@ -2794,6 +2794,7 @@ typedef struct {
 mus_float_t *mus_partials_to_wave(mus_float_t *partial_data, int partials, mus_float_t *table, mus_long_t table_size, bool normalize)
 {
   int partial, k;
+  if (!table) return(NULL);
   memset((void *)table, 0, table_size * sizeof(mus_float_t));
   for (partial = 0, k = 1; partial < partials; partial++, k += 2)
     {
@@ -2817,6 +2818,7 @@ mus_float_t *mus_partials_to_wave(mus_float_t *partial_data, int partials, mus_f
 mus_float_t *mus_phase_partials_to_wave(mus_float_t *partial_data, int partials, mus_float_t *table, mus_long_t table_size, bool normalize)
 {
   int partial, k, n;
+  if (!table) return(NULL);
   memset((void *)table, 0, table_size * sizeof(mus_float_t));
   for (partial = 0, k = 1, n = 2; partial < partials; partial++, k += 3, n += 3)
     {

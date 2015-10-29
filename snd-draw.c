@@ -295,10 +295,10 @@ static Xen g_draw_line(Xen x0, Xen y0, Xen x1, Xen y1, Xen snd, Xen chn, Xen ax,
   #define H_draw_line "(" S_draw_line " x0 y0 x1 y1 :optional snd chn (ax " S_time_graph ") cr): draw a line"
 
   Snd_assert_channel(S_draw_line, snd, chn, 5);
-  Xen_check_type(Xen_is_number(x0), x0, 1, S_draw_line, "a number");
-  Xen_check_type(Xen_is_number(y0), y0, 2, S_draw_line, "a number");
-  Xen_check_type(Xen_is_number(x1), x1, 3, S_draw_line, "a number");
-  Xen_check_type(Xen_is_number(y1), y1, 4, S_draw_line, "a number");
+  Xen_check_type(Xen_is_integer(x0), x0, 1, S_draw_line, "an integer");
+  Xen_check_type(Xen_is_integer(y0), y0, 2, S_draw_line, "an integer");
+  Xen_check_type(Xen_is_integer(x1), x1, 3, S_draw_line, "an integer");
+  Xen_check_type(Xen_is_integer(y1), y1, 4, S_draw_line, "an integer");
   Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 7, S_draw_line, "an integer such as " S_time_graph);
 
   draw_line(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_line, xcr),
@@ -333,10 +333,10 @@ static Xen g_fill_rectangle(Xen x0, Xen y0, Xen width, Xen height, Xen snd, Xen 
   #define H_fill_rectangle "(" S_fill_rectangle " x0 y0 width height :optional snd chn (ax " S_time_graph ") erase cr): draw a filled rectangle"
 
   Snd_assert_channel(S_fill_rectangle, snd, chn, 5);
-  Xen_check_type(Xen_is_number(x0), x0, 1, S_fill_rectangle, "a number");
-  Xen_check_type(Xen_is_number(y0), y0, 2, S_fill_rectangle, "a number");
-  Xen_check_type(Xen_is_number(width), width, 3, S_fill_rectangle, "a number");
-  Xen_check_type(Xen_is_number(height), height, 4, S_fill_rectangle, "a number");
+  Xen_check_type(Xen_is_integer(x0), x0, 1, S_fill_rectangle, "an integer");
+  Xen_check_type(Xen_is_integer(y0), y0, 2, S_fill_rectangle, "an integer");
+  Xen_check_type(Xen_is_integer(width), width, 3, S_fill_rectangle, "an integer");
+  Xen_check_type(Xen_is_integer(height), height, 4, S_fill_rectangle, "an integer");
   Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 7, S_fill_rectangle, "an integer such as " S_time_graph);
   Xen_check_type(Xen_is_boolean_or_unbound(erase), erase, 8, S_fill_rectangle, "a boolean");
 
@@ -364,8 +364,8 @@ static Xen g_draw_string(Xen text, Xen x0, Xen y0, Xen snd, Xen chn, Xen ax, Xen
   const char *tmp = NULL;
   Snd_assert_channel(S_draw_string, snd, chn, 4);
   Xen_check_type(Xen_is_string(text), text, 1, S_draw_string, "a string");
-  Xen_check_type(Xen_is_number(x0), x0, 2, S_draw_string, "a number");
-  Xen_check_type(Xen_is_number(y0), y0, 3, S_draw_string, "a number");
+  Xen_check_type(Xen_is_integer(x0), x0, 2, S_draw_string, "an integer");
+  Xen_check_type(Xen_is_integer(y0), y0, 3, S_draw_string, "an integer");
   Xen_check_type(Xen_is_integer_or_unbound(ax), ax, 6, S_draw_string, "an integer such as " S_time_graph);
 
   tmp = Xen_string_to_C_string(text);

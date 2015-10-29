@@ -4,10 +4,12 @@ end
 document s7print
 interpret the argument as an s7 value and display it
 end
+
 # the current expression is sc->cur_code
 # the current environment is sc->envir
 # the error environment is sc->owlet
 # so for example, to see the current local variables, s7p sc->envir
+# source ~/.gdbinit reloads
 
 define s7eval
 print s7_object_to_c_string(sc, s7_eval_c_string(sc, $arg0))
@@ -29,13 +31,6 @@ end
 document s7stack
 display the currently active local environments
 end
-
-# and possibly s7 stack?
-# shadowed globals with current value
-# heap/gc stats
-# port fields
-
-# source ~/.gdbinit reloads
 
 define s7value
 print s7_object_to_c_string(sc, s7_name_to_value(sc, $arg0))
@@ -265,9 +260,11 @@ define s7cell
   end
  
   if (($type >= T_C_FUNCTION_STAR) || ($is_bad_type))
-      printf "fnc:            c_proc: %p, ff: %p, setter: %p,\n                    required_args: %d, optional_args: %d, all_args: %d, rest_arg: %d\n", \
+      printf "c-fnc:          c_proc: %p, ff: %p, setter: %p,\n                required_args: %d, optional_args: %d, all_args: %d, rest_arg: %d\n", \
          $cell.object.fnc.c_proc, $cell.object.fnc.ff, $cell.object.fnc.setter, \
          $cell.object.fnc.required_args, $cell.object.fnc.optional_args, $cell.object.fnc.all_args, $cell.object.fnc.rest_arg
+      if ((!$is_bad_type) && ($cell.object.fnc.c_proc != 0))
+         printf "                name: %s\n", $cell.object.fnc.c_proc->name
   end
 
 end

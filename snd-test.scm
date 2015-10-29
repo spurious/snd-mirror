@@ -41,7 +41,7 @@
 	(error 'wrong-type-arg "make-polar args should be real"))))
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
 (if (<= tests 0) (set! tests 1))

@@ -429,13 +429,15 @@ static s7_pointer g_complete(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_append_text(s7_scheme *sc, s7_pointer args)
 {
-  glistener_append_text(unwrap_glistener(sc, "listener append_text", s7_car(args)), s7_string(s7_cadr(args)));
+  if (s7_is_string(s7_cadr(args)))
+    glistener_append_text(unwrap_glistener(sc, "listener append_text", s7_car(args)), s7_string(s7_cadr(args)));
   return(s7_cadr(args));
 }
 
 static s7_pointer g_insert_text(s7_scheme *sc, s7_pointer args)
 {
-  glistener_insert_text(unwrap_glistener(sc, "listener insert_text", s7_car(args)), s7_string(s7_cadr(args)));
+  if (s7_is_string(s7_cadr(args)))
+    glistener_insert_text(unwrap_glistener(sc, "listener insert_text", s7_car(args)), s7_string(s7_cadr(args)));
   return(s7_cadr(args));
 }
 
@@ -490,7 +492,8 @@ static s7_pointer g_text_widget(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_set_prompt(s7_scheme *sc, s7_pointer args)
 {
-  glistener_set_prompt(unwrap_glistener(sc, "set listener prompt", s7_car(args)), s7_string(s7_cadr(args)));
+  if (s7_is_string(s7_cadr(args)))
+    glistener_set_prompt(unwrap_glistener(sc, "set listener prompt", s7_car(args)), s7_string(s7_cadr(args)));
   return(s7_cadr(args));
 }
 

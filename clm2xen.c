@@ -1660,7 +1660,10 @@ static Xen g_mus_reset(Xen gen)
 #if HAVE_SCHEME
   if (s7_is_float_vector(gen))
     {
-      memset((void *)s7_float_vector_elements(gen), 0, s7_vector_length(gen) * sizeof(s7_double));
+      s7_int len;
+      len = s7_vector_length(gen);
+      if (len > 0)
+	memset((void *)s7_float_vector_elements(gen), 0, len * sizeof(s7_double));
       return(gen);
     }
   {
@@ -2483,6 +2486,8 @@ static Xen g_make_oscil(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 static Xen g_oscil(Xen osc, Xen fm, Xen pm)
 {
   #define H_oscil "(" S_oscil " gen (fm 0.0) (pm 0.0)): next sample from " S_oscil " gen: val = sin(phase + pm); phase += (freq + fm)"
+  #define Q_oscil s7_make_circular_signature(s7, 2, 3, s7_make_symbol(s7, "float?"), s7_make_symbol(s7, "oscil?"), s7_make_symbol(s7, "real?"))
+
   mus_float_t fm1;
   mus_any *g = NULL;
   mus_xen *gn;
@@ -12764,7 +12769,7 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_mus_xcoeffs,		g_mus_xcoeffs_w,		1, 0, 0, H_mus_xcoeffs,		pl_fc);
   Xen_define_typed_procedure(S_mus_ycoeffs,		g_mus_ycoeffs_w,		1, 0, 0, H_mus_ycoeffs,		pl_fc);
   Xen_define_typed_procedure(S_is_oscil,		g_is_oscil_w,			1, 0, 0, H_is_oscil,		pl_bt);
-  Xen_define_typed_procedure(S_oscil,			g_oscil_w,			1, 2, 0, H_oscil,		pl_dcr);
+  Xen_define_typed_procedure(S_oscil,			g_oscil_w,			1, 2, 0, H_oscil,		Q_oscil);
   Xen_define_typed_procedure(S_is_oscil_bank,		g_is_oscil_bank_w,		1, 0, 0, H_is_oscil_bank,	pl_bt);
   Xen_define_typed_procedure(S_oscil_bank,		g_oscil_bank_w,			1, 0, 0, H_oscil_bank,		pl_dc);
 

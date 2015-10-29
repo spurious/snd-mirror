@@ -3724,7 +3724,7 @@ static void add_setter(s7_scheme *sc, s7_pointer p, s7_pointer setter)
 	{
 	  cdr(x) = setter;
 	  return;
-	}
+ 	}
     }
   if (sc->setters_loc == sc->setters_size)
     {
@@ -4754,7 +4754,7 @@ static void pop_stack(s7_scheme *sc)
       if (stop_at_error) abort();
     }
   sc->code =  sc->stack_end[0];
-  sc->envir = sc->stack_end[1];
+  sc->envir = _TLid(sc->stack_end[1]);
   sc->args =  sc->stack_end[2];
   sc->op =    (opcode_t)(sc->stack_end[3]);
   if (sc->op > OP_MAX_DEFINED) 
@@ -4773,7 +4773,7 @@ static void pop_stack_no_op(s7_scheme *sc)
       if (stop_at_error) abort();
     }
   sc->code =  sc->stack_end[0];
-  sc->envir = sc->stack_end[1];
+  sc->envir = _TLid(sc->stack_end[1]);
   sc->args =  sc->stack_end[2];
 }
 
@@ -4785,7 +4785,7 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
       if (stop_at_error) abort();
     }
   if (code) sc->stack_end[0] = code;
-  sc->stack_end[1] = sc->envir;
+  sc->stack_end[1] = _TLid(sc->envir);
   if (args) sc->stack_end[2] = args;
   sc->stack_end[3] = (s7_pointer)op;
   sc->stack_end += 4;
@@ -5385,10 +5385,6 @@ static s7_pointer g_symbol(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer add_sym_to_list(s7_scheme *sc, s7_pointer sym)
 {
-#if DEBUGGING
-  if (!is_symbol(sym))
-    fprintf(stderr, "%s[%d]: %s is not a symbol\n", __func__, __LINE__, DISPLAY(sym));
-#endif
   symbol_tag(sym) = sc->syms_tag;
   return(sym);
 }
@@ -6649,10 +6645,6 @@ static s7_pointer g_set_outlet(s7_scheme *sc, s7_pointer args)
 static s7_pointer find_symbol(s7_scheme *sc, s7_pointer symbol)
 {
   s7_pointer x;
-#if DEBUGGING
-  if (!is_symbol(symbol))
-    fprintf(stderr, "%s[%d]: %s is not a symbol\n", __func__, __LINE__, DISPLAY(symbol));
-#endif
 
   if (let_id(sc->envir) == symbol_id(symbol))
     return(local_slot(symbol));
@@ -49654,7 +49646,8 @@ static s7_pointer g_format_just_newline(s7_scheme *sc, s7_pointer args)
 
   if (pt == sc->T)
     {
-      port_write_string(sc->output_port)(sc, string_value(str), string_length(str), sc->output_port);
+      if (sc->output_port != sc->F)
+	port_write_string(sc->output_port)(sc, string_value(str), string_length(str), sc->output_port);
       return(s7_make_string_with_length(sc, string_value(str), string_length(str)));
     }
 
@@ -61299,7 +61292,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    int num_args;
 		    s7_pointer args, p;
-		    
+
 		    num_args = integer(arglist_length(code));
 		    if ((num_args != 0) &&
 			(num_args < NUM_SAFE_LISTS) &&
@@ -71986,7 +71979,7 @@ static s7_pointer g_is_integer_or_any_at_end(s7_scheme *sc, s7_pointer args) {re
 
 
 #ifndef _MSC_VER
-/* an experiment -- gdb stacktrace decoding */
+/* gdb stacktrace decoding */
 
 static bool is_decodable(s7_scheme *sc, s7_pointer p)
 {
@@ -71997,8 +71990,9 @@ static bool is_decodable(s7_scheme *sc, s7_pointer p)
   if ((void *)p == (void *)sc) return(false);
 
   /* check basic constants */
-  if ((p == sc->NIL) || (p == sc->T) || (p == sc->F) || (p == sc->EOF_OBJECT) || (p == sc->ELSE) ||
-      (p == sc->UNDEFINED) || (p == sc->UNSPECIFIED) || (p == sc->NO_VALUE) || (p == sc->GC_NIL))
+  if ((p == sc->NIL) || (p == sc->T) || (p == sc->F) || (p == sc->EOF_OBJECT) || (p == sc->ELSE) || (p == sc->rootlet) ||
+      (p == sc->UNDEFINED) || (p == sc->UNSPECIFIED) || (p == sc->NO_VALUE) || (p == sc->GC_NIL) ||
+      (p == sc->T1_1) || (p == sc->T2_1) || (p == sc->T3_1) || (p == sc->A1_1) || (p == sc->A2_1) || (p == sc->A3_1) || (p == sc->A4_1))
     return(true);
 
   /* check symbol-table */
@@ -72008,10 +72002,13 @@ static bool is_decodable(s7_scheme *sc, s7_pointer p)
 	s7_pointer sym;
 	sym = car(x);
 	if ((sym == p) ||
-	    ((is_slot(initial_slot(sym))) && (p == slot_value(initial_slot(sym)))) ||
-	    ((is_slot(global_slot(sym))) && (p == slot_value(global_slot(sym)))))
+	    ((is_global(sym)) && (is_slot(global_slot(sym))) && (p == slot_value(global_slot(sym)))))
 	  return(true);
       }
+
+  for (i = 0; i < NUM_CHARS; i++) if (p == chars[i]) return(true);
+  for (i = 0; i <= NUM_SMALL_INTS; i++) if (p == small_ints[i]) return(true);
+  /* also real_one and friends, sc->safe_lists, tmp_strs? p|elist? */
 
   /* check the heap */
   tp = sc->heap;
@@ -72054,7 +72051,7 @@ char *s7_decode_bt(void)
       for (i = 0; i < size; i++)
 	{
 	  fputc(bt[i], stdout);
-	  if (bt[i] == '"')
+	  if ((bt[i] == '"') && ((i == 0) || (bt[i - 1] != '\\')))
 	    in_quotes = (!in_quotes);
 	  else
 	    {
@@ -72079,6 +72076,7 @@ char *s7_decode_bt(void)
 				  (!is_free(p)))
 				{
 				  char *str;
+				  if (bt[i + 1] == ' ') fputc(' ', stdout);
 				  i = k - 1;
 				  str = s7_object_to_c_string(sc, p);
 				  fprintf(stdout, "%s%s%s", BOLD_TEXT, str, UNBOLD_TEXT);
@@ -73709,5 +73707,8 @@ int main(int argc, char **argv)
  *   also arg num is incorrect -- always off by 1?
  * can opt'd *|+ etc use new overflow checks?
  * is define-constant consistent in use of local/global slots? check gc mark
+ * help(old local)->s7_symbol_value can access free value?
+ * gdbinit s7clobbered: init != glob [5824]
+ * hash_equal can get into a loop? table as key in itself reverse+equal??
+ *   finish t705 after ^
  */
- 
